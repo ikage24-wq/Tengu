@@ -20,7 +20,8 @@ const hash = (n) => {
 // `blades` grass blades along the lip, and `drip` what hangs over edges.
 export const MATERIALS = {
   meadow: { lip: '#8ee08a', body: '#ebc596', deep: '#d4a270', stone: '#f6dfbd', style: 'cobble', blades: true, drip: 'vine' },
-  forest: { lip: '#7fd38f', body: '#bb9068', deep: '#93684a', stone: '#d5b48c', style: 'loam', blades: true, drip: 'root' },
+  // (The map redraw: the woods' own mossy earth, strata, roots and stones, under a thick moss lip.)
+  forest: { lip: '#7fd38f', body: '#b58a64', deep: '#8a6044', stone: '#d8c0a0', style: 'mossloam', blades: true, drip: 'root', moss: true },
   town: { lip: '#ffffff', body: '#f6d3bd', deep: '#e3ad90', stone: '#fde7d8', style: 'cobble', blades: false, drip: null },
   harbor: { lip: '#e2bf96', body: '#a4a9cf', deep: '#7b80ad', stone: '#c3c8e6', style: 'brick', blades: false, drip: 'weed' },
   crag: { lip: '#ffe0ad', body: '#e2a66c', deep: '#b97a46', stone: '#f6cf9a', style: 'slab', blades: false, drip: null },
@@ -308,6 +309,112 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
+  } else if (m.style === 'mossloam') {
+    // Mossy earth (the map redraw): soft bands of soil, winding roots with rootlets, a few big
+    // rounded stones lit from the upper left, and small pebbles and specks between them.
+    const per = (n) => (Math.PI * 2 * n) / TW;
+    for (const [y0, amp, n, c, a] of [[22, 4, 2, m.deep, 0.32], [58, 5, 3, shade(m.body, 7), 0.5], [96, 4, 2, m.deep, 0.38]]) {
+      g.fillStyle = c;
+      g.globalAlpha = a;
+      for (const dy of [-TH, 0, TH]) {
+        g.beginPath();
+        g.moveTo(0, y0 + dy);
+        for (let x = 0; x <= TW; x += 4) g.lineTo(x, y0 + dy + Math.sin(x * per(n) + y0) * amp);
+        for (let x = TW; x >= 0; x -= 4) g.lineTo(x, y0 + dy + 9 + Math.sin(x * per(n) + y0 + 1.3) * amp * 0.7);
+        g.closePath();
+        g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+    // Roots: lighter strands winding across with a dark underside, and rootlets off them.
+    const rootC = mix(m.stone, m.body, 0.45);
+    for (let i = 0; i < 1; i++) {
+      const k = seed + i * 9.7 + 40;
+      const x = hash(k) * TW;
+      const y = 10 + hash(k + 1) * (TH - 20);
+      const len = 50 + hash(k + 2) * 50;
+      wrap((dx, dy) => {
+        const path = () => {
+          g.beginPath();
+          g.moveTo(x + dx, y + dy);
+          g.bezierCurveTo(x + dx + len * 0.3, y + dy - 8, x + dx + len * 0.6, y + dy + 9, x + dx + len, y + dy + 2);
+        };
+        g.lineCap = 'round';
+        g.strokeStyle = mix(m.deep, INK, 0.2);
+        g.lineWidth = 3.4;
+        g.save();
+        g.translate(0, 1);
+        path();
+        g.stroke();
+        g.restore();
+        g.strokeStyle = rootC;
+        g.lineWidth = 2.6;
+        path();
+        g.stroke();
+        g.strokeStyle = shade(rootC, 10);
+        g.lineWidth = 0.9;
+        g.save();
+        g.translate(-0.4, -0.7);
+        path();
+        g.stroke();
+        g.restore();
+        g.strokeStyle = rootC;
+        g.lineWidth = 1;
+        for (const u of [0.3, 0.7]) {
+          const rx = x + dx + len * u;
+          const ry = y + dy + (u < 0.5 ? -2 : 3);
+          g.beginPath();
+          g.moveTo(rx, ry);
+          g.quadraticCurveTo(rx + 3, ry + 5, rx + 1, ry + 9);
+          g.stroke();
+        }
+      });
+    }
+    // Big stones: rounded, lit top left, shadowed bottom right, outlined in their own dark.
+    for (let i = 0; i < 0; i++) {
+      const k = seed + i * 7.9 + 90;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const rx = 3 + hash(k + 2) ** 2 * 8;
+      const ry = rx * (0.6 + hash(k + 3) * 0.2);
+      wrap((dx, dy) => {
+        g.fillStyle = mix(m.deep, INK, 0.15);
+        g.beginPath();
+        g.ellipse(x + dx + 1, y + dy + 1.5, rx, ry, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = mix(mix(m.stone, m.body, 0.3), '#a8a0b8', 0.15 + hash(k + 6) * 0.15);
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, rx, ry, 0, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = edge(m.body);
+        g.lineWidth = 0.6;
+        g.stroke();
+        g.fillStyle = 'rgba(255,255,255,0.4)';
+        g.beginPath();
+        g.ellipse(x + dx - rx * 0.3, y + dy - ry * 0.35, rx * 0.45, ry * 0.3, -0.3, 0, Math.PI * 2);
+        g.fill();
+        if (hash(k + 5) > 0.5) {
+          // A cap of moss on top.
+          g.fillStyle = shade(m.lip, -10);
+          g.beginPath();
+          g.ellipse(x + dx + rx * 0.1, y + dy - ry * 0.75, rx * 0.65, ry * 0.32, 0, 0, Math.PI * 2);
+          g.fill();
+        }
+      });
+    }
+    // Pebbles and specks.
+    for (let i = 0; i < 5 * AREA; i++) {
+      const k = seed + i * 5.3 + 130;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const r = 0.8 + hash(k + 2) * 1.4;
+      wrap((dx, dy) => {
+        g.fillStyle = hash(k + 3) > 0.5 ? m.stone : mix(m.deep, INK, 0.1);
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, r * 1.3, r, 0, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
   } else {
     // Loam: soft dark clumps, pebbles, and thin roots.
     for (let i = 0; i < 10 * AREA; i++) {
@@ -469,6 +576,7 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
       }
     }
   }
+  if (m.style === 'mossloam') earthDecals(ctx, m, runs, cam, width, height);
   ctx.restore();
 
   // Cliff faces: where the ground drops at a wall, the high side shows a shaded face.
@@ -483,12 +591,103 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   }
   // The lip along the top of every run.
   // The lip casts a soft shadow onto the dirt just under it.
-  for (const pts of runs) strokeAlong(ctx, pts, 12, hexA(INK, 0.16), 6);
-  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, 10, deco));
+  for (const pts of runs) strokeAlong(ctx, pts, m.moss ? 15 : 12, hexA(INK, 0.16), 6);
+  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, m.moss ? 12 : 10, deco));
   if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+
+// Things set in the earth by where they are in the world, not by the texture's tile, so nothing
+// repeats: big stones (some capped with moss), roots looping down from the surface, and buried
+// pebbles, each in its own spot under the lip.
+function earthDecals(ctx, m, runs, cam, width, height) {
+  const CELL = 70;
+  const topAt = (sx) => {
+    for (const pts of runs) {
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, ay] = pts[i - 1];
+        const [bx, by] = pts[i];
+        if (sx >= ax && sx <= bx) return ay + ((by - ay) * (sx - ax)) / (bx - ax || 1);
+      }
+    }
+    return null;
+  };
+  const rootC = mix(m.stone, m.body, 0.45);
+  const first = Math.floor((cam.x - 40) / CELL);
+  for (let c = first; c * CELL < cam.x + width + 40; c++) {
+    const k = c * 3.17 + 0.5;
+    const wx = c * CELL + hash(k) * CELL;
+    const sx = wx - cam.x;
+    const top = topAt(sx);
+    if (top == null || top > height) continue;
+    const kind = hash(k + 1);
+    const y = top + 24 + hash(k + 2) * 90;
+    if (kind < 0.42) {
+      // A stone.
+      const rx = 4 + hash(k + 3) ** 2 * 11;
+      const ry = rx * (0.55 + hash(k + 4) * 0.25);
+      ctx.fillStyle = mix(m.deep, INK, 0.2);
+      ctx.beginPath();
+      ctx.ellipse(sx + 1, y + 1.6, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = mix(mix(m.stone, m.body, 0.3), '#a8a0b8', 0.12 + hash(k + 5) * 0.18);
+      ctx.beginPath();
+      ctx.ellipse(sx, y, rx, ry, (hash(k + 6) - 0.5) * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = edge(m.body);
+      ctx.lineWidth = 0.7;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.38)';
+      ctx.beginPath();
+      ctx.ellipse(sx - rx * 0.3, y - ry * 0.38, rx * 0.42, ry * 0.26, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      if (rx > 7 && hash(k + 7) > 0.4) {
+        ctx.fillStyle = shade(m.lip, -12);
+        ctx.beginPath();
+        ctx.ellipse(sx + rx * 0.1, y - ry * 0.78, rx * 0.6, ry * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (kind < 0.62) {
+      // A root looping down from the surface and back.
+      const len = 30 + hash(k + 3) * 40;
+      const dip = 14 + hash(k + 4) * 26;
+      const path = () => {
+        ctx.beginPath();
+        ctx.moveTo(sx, top + 10);
+        ctx.bezierCurveTo(sx + len * 0.1, top + 10 + dip, sx + len * 0.8, top + 10 + dip * 1.1, sx + len, top + 18 + dip * 0.4);
+      };
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = mix(m.deep, INK, 0.25);
+      ctx.lineWidth = 3.6;
+      ctx.save();
+      ctx.translate(0.6, 1.2);
+      path();
+      ctx.stroke();
+      ctx.restore();
+      ctx.strokeStyle = rootC;
+      ctx.lineWidth = 2.6;
+      path();
+      ctx.stroke();
+      ctx.strokeStyle = shade(rootC, 10);
+      ctx.lineWidth = 0.9;
+      ctx.save();
+      ctx.translate(-0.5, -0.7);
+      path();
+      ctx.stroke();
+      ctx.restore();
+    } else if (kind < 0.8) {
+      // A little nest of pebbles.
+      for (let i = 0; i < 3; i++) {
+        const r = 1.4 + hash(k + 10 + i) * 1.8;
+        ctx.fillStyle = hash(k + 20 + i) > 0.5 ? m.stone : mix(m.stone, m.body, 0.5);
+        ctx.beginPath();
+        ctx.ellipse(sx + i * 4 - 4, y + (i % 2) * 2, r * 1.3, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+}
 
 // The top layer along a line of points: a thick band with a soft scalloped (or bladed) lower edge,
 // a bright top, and an outline.
@@ -508,7 +707,27 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
     ctx.fillStyle = m.lip;
     ctx.strokeStyle = line;
     ctx.lineWidth = 1;
-    if (m.blades && hash(k + seed * 31) > 0.55) {
+    if (m.moss) {
+      // Moss hangs over the edge in soft tongues of every length.
+      // Mostly short, now and then a long one; uneven widths, the odd gap.
+      const h = hash(k * 1.9 + seed * 13);
+      if (h < 0.22) return;
+      const len = 1.5 + h * h * 9;
+      const wd = 2.4 + hash(k * 2.3 + seed) * 3.2;
+      const ox = (hash(k * 4.1 + seed) - 0.5) * 4;
+      ctx.beginPath();
+      ctx.moveTo(x + ox - wd, y + depth - 1.5);
+      ctx.quadraticCurveTo(x + ox - wd * 0.8, y + depth + len, x + ox + 0.4, y + depth + len);
+      ctx.quadraticCurveTo(x + ox + wd * 0.9, y + depth + len * 0.8, x + ox + wd, y + depth - 1.5);
+      ctx.fill();
+      if (len > 4) {
+        ctx.stroke();
+        ctx.fillStyle = shade(m.lip, -14);
+        ctx.beginPath();
+        ctx.ellipse(x + ox + 0.6, y + depth + len - 1.8, wd * 0.45, 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (m.blades && hash(k + seed * 31) > 0.55) {
       const len = 4 + hash(k + 7) * 4;
       ctx.beginPath();
       ctx.moveTo(x - 3, y + depth - 1);
@@ -523,6 +742,16 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
       ctx.stroke();
     }
   });
+  // On moss: soft lumps of lighter moss along the top, so the lip isn't one smooth band.
+  if (m.moss) {
+    forAlong(pts, 13, (x, y, k) => {
+      if (x < -10 || x > width + 10 || hash(k * 3.1 + seed) < 0.4) return;
+      ctx.fillStyle = shade(m.lip, 9);
+      ctx.beginPath();
+      ctx.ellipse(x, y + 2.5, 4 + hash(k + 2) * 3, 2.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
   // A darker underside line inside the band and a bright top.
   strokeAlong(ctx, pts, depth - 2.5, deep, 1.4);
   strokeAlong(ctx, pts, 0.6, shade(m.lip, 18), 1.6);
@@ -860,6 +1089,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null) {
   const style = p.style ?? look?.islands ?? 'earth';
   if (style !== 'earth') {
     if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
@@ -1024,6 +1254,86 @@ function drawPlanks(ctx, m, x, y, w, time, seed, deco) {
     ctx.fill();
   }
   if (deco) edgeDeco(ctx, deco, [[x + 3, y - 1], [x + w - 3, y - 1]], time, seed, Infinity);
+}
+
+// A great mossy branch (the map redraw, the woods' platforms): a bark log under a cap of moss
+// that hangs over its edges, a sawn ring at one end and a leafy twig at the other that sways in
+// the wind, little twigs with leaves and vines hanging beneath, and knots and bark along it.
+const BARK = '#9a7356';
+function drawBranch(ctx, m, x, y, w, time, seed, deco) {
+  const line = edge(BARK);
+  const sway = Math.sin(time * 1.1 + seed * 2.7) * 1.6 + windAt(time, x + camX) * 0.8;
+  // Hanging below: vines and little leafy twigs.
+  for (let dx = 16; dx < w - 12; dx += 24) {
+    if (hash(seed * 9.1 + dx) < 0.35) continue;
+    drip(ctx, { ...m, drip: 'vine' }, x + dx, y + 15, 22, time, seed * 3 + dx);
+  }
+  // The leafy twig curling up off the far end.
+  const tx = x + w - 2;
+  ctx.strokeStyle = shade(BARK, -10);
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(tx - 6, y + 7);
+  ctx.quadraticCurveTo(tx + 8, y + 4, tx + 14 + sway, y - 8);
+  ctx.stroke();
+  for (const [lx, ly, a] of [[tx + 8, y - 1, -0.5], [tx + 14 + sway, y - 10, -1.1], [tx + 4, y + 1, 0.4]]) {
+    ctx.fillStyle = m.lip;
+    ctx.strokeStyle = edge(m.lip);
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.ellipse(lx + sway * 0.5, ly, 4.6, 2.2, a, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  // The log: a rounded tube, lit on top, shadowed under, outlined.
+  ctx.fillStyle = BARK;
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(x, y - 1, w, 16, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = shade(BARK, 12);
+  ctx.fillRect(x + 4, y + 2, w - 8, 3);
+  ctx.fillStyle = shade(BARK, -16);
+  ctx.fillRect(x + 4, y + 10, w - 8, 3);
+  // Bark: short curved grooves and the odd knot.
+  ctx.strokeStyle = shade(BARK, -24);
+  ctx.lineWidth = 0.9;
+  for (let dx = 10; dx < w - 10; dx += 9) {
+    const k = hash(seed * 4.3 + dx);
+    const by = y + 5 + k * 6;
+    ctx.beginPath();
+    ctx.moveTo(x + dx, by);
+    ctx.quadraticCurveTo(x + dx + 4, by - 1.5, x + dx + 7 + k * 3, by + 0.5);
+    ctx.stroke();
+    if (k > 0.86) {
+      ctx.fillStyle = shade(BARK, -20);
+      ctx.beginPath();
+      ctx.ellipse(x + dx + 3, by + 1, 2.4, 1.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = shade(BARK, 14);
+      ctx.beginPath();
+      ctx.ellipse(x + dx + 2.6, by + 0.6, 1, 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // The sawn ring at the near end.
+  ctx.fillStyle = '#f0d4a6';
+  ctx.strokeStyle = line;
+  ctx.beginPath();
+  ctx.ellipse(x + 1, y + 7, 4.6, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = '#c99a6a';
+  for (const r of [2, 4.5]) {
+    ctx.beginPath();
+    ctx.ellipse(x + 1, y + 7, r * 0.55, r, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // The moss cap, lumpy on top and hanging over the front edge in tongues.
+  lip(ctx, { ...m, blades: true }, [[x + 3, y], [x + w - 3, y]], time, seed + 70, Infinity, 6, deco);
 }
 
 // A rope bridge: posts at both ends, sagging rope rails, and planks with gaps between them.

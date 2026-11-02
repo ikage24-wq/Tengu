@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: one map as the game draws it, with the hero standing somewhere on it, for before/after
+// pictures of map art. ?map=woods&x=600&y=0 (y: 0 = the ground, else a floor's height)&night=1&t=3
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = Number(q.get('s') ?? 2);
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+const c = balanceChar('thief', 30);
+const w = createWorld(c);
+w.log = () => {};
+if (q.get('night') != null) w.forceNight = Number(q.get('night'));
+loadMap(w, q.get('map') ?? 'woods', 'west');
+w.god = true;
+const y = q.get('y') ? Number(q.get('y')) : w.map.groundY;
+Object.assign(w.body, { x: Number(q.get('x') ?? 400), y, vx: 0, vy: 0, facing: 1 });
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+for (let k = 0; k < 240; k++) updateWorld(w, 1 / 60, idle);
+const cam = createCamera();
+// The effect strips and map art load first.
+await new Promise((res) => setTimeout(res, 2500));
+// Drawn every frame, so the map's arrival fade plays out before the picture.
+let t = 0;
+for (let k = 0; k < Math.round(Number(q.get('t') ?? 3) * 60); k++) {
+  updateWorld(w, 1 / 60, idle);
+  t += 1 / 60;
+  updateCamera(cam, w, 1 / 60);
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(ctx, w, cam, t);
+}
+// ?gif=4: then plays on for that many seconds, printing its frames for tools/make-gif.py.
+if (q.get('gif')) {
+  const out = document.createElement('canvas');
+  // ?gw=960: the clip's width (it keeps the view's shape).
+  out.width = Number(q.get('gw') ?? VW);
+  out.height = Math.round((out.width * VH) / VW);
+  const oc = out.getContext('2d');
+  const frames = [];
+  for (let f = 0; f < Number(q.get('gif')) * 20; f++) {
+    for (let k = 0; k < 3; k++) {
+      updateWorld(w, 1 / 60, idle);
+      t += 1 / 60;
+      updateCamera(cam, w, 1 / 60);
+    }
+    nextFrame();
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+    setHd(true, SCALE);
+    drawWorld(ctx, w, cam, t);
+    oc.drawImage(canvas, 0, 0, out.width, out.height);
+    frames.push(out.toDataURL('image/jpeg', 0.88));
+  }
+  const pre = document.createElement('pre');
+  pre.id = 'out';
+  pre.textContent = JSON.stringify(frames);
+  document.body.appendChild(pre);
+}
+document.title = 'ready';
+</script>
+</body></html>

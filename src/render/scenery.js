@@ -11,6 +11,7 @@ import { drawTerrain, drawIsland, drawLadder, wind, windTravel } from './terrain
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape } from './painted.js';
 import { drawPortalGate } from './portals.js';
 import { levelRange } from '../world/routes.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
@@ -60,7 +61,7 @@ export const THEMES = {
     sky: ['#b8f0d0', '#e0f8e8', '#fff8e0'], sun: '#fffde0', far: '#9fdcb4', mid: '#7cc794', midTrim: '#5aa878',
     ground: '#c9a27a', groundDeep: '#b08860', trim: '#7ed38f', ledge: '#d9b88f', ledgeTrim: '#8fe39a', ledgeShade: '#b8946b',
     skyline: 'trees', props: ['mushroom', 'tuft', 'flower', 'bush', 'tuft', 'rock'],
-    critters: ['firefly', 'butterfly'], drift: 'leaf', face: 'sun',
+    critters: ['firefly', 'butterfly'], drift: 'leaf', face: 'sun', painted: 'forest',
   },
   ruins: {
     sky: ['#7b6be6', '#c39cff', '#ffc2e0'], sun: '#ffe6ff', far: '#9d8ae8', mid: '#b8a6f0', midTrim: '#8f7cd0',
@@ -2088,6 +2089,8 @@ const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 
 function drawCritters(ctx, t, map, cam, width, height, time) {
   const kinds = t.critters ?? [];
+  // The painted woods' own life: squirrels on the branches and songbirds between the trees.
+  if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
   // Birds hop and peck along the ground.
   if (kinds.includes('bird')) {
     for (let i = 0; i < Math.ceil(map.width / 360); i++) {
@@ -2207,7 +2210,13 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
       sparkle(ctx, x + wob, y, (1.6 + (j % 3) * 0.6) * k, c);
       continue;
     }
-    // Petals and leaves tumble, and tip over further when a gust blows.
+    // Leaves are real leaves: they turn over as they fall, lit face then paler back, a midrib
+    // down them, and tip further when a gust blows.
+    if (t.drift === 'leaf') {
+      leafShape(ctx, x + wob, y, k * 0.95, time * (2 + hash(i + 3) * 2) + i, Math.sin(time * 1.3 + i) * 0.8 + gust * 0.5, c, mix(c, '#fff8e0', 0.35));
+      continue;
+    }
+    // Petals tumble, and tip over further when a gust blows.
     ctx.fillStyle = c;
     ctx.beginPath();
     ctx.ellipse(x + wob, y, 2.6 * k, 1.4 * k, Math.sin(time * 3 + i) * 1.2 + gust * 0.5, 0, Math.PI * 2);
@@ -2229,6 +2238,7 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
 export function drawSceneFront(ctx, map, cam, width, height, time) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
+  if (t.painted === 'forest') drawPaintedForestFront(ctx, t, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time, 'front');
 }
 
@@ -2319,14 +2329,19 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const far = { ...t, far: farC, farLit: mix(farC, t.sun, 0.42), farBack: mix(t.far, air, 0.62 * aerial) };
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
-    drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
-    const farY = layerY(50, 0.05);
-    veil = { color: air, k: 0.5 * aerial };
-    drawFar(g, far, cam, width, farY, time);
-    footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
-    veil = { color: air, k: 0.22 * aerial };
-    drawMid(g, t, theme, cam, width, layerY(10, 0.1), time);
-    veil = null;
+    // (Under a painted forest's canopy there are no clouds to see.)
+    if (t.painted !== 'forest') drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
+    if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
+    else {
+      const farY = layerY(50, 0.05);
+      veil = { color: air, k: 0.5 * aerial };
+      drawFar(g, far, cam, width, farY, time);
+      footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
+      veil = { color: air, k: 0.22 * aerial };
+      drawMid(g, t, theme, cam, width, layerY(10, 0.1), time);
+      veil = null;
+    }
     drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);

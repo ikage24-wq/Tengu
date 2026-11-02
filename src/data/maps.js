@@ -277,7 +277,7 @@ export const MAPS = {
   // springs you up into the trees.
   woods: {
     id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
-    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'planks', edges: 'glowcaps' },
+    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'branch', edges: 'glowcaps' },
     ...lay({
       width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
