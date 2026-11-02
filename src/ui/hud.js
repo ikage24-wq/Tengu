@@ -59,6 +59,7 @@ function meter(state, key, ratio, t) {
   m.at = t;
   if (ratio > m.v + 0.0005) {
     if (ratio - m.v > 0.02) m.healAt = t;
+    m.gainAt = t;
     m.trail = Math.max(m.trail, ratio);
   } else if (ratio < m.v - 0.0005) {
     if (m.trail <= m.v + 0.001) m.hold = t + 0.6;
@@ -77,7 +78,37 @@ function meter(state, key, ratio, t) {
     shine: heal < 0.4 ? heal / 0.4 : null,
     shake: hit < 0.22 ? Math.round(Math.sin(hit * 80) * (m.big ? 2 : 1) * (1 - hit / 0.22)) : 0,
     hurt: t - m.hurtAt,
+    // Refilling: true for a moment after it last went up.
+    filling: t - (m.gainAt ?? -9) < 0.6,
   };
+}
+
+// The amount just lost or gained, popping out beside a bar and floating off (the HUD redraw):
+// "-123" in the bar's warning red, "+80" in its own colour. Changes close together add up.
+function changes(state, key, value, t) {
+  const hud = state.hud;
+  const c = (hud[`${key}Pop`] ??= { last: value, pops: [] });
+  const d = value - c.last;
+  c.last = value;
+  if (d !== 0) {
+    const top = c.pops[c.pops.length - 1];
+    if (top && t - top.at < 0.25 && Math.sign(top.d) === Math.sign(d)) top.d += d;
+    else c.pops.push({ d, at: t });
+  }
+  c.pops = c.pops.filter((p) => t - p.at < 1);
+  return c.pops;
+}
+function drawPops(ctx, pops, x, y, t, gain) {
+  for (const p of pops) {
+    const a = t - p.at;
+    // Losses pop out on the right of the bar's middle, gains a little to the left, so both read.
+    const px = x + (p.d > 0 ? -22 : 0);
+    const pop = a < 0.12 ? 1 + 0.5 * (1 - a / 0.12) : 1;
+    const k = Math.min(1, (1 - a) / 0.35);
+    ctx.globalAlpha = Math.max(0, k);
+    text(ctx, `${p.d > 0 ? '+' : '-'}${Math.abs(p.d).toLocaleString()}`, px, y - a * 10, { size: 6 * pop, bold: true, color: p.d > 0 ? gain : '#ff4f6b', outline: '#ffffff' });
+    ctx.globalAlpha = 1;
+  }
 }
 
 // The red edge that pulses on the world while HP is low: drawn once, then faded in and out.
@@ -127,8 +158,10 @@ export function drawHud(ui, state, world) {
   ctx.font = font(8, true);
   text(ctx, JOBS[char.job].name, 46 + ctx.measureText(char.name).width + 4, TRAY_Y + 10, { size: 6.5, color: COLORS.muted });
 
-  bar(ctx, 56 + hp.shake, TRAY_Y + 13, 112, 8, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { size: 6, trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0 });
-  bar(ctx, 56, TRAY_Y + 23, 112, 8, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { size: 6, trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine });
+  bar(ctx, 56 + hp.shake, TRAY_Y + 13, 112, 8, hpR, low ? (beat > 0.5 ? '#ff4f6b' : COLORS.hp) : COLORS.hp, `${char.hp} / ${s.maxHp}`, { size: 6, trail: hp.trail, trailColor: '#ffd3dc', flash: hp.flash, shine: hp.shine, pulse: low ? 0.25 + 0.5 * beat : 0, rim: true, ticks: true, stripes: hp.filling ? 1 : 0 });
+  bar(ctx, 56, TRAY_Y + 23, 112, 8, char.mp / s.maxMp, COLORS.mp, `${char.mp} / ${s.maxMp}`, { size: 6, trail: mp.trail, trailColor: '#d6ebff', flash: mp.flash, shine: mp.shine, rim: true, ticks: true, stripes: mp.filling ? 1 : 0 });
+  drawPops(ctx, changes(state, 'hp', char.hp, t), 150 + hp.shake, TRAY_Y + 10, t, '#4fc97a');
+  drawPops(ctx, changes(state, 'mp', char.mp, t), 150, TRAY_Y + 20, t, '#4fa8ff');
   badge(ctx, 52 + hp.shake, TRAY_Y + 17, 'heart', COLORS.hp, low ? 1 + beat * 0.25 : 1 + hp.flash * 0.2);
   badge(ctx, 52, TRAY_Y + 27, 'drop', COLORS.mp, 1 + mp.flash * 0.2);
 
@@ -543,6 +576,27 @@ function drawPortrait(ctx, char, world, { hurt = false, low = false, cheer = fal
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  // A little ribbon tied at the top of the frame, its tails swaying.
+  const sw = Math.sin(world.now * 1.6) * 0.6;
+  ctx.fillStyle = COLORS.accent;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(cx + dir * 4, cy - r - 1);
+    ctx.lineTo(cx + dir * 9 + sw, cy - r + 6);
+    ctx.lineTo(cx + dir * 6 + sw, cy - r + 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(cx + dir * 4, cy - r - 2.5, 4, 2.6, dir * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy - r - 2.4, 1.8, 0, Math.PI * 2);
+  ctx.fill();
   ctx.stroke();
   box(ctx, cx - 14, cy + 14, 28, 10, { fill: COLORS.accent, edge: '#ffffff', r: 5, width: 1.5 });
   text(ctx, `Lv ${char.level}`, cx, cy + 21.6, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: '#c95a8f' });

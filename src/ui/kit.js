@@ -311,7 +311,9 @@ export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', f
   const tier = item.rarity ?? 0;
   const rc = RARITIES[tier]?.color;
   if (shadow) itemShadow(ctx, x + s / 2, iy + isz - 1);
-  drawItemIcon(ctx, item.id, ix, iy - (state === 'hot' ? 1 : 0), scale, item.variant ?? null);
+  // (The UI redraw: a hovered item hops up on a little spring instead of a one-pixel lift.)
+  const hop = state === 'hot' ? 1 + Math.abs(Math.sin(now() * 7)) * 1.4 : 0;
+  drawItemIcon(ctx, item.id, ix, iy - hop, scale, item.variant ?? null);
   if (rc) {
     rarityCell(ctx, x, y, s, s, rc, tier, r);
     ctx.save();
@@ -321,6 +323,15 @@ export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', f
     ctx.lineWidth = 1.5;
     ctx.stroke();
     ctx.restore();
+    // Rare and better items twinkle in their top corner now and then.
+    if (tier >= 1) {
+      const k = Math.sin(now() * 2.2 + x * 0.07 + y * 0.05);
+      if (k > 0.6) {
+        ctx.globalAlpha = (k - 0.6) / 0.4;
+        sparkle(ctx, x + s - 4.5, y + 4.5, 1.6 + (k - 0.6) * 4, '#ffffff');
+        ctx.globalAlpha = 1;
+      }
+    }
   }
   if (count && item.qty > 1) text(ctx, `${item.qty}`, x + s - 2.5, y + s - 2.5, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
 }
@@ -845,12 +856,29 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   roundRect(ctx, x, y, w, h, R);
   ctx.fillStyle = '#fffaf6';
   ctx.fill();
-  // A faint wash of the theme color toward the bottom.
+  // A faint wash of the theme color toward the bottom, and (the UI redraw) a soft polka-dot
+  // pattern over the body, like printed fabric.
   ctx.save();
   ctx.clip();
   ctx.fillStyle = theme.light;
   ctx.globalAlpha = 0.35;
   ctx.fillRect(x, y + h - 14, w, 14);
+  ctx.globalAlpha = 0.16;
+  for (let py = y + HEADER + 8, row = 0; py < y + h; py += 12, row++) {
+    for (let px = x + 8 + (row % 2) * 6; px < x + w; px += 12) {
+      ctx.beginPath();
+      ctx.arc(px, py, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+  // A stitched seam just inside the rim, below the title.
+  ctx.save();
+  roundRect(ctx, x + 5, y + HEADER + 4, w - 10, h - HEADER - 9, R - 5);
+  ctx.setLineDash([2.5, 2.5]);
+  ctx.strokeStyle = theme.light;
+  ctx.lineWidth = 1;
+  ctx.stroke();
   ctx.restore();
   // A soft halo of the theme's light tint round the rim keeps the edge from melting into a scene
   // of the same pastel, without a hard dark line.
@@ -890,7 +918,39 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
     ctx.globalAlpha = 0.5 + 0.5 * k;
     sparkle(ctx, x + w - 40 - i * 14, y + 7 + i * 4, 1.5 + k * 1.5, '#ffffff');
   }
+  // Tiny stars twinkling in the bottom corners.
+  for (const [sx, ph] of [[x + 11, 0], [x + w - 11, 1.7]]) {
+    const k = 0.5 + 0.5 * Math.sin(t * 1.8 + ph);
+    ctx.globalAlpha = 0.45 + 0.45 * k;
+    sparkle(ctx, sx, y + h - 10, 1.6 + k * 1.2, theme.main);
+  }
   ctx.globalAlpha = 1;
+  // A little bow tied on the ribbon, its tails swaying.
+  {
+    const bx0 = x + w - 62;
+    const by0 = y + 4;
+    const sw = Math.sin(t * 1.6) * 0.6;
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = theme.dark;
+    ctx.lineWidth = 1;
+    for (const dir of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(bx0 + dir * 1.5, by0 + 1);
+      ctx.lineTo(bx0 + dir * 4 + sw, by0 + 8);
+      ctx.lineTo(bx0 + dir * 1.6 + sw, by0 + 8.6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(bx0 + dir * 3.6, by0, 3.4, 2.2, dir * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.arc(bx0, by0, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
 
   // The icon badge, sitting over the ribbon's corner.
   const bx = x + 13;
@@ -1023,13 +1083,15 @@ export function tabs(ui, x, y, labels, current, { w = 46, h = 15 } = {}) {
 // `trail` (a lagging ratio drawn as a chunk in `trailColor`, what was just lost), `flash` (0..1, a
 // white flash over the fill, for heals), `pulse` (0..1, a red glow on the rim, for danger), and
 // `shine` (0..1, the progress of one bright sweep, for refills).
-export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff', size = 7, trail = null, trailColor = '#ffffff', flash = 0, pulse = 0, shine = null } = {}) {
+export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff', size = 7, trail = null, trailColor = '#ffffff', flash = 0, pulse = 0, shine = null, rim = false, ticks = false, stripes = 0 } = {}) {
   const r = h / 2;
   if (pulse > 0) {
     ctx.globalAlpha = pulse;
     box(ctx, x - 1.5, y - 1.5, w + 3, h + 3, { fill: '#ff4f6b', edge: null, r: r + 1.5 });
     ctx.globalAlpha = 1;
   }
+  // (The HUD redraw: a soft frame in the bar's own deep shade with a white rim inside it.)
+  if (rim) box(ctx, x - 1.5, y - 1.5, w + 3, h + 3, { fill: '#ffffff', edge: darken(color, 0.25), r: r + 1.5, width: 1 });
   box(ctx, x, y, w, h, { fill: 'rgba(74,53,96,0.32)', edge: null, r });
   const fw = Math.max(0, Math.min(1, ratio)) * w;
   // The chunk just lost, draining after the bar.
@@ -1058,6 +1120,24 @@ export function bar(ctx, x, y, w, h, ratio, color, label, { textColor = '#ffffff
       ctx.lineTo(sx + 6 + sw, y);
       ctx.lineTo(sx + sw, y + h);
       ctx.fill();
+    }
+    // Fine ticks every tenth, so how much is left reads at a glance.
+    if (ticks) {
+      ctx.fillStyle = 'rgba(255,255,255,0.28)';
+      for (let i = 1; i < 10; i++) ctx.fillRect(Math.round(x + (w * i) / 10), y + h * 0.45, 0.8, h * 0.55);
+    }
+    // While refilling, soft diagonal stripes drift along the fill.
+    if (stripes > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${0.22 * stripes})`;
+      const off = (now() * 10) % 8;
+      for (let sx = x - 8 + off; sx < x + fw; sx += 8) {
+        ctx.beginPath();
+        ctx.moveTo(sx, y + h);
+        ctx.lineTo(sx + 4, y);
+        ctx.lineTo(sx + 7, y);
+        ctx.lineTo(sx + 3, y + h);
+        ctx.fill();
+      }
     }
     if (flash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${0.75 * flash})`;

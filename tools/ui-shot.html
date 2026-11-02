@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the game screen with its HUD and windows, as the game draws them, for before/after
+// pictures of UI work. ?map=sprout&x=900&open=bag,skills&job=archer&level=30
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH, createInput } from '../src/input.js';
+import { beginUi, endUi } from '../src/ui/kit.js';
+import { createUiState, drawUi } from '../src/ui/manager.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = Number(q.get('s') ?? 2);
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+const c = balanceChar(q.get('job') ?? 'archer', Number(q.get('level') ?? 30));
+const w = createWorld(c);
+w.log = () => {};
+loadMap(w, q.get('map') ?? 'sprout', 'west');
+w.god = true;
+Object.assign(w.body, { x: Number(q.get('x') ?? 900), vx: 0, vy: 0, facing: 1 });
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+for (let k = 0; k < 240; k++) updateWorld(w, 1 / 60, idle);
+const input = createInput(canvas);
+const state = createUiState();
+// (Opened long ago, so the picture shows them settled, not mid-pop.)
+for (const name of (q.get('open') ?? '').split(',').filter(Boolean)) if (state.windows[name]) Object.assign(state.windows[name], { open: true, openedAt: -99 });
+const cam = createCamera();
+await new Promise((res) => setTimeout(res, 2500));
+let t = 0;
+// ?hit=120&spend=60: take that much HP and spend that much MP a moment before the picture.
+for (let k = 0; k < 120; k++) {
+  if (k === 105 && q.get('hit')) w.char.hp = Math.max(1, w.char.hp - Number(q.get('hit')));
+  if (k === 105 && q.get('spend')) w.char.mp = Math.max(0, w.char.mp - Number(q.get('spend')));
+  updateWorld(w, 1 / 60, idle);
+  t += 1 / 60;
+  updateCamera(cam, w, 1 / 60);
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(ctx, w, cam, t);
+  const ui = beginUi(ctx, input);
+  drawUi(ui, state, w);
+  endUi(ui);
+}
+document.title = 'ready';
+</script>
+</body></html>
