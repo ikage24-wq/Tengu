@@ -193,8 +193,12 @@ export function tickAir(m, dt) {
 }
 
 // How fast a monster's gait carries it right now, as a share of its speed (averaging about 1).
+// (A monster lulled by the Starlight Idol's Lullaby drifts along at a sleepy pace: world/idol.js.)
 function pace(m, chasing, dt) {
   m.walked = (m.walked ?? 0) + dt;
+  return gait(m, chasing) * (m.lulled > 0 ? 0.4 : 1);
+}
+function gait(m, chasing) {
   switch (m.def.gait) {
     // Each leap covers ground fast, then it lands and gathers itself for the next.
     case 'bound': return 2.6 * Math.max(0, Math.sin(m.phase * 7));
@@ -208,6 +212,7 @@ function pace(m, chasing, dt) {
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
 // Returns 'slam' on the frame a boss slam lands.
 export function updateMob(m, player, dt, now) {
+  if (m.lulled > 0) m.lulled -= dt;
   if (m.hp <= 0) {
     m.dying += dt;
     return null;

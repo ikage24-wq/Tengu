@@ -307,6 +307,14 @@ carry an improvement across every part of the game it applies to.
     steam; sticky and cluster bolts burst in brass and teal with scattered cogs; her turret is a brass
     tripod machine with a cog drum and a teal eye; Big Bertha is a giant brass ballista unfolding
     over her. Crossbows are compact gadget crossbows held at the waist.
+  - The Starlight Idol (2026-11-02; she replaced the Shrine Maiden) is pink and gold, HD soft glow:
+    her note in flight is a pink music note bobbing with gold sparkles behind it; her big note a
+    burst of pink sound waves round a pair of gold notes; her hit a pink pop that bursts into notes
+    and hearts; her songs are rings of staff lines on the ground with beads running round them and
+    shapes rising off them (pink hearts and notes for Healing Song, gold stars for Cheer, lilac moons
+    and z's for Lullaby); Grand Concert is a pink stage with a gold rim and footlights, two
+    spotlights and a shower of hearts and notes; her badge a heart with a gold note. Her wand is
+    drawn as a pink and gold microphone.
   - The Star Witch (2026-11-02; she replaced the Spirit Mage) is midnight blue and warm gold with
     white star cores, HD soft glow: her bolt is a spinning five-point gold star with a midnight comet
     tail; her staff fires comets (a big star in a gold ring with a long tail) and calls meteors

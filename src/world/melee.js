@@ -33,9 +33,8 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { tickPets, sendSnow, moonfall, howl, duetSnow, duetMoon } from './pets.js';
-import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
+import { tickIdol, sing, curtainCall, grandConcert } from './idol.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
-import { tickGuardian } from './kitsune.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY } from './physics.js';
 import { tickOni } from './oni.js';
@@ -204,6 +203,15 @@ export const PATH_COMBOS = {
     { move: 'swtwirl', dur: 0.46, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 48, range: 300, h: 60, knock: 25, speed: 760, oy: -3 }, { at: 0.5, shot: 'stbolt', magic: true, pct: 52, range: 300, h: 60, knock: 25, speed: 760, oy: 3 }] },
     { move: 'swspin', dur: 0.5, strikes: [{ at: 0.56, shot: 'stbolt', magic: true, pct: 90, range: 300, h: 60, knock: 25, speed: 760, targets: 2, pierce: true }] },
     { move: 'swsnap', dur: 0.58, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 160, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+  ],
+  // The Starlight Idol (the Shrine Maiden remade; docs/design/starlight-idol.md), singing into her
+  // mic: a line sung with a dip on the beat and the mic swung out (a note flies), a step and touch
+  // (a note on each beat), and the high note: she belts, then throws the mic out as a burst of sound
+  // blasts through the line.
+  idol: [
+    { move: 'sibeat', dur: 0.4, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 700 }] },
+    { move: 'sistep', dur: 0.5, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 700, oy: -3 }, { at: 0.6, shot: 'sinote', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 700, oy: 3 }] },
+    { move: 'sihigh', dur: 0.64, finisher: true, strikes: [{ at: 0.5, shot: 'sibig', magic: true, pct: 165, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   starstaff: [
     { move: 'ssthrust', dur: 0.46, step: 4, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 92, range: 320, h: 70, knock: 120, speed: 700 }] },
@@ -443,6 +451,16 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.starwand[2], { move: 'swhop', dur: 0.48, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 88, range: 300, h: 60, knock: 25, speed: 760, h: 150, drop: 40, targets: 2, pierce: true }] }],
     [PATH_COMBOS.starwand[3], { move: 'swshowoff', dur: 0.55, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 155, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
+  // The Starlight Idol. Openers: a line on the beat or a blown kiss. Second: the step and touch or
+  // singing over her shoulder. Finisher: the high note or her idol pose; now and then an idol jump
+  // in place of the second, singing down at them from the top of it.
+  idol: [
+    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.4, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 700, knock: 30 }] }],
+    [PATH_COMBOS.idol[1],
+      { move: 'sishoulder', dur: 0.56, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 44, range: 300, h: 64, knock: 20, speed: 700, oy: -2 }, { at: 0.6, shot: 'sinote', magic: true, pct: 52, range: 300, h: 64, knock: 20, speed: 700, oy: 2 }] },
+      { move: 'sijump', dur: 0.56, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 700, h: 150, drop: 40, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+  ],
   starstaff: [
     [PATH_COMBOS.starstaff[0], { move: 'swsweep', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
     [PATH_COMBOS.starstaff[1], { move: 'swspin', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
@@ -528,6 +546,16 @@ const ARCHER_COMMANDS = {
       { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
     ],
     dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stbolt', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+  },
+  // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
+  // hang in the air (the second a big one); a rock-star knee slide out of a run.
+  idol: {
+    up: { move: 'siup', dur: 0.44, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 700, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'siair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 700, range: 260, h: 170, drop: 60, knock: 30 }] },
+      { move: 'siair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sibig', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 660, big: true, stop: 0.04, shake: 1 }] },
+    ],
+    dash: { move: 'sidash', dur: 0.56, step: 50, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 700, targets: 2, pierce: true, knock: 100 }] },
   },
   starstaff: {
     up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
@@ -1043,8 +1071,8 @@ export const STAR_SPLIT = 0.5;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm') {
   if (!hasSpirit(world.char) || n <= 0) return;
-  // A Shrine Maiden builds Grace instead (her heals and wards count most); an Onmyoji, Binding.
-  if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.45));
+  // A Starlight Idol builds Applause instead (her heals count most); an Onmyoji, Binding.
+  if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
   if (hasBinding(world.char)) return addBinding(world, n * 0.7);
   const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
   world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
@@ -1052,23 +1080,20 @@ export function addSpirit(world, n, kind = 'harm') {
   world.spiritKind = kind;
 }
 export const constellation = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
-// Grace: the Shrine Maiden's gauge, in place of Spirit. Her heals and wards landing build it most,
-// more the more allies they reach (her spells that land, a little); it fades once the fighting
-// stops. Full (DIVINE GRACE), every heal she gives also wards whoever it mends (GRACE_WARD of their
-// max HP, a fresh Spirit Ward on her and the party, at most every GRACE_WARD_EVERY s), and her
-// finisher, Thousand Torii, is ready.
+// Applause (internally Grace): the Starlight Idol's gauge, in place of Spirit. The crowd cheers for
+// her heals (most, more the more allies they reach), her songs laid on the party, and her notes
+// that land; it fades once the fighting stops. Full (LIVE SHOW), her songs reach twice as far and
+// mend more (world/idol.js), and her finisher, Grand Concert, is ready.
 export const GRACE_MAX = 100;
 const GRACE_HOLD = 6;
 const GRACE_DRAIN = 8;
-export const GRACE_WARD = 0.1;
-const GRACE_WARD_EVERY = 1.5;
 export const hasGrace = (char) => jobChain(char.job).includes('shrinemaiden');
 export function addGrace(world, n) {
   if (!hasGrace(world.char) || n <= 0) return;
   world.grace = Math.min(GRACE_MAX, (world.grace ?? 0) + n);
   world.graceAt = world.now;
 }
-export const divineGrace = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
+export const liveShow = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
 // Binding: the Onmyoji's gauge, in place of Spirit: how tightly she holds her yokai troupe. Her
 // spells that land build it, and so does every blow her troupe lands (world/oni.js, yuki.js,
 // tengu.js); it fades once the fighting stops. Full (ALL BOUND), her troupe fights faster
@@ -1087,21 +1112,13 @@ export const allBound = (world) => hasBinding(world.char) && (world.binding ?? 0
 // How long a yokai of the troupe rests between moves: shorter when she holds them All Bound, or
 // under Yokai Rally.
 export const troupeRest = (world) => (allBound(world) ? BOUND_REST : 1) * (world.rally?.until > world.now ? 0.6 : 1);
-// How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Grace.
+// How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Applause.
 const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
-// Divine Grace: a heal she gives wards them too.
-function graceWard(world) {
-  if (!divineGrace(world) || world.now < (world.graceWardAt ?? 0)) return;
-  const ward = world.char.buffs?.spiritward;
-  if (ward && ward.until > world.now && ward.shield >= world.stats.maxHp * GRACE_WARD) return;
-  world.graceWardAt = world.now + GRACE_WARD_EVERY;
-  applyBuff(world, 'spiritward', { duration: 8, buff: { barrier: GRACE_WARD }, range: { w: 440, h: 160, around: true } });
-}
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
 // Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
 export function healAround(world, x, y, pct, r, gauge = true) {
   const { char, body, stats } = world;
-  // A Shrine Maiden's Shrine Mastery makes every heal she gives mend more.
+  // A Starlight Idol's Stage Presence makes every heal she gives mend more.
   const lv = grownLevel(char, SKILLS.shrinemastery);
   if (lv > 0) pct *= 1 + (skillAt('shrinemastery', lv).passive.healPower ?? 0);
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
@@ -1112,7 +1129,6 @@ export function healAround(world, x, y, pct, r, gauge = true) {
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
   if (gauge) addSpirit(world, 40 * pct * (1 + 0.5 * alliesNear(world, x, r)), 'mend');
-  graceWard(world);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar']);
@@ -1142,6 +1158,7 @@ export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
   if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
+  if (w === 'wand' && hasGrace(char)) return 'idol';
   if ((w === 'wand' || w === 'staff') && hasSpirit(char)) return 'spiritmage';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
@@ -1381,9 +1398,8 @@ export function tickMelee(world, dt) {
   tickTraps(world);
   tickEngineer(world);
   tickPets(world, dt);
-  tickShrine(world);
+  tickIdol(world);
   tickOnmyoji(world);
-  tickGuardian(world, dt);
   tickOni(world, dt);
   tickYuki(world, dt);
   tickTengu(world, dt);
@@ -1480,10 +1496,10 @@ function land(world, s) {
   if (s.grant) grantSpell(world, s.grant);
   // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
   if (s.turret) deployTurret(world, s.turret);
-  // The Shrine Maiden's lasting spells (world/shrine.js).
-  if (s.purify) purify(world, s);
-  if (s.revive) resurrect(world, s);
-  if (s.torii) thousandTorii(world, s);
+  // The Starlight Idol's songs and show (world/idol.js).
+  if (s.song) sing(world, s);
+  if (s.revive) curtainCall(world, s);
+  if (s.concert) grandConcert(world, s);
   // The Onmyoji's (world/onmyoji.js).
   if (s.ofuda) ofudaBarrage(world, s);
   if (s.seiman) seimanSeal(world, s);
@@ -1752,7 +1768,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1773,11 +1789,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
 function grantSpell(world, g) {
   if (world.dead) return;
   applyBuff(world, g.id, { duration: g.duration, buff: g.buff, range: g.range });
-  // A ward (or a blessing) laid on the party builds a Shrine Maiden's Grace, more for each ally.
+  // A song or a blessing laid on the party builds a Starlight Idol's Applause, more for each ally.
   addGrace(world, 7 * (1 + alliesNear(world, world.body.x, (g.range?.w ?? 440) / 2)));
 }
 
-// A hit of a mage path's summon (her guardian or yokai troupe): a spell of her own magic attack,
+// A hit of a mage path's spell that lands on its own (her songs and show, or the yokai troupe): a spell of her own magic attack,
 // landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
 export function dollHit(world, m, f, at = 0) {
   // (Her yokai troupe hit harder under Yokai Rally.)

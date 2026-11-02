@@ -701,7 +701,37 @@ function star5(x, y, r, c, k = 0.46, rot = 0) {
 // A star with a light face and a gem at its heart.
 const starHead = (x, y, r, c, light, gemC, k) => [star5(x, y, r, c, k), F(star5(x, y - r * 0.08, r * 0.62, light, k)), ...(gemC ? gem(x, y, r * 0.24, gemC) : [])];
 
+// The Starlight Idol's wand is her microphone (the 'idol' finish, render/hero.js): a short gold
+// handle, a round pink mic head with a gold grille band and a little star on it, ribbons tied at
+// the neck. Small, so she can sing into it with it held out beside her face, never across it. It
+// grows a little and gains a gem and wings up the tiers.
+function idolMic(m, t) {
+  const s = [];
+  const a = {};
+  const H = 4.6 + t * 0.2;
+  const r = 3 + t * 0.07;
+  const cy = -H - r + 0.6;
+  // Ribbons tied at the neck, trailing down either side of the handle.
+  for (const sd of [-1, 1]) s.push(T([[0, -H + 0.8], [sd * 2.6, -H + 2], [sd * 2.2, -H + 4.6], [sd * 1.4, -H + 3.6], [sd * 0.6, -H + 1.6]], m.bladeDark));
+  s.push(T([[-1.2, 2.4], [1.2, 2.4], [1, -H], [-1, -H]], m.trim), F(T([[0.3, 2.4], [1.2, 2.4], [1, -H], [0.3, -H]], m.trimDark)));
+  s.push(E(0, 2.6, 1.4, 1.1, m.trimDark), F(R(-1.1, -1, 2.2, 0.7, m.trimDark)), E(0, -H + 0.2, 1.9, 1, m.trimDark));
+  if (t >= 6) for (const sd of [-1, 1]) s.push(leafAt(sd * 2.6, cy + 0.6, sd < 0 ? 160 : 20, 3.8, 1.3, m.edge));
+  s.push(E(0, cy, r, r, m.blade), F(E(0.7, cy + 0.8, r * 0.75, r * 0.7, m.bladeDark)), F(E(-0.9, cy - 1, r * 0.42, r * 0.36, m.edge)));
+  for (const [x, y] of [[-1.2, -1.6], [0.4, -2], [1.6, -1], [-1.8, 0.4], [0.2, 0.2], [1.6, 1.2], [-0.6, 1.8]]) s.push(F(E(x * r / 3, cy + y * r / 3, 0.32, 0.32, m.bladeDark)));
+  s.push(R(-r, cy + 0.2, r * 2, 1, m.trim), F(R(-r, cy + 0.9, r * 2, 0.3, m.trimDark)));
+  s.push(F(star5(r * 0.55, cy - r * 0.55, 1.2 + t * 0.06, m.trim)));
+  if (t >= 4) {
+    s.push(...gem(0, cy + 0.7, 0.75, m.gem));
+    a.gem = [0, cy + 0.7];
+  }
+  a.blade = [cy - r, -H];
+  a.head = [0, cy];
+  a.tip = [0, cy - r];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
 function wand(m, t, f = 0) {
+  if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
   const a = {};
   const H = 7 + t * 0.35;

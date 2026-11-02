@@ -250,7 +250,7 @@ test("a Star Witch in the healer's seat veils the tank and wishes stars on the h
   assert.ok(world.fx.some((f) => f.kind === 'stwish'), 'with her wishing star');
 });
 
-test("a Shrine Maiden in the healer's seat heals with Grand Blessing and raises the fallen with the Resurrection Dance", async () => {
+test("a Starlight Idol in the healer's seat sings Healing Song and raises the fallen with Curtain Call", async () => {
   assert.equal(roleOf('shrinemaiden', 'mage'), 'healer');
   assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Onmyoji deals damage');
   const { computeStats } = await import('../src/core/stats.js');
@@ -266,16 +266,16 @@ test("a Shrine Maiden in the healer's seat heals with Grand Blessing and raises 
     updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
     updateBots(world.bots, world, 1 / 60);
   }
-  // Several hurt: Grand Blessing.
+  // Several hurt: Healing Song.
   world.dungeon.combat = true;
   for (const g of groupOf(world)) {
     if (g.bot) g.bot.hp = Math.round(g.bot.stats.maxHp * 0.4);
     else world.char.hp = Math.round(world.stats.maxHp * 0.4);
   }
   healerTurn(healer, world, rng);
-  assert.equal(healer.attack.pose, 'shrinegrand', 'her great sweep of the gohei');
-  assert.ok(world.fx.some((f) => f.kind === 'grandblessing'), 'and the great pillar of light');
-  // A fallen member, out of the fight: the Resurrection Dance.
+  assert.equal(healer.attack.pose, 'sisong', 'she sings into her mic');
+  assert.ok(world.fx.some((f) => f.kind === 'sisong'), 'and the ring of her song rises');
+  // A fallen member, out of the fight: Curtain Call.
   world.dungeon.combat = false;
   // (Everyone else whole again, so raising the fallen is what's left to do.)
   for (const g of groupOf(world)) {
@@ -287,7 +287,7 @@ test("a Shrine Maiden in the healer's seat heals with Grand Blessing and raises 
   down.bot.hp = 0;
   healerTurn(healer, world, rng);
   assert.ok(isUp(world, down), 'they get up');
-  assert.equal(healer.attack.pose, 'shrinerevive');
+  assert.equal(healer.attack.pose, 'sibow', 'her deep bow');
 });
 
 test('an Onmyoji in the group dances her spells and flings talismans', async () => {

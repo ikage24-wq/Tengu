@@ -491,6 +491,22 @@ const ICONS = {
     ctx.stroke();
     ctx.restore();
   },
+  // A music note, two beamed together (the Starlight Idol's Applause).
+  note(ctx, s) {
+    for (const [hx, hy] of [[-s * 0.24, s * 0.3], [s * 0.3, s * 0.22]]) {
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, s * 0.17, s * 0.13, -0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(hx + s * 0.1, hy - s * 0.62, s * 0.08, s * 0.62);
+    }
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.06, -s * 0.36);
+    ctx.lineTo(s * 0.48, -s * 0.46);
+    ctx.lineTo(s * 0.48, -s * 0.3);
+    ctx.lineTo(-s * 0.06, -s * 0.2);
+    ctx.closePath();
+    ctx.fill();
+  },
   // A five-point star (the Star Witch's Constellation).
   star5(ctx, s) {
     ctx.beginPath();

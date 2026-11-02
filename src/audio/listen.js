@@ -39,10 +39,8 @@ const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smok
 const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Spirit Mage and her doll.
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
-  // The Shrine Maiden's kitsune guardian.
-  'kitsunecall', 'kitsuneblock', 'kitsuneport', 'kitsunegather', 'kitsunemoonfall', 'kitsunecrescent', 'kitsunejab',
-  // The Shrine Maiden.
-  'grandblessing', 'purifycircle', 'purifyburn', 'reviveflash', 'resurrection', 'thousandtorii',
+  // The Starlight Idol.
+  'idolsong', 'sisong', 'siwave', 'sistage', 'sihit',
   // The Onmyoji's oni.
   'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar',
   // The Onmyoji's yuki-onna (her frost prints, her frost on a monster and the snowball's burst are
@@ -220,7 +218,6 @@ const SUMMONS = [
   ['oni', 'oniGrunt', 'oniSigh'],
   ['yuki', 'yukiHiss', 'yukiHum'],
   ['tengu', 'tenguHmph', 'tenguLaugh'],
-  ['guardian', 'kitsuneKiai', null],
   ['doll', 'dollHey', 'dollGiggle'],
 ];
 function hearSummons(world, m, pan) {

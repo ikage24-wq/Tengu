@@ -288,10 +288,6 @@ const R = {
   allstars: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'C6:60 D6:60 E6:60 G6:60 A6:60 C7:60 E7:600', inst: 'celesta', db: -2 }, sparkle('r:420 C8:0 G7:60', { db: -10 })] },
   starfallsky: { db: -10, max: 1, room: true, layers: [{ seq: 'C6:90 E6:90 G6:90 A6:90 C7:90 E7:90 G7:400', inst: 'celesta', db: -2 }, { rec: 'holyProtect', len: 1200, db: -8 }] },
   starfallimpact: { db: -6, max: 1, room: true, duck: [-8, 1400], layers: [thump(55, 700, { slide: -1.6 }), { rec: 'holyBlast', len: 1600, db: -2 }, { rec: 'rockHit', rate: 0.7, db: -6 }, sparkle('r:200 C7:0 G6:80 E6:160 C6:240', { db: -8 })] },
-  // The Shrine Maiden: Grand Blessing (a bigger, brighter Blessing with a full choir), the
-  // Purification circle opening (a deep bell and a rising chime) and a monster burning in it,
-  // someone raised from the fallen (a harp run and a choir), and each torii gate of Thousand Torii
-  // going up (a taiko hit and a bell, the notes rising gate by gate).
   // The Onmyoji's oni: her club landing (a heavy iron thud), the Ground Pound (a deep crash and
   // rocks), and her smoke puff.
   onihit: { db: -10, vary: 6, max: 3, gap: 60, layers: [{ rec: 'punchHeavy', rate: 0.8 }, { rec: 'metalHeavy', rate: 0.7, db: -6 }] },
@@ -340,12 +336,17 @@ const R = {
   tenguvanish: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.1, len: 500 }, { rec: 'cloth', rate: 1.4, db: -6, len: 300 }] },
   tenguhit: { db: -14, vary: 8, max: 3, gap: 40, layers: [{ rec: 'cut', rate: 1.1, len: 300 }] },
   onipuff: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.3, len: 500 }, whoosh(300, 300, 1400, { db: -6 })] },
-  grandblessing: { db: -9, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1800 }, { seq: 'D5:80 E5:80 G5:80 A5:80 D6:80 E6:900', inst: 'celesta', db: -4 }, { seq: 'r:200 D4+A4+D5+A5:1500', inst: 'choir_aahs', attack: 0.25, db: -6 }] },
-  purifycircle: { db: -11, max: 1, room: true, layers: [{ rec: 'bell', len: 1400, rate: 0.7 }, { rec: 'holyProtect', len: 1200, db: -4 }, sparkle('D6:60 A6:60 D7:400', { db: -10 })] },
-  purifyburn: { db: -18, vary: 8, max: 3, gap: 90, layers: [{ rec: 'fireImpact', rate: 1.4, len: 300, db: -6 }, sparkle('A6:150', { db: -12 })] },
-  reviveflash: { db: -10, max: 2, room: true, layers: [{ rec: 'holyHeal', len: 1400 }, { seq: 'G4:70 B4:70 D5:70 G5:70 B5:70 D6:700', inst: 'orchestral_harp', db: -2 }, { seq: 'r:300 G4+D5+G5:1000', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
-  resurrection: { db: -12, max: 1, room: true, layers: [{ rec: 'holyProtect', len: 1500 }, { rec: 'bell', len: 1600, rate: 0.85, db: -4 }] },
-  thousandtorii: { db: -9, max: 1, room: true, duck: [-6, 2000], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:340 E4:340 G4:340 A4:340 B4:340 D5:340 E5:340 G5:900', inst: 'orchestral_harp', db: -2 }, { seq: 'r:600 D4+A4+D5:2200', inst: 'choir_aahs', attack: 0.4, db: -8 }] },
+  // The Starlight Idol, a pop stage in a bright major key: a note sung off the mic (a glockenspiel
+  // ping on a breath of voice), her big note (a chord with a whoosh), a note landing (a tiny pluck
+  // and sparkle), a song starting (a sung phrase over a harp), her sound waves (a stab of brass),
+  // and Grand Concert (a drum roll into a big chord with the choir).
+  idolnote: { db: -16, vary: 6, max: 3, layers: [{ seq: 'E7:120', inst: 'glockenspiel', db: -4 }, { seq: 'B5:160', inst: 'choir_aahs', attack: 0.01, db: -14 }, whoosh(200, 900, 3200, { focus: 0.3, db: -12 })] },
+  idolbig: { db: -12, vary: 4, max: 2, layers: [whoosh(380, 500, 2800, { focus: 0.4, db: -6 }), { seq: 'C5+E5+G5+C6:400', inst: 'brass_section', attack: 0.01, db: -6 }, sparkle('G7:0 C8:60', { db: -10 })] },
+  sihit: { db: -19, vary: 8, max: 3, gap: 60, layers: [{ seq: 'C7:90', inst: 'pizzicato_strings', db: -4 }, sparkle('G7:40', { db: -12 })] },
+  idolsong: { db: -10, max: 1, room: true, layers: [{ seq: 'E5:160 G5:160 A5:160 C6:600', inst: 'choir_aahs', attack: 0.04, db: -4 }, { seq: 'C4+E4+G4+C5:1000', inst: 'orchestral_harp', db: -6 }, sparkle('r:200 C7:0 E7:80 G7:160', { db: -12 })] },
+  sisong: { db: -13, max: 1, room: true, layers: [{ seq: 'G5:140 C6:500', inst: 'choir_aahs', attack: 0.04, db: -4 }, sparkle('C7:0 G7:80', { db: -12 })] },
+  siwave: { db: -13, vary: 4, max: 2, gap: 120, layers: [{ seq: 'G4+C5+E5:260', inst: 'brass_section', attack: 0.01, db: -4 }, whoosh(300, 300, 2000, { focus: 0.5, db: -8 })] },
+  sistage: { db: -8, max: 1, room: true, duck: [-6, 2200], layers: [{ seq: 'C4:70 C4:70 C4:70 C4:70 C4:70 G4:300', inst: 'timpani', db: -4 }, { seq: 'r:420 C5+E5+G5+C6:1600', inst: 'brass_section', attack: 0.02, db: -4 }, { seq: 'r:420 C4+G4+C5+E5:1800', inst: 'choir_aahs', attack: 0.2, db: -6 }, sparkle('r:600 C7:0 E7:80 G7:160 C8:240', { db: -10 })] },
   lanternray: { db: -15, vary: 6, max: 3, gap: 80, layers: [{ rec: 'holyBlast', len: 500, db: -6 }, sparkle('A6:30 D7:200', { db: -8 })] },
   lanternblaze: { db: -8, max: 1, room: true, duck: [-8, 1200], layers: [thump(70, 600, { slide: -1 }), { rec: 'holyBlast', len: 1800 }, { rec: 'bell', len: 1500, rate: 0.8, db: -3 }, { seq: 'D5+A5+D6+E6:1200', inst: 'celesta', db: -5 }] },
   // Her Spirit Doll, small and silly: a paper-fan smack, a bell bonked on a head, a twirl of
@@ -357,17 +358,6 @@ const R = {
   dollpop: { db: -16, max: 2, layers: [{ rec: 'teleIn', rate: 1.6, len: 400 }, sparkle('C7:30 G7:100', { db: -12 })] },
   spitball: { db: -13, vary: 10, max: 3, layers: [whoosh(120, 800, 2400, { focus: 0.15 }), thump(700, 60, { slide: 1, db: -10 })] },
   spitsplat: { db: -12, vary: 8, max: 3, layers: [{ rec: 'slime', len: 500, rate: 1.2 }, { rec: 'splash', len: 400, rate: 1.5, db: -6 }] },
-  // The Shrine Maiden's kitsune guardian: her naginata's butt struck on the ground with a bell, and
-  // a blow taken on the haft.
-  kitsunecall: { db: -10, max: 1, room: true, layers: [thump(90, 300, { slide: -1.5 }), { rec: 'clangHeavy', rate: 0.9, db: -6 }, { rec: 'bell', len: 1000, rate: 1.1, db: -4 }] },
-  kitsuneblock: { db: -11, vary: 4, max: 2, layers: [{ rec: 'clang', rate: 1.1 }, { rec: 'wood', db: -6 }] },
-  // Her teleport (a rush of fox fire and a bell), Moonfall's charge (a rising rush of wind and
-  // fire) and its blow (a huge heavy crash, a bell), and Crescent Moon's great cut.
-  kitsuneport: { db: -12, max: 2, layers: [{ rec: 'fireLaunch', rate: 1.2, db: -4 }, { rec: 'teleOut', rate: 0.9 }, { rec: 'bell', len: 900, rate: 1.4, db: -10 }] },
-  kitsunegather: { db: -10, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 1.1 }, { rec: 'fireCharge', rate: 0.9, db: -4 }, whoosh(1500, 200, 1600, { focus: 0.8, db: -6 })] },
-  kitsunemoonfall: { db: -7, max: 1, room: true, layers: [thump(70, 500, { slide: -1.2 }), { rec: 'holyBlast', rate: 0.85 }, { rec: 'rockHit', rate: 0.7, db: -4 }, { rec: 'bell', len: 1200, rate: 0.9, db: -6 }] },
-  kitsunejab: { db: -15, vary: 10, max: 3, layers: [{ rec: 'stab', rate: 1.2 }, whoosh(160, 900, 3000, { focus: 0.2, db: -6 })] },
-  kitsunecrescent: { db: -10, max: 2, layers: [{ rec: 'bladeSwingHeavy', rate: 0.9 }, whoosh(600, 400, 3000, { focus: 0.3, db: -4 }), sparkle('E7:0 B7:60', { db: -14 })] },
   // The Thief's paths. The Blade Dancer: Ricochet topping out (rings whirring up and a bright
   // chime: Carousel). The Sky Dancer's follow hers.
   carouselfull: { db: -10, max: 1, duck: [-5, 800], layers: [whoosh(500, 300, 2400, { focus: 0.6, db: -4 }), sparkle('C7:0 E7:70 G7:140 C8:210', { db: -10 }), { seq: 'r:120 C5+G5:600', inst: 'orchestral_harp', attack: 0.02, db: -8 }] },
@@ -558,8 +548,6 @@ const R = {
   // The tengu: a smug "hmph" and a short laugh.
   tenguHmph: { db: -20, vary: 5, max: 1, gap: 600, layers: [{ wave: 'saw', f0: 230, slide: -0.8, env: { a: 10, s: 80, d: 90 }, lpf: [1200] }] },
   tenguLaugh: { db: -21, vary: 5, max: 1, gap: 1200, layers: [{ wave: 'saw', f0: 260, repeat: 110, repeatSemis: -1, slide: -1, env: { a: 10, s: 380, d: 100 }, lpf: [1400] }] },
-  // The guardian: a short sharp kiai.
-  kitsuneKiai: { db: -20, vary: 4, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 520, slide: -0.9, env: { a: 8, s: 70, d: 100 }, lpf: [2200] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },

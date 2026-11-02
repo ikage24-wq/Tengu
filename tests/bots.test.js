@@ -575,16 +575,16 @@ test('a party combo: your finisher brings the members fighting by you in with th
   assert.ok(fin, 'and their own finisher goes off');
 });
 
-test('the priestesses fight with their whole kit: torii gates, talismans, and blessings', async () => {
+test("the Star Witch's paths fight with their whole kit: the concert stage, talismans, and songs", async () => {
   const { botSkills, tickHunter } = await import('../src/world/party.js');
   const { spawnMob } = await import('../src/world/mobs.js');
   const { createBody } = await import('../src/world/physics.js');
-  const shrine = makeBotCharacter(seeded(3), { name: 'Miko', level: 50, jobs: ['spiritmage', 'shrinemaiden'] });
+  const shrine = makeBotCharacter(seeded(3), { name: 'Mimi', level: 50, jobs: ['spiritmage', 'shrinemaiden'] });
   const onmyo = makeBotCharacter(seeded(4), { name: 'Abe', level: 50, jobs: ['spiritmage', 'onmyoji'] });
   const ids = (c) => botSkills(c).map((s) => s.id);
-  for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Shrine Maiden: ${id}`);
+  for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Starlight Idol: ${id}`);
   for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Onmyoji: ${id}`);
-  for (const [char, fx] of [[shrine, 'thousandtorii'], [onmyo, 'ofuda']]) {
+  for (const [char, fx] of [[shrine, 'sistage'], [onmyo, 'ofuda']]) {
     const world = createWorld(createCharacter('Me', {}));
     quiet(world);
     world.god = true;

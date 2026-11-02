@@ -33,7 +33,7 @@ canvas.width = CW * COLS;
 canvas.height = (CH + 22) * Math.ceil(CASES.length / COLS);
 ctx.fillStyle = '#2a2440';
 ctx.fillRect(0, 0, canvas.width, canvas.height);
-const MOVE_CASES = [['kagurafin', 0.65], ['glidecast', 0.55], ['kagurabless', 0.65], ['twirlstep', 0.7], ['shrinegrand', 0.65], ['floatcast', 0.5], ['sleevefan', 0.15], ['shrinepurify', 0.75], ['onmyoofuda', 0.6], ['onmyoseal', 0.65], ['kaguraup', 0.4], ['onmyorally', 0.15], ['kaguralantern', 0.45], ['ballista', 0.85], ['smite', 0.15]];
+const MOVE_CASES = [['kagurafin', 0.65], ['glidecast', 0.55], ['kagurabless', 0.65], ['twirlstep', 0.7], ['floatcast', 0.5], ['sleevefan', 0.15], ['shrinepurify', 0.75], ['onmyoofuda', 0.6], ['onmyoseal', 0.65], ['kaguraup', 0.4], ['onmyorally', 0.15], ['kaguralantern', 0.45], ['ballista', 0.85], ['smite', 0.15]];
 if (Q.has('moves')) CASES.splice(0, CASES.length, ...MOVE_CASES.map(([k, p]) => ['smile', p, 'none', `${k} @ ${p}`, k]));
 const SHOW = Q.get('only') ? Q.get('only').split(',').map(Number).map((i) => CASES[i]) : CASES;
 canvas.height = (CH + 22) * Math.ceil(SHOW.length / COLS);

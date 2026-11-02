@@ -256,17 +256,18 @@ function spiritAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembwitch', x, y - 78 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Grace: a gold ring of shrine light at the Shrine Maiden's feet, warm light rising round her as
-// it builds, and full (Divine Grace), a torii emblem of light over her head and gold rings racing
-// out.
+// Applause (the Starlight Idol; internally Grace): a pink ring at her feet that fills in as the
+// crowd's cheer builds, turning faster the fuller it is; full (Live Show), hearts and notes circle
+// her and her badge, a heart with a note on it, shines over her head.
 function graceAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringholy', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringholy', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.15) fxSprite(ctx, 'celsisong', x, y + 2, { frame: Math.floor(t * (4 + 6 * k)) % 10, scale: s * (0.3 + 0.18 * k), alpha: Math.min(0.85, (k - 0.15) * 2) });
     return;
   }
-  if (k > 0.4) fxSprite(ctx, 'celholyglow', x, y, { t: t * (0.7 + 0.5 * k), scale: s * (0.45 + 0.25 * k), alpha: Math.min(0.85, (k - 0.4) * 2.2) });
-  if (k >= 1) fxSprite(ctx, 'celembholy', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (k >= 1) {
+    fxSprite(ctx, 'celsiaura', x, y - 26 * s, { t, scale: s * 0.5, alpha: 0.9 });
+    fxSprite(ctx, 'celembidol', x, y - 66 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  }
 }
 
 // Binding: the five-pointed star seal of onmyodo glowing red at the Onmyoji's feet, turning, more of

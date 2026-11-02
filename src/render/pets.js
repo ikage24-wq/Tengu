@@ -1,10 +1,9 @@
 // Draws the companions: the Beastmaster's Snow wolf (render/snowwolf.js), who walks behind the
-// Beastmaster ('back', drawn before the hero), and the mage paths' guardian and yokai troupe.
+// Beastmaster ('back', drawn before the hero), and the Onmyoji's yokai troupe.
 
 import { drawMochi } from './mochi.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawSnowWolf } from './snowwolf.js';
-import { drawKitsune } from './kitsune.js';
 import { drawOniCompanion } from './oni.js';
 import { drawYukiCompanion } from './yuki.js';
 import { drawTenguCompanion } from './tengu.js';
@@ -12,7 +11,6 @@ import { drawTenguCompanion } from './tengu.js';
 export function drawPets(ctx, world, cam, time, layer) {
   // Your Mochi, behind you.
   if (world.mochi && layer === 'back') drawMochi(ctx, world.mochi, Math.round(world.mochi.x - cam.x), Math.round(world.mochi.y - cam.y), world.now);
-  if (world.guardian && layer === 'back') drawKitsune(ctx, world, world.guardian, cam, time);
   // The Arbalist Engineer's turret: idle, its head swivelling (frames 0-3), or firing (4-5) for a
   // moment after each bolt, turned to face what it shoots at.
   const tr = world.turret;

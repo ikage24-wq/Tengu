@@ -17,13 +17,12 @@ import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
 import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
-import { GUARDIAN_OUTFIT_KEYS } from './jobgear/guardian.js';
 import { TROUPE_OUTFIT_KEYS } from './jobgear/troupe.js';
 import { PET_OUTFIT_KEYS } from './jobgear/pets.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { paintFan, paintGohei } from './props.js';
+import { paintFan } from './props.js';
 import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
@@ -190,7 +189,7 @@ const PATH_TRIMS = {
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
-  const style = OUTFIT_STYLES.includes(look.outfit) || GUARDIAN_OUTFIT_KEYS.includes(look.outfit) || TROUPE_OUTFIT_KEYS.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
+  const style = OUTFIT_STYLES.includes(look.outfit) || TROUPE_OUTFIT_KEYS.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
   // Where nothing is equipped, the outfit picked in the creator.
   const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
   // A real hero's gear (not a preview or a townsperson, who pass none): where the top, bottoms or
@@ -2797,6 +2796,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
   // The Arbalist Engineer's crossbow takes her polished brass.
   if (state.job === 'stormcaller' && g.weapon?.type === 'crossbow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'brass' };
+  // The Starlight Idol's wand is her pink and gold microphone.
+  if (state.job === 'shrinemaiden' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'idol' };
   // The Sky Dancer's gloves take her sky blue the same way.
   if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
   // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
@@ -2921,10 +2922,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.translate(sx(squashX(wx + rig.tx)), sy(squashY(wy + bodyY)));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((((mv.fanA ?? 0) - 90) * Math.PI) / 180);
-    // A Shrine Maiden dances with a gohei in place of the fan (the same motion, its streamers
-    // flying out where the fan would open).
-    if (state.job === 'shrinemaiden') paintGohei(ctx, scale * 1.3, mv.fan, state.time ?? 0);
-    else paintFan(ctx, scale * 1.3, mv.fan);
+    paintFan(ctx, scale * 1.3, mv.fan);
     ctx.restore();
   };
   if (mv?.fanBack) drawFan();

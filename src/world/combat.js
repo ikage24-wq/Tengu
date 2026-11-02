@@ -10,7 +10,6 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
 import { guard, howl } from './pets.js';
-import { kitsuneGuard } from './kitsune.js';
 import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -192,12 +191,6 @@ export function blockOnHit(world, fromX = null, rng = Math.random) {
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'BLOCK', color: SCHOOL_TEXT.holy, t: 0 });
     world.juice.push({ type: 'shake', mag: 1.5, dur: 0.15 });
     bulwarkWave(world, p);
-    return true;
-  }
-  // The Shrine Maiden's kitsune guardian steps in front of it and takes it on the haft.
-  if (kitsuneGuard(world, fromX, rng)) {
-    world.invuln = Math.max(world.invuln, 0.5);
-    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'GUARD', color: '#ffd2a8', t: 0 });
     return true;
   }
   const lg = procOf(world.char, 'loyalguard');

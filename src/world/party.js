@@ -142,9 +142,9 @@ function weaponStyle(bot) {
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.45, special: 'swsnap' };
-  // Her paths dance too: a Shrine Maiden with her gohei (her big one, Purification's sweep), an
-  // Onmyoji with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
-  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'shrinepurify' };
+  // The Starlight Idol sings her notes at them, and her big one is the high note. The Onmyoji
+  // dances with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
+  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['sibeat', 'sistep', 'sikiss', 'sishoulder'], shot: 'sinote', ranged: true, magic: true, dur: 0.5, special: 'sihigh' };
   if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'onmyoofuda', ofuda: true };
   // The Sky Dancer throws her gusts of wind.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
@@ -635,27 +635,23 @@ const SPECIALS = {
   ofudabarrage: { move: 'onmyoofuda', dur: 1.05, play: (bot, world, m, rng, P, tune) => { const O = P.combo[0].strikes[0].ofuda; ofudaVolley(bot, world, m, rng, O.n, O.pct * tune, O.range); } },
   troupecombo: { move: 'onmyoofuda', dur: 1.6, play: (bot, world, m, rng, P, tune) => { ofudaVolley(bot, world, m, rng, 12, P.combo[0].strikes[0].troupe.pct * tune, 360); world.fx.push({ kind: 'seimanseal', x: m.x, y: m.y, r: 90, t: 0, dur: 1.4 }); } },
   blessing: { move: 'swwish', dur: 0.9, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
-  grandblessing: { move: 'shrinegrand', dur: 1.55, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  grandblessing: { move: 'sisong', dur: 1.2, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
+  // monsters round her back.
   thousandtorii: {
-    move: 'shrinetorii', dur: 2.2,
+    move: 'siconcert', dur: 2.4,
     play: (bot, world, m, rng, P, tune) => {
-      const T = P.combo[0].strikes[0].torii;
+      const C = P.combo[0].strikes[0].concert;
       const b = bot.body;
-      const dir = b.facing;
-      const nav = navOf(world.map);
-      const surf = nav.surfaces[surfaceOf(nav, b)];
-      const gates = Array.from({ length: T.n }, (_, i) => {
-        let x = b.x + dir * (60 + (i * T.span) / Math.max(1, T.n - 1));
-        if (surf) x = Math.max(surf.x1 + 10, Math.min(surf.x2 - 10, x));
-        return { x, y: surf ? surf.yAt(x) : b.y, at: world.now + 0.45 + i * T.gap };
+      world.fx.push({ kind: 'sistage', x: b.x, y: b.y, t: 0, dur: C.beats.at(-1) + 0.9 });
+      bless(bot, world, rng, 0.5, C.r, true);
+      const range = magicRange(bot.stats, C.pct * tune * 1.3);
+      C.beats.forEach((at, k) => {
+        const last = k === C.beats.length - 1;
+        world.fx.push({ kind: 'siwave', big: true, x: b.x, y: b.y - 30, t: -at, dur: 0.6 });
+        world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < C.r + o.def.w / 2 && Math.abs(o.y - b.y) < 120)
+          .forEach((o, i) => land(bot, world, o, at, range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'sihit', via: 'spell' }, rng));
       });
-      const torii = { t0: world.now, gates, dir, n: T.n, gap: T.gap, hold: T.hold };
-      world.fx.push({ kind: 'thousandtorii', torii, x: b.x, y: b.y, t: 0, dur: 0.45 + T.n * T.gap + T.hold + 0.9 });
-      const range = magicRange(bot.stats, T.pct * tune * 1.3);
-      for (const g of gates) {
-        world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - g.x) < T.cut + o.def.w / 2 && Math.abs(o.y - g.y) < 90)
-          .forEach((o, i) => land(bot, world, o, g.at - world.now, range, { stack: i, knock: 160, launch: 220, stun: 0.4, big: !i, burst: 'spirithit', via: 'spell' }, rng));
-      }
     },
   },
 };

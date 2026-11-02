@@ -11,7 +11,7 @@
 
 import { faithGuard, pathSchool } from './melee.js';
 import { ventGuard } from './engineer.js';
-import { lastRite } from './shrine.js';
+import { lastRite } from './idol.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
 import { JOBS, jobChain } from '../data/jobs.js';
@@ -1573,19 +1573,19 @@ export function healerTurn(bot, world, rng) {
   const me = group.find((g) => g.bot === bot);
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
-  // A Spirit Mage heals with her own spells and dance: Blessing's column of light, Spirit Ward. A
-  // Shrine Maiden with hers: Grand Blessing's great pillar for the group and its long regen, and
-  // the Resurrection Dance for the fallen.
+  // A Star Witch heals with her own spells: Wishing Star and Star Veil. A Starlight Idol with her
+  // songs: Healing Song for the group and its long regen, and Curtain Call for the fallen.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const maiden = bot.char.job === 'shrinemaiden';
-  // (The Star Witch wishes stars down; her paths keep their columns of light.)
+  // (The Star Witch wishes stars down; the Idol sings; the Onmyoji keeps her columns of light.)
   const witch = bot.char.job === 'spiritmage';
-  const bless = (g) => shrine && world.fx.push({ kind: witch ? 'stwish' : 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  const star = witch || maiden;
+  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sisong' : witch ? 'stwish' : 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: witch ? 'swwish' : 'kagurabless', t: 0, dur: witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'kagurabless', t: 0, dur: maiden ? 1.2 : witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: witch ? 'swveil' : 'kaguraward', dur: witch ? 0.8 : 1.1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'shrinegrand', dur: 1.55 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'kagurabless', dur: witch ? 0.9 : 1.2 };
+  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'kaguraward', dur: star ? 0.8 : 1.1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 1.2 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'kagurabless', dur: witch ? 0.9 : 1.2 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
@@ -1594,9 +1594,10 @@ export function healerTurn(bot, world, rng) {
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
     if (maiden) {
-      world.fx.push({ kind: 'grandblessing', x: bot.body.x, y: bot.body.y, r: 320, t: 0, dur: 1.3 });
-      bot.attack = { pose: 'shrinegrand', t: 0, dur: 1.55 };
-    } else cast();
+      world.fx.push({ kind: 'sisong', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
+      world.fx.push({ kind: 'siwave', x: bot.body.x, y: bot.body.y - 26, t: 0, dur: 0.6 });
+    }
+    cast();
     if (rng() < 0.2) groupSay(world, bot, 'dgHeal');
     return between(1.5, 1.9, rng);
   }
@@ -1622,21 +1623,21 @@ export function healerTurn(bot, world, rng) {
       bless(g);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    if (maiden) world.fx.push({ kind: 'grandblessing', x: bot.body.x, y: bot.body.y, r: 320, t: 0, dur: 1.3 });
+    if (maiden) world.fx.push({ kind: 'sisong', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
     bot.attack = { pose: renew.pose, t: 0, dur: renew.dur };
     return between(1.2, 1.6, rng);
   }
   if (!run.combat) {
-    // (A Shrine Maiden raises them with the Resurrection Dance, from further off.)
+    // (A Starlight Idol raises them with Curtain Call, from further off.)
     const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < (maiden ? 320 : 44));
     if (fallen) {
       revive(world, fallen, maiden ? 0.6 : 0.5);
       if (maiden) {
-        world.fx.push({ kind: 'reviveflash', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
-        world.fx.push({ kind: 'resurrection', x: bot.body.x, y: bot.body.y, t: 0, dur: 1.6 });
+        world.fx.push({ kind: 'sihit', big: true, x: fallen.body.x, y: fallen.body.y - 10, h: 0, t: 0, dur: 0.7 });
+        world.fx.push({ kind: 'sisong', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
       }
-      bot.attack = maiden ? { pose: 'shrinerevive', t: 0, dur: 2.4 } : { pose: 'pray', t: 0, dur: 1 };
-      return maiden ? 2.5 : 1.2;
+      bot.attack = maiden ? { pose: 'sibow', t: 0, dur: 1.4 } : { pose: 'pray', t: 0, dur: 1 };
+      return maiden ? 1.5 : 1.2;
     }
   }
   return 0.4;

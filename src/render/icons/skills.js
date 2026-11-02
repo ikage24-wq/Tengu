@@ -41,6 +41,8 @@ const BG = {
   brassbg: ['#ffe6a8', '#5a3818'],
   rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
+  idolbg: ['#ffe0f0', '#a83a7a'],
+  lullbg: ['#f4e4ff', '#5a3a9a'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -1225,17 +1227,6 @@ function skywaltz() {
 
 // ---------- The mage paths' shrine pieces (paper streamers, wisps of spirit light) ----------
 const SCARLET = '#e0303e';
-// A zigzag paper streamer (shide) hanging from (x, y), `n` folds of `w` wide and `h` tall each.
-function shideIcon(x, y, n = 3, w = 1.6, h = 1.7, lean = 0.3) {
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const side = i % 2 ? 1 : -1;
-    const y0 = y + i * h;
-    const x0 = x + side * w * 0.35 + lean * i;
-    out.push(...solid([[x0 - w / 2, y0], [x0 + w / 2, y0], [x0 + w / 2 - side * w * 0.6, y0 + h], [x0 - w / 2 - side * w * 0.6, y0 + h]], i % 2 ? '#ddd6ee' : W, { shadow: false, d: 0.3, ink: '#6a5aa8' }));
-  }
-  return out;
-}
 // A wisp of spirit light: a bright round head, a soft tail behind it.
 function wisp(x, y, r, ang = 0) {
   const c = Math.cos(ang * D2R);
@@ -1310,59 +1301,83 @@ function heavenslantern() {
   for (const [x, y] of [[4.6, 12.4], [9.6, 10.8], [13, 14]]) out.push(...cometTrail(x - 3, y - 4, x, y, 1.6), ...goldStar(x, y, 1.8));
   return out;
 }
-// Shrine Mastery (the Shrine Maiden): a vermilion torii gate with light shining through it.
+// ---------- The Starlight Idol (pink and gold: notes, hearts, her mic, the stage) ----------
+const IPINK = '#ff8fc0';
+const IPINKINK = '#8a2a5e';
+// A music note: a round head with a stem and a flag (or two beamed together, `pair`).
+function noteIcon(x, y, r, c = IPINK, pair = false) {
+  const head = (hx, hy) => solid(turn(oval(hx, hy, r * 0.62, r * 0.46, 0, 14), -20, hx, hy), c, { d: 0.3, ink: IPINKINK });
+  const stem = (hx, hy) => S(rect(hx + r * 0.38, hy - r * 2.1, r * 0.26, r * 2.1), IPINKINK);
+  if (pair) {
+    return [stem(x - r, y), stem(x + r * 0.8, y - r * 0.3), S([[x - r + r * 0.38, y - r * 2.1], [x + r * 0.8 + r * 0.64, y - r * 2.4], [x + r * 0.8 + r * 0.64, y - r * 1.8], [x - r + r * 0.38, y - r * 1.5]], IPINKINK), ...head(x - r, y), ...head(x + r * 0.8, y - r * 0.3)];
+  }
+  return [stem(x, y), S([[x + r * 0.38, y - r * 2.1], [x + r * 1.3, y - r * 1.3], [x + r * 1.1, y - r * 0.9], [x + r * 0.6, y - r * 1.4]], IPINKINK), ...head(x, y)];
+}
+// A heart, `r` across half its width.
+function heartIcon(x, y, r, c = IPINK) {
+  const pts = Array.from({ length: 24 }, (_, j) => {
+    const t = (j / 24) * Math.PI * 2;
+    return [x + (Math.sin(t) ** 3) * r, y - ((13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16) * r];
+  });
+  return solid(pts, c, { d: 0.35, ink: IPINKINK });
+}
+// Her mic: a gold handle and a round pink head with a gold band, standing at (x, y) (its foot).
+function micIcon(x, y, h, lean = 0) {
+  const top = turn([[x, y - h]], lean, x, y)[0];
+  const r = h * 0.3;
+  return [S(tube([[x, y], [top[0], top[1] + r * 0.6]], h * 0.11, h * 0.08), '#e8a83a'), ...solid(oval(top[0], top[1], r, r, 0, 18), IPINK, { d: 0.35, ink: IPINKINK }), S(rect(top[0] - r, top[1] + r * 0.05, r * 2, r * 0.32), '#ffd36a')];
+}
+// Stage Presence (the Starlight Idol): her mic on a stand in a spotlight's glow.
 function shrinemastery() {
-  const out = [...tile('shrine', 'passive'), ...aura(8, 9, 6.4, '#fff3dc', 1.1)];
-  const red = '#e0453a';
-  out.push(...solid(rect(3.6, 5.6, 1.6, 9), red, { d: 0.3, ink: '#7a1c1c' }), ...solid(rect(10.8, 5.6, 1.6, 9), red, { d: 0.3, ink: '#7a1c1c' }));
-  out.push(...solid([[1.4, 3.2], [14.6, 3.2], [13.8, 4.8], [2.2, 4.8]], '#3a2a2a', { d: 0.3 }), ...solid(rect(2.6, 6.2, 10.8, 1.2), red, { d: 0.3, ink: '#7a1c1c' }));
-  out.push(S(rect(6.4, 7.6, 3.2, 7), '#fff7e4'));
-  out.push(...spark(8, 10.6, 1.2, '#ffd36a'), ...spark(13.6, 1.8, 0.8));
+  const out = [...tile('idolbg', 'passive'), ...aura(8, 7, 6.6, '#fff0f6', 1.2)];
+  out.push(S([[7, 0.8], [9, 0.8], [11.6, 15], [4.4, 15]], '#fff2f8'));
+  out.push(S(tube([[8, 14.4], [8, 7.6]], 0.4, 0.4), '#8a5a2a'), S(oval(8, 14.6, 3, 0.8, 0, 14), '#8a5a2a'));
+  out.push(...micIcon(8, 8.4, 5.6));
+  out.push(...spark(3.2, 4, 1, '#ffd36a'), ...spark(13, 3.4, 0.9));
   return out;
 }
-// A little torii gate in the icon's frame: two vermilion posts, a black lintel curving up, a beam.
-function toriiIcon(x, y, w, h) {
-  const red = '#e0453a';
-  return [
-    ...solid(rect(x - w * 0.36, y - h * 0.8, w * 0.12, h * 0.8), red, { d: 0.3, ink: '#7a1c1c' }), ...solid(rect(x + w * 0.24, y - h * 0.8, w * 0.12, h * 0.8), red, { d: 0.3, ink: '#7a1c1c' }),
-    ...solid([[x - w * 0.56, y - h], [x + w * 0.56, y - h], [x + w * 0.5, y - h * 0.84], [x - w * 0.5, y - h * 0.84]], '#3a2a2a', { d: 0.3 }),
-    ...solid(rect(x - w * 0.46, y - h * 0.7, w * 0.92, h * 0.1), red, { d: 0.3, ink: '#7a1c1c' }),
-  ];
-}
-// Grand Blessing (the Shrine Maiden): a great column of gold light with a gohei's streamers
-// flying either side of it.
+// Healing Song: a heart with notes rising off it.
 function grandblessing() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 8, 7.2, '#fff3dc', 1.25)];
-  out.push(S(rect(4.6, 0.6, 6.8, 14.8), '#ffe9b8'), S(rect(6, 0.6, 4, 14.8), '#fff8e4'), S(rect(7.2, 0.6, 1.6, 14.8), W));
-  out.push(...shideIcon(3, 3.4, 3, 1.5, 1.6, 0.3), ...shideIcon(13, 3.4, 3, 1.5, 1.6, -0.3));
-  out.push(...spark(2.6, 11.6, 1, '#ffd36a'), ...spark(13.4, 12, 1), ...spark(8, 13.6, 1.2, '#ffd36a'));
+  const out = [...tile('idolbg', 'active'), ...aura(7, 10, 6.4, '#fff0f6', 1.1)];
+  out.push(...heartIcon(6.6, 10.4, 4.6));
+  out.push(...noteIcon(11.6, 7, 1.6, '#ffd36a'), ...noteIcon(12.6, 13.4, 1.2));
+  out.push(...spark(3, 3.4, 1), ...spark(9.4, 2.4, 0.9, '#ffd36a'));
   return out;
 }
-// Purification (the Shrine Maiden): a circle of sacred light on the ground, a gohei standing in it.
+// Cheer: the mic thrust up in a burst of gold stars.
+function idolcheer() {
+  const out = [...tile('idolbg', 'buff'), ...aura(9, 6, 6.4, '#fff4c8', 1.3, 5)];
+  out.push(...goldStar(10.4, 5, 3.6, 0.1), ...goldStar(3.6, 3.6, 1.6, 0.4), ...goldStar(13.4, 11.6, 1.4, 0.2));
+  out.push(...micIcon(5.6, 15, 9.4, 20));
+  out.push(...spark(13.2, 1.8, 1));
+  return out;
+}
+// Lullaby: a sleepy crescent moon with a soft lilac note and a "z".
 function purification() {
-  const out = [...tile('shrine', 'active')];
-  out.push(...solid(oval(8, 11.6, 6.6, 2.6, 0, 28), '#ffe9b8', { d: 0.3, ink: '#b8862a' }), S(oval(8, 11.6, 4.6, 1.6, 0, 24), '#fff8e4'));
-  out.push(S(tube([[8, 11.4], [8, 2.4]], 0.6, 0.6), '#a07a4a'), S(rect(7.4, 2, 1.2, 0.8), '#ffd36a'));
-  out.push(...shideIcon(9, 3, 3, 1.4, 1.5, 0.25), ...shideIcon(7, 3, 3, 1.4, 1.5, -0.25));
-  out.push(...spark(3.4, 7, 0.9, '#ffd36a'), ...spark(12.8, 6.4, 0.9));
+  const out = [...tile('lullbg', 'active'), ...aura(7, 8, 6, '#f4e4ff', 1.1)];
+  out.push(...solid([...arcPts(7, 8.4, 5.2, 5.2, 70, 290, 14), ...arcPts(9.4, 7.6, 4.2, 4.2, 280, 80, 14)], '#e6d2ff', { d: 0.35, ink: '#5a3a9a' }));
+  out.push(...noteIcon(12, 13, 1.4, '#d4b0ff'));
+  out.push(S([[10.4, 2], [13.6, 2], [13.6, 2.8], [11.6, 5], [13.6, 5], [13.6, 5.8], [10.4, 5.8], [10.4, 5], [12.4, 2.8], [10.4, 2.8]], '#fff0f6'));
+  out.push(...spark(3, 13.4, 0.9, '#ffd36a'));
   return out;
 }
-// Resurrection Dance (the Shrine Maiden): a pillar of gold light lifting a soul up out of the
-// ground, a ring at its foot.
+// Curtain Call: pink stage curtains drawn back, a burst of light where she bows.
 function resurrection() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 7, 6.6, '#fff3dc', 1.1)];
-  out.push(S(rect(5.6, 1, 4.8, 12.6), '#ffe9b8'), S(rect(6.8, 1, 2.4, 12.6), W));
-  out.push(...solid(oval(8, 13.4, 5.4, 1.8, 0, 24), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
-  out.push(...solid(oval(8, 6, 1.8, 2.2, 0, 16), '#fff8e4', { d: 0.3, ink: '#c8a24a' }), S(tube([[8, 8], [7.4, 10.4], [8.4, 12]], 0.9, 0.3), '#fff8e4'));
-  out.push(...spark(3.2, 4, 1, '#ffd36a'), ...spark(12.8, 3.4, 0.9));
+  const out = [...tile('idolbg', 'active'), ...aura(8, 9, 5.6, '#fff4c8', 1.3)];
+  out.push(S(rect(1, 1, 14, 1.8), '#ffd36a'));
+  out.push(...solid([[1, 2.6], [5.6, 2.6], [4, 7], [2.8, 15], [1, 15]], '#e0609e', { d: 0.35, ink: IPINKINK }));
+  out.push(...solid([[15, 2.6], [10.4, 2.6], [12, 7], [13.2, 15], [15, 15]], '#e0609e', { d: 0.35, ink: IPINKINK }));
+  out.push(...goldStar(8, 9.4, 3, 0), ...heartIcon(8, 14, 1.2, '#fff0f6'));
+  out.push(...spark(8, 3.6, 1));
   return out;
 }
-// Thousand Torii (the Shrine Maiden's finisher): torii gates of light one behind another, down a
-// corridor into the distance.
+// Grand Concert (her finisher): the stage of light, two spotlights crossing on her mic, notes over it.
 function thousandtorii() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 9, 7, '#fff3dc', 1.2)];
-  out.push(...toriiIcon(11.4, 9.4, 4.6, 5.4), ...toriiIcon(9.2, 11.6, 6.6, 7.6), ...toriiIcon(6.4, 15, 9.6, 11));
-  out.push(...spark(13.6, 2.4, 1, '#ffd36a'), ...spark(2.4, 4, 0.9));
+  const out = [...tile('idolbg', 'active'), ...aura(8, 9, 7, '#fff4c8', 1.3, 5)];
+  out.push(S([[0.6, 0.6], [2, 0.6], [9.4, 12], [7.4, 12]], '#fff4c8'), S([[15.4, 0.6], [14, 0.6], [6.6, 12], [8.6, 12]], '#ffeaf4'));
+  out.push(...solid(rect(1.4, 12.4, 13.2, 2.6), IPINK, { d: 0.35, ink: IPINKINK }), S(rect(1.4, 12, 13.2, 0.9), '#ffd36a'));
+  out.push(...micIcon(8, 12, 6.4));
+  out.push(...noteIcon(3.2, 7, 1.2, '#ffd36a'), ...noteIcon(12.2, 6, 1.2, '#fff0f6'));
   return out;
 }
 // Onmyodo (the Onmyoji): a paper talisman with a red five-pointed star seal on it.
@@ -1489,7 +1504,7 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
   skymastery, updraft, zephyr, skywaltz,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
+  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
 // The Wind Dancer's skills wear the old Thief's pictures until she has her own.

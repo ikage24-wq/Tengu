@@ -12,7 +12,6 @@ import { R, E, T, F, shade } from '../pixel.js';
 import { torsoPts, band, MID, button, limb } from '../figure.js';
 import { frill, heart, flower, hoop, dome } from './casual.js';
 import { fur } from './kit.js';
-import { GUARDIAN_OUTFITS } from './guardian.js';
 import { TROUPE_OUTFITS } from './troupe.js';
 import { PET_OUTFITS } from './pets.js';
 
@@ -437,9 +436,9 @@ const BASICS = {
 };
 
 export const STARTER_OUTFITS = Object.keys(OUTFITS);
-// (The kitsune guardian's and the yokai troupe's outfits are drawn the same way, but never offered
+// (The yokai troupe's outfits are drawn the same way, but never offered
 // in the creator.)
-const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? GUARDIAN_OUTFITS[t] ?? TROUPE_OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
+const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? TROUPE_OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
 
 export default {
   hat: (t, p, m) => of(t).hat?.(p, m) ?? [],

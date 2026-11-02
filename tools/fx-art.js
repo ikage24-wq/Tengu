@@ -5750,6 +5750,311 @@
     inked(ctx, [[18, -30], [24, -30], [24, 30], [18, 30]], TEALE[2], TEALE[4], 3);
   });
 
+  // ---------- The Starlight Idol (pink and gold: music notes, hearts, sound waves, the stage) ----------
+  // docs/design/starlight-idol.md. Her shapes: pink music notes with gold sparkles, hearts, sound
+  // waves opening out like ))), staff lines, and the stage of light her Grand Concert stands on.
+  // Her lullaby is the one soft lilac thing she has.
+  const IDOLPINK = ['#ffffff', '#ffe0ee', '#ff8fc0', '#e0609e', '#8a2a5e'];
+  const SHOWGOLD = ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228'];
+  const LULLABY = ['#ffffff', '#f4e4ff', '#d4b0ff', '#a07ae0', '#5a3a9a'];
+
+  // A music note at (x, y) (its head), `s` big, tilted by `rot`: an eighth note (one flag), or a
+  // pair beamed together (`pair`).
+  function noteArt(ctx, pal, x, y, s, rot = 0, pair = false) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const head = (hx, hy) => {
+      const pts = Array.from({ length: 16 }, (_, k) => {
+        const a = (k / 16) * TAU;
+        const px = Math.cos(a) * s * 0.62;
+        const py = Math.sin(a) * s * 0.44;
+        return [hx + px * 0.94 - py * 0.34, hy + px * 0.34 + py * 0.94];
+      });
+      inked(ctx, pts, pal[2], pal[4], Math.max(2, s * 0.14));
+      fill(ctx, pts.map(([px, py]) => [hx + (px - hx) * 0.55 - s * 0.12, hy + (py - hy) * 0.5 - s * 0.1]), pal[1]);
+    };
+    const st = s * 0.13;
+    const top = -s * 2;
+    const stem = (hx) => inked(ctx, [[hx + s * 0.44, -s * 0.1], [hx + s * 0.44 + st, -s * 0.1], [hx + s * 0.44 + st, top], [hx + s * 0.44, top]], pal[3], pal[4], Math.max(2, s * 0.12));
+    if (pair) {
+      stem(-s * 0.7);
+      stem(s * 0.9);
+      inked(ctx, [[-s * 0.26, top], [s * 1.34 + st, top - s * 0.3], [s * 1.34 + st, top + s * 0.22], [-s * 0.26, top + s * 0.52]], pal[3], pal[4], Math.max(2, s * 0.12));
+      head(-s * 0.7, 0);
+      head(s * 0.9, -s * 0.3);
+    } else {
+      stem(0);
+      inked(ctx, [[s * 0.44, top], [s * 0.44 + st, top], [s * 1.2, top + s * 0.7], [s * 1.06, top + s * 1.16], [s * 0.7, top + s * 0.62], [s * 0.44, top + s * 0.5]], pal[3], pal[4], Math.max(2, s * 0.12));
+      head(0, 0);
+    }
+    fill(ctx, [[-s * 0.3, -s * 0.2], [-s * 0.1, -s * 0.28], [-s * 0.05, -s * 0.12]], pal[0]);
+    ctx.restore();
+  }
+  // A heart at (x, y), `r` across half its width.
+  function heartArt(ctx, pal, x, y, r, rot = 0) {
+    const pts = (k) => Array.from({ length: 28 }, (_, j) => {
+      const t = (j / 28) * TAU;
+      const hx = 16 * Math.sin(t) ** 3;
+      const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+      const px = (hx / 16) * r * k;
+      const py = (hy / 16) * r * k;
+      return [x + px * Math.cos(rot) - py * Math.sin(rot), y + px * Math.sin(rot) + py * Math.cos(rot)];
+    });
+    inked(ctx, pts(1), pal[2], pal[4], Math.max(2, r * 0.16));
+    fill(ctx, pts(0.62).map(([px, py]) => [px - r * 0.14, py - r * 0.16]), pal[1]);
+    fill(ctx, [[x - r * 0.62, y - r * 0.5], [x - r * 0.4, y - r * 0.66], [x - r * 0.3, y - r * 0.44]], pal[0]);
+  }
+  // A sound wave: `n` arcs opening out toward +x from (x, y), each `th` thick, `gap` apart.
+  function soundWaves(ctx, pal, x, y, r, n, gap, th, spread = 0.9, seed = 1) {
+    for (let k = 0; k < n; k++) celCrescent(ctx, pal, x, y, r + k * gap, -spread, spread, th * (1 - k * 0.18), { seed: seed + k });
+  }
+
+  const ease3 = (t) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
+
+  // Her sparkle note in flight (loops, toward +x): a pink note that bobs and turns as it goes, a
+  // trail of gold sparkles and a wavy staff line behind it.
+  E.sinote = (() => {
+    const cx = 100;
+    const cy = 56;
+    return {
+      w: 140, h: 100, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        speedLine(ctx, IDOLPINK, cx - 90, cy + Math.sin(ph) * 6, cx - 12, cy + Math.sin(ph + 1) * 4, 4);
+        const R = rng(401 + i);
+        for (let j = 0; j < 3; j++) sparkle(ctx, SHOWGOLD, cx - 30 - j * 22 - R() * 8, cy + (R() - 0.5) * 26, 7 - j * 1.6, j + i);
+        noteArt(ctx, IDOLPINK, cx, cy + 10 + Math.sin(ph) * 4, 15, Math.sin(ph) * 0.25, i % 3 === 0 ? false : i % 3 === 1);
+      },
+    };
+  })();
+
+  // Her big note (the high note, finishers): a burst of sound, three pink waves opening out round
+  // a beamed pair of notes, gold sparkles flying off its edge.
+  E.sibig = (() => {
+    const cx = 150;
+    const cy = 80;
+    return {
+      w: 230, h: 160, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const pulse = Math.sin((i / 6) * TAU);
+        soundWaves(ctx, IDOLPINK, cx - 60, cy, 48 + pulse * 3, 3, 22, 16, 0.85, 410);
+        const R = rng(411 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, SHOWGOLD, cx - 10 + R() * 50, cy + (R() - 0.5) * 120, 6 + R() * 5, j);
+        noteArt(ctx, SHOWGOLD, cx - 30, cy + 16, 18, pulse * 0.12, true);
+      },
+    };
+  })();
+
+  // Her mark on a monster: a pink starburst pops, then notes and hearts burst out round it and
+  // float up, twinkling out in gold.
+  E.sihit = (() => {
+    const c = 100;
+    const out = [[-1, -0.6], [0.2, -1], [1, -0.4], [0.7, 0.6], [-0.8, 0.5]];
+    return {
+      w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, IDOLPINK, c, c, [30, 46, 36][i], 8, 421, { inner: 0.35, rot: i * 0.3 });
+        if (i >= 1 && i <= 5) {
+          const k = ease3((i - 1) / 4);
+          out.forEach(([dx, dy], j) => {
+            const x = c + dx * (20 + k * 50);
+            const y = c + dy * (20 + k * 50) - k * 14;
+            const s = (i === 5 ? 7 : 10) + (j % 2) * 2;
+            if (j % 2) heartArt(ctx, j === 3 ? SHOWGOLD : IDOLPINK, x, y, s, dx * 0.3);
+            else noteArt(ctx, j === 2 ? SHOWGOLD : IDOLPINK, x, y, s, dx * 0.3);
+          });
+        }
+        if (i === 6) out.forEach(([dx, dy], j) => sparkle(ctx, SHOWGOLD, c + dx * 74, c + dy * 74 - 22, 7, j));
+      },
+    };
+  })();
+
+  // A song hanging in the air (loops): a ring of staff lines on the ground round her and notes (or
+  // the song's own shapes) rising off it and fading, at their own phases, so it never stops moving.
+  function songZone(pal, accent, shapes, seed) {
+    const c = 160;
+    const gy = 170;
+    const N = 10;
+    return {
+      w: 320, h: 190, n: N, fps: 10, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.translate(c, gy - 10);
+        ctx.scale(1, 0.24);
+        ctx.globalAlpha = 0.2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 140, 140, 0, 0, TAU);
+        ctx.fillStyle = pal[2];
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        for (let k = 0; k < 3; k++) {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 130 - k * 9, 130 - k * 9, (i / N) * TAU * 0.1, 0, TAU);
+          ctx.strokeStyle = k === 1 ? pal[2] : pal[3];
+          ctx.lineWidth = k === 1 ? 7 : 4;
+          ctx.stroke();
+        }
+        // Beads running round the staff, so the ring itself keeps moving.
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6 + i / N / 6) * TAU;
+          ctx.beginPath();
+          ctx.ellipse(Math.cos(a) * 121, Math.sin(a) * 121, 7, 26, 0, 0, TAU);
+          ctx.fillStyle = accent[1];
+          ctx.fill();
+        }
+        ctx.restore();
+        const R = rng(seed);
+        for (let j = 0; j < 9; j++) {
+          const a = (j / 9) * TAU + R() * 0.6;
+          const u = (j / 9 + i / N) % 1;
+          const x = c + Math.cos(a) * 120 * (1 - u * 0.35);
+          const y = gy - 10 + Math.sin(a) * 28 - u * 110;
+          const s = 16 * Math.sin(Math.PI * Math.min(1, u * 1.15 + 0.08));
+          if (s < 2) continue;
+          shapes(ctx, j % 3 === 2 ? accent : pal, x, y, s, j, u);
+        }
+      },
+    };
+  }
+  // Healing Song: pink notes and hearts rising from a pink staff ring.
+  E.sisong = songZone(IDOLPINK, SHOWGOLD, (ctx, pal, x, y, s, j, u) => (j % 2 ? heartArt(ctx, pal, x, y, s * 0.9, Math.sin(u * 6) * 0.3) : noteArt(ctx, pal, x, y, s, Math.sin(u * 6 + j) * 0.3, j % 4 === 0)), 431);
+  // Cheer: gold stars and notes bouncing up off a gold ring, pink hearts among them.
+  E.sicheer = songZone(SHOWGOLD, IDOLPINK, (ctx, pal, x, y, s, j, u) => (j % 2 ? sparkle(ctx, pal, x, y, s * 1.1, u * 4) : j % 3 === 2 ? heartArt(ctx, pal, x, y, s * 0.9) : noteArt(ctx, pal, x, y, s, Math.sin(u * 8) * 0.4)), 441);
+  // Lullaby: soft lilac notes, little crescent moons and sleepy z's drifting up slowly.
+  E.silullaby = songZone(LULLABY, IDOLPINK, (ctx, pal, x, y, s, j, u) => {
+    if (j % 3 === 0) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-0.4);
+      const moon = [...Array.from({ length: 12 }, (_, k) => [Math.cos(-1.9 + (k / 11) * 3.8) * s, Math.sin(-1.9 + (k / 11) * 3.8) * s]), ...Array.from({ length: 12 }, (_, k) => [s * 0.45 + Math.cos(1.6 - (k / 11) * 3.2) * s * 0.8, Math.sin(1.6 - (k / 11) * 3.2) * s * 0.8])];
+      inked(ctx, moon, pal[2], pal[4], 2.5);
+      ctx.restore();
+    } else if (j % 3 === 1) {
+      const z = s * 0.8;
+      inked(ctx, [[x - z, y - z], [x + z, y - z], [x + z, y - z * 0.6], [x - z * 0.3, y + z * 0.6], [x + z, y + z * 0.6], [x + z, y + z], [x - z, y + z], [x - z, y + z * 0.6], [x + z * 0.3, y - z * 0.6], [x - z, y - z * 0.6]], pal[2], pal[4], 2.5);
+    } else noteArt(ctx, pal, x, y, s, Math.sin(u * 4) * 0.3);
+  }, 451);
+
+  // A song cast (the burst when she starts singing one, and Grand Concert's music blasts): sound
+  // waves opening out both ways from her, notes thrown off them, then sparkles.
+  E.siwave = (() => {
+    const c = 150;
+    const cy = 100;
+    return {
+      w: 300, h: 200, n: 7, fps: 24, px: c, py: cy,
+      draw(ctx, i) {
+        const k = ease3(i / 5);
+        if (i <= 5) {
+          for (const sd of [-1, 1]) {
+            ctx.save();
+            ctx.translate(c, cy);
+            ctx.scale(sd, 1);
+            soundWaves(ctx, IDOLPINK, 0, 0, 20 + k * 70, 3, 18, 14 * (1 - k * 0.5), 0.8, 461);
+            ctx.restore();
+          }
+        }
+        if (i <= 1) starburst(ctx, SHOWGOLD, c, cy, 26 + i * 10, 8, 462, { inner: 0.4 });
+        const R = rng(463);
+        for (let j = 0; j < 6; j++) {
+          const sd = j % 2 ? 1 : -1;
+          const x = c + sd * (40 + k * 90 + R() * 20);
+          const y = cy + (R() - 0.5) * 100 - k * 20;
+          if (i >= 1 && i <= 5) noteArt(ctx, j % 3 ? IDOLPINK : SHOWGOLD, x, y, 10, sd * 0.3, j === 4);
+          else if (i === 6) sparkle(ctx, SHOWGOLD, x, y - 10, 7, j);
+        }
+      },
+    };
+  })();
+
+  // Grand Concert: a stage of light rises under her (a pink platform with a gold rim and footlights),
+  // two spotlights swing in and cross on her, hearts and notes shower down, and it all breaks into
+  // sparkles at the end.
+  E.sistage = (() => {
+    const c = 240;
+    const gy = 380;
+    return {
+      w: 480, h: 400, n: 14, fps: 6, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = ease3(Math.min(1, i / 3)) * (i >= 12 ? 1 - (i - 11) / 3 : 1);
+        const top = gy - 40 * rise;
+        // The spotlights.
+        if (i >= 3 && i <= 11) {
+          const sw = Math.sin((i - 3) * 0.7) * 0.2;
+          for (const sd of [-1, 1]) {
+            ctx.save();
+            ctx.globalAlpha = 0.32;
+            const sx = c + sd * 220;
+            const tx = c + sw * 80 * sd;
+            fill(ctx, [[sx - 8, 0], [sx + 8, 0], [tx + 70, top], [tx - 70, top]], sd < 0 ? IDOLPINK[1] : SHOWGOLD[1]);
+            ctx.globalAlpha = 0.5;
+            fill(ctx, [[sx - 3, 0], [sx + 3, 0], [tx + 30, top], [tx - 30, top]], '#ffffff');
+            ctx.restore();
+          }
+        }
+        // The stage.
+        if (rise > 0.05) {
+          inked(ctx, [[c - 200, gy], [c + 200, gy], [c + 190, top], [c - 190, top]], IDOLPINK[3], IDOLPINK[4], 5);
+          fill(ctx, [[c - 186, top + 10], [c + 186, top + 10], [c + 194, gy - 4], [c - 194, gy - 4]], IDOLPINK[2]);
+          inked(ctx, [[c - 196, top - 8], [c + 196, top - 8], [c + 190, top + 8], [c - 190, top + 8]], SHOWGOLD[2], SHOWGOLD[4], 4);
+          fill(ctx, [[c - 180, top - 4], [c + 180, top - 4], [c + 176, top], [c - 176, top]], SHOWGOLD[0]);
+          for (let k = 0; k < 9; k++) {
+            const x = c - 160 + k * 40;
+            const lit = i >= 3 && (k + i) % 2 === 0;
+            ctx.beginPath();
+            ctx.ellipse(x, top + 22 * rise, 7, 5, 0, 0, TAU);
+            ctx.fillStyle = lit ? SHOWGOLD[0] : SHOWGOLD[2];
+            ctx.fill();
+            if (lit) sparkle(ctx, SHOWGOLD, x, top + 22 * rise, 6, k);
+          }
+          if (i <= 3) for (let k = 0; k < 6; k++) sparkle(ctx, SHOWGOLD, c - 180 + k * 72, gy - 10 - 20 * rise, 10, k + i);
+        }
+        // The shower of hearts and notes.
+        if (i >= 4 && i <= 12) {
+          const R = rng(472);
+          for (let j = 0; j < 12; j++) {
+            const x = c + (R() - 0.5) * 440;
+            const y0 = R() * 160;
+            const y = (y0 + (i - 4) * 34) % 300;
+            const s = 10 + R() * 6;
+            if (i === 12) sparkle(ctx, SHOWGOLD, x, y, 8, j);
+            else if (j % 3 === 0) heartArt(ctx, IDOLPINK, x, y, s, (R() - 0.5) * 0.6);
+            else if (j % 3 === 1) noteArt(ctx, j % 2 ? SHOWGOLD : IDOLPINK, x, y, s, (R() - 0.5) * 0.6, j % 4 === 1);
+            else sparkle(ctx, SHOWGOLD, x, y, s * 0.8, j);
+          }
+        }
+        if (i >= 12) {
+          const R = rng(473);
+          for (let j = 0; j < 14; j++) sparkle(ctx, j % 2 ? IDOLPINK : SHOWGOLD, c + (R() - 0.5) * 400, gy - 30 - R() * 60 - (i - 12) * 30, 10 - (i - 12) * 3, j);
+        }
+      },
+    };
+  })();
+
+  // Applause (her gauge, full: Live Show): little hearts and notes circling her and twinkling.
+  E.siaura = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 8, fps: 10, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        for (let j = 0; j < 5; j++) {
+          const a = (j / 5) * TAU + (i / 8) * TAU * 0.2;
+          const x = c + Math.cos(a) * 60;
+          const y = c + Math.sin(a) * 22 - 10 * Math.sin(((i + j * 2) / 8) * TAU);
+          if (j % 2) heartArt(ctx, j === 3 ? SHOWGOLD : IDOLPINK, x, y, 9);
+          else noteArt(ctx, j === 2 ? SHOWGOLD : IDOLPINK, x, y, 10, Math.sin(((i + j) / 8) * TAU) * 0.3);
+        }
+        if (i % 2 === 0) sparkle(ctx, SHOWGOLD, c + Math.cos(i) * 40, c - 30, 6, i);
+      },
+    };
+  })();
+
+  // Her badge: a pink heart with a gold note across it.
+  E.embidol = emblem(IDOLPINK, (ctx, pal) => {
+    heartArt(ctx, pal, 0, 4, 48);
+    noteArt(ctx, SHOWGOLD, -6, 20, 20, 0.1, true);
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

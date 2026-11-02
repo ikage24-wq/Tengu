@@ -158,6 +158,9 @@ jobs.)
   Sky Dancer (2026-11-02, replacing the Kitsune: gloves, every blow lifts her, Tailwind and free flight:
   Updraft, Zephyr, Sky Waltz finisher), on the Wind Dancer (the remade first-job Thief) whose
   skills lead into both (the old Assassin and Night Lord were removed earlier).
+  Mage: the Star Witch (remade Spirit Mage) branches at 30, after Elowen's trial, into the Starlight
+  Idol (2026-11-02, replacing the Shrine Maiden: songs that linger, Applause and Live Show, Curtain
+  Call, Grand Concert finisher; the dungeon healer) or the Onmyoji (to be remade as the Astronomer).
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).

@@ -316,7 +316,7 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
 });
 
-test("the Spirit Mage branches two ways at 30, the Shrine Maiden and the Onmyoji, after Elowen's trial", async () => {
+test("the Star Witch branches two ways at 30, the Starlight Idol and the Onmyoji, after Elowen's trial", async () => {
   const { nextJobs, jobChain } = await import('../src/data/jobs.js');
   const { QUESTS } = await import('../src/data/quests.js');
   assert.deepEqual(nextJobs('spiritmage', 30).map((j) => j.id).sort(), ['onmyoji', 'shrinemaiden']);

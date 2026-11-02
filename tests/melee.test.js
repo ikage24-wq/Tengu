@@ -1988,8 +1988,8 @@ function mage() {
 
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'], shrinemaiden: ['spiritmage', 'shrinemaiden'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20', shrinemaiden: 'wand_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;
@@ -2513,137 +2513,137 @@ test('Starfall needs a full Constellation, spends it, rains meteors on everythin
   assert.ok(w.spirit < 10, `and it never refills (${w.spirit})`);
 });
 
-// A Shrine Maiden (past Elowen's trial) with her kitsune guardian.
-function shrineMaiden() {
+// A Starlight Idol (past Elowen's trial).
+function idol() {
   const w = shrineMage();
   w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
   w.char.job = 'shrinemaiden';
   run(w, 0.2);
   return w;
 }
-
-test('the Shrine Maiden has a kitsune guardian who fights in front of her and bows when it is over', () => {
-  const w = shrineMaiden();
-  assert.ok(w.guardian, 'she is there');
-  assert.equal(shrineMage().guardian ?? null, null, 'a Star Witch has none');
-  const seen = new Set();
-  const hp0 = w.mobs.map((m) => m.hp);
-  for (let i = 0; i < 60 * 6; i++) {
-    updateWorld(w, DT, idle);
-    if (w.guardian.act) seen.add(w.guardian.act.kind);
-  }
-  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft', 'spin', 'crescent', 'flurry', 'moonfall'].filter((k) => seen.has(k)).length >= 2, `a mix of her own moves (${[...seen]})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her naginata lands');
-  w.mobs.forEach((m) => { m.hp = 0; });
-  let bowed = false;
-  // (Her blows are heavy and slow: she finishes the one she's in before she bows.)
-  for (let i = 0; i < 60 * 4; i++) {
-    updateWorld(w, DT, idle);
-    bowed ||= w.guardian.act?.kind === 'bow';
-  }
-  assert.ok(bowed, 'and bows to the Maiden once the fight is over');
-});
-
-test("a Shrine Maiden has her guardian and no doll, and still casts Starfall on her Grace", () => {
-  const w = shrineMaiden();
-  assert.ok(w.guardian, 'her guardian is there');
-  assert.ok(!w.doll, 'and no doll beside her');
-  // (Her gauge is Grace now: Starfall spends it.)
-  w.grace = 100;
-  w.graceAt = w.now;
-  assert.ok(cast(w, 'heavenslantern').ok);
-  let rain = false;
-  dice(0.5, () => {
-    for (let i = 0; i < 60 * 3; i++) {
-      updateWorld(w, DT, idle);
-      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'stmeteor');
-    }
-  });
-  assert.ok(rain, 'the meteors fall');
-});
-
-// A Shrine Maiden with her own skills learned.
-function shrineFull() {
-  const w = shrineMaiden();
-  Object.assign(w.char.skills, { grandblessing: 15, purification: 15, resurrection: 8, thousandtorii: 8, shrinemastery: 10 });
+// A Starlight Idol with her own skills learned.
+function idolFull() {
+  const w = idol();
+  Object.assign(w.char.skills, { grandblessing: 15, idolcheer: 15, purification: 15, resurrection: 8, thousandtorii: 8, shrinemastery: 10 });
   // (Built as a Star Witch first: whatever stars she lit before she advanced are gone.)
   w.spirit = 0;
   return w;
 }
 const settleCast = (w, s = 3) => run(w, s);
 
-test('a Shrine Maiden builds Grace (not Spirit) from her heals and wards, and full, her heals ward', () => {
-  const w = shrineFull();
-  w.god = false;
-  w.char.hp = Math.round(w.stats.maxHp * 0.4);
-  assert.ok(cast(w, 'grandblessing').ok);
-  settleCast(w, 2);
-  assert.ok((w.grace ?? 0) > 5, `Grand Blessing builds Grace (${w.grace})`);
-  assert.equal(w.spirit ?? 0, 0, 'and no Spirit');
-  assert.ok(w.char.hp > w.stats.maxHp * 0.6, 'it heals her a lot');
-  assert.ok(w.char.buffs.grandblessing, 'and leaves its regen on her');
-  // Full Grace: a heal also wards her.
-  delete w.char.buffs.spiritward;
-  w.grace = 100;
-  w.graceAt = w.now;
-  w.char.hp = Math.round(w.stats.maxHp * 0.5);
-  assert.ok(cast(w, 'grandblessing').ok);
-  settleCast(w, 2);
-  assert.ok(w.char.buffs.spiritward?.shield > 0, 'Divine Grace wards whoever it heals');
+test('the Starlight Idol sings her own notes and her own pool of moves, and they build Applause (not Spirit)', () => {
+  const pool = PATH_VARIANTS.idol;
+  assert.equal(pool.length, PATH_COMBOS.idol.length, 'one choice per combo step');
+  pool.forEach((step, i) => {
+    assert.equal(step[0], PATH_COMBOS.idol[i], `step ${i + 1} opens with her own`);
+    assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
+    for (const v of step) assert.ok(MOVES[v.move], `${v.move} is a move`);
+  });
+  assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+  const w = idol();
+  w.spirit = 0;
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  let shot = null;
+  for (let i = 0; i < 120; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+    shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
+  }
+  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.idol.map((s) => s.move), 'her combo');
+  assert.equal(shot, 'sinote', 'sparkle notes');
+  assert.ok(w.grace > 0, `her notes build Applause (${w.grace})`);
+  assert.equal(w.spirit ?? 0, 0, 'and no stars');
 });
 
-test('Purification opens a circle of light that burns the monsters standing in it again and again', () => {
-  const w = shrineFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [40, 80, 400][i] }));
+test('Healing Song heals at once, then hangs in the air mending whoever stands in it; Live Show reaches twice as far', () => {
+  const w = idolFull();
+  w.char.hp = Math.round(w.stats.maxHp * 0.3);
+  assert.ok(cast(w, 'grandblessing').ok);
+  run(w, 0.7);
+  const after = w.char.hp;
+  assert.ok(after > w.stats.maxHp * 0.45, 'it heals her at once');
+  const song = w.songs.find((s) => s.kind === 'heal');
+  assert.ok(song, 'the song hangs where she sang it');
+  run(w, 3);
+  assert.ok(w.char.hp > after, 'and keeps mending her while she stands in it');
+  assert.ok(w.grace > 5, `healing builds Applause (${w.grace})`);
+  // Live Show: sung again on full Applause, it reaches twice as far.
+  w.grace = 100;
+  w.graceAt = 1e9;
+  settleCast(w, 1);
+  assert.ok(cast(w, 'grandblessing').ok);
+  run(w, 0.7);
+  const live = w.songs.find((s) => s.kind === 'heal');
+  assert.ok(live.live && live.r >= song.r * 2 - 1, `Live Show: ${live.r} against ${song.r}`);
+  assert.equal(w.songs.filter((s) => s.kind === 'heal').length, 1, 'one healing song at a time');
+});
+
+test('Cheer: everyone standing in it hits harder, and stepping out of it lets it go', () => {
+  const w = idolFull();
+  assert.ok(cast(w, 'idolcheer').ok);
+  run(w, 1.6);
+  assert.ok(w.char.buffs.idolcheer?.values.watk > 0, 'standing in it lifts her attack');
+  w.body.x += 900;
+  run(w, 2.5);
+  assert.ok(!(w.char.buffs.idolcheer?.until > w.now), 'out of it, the lift wears off');
+});
+
+test('Lullaby: the monsters in it slow to a drift and her notes chip at them again and again', () => {
+  const w = idolFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [40, 80, 500][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'purification').ok);
   const hits = w.mobs.map(() => 0);
   let last = hp0.slice();
-  for (let i = 0; i < 60 * 5; i++) {
+  let lulled = false;
+  for (let i = 0; i < 60 * 4; i++) {
     updateWorld(w, DT, idle);
+    lulled ||= w.mobs[0].lulled > 0;
     w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
   }
-  assert.ok(w.fx.some((f) => f.kind === 'purifycircle') || hits[0] > 0, 'the circle is there');
-  assert.ok(hits[0] >= 4 && hits[1] >= 4, `the monsters in it burn again and again (${hits})`);
+  assert.ok(lulled, 'they are lulled');
+  assert.ok(hits[0] >= 4 && hits[1] >= 4, `chipped at again and again (${hits})`);
   assert.equal(hits[2], 0, 'and not the one outside it');
 });
 
-test("Resurrection Dance's Last Rite keeps her standing through a blow that would knock her out, once", () => {
-  const w = shrineFull();
+test("Curtain Call's Encore keeps her standing through a blow that would knock her out, once", () => {
+  const w = idolFull();
   w.god = false;
   assert.ok(cast(w, 'resurrection').ok);
+  assert.equal(w.pose.kind, 'sibow');
   settleCast(w, 3);
-  assert.ok(w.char.buffs.resurrection, 'Last Rite is on her');
+  assert.ok(w.char.buffs.resurrection, 'Encore is on her');
   w.invuln = 0;
-  // (Her guardian mustn't take the blow for her.)
-  w.guardian.guardAt = Infinity;
   hurtPlayer(w, 1e7, w.body.x + 30);
   assert.equal(w.dead, false, 'she is still standing');
   assert.ok(w.char.hp > 0);
   assert.ok(!w.char.buffs.resurrection, 'and it is spent');
 });
 
-test('Thousand Torii: a corridor of gates rises, the guardian cuts at each one, and the party is warded', () => {
-  const w = shrineFull();
-  w.god = false;
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [120, 260, 380][i] }));
+test('Grand Concert needs full Applause, spends it, heals in full, and three beats of music blast the monsters', () => {
+  const w = idolFull();
+  w.char.hp = Math.round(w.stats.maxHp * 0.2);
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 90, 250][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'thousandtorii').reason, 'gauge:grace', 'needs full Grace');
+  assert.equal(cast(w, 'thousandtorii').reason, 'gauge:grace', 'needs full Applause');
   w.grace = 100;
   w.graceAt = w.now;
   assert.ok(cast(w, 'thousandtorii').ok);
   assert.equal(w.grace, 0, 'spends it');
-  const seen = new Set();
-  let gates = 0;
-  for (let i = 0; i < 60 * 5; i++) {
+  assert.equal(w.pose.kind, 'siconcert');
+  let stage = false;
+  let beats = 0;
+  for (let i = 0; i < 60 * 3; i++) {
     updateWorld(w, DT, idle);
-    if (w.guardian.act) seen.add(w.guardian.act.kind);
-    gates = Math.max(gates, w.torii?.done ?? 0);
+    stage ||= w.fx.some((f) => f.kind === 'sistage');
+    beats = Math.max(beats, w.concert?.done ?? 0);
   }
-  assert.ok(gates >= 5, `the gates rise (${gates})`);
-  assert.ok(seen.has('torii'), 'the guardian goes down the corridor');
-  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster down the corridor is cut');
-  assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the last gate wards the party');
+  assert.ok(stage, 'the stage rises');
+  assert.equal(w.char.hp, w.stats.maxHp, 'she is healed in full');
+  assert.ok(beats >= 3 || !w.concert, `three beats (${beats})`);
+  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'the music reaches every monster round her');
+  assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the party is warded');
 });
 
 // An Onmyoji (past Elowen's trial) with the first of her yokai troupe, the oni.
@@ -2964,85 +2964,6 @@ test('a map change mid-finisher leaves nothing behind: no seal, no combo, no one
   assert.equal(w.troupeCombo, null, 'the combo is gone');
   assert.equal(w.seiman, null, 'and the seal');
   assert.ok([w.oni, w.yuki, w.tengu].every((k) => !k.hidden && !(k.air > 0) && k.act?.kind !== 'combo'), 'the troupe are back on their feet, all of them seen');
-});
-
-test("the kitsune guardian steps in front of a hit meant for the Maiden", async () => {
-  const { blockOnHit } = await import('../src/world/combat.js');
-  const w = shrineMaiden();
-  Object.assign(w.guardian.body, { x: w.body.x + 30 });
-  w.guardian.x = w.body.x + 30;
-  w.guardian.act = null;
-  assert.equal(blockOnHit(w, w.body.x + 60, () => 0), true, 'the hit never lands');
-  assert.equal(w.guardian.act.kind, 'block');
-  assert.ok(w.numbers.some((n) => n.text === 'GUARD'));
-  assert.equal(blockOnHit(w, w.body.x + 60, () => 0), false, 'and not again straight away');
-});
-
-test('the kitsune guardian only walks, and teleports to the Maiden when she is left far behind', () => {
-  const w = shrineMaiden();
-  for (const m of w.mobs) m.hp = 0;
-  run(w, 2);
-  // A little way off: she walks it, slowly.
-  Object.assign(w.guardian.body, { x: w.body.x - 150 });
-  w.guardian.act = null;
-  let fastest = 0;
-  for (let i = 0; i < 60 * 2; i++) {
-    updateWorld(w, DT, idle);
-    if (!w.guardian.act) fastest = Math.max(fastest, Math.abs(w.guardian.body.vx));
-    assert.notEqual(w.guardian.act?.kind, 'vanish', 'no teleport for a short walk');
-  }
-  assert.ok(fastest > 10 && fastest < 80, `she walks, slow (${Math.round(fastest)})`);
-  // Far off: she vanishes in fox fire and steps out of it by the Maiden.
-  Object.assign(w.guardian.body, { x: w.body.x - 400 });
-  w.guardian.act = null;
-  const seen = new Set();
-  for (let i = 0; i < 60 * 2; i++) {
-    updateWorld(w, DT, idle);
-    if (w.guardian.act) seen.add(w.guardian.act.kind);
-  }
-  assert.ok(seen.has('vanish') && seen.has('arrive'), `she teleports (${[...seen]})`);
-  assert.ok(w.fx.some((f) => f.kind === 'kitsuneport') || seen.has('arrive'), 'in fox fire');
-  assert.ok(Math.abs(w.guardian.x - w.body.x) < 80, 'and is back by the Maiden');
-});
-
-test('the kitsune guardian has more weapon moves, and skills of her own', (t) => {
-  // Her picks are random: a fixed sequence keeps the test steady.
-  let seed = 8080;
-  t.mock.method(Math, 'random', () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648));
-  const w = shrineMaiden();
-  const seen = new Set();
-  // (Her picks are random: a long fight, so she gets round to them.)
-  for (let r = 0; r < 20; r++) {
-    w.mobs.forEach((m) => { m.hp = m.maxHp ?? 1e9; });
-    for (let i = 0; i < 60 * 8; i++) {
-      updateWorld(w, DT, idle);
-      if (w.guardian.act) seen.add(w.guardian.act.kind);
-      w.mobs.forEach((m) => { m.hp = Math.max(m.hp, 1); });
-    }
-  }
-  // (Her picks are random, so this asks for some of her eight moves beyond the first four.)
-  assert.ok(['thrust', 'sweep', 'rising', 'twin', 'cleave', 'reap', 'haft', 'spin'].filter((k) => seen.has(k)).length >= 3, `a spread of her weapon moves (${[...seen]})`);
-  assert.ok(['moonfall', 'crescent', 'flurry'].filter((k) => seen.has(k)).length >= 2, `her skills (${[...seen]})`);
-  assert.ok(!w.fx.some((f) => f.kind === 'kitsunecrescent' && f.speed), 'nothing flies: she has no range');
-});
-
-test("the kitsune guardian's Moonfall drags the monsters round her in and crushes them", () => {
-  const w = shrineMaiden();
-  const k = w.guardian;
-  const live = w.mobs.slice(0, 3);
-  w.mobs.slice(3).forEach((m) => { m.hp = 0; });
-  live.forEach((m, i) => { m.x = Math.min(m.x2 ?? 1e9, Math.max(m.x1 ?? -1e9, k.x + k.dir * (150 + i * 40))); m.y = k.y; });
-  const hp0 = live.map((m) => m.hp);
-  const far0 = live.map((m) => Math.abs(m.x - k.x));
-  k.act = { kind: 'moonfall', t0: w.now, dur: 2.5, done: 0 };
-  let closest = far0.map(() => Infinity);
-  for (let i = 0; i < 60 * 1.8; i++) {
-    updateWorld(w, DT, idle);
-    live.forEach((m, j) => { closest[j] = Math.min(closest[j], Math.abs(m.x - k.x)); });
-  }
-  assert.ok(live.every((m, j) => closest[j] < far0[j] - 40), `they're pulled in (${far0.map(Math.round)} -> ${closest.map(Math.round)})`);
-  run(w, 1);
-  assert.ok(live.some((m, j) => m.hp < hp0[j]), 'and the blade comes down on them');
 });
 
 // ---------- Getting about: the Thief's flash jump and shadow dash, the Archer's air leap ----------

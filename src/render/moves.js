@@ -64,7 +64,7 @@ const breathe = (p) => Math.sin(p * Math.PI * 3);
 const rel = (p, a, b) => (p >= a && p < b ? 1 : 0);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'shrinegrand', 'shrinepurify', 'shrinerevive', 'shrinetorii', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyocombo']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyocombo']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -2581,6 +2581,285 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Starlight Idol's moves (her own; docs/design/starlight-idol.md) ----------
+  // A pop idol on stage: her wand is her microphone. She sings into it held out beside her face
+  // (MIC: never across it), bounces on the beat, sways her hips, points the mic at the monsters
+  // as the notes fly, and finishes on a pose with a wink. Her free hand works the crowd: waves,
+  // points, a peace sign, a hand on her heart.
+
+  // On the beat (opener, the note leaves at ~0.32): she sings a line into the mic with a little dip
+  // on the beat, then swings the mic out at them, the free hand flicking back.
+  sibeat(p) {
+    const dip = bump(p, 0, 0.26);
+    const out = ease(seg(p, 0.22, 0.34));
+    const hold = soft(seg(p, 0.42, 1));
+    return {
+      weapon: lerp(48, 82, out) - 6 * hold, arm: lerp(98, 90, out) - 8 * hold, lunge: 3 * out * (1 - hold * 0.5), tilt: 0.05 * out * (1 - hold), lift: -1 * dip,
+      rig: (r) => {
+        r.backArm = [q(lerp(1, -5, out)), q(lerp(-2, -4, out))];
+        r.squat = q(1.2 * dip);
+        danceLegs(r, [dip, [1.4, 0, 4], [-1.4, 0, -4]], [out, [2.4, 0, 4], [-2, 0, -8]]);
+        strikeFace(r);
+        if (hold > 0.6) r.mouth = 'grin';
+      },
+    };
+  },
+  // Step and touch (second, notes at ~0.3 and ~0.6): a step to one side and a touch, then back,
+  // her hips swaying with each, the mic swung out at them on each beat.
+  sistep(p) {
+    const b1 = ease(seg(p, 0.16, 0.3)) * (1 - soft(seg(p, 0.36, 0.48)));
+    const b2 = ease(seg(p, 0.48, 0.6));
+    const hold = soft(seg(p, 0.66, 1));
+    const sway = Math.sin(seg(p, 0, 0.66) * Math.PI * 2);
+    return {
+      weapon: lerp(48, 80, Math.max(b1, b2)), arm: lerp(98, 88, Math.max(b1, b2)) - 6 * hold, tilt: 0.06 * sway * (1 - hold), lunge: 2 * b1 + 3 * b2 * (1 - hold * 0.5),
+      rig: (r) => {
+        r.backArm = [q(-2 - 3 * b2 + 3 * b1), q(-3 - 3 * b1)];
+        r.hairLift = Math.abs(sway) > 0.6 ? Math.sign(sway) : 0;
+        danceLegs(r, [Math.max(0, sway), [3.4, 0, 6], [-0.4, -0.8, -6]], [Math.max(0, -sway), [0.6, -0.8, 6], [-3.4, 0, -6]], [b2, [2.4, 0, 4], [-2.2, 0, -8]]);
+        strikeFace(r);
+        if (hold > 0.6) r.eyes = 'happy';
+      },
+    };
+  },
+  // The high note (the finish, ~0.5): she leans back, eyes shut, belting into the mic, the free arm
+  // flung wide behind her; then throws herself forward with the mic thrust out as a big note
+  // blasts through the line. A wink to end it.
+  sihigh(p) {
+    const belt = soft(seg(p, 0.04, 0.38));
+    const blast = ease(seg(p, 0.4, 0.52));
+    const hold = soft(seg(p, 0.6, 0.92)) * (1 - soft(seg(p, 0.94, 1)));
+    return {
+      weapon: lerp(lerp(48, 44, belt), 85, blast), arm: lerp(lerp(98, 104, belt), 92, blast) - 6 * hold, tilt: -0.1 * belt * (1 - blast) + 0.1 * blast * (1 - hold), lunge: -2 * belt * (1 - blast) + 6 * blast * (1 - hold * 0.5),
+      lift: 1.5 * breathe(p) * belt * (1 - blast),
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, -7, belt), -4, blast) + 6 * hold), q(lerp(-3, -7, belt) - 2 * hold)];
+        r.hairLift = blast > 0.3 && hold < 0.5 ? 1 : belt > 0.5 ? -1 : 0;
+        r.cape -= q(4 * blast);
+        danceLegs(r, [belt * (1 - blast), [2, 0, 4], [-2.6, -0.4, -10]], [blast, [3.6, 0, 6], [-3.4, -0.6, -14]]);
+        strikeFace(r);
+        if (belt > 0.4 && blast < 0.3) r.eyes = 'happy';
+        if (hold > 0.4) {
+          r.eyes = 'wink';
+          r.mouth = 'grin';
+        }
+      },
+    };
+  },
+  // Blown kiss (an opener in her pool, ~0.3): the free hand brought up under her chin and flung
+  // out at them with a wink; the note flies off her fingertips.
+  sikiss(p) {
+    const up = soft(seg(p, 0, 0.22));
+    const fling = ease(seg(p, 0.22, 0.34));
+    const hold = soft(seg(p, 0.4, 1));
+    return {
+      weapon: 75, arm: 40 - 8 * hold, lunge: 2.5 * fling * (1 - hold * 0.5), tilt: 0.05 * fling * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, 5, up), 9, fling)), q(lerp(lerp(-2, -9, up), -7, fling))];
+        danceLegs(r, [fling, [2, 0, 4], [-0.6, -1.6, -20]]);
+        if (fling > 0.2) r.eyes = 'wink';
+        else if (up > 0.5) r.mouth = 'cat';
+      },
+    };
+  },
+  // Over the shoulder (second in her pool, ~0.32 and ~0.6): she turns her back to them, looks over
+  // her shoulder singing, then turns back round and points the mic at them on the next beat.
+  sishoulder(p) {
+    const away = soft(seg(p, 0.02, 0.18)) * (1 - soft(seg(p, 0.42, 0.52)));
+    const turned = away > 0.5;
+    const pt1 = ease(seg(p, 0.24, 0.34)) * (1 - soft(seg(p, 0.38, 0.46)));
+    const pt2 = ease(seg(p, 0.52, 0.62));
+    const hold = soft(seg(p, 0.68, 1));
+    return {
+      weapon: turned ? 120 - 20 * pt1 : lerp(48, 82, pt2), arm: turned ? 70 + 20 * pt1 : lerp(98, 90, pt2) - 6 * hold, turn: turned ? -1 : 1, lunge: 3 * pt2 * (1 - hold * 0.5), tilt: turned ? -0.05 : 0.05 * pt2 * (1 - hold),
+      rig: (r) => {
+        r.backArm = turned ? [q(3), q(-6)] : [q(-3 - 2 * pt2), q(-3)];
+        r.hairLift = p > 0.42 && p < 0.55 ? 1 : 0;
+        danceLegs(r, [turned ? 1 : 0, [1.2, 0, 4], [-1.8, -1.2, -16]], [pt2, [2.6, 0, 4], [-2.2, 0, -8]]);
+        strikeFace(r);
+        if (hold > 0.5) r.eyes = 'happy';
+      },
+    };
+  },
+  // Idol jump (third in her pool, ~0.45): a jump with both heels kicked up behind, the mic held up
+  // and out, singing down at them from the top of it.
+  sijump(p) {
+    const crouch = bump(p, 0, 0.16);
+    const hop = Math.sin(Math.PI * seg(p, 0.12, 0.72));
+    const sing = ease(seg(p, 0.34, 0.46));
+    const land = bump(p, 0.7, 0.86);
+    return {
+      weapon: lerp(30, 120, sing), arm: lerp(130, 85, sing), lift: 12 * hop - 1.5 * crouch,
+      rig: (r) => {
+        r.air = hop > 0.15;
+        r.squat = q(1.5 * (crouch + land));
+        r.backArm = [q(4 * hop), q(-9 * hop - 2)];
+        r.hairLift = hop > 0.3 ? -1 : 0;
+        danceLegs(r, [hop, [-1.4, -4.6, -40], [-3.6, -5.4, -60]]);
+        strikeFace(r);
+        if (hop > 0.5 && sing < 0.3) r.eyes = 'happy';
+      },
+    };
+  },
+  // Idol pose (a finish in her pool, ~0.48): a little spin of the mic in her fingers, then a hip pop
+  // with the mic thrust out, the free hand flashing a peace sign at her hip; the wink.
+  sipose(p) {
+    const spin = seg(p, 0.06, 0.36);
+    const pop = ease(seg(p, 0.38, 0.5));
+    const hold = soft(seg(p, 0.56, 0.92)) * (1 - soft(seg(p, 0.94, 1)));
+    return {
+      weapon: spin < 1 ? 40 + spin * 360 : lerp(40, 88, pop), arm: spin < 1 ? 80 : lerp(80, 95, pop) - 4 * hold, lunge: 4 * pop * (1 - hold * 0.4), tilt: -0.06 * pop,
+      rig: (r) => {
+        r.backArm = [q(-2 + 4 * hold), q(-3 + 2 * hold)];
+        r.cape -= q(3 * pop);
+        danceLegs(r, [pop, [3, 0, 6], [-1, -1.4, -24]]);
+        strikeFace(r);
+        if (hold > 0.4) {
+          r.eyes = 'wink';
+          r.mouth = 'grin';
+        }
+      },
+    };
+  },
+  // Up + attack: up on her toes, the mic pointed up at whatever flies, the free arm thrown up too.
+  siup(p) {
+    const go = ease(seg(p, 0.2, 0.36));
+    const hold = soft(seg(p, 0.45, 1));
+    return {
+      weapon: lerp(48, 50, go), arm: lerp(98, 122, go) - 15 * hold, tilt: -0.08 * go * (1 - hold), lift: 2 * go * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(-2 + 3 * go), q(-3 - 8 * go)];
+        danceLegs(r, [go, [0.8, -1.4, 10], [-2, -2.6, -40]]);
+        strikeFace(r);
+      },
+    };
+  },
+  // In the air: knees tucked, she sings down at them, the mic pointed at the ground.
+  siair(p) {
+    const go = ease(seg(p, 0.18, 0.34));
+    return {
+      weapon: lerp(60, 150, go), arm: lerp(100, 70, go),
+      rig: (r) => { r.air = true; r.backArm = [q(-4), q(-7)]; danceLegs(r, [1, [2.4, -4.6, 40], [-1.2, -3.6, 20]]); strikeFace(r); },
+    };
+  },
+  // Out of a run: a rock-star knee slide, leaning back, belting into the mic, then pointing it at
+  // them from the end of the slide.
+  sidash(p) {
+    const slide = soft(seg(p, 0, 0.24)) * (1 - soft(seg(p, 0.78, 1)));
+    const point = ease(seg(p, 0.42, 0.54));
+    return {
+      weapon: lerp(46, 85, point), arm: lerp(100, 90, point), tilt: -0.16 * slide * (1 - point * 0.6), lunge: 4 * slide,
+      rig: (r) => {
+        r.squat = q(4 * slide);
+        r.backArm = [q(-7 * slide), q(-6 * slide)];
+        r.hairLift = slide > 0.4 ? 1 : 0;
+        danceLegs(r, [slide, [5.4, -0.6, 10], [-4.4, -1, -70]]);
+        strikeFace(r);
+        if (slide > 0.5 && point < 0.3) r.eyes = 'happy';
+      },
+    };
+  },
+  // Healing Song (1.2 s, the song starts at ~0.45): she lays her free hand on her heart, closes her
+  // eyes and sings into the mic, swaying slowly side to side; the song rises round her.
+  sisong(p) {
+    const into = soft(seg(p, 0, 0.3));
+    const sway = Math.sin(seg(p, 0.15, 1) * Math.PI * 2) * into;
+    const out = soft(seg(p, 0.86, 1));
+    return {
+      weapon: 48, arm: lerp(80, 99, into) - 10 * out, tilt: 0.05 * sway, lift: breathe(p) * into * 0.8,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 5, into) * (1 - out)), q(lerp(-2, -6, into) * (1 - out) - 2 * out)];
+        r.hairLift = Math.abs(sway) > 0.6 ? Math.sign(sway) : 0;
+        danceLegs(r, [Math.max(0, sway), [2.4, 0, 6], [-0.2, -0.6, -4]], [Math.max(0, -sway), [0.2, -0.6, 4], [-2.4, 0, -6]]);
+        if (into > 0.5 && out < 0.5) {
+          r.eyes = 'happy';
+          strikeFace(r);
+        }
+      },
+    };
+  },
+  // Cheer (0.9 s, the cheer bursts at ~0.6): three pumps of the mic up over her head on the beat,
+  // a hop on the last, free arm pumping too: "hey, hey, HEY!"
+  sicheer(p) {
+    const pump = (a, b) => bump(p, a, b);
+    const k = Math.max(pump(0.05, 0.25), pump(0.25, 0.45), pump(0.45, 0.7) * 1.2);
+    const hop = Math.sin(Math.PI * seg(p, 0.48, 0.78));
+    const settle = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(48, 64, Math.min(1, k)), arm: lerp(98, 124, Math.min(1, k)) - 30 * settle, lift: 7 * hop,
+      rig: (r) => {
+        r.air = hop > 0.2;
+        r.backArm = [q(3 * k), q(-3 - 8 * k)];
+        r.squat = q(1.2 * (1 - k) * (1 - settle) * (p < 0.48 ? 1 : 0));
+        danceLegs(r, [hop, [1.6, -3.4, 30], [-2.4, -4, -40]]);
+        strikeFace(r);
+        if (hop > 0.4) r.eyes = 'happy';
+      },
+    };
+  },
+  // Lullaby (1.2 s, the lullaby drifts out at ~0.5): she holds the mic low and close, eyes half
+  // shut, rocking slowly as if with a baby in her arms, the free hand drifting out in a soft wave.
+  silullaby(p) {
+    const into = soft(seg(p, 0, 0.25));
+    const rock = Math.sin(seg(p, 0.1, 1) * Math.PI * 1.5) * into;
+    const wave = soft(seg(p, 0.35, 0.6)) * (1 - soft(seg(p, 0.85, 1)));
+    return {
+      weapon: lerp(40, 55, into), arm: lerp(80, 70, into), tilt: 0.06 * rock, lift: breathe(p) * 0.6 * into,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 8, wave)), q(lerp(-2, -5, wave) + Math.sin(p * Math.PI * 4) * wave)];
+        r.hairLift = 0;
+        danceLegs(r, [Math.max(0, rock), [2, 0, 4], [-0.6, -0.4, -4]], [Math.max(0, -rock), [0.6, -0.4, 4], [-2, 0, -4]]);
+        if (into > 0.5) r.eyes = 'half';
+        if (wave > 0.4) r.mouth = 'cat';
+      },
+    };
+  },
+  // Curtain Call (1.4 s, they rise at ~0.7): a deep bow, mic swept out to the side, then she rises
+  // with both arms flung up and wide to the crowd, and the fallen get up with her.
+  sibow(p) {
+    const bow = soft(seg(p, 0.05, 0.35)) * (1 - soft(seg(p, 0.5, 0.66)));
+    const rise = ease(seg(p, 0.6, 0.74));
+    const hold = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(48, 150, bow), 62, rise), arm: lerp(lerp(98, 50, bow), 122, rise) - 40 * hold, tilt: 0.3 * bow - 0.06 * rise * (1 - hold), lift: 3 * rise * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(lerp(-6 * bow, 5, rise) * (1 - hold)), q(lerp(-2, -11, rise) * (1 - hold) - 2)];
+        r.hairLift = bow > 0.5 ? 1 : rise > 0.3 && hold < 0.5 ? -1 : 0;
+        danceLegs(r, [bow, [2.6, 0, 4], [-2.2, -0.6, -12]], [rise, [1, -1.4, 10], [-1.6, -1.6, -20]]);
+        if (bow > 0.5) r.eyes = 'happy';
+        else if (rise > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Grand Concert (her finisher, 2.4 s): the stage rises under her (the lift), she spreads her arms
+  // to the crowd, then sings it out: three big beats, leaning back to belt and throwing the mic out
+  // at them on each (the music blasts at ~0.42, ~0.58, ~0.74), and ends on her pose: hip popped,
+  // mic out, the free arm up, and a wink.
+  siconcert(p) {
+    const up = soft(seg(p, 0, 0.22));
+    const spread = soft(seg(p, 0.16, 0.32));
+    const beat = (a) => ease(seg(p, a - 0.06, a)) * (1 - soft(seg(p, a + 0.02, a + 0.1)));
+    const b = Math.max(beat(0.42), beat(0.58), beat(0.76));
+    const belt = p > 0.32 && p < 0.8 ? 1 - b : 0;
+    const fin = soft(seg(p, 0.84, 0.94)) * (1 - soft(seg(p, 0.97, 1)));
+    return {
+      weapon: lerp(lerp(lerp(48, 44, spread), 85, b), 62, fin), arm: lerp(lerp(lerp(98, 104, spread), 92, b), 120, fin), lift: 6 * up * (1 - soft(seg(p, 0.95, 1))) + breathe(p) * up,
+      tilt: -0.08 * belt * spread + 0.1 * b - 0.06 * fin, lunge: 4 * b,
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, -8, spread), -4, b) * (1 - fin) + 3 * fin), q(lerp(-2, -9, spread) * (1 - fin) - 10 * fin)];
+        r.hairLift = b > 0.3 ? 1 : belt > 0.5 ? -1 : 0;
+        r.cape -= q(4 * b);
+        danceLegs(r, [spread, [2.2, 0, 4], [-2.2, 0, -6]], [b, [3.4, 0, 6], [-3, -0.6, -12]], [fin, [3, 0, 6], [-1, -1.4, -24]]);
+        strikeFace(r);
+        if (belt > 0.6 && spread > 0.5) r.eyes = 'happy';
+        if (fin > 0.4) {
+          r.eyes = 'wink';
+          r.mouth = 'grin';
+        }
+      },
+    };
+  },
+
   // ---------- The Sky Dancer's moves (her own; docs/design/sky-dancer.md) ----------
   // She dances on the air: every figure is drawn airborne (legs free, toes pointed), her gloved
   // palms and her feet throwing the wind. Arms stay below her face (out front, wide or low); each
@@ -3189,107 +3468,6 @@ export const MOVES = {
     };
   },
 
-  // ---------- The Shrine Maiden's figures (her gohei is drawn where the fan would be) ----------
-  // Grand Blessing (the light falls at ~0.55): she lifts the bell staff high and rings it while the
-  // gohei sweeps over her head left, right and left again, the way a priestess purifies, her hips
-  // swaying with it; then both arms open wide and her face lifts as the great light falls.
-  shrinegrand(p) {
-    const up = soft(seg(p, 0, 0.18));
-    const open = soft(seg(p, 0.48, 0.62));
-    const settle = soft(seg(p, 0.84, 1));
-    const hold = 1 - settle;
-    const sw = Math.sin(seg(p, 0.14, 0.5) * Math.PI * 3) * up * (1 - open);
-    const ring = Math.sin(seg(p, 0.1, 0.5) * Math.PI * 8) * 10 * up * (1 - open);
-    return {
-      weapon: -5 + ring + 30 * open * hold + 25 * settle, arm: lerp(70, 160, up) - 40 * open - 40 * settle,
-      tilt: 0.06 * sw - 0.12 * open * hold, lift: 2 * up * (1 - open) + 5 * open * hold + breathe(p) * open * hold,
-      fan: 0.4 + 0.6 * Math.abs(sw) + 0.6 * open * hold, fanA: (-10 + 70 * sw) * (1 - open) - 110 * open * hold,
-      rig: (r) => {
-        r.backArm = [q((2 + 6 * sw) * up * (1 - open) - 11 * open * hold), q(-11 * up * (1 - open) - 9 * open * hold)];
-        r.tx = q(0.8 * sw);
-        r.hairLift = open * hold > 0.4 ? -1 : 0;
-        r.cape -= q(3 * Math.abs(sw) + 4 * open * hold);
-        danceLegs(r, [up * (1 - open), [2.4, 0, 6], [-2.4, 0, -6]], [open * hold, [1.4, -1.6, 12], [-1.4, -1.4, -10]]);
-        if (open * hold > 0.4) r.eyes = 'happy';
-        else if (up > 0.3) r.eyes = 'blink';
-      },
-    };
-  },
-  // Purification (the circle forms at ~0.5): she draws the gohei up behind her shoulder, then
-  // sweeps it down and round in one long low arc across the ground before her, sinking with it,
-  // and drives the bell staff's foot down as the circle of light opens; holds, kneeling a little.
-  shrinepurify(p) {
-    const draw = soft(seg(p, 0, 0.24));
-    const arc = soft(seg(p, 0.22, 0.5));
-    const plant = soft(seg(p, 0.44, 0.54));
-    const settle = soft(seg(p, 0.82, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, -5, draw) + 165 * plant * hold + 20 * settle, arm: lerp(70, 120, draw) - 60 * plant - 10 * settle,
-      tilt: -0.08 * draw * (1 - arc) + 0.26 * arc * hold, lunge: 5 * arc * hold, lift: 2 * draw * (1 - arc),
-      fan: 0.5 + 0.5 * arc * hold, fanA: lerp(-40, 60, draw) * (1 - arc) + lerp(60, -150, arc) * arc * hold,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, -4, draw) * (1 - arc) + lerp(-4, 8, arc) * hold), q(lerp(0, -10, draw) * (1 - arc) + 2 * arc * hold)];
-        r.squat = q(2.4 * arc * hold);
-        r.cape -= q(2 * draw + 4 * arc * hold);
-        r.hairLift = arc * hold > 0.4 ? -1 : 0;
-        danceLegs(r, [draw * (1 - arc), [1.4, -1.2, 8], [-1.4, 0, -6]], [arc * hold, [5, 0, 8], [-4.4, 0, -16]]);
-        if (plant * hold > 0.3) r.eyes = 'half';
-      },
-    };
-  },
-  // Resurrection Dance (the dead rise at ~0.7): a long, slow figure. She kneels with the bell
-  // staff and the gohei held together at her heart, eyes closed; rises slowly, turning the gohei
-  // three times in a circle over her head as the bells ring; then lifts both arms to the sky and
-  // holds there on her toes, looking up.
-  shrinerevive(p) {
-    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.22, 0.36)));
-    const rise = soft(seg(p, 0.22, 0.4));
-    const circle = seg(p, 0.3, 0.64);
-    const sky = soft(seg(p, 0.62, 0.74));
-    const settle = soft(seg(p, 0.88, 1));
-    const hold = 1 - settle;
-    const turn = circle * Math.PI * 6;
-    const twirl = rise * (1 - sky);
-    const ring = Math.sin(p * 40) * 8 * twirl;
-    return {
-      weapon: lerp(10, 40, kneel) + ring - 40 * sky * hold + 30 * settle, arm: lerp(70, 40, kneel) + 100 * twirl + 150 * sky * hold - 20 * settle,
-      tilt: 0.3 * kneel - 0.14 * sky * hold, lift: 6 * sky * hold + breathe(p) * sky * hold,
-      fan: 0.3 + 0.7 * twirl + 0.6 * sky * hold, fanA: lerp(60, 120, kneel) * (1 - rise) + (Math.cos(turn) * 60 - 20) * twirl - 120 * sky * hold,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, 4, kneel) * (1 - rise) + 3 * Math.sin(turn) * twirl - 3 * sky * hold), q(lerp(0, 1, kneel) * (1 - rise) - 10 * twirl - 14 * sky * hold)];
-        r.squat = q(3 * kneel);
-        r.hairLift = twirl > 0.3 || sky > 0.3 ? -1 : 0;
-        r.cape -= q(3 * twirl + 4 * sky * hold);
-        danceLegs(r, [kneel, [3.4, 0, 2], [-3.4, -0.4, -2]], [sky * hold, [1.4, -2.4, 14], [-1.4, -1.6, -10]]);
-        if (kneel > 0.3) r.eyes = 'blink';
-        else if (sky * hold > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
-      },
-    };
-  },
-  // Thousand Torii (the gates rise at ~0.45): she plants the bell staff before her and holds the
-  // gohei out level and straight ahead, pointing the way down the corridor, chin up; as the gates
-  // rise she sweeps it up overhead and holds it high while her guardian goes gate to gate.
-  shrinetorii(p) {
-    const point = soft(seg(p, 0, 0.24));
-    const raise = soft(seg(p, 0.42, 0.56));
-    const settle = soft(seg(p, 0.9, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, 150, point) * (1 - settle) + 20 * settle, arm: lerp(70, 30, point) * (1 - settle) + 70 * settle,
-      tilt: -0.1 * point * hold, lunge: 3 * point * (1 - raise), lift: 3 * raise * hold + breathe(p) * raise * hold,
-      fan: 0.5 + 0.5 * raise * hold, fanA: lerp(0, 90, point) * (1 - raise) - 30 * raise * hold,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, 8, point) * (1 - raise) + 2 * raise * hold), q(lerp(0, -6, point) * (1 - raise) - 14 * raise * hold)];
-        r.hairLift = raise * hold > 0.3 ? -1 : 0;
-        r.cape -= q(2 * point + 4 * raise * hold);
-        danceLegs(r, [point * (1 - raise), [4, 0, 6], [-3.6, 0, -10]], [raise * hold, [1.4, -2, 12], [-1.4, -1.4, -8]]);
-        if (point * (1 - raise) > 0.5) r.eyes = 'half';
-        else if (raise * hold > 0.4) r.eyes = 'happy';
-      },
-    };
-  },
-
   // ---------- The Onmyoji's figures (sharp and commanding: the fan snaps, the talismans fly) ----------
   // Ofuda Barrage (the talismans fly at ~0.42): she snaps the fan shut and draws a fan of talismans
   // up by her cheek between her fingers, then whips her arm out flat and wide, flinging them, her
@@ -3469,7 +3647,6 @@ export const MOVE_MIN = {
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, whirlflip: 0.6, flashjump: 0.3, shadowrun: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
-  shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
   onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,
 };
 
@@ -3668,7 +3845,7 @@ const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
 const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
 // The figures where a grounded dancer rises up off the floor: the finishers, the cast upward, and
 // her big skills.
-const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'shrinegrand', 'shrinerevive', 'shrinetorii', 'onmyorally', 'onmyocombo']);
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'onmyorally', 'onmyocombo']);
 const DANCE_STYLES = {
   // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
   // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff

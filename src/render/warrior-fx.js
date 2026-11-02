@@ -21,7 +21,7 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
+const EMBLEMS = { idol: 'celembidol', brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
@@ -51,6 +51,12 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (school === 'rage') {
     rageFlare(ctx, x, y, p, h);
+    return;
+  }
+  // The Starlight Idol's: no pillar, a burst of sound waves and notes, her badge rising.
+  if (school === 'idol') {
+    fxSprite(ctx, 'celsiwave', x, y - 26, { p, scale: 0.6 });
+    if (p > 0.15) fxSprite(ctx, EMBLEMS.idol, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   // The Arbalist Engineer's: no pillar, a burst of steam with her badge turning in it.
@@ -119,6 +125,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
+  else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.4 });
   else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
   else if (school === 'aerial') fxSprite(ctx, 'celskyhit', x, y, { p, scale: k * 0.6 });
   else if (school === 'rosegold') fxSprite(ctx, 'celbdhit', x, y, { p, scale: k * 0.7, rot: (seed - 0.5) * 0.6 });
@@ -153,6 +160,26 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // Veil, and Starfall's constellation over the sky and its great impact.
     // The Arbalist Engineer's (brass and teal): her hit with flying cogs, a sticky or cluster burst, a
     // vent of steam, a sticky bolt ticking on a monster, and Big Bertha's ballista over her.
+    // The Starlight Idol's (pink and gold): her hit of notes and hearts, a song's sound waves, a
+    // song hanging in the air (a ring on the ground for as long as it lasts), a song's ring sung
+    // once (the party's healer bots), and Grand Concert's stage.
+    case 'sihit':
+      return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5, rot: (seed - 0.5) * 0.4 }) || true;
+    case 'siwave':
+      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.big ? 1 : 0.6 }) || true;
+    case 'idolsong': {
+      const S = f.song;
+      const name = S.kind === 'cheer' ? 'celsicheer' : S.kind === 'lull' ? 'celsilullaby' : 'celsisong';
+      const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
+      if (fade <= 0) return true;
+      return fxSprite(ctx, name, x, y + 2, { t: f.t, scale: S.r / 150, alpha: fade }) || true;
+    }
+    case 'sisong': case 'sicheer': case 'silullaby': {
+      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 3);
+      return fxSprite(ctx, `cel${f.kind}`, x, y + 2, { t: f.t, scale: f.big ? 1.2 : 0.6, alpha: fade }) || true;
+    }
+    case 'sistage':
+      return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 0.8 }) || true;
     case 'aehit':
       return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
     case 'aeboom':

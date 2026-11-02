@@ -49,13 +49,13 @@ export const JOBS = {
     blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
   },
 
-  // Spirit Mage branches. Both ask for Elowen's trial first (docs/design/spirit-mage-paths.md).
-  // Both are built: the Shrine Maiden (her guardian, Grace, her skills and Thousand Torii) and the
+  // The Star Witch's paths (ids kept). Both ask for Elowen's trial first.
+  // The Starlight Idol (her songs, Applause and Grand Concert; docs/design/starlight-idol.md) and the
   // Onmyoji (her yokai troupe led by the tengu, Binding, her skills and Troupe Combo).
   shrinemaiden: {
-    id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Shrine Maiden', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
-    hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand', 'staff'],
-    blurb: 'The shrine\'s own priestess, the heart of any party. Heals, wards and blessings carry everyone, and a kitsune shrine guardian with a naginata stands in front of them. The healer of any dungeon group.',
+    id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Starlight Idol', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand'],
+    blurb: 'A pop idol whose wand is her microphone: the heart of any party. Her songs hang in the air where she sings them, mending everyone, cheering them on or lulling the monsters; her heals and hits build Applause, and full, her songs reach twice as far. Curtain Call raises the fallen, and Grand Concert heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
     id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',

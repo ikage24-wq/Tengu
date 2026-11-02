@@ -31,11 +31,8 @@ const RETIRED = {
 };
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
-  return HAIR_STYLES.includes(s) || GUARDIAN_HAIR.includes(s) || TROUPE_HAIR.includes(s) ? s : HAIR_STYLES[0];
+  return HAIR_STYLES.includes(s) || TROUPE_HAIR.includes(s) ? s : HAIR_STYLES[0];
 };
-// Styles made for the Shrine Maiden's kitsune guardian alone (render/kitsune.js), never offered in
-// the creator: see "The kitsune guardian's own styles" below.
-export const GUARDIAN_HAIR = ['heian', 'highqueen', 'foxmane', 'sweptback', 'boundtail', 'moonriver'];
 // Styles made for the Onmyoji's yokai troupe alone, never offered in the creator: see "The yokai
 // troupe's own styles" below.
 export const TROUPE_HAIR = ['onisilver', 'onitwin', 'onibob', 'onipony', 'onimane', 'onitopknot', 'oniwhite', 'yukistraight', 'yukiwave', 'yukistorm', 'yukihime', 'yukibob', 'yukibun', 'yukitails', 'yukifrost', 'tengupart', 'tengusweep', 'tengulong', 'tenguwolf', 'tenguhalf', 'tenguslick'];
@@ -1000,12 +997,9 @@ Object.assign(STYLES, {
 // ---------- Two-tone ----------
 
 // The part of a closed outline below the line y = y0 (clipped).
-// ---------- The kitsune guardian's own styles ----------
-// Six styles drawn for her alone: regal, cold and strong, silver-white, leaving her fox ears clear.
-// Their bangs are new outlines too.
+// ---------- More fringes ----------
+// Long, sharp and centre-parted fringes the court and wild styles above draw with.
 Object.assign(FRINGES, {
-  // Heian court: parted in the middle, no fringe, the hair drawn back and down from a high brow.
-  heianpart: { pts: [[24.4, 14.4], [22.2, 10.8], [19.2, 8.4], [HX, 7.6], [11.8, 8.4], [8.8, 10.8], [6.6, 14.4]], lean: 0, plain: true, part: [[HX, 1.6], [HX, 7.2]] },
   // A queen's centre part: two long curtains sweeping down past the cheekbones.
   queenpart: { pts: [[24.8, 19.4], [23.4, 15.4], [21.4, 12.4], [18.8, 10.2], [HX, 9.2], [12.2, 10.2], [9.6, 12.4], [7.6, 15.4], [6.2, 19.4]], lean: 0, plain: true, part: [[HX, 1.6], [HX, 8.8]] },
   // Regal: long, sharp points swept across the brow to the far side, longest by the far eye.
@@ -1015,117 +1009,6 @@ Object.assign(FRINGES, {
   // Swept back: no fringe at all, the hairline high and the hair combed straight back.
   bare: { pts: [[24.6, 11.4], [22.2, 8.6], [18.8, 6.8], [HX, 6.4], [12.2, 6.8], [8.8, 8.6], [6.4, 11.4]], lean: 0, plain: true, strands: [[19.6, 6.6, 12.4, 2.6, 1, 0.6], [16.6, 6.4, 9.4, 3.4, 0.9, 0.5], [22, 8, 15.6, 2.4, 0.9, 0.6]] },
 });
-const PAPER = '#ffffff';
-const PAPER_SH = '#ddd6ee';
-const CORD = '#d8352c';
-const CORD_DK = '#8e1c16';
-const RINGG = '#f2c94c';
-const RINGG_DK = '#a8781a';
-Object.assign(STYLES, {
-  // Heian court hair: straight and floor-length, parted in the middle with no fringe, cheek-length
-  // side locks cut blunt (binsogi) in front of each ear, and the whole fall tied loosely at the
-  // small of the back with a white paper band and a red cord, gathering in there and spreading
-  // again below it.
-  heian(r, m) {
-    const side = (dir) => {
-      const pts = [[24, 10], [27.2, 10.8], [27.6, 22.6, 1], [21.8, 21.4, 1], [21.8, 14.6]];
-      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.6);
-    };
-    const upper = sheet({ len: 36, flare: 12.6, ends: 'level', n: 3 }, r, m, 0.7);
-    const lower = [mass([[HX - 8.6, 33.6], [HX + 8.6, 33.6], [HX + 11.4, 46], [HX + 12.6, 57.4], [HX - 12.6, 57.4], [HX - 11.4, 46]], r.sh1, m, 0.7),
-      streak(HX - 5.6, 37, HX - 8.6, 55, 1.1, -0.6, r.base, m, 0.7), streak(HX + 5.6, 37, HX + 8.6, 55, 1.1, 0.6, r.base, m, 0.7), crease(HX, 57.2, 9, r.sh2)];
-    const tie = [F(R(HX - 9.2, 32.2, 18.4, 2.8, PAPER)), F(R(HX - 9.2, 33.8, 18.4, 0.5, PAPER_SH)), F(R(HX - 9.4, 32.9, 18.8, 0.7, CORD)),
-      lock([[HX + 1, 33.4], [HX + 1.6, 37], [HX + 0.6, 40.4]], 0.9, CORD, m, 0.8), lock([[HX - 1, 33.4], [HX - 1.8, 36.6], [HX - 1.2, 39.6]], 0.9, CORD_DK, m, 0.8)];
-    return {
-      head: [crown(r)],
-      hang: [napeShadow(r), ...upper, ...lower, ...tie],
-      front: bangs('heianpart', r, m, [side(1), side(-1), F(R(21.8, 14.6, 0.7, 6.8, r.sh2)), F(R(8.5, 14.6, 0.7, 6.8, r.sh2))]),
-      tips: [46, 52],
-    };
-  },
-  // An imperial high tail: all of it drawn up and tied high at the back of the crown with a red
-  // cord and a gold ring, falling in one long, heavy tail to her knees; sharp swept bangs and two
-  // long locks framing the face to the chest.
-  highqueen(r, m) {
-    const tail = [[5.4, 4.6], [1.6, 3.6], [-2.4, 7], [-4.4, 14.6], [-4.8, 23], [-3.6, 31.4], [-4.4, 39.6], [-3.2, 46.6]];
-    const light = [[5, 5.6], [1.6, 7], [-1, 13], [-1.6, 21], [-0.8, 29], [-1.4, 36]];
-    const tie = [F(E(5.6, 4.8, 2.1, 2.5, CORD)), F(E(5.6, 4.8, 1.3, 1.6, CORD_DK)), F(E(6.4, 4.2, 1.5, 1.8, RINGG)), F(E(6.6, 4, 0.6, 0.7, RINGG_DK)),
-      lock([[5, 6.6], [4.2, 11], [4.8, 15.4]], 0.9, CORD, m, 1.1), lock([[5.8, 6.6], [6.2, 10.4], [5.6, 13.6]], 0.8, CORD_DK, m, 1.1)];
-    return {
-      head: [crown(r), streak(14, 4, 7.4, 4.8, 1, 0.4, r.sh1), streak(17.4, 6, 8.2, 6.6, 1, 0.4, r.sh1)],
-      hang: [F(E(HX, 19.6, 8.4, 3.6, r.sh2)), lock(tail, 9, r.sh1, m, 1.1, 0.14), lock(light, 3.8, r.base, m, 1.25), streak(0, 9, -2.6, 20, 0.9, 0.3, r.hi, m, 1.2), ...tie],
-      front: bangs('regal', r, m, sideLocks(r, m, [[25.2, 11], [26.8, 18.4], [27, 26.4], [25.8, 33]], undefined, 3.4)),
-      top: tie,
-      tips: [32, 42],
-    };
-  },
-  // A wild mane: huge, thick and untamed, flaring out round her shoulders in jagged spikes like a
-  // fox's ruff or a flame, a few spikes sticking up off the crown behind her ears; jagged bangs.
-  foxmane(r, m) {
-    const spike = (pts, w, c = r.base, k = 1.15) => [lock(pts, w, c, m, k), lock(fx(pts), w, c, m, k)];
-    return {
-      head: [crown(r, 1.6), lock([[7, 6], [2.4, 2.6], [-1.8, 2.4]], 4.8, r.sh1, m, 0.8), lock([[6, 9], [1, 8.6], [-3, 10.4]], 4.6, r.sh1, m, 0.8)],
-      hang: [...sheet({ len: 46, flare: 18, ends: 'points', n: 7, w0: 13.4, wave: 1.4 }, r, m, 1.05),
-        ...spike([[4, 14], [-1.4, 19], [-6, 22.4]], 5.2, r.sh1), ...spike([[3.4, 20], [-2, 27], [-6.4, 31]], 5.4, r.sh1), ...spike([[4, 27], [-0.6, 35], [-4.2, 40.4]], 5, r.sh1)],
-      front: bangs('mane', r, m, [...spike([[25, 12.6], [28.4, 17.6], [32.4, 21.4]], 4.6), ...spike([[25, 17], [27.4, 23.6], [31, 28]], 4.2)]),
-      tips: [34, 42],
-    };
-  },
-  // Swept back: no fringe, every strand combed straight back off a high brow (her whole face bare
-  // and cold), falling long and straight behind her; two loose strands slip forward over the brow.
-  sweptback(r, m) {
-    return {
-      head: [crown(r, 0.4), streak(20.4, 4.6, 8, 4.4, 1.1, 1.2, r.sh1), streak(22.6, 8, 9.6, 8.4, 1, 1, r.sh1), streak(18, 2.4, 9, 2.6, 0.9, 0.8, r.hi)],
-      hang: [napeShadow(r), ...sheet({ len: 50, flare: 13.4, ends: 'points', n: 4, wave: 0.8 }, r, m, 0.9)],
-      front: bangs('bare', r, m, [
-        lock([[19.4, 6.8], [21, 11.4], [20, 15.6], [20.8, 18]], 1.5, r.base, m, 1.3), lock([[17.6, 6.6], [18.4, 10.6], [17.2, 14]], 1.1, r.sh1, m, 1.3),
-        ...sideLocks(r, m, [[25, 10.4], [26.6, 17], [26.4, 24], [27.2, 29]], undefined, 2.8)]),
-      tips: [38, 46],
-    };
-  },
-  // A bound tail: gathered low at the nape into one thick tail brought forward over her near
-  // shoulder, bound every hand's width with gold rings and red cord, so it hangs in segments down
-  // the front of her robes and ends in a full brush like a fox's tail; sharp swept bangs and blunt
-  // locks at the cheeks.
-  boundtail(r, m) {
-    const spine = [[24.2, 16], [26.6, 21], [26.4, 27], [27, 33], [26.4, 39], [26.8, 44]];
-    const mv = mover(m, 1.1);
-    const bands = [];
-    for (const y of [22, 28, 34, 40]) {
-      const i = spine.findIndex((p) => p[1] >= y);
-      const [a, b] = [spine[Math.max(0, i - 1)], spine[i]];
-      const t = (y - a[1]) / (b[1] - a[1] || 1);
-      const [x, yy] = mv([a[0] + (b[0] - a[0]) * t, y]);
-      // (Each ring as wide as the tail is there: it tapers from the shoulder.)
-      const hw = 3.6 * (0.55 + 0.45 * (1 - (y - 16) / 28) ** 0.75);
-      bands.push(F(E(x, yy, hw, 1.2, RINGG)), F(E(x, yy + 0.5, hw, 0.6, RINGG_DK)), F(E(x, yy - 0.4, hw * 0.7, 0.35, '#fff3c0')), F(E(x, yy + 1.5, hw * 0.95, 0.45, CORD)));
-    }
-    const [bx, by] = mv([26.8, 44]);
-    const brush = poly(smooth([[bx - 3, by - 1], [bx + 3, by - 1], [bx + 4, by + 3.4], P(bx + 2, by + 7.4), [bx, by + 5.6], P(bx - 2.4, by + 7.6), [bx - 4, by + 3.2]]), r.base);
-    const side = (dir) => {
-      const pts = [[24, 10], [27, 10.8], [27.4, 21, 1], [22, 19.6, 1], [22, 14.6]];
-      return mass(dir > 0 ? pts : fx(pts), r.base, m, 0.6);
-    };
-    return {
-      head: [crown(r), streak(18, 4, 9, 9, 1, 0.6, r.sh1), streak(21, 7, 10.6, 13, 1, 0.6, r.sh1)],
-      hang: [napeShadow(r), ...sheet({ len: 26, flare: 12, ends: 'level', n: 3 }, r, m, 0.8)],
-      front: bangs('regal', r, m, [side(-1), lock(spine, 7, r.base, m, 1.1, 0.55), streak(25.2, 19, 26, 40, 0.9, -0.3, r.hi, m, 1.1), lock([[23.6, 17], [25.4, 26], [25.2, 38]], 1.4, r.sh1, m, 1.1), brush, ...bands, side(1)]),
-      tips: [40, 48],
-    };
-  },
-  // A moon river: floor-length hair falling from a centre part in slow, heavy waves, flaring wide
-  // below; long curtains frame the face, and a lock falls in front of each shoulder to her waist.
-  moonriver(r, m) {
-    const front = [[25, 12], [27, 20], [26, 28], [27.6, 35], [26.6, 41]];
-    return {
-      head: [crown(r, 0.6)],
-      hang: [napeShadow(r), ...sheet({ len: 57, flare: 17.6, ends: 'points', n: 6, wave: 2.2, w0: 12.4 }, r, m, 0.9)],
-      front: bangs('queenpart', r, m, [lock(front, 4, r.base, m, 1.2, 0.2), streak(25.6, 15, 26.4, 30, 0.8, -0.3, r.hi, m, 1.2), lock(fx(front), 4, r.base, m, 1.2, 0.2)]),
-      tips: [44, 52],
-    };
-  },
-});
-
 // ---------- The yokai troupe's own styles ----------
 // The oni's: big, wild and heavy, leaving room for his horns.
 Object.assign(FRINGES, {
