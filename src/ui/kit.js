@@ -256,15 +256,17 @@ export function itemShadow(ctx, x, y) {
 // Rarity on an item cell, drawn over the icon: a tint washing in from the corners for Epic and
 // up, and a shine that sweeps across Legendary items every couple of seconds.
 export function rarityCell(ctx, x, y, w, h, color, tier, r = 4) {
-  if (!color || tier < 2) return;
+  if (!color || tier < 1) return;
   ctx.save();
   roundRect(ctx, x, y, w, h, r);
   ctx.clip();
+  // (The icon redraw: rare items glow too, softly; Epic and up glow more, and breathe.)
+  const breathe = tier >= 2 ? 0.85 + 0.15 * Math.sin(now() * 2 + x * 0.05) : 1;
   for (const [cx, cy] of [[x, y], [x + w, y + h]]) {
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.6);
     g.addColorStop(0, color);
     g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.globalAlpha = 0.35;
+    ctx.globalAlpha = (tier >= 2 ? 0.4 : 0.22) * breathe;
     ctx.fillStyle = g;
     ctx.fillRect(x, y, w, h);
   }

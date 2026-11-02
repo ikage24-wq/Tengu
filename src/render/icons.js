@@ -213,7 +213,8 @@ function skillShapes(s) {
 // yet shows a plain tile.
 export function skillIcon(skillId) {
   const art = SKILL_ART[skillId];
-  return sprite(`skill|${skillId}`, () => (art ? { w: 16, h: 16, shapes: art(), res: 3, soft: 'cel', crisp: true } : { w: 16, h: 16, shapes: skillShapes(SKILLS[skillId]) }));
+  // (The icon redraw: a lighter outline, so the art reads softer and smoother, like the effects.)
+  return sprite(`skill|${skillId}`, () => (art ? { w: 16, h: 16, shapes: art(), res: 3, soft: 'cel', crisp: false } : { w: 16, h: 16, shapes: skillShapes(SKILLS[skillId]) }));
 }
 
 export function drawSkillIcon(ctx, skillId, x, y, scale = 1) {

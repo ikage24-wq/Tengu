@@ -7,6 +7,7 @@
 
 import { shade, mix } from '../pixel.js';
 import { hi, lt, sh, dk, ink, S, oval, arcPts, bez, bez3, rect, clip, cut, ball, tube, line, bevel, twinkle, glint, leaf, turn, W, GOLD, D2R } from './items.js';
+import { SKILLS } from '../../data/skills.js';
 
 // ---------- The tile ----------
 
@@ -56,15 +57,29 @@ function rrect(x, y, w, h, r, n = 6) {
 }
 const OUTER = rrect(0, 0, 16, 16, 3.4);
 const INNER = rrect(0.95, 0.95, 14.1, 14.1, 2.5);
-const inTile = (pts) => clip(pts, INNER);
+// (The icon redraw: the frame's shape says what kind of skill it is, readable at a glance. Attacks
+// keep the rounded square, passives are round, buffs have their corners cut like a gem.)
+const circle = (cx, cy, r, n = 28) => Array.from({ length: n }, (_, i) => [cx + Math.cos((i / n) * Math.PI * 2 - Math.PI / 2) * r, cy + Math.sin((i / n) * Math.PI * 2 - Math.PI / 2) * r]);
+const chamfer = (x, y, w, h, c) => [[x + c, y], [x + w - c, y], [x + w, y + c], [x + w, y + h - c], [x + w - c, y + h], [x + c, y + h], [x, y + h - c], [x, y + c]];
+const SHAPES = {
+  active: [OUTER, INNER],
+  passive: [circle(8, 8, 8), circle(8, 8, 7.05)],
+  buff: [chamfer(0, 0, 16, 16, 3.6), chamfer(0.95, 0.95, 14.1, 14.1, 3.1)],
+};
+let curOuter = OUTER;
+let curInner = INNER;
+const inTile = (pts) => clip(pts, curInner);
 
 // The tile being drawn: its tones, for glows and drop shadows.
 let cur = null;
 
 function tile(bg, kind) {
   const [top, deep] = BG[bg];
-  cur = { top, deep, mid: mix(top, deep, 0.5), shadow: mix(deep, '#1c1230', 0.3) };
-  const out = bevel(OUTER, INNER, FRAME[kind]);
+  cur = { top, deep, mid: mix(top, deep, 0.5), shadow: mix(deep, '#1c1230', 0.3), kind };
+  [curOuter, curInner] = SHAPES[kind] ?? SHAPES.active;
+  // The rim takes a little of the job's own colour (the tile's deep tone), so a bar of one job's
+  // skills reads as a set.
+  const out = bevel(curOuter, curInner, mix(FRAME[kind], deep, 0.3));
   const n = 10;
   for (let i = 0; i < n; i++) {
     const y = 0.9 + (i * 14.2) / n;
@@ -75,13 +90,12 @@ function tile(bg, kind) {
   out.push(S(inTile([[0, 0], [5, 0], [0, 5]]), mix(top, '#ffffff', 0.3)));
   out.push(S(inTile(rect(-1, 13.6, 18, 4)), mix(deep, '#1c1230', 0.12)));
   if (kind === 'passive') {
-    for (const [x, y] of [[1.5, 1.5], [14.5, 1.5], [1.5, 14.5], [14.5, 14.5]]) out.push(S(oval(x, y, 0.95, 0.95, 0, 12), '#8f86b8'), S(oval(x - 0.15, y - 0.15, 0.65, 0.65, 0, 12), '#f4f0ff'));
+    // Four studs round the ring.
+    for (const [x, y] of [[8, 0.5], [15.5, 8], [8, 15.5], [0.5, 8]]) out.push(S(oval(x, y, 0.85, 0.85, 0, 12), '#8f86b8'), S(oval(x - 0.15, y - 0.15, 0.55, 0.55, 0, 12), '#f4f0ff'));
   }
   if (kind === 'buff') {
-    // Gold corner caps.
-    for (const [x, y, a] of [[1.4, 1.4, 0], [14.6, 1.4, 90], [14.6, 14.6, 180], [1.4, 14.6, 270]]) {
-      out.push(S(turn([[x - 0.9, y - 0.9], [x + 1.8, y - 0.9], [x - 0.9, y + 1.8]], a, x, y), '#ffe9a0'));
-    }
+    // Gold caps on the cut corners.
+    for (const [x, y] of [[1.8, 1.8], [14.2, 1.8], [14.2, 14.2], [1.8, 14.2]]) out.push(S(oval(x, y, 0.9, 0.9, 0, 12), '#ffe9a0'));
   }
   return out;
 }
@@ -1460,10 +1474,17 @@ Object.assign(ART, { pirouette: ART.shadowdash, ribbonlash: ART.twinfang, gustli
 const TONES = {};
 
 // Every design is clipped to the tile, so nothing spills past the frame's own outline.
+// Finishers (the ones that spend a full gauge) wear a gold rim and a little gold star on top.
 export const SKILL_ART = Object.fromEntries(Object.entries(ART).map(([id, draw]) => [id, () => {
   const shapes = draw().filter(Boolean);
   TONES[id] = [cur.top, cur.deep];
-  return shapes.map((s) => ({ ...s, pts: clip(s.pts, OUTER) })).filter((s) => s.pts.length > 2);
+  const outer = curOuter;
+  const out = shapes.map((s) => ({ ...s, pts: clip(s.pts, outer) })).filter((s) => s.pts.length > 2);
+  if (SKILLS[id]?.fullGauge) {
+    out.push(...bevel(outer, curInner, '#ffd25a').slice(1, -1));
+    out.push(S([[8, -0.6], [8.9, 1.5], [11, 1.7], [9.4, 3], [9.9, 5], [8, 3.9], [6.1, 5], [6.6, 3], [5, 1.7], [7.1, 1.5]], '#ffe36b'), twinkle(8, 2.1, 0.9));
+  }
+  return out;
 }]));
 
 export function skillTone(id) {
