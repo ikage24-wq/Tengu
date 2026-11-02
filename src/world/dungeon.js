@@ -435,7 +435,7 @@ function openCache(world, o) {
   const gold = Math.round((150 + Math.random() * 150) * k);
   char.gold += gold;
   world.log(`A hidden cache! +${gold} gold`, '#ffe36b');
-  for (const [id, qty] of [['hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k]]) {
+  for (const [id, qty] of [['hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k], ['gacha_ticket', 1]]) {
     if (ITEMS[id] && addItem(char.inventory, id, qty)) world.log(`Received ${ITEMS[id].name} x${qty}.`, ITEMS[id].color);
   }
   world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' });
@@ -475,6 +475,9 @@ function openChest(world, o) {
     const piece = setPieceFor(char, def.set);
     if (piece) give(makeEquip(piece, { rarity: run.hard ? 2 : 1, variant: 'roll' }));
   }
+  // A capsule ticket for the day's first clear, and one more on Hard.
+  const tickets = (daily ? 1 : 0) + (run.hard ? 1 : 0);
+  if (tickets && addItem(char.inventory, 'gacha_ticket', tickets)) world.log(`Received Capsule Ticket x${tickets}.`, ITEMS.gacha_ticket.color);
   for (const it of reward.items) {
     const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === 'hollow_acorn' ? 5 : 0);
     if (addItem(char.inventory, it.id, qty)) world.log(`Received ${ITEMS[it.id].name} x${qty}.`, ITEMS[it.id].color);

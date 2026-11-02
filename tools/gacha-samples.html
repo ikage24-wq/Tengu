@@ -1,0 +1,108 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Gacha samples</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: Sprout Village's capsule machine and its living set, Spring Spirit: each piece, then
+// the whole set standing and walking at several moments so its effects show moving
+// (render/gacha.js, render/jobgear/gacha.js, data/outfits-gacha.js).
+await import('/src/data/cash.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawMachine, drawCapsule, drawBurst, rarityOf } = await import('/src/render/gacha.js');
+const { GACHA_LOOKS } = await import('/src/data/outfits-gacha.js');
+
+const W = 1240;
+const H = 1420;
+const K = 1.5;
+const c = document.getElementById('c');
+c.width = W * K;
+c.height = H * K;
+const ctx = c.getContext('2d');
+setHd(true, K);
+ctx.setTransform(K, 0, 0, K, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+const title = (t, x, y, col = '#3a2d4f') => {
+  ctx.fillStyle = col;
+  ctx.font = 'bold 16px Segoe UI, sans-serif';
+  ctx.fillText(t, x, y);
+};
+const look = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const gearOf = (keys) => {
+  const g = {};
+  for (const e of GACHA_LOOKS.filter((x) => keys.includes(x.key))) {
+    g[e.slot] = { id: `look_gacha_${e.key}_${e.slot}` };
+    for (const s of e.covers ?? []) g[s] = { id: `look_gacha_${e.key}_${s}` };
+  }
+  return g;
+};
+const ALL = GACHA_LOOKS.map((e) => e.key);
+const hero = (gear, x, y, scale, state) => {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  setHd(true, K * scale);
+  nextFrame();
+  drawHero(ctx, look, gear, 0, 0, { pose: 'idle', time: 0, facing: 1, ...state }, null);
+  ctx.restore();
+  setHd(true, K);
+};
+
+// 1. The machine and a pull ending on the star prize.
+title('Sprout Village capsule machine: a pull', 20, 28);
+const fy = 220;
+ctx.fillStyle = 'rgba(58,45,79,0.12)';
+ctx.fillRect(0, fy, W, 2);
+const steps = [['Ticket in', { crank: 0 }, null], ['Crank!', { crank: 1, shake: true }, null], ['Clunk', { crank: 3 }, { dx: 8, open: 0 }], ['Rolls out', { crank: 0 }, { dx: 44, open: 0 }], ['Pop!', { crank: 0 }, { dx: 44, open: 0.5, burst: 0.25 }]];
+steps.forEach(([label, m, cap], i) => {
+  const x = 70 + i * 170;
+  nextFrame();
+  drawMachine(ctx, x, fy, m);
+  if (cap) {
+    if (cap.burst) drawBurst(ctx, x + cap.dx, fy - 14, cap.burst, 'star');
+    drawCapsule(ctx, x + cap.dx, fy, { rarity: 'star', open: cap.open });
+  }
+  title(label, x - 30, fy + 22, '#8f7cc4');
+});
+drawBurst(ctx, 1000, fy - 50, 0.5, 'star');
+hero(gearOf(['dewwings']), 1000, fy, 1.6, { time: 0.6 });
+title('Star prize: Dewdrop Wings!', 905, fy + 22, '#d4a020');
+
+// 2. The set, piece by piece.
+title('The Spring Spirit set (only from this machine)', 20, 268);
+const py = 430;
+GACHA_LOOKS.forEach((e, i) => {
+  const x = 100 + i * 190;
+  hero(gearOf([e.key]), x, py, 1.6, { time: 1.2 + i * 0.5 });
+  ctx.textAlign = 'center';
+  title(e.name, x, py + 22);
+  const r = rarityOf(e.rarity);
+  title(r.label, x, py + 42, e.rarity === 'star' ? '#d4a020' : e.rarity === 'rare' ? '#8a5ad8' : '#4a8ac8');
+  ctx.textAlign = 'left';
+});
+
+// 3. The whole set, alive: standing (flowers sprout, fireflies circle, pollen rises) and walking
+// (a shower of petals, fireflies trailing sparkles), at dusk.
+ctx.fillStyle = '#2e2a48';
+ctx.fillRect(0, 480, W, H - 480);
+title('Wearing the whole set: standing, five moments', 20, 510, '#f6f0ff');
+const s1 = 740;
+ctx.fillStyle = 'rgba(255,255,255,0.12)';
+ctx.fillRect(0, s1, W, 2);
+for (let i = 0; i < 5; i++) hero(gearOf(ALL), 130 + i * 240, s1, 2.4, { time: i * 0.75 });
+title('Walking, five moments', 20, 790, '#f6f0ff');
+const s2 = 1020;
+ctx.fillStyle = 'rgba(255,255,255,0.12)';
+ctx.fillRect(0, s2, W, 2);
+for (let i = 0; i < 5; i++) hero(gearOf(ALL), 130 + i * 240, s2, 2.4, { pose: 'walk', time: 0.3 + i * 0.41 });
+// 4. Up close: the set's bonus, a spring bloom (flowers ring the feet, petals spiral up and
+// burst over the head), then the butterfly settled on the crown.
+title('The full-set bonus up close: a spring bloom, then the butterfly resting on the crown', 20, 1080, '#f6f0ff');
+const s3 = 1380;
+ctx.fillStyle = 'rgba(255,255,255,0.12)';
+ctx.fillRect(0, s3, W, 2);
+[0.25, 0.7, 1.25, 1.95, 7.3].forEach((tm, i) => hero(gearOf(ALL), 130 + i * 240, s3, 3.2, { time: tm }));
+document.title = 'ready';
+</script>

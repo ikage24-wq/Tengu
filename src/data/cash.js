@@ -11,6 +11,7 @@
 import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, ENDGAME_THEMES, UNIQUE_IDS } from './items.js';
 import { CASUAL_LOOKS } from './outfits-casual.js';
 import { FUN_LOOKS } from './outfits-fun.js';
+import { GACHA_LOOKS } from './outfits-gacha.js';
 import { COSTUME_LOOKS } from './outfits-costume.js';
 import { ACC_LOOKS } from './outfits-acc.js';
 
@@ -28,7 +29,8 @@ export const CASH_ITEMS = [];
 
 function add(def) {
   ITEMS[def.id] = { type: 'cash', price: 0, ...def };
-  if (!def.retired) CASH_ITEMS.push(def.id);
+  // (Capsule machine looks are never sold: they only come out of the machines.)
+  if (!def.retired && !def.gacha) CASH_ITEMS.push(def.id);
 }
 
 // The pieces a whole-body costume is split into, and each one's share of the set's price.
@@ -37,7 +39,7 @@ const SPLIT = { bottom: { name: 'Bottom', share: 0.25 }, hat: { name: 'Hat', sha
 // The casual, swim, and funny lines. Each piece wears a hidden "look" item per slot it dresses
 // (its own, plus any it covers, like a onesie's legs), drawn by that line's module with the
 // entry's index as its design.
-for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['costume', COSTUME_LOOKS], ['acc', ACC_LOOKS]]) {
+for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['gacha', GACHA_LOOKS], ['costume', COSTUME_LOOKS], ['acc', ACC_LOOKS]]) {
   list.forEach((e, t) => {
     const look = (slot) => {
       const id = `look_${family}_${e.key}_${slot}`;
@@ -45,7 +47,7 @@ for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['co
       return id;
     };
     // (A draft is drawn but not sold yet.)
-    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft ? { retired: true } : {}) };
+    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft ? { retired: true } : {}), ...(e.machine ? { gacha: e.machine, rarity: e.rarity } : {}) };
     if (e.slot === 'weapon') add({ ...base, cover: { fun: family, t } });
     else if (e.covers?.includes('hat')) {
       // A whole-body costume or onesie is sold in pieces (the player's call, 2026-11-01): its top

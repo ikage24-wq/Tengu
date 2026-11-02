@@ -115,6 +115,11 @@ jobs.)
   without being hit), "Fashionista", one per story chapter, one per boss on Hard.
 - **Earned outfits**: lower the free Cash and put the best outfits behind achievements, boss
   trophies, and town currencies. The Cash Shop stays, but the special looks are earned.
+- **Capsule machines** (in: Sprout Village, Cherry Plaza): a town machine whose pieces build one
+  living set with moving effects and a whole-set bonus (Spring Spirit: pollen, petals, blooms,
+  fireflies, a butterfly). Looks only, never sold; a pull takes a Capsule Ticket, earned from
+  daily quests, every boss, hidden dungeon caches, and a dungeon's first clear of the day (and
+  Hard). No repeats, rarer pieces come up less often. Other towns' machines: later, if wanted.
 
 ### 9. Life and fun (later)
 - **Fun Fair** (FFXIV's Gold Saucer): Boss Rush, minigames, its own prize tokens and outfits.

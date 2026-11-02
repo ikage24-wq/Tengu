@@ -11,6 +11,7 @@
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
+import { outfitFx, drawOutfitFx } from './gacha.js';
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
@@ -2550,8 +2551,15 @@ function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) 
 // Draws a hero. Advanced jobs (state.job) get an idle aura that fades in while standing still,
 // layered behind and in front of the sprite.
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
+  // Capsule-machine looks carry living effects (render/gacha.js), drawn round the body.
+  const worn = outfitFx(gear);
   const job = settings.jobAuras && AURA_JOBS.has(state.job) ? state.job : null;
-  if (!job) return drawHeroBody(ctx, look, gear, x, y, state, anim);
+  if (!job) {
+    if (worn) drawOutfitFx(ctx, worn, 'back', x, y, state);
+    drawHeroBody(ctx, look, gear, x, y, state, anim);
+    if (worn) drawOutfitFx(ctx, worn, 'front', x, y, state);
+    return;
+  }
   const time = state.time ?? 0;
   const idle = (state.pose ?? 'idle') === 'idle';
   let k = idle ? 1 : 0;
@@ -2564,7 +2572,9 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   const s = state.scale ?? 1;
   const t = time + (state.seed ?? 0) * 1.37;
   drawJobAura(ctx, job, 'back', x, y, t, s, k);
+  if (worn) drawOutfitFx(ctx, worn, 'back', x, y, state);
   drawHeroBody(ctx, look, gear, x, y, state, anim);
+  if (worn) drawOutfitFx(ctx, worn, 'front', x, y, state);
   drawJobAura(ctx, job, 'front', x, y, t, s, k);
 }
 

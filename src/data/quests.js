@@ -163,7 +163,7 @@ export const QUESTS = {
     id: 'daily_meadow', name: 'Daily: Hill Patrol', giver: 'mira', minLevel: 6, daily: true,
     text: "The Toadstool Goblins sneak back into Clover Hills every night. Help me keep them in check: 15 will do for today.",
     objectives: [{ type: 'kill', mob: 'mushkin', count: 15 }],
-    rewards: { exp: 700, gold: 500, items: [{ id: 'orange_potion', qty: 5 }] },
+    rewards: { exp: 700, gold: 500, items: [{ id: 'orange_potion', qty: 5 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 
   // Pastel Harbor.
@@ -213,7 +213,7 @@ export const QUESTS = {
     id: 'daily_harbor', name: 'Daily: Warg Watch', giver: 'rook', minLevel: 14, daily: true,
     text: "Wargs keep circling the woods road where our carts go. Thin the pack: 20 Wargs today.",
     objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
-    rewards: { exp: 4500, gold: 1500, items: [{ id: 'orange_potion', qty: 10 }] },
+    rewards: { exp: 4500, gold: 1500, items: [{ id: 'orange_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 
   // Ember Crag.
@@ -233,7 +233,7 @@ export const QUESTS = {
     id: 'daily_crag', name: 'Daily: Restless Bones', giver: 'brann', minLevel: 24, daily: true,
     text: "The Dullahans never stay down for long. Put 20 of them back to rest today, and keep your guard up.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
-    rewards: { exp: 14000, gold: 3500, items: [{ id: 'white_potion', qty: 10 }] },
+    rewards: { exp: 14000, gold: 3500, items: [{ id: 'white_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 
   // Moonleaf Grove.

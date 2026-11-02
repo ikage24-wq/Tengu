@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { drawMachine } from './gacha.js';
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, snap, footShadow, slopeAt } from './pixel.js';
@@ -488,6 +489,27 @@ export function drawStreet(ctx, map, cam, width, time) {
         ctx.lineTo(x - 3 + k * 6, gy - 2 - fl);
         ctx.lineTo(x + k * 6, gy - 2);
         ctx.fill();
+      }
+    }
+  }
+  // The town's capsule machine: its capsules rattle now and then, a glint slides over the globe,
+  // and its crank turns while someone pulls (map.gachaTurn, set by the machine's window).
+  if (map.gacha != null) {
+    const x = map.gacha - cam.x;
+    if (x > -60 && x < width + 60) {
+      const gy = ground(map.gacha);
+      const turn = performance.now() / 1000 - (map.gachaTurn ?? -99);
+      const pulling = turn >= 0 && turn < 0.75;
+      const rattle = pulling ? Math.floor(turn * 14) % 2 === 0 : (time % 6.5) < 0.3 && Math.floor(time * 12) % 2 === 0;
+      ctx.save();
+      ctx.translate(snap(x), gy + 2);
+      ctx.scale(0.75, 0.75);
+      drawMachine(ctx, 0, 0, { crank: pulling ? Math.floor(turn * 10) : 0, shake: rattle });
+      ctx.restore();
+      const u = (time / 4.2) % 1;
+      if (u < 0.3) {
+        const g = Math.sin((Math.PI * u) / 0.3);
+        sparkleAt(ctx, x - 14 + u * 40, gy - 62 + u * 8, 3 * g, '#ffffff', g);
       }
     }
   }
@@ -1390,4 +1412,20 @@ export function drawParty(ctx, members, cam, width, time, hoverId = null) {
     drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
+}
+
+// A little four-point sparkle (the glint on the capsule machine's globe).
+function sparkleAt(ctx, x, y, r, c, a) {
+  if (r <= 0.05) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.quadraticCurveTo(x, y, x, y + r);
+  ctx.quadraticCurveTo(x, y, x - r, y);
+  ctx.quadraticCurveTo(x, y, x, y - r);
+  ctx.fill();
+  ctx.restore();
 }

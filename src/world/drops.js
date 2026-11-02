@@ -42,6 +42,8 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });
+  // Every boss leaves a capsule ticket.
+  if (def.boss) loot.push({ kind: 'item', id: 'gacha_ticket', qty: 1 });
   const gearRolls = def.boss ? 3 : rng() < GEAR_CHANCE ? 1 : 0;
   for (let i = 0; i < gearRolls; i++) {
     const id = gearFor(def.level, rng, fits);

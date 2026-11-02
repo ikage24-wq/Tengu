@@ -19,6 +19,7 @@ import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
+import { gachaWindow } from './gacha.js';
 import { tradeWindow } from './trade.js';
 import { tradeSay } from '../net/together.js';
 import { online } from '../net/online.js';
@@ -58,10 +59,11 @@ export function createUiState() {
       online: { x: 200, y: 30, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
+      gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
       trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'trade', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'gacha', 'trade', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -103,6 +105,8 @@ export function routeInput(state, world, input, dt) {
       }
     } else if (e.type === 'cook') {
       state.windows.cook.open = true;
+    } else if (e.type === 'gacha') {
+      state.windows.gacha.open = true;
     } else if (e.type === 'death') {
       state.death = true;
     } else if (e.type === 'admin') {
@@ -170,7 +174,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, trade: tradeWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, gacha: gachaWindow, trade: tradeWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

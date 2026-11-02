@@ -956,6 +956,23 @@ function letter() {
   return out;
 }
 
+// A capsule ticket: a mint stub with notched ends and a perforated tear line, a pink and white
+// capsule printed on it, and a sparkle (it's a prize).
+function gacha_ticket() {
+  const mint = '#8fe0a8';
+  const out = [];
+  const body = [[1, 4.6], [15, 4.6], [15, 7.2], ...arcPts(15, 8.6, 1.4, 1.4, 90, 270, 6), [15, 10], [15, 12.6], [1, 12.6], [1, 10], ...arcPts(1, 8.6, 1.4, 1.4, 270, 450, 6), [1, 7.2]];
+  out.push(...ball(body, mint, { k: 0.9, glow: 0.5 }));
+  out.push(S(rect(1.6, 5.2, 12.8, 0.7), lt(mint)));
+  for (let y = 5.6; y < 12.4; y += 1.4) out.push(S(oval(11.2, y, 0.32, 0.32, 0, 8), sh(mint)));
+  // The capsule: pink top, white bottom, a glint.
+  out.push(...ball(arcPts(6, 8.6, 3, 3, 0, 180, 12).concat([[3, 8.6]]), '#ff9ec0', { glow: 0.7 }));
+  out.push(...ball(arcPts(6, 8.6, 3, 3, 180, 360, 12), '#ffffff', { glow: 0 }));
+  out.push(S(rect(3, 8.3, 6, 0.6), sh('#ff9ec0')));
+  out.push(twinkle(13.4, 3.4, 1.6), ...glint(4.6, 6.8, 0.5));
+  return out;
+}
+
 // A parcel in brown paper tied with a mint ribbon and a bow on top.
 function parcel() {
   const kraft = '#e8b97a';
@@ -991,7 +1008,7 @@ function framed(draw) {
 
 const ART = {
   fluff, shell, sprout_leaf, mushcap, ribbon, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
-  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel,
+  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,
 };
 

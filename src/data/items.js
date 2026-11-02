@@ -471,6 +471,9 @@ for (const d of DISHES) {
 // Gathered and mined finds (data/gathering.js).
 for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'etc', gathered: true, price, color, desc });
 
+// The capsule machines' tickets (data/outfits-gacha.js): earned by playing, one turn of the crank.
+add({ id: 'gacha_ticket', name: 'Capsule Ticket', type: 'etc', price: 0, color: '#7fd17a', desc: "One turn of a town's capsule machine. Earned from daily quests, bosses, and dungeon treasure." });
+
 // Quest items: carried for a quest (a delivery), never sold or dropped.
 add({ id: 'letter', name: 'Sealed Letter', type: 'etc', quest: true, price: 0, color: '#ff9ec0', desc: 'For someone special. Deliver it by talking to them.' });
 add({ id: 'parcel', name: 'Parcel', type: 'etc', quest: true, price: 0, color: '#e8b97a', desc: 'A parcel tied with a mint ribbon. Deliver it by talking to whoever it is for.' });

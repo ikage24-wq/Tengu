@@ -343,6 +343,11 @@ function interact(world) {
     if (why) world.log(why, '#ffb3c6');
     return true;
   }
+  // A town's capsule machine.
+  if (world.map.gacha != null && Math.abs(world.map.gacha - b.x) < 24 && Math.abs(groundAt(world.map, world.map.gacha) - b.y) < 6) {
+    world.events.push({ type: 'gacha' });
+    return true;
+  }
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });

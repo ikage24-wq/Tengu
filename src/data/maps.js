@@ -24,6 +24,8 @@ export const MAPS = {
     id: 'sprout', plaza: 1760, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1550,
+    // The town's capsule machine (data/outfits-gacha.js).
+    gacha: 2045,
     width: 3200, height: 520, groundY: 480,
     look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.86 },
     terrain: [[0, 480], [1600, 480], [1640, 456], [2160, 456], [2200, 480], [3200, 480]],
