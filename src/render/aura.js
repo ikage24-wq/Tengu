@@ -221,16 +221,18 @@ function valorAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembsteel', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Momentum: a sky-blue ring at her feet, gold feathers circling her on a ring of wind as it
-// builds, and full (Hawkeye), the hawk emblem over her head and gold rings racing out.
+// Combo (the Acrobat Archer; internally Momentum): a mint ribbon swirling flat round her feet as it
+// builds, faster the fuller it is; full (Showtime), gold stars and the ribbon twirl round her and her
+// badge, a gold star with a ribbon and an arrow, shines over her head.
 function momentumAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringsky', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringhawk', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.15 && k < 1) fxSprite(ctx, 'celacaura', x, y, { frame: Math.floor(t * (4 + 8 * k)) % 8, scale: s * (0.4 + 0.25 * k), alpha: Math.min(0.8, (k - 0.15) * 2) });
     return;
   }
-  if (k > 0.4) fxSprite(ctx, 'celmomentum', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
-  if (k >= 1) fxSprite(ctx, 'celembhawk', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (k >= 1) {
+    fxSprite(ctx, 'celacaura', x, y - 22 * s, { t: t * 1.4, scale: s * 0.6 });
+    fxSprite(ctx, 'celembacro', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  }
 }
 
 // Encore (the Wind Dancer; internally the Thief's Shadow): a ring of coral and cream ribbons

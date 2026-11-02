@@ -41,6 +41,8 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 's
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Starlight Idol.
   'idolsong', 'sisong', 'siwave', 'sistage', 'sihit',
+  // The Acrobat Archer.
+  'achit', 'acfirework', 'acburst', 'trapsnap',
   // The Astronomer.
   'ashit', 'aswell', 'astide', 'asalign']);
 
@@ -143,7 +145,7 @@ export function hearWorld(world, cam) {
     if (tier > (m.tier ?? 0)) sfx('tier', { n: tier });
     m.tier = tier;
     if ((world.valor ?? 0) >= 100 && !(m.valor >= 100)) sfx('unbroken');
-    if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('hawkeye');
+    if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('showtime');
     if ((world.shadow ?? 0) >= 100 && !(m.shadow >= 100)) sfx('phantom');
     if ((world.ki ?? 0) >= 100 && !(m.ki >= 100)) sfx('carouselfull');
     if ((world.tails ?? 0) >= 100 && !(m.tails >= 100)) sfx('tailwindfull');

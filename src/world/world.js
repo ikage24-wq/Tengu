@@ -728,6 +728,8 @@ export function updateWorld(world, dt, input) {
       if (h.freeze && !(m.frozenUntil > world.now)) world.fx.push({ kind: 'freeze', x: m.x, y: m.y, h: m.def.h, w: m.def.w, t: 0, dur: 0.5 });
       if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
       if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : h.stun ? 'stun' : 'snare';
+      // (The Acrobat Archer's snare is a ribbon tied in a bow.)
+      if (h.snare) m.holdLook = world.char.job === 'archer' ? 'ribbon' : null;
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
     // (Burns bite the same way, in blue flame.)

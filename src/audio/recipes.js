@@ -210,13 +210,21 @@ const R = {
       { seq: 'r:120 C4+G4+C5:800', inst: 'brass_section', db: -6 },
     ],
   },
-  hawkeye: {
-    db: -11, max: 1, room: true, duck: [-5, 900], layers: [
-      { rec: 'windWhoosh', len: 1000 },
-      { seq: 'D5:60 F#5:60 A5:60 D6:60 A6:600', inst: 'orchestral_harp', db: -4 },
-      { seq: 'r:200 A6:600', inst: 'glockenspiel', db: -8 },
+  // Combo full (the Acrobat Archer's Showtime): a circus drum roll into a bright brass hit.
+  showtime: {
+    db: -10, max: 1, room: true, duck: [-5, 900], layers: [
+      { seq: 'C4:50 C4:50 C4:50 C4:50 C4:50 C4:50', inst: 'timpani', db: -6 },
+      { seq: 'r:300 C5+E5+G5+C6:700', inst: 'brass_section', attack: 0.01, db: -4 },
+      { seq: 'r:300 C7:80 G7:500', inst: 'glockenspiel', db: -8 },
     ],
   },
+  // The Acrobat Archer: an arrow landing (a bright pluck and a sparkle), Firework Arrow (a pop and a
+  // crackle of sparks), her springboard going (a springy boing), and Grand Somersault's ring of gold
+  // at the top of her leap (a cymbal swell into a fanfare).
+  achit: { db: -18, vary: 8, max: 3, gap: 50, layers: [{ seq: 'E6:90', inst: 'pizzicato_strings', db: -4 }, sparkle('B7:40', { db: -12 })] },
+  acfirework: { db: -11, vary: 6, max: 2, gap: 80, layers: [thump(180, 120, { db: -4 }), { rec: 'fireImpact', rate: 1.6, len: 300, db: -8 }, sparkle('C7:30 E7:60 G7:90 C8:120 G7:150', { db: -8 })] },
+  trapsnap: { db: -11, vary: 6, max: 2, layers: [{ wave: 'sine', f0: 160, slide: 2.2, env: { a: 5, s: 140, d: 120 }, db: -4 }, { rec: 'wood', rate: 1.4, db: -8 }] },
+  acburst: { db: -8, max: 1, room: true, duck: [-6, 1400], layers: [whoosh(600, 200, 3000, { focus: 0.6, db: -6 }), { seq: 'r:200 G4+C5+E5+G5:1000', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:200 C7:0 E7:60 G7:120 C8:180', { db: -8 })] },
   // The finishers' big moments: Titan Breaker's sword forming and the ground splitting under it,
   // and Falcon Dive's call (a rising wind and brass) and the falcon's strike.
   titanrise: { db: -12, max: 1, layers: [{ rec: 'unsheathe', rate: 0.7, len: 900 }, { seq: 'C3+G3:900', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },

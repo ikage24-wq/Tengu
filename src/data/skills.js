@@ -504,39 +504,39 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Archer (warm gold and sky blue: gold arrows, a huntress with tricks) ----------
-  // Every shot an Archer lands builds Momentum (0-100, see world/melee.js), more for each one in a
-  // row; a hit taken knocks half of it away. Full (Hawkeye), arrows fly faster and curve to find
-  // monsters. Comet Arrow needs it full and spends it.
+  // ---------- The Acrobat Archer (mint and gold: gold arrows, mint ribbons, stars, confetti) ----------
+  // The Archer remade (ids kept; docs/design/acrobat-archer.md): a playful show-off who shoots
+  // mid-trick with a short trick bow. Her shots that land build Combo (world/melee.js); full
+  // (Showtime) every shot splits into three, and Grand Somersault needs it full and spends it.
   //
-  // A simple first job: she fights with her basic shots, and three tricks set themselves off from
-  // them (procs, see world/melee.js): Blast Arrow and Snare Arrow from any shot, Spring Trap from
-  // her combo's last shot. Her buttons are Vault (getting past them) and Comet Arrow (the big one,
-  // on a full gauge). Steady Hands and Light Feet are passives.
+  // A simple first job: she fights with her basic shots, and two tricks set themselves off from them
+  // (procs, see world/melee.js): Firework Arrow and Ribbon Snare. Her buttons are Handspring
+  // (getting past them), Springboard (a trap) and Grand Somersault. Steady Hands and Light Feet are
+  // passives.
   blastarrow: skill({
-    id: 'blastarrow', name: 'Blast Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
-    desc: 'Your shots sometimes burst on impact, hitting everything close around their target, hit or miss.',
+    id: 'blastarrow', name: 'Firework Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
+    desc: 'Your shots sometimes go off like fireworks where they land, bursting in gold and mint on everything close around their target, hit or miss.',
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), r: lerp(50, 80, lv, m), pct: lerp(110, 160, lv, m) } }),
   }),
   snarearrow: skill({
-    id: 'snarearrow', name: 'Snare Arrow', job: 'archer', type: 'passive', fx: null, school: 'hawk',
-    desc: 'Your shots sometimes tangle their target in a net, holding it in place for a few seconds. While it is held, your shots hit it harder.',
+    id: 'snarearrow', name: 'Ribbon Snare', job: 'archer', type: 'passive', fx: null, school: 'hawk',
+    desc: 'Your shots sometimes trail a ribbon that wraps their target up in a bow, holding it in place for a few seconds. While it is tied up, your shots hit it harder.',
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(2, 3.5, lv, m), bonus: lerpf(0.15, 0.3, lv, m) } }),
   }),
   springtrap: skill({
-    id: 'springtrap', name: 'Spring Trap', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10,
-    desc: 'Set a spring trap on the ground just ahead. The first monster to step on it is snapped and flung into the air. Up to three traps at once.',
+    id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10,
+    desc: 'Set a little circus springboard down just ahead and give it a pat. The first monster to step on it is bounced high into the air. Up to three at once.',
     at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true }),
   }),
   vault: skill({
-    id: 'vault', name: 'Vault', job: 'archer', type: 'attack', fx: null, icon: 'vault', maxLevel: 10, school: 'hawk', movement: true,
-    desc: 'Spring up and over the monster in front of you, land behind it, and turn to shoot it. Nothing touches you mid-vault.',
+    id: 'vault', name: 'Handspring', job: 'archer', type: 'attack', fx: null, icon: 'vault', maxLevel: 10, school: 'hawk', movement: true,
+    desc: 'Run in and handspring right over the monster in front of you, land behind it, and turn to shoot it. Nothing touches you mid-flip.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: k(110, 180), hits: 1, targets: 1,
-        combo: [{ move: 'vault', dur: 0.62, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
+        combo: [{ move: 'achandspring', dur: 0.66, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
       };
     },
   }),
@@ -551,18 +551,16 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { speed: lerp(3, 18, lv, m), eva: lerp(3, 25, lv, m) } }),
   }),
   cometarrow: skill({
-    id: 'cometarrow', name: 'Comet Arrow', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Momentum, and spends it. Leap high into the air and hang there aiming straight down, then fire a giant flaming arrow that crashes into the ground ahead like a meteor: the ground cracks open, a shockwave races out both ways, and everything nearby is thrown into the air.',
+    id: 'cometarrow', name: 'Grand Somersault', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Combo, and spends it. Crouch deep and launch yourself into a huge triple somersault high above the screen; at the top a ring of gold bursts round you and you rain golden arrows down on everything below, then land with a wink.',
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(8, 12);
       return {
-        mp: k(30, 50), pct: k(420, 720), hits: 2, targets,
-        combo: [{ move: 'comet', dur: 1.5, step: -10, finisher: true, guard: 1.3, strikes: [
-          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, burst: 'cometfall', burstAt: 0, quiet: true, gauge: 0 },
-          { at: 0.62, pct: k(420, 720), reach: 230, h: 170, targets, knock: 220, launch: 460, crack: true, burst: 'cometimpact', burstAt: 0.55, fx: 'hawkhit', big: true, stop: 0.16, shake: 8, gauge: 0 },
-          { at: 0.76, pct: k(150, 260), reach: 270, h: 170, targets, knock: 300, burst: 'cometwave', burstAt: 0.55, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        mp: k(30, 50), pct: k(120, 200), hits: 1, targets: 0,
+        combo: [{ move: 'acsomersault', dur: 1.9, step: 0, finisher: true, guard: 1.7, strikes: [
+          { at: 0.58, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'acburst', burstAt: 0, burstDur: 0.8, gauge: 0 },
+          { at: 0.6, rain: k(12, 16), pct: k(120, 200), rainW: 420, around: true, span: 0.3, knock: 60, launch: 140, variant: 'acarrow', school: 'acro', gauge: 0 },
         ] }],
       };
     },
@@ -889,7 +887,7 @@ export const SKILLS = {
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
-  vault: 'vault', cometarrow: 'comet', springtrap: 'throw', packhowl: 'cheer',
+  vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'cheer',
   stampede: 'skyshot', snacktime: 'throw', deployturret: 'aedeploy', overclock: 'aebrace', bigbertha: 'aebertha',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',

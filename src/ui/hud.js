@@ -371,8 +371,8 @@ export function hotkeyAt(x, y) {
 const GAUGES = {
   valor: { color: '#4f7fe0', hot: '#9fd2ff', icon: 'shield', name: 'Valor', full: 'UNBROKEN', notch: () => null, edge: 'rgba(110,160,255,', ink: '#24307a',
     tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
-  momentum: { color: '#e8962a', hot: '#7fcfff', icon: 'feather', name: 'Momentum', full: 'HAWKEYE', notch: () => null, edge: 'rgba(255,200,90,', ink: '#8a4a1a',
-    tip: 'Your shots build it, more for each one landed in a row; taking a hit knocks half of it away. Full, your arrows fly faster and curve to find monsters, and Falcon Dive is ready.' },
+  momentum: { color: '#2a9a78', hot: '#ffd36a', icon: 'star5', name: 'Combo', full: 'SHOWTIME', notch: () => null, edge: 'rgba(94,214,168,', ink: '#145a4a',
+    tip: 'Your shots build it, more for each one landed in a row; your flips and rolls keep it from fading, and taking a hit knocks half of it away. Full (Showtime), every shot you loose splits into three arrows, and Grand Somersault is ready.' },
   grace: { color: '#e0609e', hot: '#ffd36a', icon: 'note', name: 'Applause', full: 'LIVE SHOW', notch: () => null, edge: 'rgba(255,143,192,', ink: '#8a2a5e',
     tip: 'The crowd cheers for you: your heals build it most, more for every ally they reach, and your songs and notes that land build it too; it fades once the fighting stops. Full, your songs reach twice as far and mend more, and Grand Concert is ready.' },
   binding: { color: '#6a4ac8', hot: '#e8e8ff', icon: 'planet', name: 'Orbit', full: 'FULL ORBIT', notch: () => null, ticks: 5, label: (v) => `${Math.min(5, Math.floor((v * 5) / 100 + 1e-9))}/5`, edge: 'rgba(212,216,238,', ink: '#2a1a6a',

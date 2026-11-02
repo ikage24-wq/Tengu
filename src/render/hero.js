@@ -2752,6 +2752,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
   // The Arbalist Engineer's crossbow takes her polished brass.
   if (state.job === 'stormcaller' && g.weapon?.type === 'crossbow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'brass' };
+  // The Acrobat Archer's bow is her short mint and gold trick recurve.
+  if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
   // The Astronomer's staff is her violet and silver orrery.
   if (state.job === 'onmyoji' && g.weapon?.type === 'staff' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'astro' };
   // The Starlight Idol's wand is her pink and gold microphone.

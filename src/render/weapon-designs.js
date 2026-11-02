@@ -956,7 +956,50 @@ function staff(m, t, f = 0) {
 // shortbow, copper-capped, a bronze recurve, an iron-banded composite, a steel bow with an arrow
 // shelf, a silver wing bow, a mithril leaf bow, a cobalt fin bow, a crystal bow, a runic recurve
 // and a starsteel crescent moon with stars at its tips.
+// The Acrobat Archer's bow (the 'acro' finish, render/hero.js): a short trick recurve, half the
+// height of a hunter's bow so it can be loosed mid-flip and held out in front of her chest without
+// reaching up across her face. Mint limbs curling back hard at the tips, gold star caps, a gold
+// grip wrapped with a mint ribbon whose tails flutter; a gem and a second star pair up the tiers.
+function acroBow(m, t) {
+  const s = [];
+  const H = 10.5 + t * 0.25;
+  const bulge = 4.6;
+  const thick = 2.2;
+  const sx = -bulge + thick / 2;
+  // The belly bows out toward the target (+x), the string behind the grip; past three quarters of
+  // the way out the limbs flick forward again at the tips (the recurve).
+  const xAt = (u) => sx + bulge * (1 - Math.pow(Math.abs(u), 1.6)) + 1.3 * Math.max(0, Math.abs(u) - 0.75) * 4;
+  const tipX = xAt(1);
+  const limb = (c, w = thick, u0 = -1, u1 = 1) => {
+    const o = [];
+    const i2 = [];
+    for (let i = 0; i <= 20; i++) {
+      const u = u0 + ((u1 - u0) * i) / 20;
+      const k = w * (1 - 0.4 * Math.abs(u));
+      o.push([xAt(u) + k / 2, u * H]);
+      i2.push([xAt(u) - k / 2, u * H]);
+    }
+    return T([...o, ...i2.reverse()], c);
+  };
+  s.push({ ...R(tipX - 0.35, -H, 0.7, H * 2, '#fff6fb'), string: true });
+  // The ribbon's tails, hanging from the grip behind the limbs.
+  s.push(T([[-1, 1], [-3.4, 3.4], [-2.6, 5.4], [-1.6, 3.6], [-0.4, 1.6]], m.bladeDark), T([[-1, 1.4], [-0.8, 4.6], [0.4, 6], [0.4, 3.4], [0, 1.6]], m.blade));
+  s.push(limb(m.blade));
+  s.push(F(limb(m.edge, thick * 0.3, -0.92, -0.12)), F(limb(m.edge, thick * 0.3, 0.12, 0.92)));
+  s.push(R(xAt(0) - 1.6, -2, 2.6, 4, m.trim), F(R(xAt(0) - 1.6, -0.4, 2.6, 0.8, m.trimDark)));
+  for (const sd of [-1, 1]) s.push(F(star(xAt(sd), sd * H, 1.6, m.trim, 0.42)));
+  const a = { tip: [tipX, -H], head: [1, 0], blade: [-H, H] };
+  if (t >= 4) {
+    s.push(...gem(xAt(0) - 0.3, 0, 0.8, m.gem));
+    a.gem = [xAt(0) - 0.3, 0];
+  }
+  if (t >= 8) for (const sd of [-1, 1]) s.push(F(star(xAt(sd * 0.55) - 1.2, sd * H * 0.55, 1, WHITE, 0.4)));
+  a.string = { x: tipX, h: H, color: '#fff6fb' };
+  return { shapes: s, blade: [-H, H], reach: [], a };
+}
+
 function bow(m, t) {
+  if (m.variant === 'acro') return acroBow(m, t);
   const s = [];
   const H = [19, 19.5, 20, 20.5, 21, 22, 22.5, 23, 23.5, 24, 25][t];
   const bulge = [7, 7, 8, 8, 8.5, 9, 9, 9.5, 9.5, 10, 11][t];

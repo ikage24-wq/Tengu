@@ -139,7 +139,7 @@ function weaponStyle(bot) {
   // heavy bolts.
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
-  if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
+  if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.45, special: 'swsnap' };
   // The Starlight Idol sings her notes at them, and her big one is the high note; the Astronomer
@@ -607,6 +607,22 @@ function bless(bot, world, rng, pct, r, big) {
 }
 
 const SPECIALS = {
+  // Grand Somersault: a huge leap, a ring of gold bursting at the top, and golden arrows raining on
+  // every monster round her.
+  cometarrow: {
+    move: 'acsomersault', dur: 1.9,
+    play: (bot, world, m, rng, P, tune) => {
+      const S = P.combo[0].strikes.find((s) => s.rain);
+      const b = bot.body;
+      world.fx.push({ kind: 'acburst', x: b.x, y: b.y, t: -1.1, dur: 0.8 });
+      const range = physicalRange(bot.stats, bot.stats.weaponType, S.pct * tune);
+      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < S.rainW / 2 && Math.abs(o.y - b.y) < 120)
+        .forEach((o, i) => {
+          world.fx.push({ kind: 'rain', variant: 'acarrow', school: 'acro', x: o.x, y: o.y, h: o.def.h, t: -1.2 - i * 0.05, dur: 0.45, seed: i });
+          land(bot, world, o, 1.4 + i * 0.05, range, { stack: i, knock: 60, launch: 140, big: !i, burst: 'achit', via: 'shot' }, rng);
+        });
+    },
+  },
   // Planetary Alignment: five planets in a row ahead of her, one beam through every monster in it.
   troupecombo: {
     move: 'asalign', dur: 2.2,

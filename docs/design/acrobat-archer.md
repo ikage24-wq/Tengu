@@ -1,0 +1,48 @@
+# The Acrobat Archer (the Archer remade)
+
+The player's picks (2026-11-02): an acrobat archer, mint and gold, a playful show-off, the Combo
+gauge with Showtime, and Grand Somersault as her finisher. Held to the Wind Dancer standard
+(CLAUDE.md). (The Beastmaster is to be replaced by a new bow path, designed next.)
+
+## Who she is
+
+A show archer who shoots mid-trick: skips, flips, splits, rolls and pirouettes, the bow drawn and
+loosed from the top of each, a wink after the good ones.
+
+- **Colour:** mint and gold (a touch of pink in her confetti).
+- **Shapes:** gold arrows trailing curling mint ribbons, five-point gold stars, confetti, round
+  circus bursts.
+- **Her bow:** the 'acro' finish draws her bow as a short trick recurve, half a hunter's bow's
+  height, mint limbs curling back at the tips, gold star caps, a gold grip with a mint ribbon; she
+  holds it canted at chest height, so it never reaches up across her face.
+
+## How she fights
+
+- **Her string (render/moves.js `ac*`):** a skip shot loosed as she lands, a back handspring with
+  an arrow off the top and another as she lands, and a split leap loosing a big arrow from mid-air.
+  Pool: a forward roll into a kneeling shot, a pirouette into a fan of three, a front flip with a
+  big arrow off the top.
+- **Commands:** a backbend shot up at fliers (up + attack), legs kicked out shooting down from the
+  air (and Down + attack), a dive roll out of a run coming up shooting, and her air leap is a back
+  handspring in the air.
+- **Combo** (her gauge, internally Momentum): shots that land build it, more for each in a row; her
+  flips, rolls and handsprings keep it from fading; a hit taken knocks half of it away. Full
+  (**Showtime**): every shot she looses splits into three arrows.
+- **Skills (ids kept):** Firework Arrow (blastarrow: shots sometimes go off like fireworks), Ribbon
+  Snare (snarearrow: a ribbon ties the target up in a bow), Springboard (springtrap: a circus
+  springboard that bounces monsters up), Handspring (vault), Steady Hands, Light Feet, and **Grand
+  Somersault** (cometarrow, the finisher): a huge leap with three somersaults, a ring of gold
+  bursting at the top, golden arrows raining on everything round her, and a landing with a wink.
+
+## Status (2026-11-02)
+
+Built, replacing the Archer in place (the job keeps the `archer` id and its skill ids; the name is
+Acrobat Archer).
+
+- Moves: acskip, acflip, acsplit, acroll, acspin, acfront, acup, acair, acdive, achandspring,
+  acspring, acsomersault (`bowShot` in render/moves.js times each draw and release).
+- Effects (tools/fx-art.js): `acarrow`, `acbig`, `achit`, `acfirework`, `acribbon`, `acspring`,
+  `acburst`, `acaura`, `embacro`. Icons, the Combo gauge, her aura, sounds.
+- Bots: an Archer in the party skips, flips and rolls as she shoots, and casts Grand Somersault.
+- The old Archer's moves and gold-and-sky-blue arrows stay only for the Beastmaster until it is
+  replaced.

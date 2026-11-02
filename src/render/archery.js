@@ -150,6 +150,14 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
   const u = f.dur ? Math.min(1, f.t / f.dur) : 0;
   const along = (d) => [x - Math.cos(ang) * d, y - Math.sin(ang) * d];
   switch (f.shot) {
+    case 'acarrow': case 'acbig': {
+      // The Acrobat Archer's: a gold arrow trailing a curling mint ribbon, and her big one wrapped in
+      // two; under Showtime the extra arrows are a little smaller.
+      const nose = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(nose) < 0;
+      fxSprite(ctx, f.shot === 'acarrow' ? 'celacarrow' : 'celacbig', x, y, { t: time + (f.seed ?? 0), flip: left, rot: left ? nose + Math.PI : nose, scale: (f.shot === 'acarrow' ? 0.5 : 0.62) * (f.split ? 0.85 : 1) });
+      return true;
+    }
     case 'hawkarrow': {
       // A gold arrow trailing sky-blue streaks. Under Hawkeye it bends as it homes in.
       const bend = (f.bend ?? 0) * Math.sin(Math.PI * u);
@@ -401,6 +409,17 @@ function drawJunk(ctx, item, x, y, rot) {
 export function drawArchery(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
+    case 'achit': {
+      // The Acrobat Archer's arrow landing: a gold star popping in a loop of mint ribbon, then
+      // confetti; heavy shots are bigger.
+      return fxSprite(ctx, 'celachit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.6 : 0.44 }) || true;
+    }
+    case 'acfirework':
+      // Firework Arrow going off.
+      return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.6 }) || true;
+    case 'acburst':
+      // Grand Somersault: the gold ring of arrows bursting round her at the top of her leap.
+      return fxSprite(ctx, 'celacburst', x, y - 72, { p, scale: 0.7 }) || true;
     case 'hawkhit': {
       // An Archer's arrow landing: a gold star pops with a sky-blue swoosh across it and gold
       // feathers burst off; heavy shots and crits add a gold ring racing out along the ground.
@@ -462,12 +481,18 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'trap': {
+      // (The Acrobat Archer's springboard, bobbing on its spring.)
+      if (f.look === 'spring') {
+        const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
+        return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.4, alpha: a2 }) || true;
+      }
       // Spring Trap, armed on the ground (it fades in as it's set, and out as it rusts away).
       const a = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
       fxSprite(ctx, 'celtrap', x, y, { t: time, scale: 0.6, alpha: a });
       return true;
     }
     case 'trapsnap': {
+      if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.4 }) || true;
       // The trap snapping shut on a monster, sparks and dust flying.
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;

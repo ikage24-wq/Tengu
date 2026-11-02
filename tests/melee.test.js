@@ -67,7 +67,7 @@ test('bare hands mix their blows too, and every new swing and shot is drawn', ()
   const fists = PATH_VARIANTS.fists.flat().map((s) => s.move);
   for (const m of ['headbutt', 'flyingkick', 'haymaker', 'cartwheel']) assert.ok(fists.includes(m), `${m} is a bare-handed blow`);
   const all = Object.values(PATH_VARIANTS).flat(2).map((s) => s.move);
-  for (const m of ['pommel', 'guardspin', 'kneelstab', 'shieldrush', 'tripleshot', 'lobshot']) assert.ok(all.includes(m), `${m} is in a pool`);
+  for (const m of ['pommel', 'guardspin', 'kneelstab', 'shieldrush', 'acroll', 'acspin', 'acfront']) assert.ok(all.includes(m), `${m} is in a pool`);
   for (const m of all) assert.ok(MOVES[m], `${m} is drawn`);
 });
 
@@ -283,7 +283,7 @@ test('bow shots chain into a combo, fly to their target, and land when they arri
   }
   assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS.archer.map((s) => s.move));
   assert.ok(firstHit > 16, `the arrow took time to arrive (frame ${firstHit})`);
-  assert.ok(w.body.x < x, 'hopped back while shooting');
+  assert.ok(Math.abs(w.body.x - x) > 4, 'she moves about as she shoots (skips, flips and leaps)');
 });
 
 test('the finishing arrow pierces the whole line', () => {
@@ -303,10 +303,10 @@ test("the archer's tricks: Blast Arrow and Snare Arrow go off on their own, Spri
     updateWorld(w, DT, press('KeyZ'));
     for (let i = 0; i < 40; i++) {
       updateWorld(w, DT, idle);
-      burst ||= w.fx.some((f) => f.kind === 'blast');
+      burst ||= w.fx.some((f) => f.kind === 'acfirework');
     }
   });
-  assert.ok(burst, 'the arrow burst on impact');
+  assert.ok(burst, 'the arrow went off like a firework');
   assert.ok(w.mobs.filter((m) => m.hp < 1e9).length >= 2, 'catching the monsters beside its target');
   const netted = w.mobs.find((m) => m.hold === 'snare' && m.frozenUntil > w.now);
   assert.ok(netted, 'a net holds its target');
@@ -1274,8 +1274,8 @@ test('the archer paths have command shots: up at flyers, from the air, and on th
   }
 });
 
-test("the Archer's skills go on as each path's arrows: gold for her, green for the Beastmaster", () => {
-  for (const [job, shot] of [['archer', 'hawkarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'aebolt']]) {
+test("the Archer's skills go on as each path's arrows: gold and mint for her, green for the Beastmaster", () => {
+  for (const [job, shot] of [['archer', 'acarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'aebolt']]) {
     const w = job === 'archer' ? range() : archer(job);
     w.char.skills.vault = 10;
     w.char.mp = 9999;
@@ -1401,64 +1401,59 @@ test("an Archer's shots build Momentum, more in a row; a hit knocks half of it a
   assert.equal(w.momentum, 0, 'it fades once the fighting stops');
 });
 
-test('full Momentum (Hawkeye): arrows fly faster and reach monsters above and below', () => {
-  const speedOf = (momentum) => {
+test('Showtime (full Combo): every shot splits into three arrows, and her flips keep the Combo from fading', () => {
+  const arrows = (momentum) => {
     const w = range();
     w.momentum = momentum;
     w.momentumAt = 1e9;
     updateWorld(w, DT, press('KeyZ'));
-    let shot = null;
-    for (let i = 0; i < 40 && !shot; i++) {
+    let n = 0;
+    for (let i = 0; i < 40; i++) {
       updateWorld(w, DT, idle);
-      shot = w.fx.find((f) => f.kind === 'projectile');
+      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile').length);
     }
-    return Math.hypot(shot.tx - shot.x, shot.ty - shot.y) / shot.dur;
+    return n;
   };
-  assert.ok(speedOf(100) > speedOf(0) * 1.3, 'faster under Hawkeye');
-  // A monster up on a ledge above: a plain shot passes under it, a Hawkeye shot curves up to it.
-  const above = (momentum) => {
-    const w = range();
-    w.mobs = [w.mobs[0]];
-    const m = w.mobs[0];
-    m.yAt = () => w.map.groundY - 75;
-    m.y = m.baseY = w.map.groundY - 75;
-    w.momentum = momentum;
-    w.momentumAt = 1e9;
-    updateWorld(w, DT, press('KeyZ'));
-    run(w, 1);
-    return w.mobs[0].hp < 1e9;
-  };
-  assert.equal(above(0), false, 'a plain shot misses the ledge');
-  assert.equal(above(100), true, 'a Hawkeye shot finds it');
+  assert.equal(arrows(0), 1, 'one arrow');
+  assert.equal(arrows(100), 3, 'three under Showtime');
+  // Mid-flip, the Combo holds; standing about, it fades.
+  const w = range();
+  w.momentum = 60;
+  w.momentumAt = w.now;
+  run(w, 4.5);
+  const idleK = w.momentum;
+  const f = range();
+  f.momentum = 60;
+  f.momentumAt = f.now;
+  for (let i = 0; i < 60 * 4.5; i++) {
+    if (!f.pose || f.pose.kind !== 'acflip') f.pose = { kind: 'acflip', since: f.now, dur: 9 };
+    updateWorld(f, DT, idle);
+  }
+  assert.ok(f.momentum > idleK, `her flips keep it going (${Math.round(f.momentum)} against ${Math.round(idleK)})`);
 });
 
-test('Comet Arrow needs full Momentum, spends it, and crashes down ahead, throwing everything into the air', () => {
+test('Grand Somersault needs a full Combo, spends it, leaps high, and rains golden arrows on everything round her', () => {
   const w = range();
   w.char.skills.cometarrow = 10;
   w.char.mp = 9999;
   w.momentum = 70;
-  assert.equal(cast(w, 'cometarrow').reason, 'gauge:momentum', 'waits for full Momentum');
+  assert.equal(cast(w, 'cometarrow').reason, 'gauge:momentum', 'waits for a full Combo');
   w.momentum = 100;
   assert.ok(cast(w, 'cometarrow').ok);
   assert.equal(w.momentum, 0, 'spends all of it');
+  assert.equal(w.pose.kind, 'acsomersault');
   let high = 0;
-  let fell = false;
-  for (let i = 0; i < 60 * 0.8; i++) {
+  let burst = false;
+  let rain = false;
+  for (let i = 0; i < 60 * 2.4; i++) {
     updateWorld(w, DT, idle);
-    high = Math.max(high, w.pose?.kind === 'comet' ? MOVES.comet((w.now - w.pose.since) / w.pose.dur).lift : 0);
-    fell ||= w.fx.some((f) => f.kind === 'cometfall');
+    if (w.pose?.kind === 'acsomersault') high = Math.max(high, MOVES.acsomersault((w.now - w.pose.since) / w.pose.dur).lift);
+    burst ||= w.fx.some((f) => f.kind === 'acburst');
+    rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'acarrow');
   }
   assert.ok(high > 50, `she leaps high (${Math.round(high)})`);
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 0, 'nothing lands before the comet does');
-  let air = 0;
-  for (let i = 0; i < 60 * 1.2; i++) {
-    updateWorld(w, DT, idle);
-    fell ||= w.fx.some((f) => f.kind === 'cometfall');
-    air = Math.max(air, ...w.mobs.map((m) => m.air ?? 0));
-  }
-  assert.ok(fell, 'the comet falls');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'it caught all of them');
-  assert.ok(air > 30, 'and threw them into the air');
+  assert.ok(burst && rain, 'a ring bursts round her and the arrows rain down');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'on all of them');
   // The no-spam rule holds.
   w.momentum = 100;
   assert.ok(cast(w, 'cometarrow').ok);
@@ -1476,7 +1471,7 @@ test('Down + attack shoots down at whatever is below, for every archer path', ()
     m.x = w.body.x + 90;
     m.y = w.body.y + 100;
     updateWorld(w, DT, { held: new Set(['ArrowDown', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
-    assert.equal(w.pose.kind, job === 'stormcaller' ? 'aeair' : 'downshot', `${job}: leans out and aims down`);
+    assert.equal(w.pose.kind, job === 'stormcaller' ? 'aeair' : job === 'archer' ? 'acair' : 'downshot', `${job}: aims down`);
     let hit = false;
     for (let i = 0; i < 60; i++) {
       updateWorld(w, DT, idle);
@@ -1489,7 +1484,7 @@ test('Down + attack shoots down at whatever is below, for every archer path', ()
 test('the Archer has command shots too: up at fliers, from the air, and on the run', () => {
   const w = range();
   updateWorld(w, DT, { held: new Set(['ArrowUp']), pressed: new Set(['KeyZ']), locked: false });
-  assert.equal(w.pose.kind, 'skyshot', 'up + attack shoots up');
+  assert.equal(w.pose.kind, 'acup', 'up + attack: a backbend shot up');
   run(w, 0.6);
   w.body.onGround = false;
   w.body.vy = -200;
@@ -1497,7 +1492,7 @@ test('the Archer has command shots too: up at fliers, from the air, and on the r
   w.lockTimer = 0;
   w.basicReadyAt = 0;
   updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose.kind, 'airshot', 'shooting from the air');
+  assert.equal(w.pose.kind, 'acair', 'shooting from the air');
 });
 
 test('War Cry goes off as Valor fills: the monsters turn on you and you take less damage', () => {

@@ -39,9 +39,9 @@ export const JOBS = {
     blurb: 'A bright young witch who casts like she\'s showing off, with INT: quick star bolts from a wand, or heavy comets and meteors from a staff, every spell out in a flash. Her spells and heals light the stars of her Constellation; all seven lit, her bolts split into three. Two star heals let her keep a party going.',
   },
   archer: {
-    id: 'archer', power: 1.45, spread: 0.72, name: 'Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
+    id: 'archer', power: 1.45, spread: 0.72, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
-    blurb: 'Fires from a distance with DEX. Steady and safe.',
+    blurb: 'A show-off who shoots mid-trick with DEX: skips, flips, splits and rolls, a short trick bow loosed from the top of each. Her hits in a row build Combo, and her flips keep it going; full (Showtime), every shot splits into three. Handspring, Springboard, and Grand Somersault: a huge leap raining golden arrows down.',
   },
   thief: {
     id: 'thief', power: 0.75, spread: 1.45, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: 10,

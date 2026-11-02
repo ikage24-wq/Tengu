@@ -427,7 +427,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -745,6 +745,10 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
       break;
     case 'moonstar':
       moonRainPiece(ctx, x, y, s, time);
+      break;
+    case 'acarrow':
+      // Grand Somersault's arrows: gold arrows with mint ribbons, falling steeply.
+      fxSprite(ctx, 'celacarrow', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
       break;
     case 'stmeteor':
       // Starfall's meteors: a gold star trailing midnight fire, falling down and right.

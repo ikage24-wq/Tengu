@@ -21,7 +21,7 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { astral: 'celembastro', idol: 'celembidol', brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
+const EMBLEMS = { acro: 'celembacro', astral: 'celembastro', idol: 'celembidol', brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
@@ -51,6 +51,12 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (school === 'rage') {
     rageFlare(ctx, x, y, p, h);
+    return;
+  }
+  // The Acrobat Archer's: no pillar, a firework going off over her with her badge rising.
+  if (school === 'acro') {
+    fxSprite(ctx, 'celacfirework', x, y - 40, { p, scale: 0.5 });
+    if (p > 0.15) fxSprite(ctx, EMBLEMS.acro, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   // The Astronomer's: no pillar, Lunar Tide's silver waves rising round her, her badge rising.
@@ -132,6 +138,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
   else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.4 });
+  else if (school === 'acro') fxSprite(ctx, 'celachit', x, y, { p, scale: k * 0.5, rot: (seed - 0.5) * 0.4 });
   else if (school === 'astral') fxSprite(ctx, 'celashit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.6 });
   else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
   else if (school === 'aerial') fxSprite(ctx, 'celskyhit', x, y, { p, scale: k * 0.6 });

@@ -42,6 +42,7 @@ const BG = {
   rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
   idolbg: ['#ffe0f0', '#a83a7a'],
+  acro: ['#d8fff0', '#1f8a6a'],
   lullbg: ['#f4e4ff', '#5a3a9a'],
   astral: ['#c8b8ff', '#24186a'],
 };
@@ -655,63 +656,69 @@ function crimsoneclipse() {
 }
 
 
-// ---------- Archer ----------
+// ---------- The Acrobat Archer (mint and gold: gold arrows, mint ribbons, stars) ----------
+const AMINT = '#5ed6a8';
+const AMINTINK = '#145a4a';
+const AGOLD = '#ffd36a';
+// A curl of mint ribbon along `pts`.
+const ribbonIcon = (pts, w = 0.8, c = AMINT) => solid(tube(pts, w * 0.5, w), c, { shadow: false, d: 0.3, ink: AMINTINK });
 
+// Firework Arrow: a gold arrow bursting into a firework of gold and mint rays.
 function blastarrow() {
-  const out = [...tile('fire', 'passive'), ...aura(10, 6, 6.4, '#fff3c0', 1.2)];
-  // An arrow striking home in a burst of fire and cloud.
-  out.push(...solid(starPts(10.4, 5.8, 5.6, 2.4, 8, -90), '#ffb347', { shadow: false, d: 0.45, ink: '#8a3a10' }));
-  out.push(S(starPts(10.4, 5.8, 3.2, 1.4, 8, -70), '#fff3c0'));
-  out.push(...puffs([[13.6, 9.4, 1.6], [6.6, 2.6, 1.4], [14, 2.6, 1.2]], '#fff6ee', { shadow: false, dark: '#e8c8b8', ink: '#8a4a3a' }));
-  out.push(...arrow([1.4, 14.6], [9, 7.2], { hw: 1.3, hl: 2, fl: '#6fc8ff' }));
-  out.push(...spark(2.6, 3, 1.1, '#fff3a6'));
+  const out = [...tile('acro', 'passive'), ...aura(10, 6, 6.4, '#fff4c8', 1.2)];
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2;
+    out.push(streak([10.4 + Math.cos(a) * 2, 5.8 + Math.sin(a) * 2], [10.4 + Math.cos(a) * 5.2, 5.8 + Math.sin(a) * 5.2], 0.9, k % 2 ? AMINT : AGOLD));
+  }
+  out.push(...solid(starPts(10.4, 5.8, 2.6, 1.1, 5, -90), '#fff4c8', { shadow: false, d: 0.3, ink: '#8e5228' }));
+  out.push(...arrow([1.4, 14.6], [8.6, 7.6], { hw: 1.3, hl: 2, fl: AMINT, head: AGOLD }));
   return out;
 }
-
+// Ribbon Snare: a mint ribbon tied in a bow round a gold arrow.
 function snarearrow() {
-  const out = [...tile('hawk', 'passive'), ...aura(9, 8, 6.6, '#fff8e0')];
-  // A rope net spread over the tile, knotted, an arrow pinning it.
-  const rope = '#a8743e';
-  for (let k = -3; k <= 3; k++) {
-    out.push(S(tube([[3 + k * 2.6, 2.4], [9 + k * 2.6, 14.4]], 0.32), rope), S(tube([[9 + k * 2.6, 2.4], [3 + k * 2.6, 14.4]], 0.32), rope));
-  }
-  for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) out.push(S(oval(8 + (a + b) * 1.3, 8.4 + (b - a) * 2.6, 0.5, 0.5, 0, 8), '#f0d6a0'));
-  out.push(...arrow([1.2, 3], [12.6, 12.4], { hw: 1.2, hl: 1.9, fl: '#6fc8ff' }));
-  out.push(...spark(13.6, 2.6, 1.1));
+  const out = [...tile('acro', 'passive'), ...aura(8, 8, 6.6, '#e6fff4')];
+  out.push(...arrow([1.6, 13.6], [14.2, 3], { hw: 1.2, hl: 1.9, fl: AMINT, head: AGOLD }));
+  out.push(...ribbonIcon([[3, 6], [6, 9.4], [9.6, 10.6], [12.6, 9.6]], 1.4));
+  for (const sd of [-1, 1]) out.push(...solid([[8, 8.6], [8 + sd * 3.6, 6.4], [8 + sd * 3.8, 10.4]], AMINT, { shadow: false, d: 0.3, ink: AMINTINK }));
+  out.push(...solid(oval(8, 8.6, 1.2, 1, 0, 10), AGOLD, { shadow: false, d: 0.3, ink: '#8e5228' }));
+  out.push(...spark(13.4, 12.6, 1));
   return out;
 }
-
+// Springboard: a striped circus springboard on its spring, a gold star bouncing off it.
 function springtrap() {
-  const out = [...tile('steel', 'passive'), ...aura(8, 10, 6.4, '#e4f2ff')];
-  // A steel trap snapping shut, its teeth meeting, sparks flying off it.
-  for (const sd of [-1, 1]) {
-    const jaw = arcPts(8, 11.4, 5.6, 5.6 * 0.9, sd > 0 ? -90 : 90, sd > 0 ? 0 : 180, 10);
-    out.push(...solid(tube(jaw, 0.9), '#c8d8f4', { shadow: false, d: 0.35, ink: '#2a3a6a' }));
-  }
-  for (let k = 0; k < 5; k++) out.push(...solid([[4 + k * 2, 7.8], [5 + k * 2, 10.2], [3 + k * 2 + 0.6, 10]], '#ffffff', { shadow: false, d: 0.25, ink: '#2a3a6a' }));
-  out.push(...solid(oval(8, 13.4, 5.2, 1.4, 0, 20), '#ffc94a', { shadow: false, d: 0.35, ink: '#7a4a10' }));
-  out.push(...spark(2.6, 3, 1.1, '#ffffff'), ...spark(13.4, 2.4, 1.2, '#fff3a6'));
+  const out = [...tile('acro', 'active'), ...aura(8, 8, 6.4, '#fff4c8')];
+  out.push(...solid(rect(2.6, 13.4, 10.8, 1.4), '#e09a36', { shadow: false, d: 0.3, ink: '#8e5228' }));
+  for (let k = 0; k < 3; k++) out.push(S(tube([[6.4, 12.6 - k * 1.3], [9.6, 12.2 - k * 1.3]], 0.35, 0.35), '#c8d2e8'));
+  out.push(...solid(turn(rect(2, 8.6, 12, 1.6), -12, 8, 9.4), AMINT, { shadow: false, d: 0.3, ink: AMINTINK }));
+  for (let x = 3.4; x < 13; x += 3) out.push(S(turn(rect(x, 8.8, 1.3, 1.2), -12, 8, 9.4), '#ffffff'));
+  out.push(...solid(starPts(9.4, 3.6, 2.6, 1.1, 5, -90), AGOLD, { shadow: false, d: 0.35, ink: '#8e5228' }));
+  return out;
+}
+// Handspring: a figure's arc flipping over, a gold arrow loosed back from the far side.
+function vault() {
+  const out = [...tile('acro', 'active'), ...aura(8, 6, 6.6, '#e6fff4')];
+  out.push(...ribbonIcon(arcPts(8, 11, 6, 7.4, 180, 360, 20), 1.1));
+  out.push(...solid(polyPts(14, 11, 1.6, 3, 90, 1), AMINT, { shadow: false, d: 0.3, ink: AMINTINK }));
+  out.push(...arrow([14.6, 3.2], [3.4, 9.4], { hw: 1.2, hl: 1.9, fl: AMINT, head: AGOLD }));
+  out.push(...spark(2.4, 2.6, 1.1, AGOLD));
+  return out;
+}
+// Grand Somersault (her finisher): a gold ring bursting high, golden arrows raining down from it.
+function cometarrow() {
+  const out = [...tile('acro', 'active'), ...aura(8, 5, 6.6, '#fff4c8', 1.3)];
+  out.push(...solid(tube(arcPts(8, 5, 4, 3, 0, 360, 24), 0.6, 0.6), AGOLD, { shadow: false, d: 0.3, ink: '#8e5228' }));
+  out.push(...solid(starPts(8, 5, 2.2, 0.9, 5, -90), '#fff4c8', { shadow: false, d: 0.3, ink: '#8e5228' }));
+  for (const x of [3, 8, 13]) out.push(...arrow([x - 1.4, 8.6], [x + 0.6, 14.4], { hw: 1, hl: 1.6, fl: AMINT, head: AGOLD }));
   return out;
 }
 
-function vault() {
-  const out = [...tile('skyblue', 'active'), ...aura(8, 6, 6.6, '#eef8ff')];
-  // A leap arcing up and over, an arrow loosed back down from the far side.
-  const arc = arcPts(8, 11, 6, 7.4, 180, 360, 20);
-  out.push(...solid(tube(arc, 0.7), '#fff6dc', { shadow: false, d: 0.3, ink: '#2a3a8a' }));
-  out.push(...solid(polyPts(14, 11, 1.6, 3, 90, 1), '#fff6dc', { shadow: false, d: 0.3, ink: '#2a3a8a' }));
-  out.push(...solid(oval(8, 14.4, 2.4, 1.1, 0, 14), '#8a6a9a', { shadow: false, d: 0.3, ink: '#3a2a4a' }));
-  out.push(...arrow([14.6, 3.2], [3.4, 9.4], { hw: 1.2, hl: 1.9, fl: '#ffd25a' }));
-  out.push(...spark(2.4, 2.6, 1.1));
-  return out;
-}
 
 function steadyhands() {
-  const out = [...tile('hawk', 'passive'), ...aura(8, 8, 6.6, '#fff8e0')];
+  const out = [...tile('acro', 'passive'), ...aura(8, 8, 6.6, '#e6fff4')];
   // A drawn bow held dead still on a sight.
-  out.push(...sightArt(10, 8, 4.4, '#ff8aa8', 0.5));
-  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2, { grip: '#3a74d0' }));
-  out.push(...arrow([3.4, 8.2], [12.6, 8], { hw: 1.2, hl: 1.9, fl: '#6fc8ff' }));
+  out.push(...sightArt(10, 8, 4.4, AGOLD, 0.5));
+  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2, { grip: AMINT }));
+  out.push(...arrow([3.4, 8.2], [12.6, 8], { hw: 1.2, hl: 1.9, fl: AMINT, head: AGOLD }));
   out.push(...glint(6.2, 4.4, 0.5), ...spark(13.6, 13.4, 1.1));
   return out;
 }
@@ -725,17 +732,6 @@ function lightfeet() {
   out.push(S(tube([[6.4, 12.6], [14.4, 12.6]], 0.5), '#5a3a20'));
   out.push(...leaf([10.6, 6.4], [15, 2.4], 2.6, '#ffffff', { bend: 0.6, rib: '#c4e8d4' }).shapes);
   out.push(...spark(13.8, 13.8, 0.9, '#fff3a6'));
-  return out;
-}
-
-function cometarrow() {
-  const out = [...tile('fire', 'active'), ...aura(10, 11, 6.6, '#fff3c0', 1.3)];
-  // A flaming arrow plunging into the ground in a burst, its fire tail streaming back up the tile.
-  out.push(...flame(4.8, 7.6, 4.4, 9, ['#c8452e', '#ffa23c', '#fff3c0'], { shadow: false, lean: -0.9 }));
-  out.push(...solid(starPts(10.6, 12.2, 5, 2, 8, -90), '#ffc94a', { shadow: false, d: 0.45, ink: '#8a3a10' }));
-  out.push(S(starPts(10.6, 12.2, 2.8, 1.1, 8, -70), '#fffbe0'));
-  out.push(...arrow([2.4, 2.6], [10.2, 11.6], { hw: 1.7, hl: 2.6, sw: 0.7, fl: '#ff8a3c', head: '#fff6c0' }));
-  out.push(...spark(13.6, 3, 1.2, '#fff3a6'), ...spark(14.4, 8, 0.8));
   return out;
 }
 

@@ -78,6 +78,14 @@ function backflip(t, k = 1) {
   };
 }
 
+// One bow shot inside a move: drawn from `a` to `at`, loosed at `at` with a kick of recoil. Returns
+// the pose's pull, nock and twang, and `snap` (loosed) and `kick` (the recoil) to pose round it.
+function bowShot(p, a, at) {
+  const pull = ease(seg(p, a, at));
+  const snap = seg(p, at, at + 0.08);
+  return { pull: snap > 0 ? 0 : pull, nock: snap === 0 && pull > 0.05, twang: twang(p, at), snap, kick: bump(p, at, at + 0.14) };
+}
+
 export const MOVES = {
   // A forward slash: wind up behind the head, cut down and through.
   slash(p) {
@@ -3088,6 +3096,257 @@ export const MOVES = {
         if (draw > 0.2 && fire < 0.3) r.eyes = 'half';
         else if (fire > 0.3 && down < 0.5) r.mouth = 'open';
         if (down > 0.4) [r.eyes, r.mouth] = ['happy', 'cat'];
+      },
+    };
+  },
+
+  // ---------- The Acrobat Archer's moves (her own; docs/design/acrobat-archer.md) ----------
+  // A playful show-off who shoots mid-trick: skips, flips, splits, rolls and pirouettes, the bow
+  // drawn and loosed from the top of each one, a wink after the good ones. Every trick is a whole
+  // body turning (never stretched); the bow is held out in front, upright or aimed, clear of her
+  // face, and the draw hand comes back to the cheek's side, never across it.
+
+  // Skip shot (opener, the arrow leaves at ~0.5): a little skip forward, the bow swung up as she
+  // goes, drawn in the air and loosed as she lands, then a twirl of the free hand.
+  acskip(p) {
+    const skip = Math.sin(Math.PI * seg(p, 0.05, 0.5));
+    const raise = ease(seg(p, 0, 0.25));
+    const s = bowShot(p, 0.2, 0.5);
+    const hold = soft(seg(p, 0.62, 1));
+    return {
+      weapon: lerp(-40, 10, raise) - 6 * s.kick, arm: lerp(70, 82, raise) + 3 * s.kick, lift: 6 * skip, lunge: 2 * skip - 3 * s.kick, tilt: -0.04 * s.pull - 0.06 * s.kick,
+      pull: s.pull, nock: s.nock, twang: s.twang,
+      rig: (r) => {
+        r.air = skip > 0.2;
+        r.backArm = s.snap > 0 ? [q(-6 + 9 * hold), q(-3 - 5 * hold)] : [q(2 - 6 * s.pull), -1];
+        danceLegs(r, [skip, [2.4, -3, 30], [-1.6, -1.6, -20]], [hold, [2, 0, 4], [-0.6, -1.4, -20]]);
+        if (s.kick > 0.3) strikeFace(r);
+        else if (hold > 0.5) r.eyes = 'wink';
+      },
+    };
+  },
+  // Back handspring (second, arrows at ~0.38 and ~0.6): a backflip with the bow drawn all the way
+  // round, an arrow off the top of it upside down and another as she lands.
+  acflip(p) {
+    const f = backflip(seg(p, 0.08, 0.66), 0.9);
+    const s1 = bowShot(p, 0.12, 0.38);
+    const s2 = bowShot(p, 0.42, 0.62);
+    const hold = soft(seg(p, 0.7, 1));
+    const sh = p < 0.4 ? s1 : s2;
+    return {
+      ...f, weapon: -6 * sh.kick, arm: 82 - 10 * hold, pull: sh.pull, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
+      rig: (r) => {
+        f.rig(r);
+        r.backArm = sh.snap > 0 ? [-6, -3] : [q(2 - 6 * sh.pull), -1];
+        if (sh.kick > 0.3) strikeFace(r);
+        else if (hold > 0.5) r.eyes = 'happy';
+      },
+    };
+  },
+  // Split leap (the finish, ~0.5): a running leap into a split in mid-air, legs flung out front and
+  // back, the bow drawn full at the top and a big arrow loosed; she lands in a crouch and winks.
+  acsplit(p) {
+    const crouch = bump(p, 0, 0.14);
+    const leap = Math.sin(Math.PI * seg(p, 0.1, 0.74));
+    const split = soft(seg(p, 0.16, 0.36)) * (1 - soft(seg(p, 0.6, 0.72)));
+    const s = bowShot(p, 0.16, 0.5);
+    const land = bump(p, 0.7, 0.88);
+    const hold = soft(seg(p, 0.8, 1));
+    return {
+      weapon: 10 - 8 * s.kick, arm: 82 + 4 * s.kick - 6 * hold, lift: 22 * leap - 2 * crouch, lunge: 3 * leap - 4 * s.kick, tilt: -0.06 * split - 0.08 * s.kick,
+      pull: s.pull, nock: s.nock, twang: s.twang,
+      rig: (r) => {
+        r.air = leap > 0.15;
+        r.squat = q(2 * (crouch + land));
+        r.backArm = s.snap > 0 ? [q(-7 + 4 * hold), -3] : [q(2 - 6 * s.pull), -1];
+        r.hairLift = leap > 0.3 ? -1 : 0;
+        r.cape -= q(3 * leap);
+        danceLegs(r, [split, [9, -7, 80], [-9, -6, -80]], [land, [2.6, 0, 6], [-2.4, 0, -8]]);
+        if (s.kick > 0.3) strikeFace(r);
+        else if (hold > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+  // Forward roll (an opener in her pool, ~0.6): a quick forward roll along the ground, popping up on
+  // one knee with the bow already drawn.
+  acroll(p) {
+    const roll = ease(seg(p, 0.02, 0.42));
+    const rolling = p > 0.02 && p < 0.42;
+    const s = bowShot(p, 0.36, 0.6);
+    const kneel = soft(seg(p, 0.38, 0.5)) * (1 - soft(seg(p, 0.82, 1)));
+    return {
+      weapon: rolling ? 30 : 10 - 6 * s.kick, arm: rolling ? 60 : 82, tilt: rolling ? roll * Math.PI * 2 : -0.05 * s.kick, lift: rolling ? 6 * Math.sin(roll * Math.PI) : 0, lunge: rolling ? 4 : -3 * s.kick,
+      pull: rolling ? 0 : s.pull, nock: !rolling && s.nock, twang: s.twang,
+      rig: (r) => {
+        if (rolling) tuck(r);
+        r.squat = q(3 * kneel);
+        r.backArm = rolling ? [-2, -3] : s.snap > 0 ? [-6, -3] : [q(2 - 6 * s.pull), -1];
+        danceLegs(r, [kneel, [3, 0, 10], [-3, 2.4, -80]]);
+        if (s.kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Pirouette fan (second in her pool, ~0.6): a spin on one toe with the bow held out, coming round
+  // to loose three arrows in a fan.
+  acspin(p) {
+    const a = ease(seg(p, 0.04, 0.44));
+    const turning = p > 0.04 && p < 0.44;
+    const s = bowShot(p, 0.42, 0.6);
+    const hold = soft(seg(p, 0.7, 1));
+    return {
+      weapon: turning ? -20 : 10 - 6 * s.kick, arm: turning ? 80 : 95 - 6 * hold, trail: turning, lift: 2 * bump(p, 0.04, 0.44),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      pull: turning ? 0 : s.pull, nock: !turning && s.nock, twang: s.twang, lunge: -3 * s.kick,
+      rig: (r) => {
+        r.backArm = turning ? [5, -6] : s.snap > 0 ? [q(-6 + 6 * hold), q(-3 - 4 * hold)] : [q(2 - 6 * s.pull), -1];
+        r.hairLift = turning ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [0.6, -1.2, 10], [-0.6, -3.6, -40]], [s.pull * (turning ? 0 : 1), [2.4, 0, 4], [-2.2, 0, -8]]);
+        if (s.kick > 0.3) strikeFace(r);
+        else if (hold > 0.5) r.eyes = 'wink';
+      },
+    };
+  },
+  // Front flip (a finish in her pool, ~0.48): a springing front flip, the bow drawn as she comes
+  // over, a big arrow loosed straight out from the top of it, landing with a bow of her own.
+  acfront(p) {
+    const crouch = bump(p, 0, 0.14);
+    const hop = Math.sin(Math.PI * seg(p, 0.1, 0.7));
+    const flip = ease(seg(p, 0.12, 0.42));
+    const s = bowShot(p, 0.34, 0.5);
+    const land = bump(p, 0.68, 0.86);
+    const hold = soft(seg(p, 0.82, 1));
+    return {
+      weapon: 10 - 6 * s.kick, arm: 82 - 8 * hold, lift: 26 * hop, tilt: flip * Math.PI * 2 - 0.06 * s.kick + 0.12 * hold,
+      pull: s.pull, nock: s.nock, twang: s.twang, lunge: 2 * hop,
+      rig: (r) => {
+        if (flip < 1 && hop > 0.2) tuck(r);
+        else danceLegs(r, [hop, [2.4, -3.6, 30], [-2.4, -2.4, -30]], [land, [2.4, 0, 6], [-2.2, 0, -8]]);
+        r.air = hop > 0.2;
+        r.squat = q(2 * (crouch + land));
+        r.backArm = s.snap > 0 ? [-6, -3] : [q(2 - 6 * s.pull), -1];
+        r.hairLift = hop > 0.3 ? -1 : 0;
+        if (s.kick > 0.3) strikeFace(r);
+        else if (hold > 0.4) r.eyes = 'happy';
+      },
+    };
+  },
+  // Up + attack: a deep backbend, the bow aimed high up and out in front of her (never over her
+  // face), an arrow loosed into the sky.
+  acup(p) {
+    const bend = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.75, 1)));
+    const s = bowShot(p, 0.2, 0.5);
+    return {
+      weapon: -24 - 6 * s.kick, arm: 104, tilt: -0.3 * bend, lunge: -2 * s.kick, pull: s.pull, nock: s.nock, twang: s.twang,
+      rig: (r) => {
+        r.backArm = s.snap > 0 ? [-4, -6] : [q(2 - 5 * s.pull), -5];
+        r.squat = q(1.5 * bend);
+        danceLegs(r, [bend, [3, 0, 10], [-2.6, 0, -6]]);
+        r.hairLift = 1;
+        if (s.kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // In the air: knees tucked, then legs kicked out straight as she aims down and looses.
+  acair(p) {
+    const s = bowShot(p, 0.1, 0.42);
+    const kick = soft(seg(p, 0.3, 0.5));
+    return {
+      weapon: 38 - 8 * s.kick, arm: 55, tilt: 0.4 - 0.12 * s.kick, pull: s.pull, nock: s.nock, twang: s.twang,
+      rig: (r) => {
+        r.air = true;
+        r.backArm = s.snap > 0 ? [-4, 0] : [q(2 - 6 * s.pull), -1];
+        danceLegs(r, [1 - kick, [2.6, -5, 40], [-0.6, -4, 20]], [kick, [3, -2, 30], [-5, -2.4, -50]]);
+        r.hairLift = -1;
+        if (s.kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Out of a run: a dive roll forward, coming up into a kneeling shot.
+  acdive(p) {
+    const dive = Math.sin(Math.PI * seg(p, 0, 0.3));
+    const roll = ease(seg(p, 0.1, 0.42));
+    const rolling = p > 0.08 && p < 0.42;
+    const s = bowShot(p, 0.4, 0.58);
+    const kneel = soft(seg(p, 0.42, 0.5)) * (1 - soft(seg(p, 0.85, 1)));
+    return {
+      weapon: rolling ? 30 : 10 - 6 * s.kick, arm: rolling ? 60 : 82, tilt: rolling ? roll * Math.PI * 2 : 0.5 * dive * (p < 0.1 ? 1 : 0), lift: 8 * dive, lunge: 4 * (1 - kneel) - 3 * s.kick,
+      pull: rolling ? 0 : s.pull, nock: !rolling && s.nock, twang: s.twang,
+      rig: (r) => {
+        if (rolling || dive > 0.3) tuck(r);
+        r.squat = q(3 * kneel);
+        r.backArm = rolling ? [-2, -3] : s.snap > 0 ? [-6, -3] : [q(2 - 6 * s.pull), -1];
+        if (!rolling) danceLegs(r, [kneel, [3, 0, 10], [-3, 2.4, -80]]);
+        if (s.kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Handspring (her Vault): a run-in, hands to the ground and a handspring over them (the whole body
+  // turning), landing behind them and turning to shoot back the way she came (shot at 0.8).
+  achandspring(p) {
+    const crouch = bump(p, 0, 0.14);
+    const hop = Math.sin(seg(p, 0.1, 0.66) * Math.PI);
+    const flip = ease(seg(p, 0.12, 0.62));
+    const land = bump(p, 0.62, 0.78);
+    const raise = ease(seg(p, 0.66, 0.78));
+    const s = bowShot(p, 0.66, 0.8);
+    const hold = soft(seg(p, 0.9, 1));
+    return {
+      weapon: lerp(30, 10, raise) - 8 * s.kick, arm: lerp(60, 82, raise), pull: s.pull, nock: s.nock && raise > 0.2, twang: s.twang,
+      lift: 44 * hop, tilt: flip * Math.PI * 2 + 0.12 * crouch, lunge: -3 * s.kick,
+      rig: (r) => {
+        if (hop > 0.2) tuck(r);
+        else r.squat = q(2 * Math.max(crouch, land));
+        r.backArm = s.snap > 0 ? [q(-6 + 4 * hold), -3] : [q(2 - 6 * s.pull), -1];
+        r.hairLift = hop > 0.3 ? -1 : 0;
+        r.cape -= hop > 0.3 ? 3 : 0;
+        if (s.kick > 0.3) strikeFace(r);
+        else if (hold > 0.4) r.eyes = 'wink';
+      },
+    };
+  },
+  // Springboard (her trap): she crouches and sets a little springboard down in front of her, gives
+  // it a pat that makes it boing, and pops back up with a peace sign.
+  acspring(p) {
+    const down = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.6, 0.8)));
+    const pat = bump(p, 0.32, 0.46) + bump(p, 0.46, 0.58) * 0.6;
+    const up = soft(seg(p, 0.7, 0.9));
+    return {
+      weapon: 40, arm: 30, lunge: 2 * down, lift: 2 * bump(p, 0.7, 0.95),
+      rig: (r) => {
+        r.squat = q(3 * down);
+        r.backArm = [q(lerp(4 + 2 * down, 3, up)), q(lerp(4 * down - 2 * pat, -8, up))];
+        danceLegs(r, [down, [2.6, 0, 10], [-2.4, 1.6, -60]]);
+        if (up > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+  // Grand Somersault (her finisher, 1.9 s): a deep crouch, a huge leap, three somersaults on the way
+  // up, then at the top she opens out wide, aims down and looses a ring of golden arrows over
+  // everything below (~0.6 to ~0.8), and drops into a landing pose with a wink.
+  acsomersault(p) {
+    const crouch = bump(p, 0, 0.16);
+    const up = ease(seg(p, 0.12, 0.42));
+    const flips = ease(seg(p, 0.14, 0.52));
+    const fall = easeIn(seg(p, 0.8, 0.92));
+    const land = bump(p, 0.9, 1);
+    const high = up * (1 - fall);
+    const aim = soft(seg(p, 0.52, 0.6)) * (1 - soft(seg(p, 0.8, 0.86)));
+    const rain = rel(p, 0.6, 0.8) ? Math.abs(Math.sin(seg(p, 0.6, 0.8) * Math.PI * 5)) : 0;
+    const hold = soft(seg(p, 0.94, 1));
+    return {
+      weapon: aim > 0 ? 38 - 8 * rain : 0, arm: aim > 0 ? 55 : 95, lift: 62 * high - 3 * crouch, tilt: flips * Math.PI * 6 + 0.4 * aim - 0.1 * rain,
+      pull: aim > 0 ? 1 - rain : 0, nock: aim > 0 && rain < 0.5, twang: rain > 0.8 ? 1 : 0,
+      rig: (r) => {
+        r.air = high > 0.1;
+        if (flips > 0 && flips < 1) tuck(r);
+        else if (aim > 0) danceLegs(r, [aim, [5, -3, 40], [-5, -3, -40]]);
+        else danceLegs(r, [land + hold, [2.8, 0, 6], [-2.6, 0, -10]]);
+        r.squat = q(2 * (crouch + land));
+        r.backArm = aim > 0 ? [q(2 - 6 * (1 - rain)), -1] : [q(-2 + 6 * hold), q(-3 - 6 * hold)];
+        r.hairLift = high > 0.2 ? -1 : 0;
+        r.cape -= q(3 * high);
+        if (aim > 0.5) strikeFace(r);
+        if (hold > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
       },
     };
   },

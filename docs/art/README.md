@@ -307,6 +307,14 @@ carry an improvement across every part of the game it applies to.
     steam; sticky and cluster bolts burst in brass and teal with scattered cogs; her turret is a brass
     tripod machine with a cog drum and a teal eye; Big Bertha is a giant brass ballista unfolding
     over her. Crossbows are compact gadget crossbows held at the waist.
+  - The Acrobat Archer (2026-11-02; she replaced the Archer) is mint and gold with a touch of pink,
+    HD soft glow: her arrow is gold trailing a curling mint ribbon; her big one wrapped in two
+    ribbons with a star burst at its head; her hit a gold star popping in a loop of mint ribbon,
+    then confetti; Firework Arrow a firework of gold and mint rays; Ribbon Snare a mint ribbon tied
+    in a bow round the monster; her springboard a striped circus board on a spring; Grand Somersault
+    a ring of gold bursting with arrows fanning out and confetti; full Combo gold stars and a ribbon
+    twirling round her; her badge a gold star with a ribbon and an arrow. Her bow is drawn as a
+    short trick recurve held canted at chest height.
   - The Astronomer (2026-11-02; she replaced the Onmyoji) is deep violet and silver, HD soft glow:
     her planet in flight is a little violet world, its bands rolling, in a tilted silver ring with an
     orbit line trailing it; her big one a ringed world with two rings; her hit a silver crescent

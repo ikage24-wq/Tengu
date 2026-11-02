@@ -143,10 +143,13 @@ export const PATH_COMBOS = {
     ] },
     { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
+  // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
+  // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
+  // she lands, and a split leap loosing a big arrow from mid-air.
   archer: [
-    { move: 'quickshot', dur: 0.44, strikes: [{ at: 0.5, shot: 'hawkarrow', pct: 90, range: 300, h: 60, knock: 25, speed: 800 }] },
-    { move: 'rapid', dur: 0.46, strikes: [{ at: 0.17, shot: 'hawkarrow', pct: 60, range: 300, h: 60, knock: 20, speed: 800 }, { at: 0.5, shot: 'hawkarrow', pct: 65, range: 300, h: 60, knock: 30, speed: 800 }] },
-    { move: 'draw', dur: 0.62, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'hawkbig', pct: 175, range: 330, h: 60, targets: 3, pierce: true, speed: 900, knock: 210, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'acskip', dur: 0.46, step: 8, strikes: [{ at: 0.5, shot: 'acarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'acflip', dur: 0.62, step: -16, carry: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -4 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'acsplit', dur: 0.66, step: 14, carry: 0.6, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 180, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Thief, by weapon. Her back flips come in the middle of a string, never at its end (the
   // player's call): she flips out, and the next blow darts straight back in (`owed`, playStep),
@@ -257,7 +260,7 @@ export const PATH_COMBOS = {
 // The arrows each archer path looses, its pool of shots and the Archer's skills (Vault) alike:
 // the Archer's gold hawk arrows, the Beastmaster's green wild arrows.
 const ARCHER_LOOK = {
-  archer: { arrow: 'hawkarrow', big: 'hawkbig', rain: 'hawkarrow', muzzle: 'feathers', school: 'hawk' },
+  archer: { arrow: 'acarrow', big: 'acbig', rain: 'acarrow', muzzle: null, school: 'acro' },
   beastmaster: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
   stormcaller: { arrow: 'aebolt', big: 'aebig', rain: 'aebolt', muzzle: 'aesteam', school: 'brass' },
 };
@@ -286,7 +289,13 @@ function shotsOf(L) {
     skyrain: { move: 'skyshot', dur: 0.7, finisher: true, strikes: [{ at: 0.55, rain: 6, pct: 70, rainFrom: 50, rainW: 240, span: 0.5, knock: 20, variant: L.rain, school: L.school }] },
   };
 }
-const ARCHER_SHOTS = shotsOf(ARCHER_LOOK.archer);
+// The Acrobat Archer's own pool: a forward roll into a kneeling shot, a pirouette into a fan of three,
+// and a front flip loosing a big arrow from the top of it.
+const ACRO_SHOTS = {
+  roll: { move: 'acroll', dur: 0.6, step: 30, carry: 0.42, strikes: [{ at: 0.6, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, knock: 60 }] },
+  spin: { move: 'acspin', dur: 0.62, strikes: [{ at: 0.6, shot: 'acarrow', pct: 46, range: 300, h: 60, knock: 25, speed: 860, fan: 3, h: 110, knock: 40 }] },
+  front: { move: 'acfront', dur: 0.64, step: 26, carry: 0.7, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
+};
 const BEAST_SHOTS = shotsOf(ARCHER_LOOK.beastmaster);
 // The Arbalist Engineer's own pool: a gunslinger twirl and a shot, a duck-and-fire, a triple crank
 // that rattles out three bolts, and a sliding shot.
@@ -489,9 +498,9 @@ export const PATH_VARIANTS = {
       { move: 'sdsweep', dur: 0.6, finisher: true, strikes: [{ at: 0.4, pct: 90, reach: 100, h: 130, around: true, targets: 5, knock: 160, fx: 'skyhit', burst: 'skyhit' }, { at: 0.55, shot: 'skygustbig', pct: 130, range: 300, h: 220, drop: 80, targets: 3, pierce: true, knock: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
   ],
   archer: [
-    [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl, ARCHER_SHOTS.lob],
-    [PATH_COMBOS.archer[1], ARCHER_SHOTS.burst, ARCHER_SHOTS.hop, ARCHER_SHOTS.triple, ARCHER_SHOTS.flipfan],
-    [PATH_COMBOS.archer[2], ARCHER_SHOTS.overdraw, ARCHER_SHOTS.skyrain],
+    [PATH_COMBOS.archer[0], ACRO_SHOTS.roll],
+    [PATH_COMBOS.archer[1], ACRO_SHOTS.spin],
+    [PATH_COMBOS.archer[2], ACRO_SHOTS.front],
   ],
   // The Beastmaster, quick and wild, her green arrows flying beside her animals. Openers: her snap
   // shot, the point-blank kick, or a slide in loosing two. Second: her backflip fan, her twirl, a
@@ -589,17 +598,17 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'wdchaine', dur: 0.5, step: 50, carry: 0.6, strikes: [{ at: 0.45, pct: 95, reach: 90, h: 70, targets: 3, around: true, knock: 90, fx: 'wdhit' }] },
   },
-  // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, a
-  // sliding shot out of a run, and Down + attack: leaning out to loose two arrows down at whatever
-  // is below.
+  // The Acrobat Archer: a backbend shot up at fliers, legs kicked out shooting down from a hang in
+  // the air (the second a big one), a dive roll out of a run coming up shooting, and Down + attack:
+  // the same kick-out shot at whatever is below.
   archer: {
-    down: { move: 'downshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'hawkarrow', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 880 }] },
-    up: { move: 'skyshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 880, big: true, stop: 0.05 }] },
+    down: { move: 'acair', dur: 0.48, strikes: [{ at: 0.42, shot: 'acarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
+    up: { move: 'acup', dur: 0.5, strikes: [{ at: 0.5, shot: 'acarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
     air: [
-      { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'hawkarrow', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 880 }] },
-      { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'hawkbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
+      { move: 'acair', dur: 0.42, hang: true, strikes: [{ at: 0.42, shot: 'acarrow', pct: 75, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 170, drop: 50, knock: 30 }] },
+      { move: 'acair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.42, shot: 'acbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'hawkarrow', pct: 95, range: 300, h: 60, knock: 80, speed: 880 }] },
+    dash: { move: 'acdive', dur: 0.62, step: 50, carry: 0.45, strikes: [{ at: 0.58, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
   },
   // The Beastmaster: a wild arrow shot up at fliers, two down from a hang, a slide shot out of a
   // run, and down at whatever is below.
@@ -626,9 +635,12 @@ const ARCHER_COMMANDS = {
 };
 // The archers' air leap (world/agility.js): jump again in mid-air and she springs up and back in a
 // backflip, loosing two shots down at them from the top of it.
-for (const [path, arrow, big] of [['archer', 'hawkarrow', 'feathers'], ['beastmaster', 'windarrow', 'gust'], ['stormcaller', 'aebolt', 'aesteam']]) {
+for (const [path, arrow, big] of [['beastmaster', 'windarrow', 'gust'], ['stormcaller', 'aebolt', 'aesteam']]) {
   ARCHER_COMMANDS[path].leap = { move: 'leapshot', dur: 0.5, strikes: [{ at: 0.55, shot: arrow, fan: 2, pct: 80, range: 280, h: 180, drop: 50, knock: 50, speed: 900, muzzle: big }] };
 }
+// (The Acrobat Archer's leap is her own back handspring in the air, an arrow off the top and one
+// as she comes round.)
+ARCHER_COMMANDS.archer.leap = { move: 'acflip', dur: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 70, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 180, drop: 50, knock: 50 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, range: 280, h: 160, drop: 40 }] };
 export function airLeap(world) {
   const leap = ARCHER_COMMANDS[pathOf(world)]?.leap;
   if (!leap) return;
@@ -779,10 +791,11 @@ export function addValor(world, n) {
   if (before < VALOR_MAX && world.valor >= VALOR_MAX) cryOut(world);
 }
 export const unbroken = (world) => hasValor(world.char) && (world.valor ?? 0) >= VALOR_MAX;
-// Momentum: the Archer's gauge (first job). Shots that land build it, more for each one landed in
-// a row (`streak`, kept while they land within MOMENTUM_ROW seconds of each other); taking a hit
-// knocks half of it away, and it fades once the fighting stops. Full (Hawkeye), arrows fly faster
-// and curve to find monsters above and below.
+// Combo (the Acrobat Archer's gauge; internally Momentum). Shots that land build it, more for each
+// one landed in a row (`streak`, kept while they land within MOMENTUM_ROW seconds of each other);
+// her flips, rolls and handsprings keep it from fading (`flipAt`), taking a hit knocks half of it
+// away, and it fades once the fighting stops. Full (SHOWTIME), every shot she looses splits into
+// three arrows, and Grand Somersault is ready.
 export const MOMENTUM_MAX = 100;
 const MOMENTUM_HOLD = 4;
 const MOMENTUM_DRAIN = 14;
@@ -795,7 +808,9 @@ export function addMomentum(world, n) {
   world.momentum = Math.min(MOMENTUM_MAX, (world.momentum ?? 0) + n * (1 + 0.1 * Math.min(10, world.streak)));
   world.momentumAt = world.now;
 }
-export const hawkeye = (world) => hasMomentum(world.char) && (world.momentum ?? 0) >= MOMENTUM_MAX;
+export const showtime = (world) => hasMomentum(world.char) && (world.momentum ?? 0) >= MOMENTUM_MAX;
+// Her tricks: while she's in one, her Combo doesn't fade.
+const FLIPS = new Set(['acflip', 'acsplit', 'acroll', 'acspin', 'acfront', 'acdive', 'achandspring', 'acsomersault']);
 // Getting hit breaks an Archer's rhythm: half her Momentum and the streak are gone.
 export function loseMomentum(world) {
   if (!hasMomentum(world.char) || !world.momentum) return;
@@ -1385,7 +1400,8 @@ export function tickMelee(world, dt) {
   tickSky(world);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
-  if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
+  if (world.momentum > 0 && FLIPS.has(world.pose?.kind)) world.flipAt = world.now;
+  if (world.momentum > 0 && world.now - Math.max(world.momentumAt ?? 0, world.flipAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
   tickTraps(world);
   tickEngineer(world);
   tickPets(world, dt);
@@ -1672,7 +1688,7 @@ function bladeProcs(world, s, count, rng = Math.random) {
 // Returns the shot to loose. `rng` for tests.
 // Blast Arrow's burst (and a sprung trap's) in each archer path's own look: the Archer's fire, the
 // Beastmaster's gale of wind and leaves, the Arbalist Engineer's brass-and-teal blast.
-const BLASTS = { beastmaster: 'galeblast', stormcaller: 'aeboom' };
+const BLASTS = { archer: 'acfirework', beastmaster: 'galeblast', stormcaller: 'aeboom' };
 function shotProcs(world, s, rng = Math.random) {
   const { char, body } = world;
   const blast = procOf(char, 'blastarrow');
@@ -1705,14 +1721,14 @@ export function gadgetHit(world, m, f, at = 0, element = null) {
   shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'procgadget', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'aehit', stun: f.stun, gauge: f.gauge ?? 3, chained: true }, m, at, f.stack ?? 0, element);
 }
 
-// Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
+// Spring Trap (the Acrobat Archer's Springboard): a trap set on the ground ahead, armed until a monster steps on it or it rusts away
 // (`life`), at most TRAPS at once (the oldest goes).
 const TRAPS = 3;
 export function setTrap(world, x, p) {
   const traps = (world.traps ??= []);
   const y = world.body.y;
   if (traps.length >= TRAPS) traps.shift().fx.dur = 0;
-  const fx = { kind: 'trap', x, y, t: 0, dur: p.life };
+  const fx = { kind: 'trap', x, y, t: 0, dur: p.life, look: world.char.job === 'archer' ? 'spring' : null };
   world.fx.push(fx);
   traps.push({ x, y, until: world.now + p.life, pct: p.pct, fx });
 }
@@ -1724,7 +1740,7 @@ function tickTraps(world) {
     const m = world.mobs.find((o) => o.hp > 0 && !(o.air > 4) && Math.abs(o.x - t.x) < 18 + o.def.w / 3 && Math.abs(o.y - t.y) < 30);
     if (!m) return true;
     t.fx.dur = t.fx.t;
-    world.fx.push({ kind: 'trapsnap', x: t.x, y: t.y, t: 0, dur: 0.5 });
+    world.fx.push({ kind: 'trapsnap', x: t.x, y: t.y, t: 0, dur: 0.5, look: t.fx.look });
     shotHit(world, { pct: t.pct, scale: 100, key: 'proctrap', dir: Math.sign(m.x - world.body.x) || 1, knock: 30, launch: 460, big: true, stop: 0.07, shake: 2, burst: BLASTS[pathOf(world)] ?? 'blast', gauge: 3 }, m, 0);
     return false;
   });
@@ -1754,7 +1770,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.doll) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.doll) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1798,11 +1814,9 @@ function fire(world, strike) {
   const { body } = world;
   // A gauntlet throws its own stars (their look and element).
   const star = STAR_SHOTS.has(s.shot) && !s.phantom && !s.free ? thrownStars(world.char) : null;
-  // Hawkeye (full Momentum): arrows fly faster and reach further, and curve to find monsters above
-  // and below (a taller search box, and a bend in their flight as they home in).
-  if (hawkeye(world) && !s.hawkeye) {
-    world.volley = ((world.volley ?? 0) + 1) % 2;
-    s = { ...s, hawkeye: true, speed: (s.speed ?? 680) * 1.4, range: s.range + 70, h: Math.max(140, (s.h ?? 60) * 2), bend: s.bend ?? (world.volley ? 22 : -22) };
+  // Showtime (full Combo): every shot she looses splits into three arrows, a little above and below.
+  if (showtime(world) && s.shot && !s.split && !s.free && !s.rain) {
+    for (const k of [-1, 1]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + k * 6, drop: (s.drop ?? 0) + (k > 0 ? 24 : 0), lift: (s.lift ?? 0) + (k < 0 ? 24 : 0), h: Math.max(s.h ?? 60, 110), pct: s.pct * 0.5, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined });
   }
   // The Sky Dancer's gusts: twice as big on full Tailwind; Updraft may throw them up in a rising
   // whirl, and in the air Zephyr may send a second gust after the first.

@@ -6283,6 +6283,244 @@
     moonArt(ctx, 34, -30, 13, -0.4);
   });
 
+  // ---------- The Acrobat Archer (mint and gold: gold arrows, mint ribbons, stars, confetti) ----------
+  // docs/design/acrobat-archer.md. Her shapes: gold arrows trailing curling mint ribbons, five-point
+  // gold stars, confetti, and the bright round bursts of a circus show.
+  const MINT = ['#ffffff', '#dcfff0', '#5ed6a8', '#2a9a78', '#145a4a'];
+  const SHOWG = ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228'];
+
+  // A gold arrow along +x with its head at (x, y), `len` long, turned by `rot`.
+  function goldArrow(ctx, x, y, len, rot = 0, w = 1) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    inked(ctx, [[-len, -2.5 * w], [-14 * w, -2.5 * w], [-14 * w, 2.5 * w], [-len, 2.5 * w]], SHOWG[3], SHOWG[4], 3);
+    fill(ctx, [[-len, -1 * w], [-14 * w, -1 * w], [-14 * w, 0.6 * w], [-len, 0.6 * w]], SHOWG[1]);
+    inked(ctx, [[0, 0], [-18 * w, -9 * w], [-14 * w, 0], [-18 * w, 9 * w]], SHOWG[2], SHOWG[4], 3);
+    fill(ctx, [[-3 * w, 0], [-14 * w, -5 * w], [-12 * w, 0]], SHOWG[0]);
+    // Mint fletching.
+    for (const sd of [-1, 1]) inked(ctx, [[-len + 2, 0], [-len + 14 * w, sd * 2], [-len + 6 * w, sd * 10 * w], [-len - 4 * w, sd * 9 * w]], MINT[2], MINT[4], 3);
+    ctx.restore();
+  }
+  // A curling mint ribbon trailing back from (x, y) along -x, `len` long, waving with `ph`.
+  function trailRibbon(ctx, x, y, len, w, ph, pal = MINT) {
+    ribbon(ctx, pal, (u) => [x - u * len, y + Math.sin(u * 7 + ph) * w * 0.9 * u], (u) => w * (1 - u) * (0.5 + 0.5 * Math.sin(Math.PI * Math.min(1, u * 2 + 0.15))), { twist: 0.6 });
+  }
+  // A few squares of confetti scattered round (x, y) in `r`.
+  function confetti(ctx, x, y, r, n, seed, s = 5) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const a = R() * TAU;
+      const d = r * (0.3 + R() * 0.7);
+      const px = x + Math.cos(a) * d;
+      const py = y + Math.sin(a) * d;
+      const k = s * (0.6 + R() * 0.6);
+      const t = R() * TAU;
+      const pts = [[-k, -k * 0.6], [k, -k * 0.6], [k, k * 0.6], [-k, k * 0.6]].map(([qx, qy]) => [px + qx * Math.cos(t) - qy * Math.sin(t), py + qx * Math.sin(t) + qy * Math.cos(t)]);
+      inked(ctx, pts, j % 3 === 0 ? MINT[2] : j % 3 === 1 ? SHOWG[2] : '#ff9ec8', j % 3 === 0 ? MINT[4] : SHOWG[4], 2);
+    }
+  }
+  // A gold five-point star (cel tones, white heart).
+  function goldStar(ctx, x, y, r, rot = 0, pal = SHOWG) {
+    const pts = (k) => Array.from({ length: 10 }, (_, i) => {
+      const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = (i % 2 ? r * 0.46 : r) * k;
+      return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+    });
+    inked(ctx, pts(1), pal[3], pal[4], 4);
+    fill(ctx, pts(0.8), pal[2]);
+    fill(ctx, pts(0.55).map(([px, py]) => [px - r * 0.06, py - r * 0.06]), pal[1]);
+    fill(ctx, pts(0.25), pal[0]);
+  }
+
+  // Her arrow in flight (loops, toward +x): a gold arrow with a mint ribbon curling behind it and a
+  // couple of sparkles.
+  E.acarrow = (() => {
+    const cx = 120;
+    const cy = 40;
+    return {
+      w: 140, h: 80, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        trailRibbon(ctx, cx - 60, cy, 70, 12, (i / 6) * TAU);
+        goldArrow(ctx, cx, cy, 64, 0, 1);
+        for (let j = 0; j < 2; j++) sparkle(ctx, SHOWG, cx - 70 - j * 24, cy + (j ? 10 : -10) * Math.sin((i / 6) * TAU), 6 - j * 1.5, i + j);
+      },
+    };
+  })();
+
+  // Her big arrow (finishers, Showtime): a bigger gold arrow wrapped in two mint ribbons spiralling
+  // round it, a star burst at its head.
+  E.acbig = (() => {
+    const cx = 190;
+    const cy = 60;
+    return {
+      w: 230, h: 120, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        trailRibbon(ctx, cx - 70, cy, 130, 22, ph);
+        trailRibbon(ctx, cx - 70, cy, 120, 18, ph + Math.PI, ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228']);
+        goldArrow(ctx, cx - 6, cy, 110, 0, 1.5);
+        starburst(ctx, SHOWG, cx + 4, cy, 18 + (i % 2) * 4, 8, 601, { inner: 0.4, rot: i * 0.3 });
+      },
+    };
+  })();
+
+  // Her mark on a monster: a gold star pops with a mint ribbon looping round it, then confetti flies.
+  E.achit = (() => {
+    const c = 100;
+    return {
+      w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 3) {
+          ctx.save();
+          ctx.translate(c, c);
+          ctx.rotate(i * 0.5);
+          ribbon(ctx, MINT, (u) => [Math.cos(u * TAU * 0.8) * (28 + i * 8), Math.sin(u * TAU * 0.8) * (20 + i * 6)], (u) => 9 * Math.sin(Math.PI * u) * (1 - i * 0.18), { twist: 0.5 });
+          ctx.restore();
+        }
+        if (i <= 3) goldStar(ctx, c, c, [16, 26, 22, 14][i], i * 0.4);
+        if (i >= 2) confetti(ctx, c, c - (i - 2) * 6, 30 + (i - 2) * 14, 8, 602, 6 - (i - 2) * 0.8);
+        if (i >= 5) for (let j = 0; j < 3; j++) sparkle(ctx, SHOWG, c + (j - 1) * 30, c - 30 - (i - 5) * 8, 7, j);
+      },
+    };
+  })();
+
+  // Firework Arrow (her Blast Arrow proc): a firework bursting where the arrow lands, rays of gold
+  // and mint shooting out and drooping, crackling into sparkles.
+  E.acfirework = (() => {
+    const c = 120;
+    return {
+      w: 240, h: 240, n: 8, fps: 24, px: c, py: c,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        if (i <= 1) starburst(ctx, SHOWG, c, c, 26 + i * 12, 10, 611, { inner: 0.3 });
+        if (i >= 1 && i <= 5) {
+          for (let j = 0; j < 10; j++) {
+            const a = (j / 10) * TAU;
+            const d = 20 + k * 70;
+            const x = c + Math.cos(a) * d;
+            const y = c + Math.sin(a) * d + (i - 1) * (i - 1) * 2;
+            const tail = 26 * (1 - (i - 1) * 0.15);
+            speedLine(ctx, j % 2 ? MINT : SHOWG, x - Math.cos(a) * tail, y - Math.sin(a) * tail - (i - 1) * 2, x, y, 6 - (i - 1) * 0.8);
+            if (i >= 3) sparkle(ctx, j % 2 ? MINT : SHOWG, x, y, 6, j);
+          }
+        }
+        if (i >= 5) {
+          const R = rng(612);
+          for (let j = 0; j < 12; j++) sparkle(ctx, j % 2 ? MINT : SHOWG, c + (R() - 0.5) * 200, c + (R() - 0.5) * 160 + (i - 5) * 12, 8 - (i - 5) * 2, j);
+        }
+      },
+    };
+  })();
+
+  // Ribbon Snare (her Snare Arrow proc): a mint ribbon looped round a monster, fluttering, its bow
+  // knotted at the front (loops while it is held).
+  E.acribbon = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 6, fps: 12, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (const [y, w] of [[-26, 26], [0, 34], [26, 28]]) {
+          ctx.save();
+          ctx.translate(c, c + y);
+          ctx.scale(1, 0.32);
+          celRing(ctx, MINT, 0, 0, w + Math.sin(ph + y) * 2, 8, { seed: 621 });
+          ctx.restore();
+        }
+        // The bow at the front, its tails fluttering.
+        for (const sd of [-1, 1]) inked(ctx, [[c, c], [c + sd * 18, c - 10 + Math.sin(ph) * 2], [c + sd * 20, c + 8], [c + sd * 4, c + 3]], MINT[2], MINT[4], 3);
+        for (const sd of [-1, 1]) ribbon(ctx, MINT, (u) => [c + sd * (4 + u * 12), c + 4 + u * 26 + Math.sin(ph + u * 5) * 4 * u], (u) => 6 * (1 - u * 0.6), {});
+        inked(ctx, Array.from({ length: 10 }, (_, j) => [c + Math.cos((j / 10) * TAU) * 5, c + 1 + Math.sin((j / 10) * TAU) * 4]), SHOWG[2], SHOWG[4], 3);
+      },
+    };
+  })();
+
+  // Her springboard (Spring Trap): a little striped circus springboard on the ground, its board
+  // bobbing on the spring (frames 0-3, loops); frames 4-7 it fires (the board snaps up, a gold star
+  // and a "boing" of rings).
+  E.acspring = (() => {
+    const c = 80;
+    const gy = 100;
+    return {
+      w: 160, h: 120, n: 8, fps: 10, px: c, py: gy,
+      draw(ctx, i) {
+        const fire = i >= 4 ? i - 4 : -1;
+        const bob = fire < 0 ? Math.sin((i / 4) * TAU) * 2 : 0;
+        const up = fire < 0 ? 0 : [26, 18, 8, 2][fire];
+        inked(ctx, [[c - 36, gy], [c + 36, gy], [c + 32, gy - 8], [c - 32, gy - 8]], SHOWG[3], SHOWG[4], 3);
+        // The spring.
+        for (let k = 0; k < 4; k++) {
+          const y = gy - 10 - k * (4 + up / 4) - bob;
+          inked(ctx, [[c - 10, y], [c + 10, y - 2], [c + 10, y], [c - 10, y + 2]], '#dfe6f2', '#5a6a8a', 2);
+        }
+        // The board, striped mint and white, tilted up as it fires.
+        const by = gy - 28 - up - bob;
+        ctx.save();
+        ctx.translate(c, by);
+        ctx.rotate(fire >= 0 ? -0.3 * (1 - fire / 4) : 0);
+        inked(ctx, [[-38, -4], [38, -4], [38, 4], [-38, 4]], MINT[2], MINT[4], 3);
+        for (let s2 = -30; s2 < 34; s2 += 16) fill(ctx, [[s2, -3], [s2 + 8, -3], [s2 + 8, 3], [s2, 3]], '#ffffff');
+        ctx.restore();
+        if (fire >= 0) {
+          ctx.save();
+          ctx.translate(c, by - 10);
+          ctx.scale(1, 0.4);
+          celRing(ctx, SHOWG, 0, 0, 20 + fire * 14, 8 - fire * 1.5, { broken: fire >= 2 ? 0.4 : 0, seed: 631 });
+          ctx.restore();
+          goldStar(ctx, c, by - 24 - fire * 10, 12 - fire * 2, fire * 0.5);
+        }
+      },
+    };
+  })();
+
+  // Grand Somersault: at the top of her leap a great gold ring of light bursts round her, arrows
+  // fanning out of it all the way round and down, confetti everywhere (one-shot, played over her).
+  E.acburst = (() => {
+    const c = 160;
+    return {
+      w: 320, h: 320, n: 9, fps: 14, px: c, py: c,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        if (i <= 6) celRing(ctx, SHOWG, c, c, 30 + k * 90, 16 * (1 - i / 9), { broken: i >= 5 ? 0.4 : 0, seed: 641 });
+        if (i <= 6) celRing(ctx, MINT, c, c, 20 + k * 60, 9 * (1 - i / 9), { seed: 642 });
+        if (i >= 1 && i <= 6) for (let j = 0; j < 10; j++) {
+          const a = Math.PI * 0.05 + (j / 9) * Math.PI * 0.9;
+          goldArrow(ctx, c + Math.cos(a) * (40 + k * 100), c + Math.sin(a) * (40 + k * 100), 34, a, 0.7);
+        }
+        if (i <= 2) goldStar(ctx, c, c, 30 + i * 8, i * 0.4);
+        if (i >= 3) confetti(ctx, c, c + (i - 3) * 10, 100 + (i - 3) * 16, 18, 643, 7);
+      },
+    };
+  })();
+
+  // Showtime (her gauge full; internally Momentum): gold stars and mint ribbons twirling round her.
+  E.acaura = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 8, fps: 10, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 8) * TAU;
+        ctx.save();
+        ctx.translate(c, c);
+        ctx.scale(1, 0.4);
+        ribbon(ctx, MINT, (u) => [Math.cos(u * TAU * 0.7 + ph) * 60, Math.sin(u * TAU * 0.7 + ph) * 60], (u) => 8 * Math.sin(Math.PI * u), { twist: 0.6 });
+        ctx.restore();
+        for (let j = 0; j < 3; j++) {
+          const a = ph + (j / 3) * TAU;
+          goldStar(ctx, c + Math.cos(a) * 58, c + Math.sin(a) * 22, 8 + 2 * Math.sin(a), a);
+        }
+      },
+    };
+  })();
+
+  // Her badge: a gold star with a mint ribbon and a gold arrow through it.
+  E.embacro = emblem(MINT, (ctx) => {
+    goldArrow(ctx, 50, 10, 100, -0.35, 1.1);
+    goldStar(ctx, 0, 0, 40, 0);
+    for (const sd of [-1, 1]) ribbon(ctx, MINT, (u) => [sd * (8 + u * 36), 30 + u * 14 + Math.sin(u * 5) * 4], (u) => 10 * (1 - u * 0.5), {});
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();
