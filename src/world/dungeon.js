@@ -1578,12 +1578,14 @@ export function healerTurn(bot, world, rng) {
   // the Resurrection Dance for the fallen.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const maiden = bot.char.job === 'shrinemaiden';
-  const bless = (g) => shrine && world.fx.push({ kind: 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  // (The Star Witch wishes stars down; her paths keep their columns of light.)
+  const witch = bot.char.job === 'spiritmage';
+  const bless = (g) => shrine && world.fx.push({ kind: witch ? 'stwish' : 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: witch ? 'swwish' : 'kagurabless', t: 0, dur: witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: 'kaguraward', dur: 1.1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'shrinegrand', dur: 1.55 } : { id: 'blessing', name: SKILLS.blessing.name, pose: 'kagurabless', dur: 1.2 };
+  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: witch ? 'swveil' : 'kaguraward', dur: witch ? 0.8 : 1.1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'shrinegrand', dur: 1.55 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'kagurabless', dur: witch ? 0.9 : 1.2 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;

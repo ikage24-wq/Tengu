@@ -10,7 +10,7 @@ import { SCHOOL_COLORS } from './spells.js';
 import { drawArcheryShot, drawArchery, windRainPiece, hawkRainPiece } from './archery.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
-import { drawThiefFx, moonRainPiece, foxRainPiece } from './thief-fx.js';
+import { drawThiefFx, moonRainPiece } from './thief-fx.js';
 import { drawHealFx } from './heal-fx.js';
 import { drawSpiritFx, drawSpiritShot } from './spirit-fx.js';
 import { wash, deep } from './fxkit.js';
@@ -422,12 +422,12 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // The sky darkens (or glitters, for gold) while the barrage falls.
         const a = Math.sin(Math.PI * Math.min(1, p * 1.1));
         ctx.globalAlpha = 0.28 * a;
-        ctx.fillStyle = f.variant === 'coin' ? '#ffd66b' : f.variant === 'star' ? '#2b2050' : c.deep;
+        ctx.fillStyle = f.variant === 'coin' ? '#ffd66b' : f.variant === 'star' || f.variant === 'stmeteor' ? '#141a4a' : c.deep;
         wash(ctx);
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'foxstar' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -439,12 +439,12 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'foxstar' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
         // A gold arrow's landing is the Archer's own hit burst (drawn with the hit).
-        if (f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'foxstar') return true;
+        if (f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor') return true;
         const k = (p - hit) / (1 - hit);
         ctx.globalAlpha = 1 - k;
         glow(ctx, x, cy, 28 * (1 - k) + 6, c.light, 1 - k);
@@ -746,8 +746,9 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     case 'moonstar':
       moonRainPiece(ctx, x, y, s, time);
       break;
-    case 'foxstar':
-      foxRainPiece(ctx, x, y, s, time);
+    case 'stmeteor':
+      // Starfall's meteors: a gold star trailing midnight fire, falling down and right.
+      fxSprite(ctx, 'celstmeteor', x, y, { t: time, scale: 0.5 * s });
       break;
     case 'star':
       glow(ctx, x, y, 10 * s, c.main, 0.6);

@@ -218,9 +218,9 @@ export const JOB_SCENES = {
     { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
   spiritmage: [
-    { card: 'A New Path', sub: 'Spirit Mage' },
-    { who: 'elowen', text: 'The spirits have chosen you, {name}. Magic here is a dance: they strike for you, and you lead.', mood: 'happy' },
-    { who: 'elowen', text: 'Listen to them, and they will always listen to you.' },
+    { card: 'A New Path', sub: 'Star Witch' },
+    { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily.", mood: 'happy' },
+    { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. You've earned it." },
   ],
   path: [
     { card: 'A New Path', sub: '{job}' },

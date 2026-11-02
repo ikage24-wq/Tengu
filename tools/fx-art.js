@@ -5349,6 +5349,198 @@
     };
   })();
 
+  // ---------- The Star Witch (midnight blue and gold: stars, comets, constellations) ----------
+  // docs/design/star-witch.md. Her shapes: five-point gold stars with white cores, midnight-blue
+  // comet tails, and constellations (stars joined by thin gold lines).
+  const NIGHT = ['#ffffff', '#9aa6f0', '#3a48b8', '#222a7e', '#0e123a'];
+  const STARGOLD = ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228'];
+
+  // A five-point star in cel tones (inked, its colour, a light face and a white heart).
+  function star5(ctx, pal, x, y, r, rot = 0) {
+    const pts = (k) => Array.from({ length: 10 }, (_, i) => {
+      const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = (i % 2 ? r * 0.46 : r) * k;
+      return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+    });
+    inked(ctx, pts(1), pal[3], pal[4], 4);
+    fill(ctx, pts(0.8), pal[2]);
+    fill(ctx, pts(0.55).map(([px, py]) => [px - r * 0.06, py - r * 0.06]), pal[1]);
+    fill(ctx, pts(0.25), pal[0]);
+  }
+  // A constellation's line: a thin gold thread between two stars.
+  function thread(ctx, x0, y0, x1, y1, w = 3) {
+    speedLine(ctx, STARGOLD, x0, y0, x1, y1, w);
+  }
+  // A comet's tail behind (x, y) toward angle `a` (radians), `len` long: a midnight crescent of
+  // trail with a gold edge and sparks shed off it.
+  function cometTail(ctx, x, y, a, len, w, seed) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ribbon(ctx, NIGHT, (u) => [-u * len, Math.sin(u * 3 + seed) * w * 0.25 * u], (u) => w * (1 - u) * (0.4 + 0.6 * Math.sin(Math.PI * Math.min(1, u * 2 + 0.1))), {});
+    const R = rng(seed);
+    for (let j = 0; j < 4; j++) sparkle(ctx, STARGOLD, -len * (0.25 + R() * 0.7), (R() - 0.5) * w * 1.6, 3 + R() * 4, j);
+    ctx.restore();
+  }
+
+  // Her star bolt in flight (loops, toward +x): a spinning gold star with a midnight tail.
+  E.stbolt = (() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 140, h: 100, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        cometTail(ctx, cx - 6, cy, 0, 80, 20, 201 + i);
+        star5(ctx, STARGOLD, cx, cy, 20, (i / 6) * ((Math.PI * 2) / 5));
+      },
+    };
+  })();
+
+  // A comet (the staff's, and big bolts): a big star head with a long tail and sparks.
+  E.stcomet = (() => {
+    const cx = 170;
+    const cy = 70;
+    return {
+      w: 230, h: 140, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        cometTail(ctx, cx - 10, cy, 0, 160, 46, 211 + i);
+        celRing(ctx, STARGOLD, cx, cy, 34 + (i % 2) * 3, 8, { seed: 212 });
+        star5(ctx, STARGOLD, cx, cy, 30, (i / 6) * ((Math.PI * 2) / 5));
+      },
+    };
+  })();
+
+  // Her mark on a monster: a gold starburst, a little constellation of four stars snapping shut
+  // round it, then the stars twinkle out.
+  E.sthit = (() => {
+    const c = 110;
+    const pts = [[c - 52, c - 30], [c + 10, c - 58], [c + 56, c - 6], [c - 14, c + 50]];
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, STARGOLD, c, c, [34, 50, 40][i], 10, 221, { inner: 0.3, rot: i * 0.2 });
+        if (i >= 1 && i <= 4) {
+          const k = Math.min(1, i / 2);
+          for (let j = 0; j < pts.length; j++) {
+            const [x0, y0] = pts[j];
+            const [x1, y1] = pts[(j + 1) % pts.length];
+            if (i <= 3) thread(ctx, x0, y0, x0 + (x1 - x0) * k, y0 + (y1 - y0) * k, 2.5);
+            star5(ctx, j % 2 ? NIGHT : STARGOLD, x0, y0, i === 4 ? 9 : 12, j);
+          }
+        }
+        if (i >= 5) for (let j = 0; j < pts.length; j++) sparkle(ctx, j % 2 ? NIGHT : STARGOLD, pts[j][0], pts[j][1] - (i - 4) * 8, 9 - (i - 5) * 3, j);
+      },
+    };
+  })();
+
+  // Her constellation (the gauge over her head, and Starfall's): seven stars light one by one
+  // (frame k shows k stars), joined by threads as they light; the last frame glows full.
+  const CONST = [[30, 110], [70, 70], [120, 84], [160, 40], [210, 60], [240, 110], [190, 130]];
+  E.stconst = {
+    w: 270, h: 160, n: 8, fps: 10, px: 135, py: 90,
+    draw(ctx, i) {
+      const lit = Math.min(7, i);
+      for (let j = 0; j < CONST.length - 1; j++) if (j + 1 < lit) thread(ctx, ...CONST[j], ...CONST[j + 1], i === 7 ? 3.5 : 2.5);
+      if (i === 7) thread(ctx, ...CONST[6], ...CONST[3], 3.5);
+      CONST.forEach(([x, y], j) => {
+        if (j < lit) star5(ctx, STARGOLD, x, y, i === 7 ? 16 : 13, j * 0.3);
+        else star5(ctx, NIGHT, x, y, 7, j * 0.3);
+      });
+      if (i === 7) for (const [x, y] of CONST) sparkle(ctx, STARGOLD, x + 14, y - 16, 6, x);
+    },
+  };
+
+  // A meteor falling (Starfall's rain), toward +x and down; loops.
+  E.stmeteor = (() => {
+    const cx = 150;
+    const cy = 150;
+    return {
+      w: 190, h: 190, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        cometTail(ctx, cx - 6, cy - 6, Math.PI / 4, 140, 40, 231 + i);
+        star5(ctx, STARGOLD, cx, cy, 24, i * 0.4);
+      },
+    };
+  })();
+
+  // Wishing Star (her heal): a star falls from the sky into a soft column of gold light over the
+  // party, then gold sparkles rise and drift away.
+  E.stwish = (() => {
+    const c = 110;
+    const gy = 300;
+    return {
+      w: 220, h: 320, n: 9, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 3) {
+          const y = 30 + i * 60;
+          cometTail(ctx, c, y, Math.PI / 2, 80, 26, 241);
+          star5(ctx, STARGOLD, c, y, 22, i * 0.5);
+        }
+        if (i >= 3 && i <= 7) {
+          const w = [30, 56, 60, 52, 34][i - 3];
+          ctx.save();
+          ctx.globalAlpha = 0.8;
+          fill(ctx, [[c - w * 0.5, 40], [c + w * 0.5, 40], [c + w, gy], [c - w, gy]], STARGOLD[1]);
+          fill(ctx, [[c - w * 0.2, 40], [c + w * 0.2, 40], [c + w * 0.4, gy], [c - w * 0.4, gy]], STARGOLD[0]);
+          ctx.restore();
+          ctx.save();
+          ctx.translate(c, gy - 6);
+          ctx.scale(1, 0.3);
+          celRing(ctx, STARGOLD, 0, 0, 40 + (i - 3) * 22, 12 - (i - 3) * 1.5, { broken: i >= 6 ? 0.4 : 0, seed: 242 });
+          ctx.restore();
+        }
+        if (i >= 4) {
+          const R = rng(243);
+          for (let j = 0; j < 8; j++) sparkle(ctx, j % 3 ? STARGOLD : NIGHT, c + (R() - 0.5) * 140, gy - 40 - R() * 120 - (i - 4) * 26, 9 * (1.1 - (i - 4) * 0.15), j);
+        }
+      },
+    };
+  })();
+
+  // Star Veil (her ward): a ring of little linked stars wraps round them and settles into a soft
+  // dome of starlight, then twinkles out.
+  E.stveil = (() => {
+    const c = 110;
+    const gy = 160;
+    return {
+      w: 220, h: 180, n: 7, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        if (i >= 2 && i <= 5) {
+          ctx.save();
+          ctx.globalAlpha = 0.45;
+          ctx.beginPath();
+          ctx.ellipse(c, gy - 10, 86, 120, 0, Math.PI, 0);
+          ctx.fillStyle = NIGHT[1];
+          ctx.fill();
+          ctx.restore();
+        }
+        const n = 9;
+        for (let j = 0; j < n; j++) {
+          const a = Math.PI + (j / (n - 1)) * Math.PI * k;
+          const x = c + Math.cos(a) * 86;
+          const y = gy - 10 + Math.sin(a) * 120;
+          if (j > 0 && i <= 5) {
+            const b = Math.PI + ((j - 1) / (n - 1)) * Math.PI * k;
+            thread(ctx, c + Math.cos(b) * 86, gy - 10 + Math.sin(b) * 120, x, y, 2);
+          }
+          if (i <= 5) star5(ctx, j % 2 ? NIGHT : STARGOLD, x, y, 9, j);
+          else sparkle(ctx, STARGOLD, x, y - 8, 7, j);
+        }
+      },
+    };
+  })();
+
+  // Her badge: a witch's hat with a gold star on its band.
+  E.embwitch = emblem(NIGHT, (ctx, pal) => {
+    inked(ctx, [[-46, 30], [46, 30], [30, 20], [-30, 20]], pal[3], pal[4], 4);
+    inked(ctx, [[-26, 22], [26, 22], [10, -20], [24, -46], [-6, -24]], pal[3], pal[4], 4);
+    fill(ctx, [[-20, 18], [-8, -14], [4, -12], [-6, 18]], pal[2]);
+    fill(ctx, [[-27, 12], [27, 12], [25, 20], [-25, 20]], STARGOLD[2]);
+    star5(ctx, STARGOLD, 0, 14, 12, 0);
+    star5(ctx, STARGOLD, 26, -44, 8, 0.4);
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

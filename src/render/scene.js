@@ -308,10 +308,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     // A job's gauge builds up around them as the fight goes on: a Warrior's Valor, an Archer's
     // Momentum, a Berserker's Rage, a Paladin's Faith, a Beastmaster's Bond (each 0-100).
     const gauge = gaugeOf(world.char);
-    // In a form the aura stays at its fullest. In Endless Fox-Fire her tails wake with the barrage,
-    // one stage at a time (one, three, six, then all nine), whatever her gauge.
-    const awake = gauge === 'tails' && p.flow ? [1, 3, 6, 9][[0.45, 0.9, 1.25].filter((h) => p.flow.heat >= h).length] / 9 : null;
-    const power = gauge ? [gauge, inForm(world) ? 1 : awake ?? (world[gauge] ?? 0) / 100] : null;
+    // In a form the aura stays at its fullest.
+    const power = gauge ? [gauge, inForm(world) ? 1 : (world[gauge] ?? 0) / 100] : null;
     // (Floating in Endless Fox-Fire's Ascension, the aura rises with her.)
     const ay = hy - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0) - (p.flow && p.flow.float !== false ? streamHover(p.flow.heat, p.flow.t0 + (p.progress ?? 0) * (p.dur ?? 0)) : 0);
     // A form draws the whole aura larger.
@@ -609,7 +607,7 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     if (b.values?.regenPct) renew = true;
   }
   // A Spirit Mage's ward: the sphere of light and sacred rope, as on her.
-  if (barrier?.id === 'spiritward') fxSprite(ctx, 'celspiritward', x, y + 4, { t: time, scale: 0.78, alpha: 0.6 * Math.min(1, (now - barrier.since) * 3) });
+  if (barrier?.id === 'spiritward') fxSprite(ctx, 'celstveil', x, y + 4, { frame: 2 + (Math.floor(time * 3) % 4), scale: 0.55, alpha: 0.55 * Math.min(1, (now - barrier.since) * 3) });
   else if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
     ctx.save();

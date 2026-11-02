@@ -270,6 +270,17 @@ const R = {
   blessing: { db: -11, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1500 }, { seq: 'D5:90 E5:90 G5:90 A5:90 D6:700', inst: 'celesta', db: -4 }, { seq: 'r:300 D5+A5:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
   wardbreak: { db: -11, max: 2, layers: [{ rec: 'glass', len: 700 }, sparkle('E7:30 B6:30 G6:200', { db: -8 }), thump(160, 160, { db: -8 })] },
   heavenslantern: { db: -10, max: 1, room: true, duck: [-6, 1500], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:80 E4:80 G4:80 A4:80 B4:80 D5:80 E5:900', inst: 'orchestral_harp' }, { seq: 'r:400 D4+A4+D5:1400', inst: 'choir_aahs', attack: 0.3, db: -8 }] },
+  // The Star Witch: a star bolt (a bright glassy ping and a sparkle), a comet (a whoosh with a
+  // trailing chime), Wishing Star (a falling glissando into a warm harp chord), Star Veil (a shimmer
+  // of bells closing round), all seven stars lit (a rising celesta run), and Starfall (the sky
+  // drawn note by note, then meteors and a great boom). All in a bright major key.
+  starbolt: { db: -15, vary: 6, max: 3, layers: [{ rec: 'glass', len: 260, rate: 1.8, db: -10 }, sparkle('G7:0 D8:40', { db: -10 }), whoosh(240, 700, 3200, { focus: 0.3, db: -10 })] },
+  starcomet: { db: -12, vary: 4, max: 2, layers: [whoosh(420, 400, 2600, { focus: 0.4, db: -4 }), sparkle('C7:0 G6:60 E6:120', { db: -10 }), { rec: 'bell', len: 500, rate: 1.4, db: -10 }] },
+  stwish: { db: -10, max: 1, room: true, layers: [{ seq: 'C7:50 A6:50 F6:50 D6:50 C6:50', inst: 'celesta', db: -6 }, { seq: 'r:260 F4+A4+C5+F5:900', inst: 'orchestral_harp', attack: 0.02, db: -4 }, { rec: 'holyHeal', len: 1200, db: -8 }] },
+  stveil: { db: -11, max: 1, room: true, layers: [sparkle('C6:0 E6:50 G6:100 C7:150 E7:200 G7:250', { db: -6 }), { rec: 'holyProtect', len: 1000, db: -6 }] },
+  allstars: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'C6:60 D6:60 E6:60 G6:60 A6:60 C7:60 E7:600', inst: 'celesta', db: -2 }, sparkle('r:420 C8:0 G7:60', { db: -10 })] },
+  starfallsky: { db: -10, max: 1, room: true, layers: [{ seq: 'C6:90 E6:90 G6:90 A6:90 C7:90 E7:90 G7:400', inst: 'celesta', db: -2 }, { rec: 'holyProtect', len: 1200, db: -8 }] },
+  starfallimpact: { db: -6, max: 1, room: true, duck: [-8, 1400], layers: [thump(55, 700, { slide: -1.6 }), { rec: 'holyBlast', len: 1600, db: -2 }, { rec: 'rockHit', rate: 0.7, db: -6 }, sparkle('r:200 C7:0 G6:80 E6:160 C6:240', { db: -8 })] },
   // The Shrine Maiden: Grand Blessing (a bigger, brighter Blessing with a full choir), the
   // Purification circle opening (a deep bell and a rising chime) and a monster burning in it,
   // someone raised from the fallen (a harp run and a choir), and each torii gate of Thousand Torii

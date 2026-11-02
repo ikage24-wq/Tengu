@@ -670,310 +670,215 @@ function dagger(m, t) {
   }
 }
 
-// ---------- Shrine pieces ----------
+// ---------- Moon and ring pieces (the wands and staves) ----------
 
-const RIBBONS = ['#e0303e', '#ffffff', '#ffd36a', '#4f8cd8', '#5fb86a'];
-const PAPER = '#ffffff';
-const PAPER_SH = '#ddd6ee';
-const BRASS = ['#f2c94c', '#b8862a'];
-const FLAP = [0, 0.6, 1, 0.6, 0, -0.6];
-const flap = (f) => FLAP[((f % 6) + 6) % 6];
-// A little round bell with its slot and a glint.
-function bell(x, y, r, tone) {
-  return [E(x, y, r, r, tone[0]), F(R(x - r * 0.7, y + r * 0.15, r * 1.4, Math.max(0.4, r * 0.3), '#3a2414')), F(E(x - r * 0.35, y - r * 0.4, r * 0.28, r * 0.24, WHITE))];
-}
-// Ribbons hanging from (x, y), `n` of them `len` long, fluttering with the frame.
-function ribbons(x, y, len, n, f) {
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const o = (i - (n - 1) / 2) * 0.7;
-    const sw = flap(f + i) * 0.6 + o * 1.2;
-    const l = len * (0.85 + 0.15 * (i % 2));
-    out.push(T([[x + o - 0.45, y], [x + o + 0.45, y], [x + sw + 0.5, y + l], [x + sw - 0.1, y + l + 0.8], [x + sw - 0.5, y + l]], RIBBONS[i % RIBBONS.length]));
-  }
-  return out;
-}
-// A zigzag paper streamer (shide) from (x, y): `n` folds, swaying with the frame, toward `side`.
-function shide(x, y, n, w, h, f, side) {
-  const out = [];
-  for (let i = 0; i < n; i++) {
-    const k = i % 2 ? 1 : -1;
-    const x0 = x + side * i * 0.4 + flap(f) * 0.5 * (i / n) * side;
-    const y0 = y + i * h;
-    out.push(T([[x0 - w / 2, y0], [x0 + w / 2, y0], [x0 + w / 2 - k * w * 0.55, y0 + h], [x0 - w / 2 - k * w * 0.55, y0 + h]], i % 2 ? PAPER_SH : PAPER));
-  }
-  return out;
-}
 // A crescent moon lying on its back like a bowl, horns up, round (x, y).
 function bowl(x, y, r, c) {
   return [T([...arcPts(x, y, r, r, 180, 360, 14), ...arcPts(x, y - r * 0.35, r * 0.82, r * 0.82, 360, 180, 12)], c)];
 }
-// A metal ring (a shakujo's): a loop with a hole.
+// A metal ring: a loop with a hole.
 const ring = (x, y, r, c) => [E(x, y, r, r, c), E(x, y, r * 0.55, r * 0.55, 'none')];
-// The bells' tone: brass on the plainest two, then the weapon's trim.
-const toneOf = (m, t) => (t <= 1 ? BRASS : [m.trim, m.trimDark]);
 
-// ---------- Wands: kagura suzu ----------
+// ---------- Wands: star wands (the Star Witch's) ----------
 //
-// A short lacquered handle above the hand, ribbons streaming from its end, and a head of bells:
-// a bamboo cluster, a copper hoop, a bronze temple bell, an iron bell pagoda, a steel bell wheel
-// round a mirror, a silver crescent hung with bells, a mithril sakaki branch, a cobalt scallop
-// shell, a crystal lotus, a runic three-tier suzu and a starsteel star.
-const LAC = ['#cfc070', '#ead2a2', '#d23a34', '#d23a34', '#2a2230', '#f6efe0', '#dbeeff', '#2f3f7a', '#e6faff', '#3d3756', '#2c3570'];
+// A short slim wand held at its end (a little pommel below the hand), a star on top, so it points
+// out from her hand and never sits across her face. A wooden wand with a brass star, a copper star
+// with a bow, a bronze star before a crescent, an iron star in a ring, a steel double star, a
+// silver crescent cradling a pink star, a mithril star with wings, a cobalt comet, a faceted
+// crystal star, a runic star in an orbit ring, and a starsteel star with little stars round it.
+const LAC = ['#b8875a', '#ead2a2', '#c8913e', '#4a4a5a', '#2a2230', '#f6efe0', '#dbeeff', '#24306a', '#e6faff', '#2c2842', '#1f2860'];
+
+// A five-point star at (x, y), `r` out to its points, `k` how deep the dips are, turned by `rot`.
+function star5(x, y, r, c, k = 0.46, rot = 0) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * k : r;
+    pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+  }
+  return T(pts, c);
+}
+// A star with a light face and a gem at its heart.
+const starHead = (x, y, r, c, light, gemC, k) => [star5(x, y, r, c, k), F(star5(x, y - r * 0.08, r * 0.62, light, k)), ...(gemC ? gem(x, y, r * 0.24, gemC) : [])];
 
 function wand(m, t, f = 0) {
   const s = [];
   const a = {};
-  const tone = toneOf(m, t);
-  const H = 8 + t * 0.25;
+  const H = 7 + t * 0.35;
   const lac = LAC[t];
-  s.push(...ribbons(0, 5.6, 8 + t * 0.5, Math.min(5, 2 + Math.ceil(t / 3)), f));
-  s.push(R(-1.2, -H, 2.4, H + 6, lac), F(R(0.4, -H, 0.8, H + 6, mix(lac, '#000000', 0.2))));
-  for (let y = -H + 2; y < 4; y += 3) s.push(F(R(-1.2, y, 2.4, 0.5, m.trim)));
-  s.push(E(0, 6, 1.6, 1.2, m.trim), R(-1.8, -H - 1.2, 3.6, 1.6, m.trim));
-  const y = -H - 1.2;
-  let top = y - 8;
+  // The wand: a slim tapering shaft from the pommel just below the hand up to the head.
+  s.push(T([[-1.1, 2.2], [1.1, 2.2], [0.8, -H], [-0.8, -H]], lac), F(T([[0.3, 2.2], [1.1, 2.2], [0.8, -H], [0.3, -H]], mix(lac, '#000000', 0.22))));
+  s.push(E(0, 2.6, 1.3, 1.1, m.trim), F(R(-1.2, -0.6, 2.4, 0.7, m.trim)), F(R(-1, -H + 0.4, 2, 0.6, m.trim)));
+  const cy = -H - 4.2;
+  let top = cy - 5;
+  const gold = t <= 1 ? '#f2c45a' : m.trim;
+  const goldLt = t <= 1 ? '#fff0b0' : m.edge;
   switch (t) {
     case 0:
-      s.push(R(-0.5, y - 4, 1, 4, '#9c9650'));
-      for (const [x, yy] of [[-1.8, y - 4.6], [1.8, y - 4.6], [0, y - 6.6]]) s.push(...bell(x, yy, 1.4, tone));
-      s.push(R(-2.2, y - 3.4, 4.4, 0.8, '#e0303e'));
-      top = y - 8;
+      s.push(...starHead(0, cy + 0.6, 3.6, gold, goldLt, null));
+      top = cy - 3.2;
       break;
     case 1:
-      s.push(...ring(0, y - 5, 4.4, m.trim));
-      for (let k = 0; k < 5; k++) {
-        const ang = Math.PI * (0.15 + (k / 4) * 0.7);
-        s.push(...bell(Math.cos(ang) * 4.4, y - 5 - Math.sin(ang) * 4.4 + 1.6, 1.1, tone));
-      }
-      top = y - 10;
+      s.push(T([[0, -H + 0.6], [-2.8, -H - 0.8], [-2.6, -H + 1.4]], '#ff7a8a'), T([[0, -H + 0.6], [2.8, -H - 0.8], [2.6, -H + 1.4]], '#ff7a8a'));
+      s.push(...starHead(0, cy, 4, gold, goldLt, null));
+      top = cy - 4;
       break;
     case 2:
-      // A temple bell: flared skirt, a knob on top, a striker band.
-      s.push(T([[-1.6, y - 8], [1.6, y - 8], [2.6, y - 3.2], [4, y - 0.6], [-4, y - 0.6], [-2.6, y - 3.2]], tone[0]), F(R(-3.4, y - 2.6, 6.8, 0.7, tone[1])), E(0, y - 8.6, 1.2, 1, tone[0]));
-      for (const x of [-3.2, 3.2]) s.push(...bell(x, y + 0.8, 0.9, tone));
-      top = y - 10;
+      s.push(...bowl(1.4, cy - 0.6, 4.6, m.blade).map((sh) => ({ ...sh, pts: sh.pts.map(([x, y]) => [x * 0.9 + 0.6, y]) })));
+      s.push(...starHead(-0.6, cy, 3.6, gold, goldLt, null));
+      top = cy - 4.6;
       break;
     case 3:
-      for (const [yy, n] of [[y - 2, 4], [y - 5.6, 3], [y - 9, 2]]) {
-        const span = (n - 1) * 1.3;
-        s.push(R(-span - 0.6, yy - 1.7, span * 2 + 1.2, 0.6, m.trim));
-        for (let k = 0; k < n; k++) s.push(...bell(-span + k * 2.6, yy, 1.15, tone));
-      }
-      s.push(R(-0.4, y - 11, 0.8, 11, m.trimDark), T([[-1.2, y - 10.6], [0, y - 12.6], [1.2, y - 10.6]], m.trim));
-      top = y - 13;
+      s.push(T([...arcPts(0, cy, 5, 5, 0, 360, 24), ...arcPts(0, cy, 3.9, 3.9, 360, 0, 24)], m.blade), ...starHead(0, cy, 3.4, m.trim, m.edge, null));
+      top = cy - 5;
       break;
-    case 4: {
-      // A wheel of bells round a round mirror.
-      const cy = y - 6;
-      s.push(...ring(0, cy, 5, m.trim));
-      for (let k = 0; k < 6; k++) {
-        const ang = (k / 6) * Math.PI * 2 + Math.PI / 6;
-        s.push(...bell(Math.cos(ang) * 5, cy - Math.sin(ang) * 5, 1.15, tone));
-      }
-      s.push(E(0, cy, 2.4, 2.4, m.blade), F(E(-0.7, cy - 0.7, 0.8, 0.8, m.edge)));
-      top = cy - 6.5;
-      break;
-    }
-    case 5: {
-      // A silver crescent, bells hung along it, a pink gem at its heart.
-      const cy = y - 8;
-      for (const ang of [215, 245, 295, 325]) {
-        const r = (ang * Math.PI) / 180;
-        s.push(R(Math.cos(r) * 5.4 - 0.2, cy - Math.sin(r) * 5.4, 0.4, 1.4, m.trimDark), ...bell(Math.cos(r) * 5.4, cy - Math.sin(r) * 5.4 + 2.2, 1, tone));
-      }
-      s.push(R(-0.6, cy + 4, 1.2, y - cy - 4, m.trim), ...bowl(0, cy, 5.4, m.blade), ...gem(0, cy + 0.6, 1.4, m.gem));
-      a.gem = [0, cy + 0.6];
-      top = cy - 6;
-      break;
-    }
-    case 6: {
-      // A sakaki branch: leaves and bells on twigs, a blue gem bud at the top.
-      s.push(R(-0.5, y - 10, 1, 10, m.trimDark));
-      for (const [x, yy, ang] of [[0, y - 3, 30], [0, y - 5, 150], [0, y - 7.4, 40], [0, y - 9, 140]]) s.push(leafAt(x, yy, ang, 4.6, 1.5, '#7fd17a'));
-      for (const [x, yy] of [[3.2, y - 1.4], [-3.4, y - 3.2], [3.4, y - 5.8], [-3, y - 7.4]]) s.push(...bell(x, yy, 1.05, tone));
-      s.push(leafAt(0, y - 10, 90, 3, 1.4, m.trim), ...gem(0, y - 11.4, 1.1, m.gem));
-      a.gem = [0, y - 11.4];
-      top = y - 13;
-      break;
-    }
-    case 7: {
-      // A scallop shell fanned open, bells along its rim, a gold gem at the hinge.
-      const cy = y - 1;
-      const rim = arcPts(0, cy, 7, 8, 160, 20, 12);
-      s.push(T([[0, cy], ...rim], m.blade));
-      for (let k = 1; k < 6; k++) {
-        const r = ((160 - k * 23.3) * Math.PI) / 180;
-        s.push(F(T([[0, cy - 0.5], [Math.cos(r) * 6.6 - 0.4, cy - Math.sin(r) * 7.6], [Math.cos(r) * 6.6 + 0.4, cy - Math.sin(r) * 7.6]], m.bladeDark)));
-      }
-      for (const [x, yy] of rim.filter((_, i) => i % 3 === 0)) s.push(...bell(x, yy - 0.4, 1.05, tone));
-      s.push(...gem(0, cy - 0.4, 1.2, m.gem));
-      a.gem = [0, cy - 0.4];
-      top = cy - 10;
-      break;
-    }
-    case 8: {
-      // A crystal lotus: petals of crystal round a pink gem, bells hanging under them.
-      const cy = y - 4.6;
-      for (const [ang, len] of [[150, 6], [120, 7], [90, 8], [60, 7], [30, 6]]) s.push(leafAt(0, cy + 1.4, ang, len, 1.8, m.blade));
-      for (const [ang, len] of [[110, 5.4], [70, 5.4]]) s.push(F(leafAt(0, cy + 1.4, ang, len, 0.8, m.edge)));
-      for (const x of [-4, -1.4, 1.4, 4]) s.push(...bell(x, cy + 3.4 + Math.abs(x) * 0.15, 1, tone));
-      s.push(...gem(0, cy + 0.4, 1.4, m.gem));
-      a.gem = [0, cy + 0.4];
-      top = cy - 8;
-      break;
-    }
-    case 9: {
-      // A dark three-tier suzu, its trunk cut with glowing runes, a violet gem on top.
-      for (const [yy, n] of [[y - 2, 5], [y - 6, 4], [y - 10, 3]]) {
-        const span = (n - 1) * 1.25;
-        s.push(T([[-span - 1, yy - 1.4], [span + 1, yy - 1.4], [span + 1.8, yy - 2.4], [-span - 1.8, yy - 2.4]], m.trim));
-        for (let k = 0; k < n; k++) s.push(...bell(-span + k * 2.5, yy, 1.1, tone));
-      }
-      s.push(R(-0.7, y - 12.6, 1.4, 12.6, m.blade));
-      for (let yy = y - 11.6; yy < y - 1; yy += 2.6) s.push(F(R(-0.4, yy, 0.8, 1.4, m.rune)));
-      a.runes = [0, y - 11.6, y - 1];
-      s.push(T([[0, y - 17], [1.8, y - 14], [0, y - 12], [-1.8, y - 14]], m.trim), ...gem(0, y - 14.2, 1.1, m.gem));
-      a.gem = [0, y - 14.2];
-      top = y - 17;
-      break;
-    }
-    default: {
-      // A gold star with a bell at each point and a gem at its heart.
-      const cy = y - 7;
-      s.push(star(0, cy, 7, GOLD, 0.34), F(star(0, cy, 4.4, m.blade, 0.34)));
-      for (const [x, yy] of [[0, cy - 7], [7, cy], [-7, cy], [0, cy + 7]]) s.push(...bell(x, yy + (yy === cy ? 1.4 : yy > cy ? 0 : -0.6), 1.15, tone));
-      s.push(...gem(0, cy, 1.5, m.gem));
+    case 4:
+      s.push(star5(0, cy, 5.2, m.bladeDark, 0.42, Math.PI / 5), ...starHead(0, cy, 4.6, m.trim, m.edge, m.gem));
       a.gem = [0, cy];
-      top = cy - 9;
+      top = cy - 5.2;
+      break;
+    case 5:
+      s.push(...bowl(0, cy + 0.6, 5.4, m.blade), ...starHead(0, cy - 1.4, 3.2, '#ff9ec0', '#ffe0ec', null), ...gem(0, cy + 2.6, 0.9, m.gem));
+      a.gem = [0, cy + 2.6];
+      top = cy - 4.8;
+      break;
+    case 6:
+      for (const sd of [-1, 1]) s.push(leafAt(sd * 2.4, cy + 1, sd < 0 ? 160 : 20, 5.4, 1.8, m.blade), F(leafAt(sd * 2.4, cy + 1, sd < 0 ? 168 : 12, 4, 0.8, m.edge)));
+      s.push(...starHead(0, cy, 4.2, m.trim, m.edge, m.gem));
+      a.gem = [0, cy];
+      top = cy - 4.2;
+      break;
+    case 7:
+      // A comet: the star with a tail curling down past the shaft.
+      s.push(T([[-1.6, cy + 1], [1.6, cy - 1], [4.6, cy + 6], [2.4, cy + 9], [1, cy + 5]], m.bladeDark), F(T([[-0.6, cy + 0.6], [1, cy - 0.6], [3.4, cy + 5.6], [1.8, cy + 7.6]], m.blade)));
+      s.push(...starHead(-0.8, cy - 0.6, 4.2, m.trim, m.edge, m.gem));
+      a.gem = [-0.8, cy - 0.6];
+      top = cy - 4.8;
+      break;
+    case 8:
+      // A faceted crystal star.
+      s.push(star5(0, cy, 5, m.blade, 0.5), F(T([[0, cy - 5], [1.2, cy - 1], [0, cy], [-1.2, cy - 1]], m.edge)), F(T([[0, cy], [4.6, cy - 1.6], [1.4, cy + 0.6]], m.bladeDark)), ...gem(0, cy, 1.2, m.gem));
+      a.gem = [0, cy];
+      top = cy - 5;
+      break;
+    case 9:
+      // A runic star inside a tilted orbit ring, runes glowing down the shaft.
+      s.push(T([...arcPts(0, cy, 6, 2.2, 200, 340, 10), ...arcPts(0, cy, 5, 1.4, 340, 200, 10)], m.trim));
+      s.push(...starHead(0, cy - 0.4, 4, m.blade, m.edge, m.gem));
+      s.push(T([...arcPts(0, cy, 6, 2.2, 20, 160, 10), ...arcPts(0, cy, 5, 1.4, 160, 20, 10)], m.trim));
+      for (let y = -H + 2; y < 1; y += 2.4) s.push(F(R(-0.35, y, 0.7, 1.2, m.rune)));
+      a.runes = [0, -H + 2, 1];
+      a.gem = [0, cy - 0.4];
+      top = cy - 4.4;
+      break;
+    default: {
+      // A big starsteel star, three little stars orbiting it.
+      s.push(star5(0, cy - 1, 6, GOLD, 0.44), F(star5(0, cy - 1.4, 3.8, m.blade, 0.44)), ...gem(0, cy - 1, 1.4, m.gem));
+      for (const [x, y] of [[-5.6, cy + 3], [5.4, cy + 2], [0, cy - 8.4]]) s.push(F(star(x, y, 1.4, WHITE, 0.3)));
+      a.gem = [0, cy - 1];
+      top = cy - 9.8;
       break;
     }
   }
   a.blade = [top, -H];
-  a.head = [0, (top - H) / 2];
+  a.head = [0, cy];
   a.tip = [0, top];
-  if (m.rune && !a.runes) a.runes = [0, -H + 1, 3];
+  if (m.rune && !a.runes) a.runes = [0, -H + 1, 1];
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
-// ---------- Staffs: gohei, shrine staff, shakujo ----------
+// ---------- Staffs: witch's staves (the Star Witch's) ----------
 //
-// A tall lacquered staff with its head on top: a bamboo gohei, a red copper gohei, a bronze gohei
-// with a mirror, an iron ringed loop, a steel shakujo arch, a silver crescent, a mithril branch
-// nesting an orb, a cobalt wave crest, a crystal cluster, a runic six-ring shakujo and a starsteel
-// star in a ring.
+// A long staff held near its foot (only a short capped end below the hand), its head a moon and
+// stars: a wooden staff with a crescent, a copper crescent with a hanging star, a bronze star
+// lantern, an iron crook with a star, a steel orb in a crescent, a silver crescent ringed with
+// dots, a mithril staff of twisted wood round a star crystal, a cobalt moon and comet, a crystal
+// shard, a runic orb in a cage, and a starsteel crescent holding a gold star.
 function staff(m, t, f = 0) {
   const s = [];
   const a = {};
-  const S = 30 + t * 0.9;
+  const S = 26 + t * 0.8;
   const lac = LAC[t];
-  s.push(R(-1.3, -S, 2.6, S + 13, lac), F(R(0.4, -S, 0.9, S + 13, mix(lac, '#000000', 0.2))));
-  for (let y = -S + 6; y < 10; y += t >= 2 ? 8 : 14) s.push(F(R(-1.3, y, 2.6, 0.8, t === 0 ? '#9c9650' : m.trim)));
-  s.push(R(-1.6, 11, 3.2, 2.6, m.trim), T([[-1.6, 13.6], [0, 15.6], [1.6, 13.6]], m.trimDark));
+  s.push(R(-1.2, -S, 2.4, S + 4, lac), F(R(0.4, -S, 0.8, S + 4, mix(lac, '#000000', 0.22))));
+  for (let y = -S + 5; y < 2; y += t >= 2 ? 7 : 12) s.push(F(R(-1.2, y, 2.4, 0.7, m.trim)));
+  s.push(R(-1.5, 3, 3, 1.6, m.trim), T([[-1.5, 4.6], [0, 6.2], [1.5, 4.6]], m.trimDark));
   const yb = -S - 1;
-  let top = yb - 10;
   let cy = yb - 5;
-  const gohei = (folds) => {
-    s.push(R(-5, yb - 0.8, 10, 1.6, t === 0 ? '#9c9650' : m.trim));
-    s.push(...shide(-3.6, yb + 0.8, folds, 2.4, 2.4, f, -1), ...shide(3.6, yb + 0.8, folds, 2.4, 2.4, f + 3, 1));
-  };
-  const arch = (r, n, c = m.trim) => {
-    cy = yb - r - 1;
-    s.push(R(-0.8, cy, 1.6, yb - cy + 0.5, c));
-    s.push(T([...arcPts(0, cy, r, r * 1.25, 200, -20, 14), [r * 0.94, yb], ...arcPts(0, cy, r - 1.3, r * 1.25 - 1.3, -20, 200, 14).map(([x, y]) => [x, y]), [-r * 0.94, yb]], c));
-    for (let k = 0; k < n; k++) {
-      const sd = k % 2 ? 1 : -1;
-      const yy = cy + 1.4 + Math.floor(k / 2) * 2.4;
-      s.push(...ring(sd * (r - 0.2), yy, 1.5, c));
-    }
-    top = cy - r * 1.25;
-  };
+  let top = yb - 10;
+  const gold = t <= 1 ? '#f2c45a' : m.trim;
+  const moon = (x, y, r, c) => T([...arcPts(x, y, r, r, 60, 300, 14), ...arcPts(x + r * 0.45, y - r * 0.05, r * 0.78, r * 0.8, 300, 60, 12)], c);
   switch (t) {
     case 0:
-      gohei(3);
-      s.push(T([[-1.3, yb - 0.8], [1.3, yb - 0.8], [0, yb - 4]], '#dcd690'));
-      top = yb - 4;
+      s.push(moon(0, yb - 4, 4.4, '#f2d690'));
+      top = yb - 8.4;
       break;
     case 1:
-      gohei(4);
-      s.push(T([[-1.6, yb - 0.8], [1.6, yb - 0.8], [1, yb - 3], [0, yb - 5], [-1, yb - 3]], m.trim));
-      top = yb - 5;
+      s.push(moon(0, yb - 4.6, 5, gold), R(2.6, yb - 4.6, 0.4, 3, m.trimDark), ...starHead(2.8, yb - 0.6, 1.8, '#fff0b0', '#ffffff', null));
+      top = yb - 9.6;
       break;
     case 2:
-      gohei(4);
-      cy = yb - 4.6;
-      s.push(E(0, cy, 3.6, 3.6, m.trim), E(0, cy, 2.8, 2.8, m.blade), F(E(-0.9, cy - 0.9, 0.9, 0.9, m.edge)));
-      top = cy - 4;
+      // A star lantern: a little cage with a star glowing inside.
+      cy = yb - 5;
+      s.push(R(-0.4, yb - 1.4, 0.8, 1.4, m.trimDark), T([[-3.4, cy - 3.6], [3.4, cy - 3.6], [3.8, cy + 3.6], [-3.8, cy + 3.6]], m.trimDark), T([[-2.6, cy - 2.8], [2.6, cy - 2.8], [2.9, cy + 2.8], [-2.9, cy + 2.8]], '#ffe8a0'), ...starHead(0, cy, 2.2, '#ffd36a', '#ffffff', null), T([[-2.4, cy - 3.6], [2.4, cy - 3.6], [0, cy - 6]], m.trim));
+      top = cy - 6;
       break;
     case 3:
-      arch(4.2, 2);
+      // A crook curling over, a star hanging from its tip.
+      s.push(T([...arcPts(3, yb - 4, 3.6, 4, 180, -40, 12), ...arcPts(3, yb - 4, 2.2, 2.6, -40, 180, 12)], lac), R(5.6, yb - 2.4, 0.4, 3, m.trimDark), ...starHead(5.8, yb + 1.8, 2.2, m.trim, m.edge, null));
+      cy = yb - 4;
+      top = yb - 8;
       break;
     case 4:
-      arch(5, 4);
-      s.push(T([[0, top - 3], [1.4, top + 0.6], [-1.4, top + 0.6]], m.trim));
-      top -= 3;
-      break;
-    case 5: {
-      gohei(3);
-      cy = yb - 7;
-      s.push(R(-0.8, cy + 5, 1.6, yb - cy - 5, m.trim), ...bowl(0, cy, 6.4, m.blade), E(0, cy + 1, 2.2, 2.2, m.trim), ...gem(0, cy + 1, 1.4, m.gem));
-      a.gem = [0, cy + 1];
-      top = cy - 7;
-      break;
-    }
-    case 6: {
-      // Branches curling up round a blue orb, leaves on them.
-      cy = yb - 6;
-      for (const sd of [-1, 1]) {
-        s.push(T([[sd * 0.4, yb], [sd * 4.8, yb - 3], [sd * 5.6, cy - 2], [sd * 4, cy - 5.4], [sd * 4.4, cy - 2], [sd * 3.6, yb - 2.4], [sd * 0.4, yb + 1.4]], m.handle));
-        s.push(leafAt(sd * 4.8, cy - 3, sd > 0 ? 40 : 140, 4, 1.4, '#7fd17a'), leafAt(sd * 5, yb - 2.4, sd > 0 ? -10 : 190, 3.4, 1.2, '#7fd17a'));
-      }
-      s.push(E(0, cy, 3.2, 3.2, m.gem), F(E(-1, cy - 1, 1, 1, WHITE)), F(E(0.8, cy + 1, 1.6, 1.2, mix(m.gem, '#000000', 0.15))));
-      a.gem = [0, cy];
-      top = cy - 7;
-      break;
-    }
-    case 7: {
-      // A wave curling over a gold orb.
       cy = yb - 5;
-      s.push(T([[-1.4, yb], [-4.6, yb - 3], [-5.4, cy - 3], [-3, cy - 7], [1.6, cy - 8], [5, cy - 5.6], [4, cy - 3.6], [2, cy - 5], [-1.4, cy - 4.6], [-3, cy - 2], [-2, yb - 2], [1.4, yb]], m.blade));
-      s.push(F(E(3.4, cy - 6.2, 1.4, 0.9, m.edge)));
-      s.push(E(0.8, cy, 2.6, 2.6, m.gem), F(E(0, cy - 0.8, 0.8, 0.8, WHITE)));
-      a.gem = [0.8, cy];
+      s.push(moon(-0.6, cy, 5.6, m.trim), ...gem(1, cy, 2.6, m.blade), F(E(0.2, cy - 0.9, 0.9, 0.9, WHITE)));
+      top = cy - 5.6;
+      break;
+    case 5:
+      cy = yb - 5.4;
+      s.push(moon(-0.4, cy, 6, m.blade));
+      for (const ang of [30, 0, -30]) s.push(F(E(Math.cos((ang * Math.PI) / 180) * 5 + 1.6, cy - Math.sin((ang * Math.PI) / 180) * 5, 0.7, 0.7, m.edge)));
+      s.push(...gem(1.2, cy, 1.2, m.gem));
+      a.gem = [1.2, cy];
+      top = cy - 6;
+      break;
+    case 6:
+      // Twisted wood (two strands) round a star crystal.
+      cy = yb - 6;
+      for (const sd of [-1, 1]) s.push(T([[sd * 0.6, yb + 1], [sd * 4, cy + 2], [sd * 3.4, cy - 3], [sd * 1, cy - 6], [sd * 2.4, cy - 2.6], [sd * 2.6, cy + 1.6], [sd * 0.2, yb + 1]], lac));
+      s.push(...starHead(0, cy, 3.2, m.blade, m.edge, m.gem));
+      a.gem = [0, cy];
+      top = cy - 6.4;
+      break;
+    case 7:
+      cy = yb - 5.6;
+      s.push(moon(-1, cy, 5.8, m.blade), T([[2, cy - 1], [6.4, cy - 7], [5, cy - 4], [8, cy - 9]], m.bladeDark), ...starHead(2.4, cy + 0.4, 2.6, m.trim, m.edge, m.gem));
+      a.gem = [2.4, cy + 0.4];
+      top = cy - 9;
+      break;
+    case 8:
+      cy = yb - 6;
+      s.push(T([[0, cy - 8], [2.8, cy - 2], [2, cy + 5], [-2, cy + 5], [-2.8, cy - 2]], m.blade), F(T([[0, cy - 8], [1, cy - 2], [0, cy + 4], [-1.2, cy - 2]], m.edge)), T([[3, cy + 1], [5, cy - 3], [4.6, cy + 4]], m.bladeDark), T([[-3, cy + 1], [-5, cy - 3], [-4.6, cy + 4]], m.bladeDark), ...gem(0, cy, 1.1, m.gem));
+      a.gem = [0, cy];
       top = cy - 8;
       break;
-    }
-    case 8: {
-      // Crystals clustered round a pink orb.
-      cy = yb - 5;
-      for (const [x, h, w] of [[-3.6, 7, 1.6], [3.6, 7, 1.6], [-1.8, 10, 1.8], [1.8, 10, 1.8], [0, 13, 2]]) s.push(T([[x - w, yb], [x - w, yb - h + 2], [x, yb - h], [x + w, yb - h + 2], [x + w, yb]], m.blade), F(T([[x, yb], [x, yb - h], [x + w, yb - h + 2], [x + w, yb]], m.bladeDark)));
-      s.push(E(0, cy, 2.4, 2.4, m.gem), F(E(-0.8, cy - 0.8, 0.8, 0.8, WHITE)));
-      a.gem = [0, cy];
-      top = yb - 13;
-      break;
-    }
     case 9:
-      arch(6, 6);
-      s.push(T([[0, top - 4], [1.8, top + 0.6], [-1.8, top + 0.6]], m.trim), ...gem(0, cy, 1.4, m.gem));
+      // A dark orb held in a ring cage, runes down the staff.
+      cy = yb - 6;
+      s.push(...gem(0, cy, 3.6, m.blade), ...ring(0, cy, 5, m.trim), R(-0.4, cy - 6.4, 0.8, 1.6, m.trim), ...starHead(0, cy - 7.4, 1.6, m.trim, m.edge, null));
+      for (let y = -S + 4; y < -S * 0.4; y += 2.6) s.push(F(R(-0.4, y, 0.8, 1.3, m.rune)));
+      a.runes = [0, -S + 4, -S * 0.4];
       a.gem = [0, cy];
-      top -= 4;
+      top = cy - 9;
       break;
-    default: {
-      // A star inside a ring, rings hanging off the ring.
+    default:
       cy = yb - 7;
-      s.push(...ring(0, cy, 6.6, m.trim).map((e, i) => (i ? { ...e, rx: 5.4, ry: 5.4 } : e)));
-      s.push(star(0, cy, 6, GOLD, 0.3), ...gem(0, cy, 1.5, m.gem));
-      for (const sd of [-1, 1]) s.push(...ring(sd * 6.6, cy + 2.6, 1.5, m.trim), ...ring(sd * 6, cy + 5, 1.5, m.trim));
-      s.push(star(0, cy - 9, 2, GOLD));
-      a.gem = [0, cy];
-      top = cy - 11;
+      s.push(moon(-1.4, cy, 7, GOLD), F(moon(-1.9, cy, 5.4, m.blade)), ...starHead(2.4, cy, 4, GOLD, m.edge, m.gem));
+      for (const [x, y] of [[-5.4, cy - 7], [6, cy - 6], [6.6, cy + 5]]) s.push(F(star(x, y, 1.3, WHITE, 0.3)));
+      a.gem = [2.4, cy];
+      top = cy - 8;
       break;
-    }
   }
-  if (m.rune) {
-    for (let y = -S + 5, i = 0; y < -S * 0.4; y += 3, i++) s.push(F(R(-0.6, y, 1.2, 1.8, m.rune)));
-    a.runes = [0, -S + 5, -S * 0.4];
-  }
+  if (m.rune && !a.runes) a.runes = [0, -S + 5, -S * 0.4];
   a.head = [0, cy];
   a.tip = [0, top];
   a.blade = [top, -S];
@@ -1271,7 +1176,7 @@ function chakram(m, t, f = 0) {
 
 // The player wants them big and chunky (MapleStory's oversized weapons): each design is drawn on
 // a plain grid, then blown up, wider than it is longer, so blades, guards and grips are bold.
-const CHUNK = { sword: [1.5, 1.2], axe: [1.4, 1.15], spear: [1.45, 1.1], dagger: [1.15, 1.15], wand: [1.4, 1.25], staff: [1.4, 1.12], bow: [1.3, 1.1], crossbow: [1.15, 1.15] };
+const CHUNK = { sword: [1.5, 1.2], axe: [1.4, 1.15], spear: [1.45, 1.1], dagger: [1.15, 1.15], wand: [1.2, 1.2], staff: [1.25, 1.1], bow: [1.3, 1.1], crossbow: [1.15, 1.15] };
 
 function scaled(d, [sx, sy]) {
   const sh = (s) => {

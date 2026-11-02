@@ -32,7 +32,7 @@ function heroAt(rng, level, jobs) {
 test('warriors tank, Spirit Mages heal, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
   for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
-  assert.equal(roleOf('spiritmage', 'mage'), 'healer', 'the Spirit Mage heals');
+  assert.equal(roleOf('spiritmage', 'mage'), 'healer', 'the Star Witch heals');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
 
@@ -226,7 +226,7 @@ test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Gua
   assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the guard');
 });
 
-test("a Spirit Mage in the healer's seat wards the tank and blesses the hurt, her own way", () => {
+test("a Star Witch in the healer's seat veils the tank and wishes stars on the hurt, her own way", () => {
   const rng = seeded(11);
   const world = heroAt(rng, 12, ['archer']);
   assert.equal(startRun(world), null);
@@ -240,14 +240,14 @@ test("a Spirit Mage in the healer's seat wards the tank and blesses the hurt, he
   delete groupOf(world).find((g) => g.role === 'tank').bot.buffs?.spiritward;
   healerTurn(healer, world, rng);
   const tank = groupOf(world).find((g) => g.role === 'tank');
-  assert.ok(tank.bot.buffs.spiritward?.shield > 0, 'a Spirit Ward on the tank');
-  assert.equal(healer.attack.pose, 'kaguraward', 'cast with her fan sweep');
+  assert.ok(tank.bot.buffs.spiritward?.shield > 0, 'a Star Veil on the tank');
+  assert.equal(healer.attack.pose, 'swveil', 'drawn with her wand');
   world.char.hp = Math.round(world.stats.maxHp * 0.3);
   const before = world.char.hp;
   healerTurn(healer, world, rng);
   assert.ok(world.char.hp > before, 'and she heals you when you are hurt');
-  assert.equal(healer.attack.pose, 'kagurabless');
-  assert.ok(world.fx.some((f) => f.kind === 'blessing'), 'with her column of light');
+  assert.equal(healer.attack.pose, 'swwish');
+  assert.ok(world.fx.some((f) => f.kind === 'stwish'), 'with her wishing star');
 });
 
 test("a Shrine Maiden in the healer's seat heals with Grand Blessing and raises the fallen with the Resurrection Dance", async () => {

@@ -12,7 +12,6 @@ import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP, addShadow } from '../s
 import { MOVES } from '../src/render/moves.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
-import { TRICKS } from '../src/world/spiritdoll.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -2418,27 +2417,35 @@ test("the warrior paths charge their own way, and run into their own attack", ()
   }
 });
 
-test("the Spirit Mage's dance is slow and elegant: about a second a figure, and each hits harder", async () => {
+test("the Star Witch casts snappy: a wand string of her own, every cast out in about a fifth of a second", async () => {
+  const { PATH_COMBOS, PATH_VARIANTS } = await import('../src/world/melee.js');
+  for (const path of ['starwand', 'starstaff']) {
+    assert.equal(PATH_VARIANTS[path].length, PATH_COMBOS[path].length, `${path}: a choice for every step`);
+    PATH_VARIANTS[path].forEach((choices, i) => {
+      assert.equal(choices[0], PATH_COMBOS[path][i]);
+      assert.ok(choices.length >= 2, `${path}: step ${i + 1} has a choice`);
+      for (const st of choices) {
+        assert.ok(MOVES[st.move], `${st.move} is drawn`);
+        assert.ok(st.strikes[0].at * st.dur <= (st.finisher ? 0.34 : 0.32), `${st.move}: the first cast is out quickly (${(st.strikes[0].at * st.dur).toFixed(2)} s)`);
+      }
+    });
+  }
   const w = arena('wand_20');
   w.char.job = 'spiritmage';
-  let moves = 0;
-  let last = null;
-  for (let i = 0; i < 8 * 60; i++) {
-    updateWorld(w, DT, press('KeyZ'));
-    if (w.pose && w.pose.since !== last) {
-      moves++;
-      last = w.pose.since;
-    }
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 120; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
   }
-  const each = 8 / moves;
-  assert.ok(each >= 0.85 && each <= 1.6, `${each.toFixed(2)} s a figure`);
-  const { PATH_COMBOS } = await import('../src/world/melee.js');
-  for (const f of PATH_COMBOS.spiritmage) assert.ok(f.dur >= 0.95, `${f.move} lasts ${f.dur} s`);
+  assert.deepEqual(seen.slice(0, 4).map((x) => x.move), PATH_COMBOS.starwand.map((x) => x.move), 'her own wand string first');
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'her stars land');
+  assert.ok(w.spirit > 0, 'and light her Constellation');
 });
 
-// A Spirit Mage with a wand, every skill of hers learned, and MP to spare.
-function shrineMage() {
-  const w = arena('wand_20');
+// A Star Witch with a wand, every skill of hers learned, and MP to spare.
+function starWitch(weapon = 'wand_20') {
+  const w = arena(weapon);
   w.char.job = 'spiritmage';
   Object.assign(w.char.skills, { spiritbolt: 20, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
   w.char.baseMp = 1e6;
@@ -2447,100 +2454,96 @@ function shrineMage() {
   return w;
 }
 
-test('Spirit Wave: the staff strikes the floor and the ring hits monsters on both sides', () => {
-  const w = shrineMage();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-90, 60, 120][i] }));
-  assert.ok(cast(w, 'spiritwave').ok);
-  assert.equal(w.pose.kind, 'kaguraslam');
-  run(w, 1.4);
-  assert.ok(w.fx.some((f) => f.kind === 'spiritwave') || w.mobs.every((m) => m.hp < 1e9), 'the ring goes out');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'behind her and in front');
+// (Her paths' tests start from her too.)
+const shrineMage = starWitch;
+
+test('her staff calls a meteor down from the sky onto them', () => {
+  const w = starWitch('staff_20');
+  w.combo = 1;
+  w.comboUntil = w.now + 9;
+  w.comboPlan = [0, 0, 0, 0];
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'ssplant');
+  let fromSky = false;
+  for (let i = 0; i < 50; i++) {
+    updateWorld(w, DT, idle);
+    fromSky ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'stmeteor' && f.y < w.body.y - 120);
+  }
+  assert.ok(fromSky, 'it falls from high above');
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and lands');
 });
 
-test('Blessing heals her when the light falls, then keeps healing, and builds Spirit', () => {
-  const w = shrineMage();
+test('a full Constellation splits her star bolts into three', () => {
+  const bolts = (spirit) => {
+    const w = starWitch();
+    w.spirit = spirit;
+    w.spiritAt = 1e9;
+    updateWorld(w, DT, press('KeyZ'));
+    let n = 0;
+    for (let i = 0; i < 30; i++) {
+      updateWorld(w, DT, idle);
+      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'stbolt').length);
+    }
+    return n;
+  };
+  assert.equal(bolts(0), 1);
+  assert.equal(bolts(100), 3);
+});
+
+test('Comet tears through the line', () => {
+  const w = starWitch();
+  assert.ok(cast(w, 'spiritwave').ok);
+  assert.equal(w.pose.kind, 'swshowoff');
+  run(w, 1);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster in the line');
+});
+
+test('Wishing Star heals her when the star falls, then keeps healing, and builds her Constellation', () => {
+  const w = starWitch();
   w.god = false;
   // (The dummies out of reach, so nothing knocks her HP about while it's measured.)
   for (const m of w.mobs) m.x += 900;
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   const hp0 = w.char.hp;
   assert.ok(cast(w, 'blessing').ok);
-  run(w, 0.2);
+  run(w, 0.15);
   assert.equal(w.char.hp, hp0, 'nothing on the press');
   run(w, 0.8);
   const healed = w.char.hp;
-  assert.ok(healed > hp0, 'mended as the light lands');
+  assert.ok(healed > hp0, 'mended as the star falls');
   assert.ok(w.char.buffs.blessing?.values.regenPct > 0, 'and blessed for a while');
   run(w, 2);
   assert.ok(w.char.hp > healed, 'healing a little more every second');
-  assert.ok(w.spirit > 0, 'healing builds Spirit');
+  assert.ok(w.spirit > 0, 'healing lights her stars');
 });
 
-test('Spirit Ward puts a barrier on her that soaks up damage', () => {
-  const w = shrineMage();
+test('Star Veil puts a barrier on her that soaks up damage', () => {
+  const w = starWitch();
   assert.ok(cast(w, 'spiritward').ok);
-  run(w, 1.3);
+  run(w, 1);
   const b = w.char.buffs.spiritward;
-  assert.ok(b && b.shield > 0, 'a ward of light');
+  assert.ok(b && b.shield > 0, 'a veil of stars');
   assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
 });
 
-test("Heaven's Lantern needs full Spirit, spends it, strikes the screen, heals, and never refills it", () => {
-  const w = shrineMage();
-  w.god = false;
+test('Starfall needs a full Constellation, spends it, rains meteors on everything ahead, and never refills it', () => {
+  const w = starWitch();
   w.spirit = 60;
-  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for full Spirit');
+  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for all seven stars');
   w.spirit = 100;
   w.spiritAt = w.now;
-  w.char.hp = Math.round(w.stats.maxHp * 0.3);
-  const hp0 = w.char.hp;
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-240, 150, 300][i] }));
   assert.ok(cast(w, 'heavenslantern').ok);
   assert.equal(w.spirit, 0, 'spends all of it');
-  let lantern = false;
-  let perched = false;
-  let blaze = false;
-  let spiritAtEnd = null;
-  const seen = new Set();
+  let rain = false;
   dice(0.5, () => {
-    for (let i = 0; i < 60 * 6; i++) {
+    for (let i = 0; i < 60 * 3; i++) {
       updateWorld(w, DT, idle);
-      lantern ||= Boolean(w.lantern);
-      if (w.lantern) perched ||= Math.abs(w.doll.x - w.lantern.x) < 12;
-      for (const f of w.fx) if (f.kind === 'lanternray') seen.add(f);
-      if (!blaze && w.fx.some((f) => f.kind === 'lanternblaze')) [blaze, spiritAtEnd] = [true, w.spirit];
+      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'stmeteor');
     }
   });
-  const rays = seen.size;
-  assert.ok(lantern && perched, 'the lantern rises with the doll on top');
-  assert.ok(rays >= 8, `its rays fall again and again (${rays})`);
-  assert.ok(blaze, 'then it blazes');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster on the screen is hit');
-  assert.ok(w.char.hp > hp0, 'its light heals her');
-  // (Checked as it blazes: once it's gone the doll's own hits build Spirit again, as they should.)
-  assert.ok(spiritAtEnd < 10, `and it never refills Spirit (${spiritAtEnd})`);
-});
-
-test('the Spirit Doll has a pool of eight tricks of her own, and each one lands', async () => {
-  const w = shrineMage();
-  run(w, 0.5);
-  const d = w.doll;
-  const seen = new Set();
-  for (const kind of ['slap', 'twirl', 'bonk', 'kick', 'charm', 'akanbe', 'ride', 'spit']) {
-    const m = w.mobs[0];
-    const before = m.hp;
-    d.act = null;
-    d.next = 1e9;
-    Object.assign(d, { x: m.x - 30, y: m.y - 18 });
-    const ride = { bonks: TRICKS.ride.bonks, from: [d.x, d.y], o: TRICKS.ride, hits: [0.5, 0.84, 1.18, 1.52] };
-    d.act = kind === 'ride' ? { kind, t0: w.now, dur: 2, mob: m, done: 0, ...ride } : { kind, t0: w.now, dur: TRICKS[kind].dur, mob: m, done: 0, x: m.x, y: m.y, x0: d.x };
-    if (kind === 'bonk') d.bells.push({ mob: m, t0: w.now, at: w.now + TRICKS.bonk.hits[0] * TRICKS.bonk.dur, x: m.x, y: m.y });
-    run(w, (TRICKS[kind].dur ?? 2) + 1);
-    if (m.hp < before) seen.add(kind);
-  }
-  assert.deepEqual([...seen].sort(), ['akanbe', 'bonk', 'charm', 'kick', 'ride', 'slap', 'spit', 'twirl']);
-  const { SKILLS } = await import('../src/data/skills.js');
-  assert.ok(!Object.values(SKILLS).some((sk) => sk.job === 'spiritmage' && /doll/i.test(sk.name)), 'the Spirit Mage never orders the doll about');
+  assert.ok(rain, 'meteors fall');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'on every monster ahead');
+  assert.ok(w.spirit < 10, `and it never refills (${w.spirit})`);
 });
 
 // A Shrine Maiden (past Elowen's trial) with her kitsune guardian.
@@ -2555,7 +2558,7 @@ function shrineMaiden() {
 test('the Shrine Maiden has a kitsune guardian who fights in front of her and bows when it is over', () => {
   const w = shrineMaiden();
   assert.ok(w.guardian, 'she is there');
-  assert.equal(shrineMage().guardian ?? null, null, 'a Spirit Mage has none');
+  assert.equal(shrineMage().guardian ?? null, null, 'a Star Witch has none');
   const seen = new Set();
   const hp0 = w.mobs.map((m) => m.hp);
   for (let i = 0; i < 60 * 6; i++) {
@@ -2574,34 +2577,29 @@ test('the Shrine Maiden has a kitsune guardian who fights in front of her and bo
   assert.ok(bowed, 'and bows to the Maiden once the fight is over');
 });
 
-test("a Shrine Maiden's doll has grown up into her guardian: no doll, and Heaven's Lantern still shines", () => {
+test("a Shrine Maiden has her guardian and no doll, and still casts Starfall on her Grace", () => {
   const w = shrineMaiden();
-  w.god = false;
   assert.ok(w.guardian, 'her guardian is there');
-  assert.equal(w.doll, null, 'and no doll beside her');
-  // (Her gauge is Grace now: the lantern spends it.)
+  assert.ok(!w.doll, 'and no doll beside her');
+  // (Her gauge is Grace now: Starfall spends it.)
   w.grace = 100;
   w.graceAt = w.now;
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-240, 150, 300][i] }));
   assert.ok(cast(w, 'heavenslantern').ok);
-  const rays = new Set();
-  let blaze = false;
+  let rain = false;
   dice(0.5, () => {
-    for (let i = 0; i < 60 * 6; i++) {
+    for (let i = 0; i < 60 * 3; i++) {
       updateWorld(w, DT, idle);
-      for (const f of w.fx) if (f.kind === 'lanternray') rays.add(f);
-      blaze ||= w.fx.some((f) => f.kind === 'lanternblaze');
+      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'stmeteor');
     }
   });
-  assert.ok(rays.size >= 8 && blaze, `the lantern shines and blazes without a doll (${rays.size} rays)`);
-  assert.equal(w.doll, null);
+  assert.ok(rain, 'the meteors fall');
 });
 
 // A Shrine Maiden with her own skills learned.
 function shrineFull() {
   const w = shrineMaiden();
   Object.assign(w.char.skills, { grandblessing: 15, purification: 15, resurrection: 8, thousandtorii: 8, shrinemastery: 10 });
-  // (Built as a Spirit Mage first: whatever Spirit her doll built before she advanced is gone.)
+  // (Built as a Star Witch first: whatever stars she lit before she advanced are gone.)
   w.spirit = 0;
   return w;
 }
@@ -2890,7 +2888,7 @@ function onmyojiFull() {
 
 test('an Onmyoji has no doll: it fused into the tengu, who carries its ribbon', () => {
   const w = onmyoji();
-  assert.equal(w.doll, null, 'no doll');
+  assert.ok(!w.doll, 'no doll');
   assert.ok(w.tengu, 'the tengu is there');
   const fresh = onmyojiFresh();
   assert.ok(fresh.fx.some((f) => f.kind === 'dollfusion' && f.who === fresh.tengu), 'the doll fuses into him when he first appears');

@@ -87,6 +87,15 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
+    case 'stbolt': case 'stcomet': case 'stmeteor': {
+      // The Star Witch's: a spinning gold star with a midnight comet tail, turned along its flight; a
+      // comet with a great tail and ring; a meteor falling from the sky.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const name = f.shot === 'stbolt' ? 'celstbolt' : f.shot === 'stcomet' ? 'celstcomet' : 'celstmeteor';
+      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'stbolt' ? 0.75 : f.shot === 'stcomet' ? 0.85 : 0.75, alpha: f.split ? 0.85 : 1 });
+      break;
+    }
     case 'skygust': case 'skygustbig': {
       // The Sky Dancer's gust: a crescent of wind with a feather riding it, turned along its flight;
       // on full Tailwind (and her finishers) a great one.

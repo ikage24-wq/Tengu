@@ -30,13 +30,13 @@ export const ELEMENT_NAMES = {
 
 // Per type: how hard it hits relative to a sword, magic attack for wands and staves, the main
 // stat its wielders want, and its names (five tiers, then the endgame themes). Wands and staves
-// are the Spirit Mage's shrine tools: kagura suzu (bell staffs) and gohei / shakujo staffs.
+// are the Star Witch's: star wands and witch's staves with moons and stars.
 const WEAPON_LINES = {
   sword: { scale: 1.0, main: 'str', names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Blade', 'Runeblade'], themes: { holy: "Seraph's Grace", demonic: 'Hellbringer', bone: 'Ossuary Edge', laser: 'Photon Saber', chainsaw: 'Ripper', cyber: 'Neon Katana' } },
   axe: { scale: 0.95, main: 'str', names: ['Stone Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Cleaver', 'Runic Greataxe'], themes: { holy: 'Dawnbreaker', demonic: 'Abyssal Reaver', bone: 'Gravedigger', laser: 'Plasma Cleaver', chainsaw: 'Buzzkill', cyber: 'Glitch Axe' } },
   spear: { scale: 0.85, main: 'str', names: ['Bamboo Spear', 'Iron Spear', 'Steel Pike', 'Mithril Lance', 'Runic Glaive'], themes: { holy: "Archangel's Lance", demonic: 'Infernal Trident', bone: 'Spine Lance', laser: 'Ion Lance', chainsaw: 'Shredder Pike', cyber: 'Synapse Spear' } },
-  wand: { scale: 0.5, matk: 0.9, main: 'int', names: ['Bamboo Suzu', 'Shrine Suzu', 'Kagura Suzu', 'Vermilion Suzu', 'Heavenly Suzu'], themes: { holy: "Amaterasu's Bells", demonic: 'Oni Bells', bone: 'Yurei Bells', laser: 'Photon Suzu', chainsaw: 'Buzzsaw Suzu', cyber: 'Holo Suzu' } },
-  staff: { scale: 0.55, matk: 1, main: 'int', names: ['Bamboo Gohei', 'Shrine Gohei', 'Shakujo', 'Vermilion Shakujo', 'Heavenly Shakujo'], themes: { holy: "Heaven's Gohei", demonic: 'Oni Shakujo', bone: 'Gashadokuro Staff', laser: 'Photon Gohei', chainsaw: 'Sawblade Shakujo', cyber: 'Neon Gohei' } },
+  wand: { scale: 0.5, matk: 0.9, main: 'int', names: ['Twig Wand', 'Star Wand', 'Moon Wand', 'Comet Wand', 'Starlight Wand'], themes: { holy: "Amaterasu's Bells", demonic: 'Oni Bells', bone: 'Yurei Bells', laser: 'Photon Suzu', chainsaw: 'Buzzsaw Suzu', cyber: 'Holo Suzu' } },
+  staff: { scale: 0.55, matk: 1, main: 'int', names: ['Moon Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'], themes: { holy: "Heaven's Gohei", demonic: 'Oni Shakujo', bone: 'Gashadokuro Staff', laser: 'Photon Gohei', chainsaw: 'Sawblade Shakujo', cyber: 'Neon Gohei' } },
   bow: { scale: 0.8, main: 'dex', names: ['Shortbow', 'Iron Bow', 'Steel Recurve', 'Mithril Longbow', 'Runic Bow'], themes: { holy: 'Wings of Dawn', demonic: 'Hellstring', bone: 'Ribcage Bow', laser: 'Photon Bow', chainsaw: 'Sawtooth Bow', cyber: 'Neon Arc' } },
   crossbow: { scale: 0.78, main: 'dex', names: ['Wooden Crossbow', 'Iron Crossbow', 'Steel Arbalest', 'Mithril Crossbow', 'Runic Arbalest'], themes: { holy: 'Judgment', demonic: 'Doombolt', bone: 'Marrow Repeater', laser: 'Railgun', chainsaw: 'Sawlauncher', cyber: 'Cyber Repeater' } },
   dagger: { scale: 0.98, main: 'luk', names: ['Wooden Hoop', 'Iron Chakram', 'Steel Chakram', 'Mithril Chakram', 'Runic Chakram'], themes: { holy: "Angel's Feather", demonic: 'Hellfang', bone: 'Bone Shiv', laser: 'Photon Knife', chainsaw: 'Revblade', cyber: 'Glitchblade' } },
@@ -56,8 +56,8 @@ const WEAPON_NOUNS = {
   sword: ['Shortsword', 'Sword', 'Longsword', 'Broadsword', 'Greatsword'],
   axe: ['Hatchet', 'Axe', 'Battleaxe', 'Greataxe', 'Executioner'],
   spear: ['Spear', 'Pike', 'Lance', 'Halberd', 'Glaive'],
-  wand: ['Suzu', 'Bell Staff', 'Kagura Suzu', 'Grand Suzu', 'Heavenly Suzu'],
-  staff: ['Gohei', 'Shrine Staff', 'Shakujo', 'Grand Shakujo', 'Heavenly Shakujo'],
+  wand: ['Wand', 'Star Wand', 'Moon Wand', 'Comet Wand', 'Starlight Wand'],
+  staff: ['Staff', 'Witch Staff', 'Crescent Staff', 'Comet Staff', 'Starlight Staff'],
   bow: ['Shortbow', 'Bow', 'Recurve', 'Longbow', 'Warbow'],
   crossbow: ['Crossbow', 'Arbalest', 'Repeater', 'Heavy Arbalest', 'Siegebow'],
   dagger: ['Hoop', 'Chakram', 'Ring Blade', 'Dancing Ring', 'Halo'],

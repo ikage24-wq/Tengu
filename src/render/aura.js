@@ -248,16 +248,14 @@ function shadowAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Spirit: a ring of spirit light at the Spirit Mage's feet, wisps of light circling up round her as
-// it builds, and full (Kami's Favour), the gohei emblem over her head and rings of light racing out.
+// Constellation (the Star Witch; internally Spirit): its stars light one by one over her head as it
+// builds, seven in all, joined by threads of gold; full, it glows and her badge, a witch's hat with a
+// gold star, shines in the middle of it.
 function spiritAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringspirit', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringspirit', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
-    return;
-  }
-  if (k > 0.4) fxSprite(ctx, 'celspiritaura', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.5 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
-  if (k >= 1) fxSprite(ctx, 'celembspirit', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (layer === 'back' || k < 0.05) return;
+  const lit = Math.min(7, Math.floor(k * 7 + 1e-9));
+  fxSprite(ctx, 'celstconst', x, y - 62 * s + Math.sin(t * 1.6) * 1.5 * s, { frame: lit, scale: s * 0.46, alpha: 0.9 });
+  if (k >= 1) fxSprite(ctx, 'celembwitch', x, y - 78 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Grace: a gold ring of shrine light at the Shrine Maiden's feet, warm light rising round her as

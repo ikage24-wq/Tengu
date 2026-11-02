@@ -1153,6 +1153,8 @@ function headShapes(look, g, rig) {
   if (look.marks) f = { ...f, extra: [...(f.extra ?? []), ...look.marks] };
   if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
   else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
+  // A move's wink (the Star Witch after a big spell): one eye shut in a happy arc, a cheeky mouth.
+  else if (rig.eyes === 'wink') f = { ...f, closed: [false, true], brows: [[0.7, -0.3], [0, 0.2]], mouth: 'cat' };
   else if (rig.mouth && f.puff) f = { ...f, puff: false };
   // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
   // that shows.
@@ -1177,7 +1179,7 @@ function headShapes(look, g, rig) {
     // A closed eye is a happy arc (true) or a named lid ('blink', 'hurt'); a blink only takes an
     // open eye.
     const shut = f.closed?.[i];
-    const mode = rig.eyes === 'hurt' || rig.eyes === 'dead' ? rig.eyes : shut ? (shut === true ? 'happy' : shut) : rig.eyes;
+    const mode = rig.eyes === 'hurt' || rig.eyes === 'dead' ? rig.eyes : shut ? (shut === true ? 'happy' : shut) : rig.eyes === 'wink' ? 'open' : rig.eyes;
     out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, eyeColor, mode, look, f, cross));
   });
   if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', sk));

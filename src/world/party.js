@@ -140,9 +140,8 @@ function weaponStyle(bot) {
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
-  // The Spirit Mage dances her bolts (a figure about a second long), and her big one is the
-  // dance's last figure.
-  if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'kagurafin' };
+  // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
+  if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.45, special: 'swsnap' };
   // Her paths dance too: a Shrine Maiden with her gohei (her big one, Purification's sweep), an
   // Onmyoji with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
   if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'shrinepurify' };
@@ -635,7 +634,7 @@ function bless(bot, world, rng, pct, r, big) {
 const SPECIALS = {
   ofudabarrage: { move: 'onmyoofuda', dur: 1.05, play: (bot, world, m, rng, P, tune) => { const O = P.combo[0].strikes[0].ofuda; ofudaVolley(bot, world, m, rng, O.n, O.pct * tune, O.range); } },
   troupecombo: { move: 'onmyoofuda', dur: 1.6, play: (bot, world, m, rng, P, tune) => { ofudaVolley(bot, world, m, rng, 12, P.combo[0].strikes[0].troupe.pct * tune, 360); world.fx.push({ kind: 'seimanseal', x: m.x, y: m.y, r: 90, t: 0, dur: 1.4 }); } },
-  blessing: { move: 'kagurabless', dur: 1.35, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
+  blessing: { move: 'swwish', dur: 0.9, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
   grandblessing: { move: 'shrinegrand', dur: 1.55, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   thousandtorii: {
     move: 'shrinetorii', dur: 2.2,
@@ -803,12 +802,13 @@ function heal(bot, world, bots) {
   if (char.hp >= max * 0.85 || world.dead) return false;
   const amount = Math.round(max * between(0.12, 0.2, bots.rng) + bot.stats.int * 2);
   char.hp = Math.min(max, char.hp + amount);
-  // A Spirit Mage blesses you with her column of light, with the bells over her head (a Shrine
-  // Maiden or an Onmyoji too: they were Spirit Mages first).
+  // A Star Witch wishes a star down on you; a Shrine Maiden or an Onmyoji blesses you with a column
+  // of light, the bells over her head.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
-  world.fx.push(shrine ? { kind: 'blessing', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  const witch = bot.char.job === 'spiritmage';
+  world.fx.push(shrine ? { kind: witch ? 'stwish' : 'blessing', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'swwish' : 'kagurabless', t: 0, dur: witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

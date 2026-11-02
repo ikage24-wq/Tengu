@@ -491,20 +491,17 @@ const ICONS = {
     ctx.stroke();
     ctx.restore();
   },
-  // A zigzag paper streamer (the Spirit Mage's Spirit).
-  shide(ctx, s) {
-    for (let i = 0; i < 4; i++) {
-      const side = i % 2 ? 1 : -1;
-      const y0 = -s * 0.46 + i * s * 0.23;
-      const x0 = side * s * 0.08;
-      ctx.beginPath();
-      ctx.moveTo(x0 - s * 0.16, y0);
-      ctx.lineTo(x0 + s * 0.16, y0);
-      ctx.lineTo(x0 + s * 0.16 - side * s * 0.18, y0 + s * 0.23);
-      ctx.lineTo(x0 - s * 0.16 - side * s * 0.18, y0 + s * 0.23);
-      ctx.closePath();
-      ctx.fill();
+  // A five-point star (the Star Witch's Constellation).
+  star5(ctx, s) {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const r = i % 2 ? s * 0.22 : s * 0.5;
+      if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
     }
+    ctx.closePath();
+    ctx.fill();
   },
   // A chakram: a ring with blade points round it (the Blade Dancer's Ricochet).
   chakram(ctx, s) {

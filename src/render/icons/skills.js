@@ -37,6 +37,7 @@ const BG = {
   indigo: ['#b8bcff', '#1e1a5e'],
   tempest: ['#cdb4ff', '#262a7e'],
   skydance: ['#e6f6ff', '#3f7ad0'],
+  midnight: ['#8a96e8', '#141a4a'],
   rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
 };
@@ -1245,7 +1246,7 @@ function skywaltz() {
   return out;
 }
 
-// ---------- Spirit Mage (white spirit light, paper streamers, scarlet cords, gold bells) ----------
+// ---------- The mage paths' shrine pieces (paper streamers, wisps of spirit light) ----------
 const SCARLET = '#e0303e';
 // A zigzag paper streamer (shide) hanging from (x, y), `n` folds of `w` wide and `h` tall each.
 function shideIcon(x, y, n = 3, w = 1.6, h = 1.7, lean = 0.3) {
@@ -1265,69 +1266,71 @@ function wisp(x, y, r, ang = 0) {
   const tail = [[x - c * r * 2.6, y - sn * r * 2.6], [x - c * r * 1.2, y - sn * r * 1.2], [x, y]];
   return [S(tube(tail, 0.2, r * 1.4), '#e6dcff'), S(tube(tail.slice(1), 0.2, r * 0.9), W), ...solid(oval(x, y, r, r, 0, 16), W, { d: 0.35, ink: '#7a6cb8' }), S(oval(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.4, 0, 10), '#fff3c4')];
 }
+// ---------- Star Witch (midnight blue and gold: stars, comets, constellations) ----------
+const STARG = '#ffd36a';
+const STARINK = '#8e5228';
+// A five-point star's points round (cx, cy), r out to its tips.
+const star5Pts = (cx, cy, r, rot = 0) => Array.from({ length: 10 }, (_, i) => {
+  const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
+  const rr = i % 2 ? r * 0.45 : r;
+  return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+});
+const goldStar = (cx, cy, r, rot = 0) => solid(star5Pts(cx, cy, r, rot), STARG, { d: 0.35, ink: STARINK });
+// A comet's tail: a midnight-to-white streak from (x0, y0) to its head at (x1, y1).
+const cometTrail = (x0, y0, x1, y1, w) => [S(tube([[x0, y0], [x1, y1]], 0.2, w), '#3a48b8'), S(tube([[x0 + (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.4], [x1, y1]], 0.15, w * 0.55), '#c8d0ff')];
 function spiritbolt() {
-  const out = [...tile('shrine', 'active'), ...aura(9, 7, 6.4, '#fff3dc')];
-  out.push(...wisp(10.6, 6, 2.6, -25));
-  out.push(...shideIcon(4.4, 9, 3, 1.5, 1.5, -0.2), ...shideIcon(7.2, 10.6, 2, 1.4, 1.4, -0.3));
-  out.push(S(tube([[9, 7.4], [6, 9.6], [3.4, 13.4]], 0.25, 0.5), SCARLET));
-  out.push(...spark(13.8, 2.6, 1, '#ffd36a'));
+  const out = [...tile('midnight', 'active')];
+  out.push(...cometTrail(1.6, 13, 9.6, 6, 2.6), ...goldStar(10.4, 5.4, 3.6, 0.2));
+  out.push(...spark(3, 3.4, 1, STARG), ...spark(13.6, 12.4, 0.8));
   return out;
 }
+// Star Step: a burst of sparkles where she was, and a star where she pops out.
 function spiritstep() {
-  const out = [...tile('shrine', 'active')];
-  const arc = arcPts(8, 12, 5.6, 7, 200, 340, 14);
-  out.push(S(tube(arc, 0.3, 1.2), '#fff3dc'));
-  out.push(...shideIcon(2.4, 7, 3, 1.4, 1.5, 0.3), ...shideIcon(13, 7.4, 3, 1.4, 1.5, -0.3));
-  out.push(...solid(oval(8, 5, 1.8, 1.8, 0, 14), W, { d: 0.35, ink: '#7a6cb8' }));
-  out.push(...spark(5.6, 2.4, 0.9, '#ffd36a'), ...spark(11, 12.6, 0.8, '#ffd36a'));
+  const out = [...tile('midnight', 'active')];
+  for (const [x, y, r] of [[3, 10, 1.2], [4.6, 6.6, 0.9], [2.2, 4.4, 0.7], [5.6, 12.4, 0.8]]) out.push(...spark(x, y, r, STARG));
+  out.push(streak([5, 9], [10, 8.4], 0.6, '#9aa6f0'), ...goldStar(11.4, 8, 3.2));
   return out;
 }
-// Spirit Wave: a flat ring of light racing out over the ground, streamers flying off both edges,
-// the bell staff's foot planted in the middle.
+// Comet: a great comet with a ring round its head.
 function spiritwave() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 11, 6, '#fff3dc')];
-  out.push(S(tube(arcPts(8, 11.4, 6.4, 2.2, 0, 360, 28), 0.9, 0.9), '#fff7e4'), S(tube(arcPts(8, 11.4, 6.4, 2.2, 180, 360, 16), 0.45, 0.45), W));
-  out.push(S(tube([[8, 2.6], [8, 11]], 0.7, 0.7), '#c8902a'), ...solid(oval(8, 2.6, 1.3, 1.1, 0, 12), '#ffd36a', { d: 0.3, ink: '#8a5a10' }));
-  out.push(...shideIcon(1.6, 8.4, 3, 1.3, 1.3, -0.4), ...shideIcon(14.2, 8.4, 3, 1.3, 1.3, 0.4));
-  out.push(...spark(4.4, 4.6, 0.9, '#ffd36a'), ...spark(12, 5, 0.8));
+  const out = [...tile('midnight', 'active'), ...aura(10, 6, 5.6, '#fff4c8')];
+  out.push(...cometTrail(0.8, 15, 8.6, 7.4, 4));
+  out.push(...edge(tube(arcPts(10.2, 5.8, 4, 4, 0, 360, 24), 0.9), STARINK, 0.35), S(tube(arcPts(10.2, 5.8, 4, 4, 0, 360, 24), 0.9), STARG));
+  out.push(...goldStar(10.2, 5.8, 2.8, 0.3));
   return out;
 }
-// Blessing: a column of warm light falling from above, with gold bells ringing at its top.
+// Wishing Star: a star falling into a column of soft gold light.
 function blessing() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 8, 6.6, '#fff3dc', 1.1)];
-  out.push(S(rect(5.4, 1, 5.2, 13.6), '#fff3dc'), S(rect(6.6, 1, 2.8, 13.6), W));
-  out.push(...[[5.2, 3.4], [10.8, 3.4]].flatMap(([x, y]) => solid([[x - 1.3, y + 1.4], [x - 0.9, y - 1], [x + 0.9, y - 1], [x + 1.3, y + 1.4]], '#ffd36a', { d: 0.3, ink: '#8a5a10' })));
-  out.push(S(tube([[5.2, 2.2], [8, 1.4], [10.8, 2.2]], 0.35, 0.35), SCARLET));
-  out.push(...spark(3, 9.4, 1, '#ffd36a'), ...spark(13, 10.6, 0.9), ...spark(8, 12.4, 1.1));
+  const out = [...tile('midnight', 'buff')];
+  out.push(S([[6, 6], [10, 6], [12.6, 15], [3.4, 15]], '#fff4c8'), S([[7.2, 6], [8.8, 6], [9.8, 15], [6.2, 15]], W));
+  out.push(...cometTrail(8, 0.4, 8, 3.6, 1.6), ...goldStar(8, 5, 2.8));
+  out.push(...spark(3.4, 9, 0.9, STARG), ...spark(12.6, 10.4, 0.9, STARG));
   return out;
 }
-// Spirit Ward: a sphere of pale light bound round its middle with a sacred rope, streamers hanging.
+// Star Veil: a dome of linked stars.
 function spiritward() {
-  const out = [...tile('shrine', 'buff')];
-  out.push(...solid(oval(8, 8, 6, 6.2, 0, 28), '#efe8ff', { d: 0.35, ink: '#7a6cb8' }), S(oval(6.4, 6, 2.4, 2, -30, 16), W));
-  out.push(S(tube(arcPts(8, 8.6, 6.1, 1.6, 0, 180, 14), 0.8, 0.8), '#f6f0f0'));
-  for (const x of [3.6, 6.6, 9.6, 12.4]) out.push(S(tube([[x, 9.4], [x + 0.9, 10.1]], 0.45, 0.45), SCARLET));
-  out.push(...shideIcon(5, 10.2, 2, 1.3, 1.3, 0.2), ...shideIcon(11, 10.2, 2, 1.3, 1.3, -0.2));
-  out.push(...spark(13.6, 2.6, 0.9, '#ffd36a'));
+  const out = [...tile('midnight', 'buff')];
+  out.push(S(arcPts(8, 13.4, 6, 9, 180, 360, 20), '#6a78d8'));
+  const pts = arcPts(8, 13.4, 6, 9, 180, 360, 6);
+  for (let i = 0; i < pts.length - 1; i++) out.push(streak(pts[i], pts[i + 1], 0.35, STARG));
+  pts.forEach(([x, y], i) => out.push(...(i % 2 ? spark(x, y, 1, W) : goldStar(x, y, 1.4))));
   return out;
 }
-// Mana Mastery: a wisp of spirit light curling round a gold heart of light.
+// Mana Mastery: a star wand crossed by a crescent moon.
 function manamastery() {
-  const out = [...tile('shrine', 'passive'), ...aura(8, 8, 6.4, '#fff3dc', 1.1)];
-  out.push(S(tube(arcPts(8, 8, 4.8, 4.8, 200, 520, 24), 0.4, 1.2), '#e6dcff'));
-  out.push(...solid(oval(8, 8, 2.2, 2.2, 0, 16), '#fff3c4', { d: 0.35, ink: '#c8902a' }), ...wisp(11.6, 4.4, 1.4, -40));
-  out.push(...spark(3.2, 12.6, 0.9, '#ffd36a'));
+  const out = [...tile('midnight', 'passive'), ...aura(8, 8, 6.6, '#c8d0ff')];
+  out.push(...solid([[3.4, 14], [4.6, 14.6], [10.4, 7.6], [9.2, 7]], '#2a2230', { d: 0.3 }));
+  out.push(...goldStar(10.6, 5.6, 3.2, 0.2));
+  out.push(...solid([...arcPts(5, 5, 3, 3, 60, 300, 10), ...arcPts(6.4, 4.8, 2.4, 2.5, 300, 60, 10)], '#c8d0ff', { d: 0.3, ink: '#222a7e' }));
   return out;
 }
-// Heaven's Lantern: a giant paper lantern glowing warm, ribbed, on a scarlet cord, streamers below.
+// Starfall: the constellation joined in gold, meteors falling from it.
 function heavenslantern() {
-  const out = [...tile('shrine', 'active'), ...aura(8, 8, 7, '#ffe2b0', 1.2)];
-  out.push(S(tube([[8, 0.6], [8, 3]], 0.5, 0.5), SCARLET));
-  out.push(...solid(oval(8, 7.8, 5, 4.8, 0, 28), '#ffd9a0', { d: 0.35, ink: '#a8642a' }), S(oval(8, 7.4, 3.2, 3.2, 0, 20), '#fff4e0'));
-  for (const dy of [-2.4, 0, 2.4]) out.push(S(tube(arcPts(8, 7.8 + dy, 4.6, 0.8, 0, 180, 10), 0.25, 0.25), '#c87a3a'));
-  out.push(S(rect(5.6, 2.6, 4.8, 1.2), '#4a2a2a'), S(rect(5.6, 12, 4.8, 1.2), '#4a2a2a'));
-  out.push(...shideIcon(6.4, 13, 2, 1.1, 1.1, -0.2), ...shideIcon(9.6, 13, 2, 1.1, 1.1, 0.2));
-  out.push(...spark(2, 3, 1, '#ffd36a'), ...spark(14, 4.4, 0.9));
+  const out = [...tile('midnight', 'active'), ...aura(8, 8, 7, STARG, 1.2, 5)];
+  const c = [[2.4, 4], [5.4, 2.4], [8.6, 3.6], [11.4, 1.8], [13.6, 3.8]];
+  for (let i = 0; i < c.length - 1; i++) out.push(streak(c[i], c[i + 1], 0.35, STARG));
+  c.forEach(([x, y]) => out.push(...spark(x, y, 1, W)));
+  for (const [x, y] of [[4.6, 12.4], [9.6, 10.8], [13, 14]]) out.push(...cometTrail(x - 3, y - 4, x, y, 1.6), ...goldStar(x, y, 1.8));
   return out;
 }
 // Shrine Mastery (the Shrine Maiden): a vermilion torii gate with light shining through it.

@@ -219,4 +219,12 @@ export const FX_SHEETS = {
   celskywhirl: { w: 213, h: 154, n: 6, fps: 18, px: 106, py: 126, d: 3, loop: false },
   celembsky: { w: 126, h: 150, n: 5, fps: 12, px: 63, py: 82, d: 3, loop: false },
   celskytornado: { w: 451, h: 429, n: 12, fps: 18, px: 225, py: 391, d: 3, loop: false },
+  celstbolt: { w: 129, h: 68, n: 6, fps: 30, px: 95, py: 34, d: 3, loop: true },
+  celstcomet: { w: 222, h: 107, n: 6, fps: 26, px: 169, py: 54, d: 3, loop: true },
+  celsthit: { w: 153, h: 156, n: 7, fps: 30, px: 75, py: 87, d: 3, loop: false },
+  celstconst: { w: 258, h: 149, n: 8, fps: 10, px: 128, py: 81, d: 3, loop: false },
+  celstmeteor: { w: 152, h: 163, n: 4, fps: 24, px: 115, py: 126, d: 3, loop: true },
+  celstwish: { w: 245, h: 338, n: 9, fps: 18, px: 122, py: 300, d: 3, loop: false },
+  celstveil: { w: 208, h: 163, n: 7, fps: 18, px: 104, py: 149, d: 3, loop: false },
+  celembwitch: { w: 124, h: 132, n: 5, fps: 12, px: 62, py: 81, d: 3, loop: false },
 };

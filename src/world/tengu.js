@@ -24,8 +24,7 @@
 // He's quick and light where the oni is heavy: snapping blows on a swift clock, a hairline stop on
 // each hit. When what he was fighting goes down he's insufferably pleased with himself; when a
 // move misses, a 'tch'.
-// He is the Spirit Doll too: on this path she fused with him (world/spiritdoll.js has no doll for an
-// Onmyoji): the first time he appears her spirit flies into him, and he carries her red ribbon on
+// He is the old Spirit Doll too: on this path she fused with him: the first time he appears her spirit flies into him, and he carries her red ribbon on
 // his fan.
 // His hits are spells of the Onmyoji's own magic attack (melee.js dollHit).
 

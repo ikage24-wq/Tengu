@@ -101,8 +101,8 @@ export const QUESTS = {
   },
   // Elowen's trial for a Spirit Mage before either level 30 path (the Shrine Maiden, the Onmyoji).
   spiritmage_trial: {
-    id: 'spiritmage_trial', name: "The Spirit Mage's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Spirit Mage doesn't fight them: she dances them home. Lay 20 of them to rest, then come back and I'll show you the Shrine Maiden's way and the Onmyoji's way.",
+    id: 'spiritmage_trial', name: "The Star Witch's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
+    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Shrine Maiden's way and the Onmyoji's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },

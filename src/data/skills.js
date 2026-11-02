@@ -270,81 +270,82 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Spirit Mage (white spirit light, paper streamers, scarlet cords, gold bells) ----------
-  // Damage and support at once, cast as a shrine dance. Spells that land and heals build Spirit
-  // (0-100, see world/melee.js), half again when she turns from one to the other; full (Kami's
-  // Favour), every damage spell also mends allies near where it lands. Her Spirit Doll floats at
-  // her side and fights with her own tricks (world/spiritdoll.js). Spells are timed combo steps
-  // like every other attack: `magic` strikes hit with magic attack.
+  // ---------- Star Witch (midnight blue and gold: stars, comets, constellations) ----------
+  // The Spirit Mage remade (the player's ask, 2026-11-02; docs/design/star-witch.md): a bright
+  // prodigy who casts like she's showing off, every cast out in about a fifth of a second. Spells
+  // that land and heals light the stars of her Constellation (the old Spirit, world/melee.js), half
+  // again when she turns from one to the other; full, her bolts split into three. She keeps two
+  // star heals for the healer's seat in the early dungeons. (Internally she keeps the Spirit Mage's
+  // id and skill ids, so saves, the dungeon healer and her paths carry over.)
   spiritbolt: skill({
-    id: 'spiritbolt', name: 'Spirit Bolt', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'spirit',
-    desc: 'A three-part dance, one figure per press: a sweep that sends a spirit bolt, a swaying step that sends two, then a deep sweeping bow that looses a great bolt through the whole line.',
+    id: 'spiritbolt', name: 'Shooting Star', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'starlit',
+    desc: 'A three-part cast, one per press: a flick of the wand that sends a shooting star, a twirl that sends two, then a snap that fires a comet through the whole line.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const bolt = (at, pct, oy = 0) => ({ at, shot: 'spiritorb', magic: true, pct, range: 300, h: 60, knock: 25, speed: 620, oy });
+      const bolt = (at, pct, oy = 0) => ({ at, shot: 'stbolt', magic: true, pct, range: 300, h: 60, knock: 30, speed: 780, oy });
       return {
-        mp: k(10, 22), pct: k(330, 570), hits: 4, targets: 1,
+        mp: k(8, 16), pct: k(150, 260), hits: 4, targets: 1,
         combo: [
-          { move: 'kagura', dur: 1.01, step: 2, strikes: [bolt(0.55, k(330, 570))] },
-          { move: 'kaguraturn', dur: 1.14, step: 2, strikes: [bolt(0.58, k(220, 375), -5), bolt(0.68, k(220, 375), 5)] },
-          { move: 'kagurafin', dur: 1.54, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: k(485, 790), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 680, knock: 180, launch: 120, big: true, stop: 0.06, shake: 2 }] },
+          { move: 'swflick', dur: 0.4, strikes: [bolt(0.3, k(150, 260))] },
+          { move: 'swtwirl', dur: 0.5, strikes: [bolt(0.3, k(95, 165), -4), bolt(0.5, k(95, 165), 4)] },
+          { move: 'swsnap', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(240, 400), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 720, knock: 180, big: true, stop: 0.06, shake: 2 }] },
         ],
       };
     },
   }),
 
   spiritstep: skill({
-    id: 'spiritstep', name: 'Spirit Step', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'spirit', movement: true,
-    desc: 'Rise on your toes and come apart into paper streamers and light, then gather again a long way ahead. Nothing touches you on the way.',
+    id: 'spiritstep', name: 'Star Step', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'starlit', movement: true,
+    desc: 'Spin on the spot and pop into sparkles, then appear a long way ahead with a little bounce. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'spiritstep', dur: 0.55, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true }] }],
+        combo: [{ move: 'swblink', dur: 0.5, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sthit', burstAt: 0, burstDur: 0.4 }] }],
       };
     },
   }),
 
   spiritwave: skill({
-    id: 'spiritwave', name: 'Spirit Wave', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'spirit',
-    desc: 'Raise the bell staff high and bring it down to the floor: a ring of white light races out along the ground both ways, paper streamers whipping off its edge, hitting every monster around you and throwing them back.',
+    id: 'spiritwave', name: 'Comet', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'starlit',
+    desc: 'Spin the wand once and point: a great comet tears through every monster in the line, knocking them back.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'kaguraslam', dur: 1.25, step: 0, strikes: [{ at: 0.5, magic: true, pct: k(220, 380), reach: 160, h: 90, around: true, targets: k(5, 8), knock: 170, launch: 150, burst: 'spiritwave', burstAt: 0, burstDur: 0.8, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        combo: [{ move: 'swshowoff', dur: 0.6, step: 0, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(220, 380), range: 360, h: 80, targets: k(5, 8), pierce: true, speed: 760, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
       };
     },
   }),
 
-  // Blessing and Spirit Ward land on the party round her in a dungeon (`grant`: a buff given when
+  // Wishing Star and Star Veil land on the party round her in a dungeon (`grant`: a buff given when
   // the strike lands, see world/melee.js).
   blessing: skill({
-    id: 'blessing', name: 'Blessing', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'spirit', party: true,
-    desc: 'Ring the bells over your head and open your arms: a column of warm light falls on you and the party around you, healing at once, then a little more every second for a while, and lifting everyone\'s attack and magic while it lasts.',
+    id: 'blessing', name: 'Wishing Star', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'starlit', party: true,
+    desc: 'Hold your wand to your heart and make a wish: a star falls into a column of gold light on you and the party around you, healing at once, then a little more every second for a while, and lifting everyone\'s attack and magic while it lasts.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'kagurabless', dur: 1.35, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'blessing', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
+        combo: [{ move: 'swwish', dur: 0.9, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'stwish', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
       };
     },
   }),
 
   spiritward: skill({
-    id: 'spiritward', name: 'Spirit Ward', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'spirit', party: true, maxLevel: 15,
-    desc: 'Sweep the open fan once all the way round you: a sphere of light bound with a sacred rope forms round you, and round the party nearby, soaking up damage until it breaks.',
+    id: 'spiritward', name: 'Star Veil', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'starlit', party: true, maxLevel: 15,
+    desc: 'Draw a circle in the air and push it out: a veil of linked stars settles over you and the party nearby, soaking up damage until it breaks.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'kaguraward', dur: 1.2, step: 0, strikes: [{ at: 0.62, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
+        combo: [{ move: 'swveil', dur: 0.8, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'stveil', burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
       };
     },
   }),
@@ -476,17 +477,18 @@ export const SKILLS = {
   }),
 
   heavenslantern: skill({
-    id: 'heavenslantern', name: "Heaven's Lantern", job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'spirit', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Spirit, and spends it. Bow low, then lift both arms to the sky: a giant paper lantern rises over the monsters with the Spirit Doll riding on top, cheering. Its rays strike the monsters on the screen again and again, healing you and the party with every one, then it blazes and bursts over everything.',
+    id: 'heavenslantern', name: 'Starfall', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'starlit', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Constellation, and spends it. Draw the constellation across the sky star by star, then swing your wand down: it all comes crashing down as a shower of meteors on every monster ahead, ending in one great impact. Then blow on your wand tip.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const kf = (a, b) => lerpf(a, b, lv, m);
-      // She lifts the lantern; the lantern itself (world/spiritdoll.js) lands the rays, each with the
-      // skill's `pct` and `heal`, and `big` for the last blaze.
       return {
-        mp: k(30, 50), pct: k(140, 230), big: k(700, 1200), rays: k(8, 12), heal: kf(0.02, 0.04), hits: 2, targets: 12,
-        combo: [{ move: 'kaguralantern', dur: 1.8, step: 0, finisher: true, guard: 1.8, strikes: [{ at: 0.48, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, lantern: true }] }],
+        mp: k(30, 50), pct: k(500, 860), hits: 14, targets: 12,
+        combo: [{ move: 'swstarfall', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'starfallsky', burstAt: 0, burstDur: 0.9 },
+          { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'stmeteor', school: 'starlit', gauge: 0 },
+          { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'starfallimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
       };
     },
   }),
@@ -878,7 +880,7 @@ const MOVES_BY_SKILL = {
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
-  spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
+  spiritbolt: 'swflick', spiritstep: 'swblink', spiritwave: 'swshowoff', blessing: 'swwish', spiritward: 'swveil', heavenslantern: 'swstarfall',
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
   ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
   goldencarousel: 'bdcarousel',

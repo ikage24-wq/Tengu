@@ -33,7 +33,6 @@ import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { tickPets, sendSnow, moonfall, howl, duetSnow, duetMoon } from './pets.js';
-import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
@@ -194,6 +193,23 @@ export const PATH_COMBOS = {
     { move: 'sdscissor', dur: 0.46, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] },
     { move: 'sdspin', dur: 0.5, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
     { move: 'sdcrescent', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 760, big: true, stop: 0.07, shake: 2 }] },
+  ],
+  // The Star Witch (the Spirit Mage remade; docs/design/star-witch.md): every cast out in about a
+  // fifth of a second, then a held pose. With a wand: a flick that sends a star bolt, a twirl that
+  // sends two, a spin that flings one through two monsters, and a constellation snap that fires a
+  // comet through the line. With a staff: a thrust that fires a comet, a swing that lobs one, a
+  // plant that calls a meteor down from the sky (`sky`), and a slam that sends a great comet.
+  starwand: [
+    { move: 'swflick', dur: 0.34, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 78, range: 300, h: 60, knock: 25, speed: 760 }] },
+    { move: 'swtwirl', dur: 0.46, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 48, range: 300, h: 60, knock: 25, speed: 760, oy: -3 }, { at: 0.5, shot: 'stbolt', magic: true, pct: 52, range: 300, h: 60, knock: 25, speed: 760, oy: 3 }] },
+    { move: 'swspin', dur: 0.5, strikes: [{ at: 0.56, shot: 'stbolt', magic: true, pct: 90, range: 300, h: 60, knock: 25, speed: 760, targets: 2, pierce: true }] },
+    { move: 'swsnap', dur: 0.58, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 160, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+  ],
+  starstaff: [
+    { move: 'ssthrust', dur: 0.46, step: 4, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 92, range: 320, h: 70, knock: 120, speed: 700 }] },
+    { move: 'ssswing', dur: 0.5, strikes: [{ at: 0.44, shot: 'stcomet', magic: true, pct: 98, range: 320, h: 70, knock: 120, speed: 700, lob: 30, h: 110 }] },
+    { move: 'ssplant', dur: 0.55, strikes: [{ at: 0.42, shot: 'stmeteor', sky: true, magic: true, pct: 115, range: 280, h: 90, targets: 2, knock: 60, launch: 120, speed: 600 }] },
+    { move: 'ssslam', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 175, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] },
   ],
   // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the swaying step a second,
   // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
@@ -421,6 +437,21 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.shinobi[3],
       { move: 'bdspinhurl', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] }],
   ],
+  // The Star Witch. Wand: a wink-cast or the flick; a sidearm sweep of three little stars or the
+  // twirl; a hop-cast down from the top of a hop or the spin; a show-off spin of the wand or the snap.
+  // Staff: the thrust or a sweep; the swing or a spin; the plant or a hop-cast; the slam or a snap.
+  starwand: [
+    [PATH_COMBOS.starwand[0], { move: 'swwink', dur: 0.3, strikes: [{ at: 0.24, shot: 'stbolt', magic: true, pct: 74, range: 300, h: 60, knock: 25, speed: 760 }] }],
+    [PATH_COMBOS.starwand[1], { move: 'swsweep', dur: 0.46, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 36, range: 300, h: 60, knock: 25, speed: 760, fan: 3, h: 110 }] }],
+    [PATH_COMBOS.starwand[2], { move: 'swhop', dur: 0.48, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 88, range: 300, h: 60, knock: 25, speed: 760, h: 150, drop: 40, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starwand[3], { move: 'swshowoff', dur: 0.55, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 155, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+  ],
+  starstaff: [
+    [PATH_COMBOS.starstaff[0], { move: 'swsweep', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'swspin', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'swhop', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
+    [PATH_COMBOS.starstaff[3], { move: 'swsnap', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
+  ],
   // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a rise onto one
   // foot. Second: the swaying step, the sleeve fan (three bolts fanning out), or the bells.
   // Finisher: the dance's last figure, or the bow and rise that throws the great bolt up and out.
@@ -490,6 +521,24 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
+  // The Star Witch: a star shot up at whatever flies, flicked down from a hang in the air (the
+  // second time two), and a slide-cast out of a run; a comet with the staff.
+  starwand: {
+    up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
+      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+    ],
+    dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stbolt', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+  },
+  starstaff: {
+    up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
+      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+    ],
+    dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+  },
   // The Spirit Mage: a bolt swept up at whatever flies, spirit bolts swept down from a float in the
   // air, and a bolt whipped out of a glide.
   spiritmage: {
@@ -984,14 +1033,14 @@ export function barrageRelease(world) {
     if (m) duetMoon(world, m, step.moon.pct);
   }
 }
-// Spirit: the Spirit Mage's gauge. Her spells that land build it, and so do her heals; turning
-// from one to the other (a heal after harm, harm after a heal) builds it half again, so she plays
-// best weaving the two. It fades once the fighting stops. Full (Kami's Favour), her damage spells
-// also mend allies near where they land (SPIRIT_HEAL of their max HP), and Heaven's Lantern is ready.
+// Spirit, as the Star Witch's Constellation (her paths turn it into their own gauges below): her
+// spells that land light its stars, and so do her heals, half again when she turns from one to the
+// other; it fades once the fighting stops. Full (all seven stars lit), every star bolt and comet she
+// casts splits into three (STAR_SPLIT of its strength each), and Starfall is ready.
 export const SPIRIT_MAX = 100;
 const SPIRIT_HOLD = 5;
 const SPIRIT_DRAIN = 10;
-export const SPIRIT_HEAL = 0.03;
+export const STAR_SPLIT = 0.5;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm') {
   if (!hasSpirit(world.char) || n <= 0) return;
@@ -1003,7 +1052,7 @@ export function addSpirit(world, n, kind = 'harm') {
   world.spiritAt = world.now;
   world.spiritKind = kind;
 }
-export const kamiFavour = (world) => hasSpirit(world.char) && (world.spirit ?? 0) >= SPIRIT_MAX;
+export const constellation = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
 // Grace: the Shrine Maiden's gauge, in place of Spirit. Her heals and wards landing build it most,
 // more the more allies they reach (her spells that land, a little); it fades once the fighting
 // stops. Full (DIVINE GRACE), every heal she gives also wards whoever it mends (GRACE_WARD of their
@@ -1093,6 +1142,7 @@ export function addAim(world, n, mob = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
+  if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
   if ((w === 'wand' || w === 'staff') && hasSpirit(char)) return 'spiritmage';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
@@ -1332,7 +1382,6 @@ export function tickMelee(world, dt) {
   tickTraps(world);
   tickStorm(world);
   tickPets(world, dt);
-  tickDoll(world, dt);
   tickShrine(world);
   tickOnmyoji(world);
   tickGuardian(world, dt);
@@ -1427,10 +1476,9 @@ function land(world, s) {
     // (`floor`: on the ground she took off from, for the Sky Dancer's tornado while she's up in the air.)
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: s.floor && !body.onGround ? world.skyFloor ?? body.y : body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
   }
-  // The Spirit Mage's support spells land with the dance: a buff on her and the party round her
-  // (`grant`), Heaven's Lantern raised (`lantern`, world/spiritdoll.js).
+  // The mage line's support spells land with the cast: a buff on her and the party round her
+  // (`grant`).
   if (s.grant) grantSpell(world, s.grant);
-  if (s.lantern) raiseLantern(world, s.key);
   // The Shrine Maiden's lasting spells (world/shrine.js).
   if (s.purify) purify(world, s);
   if (s.revive) resurrect(world, s);
@@ -1709,7 +1757,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1725,11 +1773,6 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     if (jumps) chainArc(world, s, m, delay, jumps, element);
     if (s.field) staticField(world, m, delay, s.field);
   }
-  // Kami's Favour: a damage spell scatters mending light over the allies near where it lands.
-  if (kamiFavour(world) && !miss && s.magic && s.pct > 0 && !s.doll) {
-    world.strikes.push({ healAt: true, x: m.x, y: m.y, amount: SPIRIT_HEAL, due: world.now + delay });
-    world.fx.push({ kind: 'spiritmend', x: m.x, y: m.y, t: -delay, dur: 0.6 });
-  }
 }
 
 // A buff the Spirit Mage's dance gives as it lands (Blessing's regen, Spirit Ward's barrier): on her,
@@ -1741,7 +1784,7 @@ function grantSpell(world, g) {
   addGrace(world, 7 * (1 + alliesNear(world, world.body.x, (g.range?.w ?? 440) / 2)));
 }
 
-// A hit of the Spirit Doll's (world/spiritdoll.js): a spell of the Spirit Mage's own magic attack,
+// A hit of a mage path's summon (her guardian or yokai troupe): a spell of her own magic attack,
 // landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
 export function dollHit(world, m, f, at = 0) {
   // (Her yokai troupe hit harder under Yokai Rally.)
@@ -1805,6 +1848,22 @@ function fire(world, strike) {
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
+  // The Star Witch: full Constellation splits her bolts and comets into three.
+  if (STAR_SHOTS_WITCH.has(s.shot) && !s.split && constellation(world)) {
+    for (const oy of [-9, 9]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04, pct: s.pct * STAR_SPLIT, big: false, stop: 0, shake: 0, gauge: 1 });
+  }
+  // A meteor called down from the sky (her staff plant): it falls on each monster from high above.
+  if (s.sky) {
+    for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
+      const my = m.y - (m.air ?? 0) - m.def.h / 2;
+      const sx = m.x - s.dir * 70;
+      const sy = my - 170;
+      const travel = Math.hypot(m.x - sx, my - sy) / speed;
+      world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: 0, dur: travel });
+      shotHit(world, s, m, travel, 0, element);
+    }
+    return;
+  }
   // The Blade Dancer's ring flies its own way: out, bouncing on, and home (ringThrow).
   if (s.bounce != null) {
     for (let i = 0; i < (s.fan ?? 1); i++) ringThrow(world, { ...s, lag: lag + i * 0.07, pick: (s.pick ?? 0) + i }, ox, oy, speed, box, element);
@@ -1912,6 +1971,7 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 }
 
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
+const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 function skyProcs(world, s) {
   const { char } = world;
   if (skyFlight(world) && !s.tailwind) s = { ...s, tailwind: true, shot: 'skygustbig', pct: s.pct * 1.5, targets: Math.max(s.targets ?? 1, 3), pierce: true, big: true };

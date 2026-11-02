@@ -301,6 +301,13 @@ carry an improvement across every part of the game it applies to.
     orbiting her waist, passing in front and behind; Golden Carousel is six rings riding a gold
     track round her, faster and faster, then flung out in a burst. Her held chakram takes a
     rose-gold finish.
+  - The Star Witch (2026-11-02; she replaced the Spirit Mage) is midnight blue and warm gold with
+    white star cores, HD soft glow: her bolt is a spinning five-point gold star with a midnight comet
+    tail; her staff fires comets (a big star in a gold ring with a long tail) and calls meteors
+    down; her hit is a little four-star constellation snapping shut round the monster; her gauge is
+    a constellation of seven stars over her head that light one by one; Wishing Star is a star
+    falling into a column of gold light, Star Veil a dome of linked stars; her badge a witch's hat
+    with a gold star. Wands are star wands held at the end, staves witch staves held near the foot.
   - The Sky Dancer (2026-11-02; she replaced the Kitsune below) is sky blue and white with a touch of
     pale sunlight, HD soft glow: her gust is a crescent of wind with a feather riding its head and
     streaks of air behind; her hit is a soft cloud bursting with a swirl through it that drifts
