@@ -109,6 +109,26 @@ if (q.has('overview')) {
     }
     return big;
   };
+  // ?overview=sprout draws just that map (or several, comma-separated); a bare ?overview shows
+  // Petal Meadow beside Blossom Heights.
+  const ids = q.get('overview') ? q.get('overview').split(',') : null;
+  if (ids) {
+    const shots = ids.map((id) => [shot(id), MAPS[id].name]);
+    const K = Number(q.get('k') ?? 0.5), pad = 30;
+    canvas.width = shots.reduce((s, [im]) => s + im.width * K + pad, pad);
+    canvas.height = Math.max(...shots.map(([im]) => im.height)) * K + pad * 2;
+    ctx.fillStyle = '#2a2238'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    let x = pad;
+    for (const [im, name] of shots) {
+      const y = canvas.height - pad - im.height * K;
+      ctx.drawImage(im, x, y, im.width * K, im.height * K);
+      ctx.fillStyle = '#f6f0ff'; ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(name, x, y - 8);
+      x += im.width * K + pad;
+    }
+    document.title = 'ready';
+    throw 0;
+  }
   const a = shot('meadow1'), b = shot('heights');
   const K = 0.5, pad = 30;
   canvas.width = (a.width + b.width) * K + pad * 3;

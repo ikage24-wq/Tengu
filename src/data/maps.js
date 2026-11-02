@@ -21,28 +21,30 @@ export const MAPS = {
   // step up, round the fountain and the great cherry tree (a branch to climb, where the cat naps);
   // and the Archers' Quarter, Kestrel and the watchtower, the range, and a cottage by the east road.
   sprout: {
-    id: 'sprout', plaza: 1760, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    id: 'sprout', plaza: 1800, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
-    stove: 1550,
+    stove: 1660,
     // The town's capsule machine (data/outfits-gacha.js).
-    gacha: 2045,
+    gacha: 1960,
     width: 3200, height: 520, groundY: 480,
     look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
-    terrain: [[0, 480], [1600, 480], [1640, 456], [2160, 456], [2200, 480], [3200, 480]],
+    // (The street plan, 2026-11-02: Cottage Row, Market Street, Cherry Plaza raised a step in the
+    // middle with the shops round it, a quiet Garden Corner, then the Archers' Quarter.)
+    terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [3200, 480]],
     // The cottages, and the plaza's own pieces (render/townhouses.js).
-    cottages: [200, 520, 800, 1340, 3050],
-    townPieces: [['plazatree', 1960], ['noticeboard', 2120]],
+    cottages: [200, 520, 800, 1080, 2340],
+    townPieces: [['plazatree', 1800], ['noticeboard', 2040]],
     platforms: [
       // The terraced walk between two cottages.
       { x: 610, y: 400, w: 150, posts: true }, { x: 700, y: 320, w: 120, posts: true },
       // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
-      { x: 1850, y: 330, w: 96, bare: true },
+      { x: 1690, y: 330, w: 96, bare: true },
       // The watchtower's deck (TOWER_DECK above the ground).
-      { x: 2478, y: 320, w: 84 },
+      { x: 2578, y: 320, w: 84 },
     ],
     ropes: [
-      { x: 1930, top: 330, bottom: 456 },
-      { x: 2494, top: 320, bottom: 480, ladder: true },
+      { x: 1770, top: 330, bottom: 456 },
+      { x: 2594, top: 320, bottom: 480, ladder: true },
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
@@ -50,22 +52,23 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'pip', x: 1180 }, { id: 'lulu', x: 1480 }, { id: 'kestrel', x: 2340 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
       { name: 'Cottage Row', from: 0, color: '#e889b4' },
       { name: 'Market Street', from: 900, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'] } },
-      { name: 'Cherry Plaza', from: 1600, color: '#ff7fb6' },
-      { name: "Archers' Quarter", from: 2180, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
+      { name: 'Cherry Plaza', from: 1460, color: '#ff7fb6' },
+      { name: 'Garden Corner', from: 2140, color: '#7fc89a' },
+      { name: "Archers' Quarter", from: 2420, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 300, y: 440 }, { x: 660, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 440 }, { x: 1760, y: 416 }, { x: 2120, y: 416 }, { x: 2520, y: 290 }, { x: 2900, y: 440 }],
+    lamps: [{ x: 300, y: 440 }, { x: 660, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 416 }, { x: 2080, y: 416 }, { x: 2260, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
-      ['pond', 980], ['giantflower', 900, 1], ['well', 1100],
-      ['archerbanner', 2240], ['watchtower', 2520], ['archerbanner', 2600],
+      ['well', 980], ['pond', 2220], ['giantflower', 2160, 1],
+      ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
-      ['bowrack', 2640], ['fence', 2725], ['archtarget', 2780, 0], ['archtarget', 2840, 1], ['archtarget', 2900, 2], ['haystack', 2950, 1],
+      ['bowrack', 2740], ['fence', 2825], ['archtarget', 2880, 0], ['archtarget', 2940, 1], ['archtarget', 3000, 2], ['haystack', 3050, 1],
     ],
     spawns: [],
   },
