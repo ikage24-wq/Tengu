@@ -2,7 +2,7 @@
 """Makes a demo GIF without Playwright or ffmpeg: a headless Edge (or Chrome) plays a page that
 prints its frames into <pre id="out"> (--dump-dom), and Pillow strings them into a GIF. The game
 must be served at localhost:8000. Pages: move-frames (moves on the hero alone,
-tools/move-frames.html) and moves-stage (skills in the game with a  plan,
+tools/move-frames.html) and moves-stage (skills in the game with a record plan,
 tools/moves-stage.html).
 
 Usage: python tools/make-gif.py out.gif [query] [page]
