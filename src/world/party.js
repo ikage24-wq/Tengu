@@ -818,6 +818,64 @@ function heal(bot, world, bots) {
 // hunting as a party member in the field (finding monsters, paths over ledges and ropes, their
 // own weapon and playstyle), but they never take the monsters by you, their kills give you
 // nothing, and they don't heal you.
+// The brain every other player runs, out hunting on their own, in your party, or in a dungeon
+// group: think at their own pace (`o.think` decides where to be and what to fight: hunting the map,
+// staying by you in town, or their role in a dungeon run), walk there over ledges and ropes, dodge
+// (or hop the Root Slam), fight what they're after with their own moves and skills, and, with
+// nothing to do, fall into their idle habits. `o.canThink` and `o.canFight` hold them back (someone
+// on the way out), `o.giveUp` is where they head after giving up on a goal, and `o.beforeFight`
+// lets a caller drop a target first (a hunter leaves your monsters to you).
+function live(bot, world, peers, dt, rng, o) {
+  const map = world.map;
+  const br = bot.brain;
+  const body = bot.body;
+  const none = () => ({ left: false, right: false, up: false, down: false, jump: false });
+  br.think -= dt;
+  if (br.think <= 0 && o.canThink !== false) {
+    br.think = between(bot.ai.react[0], bot.ai.react[1], rng);
+    o.think();
+  }
+  o.afterThink?.();
+  const busy = bot.attack && ['pray', 'cheer', 'flip', 'roar', 'guard', 'aimshot'].includes(bot.attack.pose) && !bot.attack.fighting;
+  const intent = busy ? none() : map.isTown ? steerTo(bot, world, peers) : fieldSteer(bot, world, peers);
+  // In a dungeon, hop over the Root Slam; out in the field, out of a queen's way.
+  if (world.dungeon && jumpNow(world, body)) intent.jump = true;
+  else if (!map.isTown) dodge(bot, world, intent, rng);
+  // Walking into something and getting nowhere: plan again, and give up on that monster.
+  const pushing = (intent.left || intent.right) && body.onGround;
+  br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
+  br.lastX = body.x;
+  if (br.stall > 1.5) {
+    br.path = null;
+    if (br.target) br.skip = { mob: br.target, until: world.now + 6 };
+    br.target = null;
+    br.goal = o.giveUp ?? null;
+    br.stall = 0;
+  }
+  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
+  carry(bot, world, dt, rng);
+  br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
+  o.beforeFight?.();
+  const m = br.target;
+  const st = bot.ai.weapon;
+  if (o.canFight !== false && m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
+    // Turn to it once planted (walking sets their facing), and only swing at what they face.
+    fight(bot, m, world, intent, rng);
+  } else o.idle?.();
+  // Idle habits with nothing to do: a flip, a cheer, a taunt, a little stretch; in town while you
+  // stand around, out hunting once they've wandered to a spot, in a dungeon between pulls.
+  const calm = map.isTown ? br.still > 3 : world.dungeon ? !world.dungeon.combat && br.settled : br.goal?.mode === 'wander' && br.settled;
+  if (!m && body.onGround && !bot.attack && calm) {
+    br.habitIn -= dt;
+    if (br.habitIn <= 0) {
+      br.habitIn = between(6, 14, rng) * bot.ai.patience;
+      bot.attack = { pose: bot.ai.habits[Math.floor(rng() * bot.ai.habits.length)], t: 0, dur: 0.9 };
+    }
+  }
+  if (bot.attack && (bot.attack.t += dt) >= bot.attack.dur) bot.attack = null;
+  bot.x = body.x;
+}
+
 export function tickHunter(bot, world, hunters, dt, rng) {
   const map = world.map;
   bot.stats ??= computeStats(bot.char);
@@ -833,43 +891,20 @@ export function tickHunter(bot, world, hunters, dt, rng) {
     bot.x = body.x;
     return;
   }
-  br.think -= dt;
-  if (br.think <= 0 && !bot.leaving) {
-    br.think = between(bot.ai.react[0], bot.ai.react[1], rng);
-    hunt(bot, world, hunters, rng);
-  }
-  if (bot.leaving) br.goal = bot.leaving;
-  const busy = bot.attack && ['cheer', 'flip', 'roar', 'guard', 'aimshot', 'pray'].includes(bot.attack.pose) && !bot.attack.fighting;
-  const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : fieldSteer(bot, world, hunters);
-  dodge(bot, world, intent, rng);
-  const pushing = (intent.left || intent.right) && body.onGround;
-  br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
-  br.lastX = body.x;
-  if (br.stall > 1.5) {
-    br.path = null;
-    if (br.target) br.skip = { mob: br.target, until: world.now + 6 };
-    br.target = null;
-    br.goal = bot.leaving ?? null;
-    br.stall = 0;
-  }
-  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
-  carry(bot, world, dt, rng);
-  const m = br.target;
-  const st = bot.ai.weapon;
-  // (A monster that's wandered over to you is yours now.)
-  if (m && !m.def.boss && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
-  if (!bot.leaving && br.target && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
-    fight(bot, m, world, intent, rng);
-  }
-  if (!m && body.onGround && !bot.attack && br.goal?.mode === 'wander' && br.settled) {
-    br.habitIn -= dt;
-    if (br.habitIn <= 0) {
-      br.habitIn = between(6, 14, rng) * bot.ai.patience;
-      bot.attack = { pose: bot.ai.habits[Math.floor(rng() * bot.ai.habits.length)], t: 0, dur: 0.9 };
-    }
-  }
-  if (bot.attack && (bot.attack.t += dt) >= bot.attack.dur) bot.attack = null;
-  bot.x = body.x;
+  live(bot, world, hunters, dt, rng, {
+    think: () => hunt(bot, world, hunters, rng),
+    canThink: !bot.leaving,
+    afterThink: () => {
+      if (bot.leaving) br.goal = bot.leaving;
+    },
+    giveUp: bot.leaving ?? null,
+    canFight: !bot.leaving,
+    // (A monster that's wandered over to you is yours now.)
+    beforeFight: () => {
+      const m = br.target;
+      if (m && !m.def.boss && !helping(bot, world) && Math.abs(m.x - world.body.x) < 150 && Math.abs(m.y - world.body.y) < 90) br.target = null;
+    },
+  });
 }
 
 // Back from town after dying: in through the portal nearest you, a little sheepish.
@@ -964,43 +999,16 @@ export function updateParty(bots, world, dt) {
       bot.appear = 1;
       br.goal = null;
     }
-    // Think at their own pace.
+    // The shared brain: what to do comes from think() (hunting, by you in town, or their role in
+    // a dungeon run).
     br.still = youStill ? br.still + dt : 0;
-    br.think -= dt;
-    if (br.think <= 0) {
-      br.think = between(bot.ai.react[0], bot.ai.react[1], rng);
-      think(bot, world, members, rng);
-    }
-    // Move.
-    const busy = bot.attack && ['pray', 'cheer', 'flip', 'roar', 'guard', 'aimshot'].includes(bot.attack.pose) && !bot.attack.fighting;
-    const intent = busy ? { left: false, right: false, up: false, down: false, jump: false } : map.isTown ? steerTo(bot, world, members) : fieldSteer(bot, world, members);
-    // In a dungeon, hop over the Root Slam; in the field, out of a queen's way.
-    if (world.dungeon && jumpNow(world, body)) intent.jump = true;
-    else if (!map.isTown) dodge(bot, world, intent, rng);
-    // Walking into something and getting nowhere: plan again, and give up on that monster.
-    const pushing = (intent.left || intent.right) && body.onGround;
-    br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
-    br.lastX = body.x;
-    if (br.stall > 1.5) {
-      br.path = null;
-      if (br.target) br.skip = { mob: br.target, until: world.now + 6 };
-      br.target = null;
-      br.goal = null;
-      br.stall = 0;
-    }
-    stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
-    carry(bot, world, dt, rng);
-    br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
-    // Fight.
-    const m = br.target;
-    const st = bot.ai.weapon;
-    if (m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
-      // Turn to it once planted (walking sets their facing), and only swing at what they face.
-      fight(bot, m, world, intent, rng);
-    } else if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') {
-      // Standing about: look where you're headed if you're on the move, or at you if not.
-      body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
-    }
+    live(bot, world, members, dt, rng, {
+      think: () => think(bot, world, members, rng),
+      idle: () => {
+        // Standing about in town: look where you're headed if you're on the move, or at you if not.
+        if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
+      },
+    });
     // Healers patch you up between fights (or mid-fight if you're in trouble).
     if (world.dungeon) {
       if (world.dungeon.roles[bot.id] === 'healer') {
@@ -1011,16 +1019,6 @@ export function updateParty(bots, world, dt) {
       br.healIn -= dt;
       if (br.healIn <= 0) br.healIn = heal(bot, world, bots) ? between(6, 10, rng) : 1.5;
     }
-    // Idle habits while you stand around: a flip, a cheer, a taunt, a little stretch.
-    if (!m && body.onGround && !bot.attack && (map.isTown ? br.still > 3 : br.goal?.mode === 'wander' && br.settled)) {
-      br.habitIn -= dt;
-      if (br.habitIn <= 0) {
-        br.habitIn = between(6, 14, rng) * bot.ai.patience;
-        bot.attack = { pose: bot.ai.habits[Math.floor(rng() * bot.ai.habits.length)], t: 0, dur: 0.9 };
-      }
-    }
-    if (bot.attack && (bot.attack.t += dt) >= bot.attack.dur) bot.attack = null;
-    bot.x = body.x;
     if (bot.appear > 0) bot.appear = Math.max(0, bot.appear - dt * 1.5);
     // Party chat.
     bot.nextLine -= dt;

@@ -302,3 +302,27 @@ test('an Onmyoji in the group dances her spells and flings talismans', async () 
   assert.equal(ai.weapon.special, 'onmyoofuda', 'her big one is Ofuda Barrage');
   assert.ok(ai.weapon.ofuda && ai.weapon.magic, 'talismans and spells');
 });
+
+test('the group finder brings only real jobs, and helpers use only their own real skills', async () => {
+  const { JOBS, jobChain } = await import('../src/data/jobs.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  const { botSkills } = await import('../src/world/party.js');
+  // The spells the healer and the tank's War Cry are built on.
+  for (const [id, job] of [['spiritward', 'spiritmage'], ['blessing', 'spiritmage'], ['grandblessing', 'shrinemaiden'], ['warcry', 'warrior']]) {
+    assert.ok(SKILLS[id], `${id} is a real skill`);
+    assert.equal(SKILLS[id].job, job);
+  }
+  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [21, 35, ['spiritmage', 'onmyoji']], [34, 40, ['warrior', 'paladin']]]) {
+    const rng = seeded(seed);
+    const world = heroAt(rng, level, jobs);
+    assert.equal(startRun(world), null);
+    for (const b of partyMembers(world.bots)) {
+      assert.ok(JOBS[b.char.job] && !JOBS[b.char.job].hidden, `${b.name}: ${b.char.job} is a real job`);
+      const chain = jobChain(b.char.job);
+      for (const s of botSkills(b.char)) {
+        assert.ok(SKILLS[s.id], `${b.name}: ${s.id} is a real skill`);
+        assert.ok(chain.includes(SKILLS[s.id].job), `${b.name} (${b.char.job}) can use ${s.id}`);
+      }
+    }
+  }
+});

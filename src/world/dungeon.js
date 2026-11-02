@@ -26,6 +26,9 @@ import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { recruitBot } from './bots.js';
+import { SKILLS } from '../data/skills.js';
+import { speak, contextOf } from './chatter.js';
+import { botChat } from './chatlog.js';
 import { loadMap } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
 import { playScene } from './story.js';
@@ -130,8 +133,17 @@ function recruit(world, def, role) {
   const ranged = bot.ai.weapon.ranged;
   bot.ai = makeAI(bot, rng, role === 'tank' ? 'guardian' : role === 'healer' ? 'healer' : ranged ? 'sniper' : 'rusher');
   bot.finder = def.id;
-  bot.bubble = { text: pick(['hi!', 'hey all', 'ready when u are', 'o/', 'yo', 'first time here?', 'lets gooo']), t: 4.5 };
+  groupSay(world, bot, 'dgHello');
   return bot;
+}
+
+// A recruit says something about the run, in their own voice, through the same chat as everyone
+// else (no repeats, paced, in your log as party chat). `kind` is a dungeon template in chatter.js.
+export function groupSay(world, bot, kind, extra = {}) {
+  const bots = world.bots;
+  if (!bots || !bot) return false;
+  const line = speak((bots.memory ??= new Set()), kind, { ...contextOf(bot, bots, world), ...extra }, bot.style ?? {}, bots.rng ?? Math.random);
+  return line ? botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' }) : false;
 }
 
 function prep(bot) {
@@ -163,7 +175,7 @@ export function startRun(world, id = 'hollow', { hard = false } = {}) {
   if (plan.slots.some((s) => s.who?.friend)) world.net.startShared(world, roles, hard);
   loadMap(world, def.rooms[0], 'start');
   world.log(`Your group enters ${def.name}${hard ? ' (Hard)' : ''}! You are the ${ROLES[roles.you].label}.`, '#ffe36b');
-  if (roles.you === 'tank') world.log('Tanks: Provoke pulls everything nearby onto you, and Chain Hook drags monsters over for the group.', '#bff0dc');
+  if (roles.you === 'tank') world.log('Tanks: as your Valor fills, War Cry turns everything nearby onto you and guards the group.', '#bff0dc');
   return null;
 }
 
@@ -287,7 +299,7 @@ function checkClear(world) {
   }
   world.juice.push({ type: 'shake', mag: 2, dur: 0.4 });
   for (const g of groupOf(world)) {
-    if (g.bot && !g.bot.down && Math.random() < 0.5) g.bot.bubble = { text: pick(last ? ['GG!!', 'we did it!', 'ez clap', 'loot time :D'] : ['nice', 'gj', 'next!', 'ez', ':D']), t: 3 };
+    if (g.bot && !g.bot.down && Math.random() < 0.5) groupSay(world, g.bot, last ? 'dgDone' : world.mobs.some((m) => m.def.boss) ? 'dgBoss' : 'dgClear', { boss: world.mobs.find((m) => m.def.boss)?.def.name ?? null });
   }
 }
 
@@ -549,7 +561,7 @@ function taunt(world, m, who, hold) {
   m.taunt = { id: who, until: world.now + hold };
 }
 
-// Every monster within `range` turns on `who`: the warrior's Provoke, in the colour of the path
+// Every monster within `range` turns on `who` (a Warrior's War Cry or taunting blow), in the colour of the path
 // that cried it (`school`; yours by default).
 export function provoke(world, who, body, range = PROVOKE.range, hold = PROVOKE.hold, school = who === 'you' ? pathSchool(world.char) : 'steel') {
   if (who === 'you' && following(world)) world.net.runLeader(world, { op: 'provoke', map: world.map.id, range, hold });
@@ -597,7 +609,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
       bot.attack = null;
       bot.brain.target = null;
       bot.brain.task = null;
-      bot.bubble = { text: pick(['x_x', 'noooo', 'im down!', 'rip', 'oof']), t: 3 };
+      groupSay(world, bot, 'dgDown');
       world.log(`${bot.name} is down!`, '#ff8fa8');
     }
     return dmg;
@@ -747,7 +759,7 @@ function revive(world, g, pct) {
   if (g.bot) {
     g.bot.down = false;
     g.bot.hp = Math.round(g.bot.stats.maxHp * pct);
-    g.bot.bubble = { text: pick(['ty!', 'thx <3', 'back!', 'phew']), t: 3 };
+    groupSay(world, g.bot, 'dgUp');
   } else {
     world.dead = false;
     world.char.hp = Math.max(1, Math.round(world.stats.maxHp * pct));
@@ -951,7 +963,7 @@ function bossMove(world, m, up, dt) {
       s.adds.shift();
       const healer = up.find((g) => g.role === 'healer') ?? pick(nonTanks.length ? nonTanks : up);
       adds(world, m, 'sporeling', [m.x - 90, m.x + 90, m.x - 150], healer?.id);
-      callout(world, 'Spore Mites!', 'They swarm the healer: Tank, Provoke! DPS, kill them!');
+      callout(world, 'Spore Mites!', 'They swarm the healer: Tank, War Cry! DPS, kill them!');
     }
     return false;
   }
@@ -1439,16 +1451,10 @@ function thinkRole(bot, world, rng) {
     const tankTarget = tank && (tank.bot ? tank.bot.brain.target : fights.find((m) => m.target === 'you' || m.threat?.you > 0));
     if (role === 'tank') {
       const loose = fights.filter((m) => m.target && m.target !== bot.id && !m.def.fight?.mender);
-      // A loose one out of reach gets hooked back; a crowd around gets Provoked.
-      const far = loose.filter((m) => !m.def.boss && Math.abs(m.x - body.x) > 70 && Math.abs(m.x - body.x) < 300 && Math.abs(m.y - body.y) < 60);
-      if (far.length && world.now >= (br.hookAt ?? 0)) {
-        botHook(world, bot, far.slice(0, 4), rng);
-        br.hookAt = world.now + between(3, 4.5, rng);
-      } else if (loose.length && world.now >= (br.provokeAt ?? 0) && loose.some((m) => Math.abs(m.x - body.x) < PROVOKE.range)) {
-        provoke(world, bot.id, body, undefined, undefined, pathSchool(bot.char));
+      // A Warrior holds monsters with War Cry, which goes off as their Valor fills in a fight.
+      if (warCry(world, bot, loose)) {
         bot.attack = { pose: 'roar', t: 0, dur: 0.5 };
-        br.provokeAt = world.now + between(2.2, 3.2, rng);
-        if (rng() < 0.25) bot.bubble = { text: pick(['over here!', 'on me!', 'got it', 'hey ugly!']), t: 2.5 };
+        if (rng() < 0.25) groupSay(world, bot, 'dgTaunt');
       }
       const boss = fights.find((m) => m.def.boss);
       const target = boss ?? loose.sort((a, b) => Math.abs(a.x - body.x) - Math.abs(b.x - body.x))[0] ?? nearest(fights.filter((m) => !m.def.fight?.mender), body);
@@ -1490,17 +1496,19 @@ function thinkRole(bot, world, rng) {
     const next = nearest(asleep, body);
     if (next) {
       const ready = up.length === group.length && up.every((g) => hpOf(world, g) / maxHpOf(world, g) > 0.7) && Math.abs(world.body.x - body.x) < 420;
-      // Ready: hook the pack back to the group from range (bosses are walked up to).
-      const pack = next.spawn?.pack ? asleep.filter((m) => m.spawn?.pack === next.spawn.pack) : [next];
-      const dist = Math.abs(next.x - body.x);
-      if (ready && !next.def.boss && dist < 280 && dist > 60 && Math.abs(next.y - body.y) < 60 && body.onGround && world.now >= (br.hookAt ?? 0)) {
-        botHook(world, bot, pack.slice(0, 5), rng);
-        br.hookAt = world.now + between(3, 4.5, rng);
-        if (rng() < 0.5) bot.bubble = { text: pick(['pulling!', 'gather up!', 'get over here!', 'AoE them!']), t: 2.5 };
+      // Ready: walk in and open on the pack with their own blows (that wakes it, and it comes
+      // for them); not ready: wait a little way short of it.
+      if (ready) {
+        br.target = next;
+        br.goal = goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * Math.max(20, bot.ai.weapon.reach * 0.6), 'fight');
+        if (!br.pulling) {
+          br.pulling = true;
+          if (rng() < 0.5) groupSay(world, bot, 'dgPull');
+        }
         return;
       }
-      br.goal = ready ? goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * (next.def.boss ? 20 : 220), 'fight') : goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * 190, 'follow');
-      if (ready && rng() < 0.02) bot.bubble = { text: pick(['pulling!', 'ready?', 'going in', 'next pack']), t: 2.5 };
+      br.pulling = false;
+      br.goal = goalOn(world, next, next.x - Math.sign(next.x - body.x || 1) * 190, 'follow');
       return;
     }
   }
@@ -1526,14 +1534,24 @@ function thinkRole(bot, world, rng) {
   br.goal = goalAt(world, Math.max(30, follow.body.x - 34 * k), follow.body.y, 'follow');
 }
 
-// A party tank throws their Chain Hook at monsters in front of them.
-function botHook(world, bot, mobs, rng) {
-  const body = bot.body;
-  const dir = Math.sign(mobs[0].x - body.x) || 1;
-  body.facing = dir;
-  hookMobs(world, bot.id, body, mobs, dir);
-  world.fx.push({ kind: 'hook', x: body.x + dir * 10, y: body.y - 28, mobs, t: 0, dur: 0.5 });
-  bot.attack = { pose: 'throw', t: 0, dur: 0.45, fighting: true };
+// A helper Warrior's War Cry, the same passive the player's Warrior has: Valor builds over the
+// fight (faster with monsters loose on the others), and once it's full the cry goes off as soon as
+// something needs grabbing: the monsters around turn on them for its taunt time and the group near
+// them is guarded, by the skill's own numbers at their level. Returns whether it went off.
+function warCry(world, bot, loose) {
+  const br = bot.brain;
+  const dt = Math.min(1, world.now - (br.valorAt ?? world.now));
+  br.valorAt = world.now;
+  br.valor = Math.min(100, (br.valor ?? 0) + dt * (12 + 8 * loose.length));
+  if (br.valor < 100 || !loose.length) return false;
+  const lv = Math.max(1, Math.min(SKILLS.warcry.maxLevel, Math.round(SKILLS.warcry.maxLevel * Math.min(1, (bot.char.level - 8) / 40))));
+  const p = SKILLS.warcry.at(lv, SKILLS.warcry.maxLevel).proc;
+  br.valor = 0;
+  provoke(world, bot.id, bot.body, p.range.w / 2, p.taunt, pathSchool(bot.char));
+  for (const g of groupOf(world)) {
+    if (isUp(world, g) && Math.abs(g.body.x - bot.body.x) < p.range.w / 2 && Math.abs(g.body.y - bot.body.y) < p.range.h) giveBuff(world, g, 'warcry', 'War Cry', p.buff, p.duration);
+  }
+  return true;
 }
 
 function nearest(list, body) {
@@ -1561,8 +1579,8 @@ export function healerTurn(bot, world, rng) {
   const cast = () => {
     bot.attack = shrine ? { pose: 'kagurabless', t: 0, dur: 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = shrine ? { id: 'spiritward', name: 'Spirit Ward', pose: 'kaguraward', dur: 1.1 } : { id: 'barrier', name: 'Arcane Barrier', pose: 'castup', dur: 0.6 };
-  const renew = maiden ? { id: 'grandblessing', name: 'Grand Blessing', pose: 'shrinegrand', dur: 1.55 } : shrine ? { id: 'blessing', name: 'Blessing', pose: 'kagurabless', dur: 1.2 } : { id: 'renew', name: 'Renew', pose: 'castup', dur: 0.6 };
+  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: 'kaguraward', dur: 1.1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'shrinegrand', dur: 1.55 } : { id: 'blessing', name: SKILLS.blessing.name, pose: 'kagurabless', dur: 1.2 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
@@ -1574,7 +1592,7 @@ export function healerTurn(bot, world, rng) {
       world.fx.push({ kind: 'grandblessing', x: bot.body.x, y: bot.body.y, r: 320, t: 0, dur: 1.3 });
       bot.attack = { pose: 'shrinegrand', t: 0, dur: 1.55 };
     } else cast();
-    if (rng() < 0.2) bot.bubble = { text: pick(['group heal!', 'stay close!', 'healing!']), t: 2.5 };
+    if (rng() < 0.2) groupSay(world, bot, 'dgHeal');
     return between(1.5, 1.9, rng);
   }
   if (low.length) {

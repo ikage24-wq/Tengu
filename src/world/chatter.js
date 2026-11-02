@@ -52,6 +52,9 @@ const SLOTS = {
   dish: () => pick(DISHES).name,
   queen: (c) => (c.level >= 18 ? pick(['Sylvana', 'Tamamo', 'Lilith', 'Selene'].slice(0, c.level >= 40 ? 4 : c.level >= 30 ? 3 : 2)) : null),
   dungeon: () => 'Rootwood Hollow',
+  // In a dungeon run: the room the group is in, and the boss there.
+  room: (c) => c.room ?? null,
+  boss: (c) => c.boss ?? null,
   npc: (c) => c.npcHere ?? pick(Object.values(NPCS)).name,
   stat: () => pick(['STR', 'DEX', 'INT', 'LUK']),
   small: () => pick(['2', '3', '5', '10', '20']),
@@ -120,6 +123,23 @@ const TEMPLATES = {
     'gj {me}', 'ty for the party {emote}', 'brb pot', '{laugh} that {mobhere}', 'this spot is good', 'almost lvl up!', 'ooh a {drophere}', 'my {myweapon} hits so hard here',
     'ur so strong {me}', 'lets do {next} after', 'one more round?', 'careful {me}!', 'i got aggro lol', 'wait for me', 'so many {mobhere}s', 'nice combo',
   ],
+  // A dungeon run, said by the group finder's recruits: hello, the tank's pulls and taunts, the
+  // healer's calls, going down and getting back up, a room cleared, a boss beaten, the end.
+  dgHello: [
+    '{hi} all {emote}', 'ready when u are', 'first time in {dungeon}?', 'lvl {mylvl} {myjob} reporting in', 'lets clear {dungeon} {emote}', 'o/ {me}',
+    'hope the tank knows the way {laugh}', 'brought {small} pots, lets go', 'my {myweapon} is ready', '{hi} {me}, good luck in there',
+  ],
+  dgPull: [
+    'pulling!', 'pulling, stay close', 'next pack, on me', 'going in {emote}', 'gather up!', 'ready? pulling', 'eyes on me everyone', 'here they come',
+    '{mobhere}s incoming', 'stack on me for this one',
+  ],
+  dgTaunt: ['over here!', 'on me!', 'got it', 'hey {mobhere}s, look at me', 'i got aggro', 'mine!', 'eyes here, {mobhere}', 'dont hit the healer pls'],
+  dgHeal: ['healing!', 'group heal!', 'stay close for heals', 'dont stand in stuff {laugh}', 'keeping u up {me}', 'mana is fine, go go', 'heals coming'],
+  dgDown: ['x_x', 'im down!', 'noooo', 'rip me', 'oof that hurt', 'help {laugh}', 'someone pick me up pls', 'i stood in it didnt i'],
+  dgUp: ['ty!', 'thx <3', 'back!', 'phew', 'ok im up', 'ty for the save', 'back in it {emote}'],
+  dgClear: ['nice', 'gj', 'next!', 'ez', 'that went well', 'smooth {emote}', '{room} done', 'gj everyone', 'onward {emote}', 'clean'],
+  dgBoss: ['{boss} down!!', 'GG {boss} {emote}', 'we beat {boss}!', 'that {boss} fight tho {laugh}', 'bye bye {boss}', 'ez {boss}'],
+  dgDone: ['GG!!', 'we did it!', 'loot time {emote}', 'gg {me}, that was fun', 'cleared {dungeon} {emote}', 'ty for the run!', 'that was a good run {emote}'],
   joined: ['{yes}! {emote}', 'omg ty for the invite', 'sure, lets go!', 'yay party!', 'ok im in {emote}', 'lets grind {me}!', 'thx {me}!!', 'ooh ok'],
   levelUp: ['LVL UP!!', 'ding!! {emote}', 'lvl {mylvl}!!', 'leveled!! ty party', 'ding {mylvl} {emote}'],
   leaving: ['gtg, ty for the party!', 'thx for the pt {me}!', 'that was fun, cya!', 'ty! logging off', 'gg party {emote}'],
@@ -352,6 +372,8 @@ export function contextOf(bot, bots, world) {
     mobsHere: mobs, dropsHere: drops, npcHere: map?.npcs?.length ? NPCS[pick(map.npcs).id]?.name : null,
     next: next && next.id !== bot.map ? next.name : null, nextMob: nextMobs.length ? pick(nextMobs).name : null,
     weather: bot.map === world.map.id ? world.weather ?? null : null,
+    room: world.dungeon && bot.map === world.map.id ? world.map.name : null,
+    boss: world.dungeon && bot.map === world.map.id ? world.mobs.find((m) => m.def.boss)?.def.name ?? null : null,
     happened: recent.length ? pick(recent).what : null,
   };
 }
