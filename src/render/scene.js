@@ -2,7 +2,7 @@
 
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, shadowClones, inForm, hasFaith, thiefSchool, inkStorm } from '../world/melee.js';
+import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps, foxSpirit, FOX_SPIRIT_HEAT } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
@@ -296,7 +296,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
-  if (!world.dead && (phantom(world) || shadowClones(world) || inkStorm(world))) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
   // A Thief darting leaves violet afterimages of herself along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
@@ -396,12 +396,12 @@ export function drawWorld(ctx, world, viewCam, time) {
 // The Thief's darting moves (Shadow Step, her dashes and flash cuts, a blink, the finisher's
 // blinks) leave afterimages: a copy of her every few pixels she covers, tinted violet, fading out
 // over a quarter second (the speed reads as shadow, not as a smear).
-const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'vaultcut', 'shadowrun', 'flashjump']);
+const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'shadowrun', 'flashjump']);
 const GHOST_LIFE = 0.24;
-// The Shinobi's afterimages are ink, the Kitsune's blue fox fire.
-const GHOST_TINT = { shadow: '#6a4ec8', ink: '#1c1624', fox: '#3a6ee0' };
-// The endless barrages' speed blur: blue fox fire, ink, the green of the wind.
-const BLUR_TINT = { kitsune: '#3a6ee0', shinobi: '#1c1624', beastmaster: '#2fae7c' };
+// The Blade Dancer's afterimages are rose gold, the Kitsune's blue fox fire.
+const GHOST_TINT = { shadow: '#6a4ec8', rosegold: '#d26d6a', fox: '#3a6ee0' };
+// The endless barrages' speed blur: blue fox fire, the green of the wind.
+const BLUR_TINT = { kitsune: '#3a6ee0', beastmaster: '#2fae7c' };
 function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   const g = (feel.ghosts ??= []);
   const b = world.body;
@@ -497,18 +497,6 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
   const live = ph && world.now >= ph.since && world.now < ph.until;
   const pose = live ? { pose: ph.kind, progress: (world.now - ph.since) / ph.dur, dur: ph.dur, from: null, blend: 1 } : {};
-  // Shadow Clones (full Ki): two ink clones of the Shinobi, one each side of her, inked flat black
-  // with a brush-dry edge of smoke rising off them.
-  if (shadowClones(world) || inkStorm(world)) {
-    const t = state.time ?? 0;
-    for (const [k, side] of [[0, -1], [1, 1]]) {
-      const cx = x + state.facing * side * (live ? 14 : 20);
-      const pose = live && world.now >= ph.since + k * 0.08 ? { pose: ph.kind, progress: Math.min(1, (world.now - ph.since - k * 0.08) / ph.dur), dur: ph.dur, from: null, blend: 1 } : {};
-      fxSprite(ctx, 'celinkaura', cx, y + 4, { t: t * 0.8 + k, scale: 0.36, alpha: 0.7 * state.alpha });
-      drawTinted(ctx, cx, y, '#14101a', 0.86, (c) => drawHero(c, look, gear, cx, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.62 }));
-    }
-    return;
-  }
   const px = x - state.facing * (live ? 10 : 16);
   // A smoky see-through copy (the Thief's realistic look): violet smoke curling up off it, the copy
   // itself thin and flickering a little like smoke in a draught.

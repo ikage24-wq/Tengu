@@ -318,16 +318,20 @@ function bindingAura(ctx, x, y, t, s, k, layer) {
   ctx.restore();
 }
 
-// Ki: a ring of brushed ink at the shinobi's feet, ink rising round her in wisps as it builds,
-// and full (Shadow Clones), the red seal over her head and rings of ink racing out.
+// Ricochet (the Blade Dancer; internally Ki): a small ring skims round her feet as it builds,
+// faster the fuller it is; full (Carousel), two rings orbit her waist, passing in front of her and
+// behind, and her badge, two linked rings, shines over her head.
 function kiAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringink', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringink', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
-    return;
+  const full = k >= 1;
+  const n = full ? 2 : k > 0.15 ? 1 : 0;
+  for (let i = 0; i < n; i++) {
+    const a = t * (full ? 5 : 2 + 2 * k) + i * Math.PI;
+    if (Math.sin(a) > 0 !== (layer === 'front')) continue;
+    const rx = (full ? 26 : 16) * s;
+    const ry = (full ? 7 : 4) * s;
+    fxSprite(ctx, 'celbdring', x + Math.cos(a) * rx, y - (full ? 20 : 3) * s + Math.sin(a) * ry, { t: t + i * 0.1, flip: Math.sin(a) > 0, scale: s * (full ? 0.7 : 0.45), alpha: full ? 1 : Math.min(1, (k - 0.15) * 2) });
   }
-  if (k > 0.4) fxSprite(ctx, 'celinkaura', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
-  if (k >= 1) fxSprite(ctx, 'celembink', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (full && layer === 'front') fxSprite(ctx, 'celembblade', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Tails: a tail of fox fire behind the kitsune for each one she has (one to nine), fanning out and

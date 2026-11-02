@@ -28,7 +28,7 @@ import { SETS } from '../../data/sets.js';
 import warrior from './warrior.js';
 import archer from './archer.js';
 import mage from './mage.js';
-import thief from './thief.js';
+import thief from './dancer.js';
 import casual from './casual.js';
 import fun from './fun.js';
 import gacha from './gacha.js';

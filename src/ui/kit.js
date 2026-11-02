@@ -460,7 +460,6 @@ const ICONS = {
     ctx.fillRect(-s * 0.06, -s * 0.28, s * 0.12, s * 0.56);
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
-  // A seal tag, a strip of paper with a brush mark (the Shinobi's Ki).
   // A torii gate: two posts, a crossbeam, and the top lintel curving up at the ends (the Shrine
   // Maiden's Grace).
   torii(ctx, s) {
@@ -507,13 +506,20 @@ const ICONS = {
       ctx.fill();
     }
   },
-  seal(ctx, s) {
-    ctx.fillRect(-s * 0.2, -s * 0.44, s * 0.4, s * 0.88);
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillRect(-s * 0.04, -s * 0.32, s * 0.08, s * 0.5);
-    ctx.fillRect(-s * 0.12, -s * 0.22, s * 0.24, s * 0.07);
-    ctx.restore();
+  // A chakram: a ring with blade points round it (the Blade Dancer's Ricochet).
+  chakram(ctx, s) {
+    ctx.beginPath();
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2;
+      ctx.moveTo(Math.cos(a - 0.2) * s * 0.3, Math.sin(a - 0.2) * s * 0.3);
+      ctx.lineTo(Math.cos(a + 0.15) * s * 0.5, Math.sin(a + 0.15) * s * 0.5);
+      ctx.lineTo(Math.cos(a + 0.3) * s * 0.3, Math.sin(a + 0.3) * s * 0.3);
+    }
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.36, 0, Math.PI * 2);
+    ctx.arc(0, 0, s * 0.2, 0, Math.PI * 2, true);
+    ctx.fill();
   },
   // A fox's tail, a plume curling up (the Kitsune's Tails).
   foxtail(ctx, s) {

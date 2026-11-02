@@ -134,7 +134,7 @@ export const SIDE_SCENES = {
   ],
   trial_vex_done: [
     { who: 'vex', text: "Twenty, and not a scratch on you. I'd almost think you were me.", mood: 'happy' },
-    { who: 'vex', text: 'The Shinobi works in ink and shadow. The Kitsune plays with fox fire and illusions. Pick your poison.' },
+    { who: 'vex', text: 'The Blade Dancer throws her rings and catches them on a turn. The Kitsune plays with fox fire and illusions. Pick your poison.' },
   ],
 };
 

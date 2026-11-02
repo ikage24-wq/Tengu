@@ -383,7 +383,7 @@ test('dash moves carry a player along, and a party member who dies walks back in
   m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
   m.hp = 1e9;
   world.mobs.push(m);
-  const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['thief', 'shinobi'], pro: false });
+  const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['warrior', 'berserker'], pro: false });
   const bot = { id: 'd1', name: 'Dasher', char, level: 45, hunter: true, map: world.map.id, x: x - 40, facing: 1, state: 'hunt', body: createBody(x - 40, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
   let carried = 0;
   for (let t = 0; t < 15; t += 1 / 30) {

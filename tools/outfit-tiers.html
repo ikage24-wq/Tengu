@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>outfit tiers</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a job family's gear sets on the hero, tier by tier, standing and mid-walk, facing
+// right and left: ?family=thief&tiers=0,6,12,19&job=thief&weapon=dagger_45
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { GEAR_LEVELS } = await import('/src/data/items.js');
+const q = new URLSearchParams(location.search);
+const family = q.get('family') ?? 'thief';
+const job = q.get('job') ?? 'thief';
+const tiers = (q.get('tiers') ?? '0,6,12,19').split(',').map(Number);
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const K = 4;
+const CW = Number(q.get('cw') ?? 200);
+const RH = 280;
+const poses = [{ pose: 'idle', facing: 1 }, { pose: 'walk', facing: 1, time: 0.18 }, { pose: 'idle', facing: -1 }].slice(0, Number(q.get('poses') ?? 3));
+const c = document.getElementById('c');
+c.width = 20 + poses.length * CW * tiers.length;
+c.height = RH;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, c.width, c.height);
+tiers.forEach((t, i) => {
+  const L = GEAR_LEVELS[t];
+  const gear = Object.fromEntries(['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape'].map((s) => [s, { id: `${family}_${s}_${L}` }]));
+  if (q.get('weapon')) gear.weapon = { id: q.get('weapon') };
+  poses.forEach((ps, j) => {
+    const x = 20 + (i * poses.length + j) * CW + CW / 2 - 14;
+    ctx.save();
+    ctx.translate(x - 60, RH - 40);
+    ctx.scale(K, K);
+    setHd(true, K);
+    nextFrame();
+    drawHero(ctx, LOOK, gear, 0, 0, { pose: ps.pose, facing: ps.facing, time: ps.time ?? 0.5, job, ready: false, moving: ps.pose === 'walk' }, null);
+    ctx.restore();
+  });
+  ctx.fillStyle = '#4a3560';
+  ctx.font = 'bold 15px Segoe UI, sans-serif';
+  ctx.fillText(`Lv ${L}`, 30 + i * poses.length * CW, 24);
+});
+document.title = 'done';
+</script>

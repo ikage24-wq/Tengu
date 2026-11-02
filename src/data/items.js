@@ -177,8 +177,8 @@ for (const [slot, name, color] of [['top', 'Starting Top', '#ffc2d6'], ['bottom'
 
 // ---------- Job gear ----------
 // Every job has its own set every 5 levels, from 5 to 100, in each armor slot: warriors in heavy
-// plate, archers in elven leaf and silk, mages in grand robes and towering hats, thieves in dark
-// wraps and long scarves. The level-5 sets are starters a Novice can wear before choosing.
+// plate, archers in elven leaf and silk, mages in grand robes and towering hats, dancers in showgirl
+// tailcoats, ruffles and plumes. The level-5 sets are starters a Novice can wear before choosing.
 // Earrings suit everyone and come in their own ladder.
 
 export const GEAR_LEVELS = Array.from({ length: 20 }, (_, i) => (i + 1) * 5);
@@ -208,12 +208,14 @@ export const JOB_SETS = {
     colors: ['#8fa8e8', '#7f8fe0', '#5f6fc8', '#8a6ad8', '#4f5fb8', '#6a3fa8', '#c86ab8', '#3f4f9a', '#4f8a8a', '#f4ead2',
       '#2f3f7a', '#5a2f8a', '#9ab8e8', '#e8a23c', '#7a2f5a', '#ffffff', '#8fe8ff', '#1f1f4a', '#2a1a2a', '#b48cff'],
   },
+  // The dancers (the Wind Dancer and her paths): a showgirl from street performer to the star of
+  // the grand stage, in bright stage colours.
   thief: {
-    names: ['Pickpocket', 'Footpad', 'Cutpurse', 'Sneak', 'Nightstalker', 'Rogue', 'Phantom', 'Viper', 'Raven', 'Assassin',
-      'Wraith', 'Nightblade', 'Shade', 'Duskfang', 'Umbral', 'Voidwalker', 'Specter', 'Oblivion', 'Nightmare', 'Shadow King'],
-    nouns: { hat: byTier(['Bandana', 'Hood', 'Mask', 'Visage']), top: byTier(['Garb', 'Garb', 'Shroud', 'Shroud']), bottom: byTier(['Pants', 'Pants', 'Hakama', 'Hakama']), shoes: byTier(['Tabi', 'Tabi', 'Steps', 'Steps']), gloves: byTier(['Wraps', 'Wraps', 'Bracers', 'Bracers']), cape: byTier(['Scarf', 'Scarf', 'Longscarf', 'Shadowscarf']) },
-    colors: ['#8a7a6a', '#6a6a7a', '#5a5a6f', '#4a4a62', '#3b3a5a', '#5a3a4a', '#6a5a9a', '#2f6a4a', '#2a2a3a', '#7a1f2f',
-      '#5f6f8a', '#1f2a4a', '#4a3f6a', '#6a2f2a', '#2a1f3a', '#1a1a2a', '#cfd6e8', '#3a0f2a', '#160f1f', '#2a1a4a'],
+    names: ['Busker', 'Street Dancer', 'Juggler', 'Tumbler', 'Fire Spinner', 'Troupe', 'Acrobat', 'Ring Dancer', 'Carnival', 'Ringleader',
+      'Headliner', 'Spotlight', 'Encore', 'Marquee', 'Showstopper', 'Starlight', 'Grand Stage', 'Limelight', 'Curtain Call', 'Prima Stella'],
+    nouns: { hat: byTier(['Ribbon', 'Top Hat', 'Tiara', 'Crown']), top: byTier(['Bodice', 'Jacket', 'Tailcoat', 'Tailcoat']), bottom: byTier(['Skirt', 'Ruffles', 'Ruffles', 'Showskirt']), shoes: byTier(['Slippers', 'Boots', 'Stage Boots', 'Stage Boots']), gloves: byTier(['Ribbons', 'Gloves', 'Opera Gloves', 'Opera Gloves']), cape: byTier(['Sash', 'Tails', 'Bustle', 'Plumes']) },
+    colors: ['#e8907a', '#f2a0b4', '#6fbcc4', '#f0b85a', '#b48ce0', '#d8485e', '#3f8fd0', '#8a4fc8', '#2fa88a', '#e8607a',
+      '#c8324a', '#2f4a9a', '#6a2f8a', '#1f7a6a', '#b0305a', '#ff7a6a', '#5a3fc8', '#e0a838', '#2a2468', '#ff5a8a'],
   },
 };
 

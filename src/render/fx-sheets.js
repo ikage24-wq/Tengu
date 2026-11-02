@@ -209,4 +209,9 @@ export const FX_SHEETS = {
   celwdgust: { w: 325, h: 199, n: 8, fps: 30, px: 75, py: 106, d: 3, loop: false },
   celembdancer: { w: 144, h: 154, n: 5, fps: 12, px: 72, py: 82, d: 3, loop: false },
   celwdfinale: { w: 402, h: 392, n: 12, fps: 20, px: 198, py: 374, d: 3, loop: false },
+  celbdring: { w: 139, h: 104, n: 6, fps: 30, px: 93, py: 52, d: 3, loop: true },
+  celbdbounce: { w: 196, h: 183, n: 6, fps: 30, px: 98, py: 91, d: 3, loop: false },
+  celbdhit: { w: 223, h: 216, n: 7, fps: 30, px: 112, py: 109, d: 3, loop: false },
+  celembblade: { w: 126, h: 134, n: 5, fps: 12, px: 63, py: 81, d: 3, loop: false },
+  celbdcarousel: { w: 488, h: 257, n: 12, fps: 20, px: 244, py: 232, d: 3, loop: false },
 };

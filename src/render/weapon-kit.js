@@ -61,6 +61,8 @@ const VARIANT_LOOKS = {
   crimson: { blade: '#dc4a5e', bladeDark: '#a02a40', edge: '#ffb8c2' },
   azure: { blade: '#4f8fe8', bladeDark: '#2f60b4', edge: '#c4f4ff' },
   gilded: { blade: '#f4c443', bladeDark: '#cc931e', edge: WHITE, trim: '#fff6dc', trimDark: '#e0c890' },
+  // The Blade Dancer's own finish on a plain chakram (render/hero.js): rose gold with a gold rim.
+  rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },
 };
 // Types whose shaft or wood (not a blade) carries most of the color.
 const WOODEN = new Set(['bow', 'crossbow', 'wand', 'staff', 'spear']);

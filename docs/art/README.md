@@ -294,8 +294,15 @@ carry an improvement across every part of the game it applies to.
     and showed hard rings (a painted fall-off fixed it), and the crescent drawn from many short
     strokes banded where they overlapped (painted as one field instead). The first realistic cuts
     were also too faint to read over a bright map; they need a solid violet body under the glow.
-  - The Thief's paths, a pair from the same shrine, both realistic (no outlines). The Shinobi is
-    ink: her cuts are wet brush strokes that dry out into bristle streaks at the tail, with a thin
+  - The Blade Dancer (2026-11-02; she replaced the Shinobi below) is rose gold and gold in the HD
+    soft-glow style: her ring in flight spins with a rose smear curling behind it the way it flies
+    (home to her hand too); a ricochet is a gold flash with sparks kicked off in a V; her hit is a
+    ring-cut looping right round the monster; her badge two linked rings; full Ricochet is two rings
+    orbiting her waist, passing in front and behind; Golden Carousel is six rings riding a gold
+    track round her, faster and faster, then flung out in a burst. Her held chakram takes a
+    rose-gold finish.
+  - The Thief's paths as they were, a pair from the same shrine, both realistic (no outlines). The
+    Shinobi (replaced by the Blade Dancer) was ink: her cuts are wet brush strokes that dry out into bristle streaks at the tail, with a thin
     red sheen and drops flying off; a hit is a splash of ink with a thin red cut; seal tags are
     paper with a red brush glyph that burst in a red circle of light; her smoke is white; her
     emblem a red seal stamp; Ki is ink rising round her; her finisher a giant fox painted in ink

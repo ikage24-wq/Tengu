@@ -36,8 +36,8 @@ const BG = {
   blood: ['#ffa0b4', '#5a0e24'],
   indigo: ['#b8bcff', '#1e1a5e'],
   tempest: ['#cdb4ff', '#262a7e'],
-  inkwash: ['#e8dfe0', '#241c2a'],
   foxfire: ['#a8d8ff', '#14308a'],
+  rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
 };
 
@@ -1151,77 +1151,50 @@ function fullmoonvolley() {
   return out;
 }
 
-// ---------- Shinobi (ink black, red seals, white smoke) ----------
-const SEALRED = '#d8283a';
-const KUNAI = { w: 1.9, gw: 2.4, glen: 1.6, guard: '#5a5868', grip: '#1c1820', gem: SEALRED };
-// A seal tag: a strip of paper with a red brush glyph.
-function sealTag(cx, cy, k = 1, rot = 0) {
-  const paper = [[cx - 2.2 * k, cy - 4.6 * k], [cx + 2.2 * k, cy - 4.6 * k], [cx + 2.2 * k, cy + 4.6 * k], [cx - 2.2 * k, cy + 4.6 * k]];
-  const glyph = [
-    streak([cx - 1.2 * k, cy - 3 * k], [cx + 1.2 * k, cy - 3 * k], 0.55 * k, SEALRED),
-    streak([cx, cy - 3.6 * k], [cx, cy + 3.4 * k], 0.6 * k, SEALRED),
-    streak([cx - 1.3 * k, cy - 0.6 * k], [cx + 1.3 * k, cy + 0.4 * k], 0.5 * k, SEALRED),
-    streak([cx - 1.1 * k, cy + 2.4 * k], [cx + 1.1 * k, cy + 2.4 * k], 0.5 * k, SEALRED),
-  ];
-  return spin([...solid(paper, '#f6ecd6', { d: 0.4, ink: '#8a6a4a' }), ...glyph], rot, cx, cy);
-}
-function shinobimastery() {
-  const out = [...tile('inkwash', 'passive'), ...aura(8, 8, 6.6, '#ffd6c8')];
-  out.push(...sword([3, 13], [12.6, 3.4], KUNAI));
-  out.push(...sealTag(11.6, 11, 0.6, 20));
-  return out;
-}
-function kunaibarrage() {
-  const out = [...tile('inkwash', 'active')];
-  for (const [y, x0] of [[4, 2], [8.4, 0.8], [12.6, 2.4]]) {
-    out.push(streak([x0, y], [x0 + 4.6, y], 0.8, '#bfb6c8'));
-    out.push(...sword([x0 + 5, y], [x0 + 11.6, y], KUNAI));
+// ---------- Blade Dancer (rose gold: bouncing rings, sparks where they ricochet, a carousel) ----------
+const ROSE = '#f2a48c';
+const ROSE_INK = '#7e3450';
+const RIMGOLD = '#ffd36a';
+// A chakram: six blade points round a rose-gold ring with a gold rim, turned by `rot`.
+function ringBlade(cx, cy, r, rot = 0, c = ROSE) {
+  const out = [];
+  for (let k = 0; k < 6; k++) {
+    const a = ((rot + k * 60) * Math.PI) / 180;
+    const p = (da, d) => [cx + Math.cos(a + da) * d, cy + Math.sin(a + da) * d];
+    out.push(...solid([p(-0.3, r * 0.8), p(0.25, r * 1.8), p(0.4, r * 0.8)], RIMGOLD, { shadow: false, d: 0.35, ink: ROSE_INK }));
   }
-  out.push(...spark(14, 2.4, 1));
+  const ring = arcPts(cx, cy, r, r, 0, 360, 28);
+  out.push(...edge(tube(ring, r * 0.5), ROSE_INK, 0.4), S(tube(ring, r * 0.5), c), S(tube(arcPts(cx - 0.2, cy - 0.2, r, r, 200, 300, 12), r * 0.18), W));
+  out.push(S(tube(arcPts(cx, cy, r * 0.62, r * 0.62, 0, 360, 22), r * 0.14), RIMGOLD));
   return out;
 }
-// Endless Blade Dance: three cuts of ink sweeping round a reverse-grip dagger, red seal-light on
-// their edges, drops of ink flicked off.
-function inkdance() {
-  const out = [...tile('inkwash', 'passive'), ...aura(8, 8, 6.6, '#ffd6c8')];
-  out.push(...swoosh(8, 8, 6.2, 5.6, -200, -40, 1.5, '#14101a', { ink: SEALRED }));
-  out.push(...swoosh(8, 8.4, 5, 4.4, 10, 150, 1.2, '#14101a', { ink: SEALRED }));
-  out.push(...sword([4.4, 11.6], [11.8, 4.2], KUNAI));
-  out.push(...swoosh(8, 8, 3.2, 2.6, 190, 300, 0.8, '#2a2230', { ink: SEALRED }));
-  out.push(S(oval(13.4, 12.8, 0.7, 0.7, 0, 8), '#14101a'), S(oval(2.6, 3.4, 0.5, 0.5, 0, 8), '#14101a'));
-  out.push(...spark(13.2, 2.8, 1.1, '#ffd6c8'));
+function ringmastery() {
+  const out = [...tile('rosegold', 'passive'), ...aura(8, 8, 6.6, '#fff0d6')];
+  out.push(...ringBlade(8, 8, 3.6, 10));
+  out.push(...spark(12.8, 3.2, 1.1), ...spark(3.4, 12.6, 0.8, RIMGOLD));
   return out;
 }
-function explodingseal() {
-  const out = [...tile('inkwash', 'active'), ...aura(8, 8, 7, '#ff8a6a', 1.1, 5)];
-  out.push(...sealTag(8, 8, 1.05, -12));
-  out.push(...spark(13.4, 3, 1.2, '#ffd6c8'), ...spark(2.8, 12.8, 1));
+// Rebound: a ring bouncing off one spark to the next, its path a zigzag of rose streaks.
+function rebound() {
+  const out = [...tile('rosegold', 'passive')];
+  out.push(streak([1.6, 12.4], [5.4, 4.6], 0.9, '#c8666a'), streak([5.4, 4.6], [9.2, 11.6], 0.9, '#c8666a'));
+  out.push(...spark(5.4, 4.6, 1.5, RIMGOLD), ...spark(9.2, 11.6, 1.3, RIMGOLD));
+  out.push(...ringBlade(12, 5.6, 2.4, 25));
   return out;
 }
-function smokebomb() {
-  const out = [...tile('inkwash', 'buff')];
-  out.push(...puffs([[4.6, 10.4, 3], [8.4, 9, 3.6], [11.8, 10.8, 2.8], [8, 12.8, 2.6]], '#e8e4ee'));
-  out.push(...solid(oval(7.6, 4.6, 2.2, 2.2, 0, 16), '#2a2230', { d: 0.4 }));
-  out.push(streak([8.8, 2.8], [10.6, 1.4], 0.5, '#c8a070'), ...spark(11, 1.4, 0.9, '#ffd36a'));
+// Twin Rings: two rings flying side by side, one a beat behind.
+function twinrings() {
+  const out = [...tile('rosegold', 'passive'), ...aura(8, 8, 6.6, '#fff0d6')];
+  out.push(streak([1, 5.4], [4.6, 5.4], 0.7, '#c8666a'), streak([0.6, 11], [6.2, 11], 0.7, '#c8666a'));
+  out.push(...ringBlade(9.6, 10.8, 2.7, 0, RIMGOLD), ...ringBlade(8, 5.2, 2.7, 30));
   return out;
 }
-function logswap() {
-  const out = [...tile('inkwash', 'buff'), ...aura(8, 9, 6, '#f2e6d0')];
-  const log = [[2.6, 7.4], [11.6, 5.6], [12.8, 9.8], [3.8, 11.6]];
-  out.push(...solid(log, '#8a5a32', { d: 0.45, ink: '#3a2414' }));
-  out.push(...solid(oval(12.2, 7.7, 1.5, 2.1, -12, 16), '#e8cc9a', { shadow: false, d: 0.3, ink: '#8a5a32' }));
-  out.push(streak([4.2, 8.8], [10.4, 7.6], 0.3, '#5a3a20'));
-  out.push(...puffs([[3, 13.2, 1.8], [6.2, 13.6, 1.5]], '#e8e4ee', { shadow: false }));
-  return out;
-}
-function thousandcuts() {
-  const out = [...tile('inkwash', 'active'), ...aura(8, 8, 7, '#ff8a6a', 1.2, 5)];
-  for (const [a, b] of [[[2, 3], [14, 13]], [[14, 3], [2, 13]], [[1.6, 8.4], [14.4, 7]]]) {
-    out.push(S(tube([a, b], 0.2, 1.6), '#14101a'));
-    out.push(S(tube([a, b], 0.1, 0.5), SEALRED));
-  }
-  out.push(...solid(oval(8, 8, 2, 2, 0, 16), SEALRED, { d: 0.4, ink: '#6a0e18' }));
-  out.push(...spark(13, 2.4, 1.1, '#ffd6c8'), ...spark(3, 13.6, 0.9));
+// Golden Carousel: rings riding a gold track round a bright centre.
+function goldencarousel() {
+  const out = [...tile('rosegold', 'active'), ...aura(8, 8, 7, RIMGOLD, 1.2, 5)];
+  out.push(...edge(tube(arcPts(8, 8.6, 6, 2.6, 0, 360, 30), 0.9), '#8e5228', 0.4), S(tube(arcPts(8, 8.6, 6, 2.6, 0, 360, 30), 0.9), RIMGOLD));
+  for (const [x, y, r] of [[2.6, 8, 1.7], [13.4, 8, 1.7], [8, 11.2, 2.1], [8, 5.6, 1.3]]) out.push(...ringBlade(x, y, r, x * 20));
+  out.push(...spark(8, 2.6, 1.4), ...spark(13.4, 13.2, 0.9, RIMGOLD));
   return out;
 }
 
@@ -1554,7 +1527,7 @@ const ART = {
   beastmastery, wildhunt, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
-  shinobimastery, inkdance, kunaibarrage, explodingseal, smokebomb, logswap, thousandcuts,
+  ringmastery, rebound, twinrings, goldencarousel,
   kitsunemastery, foxbarrage, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,

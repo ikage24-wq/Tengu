@@ -12,7 +12,7 @@ import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from '.
 import { guard, howl } from './pets.js';
 import { foxDecoy } from './decoy.js';
 import { kitsuneGuard } from './kitsune.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, addKi, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -105,11 +105,6 @@ export function applyBuff(world, skillId, params) {
   char.buffs[skillId] = { until: now + params.duration, since: now, values: params.buff, name: s.name };
   if (params.buff.barrier) char.buffs[skillId].shield = Math.round(stats.maxHp * params.buff.barrier);
   world.fx.push({ kind: 'buffcast', skill: skillId, name: s.name, school: schoolFor(char, s.school), x: body.x, y: body.y, dir: body.facing, t: 0, dur: 1.1 });
-  // A Shinobi's Smoke Bomb: she's untouchable a moment in the smoke, the monsters lose track of
-  // her, and it builds Ki.
-  if (params.ki) addKi(world, params.ki);
-  // (And a log waits in the smoke: see logSwap in world/world.js.)
-  if (params.log) char.buffs.logswap = { until: now + params.log.secs, since: now, values: { ki: params.log.ki }, name: 'Log Swap' };
   if (params.guard) world.invuln = Math.max(world.invuln, params.guard);
   if (params.lose) {
     for (const m of world.mobs) if (m.hp > 0 && Math.abs(m.x - body.x) < params.lose) m.aggroUntil = 0;

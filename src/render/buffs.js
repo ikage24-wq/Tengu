@@ -143,16 +143,7 @@ export const BUFF_LOOKS = {
       sheen(ctx, x, y, t, '#ffffff', a);
     },
   },
-  // The Shinobi's Smoke Bomb: white smoke hanging round her feet while it lasts; Log Swap: a ring
-  // of ink at her feet, ready. The Kitsune's Fox Illusion is drawn as the illusions themselves.
-  smokebomb: {
-    color: '#e8e4ee', cast: 'gust',
-    back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celsmokebomb', x, y + 8, { frame: 5, scale: 0.42, alpha: a * 0.45 }),
-  },
-  logswap: {
-    color: '#c8a070', cast: 'shine',
-    back: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celringink', x, y, { frame: 2, scale: 0.3, sy: 0.32, alpha: a * 0.5 }),
-  },
+  // (The Kitsune's Fox Illusion is drawn as the illusions themselves.)
   quickhaste: {
     color: '#b89cff', cast: 'gust',
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).
@@ -210,9 +201,6 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
     fxSprite(ctx, pathTint(school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 1.1 });
     groundWave(ctx, school, x, y, Math.min(1, p * 1.3), 90);
     if (p > 0.1) fxSprite(ctx, `celemb${school}`, x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
-  } else if (f.skill === 'smokebomb') {
-    // Smoke Bomb goes off in a burst of white smoke instead of a pillar.
-    fxSprite(ctx, 'celsmokebomb', x, y + 6, { p, scale: 1.1 });
   } else if (f.skill === 'ironguard') {
     pillarOf(ctx, school, x, y, p);
     fxSprite(ctx, pathTint(school, 'celplates', 'celplatesgold', 'celplatesred'), x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });

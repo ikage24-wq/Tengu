@@ -87,6 +87,15 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
+    case 'ring': case 'ringbig': {
+      // The Blade Dancer's ring: spinning, its rose smear curling behind it the way it flies (home
+      // to her hand too); a twin ring a little smaller and lighter.
+      const big = f.shot === 'ringbig';
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      fxSprite(ctx, 'celbdring', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (big ? 1.15 : 0.8) * (f.twin ? 0.85 : 1), alpha: f.twin ? 0.85 : 1 });
+      break;
+    }
     case 'arrow': case 'pierce': {
       // Pointed along its flight, with a fading streak behind and fletching at the tail.
       ctx.translate(x, y);
@@ -868,14 +877,15 @@ function drawFx(ctx, f, cam, time) {
         else if (f.path === 'rage') {
           fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.95 });
           fxSprite(ctx, 'celclaw', x, y, { p, scale: 0.55, flip: (f.dir ?? 1) < 0 });
-        } else if (f.path === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: 0.8, flip: (f.dir ?? 1) < 0, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
+        } else if (f.path === 'rosegold') fxSprite(ctx, 'celbdhit', x, y, { p, scale: 0.75, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
+        else if (f.path === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: 0.8, flip: (f.dir ?? 1) < 0, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
         else fxSprite(ctx, 'celcrit', x, y, { p, scale: 0.75 });
         break;
       }
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink' || f.path === 'coral') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink' || f.path === 'coral' || f.path === 'rosegold') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;
@@ -1012,6 +1022,11 @@ function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
   const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  if (school === 'rosegold') {
+    // The Blade Dancer's cuts come from her ring spinning round her: its ring-cut, seen flat.
+    fxSprite(ctx, 'celbdhit', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 36, sy: f.flat ? 0.42 : 0.8, flip: (f.dir || 1) < 0 });
+    return;
+  }
   if (f.flat && (school === 'ink' || school === 'shadow')) {
     // A thief's whirl: a ring of her own cut (brushed ink, or violet moonlight) swept round her.
     fxSprite(ctx, school === 'ink' ? 'celringink' : 'celringshadow', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 34, sy: 0.42 });

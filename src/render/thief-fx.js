@@ -111,7 +111,10 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       // A flash jump, a shadow dash or an archer's air leap: a pop of light where she kicks off,
       // a ring standing across her path, speed lines and sparkles trailing behind her, in her
       // path's own colours.
-      fxSprite(ctx, `celleap${LEAP[f.school] ?? 'shadow'}`, x, y, { p, flip, scale: 0.95 * (f.k ?? 1) });
+      // (The Wind Dancer kicks off in a gust, the Blade Dancer in a ricochet's spark.)
+      if (f.school === 'coral') fxSprite(ctx, 'celwdgust', x, y - 6, { p, flip: !flip, scale: 0.6 * (f.k ?? 1), rot: flip ? -0.5 : 0.5 });
+      else if (f.school === 'rosegold') fxSprite(ctx, 'celbdbounce', x, y - 4, { p, flip, scale: 0.75 * (f.k ?? 1) });
+      else fxSprite(ctx, `celleap${LEAP[f.school] ?? 'shadow'}`, x, y, { p, flip, scale: 0.95 * (f.k ?? 1) });
       return true;
     }
     case 'blinksmoke': {
@@ -161,59 +164,9 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       groundRing(ctx, 'celringshadow', x, y, p, r);
       return true;
     }
-    // ---------- The Shinobi (ink, red seals, white smoke) ----------
-    case 'inkhit': {
-      // A heavy blow's splash of ink on the monster (or where it lands).
-      fxSprite(ctx, 'celinkhit', x, y - (f.h ?? 30) / 2, { p, flip, scale: f.big ? 1.1 : 0.85, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
-      return true;
-    }
-    case 'sealtag': {
-      // A seal tag slapped on the monster: it glows red, then bursts (the burst is its own blow).
-      fxSprite(ctx, 'celseal', x, y - (f.h ?? 30) / 2, { frame: Math.min(3, Math.floor(p * 4)), scale: 0.4 });
-      return true;
-    }
-    case 'sealburst': {
-      // The seal bursting: a red circle of light, scraps of paper, a ring along the ground.
-      fxSprite(ctx, 'celseal', x, y - 26, { frame: 3 + Math.min(3, p * 4), scale: 1 });
-      groundRing(ctx, 'celringink', x, y, p, 60);
-      return true;
-    }
     case 'smokeburst': {
       // A burst of white smoke where she darts off, swaps out, or vanishes.
       fxSprite(ctx, 'celsmokebomb', x, y + 6, { p, flip, scale: 0.6 });
-      return true;
-    }
-    case 'logpoof': {
-      // Log Swap: a log drops where she stood, in a burst of smoke.
-      fxSprite(ctx, 'cellog', x, y + 2, { p: Math.min(1, p * 1.6), flip, scale: 0.62, alpha: p > 0.8 ? (1 - p) / 0.2 : 1 });
-      fxSprite(ctx, 'celsmokebomb', x, y + 6, { p, scale: 0.65 });
-      return true;
-    }
-    case 'inkwash': {
-      // Thousand Cuts: ink spills over the world, it darkens to a wash of ink on paper, and she
-      // vanishes in a burst of white smoke.
-      const a = Math.min(1, p * 5) * (p > 0.85 ? (1 - p) / 0.15 : 1);
-      ctx.save();
-      ctx.globalAlpha = 0.42 * a;
-      ctx.fillStyle = '#14101a';
-      wash(ctx);
-      ctx.restore();
-      fxSprite(ctx, 'celsmokebomb', x, y + 6, { p: Math.min(1, p * 2), scale: 0.9 });
-      return true;
-    }
-    case 'inkcut': {
-      // Thousand Cuts on each monster: she steps out of white smoke and a brush stroke of ink
-      // cuts across it, splashing.
-      const cy = y - (f.h ?? 24) / 2;
-      fxSprite(ctx, 'celsmokebomb', x - 14, y + 4, { p: Math.min(1, p * 1.5), scale: 0.3 });
-      fxSprite(ctx, 'celinkhit', x, cy, { p, scale: 0.9, rot: ((f.seed ?? 0.5) - 0.5) * 1.6 });
-      return true;
-    }
-    case 'inkfoxsweep': {
-      // The last blow: a giant fox of ink sweeps through the whole line, a ring of ink racing out.
-      const r = f.r ?? 220;
-      fxSprite(ctx, 'celinkfoxbig', x + (f.dir || 1) * 30, y + 10, { p, flip, scale: r / 300 });
-      groundRing(ctx, 'celringink', x, y, p, r);
       return true;
     }
     // ---------- The Kitsune (gold and blue fox fire) ----------

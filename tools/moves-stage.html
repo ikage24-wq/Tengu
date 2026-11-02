@@ -18,6 +18,7 @@ import { text, box } from '../src/ui/kit.js';
 import { makeEquip } from '../src/core/items.js';
 import { bindFreeHotkey } from '../src/core/character.js';
 import { SKILLS } from '../src/data/skills.js';
+import { gaugeOf } from '../src/world/melee.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -45,7 +46,9 @@ w.mobs = [];
 w.god = true;
 Object.assign(w.body, { x: 300, y: w.map.groundY, facing: 1 });
 const base = Object.values(MOBS).filter((m) => !m.boss && m.level <= level - 8).sort((a, b) => b.level - a.level)[0];
-const homes = [430, 470, 510];
+// ?spread=90: the dummies further apart (rings bouncing between them read better).
+const gap = Number(q.get('spread') ?? 40);
+const homes = [430, 430 + gap, 430 + gap * 2];
 for (const x of homes) {
   const m = spawnMob(w.map, { mob: base.id, x, y: w.map.groundY });
   m.def = { ...m.def, hp: 1e9, aggro: false, speed: 0, atk: 0 };
@@ -92,7 +95,8 @@ window.ready = true;
 // ?record=PLAN: plays a plan and prints the frames (cropped round the hero, as data URLs, JSON)
 // into <pre id="out"> for a headless browser's --dump-dom (tools/make-gif.py). The plan is steps
 // split by ';': KEY:secs records while holding a key (_ for none, a press on its first frame),
-// !KEY:secs plays without recording, place:x moves the hero, cap:text sets the caption.
+// !KEY:secs plays without recording, place:x moves the hero, cap:text sets the caption, gauge:n
+// fills the job's gauge.
 if (q.get('record')) {
   const keep = setInterval(() => {}, 10);
   // (The effect strips load first, so nothing pops in blank.)
@@ -108,9 +112,12 @@ if (q.get('record')) {
     const [head, arg] = [part.slice(0, part.indexOf(':')), part.slice(part.indexOf(':') + 1)];
     if (head === 'place') { window.place(Number(arg)); continue; }
     if (head === 'cap') { words = arg; continue; }
+    // gauge:100 fills the job's gauge (for a finisher).
+    if (head === 'gauge') { const g = gaugeOf(w.char); w[g] = Number(arg); w[`${g}At`] = w.now; continue; }
     const quiet = head.startsWith('!');
     const key = head.replace('!', '');
-    const held = key === '_' ? [] : [key];
+    // (Keys joined by + are held together: ArrowUp+KeyZ.)
+    const held = key === '_' ? [] : key.split('+');
     const n = Math.round(Number(arg) * FPS);
     for (let i = 0; i < n; i++) {
       step(1 / FPS, held, i === 0 ? held : []);

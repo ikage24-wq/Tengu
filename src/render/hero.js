@@ -182,6 +182,9 @@ function popOf(c) {
   return '#ffd36e';
 }
 
+// A dancer path's trim on the dancers' gear (see drawHero).
+const PATH_TRIMS = { shinobi: { trim: '#f4b49a', trimDark: '#c8746a', trimLight: '#ffe0cf', accent: '#ffd36a' } };
+
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
   const style = OUTFIT_STYLES.includes(look.outfit) || GUARDIAN_OUTFIT_KEYS.includes(look.outfit) || TROUPE_OUTFIT_KEYS.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
@@ -2785,6 +2788,12 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const { pose = 'idle', facing = 1, alpha = 1, scale = 1 } = state;
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
+  // The Blade Dancer's chakrams take her rose gold, unless the item has a colour of its own.
+  if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
+  // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
+  // gear sets or recoloured variants): the Blade Dancer's in rose gold with gold gems.
+  const trim = PATH_TRIMS[state.job];
+  if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
   // The body acts out the mood: the expression, or worn out at low health.
   const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, anim, mv);
   // A choreographed pose overrides the rig (boss dances).
@@ -2809,7 +2818,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   }
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
-  const gk = gearKey(gear);
+  const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
   // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
   // the frame's drawing budget is spent (see spriteBudgeted).
   const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}`;
@@ -2867,7 +2876,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // Weapon size relative to the hero (they are drawn big on purpose).
   const ws = scale * WEAPON_SCALE;
   const drawWeapon = () => {
-    if (!wpn) return;
+    // (A thrown weapon is out of her hand: `thrown` from the move, the Blade Dancer's ring in flight.)
+    if (!wpn || (mv?.thrown ?? 0) >= 0.5) return;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.imageSmoothingEnabled = false;

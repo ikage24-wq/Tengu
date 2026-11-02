@@ -350,19 +350,20 @@ const R = {
   kitsunemoonfall: { db: -7, max: 1, room: true, layers: [thump(70, 500, { slide: -1.2 }), { rec: 'holyBlast', rate: 0.85 }, { rec: 'rockHit', rate: 0.7, db: -4 }, { rec: 'bell', len: 1200, rate: 0.9, db: -6 }] },
   kitsunejab: { db: -15, vary: 10, max: 3, layers: [{ rec: 'stab', rate: 1.2 }, whoosh(160, 900, 3000, { focus: 0.2, db: -6 })] },
   kitsunecrescent: { db: -10, max: 2, layers: [{ rec: 'bladeSwingHeavy', rate: 0.9 }, whoosh(600, 400, 3000, { focus: 0.3, db: -4 }), sparkle('E7:0 B7:60', { db: -14 })] },
-  // The Thief's paths. The Shinobi: Ki topping out (a blade drawn and a taiko hit: Shadow
-  // Clones), a seal bursting, ink spilling over the world, and the ink fox's sweep. The Kitsune:
+  // The Thief's paths. The Blade Dancer: Ricochet topping out (rings whirring up and a bright
+  // chime: Carousel). The Kitsune:
   // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the
   // fire fox's pounce.
-  shadowclones: { db: -10, max: 1, duck: [-5, 800], layers: [{ rec: 'unsheathe', rate: 1.1 }, thump(90, 320, { slide: -1 }), { seq: 'r:80 D4+A4:600', inst: 'pan_flute', attack: 0.05, db: -8 }] },
-  sealburst: { db: -10, max: 2, layers: [{ rec: 'darkImpact', len: 700, db: -4 }, thump(110, 260), { seq: 'D5:300', inst: 'orchestral_harp', db: -8 }] },
-  inkwash: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', len: 1400 }, { rec: 'teleOut', db: -6 }, { seq: 'D3+A3:1200', inst: 'pan_flute', attack: 0.3, db: -8 }] },
-  inkfoxsweep: {
-    db: -8, max: 1, duck: [-8, 1200], layers: [
-      { rec: 'bladeSwingHeavy', rate: 0.75 },
-      { rec: 'darkImpact', len: 1400, db: -3 },
-      thump(65, 480, { slide: -1.5 }),
-      { seq: 'D3+A3+D4+F4:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
+  carouselfull: { db: -10, max: 1, duck: [-5, 800], layers: [whoosh(500, 300, 2400, { focus: 0.6, db: -4 }), sparkle('C7:0 E7:70 G7:140 C8:210', { db: -10 }), { seq: 'r:120 C5+G5:600', inst: 'orchestral_harp', attack: 0.02, db: -8 }] },
+  // A ring ricocheting (a bright metal ping and a sparkle), and Golden Carousel (rings whirring
+  // round her faster and faster on a harp run, then flung out with a crash of chimes).
+  bdbounce: { db: -16, vary: 8, max: 3, layers: [{ rec: 'clang', rate: 1.6, db: -6 }, sparkle('E7:0 B7:40', { db: -12 })] },
+  bdcarousel: {
+    db: -8, max: 1, duck: [-6, 1400], layers: [
+      whoosh(300, 1200, 2800, { focus: 0.7, db: -4 }),
+      { seq: 'C5:90 E5:90 G5:90 C6:90 E6:90 G6:90 C7:600', inst: 'orchestral_harp', db: -6 },
+      { seq: 'r:1000 C5+G5+C6+E6:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
+      sparkle('r:1000 C8:0 G7:60 E7:120 C7:180', { db: -10 }),
     ],
   },
   ninetails: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'D5:50 E5:50 A5:50 B5:50 D6:50 E6:700', inst: 'orchestral_harp' }, { seq: 'r:200 A4+D5+E5:900', inst: 'choir_aahs', attack: 0.2, db: -8 }] },

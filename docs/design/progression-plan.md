@@ -153,8 +153,8 @@ jobs.)
   Volley finisher) or Sniper (crossbow, Focus gauge and Deadeye: Marksman's Chain, Glacier Bolt,
   Steady Aim, mastery, Heartseeker finisher), each with its own basic combo, command shots (up,
   air, running), moves, effects, sounds, icons, auras, and generated players on both paths.
-  Thief done: Vex's trial at 30 (defeat 20 Bone Knights), then Shinobi (dagger, Ki and Shadow
-  Clones: Kunai Barrage, Exploding Seal, Smoke Bomb, Log Swap, Thousand Cuts finisher) or Kitsune
+  Thief done: Vex's trial at 30 (defeat 20 Bone Knights), then the Blade Dancer (2026-11-02, replacing
+  the Shinobi: chakrams, Ricochet and the Carousel: Rebound, Twin Rings, Golden Carousel finisher) or Kitsune
   (gauntlet, Tails and fox-fire illusions: Fox-Fire Fan, Fox Illusion, Fox-Fire Trap, Fox Hop,
   Nine-Tail Blaze finisher), on a remade first-job Thief whose skills lead into both (the old
   Assassin and Night Lord were removed).

@@ -5045,6 +5045,157 @@
     };
   })();
 
+  // ---------- The Blade Dancer (rose gold: bouncing rings, sparks where they ricochet, a carousel) ----------
+  // docs/design/blade-dancer.md. Her shapes: a spinning chakram with its own smear, bright V-shaped
+  // ricochet sparks, and rings riding an orbit round her like a carousel.
+  const ROSEGOLD = ['#ffffff', '#ffe8dc', '#f6ad94', '#d26d6a', '#7e3450'];
+  const GOLDRING = ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228'];
+
+  // A chakram seen a little edge-on (`sy` squashes it), turned by `rot`: a banded ring with six
+  // blade points, a gold rim and a white glint.
+  function chakram(ctx, x, y, r, rot, sy = 1, pal = ROSEGOLD) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(1, sy);
+    ctx.rotate(rot);
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * TAU;
+      const p = (t, d) => [Math.cos(a + t) * d, Math.sin(a + t) * d];
+      inked(ctx, [p(-0.22, r * 0.9), p(0.18, r * 1.42), p(0.3, r * 0.92)], pal[2], pal[4], 4);
+      fill(ctx, [p(-0.05, r * 0.95), p(0.16, r * 1.3), p(0.22, r * 0.95)], pal[1]);
+    }
+    celRing(ctx, pal, 0, 0, r, r * 0.42, { seed: 111 });
+    celRing(ctx, GOLDRING, 0, 0, r * 0.62, r * 0.12, { seed: 112 });
+    ctx.restore();
+    sparkle(ctx, GOLDRING, x - r * 0.45, y - r * 0.5 * sy, r * 0.32, 0.4);
+  }
+
+  // Her ring in flight (loops): it spins, a rose smear curling behind it and two gold sparks
+  // shed off its rim. Flies toward +x.
+  E.bdring = (() => {
+    const cx = 92;
+    const cy = 56;
+    return {
+      w: 140, h: 112, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const rot = (i / 6) * (TAU / 6);
+        celCrescent(ctx, ROSEGOLD, cx, cy, 38, Math.PI * 0.55 + i * 0.05, Math.PI * 1.45 + i * 0.05, 14, { seed: 113, inkW: 3 });
+        speedLine(ctx, GOLDRING, cx - 86, cy - 12 + (i % 2) * 4, cx - 40, cy - 12, 2.5);
+        speedLine(ctx, GOLDRING, cx - 76, cy + 16 - (i % 2) * 4, cx - 38, cy + 14, 2.5);
+        chakram(ctx, cx, cy, 24, rot, 0.86);
+      },
+    };
+  })();
+
+  // Where a ring ricochets: a gold flash, a rose ring popping out, and sparks kicked off in a V
+  // (the way it bounced), breaking into beads.
+  E.bdbounce = (() => {
+    const c = 90;
+    return {
+      w: 180, h: 180, n: 6, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, GOLDRING, c, c, [36, 52, 40][i], 8, 121, { inner: 0.3, rot: i * 0.2 });
+        if (i >= 1 && i <= 3) celRing(ctx, ROSEGOLD, c, c, 30 + i * 16, 10 - i * 2, { broken: i === 3 ? 0.5 : 0, seed: 122 });
+        const k = i / 5;
+        for (const [a, pal] of [[-2.3, GOLDRING], [-0.85, GOLDRING], [-1.9, ROSEGOLD], [-1.2, ROSEGOLD], [-2.7, ROSEGOLD], [-0.45, ROSEGOLD]]) {
+          const d = 26 + k * 66;
+          const x = c + Math.cos(a) * d;
+          const y = c + Math.sin(a) * d + k * k * 30;
+          if (i < 4) speedLine(ctx, pal, x - Math.cos(a) * 22, y - Math.sin(a) * 22, x + Math.cos(a) * 10, y + Math.sin(a) * 10, 3.5);
+          else shard(ctx, pal, x, y, a, 9, 3);
+        }
+        if (i >= 3) sparkle(ctx, GOLDRING, c + 4, c - 30 - i * 4, 12 - i, 0.3);
+      },
+    };
+  })();
+
+  // Her mark on a monster: a ring-cut loops right round it (a full rose-gold circle drawn as one
+  // crescent), a gold glint crosses it, then it breaks into beads.
+  E.bdhit = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        const sweep = [1.6, 3.6, 5.6, 6.1, 6.1, 0, 0][i];
+        if (i <= 4) celCrescent(ctx, ROSEGOLD, c, c, 58 + i * 4, -1.2, -1.2 + sweep, [14, 18, 20, 18, 12][i], { seed: 131, inkW: 4 });
+        if (i >= 1 && i <= 3) {
+          speedLine(ctx, GOLDRING, c - 56, c + 40, c + 56, c - 40, 6);
+          sparkle(ctx, GOLDRING, c, c, [26, 22, 16][i - 1], 0.2);
+        }
+        if (i >= 4) {
+          const k = (i - 4) / 2;
+          const R = rng(133);
+          for (let j = 0; j < 8; j++) {
+            const a = (j / 8) * TAU + R() * 0.4;
+            const d = 64 + k * 34;
+            if (i < 6) shard(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + Math.cos(a) * d, c + Math.sin(a) * d, a + Math.PI / 2, 12, 3.5);
+            else sparkle(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + Math.cos(a) * d, c + Math.sin(a) * d, 8, a);
+          }
+        }
+      },
+    };
+  })();
+
+  // Her badge: two rings linked, rose gold and gold, with blade points.
+  E.embblade = emblem(ROSEGOLD, (ctx) => {
+    chakram(ctx, -16, 4, 26, 0.3, 1, GOLDRING);
+    chakram(ctx, 16, -4, 26, 0.1, 1, ROSEGOLD);
+  });
+
+  // Golden Carousel (her finisher): rings gather on an orbit round her, riding it faster and
+  // faster under a gold track like a carousel's; then they fly out in every direction, the track
+  // bursts into a ring of sparks, and gold sparkles rain down.
+  E.bdcarousel = (() => {
+    const c = 240;
+    const gy = 300;
+    const oy = gy - 90;
+    return {
+      w: 480, h: 320, n: 12, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const gather = Math.min(1, (i + 1) / 4);
+        const fly = i >= 8 ? (i - 7) / 4 : 0;
+        const rx = 150 * (1.25 - gather * 0.25);
+        const ry = 46 * (1.25 - gather * 0.25);
+        const turn = [0, 0.3, 0.7, 1.2, 1.9, 2.7, 3.6, 4.6, 5.2][Math.min(8, i)];
+        // The track: a gold band on the orbit (its back half first, behind the rings).
+        if (i <= 8) {
+          ctx.save();
+          ctx.translate(c, oy);
+          ctx.scale(1, ry / rx);
+          celRing(ctx, GOLDRING, 0, 0, rx + 8, 12, { broken: i === 8 ? 0.4 : 0, seed: 141 });
+          ctx.restore();
+        }
+        const rings = [];
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * TAU + turn;
+          const d = 1 + fly * 1.6;
+          rings.push([c + Math.cos(a) * rx * d, oy + Math.sin(a) * ry * d - fly * 60 * Math.abs(Math.cos(a)), Math.sin(a), a]);
+        }
+        rings.sort((a, b) => a[2] - b[2]);
+        for (const [x, y, depth, a] of rings) {
+          if (i < 11) {
+            // Its smear: a rose crescent riding the orbit behind it, longer as it speeds up; flying
+            // out, a streak back toward her.
+            if (i >= 2 && !fly) {
+              ctx.save();
+              ctx.translate(c, oy);
+              ctx.scale(1, ry / rx);
+              celCrescent(ctx, ROSEGOLD, 0, 0, rx + 14, a - 0.25 - Math.min(1.1, i * 0.16), a - 0.08, 22, { seed: 144, inkW: 4 });
+              ctx.restore();
+            }
+            if (fly && i < 10) speedLine(ctx, ROSEGOLD, x - Math.cos(a) * 90, y + Math.abs(Math.cos(a)) * 30 - Math.sin(a) * 30, x, y, 5);
+            chakram(ctx, x, y, (26 + depth * 6) * (i === 0 ? 0.5 : 1), turn * 2 + a, 0.8, depth > 0 ? ROSEGOLD : GOLDRING);
+          } else sparkle(ctx, GOLDRING, x, y, 12, a);
+        }
+        if (i === 8 || i === 9) starburst(ctx, GOLDRING, c, oy, 80 - (i - 8) * 18, 12, 142, { inner: 0.3 });
+        if (i >= 8) {
+          const R = rng(143);
+          for (let j = 0; j < 12; j++) sparkle(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + (R() - 0.5) * 420, oy - 120 + R() * 60 + fly * 110, 12 * (1.2 - fly * 0.5), j);
+        }
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

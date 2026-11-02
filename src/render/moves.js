@@ -64,6 +64,8 @@ function danceLegs(r, ...stances) {
   r.backLeg = grid(b);
 }
 const breathe = (p) => Math.sin(p * Math.PI * 3);
+// While a thrown weapon is in flight (the Blade Dancer's ring), between two moments of a move.
+const rel = (p, a, b) => (p >= a && p < b ? 1 : 0);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
 export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'shrinegrand', 'shrinepurify', 'shrinerevive', 'shrinetorii', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyocombo']);
@@ -443,139 +445,6 @@ export const MOVES = {
     return {
       turn: s > 0.2 && s < 0.85 ? -1 : 1, weapon: p < 0.3 ? 40 : lerp(40, 120, f) - 30 * b, arm: p < 0.3 ? 30 : lerp(30, 100, f) - 30 * b, tilt: -0.12, poised: true,
       rig: (r) => { tuck(r); r.backArm = [-4, -6]; r.hairLift = -3; r.cape = -7; },
-    };
-  },
-
-  // ---------- Endless Blade Dance (the Shinobi's barrage, world/melee.js STREAMS.shinobi) ----------
-  // A dancer with a reverse-grip blade, low and loose, never still: every cut flows out of the
-  // last on the barrage's own clock (streamFlow). Cuts land at about 0.45: a coil (to 0.2), the
-  // cut (to 0.48), the blade carried round for the next (from 0.62). Stages:
-  //   Quick cuts    stabs from the hip and a low jab, a flat slice
-  //   Spinning cuts a full turn cutting all round, a rising cut off the toes, a hook-kick cut
-  //   Ink Blink     she melts into ink and steps out on the far side of them, cutting as she turns
-  //   Clone Storm   two-handed X-cuts and a great overhead brush cut, her ink clones beside her
-  inkjab(p) {
-    const c = ease(seg(p, 0, 0.2));
-    const f = ease(seg(p, 0.2, 0.45));
-    const b = seg(p, 0.62, 1);
-    return {
-      weapon: 92, arm: lerp(lerp(80, 50, c), 104, f) - 30 * b, lunge: -2 * c + 9 * f * (1 - 0.7 * b), tilt: 0.14 * f * (1 - b),
-      rig: (r) => { r.tx = f > 0.4 ? 2 : -1; lungeLegs(r, 1 + 0.3 * f); r.backArm = [q(-4 * f), -2]; r.cape = -3; if (f > 0.3) strikeFace(r); },
-    };
-  },
-  inkjab2(p) {
-    const c = ease(seg(p, 0, 0.2));
-    const f = ease(seg(p, 0.2, 0.45));
-    const b = seg(p, 0.62, 1);
-    return {
-      weapon: 80, arm: lerp(lerp(60, 30, c), 75, f) - 15 * b, lunge: -3 * c + 10 * f * (1 - 0.6 * b), tilt: 0.24 * f * (1 - b) + 0.06,
-      rig: (r) => { r.squat = 2; r.tx = 2; lungeLegs(r, 1.5); r.backArm = [-6, 0]; r.hairLift = -1; r.cape = -5; strikeFace(r); },
-    };
-  },
-  inkslice(p) {
-    const c = ease(seg(p, 0, 0.2));
-    const f = ease(seg(p, 0.2, 0.48));
-    const b = seg(p, 0.62, 1);
-    return {
-      weapon: lerp(lerp(60, -60, c), 165, f) - 70 * b, arm: lerp(lerp(90, 130, c), 55, f) + 35 * b, lunge: 6 * f * (1 - 0.6 * b), tilt: -0.06 * c + 0.12 * f * (1 - b), trail: p > 0.18 && p < 0.6,
-      rig: (r) => { r.tx = f > 0.5 ? 2 : -1; lungeLegs(r, 1.2); r.backArm = [q(3 - 8 * f), -3]; r.hairLift = -1; r.cape = -4; if (f > 0.2) strikeFace(r); },
-    };
-  },
-  inkspin(p) {
-    const a = ease(seg(p, 0.1, 0.62));
-    const b = seg(p, 0.7, 1);
-    return {
-      weapon: 95 + a * 360, arm: 98 - 20 * b, orbit: true, turn: a > 0.25 && a < 0.75 ? -1 : 1, lift: 5 * bump(p, 0.12, 0.66), lunge: 2 * a * (1 - b), trail: p > 0.1 && p < 0.66,
-      rig: (r) => { r.squat = p < 0.1 || p > 0.7 ? 2 : 0; if (p >= 0.1 && p <= 0.7) { r.frontLeg = [2, -2, 20]; r.backLeg = [-2, 0, -10]; } else wideLegs(r); r.backArm = [-8, -3]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
-    };
-  },
-  inkrise(p) {
-    const c = ease(seg(p, 0, 0.22));
-    const f = ease(seg(p, 0.22, 0.48));
-    const b = seg(p, 0.64, 1);
-    return {
-      weapon: lerp(lerp(120, 165, c), -70, f) + 120 * b, arm: lerp(lerp(45, 30, c), 172, f) - 110 * b, lift: 9 * bump(p, 0.22, 0.85), lunge: 3 * f * (1 - b), tilt: -0.12 * f * (1 - b), trail: p > 0.2 && p < 0.6,
-      rig: (r) => { if (p > 0.3 && p < 0.75) tuck(r); else { r.squat = 2; wideLegs(r); } r.backArm = [-3, 3]; r.hairLift = -3; r.cape = -6; if (f > 0.2) strikeFace(r); },
-    };
-  },
-  inkhook(p) {
-    const c = ease(seg(p, 0, 0.22));
-    const k = bump(p, 0.2, 0.62);
-    const f = ease(seg(p, 0.25, 0.48));
-    const b = seg(p, 0.66, 1);
-    return {
-      turn: p > 0.12 && p < 0.38 ? -1 : 1, weapon: lerp(lerp(40, 150, c), -100, f) + 140 * b, arm: lerp(lerp(70, 35, c), 160, f) - 100 * b, lift: 4 * k, tilt: -0.2 * k, lunge: 4 * k,
-      rig: (r) => { r.frontLeg = k > 0.3 ? [q(3 + 4 * k), q(-6 * k), q(60 + 30 * k)] : [2, 0, 4]; r.backLeg = [-2, 0, -6]; r.backArm = [-5, -4]; r.hairLift = -2; r.cape = -6; if (k > 0.3) strikeFace(r); },
-    };
-  },
-  // Ink Blink: gone into ink at the start (the world moves her through the line), out of it on the
-  // far side already turned, cutting down through them.
-  inkblink(p) {
-    const f = ease(seg(p, 0.24, 0.48));
-    const b = seg(p, 0.64, 1);
-    return {
-      weapon: lerp(-90, 160, f) - 60 * b, arm: lerp(170, 45, f) + 40 * b, lunge: 4 * f * (1 - b), tilt: 0.16 * f * (1 - b), lift: 4 * (1 - seg(p, 0.1, 0.3)), trail: p > 0.22 && p < 0.6,
-      fade: 1 - seg(p, 0.08, 0.24),
-      rig: (r) => { if (p < 0.24) tuck(r); else { r.squat = 2; lungeLegs(r, 1.4); } r.backArm = [-7, -2]; r.hairLift = -3; r.cape = -6; strikeFace(r); },
-    };
-  },
-  inkblink2(p) {
-    const f = ease(seg(p, 0.24, 0.48));
-    const b = seg(p, 0.64, 1);
-    return {
-      turn: p < 0.3 ? -1 : 1, weapon: lerp(40, 175, f) - 80 * b, arm: lerp(100, 40, f) + 50 * b, lunge: 5 * f * (1 - b), tilt: 0.1 * f * (1 - b), trail: p > 0.22 && p < 0.6,
-      fade: 1 - seg(p, 0.08, 0.24),
-      rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [5, -6]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
-    };
-  },
-  // Clone Storm: a quick X, two cuts crossing (the second lands the blow), arms flung wide after.
-  inkstorm(p) {
-    const f1 = ease(seg(p, 0.05, 0.25));
-    const f2 = ease(seg(p, 0.28, 0.48));
-    const b = seg(p, 0.64, 1);
-    return {
-      weapon: p < 0.27 ? lerp(-80, 150, f1) : lerp(150, -40, f2) + 90 * b, arm: p < 0.27 ? lerp(165, 40, f1) : lerp(40, 150, f2) - 70 * b, lunge: 5 * f2 * (1 - b) + 2 * f1, tilt: 0.12 * f1 - 0.1 * f2 * (1 - b), trail: p > 0.05 && p < 0.55,
-      rig: (r) => { r.squat = 1; lungeLegs(r, 1.3); r.backArm = [q(-8 + 12 * f2), q(-6 + 4 * f2)]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
-    };
-  },
-  // ...and the great overhead brush cut: up on her toes, the blade raised high behind, then brought
-  // down through everything in front, landing low.
-  inkstorm2(p) {
-    const c = ease(seg(p, 0, 0.26));
-    const f = ease(seg(p, 0.26, 0.5));
-    const b = seg(p, 0.7, 1);
-    return {
-      weapon: lerp(lerp(60, -130, c), 175, f) - 60 * b, arm: lerp(lerp(90, 185, c), 30, f) + 50 * b, lift: 6 * c * (1 - f), lunge: -2 * c + 8 * f * (1 - 0.6 * b), tilt: -0.1 * c + 0.26 * f * (1 - b), trail: p > 0.24 && p < 0.6,
-      rig: (r) => { if (f > 0.5) { r.squat = 3; wideLegs(r); } else if (c > 0.5) { r.frontLeg = [2, -1, 4]; r.backLeg = [-2, -1, -4]; } r.backArm = [q(-4 - 4 * f), -6]; r.hairLift = -3; r.cape = q(-8 * f - 2); strikeFace(r); },
-    };
-  },
-  inkaircut(p) {
-    const f = ease(seg(p, 0.15, 0.48));
-    const b = seg(p, 0.64, 1);
-    return {
-      weapon: lerp(-60, 150, f) - 40 * b, arm: lerp(170, 50, f) + 30 * b, tilt: 0.2 * f * (1 - b), trail: p > 0.12 && p < 0.6,
-      rig: (r) => { tuck(r); r.backArm = [-6, -4]; r.hairLift = -3; r.cape = -6; strikeFace(r); },
-    };
-  },
-  inkairspin(p) {
-    const a = ease(seg(p, 0.06, 0.6));
-    return {
-      weapon: 95 + a * 360, arm: 100, orbit: true, turn: a > 0.25 && a < 0.75 ? -1 : 1, tilt: 0.1, trail: p > 0.06 && p < 0.62,
-      rig: (r) => { tuck(r); r.backArm = [-8, -3]; r.hairLift = -3; r.cape = -7; strikeFace(r); },
-    };
-  },
-  // The drawn cut that ends the dance: she drops low with the blade sheathed along her forearm,
-  // holds it a breath, then she's through the line in one cut and stands frozen past them, blade out,
-  // as the ink lands behind her.
-  inkdraw(p) {
-    const c = ease(seg(p, 0, 0.3));
-    const hold = p >= 0.3 && p < 0.5;
-    const f = ease(seg(p, 0.5, 0.6));
-    const b = ease(seg(p, 0.82, 1));
-    const shiver = hold ? Math.sin(p * 220) * 0.6 : 0;
-    return {
-      weapon: p < 0.5 ? lerp(25, 172, c) + shiver : lerp(172, 88, f) - 60 * b, arm: p < 0.5 ? lerp(60, 15, c) : lerp(15, 92, f) - 30 * b, lunge: -3 * c * (1 - f) + 10 * f * (1 - b), tilt: 0.12 * c + 0.2 * f * (1 - b), trail: p > 0.5 && p < 0.66,
-      rig: (r) => { r.squat = p < 0.82 ? 3 : 1; if (f > 0) lungeLegs(r, 1.8); else wideLegs(r); r.backArm = [q(3 - 9 * f), q(-1 - 3 * f)]; r.hairLift = f > 0 ? -3 : 0; r.cape = q(-8 * f); r.eyes = hold ? 'half' : null; if (f > 0) strikeFace(r); },
     };
   },
 
@@ -1903,36 +1772,6 @@ export const MOVES = {
     return backflip(seg(p, 0.52, 0.92), 0.6);
   },
 
-  // The X-cut finisher, planted: the two cuts, then she sinks into a low wide stance with the
-  // dagger held out at them, ready to go again (no flip away: the combo keeps flowing). Cuts at
-  // about 0.12 and 0.4.
-  crossfin(p) {
-    const m = MOVES.cross(Math.min(1, p / 0.55));
-    const sink = ease(seg(p, 0.5, 0.7)) * (1 - ease(seg(p, 0.86, 1)));
-    return {
-      ...m, lunge: (m.lunge ?? 0) + 5 * sink, tilt: (m.tilt ?? 0) + 0.12 * sink,
-      rig: (r) => { m.rig?.(r); if (sink > 0.2) { r.squat = 2; wideLegs(r); r.backArm = [-5, -3]; r.hairLift = -1; r.cape -= 2; strikeFace(r); } },
-    };
-  },
-
-  // A whirl that cuts all round her twice and stops dead, low, blade out at them. Cuts at about
-  // 0.21 and 0.42.
-  whirlfin(p) {
-    const m = MOVES.spin(Math.min(1, p / 0.6), 1);
-    const sink = ease(seg(p, 0.58, 0.72)) * (1 - ease(seg(p, 0.88, 1)));
-    return {
-      ...m, lunge: (m.lunge ?? 0) + 4 * sink,
-      rig: (r) => { m.rig?.(r); if (sink > 0.2) { r.squat = 2; wideLegs(r); r.backArm = [-5, -3]; r.cape -= 2; strikeFace(r); } },
-    };
-  },
-
-  // Mid-string: a slash, and she rides its swing straight up into a backflip, landing low and
-  // coiled to dart back in with the next blow. Cut at about 0.2.
-  cutflip(p) {
-    if (p < 0.44) return MOVES.slash(p / 0.44);
-    return backflip(seg(p, 0.44, 0.94), 0.75);
-  },
-
   // ---------- The Wind Dancer's moves (her own; docs/design/wind-dancer.md) ----------
   // She moves like a dancer, never a fighter: every blow is a dance figure, and the chakram (held by
   // its rim) or the wind from her gloved hands follows the figure. Weight goes up onto her toes, the
@@ -2234,6 +2073,223 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Blade Dancer's moves (her own; docs/design/blade-dancer.md) ----------
+  // A ring-throwing showgirl: every figure is a throw or a catch. The ring leaves her hand on the
+  // release frame (`thrown`, so the hand is empty while it flies) and comes home on a turn. Throws
+  // stay low or sidearm so neither the ring nor her arm crosses her face; the free arm always
+  // finishes the line, and every figure ends in a held, showy pose.
+
+  // Backhand flick (opener, the ring leaves at ~0.34 and is caught back at ~0.86): the ring drawn
+  // back to her hip, then flicked out with a snap of the wrist and a step; her open hand holds the
+  // line out front while it flies, and she plucks it out of the air coming home.
+  bdflick(p) {
+    const wind = soft(seg(p, 0, 0.3));
+    const flick = ease(seg(p, 0.3, 0.42));
+    const catchIt = soft(seg(p, 0.82, 0.95));
+    return {
+      weapon: lerp(lerp(160, 215, wind), 100, flick), arm: lerp(lerp(50, 22, wind), 76, flick) - 6 * catchIt,
+      thrown: rel(p, 0.34, 0.86), lunge: -2 * wind * (1 - flick) + 5 * flick * (1 - catchIt * 0.5), tilt: -0.07 * wind * (1 - flick) + 0.06 * flick,
+      rig: (r) => {
+        r.backArm = [q(lerp(3, -6, flick)), q(lerp(-2, -6, flick))];
+        r.squat = q(wind * (1 - flick));
+        r.cape -= q(3 * flick);
+        danceLegs(r, [wind * (1 - flick), [1.4, 0, 4], [-1.6, 0, -6]], [flick, [3.4, -0.6, 8], [-3.6, -2, -24]]);
+        if (flick > 0.3 && p < 0.8) strikeFace(r);
+      },
+    };
+  },
+  // Cross toss (second, two rings at ~0.3 and ~0.5): a ring flung low from each hand so they cross
+  // in front of her, her arms ending crossed and then sprung open like a fan.
+  bdcross(p) {
+    const one = ease(seg(p, 0.18, 0.32));
+    const two = ease(seg(p, 0.38, 0.52));
+    const open = soft(seg(p, 0.6, 0.85));
+    return {
+      weapon: lerp(200, 110, one), arm: lerp(35, 74, one) - 16 * open, thrown: rel(p, 0.3, 0.92),
+      lunge: 3 * one, tilt: 0.05 * one - 0.04 * open,
+      rig: (r) => {
+        r.backArm = [q(lerp(-4, 7, two) - 12 * open), q(lerp(-2, -5, two) - 2 * open)];
+        r.cape -= q(3 * one);
+        danceLegs(r, [one, [2.6, 0, 6], [-2.2, -1, -14]], [open, [1.6, -1.4, 10], [-3, 0, -10]]);
+        if (one > 0.4) strikeFace(r);
+      },
+    };
+  },
+  // Turning catch (third, cuts all round her at ~0.5): she turns on her toe to meet the ring coming
+  // home and catches it out at arm's length, its spin carrying it round her once before it stops.
+  bdcatch(p) {
+    const a = ease(seg(p, 0.1, 0.62));
+    const turning = a > 0 && a < 1;
+    const settle = soft(seg(p, 0.66, 1));
+    return {
+      weapon: 100 + 10 * Math.sin(a * Math.PI * 2), arm: 82 + 6 * settle, thrown: rel(p, 0, 0.42),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      lift: 3 * bump(p, 0.1, 0.64), trail: p > 0.42 && p < 0.66,
+      rig: (r) => {
+        r.backArm = turning ? [0, -9] : [q(-6 * settle), q(-3 - 3 * settle)];
+        r.hairLift = turning ? -1 : 0;
+        r.cape -= q(4 * bump(p, 0.1, 0.66));
+        danceLegs(r, [turning ? 1 : 0, [1.2, -4.4, 34], [-0.4, -1.4, -4]], [settle, [3, 0, 6], [-3, -1, -16]]);
+        if (turning) strikeFace(r);
+      },
+    };
+  },
+  // Sidearm hurl (the finish, the ring leaves at ~0.45): a deep lunge back with the ring drawn
+  // right round behind her hip, then the whole body unwinds and hurls it sidearm down the line; she
+  // ends stretched long after it, free arm raised behind: a showgirl's flourish.
+  bdhurl(p) {
+    const coil = soft(seg(p, 0, 0.36));
+    const hurl = ease(seg(p, 0.36, 0.48));
+    const pose = soft(seg(p, 0.5, 0.66)) * (1 - soft(seg(p, 0.9, 1)));
+    return {
+      weapon: lerp(lerp(170, 245, coil), 96, hurl), arm: lerp(lerp(45, 15, coil), 96, hurl) - 6 * pose, thrown: rel(p, 0.45, 1.01),
+      lunge: -4 * coil * (1 - hurl) + 9 * hurl * (1 - soft(seg(p, 0.9, 1)) * 0.6), tilt: -0.12 * coil * (1 - hurl) + 0.16 * hurl - 0.08 * pose,
+      rig: (r) => {
+        r.squat = q(1.5 * coil * (1 - hurl) + 1.5 * hurl * (1 - pose));
+        r.backArm = [q(lerp(4, -5, hurl) - 2 * pose), q(lerp(-2, -4, hurl) - 7 * pose)];
+        r.hairLift = hurl > 0.4 ? 1 : 0;
+        r.cape -= q(5 * hurl);
+        danceLegs(r, [coil * (1 - hurl), [2, 0, 6], [-3, 0, -10]], [hurl, [4.6, 0, 6], [-5, -2, -30]], [pose, [3.6, -1, 10], [-5.4, -4, -50]]);
+        if (hurl > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Skimming throw (opener): she drops low and skims the ring along just over the ground.
+  bdskip(p) {
+    const low = soft(seg(p, 0, 0.3));
+    const go = ease(seg(p, 0.3, 0.44));
+    const up = soft(seg(p, 0.75, 1));
+    return {
+      weapon: lerp(lerp(150, 200, low), 115, go), arm: lerp(lerp(45, 25, low), 70, go), thrown: rel(p, 0.4, 0.88),
+      lunge: 6 * go * (1 - up * 0.5), tilt: 0.12 * low * (1 - up),
+      rig: (r) => {
+        r.squat = q(2 * low * (1 - up));
+        r.backArm = [q(-6 * go), q(-3 - 2 * go)];
+        danceLegs(r, [low * (1 - up), [3.4, 0, 4], [-3.6, 0, -6]]);
+        if (go > 0.3 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Lasso (second): the ring swung low at her side like a pendulum, faster and wider each pass, then
+  // let fly forward off the top of a swing.
+  bdlasso(p) {
+    const wind = seg(p, 0, 0.5);
+    const go = ease(seg(p, 0.5, 0.6));
+    const back = soft(seg(p, 0.8, 1));
+    const swing = 180 + (30 + 35 * wind) * Math.sin(wind * wind * Math.PI * 5);
+    return {
+      weapon: lerp(swing, 100, go), arm: lerp(20 + 6 * wind, 78, go) - 20 * back, thrown: rel(p, 0.55, 0.92),
+      lunge: 4 * go, tilt: -0.05 * wind * (1 - go) + 0.06 * go,
+      rig: (r) => {
+        r.backArm = [q(lerp(2, -6, go)), q(lerp(-6, -4, go))];
+        r.cape -= q(2 * wind);
+        danceLegs(r, [wind * (1 - go), [1, 0, 4], [-1.4, -1, -10]], [go, [3, 0, 6], [-3, -1, -16]]);
+        if (go > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Lob (third, and her up command): an underhand lob that sends the ring arcing up over them.
+  bdlob(p) {
+    const dip = soft(seg(p, 0, 0.26));
+    const lob = ease(seg(p, 0.26, 0.42));
+    const down = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(165, 200, dip), 80, lob), arm: lerp(lerp(40, 15, dip), 96, lob) - 50 * down, thrown: rel(p, 0.33, 0.9),
+      lift: 3 * lob * (1 - down), tilt: -0.08 * lob * (1 - down),
+      rig: (r) => {
+        r.squat = q(1.5 * dip * (1 - lob));
+        r.backArm = [q(-5 * lob), q(-2 - 6 * lob * (1 - down))];
+        r.hairLift = lob > 0.4 && down < 0.5 ? -1 : 0;
+        danceLegs(r, [dip * (1 - lob), [1.6, 0, 4], [-1.6, 0, -6]], [lob * (1 - down), [0.6, -2, 6], [-0.6, -2, -6]]);
+        if (lob > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Spinning hurl (a finish): two quick turns with the ring swinging out at her waist, and she lets
+  // it go out of the second, ending on one foot, arms wide.
+  bdspinhurl(p) {
+    const a = ease(seg(p, 0.06, 0.5)) * 2;
+    const turning = p > 0.06 && p < 0.5;
+    const pose = soft(seg(p, 0.5, 0.64)) * (1 - soft(seg(p, 0.9, 1)));
+    return {
+      weapon: turning ? 100 : 96, arm: turning ? 84 : 92 - 4 * pose, thrown: rel(p, 0.46, 1.01),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      lift: 3 * bump(p, 0.06, 0.5) + 2 * pose, trail: p > 0.06 && p < 0.48,
+      rig: (r) => {
+        r.backArm = turning ? [-6, -4] : [q(-8 * pose), q(-3 - 5 * pose)];
+        r.hairLift = turning ? -1 : 0;
+        r.cape -= q(4 * bump(p, 0.06, 0.64));
+        danceLegs(r, [turning ? 1 : 0, [0.8, -1.6, 8], [-0.8, -1.6, -8]], [pose, [2.4, -1.6, 12], [-4.6, -3.6, -46]]);
+        if (turning || pose > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // In the air: a downward flick of the ring at whatever is below.
+  bdairflick(p) {
+    const go = ease(seg(p, 0.2, 0.42));
+    return {
+      weapon: lerp(60, 150, go), arm: lerp(80, 130 - 70, go), thrown: rel(p, 0.4, 0.95),
+      rig: (r) => { r.air = true; r.backArm = [q(-5 * go), q(-6)]; danceLegs(r, [1, [2.4, -3, 30], [-2.4, -2, -30]]); if (go > 0.3) strikeFace(r); },
+    };
+  },
+  // In the air, the second: she tucks, then scissors both arms down and out, flinging a ring from
+  // each hand at whatever is below, legs split wide behind the throw.
+  bdairtwin(p) {
+    const tuck = soft(seg(p, 0, 0.3));
+    const go = ease(seg(p, 0.3, 0.46));
+    const open = soft(seg(p, 0.5, 0.8));
+    return {
+      weapon: lerp(lerp(70, 40, tuck), 160, go), arm: lerp(lerp(80, 120, tuck), 55, go), thrown: rel(p, 0.38, 0.96), tilt: -0.08 * tuck * (1 - go) + 0.1 * go * (1 - open),
+      rig: (r) => {
+        r.air = true;
+        r.backArm = [q(lerp(-2, -7, go)), q(lerp(-9, 2, go))];
+        r.hairLift = go > 0.3 ? -1 : 0;
+        danceLegs(r, [tuck * (1 - go), [2.6, -4, 50], [-1, -3.6, 30]], [go, [5, -2, 60], [-5, -2, -60]], [open, [2.4, -3, 30], [-2.4, -2, -30]]);
+        if (go > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Out of a run: she slides in on one knee and skims the ring out of the slide.
+  bdslide(p) {
+    const slide = soft(seg(p, 0, 0.4)) * (1 - soft(seg(p, 0.8, 1)));
+    const go = ease(seg(p, 0.3, 0.44));
+    return {
+      weapon: lerp(190, 110, go), arm: lerp(30, 70, go), thrown: rel(p, 0.42, 0.9), lunge: 8 * slide, tilt: -0.12 * slide,
+      rig: (r) => {
+        r.squat = q(2 * slide);
+        r.backArm = [q(-7 * slide), q(-4)];
+        r.hairLift = slide > 0.4 ? 1 : 0;
+        r.cape -= q(4 * slide);
+        danceLegs(r, [slide, [4.6, -0.4, 40], [-4, 0, -10]]);
+        if (go > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Golden Carousel (her finisher, 1.6 s): she raises the ring and turns slowly on her toes as rings
+  // gather round her like a carousel, faster and faster; at the peak she flings her arm out and
+  // they all fly; she holds the pose, catches her own ring as it comes home, and curtsies.
+  bdcarousel(p) {
+    const rise = soft(seg(p, 0, 0.12));
+    const a = easeIn(seg(p, 0.1, 0.62)) * 3;
+    const turning = p > 0.1 && p < 0.62;
+    const fling = ease(seg(p, 0.62, 0.7));
+    const pose = fling * (1 - soft(seg(p, 0.86, 0.92)));
+    const bow = soft(seg(p, 0.9, 0.97)) * (1 - soft(seg(p, 0.99, 1)));
+    return {
+      weapon: turning ? 100 : lerp(96, 165, bow), arm: turning ? lerp(84, 92, rise) : lerp(96, 40, bow), thrown: rel(p, 0.66, 0.9),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      lift: 3 * rise * (1 - bow) + 2 * pose, tilt: 0.1 * fling * (1 - bow) + 0.28 * bow, lunge: 4 * fling * (1 - bow), trail: turning,
+      rig: (r) => {
+        r.backArm = turning ? [q(-2), q(-10)] : [q(-7 * pose - 6 * bow), q(-8 * pose - 2 * bow)];
+        r.hairLift = turning || pose > 0.4 ? -1 : 0;
+        r.cape -= q(5 * (turning ? 1 : pose));
+        danceLegs(r, [rise * (1 - bow), [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1.2, -4.4, 34], [-0.4, -1.6, -4]], [pose, [3.6, -1, 10], [-5, -3.4, -44]], [bow, [3.4, 0, 14], [-1.6, 0, -4]]);
+        if (bow > 0.4) r.eyes = 'half';
+        else if (turning || pose > 0.3) strikeFace(r);
+      },
+    };
+  },
+
   // A heaving throw: wind the arm right back with a deep twist, step through hard and whip the
   // star out, the whole body following it forward. The star leaves at about 0.52.
   heavethrow(p) {
@@ -2291,21 +2347,6 @@ export const MOVES = {
     };
   },
 
-  // A vaulting cut: spring up into a forward flip over the blade, and come down out of it cutting
-  // straight down through them, landing low. Lands at about 0.58.
-  vaultcut(p) {
-    const crouch = bump(p, 0, 0.18);
-    const hop = Math.sin(seg(p, 0.12, 0.6) * Math.PI);
-    const flip = ease(seg(p, 0.16, 0.48));
-    const cut = ease(seg(p, 0.48, 0.6));
-    const settle = ease(seg(p, 0.72, 1));
-    return {
-      weapon: lerp(lerp(25, -150, flip), 170, cut) - 40 * settle, arm: lerp(lerp(60, 175, flip), 35, cut) + 20 * settle, lift: 30 * hop, tilt: flip * Math.PI * 2 + 0.25 * cut * (1 - settle), lunge: 4 * cut * (1 - settle),
-      trail: cut > 0 && p < 0.7,
-      rig: (r) => { if (hop > 0.2) tuck(r); else { r.squat = crouch > 0.3 || settle < 0.6 ? 2 : 1; wideLegs(r); } r.backArm = [-3, -4]; r.hairLift = hop > 0.3 ? -1 : 0; if (cut > 0) strikeFace(r); },
-    };
-  },
-
   // A whirl: two quick turns with the dagger out, cutting everything round her, then a backflip
   // out of it. Cuts at about 0.22 and 0.46.
   whirlflip(p) {
@@ -2342,36 +2383,6 @@ export const MOVES = {
   },
 
   // ---------- The Thief's paths ----------
-  // The Shinobi's palm strike: drop low with the dagger drawn back, then drive the open free hand
-  // into them, slapping a seal on (it lands at about 0.42), and hold it there a beat.
-  palmseal(p) {
-    if (p < 0.3) {
-      const t = ease(p / 0.3);
-      return { weapon: lerp(25, 150, t), arm: lerp(60, 30, t), lunge: -3 * t, tilt: -0.08 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = -1; r.backArm = [q(-2 - 2 * t), -2]; } };
-    }
-    const t = ease(seg(p, 0.3, 0.42));
-    const back = ease(seg(p, 0.62, 1));
-    return {
-      weapon: 150 - 20 * back, arm: 30 + 25 * back, lunge: lerp(-3, 10, t) * (1 - back * 0.8), tilt: 0.2 * t * (1 - back),
-      rig: (r) => { r.tx = 2; r.squat = back < 0.5 ? 2 : 1; lungeLegs(r, 1.4); r.backArm = [q(lerp(-4, 8, t) - 6 * back), q(-4 + 2 * back)]; r.cape = -4; r.hairLift = -1; strikeFace(r); },
-    };
-  },
-
-  // The Shinobi's spinning throw: whip round once with the kunai fanned in the hand, and fling them
-  // out of the turn in a wide sidearm (they leave at about 0.55).
-  kunaifan(p) {
-    if (p < 0.38) {
-      const a = ease(p / 0.38);
-      return { weapon: lerp(60, 150, a), arm: lerp(90, 40, a), orbit: true, turn: a < 0.5 ? -1 : 1, lift: 4 * bump(a, 0, 1), tilt: -0.12 * a, rig: (r) => { r.squat = 1; wideLegs(r); r.backArm = [-3, -4]; r.hairLift = -1; } };
-    }
-    const t = ease(seg(p, 0.38, 0.58));
-    const back = ease(seg(p, 0.7, 1));
-    return {
-      weapon: lerp(150, 70, t), arm: lerp(40, 105, t) - 30 * back, lunge: 4 * t * (1 - back), tilt: 0.16 * t * (1 - back),
-      rig: (r) => { r.tx = 2; lungeLegs(r, 1.2); r.backArm = [-5, -2]; r.hairLift = -1; if (t > 0 && back < 0.5) strikeFace(r); },
-    };
-  },
-
   // The Kitsune's pounce: crouch like a fox, spring forward in a high arc with the arm drawn back,
   // whip the stars down at them from the top of it (about 0.56), and land low.
   foxpounce(p) {
@@ -3017,7 +3028,7 @@ export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, gather: 1, pluck: 1, mine: 1.3, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
-  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, palmseal: 0.45, kunaifan: 0.45, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, vaultcut: 0.55, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, crossfin: 0.55, whirlfin: 0.6, inkdraw: 0.6, cutflip: 0.5, heavethrow: 0.5, flashjump: 0.3, shadowrun: 0.3, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
+  spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, foxpounce: 0.55, foxhop: 0.45, spinkick: 0.4, whirlflip: 0.6, twirlthrow: 0.45, throwflip: 0.55, flipthrow: 0.55, heavethrow: 0.5, flashjump: 0.3, shadowrun: 0.3, moonthrow: 1.5, upthrow: 0.4, airthrow: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
   shrinegrand: 1.4, shrinepurify: 1.2, shrinerevive: 2.2, shrinetorii: 1.8,
   onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,

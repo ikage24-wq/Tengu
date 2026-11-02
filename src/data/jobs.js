@@ -90,9 +90,9 @@ export const JOBS = {
   // Thief branches, a pair from the same mountain shrine. Both ask for Vex's trial first; each
   // keeps to one of the Thief's two weapons.
   shinobi: {
-    id: 'shinobi', power: 1.6, spread: 1.07, name: 'Shinobi', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'shinobi', power: 1.6, spread: 1.07, name: 'Blade Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
-    blurb: 'Ink, smoke and seals with a dagger. Hits and dodges build Ki; full, two ink clones repeat every attack. Kunai, exploding seals, smoke bombs, a log to swap places with, and Thousand Cuts: a giant ink fox.',
+    blurb: 'A ring-throwing showgirl with chakrams. Her rings ricochet from monster to monster and fly home to her hand, building Ricochet; full, two rose-gold rings orbit her and cut whatever comes close. Rebound, Twin Rings, and Golden Carousel: a carousel of rings flung out through everything.',
   },
   kitsune: {
     id: 'kitsune', power: 1.41, spread: 1.37, name: 'Kitsune', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',

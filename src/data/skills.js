@@ -764,74 +764,45 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Shinobi (the thief's dagger path: ink black, red seals, white smoke) ----------
-  // Hits and dodges build Ki (0-100, see world/melee.js); full (Shadow Clones), two ink clones of
-  // her repeat every attack. Thousand Cuts needs it full and spends it.
-  shinobimastery: skill({
-    id: 'shinobimastery', name: 'Shinobi Mastery', job: 'shinobi', type: 'passive', grows: true, fx: null, icon: 'shinobimastery',
-    desc: 'Steadier dagger cuts, more attack, and more critical hits.',
+  // ---------- Blade Dancer (the Wind Dancer's chakram path: rose gold, bouncing rings, a carousel) ----------
+  // docs/design/blade-dancer.md. Every blow of hers is a throw or a catch: her rings ricochet from
+  // monster to monster and fly home to her hand (world/melee.js ringThrow). Rings landing and
+  // bouncing build Ricochet (internally Ki, the Shinobi's it replaced); full (Carousel), two rings
+  // orbit her and cut what comes close. Like the Wind Dancer, her book is mostly skills that go off
+  // by themselves (Rebound, Twin Rings); her button is Golden Carousel, the finisher.
+  // (Internally the path keeps the Shinobi's id, so saves and quests carry over.)
+  ringmastery: skill({
+    id: 'ringmastery', name: 'Ring Mastery', job: 'shinobi', type: 'passive', grows: true, fx: null, icon: 'ringmastery',
+    desc: 'Steadier ring throws, more attack, and more critical hits.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 16, lv, m), critRate: lerpf(0.02, 0.12, lv, m) } }),
   }),
-  // Changes her basic attack (world/melee.js barrageThrow, STREAMS.shinobi): `from` to `to` cuts a
-  // second over `ramp` seconds of holding; let go and one drawn cut ends it (`finish`, growing
-  // over `full` seconds).
-  inkdance: skill({
-    id: 'inkdance', name: 'Endless Blade Dance', job: 'shinobi', type: 'passive', fx: null, icon: 'inkdance', school: 'ink', maxLevel: 10,
-    desc: 'Her basic attack becomes an endless dance of the blade: hold attack and the cuts never stop, faster the longer you hold, and you can walk slowly while cutting. Quick cuts become spinning cuts, then she blinks through ink from one side of them to the other, and at full tilt her ink clones join the storm. Let go and she ends it with one drawn cut, a giant brush stroke of ink through the line, stronger the longer you held. Needs a dagger.',
+  rebound: skill({
+    id: 'rebound', name: 'Rebound', job: 'shinobi', type: 'passive', fx: null, icon: 'rebound', school: 'rosegold',
+    desc: 'Your thrown rings sometimes keep ricocheting: they bounce on to two or three more monsters before they fly home.',
     weapons: ['dagger'],
-    at: (lv, m) => ({ passive: {}, barrage: { unit: 'cut', pct: 56, from: 5, to: lerpf(9, 11, lv, m), ramp: 2.5, finish: [lerp(180, 240, lv, m), lerp(400, 540, lv, m)], full: 3 } }),
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.4, lv, m), extra: lerp(2, 3, lv, m) } }),
   }),
-  kunaibarrage: skill({
-    id: 'kunaibarrage', name: 'Kunai Barrage', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'kunaibarrage', school: 'ink',
-    desc: 'A three-part combo, one part per press: two kunai, two more, then a spinning throw of five that pins the line. Needs a dagger.',
+  twinrings: skill({
+    id: 'twinrings', name: 'Twin Rings', job: 'shinobi', type: 'passive', fx: null, icon: 'twinrings', school: 'rosegold',
+    desc: 'A second ring sometimes flies a beat after your throw, at the next monster along, and bounces just the same.',
     weapons: ['dagger'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const kunai = (at, oy = 0) => ({ at, shot: 'kunai', pct: k(70, 115), range: 280, h: 60, knock: 25, speed: 950, oy });
-      return {
-        mp: k(5, 12), pct: k(70, 115), hits: 9, targets: 1,
-        combo: [
-          { move: 'barrage', dur: 0.36, step: -2, strikes: [kunai(0.17, -3), kunai(0.5, 3)] },
-          { move: 'barrage', dur: 0.36, step: -2, strikes: [kunai(0.17, 3), kunai(0.5, -3)] },
-          { move: 'kunaifan', dur: 0.5, step: -6, finisher: true, strikes: [{ at: 0.55, shot: 'kunai', fan: 5, pct: k(90, 150), range: 300, h: 150, knock: 120, launch: 80, speed: 980, big: true, stop: 0.05, shake: 2 }] },
-        ],
-      };
-    },
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.35, lv, m), pct: lerp(50, 80, lv, m) } }),
   }),
-  explodingseal: skill({
-    id: 'explodingseal', name: 'Exploding Seal', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'explodingseal', school: 'ink',
-    desc: 'Slap a seal tag on the monsters in front of you: it glows red, then bursts a moment later, catching everything close by. Needs a dagger.',
-    weapons: ['dagger'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(8, 15), pct: k(170, 290), hits: 2, targets: 4,
-        combo: [{ move: 'palmseal', dur: 0.5, step: 12, strikes: [
-          { at: 0.42, pct: k(60, 100), reach: 54, h: 56, targets: 2, knock: 20, fx: 'sealtag' },
-          { at: 0.42, delay: 0.6, pct: k(170, 290), reach: 80, h: 80, around: true, targets: 4, knock: 180, launch: 160, burst: 'sealburst', burstAt: 0.5, big: true, stop: 0.07, shake: 3 },
-        ] }],
-      };
-    },
-  }),
-  smokebomb: skill({
-    id: 'smokebomb', name: 'Smoke Bomb', job: 'shinobi', type: 'buff', fx: 'buff', icon: 'smokebomb', school: 'ink', maxLevel: 10,
-    desc: "Throw down a smoke bomb: you're untouchable a moment in the smoke, the monsters around you lose track of you, you dodge far more often for a while, and it builds Ki. A log waits in the smoke too: the next blow that would land on you hits it instead, and you reappear behind whoever struck, with a burst of Ki.",
-    at: (lv, m) => ({ mp: lerp(14, 10, lv, m), duration: lerpf(4, 8, lv, m), buff: { eva: lerp(40, 120, lv, m) }, ki: lerp(10, 20, lv, m), guard: 0.6, lose: 220, log: { secs: lerp(10, 30, lv, m), ki: lerp(15, 30, lv, m) } }),
-  }),
-  thousandcuts: skill({
-    id: 'thousandcuts', dmg: 2.5, name: 'Thousand Cuts', job: 'shinobi', type: 'attack', fx: 'flurry', icon: 'thousandcuts', school: 'ink', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Ki, and spends it. Ink spills over the world; you flicker from monster to monster cutting each one, then a giant fox of ink sweeps through the whole line. Needs a dagger.',
+  goldencarousel: skill({
+    id: 'goldencarousel', name: 'Golden Carousel', job: 'shinobi', type: 'attack', fx: null, icon: 'goldencarousel', school: 'rosegold', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Ricochet, and spends it. You raise your ring and turn on your toes as rings gather round you on a golden track, cutting everything close, faster and faster; then you fling your arm out and they all fly, ricocheting through every monster around. Needs chakrams.',
     weapons: ['dagger'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
-      const cut = (at) => ({ at, pct: k(90, 150), reach: 220, h: 150, around: true, targets, knock: 30, fx: 'inkcut', quiet: true, stop: 0.03, gauge: 0 });
+      const cut = (at) => ({ at, pct: k(60, 100), reach: 120, h: 120, around: true, targets, knock: 10, pull: 40, fx: 'bdhit', quiet: true, stop: 0.03, gauge: 0 });
+      const ring = (i) => ({ at: 0.66, shot: 'ringbig', around: true, pick: i, bounce: k(3, 5), pct: k(160, 260), range: 420, h: 200, knock: 160, launch: 220, speed: 900, gauge: 0, big: !i, stop: i ? 0 : 0.12, shake: i ? 0 : 6 });
       return {
-        mp: k(30, 50), pct: k(460, 780), hits: 6, targets,
-        combo: [{ move: 'assassinate', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.08, pct: 0, reach: 0, h: 0, targets: 0, burst: 'inkwash', burstAt: 0, burstDur: 1.3, quiet: true, gauge: 0 },
-          cut(0.3), cut(0.38), cut(0.46), cut(0.54),
-          { at: 0.74, pct: k(460, 780), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burst: 'inkfoxsweep', burstAt: 0, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        mp: k(30, 50), pct: k(160, 260), hits: 10, targets,
+        combo: [{ move: 'bdcarousel', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bdcarousel', burstAt: 0, burstDur: 1.4, quiet: true, gauge: 0 },
+          cut(0.2), cut(0.3), cut(0.4), cut(0.5), cut(0.58),
+          ...[0, 1, 2, 3, 4, 5].map(ring),
         ] }],
       };
     },
@@ -952,7 +923,7 @@ const MOVES_BY_SKILL = {
   spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
   ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
-  shinobimastery: 'cheer', kunaibarrage: 'barrage', explodingseal: 'palmseal', smokebomb: 'vanish', thousandcuts: 'assassinate',
+  goldencarousel: 'bdcarousel',
   kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
   gmsmite: 'castup', gmhaste: 'cheer',
 };

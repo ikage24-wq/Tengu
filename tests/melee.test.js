@@ -1760,7 +1760,7 @@ test("a weapon's own mastery only counts while that weapon is held, and grows wi
   assert.equal(passiveBonus(w.char).watk ?? 0, 0, 'nothing from it with a gauntlet');
 });
 
-// ---------- The Thief's paths: the Shinobi (dagger, Ki) and the Kitsune (gauntlet, Tails) ----------
+// ---------- The Thief's paths: the Blade Dancer (chakrams, Ricochet) and the Kitsune (gauntlet, Tails) ----------
 
 function thiefPath(job) {
   const weapon = job === 'shinobi' ? 'dagger_20' : 'gauntlet_20';
@@ -1901,85 +1901,81 @@ test('each thief path has its own basic combo, and mixes its own pool of swings 
       updateWorld(w, DT, hold);
       if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
     }
-    assert.deepEqual(seen.slice(0, 3).map((x) => x.move), PATH_COMBOS[job].map((x) => x.move), job);
+    assert.deepEqual(seen.slice(0, PATH_COMBOS[job].length).map((x) => x.move), PATH_COMBOS[job].map((x) => x.move), job);
     assert.ok(w.mobs.some((m) => m.hp < 1e9), `${job} hits`);
   }
 });
 
-test("a Shinobi's hits and dodges build Ki, and it fades once the fighting stops", () => {
+test("a Blade Dancer's ring bounces on from monster to monster, then flies home to her hand", () => {
+  const w = thiefPath('shinobi');
+  w.mobs.forEach((m, i) => (m.x = 360 + i * 70));
+  const start = w.mobs.map((m) => m.hp);
+  const seen = new Set();
+  let home = false;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'bdflick', 'her flick throw');
+  dice(0, () => {
+    for (let i = 0; i < 60; i++) {
+      updateWorld(w, DT, idle);
+      for (const f of w.fx) {
+        seen.add(f.kind);
+        if (f.kind === 'projectile' && f.shot === 'ring' && f.home && f.t > 0) home = true;
+      }
+    }
+  });
+  assert.ok(w.mobs.filter((m, i) => m.hp < start[i]).length >= 2, 'it hits one and bounces on to another');
+  assert.ok(seen.has('bdbounce'), 'a spark where it ricochets');
+  assert.ok(home, 'and it flies home to her hand');
+});
+
+test("Ricochet builds from her rings landing and bouncing, and fades once the fighting stops", () => {
   const w = thiefPath('shinobi');
   run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-  assert.ok(w.ki > 0, 'hits build it');
-  // The fight stops (the monsters wander far off).
+  assert.ok(w.ki > 0, 'her rings build it');
   for (const m of w.mobs) Object.assign(m, { x: w.body.x + 2000, aggroUntil: 0 });
   run(w, 12);
   assert.equal(w.ki, 0, 'faded');
-  // A monster's blow that misses her (a dodge) builds it too.
-  const v = thiefPath('shinobi');
-  const m = v.mobs[0];
-  m.def = { ...m.def, acc: -999, atk: 50 };
-  v.god = false;
-  v.invuln = 0;
-  Object.assign(m, { x: v.body.x, y: v.body.y, air: 0, frozenUntil: 0 });
-  dice(0.999, () => updateWorld(v, DT, idle));
-  assert.ok(v.ki > 0, `a dodge builds Ki (${v.ki})`);
 });
 
-test('full Ki (Shadow Clones): two ink clones repeat every attack, each lighter', () => {
-  const hits = (ki) => {
+test('full Ricochet (Carousel): two rings orbit her and cut whatever comes close, on their own', () => {
+  const cut = (ki) => {
     const w = thiefPath('shinobi');
     w.ki = ki;
     w.kiAt = 1e9;
-    let n = 0;
-    let last = w.mobs[0].hp;
-    updateWorld(w, DT, press('KeyZ'));
-    for (let i = 0; i < 40; i++) {
-      updateWorld(w, DT, idle);
-      if (w.mobs[0].hp < last) n += 1;
-      last = w.mobs[0].hp;
-    }
-    return { n, clones: w.phantom?.clones };
+    const hp = w.mobs[0].hp;
+    dice(0, () => run(w, 1));
+    return hp - w.mobs[0].hp;
   };
-  const plain = hits(0);
-  const full = hits(100);
-  assert.equal(full.n, plain.n * 3, `two clones each land the blow again (${plain.n} vs ${full.n})`);
-  assert.equal(full.clones, true);
+  assert.equal(cut(0), 0, 'nothing without it');
+  assert.ok(cut(100) > 0, 'the rings cut the monster beside her');
 });
 
-test("Smoke Bomb hides her and builds Ki, and leaves a log that takes the next blow and puts her behind them", () => {
-  const w = thiefPath('shinobi');
-  learn(w, 'smokebomb');
-  assert.ok(castNow(w, 'smokebomb').ok);
-  assert.ok(w.invuln > 0.3, 'untouchable a moment');
-  assert.ok(w.ki >= 10, 'Ki from the smoke');
-  assert.ok(w.char.buffs.smokebomb.values.eva > 0, 'dodges more');
-  assert.ok(w.char.buffs.logswap, 'a log waits in the smoke');
-  run(w, 1.2);
-  w.god = false;
-  w.invuln = 0;
-  const hp = w.char.hp;
-  const x0 = w.body.x;
-  const ki0 = w.ki;
-  hurtPlayer(w, 500, x0 + 30);
-  assert.equal(w.char.hp, hp, 'the log took it');
-  assert.ok(w.body.x > x0 + 50, 'behind the one who struck');
-  assert.equal(w.body.facing, -1, 'turned to face them');
-  assert.ok(w.ki > ki0, 'Ki from the swap');
-  assert.ok(w.fx.some((f) => f.kind === 'logpoof'), 'a log where she stood');
-  assert.ok(!w.char.buffs.logswap, 'spent');
-});
-
-test('Exploding Seal slaps a seal on, and it bursts a moment later on everything close by', () => {
-  const w = thiefPath('shinobi');
-  learn(w, 'explodingseal');
-  const start = w.mobs.map((m) => m.hp);
-  assert.ok(castNow(w, 'explodingseal').ok);
-  run(w, 0.4);
-  const after = w.mobs.map((m) => m.hp);
-  assert.ok(w.fx.some((f) => f.kind === 'sealtag'), 'a seal on them');
-  run(w, 0.8);
-  assert.ok(w.fx.some((f) => f.kind === 'sealburst') || w.mobs.every((m, i) => m.hp < after[i] || after[i] === start[i]), 'it bursts');
-  assert.ok(w.mobs.filter((m, i) => m.hp < after[i]).length >= 2, 'the burst catches several');
+test('Rebound sends a ring bouncing further, and Twin Rings sends a second after it', () => {
+  const throwOnce = (skills) => {
+    const w = thiefPath('shinobi');
+    for (const id of skills) learn(w, id);
+    w.mobs = [];
+    for (let i = 0; i < 6; i++) {
+      const m = spawnMob(w.map, { mob: 'boarlet', x: 360 + i * 60, y: w.map.groundY });
+      m.def = { ...m.def, hp: 1e9, eva: 0, aggro: false, speed: 0 };
+      m.hp = 1e9;
+      w.mobs.push(m);
+    }
+    let twins = 0;
+    dice(0, () => {
+      updateWorld(w, DT, press('KeyZ'));
+      for (let i = 0; i < 70; i++) {
+        updateWorld(w, DT, idle);
+        twins = Math.max(twins, w.fx.filter((f) => f.kind === 'projectile' && f.twin).length);
+      }
+    });
+    return { hit: w.mobs.filter((m) => m.hp < 1e9).length, twins };
+  };
+  const plain = throwOnce([]);
+  assert.equal(plain.hit, 2, 'the flick bounces once');
+  assert.equal(plain.twins, 0);
+  assert.ok(throwOnce(['rebound']).hit >= 4, 'Rebound: two or three bounces more');
+  assert.ok(throwOnce(['twinrings']).twins > 0, 'Twin Rings: a second ring');
 });
 
 test("a Kitsune's stars build Tails, set monsters burning, and grow fox-fire illusions every three tails", () => {
@@ -2025,7 +2021,7 @@ test('Fox Decoy pulls the monsters near it, then bursts on them; the trap burns 
 });
 
 test("each thief path's finisher needs its gauge full, spends it, and lands its big moment", () => {
-  for (const [job, skill, gauge, burst] of [['shinobi', 'thousandcuts', 'ki', 'inkfoxsweep'], ['kitsune', 'ninetailblaze', 'tails', 'flamefoxpounce']]) {
+  for (const [job, skill, gauge, burst] of [['shinobi', 'goldencarousel', 'ki', 'bdcarousel'], ['kitsune', 'ninetailblaze', 'tails', 'flamefoxpounce']]) {
     const w = thiefPath(job);
     learn(w, skill);
     w[gauge] = 50;
@@ -3164,7 +3160,7 @@ test("a Thief's flash jump throws her far forward in mid-air, once per jump, in 
     tap(w, ['Space']);
     assert.equal(w.pose?.kind, 'flashjump');
     const fx = w.fx.find((f) => f.kind === 'leapburst');
-    assert.equal(fx?.school, { null: 'coral', shinobi: 'ink', kitsune: 'fox' }[job]);
+    assert.equal(fx?.school, { null: 'coral', shinobi: 'rosegold', kitsune: 'fox' }[job]);
     keep(w, [], 20);
     assert.ok(w.body.x - x0 > 140, `${job ?? 'thief'} flies forward (${(w.body.x - x0).toFixed(0)}px)`);
     // Only once per jump.
@@ -3244,48 +3240,7 @@ test("an Archer's air leap springs her up and back and looses a shot from the to
   assert.ok(w.body.vy >= vy, 'no air jump');
 });
 
-// ---------- The other endless barrages: the Shinobi's blade dance, the Beastmaster's wild hunt ----------
-// Holds attack for `secs` with fixed dice, noting the figures she dances.
-function holdBarrage(w, secs, seed = 11) {
-  const figures = [];
-  let since = null;
-  dice(0, () => {
-    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < secs * 60; i++) {
-      w.char.mp = 9999;
-      updateWorld(w, DT, i === 0 ? press('KeyZ') : { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-      if (w.pose?.since !== since && w.pose?.flow) figures.push({ at: w.now, kind: w.pose.kind, heat: w.pose.flow.heat, x: w.body.x });
-      since = w.pose?.since;
-    }
-  });
-  return figures;
-}
-
-test('Endless Blade Dance: quick cuts, spinning cuts, ink blinks through the line, then her ink clones join; a drawn cut ends it', async () => {
-  const { STREAMS, inkStorm } = await import('../src/world/melee.js');
-  const w = thiefPath('shinobi');
-  learn(w, 'inkdance');
-  const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
-  const figures = holdBarrage(w, 6.5);
-  const kinds = new Set(figures.map((f) => f.kind));
-  for (const st of STREAMS.shinobi.stages.slice(0, 4)) assert.ok(st.figures.filter((k) => kinds.has(k)).length >= 2, `dances the stage from ${st.at}`);
-  assert.ok(figures.filter((f) => f.at < figures[0].at + 0.8).every((f) => ['inkjab', 'inkjab2', 'inkslice'].includes(f.kind)), 'opens on quick cuts');
-  assert.ok(figures.every((f, i) => !i || f.kind !== figures[i - 1].kind), 'never the same figure twice running');
-  for (const k of kinds) assert.ok(MOVES[k], `${k} is drawn`);
-  // Blinks carry her through the line, back and forth.
-  const sides = new Set(figures.filter((f) => f.kind.startsWith('inkblink')).map((f) => Math.sign(f.x - w.mobs[0].x)));
-  assert.equal(sides.size, 2, 'blinks out on both sides of them');
-  assert.ok(inkStorm(w), 'flat out, her ink clones are out');
-  assert.ok(w.phantom?.clones, 'and they dance beside her');
-  assert.ok(w.mobs.reduce((n, m) => n + m.hp, 0) < hp, 'the cuts land');
-  // Letting go: the drawn cut, a brush stroke of ink through the line.
-  updateWorld(w, DT, idle);
-  assert.equal(w.pose.kind, 'inkdraw');
-  assert.ok(w.pose.fin);
-  assert.ok(w.fx.some((f) => f.kind === 'inkbrush' && f.big), 'a giant brush stroke of ink');
-  assert.equal(inkStorm(w), false, 'the clones go with it');
-});
-
+// ---------- The other endless barrage: the Beastmaster's wild hunt ----------
 test('Wild Hunt: quick shots, shooting on the move, Snow wolf joins the hunt, a gale of leaves; a gale arrow and her moon end it', async () => {
   const { STREAMS } = await import('../src/world/melee.js');
   const w = archer('beastmaster');
@@ -3325,15 +3280,11 @@ test('Wild Hunt: quick shots, shooting on the move, Snow wolf joins the hunt, a 
 
 test('the endless barrages need their passive and their weapon, and keep the no-squash rule', async () => {
   const { barrageOf } = await import('../src/world/melee.js');
-  const sh = thiefPath('shinobi');
-  assert.equal(barrageOf(sh), null, 'not without the passive');
-  learn(sh, 'inkdance');
-  assert.ok(barrageOf(sh));
   const bm = archer('beastmaster');
   assert.equal(barrageOf(bm), null);
   learn(bm, 'wildhunt');
   assert.ok(barrageOf(bm));
-  // A Kitsune's passive does nothing for a Shinobi.
+  // A Kitsune's passive does nothing for a Blade Dancer.
   const sh2 = thiefPath('shinobi');
   learn(sh2, 'foxbarrage');
   assert.equal(barrageOf(sh2), null);

@@ -74,8 +74,8 @@ const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'], cora
 // (The Wind Dancer's blows default to her coral, never the Warrior's steel.)
 export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : 'steel');
 // The Archer's gold hawk skills the same way: the Beastmaster's green.
-// And the Thief's violet shadow skills: the Shinobi's ink, the Kitsune's fox fire.
-export const thiefSchool = (char) => (hasKi(char) ? 'ink' : hasTails(char) ? 'fox' : hasShadow(char) ? 'coral' : 'shadow');
+// And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Kitsune's fox fire.
+export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'fox' : hasShadow(char) ? 'coral' : 'shadow');
 export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' ? thiefSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
@@ -174,13 +174,17 @@ export const PATH_COMBOS = {
     { move: 'wdrise', dur: 0.44, step: 0, strikes: [{ at: 0.42, pct: 110, reach: 90, h: 110, targets: 3, knock: 20, launch: 300, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
     { move: 'wdflourish', dur: 0.5, step: 0, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 96, h: 90, around: true, targets: 5, knock: 220, launch: 200, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] },
   ],
-  // The Thief's paths. The Shinobi: a kunai stab, a slash up into a backflip that throws two kunai
-  // down at them from the top, then a planted X-cut. The Kitsune: a fox-fire star, a backflip
-  // whipping two down from the top of it, then a heaving throw of a great fox-fire star.
+  // The Thief's paths. The Blade Dancer (docs/design/blade-dancer.md): every blow a throw or a
+  // catch of her ring (`bounce`: it ricochets on to that many more monsters, then flies home to her
+  // hand). A backhand flick that bounces once, a cross toss of two rings, a turning catch that cuts
+  // all round her as it comes home, and a sidearm hurl that ricochets through four.
+  // The Kitsune: a fox-fire star, a backflip whipping two down from the top of it, then a heaving
+  // throw of a great fox-fire star.
   shinobi: [
-    { move: 'thrust', dur: 0.26, step: 8, strikes: [{ at: 0.42, pct: 95, reach: 60, h: 46, knock: 30, pierce: true }] },
-    { move: 'cutflip', dur: 0.56, step: 6, strikes: [{ at: 0.2, pct: 90, reach: 60, h: 52, knock: 40, arc: [-100, 190], thick: 5, flipback: 44 }, { at: 0.66, shot: 'kunai', fan: 2, pct: 45, range: 240, h: 120, drop: 30, knock: 30, speed: 900 }] },
-    { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 95, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 130, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06, burst: 'inkhit', burstAt: 0.4 }] },
+    { move: 'bdflick', dur: 0.42, strikes: [{ at: 0.36, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 30, speed: 760 }] },
+    { move: 'bdcross', dur: 0.46, strikes: [{ at: 0.3, shot: 'ring', bounce: 0, pct: 60, range: 250, h: 60, knock: 20, speed: 780, oy: -3 }, { at: 0.5, shot: 'ring', bounce: 0, pct: 65, range: 250, h: 60, knock: 30, speed: 780, oy: 3 }] },
+    { move: 'bdcatch', dur: 0.5, step: 4, strikes: [{ at: 0.5, pct: 95, reach: 68, h: 60, around: true, targets: 3, knock: 50, arc: [-90, 360], thick: 6, fx: 'bdhit' }] },
+    { move: 'bdhurl', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.46, shot: 'ringbig', bounce: 3, pct: 165, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] },
   ],
   kitsune: [
     { move: 'throw', dur: 0.36, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
@@ -399,21 +403,19 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.thiefstar[3],
       { move: 'wdlunge', dur: 0.56, step: 8, carry: 0.4, finisher: true, strikes: [{ at: 0.46, pct: 170, reach: 140, h: 66, targets: 4, pierce: true, knock: 220, fx: 'wdhit', burst: 'wdgust', burstAt: 0.2, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] }],
   ],
-  // The Shinobi. Openers: her kunai stab, a blur of stabs, or a dash cut through the line.
-  // Second: her slash, a palm strike that slaps a seal on them (it bursts a beat later), or a
-  // spinning throw of three kunai, or a slash up into a backflip throwing two down. Finisher, always
-  // planted in reach: the X-cut, a vaulting cut, or a whirl.
+  // The Blade Dancer. Openers: her flick, or a ring skimmed low along the ground. Second: the cross
+  // toss, or the lasso swung faster and faster that bounces twice. Third: the turning catch, or an
+  // underhand lob that arcs over and throws them up. Finisher: the sidearm hurl, or a double spin
+  // that cuts round her and lets the ring fly out of the second turn.
   shinobi: [
     [PATH_COMBOS.shinobi[0],
-      { move: 'flurry', dur: 0.3, step: 8, strikes: [{ at: 0.3, pct: 55, reach: 58, h: 46, knock: 15, pierce: true }, { at: 0.7, pct: 60, reach: 58, h: 46, knock: 30, pierce: true }] },
-      { move: 'flashcut', dur: 0.32, step: 32, carry: 0.42, strikes: [{ at: 0.4, pct: 95, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
+      { move: 'bdskip', dur: 0.42, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 40, speed: 800, oy: 6 }] }],
     [PATH_COMBOS.shinobi[1],
-      { move: 'palmseal', dur: 0.4, step: 10, strikes: [{ at: 0.42, pct: 60, reach: 50, h: 52, knock: 20, fx: 'sealtag' }, { at: 0.42, delay: 0.5, pct: 110, reach: 70, h: 70, around: true, targets: 3, knock: 120, burst: 'sealburst', burstAt: 0.5, stop: 0.04, shake: 1, quiet: true }] },
-      { move: 'kunaifan', dur: 0.42, strikes: [{ at: 0.55, shot: 'kunai', fan: 3, pct: 55, range: 260, h: 120, knock: 40, speed: 900 }] },
-      { move: 'slash', dur: 0.28, step: 6, strikes: [{ at: 0.45, pct: 100, reach: 60, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] }],
+      { move: 'bdlasso', dur: 0.55, strikes: [{ at: 0.56, shot: 'ring', bounce: 2, pct: 90, range: 280, h: 60, knock: 40, speed: 820 }] }],
     [PATH_COMBOS.shinobi[2],
-      { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 155, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, burst: 'inkhit', burstAt: 0.5, stop: 0.06, shake: 2 }] },
-      { move: 'whirlfin', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 75, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 115, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05 }] }],
+      { move: 'bdlob', dur: 0.5, strikes: [{ at: 0.34, shot: 'ring', lob: 40, bounce: 1, pct: 100, range: 260, h: 90, knock: 20, launch: 200, speed: 640 }] }],
+    [PATH_COMBOS.shinobi[3],
+      { move: 'bdspinhurl', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] }],
   ],
   // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a rise onto one
   // foot. Second: the swaying step, the sleeve fan (three bolts fanning out), or the bells.
@@ -609,16 +611,15 @@ const DANCER_COMMANDS = {
   ],
   dash: { move: 'wdchaine', dur: 0.5, step: 60, carry: 0.6, strikes: [{ at: 0.3, pct: 90, reach: 70, h: 64, targets: 3, around: true, knock: 60, fx: 'wdhit' }, { at: 0.6, pct: 110, reach: 70, h: 64, targets: 3, around: true, knock: 180, fx: 'wdhit', big: true, stop: 0.04 }] },
 };
-// The Shinobi's dagger commands: a launcher that throws a kunai up after them, fast air cuts then
-// a fan of kunai thrown down, and out of a run a dash through the line in a burst of smoke.
-const SHINOBI_COMMANDS = {
-  up: { ...DAGGER_COMMANDS.up, strikes: [{ ...DAGGER_COMMANDS.up.strikes[0], pct: 115 }, { at: 0.7, shot: 'kunai', pct: 60, range: 220, h: 200, lift: 80, knock: 20, speed: 900 }] },
+// The Blade Dancer's commands (her own figures): an underhand lob that throws them up, rings flicked
+// down from the air (the second, two at once), and a sliding throw out of a run that bounces twice.
+const BLADE_COMMANDS = {
+  up: { move: 'bdlob', dur: 0.5, strikes: [{ at: 0.34, shot: 'ring', bounce: 1, pct: 110, range: 220, h: 200, lift: 80, knock: 20, launch: 420, hop: 360, speed: 700, big: true, stop: 0.04 }] },
   air: [
-    DAGGER_COMMANDS.air[0],
-    DAGGER_COMMANDS.air[1],
-    { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'kunai', fan: 4, pct: 70, range: 240, h: 200, drop: 90, knock: 80, speed: 950, big: true, stop: 0.04, shake: 1 }] },
+    { move: 'bdairflick', dur: 0.36, hang: true, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 240, h: 170, drop: 60, knock: 20, speed: 800 }] },
+    { move: 'bdairtwin', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ring', fan: 2, bounce: 1, pct: 80, range: 250, h: 190, drop: 80, knock: 80, speed: 820, big: true, stop: 0.04, shake: 1 }] },
   ],
-  dash: { ...DAGGER_COMMANDS.dash, smoke: true },
+  dash: { move: 'bdslide', dur: 0.5, step: 60, carry: 0.45, strikes: [{ at: 0.42, shot: 'ring', bounce: 2, pct: 120, range: 270, h: 60, knock: 120, speed: 860, big: true, stop: 0.04 }] },
 };
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
@@ -761,21 +762,33 @@ function spotlight(world) {
     pct: p.pct, reach: p.range.w / 2, h: p.range.h, around: true, targets: 8, knock: 40, stun: p.stun, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, school: 'coral', stop: 0.04, shake: 2,
   }));
 }
-// Ki: the Shinobi's gauge. Every hit builds it, and so does every dodge (a monster's blow that
-// misses her, a Smoke Bomb, a Log Swap); it fades once the fighting stops. Full (Shadow Clones),
-// two ink clones of her repeat every attack, each at CLONE_POWER.
+// Ricochet (the Blade Dancer's gauge; internally Ki, the Shinobi's it replaced): every ring that
+// lands builds it and every bounce more; it fades once the fighting stops. Full (Carousel), two
+// rose-gold rings orbit her and cut whatever comes close, on their own (CAROUSEL_*), and Golden
+// Carousel is ready.
 export const KI_MAX = 100;
 const KI_HOLD = 5;
 const KI_DRAIN = 12;
-export const CLONE_POWER = 0.35;
-const CLONE_LAG = 0.08;
+export const CAROUSEL_PCT = 45;
+const CAROUSEL_EVERY = 0.3;
+const CAROUSEL_REACH = { x: 46, y: 50 };
 export const hasKi = (char) => jobChain(char.job).includes('shinobi');
 export function addKi(world, n) {
   if (!hasKi(world.char) || n <= 0) return;
   world.ki = Math.min(KI_MAX, (world.ki ?? 0) + n);
   world.kiAt = world.now;
 }
-export const shadowClones = (world) => hasKi(world.char) && (world.ki ?? 0) >= KI_MAX;
+export const carousel = (world) => hasKi(world.char) && (world.ki ?? 0) >= KI_MAX;
+// The orbiting rings cut what's close, a few monsters a beat (CAROUSEL_EVERY).
+function tickCarousel(world) {
+  if (!carousel(world) || world.dead || world.now < (world.carouselAt ?? 0)) return;
+  world.carouselAt = world.now + CAROUSEL_EVERY;
+  const { body } = world;
+  world.mobs
+    .filter((m) => m.hp > 0 && Math.abs(m.x - body.x) <= CAROUSEL_REACH.x + m.def.w / 2 && Math.abs(ringMid(m) - (body.y - 20)) <= CAROUSEL_REACH.y)
+    .slice(0, 3)
+    .forEach((m, k) => shotHit(world, { pct: CAROUSEL_PCT, scale: 100, key: 'proccarousel', dir: Math.sign(m.x - body.x) || 1, knock: 30, burst: 'bdhit', gauge: 0 }, m, 0.02 * k, k));
+}
 // Tails: the Kitsune's gauge, one fox-fire tail to nine. Stars that land build it, half again on
 // a monster already burning; it fades once the fighting stops. Every three tails, one more
 // fox-fire illusion throws a star beside each of hers (ILLUSION_POWER of its strength); full
@@ -791,15 +804,12 @@ export function addTails(world, n, mob = null) {
   world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (burning ? 1.5 : 1));
   world.tailsAt = world.now;
 }
-// Endless barrages (a passive for three paths, data/skills.js): while attack is held her basic
+// Endless barrages (a passive for two paths, data/skills.js): while attack is held her basic
 // attack goes on and on, faster the longer it's held, building through stages of its own; she can
 // walk slowly through it (world.js), and in the air she hangs a moment, then keeps going as she
 // falls. Let go after a while and a finisher ends it, stronger the longer she held.
 //   Kitsune     Endless Fox-Fire: fox-fire stars hand over hand (Fox Sign, Trickster, Wheel,
 //               Ascension), ending in a fox-moon star
-//   Shinobi     Endless Blade Dance: quick cuts, spinning cuts, blinking from monster to monster
-//               through ink, then her ink clones joining the storm; ending in one drawn cut, a
-//               giant brush stroke of ink through the line
 //   Beastmaster Wild Hunt: quick shots, shooting on the move, then Snow wolf joins the hunt and
 //               they fight as one, and at the top a gale of leaves wheels round her; ending in a
 //               great gale arrow as Snow wolf brings the moon down on them
@@ -816,21 +826,6 @@ export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.
 // A figure plays for its own length (a little quicker as it speeds up) while the beats keep the
 // barrage's rate; never the same figure twice running.
 const FOX_SIGNS = new Set(['foxdeal2', 'foxfloat2']);
-// The Shinobi's cuts, by figure: their reach and the arc of the ink they leave.
-const INK_CUTS = {
-  inkjab: { reach: 62, h: 46, pierce: true, targets: 2 },
-  inkjab2: { reach: 62, h: 44, pierce: true, targets: 2 },
-  inkslice: { reach: 64, h: 54, arc: [-100, 190], thick: 6, targets: 2 },
-  inkspin: { reach: 66, h: 56, around: true, arc: [-90, 360], thick: 6, targets: 3 },
-  inkrise: { reach: 64, h: 70, arc: [80, -175], thick: 6, targets: 2 },
-  inkhook: { reach: 60, h: 54, arc: [110, -230], thick: 6, targets: 2 },
-  inkblink: { reach: 66, h: 60, arc: [-150, 200], thick: 7, targets: 3 },
-  inkblink2: { reach: 66, h: 56, arc: [100, -215], thick: 7, targets: 3 },
-  inkstorm: { reach: 72, h: 60, arc: [-115, 205], thick: 8, targets: 3 },
-  inkstorm2: { reach: 76, h: 72, arc: [-170, 330], thick: 9, targets: 4 },
-  inkaircut: { reach: 62, h: 80, arc: [-60, 150], thick: 6, targets: 2 },
-  inkairspin: { reach: 64, h: 80, around: true, arc: [-90, 360], thick: 6, targets: 3 },
-};
 export const STREAMS = {
   kitsune: {
     skill: 'foxbarrage', school: 'fox', hover: true,
@@ -848,41 +843,6 @@ export const STREAMS = {
     strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, oy: air ? 0 : 5, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
     // No finisher: it's for holding on mobs and bosses, so letting go just stops (the wheel of
     // fox fire still flies apart).
-  },
-  shinobi: {
-    skill: 'inkdance', school: 'ink', closeIn: 40,
-    figures: { inkjab: 0.22, inkjab2: 0.22, inkslice: 0.28, inkspin: 0.4, inkrise: 0.34, inkhook: 0.34, inkblink: 0.36, inkblink2: 0.36, inkstorm: 0.34, inkstorm2: 0.44, inkaircut: 0.28, inkairspin: 0.36 },
-    stages: [
-      { at: 0, figures: ['inkjab', 'inkjab2', 'inkslice'] },
-      { at: 0.45, figures: ['inkslice', 'inkspin', 'inkrise', 'inkhook'] },
-      { at: 0.9, figures: ['inkblink', 'inkblink2', 'inkspin'] },
-      { at: 1.25, figures: ['inkstorm', 'inkstorm2', 'inkblink', 'inkblink2'] },
-      { at: 1.55, figures: ['inkstorm', 'inkstorm2', 'inkblink2'] },
-    ],
-    air: (heat) => (heat >= 0.45 ? ['inkaircut', 'inkairspin'] : ['inkaircut']),
-    ready: () => true,
-    strike: (b, { move, stage }) => ({ at: 0.45, pct: b.pct, knock: stage >= 3 ? 24 : 10, gauge: 1, ...INK_CUTS[move], burst: stage >= 2 && (move === 'inkstorm2' || move === 'inkblink') ? 'inkhit' : undefined }),
-    // Ink Blink: at the start of a blink figure she melts into ink and steps out on the far side
-    // of the monster in front, turning to cut it (back and forth through the line).
-    start: (world, run, move) => {
-      if (!move.startsWith('inkblink') || !world.body.onGround) return;
-      const b = world.body;
-      const m = pickTargets(world.mobs, b, { w: 170, h: 40 }, 1)[0];
-      if (!m) return;
-      const side = Math.sign(m.x - b.x) || b.facing;
-      const nx = Math.max(b.w / 2, Math.min(world.map.width - b.w / 2, m.x + side * 26));
-      world.fx.push({ kind: 'inkbrush', x: (b.x + nx) / 2, y: b.y - 22, len: Math.abs(nx - b.x), dir: side, t: 0, dur: 0.4, seed: Math.random() });
-      world.fx.push({ kind: 'smokeburst', x: b.x, y: b.y, dir: side, t: 0, dur: 0.6 });
-      b.x = nx;
-      b.facing = -side;
-      world.fx.push({ kind: 'smokeburst', x: nx, y: b.y, dir: -side, t: 0, dur: 0.6 });
-    },
-    // The Clone Storm (from stage 3): two ink clones of her join in, each beat (render/scene.js
-    // draws them dancing the figures a beat behind her).
-    clones: 3,
-    finish: (b, pct, k, air) => (air
-      ? { move: 'inkaircut', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, pct, reach: 90, h: 120, targets: 4, arc: [-80, 200], thick: 14, knock: 200, launch: 160, big: true, burst: 'inkhit', stop: 0.05 + 0.03 * k, shake: Math.round(1 + 2 * k) }] }
-      : { move: 'inkdraw', dur: 0.72, step: 70, carry: 0.56, trail: true, finisher: true, brush: true, strikes: [{ at: 0.56, pct, reach: 120, h: 70, targets: 5, pierce: true, around: false, knock: 240, launch: 180, arc: [-160, 200], thick: 16, big: true, burst: 'inkhit', fx: 'inkcut', stop: 0.06 + 0.04 * k, shake: Math.round(2 + 3 * k) }] }),
   },
   beastmaster: {
     skill: 'wildhunt', school: 'wind',
@@ -917,8 +877,6 @@ export function barrageOf(world) {
   const lv = spec ? world.char.skills[spec.skill] ?? 0 : 0;
   return lv > 0 ? skillAt(spec.skill, lv).barrage : null;
 }
-// The Shinobi's ink clones are out (the Clone Storm stage).
-export const inkStorm = (world) => Boolean(world.barrage?.kind === 'shinobi' && world.barrage.stage >= STREAMS.shinobi.clones);
 // The barrage's own dice (xorshift).
 function barrageDice(run) {
   let s = run.dice;
@@ -978,12 +936,6 @@ function barrageThrow(world, b, rng = Math.random) {
     // Another beat while the figure plays out.
     world.strikes.push({ ...spec.strike(b, { air, stage, move: fig.move, heat }), n: 0, of: 1, due: now + 0.02, dir: body.facing, scale: 100, key, school: look, finisher: false, move: fig.move, dur: fig.dur, hit: 0.4 });
   }
-  // The Shinobi's ink clones cut beside her, a beat behind (lighter).
-  if (kind === 'shinobi' && stage >= spec.clones) {
-    const cut = spec.strike(b, { air, stage, move: run.figure.move, heat });
-    for (const lag of [CLONE_LAG, CLONE_LAG * 2]) world.strikes.push({ ...cut, n: 0, of: 1, due: now + 0.02 + lag, dir: body.facing, scale: 100 * CLONE_POWER, key, school: 'ink', finisher: false, move: run.figure.move, dur: run.figure.dur, phantom: true, quiet: true, gauge: 0, burst: undefined });
-    world.phantom = { kind: run.figure.move, since: now + CLONE_LAG, dur: run.figure.dur, until: now + CLONE_LAG * 2 + run.figure.dur, clones: true };
-  }
   spec.beat?.(world, b, run);
   // The beats keep the barrage's own rate, whatever the figure.
   world.attackTimer = Math.min(world.attackTimer, 0.86 / rate);
@@ -1011,8 +963,6 @@ export function barrageRelease(world) {
   const pct = Math.round(b.finish[0] + (b.finish[1] - b.finish[0]) * k);
   const step = spec.finish(b, pct, k, air);
   playStep(world, step, 100, air ? 'basicair1' : 'basic2');
-  // The Shinobi's last cut leaves a giant brush stroke of ink along the line.
-  if (step.brush) world.fx.push({ kind: 'inkbrush', x: world.body.x + world.body.facing * 70, y: world.body.y - 24, len: 200, dir: world.body.facing, big: true, t: -0.56 * step.dur * 0.9, dur: 0.6, seed: Math.random() });
   // The Beastmaster's: Snow wolf brings the moon down on them as the gale arrow flies.
   if (step.moon) {
     const m = pickTargets(world.mobs, world.body, { w: 340, h: 120 }, 1)[0];
@@ -1122,6 +1072,7 @@ export function addAim(world, n, mob = null) {
   addTails(world, n, mob);
   addMomentum(world, n);
   addShadow(world, n);
+  addKi(world, n);
   addBond(world, n);
   addCharge(world, n);
 }
@@ -1171,7 +1122,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { thiefdagger: DANCER_COMMANDS, shinobi: SHINOBI_COMMANDS }[pathOf(world)] ?? null;
+    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1293,8 +1244,6 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
   if (step.wall) world.fx.push({ kind: 'shieldwall', follow: true, ahead: 22, x: body.x + body.facing * 22, y: body.y, dir: body.facing, t: 0, dur: dur * 0.82 });
-  // A Shinobi's dash goes off in a burst of white smoke.
-  if (step.smoke) world.fx.push({ kind: 'smokeburst', x: body.x, y: body.y, dir: body.facing, t: 0, dur: 0.8 });
   // A blink (Backstab) leaves a puff of smoke where she melts away and another where she steps out.
   if (step.blink) for (const [at, dx] of [[0.11, 0], [0.4, step.step]]) world.fx.push({ kind: 'blinksmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.7 });
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
@@ -1330,8 +1279,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   }
   // Phantom (full Shadow): a shadow copy of the thief repeats every blow and throw a beat later,
   // lighter (finishers are hers alone).
-  // Shadow Clones (full Ki) do the same with two ink clones, a beat apart, each lighter still.
-  const copies = phantom(world) ? [[PHANTOM_LAG, PHANTOM_POWER, 'shadow']] : shadowClones(world) ? [[CLONE_LAG, CLONE_POWER, 'ink'], [CLONE_LAG * 2, CLONE_POWER, 'ink']] : [];
+  const copies = phantom(world) ? [[PHANTOM_LAG, PHANTOM_POWER, 'shadow']] : [];
   if (copies.length && (!step.finisher || key.startsWith('basic'))) {
     world.phantom = { kind: step.move, since: now + copies[0][0], dur, until: now + copies.at(-1)[0] + dur, clones: copies.length > 1 };
     for (const [lag, power, look] of copies) {
@@ -1361,6 +1309,7 @@ export function tickMelee(world, dt) {
   if (world.grace > 0 && world.now - (world.graceAt ?? 0) > GRACE_HOLD) world.grace = Math.max(0, world.grace - GRACE_DRAIN * dt);
   if (world.binding > 0 && world.now - (world.bindingAt ?? 0) > BINDING_HOLD) world.binding = Math.max(0, world.binding - BINDING_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
+  tickCarousel(world);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
@@ -1447,7 +1396,7 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'ink' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
@@ -1743,7 +1692,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'inkhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1850,6 +1799,11 @@ function fire(world, strike) {
       fire(world, { ...s, illusion: true, free: true, phantom: true, fan: 1, pierce: false, pct: s.pct * ILLUSION_POWER, oy: (s.oy ?? 0) + oyk, lag: (s.lag ?? 0) + 0.05 * (k + 1), bend: oyk * 2, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined, kickback: 0 });
     }
   }
+  // The Blade Dancer's ring flies its own way: out, bouncing on, and home (ringThrow).
+  if (s.bounce != null) {
+    for (let i = 0; i < (s.fan ?? 1); i++) ringThrow(world, { ...s, lag: lag + i * 0.07, pick: (s.pick ?? 0) + i }, ox, oy, speed, box, element);
+    return;
+  }
   if (s.pierce) {
     const line = pickTargets(world.mobs, body, box, s.targets ?? 1);
     // It flies at the first monster in its line (up or down to it, from the air or onto a slope)
@@ -1900,6 +1854,55 @@ function fire(world, strike) {
       fly(ox + s.dir * Math.cos(a) * s.range, oy + Math.sin(a) * s.range);
     }
   }
+}
+
+// The Blade Dancer's ring: it flies at a monster in its line (the `pick`-th nearest, for a fan or the
+// Carousel's flight of rings), ricochets on to the nearest monster it hasn't hit, `bounce` times
+// (each a little lighter, a spark where it bounces), then flies home to her hand. Rebound may give
+// it more bounces; Twin Rings may send a second after it at the next monster along.
+const RING_JUMP = { x: 170, y: 90 };
+const RING_FALLOFF = 0.85;
+const ringMid = (m) => m.y - (m.air ?? 0) - m.def.h / 2;
+function ringThrow(world, s, ox, oy, speed, box, element) {
+  const { body, char } = world;
+  const rebound = !s.twin && procOf(char, 'rebound');
+  const bounces = (s.bounce ?? 0) + (rebound && Math.random() < rebound.chance ? rebound.extra : 0);
+  const leg = (x, y, tx, ty, at, mob, home = false) => {
+    const d = Math.max(0.05, Math.hypot(tx - x, ty - y) / speed);
+    world.fx.push({ kind: 'projectile', weapon: 'dagger', shot: s.shot, school: 'rosegold', bend: s.lob && x === ox ? -s.lob * s.dir : 0, x, y, tx, ty, mob, home, twin: Boolean(s.twin), t: -at, dur: d });
+    return at + d;
+  };
+  const pool = pickTargets(world.mobs, body, s.around ? { ...box, around: true } : box, (s.pick ?? 0) + 1);
+  let m = pool[s.pick ?? 0] ?? pool.at(-1);
+  if (!m) {
+    // Nothing to aim at: out to its full reach and back.
+    const tx = ox + s.dir * s.range;
+    const ty = oy + (s.drop ? 40 : s.lift ? -60 : 0);
+    leg(tx, ty, ox, oy, leg(ox, oy, tx, ty, s.lag ?? 0), null, true);
+    return;
+  }
+  const hit = new Set();
+  let at = s.lag ?? 0;
+  let x = ox;
+  let y = oy;
+  for (let j = 0; m; j++) {
+    const mx = m.x;
+    const my = ringMid(m);
+    at = leg(x, y, mx, my, at, m);
+    const pct = s.pct * RING_FALLOFF ** j;
+    shotHit(world, j ? { ...s, pct, fromX: x, dir: Math.sign(mx - x) || s.dir, burst: 'bdbounce', knock: 50, launch: 0, big: false, stop: 0.02, shake: 0, gauge: s.gauge === 0 ? 0 : 4 } : { ...s, burst: s.burst ?? 'bdhit' }, m, at, j % 3, element, j);
+    hit.add(m);
+    x = mx;
+    y = my;
+    if (j >= bounces) break;
+    m = world.mobs
+      .filter((o) => !hit.has(o) && o.hp > 0 && Math.abs(o.x - x) <= RING_JUMP.x && Math.abs(ringMid(o) - y) <= RING_JUMP.y)
+      .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
+  }
+  leg(x, y, body.x + s.dir * 10, body.y - HAND_Y, at, null, true);
+  // Twin Rings: a second ring a beat behind, at the next monster along if there is one.
+  const twin = !s.twin && procOf(char, 'twinrings');
+  if (twin && Math.random() < twin.chance) ringThrow(world, { ...s, twin: true, pct: (s.pct * twin.pct) / 100, lag: (s.lag ?? 0) + 0.1, pick: (s.pick ?? 0) + 1, big: false, stop: 0, shake: 0 }, ox, oy + 4, speed, box, element);
 }
 
 // Arrows rain down on the monsters in an area ahead, one after another.

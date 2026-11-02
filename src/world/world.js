@@ -21,7 +21,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
 import { rodGuard } from './storm.js';
-import { tickMelee, faithGuard, addAim, addKi, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
@@ -490,7 +490,7 @@ export function setDropFor(char, bossId, chance, rng = Math.random) {
 }
 
 export function hurtPlayer(world, rawAtk, fromX) {
-  if (world.god || blockOnHit(world, fromX) || logSwap(world, fromX)) return;
+  if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
   let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
@@ -514,23 +514,6 @@ export function hurtPlayer(world, rawAtk, fromX) {
     world.log('You fainted...', '#ff6b8a');
   }
   hurtProcs(world, dmg);
-}
-
-// Log Swap (the Shinobi's): the next blow that would land hits a log instead, left in a puff of
-// smoke, and she reappears behind whoever struck, untouchable a moment, her Ki rising.
-function logSwap(world, fromX) {
-  const buff = world.char.buffs.logswap;
-  if (!buff || buff.until <= world.now || world.dead) return false;
-  delete world.char.buffs.logswap;
-  const b = world.body;
-  world.fx.push({ kind: 'logpoof', x: b.x, y: b.y, dir: b.facing, t: 0, dur: 0.9 });
-  const side = Math.sign(fromX - b.x) || b.facing;
-  b.x = Math.max(b.w / 2, Math.min(world.map.width - b.w / 2, fromX + side * 34));
-  b.facing = -side;
-  world.fx.push({ kind: 'smokeburst', x: b.x, y: b.y, dir: b.facing, t: 0, dur: 0.7 });
-  world.invuln = Math.max(world.invuln, 0.8);
-  addKi(world, buff.values.ki ?? 20);
-  return true;
 }
 
 function playerBox(b) {
@@ -716,7 +699,7 @@ export function updateWorld(world, dt, input) {
       if (h.gauge) addAim(world, h.gauge, m);
       drinkBlood(world, h.damage);
     }
-    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'ink' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);
@@ -810,8 +793,6 @@ export function updateWorld(world, dt, input) {
     } else {
       world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0 });
       world.invuln = 0.5;
-      // A Shinobi's dodges build Ki.
-      addKi(world, 6);
     }
   }
   // Monsters don't pop up right on top of you or your party.
@@ -852,6 +833,11 @@ export function updateWorld(world, dt, input) {
   // Arrows and bolts track the monster they were loosed at (knocked back, launched, walking): a
   // shot heads for where it is now; a piercing one keeps its line through it out to its reach.
   for (const f of world.fx) {
+    // (The Blade Dancer's ring flying home finds her hand wherever she has moved to.)
+    if (f.kind === 'projectile' && f.home && f.t < f.dur) {
+      f.tx = world.body.x + world.body.facing * 10;
+      f.ty = world.body.y - 15;
+    }
     const m = f.mob;
     if (f.kind !== 'projectile' || !m || m.hp <= 0 || f.t >= f.dur) continue;
     const mx = m.x;
