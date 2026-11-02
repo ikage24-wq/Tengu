@@ -2,7 +2,8 @@
 
 The player's picks (2026-11-02): an acrobat archer, mint and gold, a playful show-off, the Combo
 gauge with Showtime, and Grand Somersault as her finisher. Held to the Wind Dancer standard
-(CLAUDE.md). (The Beastmaster is to be replaced by a new bow path, designed next.)
+(CLAUDE.md). Her bow path is the Phantom Trickster (docs/design/phantom-trickster.md), her
+crossbow path the Arbalist Engineer.
 
 ## Who she is
 
@@ -44,5 +45,4 @@ Acrobat Archer).
 - Effects (tools/fx-art.js): `acarrow`, `acbig`, `achit`, `acfirework`, `acribbon`, `acspring`,
   `acburst`, `acaura`, `embacro`. Icons, the Combo gauge, her aura, sounds.
 - Bots: an Archer in the party skips, flips and rolls as she shoots, and casts Grand Somersault.
-- The old Archer's moves and gold-and-sky-blue arrows stay only for the Beastmaster until it is
-  replaced.
+- The old Archer's figures (draw, quickshot and the like) stay for the moves other jobs share.

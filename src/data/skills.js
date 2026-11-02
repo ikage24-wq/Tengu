@@ -566,77 +566,67 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Beastmaster (the archer's bow path: green wild arrows, and Snow wolf) ----------
-  // She hunts with a companion (world/pets.js): Snow wolf, a small, fed-up wolf girl dragging the
-  // Fang of the Wolf Queen, a greatsword that casts moonlight. Her shots that land, and Snow wolf's
-  // hits, build Bond (0-100, see world/melee.js), shown as Snow wolf's Patience running out; full
-  // (Fed Up), Snow wolf fights on her own, and the finisher spends it. Like the Archer, she fights
-  // with her basic shots and her skills set themselves off: Fine, I'll Go and Moonfall from any
-  // shot, Lunar Howl from her combo's last shot. Her last skills: Moon Ward and
-  // Queen's Awakening. Her buttons are the Archer's Vault, Snack Time and the finisher, Last Straw.
-  // (The skill ids are the old animals' names, kept for saves.)
+  // ---------- The Phantom Trickster (the Acrobat Archer's bow path; replaces the Beastmaster) ----------
+  // A stage magician with a bow (ids kept for saves; docs/design/phantom-trickster.md). Her shots that
+  // land build Illusion (world/melee.js): half full, a see-through copy of her shoots beside her; full,
+  // two (a third with Hall of Mirrors), shooting with every arrow. Her tricks set themselves off from
+  // her shots (Vanishing Arrow, Dove Arrow, Card Trick: world/phantom.js); her buttons are Smoke Bomb,
+  // Showstopper and the finisher, Grand Illusion.
   beastmastery: skill({
-    id: 'beastmastery', name: 'Beast Mastery', job: 'beastmaster', type: 'passive', grows: true, fx: null,
-    desc: 'Steadier shots, more attack, and sharper aim, and Snow wolf hits harder too.',
+    id: 'beastmastery', name: 'Sleight of Hand', job: 'beastmaster', type: 'passive', grows: true, fx: null,
+    desc: 'Quick fingers: steadier shots, more attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 25, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
-  // Changes her basic attack (world/melee.js barrageThrow, STREAMS.beastmaster): `from` to `to`
-  // arrows a second over `ramp` seconds of holding; from the Duet on Snow wolf cuts beside her
-  // (`wolf`, % a cut); let go and a gale arrow ends it (`finish`, growing over `full` seconds),
-  // with Snow wolf's moon crashing down on them at `moon` of its strength.
   wildhunt: skill({
-    id: 'wildhunt', name: 'Wild Hunt', job: 'beastmaster', type: 'passive', fx: null, icon: 'wildhunt', school: 'wind', maxLevel: 10,
-    desc: 'Her basic attack becomes an endless hunt with Snow wolf: hold attack and green arrows fly faster and faster as she shoots on the move, and you can walk slowly while shooting. Soon Snow wolf joins in, cutting beside her, and at full tilt a gale of leaves wheels round her. Let go and she looses a great gale arrow through the line as Snow wolf brings the moon down on them, stronger the longer you held. Needs a bow.',
-    weapons: ['bow'],
-    at: (lv, m) => ({ passive: {}, barrage: { unit: 'arrow', pct: 48, from: 5, to: lerpf(9, 11, lv, m), ramp: 2.5, wolf: lerp(140, 240, lv, m), moon: 0.6, finish: [lerp(140, 200, lv, m), lerp(320, 460, lv, m)], full: 3 } }),
+    id: 'wildhunt', name: 'Vanishing Arrow', job: 'beastmaster', type: 'passive', fx: null, icon: 'wildhunt', school: 'phantom', maxLevel: 10,
+    desc: 'Your shots sometimes vanish in a puff of smoke as they hit and reappear behind their target a beat later, striking it again from behind.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.3, lv, m), pct: lerp(90, 160, lv, m) } }),
   }),
   wolfpounce: skill({
-    id: 'wolfpounce', name: "Fine, I'll Go", job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
-    desc: 'Your shots sometimes make Snow wolf drag herself over to the nearest monster in front of you, hit or miss, and spin her greatsword round in a full circle of moonlight, cutting everything close.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.14, 0.32, lv, m), pct: lerp(90, 160, lv, m) } }),
+    id: 'wolfpounce', name: 'Dove Arrow', job: 'beastmaster', type: 'passive', fx: null, school: 'phantom',
+    desc: 'Your shots sometimes burst into silver doves as they hit, which fly on and strike the monsters close round their target.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.3, lv, m), pct: lerp(70, 130, lv, m), n: lerp(2, 3, lv, m) } }),
   }),
   hawkstrike: skill({
-    id: 'hawkstrike', name: 'Moonfall', job: 'beastmaster', type: 'passive', fx: null, school: 'wind',
-    desc: 'Your shots sometimes make Snow wolf plant her greatsword with a sigh, hit or miss: a beam of moonlight crashes down on the farthest monster in front of you and throws it into the air.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.14, 0.32, lv, m), pct: lerp(80, 140, lv, m) } }),
+    id: 'hawkstrike', name: 'Card Trick', job: 'beastmaster', type: 'passive', fx: null, school: 'phantom',
+    desc: 'Your shots sometimes come with a fan of three playing cards flicked from your fingers, cutting through the line.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.3, lv, m), pct: lerp(50, 90, lv, m) } }),
   }),
   packhowl: skill({
-    id: 'packhowl', name: 'Lunar Howl', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10,
-    desc: "Call on Snow wolf to howl, wherever she is and whatever she's doing (even mid-hunt): she lets out a grudging howl, a pale moon rising behind her, and every monster close round her is knocked away and stunned.",
-    at: (lv, m) => ({ mp: lerp(10, 18, lv, m), pct: lerp(100, 170, lv, m), stun: lerpf(1, 2, lv, m), r: lerp(100, 140, lv, m), howl: true }),
+    id: 'packhowl', name: 'Smoke Bomb', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10,
+    desc: 'Slap a smoke bomb down at your feet: everything close round you is knocked back and stunned, loses track of you, and nothing touches you while the smoke is thick.',
+    at: (lv, m) => ({ mp: lerp(10, 18, lv, m), pct: lerp(100, 170, lv, m), stun: lerpf(1, 2, lv, m), r: lerp(100, 140, lv, m), smoke: true }),
   }),
   loyalguard: skill({
-    id: 'loyalguard', name: 'Moon Ward', job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10,
-    desc: 'A hit sometimes never reaches you: Snow wolf plants her greatsword in front of it, a crescent shield of moonlight takes it, and she flicks a crescent back at the attacker.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m), pct: lerp(120, 200, lv, m) } }),
+    id: 'loyalguard', name: 'Mirror Dodge', job: 'beastmaster', type: 'passive', fx: null, school: 'phantom', maxLevel: 10,
+    desc: 'While a copy of you stands behind you, a hit sometimes strikes the copy instead: it pops in a puff of smoke and comes back a few seconds later.',
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m) } }),
   }),
   snacktime: skill({
-    id: 'snacktime', name: 'Snack Time', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'wind', maxLevel: 10,
-    desc: "Toss Snow wolf a moon cookie. For a while she's happy: ears up, tail wagging, she keeps up with you instead of waddling, attacks harder and more often, gets through each attack quicker, and her Patience holds instead of fading. When it wears off she slumps right back.",
-    at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { snackPct: lerpf(1.25, 1.6, lv, m), snackSpeed: lerpf(1.2, 1.45, lv, m) } }),
+    id: 'snacktime', name: 'Showstopper', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'phantom', maxLevel: 10,
+    desc: 'Take a grand bow and snap your fingers: for a while your copies hit much harder.',
+    at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { copyPower: lerpf(0.4, 1, lv, m) } }),
   }),
   alpha: skill({
-    id: 'alpha', name: "Queen's Awakening", job: 'beastmaster', type: 'passive', fx: null, school: 'wind', maxLevel: 10,
-    desc: 'While Snow wolf is Fed Up (full Bond), the wolf head on her greatsword wakes: her eyes open, she attacks faster and harder, and every swing also throws a crescent of moonlight at the farthest monster.',
-    at: (lv, m) => ({ passive: {}, proc: { pct: lerp(150, 260, lv, m), every: lerpf(1.3, 0.9, lv, m) } }),
+    id: 'alpha', name: 'Hall of Mirrors', job: 'beastmaster', type: 'passive', fx: null, school: 'phantom', maxLevel: 10,
+    desc: 'While your Illusion is full, a third copy of you joins the other two.',
+    at: (lv, m) => ({ passive: {}, proc: { pct: lerp(1, 1, lv, m) } }),
   }),
   stampede: skill({
-    id: 'stampede', name: 'Last Straw', job: 'beastmaster', type: 'attack', fx: null, school: 'wind', maxLevel: 10, fullGauge: true,
-    desc: "Finisher: needs full Bond, and spends it. That's it: Snow wolf snaps. She's beside you in a flash, fuming, eyes blazing; for once she lifts the greatsword in one hand as if it weighed nothing, twirls it, leaps, and brings it down under a great full moon: everything across the whole screen around her is cut and thrown into the air. Then she keels over asleep.",
+    id: 'stampede', name: 'Grand Illusion', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Illusion, and spends it. Sweep your cape up, snap your fingers and vanish in smoke: a ring of copies of you appears all round the screen, and they all loose at once at the monsters nearest them. Then you reappear and take a bow.',
     weapons: ['bow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const targets = k(8, 12);
-      // The Beastmaster raises her bow and gives the signal; Snow wolf acts it out and lands the
-      // blow (world/pets.js lastStraw), with the skill's pct.
       return {
-        mp: k(30, 50), pct: k(900, 1500), hits: 1, targets,
-        combo: [{ move: 'skyshot', dur: 0.9, step: 0, finisher: true, guard: 0.9, strikes: [
-          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'laststraw', burstAt: 0, burstDur: 0.1, quiet: true, gauge: 0 },
+        mp: k(30, 50), pct: k(260, 440), hits: 1, targets: 0,
+        combo: [{ move: 'ptillusion', dur: 2.4, step: 0, finisher: true, guard: 2.2, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, grand: { n: k(8, 12), r: 300, at: 1.2, pct: k(260, 440), hide: 1.7 } },
         ] }],
       };
     },
   }),
+
 
   // ---------- Arbalist Engineer (the archer's crossbow path: brass and teal, gears, steam) ----------
   // The Stormcaller remade (the player's ask, 2026-11-02; docs/design/arbalist.md): an excited
@@ -887,8 +877,8 @@ export const SKILLS = {
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
   pebble: 'throw', quickstep: 'cheer',
-  vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'cheer',
-  stampede: 'skyshot', snacktime: 'throw', deployturret: 'aedeploy', overclock: 'aebrace', bigbertha: 'aebertha',
+  vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'ptbomb',
+  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aebrace', bigbertha: 'aebertha',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',

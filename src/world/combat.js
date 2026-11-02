@@ -9,7 +9,7 @@ import { mobBox } from './mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
-import { guard, howl } from './pets.js';
+import { mirrorDodge, smokeBomb } from './phantom.js';
 import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
@@ -177,8 +177,8 @@ export function rallyOnHit(world) {
 }
 
 // Before a hit lands, it may not land at all. Divine Aegis (Paladin): a shield of light flashes
-// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). Moon Ward (Beastmaster): Snow wolf plants her
-// greatsword in front of it (from `fromX`) behind a crescent of moonlight, and flicks one back. True if the hit is gone. `rng` for tests.
+// up and blocks it, then a holy shockwave answers it (twice as often while the Aegis is up). Mirror Dodge (Phantom Trickster):
+// one of her copies takes it instead and pops in smoke (world/phantom.js). True if the hit is gone. `rng` for tests.
 export function blockOnHit(world, fromX = null, rng = Math.random) {
   const { body } = world;
   if (world.dead) return false;
@@ -193,10 +193,9 @@ export function blockOnHit(world, fromX = null, rng = Math.random) {
     bulwarkWave(world, p);
     return true;
   }
-  const lg = procOf(world.char, 'loyalguard');
-  if (lg && rng() < lg.chance && guard(world, fromX, lg)) {
+  if (mirrorDodge(world, fromX, rng)) {
     world.invuln = Math.max(world.invuln, 0.5);
-    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'WARD', color: '#bcd6ff', t: 0 });
+    world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'MISS', color: '#e6b8f2', t: 0 });
     return true;
   }
   return false;
@@ -363,14 +362,13 @@ export function cast(world, skillId, rng = Math.random) {
     area = { w: Math.abs(body.x - from) + 40, h: 64, back: true };
   }
 
-  // Tricks of their own: the Archer's Spring Trap, the Beastmaster's Lunar Howl (Snow wolf does
-  // it; without her there's nothing to howl, and the MP comes back).
+  // Tricks of their own: the Acrobat Archer's Springboard, the Phantom Trickster's Smoke Bomb.
   if (params.trap) {
     setTrap(world, body.x + body.facing * 70, params);
     return { ok: true };
   }
-  if (params.howl) {
-    if (!howl(world, params)) char.mp += params.mp ?? 0;
+  if (params.smoke) {
+    smokeBomb(world, params);
     return { ok: true };
   }
 

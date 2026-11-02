@@ -95,9 +95,9 @@ const JOBS = {
     back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celembers', x, y, { t: t * 0.5, scale: s * 0.45, alpha: k * 0.45 }),
     front: () => {},
   },
-  // Beastmaster: a slow, faint curl of wind and leaves at her feet.
+  // Phantom Trickster: a faint drift of silver sparkles and cards round her.
   beastmaster: {
-    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * 0.6, scale: s * 0.5, sy: 0.3, alpha: k * 0.6 }),
+    back: (ctx, x, y, t, s, k) => fxSprite(ctx, 'celptaura', x, y - 22 * s, { t: t * 0.6, scale: s * 0.35, alpha: k * 0.35 }),
     front: () => {},
   },
   // Stormcaller: faint arcs of lightning crackling round her feet.
@@ -182,16 +182,16 @@ function faithAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.4) fxSprite(ctx, 'celmotes', x, y, { t, scale: s * 0.6, alpha: Math.min(1, (k - 0.4) * 2.5) });
 }
 
-// Bond, in Tengu's own effect art: a curl of wind spinning at her feet that widens and quickens
-// as it fills, leaves blowing past from halfway, and full (Wild), rings of wind racing out from
-// her feet.
+// Illusion (the Phantom Trickster; internally Bond): silver sparkles drift up round her as it
+// builds (her copies are drawn by render/scene.js); full, two cards turn round her and her badge, a
+// top hat with a card, shines over her head.
 function bondAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celwindspin', x, y - 2 * s, { t: t * (1 + k), scale: s * (0.5 + 0.4 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringwind', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
-    return;
+  if (layer === 'back') return;
+  if (k > 0.2 && k < 1) fxSprite(ctx, 'celptaura', x, y - 22 * s, { frame: Math.floor(t * 6) % 8, scale: s * 0.4, alpha: Math.min(0.6, (k - 0.2) * 1.5) });
+  if (k >= 1) {
+    fxSprite(ctx, 'celptaura', x, y - 22 * s, { t, scale: s * 0.55 });
+    fxSprite(ctx, 'celembphantom', x, y - 62 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
   }
-  if (k > 0.5) fxSprite(ctx, 'celleaves', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.45, flip: Math.floor((t * 0.9) / 0.45) % 2 === 1, scale: s * (0.4 + 0.2 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
 }
 
 // Pressure (the Arbalist Engineer; internally Charge): little puffs of steam escape at her feet as

@@ -262,4 +262,13 @@ export const FX_SHEETS = {
   celacburst: { w: 290, h: 303, n: 9, fps: 14, px: 145, py: 134, d: 3, loop: false },
   celacaura: { w: 156, h: 87, n: 8, fps: 10, px: 78, py: 42, d: 3, loop: true },
   celembacro: { w: 126, h: 148, n: 5, fps: 12, px: 63, py: 81, d: 3, loop: false },
+  celptarrow: { w: 131, h: 61, n: 6, fps: 24, px: 118, py: 32, d: 3, loop: true },
+  celptbig: { w: 220, h: 87, n: 6, fps: 20, px: 189, py: 43, d: 3, loop: true },
+  celpthit: { w: 139, h: 138, n: 7, fps: 30, px: 68, py: 98, d: 3, loop: false },
+  celptsmoke: { w: 145, h: 138, n: 7, fps: 20, px: 75, py: 121, d: 3, loop: false },
+  celptdove: { w: 81, h: 77, n: 4, fps: 12, px: 41, py: 40, d: 3, loop: true },
+  celptcard: { w: 66, h: 69, n: 6, fps: 24, px: 33, py: 34, d: 3, loop: true },
+  celptillusion: { w: 371, h: 229, n: 10, fps: 12, px: 188, py: 205, d: 3, loop: false },
+  celptaura: { w: 152, h: 97, n: 8, fps: 10, px: 76, py: 52, d: 3, loop: true },
+  celembphantom: { w: 124, h: 132, n: 5, fps: 12, px: 62, py: 81, d: 3, loop: false },
 };

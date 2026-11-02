@@ -6521,6 +6521,192 @@
     for (const sd of [-1, 1]) ribbon(ctx, MINT, (u) => [sd * (8 + u * 36), 30 + u * 14 + Math.sin(u * 5) * 4], (u) => 10 * (1 - u * 0.5), {});
   });
 
+  // ---------- The Phantom Trickster (plum and silver: smoke, cards, doves, top hats) ----------
+  // docs/design/phantom-trickster.md. Her shapes: plum arrows trailing wisps of smoke, silver
+  // sparkles, playing cards with their suits, silver doves, and puffs of plum stage smoke.
+  const PLUM = ['#ffffff', '#f2dcf6', '#b86ac0', '#7a3a8a', '#3a1446'];
+  const PSILV = ['#ffffff', '#f8f6ff', '#dcdcee', '#9a9cc0', '#4a4a6a'];
+  const SMOKE = ['#ffffff', '#ecd8f4', '#c8a0dc', '#8e5cac', '#3a1446'];
+
+  // A plum arrow along +x, head at (x, y), `len` long.
+  function plumArrow(ctx, x, y, len, w = 1) {
+    inked(ctx, [[x - len, y - 2.4 * w], [x - 13 * w, y - 2.4 * w], [x - 13 * w, y + 2.4 * w], [x - len, y + 2.4 * w]], PLUM[3], PLUM[4], 3);
+    fill(ctx, [[x - len, y - 0.9 * w], [x - 13 * w, y - 0.9 * w], [x - 13 * w, y + 0.5 * w], [x - len, y + 0.5 * w]], PLUM[1]);
+    inked(ctx, [[x, y], [x - 17 * w, y - 8 * w], [x - 13 * w, y], [x - 17 * w, y + 8 * w]], PSILV[2], PSILV[4], 3);
+    fill(ctx, [[x - 3 * w, y], [x - 13 * w, y - 4.5 * w], [x - 11 * w, y]], PSILV[0]);
+    for (const sd of [-1, 1]) inked(ctx, [[x - len + 2, y], [x - len + 13 * w, y + sd * 2], [x - len + 6 * w, y + sd * 9 * w], [x - len - 4 * w, y + sd * 8 * w]], PLUM[2], PLUM[4], 3);
+  }
+  // A card suit at (x, y), `r` big: 0 spade, 1 heart, 2 diamond, 3 club.
+  function suit(ctx, x, y, r, k, c, ink) {
+    const heart = (sy) => Array.from({ length: 24 }, (_, j) => {
+      const t = (j / 24) * TAU;
+      return [x + (Math.sin(t) ** 3) * r, y + sy * ((13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 16) * r];
+    });
+    if (k === 0) {
+      inked(ctx, heart(1), c, ink, 2.5);
+      inked(ctx, [[x, y], [x + r * 0.5, y + r * 1.3], [x - r * 0.5, y + r * 1.3]], c, ink, 2.5);
+    } else if (k === 1) inked(ctx, heart(-1), c, ink, 2.5);
+    else if (k === 2) inked(ctx, [[x, y - r * 1.2], [x + r * 0.8, y], [x, y + r * 1.2], [x - r * 0.8, y]], c, ink, 2.5);
+    else {
+      for (const [dx, dy] of [[0, -0.55], [-0.55, 0.2], [0.55, 0.2]]) inked(ctx, Array.from({ length: 14 }, (_, j) => [x + dx * r + Math.cos((j / 14) * TAU) * r * 0.5, y + dy * r + Math.sin((j / 14) * TAU) * r * 0.5]), c, ink, 2.5);
+      inked(ctx, [[x, y], [x + r * 0.4, y + r * 1.2], [x - r * 0.4, y + r * 1.2]], c, ink, 2.5);
+    }
+  }
+  // A playing card at (x, y), `h` tall, turned by `rot`, seen edge-on by `squash` (spinning).
+  function cardArt(ctx, x, y, h, rot, squash, k) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    ctx.scale(Math.max(0.12, Math.abs(squash)), 1);
+    const w = h * 0.68;
+    inked(ctx, [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]], PSILV[0], PSILV[4], 3);
+    if (squash > 0.3) suit(ctx, 0, 0, h * 0.22, k, k % 2 ? '#e0405a' : PLUM[3], PLUM[4]);
+    else fill(ctx, [[-w / 2 + 3, -h / 2 + 3], [w / 2 - 3, -h / 2 + 3], [w / 2 - 3, h / 2 - 3], [-w / 2 + 3, h / 2 - 3]], PLUM[2]);
+    ctx.restore();
+  }
+  // A silver dove at (x, y), `s` big, facing +x, wings at `flap` (-1 up to 1 down).
+  function doveArt(ctx, x, y, s, flap) {
+    const wing = (dy) => [[x - s * 0.3, y], [x - s * 0.9, y + dy * s], [x + s * 0.2, y + dy * s * 0.7], [x + s * 0.3, y]];
+    inked(ctx, wing(-1.1 * flap - 0.2), PSILV[2], PSILV[4], 3);
+    inked(ctx, [[x - s, y + s * 0.1], [x - s * 0.3, y - s * 0.35], [x + s * 0.5, y - s * 0.4], [x + s * 0.9, y - s * 0.2], [x + s * 0.5, y + s * 0.3], [x - s * 0.5, y + s * 0.3], [x - s * 1.3, y + s * 0.5]], PSILV[0], PSILV[4], 3);
+    inked(ctx, [[x + s * 0.9, y - s * 0.25], [x + s * 1.25, y - s * 0.12], [x + s * 0.9, y - s * 0.05]], '#ffb86a', '#8e5228', 2);
+    fill(ctx, wing(-0.7 * flap), PSILV[1]);
+  }
+
+  // Her arrow in flight (loops, toward +x): a plum arrow with a wisp of smoke curling behind and
+  // silver sparkles.
+  E.ptarrow = (() => {
+    const cx = 120;
+    const cy = 40;
+    return {
+      w: 140, h: 80, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let j = 0; j < 3; j++) puff(ctx, SMOKE, cx - 66 - j * 18, cy + Math.sin(ph + j) * 5, 9 - j * 2, 701 + j + i, { lobes: 4, holes: j > 1 ? 0.4 : 0 });
+        plumArrow(ctx, cx, cy, 64);
+        for (let j = 0; j < 2; j++) sparkle(ctx, PSILV, cx - 40 - j * 26, cy + (j ? 12 : -12) * Math.cos(ph), 6 - j, i + j);
+      },
+    };
+  })();
+
+  // Her big arrow: a bigger plum arrow trailing smoke, the four suits tumbling in its wake.
+  E.ptbig = (() => {
+    const cx = 190;
+    const cy = 60;
+    return {
+      w: 230, h: 120, n: 6, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let j = 0; j < 4; j++) puff(ctx, SMOKE, cx - 110 - j * 22, cy + Math.sin(ph + j) * 8, 16 - j * 3, 711 + j + i, { lobes: 5, holes: j > 2 ? 0.4 : 0 });
+        for (let k = 0; k < 4; k++) suit(ctx, cx - 50 - k * 30, cy + Math.sin(ph + k * 1.6) * 22, 7, k, k % 2 ? '#e0405a' : PSILV[2], PLUM[4]);
+        plumArrow(ctx, cx, cy, 110, 1.5);
+        starburst(ctx, PSILV, cx + 2, cy, 16 + (i % 2) * 4, 8, 712, { inner: 0.4 });
+      },
+    };
+  })();
+
+  // Her mark on a monster: a silver flash, a puff of plum smoke, and three cards fanning out of it.
+  E.pthit = (() => {
+    const c = 100;
+    return {
+      w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, PSILV, c, c, [22, 34, 26][i], 8, 721, { inner: 0.4 });
+        if (i >= 1 && i <= 5) for (let j = 0; j < 3; j++) puff(ctx, SMOKE, c + (j - 1) * 18, c + 6 - (i - 1) * 3, 14 + i * 2 - j * 2, 722 + j, { lobes: 5, holes: i >= 4 ? 0.5 : 0 });
+        if (i >= 1 && i <= 5) for (let j = 0; j < 3; j++) {
+          const a = -Math.PI / 2 + (j - 1) * 0.7;
+          const d = 18 + i * 12;
+          cardArt(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, 26 - i * 2, a + Math.PI / 2, Math.cos(i * 0.9 + j), j);
+        }
+        if (i >= 5) for (let j = 0; j < 4; j++) sparkle(ctx, PSILV, c + (j - 1.5) * 26, c - 50 - (i - 5) * 8, 7, j);
+      },
+    };
+  })();
+
+  // A puff of stage smoke (vanishing and appearing, her copies coming and going): plum smoke
+  // billowing out round a silver flash, then thinning into sparkles.
+  E.ptsmoke = (() => {
+    const c = 90;
+    const gy = 150;
+    return {
+      w: 180, h: 170, n: 7, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        if (i <= 1) starburst(ctx, PSILV, c, gy - 50, 24 + i * 12, 8, 731, { inner: 0.4 });
+        if (i <= 5) for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU;
+          puff(ctx, SMOKE, c + Math.cos(a) * 34 * k, gy - 50 + Math.sin(a) * 34 * k - (i > 2 ? (i - 2) * 6 : 0), 22 * (1 - (i > 3 ? (i - 3) * 0.25 : 0)), 732 + j, { lobes: 5, holes: i >= 4 ? 0.5 : 0 });
+        }
+        if (i >= 4) for (let j = 0; j < 6; j++) sparkle(ctx, PSILV, c + Math.cos(j) * 50, gy - 60 - (i - 4) * 14 + Math.sin(j * 2) * 30, 8 - (i - 4) * 2, j);
+      },
+    };
+  })();
+
+  // A silver dove in flight (loops, toward +x): Dove Arrow's doves.
+  E.ptdove = {
+    w: 90, h: 70, n: 4, fps: 12, px: 50, py: 35, loop: true,
+    draw(ctx, i) {
+      doveArt(ctx, 50, 38, 22, [1, 0, -1, 0][i]);
+    },
+  };
+  // A spinning card in flight (loops): Card Trick's cards.
+  E.ptcard = {
+    w: 60, h: 60, n: 6, fps: 24, px: 30, py: 30, loop: true,
+    draw(ctx, i) {
+      cardArt(ctx, 30, 30, 34, 0.5, Math.cos((i / 6) * TAU), i % 4);
+    },
+  };
+
+  // Grand Illusion: a great ring of stage smoke bursts open round her, silver stars scattering and
+  // cards fluttering down through it.
+  E.ptillusion = (() => {
+    const c = 180;
+    const gy = 220;
+    return {
+      w: 360, h: 240, n: 10, fps: 12, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        if (i <= 7) for (let j = 0; j < 10; j++) {
+          const a = (j / 10) * TAU;
+          puff(ctx, SMOKE, c + Math.cos(a) * 150 * k, gy - 70 + Math.sin(a) * 50 * k, 26 * (1 - (i > 5 ? (i - 5) * 0.25 : 0)), 741 + j, { lobes: 5, holes: i >= 6 ? 0.5 : 0 });
+        }
+        if (i <= 2) starburst(ctx, PSILV, c, gy - 70, 40 + i * 20, 10, 742, { inner: 0.3 });
+        if (i >= 2) for (let j = 0; j < 8; j++) cardArt(ctx, c + (j - 3.5) * 40, gy - 190 + (i - 2) * 22 + (j % 2) * 20, 22, j * 0.5 + i * 0.3, Math.cos(i * 0.8 + j), j % 4);
+        if (i >= 6) {
+          const R = rng(743);
+          for (let j = 0; j < 12; j++) sparkle(ctx, j % 2 ? PSILV : PLUM, c + (R() - 0.5) * 320, gy - 40 - R() * 150, 9 - (i - 6) * 2, j);
+        }
+      },
+    };
+  })();
+
+  // Illusion (her gauge; full: her copies shoot with every arrow): silver sparkles and two little
+  // cards turning round her.
+  E.ptaura = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 8, fps: 10, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 8) * TAU;
+        for (let j = 0; j < 2; j++) {
+          const a = ph + j * Math.PI;
+          cardArt(ctx, c + Math.cos(a) * 54, c + Math.sin(a) * 18, 22, 0.2, Math.cos(a * 2), j * 2 + 1);
+        }
+        for (let j = 0; j < 3; j++) sparkle(ctx, PSILV, c + Math.cos(ph * 1.5 + j * 2) * 40, c - 20 + Math.sin(ph + j) * 16, 6, i + j);
+      },
+    };
+  })();
+
+  // Her badge: a plum top hat with a silver band, a card tucked in it and a star over it.
+  E.embphantom = emblem(PLUM, (ctx, pal) => {
+    inked(ctx, [[-48, 30], [48, 30], [44, 20], [-44, 20]], pal[3], pal[4], 5);
+    inked(ctx, [[-28, 22], [28, 22], [24, -36], [-24, -36]], pal[3], pal[4], 5);
+    fill(ctx, [[-22, 16], [-14, 16], [-12, -30], [-20, -30]], pal[2]);
+    fill(ctx, [[-27, 10], [27, 10], [26, 18], [-26, 18]], PSILV[2]);
+    cardArt(ctx, 18, -10, 30, 0.3, 1, 1);
+    sparkle(ctx, PSILV, 34, -48, 12, 0.2);
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

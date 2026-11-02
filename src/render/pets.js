@@ -1,9 +1,7 @@
-// Draws the companions: the Beastmaster's Snow wolf (render/snowwolf.js), who walks behind the
-// Beastmaster ('back', drawn before the hero).
+// Draws the companions ('back', before the hero): your Mochi, and the Arbalist Engineer's turret.
 
 import { drawMochi } from './mochi.js';
 import { fxSprite } from './fx-sprites.js';
-import { drawSnowWolf } from './snowwolf.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   // Your Mochi, behind you.
@@ -17,7 +15,4 @@ export function drawPets(ctx, world, cam, time, layer) {
     const up = Math.min(1, (world.now - tr.since) / 0.25);
     fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, scale: 0.5 * up, flip: tr.dir < 0 });
   }
-  const pets = world.pets;
-  if (!pets || layer !== 'back') return;
-  drawSnowWolf(ctx, world, pets.snow, cam, time);
 }

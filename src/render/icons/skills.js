@@ -43,6 +43,7 @@ const BG = {
   shrine: ['#f6f0ff', '#5a46a8'],
   idolbg: ['#ffe0f0', '#a83a7a'],
   acro: ['#d8fff0', '#1f8a6a'],
+  phantom: ['#f2dcf6', '#4a1a5a'],
   lullbg: ['#f4e4ff', '#5a3a9a'],
   astral: ['#c8b8ff', '#24186a'],
 };
@@ -776,139 +777,97 @@ function sightArt(cx, cy, r, c = '#ff5a7a', w = 0.6) {
   return [...edge(ring, ink(c), 0.35), S(ring, c), ...ticks.flatMap((t) => [...edge(t, ink(c), 0.3), S(t, c)])];
 }
 
-// A crescent moon bulging toward +x (turned by `rot` degrees), silver-blue moonlight.
-function moonCrescent(cx, cy, r, rot = 0) {
-  const outer = arcPts(cx, cy, r, r, -100, 100, 16);
-  const inner = arcPts(cx - r * 0.45, cy, r * 0.85, r * 0.85, 72, -72, 16);
-  return turn([...outer, ...inner], rot, cx, cy);
-}
-const MOON = '#e4eeff';
-const MOON_INK = '#3f4f9e';
-// Snow wolf's head, facing the viewer: a white wolf cut with ice-blue tips, wolf ears, half-shut
-// blue eyes and a bored mouth. `tilt` turns it (degrees), for the howl.
-function snowHead(cx, cy, k = 1, tilt = 0, howling = false) {
-  const P = (pts) => turn(pts.map(([x, y]) => [cx + x * k, cy + y * k]), tilt, cx, cy);
-  const out = [];
-  for (const s of [-1, 1]) {
-    out.push(...solid(P([[s * 1.4, -2.6], [s * 3.4, -6], [s * 3.8, -2]]), '#f4f6fc', { shadow: false, d: 0.35, ink: '#3a4664' }));
-    out.push(S(P([[s * 2.2, -2.8], [s * 3.3, -4.8], [s * 3.4, -2.6]]), '#c8d4ea'));
-  }
-  out.push(...solid(P(oval(0, 0, 4.2, 3.8, 0, 24)), '#f4f6fc', { d: 0.4, ink: '#3a4664' }));
-  out.push(S(P([[-3.6, 1.2], [-4.2, 3.6], [-3, 2.6], [-2.6, 3.8], [-2, 2]]), '#9fd8ff'), S(P([[3.6, 1.2], [4.2, 3.6], [3, 2.6], [2.6, 3.8], [2, 2]]), '#9fd8ff'));
-  out.push(S(P(oval(0, 1.2, 2.6, 2.2, 0, 18)), '#fff0e6'));
-  for (const s of [-1, 1]) {
-    out.push(S(P([[s * 0.6, 0.6], [s * 2, 0.4], [s * 2, 1], [s * 0.6, 1.1]]), '#1e2a48'));
-    out.push(S(P([[s * 1, 1], [s * 1.8, 1], [s * 1.6, 1.5], [s * 1.1, 1.5]]), '#4fc8ff'));
-    out.push(S(P([[s * 0.7, -0.6], [s * 1.9, -0.7], [s * 1.9, -0.2], [s * 0.7, -0.1]]), '#3a4664'));
-  }
-  out.push(howling ? S(P(oval(0, 2.7, 0.7, 0.8, 0, 10)), '#7a2a3a') : S(P([[-0.8, 2.6], [0.8, 2.6], [0.8, 2.9], [-0.8, 2.9]]), '#b04a5a'));
-  return out;
-}
-// The Fang of the Wolf Queen in small: a broad pale blade with a crescent cut through it, a silver
-// guard and a gold pommel with an ice stone.
-const fang = (base, tip, o = {}) => sword(base, tip, { w: 2.6, metal: '#eef3fb', guard: '#dfe6f2', grip: '#f4f1ea', gem: '#8fe6ff', ...o });
 
+// ---------- The Phantom Trickster (plum and silver: smoke, cards, doves, top hats) ----------
+const PPLUM = '#9a4a9a';
+const PPLUMINK = '#3a1446';
+const PSIL = '#e6e8f6';
+// A playing card at (x, y), `h` tall, turned `deg`, with a suit mark (red or plum).
+function cardIcon(x, y, h, deg, red = true) {
+  const w = h * 0.68;
+  return [...solid(turn(rect(x - w / 2, y - h / 2, w, h), deg, x, y), '#ffffff', { shadow: false, d: 0.3, ink: PPLUMINK }), S(turn(oval(x, y, w * 0.18, h * 0.16, 0, 10), deg, x, y), red ? '#e0405a' : PPLUM)];
+}
+// A puff of plum stage smoke.
+const smokeIcon = (pts) => puffs(pts, '#e6d0f0', { shadow: false, light: '#ffffff', ink: '#5a3a72' });
+// A top hat.
+function hatIcon(x, y, s) {
+  return [...solid(rect(x - s, y, s * 2, s * 0.3), PPLUM, { shadow: false, d: 0.3, ink: PPLUMINK }), ...solid(rect(x - s * 0.6, y - s * 1.2, s * 1.2, s * 1.25), PPLUM, { shadow: false, d: 0.3, ink: PPLUMINK }), S(rect(x - s * 0.6, y - s * 0.25, s * 1.2, s * 0.22), PSIL)];
+}
+// Sleight of Hand: a card held up between two fingers, sparkling.
 function beastmastery() {
-  const out = [...tile('mint', 'passive'), ...aura(8, 8, 6.6, '#f4fff0')];
-  // A bow with a crescent moon tied to the grip.
-  out.push(...longbow([3.4, 14.2], [2.8, 1.8], 2.2, { grip: '#3aa060' }));
-  out.push(...arrow([3.4, 8.2], [14.4, 7.8], { hw: 1.25, hl: 2, fl: '#9cf0b8' }));
-  out.push(...solid(moonCrescent(10.8, 11.8, 2.4, 200), MOON, { d: 0.35, ink: MOON_INK }));
-  out.push(...spark(13.6, 2.6, 1.1, '#ffffff'));
+  const out = [...tile('phantom', 'passive'), ...aura(8, 7, 6.4, '#f2dcf6')];
+  out.push(...cardIcon(8, 6.6, 7.6, 12));
+  out.push(...solid(oval(6.4, 12.6, 2.4, 1.6, 0, 12), '#ffe0cf', { shadow: false, d: 0.3, ink: '#8a5a4a' }));
+  out.push(...spark(13, 3, 1), ...spark(3, 4, 0.8));
   return out;
 }
-
-// Wild Hunt: three green arrows streaming forward, the Fang of the Wolf Queen cutting across
-// beside them, leaves tumbling on the wind.
+// Vanishing Arrow: a plum arrow fading into smoke, its head coming out the far side.
 function wildhunt() {
-  const out = [...tile('mint', 'passive'), ...aura(8, 8, 6.6, '#f4fff0')];
-  out.push(...swoosh(8, 8.6, 6.4, 5.6, -150, 30, 1.2, '#bdf5d6', { ink: '#13706e' }));
-  out.push(...fang([2.6, 13.6], [13.6, 4.4], { w: 2.2 }));
-  for (const [y, x0] of [[4.2, 1.6], [7.8, 3.2], [11.6, 5.2]]) out.push(...arrow([x0, y], [x0 + 9.4, y - 0.6], { hw: 1.1, hl: 1.8, fl: '#9cf0b8' }));
-  out.push(...leaf([11.6, 13.6], [14.2, 11.2], 1.4, '#7ad860').shapes, ...leaf([2.2, 3.8], [4.4, 1.8], 1.1, '#7ad860').shapes);
-  out.push(...spark(14, 2.4, 1, '#ffffff'));
+  const out = [...tile('phantom', 'passive'), ...aura(8, 8, 6.4, '#f2dcf6')];
+  out.push(...arrow([1.4, 12.6], [6, 9.6], { hw: 1, hl: 1.6, fl: PPLUM, head: PSIL }));
+  out.push(...smokeIcon([[8, 8.6, 2.4], [6.6, 7, 1.6], [9.6, 7, 1.6]]));
+  out.push(...arrow([10.4, 6.4], [14.6, 3.6], { hw: 1, hl: 1.6, fl: PPLUM, head: PSIL }));
   return out;
 }
-
+// Dove Arrow: two silver doves flying off an arrow's head.
 function wolfpounce() {
-  const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.8, '#dce8ff', 1.2)];
-  // Fine, I'll Go: the greatsword swung round in a full ring of moonlight.
-  out.push(...swoosh(8, 8.4, 6, 5.6, -200, 20, 1.6, '#cfe0ff', { ink: MOON_INK }));
-  out.push(...fang([4.6, 11.4], [14, 3.2]));
-  out.push(...swoosh(8, 8.4, 6, 5.6, 40, 150, 1.2, '#cfe0ff', { ink: MOON_INK }));
-  out.push(...spark(2.4, 2.8, 1.1, '#ffffff'));
+  const out = [...tile('phantom', 'passive'), ...aura(9, 7, 6.4, '#f8f6ff')];
+  out.push(...arrow([1.4, 14], [7.6, 8.6], { hw: 1, hl: 1.6, fl: PPLUM, head: PSIL }));
+  for (const [x, y, s] of [[10.6, 5.4, 2.6], [12.8, 10.4, 2]]) out.push(...solid([[x - s, y + s * 0.2], [x - s * 0.3, y - s * 0.4], [x + s * 0.6, y - s * 0.3], [x + s, y - s * 0.6], [x + s * 0.4, y + s * 0.4]], PSIL, { shadow: false, d: 0.3, ink: '#4a4a6a' }), ...solid([[x - s * 0.2, y - s * 0.2], [x - s * 0.8, y - s * 1.2], [x + s * 0.3, y - s * 0.4]], '#ffffff', { shadow: false, d: 0.3, ink: '#4a4a6a' }));
   return out;
 }
-
+// Card Trick: a fan of three cards flying.
 function hawkstrike() {
-  const out = [...tile('royal', 'passive'), ...aura(8, 9, 6.6, '#dce8ff', 1.2)];
-  // Moonfall: a crescent moon high up, a beam of moonlight crashing down from it.
-  out.push(...solid(moonCrescent(8.4, 3.4, 2.4, 160), MOON, { d: 0.35, ink: MOON_INK }));
-  const beam = [[6.4, 5.4], [9.6, 5.4], [11, 14], [5, 14]];
-  out.push(S(beam, '#9cb8f4'), S([[7.4, 5.4], [8.6, 5.4], [9.4, 14], [6.6, 14]], '#eef4ff'));
-  out.push(...solid(starPts(8, 13.2, 3, 1.1, 4, -90), '#ffffff', { shadow: false, d: 0.3, ink: MOON_INK }));
-  out.push(...spark(13.4, 9, 1, '#ffffff'), ...spark(2.6, 10.4, 0.8, '#ffffff'));
+  const out = [...tile('phantom', 'passive'), ...aura(8, 8, 6.4, '#f2dcf6')];
+  out.push(...cardIcon(5, 9, 6.4, -20, false), ...cardIcon(8, 8, 6.6, 0, true), ...cardIcon(11, 9, 6.4, 20, false));
+  out.push(streak([1, 12], [4, 11], 0.6, '#f2dcf6'), ...spark(13.6, 3, 0.9));
   return out;
 }
-
+// Smoke Bomb: a round black bomb bursting into plum smoke.
 function packhowl() {
-  const out = [...tile('indigo', 'passive'), ...aura(8, 9, 6.6, '#dce8ff', 1.2)];
-  // Lunar Howl: Snow wolf howling (grudgingly) under a pale full moon, rings racing out.
-  out.push(...solid(oval(12.4, 3.6, 2.4, 2.4, 0, 18), MOON, { shadow: false, d: 0.35, ink: MOON_INK }));
-  out.push(S(oval(11.8, 3, 0.6, 0.6, 0, 8), '#c4d2f0'), S(oval(13, 4.4, 0.5, 0.5, 0, 8), '#c4d2f0'));
-  for (const r of [3.4, 5.2]) out.push(...swoosh(4.4, 7.6, r, r, -160, -40, 0.7, '#dce8ff', { ink: MOON_INK }));
-  out.push(...snowHead(7.4, 10.4, 0.95, -18, true));
+  const out = [...tile('phantom', 'active'), ...aura(8, 9, 6.4, '#f2dcf6')];
+  out.push(...smokeIcon([[4.6, 10.6, 2.6], [8, 8.6, 3.2], [11.6, 10.6, 2.6], [8, 12.4, 2.4]]));
+  out.push(...solid(oval(8, 5, 2.4, 2.4, 0, 14), '#3a2a4a', { shadow: false, d: 0.3, ink: '#1a1022' }), S(tube([[9.4, 3.2], [11, 1.6]], 0.3, 0.3), '#c8a46a'), ...spark(11.6, 1.4, 0.9, '#ffd36a'));
   return out;
 }
-
+// Mirror Dodge: a hand mirror, a copy's silhouette popping in smoke beside it.
 function loyalguard() {
-  const out = [...tile('glacier', 'passive'), ...aura(8, 9, 6.8, '#dce8ff', 1.1)];
-  // Moon Ward: the greatsword planted point-down, a crescent shield of moonlight round it, a hit
-  // glancing off.
-  out.push(...swoosh(7.4, 8.6, 5, 6.4, -70, 70, 1.6, '#cfe0ff', { ink: MOON_INK }));
-  out.push(...fang([7.4, 3.4], [7.4, 14.6], { w: 2.8 }));
-  out.push(streak([14.6, 2.4], [12.2, 4.6], 0.9, '#ffffff'), streak([15, 5], [12.8, 6], 0.7, '#ffffff'));
-  out.push(...spark(2.4, 13, 1, '#ffffff'));
+  const out = [...tile('phantom', 'passive'), ...aura(8, 8, 6.4, '#f8f6ff')];
+  out.push(...solid(oval(6.6, 6.6, 3.6, 4.2, 0, 20), PSIL, { shadow: false, d: 0.35, ink: '#4a4a6a' }), S(oval(6, 5.6, 1.6, 2.2, 0, 14), '#ffffff'));
+  out.push(...solid(rect(5.8, 10.6, 1.6, 4), PPLUM, { shadow: false, d: 0.3, ink: PPLUMINK }));
+  out.push(...smokeIcon([[12, 10.4, 2], [13.4, 8.6, 1.4]]));
   return out;
 }
-
+// Hall of Mirrors: three see-through copies, one behind another.
 function alpha() {
-  const out = [...tile('royal', 'passive'), ...aura(7, 7.4, 7, '#e8f0ff', 1.3)];
-  // Queen's Awakening: the silver wolf's head on the greatsword's guard, the blade in its jaws,
-  // crowned, its ice-blue eye open and burning.
-  out.push(...fang([7.6, 9.6], [15, 13.6], { w: 2.6 }));
-  const P = (pts) => pts.map(([x, y]) => [1 + x * 0.78, 1.4 + y * 0.78]);
-  out.push(...solid(P([[3, 6], [3.6, 1.6], [6, 4.6]]), '#eef3fb', { shadow: false, d: 0.35, ink: '#2e3850' }));
-  out.push(...solid(P([[5.6, 5], [6.6, 1], [8.4, 4.4]]), '#eef3fb', { shadow: false, d: 0.35, ink: '#2e3850' }));
-  const head = P([[2.4, 7], [4.4, 4.4], [8.6, 4.2], [12.4, 6.4], [14.4, 8.4], [13.6, 10], [9.6, 10], [11, 12.6], [5.6, 13.6], [2.4, 11]]);
-  out.push(...solid(head, '#eef3fb', { d: 0.45, ink: '#2e3850', light: '#ffffff' }));
-  out.push(S(oval(12.2, 8.1, 0.7, 0.6, 0, 10), '#2a3048'));
-  out.push(...solid(P([[7.4, 6.6], [10, 6.8], [9, 7.8]]), '#8fe6ff', { shadow: false, d: 0.3, ink: '#1c6a96' }));
-  out.push(...spark(8.4, 6.8, 1.5, '#e8fbff'));
-  out.push(...solid(P([[4.6, 4.4], [5, 2], [6, 3.2], [7, 1.4], [8, 3.2], [9, 2], [9.4, 4.4]]), '#f2c94c', { shadow: false, d: 0.3, ink: '#8a5a10' }));
+  const out = [...tile('phantom', 'passive'), ...aura(8, 8, 6.8, '#f2dcf6', 1.2)];
+  for (const [x, c] of [[4.4, '#d8b8e6'], [8, '#c890da'], [11.6, '#b86ac0']]) out.push(...solid([[x - 1.6, 14.4], [x - 1.4, 8.6], [x - 2, 6.4], [x, 3.4], [x + 2, 6.4], [x + 1.4, 8.6], [x + 1.6, 14.4]], c, { shadow: false, d: 0.3, ink: PPLUMINK }));
   return out;
 }
-
+// Showstopper: the top hat with a card and a burst of sparkles over it.
 function snacktime() {
-  const out = [...tile('dawn', 'buff'), ...aura(8, 8.4, 6.8, '#fff6e0', 1.2)];
-  // Snack Time: a moon cookie with a crescent of blue icing, crumbs, little hearts.
-  out.push(...solid(oval(8, 8.6, 5.2, 5, 0, 26), '#e8c08a', { d: 0.45, ink: '#8a5a30', light: '#f8dcb0' }));
-  out.push(...solid(moonCrescent(8.6, 8, 2.6, 0), '#cfe0ff', { shadow: false, d: 0.3, ink: MOON_INK }));
-  for (const [x, y] of [[5, 6], [6.4, 11.6], [10.8, 11.4]]) out.push(S(oval(x, y, 0.5, 0.45, 0, 8), '#8a5a30'));
-  for (const [x, y, s] of [[13, 3, 1.2], [3, 3.2, 1]]) out.push(...solid(heartPts(x, y, s * 2.2), '#ff7aa8', { shadow: false, d: 0.3, ink: '#a8306a' }));
+  const out = [...tile('phantom', 'buff'), ...aura(8, 7, 6.6, '#fff4c8', 1.2)];
+  out.push(...hatIcon(8, 10.6, 4.2), ...cardIcon(10.4, 7.6, 4, 18));
+  out.push(...spark(4, 3, 1.1, '#ffd36a'), ...spark(12.6, 2.6, 1), ...spark(8, 1.8, 0.8));
+  return out;
+}
+// Grand Illusion (her finisher): a ring of smoke with copies round it and the top hat in the middle.
+function stampede() {
+  const out = [...tile('phantom', 'active'), ...aura(8, 8, 7, '#f2dcf6', 1.3, 5)];
+  out.push(...smokeIcon([[3, 12.6, 1.8], [8, 13.6, 2], [13, 12.6, 1.8], [2.6, 7, 1.4], [13.4, 7, 1.4]]));
+  out.push(...hatIcon(8, 8.4, 3.4));
+  for (const x of [3.6, 12.4]) out.push(S([[x - 1, 11], [x - 0.8, 7], [x, 5.2], [x + 0.8, 7], [x + 1, 11]], '#c890da'));
+  out.push(...spark(8, 2, 1.1));
   return out;
 }
 
-function stampede() {
-  const out = [...tile('indigo', 'active'), ...aura(8, 7, 7, '#e8f0ff', 1.4)];
-  // Last Straw: a great full moon, crescents of moonlight sweeping out under it, and an anger vein.
-  out.push(...solid(oval(8, 6, 4.6, 4.6, 0, 28), MOON, { d: 0.45, ink: MOON_INK, light: '#ffffff' }));
-  for (const [x, y, r] of [[6.4, 4.6, 0.9], [9.6, 7.4, 1.2], [9.2, 3.8, 0.6]]) out.push(S(oval(x, y, r, r, 0, 10), '#c4d2f0'));
-  for (const [y, rx] of [[12.2, 7], [14.2, 6]]) out.push(...swoosh(8, y - 4, rx, 4, 40, 140, 1.3, '#cfe0ff', { ink: MOON_INK }));
-  for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) out.push(S(tube([[12.6 + sx * 0.5, 3 + sy * 1.5], [12.6 + sx * 0.5, 3 + sy * 0.5], [12.6 + sx * 1.5, 3 + sy * 0.5]], 0.55), '#ff4d6d'));
-  out.push(...spark(2, 3, 0.8, '#ffffff'));
-  return out;
-}
+
+
+
+
+
+
+
 
 
 // ---------- Thief ----------

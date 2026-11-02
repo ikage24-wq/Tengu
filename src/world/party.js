@@ -137,7 +137,7 @@ function weaponStyle(bot) {
   const type = bot.stats.weaponType;
   // Archers shoot their own way: an Archer's gold arrows, a Beastmaster's wild arrows, a Stormcaller's
   // heavy bolts.
-  if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
+  if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['ptflourish', 'ptswirl', 'ptcard', 'ptlean']), shot: 'ptarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
@@ -424,7 +424,7 @@ const GAUGE_PER_HIT = 3;
 // A string left alone this long starts over from its opener.
 const COMBO_RESET = 1.2;
 // Parts of a skill a bot can't play (buffs, heals, lasting spells): a skill with any is left out.
-const EXOTIC = ['grant', 'lantern', 'song', 'revive', 'concert', 'well', 'align', 'heal', 'sky', 'provoke', 'rain'];
+const EXOTIC = ['grant', 'lantern', 'song', 'revive', 'concert', 'well', 'align', 'grand', 'heal', 'sky', 'provoke', 'rain'];
 const plain = (s) => !EXOTIC.some((k) => s[k] != null);
 const CUT_TINT = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 
@@ -621,6 +621,18 @@ const SPECIALS = {
           world.fx.push({ kind: 'rain', variant: 'acarrow', school: 'acro', x: o.x, y: o.y, h: o.def.h, t: -1.2 - i * 0.05, dur: 0.45, seed: i });
           land(bot, world, o, 1.4 + i * 0.05, range, { stack: i, knock: 60, launch: 140, big: !i, burst: 'achit', via: 'shot' }, rng);
         });
+    },
+  },
+  // Grand Illusion: she vanishes in smoke and every monster round her takes a copy's arrow.
+  stampede: {
+    move: 'ptillusion', dur: 2.4,
+    play: (bot, world, m, rng, P, tune) => {
+      const G = P.combo[0].strikes[0].grand;
+      const b = bot.body;
+      world.fx.push({ kind: 'ptillusion', x: b.x, y: b.y, t: 0, dur: G.hide + 0.4 });
+      const range = physicalRange(bot.stats, bot.stats.weaponType, G.pct * tune);
+      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < G.r + 80 && Math.abs(o.y - b.y) < 160)
+        .forEach((o, i) => land(bot, world, o, G.at + 0.2 + i * 0.03, range, { stack: i, knock: 200, launch: 160, stun: 0.3, big: !i, burst: 'pthit', via: 'shot' }, rng));
     },
   },
   // Planetary Alignment: five planets in a row ahead of her, one beam through every monster in it.

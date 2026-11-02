@@ -41,6 +41,8 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 's
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Starlight Idol.
   'idolsong', 'sisong', 'siwave', 'sistage', 'sihit',
+  // The Phantom Trickster.
+  'pthit', 'ptsmoke', 'ptillusion',
   // The Acrobat Archer.
   'achit', 'acfirework', 'acburst', 'trapsnap',
   // The Astronomer.
@@ -229,16 +231,6 @@ function hearSummons(world, m, pan) {
       said[`${key}At`] = world.now + 18 + Math.random() * 20;
       if (said[`${key}At0`]) sfx(idle, { pan: pan(k.x) });
       said[`${key}At0`] = true;
-    }
-  }
-  // Snow wolf: a growl when she swings, a bored huff now and then.
-  const w = world.pets?.snow;
-  if (w) {
-    if (w.act && w.act !== said.wolf) sfx('wolfGrowl', { pan: pan(w.x) });
-    said.wolf = w.act ?? null;
-    if (!w.act && world.now > (said.wolfAt ?? world.now + 6)) {
-      said.wolfAt = world.now + 14 + Math.random() * 16;
-      sfx('wolfHuff', { pan: pan(w.x) });
     }
   }
 }

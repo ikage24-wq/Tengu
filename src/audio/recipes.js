@@ -218,6 +218,12 @@ const R = {
       { seq: 'r:300 C7:80 G7:500', inst: 'glockenspiel', db: -8 },
     ],
   },
+  // The Phantom Trickster, a stage magic act: an arrow landing (a soft pop and a twinkle), a puff
+  // of her smoke (a poof with a little chime), and Grand Illusion (a mysterious rising run into a
+  // big magic flourish as the copies loose).
+  pthit: { db: -18, vary: 8, max: 3, gap: 50, layers: [{ rec: 'teleIn', rate: 1.8, len: 200, db: -6 }, sparkle('A7:40', { db: -12 })] },
+  ptsmoke: { db: -13, vary: 6, max: 2, gap: 80, layers: [{ rec: 'teleOut', rate: 1.2, len: 500 }, whoosh(300, 300, 1400, { db: -8 }), sparkle('E7:60 B7:120', { db: -12 })] },
+  ptillusion: { db: -8, max: 1, room: true, duck: [-6, 2200], layers: [{ rec: 'teleOut', rate: 0.9, len: 700 }, { seq: 'D5:120 F5:120 A5:120 C#6:120 D6:120 F6:120 A6:500', inst: 'celesta', db: -4 }, { seq: 'r:1200 D4+A4+D5+F5:1400', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:1200 D7:0 A7:80 D8:160', { db: -8 })] },
   // The Acrobat Archer: an arrow landing (a bright pluck and a sparkle), Firework Arrow (a pop and a
   // crackle of sparks), her springboard going (a springy boing), and Grand Somersault's ring of gold
   // at the top of her leap (a cymbal swell into a fanfare).
@@ -508,9 +514,6 @@ const R = {
   // The Spirit Doll's giggle: a quick run of tiny high notes.
   dollGiggle: { db: -21, vary: 6, max: 1, gap: 600, layers: [{ wave: 'sine', arp: [1568, 1760, 1568, 2093, 1760], arpStep: 55, vib: [14, 4], env: { a: 5, s: 260, d: 60 }, overtones: [3, 0.25] }] },
   dollHey: { db: -20, vary: 6, max: 1, gap: 400, layers: [{ wave: 'sine', f0: 1400, slide: 1.4, vib: [12, 3], env: { a: 4, s: 90, d: 60 }, overtones: [3, 0.25] }] },
-  // Snow wolf: a bored huff through the nose, and a little growl when she swings.
-  wolfHuff: { db: -22, vary: 8, max: 1, gap: 800, layers: [{ wave: 'noise', env: { a: 20, s: 60, d: 200 }, lpf: [1400, 600], hpf: [300] }] },
-  wolfGrowl: { db: -21, vary: 6, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 120, slide: 0.4, vib: [24, 8], env: { a: 30, s: 160, d: 140 }, lpf: [700] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },

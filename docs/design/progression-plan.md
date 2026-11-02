@@ -149,7 +149,8 @@ jobs.)
   dungeon redesign). Was: Tamamo, Lilith and Selene trials, the crystal mines dungeon,
   and the Prismaris finale; the 2nd job is part of chapter 4.
 - [x] **Phase 5: Archer and Thief 2nd jobs.** (The Archer was remade 2026-11-02 as the Acrobat
-  Archer: docs/design/acrobat-archer.md; the Beastmaster is to be replaced by a new bow path.) Archer done: Kestrel's trial at 30 (shoot down 15
+  Archer: docs/design/acrobat-archer.md; the Beastmaster was replaced by the Phantom Trickster:
+  docs/design/phantom-trickster.md.) Archer done: Kestrel's trial at 30 (shoot down 15
   Wraiths), then Ranger (bow, Gale gauge: Gale Volley, Cyclone Arrow, Tailwind, mastery, Storm
   Volley finisher) or Sniper (crossbow, Focus gauge and Deadeye: Marksman's Chain, Glacier Bolt,
   Steady Aim, mastery, Heartseeker finisher), each with its own basic combo, command shots (up,

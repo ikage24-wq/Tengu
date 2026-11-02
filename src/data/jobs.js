@@ -77,9 +77,9 @@ export const JOBS = {
 
   // Archer branches. Both ask for Kestrel's trial first.
   beastmaster: {
-    id: 'beastmaster', power: 2.57, spread: 0.92, name: 'Beastmaster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'beastmaster', power: 2.57, spread: 0.92, name: 'Phantom Trickster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 26, mp: 17, advanceHp: 340, advanceMp: 260, weapons: ['bow'],
-    blurb: 'Hunts with a bow beside her wolf and hawk. Her shots and her animals\' hits build Bond; full, the animals grow bigger and hunt on their own. Pounces, dives, howls and a stampede of spirit beasts.',
+    blurb: 'A stage magician with a bow: every shot dressed up as a trick. Her hits build Illusion, and see-through copies of her appear behind her and shoot beside her. Arrows that vanish and strike again, doves, cards, a smoke bomb, and Grand Illusion: a ring of copies all loosing at once.',
   },
   stormcaller: {
     id: 'stormcaller', power: 1.57, spread: 0.56, name: 'Arbalist Engineer', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
@@ -112,7 +112,8 @@ export const JOBS = {
 // Jobs renamed or retired since older saves were made, and what they became (a job not listed here
 // that no longer exists starts over as a Novice: core/save.js).
 // Older warrior, archer, and thief advanced jobs are retired; those characters return to their first job.
-// The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller. The test
+// The archer's Ranger and Sniper were remade as the Beastmaster and the Stormcaller (now the Phantom
+// Trickster and the Arbalist Engineer, ids kept). The test
 // warrior (Swordsman, test) was tried and taken out.
 export const RETIRED_JOBS = {
   testwarrior: 'warrior', blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',

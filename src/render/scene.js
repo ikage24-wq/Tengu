@@ -23,6 +23,7 @@ import { drawBuffEffects } from './buffs.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
+import { copiesOf, copyAt } from '../world/phantom.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
@@ -280,7 +281,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (world.pose || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
   const ready = !world.map.isTown && world.now - (feel.lastFight ?? -99) < 4;
   const low = !world.map.isTown && world.char.hp < (world.stats?.maxHp ?? 1) * 0.3;
-  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : blink ? 0.45 : 1, job: world.char.job, ready, low, urgent: true };
+  // (Hidden in her own smoke through Grand Illusion, between vanishing and coming back for her bow.)
+  const hidden = world.illusion && world.now > world.illusion.since + 0.25 && world.now < world.illusion.until - 0.2;
+  const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : hidden ? 0 : blink ? 0.45 : 1, job: world.char.job, ready, low, urgent: true };
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
@@ -288,6 +291,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
   if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
+  // The Phantom Trickster's see-through copies behind her, and Grand Illusion's ring of them.
+  if (!world.dead) drawCopies(ctx, world, look, gear, cam, heroState, time);
   // A Thief darting leaves violet afterimages of herself along the way, fading fast.
   drawAfterimages(ctx, world, look, gear, cam, heroState, time);
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
@@ -444,6 +449,34 @@ function drawLeafWheel(ctx, world, run, hx, hy, time, layer) {
 }
 
 // Buffs that copy you: Shadow Partner's dark clone just behind, and Mirage's golden decoys.
+// The Phantom Trickster's copies (world/phantom.js): plum see-through copies of her standing just
+// behind her, each doing what she does and bobbing on its own; and through Grand
+// Illusion, a ring of them round the screen, each drawing and loosing at the monster nearest it.
+const COPY_TINT = '#9a4a9a';
+function drawCopies(ctx, world, look, gear, cam, state, time) {
+  const n = copiesOf(world);
+  for (let k = n - 1; k >= 0; k--) {
+    if (world.copyGone?.[k] > world.now) continue;
+    const c = copyAt(world, k);
+    const x = snap(c.x - cam.x);
+    const y = snap(c.y - cam.y);
+    const flicker = 0.85 + 0.15 * Math.sin(time * 7 + k * 2);
+    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, job: 'beastmaster', alpha: state.alpha * 0.62 * flicker }));
+  }
+  const I = world.illusion;
+  if (!I) return;
+  for (const sp of I.spots) {
+    if (world.now < sp.at) continue;
+    const x = snap(sp.x - cam.x);
+    const y = snap(sp.y - cam.y);
+    const age = world.now - sp.at;
+    const shoot = Math.max(0, world.now - (I.shoot - 0.5));
+    const fade = Math.min(1, age * 4) * Math.min(1, Math.max(0, I.until - world.now) * 3);
+    const pose = { pose: 'ptflourish', progress: Math.min(1, shoot / 0.52), dur: 0.52, from: null, blend: 1 };
+    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, ...pose, facing: sp.dir, job: 'beastmaster', alpha: 0.78 * fade }));
+  }
+}
+
 function drawPhantom(ctx, world, look, gear, x, y, state) {
   const ph = world.phantom;
   const live = ph && world.now >= ph.since && world.now < ph.until;

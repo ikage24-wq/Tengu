@@ -307,6 +307,13 @@ carry an improvement across every part of the game it applies to.
     steam; sticky and cluster bolts burst in brass and teal with scattered cogs; her turret is a brass
     tripod machine with a cog drum and a teal eye; Big Bertha is a giant brass ballista unfolding
     over her. Crossbows are compact gadget crossbows held at the waist.
+  - The Phantom Trickster (2026-11-02; she replaced the Beastmaster) is plum and silver, HD soft
+    glow: her arrow is plum trailing a wisp of smoke and silver sparkles; her big one has the four
+    card suits tumbling behind it; her hit a silver flash, a puff of plum smoke and three cards fanning
+    out; her stage smoke plum puffs round a silver flash; Dove Arrow silver doves; Card Trick spinning
+    playing cards; Grand Illusion a great ring of smoke with cards fluttering down; her badge a plum
+    top hat with a card. Her copies are plum see-through copies of her own figure. Her bow is the
+    Acrobat Archer's short recurve in plum and silver.
   - The Acrobat Archer (2026-11-02; she replaced the Archer) is mint and gold with a touch of pink,
     HD soft glow: her arrow is gold trailing a curling mint ribbon; her big one wrapped in two
     ribbons with a star burst at its head; her hit a gold star popping in a loop of mint ribbon,

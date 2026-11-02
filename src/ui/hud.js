@@ -389,8 +389,8 @@ const GAUGES = {
     tip: 'Your blows build it and it drains once the fighting stops. The fuller it is, the harder you hit. Rampage spends it all; full, it powers Crimson Eclipse.' },
   faith: { color: '#e8b02a', hot: '#ffe36b', icon: 'star', name: 'Faith', full: 'SANCTIFIED', notch: () => null,
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
-  bond: { color: '#6f8fe0', hot: '#d6e8ff', icon: 'moon', name: 'Patience', full: 'FED UP', notch: () => null, edge: 'rgba(170,200,255,', ink: '#2a3a7a',
-    tip: 'Snow wolf\'s patience running out: your shots and her hits wear it down, and it recovers once the fighting stops. Gone, she\'s Fed Up and fights on her own, and Last Straw is ready.' },
+  bond: { color: '#9a4a9a', hot: '#f2eeff', icon: 'tophat', name: 'Illusion', full: 'ALL COPIES', notch: () => null, edge: 'rgba(216,180,232,', ink: '#3a1446',
+    tip: 'Your shots that land build it; it fades once the fighting stops. Half full, a see-through copy of you stands behind you and shoots with you every other arrow; full, two (a third with Hall of Mirrors) shoot with every arrow, and Grand Illusion is ready.' },
   charge: { color: '#b8782a', hot: '#4fe0d0', icon: 'cog', name: 'Pressure', full: 'OVERDRIVE', notch: () => null, edge: 'rgba(79,224,208,', ink: '#5a3818',
     tip: 'Every bolt of yours that lands builds steam pressure; it fades once the fighting stops. Full (Overdrive), your crossbow vents steam and every shot fires a second bolt, and Big Bertha is ready.' },
 };

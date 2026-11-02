@@ -491,6 +491,11 @@ const ICONS = {
     ctx.stroke();
     ctx.restore();
   },
+  // A top hat (the Phantom Trickster's Illusion).
+  tophat(ctx, s) {
+    ctx.fillRect(-s * 0.48, s * 0.18, s * 0.96, s * 0.14);
+    ctx.fillRect(-s * 0.28, -s * 0.42, s * 0.56, s * 0.62);
+  },
   // A ringed planet (the Astronomer's Orbit).
   planet(ctx, s) {
     ctx.beginPath();

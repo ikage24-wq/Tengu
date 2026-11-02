@@ -150,6 +150,16 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
   const u = f.dur ? Math.min(1, f.t / f.dur) : 0;
   const along = (d) => [x - Math.cos(ang) * d, y - Math.sin(ang) * d];
   switch (f.shot) {
+    case 'ptarrow': case 'ptbig': case 'ptcard': case 'ptdove': {
+      // The Phantom Trickster's: a plum arrow trailing smoke, her big one with card suits tumbling
+      // behind, a spinning playing card, and a silver dove flapping along (always right way up).
+      const nose = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(nose) < 0;
+      const name = { ptarrow: 'celptarrow', ptbig: 'celptbig', ptcard: 'celptcard', ptdove: 'celptdove' }[f.shot];
+      const upright = f.shot === 'ptcard' || f.shot === 'ptdove';
+      fxSprite(ctx, name, x, y, { t: time + (f.seed ?? 0), flip: left, rot: upright ? 0 : left ? nose + Math.PI : nose, scale: { ptarrow: 0.5, ptbig: 0.62, ptcard: 0.32, ptdove: 0.4 }[f.shot] * (f.split ? 0.85 : 1) });
+      return true;
+    }
     case 'acarrow': case 'acbig': {
       // The Acrobat Archer's: a gold arrow trailing a curling mint ribbon, and her big one wrapped in
       // two; under Showtime the extra arrows are a little smaller.
@@ -341,74 +351,18 @@ export function windRainPiece(ctx, x, y, s, time) {
 
 // ---------- Hits, bursts, and sights ----------
 
-// One piece of Snow wolf's sleeve junk, drawn plain, centred at (x, y), turned `rot`.
-function drawJunk(ctx, item, x, y, rot) {
-  const INK = '#3a2d4f';
-  const shape = (draw, fill) => {
-    ctx.beginPath();
-    draw();
-    ctx.fillStyle = fill;
-    ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = INK;
-    ctx.stroke();
-  };
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rot);
-  ctx.scale(1.4, 1.4);
-  if (item === 'rock') {
-    shape(() => { ctx.moveTo(-5, 1); ctx.lineTo(-3, -4); ctx.lineTo(3, -4); ctx.lineTo(5, 0); ctx.lineTo(2, 4); ctx.lineTo(-4, 4); ctx.closePath(); }, '#a8a4b4');
-    ctx.fillStyle = '#d0ccdc';
-    ctx.fillRect(-2, -3, 3, 2);
-  } else if (item === 'sandal') {
-    shape(() => ctx.ellipse(0, 0, 7, 3, 0, 0, Math.PI * 2), '#c8956a');
-    ctx.strokeStyle = '#d24a5a';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(-3, -2);
-    ctx.lineTo(2, 0);
-    ctx.lineTo(-3, 2);
-    ctx.stroke();
-  } else if (item === 'fish') {
-    shape(() => { ctx.ellipse(-1, 0, 6, 3, 0, 0, Math.PI * 2); }, '#8fb0d8');
-    shape(() => { ctx.moveTo(4, 0); ctx.lineTo(8, -3); ctx.lineTo(8, 3); ctx.closePath(); }, '#6f90c0');
-    ctx.fillStyle = INK;
-    ctx.fillRect(-5, -1, 1, 1);
-  } else if (item === 'duck') {
-    shape(() => ctx.ellipse(0, 1, 5, 3.5, 0, 0, Math.PI * 2), '#ffd84a');
-    shape(() => ctx.arc(3, -3, 2.6, 0, Math.PI * 2), '#ffd84a');
-    shape(() => { ctx.moveTo(5, -3); ctx.lineTo(8, -2); ctx.lineTo(5, -1.5); ctx.closePath(); }, '#ff8a3a');
-    ctx.fillStyle = INK;
-    ctx.fillRect(3, -4, 1, 1);
-  } else if (item === 'teacup') {
-    shape(() => { ctx.moveTo(-5, -3); ctx.lineTo(5, -3); ctx.lineTo(3, 3); ctx.lineTo(-3, 3); ctx.closePath(); }, '#ffffff');
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(6, 0, 1.8, -1.4, 1.4);
-    ctx.stroke();
-    ctx.fillStyle = '#5ab8ee';
-    ctx.fillRect(-4, -3, 8, 1);
-  } else if (item === 'cat') {
-    shape(() => ctx.ellipse(0, 1, 6, 3.6, 0, 0, Math.PI * 2), '#d8d2e0');
-    shape(() => ctx.arc(-4, -1, 3, 0, Math.PI * 2), '#d8d2e0');
-    shape(() => { ctx.moveTo(-6.5, -2.5); ctx.lineTo(-6, -5.5); ctx.lineTo(-4.4, -3.6); ctx.closePath(); }, '#d8d2e0');
-    shape(() => { ctx.moveTo(-3.6, -3.6); ctx.lineTo(-2.4, -5.8); ctx.lineTo(-1.6, -3); ctx.closePath(); }, '#d8d2e0');
-    ctx.strokeStyle = INK;
-    ctx.beginPath();
-    ctx.moveTo(-5.4, -1);
-    ctx.lineTo(-4.4, -1);
-    ctx.moveTo(-3.4, -1);
-    ctx.lineTo(-2.4, -1);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
 export function drawArchery(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
   switch (f.kind) {
+    case 'pthit':
+      // The Phantom Trickster's arrow landing: a silver flash, a puff of plum smoke, three cards.
+      return fxSprite(ctx, 'celpthit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.6 : 0.44 }) || true;
+    case 'ptsmoke':
+      // A puff of her stage smoke (vanishing, appearing, a copy popping, Smoke Bomb).
+      return fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: f.small ? 0.35 : 0.7 }) || true;
+    case 'ptillusion':
+      // Grand Illusion: the great ring of stage smoke, cards fluttering down through it.
+      return fxSprite(ctx, 'celptillusion', x, y + 4, { p, scale: 1 }) || true;
     case 'achit': {
       // The Acrobat Archer's arrow landing: a gold star popping in a loop of mint ribbon, then
       // confetti; heavy shots are bigger.
@@ -500,211 +454,6 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     case 'zap': {
       // A small zap: a jump of chain lightning or charged ground biting a monster.
       fxSprite(ctx, 'celstormhit', x, y - (f.h ?? 24) / 2, { p, flip, scale: 0.42 });
-      return true;
-    }
-    // ---- Snow wolf's moon magic (world/pets.js) ----
-    case 'moonhit': {
-      // Her hits: a crescent of moonlight cut across the target, sparkles thrown off it.
-      const cy = y - (f.h ?? 24) / 2;
-      const big = f.big || f.crit;
-      fxSprite(ctx, 'celmoonhit', x, cy, { p, flip, scale: big ? 0.85 : 0.7 });
-      if (big) groundRing(ctx, 'celringice', x, y, p, 46);
-      return true;
-    }
-    case 'moonslash': {
-      // The greatsword spun round her: a full ring of moonlight crescents as wide as its reach, a
-      // ring of cold light racing out along the ground under it.
-      fxSprite(ctx, 'cellunarcrescent', x, y - 18, { p, flip, scale: 1.25 });
-      fxSprite(ctx, 'cellunarcrescent', x, y - 10, { p: Math.min(1, p * 1.15), flip: !flip, scale: 1.25, rot: Math.PI });
-      groundRing(ctx, 'celringice', x, y, p, 84);
-      return true;
-    }
-    case 'moonslam': {
-      // The greatsword dropped on the ground ahead: a cold burst, a ring of light and dust.
-      fxSprite(ctx, 'celmoonhit', x, y - 10, { p, flip, scale: 1.1 });
-      groundRing(ctx, 'celringice', x, y, p, 64);
-      fxSprite(ctx, 'celdust', x, y, { p, flip, scale: 0.7 });
-      return true;
-    }
-    case 'moonquake': {
-      // Her leap landing: the greatsword crashes down, a burst of moonlight, two rings of cold light
-      // racing out along the ground as wide as it hit, dust thrown up.
-      const r = f.r ?? 84;
-      fxSprite(ctx, 'celmoonhit', x, y - 12, { p, flip, scale: 1.4 });
-      groundRing(ctx, 'celringice', x, y, p, r);
-      groundRing(ctx, 'celringice', x, y, Math.min(1, p * 1.6), r * 0.6);
-      fxSprite(ctx, 'celdust', x - 20, y, { p, flip: true, scale: 0.9 });
-      fxSprite(ctx, 'celdust', x + 20, y, { p, flip: false, scale: 0.9 });
-      return true;
-    }
-    case 'junk': {
-      // Sleeve Junk in flight: lobbed in a high arc, tumbling.
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const jx = x + (tx - x) * p;
-      const jy = y + (ty - y) * p - 46 * 4 * p * (1 - p);
-      drawJunk(ctx, f.item, jx, jy, (f.dir || 1) * p * 9 + (f.seed ?? 0) * 6);
-      return true;
-    }
-    case 'junkbounce': {
-      // ...bouncing back off its head, spinning, and dropping away.
-      const d = f.dir || 1;
-      const bx = x + d * 30 * p;
-      const by = y - 26 * Math.sin(Math.PI * Math.min(1, p * 1.4)) + 40 * Math.max(0, p - 0.7);
-      ctx.save();
-      ctx.globalAlpha = 1 - Math.max(0, p - 0.7) / 0.3;
-      drawJunk(ctx, f.item, bx, by, d * p * 14);
-      ctx.restore();
-      if (f.item === 'teacup' && p < 0.4) {
-        // A teacup shatters: shards flying.
-        ctx.fillStyle = '#ffffff';
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 + (f.seed ?? 0);
-          ctx.fillRect(x + Math.cos(a) * 30 * p, y + Math.sin(a) * 20 * p - 4, 2, 2);
-        }
-      }
-      return true;
-    }
-    case 'bonk': {
-      // BONK: a cartoon star where it struck, and the word popping up off the head.
-      const cy = y - (f.h ?? 24);
-      const k = Math.min(1, p * 4) * (1 - Math.max(0, p - 0.6) / 0.4);
-      ctx.save();
-      ctx.globalAlpha = k;
-      ctx.translate(x, cy);
-      ctx.rotate(p * 2);
-      ctx.beginPath();
-      for (let i = 0; i < 10; i++) {
-        const r = i % 2 ? 4 : 10 * (0.6 + 0.4 * Math.min(1, p * 5));
-        const a = (i / 10) * Math.PI * 2;
-        ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
-      }
-      ctx.closePath();
-      ctx.fillStyle = '#ffe36b';
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#a8543a';
-      ctx.stroke();
-      ctx.restore();
-      ctx.save();
-      ctx.globalAlpha = k;
-      ctx.font = 'bold 10px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = '#3a2d4f';
-      ctx.fillStyle = '#ffffff';
-      const wy = cy - 12 - 10 * p;
-      ctx.strokeText('BONK!', x, wy);
-      ctx.fillText('BONK!', x, wy);
-      ctx.restore();
-      return true;
-    }
-    case 'catnap': {
-      // The sleepy cat, curled up asleep on the monster's head while it can't move, z's drifting up.
-      const m = f.mob;
-      const cx = (m ? m.x : f.x) - cam.x;
-      const cy = (m ? m.y - (m.air ?? 0) - m.def.h : f.y) - cam.y;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, (1 - p) * 5);
-      drawJunk(ctx, 'cat', cx, cy - 3, 0);
-      ctx.fillStyle = '#8f7cc4';
-      ctx.font = 'bold 7px sans-serif';
-      ctx.fillText('z', cx + 6, cy - 10 - 6 * ((p * 3) % 1));
-      ctx.restore();
-      return true;
-    }
-    case 'moonbolt': {
-      // A crescent of moonlight flicked from the blade, flying to its target: big and bright enough
-      // to follow, a soft glow round it and two fading afterimages behind, a flash as it leaves.
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const ang = Math.atan2(ty - y, (tx - x) * (f.dir || 1));
-      const at = (q) => [x + (tx - x) * q, y + (ty - y) * q];
-      const [cx, cy] = at(p);
-      if (p < 0.2) fxSprite(ctx, 'celmoonhit', x, y, { p: p / 0.2, scale: 0.5 });
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 22);
-      g.addColorStop(0, 'rgba(200, 225, 255, 0.55)');
-      g.addColorStop(1, 'rgba(120, 160, 240, 0)');
-      ctx.fillStyle = g;
-      ctx.fillRect(cx - 22, cy - 22, 44, 44);
-      ctx.restore();
-      for (const [lag, a] of [[0.16, 0.25], [0.08, 0.5]]) {
-        if (p > lag) fxSprite(ctx, 'celmoonbolt', ...at(p - lag), { t: time, flip, scale: 0.95, rot: ang * (f.dir || 1), alpha: a });
-      }
-      fxSprite(ctx, 'celmoonbolt', cx, cy, { t: time, flip, scale: 1.05, rot: ang * (f.dir || 1) });
-      return true;
-    }
-    case 'moonfall': {
-      // Moonfall: a beam of moonlight crashing down from the sky onto one monster.
-      fxSprite(ctx, 'celmoonbeam', x, y, { p, scale: 0.62 });
-      return true;
-    }
-    case 'lunarhowl': {
-      // Lunar Howl: a pale moon rising behind her, rings of cold light racing out along the ground.
-      const r = f.r ?? 110;
-      fxSprite(ctx, 'cellunarmoon', x - (f.dir || 1) * 6, y - 46, { p, scale: 0.42 });
-      groundRing(ctx, 'celringice', x, y, p, r);
-      groundRing(ctx, 'celringice', x, y, Math.min(1, p * 1.5), r * 0.6);
-      return true;
-    }
-    case 'moonward': {
-      // Moon Ward: a crescent shield of moonlight standing up in front of the planted greatsword.
-      fxSprite(ctx, 'cellunarcrescent', x + (f.dir || 1) * 6, y - 26, { p, scale: 0.3, rot: (f.dir || 1) * (Math.PI / 2) });
-      return true;
-    }
-    case 'laststraw':
-      // The finisher's signal: Snow wolf acts it out (strawmoon, and her own drawing).
-      return true;
-    case 'strawmoon': {
-      // Last Straw: a great full moon rises behind her as she fumes; as she lands (`f.hit`), it
-      // bursts: a flash of moonlight, crescents racing out both ways across the whole screen, rings
-      // of cold light under them.
-      const hit = f.hit ?? 0.5;
-      const frame = p < 0.08 ? 0 : p < 0.16 ? 1 : p < hit + 0.15 ? 2 + (Math.floor(time * 6) % 2) : p < hit + 0.25 ? 4 : 5;
-      if (p < hit + 0.35) fxSprite(ctx, 'cellunarmoon', x - (f.dir || 1) * 10, y - 120, { frame, scale: 1.2 });
-      const q = (p - hit) / (1 - hit);
-      if (q > 0 && q < 0.6) {
-        const k = q / 0.6;
-        fxSprite(ctx, 'celmoonhit', x, y - 20, { p: k, scale: 2.4 });
-        groundRing(ctx, 'celringice', x, y, k, f.r ?? 420);
-        groundRing(ctx, 'celringice', x, y, Math.min(1, k * 1.6), (f.r ?? 420) * 0.5);
-        for (const side of [-1, 1]) {
-          for (let i = 0; i < 3; i++) {
-            const d = (k - i * 0.12) / 0.7;
-            if (d <= 0 || d >= 1) continue;
-            fxSprite(ctx, 'cellunarcrescent', x + side * d * (f.r ?? 420), y - 18, { p: Math.min(0.99, 0.35 + d * 0.5), flip: side < 0, scale: 0.55, rot: side * (Math.PI / 2), alpha: Math.min(1, (1 - d) * 4) });
-          }
-        }
-      }
-      return true;
-    }
-    case 'cookie': {
-      // Snack Time: a moon cookie tossed in an arc from the Beastmaster to Snow wolf, spinning.
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const cx = x + (tx - x) * p;
-      const cy = y + (ty - y) * p - 40 * p * (1 - p) * 4;
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(time * 12);
-      ctx.beginPath();
-      ctx.arc(0, 0, 3.6, 0, Math.PI * 2);
-      ctx.fillStyle = '#e8c08a';
-      ctx.fill();
-      ctx.lineWidth = 1;
-      ctx.strokeStyle = '#8a5a30';
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(0.4, -0.2, 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = '#cfe0ff';
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(1.2, -0.8, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#e8c08a';
-      ctx.fill();
-      ctx.restore();
       return true;
     }
     case 'cometfall': {

@@ -960,8 +960,11 @@ function staff(m, t, f = 0) {
 // height of a hunter's bow so it can be loosed mid-flip and held out in front of her chest without
 // reaching up across her face. Mint limbs curling back hard at the tips, gold star caps, a gold
 // grip wrapped with a mint ribbon whose tails flutter; a gem and a second star pair up the tiers.
+// The Phantom Trickster's bow (the 'phantom' finish) is the same short recurve in plum and silver:
+// little silver crescent moons for tips and a silver tassel hanging from a diamond on the grip.
 function acroBow(m, t) {
   const s = [];
+  const phantom = m.variant === 'phantom';
   const H = 10.5 + t * 0.25;
   const bulge = 4.6;
   const thick = 2.2;
@@ -983,11 +986,15 @@ function acroBow(m, t) {
   };
   s.push({ ...R(tipX - 0.35, -H, 0.7, H * 2, '#fff6fb'), string: true });
   // The ribbon's tails, hanging from the grip behind the limbs.
-  s.push(T([[-1, 1], [-3.4, 3.4], [-2.6, 5.4], [-1.6, 3.6], [-0.4, 1.6]], m.bladeDark), T([[-1, 1.4], [-0.8, 4.6], [0.4, 6], [0.4, 3.4], [0, 1.6]], m.blade));
+  if (phantom) s.push(R(-0.9, 1, 0.6, 3, m.trimDark), T([[-1.6, 4], [0, 4], [0.4, 7.4], [-0.6, 8], [-2, 7.4]], m.trim), F(T([[-1, 4.4], [-0.4, 4.4], [-0.4, 7.4], [-1, 7.6]], m.edge)));
+  else s.push(T([[-1, 1], [-3.4, 3.4], [-2.6, 5.4], [-1.6, 3.6], [-0.4, 1.6]], m.bladeDark), T([[-1, 1.4], [-0.8, 4.6], [0.4, 6], [0.4, 3.4], [0, 1.6]], m.blade));
   s.push(limb(m.blade));
   s.push(F(limb(m.edge, thick * 0.3, -0.92, -0.12)), F(limb(m.edge, thick * 0.3, 0.12, 0.92)));
   s.push(R(xAt(0) - 1.6, -2, 2.6, 4, m.trim), F(R(xAt(0) - 1.6, -0.4, 2.6, 0.8, m.trimDark)));
-  for (const sd of [-1, 1]) s.push(F(star(xAt(sd), sd * H, 1.6, m.trim, 0.42)));
+  if (phantom) {
+    for (const sd of [-1, 1]) s.push(T([...arcPts(xAt(sd), sd * H, 1.9, 1.9, 60, 300, 10), ...arcPts(xAt(sd) + 0.8, sd * H, 1.5, 1.5, 300, 60, 10)], m.trim));
+    s.push(T([[xAt(0) + 1.2, -1.6], [xAt(0) + 2.4, 0], [xAt(0) + 1.2, 1.6], [xAt(0), 0]], m.edge));
+  } else for (const sd of [-1, 1]) s.push(F(star(xAt(sd), sd * H, 1.6, m.trim, 0.42)));
   const a = { tip: [tipX, -H], head: [1, 0], blade: [-H, H] };
   if (t >= 4) {
     s.push(...gem(xAt(0) - 0.3, 0, 0.8, m.gem));
@@ -999,7 +1006,7 @@ function acroBow(m, t) {
 }
 
 function bow(m, t) {
-  if (m.variant === 'acro') return acroBow(m, t);
+  if (m.variant === 'acro' || m.variant === 'phantom') return acroBow(m, t);
   const s = [];
   const H = [19, 19.5, 20, 20.5, 21, 22, 22.5, 23, 23.5, 24, 25][t];
   const bulge = [7, 7, 8, 8, 8.5, 9, 9, 9.5, 9.5, 10, 11][t];

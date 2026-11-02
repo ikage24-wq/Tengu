@@ -8,7 +8,6 @@ import { drawHero } from '../render/hero.js';
 import { COLORS, THEMES, text, box, button, tabs, wrap, bar, hover, clicked, roundRect, font, softShadow, icon, tooltip, lighten, darken, toggle } from './kit.js';
 import { paintFan } from '../render/props.js';
 import { lookFor } from '../render/townlife.js';
-import { drawSnowWolf } from '../render/snowwolf.js';
 import { groundAt } from '../world/physics.js';
 import { createAnim, stepAnim } from '../render/animator.js';
 import { stats, wornGear } from '../core/character.js';
@@ -37,13 +36,13 @@ function backdrop(ctx, time) {
 
 // A silly subtitle under the logo, rolled fresh on every page load.
 const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
-const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Arbalist Engineer', 'Blade Dancer', 'Sky Dancer', 'Onmyoji'];
+const JOB_NAMES = ['Paladin', 'Berserker', 'Phantom Trickster', 'Arbalist Engineer', 'Blade Dancer', 'Sky Dancer', 'Starlight Idol', 'Astronomer'];
 const QUOTE_MAKERS = [
   () => `${oneOf(JOB_NAMES)}s are perfectly balanced. Probably.`,
   () => `${oneOf(['Mira', 'Marlo', 'Lulu', 'The Crystal King'])} says hi!`,
   () => oneOf([
     'Bring friends. Share the loot. Or don\'t.',
-    'The snow wolf is a very good girl.',
+    'Pick a card. Any card.',
     'Paladins hit like a pillow, on purpose.',
     'Engineers: please stop blowing up the bots.',
     'Smug face sold separately.',
@@ -245,7 +244,7 @@ const TITLE_MAP = (() => {
 const CAM_SPEED = 12;
 
 // Who's out in the meadow: a few heroes of different jobs strolling across, each doing their
-// weapon's idle bits when they stop for a breather, and Snow wolf dragging her sword after them.
+// weapon's idle bits when they stop for a breather.
 const CAST = [
   { look: 71, weapon: 'sword_30', speed: 26, start: 0, dir: 1 },
   { look: 12, weapon: 'bow_30', speed: 22, start: 230, dir: 1 },
@@ -256,8 +255,6 @@ const castLooks = CAST.map((c) => lookFor(c.look));
 // Each one's walk cycle runs on the ground they cover (render/animator.js), so their feet plant.
 const castAnims = CAST.map(() => createAnim());
 let castT = null;
-const wolf = { x: 0, y: 0, dir: 1, act: null, moving: true, vx: 20, happy: null, body: { onGround: true, rope: null, vy: 0, y: 0 } };
-const wolfWorld = { now: 0, char: { job: 'beastmaster', skills: {} }, bond: 0 };
 function cast(ctx, time, cam) {
   const map = TITLE_MAP;
   const feet = (x) => groundAt(map, x + cam.x) - cam.y;
@@ -276,9 +273,6 @@ function cast(ctx, time, cam) {
     stepAnim(a, { vx: walking ? c.dir * c.speed : 0, vy: 0, onGround: true, rope: false, facing: c.dir, y: 0 }, dt);
     drawHero(ctx, castLooks[i], { weapon: { id: c.weapon } }, Math.round(x), Math.round(feet(x)), { pose: walking ? 'walk' : 'idle', time: time + i * 7, seed: i * 11, facing: c.dir, urgent: false }, a);
   });
-  wolfWorld.now = time;
-  wolf.x = onScreen(time * 20 + 120);
-  drawSnowWolf(ctx, wolfWorld, wolf, { x: 0, y: -Math.round(feet(wolf.x)) }, time);
 }
 
 // The wooden sign World Select hangs on: two ropes from the top of the screen, a plank board with

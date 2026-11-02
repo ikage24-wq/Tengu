@@ -377,7 +377,7 @@ const BLOCKER_TEXT = {
   'gauge:tails': 'A finisher needs all nine Tails. Keep your fox-fire stars landing!',
   'gauge:rage': 'A finisher needs full Rage. Keep swinging!',
   'gauge:faith': 'A finisher needs full Faith. Keep fighting!',
-  'gauge:bond': "Snow wolf isn't fed up enough yet. Keep fighting!",
+  'gauge:bond': "Your Illusion isn't full yet. Keep fighting!",
   'gauge:charge': 'Not Supercharged yet: land more bolts!',
   unlearned: null,
   passive: null,
@@ -729,7 +729,7 @@ export function updateWorld(world, dt, input) {
       if (h.stun && !h.freeze && !(m.frozenUntil > world.now)) world.juice.push({ type: 'stun', x: m.x, y: m.y });
       if (!(m.frozenUntil > world.now)) m.hold = h.freeze ? 'ice' : h.stun ? 'stun' : 'snare';
       // (The Acrobat Archer's snare is a ribbon tied in a bow.)
-      if (h.snare) m.holdLook = world.char.job === 'archer' ? 'ribbon' : null;
+      if (h.snare) m.holdLook = JOBS[world.char.job]?.family === 'archer' ? 'ribbon' : null;
       m.frozenUntil = Math.max(m.frozenUntil ?? 0, world.now + secs);
     }
     // (Burns bite the same way, in blue flame.)
