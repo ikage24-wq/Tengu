@@ -8,7 +8,8 @@ import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
-import { drawHero } from './hero.js';
+import { drawHero, setLight, rimLightOf } from './hero.js';
+import { gameHour } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
 import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
@@ -214,6 +215,8 @@ function drawZoneTitle(ctx, world, time) {
 
 export function drawWorld(ctx, world, viewCam, time) {
   const b = world.body;
+  // The rim light on every figure takes the map's light and the hour (the hero redraw's light pass).
+  setLight(rimLightOf(world.map, gameHour((world.dayClock ?? (() => new Date()))())));
   const dt = feel.last === null ? 0 : Math.min(0.1, Math.max(0, time - feel.last));
   feel.last = time;
   if (feel.world !== world || feel.mapId !== world.map.id) {

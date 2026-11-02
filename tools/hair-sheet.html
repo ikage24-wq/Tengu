@@ -1,0 +1,53 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Hair sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: hairstyles side by side, big, in a few poses (standing, mid-walk, mid-jump, from
+// behind), to judge a hair redraw. ?hairs=fluffybob,wavylong,ponytail,candy&colors=#ffb38a,#3b3650&k=5
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero, setLight } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+// ?light=0: without the light pass, for a before/after.
+if (q.get('light') === '0') setLight(false);
+// ?rim=%23ffc890: the rim light's colour (a map's light at some hour).
+if (q.get('rim')) setLight(q.get('rim'));
+const hairs = (q.get('hairs') ?? 'fluffybob,wavylong,ponytail,candy').split(',');
+const colors = (q.get('colors') ?? '#ffb38a').split(',');
+const poses = (q.get('poses') ?? 'stand,walk,jump').split(',');
+const POSE = { stand: { pose: 'idle', time: 0.3 }, walk: { pose: 'walk', time: 0.35 }, jump: { pose: 'jump', time: 0.3, vy: -200 }, back: { pose: 'idle', time: 0.3, facing: -1 } };
+const K = Number(q.get('k') ?? 5);
+const D = 1.5;
+const CW = 40 * K;
+const RH = 56 * K;
+const cols = hairs.flatMap((h) => poses.map((p) => [h, p]));
+const W = 20 + cols.length * CW;
+const H = colors.length * RH + 30;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 13px Segoe UI, sans-serif';
+cols.forEach(([h, p], i) => { ctx.fillStyle = '#3a2d4f'; ctx.fillText(`${h} ${p}`, 20 + i * CW + 10, 20); });
+colors.forEach((color, r) => {
+  ctx.fillStyle = r % 2 ? '#efe6fb' : '#fbf7ff';
+  ctx.fillRect(0, 30 + r * RH, W, RH);
+  cols.forEach(([hair, p], i) => {
+    const x = 20 + i * CW + CW / 2;
+    const y = 30 + r * RH + RH - 4 * K;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(K, K);
+    setHd(true, K * D);
+    nextFrame();
+    drawHero(ctx, { hairStyle: hair, hairColor: color, skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'jewel', outfitColor: '#ffffff', face: 'smile' }, {}, 0, 0, { facing: 1, urgent: true, ...POSE[p] }, null);
+    ctx.restore();
+  });
+});
+document.title = 'ready';
+</script>

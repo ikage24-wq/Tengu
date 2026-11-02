@@ -37,7 +37,8 @@ import { HAIR_STYLES, BANG_STYLES, hairStyleOf, coversEye, hairParts, hairNape }
 export { HAIR_STYLES, BANG_STYLES, hairStyleOf };
 // Eye styles offered in the creator and salon. The closed-eye ones (happy, sleepy, wink) are now
 // covered by the animated faces, so they are hidden there but still draw for older characters.
-export const PICKABLE_EYE_STYLES = ['sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
+// The redrawn jewel eyes come first: new characters start with them.
+export const PICKABLE_EYE_STYLES = ['jewel', 'sparkle', 'round', 'cat', 'droopy', 'star', 'big'];
 export const FACE_STYLES = ['smile', 'smug', 'sassy', 'grin', 'pout', 'shy', 'cool', 'cat', 'angry', 'excited', 'love', 'sleepy', 'sad', 'shock', 'playful', 'proud', 'dizzy', 'nervous', 'giggle', 'determined',
   'bleh', 'excuseme', 'dimple', 'mmhm', 'hmph', 'judging', 'ohoho', 'sneer', 'heh', 'smugcat', 'toldyou', 'lookdown'];
 
@@ -311,6 +312,8 @@ const EYE_LOOK = {
   happy: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
   wink: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
   // A doll's: big and perfectly round, almost all iris, a glass ring for a pupil, barely a lash.
+  // The redrawn hero's jewel eyes: big, the iris painted like a cut gem (heroine.js drawEye `jewel`).
+  jewel: { rx: 2.4, ry: 2.95, tilt: 0.12, wing: 1.1, flicks: 2, iris: 1.36, jewel: true, sparkle: true },
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
 };
 const mirrorAt = (x, y) => [-x, y];
@@ -342,7 +345,7 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
     eye: {
       iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil ? 'star' : st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
       ink: st.lash ?? hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
-      sparkle: st.sparkle || f.shine, tilt: st.tilt,
+      sparkle: st.sparkle || f.shine, tilt: st.tilt, jewel: st.jewel,
     },
   };
   const k = wide ? 1.2 : 1;
@@ -1944,11 +1947,11 @@ function solveRig(state, anim, mv = null) {
   const r = baseRig();
   const t = time + seed * 1.37;
   // Without a spring (NPCs, menus) the hair still sways, its tips a beat behind the breath.
-  r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.4 - 1.4) * 0.35) * 2) / 2;
+  r.hair = Math.round((anim ? Math.max(-3, Math.min(3, anim.hair)) : Math.sin(t * 1.3) * 0.8 + Math.sin(t * 2.4 - 1.4) * 0.4) * 4) / 4;
   // The tips follow the root a beat later (a chain), and swing a little further.
-  r.hairTip = Math.round((anim ? Math.max(-4, Math.min(4, anim.hairTip ?? anim.hair)) : Math.sin(t * 1.3 - 0.9) * 0.75 + Math.sin(t * 2.4 - 2.4) * 0.4) * 2) / 2;
-  // A slow breeze travels down the hair, in 8 steps over about 2.6 seconds.
-  r.hairWave = Math.floor((((t / 2.6) % 1) + 1) % 1 * 8);
+  r.hairTip = Math.round((anim ? Math.max(-5, Math.min(5, anim.hairTip ?? anim.hair)) : Math.sin(t * 1.3 - 0.9) * 1 + Math.sin(t * 2.4 - 2.4) * 0.45) * 4) / 4;
+  // A slow breeze travels down the hair, in 12 steps over about 2.6 seconds.
+  r.hairWave = Math.floor((((t / 2.6) % 1) + 1) % 1 * 12);
   // The cape is a chain of two springs: the root (upper cloth) and the hem a beat behind it.
   r.cape = anim ? Math.round(Math.max(-4, Math.min(4, anim.capeTip ?? anim.cape))) : Math.round(Math.sin(t * 1.1) * 0.8);
   r.capeRoot = anim ? Math.round(Math.max(-3, Math.min(3, anim.cape)) * 2) / 2 : null;
@@ -2419,7 +2422,7 @@ function weaponIdle(type, t) {
 export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
   const rig = { ...baseRig(), ...pose, armIn: true };
   const g = resolveGear(look, null);
-  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true }));
+  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT }));
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
   const top = y - H * scale - (rig.lift ?? 0) * scale;
@@ -2588,6 +2591,20 @@ const SETTLE_POSE = { weapon: 62, arm: 30, lift: 0, lunge: 0, tilt: 0, turn: 1, 
 
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
+// The light pass over the hero's figure (soft back shadow and rim light): LIGHT is the rim's colour,
+// set by the scene from the map and the hour (rimLightOf), or false (only for before/after sheets).
+let LIGHT = '#fff1e0';
+export const setLight = (on) => { LIGHT = on === true ? '#fff1e0' : on; };
+// The rim light's colour for a map at an hour: warm white by day (tinted by the place: green under
+// the trees, icy on the snow, gold on the crags, teal in caves), gold at dusk and dawn, a cool
+// moonlit blue at night. A handful of colours, so the figure is only redrawn when the light changes.
+const PLACE_RIM = { forest: '#e4ffc8', grove: '#e4ffc8', snow: '#d8f0ff', ridge: '#d8f0ff', crag: '#fff0d0', ruins: '#fff0d0', cave: '#d8fff4', hollow: '#ecdcff', springs: '#fff0f4', sky: '#f4f4ff' };
+export function rimLightOf(map, hour) {
+  const night = map?.night ?? 0;
+  if (night >= 0.6) return '#9cb4ff';
+  if (night > 0.05) return hour > 12 ? '#ffb468' : '#ffc89a';
+  return PLACE_RIM[map?.theme] ?? '#fff1e0';
+}
 
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
@@ -2793,8 +2810,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
   // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
   // the frame's drawing budget is spent (see spriteBudgeted).
-  const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}`;
-  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true });
+  const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
+  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT });
   const body = state.urgent ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
 
   const flip = facing < 0;

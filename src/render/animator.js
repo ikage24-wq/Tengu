@@ -97,15 +97,15 @@ export function stepAnim(a, body, dt) {
   // Hair and cape trail behind motion and float when falling.
   const speed = Math.max(-1, Math.min(1, localVx / 125));
   // Standing, a slow sway that the hair follows a beat behind the breath.
-  const idleSway = Math.sin(a.t * 1.3 - 0.9) * 0.5;
+  const idleSway = Math.sin(a.t * 1.3 - 0.9) * 0.75 + Math.sin(a.t * 2.1) * 0.2;
   const fall = body.onGround ? 0 : Math.max(-1, Math.min(1, body.vy / 500));
   // Running, they stream out behind and ripple with each stride, the cape a beat after the hair.
   const stride = a.phase * Math.PI * 4;
   const ripple = body.onGround ? Math.sin(stride) * Math.abs(speed) : 0;
   const capeRipple = body.onGround ? Math.sin(stride - 1.2) * Math.abs(speed) : 0;
-  spring(a, 'hair', 'hairV', -speed * 3 + idleSway + fall * 0.6 + ripple * 0.9, 140, 11, dt);
+  spring(a, 'hair', 'hairV', -speed * 3.4 + idleSway + fall * 0.9 + ripple * 1.3, 140, 10, dt);
   // The tips chase the root on a softer spring, so a swing travels down the hair and overshoots.
-  spring(a, 'hairTip', 'hairTipV', a.hair * 1.25, 55, 6.5, dt);
+  spring(a, 'hairTip', 'hairTipV', a.hair * 1.4, 48, 5.2, dt);
   spring(a, 'cape', 'capeV', -speed * 4 + idleSway * 0.8 + fall * 1.2 + capeRipple * 1.2, 90, 9.5, dt);
   // The hem chases the cape's root on a softer spring: it lags a start, swings past on a stop,
   // and settles a beat after the shoulders.

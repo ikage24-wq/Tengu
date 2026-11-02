@@ -50,6 +50,17 @@ export function lightTone(c) {
   return mix(c, '#fff8ee', 0.22);
 }
 
+// The rim light on the figure's top and front edges (the light pass): brighter and warmer.
+// `light` is the colour of the light catching it (warm white by day, gold at dusk, blue at night).
+export function rimTone(c, light = '#fff1e0') {
+  return mix(shade(c, 12), light, 0.46);
+}
+
+// The light pass's form shadow: warmer than the plain one, a rosy violet, so skin stays alive.
+export function formTone(c) {
+  return mix(shade(c, -10), '#c98ab8', 0.2);
+}
+
 export function shade(hex, amount) {
   const n = parseInt(hex.slice(1), 16);
   const adj = (v) => Math.max(0, Math.min(255, v + Math.round((amount / 100) * 255)));
@@ -99,7 +110,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -213,7 +224,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       }
       return v;
     };
-    const tone = (id) => toned(dark, id, shadowTone);
+    const tone = (id) => toned(dark, id, light ? formTone : shadowTone);
     const shaded = new Uint8Array(gw * gh);
     for (let y = 0; y < gh; y++) {
       let x = 0;
@@ -226,11 +237,15 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         }
         // A run of this color; flat details inside it (strands, shines) don't break it.
         let end = x;
-        while (end < gw && (grid[y * gw + end] === c || (flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
+        // (With the light pass a run stops at flat parts too, so an arm in front of flat hair is
+        // shaded as the arm alone, not as the arm plus the hair beside it.)
+        while (end < gw && (grid[y * gw + end] === c || (!light && flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
         // Three tones across the run: shadow at the back, base, and a soft highlight at the front.
         const len = end - x;
         // 'cel' sprites (front-facing figures) skip the side shadow and keep only the cast and bottom bands.
-        const back = soft === 'cel' ? 0 : Math.max(res, Math.round(len * 0.28));
+        // The light pass (`light`, the hero redraw): even a front-facing figure turns from the light,
+        // its back side in a soft shadow that widens toward the feet, so the figure reads as round.
+        const back = soft === 'cel' ? (light && len >= res * 3 ? Math.round(len * (0.14 + 0.26 * (y / gh))) : 0) : Math.max(res, Math.round(len * 0.28));
         // Thin parts (arms, legs) only get the shadow; a highlight on them reads as stripes.
         // No highlight band: one soft shadow keeps the look simple.
         const front = 0;
@@ -254,6 +269,25 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         }
         if (shadow) out[i] = tone(c);
         else if (!lit[i] && shaded[i] === 2) out[i] = toned(bright, c, lightTone);
+      }
+    }
+    // The rim light (the light pass): a warm edge of light along the top and front of the upper
+    // figure, where the light from the front catches it. Hair takes it too.
+    if (light) {
+      const rw = Math.max(1, Math.round(res * 0.4));
+      const rim = new Map();
+      const top = gh * 0.52;
+      for (let y = 0; y < top; y++) {
+        for (let x = 0; x < gw; x++) {
+          const i = y * gw + x;
+          const c = grid[i];
+          if (c < 0) continue;
+          // Only edges that face the light: the front, and the top on the front half.
+          let edge = false;
+          const front = x > gw * 0.47;
+          for (let k = 1; k <= rw && !edge; k++) edge = x + k >= gw || grid[i + k] < 0 || (front && (y - k < 0 || grid[i - k * gw] < 0));
+          if (edge) out[i] = toned(rim, c, (col) => rimTone(col, typeof light === 'string' ? light : undefined));
+        }
       }
     }
   }
@@ -391,9 +425,9 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
 // sprite keeps its feet and centre where w x h puts them.
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.

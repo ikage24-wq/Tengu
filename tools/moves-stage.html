@@ -36,6 +36,8 @@ c.mp = c.baseMp = 99999;
 for (const id of (q.get('learn') ?? '').split(',').filter(Boolean)) c.skills[id] = 10;
 // ?weapon=sword_45: hold a given weapon.
 if (q.get('weapon')) c.equipment.weapon = makeEquip(q.get('weapon'));
+// ?hair=wavylong&hairColor=%23ffb38a: wear a given hairstyle (to judge hair motion).
+if (q.get('hair')) c.appearance = { ...c.appearance, hairStyle: q.get('hair'), hairColor: q.get('hairColor') ?? '#ffb38a', eyeStyle: 'jewel' };
 // Every skill it has goes on a hotkey, in order (Q, W, E, R, A, S...), to press from outside.
 for (const id of Object.keys(c.skills)) if (SKILLS[id] && SKILLS[id].type !== 'passive') bindFreeHotkey(c, { skill: id });
 const w = createWorld(c);

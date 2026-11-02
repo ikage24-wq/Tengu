@@ -46,6 +46,8 @@ export const sameLook = (a, b) => LOOK_OPTIONS.every((o) => a?.[o.key] === b?.[o
 export function randomLook(rng = Math.random) {
   const look = {};
   for (const opt of LOOK_OPTIONS) look[opt.key] = opt.options[Math.floor(rng() * opt.options.length)];
+  // New heroes mostly start with the redrawn jewel eyes.
+  if (rng() < 0.6) look.eyeStyle = 'jewel';
   // Most random heroes keep one hair colour; two-tone is the occasional treat.
   if (rng() < 0.6) look.hairTip = 'none';
   if (rng() < 0.7) look.hairBangs = 'auto';

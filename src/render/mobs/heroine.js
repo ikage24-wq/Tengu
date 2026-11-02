@@ -342,7 +342,30 @@ function drawEye(pen, e, x, look) {
   const ix = snap3(e.cx + gx * rx * 2 + 0.3 - (e.near ? 0 : o * rx * 0.06), pen.k);
   const iy = snap3(e.cy + gy * ry * 2 + ry * 0.12, pen.k);
   const disc = clip(ell(ix, iy, irx, iry, 24), almond);
-  if (disc.length > 2) {
+  // A jewel eye (E.jewel, the redrawn hero's): the iris painted like a cut gem. A deep rim round the
+  // edge, a dark band under the lid shading down into the colour in soft steps, fine light streaks
+  // radiating from the pupil, a glowing crescent of reflected light across the bottom, then the
+  // pupil, two shines and a sparkle on top (below).
+  if (E.jewel && disc.length > 2) {
+    const inIris = (pts) => clip(clip(pts, ell(ix, iy, irx, iry, 24)), almond);
+    const band = (y0, y1, c) => pen.poly(inIris([[ix - 9, iy + y0 * iry], [ix + 9, iy + y0 * iry], [ix + 9, iy + y1 * iry], [ix - 9, iy + y1 * iry]]), c);
+    pen.poly(disc, mix(irisDk, ink, 0.35));
+    pen.poly(inIris(ell(ix, iy + iry * 0.02, irx * 0.86, iry * 0.9, 24)), iris);
+    band(-1.2, -0.42, mix(irisDk, ink, 0.25));
+    band(-0.42, -0.16, irisDk);
+    band(-0.16, 0.08, mix(irisDk, iris, 0.5));
+    // Light streaks fanning down from the pupil, like facets.
+    for (let k = 0; k < 7; k++) {
+      const a = PI * (0.18 + 0.64 * (k / 6));
+      const r0 = 0.32;
+      const r1 = 0.82;
+      const w = 0.07;
+      const p = (r, d) => [ix + Math.cos(a + d) * irx * r, iy + Math.sin(a + d) * iry * r];
+      pen.poly(inIris([p(r0, -w), p(r1, -w * 0.4), p(r1, w * 0.4), p(r0, w)]), mix(iris, irisLt, 0.55));
+    }
+    pen.poly(inIris(ell(ix, iy + iry * 0.66, irx * 0.72, iry * 0.36, 18)), irisLt);
+    pen.poly(inIris(ell(ix, iy + iry * 0.74, irx * 0.46, iry * 0.18, 14)), mix(irisLt, '#ffffff', 0.55));
+  } else if (disc.length > 2) {
     pen.poly(disc, iris);
     pen.poly(clip(clip([[ix - 9, iy - 9], [ix + 9, iy - 9], [ix + 9, iy - iry * 0.12], [ix - 9, iy - iry * 0.02]], ell(ix, iy, irx, iry, 24)), almond), irisDk);
     pen.poly(clip(clip(ell(ix + 0.05, iy + iry * 0.62, irx * 0.78, iry * 0.42, 18), ell(ix, iy, irx, iry, 24)), almond), irisLt);
@@ -412,9 +435,15 @@ function drawEye(pen, e, x, look) {
     cl(ell(ix, iy - iry * 0.06, pr * 0.5, pr * 0.6, 12), mix(irisLt, '#ffffff', 0.4));
   }
   else cl(ell(ix, iy - iry * 0.08, Math.max(0.5, irx * 0.3 * ps), Math.max(0.7, iry * 0.38 * ps), 14), pc);
-  // Shines sit on the same side in both eyes (light from the upper left).
+  // Shines sit on the same side in both eyes (light from the upper left). A jewel eye gets a
+  // bigger tilted main shine, a soft second one beside it, and a small bright one low.
+  if (E.jewel) {
+    const bg = Math.max(0.7, irx * 0.36);
+    cl(ell(ix - irx * 0.34, iy - iry * 0.16, bg, bg * 1.2, 10, -0.5), '#ffffff');
+    cl(ell(ix + irx * 0.08, iy - iry * 0.3, bg * 0.42, bg * 0.42, 8), mix(irisLt, '#ffffff', 0.75));
+  }
   const big = Math.max(0.62, irx * 0.3);
-  cl(ell(ix - irx * 0.38, iy - iry * 0.36, big, big * 1.1, 8, 0.4), '#ffffff');
+  if (!E.jewel) cl(ell(ix - irx * 0.38, iy - iry * 0.36, big, big * 1.1, 8, 0.4), '#ffffff');
   cl(ell(ix + irx * 0.42, iy + iry * 0.44, 0.36, 0.36, 8), E.sparkle ? '#ffffff' : mix(irisLt, '#ffffff', 0.5));
   if (E.sparkle && !hot) cl(starPts(ix + irx * 0.1, iy + iry * 0.1, 0.55), mix(irisLt, '#ffffff', 0.7));
 

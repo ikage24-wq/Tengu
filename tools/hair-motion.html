@@ -1,0 +1,71 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Hair motion</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: hairstyles side by side, big, moving through a little routine (stand, walk right, stop,
+// turn and walk back, stop, hop, settle) with the real hair springs, to judge hair sway. Prints its
+// frames for tools/make-gif.py: python tools/make-gif.py hair.gif "hairs=wavylong,candy" hair-motion
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { createAnim, stepAnim } = await import('/src/render/animator.js');
+const q = new URLSearchParams(location.search);
+const hairs = (q.get('hairs') ?? 'fluffybob,wavylong,ponytail,candy').split(',');
+const color = q.get('color') ?? '#ffb38a';
+const K = Number(q.get('k') ?? 4);
+const CW = 58 * K;
+const H = 52 * K;
+const c = document.getElementById('c');
+c.width = hairs.length * CW;
+c.height = H;
+const ctx = c.getContext('2d');
+// The routine: [seconds, speed (px/s, + is right), jump?].
+const plan = [[1.0, 0], [1.1, 125], [1.0, 0], [0.9, -125], [0.9, 0], [0, 0, true], [1.6, 0]];
+const FPS = 20;
+const SUB = 3;
+const dt = 1 / (FPS * SUB);
+const bodies = hairs.map(() => ({ vx: 0, vy: 0, y: 0, facing: 1, onGround: true }));
+const anims = hairs.map(() => createAnim());
+const frames = [];
+let time = 0;
+for (const [secs, speed, jump] of plan) {
+  if (jump) for (const b of bodies) { b.vy = -430; b.onGround = false; }
+  const n = Math.max(1, Math.round(secs * FPS));
+  for (let i = 0; i < n && secs > 0; i++) {
+    for (let s = 0; s < SUB; s++) {
+      time += dt;
+      bodies.forEach((b, k) => {
+        b.vx += (speed - b.vx) * (1 - Math.exp(-dt * 14));
+        if (Math.abs(speed) > 1) b.facing = Math.sign(speed);
+        if (!b.onGround) {
+          b.vy += 1300 * dt;
+          b.y += b.vy * dt;
+          if (b.y >= 0) { b.y = 0; b.vy = 0; b.onGround = true; }
+        }
+        stepAnim(anims[k], b, dt);
+      });
+    }
+    ctx.fillStyle = '#f6f0ff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    hairs.forEach((hair, k) => {
+      const b = bodies[k];
+      const pose = !b.onGround ? 'jump' : Math.abs(b.vx) > 8 ? 'walk' : 'idle';
+      ctx.save();
+      ctx.translate(k * CW + CW / 2, H - 5 * K + b.y * K * 0.25);
+      ctx.scale(K, K);
+      setHd(true, K);
+      nextFrame();
+      drawHero(ctx, { hairStyle: hair, hairColor: color, skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'jewel', outfitColor: '#ffffff', face: 'smile' }, {}, 0, 0, { pose, time, facing: b.facing, vy: b.vy, urgent: true }, anims[k]);
+      ctx.restore();
+    });
+    frames.push(c.toDataURL('image/jpeg', 0.9));
+  }
+}
+const out = document.createElement('pre');
+out.id = 'out';
+out.textContent = JSON.stringify(frames);
+document.body.appendChild(out);
+document.title = 'done';
+</script>
