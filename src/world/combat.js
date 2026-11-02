@@ -160,6 +160,18 @@ export function braceOnHit(world, dmg, rng = Math.random) {
   world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'IRON GUARD', color: '#cfe3ff', t: 0 });
 }
 
+// Light Feet (Wind Dancer): a hit that lands on her may set her dancing: untouchable for a moment,
+// and harder to hit for a few seconds (not while it's already up). `rng` for tests.
+export function danceOnHit(world, rng = Math.random) {
+  const p = procOf(world.char, 'lightfeet');
+  if (!p || world.dead || (world.char.buffs.lightfeet?.until ?? 0) > world.now || rng() >= p.chance) return;
+  applyBuff(world, 'lightfeet', p);
+  world.invuln = Math.max(world.invuln, p.secs);
+  const { body } = world;
+  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'LIGHT FEET', color: '#ffb3a6', t: 0 });
+  world.fx.push({ kind: 'wdswirl', x: body.x, y: body.y, t: 0, dur: 0.4 });
+}
+
 // Divine Aegis (Paladin): a hit that leaves you under `low` of your max HP makes you raise your
 // blade, guarding and mending you and the party around you (not while it's already up).
 export function rallyOnHit(world) {
@@ -243,6 +255,7 @@ export function drinkBlood(world, dmg) {
 // Everything that answers a hit you take.
 export function hurtProcs(world, dmg) {
   braceOnHit(world, dmg);
+  danceOnHit(world);
   rallyOnHit(world);
 }
 
@@ -343,7 +356,8 @@ export function cast(world, skillId, rng = Math.random) {
   // flare with a burst of power instead.
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';
   if (s?.school && magical) world.fx.push({ kind: 'castcircle', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.2), big: lock >= 1 });
-  else if (s?.school && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
+  // (The Wind Dancer's big skills bring their own spotlight and ribbons, never another job's pillar.)
+  else if (s?.school && s.school !== 'coral' && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
 
   let area = params.range;
   if (type === 'blink') {

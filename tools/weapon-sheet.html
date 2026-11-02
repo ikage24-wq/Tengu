@@ -63,10 +63,10 @@ TYPES.forEach((type, r) => {
     const s = sprite(`sheet|${type}|${t}|${K}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: Math.ceil(K * D), soft: 'cel', crisp: true }));
     ctx.save();
     // Bows sit on their middle; crossbows (built lying down) stand on end so they fit a cell.
-    ctx.translate(LEFT + i * CELL + CELL / 2, type === 'bow' ? y0 + ROW / 2 + 6 : type === 'crossbow' ? y0 + ROW / 2 - 4 : y0 + ROW - 12);
+    ctx.translate(LEFT + i * CELL + CELL / 2, type === 'bow' || type === 'dagger' ? y0 + ROW / 2 + 6 : type === 'crossbow' ? y0 + ROW / 2 - 4 : y0 + ROW - 12);
     if (type === 'crossbow') ctx.rotate(-Math.PI / 2);
     ctx.scale(K, K);
-    if (type === 'bow' || type === 'crossbow') blit(ctx, s, -def.w / 2, -def.h / 2);
+    if (type === 'bow' || type === 'crossbow' || type === 'dagger') blit(ctx, s, -def.w / 2, -def.h / 2);
     else blit(ctx, s, -def.grip[0], -def.grip[1] - (def.h - def.grip[1]) * 0.15);
     ctx.restore();
     const name = ITEMS[`${type}_${t * 5}`]?.name ?? '';

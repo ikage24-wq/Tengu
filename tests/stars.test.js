@@ -44,23 +44,3 @@ test('a gauntlet throws its own stars, better the higher its level, and they add
   assert.equal(thrownStars(c), null, 'only a gauntlet throws stars');
 });
 
-test('a thief with a gauntlet always has stars to throw', () => {
-  const c = thief();
-  const w = createWorld(c);
-  loadMap(w, 'woods', 'west');
-  w.god = true;
-  w.spawner.slots = [];
-  w.mobs = [];
-  const m = spawnMob(w.map, { mob: 'boarlet', x: 400, y: w.map.groundY });
-  m.def = { ...m.def, hp: 1e9, eva: 0, aggro: false, speed: 0 };
-  m.hp = 1e9;
-  w.mobs.push(m);
-  Object.assign(w.body, { x: 300, y: w.map.groundY, facing: 1, onGround: true });
-  run(w, 0.2);
-  c.inventory.use = [];
-  c.skills.luckyseven = 10;
-  c.mp = 9999;
-  assert.ok(cast(w, 'luckyseven').ok, 'with an empty bag');
-  run(w, 2);
-  assert.ok(m.hp < 1e9, 'and they land');
-});

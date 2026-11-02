@@ -44,9 +44,9 @@ export const JOBS = {
     blurb: 'Fires from a distance with DEX. Steady and safe.',
   },
   thief: {
-    id: 'thief', power: 0.75, spread: 1.45, name: 'Thief', family: 'thief', tier: 1, parent: 'novice', level: 10,
+    id: 'thief', power: 0.75, spread: 1.45, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: 10,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
-    blurb: 'Quick hits with LUK. Daggers up close, or a gauntlet that hurls throwing stars at range.',
+    blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
   },
 
   // Spirit Mage branches. Both ask for Elowen's trial first (docs/design/spirit-mage-paths.md).

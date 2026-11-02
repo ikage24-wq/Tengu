@@ -1,0 +1,57 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Move strips</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: each named move as a strip of moments (progress 0 to 1), the hero holding a weapon,
+// big, to judge the motion: ?moves=wdpique,wdspin&weapon=dagger_30&job=thief&n=9&dur=0.4
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+const moves = (q.get('moves') ?? 'wdpique').split(',');
+const weapon = q.get('weapon') ?? 'dagger_30';
+const job = q.get('job') ?? 'thief';
+const N = Number(q.get('n') ?? 9);
+const durs = (q.get('dur') ?? '').split(',').map(Number);
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const K = 2.6;
+const D = 1.5;
+const CW = 150;
+const RH = 170;
+const W = 120 + N * CW;
+const H = moves.length * RH;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+moves.forEach((mv, r) => {
+  const y = r * RH + RH - 30;
+  ctx.fillStyle = r % 2 ? '#efe6fb' : '#fbf7ff';
+  ctx.fillRect(0, r * RH, W, RH);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.font = 'bold 13px Segoe UI, sans-serif';
+  ctx.fillText(mv, 8, y - 50);
+  for (let i = 0; i < N; i++) {
+    const p = i / (N - 1);
+    const x = 120 + i * CW + CW / 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(K, K);
+    setHd(true, K * D);
+    nextFrame();
+    drawHero(ctx, LOOK, { weapon: { id: weapon } }, 0, 0, { pose: mv, progress: p, dur: durs[r] || 0.5, time: p, facing: 1, job, ready: true }, null);
+    ctx.restore();
+    ctx.fillStyle = '#8f7cc4';
+    ctx.font = '10px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.toFixed(2), x, y + 18);
+    ctx.textAlign = 'left';
+  }
+});
+document.title = 'ready';
+</script>

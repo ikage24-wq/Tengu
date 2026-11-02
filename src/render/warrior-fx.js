@@ -21,7 +21,7 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
+const EMBLEMS = { coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
@@ -51,6 +51,12 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (school === 'rage') {
     rageFlare(ctx, x, y, p, h);
+    return;
+  }
+  // The Wind Dancer's: no pillar, her swirl of ribbons with her badge rising out of it.
+  if (school === 'coral') {
+    fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.9 });
+    if (p > 0.15) fxSprite(ctx, EMBLEMS.coral, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   groundRing(ctx, ringOf(school), x, y, Math.min(1, p * 1.3), 40);
@@ -88,6 +94,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
+  else if (school === 'coral') fxSprite(ctx, 'celwdhit', x, y, { p, scale: k * 0.7, rot: (seed - 0.5) * 0.6 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -97,6 +104,19 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {
+    // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
+    // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
+    case 'wdhit':
+      return fxSprite(ctx, 'celwdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, rot: (seed - 0.5) * 0.6 }) || true;
+    case 'wdswirl':
+      return fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.95 }) || true;
+    case 'wdgust':
+      return fxSprite(ctx, 'celwdgust', x - dir * 30, y - 28, { p, flip }) || true;
+    // A puff of wind off her palms (each blow with gloves): a small crescent gust.
+    case 'wdpuff':
+      return fxSprite(ctx, 'celwdgust', x - dir * 10, y - 26, { p, flip, scale: 0.5 }) || true;
+    case 'wdfinale':
+      return fxSprite(ctx, 'celwdfinale', x, y + 4, { p, scale: 1.1 }) || true;
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.

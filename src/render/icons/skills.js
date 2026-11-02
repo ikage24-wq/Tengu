@@ -1559,6 +1559,8 @@ const ART = {
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
+// The Wind Dancer's skills wear the old Thief's pictures until she has her own.
+Object.assign(ART, { pirouette: ART.shadowdash, ribbonlash: ART.twinfang, gustline: ART.starfan, spotlight: ART.quickhaste, lightfeet: ART.nimblefeet, grandfinale: ART.fullmoonvolley });
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint
 // the plate behind an icon to match it.

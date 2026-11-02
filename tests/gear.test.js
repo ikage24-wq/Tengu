@@ -120,7 +120,9 @@ test('every weapon type has a weapon every 5 levels and every endgame design, ea
 
 test('better weapons animate more', () => {
   const live = (type, tier, theme = null) => Boolean(weaponShapes(type, tier, 0, theme).live);
-  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet']) {
+  // (A gauntlet is a small glove on the hand, with no shimmer of its own.)
+  assert.equal(live('gauntlet', 10), false, 'the glove carries no shimmer');
+  for (const type of ['sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger']) {
     assert.equal(live(type, 0), false, `${type} tier 0 is still`);
     assert.equal(weaponFrames(type, 0), 1, `${type} tier 0 has one frame`);
     assert.ok(weaponFrames(type, 5) > weaponFrames(type, 4), `${type} gems shine from Silver`);

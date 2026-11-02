@@ -235,17 +235,17 @@ function momentumAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembhawk', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Shadow: a violet ring at the thief's feet, wisps of shadow curling up round her as it builds,
-// and full (Phantom), the crescent emblem over her head and violet rings racing out (the shadow
-// copy itself is drawn with the hero).
+// Encore (the Wind Dancer; internally the Thief's Shadow): a ring of coral and cream ribbons
+// swirls flat round her feet as it builds, spinning faster the fuller it is; full (Standing
+// Ovation), the ribbons whirl on and on and her badge, a chakram tied with a bow, shines over her
+// head.
 function shadowAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringshadow', x, y, { frame: 2, scale: s * (0.35 + 0.25 * k), sy: 0.32, alpha: Math.min(1, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringshadow', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.15 && k < 1) fxSprite(ctx, 'celwdswirl', x, y, { frame: 4, scale: s * (0.45 + 0.3 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2), rot: t * (0.5 + k) });
+    if (k >= 1) fxSprite(ctx, 'celwdswirl', x, y, { t: (t * 0.6) % 0.3, scale: s * 0.8, sy: 0.3 });
     return;
   }
-  if (k > 0.4) fxSprite(ctx, 'celshadowaura', x, y, { t: t * (0.8 + 0.6 * k), scale: s * (0.55 + 0.25 * k), alpha: Math.min(1, (k - 0.4) * 2.5) });
-  if (k >= 1) fxSprite(ctx, 'celembshadow', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Spirit: a ring of spirit light at the Spirit Mage's feet, wisps of light circling up round her as

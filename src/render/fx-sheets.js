@@ -204,4 +204,9 @@ export const FX_SHEETS = {
   celclawbig: { of: 'celclaw', k: 1.7 },
   celgashbig: { of: 'celgash', k: 1.7 },
   celshockredbig: { of: 'celshockred', k: 2.6 },
+  celwdswirl: { w: 282, h: 282, n: 8, fps: 26, px: 141, py: 141, d: 3, loop: false },
+  celwdhit: { w: 243, h: 242, n: 7, fps: 30, px: 120, py: 122, d: 3, loop: false },
+  celwdgust: { w: 325, h: 199, n: 8, fps: 30, px: 75, py: 106, d: 3, loop: false },
+  celembdancer: { w: 144, h: 154, n: 5, fps: 12, px: 72, py: 82, d: 3, loop: false },
+  celwdfinale: { w: 402, h: 392, n: 12, fps: 20, px: 198, py: 374, d: 3, loop: false },
 };

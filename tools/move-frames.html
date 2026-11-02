@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>move frames</title>
+<pre id="out"></pre>
+<script type="module">
+// For tools/make-gif.py (?page=move-frames): plays a list of moves on the hero back to back, at
+// their own lengths, and prints the frames as data URLs (JSON) for a headless browser's
+// --dump-dom. ?moves=wdpique:0.3,wdspin:0.36&weapon=dagger_45&job=thief
+const keep = setInterval(() => {}, 10);
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+const job = q.get('job') ?? 'thief';
+const FPS = 20;
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const K = 3;
+const W = 300;
+const H = 240;
+const c = document.createElement('canvas');
+c.width = W;
+c.height = H;
+const ctx = c.getContext('2d');
+const frames = [];
+const sets = (q.get('sets') ?? 'dagger_45|wdpique:0.3,wdspin:0.36,wdarabesque:0.5,wdfouette:0.6,wdchasse:0.32,wdfankick:0.4,wdjete:0.5,wdchaine:0.6,wdencore:1.5;gauntlet_45|wdpalm:0.32,wdrond:0.38,wdrise:0.44,wdflourish:0.5,wdlunge:0.56').split(';');
+let t = 0;
+for (const set of sets) {
+  const [weapon, list] = set.split('|');
+  for (const item of list.split(',')) {
+    const [move, d] = item.split(':');
+    const dur = Number(d);
+    // A few frames of the move itself, then a short beat standing ready.
+    const n = Math.max(6, Math.round(dur * FPS * 1.6));
+    for (let i = 0; i <= n + 4; i++) {
+      const p = Math.min(1, i / n);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#f6f0ff';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#d9cfee';
+      ctx.fillRect(0, H - 34, W, 2);
+      ctx.fillStyle = '#6a5a8a';
+      ctx.font = 'bold 14px Segoe UI, sans-serif';
+      ctx.fillText(move.replace(/^wd/, ''), 10, 20);
+      ctx.save();
+      ctx.translate(W / 2 - 20, H - 34);
+      ctx.scale(K, K);
+      setHd(true, K);
+      nextFrame();
+      const state = i <= n ? { pose: move, progress: p, dur } : { pose: 'idle', ready: true };
+      drawHero(ctx, LOOK, { weapon: { id: weapon } }, 0, 0, { ...state, time: t, facing: 1, job }, null);
+      ctx.restore();
+      t += 1 / FPS;
+      frames.push(c.toDataURL('image/png'));
+    }
+  }
+}
+document.getElementById('out').textContent = JSON.stringify(frames);
+clearInterval(keep);
+document.title = 'done';
+</script>

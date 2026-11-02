@@ -68,6 +68,11 @@ blow).
 
 ## 3. Animation
 
+Held to the Wind Dancer standard (CLAUDE.md): every move is the job's own, drawn for its name
+(a dancer dances), re-rigged as freely as it needs, fluid, and never covering the face. Never
+borrow another job's moves. Check it with strips (`tools/move-strip.html`), every pose for the
+face (`tools/hold-sheet.html`) and GIFs (`tools/make-gif.py`) before showing it.
+
 - Moves drawn for the job's weapon: a bow really draws and the string snaps, a crossbow kneels and
   cranks, an axe winds up heavy.
 - The follow-through is the longest beat, heavier blows have more anticipation, and finishers
@@ -117,7 +122,9 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
 
 ## 6. Show it
 
-- Record a demo video of every skill (basic combo, command moves, each skill, the gauge filling,
-  the finisher) with captions, and send it.
+- Record GIFs of every move and of every skill in the game (basic strings, command moves, each
+  skill, the gauge filling, the finisher) with captions (`tools/make-gif.py`: the moves alone with
+  the page `move-frames`, the skills on the stage with `moves-stage` and its `record` plan), and
+  send them.
 - Fix anything that looks wrong before calling the job done.
 - Commit and push, and report in plain words with pictures.

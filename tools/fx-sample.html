@@ -1,0 +1,46 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Effect samples</title>
+<style>body { margin: 0; background: #2b2340; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script src="/tools/fx-art.js"></script>
+<script>
+// Dev tool: every drawing of the named effects from tools/fx-art.js in order, on a dark and a
+// bright background, in HD with their soft glow. Open /tools/fx-sample.html?fx=wdswirl,wdhit.
+const names = (new URLSearchParams(location.search).get('fx') ?? 'wdswirl,wdhit,wdgust,embdancer').split(',');
+const D = 2;
+const W = 1700;
+const c = document.getElementById('c');
+c.width = W;
+c.height = 2400;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#2b2340';
+ctx.fillRect(0, 0, W, c.height);
+let y = 10;
+for (const name of names) {
+  const e = window.FXART[name];
+  ctx.fillStyle = '#f6f0ff';
+  ctx.font = 'bold 18px Segoe UI, sans-serif';
+  ctx.fillText(name, 10, y + 20);
+  y += 30;
+  for (const bg of ['#2b2340', '#fff4f8']) {
+    let x = 10;
+    let rowH = 0;
+    for (let i = 0; i < e.n; i++) {
+      const r = window.FXHD.render(e, i, D);
+      const k = Math.min(1, 190 / r.canvas.width);
+      const w = r.canvas.width * k;
+      const h = r.canvas.height * k;
+      ctx.fillStyle = bg;
+      ctx.fillRect(x - 2, y - 2, w + 4, h + 4);
+      ctx.drawImage(r.canvas, x, y, w, h);
+      x += w + 8;
+      rowH = Math.max(rowH, h);
+    }
+    y += rowH + 10;
+  }
+  y += 14;
+}
+// (The canvas keeps its size: resizing it would wipe it.)
+document.title = 'ready';
+</script>

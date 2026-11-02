@@ -57,7 +57,7 @@ step-by-step recipe is `docs/design/making-a-job.md`: read it before starting an
 - **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
   cranks), with weight that matches each blow.
 - **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
-  is (the Warrior's steel-blue cross and giant sword, the Archer's gold arrows and sky-blue feathers, the Thief's violet smoke and crescent moons, the Shinobi's ink and red seals, the Kitsune's blue fox fire and tails, the Paladin's gold star, the Berserker's rose claws, the Ranger's
+  is (the Warrior's steel-blue cross and giant sword, the Archer's gold arrows and sky-blue feathers, the Wind Dancer's coral ribbons, crescent gusts and spinning rings, the Shinobi's ink and red seals, the Kitsune's blue fox fire and tails, the Paladin's gold star, the Berserker's rose claws, the Ranger's
   emerald wind and leaves, the Sniper's ice-blue streaks and rose sight).
 - **Effects in Tengu's own art** (`tools/fx-art.js`, HD with a soft glow; see the effects rule
   below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture
@@ -122,6 +122,33 @@ platforms, effects, UI and HUD pieces all have motion or idle life. And every mo
   move with it.
 - Check it moving (a strip of moments or a short recording), not just a still, before calling it
   done.
+
+**The Wind Dancer standard (the player's standing rule, 2026-11-02, for every job, path, summon,
+monster and move from now on).** The remade Wind Dancer is the quality bar the player approved;
+everything is held to it:
+- **Its own motion, matching its name.** Every move is drawn for what the thing *is*: a dancer
+  dances (piqué, pirouette, arabesque, fouetté, a bow), a knight fights like a knight, a witch
+  casts like a witch. Name each move for the figure it is, and build the whole set from that one
+  idea.
+- **Re-rig freely to get there.** Change how the weapon is held, its size, its grip point, rest and
+  ready angles, idle fidgets and the rig's poses whenever it makes the motion read better (the
+  chakram was re-gripped on its rim and hung at the hip so it never covers the face).
+- **Fluid and smooth.** Anticipation, a clean strike landing early, follow-through and a held end
+  pose; poses ease into each other, turns are clean mirror flips, nothing snaps or stutters.
+- **Readable.** Nothing covers the face in any pose (check standing, idle fidgets, ready, walk,
+  jump, every move); the silhouette says what the move is at game size.
+- **Its effects follow the moves**, in the job's own colour and shapes, never another job's
+  defaults (no steel trails, pillars or emblems on a coral dancer).
+- **Checked moving, then shown.** Render every move as a strip of moments (`tools/move-strip.html`),
+  check every pose for the face (`tools/hold-sheet.html`), record GIFs of the moves and of the skills
+  in the game (`tools/make-gif.py`), fix what looks wrong, and send the GIFs before calling it done.
+
+**Never reuse another job's moves (the player's standing rule, 2026-11-02).** Every job and path
+gets its own animations drawn for its own fantasy: a dancer moves like a dancer, a knight like a
+knight. Never borrow another job's swings, throws, poses or effects and re-skin them (the first
+Wind Dancer reused the old Thief's swings and the player called them generic). Reuse the engine
+(the rig, the timing, the strike system), never the motion. A new job isn't done until every
+move it plays is its own.
 
 **Summons are built on a player character, with a new rig (the player's standing rule, for every
 summon and companion).** Every summon (a companion, a shikigami, a guardian, anything a job calls

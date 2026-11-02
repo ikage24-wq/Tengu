@@ -2397,16 +2397,18 @@ function weaponIdle(type, t) {
       return { arm: [lerp(0, 2, k), lerp(0, -3, k)], angle: lerp(hang, 85, k), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-3 * k + 0.6 * Math.cos(b.s * 10) * k)], hy: q2(0.8 * k), hx: q2(0.4 * k) } };
     }
     case 'dagger': {
-      const wob = 25 + Math.sin(t * 2) * 5;
-      const b = bit([1.3, 2.2, 2.2]);
+      // The Wind Dancer's chakram (the dagger items): every fidget keeps the ring at her hip or
+      // out in front, never up by her face.
+      const wob = 160 + Math.sin(t * 2) * 5;
+      const b = bit([1.3, 2, 1.8]);
       if (!b) return rest(wob);
       const k = env(b.u);
-      // Tossed with a couple of flips and caught.
-      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [0, -2 * bump(b.u, 0, 1)], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 18 }; }
-      // Spun on a fingertip, held up.
-      if (b.i === 1) return { arm: [lerp(0, 2, k), lerp(0, -5, k)], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 1080, rig: { hy: q2(-0.4 * k) } };
-      // Cleaning a nail with the point, bored.
-      return { arm: [lerp(0, 3, k), lerp(0, -4, k)], angle: lerp(wob, 120, k) + Math.sin(b.s * 9) * 6 * k, rig: { backArm: [q2(3.6 * k), q2(-4.4 * k)], hy: q2(0.8 * k) } };
+      // Tossed up spinning out in front of her and caught.
+      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [lerp(0, 3, k), -1 * bump(b.u, 0, 1)], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 14 }; }
+      // Twirled round her hand at her hip, three turns.
+      if (b.i === 1) return { arm: [lerp(0, 3, k), lerp(0, 1, k)], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 1080 };
+      // A little flourish: the ring swept out to the side and held there a beat, a showgirl's pose.
+      return { arm: [lerp(0, 5, k), lerp(0, -1.5, k)], angle: lerp(wob, 95, k) + Math.sin(b.s * 5) * 4 * k, rig: { backArm: [q2(-2 * k), q2(-5 * k)] } };
     }
     case 'gauntlet': {
       const flex = 70 + Math.sin(t * 4) * 5;
@@ -2851,11 +2853,12 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const armDx = rig.tx;
   const armDy = bodyY;
 
-  const restAngle = { crossbow: 55, gauntlet: 70 }[g.weapon?.type] ?? 25;
+  // (A chakram hangs from her hand down by her hip, the ring below it, never up by her face.)
+  const restAngle = { crossbow: 55, gauntlet: 70, dagger: 160 }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
-  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20, dagger: 128 }[g.weapon?.type] ?? 62 : null;
+  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20, dagger: 105 }[g.weapon?.type] ?? 62 : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.

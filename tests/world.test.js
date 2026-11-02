@@ -280,16 +280,16 @@ test('skills never go on cooldown: a spell is free again a beat after its motion
   setJob(w.char, 'thief');
   setLevel(w.char, 40);
   w.char.equipment.weapon = makeEquip('dagger_20', {});
-  w.char.skills.backstab = 10;
+  w.char.skills.pirouette = 10;
   w.char.baseMp = 5000;
   gmCommand(w, 'heal', []);
   updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'backstab').ok, true);
-  assert.equal(cast(w, 'backstab').reason, 'busy', 'not while she slips through');
-  for (let i = 0; i < 36; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'backstab').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
+  assert.equal(cast(w, 'pirouette').ok, true);
+  assert.equal(cast(w, 'pirouette').reason, 'busy', 'not while she spins away');
+  for (let i = 0; i < 28; i++) updateWorld(w, DT, idle);
+  assert.equal(cast(w, 'pirouette').reason, 'busy', 'a beat of recovery after the motion, so it cannot be mashed');
   for (let i = 0; i < 30; i++) updateWorld(w, DT, idle);
-  assert.equal(cast(w, 'backstab').ok, true, 'usable again right after that beat: no cooldown');
+  assert.equal(cast(w, 'pirouette').ok, true, 'usable again right after that beat: no cooldown');
 });
 
 test("a GM job swap forgets skills from outside the new job's line and gives their SP back", async () => {
@@ -378,11 +378,11 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
   // The Assassin and the Night Lord were removed: they become the Shinobi and the Kitsune (the
   // new paths for the same weapons), with their old skills' points given back.
   for (const [was, now] of [['assassin', 'shinobi'], ['nightlord', 'kitsune']]) {
-    const r = { job: was, sp: 0, skills: { twinfang: 10, crowcombo: 7, galaxyfall: 3 }, hotkeys: { KeyQ: { skill: 'crowcombo' } } };
+    const r = { job: was, sp: 0, skills: { ribbonlash: 10, crowcombo: 7, galaxyfall: 3 }, hotkeys: { KeyQ: { skill: 'crowcombo' } } };
     updateRetiredJobs(r);
     assert.equal(r.job, now, was);
     assert.equal(r.sp, 10, `${was}: the old skills' points come back`);
-    assert.deepEqual(r.skills, { twinfang: 10 });
+    assert.deepEqual(r.skills, { ribbonlash: 10 });
     assert.equal(r.hotkeys.KeyQ, null);
   }
 });

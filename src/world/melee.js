@@ -66,15 +66,16 @@ const HAND_Y = 15;
 // and a Berserker's rage in red.
 const BLADE = '#8fb8ff';
 const HEAVY = '#ffb347';
-const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
+const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'], coral: ['#ffc2b4', '#ff7a6a'] };
 
 // The colour a warrior path's own skills come in: the Warrior's steel, the Paladin's holy gold,
 // the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
-export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : 'steel');
+// (The Wind Dancer's blows default to her coral, never the Warrior's steel.)
+export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : 'steel');
 // The Archer's gold hawk skills the same way: the Beastmaster's green.
 // And the Thief's violet shadow skills: the Shinobi's ink, the Kitsune's fox fire.
-export const thiefSchool = (char) => (hasKi(char) ? 'ink' : hasTails(char) ? 'fox' : 'shadow');
+export const thiefSchool = (char) => (hasKi(char) ? 'ink' : hasTails(char) ? 'fox' : hasShadow(char) ? 'coral' : 'shadow');
 export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' ? thiefSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
@@ -156,15 +157,22 @@ export const PATH_COMBOS = {
   // so holding attack flows on and on. With a dagger: a stab, a slash that rides up into a
   // backflip, then a planted X-cut. With a gauntlet: a star, a backflip whipping two stars down
   // from the top of it, then a heaving throw of the moon star through the line.
+  // The Wind Dancer (the Thief remade; docs/design/wind-dancer.md): four quick blows, each a dance
+  // figure of her own (render/moves.js `wd*`), landing in about a fifth of a second. With chakrams:
+  // a piqué cut, a pirouette, an arabesque that cuts twice, and a fouetté that flings a gust down
+  // the line. With gloves: a port de bras push, a rond de bras, a relevé that lifts them, and a
+  // pirouette that opens into a burst of ribbons.
   thiefdagger: [
-    { move: 'thrust', dur: 0.28, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 58, h: 46, knock: 30, pierce: true }] },
-    { move: 'cutflip', dur: 0.56, step: 6, strikes: [{ at: 0.2, pct: 95, reach: 60, h: 52, knock: 40, arc: [-100, 190], thick: 5, flipback: 44 }] },
-    { move: 'crossfin', dur: 0.62, step: 10, carry: 0.12, finisher: true, strikes: [{ at: 0.12, pct: 85, reach: 62, h: 54, knock: 60, arc: [-110, 200], thick: 6 }, { at: 0.4, pct: 120, reach: 62, h: 56, knock: 170, arc: [100, -210], thick: 7, big: true, stop: 0.06 }] },
+    { move: 'wdpique', dur: 0.3, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 68, h: 56, knock: 30, arc: [170, -140], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdspin', dur: 0.36, step: 6, strikes: [{ at: 0.5, pct: 90, reach: 70, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdarabesque', dur: 0.5, step: 10, strikes: [{ at: 0.25, pct: 60, reach: 72, h: 54, targets: 2, knock: 20, pierce: true, fx: 'wdhit' }, { at: 0.5, pct: 70, reach: 72, h: 58, targets: 2, knock: 60, arc: [-60, 260], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdfouette', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.4, pct: 170, reach: 130, h: 66, targets: 4, pierce: true, knock: 200, launch: 140, fx: 'wdhit', burst: 'wdgust', burstAt: 0.25, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] },
   ],
   thiefstar: [
-    { move: 'throw', dur: 0.38, strikes: [{ at: 0.5, shot: 'star', pct: 85, range: 280, h: 60, knock: 25, speed: 760 }] },
-    { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'star', fan: 2, pct: 60, range: 280, h: 110, drop: 20, knock: 30, speed: 800 }] },
-    { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'moonstar', pct: 150, range: 310, h: 60, targets: 2, pierce: true, speed: 820, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'wdpalm', dur: 0.32, step: 6, strikes: [{ at: 0.42, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdrond', dur: 0.38, step: 4, strikes: [{ at: 0.5, pct: 90, reach: 92, h: 66, targets: 2, pierce: true, knock: 70, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdrise', dur: 0.44, step: 0, strikes: [{ at: 0.42, pct: 110, reach: 90, h: 110, targets: 3, knock: 20, launch: 300, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdflourish', dur: 0.5, step: 0, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 96, h: 90, around: true, targets: 5, knock: 220, launch: 200, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] },
   ],
   // The Thief's paths. The Shinobi: a kunai stab, a slash up into a backflip that throws two kunai
   // down at them from the top, then a planted X-cut. The Kitsune: a fox-fire star, a backflip
@@ -366,29 +374,30 @@ export const PATH_VARIANTS = {
   // Second: a slash up into a backflip, a plain slash, a spinning roundhouse kick, or a spinning
   // backhand. Finisher, always planted in reach so the next string flows on: the X-cut, a vaulting
   // front flip that cuts down out of the air, or a whirl that cuts all round her.
+  // The Wind Dancer with chakrams. Openers: her piqué cut, or a gliding chassé cut. Second: the
+  // pirouette, or a fan kick the ring follows round. Third: the arabesque, or a grand jeté that cuts
+  // down as she lands. Finish: the fouetté, or chaînés turns into a bow.
   thiefdagger: [
     [PATH_COMBOS.thiefdagger[0],
-      { move: 'flurry', dur: 0.32, step: 8, strikes: [{ at: 0.3, pct: 50, reach: 58, h: 46, knock: 15, pierce: true }, { at: 0.7, pct: 55, reach: 58, h: 46, knock: 30, pierce: true }] },
-      { move: 'flashcut', dur: 0.34, step: 30, carry: 0.42, strikes: [{ at: 0.4, pct: 90, reach: 62, h: 50, targets: 2, knock: 40, arc: [-80, 200], thick: 5, pierce: true }] }],
+      { move: 'wdchasse', dur: 0.32, step: 26, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 70, h: 50, targets: 2, knock: 30, pierce: true, fx: 'wdhit' }] }],
     [PATH_COMBOS.thiefdagger[1],
-      { move: 'slash', dur: 0.3, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 58, h: 52, knock: 35, arc: [-100, 190], thick: 5 }] },
-      { move: 'spinkick', dur: 0.4, step: 8, strikes: [{ at: 0.5, pct: 90, reach: 52, h: 52, knock: 110, stop: 0.04 }] },
-      { move: 'spinback', dur: 0.38, step: 8, strikes: [{ at: 0.58, pct: 95, reach: 60, h: 56, targets: 2, knock: 60, launch: 100, arc: [100, -215], thick: 5 }] }],
+      { move: 'wdfankick', dur: 0.4, step: 4, strikes: [{ at: 0.45, pct: 90, reach: 64, h: 76, targets: 2, knock: 40, launch: 140, arc: [150, -160], thick: 6, fx: 'wdhit' }] }],
     [PATH_COMBOS.thiefdagger[2],
-      { move: 'vaultcut', dur: 0.66, step: 24, carry: 0.5, finisher: true, strikes: [{ at: 0.56, pct: 150, reach: 64, h: 62, targets: 3, knock: 90, launch: 260, arc: [-150, 190], thick: 7, big: true, stop: 0.06, shake: 2 }] },
-      { move: 'whirlfin', dur: 0.72, step: 6, finisher: true, strikes: [{ at: 0.21, pct: 70, reach: 58, h: 56, around: true, targets: 3, knock: 30, arc: [-90, 360], thick: 5 }, { at: 0.42, pct: 110, reach: 60, h: 56, around: true, targets: 3, knock: 170, arc: [-90, 360], thick: 6, big: true, stop: 0.05 }] }],
+      { move: 'wdjete', dur: 0.5, step: 30, carry: 0.6, strikes: [{ at: 0.52, pct: 130, reach: 70, h: 64, targets: 3, knock: 70, arc: [-30, 200], thick: 7, fx: 'wdhit' }] }],
+    [PATH_COMBOS.thiefdagger[3],
+      { move: 'wdchaine', dur: 0.6, step: 40, carry: 0.7, finisher: true, strikes: [{ at: 0.3, pct: 70, reach: 70, h: 60, around: true, targets: 4, knock: 40, fx: 'wdhit' }, { at: 0.55, pct: 120, reach: 76, h: 64, around: true, targets: 4, knock: 210, launch: 160, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] }],
   ],
-  // The Thief with a gauntlet. Openers: her star or a twirling throw. Second: a backflip whipping
-  // two stars down, two stars, or a fan of three at once. Finisher: the heaving throw of the moon
-  // star, or a twirl that flings it out of the turn.
+  // The Wind Dancer with gloves: a push or a gliding chassé; a rond de bras or a fan kick; a relevé or
+  // a grand jeté; the opening pirouette or a lunge that drives a gust down the line.
   thiefstar: [
     [PATH_COMBOS.thiefstar[0],
-      { move: 'twirlthrow', dur: 0.44, strikes: [{ at: 0.62, shot: 'star', pct: 90, range: 280, h: 60, knock: 30, speed: 800 }] }],
+      { move: 'wdchasse', dur: 0.32, step: 22, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
     [PATH_COMBOS.thiefstar[1],
-      { move: 'barrage', dur: 0.4, strikes: [{ at: 0.17, shot: 'star', pct: 55, range: 280, h: 60, knock: 20, speed: 760 }, { at: 0.5, shot: 'star', pct: 60, range: 280, h: 60, knock: 25, speed: 760, oy: 4 }] },
-      { move: 'throw', dur: 0.42, strikes: [{ at: 0.5, shot: 'star', fan: 3, pct: 45, range: 280, h: 110, knock: 30, speed: 760, muzzle: 'smokepuff' }] }],
+      { move: 'wdfankick', dur: 0.4, step: 4, strikes: [{ at: 0.45, pct: 90, reach: 90, h: 76, targets: 2, pierce: true, knock: 50, launch: 120, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
     [PATH_COMBOS.thiefstar[2],
-      { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'moonstar', pct: 150, range: 320, h: 80, targets: 2, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
+      { move: 'wdjete', dur: 0.5, step: 26, carry: 0.6, strikes: [{ at: 0.52, pct: 120, reach: 100, h: 70, targets: 3, pierce: true, knock: 80, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
+    [PATH_COMBOS.thiefstar[3],
+      { move: 'wdlunge', dur: 0.56, step: 8, carry: 0.4, finisher: true, strikes: [{ at: 0.46, pct: 170, reach: 140, h: 66, targets: 4, pierce: true, knock: 220, fx: 'wdhit', burst: 'wdgust', burstAt: 0.2, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] }],
   ],
   // The Shinobi. Openers: her kunai stab, a blur of stabs, or a dash cut through the line.
   // Second: her slash, a palm strike that slaps a seal on them (it bursts a beat later), or a
@@ -497,13 +506,15 @@ const ARCHER_COMMANDS = {
   },
   // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
   // the air, and a star thrown out of a run.
+  // The Wind Dancer with gloves: a gust swept up at whatever flies, gusts pushed down from a hang
+  // in the air, and a cartwheel of wind out of a run.
   thiefstar: {
-    up: { move: 'upthrow', dur: 0.44, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 100, range: 260, h: 190, lift: 50, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    up: { move: 'wdrise', dur: 0.44, strikes: [{ at: 0.42, pct: 100, reach: 90, h: 190, targets: 3, knock: 20, launch: 360, fx: 'wdhit', big: true, stop: 0.04 }] },
     air: [
-      { move: 'airthrow', dur: 0.34, hang: true, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 75, range: 260, h: 170, drop: 50, knock: 30, speed: 760 }] },
-      { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'moonstar', fan: 2, pct: 95, range: 260, h: 190, drop: 60, knock: 120, speed: 820, big: true, stop: 0.05, shake: 1 }] },
+      { move: 'wdairspin', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 75, reach: 100, h: 170, targets: 3, knock: 30, fx: 'wdhit' }] },
+      { move: 'wdairsplit', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 95, reach: 110, h: 190, targets: 4, knock: 120, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.4, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'dashstab', dur: 0.44, step: 40, carry: 0.5, strikes: [{ at: 0.45, shot: 'star', fan: 2, pct: 85, range: 280, h: 80, knock: 80, speed: 800 }] },
+    dash: { move: 'wdchaine', dur: 0.5, step: 50, carry: 0.6, strikes: [{ at: 0.45, pct: 95, reach: 90, h: 70, targets: 3, around: true, knock: 90, fx: 'wdhit' }] },
   },
   // The Archer: a shot up that pops fliers higher, two shots loosed down from a hang in the air, a
   // sliding shot out of a run, and Down + attack: leaning out to loose two arrows down at whatever
@@ -587,6 +598,16 @@ const DAGGER_COMMANDS = {
     { move: 'meteor', dur: 0.44, dive: 820, finisher: true, strikes: [{ onLand: true, pct: 170, reach: 70, h: 64, around: true, targets: 4, knock: 180, big: true, stop: 0.07, shake: 3 }] },
   ],
   dash: { move: 'dashstab', dur: 0.4, step: 60, carry: 0.6, strikes: [{ at: 0.32, pct: 90, reach: 80, h: 50, targets: 3, pierce: true, knock: 60 }, { at: 0.55, pct: 110, reach: 80, h: 50, targets: 3, pierce: true, knock: 180, big: true, stop: 0.04 }] },
+};
+// The Wind Dancer's chakram commands (her own figures): a relevé that lifts them, a turning cut and
+// a split that cuts down in the air, and chaînés through the line out of a run.
+const DANCER_COMMANDS = {
+  up: { move: 'wdrise', dur: 0.44, step: 0, strikes: [{ at: 0.4, pct: 105, reach: 70, h: 90, targets: 3, knock: 20, launch: 440, hop: 380, arc: [80, -175], thick: 6, fx: 'wdhit', big: true, stop: 0.05 }] },
+  air: [
+    { move: 'wdairspin', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 85, reach: 66, h: 80, around: true, targets: 3, knock: 10, launch: 140, fx: 'wdhit' }] },
+    { move: 'wdairsplit', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 120, reach: 70, h: 84, targets: 3, knock: 140, launch: 120, arc: [-30, 200], thick: 6, fx: 'wdhit', big: true, stop: 0.05, shake: 1 }] },
+  ],
+  dash: { move: 'wdchaine', dur: 0.5, step: 60, carry: 0.6, strikes: [{ at: 0.3, pct: 90, reach: 70, h: 64, targets: 3, around: true, knock: 60, fx: 'wdhit' }, { at: 0.6, pct: 110, reach: 70, h: 64, targets: 3, around: true, knock: 180, fx: 'wdhit', big: true, stop: 0.04 }] },
 };
 // The Shinobi's dagger commands: a launcher that throws a kunai up after them, fast air cuts then
 // a fan of kunai thrown down, and out of a run a dash through the line in a burst of smoke.
@@ -721,11 +742,25 @@ const PHANTOM_LAG = 0.1;
 export const hasShadow = (char) => char.job === 'thief';
 export function addShadow(world, n) {
   if (!hasShadow(world.char) || n <= 0) return;
+  const before = world.shadow ?? 0;
   world.chain = world.now - (world.shadowAt ?? -9) <= SHADOW_CHAIN ? (world.chain ?? 0) + 1 : 0;
   world.shadow = Math.min(SHADOW_MAX, (world.shadow ?? 0) + n * (1 + 0.12 * Math.min(10, world.chain)));
   world.shadowAt = world.now;
+  if (before < SHADOW_MAX && world.shadow >= SHADOW_MAX) spotlight(world);
 }
 export const phantom = (world) => hasShadow(world.char) && (world.shadow ?? 0) >= SHADOW_MAX;
+// Spotlight (the Wind Dancer): her Encore just filled, so she strikes a pose. Everything around her
+// is dazzled a moment, and she and the party round her move faster and dodge more.
+function spotlight(world) {
+  const p = procOf(world.char, 'spotlight');
+  if (!p || world.dead) return;
+  applyBuff(world, 'spotlight', p);
+  const { body } = world;
+  world.numbers.push({ x: body.x, y: body.y - body.h - 10, text: 'ENCORE!', color: '#ff8a7a', t: 0, big: true });
+  world.strikes.push(procStrike(world, { at: 0, dir: body.facing, move: null, dur: 0 }, 'procspotlight', 0.05, {
+    pct: p.pct, reach: p.range.w / 2, h: p.range.h, around: true, targets: 8, knock: 40, stun: p.stun, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, school: 'coral', stop: 0.04, shake: 2,
+  }));
+}
 // Ki: the Shinobi's gauge. Every hit builds it, and so does every dodge (a monster's blow that
 // misses her, a Smoke Bomb, a Log Swap); it fades once the fighting stops. Full (Shadow Clones),
 // two ink clones of her repeat every attack, each at CLONE_POWER.
@@ -1136,7 +1171,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { thiefdagger: DAGGER_COMMANDS, shinobi: SHINOBI_COMMANDS }[pathOf(world)] ?? null;
+    const own = { thiefdagger: DANCER_COMMANDS, shinobi: SHINOBI_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1412,7 +1447,7 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'ink' : hasShadow(char) ? 'shadow' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'ink' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
@@ -1584,15 +1619,26 @@ function formEcho(world, s) {
   if (!(world.formSwing && world.now < world.formSwing.until)) world.formSwing = { kind: s.move, since: world.now + 0.13 - s.at * s.dur, dur: s.dur, until: world.now + 0.13 + (1 - s.at) * s.dur };
 }
 
+// Ribbon Lash (Wind Dancer): two lashes of ribbon a beat after the blow, all round her.
+function lashStrikes(world, s, p) {
+  const lash = (delay, burst) => procStrike(world, s, 'procribbonlash', delay, { pct: p.pct, reach: 76, h: 70, around: true, targets: p.targets, knock: 30, fx: 'wdhit', school: 'coral', ...(burst ? { burst: 'wdswirl', burstAt: 0, burstDur: 0.4 } : {}) });
+  world.strikes.push(lash(0.1, true), lash(0.24, false));
+}
+
 // After a basic swing lands (on `count` monsters, maybe none). `rng` for tests.
 function bladeProcs(world, s, count, rng = Math.random) {
   const { char } = world;
+  const lash = procOf(char, 'ribbonlash');
+  if (lash && rng() < lash.chance) lashStrikes(world, s, lash);
   for (const [id, strikes] of [['bladerush', rushStrikes], ['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
     const p = procOf(char, id);
     if (p && rng() < p.chance) strikes(world, s, p);
   }
   // Only the ground combo's own finisher flows on (not a dive, a slam, or a dash).
   if (!s.finisher || !/^basic\d$/.test(s.key)) return;
+  // Gust Line (Wind Dancer): the string's last blow flings a gust down the line.
+  const gust = procOf(char, 'gustline');
+  if (gust) world.strikes.push(procStrike(world, s, 'procgustline', 0.12, { pct: gust.pct, reach: 210, h: 70, targets: gust.targets, pierce: true, knock: 160, fx: 'wdhit', burst: 'wdgust', burstAt: 0.15, burstDur: 0.45, school: 'coral', stop: 0.04, shake: 1 }));
   const judgment = procOf(char, 'judgment');
   if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
   if (world.queuedStep) return;

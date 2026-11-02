@@ -1168,9 +1168,110 @@ function crossbow(m, t) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
+// ---------- Chakrams (the Wind Dancer's; the dagger items) ----------
+//
+// A ring blade held by a bar across its middle (the grip, at the origin), a coral ribbon tied to
+// it that flutters. A wooden hoop, a notched copper ring, a bronze ring with leaf blades, an iron
+// saw ring, a steel pinwheel of hooks, a silver ring of crescent wings, a mithril flower of petals,
+// a cobalt ring of breaking waves, a faceted crystal ring, a runic ring with spikes and a
+// starsteel star.
+const CORAL = '#ff8a7a';
+const CORAL_DK = '#e0605a';
+
+// A band round the origin from radius r0 to r1 (a ring with its hole), as one polygon.
+function band(r0, r1, c, n = 28, cx = 0, cy = 0) {
+  const o = [];
+  const i2 = [];
+  for (let k = 0; k <= n; k++) {
+    const a = (k / n) * Math.PI * 2;
+    o.push([cx + Math.cos(a) * r1, cy + Math.sin(a) * r1]);
+    i2.push([cx + Math.cos(a) * r0, cy + Math.sin(a) * r0]);
+  }
+  return T([...o, ...i2.reverse()], c);
+}
+// `n` blades round the rim at radius r, each `len` out and `w` wide, turned by `rot`, leaning by
+// `lean` (a pinwheel), shaped by `kind`.
+function rimBlades(n, r, len, w, c, { rot = 0, lean = 0, kind = 'tooth' } = {}) {
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const a = rot + (k / n) * Math.PI * 2;
+    const d = [Math.cos(a), Math.sin(a)];
+    const t = [-d[1], d[0]];
+    const at = (u, s) => [d[0] * (r + len * u) + t[0] * (w * s + lean * u * len), d[1] * (r + len * u) + t[1] * (w * s + lean * u * len)];
+    if (kind === 'leaf') out.push(T([at(-0.2, 0), at(0.35, 1), at(0.75, 0.6), at(1, 0), at(0.75, -0.6), at(0.35, -1)], c));
+    else if (kind === 'hook') out.push(T([at(-0.2, -1), at(0.4, -0.9), at(1, 0.6), at(0.55, 0.2), at(-0.2, 1)], c));
+    else if (kind === 'wing') out.push(T([at(-0.2, -1), at(0.6, -1.2), at(1, -0.2), at(0.5, 0.1), at(-0.2, 1)], c));
+    else out.push(T([at(-0.2, -1), at(1, 0), at(-0.2, 1)], c));
+  }
+  return out;
+}
+
+function chakram(m, t, f = 0) {
+  const s = [];
+  const a = {};
+  // A small ring (MapleStory-sized, not a shield), held by a wrapped grip on its rim so the ring
+  // sits out beyond her hand, never round it (the player: the weapon was blocking her face).
+  const RR = [4.4, 4.6, 4.8, 5, 5.2, 5.4, 5.6, 5.8, 6, 6.2, 6.4][t];
+  const th = [1.6, 1.6, 1.7, 1.7, 1.8, 1.8, 1.8, 1.9, 1.9, 2, 2][t];
+  const k = 0.7;
+  const ring = t === 0 ? m.handle : m.blade;
+  // The blades round the rim (behind the ring).
+  switch (t) {
+    case 1: s.push(...rimBlades(8, RR - 0.3, 1.6 * k, 0.8, ring, { rot: Math.PI / 8 })); break;
+    case 2: s.push(...rimBlades(4, RR - 0.4, 4.6 * k, 1.3, ring, { rot: Math.PI / 4, kind: 'leaf' })); break;
+    case 3: s.push(...rimBlades(12, RR - 0.3, 2 * k, 0.8, ring)); break;
+    case 4: s.push(...rimBlades(3, RR - 0.6, 6 * k, 1.4, ring, { rot: -Math.PI / 2, lean: 0.6, kind: 'hook' })); break;
+    case 5: s.push(...rimBlades(6, RR - 0.4, 4.4 * k, 1.2, m.trim, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' })); break;
+    case 6: s.push(...rimBlades(8, RR - 0.6, 3.6 * k, 1.4, ring, { kind: 'leaf' }), ...rimBlades(8, RR - 0.6, 2.2 * k, 0.6, m.edge, { kind: 'leaf' }).map(F)); break;
+    case 7: s.push(...rimBlades(4, RR - 0.4, 5 * k, 1.5, ring, { rot: -Math.PI / 4, lean: 0.9, kind: 'hook' })); break;
+    case 8: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.1, ring, { rot: -Math.PI / 2 }), ...rimBlades(4, RR - 0.4, 3.4 * k, 0.8, ring, { rot: -Math.PI / 4 })); break;
+    case 9: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.5, m.trim, { rot: -Math.PI / 2 }), ...rimBlades(8, RR - 0.3, 1.8 * k, 0.8, ring, { rot: Math.PI / 8 })); break;
+    case 10: {
+      const st = star(0, 0, RR + 3.4, GOLD, 0.3);
+      s.push(st, { ...st, pts: st.pts.map(([x, y]) => [x * 0.707 - y * 0.707, x * 0.707 + y * 0.707]) }, ...rimBlades(4, RR - 0.4, 4.2, 1.4, m.trim, { rot: -Math.PI / 4 }));
+      break;
+    }
+    default: break;
+  }
+  // The ring, faceted for crystal.
+  if (t === 8) {
+    const oct = (r) => Array.from({ length: 8 }, (_, i) => [Math.cos((i / 8) * Math.PI * 2 + Math.PI / 8) * r, Math.sin((i / 8) * Math.PI * 2 + Math.PI / 8) * r]);
+    s.push(T([...oct(RR), oct(RR)[0], ...oct(RR - th).reverse(), oct(RR - th)[7]], ring), F(T([...oct(RR).slice(4, 8), ...oct(RR - th).slice(4, 8).reverse()], m.bladeDark)));
+  } else {
+    s.push(band(RR - th, RR, ring), F(band(RR - th, RR - th + 0.5, mix(ring, '#000000', 0.18))), F(band(RR - 0.6, RR, m.edge, 28)));
+  }
+  if (t === 9) for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2 + 0.3;
+    s.push(F(R(Math.cos(ang) * (RR - th / 2) - 0.4, Math.sin(ang) * (RR - th / 2) - 0.5, 0.8, 1, m.rune)));
+  }
+  if (t >= 10) for (const ang of [0.8, 2.6, 4.4]) s.push(F(star(Math.cos(ang) * (RR - th / 2), Math.sin(ang) * (RR - th / 2), 0.8, m.rune)));
+  // A gem at the top of the ring from Silver, a coral bead on the plain hoop.
+  if (t >= 5) s.push(...gem(0, -RR + th / 2, 0.9, m.gem));
+  if (t === 0) s.push(E(0, -RR + 0.8, 0.8, 0.7, CORAL));
+  // Everything so far moves up so the ring's bottom sits just above the grip.
+  const cy = RR + 1.2;
+  const lifted = s.map((sh) => ({ ...sh, y: (sh.y ?? 0) - cy }));
+  s.length = 0;
+  s.push(...lifted);
+  // The ribbon, tied to the ring's far edge (so it trails below the ring as it hangs, and streams
+  // behind a throw), its tails fluttering; then the grip on the rim, wrapped.
+  const sw = [0, 0.6, 1, 0.6, 0, -0.6][((f % 6) + 6) % 6];
+  const ty = -cy - RR + 0.4;
+  s.unshift(T([[-0.5, ty], [0.5, ty], [-1.6 + sw, ty - 4.6], [-2.8 + sw, ty - 4]], CORAL), T([[-0.5, ty], [0.5, ty], [2 + sw * 0.6, ty - 3.8], [1 + sw * 0.6, ty - 4.4]], CORAL_DK));
+  // The grip on the rim, wrapped.
+  s.push(R(-0.6, -1.6, 1.2, 1.2, ring), R(-1.1, -0.6, 2.2, 2.4, t === 0 ? '#efe0bf' : m.grip));
+  for (let y = -0.4; y < 1.6; y += 0.9) s.push(F(R(-1.1, y, 2.2, 0.35, t === 0 ? '#c9a878' : m.trimDark)));
+  if (t >= 5) a.gem = [0, -cy - RR + th / 2];
+  a.tip = [0, -cy - RR - 1];
+  a.head = [0, -cy];
+  a.blade = [-cy - RR, -cy + RR];
+  if (m.rune) a.runes = [0, -cy - RR + 1, -cy + RR - 1];
+  return { shapes: s, blade: [-cy - RR, -cy + RR], reach: [], a };
+}
+
 // The player wants them big and chunky (MapleStory's oversized weapons): each design is drawn on
 // a plain grid, then blown up, wider than it is longer, so blades, guards and grips are bold.
-const CHUNK = { sword: [1.5, 1.2], axe: [1.4, 1.15], spear: [1.45, 1.1], dagger: [1.5, 1.25], wand: [1.4, 1.25], staff: [1.4, 1.12], bow: [1.3, 1.1], crossbow: [1.15, 1.15] };
+const CHUNK = { sword: [1.5, 1.2], axe: [1.4, 1.15], spear: [1.45, 1.1], dagger: [1.15, 1.15], wand: [1.4, 1.25], staff: [1.4, 1.12], bow: [1.3, 1.1], crossbow: [1.15, 1.15] };
 
 function scaled(d, [sx, sy]) {
   const sh = (s) => {
@@ -1184,7 +1285,8 @@ function scaled(d, [sx, sy]) {
   return { shapes: d.shapes.map(sh), blade: d.blade.map((y) => y * sy), reach: d.reach.map(pt), a };
 }
 
-const DRAW = { sword, axe, spear, dagger, wand, staff, bow, crossbow };
+// (The dagger items are the Wind Dancer's chakrams now: docs/design/wind-dancer.md.)
+const DRAW = { sword, axe, spear, dagger: chakram, wand, staff, bow, crossbow };
 export const DESIGNS = Object.fromEntries(Object.entries(DRAW).map(([k, f]) => [k, (m, t, frame) => scaled(f(m, t, frame), CHUNK[k] ?? [1, 1])]));
 
 // ---------- The glove ----------

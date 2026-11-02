@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap, hurtPlayer } from '../src/world/worl
 import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
-import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP } from '../src/world/melee.js';
+import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP, addShadow } from '../src/world/melee.js';
 import { MOVES } from '../src/render/moves.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
@@ -381,7 +381,7 @@ test("skills can't be spammed back to back, even by moving, but basic attacks st
 });
 
 test('the same no-spam rule holds for every job, spells and thief skills included', () => {
-  for (const [job, weapon, skill] of [['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang'], ['warrior', 'sword_20', 'shouldercharge']]) {
+  for (const [job, weapon, skill] of [['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'pirouette'], ['thief', 'dagger_20', 'pirouette'], ['warrior', 'sword_20', 'shouldercharge']]) {
     const w = arena(weapon);
     w.char.job = job;
     w.char.skills[skill] = 10;
@@ -1601,84 +1601,47 @@ function thief(weapon = 'dagger_20') {
   return w;
 }
 
-test('the Thief has her own basic combo with each weapon', () => {
+test('the Wind Dancer has her own four-blow string with each weapon, and every blow lands fast', () => {
   for (const [weapon, path] of [['dagger_20', 'thiefdagger'], ['gauntlet_20', 'thiefstar']]) {
+    assert.equal(PATH_COMBOS[path].length, 4, `${path}: four blows`);
+    assert.ok(PATH_COMBOS[path].at(-1).finisher, `${path}: a finish`);
+    for (const st of PATH_COMBOS[path].map((x) => x.strikes[0].at * x.dur)) assert.ok(st <= 0.26, `${path}: lands in about a fifth of a second (${st.toFixed(2)})`);
     const w = thief(weapon);
     const seen = [];
     const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 150; i++) {
       updateWorld(w, DT, hold);
       if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
     }
-    assert.deepEqual(seen.slice(0, 3).map((s) => s.move), PATH_COMBOS[path].map((s) => s.move), path);
+    assert.deepEqual(seen.slice(0, 4).map((x) => x.move), PATH_COMBOS[path].map((x) => x.move), path);
     assert.ok(w.mobs.some((m) => m.hp < 1e9), `${weapon} hits`);
   }
 });
-
-test("the Thief's combos mix her own acrobatic pools, flip mid-string and dart back in, so the combo flows on", () => {
+test("the Wind Dancer's strings mix her own pools of swings, and every one comes up", () => {
   for (const [weapon, path] of [['dagger_20', 'thiefdagger'], ['gauntlet_20', 'thiefstar']]) {
     const steps = PATH_VARIANTS[path];
     assert.equal(steps.length, PATH_COMBOS[path].length, `${path}: a choice for every step`);
     steps.forEach((choices, i) => {
       assert.equal(choices[0], PATH_COMBOS[path][i], `${path}: her own swing comes first`);
       assert.ok(choices.length >= 2, `${path}: step ${i + 1} has a choice`);
-      for (const s of choices) assert.ok(MOVES[s.move], `${path}: ${s.move} is drawn`);
+      for (const x of choices) assert.ok(MOVES[x.move], `${path}: ${x.move} is drawn`);
     });
-    assert.ok(steps.at(-1).every((s) => s.finisher), `${path}: every last swing is a finisher`);
-    // Back flips only in the middle of a string, never as its end.
-    assert.ok(steps.at(-1).every((s) => !/flip/.test(s.move) && !(s.step < 0) && s.strikes.every((t) => !t.flipback && !t.kickback)), `${path}: finishers stay planted`);
-    assert.ok(steps[1].some((s) => /flip/.test(s.move)), `${path}: a mid-string flip`);
-    // Played out with fixed dice, every swing in the pool comes up; a flip springs her back, and
-    // the next blow darts her back in, so each string ends about where it started.
+    assert.ok(steps.at(-1).every((x) => x.finisher), `${path}: every last swing is a finisher`);
     const w = thief(weapon);
     const seen = new Set();
-    const flips = [];
     let seed = 11;
     dice(0, () => {
       Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-      let flip = null;
-      let since = null;
       for (let i = 0; i < 60 * 60; i++) {
         w.char.mp = 9999;
         if (!w.pose) w.body.x = Math.max(w.body.x, 300);
         updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-        if (!w.pose) continue;
-        seen.add(w.pose.kind);
-        if (w.pose.since !== since) {
-          since = w.pose.since;
-          if (flip) flip.next = w.pose.kind;
-          if (/flip/.test(w.pose.kind) && !w.pose.fin) flip = { x: w.body.x, low: w.body.x };
-        }
-        if (flip && !flip.next) flip.low = Math.min(flip.low, w.body.x);
-        if (flip?.next && w.pose.fin && w.now - w.pose.since > w.pose.dur * 0.6) {
-          flips.push({ ...flip, end: w.body.x });
-          flip = null;
-        }
+        if (w.pose) seen.add(w.pose.kind);
       }
     });
-    for (const s of steps.flat()) assert.ok(seen.has(s.move), `${path}: ${s.move} came up`);
-    assert.ok(flips.length >= 2, `${path}: mid-string flips came up`);
-    for (const f of flips) {
-      assert.ok(f.low < f.x - 20, `${path}: the flip springs her back (${(f.x - f.low).toFixed(0)}px)`);
-      assert.ok(f.end >= f.x - 4, `${path}: ${f.next} darts her back in (${(f.end - f.x).toFixed(0)}px)`);
-    }
+    for (const x of steps.flat()) assert.ok(seen.has(x.move), `${path}: ${x.move} came up`);
   }
 });
-
-test('Backstab melts her into smoke while she slips through, and she steps out of it behind them', async () => {
-  const { moveAt } = await import('../src/render/moves.js');
-  assert.ok((moveAt('backstab', 0.3, 0.56)?.fade ?? 0) >= 0.98, 'gone mid-blink');
-  assert.ok((moveAt('backstab', 0.05, 0.56)?.fade ?? 0) < 0.1, 'there as she dips');
-  assert.ok((moveAt('backstab', 0.7, 0.56)?.fade ?? 0) < 0.1, 'back for the stab');
-  const w = thief();
-  w.char.skills.backstab = 10;
-  const x0 = w.body.x;
-  cast(w, 'backstab');
-  assert.equal(w.fx.filter((f) => f.kind === 'blinksmoke').length, 2, 'a puff where she goes and one where she comes out');
-  for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
-  assert.ok(w.body.x > x0 + 40, 'slipped through');
-});
-
 test("a Thief's hits build Shadow, faster in a quick chain, and it fades once the fighting stops", (t) => {
   // Crits and the basic combo's swings are random: a fixed sequence keeps the comparison fair
   // (and the test steady).
@@ -1703,101 +1666,88 @@ test("a Thief's hits build Shadow, faster in a quick chain, and it fades once th
   assert.equal(w.shadow, 0, 'faded once the fighting stopped');
 });
 
-test('full Shadow (Phantom): a shadow copy repeats every attack a beat later, lighter', () => {
-  const hits = (shadow) => {
-    const w = thief();
-    w.shadow = shadow;
-    w.shadowAt = 1e9;
-    let n = 0;
-    let last = w.mobs[0].hp;
-    updateWorld(w, DT, press('KeyZ'));
-    for (let i = 0; i < 40; i++) {
-      updateWorld(w, DT, idle);
-      if (w.mobs[0].hp < last) n += 1;
-      last = w.mobs[0].hp;
-    }
-    return { n, w };
-  };
-  assert.equal(hits(0).n, 1, 'one stab');
-  const full = hits(100);
-  assert.equal(full.n, 2, 'the stab and its shadow');
-  assert.ok(full.w.phantom, 'the copy plays the move');
-  // With a gauntlet the copy throws too, without using up stars.
-  const w = thief('gauntlet_20');
-  w.shadow = 100;
-  w.shadowAt = 1e9;
-  const stars = () => w.char.inventory.use.reduce((n, s) => n + (s?.qty ?? 0), 0);
-  const before = stars();
-  updateWorld(w, DT, press('KeyZ'));
-  assert.ok(w.strikes.some((s) => s.phantom && s.shot), 'the copy throws a star of its own');
-  run(w, 0.5);
-  assert.equal(before - stars(), 0, 'stars never run out, the shadow star neither');
+test('full Encore (Standing Ovation): every attack strikes twice, with chakrams or gloves', () => {
+  for (const weapon of ['dagger_20', 'gauntlet_20']) {
+    const hits = (encore) => {
+      const w = thief(weapon);
+      w.shadow = encore;
+      w.shadowAt = 1e9;
+      let n = 0;
+      let last = w.mobs[0].hp;
+      updateWorld(w, DT, press('KeyZ'));
+      for (let i = 0; i < 40; i++) {
+        updateWorld(w, DT, idle);
+        if (w.mobs[0].hp < last) n += 1;
+        last = w.mobs[0].hp;
+      }
+      return n;
+    };
+    assert.equal(hits(100), hits(0) * 2, `${weapon}: each blow lands twice`);
+  }
 });
-
-test('dagger skills need a dagger and gauntlet skills a gauntlet; shared skills work with both', () => {
-  const d = thief();
-  Object.assign(d.char.skills, { luckyseven: 5, twinfang: 5, shadowdash: 5, daggermastery: 20, gauntletmastery: 20 });
-  assert.equal(cast(d, 'luckyseven').reason, 'weapon');
-  assert.ok(cast(d, 'twinfang').ok);
-  const g = thief('gauntlet_20');
-  Object.assign(g.char.skills, { luckyseven: 5, twinfang: 5, shadowdash: 5 });
-  assert.equal(cast(g, 'twinfang').reason, 'weapon');
-  assert.ok(cast(g, 'luckyseven').ok);
-  run(g, 1);
-  const x = g.body.x;
-  assert.ok(cast(g, 'shadowdash').ok, 'Shadow Step works with a gauntlet');
-  assert.ok(g.invuln > 0, 'untouchable on the way');
-  run(g, 0.5);
-  assert.ok(g.body.x > x + 60, 'darted forward');
-});
-
-test('Backstab slips through, turns, and hits much harder on a monster facing away', () => {
-  // (The dice are pinned from the start: a monster left to wander with real dice before the stab
-  // sometimes turns round mid-move, so the stab from behind lands on its face.)
-  const dealt = (facing) => {
-    const random = Math.random;
-    Math.random = () => 0.5;
-    try {
-      const w = thief();
-      w.mobs = [w.mobs[0]];
-      w.mobs[0].dir = facing;
-      w.char.skills.backstab = 10;
-      const x = w.body.x;
-      assert.ok(cast(w, 'backstab').ok);
-      run(w, 0.7);
-      assert.ok(w.body.x > w.mobs[0].x, 'came out the far side');
-      assert.equal(w.body.facing, -1, 'turned round to stab');
-      assert.ok(w.body.x > x);
-      return 1e9 - w.mobs[0].hp;
-    } finally {
-      Math.random = random;
-    }
-  };
-  // The monster faces the thief (-1) as she comes in, so once she's past it, its back is to her.
-  assert.ok(dealt(-1) > dealt(1) * 1.4, 'from behind hits much harder');
-});
-
-test("each of the Thief's finishers needs full Shadow, spends it, and lands its big moment", () => {
-  for (const [weapon, skill] of [['dagger_20', 'moonlitassassin'], ['gauntlet_20', 'fullmoonvolley']]) {
+test("the Wind Dancer's masteries count only with their own weapon; Pirouette works with both", () => {
+  for (const weapon of ['dagger_20', 'gauntlet_20']) {
     const w = thief(weapon);
-    w.char.skills[skill] = 10;
+    w.char.skills.pirouette = 10;
+    const x = w.body.x;
+    assert.ok(cast(w, 'pirouette').ok, `Pirouette with ${weapon}`);
+    assert.ok(w.invuln > 0, 'untouchable on the way');
+    run(w, 0.6);
+    assert.ok(w.body.x > x + 60, 'spun forward');
+  }
+});
+test('Grand Finale needs full Encore, spends it, and lands on the whole line with either weapon', () => {
+  for (const weapon of ['dagger_20', 'gauntlet_20']) {
+    const w = thief(weapon);
+    w.char.skills.grandfinale = 10;
     w.shadow = 80;
-    assert.equal(cast(w, skill).reason, 'gauge:shadow', `${skill} waits for full Shadow`);
+    assert.equal(cast(w, 'grandfinale').reason, 'gauge:shadow', 'waits for full Encore');
     w.shadow = 100;
-    assert.ok(cast(w, skill).ok);
+    assert.ok(cast(w, 'grandfinale').ok);
     assert.equal(w.shadow, 0, 'spends all of it');
+    assert.ok(w.fx.some((f) => f.kind === 'wdfinale') || w.strikes.some((x) => x.burst === 'wdfinale'), 'the spotlight drops');
     run(w, 2);
-    assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, `${skill} hits the whole line`);
+    assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'hits the whole line');
     assert.ok((w.shadow ?? 0) < 100, 'and does not refill it');
-    settle(w);
-    w.shadow = 100;
-    assert.ok(cast(w, skill).ok);
-    run(w, 0.3);
-    w.shadow = 100;
-    assert.equal(cast(w, skill).reason, 'busy', `${skill} can't be recast mid-motion`);
   }
 });
 
+test('Ribbon Lash whirls on from her swings, Gust Line flies from the last blow of a string', () => {
+  const w = thief();
+  w.char.skills.ribbonlash = 20;
+  w.char.skills.gustline = 20;
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  const keys = new Set();
+  for (let i = 0; i < 60 * 6; i++) {
+    updateWorld(w, DT, hold);
+    for (const x of w.strikes) keys.add(x.key);
+  }
+  assert.ok(keys.has('procribbonlash'), 'a lash of ribbons');
+  assert.ok(keys.has('procgustline'), 'a gust down the line');
+});
+
+test('Spotlight: Encore filling dazzles everything around her and speeds up the party', () => {
+  const w = thief();
+  w.char.skills.spotlight = 10;
+  w.shadow = 99;
+  w.shadowAt = w.now;
+  addShadow(w, 10);
+  assert.ok(w.char.buffs.spotlight, 'the buff');
+  assert.ok(w.strikes.some((x) => x.key === 'procspotlight' && x.stun), 'the dazzle');
+});
+
+test('Light Feet: a hit on her sometimes sets her dancing out of reach', async () => {
+  const { danceOnHit } = await import('../src/world/combat.js');
+  const w = thief();
+  w.char.skills.lightfeet = 20;
+  w.invuln = 0;
+  danceOnHit(w, () => 0);
+  assert.ok(w.invuln > 0.5, 'untouchable a moment');
+  assert.ok(w.char.buffs.lightfeet, 'and harder to hit');
+  const before = w.char.buffs.lightfeet.until;
+  danceOnHit(w, () => 0);
+  assert.equal(w.char.buffs.lightfeet.until, before, 'not again while it is up');
+});
 test("a weapon's own mastery only counts while that weapon is held, and grows with your level", async () => {
   const { passiveBonus } = await import('../src/core/stats.js');
   const w = thief();
@@ -2194,7 +2144,7 @@ test('attacking out of a run is still a dash attack', () => {
 // The same for a held attack skill, every kind of job: you stay planted and keep casting it (the
 // key repeats once held), turning with the direction, never walking off between casts.
 test('holding an attack skill and a direction keeps casting it, planted, for every job', () => {
-  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'luckyseven'], ['thief', 'dagger_20', 'twinfang']]) {
+  for (const [job, weapon, skill] of [['warrior', 'sword_20', 'shouldercharge'], ['archer', 'bow_20', 'vault'], ['thief', 'gauntlet_20', 'pirouette'], ['thief', 'dagger_20', 'pirouette']]) {
     const casts = (dir) => {
       const w = arena(weapon);
       w.char.job = job;
@@ -3214,7 +3164,7 @@ test("a Thief's flash jump throws her far forward in mid-air, once per jump, in 
     tap(w, ['Space']);
     assert.equal(w.pose?.kind, 'flashjump');
     const fx = w.fx.find((f) => f.kind === 'leapburst');
-    assert.equal(fx?.school, { null: 'shadow', shinobi: 'ink', kitsune: 'fox' }[job]);
+    assert.equal(fx?.school, { null: 'coral', shinobi: 'ink', kitsune: 'fox' }[job]);
     keep(w, [], 20);
     assert.ok(w.body.x - x0 > 140, `${job ?? 'thief'} flies forward (${(w.body.x - x0).toFixed(0)}px)`);
     // Only once per jump.

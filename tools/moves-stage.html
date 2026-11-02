@@ -88,4 +88,42 @@ window.caption = (s) => (words = s);
 window.place = (x) => Object.assign(w.body, { x, y: w.map.groundY, vx: 0, vy: 0, onGround: true, rope: null, facing: 1 });
 window.frame = () => canvas.toDataURL('image/jpeg', 0.92);
 window.ready = true;
+
+// ?record=PLAN: plays a plan and prints the frames (cropped round the hero, as data URLs, JSON)
+// into <pre id="out"> for a headless browser's --dump-dom (tools/make-gif.py). The plan is steps
+// split by ';': KEY:secs records while holding a key (_ for none, a press on its first frame),
+// !KEY:secs plays without recording, place:x moves the hero, cap:text sets the caption.
+if (q.get('record')) {
+  const keep = setInterval(() => {}, 10);
+  // (The effect strips load first, so nothing pops in blank.)
+  await new Promise((res) => setTimeout(res, 2500));
+  const FPS = 20;
+  const crop = document.createElement('canvas');
+  crop.width = 520;
+  crop.height = 300;
+  const cx = crop.getContext('2d');
+  const frames = [];
+  for (let i = 0; i < 45; i++) step(1 / 30);
+  for (const part of q.get('record').split(';')) {
+    const [head, arg] = [part.slice(0, part.indexOf(':')), part.slice(part.indexOf(':') + 1)];
+    if (head === 'place') { window.place(Number(arg)); continue; }
+    if (head === 'cap') { words = arg; continue; }
+    const quiet = head.startsWith('!');
+    const key = head.replace('!', '');
+    const held = key === '_' ? [] : [key];
+    const n = Math.round(Number(arg) * FPS);
+    for (let i = 0; i < n; i++) {
+      step(1 / FPS, held, i === 0 ? held : []);
+      if (quiet) continue;
+      cx.drawImage(canvas, 430, 380, 624, 360, 0, 0, 520, 300);
+      frames.push(crop.toDataURL('image/jpeg', 0.88));
+    }
+  }
+  const out = document.createElement('pre');
+  out.id = 'out';
+  out.textContent = JSON.stringify(frames);
+  document.body.appendChild(out);
+  clearInterval(keep);
+  document.title = 'done';
+}
 </script></body></html>

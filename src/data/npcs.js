@@ -69,7 +69,7 @@ export const NPCS = {
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },
   vex: {
-    id: 'vex', name: 'Vex', title: 'Thief Instructor', role: 'instructor', family: 'thief',
+    id: 'vex', name: 'Vex', title: 'Wind Dancer Instructor', role: 'instructor', family: 'thief',
     building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
     quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_miko', 'thief_trial'], showJob: 'shinobi',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },

@@ -1,0 +1,51 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Hold sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a hero holding one weapon in every everyday pose (standing, ready, walking, jumping,
+// the idle fidgets over time), big, to check the weapon never covers the face.
+// ?weapon=dagger_30&job=thief
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+const weapon = q.get('weapon') ?? 'dagger_30';
+const job = q.get('job') ?? 'thief';
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const poses = [
+  ['stand', { pose: 'idle', time: 0.2 }], ['stand 2s', { pose: 'idle', time: 2.1 }], ['stand 5s', { pose: 'idle', time: 5.3 }], ['stand 9s', { pose: 'idle', time: 9.4 }],
+  ['ready', { pose: 'idle', ready: true, time: 0.4 }], ['ready 1s', { pose: 'idle', ready: true, time: 1.3 }],
+  ['walk', { pose: 'walk', time: 0.2 }], ['walk 2', { pose: 'walk', time: 0.45 }], ['jump', { pose: 'jump', time: 0.3 }],
+  ['back', { pose: 'idle', time: 0.2, facing: -1 }],
+];
+const K = 4;
+const D = 1.5;
+const CW = 230;
+const W = CW * 5;
+const H = 2 * 260 + 20;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+poses.forEach(([label, st], i) => {
+  const x = (i % 5) * CW + CW / 2;
+  const y = Math.floor(i / 5) * 260 + 230;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(K, K);
+  setHd(true, K * D);
+  nextFrame();
+  drawHero(ctx, LOOK, { weapon: { id: weapon } }, 0, 0, { facing: 1, job, ...st }, null);
+  ctx.restore();
+  ctx.fillStyle = '#6a5a8a';
+  ctx.font = 'bold 13px Segoe UI, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(label, x, y + 22);
+});
+document.title = 'ready';
+</script>

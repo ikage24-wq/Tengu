@@ -4857,6 +4857,194 @@
     return { canvas: out, px: e.px * K + pad, py: e.py * K + pad, r: e.swing ? e.swing[2] * K : null };
   }
 
+
+  // ---------- The Wind Dancer (coral and cream: swirling ribbons, crescent gusts, spinning rings) ----------
+  // docs/design/wind-dancer.md. Her shapes are her own: ribbons that curl, gusts shaped like
+  // crescents with a ribbon tail, and rings that spin and break into beads.
+  const CORAL = ['#ffffff', '#ffe9df', '#ff9d88', '#f2655c', '#a8385a'];
+  const CREAM = ['#ffffff', '#fff8ea', '#ffe6bc', '#f2c27e', '#a87048'];
+
+  // A ribbon along the curve p(u) (u 0..1), `w(u)` wide, inked, with a light band down it and a
+  // twist (its far side, darker) where its width passes through zero.
+  function ribbon(ctx, pal, p, w, { n = 40, twist = 0 } = {}) {
+    const top = [];
+    const bot = [];
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      const [x, y] = p(u);
+      const [x2, y2] = p(Math.min(1, u + 0.01));
+      const a = Math.atan2(y2 - y, x2 - x) + Math.PI / 2;
+      const ww = w(u) * (twist ? Math.cos(u * Math.PI * twist) : 1);
+      top.push([x + Math.cos(a) * ww, y + Math.sin(a) * ww]);
+      bot.push([x - Math.cos(a) * ww, y - Math.sin(a) * ww]);
+    }
+    inked(ctx, top.concat(bot.reverse()), pal[2], pal[4], 4);
+    const mid = [];
+    const mid2 = [];
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      const [x, y] = p(u);
+      const [x2, y2] = p(Math.min(1, u + 0.01));
+      const a = Math.atan2(y2 - y, x2 - x) + Math.PI / 2;
+      const ww = w(u) * 0.4 * (twist ? Math.cos(u * Math.PI * twist) : 1);
+      mid.push([x + Math.cos(a) * ww - 1, y + Math.sin(a) * ww - 1]);
+      mid2.push([x - Math.cos(a) * ww * 0.2 - 1, y - Math.sin(a) * ww * 0.2 - 1]);
+    }
+    fill(ctx, mid.concat(mid2.reverse()), pal[1]);
+  }
+
+  // Her swirl: two ribbons curl round her as she spins (coral and cream), meet in a ring, then
+  // unwind and scatter into beads.
+  E.wdswirl = (() => {
+    const c = 130;
+    return {
+      w: 260, h: 260, n: 8, fps: 26, px: c, py: c,
+      draw(ctx, i) {
+        const spin = [0.6, 1.4, 2.4, 3.2, 3.6, 3.6, 3.6, 3.6][i];
+        const open = i >= 4 ? (i - 3) / 4 : 0;
+        if (i < 6) {
+          for (const [k, pal] of [[0, CORAL], [Math.PI, CREAM]]) {
+            ribbon(ctx, pal, (u) => {
+              const a = k + u * spin;
+              const r = 40 + u * 70 + open * 40;
+              return [c + Math.cos(a) * r, c + Math.sin(a) * r * 0.9];
+            }, (u) => 14 * Math.sin(Math.PI * u) * (1 - open * 0.6), { twist: 1.5 });
+          }
+        }
+        if (i >= 3) {
+          const R = rng(71 + i);
+          for (let j = 0; j < 9; j++) {
+            const a = (j / 9) * TAU + R() * 0.4;
+            const d = 90 + open * 50;
+            if (i >= 6) sparkle(ctx, j % 2 ? CORAL : CREAM, c + Math.cos(a) * d, c + Math.sin(a) * d, 9, a);
+            else shard(ctx, j % 2 ? CORAL : CREAM, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 14, 4);
+          }
+        }
+      },
+    };
+  })();
+
+  // Her mark on a monster: a ring snaps round it and spins, a crescent gust cuts across, then the
+  // ring breaks into beads and a ribbon of sparkles.
+  E.wdhit = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) {
+          celRing(ctx, CORAL, c, c, 34, 10, { seed: 81 });
+          return;
+        }
+        if (i <= 2) {
+          celRing(ctx, CORAL, c, c, i === 1 ? 62 : 70, 12, { seed: 81 });
+          celCrescent(ctx, CREAM, c + 10, c + 40, 70, -2.6, -0.5, 24, { seed: 82, inkW: 4 });
+          sparkle(ctx, CORAL, c + 52, c - 42, i === 1 ? 18 : 14, 0.3);
+          return;
+        }
+        const k = (i - 2) / 4;
+        if (i === 3) celRing(ctx, CORAL, c, c, 80, 8, { broken: 0.5, seed: 81 });
+        const R = rng(83);
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU + R() * 0.4;
+          const d = 60 + k * 50;
+          if (i < 6) shard(ctx, j % 2 ? CORAL : CREAM, c + Math.cos(a) * d, c + Math.sin(a) * d, a + Math.PI / 2, 14 * (1.1 - k * 0.6), 4 * (1.1 - k * 0.5));
+          else sparkle(ctx, j % 2 ? CORAL : CREAM, c + Math.cos(a) * d, c + Math.sin(a) * d, 8, a);
+        }
+      },
+    };
+  })();
+
+  // A gust: a crescent of wind flung forward with a ribbon streaming off its tail.
+  E.wdgust = (() => {
+    const cx = 60;
+    const cy = 120;
+    return {
+      w: 320, h: 240, n: 8, fps: 30, px: cx, py: cy,
+      draw(ctx, i) {
+        const x = cx + i * 22;
+        if (i < 6) {
+          const th = [24, 40, 46, 44, 36, 26][i];
+          celCrescent(ctx, CORAL, x, cy, 90, -1.1, 1.1, th, { seed: 91, inkW: 4 });
+          ribbon(ctx, CREAM, (u) => [x - 30 - u * 110, cy - 76 + Math.sin(u * 6 + i) * 12 + u * 20], (u) => 8 * (1 - u), { twist: 1 });
+          for (const dy of [-40, 0, 40]) speedLine(ctx, CORAL, x - 70, cy + dy, x - 10, cy + dy * 0.9, 3);
+        } else {
+          for (let j = 0; j < 6; j++) sparkle(ctx, j % 2 ? CORAL : CREAM, x + 60 + Math.cos(j) * 30, cy + (j - 2.5) * 26, 9, j);
+        }
+      },
+    };
+  })();
+
+  // Her badge, rising in her buff's pillar: a chakram with a ribbon bow.
+  E.embdancer = emblem(CORAL, (ctx, pal) => {
+    const band = (r0, r1, colour) => {
+      ctx.beginPath();
+      ctx.arc(0, 0, r1, 0, TAU);
+      ctx.arc(0, 0, r0, 0, TAU, true);
+      ctx.fillStyle = colour;
+      ctx.fill('evenodd');
+    };
+    band(30, 48, pal[4]);
+    band(33, 45, pal[2]);
+    band(36, 41, pal[1]);
+    for (let k = 0; k < 8; k++) {
+      ctx.save();
+      ctx.rotate((k / 8) * TAU);
+      inked(ctx, [[-6, -46], [0, -60], [6, -46]], pal[2], pal[4], 4);
+      ctx.restore();
+    }
+    for (const sd of [-1, 1]) inked(ctx, [[0, 44], [sd * 26, 30], [sd * 30, 52], [sd * 8, 50]], CREAM[2], CREAM[4], 4);
+    inked(ctx, [[-7, 40], [7, 40], [7, 52], [-7, 52]], CREAM[1], CREAM[4], 4);
+  });
+
+
+  // Grand Finale (her finisher): a spotlight beam drops on her, coral and cream ribbons spiral up
+  // round it into a great rose of ribbons, then it bursts open in a ring of rings and a shower of
+  // sparkles, like the curtain coming down on a show.
+  E.wdfinale = (() => {
+    const c = 220;
+    const gy = 380;
+    return {
+      w: 440, h: 420, n: 12, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 11;
+        // The spotlight.
+        if (i <= 8) {
+          const w = [40, 70, 80, 80, 80, 76, 64, 46, 24][i];
+          ctx.save();
+          ctx.globalAlpha = 0.85;
+          fill(ctx, [[c - w * 0.35, 0], [c + w * 0.35, 0], [c + w, gy], [c - w, gy]], CREAM[1]);
+          fill(ctx, [[c - w * 0.15, 0], [c + w * 0.15, 0], [c + w * 0.45, gy], [c - w * 0.45, gy]], CREAM[0]);
+          ctx.restore();
+        }
+        // Ribbons spiralling up round it.
+        if (i >= 1 && i <= 8) {
+          const up = Math.min(1, i / 5);
+          for (const [phase, pal] of [[0, CORAL], [Math.PI, CREAM], [Math.PI / 2, CORAL]]) {
+            ribbon(ctx, pal, (u) => {
+              const a = phase + u * 7 + i * 0.5;
+              const r = 70 + u * 40 + (i > 5 ? (i - 5) * 30 : 0);
+              return [c + Math.cos(a) * r, gy - 20 - u * 300 * up + Math.sin(a) * 18];
+            }, (u) => 11 * Math.sin(Math.PI * u), { twist: 2 });
+          }
+        }
+        // The burst: rings racing out, and sparkles showering down.
+        if (i >= 6) {
+          const b = (i - 6) / 5;
+          if (i <= 9) celRing(ctx, CORAL, c, gy - 170, 60 + b * 140, 16 * (1 - b * 0.6), { broken: i >= 8 ? 0.5 : 0, seed: 101 });
+          if (i <= 8) celRing(ctx, CREAM, c, gy - 170, 30 + b * 90, 10, { seed: 102 });
+          const R = rng(103);
+          for (let j = 0; j < 14; j++) {
+            const x = c + (R() - 0.5) * 380;
+            const y = gy - 330 + R() * 120 + b * 160;
+            sparkle(ctx, j % 2 ? CORAL : CREAM, x, y, 14 * (1.2 - b * 0.5), j);
+          }
+        }
+        if (i === 6 || i === 7) starburst(ctx, CORAL, c, gy - 170, 90 - (i - 6) * 20, 10, 104, { inner: 0.3 });
+        void k;
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

@@ -213,9 +213,9 @@ export const JOB_SCENES = {
     { who: 'kestrel', text: '...And keep your bowstring dry. That part nobody tells you.', mood: 'happy' },
   ],
   thief: [
-    { card: 'A New Path', sub: 'Thief' },
-    { who: 'vex', text: "Welcome to the harbor's best-kept secret, {name}. Fast hands, light feet.", mood: 'happy' },
-    { who: 'vex', text: 'Here, stars to throw. Lose them in a monster, not in a card game.' },
+    { card: 'A New Path', sub: 'Wind Dancer' },
+    { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Light feet, big finish.", mood: 'happy' },
+    { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
   spiritmage: [
     { card: 'A New Path', sub: 'Spirit Mage' },

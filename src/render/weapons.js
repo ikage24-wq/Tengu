@@ -40,7 +40,8 @@ export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = 
     // (drawn with the hand), so nothing is held.
     const own = !theme && tier <= 10 && DESIGNS[type];
     const { shapes, blade, reach, a } = type === 'gauntlet' ? GLOVE : own ? own(look, tier, frame) : form(look, frame);
-    def = pack(finish(unstrung ? shapes.filter((sh) => !sh.string) : shapes, materialsOf(look)), { blade, reach, anchors: a, live: liveFor(look, a) });
+    // (A glove carries no shimmer of its own: on so small a thing it reads as a smudge over the hand.)
+    def = pack(finish(unstrung ? shapes.filter((sh) => !sh.string) : shapes, materialsOf(look)), { blade, reach, anchors: a, live: type === 'gauntlet' ? null : liveFor(look, a) });
     built.set(key, def);
   }
   return def;

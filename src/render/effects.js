@@ -662,6 +662,11 @@ function drawFx(ctx, f, cam, time) {
       const by = (from0 ? f.y + from0[1] : b.y + b.h / 2) - cam.y;
       const reach = Math.max(24, Math.abs(end - start));
       const sx0 = start - cam.x;
+      // The Wind Dancer's thrust sends a little crescent gust instead of a streak of steel.
+      if (f.school === 'coral') {
+        fxSprite(ctx, 'celwdgust', sx0 + (dir * reach) * 0.45, by + 2, { p, flip: dir < 0, scale: 0.5 });
+        break;
+      }
       fxSprite(ctx, pathTint(f.school, 'celstreak', 'celstreakgold', 'celstreakred'), sx0 + (dir * reach) / 2, by + 2, { p, flip: dir < 0, sx: reach / 100, sy: 0.7 });
       fxSprite(ctx, pathTint(f.school, 'celhit', 'celholyhit', 'celhitred'), sx0 + dir * reach, by + 2, { p, scale: 0.6 });
       break;
@@ -870,7 +875,7 @@ function drawFx(ctx, f, cam, time) {
       // (A Paladin's and a Berserker's blade hits draw their own star and claws as holy and rage
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
-        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink' || f.path === 'coral') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;
