@@ -210,7 +210,7 @@ const rollOf = (c, rows) => bars(...[4, 4, 2, 1].map((step) => Array.from({ leng
 const first4 = (line) => bars(...line.split(' | ').slice(0, 4));
 const X = {
   high: F.hold(72),
-  arp: F.arp(76, 2),
+  arp: F.arp(67, 2),
   root5: (s, len) => `${nm(rootIn(s, 5))}:${len}`,
   timp: (s, len) => Array(len / 8).fill(`${nm(rootIn(s, 2))}:4 ${nm(rootIn(s, 2))}:2 ${nm(rootIn(s, 2))}:2`).join(' '),
 };
@@ -224,11 +224,14 @@ function edm(o) {
   const c4 = o.chart.slice(0, 4);
   const [bassInst, bassFig] = BASS[o.bass ?? 'off'];
   const chords = CHORDS[o.chords ?? 'stab'];
-  const arp = F.arp(72, o.arp === 1 ? 1 : 2);
+  // (Between the chord bed and the melody by default, so it never tangles with the melody; a song
+  // whose melody sits low or high moves it with `arpCenter`.)
+  const arp = F.arp(o.arpCenter ?? 67, o.arp === 1 ? 1 : 2);
   const tracks = {
-    lead: { inst: o.lead ?? 'saw', gain: 0.5, verb: 0.25, echo: { rows: 3, fb: 0.28, wet: 0.18 } },
+    // (A soft, short echo: louder, it rang each note on under the next one, a step away.)
+    lead: { inst: o.lead ?? 'saw', gain: 0.5, verb: 0.25, echo: { rows: 3, fb: 0.12, wet: 0.07 } },
     voice: { inst: o.voice, gain: o.voiceGain ?? 0.5, pan: -0.15, verb: 0.35 },
-    arp: { inst: o.arpInst ?? 'edmPluck', gain: 0.3, pan: 0.25, verb: 0.3, echo: { rows: 3, fb: 0.25, wet: 0.18 } },
+    arp: { inst: o.arpInst ?? 'edmPluck', gain: 0.3, pan: 0.25, verb: 0.3, echo: { rows: 3, fb: 0.12, wet: 0.07 } },
     bass: { inst: bassInst, gain: 0.36, verb: 0, low: true },
     riser: { inst: 'riser', gain: 0.5, verb: 0.3 },
   };
@@ -327,7 +330,7 @@ const crag = edm({
 });
 
 const forest = edm({
-  name: 'forest', bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'balafonLead', bass: 'off', chords: 'pad',
+  name: 'forest', arpCenter: 60, bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'balafonLead', bass: 'off', chords: 'pad',
   intro: 'perc', perc: bars(...Array(4).fill('t..xt.x.t..xt.xx')), build: 'tom', beat: 'K..tC.t.K.t.Cxt.', fill: 'K..tC.t.K.tttttt',
   chart: ['Am', 'G', 'F', 'G', 'Am', 'G', 'F', 'E'],
   hookA: bars('A4:1 r:1 C5:1 r:1 E5:2 C5:2 A4:2 B4:2 C5:4', 'G4:1 r:1 B4:1 r:1 D5:2 B4:2 G4:2 A4:2 B4:4', 'F4:1 r:1 A4:1 r:1 C5:2 A4:2 F4:2 G4:2 A4:4', 'B4:2 D5:2 G5:4 F5:2 D5:2 B4:4',
@@ -347,7 +350,7 @@ const grove = edm({
 });
 
 const ruins = edm({
-  name: 'ruins', bpm: 120, voice: 'horn', lead: 'vibesLead', bass: 'octaves', chords: 'piano',
+  name: 'ruins', arpCenter: 84, bpm: 120, voice: 'horn', lead: 'vibesLead', bass: 'octaves', chords: 'piano',
   intro: 'arp', build: 'snare', beat: 'K.h.C.hhK.hhC.h.', fill: 'K.h.C.hhK.hhSSSS',
   chart: ['Cm', 'Ab', 'Fm', 'G', 'Cm', 'Ab', 'Bb', 'G'],
   hookA: bars('C5:2 C5:1 Eb5:1 G5:2 C6:2 r:2 Bb5:2 G5:4', 'C5:2 C5:1 Eb5:1 Ab5:2 C6:2 r:2 Bb5:2 Ab5:4', 'C5:2 C5:1 F5:1 Ab5:2 C6:2 r:2 Ab5:2 F5:4', 'G5:4 B5:4 D6:8',
@@ -376,7 +379,7 @@ const sky = edm({
 });
 
 const hollow = edm({
-  name: 'hollow', bpm: 124, voice: 'horn', lead: 'pizzLead', bass: 'funk', chords: 'stab',
+  name: 'hollow', arpCenter: 84, bpm: 124, voice: 'horn', lead: 'pizzLead', bass: 'funk', chords: 'stab',
   form: 'coldopen', build: 'kick', beat: 'K.hhC.h.KKhhC.h.', fill: 'K.hhC.h.KKKKCCCC',
   chart: ['Gm', 'Eb', 'Cm', 'D', 'Gm', 'Eb', 'F', 'D'],
   hookA: bars('G4:3 Bb4:3 D5:2 C5:3 Bb4:3 G4:2', 'G4:3 Bb4:3 Eb5:2 D5:3 Bb4:3 G4:2', 'G4:3 C5:3 Eb5:2 D5:3 C5:3 G4:2', 'F#4:4 A4:4 D5:8',
@@ -396,7 +399,7 @@ const boss = edm({
 });
 
 const shrine = edm({
-  name: 'shrine', bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'kotoLead', bass: 'off', chords: 'pad',
+  name: 'shrine', bpm: 120, voice: 'panflute', voiceShift: 0, lead: 'kotoLead', bass: 'off', chords: 'stab',
   intro: 'perc', perc: bars(...Array(4).fill('t.t...w.t.tt..ww')), build: 'tom', beat: 'K.t.C.t.K.ttC.t.', fill: 'K.w.C.w.KwKwCwww',
   chart: ['Dm', 'Bb', 'Am', 'Dm', 'Gm', 'Bb', 'Am', 'A'],
   hookA: bars('D5:2 E5:1 F5:1 A5:2 Bb5:2 r:2 A5:2 F5:4', 'D5:2 F5:1 A5:1 Bb5:2 D6:2 r:2 A5:2 Bb5:4', 'E5:2 F5:1 A5:1 E6:2 D6:2 r:2 Bb5:2 A5:4', 'D6:4 A5:4 D5:8',
@@ -435,7 +438,7 @@ const peak = edm({
 });
 
 const starfall = edm({
-  name: 'starfall', bpm: 124, voice: 'chimes', voiceShift: 0, lead: 'vibesLead', bass: 'house', chords: 'stab',
+  name: 'starfall', arpCenter: 60, bpm: 124, voice: 'chimes', voiceShift: 0, lead: 'vibesLead', bass: 'house', chords: 'stab',
   intro: 'arp', build: 'stop', beat: 'K.o.C.o.K.o.C.oo', fill: 'K.o.C.o.K.o.SSSS',
   chart: ['E', 'C#m', 'A', 'B', 'E', 'G#m', 'A', 'B'],
   hookA: bars('B4:2 E5:2 r:1 G#5:1 F#5:2 E5:2 r:1 B4:1 E5:4', 'C#5:2 E5:2 r:1 G#5:1 F#5:2 E5:2 r:1 C#5:1 G#5:4', 'C#5:2 E5:2 r:1 A5:1 G#5:2 E5:2 r:1 C#5:1 A5:4', 'B5:4 A5:2 G#5:2 F#5:8',
