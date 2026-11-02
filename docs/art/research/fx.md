@@ -529,3 +529,23 @@ leaves dark fringes, so fade each drawing's opacity instead (both at full streng
   but as a damage-and-support hybrid like its later Bishop: every damage spell's look is a flower
   (bolt, hit, storm), every heal is a mint flower of light, so the two halves read as one job.
 
+
+## 10. Weapons: the level 1-50 ladder (redrawn 2026-11-02)
+
+- **Each level is its own weapon, not a recolour.** MapleStory's sword ladder runs Karl Sword (10),
+  Sabre (15), Machete and Viking Sword (20), Cutlus (35), Crystal Blade (50): every step is a
+  different weapon with its own outline (meowdb.com MapleStory Classic item pages; Wikibooks
+  "MapleStory/Beginner Guide/Weapons"). Tengu's levels 1-50 follow this: practice sword, gladius,
+  xiphos, arming sword, sabre, swept-hilt silver sword, elven blade, wave blade, crystal blade,
+  runic and starsteel longswords, and the same idea for every type (render/weapon-designs.js).
+- **Silhouette first.** Fill a weapon solid: if it doesn't read, it has a silhouette problem, the
+  most common cause of generic-looking pixel art; small details like a hilt come last
+  (freegamesprites.com "sprite silhouette test"; bugnet.io "how to make pixel art that reads
+  clearly").
+- **Big and chunky (the player's pick).** Weapons are drawn on a plain grid, then blown up wider than
+  they are long (about 1.4-1.5x across, 1.1-1.25x along), so blades, guards and grips read bold
+  next to the chibi hero, the way MapleStory's oversized weapons do.
+- **Gauntlets are a small glove (the player's call).** Nothing is held; the weapon hand wears a
+  glove in the weapon's look, and its bag icon is the glove.
+- **Icons come from the weapon's own drawing**, laid corner to corner; long weapons (spears,
+  staffs, wands) show only their head in the icon.

@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Weapon icons</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every type's level 1-50 bag icons in a grid, at 4x on a light cell (as in the bag) and
+// at 1x beside it. Open /tools/weapon-icons.html.
+const { setHd } = await import('/src/render/pixel.js');
+const { drawItemIcon } = await import('/src/render/icons.js');
+const TYPES = ['sword', 'axe', 'spear', 'dagger', 'wand', 'staff', 'bow', 'crossbow', 'gauntlet'];
+const K = 4;
+const CELL = 16 * K + 14;
+const W = 110 + 11 * CELL;
+const H = 20 + TYPES.length * CELL;
+const D = 1.5;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+TYPES.forEach((type, r) => {
+  const y = 20 + r * CELL;
+  ctx.fillStyle = '#3a2d4f';
+  ctx.font = 'bold 12px Segoe UI, sans-serif';
+  ctx.fillText(type, 10, y + CELL / 2);
+  for (let t = 0; t <= 10; t++) {
+    const x = 110 + t * CELL;
+    ctx.fillStyle = '#fffaf6';
+    ctx.strokeStyle = '#e6dcef';
+    ctx.beginPath();
+    ctx.roundRect(x, y, 16 * K + 6, 16 * K + 6, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(x + 3, y + 3);
+    ctx.scale(K, K);
+    setHd(true, K * D);
+    drawItemIcon(ctx, `${type}_${t * 5}`, 0, 0);
+    ctx.restore();
+  }
+});
+setHd(true, D);
+document.title = 'ready';
+</script>

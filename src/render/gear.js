@@ -7,6 +7,7 @@
 // shaped by the body type (see FIGURES) · legs jointed at hip (y 37.6), knee, and ankle (y 53 at rest), from x 12.3 (left)
 // and 18.7 (right) · soles at y 56 · shoulders (10.4, 28.2) and (20.8, 28.2) · hands rest at y 37.6.
 
+import { gloveShapes } from './weapon-designs.js';
 import { R, E, T, F, shade, shadowTone } from './pixel.js';
 import { GOLD, SILVER, INK, FIGURE, torsoPts, robePts, dressPts, band, side, MID, collar, tieBow, button, limb, reach, mirrorX } from './figure.js';
 import { JOB_GEAR } from './jobgear/index.js';
@@ -434,6 +435,8 @@ export function hatBackShapes(design, c, piece = null, m = MOTION) {
 
 export function handShapes(hx, hy, glove, skin, ex = hx, ey = hy - 4) {
   if (!glove) return [E(hx, hy, 2, 2, skin)];
+  // A gauntlet weapon: a small glove on the weapon hand (render/weapon-designs.js).
+  if (glove.gauntlet) return gloveShapes(glove.gauntlet, hx, hy, ex, ey);
   if (glove.family) return done(gearOf(glove).hand(glove.tier, glove.pal, hx, hy, ex, ey), glove);
   const c = glove.color;
   switch (glove.design) {

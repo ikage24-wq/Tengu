@@ -11,6 +11,7 @@
 // cape follow-through, attack anticipation and lunge with a weapon trail, a climb cycle, and a
 // hurt recoil.
 
+import { lookFor } from './weapon-kit.js';
 import { outfitFx, drawOutfitFx } from './gacha.js';
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
@@ -233,7 +234,10 @@ function resolveGear(look, gear) {
 
 function gearKey(gear) {
   if (!gear) return '-';
-  return ['top', 'bottom', 'shoes', 'gloves', 'hat', 'face', 'cape', 'earring'].map((s) => (gear[s] ? `${gear[s].id}${gear[s].variant ? `:${gear[s].variant}` : ''}` : '')).join(',');
+  const key = ['top', 'bottom', 'shoes', 'gloves', 'hat', 'face', 'cape', 'earring'].map((s) => (gear[s] ? `${gear[s].id}${gear[s].variant ? `:${gear[s].variant}` : ''}` : '')).join(',');
+  // A gauntlet is worn as the weapon hand's glove, so it is part of the arm's look.
+  const w = gear.weapon;
+  return ITEMS[w?.id]?.weaponType === 'gauntlet' ? `${key}|${w.id}:${w.variant ?? ''}:${w.cover ? JSON.stringify(w.cover) : ''}` : key;
 }
 
 // ---------- Head ----------
@@ -1247,7 +1251,14 @@ const HAND_Y = 37.6;
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
-  return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, g, skin, side);
+  return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, gloved(g), skin, side);
+}
+
+// The weapon hand wears a gauntlet as a small glove, in the weapon's own look.
+function gloved(g) {
+  const w = g.weapon;
+  if (w?.type !== 'gauntlet' || w.fun) return g;
+  return { ...g, gloves: { gauntlet: lookFor('gauntlet', w.tier, w.theme, w.variant) } };
 }
 
 // Attack arms point along `angle` (0 = down, 90 = forward, 180 = up) from the front shoulder.
@@ -1255,7 +1266,7 @@ function aimedArm(angle, sleeve, long, g, skin) {
   const rad = (angle * Math.PI) / 180;
   const hx = FRONT_SHOULDER + Math.sin(rad) * 8.6;
   const hy = SHOULDER_Y + Math.cos(rad) * 8.6;
-  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, g, skin), hand: [hx, hy] };
+  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, gloved(g), skin), hand: [hx, hy] };
 }
 
 // ---------- Body parts per rig ----------

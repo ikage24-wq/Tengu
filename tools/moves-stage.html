@@ -4,7 +4,7 @@
 <script type="module">
 // Dev tool: a job among a line of training dummies, driven key by key from outside, drawn with the
 // game's own renderer, with a caption. For demo videos (tools/record-moves.cjs):
-// ?job=shinobi&level=45&learn=inkdance, then window.step(dt, held, pressed) and window.caption(text).
+// ?job=shinobi&level=45&learn=inkdance&weapon=dagger_45, then window.step(dt, held, pressed) and window.caption(text).
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { spawnMob } from '../src/world/mobs.js';
@@ -15,6 +15,7 @@ import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { VW, VH } from '../src/input.js';
 import { JOBS } from '../src/data/jobs.js';
 import { text, box } from '../src/ui/kit.js';
+import { makeEquip } from '../src/core/items.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -30,6 +31,8 @@ const c = balanceChar(job, level);
 c.mp = c.baseMp = 99999;
 // ?learn=inkdance: a passive to try (at its top level).
 for (const id of (q.get('learn') ?? '').split(',').filter(Boolean)) c.skills[id] = 10;
+// ?weapon=sword_45: hold a given weapon.
+if (q.get('weapon')) c.equipment.weapon = makeEquip(q.get('weapon'));
 const w = createWorld(c);
 w.log = () => {};
 loadMap(w, 'woods', 'west');

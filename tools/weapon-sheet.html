@@ -1,0 +1,92 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Weapon sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every weapon type's progression weapons from level 1 to 50 (tiers 0-10), drawn big as
+// sprites, with a hero holding a few of them. Open /tools/weapon-sheet.html (&types=sword,axe
+// limits the rows; &tiers=0,5,10 the columns; &k=4 the scale).
+await import('/src/data/cash.js');
+const { setHd, sprite, blit, nextFrame } = await import('/src/render/pixel.js');
+const { weaponShapes } = await import('/src/render/weapons.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { ITEMS } = await import('/src/data/items.js');
+
+const q = new URLSearchParams(location.search);
+const TYPES = (q.get('types') ?? 'sword,axe,spear,dagger,wand,staff,bow,crossbow,gauntlet').split(',');
+const TIERS = (q.get('tiers') ?? '0,1,2,3,4,5,6,7,8,9,10').split(',').map(Number);
+const K = Number(q.get('k') ?? 3);
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const CELL = 26 * K;
+const ROW = 64 * K;
+const LEFT = 110;
+const W = LEFT + TIERS.length * CELL + 260;
+const H = 40 + TYPES.length * ROW;
+const c = document.getElementById('c');
+const D = 1.5;
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 12px Segoe UI, sans-serif';
+TIERS.forEach((t, i) => {
+  ctx.fillStyle = '#8f7cc4';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Lv ${t * 5 || 1}`, LEFT + i * CELL + CELL / 2, 24);
+});
+ctx.textAlign = 'left';
+TYPES.forEach((type, r) => {
+  const y0 = 40 + r * ROW;
+  ctx.fillStyle = r % 2 ? '#efe6fb' : '#fbf7ff';
+  ctx.fillRect(0, y0, W, ROW);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.fillText(type, 12, y0 + ROW / 2);
+  TIERS.forEach((t, i) => {
+    // A gauntlet is a glove on the hand: show it worn.
+    if (type === 'gauntlet') {
+      ctx.save();
+      ctx.translate(LEFT + i * CELL + CELL / 2, y0 + ROW - 14);
+      ctx.scale(K * 0.9, K * 0.9);
+      setHd(true, K * 0.9 * D);
+      nextFrame();
+      drawHero(ctx, LOOK, { weapon: { id: `${type}_${t * 5}` } }, 0, 0, { pose: 'idle', time: 0.4, facing: 1, ready: true }, null);
+      ctx.restore();
+      return;
+    }
+    const def = weaponShapes(type, t, 0, null, null);
+    if (!def) return;
+    setHd(true, K * D);
+    nextFrame();
+    const s = sprite(`sheet|${type}|${t}|${K}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: Math.ceil(K * D), soft: 'cel', crisp: true }));
+    ctx.save();
+    // Bows sit on their middle; crossbows (built lying down) stand on end so they fit a cell.
+    ctx.translate(LEFT + i * CELL + CELL / 2, type === 'bow' ? y0 + ROW / 2 + 6 : type === 'crossbow' ? y0 + ROW / 2 - 4 : y0 + ROW - 12);
+    if (type === 'crossbow') ctx.rotate(-Math.PI / 2);
+    ctx.scale(K, K);
+    if (type === 'bow' || type === 'crossbow') blit(ctx, s, -def.w / 2, -def.h / 2);
+    else blit(ctx, s, -def.grip[0], -def.grip[1] - (def.h - def.grip[1]) * 0.15);
+    ctx.restore();
+    const name = ITEMS[`${type}_${t * 5}`]?.name ?? '';
+    ctx.fillStyle = '#6a5a8a';
+    ctx.font = '9px Segoe UI, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(name.length > 18 ? name.slice(0, 17) + '…' : name, LEFT + i * CELL + CELL / 2, y0 + ROW - 2);
+    ctx.textAlign = 'left';
+    ctx.font = 'bold 12px Segoe UI, sans-serif';
+  });
+  // A hero holding the level-25 and level-50 ones.
+  [5, 10].forEach((t, k) => {
+    ctx.save();
+    ctx.translate(LEFT + TIERS.length * CELL + 70 + k * 110, y0 + ROW - 14);
+    ctx.scale(2.4, 2.4);
+    setHd(true, 2.4 * D);
+    nextFrame();
+    drawHero(ctx, LOOK, { weapon: { id: `${type}_${t * 5}` } }, 0, 0, { pose: 'idle', time: 0.4, facing: 1, ready: true }, null);
+    ctx.restore();
+  });
+});
+document.title = 'ready';
+</script>

@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Weapon swings</title>
+<style>body { margin: 0; background: #2b2340; } canvas { display: block; } iframe { position: absolute; left: -9999px; width: 1280px; height: 720px; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a strip of moments for each weapon in use (its job holding attack at training dummies
+// on the move stage), for checking swings without a video recorder. ?list=warrior:sword_50,...
+const q = new URLSearchParams(location.search);
+const LIST = (q.get('list') ?? 'warrior:sword_25,warrior:sword_50,warrior:axe_50,warrior:spear_50,thief:dagger_50,thief:gauntlet_45,spiritmage:wand_50,spiritmage:staff_50,archer:bow_50,archer:crossbow_50').split(',');
+const MOMENTS = [0.15, 0.3, 0.45, 0.6, 0.8, 1.0];
+// Each moment: the middle of the stage, cropped round the hero.
+const CW = 300;
+const CH = 190;
+const c = document.getElementById('c');
+c.width = 140 + MOMENTS.length * CW;
+c.height = LIST.length * CH;
+const ctx = c.getContext('2d');
+ctx.fillStyle = '#2b2340';
+ctx.fillRect(0, 0, c.width, c.height);
+const load = (src) => new Promise((res) => {
+  const f = document.createElement('iframe');
+  f.src = src;
+  document.body.appendChild(f);
+  const wait = () => (f.contentWindow?.ready ? res(f) : setTimeout(wait, 50));
+  wait();
+});
+for (const [r, pair] of LIST.entries()) {
+  const [job, weapon] = pair.split(':');
+  const f = await load(`/tools/moves-stage.html?job=${job}&level=50&weapon=${weapon}`);
+  const win = f.contentWindow;
+  for (let i = 0; i < 45; i++) win.step(1 / 30);
+  const ranged = /bow|wand|staff|gauntlet/.test(weapon);
+  win.place(ranged ? 250 : 380);
+  win.caption('');
+  ctx.fillStyle = '#f6f0ff';
+  ctx.font = 'bold 14px Segoe UI, sans-serif';
+  ctx.fillText(weapon, 10, r * CH + CH / 2);
+  let t = 0;
+  for (const [k, at] of MOMENTS.entries()) {
+    while (t < at) {
+      win.step(1 / 30, ['KeyZ'], t === 0 ? ['KeyZ'] : []);
+      t += 1 / 30;
+    }
+    const img = new Image();
+    img.src = win.frame();
+    await img.decode();
+    // The hero stands near the left third; crop round them.
+    const sx = ranged ? 260 : 520;
+    ctx.drawImage(img, sx, 300, 600, 380, 140 + k * CW, r * CH, CW - 4, CH - 4);
+  }
+  f.remove();
+}
+document.title = 'ready';
+</script>

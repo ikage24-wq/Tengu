@@ -8,6 +8,8 @@ import { rollLoot } from '../src/world/drops.js';
 import { MOBS } from '../src/data/mobs.js';
 import { topShapes, legLook, legShapes, hatShapes, hatBackShapes, capeShapes, handShapes, earringShapes } from '../src/render/gear.js';
 import { weaponShapes, weaponIcon, weaponFrames } from '../src/render/weapons.js';
+import { gloveShapes } from '../src/render/weapon-designs.js';
+import { lookFor } from '../src/render/weapon-kit.js';
 import { pieceOf } from '../src/render/jobgear/index.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
@@ -23,7 +25,8 @@ test('every equip has a design the renderer draws', () => {
     const pc = pieceOf(def);
     let shapes;
     switch (def.slot) {
-      case 'weapon': shapes = weaponShapes(def.weaponType, def.tier, 0, def.theme ?? null)?.shapes; break;
+      // (A gauntlet is worn as a glove on the weapon hand.)
+      case 'weapon': shapes = def.weaponType === 'gauntlet' ? gloveShapes(lookFor('gauntlet', def.tier, def.theme ?? null), 10, 30, 10, 26) : weaponShapes(def.weaponType, def.tier, 0, def.theme ?? null)?.shapes; break;
       case 'hat': shapes = [...hatShapes(def.design, c, pc), ...hatBackShapes(def.design, c, pc)]; break;
       case 'top': shapes = topShapes(def.design, c, pc); break;
       case 'bottom': shapes = legShapes(11, legLook(def.design, c, '#ffffff', pc), { design: 'sneakers', color: c }, false); break;
@@ -107,7 +110,7 @@ test('every weapon type has a weapon every 5 levels and every endgame design, ea
       }
       for (let f = 0; f < 6; f++) {
         const art = weaponShapes(type, def.tier, f, def.theme ?? null);
-        assert.ok(art.shapes.length && art.grip[0] < art.w && art.grip[1] < art.h, `${id} frame ${f} has a grip inside it`);
+        assert.ok((art.shapes.length || type === 'gauntlet') && art.grip[0] < art.w && art.grip[1] < art.h, `${id} frame ${f} has a grip inside it`);
       }
       assert.ok(weaponIcon(type, def.tier, def.theme ?? null)?.length, `${id} icon`);
       if (def.theme) assert.equal(def.element, def.theme, `${id} brings its theme's effects`);
@@ -129,7 +132,7 @@ test('better weapons animate more', () => {
 
 test('every weapon tier looks different, and variants recolor progression weapons only', () => {
   const art = (type, tier, theme = null, variant = null) => JSON.stringify(weaponShapes(type, tier, 0, theme, variant).shapes);
-  for (const type of ['sword', 'bow', 'staff', 'gauntlet']) {
+  for (const type of ['sword', 'axe', 'spear', 'dagger', 'wand', 'bow', 'crossbow', 'staff']) {
     assert.equal(new Set(WEAPON_LEVELS.map((_, t) => art(type, t))).size, WEAPON_LEVELS.length, `${type} has a look per tier`);
     assert.ok(weaponShapes(type, 20).w * weaponShapes(type, 20).h > weaponShapes(type, 1).w * weaponShapes(type, 1).h, `${type} grows`);
     for (const v of ['dark', 'white', 'crimson', 'azure', 'gilded']) {
@@ -137,6 +140,23 @@ test('every weapon tier looks different, and variants recolor progression weapon
       assert.notEqual(JSON.stringify(weaponIcon(type, 10, null, v)), JSON.stringify(weaponIcon(type, 10)), `${type} ${v} icon recolors`);
       assert.equal(art(type, 21, 'bone', v), art(type, 21, 'bone'), `${type} themes ignore ${v}`);
     }
+  }
+});
+
+test('a gauntlet is a small glove: one look per tier, recoloured by variants, nothing held', () => {
+  const glove = (tier, theme = null, variant = null) => JSON.stringify(gloveShapes(lookFor('gauntlet', tier, theme, variant), 10, 30, 10, 26));
+  assert.equal(new Set(WEAPON_LEVELS.map((_, t) => glove(t)).slice(0, 11)).size, 11, 'a glove per level up to 50');
+  for (const v of ['dark', 'crimson', 'azure']) assert.notEqual(glove(10, null, v), glove(10), `${v} recolors the glove`);
+  assert.equal(weaponShapes('gauntlet', 5).shapes.length, 0, 'nothing in the hand');
+  const icons = new Set(Array.from({ length: 11 }, (_, t) => JSON.stringify(weaponIcon('gauntlet', t))));
+  assert.equal(icons.size, 11, 'a glove icon per level');
+});
+
+test('bows keep their string for the draw', () => {
+  for (let t = 0; t <= 10; t++) {
+    const a = weaponShapes('bow', t).anchors;
+    assert.ok(a.string && a.string.h > 15, `bow tier ${t} has its string`);
+    assert.ok(weaponShapes('bow', t, 0, null, null, true).shapes.length < weaponShapes('bow', t).shapes.length, 'the string can be left out to draw it live');
   }
 });
 

@@ -15,6 +15,7 @@ import { R, E, P, T, F, mix } from './pixel.js';
 import { lookFor, pack, GOLD, WHITE } from './weapon-kit.js';
 import { FORMS } from './weapon-forms.js';
 import { liveFor } from './weapon-fx.js';
+import { DESIGNS, gloveShapes } from './weapon-designs.js';
 import { finish } from './jobgear/kit.js';
 
 export function weaponFrames(type, tier = 0, theme = null) {
@@ -24,6 +25,7 @@ export function weaponFrames(type, tier = 0, theme = null) {
 }
 
 const built = new Map();
+const GLOVE = { shapes: [], blade: [-2, 0], reach: [], a: { tip: [0, -2], head: [0, -1], blade: [-2, 0] } };
 
 // `variant` (dark, white, crimson, azure, gilded, or null) recolors a progression weapon.
 // `unstrung` leaves a bow's string out, for drawing it pulled back live.
@@ -34,7 +36,10 @@ export function weaponShapes(type, tier = 0, frame = 0, theme = null, variant = 
   let def = built.get(key);
   if (!def) {
     const look = lookFor(type, tier, theme, variant);
-    const { shapes, blade, reach, a } = form(look, frame);
+    // Levels 1-50 have their own designs (weapon-designs.js); a gauntlet is a glove on the hand
+    // (drawn with the hand), so nothing is held.
+    const own = !theme && tier <= 10 && DESIGNS[type];
+    const { shapes, blade, reach, a } = type === 'gauntlet' ? GLOVE : own ? own(look, tier, frame) : form(look, frame);
     def = pack(finish(unstrung ? shapes.filter((sh) => !sh.string) : shapes, materialsOf(look)), { blade, reach, anchors: a, live: liveFor(look, a) });
     built.set(key, def);
   }
@@ -273,8 +278,55 @@ function tierMark(type, look) {
   return out;
 }
 
+// Levels 1-50: the icon is the weapon's own drawing, turned to lie corner to corner (the tip up
+// and to the right) and fitted to the 16x16 cell, so the icon always matches what's in the hand.
+// A gauntlet's icon is its glove.
+const ICON_TURN = { crossbow: -45 };
+// Long weapons show their head: only this top part of them is fitted to the cell (the rest runs
+// off its corner).
+const ICON_HEAD = { spear: 0.5, staff: 0.45, wand: 0.7 };
+function designIcon(type, tier, look) {
+  const ang = ((ICON_TURN[type] ?? 45) * Math.PI) / 180;
+  const [c, sn] = [Math.cos(ang), Math.sin(ang)];
+  const d = type === 'gauntlet' ? null : DESIGNS[type](look, tier, 0);
+  const raw = d ? d.shapes : gloveShapes(look, 0, 0, -4, 5);
+  // The part of the weapon that sets the fit (before turning): its head, for long ones.
+  let cutY = Infinity;
+  if (d && ICON_HEAD[type]) {
+    const ys = raw.flatMap((sh) => (sh.t === 'p' ? sh.pts.map(([, y]) => y + sh.y) : sh.t === 'r' ? [sh.y, sh.y + sh.h] : [sh.y - sh.ry, sh.y + sh.ry]));
+    const lo = Math.min(...ys);
+    cutY = lo + (Math.max(...ys) - lo) * ICON_HEAD[type];
+  }
+  const turn = type === 'gauntlet' ? ([x, y]) => [x, y] : ([x, y]) => [x * c - y * sn, x * sn + y * c];
+  // Everything as polygons (and round shapes kept round), turned.
+  const polys = raw.map((sh) => {
+    if (sh.t === 'e') {
+      const [x, y] = turn([sh.x, sh.y]);
+      return { ...sh, x, y };
+    }
+    const pts = sh.t === 'r' ? [[sh.x, sh.y], [sh.x + sh.w, sh.y], [sh.x + sh.w, sh.y + sh.h], [sh.x, sh.y + sh.h]] : sh.pts.map(([x, y]) => [x + sh.x, y + sh.y]);
+    return { ...sh, t: 'p', x: 0, y: 0, pts: pts.map(turn) };
+  });
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  polys.forEach((p, i) => {
+    const sh = raw[i];
+    // Each point's height before turning, to leave out what lies below the head.
+    const ys = sh.t === 'p' ? sh.pts.map(([, y]) => y + sh.y) : sh.t === 'r' ? [sh.y, sh.y, sh.y + sh.h, sh.y + sh.h] : [sh.y, sh.y];
+    const pts = (p.t === 'e' ? [[p.x - p.rx, p.y - p.ry], [p.x + p.rx, p.y + p.ry]] : p.pts).filter((_, j) => ys[j] <= cutY);
+    for (const [x, y] of pts) {
+      x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+    }
+  });
+  const k = Math.min(14.6 / (x1 - x0), 14.6 / (y1 - y0));
+  const ox = 8 - ((x0 + x1) / 2) * k;
+  const oy = 8 - ((y0 + y1) / 2) * k;
+  const fit = (p) => (p.t === 'e' ? { ...p, x: p.x * k + ox, y: p.y * k + oy, rx: p.rx * k, ry: p.ry * k } : { ...p, pts: p.pts.map(([x, y]) => [x * k + ox, y * k + oy]) });
+  return finish(polys.map(fit), materialsOf(look));
+}
+
 export function weaponIcon(type, tier = 0, theme = null, variant = null) {
   if (!ICONS[type]) return null;
   const look = lookFor(type, tier, theme, variant);
+  if (type === 'gauntlet' || (!theme && tier <= 10 && DESIGNS[type])) return designIcon(type, tier, look);
   return [...ICONS[type](iconColors(look)), ...(theme ? ICON_MARKS[theme]() : tierMark(type, look))];
 }
