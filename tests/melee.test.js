@@ -1752,14 +1752,16 @@ test('dagger skills need a dagger and gauntlet skills a gauntlet; shared skills 
 });
 
 test('Backstab slips through, turns, and hits much harder on a monster facing away', () => {
+  // (The dice are pinned from the start: a monster left to wander with real dice before the stab
+  // sometimes turns round mid-move, so the stab from behind lands on its face.)
   const dealt = (facing) => {
-    const w = thief();
-    w.mobs = [w.mobs[0]];
-    w.mobs[0].dir = facing;
-    w.char.skills.backstab = 10;
     const random = Math.random;
     Math.random = () => 0.5;
     try {
+      const w = thief();
+      w.mobs = [w.mobs[0]];
+      w.mobs[0].dir = facing;
+      w.char.skills.backstab = 10;
       const x = w.body.x;
       assert.ok(cast(w, 'backstab').ok);
       run(w, 0.7);
