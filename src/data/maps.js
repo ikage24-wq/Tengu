@@ -27,7 +27,7 @@ export const MAPS = {
     // The town's capsule machine (data/outfits-gacha.js).
     gacha: 2045,
     width: 3200, height: 520, groundY: 480,
-    look: { edges: 'flowers', front: 'blossoms', islands: 'planks', propKeep: 0.86 },
+    look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
     terrain: [[0, 480], [1600, 480], [1640, 456], [2160, 456], [2200, 480], [3200, 480]],
     // The cottages, and the plaza's own pieces (render/townhouses.js).
     cottages: [200, 520, 800, 1340, 3050],
@@ -65,7 +65,7 @@ export const MAPS = {
       ['pond', 980], ['giantflower', 900, 1], ['well', 1100],
       ['archerbanner', 2240], ['watchtower', 2520], ['archerbanner', 2600],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
-      ['bowrack', 2680], ['fence', 2720], ['archtarget', 2780, 0], ['archtarget', 2840, 1], ['archtarget', 2900, 2], ['haystack', 2950, 1],
+      ['bowrack', 2640], ['fence', 2725], ['archtarget', 2780, 0], ['archtarget', 2840, 1], ['archtarget', 2900, 2], ['haystack', 2950, 1],
     ],
     spawns: [],
   },
@@ -80,7 +80,7 @@ export const MAPS = {
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
     width: 2400, height: 1040, groundY: 1000,
-    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', front: 'blossoms', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
     zones: [
       { name: 'Petal Fields', from: Infinity, color: '#e889b4' },
       { name: 'Beehive Banks', from: 800, color: '#e0a040', look: { sky: ['#ffd9a6', '#ffecc8', '#fff8e4'], far: '#f6dcb8', mid: '#d6e6a0', midTrim: '#b2d07e', edges: 'clover', props: ['tulip', 'flower', 'tuft', 'bush'] } },
@@ -417,7 +417,7 @@ export const MAPS = {
     npcs: [],
     // A landmark per zone: glowing pools on the terraces, a great crystal by the throne's gate at
     // the lake, a crystal spire in the east.
-    deco: [['glowpool', 240, 0, 600], ['glowpool', 1200, 0, 1000], ['crystalspire', 1400, 1, 1000], ['stalagmite', 950, 0, 880], ['crystalspire', 2000, 0, 720], ['stalagmite', 2400, 0, 600]],
+    deco: [['glowpool', 240, 0, 600], ['glowpool', 1200, 0, 1000], ['crystalspire', 1400, 1, 1000], ['stalagmite', 950, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
     lamps: [{ x: 240, y: 580 }, { x: 1300, y: 960 }, { x: 2100, y: 440 }],
     spirit: { x: 1300, y: 640 },
     habitats: { crystalslime: { naps: true, home: { x: 240, y: 600 } }, rockgolem: { naps: true }, shade: { play: true } },
@@ -543,7 +543,7 @@ Object.assign(MAPS, {
     npcs: [],
     // A landmark per zone: the mesa rock and the camp tent in the west, the old bones and the totem
     // on the gorge floor, the windmill on the lookout.
-    deco: [['mesa', 550], ['tent', 300, 0, 520], ['bones', 1000], ['totem', 1550], ['signpost', 2300, 0, 560], ['windmillcrag', 2100, 0, 300]],
+    deco: [['mesa', 550], ['tent', 300, 0, 520], ['bones', 790], ['totem', 1300], ['signpost', 2300, 0, 560], ['windmillcrag', 2100, 0, 300]],
     lamps: [{ x: 300, y: 480 }, { x: 1000, y: 970 }, { x: 2100, y: 260 }],
     spirit: { x: 1200, y: 500 },
     habitats: { pebblet: { naps: true, home: { x: 1000, y: 1000 } }, scorpip: { play: true, naps: true } },
@@ -716,7 +716,7 @@ Object.assign(MAPS, {
   hollow_gate: {
     id: 'hollow_gate', name: 'Hollow Gate', theme: 'forest', town: 'crag', world: { x: 168, y: 132 },
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#ff9f7a', '#d48ab8', '#6a4f9a'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', front: 'roots', critters: ['firefly'], face: null, edges: 'glowcaps' },
+    look: { sky: ['#ff9f7a', '#d48ab8', '#6a4f9a'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', critters: ['firefly'], face: null, edges: 'glowcaps' },
     terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
     platforms: [{ x: 400, y: G - 120, w: 160 }],
     ropes: [],
@@ -750,11 +750,11 @@ Object.assign(MAPS, {
         { name: 'Canopy', color: '#9fd88a', from: 380, mobs: [], look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'] } },
       ],
     }),
-    look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'], far: '#2a4a4a', mid: '#3a5a4a', midTrim: '#5a8a6a', skyline: 'bigtrees', light: 'ridge', drift: 'leaf', front: 'leaves', critters: ['firefly'] },
+    look: { sky: ['#1e3a5a', '#3a6a7a', '#8ab8a8'], far: '#2a4a4a', mid: '#3a5a4a', midTrim: '#5a8a6a', skyline: 'bigtrees', light: 'ridge', drift: 'leaf', critters: ['firefly'] },
     task: { kind: 'light', label: 'Light the glowcaps' },
     dark: true,
     darkDepth: [0.45, 1],
-    deco: [['owlnest', 520, 0, 260], ['hollowlog', 1420, 0, 480], ['giantshroom', 700, 0], ['mushring', 300]],
+    deco: [['owlnest', 520, 0, 260], ['hollowlog', 1350, 0, 480], ['giantshroom', 700, 0], ['mushring', 300]],
     portals: [
       { id: 'out', x: 60, y: 260, to: 'hollow_gate', toPortal: 'door', label: 'Leave' },
       { id: 'start', x: 160, y: 260, hidden: true },
@@ -782,7 +782,7 @@ Object.assign(MAPS, {
     }),
     look: { sky: ['#4a2a5a', '#8a4a80', '#d890b8'], far: '#5a3460', mid: '#8a5480', midTrim: '#c890b8', ...ROOTS, light: 'grove', drift: 'spore', shrooms: ['#ff9ec8', '#ffd0e8', '#c9a6ff'] },
     bouncers: [{ x: 440 }, { x: 960 }],
-    deco: [['mushring', 700], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320]],
+    deco: [['mushring', 610], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320]],
     portals: [
       { id: 'west', x: 40, y: 540, to: 'hollow1', toPortal: 'east' },
       { id: 'east', x: 1360, y: 540, to: 'hollow3', toPortal: 'west', sealed: true },
@@ -808,7 +808,7 @@ Object.assign(MAPS, {
         { name: 'The Root Floor', color: '#9fd88a', from: 500, mobs: [], look: { sky: ['#2a3a2a', '#45583a', '#6a7a4a'] } },
       ],
     }),
-    look: { sky: ['#1e1418', '#2e2026', '#45302e'], far: '#2e2226', mid: '#4a3434', midTrim: '#6a4a44', ...ROOTS, light: 'cave', drift: 'spore', front: 'roots' },
+    look: { sky: ['#1e1418', '#2e2026', '#45302e'], far: '#2e2226', mid: '#4a3434', midTrim: '#6a4a44', ...ROOTS, light: 'cave', drift: 'spore' },
     task: { kind: 'free', label: 'Free the trapped Sprouts' },
     rootfall: true,
     updrafts: [{ x: 650, w: 56, top: 400, bottom: 700, kind: 'spores' }],
@@ -866,7 +866,7 @@ Object.assign(MAPS, {
     task: { kind: 'keys', label: 'Find the Root Keys', count: 3 },
     flood: { every: 24, warn: 3, last: 7, damage: 40 },
     updrafts: [{ x: 1040, w: 60, top: 540, bottom: 1000, kind: 'spores' }],
-    deco: [['rootgate', 1160, 0, 530], ['giantshroom', 300, 2], ['mushring', 1500]],
+    deco: [['rootgate', 1160, 0, 530], ['giantshroom', 230, 2], ['mushring', 1590]],
     portals: [
       { id: 'west', x: 40, y: 1000, to: 'hollow4', toPortal: 'east' },
       { id: 'east', x: 1160, y: 530, to: 'hollow6', toPortal: 'west', sealed: true },
@@ -891,7 +891,7 @@ Object.assign(MAPS, {
     ],
     ropes: [],
     look: { sky: ['#14242e', '#1e4a4a', '#5ac0a8'], far: '#1e3a3a', mid: '#2e5a52', midTrim: '#5aa088', ...ROOTS, light: 'hollow', drift: 'spore', shrooms: ['#7fe6d6', '#c4f6ee', '#9fffb0'] },
-    deco: [['glowpool', 380], ['giantshroom', 1160, 1], ['glowpool', 1120], ['mushring', 760]],
+    deco: [['glowpool', 380], ['giantshroom', 1250, 1], ['glowpool', 1120], ['mushring', 760]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
       { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -955,12 +955,12 @@ Object.assign(MAPS, {
     // A moving part per zone: blossoms bouncing you up in the meadow, the waterfall's mist floating
     // you up the cliff (Up to ride it), and the drifting leaf in the grove.
     springs: [{ x: 420, y: 880, up: 170, kind: 'blossom' }],
-    updrafts: [{ x: 950, w: 50, top: 610, bottom: 880, kind: 'mist' }],
+    updrafts: [{ x: 955, w: 50, top: 610, bottom: 880, kind: 'mist' }],
     portals: [{ id: 'west', x: 40, y: 880, to: 'woods', toPortal: 'glade' }],
     npcs: [],
     // A landmark per zone: the giant flowers in the meadow, the waterfall and its pool, the great
     // tree in the grove.
-    deco: [['giantflower', 260, 0], ['giantflower', 700, 2], ['pond', 940], ['waterfall', 1000, 0, 640], ['bigtree', 1700, 1, 640], ['giantflower', 2150, 1, 640]],
+    deco: [['giantflower', 260, 0], ['giantflower', 700, 2], ['pond', 890], ['waterfall', 958, 240, 880], ['bigtree', 1680, 1, 640], ['giantflower', 2150, 1, 640]],
     lamps: [{ x: 900, y: 810 }, { x: 1700, y: 600 }, { x: 2300, y: 610 }],
     spirit: { x: 2200, y: 400 },
     habitats: { sylph: { play: true, naps: true }, mossgolem: { naps: true, home: { x: 260, y: 880 } } },
@@ -993,8 +993,8 @@ Object.assign(MAPS, {
     npcs: [],
     // A landmark per zone: the three great gates on the steps, the cherry trees on the terraces,
     // the hokora shrine on the top terrace.
-    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1310, 1], ['torii', 2070], ['foxstatue', 1990, 0], ['foxstatue', 2150, 1],
-      ['sakura', 700, 0, 480], ['sakura', 1800, 1, 480], ['hokora', 1200, 0, 240]],
+    deco: [['torii', 380], ['foxstatue', 290, 0], ['foxstatue', 470, 1], ['torii', 1220], ['foxstatue', 1130, 0], ['foxstatue', 1310, 1], ['torii', 1900], ['foxstatue', 1820, 0], ['foxstatue', 1980, 1],
+      ['sakura', 700, 0, 480], ['sakura', 1860, 1, 480], ['hokora', 1200, 0, 240]],
     lamps: [{ x: 1200, y: 200 }, { x: 700, y: 440 }, { x: 1220, y: 850 }],
     spirit: { x: 1700, y: 200 },
     habitats: { nekomata: { naps: true, play: true, home: { x: 1220, y: 880 } }, kitsunemiko: { naps: true } },
@@ -1078,7 +1078,7 @@ Object.assign(MAPS, {
     npcs: [],
     // A landmark per zone: the hot springs on the pools floor (the east one with the fishing dock),
     // the waterfall on the steps, a spring at the top.
-    deco: [['hotspring', 860], ['hotspring', 1620], ['hotspring', 2250], ['waterfall', 1500, 0, 560], ['hotspring', 1100, 0, 240]],
+    deco: [['hotspring', 860], ['hotspring', 1620], ['hotspring', 2250], ['waterfall', 1500, 80, 560], ['hotspring', 1100, 0, 240]],
     lamps: [{ x: 2230, y: 810 }, { x: 1500, y: 520 }, { x: 1100, y: 200 }],
     spirit: { x: 1600, y: 200 },
     habitats: { lamia: { naps: true, home: { x: 860, y: 880 } }, shade: { play: true } },

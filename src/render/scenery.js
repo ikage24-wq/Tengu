@@ -4,10 +4,10 @@
 // chimney smoke, bobbing boats. World-to-screen is (wx - cam.x, wy - cam.y). Layouts are seeded so
 // nothing jitters as you move; animation comes only from `time`.
 
-import { R, E, T, F, sprite, blit, shade, mix, snap, tinted, gfx } from './pixel.js';
+import { R, E, T, F, sprite, blit, shade, mix, snap, tinted } from './pixel.js';
 import { groundAt, surfacesOf, driftOffset } from '../world/physics.js';
 import { drawMovers } from './movers.js';
-import { drawTerrain, drawIsland, drawLadder, wind, windAt, windTravel } from './terrain.js';
+import { drawTerrain, drawIsland, drawLadder, wind, windTravel } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
@@ -88,7 +88,7 @@ export const THEMES = {
     sky: ['#ff9ec6', '#ffc8b4', '#fff0d6'], sun: '#fff1c9', far: '#e9a2bf', mid: '#f6c4d4', midTrim: '#e08aa8',
     ground: '#ddc8ba', groundDeep: '#c4a898', trim: '#ffc6de', ledge: '#e6d2c4', ledgeTrim: '#ffd0e2', ledgeShade: '#c8aa9c',
     skyline: 'pagodas', props: ['stonelamp', 'tuft', 'flower', 'tuft', 'bush', 'stonelamp'],
-    critters: ['butterfly', 'bird'], drift: 'petal', face: 'sun', front: 'blossoms',
+    critters: ['butterfly', 'bird'], drift: 'petal', face: 'sun',
   },
   // Moonlit Ridge: blue night on the mountain, a huge moon, pines on the slopes, wolves' country.
   ridge: {
@@ -2223,221 +2223,12 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
   ctx.restore();
 }
 
-// ---------- The foreground ----------
-
-// Out-of-focus things just in front of the camera that frame the view from the top edge: leaf
-// clumps in the woods, roots in the hollow, vines in the ruins, crystal shards in caves, blossom
-// branches in spring maps, cloud wisps in the sky, and strings of lights over the harbor. They
-// scroll faster than the world (they're nearer), sway with the wind, and turn see-through when
-// anyone is under them, so they never hide a fight.
-const FRONT_COLORS = {
-  leaves: ['#4f9a6e', '#5fae7a', '#3f8a66'],
-  grove: ['#5a4aa0', '#6a58b4', '#4c3f8e'],
-  roots: ['#5a3f4c', '#6c4c58', '#4a3442'],
-  vines: ['#5a9a7a', '#6aae86', '#4c8a70'],
-  crystals: ['#5c4aa6', '#6e5cc0', '#4a3c90'],
-  blossoms: ['#b88a7a', '#ffb3cf', '#ff9ec0'],
-  clouds: ['#ffffff', '#f4f6ff', '#ffffff'],
-};
-const FRONT_W = 130;
-const FRONT_H = 96;
-const fronts = new Map();
-// Each piece is painted once, softly blurred (it's out of focus), and reused.
-function frontArt(kind, v) {
-  const res = Math.max(1, Math.round(gfx.scale || 1));
-  const key = `${kind}|${v}|${res}`;
-  let c = fronts.get(key);
-  if (!c) {
-    c = document.createElement('canvas');
-    c.width = FRONT_W * res;
-    c.height = FRONT_H * res;
-    const g = c.getContext('2d');
-    g.filter = `blur(${(kind === 'clouds' ? 2 : 1.1) * res}px)`;
-    g.scale(res, res);
-    paintFront(g, kind, v, FRONT_COLORS[kind]);
-    fronts.set(key, c);
-  }
-  return c;
-}
-
-// Paints a foreground piece hanging from (FRONT_W / 2, 0).
-function paintFront(g, kind, v, [c0, c1, c2]) {
-  const cx = FRONT_W / 2;
-  const r = (n) => hash(v * 13.7 + n);
-  const leaf = (x, y, rx, ry, a, c) => {
-    g.fillStyle = c;
-    g.beginPath();
-    g.ellipse(x, y, rx, ry, a, 0, Math.PI * 2);
-    g.fill();
-  };
-  const stem = (pts, w, c) => {
-    g.fillStyle = c;
-    fillPts(g, bandPts(pts, (u) => w * (1 - u * 0.7)));
-  };
-  const curve = (x0, len, bend, n = 8) => Array.from({ length: n + 1 }, (_, k) => [x0 + Math.sin((k / n) * 2.2) * bend, -4 + (k / n) * len]);
-  if (kind === 'leaves' || kind === 'grove') {
-    // Two or three twigs, each ending in a clump of overlapping leaves.
-    for (let s = 0; s < 2 + Math.floor(r(1) * 2); s++) {
-      const x0 = cx - 34 + s * 30 + r(s + 2) * 14;
-      const len = 26 + r(s + 5) * 34;
-      const bend = (r(s + 8) - 0.5) * 20;
-      const pts = curve(x0, len, bend);
-      stem(pts, 2, c2);
-      const [tx, ty] = pts[pts.length - 1];
-      for (let j = 0; j < 9; j++) {
-        const a = (j / 9) * Math.PI * 2 + r(j + 11);
-        const d = 4 + r(j + 20) * 8;
-        leaf(tx + Math.cos(a) * d, ty + Math.sin(a) * d * 0.7 - 2, 8 + r(j + 30) * 3, 4.2, a, j % 3 ? c0 : c1);
-      }
-      for (const u of [0.35, 0.65]) {
-        const [lx, ly] = pts[Math.round(u * 8)];
-        leaf(lx + 6, ly, 7, 3.4, 0.6, c1);
-        leaf(lx - 6, ly + 3, 7, 3.4, -0.6, c0);
-      }
-    }
-  } else if (kind === 'roots') {
-    // Gnarled roots hanging from the den's ceiling, tapering, one or two curling at the tip.
-    g.fillStyle = c2;
-    g.beginPath();
-    g.ellipse(cx, -6, 58, 14, 0, 0, Math.PI * 2);
-    g.fill();
-    for (let s = 0; s < 3; s++) {
-      const x0 = cx - 34 + s * 30 + r(s + 2) * 10;
-      const len = 30 + r(s + 5) * 46;
-      const pts = curve(x0, len, (r(s + 8) - 0.5) * 18);
-      if (r(s + 14) > 0.5) {
-        const [ex, ey] = pts[pts.length - 1];
-        pts.push([ex + 4, ey + 4], [ex + 7, ey], [ex + 4.5, ey - 3]);
-      }
-      stem(pts, 5 + r(s + 3) * 2, s % 2 ? c0 : c1);
-    }
-  } else if (kind === 'vines') {
-    // Long vines with leaf pairs down their length.
-    for (let s = 0; s < 3; s++) {
-      const x0 = cx - 36 + s * 34 + r(s + 2) * 10;
-      const len = 34 + r(s + 5) * 50;
-      const pts = curve(x0, len, (r(s + 8) - 0.5) * 12, 10);
-      stem(pts, 1.4, c2);
-      for (let k = 2; k <= 10; k += 2) {
-        const [lx, ly] = pts[k];
-        leaf(lx + 4, ly, 5, 2.6, 0.5, c0);
-        leaf(lx - 4, ly + 2, 5, 2.6, -0.5, c1);
-      }
-    }
-  } else if (kind === 'crystals') {
-    // A cluster of shards hanging point-down, each with a lit facet.
-    for (let s = 0; s < 4; s++) {
-      const x = cx - 36 + s * 22 + r(s + 2) * 10;
-      const w = 7 + r(s + 4) * 9;
-      const len = 26 + r(s + 6) * 46;
-      g.fillStyle = s % 2 ? c0 : c2;
-      g.beginPath();
-      g.moveTo(x - w, -2);
-      g.lineTo(x + w, -2);
-      g.lineTo(x + w * 0.2, len);
-      g.closePath();
-      g.fill();
-      g.fillStyle = c1;
-      g.beginPath();
-      g.moveTo(x - w * 0.2, -2);
-      g.lineTo(x + w * 0.6, -2);
-      g.lineTo(x + w * 0.2, len * 0.85);
-      g.closePath();
-      g.fill();
-    }
-  } else if (kind === 'blossoms') {
-    // A cherry branch reaching in from above, dotted with blossoms.
-    const pts = [[cx - 58, -4], [cx - 30, 14 + r(1) * 8], [cx, 22 + r(2) * 10], [cx + 34, 26 + r(3) * 12], [cx + 56, 40 + r(4) * 10]];
-    stem(pts, 3, c0);
-    const twig = [[cx - 4, 22], [cx + 6, 40 + r(5) * 10], [cx + 4, 54 + r(6) * 10]];
-    stem(twig, 1.6, c0);
-    for (const [bx, by] of [...pts.slice(1), ...twig.slice(1), [cx - 16, 24], [cx + 20, 34], [cx + 46, 30]]) {
-      for (let j = 0; j < 5; j++) {
-        const a = (j / 5) * Math.PI * 2;
-        leaf(bx + Math.cos(a) * 3.4, by + Math.sin(a) * 3.4, 3.4, 3.4, 0, j % 2 ? c1 : c2);
-      }
-      leaf(bx, by, 1.6, 1.6, 0, '#fff3c4');
-    }
-  } else if (kind === 'clouds') {
-    // A soft cloud wisp drifting by just under the top edge.
-    g.globalAlpha = 0.85;
-    for (let j = 0; j < 6; j++) leaf(cx - 46 + j * 18 + r(j) * 8, 6 + r(j + 9) * 10, 16 + r(j + 3) * 10, 12 + r(j + 6) * 6, 0, j % 2 ? c0 : c1);
-    g.globalAlpha = 1;
-  }
-}
-
-// The harbor's front layer: strings of little lights sagging across the top of the view.
-function drawGarlands(ctx, cam, width, time, fade) {
-  repeat(cam.x, 1.25, 260, width, (i, x) => {
-    if (hash(i + 70) < 0.4) return;
-    const sag = 18 + hash(i + 71) * 14;
-    const top = -4 + hash(i + 72) * 6;
-    const a = fade(x + 130);
-    ctx.save();
-    ctx.globalAlpha = 0.75 * a;
-    ctx.strokeStyle = '#3a2d4f';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(x, top);
-    ctx.quadraticCurveTo(x + 130, top + sag * 2, x + 260, top);
-    ctx.stroke();
-    for (let k = 1; k < 12; k++) {
-      const u = k / 12;
-      const lx = x + u * 260;
-      const ly = top + 4 * sag * u * (1 - u) + 3;
-      const c = ['#ffe36b', '#ff9ec0', '#9fd8ff', '#bff0dc'][(k + i) % 4];
-      const tw = 0.65 + 0.35 * Math.sin(time * 3 + k * 1.7 + i);
-      ctx.globalAlpha = a;
-      glow(ctx, lx, ly, 9, c, 0.45 * tw);
-      ctx.globalAlpha = a;
-      ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.arc(lx, ly, 2.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  });
-}
-
-const FRONTS = { forest: 'leaves', grove: 'grove', hollow: 'roots', ruins: 'vines', cave: 'crystals', sky: 'clouds', harbor: 'garland', shrine: 'blossoms', springs: 'leaves' };
-
-// Everything in front of the characters: the foreground framing pieces and the nearest band of
-// drifting petals or sparks. `actors` are the screen boxes ({ x, top }) of the player and the
-// monsters, which the pieces turn see-through over.
-export function drawSceneFront(ctx, map, cam, width, height, time, actors = []) {
+// Everything in front of the characters: the nearest band of drifting petals or sparks. (Nothing
+// hangs into the top of the view: out-of-focus leaf clumps, branches and garlands hanging from
+// nothing read as clutter, and were taken out.)
+export function drawSceneFront(ctx, map, cam, width, height, time) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
-  const kind = t.front !== undefined ? t.front : FRONTS[theme];
-  // How solid a piece centered at screen x is: see-through when anyone near it stands high on
-  // the screen (on a ledge just under it).
-  const fade = (x) => {
-    let k = 1;
-    for (const a of actors) {
-      if (a.top > 92) continue;
-      k = Math.min(k, Math.max(0, (Math.abs(a.x - x) - 45) / 45));
-    }
-    return 0.3 + 0.7 * k;
-  };
-  if (kind === 'garland') drawGarlands(ctx, cam, width, time, fade);
-  else if (kind) {
-    repeat(cam.x, 1.25, 170, width, (i, x) => {
-      if (hash(i + 60) < 0.5) return;
-      const v = Math.floor(hash(i + 61) * 3);
-      const c = frontArt(kind, v);
-      const scale = 0.8 + hash(i + 62) * 0.3;
-      const ax = x + 85;
-      const sway = kind === 'clouds' ? 0 : (windAt(time, cam.x * 1.25 + ax) - 0.6) * 0.06 + Math.sin(time * 1.1 + i) * 0.02;
-      const drift = kind === 'clouds' ? Math.sin(time * 0.3 + i) * 10 : 0;
-      ctx.save();
-      ctx.globalAlpha = (kind === 'clouds' ? 0.7 : 0.92) * fade(ax);
-      ctx.translate(ax + drift, -2);
-      ctx.rotate(sway);
-      ctx.scale(hash(i + 63) > 0.5 ? -scale : scale, scale);
-      ctx.imageSmoothingEnabled = true;
-      ctx.drawImage(c, -FRONT_W / 2, 0, FRONT_W, FRONT_H);
-      ctx.restore();
-    });
-  }
   drawDrift(ctx, t, cam, width, height, time, 'front');
 }
 

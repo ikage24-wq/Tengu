@@ -360,11 +360,9 @@ export function drawWorld(ctx, world, viewCam, time) {
     for (const l of world.map.lamps ?? []) lights.push({ x: l.x - cam.x, y: l.y - cam.y, r: 80, c: l.c });
     drawNight(ctx, VIEW_W, VIEW_H, world.map.night, lights);
   }
-  // The foreground: framing pieces and the nearest drifting petals, in front of everyone (and of
-  // the light, being between it and the camera), but under the effects.
-  const actors = [{ x: hx, top: hy - 50 }];
-  for (const m of world.mobs) if (m.hp > 0) actors.push({ x: m.x - cam.x, top: m.y - m.def.h - cam.y });
-  drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time, actors);
+  // The nearest drifting petals, in front of everyone (and of the light, being between it and the
+  // camera), but under the effects.
+  drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time);
   if (world.dungeon) {
     drawHollowFront(ctx, world, cam, time);
     // The dark rooms: light only where the group and the glowcaps are.
