@@ -7,6 +7,7 @@
 
 import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
+import { shade } from '../render/pixel.js';
 import { JOBS } from '../data/jobs.js';
 import { travelTo } from '../world/world.js';
 import { levelRange, routeBetween, setRoute } from '../world/routes.js';
@@ -23,10 +24,14 @@ const MAP_H = 240;
 const INK = '#5a3f7a';
 
 // The island and its ring road: an ellipse round the middle of the map.
+// (The world map redraw, 2026-11-02: laid out again so no two roads cross. The ring road runs round
+// the coast; the canyon, the crag, the ridge, the Hollow's gate and the glade sit inside it; the
+// springs and the frozen peak have a little isle to the north, the Sky Garden and Starfall float
+// above it, and the grove's long roads north fan out one above another.)
 const CX = 200;
-const CY = 132;
+const CY = 150;
 const RX = 150;
-const RY = 82;
+const RY = 66;
 const deg = (d) => (d * Math.PI) / 180;
 const onRing = (a, k = 1) => ({ x: CX + Math.cos(deg(a)) * RX * k, y: CY + Math.sin(deg(a)) * RY * k, a });
 // Where each map sits. The ring runs clockwise from Sprout Village in the west: the meadows, the
@@ -34,21 +39,19 @@ const onRing = (a, k = 1) => ({ x: CX + Math.cos(deg(a)) * RX * k, y: CY + Math.
 // canyon road climbs from the meadow to the crag in the middle (the Hollow's gate off it); the
 // throne room is a spur off the cave, and the Sky Garden floats above it.
 const SPOT = {
-  sprout: onRing(180), meadow1: onRing(142), meadow2: onRing(108), harbor: onRing(75), woods: onRing(35), grove: onRing(355),
-  ruins: onRing(315), cave: onRing(262),
-  canyon: { x: CX - 70, y: CY + 6 }, crag: { x: CX + 4, y: CY - 4 }, hollow_gate: { x: CX - 86, y: CY - 30 },
-  bossroom: onRing(238, 0.74),
-  // The far regions, each just off the place it leads from: the glade inside the woods, the shrine
-  // path out past the ruins, the ridge up the mountain from the crag, and the climb from the cave
-  // through the springs and the peak to the Sky Garden, with Starfall above it.
-  glade: { x: 282, y: 170 }, shrine: { x: 372, y: 64 }, ridge: { x: 258, y: 112 },
-  springs: { x: 150, y: 34 }, peak: { x: 196, y: 14 }, sky: { x: 262, y: 20 }, starfall: { x: 322, y: 14 },
+  sprout: onRing(180), meadow1: onRing(140), meadow2: onRing(108), harbor: onRing(75), woods: onRing(35), grove: onRing(350),
+  ruins: onRing(300), cave: onRing(245),
+  canyon: { x: 116, y: 160 }, crag: { x: 196, y: 168 }, hollow_gate: { x: 104, y: 126 }, ridge: { x: 252, y: 150 },
+  glade: { x: 290, y: 186 }, shrine: { x: 306, y: 112 }, bossroom: { x: 84, y: 76 },
+  springs: { x: 150, y: 50 }, peak: { x: 205, y: 34 }, sky: { x: 262, y: 18 }, starfall: { x: 332, y: 26 },
 };
+// Where a road bends (its control point), for the roads that must curve round others to stay clear.
+const CTRL = { 'cave|sky': { x: 175, y: -30 }, 'grove|springs': { x: 262, y: 58 }, 'grove|peak': { x: 272, y: 30 } };
 // Where each place's name sits from its stop (the default is just under it).
 const LABEL = {
-  sprout: [0, 13], meadow1: [-6, 9], meadow2: [0, 9], harbor: [0, 13], woods: [6, 9], grove: [0, 13], ruins: [18, -12], cave: [26, 6],
-  canyon: [0, 9], crag: [0, 13], hollow_gate: [-28, -2], bossroom: [0, 9], glade: [0, 9], shrine: [-4, 9], ridge: [0, 9],
-  springs: [-14, 9], peak: [0, -10], sky: [0, 10], starfall: [0, 9],
+  sprout: [0, 13], meadow1: [-8, 9], meadow2: [0, 9], harbor: [0, 13], woods: [8, 9], grove: [0, 13], ruins: [-10, -12], cave: [-24, 6],
+  canyon: [0, 9], crag: [0, 13], hollow_gate: [-6, -12], bossroom: [0, 9], glade: [-36, 2], shrine: [14, -12], ridge: [0, 9],
+  springs: [-26, 0], peak: [0, -10], sky: [0, 11], starfall: [0, 9],
 };
 const spot = (m) => SPOT[m.id] ?? m.world;
 // The roads round the ring (each a real portal link between neighbours on it; the last stop joins
@@ -75,7 +78,10 @@ const hash = (n) => {
   return s - Math.floor(s);
 };
 
-// Roads: one per pair of maps joined by a portal.
+// Roads drawn on the map: one per pair of maps joined by a portal, except the long ones that would
+// cross or crowd the others (the journeys they make are already shown by other roads; the guide's
+// route still follows every real road).
+const HIDDEN = new Set(['grove|springs', 'grove|peak', 'grove|sky', 'cave|sky', 'cave|grove']);
 const ROADS = (() => {
   const seen = new Set();
   const out = [];
@@ -84,7 +90,7 @@ const ROADS = (() => {
     for (const p of m.portals) {
       if (!p.to || !MAPS[p.to] || !onMap(MAPS[p.to])) continue;
       const key = [m.id, p.to].sort().join('|');
-      if (seen.has(key)) continue;
+      if (seen.has(key) || HIDDEN.has(key)) continue;
       seen.add(key);
       out.push([m.id, p.to]);
     }
@@ -99,108 +105,400 @@ function circle(ctx, x, y, r) {
   ctx.fill();
 }
 
-// The sea: a soft blue and a handful of slow ripples.
+// The sea (the world map redraw: a storybook island): deeper toward the edges, rows of little wave
+// crests drifting by, sparkles on the water, and a sailboat going round the island.
 function drawSea(ctx, ox, oy, time) {
-  const g = ctx.createLinearGradient(0, oy, 0, oy + MAP_H);
-  g.addColorStop(0, '#a9dcff');
-  g.addColorStop(1, '#c9ecff');
+  const g = ctx.createRadialGradient(ox + CX, oy + CY, 60, ox + CX, oy + CY, 260);
+  g.addColorStop(0, '#bfe9ff');
+  g.addColorStop(1, '#7ec4f0');
   ctx.fillStyle = g;
   roundRect(ctx, ox, oy, MAP_W, MAP_H, 10);
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * Math.PI * 2 + 0.3;
-    const x = ox + CX + Math.cos(a) * (RX + 26 + hash(i) * 10) - 6;
-    const y = oy + CY + Math.sin(a) * (RY + 20 + hash(i + 9) * 8);
-    if (y < oy + 6 || y > oy + MAP_H - 6) continue;
-    const s = Math.sin(time * 1.5 + i) * 1.2;
+  ctx.save();
+  roundRect(ctx, ox, oy, MAP_W, MAP_H, 10);
+  ctx.clip();
+  // Wave crests: little white arcs in loose rows, drifting slowly.
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 0.9;
+  for (let i = 0; i < 46; i++) {
+    const x = ox + ((hash(i) * MAP_W + time * (3 + hash(i + 5) * 3)) % (MAP_W + 20)) - 10;
+    const y = oy + hash(i + 9) * MAP_H;
+    const dx = (x - ox - CX) / (RX + 34);
+    const dy = (y - oy - CY) / (RY + 34);
+    if (dx * dx + dy * dy < 1) continue;
+    const s = 0.6 + 0.4 * Math.sin(time * 1.6 + i);
+    ctx.globalAlpha = 0.4 + 0.5 * s;
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(x + 3, y - 2 - s * 0.3, x + 6, y);
-    ctx.quadraticCurveTo(x + 9, y + 2, x + 12, y);
+    ctx.moveTo(x - 4, y);
+    ctx.quadraticCurveTo(x - 2, y - 2 * s, x, y);
+    ctx.quadraticCurveTo(x + 2, y - 2 * s, x + 4, y);
     ctx.stroke();
   }
+  ctx.globalAlpha = 1;
+  // Sparkles on the water.
+  for (let i = 0; i < 10; i++) {
+    const k = Math.sin(time * 2.2 + i * 1.7);
+    if (k < 0.5) continue;
+    ctx.globalAlpha = (k - 0.5) * 2;
+    sparkleAt(ctx, ox + hash(i + 40) * MAP_W, oy + hash(i + 41) * MAP_H, 1.2 + (k - 0.5) * 3);
+  }
+  ctx.globalAlpha = 1;
+  // A sailboat sailing round the island, bobbing.
+  const a = time * 0.05;
+  const bx = ox + CX + Math.cos(a) * (RX + 48);
+  const by = oy + CY + Math.sin(a) * (RY + 44) + Math.sin(time * 2) * 0.8;
+  const dir = Math.sin(a) > 0 ? -1 : 1;
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(bx - dir * 6, by + 2, 6, 1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#c98a5a';
+  ctx.beginPath();
+  ctx.moveTo(bx - 5, by - 1);
+  ctx.lineTo(bx + 5, by - 1);
+  ctx.lineTo(bx + 3, by + 2);
+  ctx.lineTo(bx - 3, by + 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(bx, by - 10);
+  ctx.lineTo(bx + 4 * dir, by - 2);
+  ctx.lineTo(bx, by - 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ff9fb8';
+  ctx.fillRect(bx - 0.4, by - 12, 3 * dir || 3, 1.6);
+  ctx.restore();
 }
 
-// The island: a cream shore round a green disc, a little lighter towards the middle, each stop's
-// region a soft pool of its colour, and the mountain in the middle.
-function drawIsland(ctx, ox, oy) {
+function sparkleAt(ctx, x, y, r) {
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r * 0.3, y - r * 0.3);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x + r * 0.3, y + r * 0.3);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r * 0.3, y + r * 0.3);
+  ctx.lineTo(x - r, y);
+  ctx.lineTo(x - r * 0.3, y - r * 0.3);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// The island's coastline: an ellipse with a gently wobbling edge, so it reads as a real island.
+function coast(ctx, x, y, grow, time = 0, breathe = 0) {
+  ctx.beginPath();
+  for (let i = 0; i <= 72; i++) {
+    const a = (i / 72) * Math.PI * 2;
+    const k = 1 + 0.07 * Math.sin(a * 3 + 1.2) + 0.04 * Math.sin(a * 7 + 0.4) + 0.02 * Math.sin(a * 13 + 2) + breathe * Math.sin(time * 1.4 + a * 2);
+    const px = x + Math.cos(a) * (RX + grow) * k;
+    const py = y + Math.sin(a) * (RY + grow) * k;
+    if (i) ctx.lineTo(px, py);
+    else ctx.moveTo(px, py);
+  }
+  ctx.closePath();
+}
+
+// The island: surf breathing round a sandy beach, the land in soft greens, each region a pool of
+// its own colour, and every place drawn as a little picture of itself (drawPlaces).
+function drawIsland(ctx, ox, oy, time = 0) {
   const x = ox + CX;
   const y = oy + CY;
-  ctx.fillStyle = 'rgba(90,63,122,0.12)';
-  ctx.beginPath();
-  ctx.ellipse(x + 2, y + 5, RX + 30, RY + 30, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(40,90,140,0.18)';
+  coast(ctx, x + 2, y + 5, 30);
   ctx.fill();
-  ctx.fillStyle = '#fff3dc';
-  ctx.beginPath();
-  ctx.ellipse(x, y, RX + 30, RY + 30, 0, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  coast(ctx, x, y, 34, time, 0.006);
   ctx.fill();
-  const g = ctx.createRadialGradient(x, y, 10, x, y, RX + 24);
-  g.addColorStop(0, '#dff6cf');
-  g.addColorStop(1, '#bfe8ad');
+  ctx.fillStyle = '#ffe9c4';
+  coast(ctx, x, y, 30);
+  ctx.fill();
+  const g = ctx.createRadialGradient(x, y - 10, 10, x, y, RX + 24);
+  g.addColorStop(0, '#d8f2c4');
+  g.addColorStop(1, '#a8dc96');
   ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.ellipse(x, y, RX + 24, RY + 24, 0, 0, Math.PI * 2);
+  coast(ctx, x, y, 24);
   ctx.fill();
-  ctx.strokeStyle = INK;
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.ellipse(x, y, RX + 30, RY + 30, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(90,63,122,0.28)';
+  ctx.lineWidth = 1.2;
+  coast(ctx, x, y, 30);
   ctx.stroke();
-  ctx.globalAlpha = 1;
+  // The northern isle, where the springs steam under the frozen peak.
+  const nx = ox + 180;
+  const ny = oy + 44;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, 52 + Math.sin(time * 1.4) * 0.6, 24, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffe9c4';
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, 48, 21, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#d6eef0';
+  ctx.beginPath();
+  ctx.ellipse(nx, ny, 43, 17, -0.15, 0, Math.PI * 2);
+  ctx.fill();
   // Each region's pool of colour.
   ctx.save();
-  ctx.beginPath();
-  ctx.ellipse(x, y, RX + 24, RY + 24, 0, 0, Math.PI * 2);
+  coast(ctx, x, y, 24);
   ctx.clip();
   for (const m of Object.values(MAPS)) {
     const p = onMap(m) && spot(m);
     if (!p || ['sky', 'starfall', 'peak', 'springs', 'shrine'].includes(m.id)) continue;
     const tint = TINT[m.isTown ? 'town' : m.theme] ?? TINT.meadow;
-    const rg = ctx.createRadialGradient(ox + p.x, oy + p.y, 2, ox + p.x, oy + p.y, m.isTown ? 34 : 28);
+    const rg = ctx.createRadialGradient(ox + p.x, oy + p.y, 2, ox + p.x, oy + p.y, m.isTown ? 34 : 30);
     rg.addColorStop(0, tint);
     rg.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = rg;
     ctx.fillRect(ox + p.x - 36, oy + p.y - 36, 72, 72);
   }
   ctx.restore();
-  // The mountain in the middle: a soft orange peak with a snowy cap, behind the crag's stop.
-  const mx = ox + SPOT.crag.x;
-  const my = oy + SPOT.crag.y + 6;
-  ctx.fillStyle = '#f2b27a';
+}
+
+// ---------- The places, drawn as little pictures ----------
+
+function tree(ctx, x, y, r, c, time, seed) {
+  const sw = Math.sin(time * 1.2 + seed) * 0.3;
+  ctx.fillStyle = 'rgba(60,90,60,0.25)';
   ctx.beginPath();
-  ctx.moveTo(mx - 34, my);
-  ctx.quadraticCurveTo(mx - 10, my - 34, mx, my - 38);
-  ctx.quadraticCurveTo(mx + 10, my - 34, mx + 34, my);
+  ctx.ellipse(x + 1, y + 0.6, r * 0.9, r * 0.35, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#9a7356';
+  ctx.fillRect(x - 0.6, y - r * 0.6, 1.2, r * 0.6);
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.arc(x + sw, y - r, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.arc(x - r * 0.35 + sw, y - r * 1.35, r * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+}
+function grove(ctx, x, y, c, time, n = 7, spread = 18) {
+  for (let i = 0; i < n; i++) tree(ctx, x + (hash(i * 3 + x) - 0.5) * spread * 2, y + (hash(i * 5 + y) - 0.5) * spread * 0.9, 3 + hash(i + x) * 2, c, time, i);
+}
+function peak(ctx, x, y, w, h, c, snow) {
+  ctx.fillStyle = shade(c, -14);
+  ctx.beginPath();
+  ctx.moveTo(x - w, y);
+  ctx.lineTo(x, y - h);
+  ctx.lineTo(x + w, y);
   ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(x - w, y);
+  ctx.lineTo(x, y - h);
+  ctx.lineTo(x + w * 0.15, y);
+  ctx.closePath();
+  ctx.fill();
+  if (snow) {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x - w * 0.32, y - h * 0.68);
+    ctx.lineTo(x, y - h);
+    ctx.lineTo(x + w * 0.32, y - h * 0.68);
+    ctx.lineTo(x + w * 0.12, y - h * 0.6);
+    ctx.lineTo(x, y - h * 0.7);
+    ctx.lineTo(x - w * 0.14, y - h * 0.6);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+function house(ctx, x, y, s, roof) {
   ctx.fillStyle = '#fff6ec';
+  ctx.fillRect(x - 3 * s, y - 4 * s, 6 * s, 4 * s);
+  ctx.fillStyle = roof;
   ctx.beginPath();
-  ctx.moveTo(mx - 9, my - 27);
-  ctx.quadraticCurveTo(mx, my - 40, mx + 9, my - 27);
-  ctx.lineTo(mx + 4, my - 24);
-  ctx.lineTo(mx, my - 28);
-  ctx.lineTo(mx - 4, my - 24);
+  ctx.moveTo(x - 4 * s, y - 3.6 * s);
+  ctx.lineTo(x, y - 7 * s);
+  ctx.lineTo(x + 4 * s, y - 3.6 * s);
   ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = '#ffe36b';
+  ctx.fillRect(x + 0.8 * s, y - 2.8 * s, 1.4 * s, 1.4 * s);
 }
 
-// A road: a tan band with a cream centre.
+// Each place's little picture, sitting just behind its stop.
+function drawPlaces(ctx, ox, oy, time) {
+  const at = (id, dx = 0, dy = 0) => {
+    const p = SPOT[id];
+    return [ox + p.x + dx, oy + p.y + dy];
+  };
+  // The mountains in the middle: the crag's warm peaks, the ridge's blue ones by moonlight.
+  {
+    const [x, y] = at('crag', 0, 8);
+    peak(ctx, x - 20, y, 16, 26, '#f2b27a', false);
+    peak(ctx, x + 18, y + 2, 14, 22, '#f6c08a', false);
+    peak(ctx, x, y, 22, 40, '#eea36a', true);
+  }
+  {
+    const [x, y] = at('ridge', 4, 4);
+    peak(ctx, x - 8, y, 10, 18, '#a8b0e6', true);
+    peak(ctx, x + 6, y + 1, 9, 14, '#b8c0ee', false);
+  }
+  // The frozen peak in the far north.
+  {
+    const [x, y] = at('peak', 0, 6);
+    peak(ctx, x - 9, y, 9, 14, '#dfe8fa', true);
+    peak(ctx, x + 5, y, 11, 20, '#e8f0ff', true);
+  }
+  // Woods, glade and grove: clusters of round trees in their own greens (the grove's violet).
+  grove(ctx, ...at('woods', -6, -10), '#5fb878', time);
+  grove(ctx, ...at('glade', 6, -8), '#7fd0a0', time, 5, 12);
+  grove(ctx, ...at('grove', 0, -14), '#a98ae0', time);
+  grove(ctx, ...at('hollow_gate', 0, -6), '#c088b8', time, 4, 10);
+  // Meadows: flowers dotted over the grass.
+  for (const id of ['meadow1', 'meadow2']) {
+    const [x, y] = at(id);
+    for (let i = 0; i < 14; i++) {
+      const fx = x + (hash(i * 7 + x) - 0.5) * 36;
+      const fy = y - 4 + (hash(i * 11 + y) - 0.5) * 14;
+      ctx.fillStyle = ['#ffb3cf', '#fff3a6', '#ffffff', '#c9b6ff'][i % 4];
+      ctx.beginPath();
+      ctx.arc(fx, fy + Math.sin(time * 2 + i) * 0.3, 1.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Sprout Village: a huddle of cottages and its cherry tree.
+  {
+    const [x, y] = at('sprout', 0, -6);
+    house(ctx, x - 10, y + 2, 1, '#f29ab4');
+    house(ctx, x + 10, y + 3, 1, '#9fb8f2');
+    tree(ctx, x, y - 4, 4, '#ffc0d8', time, 3);
+  }
+  // Pastel Harbor: a pier into the sea and a lighthouse whose light turns.
+  {
+    const [x, y] = at('harbor', 0, 10);
+    ctx.fillStyle = '#c99a6b';
+    ctx.fillRect(x + 8, y + 4, 3, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(x - 18, y - 12, 5, 13);
+    ctx.fillStyle = '#ff8fa8';
+    ctx.fillRect(x - 18, y - 8, 5, 2.4);
+    ctx.fillStyle = '#ffe36b';
+    ctx.fillRect(x - 17.5, y - 15, 4, 3);
+    ctx.globalAlpha = 0.25 + 0.2 * Math.sin(time * 2);
+    ctx.beginPath();
+    ctx.moveTo(x - 15.5, y - 13.5);
+    ctx.lineTo(x - 15.5 + Math.cos(time) * 22, y - 18);
+    ctx.lineTo(x - 15.5 + Math.cos(time) * 22, y - 9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  // The ruins: broken columns.
+  {
+    const [x, y] = at('ruins', 0, -4);
+    ctx.fillStyle = '#e6dcff';
+    for (const [dx, h] of [[-8, 9], [-2, 6], [5, 11], [10, 4]]) ctx.fillRect(x + dx, y - h, 3, h);
+  }
+  // The crystal cave: a dark mouth in the rock with a crystal glinting.
+  {
+    const [x, y] = at('cave', 0, -6);
+    ctx.fillStyle = '#9a8ac8';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 12, 8, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#3f3380';
+    ctx.beginPath();
+    ctx.ellipse(x, y, 5, 5, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = '#a8e8ff';
+    ctx.beginPath();
+    ctx.moveTo(x + 7, y);
+    ctx.lineTo(x + 9, y - 6);
+    ctx.lineTo(x + 11, y);
+    ctx.fill();
+  }
+  // The springs: steaming pools.
+  {
+    const [x, y] = at('springs', 0, -2);
+    ctx.fillStyle = '#7fe0d0';
+    ctx.beginPath();
+    ctx.ellipse(x - 5, y, 6, 2.6, 0, 0, Math.PI * 2);
+    ctx.ellipse(x + 6, y + 2, 5, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    for (let i = 0; i < 3; i++) {
+      const u = (time * 0.4 + i / 3) % 1;
+      ctx.globalAlpha = 0.6 * (1 - u);
+      ctx.beginPath();
+      ctx.arc(x - 4 + i * 4, y - 2 - u * 10, 1.5 + u * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // The fox shrine: a red gate.
+  {
+    const [x, y] = at('shrine', 0, -3);
+    ctx.fillStyle = '#e0303e';
+    ctx.fillRect(x - 6, y - 9, 1.6, 9);
+    ctx.fillRect(x + 4.4, y - 9, 1.6, 9);
+    ctx.fillRect(x - 8, y - 10, 16, 1.8);
+    ctx.fillRect(x - 6.5, y - 7.2, 13, 1.2);
+  }
+  // The throne: a dark castle tower.
+  {
+    const [x, y] = at('bossroom', 0, -4);
+    ctx.fillStyle = '#6a5aa8';
+    ctx.fillRect(x - 4, y - 9, 8, 9);
+    for (const dx of [-4, -1, 2]) ctx.fillRect(x + dx, y - 11, 2, 2);
+  }
+}
+
+// Clouds drifting slowly over the island, their shadows on the land below.
+function drawClouds(ctx, ox, oy, time) {
+  for (let i = 0; i < 4; i++) {
+    const x = ox + ((hash(i + 60) * MAP_W + time * (2 + i)) % (MAP_W + 80)) - 40;
+    const y = oy + 30 + hash(i + 61) * 160;
+    const s = 0.8 + hash(i + 62) * 0.6;
+    const puffs = [[-10, 2, 7], [-2, -1, 9], [8, 1, 8], [15, 3, 6]];
+    ctx.fillStyle = 'rgba(60,80,120,0.07)';
+    for (const [dx, dy, r] of puffs) circle(ctx, x + dx * s + 6, y + dy * s + 14, r * s);
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (const [dx, dy, r] of puffs) circle(ctx, x + dx * s, y + dy * s, r * s);
+  }
+}
+
+// A road: a winding trail, a soft worn band with a dotted line of footsteps along it.
 function stroke(ctx, path) {
+  ctx.save();
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#c99a6b';
-  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(201,154,107,0.45)';
+  ctx.lineWidth = 4.5;
   path();
   ctx.stroke();
-  ctx.strokeStyle = '#fff6e6';
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#a8764a';
+  ctx.lineWidth = 1.6;
+  ctx.setLineDash([1.6, 3.2]);
   path();
   ctx.stroke();
+  ctx.restore();
 }
 
-// The ring road between neighbours on it, then the spurs (straight), then the sky's dotted line.
+// A spur road's bend: its middle pushed outward, away from the island's middle, so trails curve
+// round the mountains instead of cutting straight across.
+function bend(a, b, ida = null, idb = null) {
+  const set = ida && CTRL[[ida, idb].sort().join('|')];
+  if (set) return set;
+  if (ida) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  const mx = (a.x + b.x) / 2;
+  const my = (a.y + b.y) / 2;
+  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  let nx = -(b.y - a.y) / len;
+  let ny = (b.x - a.x) / len;
+  if (nx * (mx - CX) + ny * (my - CY) < 0) {
+    nx = -nx;
+    ny = -ny;
+  }
+  const k = Math.min(28, len * 0.22);
+  return { x: mx + nx * k, y: my + ny * k };
+}
+
+// The ring road between neighbours on it, then the spurs (curving), then the sky's dotted line.
 function drawRoads(ctx, ox, oy, time, lit = new Set()) {
   const linked = new Set(ROADS.map(([a, b]) => [a, b].sort().join('|')));
   for (let i = 0; i < RING.length; i++) {
@@ -226,6 +524,7 @@ function drawRoads(ctx, ox, oy, time, lit = new Set()) {
     if (!ma.world || !mb.world) continue;
     const a = spot(ma);
     const b = spot(mb);
+    const c = bend(a, b, ida, idb);
     // Roads up into the air (the Sky Garden and Starfall) are dotted.
     if (['sky', 'starfall'].includes(ida) || ['sky', 'starfall'].includes(idb)) {
       ctx.save();
@@ -235,7 +534,7 @@ function drawRoads(ctx, ox, oy, time, lit = new Set()) {
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(ox + a.x, oy + a.y);
-      ctx.lineTo(ox + b.x, oy + b.y);
+      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + b.x, oy + b.y);
       ctx.stroke();
       ctx.restore();
       continue;
@@ -243,7 +542,7 @@ function drawRoads(ctx, ox, oy, time, lit = new Set()) {
     stroke(ctx, () => {
       ctx.beginPath();
       ctx.moveTo(ox + a.x, oy + a.y);
-      ctx.lineTo(ox + b.x, oy + b.y);
+      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + b.x, oy + b.y);
     });
   }
 }
@@ -275,7 +574,11 @@ function drawRoute(ctx, ox, oy, time, path) {
       if (cw && a1 > a0) a1 -= Math.PI * 2;
       if (!cw && a1 < a0) a1 += Math.PI * 2;
       ctx.ellipse(ox + CX, oy + CY, RX, RY, 0, a0, a1, cw);
-    } else ctx.lineTo(ox + p.x, oy + p.y);
+    } else {
+      const q = spot(MAPS[prev]);
+      const c = bend(q, p, prev, id);
+      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + p.x, oy + p.y);
+    }
   });
   ctx.stroke();
   ctx.strokeStyle = '#ffffff';
@@ -384,10 +687,12 @@ export function worldMapWindow(ui, state, world) {
   ctx.save();
   roundRect(ctx, 0, 0, MAP_W, MAP_H, 10);
   ctx.clip();
-  drawIsland(ctx, 0, 0);
+  drawIsland(ctx, 0, 0, time);
+  drawPlaces(ctx, 0, 0, time);
   drawRoads(ctx, 0, 0, time);
   drawRoute(ctx, 0, 0, time, pathIds?.filter((id) => onMap(MAPS[id])));
   drawSky(ctx, 0, 0, time);
+  drawClouds(ctx, 0, 0, time);
   ctx.restore();
   box(ctx, 8, 8, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
   text(ctx, 'Tengu Island', 45, 18.5, { size: 8.5, bold: true, align: 'center', color: INK });

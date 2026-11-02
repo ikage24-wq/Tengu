@@ -19,6 +19,7 @@ import { gaugeOf } from '../world/melee.js';
 import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
+import { MATERIALS } from '../render/terrain.js';
 import { questMarker } from './npc.js';
 import { drawQuestTracker } from './quests.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
@@ -612,11 +613,20 @@ function luma(hex) {
 function drawMinimap(ui, world) {
   const { ctx } = ui;
   const map = world.map;
-  const w = 128;
+  // (The minimap redraw: wider, and framed on the band of the map where things are, that band
+  // shown taller than it is wide-for-wide, so a flat town isn't a three-pixel strip.)
+  const w = 150;
   const scale = w / map.width;
-  const h = Math.max(24, Math.round(map.height * scale));
+  const tops = [...(map.terrain ?? [[0, map.groundY]]).map(([, ty]) => ty), ...map.platforms.map((p) => p.y), ...map.ropes.map((r) => r.top)];
+  const top = Math.max(0, Math.min(...tops) - 70);
+  const span = map.height - top;
+  const h = Math.max(44, Math.min(96, Math.round(span * scale * 1.6)));
+  const sy = h / span;
+
   const x = 8;
   const y = 20;
+  const X = (v) => x + v * scale;
+  const Y = (v) => y + (v - top) * sy;
   softShadow(ctx, x - 4, y - 16, w + 8, h + 20, 12, 3);
   box(ctx, x - 4, y - 16, w + 8, h + 20, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 12, width: 2 });
   box(ctx, x - 1, y - 13, w + 2, 11, { fill: SKY.main, edge: null, r: 5.5 });
@@ -640,27 +650,39 @@ function drawMinimap(ui, world) {
   const line = map.terrain ?? [[0, map.groundY], [map.width, map.groundY]];
   ctx.beginPath();
   ctx.moveTo(x, y + h);
-  for (const [tx, ty] of line) ctx.lineTo(x + tx * scale, y + ty * scale);
+  for (const [tx, ty] of line) ctx.lineTo(x + tx * scale, Y(ty));
   ctx.lineTo(x + w, y + h);
   ctx.closePath();
   ctx.fillStyle = land;
   ctx.fill();
-  ctx.strokeStyle = edge;
-  ctx.lineWidth = 1.5;
+  // A soft shade down into the ground, and its top in the map's own grass (or sand, or snow).
+  const deep = ctx.createLinearGradient(0, y + h * 0.5, 0, y + h);
+  deep.addColorStop(0, 'rgba(58,45,79,0)');
+  deep.addColorStop(1, 'rgba(58,45,79,0.22)');
+  ctx.fillStyle = deep;
+  ctx.fill();
+  ctx.strokeStyle = (MATERIALS[map.look?.material ?? map.theme] ?? MATERIALS.meadow).lip;
+  ctx.lineWidth = 3;
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  line.forEach(([tx, ty], i) => (i ? ctx.lineTo(x + tx * scale, y + ty * scale) : ctx.moveTo(x + tx * scale, y + ty * scale)));
+  line.forEach(([tx, ty], i) => (i ? ctx.lineTo(X(tx), Y(ty) + 1) : ctx.moveTo(X(tx), Y(ty) + 1)));
+  ctx.stroke();
+  ctx.strokeStyle = edge;
+  ctx.lineWidth = 1;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  line.forEach(([tx, ty], i) => (i ? ctx.lineTo(x + tx * scale, Y(ty)) : ctx.moveTo(x + tx * scale, Y(ty))));
   ctx.stroke();
   // Footholds as solid ledges, ropes as thin lines.
   ctx.fillStyle = edge;
-  for (const p of map.platforms) ctx.fillRect(x + p.x * scale, y + p.y * scale - 0.5, Math.max(1, p.w * scale), 2);
+  for (const p of map.platforms) ctx.fillRect(x + p.x * scale, Y(p.y) - 0.5, Math.max(1, p.w * scale), 2);
   ctx.fillStyle = '#b8875a';
-  for (const r of map.ropes) ctx.fillRect(x + r.x * scale - 0.5, y + r.top * scale, 1, (r.bottom - r.top) * scale);
+  for (const r of map.ropes) ctx.fillRect(x + r.x * scale - 0.5, Y(r.top), 1, (r.bottom - r.top) * sy);
   // Portals as little violet arches.
   for (const p of map.portals) {
     if (p.hidden) continue;
     const px = x + p.x * scale;
-    const py = y + p.y * scale;
+    const py = Y(p.y);
     ctx.fillStyle = '#ffffff';
     roundRect(ctx, px - 3, py - 8, 6, 8, 3);
     ctx.fill();
@@ -674,7 +696,7 @@ function drawMinimap(ui, world) {
   // People: yellow pips, with a "!" or "?" when they have a quest for you.
   for (const n of map.npcs) {
     const nx = x + n.x * scale;
-    const ny = y + groundAt(map, n.x) * scale - 2.5;
+    const ny = Y(groundAt(map, n.x)) - 2.5;
     const mark = questMarker(world.char, n.id);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
@@ -687,17 +709,17 @@ function drawMinimap(ui, world) {
     if (mark) text(ctx, mark, nx, ny + 1.6, { size: 4.5, bold: true, align: 'center', color: '#ffffff' });
   }
   ctx.fillStyle = '#ff5f86';
-  for (const m of world.mobs) if (m.hp > 0) ctx.fillRect(x + m.x * scale - 0.75, y + m.y * scale - 1.5, 1.5, 1.5);
+  for (const m of world.mobs) if (m.hp > 0) ctx.fillRect(x + m.x * scale - 0.75, Y(m.y) - 1.5, 1.5, 1.5);
   // Party members, out hunting on their own, in their playstyle's color.
   for (const b of partyMembers(world.bots)) {
     if (!b.body || b.map !== map.id) continue;
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 2.2, 0, Math.PI * 2);
+    ctx.arc(x + b.body.x * scale, Y(b.body.y) - 2, 2.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = PLAYSTYLES[b.ai?.kind]?.color ?? '#3fc48a';
     ctx.beginPath();
-    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.5, 0, Math.PI * 2);
+    ctx.arc(x + b.body.x * scale, Y(b.body.y) - 2, 1.5, 0, Math.PI * 2);
     ctx.fill();
   }
   // Other players hunting here: small cream dots.
@@ -705,17 +727,17 @@ function drawMinimap(ui, world) {
     if (!b.hunter || !b.body || b.map !== map.id) continue;
     ctx.fillStyle = '#7a6a92';
     ctx.beginPath();
-    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.9, 0, Math.PI * 2);
+    ctx.arc(x + b.body.x * scale, Y(b.body.y) - 2, 1.9, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#fff3d6';
     ctx.beginPath();
-    ctx.arc(x + b.body.x * scale, y + b.body.y * scale - 2, 1.3, 0, Math.PI * 2);
+    ctx.arc(x + b.body.x * scale, Y(b.body.y) - 2, 1.3, 0, Math.PI * 2);
     ctx.fill();
   }
   // Friends online: sky-blue dots, party friends a bigger rose dot with a white heart-ring.
   for (const g of othersHere(world)) {
     const gx = x + g.body.x * scale;
-    const gy = y + g.body.y * scale - 2.5;
+    const gy = Y(g.body.y) - 2.5;
     const mate = inParty(g.id);
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
@@ -728,7 +750,7 @@ function drawMinimap(ui, world) {
   }
   // You: a pink arrow pointing the way you face, with a ring pulsing out from it.
   const px = x + world.body.x * scale;
-  const py = y + world.body.y * scale - 3;
+  const py = Y(world.body.y) - 3;
   const f = world.body.facing ?? 1;
   const pulse = (world.now * 1.5) % 1;
   ctx.strokeStyle = COLORS.accent;
