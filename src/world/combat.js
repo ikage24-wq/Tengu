@@ -10,7 +10,6 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
 import { guard, howl } from './pets.js';
-import { foxDecoy } from './decoy.js';
 import { kitsuneGuard } from './kitsune.js';
 import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
 
@@ -372,17 +371,13 @@ export function cast(world, skillId, rng = Math.random) {
   }
 
   // Tricks of their own: the Archer's Spring Trap, the Beastmaster's Lunar Howl (Snow wolf does
-  // it; without her there's nothing to howl, and the MP comes back), the Kitsune's Fox Decoy.
+  // it; without her there's nothing to howl, and the MP comes back).
   if (params.trap) {
     setTrap(world, body.x + body.facing * 70, params);
     return { ok: true };
   }
   if (params.howl) {
     if (!howl(world, params)) char.mp += params.mp ?? 0;
-    return { ok: true };
-  }
-  if (params.decoy) {
-    foxDecoy(world, params);
     return { ok: true };
   }
 

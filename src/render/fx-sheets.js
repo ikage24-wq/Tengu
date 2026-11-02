@@ -214,4 +214,9 @@ export const FX_SHEETS = {
   celbdhit: { w: 223, h: 216, n: 7, fps: 30, px: 112, py: 109, d: 3, loop: false },
   celembblade: { w: 126, h: 134, n: 5, fps: 12, px: 63, py: 81, d: 3, loop: false },
   celbdcarousel: { w: 488, h: 257, n: 12, fps: 20, px: 244, py: 232, d: 3, loop: false },
+  celskygust: { w: 166, h: 133, n: 6, fps: 30, px: 113, py: 67, d: 3, loop: true },
+  celskyhit: { w: 243, h: 216, n: 7, fps: 30, px: 120, py: 122, d: 3, loop: false },
+  celskywhirl: { w: 213, h: 154, n: 6, fps: 18, px: 106, py: 126, d: 3, loop: false },
+  celembsky: { w: 126, h: 150, n: 5, fps: 12, px: 63, py: 82, d: 3, loop: false },
+  celskytornado: { w: 451, h: 429, n: 12, fps: 18, px: 225, py: 391, d: 3, loop: false },
 };

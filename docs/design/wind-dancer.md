@@ -47,9 +47,10 @@ Each gets its own string, procs, getaway move and finisher, built the same way.
   Grand Finale. Her effects: `wdhit`, `wdswirl`, `wdgust`, `wdfinale`, `embdancer` in
   tools/fx-art.js (built with tools/build-fx-edge.py). Chakrams are the dagger items redrawn.
 - **Paths:** the Blade Dancer (chakrams) is built and has replaced the Shinobi (docs/design/blade-dancer.md);
-  the Sky Dancer (gloves, never lands, sky blue) is next and will replace the Kitsune.
+  the Sky Dancer (gloves, never lands, sky blue) is built and has replaced the Kitsune
+  (docs/design/sky-dancer.md).
 - **Outfit (2026-11-02, the player's pick: showgirl):** the dancers' gear line (render/jobgear/dancer.js)
   climbs from a street performer's bow and bodice to top hats and bolero jackets, a ringmaster's
   tailcoat with a tiara and plume fan, and a grand plumed crown with a feather bustle. Each path
-  trims it in its own colour (render/hero.js PATH_TRIMS: the Blade Dancer's rose gold).
+  trims it in its own colour (render/hero.js PATH_TRIMS: the Blade Dancer's rose gold, the Sky Dancer's sky blue).
 - **Still to do:** her own skill icons (she wears the old Thief's for now), sounds.

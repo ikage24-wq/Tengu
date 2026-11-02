@@ -114,6 +114,7 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       // (The Wind Dancer kicks off in a gust, the Blade Dancer in a ricochet's spark.)
       if (f.school === 'coral') fxSprite(ctx, 'celwdgust', x, y - 6, { p, flip: !flip, scale: 0.6 * (f.k ?? 1), rot: flip ? -0.5 : 0.5 });
       else if (f.school === 'rosegold') fxSprite(ctx, 'celbdbounce', x, y - 4, { p, flip, scale: 0.75 * (f.k ?? 1) });
+      else if (f.school === 'aerial') fxSprite(ctx, 'celskyhit', x, y - 4, { p, scale: 0.5 * (f.k ?? 1) });
       else fxSprite(ctx, `celleap${LEAP[f.school] ?? 'shadow'}`, x, y, { p, flip, scale: 0.95 * (f.k ?? 1) });
       return true;
     }
@@ -169,58 +170,10 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celsmokebomb', x, y + 6, { p, flip, scale: 0.6 });
       return true;
     }
-    // ---------- The Kitsune (gold and blue fox fire) ----------
-    case 'foxhit': {
-      // A fox-fire star landing: blue flame bursting up off the monster with gold sparks.
-      fxSprite(ctx, 'celfoxhit', x, y - (f.h ?? 24) / 2 + 12, { p, scale: f.big || f.crit ? 1.1 : 0.85 });
-      if (f.crit) fxSprite(ctx, 'celcrit', x, y - (f.h ?? 24) / 2, { p, scale: 0.45 });
-      if (f.big) groundRing(ctx, 'celringfox', x, y, p, 46);
-      return true;
-    }
+    // A monster burning: blue fire licking up off it.
     case 'foxburn': {
       // A monster burning in fox fire: a lick of blue flame up its side as the burn bites.
       fxSprite(ctx, 'celfoxfire', x + ((f.seed ?? 0.5) - 0.5) * 16, y - 4, { t: p * 0.6, scale: 0.32, alpha: p > 0.6 ? (1 - p) / 0.4 : 1 });
-      return true;
-    }
-    case 'foxtrap': {
-      // A ring of fox fire burning on the ground ahead, flaring as the trap closes.
-      const tx = x + (f.dir || 1) * 110;
-      fxSprite(ctx, 'celfoxtrapring', tx, y + 4, { t: p * 1.4, scale: 0.7, alpha: Math.min(1, p * 6) * (p > 0.9 ? (1 - p) / 0.1 : 1) });
-      return true;
-    }
-    case 'foxtrapburst': {
-      fxSprite(ctx, 'celfoxhit', x, y - 10, { p, scale: 1.3 });
-      groundRing(ctx, 'celringfox', x, y, p, 110);
-      return true;
-    }
-    case 'foxdecoy': {
-      // Fox Hop: the decoy of fox fire she leaves behind, bursting.
-      fxSprite(ctx, 'celfoxhit', x, y - 10, { p, scale: 1 });
-      groundRing(ctx, 'celringfox', x, y, p, 60);
-      return true;
-    }
-    case 'foxnight': {
-      // Nine-Tail Blaze: night falls, and nine fox-fire stars spin up over the monsters ahead.
-      const a = Math.min(1, p * 5) * (p > 0.85 ? (1 - p) / 0.15 : 1);
-      ctx.save();
-      ctx.globalAlpha = 0.38 * a;
-      ctx.fillStyle = '#0c1440';
-      wash(ctx);
-      ctx.restore();
-      const cx = x + (f.dir || 1) * 150;
-      for (let k = 0; k < 9; k++) {
-        const ang = (k / 9) * Math.PI * 2 + p * 9;
-        const rr = 60 * Math.min(1, p * 3);
-        fxSprite(ctx, 'celfoxfire', cx + Math.cos(ang) * rr, y - 130 + Math.sin(ang) * rr * 0.5, { t: time + k * 0.1, scale: 0.35, alpha: a });
-      }
-      return true;
-    }
-    case 'flamefoxpounce': {
-      // The last blow: the giant fox of blue fire pounces through the line, a ring of fox fire
-      // racing out.
-      const r = f.r ?? 220;
-      fxSprite(ctx, 'celflamefoxbig', x + (f.dir || 1) * 30, y + 10, { p, flip, scale: r / 300 });
-      groundRing(ctx, 'celringfox', x, y, p, r);
       return true;
     }
     default:

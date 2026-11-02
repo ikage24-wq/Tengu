@@ -37,7 +37,8 @@ import { tickDoll, raiseLantern } from './spiritdoll.js';
 import { tickShrine, purify, resurrect, thousandTorii } from './shrine.js';
 import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
 import { tickGuardian } from './kitsune.js';
-import { launchWisp, foxSpirit, FOX_SPIRIT_HEAT } from './foxwheel.js';
+import { launchWisp } from './foxwheel.js';
+import { GRAVITY } from './physics.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
 import { tickTengu } from './tengu.js';
@@ -74,8 +75,8 @@ const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'], cora
 // (The Wind Dancer's blows default to her coral, never the Warrior's steel.)
 export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : 'steel');
 // The Archer's gold hawk skills the same way: the Beastmaster's green.
-// And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Kitsune's fox fire.
-export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'fox' : hasShadow(char) ? 'coral' : 'shadow');
+// And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Sky Dancer's sky blue.
+export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'aerial' : hasShadow(char) ? 'coral' : 'shadow');
 export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' ? thiefSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
@@ -178,18 +179,21 @@ export const PATH_COMBOS = {
   // catch of her ring (`bounce`: it ricochets on to that many more monsters, then flies home to her
   // hand). A backhand flick that bounces once, a cross toss of two rings, a turning catch that cuts
   // all round her as it comes home, and a sidearm hurl that ricochets through four.
-  // The Kitsune: a fox-fire star, a backflip whipping two down from the top of it, then a heaving
-  // throw of a great fox-fire star.
   shinobi: [
     { move: 'bdflick', dur: 0.42, strikes: [{ at: 0.36, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 30, speed: 760 }] },
     { move: 'bdcross', dur: 0.46, strikes: [{ at: 0.3, shot: 'ring', bounce: 0, pct: 60, range: 250, h: 60, knock: 20, speed: 780, oy: -3 }, { at: 0.5, shot: 'ring', bounce: 0, pct: 65, range: 250, h: 60, knock: 30, speed: 780, oy: 3 }] },
     { move: 'bdcatch', dur: 0.5, step: 4, strikes: [{ at: 0.5, pct: 95, reach: 68, h: 60, around: true, targets: 3, knock: 50, arc: [-90, 360], thick: 6, fx: 'bdhit' }] },
     { move: 'bdhurl', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.46, shot: 'ringbig', bounce: 3, pct: 165, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] },
   ],
+  // The Sky Dancer (docs/design/sky-dancer.md): she dances on the air, every blow lifting her
+  // (skyLift) and throwing a crescent of wind down at them from her palms or her feet. A palm push,
+  // a scissor kick, an aerial spin that blows a ring of wind round her, and a crescent kick that
+  // hurls a great gust through the line.
   kitsune: [
-    { move: 'throw', dur: 0.36, strikes: [{ at: 0.5, shot: 'foxstar', pct: 90, range: 290, h: 60, knock: 25, speed: 780 }] },
-    { move: 'flipthrow', dur: 0.6, step: -30, carry: 0.46, strikes: [{ at: 0.46, shot: 'foxstar', fan: 2, pct: 65, range: 290, h: 110, drop: 20, knock: 30, speed: 800 }] },
-    { move: 'heavethrow', dur: 0.62, step: 8, carry: 0.5, finisher: true, strikes: [{ at: 0.52, shot: 'foxmoon', pct: 160, range: 320, h: 80, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'sdpalm', dur: 0.4, strikes: [{ at: 0.4, shot: 'skygust', pct: 90, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] },
+    { move: 'sdscissor', dur: 0.46, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] },
+    { move: 'sdspin', dur: 0.5, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
+    { move: 'sdcrescent', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 760, big: true, stop: 0.07, shake: 2 }] },
   ],
   // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the swaying step a second,
   // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
@@ -430,18 +434,18 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.spiritmage[2],
       { move: 'bowrise', dur: 1.54, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 365, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
   ],
-  // The Kitsune. Openers: her fox-fire star or a twirling throw. Second: a backflip whipping two
-  // stars down, two stars, or a fan of three. Finisher, always planted in reach: the heaving throw,
-  // a pounce that throws down at them as she lands, or a twirl that flings the great star.
+  // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
+  // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
+  // chopped down on them. Finisher: the crescent kick or a sweeping kick that turns her once round.
   kitsune: [
     [PATH_COMBOS.kitsune[0],
-      { move: 'twirlthrow', dur: 0.42, strikes: [{ at: 0.62, shot: 'foxstar', pct: 95, range: 290, h: 60, knock: 30, speed: 800 }] }],
+      { move: 'sdtwirl', dur: 0.46, strikes: [{ at: 0.48, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] }],
     [PATH_COMBOS.kitsune[1],
-      { move: 'barrage', dur: 0.4, strikes: [{ at: 0.17, shot: 'foxstar', pct: 60, range: 290, h: 60, knock: 20, speed: 780 }, { at: 0.5, shot: 'foxstar', pct: 65, range: 290, h: 60, knock: 25, speed: 780, oy: 4 }] },
-      { move: 'throw', dur: 0.42, strikes: [{ at: 0.5, shot: 'foxstar', fan: 3, pct: 48, range: 290, h: 110, knock: 30, speed: 780 }] }],
+      { move: 'sdflutter', dur: 0.55, strikes: [{ at: 0.3, shot: 'skygust', pct: 55, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }, { at: 0.6, shot: 'skygust', pct: 60, range: 260, h: 200, drop: 70, knock: 30, speed: 700, oy: 4 }] }],
     [PATH_COMBOS.kitsune[2],
-      { move: 'foxpounce', dur: 0.64, step: 50, carry: 0.55, finisher: true, strikes: [{ at: 0.56, shot: 'foxmoon', fan: 2, pct: 110, range: 260, h: 120, drop: 30, knock: 160, speed: 900, big: true, stop: 0.05, shake: 2 }] },
-      { move: 'twirlthrow', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.62, shot: 'foxmoon', pct: 160, range: 320, h: 64, targets: 3, pierce: true, speed: 860, knock: 190, big: true, stop: 0.05, shake: 2 }] }],
+      { move: 'sdheel', dur: 0.55, strikes: [{ at: 0.54, shot: 'skygust', pct: 110, range: 200, h: 220, drop: 110, targets: 2, pierce: true, knock: 40, launch: -200, speed: 760 }] }],
+    [PATH_COMBOS.kitsune[3],
+      { move: 'sdsweep', dur: 0.6, finisher: true, strikes: [{ at: 0.4, pct: 90, reach: 100, h: 130, around: true, targets: 5, knock: 160, fx: 'skyhit', burst: 'skyhit' }, { at: 0.55, shot: 'skygustbig', pct: 130, range: 300, h: 220, drop: 80, targets: 3, pierce: true, knock: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
   ],
   archer: [
     [PATH_COMBOS.archer[0], ARCHER_SHOTS.kick, ARCHER_SHOTS.twirl, ARCHER_SHOTS.lob],
@@ -496,15 +500,12 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'glidecast', dur: 1.06, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'spiritorb', magic: true, fan: 2, pct: 185, range: 280, h: 80, knock: 80, speed: 640 }] },
   },
-  // The Kitsune: two fox-fire stars flung up at whatever flies, fans of them thrown down from a
-  // hang in the air, and a pounce out of a run that throws two as she lands.
+  // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
+  // out. (In the air she has no separate air string: her whole string is danced in the air.)
   kitsune: {
-    up: { move: 'upthrow', dur: 0.44, strikes: [{ at: 0.45, shot: 'foxstar', fan: 2, pct: 105, range: 260, h: 190, lift: 50, knock: 20, launch: 380, speed: 780, big: true, stop: 0.04 }] },
-    air: [
-      { move: 'airthrow', dur: 0.34, hang: true, strikes: [{ at: 0.45, shot: 'foxstar', fan: 3, pct: 65, range: 260, h: 170, drop: 50, knock: 30, speed: 780 }] },
-      { move: 'airthrow', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'foxmoon', fan: 2, pct: 100, range: 260, h: 190, drop: 60, knock: 120, speed: 860, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'foxpounce', dur: 0.56, step: 60, carry: 0.55, strikes: [{ at: 0.56, shot: 'foxstar', fan: 2, pct: 90, range: 260, h: 110, drop: 20, knock: 90, speed: 820 }] },
+    up: { move: 'sdrise', dur: 0.5, strikes: [{ at: 0.4, pct: 110, reach: 80, h: 200, targets: 4, knock: 20, launch: 420, fx: 'skyhit', burst: 'skyupdraft', big: true, stop: 0.04 }] },
+    air: [],
+    dash: { move: 'sdglide', dur: 0.5, step: 70, carry: 0.5, strikes: [{ at: 0.42, shot: 'skygust', pct: 120, range: 280, h: 120, targets: 3, pierce: true, knock: 140, speed: 820, big: true, stop: 0.04 }] },
   },
   // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
   // the air, and a star thrown out of a run.
@@ -789,27 +790,61 @@ function tickCarousel(world) {
     .slice(0, 3)
     .forEach((m, k) => shotHit(world, { pct: CAROUSEL_PCT, scale: 100, key: 'proccarousel', dir: Math.sign(m.x - body.x) || 1, knock: 30, burst: 'bdhit', gauge: 0 }, m, 0.02 * k, k));
 }
-// Tails: the Kitsune's gauge, one fox-fire tail to nine. Stars that land build it, half again on
-// a monster already burning; it fades once the fighting stops. Every three tails, one more
-// fox-fire illusion throws a star beside each of hers (ILLUSION_POWER of its strength); full
-// (Nine Tails), three of them, and the finisher is ready.
+// Tailwind (the Sky Dancer's gauge; internally Tails, the Kitsune's it replaced): her hits build
+// it, three times as fast while she's up in the air; it fades once the fighting stops. Full, a
+// whirlwind under her feet lets her fly freely (Up and Down move her through the air, SKY_FLY) and
+// her gusts are twice as big; Sky Waltz is ready.
 export const TAILS_MAX = 100;
 const TAILS_HOLD = 5;
 const TAILS_DRAIN = 10;
-export const ILLUSION_POWER = 0.3;
 export const hasTails = (char) => jobChain(char.job).includes('kitsune');
-export function addTails(world, n, mob = null) {
+export function addTails(world, n) {
   if (!hasTails(world.char) || n <= 0) return;
-  const burning = mob && mob.poison?.kind === 'burn' && mob.poison.until > world.now;
-  world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (burning ? 1.5 : 1));
+  world.tails = Math.min(TAILS_MAX, (world.tails ?? 0) + n * (world.body.onGround ? 0.5 : 1.5));
   world.tailsAt = world.now;
 }
-// Endless barrages (a passive for two paths, data/skills.js): while attack is held her basic
+export const skyFlight = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
+// Every blow lifts her: each one springs her back up to her cruising height (SKY_CRUISE over where
+// she took off, a little higher with each blow up to SKY_CEIL), and she hangs there through the
+// move, sinking only slowly (SKY_SINK). Stopped, she drifts down softly (SKY_DRIFT) for
+// SKY_DRIFT_FOR seconds after her last blow.
+const SKY_CRUISE = 50;
+const SKY_CLIMB = 4;
+const SKY_CEIL = 90;
+const SKY_SINK = 14;
+const SKY_DRIFT = 70;
+const SKY_DRIFT_FOR = 3;
+const SKY_FLY = 170;
+function skyLift(world, dur) {
+  const b = world.body;
+  if (b.rope || world.dead) return;
+  if (b.onGround) {
+    world.skyFloor = b.y;
+    world.skyHeight = SKY_CRUISE;
+    b.onGround = false;
+  } else world.skyHeight = Math.min(SKY_CEIL, (world.skyHeight ?? SKY_CRUISE) + SKY_CLIMB);
+  // (Rising just high enough to reach that height: v = sqrt(2gh).)
+  const rise = Math.max(8, Math.min(SKY_CEIL, b.y - ((world.skyFloor ?? b.y) - world.skyHeight)));
+  b.vy = Math.min(b.vy, -Math.sqrt(2 * GRAVITY * rise));
+  world.hangUntil = Math.max(world.hangUntil ?? 0, world.now + dur + 0.5);
+  world.skyAt = world.now;
+}
+// Every tick: the soft drift down, and free flight on full Tailwind.
+function tickSky(world) {
+  if (!hasTails(world.char)) return;
+  const b = world.body;
+  if (b.onGround || b.rope || world.dead) return;
+  if (skyFlight(world)) {
+    b.vy = world.intent?.up ? -SKY_FLY : world.intent?.down ? SKY_FLY : Math.min(b.vy, 0) * 0.8;
+    return;
+  }
+  if (world.now < (world.hangUntil ?? 0)) b.vy = Math.min(b.vy, SKY_SINK);
+  else if (world.now - (world.skyAt ?? -99) < SKY_DRIFT_FOR) b.vy = Math.min(b.vy, SKY_DRIFT);
+}
+// The endless barrage (the Beastmaster's passive, data/skills.js): while attack is held her basic
 // attack goes on and on, faster the longer it's held, building through stages of its own; she can
 // walk slowly through it (world.js), and in the air she hangs a moment, then keeps going as she
 // falls. Let go after a while and a finisher ends it, stronger the longer she held.
-//   Kitsune     Endless Fox-Fire: fox-fire stars hand over hand (Fox Sign, Trickster, Wheel,
-//               Ascension), ending in a fox-moon star
 //   Beastmaster Wild Hunt: quick shots, shooting on the move, then Snow wolf joins the hunt and
 //               they fight as one, and at the top a gale of leaves wheels round her; ending in a
 //               great gale arrow as Snow wolf brings the moon down on them
@@ -825,25 +860,7 @@ export const barrageHeat = (b, held) => Math.min(1, held / b.ramp) + 0.6 * Math.
 // beat looses (`strike`), anything else it does on a beat (`beat`), and the finisher (`finish`).
 // A figure plays for its own length (a little quicker as it speeds up) while the beats keep the
 // barrage's rate; never the same figure twice running.
-const FOX_SIGNS = new Set(['foxdeal2', 'foxfloat2']);
 export const STREAMS = {
-  kitsune: {
-    skill: 'foxbarrage', school: 'fox', hover: true,
-    figures: { foxdeal: 0.28, foxdeal2: 0.28, foxspin: 0.42, foxbehind: 0.4, foxhopback: 0.42, foxlob: 0.36, foxwheel: 0.5, foxwheel2: 0.5, foxfloat: 0.62, foxfloat2: 0.62, foxairthrow: 0.3, foxairspin: 0.36 },
-    stages: [
-      { at: 0, figures: ['foxdeal', 'foxdeal2'] },
-      { at: 0.45, figures: ['foxdeal', 'foxspin', 'foxbehind', 'foxhopback', 'foxlob'] },
-      { at: 0.9, figures: ['foxwheel', 'foxwheel2', 'foxspin'] },
-      { at: 1.25, figures: ['foxfloat', 'foxfloat2'] },
-      { at: 1.55, figures: ['foxfloat', 'foxfloat2'] },
-    ],
-    air: (heat) => (heat >= 0.9 ? ['foxairthrow', 'foxairspin'] : ['foxairthrow']),
-    ready: (world) => Boolean(thrownStars(world.char)),
-    // (On the ground her throws come from the hip, lower than a bow hand.)
-    strike: (b, { air, stage, move }) => ({ at: 0.4, shot: 'foxstar', pct: b.pct, range: 290, h: air ? 170 : 60, drop: air ? 40 : 0, knock: 8, speed: 820, gauge: 1, oy: air ? 0 : 5, wheel: !air && stage >= 2, sign: FOX_SIGNS.has(move) }),
-    // No finisher: it's for holding on mobs and bosses, so letting go just stops (the wheel of
-    // fox fire still flies apart).
-  },
   beastmaster: {
     skill: 'wildhunt', school: 'wind',
     figures: { bmsnap: 0.24, bmsnap2: 0.26, bmskip: 0.36, bmspin: 0.4, bmslide: 0.36, bmhunt: 0.36, bmhunt2: 0.36, bmgale: 0.42, bmgale2: 0.44, bmairshot: 0.28, bmairspin: 0.38 },
@@ -904,14 +921,13 @@ function barrageThrow(world, b, rng = Math.random) {
   // Each new stage flares up in the path's colour round her, harder the higher it goes.
   const stage = spec.stages.findLastIndex((s) => heat >= s.at);
   if (stage > run.stage) {
-    if (kind === 'kitsune') world.fx.push({ kind: 'tailwake', x: body.x - body.facing * 8, y: body.y, dir: body.facing, t: 0, dur: 0.6, big: stage >= 3 });
-    else world.fx.push({ kind: 'powerup', school: spec.school, x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
+    world.fx.push({ kind: 'powerup', school: spec.school, x: body.x, y: body.y, t: 0, dur: 0.45, big: stage >= 3 });
     if (stage >= 3) world.juice.push({ type: 'shake', mag: 1, dur: 0.15 });
   }
   run.stage = stage;
   const key = air ? 'basicairstream' : 'basicstream';
   // (Cuts and arrows land in the path's own colour; her stars carry their own.)
-  const look = kind === 'kitsune' ? null : spec.school;
+  const look = spec.school;
   const fig = run.figure;
   // (A new figure starts before this one would run out ahead of the next beat, so she's never
   // left without one.)
@@ -949,8 +965,7 @@ function barrageThrow(world, b, rng = Math.random) {
 export function barrageRelease(world) {
   const run = world.barrage;
   world.barrage = null;
-  // Kitsune: the wheel of fox fire flies apart; Beastmaster: the gale of leaves scatters
-  // (render/scene.js drawFoxWheel, drawLeafWheel).
+  // The Beastmaster's gale of leaves scatters (render/scene.js drawLeafWheel).
   world.wheelGone = { kind: run.kind, since: run.since, heat: run.heat, goneAt: world.now };
   const spec = STREAMS[run.kind];
   const b = barrageOf(world);
@@ -969,8 +984,6 @@ export function barrageRelease(world) {
     if (m) duetMoon(world, m, step.moon.pct);
   }
 }
-export const tailCount = (world) => (hasTails(world.char) ? Math.min(9, Math.floor(((world.tails ?? 0) / TAILS_MAX) * 9 + 1e-9)) : 0);
-export const nineTails = (world) => hasTails(world.char) && (world.tails ?? 0) >= TAILS_MAX;
 // Spirit: the Spirit Mage's gauge. Her spells that land build it, and so do her heals; turning
 // from one to the other (a heal after harm, harm after a heal) builds it half again, so she plays
 // best weaving the two. It fades once the fighting stops. Full (Kami's Favour), her damage spells
@@ -1054,7 +1067,7 @@ export function healAround(world, x, y, pct, r, gauge = true) {
   graceWard(world);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
-const STAR_SHOTS = new Set(['star', 'moonstar', 'foxstar', 'foxmoon']);
+const STAR_SHOTS = new Set(['star', 'moonstar']);
 // A job's own gauge: which one the character has ('grace', 'spirit', 'ki', 'tails', 'valor', 'momentum',
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
@@ -1069,7 +1082,7 @@ export function gaugeFull(world) {
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n, mob = null) {
   addSpirit(world, n);
-  addTails(world, n, mob);
+  addTails(world, n);
   addMomentum(world, n);
   addShadow(world, n);
   addKi(world, n);
@@ -1154,7 +1167,7 @@ export function basicCombo(world) {
   const cmd = ARCHER_COMMANDS[path];
   const stream = barrageOf(world);
   if (cmd) {
-    if (!body.onGround && !body.rope) {
+    if (!body.onGround && !body.rope && cmd.air.length) {
       if (stream) return barrageThrow(world, stream);
       if ((world.airCombo ?? 0) >= cmd.air.length) return;
       playStep(world, cmd.air[world.airCombo], 100, `basicair${world.airCombo}`);
@@ -1220,7 +1233,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (key.startsWith('basic')) {
     // Basic attacks keep their rhythm; a finisher or a command move ends with a beat.
     const own = /^basic(air)?\d$/.test(key);
-    // A stream of throws (Endless Fox-Fire) goes on with no beat at all.
+    // A stream of shots (Wild Hunt) goes on with no beat at all.
     world.basicReadyAt = now + (step.stream ? dur : busy + (step.finisher ? AFTER.basicFinisher : own ? 0 : AFTER.command));
   } else {
     // A skill plays out its whole motion, then its beat; a basic attack can follow once the
@@ -1273,6 +1286,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
     world.fx.push({ kind: 'chargeglow', school: school ?? 'focus', x: body.x + body.facing * 16, y: body.y - HAND_Y - 2, dir: body.facing, t: 0, dur: lead });
   }
   world.hangUntil = step.hang ? now + dur + 0.15 : 0;
+  // The Sky Dancer: every blow lifts her.
+  if (hasTails(world.char)) skyLift(world, dur);
   if (step.dive) {
     body.vy = step.dive;
     world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, until: now + 1.2 };
@@ -1310,6 +1325,7 @@ export function tickMelee(world, dt) {
   if (world.binding > 0 && world.now - (world.bindingAt ?? 0) > BINDING_HOLD) world.binding = Math.max(0, world.binding - BINDING_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
+  tickSky(world);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
@@ -1408,7 +1424,8 @@ function land(world, s) {
     world.fx.push({ kind: 'rain', variant: 'windarrow', school: 'wind', box: { x: body.x - 320, y: body.y - 330, w: 640, h: 330 }, x: body.x, y: body.y, t: 0, dur: s.sky });
   }
   if (s.burst) {
-    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
+    // (`floor`: on the ground she took off from, for the Sky Dancer's tornado while she's up in the air.)
+    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: s.floor && !body.onGround ? world.skyFloor ?? body.y : body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
   }
   // The Spirit Mage's support spells land with the dance: a buff on her and the party round her
   // (`grant`), Heaven's Lantern raised (`lantern`, world/spiritdoll.js).
@@ -1692,7 +1709,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'foxhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1745,22 +1762,20 @@ function fire(world, strike) {
     world.volley = ((world.volley ?? 0) + 1) % 2;
     s = { ...s, hawkeye: true, speed: (s.speed ?? 680) * 1.4, range: s.range + 70, h: Math.max(140, (s.h ?? 60) * 2), bend: s.bend ?? (world.volley ? 22 : -22) };
   }
-  // A Kitsune's stars catch fox fire: everything they hit burns a little while.
-  if (hasTails(world.char) && STAR_SHOTS.has(s.shot) && !s.burn) s = { ...s, burn: { pct: 0.08, secs: 2 } };
+  // The Sky Dancer's gusts: twice as big on full Tailwind; Updraft may throw them up in a rising
+  // whirl, and in the air Zephyr may send a second gust after the first.
+  if (hasTails(world.char) && SKY_SHOTS.has(s.shot)) s = skyProcs(world, s);
   // Shots leave from the bow hand (chest high), lifted with the pose (a backflip is mid-air).
   let ox = body.x + s.dir * 10;
   let oy = body.y - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
-  // Endless Fox-Fire: from the Wheel on, the stars peel off the wisp of fox fire swinging round
-  // toward them; a star from her fox sign pops a fox face of fire there.
-  if ((s.wheel || s.leaf) && world.barrage) {
+  // Wild Hunt's arrows peel off the leaf swinging round toward them.
+  if (s.leaf && world.barrage) {
     const run = world.barrage;
-    const wisp = launchWisp(run.heat, world.now - run.since, s.dir, !s.leaf);
-    // (At the very top, every other star leaves from the fox spirit's mouth instead.)
-    const spirit = !s.leaf && run.heat >= FOX_SPIRIT_HEAT && run.n % 2 === 1 ? foxSpirit(run.heat, world.now - run.since, s.dir).mouth : null;
-    ox = body.x + (spirit ?? wisp).x;
-    oy = body.y + (spirit ?? wisp).y;
-    if (!s.illusion) world.fx.push({ kind: s.leaf ? 'leaflaunch' : 'wisplaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
-  } else if (s.sign && !s.illusion) world.fx.push({ kind: 'foxsign', x: ox + s.dir * 3, y: oy, dir: s.dir, t: 0, dur: 0.32 });
+    const wisp = launchWisp(run.heat, world.now - run.since, s.dir, false);
+    ox = body.x + wisp.x;
+    oy = body.y + wisp.y;
+    world.fx.push({ kind: 'leaflaunch', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.25 });
+  }
   // A recoiling shot kicks you back (`recoil` in the air hops you up; `kickback` shoves you on
   // the ground), and some burst at the bow as they go (`muzzle`).
   if (s.recoil) body.vy = Math.min(body.vy, -s.recoil);
@@ -1790,15 +1805,6 @@ function fire(world, strike) {
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
-  // The Kitsune's illusions: one fox-fire illusion for every three tails (three at Nine Tails),
-  // each throwing a free, lighter star beside hers.
-  if (hasTails(world.char) && STAR_SHOTS.has(s.shot) && !s.illusion) {
-    const n = Math.floor(tailCount(world) / 3);
-    for (let k = 0; k < n; k++) {
-      const oyk = (k % 2 ? 1 : -1) * (8 + Math.floor(k / 2) * 7);
-      fire(world, { ...s, illusion: true, free: true, phantom: true, fan: 1, pierce: false, pct: s.pct * ILLUSION_POWER, oy: (s.oy ?? 0) + oyk, lag: (s.lag ?? 0) + 0.05 * (k + 1), bend: oyk * 2, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined, kickback: 0 });
-    }
-  }
   // The Blade Dancer's ring flies its own way: out, bouncing on, and home (ringThrow).
   if (s.bounce != null) {
     for (let i = 0; i < (s.fan ?? 1); i++) ringThrow(world, { ...s, lag: lag + i * 0.07, pick: (s.pick ?? 0) + i }, ox, oy, speed, box, element);
@@ -1903,6 +1909,17 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
   // Twin Rings: a second ring a beat behind, at the next monster along if there is one.
   const twin = !s.twin && procOf(char, 'twinrings');
   if (twin && Math.random() < twin.chance) ringThrow(world, { ...s, twin: true, pct: (s.pct * twin.pct) / 100, lag: (s.lag ?? 0) + 0.1, pick: (s.pick ?? 0) + 1, big: false, stop: 0, shake: 0 }, ox, oy + 4, speed, box, element);
+}
+
+const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
+function skyProcs(world, s) {
+  const { char } = world;
+  if (skyFlight(world) && !s.tailwind) s = { ...s, tailwind: true, shot: 'skygustbig', pct: s.pct * 1.5, targets: Math.max(s.targets ?? 1, 3), pierce: true, big: true };
+  const up = procOf(char, 'updraft');
+  if (up && !s.zephyr && Math.random() < up.chance) s = { ...s, launch: Math.max(s.launch ?? 0, up.launch), burst: 'skyupdraft', pct: (s.pct * up.pct) / 100 };
+  const z = procOf(char, 'zephyr');
+  if (z && !s.zephyr && !world.body.onGround && Math.random() < z.chance) fire(world, { ...s, zephyr: true, lag: (s.lag ?? 0) + 0.12, oy: (s.oy ?? 0) + 5, pct: (s.pct * z.pct) / 100, big: false, stop: 0, shake: 0 });
+  return s;
 }
 
 // Arrows rain down on the monsters in an area ahead, one after another.

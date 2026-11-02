@@ -351,9 +351,7 @@ const R = {
   kitsunejab: { db: -15, vary: 10, max: 3, layers: [{ rec: 'stab', rate: 1.2 }, whoosh(160, 900, 3000, { focus: 0.2, db: -6 })] },
   kitsunecrescent: { db: -10, max: 2, layers: [{ rec: 'bladeSwingHeavy', rate: 0.9 }, whoosh(600, 400, 3000, { focus: 0.3, db: -4 }), sparkle('E7:0 B7:60', { db: -14 })] },
   // The Thief's paths. The Blade Dancer: Ricochet topping out (rings whirring up and a bright
-  // chime: Carousel). The Kitsune:
-  // the ninth tail (a koto run and bells: Nine Tails), night falling with the fox fire, and the
-  // fire fox's pounce.
+  // chime: Carousel). The Sky Dancer's follow hers.
   carouselfull: { db: -10, max: 1, duck: [-5, 800], layers: [whoosh(500, 300, 2400, { focus: 0.6, db: -4 }), sparkle('C7:0 E7:70 G7:140 C8:210', { db: -10 }), { seq: 'r:120 C5+G5:600', inst: 'orchestral_harp', attack: 0.02, db: -8 }] },
   // A ring ricocheting (a bright metal ping and a sparkle), and Golden Carousel (rings whirring
   // round her faster and faster on a harp run, then flung out with a crash of chimes).
@@ -366,14 +364,16 @@ const R = {
       sparkle('r:1000 C8:0 G7:60 E7:120 C7:180', { db: -10 }),
     ],
   },
-  ninetails: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ seq: 'D5:50 E5:50 A5:50 B5:50 D6:50 E6:700', inst: 'orchestral_harp' }, { seq: 'r:200 A4+D5+E5:900', inst: 'choir_aahs', attack: 0.2, db: -8 }] },
-  foxnight: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 900 }, { seq: 'A5:60 B5:60 E6:60 A6:700', inst: 'celesta', db: -4 }, { seq: 'A3+E4+A4:1100', inst: 'pan_flute', attack: 0.2, db: -8 }] },
-  flamefoxpounce: {
-    db: -8, max: 1, duck: [-8, 1200], layers: [
-      { rec: 'fireLaunch', len: 900, db: -2 },
-      { rec: 'darkImpact', len: 1400, db: -4 },
-      thump(70, 460, { slide: -1.5 }),
-      { seq: 'A3+E4+A4+B4:900', inst: 'orchestral_harp', attack: 0.02, db: -6 },
+  // The Sky Dancer: Tailwind topping out (a rush of wind and a rising flute run), Updraft's rising
+  // whirl, and Sky Waltz (the tornado spinning up on a harp and flute, and the slam).
+  tailwindfull: { db: -11, max: 1, room: true, duck: [-5, 900], layers: [{ rec: 'windWhoosh', len: 1200 }, { seq: 'C6:50 D6:50 E6:50 G6:50 A6:50 C7:700', inst: 'flute', db: -4 }, sparkle('r:300 E7:0 G7:60', { db: -12 })] },
+  skyupdraft: { db: -14, vary: 6, max: 2, layers: [whoosh(200, 500, 2600, { focus: 0.5, db: -4 }), { seq: 'G5:60 C6:200', inst: 'flute', db: -10 }] },
+  skytornado: {
+    db: -8, max: 1, duck: [-6, 1500], layers: [
+      { rec: 'windWhoosh', len: 1600 },
+      { seq: 'C5:100 E5:100 G5:100 C6:100 E6:100 G6:100', inst: 'orchestral_harp', db: -6 },
+      thump(60, 520, { slide: -1.5, at: 1100 }),
+      { seq: 'r:1100 C4+G4+C5+E5:900', inst: 'flute', attack: 0.02, db: -6 },
     ],
   },
 

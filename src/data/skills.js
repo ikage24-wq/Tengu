@@ -808,86 +808,44 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Kitsune (the thief's gauntlet path: gold and blue fox fire) ----------
-  // Stars that land build Tails (0-100, one tail to nine, see world/melee.js), more on monsters
-  // already burning; every three tails a fox-fire illusion throws stars beside hers. Nine-Tail
-  // Blaze needs all nine and spends them.
-  kitsunemastery: skill({
-    id: 'kitsunemastery', name: 'Kitsune Mastery', job: 'kitsune', type: 'passive', grows: true, fx: null, icon: 'kitsunemastery',
-    desc: 'Steadier stars, more attack, and sharper aim.',
+  // ---------- Sky Dancer (the Wind Dancer's glove path: sky blue, white and sunlight) ----------
+  // docs/design/sky-dancer.md. She dances on the air: every blow lifts her and throws a crescent of
+  // wind down at them (world/melee.js skyLift). Her hits build Tailwind (internally Tails, the
+  // Kitsune's it replaced), faster in the air; full, she flies freely and her gusts are twice as
+  // big. Like the Wind Dancer, her book is mostly skills that go off by themselves (Updraft,
+  // Zephyr); her button is Sky Waltz, the finisher.
+  // (Internally the path keeps the Kitsune's id, so saves and quests carry over.)
+  skymastery: skill({
+    id: 'skymastery', name: 'Sky Mastery', job: 'kitsune', type: 'passive', grows: true, fx: null, icon: 'skymastery',
+    desc: 'Steadier gusts, more attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), watk: lerp(2, 20, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
-  // Changes her basic attack (world/melee.js barrageThrow): `from` to `to` stars a second over
-  // `ramp` seconds of holding. No finisher: letting go just stops.
-  foxbarrage: skill({
-    id: 'foxbarrage', name: 'Endless Fox-Fire', job: 'kitsune', type: 'passive', fx: null, icon: 'foxbarrage', maxLevel: 10,
-    desc: 'Her basic attack becomes an endless barrage: hold attack and fox-fire stars fly hand over hand without stopping, faster the longer you hold, and you can walk slowly while throwing. In the air she hangs a moment and keeps throwing. Let go and she simply stops. Needs a gauntlet.',
+  updraft: skill({
+    id: 'updraft', name: 'Updraft', job: 'kitsune', type: 'passive', fx: null, icon: 'updraft', school: 'aerial',
+    desc: 'Your gusts sometimes land in a rising whirl of wind that hits harder and throws the monster high into the air.',
     weapons: ['gauntlet'],
-    at: (lv, m) => ({ passive: {}, barrage: { unit: 'star', pct: 26, from: 5, to: lerpf(10, 12, lv, m), ramp: 2.5 } }),
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.35, lv, m), pct: lerp(120, 160, lv, m), launch: lerp(320, 460, lv, m) } }),
   }),
-  foxfirefan: skill({
-    id: 'foxfirefan', name: 'Fox-Fire Fan', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxfirefan', school: 'fox',
-    desc: 'A three-part combo, one part per press: a fan of fox-fire stars, one per monster, another, then a great fox-fire star through the line. Everything they hit burns. Needs a gauntlet.',
+  zephyr: skill({
+    id: 'zephyr', name: 'Zephyr', job: 'kitsune', type: 'passive', fx: null, icon: 'zephyr', school: 'aerial',
+    desc: 'While you dance in the air, a second gust sometimes follows the first a beat later.',
     weapons: ['gauntlet'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const n = k(3, 5);
-      return {
-        mp: k(6, 14), pct: k(80, 130), hits: 1, targets: n,
-        combo: [
-          { move: 'throw', dur: 0.42, step: -3, strikes: [{ at: 0.5, shot: 'foxstar', fan: n, pct: k(80, 130), range: 290, h: 150, knock: 50, speed: 800 }] },
-          { move: 'twirlthrow', dur: 0.46, step: -3, strikes: [{ at: 0.62, shot: 'foxstar', fan: n, pct: k(85, 140), range: 290, h: 150, knock: 60, speed: 800 }] },
-          { move: 'throwflip', dur: 0.64, step: -4, finisher: true, strikes: [{ at: 0.25, shot: 'foxmoon', pct: k(170, 280), range: 330, h: 70, targets: k(3, 5), pierce: true, speed: 860, knock: 200, launch: 120, big: true, stop: 0.06, shake: 2, kickback: 40 }] },
-        ],
-      };
-    },
+    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.4, lv, m), pct: lerp(50, 80, lv, m) } }),
   }),
-  foxillusion: skill({
-    id: 'foxillusion', name: 'Fox Decoy', job: 'kitsune', type: 'attack', fx: null, icon: 'foxillusion', school: 'fox',
-    desc: 'Set a fox-fire illusion of yourself down just ahead. For a few seconds every monster near it goes after it instead of you, and when its time is up it bursts in fox fire on everything close.',
-    at: (lv, m) => ({ mp: lerp(16, 26, lv, m), duration: lerpf(5, 9, lv, m), pct: lerp(150, 260, lv, m), targets: lerp(4, 7, lv, m), r: 260, decoy: true }),
-  }),
-  foxtrap: skill({
-    id: 'foxtrap', name: 'Fox-Fire Trap', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxtrap', school: 'fox',
-    desc: 'Throw a ring of fox fire onto the ground ahead: it burns everything standing in it for a moment, then bursts. Needs a gauntlet.',
-    weapons: ['gauntlet'],
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      const tick = (delay) => ({ at: 0.5, delay, pct: k(40, 70), reach: 200, h: 70, targets: 6, knock: 5, burn: { pct: 0.1, secs: 2 }, quiet: true, gauge: 2 });
-      return {
-        mp: k(12, 24), pct: k(160, 260), hits: 5, targets: 6,
-        combo: [{ move: 'throw', dur: 0.5, step: -4, strikes: [
-          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, burst: 'foxtrap', burstAt: 0, burstDur: 1.6, quiet: true, gauge: 0 },
-          tick(0.15), tick(0.45), tick(0.75),
-          { at: 0.5, delay: 1.05, pct: k(160, 260), reach: 200, h: 80, targets: 6, knock: 160, launch: 140, burn: { pct: 0.12, secs: 3 }, burst: 'foxtrapburst', burstAt: 0.55, big: true, stop: 0.05, shake: 2 },
-        ] }],
-      };
-    },
-  }),
-  foxhop: skill({
-    id: 'foxhop', name: 'Fox Hop', job: 'kitsune', type: 'attack', fx: 'star', icon: 'foxhop', school: 'fox', maxLevel: 10, movement: true,
-    desc: 'Spring back out of reach, leaving a decoy of fox fire where you stood that bursts on anything close. Nothing touches you on the way. Works with either weapon.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(10, 6), pct: k(80, 140), hits: 1, targets: 4,
-        combo: [{ move: 'foxhop', dur: 0.46, step: -k(100, 150), carry: 0.6, guard: 0.45, strikes: [{ at: 0.06, pct: k(80, 140), reach: 60, h: 70, around: true, targets: 4, knock: 120, burn: { pct: 0.1, secs: 2 }, burst: 'foxdecoy', burstAt: 0, gauge: 3 }] }],
-      };
-    },
-  }),
-  ninetailblaze: skill({
-    id: 'ninetailblaze', dmg: 1.45, name: 'Nine-Tail Blaze', job: 'kitsune', type: 'attack', fx: 'star', icon: 'ninetailblaze', school: 'fox', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs all nine Tails, and spends them. Nine fox-fire stars spin up into the night and rain down burning on every monster, then they gather into a giant fox of blue fire that pounces through the line. Needs a gauntlet.',
+  skywaltz: skill({
+    id: 'skywaltz', name: 'Sky Waltz', job: 'kitsune', type: 'attack', fx: null, icon: 'skywaltz', school: 'aerial', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs full Tailwind, and spends it. You turn on the air, faster and faster, as a giant tornado spins up round you and lifts every monster into the sky; then you drive both palms down and it slams them into the ground. Needs gloves.',
     weapons: ['gauntlet'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
+      const lift = (at) => ({ at, pct: k(60, 100), reach: 200, h: 220, around: true, targets, knock: 0, launch: 220, pull: 50, fx: 'skyhit', quiet: true, stop: 0.03, gauge: 0 });
       return {
-        mp: k(30, 50), pct: k(440, 760), hits: 16, targets,
-        combo: [{ move: 'moonthrow', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.18, pct: 0, reach: 0, h: 0, targets: 0, burst: 'foxnight', burstAt: 0, burstDur: 1.1, quiet: true, gauge: 0 },
-          { at: 0.5, rain: k(10, 14), pct: k(80, 130), rainFrom: 30, rainW: 320, span: 0.4, knock: 30, variant: 'foxstar', school: 'fox', burn: { pct: 0.1, secs: 3 }, gauge: 0 },
-          { at: 0.8, pct: k(440, 760), reach: 230, h: 150, around: true, targets, knock: 300, launch: 380, burn: { pct: 0.15, secs: 3 }, burst: 'flamefoxpounce', burstAt: 0, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        mp: k(30, 50), pct: k(440, 740), hits: 6, targets,
+        combo: [{ move: 'sdwaltz', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'skytornado', burstAt: 0, burstDur: 1.4, floor: true, quiet: true, gauge: 0 },
+          lift(0.22), lift(0.32), lift(0.42), lift(0.52), lift(0.6),
+          { at: 0.7, pct: k(440, 740), reach: 230, h: 240, around: true, targets, knock: 200, crack: true, fx: 'skyhit', big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
       };
     },
@@ -924,7 +882,7 @@ const MOVES_BY_SKILL = {
   grandblessing: 'shrinegrand', purification: 'shrinepurify', resurrection: 'shrinerevive', thousandtorii: 'shrinetorii',
   ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
   goldencarousel: 'bdcarousel',
-  kitsunemastery: 'cheer', foxfirefan: 'throw', foxillusion: 'cheer', foxtrap: 'throw', foxhop: 'foxhop', ninetailblaze: 'moonthrow',
+  skywaltz: 'sdwaltz',
   gmsmite: 'castup', gmhaste: 'cheer',
 };
 for (const [id, move] of Object.entries(MOVES_BY_SKILL)) SKILLS[id].anim = move;

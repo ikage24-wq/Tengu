@@ -147,8 +147,8 @@ function weaponStyle(bot) {
   // Onmyoji with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
   if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan', 'bellshake'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'shrinepurify' };
   if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'onmyoofuda', ofuda: true };
-  // The Kitsune throws her fox-fire stars.
-  if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['throw', 'barrage', 'twirlthrow']), shot: 'foxstar', ranged: true };
+  // The Sky Dancer throws her gusts of wind.
+  if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
   return { reach: 42, lift: 30, pose: type === 'spear' ? 'thrust' : pick2(['slash', 'slash2']), shot: null, ranged: false };
 }

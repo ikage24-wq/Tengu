@@ -301,6 +301,13 @@ carry an improvement across every part of the game it applies to.
     orbiting her waist, passing in front and behind; Golden Carousel is six rings riding a gold
     track round her, faster and faster, then flung out in a burst. Her held chakram takes a
     rose-gold finish.
+  - The Sky Dancer (2026-11-02; she replaced the Kitsune below) is sky blue and white with a touch of
+    pale sunlight, HD soft glow: her gust is a crescent of wind with a feather riding its head and
+    streaks of air behind; her hit is a soft cloud bursting with a swirl through it that drifts
+    apart into puffs and feathers; a whirlwind of stacked rings turns under her feet as Tailwind
+    builds (full, she rides it); her badge is a wing over a cloud; Sky Waltz is a tornado that
+    builds into a tall column and slams out along the ground in clouds and sunlight. Her gloves
+    take a sky-blue finish.
   - The Thief's paths as they were, a pair from the same shrine, both realistic (no outlines). The
     Shinobi (replaced by the Blade Dancer) was ink: her cuts are wet brush strokes that dry out into bristle streaks at the tail, with a thin
     red sheen and drops flying off; a hit is a splash of ink with a thin red cut; seal tags are

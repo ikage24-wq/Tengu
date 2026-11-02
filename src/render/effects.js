@@ -87,6 +87,15 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
+    case 'skygust': case 'skygustbig': {
+      // The Sky Dancer's gust: a crescent of wind with a feather riding it, turned along its flight;
+      // on full Tailwind (and her finishers) a great one.
+      const big = f.shot === 'skygustbig';
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      fxSprite(ctx, 'celskygust', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: big ? 1.3 : 0.8 });
+      break;
+    }
     case 'ring': case 'ringbig': {
       // The Blade Dancer's ring: spinning, its rose smear curling behind it the way it flies (home
       // to her hand too); a twin ring a little smaller and lighter.
@@ -163,29 +172,6 @@ function drawShot(ctx, f, cam) {
       ctx.moveTo(-9, 0);
       ctx.quadraticCurveTo(-13, Math.sin(f.t * 40) * 2.5, -16, Math.sin(f.t * 40 + 1) * 3);
       ctx.stroke();
-      break;
-    }
-    case 'foxstar': case 'foxmoon': {
-      // A Kitsune's star: steel caught in blue fox fire, a wake of flame behind it; a great one
-      // drawn large; an illusion's is fox fire alone.
-      const big = f.shot === 'foxmoon';
-      fxSprite(ctx, 'celfoxtrail', x - dir * (big ? 4 : 2), y, { t: f.t, flip: dir < 0, scale: big ? 0.55 : 0.36, alpha: f.illusion ? 0.75 : 1 });
-      if (f.illusion) {
-        fxSprite(ctx, 'celfoxfire', x, y + 6, { t: f.t * 2, scale: big ? 0.3 : 0.2 });
-        break;
-      }
-      ctx.translate(x, y);
-      ctx.rotate(f.t * (big ? 16 : 20));
-      const r = big ? 12 : 7;
-      const body = big ? '#dfe8ff' : f.starColor ?? '#c8d2e6';
-      for (const [k, al] of [[0.26, 0.22], [0.13, 0.4]]) {
-        ctx.save();
-        ctx.rotate(-k);
-        ctx.globalAlpha = al;
-        shuriken(ctx, r, '#6ab8ff', '#6ab8ff', null);
-        ctx.restore();
-      }
-      shuriken(ctx, r, body, '#ffffff', mix(body, '#1e3a8a', 0.6));
       break;
     }
     case 'star': case 'moonstar': {

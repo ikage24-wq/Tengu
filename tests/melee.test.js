@@ -1760,7 +1760,7 @@ test("a weapon's own mastery only counts while that weapon is held, and grows wi
   assert.equal(passiveBonus(w.char).watk ?? 0, 0, 'nothing from it with a gauntlet');
 });
 
-// ---------- The Thief's paths: the Blade Dancer (chakrams, Ricochet) and the Kitsune (gauntlet, Tails) ----------
+// ---------- The dancer's paths: the Blade Dancer (chakrams, Ricochet) and the Sky Dancer (gloves, Tailwind) ----------
 
 function thiefPath(job) {
   const weapon = job === 'shinobi' ? 'dagger_20' : 'gauntlet_20';
@@ -1783,96 +1783,6 @@ const castNow = (w, id) => {
   w.char.mp = 9999;
   return cast(w, id);
 };
-
-test('Endless Fox-Fire: held attack is an endless barrage that speeds up, walks slowly, and just stops on letting go', async () => {
-  const { STREAM_MOVES } = await import('../src/world/melee.js');
-  const w = thiefPath('kitsune');
-  const hold = (...keys) => ({ held: new Set(['KeyZ', ...keys]), pressed: new Set(), locked: false });
-  const streaming = () => STREAM_MOVES.has(w.pose?.kind);
-  updateWorld(w, DT, press('KeyZ'));
-  assert.ok(!streaming(), 'without the passive, her usual combo');
-  run(w, 2);
-  learn(w, 'foxbarrage');
-  const hp = w.mobs.reduce((n, m) => n + m.hp, 0);
-  const stars = [];
-  const figures = [];
-  let n = 0;
-  let since = null;
-  // (Fixed dice, so every figure in each stage's pool comes up.)
-  let seed = 11;
-  dice(0, () => {
-    Math.random = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    for (let i = 0; i < 7 * 60; i++) {
-      updateWorld(w, DT, i === 0 ? press('KeyZ') : hold());
-      if (w.barrage && w.barrage.n > n) stars.push(w.now);
-      n = w.barrage?.n ?? 0;
-      if (w.pose?.since !== since && streaming()) figures.push({ at: w.now, kind: w.pose.kind, flow: w.pose.flow });
-      since = w.pose?.since;
-      assert.ok(i < 2 || streaming(), `always in a figure while held (${w.now.toFixed(2)}: ${w.pose?.kind})`);
-    }
-  });
-  const start = stars[0];
-  const within = (list, a, b) => list.filter((t) => (t.at ?? t) >= start + a && (t.at ?? t) < start + b);
-  assert.ok(within(stars, 0, 1).length >= 4, `a quick stream from the start (${within(stars, 0, 1).length})`);
-  assert.ok(within(stars, 3, 4).length > within(stars, 0, 1).length + 2, `faster the longer it's held (${within(stars, 0, 1).length} then ${within(stars, 3, 4).length})`);
-  assert.ok(stars.every((t, i) => !i || t - stars[i - 1] < 0.25), 'never a pause');
-  // The stages: Kitsunebi (stars dealt like cards), then the Trickster's tricks, the Wheel, and
-  // floating in Ascension.
-  assert.deepEqual([...new Set(within(figures, 0, 0.8).map((t) => t.kind))].sort(), ['foxdeal', 'foxdeal2']);
-  const kinds = new Set(figures.map((t) => t.kind));
-  for (const k of ['foxspin', 'foxbehind', 'foxhopback', 'foxlob', 'foxwheel', 'foxwheel2', 'foxfloat', 'foxfloat2']) assert.ok(kinds.has(k), `plays ${k}`);
-  assert.ok(within(figures, 6, 7).every((t) => t.kind.startsWith('foxfloat')), 'flat out, floating');
-  assert.ok(figures.every((t, i) => !i || t.kind !== figures[i - 1].kind), 'never the same figure twice running');
-  // Her body moves on one clock through all of it, and it keeps building after full speed.
-  assert.ok(figures.every((t, i) => !i || t.flow.t0 > figures[i - 1].flow.t0));
-  assert.ok(figures.at(-1).flow.heat > 1.5, `still building past full speed (${figures.at(-1).flow.heat})`);
-  assert.ok(w.mobs.reduce((m, x) => m + x.hp, 0) < hp, 'the stars land');
-  // She walks through it, slowly.
-  const x = w.body.x;
-  run(w, 0.5, hold('ArrowRight'));
-  const walked = w.body.x - x;
-  assert.ok(walked > 5, `walks while throwing (${walked})`);
-  assert.ok(walked < (w.stats.speed / 100) * 60, 'but slowly');
-  assert.ok(streaming(), 'still throwing');
-  // Letting go: no finisher, she just stops, and the wheel of fox fire flies apart.
-  updateWorld(w, DT, idle);
-  assert.ok(!w.pose?.fin, `no finisher (${w.pose?.kind})`);
-  assert.ok(!w.strikes.some((s) => s.finisher), 'no finishing shot');
-  assert.equal(w.barrage, null);
-  assert.ok(w.wheelGone.heat > 1.5);
-  // A tap is one star and no finisher.
-  run(w, 1);
-  updateWorld(w, DT, press('KeyZ'));
-  assert.ok(w.pose.kind.startsWith('foxdeal'));
-  updateWorld(w, DT, idle);
-  assert.ok(w.pose.kind.startsWith('foxdeal'), 'no finisher after a tap');
-});
-
-
-test('Endless Fox-Fire never puts her throwing hand over her face', async () => {
-  // Her head is most of her: an arm raised between about 120 and 260 degrees puts the gauntlet over
-  // her face. Every figure keeps the hand low and wide (follow-through included).
-  const { moveAt } = await import('../src/render/moves.js');
-  const { STREAMS } = await import('../src/world/melee.js');
-  const figures = Object.keys(STREAMS.kitsune.figures);
-  for (const k of figures) {
-    for (let p = 0; p <= 1.0001; p += 0.02) {
-      const a = (((moveAt(k, p, 0.4).arm % 360) + 360) % 360);
-      assert.ok(a <= 122 || a >= 262, `${k} at ${p.toFixed(2)}: arm ${Math.round(a)}`);
-    }
-  }
-});
-
-test('Endless Fox-Fire: from the Wheel on, stars leave from the wisp of fox fire swinging round toward them', async () => {
-  const { wheelWisps, launchWisp, wheelShape } = await import('../src/world/foxwheel.js');
-  assert.deepEqual([0, 0.5, 1, 1.4].map((h) => wheelShape(h, 0).n), [2, 4, 6, 9]);
-  for (const facing of [1, -1]) {
-    const w = launchWisp(1.2, 0.37, facing);
-    assert.ok(wheelWisps(1.2, 0.37, facing).every((o) => o.x * facing <= w.x * facing));
-    assert.ok(w.x * facing > 0, 'out in front of her');
-  }
-  assert.ok(wheelShape(1.6, 0).cy < wheelShape(1, 0).cy - 8, 'the wheel rises with her when she floats');
-});
 
 test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
   const { JOBS } = await import('../src/data/jobs.js');
@@ -1978,50 +1888,79 @@ test('Rebound sends a ring bouncing further, and Twin Rings sends a second after
   assert.ok(throwOnce(['twinrings']).twins > 0, 'Twin Rings: a second ring');
 });
 
-test("a Kitsune's stars build Tails, set monsters burning, and grow fox-fire illusions every three tails", () => {
+test("a Sky Dancer's every blow lifts her: she stays up while she attacks, and drifts down softly when she stops", () => {
   const w = thiefPath('kitsune');
-  run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
-  assert.ok(w.tails > 0, 'stars build it');
-  assert.ok(w.mobs.some((m) => m.poison?.kind === 'burn'), 'they burn');
-  const counts = [0, 34, 67, 100].map((t) => {
-    const v = thiefPath('kitsune');
-    v.tails = t;
-    v.tailsAt = 1e9;
-    updateWorld(v, DT, press('KeyZ'));
-    run(v, 0.3);
-    return v.fx.filter((f) => f.kind === 'projectile' && f.illusion).length;
-  });
-  assert.deepEqual(counts, [0, 1, 2, 3], `illusion stars by tails: ${counts}`);
+  const ground = w.body.y;
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose.kind, 'sdpalm', 'her palm push');
+  run(w, 0.3, hold);
+  assert.ok(!w.body.onGround && ground - w.body.y > 20, `the first blow hops her up (${(ground - w.body.y).toFixed(0)}px)`);
+  let low = Infinity;
+  let high = 0;
+  for (let i = 0; i < 3 * 60; i++) {
+    updateWorld(w, DT, hold);
+    low = Math.min(low, ground - w.body.y);
+    high = Math.max(high, ground - w.body.y);
+  }
+  assert.ok(low > 10, `she stays up while she keeps attacking (lowest ${low.toFixed(0)}px)`);
+  assert.ok(high < 130, `but never flies off (highest ${high.toFixed(0)}px)`);
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'her gusts land');
+  // Let go: a soft drift down, then she lands.
+  run(w, 0.8);
+  assert.ok(!w.body.onGround && w.body.vy <= 75, `drifting down (${w.body.vy.toFixed(0)}px/s)`);
+  run(w, 4);
+  assert.ok(w.body.onGround, 'and lands');
 });
 
-test('Fox Decoy pulls the monsters near it, then bursts on them; the trap burns them; Fox Hop springs her back', async () => {
-  const { decoyFor } = await import('../src/world/decoy.js');
+test('Tailwind builds faster in the air, fades once the fighting stops, and full, she flies freely', () => {
   const w = thiefPath('kitsune');
-  learn(w, 'foxillusion');
-  learn(w, 'foxtrap');
-  learn(w, 'foxhop');
-  const start = w.mobs.map((m) => m.hp);
-  assert.ok(castNow(w, 'foxillusion').ok);
-  const d = w.decoy;
-  assert.ok(d && Math.abs(d.x - w.body.x) > 40, 'set down ahead of her');
-  assert.ok(w.mobs.some((m) => decoyFor(w, m) === d), 'the monsters near it go after it');
-  run(w, 10);
-  assert.equal(w.decoy, null, 'gone when its time is up');
-  assert.ok(w.mobs.some((m, i) => m.hp < start[i]), 'it burst on them');
-  const before = w.mobs.map((m) => m.hp);
-  assert.ok(castNow(w, 'foxtrap').ok);
-  run(w, 1.8);
-  assert.ok(w.mobs.filter((m, i) => m.hp < before[i]).length >= 2, 'the trap catches them');
-  assert.ok(w.mobs.some((m) => m.poison?.kind === 'burn'), 'burning');
-  run(w, 1);
-  const x0 = w.body.x;
-  assert.ok(castNow(w, 'foxhop').ok);
-  run(w, 0.6);
-  assert.ok(w.body.x < x0 - 60, `sprang back (${(x0 - w.body.x).toFixed(0)}px)`);
+  run(w, 1.5, { held: new Set(['KeyZ']), pressed: new Set(), locked: false });
+  assert.ok(w.tails > 0, 'her hits build it');
+  for (const m of w.mobs) Object.assign(m, { x: w.body.x + 2000, aggroUntil: 0 });
+  run(w, 14);
+  assert.equal(w.tails, 0, 'faded');
+  const v = thiefPath('kitsune');
+  v.tails = 100;
+  v.tailsAt = 1e9;
+  updateWorld(v, DT, press('KeyZ'));
+  run(v, 0.5);
+  const y0 = v.body.y;
+  run(v, 0.6, { held: new Set(['ArrowUp']), pressed: new Set(), locked: false });
+  assert.ok(v.body.y < y0 - 40, `Up flies her higher (${(y0 - v.body.y).toFixed(0)}px)`);
+  const y1 = v.body.y;
+  run(v, 1);
+  assert.ok(Math.abs(v.body.y - y1) < 12, 'and she hovers there');
+});
+
+test('Updraft throws them up in a rising whirl, and Zephyr sends a second gust in the air', () => {
+  const gusts = (skills) => {
+    const w = thiefPath('kitsune');
+    for (const id of skills) learn(w, id);
+    let n = 0;
+    let launched = false;
+    let up = false;
+    dice(0, () => {
+      updateWorld(w, DT, press('KeyZ'));
+      for (let i = 0; i < 40; i++) {
+        updateWorld(w, DT, idle);
+        n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot?.startsWith('skygust')).length);
+        launched ||= w.mobs.some((m) => (m.air ?? 0) > 20);
+        up ||= w.fx.some((f) => f.kind === 'skyupdraft');
+      }
+    });
+    return { n, launched, up };
+  };
+  const plain = gusts([]);
+  assert.equal(plain.n, 1, 'one gust');
+  assert.equal(plain.up, false);
+  const u = gusts(['updraft']);
+  assert.ok(u.up && u.launched, 'Updraft: a rising whirl throws them up');
+  assert.ok(gusts(['zephyr']).n >= 2, 'Zephyr: a second gust');
 });
 
 test("each thief path's finisher needs its gauge full, spends it, and lands its big moment", () => {
-  for (const [job, skill, gauge, burst] of [['shinobi', 'goldencarousel', 'ki', 'bdcarousel'], ['kitsune', 'ninetailblaze', 'tails', 'flamefoxpounce']]) {
+  for (const [job, skill, gauge, burst] of [['shinobi', 'goldencarousel', 'ki', 'bdcarousel'], ['kitsune', 'skywaltz', 'tails', 'skytornado']]) {
     const w = thiefPath(job);
     learn(w, skill);
     w[gauge] = 50;
@@ -3160,7 +3099,7 @@ test("a Thief's flash jump throws her far forward in mid-air, once per jump, in 
     tap(w, ['Space']);
     assert.equal(w.pose?.kind, 'flashjump');
     const fx = w.fx.find((f) => f.kind === 'leapburst');
-    assert.equal(fx?.school, { null: 'coral', shinobi: 'rosegold', kitsune: 'fox' }[job]);
+    assert.equal(fx?.school, { null: 'coral', shinobi: 'rosegold', kitsune: 'aerial' }[job]);
     keep(w, [], 20);
     assert.ok(w.body.x - x0 > 140, `${job ?? 'thief'} flies forward (${(w.body.x - x0).toFixed(0)}px)`);
     // Only once per jump.
@@ -3284,8 +3223,4 @@ test('the endless barrages need their passive and their weapon, and keep the no-
   assert.equal(barrageOf(bm), null);
   learn(bm, 'wildhunt');
   assert.ok(barrageOf(bm));
-  // A Kitsune's passive does nothing for a Blade Dancer.
-  const sh2 = thiefPath('shinobi');
-  learn(sh2, 'foxbarrage');
-  assert.equal(barrageOf(sh2), null);
 });

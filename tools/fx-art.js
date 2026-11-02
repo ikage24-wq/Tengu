@@ -5196,6 +5196,159 @@
     };
   })();
 
+  // ---------- The Sky Dancer (sky blue and white, pale sunlight: wind crescents, feathers, clouds) ----------
+  // docs/design/sky-dancer.md. Her shapes: crescents of wind with a feather riding them, soft
+  // clouds where they land, whirlwinds of stacked rings, and a tornado for her finisher.
+  const SKYB = ['#ffffff', '#e6f6ff', '#9ad6ff', '#4e9fe6', '#2a4f9e'];
+  const SUNLIT = ['#ffffff', '#fff8dc', '#ffe6a0', '#f0c060', '#a8783a'];
+  const CLOUDS = ['#ffffff', '#ffffff', '#eef4ff', '#c4d6f2', '#6f86c0'];
+
+  // A feather at (x, y), `len` long, turned by `a` (radians, 0 = pointing right), its vane a soft
+  // leaf with a light spine and a notch or two along its edge.
+  function feather(ctx, pal, x, y, len, a, w = len * 0.28) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const vane = [];
+    for (let i = 0; i <= 12; i++) {
+      const u = i / 12;
+      vane.push([-len / 2 + u * len, -w * Math.sin(Math.PI * Math.min(1, u * 1.1)) * (u > 0.55 && u < 0.62 ? 0.7 : 1)]);
+    }
+    for (let i = 12; i >= 0; i--) {
+      const u = i / 12;
+      vane.push([-len / 2 + u * len, w * 0.8 * Math.sin(Math.PI * Math.min(1, u * 1.1)) * (u > 0.3 && u < 0.37 ? 0.7 : 1)]);
+    }
+    inked(ctx, vane, pal[2], pal[4], 3);
+    fill(ctx, vane.map(([px, py]) => [px * 0.9, py * 0.55 - 1]), pal[1]);
+    fill(ctx, [[-len / 2 - 3, -1], [len / 2, -0.6], [len / 2, 0.6], [-len / 2 - 3, 1]], pal[0]);
+    ctx.restore();
+  }
+
+  // Her gust in flight (loops, flying toward +x and a little down): a crescent of wind with a
+  // feather riding its head and streaks of air behind.
+  E.skygust = (() => {
+    const cx = 100;
+    const cy = 70;
+    return {
+      w: 170, h: 140, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const k = Math.sin((i / 6) * TAU);
+        celCrescent(ctx, SKYB, cx - 20, cy, 56, -1.2 + k * 0.05, 1.2 + k * 0.05, 26, { seed: 151, inkW: 4 });
+        celCrescent(ctx, CLOUDS, cx - 34, cy, 44, -0.9, 0.9, 12, { seed: 152, inkW: 3 });
+        for (const [dy, l] of [[-34, 60], [0, 80], [34, 56]]) speedLine(ctx, SKYB, cx - 40 - l, cy + dy + (i % 2) * 3, cx - 36, cy + dy * 0.9, 3);
+        feather(ctx, SUNLIT, cx + 26, cy - 22 + k * 3, 30, -0.4 + k * 0.15);
+        sparkle(ctx, SUNLIT, cx + 30, cy + 26 - k * 4, 7, i * 0.5);
+      },
+    };
+  })();
+
+  // Her mark on a monster: a soft cloud bursts round it with a swirl of wind through it, then it
+  // drifts apart into puffs, feathers and sparkles.
+  E.skyhit = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / 6;
+        if (i <= 3) puff(ctx, CLOUDS, c, c, [28, 46, 52, 50][i], 161, { holes: i === 3 ? 0.4 : 0, lobes: 6 });
+        if (i >= 1 && i <= 4) celCrescent(ctx, SKYB, c, c, 50 + i * 6, -2.4 + i * 0.6, 0.4 + i * 0.6, [16, 18, 14, 10][i - 1], { seed: 162, inkW: 4 });
+        if (i >= 1 && i <= 2) sparkle(ctx, SUNLIT, c + 30, c - 30, 16 - i * 3, 0.3);
+        if (i >= 3) {
+          const R = rng(163);
+          for (let j = 0; j < 6; j++) {
+            const a = (j / 6) * TAU + R() * 0.5;
+            const d = 50 + k * 60;
+            const x = c + Math.cos(a) * d;
+            const y = c + Math.sin(a) * d - k * 20;
+            if (j % 3 === 0) feather(ctx, j % 2 ? SKYB : SUNLIT, x, y, 22 * (1.1 - k * 0.4), a + k * 2);
+            else if (i < 6) puff(ctx, CLOUDS, x, y, 12 * (1.1 - k * 0.5), 164 + j, { lobes: 4 });
+            else sparkle(ctx, j % 2 ? SKYB : SUNLIT, x, y, 8, a);
+          }
+        }
+      },
+    };
+  })();
+
+  // A whirlwind under her feet (loops): rings of wind stacked and turning, wider at the top, with
+  // feathers caught in it. Drawn flat at her feet in game (the Tailwind aura and her flight).
+  E.skywhirl = (() => {
+    const c = 120;
+    const base = 150;
+    return {
+      w: 240, h: 180, n: 6, fps: 18, px: c, py: base,
+      draw(ctx, i) {
+        for (let k = 0; k < 4; k++) {
+          const y = base - k * 28;
+          const r = 34 + k * 20;
+          const a0 = (i / 6) * TAU + k * 0.9;
+          ctx.save();
+          ctx.translate(c, y);
+          ctx.scale(1, 0.32);
+          celCrescent(ctx, k % 2 ? CLOUDS : SKYB, 0, 0, r, a0, a0 + 3.6, 16 - k * 2, { seed: 171 + k, inkW: 4 });
+          ctx.restore();
+        }
+        for (let j = 0; j < 2; j++) {
+          const a = (i / 6) * TAU + j * Math.PI;
+          feather(ctx, j ? SUNLIT : SKYB, c + Math.cos(a) * 70, base - 70 + Math.sin(a) * 12, 22, a + 1.2);
+        }
+      },
+    };
+  })();
+
+  // Her badge: a white wing over a little cloud, with a sun sparkle.
+  E.embsky = emblem(SKYB, (ctx) => {
+    puff(ctx, CLOUDS, 0, 22, 26, 181, { lobes: 5 });
+    for (let k = 0; k < 5; k++) feather(ctx, k % 2 ? SKYB : CLOUDS, -6 + k * 7, -2 - k * 6, 44 - k * 4, -0.5 - k * 0.32);
+    sparkle(ctx, SUNLIT, 30, -34, 12, 0.3);
+  });
+
+  // Sky Waltz (her finisher): a tornado gathers round her, spinning up from the ground into a great
+  // column with feathers and clouds caught in it; then it slams down, bursting out along the
+  // ground in a ring of wind and clouds, sunlight sparkling down.
+  E.skytornado = (() => {
+    const c = 220;
+    const gy = 400;
+    return {
+      w: 440, h: 420, n: 12, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 7) {
+          const grow = Math.min(1, (i + 1) / 5);
+          const rings = 7;
+          for (let k = 0; k < rings; k++) {
+            const u = k / (rings - 1);
+            const y = gy - 20 - u * 330 * grow;
+            const r = (40 + u * 120) * (0.6 + 0.4 * grow);
+            const a0 = i * 1.3 + k * 0.8;
+            ctx.save();
+            ctx.translate(c + Math.sin(u * 3 + i * 0.7) * 10 * u, y);
+            ctx.scale(1, 0.3);
+            celCrescent(ctx, k % 2 ? CLOUDS : SKYB, 0, 0, r, a0, a0 + 4, 26 - u * 6, { seed: 191 + k, inkW: 4 });
+            ctx.restore();
+          }
+          const R = rng(192 + i);
+          for (let j = 0; j < 6; j++) {
+            const u = R();
+            const a = R() * TAU + i;
+            feather(ctx, j % 2 ? SUNLIT : SKYB, c + Math.cos(a) * (50 + u * 110), gy - 40 - u * 300 * grow, 24, a);
+          }
+        }
+        // The slam: rings bursting out along the ground, clouds rolling, sunlight raining.
+        if (i >= 8) {
+          const b = (i - 8) / 3;
+          ctx.save();
+          ctx.translate(c, gy - 10);
+          ctx.scale(1, 0.32);
+          celRing(ctx, SKYB, 0, 0, 80 + b * 140, 24 * (1 - b * 0.6), { broken: i >= 10 ? 0.5 : 0, seed: 193 });
+          ctx.restore();
+          for (const s of [-1, 1]) for (let j = 0; j < 3; j++) puff(ctx, CLOUDS, c + s * (60 + b * 120 + j * 30), gy - 20 - j * 8, 26 * (1 - b * 0.5) - j * 4, 194 + j, { holes: b > 0.5 ? 0.4 : 0, lobes: 5 });
+          if (i <= 9) starburst(ctx, SUNLIT, c, gy - 40, 80 - (i - 8) * 20, 10, 195, { inner: 0.3 });
+          const R = rng(196);
+          for (let j = 0; j < 10; j++) sparkle(ctx, j % 2 ? SUNLIT : SKYB, c + (R() - 0.5) * 380, gy - 300 + R() * 100 + b * 150, 12 * (1.2 - b * 0.5), j);
+        }
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

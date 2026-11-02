@@ -334,20 +334,16 @@ function kiAura(ctx, x, y, t, s, k, layer) {
   if (full && layer === 'front') fxSprite(ctx, 'celembblade', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Tails: a tail of fox fire behind the kitsune for each one she has (one to nine), fanning out and
-// swaying, and full (Nine Tails), the fox's face over her head and rings of fox fire racing out.
-function tailsAura(ctx, x, y, t, s, k, layer, dir = 1) {
-  const n = Math.min(9, Math.floor(k * 9 + 1e-9));
+// Tailwind (the Sky Dancer; internally Tails): a whirlwind of wind rings gathers under her feet as
+// it builds, turning faster the fuller it is; full, it grows into the whirlwind she rides through
+// the air, and her badge, a wing over a cloud, shines over her head.
+function tailsAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    for (let i = 0; i < n; i++) {
-      const spread = n === 1 ? 0 : i / (n - 1) - 0.5;
-      const sway = Math.sin(t * 2.2 + i * 0.9) * 0.08;
-      fxSprite(ctx, 'celfoxtail', x - dir * 8, y - 12 * s, { t: t + i * 0.13, flip: dir < 0, rot: dir * (spread * 1.5 + sway - 0.15), scale: s * (0.48 + 0.04 * (4 - Math.abs(i - (n - 1) / 2))), alpha: 0.95 });
-    }
-    if (k >= 1) fxSprite(ctx, 'celringfox', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.15 && k < 1) fxSprite(ctx, 'celskywhirl', x, y + 4 * s, { t: t * (0.6 + 0.8 * k), scale: s * (0.22 + 0.16 * k), alpha: Math.min(1, (k - 0.15) * 2) });
+    if (k >= 1) fxSprite(ctx, 'celskywhirl', x, y + 6 * s, { t: t * 1.6, scale: s * 0.46 });
     return;
   }
-  if (k >= 1) fxSprite(ctx, 'celembfox', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (k >= 1) fxSprite(ctx, 'celembsky', x, y - 62 * s, { frame: 1, scale: s * 0.3, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or

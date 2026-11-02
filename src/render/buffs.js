@@ -143,7 +143,6 @@ export const BUFF_LOOKS = {
       sheen(ctx, x, y, t, '#ffffff', a);
     },
   },
-  // (The Kitsune's Fox Illusion is drawn as the illusions themselves.)
   quickhaste: {
     color: '#b89cff', cast: 'gust',
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).

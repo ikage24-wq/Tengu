@@ -154,10 +154,10 @@ jobs.)
   Steady Aim, mastery, Heartseeker finisher), each with its own basic combo, command shots (up,
   air, running), moves, effects, sounds, icons, auras, and generated players on both paths.
   Thief done: Vex's trial at 30 (defeat 20 Bone Knights), then the Blade Dancer (2026-11-02, replacing
-  the Shinobi: chakrams, Ricochet and the Carousel: Rebound, Twin Rings, Golden Carousel finisher) or Kitsune
-  (gauntlet, Tails and fox-fire illusions: Fox-Fire Fan, Fox Illusion, Fox-Fire Trap, Fox Hop,
-  Nine-Tail Blaze finisher), on a remade first-job Thief whose skills lead into both (the old
-  Assassin and Night Lord were removed).
+  the Shinobi: chakrams, Ricochet and the Carousel: Rebound, Twin Rings, Golden Carousel finisher) or the
+  Sky Dancer (2026-11-02, replacing the Kitsune: gloves, every blow lifts her, Tailwind and free flight:
+  Updraft, Zephyr, Sky Waltz finisher), on the Wind Dancer (the remade first-job Thief) whose
+  skills lead into both (the old Assassin and Night Lord were removed earlier).
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).

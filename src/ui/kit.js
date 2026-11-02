@@ -521,14 +521,17 @@ const ICONS = {
     ctx.arc(0, 0, s * 0.2, 0, Math.PI * 2, true);
     ctx.fill();
   },
-  // A fox's tail, a plume curling up (the Kitsune's Tails).
-  foxtail(ctx, s) {
-    ctx.beginPath();
-    ctx.moveTo(s * 0.3, s * 0.46);
-    ctx.quadraticCurveTo(-s * 0.5, s * 0.3, -s * 0.3, -s * 0.46);
-    ctx.quadraticCurveTo(s * 0.1, -s * 0.2, s * 0.06, s * 0.1);
-    ctx.quadraticCurveTo(s * 0.12, s * 0.3, s * 0.3, s * 0.46);
-    ctx.fill();
+  // A wing, three feathers swept up and back (the Sky Dancer's Tailwind).
+  wing(ctx, s) {
+    for (const [len, a, w] of [[0.9, -0.9, 0.2], [0.78, -0.45, 0.18], [0.62, -0.05, 0.16]]) {
+      ctx.save();
+      ctx.translate(-s * 0.28, s * 0.3);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(s * len * 0.5, 0, s * len * 0.5, s * w, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   },
   // A crescent moon (the Thief's Shadow).
   moon(ctx, s) {

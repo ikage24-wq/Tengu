@@ -183,7 +183,10 @@ function popOf(c) {
 }
 
 // A dancer path's trim on the dancers' gear (see drawHero).
-const PATH_TRIMS = { shinobi: { trim: '#f4b49a', trimDark: '#c8746a', trimLight: '#ffe0cf', accent: '#ffd36a' } };
+const PATH_TRIMS = {
+  shinobi: { trim: '#f4b49a', trimDark: '#c8746a', trimLight: '#ffe0cf', accent: '#ffd36a' },
+  kitsune: { trim: '#bfe6ff', trimDark: '#6fa8d8', trimLight: '#eef9ff', accent: '#ffe6a0' },
+};
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
@@ -2790,6 +2793,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const g = resolveGear(look, gear);
   // The Blade Dancer's chakrams take her rose gold, unless the item has a colour of its own.
   if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
+  // The Sky Dancer's gloves take her sky blue the same way.
+  if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
   // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
   // gear sets or recoloured variants): the Blade Dancer's in rose gold with gold gems.
   const trim = PATH_TRIMS[state.job];

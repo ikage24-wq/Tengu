@@ -4,7 +4,7 @@ import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
-import { wheelShape, wheelWisps, foxSpirit, FOX_SPIRIT_HEAT } from '../world/foxwheel.js';
+import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
@@ -285,15 +285,6 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
   drawBuffClones(ctx, buffs, look, gear, hx, hy, heroState, time);
-  // Fox Decoy: an illusion of the Kitsune in blue fox fire where she set it, flickering, flames
-  // licking up off it.
-  const d = world.decoy;
-  if (d && d.map === world.map.id && !world.dead) {
-    const dx = snap(d.x - cam.x);
-    const dy = snap(d.y - cam.y);
-    fxSprite(ctx, 'celfoxfire', dx, dy + 4, { t: time, scale: 0.36, alpha: 0.6 });
-    drawTinted(ctx, dx, dy, '#2f6cf0', 0.7, (c) => drawHero(c, look, gear, dx, dy, { time, facing: d.facing, ready: true, job: null, alpha: 0.68 + 0.12 * Math.sin(time * 7) }));
-  }
   // Phantom (a Thief's full Shadow): her shadow copy stands just behind her, and plays each move a
   // beat after she does.
   if (!world.dead && phantom(world)) drawPhantom(ctx, world, look, gear, hx, hy, heroState);
@@ -398,8 +389,8 @@ export function drawWorld(ctx, world, viewCam, time) {
 // over a quarter second (the speed reads as shadow, not as a smear).
 const GHOST_MOVES = new Set(['dashstab', 'backstab', 'assassinate', 'flashcut', 'shadowrun', 'flashjump']);
 const GHOST_LIFE = 0.24;
-// The Blade Dancer's afterimages are rose gold, the Kitsune's blue fox fire.
-const GHOST_TINT = { shadow: '#6a4ec8', rosegold: '#d26d6a', fox: '#3a6ee0' };
+// The Blade Dancer's afterimages are rose gold, the Sky Dancer's sky blue.
+const GHOST_TINT = { shadow: '#6a4ec8', rosegold: '#d26d6a', fox: '#3a6ee0', aerial: '#4e9fe6' };
 // The endless barrages' speed blur: blue fox fire, the green of the wind.
 const BLUR_TINT = { kitsune: '#3a6ee0', beastmaster: '#2fae7c' };
 function drawAfterimages(ctx, world, look, gear, cam, state, time) {
@@ -424,50 +415,12 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
   }
 }
 
-// Endless Fox-Fire: the wheel of fox fire round her (world/foxwheel.js), its back half drawn
-// behind her and its front half in front, each wisp trailing a blur of itself round the ring that
-// grows as it spins faster. From the Wheel stage a faint ring marks its path, and at the very top a
-// circle of fox fire burns on the ground under her as she floats. When she lets go, the wisps fly
-// apart and fade.
+// The endless barrages' wheels round her: only the Beastmaster's gale of leaves now (the Kitsune's
+// fox-fire wheel went with her).
 function drawFoxWheel(ctx, world, hx, hy, time, layer) {
   const run = world.barrage ?? world.wheelGone;
-  if (!run || run.heat == null) return;
-  if (run.kind === 'beastmaster') return drawLeafWheel(ctx, world, run, hx, hy, time, layer);
-  if (run.kind && run.kind !== 'kitsune') return;
-  const fade = world.barrage ? 1 : 1 - (world.now - run.goneAt) / 0.35;
-  if (fade <= 0) return;
-  const t = (world.barrage ? world.now : run.goneAt) - run.since;
-  const heat = run.heat;
-  const spread = 1 + (1 - fade) * 1.8;
-  const dir = world.body.facing;
-  const k = Math.min(1, heat / 1.6);
-  const shape = wheelShape(heat, t);
-  if (layer === 'back') {
-    // At the very top, the giant fox spirit of fox fire looms over and behind her, flickering.
-    if (heat >= FOX_SPIRIT_HEAT) {
-      const sp = foxSpirit(heat, t, dir);
-      fxSprite(ctx, 'celembfox', hx + sp.x, hy + sp.y, { frame: 1 + (Math.floor(time * 6) % 2), scale: 1.9 + 0.08 * Math.sin(time * 5), alpha: 0.95 * fade * Math.min(1, (heat - FOX_SPIRIT_HEAT) / 0.12) });
-    }
-    if (heat >= 1.5) fxSprite(ctx, 'celfoxtrapring', hx, hy + 4, { t: time * 1.4, scale: 0.75, alpha: fade * Math.min(1, (heat - 1.5) / 0.08) });
-    if (heat >= 0.9) {
-      ctx.save();
-      ctx.globalAlpha = 0.3 * fade * Math.min(1, (heat - 0.9) / 0.2);
-      ctx.strokeStyle = '#8cc4ff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(hx, hy + shape.cy, shape.rx * spread, shape.ry * spread, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-  const trail = heat >= 0.9 ? 4 : 2;
-  for (const w of wheelWisps(heat, t, dir)) {
-    if (w.front !== (layer === 'front')) continue;
-    for (let j = trail; j >= 0; j--) {
-      const at = j ? wheelWisps(heat, t - j * 0.02, dir)[w.i] : w;
-      fxSprite(ctx, 'celfoxfire', hx + at.x * spread, hy + shape.cy + (at.y - shape.cy) * spread, { t: time * 1.4 + w.i * 0.17, scale: (0.26 + 0.14 * k) * (1 - j * 0.14), alpha: fade * (j ? 0.4 * (1 - j / (trail + 1)) : 1) });
-    }
-  }
+  if (!run || run.heat == null || run.kind !== 'beastmaster') return;
+  drawLeafWheel(ctx, world, run, hx, hy, time, layer);
 }
 
 // Wild Hunt's gale (the Beastmaster at full tilt, heat 1.25 on): leaves tumbling round her on the

@@ -55,7 +55,7 @@ blow).
   - any special behaviour is tested (e.g. Sniper bolts pierce the line).
 
 - **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both
-  2nd-job paths (the Blade Dancer and the Kitsune grew from the Wind Dancer's chakram and glove sets): one shared gauge and a few shared skills, then a set of skills for each weapon
+  2nd-job paths (the Blade Dancer and the Sky Dancer grew from the Wind Dancer's chakram and glove sets): one shared gauge and a few shared skills, then a set of skills for each weapon
   (each set with its own finisher and mastery, gated by `weapons`), so the player chooses where
   the points go, and its own basic combo and command moves for each weapon.
 

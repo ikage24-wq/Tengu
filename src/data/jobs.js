@@ -87,17 +87,17 @@ export const JOBS = {
     blurb: 'Calls the storm down with a crossbow. Her bolts build Charge; full, every bolt chains on to one more monster. Lightning that jumps between monsters, charged ground, a storm cloud overhead, and Thunderhead: a storm over the whole screen.',
   },
 
-  // Thief branches, a pair from the same mountain shrine. Both ask for Vex's trial first; each
-  // keeps to one of the Thief's two weapons.
+  // The dancer's paths (the Thief's branches, ids kept). Both ask for Vex's trial first; each keeps
+  // to one of her two weapons: the Blade Dancer to chakrams, the Sky Dancer to gloves.
   shinobi: {
     id: 'shinobi', power: 1.6, spread: 1.07, name: 'Blade Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
     blurb: 'A ring-throwing showgirl with chakrams. Her rings ricochet from monster to monster and fly home to her hand, building Ricochet; full, two rose-gold rings orbit her and cut whatever comes close. Rebound, Twin Rings, and Golden Carousel: a carousel of rings flung out through everything.',
   },
   kitsune: {
-    id: 'kitsune', power: 1.41, spread: 1.37, name: 'Kitsune', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'kitsune', power: 1.41, spread: 1.37, name: 'Sky Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
-    blurb: 'Fox-fire stars from a gauntlet. Her stars set monsters burning and grow her Tails, one to nine; every three tails a fox-fire illusion throws stars beside her. Fox-fire fans, illusions, traps, and Nine-Tail Blaze: a giant fox of blue fire.',
+    blurb: 'A dancer who never lands, with gloves of wind. Every blow lifts her higher over the monsters and throws a crescent of wind down at them; her hits in the air build Tailwind, and full, she flies freely and her gusts are twice as big. Updraft, Zephyr, and Sky Waltz: a giant tornado that lifts them all and slams them down.',
   },
 
   // Hidden: only unlocked with the Game Master passphrase, never offered by an instructor.

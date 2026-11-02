@@ -36,7 +36,7 @@ const BG = {
   blood: ['#ffa0b4', '#5a0e24'],
   indigo: ['#b8bcff', '#1e1a5e'],
   tempest: ['#cdb4ff', '#262a7e'],
-  foxfire: ['#a8d8ff', '#14308a'],
+  skydance: ['#e6f6ff', '#3f7ad0'],
   rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
 };
@@ -1198,70 +1198,50 @@ function goldencarousel() {
   return out;
 }
 
-// ---------- Kitsune (gold and blue fox fire) ----------
-// A tongue of fox fire (the shared flame shape, in blue with a white core).
-const foxFlame = (cx, by, w, h, lean = 0) => [...solid(flamePts(cx, by, w * 2, h, lean), '#2f7cff', { d: 0.4, ink: '#0c1a6a' }), S(flamePts(cx, by - 0.3, w * 1.1, h * 0.62, lean * 0.6), '#bfeaff'), S(flamePts(cx, by - 0.4, w * 0.56, h * 0.32, lean * 0.3), W)];
-// A fox's face from the front: a broad head, two tall ears, a pointed muzzle.
-function foxFace(cx, cy, k, c, o = {}) {
-  const head = [[cx - 4 * k, cy - 1 * k], [cx - 4.4 * k, cy - 5.2 * k], [cx - 1.8 * k, cy - 2.6 * k], [cx + 1.8 * k, cy - 2.6 * k], [cx + 4.4 * k, cy - 5.2 * k], [cx + 4 * k, cy - 1 * k], [cx + 2.2 * k, cy + 1.8 * k], [cx, cy + 4 * k], [cx - 2.2 * k, cy + 1.8 * k]];
-  return [...solid(head, c, { d: 0.4, ink: o.ink ?? '#0c1a6a' }), S(oval(cx - 1.6 * k, cy - 0.2 * k, 0.6 * k, 0.35 * k, -20, 10), o.eye ?? '#ffd36a'), S(oval(cx + 1.6 * k, cy - 0.2 * k, 0.6 * k, 0.35 * k, 20, 10), o.eye ?? '#ffd36a'), S(oval(cx, cy + 3.2 * k, 0.5 * k, 0.4 * k, 0, 8), '#1a1420')];
+// ---------- Sky Dancer (sky blue, white clouds, a little sunlight) ----------
+const SKYBLUE = '#8fd0ff';
+const SKYINK = '#2a4f9e';
+const SUNGOLD = '#ffe6a0';
+// A crescent of wind sweeping from a0 to a1 round (cx, cy).
+const gust = (cx, cy, r, a0, a1, w) => swoosh(cx, cy, r, r * 0.9, a0, a1, w, SKYBLUE, { ink: SKYINK });
+// A feather: a soft leaf with a white spine, from (x0, y0) to (x1, y1).
+function featherIcon(x0, y0, x1, y1, w, c = W) {
+  const mx = (x0 + x1) / 2;
+  const my = (y0 + y1) / 2;
+  const nx = -(y1 - y0);
+  const ny = x1 - x0;
+  const l = Math.hypot(nx, ny) || 1;
+  const pts = [[x0, y0], [mx + (nx / l) * w, my + (ny / l) * w], [x1, y1], [mx - (nx / l) * w * 0.7, my - (ny / l) * w * 0.7]];
+  return [...solid(pts, c, { d: 0.35, ink: SKYINK, shadow: false }), streak([x0, y0], [x1, y1], 0.3, '#c8dcf0')];
 }
-function kitsunemastery() {
-  const out = [...tile('foxfire', 'passive'), ...aura(8, 8, 6.6, '#bfeaff')];
-  out.push(...foxFlame(8, 14, 3.4, 10));
-  out.push(...throwStar(8, 8, 4.2, -30, '#dfe8ff'));
+function skymastery() {
+  const out = [...tile('skydance', 'passive'), ...aura(8, 8, 6.6, '#e8f8ff')];
+  out.push(...gust(8, 8, 5.4, -200, -30, 1.8), ...gust(8, 8.6, 3.4, 20, 160, 1.2));
+  out.push(...featherIcon(5, 12.6, 11.6, 4, 1.6));
+  out.push(...spark(13, 2.6, 1.1, SUNGOLD));
   return out;
 }
-// A stream of fox-fire stars, small and far to big and near, trailing blue fire.
-function foxbarrage() {
-  const out = [...tile('foxfire', 'passive'), ...aura(8, 8, 6.6, '#bfeaff')];
-  for (const [x, y, r, rot] of [[3.4, 12.6, 1.5, -10], [6, 10, 2, -35], [9, 7.4, 2.5, -60], [12.4, 4.6, 3, -85]]) {
-    out.push(streak([x - 2.6, y + 2.6], [x - 0.6, y + 0.6], r * 0.5, '#2f7cff'));
-    out.push(...throwStar(x, y, r, rot, '#dfe8ff'));
-  }
-  out.push(...spark(3.4, 4, 1, '#ffd36a'));
+// Updraft: a whirl rising out of a little cloud.
+function updraft() {
+  const out = [...tile('skydance', 'passive')];
+  out.push(...puffs([[5.4, 12.6, 2.4], [8.4, 12, 2.8], [11.2, 12.8, 2.2]], W));
+  for (const [y, r] of [[9.4, 3.8], [6.6, 3], [4, 2.2]]) out.push(...swoosh(8, y, r, r * 0.42, -200, 60, 0.9, SKYBLUE, { ink: SKYINK }));
+  out.push(...spark(12.6, 3, 1, SUNGOLD));
   return out;
 }
-function foxfirefan() {
-  const out = [...tile('foxfire', 'active')];
-  for (const [x, y, r, rot] of [[4, 11.4, 2.6, -20], [8.4, 6.4, 3.2, -50], [12.6, 11, 2.6, -70]]) {
-    out.push(...foxFlame(x - 1.6, y + 2.8, 1.8, 5.6, -1.2));
-    out.push(...throwStar(x, y, r, rot, '#dfe8ff'));
-  }
-  out.push(...spark(14, 3, 1, '#ffd36a'));
+// Zephyr: two crescents of wind, one a beat behind the other.
+function zephyr() {
+  const out = [...tile('skydance', 'passive'), ...aura(8, 8, 6.6, '#e8f8ff')];
+  out.push(...gust(5.4, 9.4, 4, -60, 60, 1.4), ...gust(10.4, 7, 4, -60, 60, 1.6));
+  out.push(streak([1, 6], [4, 6], 0.5, '#c8dcf0'), streak([1.4, 12], [4.4, 12], 0.5, '#c8dcf0'));
   return out;
 }
-function foxillusion() {
-  const out = [...tile('foxfire', 'buff'), ...aura(8, 8, 6.4, '#bfeaff')];
-  out.push(...foxFace(4.2, 9.6, 0.62, '#6ab8ff', { eye: '#ffffff' }), ...foxFace(11.8, 9.6, 0.62, '#6ab8ff', { eye: '#ffffff' }));
-  out.push(...foxFace(8, 8, 0.9, '#ffffff', { ink: '#1e3a8a' }));
-  out.push(streak([6.4, 7], [7.4, 7.6], 0.5, '#d8283a'), streak([9.6, 7], [8.6, 7.6], 0.5, '#d8283a'));
-  return out;
-}
-function foxtrap() {
-  const out = [...tile('foxfire', 'active')];
-  out.push(S(oval(8, 12, 6.4, 2.4, 0, 28), '#0c1a6a'), S(oval(8, 12, 5.6, 1.7, 0, 28), '#2f7cff'), S(oval(8, 12, 4.4, 1.1, 0, 24), '#14308a'));
-  for (const [x, h] of [[2.4, 5], [5, 7], [8, 8.4], [11, 7], [13.6, 5]]) out.push(...foxFlame(x, 12.4, 1.3, h));
-  out.push(...spark(13.8, 2.6, 1, '#ffd36a'));
-  return out;
-}
-function foxhop() {
-  const out = [...tile('foxfire', 'active')];
-  const arc = arcPts(8, 11, 5.2, 6.4, 200, 340, 14);
-  out.push(S(tube(arc, 0.4, 1.3), '#bfeaff'));
-  out.push(S([[2.4, 10.8], [1.6, 7.6], [4.6, 9.2]], '#bfeaff'));
-  out.push(...foxFlame(12.6, 14, 2.2, 7));
-  out.push(...spark(5, 3.4, 0.9, '#ffd36a'));
-  return out;
-}
-function ninetailblaze() {
-  const out = [...tile('foxfire', 'active'), ...aura(8, 8, 7.2, '#bfeaff', 1.2, 5)];
-  for (let i = 0; i < 9; i++) {
-    const a = (-150 + i * 15) * (Math.PI / 180);
-    out.push(S(tube([[8, 11], [8 + Math.cos(a) * 5, 11 + Math.sin(a) * 5], [8 + Math.cos(a - 0.3) * 7.4, 11 + Math.sin(a - 0.3) * 7.4]], 0.9, 0.2), i % 2 ? '#2f7cff' : '#6ab8ff'));
-  }
-  out.push(...foxFace(8, 10.6, 0.8, '#bfeaff', { ink: '#1e3a8a' }));
-  out.push(...spark(14, 2.6, 1.1, '#ffd36a'), ...spark(2.2, 2.8, 0.9, '#ffd36a'));
+// Sky Waltz: a tornado with a sun sparkle at its top.
+function skywaltz() {
+  const out = [...tile('skydance', 'active'), ...aura(8, 8, 7, SUNGOLD, 1.2, 5)];
+  for (const [y, r] of [[13, 1.6], [11, 2.6], [8.8, 3.6], [6.4, 4.6], [3.8, 5.6]]) out.push(...swoosh(8, y, r, r * 0.38, -210, 40, 1, y < 8 ? W : SKYBLUE, { ink: SKYINK }));
+  out.push(...featherIcon(11.6, 6.2, 14.2, 2.4, 1));
+  out.push(...spark(3, 3, 1.2, SUNGOLD), ...spark(13.4, 12.6, 0.9));
   return out;
 }
 
@@ -1528,7 +1508,7 @@ const ART = {
   stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
-  kitsunemastery, foxbarrage, foxfirefan, foxillusion, foxtrap, foxhop, ninetailblaze,
+  skymastery, updraft, zephyr, skywaltz,
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };

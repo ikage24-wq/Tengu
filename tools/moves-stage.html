@@ -122,7 +122,8 @@ if (q.get('record')) {
     for (let i = 0; i < n; i++) {
       step(1 / FPS, held, i === 0 ? held : []);
       if (quiet) continue;
-      cx.drawImage(canvas, 430, 380, 624, 360, 0, 0, 520, 300);
+      // (?cropy=300 raises the window, for a hero dancing up in the air.)
+      cx.drawImage(canvas, 430, Number(q.get('cropy') ?? 380), 624, 360, 0, 0, 520, 300);
       frames.push(crop.toDataURL('image/jpeg', 0.88));
     }
   }

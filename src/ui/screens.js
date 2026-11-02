@@ -37,7 +37,7 @@ function backdrop(ctx, time) {
 
 // A silly subtitle under the logo, rolled fresh on every page load.
 const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
-const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Stormcaller', 'Blade Dancer', 'Kitsune', 'Onmyoji'];
+const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Stormcaller', 'Blade Dancer', 'Sky Dancer', 'Onmyoji'];
 const QUOTE_MAKERS = [
   () => `${oneOf(JOB_NAMES)}s are perfectly balanced. Probably.`,
   () => `${oneOf(['Mira', 'Marlo', 'Lulu', 'The Crystal King'])} says hi!`,
