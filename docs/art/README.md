@@ -307,6 +307,13 @@ carry an improvement across every part of the game it applies to.
     steam; sticky and cluster bolts burst in brass and teal with scattered cogs; her turret is a brass
     tripod machine with a cog drum and a teal eye; Big Bertha is a giant brass ballista unfolding
     over her. Crossbows are compact gadget crossbows held at the waist.
+  - The Astronomer (2026-11-02; she replaced the Onmyoji) is deep violet and silver, HD soft glow:
+    her planet in flight is a little violet world, its bands rolling, in a tilted silver ring with an
+    orbit line trailing it; her big one a ringed world with two rings; her hit a silver crescent
+    sweeping round the monster and a violet ring opening; her moons little silver moons riding a flat
+    orbit round her middle (her gauge); Gravity Well a small world with silver rings spiralling in;
+    Lunar Tide a silver tide rising round her; Planetary Alignment five planets in a row and a beam
+    through them; her badge a ringed planet with a moon. Her staff is drawn as an orrery.
   - The Starlight Idol (2026-11-02; she replaced the Shrine Maiden) is pink and gold, HD soft glow:
     her note in flight is a pink music note bobbing with gold sparkles behind it; her big note a
     burst of pink sound waves round a pair of gold notes; her hit a pink pop that bursts into notes

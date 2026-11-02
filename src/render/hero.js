@@ -17,7 +17,6 @@ import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
 import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
-import { TROUPE_OUTFIT_KEYS } from './jobgear/troupe.js';
 import { PET_OUTFIT_KEYS } from './jobgear/pets.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
@@ -189,7 +188,7 @@ const PATH_TRIMS = {
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
-  const style = OUTFIT_STYLES.includes(look.outfit) || TROUPE_OUTFIT_KEYS.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
+  const style = OUTFIT_STYLES.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
   // Where nothing is equipped, the outfit picked in the creator.
   const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
   // A real hero's gear (not a preview or a townsperson, who pass none): where the top, bottoms or
@@ -313,45 +312,6 @@ const EYE_LOOK = {
   wink: { rx: 2, ry: 2.5, tilt: 0.12, wing: 0.9, flicks: 1, iris: 1.3 },
   // A doll's: big and perfectly round, almost all iris, a glass ring for a pupil, barely a lash.
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
-  // The oni's own (render/oni.js; never offered in the creator): sharp and upswept with slit
-  // pupils; huge and round with star pupils; droopy and heavy-lidded; wide with a small fierce iris.
-  onisharp: { rx: 2.4, ry: 2.2, tilt: 0.6, wing: 2, flicks: 2, iris: 1.05, pupil: 'slit' },
-  oniround: { rx: 2.35, ry: 2.95, tilt: 0.05, wing: 0.7, flicks: 2, iris: 1.45, pupil: 'star', sparkle: true },
-  onitare: { rx: 2.3, ry: 2.3, tilt: -0.28, wing: 1.2, flicks: 1, iris: 1.25, open: 0.6 },
-  onisanpaku: { rx: 2.35, ry: 2.6, tilt: 0.3, wing: 1.4, flicks: 2, iris: 0.8 },
-  // The yuki-onna's: calm and downcast, long and narrow with heavy lashes and a small pale iris;
-  // or wide and empty, a cold stare with a tiny pupil.
-  yukicalm: { rx: 2.5, ry: 2, tilt: 0.12, wing: 1.6, flicks: 3, iris: 1.05, open: 0.7 },
-  yukistare: { rx: 2.3, ry: 2.7, tilt: 0.05, wing: 1, flicks: 2, iris: 1.2, pupil: 'ring' },
-  // More of hers, to pick from: snowflake pupils (round, or narrow and veiled); a long, sleepy,
-  // downturned veil of lashes; a thin cold bar of a pupil; diamond pupils, upswept; a huge glassy
-  // doll's eye; and a narrow, sharp, almost-closed glance.
-  yukiflake: { rx: 2.35, ry: 2.6, tilt: 0.08, wing: 1.2, flicks: 2, iris: 1.35, pupil: 'flake', sparkle: true },
-  yukiflakeveil: { rx: 2.5, ry: 2.2, tilt: 0.15, wing: 1.8, flicks: 3, iris: 1.2, pupil: 'flake', open: 0.62 },
-  yukiveil: { rx: 2.55, ry: 2.1, tilt: -0.22, wing: 2, flicks: 3, iris: 1.1, open: 0.5 },
-  yukibar: { rx: 2.4, ry: 2.4, tilt: 0.1, wing: 1.4, flicks: 2, iris: 1.3, pupil: 'bar' },
-  yukidiamond: { rx: 2.4, ry: 2.3, tilt: 0.45, wing: 1.8, flicks: 2, iris: 1.15, pupil: 'diamond' },
-  yukiglass: { rx: 2.4, ry: 2.9, tilt: 0, wing: 0.6, flicks: 1, iris: 1.5, pupil: 'ring', sparkle: true },
-  yukislit: { rx: 2.6, ry: 1.7, tilt: 0.3, wing: 2.2, flicks: 3, iris: 1, open: 0.55 },
-  // More of hers (`lash` sets the lashes' colour: frost white, or ice blue):
-  yukifrostlash: { rx: 2.45, ry: 2.4, tilt: 0.1, wing: 1.8, flicks: 3, iris: 1.25, pupil: 'flake', lash: '#e8f0ff', sparkle: true },
-  yukicrescent: { rx: 2.4, ry: 2.5, tilt: 0.05, wing: 1.4, flicks: 2, iris: 1.3, pupil: 'crescent' },
-  yukimoon: { rx: 2.55, ry: 2.05, tilt: -0.2, wing: 2, flicks: 3, iris: 1.15, pupil: 'crescent', open: 0.58 },
-  yukicrystal: { rx: 2.4, ry: 2.6, tilt: 0.08, wing: 1.3, flicks: 2, iris: 1.35, pupil: 'crystal', sparkle: true },
-  yukiblank: { rx: 2.35, ry: 2.5, tilt: 0.05, wing: 1.2, flicks: 2, iris: 1.3, pupil: 'none' },
-  yukirings: { rx: 2.4, ry: 2.6, tilt: 0.06, wing: 1.2, flicks: 2, iris: 1.35, pupil: 'rings' },
-  yukiwhiteveil: { rx: 2.55, ry: 2.1, tilt: -0.22, wing: 2, flicks: 3, iris: 1.1, open: 0.5, lash: '#e8f0ff' },
-  yukiicelash: { rx: 2.45, ry: 2.3, tilt: 0.35, wing: 2.2, flicks: 3, iris: 1.15, pupil: 'diamond', lash: '#6a9ad8' },
-  // The tengu's: long, sharp and upswept under a heavy lid (a smug, unhurried look down his nose),
-  // a man's light lashes, a narrow gold iris.
-  tengusmug: { rx: 2.55, ry: 1.85, tilt: 0.34, wing: 1.1, flicks: 1, iris: 1.12, open: 0.64 },
-  // More of his, to pick from: a fox's, narrow and sharply upswept; heavy-lidded and bored; keen,
-  // with a slit pupil; long and calm, almond-shaped; a hawk's, a small fierce iris in a wide eye.
-  tengufox: { rx: 2.6, ry: 1.7, tilt: 0.55, wing: 1.5, flicks: 1, iris: 1.05, open: 0.56 },
-  tenguheavy: { rx: 2.5, ry: 2, tilt: 0.12, wing: 1, flicks: 1, iris: 1.1, open: 0.48 },
-  tengukeen: { rx: 2.45, ry: 2, tilt: 0.42, wing: 1.3, flicks: 1, iris: 1.15, pupil: 'slit', open: 0.7 },
-  tengucalm: { rx: 2.6, ry: 1.9, tilt: 0.2, wing: 1.2, flicks: 1, iris: 1.25, open: 0.72 },
-  tenguhawk: { rx: 2.35, ry: 2.3, tilt: 0.3, wing: 1, flicks: 1, iris: 0.9, open: 0.8 },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -449,7 +409,6 @@ function earShapes(style, c, inner) {
 // darkest shade, never ink). `round` is hikimayu: small soft ovals set high; `dots` a doll's
 // painted brows, two tiny dots side by side set very high. `none` hides them.
 export const BROW_STYLES = ['soft', 'thick', 'round', 'thin', 'arched', 'sharp', 'stubby', 'dots', 'none'];
-// (Also 'tengu', the tengu's own: never offered in the creator.)
 
 // A tapered ribbon along `pts`, `ws` thick at each point.
 function ribbon(pts, ws, c) {
@@ -506,9 +465,6 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
     case 'arched':
       // A high curve that peaks past the middle.
       return ribbon([at(0), at(0.35, 0.6), at(0.65, 0.95), at(1, 0.2)], g([0.5, 0.75, 0.7, 0.35]), c);
-    case 'tengu':
-      // The tengu's: straight, strong and clean, a man's brow, tapering long past the eye.
-      return ribbon([at(-0.12), at(0.45, 0.18), at(1.18, 0.3)], g([1.05, 0.95, 0.3]), c);
     case 'sharp':
       // Full at the inner end, narrowing to a point that flicks up past the eye.
       return ribbon([at(0), at(0.5, 0.15), at(1.12, 0.75)], g([0.95, 0.7, 0.12]), c);
@@ -2796,6 +2752,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
   // The Arbalist Engineer's crossbow takes her polished brass.
   if (state.job === 'stormcaller' && g.weapon?.type === 'crossbow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'brass' };
+  // The Astronomer's staff is her violet and silver orrery.
+  if (state.job === 'onmyoji' && g.weapon?.type === 'staff' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'astro' };
   // The Starlight Idol's wand is her pink and gold microphone.
   if (state.job === 'shrinemaiden' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'idol' };
   // The Sky Dancer's gloves take her sky blue the same way.

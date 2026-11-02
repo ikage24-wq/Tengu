@@ -95,6 +95,15 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 2, alpha: f.split ? 0.85 : 1 });
       break;
     }
+    case 'asplanet': case 'asbig': case 'asmoon': {
+      // The Astronomer's: a little ringed planet rolling with an orbit trailing it, a great ringed
+      // world, and one of her moons flying off at a monster.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const name = f.shot === 'asplanet' ? 'celasplanet' : f.shot === 'asbig' ? 'celasbig' : 'celasmoon';
+      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'asmoon' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'asplanet' ? 0.75 : f.shot === 'asbig' ? 0.8 : 0.3, alpha: f.split ? 0.85 : 1 });
+      break;
+    }
     case 'sinote': case 'sibig': {
       // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);

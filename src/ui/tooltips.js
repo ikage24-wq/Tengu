@@ -108,12 +108,14 @@ function describeParts(params, tune = 1) {
   }
   const parts = [];
   const pc = (v) => `${Math.round(v * tune)}%`;
-  // A combo skill: each step's blows (and the volleys, gates and chains it calls down).
+  // A combo skill: each step's blows (and the volleys, songs, wells and beams it calls down).
   const steps = params.combo ?? [];
   const stepHits = steps.map((st) => (st.strikes ?? []).flatMap((x) => {
     if (x.rain) return [`${x.rain}×${pc(x.pct)}`];
-    if (x.torii) return [`${x.torii.n} gates ×${pc(x.torii.pct)}`];
-    if (x.troupe) return [`chain ${pc(x.troupe.pct)} + ${pc(x.troupe.big)}`];
+    if (x.concert) return [`${x.concert.beats.length} beats ×${pc(x.concert.pct)}`];
+    if (x.align) return [`beam ${pc(x.align.pct)}`];
+    if (x.well) return [`${pc(x.well.pct)} every ${x.well.every}s`];
+    if (x.song?.pct) return [`${pc(x.song.pct)} every ${x.song.every}s`];
     return x.pct > 0 ? [pc(x.pct)] : [];
   }));
   if (stepHits.some((h) => h.length)) {
@@ -159,7 +161,7 @@ function describeParts(params, tune = 1) {
 function biggestPct(params) {
   const p = params.proc ?? params;
   const strikes = (p.combo ?? []).flatMap((st) => st.strikes ?? []);
-  return Math.max(0, p.pct ?? 0, ...strikes.map((x) => x.troupe?.big ?? x.torii?.pct ?? x.pct ?? 0));
+  return Math.max(0, p.pct ?? 0, ...strikes.map((x) => x.concert?.pct ?? x.align?.pct ?? x.well?.pct ?? x.song?.pct ?? x.pct ?? 0));
 }
 
 export function skillTooltip(char, skillId) {
@@ -171,8 +173,8 @@ export function skillTooltip(char, skillId) {
     { text: `${JOBS[s.job].name} skill  ·  Level ${lv}/${s.maxLevel}`, color: COLORS.muted },
     { text: s.desc },
   ];
-  // (Troupe Combo focuses its own way; Thousand Torii's gates cut wherever they rise.)
-  const focus = skillId === 'troupecombo' ? ' Hits harder the fewer it catches (three times on one).' : skillId === 'thousandtorii' ? '' : ' Hits harder the fewer it catches (double on one).';
+  // (Grand Concert's music and Planetary Alignment's beam hit everything they reach alike.)
+  const focus = skillId === 'troupecombo' || skillId === 'thousandtorii' ? '' : ' Hits harder the fewer it catches (double on one).';
   if (s.fullGauge) lines.push({ text: `Finisher: needs a full gauge and spends it.${focus}`, color: '#c99a1f', size: 8 });
   const now = lv > 0 ? describeParts(skillAt(skillId, lv), tune) : [];
   if (lv > 0) lines.push({ text: `Now: ${now.join(', ')}`, color: '#3f9f5f' });

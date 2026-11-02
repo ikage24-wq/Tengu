@@ -1988,8 +1988,8 @@ function mage() {
 
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'], shrinemaiden: ['spiritmage', 'shrinemaiden'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20', shrinemaiden: 'wand_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'], shrinemaiden: ['spiritmage', 'shrinemaiden'], onmyoji: ['spiritmage', 'onmyoji'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20', shrinemaiden: 'wand_20', onmyoji: 'staff_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;
@@ -2646,324 +2646,143 @@ test('Grand Concert needs full Applause, spends it, heals in full, and three bea
   assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the party is warded');
 });
 
-// An Onmyoji (past Elowen's trial) with the first of her yokai troupe, the oni.
-function onmyoji() {
-  const w = shrineMage();
+// An Astronomer (past Elowen's trial), with her orrery staff.
+function astronomer(skills = false) {
+  const w = starWitch('staff_20');
   w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
   w.char.job = 'onmyoji';
+  if (skills) Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
+  w.spirit = 0;
   run(w, 0.2);
   return w;
 }
+// How many moons fly off at the monsters in `secs` seconds.
+const moonShots = (w, secs) => {
+  let n = 0;
+  for (let i = 0; i < secs * 60; i++) {
+    w.bindingAt = w.now;
+    updateWorld(w, DT, idle);
+    for (const f of w.fx) if (f.kind === 'projectile' && f.shot === 'asmoon' && !f.counted) {
+      f.counted = true;
+      n++;
+    }
+  }
+  return n;
+};
 
-test('the Onmyoji has an oni who fights on her own with her heavy club, and sulks when she whiffs', () => {
-  const w = onmyoji();
-  assert.ok(w.oni, 'the oni is there');
-  assert.equal(shrineMage().oni ?? null, null, 'a Spirit Mage has none');
-  assert.equal(w.guardian ?? null, null, 'and an Onmyoji has no guardian');
-  // (The rest of the troupe stand back.)
-  w.yuki.next = w.tengu.next = Infinity;
-  const seen = new Set();
-  const hp0 = w.mobs.map((m) => m.hp);
-  for (let i = 0; i < 60 * 8; i++) {
-    updateWorld(w, DT, idle);
-    if (w.oni.act) seen.add(w.oni.act.kind);
+test('the Astronomer flings her own planets and her own pool of moves, and they build Orbit (not Spirit)', () => {
+  const pool = PATH_VARIANTS.astro;
+  assert.equal(pool.length, PATH_COMBOS.astro.length, 'one choice per combo step');
+  pool.forEach((step, i) => {
+    assert.equal(step[0], PATH_COMBOS.astro[i], `step ${i + 1} opens with her own`);
+    assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
+    for (const v of step) assert.ok(MOVES[v.move], `${v.move} is a move`);
+  });
+  assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+  const w = astronomer();
+  const seen = [];
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  let shot = null;
+  for (let i = 0; i < 140; i++) {
+    updateWorld(w, DT, hold);
+    if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+    shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
   }
-  assert.ok(['kesa', 'grab', 'stomp', 'charge', 'whirl', 'roar'].filter((k) => seen.has(k)).length >= 2, `a mix of her moves (${[...seen]})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her club lands');
-  // A blow at nothing: she sulks.
-  w.mobs.forEach((m) => { m.x += 3000; });
-  // (Nor anything the tengu is carrying off.)
-  if (w.tengu) w.tengu.act = null;
-  w.oni.act = { kind: 'stomp', t0: w.now, dur: 1.25, done: 0 };
-  w.oni.mood = null;
-  let sulked = false;
-  for (let i = 0; i < 60 * 3; i++) {
-    updateWorld(w, DT, idle);
-    sulked ||= w.oni.mood?.kind === 'sulk';
-  }
-  assert.ok(sulked, 'she sulks when she hits nothing');
+  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.astro.map((s) => s.move), 'her combo');
+  assert.equal(shot, 'asplanet', 'planets');
+  assert.ok(w.binding > 0, `her planets build Orbit (${w.binding})`);
+  assert.equal(w.spirit ?? 0, 0, 'and no stars');
 });
 
-test("the oni grabs a monster, hoists it over her head and slams it; and charges through them", () => {
-  const w = onmyoji();
-  const k = w.oni;
-  const m = w.mobs[0];
-  w.mobs.slice(1).forEach((o) => { o.x += 3000; });
-  Object.assign(m, { x: k.x + k.dir * 50, y: k.y });
-  const hp0 = m.hp;
-  k.next = Infinity;
-  k.act = { kind: 'grab', t0: w.now, dur: 1.9, done: 0 };
-  let high = 0;
-  for (let i = 0; i < 60 * 3; i++) {
-    updateWorld(w, DT, idle);
-    high = Math.max(high, m.air ?? 0);
-  }
-  assert.ok(high > 30, `she hoists it up (${Math.round(high)})`);
-  assert.ok(m.hp < hp0, 'and slams it');
-  // The charge: she barrels forward through a monster in her way.
-  Object.assign(m, { x: k.x + k.dir * 120, y: k.y, air: 0, airV: 0 });
-  const x0 = k.x;
-  const hp1 = m.hp;
-  k.act = { kind: 'charge', t0: w.now, dur: 1.35, done: 0 };
-  for (let i = 0; i < 60 * 2.5; i++) updateWorld(w, DT, idle);
-  assert.ok(Math.abs(k.x - x0) > 100, `she charges forward (${Math.round(k.x - x0)})`);
-  assert.ok(m.hp < hp1, 'trampling what is in her way');
-});
-
-test('the Onmyoji has a yuki-onna who floats, leaves frost where she goes, and fights with ice', () => {
-  const w = onmyoji();
-  assert.ok(w.yuki, 'the yuki-onna is there');
-  assert.equal(shrineMage().yuki ?? null, null, 'a Spirit Mage has none');
-  w.oni.next = w.tengu.next = Infinity;
-  const seen = new Set();
-  const hp0 = w.mobs.map((m) => m.hp);
-  let froze = false;
-  for (let i = 0; i < 60 * 16; i++) {
-    updateWorld(w, DT, idle);
-    if (w.yuki.act) seen.add(w.yuki.act.kind);
-    froze ||= w.mobs.some((m) => m.frozenUntil > w.now);
-  }
-  assert.ok(['breath', 'ask', 'spikes', 'icicle', 'whiteout', 'snowball', 'needles', 'frostfan', 'mist'].filter((k) => seen.has(k)).length >= 3, `a mix of her moves (${[...seen]})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'her ice lands');
-  assert.ok(froze, 'and freezes them');
-  // Drifting after the Onmyoji, she leaves frost on the ground.
-  w.mobs.forEach((m) => { m.x += 3000; });
-  w.yuki.act = null;
-  w.yuki.body.x = w.body.x - 30;
-  w.body.x += 200;
-  let prints = 0;
-  for (let i = 0; i < 60 * 3; i++) {
-    updateWorld(w, DT, idle);
-    prints = Math.max(prints, w.fx.filter((f) => f.kind === 'yukiprint').length);
-  }
-  assert.ok(prints > 2, `frost prints where she drifts (${prints})`);
-});
-
-test("the yuki-onna's cold builds up on a monster until it freezes, and her question heals the Onmyoji", () => {
-  const w = onmyoji();
-  const k = w.yuki;
-  // (The rest of the troupe stand back.)
-  w.oni.next = w.tengu.next = Infinity;
-  w.oni.act = w.tengu.act = null;
-  const m = w.mobs.find((o) => o.hp > 0);
-  // (A sturdy one of its kind, so it lives through both of her moves.)
-  m.def = { ...m.def, hp: 1e9 };
-  Object.assign(m, { x: k.x + 60, y: k.y, hp: 1e9 });
-  // White Breath: chilled again and again, it frosts over and freezes solid.
-  k.act = { kind: 'breath', t0: w.now, dur: 2.3, mob: m, x0: k.x };
-  let frost = false;
-  let froze = false;
-  for (let i = 0; i < 60 * 2.4; i++) {
-    updateWorld(w, DT, idle);
-    frost ||= (m.yukiChill?.n ?? 0) >= 2 && w.fx.some((f) => f.kind === 'yukifrost' && f.mob === m);
-    froze ||= m.frozenUntil > w.now;
-  }
-  assert.ok(frost, 'frost creeps over it');
-  assert.ok(froze, 'and it freezes');
-  // Answer Me: its soul is drawn out, and goes to heal the Onmyoji.
-  w.char.hp = Math.round(w.stats.maxHp / 2);
-  m.frozenUntil = 0;
-  Object.assign(m, { x: k.x + 40, y: k.y, hp: m.def.hp ?? m.hp });
-  const hp = w.char.hp;
-  k.act = { kind: 'ask', t0: w.now, dur: 2.8, mob: m, x0: k.x };
-  for (let i = 0; i < 60 * 3.6; i++) updateWorld(w, DT, idle);
-  assert.ok(w.char.hp > hp, `she heals the Onmyoji (${hp} -> ${w.char.hp})`);
-});
-
-test('the Onmyoji has a tengu who fights with sword, fan and feathers', () => {
-  const w = onmyoji();
-  assert.ok(w.tengu, 'the tengu is there');
-  assert.equal(shrineMage().tengu ?? null, null, 'a Spirit Mage has none');
-  w.oni.next = w.yuki.next = Infinity;
-  const seen = new Set();
-  const hp0 = w.mobs.map((m) => m.hp);
-  for (let i = 0; i < 60 * 12; i++) {
-    updateWorld(w, DT, idle);
-    if (w.tengu.act) seen.add(w.tengu.act.kind);
-  }
-  assert.ok(['iai', 'kurama', 'gust', 'whirlwind', 'feathers', 'stones', 'spirited'].filter((k) => seen.has(k)).length >= 3, `a mix of his moves (${[...seen]})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'his blows land');
-});
-
-test('the tengu flies to the Onmyoji when she is far ahead, and carries a monster off into the air', () => {
-  const w = onmyoji();
-  const k = w.tengu;
-  for (const m of w.mobs) m.x += 4000;
-  run(w, 0.5);
-  k.act = null;
-  Object.assign(k.body, { x: w.body.x - 40 });
-  w.body.x += 300;
-  let flew = false;
-  for (let i = 0; i < 60 * 3; i++) {
-    updateWorld(w, DT, idle);
-    flew ||= k.flying;
-  }
-  assert.ok(flew, 'he flies');
-  assert.ok(Math.abs(k.x - w.body.x) < 120, `and lands by her (${Math.round(k.x - w.body.x)})`);
-  // Spirited Away.
-  const m = w.mobs[0];
-  Object.assign(m, { x: k.x + 60 * k.dir, y: k.y, hp: 99999, air: 0, frozenUntil: 0 });
-  k.act = { kind: 'spirited', t0: w.now, dur: 2.5, done: 0, mob: m };
-  let high = 0;
-  for (let i = 0; i < 60 * 3; i++) {
-    updateWorld(w, DT, idle);
-    high = Math.max(high, m.air ?? 0);
-  }
-  assert.ok(high > 60, `the monster is carried high (${Math.round(high)})`);
-  assert.ok(m.hp < 99999, 'and hurled down');
-});
-
-test("the tengu leads the troupe: he marks a monster and the oni and yuki-onna go for it", () => {
-  const w = onmyoji();
-  const k = w.tengu;
-  const live = w.mobs.filter((m) => m.hp > 0);
-  assert.ok(live.length >= 2, 'a fight on');
-  live.forEach((m, i) => Object.assign(m, { x: k.x + 60 + i * 30, y: k.y, hp: 9999 + i * 100 }));
-  k.next = 0;
-  k.commandAt = 0;
-  k.mark = null;
-  k.act = { kind: 'command', t0: w.now, dur: 1.05, done: 0 };
-  run(w, 1.2);
-  assert.ok(k.mark, 'he marks one');
-  assert.equal(k.mark.mob, live.reduce((a, b) => (b.hp > a.hp ? b : a)), 'the toughest');
-  assert.ok(w.fx.some((f) => f.kind === 'tengumark'), 'a seal over it');
-  // (Each turns to it at their next thought, once whatever they're in the middle of is done.)
-  const mark = k.mark.mob;
-  let oni = false;
-  let yuki = false;
-  for (let i = 0; i < 60 * 4 && !(oni && yuki); i++) {
-    updateWorld(w, DT, idle);
-    oni ||= w.oni.brain.target === mark;
-    yuki ||= w.yuki.brain.target === mark;
-  }
-  assert.ok(oni, 'the oni goes for it');
-  assert.ok(yuki, 'and the yuki-onna');
-});
-
-// An Onmyoji with her own skills learned, her troupe standing back.
-function onmyojiFull() {
-  const w = onmyoji();
-  Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
-  w.spirit = 0;
+test('her moons: one for every fifth of Orbit, flying off at the monsters on their own; on Full Orbit twice as often', async () => {
+  const { moonsOf } = await import('../src/world/astro.js');
+  const w = astronomer();
   w.binding = 0;
-  for (const k of [w.oni, w.yuki, w.tengu]) {
-    k.next = Infinity;
-    k.act = null;
-  }
-  return w;
-}
-
-test('an Onmyoji has no doll: it fused into the tengu, who carries its ribbon', () => {
-  const w = onmyoji();
-  assert.ok(!w.doll, 'no doll');
-  assert.ok(w.tengu, 'the tengu is there');
-  const fresh = onmyojiFresh();
-  assert.ok(fresh.fx.some((f) => f.kind === 'dollfusion' && f.who === fresh.tengu), 'the doll fuses into him when he first appears');
-});
-function onmyojiFresh() {
-  const w = shrineMage();
-  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
-  w.char.job = 'onmyoji';
-  w.tengu = null;
-  updateWorld(w, DT, idle);
-  return w;
-}
-
-test("an Onmyoji builds Binding (not Spirit) from her spells and her troupe's blows; All Bound, they fight faster", async () => {
-  const { gaugeOf, troupeRest, BOUND_REST } = await import('../src/world/melee.js');
-  const w = onmyojiFull();
-  assert.equal(gaugeOf(w.char), 'binding');
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 80 + i * 40, y: w.body.y, hp: 99999 }));
-  assert.ok(cast(w, 'ofudabarrage').ok);
-  run(w, 2);
-  assert.ok((w.binding ?? 0) > 3, `her spells build it (${w.binding})`);
-  assert.equal(w.spirit ?? 0, 0, 'and no Spirit');
-  const b0 = w.binding;
-  w.oni.next = 0;
-  for (let i = 0; i < 60 * 4; i++) updateWorld(w, DT, idle);
-  assert.ok(w.binding > b0, `the troupe's blows build it (${b0} -> ${w.binding})`);
-  w.binding = 100;
-  w.bindingAt = w.now;
-  assert.equal(troupeRest(w), BOUND_REST, 'All Bound, the troupe rests less');
-});
-
-test("the Onmyoji's spells: talismans burst, the star seal binds, the rally empowers the troupe", () => {
-  const w = onmyojiFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 90 + i * 30, y: w.body.y, hp: 99999 }));
+  assert.equal(moonsOf(w), 0, 'no moons yet');
+  w.binding = 41;
+  assert.equal(moonsOf(w), 2, 'two moons at two fifths');
+  w.binding = 20;
   const hp0 = w.mobs.map((m) => m.hp);
+  const one = moonShots(w, 4);
+  assert.ok(one >= 2, `one moon flies out on its own (${one})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'and strikes');
+  const full = astronomer();
+  full.binding = 100;
+  const five = moonShots(full, 4);
+  assert.ok(five >= one * 4, `Full Orbit: five moons, twice as quick (${five} against ${one})`);
+  assert.equal(moonsOf(astronomer()), 0, 'and none for a Star Witch\'s stars');
+});
+
+test('Ringed Planet rolls a great ringed world through every monster in the line', () => {
+  const w = astronomer(true);
+  w.mobs.forEach((m, i) => (m.x = w.body.x + 120 + i * 60));
   assert.ok(cast(w, 'ofudabarrage').ok);
-  let tags = 0;
-  for (let i = 0; i < 60 * 2; i++) {
+  assert.equal(w.pose.kind, 'asglobe');
+  let big = false;
+  for (let i = 0; i < 120; i++) {
     updateWorld(w, DT, idle);
-    tags = Math.max(tags, w.fx.filter((f) => f.kind === 'ofuda').length);
+    big ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'asbig');
   }
-  assert.ok(tags >= 4, `talismans fly (${tags})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'and burst on the monsters');
-  // Seiman Seal: bound fast inside it.
+  assert.ok(big, 'the ringed world rolls out');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'through the whole line');
+});
+
+test('Gravity Well pulls the monsters round it in and crushes them again and again, and is gone after a map change', async () => {
+  const { loadMap } = await import('../src/world/world.js');
+  const w = astronomer(true);
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [60, 220, 600][i] }));
+  for (const m of w.mobs) m.def = { ...m.def, speed: 0 };
+  const x0 = w.mobs.map((m) => m.x);
+  const hits = w.mobs.map(() => 0);
+  let last = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'seimanseal').ok);
-  let bound = false;
   for (let i = 0; i < 60 * 3; i++) {
     updateWorld(w, DT, idle);
-    bound ||= Boolean(w.seiman) && w.mobs.some((m) => m.frozenUntil > w.now && Math.abs(m.x - w.seiman.x) < w.seiman.r);
+    w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
   }
-  assert.ok(bound, 'the seal binds what stands in it');
-  // Yokai Rally.
-  assert.ok(cast(w, 'yokairally').ok);
-  run(w, 1.5);
-  assert.ok(w.rally?.until > w.now, 'the troupe is rallied');
-  assert.ok(w.fx.some((f) => f.kind === 'rallied' && f.who === w.oni), 'each of them answers');
+  assert.ok(w.well, 'the well hangs there');
+  assert.ok(Math.abs(w.mobs[1].x - w.well.x) < Math.abs(x0[1] - w.well.x), 'a monster at its edge is drawn in');
+  assert.ok(hits[0] >= 3 && hits[1] >= 3, `crushed again and again (${hits})`);
+  assert.equal(hits[2], 0, 'not one far off');
+  loadMap(w, w.map.id, w.char.portal);
+  run(w, 0.2);
+  assert.equal(w.well, null, 'gone with the map');
 });
 
-test('Troupe Combo: needs full Binding; the yuki-onna freezes them, the tengu lifts them, the oni smashes them down, they shatter', () => {
-  const w = onmyojiFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 110, 220][i % 3], y: w.body.y, hp: 99999 }));
+test('Lunar Tide: her moons fly out more often while it lasts', () => {
+  const plain = astronomer(true);
+  plain.binding = 60;
+  const before = moonShots(plain, 4);
+  const w = astronomer(true);
+  w.binding = 60;
+  assert.ok(cast(w, 'yokairally').ok);
+  assert.equal(w.pose.kind, 'astide');
+  run(w, 1.1);
+  assert.ok(w.char.buffs.yokairally, 'the tide is on her');
+  const after = moonShots(w, 4);
+  assert.ok(after > before, `more moons fly (${after} against ${before})`);
+});
+
+test('Planetary Alignment needs a Full Orbit, spends it, and its beam goes through every monster ahead', () => {
+  const w = astronomer(true);
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-140, 140, 380][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs full Binding');
+  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a Full Orbit');
   w.binding = 100;
   w.bindingAt = w.now;
   assert.ok(cast(w, 'troupecombo').ok);
   assert.equal(w.binding, 0, 'spends it');
-  const parts = new Set();
-  let frozen = false;
-  let high = 0;
-  let oniUp = 0;
-  let shattered = null;
-  for (let i = 0; i < 60 * 5; i++) {
-    updateWorld(w, DT, idle);
-    // (Right as her fan snaps: out of the ice.)
-    if (shattered === null && w.troupeCombo?.done?.shatter) shattered = w.mobs.every((m) => !(m.frozenUntil > w.now && m.hold === 'ice'));
-    for (const k of [w.oni, w.yuki, w.tengu]) if (k.act?.kind === 'combo') parts.add(k);
-    frozen ||= w.mobs.every((m) => m.frozenUntil > w.now);
-    high = Math.max(high, ...w.mobs.map((m) => m.air ?? 0));
-    oniUp = Math.max(oniUp, w.oni.air ?? 0);
-  }
-  assert.equal(parts.size, 3, 'all three play their part');
-  assert.ok(frozen, 'every monster is frozen');
-  assert.ok(high > 50, `lifted high (${Math.round(high)})`);
-  assert.ok(oniUp > 60, `the oni leaps (${Math.round(oniUp)})`);
-  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'every monster on the screen is hit, behind her too');
-  assert.ok(shattered, 'and they shatter out of the ice');
-  assert.ok([w.oni, w.yuki, w.tengu].every((k) => k.act?.kind !== 'combo'), 'and the troupe go back to fighting');
-});
-
-test('a map change mid-finisher leaves nothing behind: no seal, no combo, no one floating or hidden', async () => {
-  const { loadMap } = await import('../src/world/world.js');
-  const w = onmyojiFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 100 + i * 40, y: w.body.y, hp: 99999 }));
-  assert.ok(cast(w, 'seimanseal').ok);
-  run(w, 2.6);
-  w.binding = 100;
-  w.bindingAt = w.now;
-  const r = cast(w, 'troupecombo');
-  assert.ok(r.ok, JSON.stringify(r));
-  // (Mid-combo: the tengu hovering, the oni about to leap.)
-  run(w, 2.4);
-  assert.ok(w.troupeCombo, 'the combo is going');
-  loadMap(w, w.map.id, w.char.portal);
-  run(w, 0.5);
-  assert.equal(w.troupeCombo, null, 'the combo is gone');
-  assert.equal(w.seiman, null, 'and the seal');
-  assert.ok([w.oni, w.yuki, w.tengu].every((k) => !k.hidden && !(k.air > 0) && k.act?.kind !== 'combo'), 'the troupe are back on their feet, all of them seen');
+  assert.equal(w.pose.kind, 'asalign');
+  let row = false;
+  dice(0.5, () => {
+    for (let i = 0; i < 60 * 2.4; i++) {
+      updateWorld(w, DT, idle);
+      row ||= w.fx.some((f) => f.kind === 'asalign');
+    }
+  });
+  assert.ok(row, 'the planets line up');
+  assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'the beam goes through everything ahead');
+  assert.equal(w.mobs[0].hp, hp0[0], 'and not behind her');
 });
 
 // ---------- Getting about: the Thief's flash jump and shadow dash, the Archer's air leap ----------

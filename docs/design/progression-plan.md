@@ -160,7 +160,9 @@ jobs.)
   skills lead into both (the old Assassin and Night Lord were removed earlier).
   Mage: the Star Witch (remade Spirit Mage) branches at 30, after Elowen's trial, into the Starlight
   Idol (2026-11-02, replacing the Shrine Maiden: songs that linger, Applause and Live Show, Curtain
-  Call, Grand Concert finisher; the dungeon healer) or the Onmyoji (to be remade as the Astronomer).
+  Call, Grand Concert finisher; the dungeon healer) or the Astronomer (2026-11-02, replacing the
+  Onmyoji: an orrery staff, moons that orbit her and fly off on their own, Ringed Planet, Gravity
+  Well, Lunar Tide, Planetary Alignment finisher).
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).

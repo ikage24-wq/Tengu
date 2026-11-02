@@ -824,7 +824,42 @@ function wand(m, t, f = 0) {
 // lantern, an iron crook with a star, a steel orb in a crescent, a silver crescent ringed with
 // dots, a mithril staff of twisted wood round a star crystal, a cobalt moon and comet, a crystal
 // shard, a runic orb in a cage, and a starsteel crescent holding a gold star.
+// The Astronomer's staff (the 'astro' finish, render/hero.js): an orrery. A slim silver staff,
+// shorter than a witch's so it never reads as a lance, held near its foot, its head a violet world inside two tilted silver rings with a little moon
+// riding the outer one; more rings, a gem and stars up the tiers.
+function orrery(m, t) {
+  const s = [];
+  const a = {};
+  const S = 19 + t * 0.55;
+  s.push(R(-1.1, -S, 2.2, S + 4, m.trim), F(R(0.3, -S, 0.8, S + 4, m.trimDark)));
+  for (let y = -S + 6; y < 2; y += 8) s.push(F(R(-1.3, y, 2.6, 0.7, m.edge)));
+  s.push(R(-1.5, 3, 3, 1.6, m.trim), T([[-1.5, 4.6], [0, 6.2], [1.5, 4.6]], m.trimDark));
+  const r = 3.6 + t * 0.08;
+  const cy = -S - r - 3;
+  const ring = (rx, ry, th, a0, a1, c) => T([...arcPts(0, cy, rx, ry, a0, a1, 14), ...arcPts(0, cy, rx - th, ry - th * 0.4, a1, a0, 14)], c);
+  const rings = t >= 6 ? 2 : 1;
+  // The back halves of the rings, the world, then their front halves over it.
+  for (let k = 0; k < rings; k++) s.push(ring(r * (1.9 + k * 0.5), r * (0.55 + k * 0.12), 0.9, 180, 360, m.trimDark));
+  s.push(E(0, cy, r, r, m.blade), F(E(0.9, cy + 0.9, r * 0.75, r * 0.7, m.bladeDark)), F(E(-1, cy - 1.1, r * 0.4, r * 0.34, m.edge)));
+  s.push(F(R(-r * 0.8, cy + 0.6, r * 1.6, 0.5, m.bladeDark)));
+  for (let k = 0; k < rings; k++) s.push(ring(r * (1.9 + k * 0.5), r * (0.55 + k * 0.12), 0.9, 0, 180, m.trim));
+  // The little moon on the outer ring.
+  const mx = r * (1.9 + (rings - 1) * 0.5) * 0.92;
+  s.push(E(mx, cy + 0.6, 1.3, 1.3, m.edge), F(E(mx + 0.4, cy + 0.9, 0.8, 0.8, m.trim)));
+  s.push(R(-0.6, cy + r - 0.2, 1.2, 2.6, m.trim));
+  if (t >= 4) {
+    s.push(...gem(0, cy, 0.8, m.gem));
+    a.gem = [0, cy];
+  }
+  if (t >= 9) for (const [x, y] of [[-r * 2, cy - r * 1.4], [r * 1.6, cy - r * 1.6]]) s.push(F(star(x, y, 1.2, WHITE, 0.3)));
+  a.head = [0, cy];
+  a.tip = [0, cy - r];
+  a.blade = [cy - r, -S];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
 function staff(m, t, f = 0) {
+  if (m.variant === 'astro') return orrery(m, t);
   const s = [];
   const a = {};
   const S = 26 + t * 0.8;

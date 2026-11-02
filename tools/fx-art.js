@@ -6055,6 +6055,234 @@
     noteArt(ctx, SHOWGOLD, -6, 20, 20, 0.1, true);
   });
 
+  // ---------- The Astronomer (deep violet and silver: ringed planets, moons, orbits) ----------
+  // docs/design/astronomer.md. Her shapes: violet planets banded and ringed in silver, little silver
+  // moons, thin silver orbit lines, and the calm curves of things going round.
+  const VIOLETSKY = ['#ffffff', '#e8dcff', '#a88af0', '#6a4ac8', '#2a1a6a'];
+  const SILVER = ['#ffffff', '#f6f6ff', '#d4d8ee', '#9a9ec4', '#4a4e74'];
+
+  // A planet at (x, y), `r` round, its band turned by `spin` (0-1), with a silver ring tilted by
+  // `tilt` radians (`rings`: how many). The back of the ring is drawn behind it, the front over it.
+  function planetArt(ctx, x, y, r, spin = 0, tilt = -0.35, rings = 1) {
+    const ring = (front, k) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(tilt);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * (1.75 + k * 0.4), r * (0.42 + k * 0.1), 0, front ? 0 : Math.PI, front ? Math.PI : TAU);
+      ctx.strokeStyle = SILVER[4];
+      ctx.lineWidth = r * 0.3;
+      ctx.stroke();
+      ctx.strokeStyle = front ? SILVER[1] : SILVER[3];
+      ctx.lineWidth = r * 0.17;
+      ctx.stroke();
+      ctx.restore();
+    };
+    for (let k = 0; k < rings; k++) ring(false, k);
+    const disc = (k) => Array.from({ length: 28 }, (_, j) => [x + Math.cos((j / 28) * TAU) * r * k, y + Math.sin((j / 28) * TAU) * r * k]);
+    inked(ctx, disc(1), VIOLETSKY[3], VIOLETSKY[4], Math.max(2.5, r * 0.12));
+    fill(ctx, disc(0.86).map(([px, py]) => [px - r * 0.06, py - r * 0.06]), VIOLETSKY[2]);
+    // Bands rolling across it as it turns.
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.86, 0, TAU);
+    ctx.clip();
+    for (let b = -2; b <= 2; b++) {
+      const by = y + ((b + spin * 2) % 5) * r * 0.36 - r * 0.1;
+      fill(ctx, [[x - r, by], [x + r, by - r * 0.08], [x + r, by + r * 0.12], [x - r, by + r * 0.2]], b % 2 ? VIOLETSKY[3] : VIOLETSKY[1]);
+    }
+    ctx.restore();
+    fill(ctx, disc(0.3).map(([px, py]) => [px - r * 0.38, py - r * 0.38]), VIOLETSKY[0]);
+    for (let k = 0; k < rings; k++) ring(true, k);
+  }
+  // A little silver moon at (x, y), `r` round, lit from the side `a` faces.
+  function moonArt(ctx, x, y, r, a = -0.6) {
+    const disc = (k, ox = 0, oy = 0) => Array.from({ length: 22 }, (_, j) => [x + ox + Math.cos((j / 22) * TAU) * r * k, y + oy + Math.sin((j / 22) * TAU) * r * k]);
+    inked(ctx, disc(1), SILVER[3], SILVER[4], Math.max(2, r * 0.14));
+    fill(ctx, disc(0.82, Math.cos(a) * r * 0.16, Math.sin(a) * r * 0.16), SILVER[1]);
+    fill(ctx, disc(0.22, -r * 0.3, r * 0.2), SILVER[2]);
+    fill(ctx, disc(0.16, r * 0.28, -r * 0.1), SILVER[2]);
+  }
+  // A thin silver orbit line: part of an ellipse round (x, y).
+  function orbitLine(ctx, x, y, rx, ry, a0, a1, w = 3, alpha = 0.8) {
+    ctx.save();
+    ctx.globalAlpha *= alpha;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, a0, a1);
+    ctx.strokeStyle = SILVER[3];
+    ctx.lineWidth = w + 2;
+    ctx.stroke();
+    ctx.strokeStyle = SILVER[1];
+    ctx.lineWidth = w;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Her planet in flight (loops, toward +x): a little ringed planet rolling, an orbit's arc trailing
+  // behind it with silver motes.
+  E.asplanet = (() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 140, h: 100, n: 6, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        orbitLine(ctx, cx + 30, cy + 30, 110, 40, Math.PI * 1.05, Math.PI * 1.45, 3, 0.7);
+        const R = rng(501 + i);
+        for (let j = 0; j < 3; j++) sparkle(ctx, SILVER, cx - 30 - j * 20 - R() * 6, cy + (R() - 0.3) * 18, 6 - j * 1.4, j + i);
+        planetArt(ctx, cx, cy, 14, i / 6, -0.35);
+      },
+    };
+  })();
+
+  // Her great ringed planet (finishers): big, two rings, a wide orbit trailing it and motes.
+  E.asbig = (() => {
+    const cx = 160;
+    const cy = 80;
+    return {
+      w: 240, h: 160, n: 6, fps: 18, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        orbitLine(ctx, cx + 40, cy + 60, 190, 80, Math.PI * 1.02, Math.PI * 1.42, 5, 0.75);
+        orbitLine(ctx, cx + 40, cy - 40, 190, 70, Math.PI * 0.6, Math.PI * 0.95, 3, 0.5);
+        const R = rng(511 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, j % 2 ? VIOLETSKY : SILVER, cx - 50 - R() * 90, cy + (R() - 0.5) * 90, 7 + R() * 4, j);
+        planetArt(ctx, cx, cy, 30, i / 6, -0.3, 2);
+      },
+    };
+  })();
+
+  // Her mark on a monster: a silver crescent sweeps round it like a moon passing, a violet ring
+  // opens out, then silver motes drift off.
+  E.ashit = (() => {
+    const c = 100;
+    return {
+      w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 3) celCrescent(ctx, SILVER, c, c, 46 + i * 4, -2.4 + i * 0.5, -0.4 + i * 0.6, 18 - i * 3, { seed: 521 });
+        if (i >= 1 && i <= 5) celRing(ctx, VIOLETSKY, c, c, 20 + i * 12, 9 - i * 1.3, { broken: i >= 4 ? 0.4 : 0, seed: 522 });
+        if (i <= 2) starburst(ctx, VIOLETSKY, c, c, [22, 34, 26][i], 8, 523, { inner: 0.4 });
+        if (i >= 4) {
+          const R = rng(524);
+          for (let j = 0; j < 5; j++) sparkle(ctx, SILVER, c + (R() - 0.5) * 120, c + (R() - 0.5) * 100 - (i - 4) * 10, 8 - (i - 4) * 2, j);
+        }
+      },
+    };
+  })();
+
+  // One of her moons (loops): a little silver moon with a faint violet glow, turning slowly; it
+  // rides her orbit (the gauge) and flies off at monsters on its own.
+  E.asmoon = {
+    w: 60, h: 60, n: 8, fps: 10, px: 30, py: 30, loop: true,
+    draw(ctx, i) {
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.arc(30, 30, 18, 0, TAU);
+      ctx.fillStyle = VIOLETSKY[2];
+      ctx.fill();
+      ctx.restore();
+      moonArt(ctx, 30, 30, 12, -0.6 + (i / 8) * TAU);
+    },
+  };
+
+  // Gravity Well (loops): a small dark world hangs over the ground, silver rings spiralling in on it
+  // and motes being drawn round and down into it.
+  E.aswell = (() => {
+    const c = 120;
+    const cy = 90;
+    const N = 10;
+    return {
+      w: 240, h: 170, n: N, fps: 12, px: c, py: 150, loop: true,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.translate(c, 150);
+        ctx.scale(1, 0.26);
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 110, 0, TAU);
+        ctx.fillStyle = VIOLETSKY[2];
+        ctx.fill();
+        ctx.restore();
+        for (let k = 0; k < 3; k++) {
+          const u = (k / 3 + i / N) % 1;
+          orbitLine(ctx, c, cy + 6, 100 * (1 - u) + 20, 34 * (1 - u) + 8, 0, TAU, 3, 0.25 + 0.6 * u);
+        }
+        for (let j = 0; j < 8; j++) {
+          const u = (j / 8 + i / N) % 1;
+          const a = j * 1.7 + u * 5;
+          sparkle(ctx, j % 2 ? SILVER : VIOLETSKY, c + Math.cos(a) * 100 * (1 - u), cy + 6 + Math.sin(a) * 34 * (1 - u), 7 * (1 - u * 0.6), j);
+        }
+        planetArt(ctx, c, cy, 20, i / N, -0.5);
+      },
+    };
+  })();
+
+  // Lunar Tide (her buff): silver waves rising round her like a tide, crescent moons swept up in
+  // them, then motes.
+  E.astide = (() => {
+    const c = 110;
+    const gy = 170;
+    return {
+      w: 220, h: 190, n: 8, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        if (i <= 6) {
+          for (const sd of [-1, 1]) celCrescent(ctx, SILVER, c + sd * 10, gy - 40 * k, 60 + 20 * k, sd < 0 ? Math.PI * 0.55 : Math.PI * 0.45, sd < 0 ? Math.PI * 1.2 : -Math.PI * 0.2, 14 * (1 - i / 8), { seed: 531 + (sd > 0) });
+          ctx.save();
+          ctx.translate(c, gy - 6);
+          ctx.scale(1, 0.3);
+          celRing(ctx, VIOLETSKY, 0, 0, 40 + i * 14, 10 - i, { broken: i >= 5 ? 0.4 : 0, seed: 533 });
+          ctx.restore();
+        }
+        for (let j = 0; j < 3; j++) {
+          const a = (j / 3) * TAU + i * 0.5;
+          if (i >= 2 && i <= 6) moonArt(ctx, c + Math.cos(a) * 60, gy - 50 - i * 10 + Math.sin(a) * 18, 9, a);
+        }
+        if (i >= 6) {
+          const R = rng(534);
+          for (let j = 0; j < 6; j++) sparkle(ctx, SILVER, c + (R() - 0.5) * 160, gy - 60 - R() * 80 - (i - 6) * 20, 8, j);
+        }
+      },
+    };
+  })();
+
+  // Planetary Alignment (her finisher): five planets pop into a row one by one, an orbit line
+  // threading them; they hold, then a silver-white beam fires straight through the row and out,
+  // and it all breaks into motes.
+  E.asalign = (() => {
+    const x0 = 40;
+    const cy = 90;
+    const pts = [[60, 22], [150, 30], [250, 38], [360, 30], [460, 24]];
+    return {
+      w: 560, h: 180, n: 13, fps: 8, px: x0, py: cy,
+      draw(ctx, i) {
+        const shown = Math.min(5, i);
+        if (i >= 2 && i <= 10) orbitLine(ctx, x0 + 260, cy, 260, 6, 0, TAU, 2, 0.6);
+        // The beam.
+        if (i >= 7 && i <= 10) {
+          const w = [26, 40, 34, 20][i - 7];
+          fill(ctx, [[x0, cy - w], [560, cy - w * 0.7], [560, cy + w * 0.7], [x0, cy + w]], VIOLETSKY[2]);
+          fill(ctx, [[x0, cy - w * 0.6], [560, cy - w * 0.4], [560, cy + w * 0.4], [x0, cy + w * 0.6]], SILVER[1]);
+          fill(ctx, [[x0, cy - w * 0.25], [560, cy - w * 0.15], [560, cy + w * 0.15], [x0, cy + w * 0.25]], SILVER[0]);
+        }
+        pts.forEach(([x, r], j) => {
+          if (j >= shown || i >= 11) return;
+          const pop = j === shown - 1 && i <= 5 ? 0.8 : 1;
+          planetArt(ctx, x0 + x - 40, cy, r * pop, (i + j) / 8, -0.3, j % 2 ? 1 : 2);
+        });
+        if (i >= 10) {
+          const R = rng(541);
+          for (let j = 0; j < 14; j++) sparkle(ctx, j % 2 ? SILVER : VIOLETSKY, x0 + R() * 500, cy + (R() - 0.5) * 100 - (i - 10) * 12, 10 - (i - 10) * 2.5, j);
+        }
+      },
+    };
+  })();
+
+  // Her badge: a ringed planet with a crescent moon beside it.
+  E.embastro = emblem(VIOLETSKY, (ctx) => {
+    planetArt(ctx, -6, 6, 30, 0.2, -0.35);
+    moonArt(ctx, 34, -30, 13, -0.4);
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

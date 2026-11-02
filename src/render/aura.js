@@ -270,49 +270,28 @@ function graceAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
-// Binding: the five-pointed star seal of onmyodo glowing red at the Onmyoji's feet, turning, more of
-// it drawn the fuller it is, and full (All Bound), a red star over her head and rings racing out.
+// Orbit (the Astronomer; internally Binding): her moons, one for every fifth of it, riding a flat
+// orbit round her middle (the same one world/astro.js sends them out from), the ones behind her
+// drawn behind, a faint silver orbit line under them; full (Full Orbit), her badge, a ringed planet
+// with a moon, shines over her head.
 function bindingAura(ctx, x, y, t, s, k, layer) {
-  const star = (cx, cy, r, sy, rot, part = 1) => {
+  const n = Math.min(5, Math.floor(k * 5 + 1e-9));
+  if (layer === 'back' && k > 0.05) {
+    ctx.save();
+    ctx.globalAlpha = 0.35 + 0.3 * k;
+    ctx.strokeStyle = '#d4d8ee';
+    ctx.lineWidth = 0.8 * s;
     ctx.beginPath();
-    const n = Math.floor(part * 5);
-    for (let i = 0; i <= n; i++) {
-      const a = ((-90 + i * 144) * Math.PI) / 180 + rot;
-      if (i) ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * sy);
-      else ctx.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * sy);
-    }
+    ctx.ellipse(x, y - 22 * s, 26 * s, 7 * s, 0, 0, Math.PI * 2);
     ctx.stroke();
-  };
-  ctx.save();
-  ctx.strokeStyle = '#ff3a46';
-  ctx.shadowColor = 'rgba(255, 60, 70, 0.9)';
-  ctx.shadowBlur = 6;
-  if (layer === 'back') {
-    if (k > 0.15) {
-      ctx.globalAlpha = Math.min(1, (k - 0.15) * 2) * 0.8;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.ellipse(x, y, 30 * s, 9 * s, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.lineWidth = 1.2;
-      star(x, y, 26 * s, 0.32, t * 0.6, Math.min(1, k * 1.05));
-    }
-    if (k >= 1) {
-      const u = (t * 2) % 1;
-      ctx.globalAlpha = 1 - u;
-      ctx.beginPath();
-      ctx.ellipse(x, y, (30 + 50 * u) * s, (9 + 15 * u) * s, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  } else if (k >= 1) {
-    ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 6);
-    ctx.lineWidth = 1.6;
-    star(x, y - 62 * s, 7 * s, 1, t * 1.2);
-    ctx.beginPath();
-    ctx.arc(x, y - 62 * s, 8.4 * s, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.restore();
   }
-  ctx.restore();
+  for (let i = 0; i < n; i++) {
+    const a = t * 0.9 + (i / n) * Math.PI * 2;
+    if ((Math.sin(a) > 0) !== (layer !== 'back')) continue;
+    fxSprite(ctx, 'celasmoon', x + Math.cos(a) * 26 * s, y - 22 * s + Math.sin(a) * 7 * s, { t: t + i, scale: s * (0.3 + 0.05 * Math.sin(a)) });
+  }
+  if (layer !== 'back' && k >= 1) fxSprite(ctx, 'celembastro', x, y - 66 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Ricochet (the Blade Dancer; internally Ki): a small ring skims round her feet as it builds,

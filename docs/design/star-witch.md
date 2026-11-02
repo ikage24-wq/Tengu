@@ -1,4 +1,4 @@
-# The Star Witch (replaces the Spirit Mage; her paths: the Starlight Idol, and the Onmyoji until it is remade)
+# The Star Witch (replaces the Spirit Mage; her paths: the Starlight Idol and the Astronomer)
 
 The player's picks (2026-11-02): a starfall caster, wand and staff, midnight blue and gold, no
 familiar, a bright prodigy, the Constellation gauge with Starfall, and two star heals so she can
@@ -38,8 +38,7 @@ and constellations that snap into shape over the monsters.
 ## Her paths
 
 At 30 she becomes the Starlight Idol (the healer, with a wand: docs/design/starlight-idol.md) or the
-Onmyoji. The Onmyoji, until it is remade as the Astronomer (staff: planets and orbiting moons),
-keeps its dances and yokai troupe and the old Spirit Mage string for its basic attack.
+Astronomer (damage, with a staff: planets and orbiting moons, docs/design/astronomer.md).
 
 ## Status (2026-11-02)
 

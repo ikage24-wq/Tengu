@@ -142,10 +142,10 @@ function weaponStyle(bot) {
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.45, special: 'swsnap' };
-  // The Starlight Idol sings her notes at them, and her big one is the high note. The Onmyoji
-  // dances with talismans (her big one, Ofuda Barrage: a fan of them bursting on the monster).
+  // The Starlight Idol sings her notes at them, and her big one is the high note; the Astronomer
+  // flings her planets, and her big one is a ringed world swept out low.
   if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['sibeat', 'sistep', 'sikiss', 'sishoulder'], shot: 'sinote', ranged: true, magic: true, dur: 0.5, special: 'sihigh' };
-  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['kagura', 'kaguraturn', 'sleevefan'], shot: 'spiritorb', ranged: true, magic: true, dur: 1, special: 'onmyoofuda', ofuda: true };
+  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['asfling', 'asconduct', 'asgaze', 'astrace'], shot: 'asplanet', ranged: true, magic: true, dur: 0.6, special: 'asring' };
   // The Sky Dancer throws her gusts of wind.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -424,7 +424,7 @@ const GAUGE_PER_HIT = 3;
 // A string left alone this long starts over from its opener.
 const COMBO_RESET = 1.2;
 // Parts of a skill a bot can't play (buffs, heals, lasting spells): a skill with any is left out.
-const EXOTIC = ['grant', 'lantern', 'purify', 'revive', 'torii', 'ofuda', 'seiman', 'rally', 'troupe', 'heal', 'sky', 'provoke', 'rain'];
+const EXOTIC = ['grant', 'lantern', 'song', 'revive', 'concert', 'well', 'align', 'heal', 'sky', 'provoke', 'rain'];
 const plain = (s) => !EXOTIC.some((k) => s[k] != null);
 const CUT_TINT = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'] };
 
@@ -435,7 +435,7 @@ function poolOf(bot) {
 }
 
 // Their job's attack skills at a level that fits theirs: [{ id, steps, full, tune }]. The
-// priestesses' spells that work their own way (Ofuda Barrage, Thousand Torii, the blessings) are
+// Star Witch line's spells that work their own way (Grand Concert, Planetary Alignment, the heals) are
 // played by SPECIALS below.
 export function botSkills(char) {
   const chain = jobChain(char.job);
@@ -582,35 +582,10 @@ function fair(bot, world, mob) {
   return bot.party || helping(bot, world) || mob.def.boss || Math.abs(mob.x - you.x) >= 170 || Math.abs(mob.y - you.y) >= 90;
 }
 
-// ---------- The priestesses' own spells ----------
-// The Spirit Mage line's spells that work their own way, played by a bot in her own style: Ofuda
-// Barrage's talismans flying, sticking and bursting; Thousand Torii's corridor of gates rising one
-// after another, each cutting what stands in it; the blessings mending everyone round her (you
-// too, when she's with you). An Onmyoji bot has no troupe of her own, so her finisher is a
-// talisman storm instead of the Troupe Combo.
-
-function ofudaVolley(bot, world, m, rng, n, pct, range) {
-  const b = bot.body;
-  const dir = b.facing;
-  const list = world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.sign(o.x - b.x) !== -dir && Math.abs(o.x - b.x) < range && Math.abs(o.y - b.y) < 110)
-    .sort((o, q) => Math.abs(o.x - b.x) - Math.abs(q.x - b.x));
-  if (!list.length) list.push(m);
-  const range2 = magicRange(bot.stats, pct * 1.3);
-  const chip = magicRange(bot.stats, pct * 0.35 * 1.3);
-  for (let i = 0; i < n; i++) {
-    const mob = list[i % list.length];
-    const spread = (i - (n - 1) / 2) * 9;
-    const tx = mob.x + (rng() - 0.5) * mob.def.w * 0.5;
-    const ty = mob.y - mob.def.h * (0.35 + rng() * 0.4);
-    const ox = b.x + dir * 12;
-    const oy = b.y - 34 + spread * 0.4;
-    const fly = Math.hypot(tx - ox, ty - oy) / 420 + 0.06;
-    const lag = 0.4 + i * 0.06;
-    world.fx.push({ kind: 'ofuda', x: ox, y: oy, tx, ty, mob, dx: tx - mob.x, dy: ty - mob.y, fly, stick: 0.38, arc: spread, t: -lag, dur: fly + 0.43, seed: rng() });
-    land(bot, world, mob, lag + fly, chip, { knock: 10, burst: 'ofudahit', via: 'spell' }, rng);
-    land(bot, world, mob, lag + fly + 0.38, range2, { knock: 60, burst: 'ofudaburst', via: 'spell' }, rng);
-  }
-}
+// ---------- The Star Witch line's own spells ----------
+// Her line's spells that work their own way, played by a bot in her own style: the heals mending
+// everyone round her (you too, when she's with you), the Idol's Grand Concert and the Astronomer's
+// Planetary Alignment.
 
 function bless(bot, world, rng, pct, r, big) {
   const b = bot.body;
@@ -632,8 +607,19 @@ function bless(bot, world, rng, pct, r, big) {
 }
 
 const SPECIALS = {
-  ofudabarrage: { move: 'onmyoofuda', dur: 1.05, play: (bot, world, m, rng, P, tune) => { const O = P.combo[0].strikes[0].ofuda; ofudaVolley(bot, world, m, rng, O.n, O.pct * tune, O.range); } },
-  troupecombo: { move: 'onmyoofuda', dur: 1.6, play: (bot, world, m, rng, P, tune) => { ofudaVolley(bot, world, m, rng, 12, P.combo[0].strikes[0].troupe.pct * tune, 360); world.fx.push({ kind: 'seimanseal', x: m.x, y: m.y, r: 90, t: 0, dur: 1.4 }); } },
+  // Planetary Alignment: five planets in a row ahead of her, one beam through every monster in it.
+  troupecombo: {
+    move: 'asalign', dur: 2.2,
+    play: (bot, world, m, rng, P, tune) => {
+      const A = P.combo[0].strikes[0].align;
+      const b = bot.body;
+      const dir = b.facing;
+      world.fx.push({ kind: 'asalign', x: b.x + dir * 50, y: b.y - 40, dir, t: -0.2, dur: A.at + 0.9 });
+      const range = magicRange(bot.stats, A.pct * tune * 1.3);
+      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < A.span && Math.abs(o.y - b.y) < 120)
+        .forEach((o, i) => land(bot, world, o, A.at + 0.2, range, { stack: i, knock: 260, launch: 200, stun: 0.4, big: !i, burst: 'ashit', via: 'spell' }, rng));
+    },
+  },
   blessing: { move: 'swwish', dur: 0.9, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
   grandblessing: { move: 'sisong', dur: 1.2, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
@@ -798,13 +784,13 @@ function heal(bot, world, bots) {
   if (char.hp >= max * 0.85 || world.dead) return false;
   const amount = Math.round(max * between(0.12, 0.2, bots.rng) + bot.stats.int * 2);
   char.hp = Math.min(max, char.hp + amount);
-  // A Star Witch wishes a star down on you; a Shrine Maiden or an Onmyoji blesses you with a column
-  // of light, the bells over her head.
+  // A Star Witch wishes a star down on you; a Starlight Idol sings to you; an Astronomer's moons
+  // tide round you.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const witch = bot.char.job === 'spiritmage';
-  world.fx.push(shrine ? { kind: witch ? 'stwish' : 'blessing', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: witch ? 'swwish' : 'kagurabless', t: 0, dur: witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

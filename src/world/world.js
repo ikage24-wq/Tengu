@@ -122,12 +122,11 @@ export function loadMap(world, mapId, portalId) {
   world.numbers = [];
   world.channel = null;
   // Spells laid on the last map stay there (Heaven's Lantern, the Starlight Idol's songs and stage,
-  // the Onmyoji's seal and her troupe's combo).
+  // the Astronomer's Gravity Well).
   world.lantern = null;
   world.songs = [];
   world.concert = null;
-  world.seiman = null;
-  world.troupeCombo = null;
+  world.well = null;
   world.events.push({ type: 'map', mapId: map.id });
   onMapLoaded(world);
   onStoryMap(world);

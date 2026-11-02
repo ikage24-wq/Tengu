@@ -1577,15 +1577,15 @@ export function healerTurn(bot, world, rng) {
   // songs: Healing Song for the group and its long regen, and Curtain Call for the fallen.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const maiden = bot.char.job === 'shrinemaiden';
-  // (The Star Witch wishes stars down; the Idol sings; the Onmyoji keeps her columns of light.)
+  // (The Star Witch wishes stars down; the Idol sings; the Astronomer's moons tide round them.)
   const witch = bot.char.job === 'spiritmage';
   const star = witch || maiden;
-  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sisong' : witch ? 'stwish' : 'blessing', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sisong' : witch ? 'stwish' : 'astide', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'kagurabless', t: 0, dur: maiden ? 1.2 : witch ? 0.9 : 1.2 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 1.2 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'kaguraward', dur: star ? 0.8 : 1.1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 1.2 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'kagurabless', dur: witch ? 0.9 : 1.2 };
+  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'astide', dur: star ? 0.8 : 1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 1.2 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;

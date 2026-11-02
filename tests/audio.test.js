@@ -125,5 +125,5 @@ test('each fight layer loops in step with its area song, and every ambience soun
   }
   const { RECIPES } = await import('../src/audio/recipes.js');
   const { MATERIAL } = await import('../src/audio/materials.js');
-  for (const name of ['birdChirp', 'cricket', 'waveWash', 'gull', 'drip', 'chatter', 'heartbeat', 'skillUp', 'buy', 'dollGiggle', 'wolfHuff', 'oniGrunt', 'tenguLaugh', ...new Set(Object.values(MATERIAL))]) assert.ok(RECIPES[name], `${name} exists`);
+  for (const name of ['birdChirp', 'cricket', 'waveWash', 'gull', 'drip', 'chatter', 'heartbeat', 'skillUp', 'buy', 'dollGiggle', 'wolfHuff', ...new Set(Object.values(MATERIAL))]) assert.ok(RECIPES[name], `${name} exists`);
 });

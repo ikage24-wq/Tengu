@@ -360,7 +360,7 @@ export const SKILLS = {
   // The Starlight Idol (the Shrine Maiden remade, id kept; docs/design/starlight-idol.md): the
   // party's healer, singing into her wand as a microphone. Her songs hang in the air where she sang
   // them (`song`, world/idol.js), she builds Applause (world/melee.js), and her finisher is Grand
-  // Concert. The Onmyoji (damage, with a yokai troupe led by the tengu) is the other path.
+  // Concert. The Astronomer (damage, below) is the other path.
   shrinemastery: skill({
     id: 'shrinemastery', name: 'Stage Presence', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
     desc: 'The crowd is with you: more magic attack, a deeper well of MP, and every heal you give mends more.',
@@ -429,59 +429,60 @@ export const SKILLS = {
       };
     },
   }),
+  // The Astronomer (the Onmyoji remade, id kept; docs/design/astronomer.md): a calm stargazer who
+  // conducts the planets with an orrery staff. Her gauge, Orbit, is the moons round her (world/
+  // melee.js); her spells live in world/astro.js.
   onmyodo: skill({
-    id: 'onmyodo', name: 'Onmyodo', job: 'onmyoji', type: 'passive', grows: true, fx: null, icon: 'onmyodo',
-    desc: 'The way of yin and yang: steadier spells, much more magic attack, and sharper aim.',
+    id: 'onmyodo', name: 'Celestial Lore', job: 'onmyoji', type: 'passive', grows: true, fx: null, icon: 'onmyodo',
+    desc: 'Years under the night sky: steadier spells, much more magic attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
-  // The Onmyoji's spells (world/onmyoji.js): she builds Binding (world/melee.js) from her spells
-  // and her troupe's blows; full, her troupe fights faster and Troupe Combo is ready.
   ofudabarrage: skill({
-    id: 'ofudabarrage', name: 'Ofuda Barrage', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'spirit',
-    desc: 'Snap the fan shut and fling a fan of paper talismans from your fingers: each flies to a monster ahead, sticks fast, and a beat later bursts in a red star seal.',
-    weapons: ['wand', 'staff'],
+    id: 'ofudabarrage', name: 'Ringed Planet', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'astral',
+    desc: 'Plant your staff and turn your free hand slowly, as if spinning a globe, then push: a great ringed planet rolls away through every monster in the line, knocking them back.',
+    weapons: ['staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(22, 40), pct: k(90, 170), hits: 2, targets: 0,
-        combo: [{ move: 'onmyoofuda', dur: 1.05, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, ofuda: { n: k(4, 7), pct: k(90, 170), range: 330, stick: 0.38 } }] }],
+        mp: k(22, 40), pct: k(240, 400), hits: 1, targets: k(5, 8),
+        combo: [{ move: 'asglobe', dur: 1.1, step: 0, strikes: [{ at: 0.56, shot: 'asbig', magic: true, pct: k(240, 400), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 460, knock: 220, launch: 100, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
       };
     },
   }),
   seimanseal: skill({
-    id: 'seimanseal', name: 'Seiman Seal', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'spirit',
-    desc: 'Trace the five-pointed star of onmyodo in the air with the fan, stroke by stroke, and strike its heart: the seal opens on the ground ahead of you for a while. Monsters standing in it are bound fast where they stand and burn again and again.',
-    weapons: ['wand', 'staff'],
+    id: 'seimanseal', name: 'Gravity Well', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'astral',
+    desc: 'Hold the staff out and draw it slowly in, as if pulling on something heavy, then point it down: a small world hangs there for a while, pulling the monsters round it in toward it and crushing them again and again.',
+    weapons: ['staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(35, 60), pct: k(55, 100), hits: 1, targets: 0,
-        combo: [{ move: 'onmyoseal', dur: 1.5, step: 0, strikes: [{ at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, seiman: { r: k(90, 130), ahead: 90, dur: k(4, 6), every: 0.5, pct: k(55, 100), bind: 0.6 } }] }],
+        combo: [{ move: 'aswell', dur: 1.1, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
       };
     },
   }),
   yokairally: skill({
-    id: 'yokairally', name: 'Yokai Rally', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'spirit', maxLevel: 15,
-    desc: 'Clap twice and raise a talisman high: your yokai troupe answers. For a while they fight faster and hit harder, and the tengu marks a monster for them at once.',
-    weapons: ['wand', 'staff'],
+    id: 'yokairally', name: 'Lunar Tide', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'astral', maxLevel: 15,
+    desc: 'Lift your staff to the sky and close your eyes: the tide of the moons rises round you. For a while your moons circle faster, fly out more often and strike harder.',
+    weapons: ['staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'onmyorally', dur: 1.25, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, rally: { dur: k(16, 30), power: kf(0.4, 0.9) } }] }],
+        combo: [{ move: 'astide', dur: 1, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'astide', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { moonPower: kf(0.4, 0.9), moonHaste: 0.6 } } }] }],
       };
     },
   }),
   troupecombo: skill({
-    id: 'troupecombo', dmg: 2.4, name: 'Troupe Combo', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'spirit', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Binding, and spends it. Point your fan and call your whole troupe into one chained attack on every monster on the screen: the yuki-onna freezes them all solid, a whirlwind from the tengu lifts them high, the oni leaps up and smashes them back into the ground, and you snap your fan shut and they shatter.',
-    weapons: ['wand', 'staff'],
+    id: 'troupecombo', dmg: 2, name: 'Planetary Alignment', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'astral', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a Full Orbit, and spends it. Rise off the ground and draw a line across the sky with your staff: five planets fall into a row ahead of you, and when you sweep the staff forward they fire as one beam through every monster in the row.',
+    weapons: ['staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(40, 60), pct: k(120, 210), hits: 1, targets: 0, range: { w: 700, h: 200, around: true },
-        combo: [{ move: 'onmyocombo', dur: 4.4, step: 0, strikes: [{ at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, troupe: { pct: k(120, 210), big: k(600, 1000) } }] }],
+        mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
+        combo: [{ move: 'asalign', dur: 2.2, step: 0, strikes: [{ at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, align: { span: 520, at: 1.15, pct: k(300, 520) } }] }],
       };
     },
   }),
@@ -895,7 +896,7 @@ const MOVES_BY_SKILL = {
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'swflick', spiritstep: 'swblink', spiritwave: 'swshowoff', blessing: 'swwish', spiritward: 'swveil', heavenslantern: 'swstarfall',
   grandblessing: 'sisong', idolcheer: 'sicheer', purification: 'silullaby', resurrection: 'sibow', thousandtorii: 'siconcert',
-  ofudabarrage: 'onmyoofuda', seimanseal: 'onmyoseal', yokairally: 'onmyorally', troupecombo: 'onmyocombo',
+  ofudabarrage: 'asglobe', seimanseal: 'aswell', yokairally: 'astide', troupecombo: 'asalign',
   goldencarousel: 'bdcarousel',
   skywaltz: 'sdwaltz',
   gmsmite: 'castup', gmhaste: 'cheer',

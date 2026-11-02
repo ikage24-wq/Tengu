@@ -66,6 +66,8 @@ const VARIANT_LOOKS = {
   brass: { blade: '#e8b85a', bladeDark: '#a8702a', edge: '#4fe0d0', trim: '#ffe0a0', trimDark: '#b8782a' },
   // The Sky Dancer's on plain gloves: sky blue with a white cuff.
   skyblue: { blade: '#8fd0ff', bladeDark: '#4e90d8', edge: '#ffffff', trim: '#ffffff', trimDark: '#c8dcf0' },
+  // The Astronomer's on her staff, drawn as an orrery (weapon-designs.js): violet and silver.
+  astro: { blade: '#8a6ae0', bladeDark: '#4a3a9a', edge: '#f2eeff', trim: '#d8dcec', trimDark: '#7a7e9a' },
   // The Starlight Idol's on her wand, drawn as her microphone (weapon-designs.js): pink and gold.
   idol: { blade: '#ff8fc0', bladeDark: '#e0609e', edge: '#fff0f6', trim: '#ffd36a', trimDark: '#d89a36' },
   rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },
@@ -96,7 +98,7 @@ export function lookFor(type, tier, theme, variant = null) {
   const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), step: t ? (t - 1) % 4 : 0, theme: null, variant: null };
   if (look.rune) look.runeDim = mix(base.bladeDark, base.rune, 0.3);
   if (base.name === 'genesis') look.prism = PRISM;
-  const v = (t > 0 || variant === 'idol') && VARIANT_LOOKS[variant];
+  const v = (t > 0 || variant === 'idol' || variant === 'astro') && VARIANT_LOOKS[variant];
   if (!v) return look;
   Object.assign(look, v, { variant });
   if (WOODEN.has(type)) Object.assign(look, { handle: v.blade, handleDark: v.bladeDark });

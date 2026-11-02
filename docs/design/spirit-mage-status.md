@@ -1,5 +1,7 @@
 # Spirit Mage: build status
 
+> Retired (2026-11-02): the Spirit Mage was remade as the Star Witch, and her paths as the Starlight Idol and the Astronomer (star-witch.md, starlight-idol.md, astronomer.md). Kept for history only.
+
 The new magic class (first job at 10, taught by Elowen). It branches at 30 into the Shrine Maiden
 (full support, one humanoid companion) and the Onmyoji (damage, a band of humanoid shikigami,
 each with its own body and rig; never reuse Snow Wolf). Everything is new art and parts.

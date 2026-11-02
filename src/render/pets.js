@@ -1,12 +1,9 @@
 // Draws the companions: the Beastmaster's Snow wolf (render/snowwolf.js), who walks behind the
-// Beastmaster ('back', drawn before the hero), and the Onmyoji's yokai troupe.
+// Beastmaster ('back', drawn before the hero).
 
 import { drawMochi } from './mochi.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawSnowWolf } from './snowwolf.js';
-import { drawOniCompanion } from './oni.js';
-import { drawYukiCompanion } from './yuki.js';
-import { drawTenguCompanion } from './tengu.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   // Your Mochi, behind you.
@@ -20,11 +17,6 @@ export function drawPets(ctx, world, cam, time, layer) {
     const up = Math.min(1, (world.now - tr.since) / 0.25);
     fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, scale: 0.5 * up, flip: tr.dir < 0 });
   }
-  if (world.oni && layer === 'back') drawOniCompanion(ctx, world, world.oni, cam, time);
-  // (The tengu's feathers circle him: behind him, and in front.)
-  if (world.tengu) drawTenguCompanion(ctx, world, world.tengu, cam, time, layer);
-  // (The yuki-onna's snowflakes drift round her: behind her, and in front.)
-  if (world.yuki) drawYukiCompanion(ctx, world, world.yuki, cam, time, layer);
   const pets = world.pets;
   if (!pets || layer !== 'back') return;
   drawSnowWolf(ctx, world, pets.snow, cam, time);

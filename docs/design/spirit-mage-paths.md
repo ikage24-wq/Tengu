@@ -1,5 +1,7 @@
 # Spirit Mage paths at level 30: the plan
 
+> Retired (2026-11-02): the Spirit Mage was remade as the Star Witch, and her paths as the Starlight Idol and the Astronomer (star-witch.md, starlight-idol.md, astronomer.md). Kept for history only.
+
 The Spirit Mage branches at 30, after Elowen's trial, like every other first job. Built the way
 `making-a-job.md` says (research, combat, animation, effects, everything else, show it), with
 the player checking in at each choice with options and GIFs. Everything is new art and new rigs:

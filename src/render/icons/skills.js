@@ -43,6 +43,7 @@ const BG = {
   shrine: ['#f6f0ff', '#5a46a8'],
   idolbg: ['#ffe0f0', '#a83a7a'],
   lullbg: ['#f4e4ff', '#5a3a9a'],
+  astral: ['#c8b8ff', '#24186a'],
 };
 
 const FRAME = { active: '#fff0f6', buff: '#ffd25a', passive: '#d4cdee' };
@@ -1380,65 +1381,54 @@ function thousandtorii() {
   out.push(...noteIcon(3.2, 7, 1.2, '#ffd36a'), ...noteIcon(12.2, 6, 1.2, '#fff0f6'));
   return out;
 }
-// Onmyodo (the Onmyoji): a paper talisman with a red five-pointed star seal on it.
+// ---------- The Astronomer (deep violet and silver: ringed planets, moons, orbits) ----------
+const AVIO = '#8a6ae0';
+const AVIOINK = '#2a1a6a';
+const ASILV = '#e6e8f6';
+// A ringed planet at (cx, cy), radius r, its ring tilted `deg`.
+function planetIcon(cx, cy, r, deg = -20) {
+  const ring = (a0, a1, c) => solid(turn(tube(arcPts(cx, cy, r * 2, r * 0.6, a0, a1, 14), 0.5, 0.5), deg, cx, cy), c, { shadow: false, d: 0.3, ink: '#3a3e64', flat: true });
+  return [...ring(180, 360, '#9a9ec4'), ...solid(oval(cx, cy, r, r, 0, 20), AVIO, { d: 0.35, ink: AVIOINK }), S(turn(rect(cx - r * 0.9, cy - r * 0.1, r * 1.8, r * 0.28), deg, cx, cy), '#5a3ab0'), ...ring(0, 180, ASILV)];
+}
+// A little silver moon.
+const moonIcon = (x, y, r) => solid(oval(x, y, r, r, 0, 14), ASILV, { d: 0.3, ink: '#4a4e74' });
+// Celestial Lore (the Astronomer): her orrery staff's head, a world in its rings, under the stars.
 function onmyodo() {
-  const out = [...tile('indigo', 'passive'), ...aura(8, 8, 6.4, '#e6dcff')];
-  out.push(...solid([[4.6, 1.4], [11.4, 1.4], [11.4, 14.6], [4.6, 14.6]], '#fbf8ff', { d: 0.35, ink: '#5a4a8a' }));
-  const star = [];
-  for (let k = 0; k <= 5; k++) {
-    const a = (-90 + k * 144) * D2R;
-    star.push([8 + Math.cos(a) * 2.6, 8 + Math.sin(a) * 2.6]);
-  }
-  out.push(S(tube(star, 0.45, 0.45), '#d8323e'), S(tube(arcPts(8, 8, 3.2, 3.2, 0, 360, 20), 0.3, 0.3), '#d8323e'));
-  out.push(S(tube([[6.2, 3], [9.8, 3]], 0.35, 0.35), '#2a2440'), S(tube([[6.6, 13], [9.4, 13]], 0.35, 0.35), '#2a2440'));
-  out.push(...spark(13.4, 3, 0.9, '#ffd36a'));
+  const out = [...tile('astral', 'passive'), ...aura(8, 8, 6.4, '#e8dcff')];
+  out.push(S(tube([[8, 15], [8, 10]], 0.5, 0.5), '#d8dcec'));
+  out.push(...planetIcon(8, 7, 3.4, -20), ...moonIcon(13, 5.6, 1));
+  out.push(...spark(3, 3, 0.9), ...spark(12.6, 12.4, 0.8, '#d4b0ff'));
   return out;
 }
-
-// A five-pointed star seal (onmyodo's seiman) at (cx, cy), radius r.
-function seimanStar(cx, cy, r, c, w = 0.45) {
-  const star = [];
-  for (let k = 0; k <= 5; k++) {
-    const a = (-90 + k * 144) * D2R;
-    star.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
-  }
-  return [S(tube(star, w, w), c), S(tube(arcPts(cx, cy, r * 1.2, r * 1.2, 0, 360, 20), w * 0.7, w * 0.7), c)];
-}
-// A paper talisman at (x, y) turned `deg`, with its red star.
-function ofudaTag(x, y, deg) {
-  const tag = turn(rect(x - 1.6, y - 3.2, 3.2, 6.4), deg, x, y);
-  return [...solid(tag, '#fbf8ff', { d: 0.3, ink: '#5a4a8a', shadow: false }), ...seimanStar(x, y - 0.6, 1, '#d8323e', 0.3)];
-}
-// Ofuda Barrage: a fan of three talismans flying out, one bursting red.
+// Ringed Planet: a great ringed world rolling out, an orbit trailing behind it.
 function ofudabarrage() {
-  const out = [...tile('indigo', 'active'), ...aura(11, 6, 5, '#ffd0d4')];
-  out.push(...ofudaTag(4.4, 11, -30), ...ofudaTag(8, 8.6, 10), ...ofudaTag(11.6, 6.2, 45));
-  out.push(...spark(13.6, 3, 1.2, '#ff5a5a'), ...spark(14, 9, 0.8, '#ff9aa0'));
+  const out = [...tile('astral', 'active'), ...aura(10, 8, 6, '#e8dcff', 1.1)];
+  out.push(S(tube(arcPts(16, 18, 14, 9, 200, 250, 10), 0.3, 0.7), ASILV));
+  out.push(...planetIcon(10, 8, 4, -20));
+  out.push(...spark(2.6, 13, 0.9), ...spark(4.4, 9.8, 0.7));
   return out;
 }
-// Seiman Seal: the five-pointed star glowing red on the ground, seen from above.
+// Gravity Well: a small dark world, silver rings spiralling in on it.
 function seimanseal() {
-  const out = [...tile('indigo', 'active'), ...aura(8, 8, 7, '#ffd0d4', 1.1)];
-  out.push(...seimanStar(8, 8.4, 5, '#ff3a46', 0.6));
-  out.push(...spark(13.4, 2.6, 1, '#ffd36a'), ...spark(2.6, 13.4, 0.8, '#ff9aa0'));
+  const out = [...tile('astral', 'active')];
+  for (const [rx, ry, c] of [[6.6, 2.6, '#9a9ec4'], [4.6, 1.8, '#d4d8ee'], [2.8, 1.1, ASILV]]) out.push(S(tube(arcPts(8, 10, rx, ry, 0, 360, 24), 0.3, 0.3), c));
+  out.push(...solid(oval(8, 7.4, 2.8, 2.8, 0, 18), '#5a3ab0', { d: 0.35, ink: AVIOINK }));
+  out.push(...spark(2.6, 4, 0.8), ...spark(13.4, 5.6, 0.8, '#d4b0ff'));
   return out;
 }
-// Yokai Rally: a talisman held high, three red stars over it (the troupe answering).
+// Lunar Tide: crescent moons on a rising silver wave.
 function yokairally() {
-  const out = [...tile('indigo', 'buff'), ...aura(8, 9, 6, '#ffd0d4')];
-  out.push(...ofudaTag(8, 10.4, 0));
-  out.push(...seimanStar(3.4, 3.8, 1.5, '#ff3a46', 0.35), ...seimanStar(8, 2.6, 1.7, '#ff3a46', 0.35), ...seimanStar(12.6, 3.8, 1.5, '#ff3a46', 0.35));
+  const out = [...tile('astral', 'buff'), ...aura(8, 8, 6.4, '#f2eeff', 1.2)];
+  out.push(...solid([...arcPts(8, 15.6, 7, 5, 180, 360, 16), ...arcPts(8, 15.6, 5, 3, 360, 180, 16)], '#d4d8ee', { d: 0.35, ink: '#4a4e74' }));
+  out.push(...solid([...arcPts(8, 5.4, 3, 3, 60, 300, 12), ...arcPts(9.4, 5.2, 2.4, 2.5, 300, 60, 10)], ASILV, { d: 0.3, ink: '#4a4e74' }));
+  out.push(...moonIcon(3.6, 9.6, 1.1), ...moonIcon(12.6, 9.2, 1.1));
   return out;
 }
-// Troupe Combo: the three of them at once: a snowflake, a black feather and the oni's crimson
-// club crossed over a red star seal.
+// Planetary Alignment (her finisher): planets in a row, a beam of light through them.
 function troupecombo() {
-  const out = [...tile('indigo', 'active'), ...aura(8, 8, 7, '#ffd0d4', 1.1)];
-  out.push(...seimanStar(8, 8.4, 5.2, '#ff3a46', 0.4));
-  out.push(...solid(tube([[3.2, 13.4], [12.2, 3.2]], 1.5), '#c4242a', { d: 0.35, ink: '#5a0a10' }));
-  out.push(...solid([[11.4, 2.4], [14, 3.4], [7, 12.6], [5.6, 11.6]], '#17151f', { shadow: false, d: 0.3, ink: '#3a4a7a' }));
-  for (const a of [0, 60, 120]) out.push(S(tube([[4.6 + Math.cos(a * D2R) * 2.6, 4.6 + Math.sin(a * D2R) * 2.6], [4.6 - Math.cos(a * D2R) * 2.6, 4.6 - Math.sin(a * D2R) * 2.6]], 0.45, 0.45), '#cfe4fb'));
-  out.push(...spark(13.4, 13, 1, '#ffd36a'));
+  const out = [...tile('astral', 'active'), ...aura(8, 8, 7, '#f2eeff', 1.3, 5)];
+  out.push(S(tube([[0.8, 11], [15.2, 5]], 0.9, 0.9), '#e8dcff'), S(tube([[0.8, 11], [15.2, 5]], 0.35, 0.35), W));
+  out.push(...planetIcon(3.6, 9.8, 1.6, -22), ...planetIcon(8, 8, 2.2, -22), ...planetIcon(12.4, 6.2, 1.6, -22));
   return out;
 }
 

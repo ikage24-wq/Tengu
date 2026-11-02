@@ -51,16 +51,16 @@ export const JOBS = {
 
   // The Star Witch's paths (ids kept). Both ask for Elowen's trial first.
   // The Starlight Idol (her songs, Applause and Grand Concert; docs/design/starlight-idol.md) and the
-  // Onmyoji (her yokai troupe led by the tengu, Binding, her skills and Troupe Combo).
+  // Astronomer (her moons, Orbit and Planetary Alignment; docs/design/astronomer.md).
   shrinemaiden: {
     id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Starlight Idol', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand'],
     blurb: 'A pop idol whose wand is her microphone: the heart of any party. Her songs hang in the air where she sings them, mending everyone, cheering them on or lulling the monsters; her heals and hits build Applause, and full, her songs reach twice as far. Curtain Call raises the fallen, and Grand Concert heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
-    id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Onmyoji', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
-    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
-    blurb: 'The spirit-binder. A rowdy troupe of yokai (an oni, a yuki-onna and a tengu) fights at her side, kept in line with talismans and star seals. Deals damage in a group.',
+    id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Astronomer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['staff'],
+    blurb: 'A calm, dreamy stargazer who conducts the planets with an orrery staff. Moons gather round her as she fights, building her Orbit, and fly off at the monsters on their own; with all five, they fly twice as often. Ringed Planet, Gravity Well, Lunar Tide, and Planetary Alignment: five planets in a row firing one beam through everything. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).

@@ -64,7 +64,7 @@ const breathe = (p) => Math.sin(p * Math.PI * 3);
 const rel = (p, a, b) => (p >= a && p < b ? 1 : 0);
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
-export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern', 'onmyoofuda', 'onmyoseal', 'onmyorally', 'onmyocombo']);
+export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern']);
 
 // A backflip (the Thief's way out of a finisher): spring up and turn right over backwards, tucked,
 // and land low. `k` scales the height.
@@ -2860,6 +2860,238 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Astronomer's moves (her own; docs/design/astronomer.md) ----------
+  // A calm, dreamy stargazer who conducts the planets like a slow dance: every figure flows (soft
+  // in and out, never a snap), her gaze drifts up to the sky between casts, and the staff moves in
+  // wide unhurried arcs held out from her, low or to the side, never across her face. Her free hand
+  // floats out to guide the planets.
+
+  // Orbit fling (opener, the planet leaves at ~0.42): the staff drawn back low behind her, then swept
+  // up and out in one long arc, the free hand floating forward; a planet slung off its tip.
+  asfling(p) {
+    const draw = soft(seg(p, 0, 0.3));
+    const sweep = soft(seg(p, 0.28, 0.48));
+    const hold = soft(seg(p, 0.55, 1));
+    return {
+      weapon: lerp(lerp(70, 150, draw), 75, sweep), arm: lerp(lerp(55, 35, draw), 95, sweep) - 10 * hold, lunge: 3 * sweep * (1 - hold * 0.5), tilt: -0.04 * draw * (1 - sweep) + 0.05 * sweep * (1 - hold),
+      lift: breathe(p) * 0.6 * hold,
+      rig: (r) => {
+        r.backArm = [q(lerp(-2, 7, sweep) * (1 - hold * 0.4)), q(lerp(-2, -6, sweep))];
+        r.hairLift = sweep > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [draw * (1 - sweep), [1.2, 0, 4], [-2.2, 0, -8]], [sweep, [2.8, 0, 6], [-2.2, -1, -18]]);
+        if (hold > 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Conducting (second, planets at ~0.35 and ~0.65): she turns the staff in a slow circle out in
+  // front of her like a conductor's baton, a planet sent off at each of two beats.
+  asconduct(p) {
+    const turn = seg(p, 0.08, 0.72);
+    const a = turn * Math.PI * 2;
+    const into = soft(seg(p, 0, 0.12));
+    const hold = soft(seg(p, 0.75, 1));
+    return {
+      weapon: lerp(70, 75 + Math.sin(a) * 28, into) * (1 - hold) + 80 * hold, arm: lerp(50, 80 + Math.cos(a) * 14, into) * (1 - hold) + 78 * hold, lunge: 1.5 * Math.max(0, Math.sin(a)), tilt: 0.04 * Math.sin(a) * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(4 + 3 * Math.cos(a)), q(-4 + 2 * Math.sin(a))];
+        danceLegs(r, [Math.max(0, Math.sin(a)), [2.4, 0, 4], [-1, -0.6, -6]], [Math.max(0, -Math.sin(a)), [0.6, -0.6, 4], [-2.4, 0, -6]]);
+        r.eyes = 'half';
+      },
+    };
+  },
+  // Ringed world (the finish, ~0.5): she lifts her gaze and the staff out to the side, holds a breath
+  // there, then brings it round level and low in a wide sweep as a great ringed planet rolls out.
+  asring(p) {
+    const lift = soft(seg(p, 0.02, 0.36));
+    const sweep = soft(seg(p, 0.38, 0.54));
+    const hold = soft(seg(p, 0.62, 0.94)) * (1 - soft(seg(p, 0.95, 1)));
+    return {
+      weapon: lerp(lerp(70, 160, lift), 90, sweep), arm: lerp(lerp(55, 25, lift), 100, sweep) - 8 * hold, lunge: 4 * sweep * (1 - hold * 0.4), tilt: -0.06 * lift * (1 - sweep) + 0.08 * sweep * (1 - hold),
+      lift: 1.5 * lift * (1 - sweep),
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, 6, lift), -3, sweep) + 4 * hold), q(lerp(-2, -9, lift) * (1 - sweep) - 4)];
+        r.hairLift = lift > 0.5 && sweep < 0.3 ? -1 : sweep > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(4 * sweep);
+        danceLegs(r, [lift * (1 - sweep), [0.8, -1, 6], [-1.6, 0, -6]], [sweep, [3.4, 0, 6], [-3, -0.6, -14]]);
+        if (lift > 0.5 && sweep < 0.3) r.eyes = 'half';
+        if (hold > 0.4) r.mouth = 'cat';
+      },
+    };
+  },
+  // Stargaze (an opener in her pool, the planet falls at ~0.5): she looks up, lifts the staff's head
+  // to the sky out beside her, then tips it down at them; a planet drops out of the sky.
+  asgaze(p) {
+    const up = soft(seg(p, 0, 0.32));
+    const tip = soft(seg(p, 0.36, 0.5));
+    const hold = soft(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(lerp(70, 30, up), 110, tip), arm: lerp(lerp(55, 120, up), 85, tip) - 8 * hold, lift: 1.2 * up * (1 - tip), tilt: -0.07 * up * (1 - tip) + 0.03 * tip * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(3 * up), q(-3 - 5 * up * (1 - tip))];
+        r.hairLift = up > 0.5 && tip < 0.5 ? -1 : 0;
+        danceLegs(r, [up * (1 - tip), [0.6, -1.2, 10], [-1.4, 0, -6]], [tip, [2.2, 0, 4], [-1.8, 0, -8]]);
+        if (up > 0.4 && tip < 0.6) r.eyes = 'happy';
+      },
+    };
+  },
+  // Slow pirouette (second in her pool, ~0.55): a slow half turn on her toes, the staff trailing
+  // low, coming back round to send a planet off the turn.
+  aspirouette(p) {
+    const a = soft(seg(p, 0.05, 0.5));
+    const turning = p > 0.05 && p < 0.5;
+    const send = soft(seg(p, 0.48, 0.6));
+    const hold = soft(seg(p, 0.65, 1));
+    return {
+      weapon: turning ? 115 : lerp(115, 80, send), arm: turning ? 45 : lerp(45, 90, send) - 8 * hold, trail: turning,
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      lunge: 3 * send * (1 - hold * 0.5), lift: 1.5 * bump(p, 0.05, 0.5),
+      rig: (r) => {
+        r.backArm = turning ? [6, -6] : [q(5 - 2 * hold), q(-5)];
+        r.hairLift = turning ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [0.6, -1.6, 10], [-0.8, -0.4, -4]], [send, [2.6, 0, 6], [-2.2, -0.6, -12]]);
+        r.eyes = 'half';
+      },
+    };
+  },
+  // Tracing an orbit (third in her pool, ~0.6): she draws a slow ellipse in the air with the staff's
+  // head out in front, and at the close of it a moon slips off along the curve.
+  astrace(p) {
+    const tr = seg(p, 0.06, 0.58);
+    const a = tr * Math.PI * 2;
+    const hold = soft(seg(p, 0.62, 1));
+    return {
+      weapon: 85 + Math.sin(a) * 25 * (tr > 0 && tr < 1 ? 1 : 0), arm: 75 + Math.cos(a) * 18 * (tr > 0 && tr < 1 ? 1 : 0) - 6 * hold, lunge: 2 * Math.sin(a / 2), tilt: 0.03 * Math.sin(a),
+      rig: (r) => {
+        r.backArm = [q(6 - 2 * hold), q(-6 + Math.sin(a) * 2)];
+        danceLegs(r, [Math.sin(a / 2), [2.4, 0, 4], [-1.6, -0.6, -8]]);
+        r.eyes = 'half';
+        if (hold > 0.5) r.mouth = 'cat';
+      },
+    };
+  },
+  // Gathering the sky (a finish in her pool, ~0.55): both arms float up and wide as if lifting the
+  // night sky, the staff out to the side, then she lowers them in a slow push and the planet goes.
+  asgather(p) {
+    const rise = soft(seg(p, 0.04, 0.4));
+    const push = soft(seg(p, 0.42, 0.58));
+    const hold = soft(seg(p, 0.64, 0.94)) * (1 - soft(seg(p, 0.95, 1)));
+    return {
+      weapon: lerp(lerp(70, 150, rise), 95, push), arm: lerp(lerp(55, 30, rise), 95, push) - 6 * hold, lift: 2.5 * rise * (1 - push) + breathe(p) * rise * (1 - push), tilt: -0.08 * rise * (1 - push) + 0.06 * push * (1 - hold), lunge: 3 * push,
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, -4, rise), 8, push)), q(lerp(-2, -12, rise) * (1 - push) - 5 * push)];
+        r.hairLift = rise > 0.5 && push < 0.3 ? -1 : push > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [rise * (1 - push), [0.6, -1.6, 10], [-0.6, -1.6, -10]], [push, [3, 0, 6], [-2.6, -0.6, -12]]);
+        if (rise > 0.5 && push < 0.4) r.eyes = 'happy';
+        else if (hold > 0.3) r.eyes = 'half';
+      },
+    };
+  },
+  // Up + attack: the staff lifted out and up to the sky beside her, a moon sent up at whatever flies.
+  asup(p) {
+    const go = soft(seg(p, 0.1, 0.36));
+    const hold = soft(seg(p, 0.5, 1));
+    return {
+      weapon: lerp(70, 35, go), arm: lerp(55, 125, go) - 15 * hold, tilt: -0.07 * go * (1 - hold), lift: 2 * go * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(3 * go), q(-3 - 6 * go)];
+        r.hairLift = go > 0.5 ? -1 : 0;
+        danceLegs(r, [go, [0.6, -1.4, 10], [-1.6, 0, -6]]);
+        r.eyes = 'happy';
+      },
+    };
+  },
+  // In the air: she floats, knees drawn up softly, and lowers the staff at them below.
+  asair(p) {
+    const go = soft(seg(p, 0.12, 0.36));
+    return {
+      weapon: lerp(90, 160, go), arm: lerp(80, 55, go), lift: breathe(p) * 0.8,
+      rig: (r) => { r.air = true; r.backArm = [q(5), q(-7)]; r.hairLift = -1; danceLegs(r, [1, [2, -4.6, 30], [-1.6, -3.2, -20]]); r.eyes = 'half'; },
+    };
+  },
+  // Out of a run: she glides on, leaning back, the staff trailing low, and sends a planet off the
+  // end of the glide.
+  asglide(p) {
+    const glide = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.8, 1)));
+    const send = soft(seg(p, 0.36, 0.5));
+    return {
+      weapon: lerp(150, 85, send), arm: lerp(30, 90, send), tilt: -0.1 * glide * (1 - send * 0.5), lunge: 4 * glide, lift: 2 * glide,
+      rig: (r) => { r.backArm = [q(-5 * glide + 5 * send), q(-5)]; r.hairLift = glide > 0.4 ? 1 : 0; danceLegs(r, [glide, [3, -1.6, 20], [-3.4, -1.2, -30]]); r.eyes = 'half'; },
+    };
+  },
+  // Ringed Planet (her skill, ~0.55): she plants the staff's foot and leans on it, the free hand
+  // turning slowly as if spinning a globe, then pushes it out: a great ringed planet rolls away.
+  asglobe(p) {
+    const plant = soft(seg(p, 0, 0.2));
+    const spin = seg(p, 0.15, 0.5);
+    const push = soft(seg(p, 0.5, 0.62));
+    const hold = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(70, 35, plant), arm: lerp(55, 40, plant), lunge: 3 * push * (1 - hold * 0.5), tilt: 0.04 * push,
+      rig: (r) => {
+        r.backArm = [q(lerp(4, 9, push) + Math.sin(spin * Math.PI * 4) * (1 - push)), q(-5 + Math.cos(spin * Math.PI * 4) * 1.5 * (1 - push))];
+        danceLegs(r, [plant, [1.6, 0, 4], [-1.4, 0, -6]], [push, [2.6, 0, 6], [-2, -0.6, -10]]);
+        r.eyes = spin > 0 && push < 0.5 ? 'half' : r.eyes;
+      },
+    };
+  },
+  // Gravity Well (her skill, ~0.55): she holds the staff out level and draws it slowly in toward
+  // herself, as if pulling on something heavy, then turns it down: the well opens where she points.
+  aswell(p) {
+    const reach = soft(seg(p, 0, 0.25));
+    const pull = soft(seg(p, 0.25, 0.5));
+    const down = soft(seg(p, 0.52, 0.64));
+    const hold = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(70, 95, reach), 135, down), arm: lerp(lerp(55, 100, reach), 75, pull) - 10 * hold, lunge: 3 * reach * (1 - pull) - 2 * pull * (1 - down), tilt: -0.06 * pull * (1 - down) + 0.04 * down * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(lerp(4, 8, reach) - 6 * pull), q(-5)];
+        danceLegs(r, [reach * (1 - pull), [2.8, 0, 6], [-1.6, 0, -8]], [pull, [1, 0, 4], [-3, 0, -10]], [down, [2.4, 0, 4], [-2, 0, -8]]);
+        r.eyes = 'half';
+        if (pull > 0.4 && down < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+  // Lunar Tide (her buff, ~0.5): she lifts the staff upright beside her and closes her eyes; her moons
+  // swirl faster round her, and she opens them with a little smile.
+  astide(p) {
+    const up = soft(seg(p, 0, 0.3));
+    const hold = soft(seg(p, 0.75, 1));
+    return {
+      weapon: lerp(70, 10, up) + 60 * hold, arm: lerp(55, 110, up) - 50 * hold, lift: 2 * up * (1 - hold) + breathe(p) * up * (1 - hold),
+      rig: (r) => {
+        r.backArm = [q(5 * up * (1 - hold)), q(-3 - 8 * up * (1 - hold))];
+        r.hairLift = up > 0.5 && hold < 0.5 ? -1 : 0;
+        danceLegs(r, [up * (1 - hold), [0.6, -0.8, 6], [-0.6, -0.8, -6]]);
+        if (up > 0.4 && hold < 0.4) r.eyes = 'happy';
+        else if (hold > 0.4) r.mouth = 'cat';
+      },
+    };
+  },
+  // Planetary Alignment (her finisher, 2.2 s): she rises off the ground, staff out to the side,
+  // and draws a long straight line across the sky with it, the planets falling into a row as she
+  // goes; she holds it, then sweeps the staff forward and the row fires as one beam; she floats
+  // down with a quiet smile.
+  asalign(p) {
+    const rise = soft(seg(p, 0, 0.18));
+    const draw = soft(seg(p, 0.18, 0.55));
+    const fire = soft(seg(p, 0.62, 0.7));
+    const down = soft(seg(p, 0.85, 1));
+    return {
+      weapon: lerp(lerp(lerp(70, 130, rise), 60, draw), 90, fire), arm: lerp(lerp(lerp(55, 30, rise), 120, draw), 95, fire), lift: 8 * rise * (1 - down) + breathe(p) * rise * (1 - down),
+      tilt: -0.08 * draw * (1 - fire) + 0.1 * fire * (1 - down), lunge: 4 * fire * (1 - down),
+      rig: (r) => {
+        r.air = rise > 0.3 && down < 0.7;
+        r.backArm = [q(lerp(lerp(0, -6, rise), 6, fire)), q(lerp(-2, -10, rise) * (1 - fire) - 5 * fire)];
+        r.hairLift = fire > 0.3 && down < 0.5 ? 1 : rise > 0.3 ? -1 : 0;
+        r.cape -= q(4 * fire);
+        danceLegs(r, [rise * (1 - down), [1.6, -4, 20], [-1.6, -3, -20]], [fire * (1 - down), [3, -2.6, 20], [-3.4, -2, -40]]);
+        if (draw > 0.2 && fire < 0.3) r.eyes = 'half';
+        else if (fire > 0.3 && down < 0.5) r.mouth = 'open';
+        if (down > 0.4) [r.eyes, r.mouth] = ['happy', 'cat'];
+      },
+    };
+  },
+
   // ---------- The Sky Dancer's moves (her own; docs/design/sky-dancer.md) ----------
   // She dances on the air: every figure is drawn airborne (legs free, toes pointed), her gloved
   // palms and her feet throwing the wind. Arms stay below her face (out front, wide or low); each
@@ -3468,102 +3700,6 @@ export const MOVES = {
     };
   },
 
-  // ---------- The Onmyoji's figures (sharp and commanding: the fan snaps, the talismans fly) ----------
-  // Ofuda Barrage (the talismans fly at ~0.42): she snaps the fan shut and draws a fan of talismans
-  // up by her cheek between her fingers, then whips her arm out flat and wide, flinging them, her
-  // weight going into it; holds, chin up.
-  onmyoofuda(p) {
-    const draw = soft(seg(p, 0, 0.3));
-    const fling = soft(seg(p, 0.34, 0.46));
-    const settle = soft(seg(p, 0.8, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, 30, draw) - 20 * fling * hold + 10 * settle, arm: lerp(70, 50, draw) * (1 - fling) + 70 * fling,
-      tilt: -0.06 * draw * (1 - fling) + 0.16 * fling * hold, lunge: 4 * fling * hold,
-      fan: 0.1 * draw * (1 - fling) + 0.9 * fling * hold, fanA: lerp(0, -60, draw) * (1 - fling) + 100 * fling * hold,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, 2.6, draw) * (1 - fling) + 10 * fling * hold), q(lerp(0, -12, draw) * (1 - fling) - 5 * fling * hold)];
-        r.cape -= q(2 * draw + 3 * fling * hold);
-        danceLegs(r, [draw * (1 - fling), [1.4, -1, 6], [-1.4, 0, -4]], [fling * hold, [4.6, 0, 8], [-4, 0, -14]]);
-        if (draw * (1 - fling) > 0.5) r.eyes = 'half';
-      },
-    };
-  },
-  // Seiman Seal (the seal opens at ~0.66): she raises the fan and traces the five-pointed star in
-  // the air before her, five sharp strokes, her other hand held in a sword-sign at her lips; then
-  // strikes its heart with the fan's tip, sinking into it.
-  onmyoseal(p) {
-    const up = soft(seg(p, 0, 0.12));
-    const draw = seg(p, 0.12, 0.6);
-    const strike = soft(seg(p, 0.6, 0.68));
-    const settle = soft(seg(p, 0.86, 1));
-    const hold = 1 - settle;
-    // The fan's tip goes round the star's five points in turn.
-    const k = Math.min(4.999, draw * 5);
-    const a0 = (-90 + Math.floor(k) * 144) * (Math.PI / 180);
-    const a1 = (-90 + (Math.floor(k) + 1) * 144) * (Math.PI / 180);
-    const f = soft(k - Math.floor(k));
-    const sx = Math.cos(a0) + (Math.cos(a1) - Math.cos(a0)) * f;
-    const sy = Math.sin(a0) + (Math.sin(a1) - Math.sin(a0)) * f;
-    const tracing = up * (1 - strike);
-    return {
-      weapon: 10 + 20 * up * (1 - strike) + 30 * strike * hold, arm: lerp(70, 110, up) + 30 * sy * tracing - 30 * strike * hold - 20 * settle,
-      tilt: 0.04 * sx * tracing + 0.18 * strike * hold, lunge: 2 * sx * tracing + 4 * strike * hold, lift: 2 * tracing,
-      fan: 0.15 + 0.2 * tracing + 0.6 * strike * hold, fanA: 40 * sx * tracing + 90 * strike * hold,
-      rig: (r) => {
-        r.backArm = [q(1.4 * up), q(-12 * up * (1 - strike) - 4 * strike * hold)];
-        r.squat = q(1.6 * strike * hold);
-        r.cape -= q(2 * tracing + 3 * strike * hold);
-        danceLegs(r, [tracing, [2, 0, 6], [-2.4, 0, -6]], [strike * hold, [4.6, 0, 10], [-4.4, 0, -14]]);
-        if (tracing > 0.4) r.eyes = 'half';
-      },
-    };
-  },
-  // Yokai Rally (the troupe answers at ~0.6): two sharp claps before her chest, then a talisman
-  // raised high overhead in the fan hand, the other hand on her hip, chin up, commanding.
-  onmyorally(p) {
-    const clap = Math.max(bump(p, 0.08, 0.22), bump(p, 0.24, 0.38));
-    const near = soft(seg(p, 0.04, 0.12)) * (1 - soft(seg(p, 0.42, 0.5)));
-    const raise = soft(seg(p, 0.46, 0.6));
-    const settle = soft(seg(p, 0.86, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, 60, near) - 50 * raise * hold + 10 * settle, arm: lerp(70, 60, near) + 110 * raise * hold - 20 * settle,
-      tilt: -0.1 * raise * hold, lift: 3 * raise * hold + 1.5 * clap,
-      fan: 0.2 * near + 0.9 * raise * hold, fanA: -20 * raise * hold,
-      rig: (r) => {
-        r.backArm = [q(lerp(0, 4.6 - 1.6 * clap, near) * (1 - raise) - 1.6 * raise * hold), q(lerp(0, -7, near) * (1 - raise) + 1 * raise * hold)];
-        r.hairLift = raise * hold > 0.4 ? -1 : 0;
-        r.cape -= q(3 * raise * hold);
-        danceLegs(r, [near, [2.4, 0, 6], [-2.4, 0, -6]], [raise * hold, [1.4, -2, 12], [-1.4, -1.4, -8]]);
-        if (clap > 0.5) r.eyes = 'blink';
-        else if (raise * hold > 0.4) r.eyes = 'half';
-      },
-    };
-  },
-  // Troupe Combo (over ~4.4 s): she thrusts the fan out at them, commanding, and holds there,
-  // chin up, while her troupe goes to work, swaying as each of them strikes (freeze ~0.24, lift
-  // ~0.44, slam ~0.77); at ~0.91 she whips the fan shut with a flourish and they shatter.
-  onmyocombo(p) {
-    const point = soft(seg(p, 0, 0.07));
-    const sway = 0.5 * (bump(p, 0.22, 0.3) + bump(p, 0.42, 0.5) + 1.6 * bump(p, 0.76, 0.84));
-    const snap = soft(seg(p, 0.87, 0.915));
-    const settle = soft(seg(p, 0.96, 1));
-    const hold = 1 - settle;
-    return {
-      weapon: lerp(10, 120, point) * (1 - snap) + 60 * snap * hold + 10 * settle, arm: lerp(70, 40, point) * (1 - snap) + 150 * snap * hold - 20 * settle,
-      tilt: -0.08 * point * hold - 0.04 * sway, lunge: 3 * point * (1 - snap) + 2 * sway, lift: 2 * snap * hold,
-      fan: (1 - 0.9 * snap) * point + 0.1, fanA: lerp(0, 90, point) * (1 - snap) - 60 * snap * hold,
-      rig: (r) => {
-        r.backArm = [q(-1.6 * point * hold), q(-0.4 * point * hold)];
-        r.cape -= q(2 * point + 2 * sway + 3 * snap * hold);
-        r.hairLift = snap * hold > 0.3 ? -1 : 0;
-        danceLegs(r, [point * (1 - snap), [4.2, 0, 8], [-4, 0, -12]], [snap * hold, [1.4, -1.6, 10], [-1.4, -1, -6]]);
-        if (snap * hold > 0.4) r.eyes = 'half';
-      },
-    };
-  },
-
   // A prayer: weapon held close, the other hand raised to it, eyes closed, floating a little.
   pray(p) {
     const k = ease(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.85, 1)));
@@ -3647,7 +3783,6 @@ export const MOVE_MIN = {
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, whirlflip: 0.6, flashjump: 0.3, shadowrun: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
-  onmyoofuda: 0.95, onmyoseal: 1.35, onmyorally: 1.1, onmyocombo: 4.2,
 };
 
 // Basic attacks chain into a combo per weapon type.
@@ -3845,7 +3980,7 @@ const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });
 const bob = (p, dur, per = 1.1) => Math.sin(p * Math.PI * 2 * Math.max(1, Math.round(dur / per)));
 // The figures where a grounded dancer rises up off the floor: the finishers, the cast upward, and
 // her big skills.
-const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern', 'onmyorally', 'onmyocombo']);
+const GROUNDED_RISE = new Set(['kagurafin', 'bowrise', 'kaguraup', 'kaguraslam', 'kagurabless', 'kaguralantern']);
 const DANCE_STYLES = {
   // Grounded kagura (suriashi): her feet slide along the floor in long, slow gliding steps, knees
   // only softly bent, eyes lowered in the holds; serene. Her poses are big and bold (the bell staff

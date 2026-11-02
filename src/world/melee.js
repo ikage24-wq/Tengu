@@ -34,12 +34,9 @@ import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, ap
 import { moveAt } from '../render/moves.js';
 import { tickPets, sendSnow, moonfall, howl, duetSnow, duetMoon } from './pets.js';
 import { tickIdol, sing, curtainCall, grandConcert } from './idol.js';
-import { tickOnmyoji, ofudaBarrage, seimanSeal, yokaiRally, troupeCombo, TROUPE, rallyPower } from './onmyoji.js';
+import { tickAstro, gravityWell, planetaryAlignment } from './astro.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY } from './physics.js';
-import { tickOni } from './oni.js';
-import { tickYuki } from './yuki.js';
-import { tickTengu } from './tengu.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 
@@ -213,18 +210,19 @@ export const PATH_COMBOS = {
     { move: 'sistep', dur: 0.5, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 700, oy: -3 }, { at: 0.6, shot: 'sinote', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 700, oy: 3 }] },
     { move: 'sihigh', dur: 0.64, finisher: true, strikes: [{ at: 0.5, shot: 'sibig', magic: true, pct: 165, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
+  // The Astronomer (the Onmyoji remade; docs/design/astronomer.md), conducting the planets with her
+  // orrery: a long arc flinging a planet, a slow conducted circle sending two, and a ringed world
+  // swept out low that rolls through the line. Her planets are heavy and unhurried.
+  astro: [
+    { move: 'asfling', dur: 0.5, strikes: [{ at: 0.42, shot: 'asplanet', magic: true, pct: 90, range: 300, h: 64, knock: 40, speed: 520 }] },
+    { move: 'asconduct', dur: 0.6, strikes: [{ at: 0.35, shot: 'asplanet', magic: true, pct: 52, range: 300, h: 64, knock: 40, speed: 520, oy: -3 }, { at: 0.65, shot: 'asplanet', magic: true, pct: 56, range: 300, h: 64, knock: 40, speed: 520, oy: 3 }] },
+    { move: 'asring', dur: 0.66, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: 175, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+  ],
   starstaff: [
     { move: 'ssthrust', dur: 0.46, step: 4, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 92, range: 320, h: 70, knock: 120, speed: 700 }] },
     { move: 'ssswing', dur: 0.5, strikes: [{ at: 0.44, shot: 'stcomet', magic: true, pct: 98, range: 320, h: 70, knock: 120, speed: 700, lob: 30, h: 110 }] },
     { move: 'ssplant', dur: 0.55, strikes: [{ at: 0.42, shot: 'stmeteor', sky: true, magic: true, pct: 115, range: 280, h: 90, targets: 2, knock: 60, launch: 120, speed: 600 }] },
     { move: 'ssslam', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 175, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] },
-  ],
-  // The Spirit Mage, dancing: the opening sweep sends a spirit bolt, the swaying step a second,
-  // and the dance's last figure looses a great bolt of spirit light that bursts through the line.
-  spiritmage: [
-    { move: 'kagura', dur: 1.01, step: 2, strikes: [{ at: 0.55, shot: 'spiritorb', magic: true, pct: 200, range: 290, h: 60, knock: 25, speed: 600 }] },
-    { move: 'kaguraturn', dur: 1.1, step: 2, strikes: [{ at: 0.6, shot: 'spiritorb', magic: true, pct: 210, range: 290, h: 60, knock: 30, speed: 600 }] },
-    { move: 'kagurafin', dur: 1.5, step: 4, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 375, range: 310, h: 66, targets: 3, pierce: true, speed: 660, knock: 190, big: true, stop: 0.06, shake: 2 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -461,24 +459,21 @@ export const PATH_VARIANTS = {
       { move: 'sijump', dur: 0.56, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 700, h: 150, drop: 40, targets: 2, pierce: true }] }],
     [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
+  // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
+  // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
+  // night sky in both arms.
+  astro: [
+    [PATH_COMBOS.astro[0], { move: 'asgaze', dur: 0.56, strikes: [{ at: 0.48, shot: 'asplanet', sky: true, magic: true, pct: 96, range: 280, h: 90, targets: 2, knock: 50, launch: 100, speed: 520 }] }],
+    [PATH_COMBOS.astro[1],
+      { move: 'aspirouette', dur: 0.6, strikes: [{ at: 0.55, shot: 'asplanet', magic: true, pct: 108, range: 300, h: 64, knock: 40, speed: 520, targets: 2, pierce: true }] },
+      { move: 'astrace', dur: 0.62, strikes: [{ at: 0.58, shot: 'asplanet', magic: true, pct: 110, range: 300, h: 64, knock: 40, speed: 520, lob: 30, h: 110 }] }],
+    [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.66, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+  ],
   starstaff: [
     [PATH_COMBOS.starstaff[0], { move: 'swsweep', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
     [PATH_COMBOS.starstaff[1], { move: 'swspin', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
     [PATH_COMBOS.starstaff[2], { move: 'swhop', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
     [PATH_COMBOS.starstaff[3], { move: 'swsnap', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
-  ],
-  // The Spirit Mage's dance. Openers: the sweep, the bells shaken three times, or a rise onto one
-  // foot. Second: the swaying step, the sleeve fan (three bolts fanning out), or the bells.
-  // Finisher: the dance's last figure, or the bow and rise that throws the great bolt up and out.
-  spiritmage: [
-    [PATH_COMBOS.spiritmage[0],
-      { move: 'bellshake', dur: 1.23, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 90, range: 280, h: 70, knock: 15, speed: 620, oy: [-6, 0, 6][i] })) },
-      { move: 'twirlstep', dur: 1.14, step: 6, strikes: [{ at: 0.58, shot: 'spiritorb', magic: true, pct: 210, range: 290, h: 60, knock: 35, speed: 620 }] }],
-    [PATH_COMBOS.spiritmage[1],
-      { move: 'sleevefan', dur: 1.1, step: -6, strikes: [{ at: 0.52, shot: 'spiritorb', magic: true, fan: 3, pct: 100, range: 280, h: 120, knock: 30, speed: 600 }] },
-      { move: 'bellshake', dur: 1.23, step: 0, strikes: [0.3, 0.5, 0.7].map((at, i) => ({ at, shot: 'spiritorb', magic: true, pct: 90, range: 280, h: 70, knock: 15, speed: 620, oy: [6, 0, -6][i] })) }],
-    [PATH_COMBOS.spiritmage[2],
-      { move: 'bowrise', dur: 1.54, step: 2, finisher: true, strikes: [{ at: 0.6, shot: 'spiritbig', magic: true, pct: 365, range: 300, h: 110, lift: 40, targets: 3, pierce: true, speed: 640, knock: 120, launch: 300, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -557,6 +552,16 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'sidash', dur: 0.56, step: 50, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 700, targets: 2, pierce: true, knock: 100 }] },
   },
+  // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
+  // (the second a ringed world), and a glide out of a run.
+  astro: {
+    up: { move: 'asup', dur: 0.5, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 112, range: 300, h: 64, knock: 40, speed: 520, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'asair', dur: 0.44, hang: true, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 84, range: 300, h: 64, knock: 40, speed: 520, range: 260, h: 170, drop: 60 }] },
+      { move: 'asair', dur: 0.5, hang: true, finisher: true, strikes: [{ at: 0.34, shot: 'asbig', magic: true, pct: 112, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 480, big: true, stop: 0.04, shake: 1 }] },
+    ],
+    dash: { move: 'asglide', dur: 0.6, step: 50, carry: 0.55, strikes: [{ at: 0.44, shot: 'asplanet', magic: true, pct: 118, range: 300, h: 64, knock: 40, speed: 520, targets: 2, pierce: true, knock: 100 }] },
+  },
   starstaff: {
     up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
     air: [
@@ -564,16 +569,6 @@ const ARCHER_COMMANDS = {
       { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
     ],
     dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
-  },
-  // The Spirit Mage: a bolt swept up at whatever flies, spirit bolts swept down from a float in the
-  // air, and a bolt whipped out of a glide.
-  spiritmage: {
-    up: { move: 'kaguraup', dur: 1.1, step: 0, strikes: [{ at: 0.5, shot: 'spiritbig', magic: true, pct: 240, range: 260, h: 190, lift: 50, targets: 2, pierce: true, knock: 20, launch: 380, speed: 640, big: true, stop: 0.05 }] },
-    air: [
-      { move: 'floatcast', dur: 0.88, hang: true, strikes: [{ at: 0.48, shot: 'spiritorb', magic: true, fan: 2, pct: 165, range: 260, h: 170, drop: 50, knock: 30, speed: 620 }] },
-      { move: 'floatcast2', dur: 1.01, hang: true, finisher: true, strikes: [{ at: 0.55, shot: 'spiritbig', magic: true, fan: 2, pct: 210, range: 260, h: 190, drop: 60, knock: 120, speed: 660, big: true, stop: 0.05, shake: 1 }] },
-    ],
-    dash: { move: 'glidecast', dur: 1.06, step: 40, carry: 0.5, strikes: [{ at: 0.5, shot: 'spiritorb', magic: true, fan: 2, pct: 185, range: 280, h: 80, knock: 80, speed: 640 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
@@ -1071,7 +1066,7 @@ export const STAR_SPLIT = 0.5;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm') {
   if (!hasSpirit(world.char) || n <= 0) return;
-  // A Starlight Idol builds Applause instead (her heals count most); an Onmyoji, Binding.
+  // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
   if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
   if (hasBinding(world.char)) return addBinding(world, n * 0.7);
   const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
@@ -1094,24 +1089,20 @@ export function addGrace(world, n) {
   world.graceAt = world.now;
 }
 export const liveShow = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
-// Binding: the Onmyoji's gauge, in place of Spirit: how tightly she holds her yokai troupe. Her
-// spells that land build it, and so does every blow her troupe lands (world/oni.js, yuki.js,
-// tengu.js); it fades once the fighting stops. Full (ALL BOUND), her troupe fights faster
-// (BOUND_REST of their rest between moves) and her finisher, Troupe Combo, is ready.
+// Orbit (internally Binding): the Astronomer's gauge, in place of Spirit: the moons round her, one
+// for every fifth of it (world/astro.js). Her spells that land build it (her moons' own blows
+// don't); it fades once the fighting stops. Full (FULL ORBIT, all five moons), her moons fly out
+// twice as often and her finisher, Planetary Alignment, is ready.
 export const BINDING_MAX = 100;
 const BINDING_HOLD = 6;
 const BINDING_DRAIN = 9;
-export const BOUND_REST = 0.5;
 export const hasBinding = (char) => jobChain(char.job).includes('onmyoji');
 export function addBinding(world, n) {
   if (!hasBinding(world.char) || n <= 0) return;
   world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n);
   world.bindingAt = world.now;
 }
-export const allBound = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
-// How long a yokai of the troupe rests between moves: shorter when she holds them All Bound, or
-// under Yokai Rally.
-export const troupeRest = (world) => (allBound(world) ? BOUND_REST : 1) * (world.rally?.until > world.now ? 0.6 : 1);
+export const fullOrbit = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
 // How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Applause.
 const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
@@ -1159,7 +1150,7 @@ export function pathOf(world) {
   const w = world.stats.weaponType;
   if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
   if (w === 'wand' && hasGrace(char)) return 'idol';
-  if ((w === 'wand' || w === 'staff') && hasSpirit(char)) return 'spiritmage';
+  if (w === 'staff' && hasBinding(char)) return 'astro';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -1399,10 +1390,7 @@ export function tickMelee(world, dt) {
   tickEngineer(world);
   tickPets(world, dt);
   tickIdol(world);
-  tickOnmyoji(world);
-  tickOni(world, dt);
-  tickYuki(world, dt);
-  tickTengu(world, dt);
+  tickAstro(world);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -1500,11 +1488,9 @@ function land(world, s) {
   if (s.song) sing(world, s);
   if (s.revive) curtainCall(world, s);
   if (s.concert) grandConcert(world, s);
-  // The Onmyoji's (world/onmyoji.js).
-  if (s.ofuda) ofudaBarrage(world, s);
-  if (s.seiman) seimanSeal(world, s);
-  if (s.rally) yokaiRally(world, s);
-  if (s.troupe) troupeCombo(world, s);
+  // The Astronomer's (world/astro.js).
+  if (s.well) gravityWell(world, s);
+  if (s.align) planetaryAlignment(world, s);
   let crits = 0;
   targets.forEach((m, i) => {
     const miss = Math.random() >= hitChance(acc, char.level, m.def);
@@ -1768,7 +1754,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.doll) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1793,12 +1779,11 @@ function grantSpell(world, g) {
   addGrace(world, 7 * (1 + alliesNear(world, world.body.x, (g.range?.w ?? 440) / 2)));
 }
 
-// A hit of a mage path's spell that lands on its own (her songs and show, or the yokai troupe): a spell of her own magic attack,
-// landing `at` seconds from now, knocking monsters away from `x`; it builds Spirit a little.
+// A hit of a mage path's spell that lands on its own (the Idol's songs and show, the Astronomer's
+// moons and planets): a spell of her own magic attack, landing `at` seconds from now, knocking
+// monsters away from `x`; it builds her gauge a little.
 export function dollHit(world, m, f, at = 0) {
-  // (Her yokai troupe hit harder under Yokai Rally.)
-  const pct = TROUPE.has(f.key) ? f.pct * (1 + rallyPower(world)) : f.pct;
-  shotHit(world, { pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
+  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
 }
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.

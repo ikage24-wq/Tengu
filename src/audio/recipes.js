@@ -288,54 +288,18 @@ const R = {
   allstars: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'C6:60 D6:60 E6:60 G6:60 A6:60 C7:60 E7:600', inst: 'celesta', db: -2 }, sparkle('r:420 C8:0 G7:60', { db: -10 })] },
   starfallsky: { db: -10, max: 1, room: true, layers: [{ seq: 'C6:90 E6:90 G6:90 A6:90 C7:90 E7:90 G7:400', inst: 'celesta', db: -2 }, { rec: 'holyProtect', len: 1200, db: -8 }] },
   starfallimpact: { db: -6, max: 1, room: true, duck: [-8, 1400], layers: [thump(55, 700, { slide: -1.6 }), { rec: 'holyBlast', len: 1600, db: -2 }, { rec: 'rockHit', rate: 0.7, db: -6 }, sparkle('r:200 C7:0 G6:80 E6:160 C6:240', { db: -8 })] },
-  // The Onmyoji's oni: her club landing (a heavy iron thud), the Ground Pound (a deep crash and
-  // rocks), and her smoke puff.
-  onihit: { db: -10, vary: 6, max: 3, gap: 60, layers: [{ rec: 'punchHeavy', rate: 0.8 }, { rec: 'metalHeavy', rate: 0.7, db: -6 }] },
-  onipound: { db: -8, max: 1, room: true, layers: [thump(60, 500, { slide: -1.2 }), { rec: 'rockHit', rate: 0.7 }, { rec: 'punchHeavy', rate: 0.6, db: -4 }] },
-  oniaura: { db: -11, max: 1, layers: [{ rec: 'fireCharge', rate: 0.8 }, whoosh(600, 200, 1200, { db: -6 })] },
-  oniroar: { db: -7, max: 1, room: true, layers: [{ rec: 'ogre', rate: 1.25 }, { rec: 'darkImpact', rate: 0.9, db: -4 }, thump(70, 400, { slide: -1 })] },
-  // The Onmyoji's yuki-onna: her white breath (a long cold hiss), her question (a soft chime) and
-  // the soul drawn out (a hollow rising tone) and let go, ice spikes cracking up, ice needles
-  // (glassy tinks), an icicle and a frozen monster shattering, the whiteout (a howling wind), her
-  // snowball, her mist and her cold hits.
-  yukistream: { db: -12, max: 1, layers: [{ rec: 'iceCharge', rate: 0.75 }, whoosh(1800, 500, 2400, { focus: 0.5, db: -5 })] },
-  yukiask: { db: -14, max: 1, layers: [sparkle('E6:0 B6:120 E7:240', { db: -6 }), { rec: 'teleIn', rate: 1.5, len: 400, db: -6 }] },
-  yukisoul: { db: -13, max: 1, layers: [{ rec: 'darkRiser', rate: 1.4, len: 1200 }, { rec: 'iceCharge', rate: 1.2, db: -8 }] },
-  yukisoulfly: { db: -12, max: 1, layers: [{ rec: 'holyHeal', rate: 1.3, len: 700 }, sparkle('B6:0 E7:80', { db: -8 })] },
-  yukispike: { db: -13, vary: 10, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 0.9, len: 450 }, { rec: 'rockHit', rate: 1.6, db: -10, len: 250 }] },
-  yukisnowball: { db: -16, max: 2, layers: [{ rec: 'swish', rate: 1.2, len: 250 }] },
-  yukimist: { db: -14, max: 1, layers: [whoosh(900, 400, 1400, { focus: 0.4, db: -4 }), sparkle('B6:0 E7:90', { db: -12 })] },
-  yukiwhiteout: { db: -9, max: 1, room: true, layers: [{ rec: 'windWhoosh', rate: 0.65, len: 3000 }, { rec: 'iceCharge', rate: 0.6, db: -6 }, whoosh(3000, 300, 1800, { focus: 0.8, db: -3 })] },
-  yukifrostfan: { db: -12, max: 1, layers: [whoosh(500, 200, 2200, { focus: 0.6, db: -2 }), sparkle('B6:0 E7:60', { db: -10 })] },
-  yukishatter: { db: -9, max: 2, gap: 80, layers: [{ rec: 'glass', rate: 0.9 }, { rec: 'iceBig', rate: 1.1, len: 800, db: -3 }] },
-  yukineedle: { db: -16, vary: 10, max: 4, gap: 40, layers: [{ rec: 'iceLaunch', rate: 1.6, len: 300 }, sparkle('E7:0 B7:40', { db: -12 })] },
-  yukiicicle: { db: -11, max: 3, gap: 90, layers: [{ rec: 'iceBig', rate: 1.2, len: 900 }, { rec: 'glass', rate: 0.8, db: -4 }] },
-  yukistep: { db: -14, max: 2, layers: [{ rec: 'teleOut', rate: 1.4, len: 500 }, sparkle('B6:0 E7:60', { db: -10 })] },
-  yukihit: { db: -15, vary: 8, max: 3, gap: 50, layers: [{ rec: 'iceImpact', rate: 1.1, len: 400 }] },
-  // The Onmyoji's tengu: a sword cut (a clean ring of steel), the gust and whirlwind of his fan,
-  // his feathers flying, stones out of the sky, a beat of his wings, his vanishing.
-  // The Onmyoji's: talismans flicked out and bursting, the star seal opening, her rally, the Night
-  // Troupe Combo (a taiko roll as she calls it), her fan snapping shut, the doll fusing.
-  ofuda: { db: -18, vary: 10, max: 4, gap: 50, layers: [{ rec: 'bookFlip', rate: 1.6, len: 200 }, { rec: 'swish', rate: 1.4, db: -6, len: 150 }] },
-  ofudaburst: { db: -13, vary: 8, max: 3, gap: 60, layers: [{ rec: 'fireImpact', rate: 1.5, len: 400 }, sparkle('E6:0', { db: -10 })] },
-  seimanseal: { db: -10, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 1.2, len: 1200 }, { rec: 'bell', rate: 1.3, db: -6, len: 900 }, sparkle('A5:0 E6:120 A6:240', { db: -8 })] },
-  yokairally: { db: -11, max: 1, layers: [{ rec: 'clangLight', rate: 1.6, len: 150 }, { rec: 'clangLight', rate: 1.6, len: 150, at: 160 }, { seq: 'r:300 E5:120 A5:120 E6:500', inst: 'flute', db: -6 }] },
-  troupecombo: { db: -9, max: 1, room: true, layers: [{ seq: 'A2:180 A2:180 A2:120 A2:120 A2:400', inst: 'timpani', db: -2 }, { rec: 'darkRiser', rate: 1.3, len: 900, db: -6 }] },
-  combosnap: { db: -9, max: 1, layers: [{ rec: 'clangHeavy', rate: 1.4, len: 400 }, { rec: 'glassHeavy', rate: 0.9, db: -2 }] },
-  dollfusion: { db: -12, max: 1, layers: [sparkle('C6:0 E6:90 G6:180 C7:270', { db: -4 }), { rec: 'cloth', rate: 1.2, db: -8, at: 800 }] },
-  tengumark: { db: -11, max: 1, layers: [{ rec: 'darkImpact', rate: 1.5, len: 500 }, sparkle('E6:0 B6:60', { db: -8 })] },
-  tengucommand: { db: -13, max: 1, layers: [{ rec: 'cloth', rate: 1.5, len: 250 }, { rec: 'clangLight', rate: 1.4, db: -8 }] },
-  tengucut: { db: -11, vary: 8, max: 3, gap: 40, layers: [{ rec: 'swingSword', rate: 1.15 }, { rec: 'bladeDraw', rate: 1.3, db: -8, len: 300 }] },
-  tengudash: { db: -12, max: 1, layers: [whoosh(260, 120, 2600, { focus: 0.7, db: -2 }), { rec: 'unsheathe', rate: 1.2, db: -6 }] },
-  tengugust: { db: -10, max: 1, layers: [{ rec: 'windWhoosh', rate: 1.1, len: 900 }, whoosh(700, 200, 1600, { focus: 0.6, db: -4 })] },
-  tenguwhirl: { db: -11, max: 2, layers: [{ rec: 'windWhoosh', rate: 0.8, len: 1600 }, { rec: 'windShot', rate: 0.7, db: -6 }] },
-  tengufeatherburst: { db: -13, max: 2, layers: [{ rec: 'cloth', rate: 1.3, len: 300 }, whoosh(300, 100, 2000, { focus: 0.5, db: -6 })] },
-  tengufeather: { db: -20, vary: 12, max: 4, gap: 30, layers: [{ rec: 'swish', rate: 1.6, len: 200 }] },
-  tengustone: { db: -15, vary: 12, max: 4, gap: 40, layers: [{ rec: 'rockHit', rate: 1.4, len: 300 }] },
-  tengutakeoff: { db: -14, max: 2, layers: [{ rec: 'cloth', rate: 0.8, len: 400 }, whoosh(400, 150, 900, { db: -4 })] },
-  tenguvanish: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.1, len: 500 }, { rec: 'cloth', rate: 1.4, db: -6, len: 300 }] },
-  tenguhit: { db: -14, vary: 8, max: 3, gap: 40, layers: [{ rec: 'cut', rate: 1.1, len: 300 }] },
-  onipuff: { db: -13, max: 2, layers: [{ rec: 'teleOut', rate: 1.3, len: 500 }, whoosh(300, 300, 1400, { db: -6 })] },
+  // The Astronomer, slow and spacious in a dreamy key: a planet flung (a soft low whoosh with a
+  // glassy ring), a great ringed world (a deeper whoosh under a low harp chord), a moon flying off
+  // (a tiny bell), her hit (a crystal ping), Gravity Well (a deep swirling hum), Lunar Tide (a
+  // rising shimmer of strings), and Planetary Alignment (the planets chiming into line one by one,
+  // then a vast chord as the beam fires).
+  astroplanet: { db: -15, vary: 6, max: 3, layers: [whoosh(320, 300, 1800, { focus: 0.3, db: -6 }), { rec: 'glass', len: 400, rate: 1.1, db: -12 }] },
+  astrobig: { db: -11, vary: 4, max: 2, layers: [whoosh(520, 200, 1400, { focus: 0.4, db: -2 }), { seq: 'D3+A3+D4+F4:900', inst: 'orchestral_harp', db: -6 }, sparkle('A6:0 D7:80', { db: -12 })] },
+  astromoon: { db: -20, vary: 8, max: 3, gap: 80, layers: [{ seq: 'A6:200', inst: 'celesta', db: -4 }, whoosh(160, 900, 3000, { focus: 0.2, db: -14 })] },
+  ashit: { db: -18, vary: 8, max: 3, gap: 60, layers: [{ rec: 'glass', len: 260, rate: 1.5, db: -6 }, sparkle('D7:40', { db: -14 })] },
+  aswell: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 0.7, len: 1400 }, whoosh(1200, 120, 900, { focus: 0.6, db: -6 }), { seq: 'D2+A2:1400', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
+  astide: { db: -11, max: 1, room: true, layers: [{ seq: 'D5:80 F5:80 A5:80 D6:80 F6:600', inst: 'celesta', db: -4 }, { seq: 'D4+A4+D5:1200', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
+  asalign: { db: -8, max: 1, room: true, duck: [-7, 2000], layers: [{ seq: 'D5:220 F5:220 A5:220 C6:220 D6:300', inst: 'celesta', db: -2 }, { seq: 'r:1150 D3+A3+D4+F4+A4:1600', inst: 'brass_section', attack: 0.02, db: -4 }, { seq: 'r:1150 D3+A3+D4:1800', inst: 'choir_aahs', attack: 0.2, db: -6 }, thump(50, 800, { slide: -1.4, db: -4 })] },
   // The Starlight Idol, a pop stage in a bright major key: a note sung off the mic (a glockenspiel
   // ping on a breath of voice), her big note (a chord with a whoosh), a note landing (a tiny pluck
   // and sparkle), a song starting (a sung phrase over a harp), her sound waves (a stab of brass),
@@ -539,15 +503,6 @@ const R = {
   // Snow wolf: a bored huff through the nose, and a little growl when she swings.
   wolfHuff: { db: -22, vary: 8, max: 1, gap: 800, layers: [{ wave: 'noise', env: { a: 20, s: 60, d: 200 }, lpf: [1400, 600], hpf: [300] }] },
   wolfGrowl: { db: -21, vary: 6, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 120, slide: 0.4, vib: [24, 8], env: { a: 30, s: 160, d: 140 }, lpf: [700] }] },
-  // The oni: a low grunt on a swing, a big bored sigh when idle.
-  oniGrunt: { db: -19, vary: 6, max: 1, gap: 500, layers: [{ wave: 'saw', f0: 150, slide: -0.6, vib: [20, 5], env: { a: 15, s: 120, d: 120 }, lpf: [800] }, { rec: 'ogre', rate: 1.3, len: 300, db: -10 }] },
-  oniSigh: { db: -22, vary: 5, max: 1, gap: 2000, layers: [{ wave: 'noise', env: { a: 150, s: 300, d: 600 }, lpf: [900, 400], hpf: [200] }, { wave: 'tri', f0: 180, slide: -0.5, env: { a: 150, s: 300, d: 500 }, lpf: [500], db: -14 }] },
-  // The yuki-onna: a soft breathy hum, and an icy hiss as she strikes.
-  yukiHum: { db: -23, vary: 3, max: 1, gap: 1500, room: true, layers: [{ wave: 'sine', arp: [659, 784, 740], arpStep: 260, vib: [5, 2], env: { a: 80, s: 700, d: 300 } }, { wave: 'noise', env: { a: 80, s: 600, d: 300 }, hpf: [3500], db: -18 }] },
-  yukiHiss: { db: -21, vary: 5, max: 1, gap: 500, layers: [{ wave: 'noise', env: { a: 20, s: 160, d: 200 }, hpf: [2600], lpf: [9000] }] },
-  // The tengu: a smug "hmph" and a short laugh.
-  tenguHmph: { db: -20, vary: 5, max: 1, gap: 600, layers: [{ wave: 'saw', f0: 230, slide: -0.8, env: { a: 10, s: 80, d: 90 }, lpf: [1200] }] },
-  tenguLaugh: { db: -21, vary: 5, max: 1, gap: 1200, layers: [{ wave: 'saw', f0: 260, repeat: 110, repeatSemis: -1, slide: -1, env: { a: 10, s: 380, d: 100 }, lpf: [1400] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },

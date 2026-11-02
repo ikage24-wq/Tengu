@@ -491,6 +491,19 @@ const ICONS = {
     ctx.stroke();
     ctx.restore();
   },
+  // A ringed planet (the Astronomer's Orbit).
+  planet(ctx, s) {
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.save();
+    ctx.lineWidth = s * 0.09;
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.5, s * 0.15, -0.35, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  },
   // A music note, two beamed together (the Starlight Idol's Applause).
   note(ctx, s) {
     for (const [hx, hy] of [[-s * 0.24, s * 0.3], [s * 0.3, s * 0.22]]) {

@@ -41,16 +41,8 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 's
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Starlight Idol.
   'idolsong', 'sisong', 'siwave', 'sistage', 'sihit',
-  // The Onmyoji's oni.
-  'onihit', 'onipound', 'onipuff', 'oniaura', 'oniroar',
-  // The Onmyoji's yuki-onna (her frost prints, her frost on a monster and the snowball's burst are
-  // silent: its hit is heard).
-  'yukistream', 'yukiask', 'yukisoul', 'yukisoulfly', 'yukispike', 'yukisnowball', 'yukimist', 'yukiwhiteout', 'yukishatter', 'yukifrostfan',
-  'yukineedle', 'yukiicicle', 'yukistep', 'yukihit',
-  // The Onmyoji's tengu.
-  // The Onmyoji's.
-  'ofuda', 'ofudaburst', 'seimanseal', 'yokairally', 'troupecombo', 'combosnap', 'dollfusion',
-  'tengumark', 'tengucommand', 'tengucut', 'tengudash', 'tengugust', 'tenguwhirl', 'tengufeatherburst', 'tengufeather', 'tengustone', 'tengutakeoff', 'tenguvanish', 'tenguhit']);
+  // The Astronomer.
+  'ashit', 'aswell', 'astide', 'asalign']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
@@ -215,9 +207,6 @@ export function hearWorld(world, cam) {
 
 // Each summon: what it says when it starts a move, and now and then when it's idle.
 const SUMMONS = [
-  ['oni', 'oniGrunt', 'oniSigh'],
-  ['yuki', 'yukiHiss', 'yukiHum'],
-  ['tengu', 'tenguHmph', 'tenguLaugh'],
   ['doll', 'dollHey', 'dollGiggle'],
 ];
 function hearSummons(world, m, pan) {

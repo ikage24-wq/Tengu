@@ -245,4 +245,12 @@ export const FX_SHEETS = {
   celsistage: { w: 454, h: 394, n: 13, fps: 6, px: 227, py: 375, d: 3, loop: false },
   celsiaura: { w: 164, h: 114, n: 8, fps: 10, px: 79, py: 61, d: 3, loop: true },
   celembidol: { w: 126, h: 149, n: 5, fps: 12, px: 63, py: 81, d: 3, loop: false },
+  celasplanet: { w: 129, h: 68, n: 6, fps: 20, px: 91, py: 30, d: 3, loop: true },
+  celasbig: { w: 236, h: 131, n: 6, fps: 18, px: 159, py: 63, d: 3, loop: true },
+  celashit: { w: 186, h: 184, n: 7, fps: 30, px: 93, py: 93, d: 3, loop: false },
+  celasmoon: { w: 65, h: 65, n: 8, fps: 10, px: 32, py: 32, d: 3, loop: true },
+  celaswell: { w: 261, h: 147, n: 10, fps: 12, px: 130, py: 109, d: 3, loop: true },
+  celastide: { w: 245, h: 201, n: 8, fps: 14, px: 122, py: 162, d: 3, loop: false },
+  celasalign: { w: 547, h: 140, n: 12, fps: 8, px: 42, py: 84, d: 3, loop: false },
+  celembastro: { w: 133, h: 132, n: 5, fps: 12, px: 70, py: 81, d: 3, loop: false },
 };

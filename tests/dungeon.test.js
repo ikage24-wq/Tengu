@@ -252,7 +252,7 @@ test("a Star Witch in the healer's seat veils the tank and wishes stars on the h
 
 test("a Starlight Idol in the healer's seat sings Healing Song and raises the fallen with Curtain Call", async () => {
   assert.equal(roleOf('shrinemaiden', 'mage'), 'healer');
-  assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Onmyoji deals damage');
+  assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Astronomer deals damage');
   const { computeStats } = await import('../src/core/stats.js');
   const rng = seeded(11);
   const world = heroAt(rng, 12, ['archer']);
@@ -290,17 +290,17 @@ test("a Starlight Idol in the healer's seat sings Healing Song and raises the fa
   assert.equal(healer.attack.pose, 'sibow', 'her deep bow');
 });
 
-test('an Onmyoji in the group dances her spells and flings talismans', async () => {
+test('an Astronomer in the group flings her planets, and her big one is the ringed world', async () => {
   const { makeAI } = await import('../src/world/party.js');
   const rng = seeded(4);
-  const char = makeBotCharacter(rng, { name: 'Omy', pro: false, level: 34, jobs: ['spiritmage', 'onmyoji'] });
+  const char = makeBotCharacter(rng, { name: 'Vega', pro: false, level: 34, jobs: ['spiritmage', 'onmyoji'] });
   assert.equal(char.job, 'onmyoji');
   const bot = { char, stats: null, level: 34, pro: false, body: { x: 0, y: 0, facing: 1 } };
   const { computeStats } = await import('../src/core/stats.js');
   bot.stats = computeStats(char);
   const ai = makeAI(bot, rng, 'sniper');
-  assert.equal(ai.weapon.special, 'onmyoofuda', 'her big one is Ofuda Barrage');
-  assert.ok(ai.weapon.ofuda && ai.weapon.magic, 'talismans and spells');
+  assert.equal(ai.weapon.special, 'asring', 'her big one is the ringed world');
+  assert.ok(ai.weapon.shot === 'asplanet' && ai.weapon.magic, 'planets, and spells');
 });
 
 test('the group finder brings only real jobs, and helpers use only their own real skills', async () => {
