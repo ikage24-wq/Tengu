@@ -7,11 +7,11 @@
 import { R, E, T, F, sprite, blit, shade, mix, snap, tinted } from './pixel.js';
 import { groundAt, surfacesOf, driftOffset } from '../world/physics.js';
 import { drawMovers } from './movers.js';
-import { drawTerrain, drawIsland, drawLadder, wind, windTravel } from './terrain.js';
+import { drawTerrain, drawIsland, drawLadder, wind, windTravel, windAt } from './terrain.js';
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
-import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape } from './painted.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPigeons, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate } from './portals.js';
 import { levelRange } from '../world/routes.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
@@ -28,13 +28,13 @@ export const THEMES = {
     sky: ['#ffc6e6', '#e2d2ff', '#fff4fb'], sun: '#fff6c9', far: '#ead9ff', mid: '#f3e6ff', midTrim: '#c9b6ff',
     ground: '#f6d3bd', groundDeep: '#e9b99d', trim: '#ffffff', ledge: '#fff0f6', ledgeTrim: '#ffffff', ledgeShade: '#f0c3d6',
     skyline: 'houses', props: ['lamp', 'flower', 'bench', 'tulip', 'flower', 'bush'],
-    critters: ['bird', 'butterfly'], drift: 'petal', face: 'sun',
+    critters: ['bird', 'butterfly'], drift: 'petal', face: 'sun', painted: 'town',
   },
   meadow: {
     sky: ['#8fdcff', '#c9efff', '#fff6dc'], sun: '#fffbe0', far: '#c4efcf', mid: '#a8e2b8', midTrim: '#7fd19a',
     ground: '#ecc595', groundDeep: '#d9ab79', trim: '#86df86', ledge: '#f0cf9e', ledgeTrim: '#8fe39a', ledgeShade: '#d8b07e',
     skyline: 'hills', props: ['flower', 'tuft', 'flower', 'bush', 'tulip', 'tuft', 'rock'],
-    critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun', rainbow: 0.28,
+    critters: ['butterfly', 'bird', 'butterfly'], drift: 'petal', face: 'sun', rainbow: 0.28, painted: 'meadow',
   },
   // The thieves' harbor, by moonlight: string lights, lit lamps, and alley cats on the crates.
   harbor: {
@@ -1329,6 +1329,8 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         if (s < 0.22) return place(ctx, treeArt(hash(i), hash(i + 1) > 0.5, undefined, leanFrame(time, x + cam.x, 5, 0.1, i)), x + 48, y0 + 4);
         place(ctx, houseArt(hash(i)), x + 48, y0 + 4);
         smoke(ctx, x + 48 + 17, y0 + 4 - (hash(hash(i) * 5 + 2) > 0.5 ? 92 : 74) + 4, time, i);
+        // (The village redraw: a washing line to the next house now and then.)
+        if (t.painted === 'town' && hash(i + 6) >= 0.22 && hash(i + 77) > 0.45) washingLine(ctx, x + 80, y0 - 30, x + 136, y0 - 32, time, i, windAt);
       });
       break;
     case 'hills':
@@ -2091,6 +2093,11 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   const kinds = t.critters ?? [];
   // The painted woods' own life: squirrels on the branches and songbirds between the trees.
   if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
+  if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
+  if (t.painted === 'town') {
+    drawVillageLife(ctx, map, cam, width, height, time, groundAt);
+    drawPigeons(ctx, map, cam, width, height, time, groundAt, cam.x + width / 2);
+  }
   // Birds hop and peck along the ground.
   if (kinds.includes('bird')) {
     for (let i = 0; i < Math.ceil(map.width / 360); i++) {
@@ -2239,6 +2246,7 @@ export function drawSceneFront(ctx, map, cam, width, height, time) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
   if (t.painted === 'forest') drawPaintedForestFront(ctx, t, cam, width, height, time);
+  if (t.painted === 'town') drawPaintedTownFront(ctx, t, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time, 'front');
 }
 
@@ -2333,16 +2341,20 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
     if (t.painted !== 'forest') drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
+    else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);
     else {
       const farY = layerY(50, 0.05);
       veil = { color: air, k: 0.5 * aerial };
-      drawFar(g, far, cam, width, farY, time);
+      // The village keeps its drawn houses in front but gets a painted hillside town far behind.
+      if (t.painted === 'town') drawPaintedTownFar(g, t, cam, width, height, time, layerY, air);
+      else drawFar(g, far, cam, width, farY, time);
       footHaze(g, air, width, height, farY + 24, 0.3 * aerial);
       veil = { color: air, k: 0.22 * aerial };
       drawMid(g, t, theme, cam, width, layerY(10, 0.1), time);
       veil = null;
     }
-    drawHaze(g, t, width, map.groundY - cam.y);
+    // (A painted backdrop lays its own haze at each plane's foot.)
+    if (t.painted !== 'forest' && t.painted !== 'meadow') drawHaze(g, t, width, map.groundY - cam.y);
   };
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');

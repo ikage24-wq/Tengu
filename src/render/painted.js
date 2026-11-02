@@ -451,3 +451,637 @@ export function leafShape(ctx, x, y, s, spin, tilt, face, back) {
   ctx.stroke();
   ctx.restore();
 }
+
+// ---------- The meadow ----------
+
+// A rolling line of hills: a smooth crest from sums of slow waves, seeded by `seed`, filled down
+// past the bottom of the view, with its lit crest a little lighter.
+function hills(ctx, cam, factor, width, y, amp, seed, c, lit) {
+  const crest = (sx) => {
+    const k = sx + cam.x * factor;
+    return y - amp * (0.55 * Math.sin(k * 0.006 + seed) + 0.3 * Math.sin(k * 0.013 + seed * 2.1) + 0.15 * Math.sin(k * 0.031 + seed * 3.7));
+  };
+  const path = (dy) => {
+    ctx.beginPath();
+    ctx.moveTo(-4, y + 400);
+    for (let sx = -4; sx <= width + 8; sx += 6) ctx.lineTo(sx, crest(sx) + dy);
+    ctx.lineTo(width + 8, y + 400);
+    ctx.closePath();
+  };
+  ctx.fillStyle = lit;
+  path(-1.6);
+  ctx.fill();
+  ctx.fillStyle = c;
+  path(0.6);
+  ctx.fill();
+  return crest;
+}
+
+// A windmill on a hill: a round tower with a cap and four sails turning in the wind.
+function windmill(ctx, x, y, s, c, time, seed) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.fillStyle = c.wall;
+  ctx.beginPath();
+  ctx.moveTo(-9, 0);
+  ctx.lineTo(-6, -38);
+  ctx.lineTo(6, -38);
+  ctx.lineTo(9, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = c.wallLit;
+  ctx.beginPath();
+  ctx.moveTo(-9, 0);
+  ctx.lineTo(-6, -38);
+  ctx.lineTo(-2, -38);
+  ctx.lineTo(-4, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = c.roof;
+  ctx.beginPath();
+  ctx.moveTo(-8.5, -37);
+  ctx.quadraticCurveTo(0, -50, 8.5, -37);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = c.door;
+  ctx.beginPath();
+  ctx.roundRect(-2.4, -8, 4.8, 8, [2.4, 2.4, 0, 0]);
+  ctx.fill();
+  ctx.fillStyle = c.window;
+  ctx.beginPath();
+  ctx.arc(0, -24, 2, 0, Math.PI * 2);
+  ctx.fill();
+  // The sails.
+  const a = time * 0.9 + seed;
+  ctx.translate(0, -36);
+  for (let k = 0; k < 4; k++) {
+    ctx.save();
+    ctx.rotate(a + (k * Math.PI) / 2);
+    ctx.fillStyle = c.sailFrame;
+    ctx.fillRect(-0.6, -26, 1.2, 26);
+    ctx.fillStyle = c.sail;
+    ctx.fillRect(0.6, -25, 5, 18);
+    ctx.restore();
+  }
+  ctx.fillStyle = c.roof;
+  ctx.beginPath();
+  ctx.arc(0, 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+// A cottage: a little house with a gable roof and a chimney.
+function cottage(ctx, x, y, s, c) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.fillStyle = c.wall;
+  ctx.fillRect(-10, -14, 20, 14);
+  ctx.fillStyle = c.wallLit;
+  ctx.fillRect(-10, -14, 6, 14);
+  ctx.fillStyle = c.roof;
+  ctx.beginPath();
+  ctx.moveTo(-13, -13);
+  ctx.lineTo(0, -25);
+  ctx.lineTo(13, -13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(5, -26, 3, 8);
+  ctx.fillStyle = c.window;
+  ctx.fillRect(3, -10, 4, 4);
+  ctx.fillStyle = c.door;
+  ctx.fillRect(-5, -8, 4, 8);
+  ctx.restore();
+}
+
+// A round tree on a hill: a short trunk and a domed crown of clumps.
+function roundTree(ctx, x, y, r, c, time, seed) {
+  ctx.fillStyle = c.bark;
+  ctx.fillRect(x - r * 0.12, y - r * 0.9, r * 0.24, r * 0.9);
+  clump(ctx, x, y - r * 1.25, r, c, seed, Math.sin(time * 0.7 + seed) * r * 0.05);
+}
+
+export function drawPaintedMeadow(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  // The map's own green, deepened toward a meadow green so hills and trees read clearly even
+  // under a pastel sky.
+  const green = mix(t.mid, '#5aae6a', 0.45);
+  // 1. Far mountains in the haze, two ranges, the further nearly the sky.
+  const farY = layerY(96, 0.03);
+  const m1 = mix(t.far, air, 0.62);
+  hills(ctx, cam, 0.04, width, farY - 30, 48, 1.3, m1, mix(m1, sun, 0.35));
+  const m2 = mix(t.far, air, 0.42);
+  hills(ctx, cam, 0.07, width, farY, 34, 4.1, m2, mix(m2, sun, 0.35));
+  haze(ctx, air, width, farY + 16, 0.4, 70);
+
+  // 2. Rolling hills in the middle distance: patchwork fields, hedgerows, round trees, a cottage
+  // and a windmill turning.
+  const midY = layerY(58, 0.06);
+  const hc = mix(mix(green, t.far, 0.15), air, 0.14);
+  const crest = hills(ctx, cam, 0.16, width, midY - 18, 26, 2.7, hc, mix(hc, sun, 0.3));
+  // Field stripes following the slope, in alternating greens and gold.
+  const fields = [shade(hc, 5), shade(hc, -4), mix(hc, '#f6e2a0', 0.3)];
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  for (let sx = -20; sx < width + 20; sx += 3) {
+    const k = Math.floor((sx + cam.x * 0.16) / 70);
+    ctx.fillStyle = fields[((k % 3) + 3) % 3];
+    const top = crest(sx) + 8;
+    ctx.fillRect(sx, top, 3, 6 + (k % 2) * 3);
+  }
+  ctx.restore();
+  const cm = planeColors(t, shade(hc, -8), air, 0.02);
+  const house = { wall: mix('#fff4e8', air, 0.15), wallLit: '#ffffff', roof: mix('#e8848a', air, 0.18), door: mix('#a8765a', air, 0.2), window: '#ffe9a0', sail: '#fffaf0', sailFrame: mix('#a8765a', air, 0.15) };
+  repeat(cam.x, 0.16, 160, width, (i, x) => {
+    const xx = x + hash(i + 2) * 80;
+    const gy = crest(xx) + 2;
+    const s = hash(i + 3);
+    if (s < 0.16) windmill(ctx, xx, gy, 1.05, house, time, i);
+    else if (s < 0.3) cottage(ctx, xx, gy, 1.05, house);
+    else if (s < 0.85) {
+      roundTree(ctx, xx, gy, 12 + hash(i + 4) * 6, cm, time, i);
+      if (hash(i + 5) > 0.5) roundTree(ctx, xx + 18, gy + 1, 9, cm, time, i + 0.4);
+    }
+  });
+  haze(ctx, air, width, midY + 8, 0.2, 60);
+
+  // 3. Near flowering hills: brighter green, dotted with wildflowers that sway, a big round tree
+  // now and then.
+  const nearY = layerY(16, 0.1);
+  const nc = mix(shade(green, 4), air, 0.04);
+  const near = hills(ctx, cam, 0.32, width, nearY - 8, 18, 5.9, nc, mix(nc, sun, 0.28));
+  const blooms = ['#ffb3cf', '#fff3a6', '#ffffff', '#c9b6ff'];
+  for (let i = 0; i < 70; i++) {
+    const wx = hash(i * 1.37) * (width + 400);
+    const sx = ((wx - cam.x * 0.32) % (width + 40) + width + 40) % (width + 40) - 20;
+    const y = near(sx) + 4 + hash(i * 2.3) * 22;
+    const sw = Math.sin(time * 1.8 + wx * 0.05) * 0.8;
+    ctx.fillStyle = mix(blooms[i % blooms.length], air, 0.12);
+    ctx.beginPath();
+    ctx.arc(sx + sw, y, 1.4 + hash(i * 3.1) * 0.9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const cn = planeColors(t, shade(green, -6), air, 0.02);
+  repeat(cam.x, 0.32, 300, width, (i, x) => {
+    if (hash(i + 70) < 0.45) return;
+    const xx = x + hash(i + 71) * 160;
+    roundTree(ctx, xx, near(xx) + 6, 18 + hash(i + 72) * 8, cn, time, i + 70);
+  });
+  haze(ctx, air, width, nearY + 4, 0.18, 40);
+}
+
+// Rabbits on the meadow floor and bees among the flowers. A rabbit hops a few times, sits with
+// its ears twitching and nose wiggling, then hops on, turning now and then. Bees buzz in loops,
+// wings a blur.
+function rabbit(ctx, x, y, dir, hop, sit, twitch) {
+  const fur = '#fff6f0';
+  const shadeC = '#e8d6e2';
+  ctx.save();
+  ctx.translate(x, y - Math.sin(hop * Math.PI) * 7);
+  ctx.scale(dir * 1.2, 1.2);
+  const stretch = hop > 0 ? Math.sin(hop * Math.PI) : 0;
+  // Back body and the tail puff.
+  ctx.fillStyle = shadeC;
+  ctx.beginPath();
+  ctx.ellipse(-2, -4, 5.4 + stretch, 4, -stretch * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fur;
+  ctx.beginPath();
+  ctx.ellipse(-1.6, -4.4, 5 + stretch, 3.7, -stretch * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-6.6, -5, 1.8, 0, Math.PI * 2);
+  ctx.fill();
+  // Head and ears, the ears flicking.
+  const hx = 3.4 + stretch * 1.5;
+  const hy = -7 - sit * 1.2;
+  ctx.beginPath();
+  ctx.ellipse(hx, hy, 3.2, 2.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const [ex, a] of [[-0.6, -0.25 - twitch * 0.3], [0.8, 0.1 + twitch * 0.15]]) {
+    ctx.save();
+    ctx.translate(hx + ex, hy - 2);
+    ctx.rotate(a - stretch * 0.6);
+    ctx.fillStyle = fur;
+    ctx.beginPath();
+    ctx.ellipse(0, -3.6, 1.2, 3.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffc6d6';
+    ctx.beginPath();
+    ctx.ellipse(0, -3.4, 0.55, 2.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = '#3a2d4f';
+  ctx.beginPath();
+  ctx.arc(hx + 1.3, hy - 0.4, 0.75, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ff9fb8';
+  ctx.beginPath();
+  ctx.arc(hx + 3, hy + 0.4 + Math.sin(twitch * 20) * 0.2, 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = shadeC;
+  ctx.beginPath();
+  ctx.ellipse(2.4, -0.6, 1.6, 0.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function bee(ctx, x, y, dir, time, seed) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir, 1);
+  const flap = Math.sin(time * 60 + seed) > 0;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.beginPath();
+  ctx.ellipse(-0.5, -2.6, 1.8, flap ? 2.4 : 1.4, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffd34a';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.6, 1.9, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#4a3a50';
+  ctx.fillRect(-1.2, -1.8, 0.9, 3.6);
+  ctx.fillRect(0.6, -1.8, 0.8, 3.6);
+  ctx.beginPath();
+  ctx.arc(2.6, -0.2, 1.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+export function drawMeadowLife(ctx, map, cam, width, height, time, groundAt) {
+  const n = Math.ceil(map.width / 420);
+  for (let i = 0; i < n; i++) {
+    const home = 140 + hash(i * 4.7 + 9) * (map.width - 280);
+    if (map.portals.some((p) => Math.abs(p.x - home) < 70) || map.npcs.some((q) => Math.abs(q.x - home) < 50)) continue;
+    // A cycle: four hops one way, a sit, four hops back, a sit.
+    const T = 7 + hash(i + 1) * 3;
+    const u = ((time / T + hash(i + 2)) % 1 + 1) % 1;
+    const half = u < 0.5 ? u * 2 : (u - 0.5) * 2;
+    const dir = u < 0.5 ? 1 : -1;
+    const hopping = half < 0.5;
+    const hops = 4;
+    const hp = hopping ? (half / 0.5) * hops : hops;
+    const along = (dir > 0 ? hp : hops - hp) * 14 - 28;
+    const wx = home + along;
+    const sx = wx - cam.x;
+    if (sx < -30 || sx > width + 30) continue;
+    const gy = groundAt(map, wx) - cam.y;
+    if (gy < -20 || gy > height + 30) continue;
+    rabbit(ctx, sx, gy, dir, hopping ? hp % 1 : 0, hopping ? 0 : 1, hopping ? 0 : Math.max(0, Math.sin(time * 6 + i * 3)) ** 8);
+  }
+  for (let i = 0; i < Math.ceil(map.width / 300); i++) {
+    const cx = 100 + hash(i * 6.1 + 3) * (map.width - 200);
+    const sx = cx - cam.x;
+    if (sx < -60 || sx > width + 60) continue;
+    const a = time * (1.4 + hash(i + 4) * 0.8) + i * 2;
+    const bx = sx + Math.sin(a) * 26;
+    const by = groundAt(map, cx) - cam.y - 18 - Math.sin(a * 2) * 8 + Math.sin(time * 9 + i) * 1.2;
+    bee(ctx, bx, by, Math.cos(a) >= 0 ? 1 : -1, time, i);
+  }
+}
+
+// ---------- The village ----------
+
+// Far behind the village: a painted hillside with a cluster of tiny rooftops in the haze, a clock
+// tower, and round trees, the next valley's town seen from afar.
+export function drawPaintedTownFar(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  const farY = layerY(170, 0.03);
+  const m1 = mix(t.far, air, 0.55);
+  hills(ctx, cam, 0.04, width, farY - 20, 40, 2.2, m1, mix(m1, sun, 0.35));
+  haze(ctx, air, width, farY + 10, 0.35, 60);
+  const midY = layerY(128, 0.05);
+  const hc = mix(mix('#9fd6a8', t.far, 0.3), air, 0.22);
+  const crest = hills(ctx, cam, 0.1, width, midY, 22, 5.3, hc, mix(hc, sun, 0.3));
+  const roofs = ['#f29ab4', '#9fb8f2', '#f6c27a', '#c4a6f2'].map((c) => mix(c, air, 0.4));
+  const wall = mix('#fff4ec', air, 0.35);
+  const ct = planeColors(t, mix('#7fc48c', air, 0.2), air, 0.3);
+  repeat(cam.x, 0.1, 220, width, (i, x) => {
+    const cx = x + hash(i + 1) * 80;
+    const gy = crest(cx) + 4;
+    // A huddle of houses climbing the slope.
+    for (let k = 0; k < 4 + Math.floor(hash(i + 2) * 3); k++) {
+      const hx = cx + (k - 2) * 12 + hash(i * 5 + k) * 4;
+      const hy = gy - Math.abs(k - 2) * -2 + hash(i * 7 + k) * 3;
+      const w = 9 + hash(i * 3 + k) * 4;
+      const h = 7 + hash(i * 9 + k) * 5;
+      ctx.fillStyle = wall;
+      ctx.fillRect(hx - w / 2, hy - h, w, h);
+      ctx.fillStyle = roofs[(((i + k) % roofs.length) + roofs.length) % roofs.length];
+      ctx.beginPath();
+      ctx.moveTo(hx - w / 2 - 1.5, hy - h + 0.5);
+      ctx.lineTo(hx, hy - h - w * 0.55);
+      ctx.lineTo(hx + w / 2 + 1.5, hy - h + 0.5);
+      ctx.closePath();
+      ctx.fill();
+      if (hash(i * 11 + k) > 0.6) {
+        ctx.fillStyle = mix('#ffe9a0', air, 0.2);
+        ctx.fillRect(hx - 1.2, hy - h * 0.6, 2.4, 2.2);
+      }
+    }
+    if (hash(i + 3) > 0.62) {
+      // A clock tower above the roofs.
+      const tx = cx + 34;
+      const ty = crest(tx) + 2;
+      ctx.fillStyle = wall;
+      ctx.fillRect(tx - 5, ty - 40, 10, 40);
+      ctx.fillStyle = roofs[0];
+      ctx.beginPath();
+      ctx.moveTo(tx - 7, ty - 39);
+      ctx.lineTo(tx, ty - 54);
+      ctx.lineTo(tx + 7, ty - 39);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = mix('#ffffff', air, 0.1);
+      ctx.beginPath();
+      ctx.arc(tx, ty - 32, 3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = mix('#7a6a8a', air, 0.3);
+      ctx.lineWidth = 0.6;
+      const a = time * 0.05;
+      ctx.beginPath();
+      ctx.moveTo(tx, ty - 32);
+      ctx.lineTo(tx + Math.cos(a) * 2.2, ty - 32 + Math.sin(a) * 2.2);
+      ctx.stroke();
+    }
+    for (let k = 0; k < 2; k++) {
+      const tx = cx - 44 + k * 90 + hash(i * 13 + k) * 10;
+      roundTree(ctx, tx, crest(tx) + 3, 8 + hash(i * 17 + k) * 4, ct, time, i * 2 + k);
+    }
+  });
+  haze(ctx, air, width, midY + 8, 0.2, 50);
+}
+
+// A village cat strolling along the street: it pads along, stops, sits and licks a paw, then
+// strolls back, tail swaying.
+function strollCat(ctx, x, y, dir, step, sit, lick, tail, c) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * 1.2, 1.2);
+  // Tail.
+  ctx.strokeStyle = c.fur;
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-5, -4 - sit * 1);
+  ctx.quadraticCurveTo(-9, -6 + tail, -8 + tail * 0.5, -11 + tail * 0.3);
+  ctx.stroke();
+  // Body.
+  ctx.fillStyle = c.fur;
+  ctx.beginPath();
+  ctx.ellipse(sit ? -1.5 : 0, -4 - sit * 1.2, sit ? 4.4 : 5.6, sit ? 4.4 : 3.2, sit ? -0.6 : 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Legs.
+  const s = Math.sin(step * Math.PI * 2);
+  ctx.fillStyle = c.dark;
+  if (!sit) {
+    for (const [lx, ph] of [[-3.6, 1], [3.4, -1]]) {
+      ctx.fillRect(lx + s * ph * 0.9 - 0.7, -2, 1.4, 2.2);
+      ctx.fillRect(lx - s * ph * 0.9 + 0.6, -2, 1.4, 2.2);
+    }
+  }
+  // Head, ears, face.
+  const hx = sit ? 1.6 : 5;
+  const hy = sit ? -9.5 + lick * 1.2 : -6.5;
+  ctx.fillStyle = c.fur;
+  ctx.beginPath();
+  ctx.ellipse(hx, hy, 3, 2.7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  for (const ex of [-1.6, 1.2]) {
+    ctx.beginPath();
+    ctx.moveTo(hx + ex - 1, hy - 1.6);
+    ctx.lineTo(hx + ex, hy - 4.2);
+    ctx.lineTo(hx + ex + 1.2, hy - 1.8);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#3a2d4f';
+  if (lick > 0.3) {
+    ctx.fillRect(hx + 0.4, hy - 0.6, 1.4, 0.4);
+  } else {
+    ctx.beginPath();
+    ctx.arc(hx + 1.2, hy - 0.4, 0.55, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ff9fb8';
+  ctx.beginPath();
+  ctx.arc(hx + 2.6, hy + 0.6, 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  if (sit) {
+    // A paw raised to the mouth.
+    ctx.fillStyle = c.fur;
+    ctx.beginPath();
+    ctx.ellipse(hx + 2.2, hy + 2.4 - lick * 1.4, 1.1, 0.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+export function drawVillageLife(ctx, map, cam, width, height, time, groundAt) {
+  const coats = [{ fur: '#f6c890', dark: '#d9a46a' }, { fur: '#ffffff', dark: '#e2d8ea' }, { fur: '#6a6080', dark: '#4a4260' }];
+  for (let i = 0; i < Math.ceil(map.width / 900); i++) {
+    const home = 200 + hash(i * 8.3 + 5) * (map.width - 400);
+    if (map.portals.some((p) => Math.abs(p.x - home) < 80)) continue;
+    const T = 16 + hash(i + 1) * 6;
+    const u = ((time / T + hash(i + 2)) % 1 + 1) % 1;
+    const half = u < 0.5 ? u * 2 : (u - 0.5) * 2;
+    const dir = u < 0.5 ? 1 : -1;
+    const walking = half < 0.6;
+    const p = walking ? half / 0.6 : 1;
+    const ease = (v) => v * v * (3 - 2 * v);
+    const along = (dir > 0 ? ease(p) : 1 - ease(p)) * 160 - 80;
+    const wx = home + along;
+    const sx = wx - cam.x;
+    if (sx < -30 || sx > width + 30) continue;
+    const gy = groundAt(map, wx) - cam.y;
+    const sitK = walking ? 0 : 1;
+    const lick = walking ? 0 : Math.max(0, Math.sin(time * 5 + i)) ** 2;
+    strollCat(ctx, sx, gy, dir, walking ? (time * 1.6) % 1 : 0, sitK, lick, Math.sin(time * 2 + i) * 2, coats[i % coats.length]);
+  }
+}
+
+// A washing line strung between two houses: a sagging cord with clothes pegged along it (a shirt,
+// socks, a dress, a towel), each swinging a beat behind the wind.
+export function washingLine(ctx, x0, y0, x1, y1, time, seed, windAt) {
+  const sag = 7;
+  const at = (u) => [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u + Math.sin(u * Math.PI) * sag];
+  ctx.strokeStyle = '#a8949a';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo((x0 + x1) / 2, (y0 + y1) / 2 + sag * 2, x1, y1);
+  ctx.stroke();
+  const colors = ['#ffb3c6', '#bfe0ff', '#fff3a6', '#c9b6ff', '#ffffff', '#b6f0d0'];
+  const kinds = ['shirt', 'sock', 'dress', 'towel', 'sock'];
+  for (let k = 0; k < 4; k++) {
+    const u = 0.18 + k * 0.21;
+    const [cx, cy] = at(u);
+    const c = colors[Math.floor(hash(seed * 7 + k) * colors.length)];
+    const kind = kinds[Math.floor(hash(seed * 3 + k) * kinds.length)];
+    const w = windAt(time - k * 0.15, cx);
+    const sw = Math.sin(time * 2.2 + k * 1.3 + seed) * 0.12 + w * 0.12;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(sw);
+    ctx.fillStyle = c;
+    ctx.strokeStyle = shade(c, -24);
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    if (kind === 'shirt') {
+      ctx.moveTo(-5, 0);
+      ctx.lineTo(5, 0);
+      ctx.lineTo(7, 3);
+      ctx.lineTo(4.4, 4);
+      ctx.lineTo(4, 10);
+      ctx.lineTo(-4, 10);
+      ctx.lineTo(-4.4, 4);
+      ctx.lineTo(-7, 3);
+    } else if (kind === 'dress') {
+      ctx.moveTo(-3, 0);
+      ctx.lineTo(3, 0);
+      ctx.lineTo(3.4, 4);
+      ctx.lineTo(6, 12);
+      ctx.lineTo(-6, 12);
+      ctx.lineTo(-3.4, 4);
+    } else if (kind === 'towel') {
+      ctx.rect(-4, 0, 8, 11);
+    } else {
+      ctx.moveTo(-1.4, 0);
+      ctx.lineTo(1.4, 0);
+      ctx.lineTo(1.4, 5);
+      ctx.lineTo(3.4, 6.4);
+      ctx.lineTo(2.6, 7.8);
+      ctx.lineTo(-1.4, 6.6);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    if (kind === 'towel') {
+      ctx.fillStyle = shade(c, -10);
+      ctx.fillRect(-4, 8, 8, 1.2);
+    }
+    // The peg.
+    ctx.fillStyle = '#c99a6b';
+    ctx.fillRect(-0.6, -1.4, 1.2, 2.6);
+    ctx.restore();
+  }
+}
+
+// A pigeon: a plump grey-lavender bird with a shimmering neck, pecking on the ground, or in the
+// air on beating wings.
+function pigeon(ctx, x, y, dir, peck, fly, beat) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(dir * 1.15, 1.15);
+  const body = '#b8b0d0';
+  if (fly > 0.3) {
+    const w = Math.sin(beat * Math.PI * 2);
+    ctx.fillStyle = shade(body, -12);
+    ctx.beginPath();
+    ctx.moveTo(-1, -3);
+    ctx.quadraticCurveTo(-4, -7 - w * 5, -9, -6 - w * 6);
+    ctx.quadraticCurveTo(-4, -3, -1, -2);
+    ctx.fill();
+  }
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.ellipse(0, -3, 4.2, 2.8, fly > 0.3 ? 0 : 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-3.4, -3.4);
+  ctx.lineTo(-7, -4.6 + fly * 2);
+  ctx.lineTo(-6.6, -2.2);
+  ctx.fill();
+  // The neck's sheen and the head, dipping to peck.
+  const hx = 3 + peck * 1.2;
+  const hy = -5.6 + peck * 3.4;
+  ctx.fillStyle = '#9fd6c8';
+  ctx.beginPath();
+  ctx.ellipse(2.6, -4.4 + peck * 1.4, 1.6, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#d6a8d8';
+  ctx.beginPath();
+  ctx.ellipse(2.2, -3.6 + peck * 1.4, 1.2, 1, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = shade(body, -6);
+  ctx.beginPath();
+  ctx.arc(hx, hy, 1.7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffb35a';
+  ctx.beginPath();
+  ctx.moveTo(hx + 1.4, hy - 0.2);
+  ctx.lineTo(hx + 2.8, hy + 0.3);
+  ctx.lineTo(hx + 1.4, hy + 0.6);
+  ctx.fill();
+  ctx.fillStyle = '#3a2d4f';
+  ctx.beginPath();
+  ctx.arc(hx + 0.5, hy - 0.4, 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  if (fly > 0.3) {
+    const w = Math.sin(beat * Math.PI * 2);
+    ctx.fillStyle = shade(body, 6);
+    ctx.beginPath();
+    ctx.moveTo(0, -3.4);
+    ctx.quadraticCurveTo(-3, -6 + w * 5, -8, -5 + w * 6);
+    ctx.quadraticCurveTo(-3, -2.4, 0, -2.6);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#ff9f9f';
+    ctx.fillRect(-0.6, -0.6, 0.6, 1);
+    ctx.fillRect(1, -0.6, 0.6, 1);
+  }
+  ctx.restore();
+}
+
+// Pigeons gathered on the street. They peck about, each on its own rhythm; when you walk close
+// they burst up and wheel overhead, and as you move off they glide back down and settle. Their
+// height comes smoothly from how near you are, so they never snap.
+export function drawPigeons(ctx, map, cam, width, height, time, groundAt, heroX) {
+  for (let f = 0; f < Math.ceil(map.width / 700); f++) {
+    const home = 260 + hash(f * 5.9 + 11) * (map.width - 520);
+    if (map.portals.some((p) => Math.abs(p.x - home) < 90) || map.npcs.some((q) => Math.abs(q.x - home) < 60)) continue;
+    const d = Math.abs(heroX - home);
+    const near = Math.max(0, Math.min(1, (110 - d) / 60));
+    const up = near * near * (3 - 2 * near);
+    for (let k = 0; k < 5; k++) {
+      const seed = f * 10 + k;
+      const gx = home + (hash(seed) - 0.5) * 60;
+      const gy = groundAt(map, gx);
+      // In the air they wheel in a loop above the flock's spot.
+      const a = time * (1.6 + hash(seed + 1) * 0.6) + seed;
+      const ax = home + Math.cos(a) * (30 + hash(seed + 2) * 20);
+      const ay = gy - 70 - hash(seed + 3) * 30 + Math.sin(a * 2) * 8;
+      const x = gx + (ax - gx) * up;
+      const y = gy + (ay - gy) * up;
+      const sx = x - cam.x;
+      if (sx < -20 || sx > width + 20) continue;
+      const dir = up > 0.3 ? (Math.sin(a) < 0 ? 1 : -1) : hash(seed + 4) > 0.5 ? 1 : -1;
+      const peck = up > 0.1 ? 0 : Math.max(0, Math.sin(time * (3 + hash(seed + 5) * 2) + seed * 2)) ** 3;
+      pigeon(ctx, sx, y - cam.y, dir, peck, up, (time * 8 + seed) % 1);
+    }
+  }
+}
+
+// In front of the village street: soft out-of-focus hydrangea bushes drifting past now and then at
+// the bottom corners.
+export function drawPaintedTownFront(ctx, t, cam, width, height, time) {
+  ctx.save();
+  ctx.filter = 'blur(2.4px)';
+  ctx.globalAlpha = 0.85;
+  repeat(cam.x, 1.25, 560, width, (i, x) => {
+    if (hash(i + 90) < 0.4) return;
+    const c = [['#f6a8c8', '#ffd0e2'], ['#a8c0f6', '#d0dcff'], ['#c8b0f2', '#e2d4ff']][((i % 3) + 3) % 3];
+    const bx = x + hash(i + 91) * 300;
+    const by = height + 10;
+    const sw = Math.sin(time * 0.8 + i) * 2;
+    ctx.fillStyle = '#6a9a78';
+    ctx.beginPath();
+    ctx.ellipse(bx, by, 46, 26, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (let k = 0; k < 6; k++) {
+      ctx.fillStyle = c[k % 2];
+      ctx.beginPath();
+      ctx.arc(bx - 30 + k * 12 + sw, by - 14 - (k % 2) * 6, 9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+  ctx.restore();
+}

@@ -51,9 +51,11 @@ if (q.get('gif')) {
   out.height = Math.round((out.width * VH) / VW);
   const oc = out.getContext('2d');
   const frames = [];
+  // ?walk=1: the hero walks right while recording (to show things that react to her).
+  const walk = q.get('walk') ? { held: new Set(['ArrowRight']), pressed: new Set(), locked: false } : idle;
   for (let f = 0; f < Number(q.get('gif')) * 20; f++) {
     for (let k = 0; k < 3; k++) {
-      updateWorld(w, 1 / 60, idle);
+      updateWorld(w, 1 / 60, walk);
       t += 1 / 60;
       updateCamera(cam, w, 1 / 60);
     }

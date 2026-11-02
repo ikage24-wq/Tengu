@@ -19,10 +19,12 @@ const hash = (n) => {
 // `body` and `deep` the land below it, `stone` its texture's highlight, `style` which texture,
 // `blades` grass blades along the lip, and `drip` what hangs over edges.
 export const MATERIALS = {
-  meadow: { lip: '#8ee08a', body: '#ebc596', deep: '#d4a270', stone: '#f6dfbd', style: 'cobble', blades: true, drip: 'vine' },
+  // (The map redraw: the meadow's soft warm earth instead of stamped cobble.)
+  meadow: { lip: '#8ee08a', body: '#e4bb8c', deep: '#c99868', stone: '#f6dfbd', style: 'meadowsoil', blades: true, drip: 'vine' },
   // (The map redraw: the woods' own mossy earth, strata, roots and stones, under a thick moss lip.)
   forest: { lip: '#7fd38f', body: '#b58a64', deep: '#8a6044', stone: '#d8c0a0', style: 'mossloam', blades: true, drip: 'root', moss: true },
-  town: { lip: '#ffffff', body: '#f6d3bd', deep: '#e3ad90', stone: '#fde7d8', style: 'cobble', blades: false, drip: null },
+  // (The map redraw: the village street is laid in garden flagstones with moss in the joints.)
+  town: { lip: '#ffffff', body: '#e8c8b4', deep: '#d6a890', stone: '#fbe6d8', style: 'flagstone', blades: false, drip: null, joint: '#a8d8a0' },
   harbor: { lip: '#e2bf96', body: '#a4a9cf', deep: '#7b80ad', stone: '#c3c8e6', style: 'brick', blades: false, drip: 'weed' },
   crag: { lip: '#ffe0ad', body: '#e2a66c', deep: '#b97a46', stone: '#f6cf9a', style: 'slab', blades: false, drip: null },
   grove: { lip: '#9fe0b0', body: '#8a76c4', deep: '#5e4c9e', stone: '#a897de', style: 'loam', blades: true, drip: 'vine', glow: '#bfe6ff' },
@@ -99,6 +101,65 @@ function paintTile(g, m, theme) {
           g.fill();
         });
       }
+    }
+  } else if (m.style === 'flagstone') {
+    // Garden flagstones (the map redraw): big flat stones of uneven sizes in staggered rows, each
+    // its own tint, lit on its upper left edge, with moss and the odd tiny flower in the joints.
+    g.fillStyle = mix(m.body, m.joint, 0.35);
+    g.fillRect(0, 0, TW, TH);
+    let y = 0;
+    for (let row = 0; y < TH; row++) {
+      const h = row % 2 ? 15 : 17;
+      let x = (row * 13) % 24 - 24;
+      for (let col = 0; x < TW; col++) {
+        const k = seed + row * 31 + col * 7;
+        const w = 20 + hash(k) * 18;
+        const sx = x;
+        const tint = hash(k + 1);
+        // Each stone sits a little high or low and is its own height, so the rows wander.
+        const sy = y + (hash(k + 6) - 0.5) * 2.4;
+        const sh = h - hash(k + 7) * 3;
+        wrap((dx, dy) => {
+          g.fillStyle = mix(m.deep, INK, 0.12);
+          rounded(g, sx + dx + 1.2, sy + dy + 1.6, w - 2, sh - 2, 6);
+          g.fill();
+          g.fillStyle = mix(m.stone, tint > 0.5 ? m.body : '#e6dcf0', 0.15 + tint * 0.35);
+          rounded(g, sx + dx + 1, sy + dy + 1, w - 2.4, sh - 2.6, 6);
+          g.fill();
+          g.strokeStyle = edge(m.body);
+          g.lineWidth = 0.6;
+          g.stroke();
+          g.fillStyle = 'rgba(255,255,255,0.45)';
+          rounded(g, sx + dx + 3, sy + dy + 2.2, (w - 6) * 0.6, 1.4, 0.7);
+          g.fill();
+          if (hash(k + 2) > 2) {
+            // A hairline crack.
+            g.strokeStyle = mix(m.deep, INK, 0.2);
+            g.lineWidth = 0.5;
+            g.beginPath();
+            g.moveTo(sx + dx + w * 0.3, sy + dy + 3);
+            g.lineTo(sx + dx + w * 0.45, sy + dy + h * 0.5);
+            g.lineTo(sx + dx + w * 0.38, sy + dy + h - 3);
+            g.stroke();
+          }
+        });
+        // Moss tufts in the joint after this stone, and now and then a tiny flower.
+        const jx = sx + w - 1;
+        wrap((dx, dy) => {
+          g.fillStyle = shade(m.joint, -6);
+          g.beginPath();
+          g.ellipse(jx + dx, sy + dy + h * (0.3 + hash(k + 3) * 0.4), 1.6, 2.4, 0, 0, Math.PI * 2);
+          g.fill();
+          if (hash(k + 4) > 0.8) {
+            g.fillStyle = hash(k + 5) > 0.5 ? '#ffc6de' : '#fff3a6';
+            g.beginPath();
+            g.arc(jx + dx, sy + dy + h * 0.5, 1.2, 0, Math.PI * 2);
+            g.fill();
+          }
+        });
+        x += w;
+      }
+      y += h;
     }
   } else if (m.style === 'brick') {
     // Big stone blocks with soft corners, a few cracked or mossy, the odd one chipped at a corner
@@ -309,7 +370,7 @@ function paintTile(g, m, theme) {
         g.fill();
       });
     }
-  } else if (m.style === 'mossloam') {
+  } else if (m.style === 'mossloam' || m.style === 'meadowsoil') {
     // Mossy earth (the map redraw): soft bands of soil, winding roots with rootlets, a few big
     // rounded stones lit from the upper left, and small pebbles and specks between them.
     const per = (n) => (Math.PI * 2 * n) / TW;
@@ -576,7 +637,7 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
       }
     }
   }
-  if (m.style === 'mossloam') earthDecals(ctx, m, runs, cam, width, height);
+  if (m.style === 'mossloam' || m.style === 'meadowsoil') earthDecals(ctx, m, runs, cam, width, height);
   ctx.restore();
 
   // Cliff faces: where the ground drops at a wall, the high side shows a shaded face.
@@ -601,6 +662,7 @@ const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 // Things set in the earth by where they are in the world, not by the texture's tile, so nothing
 // repeats: big stones (some capped with moss), roots looping down from the surface, and buried
 // pebbles, each in its own spot under the lip.
+const pickC = (list, h) => list[Math.floor(h * list.length) % list.length];
 function earthDecals(ctx, m, runs, cam, width, height) {
   const CELL = 70;
   const topAt = (sx) => {
@@ -651,7 +713,7 @@ function earthDecals(ctx, m, runs, cam, width, height) {
     } else if (kind < 0.62) {
       // A root looping down from the surface and back.
       const len = 30 + hash(k + 3) * 40;
-      const dip = 14 + hash(k + 4) * 26;
+      const dip = 5 + hash(k + 4) * 10;
       const path = () => {
         ctx.beginPath();
         ctx.moveTo(sx, top + 10);
@@ -676,6 +738,67 @@ function earthDecals(ctx, m, runs, cam, width, height) {
       path();
       ctx.stroke();
       ctx.restore();
+    } else if (m.style === 'meadowsoil' && kind < 0.74) {
+      // A flower bulb asleep in the earth, a shoot rising and roots trailing below.
+      const by = top + 18 + hash(k + 3) * 20;
+      ctx.strokeStyle = '#e8d6b8';
+      ctx.lineWidth = 0.8;
+      for (const dx of [-2, 0, 2]) {
+        ctx.beginPath();
+        ctx.moveTo(sx + dx * 0.5, by + 3);
+        ctx.quadraticCurveTo(sx + dx * 1.5, by + 7, sx + dx * 1.2, by + 10);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#8fd08a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(sx, by - 3);
+      ctx.lineTo(sx + 0.5, by - 9);
+      ctx.stroke();
+      ctx.fillStyle = '#f4e2c8';
+      ctx.beginPath();
+      ctx.moveTo(sx, by - 4.5);
+      ctx.quadraticCurveTo(sx + 4.2, by - 1, sx + 2.6, by + 3);
+      ctx.lineTo(sx - 2.6, by + 3);
+      ctx.quadraticCurveTo(sx - 4.2, by - 1, sx, by - 4.5);
+      ctx.fill();
+      ctx.strokeStyle = edge(m.body);
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.6;
+      ctx.beginPath();
+      ctx.ellipse(sx - 1, by - 1.5, 0.9, 1.6, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (m.style === 'meadowsoil' && kind < 0.78) {
+      // A buried treasure: a little gem or an old coin catching a glint.
+      const gem = hash(k + 3) > 0.5;
+      ctx.fillStyle = gem ? pickC(['#ff9ec0', '#9fd8ff', '#c9a6ff'], hash(k + 4)) : '#ffd66b';
+      ctx.strokeStyle = gem ? 'rgba(80,50,90,0.5)' : '#c8902a';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      if (gem) {
+        ctx.moveTo(sx, y - 3);
+        ctx.lineTo(sx + 2.6, y - 0.6);
+        ctx.lineTo(sx, y + 3);
+        ctx.lineTo(sx - 2.6, y - 0.6);
+        ctx.closePath();
+      } else ctx.ellipse(sx, y, 3, 2.4, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(sx - 0.8, y - 1, 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (m.style === 'meadowsoil' && kind < 0.86) {
+      // Seeds scattered in the soil.
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = i % 2 ? '#f0dcc0' : '#a87a58';
+        ctx.beginPath();
+        ctx.ellipse(sx + (hash(k + 30 + i) - 0.5) * 12, y + (hash(k + 40 + i) - 0.5) * 8, 1.4, 0.8, hash(k + 50 + i) * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (kind < 0.8) {
       // A little nest of pebbles.
       for (let i = 0; i < 3; i++) {
