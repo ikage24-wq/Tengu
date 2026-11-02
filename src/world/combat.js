@@ -378,7 +378,6 @@ export function cast(world, skillId, rng = Math.random) {
   }
 
   if (type === 'buff') {
-    if (s?.castFx) world.fx.push({ kind: s.castFx, x: body.x, y: body.y, t: 0, dur: 0.9 });
     applyBuff(world, skillId, params);
     if (params.rageGain) addRage(world, params.rageGain);
     if (params.aimGain) addAim(world, params.aimGain);

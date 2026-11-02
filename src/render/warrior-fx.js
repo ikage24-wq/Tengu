@@ -97,18 +97,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   switch (f.kind) {
-    // The test warrior's bold skills (tools/fx-art.js `tw*`): a burst on each monster hit, the
-    // sweep over the row, the crash, the rush and the buff.
-    case 'twhit':
-      return fxSprite(ctx, 'celtwhit', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.85, rot: (seed - 0.5) * 0.6 }) || true;
-    case 'twsweep':
-      return fxSprite(ctx, 'celtwsweep', x, y - 14, { p, flip }) || true;
-    case 'twcrash':
-      return fxSprite(ctx, 'celtwcrash', x, y + 2, { p }) || true;
-    case 'twrush':
-      return fxSprite(ctx, 'celtwrush', x, y - 24, { p, flip }) || true;
-    case 'twfury':
-      return fxSprite(ctx, 'celtwfury', x, y + 2, { p }) || true;
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.

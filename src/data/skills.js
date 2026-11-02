@@ -138,67 +138,6 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- Swordsman (test): a classic side-scroller MMO warrior ----------
-  // Every skill is a hotkey press, played as a timed combo step so hits land on the swing: Crescent
-  // Sweep for the crowd, Iron Crash for one big target, Iron Rush to get about, and two buffs. Its
-  // effects are the bold `tw*` strips (tools/fx-art.js).
-  crescentsweep: skill({
-    id: 'crescentsweep', name: 'Crescent Sweep', job: 'testwarrior', type: 'attack', fx: null, icon: 'whirlwind', school: 'steel',
-    desc: 'A huge crescent of steel and light sweeps the whole row in front of you, striking up to six monsters.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(8, 16), pct: k(110, 210), hits: 1, targets: 6,
-        combo: [{ move: 'cleave', dur: 0.6, step: 8, strikes: [{ at: 0.45, pct: k(110, 210), reach: 150, h: 96, targets: 6, knock: 120, fx: 'twhit', burst: 'twsweep', burstAt: 0.32, burstDur: 0.45, big: true, stop: 0.06, shake: 2 }] }],
-      };
-    },
-  }),
-  ironcrash: skill({
-    id: 'ironcrash', name: 'Iron Crash', job: 'testwarrior', type: 'attack', fx: null, icon: 'titanbreak', school: 'steel',
-    desc: 'Bring your blade down on one monster like a falling pillar: the ground bursts under it, and it is struck twice.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(10, 20), pct: k(190, 360), hits: 2, targets: 1,
-        combo: [{ move: 'overhead', dur: 0.72, step: 10, strikes: [
-          { at: 0.5, pct: k(140, 260), reach: 92, h: 80, targets: 1, knock: 60, fx: 'twhit', burst: 'twcrash', burstAt: 0.7, burstDur: 0.6, big: true, stop: 0.1, shake: 4 },
-          { at: 0.64, pct: k(50, 100), reach: 92, h: 80, targets: 1, knock: 160, fx: 'twhit', stop: 0.04 },
-        ] }],
-      };
-    },
-  }),
-  ironrush: skill({
-    id: 'ironrush', name: 'Iron Rush', job: 'testwarrior', type: 'attack', fx: null, icon: 'charge', school: 'steel', movement: true,
-    desc: 'Charge forward behind your blade, knocking back every monster in your way.',
-    at: (lv, m) => {
-      const k = (a, b) => lerp(a, b, lv, m);
-      return {
-        mp: k(8, 5), pct: k(80, 150), hits: 1, targets: 6,
-        combo: [{ move: 'dash', dur: 0.45, step: k(90, 140), carry: 0.7, guard: 0.4, strikes: [{ at: 0.3, pct: k(80, 150), reach: 56, h: 66, around: true, targets: 6, knock: 280, fx: 'twhit', burst: 'twrush', burstAt: 0.2, burstDur: 0.4, stop: 0.04, shake: 1 }] }],
-      };
-    },
-  }),
-  warspirit: skill({
-    id: 'warspirit', name: 'War Spirit', job: 'testwarrior', type: 'buff', fx: null, castFx: 'twfury', icon: 'warcry', school: 'steel',
-    desc: 'Your fighting spirit flares up: more weapon attack for a while.',
-    at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 180, lv, m), buff: { watk: lerp(6, 30, lv, m) } }),
-  }),
-  ironbody: skill({
-    id: 'ironbody', name: 'Iron Body', job: 'testwarrior', type: 'buff', fx: null, icon: 'ironguard', school: 'steel',
-    desc: 'Harden yourself like iron: take less damage from every hit for a while.',
-    at: (lv, m) => ({ mp: lerp(12, 24, lv, m), duration: lerp(60, 180, lv, m), buff: { dmgCut: lerpf(0.08, 0.25, lv, m), wdef: lerp(10, 50, lv, m) } }),
-  }),
-  twmastery: skill({
-    id: 'twmastery', name: 'Weapon Mastery', job: 'testwarrior', type: 'passive', grows: true, fx: null, icon: 'swordmastery',
-    desc: 'Steadier blows and more attack with every blade.',
-    at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 20, lv, m) } }),
-  }),
-  twtoughness: skill({
-    id: 'twtoughness', name: 'Toughness', job: 'testwarrior', type: 'passive', grows: true, fx: null, icon: 'toughness',
-    desc: 'Tougher all around: more max HP and weapon defense.',
-    at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
-  }),
-
   // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
   // Like the Warrior, she fights with her basic attacks and her skills set themselves off (procs,
   // see the Warrior above): Aegis Smite from her swings, Hallowed Ground from her combo's last
@@ -1070,7 +1009,6 @@ const MOVES_BY_SKILL = {
   vault: 'vault', cometarrow: 'comet', springtrap: 'throw', packhowl: 'cheer',
   stampede: 'skyshot', snacktime: 'throw', overcharge: 'steadyaim', thunderhead: 'skyshot',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
-  crescentsweep: 'cleave', ironcrash: 'overhead', ironrush: 'dash', warspirit: 'roar', ironbody: 'guard',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   shadowdash: 'dashstab', quickhaste: 'cheer', twinfang: 'thrust', backstab: 'backstab', moonlitassassin: 'assassinate', luckyseven: 'barrage', starfan: 'throw', fullmoonvolley: 'moonthrow',
   spiritbolt: 'kagura', spiritstep: 'spiritstep', spiritwave: 'kaguraslam', blessing: 'kagurabless', spiritward: 'kaguraward', heavenslantern: 'kaguralantern',

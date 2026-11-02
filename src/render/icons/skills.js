@@ -1559,8 +1559,6 @@ const ART = {
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
-// The test warrior (Swordsman, test) borrows the Warrior's icons for now.
-Object.assign(ART, { crescentsweep: ART.whirlwind, ironcrash: ART.titanbreak, ironrush: ART.shouldercharge, warspirit: ART.warcry, ironbody: ART.ironguard, twmastery: ART.swordmastery, twtoughness: ART.toughness });
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint
 // the plate behind an icon to match it.

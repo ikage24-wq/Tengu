@@ -100,7 +100,7 @@ test('important side quests and every job advancement have scenes, naming real s
     assert.ok(QUESTS[id], `${id} is a quest`);
     for (const k of Object.values(sc)) assert.ok(SCENES[k], `${id}: scene ${k}`);
   }
-  for (const j of Object.values(JOBS).filter((j) => j.tier === 1 && !j.test)) assert.ok(JOB_SCENES[j.id], `${j.id} has a scene`);
+  for (const j of Object.values(JOBS).filter((j) => j.tier === 1)) assert.ok(JOB_SCENES[j.id], `${j.id} has a scene`);
   for (const [id, sc] of Object.entries(SCENES)) {
     for (const st of sc) if (st.who && st.who !== 'player' && st.who !== 'hayate') assert.ok(NPCS[st.who] || MOBS[st.who], `${id}: who is ${st.who}?`);
   }
