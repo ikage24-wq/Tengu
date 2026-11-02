@@ -110,7 +110,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -237,15 +237,28 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         }
         // A run of this color; flat details inside it (strands, shines) don't break it.
         let end = x;
-        // (With the light pass a run stops at flat parts too, so an arm in front of flat hair is
-        // shaded as the arm alone, not as the arm plus the hair beside it.)
-        while (end < gw && (grid[y * gw + end] === c || (!light && flat[y * gw + end] && grid[y * gw + end] >= 0))) end++;
+        // (With the light pass a run carries on through thin flat details, such as seams and folds,
+        // but stops at broad flat parts, so an arm in front of flat hair is shaded as the arm alone.)
+        const gap = light ? res * 1.6 : Infinity;
+        while (end < gw) {
+          const k = y * gw + end;
+          if (grid[k] === c) end++;
+          else if (flat[k] && grid[k] >= 0) {
+            let j = end;
+            while (j < gw && j - end <= gap && flat[y * gw + j] && grid[y * gw + j] >= 0 && grid[y * gw + j] !== c) j++;
+            if (j < gw && grid[y * gw + j] === c && j - end <= gap) end = j;
+            else if (!light) end = j;
+            else break;
+          } else break;
+        }
         // Three tones across the run: shadow at the back, base, and a soft highlight at the front.
         const len = end - x;
         // 'cel' sprites (front-facing figures) skip the side shadow and keep only the cast and bottom bands.
         // The light pass (`light`, the hero redraw): even a front-facing figure turns from the light,
         // its back side in a soft shadow that widens toward the feet, so the figure reads as round.
-        const back = soft === 'cel' ? (light && len >= res * 3 ? Math.round(len * (0.14 + 0.26 * (y / gh))) : 0) : Math.max(res, Math.round(len * 0.28));
+        // With `edge` (the figure's back line, in its own units at the top and the feet), the shadow
+        // is everything behind one smooth line, so no detail or lock of hair can step it.
+        const back = soft === 'cel' ? 0 : Math.max(res, Math.round(len * 0.28));
         // Thin parts (arms, legs) only get the shadow; a highlight on them reads as stripes.
         // No highlight band: one soft shadow keeps the look simple.
         const front = 0;
@@ -254,12 +267,13 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         x = end;
       }
     }
+    const behind = light && edge ? (x, y) => x < at(edge[0] + (edge[1] - edge[0]) * (y / gh)) : () => false;
     for (let y = 0; y < gh; y++) {
       for (let x = 0; x < gw; x++) {
         const i = y * gw + x;
         const c = grid[i];
         if (c < 0 || flat[i]) continue;
-        let shadow = !lit[i] && shaded[i] === 1;
+        let shadow = !lit[i] && (shaded[i] === 1 || behind(x, y));
         for (let k = 1; k <= under && !shadow && !lit[i]; k++) shadow = y + k >= gh || grid[i + k * gw] < 0;
         if (!cast[i]) {
           for (let k = 1; k <= castBand && !shadow && y - k >= 0; k++) {
@@ -425,9 +439,9 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
 // sprite keeps its feet and centre where w x h puts them.
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.

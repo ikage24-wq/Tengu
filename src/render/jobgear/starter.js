@@ -49,6 +49,9 @@ const tier = (x0, x1, y0, x2, x3, y1, n, c) => frill(x0, x1, y0, x2, x3, y1, n, 
 // A bow with two loops and two tails, centred at (x, y).
 const bow = (x, y, w, c, d) => [T([[x, y], [x - w, y - w * 0.6], [x - w * 1.1, y + w * 0.5]], c), T([[x, y], [x + w, y - w * 0.6], [x + w * 1.1, y + w * 0.5]], c),
   T([[x - 0.4, y + 0.3], [x - w * 0.7, y + w * 1.4], [x - w * 0.2, y + w * 1.3]], c), T([[x + 0.4, y + 0.3], [x + w * 0.7, y + w * 1.4], [x + w * 0.2, y + w * 1.3]], c), F(E(x, y, w * 0.32, w * 0.32, d))];
+// A cloth fold (the outfit redraw): a dark crease tapering to a point, a light ridge just above it
+// where the cloth turns back to the light.
+const crease = (x0, y0, x1, y1, w, dark, lite) => [F(limb(x0 + 0.1, y0 - 0.55, x1 + 0.1, y1 - 0.55, w * 0.75, 0.1, lite)), F(limb(x0, y0, x1, y1, w, 0.1, dark))];
 // Rib lines (cuffs, hems, turtlenecks).
 const ribs = (x0, x1, y, h, c, step = 1.2) => Array.from({ length: Math.floor((x1 - x0) / step) }, (_, i) => F(R(x0 + 0.4 + i * step, y, 0.35, h, c)));
 
@@ -59,13 +62,23 @@ const ribs = (x0, x1, y, h, c, step = 1.2) => Array.from({ length: Math.floor((x
 const OUTFITS = {
   // An oversized tee with a big heart print, half tucked into rolled-cuff mom jeans; high-tops.
   casual: {
-    top: (p) => [T(loose(36.6, 0.5), p.main), F(E(MID, 26.2, 3, 1.2, p.dark)),
+    top: (p) => [T(loose(36.6, 0.5), p.main),
+      // Light falls across the chest on the front side, so the tee has volume.
+      F(E(MID + 2.4, 28.6, 2.4, 1.1, shade(p.main, 5))),
+      // A ribbed crew neck: the band, its inside in shadow, and a fine light edge.
+      F(E(MID, 26.3, 3.3, 1.4, p.dark)), F(E(MID, 26, 2.3, 0.75, p.deep)), F(limb(MID + 0.6, 27.5, MID + 3, 26.8, 0.35, 0.25, p.light)),
+      // The cloth drapes from the shoulder down toward the tuck.
+      ...crease(12.6, 28.6, 14.6, 33.2, 0.6, p.dark, p.light),
       heart(MID - 0.4, 30.8, 2.8, pale(p)), heart(MID - 0.4, 30.9, 1.4, p.pop), F(E(19.6, 28.6, 0.5, 0.5, pale(p))), F(E(11.6, 33.4, 0.45, 0.45, pale(p))),
+      // A stitched hem along the loose side.
+      F(limb(9.8, 36, 16.8, 35.5, 0.3, 0.3, p.dark)),
       // The front tuck: the hem lifts on the facing side, with folds pulling toward it.
       T([[17, 35], [21.9, 34.4], [22.1, 36.8], [17.4, 36]], p.dark), F(limb(17.4, 35.2, 20.6, 32.8, 0.45, 0.35, p.dark)), F(limb(18.6, 35.4, 21, 34, 0.4, 0.3, p.dark))],
     sleeve: (p) => p.main,
     legs: () => ({ top: DENIM, low: DENIM, pad: null, cuff: DENIM_LIGHT }),
-    skirt: () => [F(limb(10.4, 37.2, 12.4, 38.6, 0.45, 0.4, DENIM_DARK)), F(limb(20.8, 37.2, 18.8, 38.6, 0.45, 0.4, DENIM_DARK)), F(R(MID - 0.25, 36.8, 0.5, 2.6, DENIM_DARK))],
+    skirt: () => [F(limb(10.4, 37.2, 12.4, 38.6, 0.45, 0.4, DENIM_DARK)), F(limb(20.8, 37.2, 18.8, 38.6, 0.45, 0.4, DENIM_DARK)), F(R(MID - 0.25, 36.8, 0.5, 2.6, DENIM_DARK)),
+      // Copper rivets at the pocket corners and the fly's stitched curve.
+      F(E(12.3, 38.5, 0.32, 0.32, GOLD)), F(E(18.9, 38.5, 0.32, 0.32, GOLD)), F(limb(MID + 0.3, 37.2, MID + 1.3, 39.2, 0.3, 0.3, DENIM_LIGHT))],
     shoe: (p, k, c) => [k.shaft(4.2, c(p.pop), 3.3), k.sole(c(p.pop)), k.poly([[-2, -0.2], [2, -0.2], [2.6, 1.6], [-2.6, 1.6]], c(WHITE)),
       k.poly([[-2.9, 2.1], [2.9, 2.1], [2.6, 3], [-2.6, 3]], c('#e6e8f2')), k.dot(0, -1.6, 0.45, c(WHITE)), k.dot(0, -3, 0.45, c(WHITE)), k.dot(-1.3, -2.2, 0.6, c(WHITE))],
   },
@@ -79,7 +92,9 @@ const OUTFITS = {
     top: (p) => [T(TORSO, p.main), T([[MID - 1.8, 26.6], [MID + 1.8, 26.6], [MID, 30.6]], pale(p) === WHITE ? p.pop : WHITE),
       F(R(10.1, 27.4, 1.1, 8.4, pale(p))), F(R(20.3, 27.4, 1.1, 8.4, pale(p))), F(R(10.4, 27.6, 0.4, 8.2, p.pop)), F(R(20.6, 27.6, 0.4, 8.2, p.pop)),
       T([[11.4, 24.8], [MID - 1.4, 25.2], [MID - 0.4, 28.2], [10.8, 27.4]], p.dark), T([[19.8, 24.8], [MID + 1.4, 25.2], [MID + 0.4, 28.2], [20.4, 27.4]], p.dark),
-      F(R(MID - 0.3, 30.4, 0.6, 5.4, p.deep)), F(E(MID, 30.8, 0.6, 0.9, GOLD)), band(TORSO, 34.6, 35.8, p.dark), ...ribs(9.8, 21.4, 34.8, 0.9, p.deep)],
+      F(R(MID - 0.3, 30.4, 0.6, 5.4, p.deep)), F(E(MID, 30.8, 0.6, 0.9, GOLD)), band(TORSO, 34.6, 35.8, p.dark), ...ribs(9.8, 21.4, 34.8, 0.9, p.deep),
+      // The stand-up collar's edge in the light, and the nylon creasing in toward the zip.
+      F(limb(MID + 1.4, 25.3, 19.8, 25, 0.35, 0.3, p.light)), ...crease(12.6, 29.6, 14.6, 33.2, 0.5, p.dark, p.light), ...crease(18.8, 30.8, 16.8, 33.6, 0.45, p.dark, p.light)],
     sleeve: (p) => p.main,
     long: true,
     legs: (p, skin) => ({ top: NAVY, low: skin, pad: null }),
@@ -96,7 +111,12 @@ const OUTFITS = {
       F(limb(MID - 1.4, 27.6, MID - 1.8, 31.6, 0.5, 0.5, pale(p))), F(limb(MID + 1.4, 27.6, MID + 1.8, 31.6, 0.5, 0.5, pale(p))),
       F(E(MID - 1.8, 31.8, 0.45, 0.6, p.pop)), F(E(MID + 1.8, 31.8, 0.45, 0.6, p.pop)),
       T([[11.6, 31.8], [19.6, 31.8], [20.6, 35], [10.6, 35]], p.dark), F(limb(11.8, 32.2, 10.8, 34.8, 0.4, 0.4, p.deep)), F(limb(19.4, 32.2, 20.4, 34.8, 0.4, 0.4, p.deep)),
-      band(loose(37.4, 0.9), 36, 37.4, p.dark), ...ribs(9, 22.2, 36.2, 1.1, p.deep), heart(19.4, 29.4, 0.8, p.pop)],
+      band(loose(37.4, 0.9), 36, 37.4, p.dark), ...ribs(9, 22.2, 36.2, 1.1, p.deep), heart(19.4, 29.4, 0.8, p.pop),
+      // The slouch sags in a soft fold above the pocket; the pocket's top is stitched.
+      ...crease(12.4, 30.2, MID, 31.2, 0.5, p.dark, p.light), ...crease(MID, 31.2, 18.8, 30.2, 0.5, p.dark, p.light),
+      ...[12.6, 14.3, 16, 17.7].map((x) => F(R(x, 32.3, 0.9, 0.3, p.light))),
+      // The rolled hood catches the light along its top.
+      F(limb(11.4, 25.2, 19.8, 25.2, 0.5, 0.5, p.light))],
     sleeve: (p) => p.main,
     long: true,
     // The hood's back hangs behind the shoulders.
@@ -117,6 +137,9 @@ const OUTFITS = {
       F(limb(MID - 2.4, 27, MID - 2.1, 35.6, 0.6, 0.6, p.deep)), F(limb(MID + 2.4, 27, MID + 2.1, 35.6, 0.6, 0.6, p.deep)),
       T([[MID - 2.4, 25.6], [MID - 5.6, 25.8], [MID - 3.2, 29.8]], p.light), T([[MID + 2.4, 25.6], [MID + 5.6, 25.8], [MID + 3.2, 29.8]], p.light),
       R(10.6, 29.6, 2.8, 1.1, p.dark), R(18.2, 29.6, 2.8, 1.1, p.dark), button(12, 30.2, GOLD), button(19.6, 30.2, GOLD),
+      // The lapels' edges catch the light; the tee is shaded where the fronts hang over it.
+      F(limb(MID + 2.4, 25.7, MID + 5.4, 25.9, 0.35, 0.3, WHITE)), F(limb(MID - 2.2, 29.4, MID - 2.1, 35.4, 0.5, 0.5, '#e8dccb')),
+      ...crease(12.6, 33, 13.6, 35.2, 0.45, p.dark, p.light), ...crease(18.4, 33, 17.8, 35.2, 0.45, p.dark, p.light),
       F(R(10.6, 30.8, 0.4, 1.6, p.dark)), F(R(21, 30.8, 0.4, 1.6, p.dark)), band(TORSO, 34.4, 35.8, p.dark)],
     sleeve: (p) => p.main,
     long: true,
@@ -133,9 +156,14 @@ const OUTFITS = {
     top: (p) => [T(TORSO, p.main), T([[MID - 2.4, 26], [MID + 2.4, 26], [MID, 31.6]], WHITE),
       T([[MID - 2.4, 25.8], [MID - 0.4, 26.2], [MID - 1.6, 27.8]], WHITE), T([[MID + 2.4, 25.8], [MID + 0.4, 26.2], [MID + 1.6, 27.8]], WHITE),
       T([[MID - 2.5, 26.2], [MID - 4.4, 26.8], [MID - 1.2, 32.2]], p.dark), T([[MID + 2.5, 26.2], [MID + 4.4, 26.8], [MID + 1.2, 32.2]], p.dark),
+      // Lapel edges catch the light; the shirt is shaded under the bow.
+      F(limb(MID - 2.5, 26.3, MID - 1.25, 32, 0.35, 0.3, p.light)), F(limb(MID + 2.5, 26.3, MID + 1.25, 32, 0.35, 0.3, p.light)),
+      F(E(MID, 29.6, 1.2, 0.7, '#e6e0f2')),
+      // Darts shaping the blazer to the waist.
+      ...crease(13.2, 30.6, 13.4, 34.6, 0.45, p.dark, p.light), ...crease(18.6, 32.8, 18.2, 34.8, 0.4, p.dark, p.light),
       ...bow(MID, 27.8, 1.9, p.pop, shade(p.pop, -22)),
       F(R(17.6, 29.8, 2.8, 0.45, p.dark)), F(T([[18.2, 30.4], [19.8, 30.4], [19.8, 31.6], [19, 32.4], [18.2, 31.6]], GOLD)), F(E(19, 31.2, 0.35, 0.35, p.main)),
-      button(MID, 33.6, GOLD), F(R(10.4, 33.4, 2.2, 0.45, p.dark))],
+      button(MID, 33.6, GOLD), F(R(10.4, 33.4, 2.2, 0.45, p.dark)), F(band(TORSO, 35, 35.6, p.dark))],
     sleeve: (p) => p.main,
     long: true,
     legs: (p, skin) => ({ top: skin, low: NAVY, pad: null }),
@@ -143,7 +171,9 @@ const OUTFITS = {
       const pts = skirtPts(41.8, 1.8);
       const base = p.second;
       const line = p.secondDark;
-      return [T(pts, base), ...pleats(41.8, 1.8, line, [12, 14.4, 16.8, 19.2]), F(band(pts, 37.4, 37.9, line)), F(band(pts, 39.6, 40.1, line)),
+      // Each pleat: a dark inner fold and a light ridge on its turned edge.
+      const ridge = [12, 14.4, 16.8, 19.2].map((x) => F(limb(x + 0.55, 35.8, x + 0.55 + (x - MID) * 0.3, 41.2, 0.35, 0.55, shade(base, 9))));
+      return [T(pts, base), ...ridge, ...pleats(41.8, 1.8, line, [12, 14.4, 16.8, 19.2]), F(band(pts, 37.4, 37.9, line)), F(band(pts, 39.6, 40.1, line)),
         F(band(pts, 38.5, 38.8, p.pop)), ...[11.2, 13.6, 16, 18.4, 20.8].map((x) => F(limb(x, 34.6, x + (x - MID) * 0.28, 41.4, 0.3, 0.35, p.pop))), band(pts, 40.9, 41.8, line)];
     },
     shoe: (p, k, c) => [k.shaft(2.4, c(NAVY), 3), k.sole(c(BROWN)), k.poly([[-2.2, -0.2], [2.2, -0.2], [2.5, 0.9], [-2.5, 0.9]], c(shade(BROWN, -16))), k.dot(0, 0.35, 0.45, c(GOLD)),
@@ -157,13 +187,18 @@ const OUTFITS = {
       F(limb(8.9, 28.8, MID - 0.4, 32.2, 0.4, 0.4, WHITE)), F(limb(22.3, 28.8, MID + 0.4, 32.2, 0.4, 0.4, WHITE)),
       F(limb(9.2, 27.8, MID - 0.6, 31.2, 0.35, 0.35, WHITE)), F(limb(22, 27.8, MID + 0.6, 31.2, 0.35, 0.35, WHITE)),
       T([[MID - 0.7, 31.6], [MID - 2.2, 35.2], [MID - 0.4, 34.6]], p.pop), T([[MID + 0.7, 31.6], [MID + 2.2, 35.2], [MID + 0.4, 34.6]], p.pop), ...bow(MID, 31.4, 1.6, p.pop, shade(p.pop, -22)),
-      band(TORSO, 34.8, 35.8, shade(WHITE, -8))],
+      band(TORSO, 34.8, 35.8, shade(WHITE, -8)),
+      // The collar's edge casts a soft shadow on the blouse, which gathers over its band.
+      F(limb(9.2, 30.2, MID - 0.6, 33.4, 0.5, 0.4, '#e6e0f0')), F(limb(22, 30.2, MID + 0.6, 33.4, 0.5, 0.4, '#e6e0f0')),
+      ...crease(12, 33.4, 13.2, 34.8, 0.45, '#dcd6ea', WHITE), ...crease(19.2, 33.4, 18, 34.8, 0.45, '#dcd6ea', WHITE),
+      F(limb(19.4, 25.6, 22.2, 27.4, 0.35, 0.3, p.light))],
     sleeve: () => WHITE,
     shoulder: (p) => [F(R(-2.3, 3.2, 4.6, 0.9, p.main))],
     legs: (p, skin) => ({ top: skin, low: WHITE, pad: null }),
     skirt: (p) => {
       const pts = skirtPts(41.6, 1.9);
-      return [T(pts, p.main), ...pleats(41.6, 1.9, p.dark), F(band(pts, 39.8, 40.4, WHITE)), band(pts, 40.9, 41.6, p.dark)];
+      const ridge = [12.2, 14.6, 17, 19.4].map((x) => F(limb(x + 0.55, 35.8, x + 0.55 + (x - MID) * 0.32, 41, 0.35, 0.55, p.light)));
+      return [T(pts, p.main), ...ridge, ...pleats(41.6, 1.9, p.dark), F(band(pts, 39.8, 40.4, WHITE)), band(pts, 40.9, 41.6, p.dark)];
     },
     shoe: (p, k, c) => [k.shaft(2.6, c(WHITE), 3.1), k.sole(c(SHOE_DARK)), k.poly([[-2.2, -0.2], [2.2, -0.2], [2.5, 0.9], [-2.5, 0.9]], c(shade(SHOE_DARK, 10))), k.dot(-0.8, -0.6, 0.4, c(WHITE))],
   },
@@ -180,7 +215,9 @@ const OUTFITS = {
         ...[28.6, 30.8, 33].map((y) => F(limb(x - 0.6, y, x + 0.6, y + 1.4, 0.55, 0.55, p.dark)))];
       return [T(pts, p.main), ...cable(12.4), ...cable(18.8),
         R(MID - 3.6, 24.2, 7.2, 3.2, p.main), F(R(MID - 3.6, 26.6, 7.2, 0.6, p.dark)), ...ribs(MID - 3.4, MID + 3.4, 24.6, 1.8, p.dark, 1.1),
-        band(pts, 35.8, 37.2, p.dark), ...ribs(9, 22.2, 36, 1.1, p.deep)];
+        band(pts, 35.8, 37.2, p.dark), ...ribs(9, 22.2, 36, 1.1, p.deep),
+        // The folded neck's top edge in the light, and the knit slouching over the hem.
+        F(limb(MID - 1, 24.5, MID + 3.4, 24.5, 0.4, 0.4, p.light)), ...crease(14, 34.4, 15.6, 35.6, 0.5, p.dark, p.light), ...crease(17.4, 34.2, 16.4, 35.6, 0.45, p.dark, p.light)];
     },
     sleeve: (p) => p.main,
     long: true,
@@ -188,7 +225,8 @@ const OUTFITS = {
     legs: () => ({ top: '#6b5a7e', low: '#6b5a7e', pad: null }),
     skirt: (p) => {
       const pts = [[10, 34.2], [21.2, 34.2], [23.8, 48.4], [7.4, 48.4]];
-      return [T(pts, p.second), ...[12.4, 15.6, 18.8].map((x) => F(limb(x, 37.6, x + (x - MID) * 0.45, 48, 0.4, 0.8, p.secondDark))), band(pts, 47.2, 48.4, p.secondDark)];
+      const ridge = [12.4, 15.6, 18.8].map((x) => F(limb(x + 0.7, 37.4, x + 0.9 + (x - MID) * 0.45, 47.6, 0.35, 0.7, shade(p.second, 9))));
+      return [T(pts, p.second), ...ridge, ...[12.4, 15.6, 18.8].map((x) => F(limb(x, 37.6, x + (x - MID) * 0.45, 48, 0.4, 0.8, p.secondDark))), band(pts, 47.2, 48.4, p.secondDark)];
     },
     shoe: (p, k, c) => [k.shaft(2.8, c(BROWN), 3.2), k.sole(c(BROWN)), k.poly([[-2.9, 2.1], [2.9, 2.1], [2.6, 3], [-2.6, 3]], c(SHOE_DARK)), k.dot(-1.2, -1.6, 0.4, c(GOLD))],
   },
@@ -200,7 +238,11 @@ const OUTFITS = {
       T([[MID - 3.8, 29.4], [MID + 3.8, 29.4], [MID + 4.4, 35.8], [MID - 4.4, 35.8]], p.main), R(MID - 4.4, 25.6, 1.5, 4.4, p.main), R(MID + 2.9, 25.6, 1.5, 4.4, p.main),
       button(MID - 3.6, 30.2, GOLD), button(MID + 3.6, 30.2, GOLD),
       R(MID - 2, 31, 4, 2.8, p.dark), heart(MID, 32.4, 1, pale(p) === WHITE ? p.pop : WHITE), F(R(MID - 2, 31, 4, 0.5, p.deep)),
-      F(limb(MID - 4.2, 30, MID - 4.4, 35.6, 0.4, 0.4, p.dark)), F(limb(MID + 4.2, 30, MID + 4.4, 35.6, 0.4, 0.4, p.dark))],
+      F(limb(MID - 4.2, 30, MID - 4.4, 35.6, 0.4, 0.4, p.dark)), F(limb(MID + 4.2, 30, MID + 4.4, 35.6, 0.4, 0.4, p.dark)),
+      // Topstitching: dashes across the bib's top and round the pocket, and the bib's edge in the light.
+      ...[MID - 3.2, MID - 1.8, MID - 0.4, MID + 1, MID + 2.4].map((x) => F(R(x, 29.9, 0.8, 0.28, p.light))),
+      ...[31.6, 32.8].map((y) => F(R(MID - 2.5, y, 0.28, 0.7, p.light))), ...[31.6, 32.8].map((y) => F(R(MID + 2.2, y, 0.28, 0.7, p.light))),
+      F(limb(MID + 0.6, 29.5, MID + 3.8, 29.5, 0.35, 0.35, shade(p.light, 6)))],
     sleeve: () => WHITE,
     shoulder: (p) => [F(R(-2.3, 1.8, 4.6, 0.8, p.pop))],
     legs: (p, skin) => ({ top: p.main, low: skin, pad: p.light }),
@@ -216,7 +258,9 @@ const OUTFITS = {
       T([[MID + 1.4, 25.8], [MID + 3.2, 25.8], [MID + 0.4, 31.6], [MID - 1.4, 31.6]], p.main),
       F(limb(MID + 2.6, 25.9, MID - 0.6, 31.4, 0.55, 0.55, p.deep)), F(limb(MID - 2.8, 25.9, MID - 0.6, 29.6, 0.5, 0.5, p.dark)),
       band(TORSO, 31.2, 34.6, p.pop), F(R(9.8, 31.2, 11.6, 0.45, shade(p.pop, -22))), F(R(9.8, 32.7, 11.6, 0.5, GOLD)), F(E(MID + 1.2, 32.95, 0.7, 0.6, GOLD)),
-      ...flower(11.4, 28.4, 0.9, pale(p), GOLD), ...flower(19.8, 29.6, 0.8, pale(p), GOLD)],
+      ...flower(11.4, 28.4, 0.9, pale(p), GOLD), ...flower(19.8, 29.6, 0.8, pale(p), GOLD),
+      ...crease(12.8, 28.2, 13.8, 31, 0.5, p.dark, p.light), ...crease(18.6, 27.6, 17.6, 31, 0.45, p.dark, p.light),
+      F(R(9.8, 31.5, 11.6, 0.4, shade(p.pop, 14)))],
     sleeve: (p) => p.main,
     long: true,
     back: (p) => [T([[15.5, 33], [8.2, 29.6], [7.2, 34.4], [9, 37]], p.pop), T([[15.5, 33], [22.8, 29.6], [23.8, 34.4], [22, 37]], p.pop),
@@ -224,6 +268,7 @@ const OUTFITS = {
     legs: () => ({ top: WHITE, low: WHITE, pad: null }),
     skirt: (p) => [T([[9.8, 34.2], [21.2, 34.2], [22.2, 51.6], [8.8, 51.6]], p.main), F(R(8.9, 49.8, 13.2, 1.8, p.dark)),
       F(limb(MID - 1, 34.6, MID - 2.4, 51.4, 0.5, 0.5, p.deep)), F(limb(MID - 0.4, 34.6, MID - 1.7, 51.4, 0.35, 0.35, p.light)),
+      ...crease(12, 36, 11, 49.6, 0.5, p.dark, p.light), ...crease(19.4, 36, 20.4, 49.6, 0.45, p.dark, p.light),
       ...flower(12, 39, 1.1, pale(p), GOLD), ...flower(19.4, 37.8, 1, pale(p), GOLD), ...flower(18, 45, 1.1, pale(p), p.pop), ...flower(10.8, 46.4, 1, pale(p), GOLD)],
     shoe: (p, k, c) => [k.poly([[-3, 1.8], [3, 1.8], [3, 3], [-3, 3]], c('#c9a77a')), k.poly([[-2.6, -0.4], [2.6, -0.4], [2.8, 1.8], [-2.8, 1.8]], c(WHITE)),
       k.poly([[-0.4, 0.2], [0.4, 0.2], [2.4, 1.6], [-2.4, 1.6]], c(p.pop))],
@@ -238,7 +283,8 @@ const OUTFITS = {
       F(limb(MID + 3.8, 25.7, MID - 0.8, 32.6, 0.7, 0.7, p.light)), F(limb(MID - 4, 25.7, MID - 1, 30.4, 0.6, 0.6, p.dark)),
       T([[9, 32.4], [22.2, 32.2], [22.4, 35.2], [8.8, 35.4]], p.pop), F(R(8.9, 33.6, 13.4, 0.5, shade(p.pop, -22))),
       F(limb(19.2, 34, 20.4 + (m?.sway ?? 0) * 0.9, 38.6, 0.8, 0.5, p.pop)), F(limb(19.8, 34, 21.8 + (m?.sway ?? 0) * 1.3, 37.8 - Math.abs(m?.sway ?? 0) * 0.3, 0.7, 0.4, shade(p.pop, -12))),
-      F(limb(11.4, 27.6, 12.6, 31.6, 0.4, 0.4, p.dark)), F(limb(20, 28, 19.2, 31.6, 0.4, 0.4, p.dark))],
+      F(limb(11.4, 27.6, 12.6, 31.6, 0.4, 0.4, p.dark)), F(limb(20, 28, 19.2, 31.6, 0.4, 0.4, p.dark)),
+      ...crease(13, 28.6, 14.4, 32, 0.55, p.dark, p.light), F(R(9, 32.5, 13.2, 0.4, shade(p.pop, 14)))],
     sleeve: (p) => p.main,
     long: true,
     shoulder: (p) => [E(0, 1, 3, 2.6, p.main), F(E(0, 2.6, 2.4, 0.6, p.dark))],
@@ -271,7 +317,8 @@ const OUTFITS = {
       T([[9.4, 32.2], [21.8, 32], [21.8, 34.6], [9.4, 34.8]], p.dark), F(R(9.4, 32.5, 12.4, 0.8, SCARLET)), F(R(9.4, 33.6, 12.4, 0.8, SCARLET)),
       ...bow(MID + 2.6, 33.2, 1.6, SCARLET, SCARLET_DK),
       F(limb(MID + 2.6, 33.6, MID + 3, 36, 0.3, 0.3, SCARLET_DK)), F(E(MID + 3, 36.8, 1.1, 1.1, GOLD)), F(E(MID + 2.7, 36.5, 0.4, 0.4, '#fff6d0')), F(R(MID + 2.5, 37.5, 1, 0.3, '#c8902a')),
-      F(limb(11.6, 27.6, 12.4, 31.4, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.2, 31.4, 0.4, 0.4, p.dark))],
+      F(limb(11.6, 27.6, 12.4, 31.4, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.2, 31.4, 0.4, 0.4, p.dark)),
+      ...crease(13.2, 28.6, 14, 31.6, 0.45, p.dark, p.light), F(R(9.4, 32.3, 12.4, 0.3, '#ff6a72'))],
     sleeve: (p) => p.main,
     long: true,
     shoulder: (p) => [E(0, 1, 2.8, 2.4, p.main), F(E(0, 2.4, 2.2, 0.5, p.dark))],
@@ -319,7 +366,8 @@ const OUTFITS = {
       // The hakama's high waist and its white bands crossing over it, the bow at the front.
       T([[9.2, 31.4], [22, 31.2], [22.2, 35], [9, 35.2]], SCARLET), F(R(9.2, 32.2, 12.8, 0.7, '#ffffff')), F(R(9.2, 33.6, 12.8, 0.6, '#ffffff')),
       ...bow(MID + 3.2, 32.8, 1.5, '#ffffff', PAPER_SH),
-      F(limb(11.6, 27.6, 12.2, 31, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.4, 31, 0.4, 0.4, p.dark))],
+      F(limb(11.6, 27.6, 12.2, 31, 0.4, 0.4, p.dark)), F(limb(19.8, 27.8, 19.4, 31, 0.4, 0.4, p.dark)),
+      ...crease(13.2, 28.4, 14, 31, 0.45, p.dark, p.light), F(R(9.2, 31.5, 12.8, 0.35, '#ff6a6a'))],
     sleeve: (p) => p.main,
     long: true,
     shoulder: (p) => [E(0, 1, 3, 2.6, p.main), F(E(0, 2.6, 2.4, 0.6, p.dark))],
@@ -340,7 +388,7 @@ const OUTFITS = {
       // a darker hem.
       const out = [T([[9.2, 34.6], [22, 34.6], [24.4, 52], [16.2, 52], [15.6, 44], [15, 52], [6.8, 52]], SCARLET),
         F(R(6.8, 50.8, 17.6, 1.2, SCARLET_DK)), F(limb(MID, 38, MID, 51.6, 0.6, 0.6, SCARLET_DK))];
-      for (const x of [10.6, 12.8, 18.2, 20.6]) out.push(F(limb(x, 35.4, x + (x - MID) * 0.32, 51.6, 0.5, 0.7, SCARLET_DK)));
+      for (const x of [10.6, 12.8, 18.2, 20.6]) out.push(F(limb(x + 0.6, 35.4, x + 0.6 + (x - MID) * 0.32, 51, 0.35, 0.55, '#ff5a64')), F(limb(x, 35.4, x + (x - MID) * 0.32, 51.6, 0.5, 0.7, SCARLET_DK)));
       out.push(F(limb(11.6, 35.6, 11.2, 50.6, 0.3, 0.3, '#ff7a7a')), F(limb(19.6, 35.6, 20.4, 50.6, 0.3, 0.3, '#ff7a7a')));
       return out;
     },
@@ -357,10 +405,19 @@ const OUTFITS = {
     hatBack: (p, m) => [T([[22, 8], [24.4, 8], [28 + m.sway, 17], [25.8 + m.sway, 17.6]], p.main), T([[23, 8], [25, 8], [25.6 + m.sway, 19.6], [23.6 + m.sway, 19]], p.dark)],
     top: (p) => [T(TORSO, p.skin), T([[9.6, 29.6], [12.6, 28.4], [MID, 29.8], [18.6, 28.4], [21.6, 29.6], [21.5, 35.8], [9.5, 35.8]], p.main),
       F(limb(11.6, 26.6, 11.8, 28.8, 0.7, 0.7, p.main)), F(limb(19.6, 26.6, 19.4, 28.8, 0.7, 0.7, p.main)),
-      ...[30.8, 31.8].map((y) => F(R(10.6, y, 10, 0.35, p.dark))), band(TORSO, 33.4, 34.8, p.pop), ...bow(19.2, 34, 1.4, p.pop, shade(p.pop, -22))],
+      // Smocking: rows of little gathered stitches across the bodice, and light on its front.
+      F(E(MID + 2, 31.2, 2.2, 0.9, p.light)), F(E(MID, 30, 1, 0.5, p.dark)),
+      ...[30.9, 32.1].flatMap((y, r) => [11.2, 12.6, 14, 15.4, 16.8, 18.2, 19.6].map((x) => F(E(x + r * 0.7, y, 0.3, 0.25, p.dark)))),
+      F(E(11.7, 28.7, 0.55, 0.42, p.pop)), F(E(19.5, 28.7, 0.55, 0.42, p.pop)),
+      band(TORSO, 33.4, 34.8, p.pop), ...bow(19.2, 34, 1.4, p.pop, shade(p.pop, -22))],
     sleeve: (p) => p.skin,
     legs: (p, skin) => ({ top: skin, low: skin, pad: null }),
-    skirt: (p) => [tier(10, 21.2, 34.2, 6.6, 24.6, 44.6, 7, p.light), tier(10, 21.2, 34.2, 8.2, 23, 40.6, 6, p.main),
+    skirt: (p) => [tier(10, 21.2, 34.2, 6.6, 24.6, 44.6, 7, p.light),
+      // The lower tier's soft folds, and a lace edge.
+      ...[9.6, 13.2, 16.8, 20.4].flatMap((x) => crease(x + (x - MID) * 0.1, 41.2, x + (x - MID) * 0.25, 44, 0.5, p.main, '#ffffff')),
+      ...[7.4, 9, 10.6, 12.2, 13.8, 15.4, 17, 18.6, 20.2, 21.8, 23.4].map((x) => F(E(x, 44.6, 0.4, 0.4, pale(p)))),
+      tier(10, 21.2, 34.2, 8.2, 23, 40.6, 6, p.main),
+      ...[11.8, 14.4, 17, 19.6].flatMap((x) => crease(x + (x - MID) * 0.05, 35.6, x + (x - MID) * 0.42, 40, 0.5, p.dark, p.light)),
       ...flower(12.4, 37.6, 1.1, pale(p), GOLD), ...flower(18.8, 38.4, 1, pale(p), GOLD), ...flower(9.6, 42.8, 1, pale(p), GOLD), ...flower(15.8, 43.2, 1.1, pale(p), p.pop), ...flower(21.6, 42.4, 0.9, pale(p), GOLD)],
     shoe: (p, k, c) => [k.shaft(1, c(BROWN), 3.1), k.poly([[-3, 1.6], [3, 1.6], [3, 3], [-3, 3]], c(CREAM)), k.poly([[-2.6, -0.2], [2.6, -0.2], [2.8, 1.6], [-2.8, 1.6]], c(p.skin)),
       k.poly([[-2.6, 0.2], [2.6, 0.2], [2.7, 1], [-2.7, 1]], c(BROWN)), k.dot(0, 0.6, 0.55, c(p.pop))],
@@ -374,7 +431,9 @@ const OUTFITS = {
     hat: (p) => [frill(6.4, 24.6, 7.8, 6.8, 24.2, 3.8, 6, 0.9, WHITE), hoop(15.5, 13.6, 10.8, 7.6, 9.6, 6.4, p.main, 200, 340, 12), F(E(15.5, 4.6, 0.8, 0.8, p.pop))],
     top: (p) => [T(TORSO, p.main), E(MID - 1.9, 26.6, 2.3, 1.5, WHITE), E(MID + 1.9, 26.6, 2.3, 1.5, WHITE), ...bow(MID, 27.4, 1.3, p.pop, shade(p.pop, -22)),
       T([[MID - 3.1, 30], [MID + 3.1, 30], [MID + 3.4, 35.8], [MID - 3.4, 35.8]], WHITE), frill(MID - 3.3, MID + 3.3, 29.2, MID - 3.6, MID + 3.6, 30.6, 4, 0.5, WHITE),
-      F(limb(MID - 3, 30, 11.6, 26.6, 0.7, 0.7, WHITE)), F(limb(MID + 3, 30, 19.6, 26.6, 0.7, 0.7, WHITE)), F(R(MID - 3.4, 34.2, 6.8, 0.6, shade(WHITE, -10)))],
+      F(limb(MID - 3, 30, 11.6, 26.6, 0.7, 0.7, WHITE)), F(limb(MID + 3, 30, 19.6, 26.6, 0.7, 0.7, WHITE)), F(R(MID - 3.4, 34.2, 6.8, 0.6, shade(WHITE, -10))),
+      ...crease(MID - 1.4, 31.2, MID - 1.8, 33.8, 0.45, '#e2dcee', WHITE), ...crease(MID + 1.6, 31.2, MID + 2, 33.8, 0.45, '#e2dcee', WHITE),
+      F(E(MID, 28, 2.6, 0.5, p.dark))],
     sleeve: (p) => p.main,
     shoulder: (p) => [E(0, 0.6, 3, 2.6, p.main), F(E(-0.8, -0.2, 1.2, 0.8, p.light)), frill(-2.8, 2.8, 2.4, -3.3, 3.3, 4.2, 3, 0.6, WHITE)],
     back: (p) => [T([[15.5, 35], [7.6, 31.4], [6.6, 36], [8.6, 38.8]], WHITE), T([[15.5, 35], [23.4, 31.4], [24.4, 36], [22.4, 38.8]], WHITE),
@@ -383,7 +442,9 @@ const OUTFITS = {
     skirt: (p) => {
       const pts = skirtPts(43.2, 3);
       return [tier(10, 21.2, 34.2, 6.4, 24.8, 44.6, 8, WHITE), T(pts, p.main), ...pleats(43.2, 3, p.dark, [11.6, 19.6]),
-        T([[MID - 3.4, 34.4], [MID + 3.4, 34.4], [MID + 4.6, 41.6], [MID - 4.6, 41.6]], WHITE), frill(MID - 4.6, MID + 4.6, 41.4, MID - 4.9, MID + 4.9, 42.8, 5, 0.6, WHITE)];
+        T([[MID - 3.4, 34.4], [MID + 3.4, 34.4], [MID + 4.6, 41.6], [MID - 4.6, 41.6]], WHITE),
+        ...crease(MID - 1.6, 35.4, MID - 2.6, 41, 0.5, '#e2dcee', WHITE), ...crease(MID + 1.6, 35.4, MID + 2.6, 41, 0.5, '#e2dcee', WHITE),
+        frill(MID - 4.6, MID + 4.6, 41.4, MID - 4.9, MID + 4.9, 42.8, 5, 0.6, WHITE)];
     },
     shoe: (p, k, c) => [k.sole(c(SHOE_DARK)), k.poly([[-2.6, -0.6], [2.6, -0.6], [2.6, 0.2], [-2.6, 0.2]], c(SHOE_DARK)), k.dot(1.4, -0.2, 0.45, c(GOLD)), k.dot(-1, 0.8, 0.45, c(WHITE))],
   },
@@ -404,7 +465,7 @@ const OUTFITS = {
         out.push(E(MID, y, w, 1.55, p.main), F(R(MID - w + 0.6, y + 1.05, (w - 0.6) * 2, 0.45, p.dark)), F(E(MID + w * 0.42, y - 0.55, w * 0.32, 0.38, p.light)));
       }
       out.push(R(MID - 3.8, 24.2, 7.6, 3.2, p.main), F(R(MID - 3.8, 26.8, 7.6, 0.5, p.dark)), fur([[MID - 4.4, 24.4], [MID, 23.6], [MID + 4.4, 24.4]], 1.2, FUR),
-        F(R(MID - 0.3, 25.6, 0.6, 11, p.deep)), F(E(MID, 28.2, 0.6, 0.9, GOLD)));
+        F(R(MID - 0.3, 25.6, 0.6, 11, p.deep)), F(R(MID + 0.05, 26, 0.25, 10.4, p.light)), F(E(MID, 28.2, 0.6, 0.9, GOLD)), F(E(MID - 0.15, 27.9, 0.25, 0.3, '#fff6d0')));
       return out;
     },
     sleeve: (p) => p.main,

@@ -2422,7 +2422,7 @@ function weaponIdle(type, t) {
 export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
   const rig = { ...baseRig(), ...pose, armIn: true };
   const g = resolveGear(look, null);
-  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT }));
+  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
   const top = y - H * scale - (rig.lift ?? 0) * scale;
@@ -2595,6 +2595,9 @@ const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
 // set by the scene from the map and the hour (rimLightOf), or false (only for before/after sheets).
 let LIGHT = '#fff1e0';
 export const setLight = (on) => { LIGHT = on === true ? '#fff1e0' : on; };
+// The light pass's back line, in body units at the top of the sprite and at the feet: everything
+// behind it (the back of the torso, the far leg) is in soft shadow, widening toward the feet.
+const BACK_EDGE = [11.4, 13.2];
 // The rim light's colour for a map at an hour: warm white by day (tinted by the place: green under
 // the trees, icy on the snow, gold on the crags, teal in caves), gold at dusk and dawn, a cool
 // moonlit blue at night. A handful of colours, so the figure is only redrawn when the light changes.
@@ -2811,7 +2814,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
   // the frame's drawing budget is spent (see spriteBudgeted).
   const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
-  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT });
+  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
   const body = state.urgent ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
 
   const flip = facing < 0;

@@ -1,0 +1,49 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Outfit sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the starter outfits side by side, big, in a few colours and poses, to judge a body and
+// outfit redraw. ?outfits=casual,sailor&colors=#ffc2d6,#5d5285&poses=stand,walk&k=4&hair=wavylong
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero, setLight, OUTFIT_STYLES } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+if (q.get('light') === '0') setLight(false);
+const outfits = q.get('outfits') ? q.get('outfits').split(',') : OUTFIT_STYLES;
+const colors = (q.get('colors') ?? '#ffc2d6,#5d5285').split(',');
+const poses = (q.get('poses') ?? 'stand').split(',');
+const hair = q.get('hair') ?? 'fluffybob';
+const POSE = { stand: { pose: 'idle', time: 0.3 }, walk: { pose: 'walk', time: 0.35 }, jump: { pose: 'jump', time: 0.3, vy: -200 }, back: { pose: 'idle', time: 0.3, facing: -1 } };
+const K = Number(q.get('k') ?? 4);
+const D = 1.5;
+const CW = 36 * K;
+const RH = 52 * K;
+const cols = outfits.flatMap((o) => poses.map((p) => [o, p]));
+const W = 20 + cols.length * CW;
+const H = colors.length * RH + 30;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+ctx.font = 'bold 12px Segoe UI, sans-serif';
+cols.forEach(([o, p], i) => { ctx.fillStyle = '#3a2d4f'; ctx.fillText(poses.length > 1 ? `${o} ${p}` : o, 20 + i * CW + 8, 20); });
+colors.forEach((color, r) => {
+  ctx.fillStyle = r % 2 ? '#efe6fb' : '#fbf7ff';
+  ctx.fillRect(0, 30 + r * RH, W, RH);
+  cols.forEach(([outfit, p], i) => {
+    ctx.save();
+    ctx.translate(20 + i * CW + CW / 2, 30 + r * RH + RH - 4 * K);
+    ctx.scale(K, K);
+    setHd(true, K * D);
+    nextFrame();
+    drawHero(ctx, { hairStyle: hair, hairColor: '#7a5238', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'jewel', outfit, outfitColor: color, face: 'smile' }, null, 0, 0, { facing: 1, urgent: true, ...POSE[p] }, null);
+    ctx.restore();
+  });
+});
+document.title = 'ready';
+</script>
