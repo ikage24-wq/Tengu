@@ -2795,6 +2795,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const g = resolveGear(look, gear);
   // The Blade Dancer's chakrams take her rose gold, unless the item has a colour of its own.
   if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
+  // The Arbalist Engineer's crossbow takes her polished brass.
+  if (state.job === 'stormcaller' && g.weapon?.type === 'crossbow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'brass' };
   // The Sky Dancer's gloves take her sky blue the same way.
   if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
   // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not

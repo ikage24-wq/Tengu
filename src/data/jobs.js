@@ -82,9 +82,9 @@ export const JOBS = {
     blurb: 'Hunts with a bow beside her wolf and hawk. Her shots and her animals\' hits build Bond; full, the animals grow bigger and hunt on their own. Pounces, dives, howls and a stampede of spirit beasts.',
   },
   stormcaller: {
-    id: 'stormcaller', power: 1.57, spread: 0.56, name: 'Stormcaller', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'stormcaller', power: 1.57, spread: 0.56, name: 'Arbalist Engineer', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
-    blurb: 'Calls the storm down with a crossbow. Her bolts build Charge; full, every bolt chains on to one more monster. Lightning that jumps between monsters, charged ground, a storm cloud overhead, and Thunderhead: a storm over the whole screen.',
+    blurb: 'An inventor with a crossbow of her own making. Her bolts build steam Pressure; full, every shot fires two. Sticky and cluster bolts, a steam vent, a little turret that fires on its own, and Big Bertha: a giant ballista bolt through everything.',
   },
 
   // The dancer's paths (the Thief's branches, ids kept). Both ask for Vex's trial first; each keeps

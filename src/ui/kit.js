@@ -503,6 +503,20 @@ const ICONS = {
     ctx.closePath();
     ctx.fill();
   },
+  // A cog (the Arbalist Engineer's Pressure).
+  cog(ctx, s) {
+    ctx.beginPath();
+    for (let i = 0; i < 32; i++) {
+      const a = (i / 32) * Math.PI * 2;
+      const r = Math.floor(i / 2) % 2 === 0 ? s * 0.5 : s * 0.38;
+      if (i) ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.moveTo(s * 0.16, 0);
+    ctx.arc(0, 0, s * 0.16, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
+  },
   // A chakram: a ring with blade points round it (the Blade Dancer's Ricochet).
   chakram(ctx, s) {
     ctx.beginPath();

@@ -1256,15 +1256,15 @@ test("the Beastmaster has her own basic combo, and its shots land when they arri
 });
 
 test('the archer paths have command shots: up at flyers, from the air, and on the run', () => {
-  for (const [job, run0] of [['beastmaster', 'slideshot'], ['stormcaller', 'slideshot']]) {
+  for (const [job, up, air, run0] of [['beastmaster', 'skyshot', 'airshot', 'slideshot'], ['stormcaller', 'aeup', 'aeair', 'aeroll']]) {
     const w = archer(job);
     updateWorld(w, DT, { held: new Set(['ArrowUp', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
-    assert.equal(w.pose.kind, 'skyshot', `${job}: up + attack shoots up`);
+    assert.equal(w.pose.kind, up, `${job}: up + attack shoots up`);
     run(w, 1);
     w.body.vy = -500;
     w.body.onGround = false;
     updateWorld(w, DT, press('KeyZ'));
-    assert.equal(w.pose.kind, 'airshot', `${job}: a shot from the air`);
+    assert.equal(w.pose.kind, air, `${job}: a shot from the air`);
     assert.ok(w.hangUntil > w.now, 'it holds you up');
     run(w, 1.5);
     Object.assign(w.body, { x: 200, facing: 1 });
@@ -1275,7 +1275,7 @@ test('the archer paths have command shots: up at flyers, from the air, and on th
 });
 
 test("the Archer's skills go on as each path's arrows: gold for her, green for the Beastmaster", () => {
-  for (const [job, shot] of [['archer', 'hawkarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'stormbolt']]) {
+  for (const [job, shot] of [['archer', 'hawkarrow'], ['beastmaster', 'windarrow'], ['stormcaller', 'aebolt']]) {
     const w = job === 'archer' ? range() : archer(job);
     w.char.skills.vault = 10;
     w.char.mp = 9999;
@@ -1476,7 +1476,7 @@ test('Down + attack shoots down at whatever is below, for every archer path', ()
     m.x = w.body.x + 90;
     m.y = w.body.y + 100;
     updateWorld(w, DT, { held: new Set(['ArrowDown', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
-    assert.equal(w.pose.kind, 'downshot', `${job}: leans out and aims down`);
+    assert.equal(w.pose.kind, job === 'stormcaller' ? 'aeair' : 'downshot', `${job}: leans out and aims down`);
     let hit = false;
     for (let i = 0; i < 60; i++) {
       updateWorld(w, DT, idle);
@@ -2133,7 +2133,7 @@ test("the Paladin's and the Berserker's combos mix their own swing pools too", (
 
 // ---------- The Stormcaller (crossbow, Charge) ----------
 
-test('the Stormcaller fights with her own violet bolts and her own pool of shots, and they build Charge', () => {
+test('the Arbalist Engineer fights with her own brass bolts and her own pool of shots, and they build Pressure', () => {
   const pool = PATH_VARIANTS.stormcaller;
   assert.equal(pool.length, PATH_COMBOS.stormcaller.length, 'one choice per combo step');
   pool.forEach((step, i) => {
@@ -2151,135 +2151,110 @@ test('the Stormcaller fights with her own violet bolts and her own pool of shots
     if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
     shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
   }
-  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.stormcaller.map((s) => s.move), 'her combo');
-  assert.equal(shot, 'stormbolt', 'violet storm bolts');
-  assert.ok(w.charge > 0, `her bolts build Charge (${w.charge})`);
-  // It fades once the fighting stops.
+  assert.deepEqual(seen.slice(0, 4), PATH_COMBOS.stormcaller.map((s) => s.move), 'her combo');
+  assert.equal(shot, 'aebolt', 'brass bolts');
+  assert.ok(w.charge > 0, `her bolts build Pressure (${w.charge})`);
   const before = w.charge;
   run(w, 8);
-  assert.ok(w.charge < before, 'and fades');
+  assert.ok(w.charge < before, 'and it fades');
 });
 
-test('Arc Bolt: a bolt that lands jumps on to the monsters near it, one after another', () => {
-  const w = archer('stormcaller');
-  // Mastered, it jumps twice: one bolt, all three hit.
-  w.char.skills.arcbolt = 20;
-  let arcs = 0;
-  dice(0.01, () => {
+test('Overdrive (full Pressure): every shot fires a second bolt', () => {
+  const bolts = (charge) => {
+    const w = archer('stormcaller');
+    w.charge = charge;
+    w.chargeAt = 1e9;
     updateWorld(w, DT, press('KeyZ'));
-    for (let i = 0; i < 60; i++) {
+    let n = 0;
+    for (let i = 0; i < 30; i++) {
       updateWorld(w, DT, idle);
-      arcs = Math.max(arcs, w.fx.filter((f) => f.kind === 'chainarc').length);
+      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile').length);
+    }
+    return n;
+  };
+  assert.equal(bolts(0), 1);
+  assert.equal(bolts(100), 2);
+});
+
+test('Sticky Bolt sticks and bursts a moment later on everything close; Cluster Bolt splits the last bolt into bomblets', () => {
+  const w = archer('stormcaller');
+  w.char.skills.stickybolt = 20;
+  w.mobs.forEach((m, i) => (m.x = w.body.x + 120 + i * 20));
+  const seen = new Set();
+  dice(0, () => {
+    updateWorld(w, DT, press('KeyZ'));
+    for (let i = 0; i < 90; i++) {
+      updateWorld(w, DT, idle);
+      for (const f of w.fx) seen.add(f.kind);
     }
   });
-  assert.equal(arcs, 2, 'lightning jumps twice');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'one bolt, all three hit');
-});
-
-test('Supercharged (full Charge): every bolt jumps to one more monster, even without Arc Bolt', () => {
-  const plain = archer('stormcaller');
-  dice(0.5, () => {
-    updateWorld(plain, DT, press('KeyZ'));
-    run(plain, 1);
+  assert.ok(seen.has('aestick') && seen.has('aeboom'), 'it sticks, then bursts');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'catching the monsters close by');
+  const c = archer('stormcaller');
+  c.char.skills.clusterbolt = 20;
+  c.combo = 2;
+  c.comboUntil = c.now + 9;
+  c.comboPlan = [0, 0, 0, 0];
+  let booms = 0;
+  dice(0, () => {
+    updateWorld(c, DT, press('KeyZ'));
+    for (let i = 0; i < 90; i++) {
+      updateWorld(c, DT, idle);
+      booms = Math.max(booms, c.fx.filter((f) => f.kind === 'aeboom' && f.small).length);
+    }
   });
-  assert.equal(plain.mobs.filter((m) => m.hp < 1e9).length, 1, 'a plain bolt hits one');
-  const w = archer('stormcaller');
-  w.charge = 100;
-  w.chargeAt = 1e9;
-  dice(0.5, () => {
-    updateWorld(w, DT, press('KeyZ'));
-    run(w, 1);
-  });
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 2, 'Supercharged, it jumps to one more');
+  assert.ok(booms >= 3, `the finisher's bolt splits into bomblets (${booms})`);
 });
 
-test('Static Field: a bolt charges the ground where it lands, zapping whatever stands there', () => {
-  const w = archer('stormcaller');
-  w.char.skills.staticfield = 10;
-  dice(0.01, () => {
-    updateWorld(w, DT, press('KeyZ'));
-    run(w, 0.6);
-  });
-  assert.equal(w.fields.length, 1, 'the ground is charged');
-  assert.ok(w.fx.some((f) => f.kind === 'staticfield'), 'and crackles');
-  const m = w.mobs[0];
-  const hp = m.hp;
-  dice(0.5, () => run(w, 1.2));
-  assert.ok(m.hp < hp, 'it zaps the monster standing on it');
-  run(w, 4);
-  assert.equal(w.fields.length, 0, 'then runs out');
-});
-
-test("Thunderclap: the combo's last bolt calls lightning down on the farthest monster, always with three in front", () => {
-  const w = archer('stormcaller');
-  w.char.skills.thunderclap = 10;
-  const far = w.mobs.at(-1);
-  let strike = null;
-  let held = false;
-  let air = 0;
-  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  for (let i = 0; i < 160 && !held; i++) {
-    updateWorld(w, DT, hold);
-    strike ??= w.fx.find((f) => f.kind === 'zapstrike');
-    air = Math.max(air, far.air ?? 0);
-    held ||= far.hold === 'stun';
-  }
-  assert.ok(strike, 'lightning strikes');
-  assert.ok(Math.abs(strike.x - far.x) < 30, 'on the farthest');
-  run(w, 0.3);
-  assert.ok(held || far.hold === 'stun', 'stunning it');
-});
-
-test('Lightning Rod: a hit she takes is softened, and the shock arcs back into the monster', async () => {
+test('Steam Vent: a hit she takes is softened, and the steam throws the monster back', async () => {
   const { hurtPlayer } = await import('../src/world/world.js');
-  const taken = (rod) => {
+  const taken = (vent) => {
     const w = archer('stormcaller');
     w.god = false;
-    if (rod) w.char.skills.lightningrod = 10;
+    if (vent) w.char.skills.steamvent = 10;
     const m = w.mobs[0];
     m.x = w.body.x + 30;
     const hp = w.char.hp;
     let lost = 0;
-    dice(0.5, () => {
+    dice(0, () => {
       hurtPlayer(w, 300, m.x);
       lost = hp - w.char.hp;
       run(w, 0.3);
     });
-    return { lost, struck: m.hp < 1e9, arc: w.fx.some((f) => f.kind === 'chainarc') };
+    return { lost, struck: m.hp < 1e9, steam: w.fx.some((f) => f.kind === 'aesteam') };
   };
   const plain = taken(false);
-  const rod = taken(true);
-  assert.ok(rod.lost < plain.lost, `softened (${rod.lost} < ${plain.lost})`);
-  assert.ok(rod.struck && !plain.struck, 'the shock hits the monster that hit her');
+  const vent = taken(true);
+  assert.ok(vent.lost < plain.lost, `softened (${vent.lost} < ${plain.lost})`);
+  assert.ok(vent.struck && vent.steam && !plain.struck, 'the steam hits the monster that hit her');
 });
 
-test('Eye of the Storm: while Supercharged, a cloud over her drops lightning on the monsters near her', () => {
+test('Deploy Turret: she sets a turret down, it fires at the monsters on its own, and packs away when its time is up', () => {
   const w = archer('stormcaller');
-  w.char.skills.eyeofstorm = 10;
-  run(w, 0.5);
-  assert.ok(!w.fx.some((f) => f.kind === 'stormcloud'), 'no cloud before she is Supercharged');
-  const struck = new Set();
+  w.char.skills.deployturret = 10;
+  assert.ok(cast(w, 'deployturret').ok);
+  assert.equal(w.pose.kind, 'aedeploy');
+  run(w, 0.6);
+  assert.ok(w.turret, 'a turret stands in front of her');
+  const hp = w.mobs.map((m) => m.hp);
+  let shots = 0;
   for (let i = 0; i < 60 * 3; i++) {
-    w.charge = 100;
-    w.chargeAt = w.now;
+    const before = w.turret?.firedAt;
     updateWorld(w, DT, idle);
-    for (const f of w.fx) if (f.kind === 'zapstrike') struck.add(f);
+    if (w.turret && w.turret.firedAt !== before) shots++;
   }
-  const strikes = struck.size;
-  assert.ok(w.fx.some((f) => f.kind === 'stormcloud'), 'a cloud gathers over her');
-  assert.ok(strikes >= 2, `lightning drops out of it (${strikes})`);
-  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'onto the monsters');
-  w.charge = 0;
-  run(w, 1);
-  assert.ok(!w.fx.some((f) => f.kind === 'stormcloud'), 'and it clears when the Charge is gone');
+  assert.ok(shots >= 4, `it fires on its own (${shots})`);
+  assert.ok(w.mobs.some((m, i) => m.hp < hp[i]), 'and its bolts land');
+  run(w, 35);
+  assert.equal(w.turret, null, 'packed away');
 });
 
-test('Overcharge: her next few bolts go out as massive piercing bolts of lightning, then it ends', () => {
+test('Overclock: her next few bolts go out heavy and piercing, then it ends', () => {
   const w = archer('stormcaller');
-  w.char.skills.overcharge = 10;
-  assert.ok(cast(w, 'overcharge').ok);
+  w.char.skills.overclock = 10;
+  assert.ok(cast(w, 'overclock').ok);
   run(w, 1.2);
-  const shots = w.char.buffs.overcharge.values.shots;
+  const shots = w.char.buffs.overclock.values.shots;
   const seen = [];
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
   dice(0.5, () => {
@@ -2291,41 +2266,33 @@ test('Overcharge: her next few bolts go out as massive piercing bolts of lightni
       }
     }
   });
-  assert.equal(seen.slice(0, shots).filter((s) => s === 'megabolt').length, shots, `the first ${shots} are massive`);
+  assert.equal(seen.slice(0, shots).filter((s) => s === 'aebig').length, shots, `the first ${shots} are heavy`);
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'tearing through the whole line');
-  assert.ok(seen.slice(shots).every((s) => s !== 'megabolt'), 'then her bolts are back to normal');
 });
 
-test('Thunderhead needs full Charge, spends it, and the storm hits everything on the screen', () => {
+test('Big Bertha needs full Pressure, spends it, and its enormous bolt blasts through everything', () => {
   const w = archer('stormcaller');
-  w.char.skills.thunderhead = 10;
-  w.charge = 60;
-  assert.equal(cast(w, 'thunderhead').reason, 'gauge:charge', 'waits for full Charge');
+  w.char.skills.bigbertha = 10;
+  w.charge = 50;
+  assert.equal(cast(w, 'bigbertha').reason, 'gauge:charge', 'waits for full Pressure');
   w.charge = 100;
   w.chargeAt = w.now;
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-260, 150, 300][i] }));
-  assert.ok(cast(w, 'thunderhead').ok);
-  assert.equal(w.charge, 0, 'spends all of it');
-  let sky = false;
-  let giant = false;
-  const struck = new Set();
+  assert.ok(cast(w, 'bigbertha').ok);
+  assert.equal(w.charge, 0, 'spends it');
+  let ballista = false;
+  let bertha = false;
   dice(0.5, () => {
-    for (let i = 0; i < 60 * 5; i++) {
+    for (let i = 0; i < 60 * 2.5; i++) {
       updateWorld(w, DT, idle);
-      sky ||= w.fx.some((f) => f.kind === 'stormsky');
-      giant ||= w.fx.some((f) => f.kind === 'gigabolt');
-      for (const f of w.fx) if (f.kind === 'zapstrike') struck.add(f);
+      ballista ||= w.fx.some((f) => f.kind === 'aeballista');
+      bertha ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'aebertha');
     }
   });
-  const strikes = struck.size;
-  assert.ok(sky, 'the storm breaks over the screen');
-  assert.ok(strikes >= 8, `lightning again and again (${strikes})`);
-  assert.ok(giant, 'then one giant bolt');
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster both ways is hit');
+  assert.ok(ballista && bertha, 'the ballista unfolds and fires');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'through every monster ahead');
+  assert.ok(w.charge < 10, `and it never refills (${w.charge})`);
 });
 
-// The Paladin and the Berserker are two different fighters: none of their swings is the other's
-// (both grew from the Warrior's, and his shared ones once made them look alike).
 test("the Paladin and the Berserker never share a swing, and the Berserker shares none with the Warrior", () => {
   const moves = (path) => new Set(PATH_VARIANTS[path].flat().map((s) => s.move));
   const pal = moves('paladin');
@@ -2352,7 +2319,7 @@ test("a provoke takes the colour of the path that cried it", async () => {
 // Blast Arrow is the Archer's, but each path's burst is its own: the Archer's fire, the
 // Beastmaster's gale of wind and leaves, the Stormcaller's thunderclap.
 test("each archer path's Blast Arrow bursts in its own look", () => {
-  for (const [job, kind] of [['beastmaster', 'galeblast'], ['stormcaller', 'thunderblast']]) {
+  for (const [job, kind] of [['beastmaster', 'galeblast'], ['stormcaller', 'aeboom']]) {
     const w = archer(job);
     w.char.skills.blastarrow = 20;
     const seen = new Set();

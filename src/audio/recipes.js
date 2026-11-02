@@ -270,6 +270,13 @@ const R = {
   blessing: { db: -11, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1500 }, { seq: 'D5:90 E5:90 G5:90 A5:90 D6:700', inst: 'celesta', db: -4 }, { seq: 'r:300 D5+A5:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
   wardbreak: { db: -11, max: 2, layers: [{ rec: 'glass', len: 700 }, sparkle('E7:30 B6:30 G6:200', { db: -8 }), thump(160, 160, { db: -8 })] },
   heavenslantern: { db: -10, max: 1, room: true, duck: [-6, 1500], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:80 E4:80 G4:80 A4:80 B4:80 D5:80 E5:900', inst: 'orchestral_harp' }, { seq: 'r:400 D4+A4+D5:1400', inst: 'choir_aahs', attack: 0.3, db: -8 }] },
+  // The Arbalist Engineer: a sticky or cluster bolt bursting (a pop and a clatter of cogs), her
+  // machine venting steam (a hiss), Big Bertha (the ballista ratcheting open, a huge thump and a
+  // long hiss), and Overdrive (a steam whistle and a ratchet).
+  aeboom: { db: -12, vary: 6, max: 3, gap: 60, layers: [{ rec: 'rockHit', rate: 1.5, len: 300, db: -4 }, thump(140, 160, { db: -6 }), { rec: 'clang', rate: 1.8, len: 300, db: -10 }] },
+  aesteam: { db: -16, vary: 6, max: 2, gap: 120, layers: [whoosh(500, 1800, 5200, { focus: 0.2, db: -4 })] },
+  aeballista: { db: -9, max: 1, room: true, duck: [-6, 1600], layers: [{ rec: 'clang', rate: 0.7, len: 500, db: -4 }, { rec: 'clang', rate: 0.9, len: 400, db: -6, at: 300 }, thump(60, 700, { slide: -1.4, at: 1000 }), whoosh(1200, 1400, 4800, { focus: 0.3, db: -6, at: 1050 })] },
+  overdrive: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'E6:80 A6:600', inst: 'pan_flute', db: -4 }, whoosh(800, 1500, 5200, { focus: 0.2, db: -8 }), { rec: 'clang', rate: 1.4, len: 300, db: -10 }] },
   // The Star Witch: a star bolt (a bright glassy ping and a sparkle), a comet (a whoosh with a
   // trailing chime), Wishing Star (a falling glissando into a warm harp chord), Star Veil (a shimmer
   // of bells closing round), all seven stars lit (a rising celesta run), and Starfall (the sky

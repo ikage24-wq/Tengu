@@ -62,6 +62,8 @@ const VARIANT_LOOKS = {
   azure: { blade: '#4f8fe8', bladeDark: '#2f60b4', edge: '#c4f4ff' },
   gilded: { blade: '#f4c443', bladeDark: '#cc931e', edge: WHITE, trim: '#fff6dc', trimDark: '#e0c890' },
   // The Blade Dancer's own finish on a plain chakram (render/hero.js): rose gold with a gold rim.
+  // The Arbalist Engineer's on a plain crossbow: polished brass with teal light.
+  brass: { blade: '#e8b85a', bladeDark: '#a8702a', edge: '#4fe0d0', trim: '#ffe0a0', trimDark: '#b8782a' },
   // The Sky Dancer's on plain gloves: sky blue with a white cuff.
   skyblue: { blade: '#8fd0ff', bladeDark: '#4e90d8', edge: '#ffffff', trim: '#ffffff', trimDark: '#c8dcf0' },
   rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },

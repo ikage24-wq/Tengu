@@ -301,6 +301,12 @@ carry an improvement across every part of the game it applies to.
     orbiting her waist, passing in front and behind; Golden Carousel is six rings riding a gold
     track round her, faster and faster, then flung out in a burst. Her held chakram takes a
     rose-gold finish.
+  - The Arbalist Engineer (2026-11-02; she replaced the Stormcaller) is polished brass with teal
+    energy and white steam, HD soft glow: her bolt is brass with a teal head streaking teal; her
+    heavy bolt is wrapped in teal rings; her hit is a teal burst with cogs flying off and a puff of
+    steam; sticky and cluster bolts burst in brass and teal with scattered cogs; her turret is a brass
+    tripod machine with a cog drum and a teal eye; Big Bertha is a giant brass ballista unfolding
+    over her. Crossbows are compact gadget crossbows held at the waist.
   - The Star Witch (2026-11-02; she replaced the Spirit Mage) is midnight blue and warm gold with
     white star cores, HD soft glow: her bolt is a spinning five-point gold star with a midnight comet
     tail; her staff fires comets (a big star in a gold ring with a long tail) and calls meteors

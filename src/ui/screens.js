@@ -37,7 +37,7 @@ function backdrop(ctx, time) {
 
 // A silly subtitle under the logo, rolled fresh on every page load.
 const oneOf = (list) => list[Math.floor(Math.random() * list.length)];
-const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Stormcaller', 'Blade Dancer', 'Sky Dancer', 'Onmyoji'];
+const JOB_NAMES = ['Paladin', 'Berserker', 'Beastmaster', 'Arbalist Engineer', 'Blade Dancer', 'Sky Dancer', 'Onmyoji'];
 const QUOTE_MAKERS = [
   () => `${oneOf(JOB_NAMES)}s are perfectly balanced. Probably.`,
   () => `${oneOf(['Mira', 'Marlo', 'Lulu', 'The Crystal King'])} says hi!`,
@@ -45,7 +45,7 @@ const QUOTE_MAKERS = [
     'Bring friends. Share the loot. Or don\'t.',
     'The snow wolf is a very good girl.',
     'Paladins hit like a pillow, on purpose.',
-    'Stormcallers: please stop zapping the bots.',
+    'Engineers: please stop blowing up the bots.',
     'Smug face sold separately.',
     'New hair. Same bad decisions.',
     'Big round glasses: now in the Cash Shop.',

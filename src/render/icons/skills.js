@@ -38,6 +38,7 @@ const BG = {
   tempest: ['#cdb4ff', '#262a7e'],
   skydance: ['#e6f6ff', '#3f7ad0'],
   midnight: ['#8a96e8', '#141a4a'],
+  brassbg: ['#ffe6a8', '#5a3818'],
   rosegold: ['#ffe0cf', '#a8405a'],
   shrine: ['#f6f0ff', '#5a46a8'],
 };
@@ -963,96 +964,72 @@ function quickhaste() {
   return out;
 }
 
-// ---------- Stormcaller (electric violet and storm blue) ----------
-const VOLT = '#b48cff';
-const VOLT_LT = '#efe4ff';
-const VOLT_INK = '#2a3394';
-// A small round monster seen far off: a dark blob with two white eyes.
-const blob = (x, y, r = 1.6) => [...solid(oval(x, y, r, r * 0.9, 0, 16), '#4a3a7a', { d: 0.3, ink: '#1a1440' }), S(oval(x - r * 0.35, y - 0.2, 0.3, 0.38, 0, 8), W), S(oval(x + r * 0.35, y - 0.2, 0.3, 0.38, 0, 8), W)];
-
-function stormmastery() {
-  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.6, '#efe4ff')];
-  // A crossbow with a violet bolt laid in it and lightning crackling off the prod.
-  out.push(...crossbowArt([2.6, 13], [12.2, 4.6], { wood: '#5a4a8a', prod: VOLT_LT, bolt0: VOLT }));
-  out.push(...bolt([[13.4, 6.6], [12.2, 9], [13.8, 9.2], [12.8, 12.6]], 1.1, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...spark(4.2, 3.4, 1.1, '#ffffff'));
+// ---------- Arbalist Engineer (brass and teal: gears, steam, teal energy) ----------
+const BRASSC = '#e8b85a';
+const BRASSINK = '#5a3818';
+const TEALC = '#4fe0d0';
+// A brass cog round (cx, cy), r to its teeth.
+function cogIcon(cx, cy, r, n = 8, c = BRASSC) {
+  const pts = [];
+  for (let i = 0; i < n * 4; i++) {
+    const a = (i / (n * 4)) * Math.PI * 2;
+    const rr = Math.floor(i / 2) % 2 === 0 ? r : r * 0.78;
+    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
+  }
+  return [...solid(pts, c, { d: 0.35, ink: BRASSINK }), S(oval(cx, cy, r * 0.32, r * 0.32, 0, 12), BRASSINK)];
+}
+// A bolt from (x0, y0) to its teal head at (x1, y1).
+const boltIcon = (x0, y0, x1, y1) => [streak([x0, y0], [x1, y1], 0.8, BRASSC), ...solid([[x1 + (x1 - x0) * 0.12, y1 + (y1 - y0) * 0.12], [x1 - 1.2, y1 - 1.4], [x1 - 1.4, y1 + 1.2]], TEALC, { shadow: false, d: 0.3, ink: '#0e4a52' })];
+const steamPuff = (list) => puffs(list, W, { ink: '#8a98a8' });
+function engmastery() {
+  const out = [...tile('brassbg', 'passive'), ...aura(8, 8, 6.6, '#c8fff4')];
+  out.push(...cogIcon(6.4, 9.6, 4.2, 8), ...boltIcon(3, 13, 12.6, 3.4));
+  return out;
+}
+// Sticky Bolt: a bolt stuck in a blob, its teal light blinking.
+function stickybolt() {
+  const out = [...tile('brassbg', 'passive')];
+  out.push(...solid(oval(9.4, 10, 4, 3.4, 0, 18), '#7a6a9a', { d: 0.35 }), ...boltIcon(2, 4, 8.6, 8.6));
+  out.push(...spark(11.6, 6, 1.4, TEALC), ...spark(13.4, 12.8, 0.9, TEALC));
+  return out;
+}
+// Cluster Bolt: little bomblets bursting in a row.
+function clusterbolt() {
+  const out = [...tile('brassbg', 'passive')];
+  for (const [x, y] of [[3.6, 11], [8, 9.6], [12.4, 11]]) out.push(...solid(oval(x, y, 1.8, 1.8, 0, 12), '#3a3a4a', { d: 0.3 }), ...spark(x + 0.4, y - 2.6, 1.1, TEALC));
+  out.push(...boltIcon(1, 3, 6.4, 5.6), ...spark(13.6, 3, 0.9));
+  return out;
+}
+// Steam Vent: a cog blowing out a cloud of steam.
+function steamvent() {
+  const out = [...tile('brassbg', 'passive')];
+  out.push(...cogIcon(5.4, 11, 3.6, 7), ...steamPuff([[9.4, 7.4, 2.6], [12.4, 5.6, 2.2], [11.4, 9.4, 2]]));
+  return out;
+}
+// Deploy Turret: a brass tripod turret with a teal eye.
+function deployturret() {
+  const out = [...tile('brassbg', 'active')];
+  for (const [x0, x1] of [[8, 3.4], [8, 12.6], [8, 9]]) out.push(streak([x0, 9.4], [x1, 14.4], 0.7, '#b8782a'));
+  out.push(...solid(rect(4.4, 6.4, 8, 3.2), BRASSC, { d: 0.35, ink: BRASSINK }), ...solid(rect(10.8, 4.4, 1.2, 7.2), '#b8782a', { d: 0.3, ink: BRASSINK }));
+  out.push(S(oval(7, 8, 1.1, 1.1, 0, 10), TEALC), ...spark(13.6, 3, 1.1, TEALC));
+  return out;
+}
+// Overclock: a cog with a teal gauge needle pinned in the red.
+function overclock() {
+  const out = [...tile('brassbg', 'buff'), ...aura(8, 8, 6, '#c8fff4')];
+  out.push(...cogIcon(8, 8.6, 5.2, 10), S(oval(8, 8.6, 3, 3, 0, 18), '#fff6e0'));
+  out.push(S(arcPts(8, 8.6, 2.6, 2.6, 300, 360, 6).concat([[8, 8.6]]), '#ff6a5a'), streak([8, 8.6], [10.4, 7], 0.6, '#0e4a52'));
+  return out;
+}
+// Big Bertha: a giant ballista bolt with a burst of teal at its head.
+function bigbertha() {
+  const out = [...tile('brassbg', 'active'), ...aura(11, 6, 5, TEALC, 1.2, 5)];
+  out.push(...solid([[1, 13], [2.6, 14.6], [11, 6.6], [9.4, 5]], BRASSC, { d: 0.35, ink: BRASSINK }));
+  out.push(...solid([[13.8, 2.2], [9, 4.4], [11.6, 7]], TEALC, { d: 0.35, ink: '#0e4a52' }));
+  out.push(...steamPuff([[3, 11, 1.8], [5, 13.4, 1.6]]), ...spark(14, 6, 1.2, TEALC));
   return out;
 }
 
-function arcbolt() {
-  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.8, '#efe4ff', 1.2)];
-  // A bolt hits one monster and lightning jumps on to two more.
-  out.push(...blob(4, 10.6), ...blob(9, 4.6, 1.4), ...blob(13, 11.4, 1.4));
-  out.push(...bolt([[5.2, 9.2], [6.6, 8], [6.2, 6.8], [8, 5.6]], 0.9, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...bolt([[10, 5.8], [11.6, 7.4], [10.8, 8.4], [12.4, 10.2]], 0.9, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...arrow([0.6, 15.2], [3.4, 11.6], { hw: 1, hl: 1.6, sw: 0.45, fl: VOLT, head: '#ffffff' }));
-  out.push(...spark(4, 10.4, 1.2, '#ffffff'), ...spark(9, 4.4, 0.9, '#ffffff'));
-  return out;
-}
-
-function staticfield() {
-  const out = [...tile('tempest', 'passive'), ...aura(8, 11, 6.6, '#efe4ff', 1.2)];
-  // Charged ground: a glowing violet pool with little arcs jumping up out of it.
-  out.push(...solid(oval(8, 12, 6.6, 2.2, 0, 28), VOLT, { d: 0.4, ink: VOLT_INK, light: VOLT_LT }));
-  out.push(S(oval(8, 11.8, 3.6, 1, 0, 20), '#ffffff'));
-  for (const [x, h, k] of [[4.2, 5.6, 1], [8, 8.4, -1], [11.8, 6, 1]]) out.push(...bolt([[x, 11.6], [x + k * 1.2, 11.6 - h * 0.4], [x - k * 0.4, 11.6 - h * 0.6], [x + k * 0.8, 11.6 - h]], 0.8, VOLT_LT, { ink: VOLT_INK, shadow: false }));
-  out.push(...spark(13.4, 3.4, 1, '#ffffff'));
-  return out;
-}
-
-function thunderclap() {
-  const out = [...tile('tempest', 'passive'), ...aura(8, 9, 6.8, '#efe4ff', 1.3)];
-  // A storm cloud with a great bolt striking down out of it onto the ground.
-  out.push(...bolt([[8.6, 5.4], [6.4, 9], [8.6, 9.2], [6.8, 14]], 1.7, VOLT_LT, { ink: VOLT_INK }));
-  out.push(...solid(starPts(6.8, 13.4, 3, 1.3, 8, -90), VOLT, { shadow: false, d: 0.35, ink: VOLT_INK }));
-  out.push(...puffs([[5, 4.2, 2.4], [8.4, 3.2, 2.8], [11.6, 4.4, 2.3], [8, 5.4, 2]], '#8a86c8', { shadow: false, dark: '#5a5296', ink: '#1a1a5a' }));
-  out.push(...spark(13.2, 10.4, 1.1, '#ffffff'));
-  return out;
-}
-
-function lightningrod() {
-  const out = [...tile('tempest', 'passive'), ...aura(6, 8, 6.6, '#efe4ff', 1.2)];
-  // A rod standing tall, crackling, and the shock arcing back into a monster.
-  out.push(...solid(rect(4.4, 3, 1.6, 11.4), '#cfd6ff', { d: 0.35, ink: VOLT_INK }));
-  out.push(...solid(polyPts(5.2, 2.6, 1.8, 4), VOLT_LT, { d: 0.35, ink: VOLT_INK }));
-  out.push(...blob(12.4, 11.4, 1.8));
-  out.push(...bolt([[6.4, 3.6], [9.6, 5.4], [8.6, 7], [11.6, 9.6]], 1.1, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...spark(5.2, 2.4, 1.3, '#ffffff'), ...spark(13.6, 3.2, 0.9, '#ffffff'));
-  return out;
-}
-
-function eyeofstorm() {
-  const out = [...tile('tempest', 'passive'), ...aura(8, 8, 6.8, '#efe4ff', 1.2)];
-  // A storm cloud with a glowing eye of lightning at its heart, bolts dropping out of it.
-  out.push(...bolt([[5.4, 7], [4.2, 10], [5.6, 10.2], [4.4, 14]], 1, VOLT_LT, { ink: VOLT_INK, shadow: false }));
-  out.push(...bolt([[11, 7], [12.2, 10.4], [10.8, 10.6], [12, 14.4]], 1, VOLT_LT, { ink: VOLT_INK, shadow: false }));
-  out.push(...puffs([[4.4, 5.6, 2.6], [8, 4.4, 3.2], [11.8, 5.6, 2.6], [8, 7, 2.4]], '#6c66ae', { shadow: false, dark: '#4c478a', ink: '#14122c' }));
-  out.push(...solid(oval(8, 5.6, 2, 1.3, 0, 20), VOLT_LT, { shadow: false, d: 0.3, ink: VOLT_INK }));
-  out.push(S(oval(8, 5.6, 0.8, 0.9, 0, 12), VOLT));
-  return out;
-}
-
-function overcharge() {
-  const out = [...tile('tempest', 'buff'), ...aura(8, 8, 7, '#efe4ff', 1.4)];
-  // The crossbow loaded with a huge bolt of lightning, crackling all over.
-  out.push(...crossbowArt([2.2, 13.6], [11, 5.4], { wood: '#5a4a8a', prod: VOLT_LT, bolt0: VOLT }));
-  out.push(...bolt([[9.6, 2.2], [12, 4.6], [11, 5.4], [14.4, 7.8]], 1.6, VOLT_LT, { ink: VOLT_INK, shadow: false }));
-  out.push(...bolt([[1.6, 8], [3.6, 9], [2.8, 10.2], [4.8, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...spark(13.2, 12.4, 1.2, '#ffffff'));
-  return out;
-}
-
-function thunderhead() {
-  const out = [...tile('royal', 'active'), ...aura(8, 9, 7, '#d8c8ff', 1.4)];
-  // The storm over the whole screen: black clouds across the top and one giant bolt striking down
-  // between smaller ones.
-  out.push(...bolt([[3.2, 5], [2.4, 8], [3.6, 8.2], [2.6, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...bolt([[13, 5], [13.8, 8], [12.6, 8.2], [13.6, 11]], 0.8, VOLT, { ink: VOLT_INK, shadow: false }));
-  out.push(...bolt([[8.8, 4], [6.4, 8.4], [9, 8.6], [7, 14.6]], 2.2, '#ffffff', { ink: VOLT_INK, core: VOLT_LT }));
-  out.push(...solid(starPts(7, 14, 3.4, 1.4, 8, -90), VOLT, { shadow: false, d: 0.35, ink: VOLT_INK }));
-  out.push(...puffs([[2.6, 3, 2.4], [6, 2.2, 2.8], [10, 2.2, 2.8], [13.6, 3, 2.4]], '#4c478a', { shadow: false, dark: '#332f66', ink: '#14122c' }));
-  return out;
-}
 
 function shadowdash() {
   const navy = '#2e2466';
@@ -1508,7 +1485,7 @@ const ART = {
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
   beastmastery, wildhunt, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
-  stormmastery, arcbolt, staticfield, thunderclap, lightningrod, eyeofstorm, overcharge, thunderhead,
+  engmastery, stickybolt, clusterbolt, steamvent, deployturret, overclock, bigbertha,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
   skymastery, updraft, zephyr, skywaltz,

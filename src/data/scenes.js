@@ -118,7 +118,7 @@ export const SIDE_SCENES = {
   ],
   trial_kestrel_done: [
     { who: 'kestrel', text: '...Hm. Clean shots. Not bad at all.', mood: 'happy' },
-    { who: 'kestrel', text: 'The Beastmaster hunts with friends who have fur and wings. The Stormcaller brings the lightning. Which are you?' },
+    { who: 'kestrel', text: 'The Beastmaster hunts with friends who have fur and wings. The Arbalist Engineer builds her own crossbow and blows things up with it. Which are you?' },
   ],
   trial_elowen: [
     { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home." },

@@ -293,25 +293,6 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       ctx.restore();
       return true;
     }
-    case 'stormbolt':
-    case 'thunderbolt':
-    case 'megabolt': {
-      // The Stormcaller's bolt: a streak of glowing plasma (no outline, like her lightning) with
-      // lightning crackling off its head and a jagged tail of it behind; a thunderbolt is bigger
-      // and wrapped in more of it, and an Overcharged bolt is huge, three lashes of lightning
-      // trailing it and a lens of storm light round its head.
-      const k = { stormbolt: 1, thunderbolt: 1.4, megabolt: 2.2 }[f.shot];
-      const [bx, by] = along(24 * k);
-      const [tx, ty] = along(44 * k + (k > 2 ? 30 : 0));
-      zigzag(ctx, bx, by, tx, ty, time, (f.seed ?? 0) * 31 + 1, 1.4 * k, 4 * k);
-      if (k > 2) {
-        for (const side of [-1, 1]) zigzag(ctx, bx, by + side * 6, tx, ty + side * 10, time + side, (f.seed ?? 0) * 17 + side, 1.6, 8);
-        fxSprite(ctx, 'celstormpierce', x, y, { frame: 2, rot: ang, scale: 0.6 });
-      }
-      fxSprite(ctx, 'celstormhit', x + Math.cos(ang) * 4, y + Math.sin(ang) * 4, { t: (time * 3) % 0.2, scale: 0.2 * k, alpha: 0.9 });
-      plasmaStreak(ctx, ...along(22 * k), x, y, 1.1 * k);
-      return true;
-    }
     case 'heartbolt': {
       // Heartseeker: one giant bolt (twice a ballista's size), rose rings of force pushed ahead of
       // it; no beam (it should read as a bolt, not a laser).
@@ -491,80 +472,9 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;
     }
-    // ---- The Stormcaller's lightning (world/storm.js) ----
-    case 'stormhit': {
-      // A bolt crackling into a monster: lightning bursting off it every way; heavy shots add a
-      // ring of storm light racing out along the ground.
-      const cy = y - (f.h ?? 24) / 2;
-      fxSprite(ctx, 'celstormhit', x, cy, { p, flip, scale: f.crit ? 1.05 : f.big ? 0.8 : 0.6 });
-      // A crit crackles bigger, lightning racing out round it (her own, not the shared burst).
-      if (f.crit) fxSprite(ctx, 'celringstorm', x, cy, { p, scale: 0.5, sy: 0.5 });
-      if (f.big) groundRing(ctx, 'celringstorm', x, y, p, 50);
-      return true;
-    }
-    case 'stormpierce': {
-      // A thunderbolt tearing through: a lens of violet light along the shot with a ring round it
-      // and lightning off the hit; each monster it passes through lands a little bigger.
-      const cy = y - (f.h ?? 24) / 2;
-      const grow = 1 + 0.1 * Math.min(6, f.rank ?? 0);
-      fxSprite(ctx, 'celstormpierce', x, cy, { p, flip, scale: 0.7 * grow });
-      fxSprite(ctx, 'celstormhit', x, cy, { p, flip, scale: 0.55 * grow });
-      if (f.big && !f.rank) groundRing(ctx, 'celringstorm', x, y, p, 55);
-      return true;
-    }
     case 'zap': {
       // A small zap: a jump of chain lightning or charged ground biting a monster.
       fxSprite(ctx, 'celstormhit', x, y - (f.h ?? 24) / 2, { p, flip, scale: 0.42 });
-      return true;
-    }
-    case 'stormspark': {
-      // A bolt leaving the crossbow with a crackle of lightning.
-      fxSprite(ctx, 'celstormspark', x + (f.dir || 1) * 8, y, { p, flip, scale: f.small ? 0.4 : 0.8 });
-      return true;
-    }
-    case 'chainarc': {
-      // Lightning jumping from one monster to the next: it lashes across, flickers, and is gone.
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const reach = Math.min(1, p / 0.25);
-      ctx.save();
-      ctx.globalAlpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
-      zigzag(ctx, x, y, x + (tx - x) * reach, y + (ty - y) * reach, time, (f.seed ?? 0) * 53, 2.4, 9);
-      if (p < 0.7) zigzag(ctx, x, y, x + (tx - x) * reach, y + (ty - y) * reach, time + 0.5, (f.seed ?? 0) * 71 + 3, 1, 12);
-      ctx.restore();
-      return true;
-    }
-    case 'staticfield': {
-      // Charged ground: arcs of lightning crawling over it and sparks jumping up out of it,
-      // popping on and fading off (no flat glow: her lightning is the light).
-      const r = f.r ?? 60;
-      const a = Math.min(1, p * f.dur / 0.15) * Math.min(1, (1 - p) * f.dur / 0.3);
-      ctx.save();
-      ctx.globalAlpha = a;
-      // Arcs crawling over the charged ground, flickering from place to place.
-      const crawl = Math.floor(time * 7);
-      for (let i = 0; i < 3; i++) {
-        const k = rand((f.seed ?? 0) * 7 + crawl * 5 + i);
-        const sx = x + (k - 0.5) * r * 1.4;
-        const len = (0.4 + rand(crawl + i * 3) * 0.5) * r;
-        zigzag(ctx, sx - len / 2, y - 1, sx + len / 2, y - 1 + (rand(crawl * 3 + i) - 0.5) * 6, time, crawl + i * 11, 0.9, 5);
-      }
-      // Little arcs jumping up off it, a few at a time.
-      const beat = Math.floor(time * 9);
-      for (let i = 0; i < 3; i++) {
-        const k = rand((f.seed ?? 0) * 11 + beat * 3 + i);
-        const sx = x + (k - 0.5) * r * 1.6;
-        const h = 10 + rand(beat + i * 7) * 16;
-        zigzag(ctx, sx, y, sx + (rand(beat * 5 + i) - 0.5) * 12, y - h, time, beat + i, 1.2, 4);
-      }
-      ctx.restore();
-      return true;
-    }
-    case 'zapstrike': {
-      // Thunderclap: a bolt of lightning striking down out of the sky onto a monster, a burst of
-      // storm light at its feet, and a ring racing out.
-      fxSprite(ctx, 'celzapstrike', x, y + 10, { p, scale: 1.5 });
-      if (p > 0.2) groundRing(ctx, 'celringstorm', x, y, (p - 0.2) / 0.8, 80);
       return true;
     }
     // ---- Snow wolf's moon magic (world/pets.js) ----
@@ -722,67 +632,6 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     case 'laststraw':
       // The finisher's signal: Snow wolf acts it out (strawmoon, and her own drawing).
       return true;
-    // ---- The Stormcaller's late skills and Thunderhead (world/storm.js) ----
-    case 'thunderhead':
-      // The finisher's signal: the storm acts it out (skybolt, stormsky, the strikes).
-      return true;
-    case 'stormcloud': {
-      // Eye of the Storm: a storm cloud churning over her head, fading in, and out when it goes.
-      const a = Math.min(1, f.t / 0.3) * (f.dur < 1e8 ? Math.max(0, (f.dur - f.t) / 0.4) : 1);
-      fxSprite(ctx, 'celstormcloud', x, y - 84, { t: time, scale: 1, alpha: a });
-      return true;
-    }
-    case 'skybolt': {
-      // Thunderhead's opening: a bolt fired straight up, a lash of lightning racing up after it to
-      // the top of the screen.
-      const top = Math.min(0, y - 400);
-      const reach = Math.min(1, p / 0.3);
-      ctx.save();
-      ctx.globalAlpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
-      zigzag(ctx, x, y, x, y + (top - y) * reach, time, f.seed ?? 3, 3, 10);
-      ctx.restore();
-      plasmaStreak(ctx, x, y + (top - y) * reach + 34, x, y + (top - y) * reach, 1.6);
-      if (p < 0.3) fxSprite(ctx, 'celstormspark', x, y, { p: p / 0.3, rot: -Math.PI / 2, scale: 0.8 });
-      return true;
-    }
-    case 'stormsky': {
-      // Thunderhead's storm breaking over the whole screen: the sky darkens to indigo, storm
-      // clouds roll in across the top, and rain streaks down through it.
-      const a = Math.min(1, f.t / 0.4) * Math.min(1, (f.dur - f.t) / 0.8);
-      ctx.save();
-      ctx.globalAlpha = 0.38 * a;
-      ctx.fillStyle = '#1a1840';
-      wash(ctx);
-      ctx.strokeStyle = STORM.light;
-      ctx.lineWidth = 1;
-      ctx.globalAlpha = 0.35 * a;
-      ctx.beginPath();
-      for (let i = 0; i < 40; i++) {
-        const u = (time * 1.4 + rand(i)) % 1;
-        const rx = rand(i * 2.3) * 680 - 20 - u * 30;
-        const ry = -20 + u * 400;
-        ctx.moveTo(rx, ry);
-        ctx.lineTo(rx - 5, ry + 16);
-      }
-      ctx.stroke();
-      ctx.restore();
-      // A bank of overlapping clouds, a back row and a front row, so it reads as one storm.
-      for (let i = 0; i < 18; i++) {
-        const back = i < 9;
-        const j = back ? i : i - 9;
-        const drift = Math.sin(time * 0.6 + i * 1.9) * 8;
-        fxSprite(ctx, 'celstormcloud', (back ? 0 : 38) + j * 78 + drift, (back ? 6 : 30) + (j % 2) * 8 - (1 - a) * 80, { t: time + i * 0.37, scale: (back ? 1.3 : 1.15) + (j % 3) * 0.1, alpha: a });
-      }
-      return true;
-    }
-    case 'gigabolt': {
-      // Thunderhead's giant bolt slamming down out of the storm, and a great ring of storm light
-      // racing out along the ground.
-      fxSprite(ctx, 'celgigabolt', x, y + 16, { p, scale: 1.4 });
-      if (p > 0.1) groundRing(ctx, 'celringstorm', x, y, (p - 0.1) / 0.9, 260);
-      if (p > 0.05 && p < 0.6) groundRing(ctx, 'celringstorm', x, y, (p - 0.05) / 0.55, 140);
-      return true;
-    }
     case 'strawmoon': {
       // Last Straw: a great full moon rises behind her as she fumes; as she lands (`f.hit`), it
       // bursts: a flash of moonlight, crescents racing out both ways across the whole screen, rings
@@ -866,13 +715,6 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // every way, and a ring of wind racing out.
       fxSprite(ctx, 'celgaleblast', x, y, { p, scale: 0.8 });
       groundRing(ctx, 'celringwind', x, y + 14, p, 60);
-      return true;
-    }
-    case 'thunderblast': {
-      // The Stormcaller's blast bolt: a thunderclap, lightning forking out of a swell of
-      // thundercloud, and a ring of storm light racing out.
-      fxSprite(ctx, 'celthunderblast', x, y, { p, scale: 0.85 });
-      groundRing(ctx, 'celringstorm', x, y + 14, p, 60);
       return true;
     }
     case 'blast': {

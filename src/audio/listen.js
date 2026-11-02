@@ -36,7 +36,7 @@ export function songFor(map, world = null) {
 }
 
 const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
-const NAMED = new Set(['stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
+const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Spirit Mage and her doll.
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Shrine Maiden's kitsune guardian.
@@ -160,7 +160,7 @@ export function hearWorld(world, cam) {
     if ((world.rage ?? 0) >= 100 && !(m.rage >= 100)) sfx('berserk');
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     if ((world.bond ?? 0) >= 100 && !(m.bond >= 100)) sfx('galeFull');
-    if ((world.charge ?? 0) >= 100 && !(m.charge >= 100)) sfx('spell', { kind: 'supercharged' });
+    if ((world.charge ?? 0) >= 100 && !(m.charge >= 100)) sfx('overdrive');
     if (world.char.job === 'spiritmage' && (world.spirit ?? 0) >= 100 && !(m.spirit >= 100)) sfx('allstars');
     // Jumps, landings, steps, and climbing.
     if (m.ground && !b.onGround && !b.rope && b.vy < -50) sfx('jump', { pan: 0 });

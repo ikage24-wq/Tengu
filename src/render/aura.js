@@ -194,20 +194,18 @@ function bondAura(ctx, x, y, t, s, k, layer) {
   if (k > 0.5) fxSprite(ctx, 'celleaves', x + Math.sin(t * 1.7) * 6 * s, y - 14 * s, { t: (t * 0.9) % 0.45, flip: Math.floor((t * 0.9) / 0.45) % 2 === 1, scale: s * (0.4 + 0.2 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
 }
 
-// Charge: violet sparks crackling at her feet that quicken as it fills, little arcs of lightning
-// jumping round her from halfway, and full (Supercharged), lightning racing out over the ground
-// from her feet again and again.
+// Pressure (the Arbalist Engineer; internally Charge): little puffs of steam escape at her feet as
+// it builds, more and quicker the fuller it is; full (Overdrive), steam pours off her in bursts and
+// her badge, a brass cog with a crossbow, turns over her head.
 function chargeAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celringstorm', x, y, { frame: 2 + (Math.floor(t * (6 + 6 * k)) % 3), scale: s * (0.3 + 0.2 * k), sy: 0.3, alpha: Math.min(0.8, (k - 0.15) * 2) });
-    if (k >= 1) fxSprite(ctx, 'celringstorm', x, y, { t: t % 0.5, scale: s * 0.8, sy: 0.32 });
+    if (k > 0.2) for (let i = 0; i < (k >= 1 ? 3 : 1 + Math.floor(k * 2)); i++) {
+      const u = (t * (0.8 + k) + i / 3) % 1;
+      fxSprite(ctx, 'celaesteam', x + (i - 1) * 9 * s, y - 2 * s, { p: u, scale: s * (0.18 + 0.12 * k), alpha: Math.min(1, (k - 0.2) * 2) * (1 - u * 0.5) });
+    }
     return;
   }
-  if (k > 0.5) {
-    const beat = Math.floor(t * 5);
-    const a = beat * 2.4;
-    fxSprite(ctx, 'celstormhit', x + Math.cos(a) * 14 * s, y - 22 * s + Math.sin(a) * 14 * s, { t: (t * 5) % 1 / 5, scale: s * (0.18 + 0.12 * k), alpha: Math.min(1, (k - 0.5) * 2.5) });
-  }
+  if (k >= 1) fxSprite(ctx, 'celembgear', x, y - 62 * s, { frame: 1, scale: s * 0.3, rot: t * 1.5, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round

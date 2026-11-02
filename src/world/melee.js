@@ -41,7 +41,7 @@ import { GRAVITY } from './physics.js';
 import { tickOni } from './oni.js';
 import { tickYuki } from './yuki.js';
 import { tickTengu } from './tengu.js';
-import { tickStorm, chainArc, staticField, thunderclap, overcharged } from './storm.js';
+import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
@@ -232,12 +232,14 @@ export const PATH_COMBOS = {
   // The archer paths. The Beastmaster: a snap shot, a backflip that fans three wild arrows down
   // on them from the top of it, then a gale shot through the line as she lands and darts back in;
   // light and quick, her animals at her side.
-  // The Stormcaller: a bolt snapped off from the hip, a double tap, then a kneeling thunderbolt
-  // that tears through the line. Violet lightning crackles off every bolt.
+  // The Arbalist Engineer (the Stormcaller remade; docs/design/arbalist.md), her crossbow at the hip:
+  // a snap shot, a double shot with a lever pumped between, a brace-and-crank heavy bolt through two,
+  // and a recoil blast that kicks her back as a heavy bolt tears through the line.
   stormcaller: [
-    { move: 'hipfire', dur: 0.4, strikes: [{ at: 0.4, shot: 'stormbolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
-    { move: 'quickshot', dur: 0.46, strikes: [{ at: 0.3, shot: 'stormbolt', pct: 55, range: 320, h: 60, knock: 20, speed: 1000 }, { at: 0.6, shot: 'stormbolt', pct: 60, range: 320, h: 60, knock: 40, speed: 1000, oy: 3 }] },
-    { move: 'kneelshot', dur: 0.66, step: -8, finisher: true, strikes: [{ at: 0.56, shot: 'thunderbolt', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1100, knock: 230, big: true, stop: 0.07, shake: 3, muzzle: 'stormspark' }] },
+    { move: 'aesnap', dur: 0.4, strikes: [{ at: 0.3, shot: 'aebolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
+    { move: 'aedouble', dur: 0.5, strikes: [{ at: 0.28, shot: 'aebolt', pct: 55, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.6, shot: 'aebolt', pct: 60, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
+    { move: 'aebrace', dur: 0.6, strikes: [{ at: 0.55, shot: 'aebolt', pct: 120, range: 320, h: 60, knock: 30, speed: 1000, targets: 2, pierce: true, knock: 90 }] },
+    { move: 'aerecoil', dur: 0.66, step: -4, finisher: true, strikes: [{ at: 0.48, shot: 'aebig', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
   ],
   beastmaster: [
     { move: 'quickshot', dur: 0.4, strikes: [{ at: 0.5, shot: 'windarrow', pct: 85, range: 300, h: 60, knock: 25, speed: 860 }] },
@@ -251,7 +253,7 @@ export const PATH_COMBOS = {
 const ARCHER_LOOK = {
   archer: { arrow: 'hawkarrow', big: 'hawkbig', rain: 'hawkarrow', muzzle: 'feathers', school: 'hawk' },
   beastmaster: { arrow: 'windarrow', big: 'galearrow', rain: 'windarrow', muzzle: 'gust', school: 'wind' },
-  stormcaller: { arrow: 'stormbolt', big: 'thunderbolt', rain: 'stormbolt', muzzle: 'stormspark', school: 'storm' },
+  stormcaller: { arrow: 'aebolt', big: 'aebig', rain: 'aebolt', muzzle: 'aesteam', school: 'brass' },
 };
 export const archerLook = (char) => ARCHER_LOOK[hasBond(char) ? 'beastmaster' : hasCharge(char) ? 'stormcaller' : 'archer'];
 // One of the Archer's gold shots as the path's own.
@@ -280,18 +282,13 @@ function shotsOf(L) {
 }
 const ARCHER_SHOTS = shotsOf(ARCHER_LOOK.archer);
 const BEAST_SHOTS = shotsOf(ARCHER_LOOK.beastmaster);
-// The Stormcaller's own pool, crossbow work: crank and fire (two bolts), a roll up onto one knee
-// for a bolt, the point-blank kick, a hop back loosing two down at them, and a braced spray of three.
-const boltAt = (at, pct, f = {}) => ({ at, shot: 'stormbolt', pct, range: 320, h: 60, knock: 30, speed: 1000, ...f });
-const STORM_SHOTS = {
-  crank: { move: 'crankshot', dur: 0.62, strikes: [boltAt(0.5, 55), boltAt(0.8, 65, { knock: 60, oy: -3 })] },
-  roll: { move: 'rollshot', dur: 0.56, step: 40, carry: 0.55, strikes: [boltAt(0.66, 105, { knock: 90, stop: 0.04 })] },
-  kick: { move: 'pointblank', dur: 0.52, step: 6, strikes: [
-    { at: 0.3, pct: 60, reach: 52, h: 56, knock: 160, stop: 0.05, shake: 1 },
-    boltAt(0.62, 110, { knock: 180, big: true, stop: 0.05 }),
-  ] },
-  hop: { move: 'hopshot', dur: 0.56, step: -24, carry: 0.5, strikes: [boltAt(0.5, 70, { fan: 2, range: 300, h: 150, drop: 30, knock: 60 })] },
-  spray: { move: 'ballista', dur: 0.72, step: -10, finisher: true, strikes: [{ at: 0.62, shot: 'thunderbolt', fan: 3, pct: 100, range: 330, h: 120, knock: 160, launch: 100, speed: 1050, big: true, stop: 0.05, shake: 2, muzzle: 'stormspark' }] },
+// The Arbalist Engineer's own pool: a gunslinger twirl and a shot, a duck-and-fire, a triple crank
+// that rattles out three bolts, and a sliding shot.
+const AE_SHOTS = {
+  twirl: { move: 'aetwirl', dur: 0.46, strikes: [{ at: 0.42, shot: 'aebolt', pct: 92, range: 320, h: 60, knock: 30, speed: 1000 }] },
+  duck: { move: 'aeduck', dur: 0.46, strikes: [{ at: 0.4, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 60 }] },
+  triple: { move: 'aetriple', dur: 0.6, strikes: [{ at: 0.3, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000 }, { at: 0.5, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.7, shot: 'aebolt', pct: 46, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
+  slide: { move: 'aeslide', dur: 0.6, step: 30, carry: 0.4, finisher: true, strikes: [{ at: 0.45, shot: 'aebig', pct: 175, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
 };
 
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
@@ -492,13 +489,14 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.beastmaster[1], BEAST_SHOTS.twirl, BEAST_SHOTS.burst, BEAST_SHOTS.hop],
     [PATH_COMBOS.beastmaster[2], BEAST_SHOTS.overdraw, BEAST_SHOTS.skyrain],
   ],
-  // The Stormcaller. Openers: her hip shot, crank and fire, or a roll up onto one knee. Second: her
-  // double tap, the point-blank kick, or a hop back loosing two down. Finisher: the kneeling
-  // thunderbolt through the line, or a braced spray of three.
+  // The Arbalist Engineer. Openers: the snap shot or a twirl shot. Second: the double shot or a
+  // duck-and-fire. Third: the brace and crank or the triple crank. Finisher: the recoil blast or a
+  // sliding shot.
   stormcaller: [
-    [PATH_COMBOS.stormcaller[0], STORM_SHOTS.crank, STORM_SHOTS.roll],
-    [PATH_COMBOS.stormcaller[1], STORM_SHOTS.kick, STORM_SHOTS.hop],
-    [PATH_COMBOS.stormcaller[2], STORM_SHOTS.spray],
+    [PATH_COMBOS.stormcaller[0], AE_SHOTS.twirl],
+    [PATH_COMBOS.stormcaller[1], AE_SHOTS.duck],
+    [PATH_COMBOS.stormcaller[2], AE_SHOTS.triple],
+    [PATH_COMBOS.stormcaller[3], AE_SHOTS.slide],
   ],
 };
 
@@ -591,21 +589,21 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'slideshot', dur: 0.5, step: 46, carry: 0.6, strikes: [{ at: 0.35, shot: 'windarrow', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }, { at: 0.62, shot: 'windarrow', pct: 90, range: 300, h: 60, knock: 90, speed: 900 }] },
   },
-  // The Stormcaller: a thunderbolt up at fliers, two bolts down from a hang, a slide shot out of a
-  // run, and down at whatever is below.
+  // The Arbalist Engineer: a bolt fired up and out at fliers, down at whatever is below, two down
+  // from a hang in the air (the second a heavy one), and a roll out of a run that comes up firing.
   stormcaller: {
-    down: { move: 'downshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'stormbolt', fan: 2, pct: 95, range: 280, h: 220, drop: 120, knock: 40, speed: 1000 }] },
-    up: { move: 'skyshot', dur: 0.5, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 105, range: 280, h: 190, lift: 50, knock: 20, launch: 360, speed: 1000, big: true, stop: 0.05 }] },
+    down: { move: 'aeair', dur: 0.44, strikes: [{ at: 0.3, shot: 'aebolt', pct: 95, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
+    up: { move: 'aeup', dur: 0.44, strikes: [{ at: 0.36, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
     air: [
-      { move: 'airshot', dur: 0.38, hang: true, strikes: [{ at: 0.45, shot: 'stormbolt', fan: 2, pct: 75, range: 280, h: 170, drop: 50, knock: 30, speed: 1000 }] },
-      { move: 'airshot2', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.5, shot: 'thunderbolt', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },
+      { move: 'aeair', dur: 0.4, hang: true, strikes: [{ at: 0.32, shot: 'aebolt', pct: 75, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 170, drop: 50 }] },
+      { move: 'aeair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.32, shot: 'aebig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'slideshot', dur: 0.5, step: 44, carry: 0.6, strikes: [{ at: 0.42, shot: 'stormbolt', pct: 95, range: 300, h: 60, knock: 80, speed: 1000 }] },
+    dash: { move: 'aeroll', dur: 0.56, step: 44, carry: 0.45, strikes: [{ at: 0.52, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 90, stop: 0.04 }] },
   },
 };
 // The archers' air leap (world/agility.js): jump again in mid-air and she springs up and back in a
 // backflip, loosing two shots down at them from the top of it.
-for (const [path, arrow, big] of [['archer', 'hawkarrow', 'feathers'], ['beastmaster', 'windarrow', 'gust'], ['stormcaller', 'stormbolt', 'stormspark']]) {
+for (const [path, arrow, big] of [['archer', 'hawkarrow', 'feathers'], ['beastmaster', 'windarrow', 'gust'], ['stormcaller', 'aebolt', 'aesteam']]) {
   ARCHER_COMMANDS[path].leap = { move: 'leapshot', dur: 0.5, strikes: [{ at: 0.55, shot: arrow, fan: 2, pct: 80, range: 280, h: 180, drop: 50, knock: 50, speed: 900, muzzle: big }] };
 }
 export function airLeap(world) {
@@ -740,7 +738,8 @@ export function addCharge(world, n) {
   world.charge = Math.min(CHARGE_MAX, (world.charge ?? 0) + n);
   world.chargeAt = world.now;
 }
-export const supercharged = (world) => hasCharge(world.char) && (world.charge ?? 0) >= CHARGE_MAX;
+// Full Pressure (Overdrive): her crossbow vents steam and every shot fires a second bolt.
+export const overdrive = (world) => hasCharge(world.char) && (world.charge ?? 0) >= CHARGE_MAX;
 // Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
 // it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
 // Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
@@ -1380,7 +1379,7 @@ export function tickMelee(world, dt) {
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && world.now - (world.momentumAt ?? 0) > MOMENTUM_HOLD) world.momentum = Math.max(0, world.momentum - MOMENTUM_DRAIN * dt);
   tickTraps(world);
-  tickStorm(world);
+  tickEngineer(world);
   tickPets(world, dt);
   tickShrine(world);
   tickOnmyoji(world);
@@ -1479,6 +1478,8 @@ function land(world, s) {
   // The mage line's support spells land with the cast: a buff on her and the party round her
   // (`grant`).
   if (s.grant) grantSpell(world, s.grant);
+  // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
+  if (s.turret) deployTurret(world, s.turret);
   // The Shrine Maiden's lasting spells (world/shrine.js).
   if (s.purify) purify(world, s);
   if (s.revive) resurrect(world, s);
@@ -1668,8 +1669,8 @@ function bladeProcs(world, s, count, rng = Math.random) {
 // nearest monster to cut it, or calling a beam of moonlight down on the farthest.
 // Returns the shot to loose. `rng` for tests.
 // Blast Arrow's burst (and a sprung trap's) in each archer path's own look: the Archer's fire, the
-// Beastmaster's gale of wind and leaves, the Stormcaller's thunderclap.
-const BLASTS = { beastmaster: 'galeblast', stormcaller: 'thunderblast' };
+// Beastmaster's gale of wind and leaves, the Arbalist Engineer's brass-and-teal blast.
+const BLASTS = { beastmaster: 'galeblast', stormcaller: 'aeboom' };
 function shotProcs(world, s, rng = Math.random) {
   const { char, body } = world;
   const blast = procOf(char, 'blastarrow');
@@ -1680,18 +1681,12 @@ function shotProcs(world, s, rng = Math.random) {
   if (wolf && rng() < wolf.chance) sendSnow(world, pickTargets(world.mobs, body, { w: 300, h: 120 }, 1)[0], wolf.pct);
   const moon = procOf(char, 'hawkstrike');
   if (moon && rng() < moon.chance) moonfall(world, pickTargets(world.mobs, body, { w: 340, h: 160 }, 9).at(-1), moon.pct);
-  // The Stormcaller's: a bolt may jump on from what it hits (Arc Bolt) or charge the ground there
-  // (Static Field), and the combo's last bolt may call lightning down on the farthest monster in
-  // front of her (Thunderclap).
-  const arc = procOf(char, 'arcbolt');
-  if (arc && s.shot && rng() < arc.chance) s = { ...s, arc: { n: arc.jumps, pct: arc.pct } };
-  const field = procOf(char, 'staticfield');
-  if (field && s.shot && rng() < field.chance) s = { ...s, field };
-  const clap = procOf(char, 'thunderclap');
-  if (clap && s.finisher && /^basic\d$/.test(s.key)) {
-    const crowd = pickTargets(world.mobs, body, { w: 340, h: 160 }, 9);
-    if (crowd.length && (crowd.length >= clap.crowd || rng() < clap.chance)) thunderclap(world, crowd.at(-1), clap);
-  }
+  // The Arbalist Engineer's: a bolt may stick and burst a moment later (Sticky Bolt), and her
+  // string's last bolt may split into bomblets where it lands (Cluster Bolt).
+  const sticky = procOf(char, 'stickybolt');
+  if (sticky && s.shot && rng() < sticky.chance) s = { ...s, sticky };
+  const cluster = procOf(char, 'clusterbolt');
+  if (cluster && s.finisher && /^basic\d$/.test(s.key) && rng() < cluster.chance) s = { ...s, cluster };
   return s;
 }
 
@@ -1702,10 +1697,10 @@ export function beastHit(world, m, f) {
   shotHit(world, { pct: f.pct, scale: 100, key: 'procbeast', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 120, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst, stun: f.stun, gauge: f.gauge ?? 5 }, m, 0);
 }
 
-// A hit of the Stormcaller's lightning (world/storm.js): it lands like one of her shots, `at`
-// seconds from now, from `x` (knocking monsters away from there), and never chains on.
-export function stormHit(world, m, f, at = 0, element = null) {
-  shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'procstorm', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'zap', stun: f.stun, gauge: f.gauge ?? 3, chained: true }, m, at, f.stack ?? 0, element);
+// A hit of the Arbalist Engineer's gadgets (world/engineer.js): it lands like one of her shots, `at`
+// seconds from now, from `x` (knocking monsters away from there), and never sets off another.
+export function gadgetHit(world, m, f, at = 0, element = null) {
+  shotHit(world, { pct: f.pct, scale: 100, key: f.key ?? 'procgadget', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'aehit', stun: f.stun, gauge: f.gauge ?? 3, chained: true }, m, at, f.stack ?? 0, element);
 }
 
 // Spring Trap: a trap set on the ground ahead, armed until a monster steps on it or it rusts away
@@ -1757,7 +1752,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? (s.shot === 'thunderbolt' || s.shot === 'megabolt' ? 'stormpierce' : 'stormhit') : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'hawkhit' : hasBond(char) ? 'galehit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1765,13 +1760,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
-  // The Stormcaller's lightning: a bolt that lands may jump on to the monsters near it (Arc Bolt,
-  // and one more while Supercharged), or leave the ground under it charged (Static Field). Only
-  // the first monster a piercing bolt reaches sets these off.
+  // The Arbalist Engineer's gadgets: a sticky bolt bursts a moment after it lands, and a cluster
+  // bolt splits into bomblets. Only the first monster a piercing bolt reaches sets these off.
   if (!miss && rank === 0 && s.shot && !s.chained && hasCharge(char)) {
-    const jumps = (s.arc?.n ?? 0) + (supercharged(world) ? 1 : 0);
-    if (jumps) chainArc(world, s, m, delay, jumps, element);
-    if (s.field) staticField(world, m, delay, s.field);
+    if (s.sticky) stickyBurst(world, m, delay, s.sticky);
+    if (s.cluster) clusterBurst(world, m, delay, s.cluster);
   }
 }
 
@@ -1794,8 +1787,13 @@ export function dollHit(world, m, f, at = 0) {
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, strike) {
-  // Overcharge: her next few bolts go out as massive bolts of lightning.
-  let s = hasCharge(world.char) ? overcharged(world, strike) : strike;
+  // Overclock: her next few bolts go out heavy.
+  let s = hasCharge(world.char) ? overclocked(world, strike) : strike;
+  // Overdrive (full Pressure): a second bolt after every shot, and a puff of steam off the machine.
+  if (overdrive(world) && s.shot && !s.split && !s.free) {
+    fire(world, { ...s, split: true, lag: (s.lag ?? 0) + 0.08, oy: (s.oy ?? 0) + 4, pct: s.pct * 0.6, big: false, stop: 0, shake: 0, gauge: 1, muzzle: undefined });
+    world.fx.push({ kind: 'aesteam', small: true, x: world.body.x - world.body.facing * 6, y: world.body.y - 8, t: 0, dur: 0.5 });
+  }
   const { body } = world;
   // A gauntlet throws its own stars (their look and element).
   const star = STAR_SHOTS.has(s.shot) && !s.phantom && !s.free ? thrownStars(world.char) : null;
@@ -1840,7 +1838,7 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
-  if (hasCharge(world.char)) world.fx.push({ kind: 'stormspark', small: true, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.3 });
+  if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.3 });
   else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });

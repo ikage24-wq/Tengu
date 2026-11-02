@@ -114,6 +114,7 @@ export function drawThiefFx(ctx, f, x, y, p, cam, time) {
       // (The Wind Dancer kicks off in a gust, the Blade Dancer in a ricochet's spark.)
       if (f.school === 'coral') fxSprite(ctx, 'celwdgust', x, y - 6, { p, flip: !flip, scale: 0.6 * (f.k ?? 1), rot: flip ? -0.5 : 0.5 });
       else if (f.school === 'rosegold') fxSprite(ctx, 'celbdbounce', x, y - 4, { p, flip, scale: 0.75 * (f.k ?? 1) });
+      else if (f.school === 'brass') fxSprite(ctx, 'celaesteam', x, y - 4, { p, scale: 0.5 * (f.k ?? 1) });
       else if (f.school === 'aerial') fxSprite(ctx, 'celskyhit', x, y - 4, { p, scale: 0.5 * (f.k ?? 1) });
       else fxSprite(ctx, `celleap${LEAP[f.school] ?? 'shadow'}`, x, y, { p, flip, scale: 0.95 * (f.k ?? 1) });
       return true;

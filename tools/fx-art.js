@@ -5541,6 +5541,215 @@
     star5(ctx, STARGOLD, 26, -44, 8, 0.4);
   });
 
+  // ---------- The Arbalist Engineer (brass and teal: gears, rivets, steam, teal energy) ----------
+  // docs/design/arbalist.md. Her shapes: brass bolts wrapped in teal energy, cogs flying off her
+  // hits, puffs of white steam, and her machines (the turret, Big Bertha's ballista).
+  const BRASS = ['#ffffff', '#fff0c8', '#e8b85a', '#b8782a', '#5a3818'];
+  const TEALE = ['#ffffff', '#c8fff4', '#4fe0d0', '#1fa098', '#0e4a52'];
+  const STEAM = ['#ffffff', '#ffffff', '#eef2f4', '#c8d0d8', '#6a7888'];
+
+  // A brass cog at (x, y), `r` to its teeth, `n` teeth, turned by `rot`, with a hole and a rim.
+  function cogArt(ctx, x, y, r, n, rot = 0, pal = BRASS) {
+    const pts = (k) => {
+      const out = [];
+      for (let i = 0; i < n * 4; i++) {
+        const a = rot + (i / (n * 4)) * TAU;
+        const tooth = Math.floor(i / 2) % 2 === 0;
+        out.push([x + Math.cos(a) * r * k * (tooth ? 1 : 0.8), y + Math.sin(a) * r * k * (tooth ? 1 : 0.8)]);
+      }
+      return out;
+    };
+    inked(ctx, pts(1), pal[3], pal[4], 4);
+    fill(ctx, pts(0.78).map(([px, py]) => [px - r * 0.06, py - r * 0.06]), pal[2]);
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.34, 0, TAU);
+    ctx.fillStyle = pal[4];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - r * 0.08, y - r * 0.08, r * 0.2, 0, TAU);
+    ctx.fillStyle = pal[1];
+    ctx.fill();
+  }
+  // A brass bolt along +x ending at (x, y), `len` long: a teal-glowing head, a brass shaft, little
+  // vane fins at the back.
+  function boltArt(ctx, x, y, len, w) {
+    inked(ctx, [[x - len, y - w * 0.3], [x - w, y - w * 0.3], [x - w, y + w * 0.3], [x - len, y + w * 0.3]], BRASS[2], BRASS[4], 3);
+    inked(ctx, [[x, y], [x - w * 1.6, y - w * 0.9], [x - w * 1.3, y], [x - w * 1.6, y + w * 0.9]], TEALE[2], TEALE[4], 3);
+    fill(ctx, [[x - w * 0.3, y], [x - w * 1.3, y - w * 0.4], [x - w * 1.1, y]], TEALE[0]);
+    for (const sd of [-1, 1]) inked(ctx, [[x - len + w * 0.4, y], [x - len - w * 0.6, y + sd * w * 1.1], [x - len + w * 1.6, y + sd * w * 0.3]], BRASS[3], BRASS[4], 3);
+  }
+
+  // Her bolt in flight (loops, toward +x): teal energy streaking behind a brass bolt.
+  E.aebolt = (() => {
+    const cx = 120;
+    const cy = 40;
+    return {
+      w: 150, h: 80, n: 4, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ribbon(ctx, TEALE, (u) => [cx - 30 - u * 80, cy + Math.sin(u * 8 + i * 1.6) * 3 * u], (u) => 9 * (1 - u), {});
+        boltArt(ctx, cx, cy, 52, 9);
+        sparkle(ctx, TEALE, cx - 60 - (i % 2) * 10, cy - 10 + (i % 2) * 18, 5, i);
+      },
+    };
+  })();
+
+  // A heavy bolt (her finishes, Overclock, Big Bertha): a big bolt wrapped in teal rings.
+  E.aebig = (() => {
+    const cx = 200;
+    const cy = 60;
+    return {
+      w: 240, h: 120, n: 4, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ribbon(ctx, TEALE, (u) => [cx - 50 - u * 150, cy + Math.sin(u * 6 + i * 1.6) * 6 * u], (u) => 20 * (1 - u), {});
+        boltArt(ctx, cx, cy, 110, 18);
+        for (let k = 0; k < 3; k++) {
+          const x = cx - 40 - k * 34 - (i * 8);
+          ctx.save();
+          ctx.translate(x, cy);
+          ctx.scale(0.35, 1);
+          celRing(ctx, TEALE, 0, 0, 30 - k * 4, 6, { seed: 301 + k });
+          ctx.restore();
+        }
+      },
+    };
+  })();
+
+  // Her mark on a monster: a teal burst, cogs flying off spinning, a puff of steam.
+  E.aehit = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, TEALE, c, c, [30, 46, 36][i], 8, 311, { inner: 0.32, rot: i * 0.25 });
+        if (i >= 2) puff(ctx, STEAM, c - 6, c + 10 - i * 4, 18 + i * 3, 312, { holes: i >= 5 ? 0.5 : 0, lobes: 4 });
+        if (i >= 1) {
+          const k = (i - 1) / 5;
+          for (const [a, r, n] of [[-2.2, 14, 7], [-0.6, 11, 6], [0.9, 9, 5]]) cogArt(ctx, c + Math.cos(a) * (30 + k * 60), c + Math.sin(a) * (30 + k * 60) + k * k * 30, r * (1 - k * 0.4), n, i * 0.8);
+        }
+      },
+    };
+  })();
+
+  // A sticky or cluster bolt bursting: a brass and teal blast, cogs and rivets, a ring of steam.
+  E.aeboom = (() => {
+    const c = 130;
+    return {
+      w: 260, h: 240, n: 8, fps: 26, px: c, py: c + 40,
+      draw(ctx, i) {
+        if (i <= 3) starburst(ctx, BRASS, c, c, [40, 70, 80, 60][i], 10, 321, { inner: 0.3 });
+        if (i >= 1 && i <= 4) starburst(ctx, TEALE, c, c, [30, 46, 40, 24][i - 1], 8, 322, { inner: 0.34, rot: 0.3 });
+        if (i >= 2) {
+          const k = (i - 2) / 5;
+          ctx.save();
+          ctx.translate(c, c + 40);
+          ctx.scale(1, 0.32);
+          celRing(ctx, STEAM, 0, 0, 50 + k * 70, 18 * (1 - k * 0.6), { broken: k > 0.5 ? 0.5 : 0, seed: 323 });
+          ctx.restore();
+          for (let j = 0; j < 5; j++) {
+            const a = -Math.PI / 2 + (j - 2) * 0.6;
+            cogArt(ctx, c + Math.cos(a) * (40 + k * 70), c + Math.sin(a) * (40 + k * 70) + k * k * 60, 10 * (1 - k * 0.5), 6, i + j);
+          }
+          if (i >= 4) puff(ctx, STEAM, c, c - 10 - k * 30, 30 + k * 10, 324, { holes: k * 0.8, lobes: 6 });
+        }
+      },
+    };
+  })();
+
+  // A puff of steam venting (Overdrive, Steam Vent, the recoil): it bursts out and drifts up.
+  E.aesteam = (() => {
+    const c = 90;
+    return {
+      w: 180, h: 180, n: 7, fps: 20, px: c, py: c + 40,
+      draw(ctx, i) {
+        const k = i / 6;
+        puff(ctx, STEAM, c, c + 20 - k * 50, 20 + k * 26, 331, { holes: k > 0.5 ? (k - 0.5) * 1.6 : 0, lobes: 5 });
+        if (i <= 3) for (const sd of [-1, 1]) puff(ctx, STEAM, c + sd * (20 + k * 40), c + 30 - k * 20, 12 + k * 10, 332 + sd, { lobes: 4 });
+      },
+    };
+  })();
+
+  // Her turret, a machine she sets down: a brass tripod, a crank drum and a little crossbow head with
+  // a teal eye. Frames 0-3 idle (the head swivels a little, the drum turns), 4-5 firing (the head
+  // kicks back, steam puffs off the drum).
+  E.aeturret = {
+    w: 180, h: 200, n: 6, fps: 8, px: 90, py: 190, loop: true,
+    draw(ctx, i) {
+      const fire = i >= 4;
+      const kick = i === 4 ? 8 : 0;
+      const tilt = fire ? -0.06 : [0, 0.05, 0, -0.05][i];
+      // The tripod.
+      for (const [x0, x1] of [[90, 40], [90, 140], [90, 100]]) inked(ctx, [[x0 - 4, 120], [x0 + 4, 120], [x1 + 4, 188], [x1 - 4, 188]], BRASS[3], BRASS[4], 4);
+      // The drum.
+      ctx.save();
+      ctx.translate(90, 112);
+      inked(ctx, [[-26, -16], [26, -16], [26, 16], [-26, 16]], BRASS[2], BRASS[4], 4);
+      fill(ctx, [[-22, -12], [22, -12], [22, -6], [-22, -6]], BRASS[1]);
+      ctx.restore();
+      cogArt(ctx, 62, 112, 14, 7, i * 0.6);
+      // The head.
+      ctx.save();
+      ctx.translate(98 - kick, 82);
+      ctx.rotate(tilt);
+      inked(ctx, [[-30, -10], [44, -10], [44, 10], [-30, 10]], BRASS[3], BRASS[4], 4);
+      fill(ctx, [[-26, -6], [40, -6], [40, -1], [-26, -1]], BRASS[1]);
+      inked(ctx, [[40, -30], [48, -30], [48, 30], [40, 30]], BRASS[2], BRASS[4], 4);
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, TAU);
+      ctx.fillStyle = TEALE[3];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-1, -1, 4.5, 0, TAU);
+      ctx.fillStyle = TEALE[1];
+      ctx.fill();
+      ctx.restore();
+      if (fire) {
+        puff(ctx, STEAM, 50, 104 - (i - 4) * 14, 14 + (i - 4) * 8, 341, { lobes: 4 });
+        if (i === 4) starburst(ctx, TEALE, 156, 82, 22, 8, 342, { inner: 0.3 });
+      }
+    },
+  };
+
+  // Big Bertha: the crossbow unfolds into a giant brass ballista over her (its arms swing out, a
+  // great drum cranks), the huge bolt goes, and the machine vents in a cloud of steam and folds away.
+  E.aeballista = (() => {
+    const gx = 200;
+    const gy = 300;
+    return {
+      w: 420, h: 320, n: 10, fps: 10, px: 160, py: gy,
+      draw(ctx, i) {
+        const open = Math.min(1, (i + 1) / 4);
+        const fired = i >= 7;
+        const fold = i >= 9;
+        // The frame and the wheels.
+        inked(ctx, [[gx - 120, gy - 70], [gx + 80, gy - 90], [gx + 84, gy - 70], [gx - 118, gy - 50]], BRASS[3], BRASS[4], 5);
+        for (const x of [gx - 90, gx + 40]) cogArt(ctx, x, gy - 30, 30, 10, i * (i < 7 ? 0.4 : 0.1));
+        // The arms swinging open.
+        for (const sd of [-1, 1]) {
+          const a = sd * (0.2 + 1.1 * open) * (fold ? 0.4 : 1);
+          ctx.save();
+          ctx.translate(gx + 80, gy - 80);
+          ctx.rotate(-Math.PI / 2 + a * 0.5);
+          inked(ctx, [[0, -8], [120 * open, -14], [130 * open, 0], [0, 8]], BRASS[2], BRASS[4], 5);
+          ctx.restore();
+        }
+        // The string and the bolt on the rail (gone once fired).
+        if (!fired) boltArt(ctx, gx + 150, gy - 80, 230, 22);
+        // The great drum and its crank.
+        cogArt(ctx, gx - 60, gy - 100, 40, 12, i * 0.5);
+        if (i >= 4 && i <= 6) for (const k of [0, 1]) sparkle(ctx, TEALE, gx - 60 + (k ? 50 : -50), gy - 150, 10, i + k);
+        if (i === 7) starburst(ctx, TEALE, gx + 160, gy - 80, 60, 10, 351, { inner: 0.3 });
+        if (fired) for (let k = 0; k < 3; k++) puff(ctx, STEAM, gx - 80 + k * 70, gy - 120 - (i - 7) * 20, 36 + (i - 7) * 10, 352 + k, { holes: i >= 9 ? 0.5 : 0, lobes: 5 });
+      },
+    };
+  })();
+
+  // Her badge: a brass cog with a little crossbow across it.
+  E.embgear = emblem(BRASS, (ctx) => {
+    cogArt(ctx, 0, 0, 44, 10, 0.2);
+    boltArt(ctx, 40, 0, 80, 10);
+    inked(ctx, [[18, -30], [24, -30], [24, 30], [18, 30]], TEALE[2], TEALE[4], 3);
+  });
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

@@ -21,7 +21,7 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
+const EMBLEMS = { brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
@@ -51,6 +51,12 @@ export function lightPillar(ctx, name, x, y, p, h = 100) {
 export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   if (school === 'rage') {
     rageFlare(ctx, x, y, p, h);
+    return;
+  }
+  // The Arbalist Engineer's: no pillar, a burst of steam with her badge turning in it.
+  if (school === 'brass') {
+    fxSprite(ctx, 'celaesteam', x, y + 4, { p, scale: 0.8 });
+    if (p > 0.15) fxSprite(ctx, EMBLEMS.brass, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5, rot: p * 2 });
     return;
   }
   // The Star Witch's: no pillar, her constellation snapping shut over her with her badge.
@@ -112,6 +118,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
+  else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
   else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
   else if (school === 'aerial') fxSprite(ctx, 'celskyhit', x, y, { p, scale: k * 0.6 });
   else if (school === 'rosegold') fxSprite(ctx, 'celbdhit', x, y, { p, scale: k * 0.7, rot: (seed - 0.5) * 0.6 });
@@ -144,6 +151,23 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // tornado.
     // The Star Witch's (midnight and gold): her constellation hit, Wishing Star's fall of light, Star
     // Veil, and Starfall's constellation over the sky and its great impact.
+    // The Arbalist Engineer's (brass and teal): her hit with flying cogs, a sticky or cluster burst, a
+    // vent of steam, a sticky bolt ticking on a monster, and Big Bertha's ballista over her.
+    case 'aehit':
+      return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
+    case 'aeboom':
+      return fxSprite(ctx, 'celaeboom', x, y + 2, { p, scale: f.small ? 0.4 : 0.65 }) || true;
+    case 'aesteam':
+      return fxSprite(ctx, 'celaesteam', x, y + 2, { p, scale: f.small ? 0.3 : 0.6, flip }) || true;
+    case 'aestick': {
+      // A sticky bolt stuck in the monster, its teal light blinking faster as it's about to burst.
+      const m = f.mob;
+      const sx = (m ? m.x - cam.x : x) - 4;
+      const sy = (m ? m.y - (m.air ?? 0) - m.def.h / 2 - cam.y : y - 20);
+      return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.45, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
+    }
+    case 'aeballista':
+      return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;
     case 'sthit':
       return fxSprite(ctx, 'celsthit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5, rot: (seed - 0.5) * 0.6 }) || true;
     case 'stwish':

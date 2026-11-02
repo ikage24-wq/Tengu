@@ -122,13 +122,11 @@ const SPELLS = {
   quake: 'quake', hammer: 'quake', stampede: 'quake',
   vortex: 'gust', rain: 'arrowHeavy', xslash: 'bladestorm', bladestorm: 'bladestorm',
   feathers: 'gust', titanwave: 'quake', moonslash: 'bladestorm', smokepuff: 'gust', healbloom: 'holyBurst',
-  zapstrike: 'lightning', chainarc: 'zap', staticfield: 'zap', supercharged: 'castZap',
-  skybolt: 'zap', stormsky: 'castZap', gigabolt: 'meteor',
-  galeblast: 'stormburst', thunderblast: 'lightning',
+  galeblast: 'stormburst',
 };
-const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt', 'stormbolt', 'thunderbolt', 'megabolt']);
+const ARROWS = new Set(['hawkarrow', 'hawkbig', 'arrow', 'rapid', 'draw', 'bigarrow', 'rain', 'windarrow', 'galearrow', 'cyclone', 'heavybolt', 'blastbolt', 'frostbolt', 'aebolt', 'aebig', 'aebertha']);
 // Crossbow shots that kick harder than a plain bolt (the archer paths' own have their own sound).
-const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt', 'thunderbolt', 'megabolt']);
+const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt', 'aebig', 'aebertha']);
 // Heavy bolts that land with a thud of their own.
 const HEAVY_HITS = new Set(['ballista', 'heartbolt', 'galearrow', 'blastbolt']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.

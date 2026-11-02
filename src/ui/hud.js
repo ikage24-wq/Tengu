@@ -391,8 +391,8 @@ const GAUGES = {
     tip: 'Your blows and the hits you take build it; it drains once the fighting stops. The fuller it is, the less damage you take; full, it powers Grand Verdict.' },
   bond: { color: '#6f8fe0', hot: '#d6e8ff', icon: 'moon', name: 'Patience', full: 'FED UP', notch: () => null, edge: 'rgba(170,200,255,', ink: '#2a3a7a',
     tip: 'Snow wolf\'s patience running out: your shots and her hits wear it down, and it recovers once the fighting stops. Gone, she\'s Fed Up and fights on her own, and Last Straw is ready.' },
-  charge: { color: '#7a5ce8', hot: '#e2d2ff', icon: 'bolt', name: 'Charge', full: 'SUPERCHARGED', notch: () => null, edge: 'rgba(160,120,255,', ink: '#2a3394',
-    tip: 'Your bolts that land build it, and so does every monster your lightning jumps to; it fades once the fighting stops. Full, every bolt jumps on to one more monster, and Thunderhead is ready.' },
+  charge: { color: '#b8782a', hot: '#4fe0d0', icon: 'cog', name: 'Pressure', full: 'OVERDRIVE', notch: () => null, edge: 'rgba(79,224,208,', ink: '#5a3818',
+    tip: 'Every bolt of yours that lands builds steam pressure; it fades once the fighting stops. Full (Overdrive), your crossbow vents steam and every shot fires a second bolt, and Big Bertha is ready.' },
 };
 function drawGauge(ui, world, kind, value) {
   const { ctx } = ui;

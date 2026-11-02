@@ -227,4 +227,12 @@ export const FX_SHEETS = {
   celstwish: { w: 245, h: 338, n: 9, fps: 18, px: 122, py: 300, d: 3, loop: false },
   celstveil: { w: 208, h: 163, n: 7, fps: 18, px: 104, py: 149, d: 3, loop: false },
   celembwitch: { w: 124, h: 132, n: 5, fps: 12, px: 62, py: 81, d: 3, loop: false },
+  celaebolt: { w: 128, h: 53, n: 4, fps: 30, px: 114, py: 28, d: 3, loop: true },
+  celaebig: { w: 212, h: 89, n: 4, fps: 30, px: 198, py: 44, d: 3, loop: true },
+  celaehit: { w: 164, h: 179, n: 7, fps: 30, px: 73, py: 65, d: 3, loop: false },
+  celaeboom: { w: 258, h: 189, n: 8, fps: 26, px: 130, py: 134, d: 3, loop: false },
+  celaesteam: { w: 156, h: 147, n: 7, fps: 20, px: 74, py: 127, d: 3, loop: false },
+  celaeturret: { w: 166, h: 162, n: 6, fps: 8, px: 76, py: 148, d: 3, loop: true },
+  celaeballista: { w: 371, h: 250, n: 10, fps: 10, px: 127, py: 235, d: 3, loop: false },
+  celembgear: { w: 126, h: 138, n: 5, fps: 12, px: 63, py: 81, d: 3, loop: false },
 };

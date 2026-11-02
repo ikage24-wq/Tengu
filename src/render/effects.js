@@ -87,6 +87,14 @@ function drawShot(ctx, f, cam) {
     return;
   }
   switch (f.shot) {
+    case 'aebolt': case 'aebig': case 'aebertha': {
+      // The Arbalist Engineer's: a brass bolt streaking teal, a heavy bolt in teal rings, and Big
+      // Bertha's enormous one.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 2, alpha: f.split ? 0.85 : 1 });
+      break;
+    }
     case 'stbolt': case 'stcomet': case 'stmeteor': {
       // The Star Witch's: a spinning gold star with a midnight comet tail, turned along its flight; a
       // comet with a great tail and ring; a meteor falling from the sky.

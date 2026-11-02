@@ -138,7 +138,7 @@ function weaponStyle(bot) {
   // Archers shoot their own way: an Archer's gold arrows, a Beastmaster's wild arrows, a Stormcaller's
   // heavy bolts.
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'spinshot']), shot: 'windarrow', ranged: true };
-  if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: 'kneelshot', shot: 'heavybolt', ranged: true };
+  if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['quickshot', 'draw']), shot: 'hawkarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.45, special: 'swsnap' };

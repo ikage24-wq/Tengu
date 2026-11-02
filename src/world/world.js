@@ -19,7 +19,7 @@ import { startAgility, tickAgility } from './agility.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
-import { rodGuard } from './storm.js';
+import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -492,7 +492,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - rodGuard(world, fromX))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - ventGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;

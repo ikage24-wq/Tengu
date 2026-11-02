@@ -2093,6 +2093,199 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Arbalist Engineer's moves (her own; docs/design/arbalist.md) ----------
+  // An excited inventor with a crossbow of her own making, held low at the waist (arm about 25-35 degrees,
+  // the crossbow level or tipped a little up), never raised to her face. Every shot kicks: the
+  // crossbow jumps up and back and settles, and she reacts (a grin, a fist pump, a pat on the stock).
+  // (A crossbow's angle: 0 is level forward, negative tips it up.)
+
+  // Snap shot (opener, the bolt leaves at ~0.3): she swings it up to her hip and fires at once.
+  aesnap(p) {
+    const up = ease(seg(p, 0, 0.24));
+    const kick = bump(p, 0.28, 0.5);
+    const hold = soft(seg(p, 0.55, 1));
+    return {
+      weapon: lerp(30, -4, up) - 14 * kick, arm: lerp(30, 30, up) + 6 * kick - 4 * hold, lunge: -3 * kick, tilt: -0.06 * kick,
+      rig: (r) => {
+        r.backArm = [q(lerp(-1, 4, up)), q(-1)];
+        danceLegs(r, [up, [2.2, 0, 4], [-2.2, 0, -6]]);
+        if (kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Double shot (second, bolts at ~0.28 and ~0.6): a shot, the free hand pumps the lever with a
+  // clack, a second shot.
+  aedouble(p) {
+    const k1 = bump(p, 0.26, 0.42);
+    const pump = bump(p, 0.4, 0.56);
+    const k2 = bump(p, 0.58, 0.74);
+    const hold = soft(seg(p, 0.76, 1));
+    return {
+      weapon: -4 - 12 * k1 - 14 * k2 + 6 * pump, arm: 30 + 6 * (k1 + k2) - 4 * hold, lunge: -2.5 * (k1 + k2), tilt: -0.05 * (k1 + k2),
+      rig: (r) => {
+        r.backArm = [q(4 - 3 * pump), q(-1 + 3 * pump)];
+        danceLegs(r, [1, [2.2, 0, 4], [-2.4, 0, -8]]);
+        if (k1 > 0.3 || k2 > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Brace and crank (third, the heavy bolt at ~0.55): she drops to one knee, braces the crossbow on
+  // it, winds the crank twice with a grin, then fires.
+  aebrace(p) {
+    const kneel = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.85, 1)));
+    const crank = seg(p, 0.18, 0.5);
+    const kick = bump(p, 0.52, 0.72);
+    return {
+      weapon: -2 - 18 * kick, arm: 22 + 8 * kick, lunge: -4 * kick, tilt: 0.04 * kneel - 0.08 * kick,
+      rig: (r) => {
+        r.squat = q(2.5 * kneel);
+        r.backArm = crank > 0 && crank < 1 ? [q(3 + 2 * Math.cos(crank * Math.PI * 4)), q(1 + 2 * Math.sin(crank * Math.PI * 4))] : [3, 0];
+        danceLegs(r, [kneel, [3.4, 0, 6], [-3.4, -1, -40]]);
+        if (crank > 0.2 && crank < 1) r.mouth = 'grin';
+        if (kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Recoil blast (the finish, ~0.48): she plants wide, fires the big bolt, and the kick throws her a
+  // hop back with the crossbow bucking up; she lands and pumps her fist.
+  aerecoil(p) {
+    const plant = soft(seg(p, 0, 0.3));
+    const kick = ease(seg(p, 0.46, 0.56)) * (1 - soft(seg(p, 0.62, 0.9)));
+    const hop = Math.sin(Math.PI * seg(p, 0.48, 0.78));
+    const pump = soft(seg(p, 0.82, 0.92)) * (1 - soft(seg(p, 0.97, 1)));
+    return {
+      weapon: lerp(10, -2, plant) - 34 * kick, arm: lerp(28, 30, plant) + 10 * kick, lunge: -8 * hop, lift: 6 * hop, tilt: -0.16 * kick,
+      rig: (r) => {
+        r.squat = q(1.5 * plant * (1 - kick));
+        r.backArm = pump > 0.2 ? [q(3 * pump), q(-9 * pump)] : [3, -1];
+        r.hairLift = hop > 0.3 ? -1 : 0;
+        danceLegs(r, [plant * (1 - hop), [3.2, 0, 6], [-3.4, 0, -10]], [hop, [2, -3, 30], [-2, -2, -30]]);
+        if (pump > 0.4) r.eyes = 'happy';
+        else if (kick > 0.2) strikeFace(r);
+      },
+    };
+  },
+  // Twirl shot (opener in her pool, ~0.42): she spins the crossbow round her finger by its grip like a
+  // gunslinger, catches it at the hip and fires.
+  aetwirl(p) {
+    const spin = seg(p, 0.04, 0.36);
+    const kick = bump(p, 0.4, 0.6);
+    const hold = soft(seg(p, 0.62, 1));
+    return {
+      weapon: spin < 1 ? 360 * spin : -4 - 14 * kick, arm: spin < 1 ? 28 : 30 + 6 * kick - 4 * hold, lunge: -3 * kick,
+      rig: (r) => { r.backArm = [q(3 * hold), q(-1)]; danceLegs(r, [1, [2, 0, 4], [-2, 0, -6]]); if (kick > 0.3) strikeFace(r); },
+    };
+  },
+  // Duck and fire (second in her pool, ~0.4): she ducks low, firing up and out from the crouch.
+  aeduck(p) {
+    const duck = soft(seg(p, 0, 0.25)) * (1 - soft(seg(p, 0.75, 1)));
+    const kick = bump(p, 0.36, 0.56);
+    return {
+      weapon: -10 - 14 * kick, arm: 24 + 6 * kick, tilt: 0.1 * duck, lunge: -2 * kick,
+      rig: (r) => { r.squat = q(2.5 * duck); r.backArm = [q(2), q(-1)]; danceLegs(r, [duck, [3, 0, 8], [-3, 0, -12]]); if (kick > 0.3) strikeFace(r); },
+    };
+  },
+  // Triple crank (third in her pool, bolts at ~0.3, ~0.5, ~0.7): she hammers the crank round and the
+  // crossbow fires three times in a row, rattling.
+  aetriple(p) {
+    const k = Math.max(bump(p, 0.28, 0.4), bump(p, 0.48, 0.6), bump(p, 0.68, 0.8));
+    const crank = seg(p, 0.2, 0.8);
+    return {
+      weapon: -4 - 12 * k, arm: 30 + 5 * k, lunge: -2 * k, tilt: -0.04 * k,
+      rig: (r) => {
+        r.backArm = crank > 0 && crank < 1 ? [q(3 + 2 * Math.cos(crank * Math.PI * 6)), q(1 + 2 * Math.sin(crank * Math.PI * 6))] : [3, 0];
+        danceLegs(r, [1, [2.4, 0, 4], [-2.4, 0, -8]]);
+        if (k > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Sliding shot (a finish in her pool, ~0.45): she slides in on one knee and fires a heavy bolt from
+  // the slide, then pops up and pats the stock.
+  aeslide(p) {
+    const slide = soft(seg(p, 0, 0.35)) * (1 - soft(seg(p, 0.7, 0.9)));
+    const kick = bump(p, 0.42, 0.62);
+    const pat = bump(p, 0.86, 1);
+    return {
+      weapon: -6 - 20 * kick, arm: 22 + 8 * kick, lunge: 6 * slide - 3 * kick, tilt: -0.12 * slide,
+      rig: (r) => {
+        r.squat = q(2 * slide);
+        r.backArm = pat > 0.2 ? [q(5), q(1 - 2 * pat)] : [q(-6 * slide), q(-3)];
+        r.hairLift = slide > 0.4 ? 1 : 0;
+        danceLegs(r, [slide, [5, 0, 30], [-3.4, 0, -10]]);
+        if (pat > 0.3) r.eyes = 'happy';
+        else if (kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Up + attack: she tips the crossbow up and out in front of her and fires at whatever flies.
+  aeup(p) {
+    const up = ease(seg(p, 0, 0.26));
+    const kick = bump(p, 0.32, 0.52);
+    return {
+      weapon: lerp(0, -45, up) + 10 * kick, arm: lerp(27, 28, up), lunge: 0,
+      rig: (r) => { r.backArm = [q(3), q(-2)]; danceLegs(r, [up, [1.4, 0, 4], [-1.6, 0, -6]]); if (kick > 0.3) strikeFace(r); },
+    };
+  },
+  // In the air: she tips it down past her knees and fires at whatever is below.
+  aeair(p) {
+    const down = ease(seg(p, 0, 0.24));
+    const kick = bump(p, 0.28, 0.5);
+    return {
+      weapon: lerp(0, 55, down) - 12 * kick, arm: 33 - 6 * kick,
+      rig: (r) => { r.air = true; r.backArm = [q(-4), q(-6)]; danceLegs(r, [1, [2.4, -3, 30], [-2.4, -2, -30]]); if (kick > 0.3) strikeFace(r); },
+    };
+  },
+  // Out of a run: a forward roll, coming up on one knee firing.
+  aeroll(p) {
+    const roll = ease(seg(p, 0, 0.42));
+    const kick = bump(p, 0.48, 0.66);
+    return {
+      weapon: roll < 1 ? 20 : -6 - 18 * kick, arm: roll < 1 ? 30 : 27 + 6 * kick, tilt: roll < 1 ? roll * Math.PI * 2 : -0.06 * kick, lift: 3 * Math.sin(Math.PI * roll),
+      rig: (r) => {
+        if (roll > 0 && roll < 1) tuck(r);
+        else { r.squat = 2; danceLegs(r, [1, [3.4, 0, 6], [-3.4, -1, -40]]); }
+        if (kick > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Deploy Turret: she kneels, sets the turret down in front of her, gives it a pat and jumps back
+  // up with a cheer.
+  aedeploy(p) {
+    const kneel = soft(seg(p, 0, 0.25)) * (1 - soft(seg(p, 0.6, 0.8)));
+    const place = bump(p, 0.2, 0.55);
+    const cheer = soft(seg(p, 0.8, 0.9)) * (1 - soft(seg(p, 0.97, 1)));
+    return {
+      weapon: 8, arm: 25, lift: 2 * cheer,
+      rig: (r) => {
+        r.squat = q(2.5 * kneel);
+        r.backArm = cheer > 0.2 ? [q(2 * cheer), q(-10 * cheer)] : [q(6 * place + 2), q(4 * place)];
+        danceLegs(r, [kneel, [3.4, 0, 6], [-3.4, -1, -40]], [cheer, [1.2, -1.5, 6], [-1.2, -1.5, -6]]);
+        if (cheer > 0.4) r.eyes = 'happy';
+      },
+    };
+  },
+  // Big Bertha (her finisher, 1.6 s): she flips her goggles down, braces wide as the crossbow unfolds
+  // into a giant ballista (drawn as an effect over her), cranks it with both hands, then the huge bolt
+  // goes and the kick skids her back; she pushes the goggles up, sooty, and grins.
+  aebertha(p) {
+    const brace = soft(seg(p, 0, 0.18));
+    const crank = seg(p, 0.2, 0.6);
+    const kick = ease(seg(p, 0.62, 0.68)) * (1 - soft(seg(p, 0.7, 0.92)));
+    const skid = soft(seg(p, 0.62, 0.8));
+    const grin = soft(seg(p, 0.88, 0.95)) * (1 - soft(seg(p, 0.99, 1)));
+    return {
+      weapon: -4 - 30 * kick, arm: 24 + 10 * kick, lunge: -10 * skid * (1 - grin * 0.3), tilt: -0.2 * kick + 0.04 * brace * (1 - kick),
+      rig: (r) => {
+        r.squat = q(2 * brace * (1 - grin));
+        r.backArm = grin > 0.3 ? [q(2), q(-12 * grin)] : crank > 0 && crank < 1 ? [q(3 + 2.4 * Math.cos(crank * Math.PI * 6)), q(1 + 2.4 * Math.sin(crank * Math.PI * 6))] : [3, 0];
+        r.hairLift = kick > 0.3 ? 1 : 0;
+        danceLegs(r, [brace * (1 - grin), [3.8, 0, 8], [-3.8, 0, -14]], [grin, [1.6, 0, 4], [-1.6, 0, -6]]);
+        if (grin > 0.4) r.mouth = 'grin';
+        else if (kick > 0.2 || (crank > 0 && crank < 1)) strikeFace(r);
+      },
+    };
+  },
+
   // ---------- The Star Witch's moves (her own; docs/design/star-witch.md) ----------
   // A bright prodigy who casts like she's showing off: quick flicks and twirls of the wand, the free
   // hand making finger-guns and peace signs, a wink after a big spell. Every cast is out in about a
