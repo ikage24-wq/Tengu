@@ -4857,6 +4857,226 @@
     return { canvas: out, px: e.px * K + pad, py: e.py * K + pad, r: e.swing ? e.swing[2] * K : null };
   }
 
+
+  // ---------- The test warrior (bold side-scroller MMO skills, Tengu's own art) ----------
+  // The player wants one warrior tried in a classic side-scroller MMO style: skills on hotkeys,
+  // each a big bold picture over the monsters. Bigger and brighter than the other jobs: thick ink,
+  // saturated colour, a white-hot core, speed lines and a burst on every monster hit.
+  const TWB = ['#ffffff', '#cfefff', '#4cb8ff', '#2272e8', '#162f8e'];
+  const TWG = ['#ffffff', '#fff2a8', '#ffc22e', '#ff8414', '#a8400c'];
+
+  // Crescent Sweep: a huge double crescent sweeps the whole row of monsters in front, back to
+  // front, a gold blade of light riding inside the blue one; it holds with speed lines streaming
+  // off it, then tears into pieces that fly forward and scatter into sparkles.
+  E.twsweep = (() => {
+    const cx = 120;
+    const cy = 250;
+    const R = 200;
+    const a0 = (-176 * Math.PI) / 180;
+    const a1 = (-8 * Math.PI) / 180;
+    return {
+      w: 420, h: 280, n: 10, fps: 30, px: cx, py: cy - 40,
+      draw(ctx, i) {
+        const o = { seed: 31, inkW: 6 };
+        if (i === 0) {
+          celCrescent(ctx, TWB, cx, cy, R, lerp(a0, a1, 0.4), lerp(a0, a1, 0.75), 30, o);
+          return;
+        }
+        if (i <= 3) {
+          const head = i === 1 ? 0.92 : 1;
+          celCrescent(ctx, TWB, cx, cy, R, a0, lerp(a0, a1, head), 64, o);
+          celCrescent(ctx, TWG, cx, cy, R - 34, lerp(a0, a1, 0.2), lerp(a0, a1, head * 0.98), 30, { ...o, seed: 33 });
+          if (i >= 2) {
+            for (const [k, d] of [[0.3, 22], [0.5, 34], [0.68, 16], [0.84, 28]]) {
+              const a = lerp(a0, a1, k);
+              const b = a - 0.42;
+              speedLine(ctx, TWB, cx + Math.cos(b) * (R + d), cy + Math.sin(b) * (R + d), cx + Math.cos(a) * (R + d), cy + Math.sin(a) * (R + d), 5);
+            }
+            sparkle(ctx, TWG, cx + Math.cos(a1) * (R - 10), cy + Math.sin(a1) * (R - 10), i === 2 ? 26 : 20, 0.3);
+            sparkle(ctx, TWB, cx + Math.cos(lerp(a0, a1, 0.55)) * (R + 30), cy + Math.sin(lerp(a0, a1, 0.55)) * (R + 30), 12, 0);
+          }
+          return;
+        }
+        if (i === 4) {
+          celCrescent(ctx, TWB, cx, cy, R, lerp(a0, a1, 0.25), a1, 44, o);
+          celCrescent(ctx, TWG, cx, cy, R - 30, lerp(a0, a1, 0.45), a1, 18, { ...o, seed: 33 });
+          return;
+        }
+        const k = (i - 4) / 5;
+        const cuts = [[0.2, 0.42], [0.45, 0.66], [0.7, 0.96]];
+        if (i <= 7) cuts.forEach(([u0, u1], j) => celCrescent(ctx, TWB, cx + k * 40, cy, R, a0, a1, 48 * (1 - k * 0.8), { ...o, u0, u1, out: 8 + k * 26 + j * 4 }));
+        const R2 = rng(40 + i);
+        for (let j = 0; j < 10; j++) {
+          const u = 0.15 + j * 0.085;
+          const a = lerp(a0, a1, u);
+          const d = R + 10 + k * 50 + R2() * 14;
+          const x = cx + Math.cos(a) * d + k * 50;
+          const y = cy + Math.sin(a) * d;
+          if (i >= 7) sparkle(ctx, j % 2 ? TWG : TWB, x, y, 10 * (1.3 - k), a);
+          else shard(ctx, j % 3 ? TWB : TWG, x, y, a + Math.PI / 2 + 0.3, 18 * (1.2 - k), 4.4 * (1.2 - k));
+        }
+      },
+    };
+  })();
+
+  // The test warrior's mark on every monster it hits: a white flash, then a big eight-point burst
+  // with a blue slash cut across it, a ring, and shards flying off.
+  E.twhit = (() => {
+    const c = 120;
+    return {
+      w: 240, h: 240, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) {
+          starburst(ctx, TWG, c, c, 40, 8, 51, { inner: 0.45 });
+          return;
+        }
+        if (i <= 2) {
+          starburst(ctx, TWG, c, c, i === 1 ? 96 : 84, 8, 51, { inner: 0.3 });
+          inked(ctx, crescent(c - 10, c + 70, 110, -2.0, -1.0, 22), TWB[2], TWB[4], 5);
+          fill(ctx, crescent(c - 10, c + 70, 110, -2.0, -1.0, 9), TWB[0]);
+          if (i === 2) celRing(ctx, TWB, c, c, 70, 10, { seed: 52 });
+          return;
+        }
+        const k = (i - 2) / 4;
+        if (i === 3) {
+          starburst(ctx, TWG, c, c, 56, 8, 51, { inner: 0.2, tones: 3 });
+          celRing(ctx, TWB, c, c, 88, 7, { broken: 0.45, seed: 52 });
+        }
+        const R = rng(53);
+        for (let j = 0; j < 9; j++) {
+          const a = (j / 9) * TAU + R() * 0.5;
+          const d = 40 + k * 70;
+          if (i < 6) shard(ctx, j % 2 ? TWG : TWB, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 18 * (1.1 - k * 0.6), 4.4 * (1.1 - k * 0.5));
+          else sparkle(ctx, j % 2 ? TWG : TWB, c + Math.cos(a) * d, c + Math.sin(a) * d, 8, a);
+        }
+      },
+    };
+  })();
+
+  // Iron Crash: a column of light slams down where the blade falls, then the ground bursts: a gold
+  // star of spikes, a shock ring flat along the ground, rocks thrown up, dust rolling out.
+  E.twcrash = (() => {
+    const cx = 200;
+    const gy = 250;
+    return {
+      w: 400, h: 300, n: 11, fps: 30, px: cx, py: gy,
+      draw(ctx, i) {
+        if (i <= 1) {
+          const top = i === 0 ? 40 : 0;
+          inked(ctx, [[cx - 26, top], [cx + 26, top], [cx + 18, gy], [cx - 18, gy]], TWB[2], TWB[4], 6);
+          fill(ctx, [[cx - 12, top + 10], [cx + 12, top + 10], [cx + 8, gy], [cx - 8, gy]], TWB[0]);
+          return;
+        }
+        const k = (i - 2) / 8;
+        // The shock ring, flat along the ground.
+        ctx.save();
+        ctx.translate(cx, gy);
+        ctx.scale(1, 0.28);
+        if (i <= 7) celRing(ctx, TWB, 0, 0, 90 + k * 110, 22 * (1 - k * 0.7), { broken: i > 5 ? 0.5 : 0, seed: 61 });
+        ctx.restore();
+        if (i <= 5) {
+          const r = [130, 150, 132, 100][i - 2];
+          starburst(ctx, TWG, cx, gy - 40, r, 10, 62, { inner: i === 2 ? 0.34 : 0.22, tones: i < 4 ? 4 : 3 });
+          if (i <= 3) {
+            ctx.beginPath();
+            ctx.arc(cx, gy - 40, 34, 0, TAU);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+          }
+        }
+        // Rocks thrown up and out, falling back.
+        const R = rng(63);
+        for (let j = 0; j < 9; j++) {
+          const dir = (j - 4) / 4;
+          const x = cx + dir * (40 + k * 170);
+          const y = gy - 20 - Math.sin(Math.min(1, k * 1.6) * Math.PI) * (70 + R() * 50) + k * 20;
+          if (i >= 3 && i <= 9) shard(ctx, ROCK, x, y, dir * 1.2, 16 * (1.2 - k * 0.5), 6 * (1.2 - k * 0.5));
+        }
+        if (i >= 6) {
+          for (let j = 0; j < 7; j++) {
+            const x = cx + (j - 3) * (34 + k * 30);
+            ctx.beginPath();
+            ctx.arc(x, gy - 6 - k * 10, 18 * (1.3 - k * 0.6), 0, TAU);
+            ctx.fillStyle = DUST[2];
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x - 4, gy - 10 - k * 10, 11 * (1.3 - k * 0.6), 0, TAU);
+            ctx.fillStyle = DUST[1];
+            ctx.fill();
+          }
+        }
+        if (i >= 9) for (let j = 0; j < 6; j++) sparkle(ctx, TWG, cx + (j - 2.5) * 50, gy - 60 - (j % 2) * 30, 9, j);
+      },
+    };
+  })();
+
+  // War Spirit (the attack buff): gold flames climb round the hero, a crossed-swords badge rises
+  // out of them on a gold pillar, then it all breaks into sparkles.
+  E.twfury = (() => {
+    const cx = 110;
+    const gy = 300;
+    return {
+      w: 220, h: 320, n: 10, fps: 20, px: cx, py: gy,
+      draw(ctx, i) {
+        const k = i / 9;
+        // The pillar.
+        if (i <= 7) {
+          const w = [30, 56, 64, 64, 60, 52, 40, 24][i];
+          inked(ctx, [[cx - w, gy], [cx - w * 0.7, gy - 260], [cx + w * 0.7, gy - 260], [cx + w, gy]], TWG[2], TWG[4], 5);
+          fill(ctx, [[cx - w * 0.5, gy], [cx - w * 0.3, gy - 250], [cx + w * 0.3, gy - 250], [cx + w * 0.5, gy]], TWG[1]);
+          fill(ctx, [[cx - w * 0.2, gy], [cx - w * 0.1, gy - 240], [cx + w * 0.1, gy - 240], [cx + w * 0.2, gy]], TWG[0]);
+        }
+        // Flames climbing round its foot.
+        for (let j = 0; j < 6; j++) {
+          const x = cx + (j - 2.5) * 26;
+          const h = (50 + ((j * 37) % 30)) * Math.sin(Math.min(1, (i + j * 0.3) / 6) * Math.PI);
+          if (h > 4 && i < 9) {
+            inked(ctx, [[x - 14, gy], [x - 6, gy - h * 0.6], [x, gy - h], [x + 6, gy - h * 0.6], [x + 14, gy]], TWG[3], TWG[4], 4);
+            fill(ctx, [[x - 7, gy], [x - 2, gy - h * 0.5], [x, gy - h * 0.75], [x + 2, gy - h * 0.5], [x + 7, gy]], TWG[1]);
+          }
+        }
+        // The badge rising.
+        if (i >= 2 && i <= 7) {
+          const y = gy - 120 - k * 90;
+          ctx.save();
+          ctx.translate(cx, y);
+          const s = i === 2 ? 0.6 : 0.85;
+          ctx.scale(s, s);
+          for (const sd of [-1, 1]) {
+            ctx.save();
+            ctx.rotate(sd * 0.7);
+            inked(ctx, [[-9, -62], [0, -76], [9, -62], [9, 30], [-9, 30]], TWB[1], TWB[4], 6);
+            fill(ctx, [[-3, -60], [0, -66], [3, -60], [3, 26], [-3, 26]], TWB[0]);
+            inked(ctx, [[-26, 30], [26, 30], [26, 42], [-26, 42]], TWG[2], TWG[4], 5);
+            inked(ctx, [[-7, 42], [7, 42], [7, 66], [-7, 66]], TWG[3], TWG[4], 5);
+            ctx.restore();
+          }
+          ctx.restore();
+        }
+        if (i >= 7) for (let j = 0; j < 8; j++) sparkle(ctx, j % 2 ? TWG : TWB, cx + Math.cos(j) * (30 + k * 40), gy - 150 - Math.sin(j * 1.7) * 60 - k * 40, 12 * (1.4 - k), j);
+      },
+    };
+  })();
+
+  // Iron Rush: speed lines streaming back, a wedge of blue wind ahead of the hero.
+  E.twrush = (() => {
+    const c = 160;
+    return {
+      w: 320, h: 200, n: 8, fps: 30, px: c, py: 100,
+      draw(ctx, i) {
+        const k = i / 7;
+        if (i <= 5) {
+          const x = 200 + i * 6;
+          inked(ctx, [[x - 120, 40], [x + 40, 100], [x - 120, 160], [x - 80, 100]], TWB[2], TWB[4], 6);
+          fill(ctx, [[x - 90, 64], [x + 16, 100], [x - 90, 136], [x - 62, 100]], TWB[1]);
+          fill(ctx, [[x - 60, 86], [x - 4, 100], [x - 60, 114], [x - 48, 100]], TWB[0]);
+        }
+        for (const [y, l] of [[56, 90], [80, 130], [100, 150], [120, 120], [144, 80]]) speedLine(ctx, TWB, 20 + k * 30, y, 20 + k * 30 + l * (1 - k * 0.6), y, 5 * (1 - k * 0.5));
+        if (i >= 5) for (let j = 0; j < 5; j++) sparkle(ctx, TWB, 230 + j * 12, 60 + j * 20, 9, j);
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

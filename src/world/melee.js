@@ -1130,9 +1130,28 @@ const FORM_HEIGHT = 1.2;
 export const inForm = (world) => (hasRage(world.char) || hasFaith(world.char)) && (world.formUntil ?? 0) > world.now;
 export const formSkill = (char) => (hasRage(char) ? 'demonform' : 'judgment');
 
+// The test warrior's basic attack (the classic side-scroller MMO way): every press is one swing,
+// picked at random (never the same twice running) from a chop, a cut, a backhand and a thrust,
+// each catching one monster; holding attack keeps swinging at a steady pace. No combo string.
+const SINGLE_SWINGS = [
+  { move: 'slash', dur: 0.56, step: 4, strikes: [{ at: 0.45, pct: 100, reach: 70, h: 60, targets: 1, knock: 45, arc: [-115, 205], thick: 9 }] },
+  { move: 'slash2', dur: 0.56, step: 4, strikes: [{ at: 0.45, pct: 100, reach: 70, h: 62, targets: 1, knock: 45, arc: [100, -215], thick: 9 }] },
+  { move: 'overhead', dur: 0.62, step: 5, strikes: [{ at: 0.47, pct: 108, reach: 72, h: 68, targets: 1, knock: 55, arc: [-105, 190], thick: 11, stop: 0.03 }] },
+  { move: 'thrust', dur: 0.52, step: 10, strikes: [{ at: 0.42, pct: 100, reach: 88, h: 46, targets: 1, knock: 55, pierce: true }] },
+];
+export const singleSwing = (char) => char.job === 'testwarrior';
+function swingOnce(world) {
+  let i = Math.floor(Math.random() * SINGLE_SWINGS.length);
+  if (i === world.lastSwing) i = (i + 1) % SINGLE_SWINGS.length;
+  world.lastSwing = i;
+  world.combo = -1;
+  playStep(world, SINGLE_SWINGS[i], 100, 'basic0');
+}
+
 // Basic attack with a melee weapon: the next step of its combo.
 export function basicCombo(world) {
   const { body } = world;
+  if (singleSwing(world.char) && MELEE.has(world.stats.weaponType) && world.stats.weaponType !== 'none') return swingOnce(world);
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {

@@ -42,12 +42,17 @@ export function balanceChar(job, level) {
     if (JOBS[id].trial) c.quests[JOBS[id].trial] = { state: 'done', kills: {} };
     advanceJob(c, id);
   }
+  // A test job stands on its own (nobody advances into it): just switch to it.
+  if (!JOBS[job].parent && job !== 'novice') {
+    while (c.level < JOBS[job].level) up();
+    c.job = job;
+  }
   while (c.level < level) up();
   autoAssignAp(c);
   for (const [id, s] of Object.entries(SKILLS)) if (chain.includes(s.job)) c.skills[id] = s.maxLevel;
   const gl = Math.max(...GEAR_LEVELS.filter((l) => l <= level));
   const family = JOBS[job].family;
-  c.equipment.weapon = makeEquip(`${WEAPON[job]}_${gl}`, { variance: 0 });
+  c.equipment.weapon = makeEquip(`${WEAPON[job] ?? JOBS[job].weapons[0]}_${gl}`, { variance: 0 });
   for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) c.equipment[slot] = makeEquip(`${family}_${slot}_${gl}`, { variance: 0 });
   const s = computeStats(c);
   c.hp = s.maxHp;

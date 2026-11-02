@@ -16,6 +16,8 @@ import { VW, VH } from '../src/input.js';
 import { JOBS } from '../src/data/jobs.js';
 import { text, box } from '../src/ui/kit.js';
 import { makeEquip } from '../src/core/items.js';
+import { bindFreeHotkey } from '../src/core/character.js';
+import { SKILLS } from '../src/data/skills.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -33,6 +35,8 @@ c.mp = c.baseMp = 99999;
 for (const id of (q.get('learn') ?? '').split(',').filter(Boolean)) c.skills[id] = 10;
 // ?weapon=sword_45: hold a given weapon.
 if (q.get('weapon')) c.equipment.weapon = makeEquip(q.get('weapon'));
+// Every skill it has goes on a hotkey, in order (Q, W, E, R, A, S...), to press from outside.
+for (const id of Object.keys(c.skills)) if (SKILLS[id] && SKILLS[id].type !== 'passive') bindFreeHotkey(c, { skill: id });
 const w = createWorld(c);
 w.log = () => {};
 loadMap(w, 'woods', 'west');

@@ -1,0 +1,25 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>draw fx</title>
+<pre id="out"></pre>
+<script src="/tools/fx-art.js"></script>
+<script>
+// For tools/build-fx-edge.py: renders the named effects of tools/fx-art.js (?names=a,b) the way
+// tools/draw-fx.cjs does (HD with a soft glow, D strip pixels per game pixel) and prints every
+// frame as a PNG data URL with the effect's meta, as JSON, for a headless browser's --dump-dom.
+const D = 3;
+const names = new URLSearchParams(location.search).get('names').split(',');
+const res = {};
+for (const name of names) {
+  const e = window.FXART[name];
+  const frames = [];
+  let first = null;
+  for (let i = 0; i < e.n; i++) {
+    const r = window.FXHD.render(e, i, D);
+    first ??= r;
+    frames.push(r.canvas.toDataURL('image/png'));
+  }
+  res[name] = { frames, meta: { w: first.canvas.width, h: first.canvas.height, n: e.n, fps: e.fps, px: first.px, py: first.py, loop: Boolean(e.loop), d: D, swing: e.swing ? [e.swing[0], e.swing[1], first.r] : null } };
+}
+document.getElementById('out').textContent = JSON.stringify(res);
+</script>

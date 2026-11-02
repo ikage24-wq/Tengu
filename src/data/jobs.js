@@ -31,6 +31,15 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
+  // A test warrior in a classic side-scroller MMO style, beside the Warrior to compare (the
+  // player's ask, 2026-11-02): one attack button with a random single swing, and skills on hotkeys
+  // with big bold effects over the monsters. No combo string, gauge or finisher (it's a test of a
+  // different way to fight). Switched to from the GM window; nobody advances into it.
+  testwarrior: {
+    id: 'testwarrior', guard: 0.85, power: 0.8, spread: 0.6, name: 'Swordsman (test)', family: 'warrior', tier: 1, parent: null, level: 10, test: true,
+    hp: 28, mp: 14, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
+    blurb: 'A test warrior: one attack button and big skills on hotkeys. Raises STR.',
+  },
   // The Spirit Mage: a young shrine mage whose spirits strike and heal (remade from scratch; the
   // old Mage is retired). Damage and support at once, with the Spirit Doll at her side.
   spiritmage: {
