@@ -35,6 +35,13 @@ import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
+import { drawManorBack, drawManorFront, drawManorObject, MANOR_HINT } from './manor.js';
+import { drawAquaBack, drawAquaFront, drawAquaObject, AQUA_HINT } from './aquarium.js';
+import { drawCarnivalBack, drawCarnivalFront, drawCarnivalObject, CARNIVAL_HINT } from './carnival.js';
+import { drawObsBack, drawObsFront, drawObsObject, OBS_HINT } from './observatory.js';
+import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } from './volcano.js';
+import { drawTheatreBack, drawTheatreFront, drawTheatreObject, THEATRE_HINT } from './theatre.js';
+import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -172,7 +179,12 @@ function drawMobs(ctx, world, cam, time) {
     const amp = struck ? Math.min(2.5, 0.8 + m.stopPeak * 18) * (world.hitstop / m.stopPeak) : 0;
     const sign = Math.floor(time * 60) % 2 ? 1 : -1;
     const ang = m.air > 0 ? Math.floor(time * 60) * 2.4 : 0;
-    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang), time, world.now);
+    // A boss diving into the clouds (the Whale's Dream) sinks and fades, then breaches elsewhere.
+    const dive = m.mech?.diving;
+    const under = dive ? Math.max(0, Math.min(1, (dive.at - world.now - 1.2) / 0.8)) : 1;
+    if (under < 1) ctx.globalAlpha = under * under * (3 - 2 * under);
+    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang) + (1 - under) * 34, time, world.now);
+    ctx.globalAlpha = 1;
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;
     if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
@@ -253,6 +265,13 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   if (world.dungeon) drawHollowBack(ctx, world, cam, time);
+  if (world.dungeon) drawManorBack(ctx, world, cam, time);
+  if (world.dungeon) drawAquaBack(ctx, world, cam, time);
+  if (world.dungeon) drawCarnivalBack(ctx, world, cam, time);
+  if (world.dungeon) drawObsBack(ctx, world, cam, time);
+  if (world.dungeon) drawVolcanoBack(ctx, world, cam, time);
+  if (world.dungeon) drawTheatreBack(ctx, world, cam, time);
+  if (world.dungeon) drawWhaleBack(ctx, world, cam, time);
   // Fishing spots by the water.
   drawSpots(ctx, world, cam, time);
   // Gathering and mining spots.
@@ -362,6 +381,13 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time);
   if (world.dungeon) {
     drawHollowFront(ctx, world, cam, time);
+    drawManorFront(ctx, world, cam, time);
+    drawAquaFront(ctx, world, cam, time);
+    drawCarnivalFront(ctx, world, cam, time);
+    drawObsFront(ctx, world, cam, time);
+    drawVolcanoFront(ctx, world, cam, time);
+    drawTheatreFront(ctx, world, cam, time);
+    drawWhaleFront(ctx, world, cam, time);
     // The dark rooms: light only where the group and the glowcaps are.
     drawDarkness(ctx, world, cam, time);
   }
@@ -558,11 +584,12 @@ function drawDungeonBack(ctx, world, cam, time) {
     if (o.kind === 'glowcap') drawGlowcap(ctx, x, gy, o.done, time + o.id);
     else if (o.kind === 'cage') drawCage(ctx, x, gy, o.done, o.done ? 1 : o.progress, time + o.id);
     else if (o.kind === 'chest' || o.kind === 'cache') drawChest(ctx, x, gy, Boolean(o.open), time);
+    else if (!drawManorObject(ctx, o, x, gy, time) && !drawAquaObject(ctx, o, x, gy, time, world.now) && !drawCarnivalObject(ctx, o, x, gy, time, world.now) && !drawObsObject(ctx, o, x, gy, time, world.now) && !drawVolcanoObject(ctx, o, x, gy, time, world.now) && !drawTheatreObject(ctx, o, x, gy, time, world.now)) drawWhaleObject(ctx, o, x, gy, time, world.now);
     // A hint over what you can use.
     const near = !o.done && Math.abs(o.x - world.body.x) < 26 && Math.abs((o.y ?? world.map.groundY) - world.body.y) <= 4 && world.body.onGround && !world.channel;
     if (near && (o.kind !== 'chest' || room.cleared)) {
       box(ctx, x - 24, gy - 62, 48, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
-      text(ctx, o.kind === 'chest' ? '▲ Open' : o.kind === 'cage' ? '▲ Free' : '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });
+      text(ctx, o.kind === 'chest' ? '▲ Open' : o.kind === 'cage' ? '▲ Free' : MANOR_HINT[o.kind] ?? AQUA_HINT[o.kind] ?? CARNIVAL_HINT[o.kind] ?? OBS_HINT[o.kind] ?? VOLCANO_HINT[o.kind] ?? THEATRE_HINT[o.kind] ?? WHALE_HINT[o.kind] ?? '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });
     }
   }
   for (const k of room.keys) if (!k.got) drawRootKey(ctx, k.x - cam.x, k.y - cam.y, time + k.t);

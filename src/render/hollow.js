@@ -111,23 +111,25 @@ export function drawHollowFront(ctx, world, cam, time) {
   if (f && f.state !== 'calm') {
     const def = map.flood;
     const level = f.state === 'rising' ? (f.since / def.warn) * 6 : f.t < 1 ? 14 * f.t : 14;
+    const sea = def.color === 'sea';
+    const melt = def.color === 'caramel';
     ctx.save();
-    ctx.globalAlpha = 0.72;
-    ctx.fillStyle = '#e8a24a';
+    ctx.globalAlpha = sea ? 0.6 : 0.72;
+    ctx.fillStyle = sea ? '#3a8ab0' : melt ? '#d8803a' : '#e8a24a';
     ctx.beginPath();
     ctx.moveTo(0, gy + 10);
     for (let x = 0; x <= 640; x += 16) ctx.lineTo(x, gy - level + Math.sin(time * 2 + (x + cam.x) * 0.05) * 2);
     ctx.lineTo(640, gy + 10);
     ctx.fill();
     ctx.globalAlpha = 0.6;
-    ctx.fillStyle = '#ffd68a';
+    ctx.fillStyle = sea ? '#bfeeff' : '#ffd68a';
     for (let x = 0; x <= 640; x += 16) ctx.fillRect(x, gy - level - 1 + Math.sin(time * 2 + (x + cam.x) * 0.05) * 2, 9, 2);
     // Bubbles popping up through it.
     for (let k = 0; k < 10; k++) {
       const u = (time * 0.7 + k * 0.37) % 1;
       const bx = ((k * 97 - cam.x) % 640 + 640) % 640;
       ctx.globalAlpha = (1 - u) * 0.8;
-      ctx.strokeStyle = '#fff1c4';
+      ctx.strokeStyle = sea ? '#ffffff' : '#fff1c4';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.arc(bx, gy - u * (level + 6), 2 + u * 2, 0, TAU);
@@ -135,8 +137,8 @@ export function drawHollowFront(ctx, world, cam, time) {
     }
     ctx.restore();
   }
-  // Gnarlroot's root walls closing in from both sides.
-  if (room.walls) {
+  // Gnarlroot's root walls closing in from both sides (the Archive's are bookcases, drawn there).
+  if (room.walls && map.dungeon !== 'observatory') {
     for (const [edge, dir] of [[room.walls.l, -1], [room.walls.r, 1]]) {
       const x = edge - cam.x;
       ctx.save();

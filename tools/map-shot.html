@@ -4,6 +4,7 @@
 <script type="module">
 // Dev tool: one map as the game draws it, with the hero standing somewhere on it, for before/after
 // pictures of map art. ?map=woods&x=600&y=0 (y: 0 = the ground, else a floor's height)&night=1&t=3
+// &portal=west (where you come in)
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -18,22 +19,35 @@ const SCALE = Number(q.get('s') ?? 2);
 canvas.width = VW * SCALE;
 canvas.height = VH * SCALE;
 preloadFxSprites();
-const c = balanceChar('thief', 30);
+const c = balanceChar('thief', Number(q.get('lv') ?? 30));
 const w = createWorld(c);
 w.log = () => {};
+window.W = w;
 if (q.get('night') != null) w.forceNight = Number(q.get('night'));
-loadMap(w, q.get('map') ?? 'woods', 'west');
+// ?run=manor: inside a dungeon run (a group from the finder), for its rooms.
+if (q.get('run')) {
+  const { createBots } = await import('../src/world/bots.js');
+  const { startRun } = await import('../src/world/dungeon.js');
+  w.bots = createBots(w, Math.random, {});
+  startRun(w, q.get('run'));
+}
+loadMap(w, q.get('map') ?? 'woods', q.get('portal') ?? 'west');
 w.god = true;
 const y = q.get('y') ? Number(q.get('y')) : w.map.groundY;
 Object.assign(w.body, { x: Number(q.get('x') ?? 400), y, vx: 0, vy: 0, facing: 1 });
 const idle = { held: new Set(), pressed: new Set(), locked: false };
-for (let k = 0; k < 240; k++) updateWorld(w, 1 / 60, idle);
+// (Scenes, like a boss meeting the group, are clicked through.)
+for (let k = 0; k < 240; k++) {
+  w.scene = null;
+  updateWorld(w, 1 / 60, idle);
+}
 const cam = createCamera();
 // The effect strips and map art load first.
 await new Promise((res) => setTimeout(res, 2500));
 // Drawn every frame, so the map's arrival fade plays out before the picture.
 let t = 0;
 for (let k = 0; k < Math.round(Number(q.get('t') ?? 3) * 60); k++) {
+  w.scene = null;
   updateWorld(w, 1 / 60, idle);
   t += 1 / 60;
   updateCamera(cam, w, 1 / 60);

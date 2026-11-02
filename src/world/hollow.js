@@ -17,14 +17,19 @@
 import { addZone, adds, callout, hurtMember, isUp } from './dungeon.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { playScene } from './story.js';
-import { HOLLOW_RADIO } from '../data/scenes.js';
+import { HOLLOW_RADIO, MANOR_RADIO, AQUA_RADIO, CARNIVAL_RADIO, OBS_RADIO, VOLCANO_RADIO, THEATRE_RADIO, WHALE_RADIO } from '../data/scenes.js';
+import { DUNGEONS } from '../data/dungeons.js';
 
-// Bramble on the root radio: a line from `key` shows over the group for a few seconds.
+// The warden on the radio (Bramble through the roots, Mr. Pumpkins through the keyhole): a line
+// from `key` shows over the group for a few seconds.
+const RADIO = { hollow: HOLLOW_RADIO, manor: MANOR_RADIO, aquarium: AQUA_RADIO, carnival: CARNIVAL_RADIO, observatory: OBS_RADIO, volcano: VOLCANO_RADIO, theatre: THEATRE_RADIO, skywhale: WHALE_RADIO };
 export function radio(world, key) {
-  const lines = HOLLOW_RADIO[key];
+  const id = world.dungeon?.id ?? 'hollow';
+  const lines = RADIO[id]?.[key];
   if (!lines) return;
-  world.radio = { who: 'bramble', text: lines[Math.floor(Math.random() * lines.length)], at: world.now };
+  world.radio = { who: DUNGEONS[id].warden, text: lines[Math.floor(Math.random() * lines.length)], at: world.now };
 }
+
 
 // How hard a bounce mushroom throws you: high enough for the top ledges (about 180px).
 export const BOUNCE = 740;
@@ -111,7 +116,7 @@ function tickFlood(world, dt, up) {
     f.state = 'rising';
     f.t = def.warn;
     f.since = 0;
-    callout(world, 'Sap Surge!', 'Get up on a ledge!');
+    callout(world, def.name ?? 'Sap Surge!', 'Get up on a ledge!');
     radio(world, 'flood');
   } else if (f.state === 'rising' && f.t <= 0) {
     f.state = 'flooded';

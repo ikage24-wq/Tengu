@@ -65,10 +65,59 @@ const PLACES = {
     day: [['drip', 2, 6], ['woodCreak', 6, 14]],
     night: [['drip', 2, 6], ['woodCreak', 6, 14]],
   },
+  // The Sunken Aquarium Palace: deep water, a low hum, drips of bubbles.
+  aquarium: {
+    bed: { lp: 260, hp: 40, db: -29, lfo: 0.08, depth: 0.6 },
+    day: [['drip', 1.5, 4]],
+    night: [['drip', 1.5, 4]],
+  },
+  // The Clockwork Carnival: a far-off fairground at night, chimes and the creak of the rides.
+  carnival: {
+    bed: { lp: 420, hp: 60, db: -31, lfo: 0.1, depth: 0.4 },
+    day: [['windChime', 3, 8], ['woodCreak', 6, 12]],
+    night: [['windChime', 3, 8], ['woodCreak', 6, 12]],
+  },
+  // The Star Observatory: a high, still night, wind round the tower, a far chime.
+  observatory: {
+    bed: { lp: 500, hp: 80, db: -32, lfo: 0.05, depth: 0.5 },
+    day: [['windChime', 4, 10]],
+    night: [['windChime', 4, 10]],
+  },
+  // The Candy Volcano: a warm rumble far below, bubbling, a chime of sugar glass.
+  volcano: {
+    bed: { lp: 220, hp: 30, db: -28, lfo: 0.12, depth: 0.5 },
+    day: [['drip', 2, 5], ['windChime', 6, 12]],
+    night: [['drip', 2, 5], ['windChime', 6, 12]],
+  },
+  // The Sky Whale's Back: open wind high over the clouds, rigging creaking, chimes on the stalls.
+  skywhale: {
+    bed: { lp: 900, hp: 120, db: -29, lfo: 0.09, depth: 0.6 },
+    day: [['windChime', 4, 9], ['woodCreak', 6, 12]],
+    night: [['windChime', 4, 9], ['woodCreak', 6, 12]],
+  },
+  // The Dream Theatre: a big hushed hall, boards creaking in the wings, a far chime from the flies.
+  theatre: {
+    bed: { lp: 400, hp: 60, db: -31, lfo: 0.06, depth: 0.5 },
+    day: [['woodCreak', 5, 11], ['windChime', 7, 14]],
+    night: [['woodCreak', 5, 11], ['windChime', 7, 14]],
+  },
+  // Moonlit Manor: a hushed old house, floorboards creaking, a far-off chime somewhere upstairs.
+  manor: {
+    bed: { lp: 320, hp: 50, db: -31, lfo: 0.04, depth: 0.5 },
+    day: [['woodCreak', 4, 10], ['windChime', 8, 16]],
+    night: [['woodCreak', 4, 10], ['windChime', 8, 16]],
+  },
 };
 // Which kind of place a map is.
 export function placeOf(map) {
   if (!map) return null;
+  if (map.dungeon === 'manor' || map.theme === 'manor') return 'manor';
+  if (map.dungeon === 'aquarium' || map.theme === 'aquarium') return 'aquarium';
+  if (map.dungeon === 'carnival' || map.theme === 'carnival') return 'carnival';
+  if (map.dungeon === 'observatory' || map.theme === 'observatory') return 'observatory';
+  if (map.dungeon === 'volcano' || map.theme === 'candy') return 'volcano';
+  if (map.dungeon === 'theatre' || map.theme === 'theatre') return 'theatre';
+  if (map.dungeon === 'skywhale' || map.theme === 'skywhale') return 'skywhale';
   if (map.dungeon || map.theme === 'hollow') return 'hollow';
   if (map.isTown) return 'town';
   if (map.theme === 'grove' || map.theme === 'shrine' || map.theme === 'springs') return 'forest';

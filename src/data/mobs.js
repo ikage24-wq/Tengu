@@ -206,6 +206,382 @@ export const MOBS = {
     fight: { every: 2, reach: 74, windup: 0.55 }, mech: 'gnarl',
   }),
 
+
+  // ---------- Moonlit Manor (levels 15-20, docs/design/moonlit-manor.md) ----------
+  porcelaindoll: mob({
+    id: 'porcelaindoll', name: 'Porcelain Doll', level: 15, hp: 640, atk: 58, def: 18, acc: 46, eva: 4, exp: 240, gold: [20, 44],
+    speed: 34, w: 26, h: 66, art: 'porcelaindoll', drops: [{ id: 'porcelain_shard', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
+    fight: { every: 1.9, reach: 38, windup: 0.45 },
+  }),
+  ghostmaid: mob({
+    id: 'ghostmaid', name: 'Ghost Maid', level: 15, hp: 520, atk: 52, def: 10, acc: 48, eva: 8, exp: 220, gold: [18, 40],
+    speed: 52, w: 26, h: 62, art: 'ghostmaid', drops: [{ id: 'shade_cloth', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.06 }],
+    fight: { every: 1.5, reach: 34, windup: 0.3 },
+  }),
+  candlebride: mob({
+    id: 'candlebride', name: 'Candle Bride', level: 17, hp: 760, atk: 62, def: 12, acc: 50, eva: 5, exp: 300, gold: [24, 52],
+    speed: 30, w: 28, h: 66, art: 'candlebride', drops: [{ id: 'candle_wax', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.08 }],
+    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170 },
+  }),
+  topiarydryad: mob({
+    id: 'topiarydryad', name: 'Topiary Dryad', level: 15, hp: 600, atk: 56, def: 14, acc: 46, eva: 6, exp: 230, gold: [20, 42],
+    speed: 46, gait: 'dart', w: 26, h: 64, art: 'topiarydryad', drops: [{ id: 'leaf_fragment', chance: 0.4 }, { id: 'moonlit_ribbon', chance: 0.06 }],
+    fight: { every: 1.6, reach: 36, windup: 0.3 },
+  }),
+  lanternghost: mob({
+    id: 'lanternghost', name: 'Lantern Ghost', level: 16, hp: 540, atk: 58, def: 8, acc: 50, eva: 9, exp: 250, gold: [20, 44],
+    speed: 40, w: 24, h: 56, art: 'lanternghost', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'moonlit_ribbon', chance: 0.06 }],
+    fight: { every: 2.1, reach: 30, windup: 0.5, range: 150 },
+  }),
+  armourknight: mob({
+    id: 'armourknight', name: 'Armour Knight', level: 18, hp: 1200, atk: 70, def: 26, acc: 52, eva: 3, exp: 420, gold: [30, 64],
+    speed: 34, w: 28, h: 66, art: 'armourknight', drops: [{ id: 'bone_shard', chance: 0.3 }, { id: 'moonlit_ribbon', chance: 0.1 }],
+    fight: { every: 2.1, reach: 44, windup: 0.55 },
+  }),
+  teahatter: mob({
+    id: 'teahatter', name: 'Tea Party Hatter', level: 17, hp: 820, atk: 64, def: 14, acc: 50, eva: 6, exp: 320, gold: [26, 56],
+    speed: 44, w: 28, h: 72, art: 'teahatter', drops: [{ id: 'moonlit_ribbon', chance: 0.1 }, { id: 'orange_potion', chance: 0.3 }],
+    fight: { every: 1.9, reach: 32, windup: 0.4, range: 120 },
+  }),
+  waltzrondo: mob({
+    id: 'waltzrondo', name: 'Dame Rondo, the Leading Armour', level: 17, hp: 15000, atk: 112, def: 24, acc: 54, eva: 3, exp: 5200, gold: [500, 900],
+    speed: 40, w: 44, h: 112, art: 'waltzrondo', boss: true,
+    drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'white_potion', chance: 1, qty: 8 }],
+    fight: { every: 1.9, reach: 64, windup: 0.5 }, mech: 'waltz',
+  }),
+  waltzminuet: mob({
+    id: 'waltzminuet', name: 'Dame Minuet, the Following Armour', level: 17, hp: 14000, atk: 104, def: 22, acc: 54, eva: 4, exp: 5200, gold: [500, 900],
+    speed: 40, w: 48, h: 108, art: 'waltzminuet', boss: true,
+    drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 8 }],
+    fight: { every: 1.7, reach: 56, windup: 0.45 }, mech: 'waltz',
+  }),
+  velvet: mob({
+    id: 'velvet', name: 'Madame Velvet, the Head Housekeeper', level: 18, hp: 26000, atk: 118, def: 24, acc: 56, eva: 3, exp: 8000, gold: [700, 1300],
+    speed: 30, w: 50, h: 116, art: 'velvet', boss: true,
+    drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 10 }],
+    fight: { every: 2, reach: 70, windup: 0.5 }, mech: 'velvet',
+  }),
+  marigold: mob({
+    id: 'marigold', name: 'Lady Marigold, the Eternal Hostess', level: 20, hp: 46000, atk: 128, def: 28, acc: 60, eva: 4, exp: 16000, gold: [1400, 2600],
+    speed: 26, w: 60, h: 128, art: 'marigold', boss: true,
+    drops: [{ id: 'moonlit_ribbon', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 72, windup: 0.55 }, mech: 'marigold',
+  }),
+
+
+  // ---------- Sunken Aquarium Palace (levels 20-25, docs/design/aquarium-palace.md) ----------
+  jellymaid: mob({
+    id: 'jellymaid', name: 'Jellyfish Maiden', level: 20, hp: 980, atk: 76, def: 16, acc: 60, eva: 9, exp: 420, gold: [30, 64],
+    speed: 34, w: 26, h: 60, art: 'jellymaid', drops: [{ id: 'jelly_ribbon', chance: 0.4 }, { id: 'tide_pearl', chance: 0.06 }],
+    fight: { every: 1.9, reach: 40, windup: 0.4 },
+  }),
+  seahorseknight: mob({
+    id: 'seahorseknight', name: 'Seahorse Knight', level: 21, hp: 1500, atk: 84, def: 30, acc: 62, eva: 4, exp: 540, gold: [36, 76],
+    speed: 40, w: 26, h: 62, art: 'seahorseknight', drops: [{ id: 'sea_glass', chance: 0.4 }, { id: 'tide_pearl', chance: 0.08 }],
+    fight: { every: 2.1, reach: 46, windup: 0.5 },
+  }),
+  anglerlamp: mob({
+    id: 'anglerlamp', name: 'Anglerfish Lamp Girl', level: 22, hp: 1200, atk: 92, def: 18, acc: 64, eva: 8, exp: 560, gold: [36, 80],
+    speed: 48, w: 26, h: 62, art: 'anglerlamp', drops: [{ id: 'wisp_flame', chance: 0.35 }, { id: 'tide_pearl', chance: 0.08 }],
+    fight: { every: 2, reach: 36, windup: 0.55 },
+  }),
+  pearldiver: mob({
+    id: 'pearldiver', name: 'Pearl Diver', level: 21, hp: 1050, atk: 80, def: 16, acc: 62, eva: 8, exp: 500, gold: [34, 72],
+    speed: 44, w: 30, h: 56, art: 'pearldiver', drops: [{ id: 'sea_glass', chance: 0.35 }, { id: 'tide_pearl', chance: 0.1 }],
+    fight: { every: 2.2, reach: 30, windup: 0.45, range: 160 },
+  }),
+  stardancer: mob({
+    id: 'stardancer', name: 'Starfish Dancer', level: 20, hp: 1000, atk: 78, def: 18, acc: 60, eva: 10, exp: 440, gold: [30, 66],
+    speed: 50, w: 26, h: 62, art: 'stardancer', drops: [{ id: 'sea_glass', chance: 0.3 }, { id: 'tide_pearl', chance: 0.06 }],
+    fight: { every: 1.7, reach: 38, windup: 0.35 },
+  }),
+  octoscholar: mob({
+    id: 'octoscholar', name: 'Octopus Scholar', level: 23, hp: 1350, atk: 88, def: 20, acc: 66, eva: 6, exp: 600, gold: [40, 84],
+    speed: 30, w: 30, h: 60, art: 'octoscholar', drops: [{ id: 'tide_pearl', chance: 0.1 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 2.3, reach: 32, windup: 0.5, range: 150 },
+  }),
+  moraymurri: mob({
+    id: 'moraymurri', name: 'Murri, the Twin Moray', level: 22, hp: 20000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [800, 1400],
+    speed: 44, w: 56, h: 100, art: 'moraymurri', boss: true,
+    drops: [{ id: 'tide_pearl', chance: 1, qty: 2 }, { id: 'white_potion', chance: 1, qty: 10 }],
+    fight: { every: 1.8, reach: 64, windup: 0.5 }, mech: 'moray',
+  }),
+  morayena: mob({
+    id: 'morayena', name: 'Ena, the Twin Moray', level: 22, hp: 20000, atk: 138, def: 30, acc: 70, eva: 5, exp: 9000, gold: [800, 1400],
+    speed: 44, w: 56, h: 100, art: 'morayena', boss: true,
+    drops: [{ id: 'tide_pearl', chance: 1, qty: 2 }, { id: 'orange_potion', chance: 1, qty: 10 }],
+    fight: { every: 1.8, reach: 64, windup: 0.5 }, mech: 'moray',
+  }),
+  abyssia: mob({
+    id: 'abyssia', name: 'Lady Abyssia, the Sea Witch', level: 23, hp: 38000, atk: 146, def: 32, acc: 72, eva: 4, exp: 14000, gold: [1000, 1800],
+    speed: 26, w: 70, h: 120, art: 'abyssia', boss: true,
+    drops: [{ id: 'tide_pearl', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 5 }],
+    fight: { every: 2.1, reach: 80, windup: 0.55 }, mech: 'abyssia',
+  }),
+  coralie: mob({
+    id: 'coralie', name: 'Queen Coralie, the Drowned Queen', level: 25, hp: 62000, atk: 160, def: 36, acc: 76, eva: 5, exp: 24000, gold: [2000, 3600],
+    speed: 30, w: 64, h: 130, art: 'coralie', boss: true,
+    drops: [{ id: 'tide_pearl', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 84, windup: 0.55 }, mech: 'coralie',
+  }),
+
+
+  // ---------- Clockwork Carnival (levels 25-30, docs/design/clockwork-carnival.md) ----------
+  musicballerina: mob({
+    id: 'musicballerina', name: 'Music Box Ballerina', level: 25, hp: 1500, atk: 98, def: 22, acc: 74, eva: 10, exp: 700, gold: [44, 90],
+    speed: 34, w: 30, h: 70, art: 'musicballerina', drops: [{ id: 'music_cylinder', chance: 0.35 }, { id: 'golden_ticket', chance: 0.06 }],
+    fight: { every: 1.9, reach: 40, windup: 0.4 },
+  }),
+  tindrummer: mob({
+    id: 'tindrummer', name: 'Tin Drummer Girl', level: 26, hp: 1800, atk: 104, def: 30, acc: 76, eva: 5, exp: 800, gold: [48, 96],
+    speed: 38, w: 26, h: 70, art: 'tindrummer', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }],
+    fight: { every: 2.1, reach: 36, windup: 0.5, range: 140 },
+  }),
+  jackbox: mob({
+    id: 'jackbox', name: 'Jack-in-the-Box Jester', level: 26, hp: 1650, atk: 108, def: 24, acc: 76, eva: 8, exp: 780, gold: [46, 94],
+    speed: 46, w: 30, h: 66, art: 'jackbox', drops: [{ id: 'tin_spring', chance: 0.4 }, { id: 'golden_ticket', chance: 0.08 }],
+    fight: { every: 2, reach: 48, windup: 0.5 },
+  }),
+  marionette: mob({
+    id: 'marionette', name: 'Marionette Dancer', level: 27, hp: 1600, atk: 110, def: 22, acc: 78, eva: 12, exp: 820, gold: [48, 98],
+    speed: 44, w: 26, h: 64, art: 'marionette', drops: [{ id: 'music_cylinder', chance: 0.3 }, { id: 'golden_ticket', chance: 0.08 }],
+    fight: { every: 1.7, reach: 40, windup: 0.35 },
+  }),
+  teddystrong: mob({
+    id: 'teddystrong', name: 'Teddy Strongwoman', level: 28, hp: 2600, atk: 122, def: 36, acc: 78, eva: 3, exp: 1050, gold: [56, 110],
+    speed: 30, w: 30, h: 64, art: 'teddystrong', drops: [{ id: 'tin_spring', chance: 0.5 }, { id: 'golden_ticket', chance: 0.12 }],
+    fight: { every: 2.4, reach: 52, windup: 0.7 },
+  }),
+  balloonseller: mob({
+    id: 'balloonseller', name: 'Balloon Seller', level: 25, hp: 1400, atk: 96, def: 18, acc: 74, eva: 12, exp: 680, gold: [42, 88],
+    speed: 40, w: 28, h: 70, art: 'balloonseller', drops: [{ id: 'golden_ticket', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 2.2, reach: 30, windup: 0.45, range: 160 },
+  }),
+  leonie: mob({
+    id: 'leonie', name: 'Leonie, the Lioness Acrobat', level: 27, hp: 52000, atk: 170, def: 38, acc: 82, eva: 6, exp: 20000, gold: [1600, 2800],
+    speed: 50, w: 50, h: 112, art: 'leonie', boss: true,
+    drops: [{ id: 'golden_ticket', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 12 }],
+    fight: { every: 1.7, reach: 62, windup: 0.45 }, mech: 'leonie',
+  }),
+  marionetta: mob({
+    id: 'marionetta', name: 'Madame Marionette', level: 28, hp: 60000, atk: 176, def: 40, acc: 84, eva: 5, exp: 24000, gold: [1800, 3200],
+    speed: 30, w: 56, h: 120, art: 'marionetta', boss: true,
+    drops: [{ id: 'golden_ticket', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 6 }],
+    fight: { every: 2, reach: 76, windup: 0.5 }, mech: 'marionetta',
+  }),
+  gearheart: mob({
+    id: 'gearheart', name: 'Queen Gearheart, the Grand Automaton', level: 30, hp: 90000, atk: 190, def: 44, acc: 88, eva: 5, exp: 36000, gold: [3000, 5200],
+    speed: 28, w: 64, h: 130, art: 'gearheart', boss: true,
+    drops: [{ id: 'golden_ticket', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 82, windup: 0.55 }, mech: 'gearheart',
+  }),
+
+
+  // ---------- Star Observatory (levels 30-35, docs/design/star-observatory.md) ----------
+  cometcourier: mob({
+    id: 'cometcourier', name: 'Comet Courier', level: 30, hp: 2300, atk: 124, def: 30, acc: 90, eva: 14, exp: 1150, gold: [60, 120],
+    speed: 56, w: 30, h: 60, art: 'cometcourier', drops: [{ id: 'stardust', chance: 0.35 }, { id: 'astral_shard', chance: 0.06 }],
+    fight: { every: 1.8, reach: 42, windup: 0.4 },
+  }),
+  nebulawitch: mob({
+    id: 'nebulawitch', name: 'Nebula Witch', level: 31, hp: 2200, atk: 132, def: 26, acc: 94, eva: 10, exp: 1200, gold: [62, 124],
+    speed: 34, w: 28, h: 68, art: 'nebulawitch', drops: [{ id: 'stardust', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }],
+    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170 },
+  }),
+  starcarto: mob({
+    id: 'starcarto', name: 'Star-chart Cartographer', level: 31, hp: 2400, atk: 128, def: 30, acc: 92, eva: 10, exp: 1220, gold: [62, 124],
+    speed: 40, w: 26, h: 66, art: 'starcarto', drops: [{ id: 'astral_shard', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 2.1, reach: 30, windup: 0.45, range: 150 },
+  }),
+  mothlibrarian: mob({
+    id: 'mothlibrarian', name: 'Moth Librarian', level: 32, hp: 2500, atk: 134, def: 28, acc: 94, eva: 12, exp: 1300, gold: [64, 128],
+    speed: 44, w: 30, h: 66, art: 'mothlibrarian', drops: [{ id: 'moth_scale', chance: 0.4 }, { id: 'astral_shard', chance: 0.08 }],
+    fight: { every: 1.9, reach: 38, windup: 0.4 },
+  }),
+  meteorgolem: mob({
+    id: 'meteorgolem', name: 'Meteor Golem Girl', level: 33, hp: 3800, atk: 150, def: 46, acc: 94, eva: 4, exp: 1600, gold: [72, 140],
+    speed: 30, w: 30, h: 64, art: 'meteorgolem', drops: [{ id: 'meteorite', chance: 0.45 }, { id: 'astral_shard', chance: 0.12 }],
+    fight: { every: 2.4, reach: 46, windup: 0.65 },
+  }),
+  geminighosts: mob({
+    id: 'geminighosts', name: 'Gemini Ghosts', level: 30, hp: 2100, atk: 120, def: 22, acc: 90, eva: 16, exp: 1100, gold: [58, 118],
+    speed: 48, w: 32, h: 50, art: 'geminighosts', drops: [{ id: 'astral_shard', chance: 0.06 }, { id: 'mana_elixir', chance: 0.2 }],
+    fight: { every: 1.7, reach: 40, windup: 0.35 },
+  }),
+  folio: mob({
+    id: 'folio', name: 'Folio, the Archivist', level: 32, hp: 78000, atk: 200, def: 46, acc: 98, eva: 6, exp: 30000, gold: [2400, 4000],
+    speed: 32, w: 54, h: 112, art: 'folio', boss: true,
+    drops: [{ id: 'astral_shard', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 14 }],
+    fight: { every: 2, reach: 70, windup: 0.5 }, mech: 'folio',
+  }),
+  eclipsesol: mob({
+    id: 'eclipsesol', name: 'Sol, the Eclipse Twin', level: 33, hp: 48000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [1500, 2600],
+    speed: 36, w: 50, h: 112, art: 'eclipsesol', boss: true,
+    drops: [{ id: 'astral_shard', chance: 1, qty: 2 }, { id: 'elixir', chance: 1, qty: 2 }],
+    fight: { every: 1.9, reach: 62, windup: 0.5 }, mech: 'eclipse',
+  }),
+  eclipseluna: mob({
+    id: 'eclipseluna', name: 'Luna, the Eclipse Twin', level: 33, hp: 48000, atk: 196, def: 44, acc: 98, eva: 6, exp: 18000, gold: [1500, 2600],
+    speed: 36, w: 50, h: 112, art: 'eclipseluna', boss: true,
+    drops: [{ id: 'astral_shard', chance: 1, qty: 2 }, { id: 'mana_elixir', chance: 1, qty: 6 }],
+    fight: { every: 1.9, reach: 62, windup: 0.5 }, mech: 'eclipse',
+  }),
+  astraea: mob({
+    id: 'astraea', name: 'Astraea, the Star Keeper', level: 35, hp: 130000, atk: 214, def: 50, acc: 104, eva: 6, exp: 52000, gold: [4200, 7000],
+    speed: 30, w: 64, h: 130, art: 'astraea', boss: true,
+    drops: [{ id: 'astral_shard', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 84, windup: 0.55 }, mech: 'astraea',
+  }),
+
+
+  // ---------- Candy Volcano (levels 35-40, docs/design/candy-volcano.md) ----------
+  gummybear: mob({
+    id: 'gummybear', name: 'Gummy Bear Brawler', level: 35, hp: 3600, atk: 160, def: 40, acc: 110, eva: 10, exp: 1700, gold: [80, 150],
+    speed: 48, w: 28, h: 64, art: 'gummybear', drops: [{ id: 'taffy_twist', chance: 0.4 }, { id: 'sugar_gem', chance: 0.06 }],
+    fight: { every: 1.7, reach: 40, windup: 0.35 },
+  }),
+  cottoncandy: mob({
+    id: 'cottoncandy', name: 'Cotton Candy Fairy', level: 35, hp: 3000, atk: 156, def: 30, acc: 112, eva: 16, exp: 1650, gold: [78, 148],
+    speed: 42, w: 30, h: 64, art: 'cottoncandy', drops: [{ id: 'taffy_twist', chance: 0.35 }, { id: 'sugar_gem', chance: 0.06 }],
+    fight: { every: 2.2, reach: 30, windup: 0.5, range: 160 },
+  }),
+  lollipopwitch: mob({
+    id: 'lollipopwitch', name: 'Lollipop Witch', level: 36, hp: 3200, atk: 166, def: 32, acc: 114, eva: 12, exp: 1750, gold: [80, 152],
+    speed: 36, w: 28, h: 72, art: 'lollipopwitch', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'mana_elixir', chance: 0.2 }],
+    fight: { every: 2.3, reach: 30, windup: 0.55, range: 170 },
+  }),
+  peppermint: mob({
+    id: 'peppermint', name: 'Peppermint Spinner', level: 37, hp: 3400, atk: 170, def: 34, acc: 116, eva: 16, exp: 1850, gold: [84, 158],
+    speed: 52, w: 32, h: 64, art: 'peppermint', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'taffy_twist', chance: 0.3 }],
+    fight: { every: 1.8, reach: 44, windup: 0.35 },
+  }),
+  chocoknight: mob({
+    id: 'chocoknight', name: 'Chocolate Knight Girl', level: 38, hp: 5200, atk: 184, def: 56, acc: 116, eva: 4, exp: 2300, gold: [96, 180],
+    speed: 32, w: 30, h: 66, art: 'chocoknight', drops: [{ id: 'cocoa_bean', chance: 0.45 }, { id: 'sugar_gem', chance: 0.12 }],
+    fight: { every: 2.3, reach: 50, windup: 0.6 },
+  }),
+  jellyninja: mob({
+    id: 'jellyninja', name: 'Jelly Bean Ninja', level: 37, hp: 3100, atk: 172, def: 30, acc: 120, eva: 20, exp: 1800, gold: [82, 156],
+    speed: 60, w: 30, h: 58, art: 'jellyninja', drops: [{ id: 'sugar_gem', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 2, reach: 30, windup: 0.4, range: 150 },
+  }),
+  toffee: mob({
+    id: 'toffee', name: 'Toffee, the Caramel Smith', level: 37, hp: 110000, atk: 236, def: 56, acc: 120, eva: 6, exp: 42000, gold: [3400, 5600],
+    speed: 30, w: 54, h: 112, art: 'toffee', boss: true,
+    drops: [{ id: 'sugar_gem', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 16 }],
+    fight: { every: 2.1, reach: 72, windup: 0.6 }, mech: 'toffee',
+  }),
+  gretel: mob({
+    id: 'gretel', name: 'Gretel, the Gingerbread Knight', level: 38, hp: 120000, atk: 240, def: 60, acc: 122, eva: 6, exp: 46000, gold: [3600, 6000],
+    speed: 40, w: 54, h: 112, art: 'gretel', boss: true,
+    drops: [{ id: 'sugar_gem', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 8 }],
+    fight: { every: 1.9, reach: 80, windup: 0.5 }, mech: 'gretel',
+  }),
+  bonbon: mob({
+    id: 'bonbon', name: 'Queen Bonbon', level: 40, hp: 180000, atk: 252, def: 62, acc: 126, eva: 6, exp: 72000, gold: [5600, 9000],
+    speed: 26, w: 70, h: 130, art: 'bonbon', boss: true,
+    drops: [{ id: 'sugar_gem', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 86, windup: 0.55 }, mech: 'bonbon',
+  }),
+  // ---------- Dream Theatre (levels 40-45, docs/design/dream-theatre.md) ----------
+  understudy: mob({
+    id: 'understudy', name: 'Understudy Ghost', level: 40, hp: 4200, atk: 190, def: 40, acc: 126, eva: 16, exp: 2400, gold: [96, 176],
+    speed: 46, w: 26, h: 60, art: 'understudy', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
+    fight: { every: 1.9, reach: 42, windup: 0.4 },
+  }),
+  chorusgirl: mob({
+    id: 'chorusgirl', name: 'Chorus Girl', level: 41, hp: 4400, atk: 196, def: 40, acc: 128, eva: 18, exp: 2500, gold: [98, 180],
+    speed: 54, w: 26, h: 68, art: 'chorusgirl', drops: [{ id: 'sequin', chance: 0.4 }, { id: 'encore_rose', chance: 0.06 }],
+    fight: { every: 1.7, reach: 44, windup: 0.35 },
+  }),
+  stagehand: mob({
+    id: 'stagehand', name: 'Stagehand Imp', level: 40, hp: 4000, atk: 192, def: 46, acc: 124, eva: 14, exp: 2350, gold: [94, 172],
+    speed: 58, w: 26, h: 56, art: 'stagehand', drops: [{ id: 'script_page', chance: 0.3 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 1.8, reach: 38, windup: 0.35 },
+  }),
+  primadonna: mob({
+    id: 'primadonna', name: 'Prima Donna', level: 42, hp: 5200, atk: 204, def: 44, acc: 130, eva: 8, exp: 2800, gold: [104, 190],
+    speed: 30, w: 34, h: 66, art: 'primadonna', drops: [{ id: 'sequin', chance: 0.45 }, { id: 'encore_rose', chance: 0.1 }],
+    fight: { every: 2.4, reach: 30, windup: 0.6, range: 180 },
+  }),
+  paperdragon: mob({
+    id: 'paperdragon', name: 'Paper Dragon Dancers', level: 43, hp: 6400, atk: 212, def: 52, acc: 130, eva: 10, exp: 3100, gold: [110, 200],
+    speed: 50, w: 48, h: 50, art: 'paperdragon', drops: [{ id: 'script_page', chance: 0.4 }, { id: 'encore_rose', chance: 0.12 }],
+    fight: { every: 2.1, reach: 54, windup: 0.5 },
+  }),
+  prompter: mob({
+    id: 'prompter', name: 'Prompter', level: 42, hp: 4300, atk: 200, def: 38, acc: 132, eva: 16, exp: 2700, gold: [100, 186],
+    speed: 40, w: 26, h: 64, art: 'prompter', drops: [{ id: 'script_page', chance: 0.45 }, { id: 'mana_elixir', chance: 0.2 }],
+    fight: { every: 2.2, reach: 30, windup: 0.5, range: 170 },
+  }),
+  persona: mob({
+    id: 'persona', name: 'Persona, the Two-Faced Muse', level: 42, hp: 160000, atk: 262, def: 62, acc: 132, eva: 8, exp: 62000, gold: [4400, 7200],
+    speed: 34, w: 54, h: 112, art: 'persona', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 18 }],
+    fight: { every: 1.9, reach: 74, windup: 0.5 }, mech: 'persona',
+  }),
+  directrice: mob({
+    id: 'directrice', name: 'Madame Directrice', level: 43, hp: 170000, atk: 268, def: 64, acc: 134, eva: 6, exp: 66000, gold: [4600, 7600],
+    speed: 32, w: 54, h: 112, art: 'directrice', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 9 }],
+    fight: { every: 2, reach: 76, windup: 0.55 }, mech: 'directrice',
+  }),
+  playwright: mob({
+    id: 'playwright', name: 'The Phantom Playwright', level: 45, hp: 240000, atk: 280, def: 68, acc: 138, eva: 8, exp: 96000, gold: [7000, 11000],
+    speed: 28, w: 64, h: 130, art: 'playwright', boss: true,
+    drops: [{ id: 'encore_rose', chance: 1, qty: 5 }],
+    fight: { every: 2, reach: 88, windup: 0.55 }, mech: 'playwright',
+  }),
+  // ---------- Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------
+  kiterider: mob({
+    id: 'kiterider', name: 'Kite Rider', level: 45, hp: 5200, atk: 220, def: 46, acc: 140, eva: 20, exp: 3300, gold: [110, 200],
+    speed: 60, w: 28, h: 64, art: 'kiterider', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.06 }],
+    fight: { every: 1.8, reach: 44, windup: 0.35 },
+  }),
+  shepherdess: mob({
+    id: 'shepherdess', name: 'Cloud Shepherdess', level: 45, hp: 5400, atk: 216, def: 46, acc: 138, eva: 14, exp: 3300, gold: [110, 200],
+    speed: 44, w: 28, h: 64, art: 'shepherdess', drops: [{ id: 'sky_silk', chance: 0.45 }, { id: 'sky_scale', chance: 0.06 }],
+    fight: { every: 1.9, reach: 46, windup: 0.4 },
+  }),
+  gunner: mob({
+    id: 'gunner', name: 'Sky Pirate Gunner', level: 46, hp: 5000, atk: 226, def: 44, acc: 144, eva: 14, exp: 3400, gold: [116, 210],
+    speed: 46, w: 28, h: 66, art: 'gunner', drops: [{ id: 'sky_scale', chance: 0.08 }, { id: 'white_potion', chance: 0.3 }],
+    fight: { every: 2.3, reach: 30, windup: 0.55, range: 190 },
+  }),
+  barnacleknight: mob({
+    id: 'barnacleknight', name: 'Barnacle Knight', level: 48, hp: 8200, atk: 240, def: 66, acc: 144, eva: 6, exp: 4200, gold: [124, 224],
+    speed: 32, w: 32, h: 68, art: 'barnacleknight', drops: [{ id: 'barnacle_shell', chance: 0.45 }, { id: 'sky_scale', chance: 0.12 }],
+    fight: { every: 2.3, reach: 56, windup: 0.6 },
+  }),
+  harpist: mob({
+    id: 'harpist', name: 'Storm Harpist', level: 47, hp: 5200, atk: 232, def: 42, acc: 148, eva: 16, exp: 3700, gold: [118, 214],
+    speed: 38, w: 28, h: 64, art: 'harpist', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'mana_elixir', chance: 0.2 }],
+    fight: { every: 2.4, reach: 30, windup: 0.55, range: 180 },
+  }),
+  monk: mob({
+    id: 'monk', name: 'Feather Monk', level: 47, hp: 6000, atk: 230, def: 52, acc: 148, eva: 18, exp: 3800, gold: [118, 214],
+    speed: 52, w: 28, h: 64, art: 'monk', drops: [{ id: 'sky_silk', chance: 0.4 }, { id: 'sky_scale', chance: 0.1 }],
+    fight: { every: 1.7, reach: 46, windup: 0.35 },
+  }),
+  gale: mob({
+    id: 'gale', name: 'Captain Gale', level: 46, hp: 200000, atk: 290, def: 70, acc: 150, eva: 10, exp: 84000, gold: [7400, 11600],
+    speed: 38, w: 54, h: 112, art: 'gale', boss: true,
+    drops: [{ id: 'sky_scale', chance: 1, qty: 3 }, { id: 'white_potion', chance: 1, qty: 20 }],
+    fight: { every: 1.8, reach: 80, windup: 0.5 }, mech: 'gale',
+  }),
+  matriarch: mob({
+    id: 'matriarch', name: 'The Barnacle Matriarch', level: 47, hp: 220000, atk: 296, def: 74, acc: 152, eva: 6, exp: 90000, gold: [7800, 12200],
+    speed: 26, w: 58, h: 120, art: 'matriarch', boss: true,
+    drops: [{ id: 'sky_scale', chance: 1, qty: 3 }, { id: 'mana_elixir', chance: 1, qty: 10 }],
+    fight: { every: 2.1, reach: 84, windup: 0.6 }, mech: 'matriarch',
+  }),
+  whaledream: mob({
+    id: 'whaledream', name: "The Whale's Dream", level: 50, hp: 320000, atk: 310, def: 76, acc: 156, eva: 8, exp: 130000, gold: [10000, 15000],
+    speed: 24, w: 70, h: 140, art: 'whaledream', boss: true,
+    drops: [{ id: 'sky_scale', chance: 1, qty: 6 }],
+    fight: { every: 2.1, reach: 92, windup: 0.6 }, mech: 'whaledream',
+  }),
+
   crystalking: mob({
     id: 'crystalking', name: 'Prismaris, the Crystal King', level: 45, hp: 160000, atk: 260, def: 60, acc: 110, eva: 12, exp: 120000,
     gold: [4000, 8000], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true,

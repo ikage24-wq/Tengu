@@ -112,6 +112,55 @@ export const THEMES = {
     skyline: 'peaks', snowcaps: true, props: ['snowtuft', 'pine', 'snowtuft', 'rock'],
     critters: ['bird'], drift: 'snow', face: 'sun',
   },
+  // Moonlit Manor: a haunted manor by moonlight, spooky-cute: violet night, warm windows, candles.
+  manor: {
+    sky: ['#2a2458', '#5a4a96', '#a88ad0'], sun: '#fff6d8', far: '#4a3a7a', mid: '#6a5a9a', midTrim: '#c9a6ff',
+    ground: '#8a6ab8', groundDeep: '#6a4e98', trim: '#c9b6ff', ledge: '#a888d0', ledgeTrim: '#e6d6ff', ledgeShade: '#7a5aa8',
+    skyline: 'manor', props: ['candle', 'flower', 'tuft', 'candle'],
+    critters: ['firefly'], drift: 'mote', face: 'moon', stars: true,
+  },
+  // The Sunken Aquarium Palace: deep teal water, sunbeams, coral and kelp, bubbles rising.
+  aquarium: {
+    sky: ['#1a4a6e', '#2a6a8a', '#4a9ab0'], sun: '#e6fbff', far: '#1e5a7a', mid: '#2a7a8a', midTrim: '#ff9ab8',
+    ground: '#e8d4b0', groundDeep: '#c8b090', trim: '#ff9ab8', ledge: '#f0dcc0', ledgeTrim: '#ffb3cf', ledgeShade: '#c8a88a',
+    skyline: 'reef', props: ['tuft', 'rock', 'tuft'],
+    critters: [], drift: 'bubble', face: null,
+  },
+  // The Clockwork Carnival: a violet night fairground, string lights, striped tents, confetti.
+  carnival: {
+    sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], sun: '#fff6d8', far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b',
+    ground: '#e8c8a0', groundDeep: '#c8a078', trim: '#ff7aa8', ledge: '#ffe0b0', ledgeTrim: '#ff7aa8', ledgeShade: '#c8a078',
+    skyline: 'carnival', props: ['tuft', 'flower', 'tuft'],
+    critters: ['firefly'], drift: 'confetti', face: 'moon', stars: true,
+  },
+  // The Star Observatory: deep night blue, the Milky Way, brass and starlight.
+  observatory: {
+    sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], sun: '#fff6d8', far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6',
+    ground: '#9a9ac8', groundDeep: '#7a7aaa', trim: '#fff3a6', ledge: '#b8b8e0', ledgeTrim: '#fff3a6', ledgeShade: '#7a7aaa',
+    skyline: 'stars', props: ['tuft', 'rock'],
+    critters: ['firefly'], drift: 'sparkle', face: 'moon', stars: true,
+  },
+  // The Candy Volcano: a pink-and-gold sky, gumdrop hills, candy canes, sprinkles in the air.
+  candy: {
+    sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], sun: '#fff6d8', far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b',
+    ground: '#f0c8a0', groundDeep: '#d8a078', trim: '#ff9ab8', ledge: '#ffe0b0', ledgeTrim: '#ff9ab8', ledgeShade: '#d8a078',
+    skyline: 'candy', props: ['flower', 'tuft', 'flower'],
+    critters: ['butterfly'], drift: 'sprinkle', face: 'sun',
+  },
+  // The Sky Whale's Back: a high bright sky over a sea of cloud, sails and pennants.
+  skywhale: {
+    sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], sun: '#fffbe6', far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff',
+    ground: '#6a8ac0', groundDeep: '#4a6a9a', trim: '#eaf6ff', ledge: '#e8b080', ledgeTrim: '#ffd36b', ledgeShade: '#8a5a3a',
+    skyline: 'whaleback', props: ['cloudpuff', 'tuft'],
+    critters: ['gull'], drift: 'sparkle', face: 'sun',
+  },
+  // The Dream Theatre: a dusky violet evening over the clouds, gold marquee lights, velvet.
+  theatre: {
+    sky: ['#4a2a6a', '#a05a9a', '#ffb0a0'], sun: '#fff0d0', far: '#6a3a7a', mid: '#8a4a7a', midTrim: '#ffd36b',
+    ground: '#c88a5a', groundDeep: '#8a5a3a', trim: '#ffd36b', ledge: '#e8b080', ledgeTrim: '#ffd36b', ledgeShade: '#8a5a3a',
+    skyline: 'theatre', props: ['tuft', 'flower'],
+    critters: [], drift: 'sparkle', face: 'moon', stars: true,
+  },
   sky: {
     sky: ['#ffc6e8', '#cddbff', '#eef8ff'], sun: '#fffbe6', far: '#ffffff', mid: '#f3f8ff', midTrim: '#d6e6ff',
     ground: '#ffffff', groundDeep: '#e6ecff', trim: '#fff0fa', ledge: '#ffffff', ledgeTrim: '#ffe6f3', ledgeShade: '#dce8ff',
@@ -1087,6 +1136,57 @@ function drawFar(ctx, t, cam, width, y0, time) {
     case 'roots':
       drawFarRoots(ctx, t, cam, width, y0, time);
       break;
+    case 'manor':
+      drawFarManor(ctx, t, cam, width, y0, time);
+      break;
+    case 'manorhall':
+      drawFarManorHall(ctx, t, cam, width, y0, time);
+      break;
+    case 'reef':
+      drawFarReef(ctx, t, cam, width, y0, time);
+      break;
+    case 'carnival':
+      drawFarCarnival(ctx, t, cam, width, y0, time);
+      break;
+    case 'stars':
+      drawFarStars(ctx, t, cam, width, y0, time);
+      break;
+    case 'candy':
+    case 'crater':
+      drawFarCandy(ctx, t, cam, width, y0, time, t.skyline === 'crater');
+      break;
+    case 'candycave':
+    case 'forge':
+      drawFarCandyCave(ctx, t, cam, width, y0, time, t.skyline === 'forge');
+      break;
+    case 'whale':
+    case 'whaleback':
+    case 'tail':
+    case 'market':
+    case 'lungs':
+    case 'deck':
+    case 'fortress':
+    case 'brow':
+      drawFarWhale(ctx, t, cam, width, y0, time, t.skyline);
+      break;
+    case 'theatre':
+    case 'stagehall':
+    case 'pirate':
+    case 'fairy':
+    case 'ballroom':
+    case 'backstage':
+    case 'greatstage':
+      drawFarTheatre(ctx, t, cam, width, y0, time, t.skyline);
+      break;
+    case 'starhall':
+    case 'archive':
+    case 'orrery':
+      drawFarStarHall(ctx, t, cam, width, y0, time, t.skyline);
+      break;
+    case 'bigtop':
+    case 'workshop':
+      drawFarBigTop(ctx, t, cam, width, y0, time, t.skyline === 'workshop');
+      break;
     // Pointed mountains, two ranges deep; on the peak they wear snow caps.
     case 'peaks':
       backRidge(ctx, t, cam, width, y0 - 60, 40);
@@ -1247,6 +1347,1296 @@ function drawFar(ctx, t, cam, width, y0, time) {
         litFill(ctx, t, p, 3, 2.4);
       });
   }
+}
+
+// Moonlit Manor, outside: the manor itself on its hill far back, gables and towers with warm
+// windows that light and go dark as if someone walks from room to room, bats round the tower.
+function drawFarManor(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 30, 30, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  repeat(cam.x, 0.16, 420, width, (i, x) => {
+    const bx = x + 60 + hash(i) * 120;
+    const p = new Path2D();
+    // The hall, two gables, a tall tower with a pointed roof, chimneys.
+    p.rect(bx, y0 - 70, 180, 100);
+    p.moveTo(bx - 8, y0 - 70);
+    p.lineTo(bx + 30, y0 - 112);
+    p.lineTo(bx + 68, y0 - 70);
+    p.moveTo(bx + 100, y0 - 70);
+    p.lineTo(bx + 140, y0 - 118);
+    p.lineTo(bx + 188, y0 - 70);
+    p.rect(bx + 70, y0 - 150, 34, 90);
+    p.moveTo(bx + 64, y0 - 150);
+    p.lineTo(bx + 87, y0 - 196);
+    p.lineTo(bx + 110, y0 - 150);
+    p.rect(bx + 20, y0 - 126, 10, 26);
+    p.rect(bx + 156, y0 - 124, 10, 30);
+    litFill(ctx, t, p, 2, 1.6);
+    // Windows: warm where someone is, dark where they've left.
+    for (let r = 0; r < 2; r++) {
+      for (let c = 0; c < 6; c++) {
+        const on = Math.sin(time * 0.4 + c * 1.7 + r * 2.3 + i) > -0.2;
+        const wx = bx + 12 + c * 28;
+        const wy = y0 - 56 + r * 30;
+        ctx.fillStyle = on ? '#ffd88a' : shade(t.far, -10);
+        ctx.beginPath();
+        ctx.roundRect(snap(wx), snap(wy), 8, 13, [4, 4, 0, 0]);
+        ctx.fill();
+        if (on) glow(ctx, wx + 4, wy + 6, 14, '#ffd27a', 0.35);
+      }
+    }
+    const tw = Math.sin(time * 0.7 + i) > 0;
+    ctx.fillStyle = tw ? '#ffe9a0' : shade(t.far, -10);
+    ctx.beginPath();
+    ctx.ellipse(bx + 87, y0 - 128, 5, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (tw) glow(ctx, bx + 87, y0 - 128, 20, '#ffe9a0', 0.4);
+  });
+  // Bats looping round the tower, their phases from their own place in the sky.
+  ctx.fillStyle = shade(t.far, -18);
+  for (let k = 0; k < 3; k++) {
+    const a = time * (0.6 + k * 0.15) + k * 2;
+    const bx = ((width * (0.3 + k * 0.22) - cam.x * 0.16) % (width + 80) + width + 80) % (width + 80) - 40 + Math.cos(a) * 40;
+    const by = y0 - 160 + Math.sin(a * 1.3) * 18;
+    const f = Math.sin(time * 14 + k) * 3;
+    ctx.beginPath();
+    ctx.moveTo(bx - 6, by - f);
+    ctx.quadraticCurveTo(bx - 3, by + 2, bx, by);
+    ctx.quadraticCurveTo(bx + 3, by + 2, bx + 6, by - f);
+    ctx.quadraticCurveTo(bx, by + 4, bx - 6, by - f);
+    ctx.fill();
+  }
+}
+
+// Moonlit Manor, inside: tall arched windows full of moonlight, curtains swaying in a draught, a
+// moonbeam slanting across, between dark panelled walls.
+function drawFarManorHall(ctx, t, cam, width, y0, time) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  repeat(cam.x, 0.2, 170, width, (i, x) => {
+    const wx = x + 50;
+    const top = y0 - 190;
+    ctx.fillStyle = mix(t.sky[2], '#ffffff', 0.25);
+    ctx.beginPath();
+    ctx.moveTo(wx, y0 - 30);
+    ctx.lineTo(wx, top + 30);
+    ctx.arc(wx + 30, top + 30, 30, Math.PI, 0);
+    ctx.lineTo(wx + 60, y0 - 30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = t.farLit;
+    ctx.fillRect(snap(wx + 28), top + 2, 4, y0 - 30 - top);
+    for (let k = 1; k < 4; k++) ctx.fillRect(snap(wx), snap(top + 30 + k * 32), 60, 3);
+    // The moonbeam slanting down to the floor.
+    ctx.save();
+    ctx.globalAlpha = 0.1 + 0.04 * Math.sin(time * 0.8 + i);
+    ctx.fillStyle = '#fff6dc';
+    ctx.beginPath();
+    ctx.moveTo(wx, top + 20);
+    ctx.lineTo(wx + 60, top + 20);
+    ctx.lineTo(wx + 150, y0 + 40);
+    ctx.lineTo(wx + 70, y0 + 40);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    // Curtains each side, swaying in the draught.
+    for (const s of [-1, 1]) {
+      const cx = s < 0 ? wx - 4 : wx + 64;
+      const sw = Math.sin(time * 0.9 + i + s) * 4;
+      ctx.fillStyle = shade(t.mid, -6);
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, top - 6);
+      ctx.lineTo(cx + 12, top - 6);
+      ctx.quadraticCurveTo(cx + 6 * s + sw, y0 - 90, cx + 10 + sw * 1.4, y0 - 20);
+      ctx.lineTo(cx - 10 + sw * 1.4, y0 - 20);
+      ctx.quadraticCurveTo(cx - 6 * s + sw, y0 - 90, cx - 12, top - 6);
+      ctx.fill();
+      ctx.fillStyle = t.midTrim;
+      ctx.fillRect(snap(cx - 12), snap(y0 - 110), 24, 4);
+    }
+  });
+  // Wainscot along the bottom of the walls.
+  ctx.fillStyle = shade(t.far, -8);
+  ctx.fillRect(0, snap(y0 - 24), width, 600);
+  ctx.fillStyle = t.farLit;
+  ctx.fillRect(0, snap(y0 - 24), width, 2);
+}
+
+// The manor's middle plane. Outside: the wrought-iron fence, clipped topiaries and lamp posts.
+// Inside: columns with candle sconces and the family's portraits, whose eyes follow you.
+function drawMidManor(ctx, t, cam, width, y0, time, inside) {
+  if (!inside) {
+    ctx.fillStyle = shade(t.mid, -14);
+    repeat(cam.x, 0.45, 26, width, (i, x) => {
+      ctx.fillRect(snap(x), snap(y0 - 40), 3, 44);
+      ctx.beginPath();
+      ctx.moveTo(x - 2, y0 - 40);
+      ctx.lineTo(x + 1.5, y0 - 48);
+      ctx.lineTo(x + 5, y0 - 40);
+      ctx.fill();
+    });
+    ctx.fillRect(0, snap(y0 - 30), width, 3);
+    ctx.fillRect(0, snap(y0 - 10), width, 3);
+    repeat(cam.x, 0.45, 140, width, (i, x) => {
+      const s = hash(i + 4);
+      if (s < 0.5) place(ctx, topiaryArt(Math.floor(hash(i) * 3)), x + 70, y0 + 4);
+      else if (s < 0.8) {
+        place(ctx, manorLampArt(), x + 70, y0 + 4);
+        glow(ctx, x + 70, y0 - 62, 24, '#ffd27a', 0.4 + 0.12 * Math.sin(time * 5 + i));
+      }
+    });
+    return;
+  }
+  repeat(cam.x, 0.45, 180, width, (i, x) => {
+    place(ctx, hallColumnArt(), x + 20, y0 + 4);
+    glow(ctx, x + 20, y0 - 80, 20, '#ffd27a', 0.35 + 0.12 * Math.sin(time * 5 + i));
+    if (hash(i + 7) > 0.35) {
+      // A portrait whose eyes slide to follow you across the room.
+      const look = Math.max(-1, Math.min(1, (width / 2 - (x + 110)) / 200));
+      place(ctx, hallPortraitArt(Math.floor(hash(i) * 4), Math.round(look * 2)), x + 110, y0 - 50);
+    }
+  });
+}
+
+// ---------- Moonlit Manor sprites ----------
+
+function topiaryArt(kind) {
+  return art(`manor-topiary|${kind}`, 40, 64, () => {
+    const g = '#6ab07a';
+    const gl = '#9ad8a0';
+    const out = [R(14, 52, 12, 12, '#c8a8e8'), F(R(14, 52, 12, 3, '#e6d6f6')), R(19, 34, 2, 20, '#8a6a5a')];
+    if (kind === 0) out.push(E(20, 26, 13, 13, g), F(E(16, 21, 6, 5, gl)), E(20, 8, 7, 7, g), F(E(18, 6, 3, 2.4, gl)));
+    else if (kind === 1) out.push(T([[20, 0], [34, 36], [6, 36]], g), F(T([[20, 3], [26, 20], [14, 20]], gl)));
+    else out.push(E(20, 30, 12, 8, g), E(20, 18, 9, 7, g), E(20, 8, 6, 5, g), F(E(17, 16, 4, 3, gl)), F(E(17, 28, 5, 3, gl)));
+    return out;
+  });
+}
+function manorLampArt() {
+  return art('manor-lamp', 20, 72, () => [
+    R(8.6, 14, 2.8, 56, '#4a3a6a'), R(6, 66, 8, 6, '#4a3a6a'), T([[3, 14], [17, 14], [14, 4], [6, 4]], '#4a3a6a'),
+    R(6, 6, 8, 8, '#ffe2a0'), F(R(7, 7, 3, 6, '#fff6dc')), T([[4, 4], [16, 4], [10, 0]], '#5a4a7a'),
+  ]);
+}
+function hallColumnArt() {
+  return art('manor-column', 30, 150, () => [
+    R(6, 10, 18, 134, '#cdb8ec'), F(R(6, 10, 5, 134, '#e6dcfa')), F(R(19, 10, 5, 134, '#a890d0')),
+    R(2, 0, 26, 10, '#e6dcfa'), R(2, 142, 26, 8, '#e6dcfa'),
+    // A candle sconce.
+    R(13, 76, 4, 4, '#ffd36b'), R(11, 70, 2, 7, '#fff6dc'), R(17, 70, 2, 7, '#fff6dc'), E(12, 68, 1.4, 2.4, '#ffb35a'), E(18, 68, 1.4, 2.4, '#ffb35a'),
+  ]);
+}
+function hallPortraitArt(who, look) {
+  return art(`manor-portrait|${who}|${look}`, 36, 46, () => {
+    const bg = ['#8a6ac8', '#5a8ac8', '#c86a8a', '#6aa88a'][who];
+    const hair = ['#ffd36b', '#4a3a6a', '#ff9a6a', '#e8ecff'][who];
+    return [
+      R(0, 0, 36, 46, '#ffd36b'), F(R(1, 1, 34, 2, '#fff2b0')), R(3, 3, 30, 40, bg),
+      E(18, 46, 12, 10, shade(bg, -16)), E(18, 22, 8, 9, '#fff0e6'), E(18, 15, 9, 6, hair),
+      E(15 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), E(21 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), R(16, 27, 4, 1, '#d86a8a'),
+    ];
+  });
+}
+
+// The Sunken Aquarium Palace, far back: sunbeams slanting down through the water, the palace's
+// domes and spires as soft blue silhouettes with lit portholes, and kelp swaying in the deep.
+function drawFarReef(ctx, t, cam, width, y0, time) {
+  // Light rays from the surface, swaying slowly.
+  ctx.save();
+  for (let k = 0; k < 5; k++) {
+    const x = ((k * 173 - cam.x * 0.05) % (width + 200) + width + 200) % (width + 200) - 100;
+    const sway = Math.sin(time * 0.4 + k * 1.7) * 30;
+    ctx.globalAlpha = 0.08 + 0.04 * Math.sin(time * 0.7 + k);
+    ctx.fillStyle = '#e6fbff';
+    ctx.beginPath();
+    ctx.moveTo(x, -10);
+    ctx.lineTo(x + 40, -10);
+    ctx.lineTo(x + 120 + sway, y0 + 60);
+    ctx.lineTo(x + 50 + sway, y0 + 60);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+  backRidge(ctx, t, cam, width, y0 - 20, 30, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  repeat(cam.x, 0.16, 380, width, (i, x) => {
+    const bx = x + 40 + hash(i) * 120;
+    const p = new Path2D();
+    // A palace wing: a hall, two onion domes on towers, a spire.
+    p.rect(bx, y0 - 60, 200, 90);
+    for (const [dx, h] of [[20, 120], [150, 104]]) {
+      p.rect(bx + dx, y0 - h, 34, h);
+      p.moveTo(bx + dx - 6, y0 - h);
+      p.quadraticCurveTo(bx + dx + 17, y0 - h - 50, bx + dx + 40, y0 - h);
+      p.closePath();
+    }
+    p.moveTo(bx + 92, y0 - 60);
+    p.lineTo(bx + 100, y0 - 150);
+    p.lineTo(bx + 108, y0 - 60);
+    litFill(ctx, t, p, 2, 1.6);
+    // Portholes lit from within, breathing.
+    for (let c = 0; c < 5; c++) {
+      const on = Math.sin(time * 0.5 + c * 1.3 + i * 2) > -0.4;
+      const wx = bx + 24 + c * 36;
+      const wy = y0 - 34;
+      ctx.fillStyle = on ? '#bff6ff' : shade(t.far, -10);
+      ctx.beginPath();
+      ctx.arc(wx, wy, 5, 0, Math.PI * 2);
+      ctx.fill();
+      if (on) glow(ctx, wx, wy, 14, '#bff6ff', 0.3);
+    }
+  });
+  // Tall kelp swaying in the deep, its phase from its own place on the sea floor.
+  ctx.fillStyle = shade(t.far, 6);
+  repeat(cam.x, 0.22, 70, width, (i, x) => {
+    if (hash(i + 31) < 0.4) return;
+    const h = 120 + hash(i + 2) * 120;
+    const wx = x + cam.x * 0.22;
+    ctx.beginPath();
+    ctx.moveTo(x, y0 + 30);
+    for (let k = 1; k <= 8; k++) {
+      const u = k / 8;
+      ctx.lineTo(x + Math.sin(time * 0.9 + wx * 0.02 + u * 3) * 10 * u, y0 + 30 - h * u);
+    }
+    for (let k = 8; k >= 0; k--) {
+      const u = k / 8;
+      ctx.lineTo(x + 6 + Math.sin(time * 0.9 + wx * 0.02 + u * 3) * 10 * u, y0 + 30 - h * u);
+    }
+    ctx.fill();
+  });
+}
+
+// The middle plane: coral clusters, sea fans, giant clam shells, and little schools of fish that
+// turn together.
+function drawMidReef(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 120, width, (i, x) => {
+    const s = hash(i + 4);
+    if (s < 0.4) place(ctx, coralArt(Math.floor(hash(i) * 3)), x + 60, y0 + 4);
+    else if (s < 0.6) place(ctx, seaFanArt(), x + 60, y0 + 4);
+    else if (s < 0.75) place(ctx, shellArt(), x + 60, y0 + 4);
+  });
+  // A school of fish crossing, turning at the ends.
+  for (let k = 0; k < 2; k++) {
+    const span = width + 200;
+    const u = ((time * 0.04 + k * 0.5) % 1);
+    const dir = Math.floor(time * 0.04 + k * 0.5) % 2 ? -1 : 1;
+    const sx = dir > 0 ? u * span - 100 : span - u * span - 100;
+    const sy = y0 - 120 - k * 50 + Math.sin(time * 0.8 + k) * 10;
+    for (let f = 0; f < 6; f++) {
+      const fx = sx + (f % 3) * 12 * -dir + Math.sin(time * 3 + f) * 2;
+      const fy = sy + Math.floor(f / 3) * 8 + (f % 2) * 4;
+      ctx.fillStyle = f % 2 ? '#ffd36b' : '#ff9ab8';
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 4, 2.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(fx - dir * 3, fy);
+      ctx.lineTo(fx - dir * 7, fy - 2.4);
+      ctx.lineTo(fx - dir * 7, fy + 2.4);
+      ctx.fill();
+    }
+  }
+}
+
+function coralArt(kind) {
+  return art(`reef-coral|${kind}`, 50, 60, () => {
+    const c = ['#ff8fb0', '#ffb35a', '#c9a6ff'][kind];
+    const cl = mix(c, '#ffffff', 0.4);
+    const out = [E(25, 58, 18, 3, mix(c, '#3a2d4f', 0.3))];
+    for (const [x, h, a] of [[25, 50, 0], [14, 36, -0.4], [36, 40, 0.35], [8, 22, -0.7], [42, 26, 0.6]]) {
+      const tx = x + Math.sin(a) * h;
+      const ty = 58 - Math.cos(a) * h;
+      out.push(T([[x - 3, 58], [x + 3, 58], [tx + 2, ty], [tx - 2, ty]], c), F(E(tx, ty, 3.4, 3.4, c)), F(E(tx - 1, ty - 1, 1.2, 1.2, cl)));
+    }
+    return out;
+  });
+}
+function seaFanArt() {
+  return art('reef-fan', 46, 56, () => {
+    const out = [R(21, 40, 4, 16, '#b05a8a')];
+    for (let k = 0; k < 7; k++) {
+      const a = -1.2 + k * 0.4;
+      out.push(T([[23, 42], [23 + Math.sin(a) * 22, 42 - Math.cos(a) * 34], [23 + Math.sin(a + 0.25) * 20, 42 - Math.cos(a + 0.25) * 30]], k % 2 ? '#ff7aa8' : '#ff9ac0'));
+    }
+    return out;
+  });
+}
+function shellArt() {
+  return art('reef-shell', 50, 30, () => [
+    E(25, 26, 22, 5, '#d8c4e6'), T([[4, 26], [46, 26], [40, 8], [25, 2], [10, 8]], '#ffe6f2'),
+    F(T([[25, 26], [25, 4], [27, 4], [27, 26]], '#f0c4dc')), F(T([[14, 26], [13, 8], [15, 7], [17, 26]], '#f0c4dc')), F(T([[34, 26], [36, 7], [38, 8], [36, 26]], '#f0c4dc')),
+    F(E(25, 22, 3, 3, '#ffffff')),
+  ]);
+}
+
+// The Clockwork Carnival outside: the great Ferris wheel turning slowly far back with its lit cars,
+// striped tents, a roller coaster's track looping against the sky, and strings of lights.
+function drawFarCarnival(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 30, 30, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  repeat(cam.x, 0.12, 560, width, (i, x) => {
+    // The wheel: a rim, spokes and cars that stay upright as it turns.
+    const cx = x + 200;
+    const cy = y0 - 110;
+    const r = 90;
+    const turn = time * 0.12 + i;
+    ctx.strokeStyle = t.farLit;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 1.5;
+    for (let k = 0; k < 8; k++) {
+      const a = turn + (k / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+      ctx.stroke();
+      const lit = Math.sin(time * 2 + k + i) > 0;
+      ctx.fillStyle = lit ? '#ffe2a0' : shade(t.far, -8);
+      ctx.beginPath();
+      ctx.roundRect(snap(cx + Math.cos(a) * r - 6), snap(cy + Math.sin(a) * r), 12, 10, 3);
+      ctx.fill();
+      if (lit) glow(ctx, cx + Math.cos(a) * r, cy + Math.sin(a) * r + 5, 12, '#ffd27a', 0.35);
+    }
+    ctx.fillStyle = t.far;
+    ctx.beginPath();
+    ctx.moveTo(cx - 50, y0 + 30);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx + 50, y0 + 30);
+    ctx.lineTo(cx + 40, y0 + 30);
+    ctx.lineTo(cx, cy + 14);
+    ctx.lineTo(cx - 40, y0 + 30);
+    ctx.fill();
+    // The coaster track looping beside it.
+    ctx.strokeStyle = t.farLit;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 330, y0 + 20);
+    ctx.bezierCurveTo(x + 360, y0 - 160, x + 460, y0 - 160, x + 470, y0 - 60);
+    ctx.bezierCurveTo(x + 480, y0 + 20, x + 520, y0 - 20, x + 560, y0 - 90);
+    ctx.stroke();
+  });
+  // Striped tents, nearer.
+  repeat(cam.x, 0.2, 260, width, (i, x) => {
+    const tx = x + 60 + hash(i) * 80;
+    const h = 70 + hash(i + 3) * 30;
+    for (let k = 0; k < 6; k++) {
+      ctx.fillStyle = k % 2 ? shade(t.far, 8) : mix(t.far, '#ff7aa8', 0.35);
+      ctx.beginPath();
+      ctx.moveTo(tx + 50, y0 - h);
+      ctx.lineTo(tx + k * 17, y0 + 20);
+      ctx.lineTo(tx + (k + 1) * 17, y0 + 20);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffd36b';
+    ctx.fillRect(snap(tx + 49), snap(y0 - h - 14), 2, 14);
+    ctx.beginPath();
+    ctx.moveTo(tx + 51, y0 - h - 14);
+    ctx.lineTo(tx + 62 + Math.sin(time * 3 + i) * 2, y0 - h - 10);
+    ctx.lineTo(tx + 51, y0 - h - 6);
+    ctx.fill();
+  });
+}
+
+// Inside the Big Top and the Funhouse: the tent's striped canvas swooping down from the king pole,
+// a ring of footlights; in the Workshop, gears turning on the walls and belts and pipes.
+function drawFarBigTop(ctx, t, cam, width, y0, time, workshop) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  if (workshop) {
+    repeat(cam.x, 0.2, 150, width, (i, x) => {
+      const cx = x + 70;
+      const cy = y0 - 120 + hash(i) * 60;
+      const r = 26 + hash(i + 2) * 20;
+      const a = time * (i % 2 ? 0.4 : -0.4) * (40 / r);
+      ctx.fillStyle = shade(t.far, 8);
+      ctx.beginPath();
+      for (let k = 0; k < 24; k++) {
+        const u = a + (k / 24) * Math.PI * 2;
+        const rr = k % 2 ? r : r * 0.82;
+        ctx.lineTo(cx + Math.cos(u) * rr, cy + Math.sin(u) * rr);
+      }
+      ctx.fill();
+      ctx.fillStyle = t.far;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.fillStyle = shade(t.far, -8);
+    ctx.fillRect(0, snap(y0 - 24), width, 600);
+    return;
+  }
+  repeat(cam.x, 0.2, 60, width, (i, x) => {
+    ctx.fillStyle = i % 2 ? shade(t.far, 10) : mix(t.far, '#ffffff', 0.12);
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x + 60, 0);
+    ctx.quadraticCurveTo(x + 30, y0 * 0.4, x + 66, y0 + 20);
+    ctx.lineTo(x + 6, y0 + 20);
+    ctx.quadraticCurveTo(x - 30, y0 * 0.4, x, 0);
+    ctx.fill();
+  });
+  // Footlights round the ring, twinkling in a chase.
+  repeat(cam.x, 0.3, 30, width, (i, x) => {
+    const on = (Math.floor(time * 6) + i) % 4 === 0;
+    ctx.fillStyle = on ? '#ffffff' : '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(x, y0 - 6, on ? 2.4 : 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    if (on) glow(ctx, x, y0 - 6, 10, '#ffe2a0', 0.5);
+  });
+}
+
+// The middle plane outside: lamp posts strung with lights, prize stalls, balloons tied to rails.
+function drawMidCarnival(ctx, t, cam, width, y0, time) {
+  const posts = [];
+  repeat(cam.x, 0.45, 160, width, (i, x) => {
+    posts.push(x + 80);
+    const s = hash(i + 4);
+    if (s < 0.5) place(ctx, stallArt(Math.floor(hash(i) * 3)), x + 80, y0 + 4);
+    place(ctx, fairLampArt(), x + 10, y0 + 4);
+  });
+  // Strings of bulbs swagging between the posts, chasing.
+  repeat(cam.x, 0.45, 160, width, (i, x) => {
+    const a = x + 10;
+    const b = x + 170;
+    for (let k = 0; k <= 10; k++) {
+      const u = k / 10;
+      const px = a + (b - a) * u;
+      const py = y0 - 70 + Math.sin(u * Math.PI) * 14;
+      const on = (Math.floor(time * 5) + k + i) % 3 === 0;
+      ctx.fillStyle = ['#ff7aa8', '#ffd36b', '#7fd8ff'][(k + i) % 3];
+      ctx.globalAlpha = on ? 1 : 0.55;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+
+function stallArt(kind) {
+  return art(`fair-stall|${kind}`, 70, 70, () => {
+    const c = ['#ff7aa8', '#7fd8ff', '#ffd36b'][kind];
+    const out = [R(6, 30, 58, 40, '#c99a6b'), F(R(6, 30, 58, 4, '#e6b090')), R(10, 36, 50, 18, '#3a2a4a')];
+    for (let k = 0; k < 7; k++) out.push(T([[2 + k * 9.4, 30], [11 + k * 9.4, 30], [6.5 + k * 9.4, 22]], k % 2 ? '#ffffff' : c));
+    out.push(R(2, 14, 66, 9, c), F(R(2, 14, 66, 3, mix(c, '#ffffff', 0.4))));
+    for (let k = 0; k < 4; k++) out.push(E(16 + k * 12, 46, 3.4, 3.4, ['#ff7aa8', '#ffd36b', '#7fd8ff', '#9ae6a8'][k]));
+    return out;
+  });
+}
+function fairLampArt() {
+  return art('fair-lamp', 16, 80, () => [R(6.6, 10, 2.8, 70, '#5a3a6a'), R(4, 74, 8, 6, '#5a3a6a'), E(8, 7, 5, 5, '#ffe2a0'), F(E(7, 6, 2, 2, '#ffffff')), R(4, 0, 8, 3, '#5a3a6a')]);
+}
+
+// The Star Observatory outside: the Milky Way in a soft band across the sky, a slow aurora, and the
+// tower's domes and telescopes in silhouette on the ridge, their slits lit.
+function drawFarStars(ctx, t, cam, width, y0, time) {
+  ctx.save();
+  // The Milky Way: a diagonal haze speckled with tiny stars.
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#e6dcff';
+  ctx.beginPath();
+  ctx.moveTo(-20, y0 - 60);
+  ctx.lineTo(width + 20, y0 - 260);
+  ctx.lineTo(width + 20, y0 - 200);
+  ctx.lineTo(-20, y0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  for (let k = 0; k < 60; k++) {
+    const u = hash(k + 300);
+    const x = ((u * width * 1.3 - cam.x * 0.03) % width + width) % width;
+    const y = y0 - 30 - u * 200 + (hash(k + 301) - 0.5) * 50;
+    ctx.fillStyle = k % 3 ? '#ffffff' : '#fff3a6';
+    ctx.globalAlpha = 0.4 + 0.5 * Math.abs(Math.sin(time * (0.6 + hash(k) * 1.2) + k));
+    ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+  }
+  // A slow aurora curtain.
+  for (let b = 0; b < 2; b++) {
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = b ? '#9ae6c8' : '#c9a6ff';
+    ctx.beginPath();
+    ctx.moveTo(-20, 40 + b * 30);
+    for (let x = -20; x <= width + 20; x += 20) ctx.lineTo(x, 40 + b * 30 + Math.sin(x * 0.012 + time * 0.3 + b * 2 + cam.x * 0.0005) * 24);
+    for (let x = width + 20; x >= -20; x -= 20) ctx.lineTo(x, 110 + b * 30 + Math.sin(x * 0.01 + time * 0.25 + b) * 20);
+    ctx.fill();
+  }
+  ctx.restore();
+  backRidge(ctx, t, cam, width, y0 - 20, 40);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  repeat(cam.x, 0.16, 420, width, (i, x) => {
+    const bx = x + 80 + hash(i) * 100;
+    const p = new Path2D();
+    // A tower with a domed top and a telescope poking from its slit, and a smaller dome beside.
+    p.rect(bx, y0 - 140, 50, 170);
+    p.moveTo(bx - 6, y0 - 140);
+    p.arc(bx + 25, y0 - 140, 31, Math.PI, 0);
+    p.rect(bx + 80, y0 - 60, 70, 90);
+    p.moveTo(bx + 76, y0 - 60);
+    p.arc(bx + 115, y0 - 60, 39, Math.PI, 0);
+    litFill(ctx, t, p, 2, 1.6);
+    ctx.save();
+    ctx.translate(bx + 25, y0 - 150);
+    ctx.rotate(-0.6 + Math.sin(time * 0.1 + i) * 0.1);
+    ctx.fillStyle = t.far;
+    ctx.fillRect(0, -5, 44, 10);
+    ctx.restore();
+    ctx.fillStyle = '#fff3a6';
+    ctx.fillRect(snap(bx + 22), snap(y0 - 162), 6, 18);
+    glow(ctx, bx + 25, y0 - 152, 16, '#fff3a6', 0.3);
+    for (let w = 0; w < 3; w++) {
+      const on = Math.sin(time * 0.4 + w * 2 + i) > -0.3;
+      ctx.fillStyle = on ? '#ffe9a0' : shade(t.far, -8);
+      ctx.fillRect(snap(bx + 20), snap(y0 - 110 + w * 34), 10, 14);
+    }
+  });
+}
+
+// Inside the tower: tall arched windows full of stars, armillary spheres turning on stands. In the
+// Archive, bookcases to the ceiling; in the Orrery, great brass rings turning slowly behind.
+function drawFarStarHall(ctx, t, cam, width, y0, time, kind) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  if (kind === 'archive') {
+    repeat(cam.x, 0.2, 110, width, (i, x) => {
+      ctx.fillStyle = shade(t.far, 8);
+      ctx.fillRect(snap(x), 0, 100, y0 + 30);
+      for (let r = 0; r < 8; r++) {
+        const sy = 20 + r * 34;
+        ctx.fillStyle = shade(t.far, -8);
+        ctx.fillRect(snap(x + 4), sy + 28, 92, 4);
+        for (let b = 0; b < 12; b++) {
+          const h = 18 + hash(i * 97 + r * 13 + b) * 9;
+          ctx.fillStyle = pick(['#7a3a5a', '#3a5a8a', '#5a7a4a', '#8a6a3a', '#5a3a7a'], hash(i * 31 + r * 7 + b));
+          ctx.fillRect(snap(x + 6 + b * 7.4), sy + 28 - h, 6, h);
+        }
+      }
+    });
+    return;
+  }
+  if (kind === 'orrery') {
+    const cx = width / 2 - cam.x * 0.05;
+    const cy = y0 - 140;
+    glow(ctx, cx, cy, 70, '#fff3a6', 0.35);
+    for (let k = 0; k < 4; k++) {
+      ctx.strokeStyle = shade(t.midTrim, -10 - k * 6);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 80 + k * 70, 22 + k * 18, -0.15, 0, Math.PI * 2);
+      ctx.stroke();
+      const a = time * (0.3 - k * 0.05) + k * 1.7;
+      ctx.fillStyle = ['#ffb38a', '#9fd8ff', '#c9a6ff', '#9ae6a8'][k];
+      ctx.beginPath();
+      ctx.arc(cx + Math.cos(a) * (80 + k * 70), cy + Math.sin(a) * (22 + k * 18), 6 + k * 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#fff3a6';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  repeat(cam.x, 0.2, 180, width, (i, x) => {
+    const wx = x + 50;
+    const top = y0 - 200;
+    ctx.fillStyle = mix(t.sky[0], '#000000', 0.2);
+    ctx.beginPath();
+    ctx.moveTo(wx, y0 - 30);
+    ctx.lineTo(wx, top + 34);
+    ctx.arc(wx + 34, top + 34, 34, Math.PI, 0);
+    ctx.lineTo(wx + 68, y0 - 30);
+    ctx.closePath();
+    ctx.fill();
+    for (let k = 0; k < 8; k++) {
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.5 + 0.5 * Math.abs(Math.sin(time * 1.2 + k + i));
+      ctx.fillRect(snap(wx + 6 + hash(i * 9 + k) * 56), snap(top + 10 + hash(i * 7 + k) * 140), 1.5, 1.5);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = t.farLit;
+    ctx.fillRect(snap(wx + 32), top, 4, y0 - 30 - top);
+    // An armillary sphere on a stand between the windows, its rings turning.
+    const sx = x + 150;
+    const sy = y0 - 70;
+    ctx.strokeStyle = t.midTrim;
+    ctx.lineWidth = 1.4;
+    for (let r = 0; r < 3; r++) {
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 16, 16 * Math.abs(Math.cos(time * 0.5 + r * 1.1 + i)), r * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = t.midTrim;
+    ctx.fillRect(snap(sx - 1), sy + 16, 2, 40);
+  });
+}
+
+// The Candy Volcano outside: the volcano's pink cone far back puffing sugar-steam, gumdrop hills,
+// candy-cane trees and lollipop flowers swaying.
+function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
+  if (crater) {
+    // Inside the crater: its glowing walls rising on both sides, sparks drifting up.
+    ctx.fillStyle = t.far;
+    ctx.fillRect(0, snap(y0 - 40), width, 400);
+    glow(ctx, width / 2, y0 + 20, width * 0.6, '#ffb06a', 0.35 + 0.05 * Math.sin(time * 2));
+    for (let k = 0; k < 20; k++) {
+      const u = (time * 0.15 + hash(k)) % 1;
+      ctx.fillStyle = k % 2 ? '#ffd36b' : '#ff8a5a';
+      ctx.globalAlpha = Math.sin(u * Math.PI);
+      ctx.fillRect(((hash(k + 9) * width - cam.x * 0.1) % width + width) % width, y0 + 20 - u * 260, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+  // The cone, with a slow plume of pink steam curling from its top.
+  const vx = width * 0.65 - cam.x * 0.06;
+  const p = new Path2D();
+  p.moveTo(vx - 260, y0 + 30);
+  p.lineTo(vx - 50, y0 - 170);
+  p.lineTo(vx + 50, y0 - 170);
+  p.lineTo(vx + 260, y0 + 30);
+  p.closePath();
+  litFill(ctx, t, p, 2, 1.6);
+  ctx.fillStyle = '#ff8ab0';
+  ctx.beginPath();
+  ctx.moveTo(vx - 50, y0 - 170);
+  for (let x = -50; x <= 50; x += 10) ctx.lineTo(vx + x, y0 - 160 + Math.abs(Math.sin(x * 0.2)) * 14);
+  ctx.lineTo(vx + 50, y0 - 170);
+  ctx.fill();
+  for (let k = 0; k < 5; k++) {
+    const u = (time * 0.08 + k * 0.2) % 1;
+    ctx.globalAlpha = 0.4 * (1 - u);
+    ctx.fillStyle = '#ffe0ec';
+    ctx.beginPath();
+    ctx.arc(vx + Math.sin(u * 4 + k) * 20 + u * 40, y0 - 180 - u * 120, 14 + u * 30, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // Gumdrop hills in a row of candy colours.
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 24), width, 400);
+  repeat(cam.x, 0.2, 140, width, (i, x) => {
+    const c = pick(['#ff9ab8', '#ffd36b', '#9ae6a8', '#9fd8ff', '#c9a6ff'], hash(i));
+    const h = 50 + hash(i + 3) * 40;
+    ctx.fillStyle = mix(c, t.far, 0.45);
+    ctx.beginPath();
+    ctx.ellipse(x + 70, y0 + 30, 70, h, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', t.far, 0.4);
+    for (let k = 0; k < 5; k++) ctx.fillRect(snap(x + 40 + k * 14), snap(y0 + 30 - h * 0.7 + (k % 2) * 8), 2, 2);
+  });
+}
+
+// Inside the mine and the kitchen: licorice beams and rock-candy crystals glowing; in the forge, the
+// furnace's glow and racks of hammers.
+function drawFarCandyCave(ctx, t, cam, width, y0, time, forge) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  if (forge) {
+    repeat(cam.x, 0.2, 260, width, (i, x) => {
+      const fx = x + 130;
+      ctx.fillStyle = shade(t.far, 10);
+      ctx.beginPath();
+      ctx.roundRect(fx - 50, y0 - 140, 100, 170, [40, 40, 0, 0]);
+      ctx.fill();
+      ctx.fillStyle = '#ff8a3a';
+      ctx.beginPath();
+      ctx.roundRect(fx - 26, y0 - 70, 52, 50, [20, 20, 0, 0]);
+      ctx.fill();
+      glow(ctx, fx, y0 - 44, 70, '#ffb06a', 0.4 + 0.1 * Math.sin(time * 4 + i));
+    });
+    return;
+  }
+  repeat(cam.x, 0.2, 180, width, (i, x) => {
+    // A licorice beam, twisted, holding up the roof.
+    ctx.fillStyle = '#2a1a22';
+    ctx.fillRect(snap(x + 20), 0, 14, y0 + 30);
+    ctx.fillStyle = '#4a2a3a';
+    for (let y = 0; y < y0 + 30; y += 16) ctx.fillRect(snap(x + 20), y, 14, 6);
+    // Rock-candy crystals clustered at its foot, glowing.
+    for (let k = 0; k < 3; k++) {
+      const c = pick(['#ff9ad8', '#9fd8ff', '#ffd36b'], hash(i + k));
+      const cx = x + 60 + k * 18;
+      const h = 30 + hash(i * 3 + k) * 30;
+      ctx.fillStyle = mix(c, t.far, 0.3);
+      ctx.beginPath();
+      ctx.moveTo(cx - 7, y0 + 30);
+      ctx.lineTo(cx, y0 + 30 - h);
+      ctx.lineTo(cx + 7, y0 + 30);
+      ctx.fill();
+      glow(ctx, cx, y0 + 20 - h * 0.5, 20, c, 0.25 + 0.1 * Math.sin(time * 2 + i + k));
+    }
+  });
+}
+
+// The Dream Theatre. Outside (Theatre Row): the playhouse floating on its cloud far back, its dome
+// and marquee bulbs chasing. Inside, each room is a stage set: the lobby's tiers of red boxes and
+// chandeliers; painted flats for the acts (a painted sea with cut-out clouds on strings, a forest of
+// cardboard trees under a paper moon); the ballroom's mirrors; backstage's rigging and sandbags; and
+// the great stage's tall velvet curtains. Everything sways from its own place in the world.
+function drawFarTheatre(ctx, t, cam, width, y0, time, kind) {
+  if (kind !== 'theatre') {
+    ctx.fillStyle = t.far;
+    ctx.fillRect(0, 0, width, 600);
+  }
+  if (kind === 'theatre') {
+    // The playhouse on its cloud, far back, bobbing slowly.
+    const hx = width * 0.68 - cam.x * 0.05;
+    const hy = y0 - 90 + Math.sin(time * 0.4) * 3;
+    const far = (c, k = 0.35) => mix(c, t.far, k);
+    // Its cloud, in soft puffs with a lit top.
+    for (const [dx, dy, r] of [[-78, 8, 24], [-46, 0, 32], [0, -4, 38], [46, 0, 32], [78, 8, 24], [-20, 14, 28], [26, 14, 28]]) {
+      ctx.fillStyle = far('#e8d8f0', 0.25);
+      ctx.beginPath();
+      ctx.arc(hx + dx, hy + 46 + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = far('#ffffff', 0.15);
+      ctx.beginPath();
+      ctx.arc(hx + dx - r * 0.2, hy + 42 + dy - r * 0.2, r * 0.7, Math.PI, Math.PI * 1.9);
+      ctx.fill();
+    }
+    // The hall: a drum of red under a gold dome, white columns, a pediment over the doors.
+    ctx.fillStyle = far('#9a2040');
+    ctx.fillRect(hx - 56, hy - 14, 112, 56);
+    ctx.fillStyle = far('#ffd36b', 0.3);
+    ctx.beginPath();
+    ctx.ellipse(hx, hy - 30, 40, 34, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = far('#c99a3b', 0.3);
+    ctx.fillRect(hx - 44, hy - 32, 88, 6);
+    for (const dx of [-24, -8, 8, 24]) ctx.fillRect(hx + dx - 1, hy - 62 + Math.abs(dx) * 0.3, 2, 30 - Math.abs(dx) * 0.3);
+    ctx.fillStyle = far('#ffffff', 0.3);
+    for (const dx of [-48, -30, 30, 48]) ctx.fillRect(hx + dx - 3, hy - 4, 6, 46);
+    ctx.fillStyle = far('#fff0e0', 0.3);
+    ctx.beginPath();
+    ctx.moveTo(hx - 60, hy - 4);
+    ctx.lineTo(hx, hy - 26);
+    ctx.lineTo(hx + 60, hy - 4);
+    ctx.fill();
+    // The doors glowing warm, the show on.
+    glow(ctx, hx, hy + 26, 26, '#ffd38a', 0.5 + 0.08 * Math.sin(time * 1.3));
+    ctx.fillStyle = far('#ffe8a0', 0.15);
+    ctx.beginPath();
+    ctx.roundRect(hx - 12, hy + 12, 24, 30, [12, 12, 0, 0]);
+    ctx.fill();
+    // A gold star on the dome's top, slowly turning, and a pennant streaming.
+    ctx.save();
+    ctx.translate(hx, hy - 70);
+    ctx.rotate(time * 0.4);
+    ctx.fillStyle = '#ffe08a';
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const a = (k / 10) * Math.PI * 2 - Math.PI / 2;
+      const r = k % 2 ? 2.4 : 6;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.fill();
+    ctx.restore();
+    glow(ctx, hx, hy - 70, 16, '#ffe08a', 0.4);
+    // Marquee bulbs chasing round the pediment.
+    for (let k = 0; k < 15; k++) {
+      const u = k / 14;
+      const on = (Math.floor(time * 6) + k) % 3 === 0;
+      const bx = hx - 58 + u * 116;
+      const by = hy - 4 - (1 - Math.abs(u - 0.5) * 2) * 22;
+      ctx.fillStyle = on ? '#fff6c8' : far('#c99a3b', 0.2);
+      ctx.fillRect(snap(bx - 1), snap(by - 1), 2, 2);
+      if (on) glow(ctx, bx, by, 5, '#ffe08a', 0.5);
+    }
+    return;
+  }
+  if (kind === 'stagehall' || kind === 'ballroom') {
+    // Tiers of red boxes with gold rails, little lamps lit in each; chandeliers swaying above.
+    for (let tier = 0; tier < 3; tier++) {
+      const ty = y0 - 150 + tier * 60;
+      repeat(cam.x, 0.18 + tier * 0.02, 90, width, (i, x) => {
+        ctx.fillStyle = mix('#9a2040', t.far, 0.35 + tier * 0.1);
+        ctx.beginPath();
+        ctx.roundRect(x + 8, ty, 74, 44, [20, 20, 0, 0]);
+        ctx.fill();
+        ctx.fillStyle = mix('#ffd36b', t.far, 0.3);
+        ctx.fillRect(x + 6, ty + 40, 78, 4);
+        glow(ctx, x + 45, ty + 20, 14, '#ffe08a', 0.25 + 0.08 * Math.sin(time * 1.5 + i + tier));
+      });
+    }
+    repeat(cam.x, 0.25, 320, width, (i, x) => {
+      const cx = x + 160 + Math.sin(time * 0.7 + i) * 3;
+      ctx.strokeStyle = '#c99a3b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 160, 0);
+      ctx.lineTo(cx, 40);
+      ctx.stroke();
+      glow(ctx, cx, 54, 40, '#fff0c0', 0.35);
+      ctx.fillStyle = '#ffd36b';
+      ctx.beginPath();
+      ctx.ellipse(cx, 50, 24, 8, 0, 0, Math.PI);
+      ctx.fill();
+      for (let k = -2; k <= 2; k++) {
+        ctx.fillStyle = '#fff6d8';
+        ctx.fillRect(snap(cx + k * 10 - 1), 40, 2, 6);
+        ctx.fillStyle = '#e8f8ff';
+        ctx.fillRect(snap(cx + k * 10 - 1), 56 + Math.abs(k) * 2, 2, 5);
+      }
+    });
+    if (kind === 'ballroom') {
+      // Tall mirrors between gold pilasters, a glint passing over them.
+      repeat(cam.x, 0.3, 200, width, (i, x) => {
+        ctx.fillStyle = mix('#c8d8ff', t.far, 0.5);
+        ctx.beginPath();
+        ctx.roundRect(x + 60, y0 - 110, 80, 140, [40, 40, 0, 0]);
+        ctx.fill();
+        const u = ((time * 0.2 + i * 0.3) % 1.5) - 0.25;
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillRect(x + 60 + Math.max(0, Math.min(74, u * 80)), y0 - 100, 6, 120);
+        ctx.fillStyle = mix('#ffd36b', t.far, 0.3);
+        ctx.fillRect(x + 54, y0 - 116, 6, 150);
+        ctx.fillRect(x + 140, y0 - 116, 6, 150);
+      });
+    }
+    return;
+  }
+  if (kind === 'pirate') {
+    // A painted backdrop: a sunset sea, a painted sun, cut-out clouds swinging on strings.
+    ctx.fillStyle = '#ffb08a';
+    ctx.fillRect(0, 0, width, y0 - 20);
+    ctx.fillStyle = '#ffe0a0';
+    ctx.beginPath();
+    ctx.arc(width * 0.5 - cam.x * 0.04, y0 - 40, 50, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = mix('#4a8ad8', t.far, 0.2);
+    ctx.fillRect(0, y0 - 40, width, 400);
+    ctx.fillStyle = mix('#8ac8ff', t.far, 0.2);
+    repeat(cam.x, 0.15, 40, width, (i, x) => ctx.fillRect(snap(x), snap(y0 - 30 + (((i % 3) + 3) % 3) * 14), 22, 2));
+    repeat(cam.x, 0.2, 220, width, (i, x) => {
+      const sw = Math.sin(time * 0.9 + i) * 6;
+      const cx = x + 110 + sw;
+      const cy = 70 + hash(i) * 50;
+      ctx.strokeStyle = '#5a4a5a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x + 110, 0);
+      ctx.lineTo(cx, cy - 20);
+      ctx.stroke();
+      ctx.fillStyle = '#fff6ee';
+      ctx.strokeStyle = '#c8a8b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx - 22, cy, 16, Math.PI, 0);
+      ctx.arc(cx, cy - 8, 20, Math.PI, 0);
+      ctx.arc(cx + 22, cy, 16, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    });
+    return;
+  }
+  if (kind === 'fairy') {
+    // A paper moon on a string and cardboard trees on wooden stands, glittering.
+    const mx = width * 0.3 - cam.x * 0.04 + Math.sin(time * 0.5) * 4;
+    ctx.strokeStyle = '#8a7a9a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mx, 0);
+    ctx.lineTo(mx, 50);
+    ctx.stroke();
+    glow(ctx, mx, 80, 60, '#fff6c8', 0.4);
+    // A cut-out crescent: the full disc with a smaller one taken out of it.
+    ctx.fillStyle = '#fff6c8';
+    ctx.beginPath();
+    ctx.arc(mx, 80, 30, 0, Math.PI * 2);
+    ctx.arc(mx + 14, 72, 26, 0, Math.PI * 2, true);
+    ctx.fill('evenodd');
+    for (let layer = 0; layer < 2; layer++) {
+      repeat(cam.x, 0.15 + layer * 0.12, 110 + layer * 30, width, (i, x) => {
+        const cx = x + 55;
+        const h = 120 + hash(i + layer * 7) * 60;
+        const c = mix(pick(['#5ab88a', '#8ad8a8', '#4a9a8a'], hash(i + 3)), t.far, 0.55 - layer * 0.2);
+        ctx.fillStyle = mix('#8a5a3a', t.far, 0.4);
+        ctx.fillRect(cx - 4, y0 + 30 - h * 0.4, 8, h * 0.4);
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        for (let k = 0; k < 3; k++) {
+          const ty = y0 + 30 - h * 0.35 - k * h * 0.2;
+          ctx.moveTo(cx - 40 + k * 8, ty);
+          ctx.lineTo(cx, ty - h * 0.3);
+          ctx.lineTo(cx + 40 - k * 8, ty);
+        }
+        ctx.fill();
+        ctx.fillStyle = '#fff6c8';
+        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 3 + i * 1.7 + layer);
+        ctx.fillRect(snap(cx - 10 + hash(i + 1) * 20), snap(y0 - h * 0.5), 2, 2);
+        ctx.globalAlpha = 1;
+      });
+    }
+    return;
+  }
+  if (kind === 'backstage') {
+    // Rigging: ropes down from the fly gallery, sandbags swinging, flats stacked against the wall.
+    repeat(cam.x, 0.2, 140, width, (i, x) => {
+      const cx = x + 70;
+      const sw = Math.sin(time * 0.8 + i * 1.3) * 5;
+      const bag = y0 - 70 - hash(i) * 60;
+      ctx.fillStyle = mix(pick(['#8ad8a8', '#ffb08a', '#9fc8ff'], hash(i + 5)), t.far, 0.5);
+      ctx.fillRect(x + 10 + hash(i + 2) * 30, y0 - 60, 50, 90);
+      ctx.strokeStyle = mix('#c8a878', t.far, 0.3);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, 0);
+      ctx.lineTo(cx + sw, bag - 10);
+      ctx.stroke();
+      ctx.fillStyle = mix('#a8885a', t.far, 0.3);
+      ctx.beginPath();
+      ctx.ellipse(cx + sw, bag, 9, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    return;
+  }
+  // The great stage: tall velvet curtains drawn back in swags, a star cloth twinkling behind.
+  for (let k = 0; k < 30; k++) {
+    ctx.fillStyle = '#fff6c8';
+    ctx.globalAlpha = 0.3 + 0.7 * Math.abs(Math.sin(time * 1.5 + k * 2.3));
+    ctx.fillRect(snap((((hash(k) * width * 2 - cam.x * 0.1) % width) + width) % width), snap(hash(k + 40) * (y0 - 40)), 2, 2);
+  }
+  ctx.globalAlpha = 1;
+  repeat(cam.x, 0.22, 300, width, (i, x) => {
+    for (const side of [0, 1]) {
+      const cx = x + (side ? 230 : 70);
+      const sw = Math.sin(time * 0.6 + i + side) * 4;
+      ctx.fillStyle = mix('#9a2040', t.far, 0.25);
+      ctx.beginPath();
+      ctx.moveTo(cx - 50, 0);
+      ctx.lineTo(cx + 50, 0);
+      ctx.quadraticCurveTo(cx + 10 + sw, y0 - 80, cx + (side ? 40 : -40), y0 + 30);
+      ctx.lineTo(cx + (side ? -10 : 10), y0 + 30);
+      ctx.quadraticCurveTo(cx - 20 + sw, y0 - 60, cx - 50, 0);
+      ctx.fill();
+      ctx.fillStyle = mix('#ffd36b', t.far, 0.2);
+      ctx.fillRect(snap(cx - 6 + sw * 0.5), snap(y0 - 90), 12, 5);
+    }
+  });
+}
+
+// The middle plane on Theatre Row: lamp posts and poster pillars announcing tonight's play.
+function drawMidTheatre(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 160, width, (i, x) => {
+    if (hash(i + 4) < 0.5) place(ctx, posterPillarArt(Math.floor(hash(i) * 3)), x + 80, y0 + 4);
+    else {
+      place(ctx, theatreLampArt(), x + 80, y0 + 4);
+      glow(ctx, x + 80, y0 - 66, 22, '#ffe08a', 0.45 + 0.08 * Math.sin(time * 2 + i));
+    }
+  });
+}
+function posterPillarArt(kind) {
+  return art(`theatre-pillar|${kind}`, 36, 86, () => {
+    const c = ['#ff7aa8', '#b89aff', '#8ff0c8'][kind];
+    return [
+      R(6, 14, 24, 72, '#6a3a5a'), F(R(6, 14, 5, 72, '#8a5a7a')), T([[3, 14], [18, 2], [33, 14]], '#9a2040'), F(E(18, 3, 2, 2, '#ffd36b')),
+      R(9, 24, 18, 26, '#fff6e0'), F(E(18, 34, 6, 6, c)), F(R(11, 44, 14, 2, '#9a2040')), R(9, 54, 18, 20, c), F(R(11, 58, 14, 2, '#ffffff')),
+    ];
+  });
+}
+function theatreLampArt() {
+  return art('theatre-lamp', 20, 86, () => [
+    R(9, 18, 3, 68, '#3a2e3e'), R(5, 82, 11, 4, '#3a2e3e'), T([[4, 10], [16, 10], [14, 22], [6, 22]], '#ffe08a'), F(R(7, 12, 6, 8, '#fff6d0')), T([[3, 10], [10, 4], [17, 10]], '#3a2e3e'),
+  ]);
+}
+
+// The Sky Whale. From the pier: the whale itself swimming far off over a sea of cloud, a little
+// town on its back, its fins beating slowly. On its back: the cloud sea rolling far below, and
+// behind each room what's there: the tail's great flukes rising and swaying, the market's tents and
+// pennant strings, the pirate ship's hull and sails, the barnacle fortress's shell towers, the
+// brow's open dusk with the spout misting up. Inside the lungs: deep blue walls, light falling in
+// shafts. Everything moves from its own place in the world.
+function cloudSea(ctx, t, cam, width, y, time) {
+  ctx.fillStyle = mix('#ffffff', t.far, 0.35);
+  ctx.fillRect(0, snap(y + 14), width, 400);
+  repeat(cam.x, 0.12, 90, width, (i, x) => {
+    const r = 40 + hash(i) * 30;
+    ctx.fillStyle = mix('#ffffff', t.far, 0.25);
+    ctx.beginPath();
+    ctx.arc(x + 45, y + 22 + Math.sin(time * 0.3 + i) * 3, r, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', t.far, 0.05);
+    ctx.beginPath();
+    ctx.arc(x + 38, y + 18 + Math.sin(time * 0.3 + i) * 3, r * 0.5, Math.PI * 1.1, Math.PI * 1.7);
+    ctx.fill();
+  });
+}
+function whaleShape(ctx, x, y, s, time, body, belly) {
+  // A whale swimming left to right: a long round body, a pale grooved belly, a fin beating, the
+  // tail's flukes lifting and falling.
+  const flap = Math.sin(time * 0.8);
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(x + 90 * s, y);
+  ctx.quadraticCurveTo(x + 80 * s, y - 34 * s, x + 10 * s, y - 32 * s);
+  ctx.quadraticCurveTo(x - 60 * s, y - 28 * s, x - 100 * s, y - 6 * s + flap * 4 * s);
+  ctx.lineTo(x - 100 * s, y + 4 * s + flap * 4 * s);
+  ctx.quadraticCurveTo(x - 40 * s, y + 22 * s, x + 30 * s, y + 20 * s);
+  ctx.quadraticCurveTo(x + 86 * s, y + 18 * s, x + 90 * s, y);
+  ctx.fill();
+  ctx.fillStyle = belly;
+  ctx.beginPath();
+  ctx.moveTo(x + 86 * s, y + 6 * s);
+  ctx.quadraticCurveTo(x + 40 * s, y + 22 * s, x - 30 * s, y + 14 * s);
+  ctx.quadraticCurveTo(x + 30 * s, y + 12 * s, x + 86 * s, y + 6 * s);
+  ctx.fill();
+  ctx.strokeStyle = mix(belly, body, 0.4);
+  ctx.lineWidth = Math.max(1, s);
+  for (let k = 0; k < 4; k++) {
+    ctx.beginPath();
+    ctx.moveTo(x + (70 - k * 14) * s, y + (9 + k) * s);
+    ctx.lineTo(x + (40 - k * 14) * s, y + (14 + k) * s);
+    ctx.stroke();
+  }
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(x - 96 * s, y + flap * 4 * s);
+  ctx.lineTo(x - 130 * s, y - 22 * s + flap * 10 * s);
+  ctx.lineTo(x - 116 * s, y + flap * 6 * s);
+  ctx.lineTo(x - 130 * s, y + 22 * s + flap * 10 * s);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x + 30 * s, y + 18 * s, 22 * s, 6 * s, 0.5 + Math.sin(time * 0.8 + 1) * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x + 62 * s, y - 4 * s, 2.4 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+function drawFarWhale(ctx, t, cam, width, y0, time, kind) {
+  if (kind === 'lungs') {
+    ctx.fillStyle = t.far;
+    ctx.fillRect(0, 0, width, 600);
+    // Light falling in soft shafts from the blowhole far above, swaying.
+    for (let k = 0; k < 5; k++) {
+      const x = ((k * 190 - cam.x * 0.1) % (width + 200) + width + 200) % (width + 200) - 100;
+      const sw = Math.sin(time * 0.4 + k) * 20;
+      ctx.fillStyle = '#eaf6ff';
+      ctx.globalAlpha = 0.12;
+      ctx.beginPath();
+      ctx.moveTo(x - 20, 0);
+      ctx.lineTo(x + 20, 0);
+      ctx.lineTo(x + 60 + sw, y0 + 40);
+      ctx.lineTo(x - 10 + sw, y0 + 40);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // Glowing hanging plants along the walls, breathing light.
+    repeat(cam.x, 0.25, 110, width, (i, x) => {
+      const len = 40 + hash(i) * 60;
+      const sw = Math.sin(time * 0.7 + i) * 4;
+      ctx.strokeStyle = mix('#5ab88a', t.far, 0.3);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 50, 0);
+      ctx.quadraticCurveTo(x + 50 + sw, len / 2, x + 50 + sw * 1.5, len);
+      ctx.stroke();
+      glow(ctx, x + 50 + sw * 1.5, len + 4, 10, '#9fe8ff', 0.4 + 0.2 * Math.sin(time * 1.5 + i));
+    });
+    return;
+  }
+  if (kind === 'whale') {
+    cloudSea(ctx, t, cam, width, y0 + 10, time);
+    // The whale swimming far off, a little town on its back, sails catching the light.
+    const wx = width * 0.55 - cam.x * 0.04 + Math.sin(time * 0.1) * 20;
+    const wy = y0 - 90 + Math.sin(time * 0.35) * 6;
+    whaleShape(ctx, wx, wy, 1.3, time, mix('#4a6ab0', t.far, 0.3), mix('#eaf6ff', t.far, 0.2));
+    for (let k = 0; k < 6; k++) {
+      const hx = wx - 70 + k * 22;
+      const hy = wy - 38 - Math.sin((k / 5) * Math.PI) * 6;
+      ctx.fillStyle = mix(pick(['#ff9ab8', '#ffd36b', '#ffffff'], hash(k)), t.far, 0.35);
+      ctx.fillRect(snap(hx), snap(hy), 10, 8);
+      ctx.fillStyle = mix('#c8304e', t.far, 0.3);
+      ctx.beginPath();
+      ctx.moveTo(hx - 2, hy);
+      ctx.lineTo(hx + 5, hy - 6);
+      ctx.lineTo(hx + 12, hy);
+      ctx.fill();
+    }
+    ctx.fillStyle = mix('#ffffff', t.far, 0.2);
+    ctx.beginPath();
+    ctx.moveTo(wx - 4, wy - 46);
+    ctx.lineTo(wx - 4, wy - 76);
+    ctx.quadraticCurveTo(wx + 14 + Math.sin(time) * 3, wy - 62, wx - 4, wy - 46);
+    ctx.fill();
+    // Its spout misting up now and then.
+    const sp = (time * 0.25) % 1;
+    if (sp < 0.3) for (let k = 0; k < 6; k++) {
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.6 * (1 - sp / 0.3);
+      ctx.beginPath();
+      ctx.arc(wx + 58 + (k - 2.5) * 5 * (sp / 0.3) * 3, wy - 34 - (sp / 0.3) * 40 + Math.abs(k - 2.5) * 4, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    return;
+  }
+  // On the whale's back: the cloud sea far below.
+  cloudSea(ctx, t, cam, width, y0 + 30, time);
+  if (kind === 'tail') {
+    // The tail's great flukes rising far behind, sweeping slowly up and down.
+    const tx = width * 0.7 - cam.x * 0.08;
+    const a = Math.sin(time * 0.35) * 0.12;
+    ctx.save();
+    ctx.translate(tx, y0 + 30);
+    ctx.rotate(a);
+    ctx.fillStyle = mix('#4a6ab0', t.far, 0.35);
+    ctx.beginPath();
+    ctx.moveTo(-30, 0);
+    ctx.quadraticCurveTo(-20, -90, 0, -130);
+    ctx.quadraticCurveTo(-90, -170, -150, -150);
+    ctx.quadraticCurveTo(-60, -200, 10, -170);
+    ctx.quadraticCurveTo(80, -200, 160, -150);
+    ctx.quadraticCurveTo(90, -170, 20, -130);
+    ctx.quadraticCurveTo(30, -90, 40, 0);
+    ctx.fill();
+    ctx.restore();
+  } else if (kind === 'market') {
+    // Striped tents in a row with strings of pennants between them, flapping.
+    repeat(cam.x, 0.22, 170, width, (i, x) => {
+      const c = pick(['#ff9ab8', '#ffd36b', '#9fd0ff', '#9ae6a8'], hash(i));
+      const h = 60 + hash(i + 2) * 30;
+      ctx.fillStyle = mix(c, t.far, 0.4);
+      ctx.beginPath();
+      ctx.moveTo(x + 30, y0 + 30);
+      ctx.lineTo(x + 85, y0 + 30 - h);
+      ctx.lineTo(x + 140, y0 + 30);
+      ctx.fill();
+      ctx.fillStyle = mix('#ffffff', t.far, 0.4);
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        ctx.moveTo(x + 85, y0 + 30 - h);
+        ctx.lineTo(x + 46 + k * 30, y0 + 30);
+        ctx.lineTo(x + 58 + k * 30, y0 + 30);
+        ctx.fill();
+      }
+      for (let k = 0; k < 6; k++) {
+        const px = x + 85 + k * 14;
+        const py = y0 + 30 - h + 6 + Math.sin((k / 5) * Math.PI) * 18;
+        ctx.fillStyle = mix(pick(['#ff7aa8', '#ffd36b', '#7fd8ff'], hash(i * 7 + k)), t.far, 0.3);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + 8, py);
+        ctx.lineTo(px + 4 + Math.sin(time * 4 + k + i) * 2, py + 9);
+        ctx.fill();
+      }
+    });
+  } else if (kind === 'deck') {
+    // The pirate airship moored behind: its hull, a mast, sails bellied in the wind, the jolly flag.
+    const sx = width * 0.5 - cam.x * 0.1;
+    const sy = y0 - 10 + Math.sin(time * 0.6) * 4;
+    ctx.fillStyle = mix('#8a5a3a', t.far, 0.35);
+    ctx.beginPath();
+    ctx.moveTo(sx - 220, sy - 20);
+    ctx.lineTo(sx + 220, sy - 20);
+    ctx.quadraticCurveTo(sx + 200, sy + 40, sx, sy + 46);
+    ctx.quadraticCurveTo(sx - 200, sy + 40, sx - 220, sy - 20);
+    ctx.fill();
+    for (const [dx, hgt] of [[-100, 170], [60, 200]]) {
+      ctx.fillStyle = mix('#5a3a2a', t.far, 0.35);
+      ctx.fillRect(sx + dx - 3, sy - 20 - hgt, 6, hgt);
+      const belly = 12 + Math.sin(time * 1.2 + dx) * 4;
+      ctx.fillStyle = mix('#fff6ee', t.far, 0.3);
+      for (let k = 0; k < 2; k++) {
+        const top = sy - 20 - hgt + 14 + k * 70;
+        ctx.beginPath();
+        ctx.moveTo(sx + dx - 50, top);
+        ctx.quadraticCurveTo(sx + dx - 50 + belly, top + 30, sx + dx - 50, top + 56);
+        ctx.lineTo(sx + dx + 50, top + 56);
+        ctx.quadraticCurveTo(sx + dx + 50 + belly, top + 30, sx + dx + 50, top);
+        ctx.fill();
+      }
+      ctx.fillStyle = mix('#2a2a3a', t.far, 0.3);
+      ctx.beginPath();
+      ctx.moveTo(sx + dx + 3, sy - 20 - hgt);
+      ctx.lineTo(sx + dx + 30 + Math.sin(time * 3 + dx) * 4, sy - 12 - hgt);
+      ctx.lineTo(sx + dx + 3, sy - 4 - hgt);
+      ctx.fill();
+    }
+  } else if (kind === 'fortress') {
+    // Towers of shell and coral grown up out of the whale's back, barnacles studding them.
+    repeat(cam.x, 0.2, 200, width, (i, x) => {
+      const h = 90 + hash(i) * 70;
+      ctx.fillStyle = mix('#ffd8e2', t.far, 0.45);
+      ctx.beginPath();
+      ctx.moveTo(x + 60, y0 + 30);
+      ctx.lineTo(x + 80, y0 + 30 - h);
+      ctx.quadraticCurveTo(x + 100, y0 + 10 - h - 30, x + 120, y0 + 30 - h);
+      ctx.lineTo(x + 140, y0 + 30);
+      ctx.fill();
+      ctx.fillStyle = mix('#ece4d4', t.far, 0.3);
+      for (let k = 0; k < 5; k++) {
+        ctx.beginPath();
+        ctx.arc(x + 76 + hash(i + k) * 48, y0 + 20 - hash(i * 3 + k) * h * 0.8, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const cx = x + 30;
+      const sw = Math.sin(time * 0.6 + i) * 3;
+      ctx.strokeStyle = mix('#ff7a8a', t.far, 0.4);
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(cx, y0 + 30);
+      ctx.quadraticCurveTo(cx + sw, y0 - 10, cx - 10 + sw, y0 - 40);
+      ctx.moveTo(cx + sw * 0.6, y0 - 4);
+      ctx.quadraticCurveTo(cx + 14 + sw, y0 - 20, cx + 18 + sw, y0 - 36);
+      ctx.stroke();
+    });
+  } else if (kind === 'brow') {
+    // The open sky at dusk: the first stars, and the whale's spout misting up ahead.
+    for (let k = 0; k < 24; k++) {
+      ctx.fillStyle = '#fff6c8';
+      ctx.globalAlpha = 0.3 + 0.7 * Math.abs(Math.sin(time + k * 2.1));
+      ctx.fillRect(snap(((hash(k) * width * 2 - cam.x * 0.05) % width + width) % width), snap(hash(k + 30) * (y0 - 60)), 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    const sx = width * 0.8 - cam.x * 0.08;
+    for (let k = 0; k < 10; k++) {
+      const u = (time * 0.15 + k / 10) % 1;
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.4 * Math.sin(u * Math.PI);
+      ctx.beginPath();
+      ctx.arc(sx + Math.sin(u * 5 + k) * 20 * u, y0 + 20 - u * 180, 8 + u * 20, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+// The middle plane outside: candy-cane trees and lollipop flowers, swaying from their own place.
+function drawMidCandy(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 120, width, (i, x) => {
+    const s = hash(i + 4);
+    const wx = x + cam.x * 0.45;
+    if (s < 0.4) place(ctx, caneTreeArt(Math.floor(hash(i) * 2)), x + 60, y0 + 4);
+    else if (s < 0.75) {
+      const sw = Math.sin(time * 1.2 + wx * 0.01) * 0.08;
+      ctx.save();
+      ctx.translate(x + 60, y0 + 4);
+      ctx.rotate(sw);
+      place(ctx, lolliFlowerArt(Math.floor(hash(i + 2) * 3)), 0, 0);
+      ctx.restore();
+    }
+  });
+}
+function caneTreeArt(kind) {
+  return art(`candy-cane|${kind}`, 40, 90, () => {
+    const out = [R(18, 20, 6, 70, '#ffffff')];
+    for (let y = 22; y < 88; y += 8) out.push(F(T([[18, y], [24, y - 3], [24, y + 1], [18, y + 4]], '#e0304e')));
+    out.push(T([[18, 22], [12, 10], [16, 4], [26, 4], [30, 12], [24, 22]], kind ? '#9ae66a' : '#ff9ab8'), F(E(18, 10, 4, 3, '#ffffff')));
+    return out;
+  });
+}
+function lolliFlowerArt(kind) {
+  return art(`candy-lolli|${kind}`, 24, 60, () => {
+    const c = ['#ff7aa8', '#ffd36b', '#7fd8ff'][kind];
+    return [R(11, 22, 2, 38, '#ffffff'), E(12, 14, 10, 10, c), F(E(12, 14, 6, 6, '#ffffff')), F(E(12, 14, 3, 3, c)), F(E(9, 10, 2, 2, '#ffffff'))];
+  });
 }
 
 // The hollow's far layer: an earthen ceiling, great twisting root columns, and roots dangling down.
@@ -1440,6 +2830,22 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       break;
     case 'roots':
       drawMidRoots(ctx, t, cam, width, y0, time);
+      break;
+    case 'manor':
+    case 'manorhall':
+      drawMidManor(ctx, t, cam, width, y0, time, t.skyline === 'manorhall');
+      break;
+    case 'reef':
+      drawMidReef(ctx, t, cam, width, y0, time);
+      break;
+    case 'carnival':
+      drawMidCarnival(ctx, t, cam, width, y0, time);
+      break;
+    case 'candy':
+      drawMidCandy(ctx, t, cam, width, y0, time);
+      break;
+    case 'theatre':
+      drawMidTheatre(ctx, t, cam, width, y0, time);
       break;
     // The shrine path behind: cherry trees in bloom, little torii, a pagoda, stone lanterns aglow.
     case 'pagodas':
@@ -2161,10 +3567,10 @@ const DRIFT_BANDS = {
 function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
   if (!t.drift) return;
   const band = DRIFT_BANDS[which];
-  const base = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms, snow: ['#ffffff', '#f2f6ff', '#e6eeff'], steam: ['#ffffff', '#f2fbff'] }[t.drift];
+  const base = { petal: ['#ffc6de', '#ffe3ef', '#ffffff'], leaf: ['#9fe0b0', '#c4f2a8', '#ffd6a5'], mote: ['#ffe6ff', '#fff6c9'], sparkle: ['#ffffff', '#c9f2ff', '#ffe36b'], ember: ['#ffb35a', '#ff8a5c', '#ffe36b'], spore: t.shrooms, snow: ['#ffffff', '#f2f6ff', '#e6eeff'], steam: ['#ffffff', '#f2fbff'], bubble: ['#eaf8ff', '#ffffff', '#bfeeff'], confetti: ['#ff7aa8', '#ffd36b', '#7fd8ff', '#9ae6a8', '#c9a6ff'], sprinkle: ['#ff5a6a', '#ffd36b', '#7fd8ff', '#9ae66a', '#ffffff'] }[t.drift];
   const colors = band.air ? base.map((c) => mix(c, t.sky[1], band.air)) : base;
   // Embers rise from the forges and spores float up from the mushrooms instead of falling.
-  const rise = t.drift === 'ember' || t.drift === 'spore' || t.drift === 'steam' ? -1 : 1;
+  const rise = t.drift === 'ember' || t.drift === 'spore' || t.drift === 'steam' || t.drift === 'bubble' ? -1 : 1;
   const spore = t.drift === 'spore';
   const k = band.size;
   const blow = windTravel(time) * 1.3 * band.speed;
@@ -2210,6 +3616,27 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
       ctx.beginPath();
       ctx.arc(x + wob * 2, y, (5 + (1 - u) * 9) * k, 0, Math.PI * 2);
       ctx.fill();
+      continue;
+    }
+    // Confetti flutters down, tumbling: little paper squares flashing their light side.
+    if (t.drift === 'confetti' || t.drift === 'sprinkle') {
+      const turn = Math.sin(time * 6 + i);
+      ctx.fillStyle = turn > 0 ? c : mix(c, '#ffffff', 0.4);
+      ctx.save();
+      ctx.translate(x + wob, y);
+      ctx.rotate(time * 2 + i);
+      ctx.fillRect(-1.6 * k, -1 * k, 3.2 * k, 2 * k * (0.5 + 0.5 * Math.abs(turn)));
+      ctx.restore();
+      continue;
+    }
+    // Bubbles rise wobbling: a ring with a glint.
+    if (t.drift === 'bubble') {
+      ctx.strokeStyle = c;
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(x + wob * 0.6, y, (1.2 + (j % 3) * 0.6) * k, 0, Math.PI * 2);
+      ctx.stroke();
+      rect(ctx, x + wob * 0.6 - 0.6 * k, y - 0.8 * k, 0.8, 0.8, '#ffffff');
       continue;
     }
     if (t.drift === 'sparkle' || t.drift === 'mote') {
@@ -2337,8 +3764,8 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const far = { ...t, far: farC, farLit: mix(farC, t.sun, 0.42), farBack: mix(t.far, air, 0.62 * aerial) };
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
-    // (Under a painted forest's canopy there are no clouds to see.)
-    if (t.painted !== 'forest') drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
+    if (t.painted !== 'forest' && !['reef', 'manorhall', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

@@ -11,8 +11,22 @@ import { ART as MAIDENS } from './maidens.js';
 import { ART as QUEENS } from './queens.js';
 import { ART as BEES } from './bees.js';
 import { ART as FARM } from './farm.js';
+import { ART as MANOR } from './manor.js';
+import { ART as MANORBOSS } from './manorboss.js';
+import { ART as SEA } from './sea.js';
+import { ART as SEABOSS } from './seaboss.js';
+import { ART as TOY } from './toy.js';
+import { ART as TOYBOSS } from './toyboss.js';
+import { ART as ASTRAL } from './astral.js';
+import { ART as ASTRALBOSS } from './astralboss.js';
+import { ART as CANDY } from './candy.js';
+import { ART as CANDYBOSS } from './candyboss.js';
+import { ART as STAGE } from './stage.js';
+import { ART as STAGEBOSS } from './stageboss.js';
+import { ART as SKYFOLK } from './skyfolk.js';
+import { ART as SKYBOSS } from './skyboss.js';
 
-export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM };
+export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS };
 
 export const mobBuild = (art, pose, frame, mood) => {
   const a = ARTS[art];

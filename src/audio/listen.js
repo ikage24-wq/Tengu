@@ -20,12 +20,27 @@ import { isQueen } from '../world/story.js';
 const memo = new WeakMap();
 
 // What each kind of map is underfoot.
-const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', shrine: 'stone', ridge: 'stone', springs: 'stone', snow: 'cloud' };
+const GROUND = { town: 'stone', meadow: 'grass', harbor: 'wood', forest: 'grass', ruins: 'stone', cave: 'crystal', sky: 'cloud', crag: 'sand', grove: 'grass', hollow: 'wood', manor: 'wood', aquarium: 'sand', carnival: 'wood', observatory: 'stone', candy: 'grass', shrine: 'stone', ridge: 'stone', springs: 'stone', snow: 'cloud' };
+// The manor's boss rooms play its boss waltz.
+const MANOR_BOSS_ROOMS = new Set(['manor3', 'manor5', 'manor6']);
+const AQUA_BOSS_ROOMS = new Set(['aquarium4', 'aquarium5', 'aquarium6']);
+const CARNIVAL_BOSS_ROOMS = new Set(['carnival4', 'carnival5', 'carnival6']);
+const OBS_BOSS_ROOMS = new Set(['observatory4', 'observatory5', 'observatory6']);
+const VOLCANO_BOSS_ROOMS = new Set(['volcano4', 'volcano5', 'volcano6']);
+const THEATRE_BOSS_ROOMS = new Set(['theatre4', 'theatre5', 'theatre6']);
+const WHALE_BOSS_ROOMS = new Set(['skywhale4', 'skywhale5', 'skywhale6']);
 const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grove' };
 
 export function songFor(map, world = null) {
   if (!map) return 'title';
   if (map.id === 'bossroom' || map.id === 'hollow6') return 'boss';
+  if (map.dungeon === 'manor') return MANOR_BOSS_ROOMS.has(map.id) ? 'manorboss' : 'manor';
+  if (map.dungeon === 'aquarium') return AQUA_BOSS_ROOMS.has(map.id) ? 'aquaboss' : 'aquarium';
+  if (map.dungeon === 'carnival') return CARNIVAL_BOSS_ROOMS.has(map.id) ? 'carnivalboss' : 'carnival';
+  if (map.dungeon === 'observatory') return OBS_BOSS_ROOMS.has(map.id) ? 'observatoryboss' : 'observatory';
+  if (map.dungeon === 'volcano') return VOLCANO_BOSS_ROOMS.has(map.id) ? 'volcanoboss' : 'volcano';
+  if (map.dungeon === 'theatre') return THEATRE_BOSS_ROOMS.has(map.id) ? 'theatreboss' : 'theatre';
+  if (map.dungeon === 'skywhale') return WHALE_BOSS_ROOMS.has(map.id) ? 'skywhaleboss' : 'skywhale';
   if (map.dungeon) return 'hollow';
   // A queen's trial, or a queen back on her map for a rematch and in the fight.
   if (map.trial) return 'queen';

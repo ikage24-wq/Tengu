@@ -17,16 +17,18 @@ setHd(true, S);
 const { ART } = await import(`../src/render/mobs/${group}.js`);
 const keys = (q.get('keys') ?? Object.keys(ART).join(',')).split(',').filter((k) => ART[k]);
 const MOODS = ['idle', 'angry', 'hurt', 'dead', 'blink', 'happy'];
+// ?sets=walk,idle,attack,moods picks which strips to show (all by default).
+const SETS = (q.get('sets') ?? 'walk,idle,attack,moods').split(',');
 const spr = (k, pose, f, mood) => sprite(`gal|${k}|${pose}${f}|${mood}`, () => ({ res: 2, soft: 'cel', crisp: true, selout: true, pad: ART[k].pad ?? 4, ...ART[k].draw(pose, f, mood) }));
 const rows = [];
 let H = 10;
 let W = 0;
 for (const k of keys) {
   const a = ART[k];
-  const walk = Array.from({ length: a.walk ?? 4 }, (_, f) => spr(k, 'walk', f, 'idle'));
-  const idle = Array.from({ length: a.idle ?? 2 }, (_, f) => spr(k, 'idle', f, 'idle'));
-  const attack = Array.from({ length: a.attack ?? 0 }, (_, f) => spr(k, 'attack', f, 'angry'));
-  const moods = MOODS.map((m) => spr(k, 'walk', 0, m));
+  const walk = !SETS.includes('walk') ? [] : Array.from({ length: a.walk ?? 4 }, (_, f) => spr(k, 'walk', f, 'idle'));
+  const idle = !SETS.includes('idle') ? [] : Array.from({ length: a.idle ?? 2 }, (_, f) => spr(k, 'idle', f, 'idle'));
+  const attack = !SETS.includes('attack') ? [] : Array.from({ length: a.attack ?? 0 }, (_, f) => spr(k, 'attack', f, 'angry'));
+  const moods = !SETS.includes('moods') ? [] : MOODS.map((m) => spr(k, 'walk', 0, m));
   const tall = Math.max(60, ...[...walk, ...attack].map((s) => s.h)) + 22;
   const wide = 50 + [...walk, ...idle, ...attack, ...moods].reduce((n, s) => n + s.w + 10, 0) + 40;
   rows.push({ k, walk, idle, attack, moods, y: H, tall });

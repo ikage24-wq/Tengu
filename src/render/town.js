@@ -1000,6 +1000,35 @@ const ROUTINES = {
       },
     };
   },
+  // Mr. Pumpkins, the manor's old groundskeeper: a lantern always in his hand, held up to peer at
+  // the manor's dark windows, a big yawn (he's been up a hundred years of nights), and a jingle of
+  // the gate keys on his belt.
+  pumpkins(t) {
+    const b = bitAt(t, [['peer', 3.2], ['yawn', 1.8], ['jingle', 1.6]], 2.2);
+    const k = b ? inOut(b.u) : 0;
+    const lift = b?.kind === 'peer' ? k : 0;
+    const lantern = (ctx, front, back, dir) => {
+      const [lx, ly] = back;
+      const sw = Math.sin(t * 2.2) * 1.2 * (1 - lift);
+      ctx.save();
+      ctx.translate(lx, ly - 2 * lift);
+      ctx.rotate(sw * 0.1);
+      ctx.fillStyle = '#4a3a6a';
+      ctx.fillRect(-0.5, 0, 1, 2);
+      ctx.fillRect(-2.6, 2, 5.2, 1);
+      ctx.fillStyle = '#ffe2a0';
+      ctx.fillRect(-2.2, 3, 4.4, 4.6);
+      ctx.fillStyle = '#ffb35a';
+      ctx.fillRect(-0.8, 4.2 + Math.sin(t * 9) * 0.3, 1.6, 2.2);
+      ctx.fillStyle = '#4a3a6a';
+      ctx.fillRect(-2.6, 7.6, 5.2, 1);
+      ctx.restore();
+    };
+    if (!b) return { face: 'smile', hands: lantern };
+    if (b.kind === 'peer') return { facing: 1, rig: { backArm: arm(4 * k, -10 * k), hx: h(0.6 * k), tilt: -2 * k }, face: 'cool', hands: lantern };
+    if (b.kind === 'yawn') return { rig: { frontArm: arm(1 * k, -9 * k), tilt: -4 * k, hy: h(-0.4 * k) }, face: k > 0.4 ? 'sleepy' : 'smile', hands: lantern };
+    return { rig: { frontArm: arm(2 * k + Math.sin(b.s * 22) * 0.6 * k, -3 * k) }, face: 'grin', hands: lantern };
+  },
   // Bramble, the Hollow's warden: leaning on nothing with his arms folded, a look down the road for
   // anyone coming, and counting the party on his fingers.
   bramble(t) {

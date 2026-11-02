@@ -399,7 +399,269 @@ const moonlight = {
   capeFront: () => [],
 };
 
-export const SET_DESIGNS = { rootwood, sylvana: dryad, tamamo: foxfire, lilith: nightrose, crystalking: prism, selene: moonlight };
+
+// ---------- Moonlit Masquerade (Moonlit Manor's chest): a masquerade mask, a lace jabot, a tailcoat ----------
+
+const masquerade = {
+  hat(t, p, m) {
+    const s = m.hair * 0.35;
+    const out = [];
+    // A little tilted top hat pinned at the side, a crescent moon on its band and a long feather
+    // that bobs, and the masquerade mask across the brow, its wings swept up like a moth's.
+    out.push(T([[19.4, 6.4], [27.4, 5.2], [27.8, 6.8], [19.8, 8]], darker(p.main, 0.25)));
+    out.push(T([[20.6, 6.2], [26.4, 5.2], [25.6, -1.2], [21, -0.4]], p.main), F(T([[20.6, 6.2], [22.4, 5.9], [22.2, -0.6], [21, -0.4]], darker(p.main, 0.14))));
+    out.push(F(T([[20.7, 5.2], [26.3, 4.3], [26.2, 3.1], [20.6, 4]], p.accent)), crescent(23.6, 4.2, 1.1, '#fff6c8', 200));
+    out.push(F(limb(25.6, 3.4, 30 + s, -5.4, 1.4, 0.3, WHITE)), F(limb(26.2, 2.8, 29.6 + s, -3.6, 0.6, 0.2, p.accent)));
+    // The masquerade mask, pinned to the hat's brim (never over the face), its wings swept up.
+    const mk = (x, y) => [14.6 + x * 0.42, 5 + y * 0.42];
+    out.push(T([[8.6, 15.6], [13.4, 14.6], [15.8, 16.4], [18.2, 14.6], [23, 15.6], [24.6, 12], [21.4, 13.4], [15.8, 15], [10.2, 13.4], [7, 12]].map(([x, y]) => mk(x - 8, y - 12)), p.accent));
+    out.push(F(E(...mk(4.4, 3.2), 0.7, 0.4, darker(p.accent, 0.4))), F(E(...mk(11.2, 3.2), 0.7, 0.4, darker(p.accent, 0.4))), F(star(...mk(-0.6, 0.2), 0.7, '#fff6c8', 4, 0.35)));
+    return out;
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    // A frilled lace jabot down the front with a moonstone, and a silver watch chain.
+    const out = [...base];
+    for (let i = 0; i < 4; i++) out.push(T([[MID - 2.2 + i * 0.2, 26.4 + i * 1.6], [MID + 2.2 - i * 0.2, 26.4 + i * 1.6], [MID + 1.6 - i * 0.3, 28.4 + i * 1.6], [MID, 28.8 + i * 1.6], [MID - 1.6 + i * 0.3, 28.4 + i * 1.6]], i % 2 ? WHITE : '#f2ecff'));
+    out.push(F(E(MID, 27, 1, 1.1, '#bfe2ff')), F(E(MID - 0.3, 26.7, 0.35, 0.35, WHITE)));
+    out.push(F(limb(MID + 1.4, 33, 21.2, 34.4, 0.35, 0.35, '#e6ecff')), F(E(21.4, 34.6, 0.8, 0.8, '#ffd36b')));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.9, 1.1, WHITE)), F(E(wx, wy + 0.5, 1.5, 0.6, '#f2ecff'))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    // A swallow-tailed coat: two long tails parted at the back, lined in the accent, a crescent
+    // embroidered on each.
+    const coat = darker(p.main, 0.1);
+    const out = [];
+    for (const k of [-1, 1]) {
+      const x = MID + k * 4.6;
+      out.push(T([[x - 4.2, 30], [x + 4.2, 30], [x + k * 2 + 2 + s, 45.4], [x + k * 1 + s, 47], [x + k * 0 - 2 + s, 45]], coat));
+      out.push(F(T([[x - 1, 32], [x + 1, 32], [x + k * 1.6 + s, 45.6], [x + k * 0.6 + s, 46.4]], p.accent)));
+      out.push(crescent(x + k * 0.6 + s * 0.6, 40, 1.2, '#fff6c8', k > 0 ? 300 : 120));
+    }
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Tidecaller (the Sunken Aquarium Palace's chest): a shell crown, a pearl collar, a fin cape ----------
+
+const tidecaller = {
+  hat(t, p, m) {
+    const s = m.hair * 0.3;
+    // A scallop-shell tiara at the side of the head with a fan of coral and a pearl.
+    const out = [T(ring(9, (i) => {
+      const a = Math.PI + (Math.PI * i) / 8;
+      return [21 + Math.cos(a) * 5.4, 7 + Math.sin(a) * 5];
+    }), '#ffe6f2')];
+    for (let i = 0; i < 5; i++) out.push(F(limb(21, 7, 21 + Math.cos(Math.PI + (Math.PI * (i + 0.5)) / 5) * 5, 7 + Math.sin(Math.PI + (Math.PI * (i + 0.5)) / 5) * 4.6, 0.35, 0.3, '#f0b8d0')));
+    out.push(F(E(21, 7.2, 1.3, 1.3, WHITE)), F(limb(17, 6, 14 + s, 1, 0.8, 0.4, p.accent)), F(limb(16, 5.4, 18 + s, 0, 0.6, 0.3, p.accent)));
+    return out;
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    const out = [...base];
+    for (let i = 0; i < 7; i++) out.push(F(E(MID - 3.6 + i * 1.2, 27 + Math.sin((i / 6) * Math.PI) * 1.6, 0.6, 0.6, WHITE)));
+    out.push(F(E(MID, 29.2, 1, 1.1, '#bfeeff')));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.6, 0.9, p.main)), F(E(wx + 0.6, wy, 0.5, 0.5, WHITE))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    // A cape cut like a fish's tail fin, ribbed, fading to the accent at its two lobes.
+    const out = [T([[7, 26], [24, 26], [26 + s, 44], [19 + s, 40], [15.5 + s, 46], [12 + s, 40], [5 + s, 44]], p.main)];
+    for (const x of [9, 13, 18, 22]) out.push(F(limb(x, 28, x + s * 0.8 + (x - MID) * 0.25, 42, 0.35, 0.25, darker(p.main, 0.2))));
+    out.push(F(T([[24, 40], [26 + s, 44], [21 + s, 42]], p.accent)), F(T([[7, 40], [5 + s, 44], [10 + s, 42]], p.accent)));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Harlequin (the Clockwork Carnival's chest): a jester cap with bells, a ruff, a diamond cape ----------
+
+const harlequin = {
+  hat(t, p, m) {
+    const s = m.hair * 0.5;
+    // A two-pointed jester cap, the points flopping with the hair's sway, a bell on each.
+    const out = [T([[6, 10], [25, 10], [24, 6], [7, 6]], p.main)];
+    out.push(T([[8, 7], [13, 6], [3 - s, -2], [0 - s, 0]], p.accent), T([[18, 6], [23, 7], [30 + s, 0], [28 + s, -2]], p.main));
+    out.push(E(0 - s, 0.4, 1.8, 1.8, '#ffd36b'), E(30 + s, 0.4, 1.8, 1.8, '#ffd36b'), F(E(-0.6 - s, -0.2, 0.6, 0.6, WHITE)), F(E(29.4 + s, -0.2, 0.6, 0.6, WHITE)));
+    return out;
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    const out = [...base];
+    for (let i = 0; i < 6; i++) out.push(E(MID - 5 + i * 2, 26 + Math.abs(i - 2.5) * 0.2, 1.4, 1.1, i % 2 ? WHITE : '#f0e8f8'));
+    out.push(F(T([[MID, 29], [MID + 1.4, 31], [MID, 33], [MID - 1.4, 31]], p.accent)));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.8, 1, WHITE)), F(E(wx + 0.8, wy + 0.6, 0.6, 0.6, '#ffd36b'))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    const out = [T(cloak(44, 1, s, 6, 2), p.main)];
+    // Harlequin diamonds in the accent across it.
+    for (const [x, y] of [[9, 32], [15.5, 32], [22, 32], [12, 38], [19, 38], [15.5, 43]]) out.push(F(T([[x + s * (y - 26) / 20, y - 2.6], [x + 1.8 + s * (y - 26) / 20, y], [x + s * (y - 26) / 20, y + 2.6], [x - 1.8 + s * (y - 26) / 20, y]], p.accent)));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Stargazer (the Star Observatory's chest): a crescent circlet, a star-chart scarf, a night-sky cape ----------
+
+const stargazer = {
+  hat(t, p, m) {
+    // A thin gold circlet with a crescent and a little star at the brow, a star on a chain swinging.
+    const s = m.hair * 0.4;
+    return [F(T([[7, 9], [24, 8.4], [24, 9.6], [7, 10.2]], '#ffd36b')), crescent(15.6, 6.4, 2.2, '#fff6c8', 200), F(star(20.6, 6.8, 1.3, p.accent, 5, 0.45)), F(limb(24, 9, 25 + s, 13, 0.3, 0.3, '#ffd36b')), F(star(25 + s, 13.6, 1, p.accent, 5, 0.45))];
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    // A scarf printed with a star chart, its end over the shoulder.
+    const out = [...base, F(limb(10, 27, 21, 27.4, 1.4, 1.4, darker(p.main, 0.1))), F(limb(19, 27.4, 21, 33, 1.2, 1, darker(p.main, 0.1)))];
+    for (const [x, y] of [[12, 27], [15.6, 27.2], [19, 27.3], [20, 30]]) out.push(F(E(x, y, 0.45, 0.45, p.accent)));
+    out.push(F(limb(12, 27, 15.6, 27.2, 0.2, 0.2, p.accent)), F(limb(15.6, 27.2, 19, 27.3, 0.2, 0.2, p.accent)));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.6, 0.9, '#ffd36b')), F(star(wx + 0.4, wy, 0.8, WHITE, 5, 0.45))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    const out = [T(cloak(45, 1.5, s, 6, 0), p.main)];
+    // Constellations stitched on the night-sky cape, joined by thin gold lines.
+    const pts = [[8, 32], [12, 36], [10, 41], [19, 33], [23, 38], [20, 43]];
+    for (let i = 0; i < pts.length - 1; i++) if (i !== 2) out.push(F(limb(pts[i][0] + s * (pts[i][1] - 26) / 20, pts[i][1], pts[i + 1][0] + s * (pts[i + 1][1] - 26) / 20, pts[i + 1][1], 0.2, 0.2, '#ffd36b')));
+    for (const [x, y] of pts) out.push(F(star(x + s * (y - 26) / 20, y, 0.9, p.accent, 4, 0.4)));
+    out.push(crescent(MID + s, 44, 1.8, p.accent, 120));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Confectioner (the Candy Volcano's chest): a chef's toque with a cherry, a frilly collar, a cake cape ----------
+
+const confectioner = {
+  hat(t, p, m) {
+    // A puffed chef's toque tipped at an angle, a cherry on top bobbing.
+    const s = m.hair * 0.4;
+    const out = [T([[8, 8], [24, 7], [24, 4], [8, 5]], WHITE)];
+    for (const [x, r] of [[10, 4.4], [16, 5.4], [22, 4.4]]) out.push(E(x, 1.4, r, r * 0.9, WHITE));
+    out.push(F(E(16, 0, 3.6, 2.6, '#f2ecf6')), E(17 + s, -5, 2, 2, '#e0304e'), F(E(16.4 + s, -5.6, 0.6, 0.6, WHITE)), F(limb(17 + s, -6.6, 18 + s, -9, 0.3, 0.3, '#5ab83a')));
+    return out;
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    const out = [...base];
+    for (let i = 0; i < 6; i++) out.push(E(MID - 5 + i * 2, 26.4 + Math.abs(i - 2.5) * 0.2, 1.4, 1.2, i % 2 ? p.main : WHITE));
+    for (const [x, y, c] of [[MID - 2, 30, '#ff5a6a'], [MID + 1.6, 31.4, '#7fd8ff'], [MID - 0.4, 33, '#ffd36b']]) out.push(F(R(x, y, 1.4, 0.6, c)));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.8, 1, WHITE)), F(E(wx, wy + 0.4, 1.4, 0.5, p.main))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    // A cape layered like a cake: sponge, cream, pink icing, caramel drips at its edge.
+    const out = [T(cloak(44, 1, s, 6, 0), '#f6d0a8')];
+    out.push(F(T(cloak(36, 0.6, s * 0.8, 6, 0), p.main)));
+    for (const y of [32, 38]) out.push(F(limb(6 + s * (y - 26) / 20, y, 25 + s * (y - 26) / 20, y, 0.9, 0.9, WHITE)));
+    for (let i = 0; i < 6; i++) out.push(F(limb(7 + i * 3.4 + s, 43.4, 7 + i * 3.4 + s, 45 + (i % 2) * 1.4, 0.7, 0.5, '#e8a040')));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Leading Role (the Dream Theatre's chest): a laurel circlet with a star, a rose-and-ruff collar, a velvet stage cape ----------
+
+const leadingRole = {
+  hat(t, p, m) {
+    // A gold laurel circlet, leaves pointing back from a star at the brow that twinkles.
+    const out = [F(T([[7, 9.4], [24, 8.6], [24, 9.8], [7, 10.6]], '#ffd36b'))];
+    for (let i = 0; i < 4; i++) {
+      out.push(F(E(9 + i * 2.4, 8.6 - i * 0.2, 1.3, 0.6, '#c99a3b')), F(E(23 - i * 2.4, 8 - i * 0.2, 1.3, 0.6, '#c99a3b')));
+    }
+    out.push(F(star(16, 7.4, 1.6 + 0.2 * Math.sin(m.hair * 3), p.accent, 5, 0.45)), F(E(16, 7.4, 0.5, 0.5, WHITE)));
+    return out;
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p) {
+    // A white pleated ruff at the neck with a red rose pinned at its side.
+    const out = [...base];
+    for (let i = 0; i < 7; i++) out.push(E(MID - 6 + i * 2, 26.2 + Math.abs(i - 3) * 0.15, 1.3, 1.5, i % 2 ? '#f2ecf6' : WHITE));
+    out.push(F(E(MID + 4, 28.4, 1.8, 1.6, '#e0405a')), F(E(MID + 3.6, 28, 0.8, 0.7, '#ff8aa0')), F(E(MID + 5.6, 29.6, 1, 0.5, '#5ab83a')));
+    return out;
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.8, 1, WHITE)), F(E(wx, wy, 1.2, 0.5, '#f2ecf6'))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    // A long velvet stage cape, deep red with a gold hem, roses scattered at the hem.
+    const out = [T(cloak(46, 1.6, s, 6, 0), p.main)];
+    out.push(F(T(cloak(46, 1.6, s, 1.4, 0), darker(p.main, 0.2))));
+    for (let i = 0; i < 7; i++) out.push(F(E(6.4 + i * 3.2 + s, 45.6, 1.6, 0.7, p.accent)));
+    for (const [x, y] of [[9, 40], [16, 43], [22, 39]]) out.push(F(E(x + (s * (y - 26)) / 20, y, 1.3, 1.2, '#e0405a')), F(E(x + (s * (y - 26)) / 20 - 0.3, y - 0.3, 0.5, 0.5, '#ff8aa0')));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+// ---------- Skyfarer (the Sky Whale's chest): aviator goggles up on the head, a streaming scarf, a whale-tail cape ----------
+
+const skyfarer = {
+  hat(t, p, m) {
+    // Aviator goggles pushed up on the brow (never over the eyes), the strap round the head.
+    return [F(T([[6.6, 9.6], [24.6, 8.6], [24.6, 10], [6.6, 11]], '#8a5a3a')), E(12.6, 8.4, 2.6, 2.2, '#c8a070'), F(E(12.6, 8.4, 1.8, 1.5, '#9fe8ff')), E(19, 8, 2.6, 2.2, '#c8a070'), F(E(19, 8, 1.8, 1.5, '#9fe8ff')), F(E(12, 7.8, 0.6, 0.5, WHITE)), F(E(18.4, 7.4, 0.6, 0.5, WHITE))];
+  },
+  hatBack: () => [],
+  hatTucks: () => false,
+  hatHidesBangs: () => false,
+  top(base, t, p, m) {
+    // A long scarf wound at the neck, its end streaming back in the wind.
+    const s = m?.sway ?? 0;
+    return [...base, F(limb(10, 26.6, 22, 27, 1.6, 1.6, p.accent)), F(limb(11, 27, 6 - s, 29 + Math.abs(s) * 0.4, 1.4, 0.8, p.accent)), F(limb(9, 28, 4 - s * 1.2, 31, 1, 0.6, darker(p.accent, 0.15)))];
+  },
+  hand(base, t, p, hx, hy, ex, ey) {
+    const [wx, wy] = wrist(hx, hy, ex, ey);
+    return [...base, F(E(wx, wy, 1.8, 1, '#8a5a3a'))];
+  },
+  cape(t, p, m) {
+    const s = m.sway;
+    // A cape cut like a whale's tail: a long blue body to two flukes, a pale belly stripe.
+    const out = [T(cloak(42, 1.2, s, 6, 0), p.main)];
+    out.push(F(T([[MID - 2 + s, 30], [MID + 2 + s, 30], [MID + 1.4 + s, 41], [MID - 1.4 + s, 41]], '#eaf6ff')));
+    out.push(T([[MID + s, 41], [MID - 8 + s * 1.2, 46], [MID - 9 + s * 1.2, 43], [MID - 2 + s, 40]], p.main), T([[MID + s, 41], [MID + 8 + s * 1.2, 46], [MID + 9 + s * 1.2, 43], [MID + 2 + s, 40]], p.main));
+    return out;
+  },
+  capeFront: () => [],
+};
+
+export const SET_DESIGNS = { rootwood, moonlit: masquerade, tidecaller, harlequin, stargazer, confectioner, leading_role: leadingRole, skyfarer, sylvana: dryad, tamamo: foxfire, lilith: nightrose, crystalking: prism, selene: moonlight };
 
 // The module a set piece draws with: the set's own pieces over the job's.
 const cache = new Map();

@@ -43,6 +43,21 @@ export const MATERIALS = {
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },
+  // Moonlit Manor: violet brick and moonlit stone inside; clipped lawn over garden flagstones out.
+  manor: { lip: '#e6d6ff', body: '#7a5aa8', deep: '#54407e', stone: '#a88ad8', style: 'brick', blades: false, drip: 'vine' },
+  manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
+  // The Sunken Aquarium Palace: pale sea sand over pink coral stone.
+  reef: { lip: '#fff0d6', body: '#e8b8c8', deep: '#c08aa8', stone: '#ffd8e2', style: 'slab', blades: false, drip: 'weed' },
+  // The Clockwork Carnival: painted boards over a sawdust-and-brick base.
+  carnival: { lip: '#ff9ab8', body: '#c8906a', deep: '#a06a4a', stone: '#e8b88a', style: 'brick', blades: false, drip: null },
+  // The Star Observatory: moonstone flags with brass inlay.
+  starstone: { lip: '#fff3a6', body: '#8a8ac0', deep: '#5a5a90', stone: '#c4c4ec', style: 'flagstone', blades: false, drip: null, joint: '#ffd36b' },
+  // The Candy Volcano: biscuit ground under a pink icing lip.
+  candy: { lip: '#ff9ab8', body: '#e0a878', deep: '#b8805a', stone: '#f6d0a8', style: 'slab', blades: false, drip: 'vine' },
+  // The Sky Whale's Back: the whale's own blue-grey hide in broad plates, a pale lip like its belly.
+  whaleskin: { lip: '#eaf6ff', body: '#6a8ac0', deep: '#4a6a9a', stone: '#9ab8e0', style: 'slab', blades: false, drip: null },
+  // The Dream Theatre: honey stage boards over a velvet-dark understage.
+  stage: { lip: '#ffd36b', body: '#c88a5a', deep: '#8a5a3a', stone: '#e8b080', style: 'boards', blades: false, drip: null },
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
 };
 
@@ -288,6 +303,40 @@ function paintTile(g, m, theme) {
             g.stroke();
           }
         });
+      }
+    }
+  } else if (m.style === 'boards') {
+    // Long stage boards, staggered, with grain lines, nail heads and the odd tape mark.
+    for (let row = 0; row < 8; row++) {
+      let x = -hash(seed + row) * 30;
+      while (x < TW) {
+        const k = seed + row * 31 + Math.floor(x);
+        const w = 34 + hash(k) * 26;
+        const y = row * (TH / 8);
+        const h = TH / 8 - 1;
+        const x0 = x;
+        wrap((dx, dy) => {
+          g.fillStyle = mix(m.stone, m.body, 0.25 + hash(k + 1) * 0.5);
+          g.fillRect(x0 + dx, y + dy, w - 1, h);
+          g.fillStyle = 'rgba(255,240,210,0.4)';
+          g.fillRect(x0 + dx + 1, y + dy + 1, w - 3, 1.4);
+          g.fillStyle = hexA(m.deep, 0.55);
+          g.fillRect(x0 + dx, y + dy + h - 1.4, w - 1, 1.4);
+          g.strokeStyle = hexA(m.deep, 0.35);
+          g.lineWidth = 0.6;
+          g.beginPath();
+          g.moveTo(x0 + dx + 3, y + dy + h * 0.5);
+          g.quadraticCurveTo(x0 + dx + w * 0.5, y + dy + h * (0.3 + hash(k + 2) * 0.4), x0 + dx + w - 4, y + dy + h * 0.55);
+          g.stroke();
+          g.fillStyle = m.deep;
+          g.fillRect(x0 + dx + 2, y + dy + h * 0.5 - 0.6, 1.2, 1.2);
+          g.fillRect(x0 + dx + w - 4, y + dy + h * 0.5 - 0.6, 1.2, 1.2);
+          if (hash(k + 3) > 0.9) {
+            g.fillStyle = hash(k + 4) > 0.5 ? '#ff7aa8' : '#7fd8ff';
+            g.fillRect(x0 + dx + w * 0.4, y + dy + 1, 5, h - 2);
+          }
+        });
+        x += w;
       }
     }
   } else if (m.style === 'strata') {
@@ -963,7 +1012,52 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
 
 // A cave's rock ceiling across the top of the map: a jagged underside and stalactites (some
 // tipped with glowing crystal), so it feels underground.
+// The manor's ceiling: a painted plaster band with a gilded moulding, drapery swags between the
+// beams, and little lamps hanging on chains, swaying from their own place in the room.
+function drawManorCeiling(ctx, m, map, cam, width, time) {
+  const base = 16 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  ctx.save();
+  ctx.fillStyle = m.deep;
+  ctx.fillRect(-2, -2, width + 4, base + 2);
+  ctx.fillStyle = '#ffd36b';
+  ctx.fillRect(-2, base, width + 4, 2);
+  ctx.fillStyle = m.stone;
+  ctx.fillRect(-2, base - 3, width + 4, 1);
+  const step = 120;
+  for (let i = Math.floor(cam.x / step) - 1; i * step - cam.x < width + step; i++) {
+    const x = i * step - cam.x;
+    // A beam end, then a swag of curtain hanging between this beam and the next.
+    ctx.fillStyle = shade(m.deep, -8);
+    ctx.fillRect(x - 5, base, 10, 8);
+    ctx.fillStyle = '#ffd36b';
+    ctx.fillRect(x - 5, base + 7, 10, 1.5);
+    const sway = Math.sin(time * 0.8 + i) * 1.5;
+    ctx.fillStyle = '#b05a8a';
+    ctx.beginPath();
+    ctx.moveTo(x + 6, base + 2);
+    ctx.quadraticCurveTo(x + step / 2, base + 26 + sway, x + step - 6, base + 2);
+    ctx.quadraticCurveTo(x + step / 2, base + 14 + sway, x + 6, base + 2);
+    ctx.fill();
+    ctx.fillStyle = '#d888b0';
+    ctx.fillRect(x + step / 2 - 14, base + 17 + sway, 28, 1.5);
+    // A lamp on a chain every other beam.
+    if (i % 2 === 0) {
+      const lx = x + Math.sin(time * 1.1 + i * 0.7) * 1.2;
+      ctx.fillStyle = '#c8902a';
+      ctx.fillRect(lx - 0.5, base + 8, 1, 14);
+      ctx.fillStyle = '#ffe2a0';
+      ctx.beginPath();
+      ctx.ellipse(lx, base + 26, 4, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(lx - 1, base + 23, 1.5, 4);
+    }
+  }
+  ctx.restore();
+}
+
 function drawCeiling(ctx, m, map, cam, width, time) {
+  if (map.look.ceiling === 'manor') return drawManorCeiling(ctx, m, map, cam, width, time);
   // It hangs at the top of the view (the cave's roof is always just overhead), rising a little
   // as you climb.
   const base = 12 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));

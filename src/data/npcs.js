@@ -109,6 +109,48 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
     quests: ['story_2_2', 'hollow_heart'],
   },
+  pumpkins: {
+    id: 'pumpkins', name: 'Mr. Pumpkins', title: 'Manor Groundskeeper', role: 'dungeon', dungeon: 'manor',
+    look: { hairStyle: 'wolf', hairColor: '#ff9a4a', skinTone: '#f2c8a0', eyeColor: '#6a4a2b', outfitColor: '#6a8a4a', eyeStyle: 'round', face: 'smile' },
+    greeting: "Lady Marigold's party's been going a hundred years. Nobody comes home from it. Bring a tank, a healer and two fighters, and mind the trolley.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  marina: {
+    id: 'marina', name: 'Marina', title: 'Harbor Diver', role: 'dungeon', dungeon: 'aquarium',
+    look: { hairStyle: 'wolf', hairColor: '#7fd8e8', skinTone: '#e7b48f', eyeColor: '#1f7a8b', outfitColor: '#5ac8c8', eyeStyle: 'sparkle', face: 'grin' },
+    greeting: 'The palace down there is glowing again. My bubble charm takes four at a time: a tank, a healer, two fighters. Hold your breath!',
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  tock: {
+    id: 'tock', name: 'Tock', title: 'Runaway Tin Soldier', role: 'dungeon', dungeon: 'carnival',
+    look: { hairStyle: 'bob', hairColor: '#ff8a5a', skinTone: '#fbd9bf', eyeColor: '#3a4aa8', outfitColor: '#e04a5a', eyeStyle: 'round', face: 'determined' },
+    greeting: "Psst! I ran away from the Carnival. Her Majesty is wound too tight and none of us can stop. Bring three friends and help me wind her down!",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  lumen: {
+    id: 'lumen', name: 'Professor Lumen', title: 'Old Stargazer', role: 'dungeon', dungeon: 'observatory',
+    look: { hairStyle: 'wolf', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5a6ad8', outfitColor: '#3a3a7a', eyeStyle: 'round', face: 'smile' },
+    greeting: "The stars have stopped turning, have you noticed? Astraea's doing. I have the key to her tower. Bring a tank, a healer and two fighters, and look up.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  praline: {
+    id: 'praline', name: 'Chef Praline', title: 'Runaway Confectioner', role: 'dungeon', dungeon: 'volcano',
+    look: { hairStyle: 'fluffybob', hairColor: '#c88a5a', skinTone: '#fbd9bf', eyeColor: '#a8520a', outfitColor: '#ffffff', eyeStyle: 'sparkle', face: 'grin' },
+    greeting: "I was the Queen's pastry chef until she started stirring the volcano! If it blows, we're all dessert. Bring a tank, a healer and two fighters... and a spoon.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  encore: {
+    id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', dungeon: 'theatre',
+    look: { hairStyle: 'wolf', hairColor: '#f2f0f6', skinTone: '#f6d2b8', eyeColor: '#b03050', outfitColor: '#9a2040', eyeStyle: 'sparkle', face: 'smile' },
+    greeting: "Forty years I played that stage, darling, and now it plays the audience. I still have my backstage pass. Bring a tank, a healer and two fighters, and never miss your cue.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
+  nimbus: {
+    id: 'nimbus', name: 'Skipper Nimbus', title: 'Whale Sailor', role: 'dungeon', dungeon: 'skywhale',
+    look: { hairStyle: 'ponytail', hairColor: '#8ac8ff', skinTone: '#f2c8a8', eyeColor: '#2a74c8', outfitColor: '#3a74c8', eyeStyle: 'round', face: 'grin' },
+    greeting: "I've sailed that whale's back since I was knee-high to a kite. She's sinking in her sleep, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
+  },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",

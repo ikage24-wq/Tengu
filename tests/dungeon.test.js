@@ -21,9 +21,9 @@ function seeded(n) {
 }
 
 // A world with a hero of the given job and level, standing at the Hollow Gate.
-function heroAt(rng, level, jobs) {
+function heroAt(rng, level, jobs, gate = 'hollow_gate') {
   const char = makeBotCharacter(rng, { name: 'Tester', pro: false, level, jobs });
-  char.mapId = 'hollow_gate';
+  char.mapId = gate;
   const world = createWorld(char);
   world.bots = createBots(world, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
   return world;
@@ -68,9 +68,9 @@ test('novices and full roles are turned away', () => {
 });
 
 test('every dungeon room is laid out and every monster in it exists', () => {
-  for (const id of DUNGEONS.hollow.rooms) {
+  for (const [dg, id] of Object.values(DUNGEONS).flatMap((d) => d.rooms.map((r) => [d.id, r]))) {
     const map = MAPS[id];
-    assert.equal(map.dungeon, 'hollow');
+    assert.equal(map.dungeon, dg);
     for (const s of map.spawns) assert.ok(MOBS[s.mob], s.mob);
     for (const p of map.portals) if (p.to) assert.ok(MAPS[p.to], `${id} -> ${p.to}`);
   }
@@ -149,7 +149,7 @@ function pilot(world) {
   } else {
     const key = room.keys.find((k) => !k.got);
     const asleep = world.mobs.filter((m) => m.hp > 0 && !m.engaged);
-    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
+    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && (o.kind !== 'clam' || room.bell.order[room.bell.next] === o.id) && (o.kind !== 'starlamp' || room.lamps.press.has(o.id)) && (o.kind !== 'dispenser' || (room.recipe.need[o.colour] ?? 0) > (room.recipe.have[o.colour] ?? 0)) && (o.kind !== 'cue' || room.cues.seq[room.cues.next] === o.id) && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
     if (key) goTo(key.x, key.y);
     else if (obj) {
       goTo(obj.x, obj.y);
@@ -190,6 +190,324 @@ test('a group clears Rootwood Hollow from the first room to the chest', () => {
   } finally {
     Math.random = random;
   }
+});
+
+test('a group clears Moonlit Manor: lanterns, the portrait puzzle, the Armours, the books, the chase, the hostess', () => {
+  const random = Math.random;
+  const rng = seeded(17);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 18, ['archer'], 'manor_gate');
+    assert.equal(startRun(world, 'manor'), null);
+    assert.equal(world.map.id, 'manor1');
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 20 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'manor_gate');
+    for (const id of DUNGEONS.manor.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.manor.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test("the gallery portraits lock in only on the crest's picture", async () => {
+  const { turnPortrait, CREST } = await import('../src/world/manor.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const rng = seeded(23);
+  const world = heroAt(rng, 18, ['archer'], 'manor_gate');
+  assert.equal(startRun(world, 'manor'), null);
+  loadMap(world, 'manor2', 'west');
+  const room = world.dungeon.room;
+  assert.equal(room.crest.length, 4);
+  for (const o of room.objects.filter((x) => x.kind === 'portrait')) {
+    assert.notEqual(o.face, room.crest[o.slot], 'starts on a wrong picture');
+    let turns = 0;
+    while (!turnPortrait(world, o)) turns++;
+    assert.ok(turns < CREST.length);
+    assert.equal(o.face, room.crest[o.slot]);
+  }
+});
+
+test('a group dives the Sunken Aquarium Palace: corals, currents, the clam vault, the morays, the abyss, the queen', () => {
+  const random = Math.random;
+  const rng = seeded(29);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 23, ['archer'], 'tidepool_pier');
+    assert.equal(startRun(world, 'aquarium'), null);
+    assert.equal(world.map.id, 'aquarium1');
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'tidepool_pier');
+    for (const id of DUNGEONS.aquarium.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.aquarium.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('the vault clams open only in the bell\u2019s order, and a wrong one shuts them all', async () => {
+  const { openClam } = await import('../src/world/aquarium.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const rng = seeded(31);
+  const world = heroAt(rng, 23, ['archer'], 'tidepool_pier');
+  assert.equal(startRun(world, 'aquarium'), null);
+  loadMap(world, 'aquarium3', 'west');
+  const room = world.dungeon.room;
+  const [first, second] = room.bell.order.map((id) => room.objects[id]);
+  assert.ok(openClam(world, first));
+  first.done = true;
+  assert.equal(openClam(world, room.objects[room.bell.order[2]]), false, 'out of order');
+  assert.equal(first.done, false, 'snapped shut');
+  assert.equal(room.bell.next, 0);
+  assert.ok(openClam(world, first));
+  first.done = true;
+  assert.ok(openClam(world, second));
+});
+
+test('a group goes round the Clockwork Carnival: music boxes, springs and balloons, the coaster, Leonie, the strings, the queen', () => {
+  const random = Math.random;
+  const rng = seeded(37);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 28, ['archer'], 'carnival_gate');
+    assert.equal(startRun(world, 'carnival'), null);
+    assert.equal(world.map.id, 'carnival1');
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'carnival_gate');
+    for (const id of DUNGEONS.carnival.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.carnival.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('a group climbs the Star Observatory: lamps, the constellation, low gravity, Folio, the eclipse, Astraea', () => {
+  const random = Math.random;
+  const rng = seeded(41);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 33, ['archer'], 'observatory_steps');
+    assert.equal(startRun(world, 'observatory'), null);
+    assert.equal(world.map.id, 'observatory1');
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'observatory_steps');
+    for (const id of DUNGEONS.observatory.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.observatory.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('the constellation lamps flip their neighbours, and the hall is always solvable', async () => {
+  const { pressLamp } = await import('../src/world/observatory.js');
+  const { loadMap } = await import('../src/world/world.js');
+  for (const seed of [43, 47, 53, 59]) {
+    const rng = seeded(seed);
+    const world = heroAt(rng, 33, ['archer'], 'observatory_steps');
+    const random = Math.random;
+    Math.random = rng;
+    try {
+      assert.equal(startRun(world, 'observatory'), null);
+      loadMap(world, 'observatory2', 'west');
+    } finally {
+      Math.random = random;
+    }
+    const room = world.dungeon.room;
+    const lamps = room.objects.filter((o) => o.kind === 'starlamp');
+    assert.ok(!lamps.every((o) => o.lit), 'starts unsolved');
+    const press = [...room.lamps.press];
+    assert.ok(press.length > 0);
+    let solved = false;
+    for (const id of press) solved = pressLamp(world, room.objects[id]);
+    assert.ok(solved, 'its solution lights every lamp');
+    assert.ok(lamps.every((o) => o.lit && o.done));
+  }
+});
+
+test('a group climbs the Candy Volcano: the valley, the mine, the recipe, the forge, the ramparts, the crater', () => {
+  const random = Math.random;
+  const rng = seeded(67);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 38, ['archer'], 'sugar_trail');
+    assert.equal(startRun(world, 'volcano'), null);
+    assert.equal(world.map.id, DUNGEONS.volcano.rooms[0]);
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'sugar_trail');
+    for (const id of DUNGEONS.volcano.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.volcano.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('the candy kitchen recipe takes exactly what it asks, and one too many spoils the pot', async () => {
+  const { addCandy } = await import('../src/world/volcano.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const rng = seeded(61);
+  const world = heroAt(rng, 38, ['archer'], 'sugar_trail');
+  assert.equal(startRun(world, 'volcano'), null);
+  loadMap(world, 'volcano3', 'west');
+  const room = world.dungeon.room;
+  const disp = (c) => room.objects.find((o) => o.kind === 'dispenser' && o.colour === c);
+  const [first] = Object.keys(room.recipe.need);
+  for (let i = 0; i < room.recipe.need[first]; i++) addCandy(world, disp(first));
+  assert.equal(addCandy(world, disp(first)), false, 'one too many');
+  assert.deepEqual(room.recipe.have, {}, 'spoiled: the pot is empty');
+  let done = false;
+  for (const [c, n] of Object.entries(room.recipe.need)) for (let i = 0; i < n; i++) done = addCandy(world, disp(c));
+  assert.ok(done, 'the exact recipe finishes the room');
+});
+
+test('a group plays the Dream Theatre: the lobby, the ship, the forest, the ball, backstage, the final curtain', () => {
+  const random = Math.random;
+  const rng = seeded(71);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 43, ['archer'], 'theatre_row');
+    assert.equal(startRun(world, 'theatre'), null);
+    assert.equal(world.map.id, DUNGEONS.theatre.rooms[0]);
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'theatre_row');
+    for (const id of DUNGEONS.theatre.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.theatre.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('the forest cue lamps take their sequence in order, and a wrong cue starts it over', async () => {
+  const { pressCue, cueShowing } = await import('../src/world/theatre.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const rng = seeded(73);
+  const world = heroAt(rng, 43, ['archer'], 'theatre_row');
+  assert.equal(startRun(world, 'theatre'), null);
+  loadMap(world, 'theatre3', 'west');
+  const room = world.dungeon.room;
+  const lamp = (id) => room.objects[id];
+  const { seq } = room.cues;
+  assert.equal(seq.length, 5);
+  for (let i = 1; i < seq.length; i++) assert.notEqual(seq[i], seq[i - 1], 'no lamp twice in a row');
+  // The sequence plays one lamp at a time.
+  assert.equal(cueShowing(room, room.cues.playFrom + 0.1), seq[0]);
+  assert.equal(cueShowing(room, room.cues.playFrom + 0.9 * 2 + 0.1), seq[2]);
+  pressCue(world, lamp(seq[0]));
+  const wrong = room.objects.find((o) => o.kind === 'cue' && o.id !== seq[1]);
+  assert.equal(pressCue(world, wrong), false);
+  assert.equal(room.cues.next, 0, 'a wrong cue starts it over');
+  let done = false;
+  for (const id of seq) done = pressCue(world, lamp(id));
+  assert.ok(done, 'the whole sequence finishes the room');
+});
+
+test("a group crosses the Sky Whale's Back: the docks, the market, the lungs, the captain, the fortress, the brow", () => {
+  const random = Math.random;
+  const rng = seeded(79);
+  Math.random = rng;
+  try {
+    const world = heroAt(rng, 48, ['archer'], 'cloudcatch_pier');
+    assert.equal(startRun(world, 'skywhale'), null);
+    assert.equal(world.map.id, DUNGEONS.skywhale.rooms[0]);
+    const seen = new Set();
+    let done = false;
+    const gold = world.char.gold;
+    for (let i = 0; i < 60 * 60 * 25 && world.dungeon; i++) {
+      seen.add(world.map.id);
+      done = world.dungeon.done;
+      if (world.scene) world.scene = null;
+      const { held, pressed } = pilot(world);
+      updateWorld(world, 1 / 60, { held, pressed, locked: false });
+      updateBots(world.bots, world, 1 / 60);
+    }
+    assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
+    assert.equal(world.map.id, 'cloudcatch_pier');
+    for (const id of DUNGEONS.skywhale.rooms) assert.ok(seen.has(id), id);
+    assert.ok(world.char.gold >= gold + DUNGEONS.skywhale.reward.gold, 'opened the chest');
+  } finally {
+    Math.random = random;
+  }
+});
+
+test('the lung gardens: the air-blooms open only on the breath out', async () => {
+  const { tendBloom, breathOf } = await import('../src/world/skywhale.js');
+  const { loadMap } = await import('../src/world/world.js');
+  const rng = seeded(83);
+  const world = heroAt(rng, 48, ['archer'], 'cloudcatch_pier');
+  assert.equal(startRun(world, 'skywhale'), null);
+  loadMap(world, 'skywhale3', 'west');
+  const room = world.dungeon.room;
+  const bloom = room.objects.find((o) => o.kind === 'airbloom');
+  room.breath.t = world.map.breath.period * 0.75;
+  assert.equal(breathOf(world).out, false);
+  assert.equal(tendBloom(world, bloom), false, 'closed on the breath in');
+  room.breath.t = world.map.breath.period * 0.25;
+  assert.equal(breathOf(world).out, true);
+  assert.equal(tendBloom(world, bloom), true, 'open on the breath out');
 });
 
 test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Guard braces", async () => {
@@ -322,6 +640,22 @@ test('the group finder brings only real jobs, and helpers use only their own rea
       for (const s of botSkills(b.char)) {
         assert.ok(SKILLS[s.id], `${b.name}: ${s.id} is a real skill`);
         assert.ok(chain.includes(SKILLS[s.id].job), `${b.name} (${b.char.job}) can use ${s.id}`);
+      }
+    }
+  }
+});
+
+test('every dungeon monster and boss draws every frame as flat shapes', async () => {
+  for (const file of ['manor', 'manorboss', 'sea', 'seaboss', 'toy', 'toyboss', 'astral', 'astralboss', 'candy', 'candyboss', 'stage', 'stageboss', 'skyfolk', 'skyboss']) {
+    const { ART } = await import(`../src/render/mobs/${file}.js`);
+    for (const [art, a] of Object.entries(ART)) {
+      for (const [pose, n] of [['walk', a.walk], ['idle', a.idle], ['attack', a.attack]]) {
+        for (let f = 0; f < n; f++) {
+          for (const mood of ['idle', 'hurt', 'dead', 'angry']) {
+            const b = a.draw(pose, f, mood);
+            assert.ok(b.shapes.every((s) => s && typeof s === 'object' && !Array.isArray(s)), `${art} ${pose} ${f} ${mood}`);
+          }
+        }
       }
     }
   }

@@ -31,6 +31,13 @@ import { speak, contextOf } from './chatter.js';
 import { botChat } from './chatlog.js';
 import { loadMap } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
+import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
+import { AQUA_MECHS, AQUA_CHANNEL, aquaSetup, tickAqua, aquaBoss, aquaHitMul, aquaKilled, openClam, bellWords } from './aquarium.js';
+import { CARNIVAL_MECHS, CARNIVAL_CHANNEL, carnivalSetup, tickCarnival, carnivalBoss, carnivalHitMul, carnivalKilled } from './carnival.js';
+import { OBS_MECHS, OBS_CHANNEL, obsSetup, tickObs, obsBoss, obsHitMul, obsKilled, pressLamp, lampsLit } from './observatory.js';
+import { VOLCANO_MECHS, VOLCANO_CHANNEL, volcanoSetup, tickVolcano, volcanoBoss, volcanoHitMul, volcanoKilled, addCandy, recipeWords, recipeCount, wantCandy } from './volcano.js';
+import { THEATRE_MECHS, THEATRE_CHANNEL, theatreSetup, tickTheatre, theatreBoss, theatreHitMul, theatreKilled, pressCue, cueCount, nextCue } from './theatre.js';
+import { WHALE_MECHS, WHALE_CHANNEL, whaleSetup, tickWhale, whaleBoss, whaleHitMul, whaleKilled, tendBloom, bloomOpen } from './skywhale.js';
 import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
@@ -225,7 +232,17 @@ export function onMapLoaded(world) {
       objects: (map.objects ?? []).map((o, i) => ({ y: map.groundY, ...o, id: i, done: false, progress: 0 })),
     };
     roomSetup(world, room);
+    manorSetup(world, room);
+    aquaSetup(world, room);
+    carnivalSetup(world, room);
+    obsSetup(world, room);
+    volcanoSetup(world, room);
+    theatreSetup(world, room);
+    whaleSetup(world, room);
     radio(world, `enter:${map.id}`);
+    if (room.crest) callout(world, 'The family crest', crestWords(room));
+    if (room.bell) callout(world, 'Ding... ding...', bellWords(room));
+    if (room.recipe) callout(world, 'The cauldron bubbles', recipeWords(room));
     for (const m of world.mobs) {
       toughen(world, m);
       settle(m);
@@ -272,8 +289,11 @@ export function taskProgress(world) {
   const task = world.map.task;
   if (!run?.room || !task) return null;
   if (task.kind === 'keys') return { label: task.label, have: run.room.keysGot, need: task.count };
-  const kind = task.kind === 'light' ? 'glowcap' : 'cage';
+  const kind = task.object ?? (task.kind === 'light' ? 'glowcap' : 'cage');
   const list = run.room.objects.filter((o) => o.kind === kind);
+  if (kind === 'starlamp') return { label: task.label, have: lampsLit(run.room), need: list.length };
+  if (kind === 'cue' && run.room.cues) return { label: task.label, ...cueCount(run.room) };
+  if (kind === 'dispenser') return { label: task.label, ...recipeCount(run.room) };
   return { label: task.label, have: list.filter((o) => o.done).length, need: list.length };
 }
 
@@ -310,7 +330,9 @@ export function portalSealed(world, portal) {
 
 // ---------- Talking to the room: glowcaps, cages, the chest ----------
 
-const CHANNEL = { glowcap: 1, cage: 1.5 };
+const CHANNEL = { glowcap: 1, cage: 1.5, ...MANOR_CHANNEL, ...AQUA_CHANNEL, ...CARNIVAL_CHANNEL, ...OBS_CHANNEL, ...VOLCANO_CHANNEL, ...THEATRE_CHANNEL, ...WHALE_CHANNEL };
+// What the log says when someone finishes one (the cages and portraits have their own).
+const DONE_LINE = { glowcap: ['lit a glowcap', '#ffe9a0'], lantern: ['lit a garden lantern', '#ffe9a0'], book: ['caught a lost book', '#c9b6ff'], lever: ['pulled a door lever', '#ffd66b'], coral: ['lit a lantern coral', '#9fe8ff'], clam: ['opened a giant clam', '#ffe6f2'], windbox: ['wound a music box', '#ffd36b'], prize: ['popped a prize balloon', '#ff9ab8'], starlamp: ['lit the last star lamp', '#fff3a6'], starlamp1: ['lit a star lamp', '#fff3a6'], crystal: ['gathered a sugar crystal', '#ff9ad8'], dispenser: ['finished the recipe', '#ffd36b'], ticket: ['found a lost ticket', '#ffd0e4'], cue: ['hit the last cue', '#ffe08a'], mooring: ['tied down a mooring', '#c8a070'], airbloom: ['tended an air-bloom', '#9fe8ff'] };
 
 function objectNear(world, body, reach = 26) {
   const room = world.dungeon?.room;
@@ -327,7 +349,7 @@ export function dungeonInteract(world) {
     return true;
   }
   if (o.kind === 'chest') {
-    if (!roomCleared(world)) world.log('The chest is wrapped in roots. Calm Gnarlroot first!', '#ffb3c6');
+    if (!roomCleared(world)) world.log(DUNGEONS[world.dungeon.id].chestLocked ?? 'The chest is sealed. Finish the room first!', '#ffb3c6');
     else openChest(world, o);
     return true;
   }
@@ -337,12 +359,41 @@ export function dungeonInteract(world) {
 }
 
 function finish(world, o, who) {
+  // A candy goes in the pot; the room is done once the recipe is exact.
+  if (o.kind === 'dispenser' && !addCandy(world, o)) {
+    world.juice.push({ type: 'loot', x: o.x, y: o.y - 30, color: '#ffd36b' });
+    return;
+  }
+  // An air-bloom opens only on the lungs' breath out.
+  if (o.kind === 'airbloom' && !tendBloom(world, o)) return;
+  // A cue lamp counts only in the sequence it flashed; a wrong one plays the sequence again.
+  if (o.kind === 'cue' && !pressCue(world, o)) {
+    world.juice.push({ type: 'loot', x: o.x, y: o.y - 30, color: '#ffe08a' });
+    return;
+  }
+  // A star lamp flips with its neighbours; the hall is done once all of them shine.
+  if (o.kind === 'starlamp' && !pressLamp(world, o)) {
+    world.juice.push({ type: 'loot', x: o.x, y: o.y - 30, color: '#fff3a6' });
+    return;
+  }
+  // A clam opens only in the bell's order.
+  if (o.kind === 'clam' && !openClam(world, o)) return;
+  // A portrait turns to its next picture, and only locks in once it shows the crest's.
+  if (o.kind === 'portrait' && !turnPortrait(world, o)) {
+    o.progress = 0;
+    world.juice.push({ type: 'loot', x: o.x, y: o.y - 30, color: '#c9b6ff' });
+    return;
+  }
   o.done = true;
   o.progress = 1;
   if (following(world)) world.net.runLeader(world, { op: 'obj', map: world.map.id, i: o.id });
   const task = taskProgress(world);
   const count = task ? ` (${task.have}/${task.need})` : '';
-  if (o.kind === 'glowcap') world.log(`${who} lit a glowcap${count}.`, '#ffe9a0');
+  if (DONE_LINE[o.kind]) world.log(`${who} ${DONE_LINE[o.kind][0]}${count}.`, DONE_LINE[o.kind][1]);
+  if (o.kind === 'portrait') {
+    world.log(`${who} set a portrait to the ${CREST[o.face]}${count}. It clicks into place!`, '#c9b6ff');
+    if (task && task.have >= task.need) callout(world, 'The portraits smile!', 'A hidden door swings open');
+  }
   if (o.kind === 'cage') {
     world.log(`${who} freed a Sprout${count}!`, '#bff0dc');
     // Every Sprout freed follows the group and cheers it on for the rest of the run.
@@ -351,7 +402,7 @@ function finish(world, o, who) {
     radio(world, 'cheer');
     world.numbers.push({ x: o.x, y: o.y - 44, text: 'Thank you!', color: '#9be08f', t: 0, small: true });
   }
-  world.juice.push({ type: 'loot', x: o.x, y: o.y - 16, color: o.kind === 'glowcap' ? '#ffd66b' : '#9be08f' });
+  world.juice.push({ type: 'loot', x: o.x, y: o.y - 16, color: o.kind === 'cage' ? '#9be08f' : '#ffd66b' });
 }
 
 function tickChannels(world, dt, group) {
@@ -435,7 +486,7 @@ function openCache(world, o) {
   const gold = Math.round((150 + Math.random() * 150) * k);
   char.gold += gold;
   world.log(`A hidden cache! +${gold} gold`, '#ffe36b');
-  for (const [id, qty] of [['hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k], ['gacha_ticket', 1]]) {
+  for (const [id, qty] of [[DUNGEONS[run.id].token ?? 'hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k], ['gacha_ticket', 1]]) {
     if (ITEMS[id] && addItem(char.inventory, id, qty)) world.log(`Received ${ITEMS[id].name} x${qty}.`, ITEMS[id].color);
   }
   world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' });
@@ -479,7 +530,7 @@ function openChest(world, o) {
   const tickets = (daily ? 1 : 0) + (run.hard ? 1 : 0);
   if (tickets && addItem(char.inventory, 'gacha_ticket', tickets)) world.log(`Received Capsule Ticket x${tickets}.`, ITEMS.gacha_ticket.color);
   for (const it of reward.items) {
-    const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === 'hollow_acorn' ? 5 : 0);
+    const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === (def.token ?? 'hollow_acorn') ? 5 : 0);
     if (addItem(char.inventory, it.id, qty)) world.log(`Received ${ITEMS[it.id].name} x${qty}.`, ITEMS[it.id].color);
   }
   // The records: clears, best grade and time, Hard unlocked.
@@ -497,7 +548,7 @@ function openChest(world, o) {
   }
   // The run's result card.
   const notes = [run.hard ? 'Hard' : 'Normal', `${run.wipes} wipe${run.wipes === 1 ? '' : 's'}`, `${run.downs} down${run.downs === 1 ? '' : 's'}`, daily ? 'daily bonus!' : null].filter(Boolean).join(' · ');
-  playScene(world, 'hollow_results', { grade, time: clock(secs), notes, bonus: `${Math.round((GRADE_BONUS[grade] - 1) * 100)}%` });
+  playScene(world, `${run.id}_results`, { grade, time: clock(secs), notes, bonus: `${Math.round((GRADE_BONUS[grade] - 1) * 100)}%` });
 }
 
 // ---------- Threat ----------
@@ -522,7 +573,7 @@ function engage(world, m, by = null) {
       run.met ??= {};
       if (!run.met[m.def.mech]) {
         run.met[m.def.mech] = true;
-        playScene(world, `hollow_${m.def.mech}`);
+        playScene(world, `${run.id}_${m.def.mech}`);
       }
     }
   }
@@ -533,6 +584,27 @@ const BOSS_LINES = {
   capper: '"Who is trampling my garden?!"',
   boar: '"GRUNT! You smell like trouble!"',
   gnarl: '"Hrrmm... too noisy... far too noisy..."',
+  waltz: '"May we have this dance? We insist."',
+  moray: '"Sister, guests! Shall we share them?"',
+  abyssia: '"Down here, darlings, the light is MINE."',
+  coralie: '"Who disturbs the drowned court?"',
+  leonie: '"Ladies and gentlemen... the main event!"',
+  marionetta: '"Such lovely limbs. They need strings."',
+  gearheart: '"Tick. Tock. The show must go on."',
+  folio: '"SHHH! This is a library!"',
+  eclipse: '"Light and dark, sister. Shall we?"',
+  astraea: '"Nothing will fall. Nothing will ever fall again."',
+  toffee: '"Mind the sparks! Ha!"',
+  gretel: '"Halt! None shall pass the gingerbread wall!"',
+  bonbon: '"More sugar! MORE! The biggest dessert in the world!"',
+  velvet: '"Shoes OFF in my hallway!"',
+  marigold: '"Oh! More guests! Do stay. Stay forever."',
+  persona: '"Shall I laugh for you, or weep? Why not both?"',
+  directrice: '"Places, everyone! And... ACTION!"',
+  playwright: '"Every story needs an ending. I have written yours."',
+  gale: '"Stowaways! Lovely. Everyone off at the next cloud!"',
+  matriarch: '"This whale is OURS now. Every last inch of it."',
+  whaledream: '"...mmh... five more minutes... five more centuries..."',
 };
 
 // A queued hit landing on a monster: wakes it, and adds threat for whoever hit it. Returns the
@@ -545,7 +617,7 @@ export function noteHit(world, m, h) {
   if (m.shield) damage = Math.round(damage * 0.5);
   // The Sprouts' cheering, and Gnarlroot's open heart (up high is where it's reached).
   const body = groupOf(world).find((g) => g.id === who)?.body;
-  damage = Math.round(damage * cheerOf(run) * heartMultiplier(world, m, body));
+  damage = Math.round(damage * cheerOf(run) * heartMultiplier(world, m, body) * manorHitMul(world, m) * aquaHitMul(world, m) * carnivalHitMul(world, m) * obsHitMul(world, m) * volcanoHitMul(world, m, body) * theatreHitMul(world, m) * whaleHitMul(world, m));
   engage(world, m, who);
   m.threat[who] = (m.threat[who] ?? 0) + Math.max(1, damage) * (run.roles[who] === 'tank' ? TANK_THREAT : 1);
   return damage;
@@ -864,7 +936,7 @@ function fight(world, m, up, dt) {
     const stop = f.range ? f.range * 0.8 : reach * 0.7;
     if (Math.abs(dx) > stop) {
       m.state = 'walk';
-      m.x += m.dir * m.def.speed * 1.3 * dt;
+      m.x += m.dir * m.def.speed * 1.3 * (m.speedK ?? 1) * dt;
     } else m.state = 'idle';
     m.x = Math.max(m.x1, Math.min(m.x2, m.x));
     // Stopped at the edge with its target on a floor below: hop down after them.
@@ -949,6 +1021,13 @@ function bossMove(world, m, up, dt) {
   const map = world.map;
   const frac = m.hp / m.def.hp;
   const nonTanks = up.filter((g) => g.role !== 'tank');
+  if (MANOR_MECHS.has(m.def.mech)) return manorBoss(world, m, up, dt);
+  if (AQUA_MECHS.has(m.def.mech)) return aquaBoss(world, m, up, dt);
+  if (CARNIVAL_MECHS.has(m.def.mech)) return carnivalBoss(world, m, up, dt);
+  if (OBS_MECHS.has(m.def.mech)) return obsBoss(world, m, up, dt);
+  if (VOLCANO_MECHS.has(m.def.mech)) return volcanoBoss(world, m, up, dt);
+  if (THEATRE_MECHS.has(m.def.mech)) return theatreBoss(world, m, up, dt);
+  if (WHALE_MECHS.has(m.def.mech)) return whaleBoss(world, m, up, dt);
   if (m.def.mech === 'capper') {
     const s = (m.mech ??= { rain: 7, adds: [0.85, 0.5] });
     capperPhases(world, m, dt);
@@ -1174,6 +1253,13 @@ export function tickDungeon(world, dt) {
   run.combat = world.mobs.some((m) => m.hp > 0 && m.engaged && !m.def.fight?.mender);
   tickZones(world, up, dt);
   tickRoom(world, dt, group, up);
+  tickManor(world, dt, group, up);
+  tickAqua(world, dt, group, up);
+  tickCarnival(world, dt, group, up);
+  tickObs(world, dt, group, up);
+  tickVolcano(world, dt, group, up);
+  tickTheatre(world, dt, group, up);
+  tickWhale(world, dt, group, up);
   tickChannels(world, dt, group);
   tickBuffs(world, group, dt);
   for (const v of run.vfx) v.t += dt;
@@ -1351,6 +1437,13 @@ export function onMobKilled(world, m) {
     run.room.walls = null;
     hollowCalmed(world);
   }
+  manorKilled(world, m);
+  aquaKilled(world, m);
+  carnivalKilled(world, m);
+  obsKilled(world, m);
+  volcanoKilled(world, m);
+  theatreKilled(world, m);
+  whaleKilled(world, m);
   if (m.def.boss) {
     run.zones = [];
     for (const a of run.room.adds) if (a.hp > 0) {
@@ -1417,6 +1510,10 @@ function ledgeGoal(world, x, mode) {
   });
   return best?.goal ?? goalAt(world, x, world.map.groundY, mode);
 }
+
+// (Party members open the vault's clams only in the bell's order.)
+// (and the constellation's lamps only the ones its solution still needs).
+const nextClam = (room, o, now, world) => (o.kind !== 'clam' || room.bell?.order[room.bell.next] === o.id) && (o.kind !== 'starlamp' || room.lamps?.press.has(o.id)) && (o.kind !== 'dispenser' || wantCandy(room, o)) && nextCue(room, o, now) && (!world || bloomOpen(world, o));
 
 function thinkRole(bot, world, rng) {
   const run = world.dungeon;
@@ -1523,7 +1620,7 @@ function thinkRole(bot, world, rng) {
       return;
     }
     const busy = new Set(group.filter((g) => g.bot && g.bot !== bot).map((g) => g.bot.brain?.task));
-    const todo = room.objects.filter((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !busy.has(o) && safe(o.x) && world.channel?.obj !== o);
+    const todo = room.objects.filter((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !busy.has(o) && safe(o.x) && world.channel?.obj !== o && nextClam(room, o, world.now, world));
     const o = role === 'dps' ? nearest(todo, body) : null;
     if (o) {
       br.task = o;

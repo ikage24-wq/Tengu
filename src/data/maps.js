@@ -905,6 +905,1272 @@ Object.assign(MAPS, {
   },
 });
 
+// ---------- Moonlit Manor (the levels 15-20 group dungeon, docs/design/moonlit-manor.md) ----------
+//
+// Each room has an idea of its own (world/manor.js runs them), and no two share a shape:
+//   fountains   garden fountains spout on a beat and throw whoever stands in the basin up high
+//   puzzle      the gallery's portraits turn; set all four to the family crest (`crest` shows it)
+//   chandelier  the ballroom's chandelier comes down mid-fight
+//   storms      page storms blow through one floor of the library at a time
+//   chase       the hallway's tea trolley rolls after the group; `doors` bar the way until their
+//               levers are pulled
+
+// What every manor room's look shares: moonlit violet, its own backdrop, the manor's own stone.
+const MANOR_OUT = { skyline: 'manor', material: 'manorgarden', critters: ['firefly'], drift: 'mote', face: 'moon', light: 'dusk' };
+const MANOR_IN = { skyline: 'manorhall', material: 'manor', critters: [], drift: 'mote', face: null, light: 'cave', ceiling: 'manor' };
+
+MAPS.woods.portals.push({ id: 'manor', x: 1300, y: 440, to: 'manor_gate', toPortal: 'south', label: 'Moonlit Manor' });
+
+Object.assign(MAPS, {
+  // Manor Hill: the garden path up from the treetops of Mossy Woods to the manor's iron gates, where
+  // old Mr. Pumpkins keeps the gate and finds groups. The manor looms on the hill behind.
+  manor_gate: {
+    id: 'manor_gate', name: 'Manor Hill', theme: 'manor', town: 'harbor', world: { x: 262, y: 150 }, music: 'manor',
+    width: 1300, height: 420, groundY: G,
+    look: { sky: ['#3a3270', '#7a62b0', '#e0a8c8'], far: '#5a4a8a', mid: '#7a6aa8', midTrim: '#c9a6ff', ...MANOR_OUT },
+    terrain: [[0, G], [340, G], [420, G - 30], [1300, G - 30]],
+    platforms: [{ x: 520, y: G - 110, w: 160 }],
+    ropes: [],
+    deco: [['signpost', 180]],
+    portals: [
+      { id: 'start', x: 760, y: G - 30, hidden: true },
+      { id: 'south', x: 60, y: G, to: 'woods', toPortal: 'manor' },
+      { id: 'door', x: 1180, y: G - 30, to: 'manor1', toPortal: 'start', label: 'Moonlit Manor', dungeon: 'manor' },
+    ],
+    npcs: [{ id: 'pumpkins', x: 960 }],
+    spawns: [],
+  },
+
+  // The Moonlit Garden: hedges and topiaries climbing in terraces to the front steps. The fountains
+  // spout on a beat and throw you up a terrace (the first one, by the gate, up to a hidden ledge).
+  // Light the three garden lanterns; the front door waits at the top.
+  manor1: {
+    id: 'manor1', name: 'The Moonlit Garden', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    ...lay({
+      width: 2200, ground: 760,
+      ledges: [
+        { x: 520, y: 640, w: 520 }, { x: 1040, y: 520, w: 520 }, { x: 1560, y: 400, w: 640, thick: 44 },
+        { x: 120, y: 570, w: 110 },
+      ],
+      zones: [
+        { name: 'The Lantern Walk', color: '#ffd88a', mobs: [] },
+        { name: 'The Fountain Terraces', color: '#8fd8e8', from: 900, mobs: [] },
+        { name: 'The Front Steps', color: '#c9a6ff', from: 1560, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#2a2458', '#5a4a96', '#c890c8'], far: '#4a3a7a', mid: '#5a7a6a', midTrim: '#9ad8a0', ...MANOR_OUT },
+    task: { kind: 'light', object: 'lantern', label: 'Light the garden lanterns' },
+    fountains: [{ x: 200, y: 760, every: 6 }, { x: 960, y: 640, every: 7 }, { x: 1500, y: 520, every: 6.5 }],
+    portals: [
+      { id: 'out', x: 50, y: 760, to: 'manor_gate', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: 760, hidden: true },
+      { id: 'east', x: 2140, y: 400, to: 'manor2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'lantern', x: 440, y: 760 }, { kind: 'lantern', x: 760, y: 640 }, { kind: 'lantern', x: 1300, y: 520 }, { kind: 'cache', x: 170, y: 570 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 640, 760, 'topiarydryad', 'lanternghost', 'topiarydryad'),
+      ...packAt('b', 880, 640, 'porcelaindoll', 'topiarydryad', 'lanternghost'),
+      ...packAt('c', 1220, 520, 'topiarydryad', 'porcelaindoll', 'lanternghost', 'topiarydryad'),
+      ...packAt('d', 1800, 400, 'porcelaindoll', 'lanternghost', 'porcelaindoll'),
+    ],
+  },
+
+  // The Portrait Gallery: a tall hall on four floors with the family's portraits on every wall. The
+  // puzzle: four of them turn (one on each floor); set each to its picture in the family crest over
+  // the stair. Picture frames drift across the gap on the top floor.
+  manor2: {
+    id: 'manor2', name: 'The Portrait Gallery', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    ...lay({
+      width: 1400, ground: 900, by: 'y',
+      ledges: [
+        { x: 60, y: 740, w: 560 }, { x: 780, y: 740, w: 560 },
+        { x: 200, y: 580, w: 1000 },
+        { x: 60, y: 420, w: 420 }, { x: 900, y: 420, w: 440 },
+        { x: 520, y: 410, w: 100, drift: { dx: 220, period: 8 } },
+        { x: 650, y: 300, w: 90 },
+      ],
+      zones: [
+        { name: 'The Entrance Hall', color: '#c9a6ff', mobs: [] },
+        { name: 'The Long Gallery', color: '#ffb3cf', from: 760, mobs: [] },
+        { name: 'The Family Wing', color: '#ffd88a', from: 600, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#1e1a3e', '#3a2e66', '#7a62b0'], far: '#3a2e5e', mid: '#5a4a86', midTrim: '#ffd36b', ...MANOR_IN },
+    task: { kind: 'light', object: 'portrait', label: 'Set the portraits to the crest' },
+    puzzle: true,
+    crest: { x: 700, y: 580 },
+    portals: [
+      { id: 'west', x: 50, y: 900, to: 'manor1', toPortal: 'east' },
+      { id: 'east', x: 1300, y: 420, to: 'manor3', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'portrait', slot: 0, x: 340, y: 900 }, { kind: 'portrait', slot: 1, x: 1160, y: 740 },
+      { kind: 'portrait', slot: 2, x: 320, y: 580 }, { kind: 'portrait', slot: 3, x: 1060, y: 420 },
+      { kind: 'cache', x: 695, y: 300 },
+    ],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 820, 900, 'ghostmaid', 'porcelaindoll', 'ghostmaid'),
+      ...packAt('b', 420, 740, 'teahatter', 'ghostmaid'),
+      ...packAt('c', 880, 580, 'porcelaindoll', 'teahatter', 'porcelaindoll'),
+      ...packAt('d', 260, 420, 'ghostmaid', 'teahatter'),
+    ],
+  },
+
+  // The Ballroom: a grand round floor under a chandelier, a balcony each side reached by little
+  // landings. The Waltzing Armours hold the floor.
+  manor3: {
+    id: 'manor3', name: 'The Ballroom', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    width: 1500, height: 420, groundY: G,
+    platforms: [
+      { x: 80, y: 260, w: 220 }, { x: 1200, y: 260, w: 220 },
+      { x: 340, y: 310, w: 100 }, { x: 1060, y: 310, w: 100 },
+      { x: 700, y: 170, w: 100 },
+    ],
+    // The chandelier's chain: climb it to the ledge in the dome (the room's secret).
+    ropes: [{ x: 750, top: 170, bottom: G }],
+    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN },
+    chandelier: { x: 750 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'manor2', toPortal: 'east' },
+      { id: 'east', x: 1460, y: G, to: 'manor4', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 750, y: 170 }],
+    npcs: [],
+    spawns: [{ mob: 'waltzrondo', x: 690, y: G, pack: 'pair' }, { mob: 'waltzminuet', x: 810, y: G, pack: 'pair' }],
+  },
+
+  // The Library: shelves to the ceiling on five floors joined by rolling ladders. The three lost
+  // books flutter along the shelves (catch them); page storms blow through one floor at a time.
+  manor4: {
+    id: 'manor4', name: 'The Library', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    ...lay({
+      width: 1500, ground: 1000, by: 'y',
+      ledges: [
+        { x: 80, y: 840, w: 640 }, { x: 860, y: 840, w: 560 },
+        { x: 300, y: 680, w: 900 },
+        { x: 80, y: 520, w: 520 }, { x: 760, y: 520, w: 660 },
+        { x: 400, y: 380, w: 1020, thick: 44 },
+        { x: 80, y: 270, w: 100 },
+      ],
+      zones: [
+        { name: 'The Reading Room', color: '#ffd88a', mobs: [] },
+        { name: 'The Stacks', color: '#c9a6ff', from: 760, mobs: [] },
+        { name: 'The Rare Books', color: '#8fd8e8', from: 450, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#20183a', '#3e2e5e', '#8a6aa0'], far: '#3a2a4a', mid: '#6a4a5a', midTrim: '#ffd36b', ...MANOR_IN },
+    task: { kind: 'light', object: 'book', label: 'Catch the lost books' },
+    storms: true,
+    portals: [
+      { id: 'west', x: 40, y: 1000, to: 'manor3', toPortal: 'east' },
+      { id: 'east', x: 1380, y: 380, to: 'manor5', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'book', x: 400, y: 840, dx: 50, period: 7 }, { kind: 'book', x: 1000, y: 680, dx: 60, period: 8 }, { kind: 'book', x: 1100, y: 520, dx: 50, period: 6.5 },
+      { kind: 'cache', x: 130, y: 270 },
+    ],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 700, 1000, 'teahatter', 'lanternghost', 'ghostmaid'),
+      ...packAt('b', 1100, 840, 'lanternghost', 'teahatter', 'lanternghost'),
+      ...packAt('c', 520, 680, 'ghostmaid', 'porcelaindoll', 'teahatter', 'ghostmaid'),
+      ...packAt('d', 340, 520, 'teahatter', 'lanternghost'),
+    ],
+  },
+
+  // The Endless Hallway: a long, long corridor of rugs, side tables and grandfather clocks. Past the
+  // start line Madame Velvet's tea trolley comes rolling; three doors bar the way until their levers
+  // are pulled. At the far end the trolley stops, and its owner is waiting.
+  manor5: {
+    id: 'manor5', name: 'The Endless Hallway', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    width: 3600, height: 420, groundY: G,
+    platforms: [{ x: 640, y: 320, w: 80 }, { x: 1460, y: 320, w: 80 }, { x: 2360, y: 320, w: 80 }, { x: 3200, y: 300, w: 90 }, { x: 3330, y: 230, w: 90 }],
+    ropes: [],
+    look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN },
+    task: { kind: 'light', object: 'lever', label: 'Pull the door levers' },
+    chase: { start: 300, from: -40, to: 3000, speed: 80, speedUp: 4, top: 128, damage: 120, plates: 3.6 },
+    doors: [{ x: 1120, lever: 0 }, { x: 2040, lever: 1 }, { x: 2860, lever: 2 }],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'manor4', toPortal: 'east' },
+      { id: 'east', x: 3560, y: G, to: 'manor6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'lever', x: 1060, y: G }, { kind: 'lever', x: 1980, y: G }, { kind: 'lever', x: 2800, y: G }, { kind: 'cache', x: 3375, y: 230 }],
+    npcs: [],
+    spawns: [{ mob: 'velvet', x: 3330, y: G }],
+  },
+
+  // The Moonlit Rooftop: the slate roof under a moon far too big, chimneys to stand on, a
+  // weathervane at the top, and a long party table laid for a hundred. Lady Marigold is waiting.
+  manor6: {
+    id: 'manor6', name: 'The Moonlit Rooftop', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    width: 1600, height: 420, groundY: G,
+    platforms: [
+      { x: 230, y: 296, w: 74 }, { x: 560, y: 300, w: 74 }, { x: 966, y: 300, w: 74 }, { x: 1296, y: 296, w: 74 },
+      { x: 760, y: 220, w: 80 },
+    ],
+    // The weathervane's pole, up to the little platform at its foot (the room's secret).
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'manor', face: null, bigMoon: true },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'manor5', toPortal: 'east' },
+      { id: 'out', x: 1560, y: G, to: 'manor_gate', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1450, after: 'clear' }, { kind: 'cache', x: 800, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'marigold', x: 800, y: G }],
+  },
+});
+
+// ---------- Sunken Aquarium Palace (the levels 20-25 group dungeon, docs/design/aquarium-palace.md) ----------
+//
+// A dive: every room deeper and darker than the last. Each has an idea of its own (world/aquarium.js
+// runs them):
+//   updrafts (kind 'bubbles')  bubble lifts: press Up in one to rise
+//   currents   [{ x1, x2, y, dir, every, last }]: a floor's water flows one way for `last` seconds
+//              every `every` seconds, carrying whoever is on it
+//   clams      objects of kind 'clam' with a `mark`: the bell rings an order; open them in it
+//   burrows    [x, x]: the moray sisters' holes in the grotto walls
+//   flood      (as in the Hollow) the tide surging up the abyss: `color: 'sea'` draws it as water
+
+const SEA_LOOK = { skyline: 'reef', material: 'reef', critters: [], drift: 'bubble', face: null, light: 'cave', ceiling: false };
+
+MAPS.harbor.portals.push({ id: 'pier', x: 2300, y: 480, to: 'tidepool_pier', toPortal: 'west', label: 'Tidepool Pier' });
+
+Object.assign(MAPS, {
+  // Tidepool Pier: a little pier off the east end of Pastel Harbor, over water glowing from below,
+  // where Marina the diver keeps her bubble charm and finds groups.
+  tidepool_pier: {
+    id: 'tidepool_pier', name: 'Tidepool Pier', theme: 'harbor', town: 'harbor', world: { x: 236, y: 214 }, music: 'aquarium',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#5a8ad8', '#9ac8e8', '#ffd8c0'], far: '#6a9ad0', mid: '#ffffff', midTrim: '#8fd3ff', skyline: 'sea', light: 'dusk', critters: ['gull'] },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'harbor', toPortal: 'pier' },
+      { id: 'door', x: 1110, y: G, to: 'aquarium1', toPortal: 'start', label: 'Sunken Aquarium Palace', dungeon: 'aquarium' },
+    ],
+    npcs: [{ id: 'marina', x: 860 }],
+    spawns: [],
+  },
+
+  // The Coral Gate: down the palace's outer wall, floor by floor, from the surface gate to the sea
+  // floor. Bubble lifts carry you back up; three lantern corals to light on the way down.
+  aquarium1: {
+    id: 'aquarium1', name: 'The Coral Gate', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    ...lay({
+      width: 1600, ground: 1100, by: 'y',
+      ledges: [
+        { x: 40, y: 300, w: 700 }, { x: 900, y: 420, w: 660 }, { x: 100, y: 560, w: 760 },
+        { x: 960, y: 700, w: 600 }, { x: 60, y: 840, w: 820 }, { x: 980, y: 960, w: 580 },
+        { x: 1440, y: 280, w: 110 },
+      ],
+      zones: [
+        { name: 'The Sea Floor', color: '#5ac8c8', mobs: [], look: { sky: ['#0e2e4e', '#1a4a6e', '#2a6a8a'] } },
+        { name: 'The Coral Wall', color: '#ff9ab8', from: 900, mobs: [], look: { sky: ['#1a4a6e', '#2a6a8a', '#4a9ab0'] } },
+        { name: 'The Surface Gate', color: '#9fe8ff', from: 520, mobs: [], look: { sky: ['#3a8ab0', '#6ab8d0', '#bfe6f0'] } },
+      ],
+    }),
+    look: { sky: ['#1a4a6e', '#2a6a8a', '#4a9ab0'], far: '#1e5a7a', mid: '#2a7a8a', midTrim: '#ff9ab8', ...SEA_LOOK },
+    task: { kind: 'light', object: 'coral', label: 'Light the lantern corals' },
+    updrafts: [{ x: 1500, w: 56, top: 280, bottom: 420, kind: 'bubbles' }, { x: 920, w: 56, top: 560, bottom: 1100, kind: 'bubbles' }],
+    portals: [
+      { id: 'out', x: 50, y: 300, to: 'tidepool_pier', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 120, y: 300, hidden: true },
+      { id: 'east', x: 1540, y: 1100, to: 'aquarium2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'coral', x: 300, y: 560 }, { kind: 'coral', x: 1200, y: 700 }, { kind: 'coral', x: 500, y: 1100 }, { kind: 'cache', x: 1470, y: 280 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 1200, 420, 'jellymaid', 'stardancer'),
+      ...packAt('b', 560, 560, 'pearldiver', 'jellymaid', 'stardancer'),
+      ...packAt('c', 420, 840, 'jellymaid', 'pearldiver', 'stardancer'),
+      ...packAt('d', 1280, 960, 'stardancer', 'jellymaid'),
+      ...packAt('e', 1060, 1100, 'pearldiver', 'jellymaid', 'stardancer'),
+    ],
+  },
+
+  // The Kelp Gardens: a long swim through the palace gardens, the sea floor below and a path along
+  // the kelp tops above. Currents sweep a floor at a time; a bubble lift at the far end leads up to
+  // a hidden grotto.
+  aquarium2: {
+    id: 'aquarium2', name: 'The Kelp Gardens', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    ...lay({
+      width: 2800, ground: 700,
+      ledges: [{ x: 300, y: 560, w: 500 }, { x: 950, y: 560, w: 600 }, { x: 1700, y: 560, w: 700 }, { x: 2640, y: 420, w: 120 }],
+      zones: [
+        { name: 'The Kelp Shallows', color: '#7fd8a8', mobs: [] },
+        { name: 'The Seagrass Meadow', color: '#9fe8d8', from: 1400, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#0e3a4a', '#1a5a5a', '#3a8a7a'], far: '#1a4a4a', mid: '#2a6a5a', midTrim: '#7fd8a8', ...SEA_LOOK },
+    currents: [{ x1: 120, x2: 1350, y: 700, dir: 1, every: 7, last: 4 }, { x1: 1500, x2: 2600, y: 560, dir: -1, every: 8, last: 4 }],
+    updrafts: [{ x: 2700, w: 56, top: 420, bottom: 700, kind: 'bubbles' }],
+    portals: [
+      { id: 'west', x: 40, y: 700, to: 'aquarium1', toPortal: 'east' },
+      { id: 'east', x: 2560, y: 700, to: 'aquarium3', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 2700, y: 420 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 700, 700, 'seahorseknight', 'stardancer', 'jellymaid'),
+      ...packAt('b', 560, 560, 'octoscholar', 'seahorseknight'),
+      ...packAt('c', 1250, 560, 'jellymaid', 'stardancer', 'octoscholar'),
+      ...packAt('d', 1700, 700, 'seahorseknight', 'octoscholar', 'seahorseknight'),
+      ...packAt('e', 2050, 560, 'stardancer', 'jellymaid', 'seahorseknight'),
+    ],
+  },
+
+  // The Pearl Vault: three floors of giant clams. The tide bell rings an order as you come in (a
+  // new one each run); open the four clams in it. A wrong one snaps them all shut.
+  aquarium3: {
+    id: 'aquarium3', name: 'The Pearl Vault', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    ...lay({
+      width: 1300, ground: 860, by: 'y',
+      ledges: [{ x: 420, y: 700, w: 460 }, { x: 100, y: 540, w: 400 }, { x: 800, y: 540, w: 400 }, { x: 580, y: 420, w: 140 }],
+      zones: [
+        { name: 'The Vault Floor', color: '#ffe6f2', mobs: [] },
+        { name: 'The Pearl Galleries', color: '#bfeeff', from: 620, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#1a2a5a', '#2a4a7a', '#6a8ac0'], far: '#22346a', mid: '#3a5a8a', midTrim: '#ffe6f2', ...SEA_LOOK },
+    task: { kind: 'light', object: 'clam', label: 'Open the clams in the bell\'s order' },
+    bell: { x: 650, y: 420 },
+    portals: [
+      { id: 'west', x: 40, y: 860, to: 'aquarium2', toPortal: 'east' },
+      { id: 'east', x: 1160, y: 540, to: 'aquarium4', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'clam', mark: 'Conch', x: 300, y: 860 }, { kind: 'clam', mark: 'Star', x: 1000, y: 860 },
+      { kind: 'clam', mark: 'Pearl', x: 650, y: 700 }, { kind: 'clam', mark: 'Wave', x: 300, y: 540 },
+      { kind: 'cache', x: 650, y: 420 },
+    ],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 650, 860, 'octoscholar', 'pearldiver', 'seahorseknight'),
+      ...packAt('b', 760, 700, 'pearldiver', 'octoscholar'),
+      ...packAt('c', 1000, 540, 'seahorseknight', 'pearldiver', 'octoscholar'),
+    ],
+  },
+
+  // The Moray Grotto: a cave riddled with holes, a burrow in each wall. The sisters wait.
+  aquarium4: {
+    id: 'aquarium4', name: 'The Moray Grotto', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    width: 1500, height: 420, groundY: G,
+    platforms: [{ x: 300, y: 300, w: 140 }, { x: 1060, y: 300, w: 140 }, { x: 650, y: 300, w: 200 }],
+    ropes: [],
+    look: { sky: ['#0e2a3a', '#1a3e4e', '#3a6a6a'], far: '#163a44', mid: '#244e56', midTrim: '#ffd36b', ...SEA_LOOK },
+    burrows: [120, 1380],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'aquarium3', toPortal: 'east' },
+      { id: 'east', x: 1460, y: G, to: 'aquarium5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 750, y: 300 }],
+    npcs: [],
+    spawns: [{ mob: 'moraymurri', x: 760, y: G, pack: 'twins' }, { mob: 'morayena', x: 1380, y: G, pack: 'twins' }],
+  },
+
+  // The Ink Abyss: a deep shaft of ledges, the tide surging up it now and then. Lady Abyssia waits
+  // at the bottom in her ink.
+  aquarium5: {
+    id: 'aquarium5', name: 'The Ink Abyss', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    ...lay({
+      width: 1400, ground: 900, by: 'y',
+      ledges: [
+        { x: 80, y: 820, w: 260 }, { x: 1060, y: 820, w: 260 }, { x: 420, y: 750, w: 200 }, { x: 780, y: 750, w: 200 },
+        { x: 120, y: 680, w: 240 }, { x: 1040, y: 680, w: 240 }, { x: 560, y: 620, w: 280 },
+      ],
+      zones: [
+        { name: 'The Ink Floor', color: '#8a6ad8', mobs: [] },
+        { name: 'The Shaft', color: '#5ae0c8', from: 780, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#0a0e2a', '#14183e', '#2a2a5a'], far: '#121836', mid: '#1e244a', midTrim: '#5ae0c8', ...SEA_LOOK },
+    flood: { every: 24, warn: 3, last: 6, damage: 70, color: 'sea', name: 'The Tide Surges!' },
+    portals: [
+      { id: 'west', x: 40, y: 900, to: 'aquarium4', toPortal: 'east' },
+      { id: 'east', x: 1360, y: 900, to: 'aquarium6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 700, y: 620 }],
+    npcs: [],
+    spawns: [{ mob: 'abyssia', x: 700, y: 900 }],
+  },
+
+  // The Throne of Tides: the great throne room on the sea floor, two sea-glass pillars to stand on,
+  // the coral throne at the back. Queen Coralie sleeps on it.
+  aquarium6: {
+    id: 'aquarium6', name: 'The Throne of Tides', theme: 'aquarium', town: 'harbor', dungeon: 'aquarium',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 300, y: 300, w: 90 }, { x: 1210, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 950, y: 300, w: 90 }, { x: 760, y: 220, w: 80 }],
+    // The throne's banner rope, up to a ledge over the throne (the room's secret).
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#0e2a4e', '#1e4a7a', '#5a9ad0'], far: '#183a66', mid: '#2a5a8a', midTrim: '#ff9ab8', ...SEA_LOOK },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'aquarium5', toPortal: 'east' },
+      { id: 'out', x: 1560, y: G, to: 'tidepool_pier', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1450, after: 'clear' }, { kind: 'cache', x: 800, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'coralie', x: 800, y: G }],
+  },
+});
+
+// ---------- Clockwork Carnival (the levels 25-30 group dungeon, docs/design/clockwork-carnival.md) ----------
+//
+// A loop round the rides. Each room has an idea of its own (world/carnival.js runs them):
+//   drifting ledges  the carousel horses, riding back and forth
+//   springs (kind 'spring')  the Funhouse's springboards
+//   coaster    { every, speed, damage }: the coaster runs the ground track, one way then the other
+//   conveyors  [{ x1, x2, y, dir }]: belts that carry whoever stands on them
+//   trapezes   [x]: where Leonie swings above the ring (drawn)
+
+const FAIR_OUT = { skyline: 'carnival', material: 'carnival', critters: ['firefly'], drift: 'confetti', face: 'moon', light: 'dusk', stars: true };
+const FAIR_IN = { skyline: 'bigtop', material: 'carnival', critters: [], drift: 'confetti', face: null, light: 'cave' };
+
+
+Object.assign(MAPS, {
+  // The Carnival Gates: past the last torii of the Fox Shrine Path, a striped arch strung with
+  // lights where Tock, a runaway tin soldier, finds groups.
+  carnival_gate: {
+    id: 'carnival_gate', name: 'Carnival Gates', theme: 'carnival', town: 'grove', world: { x: 400, y: 104 }, music: 'carnival',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'shrine', toPortal: 'carnival' },
+      { id: 'door', x: 1110, y: G, to: 'carnival1', toPortal: 'start', label: 'Clockwork Carnival', dungeon: 'carnival' },
+    ],
+    npcs: [{ id: 'tock', x: 860 }],
+    spawns: [],
+  },
+
+  // The Midway: a long avenue of stalls with the carousel in the middle. Its horses ride back and
+  // forth at two heights, carrying you up to the high stalls; wind the three music boxes.
+  carnival1: {
+    id: 'carnival1', name: 'The Midway', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    ...lay({
+      width: 2600, ground: 600,
+      ledges: [
+        { x: 900, y: 520, w: 90, style: 'planks', drift: { dx: 240, period: 6 } }, { x: 1400, y: 500, w: 90, style: 'planks', drift: { dx: 260, period: 7 } },
+        { x: 1150, y: 440, w: 300 }, { x: 300, y: 500, w: 360 }, { x: 1900, y: 500, w: 420 }, { x: 2420, y: 400, w: 110 },
+      ],
+      zones: [
+        { name: 'The Ticket Stalls', color: '#ff9ab8', mobs: [] },
+        { name: 'The Carousel', color: '#ffd36b', from: 850, mobs: [] },
+        { name: 'The Prize Booths', color: '#7fd8ff', from: 1800, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT },
+    task: { kind: 'light', object: 'windbox', label: 'Wind the music boxes' },
+    portals: [
+      { id: 'out', x: 50, y: 600, to: 'carnival_gate', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: 600, hidden: true },
+      { id: 'east', x: 2560, y: 600, to: 'carnival2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'windbox', x: 480, y: 500 }, { kind: 'windbox', x: 1300, y: 440 }, { kind: 'windbox', x: 2100, y: 600 }, { kind: 'cache', x: 2470, y: 400 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 650, 600, 'musicballerina', 'balloonseller', 'musicballerina'),
+      ...packAt('b', 1250, 600, 'tindrummer', 'musicballerina', 'tindrummer'),
+      ...packAt('c', 2050, 500, 'balloonseller', 'tindrummer'),
+      ...packAt('d', 1750, 600, 'musicballerina', 'tindrummer', 'balloonseller'),
+    ],
+  },
+
+  // The Funhouse: a tall maze of crooked floors and springboards. Bounce up from floor to floor and
+  // pop the five prize balloons; the way out is at the top.
+  carnival2: {
+    id: 'carnival2', name: 'The Funhouse', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    ...lay({
+      width: 1300, ground: 1000, by: 'y',
+      ledges: [
+        { x: 80, y: 840, w: 500 }, { x: 760, y: 840, w: 460 }, { x: 300, y: 680, w: 700 },
+        { x: 60, y: 520, w: 420 }, { x: 820, y: 520, w: 420 }, { x: 360, y: 360, w: 860 }, { x: 60, y: 260, w: 110 },
+      ],
+      zones: [
+        { name: 'The Crooked Hall', color: '#ff9ab8', mobs: [] },
+        { name: 'The Mirror Floors', color: '#c9a6ff', from: 760, mobs: [] },
+        { name: 'The Top Floor', color: '#ffd36b', from: 440, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#3a1e5a', '#7a3a8a', '#e07ab0'], far: '#5a2a6a', mid: '#8a4a8a', midTrim: '#7fd8ff', ...FAIR_IN },
+    task: { kind: 'light', object: 'prize', label: 'Pop the prize balloons' },
+    springs: [{ x: 640, y: 1000, up: 170, kind: 'spring' }, { x: 380, y: 840, up: 170, kind: 'spring' }, { x: 900, y: 680, up: 170, kind: 'spring' }, { x: 300, y: 520, up: 170, kind: 'spring' }, { x: 110, y: 520, up: 270, kind: 'spring' }],
+    portals: [
+      { id: 'west', x: 40, y: 1000, to: 'carnival1', toPortal: 'east' },
+      { id: 'east', x: 1180, y: 360, to: 'carnival3', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'prize', x: 1100, y: 1000 }, { kind: 'prize', x: 200, y: 840 }, { kind: 'prize', x: 700, y: 680 },
+      { kind: 'prize', x: 1100, y: 520 }, { kind: 'prize', x: 600, y: 360 }, { kind: 'cache', x: 110, y: 260 },
+    ],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 860, 1000, 'jackbox', 'marionette'),
+      ...packAt('b', 960, 840, 'marionette', 'balloonseller', 'jackbox'),
+      ...packAt('c', 450, 680, 'jackbox', 'marionette'),
+      ...packAt('d', 960, 520, 'balloonseller', 'jackbox', 'marionette'),
+      ...packAt('e', 900, 360, 'marionette', 'jackbox'),
+    ],
+  },
+
+  // The Coaster Yard: a long yard under the tracks, raised walkways all along it. The coaster runs
+  // the ground track on a timer, one way then back: when the rail lights up, get off it.
+  carnival3: {
+    id: 'carnival3', name: 'The Coaster Yard', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    width: 2600, height: 420, groundY: G,
+    platforms: [
+      { x: 160, y: 300, w: 180 }, { x: 560, y: 300, w: 220 }, { x: 1000, y: 300, w: 200 }, { x: 1420, y: 300, w: 220 },
+      { x: 1860, y: 300, w: 200 }, { x: 2280, y: 300, w: 180 }, { x: 1180, y: 220, w: 120 },
+    ],
+    ropes: [{ x: 1240, top: 220, bottom: G }],
+    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT },
+    coaster: { every: 9, speed: 520, damage: 180 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'carnival2', toPortal: 'east' },
+      { id: 'east', x: 2560, y: G, to: 'carnival4', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 1240, y: 220 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 660, G, 'teddystrong', 'tindrummer'),
+      ...packAt('b', 1100, 300, 'jackbox', 'tindrummer'),
+      ...packAt('c', 1500, G, 'teddystrong', 'jackbox', 'tindrummer'),
+      ...packAt('d', 1960, 300, 'tindrummer', 'teddystrong'),
+      ...packAt('e', 2200, G, 'jackbox', 'teddystrong', 'jackbox'),
+    ],
+  },
+
+  // The Big Top: a round ring of sawdust under the tent, two trapezes overhead, a balcony each side.
+  carnival4: {
+    id: 'carnival4', name: 'The Big Top', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    width: 1500, height: 420, groundY: G,
+    platforms: [{ x: 80, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 680, y: 220, w: 140 }],
+    ropes: [{ x: 750, top: 220, bottom: G }],
+    look: { sky: ['#4a1e3a', '#8a2a4a', '#e05a6a'], far: '#5a2440', mid: '#8a3450', midTrim: '#ffd36b', ...FAIR_IN },
+    trapezes: [450, 1050],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'carnival3', toPortal: 'east' },
+      { id: 'east', x: 1460, y: G, to: 'carnival5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 750, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'leonie', x: 760, y: G }],
+  },
+
+  // The Toy Workshop: the factory floor where the toys are made, conveyor belts on every floor.
+  // Madame Marionette waits among the half-built puppets.
+  carnival5: {
+    id: 'carnival5', name: 'The Toy Workshop', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    ...lay({
+      width: 1500, ground: 700, by: 'y',
+      ledges: [{ x: 80, y: 600, w: 300 }, { x: 1120, y: 600, w: 300 }, { x: 520, y: 560, w: 460 }, { x: 680, y: 470, w: 140 }],
+      zones: [{ name: 'The Workshop Floor', color: '#ffd36b', mobs: [] }, { name: 'The Gantries', color: '#c9a6ff', from: 620, mobs: [] }],
+    }),
+    look: { sky: ['#2a1e3a', '#4a3456', '#8a6a7a'], far: '#3a2a46', mid: '#5a4060', midTrim: '#ffd36b', ...FAIR_IN, skyline: 'workshop' },
+    conveyors: [{ x1: 60, x2: 1440, y: 700, dir: 1 }, { x1: 520, x2: 980, y: 560, dir: -1 }],
+    portals: [
+      { id: 'west', x: 40, y: 700, to: 'carnival4', toPortal: 'east' },
+      { id: 'east', x: 1460, y: 700, to: 'carnival6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 750, y: 470 }],
+    npcs: [],
+    spawns: [{ mob: 'marionetta', x: 760, y: 700 }],
+  },
+
+  // The Ferris Wheel: the plaza under the great wheel, its parked cars to stand on. Queen Gearheart
+  // turns slowly at its foot.
+  carnival6: {
+    id: 'carnival6', name: 'The Ferris Wheel', theme: 'carnival', town: 'grove', dungeon: 'carnival',
+    width: 1700, height: 420, groundY: G,
+    platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
+    // The wheel's spoke ladder, up to a car at its hub (the room's secret).
+    ropes: [{ x: 850, top: 220, bottom: G }],
+    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'carnival5', toPortal: 'east' },
+      { id: 'out', x: 1660, y: G, to: 'carnival_gate', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1550, after: 'clear' }, { kind: 'cache', x: 850, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'gearheart', x: 850, y: G }],
+  },
+});
+
+// ---------- Star Observatory (the levels 30-35 group dungeon, docs/design/star-observatory.md) ----------
+//
+// A climb up the tower, floor by floor. Each room has an idea of its own (world/observatory.js):
+//   meteors        { every, damage }: meteor showers on whoever's floors
+//   constellation  [[a, b], ...]: which star lamps are joined (using one flips it and its neighbours)
+//   lowGravity     0..1: how much lighter everyone falls in the air
+//   eclipse        the hall split into a sunlit and a shadowed half (the Eclipse Twins' fight)
+
+const STAR_OUT = { skyline: 'stars', material: 'starstone', critters: ['firefly'], drift: 'sparkle', face: 'moon', light: 'ridge', stars: true };
+const STAR_IN = { skyline: 'starhall', material: 'starstone', critters: [], drift: 'sparkle', face: null, light: 'cave', ceiling: 'manor' };
+
+Object.assign(MAPS, {
+  // The Observatory Steps: the top of Moonlit Ridge, where a tower that only appears on clear nights
+  // stands against the stars. Professor Lumen has the key.
+  observatory_steps: {
+    id: 'observatory_steps', name: 'Observatory Steps', theme: 'observatory', town: 'crag', world: { x: 232, y: 92 }, music: 'observatory',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'ridge', toPortal: 'observatory' },
+      { id: 'door', x: 1110, y: G, to: 'observatory1', toPortal: 'start', label: 'Star Observatory', dungeon: 'observatory' },
+    ],
+    npcs: [{ id: 'lumen', x: 860 }],
+    spawns: [],
+  },
+
+  // The Starlit Stair: up the tower's outside, a zig-zag of landings under the open sky. Meteor
+  // showers fall on the landings now and then; three star lamps to light on the way.
+  observatory1: {
+    id: 'observatory1', name: 'The Starlit Stair', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    ...lay({
+      width: 1500, ground: 1100, by: 'y',
+      ledges: [
+        { x: 700, y: 980, w: 700 }, { x: 80, y: 860, w: 700 }, { x: 760, y: 740, w: 660 }, { x: 100, y: 620, w: 660 },
+        { x: 740, y: 500, w: 680 }, { x: 80, y: 380, w: 700, thick: 44 }, { x: 1300, y: 300, w: 110 },
+      ],
+      zones: [
+        { name: 'The Tower Foot', color: '#c9b6ff', mobs: [] },
+        { name: 'The Winding Stair', color: '#9fd8ff', from: 900, mobs: [] },
+        { name: 'The Star Landing', color: '#fff3a6', from: 560, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#0e1440', '#2a2a7a', '#6a5ab0'], far: '#1e2a5a', mid: '#2e3a72', midTrim: '#fff3a6', ...STAR_OUT },
+    task: { kind: 'light', object: 'starlamp1', label: 'Light the star lamps' },
+    meteors: { every: 10, damage: 170 },
+    portals: [
+      { id: 'out', x: 50, y: 1100, to: 'observatory_steps', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: 1100, hidden: true },
+      { id: 'east', x: 140, y: 380, to: 'observatory2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'starlamp1', x: 1200, y: 980 }, { kind: 'starlamp1', x: 300, y: 620 }, { kind: 'starlamp1', x: 1300, y: 500 }, { kind: 'cache', x: 1350, y: 300 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 700, 1100, 'cometcourier', 'starcarto', 'cometcourier'),
+      ...packAt('b', 500, 860, 'starcarto', 'geminighosts'),
+      ...packAt('c', 1050, 740, 'cometcourier', 'geminighosts', 'starcarto'),
+      ...packAt('d', 500, 620, 'geminighosts', 'cometcourier'),
+      ...packAt('e', 1000, 500, 'starcarto', 'cometcourier', 'geminighosts'),
+    ],
+  },
+
+  // The Constellation Hall: a wide hall, five star lamps set in the pattern of a constellation (on
+  // the floor and on two balconies). Using one flips it and the lamps joined to it: light all five.
+  observatory2: {
+    id: 'observatory2', name: 'The Constellation Hall', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 480, y: 300, w: 160 }, { x: 960, y: 300, w: 160 }, { x: 740, y: 220, w: 120 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#14183e', '#2a2a66', '#5a4a96'], far: '#1e2050', mid: '#2e3070', midTrim: '#fff3a6', ...STAR_IN },
+    task: { kind: 'light', object: 'starlamp', label: 'Light all five star lamps' },
+    constellation: [[0, 1], [1, 2], [2, 3], [3, 4], [1, 3]],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'observatory1', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'observatory3', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'starlamp', x: 300, y: G }, { kind: 'starlamp', x: 560, y: 300 }, { kind: 'starlamp', x: 800, y: G },
+      { kind: 'starlamp', x: 1040, y: 300 }, { kind: 'starlamp', x: 1300, y: G }, { kind: 'cache', x: 800, y: 220 },
+    ],
+    npcs: [],
+    spawns: [...packAt('a', 560, G, 'nebulawitch', 'mothlibrarian'), ...packAt('b', 1060, G, 'mothlibrarian', 'nebulawitch', 'meteorgolem')],
+  },
+
+  // The Weightless Reading Room: shelves floating far apart in a room with almost no weight to it.
+  // Every jump is long and floaty.
+  observatory3: {
+    id: 'observatory3', name: 'The Weightless Reading Room', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    ...lay({
+      width: 2400, ground: 700,
+      ledges: [
+        { x: 300, y: 560, w: 260 }, { x: 720, y: 450, w: 240 }, { x: 1120, y: 560, w: 260 }, { x: 1520, y: 440, w: 260 },
+        { x: 1940, y: 540, w: 260 }, { x: 1000, y: 330, w: 200 }, { x: 2250, y: 380, w: 110 },
+      ],
+      zones: [{ name: 'The Quiet Stacks', color: '#c9b6ff', mobs: [] }, { name: 'The Floating Shelves', color: '#9fd8ff', from: 1200, mobs: [] }],
+    }),
+    look: { sky: ['#1a1440', '#3a2a6a', '#7a5aa8'], far: '#22184a', mid: '#3a2a66', midTrim: '#fff3a6', ...STAR_IN },
+    lowGravity: 0.55,
+    portals: [
+      { id: 'west', x: 40, y: 700, to: 'observatory2', toPortal: 'east' },
+      { id: 'east', x: 2360, y: 700, to: 'observatory4', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 2300, y: 380 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 650, 700, 'mothlibrarian', 'nebulawitch', 'mothlibrarian'),
+      ...packAt('b', 840, 450, 'geminighosts', 'mothlibrarian'),
+      ...packAt('c', 1350, 700, 'meteorgolem', 'nebulawitch', 'meteorgolem'),
+      ...packAt('d', 1650, 440, 'nebulawitch', 'geminighosts'),
+      ...packAt('e', 2000, 700, 'meteorgolem', 'mothlibrarian', 'nebulawitch'),
+    ],
+  },
+
+  // The Archive: a long hall of bookcases to the ceiling. Folio keeps it, very quietly.
+  observatory4: {
+    id: 'observatory4', name: 'The Archive', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    width: 1800, height: 420, groundY: G,
+    platforms: [{ x: 200, y: 300, w: 180 }, { x: 1420, y: 300, w: 180 }, { x: 830, y: 220, w: 140 }],
+    ropes: [{ x: 900, top: 220, bottom: G }],
+    look: { sky: ['#1e1436', '#3a2850', '#7a5a7a'], far: '#2a1e3e', mid: '#4a3456', midTrim: '#ffd36b', ...STAR_IN, skyline: 'archive' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'observatory3', toPortal: 'east' },
+      { id: 'east', x: 1760, y: G, to: 'observatory5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 900, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'folio', x: 900, y: G }],
+  },
+
+  // The Orrery: brass planets orbiting a sun of glass, ridden like moving ledges. The Eclipse Twins
+  // float at its heart; the hall is half in light and half in shadow.
+  observatory5: {
+    id: 'observatory5', name: 'The Orrery', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    width: 1600, height: 420, groundY: G,
+    platforms: [
+      { x: 200, y: 300, w: 90, drift: { dx: 260, period: 8 } }, { x: 1100, y: 300, w: 90, drift: { dx: 260, period: 9 } },
+      { x: 740, y: 230, w: 120 },
+    ],
+    ropes: [{ x: 800, top: 230, bottom: G }],
+    look: { sky: ['#140e30', '#2e1e56', '#6a4a96'], far: '#1e1446', mid: '#2e2260', midTrim: '#ffd36b', ...STAR_IN, skyline: 'orrery' },
+    eclipse: true,
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'observatory4', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'observatory6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 800, y: 230 }],
+    npcs: [],
+    spawns: [{ mob: 'eclipsesol', x: 680, y: G, pack: 'twins' }, { mob: 'eclipseluna', x: 920, y: G, pack: 'twins' }],
+  },
+
+  // The Telescope Crown: the open dome at the top of the tower, the great telescope pointing straight
+  // up at stars that don't move. Astraea waits beneath it.
+  observatory6: {
+    id: 'observatory6', name: 'The Telescope Crown', theme: 'observatory', town: 'crag', dungeon: 'observatory',
+    width: 1700, height: 420, groundY: G,
+    platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
+    // The telescope's ladder, up to its eyepiece (the room's secret).
+    ropes: [{ x: 850, top: 220, bottom: G }],
+    look: { sky: ['#06082a', '#1a1a5a', '#4a3a90'], far: '#121a4a', mid: '#1e2a66', midTrim: '#fff3a6', ...STAR_OUT, material: 'starstone' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'observatory5', toPortal: 'east' },
+      { id: 'out', x: 1660, y: G, to: 'observatory_steps', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1550, after: 'clear' }, { kind: 'cache', x: 850, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'astraea', x: 850, y: G }],
+  },
+});
+
+// ---------- Candy Volcano (the levels 35-40 group dungeon, docs/design/candy-volcano.md) ----------
+//
+// Down a candy valley and the mines beneath it, then up the cone. Each room has an idea of its own
+// (world/volcano.js runs them):
+//   sticky     [{ x1, x2, y }]: sticky taffy that halves your pace
+//   hotFloor   [[x1, x2]]: hot caramel on the ground floor there that burns
+//   dispensers objects of kind 'dispenser' with a `colour`: the kitchen's recipe puzzle
+//   lateFlood  the crater's caramel (its `flood`) only rises once the queen calls it
+
+const SUGAR = { skyline: 'candy', material: 'candy', critters: ['butterfly'], drift: 'sprinkle', face: 'sun', light: 'dusk' };
+const SUGAR_IN = { skyline: 'candycave', material: 'candy', critters: [], drift: 'sprinkle', face: null, light: 'cave' };
+
+Object.assign(MAPS, {
+  // The Sugar Trail: past the steam of Serpent Springs, a path of candy stones up to the foot of a
+  // mountain that smells of caramel. Chef Praline finds groups here.
+  sugar_trail: {
+    id: 'sugar_trail', name: 'Sugar Trail', theme: 'candy', town: 'grove', world: { x: 270, y: 30 }, music: 'volcano',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'springs', toPortal: 'volcano' },
+      { id: 'door', x: 1110, y: G, to: 'volcano1', toPortal: 'start', label: 'Candy Volcano', dungeon: 'volcano' },
+    ],
+    npcs: [{ id: 'praline', x: 860 }],
+    spawns: [],
+  },
+
+  // The Gumdrop Valley: down from the ridge into a valley of gumdrop hills and up the far side.
+  // Sticky taffy pools in the low ground; three sugar crystals to gather.
+  volcano1: {
+    id: 'volcano1', name: 'The Gumdrop Valley', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    ...lay({
+      width: 2600, ground: 680,
+      terrain: [[0, 520], [400, 520], [400, 600], [680, 600], [680, 680], [1900, 680], [1900, 600], [2200, 600], [2200, 520], [2600, 520]],
+      ledges: [{ x: 900, y: 620, w: 260 }, { x: 1420, y: 620, w: 260 }, { x: 1150, y: 540, w: 300 }, { x: 1240, y: 430, w: 120 }],
+      zones: [
+        { name: 'The Gumdrop Hills', color: '#ff9ab8', mobs: [] },
+        { name: 'The Taffy Hollow', color: '#ffd36b', from: 680, mobs: [] },
+        { name: 'The Far Slope', color: '#9ae66a', from: 1900, mobs: [] },
+      ],
+    }),
+    look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR },
+    task: { kind: 'light', object: 'crystal', label: 'Gather the sugar crystals' },
+    sticky: [{ x1: 760, x2: 1060, y: 680 }, { x1: 1500, x2: 1840, y: 680 }],
+    portals: [
+      { id: 'out', x: 50, y: 520, to: 'sugar_trail', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: 520, hidden: true },
+      { id: 'east', x: 2550, y: 520, to: 'volcano2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'crystal', x: 560, y: 600 }, { kind: 'crystal', x: 1300, y: 540 }, { kind: 'crystal', x: 2050, y: 600 }, { kind: 'cache', x: 1300, y: 430 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 300, 520, 'gummybear', 'cottoncandy'),
+      ...packAt('b', 900, 680, 'gummybear', 'lollipopwitch', 'gummybear'),
+      ...packAt('c', 1300, 680, 'cottoncandy', 'lollipopwitch', 'gummybear'),
+      ...packAt('d', 1680, 680, 'lollipopwitch', 'gummybear', 'cottoncandy'),
+      ...packAt('e', 2350, 520, 'gummybear', 'lollipopwitch'),
+    ],
+  },
+
+  // The Licorice Mine: tunnels under the valley, licorice beams overhead, and a long pit of hot
+  // caramel in the middle of the floor. Minecarts ride the rails across it; ledges run above.
+  volcano2: {
+    id: 'volcano2', name: 'The Licorice Mine', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    width: 2600, height: 420, groundY: G,
+    platforms: [
+      { x: 140, y: 300, w: 300 }, { x: 820, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 7 } }, { x: 1440, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 8 } },
+      { x: 2100, y: 300, w: 360 }, { x: 1250, y: 220, w: 140 },
+    ],
+    ropes: [{ x: 1320, top: 220, bottom: G }],
+    look: { sky: ['#3a1e2a', '#5a2e3e', '#8a4a5a'], far: '#3e2230', mid: '#5a3240', midTrim: '#ff7aa8', ...SUGAR_IN },
+    hotFloor: [[700, 1950]],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'volcano1', toPortal: 'east' },
+      { id: 'east', x: 2560, y: G, to: 'volcano3', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 1320, y: 220 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 360, G, 'chocoknight', 'jellyninja', 'chocoknight'),
+      ...packAt('b', 300, 300, 'jellyninja', 'peppermint'),
+      ...packAt('c', 2250, 300, 'peppermint', 'jellyninja'),
+      ...packAt('d', 2250, G, 'chocoknight', 'peppermint', 'jellyninja'),
+    ],
+  },
+
+  // The Candy Kitchen: a great kitchen on two floors around a bubbling cauldron. Four dispensers of
+  // candy; add exactly what the recipe asks, and the oven door opens.
+  volcano3: {
+    id: 'volcano3', name: 'The Candy Kitchen', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 200, y: 300, w: 300 }, { x: 1100, y: 300, w: 300 }, { x: 720, y: 220, w: 160 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#4a2a3a', '#7a4a5a', '#c88a8a'], far: '#5a3040', mid: '#7a4656', midTrim: '#ffd36b', ...SUGAR_IN },
+    task: { kind: 'light', object: 'dispenser', label: 'Cook the recipe' },
+    cauldron: { x: 800 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'volcano2', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'volcano4', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'dispenser', colour: 'red', x: 300, y: 300 }, { kind: 'dispenser', colour: 'yellow', x: 520, y: G },
+      { kind: 'dispenser', colour: 'green', x: 1080, y: G }, { kind: 'dispenser', colour: 'blue', x: 1300, y: 300 },
+      { kind: 'cache', x: 800, y: 220 },
+    ],
+    npcs: [],
+    spawns: [...packAt('a', 300, G, 'lollipopwitch', 'peppermint', 'cottoncandy'), ...packAt('b', 1300, G, 'cottoncandy', 'jellyninja', 'lollipopwitch')],
+  },
+
+  // The Caramel Forge: a forge hall over cooling caramel, the anvil in the middle, bellows at the
+  // back. Toffee is hammering.
+  volcano4: {
+    id: 'volcano4', name: 'The Caramel Forge', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#4a1a1a', '#8a3a2a', '#e08a4a'], far: '#5a2420', mid: '#7a3a2a', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'forge' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'volcano3', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'volcano5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 800, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'toffee', x: 800, y: G }],
+  },
+
+  // The Gingerbread Ramparts: a long gingerbread wall-walk between candy towers, the volcano's cone
+  // rising behind. Gretel holds the wall.
+  volcano5: {
+    id: 'volcano5', name: 'The Gingerbread Ramparts', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    width: 2000, height: 420, groundY: G,
+    platforms: [{ x: 160, y: 300, w: 160 }, { x: 900, y: 300, w: 200 }, { x: 1680, y: 300, w: 160 }, { x: 950, y: 220, w: 100 }],
+    ropes: [{ x: 1000, top: 220, bottom: G }],
+    look: { sky: ['#ff8a6a', '#ffb88a', '#ffe8c0'], far: '#c86a5a', mid: '#e08a6a', midTrim: '#ffffff', ...SUGAR, skyline: 'candy' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'volcano4', toPortal: 'east' },
+      { id: 'east', x: 1960, y: G, to: 'volcano6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 1000, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'gretel', x: 1000, y: G }],
+  },
+
+  // The Crater: islands of rock candy in a lake of caramel, the sky glowing. Queen Bonbon stirs it.
+  volcano6: {
+    id: 'volcano6', name: 'The Crater', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    width: 1700, height: 420, groundY: G,
+    platforms: [
+      { x: 160, y: 300, w: 160 }, { x: 520, y: 300, w: 140 }, { x: 1040, y: 300, w: 140 }, { x: 1380, y: 300, w: 160 },
+      { x: 790, y: 220, w: 120 },
+    ],
+    ropes: [{ x: 850, top: 220, bottom: G }],
+    look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater' },
+    flood: { every: 18, warn: 3, last: 6, damage: 80, color: 'caramel', name: 'The caramel rises!' },
+    lateFlood: true,
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'volcano5', toPortal: 'east' },
+      { id: 'out', x: 1660, y: G, to: 'sugar_trail', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1560, after: 'clear' }, { kind: 'cache', x: 850, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'bonbon', x: 850, y: G }],
+  },
+});
+
+// ---------- The Dream Theatre (levels 40-45, docs/design/dream-theatre.md) ----------
+//
+// A theatre floating on a cloud off the Sky Garden: the lobby, then a stage whose set changes act by
+// act, then backstage, then the final curtain. Each room has an idea of its own (world/theatre.js):
+//   spotlights [{ x, span, period }]: beams sweeping the floor; a monster caught in one takes more
+//   rocking    { period, push }: the ship's deck rolls, sliding everyone on the floor one way then back
+//   cannons    { every, damage }: cannon fire on marked spots round the group
+//   cue lamps  objects of kind 'cue' with a `colour`: the forest act's sequence puzzle
+//   mast       on a ledge: a lantern hangs there and swings with the deck's roll
+
+const STAGE = { material: 'stage', critters: [], drift: 'sparkle', face: null, light: 'cave' };
+
+Object.assign(MAPS, {
+  // Theatre Row: a street of lamp posts and poster pillars on the clouds, the playhouse floating
+  // beyond. Madame Encore finds groups here.
+  theatre_row: {
+    id: 'theatre_row', name: 'Theatre Row', theme: 'theatre', town: 'grove', world: { x: 362, y: 28 }, music: 'theatre',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#4a2a6a', '#a05a9a', '#ffb0a0'], far: '#6a3a7a', mid: '#8a4a7a', midTrim: '#ffd36b', skyline: 'theatre', material: 'stage', critters: [], drift: 'sparkle', face: 'moon', stars: true },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'sky', toPortal: 'theatre' },
+      { id: 'door', x: 1110, y: G, to: 'theatre1', toPortal: 'start', label: 'Dream Theatre', dungeon: 'theatre' },
+    ],
+    npcs: [{ id: 'encore', x: 860 }],
+    spawns: [],
+  },
+
+  // The Grand Lobby: a long lobby of carpeted floor, balconies above on gilt stairs, spotlights
+  // sweeping from the chandeliers. Three lost tickets to find.
+  theatre1: {
+    id: 'theatre1', name: 'The Grand Lobby', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 2400, height: 420, groundY: G,
+    platforms: [
+      { x: 260, y: 300, w: 320 }, { x: 900, y: 300, w: 320 }, { x: 1540, y: 300, w: 320 },
+      { x: 1080, y: 220, w: 140 }, { x: 2040, y: 300, w: 220 },
+    ],
+    ropes: [{ x: 1150, top: 220, bottom: G }, { x: 420, top: 300, bottom: G }, { x: 1700, top: 300, bottom: G }],
+    look: { sky: ['#3a1a3a', '#6a2a4a', '#9a4a5a'], far: '#4a2038', mid: '#6a2a48', midTrim: '#ffd36b', ...STAGE, skyline: 'stagehall' },
+    task: { kind: 'light', object: 'ticket', label: 'Find the lost tickets' },
+    spotlights: [{ x: 600, span: 220, period: 7 }, { x: 1300, span: 260, period: 9 }, { x: 1950, span: 220, period: 8 }],
+    portals: [
+      { id: 'out', x: 50, y: G, to: 'theatre_row', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: G, hidden: true },
+      { id: 'east', x: 2360, y: G, to: 'theatre2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'ticket', x: 700, y: G }, { kind: 'ticket', x: 1700, y: 300 }, { kind: 'ticket', x: 2150, y: 300 }, { kind: 'cache', x: 1150, y: 220 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 520, G, 'understudy', 'chorusgirl'),
+      ...packAt('b', 420, 300, 'stagehand', 'understudy'),
+      ...packAt('c', 1060, 300, 'chorusgirl', 'stagehand'),
+      ...packAt('d', 1300, G, 'understudy', 'chorusgirl', 'stagehand'),
+      ...packAt('e', 1700, 300, 'stagehand', 'chorusgirl'),
+      ...packAt('f', 2000, G, 'chorusgirl', 'understudy', 'stagehand'),
+    ],
+  },
+
+  // Act I: The Pirate Ship. A ship set on a rocking stage: masts and yards to climb, a crow's nest,
+  // painted waves rolling in front. Cannons fire at marked spots.
+  theatre2: {
+    id: 'theatre2', name: 'Act I: The Pirate Ship', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 2200, height: 420, groundY: G,
+    platforms: [
+      { x: 200, y: 300, w: 260 }, { x: 760, y: 300, w: 240, mast: true }, { x: 1320, y: 300, w: 240, mast: true },
+      { x: 820, y: 220, w: 120, mast: true }, { x: 1380, y: 220, w: 120 }, { x: 1820, y: 300, w: 240 },
+    ],
+    ropes: [{ x: 880, top: 220, bottom: G }, { x: 1440, top: 220, bottom: G }, { x: 330, top: 300, bottom: G }],
+    look: { sky: ['#ff8a6a', '#ffb08a', '#ffe0a0'], far: '#5a3a5a', mid: '#7a4a5a', midTrim: '#ffd36b', ...STAGE, skyline: 'pirate' },
+    rocking: { period: 7, push: 55 },
+    cannons: { every: 9, damage: 190 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'theatre1', toPortal: 'east' },
+      { id: 'east', x: 2160, y: G, to: 'theatre3', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 880, y: 220 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 420, G, 'stagehand', 'paperdragon'),
+      ...packAt('b', 330, 300, 'understudy', 'stagehand'),
+      ...packAt('c', 880, 300, 'chorusgirl', 'stagehand'),
+      ...packAt('d', 1100, G, 'paperdragon', 'understudy', 'chorusgirl'),
+      ...packAt('e', 1440, 300, 'stagehand', 'chorusgirl'),
+      ...packAt('f', 1800, G, 'paperdragon', 'stagehand', 'understudy'),
+    ],
+  },
+
+  // Act II: The Fairy Forest. Cardboard trees under a paper moon; four coloured cue lamps at the
+  // edge of the stage. Watch the sequence they flash, then play it back.
+  theatre3: {
+    id: 'theatre3', name: 'Act II: The Fairy Forest', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 200, y: 300, w: 280 }, { x: 1120, y: 300, w: 280 }, { x: 720, y: 220, w: 160 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#1e2a4a', '#2a4a5a', '#4a7a6a'], far: '#22384a', mid: '#2e4a50', midTrim: '#8ff0c8', ...STAGE, skyline: 'fairy' },
+    task: { kind: 'light', object: 'cue', label: 'Play back the cues' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'theatre2', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'theatre4', toPortal: 'west', sealed: true },
+    ],
+    objects: [
+      { kind: 'cue', colour: 'rose', x: 340, y: 300 }, { kind: 'cue', colour: 'gold', x: 620, y: G },
+      { kind: 'cue', colour: 'mint', x: 980, y: G }, { kind: 'cue', colour: 'violet', x: 1260, y: 300 },
+      { kind: 'cache', x: 800, y: 220 },
+    ],
+    npcs: [],
+    spawns: [...packAt('a', 300, G, 'prompter', 'primadonna', 'chorusgirl'), ...packAt('b', 1300, G, 'primadonna', 'prompter', 'understudy')],
+  },
+
+  // Act III: The Masked Ball. A ballroom set of mirrors and chandeliers; Persona dances alone.
+  theatre4: {
+    id: 'theatre4', name: 'Act III: The Masked Ball', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#2a1a4a', '#5a3a7a', '#a07ab0'], far: '#3a2450', mid: '#5a3a6a', midTrim: '#ffd36b', ...STAGE, skyline: 'ballroom' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'theatre3', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'theatre5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 800, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'persona', x: 800, y: G }],
+  },
+
+  // Backstage: ropes, sandbags and stacked flats. Madame Directrice runs the show from here.
+  theatre5: {
+    id: 'theatre5', name: 'Backstage', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 1800, height: 420, groundY: G,
+    platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100 }],
+    ropes: [{ x: 900, top: 220, bottom: G }, { x: 250, top: 300, bottom: G }, { x: 1550, top: 300, bottom: G }],
+    look: { sky: ['#1a1a24', '#2a2a3a', '#4a3a4a'], far: '#24202e', mid: '#3a3040', midTrim: '#ffd36b', ...STAGE, skyline: 'backstage' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'theatre4', toPortal: 'east' },
+      { id: 'east', x: 1760, y: G, to: 'theatre6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 900, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'directrice', x: 900, y: G }],
+  },
+
+  // The Final Curtain: the great stage under a star cloth, velvet curtains drawn back. The Phantom
+  // Playwright waits at his desk.
+  theatre6: {
+    id: 'theatre6', name: 'The Final Curtain', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    width: 1800, height: 420, groundY: G,
+    platforms: [
+      { x: 160, y: 300, w: 160 }, { x: 560, y: 300, w: 140 }, { x: 1100, y: 300, w: 140 }, { x: 1480, y: 300, w: 160 },
+      { x: 840, y: 220, w: 120 },
+    ],
+    ropes: [{ x: 900, top: 220, bottom: G }],
+    look: { sky: ['#140e2a', '#2a1a4a', '#5a2a5a'], far: '#1e1434', mid: '#3a1e44', midTrim: '#ffd36b', ...STAGE, skyline: 'greatstage' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'theatre5', toPortal: 'east' },
+      { id: 'out', x: 1760, y: G, to: 'theatre_row', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1660, after: 'clear' }, { kind: 'cache', x: 900, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'playwright', x: 900, y: G }],
+  },
+});
+// ---------- The Sky Whale's Back (levels 45-50, docs/design/sky-whale.md) ----------
+//
+// A town on a giant whale swimming through the sky, crossed from tail to brow. Each room has an idea
+// of its own (world/skywhale.js):
+//   tailflip  { every, push }: the tail flips; after a warning everyone on the ground floor slides
+//   gusts     { every, dur, push }: the wind shoves everyone one way for a few seconds
+//   geysers   [{ x, w, every, up }]: blowholes erupting on a beat, throwing you `up` px high
+//   breath    { period, pull }: the lungs breathe in (a pull to the middle) and out (a push outward)
+//   moorings and air-blooms: objects of kind 'mooring' and 'airbloom' (blooms open on the breath out)
+
+const WHALE = { skyline: 'whaleback', material: 'whaleskin', critters: ['gull'], drift: 'sparkle', face: 'sun' };
+
+Object.assign(MAPS, {
+  // Cloudcatch Pier: a wooden pier off the east rim of Starfall Heights, the whale swimming close
+  // beyond the clouds. Skipper Nimbus finds groups here.
+  cloudcatch_pier: {
+    id: 'cloudcatch_pier', name: 'Cloudcatch Pier', theme: 'skywhale', town: 'grove', world: { x: 400, y: 30 }, music: 'skywhale',
+    width: 1200, height: 420, groundY: G,
+    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', skyline: 'whale', material: 'stage', critters: ['gull'], drift: 'sparkle', face: 'sun' },
+    platforms: [{ x: 420, y: G - 80, w: 140 }],
+    ropes: [],
+    deco: [['signpost', 160]],
+    portals: [
+      { id: 'start', x: 640, y: G, hidden: true },
+      { id: 'west', x: 50, y: G, to: 'starfall', toPortal: 'whale' },
+      { id: 'door', x: 1110, y: G, to: 'skywhale1', toPortal: 'start', label: "Sky Whale's Back", dungeon: 'skywhale' },
+    ],
+    npcs: [{ id: 'nimbus', x: 860 }],
+    spawns: [],
+  },
+
+  // The Tail Docks: long docks built along the whale's tail, crates and moorings. The tail flips.
+  skywhale1: {
+    id: 'skywhale1', name: 'The Tail Docks', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 2400, height: 420, groundY: G,
+    platforms: [
+      { x: 240, y: 300, w: 300 }, { x: 900, y: 300, w: 320 }, { x: 1600, y: 300, w: 300 },
+      { x: 1180, y: 220, w: 140 }, { x: 2040, y: 300, w: 240 },
+    ],
+    ropes: [{ x: 390, top: 300, bottom: G }, { x: 1250, top: 220, bottom: G }, { x: 1750, top: 300, bottom: G }, { x: 2160, top: 300, bottom: G }],
+    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', ...WHALE, skyline: 'tail', material: 'stage' },
+    task: { kind: 'light', object: 'mooring', label: 'Tie down the moorings' },
+    tailflip: { every: 13, push: 150 },
+    portals: [
+      { id: 'out', x: 50, y: G, to: 'cloudcatch_pier', toPortal: 'door', label: 'Leave' },
+      { id: 'start', x: 110, y: G, hidden: true },
+      { id: 'east', x: 2360, y: G, to: 'skywhale2', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'mooring', x: 600, y: G }, { kind: 'mooring', x: 1060, y: 300 }, { kind: 'mooring', x: 2000, y: G }, { kind: 'cache', x: 1250, y: 220 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 420, G, 'kiterider', 'shepherdess'),
+      ...packAt('b', 390, 300, 'gunner', 'kiterider'),
+      ...packAt('c', 1060, 300, 'shepherdess', 'gunner'),
+      ...packAt('d', 1300, G, 'kiterider', 'shepherdess', 'gunner'),
+      ...packAt('e', 1750, 300, 'gunner', 'kiterider'),
+      ...packAt('f', 1900, G, 'shepherdess', 'kiterider', 'gunner'),
+    ],
+  },
+
+  // The Spine Market: tents and stalls along the whale's spine, blowholes in the street, gusts.
+  skywhale2: {
+    id: 'skywhale2', name: 'The Spine Market', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 2600, height: 420, groundY: G,
+    platforms: [
+      { x: 200, y: 300, w: 280 }, { x: 760, y: 300, w: 220 }, { x: 1240, y: 300, w: 240 }, { x: 1760, y: 300, w: 220 }, { x: 2200, y: 300, w: 260 },
+      { x: 1300, y: 210, w: 120 },
+    ],
+    ropes: [{ x: 340, top: 300, bottom: G }, { x: 1360, top: 210, bottom: G }, { x: 2330, top: 300, bottom: G }],
+    look: { sky: ['#4a8ad8', '#8ac8ff', '#ffe8d0'], far: '#7aa8e0', mid: '#a8ccf0', midTrim: '#ffd36b', ...WHALE, skyline: 'market' },
+    gusts: { every: 11, dur: 3, push: 70 },
+    geysers: [{ x: 700, w: 54, every: 6, up: 170 }, { x: 1700, w: 54, every: 7, up: 170 }],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'skywhale1', toPortal: 'east' },
+      { id: 'east', x: 2560, y: G, to: 'skywhale3', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 1360, y: 210 }],
+    npcs: [],
+    spawns: [
+      ...packAt('a', 400, G, 'gunner', 'monk'),
+      ...packAt('b', 340, 300, 'harpist', 'kiterider'),
+      ...packAt('c', 1000, G, 'monk', 'harpist', 'gunner'),
+      ...packAt('d', 1360, 300, 'kiterider', 'monk'),
+      ...packAt('e', 2000, G, 'harpist', 'gunner', 'monk'),
+      ...packAt('f', 2330, 300, 'monk', 'harpist'),
+    ],
+  },
+
+  // The Lung Gardens: a greenhouse of glowing ribs inside the whale, which breathes. Three air-blooms
+  // open only on the breath out.
+  skywhale3: {
+    id: 'skywhale3', name: 'The Lung Gardens', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 1600, height: 420, groundY: G,
+    platforms: [{ x: 200, y: 300, w: 280 }, { x: 1120, y: 300, w: 280 }, { x: 720, y: 220, w: 160 }],
+    ropes: [{ x: 800, top: 220, bottom: G }],
+    look: { sky: ['#3a5a8a', '#6a9ac8', '#c8e8f6'], far: '#4a6a98', mid: '#6a8ab8', midTrim: '#9fe8ff', ...WHALE, skyline: 'lungs', face: null, light: 'cave', critters: [] },
+    task: { kind: 'light', object: 'airbloom', label: 'Tend the air-blooms' },
+    breath: { period: 10, pull: 45 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'skywhale2', toPortal: 'east' },
+      { id: 'east', x: 1560, y: G, to: 'skywhale4', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'airbloom', x: 320, y: 300 }, { kind: 'airbloom', x: 800, y: G }, { kind: 'airbloom', x: 1260, y: 300 }, { kind: 'cache', x: 800, y: 220 }],
+    npcs: [],
+    spawns: [...packAt('a', 340, G, 'shepherdess', 'monk', 'harpist'), ...packAt('b', 1260, G, 'harpist', 'shepherdess', 'monk')],
+  },
+
+  // The Blowhole Deck: a pirate airship moored over the great blowhole. Captain Gale's ship.
+  skywhale4: {
+    id: 'skywhale4', name: 'The Blowhole Deck', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 1700, height: 420, groundY: G,
+    platforms: [{ x: 160, y: 300, w: 200 }, { x: 1340, y: 300, w: 200 }, { x: 620, y: 230, w: 120 }, { x: 960, y: 230, w: 120 }],
+    ropes: [{ x: 260, top: 300, bottom: G }, { x: 1440, top: 300, bottom: G }, { x: 650, top: 230, bottom: G }, { x: 1050, top: 230, bottom: G }],
+    look: { sky: ['#4a7ad0', '#8ab8f0', '#ffe0c0'], far: '#6a90d0', mid: '#98c0ec', midTrim: '#ffffff', ...WHALE, skyline: 'deck', material: 'stage' },
+    geysers: [{ x: 850, w: 80, every: 9, up: 190 }],
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'skywhale3', toPortal: 'east' },
+      { id: 'east', x: 1660, y: G, to: 'skywhale5', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 680, y: 230 }],
+    npcs: [],
+    spawns: [{ mob: 'gale', x: 850, y: G }],
+  },
+
+  // The Barnacle Fortress: walls of shell and coral grown over the whale's back.
+  skywhale5: {
+    id: 'skywhale5', name: 'The Barnacle Fortress', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 1800, height: 420, groundY: G,
+    platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100 }],
+    ropes: [{ x: 900, top: 220, bottom: G }, { x: 250, top: 300, bottom: G }, { x: 1550, top: 300, bottom: G }],
+    look: { sky: ['#3a6ab0', '#7aa8e0', '#d8f0f0'], far: '#5a80b8', mid: '#7aa0c8', midTrim: '#ffd8e2', ...WHALE, skyline: 'fortress' },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'skywhale4', toPortal: 'east' },
+      { id: 'east', x: 1760, y: G, to: 'skywhale6', toPortal: 'west', sealed: true },
+    ],
+    objects: [{ kind: 'cache', x: 900, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'matriarch', x: 900, y: G }],
+  },
+
+  // The Whale's Brow: the top of its head, open to the wind above the clouds.
+  skywhale6: {
+    id: 'skywhale6', name: "The Whale's Brow", theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    width: 1800, height: 420, groundY: G,
+    platforms: [
+      { x: 160, y: 300, w: 160 }, { x: 560, y: 300, w: 140 }, { x: 1100, y: 300, w: 140 }, { x: 1480, y: 300, w: 160 },
+      { x: 840, y: 220, w: 120 },
+    ],
+    ropes: [{ x: 900, top: 220, bottom: G }],
+    look: { sky: ['#2a3a7a', '#7a6ac8', '#ffc8a0'], far: '#4a5aa0', mid: '#6a7ac0', midTrim: '#fff3a6', ...WHALE, skyline: 'brow', stars: true },
+    gusts: { every: 13, dur: 2.5, push: 60 },
+    portals: [
+      { id: 'west', x: 40, y: G, to: 'skywhale5', toPortal: 'east' },
+      { id: 'out', x: 1760, y: G, to: 'cloudcatch_pier', toPortal: 'start', label: 'Exit', sealed: true },
+    ],
+    objects: [{ kind: 'chest', x: 1660, after: 'clear' }, { kind: 'cache', x: 900, y: 220 }],
+    npcs: [],
+    spawns: [{ mob: 'whaledream', x: 900, y: G }],
+  },
+});
+
+MAPS.sky.portals.push({ id: 'theatre', x: 2800, y: 1040, to: 'theatre_row', toPortal: 'west', label: 'Theatre Row' });
+
 // ---------- The far regions (levels 19-50) ----------
 //
 // Off the ring road: the Whispering Glade past Mossy Woods, the Fox Shrine Path past the Twilight
@@ -1176,7 +2442,7 @@ Object.assign(MAPS, {
     // (Up to ride it, and catch the ferry going over), and a vent up to the east rim's island.
     updrafts: [{ x: 1300, w: 56, top: 610, bottom: 1040, kind: 'wisplight' }],
     springs: [{ x: 2300, y: 520, up: 120, kind: 'gust' }],
-    portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }],
+    portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }, { id: 'whale', x: 2550, y: 520, to: 'cloudcatch_pier', toPortal: 'west', label: 'Cloudcatch Pier' }],
     npcs: [],
     // A landmark per zone: a cloud pillar on the west rim, the moonstones round the crater, the
     // gazebo on the east rim's island.
@@ -1228,6 +2494,10 @@ Object.assign(MAPS, {
 MAPS.glade.portals.push({ id: 'bower', x: 2340, y: 640, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
+// The way to the Clockwork Carnival (its rooms are with the dungeons above).
+MAPS.springs.portals.push({ id: 'volcano', x: 2340, y: 880, to: 'sugar_trail', toPortal: 'west', label: 'Candy Volcano' });
+MAPS.ridge.portals.push({ id: 'observatory', x: 2360, y: 560, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
+MAPS.shrine.portals.push({ id: 'carnival', x: 2400, y: 880, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
 // Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
 MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 2180, y: 832, w: 95, posts: true });

@@ -23,6 +23,20 @@
 // - Frozen Peak: "Snowfall", house (120), E minor, xylophone, celesta, chimes.
 // - Starfall Heights: "Stargazer", house (124), E major, vibraphone, hand chimes.
 // - The queens (trials and rematches): "Queen's Gauntlet", a waltz in G minor, harp and violin.
+// - Moonlit Manor: "Midnight Waltz", a music-box waltz in C minor, celesta and glockenspiel; its
+//   bosses "The Last Waltz", faster, pizzicato over brass.
+// - Sunken Aquarium Palace: "Bubble Pop", tropical city pop in E-flat, vibraphone and kalimba;
+//   its bosses "Undertow", F minor, marimba over brass.
+// - Clockwork Carnival: "Calliope Swing", a fairground march in F, glockenspiel over brass; its
+//   bosses "Overwound", a xylophone polka in D minor.
+// - Star Observatory: "Clockwork Stars", baroque pop in A minor, harpsichord over celesta; its
+//   bosses "Event Horizon", church organ and brass in C minor.
+// - Candy Volcano: "Sugar Rush", Latin house in D, nylon guitar and trumpet; its bosses
+//   "Eruption", brass stabs and timpani in B minor.
+// - Dream Theatre: "Opening Night", swing in B-flat, clarinet over a walking bass and house piano;
+//   its bosses "Showstopper", a big band in G minor, brass over timpani, a sax answering.
+// - Sky Whale's Back: "Skyfarers", epic folk in D Dorian, a fiddle hook over taiko toms and a harp;
+//   its bosses "Leviathan", E minor, fiddle and brass over driving taiko and timpani.
 // At night the towns play an evening version (the lead on piano, the drums pulled back), and a
 // fight layers more drums and bass over an area's song.
 
@@ -115,6 +129,7 @@ const I = {
   accordion: { sample: 'accordion', rel: 0.12, gate: 0.92 },
   horn: { sample: 'french_horn', attack: 0.03, rel: 0.25 },
   trumpet: { sample: 'trumpet', rel: 0.15, gate: 0.92 },
+  clarinet: { sample: 'clarinet', rel: 0.15, gate: 0.92 },
   brass: { sample: 'brass_section', rel: 0.15, gate: 0.9 },
   brassStab: { sample: 'brass_section', rel: 0.08, gate: 0.5 },
   guitar: { sample: 'acoustic_guitar_nylon', strum: 0.018, rel: 0.3, gain: 0.8 },
@@ -161,8 +176,15 @@ const E = {
   celestaLead: { sample: 'celesta', rel: 0.5 },
   glockLead: { sample: 'glockenspiel', rel: 0.4, gain: 0.6 },
   xyloLead: { sample: 'xylophone', rel: 0.2, gain: 0.8 },
+  harpsiLead: { sample: 'harpsichord', rel: 0.3, gain: 0.85 },
+  organLead: { sample: 'church_organ', rel: 0.2, gate: 0.85, gain: 0.7 },
   pizzLead: { sample: 'pizzicato_strings', rel: 0.2, gain: 0.95 },
   guitarLead: { sample: 'acoustic_guitar_nylon', rel: 0.3, gain: 0.9 },
+  // Swing leads: clarinet and sax, tongued short so the hook swings rather than smears.
+  clarinetLead: { sample: 'clarinet', rel: 0.12, gate: 0.8, gain: 0.95 },
+  saxLead: { sample: 'saxophone', rel: 0.12, gate: 0.8, gain: 0.9 },
+  // A folk fiddle: bowed short and bright.
+  fiddleLead: { sample: 'violin', rel: 0.12, gate: 0.78, gain: 0.95 },
   kotoLead: { sample: 'koto', rel: 0.5 },
   sitarLead: { sample: 'sitar', rel: 0.4 },
   // The areas' own instruments, played short for intros and breakdowns.
@@ -196,6 +218,8 @@ const BASS = {
   // Funk: root, octave and fifth, syncopated.
   funk: ['synbass', (s) => `${r2(s)}:2 r:1 ${r2(s)}:1 ${nm(rootIn(s, 3))}:2 ${r2(s)}:2 r:2 ${r2(s)}:1 ${nm(rootIn(s, 2) + 7)}:1 ${nm(rootIn(s, 3))}:2 r:2`],
   waltz: ['synbass', (s) => `r:4 ${r2(s)}:4 ${r2(s)}:4`],
+  // Swing: a walking bass in quarters, root, fifth, octave, fifth.
+  walk: ['synbass', (s, len) => Array(len / 16).fill(`${r2(s)}:4 ${nm(rootIn(s, 2) + 7)}:4 ${nm(rootIn(s, 3))}:4 ${nm(rootIn(s, 2) + 7)}:4`).join(' ')],
 };
 const CHORDS = {
   stab: ['stab', (s, len) => (len === 12 ? `r:4 ${tones(s, 64)}:3 r:1 ${tones(s, 64)}:3 r:1` : F.offbeat(64)(s, len))],
@@ -456,7 +480,175 @@ const queen = edm({
   hookB: bars('D7:4 G7:4 Bb7:4', 'Eb7:8 G7:4', 'C7:4 Eb7:4 G7:4', 'A7:8 F#7:4', 'G7:4 F7:4 D7:4', 'Eb7:4 D7:4 C7:4', 'F#7:4 A7:4 D7:4', 'G7:12'),
 });
 
-export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss, shrine, ridge, springs, peak, starfall, queen };
+
+// Moonlit Manor: "Midnight Waltz", a music-box waltz in C minor (156, three to the bar): celesta
+// over a glockenspiel music box, a waltz bass, soft pads, little bells. Spooky, but it smiles.
+const manor = edm({
+  name: 'manor', bpm: 156, rows: 12, voice: 'glock', lead: 'celestaLead', bass: 'waltz', chords: 'pad',
+  intro: 'solo', build: 'snare', beat: 'K...c.h.c.h.', fill: 'K...c.K.cccc',
+  chart: ['Cm', 'Ab', 'Fm', 'G', 'Cm', 'Ab', 'Db', 'G'],
+  hookA: bars('G5:2 C6:2 Eb6:2 G6:4 Eb6:2', 'F6:2 Eb6:2 C6:2 Ab5:6', 'F5:2 Ab5:2 C6:2 F6:4 Eb6:2', 'D6:3 C6:1 B5:2 G5:6',
+    'G5:2 C6:2 Eb6:2 G6:4 Ab6:2', 'G6:2 F6:2 Eb6:2 C6:6', 'Db6:2 F6:2 Ab6:2 G6:3 F6:1 Db6:2', 'B5:4 D6:4 G6:4'),
+  hookB: bars('C7:4 G6:4 Eb6:4', 'Ab6:6 C7:2 Eb7:4', 'F6:4 Ab6:4 C7:4', 'B6:6 D7:2 G6:4', 'Eb7:4 D7:4 C7:4', 'Ab6:4 C7:4 Eb7:4', 'Db7:4 F7:4 Ab6:4', 'G6:6 B6:2 D7:4'),
+  extra: { bells: ['bells', 'root5', 0.2] },
+});
+
+// The manor's bosses: "The Last Waltz", the same key whirled faster (172), a pizzicato lead over
+// brass, the waltz bass driving, bells on the downbeats.
+const manorboss = edm({
+  name: 'manorboss', bpm: 172, rows: 12, voice: 'brass', lead: 'pizzLead', bass: 'waltz', chords: 'stab',
+  intro: 'drums', build: 'snare', beat: 'K...c.K.c...', fill: 'K...c.K.cccc',
+  chart: ['Cm', 'Ab', 'Fm', 'G', 'Cm', 'Ab', 'Bb', 'G'],
+  hookA: bars('C6:2 C6:2 G6:2 Eb6:4 D6:2', 'C6:2 Ab5:2 C6:2 Eb6:6', 'F6:2 F6:2 C7:2 Ab6:4 G6:2', 'F6:2 Eb6:2 D6:2 B5:6',
+    'C6:2 C6:2 G6:2 Eb6:4 G6:2', 'Ab6:2 G6:2 F6:2 Eb6:6', 'D6:2 F6:2 Bb6:2 Ab6:4 F6:2', 'G6:4 B6:4 D7:4'),
+  hookB: bars('G7:6 Eb7:6', 'Ab7:6 C7:6', 'F7:4 Ab7:4 F7:4', 'D7:6 B6:6', 'Eb7:4 G7:4 C7:4', 'Ab7:4 G7:4 Eb7:4', 'D7:4 F7:4 Bb7:4', 'B6:6 G6:6'),
+  extra: { bells: ['bells', 'root5', 0.24] },
+});
+
+// The Sunken Aquarium Palace: "Bubble Pop", tropical city pop in E-flat (112), a vibraphone hook
+// that bubbles up the chord, chimes, a kalimba rippling underneath.
+const aquarium = edm({
+  name: 'aquarium', bpm: 112, voice: 'chimes', lead: 'vibesLead', bass: 'octaves', chords: 'pad',
+  intro: 'arp', build: 'snare', beat: 'K...h.C.K.h.C.h.', fill: 'K...h.C.K.K.CCCC',
+  chart: ['Eb', 'Cm', 'Ab', 'Bb', 'Eb', 'Gm', 'Ab', 'Bb'],
+  hookA: bars('Eb6:2 G6:2 Bb6:2 r:2 G6:2 Bb6:2 Eb7:4', 'C7:2 Bb6:2 G6:2 r:2 Eb6:4 G6:4', 'Ab6:2 C7:2 Eb7:2 r:2 C7:2 Ab6:2 F6:4', 'Bb6:4 D7:4 F7:4 D7:4',
+    'Eb6:2 G6:2 Bb6:2 r:2 G6:2 Bb6:2 Eb7:4', 'D7:2 Bb6:2 G6:2 r:2 Bb6:4 D7:4', 'C7:2 Eb7:2 Ab7:2 r:2 G7:2 F7:2 Eb7:4', 'F7:6 D7:2 Bb6:8'),
+  hookB: bars('G7:8 Eb7:8', 'C7:8 Eb7:8', 'Ab6:8 C7:8', 'D7:8 F7:8', 'Bb6:8 Eb7:8', 'G7:8 D7:8', 'Eb7:4 F7:4 G7:8', 'F7:16'),
+  extra: { kalimba: ['kalimba', 'arp', 0.2] },
+});
+
+// The palace's bosses: "Undertow", F minor (128), a marimba hook over brass and a funk bass,
+// timpani rolling in like waves.
+const aquaboss = edm({
+  name: 'aquaboss', bpm: 128, voice: 'brass', lead: 'marimbaLead', bass: 'funk', chords: 'stab',
+  form: 'coldopen', build: 'kick', beat: 'K.hhC.h.KKhhC.h.', fill: 'K.hhC.h.KKKKCCCC',
+  chart: ['Fm', 'Db', 'Bb', 'C', 'Fm', 'Db', 'Eb', 'C'],
+  hookA: bars('F5:2 Ab5:2 C6:2 r:1 Db6:1 C6:2 Ab5:2 F5:4', 'F5:2 Ab5:2 Db6:2 r:1 F6:1 Eb6:2 Db6:2 Ab5:4', 'F5:2 Bb5:2 Db6:2 r:1 F6:1 Eb6:2 Db6:2 Bb5:4', 'E5:4 G5:4 C6:4 Bb5:4',
+    'F5:2 Ab5:2 C6:2 r:1 Db6:1 C6:2 Ab5:2 F5:4', 'F5:2 Ab5:2 Db6:2 r:1 F6:1 Eb6:2 Db6:2 Ab5:4', 'G5:2 Bb5:2 Eb6:2 r:1 G6:1 F6:2 Eb6:2 Bb5:4', 'C6:6 Bb5:2 G5:4 E5:4'),
+  hookB: bars('C7:4 Ab6:4 F6:4 Ab6:4', 'Db7:6 C7:2 Ab6:8', 'Bb6:4 Db7:4 F7:4 Db7:4', 'C7:6 Bb6:2 G6:8', 'Ab6:4 C7:4 F7:4 Eb7:4', 'Db7:4 F7:4 Ab7:8', 'G7:4 Eb7:4 Bb6:4 G6:4', 'E7:8 C7:8'),
+  extra: { timp: ['timpani', 'timp', 0.35] },
+});
+
+// The Clockwork Carnival: "Calliope Swing", a swinging fairground march in F (132): a glockenspiel
+// hook over brass, the calliope's oom-pah bass, an accordion rippling under it.
+const carnival = edm({
+  name: 'carnival', bpm: 132, voice: 'brass', lead: 'glockLead', bass: 'octaves', chords: 'stab',
+  intro: 'perc', build: 'snare', beat: 'K.h.C.h.K.h.C.hh', fill: 'K.h.C.h.K.C.CCCC',
+  chart: ['F', 'C', 'Dm', 'Bb', 'F', 'C', 'Bb', 'C'],
+  hookA: bars('C6:3 A5:1 F5:2 A5:2 C6:4 D6:2 C6:2', 'Bb5:3 G5:1 E5:2 G5:2 C6:8', 'A5:3 F5:1 D5:2 F5:2 A5:4 Bb5:2 A5:2', 'G5:4 Bb5:4 D6:4 F6:4',
+    'C6:3 A5:1 F5:2 A5:2 C6:4 D6:2 C6:2', 'E6:3 C6:1 G5:2 C6:2 E6:4 F6:2 E6:2', 'D6:3 Bb5:1 F5:2 Bb5:2 D6:4 C6:2 Bb5:2', 'A5:4 G5:4 E5:4 C5:4'),
+  hookB: bars('F6:6 E6:2 D6:8', 'E6:6 D6:2 C6:8', 'D6:4 F6:4 A6:8', 'G6:6 F6:2 D6:8', 'F6:4 A6:4 C7:8', 'Bb6:6 A6:2 G6:8', 'F6:4 D6:4 Bb5:8', 'C6:8 E6:8'),
+  extra: { accordion: ['accordion', 'arp', 0.18] },
+});
+
+// The carnival's bosses: "Overwound", D minor (150), a xylophone polka driven hard over brass and
+// timpani.
+const carnivalboss = edm({
+  name: 'carnivalboss', bpm: 150, voice: 'brass', lead: 'xyloLead', bass: 'house', chords: 'stab',
+  intro: 'drums', build: 'kick', beat: 'K.C.K.C.K.C.K.CC', fill: 'K.C.K.C.KKCCCCCC',
+  chart: ['Dm', 'A', 'Dm', 'A', 'Gm', 'Dm', 'A', 'Dm'],
+  hookA: bars('D6:2 F6:2 A6:2 F6:2 D6:2 F6:2 A6:4', 'C#6:2 E6:2 A6:2 E6:2 C#6:2 E6:2 A6:4', 'D6:2 F6:2 A6:2 D7:2 C7:2 A6:2 F6:4', 'E6:2 G6:2 C#7:2 A6:2 G6:2 E6:2 C#6:4',
+    'G6:2 Bb6:2 D7:2 Bb6:2 G6:2 Bb6:2 D7:4', 'F6:2 A6:2 D7:2 A6:2 F6:2 A6:2 D7:4', 'E6:2 C#6:2 A5:2 C#6:2 E6:2 G6:2 A6:4', 'D7:6 A6:2 D6:8'),
+  hookB: bars('A6:4 D7:4 F7:4 E7:4', 'E7:6 D7:2 C#7:8', 'D7:4 F7:4 A7:4 G7:4', 'G7:6 F7:2 E7:8', 'Bb6:4 D7:4 G7:4 F7:4', 'F7:6 E7:2 D7:8', 'C#7:4 E7:4 A7:4 G7:4', 'F7:8 D7:8'),
+  extra: { timp: ['timpani', 'timp', 0.35] },
+});
+
+// The Star Observatory: "Clockwork Stars", baroque pop in A minor (116): a harpsichord hook over
+// celesta, pizzicato strings walking under it.
+const observatory = edm({
+  name: 'observatory', bpm: 116, voice: 'celesta', lead: 'harpsiLead', bass: 'octaves', chords: 'pad',
+  intro: 'solo', build: 'snare', beat: 'K...h...C...h.h.', fill: 'K...h...C.C.CCCC',
+  chart: ['Am', 'F', 'C', 'G', 'Am', 'Dm', 'E', 'Am'],
+  hookA: bars('A5:2 C6:2 E6:2 A6:2 G6:2 E6:2 C6:4', 'F5:2 A5:2 C6:2 F6:2 E6:2 C6:2 A5:4', 'E5:2 G5:2 C6:2 E6:2 D6:2 C6:2 G5:4', 'D6:2 B5:2 G5:2 B5:2 D6:4 G6:4',
+    'A5:2 C6:2 E6:2 A6:2 G6:2 E6:2 C6:4', 'D6:2 F6:2 A6:2 F6:2 D6:2 C6:2 A5:4', 'G#5:2 B5:2 E6:2 G#6:2 F6:2 E6:2 D6:4', 'C6:4 B5:4 A5:8'),
+  hookB: bars('E7:4 C7:4 A6:8', 'F7:4 C7:4 A6:8', 'G7:4 E7:4 C7:8', 'D7:4 B6:4 G6:8', 'A6:4 C7:4 E7:8', 'F7:4 D7:4 A6:8', 'E7:4 G#6:4 B6:8', 'A6:16'),
+  extra: { pizz: ['pizz', 'arp', 0.22] },
+});
+
+// The observatory's bosses: "Event Horizon", C minor (136), a church organ hook over brass and
+// timpani, driving.
+const observatoryboss = edm({
+  name: 'observatoryboss', bpm: 136, voice: 'brass', lead: 'organLead', bass: 'house', chords: 'stab',
+  form: 'coldopen', build: 'kick', beat: 'K.h.C.h.K.h.C.hK', fill: 'K.h.C.h.KKKKCCCC',
+  chart: ['Cm', 'Ab', 'Eb', 'Bb', 'Cm', 'Ab', 'Fm', 'G'],
+  hookA: bars('C5:2 Eb5:2 G5:2 C6:2 Bb5:2 G5:2 Eb5:4', 'Ab4:2 C5:2 Eb5:2 Ab5:2 G5:2 Eb5:2 C5:4', 'Eb5:2 G5:2 Bb5:2 Eb6:2 D6:2 Bb5:2 G5:4', 'D5:4 F5:4 Bb5:8',
+    'C5:2 Eb5:2 G5:2 C6:2 Bb5:2 G5:2 Eb5:4', 'Ab4:2 C5:2 Eb5:2 Ab5:2 G5:2 Eb5:2 C5:4', 'F5:2 Ab5:2 C6:2 F6:2 Eb6:2 C6:2 Ab5:4', 'B5:4 D6:4 G6:8'),
+  hookB: bars('G6:6 Eb6:2 C6:8', 'Ab6:6 Eb6:2 C6:8', 'Bb6:6 G6:2 Eb6:8', 'Bb6:6 F6:2 D6:8', 'C7:4 G6:4 Eb6:8', 'Ab6:4 Eb6:4 C6:8', 'F6:4 Ab6:4 C7:8', 'B6:8 G6:8'),
+  extra: { timp: ['timpani', 'timp', 0.4] },
+});
+
+// The Candy Volcano: "Sugar Rush", Latin house in D (122): a nylon-guitar hook over trumpet stabs,
+// marimba rippling under it.
+const volcano = edm({
+  name: 'volcano', bpm: 122, voice: 'trumpet', lead: 'guitarLead', bass: 'funk', chords: 'stab',
+  intro: 'perc', build: 'tom', beat: 'K..hC.h.K.hhC.h.', fill: 'K..hC.h.KKt.tttt',
+  chart: ['D', 'Bm', 'G', 'A', 'D', 'Bm', 'Em', 'A'],
+  hookA: bars('F#5:2 A5:2 D6:1 r:1 C#6:2 B5:2 A5:2 F#5:4', 'F#5:2 B5:2 D6:1 r:1 C#6:2 B5:2 F#5:2 D5:4', 'G5:2 B5:2 D6:1 r:1 E6:2 D6:2 B5:2 G5:4', 'A5:2 C#6:2 E6:1 r:1 D6:2 C#6:2 A5:4 r:2',
+    'F#5:2 A5:2 D6:1 r:1 C#6:2 B5:2 A5:2 F#5:4', 'F#5:2 B5:2 D6:1 r:1 F#6:2 E6:2 D6:2 B5:4', 'E5:2 G5:2 B5:1 r:1 E6:2 D6:2 B5:2 G5:4', 'A5:4 C#6:4 E6:4 A6:4'),
+  hookB: bars('A6:6 F#6:2 D6:8', 'B6:6 F#6:2 D6:8', 'G6:6 B6:2 D7:8', 'E6:6 A6:2 C#7:8', 'D7:4 A6:4 F#6:8', 'F#6:4 B6:4 D7:8', 'G6:4 E6:4 B5:8', 'A6:8 C#7:8'),
+  extra: { marimba: ['marimba', 'arp', 0.2] },
+});
+
+// The volcano's bosses: "Eruption", B minor (138), brass stabs over a funk bass, timpani rolling.
+const volcanoboss = edm({
+  name: 'volcanoboss', bpm: 138, voice: 'brass', lead: 'brassStab', lead2: 'saw', bass: 'funk', chords: 'stab',
+  intro: 'drums', build: 'kick', beat: 'K.hhC.h.KKhhC.hK', fill: 'K.hhC.h.KKKKCCCC',
+  chart: ['Bm', 'G', 'D', 'A', 'Bm', 'G', 'Em', 'F#'],
+  hookA: bars('B5:2 D6:2 F#6:2 r:2 E6:2 D6:2 B5:4', 'B5:2 D6:2 G6:2 r:2 F#6:2 D6:2 B5:4', 'A5:2 D6:2 F#6:2 r:2 E6:2 D6:2 A5:4', 'C#6:4 E6:4 A6:8',
+    'B5:2 D6:2 F#6:2 r:2 E6:2 D6:2 B5:4', 'B5:2 D6:2 G6:2 r:2 B6:2 A6:2 G6:4', 'G5:2 B5:2 E6:2 r:2 D6:2 B5:2 G5:4', 'A#5:4 C#6:4 F#6:8'),
+  hookB: bars('F#6:6 D6:2 B5:8', 'G6:6 D6:2 B5:8', 'F#6:6 A6:2 D7:8', 'E6:6 A6:2 C#7:8', 'B6:4 F#6:4 D6:8', 'G6:4 B6:4 D7:8', 'E6:4 G6:4 B6:8', 'F#6:8 A#6:8'),
+  extra: { timp: ['timpani', 'timp', 0.4] },
+});
+
+// The Dream Theatre: "Opening Night", swing in B-flat (128): a clarinet hook over a walking bass
+// and the house piano, a sax taking the second chorus.
+const theatre = edm({
+  name: 'theatre', bpm: 128, swing: 0.6, voice: 'clarinet', voiceShift: 0, lead: 'clarinetLead', lead2: 'saxLead', bass: 'walk', chords: 'piano',
+  intro: 'solo', build: 'snare', beat: 'K.h.C.hhK.h.C.hh', fill: 'K.h.C.hhK.C.CCCC',
+  chart: ['Bb', 'Gm', 'Cm', 'F', 'Bb', 'Eb', 'Cm', 'F'],
+  hookA: bars('F5:2 D5:2 F5:2 Bb5:4 A5:2 Bb5:2 r:2', 'G5:2 D5:2 G5:2 Bb5:4 A5:2 G5:4', 'Eb5:2 G5:2 C6:3 Bb5:1 G5:2 Eb5:2 C5:4', 'F5:2 A5:2 C6:2 r:2 Eb6:4 D6:4',
+    'D6:2 C6:2 Bb5:2 F5:2 G5:2 Bb5:2 D6:4', 'Eb6:2 D6:2 C6:2 Bb5:2 G5:4 Eb5:4', 'C5:2 Eb5:2 G5:2 C6:2 Bb5:2 A5:2 G5:4', 'F5:4 A5:4 C6:4 Eb6:4'),
+  hookB: bars('Bb5:6 D6:2 F6:8', 'G5:6 Bb5:2 D6:8', 'G5:4 C6:4 Eb6:8', 'F5:4 A5:4 C6:4 Eb6:4', 'D6:6 F6:2 Bb6:8', 'Eb6:6 G6:2 Bb6:8', 'C6:4 Eb6:4 G6:8', 'F6:6 Eb6:2 D6:4 C6:4'),
+  extra: { vibes: ['vibes', 'arp', 0.16] },
+});
+
+// The theatre's bosses: "Showstopper", G minor (140), a big band: brass hits over timpani and a
+// walking bass, the sax answering in the second chorus.
+const theatreboss = edm({
+  name: 'theatreboss', bpm: 140, swing: 0.55, voice: 'brass', lead: 'brassStab', lead2: 'saxLead', bass: 'walk', chords: 'stab',
+  form: 'coldopen', build: 'tom', beat: 'K.hhC.h.K.hhC.hK', fill: 'K.hhC.h.KKKKCCCC',
+  chart: ['Gm', 'Eb', 'Cm', 'D', 'Gm', 'Bb', 'Cm', 'D'],
+  hookA: bars('G5:2 Bb5:2 D6:2 r:2 C6:2 Bb5:2 G5:4', 'G5:2 Bb5:2 Eb6:2 r:2 D6:2 Bb5:2 G5:4', 'Eb5:2 G5:2 C6:2 r:2 Bb5:2 G5:2 Eb5:4', 'F#5:4 A5:4 D6:8',
+    'G5:2 Bb5:2 D6:2 r:2 G6:2 F6:2 D6:4', 'F5:2 Bb5:2 D6:2 r:2 F6:2 D6:2 Bb5:4', 'C6:2 Eb6:2 G6:2 r:2 F6:2 Eb6:2 C6:4', 'D6:4 C6:4 A5:4 F#5:4'),
+  hookB: bars('D6:6 Bb5:2 G5:8', 'Eb6:6 Bb5:2 G5:8', 'Eb6:6 G6:2 C7:8', 'D6:6 F#6:2 A6:8', 'G6:4 D6:4 Bb5:8', 'F6:4 Bb6:4 D7:8', 'Eb6:4 G6:4 C7:8', 'D7:8 F#6:8'),
+  extra: { timp: ['timpani', 'timp', 0.4] },
+});
+
+// The Sky Whale's Back: "Skyfarers", epic folk in D Dorian (128): a fiddle hook over taiko toms,
+// a harp rippling, nylon-guitar chops.
+const skywhale = edm({
+  name: 'skywhale', bpm: 128, voice: 'violinStacc', voiceShift: 0, lead: 'fiddleLead', bass: 'house', chords: 'guitar',
+  intro: 'drums', build: 'tom', beat: 'K..tC.t.K.ttC.t.', fill: 'K.t.C.t.tttttttt',
+  chart: ['Dm', 'C', 'G', 'Dm', 'F', 'C', 'G', 'A'],
+  hookA: bars('D6:2 A5:2 D6:2 E6:2 F6:4 E6:2 D6:2', 'C6:2 G5:2 C6:2 D6:2 E6:4 D6:2 C6:2', 'B5:2 D6:2 G6:2 F6:2 E6:4 D6:4', 'D6:4 A5:2 F5:2 D5:8',
+    'F5:2 A5:2 C6:2 F6:2 E6:2 C6:2 A5:4', 'G5:2 C6:2 E6:2 G6:2 F6:2 E6:2 C6:4', 'B5:2 D6:2 G6:4 A6:2 G6:2 D6:4', 'C#6:4 E6:4 A6:8'),
+  hookB: bars('A6:6 F6:2 D6:8', 'G6:6 E6:2 C6:8', 'B6:6 G6:2 D6:8', 'A6:4 F6:4 D6:8', 'C7:6 A6:2 F6:8', 'G6:4 C7:4 E7:8', 'D7:4 B6:4 G6:8', 'C#7:8 E7:8'),
+  extra: { harp: ['harp', 'arp', 0.18] },
+});
+
+// The whale's bosses: "Leviathan", E minor (142): the fiddle, then brass, over driving taiko and
+// timpani.
+const skywhaleboss = edm({
+  name: 'skywhaleboss', bpm: 142, voice: 'horn', lead: 'fiddleLead', lead2: 'brassStab', bass: 'octaves', chords: 'pad',
+  form: 'coldopen', build: 'tom', beat: 'K.ttC.t.K.ttC.tK', fill: 'K.ttC.t.tttttttt',
+  chart: ['Em', 'C', 'G', 'D', 'Em', 'C', 'Am', 'B'],
+  hookA: bars('E6:2 G6:2 B6:2 r:2 A6:2 G6:2 E6:4', 'E6:2 G6:2 C7:2 r:2 B6:2 G6:2 E6:4', 'D6:2 G6:2 B6:2 r:2 A6:2 G6:2 D6:4', 'F#6:4 A6:4 D7:8',
+    'E6:2 G6:2 B6:2 r:2 E7:2 D7:2 B6:4', 'C6:2 E6:2 G6:2 r:2 C7:2 B6:2 G6:4', 'A5:2 C6:2 E6:2 r:2 A6:2 G6:2 E6:4', 'D#6:4 F#6:4 B6:8'),
+  hookB: bars('B5:6 G5:2 E5:8', 'C6:6 G5:2 E5:8', 'D6:6 B5:2 G5:8', 'D6:6 A5:2 F#5:8', 'E6:4 B5:4 G5:8', 'C6:4 E6:4 G6:8', 'A5:4 C6:4 E6:8', 'D#6:8 F#6:8'),
+  extra: { timp: ['timpani', 'timp', 0.4] },
+});
+
+export const SONGS = { title, town, meadow, harbor, crag, forest, grove, ruins, cave, sky, hollow, boss, shrine, ridge, springs, peak, starfall, queen, manor, manorboss, aquarium, aquaboss, carnival, carnivalboss, observatory, observatoryboss, volcano, volcanoboss, theatre, theatreboss, skywhale, skywhaleboss };
 
 // Each town's evening version: the same song a touch slower, the lead handed to a piano (or the
 // horn, for the warriors' town), the drums pulled back.
@@ -480,7 +672,7 @@ for (const [key, lead] of Object.entries(EVENING)) {
 // where the song has no drums (the intro, the breakdown) it brings in the song's own beat, so a
 // fight never goes quiet. Its bass comes up; the other parts stay in, silenced, so every section
 // keeps its length.
-for (const key of ['town', 'meadow', 'harbor', 'crag', 'forest', 'grove', 'ruins', 'cave', 'sky', 'hollow', 'shrine', 'ridge', 'springs', 'peak', 'starfall']) {
+for (const key of ['town', 'meadow', 'harbor', 'crag', 'forest', 'grove', 'ruins', 'cave', 'sky', 'hollow', 'shrine', 'ridge', 'springs', 'peak', 'starfall', 'manor', 'aquarium', 'carnival', 'observatory', 'volcano', 'theatre', 'skywhale']) {
   const song = SONGS[key];
   SONGS[`${key}-fight`] = {
     ...song,

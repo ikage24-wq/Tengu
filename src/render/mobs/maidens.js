@@ -20,6 +20,17 @@ const GY = 64;
 // ---------- Transform stack and shape helpers ----------
 
 let X = (x, y) => [x, y];
+// Stroke and dot widths scale with `grand` (the bosses drawn bigger on the same art); 1 otherwise.
+let WS = 1;
+function grand(k, ox, oy, fn) {
+  const prev = WS;
+  WS *= k;
+  try {
+    return within((x, y) => [ox + x * k, oy + y * k], fn);
+  } finally {
+    WS = prev;
+  }
+}
 function within(f, fn) {
   const prev = X;
   X = (x, y) => prev(...f(x, y));
@@ -102,7 +113,7 @@ function ovalPts(cx, cy, rx, ry, n = 24, a = 0) {
 const ooval = (cx, cy, rx, ry, c, a = 0, d = INK_W) => opoly(ovalPts(cx, cy, rx, ry, 22, a), c, d);
 const dot = (x, y, rx, c, ry = rx) => {
   const [px, py] = X(x, y);
-  return F(E(px, py, rx, ry, c));
+  return F(E(px, py, rx * WS, ry * WS, c));
 };
 const arcPts = (cx, cy, rx, ry, a0, a1, n = 8) =>
   Array.from({ length: n + 1 }, (_, i) => {
@@ -145,7 +156,7 @@ function bandPts(pts, wf, n = 4) {
     const len = Math.hypot(dx, dy) || 1;
     dx /= len;
     dy /= len;
-    const w = wfn(i / (m - 1)) / 2;
+    const w = (wfn(i / (m - 1)) / 2) * WS;
     left.push([p[i][0] - dy * w, p[i][1] + dx * w]);
     right.push([p[i][0] + dy * w, p[i][1] - dx * w]);
   }
@@ -258,6 +269,7 @@ function fadeDeep(v) {
 }
 function faceLook(look, mood) {
   const l = { k: HK, lineK: 1.5, browsOnTop: true, blushLines: true, blushN: 2, chibi: true, mouthK: 1.35, ...look };
+  l.lineK *= WS;
   return mood === 'dead' ? fadeDeep(l) : l;
 }
 // The skin, face and neck (draw before the hair) and the brows and sweat (after it).
@@ -1839,4 +1851,11 @@ export const INFO = {
   nekomata: { name: 'Nekomata', w: 24, h: 46 },
   lamia: { name: 'Lamia', w: 28, h: 50 },
   lupina: { name: 'Lupina', w: 24, h: 50 },
+};
+
+// The maidens' drawing kit, shared with the manor maidens (manor.js): every helper works through this
+// module's transform stack, so `XY` is the current transform.
+export const KIT = {
+  XY: (x, y) => X(x, y), within, grand, at, rot, shift, chain, poly, fpoly, opoly, ooval, ovalPts, dot, arcPts, spline, band, fband, oband, taperW, lockW, line, sparkle, flame, gem,
+  joint, gait, fade, breath, face, faceTop, crownHair, bangEdge, lockHair, backHair, limb, round, soften, sleeve, TORSO, flowPts, lockPts, clamp, lerp, smooth, clumpPts, W, H, GY, TAU,
 };

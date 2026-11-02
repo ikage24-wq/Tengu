@@ -195,6 +195,7 @@ const DRAFTS = {
   gust: { glow: '#e8f4ff', bits: ['#ffffff', '#d8ecff', '#f0e0c8'], count: 22, speed: 120, size: 1.8, petal: true },
   chaff: { glow: '#ffe6b0', bits: ['#e8c070', '#f6dc98', '#fff2c8'], count: 20, speed: 75, size: 2.2, petal: true },
   pollen: { glow: '#ffd970', bits: ['#ffc83a', '#ffdc6e', '#fff2b8'], count: 24, speed: 70, size: 2, petal: false },
+  bubbles: { glow: '#bfeeff', bits: ['#ffffff', '#dff6ff', '#9fe0ff'], count: 22, speed: 90, size: 2.2, petal: false },
   petals: { glow: '#ffd2e6', bits: ['#ff9ec7', '#ffc2dc', '#ffffff'], count: 18, speed: 85, size: 2.4, petal: true },
 };
 function updraft(ctx, u, cam, time) {
@@ -234,6 +235,23 @@ function updraft(ctx, u, cam, time) {
   ctx.strokeStyle = OUTLINE + '00';
 }
 
+// A funhouse springboard: a striped pad on a coil that squashes flat and boings up when it fires.
+function springboard(ctx, x, y, since) {
+  const pop = since < 0.12 ? -1 : since < 0.5 ? Math.sin(((since - 0.12) / 0.38) * Math.PI * 3) * (1 - (since - 0.12) / 0.38) : 0;
+  const h = 8 + pop * 6;
+  ctx.strokeStyle = '#a8b4d8';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  for (let k = 0; k <= 6; k++) ctx.lineTo(x + (k % 2 ? 6 : -6), y - (k / 6) * h);
+  ctx.stroke();
+  ctx.fillStyle = '#ff7aa8';
+  ctx.beginPath();
+  ctx.roundRect(x - 12, y - h - 4, 24, 5, 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  for (let k = 0; k < 3; k++) ctx.fillRect(x - 9 + k * 8, y - h - 4, 3, 5);
+}
+
 export function drawMovers(ctx, map, cam, width, height, time) {
   for (const u of map.updrafts ?? []) {
     if (u.x + u.w < cam.x - 20 || u.x - u.w > cam.x + width + 20 || u.bottom < cam.y - 20 || u.top - 40 > cam.y + height) continue;
@@ -245,6 +263,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     const since = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
     if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
+    else if (s.kind === 'spring') springboard(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'shroom') shroom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
     else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
