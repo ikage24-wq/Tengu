@@ -61,6 +61,8 @@ function reset() {
   online.claim = null;
   online.party = null;
   online.partyAsk = online.partyAsked = null;
+  online.joinAsk = online.joinAsked = null;
+  online.rosters = null;
   online.trade = null;
   if (online.world) online.world.net = null;
 }
@@ -608,6 +610,8 @@ function onDead(world, msg) {
   }
   m.hp = 0;
   m.byNet = true;
+  // (A party friend's kill shows as theirs on your quest tracker.)
+  if (online.party?.members.includes(msg.id)) m.killedByName = online.ghosts.get(msg.id)?.name ?? null;
   killMob(world, m, !m.mine);
 }
 

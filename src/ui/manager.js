@@ -35,6 +35,8 @@ import { checkArrival } from '../world/routes.js';
 import { sceneInput, drawScene, drawRadio } from './cutscene.js';
 import { drawGuide } from './guide.js';
 import { emoteWheel } from './emotes.js';
+import { drawPings } from './grouping.js';
+import { smartPing } from '../world/grouping.js';
 
 // Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
 function noteVisits(world) {
@@ -139,8 +141,9 @@ export function routeInput(state, world, input, dt) {
 
   if (input.pressed.has('F9') && isGm(world.char)) state.windows.admin.open = !state.windows.admin.open;
   if (!isGm(world.char)) state.windows.admin.open = false;
-  // T: the emote wheel.
+  // T: the emote wheel. V: a ping for your party.
   if (input.pressed.has('KeyT')) state.emotes = !state.emotes;
+  if (input.pressed.has('KeyV') && !world.scene) smartPing(world);
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
   }
@@ -231,6 +234,7 @@ export function drawUi(ui, state, world) {
   state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;
   state.typeField = null;
   dimWorld(ui.ctx, state);
+  drawPings(ui, state, world);
   drawHud(ui, state, world);
   // The guide arrow and pill, while a route is set.
   drawGuide(ui, state, world);

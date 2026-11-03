@@ -18,9 +18,10 @@ const BASE = {
   LOOT: { x: 512, y: 304, r: 11, code: 'KeyX', label: 'Loot', color: '#ffe08a', dark: '#c99a1f' },
   CHAT: { x: 622, y: 136, r: 11, code: null, label: 'Chat', color: '#c9b6ff', dark: '#7a5cc8' },
   EMOTE: { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' },
+  PING: { x: 622, y: 192, r: 11, code: 'KeyV', label: 'Ping', color: '#bfe6ff', dark: '#3f8fd0' },
 };
 const DEAD = 11;
-let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, ARC;
+let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, ARC;
 const FADE = 1;
 // Lays the controls out from the settings: left-handed play mirrors the whole set.
 function relayout() {
@@ -36,6 +37,7 @@ function relayout() {
   LOOT = place(BASE.LOOT, VW, VH);
   CHAT = place(BASE.CHAT, VW, 150);
   EMOTE = place(BASE.EMOTE, VW, 150);
+  PING = place(BASE.PING, VW, 150);
   // Skill buttons in an arc above the Attack button (mirrored with it).
   ARC = [195, 230, 265, 300].map((deg) => {
     const a = (deg * Math.PI) / 180;
@@ -47,7 +49,7 @@ relayout();
 // Where the controls sit now (for the preview in Options).
 export function touchLayout() {
   relayout();
-  return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, ...ARC] };
+  return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, ...ARC] };
 }
 // The HUD's hotkey bubbles (see ui/hud.js).
 const HK = { x: 380, step: 21, y: 329.5, d: 19 };
@@ -160,7 +162,7 @@ function start(t, id, p, field) {
       steer(t, p);
       return;
     }
-    const buttons = [ATTACK, JUMP, LOOT, EMOTE, ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
+    const buttons = [ATTACK, JUMP, LOOT, EMOTE, PING, ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
     const hit = buttons.find((b) => near(p, b));
     if (hit) {
       press(input, hit.code);
@@ -314,6 +316,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
   drawButton(ctx, t, LOOT, time, () => icon(ctx, 'bag', LOOT.x, LOOT.y, 11, '#ffffff'));
   drawButton(ctx, t, CHAT, time, () => icon(ctx, 'chat', CHAT.x, CHAT.y, 11, '#ffffff'));
   drawButton(ctx, t, EMOTE, time, () => icon(ctx, 'heart', EMOTE.x, EMOTE.y, 10, '#ffffff'));
+  drawButton(ctx, t, PING, time, () => icon(ctx, 'pin', PING.x, PING.y, 10, '#ffffff'));
   arcKeys(world).forEach((k, i) => {
     const b = { ...ARC[i], code: k.code, color: '#fffaf8', dark: '#9a7cc8' };
     drawButton(ctx, t, b, time, () => {

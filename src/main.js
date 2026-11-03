@@ -14,6 +14,7 @@ import { settings, loadSettings } from './core/settings.js';
 import { setHd, gfx, nextFrame } from './render/pixel.js';
 import { VIVID } from './render/post.js';
 import { createBots, updateBots, botsIn, bodiedIn } from './world/bots.js';
+import { updateGrouping } from './world/grouping.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
 import { openProfile } from './ui/profile.js';
@@ -220,6 +221,7 @@ function step(now) {
     // yours (listen.js).
     const before = new Set([...world.fx, ...world.juice]);
     updateBots(world.bots, world, dt);
+    updateGrouping(world, dt);
     for (const f of world.fx) if (!before.has(f)) f.ally = true;
     for (const j of world.juice) if (!before.has(j)) j.ally = true;
     // Online: tell friends what you're doing, and show what they're doing.
