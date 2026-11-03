@@ -18,7 +18,7 @@ import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics
 import { startAgility, tickAgility } from './agility.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
+import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
@@ -666,6 +666,7 @@ export function updateWorld(world, dt, input) {
 
   // ----- Melee strikes landing, then queued hits -----
   tickMelee(world, dt);
+  tickLater(world);
   const due = world.pending.filter((h) => h.at <= world.now);
   world.pending = world.pending.filter((h) => h.at > world.now);
   // Your hits on monsters other than the one you're on (the nearest) land at your job's `spread`

@@ -363,19 +363,24 @@ export function cast(world, skillId, rng = Math.random) {
   }
 
   // Tricks of their own: the Acrobat Archer's Springboard, the Phantom Trickster's Smoke Bomb.
+  // (A skill with a move of its own lands on that move's moment, `landAt`, not on the press.)
+  const onMove = (run) => (s?.landAt ? (world.later ??= []).push({ at: now + poseDur * s.landAt, run }) : run());
   if (params.trap) {
-    setTrap(world, body.x + body.facing * 70, params);
+    const x = body.x + body.facing * 70;
+    onMove(() => setTrap(world, x, params));
     return { ok: true };
   }
   if (params.smoke) {
-    smokeBomb(world, params);
+    onMove(() => smokeBomb(world, params));
     return { ok: true };
   }
 
   if (type === 'buff') {
-    applyBuff(world, skillId, params);
-    if (params.rageGain) addRage(world, params.rageGain);
-    if (params.aimGain) addAim(world, params.aimGain);
+    onMove(() => {
+      applyBuff(world, skillId, params);
+      if (params.rageGain) addRage(world, params.rageGain);
+      if (params.aimGain) addAim(world, params.aimGain);
+    });
     return { ok: true };
   }
 
@@ -458,3 +463,13 @@ export function cast(world, skillId, rng = Math.random) {
   return { ok: true, targets: targets.length };
 }
 
+// Things a skill set off for a moment of its move (`landAt`): each goes off when its time comes.
+export function tickLater(world) {
+  const list = world.later;
+  if (!list?.length) return;
+  world.later = [];
+  for (const x of list) {
+    if (x.at <= world.now) x.run();
+    else world.later.push(x);
+  }
+}

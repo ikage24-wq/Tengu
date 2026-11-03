@@ -330,6 +330,8 @@ test("the archer's tricks: Blast Arrow and Snare Arrow go off on their own, Spri
   v.char.skills.springtrap = 10;
   v.char.mp = 9999;
   assert.ok(cast(v, 'springtrap').ok);
+  assert.ok(!v.traps?.length, 'not on the press: when she sets it down');
+  run(v, 0.4);
   assert.equal(v.traps?.length, 1, 'a trap is set');
   const trap = v.traps[0];
   const m = v.mobs[2];

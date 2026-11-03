@@ -152,7 +152,7 @@ test('every weapon keeps its blow on time and leans into it', async () => {
   const { moveAt, FEEL } = await import('../src/render/moves.js');
   for (const weapon of Object.keys(FEEL)) {
     for (const hit of [0.3, 0.45, 0.6]) {
-      const plain = moveAt('slash', hit, 0.4);
+      const plain = moveAt('slash', hit, 0.4, { weapon });
       const felt = moveAt('slash', hit, 0.4, { weapon, hit });
       assert.ok(Math.abs(plain.weapon - felt.weapon) < 1e-6 || FEEL[weapon].over || FEEL[weapon].twirl, `${weapon}: the blade is where it was when the blow lands`);
     }

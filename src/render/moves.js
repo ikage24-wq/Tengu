@@ -512,6 +512,57 @@ export const MOVES = {
     };
   },
 
+  // ---------- Skills that used to borrow a generic pose or a combo move, given moves of their own ----------
+
+  // Overclock (the Arbalist Engineer): she props the crossbow up on her hip, cranks it hard past
+  // its limit (it shudders), a puff of steam, and a hop with a thumbs-up (takes at 0.75).
+  aeoverclock(p) {
+    const prop = soft(seg(p, 0, 0.14)) * (1 - soft(seg(p, 0.84, 1)));
+    const crank = seg(p, 0.14, 0.62);
+    const shudder = crank > 0.4 && crank < 1 ? Math.sin(p * 120) * 4 * crank : 0;
+    const hop = bump(p, 0.68, 0.86);
+    const thumb = soft(seg(p, 0.7, 0.8));
+    return {
+      weapon: lerp(55, 20, prop) + shudder, arm: lerp(30, 40, prop), lift: 5 * hop, tilt: -0.05 * prop,
+      rig: (r) => {
+        r.squat = q(1 * prop * (1 - hop));
+        r.backArm = crank > 0 && crank < 1 ? [q(3 + 2.2 * Math.cos(crank * Math.PI * 8)), q(1 + 2.2 * Math.sin(crank * Math.PI * 8))] : thumb > 0 ? [q(-3 * thumb), q(-7 * thumb)] : [3, 0];
+        wideLegs(r);
+        if (hop > 0.2) r.air = true;
+        if (crank > 0.2 && crank < 1) r.mouth = 'grin';
+        if (thumb > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+
+  // Star Pebble (the Novice): a wind-up with the pebble behind her, and a flick (released at 0.5).
+  pebbleflick(p) {
+    const wind = soft(seg(p, 0, 0.4));
+    const flick = ease(seg(p, 0.42, 0.55));
+    const settle = soft(seg(p, 0.7, 1));
+    return {
+      weapon: 0, arm: lerp(lerp(30, 8, wind), 92, flick) - 40 * settle, lunge: 3 * flick * (1 - settle), tilt: lerp(-0.08 * wind, 0.1, flick) * (1 - settle),
+      rig: (r) => { r.tx = flick > 0 ? 1 : -1; lungeLegs(r, 0.6 + 0.4 * flick); r.backArm = [q(2 - 4 * flick), -1]; if (flick > 0.3 && settle < 0.5) r.mouth = 'open'; },
+    };
+  },
+
+  // Quick Step (the Novice): two quick hops in place and a heel click (it takes at 0.75).
+  qstep(p) {
+    const h1 = bump(p, 0.08, 0.36);
+    const h2 = bump(p, 0.42, 0.8);
+    const click = bump(p, 0.52, 0.7);
+    return {
+      weapon: 25, arm: 30, lift: 5 * h1 + 9 * h2,
+      rig: (r) => {
+        if (h1 > 0.2 || h2 > 0.2) r.air = true;
+        r.frontLeg = click > 0.2 ? [1, -2, -10] : [1.2, -2 * (h1 + h2), 6 * h2];
+        r.backLeg = click > 0.2 ? [-1, -2, 10] : [-1.2, -2 * (h1 + h2), -6 * h2];
+        r.backArm = [q(-3 * h2), q(-4 * h2)];
+        if (h2 > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
+      },
+    };
+  },
+
   // ---------- The Warrior line's finishers, remade for the big weapons (2026-11-03) ----------
 
   // Titan Breaker: a deep crouch with the blade dropped back low, then a huge leap with two
@@ -4682,7 +4733,17 @@ export function hefted(mv, kind = null, p = 0) {
   }
   return out;
 }
-const HEFT = new Set(['sword', 'axe', 'spear']);
+const HEFT = new Set(['sword', 'axe', 'spear', 'staff', 'dagger', 'gauntlet', 'wand', 'none']);
+// A staff is longer than she is tall: pointed steeply down it would run through the floor, so its
+// downward angles are eased toward level (front and back alike).
+function staffed(mv) {
+  if (!mv || mv.weapon == null || mv.orbit) return mv;
+  const w = ((((mv.weapon % 360) + 360) % 360));
+  let v = w;
+  if (w > 100 && w <= 180) v = 100 + (w - 100) * 0.3;
+  else if (w > 180 && w < 260) v = 260 - (260 - w) * 0.3;
+  return v === w ? mv : { ...mv, weapon: mv.weapon + (v - w) };
+}
 
 export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (!MOVES[kind]) return null;
@@ -4690,6 +4751,7 @@ export function moveAt(kind, progress, dur = 0.35, feel = null) {
   const p = bend(clamp01(progress), feel?.hit, f.pre, f.post);
   let mv = after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
   if (HEFT.has(feel?.weapon)) mv = hefted(mv, kind, p);
+  if (feel?.weapon === 'staff') mv = staffed(mv);
   return DANCE_MOVES.has(kind) && DANCE_STYLES[danceStyle] ? DANCE_STYLES[danceStyle](mv, (q2) => rawMoveAt(kind, clamp01(q2), dur), p, dur, kind) : mv;
 }
 

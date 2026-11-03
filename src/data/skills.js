@@ -41,12 +41,12 @@ function skill(def) {
 export const SKILLS = {
   // ---------- Novice ----------
   pebble: skill({
-    id: 'pebble', name: 'Star Pebble', job: 'novice', type: 'attack', maxLevel: 3, fx: 'pebble',
+    id: 'pebble', name: 'Star Pebble', job: 'novice', type: 'attack', maxLevel: 3, fx: 'pebble', lock: 0.45,
     desc: 'Flick a sparkly pebble at the nearest monster.',
     at: (lv) => ({ mp: 2, pct: 110 + lv * 25, hits: 1, targets: 1, range: { w: 220, h: 50 }, projectile: true }),
   }),
   quickstep: skill({
-    id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff',
+    id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff', lock: 0.55, landAt: 0.75,
     desc: 'Move and jump faster for a while.',
     at: (lv) => ({ mp: 8, duration: 60 + lv * 30, buff: { speed: 8 + lv * 4, jump: 3 + lv * 2 } }),
   }),
@@ -527,7 +527,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(2, 3.5, lv, m), bonus: lerpf(0.15, 0.3, lv, m) } }),
   }),
   springtrap: skill({
-    id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10,
+    id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, lock: 0.7, landAt: 0.4,
     desc: 'Set a little circus springboard down just ahead and give it a pat. The first monster to step on it is bounced high into the air. Up to three at once.',
     at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true }),
   }),
@@ -596,7 +596,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.3, lv, m), pct: lerp(50, 90, lv, m) } }),
   }),
   packhowl: skill({
-    id: 'packhowl', name: 'Smoke Bomb', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10,
+    id: 'packhowl', name: 'Smoke Bomb', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10, lock: 0.62, landAt: 0.4,
     desc: 'Slap a smoke bomb down at your feet: everything close round you is knocked back and stunned, loses track of you, and nothing touches you while the smoke is thick.',
     at: (lv, m) => ({ mp: lerp(10, 18, lv, m), pct: lerp(100, 170, lv, m), stun: lerpf(1, 2, lv, m), r: lerp(100, 140, lv, m), smoke: true }),
   }),
@@ -606,7 +606,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m) } }),
   }),
   snacktime: skill({
-    id: 'snacktime', name: 'Showstopper', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'phantom', maxLevel: 10,
+    id: 'snacktime', name: 'Showstopper', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'phantom', maxLevel: 10, lock: 0.8, landAt: 0.6,
     desc: 'Take a grand bow and snap your fingers: for a while your copies hit much harder.',
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { copyPower: lerpf(0.4, 1, lv, m) } }),
   }),
@@ -674,7 +674,7 @@ export const SKILLS = {
     },
   }),
   overclock: skill({
-    id: 'overclock', name: 'Overclock', job: 'stormcaller', type: 'buff', fx: 'buff', icon: 'overclock', school: 'brass', maxLevel: 10,
+    id: 'overclock', name: 'Overclock', job: 'stormcaller', type: 'buff', fx: 'buff', icon: 'overclock', school: 'brass', maxLevel: 10, lock: 0.8, landAt: 0.75,
     desc: 'Crank your crossbow past its limits: your next few bolts are heavy bolts that tear through every monster in their line, hitting far harder.',
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: 20, buff: { shots: lerp(3, 6, lv, m), power: lerpf(1.6, 2.2, lv, m) } }),
   }),
@@ -879,9 +879,9 @@ export const SKILLS = {
 
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
-  pebble: 'throw', quickstep: 'cheer',
+  pebble: 'pebbleflick', quickstep: 'qstep',
   vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'ptbomb',
-  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aebrace', bigbertha: 'aebertha',
+  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aeoverclock', bigbertha: 'aebertha',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',

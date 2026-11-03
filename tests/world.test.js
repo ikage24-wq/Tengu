@@ -145,7 +145,7 @@ test('skills spend MP and buffs raise stats', () => {
   w.char.mp = 100;
   w.char.hotkeys = { KeyQ: { skill: 'quickstep' } };
   updateWorld(w, DT, keys([], ['KeyQ']));
-  updateWorld(w, DT, idle);
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
   assert.ok(w.stats.speed > speed);
   assert.ok(w.char.mp < 100);
 });
