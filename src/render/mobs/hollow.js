@@ -1,3 +1,5 @@
+// (Retired as Rootwood Hollow's monster art on 2026-11-03: render/mobs/hollowfolk.js draws them now.
+// This file's rig helpers stay, shared by the field bosses in bosses.js.)
 // Monster art: hollow. Rootwood Hollow's minions, the creatures of a giant tree gone sour: root
 // imps, mushroom shamans, bramble bears, spore mites, and the corrupted saplings that feed its
 // heart. Bark and fungus in soft browns, lilacs, and mossy greens, with the corruption showing as

@@ -5,7 +5,7 @@ import { ART as MEADOW } from './meadow.js';
 import { ART as WILDS } from './wilds.js';
 import { ART as RUINS } from './ruins.js';
 import { ART as SKY } from './sky.js';
-import { ART as HOLLOW } from './hollow.js';
+import { ART as HOLLOW } from './hollowfolk.js';
 import { ART as BOSSES } from './bosses.js';
 import { ART as MAIDENS } from './maidens.js';
 import { ART as QUEENS } from './queens.js';
@@ -26,7 +26,7 @@ import { ART as STAGEBOSS } from './stageboss.js';
 import { ART as SKYFOLK } from './skyfolk.js';
 import { ART as SKYBOSS } from './skyboss.js';
 
-export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS };
+export const ARTS = { ...MEADOW, ...WILDS, ...RUINS, ...SKY, ...HOLLOW, ...BOSSES, ...MAIDENS, ...QUEENS, ...BEES, ...FARM, ...MANOR, ...MANORBOSS, ...SEA, ...SEABOSS, ...TOY, ...TOYBOSS, ...ASTRAL, ...ASTRALBOSS, ...CANDY, ...CANDYBOSS, ...STAGE, ...STAGEBOSS, ...SKYFOLK, ...SKYBOSS, ...HOLLOW };
 
 export const mobBuild = (art, pose, frame, mood) => {
   const a = ARTS[art];
