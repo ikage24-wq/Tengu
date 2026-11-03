@@ -732,8 +732,11 @@ function listen(bots, world) {
     const all = near();
     if (all.length) {
       if (h.emote) {
-        const bot = all[0];
-        if (rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
+        // (An emote from the party bar is your party's to answer, world/grouping.js: someone else
+        // here may, but not a party member a second time.)
+        const fromBar = world.now - (world.partyEmoteAt ?? -99) < 0.5;
+        const bot = fromBar ? all.find((b) => !b.party) : all[0];
+        if (bot && rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
       } else {
         const words = h.words.toLowerCase();
         const named = all.find((b) => words.includes(b.name.toLowerCase()));

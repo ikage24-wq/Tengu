@@ -44,6 +44,7 @@ import { botChat, stale, shape } from './chatlog.js';
 import { voiced } from './chatter.js';
 import { LIFE_POSE_SECS } from './lifepose.js';
 import { CRAFT_SECS } from './crafting.js';
+import { partyGathered } from './grouping.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -381,6 +382,8 @@ function finishNode(bot, world, L, rng) {
   world.botPops = [...(world.botPops ?? []).filter((p) => world.now - p.at < 1), { x: n.x, y: n.y, items: [...new Set(L.got)], at: world.now }];
   const up = botLifeExp(bot.char, L.skill, n.tier ?? 1, L.skill === 'mining' ? 'mine' : 'gather');
   bot.lifeDone = (bot.lifeDone ?? 0) + 1;
+  // A party member's finds count for your quests (world/grouping.js).
+  if (bot.party) for (const id of L.got) partyGathered(world, bot, id, 1);
   if (L.rare || n.night) lifeSay(world, bot, rareLine(bot, world, L.rare ?? L.got[0], n, rng), rng, { chance: L.rare ? 0.85 : 0.35 });
   else if (up) lifeSay(world, bot, levelLine(bot, L.skill, up, rng), rng, { chance: 0.55 });
 }

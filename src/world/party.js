@@ -232,8 +232,10 @@ function hunt(bot, world, members, rng) {
   br.target = target;
   // Come to help with nothing to fight by you: they run over to you.
   if (!target && helping(bot, world) && !bot.gave) {
-    const you = world.body;
-    const s = surfaceOf(nav, you);
+    // (A "Here!" ping calls them to the marker, not to wherever you've gone since.)
+    const spot = bot.pingSpot && world.now < bot.pingSpot.until ? bot.pingSpot : null;
+    const you = spot ? { x: spot.x, y: spot.y } : world.body;
+    const s = spot ? surfaceBelow(nav, spot.x, spot.y - 4) : surfaceOf(nav, you);
     if (s >= 0) {
       const x = you.x + (Math.sign(body.x - you.x) || 1) * 30;
       br.goal = { x, y: you.y, mode: 'fight', surface: s };

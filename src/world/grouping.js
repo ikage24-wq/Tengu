@@ -128,6 +128,7 @@ export function heardPing(world, p) {
       bot.pingFocus = { mob: p.mob, until: p.until };
     } else {
       bot.helping = world.now + (p.kind === 'help' ? 14 : 9);
+      bot.pingSpot = p.kind === 'here' ? { x: p.x, y: p.y, until: bot.helping } : null;
       br.target = null;
       br.goal = null;
       br.path = null;
