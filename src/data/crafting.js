@@ -119,6 +119,13 @@ export const STONES = [
 export const TONICS = [
   { id: 'herb_salve', name: 'Clover Salve', effect: { hpPct: 0.25, mpPct: 0.15 }, price: 420, color: '#9fe0a0', desc: 'A cooling green salve. Restores 25% of your max HP and 15% of your max MP.' },
   { id: 'moon_draught', name: 'Moonpetal Draught', effect: { hpPct: 0.4, mpPct: 0.4 }, price: 1500, color: '#c9c4ff', desc: 'Moonpetal steeped with honey. Restores 40% of your max HP and MP.' },
+  // One of each region's own, from its herbs (the player's pick: every herb has a use at the bench
+  // as well as the stove), and a rare one from the night flowers.
+  { id: 'meadow_cordial', name: 'Meadow Cordial', effect: { hpPct: 0.3, mpPct: 0.1 }, price: 260, color: '#ff8fa8', desc: 'Wild strawberries and prickle pear, pressed sweet. Restores 30% of your max HP and 10% of your max MP.' },
+  { id: 'forest_brew', name: 'Forest Mint Brew', effect: { hpPct: 0.3, mpPct: 0.3 }, price: 700, color: '#8fe0b0', desc: 'Temple mint and chanterelle, brewed earthy and bright. Restores 30% of your max HP and MP.' },
+  { id: 'shrine_infusion', name: 'Shrine Thyme Infusion', effect: { hpPct: 0.45, mpPct: 0.35 }, price: 1400, color: '#ffc8a0', desc: 'Moon thyme, steam ginger and a shrine plum, steeped warm. Restores 45% of your max HP and 35% of your max MP.' },
+  { id: 'starlight_nectar', name: 'Starlight Nectar', effect: { hpPct: 0.6, mpPct: 0.5 }, price: 2600, color: '#ffe9a6', desc: 'Cloudberries and snow peach with a star of anise. Restores 60% of your max HP and half your max MP.' },
+  { id: 'nightbloom_elixir', name: 'Nightbloom Elixir', effect: { hpPct: 1, mpPct: 1 }, price: 6000, color: '#c9a6ff', desc: 'Brewed from flowers that only open at night. Restores all your HP and MP.' },
 ];
 
 // ---------- Recipes ----------
@@ -184,6 +191,12 @@ recipe({ id: 'craft_white_potion', cat: 'potion', tier: 3, level: 24, needs: { c
 recipe({ id: 'craft_mana_elixir', cat: 'potion', tier: 3, level: 28, needs: { moonpetal: 1, crystal_gel: 1 }, makes: 'mana_elixir', qty: 5 });
 recipe({ id: 'craft_moon_draught', cat: 'potion', tier: 4, level: 36, needs: { moonpetal: 2, honeycomb: 1, feather: 1 }, makes: 'moon_draught', qty: 3 });
 recipe({ id: 'craft_elixir', cat: 'potion', tier: 4, level: 42, needs: { moonpetal: 2, honeycomb: 2, stardust: 1 }, makes: 'elixir', qty: 2 });
+// Each region's own tonic, from its herbs; and the night flowers' elixir.
+recipe({ id: 'craft_meadow_cordial', cat: 'potion', tier: 1, level: 6, needs: { wild_strawberry: 2, prickle_pear: 1 }, makes: 'meadow_cordial', qty: 3 });
+recipe({ id: 'craft_forest_brew', cat: 'potion', tier: 2, level: 14, needs: { temple_mint: 2, chanterelle: 1, whisperberry: 1 }, makes: 'forest_brew', qty: 3 });
+recipe({ id: 'craft_shrine_infusion', cat: 'potion', tier: 3, level: 27, needs: { moon_thyme: 2, steam_ginger: 1, shrine_plum: 1 }, makes: 'shrine_infusion', qty: 3 });
+recipe({ id: 'craft_starlight_nectar', cat: 'potion', tier: 4, level: 39, needs: { cloudberry: 2, snow_peach: 1, star_anise: 1 }, makes: 'starlight_nectar', qty: 3 });
+recipe({ id: 'craft_nightbloom_elixir', cat: 'potion', tier: 4, level: 44, needs: { duskcap: 1, foxfire_lily: 1, starbloom: 1 }, makes: 'nightbloom_elixir', qty: 2 });
 
 // Polishing stones.
 for (const s of STONES) {
