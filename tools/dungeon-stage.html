@@ -128,7 +128,11 @@ let card = null;
 
 function tick() {
   // (Scenes, like Gnarlroot falling asleep, play for a moment and are then clicked through.)
-  if (w.scene && w.scene.t > 2.5) w.scene = null;
+  // (A montage jumping between rooms skips the scenes outright: window.room sets noScenes.)
+  if (w.scene && (noScenes || w.scene.t > 2.5)) {
+    w.scene = null;
+    w.cine = null;
+  }
   const { held, pressed } = pilot(w);
   updateWorld(w, 1 / 60, { held, pressed, locked: false });
   updateBots(w.bots, w, 1 / 60);
@@ -178,6 +182,7 @@ function step(secs) {
 // Jumps the run to a room (restarting the run for that room's dungeon if it's another one), with
 // the group there and no arrival scene.
 function room(id) {
+  noScenes = true;
   const d = MAPS[id].dungeon;
   if (!w.dungeon || w.dungeon.id !== d) {
     w.dungeon = null;
@@ -192,6 +197,7 @@ function room(id) {
   return w.map.id;
 }
 let fadeA = 0;
+let noScenes = false;
 
 window.sim = sim;
 window.room = room;

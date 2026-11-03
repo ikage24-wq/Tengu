@@ -3,11 +3,11 @@
 // the field monsters' kit (meadow.js ramps, crescents, chains) and the simple faces (faces.js), so
 // they sit in the same world as the Moss Tortoise and the Kitsune Kit.
 
-import { E, T, F, mix, sparkLine } from './kit.js';
+import { E, T, F, R, mix, sparkLine } from './kit.js';
 import { ramp, crescent, shine, smear, chain, wave, smooth, breath, sway } from './meadow.js';
 import { simpleEye, simpleMouth, blush, band, deadEye, tear, vein } from './faces.js';
 
-export { E, T, F, mix, ramp, crescent, shine, smear, chain, wave, smooth, breath, sway, band, tear, vein };
+export { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, smooth, breath, sway, band, tear, vein };
 
 export const TAU = Math.PI * 2;
 export const D2R = Math.PI / 180;

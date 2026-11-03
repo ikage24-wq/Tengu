@@ -32,7 +32,7 @@ fairground, ride to ride, ending back at the gates.
 
 ## Monsters (levels 25-29), on a new rig
 
-The **toy rig** (render/mobs/toyrig.js): the manor rig's skeleton driven by clockwork timing. Poses
+The **toy rig** (render/mobs/toy.js): the manor rig's skeleton driven by clockwork timing. Poses
 tick from key to key with a quick move and a little overshoot that settles (never a snap: the
 overshoot is eased), a wind-up key turns in every toy's back, and it slows when hurt.
 
@@ -62,3 +62,12 @@ overshoot is eased), a wind-up key turns in every toy's back, and it slows when 
 Golden Tickets (tokens), Lv 30 gear, the **Harlequin** set (a jester cap with bells, a ruffle
 collar, a diamond-patterned cape). Music: "Calliope Swing" (a swinging fairground march, F major,
 glockenspiel and brass) and, for the bosses, "Overwound" (D minor, a xylophone polka driven hard).
+
+## The 2026-11-03 redraw
+
+The monsters and bosses were redrawn toy-first (render/mobs/toy.js and toyboss.js), retiring the
+costumed girls on the tall rig: a mouse ballerina on her music box, a tin drummer rabbit, a
+jack-in-the-box clown, a wooden puppy marionette, Teddy Strongbear with his barbell, and a
+balloon-animal poodle under her balloons. Leonie is a chubby lion on a circus ball with a flaming
+hoop, Madame Marionette a velvet spider puppeteer with puppets on her strings, and Queen Gearheart a
+grand clockwork owl with a crown of gears and a clock-face belly. Every toy has a turning wind-up key.
