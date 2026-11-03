@@ -85,7 +85,7 @@ test('no spot sits within 120 px of a portal or a monster on its floor, or crowd
 });
 
 test('fishing spots are only by water, quiet nooks no monster reaches, each with its tier and its fish', () => {
-  const WATER = ['pond', 'glowpool', 'hotspring', 'waterfall'];
+  const WATER = ['pond', 'bigpond', 'glowpool', 'hotspring', 'waterfall'];
   for (const [id, spots] of Object.entries(SPOTS)) {
     const m = MAPS[id];
     for (const s of spots) {
