@@ -50,3 +50,20 @@ Kestrel's trial carry over; the name is Arbalist Engineer).
 - Effects (tools/fx-art.js): `aebolt`, `aebig`, `aehit`, `aeboom`, `aesteam`, `aeturret`,
   `aeballista`, `embgear`. Icons, the Pressure gauge, her steam aura, sounds.
 - Removed: the Stormcaller's lightning (world/storm.js and its drawings).
+
+## Animation rework (2026-11-03)
+
+- Her moves set their own kicks (they no longer get the generic sway, which threw her body 40-60
+  px forward and back during the twirl). Twirl: arm out, a little hop, one spin round the trigger
+  finger (drawn behind her body as it passes over), slapped home at the hip.
+- Each shot reads differently: Snap whips the crossbow up from nose-down; Double throws the free
+  hand up and slams the lever; Brace drops onto one knee and winds the crank at the butt in big
+  circles; Duck crouches with both knees bent and the head tucked; Triple leans back, stock on the
+  hip, hammering the crank as it rattles; Slide is a baseball slide, front leg long, back knee
+  skidding, leaning back with the hair streaming.
+- Deploy Turret kneels, lowers the crossbow, reaches out to set the turret down and pats it twice,
+  then hops up cheering. Big Bertha: down on one knee, three crank turns with the body bobbing into
+  each, a growing shudder as it charges (eyes screwed half shut), then the kick throws her up off
+  her knee and skids her back; she settles and pumps her fist. The roll hugs the crossbow along her
+  back (no more poking through the floor).
+- The free hand's crank sits at the butt behind her hip: in front, the big crossbow hides it.

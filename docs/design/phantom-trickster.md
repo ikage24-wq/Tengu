@@ -48,3 +48,17 @@ Built, replacing the Beastmaster in place (the path keeps the `beastmaster` id a
 - Removed: Snow wolf (her code, drawings, sounds, title-screen walk and tests), the Wild Hunt
   barrage and its figures (the barrage engine in world/melee.js is left without a stream), and the
   old Beastmaster arrows and effects.
+
+## Animation rework (2026-11-03)
+
+- Her long recurve is drawn in the archers' shared clean line (`bowDraw`), held lower and canted
+  forward (a showman's tilt that keeps its curled tips off her face), resting low at her hip
+  between tricks; after the loose it rolls forward.
+- Each opener is its own trick: Flourish sweeps the free hand out, over her head and away wide
+  before the draw; Card cocks the wrist to the shoulder and flicks a card with a wink, weight
+  snapping forward, before a quick shot; Lazy Lean leans right back on the back foot, the front
+  heel out, and looses from the hip with the bow canted over. Cape Swirl tucks the bow low for the
+  turn. Shooting up tips the bow right back (its top limb behind her head).
+- The run's smoke-step glides in a long low lunge along the floor. Grand Illusion has real beats at
+  both ends of her vanishing: arms flung open, a whirl, a high finger snap; then she springs out of
+  the smoke with a half turn, lands arms wide ("ta-da"), and takes a deep, slow stage bow.

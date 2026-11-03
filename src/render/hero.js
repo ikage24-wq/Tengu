@@ -1469,9 +1469,13 @@ function flightAt(p, G) {
 const legKey = ([dx, dy, tilt]) => [q(dx), q(dy), Math.round(tilt / 2) * 2];
 
 // How far the hips sink so every planted foot (one not lifted) can reach the ground.
+// `squat` is a depth on a 0-4 scale (1 a dip, 2 a crouch, 3 a deep crouch or kneel), counted in
+// SQUAT_DEPTH figure units each: the figure is drawn squashed (KY), so a squat taken as plain units
+// sank the hips barely a pixel and every crouch and kneel read as standing straight.
+const SQUAT_DEPTH = 2.2;
 function hipDrop(r) {
   if (r.air) return 0;
-  let drop = r.squat;
+  let drop = r.squat * SQUAT_DEPTH;
   for (const [dx, dy] of [r.frontLeg, r.backLeg]) {
     if (dy < -0.01) continue;
     drop = Math.max(drop, REST_LEG - Math.sqrt(Math.max(0, LEG * LEG - dx * dx)));
