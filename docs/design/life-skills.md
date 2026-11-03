@@ -50,3 +50,10 @@ war reel, the catch held up), cooking at the stove (`cook`, stir, toss, taste) a
 bench (`craft`, hammer, file, hold it up). The spots themselves are animated (swaying herbs,
 glinting ore, bobbing floats, smoke from the stove, sparks on the anvil) and rest visibly after
 use.
+
+## The player's choices (2026-11-03)
+- Crafted gear: a little better than drop and shop gear of the same level, with a quality roll
+  that rises with Crafting level; hunters still get good gear from drops and bosses.
+- No minigames: walk up, press Up, watch the motion. Levels and tools make it faster and richer.
+- Built in four parts (spots on every map, levels in play, crafting, motion), each shown to the
+  player with pictures before moving on.
