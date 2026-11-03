@@ -99,7 +99,8 @@ export function coopBosses(world) {
 
 export function tickCoopBosses(world, dt) {
   // (Online, the game that runs a map's monsters runs their mechanics too.)
-  if (world.net?.isFollower?.(world) || (!world.dungeon && world.net?.mirrored?.(world))) return;
+  // A friend's game only shows them, from the owner's messages (coopShared below).
+  if (world.net?.isFollower?.(world) || (!world.dungeon && world.net?.mirrored?.(world))) return tickCoopMirror(world, dt);
   world.coopFx ??= [];
   for (const m of world.mobs) {
     if (m.hp <= 0 || !m.def.boss) continue;
@@ -150,7 +151,7 @@ const TICK = {
       world.log?.(`Nobody stood in the ring: ${def.name} bursts wide!`, '#ffb3c6');
     }
     world.juice.push({ type: 'shake', mag: inside.length > 1 ? 4 : 7, dur: 0.5 });
-    world.coopFx.push({ kind: 'split', x: r.x, y: r.y, w: r.w, n: inside.length, t: 0, dur: 0.8 });
+    world.coopFx.push({ kind: 'split', boss: m.def.id, x: r.x, y: r.y, w: r.w, n: inside.length, t: 0, dur: 0.8 });
   },
 
   sides(world, m, s, members) {
@@ -318,7 +319,7 @@ export function coopHit(world, m, h) {
           s.openUntil = world.now + def.open;
           shout(world, `${def.name} broken!`, 'Hit it hard while it\'s open');
           world.juice.push({ type: 'shake', mag: 6, dur: 0.45 });
-          world.coopFx.push({ kind: 'crack', x: m.x, y: m.y - m.def.h / 2, w: m.def.w, t: 0, dur: 0.9 });
+          world.coopFx.push({ kind: 'crack', boss: m.def.id, x: m.x, y: m.y - m.def.h / 2, w: m.def.w, h: m.def.h, t: 0, dur: 0.9 });
           world.hitstop = Math.max(world.hitstop ?? 0, 0.08);
         }
       }
@@ -405,3 +406,85 @@ export function coopState(m) {
 }
 
 export const bossName = (id) => MOBS[id]?.name ?? id;
+
+// ---------- Online: friends see the mechanics ----------
+// The game that runs a boss (the map's owner, or a shared run's leader) sends what its mechanics
+// are doing a few times a second: which ones, where the ring and the seal are, how many stand in
+// the ring, who holds the seal, which sides of the guard were struck lately, the twins and their
+// tether, and any burst that just went off. A friend's game rebuilds `m.coop` from it on its copy
+// of the boss, so the same telegraphs and counts show on every screen (its own step into a ring
+// still counts at once). `idOf(m)` names a monster the way the net layer does.
+
+const r1 = (v) => Math.round(v * 10) / 10;
+
+export function coopShared(world, idOf) {
+  const list = [];
+  for (const m of coopBosses(world)) {
+    const near = membersHere(world).filter((g) => Math.abs(g.body.x - m.x) < NEAR && Math.abs(g.body.y - m.y) < 400);
+    list.push({
+      mob: idOf(m),
+      mechs: m.coop.mechs.map((s) => {
+        const o = { k: s.def.kind };
+        if (s.ring) o.ring = [Math.round(s.ring.x), Math.round(s.ring.y), s.ring.w, r1(s.ring.t), s.ring.warn, near.filter((g) => inRing(s.ring, g.body)).length];
+        if (s.def.kind === 'seal' && s.x != null) o.seal = [Math.round(s.x), Math.round(s.y), s.heldBy ? 1 : 0];
+        if (s.def.kind === 'sides') o.guard = [s.guard ? 1 : 0, ...[-1, 1].map((d) => (s.hits[d] != null ? r1(Math.min(99, world.now - s.hits[d])) : -1))];
+        if (s.pair) o.twins = [...s.pair.map(idOf), s.alone != null ? r1(world.now - s.alone) : -1, s.done ? 1 : 0];
+        return o;
+      }),
+    });
+  }
+  const fx = (world.coopFx ?? []).filter((f) => !f.shared);
+  for (const f of fx) f.shared = true;
+  return { list, fx: fx.map((f) => ({ ...f, shared: undefined, x: Math.round(f.x), y: Math.round(f.y) })) };
+}
+
+export function applyCoopShared(world, msg) {
+  const byId = (id) => world.mobs.find((o) => o.net === id) ?? null;
+  const seen = new Set();
+  for (const e of msg.list ?? []) {
+    const m = byId(e.mob);
+    if (!m) continue;
+    seen.add(m);
+    const defs = mechsFor(world, m);
+    const before = m.coop?.mechs ?? [];
+    m.coop = {
+      mirror: true,
+      mechs: e.mechs.map((o, i) => {
+        const def = defs.find((d) => d.kind === o.k) ?? { kind: o.k, name: '', window: 1.6, revive: 4 };
+        // Keep what the drawing eases (glow, shell, pips) from one message to the next.
+        const s = before.find((b) => b.def.kind === o.k) ?? { def, hits: {}, side: {} };
+        s.def = def;
+        if (o.ring) {
+          const [x, y, w, t, warn, n] = o.ring;
+          const same = s.ring && Math.abs(s.ring.x - x) < 2 && s.ring.t <= t + 0.5;
+          s.ring = { ...(same ? s.ring : {}), x, y, w, t: same ? Math.max(s.ring.t, t) : t, warn, n };
+        } else s.ring = null;
+        if (o.seal) [s.x, s.y, s.heldBy] = [o.seal[0], o.seal[1], o.seal[2] ? 'friend' : null];
+        else if (def.kind === 'seal') s.x = null;
+        if (o.guard) {
+          s.guard = Boolean(o.guard[0]);
+          s.hits = {};
+          if (o.guard[1] >= 0) s.hits[-1] = world.now - o.guard[1];
+          if (o.guard[2] >= 0) s.hits[1] = world.now - o.guard[2];
+        }
+        if (o.twins) {
+          const pair = [byId(o.twins[0]), byId(o.twins[1])];
+          s.pair = pair.every(Boolean) ? pair : null;
+          s.alone = o.twins[2] >= 0 ? world.now - o.twins[2] : null;
+          s.done = Boolean(o.twins[3]);
+        } else if (def.kind === 'twins') s.pair = null;
+        return s;
+      }),
+    };
+  }
+  // A boss whose mechanics stopped (or that fell) shows none.
+  for (const m of world.mobs) if (m.coop?.mirror && !seen.has(m)) m.coop = null;
+  world.coopFx ??= [];
+  for (const f of msg.fx ?? []) world.coopFx.push({ ...f, shared: true });
+}
+
+// Between messages a friend's game runs the shown telegraphs on (the ring filling, bursts fading).
+function tickCoopMirror(world, dt) {
+  for (const m of world.mobs) for (const s of m.coop?.mechs ?? []) if (s.ring) s.ring.t = Math.min(s.ring.warn, s.ring.t + dt);
+  world.coopFx = (world.coopFx ?? []).filter((f) => (f.t += dt) < f.dur);
+}

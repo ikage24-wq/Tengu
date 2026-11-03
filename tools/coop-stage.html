@@ -5,7 +5,9 @@
 // Dev tool: co-op content on stage, drawn with the game's renderer and HUD, for pictures and
 // videos. ?mode=board (Posy's Party Board in Sprout Village, with a party), queen (the Queen Bee's
 // shared honey bomb with a bot party), mac (Old MacGoblin's two-sided guard), gnarl (Gnarlroot's
-// Root Seal in Rootwood Hollow), twins (Hard: the Myconid Queen's tethered twins).
+// Root Seal in Rootwood Hollow), twins (Hard: the Myconid Queen's tethered twins), spore (the Myconid
+// Queen's Spore Bloom ring), tuskar (Hard: Tuskar's flame bulwark and Earthquake Stomp), gnarlhard
+// (Hard: Gnarlroot's Root Seal and Bark Ward).
 // window.step(secs) plays and draws, window.sim(secs) plays only, window.frame() the picture.
 import { makeBotCharacter, createBots, updateBots, recruitBot } from '../src/world/bots.js';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
@@ -37,9 +39,11 @@ const rng = () => {
   return n / 4294967296;
 };
 Math.random = rng;
-const LV = { board: 8, queen: 9, mac: 12, gnarl: 13, twins: 13 }[mode];
+const LV = { board: 8, queen: 9, mac: 12, gnarl: 13, twins: 13, spore: 13, tuskar: 13, gnarlhard: 13 }[mode];
+const ROOM = { gnarl: 'hollow6', gnarlhard: 'hollow6', twins: 'hollow2', spore: 'hollow2', tuskar: 'hollow4' };
+const hard = ['twins', 'tuskar', 'gnarlhard'].includes(mode);
 const char = makeBotCharacter(rng, { name: 'Mochi', pro: true, level: LV, jobs: [q.get('job') ?? 'archer'] });
-const dungeon = mode === 'gnarl' || mode === 'twins';
+const dungeon = Boolean(ROOM[mode]);
 char.mapId = dungeon ? 'hollow_gate' : mode === 'board' ? 'sprout' : mode === 'queen' ? 'meadow1' : 'meadow2';
 const w = createWorld(char);
 w.log = () => {};
@@ -60,12 +64,14 @@ if (dungeon) {
   char.dungeons = { hollow: { clears: 1, hardClears: 0, best: 'A', bestTime: 700, day: null } };
   joinParty(w.bots, recruitBot(w.bots, w, { level: 13, jobs: ['warrior'] }), w);
   joinParty(w.bots, recruitBot(w.bots, w, { level: 13, jobs: ['thief'] }), w);
-  startRun(w, 'hollow', { hard: mode === 'twins' });
-  loadMap(w, mode === 'gnarl' ? 'hollow6' : 'hollow2', 'west');
+  startRun(w, 'hollow', { hard });
+  loadMap(w, ROOM[mode], 'west');
   boss = w.mobs.find((m) => m.def.boss);
   put(w.body, floor(boss.x - 200, w.map.groundY));
   noteHit(w, boss, { damage: 1 });
   if (mode === 'twins') boss.hp = boss.def.hp * 0.62;
+  armBoss(w, boss);
+  for (const s of boss.coop?.mechs ?? []) if (s.def.kind === 'split') s.next = 2.5;
 } else {
   loadMap(w, char.mapId, mode === 'board' ? 'start' : 'west');
   for (const job of ['thief', 'warrior']) joinParty(w.bots, recruitBot(w.bots, w, { level: LV, jobs: [job] }), w);
@@ -132,7 +138,7 @@ window.step = (secs) => {
   drawWorld(ctx, w, cam, t);
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   ui.cam = cam;
-  try {
+  if (q.get('ui') !== '0') try {
     drawUi(beginUi(ctx, input), ui, w);
   } catch (e) {
     console.log('hud', e.message);

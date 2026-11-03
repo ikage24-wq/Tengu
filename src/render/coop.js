@@ -1,19 +1,34 @@
 // The two-person boss mechanics on screen (world/coopboss.js) and a defend quest's calm stone
-// (world/partyquest.js), in the game's soft pastel shapes: a gold share-ring on the floor with a
-// pip for each player standing in it, a seal stone with its rune circle and a ribbon of light to the
-// boss while it's held, a guard shell round the boss whose two halves light as they're struck, and
-// a tether between the twins. Everything eases in and out on time; nothing pops.
+// (world/partyquest.js). The telegraphs are Tengu's own effect art (tools/fx-art.js, the `celco*`
+// strips), each in its boss's own colour and shapes: the shared blow's gold ring with the Queen
+// Bee's honeycomb and bees, the Myconid Queen's mushroom caps and spores, or Tuskar's stomping
+// rocks, with a gold star pip over it for each player standing in it; the two-sided guard built of
+// pieces laid round the boss (Old MacGoblin's barn-door planks, Tuskar's flame bulwark,
+// Gnarlroot's bark plates) that crack when a side is struck and break apart; Gnarlroot's Root Seal,
+// a rune circle of roots with its stone, and the ribbon of light chained from it to him while it's
+// held; and the twin puffballs' spore tether, fraying red once one falls. Everything eases in and
+// out on time; nothing pops.
 
-import { shock, starFlash, puff } from './fxkit.js';
+import { fxSprite } from './fx-sprites.js';
 import { coopBosses, inRing, membersHere } from '../world/coopboss.js';
 
 const TAU = Math.PI * 2;
-const GOLD = { core: '#fff6d0', light: '#ffe58a', main: '#ffc94f', dark: '#e0a52f', ink: '#9a6a12' };
-const SEAL = { core: '#f2fff8', light: '#c8f5dc', main: '#7fd1a0', dark: '#4fae7e', ink: '#2a7f5c' };
-const GUARD = { light: '#e8dcff', main: '#b48cff', dark: '#9068e0', ink: '#6a48ad' };
-const TETHER = { main: '#ff9ec8', dark: '#e0659f', hot: '#ff5f80' };
 const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+const ease = (v, to, k) => v + (to - v) * k;
 
+// Each boss's look: the motif of its share ring and the pieces of its guard.
+const RING_OF = { queenbee: 'celcohoney', mothercapper: 'celcospore', tuskar: 'celcostomp' };
+const HIT_OF = { celcohoney: 'celcohoneyhit', celcospore: 'celcosporehit', celcostomp: 'celcostomphit' };
+const GUARD_OF = {
+  macgoblin: { idle: 'celcobarn', crack: 'celcobarncrack', broke: 'celcobarnbreak', gap: 21, brace: true },
+  tuskar: { idle: 'celcoflame', crack: 'celcoflamecrack', broke: 'celcoflamebreak', gap: 20, upright: true },
+  gnarlroot: { idle: 'celcobark', crack: 'celcobarkcrack', broke: 'celcobarkbreak', gap: 22 },
+};
+const ringOf = (id) => RING_OF[id] ?? 'celcohoney';
+const guardOf = (id) => GUARD_OF[id] ?? GUARD_OF.gnarlroot;
+const RING_W = 130; // the share ring's drawn width
+
+// A soft glow for the calm stone (a defend quest's prop, not a boss telegraph).
 function softGlow(ctx, x, y, r, color, a) {
   if (a <= 0.01) return;
   const g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -38,126 +53,105 @@ function twinkle(ctx, x, y, r, color) {
   ctx.fill();
 }
 
+// Points along a quadratic curve about every `gap` px, each with the curve's angle there.
+function along(x0, y0, mx, my, x1, y1, gap) {
+  const len = Math.hypot(mx - x0, my - y0) + Math.hypot(x1 - mx, y1 - my);
+  const n = Math.max(2, Math.round(len / gap));
+  const out = [];
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const x = (1 - u) * (1 - u) * x0 + 2 * u * (1 - u) * mx + u * u * x1;
+    const y = (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * my + u * u * y1;
+    const dx = 2 * (1 - u) * (mx - x0) + 2 * u * (x1 - mx);
+    const dy = 2 * (1 - u) * (my - y0) + 2 * u * (y1 - my);
+    out.push({ x, y, a: Math.atan2(dy, dx), u });
+  }
+  return out;
+}
+
+// Where a guard's pieces sit round a boss (centre cx, cy; the guard's half-sizes rx, ry): on each
+// side an arc of them, turned along it.
+export function guardPieces(cx, cy, rx, ry, gap) {
+  const arc = 1.15;
+  const len = 2 * arc * Math.sqrt((rx * rx + ry * ry) / 2);
+  const n = Math.max(3, Math.round(len / gap));
+  const out = [];
+  for (const side of [-1, 1]) {
+    for (let j = 0; j < n; j++) {
+      const th = -arc + (2 * arc * (j + 0.5)) / n;
+      const tx = -rx * Math.sin(th);
+      const ty = ry * Math.cos(th);
+      const rot = Math.atan2(ty, tx) - Math.PI / 2;
+      out.push({ side, j, x: cx + side * Math.cos(th) * rx, y: cy + Math.sin(th) * ry, rot: side > 0 ? rot : -rot, th });
+    }
+  }
+  return out;
+}
+const guardSize = (def) => ({ rx: def.w * 0.62 + 8, ry: def.h * 0.62 + 6 });
+
 // ---------- On the floor, under everyone ----------
 
 export function drawCoopBack(ctx, world, cam, time) {
   for (const m of coopBosses(world)) {
     for (const s of m.coop.mechs) {
-      if (s.def.kind === 'split' && s.ring) drawRing(ctx, world, s.ring, cam, time);
-      if (s.def.kind === 'seal' && s.x != null) drawSealStone(ctx, s, cam, time, world);
+      if (s.def.kind === 'split' && s.ring) drawRing(ctx, world, m, s.ring, cam, time);
+      if (s.def.kind === 'seal' && s.x != null) drawSealStone(ctx, s, cam, time);
     }
   }
   const d = world.pqDefend;
   if (d?.spot && world.map.id === world.char.partyQuest?.map) drawCalmStone(ctx, d, cam, time);
 }
 
-function drawRing(ctx, world, r, cam, time) {
+// The share ring: it grows into place, its motif turning round the rim, the blow gathering inside
+// it (a bright ring closing out to the rim). Its pips go over everyone (ringPips).
+function drawRing(ctx, world, m, r, cam, time) {
   const p = Math.min(1, r.t / r.warn);
   const x = r.x - cam.x;
   const y = r.y - cam.y;
-  const rx = r.w / 2;
-  const ry = 8;
   const born = smooth(r.t / 0.35);
-  const hot = p > 0.8 && Math.floor(time * 10) % 2 === 0;
-  ctx.save();
-  softGlow(ctx, x, y - 4, rx * 1.2, GOLD.light, 0.35 * born);
-  // The fill gathering toward the middle as it nears.
-  ctx.globalAlpha = (0.18 + p * 0.22) * born;
-  ctx.fillStyle = GOLD.main;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx * born, ry * born, 0, 0, TAU);
-  ctx.fill();
-  ctx.globalAlpha = (0.3 + 0.4 * p) * born;
-  ctx.fillStyle = GOLD.light;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx * (1 - p) * born + 2, ry * (1 - p) * born + 0.5, 0, 0, TAU);
-  ctx.fill();
-  // The rim: ink, gold, a white core line, slowly turning dashes on top.
-  ctx.globalAlpha = born;
-  shock(ctx, x, y, rx * born, ry * born, 2.4, hot ? '#fff1a8' : GOLD.main);
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 0.9;
-  ctx.setLineDash([5, 4]);
-  ctx.lineDashOffset = -time * 14;
-  ctx.beginPath();
-  ctx.ellipse(x, y, rx * born, ry * born, 0, 0, TAU);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  // Sparkles drifting up out of it.
-  for (let k = 0; k < 5; k++) {
-    const u = (time * 0.7 + k / 5) % 1;
-    ctx.globalAlpha = Math.sin(u * Math.PI) * born;
-    twinkle(ctx, x + (k - 2) * rx * 0.38, y - 4 - u * (14 + p * 10), 1.4 + p, k % 2 ? GOLD.core : GOLD.light);
-  }
-  // A pip over the ring for each player standing in it, so you see it filling up.
-  const n = membersHere(world).filter((g) => inRing(r, g.body)).length;
-  const pipY = y - 30 - Math.sin(time * 4) * 1.5;
-  for (let i = 0; i < Math.max(1, n); i++) {
-    const px = x + (i - (Math.max(1, n) - 1) / 2) * 9;
-    ctx.globalAlpha = born * (n ? 1 : 0.45);
-    starFlash(ctx, px, pipY, n ? 4.4 : 3.4, 4, time * 1.5 + i, n ? GOLD.main : '#d8cbe8', '#ffffff', 1.3);
-  }
-  ctx.restore();
+  const scale = (r.w / RING_W) * (0.8 + 0.2 * born);
+  fxSprite(ctx, ringOf(m.def.id), x, y, { t: time, scale, alpha: born });
+  fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * (p > 0.8 ? 0.75 + 0.25 * Math.sin(time * 18) : 1) });
 }
 
-function drawSealStone(ctx, s, cam, time, world) {
+// Over the ring, above everyone's heads (drawn in front): a pip for every player near the fight,
+// lit gold (popping in) for each one standing in it.
+function ringPips(ctx, world, m, r, cam, time) {
+  const x = r.x - cam.x;
+  const y = r.y - cam.y;
+  const born = smooth(r.t / 0.35);
+  // Who's in it: counted here (your own step shows at once), or as the boss's owner counted it.
+  const here = membersHere(world);
+  const n = Math.max(here.filter((g) => inRing(r, g.body)).length, r.n ?? 0);
+  const slots = Math.min(6, Math.max(n, here.filter((g) => Math.abs(g.body.x - m.x) < 620).length, 1));
+  r.pips ??= [];
+  const pipY = y - 64 +Math.sin(time * 3) * 1.5;
+  for (let i = 0; i < slots; i++) {
+    const lit = (r.pips[i] = ease(r.pips[i] ?? 0, i < n ? 1 : 0, 0.18));
+    const px = x + (i - (slots - 1) / 2) * 11;
+    fxSprite(ctx, 'celcopipoff', px, pipY, { t: time + i * 0.2, alpha: born * (1 - lit) * 0.9 });
+    if (lit > 0.02) fxSprite(ctx, 'celcopip', px, pipY - lit * 2, { t: time + i * 0.2, scale: 0.6 + 0.4 * lit + 0.15 * Math.sin(lit * Math.PI), alpha: born * Math.min(1, lit * 1.5) });
+  }
+}
+
+// The Root Seal on the floor: its rune circle of roots (lighting up while someone holds it), the
+// stone in the middle, and a leaf bobbing over it asking while nobody's on it.
+function drawSealStone(ctx, s, cam, time) {
   const x = s.x - cam.x;
   const y = s.y - cam.y;
-  const held = Boolean(s.heldBy);
-  const k = (s.glow = (s.glow ?? 0) + ((held ? 1 : 0) - (s.glow ?? 0)) * 0.12);
-  ctx.save();
-  softGlow(ctx, x, y - 8, 34 + 10 * k, SEAL.light, 0.3 + 0.35 * k);
-  // The rune circle on the floor, turning.
-  ctx.globalAlpha = 0.55 + 0.35 * k;
-  shock(ctx, x, y, 24, 6.5, 1.8, SEAL.main);
-  ctx.strokeStyle = SEAL.core;
-  ctx.lineWidth = 0.8;
-  ctx.setLineDash([3, 3]);
-  ctx.lineDashOffset = time * (6 + 18 * k);
-  ctx.beginPath();
-  ctx.ellipse(x, y, 18, 4.6, 0, 0, TAU);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  // The stone: a rounded tablet with a leaf rune.
-  ctx.globalAlpha = 1;
-  const lift = Math.sin(time * 2) * 0.8;
-  const top = y - 22 + lift;
-  ctx.fillStyle = SEAL.ink;
-  ctx.beginPath();
-  ctx.roundRect(x - 9, top - 1, 18, 23, 7);
-  ctx.fill();
-  ctx.fillStyle = SEAL.dark;
-  ctx.beginPath();
-  ctx.roundRect(x - 8, top, 16, 21, 6);
-  ctx.fill();
-  ctx.fillStyle = SEAL.main;
-  ctx.beginPath();
-  ctx.roundRect(x - 8, top, 14, 19, 6);
-  ctx.fill();
-  ctx.fillStyle = k > 0.5 ? SEAL.core : SEAL.light;
-  ctx.beginPath();
-  ctx.ellipse(x - 1, top + 9, 3.2, 5.2, 0.5, 0, TAU);
-  ctx.fill();
-  ctx.strokeStyle = SEAL.dark;
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(x - 3, top + 13);
-  ctx.lineTo(x + 1, top + 5);
-  ctx.stroke();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x - 6, top + 3, 1.2, 3);
-  if (!held) {
-    // Nobody on it: a little arrow bobbing over it, asking.
-    const b = Math.sin(time * 5) * 2;
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = SEAL.main;
-    ctx.beginPath();
-    ctx.moveTo(x - 4, top - 10 + b);
-    ctx.lineTo(x + 4, top - 10 + b);
-    ctx.lineTo(x, top - 4 + b);
-    ctx.fill();
+  const k = (s.glow = ease(s.glow ?? 0, s.heldBy ? 1 : 0, 0.12));
+  // (It eases in where it lands each time it hops.)
+  if (s.drawnAt !== s.x) {
+    s.drawnAt = s.x;
+    s.born = 0;
   }
-  ctx.restore();
+  s.born = ease(s.born ?? 0, 1, 0.08);
+  const b = smooth(s.born);
+  fxSprite(ctx, 'celcoseal', x, y, { t: time, alpha: b * (1 - k), scale: 0.85 + 0.15 * b });
+  fxSprite(ctx, 'celcosealheld', x, y, { t: time, alpha: b * k, scale: 0.85 + 0.15 * b });
+  const lift = Math.sin(time * 2) * 0.8;
+  fxSprite(ctx, 'celcosealstone', x, y + 1 + lift, { t: time, alpha: b });
+  if (k < 0.95) fxSprite(ctx, 'celcosealask', x, y - 30 + lift, { t: time, alpha: b * (1 - k) });
 }
 
 function drawCalmStone(ctx, d, cam, time) {
@@ -195,116 +189,80 @@ export function drawCoopFront(ctx, world, cam, time) {
     const by = m.y - (m.air ?? 0) - cam.y;
     for (const s of m.coop.mechs) {
       if (s.def.kind === 'sides') drawGuard(ctx, world, m, s, bx, by, time);
+      if (s.def.kind === 'split' && s.ring) ringPips(ctx, world, m, s.ring, cam, time);
       if (s.def.kind === 'seal' && s.x != null) drawSealBeam(ctx, s, bx, by - m.def.h * 0.55, cam, time);
       if (s.def.kind === 'twins' && s.pair && !s.done) drawTether(ctx, world, s, cam, time);
     }
   }
   for (const f of world.coopFx ?? []) {
-    const p = f.t / f.dur;
+    const p = Math.min(0.999, f.t / f.dur);
     const x = f.x - cam.x;
     const y = f.y - cam.y;
-    ctx.save();
     if (f.kind === 'split') {
-      // The blow coming down: a gold star bursting, a ring going out, beads scattering.
-      const n = Math.max(1, f.n);
-      ctx.globalAlpha = 1 - smooth(p);
-      shock(ctx, x, y, f.w / 2 + p * 60, 8 + p * 10, 3.6 * (1 - p) + 0.4, f.n > 1 ? GOLD.main : '#ff9ec8');
-      starFlash(ctx, x, y - 26 - p * 10, 26 * (1 - p * 0.4) / Math.sqrt(n) + 8, 8, p * 2, f.n > 1 ? GOLD.main : '#ff9ec8');
-      for (let k = 0; k < 8; k++) {
-        const a = (k / 8) * TAU;
-        twinkle(ctx, x + Math.cos(a) * (14 + p * 60), y - 20 + Math.sin(a) * (8 + p * 30) - p * 10, 2.4 * (1 - p) + 0.4, GOLD.light);
-      }
+      // The blow coming down in the boss's own shapes.
+      fxSprite(ctx, HIT_OF[ringOf(f.boss)], x, y, { p, scale: (f.w ?? RING_W) / RING_W });
     } else if (f.kind === 'crack') {
-      // The guard breaking: shell shards flying off both sides, a lavender star.
-      ctx.globalAlpha = 1 - smooth(p);
-      starFlash(ctx, x, y, 30 * (0.5 + p), 6, p * 3, GUARD.main);
-      for (let k = 0; k < 10; k++) {
-        const side = k % 2 ? 1 : -1;
-        const a = -0.9 + (k / 10) * 1.8;
-        ctx.fillStyle = k % 3 ? GUARD.light : GUARD.main;
-        ctx.beginPath();
-        const sx = x + side * (f.w * 0.55 + p * 50 * Math.cos(a));
-        const sy = y + Math.sin(a) * 30 * p + p * p * 30;
-        ctx.ellipse(sx, sy, 4 * (1 - p) + 1, 2.4 * (1 - p) + 0.6, a + p * 4, 0, TAU);
-        ctx.fill();
+      // The guard breaking: every piece snaps and tumbles off outward.
+      const look = guardOf(f.boss);
+      const { rx, ry } = guardSize({ w: f.w, h: f.h ?? f.w });
+      for (const q of guardPieces(x, y, rx, ry, look.gap)) {
+        const out = smooth(p) * 26;
+        fxSprite(ctx, look.broke, q.x + q.side * out * Math.cos(q.th), q.y + out * Math.sin(q.th) * 0.6, { p, flip: q.side < 0, rot: look.upright ? 0 : q.rot });
       }
     } else if (f.kind === 'seal') {
-      ctx.globalAlpha = 1 - smooth(p);
-      shock(ctx, x, y, 20 + p * 30, 5 + p * 6, 2.4 * (1 - p) + 0.3, SEAL.main);
-      twinkle(ctx, x, y - 30 - p * 10, 5 * (1 - p) + 1, SEAL.core);
+      fxSprite(ctx, 'celcosealpop', x, y, { p });
     } else if (f.kind === 'twins' || f.kind === 'revive') {
-      ctx.globalAlpha = 1 - smooth(p);
-      starFlash(ctx, x, y, 22 * (0.6 + p), 5, p * 2, f.kind === 'twins' ? TETHER.main : TETHER.hot);
-      puff(ctx, x, y + 10, 10 * (1 - p) + 3, '#ffe2f0', '#e0b0d0');
+      fxSprite(ctx, 'celcotwinpop', x, y, { p, scale: f.kind === 'revive' ? 0.8 : 1.1 });
     }
-    ctx.restore();
   }
 }
 
-// The guard: two curved halves of a lavender shell round the boss. A half struck in the last beat
-// glows bright; once broken it's gone (shards, above) until it forms again, easing back in.
+// The guard: its pieces laid round the boss in two arcs. A half struck in the last beat shows its
+// cracked drawing (light splitting it); while one half is lit the other pulses and a lilac pip
+// over it asks for the blow. Broken, it's gone (the pieces fly, above) until it forms again,
+// growing back in.
 function drawGuard(ctx, world, m, s, bx, by, time) {
-  const k = (s.shell = (s.shell ?? 1) + ((s.guard ? 1 : 0) - (s.shell ?? 1)) * 0.1);
+  const k = (s.shell = ease(s.shell ?? 1, s.guard ? 1 : 0, 0.1));
   if (k < 0.03) return;
+  const look = guardOf(m.def.id);
   const cy = by - m.def.h * 0.5;
-  const rx = m.def.w * 0.62 + 8;
-  const ry = m.def.h * 0.62 + 6;
+  const { rx, ry } = guardSize(m.def);
+  const lit = {};
   for (const side of [-1, 1]) {
     const since = world.now - (s.hits[side] ?? -9);
-    const lit = s.guard ? Math.max(0, 1 - since / s.def.window) : 0;
-    ctx.save();
-    ctx.globalAlpha = k * (0.55 + 0.45 * lit);
-    const from = side > 0 ? -1.15 : Math.PI + 1.15;
-    const to = side > 0 ? 1.15 : Math.PI - 1.15;
-    for (const [w, c] of [[5.2, GUARD.ink], [3.6, lit > 0.2 ? '#ffffff' : GUARD.main], [1.2, GUARD.light]]) {
-      ctx.strokeStyle = c;
-      ctx.lineWidth = w * (0.8 + 0.2 * Math.sin(time * 3 + side));
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.ellipse(bx, cy, rx * (0.96 + 0.04 * k), ry, 0, from, to, side < 0);
-      ctx.stroke();
-    }
-    // A sparkle on a struck half; a soft "!" of light on the half still waiting to be struck while
-    // the other is lit.
-    if (lit > 0) twinkle(ctx, bx + side * rx, cy - 4, 4 + 3 * lit, '#ffffff');
-    else if (s.guard && world.now - (s.hits[-side] ?? -9) < s.def.window) {
-      ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 14);
-      twinkle(ctx, bx + side * (rx + 6), cy, 4, GUARD.light);
-    }
-    ctx.restore();
+    lit[side] = s.guard ? Math.max(0, 1 - since / s.def.window) : 0;
+  }
+  const e = smooth(k);
+  for (const q of guardPieces(bx, cy, rx * (0.9 + 0.1 * e), ry * (0.9 + 0.1 * e), look.gap)) {
+    const L = smooth(Math.min(1, lit[q.side] * 1.6));
+    const waiting = s.guard && lit[-q.side] > 0 && lit[q.side] === 0;
+    const a = e * (waiting ? 0.75 + 0.25 * Math.sin(time * 12) : 1);
+    const o = { t: time + q.j * 0.17 + (q.side > 0 ? 0.5 : 0), flip: q.side < 0, rot: look.upright ? 0 : q.rot, scale: 0.7 + 0.3 * e, sy: look.brace && q.j % 2 ? -1 : 1 };
+    if (L < 0.98) fxSprite(ctx, look.idle, q.x, q.y, { ...o, alpha: a * (1 - L) });
+    if (L > 0.02) fxSprite(ctx, look.crack, q.x, q.y, { ...o, alpha: a * L });
+  }
+  for (const side of [-1, 1]) {
+    if (!(s.guard && lit[-side] > 0 && lit[side] === 0)) continue;
+    fxSprite(ctx, 'celcopipoff', bx + side * (rx + 14), cy - 8 + Math.sin(time * 6) * 2, { t: time, scale: 1.3, alpha: 0.6 + 0.4 * Math.sin(time * 12) });
   }
 }
 
-// The seal held: a ribbon of mint light from the stone to the boss, rippling.
+// The seal held: a ribbon of mint light braided from the stone to the boss, rippling, a leaf
+// riding it.
 function drawSealBeam(ctx, s, bx, by, cam, time) {
   const k = s.glow ?? 0;
   if (k < 0.05) return;
   const x = s.x - cam.x;
   const y = s.y - cam.y - 24;
-  ctx.save();
-  ctx.globalAlpha = k * 0.9;
-  ctx.lineCap = 'round';
   const mx = (x + bx) / 2;
-  const my = Math.min(y, by) - 40;
-  for (const [w, c] of [[4, SEAL.dark], [2.4, SEAL.main], [1, SEAL.core]]) {
-    ctx.strokeStyle = c;
-    ctx.lineWidth = w;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.quadraticCurveTo(mx, my + Math.sin(time * 4) * 6, bx, by);
-    ctx.stroke();
-  }
-  for (let i = 0; i < 4; i++) {
-    const u = (time * 0.8 + i / 4) % 1;
-    const qx = (1 - u) * (1 - u) * x + 2 * u * (1 - u) * mx + u * u * bx;
-    const qy = (1 - u) * (1 - u) * y + 2 * u * (1 - u) * (my + Math.sin(time * 4) * 6) + u * u * by;
-    twinkle(ctx, qx, qy, 2.2, '#ffffff');
-  }
-  ctx.restore();
+  const my = Math.min(y, by) - 40 + Math.sin(time * 4) * 6;
+  // It reaches out from the stone as it lights.
+  const pts = along(x, y, mx, my, bx, by, 16).filter((q) => q.u <= k + 0.001);
+  pts.forEach((q, i) => fxSprite(ctx, 'celcosealbeam', q.x, q.y, { t: time - i * 0.11, rot: q.a, alpha: Math.min(1, k * 1.4) }));
 }
 
-// The twins' tether: a pink ribbon between them; once one falls it frays red and shortens as its
-// twin's call-back nears.
+// The twins' tether: a pink spore-thread sagging between them; once one falls it frays red, and
+// the fray takes over as its twin's call-back nears.
 function drawTether(ctx, world, s, cam, time) {
   const [a, b] = s.pair;
   const ax = a.x - cam.x;
@@ -312,28 +270,12 @@ function drawTether(ctx, world, s, cam, time) {
   const bx = b.x - cam.x;
   const by = b.y - b.def.h * 0.5 - cam.y;
   const alone = s.alone != null ? Math.min(1, (world.now - s.alone) / s.def.revive) : 0;
-  ctx.save();
-  ctx.globalAlpha = 0.85;
-  ctx.lineCap = 'round';
+  s.fray = ease(s.fray ?? 0, s.alone != null ? 0.35 + 0.65 * alone : 0, 0.1);
   const sag = 20 + Math.sin(time * 3) * 4;
-  for (const [w, c] of [[3.6, TETHER.dark], [2, alone ? TETHER.hot : TETHER.main], [0.8, '#ffffff']]) {
-    ctx.strokeStyle = c;
-    ctx.lineWidth = w;
-    ctx.setLineDash(alone ? [6 * (1 - alone) + 2, 3 + alone * 4] : []);
-    ctx.lineDashOffset = -time * 20;
-    ctx.beginPath();
-    ctx.moveTo(ax, ay);
-    ctx.quadraticCurveTo((ax + bx) / 2, Math.max(ay, by) + sag, bx, by);
-    ctx.stroke();
-  }
-  ctx.setLineDash([]);
-  // Hearts sliding along it.
-  for (let i = 0; i < 3; i++) {
-    const u = (time * 0.4 + i / 3) % 1;
-    const qx = (1 - u) * (1 - u) * ax + 2 * u * (1 - u) * ((ax + bx) / 2) + u * u * bx;
-    const qy = (1 - u) * (1 - u) * ay + 2 * u * (1 - u) * (Math.max(ay, by) + sag) + u * u * by;
-    twinkle(ctx, qx, qy, 2.4, alone ? TETHER.hot : '#ffd6ea');
-  }
-  ctx.restore();
+  const pts = along(ax, ay, (ax + bx) / 2, Math.max(ay, by) + sag, bx, by, 15);
+  pts.forEach((q, i) => {
+    const o = { t: time + i * 0.09, rot: q.a };
+    if (s.fray < 0.98) fxSprite(ctx, 'celcotether', q.x, q.y, { ...o, alpha: 1 - s.fray });
+    if (s.fray > 0.02) fxSprite(ctx, 'celcotetherfray', q.x, q.y, { ...o, alpha: s.fray * (0.8 + 0.2 * Math.sin(time * 16 + i)) });
+  });
 }
-

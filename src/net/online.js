@@ -16,11 +16,12 @@ import { createAnim } from '../render/animator.js';
 import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
-import { coopHit } from '../world/coopboss.js';
+import { coopHit, coopShared } from '../world/coopboss.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
 const MOBS_EVERY = 1 / 10;
+const COOP_EVERY = 1 / 5;
 const PROFILE_EVERY = 1.5;
 const GONE_AFTER = 10;
 
@@ -245,6 +246,15 @@ export function tickNet(world, dt) {
   if (online.mobsIn <= 0 && online.claim === world.map.id && othersHere(world).length) {
     online.mobsIn = MOBS_EVERY;
     sendMobs(world);
+  }
+  // A boss's two-person mechanics (world/coopboss.js), for friends on the map to see.
+  online.coopIn = (online.coopIn ?? 0) - dt;
+  if (online.coopIn <= 0 && online.claim === world.map.id && !solo(world) && othersHere(world).length) {
+    online.coopIn = COOP_EVERY;
+    const c = coopShared(world, netId);
+    // (Once more after the last one ends, so friends' screens clear too.)
+    if (c.list.length || c.fx.length || online.coopWas) send({ t: 'coop', map: world.map.id, ...c });
+    online.coopWas = c.list.length > 0;
   }
   // Those who stop talking are gone.
   const now = performance.now() / 1000;

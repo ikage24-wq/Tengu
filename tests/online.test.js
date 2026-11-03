@@ -115,3 +115,44 @@ test('when the player running a map leaves it, the next one takes its monsters o
   assert.equal(a.mirror, null);
 });
 
+
+test('a boss\'s two-person mechanics reach friends on the map: the ring, who\'s in it, the guard and its break', async () => {
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { mechOf, coopHit } = await import('../src/world/coopboss.js');
+  const { A, B, a, b, pairs } = await room();
+  // The host runs the woods: a Queen Bee and Old MacGoblin turn up beside the two of them.
+  const queen = spawnMob(a.map, { mob: 'queenbee', x: a.body.x + 60, y: a.body.y });
+  const mac = spawnMob(a.map, { mob: 'macgoblin', x: a.body.x - 90, y: a.body.y });
+  a.mobs.push(queen, mac);
+  b.body.x = a.body.x + 10;
+  await play(pairs, 0.6);
+  const split = mechOf(queen, 'split');
+  assert.ok(split, 'the host armed the queen');
+  split.next = 0;
+  await play(pairs, 0.6);
+  const ring = split.ring;
+  assert.ok(ring, 'a share ring is marked');
+  const shown = b.mobs.find((m) => m.net === queen.net);
+  assert.ok(shown?.coop, 'the guest\'s queen carries the mechanics');
+  const seen = mechOf(shown, 'split').ring;
+  assert.ok(seen && Math.abs(seen.x - ring.x) < 2 && seen.w === ring.w, 'the guest sees the same ring');
+  assert.ok(seen.t > 0 && seen.t <= seen.warn, 'its countdown runs on the guest\'s screen too');
+  assert.equal(typeof seen.n, 'number', 'with the count of who stands in it');
+  // The guard: struck from both sides on the host, the guest sees it break.
+  const macShown = b.mobs.find((m) => m.net === mac.net);
+  assert.equal(mechOf(macShown, 'sides').guard, true, 'the guest sees the guard up');
+  coopHit(a, mac, { damage: 100, fromX: mac.x - 50 });
+  await play(pairs, 0.3);
+  assert.ok(mechOf(macShown, 'sides').hits[-1] != null, 'the struck side shows lit');
+  coopHit(a, mac, { damage: 100, fromX: mac.x + 50 });
+  await play(pairs, 0.3);
+  assert.equal(mechOf(macShown, 'sides').guard, false, 'broken on the guest\'s screen');
+  assert.ok(b.coopFx.some((f) => f.kind === 'crack' && f.boss === 'macgoblin'), 'and the guest sees it shatter');
+  // The bosses gone, the guest's screen clears.
+  queen.hp = 0;
+  mac.hp = 0;
+  await play(pairs, 0.6);
+  assert.ok(!b.mobs.some((m) => m.coop && m.hp > 0), 'no telegraphs left on the guest\'s screen');
+  A.leaveRoom(a);
+  B.leaveRoom(b);
+});

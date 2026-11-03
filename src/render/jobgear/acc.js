@@ -145,8 +145,85 @@ const HEAD = {
   },
   // Three gold star clips along the near side of the bangs.
   starclips: (p) => [...[[19.6, 7.2, 2.2, 10], [22.8, 9.4, 1.8, -14], [24.8, 12.2, 1.5, 20]].flatMap(([x, y, r, rot]) => [star(x, y, r, p.main, rot), F(star(x, y, r * 0.5, lighter(p.main, 0.25), rot)), F(E(x - r * 0.3, y - r * 0.3, r * 0.15, r * 0.15, WHITE))]), sparkle(18, 5.4, 0.6)],
+  // Gnarlroot's Leaf Crown (Hard Rootwood Hollow): a twig circlet set with oak and maple leaves
+  // in turn, their tips swaying, a little acorn tucked on the near side and a green gem glowing at
+  // the front.
+  leafcrown: (p, m) => {
+    const sw = (m?.hair ?? 0) * 0.5 + (m?.sway ?? 0) * 0.3;
+    const at = (i) => [5 + i * 3.5, 6.4 - Math.sin((i / 6) * Math.PI) * 3.6];
+    const band = ring(7, (i) => at(i));
+    const out = [
+      // The twig band, with a lighter top edge.
+      T([...band.map(([x, y]) => [x, y - 0.7]), ...band.slice().reverse().map(([x, y]) => [x, y + 0.9])], '#8e6248'),
+      F(T([...band.map(([x, y]) => [x, y - 0.6]), ...band.slice().reverse().map(([x, y]) => [x, y - 0.1])], '#c89a72')),
+    ];
+    ring(7, (i) => i).forEach((i) => {
+      if (i === 3) return;
+      const [x, y] = at(i);
+      const tip = (i < 3 ? -1 : 1) * (8 + i * 2) + sw * (i % 2 ? 6 : -5);
+      const ang = -90 + (i - 3) * 24 + tip * 0.6;
+      const green = i % 2 ? '#5cba4a' : '#7fd17a';
+      if (i % 2) out.push(...oakLeaf(x, y, 4.6, ang, green));
+      else out.push(...mapleLeaf(x, y - 0.4, 2.7, ang + 90, i === 0 || i === 6 ? '#f2a85a' : '#e8c25a'));
+    });
+    // The acorn on the near side, nodding.
+    const [ax, ay] = [21.6 + sw * 0.3, 4.6];
+    out.push(E(ax, ay + 1.2, 1.2, 1.5, '#c8905a'), F(E(ax - 0.35, ay + 0.9, 0.4, 0.6, '#e8b87a')), E(ax, ay, 1.5, 0.85, '#8e6248'), F(R(ax - 0.9, ay - 0.5, 1.8, 0.4, '#b88a5a')), F(R(ax - 0.15, ay - 1.5, 0.35, 0.9, '#6a4a3a')));
+    // The gem at the front, set in a little leaf cup, glowing.
+    const g = 0.15 + Math.abs(m?.hair ?? 0) * 0.08;
+    out.push(...oakLeaf(15.5, 3.4, 2.6, 160, '#4fae7e'), ...oakLeaf(15.5, 3.4, 2.6, 20, '#4fae7e'));
+    out.push(F(E(15.5, 2.4, 2.1 + g * 2, 2.1 + g * 2, mix('#9de8b8', '#ffffff', 0.2))), ...gem(15.5, 2.4, 1.7, '#3fcf8a'), sparkle(17.6, 0.2 - g * 2, 0.8 + g, WHITE));
+    return out;
+  },
 };
+// An oak leaf: a long leaf with rounded lobes down both sides, a vein, from (x, y) toward `ang`.
+function oakLeaf(x, y, len, ang, c) {
+  const pts = [];
+  for (let i = 0; i <= 12; i++) {
+    const u = i / 12;
+    const w = len * 0.32 * Math.sin(Math.PI * u) * (0.7 + 0.3 * Math.abs(Math.sin(u * Math.PI * 3)));
+    pts.push([u * len, -w]);
+  }
+  for (let i = 12; i >= 0; i--) {
+    const u = i / 12;
+    const w = len * 0.32 * Math.sin(Math.PI * u) * (0.7 + 0.3 * Math.abs(Math.sin(u * Math.PI * 3 + 0.5)));
+    pts.push([u * len, w]);
+  }
+  const place = (list) => turn(list.map(([px, py]) => [x + px, y + py]), x, y, ang);
+  return [T(place(pts), c), F(T(place([[len * 0.15, -0.15], [len * 0.9, -0.1], [len * 0.9, 0.15], [len * 0.15, 0.2]]), darker(c, 0.2))), F(T(place([[len * 0.25, -len * 0.08], [len * 0.6, -len * 0.18], [len * 0.55, -len * 0.06]]), lighter(c, 0.25)))];
+}
+// A maple leaf: five pointed lobes round its stem at (x, y), turned by `ang` (0 points up).
+function mapleLeaf(x, y, r, ang, c) {
+  // Lobes round the leaf's middle: a tall top one, two broad upper ones, two small lower ones,
+  // each notched in, and a short stem down to (x, y).
+  const cx = x + Math.sin(rad(ang)) * r * 0.9;
+  const cy = y - Math.cos(rad(ang)) * r * 0.9;
+  const LOBES = [[0, 1.2], [52, 1.05], [108, 0.62], [-108, 0.62], [-52, 1.05]].sort((p, q) => p[0] - q[0]);
+  const outline = (k) => {
+    const pts = [];
+    LOBES.forEach(([d, len], i) => {
+      const a = rad(ang - 90 + d);
+      const next = LOBES[(i + 1) % LOBES.length];
+      const gap = rad(ang - 90 + (next[0] < d ? next[0] + 360 : next[0]) / 2 + d / 2);
+      pts.push([cx + Math.cos(a - 0.22) * r * len * 0.62 * k, cy + Math.sin(a - 0.22) * r * len * 0.62 * k]);
+      pts.push([cx + Math.cos(a) * r * len * k, cy + Math.sin(a) * r * len * k]);
+      pts.push([cx + Math.cos(a + 0.22) * r * len * 0.62 * k, cy + Math.sin(a + 0.22) * r * len * 0.62 * k]);
+      if (Math.abs(next[0] - d) < 200) pts.push([cx + Math.cos(gap) * r * 0.32 * k, cy + Math.sin(gap) * r * 0.32 * k]);
+      else pts.push([x + (cx - x) * 0.55, y + (cy - y) * 0.55]);
+    });
+    return pts;
+  };
+  return [F(limb(x, y, cx, cy, 0.25, 0.2, darker(c, 0.3))), T(outline(1), c), F(T(outline(0.55).map(([px, py]) => [px - 0.15, py - 0.2]), lighter(c, 0.2))),
+    F(limb(cx, cy, cx + Math.sin(rad(ang)) * r * 0.9, cy - Math.cos(rad(ang)) * r * 0.9, 0.18, 0.1, darker(c, 0.2)))];
+}
 const HEAD_BACK = {
+  // The leaf crown's back: two darker leaves behind the head and a pair of leaf tails on a vine,
+  // swinging.
+  leafcrown: (p, m) => {
+    const sw = m?.sway ?? 0;
+    return [...oakLeaf(4.6, 7.2, 4, 200 + sw * 10, '#3f8e5a'), ...oakLeaf(26.4, 7.2, 4, -20 - sw * 10, '#3f8e5a'),
+      F(limb(5.4, 8, 4.2 + sw, 12.4, 0.35, 0.3, '#8e6248')), ...oakLeaf(4.2 + sw, 12.4, 3, 110 + sw * 20, '#5cba4a')];
+  },
   // The flower crown's ribbons trailing behind.
   flowercrown: (p, m) => {
     const sw = m?.sway ?? 0;

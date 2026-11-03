@@ -47,7 +47,7 @@ for (const [family, list] of [['casual', CASUAL_LOOKS], ['fun', FUN_LOOKS], ['ga
       return id;
     };
     // (A draft is drawn but not sold yet.)
-    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft ? { retired: true } : {}), ...(e.machine ? { gacha: e.machine, rarity: e.rarity } : {}) };
+    const base = { id: `cash_${family}_${e.key}`, name: e.name, slot: e.slot, style: e.style, cash: e.cash, color: e.color, ...(e.draft || e.unsold ? { retired: true } : {}), ...(e.machine ? { gacha: e.machine, rarity: e.rarity } : {}) };
     if (e.slot === 'weapon') add({ ...base, cover: { fun: family, t } });
     else if (e.covers?.includes('hat')) {
       // A whole-body costume or onesie is sold in pieces (the player's call, 2026-11-01): its top

@@ -17,7 +17,7 @@ ITEMS.party_token = {
 // always brings it). A crown of Gnarlroot's own leaves, worn in the hat slot.
 ITEMS.cash_rootwood_crown = {
   id: 'cash_rootwood_crown', type: 'cash', price: 0, name: "Gnarlroot's Leaf Crown", slot: 'hat', style: 'fancy', cash: 0,
-  retired: true, color: '#7fd1a0', skin: 'look_acc_flowercrown_hat', hardOnly: true,
+  retired: true, color: '#7fd1a0', skin: 'look_acc_leafcrown_hat', hardOnly: true,
 };
 
 // ---------- The Party Board ----------
