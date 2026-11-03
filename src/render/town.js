@@ -16,6 +16,7 @@ import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
+import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
 import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
@@ -1341,6 +1342,8 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
 
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
 // pros, green with a heart for party members, a title in gold and the guild underneath).
+const afkAt = new WeakMap();
+
 function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
@@ -1354,13 +1357,30 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const body = bot.body ?? null;
   if (!body || body.onGround) shadow(ctx, x, y, body ? slopeAt(body.surface, body.x) : slope);
   const waving = bot.state === 'wave';
-  let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) || bot.moving ? 'walk' : 'idle';
+  // (Town walking eases in and out: standing still mid-stroll, they stand.)
+  const strolling = ['walk', 'leave', 'approach'].includes(bot.state) && (bot.speed == null || bot.speed > 4);
+  let pose = waving ? 'cheer' : strolling || bot.moving ? 'walk' : 'idle';
   let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;
+  let dur = 0.5;
+  // A hop for the fun of it (up over the street and down: world/botsoul.js).
+  const hop = !body ? hopLift(bot) : 0;
+  if (hop > 0) {
+    pose = 'jump';
+    y -= hop;
+  }
   // A little emote, or a cheer at a catch.
   if (!body && bot.emote && !waving) {
     pose = bot.emote.pose;
     progress = bot.emote.t / bot.emote.dur;
+    dur = bot.emote.dur;
   }
+  // AFK: sat on the street, dozing, for as long as they're away.
+  if (!body && bot.afk) {
+    if (!afkAt.has(bot)) afkAt.set(bot, time);
+    pose = 'afk';
+    progress = 1;
+    dur = Math.max(0.01, time - afkAt.get(bot));
+  } else afkAt.delete(bot);
   if (body) {
     if (bot.attack) {
       pose = bot.attack.pose;
@@ -1377,13 +1397,14 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     progress = life.progress;
   }
   const own = bot.char.appearance;
-  const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : own;
+  // (Their mood shows on their face now and then: world/botsoul.js.)
+  const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.moodFace && !bot.afk ? { ...own, face: bot.moodFace.face } : own;
   const gear = wornGear(bot.char);
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time, body);
   const state = {
-    pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
+    pose, progress, dur, vy: body ? body.vy : hop > 0 ? (bot.hop.t / bot.hop.dur < 0.5 ? -200 : 200) : undefined, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
     // Party members fighting nearby stand on guard between swings.
     ready: Boolean(bot.party && bot.brain?.target), hurt: bot.hurt > 0,
   };
@@ -1415,7 +1436,25 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const w = ctx.measureText(label).width + pad;
   // A friend's tag is sky blue.
   const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
-  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+  // (A group of their own: the tag edged in their group's colour, so you can tell who's together.)
+  const crewEdge = !bot.party && bot.crew ? bot.crew.color : null;
+  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : crewEdge ?? (bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null), r: 5, width: crewEdge ? 1.5 : 1 });
+  if (crewEdge) {
+    ctx.fillStyle = crewEdge;
+    ctx.beginPath();
+    ctx.arc(x + w / 2 + 4, y + 7, 2, 0, TAU);
+    ctx.arc(x + w / 2 + 8.5, y + 7, 2, 0, TAU);
+    ctx.fill();
+  }
+  // Away from the keyboard: a little AFK tag that breathes over their head.
+  if (bot.afk) {
+    const a = 0.75 + 0.25 * Math.sin(time * 2.2 + seed);
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = a * fade;
+    box(ctx, x - 11, y - 52 + Math.sin(time * 1.6 + seed) * 1.2, 22, 9, { fill: 'rgba(90,82,120,0.85)', edge: '#d9d0f0', r: 4.5, width: 1 });
+    text(ctx, 'AFK', x, y - 45.5 + Math.sin(time * 1.6 + seed) * 1.2, { size: 6, bold: true, align: 'center', color: '#f2ecff' });
+    ctx.globalAlpha = was;
+  }
 
   if (bot.party) {
     ctx.fillStyle = '#ffffff';

@@ -5,6 +5,7 @@
 //     gift (and remember it).
 //   - Weather: rain or snow comes and goes on each map.
 
+import { remember } from './botmemory.js';
 import { MOBS } from '../data/mobs.js';
 import { MAPS } from '../data/maps.js';
 import { joinParty, partyMembers, PARTY_MAX } from './party.js';
@@ -68,6 +69,7 @@ export function questKill(bots, world, m) {
     if (q.got < q.n) continue;
     q.done = true;
     b.helped = true;
+    remember(world.char, b, 'quest', MOBS[q.mob]?.name ?? null, world.map.id);
     const gold = 300 + b.level * 40;
     world.char.gold += gold;
     addItem(world.char.inventory, 'elixir', 1);
