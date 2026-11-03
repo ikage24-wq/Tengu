@@ -205,3 +205,44 @@ test("the Paladin and the Berserker swing none of the Warrior's swings", async (
   const warrior = own('warrior');
   for (const job of ['paladin', 'berserker']) for (const m of own(job)) assert.ok(!warrior.has(m), `${job} borrows ${m}`);
 });
+
+test('the Starlight Idol sings into her mic, belts with her head back, and ends each figure on its own pose', async () => {
+  const { moveAt } = await import('../src/render/moves.js');
+  const DUR = { sibeat: 0.4, sistep: 0.5, sihigh: 0.64, sikiss: 0.4, sishoulder: 0.56, sijump: 0.56, sipose: 0.62, siup: 0.44, siair: 0.38, sidash: 0.56, sisong: 1.2, sicheer: 0.9, silullaby: 1.2, sibow: 1.4, siconcert: 2.4 };
+  const SINGS = ['sibeat', 'sistep', 'sihigh', 'sishoulder', 'sijump', 'sipose', 'siup', 'sidash', 'sisong', 'silullaby', 'siconcert'];
+  const BELTS = ['sihigh', 'siup', 'sidash', 'sisong', 'sibow', 'siconcert'];
+  const base = () => ({ tx: 0, by: 0, hx: 0, hy: 0, frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0, hairLift: 0, cape: 0, eyes: 'open', mouth: null, tilt: 0 });
+  const at = (kind, p) => {
+    const mv = moveAt(kind, p, DUR[kind], { weapon: 'wand' });
+    const r = base();
+    mv.rig?.(r);
+    return { mv, r };
+  };
+  for (const kind of Object.keys(DUR)) {
+    let chin = false;
+    let back = 0;
+    for (let i = 0; i <= 60; i++) {
+      const { mv, r } = at(kind, i / 60);
+      // The mic under her chin: the hand low, the mic tipped forward so its head sits below her mouth.
+      if (mv.arm < 20 && mv.weapon > 25 && mv.weapon < 65) chin = true;
+      back = Math.min(back, r.tilt);
+      // With the hand low, the mic never stands straight up over her face.
+      if (mv.turn > 0) assert.ok(!(mv.arm < 30 && mv.weapon < 28), `${kind} stands the mic up over her face at ${i / 60}`);
+    }
+    if (SINGS.includes(kind)) assert.ok(chin, `${kind} never sings into the mic under her chin`);
+    if (BELTS.includes(kind)) assert.ok(back <= -10, `${kind} never throws her head back`);
+  }
+  // Each figure ends on its own pose (the string and its pool, the command moves, her skills).
+  const sig = (kind) => {
+    const { mv, r } = at(kind, 1);
+    return `${Math.round(mv.weapon / 20)},${Math.round(mv.arm / 20)},${r.eyes},${r.armSide},${r.backArm[1] < -12}`;
+  };
+  for (const set of [['sibeat', 'sistep', 'sihigh', 'sikiss', 'sishoulder', 'sijump', 'sipose'], ['siup', 'siair', 'sidash'], ['sisong', 'sicheer', 'silullaby', 'sibow', 'siconcert']]) {
+    const seen = new Map();
+    for (const kind of set) {
+      const s = sig(kind);
+      assert.ok(!seen.has(s), `${kind} ends on the same pose as ${seen.get(s)}`);
+      seen.set(s, kind);
+    }
+  }
+});

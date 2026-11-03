@@ -1028,6 +1028,9 @@ function liveFace(look, state, mv) {
     if (h < 1.4) return { lid: 0.05, mouth: beat(4) % 3 ? 'fang' : 'D', brows: [[0.1, 0.6], [0.1, 0.6]] };
     return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? [true, true] : null };
   }
+  // The Starlight Idol performs, never scowls: bright raised brows, a blush, a note over her head
+  // as she sings (her moves shape the mouth and close or wink the eyes themselves).
+  if (mv && state.job === 'shrinemaiden') return { brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.2, mouth: 'cat', extra: ['note'] };
   if (mv) {
     const p = state.progress ?? 0;
     if (p < 0.3) return { lid: 0.25, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
@@ -2256,6 +2259,31 @@ const BACKSLUNG = new Set(['sword', 'axe', 'spear', 'staff', 'bow']);
 // How far down its hilt a weapon is held (art px from the grip point toward the pommel).
 const HILT = { sword: 8, axe: 7.5, spear: 9 };
 
+// The Starlight Idol's idle with her mic (rests pointing down and forward at her hip, the head clear
+// of her face): she swings it round in a loop by its cord at her side and catches it; points it
+// out at the crowd with a little lean and a nod (her wink-and-point); and brings it up under her
+// chin to hum a bar, swaying, head rocking to the tune.
+function idolIdle(t, bit, env, bump, seg, lerp, q2) {
+  const hang = 118 + Math.sin(t * 2.4) * 8;
+  const b = bit([1.6, 1.8, 2.6]);
+  if (!b) return { arm: [0.5, 0], angle: hang, rig: { hx: q2(Math.sin(t * 2.4) * 0.3) } };
+  const k = env(b.u);
+  // Let down to dangle from her fingers by the cord and swung to and fro below her hand, out at
+  // her side, each swing bigger, then flicked back up into her grip with a sparkle.
+  if (b.i === 0) {
+    const swing = Math.sin(b.s * 7) * (40 + 45 * smooth(seg(b.u, 0, 0.6))) * k;
+    return { arm: [0.5 + 2.5 * k, 1.5 * k], angle: lerp(hang, 180, k) + swing, sparkle: b.u > 0.8 && b.u < 0.95, rig: { tilt: Math.round(2 * k), hx: q2(0.4 * Math.sin(b.s * 7) * k) } };
+  }
+  // The point: the mic out at the crowd, a lean in and a nod on the beat, free hand on her hip.
+  if (b.i === 1) {
+    const nod = bump(b.u, 0.45, 0.65);
+    return { arm: [lerp(0.5, 4, k), lerp(0, -3, k)], angle: lerp(hang, 82, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-3 * k + 3 * nod), hx: q2(0.5 * k) } };
+  }
+  // Humming a bar: the mic up under her chin (head well above it), swaying side to side.
+  const sway = Math.sin(b.s * 4.2) * k;
+  return { arm: [lerp(0.5, 2, k), lerp(0, -2.5, k)], angle: lerp(hang, 46, k), rig: { tilt: Math.round(-2 * k + 3 * sway), hx: q2(0.8 * sway), backArm: [q2(-3 * k - 1.5 * sway), q2(-1.5 * k)] } };
+}
+
 // Idle routines while standing still: each weapon has a few things it does, taken in turn with a
 // breather of the gentle loop between them, each easing in and out so the hands never jump.
 // Returns the hand's offset from its rest spot (body units), the weapon's angle, and optionally a
@@ -2263,7 +2291,7 @@ const HILT = { sword: 8, axe: 7.5, spear: 9 };
 // head, a lean) acting along with it. Bare hands (`type` none) get theirs too.
 const smooth = (u) => u * u * (3 - 2 * u);
 const IDLE_REST = 3.2;
-function weaponIdle(type, t) {
+function weaponIdle(type, t, job) {
   const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
   const seg = (p, a, b) => Math.max(0, Math.min(1, (p - a) / (b - a)));
   const env = (u, a = 0.18, b = 0.82) => smooth(seg(u, 0, a)) * (1 - smooth(seg(u, b, 1)));
@@ -2310,6 +2338,8 @@ function weaponIdle(type, t) {
       return { arm: [1, -5 - Math.sin(b.s * 7) * 1.2 * k], angle: sway + Math.sin(b.s * 7) * 9 * k, rig: { backArm: [q2(-7 * k), q2(-5 * k)], tilt: Math.round(-2 * k) } };
     }
     case 'wand': {
+      // The Starlight Idol's mic (her own fidgets; the Star Witch's wand ones are below).
+      if (job === 'shrinemaiden') return idolIdle(t, bit, env, bump, seg, lerp, q2);
       // The wand rests pointing forward and down at her hip, so its star never comes up by her face.
       const twirl = 115 + Math.sin(t * 3) * 12;
       const b = bit([1, 2.4, 2.2]);
@@ -2782,7 +2812,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const over = attack ? null : rig.armOver ?? null;
   rig.armIn = !attack && over == null;
   // (Bare hands have idle bits too, unless someone else is already moving the arms: an NPC.)
-  const idleW = !attack && pose === 'idle' && !state.ready && rig.view !== 'back' && (g.weapon || !state.rig) ? weaponIdle(g.weapon?.type ?? 'none', (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
+  const idleW = !attack && pose === 'idle' && !state.ready && rig.view !== 'back' && (g.weapon || !state.rig) ? weaponIdle(g.weapon?.type ?? 'none', (state.time ?? 0) + (state.seed ?? 0) * 1.37, state.job) : null;
   // An arm the mood is already posing (crossed, on the hips, behind the back) keeps its pose: the
   // bit's own move for that arm is dropped rather than piled on top of it.
   const posed = rig.posed ?? {};
