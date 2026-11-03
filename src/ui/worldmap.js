@@ -1,7 +1,6 @@
-// The world map (M): Tengu Island as a round island with one ring road running round it. The
-// towns sit on the ring like stops on a roundabout, the fields between them; Ember Crag is the
-// mountain in the middle, up the canyon road; the far regions branch off the places they lead
-// from, and the Sky Garden floats off the north shore. Every place shows its name and level range.
+// The world map (M): Tengu Island laid out on a grid, each region a block of its own colour with
+// its places in a row, Ember Crag the big landmark in the middle, and the sky places on a row of
+// clouds along the top. Every place shows its name and level range, and no road crosses another.
 // Your party and your friends show as little faces by the place each is at (tap one to warp to
 // them or ask to join their party), and a bubble by your pin counts the players around you.
 // Tap any place for its monsters and how far it is, then "Show the way" to have the guide arrow
@@ -20,58 +19,76 @@ import { partyMembers } from '../world/party.js';
 import { askToJoin, joinBlocker, PINGS } from '../world/grouping.js';
 import { callBuddy } from '../world/buddies.js';
 
-// The map is drawn in its own 400x240 frame, shown K times larger.
-const K = 1.2;
-const W = 500;
+// The map is drawn in its own 500x260 frame, shown K times larger.
+const K = 1.1;
+const W = 570;
 const H = 340;
-const MAP_W = 400;
-const MAP_H = 240;
+const MAP_W = 500;
+const MAP_H = 260;
 const INK = '#5a3f7a';
 
-// The island and its ring road: an ellipse round the middle of the map.
-// (The world map redraw, 2026-11-02: laid out again so no two roads cross. The ring road runs round
-// the coast; the canyon, the crag, the ridge, the Hollow's gate and the glade sit inside it; the
-// springs and the frozen peak have a little isle to the north, the Sky Garden and Starfall float
-// above it, and the grove's long roads north fan out one above another.)
-const CX = 200;
-const CY = 150;
-const RX = 150;
-const RY = 66;
-const deg = (d) => (d * Math.PI) / 180;
-const onRing = (a, k = 1) => ({ x: CX + Math.cos(deg(a)) * RX * k, y: CY + Math.sin(deg(a)) * RY * k, a });
-// Where each map sits. The ring runs clockwise from Sprout Village in the west: the meadows, the
-// harbor in the south, the woods, the grove in the east, the ruins and the cave in the north. The
-// canyon road climbs from the meadow to the crag in the middle (the Hollow's gate off it); the
-// throne room is a spur off the cave, and the Sky Garden floats above it.
+// The plan (the world map redesign, 2026-11-03; the rules are in docs/art/research/env.md, G).
+// The map is a grid: seven columns on one 70 px pitch and six rows on shared baselines, so every
+// row reads as a row and every name sits in the same place under its stop. Each place sits on a
+// tile of its region's ground colour, and tiles of one region join into one block: the meadows in
+// the west, the highlands through the middle round Ember Crag (the one big landmark), the harbor
+// and the woods along the south coast, the crystal cliffs in the north-west, the moonlit east
+// round Moonleaf Grove, the snowy north shore, and the sky row of clouds along the top.
+// Roads run along a row between neighbours; a road between rows leaves its stop sideways and turns
+// in the gap between two columns, where no name ever sits, so no road crosses another or runs
+// behind a name. (When moving a place, check every road against every stop and name pill.)
+const COL = [40, 110, 180, 250, 320, 390, 460];
+const ROW = { sky: 26, snow: 66, north: 106, middle: 150, south: 194, coast: 234 };
+const cell = (c, r) => ({ x: COL[c], y: ROW[r] });
 const SPOT = {
-  sprout: onRing(180), meadow1: onRing(140), meadow2: onRing(108), harbor: onRing(75), woods: onRing(35), grove: onRing(350),
-  ruins: onRing(300), cave: onRing(245),
-  canyon: { x: 116, y: 160 }, crag: { x: 196, y: 168 }, hollow_gate: { x: 104, y: 126 }, ridge: { x: 252, y: 150 },
-  glade: { x: 290, y: 186 }, shrine: { x: 306, y: 112 }, bossroom: { x: 84, y: 76 },
-  springs: { x: 150, y: 50 }, peak: { x: 205, y: 34 }, sky: { x: 262, y: 18 }, starfall: { x: 332, y: 26 },
-};
-// Where a road bends (its control point), for the roads that must curve round others to stay clear.
-const CTRL = { 'cave|sky': { x: 175, y: -30 }, 'grove|springs': { x: 262, y: 58 }, 'grove|peak': { x: 272, y: 30 } };
-// Where each place's name sits from its stop (the default is just under it).
-const LABEL = {
-  sprout: [0, 13], meadow1: [-8, 9], meadow2: [0, 9], harbor: [0, 13], woods: [8, 9], grove: [0, 13], ruins: [-10, -12], cave: [-24, 6],
-  canyon: [0, 9], crag: [0, 13], hollow_gate: [-6, -12], bossroom: [0, 9], glade: [-36, 2], shrine: [14, -12], ridge: [0, 9],
-  springs: [-26, 0], peak: [0, -10], sky: [0, 11], starfall: [0, 9],
+  theatre_row: cell(3, 'sky'), sky: cell(4, 'sky'), starfall: cell(5, 'sky'), cloudcatch_pier: cell(6, 'sky'),
+  sugar_trail: cell(1, 'snow'), springs: cell(2, 'snow'), peak: cell(3, 'snow'),
+  bossroom: cell(0, 'north'), cave: cell(1, 'north'), ruins: cell(4, 'north'), shrine: cell(5, 'north'), carnival_gate: cell(6, 'north'),
+  sprout: cell(0, 'middle'), hollow_gate: cell(1, 'middle'), canyon: cell(2, 'middle'), crag: cell(3, 'middle'), ridge: cell(4, 'middle'),
+  observatory_steps: cell(5, 'middle'), grove: cell(6, 'middle'),
+  meadow1: cell(1, 'south'), meadow2: cell(2, 'south'), harbor: cell(3, 'south'), glade: cell(4, 'south'), woods: cell(5, 'south'),
+  tidepool_pier: cell(2, 'coast'), manor_gate: cell(4, 'coast'),
 };
 const spot = (m) => SPOT[m.id] ?? m.world;
-// The roads round the ring (each a real portal link between neighbours on it; the last stop joins
-// back to the first, closing it).
-const RING = ['sprout', 'meadow1', 'meadow2', 'harbor', 'woods', 'grove', 'ruins', 'cave'];
-// Each region's colour, under its stop.
-const TINT = {
-  town: '#bfeaa8', meadow: '#c4eeb0', harbor: '#ffe0b0', forest: '#9fd8a2', grove: '#d3c0f6',
-  ruins: '#dccff7', cave: '#beb0ea', crag: '#f7c996', sky: '#ffffff',
-  shrine: '#ffd0e0', ridge: '#b8c0ec', springs: '#bfeae0', snow: '#eef4ff',
+// The island's middle and size (a rounded, squarish island that fills the frame).
+const CX = 250;
+const CY = 160;
+const RX = 226;
+const RY = 72;
+// The regions: each place's tile colour (tiles of one region join into one block).
+const REGION = {
+  meadow: { fill: '#dcf2b4', ids: ['sprout', 'hollow_gate', 'meadow1', 'meadow2'] },
+  highland: { fill: '#f9e0b8', ids: ['canyon', 'crag', 'ridge'] },
+  harbor: { fill: '#ffe6cc', ids: ['harbor', 'tidepool_pier'] },
+  forest: { fill: '#c2e6b4', ids: ['glade', 'woods', 'manor_gate'] },
+  crystal: { fill: '#ddd2f6', ids: ['bossroom', 'cave'] },
+  moon: { fill: '#ecd8f6', ids: ['ruins', 'shrine', 'carnival_gate', 'observatory_steps', 'grove'] },
+  snow: { fill: '#eef6fb', ids: ['sugar_trail', 'springs', 'peak'] },
 };
+const REGION_OF = Object.fromEntries(Object.entries(REGION).flatMap(([k, r]) => r.ids.map((id) => [id, k])));
+// The dungeon gates (a little arch for a stop, not a dot), and the places up in the air (on
+// clouds, their roads dotted).
+const GATES = new Set(['hollow_gate', 'manor_gate', 'tidepool_pier', 'carnival_gate', 'observatory_steps', 'sugar_trail', 'theatre_row', 'cloudcatch_pier']);
+const AIR = new Set(['theatre_row', 'sky', 'starfall', 'cloudcatch_pier']);
+// A road's corners: straight along a row; between rows, out sideways to the gap between the two
+// columns, along the gap, and in sideways.
+function routePoints(a, b) {
+  if (a.y === b.y) return [a, b];
+  const gx = (a.x + b.x) / 2;
+  return [a, { x: gx, y: a.y }, { x: gx, y: b.y }, b];
+}
+// Traces a road's corners onto the current path, rounding each turn.
+function traceRoad(ctx, ox, oy, a, b, start = true) {
+  const pts = routePoints(a, b);
+  if (start) ctx.moveTo(ox + pts[0].x, oy + pts[0].y);
+  for (let i = 1; i < pts.length - 1; i++) ctx.arcTo(ox + pts[i].x, oy + pts[i].y, ox + pts[i + 1].x, oy + pts[i + 1].y, 7);
+  ctx.lineTo(ox + pts[pts.length - 1].x, oy + pts[pts.length - 1].y);
+}
 // Each region's colour for its name pill's edge.
 const EDGE = {
   meadow: '#7fc98a', forest: '#5fae7a', ruins: '#9a82d8', cave: '#7a6ad0', crag: '#e88a4c', sky: '#8fb8ff',
   shrine: '#e8708a', ridge: '#6a7ad0', springs: '#4fb8a4', snow: '#8fb8e8', harbor: '#d9a060', grove: '#8a72d8',
+  manor: '#7a6ab8', carnival: '#e0709a', observatory: '#6a8ad8', candy: '#e889b4', theatre: '#c0607a', skywhale: '#5aa8d8',
 };
 // The places on the map (not the queens' trial arenas, which belong to their regions).
 const onMap = (m) => m.world && !m.trial;
@@ -86,7 +103,10 @@ const hash = (n) => {
 // Roads drawn on the map: one per pair of maps joined by a portal, except the long ones that would
 // cross or crowd the others (the journeys they make are already shown by other roads; the guide's
 // route still follows every real road).
-const HIDDEN = new Set(['grove|springs', 'grove|peak', 'grove|sky', 'cave|sky', 'cave|grove']);
+const HIDDEN = new Set(['grove|springs', 'grove|peak', 'grove|sky', 'grove|starfall', 'cave|sky', 'cave|grove', 'harbor|woods', 'grove|ruins']);
+// How the guide's route draws a hidden road: along the shown roads beside it (the stops between,
+// in order from the first id of the sorted pair to the second).
+const DRAW_VIA = { 'grove|ruins': ['shrine'], 'cave|grove': ['ruins', 'shrine'], 'harbor|woods': ['glade'] };
 const ROADS = (() => {
   const seen = new Set();
   const out = [];
@@ -130,7 +150,7 @@ function drawSea(ctx, ox, oy, time) {
     const y = oy + hash(i + 9) * MAP_H;
     const dx = (x - ox - CX) / (RX + 34);
     const dy = (y - oy - CY) / (RY + 34);
-    if (dx * dx + dy * dy < 1) continue;
+    if (dx ** 4 + dy ** 4 < 1) continue;
     const s = 0.6 + 0.4 * Math.sin(time * 1.6 + i);
     ctx.globalAlpha = 0.4 + 0.5 * s;
     ctx.beginPath();
@@ -148,11 +168,11 @@ function drawSea(ctx, ox, oy, time) {
     sparkleAt(ctx, ox + hash(i + 40) * MAP_W, oy + hash(i + 41) * MAP_H, 1.2 + (k - 0.5) * 3);
   }
   ctx.globalAlpha = 1;
-  // A sailboat sailing round the island, bobbing.
-  const a = time * 0.05;
-  const bx = ox + CX + Math.cos(a) * (RX + 48);
-  const by = oy + CY + Math.sin(a) * (RY + 44) + Math.sin(time * 2) * 0.8;
-  const dir = Math.sin(a) > 0 ? -1 : 1;
+  // A sailboat sailing to and fro in the open water off the north-west corner, bobbing.
+  const a = time * 0.08;
+  const bx = ox + 50 + Math.sin(a) * 30;
+  const by = oy + 44 + Math.sin(time * 2) * 0.8;
+  const dir = Math.cos(a) > 0 ? 1 : -1;
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.beginPath();
   ctx.ellipse(bx - dir * 6, by + 2, 6, 1, 0, 0, Math.PI * 2);
@@ -192,18 +212,37 @@ function sparkleAt(ctx, x, y, r) {
   ctx.fill();
 }
 
-// The island's coastline: an ellipse with a gently wobbling edge, so it reads as a real island.
+// The island's coastline: a rounded, squarish island (it holds the grid of places) with a gently
+// wobbling edge, so it still reads as a real island.
 function coast(ctx, x, y, grow, time = 0, breathe = 0) {
   ctx.beginPath();
-  for (let i = 0; i <= 72; i++) {
-    const a = (i / 72) * Math.PI * 2;
-    const k = 1 + 0.07 * Math.sin(a * 3 + 1.2) + 0.04 * Math.sin(a * 7 + 0.4) + 0.02 * Math.sin(a * 13 + 2) + breathe * Math.sin(time * 1.4 + a * 2);
-    const px = x + Math.cos(a) * (RX + grow) * k;
-    const py = y + Math.sin(a) * (RY + grow) * k;
+  for (let i = 0; i <= 96; i++) {
+    const a = (i / 96) * Math.PI * 2;
+    const k = 1 + 0.018 * Math.sin(a * 5 + 1.2) + 0.01 * Math.sin(a * 11 + 0.4) + breathe * Math.sin(time * 1.4 + a * 2);
+    const c = Math.cos(a);
+    const sn = Math.sin(a);
+    const px = x + Math.sign(c) * Math.sqrt(Math.abs(c)) * (RX + grow) * k;
+    const py = y + Math.sign(sn) * Math.sqrt(Math.abs(sn)) * (RY + grow) * k;
     if (i) ctx.lineTo(px, py);
     else ctx.moveTo(px, py);
   }
   ctx.closePath();
+}
+
+// A place's tile: the cell round its stop and its name, reaching to meet the tiles of its own
+// region beside, above and below it, so one region reads as one block.
+function tileRect(id) {
+  const p = SPOT[id];
+  const r = REGION_OF[id];
+  const c = COL.indexOf(p.x);
+  const rows = Object.values(ROW);
+  const ri = rows.indexOf(p.y);
+  const same = (cc, rr) => Object.keys(SPOT).some((k) => REGION_OF[k] === r && SPOT[k].x === COL[cc] && SPOT[k].y === rows[rr]);
+  const left = same(c - 1, ri) ? 35 : 32;
+  const right = same(c + 1, ri) ? 35 : 32;
+  const up = same(c, ri - 1) ? (p.y - rows[ri - 1]) / 2 + 6 : 18;
+  const down = same(c, ri + 1) ? (rows[ri + 1] - p.y) / 2 - 6 : 26;
+  return { x: p.x - left, y: p.y - up, w: left + right, h: up + down };
 }
 
 // The island: surf breathing round a sandy beach, the land in soft greens, each region a pool of
@@ -220,9 +259,9 @@ function drawIsland(ctx, ox, oy, time = 0) {
   ctx.fillStyle = '#ffe9c4';
   coast(ctx, x, y, 30);
   ctx.fill();
-  const g = ctx.createRadialGradient(x, y - 10, 10, x, y, RX + 24);
-  g.addColorStop(0, '#d8f2c4');
-  g.addColorStop(1, '#a8dc96');
+  const g = ctx.createLinearGradient(0, y - RY - 24, 0, y + RY + 24);
+  g.addColorStop(0, '#c4e6b0');
+  g.addColorStop(1, '#b2dc9c');
   ctx.fillStyle = g;
   coast(ctx, x, y, 24);
   ctx.fill();
@@ -230,34 +269,20 @@ function drawIsland(ctx, ox, oy, time = 0) {
   ctx.lineWidth = 1.2;
   coast(ctx, x, y, 30);
   ctx.stroke();
-  // The northern isle, where the springs steam under the frozen peak.
-  const nx = ox + 180;
-  const ny = oy + 44;
-  ctx.fillStyle = 'rgba(255,255,255,0.75)';
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, 52 + Math.sin(time * 1.4) * 0.6, 24, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffe9c4';
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, 48, 21, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d6eef0';
-  ctx.beginPath();
-  ctx.ellipse(nx, ny, 43, 17, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-  // Each region's pool of colour.
+  // Each place's tile in its region's colour (a soft shade under it, then the tile), on the land.
   ctx.save();
   coast(ctx, x, y, 24);
   ctx.clip();
-  for (const m of Object.values(MAPS)) {
-    const p = onMap(m) && spot(m);
-    if (!p || ['sky', 'starfall', 'peak', 'springs', 'shrine'].includes(m.id)) continue;
-    const tint = TINT[m.isTown ? 'town' : m.theme] ?? TINT.meadow;
-    const rg = ctx.createRadialGradient(ox + p.x, oy + p.y, 2, ox + p.x, oy + p.y, m.isTown ? 34 : 30);
-    rg.addColorStop(0, tint);
-    rg.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = rg;
-    ctx.fillRect(ox + p.x - 36, oy + p.y - 36, 72, 72);
+  const tiles = Object.keys(SPOT).filter((id) => REGION_OF[id]).map((id) => [tileRect(id), REGION[REGION_OF[id]].fill]);
+  ctx.fillStyle = 'rgba(90,120,70,0.16)';
+  for (const [t] of tiles) {
+    roundRect(ctx, ox + t.x, oy + t.y + 1.6, t.w, t.h, 10);
+    ctx.fill();
+  }
+  for (const [t, fill] of tiles) {
+    ctx.fillStyle = fill;
+    roundRect(ctx, ox + t.x, oy + t.y, t.w, t.h, 10);
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -484,70 +509,28 @@ function stroke(ctx, path) {
   ctx.restore();
 }
 
-// A spur road's bend: its middle pushed outward, away from the island's middle, so trails curve
-// round the mountains instead of cutting straight across.
-function bend(a, b, ida = null, idb = null) {
-  const set = ida && CTRL[[ida, idb].sort().join('|')];
-  if (set) return set;
-  if (ida) return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-  const mx = (a.x + b.x) / 2;
-  const my = (a.y + b.y) / 2;
-  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  let nx = -(b.y - a.y) / len;
-  let ny = (b.x - a.x) / len;
-  if (nx * (mx - CX) + ny * (my - CY) < 0) {
-    nx = -nx;
-    ny = -ny;
-  }
-  const k = Math.min(28, len * 0.22);
-  return { x: mx + nx * k, y: my + ny * k };
-}
-
-// The ring road between neighbours on it, then the spurs (curving), then the sky's dotted line.
-function drawRoads(ctx, ox, oy, time, lit = new Set()) {
-  const linked = new Set(ROADS.map(([a, b]) => [a, b].sort().join('|')));
-  for (let i = 0; i < RING.length; i++) {
-    const next = RING[(i + 1) % RING.length];
-    const a = SPOT[RING[i]];
-    const b = SPOT[next];
-    if (!linked.has([RING[i], next].sort().join('|'))) continue;
-    // Clockwise along the ellipse, from one stop's angle to the next.
-    let a0 = deg(a.a);
-    let a1 = deg(b.a);
-    if (a1 > a0) a1 -= Math.PI * 2;
-    stroke(ctx, () => {
-      ctx.beginPath();
-      ctx.ellipse(ox + CX, oy + CY, RX, RY, 0, a0, a1, true);
-    });
-  }
+// Every road: along a row, or turning in the gap between two columns; the roads up into the air
+// are dotted.
+function drawRoads(ctx, ox, oy, time) {
   for (const [ida, idb] of ROADS) {
-    const ra = RING.indexOf(ida);
-    const rb = RING.indexOf(idb);
-    if (ra >= 0 && rb >= 0 && (Math.abs(ra - rb) === 1 || Math.abs(ra - rb) === RING.length - 1)) continue;
-    const ma = MAPS[ida];
-    const mb = MAPS[idb];
-    if (!ma.world || !mb.world) continue;
-    const a = spot(ma);
-    const b = spot(mb);
-    const c = bend(a, b, ida, idb);
-    // Roads up into the air (the Sky Garden and Starfall) are dotted.
-    if (['sky', 'starfall'].includes(ida) || ['sky', 'starfall'].includes(idb)) {
+    const a = spot(MAPS[ida]);
+    const b = spot(MAPS[idb]);
+    if (AIR.has(ida) || AIR.has(idb)) {
       ctx.save();
+      ctx.lineCap = 'round';
       ctx.setLineDash([3, 4]);
       ctx.lineDashOffset = -time * 8;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(ox + a.x, oy + a.y);
-      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + b.x, oy + b.y);
+      traceRoad(ctx, ox, oy, a, b);
       ctx.stroke();
       ctx.restore();
       continue;
     }
     stroke(ctx, () => {
       ctx.beginPath();
-      ctx.moveTo(ox + a.x, oy + a.y);
-      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + b.x, oy + b.y);
+      traceRoad(ctx, ox, oy, a, b);
     });
   }
 }
@@ -557,34 +540,28 @@ function drawRoute(ctx, ox, oy, time, path) {
   if (!path || path.length < 2) return;
   ctx.save();
   ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.strokeStyle = '#ff6b9a';
   ctx.lineWidth = 4;
   ctx.globalAlpha = 0.85;
-  // Neighbours on the ring follow its curve; every other step is straight, like its road.
   ctx.beginPath();
-  path.forEach((id, i) => {
-    const p = spot(MAPS[id]);
-    if (!i) {
-      ctx.moveTo(ox + p.x, oy + p.y);
-      return;
-    }
-    const prev = path[i - 1];
-    const ra = RING.indexOf(prev);
-    const rb = RING.indexOf(id);
-    const n = RING.length;
-    if (ra >= 0 && rb >= 0 && ((ra + 1) % n === rb || (rb + 1) % n === ra)) {
-      const a0 = deg(SPOT[prev].a);
-      let a1 = deg(SPOT[id].a);
-      const cw = (ra + 1) % n === rb;
-      if (cw && a1 > a0) a1 -= Math.PI * 2;
-      if (!cw && a1 < a0) a1 += Math.PI * 2;
-      ctx.ellipse(ox + CX, oy + CY, RX, RY, 0, a0, a1, cw);
-    } else {
-      const q = spot(MAPS[prev]);
-      const c = bend(q, p, prev, id);
-      ctx.quadraticCurveTo(ox + c.x, oy + c.y, ox + p.x, oy + p.y);
-    }
-  });
+  const first = spot(MAPS[path[0]]);
+  ctx.moveTo(ox + first.x, oy + first.y);
+  for (let i = 1; i < path.length; i++) {
+    const from = path[i - 1];
+    const to = path[i];
+    const key = [from, to].sort().join('|');
+    // A hidden road is drawn along the shown roads it runs beside, or (a lift up to the sky or a
+    // long hop) straight across.
+    const via = DRAW_VIA[key];
+    if (via) {
+      const stops = [from, ...(from < to ? via : [...via].reverse()), to];
+      for (let k = 1; k < stops.length; k++) traceRoad(ctx, ox, oy, SPOT[stops[k - 1]], SPOT[stops[k]], false);
+    } else if (HIDDEN.has(key)) {
+      const b = spot(MAPS[to]);
+      ctx.lineTo(ox + b.x, oy + b.y);
+    } else traceRoad(ctx, ox, oy, spot(MAPS[from]), spot(MAPS[to]), false);
+  }
   ctx.stroke();
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 1.6;
@@ -594,17 +571,22 @@ function drawRoute(ctx, ox, oy, time, path) {
   ctx.restore();
 }
 
-// The Sky Garden: a little floating island on a cloud.
+// The places in the air: each a little floating island on its own cloud (the Sky Garden's the
+// biggest), bobbing on its own beat.
 function drawSky(ctx, ox, oy, time) {
-  const p = SPOT.sky;
-  const x = ox + p.x;
-  const y = oy + p.y + Math.sin(time * 1.2) * 1.5;
-  ctx.fillStyle = '#ffffff';
-  for (const [dx, dy, r] of [[-12, 4, 7], [-4, 1, 9], [7, 3, 8], [14, 5, 6]]) circle(ctx, x + dx, y + dy, r);
-  ctx.fillStyle = '#c4eeb0';
-  ctx.beginPath();
-  ctx.ellipse(x, y - 3, 13, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
+  let i = 0;
+  for (const id of AIR) {
+    const p = SPOT[id];
+    const s = id === 'sky' ? 1 : 0.7;
+    const x = ox + p.x;
+    const y = oy + p.y + Math.sin(time * 1.2 + i++ * 1.3) * 1.5;
+    ctx.fillStyle = '#ffffff';
+    for (const [dx, dy, r] of [[-12, 4, 7], [-4, 1, 9], [7, 3, 8], [14, 5, 6]]) circle(ctx, x + dx * s, y + dy * s, r * s);
+    ctx.fillStyle = '#c4eeb0';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 3 * s, 13 * s, 4 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 // A town's stop: a round badge in its colour with a little roof on it, and its name on a pill.
@@ -637,33 +619,56 @@ function drawTown(ctx, x, y, m, picked, time) {
   text(ctx, m.name, x, y + r + 10.5, { size: 7.5, bold: true, align: 'center', color: INK });
 }
 
-// A place's name and level range on a little pill, in its region's colour.
+// A place's name on a little pill right under its stop, in its region's colour: the name on top,
+// its level range small under it, so every pill fits its column.
 function drawLabel(ctx, x, y, m, picked) {
-  const [dx, dy] = LABEL[m.id] ?? [0, 9];
-  const lv = levelRange(m);
-  const name = m.id === 'bossroom' ? 'Throne' : m.id === 'hollow_gate' ? 'Hollow Gate' : m.name;
-  ctx.font = font(5.6, true);
+  const lv = levelRange(m)?.replace('Lv ', '');
+  const name = m.name;
+  ctx.font = font(5.4, true);
   const nw = ctx.measureText(name).width;
-  ctx.font = font(5, false);
-  const lw = lv ? ctx.measureText(lv.replace('Lv ', '')).width + 4 : 0;
-  const w = nw + lw + 7;
-  const lx = x + dx - w / 2;
-  const ly = y + dy - (dy < 0 ? 8 : 0);
+  ctx.font = font(4.8, false);
+  const lw = lv ? ctx.measureText(lv).width : 0;
+  const w = Math.max(nw, lw) + 7;
+  const h = lv ? 14 : 8.5;
+  const lx = x - w / 2;
+  const ly = y + 7;
   const edge = EDGE[m.theme] ?? '#8c76b8';
-  box(ctx, lx, ly, w, 8, { fill: picked ? '#ff6b9a' : 'rgba(255,255,255,0.94)', edge: picked ? '#ffffff' : edge, r: 4, width: 1 });
-  text(ctx, name, lx + 3.5, ly + 6, { size: 5.6, bold: true, color: picked ? '#ffffff' : INK });
-  if (lv) text(ctx, lv.replace('Lv ', ''), lx + 3.5 + nw + 3, ly + 6, { size: 5, color: picked ? '#ffe9f2' : COLORS.muted });
+  box(ctx, lx, ly, w, h, { fill: picked ? '#ff6b9a' : 'rgba(255,255,255,0.96)', edge: picked ? '#ffffff' : edge, r: 4, width: 1 });
+  text(ctx, name, x, ly + 6.2, { size: 5.4, bold: true, align: 'center', color: picked ? '#ffffff' : INK });
+  if (lv) text(ctx, lv, x, ly + 11.8, { size: 4.8, align: 'center', color: picked ? '#ffe9f2' : COLORS.muted });
 }
 
-// A field's stop: a small white dot ringed in its region's colour (the throne room's in red).
+// A field's stop: a small white dot ringed in its region's colour (the throne room's in red with
+// a red heart). A dungeon gate's stop: a little white arch, so gates read apart from fields.
 function drawField(ctx, x, y, m, hot) {
-  const edge = m.id === 'bossroom' ? '#ff6b8a' : m.id === 'crag' ? '#e88a4c' : '#8c76b8';
+  const edge = m.id === 'bossroom' ? '#ff6b8a' : EDGE[m.theme] ?? '#8c76b8';
+  const r = hot ? 5 : 4;
   ctx.fillStyle = '#ffffff';
-  circle(ctx, x, y, hot ? 5 : 4);
   ctx.strokeStyle = edge;
   ctx.lineWidth = 1.5;
+  if (GATES.has(m.id)) {
+    const s = r + 0.6;
+    ctx.beginPath();
+    ctx.moveTo(x - s, y + s * 0.8);
+    ctx.lineTo(x - s, y - s * 0.1);
+    ctx.arc(x, y - s * 0.1, s, Math.PI, 0);
+    ctx.lineTo(x + s, y + s * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = edge;
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.4, y + s * 0.8);
+    ctx.lineTo(x - s * 0.4, y + s * 0.05);
+    ctx.arc(x, y + s * 0.05, s * 0.4, Math.PI, 0);
+    ctx.lineTo(x + s * 0.4, y + s * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    return;
+  }
+  circle(ctx, x, y, r);
   ctx.beginPath();
-  ctx.arc(x, y, hot ? 5 : 4, 0, Math.PI * 2);
+  ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.stroke();
   if (m.id === 'bossroom') {
     ctx.fillStyle = '#ff6b8a';

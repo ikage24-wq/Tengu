@@ -55,7 +55,7 @@ export function createUiState() {
       skills: { x: 180, y: 52, open: false, theme: 'lavender', icon: 'book' },
       quests: { x: 300, y: 52, open: false, theme: 'mint', icon: 'scroll' },
       npc: { x: 170, y: 84, open: false, theme: 'pink', icon: 'chat' },
-      worldmap: { x: 70, y: 6, open: false, theme: 'sky', icon: 'map' },
+      worldmap: { x: 35, y: 6, w: 570, h: 340, open: false, theme: 'sky', icon: 'map' },
       admin: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       options: { x: 170, y: 40, open: false, tab: 0, theme: 'lavender', icon: 'gear' },
       profile: { x: 160, y: 46, open: false, tab: 0, theme: 'sky', icon: 'user' },

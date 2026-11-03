@@ -503,3 +503,22 @@ copper → silver → gold → rainbow.
 7. Minimap filled with ground colour and portal and NPC glyphs (#25).
 8. Foreground occluder silhouettes (#4, M effort, but it's the single biggest "MapleStory/Hollow
    Knight depth" upgrade).
+
+### G. World map layout (added 2026-11-03)
+
+**26. Map composition.** Cartographic layout (UCGIS GIS&T Body of Knowledge, "Visual Hierarchy and
+Layout"; Penn State GEOG 486 on spacing; a fantasy-map "10-second rule" blog) and the Mario Kart
+World map write-up.
+- Hierarchy by size, value and detail: the capital/towns get the biggest marker and label, fields a
+  smaller one, gates a distinct glyph; the map's one hero landmark gets the most detail.
+- Keep labels off linework (roads, coasts); one fixed offset for all labels of a kind; labels of
+  the same row share a baseline.
+- Negative space is part of the design: margins round the frame, breathing room round each stop,
+  the sea as rest. Equal pitch between stops in a row reads as order.
+- Group by region: each region a distinct ground colour block with its stops in one row or arc, so
+  the player reads "the meadows", "the highlands", "the sky" before reading names.
+- Mario Kart World: hierarchy of routes > roads > land art; little dioramas as recognisable icons;
+  brightness and detail density tuned so it reads at a glance ("find any place in 10 seconds").
+- **Apply (ui/worldmap.js):** the island in bands (sky row, north shore, island rows, south coast
+  gates), each region a land block, stops on a 60-px pitch, labels always under the stop, roads
+  leaving sideways/upward so they never cross a label.
