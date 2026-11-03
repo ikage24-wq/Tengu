@@ -2019,3 +2019,27 @@ function rain(world, s) {
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
 }
+
+// The command moves a character of this job would play (up + attack, in the air, on the run), for
+// the bots that fight with them (world/botfight.js): the same moves you get, never someone else's.
+export function commandsOf(char, weaponType) {
+  const path = pathOf({ char, stats: { weaponType } });
+  if (ARCHER_COMMANDS[path]) return ARCHER_COMMANDS[path];
+  if (!MELEE.has(weaponType)) return null;
+  const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[path] ?? null;
+  const dash = own?.dash ?? PATH_DASH[hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null] ?? DASH;
+  return { up: own?.up ?? LAUNCHER, air: own?.air ?? AIR, dash };
+}
+
+// The procs a bot's basic swing or shot sets off, the same ones yours do (Blade Rush, Aegis Smite,
+// Ravage, Ribbon Lash, Gust Line, Whirlwind; Blast and Snare Arrow and the rest): `s` is the
+// swing's (or shot's) strike, `count` how many it caught. Returns { strikes } (extra blows, `due`
+// seconds after the swing's strike), { step } (a move that flows on, like the Whirlwind), or
+// { shot } (the shot as it flies, maybe a Blast Arrow).
+export function botProcs(char, weaponType, s, finisher, count, rng = Math.random) {
+  const world = { now: 0, strikes: [], char, stats: { weaponType }, faith: 0, body: { x: 0, facing: 1 } };
+  const key = finisher ? 'basic2' : 'basic0';
+  if (s.shot) return { shot: shotProcs(world, { ...s, key, finisher }, rng) };
+  bladeProcs(world, { ...s, dir: 1, scale: 100, key, finisher }, count, rng);
+  return { strikes: world.strikes, step: world.queuedStep?.step ?? null };
+}

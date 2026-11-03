@@ -29,6 +29,7 @@ import { recruitBot } from './bots.js';
 import { SKILLS } from '../data/skills.js';
 import { speak, contextOf } from './chatter.js';
 import { botChat } from './chatlog.js';
+import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
 import { loadMap } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
 import { playScene } from './story.js';
@@ -1130,12 +1131,12 @@ function tickZones(world, up, dt) {
 
 // Is (body) standing somewhere about to go off? Party members use it to dodge.
 export function dangerFor(world, body) {
-  return world.dungeon?.zones.find((z) => !z.hit && z.kind !== 'floor' && inZone(world, z, body)) ?? null;
+  return world.dungeon?.zones.find((z) => !z.hit && z.kind !== 'floor' && !shared(z) && inZone(world, z, body)) ?? null;
 }
 
 // The closest safe x on the floor from (body), out of every zone about to go off.
 export function safeX(world, body) {
-  const zones = world.dungeon.zones.filter((z) => !z.hit && z.kind !== 'floor');
+  const zones = world.dungeon.zones.filter((z) => !z.hit && z.kind !== 'floor' && !shared(z));
   const bad = (x) => zones.some((z) => inZone(world, z, { x, y: body.y, onGround: true }));
   for (let d = 0; d < world.map.width; d += 12) {
     for (const x of [body.x - d, body.x + d]) if (x > 24 && x < world.map.width - 24 && !bad(x)) return x;
@@ -1391,6 +1392,8 @@ export function roleThink(bot, world, rng) {
   const br = bot.brain;
   if (bot.down || !br.goal) return;
   const role = world.dungeon.roles[bot.id] ?? 'dps';
+  // Where they stand in the fight, as a group: world/botfight.js.
+  if (!dangerFor(world, bot.body)) placeInGroup(bot, world, role, navOf(world.map));
   const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
   if (floodComing(world)) br.goal = ledgeGoal(world, br.goal.x, 'fight');
   else if (heart && role !== 'healer') br.goal = ledgeGoal(world, heart.x + (Math.sign(bot.body.x - heart.x) || 1) * 60, 'fight');
@@ -1468,20 +1471,22 @@ function thinkRole(bot, world, rng) {
     // Damage: saplings and adds first, then whatever the tank is fighting.
     const menders = fights.filter((m) => m.def.fight?.mender);
     const addsUp = fights.filter((m) => m.add && !m.def.fight?.mender);
-    const target = role === 'dps' ? nearest(menders, body) ?? nearest(addsUp, body) ?? (tankTarget?.hp > 0 ? tankTarget : null) ?? nearest(fights, body) : tankTarget?.hp > 0 ? tankTarget : nearest(fights, body);
+    // (Your target, or your ping, comes right after the saplings.)
+    const focus = focusOf(world);
+    const yours = focus && fights.includes(focus) ? focus : null;
+    const target = role === 'dps' ? nearest(menders, body) ?? yours ?? nearest(addsUp, body) ?? (tankTarget?.hp > 0 ? tankTarget : null) ?? nearest(fights, body) : tankTarget?.hp > 0 ? tankTarget : nearest(fights, body);
     br.target = target ?? null;
     if (!target) return;
     if (role === 'healer') {
-      // Healers hang back behind the tank, away from the middle of the fight.
-      const anchor = tank?.body ?? body;
-      const side = Math.sign(anchor.x - target.x) || -1;
+      // Healers hang back behind the monster, out of its way, at the back of the group.
+      const side = tank && tank.bot !== bot ? behindSide(tank.body, target, -1) : Math.sign(body.x - target.x) || -1;
       br.goal = goalAt(world, Math.max(30, Math.min(world.map.width - 30, target.x + side * 140)), target.y, 'fight');
       const low = up.some((g) => hpOf(world, g) / maxHpOf(world, g) < 0.85);
       if (low) br.target = null;
       return;
     }
-    // Ranged fighters stand on the tank's side so the monster faces away from them.
-    br.goal = spot(target, st.ranged && tank ? Math.sign(tank.body.x - target.x) || sideOf(target) : sideOf(target));
+    // Damage dealers flank it: behind the monster, the far side from the tank it's facing.
+    br.goal = spot(target, tank && tank.bot !== bot ? behindSide(tank.body, target, sideOf(target)) : sideOf(target));
     return;
   }
   br.target = null;
@@ -1603,6 +1608,8 @@ export function healerTurn(bot, world, rng) {
   }
   if (low.length) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
+    if (low[0].g.id === 'you' && low[0].f < 0.5) callOut(world, bot, 'heal');
+    else if (low[0].g.bot === bot && low[0].f < 0.5) callOut(world, bot, 'healSelf');
     bless(low[0].g);
     cast();
     return between(1.1, 1.5, rng);
