@@ -4,6 +4,8 @@
 // wear), the quality odds for a piece, what it needs (have/need, green when it's enough), and the
 // Craft button. Crafting is a short moment at the bench (world/crafting.js): the hero works, the
 // anvil sparks, and the piece comes out. Along the bottom, the life tools you have equipped.
+// The "For" pill picks who it's for: you, or a party member here (a bot party member or an online
+// party friend), who gets it straight away (world/coop-life.js), gear tagged "Made by" you.
 
 import { ITEMS } from '../data/items.js';
 import { CATEGORIES, QUALITIES, ARTISAN_LEVELS, TOOL_SLOTS } from '../data/crafting.js';
@@ -17,6 +19,7 @@ import { MOVES } from '../render/moves.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, wrap, tabs, bar, itemSlot, sparkle, icon } from './kit.js';
 import { itemTooltip } from './tooltips.js';
+import { craftTargets } from '../world/coop-life.js';
 
 const W = 360;
 const H = 252;
@@ -134,6 +137,7 @@ function detail(ui, win, world, r, x, y, w) {
   const who = def.family ? ` · ${JOBS[char.job].name}` : '';
   text(ctx, `${kindOf(def)}${def.reqLevel ? ` · Lv ${def.reqLevel}` : ''}${who}${r.qty > 1 ? ` · makes ${r.qty}` : ''}`, x + 40, y + 22, { size: 6.5, color: COLORS.muted });
   text(ctx, `Crafting Lv ${r.level}`, x + 40, y + 31, { size: 6.5, bold: true, color: lifeLevel(char, 'crafting') >= r.level ? COLORS.good : COLORS.bad });
+  const forWho = friendPill(ui, win, world, x + w - 66, y + 24, 64);
   let ly = y + 46;
 
   // What it is: stats (against what you wear in that slot), a tool's numbers, or what it does.
@@ -194,9 +198,10 @@ function detail(ui, win, world, r, x, y, w) {
   } else {
     const ok = !why && !busy;
     const bw = def.life ? 62 : w - 4;
-    if (button(ui, x, ly, bw, 18, 'Craft', { primary: ok, enabled: ok, size: 8, iconName: 'hammer' })) {
+    if (button(ui, x, ly, bw, 18, forWho && !def.life ? fit(ctx, `Craft for ${forWho.name}`, bw - 24, 8, true) : 'Craft', { primary: ok, enabled: ok, size: 8, iconName: 'hammer' })) {
       const no = startCrafting(world, r, CRAFT_MOVE);
       if (no) world.log(BLOCKER_TEXT[no] ?? 'Stand at the bench to craft.', '#ffb3c6');
+      else if (forWho) world.crafting.forWho = forWho;
     }
     if (why && hover(ui, x, ly, bw, 18)) tooltip(ui, BLOCKER_TEXT[why]);
     if (def.life) {
@@ -214,11 +219,31 @@ function detail(ui, win, world, r, x, y, w) {
     const q = last.result.quality;
     const a = Math.min(1, 3 - (world.now - last.at));
     ctx.globalAlpha = a;
-    const msg = last.result.inst ? `${r.quality ? `${QUALITIES[q].name}! ` : ''}Into your bag.` : `+${last.result.qty} into your bag.`;
+    const msg = last.forWho ? `${r.quality ? `${QUALITIES[q].name}! ` : ''}Sent to ${last.forWho.name}!` : last.result.inst ? `${r.quality ? `${QUALITIES[q].name}! ` : ''}Into your bag.` : `+${last.result.qty} into your bag.`;
     text(ctx, msg, x + 40, y + 40, { size: 7, bold: true, color: r.quality ? QUALITIES[q].color : COLORS.good });
     if (q === 2) sparkle(ctx, x + 30, y + 6, 4 + Math.sin(world.now * 9) * 1.5, '#ffd27a');
     ctx.globalAlpha = 1;
   }
+}
+
+// Who the piece is for: a pill that steps through you and the party members here (a bot party
+// member or an online party friend). Returns the target, or null for yourself.
+function friendPill(ui, win, world, x, y, w) {
+  const { ctx } = ui;
+  const list = craftTargets(world);
+  const who = list.find((t) => t.id === win.forWho) ?? null;
+  if (!who) win.forWho = null;
+  const hot = hover(ui, x, y, w, 12);
+  const on = Boolean(who);
+  box(ctx, x, y, w, 12, { fill: on ? '#ffe4f0' : hot ? '#ffffff' : '#f6f2fb', edge: on ? '#ff8fc1' : ui.theme.light, r: 6, width: 1 });
+  if (on) sparkle(ctx, x + 5, y + 6, 2 + Math.sin(performance.now() / 260) * 0.5, '#ff8fc1');
+  text(ctx, fit(ctx, on ? `For ${who.name}` : 'For: me', w - 14, 6.3, true), x + w / 2 + (on ? 3 : 0), y + 8.4, { size: 6.3, bold: true, align: 'center', color: on ? '#c0407a' : list.length ? COLORS.ink : COLORS.muted });
+  if (hot) tooltip(ui, list.length ? [{ text: 'Craft for a friend', bold: true }, { text: 'Click to pick who gets it: a party member on this map. Gear you make for them says it was made by you.', size: 8, color: COLORS.muted }] : [{ text: 'Craft for a friend', bold: true }, { text: 'Party up with someone here to make things for them.', size: 8, color: COLORS.muted }]);
+  if (list.length && clicked(ui, x, y, w, 12)) {
+    const i = who ? list.indexOf(who) : -1;
+    win.forWho = i + 1 < list.length ? list[i + 1].id : null;
+  }
+  return list.find((t) => t.id === win.forWho) ?? null;
 }
 
 // The four tool slots: the tool in use for each, or a ghost; click one to put it away.

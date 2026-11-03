@@ -4,7 +4,7 @@
 
 import { SETS, SET_SLOTS, setPieceId } from './sets.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
-import { DISHES } from './cooking.js';
+import { DISHES, FEASTS } from './cooking.js';
 import { GATHERED } from './gathering.js';
 import { CRAFT_MATERIALS, craftedItemDefs } from './crafting.js';
 
@@ -470,6 +470,10 @@ add({ id: 'fishing_rod', name: 'Fishing Rod', type: 'etc', price: 300, stack: 1,
 for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, price: f.price, color: f.color, desc: `A ${RARITY_NAMES[f.rarity].toLowerCase()} fish. Cook it at a town stove, or sell it.` });
 for (const d of DISHES) {
   add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });
+}
+// Party feasts (world/coop-life.js): eaten by one, shared by the whole party on the map.
+for (const f of FEASTS) {
+  add({ id: f.id, name: f.name, type: 'use', price: Math.round(Object.values(f.needs).reduce((n, q) => n + q, 0) * 90 + f.heal * 0.4), effect: { feast: f.id, hp: f.heal }, color: f.colors[0], desc: `A party feast: everyone in your party on this map heals ${f.heal} HP and gets ${f.about} for ${Math.round(f.secs / 60)} minutes.` });
 }
 
 // Gathered and mined finds (data/gathering.js).

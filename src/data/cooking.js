@@ -72,3 +72,22 @@ export const DISH_BY_ID = Object.fromEntries(DISHES.map((d) => [d.id, d]));
 
 // How many dishes a pot serves.
 export const SERVINGS = 2;
+
+// Party feasts (world/coop-life.js): one per region tier, a big pot from a bigger batch of that
+// tier's own dish ingredients. Whoever eats one shares it with the whole party on the map (bot
+// members and online friends too): its bonus is two of the tier's dishes together, for longer.
+// FEASTS: { id, name, vessel, colors, needs, heal, values, secs, about, from (the dishes), tier }.
+const feast = (id, name, colors, needs, from, about) => {
+  const ds = from.map((d) => DISH_BY_ID[d]);
+  const values = {};
+  for (const d of ds) for (const [k, v] of Object.entries(d.values)) values[k] = (values[k] ?? 0) + v;
+  return { id, name, vessel: 'bowl', dish: '#ffe9a6', colors, needs, heal: Math.round(ds.reduce((n, d) => n + d.heal, 0) * 0.75), values, secs: 1200, about, from, feast: true };
+};
+export const FEASTS = [
+  feast('feast_meadow', 'Meadow Picnic Feast', ['#ff5a6e', '#ffc6dc'], { wild_strawberry: 3, prickle_pear: 3, honeycomb: 2 }, ['dish_shortcake', 'dish_sorbet'], 'Max HP, MP and speed'),
+  feast('feast_woods', 'Woodland Harvest Feast', ['#ffb347', '#9f8cff'], { chanterelle: 3, temple_mint: 3, whisperberry: 2, honeycomb: 1 }, ['dish_risotto', 'dish_minttea'], 'Max HP and HP back'),
+  feast('feast_shrine', 'Shrine Festival Feast', ['#e05a7a', '#c8e8ff'], { shrine_plum: 2, sea_kelp: 2, crystal_truffle: 3, chanterelle: 1 }, ['dish_onigiri', 'dish_gratin'], 'Max HP, defense and attack'),
+  feast('feast_sky', 'Starfall Sky Feast', ['#ffd8d0', '#e0a85a'], { snow_peach: 3, star_anise: 3, cloudberry: 2, honeycomb: 1 }, ['dish_compote', 'dish_anisestew'], 'Max HP, MP and attack'),
+];
+for (const f of FEASTS) f.tier = Math.max(1, ...Object.keys(f.needs).map((id) => FIND_TIER[id] ?? FISH_BY_ID[id]?.tier ?? 1));
+export const FEAST_BY_ID = Object.fromEntries(FEASTS.map((f) => [f.id, f]));

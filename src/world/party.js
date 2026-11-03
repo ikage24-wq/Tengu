@@ -21,6 +21,7 @@ import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
 import { pickTargets } from './combat.js';
 import { SKILLS } from '../data/skills.js';
 import { inZone } from './story.js';
+import { helpGoal, tickHelpers, tickBotBuffs } from './coop-life.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -1014,6 +1015,15 @@ export function updateParty(bots, world, dt) {
     br.still = youStill ? br.still + dt : 0;
     live(bot, world, members, dt, rng, {
       think: () => think(bot, world, members, rng),
+      // (Helping you at a life spot, they head for their place beside it: world/coop-life.js.)
+      afterThink: () => {
+        const help = helpGoal(bot);
+        if (help) {
+          br.goal = help;
+          br.target = null;
+        }
+      },
+      canFight: !bot.lifeHelp,
       idle: () => {
         // Standing about in town: look where you're headed if you're on the move, or at you if not.
         if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
@@ -1038,4 +1048,7 @@ export function updateParty(bots, world, dt) {
       botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' });
     }
   });
+  // Co-op life skills: helpers at your spot, and feasts wearing off (world/coop-life.js).
+  tickHelpers(bots, world, dt);
+  tickBotBuffs(bots, world);
 }
