@@ -9,6 +9,8 @@
 // notes; { drum: 'K' } a drum hit; anything else is a synth layer (synth.js). See
 // docs/audio/README.md for the rules (jingles after research-japanese.md, Part 5).
 
+import { RECORDED } from './recorded.js';
+
 const N = { C5: 523 };
 // A whoosh: noise swept through a band, rising then falling (`focus` is where it peaks).
 const whoosh = (len, from, to, o = {}) => ({ wave: 'noise', len, env: { bell: true, focus: o.focus ?? 0.55 }, hpf: [from * 0.7, to * 0.7], lpf: [from, to, o.q ?? 1.3], db: o.db ?? 0, at: o.at ?? 0 });
@@ -540,5 +542,8 @@ const R = {
 };
 
 export const RECIPES = R;
+// A recorded effect that keeps its recipe's notes (recorded.js `music`) plays them from this
+// notes-only version alongside the recording, so each job keeps its musical colour.
+for (const [k, rec] of Object.entries(RECORDED)) if (rec.music && R[k]) R[`${k}~music`] = { ...R[k], layers: R[k].layers.filter((l) => l.seq) };
 // How many variants of each recipe to keep: noisy or recorded ones vary, tonal ones are the same.
 export const variantsOf = (name) => (R[name].layers.some((l) => l.rec || /noise/.test(l.wave ?? '')) ? 3 : 1);

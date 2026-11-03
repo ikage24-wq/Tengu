@@ -3,7 +3,8 @@
 // finished sounds (assets/audio/rec), each blow from its impact so nothing lags. These replace the
 // recipe of the same name (recipes.js), which still sets the sound's level, pitch spread, gap and
 // voice cap; `trim` (dB) matches each one's loudness to the recipe it replaces, and `takes` is how
-// many versions there are (one is picked at random each time).
+// many versions there are (one is picked at random each time); `music` plays the recipe's notes (its
+// tuned layers) over the recording, so a job's moves keep their musical colour.
 
 export const RECORDED = {
   // Swings and blows.
@@ -111,6 +112,90 @@ export const RECORDED = {
   waveWash: { trim: 6.4 },
   woodCreak: { trim: 4.9 },
   townBell: { trim: 2.8 },
+  // ----- The jobs' skills: `music` keeps the recipe's notes over the recording -----
+  // Warrior.
+  titanrise: { trim: -4.7, music: true },
+  titanbreak: { trim: -4.5, music: true },
+  unbroken: { trim: -2.6, music: true },
+  // Paladin.
+  pillar: { trim: -0.1 },
+  aegis: { trim: 3.4 },
+  consecrate: { trim: 4.8, music: true },
+  verdict: { trim: -2.4, music: true },
+  sanctified: { trim: -5.1, music: true },
+  // Berserker.
+  bloodmoon: { trim: -2.8, music: true },
+  eclipse: { trim: 2.5 },
+  rageburst: { trim: -1.3 },
+  berserk: { trim: -0.6, music: true },
+  // Star Witch, and her doll.
+  spiritwave: { trim: -1.4 },
+  blessing: { trim: 0, music: true },
+  wardbreak: { trim: 1.8, music: true },
+  heavenslantern: { trim: 2, music: true },
+  lanternray: { trim: 4.9, music: true },
+  lanternblaze: { trim: 3, music: true },
+  stwish: { trim: -1.3, music: true },
+  stveil: { trim: 3.8, music: true },
+  starfallsky: { trim: 2.1, music: true },
+  starfallimpact: { trim: -3.8, music: true },
+  starbolt: { trim: -3, music: true },
+  starcomet: { trim: -2, music: true },
+  suzuBig: { trim: 3.6, music: true },
+  spiritHit: { trim: -1.3, music: true },
+  castSpirit: { trim: 3.6, music: true },
+  allstars: { trim: -1.6, music: true },
+  fanslap: { trim: 2.3 },
+  bellbonk: { trim: 1.9, music: true },
+  dollcharm: { trim: 2, music: true },
+  dolltwirl: { trim: 3.5 },
+  dollpop: { trim: 3.8, music: true },
+  spitball: { trim: 2.3 },
+  spitsplat: { trim: -2.8 },
+  // Starlight Idol.
+  idolnote: { trim: 0.4, music: true },
+  idolbig: { trim: -1.2, music: true },
+  sisong: { trim: 3.5, music: true },
+  idolsong: { trim: 0.4, music: true },
+  siwave: { trim: -2.1, music: true },
+  sistage: { trim: -4, music: true },
+  // Astronomer.
+  ashit: { trim: -4.3, music: true },
+  aswell: { trim: -6.3, music: true },
+  astide: { trim: -2.7, music: true },
+  asalign: { trim: 0.9, music: true },
+  astroplanet: { trim: -1.7 },
+  astrobig: { trim: 3.5, music: true },
+  astromoon: { trim: -0.2, music: true },
+  // Acrobat Archer.
+  achit: { trim: -2.1, music: true },
+  trapsnap: { trim: 8 },
+  showtime: { trim: -0.4, music: true },
+  // Phantom Trickster.
+  pthit: { trim: -4, music: true },
+  ptsmoke: { trim: 1, music: true },
+  ptillusion: { trim: -0.7, music: true },
+  phantom: { trim: 3, music: true },
+  galeFull: { trim: -9.2, music: true },
+  // Arbalist Engineer.
+  aeboom: { trim: -3.7 },
+  aesteam: { trim: 4.7 },
+  aeballista: { trim: -2 },
+  overdrive: { trim: 8, music: true },
+  lockOn: { trim: 8 },
+  castSteel: { trim: -1.8 },
+  // Blade Dancer.
+  bdbounce: { trim: 4.1, music: true },
+  bdcarousel: { trim: -4.6, music: true },
+  carouselfull: { trim: 2.3, music: true },
+  // Sky Dancer.
+  skyupdraft: { trim: -3.3, music: true },
+  skytornado: { trim: 0.2, music: true },
+  tailwindfull: { trim: -9.1, music: true },
+  // Team moves.
+  teamcatch: { trim: -2.1, music: true },
+  teamrevive: { trim: -1.4, music: true },
+  teamburst: { trim: -3.8, music: true },
 };
 
 // The files for a sound: assets/audio/rec/<name>.mp3, or <name>1.mp3, <name>2.mp3... for takes.

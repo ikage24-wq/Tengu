@@ -311,6 +311,119 @@ S['cricket'] = [[('wheat', 10.0, 2.0, 0, 0)]]
 S['waveWash'] = [[('lake', 6.8, 1.6, 0, 0)]]
 S['woodCreak'] = [[('scrape', 0.04, 0.5, 0, 0)]]
 
+
+# ----- The jobs' skills (2026-11-03): the recording is each move's body (its whoosh, impact,
+# texture); moves whose recipe has notes keep them on top (`music` in recorded.js) so every job
+# keeps its own musical colour. -----
+F.update({
+    'gong': '80,TheGong.wav',
+    'searing': '27,Searing.wav',
+    'groan': 'DSGNRise_Cinematic Metallic Riser, Trailer, Designed Groan_JF_Haunted Metal Vol 2_08.wav',
+    'deepmetal': 'DSGNTonl_Deep Metallic Hits, Epic, Sub, Bass_JF_Haunted Metal Vol 3_12.wav',
+    'cannon': 'Bluezone_BC0296_steampunk_weapon_cannon_shot_013_02.wav',
+    'flare': 'Bluezone_BC0296_steampunk_weapon_flare_shot_explosion_003.wav',
+    'machine': 'Bluezone_BC0305_steampunk_machine_mechanical_texture_heavy_impact_011.wav',
+    'gearclick': 'Bluezone_BC0301_tiny_gears_small_mechanism_click_003.wav',
+    'gearspin': 'Bluezone_BC0301_tiny_gears_small_mechanism_sequence_spinning_008.wav',
+    'lever': 'Bluezone_BC0302_industrial_lever_switch_014.wav',
+    'leversmall': 'Bluezone_BC0302_industrial_lever_switch_small_003.wav',
+    'steam': 'AIRBrst_Steam Release Short 03_JSE_SG_Mono.wav',
+    'ricochet': 'MECHMisc_Ricochet Hits 01_JSE_SG.wav',
+    'ping': 'SCIMisc_Ping 18_RSCPC_PX.wav',
+    'zapshort': 'SCIMisc_Zap Short 14_RSCPC_PX.wav',
+    'synthwhoosh': 'WHSH_Whoosh Synth Noise 28_RogueWaves_AnimeStudio.wav',
+    'passlow': 'WHOOSH PASS SF LOW.wav',
+    'bassdown': 'Cartoon Transition Bass Down.wav',
+    'pull': 'Cartoon Pull Swoosh Readout.wav',
+    'pops': 'Cartoon Pops Random Sequence Reverb.wav',
+    'laser': 'Laser_Beam_004.wav',
+    'ocean': 'WATRSurf_Ocean Medium to Large Rocks 02 Loop_Cascadia Shore Waves.wav',
+    'shimmer': 'MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav',
+})
+# Warrior.
+S['titanrise'] = [[('groan', 1.95, 1.0, 0, 0), ('blade', 0.0, 0.36, -6, 0)]]
+S['titanbreak'] = [[('bigboom', 0.0, 1.8, 0, 0), ('stone', 0.0, 0.4, -4, 0), ('woodhit', peak('woodhit', 2.27, 2.9), 0.4, -6, 0)]]
+S['unbroken'] = [[('gong', 0.1, 1.6, 0, 0)]]
+# Paladin.
+S['pillar'] = [[('chord', peak('chord', 0.25, 1.48), 1.1, 0, 0), ('bigboom', 0.0, 1.0, -8, 0), ('handbell', 0.05, 0.9, -8, 0)]]
+S['aegis'] = [[('shield', peak('shield', 0.01, 0.54), 0.5, 0, 0), ('light', 0.0, 1.4, -4, 0), ('handbell', 0.05, 1.0, -10, 0)]]
+S['consecrate'] = [[('cinehit', 0.1, 1.4, 0, 0), ('light', 0.0, 1.2, -4, 0)]]
+S['verdict'] = [[('boomC', 0.25, 1.8, 0, 0), ('chord', peak('chord', 0.25, 1.48), 1.0, -4, 0), ('light', 0.0, 1.2, -6, 0)]]
+S['sanctified'] = [[('light', 0.0, 1.2, 0, 0), ('handbell', 0.05, 1.0, -6, 0)]]
+# Berserker.
+S['bloodmoon'] = [[('groan', 1.95, 1.4, 0, 0), ('braam', 0.3, 1.2, -4, 0)]]
+S['eclipse'] = [[('deepmetal', 1.2, 2.2, 0, 0), ('nuke', 0.0, 2.0, -6, 0)]]
+S['rageburst'] = [[('fire', 0.15, 1.0, 0, 0), ('smash', peak('smash', 0, 0.6), 0.45, -2, 0), ('lowring', peak('lowring', 0, 1), 0.6, -6, 0)]]
+S['berserk'] = [[('growl', 0.05, 1.4, 0, 0), ('deepmetal', 1.2, 1.4, -6, 0)]]
+# Star Witch, and her doll.
+S['spiritwave'] = [[('airy', 0.5, 1.2, 0, 0), ('chord', peak('chord', 0.25, 1.48), 1.0, -4, 0), ('handbell', 0.05, 1.0, -6, 0)]]
+S['blessing'] = [[('astonish', 3.0, 1.5, 0, 0), ('light', 0.0, 1.2, -4, 0)]]
+S['wardbreak'] = [[('glassbrk', 0.08, 0.6, 0, 0), ('glass', 0.3, 0.5, -6, 0)]]
+S['heavenslantern'] = [[('searing', 0.0, 2.0, 0, 0), ('light', 0.0, 1.5, -4, 0)]]
+S['lanternray'] = [[('laser', 0.0, 0.6, 0, 0), ('light', 0.0, 0.5, -8, 0)]]
+S['lanternblaze'] = [[('cinehit', 0.1, 1.6, 0, 0), ('light', 0.0, 1.6, -3, 0), ('handbell', 0.05, 1.4, -6, 0)]]
+S['fanslap'] = [[('smack', peak('smack', 0.03, 0.62), 0.3, 0, 0), ('bag', 0.05, 0.3, -6, 0)]]
+S['bellbonk'] = [[('handbell', 0.05, 1.2, 0, 0), ('file', peak('file', 0, 1.5), 0.3, -4, 0)]]
+S['dollcharm'] = [[('confetti', 0.1, 0.4, 0, 0)]]
+S['dolltwirl'] = [[('pull', 0.5, 0.9, 0, 0)]]
+S['dollpop'] = [[('syringe', 0.0, 0.2, 0, 0), ('pops', 0.0, 0.4, -6, 0)]]
+S['spitball'] = [[('sweep', 0.03, 0.12, 0, 0), ('syringe', 0.0, 0.15, -6, 0)]]
+S['spitsplat'] = [[('bubbles', 0.0, 0.45, 0, 0), ('squelch', 0.0, 0.25, -6, 0)]]
+S['allstars'] = [[('powerup', 0.05, 1.2, 0, 0)]]
+S['stwish'] = [[('light', 0.0, 1.3, 0, 0)]]
+S['stveil'] = [[('astonish', 6.0, 1.1, 0, 0)]]
+S['starfallsky'] = [[('astral', 5.0, 1.3, 0, 0)]]
+S['starfallimpact'] = [[('bigboom', 0.0, 2.0, 0, 0), ('cinehit', 0.1, 1.0, -6, 0), ('crushed', 0.25, 0.8, -10, 0)]]
+S['starbolt'] = [[('glass', 0.3, 0.35, 0, 0), ('ping', 0.0, 0.3, -8, 0)]]
+S['starcomet'] = [[('scifi', 0.18, 0.6, 0, 0), ('handbell', 0.05, 0.6, -10, 0)]]
+S['suzuBig'] = [[('handbell', 0.05, 1.0, 0, 0), ('airy', 0.5, 0.7, -6, 0), ('stone', 0.0, 0.3, -10, 0)]]
+S['spiritHit'] = [[('ping', 0.0, 0.4, 0, 0), ('body', peak('body', 1.16, 1.46), 0.2, -10, 0)]]
+S['castSpirit'] = [[('astonish', 9.0, 0.9, 0, 0)]]
+# Starlight Idol.
+S['idolnote'] = [[('synthwhoosh', 2.55, 0.3, 0, 0)]]
+S['idolbig'] = [[('scifi', 0.18, 0.5, 0, 0)]]
+S['sisong'] = [[('shimmer', 2.0, 0.8, 0, 0)]]
+S['idolsong'] = [[('shimmer', 6.0, 1.2, 0, 0)]]
+S['siwave'] = [[('airy', 0.5, 0.6, 0, 0)]]
+S['sistage'] = [[('cinehit', 0.1, 1.6, 0, 0), ('fireworks', peak('fireworks', 4.1, 4.8), 1.0, -6, 400)]]
+# Astronomer.
+S['ashit'] = [[('ping', 0.0, 0.25, 0, 0), ('glass', 0.3, 0.2, -8, 0)]]
+S['aswell'] = [[('groan', 1.95, 1.4, 0, 0)]]
+S['astide'] = [[('ocean', 9.3, 1.4, 0, 0), ('astral', 5.0, 1.0, -6, 0)]]
+S['asalign'] = [[('gong', 0.1, 2.0, 0, 0), ('bigboom', 0.0, 1.5, -8, 1100)]]
+S['astroplanet'] = [[('scifi', 0.18, 0.4, 0, 0), ('glassbrk', 0.08, 0.3, -12, 0)]]
+S['astrobig'] = [[('passlow', 0.55, 0.9, 0, 0), ('stone', 0.0, 0.3, -6, 0)]]
+S['astromoon'] = [[('synthwhoosh', 2.55, 0.25, 0, 0)]]
+# Acrobat Archer.
+S['achit'] = [[('smack', peak('smack', 0.03, 0.62), 0.15, 0, 0)]]
+S['trapsnap'] = [[('leversmall', 0.0, 0.25, 0, 0), ('drops', 0.04, 0.3, -6, 0)]]
+S['showtime'] = [[('confetti', 0.1, 0.4, 0, 0), ('whistles', 4.0, 1.0, -6, 100)]]
+# Phantom Trickster.
+S['pthit'] = [[('zapshort', 0.0, 0.2, 0, 0)]]
+S['ptsmoke'] = [[('debris', 0.3, 0.6, 0, 0), ('vortex', 0.0, 0.6, -8, 0)]]
+S['ptillusion'] = [[('vortex', 0.0, 1.4, 0, 0), ('bassdown', 0.38, 1.4, -6, 0)]]
+S['phantom'] = [[('vortex', 0.0, 1.2, 0, 0)]]
+S['galeFull'] = [[('airy', 0.5, 1.4, 0, 0)]]
+# Arbalist Engineer.
+S['aeboom'] = [[('cannon', 0.0, 0.6, 0, 0), ('stone', 0.0, 0.3, -6, 0)]]
+S['aesteam'] = [[('steam', 0.0, 0.9, 0, 0)]]
+S['aeballista'] = [[('lever', 0.24, 0.5, 0, 0), ('machine', 0.0, 0.4, -2, 300), ('cannon', 0.0, 1.6, 0, 1000)]]
+S['overdrive'] = [[('gearspin', 0.0, 1.2, 0, 0), ('steam', 2.4, 0.9, -6, 200)]]
+S['lockOn'] = [[('gearclick', 0.0, 0.05, 0, 0)]]
+S['castSteel'] = [[('blade', 0.0, 0.36, 0, 0), ('leversmall', 0.0, 0.2, -6, 100)]]
+# Blade Dancer.
+S['bdbounce'] = [[('ricochet', 0.0, 0.4, 0, 0)]]
+S['bdcarousel'] = [[('energy', 0.07, 0.85, 0, 0), ('airy', 0.5, 1.0, -4, 0)]]
+S['carouselfull'] = [[('energy', 0.07, 0.85, 0, 0), ('powerup', 0.05, 1.0, -6, 0)]]
+# Sky Dancer.
+S['skyupdraft'] = [[('airy', 0.5, 0.7, 0, 0)]]
+S['skytornado'] = [[('storm', 40.0, 2.0, 0, 0), ('airy', 0.5, 1.6, -3, 0)]]
+S['tailwindfull'] = [[('airy', 0.5, 1.3, 0, 0)]]
+# Team moves.
+S['teamcatch'] = [[('syringe', 0.0, 0.2, 0, 0), ('body', peak('body', 1.16, 1.46), 0.2, -10, 0)]]
+S['teamrevive'] = [[('astonish', 3.0, 1.3, 0, 0), ('light', 0.0, 1.0, -4, 0)]]
+S['teamburst'] = [[('bigboom', 0.0, 1.4, 0, 0), ('smash', peak('smash', 0, 0.6), 0.4, -4, 0)]]
+
 missing=[k for k,v in F.items() if not os.path.exists(SRC+v)]
 if missing: sys.exit(f"missing {missing}")
 only = sys.argv[1:]

@@ -83,6 +83,11 @@ function voice(name, o = {}) {
   }
   const db = (r.db ?? -14) + (isRecorded(name) ? RECORDED[name].trim : 0) + (o.db ?? 0) + (ally ? ALLY_DB : 0);
   const v = play(buf, { bus: UI.has(name) ? 'ui' : o.bus ?? 'sfx', db, rate, pan: UI.has(name) ? 0 : o.pan, room: r.room ? 0.35 : 0, at });
+  // A recording that keeps its recipe's notes plays them with it, at the recipe's own level.
+  if (RECORDED[name]?.music && isRecorded(name)) {
+    const notes = sfxBuffer(`${name}~music`);
+    if (notes) play(notes, { bus: o.bus ?? 'sfx', db: db - RECORDED[name].trim, rate, pan: o.pan, room: r.room ? 0.35 : 0, at });
+  }
   voices.push({ name, v, end: (at || t) + buf.duration / rate, ranked });
   if (ranked) {
     recent.push(t);
