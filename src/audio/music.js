@@ -8,6 +8,7 @@
 import { audioReady, now, loop, stop, muffleMusic } from './engine.js';
 import { songBuffer, prepareSongs } from './bank.js';
 import { SONGS } from './songs.js';
+import { trackFor } from './tracks.js';
 
 let want = null;
 let cur = null;
@@ -47,7 +48,8 @@ function leave(fade) {
 let fightK = 0;
 function startFight(c) {
   const key = `${c.key}-fight`;
-  if (!SONGS[key]) return;
+  // A recorded track has no fight layer of its own.
+  if (!SONGS[key] || trackFor(c.key)) return;
   const go = (song) => {
     if (cur !== c || c.fight) return;
     // In step with the song: from where it is now, or with it if it hasn't begun yet.

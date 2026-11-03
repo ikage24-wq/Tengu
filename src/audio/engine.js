@@ -149,6 +149,9 @@ export function muffleMusic(hz, secs = 0.4) {
   musicTone.frequency.setTargetAtTime(Math.max(200, Math.min(20000, hz)), ac.currentTime, secs / 3);
 }
 
+// Decodes a recorded file's bytes (a music track) into a buffer; null before audio is unlocked.
+export const decodeFile = (bytes) => (ac ? new Promise((ok, no) => ac.decodeAudioData(bytes, ok, no)) : Promise.resolve(null));
+
 // A bus's input node (for sounds built live from nodes, like the ambience beds).
 export const busNode = (name) => (buses ? buses[name] : null);
 

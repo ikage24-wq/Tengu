@@ -11,7 +11,8 @@ import { RECIPES, variantsOf } from './recipes.js';
 import { renderSong } from './studio.js';
 import { SONGS } from './songs.js';
 import { loadSamples, transferables } from './samples.js';
-import { onUnlock, toBuffer } from './engine.js';
+import { onUnlock, toBuffer, decodeFile } from './engine.js';
+import { trackFor } from './tracks.js';
 
 const SFX_SR = 44100;
 const SONG_SR = 32000;
@@ -136,6 +137,7 @@ export function sfxBuffer(name) {
 // A song loop: { buffer, loopStart, loopEnd, bpm }, or null while it's being made (it's
 // requested, and `then` runs when it's ready).
 export function songBuffer(key, then) {
+  if (trackFor(key)) return trackBuffer(key, then);
   if (songBufs.has(key)) {
     const song = songBufs.get(key);
     songBufs.delete(key);
@@ -156,9 +158,59 @@ export function songBuffer(key, then) {
 // `prio` 0 makes them as urgent as a song wanted now.
 export function prepareSongs(keys, prio = 3) {
   for (const k of keys) {
+    if (trackFor(k)) {
+      fetchTrack(trackFor(k));
+      continue;
+    }
     if (!SONGS[k] || songBufs.has(k) || (pending.has(k) && prio > 0)) continue;
     pending.add(k);
     asked.delete(`song:${k}`);
     want({ type: 'song', key: k }, prio);
   }
+}
+
+// ----- The recorded tracks (tracks.js) -----
+// Fetched ahead (the bytes are small), decoded only when wanted: a decoded track is about 20 MB a
+// minute, so only the last three are kept. Night keys share the day's file and buffer.
+const trackBytes = new Map();
+const trackBufs = new Map();
+const trackWait = new Map();
+const base = typeof window !== 'undefined' ? new URL('../../', import.meta.url) : null;
+
+function fetchTrack(tr) {
+  if (!base || typeof fetch === 'undefined') return null;
+  if (!trackBytes.has(tr.file)) trackBytes.set(tr.file, fetch(new URL(tr.file, base)).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${tr.file}: ${r.status}`)))));
+  return trackBytes.get(tr.file);
+}
+
+function trackBuffer(key, then) {
+  const tr = trackFor(key);
+  if (trackBufs.has(tr.file)) {
+    const song = trackBufs.get(tr.file);
+    trackBufs.delete(tr.file);
+    trackBufs.set(tr.file, song);
+    return song;
+  }
+  if (then) trackWait.set(tr.file, [...(trackWait.get(tr.file) ?? []), then]);
+  if (trackWait.has(tr.file) && trackWait.get(tr.file).busy) return null;
+  const list = trackWait.get(tr.file) ?? [];
+  list.busy = true;
+  trackWait.set(tr.file, list);
+  fetchTrack(tr)
+    ?.then((bytes) => decodeFile(bytes.slice(0)))
+    .then((buffer) => {
+      const waiters = trackWait.get(tr.file) ?? [];
+      trackWait.delete(tr.file);
+      if (!buffer) return;
+      const song = { buffer, loopStart: 0, loopEnd: buffer.duration, track: tr };
+      trackBufs.set(tr.file, song);
+      while (trackBufs.size > 3) trackBufs.delete(trackBufs.keys().next().value);
+      for (const fn of waiters) fn(song);
+    })
+    .catch((err) => {
+      trackWait.delete(tr.file);
+      trackBytes.delete(tr.file);
+      console.warn('music', tr.file, err);
+    });
+  return null;
 }

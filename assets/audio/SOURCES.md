@@ -12,4 +12,10 @@ are CC0. Rebuild with `node tools/build-audio.mjs`.
   qubodup); and percussion from the two Versilian libraries for the spells (gongs, bells, wind
   chimes, wine glasses, cymbals, drums, zaps).
 
-The music's synths and drums, and the choir, are made in code.
+- **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 3, 4
+  and 5 and Epic Boss Battle; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
+  Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from
+  [OpenGameArt](https://opengameart.org), all CC0.
+
+The written songs (`src/audio/songs.js`), with their synths, drums and choir made in code, are kept
+for any area without a recorded track.
