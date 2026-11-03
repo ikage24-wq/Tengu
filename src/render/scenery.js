@@ -2714,6 +2714,15 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
   ctx.globalAlpha = theme === 'forest' ? 0.72 : theme === 'town' ? 0.88 : 0.92;
   switch (t.skyline) {
     case 'houses':
+      // A painted town already has its far hillside town; its middle row is only a few trees, so
+      // the street reads in front of a calm backdrop (the exterior rule: three depths, no
+      // half-hidden row of houses behind the street).
+      if (t.painted === 'town') {
+        repeat(cam.x, 0.45, 150, width, (i, x) => {
+          if (hash(i + 5) < 0.45) place(ctx, treeArt(hash(i), hash(i + 1) > 0.5, undefined, leanFrame(time, x + cam.x, 5, 0.1, i)), x + 60 + hash(i + 8) * 30, y0 + 4);
+        });
+        break;
+      }
       repeat(cam.x, 0.45, 120, width, (i, x) => {
         const s = hash(i + 5);
         if (s < 0.22) return place(ctx, treeArt(hash(i), hash(i + 1) > 0.5, undefined, leanFrame(time, x + cam.x, 5, 0.1, i)), x + 48, y0 + 4);
@@ -3444,7 +3453,7 @@ function drawProps(ctx, t, map, cam, width, time) {
       // Keep doorways clear around portals and NPCs, and ropes clear on ledges.
       if (s.ground && map.portals.some((p) => Math.abs(p.x - wx) < 44)) continue;
       if (s.ground && map.npcs.some((n) => Math.abs(n.x - wx) < (map.isTown ? 58 : 30))) continue;
-      if (s.ground && map.isTown && map.plaza && Math.abs(map.plaza - wx) < 46) continue;
+      if (s.ground && map.isTown && map.plaza && Math.abs((map.fountain ?? map.plaza) - wx) < 46) continue;
       const sy = s.yAt(wx);
       // Leave room around houses and landmarks standing on a ledge.
       if (!s.ground && (map.deco ?? []).some(([, dx, , dy]) => dy === sy && Math.abs(dx - wx) < 46)) continue;

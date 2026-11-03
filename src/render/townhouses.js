@@ -78,6 +78,165 @@ export function cottageArt(seed) {
   }, false);
 }
 
+// A shingled hip roof across x0 ... x1 from `base` up to a short ridge at `top` (inset by `inset`
+// each side): lit on the left, the right end in shade, a course line every 6 px.
+function hipRoof(x0, x1, base, top, inset, c, seed) {
+  const r = ramp(c, 0.8);
+  const out = [T([[x0, base], [x0 + inset, top], [x1 - inset, top], [x1, base]], c)];
+  out.push(F(T([[x1 - inset - 14, top], [x1 - inset, top], [x1, base], [x1 - 24, base]], mix(c, r.sh, 0.65))));
+  for (let y = base - 6, row = 0; y > top + 3; y -= 6, row++) {
+    const k = (base - y) / (base - top);
+    const a = x0 + inset * k + 1;
+    const b = x1 - inset * k - 1;
+    out.push(F(R(a, y, b - a, 0.8, r.sh)));
+    for (let x = a + 3 + (row % 2) * 3; x < b - 2; x += 7) if (hash(seed + row * 2.7 + x) > 0.3) out.push(F(R(x, y - 5, 0.6, 5, r.sh)));
+  }
+  out.push(F(T([[x0 + 1, base - 0.6], [x0 + inset + 1, top + 0.6], [x0 + inset + 3, top + 0.6], [x0 + 3.6, base - 0.6]], r.hi)), F(R(x0 + inset, top, x1 - x0 - inset * 2, 1.2, r.hi)));
+  return out;
+}
+
+// An arched window: a round top over a square pane, frame and sill.
+function archWindow(x, y, w, h, frame) {
+  const r = w / 2;
+  return [E(x + r, y + r, r + 1, r + 1, frame), R(x - 1, y + r, w + 2, h - r + 1, frame), F(E(x + r, y + r, r, r, '#ffd98a')), F(R(x, y + r, w, h - r, '#ffd98a')), F(E(x + r - r * 0.3, y + r * 0.8, r * 0.5, r * 0.5, '#fff6c9')), F(R(x + r - 0.35, y + 1, 0.7, h - 1, frame)), F(R(x, y + r + (h - r) * 0.45, w, 0.7, frame))];
+}
+
+// A wide, low bungalow, 156 wide and 104 tall: one storey under a big hip roof, an arched bay
+// window with a flower box, the front door under its own little porch, a chimney. Its long low
+// shape sits between the tall houses so the street has a rhythm.
+export function bungalowArt(seed) {
+  const wallC = pick(WALLS, seed * 5 + 2);
+  const roofC = pick(ROOFS, seed * 3 + 4);
+  return art(`bungalow|${wallC}|${roofC}`, 156, 104, () => {
+    const wall = ramp(wallC, 0.6);
+    const roof = ramp(roofC, 0.8);
+    const wood = ramp('#c99a6b', 0.8);
+    const out = [];
+    out.push(...stones(112, 6, 12, 24, ramp('#e2c6c0', 0.7), seed, { rowH: 5, blockW: 6 }), ...beam(110, 3, 16, 4, shade(roofC, -14)));
+    out.push(R(14, 44, 128, 50, wall.base), ...wallShade(14, 46, 128, 48, wall, 3));
+    out.push(...stones(12, 92, 132, 12, ramp('#d8cce4', 0.7), seed * 5, { rowH: 6, blockW: 11 }));
+    out.push(...hipRoof(2, 154, 48, 14, 30, roofC, seed * 11), ...beam(4, 46, 148, 4, shade(roofC, -18)));
+    // The arched bay window and its flower box.
+    out.push(...archWindow(30, 54, 34, 32, '#ffffff'), ...beam(26, 87, 42, 3, '#c99a6b'));
+    for (let k = 0; k < 7; k++) out.push(F(E(29 + k * 6, 86, 2, 1.8, pick(BLOOMS, seed + k * 1.7))));
+    out.push(...archWindow(74, 58, 14, 18, '#ffffff'));
+    // The door under its porch: two posts and a small gable.
+    out.push(R(98, 60, 22, 32, wood.sh), ...planks(99, 61, 20, 31, wood, 3, seed * 7), F(E(115, 77, 1.2, 1.2, '#ffe36b')));
+    out.push(R(91, 54, 3, 38, '#fff4ea'), R(124, 54, 3, 38, '#fff4ea'));
+    out.push(T([[86, 56], [109, 40], [132, 56]], roof.base), F(T([[109, 40], [132, 56], [110, 56]], roof.sh)), ...beam(86, 55, 46, 3, '#fff4ea'));
+    out.push(...beam(94, 101, 30, 3, '#e2d8ee'));
+    out.push(...foliage(140, 98, 8, 6, ramp('#8fdc9a'), seed * 3, { tips: 2 }), ...foliage(18, 99, 7, 5, ramp('#8fdc9a'), seed * 4, { tips: 2 }));
+    return out;
+  }, false);
+}
+
+// A tall, narrow townhouse, 88 wide and 190 tall: three floors under a steep gable with a round
+// attic window, a bay window jutting out of the top floor, shuttered windows on the middle floor,
+// and an arched door with a lantern at street level.
+export function townhouseArt(seed) {
+  const wallC = pick(WALLS, seed * 9 + 3);
+  const roofC = pick(ROOFS, seed * 13 + 2);
+  return art(`townhouse|${wallC}|${roofC}`, 88, 190, () => {
+    const wall = ramp(wallC, 0.6);
+    const roof = ramp(roofC, 0.8);
+    const wood = ramp('#c99a6b', 0.8);
+    const out = [];
+    out.push(R(8, 50, 72, 128, wall.base), ...wallShade(8, 52, 72, 126, wall, 3));
+    out.push(...stones(6, 176, 76, 14, ramp('#d8cce4', 0.7), seed * 5, { rowH: 7, blockW: 10 }));
+    for (const y of [92, 134]) out.push(...beam(6, y, 76, 4, '#c99a6b'));
+    out.push(...gable(0, 88, 54, 2, roofC, seed * 11), ...beam(2, 52, 84, 4, shade(roofC, -18)));
+    out.push(E(44, 34, 7, 7, '#ffffff'), F(E(44, 34, 5.6, 5.6, '#ffd98a')), F(E(42.6, 32.6, 2.6, 2.6, '#fff6c9')), F(R(43.6, 28.4, 0.8, 11.2, '#ffffff')));
+    // The top floor's bay window: a box jutting out on brackets, with its own little roof.
+    out.push(R(24, 62, 40, 26, wall.base), F(R(60, 62, 4, 26, wall.sh)), ...windowPane(30, 66, 28, 16, '#ffffff', '#ffd98a', '#fff6c9'));
+    out.push(T([[20, 63], [44, 54], [68, 63]], roof.base), F(T([[44, 54], [68, 63], [45, 63]], roof.sh)));
+    out.push(T([[26, 88], [34, 88], [30, 94]], wood.sh), T([[54, 88], [62, 88], [58, 94]], wood.sh));
+    // The middle floor: two shuttered windows.
+    out.push(...window2(18, 104, 14, 16, wall, seed + 1, true), ...window2(56, 104, 14, 16, wall, seed + 2, true));
+    // Street level: an arched door with a lantern, and a window.
+    out.push(...archWindow(14, 146, 16, 20, '#ffffff'));
+    out.push(E(56, 150, 11, 11, wood.sh), R(45, 150, 22, 26, wood.sh), ...planks(46, 151, 20, 25, wood, 3, seed * 7), E(56, 151, 10, 9.6, wood.base));
+    out.push(F(E(62, 164, 1.2, 1.2, '#ffe36b')), R(72, 146, 2, 6, '#7a6a8a'), E(73, 155, 3, 3.6, '#fff3a6'), F(E(73.6, 155.6, 1.6, 2.2, '#ffe08a')));
+    out.push(...beam(42, 187, 28, 3, '#e2d8ee'));
+    return out;
+  }, false);
+}
+
+// The village inn, 240 wide and 176 tall, built so you can climb it: the porch roof runs the whole
+// front as a deck 80 px up (a railing at each end, the inn's sign hanging under it), and the upper
+// floor, set back, has a roof terrace 160 px up with potted plants at its corners. Both decks are
+// the map's own ledges (bare platforms), so you jump up the building, not up scaffolding.
+export function innArt() {
+  return art('inn', 240, 176, () => {
+    const wall = ramp('#fff4e6', 0.6);
+    const upper = ramp('#ffe3ef', 0.6);
+    const wood = ramp('#c99a6b', 0.8);
+    const deck = ramp('#e2b98a', 0.8);
+    const out = [];
+    // Upper floor, set back, with its roof terrace.
+    out.push(R(44, 22, 152, 74, upper.base), ...wallShade(44, 24, 152, 72, upper, 3));
+    // Timber framing: corner posts, a mid rail, and cross braces between the windows.
+    for (const x of [44, 92, 144, 192]) out.push(R(x, 22, 4, 72, wood.base), F(R(x + 2.6, 22, 1.4, 72, wood.sh)));
+    out.push(...beam(44, 64, 152, 3, '#c99a6b'));
+    for (const [a, b] of [[48, 92], [148, 192]]) out.push(F(T([[a, 92], [a + 3, 92], [b, 68], [b - 3, 68]], wood.sh)));
+    out.push(...window2(60, 36, 18, 16, upper, 4, true), ...window2(162, 36, 18, 16, upper, 5, true));
+    out.push(R(108, 34, 24, 54, wood.sh), ...planks(109, 35, 22, 53, wood, 3, 9), F(E(126, 62, 1, 1, '#ffe36b')));
+    out.push(...planks(38, 14, 164, 8, deck, 1, 3, true), ...beam(36, 20, 168, 3, shade('#e2b98a', -20)));
+    for (const x of [40, 196]) out.push(R(x, 2, 4, 12, '#fff4ea'), F(R(x + 2.6, 2, 1.4, 12, '#e2d4c8')));
+    out.push(...beam(38, 2, 30, 2.4, '#fff4ea'), ...beam(172, 2, 30, 2.4, '#fff4ea'));
+    for (let k = 0; k <= 14; k++) {
+      const u = k / 14;
+      const x = 42 + u * 156;
+      const y = 3 + Math.sin(u * Math.PI) * 8;
+      if (k % 2) out.push(F(E(x, y + 2.4, 2.2, 2.6, ['#ffe36b', '#ff9ec0', '#9fe0ff'][k % 3])), F(E(x - 0.6, y + 1.8, 0.9, 1, '#ffffff')));
+      else out.push(F(R(x - 5.6, y, 11.2, 0.6, '#7a6a8a')));
+    }
+    for (const x of [52, 188]) out.push(R(x - 6, 8, 12, 7, '#d98a6a'), F(R(x + 3, 8, 3, 7, shade('#d98a6a', -16))), ...foliage(x, 5, 7, 5, ramp('#8fdc9a'), x, { tips: 3 }), F(E(x - 2, 2, 1.6, 1.6, '#ff9ec0')), F(E(x + 3, 3, 1.4, 1.4, '#ffe36b')));
+    // The porch roof deck along the whole front, with a railing at each end.
+    out.push(...planks(6, 94, 228, 8, deck, 1, 7, true), ...beam(4, 100, 232, 3, shade('#e2b98a', -20)));
+    for (let x = 8; x <= 228; x += 10) if (x < 40 || x > 200) out.push(R(x, 84, 1.8, 10, '#fff4ea'), F(R(x + 1.1, 84, 0.7, 10, '#e2d4c8')));
+    out.push(...beam(6, 82, 36, 2.4, '#fff4ea'), ...beam(198, 82, 36, 2.4, '#fff4ea'));
+    // The ground floor: walls, the big double door, windows, and the porch posts.
+    out.push(R(24, 103, 192, 73, wall.base), ...wallShade(24, 103, 192, 73, wall, 4));
+    out.push(E(120, 140, 17, 14, wood.sh), R(103, 140, 34, 36, wood.sh), ...planks(104, 141, 16, 35, wood, 2, 11), ...planks(120, 141, 16, 35, wood, 2, 12), E(120, 141, 16, 12.6, wood.base), F(R(119.4, 130, 1.2, 46, wood.deep)));
+    out.push(F(E(116, 158, 1.2, 1.2, '#ffe36b')), F(E(124, 158, 1.2, 1.2, '#ffe36b')));
+    out.push(...window2(42, 120, 24, 20, wall, 6, true), ...window2(174, 120, 24, 20, wall, 7, true));
+    for (const x of [36, 168]) {
+      for (let k = 0; k < 6; k++) out.push(T([[x + k * 6, 108], [x + k * 6 + 6, 108], [x + k * 6 + 7, 117], [x + k * 6 + 1, 117]], k % 2 ? '#ffffff' : '#ff9ec0'));
+      for (let k = 0; k < 6; k++) out.push(F(E(x + k * 6 + 4, 117, 3, 2, k % 2 ? '#ffffff' : '#ff9ec0')));
+      out.push(F(R(x, 108, 37, 1.2, shade('#ff9ec0', -20))));
+    }
+    for (const x of [8, 226]) out.push(R(x, 102, 6, 74, '#fff4ea'), F(R(x + 4, 102, 2, 74, '#e2d4c8')), ...beam(x - 2, 172, 10, 4, '#e2d8ee'));
+    out.push(...stones(24, 168, 192, 8, ramp('#d8cce4', 0.7), 21, { rowH: 8, blockW: 12 }));
+    // The sign: a board with a frothy mug, hanging under the deck on two little chains.
+    out.push(F(R(77, 103, 0.8, 6, '#7a6a8a')), F(R(91, 103, 0.8, 6, '#7a6a8a')), R(72, 108, 24, 14, '#e8c69a'), F(R(72, 108, 24, 1.4, wood.sh)), R(80, 112, 8, 8, '#ffb38a'), F(R(86, 112, 2, 8, shade('#ffb38a', -18))), E(84, 112, 5, 2.4, '#ffffff'), R(88, 114, 3, 1.2, '#ffb38a'), R(90, 114, 1.2, 4, '#ffb38a'));
+    // A lantern by the door, and planters either side of it.
+    out.push(R(144, 128, 2, 6, '#7a6a8a'), E(145, 137, 3.4, 4, '#fff3a6'), F(E(145.6, 137.6, 1.8, 2.4, '#ffe08a')));
+    for (const x of [96, 152]) out.push(R(x - 5, 168, 10, 8, '#d98a6a'), ...foliage(x, 166, 6, 5, ramp('#8fdc9a'), x * 3, { tips: 2 }), F(E(x, 162, 1.5, 1.5, pick(BLOOMS, x))));
+    return out;
+  }, false);
+}
+
+// An open-fronted workshop shed for the craft bench, 104 wide and 100 tall: a plank back wall,
+// two posts and a slanted shingle roof with a striped valance, a little sign with a hammer, so the
+// bench and its pegboard read as a workshop instead of loose things on the street.
+export function workshedArt(roofC = '#9fb8ff') {
+  return art(`workshed|${roofC}`, 104, 100, () => {
+    const wood = ramp('#c99a6b', 0.8);
+    const back = ramp('#e8c69a', 0.8);
+    const roof = ramp(roofC, 0.8);
+    const out = [];
+    out.push(...planks(8, 30, 88, 66, back, 8, 5), F(R(8, 30, 88, 6, back.sh)));
+    out.push(T([[0, 34], [10, 12], [98, 18], [104, 34]], roof.base), F(T([[60, 15], [98, 18], [104, 34], [70, 34]], roof.sh)));
+    for (let y = 30, row = 0; y > 16; y -= 5, row++) out.push(F(R(4 + row * 2, y, 96 - row * 3, 0.8, roof.sh)));
+    out.push(F(T([[1, 33], [10.6, 12.6], [12.4, 13], [3.4, 33]], roof.hi)));
+    for (let k = 0; k < 9; k++) out.push(T([[4 + k * 11, 34], [15 + k * 11, 34], [15 + k * 11, 38], [9.5 + k * 11, 41], [4 + k * 11, 38]], k % 2 ? '#ffffff' : '#ff9ec0'));
+    for (const x of [6, 92]) out.push(R(x, 34, 6, 66, wood.base), F(R(x + 4, 34, 2, 66, wood.sh)), ...beam(x - 2, 96, 10, 4, '#e2d8ee'));
+    out.push(R(40, 2, 26, 12, '#fff4e6'), F(R(40, 12, 26, 2, '#e2d4c8')), F(R(46, 0, 0.8, 3, '#7a6a8a')), F(R(60, 0, 0.8, 3, '#7a6a8a')));
+    out.push(R(48, 6, 10, 2.4, '#8a7a9a'), R(51.6, 4, 2.8, 7.4, '#c99a6b'));
+    return out;
+  }, false);
+}
+
 // The giant cherry tree over Sprout's plaza, 240 wide and 220 tall: a broad twisting trunk, boughs
 // spreading over the plaza under a lumpy crown of pink, and a round wooden bench at its foot.
 export function plazaTreeArt(v = 0) {
@@ -124,10 +283,12 @@ const CANAL = ['#ffd6e6', '#cfe2ff', '#fff1c4', '#d8f2e4', '#e6dcff'];
 // A tall, narrow canal house, 84 wide and 176 tall: three floors of pastel plaster under a stepped
 // gable, warm lit windows (it's always evening at the harbor), a hoist beam at the top, a door up
 // two steps, and a little awning over the ground-floor window.
-export function canalHouseArt(seed) {
+// `gableKind` picks the top: 'step' (stepped), 'bell' (a curved bell gable) or 'neck' (a tall
+// neck with scrolled shoulders and a little pediment), so a row of them reads as different houses.
+export function canalHouseArt(seed, gableKind = 'step') {
   const wallC = pick(CANAL, seed);
   const trimC = pick(['#ffffff', '#fff4ea', '#ece4ff'], seed * 5);
-  return art(`canal|${wallC}|${trimC}`, 84, 176, () => {
+  return art(`canal|${wallC}|${trimC}|${gableKind}`, 84, 176, () => {
     const W = 84;
     const H = 176;
     const wall = ramp(wallC, 0.6);
@@ -135,11 +296,30 @@ export function canalHouseArt(seed) {
     const wood = ramp('#8a6a5a', 0.8);
     const top = 40;
     const out = [];
-    // The stepped gable: three steps up each side to the hoist beam.
-    out.push(T([[6, top + 6], [6, top - 4], [14, top - 4], [14, top - 14], [22, top - 14], [22, top - 24], [30, top - 24], [30, top - 34], [54, top - 34], [54, top - 24], [62, top - 24], [62, top - 14], [70, top - 14], [70, top - 4], [78, top - 4], [78, top + 6]], wall.base));
-    out.push(F(T([[54, top - 34], [54, top - 24], [62, top - 24], [62, top - 14], [70, top - 14], [70, top - 4], [78, top - 4], [78, top + 6], [64, top + 6]], wall.sh)));
-    for (const [x, y, w] of [[6, top - 6, 8], [14, top - 16, 8], [22, top - 26, 8], [30, top - 36, 24], [54, top - 26, 8], [62, top - 16, 8], [70, top - 6, 8]]) out.push(...beam(x - 1, y, w + 2, 3, trimC));
-    out.push(R(40, top - 30, 4, 8, wood.base), R(38, top - 32, 16, 3, wood.base), R(51, top - 29, 1, 6, '#5a4a6a'));
+    if (gableKind === 'bell') {
+      // A bell gable: curving in from the shoulders to a rounded top, a cornice along it.
+      const pts = [[6, top + 6], [6, top - 2], [14, top - 6], [20, top - 14], [24, top - 24], [30, top - 31], [36, top - 35], [42, top - 36], [48, top - 35], [54, top - 31], [60, top - 24], [64, top - 14], [70, top - 6], [78, top - 2], [78, top + 6]];
+      out.push(T(pts, wall.base), F(T([[42, top - 36], ...pts.slice(8), [64, top + 6]], wall.sh)));
+      for (let i = 1; i < pts.length - 2; i++) {
+        const [ax, ay] = pts[i];
+        const [bx, by] = pts[i + 1];
+        out.push(F(T([[ax, ay - 1.4], [bx, by - 1.4], [bx, by + 1.2], [ax, ay + 1.2]], trimC)));
+      }
+      out.push(F(E(42, top - 37, 3, 2.4, trimC)));
+    } else if (gableKind === 'neck') {
+      // A neck gable: a tall neck with scrolled shoulders and a small pediment on top.
+      out.push(T([[6, top + 6], [6, top - 4], [24, top - 12], [26, top - 30], [58, top - 30], [60, top - 12], [78, top - 4], [78, top + 6]], wall.base));
+      out.push(F(T([[48, top - 30], [58, top - 30], [60, top - 12], [78, top - 4], [78, top + 6], [64, top + 6]], wall.sh)));
+      out.push(T([[22, top - 30], [42, top - 39], [62, top - 30]], trimC), F(T([[42, top - 39], [62, top - 30], [43, top - 30]], trim.sh)));
+      for (const [cx, cy] of [[16, top - 6], [68, top - 6]]) out.push(E(cx, cy, 5, 4, trimC), F(E(cx, cy, 2.4, 2, wall.base)));
+      out.push(...beam(4, top - 6, 76, 3, trimC), ...beam(24, top - 32, 36, 3, trimC));
+    } else {
+      // The stepped gable: three steps up each side to the hoist beam.
+      out.push(T([[6, top + 6], [6, top - 4], [14, top - 4], [14, top - 14], [22, top - 14], [22, top - 24], [30, top - 24], [30, top - 34], [54, top - 34], [54, top - 24], [62, top - 24], [62, top - 14], [70, top - 14], [70, top - 4], [78, top - 4], [78, top + 6]], wall.base));
+      out.push(F(T([[54, top - 34], [54, top - 24], [62, top - 24], [62, top - 14], [70, top - 14], [70, top - 4], [78, top - 4], [78, top + 6], [64, top + 6]], wall.sh)));
+      for (const [x, y, w] of [[6, top - 6, 8], [14, top - 16, 8], [22, top - 26, 8], [30, top - 36, 24], [54, top - 26, 8], [62, top - 16, 8], [70, top - 6, 8]]) out.push(...beam(x - 1, y, w + 2, 3, trimC));
+      out.push(R(40, top - 30, 4, 8, wood.base), R(38, top - 32, 16, 3, wood.base), R(51, top - 29, 1, 6, '#5a4a6a'));
+    }
     // Three floors of plaster with trim bands.
     out.push(R(6, top + 6, 72, H - top - 6, wall.base), ...wallShade(6, top + 8, 72, H - top - 8, wall, 2.4));
     for (const y of [top + 50, top + 94]) out.push(...beam(4, y, 76, 3.4, trimC));
@@ -152,6 +332,47 @@ export function canalHouseArt(seed) {
     out.push(...window2(48, H - 40, 20, 18, wall, seed + 3, false));
     const aw = pick(['#ff8fb0', '#8fb8ff', '#7fd1a8'], seed * 9);
     for (let k = 0; k < 6; k++) out.push(T([[44 + k * 5, H - 52], [49 + k * 5, H - 52], [49 + k * 5, H - 46], [44 + k * 5, H - 44]], k % 2 ? '#ffffff' : aw));
+    return out;
+  }, false);
+}
+
+// The harbor warehouse, 240 wide and 176 tall, built to be climbed: pastel brick under a flat
+// roof with a parapet and a hoist crane, a loading gallery across the front 80 px up (rope rails
+// at the ends, a few crates stacked neatly at one end), and the roof 160 px up. Both are the map's
+// own ledges (bare platforms). Big arched cargo doors at street level, a hoist door upstairs with
+// its pulley and a hanging hook.
+export function warehouseArt() {
+  return art('warehouse', 240, 176, () => {
+    const brick = ramp('#e8a9a0', 0.7);
+    const wood = ramp('#8a6a5a', 0.8);
+    const deck = ramp('#c9a27a', 0.8);
+    const trim = '#fff4ea';
+    const out = [];
+    out.push(...stones(18, 22, 204, 154, brick, 31, { rowH: 6, blockW: 14 }));
+    out.push(F(R(18, 22, 204, 3, brick.deep)), F(R(219, 22, 3, 154, brick.deep)));
+    // The roof: a parapet with a coping, and a hoist crane arm.
+    out.push(...beam(14, 14, 212, 8, trim), ...beam(12, 12, 216, 3, '#e2d8ee'));
+    out.push(R(196, 0, 5, 14, wood.base), R(176, 0, 34, 4, wood.base), F(R(176, 2.6, 34, 1.4, wood.sh)), F(R(180, 4, 0.8, 10, '#5a4a6a')), F(E(180.4, 15, 2, 1.6, '#8a8aa0')));
+    // Upstairs: the hoist door and two round windows.
+    out.push(R(104, 32, 32, 46, wood.sh), ...planks(105, 33, 15, 45, wood, 2, 4), ...planks(120, 33, 15, 45, wood, 2, 5), ...beam(100, 30, 40, 4, trim));
+    out.push(R(116, 24, 8, 4, '#8a8aa0'), F(R(119.6, 28, 0.8, 30, '#5a4a6a')), F(T([[118, 58], [122, 58], [122, 62], [119, 64]], '#8a8aa0')));
+    for (const x of [56, 184]) out.push(E(x, 52, 13, 13, trim), F(E(x, 52, 10.6, 10.6, '#ffd98a')), F(E(x - 3, 49, 4.4, 4.4, '#fff6c9')), F(R(x - 0.4, 41.4, 0.8, 21.2, trim)), F(R(x - 10.6, 51.6, 21.2, 0.8, trim)));
+    // The loading gallery: a deck on brackets, rope rails at its ends, a few crates.
+    out.push(...planks(6, 94, 228, 8, deck, 1, 13, true), ...beam(4, 100, 232, 3, shade('#c9a27a', -22)));
+    for (let x = 22; x < 220; x += 28) out.push(T([[x, 103], [x + 8, 103], [x + 2, 116]], wood.sh));
+    for (const x0 of [8, 202]) {
+      out.push(R(x0, 80, 3, 14, wood.base), R(x0 + 27, 80, 3, 14, wood.base));
+      out.push(F(T([[x0 + 1.5, 83], [x0 + 15, 86.5], [x0 + 28.5, 83], [x0 + 28.5, 84.4], [x0 + 15, 88], [x0 + 1.5, 84.4]], '#d9b98a')));
+    }
+    for (const [x, y, w, h] of [[42, 80, 16, 14], [58, 84, 12, 10], [46, 70, 12, 10]]) out.push(R(x, y, w, h, '#d9a273'), F(R(x + w - 2.4, y, 2.4, h, shade('#d9a273', -18))), F(R(x, y, w, 1.2, '#f2c99a')), F(T([[x + 1, y + 1], [x + 3, y + 1], [x + w - 1, y + h - 1], [x + w - 3, y + h - 1]], shade('#d9a273', -12))));
+    // Street level: two big arched cargo doors and a lantern between them.
+    for (const x of [36, 144]) {
+      out.push(E(x + 30, 130, 31, 16, trim), R(x - 1, 130, 62, 46, trim));
+      out.push(E(x + 30, 131, 28, 14, wood.sh), R(x + 2, 131, 56, 45, wood.sh), ...planks(x + 3, 132, 26, 44, wood, 3, x), ...planks(x + 31, 132, 26, 44, wood, 3, x + 1));
+      out.push(F(T([[x + 4, 140], [x + 8, 140], [x + 28, 172], [x + 24, 172]], wood.base)), F(T([[x + 32, 172], [x + 36, 172], [x + 56, 140], [x + 52, 140]], wood.base)));
+    }
+    out.push(R(119, 128, 2, 6, '#5a4a6a'), E(120, 138, 3.4, 4.4, '#fff3a6'), F(E(120.6, 138.6, 1.8, 2.6, '#ffe08a')));
+    out.push(...beam(16, 172, 208, 4, '#c9c3d8'));
     return out;
   }, false);
 }
@@ -217,6 +438,43 @@ export function adobeHouseArt(seed) {
   }, false);
 }
 
+// A wide sandstone arcade house, 160 wide and 120 tall: one storey behind a shaded arcade of three
+// round arches with a striped awning, and a roof garden 90 px up behind a low parapet (planters,
+// a trellis of vines, a lantern). Its roof is a ledge on the map, reached by the ladder at its side.
+export function adobeArcadeArt(seed) {
+  const wallC = pick(ADOBE, seed * 3 + 1);
+  const cloth = pick(['#5fb8d8', '#ff8a5c', '#ffd66b'], seed * 5);
+  return art(`adobearcade|${wallC}|${cloth}`, 160, 120, () => {
+    const wall = ramp(wallC, 0.7);
+    const wood = ramp('#8a5a3c', 0.8);
+    const top = 30;
+    const out = [];
+    // The roof garden: a trellis of vines, planters and a lantern on a post.
+    out.push(R(104, 2, 3, 28, wood.base), R(150, 2, 3, 28, wood.base), R(100, 2, 56, 3, wood.base), F(R(100, 4, 56, 1, wood.sh)));
+    for (let k = 0; k < 6; k++) out.push(...foliage(106 + k * 9, 6 + (k % 2) * 2, 5, 4, ramp('#8fd08a'), seed + k, { flat: true }), F(E(106 + k * 9, 9, 1.3, 1.3, k % 2 ? '#ff9ec0' : '#ffe36b')));
+    for (const x of [18, 44, 70]) out.push(R(x - 6, top - 9, 12, 9, '#d98a6a'), F(R(x + 3, top - 9, 3, 9, '#b8705a')), E(x, top - 13, 6, 5, '#7fc98a'), F(E(x - 2, top - 15, 1.6, 1.6, x === 44 ? '#ffe36b' : '#ff9ec0')));
+    out.push(R(88, top - 22, 2, 22, '#7a5238'), E(89, top - 24, 3.4, 4, '#fff3a6'), F(E(89.6, top - 23.4, 1.8, 2.4, '#ffe08a')));
+    // The walls and the parapet.
+    out.push(T([[4, 120], [4, top + 4], [8, top], [152, top], [156, top + 4], [156, 120]], wall.base), F(R(4, top, 152, 3, wall.hi)), F(R(150, top + 4, 6, 116 - top, mix(wall.base, wall.sh, 0.6))));
+    for (let x = 12; x < 150; x += 16) out.push(R(x, top + 7, 6, 4, wood.base), F(R(x, top + 9.6, 6, 1.4, wood.sh)));
+    // The awning over the arcade.
+    for (let k = 0; k < 12; k++) out.push(T([[8 + k * 12, top + 16], [20 + k * 12, top + 16], [21 + k * 12, top + 26], [9 + k * 12, top + 26]], k % 2 ? '#ffffff' : cloth));
+    for (let k = 0; k < 12; k++) out.push(F(E(14.5 + k * 12, top + 26, 6, 2.6, k % 2 ? '#ffffff' : cloth)));
+    out.push(F(R(8, top + 16, 144, 1.4, shade(cloth, -20))));
+    // Three round arches into the shaded arcade, a lit doorway and pots inside.
+    for (const x of [16, 62, 108]) {
+      out.push(E(x + 18, top + 52, 19, 16, wall.sh), R(x - 1, top + 52, 38, 38, wall.sh));
+      out.push(E(x + 18, top + 53, 16, 14, '#8a5a5a'), R(x + 2, top + 53, 32, 37, '#8a5a5a'));
+      out.push(F(E(x + 18, top + 53, 16, 14, mix('#8a5a5a', '#5a3f4c', 0.4))));
+    }
+    out.push(R(72, top + 56, 16, 34, '#5a3f4c'), F(R(74, top + 66, 12, 24, '#ffd98a')), F(R(74, top + 66, 6, 12, '#fff6c9')));
+    out.push(E(36, top + 86, 7, 4, '#c97f4f'), E(36, top + 80, 5, 6, '#9fd88a'), E(126, top + 86, 7, 4, '#c97f4f'), E(126, top + 79, 4, 7, '#7fc98a'));
+    for (const x of [14, 60, 106, 152]) out.push(R(x - 1, top + 50, 4, 40, wall.base), F(R(x + 2, top + 50, 1, 40, wall.sh)));
+    out.push(...beam(2, 116, 156, 4, '#c97f4f'));
+    return out;
+  }, false);
+}
+
 // The sparring arena at the heart of the crag: a ring of sand with low posts and ropes, a banner at
 // each corner, a weapon rack and a gong. 280 wide, 96 tall.
 export function arenaArt() {
@@ -266,6 +524,41 @@ export function treeHomeArt(seed) {
 // The moon-lantern tree over the grove's plaza: a great dark tree hung with paper lanterns (their
 // light drawn live), a crescent moon charm at its heart, and a ring of stones at its foot. 260 wide,
 // 240 tall.
+// A giant glowcap mushroom home for the grove, 124 wide and 140 tall: a thick pale stem with a
+// round door, two porthole windows and a little balcony, under a wide domed cap with glowing spots,
+// a crooked chimney poking through and lanterns hung from its rim.
+export function mushHomeArt(seed) {
+  const capC = pick(['#9f8ae0', '#7fb8e8', '#c48ae0'], seed);
+  return art(`mushhome|${capC}`, 124, 140, () => {
+    const stem = ramp('#f2e8ff', 0.6);
+    const cap = ramp(capC, 0.8);
+    const wood = ramp('#a88a78', 0.8);
+    const out = [];
+    // The stem, flaring at the foot.
+    out.push(T([[30, 140], [36, 112], [38, 70], [86, 70], [88, 112], [94, 140]], stem.base), F(T([[72, 70], [86, 70], [88, 112], [94, 140], [76, 140]], stem.sh)));
+    out.push(F(T([[36, 112], [38, 74], [44, 74], [42, 112]], stem.hi)));
+    // The chimney behind the cap.
+    out.push(R(84, 6, 9, 20, '#b8a8c8'), F(R(90, 6, 3, 20, '#9a8ab0')), R(82, 4, 13, 4, '#9a8ab0'));
+    // The cap: a wide dome with a lit crown, glowing spots and a frilled rim.
+    const dome = [[2, 70], [8, 46], [24, 24], [46, 12], [62, 10], [78, 12], [100, 24], [116, 46], [122, 70]];
+    out.push(T(dome, cap.base), F(T([[62, 10], [78, 12], [100, 24], [116, 46], [122, 70], [70, 70]], cap.sh)));
+    out.push(F(T([[10, 50], [24, 28], [44, 16], [56, 14], [40, 26], [24, 44], [18, 58]], cap.hi)));
+    for (const [x, y, r] of [[30, 44, 6], [56, 26, 5], [80, 36, 7], [100, 56, 5], [48, 56, 4], [16, 62, 3]]) out.push(F(E(x, y, r, r * 0.8, '#e8fff8')), F(E(x - r * 0.25, y - r * 0.25, r * 0.4, r * 0.3, '#ffffff')));
+    for (let k = 0; k < 12; k++) out.push(F(E(6 + k * 10, 70, 6, 3, k % 2 ? cap.sh : cap.deep)));
+    // Lanterns from the rim.
+    for (const x of [14, 110]) out.push(F(R(x - 0.4, 72, 0.8, 8, '#5a4a6a')), E(x, 84, 4, 5, '#fff3a6'), F(E(x + 0.6, 84.6, 2.2, 3, '#ffe08a')), F(R(x - 4, 79, 8, 1.4, '#9f8ae0')));
+    // Porthole windows, the little balcony, and the round door.
+    for (const [x, y] of [[50, 88], [74, 90]]) out.push(E(x, y, 7, 7, wood.base), F(E(x, y, 5.4, 5.4, '#ffd98a')), F(E(x - 1.6, y - 1.6, 2.2, 2.2, '#fff6c9')), F(R(x - 0.3, y - 5.4, 0.6, 10.8, wood.base)));
+    out.push(...beam(40, 100, 44, 3, '#a88a78'));
+    for (let k = 0; k < 9; k++) out.push(R(42 + k * 5, 92, 1.4, 8, '#e2d4f0'));
+    out.push(...beam(40, 91, 44, 2, '#e2d4f0'));
+    out.push(E(62, 118, 11, 10, wood.sh), R(51, 118, 22, 22, wood.sh), ...planks(52, 119, 20, 21, wood, 3, seed * 7), E(62, 119, 10, 9, wood.base), F(E(68, 130, 1.2, 1.2, '#ffe36b')));
+    out.push(...beam(46, 137, 32, 3, '#c9c3d8'));
+    out.push(...foliage(26, 136, 9, 6, ramp('#8fd0b8'), seed * 3, { tips: 2 }), ...foliage(100, 137, 8, 5, ramp('#8fd0b8'), seed * 5, { tips: 2 }));
+    return out;
+  }, false);
+}
+
 export function moonTreeArt() {
   return art('moontree', 260, 240, () => {
     const b = ramp('#5a4a8a', 0.85);

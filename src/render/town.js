@@ -19,7 +19,7 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
@@ -458,17 +458,22 @@ export function drawStreet(ctx, map, cam, width, time) {
   // A redesigned town lays out its own two-storey cottages, set back a step behind the street.
   // Each town's own kind of home (`homeStyle`): Sprout's cottages, the harbor's canal houses, the
   // crag's flat-roofed sandstone houses, the grove's tree homes.
-  for (const wx of map.cottages ?? []) {
+  // An entry is a place, or [place, kind] for one of the street's other buildings (the bungalow,
+  // the townhouse, the inn), so a street mixes tall, low and wide buildings.
+  for (const entry of map.cottages ?? []) {
+    const [wx, kind] = Array.isArray(entry) ? entry : [entry, null];
     const x = wx - cam.x;
-    if (x < -90 || x > width + 90) continue;
+    if (x < -130 || x > width + 130) continue;
     const seed = hash(wx * 0.11 + 3);
-    const style = map.homeStyle ?? 'cottage';
-    const s = style === 'canal' ? canalHouseArt(seed) : style === 'adobe' ? adobeHouseArt(seed) : style === 'treehome' ? treeHomeArt(seed) : cottageArt(seed);
+    const style = kind ?? map.homeStyle ?? 'cottage';
+    const s = style.startsWith('canal') ? canalHouseArt(seed, style.split('-')[1] ?? pick(['step', 'bell', 'neck'], seed)) : style === 'warehouse' ? warehouseArt() : style === 'arcade' ? adobeArcadeArt(seed) : style === 'mushhome' ? mushHomeArt(seed) : style === 'adobe' ? adobeHouseArt(seed) : style === 'treehome' ? treeHomeArt(seed) : style === 'bungalow' ? bungalowArt(seed) : style === 'townhouse' ? townhouseArt(seed) : style === 'inn' ? innArt() : cottageArt(seed);
     const hy = ground(wx);
     place(ctx, s, snap(x), hy + 2);
     if (style === 'cottage') chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
+    else if (style === 'bungalow') chimneySmoke(ctx, x + 40, hy - 100, time, seed);
+    else if (style === 'inn') glowSoft(ctx, x + 25, hy - 40, 18, '#ffe9a6', 0.3 + 0.06 * Math.sin(time * 1.7));
     // Lit windows breathe a little light at night.
-    if (style === 'canal' || style === 'treehome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
+    if (style.startsWith('canal') || style === 'treehome' || style === 'mushhome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
   }
   // The town stove: the fire licking in its arch (three drawings flowing one into the next), the
   // pot's lid rattling on the boil now and then, and cel puffs of steam curling up and tearing
@@ -511,6 +516,7 @@ export function drawStreet(ctx, map, cam, width, time) {
   // someone works there: map.benchWork, set by world/crafting.js).
   if (map.bench != null) {
     const x = snap(map.bench - cam.x);
+    if (map.workshed && x > -70 && x < width + 70) place(ctx, workshedArt(), x, ground(map.bench) + 2);
     if (x > -60 && x < width + 60) drawCraftBench(ctx, map.theme, x, ground(map.bench), time, map.bench, map.benchWork ?? null);
   }
   // The town's capsule machine: its capsules rattle now and then, a glint slides over the globe,
@@ -587,8 +593,9 @@ export function drawStreet(ctx, map, cam, width, time) {
   }
   // The plaza fountain, with water arcing from the spout.
   if (map.plaza != null) {
-    const x = snap(map.plaza - cam.x);
-    const gy = ground(map.plaza);
+    const fx = map.fountain ?? map.plaza;
+    const x = snap(fx - cam.x);
+    const gy = ground(fx);
     if (x > -60 && x < width + 60) {
       place(ctx, fountainArt(Math.floor(time * 5) % FOUNTAIN_FRAMES), x, gy);
       fountainWater(ctx, x, gy, time);

@@ -18,29 +18,35 @@ import { SPOT } from './gathering.js';
 export const MAPS = {
   // Sprout Village, laid out with room to breathe (the town rules: districts with a feel, everything
   // a short walk from the plaza, nothing important up a ladder). Left to right: Cottage Row by the
-  // west gate, where Mira welcomes you, with the terraced walk between two cottages; a duck pond in a
-  // flower garden; Market Street (Pip's goods, Lulu's salon, the stove by the well); Cherry Plaza, a
+  // west gate, where Mira welcomes you, and the inn you can climb (its porch roof and roof terrace);
+  // Market Street (Pip's goods, Lulu's salon, the stove); a duck pond in Garden Corner; Cherry Plaza, a
   // step up, round the fountain and the great cherry tree (a branch to climb, where the cat naps);
   // and the Archers' Quarter, Kestrel and the watchtower, the range, and a cottage by the east road.
   sprout: {
-    id: 'sprout', plaza: 1800, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    id: 'sprout', plaza: 1800,
+    // The fountain stands clear of the cherry tree, on the plaza's east side.
+    fountain: 1915, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1660,
     // The craft bench (data/crafting.js), on Market Street, between Lulu's salon and Pip's goods.
     bench: 1400,
     // The town's capsule machine (data/outfits-gacha.js).
-    gacha: 1960,
+    gacha: 1995,
     width: 3200, height: 520, groundY: 480,
     look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
     // (The street plan, 2026-11-02: Cottage Row, Market Street, Cherry Plaza raised a step in the
     // middle with the shops round it, a quiet Garden Corner, then the Archers' Quarter.)
     terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [3200, 480]],
-    // The cottages, and the plaza's own pieces (render/townhouses.js).
-    cottages: [200, 520, 800, 1080, 2340],
-    townPieces: [['plazatree', 1800], ['noticeboard', 2040]],
+    // The street's buildings (render/townhouses.js), varied so the street has a rhythm: a cottage
+    // by the west gate, a tall townhouse, the inn (whose porch roof and roof terrace are the climb),
+    // a low bungalow on Market Street, and a cottage by the pond in Garden Corner.
+    cottages: [200, [440, 'townhouse'], [690, 'inn'], [1050, 'bungalow'], 2340],
+    townPieces: [['plazatree', 1800]],
+    // The craft bench stands in its own little open workshop.
+    workshed: true,
     platforms: [
-      // The terraced walk between two cottages.
-      { x: 610, y: 400, w: 150, posts: true }, { x: 700, y: 320, w: 120, posts: true },
+      // The inn's porch roof and its roof terrace (drawn with the inn).
+      { x: 578, y: 400, w: 224, bare: true }, { x: 616, y: 320, w: 148, bare: true },
       // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
       { x: 1690, y: 330, w: 96, bare: true },
       // The watchtower's deck (TOWER_DECK above the ground).
@@ -67,9 +73,9 @@ export const MAPS = {
       { name: "Archers' Quarter", from: 2420, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 300, y: 440 }, { x: 660, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 416 }, { x: 2080, y: 416 }, { x: 2260, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
+    lamps: [{ x: 300, y: 440 }, { x: 870, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 416 }, { x: 2080, y: 416 }, { x: 2260, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
-      ['well', 980], ['pond', 2220], ['giantflower', 2160, 1],
+      ['pond', 2220],
       ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
       ['bowrack', 2740], ['fence', 2825], ['archtarget', 2880, 0], ['archtarget', 2940, 1], ['archtarget', 3000, 2], ['haystack', 3050, 1],
@@ -236,7 +242,7 @@ export const MAPS = {
 
   // The thieves' home port at dusk, in quarters: the market (Marlo's cart among tall pastel canal
   // houses); the raised harbor plaza with the fountain and the Harbor Office; the back alley under
-  // washing lines (Vex's Den, a rooftop hideout up on stilts behind it); then the pier, a walkable
+  // washing lines (Vex's Den, and the warehouse you can climb behind it); then the pier, a walkable
   // boardwalk over the water with rowboats tied up, the moored ship, and the lighthouse.
   harbor: {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
@@ -248,11 +254,14 @@ export const MAPS = {
     look: { islands: 'planks', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
     homeStyle: 'canal',
-    cottages: [180, 470, 600, 1190, 1420, 1720],
-    townPieces: [['pier', 2120], ['noticeboard', 830]],
+    // Canal Row is one terrace of narrow houses wall to wall, each with its own gable (neck, bell,
+    // stepped); a house on the square and one in the alley; and the warehouse by the pier, whose
+    // loading gallery and roof are the climb (render/townhouses.js).
+    cottages: [[180, 'canal-neck'], [432, 'canal-bell'], [516, 'canal-step'], [600, 'canal-neck'], [1190, 'canal-bell'], [1420, 'canal-step'], [1775, 'warehouse']],
+    townPieces: [['pier', 2120]],
     platforms: [
-      // The rooftop hideout behind the Den, on stilts.
-      { x: 1660, y: 400, w: 150, posts: true }, { x: 1740, y: 320, w: 150, posts: true },
+      // The warehouse's loading gallery and its roof (drawn with the warehouse).
+      { x: 1661, y: 400, w: 228, bare: true }, { x: 1680, y: 320, w: 190, bare: true },
       // The pier's deck.
       { x: 1972, y: 426, w: 296, bare: true },
     ],
@@ -273,7 +282,7 @@ export const MAPS = {
     ],
     // Lamps that glow at night (world/daytime.js): the canal, the square, the alley, the lighthouse.
     lamps: [{ x: 330, y: 440 }, { x: 700, y: 440 }, { x: 1060, y: 420 }, { x: 1320, y: 430 }, { x: 1880, y: 430 }, { x: 2120, y: 400 }, { x: 2440, y: 330 }],
-    deco: [['crates', 120], ['barrels', 720], ['alleylamp', 1320], ['laundryline', 1470], ['alleylamp', 1880], ['crates', 1800, 0, 320], ['lighthouse', 2440]],
+    deco: [['crates', 120], ['barrels', 720], ['alleylamp', 1320], ['laundryline', 1470], ['lighthouse', 2440]],
     spawns: [],
   },
 
@@ -577,13 +586,15 @@ Object.assign(MAPS, {
     look: { propKeep: 0.8 },
     terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
     homeStyle: 'adobe',
-    cottages: [530, 1400, 1950],
-    townPieces: [['arena', 1080], ['noticeboard', 1255]],
+    // Two sandstone houses and, on Forge Row, a wide arcade house with a roof garden (each roof a
+    // ledge up the ladder at its side).
+    cottages: [530, 1400, [1960, 'arcade']],
+    townPieces: [['arena', 1080]],
     platforms: [
       // The houses' flat roofs (their own art: nothing drawn for them), up the ladders.
-      { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1902, y: 360, w: 96, bare: true },
+      { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1884, y: 390, w: 96, bare: true },
     ],
-    ropes: [{ x: 490, top: 360, bottom: 480, ladder: true }, { x: 1360, top: 336, bottom: 456, ladder: true }, { x: 1910, top: 360, bottom: 480, ladder: true }],
+    ropes: [{ x: 490, top: 360, bottom: 480, ladder: true }, { x: 1360, top: 336, bottom: 456, ladder: true }, { x: 1886, top: 390, bottom: 480, ladder: true }],
     portals: [
       { id: 'start', x: 960, y: 456, hidden: true },
       { id: 'south', x: 60, y: 480, to: 'canyon', toPortal: 'north' },
@@ -618,8 +629,9 @@ Object.assign(MAPS, {
     look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
     homeStyle: 'treehome',
-    cottages: [180, 640, 1980, 2180],
-    townPieces: [['moontree', 1110], ['noticeboard', 1340]],
+    // Tree homes and giant glowcap mushroom homes, alternating so no two neighbours match.
+    cottages: [180, [712, 'mushhome'], 1980, [2170, 'mushhome']],
+    townPieces: [['moontree', 1110]],
     platforms: [
       // A bough of the moon tree.
       { x: 1006, y: 324, w: 92, bare: true },

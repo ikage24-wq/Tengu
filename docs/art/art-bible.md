@@ -259,3 +259,30 @@ Other sources consulted:
 - Octopath HD-2D dev interview (raising sprite colour density when sprites looked "lonely" on big screens): https://www.siliconera.com/project-octopath-traveler-developers-answer-project-started-troubles-developing-hd-2d/
 
 Note: searches for written breakdowns of MapleStory, Granblue, Arknights, Azur Lane and Cookie Run chibi sprites returned no usable text. The game-specific conventions above (such as the half-lid smirk on gacha villainesses and hikimayu for a Heian empress) come from familiarity with those games, not from cited pages. Check them against the in-game art before treating them as fixed.
+
+## Exterior and interior design (the player's rule, 2026-11-03)
+
+Every town, field and dungeon room is designed like a real place, not filled. The player called the
+old towns "clutter and slop" and asked for everything to look perfect.
+
+**Exteriors (towns and fields)**
+- Three depths only: the play street in full detail, one far backdrop (hills, a distant town or
+  skyline) washed toward the sky, and the sky. No half-hidden middle row of the same buildings
+  behind the street.
+- A street is a sequence of districts. Each district has one hero building or landmark, and the
+  buildings either side vary in type and silhouette (tall and narrow, wide and low, a shop front),
+  never one template recoloured.
+- Platforms in a town are architecture: balconies, porch roofs, roof terraces, bridges between
+  buildings, stairs. Never scaffolding or floating planks in the middle of a street.
+- Props come in small, deliberate groups (a bench, a lamp and a planter at a doorstep), with open
+  ground between groups. Nothing outsized or random (no giant flower in a village street).
+- Contrast by depth: the street is the most saturated and outlined; the backdrop is paler and
+  softer, so the player's layer always reads first.
+
+**Interiors (any room that is inside something)**
+- Walls and a ceiling frame the room; nothing outdoors shows unless through a window or door.
+- Floors are the room's material: tile, parquet, carpet, planks, stone. No grass, flowers or soil.
+- Platforms are part of the building: balconies, mezzanines, shelves, catwalks, stairs, scaffolds
+  fixed to a wall or hung from the ceiling on chains. No floating islands with rounded rock
+  undersides.
+- Light comes from lamps, chandeliers, windows and glowing fixtures, never a sun.
