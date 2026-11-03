@@ -14,7 +14,8 @@ import { TOWN_REGIONS, PQ_KINDS, ROTATE_HOURS, WAVE_SIZE, WAVE_GAP, pqReward, TO
 import { getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
-import { NODES } from '../data/gathering.js';
+import { NODES, KINDS } from '../data/gathering.js';
+import { lifeLevel, needFor, skillOfKind, LIFE_NAMES } from '../core/life.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
 import { computeStats } from '../core/stats.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
@@ -41,7 +42,16 @@ export const boardTurnsIn = (world) => Math.ceil((ROTATE_HOURS * 3600e3 - (clock
 
 const mobsOn = (map) => [...new Set((map.spawns ?? []).map((s) => s.mob))].filter((id) => MOBS[id] && !MOBS[id].boss);
 const nodesOn = (id) => NODES[id] ?? getMap(id).nodes ?? [];
-const materialsOn = (id) => [...new Set(nodesOn(id).filter((n) => !n.night).flatMap((n) => Object.keys(n.pool ?? {})))].filter((i) => ITEMS[i]);
+// The skill a spot trains and the level it needs, and whether you can work it yet.
+const skillOf = (n) => skillOfKind(n.kind, KINDS[n.kind]);
+const canWork = (char, n) => lifeLevel(char, skillOf(n)) >= needFor(n);
+// A map's day-time materials; with `char`, only those from spots that character can work.
+const materialsOn = (id, char = null) => [...new Set(nodesOn(id).filter((n) => !n.night && (!char || canWork(char, n))).flatMap((n) => Object.keys(n.pool ?? {})))].filter((i) => ITEMS[i]);
+// The lowest level a material's spots on a map need, as { skill, lv }.
+function needOf(id, item) {
+  const spots = nodesOn(id).filter((n) => !n.night && (n.pool ?? {})[item]).sort((a, b) => needFor(a) - needFor(b));
+  return spots[0] ? { skill: skillOf(spots[0]), lv: needFor(spots[0]) } : null;
+}
 
 // The region's maps that suit a level: their monsters within reach, closest first.
 function mapsFor(town, level) {
@@ -73,8 +83,16 @@ export function boardOffers(world, town = world.map.town) {
   const mob = choose(mobs.slice(0, 2).length ? mobs.slice(0, 2) : mobsOn(hm));
   if (mob) out.push(offer(town, slot, 'hunt', hm.id, { mob }, level));
   // Gather: a material from that map's spots.
-  const gm = choose(maps.filter((m) => materialsOn(m.id).length).slice(0, 3)) ?? null;
-  if (gm) out.push(offer(town, slot, 'gather', gm.id, { item: choose(materialsOn(gm.id)) }, level));
+  // From spots you can work yourself; only when none of the region's maps has one, a material
+  // your party gathers for you, and the quest says what level its spots need.
+  const char = world.char;
+  const mine = maps.filter((m) => materialsOn(m.id, char).length).slice(0, 3);
+  const gm = choose(mine.length ? mine : maps.filter((m) => materialsOn(m.id).length).slice(0, 3)) ?? null;
+  if (gm) {
+    const item = choose(materialsOn(gm.id, mine.length ? char : null));
+    const need = mine.length ? null : needOf(gm.id, item);
+    out.push(offer(town, slot, 'gather', gm.id, { item, ...(need ? { needs: need } : {}) }, level));
+  }
   // Defend: a wave on one of them.
   const dm = choose(top);
   out.push(offer(town, slot, 'defend', dm.id, { pool: mobsOn(dm).filter((id) => MOBS[id].level <= level + 4) }, level));
@@ -90,7 +108,7 @@ function offer(town, slot, kind, map, extra, level) {
 export function pqGoal(q) {
   const where = getMap(q.map).name;
   if (q.kind === 'hunt') return `Defeat ${q.need} ${MOBS[q.mob].name}s, together`;
-  if (q.kind === 'gather') return `Gather ${q.need} ${ITEMS[q.item].name}, together`;
+  if (q.kind === 'gather') return `Gather ${q.need} ${ITEMS[q.item].name}, together${q.needs ? ` (its spots need ${LIFE_NAMES[q.needs.skill]} Lv ${q.needs.lv})` : ''}`;
   return `Hold off ${q.need} waves at the calm stone in ${where}`;
 }
 
@@ -303,7 +321,9 @@ function tickBotGather(world, q, dt) {
   }
 }
 
-const playerAt = (world, node) => Math.abs(world.body.x - node.x) < 90 && Math.abs(world.body.y - node.y) < 40;
+// You're at (or near) a spot you can work yourself: party members leave it to you. A spot you
+// can't work yet is theirs to use even with you standing by it.
+const playerAt = (world, node) => Math.abs(world.body.x - node.x) < 90 && Math.abs(world.body.y - node.y) < 40 && canWork(world.char, node);
 
 function stopGather(bot) {
   bot.pqGather = null;

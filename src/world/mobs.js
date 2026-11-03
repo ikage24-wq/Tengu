@@ -1,7 +1,7 @@
 // Monster runtime: spawning, respawning, patrol and chase AI, knockback, and the boss slam.
 
 import { MOBS } from '../data/mobs.js';
-import { surfacesOf, groundPieceAt } from './physics.js';
+import { surfacesOf, groundPieceAt, groundAt } from './physics.js';
 import { habitGoal } from './habits.js';
 
 // A monster comes back somewhere between these many seconds after it falls (a map's own
@@ -18,6 +18,11 @@ const CLEAR = 110;
 const RETRY = 1;
 const AGGRO_TIME = 6;
 const HOVER = 46;
+// A flyer never dips closer than this to the ground under it (its bob included), rises out at
+// RISE px/s when the ground climbs ahead of it, and eases home at HOME_DRIFT px/s after a chase.
+const FLY_CLEAR = 22;
+const RISE = 140;
+const HOME_DRIFT = 24;
 
 let nextUid = 1;
 
@@ -42,6 +47,10 @@ export function spawnMob(map, spawn) {
     baseY: def.fly ? spawn.y - HOVER : surface.yAt(x),
     // Walkers follow their surface's height (up and down slopes).
     yAt: def.fly ? null : surface.yAt,
+    // Flyers keep clear of the solid ground under them (`floorAt`) and drift back to their own
+    // hover height (`homeY`) once a chase is over.
+    floorAt: def.fly ? (fx) => groundAt(map, fx) : null,
+    homeY: def.fly ? spawn.y - HOVER : null,
     x1, x2,
     hp: def.hp,
     dir: Math.random() < 0.5 ? -1 : 1,
@@ -209,6 +218,22 @@ function gait(m, chasing) {
   }
 }
 
+// The lowest a flyer's hover line may sit at x: clear of the ground under its whole body.
+function flyFloor(m, x) {
+  const half = m.def.w / 2;
+  return Math.min(m.floorAt(x), m.floorAt(x - half), m.floorAt(x + half)) - FLY_CLEAR;
+}
+
+// Keeps a flyer out of the dirt: where the ground rises above its hover line it holds back and
+// climbs over (smoothly, never popping up), and it never sinks below the ground it is over.
+function keepAloft(m, x0, dt) {
+  if (!m.floorAt) return;
+  const floor = flyFloor(m, m.x);
+  if (m.baseY <= floor) return;
+  if (m.baseY - floor > 10 && m.x !== x0 && m.baseY <= flyFloor(m, x0) + 0.5) m.x = x0;
+  m.baseY -= Math.min(m.baseY - floor, RISE * dt);
+}
+
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
 // Returns 'slam' on the frame a boss slam lands.
 export function updateMob(m, player, dt, now) {
@@ -241,6 +266,8 @@ export function updateMob(m, player, dt, now) {
     }
   }
 
+  const x0 = m.x;
+  let chasing = false;
   if (m.stagger > 0) {
     m.stagger -= dt;
     m.x += m.knockVx * dt;
@@ -252,7 +279,11 @@ export function updateMob(m, player, dt, now) {
     if (Math.abs(dx) > 6) m.dir = Math.sign(dx);
     m.state = 'walk';
     m.x += m.dir * m.def.speed * 1.35 * pace(m, true, dt) * dt;
-    if (m.def.fly) m.baseY += Math.sign(player.y - 30 - m.baseY) * 30 * dt;
+    if (m.def.fly) {
+      chasing = true;
+      const want = player.y - 30 - m.baseY;
+      m.baseY += Math.sign(want) * Math.min(Math.abs(want), 30 * dt);
+    }
   } else if (habitGoal(m, now)) {
     // Living there: napping, heading home, playing chase or running off (world/habits.js).
     const goal = habitGoal(m, now);
@@ -276,7 +307,14 @@ export function updateMob(m, player, dt, now) {
 
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }
   if (m.x >= m.x2) { m.x = m.x2; m.dir = -1; }
-  if (m.def.fly) m.y = m.baseY + Math.sin(m.phase * 2.2) * 6;
+  if (m.def.fly) {
+    if (!chasing && m.homeY != null && m.baseY !== m.homeY) {
+      const back = m.homeY - m.baseY;
+      m.baseY += Math.sign(back) * Math.min(Math.abs(back), HOME_DRIFT * dt);
+    }
+    keepAloft(m, x0, dt);
+    m.y = m.baseY + Math.sin(m.phase * 2.2) * 6;
+  }
   else if (m.yAt) m.y = m.yAt(m.x);
   return event;
 }

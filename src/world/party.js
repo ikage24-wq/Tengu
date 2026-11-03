@@ -183,6 +183,31 @@ export function makeAI(bot, rng, kind = null) {
   };
 }
 
+// A monster they've stood by for UNREACH_SECS without being able to hit it (a flyer hovering out
+// of reach over them, one up a cliff they can't climb) is given up on, and left be for
+// UNREACH_SKIP seconds, so they go hunt something else instead of staring up at it.
+const UNREACH_SECS = 3;
+const UNREACH_SKIP = 15;
+function giveUpOutOfReach(bot, world, m, canHit, dt, giveUp) {
+  const br = bot.brain;
+  const body = bot.body;
+  if (br.outOfReach) br.outOfReach = br.outOfReach.filter((o) => world.now < o.until && o.mob.hp > 0);
+  if (!m || m.hp <= 0 || canHit || world.map.isTown || world.dungeon || !body.onGround || (br.stopped ?? 0) < 0.4) {
+    if (!m || canHit || br.unreach?.mob !== m) br.unreach = null;
+    return;
+  }
+  if (br.unreach?.mob !== m) br.unreach = { mob: m, t: 0 };
+  br.unreach.t += dt;
+  if (br.unreach.t < UNREACH_SECS) return;
+  (br.outOfReach ??= []).push({ mob: m, until: world.now + UNREACH_SKIP });
+  br.unreach = null;
+  br.target = null;
+  br.fightOn = null;
+  br.goal = giveUp ?? null;
+  br.path = null;
+  br.think = Math.min(br.think ?? 0, 0.2);
+}
+
 // ---------- In the field: hunting on their own ----------
 
 // The monster a member hunts: one near them that no partymate is already on, anywhere on the
@@ -193,7 +218,7 @@ const helping = (bot, world) => Boolean(bot.helping && world.now < bot.helping);
 function huntTarget(bot, world, members) {
   const br = bot.brain;
   const body = bot.body;
-  const skip = (m) => br.skip?.mob === m && world.now < br.skip.until;
+  const skip = (m) => (br.skip?.mob === m && world.now < br.skip.until) || br.outOfReach?.some((o) => o.mob === m && world.now < o.until);
   const cur = br.target;
   // In your party: a monster thrown up nearby to catch, then whatever you're fighting (or pinged).
   if (bot.party) {
@@ -328,7 +353,17 @@ function fieldSteer(bot, world, members) {
   const body = bot.body;
   const g = br.goal;
   const none = { left: false, right: false, up: false, down: false, jump: false };
-  if (!g || g.surface < 0) return none;
+  if (!body.rope) br.climbOff = 0;
+  // On a rope with no way planned (a goal dropped or a path cleared mid-climb, or one that can't
+  // be planned from a rope): finish the climb to a ledge, toward the goal when there is one, or
+  // the nearer end, and plan again from there, rather than hang on the rope.
+  const climbOff = () => {
+    const r = body.rope;
+    if (!r) return none;
+    if (!br.climbOff) br.climbOff = g && g.y != null && Math.abs(g.y - body.y) > 8 ? Math.sign(g.y - body.y) : body.y - r.top < r.bottom - body.y ? -1 : 1;
+    return { ...none, up: br.climbOff < 0, down: br.climbOff > 0 };
+  };
+  if (!g || g.surface < 0) return climbOff();
   const nav = navOf(world.map);
   const here = surfaceOf(nav, body);
   if (here >= 0 && (!br.path || br.pathTo !== g.surface || world.now > br.replanAt)) {
@@ -339,10 +374,10 @@ function fieldSteer(bot, world, members) {
       if (br.target) br.skip = { mob: br.target, until: world.now + 8 };
       br.target = null;
       br.goal = null;
-      return none;
+      return climbOff();
     }
   }
-  if (!br.path) return none;
+  if (!br.path) return climbOff();
   // On the goal's ledge: the usual calm approach (stop near it, keep apart from partymates),
   // walking only: the path finder already brought them to the right surface, so a goal that
   // looks a little higher (a slope) is no reason to jump or drop.
@@ -953,7 +988,9 @@ function live(bot, world, peers, dt, rng, o) {
   const st = bot.ai.weapon;
   // (Mid-air in a command move, they keep at it up there.)
   const aloft = !body.onGround && !body.rope && (bot.fight?.queue?.[0]?.air || bot.hop);
-  if (o.canFight !== false && m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 + (aloft ? 30 : 0) && Math.abs(m.y - body.y) < (aloft ? 170 : Math.max(50, st.lift)) && (body.onGround || aloft)) {
+  const canHit = m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 + (aloft ? 30 : 0) && Math.abs(m.y - body.y) < (aloft ? 170 : Math.max(50, st.lift)) && (body.onGround || aloft);
+  giveUpOutOfReach(bot, world, m, canHit, dt, o.giveUp);
+  if (o.canFight !== false && canHit) {
     // Turn to it once planted (walking sets their facing), and only swing at what they face.
     fight(bot, m, world, intent, rng);
   } else o.idle?.();
