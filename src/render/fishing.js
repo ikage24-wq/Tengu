@@ -240,6 +240,10 @@ export function drawFishing(ctx, world, cam, time, hx, hy) {
     ctx.restore();
     return;
   }
+  if (f.phase === 'reel') {
+    drawReel(ctx, f, tip, bx0, by0, hx, hy, time);
+    return;
+  }
   if (show) {
     line(ctx, tip, bx, by - 3, f.phase === 'bite' ? 0 : f.phase === 'miss' ? 22 : 12);
     place(ctx, floatArt(), bx, by + 3);
@@ -278,4 +282,49 @@ export function drawFriendFishing(ctx, f, hx, hy, cam, time, at = null) {
   for (let k = 0; k < 2; k++) ripple(ctx, f.bx - cam.x, f.by - cam.y + 1, (((time * 0.5 + k * 0.5 + f.bx * 0.013) % 1) + 1) % 1, f.phase === 'bite' ? 1.4 : 1);
   line(ctx, tip, bx, by - 3, f.phase === 'bite' ? 0 : 12);
   place(ctx, floatArt(), bx, by + 3);
+}
+
+// A big one on the line (world/fishing.js reel): the line taut to a splash where it thrashes, the
+// fish's back breaking the water now and then; over the hero, the tug of war: how much line you've
+// won back (the fish swims toward the boat end as you win) and how tight the line is (red near
+// the snap), with what to do now.
+function drawReel(ctx, f, tip, bx0, by0, hx, hy, time) {
+  const r = f.reel;
+  const run = r.run > 0;
+  const fx = bx0 + Math.sin(time * (run ? 14 : 5)) * (run ? 10 : 4) - (r.got - 0.5) * 10 * f.spot.face;
+  const fy = by0 + 2;
+  for (let k = 0; k < 3; k++) ripple(ctx, fx, fy, (time * (run ? 3 : 1.5) + k / 3) % 1, run ? 1.6 : 1.2);
+  if (Math.sin(time * 3) > 0.6) {
+    ctx.fillStyle = f.fish.color;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy - 2, 10, 3.5, 0, Math.PI, 0);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffffff';
+  for (let k = 0; k < (run ? 6 : 3); k++) ctx.fillRect(fx + Math.cos(time * 9 + k * 2) * 9, fy - 4 - Math.abs(Math.sin(time * 7 + k)) * 8, 1.6, 1.6);
+  line(ctx, tip, fx, fy - 2, 0);
+  // The meter.
+  const W = 70;
+  const x = hx - W / 2;
+  const y = hy - 92;
+  ctx.fillStyle = 'rgba(58,45,79,0.75)';
+  ctx.fillRect(x - 3, y - 3, W + 6, 22);
+  // Line won back: a track with the fish on it, swimming toward the rod as you win.
+  ctx.fillStyle = '#4fc0c8';
+  ctx.fillRect(x, y, W, 6);
+  ctx.fillStyle = '#9fe8b0';
+  ctx.fillRect(x, y, W * Math.max(0, Math.min(1, r.got)), 6);
+  ctx.fillStyle = f.fish.color;
+  ctx.beginPath();
+  ctx.ellipse(x + W * Math.max(0, Math.min(1, r.got)), y + 3, 4, 2.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Tension: green, then gold, then red; it shakes when it's near the snap.
+  const t = r.tension;
+  const shake = t > 0.8 ? Math.sin(time * 60) * 1.2 : 0;
+  ctx.fillStyle = '#5a4a6a';
+  ctx.fillRect(x + shake, y + 9, W, 5);
+  ctx.fillStyle = t > 0.8 ? '#ff5a6a' : t > 0.55 ? '#ffd36b' : '#8fe0a0';
+  ctx.fillRect(x + shake, y + 9, W * t, 5);
+  const say = run && r.holding ? "It's running! Let go!" : run ? 'Wait it out...' : r.holding ? 'Reeling...' : 'Hold Z to reel!';
+  text(ctx, say, hx, y - 6, { size: 7, bold: true, align: 'center', color: run ? '#ffd36b' : '#ffffff', outline: 'rgba(58,45,79,0.8)' });
 }

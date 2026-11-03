@@ -92,7 +92,7 @@ test('fishing spots are only by water, quiet nooks no monster reaches, each with
       // Water: a pond or pool by the bobber, the sea (a harbor's, the sky's cloud sea), or a hole in the lake ice.
       const wet = s.ice || s.sky || ['harbor', 'sky'].includes(m.theme) || (m.deco ?? []).some((d) => WATER.includes(d[0]) && Math.abs(d[1] - s.bx) < 120);
       assert.ok(wet, `${id}: the fishing spot is by water`);
-      assert.equal(s.tier, MAP_TIER[id], `${id}: the fishing spot is its region's tier`);
+      if (!s.sea) assert.equal(s.tier, MAP_TIER[id], `${id}: the fishing spot is its region's tier`);
       for (const f of Object.keys(s.pool)) assert.ok(FISH.find((q) => q.id === f).tier <= s.tier, `${id}: ${f} belongs to this region or below`);
       const surf = surfacesOf(m).find((f) => s.x >= f.x1 && s.x <= f.x2 && Math.abs(f.yAt(s.x) - s.y) < 2);
       for (const sp of m.spawns) {
@@ -109,7 +109,7 @@ test('fishing spots are only by water, quiet nooks no monster reaches, each with
 test('dishes from the new finds scale with their tier', () => {
   for (const d of DISHES) assert.ok(d.tier >= 1 && d.tier <= 4, `${d.id} has a tier`);
   // Each find a cook can use, and every new fish, has a dish.
-  for (const f of FISH) assert.ok(DISHES.some((d) => d.needs[f.id]), `${f.id} cooks into something`);
+  for (const f of FISH) assert.ok(f.boss || DISHES.some((d) => d.needs[f.id]), `${f.id} cooks into something`);
   // Higher tiers heal more on average.
   const avg = (t) => { const ds = DISHES.filter((d) => d.tier === t); return ds.reduce((s, d) => s + d.heal, 0) / ds.length; };
   for (let t = 2; t <= 4; t++) assert.ok(avg(t) > avg(t - 1), `tier ${t} dishes heal more than tier ${t - 1}`);

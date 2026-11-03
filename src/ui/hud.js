@@ -29,6 +29,7 @@ import { inParty } from '../net/together.js';
 import { drawMinimapPings } from './grouping.js';
 import { groupReady, NEAR_BONUS } from '../world/teamwork.js';
 import { VW } from '../input.js';
+import { standings, derbyClock } from '../world/derby.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -397,7 +398,8 @@ export function drawHud(ui, state, world) {
   if (world.dungeon) {
     drawDungeonTracker(ui, world);
     drawCallout(ctx, world);
-  } else if (settings.questTracker) drawQuestTracker(ui, state, world);
+  } else if (world.map.id === 'lagoon' && world.derby && !world.derby.done && derbyClock(world).on) drawDerbyBoard(ui, world);
+  else if (settings.questTracker) drawQuestTracker(ui, state, world);
   if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
   if (settings.mapBanner) drawBanner(ctx, world, state);
   drawTutorial(ui, world);
@@ -1067,6 +1069,34 @@ function drawDungeonTracker(ui, world) {
   text(ctx, `${n}/${def.rooms.length}  ${world.map.name}`, x + 6, y + 22, { size: 7, bold: true, color: COLORS.ink });
   rows.forEach((r, i) => text(ctx, `${r.done ? '✓' : r.next ? '➜' : '•'} ${r.label}`, x + 8, y + 32 + i * 10, { size: 6.5, color: r.done ? COLORS.good : r.next ? th.dark : COLORS.muted, bold: r.next }));
   if (run.wipes) text(ctx, `Wipes: ${run.wipes}`, x + w - 6, y + 22, { size: 6, align: 'right', color: COLORS.bad });
+}
+
+// The Fishing Derby's live board at Lantern Lagoon (world/derby.js): time left, the top five, and
+// where you stand if you're further down.
+function drawDerbyBoard(ui, world) {
+  const { ctx } = ui;
+  const d = world.derby;
+  const th = THEMES.peach ?? THEMES.mint;
+  const w = 138;
+  const x = 640 - w - 6;
+  const y = 6;
+  const rows = standings(d, d.secs ?? 0);
+  const you = rows.findIndex((r) => r.you);
+  const shown = rows.slice(0, 5);
+  if (you >= 5) shown.push(rows[you]);
+  const h = 30 + Math.max(1, shown.length) * 10;
+  const left = derbyClock(world).left ?? 0;
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.2 });
+  box(ctx, x + 2, y + 2, w - 4, 11, { fill: th.main, edge: null, r: 5.5 });
+  text(ctx, 'Fishing Derby', x + 8, y + 10.5, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  text(ctx, `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`, x + w - 7, y + 10.5, { size: 7, bold: true, align: 'right', color: '#ffffff', outline: th.ink });
+  text(ctx, you < 0 ? 'Catch a fish to enter!' : `You're ${you + 1}${['st', 'nd', 'rd'][you] ?? 'th'} of ${rows.length}`, x + 6, y + 22, { size: 7, bold: true, color: COLORS.ink });
+  shown.forEach((r, i) => {
+    const place = rows.indexOf(r) + 1;
+    const color = r.you ? th.dark : place === 1 ? COLORS.gold : COLORS.muted;
+    text(ctx, `${place}. ${r.name}`, x + 8, y + 32 + i * 10, { size: 6.5, color, bold: r.you || place === 1 });
+    text(ctx, `${r.size} cm`, x + w - 7, y + 32 + i * 10, { size: 6.5, align: 'right', color, bold: r.you });
+  });
 }
 
 // Boss moves and milestones, called out big across the middle of the screen.

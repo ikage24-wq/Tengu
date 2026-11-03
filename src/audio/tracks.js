@@ -25,6 +25,9 @@ export const TRACKS = {
   grove: T('innocence', 'Innocence', JJ),
   springs: T('peaceful-days', 'Peaceful Days', JJ),
   shrine: T('summer-memories', 'Summer Memories', JJ),
+  // Lantern Lagoon, and the Sea Biscuit's voyage there.
+  lagoon: T('summer-memories', 'Summer Memories', JJ),
+  voyage: T('tropical-island', 'Tropical Island', JJ),
   // Fields.
   meadow: T('grasslands', 'Grasslands', JJ),
   sky: T('tropical-island', 'Tropical Island', JJ),

@@ -34,6 +34,8 @@ import { spotHere, startFishing, tickFishing } from './fishing.js';
 import { nodeHere, startGathering, tickGathering } from './gathering.js';
 import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
+import { tickVoyage } from './voyage.js';
+import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
 import { teamHit, teamLanded, tickTeam } from './teamwork.js';
@@ -247,6 +249,14 @@ export function useItem(world, id) {
     }
     world.itemReadyAt = world.now + ITEM_DELAY;
     world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
+    return true;
+  }
+  // Lantern bait: the next casts bite sooner (world/fishing.js).
+  if (def.effect?.bait) {
+    if (removeItem(world.char.inventory, id, 1) < 1) return false;
+    world.char.bait = (world.char.bait ?? 0) + def.effect.bait;
+    world.log(`Baited! Fish bite twice as fast for your next ${world.char.bait} casts.`, '#ffd27a');
+    world.itemReadyAt = world.now + ITEM_DELAY;
     return true;
   }
   // A dish: eaten for a little HP and its bonus for a while (different dishes add up; the same
@@ -569,6 +579,10 @@ export function updateWorld(world, dt, input) {
   world.map.clock = world.now;
   tickDaytime(world, dt);
   tickCalm(world);
+  // On the Sea Biscuit, the trip's clock (world/voyage.js).
+  tickVoyage(world, dt);
+  // The Fishing Derby at Lantern Lagoon, on the hour (world/derby.js).
+  tickDerby(world);
   world.attackTimer = Math.max(0, world.attackTimer - dt);
   world.lockTimer = Math.max(0, (world.lockTimer ?? 0) - dt);
   world.invuln = Math.max(0, world.invuln - dt);

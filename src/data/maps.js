@@ -269,7 +269,7 @@ export const MAPS = {
     portals: [
       { id: 'start', x: 900, y: 460, hidden: true },
       { id: 'west', x: 40, y: 480, to: 'meadow2', toPortal: 'east' },
-      { id: 'east', x: 2840, y: 480, to: 'woods', toPortal: 'west' },
+      { id: 'east', x: 2868, y: 480, to: 'woods', toPortal: 'west' },
     ],
     npcs: [{ id: 'marlo', x: 340 }, { id: 'posy', x: 870 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
     // Its districts, left to right, each named as you walk in (the town rules).
@@ -673,6 +673,80 @@ Object.assign(MAPS, {
   },
 
 });
+
+// ---------- Lantern Lagoon: the fishing town you sail to from Pastel Harbor ----------
+// Off the world map, across the sea: you get there on Captain Bobbin's little paddle steamer, the
+// Sea Biscuit (world/voyage.js), which runs on steam, not wind, so it still sails. A cozy island
+// village with no monsters at all, only fishing. Left to right and low to high: Shell Cove, a
+// sandy beach where the steamer moors in the surf, with rock pools to fish; stairs up to the Stilt
+// Village, a lantern-strung boardwalk over the turquoise lagoon (the water and the stilts show
+// beneath its planks: render/lagoon.js), with Mister Brine's tackle shop, Lantern Square and
+// Nori's derby board, a bridge and net lofts overhead, and the twins' noodle stall; then a ladder
+// up the cliff to Lighthouse Point, where Granny Kelp keeps the light (its gallery you can climb)
+// and the deep water off the point holds the biggest fish.
+Object.assign(MAPS, {
+  lagoon: {
+    id: 'lagoon', plaza: 1200, fountain: false, name: 'Lantern Lagoon', theme: 'harbor', isTown: true, town: 'lagoon', music: 'lagoon',
+    // The noodle stall's stove, for cooking your catch (data/cooking.js).
+    stove: 1580,
+    width: 2400, height: 760, groundY: 620,
+    look: { sky: ['#ffb8a8', '#ffd8c0', '#fff0e0'], far: '#8fd8e0', mid: '#bfe8d8', midTrim: '#8fd0c0', islands: 'planks', material: 'beach', propKeep: 0.75 },
+    terrain: [[0, 700], [500, 700], [620, 620], [1880, 620], [1880, 440], [2400, 440]],
+    // The lagoon under the boardwalk, the surf at the cove's edge, and the sea at the foot of the
+    // point (render/lagoon.js draws them, with the stilts, the stairs and the cliff).
+    lagoon: { surf: [0, 130], deck: [620, 1880], cliff: [1880, 2400], sea: [2300, 2400], seaTop: 520 },
+    cottages: [],
+    townPieces: [['steamer', 70], ['rockpools', 420], ['stilthouse', 760], ['tackleshop', 880], ['stilthouse', 1040], ['lanternpole', 1200], ['derbyboard', 1260], ['stilthouse', 1360], ['noodlestall', 1530], ['stilthouse', 1720], ['lighthouse', 2080]],
+    platforms: [
+      // The Lantern Bridge between two stilt houses, a net loft, and a rooftop deck.
+      { x: 975, y: 486, w: 130, bare: true }, { x: 1300, y: 500, w: 126, bare: true }, { x: 1650, y: 470, w: 140, bare: true },
+      // The top of the cliff ladder, and the lighthouse's gallery.
+      { x: 1844, y: 440, w: 34, bare: true }, { x: 2030, y: 262, w: 100, bare: true },
+    ],
+    ropes: [
+      { x: 990, top: 486, bottom: 620 }, { x: 1412, top: 500, bottom: 620 }, { x: 1662, top: 470, bottom: 620 },
+      { x: 1866, top: 440, bottom: 620, ladder: true }, { x: 2118, top: 262, bottom: 440, ladder: true },
+    ],
+    portals: [
+      { id: 'start', x: 1200, y: 620, hidden: true },
+      // Where the Sea Biscuit puts you ashore; Captain Bobbin sails you back (a sea road for the
+      // guide: world/routes.js).
+      { id: 'pier', x: 260, y: 700, hidden: true, to: 'harbor', toPortal: 'ferry', ferry: true },
+    ],
+    npcs: [{ id: 'bobbin', x: 220 }, { id: 'brine', x: 880 }, { id: 'nori', x: 1200 }, { id: 'coral', x: 1520 }, { id: 'kelp', x: 2230 }],
+    zonesBy: 'x',
+    zones: [
+      { name: 'Shell Cove', from: 0, color: '#ffd6a0' },
+      { name: 'Stilt Village', from: 580, color: '#5fd0c8', look: { sky: ['#ffb0b8', '#ffd0c8', '#fff0e6'] } },
+      { name: 'Lighthouse Point', from: 1880, color: '#8fa8ff', look: { sky: ['#a8c0ff', '#d0dcff', '#f4f6ff'] } },
+    ],
+    // Lanterns that glow at night (world/daytime.js): the cove, the boardwalk's strings, the
+    // square's pole, the stall, the lighthouse's lamp.
+    lamps: [{ x: 300, y: 660 }, { x: 700, y: 580 }, { x: 1000, y: 470 }, { x: 1200, y: 540, c: '#ffd27a' }, { x: 1530, y: 560, c: '#ffb070' }, { x: 1760, y: 450 }, { x: 2080, y: 150, c: '#fff3a6' }],
+    deco: [],
+    spawns: [],
+  },
+  // The voyage there and back on the Sea Biscuit: the steamer's deck is the map, and the sea runs
+  // past (render/lagoon.js). No monsters; fish off the stern while you sail. world/voyage.js
+  // brings you in to port after `dur` seconds.
+  ...Object.fromEntries([['voyage_out', 'lagoon', 'pier', 'To Lantern Lagoon'], ['voyage_home', 'harbor', 'ferry', 'To Pastel Harbor']].map(([id, to, toPortal, name]) => [id, {
+    id, name: `The Sea Biscuit: ${name}`, theme: 'harbor', town: to, music: 'voyage',
+    voyage: { to, toPortal, dur: 55 },
+    width: 760, height: 520, groundY: 420,
+    look: { sky: ['#9fd8ff', '#cdeeff', '#f2fbff'], far: '#a8e0f0', mid: '#bfe8f6', midTrim: '#9fd8e8', islands: 'planks', material: 'parquet', propKeep: 1 },
+    terrain: [[0, 420], [760, 420]],
+    platforms: [{ x: 470, y: 330, w: 120, bare: true }],
+    ropes: [{ x: 480, top: 330, bottom: 420, ladder: true }],
+    portals: [{ id: 'deck', x: 380, y: 420, hidden: true }],
+    npcs: [{ id: 'bobbin', x: 690 }],
+    deco: [],
+    spawns: [],
+  }])),
+});
+// Captain Bobbin waits at the end of Pastel Harbor's quay with the Sea Biscuit.
+MAPS.harbor.npcs.push({ id: 'bobbin', x: 2768 });
+MAPS.harbor.portals.push({ id: 'ferry', x: 2768, y: 480, hidden: true, to: 'lagoon', toPortal: 'pier', ferry: true });
+MAPS.harbor.townPieces.push(['ferryjetty', 2815]);
 
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];

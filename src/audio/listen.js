@@ -212,6 +212,12 @@ export function hearWorld(world, cam) {
   m.sp = sp;
   m.gold0 = char.gold;
 
+  // ----- Old Lumen landed (world/lumen.js): the fanfare -----
+  if (world.fishCaught && world.fishCaught.at !== m.caughtAt) {
+    m.caughtAt = world.fishCaught.at;
+    if (!first && world.fishCaught.fish.boss) sfx('bossDefeated');
+  }
+
   // ----- An emote (ui/emotes.js): its own little sound -----
   if (world.heard?.emote && world.heard.at !== m.emoteAt) {
     m.emoteAt = world.heard.at;

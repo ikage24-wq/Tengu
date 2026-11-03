@@ -33,6 +33,8 @@ export function fishingPose(f) {
     const dur = f.fish?.react ?? 1;
     return { pose: 'fishbite', progress: clamp01(f.t / dur), dur };
   }
+  // A big one on the line: the bite's heave, over and over, harder while reeling.
+  if (f.phase === 'reel') return { pose: 'fishbite', progress: f.reel?.holding ? 0.45 + 0.4 * ((f.t * 2.2) % 1) : 0.3 + 0.15 * Math.sin(f.t * 4), dur: 1 };
   if (f.phase === 'catch') return { pose: 'fishcatch', progress: clamp01(f.t / 1.4), dur: 1.4 };
   return { pose: 'fishmiss', progress: clamp01(f.t / 0.9), dur: 0.9 };
 }

@@ -97,10 +97,10 @@ function fishPage(ui, win, char, x, y, th) {
     drawItemIcon(ctx, f.id, cx + (cw - 4) / 2 - 12, cy + 3, 1.5);
     ctx.restore();
     text(ctx, rec ? fit(ctx, f.name, cw - 8, 6, true) : '???', cx + (cw - 4) / 2, cy + 35, { size: 6, bold: true, align: 'center', color: rec ? COLORS.ink : COLORS.muted });
-    if (rec) text(ctx, `x${rec.n}`, cx + (cw - 4) / 2, cy + 42, { size: 5.5, align: 'center', color: COLORS.muted });
-    if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n}`, size: 8 }] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }]);
+    if (rec) text(ctx, rec.best ? `x${rec.n} · ${rec.best} cm` : `x${rec.n}`, cx + (cw - 4) / 2, cy + 42, { size: 5.5, align: 'center', color: COLORS.muted });
+    if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n}`, size: 8 }, ...(rec.best ? [{ text: `Biggest: ${rec.best} cm`, size: 8 }] : [])] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }]);
   });
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
-  text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip or Marlo, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });
+  text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip, Marlo or Mister Brine, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 18, { size: 6.5, align: 'right', color: COLORS.muted });
 }

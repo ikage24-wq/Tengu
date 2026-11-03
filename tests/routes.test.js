@@ -10,7 +10,7 @@ import { routeBetween, nextStep, questTarget, setRoute, checkArrival, levelRange
 
 test('every place on the island can be reached from Sprout Village, and back', () => {
   for (const m of Object.values(MAPS)) {
-    if (m.dungeon || m.id.startsWith('daw') || ['trainfield', 'dock'].includes(m.id)) continue;
+    if (m.dungeon || m.voyage || m.id.startsWith('daw') || ['trainfield', 'dock'].includes(m.id)) continue;
     assert.ok(routeBetween('sprout', m.id), `to ${m.id}`);
     assert.ok(routeBetween(m.id, 'sprout'), `from ${m.id}`);
   }

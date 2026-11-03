@@ -25,6 +25,7 @@ import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
 import { botLifePose, holdFind } from './life.js';
 import { drawFriendFishing } from './fishing.js';
+import { drawLagoonGround, drawLagoonPiece, drawLagoonOverhead, drawVoyage, drawVoyageDeck } from './lagoon.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -425,8 +426,16 @@ function fountainWater(ctx, x, gy, time) {
 // Draws houses, NPC buildings, and the fountain along the street. Called from the scenery, after
 // the ground and before ledges and props.
 export function drawStreet(ctx, map, cam, width, time) {
+  // The Sea Biscuit's deck at sea (render/lagoon.js): the sea, her hull and her deck.
+  if (map.voyage) {
+    drawVoyage(ctx, map, cam, width, 360, time, map.voyageAt ?? 0);
+    drawVoyageDeck(ctx, map, cam, width, time);
+    return;
+  }
   if (!map.isTown) return;
   const ground = (wx) => snap(groundAt(map, wx) - cam.y);
+  // Lantern Lagoon: the water under the boardwalk, the surf, the point's rock (render/lagoon.js).
+  if (map.lagoon) drawLagoonGround(ctx, map, cam, width, 360, time);
   const theme = map.theme;
   // Decks on posts: a town ledge standing on the street (`posts`), its timber legs and braces.
   for (const p of map.platforms) {
@@ -542,7 +551,9 @@ export function drawStreet(ctx, map, cam, width, time) {
       }
     }
   }
-  for (const [kind, wx] of map.townPieces ?? []) {
+  for (const [kind, wx, extra] of map.townPieces ?? []) {
+    // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
+    if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
@@ -641,6 +652,8 @@ export function drawStreet(ctx, map, cam, width, time) {
       }
     }
   }
+  // The lagoon's lantern strings over the boardwalk.
+  drawLagoonOverhead(ctx, map, cam, width, time);
   // Houses fill the gaps between NPCs, portals, and the plaza (in towns not yet laid out with
   // cottages of their own).
   const kinds = map.cottages ? [] : STREET[theme] ?? [];
@@ -663,8 +676,9 @@ export function drawStreet(ctx, map, cam, width, time) {
       if (kind === 'house' || kind === 'adobe') chimneySmoke(ctx, x + (kind === 'house' ? 17 : -24), hy - (kind === 'house' ? 84 : 46), time, seed);
     }
   }
-  // The plaza fountain, with water arcing from the spout.
-  if (map.plaza != null) {
+  // The plaza fountain, with water arcing from the spout (Lantern Lagoon's square has its lantern
+  // pole instead: `fountain: false`).
+  if (map.plaza != null && map.fountain !== false) {
     const fx = map.fountain ?? map.plaza;
     const x = snap(fx - cam.x);
     const gy = ground(fx);

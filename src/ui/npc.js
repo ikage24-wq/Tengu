@@ -24,6 +24,8 @@ import { itemTooltip } from './tooltips.js';
 import { shopWindow } from './shop.js';
 import { polishWindow } from './polish.js';
 import { teamOf } from '../world/teamwork.js';
+import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
+import { derbyClock, standings, PRIZES } from '../world/derby.js';
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -221,6 +223,30 @@ export function npcWindow(ui, state, world) {
   if (npc.role === 'board') {
     const pq = char.partyQuest;
     choices.push({ label: 'Party quests', sub: pq ? `On one: ${pq.have}/${pq.need}` : `${boardOffers(world).length} on the board · shared rewards`, icon: 'friends', primary: true, run: () => (dlg.board = true) });
+  }
+  // Captain Bobbin sails you across (world/voyage.js): the long way, or straight there once you know it.
+  const route = npc.role === 'ferry' ? routeFrom(world) : null;
+  if (route) {
+    const sail = (quick) => () => {
+      dlg.bye = true;
+      setSail(world, { quick });
+      sfx('waveWash');
+    };
+    choices.push({ label: `Sail to ${route.name}`, sub: 'About a minute at sea · fish off the stern', icon: 'star', primary: true, run: sail(false) });
+    if (hasSailed(char)) choices.push({ label: 'Full steam ahead', sub: `Straight to ${route.name}`, icon: 'door', run: sail(true) });
+  }
+  // Nori and the Fishing Derby (world/derby.js): when it's on, and how it works.
+  if (npc.role === 'derby') {
+    const dc = derbyClock(world);
+    const mins = Math.ceil((dc.next ?? 0) / 60);
+    choices.push({ label: 'The Fishing Derby', sub: dc.on ? `On now! ${Math.ceil(dc.left / 60)} min left` : `Next one in ${mins} min`, icon: 'star', primary: dc.on, run: () => {
+      dlg.bye = true;
+      const d = world.derby;
+      const me = d && !d.done ? standings(d, d.secs ?? 0).findIndex((r) => r.you) : -1;
+      const line = dc.on ? (me >= 0 ? `You're in ${me + 1}${['st', 'nd', 'rd'][me] ?? 'th'} place! Bigger, BIGGER!` : 'It\'s on! Catch anything here at the lagoon to enter. The deep water off the point has the giants...')
+        : `Every hour on the hour, five minutes, biggest catch wins! First prize: ${PRIZES[0].gold} gold, bait, and one of my medals.${char.derbyWins ? ` You've won ${char.derbyWins}. Lucky.` : ''}`;
+      (world.bubbles ??= {}).nori = { text: line, t: 6 };
+    } });
   }
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });
   if (npc.role === 'instructor') {

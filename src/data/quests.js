@@ -188,6 +188,47 @@ export const QUESTS = {
     ],
     rewards: { exp: 3200, gold: 1500, items: [{ id: 'hollow_acorn', qty: 3 }, { id: 'orange_potion', qty: 20 }] },
   },
+  // ----- Lantern Lagoon: Granny Kelp and the light on the point -----
+  // The lighthouse has been flickering since the wind went quiet, and the fish are acting strange:
+  // Old Lumen, the great lantern fish who has lived under the point since Granny was a girl, is
+  // restless. Any level can do it: it asks for fishing, not fighting (world/lumen.js).
+  kelp_1: {
+    id: 'kelp_1', name: 'The Dim Light', giver: 'kelp', minLevel: 1,
+    text: "See my light? Flickering like a guttering candle, it is, and it's never done that. The fish know why, dearie. Bring me three Lantern Gobies from the cove's rock pools: their little glow tells me the mood of the tide.",
+    objectives: [{ type: 'collect', item: 'fish_goby', count: 3 }],
+    rewards: { exp: 300, gold: 400, items: [{ id: 'lantern_bait', qty: 3 }] },
+  },
+  kelp_2: {
+    id: 'kelp_2', name: 'Strange Bites', giver: 'kelp', minLevel: 1, prereq: 'kelp_1',
+    text: "The gobies are dim as dishwater. Something's stirring the deep. Go ask the folk who know the water: Nori, Mister Brine, and that sleepy Bobbin, if he's awake. Then come tell me.",
+    objectives: [
+      { type: 'talk', npc: 'nori', say: "Weird? Yeah! The big fish keep swimming toward the point, all at once, like they're scared. Don't tell anyone I said scared." },
+      { type: 'talk', npc: 'brine', say: "My nets came up with scales last week. Glowing ones. Big as dinner plates. I didn't sell them. I didn't sleep either." },
+      { type: 'talk', npc: 'bobbin', say: "Saw a light under the Biscuit on the way in. Big as my boat. Thought I was dreaming. I usually am." },
+    ],
+    rewards: { exp: 500, gold: 600, items: [] },
+  },
+  kelp_3: {
+    id: 'kelp_3', name: 'Oil for the Lamp', giver: 'kelp', minLevel: 1, prereq: 'kelp_2',
+    text: "Big glowing scales... it's Old Lumen, then. He's lived under the point since I was a girl, and he's never been restless. First, my light: it burns angler oil. Catch me two Lantern Anglers off the boardwalk, then climb up to the gallery and see how dark the sea's gone.",
+    objectives: [
+      { type: 'collect', item: 'fish_angler', count: 2 },
+      { type: 'visit', map: 'lagoon', above: 300, place: 'the lighthouse gallery' },
+    ],
+    rewards: { exp: 1200, gold: 1200, items: [{ id: 'rod_oak', qty: 1 }] },
+  },
+  kelp_4: {
+    id: 'kelp_4', name: 'The Deep Water', giver: 'kelp', minLevel: 1, prereq: 'kelp_3',
+    text: "The light's back, and look: the deep water's all churned up off the point. Lumen's down there, and he won't come to just anybody's line. Show him you can handle the deep: catch a Sailfin Tuna from the point.",
+    objectives: [{ type: 'catch', fish: 'fish_tuna', count: 1, map: 'lagoon', place: 'Lighthouse Point' }],
+    rewards: { exp: 2000, gold: 2000, items: [{ id: 'lantern_bait', qty: 5 }] },
+  },
+  kelp_5: {
+    id: 'kelp_5', name: 'Old Lumen', giver: 'kelp', minLevel: 1, prereq: 'kelp_4',
+    text: "He's frightened, dearie. With no wind the currents have gone still, and the old fellow thinks the sea is dying. Cast off the point and he'll come. Reel him in, gently, let him see the light up close, and let him go. He'll understand. Mind: he's the biggest thing you'll ever hook.",
+    objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point' }],
+    rewards: { exp: 6000, gold: 6000, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },
+  },
   marlo_scales: {
     id: 'marlo_scales', name: 'Shiny Scales', giver: 'marlo', minLevel: 9,
     text: "Basilisk scales! Ladies in the capital sew them on their gloves. Bring me 15 and I'll make it worth your while.",

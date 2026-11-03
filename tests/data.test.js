@@ -111,7 +111,7 @@ test('mob drops, NPC shops, and quest rewards are real items', () => {
     assert.ok(NPCS[q.giver], `${q.id} giver`);
     for (const r of q.rewards.items) assert.ok(ITEMS[r.id], `${q.id} reward ${r.id}`);
     for (const o of q.objectives) {
-      const real = { kill: () => MOBS[o.mob], collect: () => ITEMS[o.item], talk: () => NPCS[o.npc], deliver: () => NPCS[o.npc] && ITEMS[o.item], visit: () => MAPS[o.map], job: () => o.tier >= 1 }[o.type];
+      const real = { kill: () => MOBS[o.mob], collect: () => ITEMS[o.item], talk: () => NPCS[o.npc], deliver: () => NPCS[o.npc] && ITEMS[o.item], visit: () => MAPS[o.map], job: () => o.tier >= 1, catch: () => ITEMS[o.fish]?.fish && MAPS[o.map] }[o.type];
       assert.ok(real?.(), `${q.id} objective`);
       // Whatever has to be delivered is handed over on accepting.
       if (o.type === 'deliver') assert.ok(q.gives?.some((g) => g.id === o.item), `${q.id} gives ${o.item}`);

@@ -16,9 +16,10 @@ export function levelRange(map) {
   return lo === hi ? `Lv ${lo}` : `Lv ${lo}-${hi}`;
 }
 
-// The roads out of a map: its open portals (not dungeon doors or a dungeon's own rooms).
+// The roads out of a map: its open portals (not dungeon doors or a dungeon's own rooms), and the
+// sea roads Captain Bobbin sails (`ferry`: talk to him where the portal stands; world/voyage.js).
 function roads(map) {
-  return map.portals.filter((p) => !p.hidden && !p.homestone && p.to && MAPS[p.to] && !p.dungeon && !MAPS[p.to].dungeon);
+  return map.portals.filter((p) => (!p.hidden || p.ferry) && !p.homestone && p.to && MAPS[p.to] && !p.dungeon && !MAPS[p.to].dungeon);
 }
 
 // The shortest way from map `from` to map `to`: the list of portals to take, in order (empty when
@@ -66,7 +67,7 @@ export function questTarget(char, id) {
     return from ? mobMap(from.id) : null;
   }
   if (o.type === 'talk' || o.type === 'deliver') return npcAt(o.npc);
-  if (o.type === 'visit') return o.map;
+  if (o.type === 'visit' || o.type === 'catch') return o.map;
   if (o.type === 'job') return null;
   return npcAt(q.giver);
 }

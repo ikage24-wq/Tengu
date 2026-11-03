@@ -158,6 +158,52 @@ export const NPCS = {
     look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },
     greeting: "Hi hi! Fresh party quests on the board! Everyone in your party chips in, and everyone gets paid. Friends or not, the more the merrier!",
   },
+  // ----- Lantern Lagoon (the fishing town across the sea from Pastel Harbor) -----
+  // Captain Bobbin sails the Sea Biscuit, a little paddle steamer, between the harbor's quay and
+  // Shell Cove (world/voyage.js). Sleepy, kind, and very proud of a boat that runs without wind.
+  bobbin: {
+    id: 'bobbin', name: 'Captain Bobbin', title: 'The Sea Biscuit', role: 'ferry',
+    look: { hairStyle: 'wolfsleek', hairColor: '#f4f4fa', skinTone: '#e7b48f', eyeColor: '#3f6aa8', outfitColor: '#3f5a9a', eyeStyle: 'round', face: 'sleepy' },
+    gear: { top: { id: 'sailor_top' } },
+    greeting: "Ahh, a passenger! The Sea Biscuit runs on steam, not wind, so she's the only boat still sailing. Where to?",
+    chatter: ['Zzz... all aboard... zzz.', "She's not slow, she's scenic.", 'The Biscuit and I have sailed forty years. She does most of the work.'],
+  },
+  // Mister Brine runs the tackle shop on the boardwalk: rods, bait, and the best price for fish
+  // anywhere (he buys every fish for a third more).
+  brine: {
+    id: 'brine', name: 'Mister Brine', title: 'Tackle & Fish Market', role: 'shop',
+    look: { hairStyle: 'wolf', hairColor: '#5a6a8a', skinTone: '#d9a07a', eyeColor: '#2f7a6b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'cool' },
+    greeting: 'Rods, bait, and the best price for fish on the whole sea. I buy every fish for a third more than the mainland. Ask anyone.',
+    shop: ['fishing_rod', 'rod_oak', 'rod_maple', 'lantern_bait', 'red_potion', 'return_scroll'],
+    fishBonus: 1.34,
+    chatter: ['Fresh bait! Glowing bait!', 'I buy fish! Every fish! Even the ugly ones!', 'A third more than the mainland, I tell you.'],
+  },
+  // Nori: nine years old, the best angler on the island (just ask her), and the Fishing Derby's
+  // host. Every hour on the hour (world/derby.js).
+  nori: {
+    id: 'nori', name: 'Nori', title: 'Fishing Derby', role: 'derby',
+    look: { hairStyle: 'fluffybob', hairColor: '#ff9e7a', skinTone: '#fbd9bf', eyeColor: '#2fa8c8', outfitColor: '#8fe0e8', eyeStyle: 'sparkle', face: 'proud' },
+    greeting: "I'm Nori, and I hold the island record. Every hour on the hour it's the Fishing Derby: biggest catch wins! Think you can beat me?",
+    chatter: ['I caught a fish THIS big once. Bigger, actually.', 'Derby on the hour! Be there!', "I'm not bragging if it's true."],
+  },
+  // Coral (and her twin Pearl, at the pots) run the noodle stall: fish noodles to buy, and the
+  // stove to cook your own catch.
+  coral: {
+    id: 'coral', name: 'Coral', title: 'Twin Noodles', role: 'shop',
+    look: { hairStyle: 'twintails', hairColor: '#ff8fb0', skinTone: '#fbe2cf', eyeColor: '#e05a7a', outfitColor: '#ffffff', eyeStyle: 'sparkle', face: 'giggle' },
+    greeting: "Welcome to Twin Noodles! Pearl cooks, I talk. Bring your catch to our stove and cook it yourself, or buy a bowl of ours!",
+    shop: ['dish_twinnoodles', 'dish_lanternskewer', 'red_potion', 'blue_potion'],
+    chatter: ['Noodles! Hot noodles!', 'Pearl, the pot is boiling over!', 'Twin Noodles: twice the noodles, twice the fun!'],
+  },
+  // Granny Kelp keeps the lighthouse on the point, and the island's old stories: why the sea has
+  // gone strange, and what lives in the deep water under the light (data/quests.js).
+  kelp: {
+    id: 'kelp', name: 'Granny Kelp', title: 'Lighthouse Keeper', role: 'guide',
+    look: { hairStyle: 'bun', hairColor: '#dfe2ee', skinTone: '#f2c8a8', eyeColor: '#6a5ac8', outfitColor: '#8fa8ff', eyeStyle: 'round', face: 'smug' },
+    greeting: "Mind the steps, dearie, they're older than me. Nearly.",
+    chatter: ['The light needs oil, and I need tea.', 'Old Lumen used to glow right under my window.', "Sixty years I've kept this light. It's never once gone out."],
+    quests: ['kelp_1', 'kelp_2', 'kelp_3', 'kelp_4', 'kelp_5'],
+  },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",

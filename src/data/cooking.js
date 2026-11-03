@@ -11,6 +11,17 @@ import { FIND_TIER } from './gathering.js';
 import { FISH_BY_ID } from './fishing.js';
 
 export const DISHES = [
+  // Lantern Lagoon's own (Twin Noodles sells them too).
+  { id: 'dish_twinnoodles', name: 'Twin Noodles', vessel: 'bowl', colors: ['#fff0c8', '#ff8a8a'], needs: { fish_goby: 2, fish_parrot: 1 }, heal: 600, values: { regenPct: 0.015 }, secs: 600, about: 'HP back every second', learn: 'fish_parrot' },
+  { id: 'dish_lanternskewer', name: 'Lantern Skewers', vessel: 'plate', colors: ['#c8e8ff', '#ffd27a'], needs: { fish_flying: 2 }, heal: 300, values: { speed: 12, jump: 6 }, secs: 600, about: 'Speed and jump', learn: 'fish_flying' },
+  { id: 'dish_clownroll', name: 'Clownfish Hand Roll', vessel: 'plate', colors: ['#ff9e5a', '#ffffff'], needs: { fish_clown: 1, fish_goby: 1 }, heal: 280, values: { acc: 10, eva: 10 }, secs: 600, about: 'Accuracy and avoid', learn: 'fish_clown' },
+  { id: 'dish_ponysoup', name: 'Sea Pony Pearl Soup', vessel: 'bowl', colors: ['#ffd6e6', '#fff8f0'], needs: { fish_seapony: 1, shell: 1 }, heal: 350, values: { mp: 150 }, secs: 600, about: 'Max MP', learn: 'fish_seapony' },
+  { id: 'dish_doradotaco', name: 'Dorado Tacos', vessel: 'plate', colors: ['#7fe0a0', '#ffd66b'], needs: { fish_dorado: 1, fish_flying: 1 }, heal: 400, values: { watk: 9, matk: 9 }, secs: 600, about: 'Attack and magic', learn: 'fish_dorado' },
+  { id: 'dish_groupercurry', name: 'Coral Grouper Curry', vessel: 'bowl', colors: ['#ffc870', '#ff8a7a'], needs: { fish_grouper: 1, fish_lagoonray: 1 }, heal: 600, values: { hp: 280 }, secs: 600, about: 'Max HP', learn: 'fish_grouper' },
+  { id: 'dish_anglerpot', name: 'Lantern Angler Hotpot', vessel: 'bowl', colors: ['#ffe08a', '#5a4a8a'], needs: { fish_angler: 1, fish_parrot: 1 }, heal: 650, values: { wdef: 20, mdef: 20 }, secs: 600, about: 'Defense', learn: 'fish_angler' },
+  { id: 'dish_tunasteak', name: 'Seared Sailfin Steak', vessel: 'plate', colors: ['#c87a7a', '#ffe08a'], needs: { fish_tuna: 1, fish_oarfish: 1 }, heal: 800, values: { watk: 12, matk: 12 }, secs: 600, about: 'Attack and magic', learn: 'fish_tuna' },
+  { id: 'dish_molastew', name: 'Sunny Mola Stew', vessel: 'bowl', colors: ['#fff0c8', '#ffd66b'], needs: { fish_mola: 1, fish_tuna: 1 }, heal: 850, values: { hp: 400, regenPct: 0.01 }, secs: 600, about: 'Max HP and HP back', learn: 'fish_mola' },
+  { id: 'dish_marlinplate', name: 'Golden Marlin Plate', vessel: 'plate', colors: ['#ffd66b', '#4f7ad0'], needs: { fish_marlin: 1 }, heal: 900, values: { critRate: 0.06, watk: 10, matk: 10 }, secs: 600, about: 'Critical rate, attack and magic', learn: 'fish_marlin' },
   { id: 'dish_grilled', name: 'Grilled Minnow Skewers', vessel: 'plate', colors: ['#ffb35a', '#ffe36b'], needs: { fish_minnow: 2 }, heal: 120, values: { regenPct: 0.01 }, secs: 300, about: 'HP back every second' },
   { id: 'dish_stew', name: 'Garden Carp Stew', vessel: 'bowl', colors: ['#ffc6a0', '#9be08f'], needs: { fish_carp: 1, sprout_leaf: 2 }, heal: 200, values: { hp: 120 }, secs: 600, about: 'Max HP' },
   { id: 'dish_skewer', name: 'Sea Salt Sardines', vessel: 'plate', colors: ['#d6e4ff', '#ffffff'], needs: { fish_sardine: 2, shell: 1 }, heal: 150, values: { watk: 6, matk: 6 }, secs: 600, about: 'Attack and magic' },

@@ -44,7 +44,10 @@ function makePreview(id) {
 
 // What one costs to buy, and what one sells for.
 const unitCost = (def) => def.price;
-const unitGain = (def, e) => sellPrice(e.id, e.inst);
+// Mister Brine (Lantern Lagoon) pays more for fish (`fishBonus`); everyone else the usual price.
+let buyer = null;
+const fishCut = (id) => (buyer?.fishBonus && ITEMS[id]?.fish ? buyer.fishBonus : 1);
+const unitGain = (def, e) => Math.round(sellPrice(e.id, e.inst) * fishCut(e.id));
 
 const kindOf = (def) => {
   if (def.type === 'equip') return def.slot === 'weapon' ? def.weaponType[0].toUpperCase() + def.weaponType.slice(1) : SLOT_NAMES[def.slot];
@@ -76,6 +79,7 @@ function entriesOf(npc, char, dlg) {
 export function shopWindow(ui, state, world) {
   const dlg = state.npc;
   const npc = NPCS[dlg.id];
+  buyer = npc;
   const win = state.windows.npc;
   // The shop is bigger than the talk box it opens from, so it starts centred above the HUD.
   if (!dlg.placedShop) {
@@ -267,7 +271,7 @@ function trade(world, dlg, e, qty) {
     gain = sellPrice(e.id, e.inst);
   } else {
     removeItem(char.inventory, e.id, qty);
-    gain = sellPrice(e.id) * qty;
+    gain = Math.round(sellPrice(e.id) * fishCut(e.id)) * qty;
   }
   char.gold += gain;
   dlg.flash = { at: world.now, text: `+${gain.toLocaleString()}g`, color: GREEN };

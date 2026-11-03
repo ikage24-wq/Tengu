@@ -26,7 +26,7 @@ test('every fishing spot is somewhere you can stand, its fish real, every fish a
       for (const id of Object.keys(s.pool)) assert.ok(ITEMS[id]?.fish, `${map} has ${id}`);
     }
   }
-  for (const f of FISH) assert.ok(Object.values(SPOTS).flat().some((s) => s.pool[f.id]), `${f.id} lives somewhere`);
+  for (const f of FISH) assert.ok(f.boss || Object.values(SPOTS).flat().some((s) => s.pool[f.id]), `${f.id} lives somewhere`);
   for (const d of DISHES) {
     assert.ok(ITEMS[d.id]?.effect?.food, d.id);
     for (const id of Object.keys(d.needs)) assert.ok(ITEMS[id], `${d.id} needs ${id}`);

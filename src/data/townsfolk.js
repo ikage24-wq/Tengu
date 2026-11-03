@@ -71,4 +71,18 @@ export const TOWNSFOLK = {
       act: { type: 'stroll', a: 120, b: 680, speed: 16, pause: 4 }, lines: ['Another lantern, another wish.', 'Lovely glow tonight.'], greet: ['Evening!', 'Watch the roots, traveller.'] },
     { id: 'gv-cat', kind: 'cat', seed: 8, look: { coat: '#3b3650' }, act: { type: 'nap', x: 1040, y: 324 } },
   ],
+  // Lantern Lagoon: Pearl at the noodle pots beside her twin, a sailor hauling the Sea Biscuit's
+  // crates up from the cove, two kids racing the boardwalk, an old angler with his tide tables,
+  // and a cat asleep on a roof terrace.
+  lagoon: [
+    { id: 'lg-pearl', name: 'Pearl', kind: 'person', seed: 91, look: { hairStyle: 'twintails', hairColor: '#ff8fb0', outfitColor: '#ffd6e6' },
+      act: { type: 'chat', x: 1566, facing: -1 }, lines: ['Stir, stir, stir...', 'Coral! More bowls!', 'The broth is the secret. Shh.'], greet: ['Hungry? Coral takes the orders!', 'Bring us a fish and use our stove!'] },
+    { id: 'lg-deckhand', name: 'Gully', kind: 'person', seed: 14, look: { outfitColor: '#bfe0ff' },
+      act: { type: 'stroll', a: 640, b: 960, speed: 22, pause: 4, carry: true }, lines: ['Crates for Brine...', 'Who packs bait in a crate this heavy?'], greet: ['Ahoy!', 'Mind the planks, they creak.'] },
+    { id: 'lg-kid1', name: 'Kai', kind: 'kid', seed: 47, act: { type: 'chase', a: 1080, b: 1440, speed: 58 }, lines: ['Last one to the lantern is a soggy sardine!', 'I saw a turtle!'] },
+    { id: 'lg-kid2', name: 'Mina', kind: 'kid', seed: 58, act: { type: 'chase', a: 1080, b: 1440, speed: 58, lag: 0.9 }, lines: ['No fair, you started early!', 'Nori says she caught a whale. She did NOT.'] },
+    { id: 'lg-angler', name: 'Old Hake', kind: 'person', seed: 66, look: { hairColor: '#e9ebfa', outfitColor: '#c8d8a8' },
+      act: { type: 'read', x: 1640 }, lines: ['High tide at noon. Fish bite at the turn.', 'In my day the derby lasted all week.'], greet: ['The deep water off the point, that\'s where the big ones are.', 'Bait, lad. Always bait.'] },
+    { id: 'lg-cat', kind: 'cat', seed: 7, act: { type: 'nap', x: 1060, y: 486 } },
+  ],
 };

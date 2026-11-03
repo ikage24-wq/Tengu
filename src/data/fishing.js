@@ -8,7 +8,8 @@
 // (the region it's first found in, 1-4: docs/design/life-skills.md) }.
 // SPOTS: per map, where to stand ({ x, y }: the floor you stand on, `face` toward the water), where
 // the bobber floats ({ bx, by }), the region's `tier` (1-4: the Fishing level it needs is
-// TIER_LV[tier] in data/gathering.js), and what bites there (`pool`: fish id -> weight). Every
+// TIER_LV[tier] in data/gathering.js), and what bites there (`pool`: fish id -> weight). The sea's
+// spots (`sea`: Lantern Lagoon and the voyage) each keep their own tier, cove to deep water. Every
 // spot is a quiet nook: a dock or a ledge of its own no monster walks to (the map rules).
 
 export const FISH = [
@@ -40,7 +41,34 @@ export const FISH = [
   { id: 'fish_cloudcarp', name: 'Cloud Carp', color: '#f4f6ff', fin: '#a8c8ff', pattern: 'spots', price: 240, rarity: 2, react: 0.8, tier: 4 },
   { id: 'fish_comet', name: 'Comet Tetra', color: '#ffe9a6', fin: '#7f9cff', pattern: 'star', price: 280, rarity: 2, react: 0.75, tier: 4 },
   { id: 'fish_nebularay', name: 'Nebula Ray', color: '#6a5ac8', fin: '#ff9ec7', pattern: 'star', price: 600, rarity: 3, react: 0.6, tier: 4 },
+  // Lantern Lagoon and the open sea on the way there (the sea tier: its spots need no level past
+  // their region's, so anyone can fish the cove, the boardwalk and the voyage). `big` ones fight:
+  // you reel them in (world/fishing.js).
+  { id: 'fish_goby', name: 'Lantern Goby', color: '#ffd27a', fin: '#ff8a6a', pattern: 'spots', price: 30, rarity: 1, react: 1.2, tier: 1, size: [4, 10] },
+  { id: 'fish_clown', name: 'Ribbon Clownfish', color: '#ff9e5a', fin: '#ffffff', pattern: 'stripes', price: 110, rarity: 2, react: 0.95, tier: 1, size: [6, 13] },
+  { id: 'fish_seapony', name: 'Sea Pony', color: '#ffb0c8', fin: '#ff8fb0', pattern: 'plain', price: 150, rarity: 3, react: 0.75, tier: 1, size: [5, 16] },
+  { id: 'fish_flying', name: 'Flying Fish', color: '#c8e8ff', fin: '#ffffff', pattern: 'stripes', price: 55, rarity: 1, react: 1.05, tier: 1, size: [18, 36] },
+  { id: 'fish_dorado', name: 'Rainbow Dorado', color: '#7fe0a0', fin: '#ffd66b', pattern: 'spots', price: 190, rarity: 2, react: 0.85, tier: 1, size: [60, 140], big: true },
+  { id: 'fish_parrot', name: 'Parrotfish', color: '#7fe0c8', fin: '#ff9ec0', pattern: 'spots', price: 85, rarity: 1, react: 1.05, tier: 2, size: [25, 60] },
+  { id: 'fish_grouper', name: 'Coral Grouper', color: '#ff8a7a', fin: '#ffc8a0', pattern: 'spots', price: 150, rarity: 2, react: 0.9, tier: 2, size: [40, 95], big: true },
+  { id: 'fish_lagoonray', name: 'Lagoon Ray', color: '#a8b8e8', fin: '#6a8ac0', pattern: 'spots', price: 180, rarity: 2, react: 0.85, tier: 2, size: [50, 130], big: true },
+  { id: 'fish_angler', name: 'Lantern Angler', color: '#5a4a8a', fin: '#ffe08a', pattern: 'star', price: 340, rarity: 3, react: 0.7, tier: 2, size: [20, 48] },
+  { id: 'fish_tuna', name: 'Sailfin Tuna', color: '#6a8ad8', fin: '#ffe08a', pattern: 'stripes', price: 280, rarity: 2, react: 0.8, tier: 3, size: [80, 190], big: true },
+  { id: 'fish_mola', name: 'Sunny Mola', color: '#e8ecff', fin: '#ffd66b', pattern: 'plain', price: 460, rarity: 3, react: 0.7, tier: 3, size: [100, 260], big: true },
+  { id: 'fish_oarfish', name: 'Ribbon Oarfish', color: '#e8f0ff', fin: '#ff6b8a', pattern: 'stripes', price: 560, rarity: 3, react: 0.65, tier: 3, size: [200, 520], big: true },
+  { id: 'fish_marlin', name: 'Golden Marlin', color: '#ffd66b', fin: '#4f7ad0', pattern: 'stripes', price: 1300, rarity: 4, react: 0.5, tier: 3, size: [180, 420], big: true },
+  // The lighthouse's own: Old Lumen, the great lantern fish under the point, caught only at the end
+  // of Granny Kelp's story (world/fishing.js, the boss reel) and let go again.
+  { id: 'fish_lumen', name: 'Old Lumen', color: '#fff3a6', fin: '#8fe8ff', pattern: 'star', price: 0, rarity: 4, react: 1.2, tier: 3, size: [640, 820], big: true, boss: true, pull: 1.5 },
 ];
+
+// How long a fish can be (cm): its own range, or one from how rare it is.
+export const sizeRange = (fish) => fish.size ?? [6 + fish.rarity * 6, 18 + fish.rarity * 22];
+// A catch's length: most are middling, the giants rare.
+export const rollSize = (fish, rng = Math.random) => {
+  const [lo, hi] = sizeRange(fish);
+  return Math.round(lo + (hi - lo) * rng() ** 1.7);
+};
 
 export const FISH_BY_ID = Object.fromEntries(FISH.map((f) => [f.id, f]));
 export const RARITY_NAMES = ['', 'Common', 'Uncommon', 'Rare', 'Legendary'];
@@ -67,6 +95,19 @@ export const SPOTS = {
   peak: [{ x: 1920, y: 1072, face: 1, bx: 2030, by: 1118, ice: true, tier: 4, pool: { fish_icefish: 6, fish_auroratrout: 4, fish_trout: 1, fish_seraph: 0.4 } }],
   sky: [{ x: 2838, y: 980, face: -1, bx: 2745, by: 1036, tier: 4, pool: { fish_cloudcarp: 6, fish_comet: 2, fish_nebularay: 0.6, fish_whale: 0.6 } }],
   starfall: [{ x: 830, y: 752, face: 1, bx: 905, by: 796, sky: true, tier: 4, pool: { fish_comet: 5, fish_seraph: 3, fish_starfish: 2, fish_nebularay: 0.8, fish_whale: 0.5 } }],
+  // Lantern Lagoon: the cove's rock pools (anyone can fish them), the boardwalk's edges over the
+  // lagoon, and the deep water off Lighthouse Point.
+  lagoon: [
+    { x: 400, y: 700, face: 1, bx: 444, by: 703, sea: true, tier: 1, pool: { fish_goby: 6, fish_clown: 3, fish_seapony: 1, fish_starfish: 0.2 } },
+    { x: 740, y: 620, face: -1, bx: 690, by: 662, sea: true, tier: 2, pool: { fish_parrot: 6, fish_grouper: 3, fish_lagoonray: 2, fish_angler: 0.8, fish_clown: 2 } },
+    { x: 1460, y: 620, face: 1, bx: 1500, by: 662, sea: true, tier: 2, pool: { fish_parrot: 6, fish_grouper: 3, fish_lagoonray: 2, fish_angler: 0.8, fish_goby: 2 } },
+    { x: 2350, y: 440, face: 1, bx: 2385, by: 548, sea: true, deep: true, tier: 3, pool: { fish_tuna: 6, fish_mola: 2, fish_oarfish: 1.2, fish_marlin: 0.35, fish_grouper: 2 } },
+  ],
+  // The Sea Biscuit's stern and bow, both ways: the open sea.
+  ...Object.fromEntries(['voyage_out', 'voyage_home'].map((id) => [id, [
+    { x: 40, y: 420, face: -1, bx: 12, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
+    { x: 720, y: 420, face: 1, bx: 748, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
+  ]])),
 };
 
 // How close you must stand to a spot to cast.
