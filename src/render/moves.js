@@ -62,6 +62,14 @@ function danceLegs(r, ...stances) {
 const breathe = (p) => Math.sin(p * Math.PI * 3);
 // While a thrown weapon is in flight (the Blade Dancer's ring), between two moments of a move.
 const rel = (p, a, b) => (p >= a && p < b ? 1 : 0);
+// The dancers' turns (Wind, Blade and Sky Dancer): a clean mirror flip at each half turn.
+const dancerTurn = (a) => Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2)));
+// A dancer's working leg held long at `deg` from straight down at the hip (90 straight forward, 180
+// straight up, negative behind her), as a foot offset for danceLegs; `len` is hip to ankle.
+const dancerLeg = (deg, len = 14.6, tilt = 0) => [len * Math.sin((deg * Math.PI) / 180), len * Math.cos((deg * Math.PI) / 180) - 15.4, tilt];
+// A dancer's free hand: it may fly wide or low, but never up past her jaw (the big chibi head
+// starts right above the shoulder, so a raised free hand lands on her cheek).
+const dancerHand = ([x, y]) => [x, Math.max(-8, y)];
 
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
 export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern']);
@@ -1852,295 +1860,351 @@ export const MOVES = {
   // free arm always finishes the line (port de bras), the working leg points, turns are clean mirror
   // flips (never a squeeze), and every figure ends in a held pose before the next. Each blow lands
   // early (about a fifth of a second in) so she still feels quick.
+  // Reading at game size (the 2026-11-03 pass): her head is most of her height, so a figure only
+  // reads in the silhouette round it: the working leg goes long and clear of the body (`dancerLeg`,
+  // a straight leg at an angle from the hip), the body tips into the figure, and each figure has its
+  // own shape. The weapon arm never rises past about 112 degrees (higher, the hand comes up over her
+  // face) and a raised ring tips forward, out past her cheek; the free hand flies wide or low but
+  // never above her jaw (`dancerHand`: her head starts right over the shoulders), and the arm and ring
+  // keep to their drawn line with no run-on (`DANCER_LINES`). Big swings go under, never over the top.
 
-  // Piqué cut (opener, hits at ~0.4): she dips, ring drawn low behind, then steps up onto her front
-  // toe and sweeps the ring up and out in one long curve, the back leg lifting into attitude and the
-  // free arm opening behind her; she holds the line a beat, then comes down.
+  // Piqué cut (opener, hits at ~0.42): she sinks into a plié with the ring drawn back low behind
+  // her, then steps up onto her front toe and scoops the ring under and up into a high line out in
+  // front, the back leg swinging up into attitude and the free arm opening wide behind; she holds the
+  // line a beat, then comes down.
   wdpique(p) {
     const prep = soft(seg(p, 0, 0.3));
-    const cut = ease(seg(p, 0.28, 0.5));
-    const down = soft(seg(p, 0.72, 1));
+    const cut = ease(seg(p, 0.3, 0.46));
+    const down = soft(seg(p, 0.76, 1));
     const up = cut * (1 - down);
     return {
-      weapon: lerp(lerp(165, 205, prep), 92, cut) + 20 * down, arm: lerp(lerp(55, 35, prep), 90, cut) - 25 * down,
-      lift: 3 * up, lunge: -2 * prep * (1 - cut) + 7 * up, tilt: -0.08 * prep * (1 - cut) + 0.06 * up, trail: p > 0.28 && p < 0.6,
+      weapon: lerp(lerp(lerp(160, 215, prep), 70, cut), 135, down), arm: lerp(lerp(lerp(40, -60, prep), 104, cut), 52, down),
+      lift: 4 * up + 0.5 * breathe(p) * up, lunge: -2 * prep * (1 - cut) + 8 * up, tilt: -0.1 * prep * (1 - cut) + 0.12 * up, trail: p > 0.3 && p < 0.6,
       rig: (r) => {
-        r.squat = q(prep * (1 - cut));
-        r.backArm = [q(lerp(2, -7, up)), q(lerp(-2, -7, up))];
+        r.squat = q(2 * prep * (1 - cut));
+        r.backArm = dancerHand([q(lerp(3 * prep, -9, up)), q(lerp(-2 * prep, -10, up))]);
         r.hairLift = up > 0.3 ? -1 : 0;
         r.cape -= q(4 * up);
-        danceLegs(r, [prep * (1 - cut), [1.6, 0, 4], [-1.6, 0, -6]], [up, [3, -2.4, 12], [-4.6, -4.4, -48]]);
+        danceLegs(r, [prep * (1 - cut), [2.4, 0, 4], [-2.4, 0, -8]], [up, [1.6, -1, -10], dancerLeg(-72, 13.4, -50)]);
         if (up > 0.3) strikeFace(r);
       },
     };
   },
-  // Pirouette cut (second, hits at ~0.5): a quick plié, then one clean turn on her toe, the ring held
-  // out at arm's length sweeping right round her, the free arm raised over her head and the working
-  // foot drawn up to her knee; she opens out of it with both arms wide.
+  // Pirouette cut (second, hits at ~0.5): a quick plié, then one clean turn on her toe with the
+  // working foot drawn up to her knee (passé), the ring out at arm's length sweeping right round her
+  // and the free arm flung wide; she opens out of it with the leg
+  // unfolding forward and the ring tipped up.
   wdspin(p) {
     const prep = soft(seg(p, 0, 0.18));
-    const a = ease(seg(p, 0.16, 0.74));
-    const open = soft(seg(p, 0.72, 1));
+    const into = ease(seg(p, 0.12, 0.24));
+    const a = ease(seg(p, 0.16, 0.72));
+    const open = soft(seg(p, 0.72, 0.9)) * (1 - soft(seg(p, 0.94, 1)) * 0.5);
     const turning = a > 0 && a < 1;
     return {
-      weapon: lerp(160, 100, prep) + 8 * Math.sin(a * Math.PI * 2), arm: lerp(60, 84, prep) + 6 * open,
-      turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))),
-      lift: 4 * bump(p, 0.16, 0.76), trail: turning,
+      weapon: lerp(lerp(150, 195, prep), 95, into) - 25 * open, arm: lerp(lerp(50, 35, prep), 96, into) + 6 * open,
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 4 * bump(p, 0.16, 0.76) + 2 * open, trail: turning,
       rig: (r) => {
-        r.squat = q(prep * (1 - a) * 1.5);
-        r.backArm = turning ? [0, -10] : [q(lerp(2, -7, open)), q(lerp(-2, -5, open))];
+        r.squat = q(2 * prep * (1 - into));
+        const crown = into * (1 - open);
+        r.backArm = dancerHand([q(lerp(lerp(2, -10, crown), -10, open)), q(lerp(lerp(-2, -10, crown), -9, open))]);
         r.hairLift = turning ? -1 : 0;
         r.cape -= q(5 * bump(p, 0.16, 0.76));
-        danceLegs(r, [prep * (1 - a), [1.6, 0, 4], [-1.6, 0, -6]], [turning ? 1 : 0, [1.2, -5, 40], [-0.4, -1.4, -4]], [open, [3, 0, 6], [-3.4, 0, -12]]);
-        if (turning) strikeFace(r);
+        danceLegs(r, [prep * (1 - into), [2.4, 0, 4], [-2.4, 0, -8]], [into, [1.6, -8, 40], [-0.4, -1.6, -8]], [open, dancerLeg(58, 14, 40), [-1, -1, -8]]);
+        if (turning || open > 0.4) strikeFace(r);
       },
     };
   },
-  // Arabesque (third, hits at ~0.25 and ~0.5): she tips forward into an arabesque, the back leg
-  // stretched high behind her and the ring thrust out in front, then flicks the ring round in a
-  // figure of eight for a second cut before rising out of it.
+  // Arabesque (third, hits at ~0.25 and ~0.5): she tips right forward over her standing leg, the
+  // back leg stretched long and high behind her and the ring thrust out in front, then flicks the
+  // ring through a figure of eight for the second cut before rising out of it.
   wdarabesque(p) {
-    const into = ease(seg(p, 0, 0.24));
-    const fig = seg(p, 0.26, 0.5);
-    const rise = soft(seg(p, 0.66, 1));
+    const into = ease(seg(p, 0, 0.22));
+    const fig = seg(p, 0.26, 0.52);
+    const rise = soft(seg(p, 0.7, 1));
     const hold = into * (1 - rise);
     return {
-      weapon: lerp(160, 92, into) + 45 * Math.sin(fig * Math.PI) * (1 - rise) + 40 * rise, arm: lerp(50, 90, into) - 22 * Math.sin(fig * Math.PI) * (1 - rise) - 20 * rise,
-      tilt: 0.28 * hold, lunge: 6 * hold, lift: 2 * hold, trail: p > 0.1 && p < 0.55,
+      weapon: lerp(lerp(160, 105, into) + 40 * Math.sin(fig * Math.PI * 2) * (1 - rise), 140, rise), arm: lerp(lerp(50, 92, into) - 20 * Math.sin(fig * Math.PI), 52, rise),
+      tilt: 0.42 * hold, lunge: 7 * hold, lift: 2 * hold + 0.5 * breathe(p) * hold, trail: p > 0.1 && p < 0.56,
       rig: (r) => {
-        r.backArm = [q(lerp(0, -6, hold)), q(lerp(-2, -9, hold))];
+        r.backArm = dancerHand([q(-9 * hold), q(-4 * hold)]);
         r.cape -= q(4 * hold);
         r.hairLift = hold > 0.4 ? 1 : 0;
-        danceLegs(r, [hold, [2, -1.4, 8], [-6.4, -6.6, -74]]);
+        danceLegs(r, [hold, [1.4, -1, -6], dancerLeg(-100, 14.6, -70)]);
         if (hold > 0.4) strikeFace(r);
       },
     };
   },
-  // Fouetté (the finish, the gust leaves at ~0.4): a deep plié with the ring drawn right back, then
-  // she whips round on one toe, the working leg kicking out and in, and flings the ring forward out
-  // of the turn; she ends in a big pose, ring arm high and forward, free arm raised, chin up: ta-da.
+  // Fouetté (the finish, the gust leaves at ~0.4): a deep plié with the ring drawn right back behind
+  // her, then she whips round on one toe, the working leg lashing out to the front and snapping back
+  // to her knee, and flings the ring out of the turn; she ends in her big pose: ring held high out
+  // in front, free arm flung wide, front foot pointed, chin up: ta-da.
   wdfouette(p) {
-    const wind = soft(seg(p, 0, 0.24));
-    const a = ease(seg(p, 0.22, 0.42));
-    const pose = soft(seg(p, 0.44, 0.62));
-    const end = soft(seg(p, 0.9, 1));
+    const wind = soft(seg(p, 0, 0.22));
+    const into = ease(seg(p, 0.18, 0.28));
+    const a = ease(seg(p, 0.2, 0.4));
+    const pose = soft(seg(p, 0.42, 0.58));
+    const end = soft(seg(p, 0.88, 1));
     const turning = a > 0 && a < 1;
     const held = pose * (1 - end);
+    const whip = Math.sin(a * Math.PI);
     return {
-      weapon: turning ? 100 : lerp(lerp(160, 220, wind), 104, pose) + 50 * end, arm: turning ? 80 : lerp(lerp(55, 30, wind), 80, pose) - 30 * end,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 5 * bump(p, 0.2, 0.46) + 2 * held + breathe(p) * 0.6 * held, tilt: -0.1 * wind * (1 - a) - 0.06 * held, lunge: -3 * wind * (1 - a) + 4 * held, trail: p > 0.2 && p < 0.5,
+      weapon: lerp(lerp(lerp(160, 225, wind), 95, into), 70, held) + 70 * end, arm: lerp(lerp(lerp(50, -60, wind), 96, into), 104, held) - 55 * end,
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 5 * bump(p, 0.2, 0.46) + 3 * held + breathe(p) * 0.6 * held, tilt: -0.12 * wind * (1 - into) - 0.1 * held, lunge: -4 * wind * (1 - into) + 5 * held, trail: p > 0.2 && p < 0.5,
       rig: (r) => {
-        r.squat = q(2 * wind * (1 - a));
-        r.backArm = turning ? [3, -6] : [q(lerp(2, -2, held)), q(lerp(-1, -11, held))];
+        r.squat = q(3 * wind * (1 - into));
+        r.backArm = dancerHand(turning ? [3, -6] : [q(lerp(lerp(0, 5, wind), -10, held)), q(lerp(lerp(0, -4, wind), -10, held))]);
         r.hairLift = turning || held > 0.5 ? -1 : 0;
         r.cape -= q(4 * bump(p, 0.2, 0.6));
-        danceLegs(r, [wind * (1 - a), [2.4, 0, 6], [-2.4, 0, -8]], [turning ? 1 : 0, [6, -4.6, 66], [-0.4, -1.4, -4]], [held, [2.6, -1.4, 10], [-4.4, -1.2, -30]]);
+        const lash = [lerp(1.6, 12.4, whip), -8, lerp(40, 50, whip)];
+        danceLegs(r, [wind * (1 - into), [3, 0, 6], [-3, 0, -8]], [turning ? 1 : 0, lash, [-0.4, -1.6, -8]], [held, [8, -1, 24], [-1, -1.4, -8]]);
         if (turning || held > 0.4) strikeFace(r);
       },
     };
   },
-  // Chassé cut (opener): a gliding chase step forward, feet meeting in the air, the ring sweeping low
-  // and level out in front.
+  // Chassé cut (opener): a gliding chase step forward, the feet meeting in the air, landing long and
+  // low in a lunge with the ring sweeping level out in front and the free arm stretched back.
   wdchasse(p) {
-    const glide = soft(seg(p, 0, 0.6));
-    const cut = ease(seg(p, 0.25, 0.5));
-    const settle = soft(seg(p, 0.7, 1));
-    const meet = bump(p, 0.15, 0.55);
+    const glide = soft(seg(p, 0, 0.5));
+    const draw = soft(seg(p, 0, 0.26));
+    const cut = ease(seg(p, 0.26, 0.44));
+    const meet = bump(p, 0.1, 0.46);
+    const land = soft(seg(p, 0.36, 0.56));
+    const settle = soft(seg(p, 0.74, 1));
     return {
-      weapon: lerp(195, 110, cut) - 15 * settle, arm: lerp(30, 85, cut) - 15 * settle, lunge: 9 * glide * (1 - settle * 0.5), lift: 4 * meet, trail: p > 0.22 && p < 0.55,
+      weapon: lerp(lerp(160, 210, draw), 105, cut) + 30 * settle, arm: lerp(lerp(40, -60, draw), 88, cut) - 34 * settle,
+      lunge: 12 * glide * (1 - settle * 0.4), lift: 6 * meet, tilt: 0.16 * cut * (1 - settle), trail: p > 0.24 && p < 0.55,
       rig: (r) => {
-        r.backArm = [q(-6 * cut), q(-4 - 2 * cut)];
+        r.squat = q(2.5 * land * (1 - settle));
+        r.backArm = dancerHand([q(-9 * glide * (1 - settle)), q(-5 * glide * (1 - settle))]);
         r.cape -= q(4 * glide);
-        danceLegs(r, [meet, [1.2, -2.6, 20], [-0.6, -2.4, -16]], [settle, [2.8, 0, 6], [-2.4, 0, -10]]);
+        danceLegs(r, [meet, [2.4, -6, 30], [-3, -7, -30]], [land, [7, 0, 6], [-8, -1, -20]], [settle, [2.6, 0, 6], [-2.4, 0, -10]]);
         if (cut > 0.3 && settle < 0.5) strikeFace(r);
       },
     };
   },
-  // Fan kick (second): her working leg sweeps up and over in a big arc, the ring following the leg
-  // round, her body leaning back away from it.
+  // Fan kick (second): her working leg sweeps up in a great arc in front of her and back down, her
+  // body leaning back away from the kick, up on the toe of her standing foot; the ring waits drawn
+  // back at her hip while the leg rises and whips out after it as the leg comes down.
   wdfankick(p) {
-    const k = ease(seg(p, 0.12, 0.6));
+    const k = ease(seg(p, 0.1, 0.56));
     const back = soft(seg(p, 0.66, 1));
     const arc = Math.sin(k * Math.PI);
+    const phi = lerp(lerp(15, 120, soft(seg(p, 0.08, 0.36))), 62, ease(seg(p, 0.36, 0.56)));
+    const whip = ease(seg(p, 0.34, 0.46));
     return {
-      weapon: lerp(170, 90, k) + 70 * back, arm: lerp(55, 92, k) - 40 * back, tilt: -0.14 * arc, lift: 2 * arc, trail: p > 0.12 && p < 0.62,
+      weapon: lerp(lerp(lerp(150, 220, soft(seg(p, 0, 0.3))), 95, whip), 140, back), arm: lerp(lerp(lerp(50, -40, soft(seg(p, 0, 0.3))), 96, whip), 52, back), tilt: -0.22 * arc * (1 - back), lift: 3 * arc, trail: p > 0.12 && p < 0.62,
       rig: (r) => {
-        r.backArm = [q(-7 * arc), q(-3 - 4 * arc)];
+        r.backArm = dancerHand([q(-10 * arc), q(-3 - 7 * arc)]);
         r.hairLift = arc > 0.4 ? 1 : 0;
         r.cape -= q(3 * arc);
-        danceLegs(r, [arc, [5.4, -6.4, 84], [-0.6, -1, -4]], [back, [2.6, 0, 6], [-2.4, 0, -10]]);
+        danceLegs(r, [ease(seg(p, 0.04, 0.16)), dancerLeg(phi, 14.6, 50), [-1, -1, -8]], [back, [2.6, 0, 6], [-2.4, 0, -10]]);
         if (arc > 0.4) strikeFace(r);
       },
     };
   },
-  // Grand jeté (third): a leap forward into the splits, arms and ring raised high, and the ring cuts
-  // down as she lands.
+  // Grand jeté (third): a big leap forward into the flat splits, the ring raised high out in front
+  // and the free arm stretched behind, and the ring cuts down as she lands in a lunge.
   wdjete(p) {
-    const up = bump(p, 0.08, 0.6);
-    const split = soft(seg(p, 0.12, 0.32)) * (1 - soft(seg(p, 0.48, 0.6)));
-    const cut = ease(seg(p, 0.44, 0.6));
-    const land = bump(p, 0.58, 0.9);
+    const up = bump(p, 0.08, 0.62);
+    const raise = soft(seg(p, 0, 0.24));
+    const split = soft(seg(p, 0.1, 0.28)) * (1 - soft(seg(p, 0.46, 0.6)));
+    const cut = ease(seg(p, 0.42, 0.54));
+    const land = bump(p, 0.56, 0.94);
     return {
-      weapon: lerp(lerp(150, 78, soft(seg(p, 0, 0.3))), 170, cut), arm: lerp(lerp(60, 86, soft(seg(p, 0, 0.3))), 60, cut), lift: 18 * up, lunge: 10 * soft(seg(p, 0.08, 0.6)), tilt: 0.06 * split, trail: p > 0.42 && p < 0.64,
+      weapon: lerp(lerp(150, 68, raise), 172, cut), arm: lerp(lerp(50, 104, raise), 42, cut), lift: 20 * up, lunge: 12 * soft(seg(p, 0.08, 0.6)), tilt: 0.08 * split + 0.14 * cut * (1 - land), trail: p > 0.42 && p < 0.64,
       rig: (r) => {
         if (up > 0.2) r.air = true;
-        r.squat = q(1.5 * land);
-        r.backArm = [q(-7 * split), q(-7 * split - 2)];
+        r.squat = q(3 * land);
+        r.backArm = dancerHand([q(-10 * split - 6 * land), q(-10 * split - 3 * land)]);
         r.hairLift = up > 0.3 ? -1 : 0;
         r.cape -= q(5 * up);
-        danceLegs(r, [split, [7, -2.4, 72], [-7, -2.4, -72]], [land, [3, 0, 6], [-3, 0, -12]]);
+        danceLegs(r, [split, [14, -14.4, 60], [-14, -14.4, -60]], [land, [6, 0, 6], [-7, -1, -16]]);
         if (cut > 0.2) strikeFace(r);
       },
     };
   },
-  // Chaînés (a finish, and her Pirouette and dash): quick chained turns travelling forward, the ring
-  // trailing round her at arm's length, and she comes out of them into a révérence, a little bow.
+  // Chaînés (a finish, and her Pirouette and dash): quick chained turns travelling forward up on her
+  // toes, the ring trailing round her at arm's length, and she comes out of them into a deep
+  // révérence: the back foot slides behind, she sinks and bows, the ring swept low and the free
+  // arm opened wide.
   wdchaine(p, dur) {
     const turns = dur > 0.55 ? 2 : 1;
     const a = ease(seg(p, 0.06, 0.7)) * turns;
-    const bow = soft(seg(p, 0.72, 0.9)) * (1 - soft(seg(p, 0.95, 1)));
+    const bow = soft(seg(p, 0.7, 0.88)) * (1 - soft(seg(p, 0.95, 1)));
     const turning = p > 0.06 && p < 0.7;
     return {
-      weapon: turning ? 100 : lerp(120, 165, bow), arm: turning ? 84 : lerp(80, 40, bow),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 2 * bump(p, 0.06, 0.7), tilt: 0.22 * bow, trail: turning,
+      weapon: turning ? 92 : lerp(110, 162, bow), arm: turning ? 96 : lerp(88, 28, bow),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 3 * bump(p, 0.06, 0.7), tilt: 0.38 * bow, trail: turning,
       rig: (r) => {
-        r.backArm = turning ? [-4, -6] : [q(-6 * bow), q(-3 * bow)];
+        r.squat = q(2 * bow);
+        r.backArm = dancerHand(turning ? [-8, -8] : [q(-10 * bow), q(-3 * bow)]);
         r.hairLift = turning ? -1 : 0;
         r.cape -= q(3 * bump(p, 0.06, 0.7));
-        danceLegs(r, [turning ? 1 : 0, [0.6, -1.6, 8], [-0.6, -1.6, -8]], [bow, [3.4, 0, 14], [-1.6, 0, -4]]);
+        danceLegs(r, [turning ? 1 : 0, [0.6, -2, 10], [-0.6, -2, -10]], [bow, [5, 0, 14], [-5, -2, -20]]);
         if (bow > 0.4) r.eyes = 'half';
         else if (turning) strikeFace(r);
       },
     };
   },
-  // Port de bras push (gloves, opener): both arms gather in to her chest, then open and push forward
-  // with a step, palms out, sending the gust.
+  // Port de bras push (gloves, opener): both hands gather in to her chest with the front foot drawn
+  // up, then she steps into a long lunge and pushes both palms out together, sending the gust.
   wdpalm(p) {
-    const gather = soft(seg(p, 0, 0.3));
-    const push = ease(seg(p, 0.3, 0.46));
-    const back = soft(seg(p, 0.7, 1));
+    const gather = soft(seg(p, 0, 0.28));
+    const push = ease(seg(p, 0.28, 0.44));
+    const back = soft(seg(p, 0.72, 1));
     const out = push * (1 - back);
     return {
-      weapon: 60, arm: lerp(lerp(30, 45, gather), 96, push) - 40 * back, lunge: -2 * gather * (1 - push) + 6 * out, tilt: 0.1 * out,
+      weapon: 60, arm: lerp(lerp(40, 25, gather), 96, push) - 46 * back, lunge: -3 * gather * (1 - push) + 10 * out, tilt: -0.08 * gather * (1 - push) + 0.18 * out,
       rig: (r) => {
-        r.backArm = [q(lerp(lerp(0, 3, gather), 6, push) * (1 - back)), q(lerp(-2, -6, gather) * (1 - push) - 5 * out)];
-        r.squat = q(gather * (1 - push));
+        r.backArm = dancerHand([q(lerp(4 * gather, 8, push) * (1 - back)), q(lerp(-6 * gather, -8, push) * (1 - back))]);
+        r.squat = q(1.5 * gather * (1 - push) + 2 * out);
         r.cape -= q(3 * out);
-        danceLegs(r, [out, [3.6, 0, 6], [-3.4, -1, -16]]);
+        danceLegs(r, [gather * (1 - push), [1, -4, 20], [-1, 0, -6]], [out, [7, 0, 6], [-8, -1, -20]]);
         if (out > 0.3) strikeFace(r);
       },
     };
   },
-  // Rond de bras (gloves, second): her lead arm circles up over her head and comes down forward like
-  // a wing, the body swaying with it, the back leg extending behind.
+  // Rond de bras (gloves, second): her lead arm sweeps from low behind her, down past her hip and
+  // up into a high line in front like a wing, while the free arm comes down from high to low behind;
+  // the body sways with it and the back leg lifts into attitude.
   wdrond(p) {
-    const c = ease(seg(p, 0.1, 0.55));
+    const c = ease(seg(p, 0.08, 0.52));
     const back = soft(seg(p, 0.7, 1));
-    const ang = c < 0.5 ? lerp(40, 138, c * 2) : lerp(138, 92, (c - 0.5) * 2);
+    const s = Math.sin(c * Math.PI);
     return {
-      weapon: 60, arm: lerp(ang, 50, back), tilt: -0.1 * Math.sin(c * Math.PI) + 0.08 * c * (1 - back), lunge: 4 * c * (1 - back), lift: 2 * Math.sin(c * Math.PI),
+      weapon: 60, arm: lerp(lerp(lerp(40, -15, soft(seg(p, 0, 0.08))), 108, c), 50, back), tilt: -0.12 * s + 0.1 * c * (1 - back), lunge: 5 * c * (1 - back), lift: 3 * s,
       rig: (r) => {
-        r.backArm = [q(-4 * Math.sin(c * Math.PI)), q(-3 - 8 * Math.sin(c * Math.PI))];
+        r.backArm = dancerHand([q(lerp(-10, -8, c) * (1 - back * (1 - c))), q(lerp(-10, 0, c) * (1 - back))]);
         r.hairLift = c > 0.3 && c < 0.8 ? -1 : 0;
-        danceLegs(r, [c * (1 - back), [2.4, -1, 8], [-5, -3.4, -44]]);
+        danceLegs(r, [c * (1 - back), [1, -1, -6], dancerLeg(-62, 13.4, -60)]);
         if (c > 0.4 && back < 0.5) strikeFace(r);
       },
     };
   },
-  // Relevé (gloves, third, and her up command): she rises right onto her toes, sweeping both arms up
-  // over her head to lift the wind and whatever is in it.
+  // Relevé (gloves, third, and her up command with either weapon): a quick plié, then she rises
+  // right up onto one toe with the other foot drawn to her knee, leaning back to look up, the
+  // weapon hand sweeping up into a high line in front (a chakram tipped forward) and the free arm
+  // flung wide, lifting the wind and whatever is in it.
   wdrise(p) {
-    const up = ease(seg(p, 0.12, 0.45));
-    const down = soft(seg(p, 0.68, 1));
+    const dip = soft(seg(p, 0, 0.14));
+    const up = ease(seg(p, 0.14, 0.4));
+    const down = soft(seg(p, 0.72, 1));
     const held = up * (1 - down);
     return {
-      weapon: lerp(60, 30, up), arm: lerp(lerp(40, 25, soft(seg(p, 0, 0.12))), 116, up) - 76 * down, lift: 6 * held, tilt: -0.1 * held, trail: p > 0.12 && p < 0.5,
+      weapon: lerp(lerp(lerp(150, 200, dip), 70, up), 140, down), arm: lerp(lerp(lerp(40, -40, dip), 106, up), 52, down), lift: 8 * held + 0.6 * breathe(p) * held, tilt: -0.14 * held, trail: p > 0.14 && p < 0.5,
       rig: (r) => {
-        r.squat = q(soft(seg(p, 0, 0.12)) * (1 - up));
-        r.backArm = [q(-1 * held), q(-11 * held)];
+        r.squat = q(2 * dip * (1 - up));
+        r.backArm = dancerHand([q(lerp(3 * dip, -10, held)), q(lerp(-2 * dip, -10, held))]);
         r.hairLift = held > 0.4 ? -1 : 0;
         r.cape -= q(4 * held);
-        danceLegs(r, [held, [0.6, -2, 6], [-0.6, -2, -6]]);
+        danceLegs(r, [dip * (1 - up), [2.4, 0, 6], [-2.4, 0, -8]], [held, [1.8, -8, 40], [-0.4, -2, -10]]);
         if (held > 0.4) strikeFace(r);
       },
     };
   },
   // Grand port de bras (gloves, finish): a pirouette with both arms flung wide, then she opens into
-  // a big pose, arms up and out, and the swirl of ribbons bursts round her.
+  // a big pose up on her toe, the front leg kicked up high in front, glove high and free arm flung
+  // wide, and the swirl of ribbons bursts round her.
   wdflourish(p) {
-    const a = ease(seg(p, 0.1, 0.5));
-    const pose = soft(seg(p, 0.5, 0.66)) * (1 - soft(seg(p, 0.9, 1)));
+    const prep = soft(seg(p, 0, 0.1));
+    const a = ease(seg(p, 0.08, 0.48));
+    const pose = soft(seg(p, 0.48, 0.62)) * (1 - soft(seg(p, 0.9, 1)));
     const turning = a > 0 && a < 1;
     return {
-      weapon: 60, arm: turning ? 96 : lerp(60, 118, pose), orbit: false,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 4 * bump(p, 0.1, 0.52) + 2 * pose, tilt: -0.06 * pose,
+      weapon: 60, arm: turning ? 92 : lerp(lerp(50, 40, prep), 110, pose), orbit: false,
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 3 * bump(p, 0.08, 0.5) + 5 * pose + 0.6 * breathe(p) * pose, tilt: -0.15 * pose,
       rig: (r) => {
-        r.backArm = turning ? [-8, -5] : [q(-6 * pose), q(-2 - 9 * pose)];
+        r.squat = q(1.5 * prep * (1 - a));
+        r.backArm = dancerHand(turning ? [-9, -6] : [q(-10 * pose), q(-10 * pose)]);
         r.hairLift = turning || pose > 0.5 ? -1 : 0;
-        r.cape -= q(4 * bump(p, 0.1, 0.66));
-        danceLegs(r, [turning ? 1 : 0, [1.2, -5, 40], [-0.4, -1.4, -4]], [pose, [2.8, -1.4, 10], [-4, -1, -26]]);
+        r.cape -= q(4 * bump(p, 0.08, 0.66));
+        danceLegs(r, [prep * (1 - a), [2.4, 0, 4], [-2.4, 0, -8]], [turning ? 1 : 0, [1.6, -8, 40], [-0.4, -1.6, -8]], [pose, dancerLeg(85, 14.6, 60), [-1, -1.6, -8]]);
         if (turning || pose > 0.4) strikeFace(r);
       },
     };
   },
-  // Lunge push (gloves, a finish): a twist away, then a deep lunge forward with both palms driven out
-  // after the gust.
+  // Lunge push (gloves, a finish): she twists away, glove drawn back behind her and the free hand
+  // forward, then drives into a deep lunge with both palms thrust out after the gust.
   wdlunge(p) {
-    const twist = soft(seg(p, 0, 0.36));
-    const drive = ease(seg(p, 0.36, 0.52));
+    const twist = soft(seg(p, 0, 0.34));
+    const drive = ease(seg(p, 0.34, 0.5));
     const back = soft(seg(p, 0.76, 1));
     const out = drive * (1 - back);
     return {
-      weapon: 60, arm: lerp(lerp(40, 20, twist), 92, drive) - 40 * back, lunge: -4 * twist * (1 - drive) + 9 * out, tilt: -0.12 * twist * (1 - drive) + 0.14 * out,
+      weapon: 60, arm: lerp(lerp(40, -40, twist), 94, drive) - 44 * back, lunge: -5 * twist * (1 - drive) + 12 * out, tilt: -0.15 * twist * (1 - drive) + 0.2 * out,
       rig: (r) => {
-        r.backArm = [q(lerp(3, 7, out)), q(-3 - 3 * out)];
-        r.squat = q(1.5 * out + twist * (1 - drive));
+        r.backArm = dancerHand([q(lerp(6 * twist, 8, drive) * (1 - back)), q(lerp(-5 * twist, -9, drive) * (1 - back))]);
+        r.squat = q(2 * twist * (1 - drive) + 3 * out);
         r.hairLift = out > 0.4 ? 1 : 0;
         r.cape -= q(5 * out);
-        danceLegs(r, [out, [4.6, 0, 6], [-4.6, 0, -14]]);
+        danceLegs(r, [twist * (1 - drive), [2, 0, 4], [-3, 0, -8]], [out, [9, 0, 6], [-10, -1, -24]]);
         if (out > 0.3) strikeFace(r);
       },
     };
   },
-  // In the air: a turning cut (she hangs a moment), and a split that cuts down as she drops.
+  // In the air: a tucked turn with the ring out at arm's length (she hangs a moment) opening into a
+  // star, and a flat split with the ring raised that cuts down as she drops.
   wdairspin(p) {
-    const a = ease(seg(p, 0.05, 0.8));
+    const a = ease(seg(p, 0.05, 0.78));
+    const turning = p > 0.05 && p < 0.78;
+    const open = soft(seg(p, 0.76, 1));
     return {
-      weapon: 100, arm: 86, trail: p > 0.05 && p < 0.82,
-      turn: Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))),
-      rig: (r) => { r.air = true; r.backArm = [-5, -7]; r.hairLift = -1; danceLegs(r, [1, [2.4, -4, 30], [-2.4, -2, -30]]); strikeFace(r); },
+      weapon: lerp(95, 70, open), arm: lerp(96, 100, open), trail: turning, lift: 3 * bump(p, 0, 0.85),
+      turn: turning ? dancerTurn(a) : 1,
+      rig: (r) => {
+        r.air = true;
+        r.backArm = dancerHand([q(lerp(-10, -10, open)), q(lerp(-10, -9, open))]);
+        r.hairLift = -1;
+        danceLegs(r, [1, [3, -11, 50], [-1, -9, 20]], [open, [9, -7, 40], [-9, -8, -40]]);
+        strikeFace(r);
+      },
     };
   },
   wdairsplit(p) {
-    const split = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.6, 0.8)));
-    const cut = ease(seg(p, 0.3, 0.55));
+    const raise = soft(seg(p, 0, 0.25));
+    const split = raise * (1 - soft(seg(p, 0.58, 0.85)));
+    const cut = ease(seg(p, 0.32, 0.48));
     return {
-      weapon: lerp(78, 170, cut), arm: lerp(86, 60, cut), trail: p > 0.28 && p < 0.6,
-      rig: (r) => { r.air = true; r.backArm = [q(-7 * split), q(-7 * split - 2)]; r.hairLift = -1; danceLegs(r, [split, [7, -2.4, 72], [-7, -2.4, -72]]); if (cut > 0.2) strikeFace(r); },
+      weapon: lerp(lerp(120, 68, raise), 172, cut), arm: lerp(lerp(70, 104, raise), 38, cut), lift: 3 * split, tilt: 0.2 * cut * (1 - soft(seg(p, 0.7, 1))), trail: p > 0.3 && p < 0.6,
+      rig: (r) => {
+        r.air = true;
+        r.backArm = dancerHand([q(-10 * raise), q(lerp(-10, -4, cut) * raise)]);
+        r.hairLift = -1;
+        danceLegs(r, [1, [4, -8, 30], [-4, -7, -30]], [split, [14, -14.4, 60], [-14, -14.4, -60]]);
+        if (cut > 0.2) strikeFace(r);
+      },
     };
   },
   // Grand Finale (her finisher, 1.5 s): she rises onto her toes as the spotlight drops, spins three
-  // times with her arms rising like a music-box dancer, opens into her biggest pose, both arms up, as
-  // the rose of ribbons bursts, then sinks into a deep bow to the crowd.
+  // times like a music-box dancer, rising higher with the ring lifting out in front and her free arm
+  // opening wide; opens into her biggest pose as the rose of ribbons bursts (~0.74): up on one toe,
+  // the front leg kicked up high, ring high out in front, free arm wide, chin up; then
+  // sinks into a deep bow to the crowd.
   wdencore(p) {
-    const rise = soft(seg(p, 0, 0.14));
-    const a = ease(seg(p, 0.12, 0.66)) * 3;
-    const pose = soft(seg(p, 0.66, 0.74)) * (1 - soft(seg(p, 0.84, 0.9)));
-    const bow = soft(seg(p, 0.86, 0.95)) * (1 - soft(seg(p, 0.98, 1)));
-    const turning = p > 0.12 && p < 0.66;
+    const rise = soft(seg(p, 0, 0.12));
+    const a = ease(seg(p, 0.12, 0.64)) * 3;
+    const turning = p > 0.12 && p < 0.64;
     const armsUp = soft(seg(p, 0.12, 0.6));
+    const pose = soft(seg(p, 0.64, 0.73));
+    const bow = soft(seg(p, 0.86, 0.95));
+    const end = soft(seg(p, 0.97, 1));
+    const armT = lerp(lerp(50, 88, rise), 104, armsUp);
+    const wT = lerp(lerp(150, 100, rise), 72, armsUp);
     return {
-      weapon: turning ? lerp(100, 60, armsUp) : lerp(lerp(60, 30, pose), 165, bow), arm: turning ? lerp(80, 128, armsUp) : lerp(lerp(60, 135, pose), 40, bow),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 3 * rise * (1 - bow) + 4 * pose + breathe(p) * 0.5 * pose, tilt: 0.3 * bow - 0.08 * pose, trail: turning,
+      weapon: lerp(lerp(lerp(wT, 70, pose), 165, bow), 140, end), arm: lerp(lerp(lerp(armT, 106, pose), 25, bow), 50, end),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: (3 * rise + 3 * armsUp + 3 * pose) * (1 - bow) + breathe(p) * 0.6 * pose * (1 - bow), tilt: -0.14 * pose * (1 - bow) + 0.4 * bow * (1 - end), trail: turning,
       rig: (r) => {
-        r.backArm = turning ? [q(-3 * armsUp), q(-4 - 7 * armsUp)] : [q(-3 * pose - 6 * bow), q(-11 * pose - 2 * bow)];
+        r.squat = q(2 * bow * (1 - end));
+        const up = lerp(armsUp, 1, pose);
+        r.backArm = dancerHand([q(lerp(lerp(-2, -10, up), -10, bow) * (1 - end)), q(lerp(lerp(-6, -10, up), -2, bow) * (1 - end))]);
         r.hairLift = turning || pose > 0.4 ? -1 : 0;
-        r.cape -= q(5 * (turning ? 1 : pose));
-        danceLegs(r, [rise * (1 - bow), [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1.2, -5, 40], [-0.4, -1.6, -4]], [pose, [2.6, -1.4, 10], [-3.6, -1.2, -24]], [bow, [3.4, 0, 14], [-1.6, 0, -4]]);
+        r.cape -= q(5 * (turning ? 1 : pose * (1 - bow)));
+        danceLegs(r, [rise, [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1.6, -8, 40], [-0.4, -1.6, -8]], [pose, dancerLeg(80, 14, 50), [-1, -1.6, -8]], [bow, [5, 0, 14], [-5, -2, -20]], [end, [2.4, 0, 6], [-2.4, 0, -8]]);
         if (bow > 0.4) r.eyes = 'half';
         else if (turning || pose > 0.3) strikeFace(r);
       },
@@ -2149,215 +2213,252 @@ export const MOVES = {
 
   // ---------- The Blade Dancer's moves (her own; docs/design/blade-dancer.md) ----------
   // A ring-throwing showgirl: every figure is a throw or a catch. The ring leaves her hand on the
-  // release frame (`thrown`, so the hand is empty while it flies) and comes home on a turn. Throws
-  // stay low or sidearm so neither the ring nor her arm crosses her face; the free arm always
-  // finishes the line, and every figure ends in a held, showy pose.
+  // release frame (`thrown`, so the hand is empty while it flies) and comes home on a turn. Each
+  // throw has its own line while the ring flies (a pointing hand, a crouch, crossed arms sprung
+  // open, a lunge with the free arm thrown high), so an empty hand is never a plain stance. Throws
+  // stay low, sidearm or underhand so neither the ring nor her arm crosses her face, and every
+  // figure ends in a held, showy pose.
 
   // Backhand flick (opener, the ring leaves at ~0.34 and is caught back at ~0.86): the ring drawn
-  // back to her hip, then flicked out with a snap of the wrist and a step; her open hand holds the
-  // line out front while it flies, and she plucks it out of the air coming home.
+  // across to her far hip, then flicked out backhand with a snap and a step up onto her toe; while
+  // it flies she points after it, back leg lifted and free arm flung back, then plucks it out
+  // of the air coming home.
   bdflick(p) {
-    const wind = soft(seg(p, 0, 0.3));
-    const flick = ease(seg(p, 0.3, 0.42));
-    const catchIt = soft(seg(p, 0.82, 0.95));
+    const wind = soft(seg(p, 0, 0.28));
+    const flick = ease(seg(p, 0.28, 0.4));
+    const catchIt = soft(seg(p, 0.82, 0.96));
+    const held = flick * (1 - catchIt);
     return {
-      weapon: lerp(lerp(160, 215, wind), 100, flick), arm: lerp(lerp(50, 22, wind), 76, flick) - 6 * catchIt,
-      thrown: rel(p, 0.34, 0.86), lunge: -2 * wind * (1 - flick) + 5 * flick * (1 - catchIt * 0.5), tilt: -0.07 * wind * (1 - flick) + 0.06 * flick,
+      weapon: lerp(lerp(150, 240, wind), 95, flick) + 45 * catchIt, arm: lerp(lerp(50, 10, wind), 100, flick) - 46 * catchIt,
+      thrown: rel(p, 0.34, 0.86), lunge: -2 * wind * (1 - flick) + 6 * held, tilt: -0.1 * wind * (1 - flick) + 0.15 * held, lift: 2 * held,
       rig: (r) => {
-        r.backArm = [q(lerp(3, -6, flick)), q(lerp(-2, -6, flick))];
-        r.squat = q(wind * (1 - flick));
+        r.backArm = dancerHand([q(lerp(5 * wind, -10, flick) * (1 - catchIt)), q(lerp(-5 * wind, -10, flick) * (1 - catchIt))]);
+        r.squat = q(1.5 * wind * (1 - flick));
         r.cape -= q(3 * flick);
-        danceLegs(r, [wind * (1 - flick), [1.4, 0, 4], [-1.6, 0, -6]], [flick, [3.4, -0.6, 8], [-3.6, -2, -24]]);
+        danceLegs(r, [wind * (1 - flick), [0.4, 0, 4], [-1.6, 0, -6]], [held, [2, -1, -8], dancerLeg(-68, 12.4, -50)], [catchIt, [2.6, 0, 6], [-2.4, 0, -10]]);
         if (flick > 0.3 && p < 0.8) strikeFace(r);
       },
     };
   },
-  // Cross toss (second, two rings at ~0.3 and ~0.5): a ring flung low from each hand so they cross
-  // in front of her, her arms ending crossed and then sprung open like a fan.
+  // Cross toss (second, two rings at ~0.3 and ~0.5): a sidearm ring from her weapon hand, then one
+  // from the free hand as the weapon arm sweeps back in, so for a beat her arms are crossed over her
+  // chest; then they spring open like a fan, up on her toe with the back leg out.
   bdcross(p) {
-    const one = ease(seg(p, 0.18, 0.32));
-    const two = ease(seg(p, 0.38, 0.52));
-    const open = soft(seg(p, 0.6, 0.85));
+    const one = ease(seg(p, 0.16, 0.3));
+    const two = ease(seg(p, 0.36, 0.5));
+    const open = soft(seg(p, 0.6, 0.8));
+    const fin = soft(seg(p, 0.9, 1));
     return {
-      weapon: lerp(200, 110, one), arm: lerp(35, 74, one) - 16 * open, thrown: rel(p, 0.3, 0.92),
-      lunge: 3 * one, tilt: 0.05 * one - 0.04 * open,
+      weapon: lerp(lerp(220, 100, one), 130, fin), arm: lerp(lerp(lerp(lerp(40, 20, soft(seg(p, 0, 0.16))), 85, one), 30, two), 102, open) - 50 * fin, thrown: rel(p, 0.3, 0.92),
+      lunge: 4 * one * (1 - fin), tilt: 0.08 * one * (1 - open) - 0.08 * open * (1 - fin), lift: 3 * open * (1 - fin),
       rig: (r) => {
-        r.backArm = [q(lerp(-4, 7, two) - 12 * open), q(lerp(-2, -5, two) - 2 * open)];
+        r.backArm = dancerHand([q(lerp(lerp(lerp(0, -6, one), 9, two), -10, open) * (1 - fin)), q(lerp(lerp(lerp(0, -4, one), -6, two), -10, open) * (1 - fin))]);
         r.cape -= q(3 * one);
-        danceLegs(r, [one, [2.6, 0, 6], [-2.2, -1, -14]], [open, [1.6, -1.4, 10], [-3, 0, -10]]);
-        if (one > 0.4) strikeFace(r);
+        r.hairLift = open > 0.4 && fin < 0.5 ? -1 : 0;
+        danceLegs(r, [one, [5, 0, 6], [-5, -1, -14]], [two, [1.6, -1, 4], [-1.4, 0, -4]], [open, [1, -1.6, -8], dancerLeg(-58, 12.6, -40)], [fin, [2.6, 0, 6], [-2.4, 0, -10]]);
+        if (one > 0.4 && fin < 0.5) strikeFace(r);
       },
     };
   },
   // Turning catch (third, cuts all round her at ~0.5): she turns on her toe to meet the ring coming
-  // home and catches it out at arm's length, its spin carrying it round her once before it stops.
+  // home, foot drawn to her knee and free arm wide, catches it out at arm's length and its spin
+  // carries it right round her; she settles into a lunge with the ring out in front.
   bdcatch(p) {
     const a = ease(seg(p, 0.1, 0.62));
     const turning = a > 0 && a < 1;
-    const settle = soft(seg(p, 0.66, 1));
+    const settle = soft(seg(p, 0.64, 0.86)) * (1 - soft(seg(p, 0.94, 1)) * 0.6);
     return {
-      weapon: 100 + 10 * Math.sin(a * Math.PI * 2), arm: 82 + 6 * settle, thrown: rel(p, 0, 0.42),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 3 * bump(p, 0.1, 0.64), trail: p > 0.42 && p < 0.66,
+      weapon: 95 + 10 * Math.sin(a * Math.PI * 2), arm: 96 - 8 * settle, thrown: rel(p, 0, 0.42),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 4 * bump(p, 0.1, 0.64), lunge: 6 * settle, tilt: 0.14 * settle, trail: p > 0.42 && p < 0.66,
       rig: (r) => {
-        r.backArm = turning ? [0, -9] : [q(-6 * settle), q(-3 - 3 * settle)];
+        r.squat = q(2 * settle);
+        r.backArm = dancerHand(turning ? [-10, -10] : [q(lerp(-6, -10, settle)), q(lerp(-10, -8, settle))]);
         r.hairLift = turning ? -1 : 0;
         r.cape -= q(4 * bump(p, 0.1, 0.66));
-        danceLegs(r, [turning ? 1 : 0, [1.2, -4.4, 34], [-0.4, -1.4, -4]], [settle, [3, 0, 6], [-3, -1, -16]]);
+        danceLegs(r, [turning ? 1 : 0, [1.6, -8, 40], [-0.4, -1.6, -8]], [settle, [6, 0, 6], [-7, -1, -16]]);
         if (turning) strikeFace(r);
       },
     };
   },
-  // Sidearm hurl (the finish, the ring leaves at ~0.45): a deep lunge back with the ring drawn
-  // right round behind her hip, then the whole body unwinds and hurls it sidearm down the line; she
-  // ends stretched long after it, free arm raised behind: a showgirl's flourish.
+  // Sidearm hurl (the finish, the ring leaves at ~0.45): she coils deep, the ring drawn right round
+  // behind her hip and her free hand aimed forward, then unwinds and hurls it sidearm down the line,
+  // driving into a deep lunge with the back leg stretched long and the free arm thrown high behind
+  // her: a showgirl's flourish, held while the ring ricochets.
   bdhurl(p) {
-    const coil = soft(seg(p, 0, 0.36));
-    const hurl = ease(seg(p, 0.36, 0.48));
-    const pose = soft(seg(p, 0.5, 0.66)) * (1 - soft(seg(p, 0.9, 1)));
+    const coil = soft(seg(p, 0, 0.34));
+    const hurl = ease(seg(p, 0.34, 0.46));
+    const pose = soft(seg(p, 0.46, 0.62)) * (1 - soft(seg(p, 0.9, 1)));
+    const fade = soft(seg(p, 0.9, 1));
     return {
-      weapon: lerp(lerp(170, 245, coil), 96, hurl), arm: lerp(lerp(45, 15, coil), 96, hurl) - 6 * pose, thrown: rel(p, 0.45, 1.01),
-      lunge: -4 * coil * (1 - hurl) + 9 * hurl * (1 - soft(seg(p, 0.9, 1)) * 0.6), tilt: -0.12 * coil * (1 - hurl) + 0.16 * hurl - 0.08 * pose,
+      weapon: lerp(lerp(160, 250, coil), 90, hurl), arm: lerp(lerp(lerp(45, -55, coil), 96, hurl), 80, pose) - 30 * fade, thrown: rel(p, 0.45, 1.01),
+      lunge: -5 * coil * (1 - hurl) + 12 * hurl * (1 - fade * 0.6), tilt: -0.18 * coil * (1 - hurl) + 0.3 * hurl * (1 - fade),
       rig: (r) => {
-        r.squat = q(1.5 * coil * (1 - hurl) + 1.5 * hurl * (1 - pose));
-        r.backArm = [q(lerp(4, -5, hurl) - 2 * pose), q(lerp(-2, -4, hurl) - 7 * pose)];
+        r.squat = q(3 * coil * (1 - hurl) + 4 * pose);
+        r.backArm = dancerHand([q(lerp(lerp(0, 7, coil), -10, hurl) * (1 - fade)), q(lerp(lerp(0, -7, coil), -3, hurl) * (1 - fade))]);
         r.hairLift = hurl > 0.4 ? 1 : 0;
         r.cape -= q(5 * hurl);
-        danceLegs(r, [coil * (1 - hurl), [2, 0, 6], [-3, 0, -10]], [hurl, [4.6, 0, 6], [-5, -2, -30]], [pose, [3.6, -1, 10], [-5.4, -4, -50]]);
+        danceLegs(r, [coil * (1 - hurl), [3, 0, 6], [-5, 0, -12]], [hurl, [9, 0, 6], [-12, -3, -40]], [fade, [2.6, 0, 6], [-2.4, 0, -10]]);
         if (hurl > 0.3) strikeFace(r);
       },
     };
   },
-  // Skimming throw (opener): she drops low and skims the ring along just over the ground.
+  // Skimming throw (opener): she drops into a low crouch, back knee almost to the floor, and skims
+  // the ring out along the ground; she holds the crouch, hand out after it, while it flies.
   bdskip(p) {
-    const low = soft(seg(p, 0, 0.3));
-    const go = ease(seg(p, 0.3, 0.44));
-    const up = soft(seg(p, 0.75, 1));
+    const low = soft(seg(p, 0, 0.26));
+    const go = ease(seg(p, 0.3, 0.42));
+    const up = soft(seg(p, 0.8, 1));
+    const crouch = low * (1 - up);
     return {
-      weapon: lerp(lerp(150, 200, low), 115, go), arm: lerp(lerp(45, 25, low), 70, go), thrown: rel(p, 0.4, 0.88),
-      lunge: 6 * go * (1 - up * 0.5), tilt: 0.12 * low * (1 - up),
+      weapon: lerp(lerp(150, 215, low), 110, go) + 25 * up, arm: lerp(lerp(45, -20, low), 70, go) - 20 * up, thrown: rel(p, 0.4, 0.88),
+      lunge: 8 * go * (1 - up * 0.5), tilt: 0.28 * crouch,
       rig: (r) => {
-        r.squat = q(2 * low * (1 - up));
-        r.backArm = [q(-6 * go), q(-3 - 2 * go)];
-        danceLegs(r, [low * (1 - up), [3.4, 0, 4], [-3.6, 0, -6]]);
+        r.squat = q(5 * crouch);
+        r.backArm = dancerHand([q(lerp(-9, -10, go) * crouch), q(lerp(-4, -5, go) * crouch)]);
+        r.hairLift = go > 0.3 && up < 0.5 ? 1 : 0;
+        danceLegs(r, [crouch, [7, 0, 10], [-7, -1, -30]]);
         if (go > 0.3 && up < 0.5) strikeFace(r);
       },
     };
   },
-  // Lasso (second): the ring swung low at her side like a pendulum, faster and wider each pass, then
-  // let fly forward off the top of a swing.
+  // Lasso (second): free hand on her hip, front foot pointed, she swings the ring in a pendulum
+  // below her hand, faster and wider each pass, then sweeps it up and lets it fly forward, stepping
+  // into a lunge pointing after it.
   bdlasso(p) {
     const wind = seg(p, 0, 0.5);
-    const go = ease(seg(p, 0.5, 0.6));
-    const back = soft(seg(p, 0.8, 1));
-    const swing = 180 + (30 + 35 * wind) * Math.sin(wind * wind * Math.PI * 5);
+    const go = ease(seg(p, 0.48, 0.58));
+    const back = soft(seg(p, 0.82, 1));
+    const swing = 180 + 30 * (0.5 + 0.5 * wind) * Math.sin(wind * wind * Math.PI * 5);
     return {
-      weapon: lerp(swing, 100, go), arm: lerp(20 + 6 * wind, 78, go) - 20 * back, thrown: rel(p, 0.55, 0.92),
-      lunge: 4 * go, tilt: -0.05 * wind * (1 - go) + 0.06 * go,
+      weapon: lerp(lerp(swing, 70, go), 130, back), arm: lerp(lerp(lerp(50, 76, soft(seg(p, 0, 0.12))), 102, go), 52, back), thrown: rel(p, 0.55, 0.92),
+      lunge: 6 * go * (1 - back), tilt: -0.08 * wind * (1 - go) + 0.12 * go * (1 - back),
       rig: (r) => {
-        r.backArm = [q(lerp(2, -6, go)), q(lerp(-6, -4, go))];
+        r.backArm = dancerHand([q(lerp(lerp(0, 3, soft(seg(p, 0, 0.12))), -10, go) * (1 - back)), q(lerp(-1, -10, go) * (1 - back))]);
         r.cape -= q(2 * wind);
-        danceLegs(r, [wind * (1 - go), [1, 0, 4], [-1.4, -1, -10]], [go, [3, 0, 6], [-3, -1, -16]]);
+        danceLegs(r, [soft(seg(p, 0, 0.12)) * (1 - go), [6, -1, 30], [-2, 0, -6]], [go * (1 - back), [7, 0, 6], [-7, -1, -18]]);
         if (go > 0.3) strikeFace(r);
       },
     };
   },
-  // Lob (third, and her up command): an underhand lob that sends the ring arcing up over them.
+  // Lob (third, and her up command): a dip, then an underhand lob that sends the ring arcing up over
+  // them; she rises onto her toe after it, hand still raised and the back leg lifted behind.
   bdlob(p) {
-    const dip = soft(seg(p, 0, 0.26));
-    const lob = ease(seg(p, 0.26, 0.42));
-    const down = soft(seg(p, 0.7, 1));
+    const dip = soft(seg(p, 0, 0.24));
+    const lob = ease(seg(p, 0.24, 0.38));
+    const down = soft(seg(p, 0.72, 1));
+    const held = lob * (1 - down);
     return {
-      weapon: lerp(lerp(165, 200, dip), 80, lob), arm: lerp(lerp(40, 15, dip), 96, lob) - 50 * down, thrown: rel(p, 0.33, 0.9),
-      lift: 3 * lob * (1 - down), tilt: -0.08 * lob * (1 - down),
+      weapon: lerp(lerp(lerp(160, 200, dip), 62, lob), 135, down), arm: lerp(lerp(lerp(40, -40, dip), 106, lob), 52, down), thrown: rel(p, 0.33, 0.9),
+      lift: 5 * held, tilt: -0.15 * held,
       rig: (r) => {
-        r.squat = q(1.5 * dip * (1 - lob));
-        r.backArm = [q(-5 * lob), q(-2 - 6 * lob * (1 - down))];
-        r.hairLift = lob > 0.4 && down < 0.5 ? -1 : 0;
-        danceLegs(r, [dip * (1 - lob), [1.6, 0, 4], [-1.6, 0, -6]], [lob * (1 - down), [0.6, -2, 6], [-0.6, -2, -6]]);
+        r.squat = q(2 * dip * (1 - lob));
+        r.backArm = dancerHand([q(lerp(3 * dip, -8, held)), q(lerp(-3 * dip, -3, held))]);
+        r.hairLift = held > 0.4 ? -1 : 0;
+        danceLegs(r, [dip * (1 - lob), [2.4, 0, 4], [-2.4, 0, -8]], [held, [0.6, -2, -10], dancerLeg(-60, 12.4, -40)]);
         if (lob > 0.3) strikeFace(r);
       },
     };
   },
-  // Spinning hurl (a finish): two quick turns with the ring swinging out at her waist, and she lets
-  // it go out of the second, ending on one foot, arms wide.
+  // Spinning hurl (a finish): two quick turns on her toe, the ring swinging out at arm's length and
+  // her free arm wide, and she lets it go out of the second, tipping straight into an
+  // arabesque that points after it.
   bdspinhurl(p) {
-    const a = ease(seg(p, 0.06, 0.5)) * 2;
-    const turning = p > 0.06 && p < 0.5;
-    const pose = soft(seg(p, 0.5, 0.64)) * (1 - soft(seg(p, 0.9, 1)));
+    const a = ease(seg(p, 0.04, 0.46)) * 2;
+    const turning = p > 0.04 && p < 0.46;
+    const pose = soft(seg(p, 0.46, 0.6)) * (1 - soft(seg(p, 0.9, 1)));
     return {
-      weapon: turning ? 100 : 96, arm: turning ? 84 : 92 - 4 * pose, thrown: rel(p, 0.46, 1.01),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 3 * bump(p, 0.06, 0.5) + 2 * pose, trail: p > 0.06 && p < 0.48,
+      weapon: turning ? 95 : lerp(130, 90, pose), arm: turning ? 94 : lerp(55, 96, pose), thrown: rel(p, 0.46, 1.01),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 3 * bump(p, 0.04, 0.5) + 2 * pose, tilt: 0.36 * pose, lunge: 5 * pose, trail: turning,
       rig: (r) => {
-        r.backArm = turning ? [-6, -4] : [q(-8 * pose), q(-3 - 5 * pose)];
+        r.backArm = dancerHand(turning ? [-10, -10] : [q(-10 * pose), q(-4 * pose)]);
         r.hairLift = turning ? -1 : 0;
-        r.cape -= q(4 * bump(p, 0.06, 0.64));
-        danceLegs(r, [turning ? 1 : 0, [0.8, -1.6, 8], [-0.8, -1.6, -8]], [pose, [2.4, -1.6, 12], [-4.6, -3.6, -46]]);
+        r.cape -= q(4 * bump(p, 0.04, 0.64));
+        danceLegs(r, [turning ? 1 : 0, [1.6, -8, 40], [-0.4, -1.6, -8]], [pose, [1.4, -1, -6], dancerLeg(-100, 14.6, -70)]);
         if (turning || pose > 0.3) strikeFace(r);
       },
     };
   },
-  // In the air: a downward flick of the ring at whatever is below.
+  // In the air: the ring raised out in front, then flicked down at whatever is below, legs kicking
+  // out from a tuck.
   bdairflick(p) {
-    const go = ease(seg(p, 0.2, 0.42));
+    const wind = soft(seg(p, 0, 0.22));
+    const go = ease(seg(p, 0.22, 0.4));
     return {
-      weapon: lerp(60, 150, go), arm: lerp(80, 130 - 70, go), thrown: rel(p, 0.4, 0.95),
-      rig: (r) => { r.air = true; r.backArm = [q(-5 * go), q(-6)]; danceLegs(r, [1, [2.4, -3, 30], [-2.4, -2, -30]]); if (go > 0.3) strikeFace(r); },
-    };
-  },
-  // In the air, the second: she tucks, then scissors both arms down and out, flinging a ring from
-  // each hand at whatever is below, legs split wide behind the throw.
-  bdairtwin(p) {
-    const tuck = soft(seg(p, 0, 0.3));
-    const go = ease(seg(p, 0.3, 0.46));
-    const open = soft(seg(p, 0.5, 0.8));
-    return {
-      weapon: lerp(lerp(70, 40, tuck), 160, go), arm: lerp(lerp(80, 120, tuck), 55, go), thrown: rel(p, 0.38, 0.96), tilt: -0.08 * tuck * (1 - go) + 0.1 * go * (1 - open),
+      weapon: lerp(lerp(90, 68, wind), 150, go), arm: lerp(lerp(80, 104, wind), 45, go), thrown: rel(p, 0.4, 0.95), tilt: 0.18 * go,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(lerp(-2, -7, go)), q(lerp(-9, 2, go))];
-        r.hairLift = go > 0.3 ? -1 : 0;
-        danceLegs(r, [tuck * (1 - go), [2.6, -4, 50], [-1, -3.6, 30]], [go, [5, -2, 60], [-5, -2, -60]], [open, [2.4, -3, 30], [-2.4, -2, -30]]);
+        r.backArm = dancerHand([q(lerp(-9 * wind, -10, go)), q(lerp(-10 * wind, -6, go))]);
+        danceLegs(r, [wind * (1 - go), [3, -10, 50], [-1, -9, 30]], [go, [9, -6, 40], [-10, -9, -50]]);
         if (go > 0.3) strikeFace(r);
       },
     };
   },
-  // Out of a run: she slides in on one knee and skims the ring out of the slide.
-  bdslide(p) {
-    const slide = soft(seg(p, 0, 0.4)) * (1 - soft(seg(p, 0.8, 1)));
-    const go = ease(seg(p, 0.3, 0.44));
+  // In the air, the second: she tucks tight, both hands gathered low, then scissors both arms down
+  // and out, flinging a ring from each hand at whatever is below, legs split wide behind the throw.
+  bdairtwin(p) {
+    const tuck = soft(seg(p, 0, 0.28));
+    const go = ease(seg(p, 0.28, 0.42));
+    const open = soft(seg(p, 0.55, 0.85));
     return {
-      weapon: lerp(190, 110, go), arm: lerp(30, 70, go), thrown: rel(p, 0.42, 0.9), lunge: 8 * slide, tilt: -0.12 * slide,
+      weapon: lerp(lerp(150, 200, tuck), 150, go), arm: lerp(lerp(70, 35, tuck), 60, go), thrown: rel(p, 0.38, 0.96), tilt: -0.1 * tuck * (1 - go) + 0.14 * go * (1 - open),
       rig: (r) => {
-        r.squat = q(2 * slide);
-        r.backArm = [q(-7 * slide), q(-4)];
+        r.air = true;
+        r.backArm = dancerHand([q(lerp(4 * tuck, -10, go)), q(lerp(-5 * tuck, -3, go))]);
+        r.hairLift = go > 0.3 ? -1 : 0;
+        danceLegs(r, [tuck * (1 - go), [3, -10, 50], [-1, -9, 30]], [go, [13, -12, 60], [-13, -12, -60]], [open, [5, -7, 30], [-5, -7, -30]]);
+        if (go > 0.3) strikeFace(r);
+      },
+    };
+  },
+  // Out of a run: she drops into a slide on her back knee, leaning back, free arm out behind for
+  // balance, and skims the ring out of the slide.
+  bdslide(p) {
+    const slide = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.8, 1)));
+    const draw = soft(seg(p, 0, 0.3));
+    const go = ease(seg(p, 0.3, 0.42));
+    return {
+      weapon: lerp(lerp(160, 210, draw), 105, go), arm: lerp(lerp(40, -10, draw), 75, go), thrown: rel(p, 0.42, 0.9), lunge: 10 * slide, tilt: -0.22 * slide,
+      rig: (r) => {
+        r.squat = q(5 * slide);
+        r.backArm = dancerHand([q(-9 * slide), q(-10 * slide)]);
         r.hairLift = slide > 0.4 ? 1 : 0;
         r.cape -= q(4 * slide);
-        danceLegs(r, [slide, [4.6, -0.4, 40], [-4, 0, -10]]);
+        danceLegs(r, [slide, [8, 0, 10], [-9, -1, -40]]);
         if (go > 0.3) strikeFace(r);
       },
     };
   },
-  // Golden Carousel (her finisher, 1.6 s): she raises the ring and turns slowly on her toes as rings
-  // gather round her like a carousel, faster and faster; at the peak she flings her arm out and
-  // they all fly; she holds the pose, catches her own ring as it comes home, and curtsies.
+  // Golden Carousel (her finisher, 1.6 s): she rises onto her toes with the ring raised out in front
+  // and turns, slowly then faster and faster, climbing higher as the rings gather round her like a
+  // carousel; at the top she coils, ring drawn back behind her, and flings it (~0.66): a big held
+  // throw high in the air, tipped into an arabesque, free arm back; she catches her ring as it
+  // comes home and curtsies.
   bdcarousel(p) {
     const rise = soft(seg(p, 0, 0.12));
-    const a = easeIn(seg(p, 0.1, 0.62)) * 3;
-    const turning = p > 0.1 && p < 0.62;
-    const fling = ease(seg(p, 0.62, 0.7));
-    const pose = fling * (1 - soft(seg(p, 0.86, 0.92)));
-    const bow = soft(seg(p, 0.9, 0.97)) * (1 - soft(seg(p, 0.99, 1)));
+    const a = easeIn(seg(p, 0.1, 0.58)) * 3;
+    const turning = p > 0.1 && p < 0.58;
+    const raise = soft(seg(p, 0.04, 0.2));
+    const climb = soft(seg(p, 0.3, 0.6));
+    const coil = soft(seg(p, 0.57, 0.63));
+    const fling = ease(seg(p, 0.63, 0.67));
+    const pose = fling * (1 - soft(seg(p, 0.88, 0.94)));
+    const bow = soft(seg(p, 0.9, 0.97));
+    const end = soft(seg(p, 0.98, 1));
+    const armT = lerp(lerp(50, 100, raise), -40, coil);
+    const wT = lerp(lerp(150, 72, raise), 230, coil);
     return {
-      weapon: turning ? 100 : lerp(96, 165, bow), arm: turning ? lerp(84, 92, rise) : lerp(96, 40, bow), thrown: rel(p, 0.66, 0.9),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 3 * rise * (1 - bow) + 2 * pose, tilt: 0.1 * fling * (1 - bow) + 0.28 * bow, lunge: 4 * fling * (1 - bow), trail: turning,
+      weapon: lerp(lerp(lerp(wT, 90, fling), 165, bow), 140, end), arm: lerp(lerp(lerp(armT, 98, fling), 30, bow), 50, end), thrown: rel(p, 0.66, 0.9),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: (3 * rise + 7 * climb) * (1 - soft(seg(p, 0.7, 0.92))) + 2 * pose + breathe(p) * 0.6 * pose, tilt: -0.15 * coil * (1 - fling) + 0.25 * pose + 0.35 * bow * (1 - end), lunge: 5 * pose, trail: turning,
       rig: (r) => {
-        r.backArm = turning ? [q(-2), q(-10)] : [q(-7 * pose - 6 * bow), q(-8 * pose - 2 * bow)];
+        r.squat = q(2 * bow * (1 - end));
+        const up = raise;
+        r.backArm = dancerHand([q(lerp(lerp(lerp(-10 * up, 7, coil), -10, fling), -10, bow) * (1 - end)), q(lerp(lerp(lerp(-10 * up, -7, coil), -4, fling), -2, bow) * (1 - end))]);
         r.hairLift = turning || pose > 0.4 ? -1 : 0;
         r.cape -= q(5 * (turning ? 1 : pose));
-        danceLegs(r, [rise * (1 - bow), [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1.2, -4.4, 34], [-0.4, -1.6, -4]], [pose, [3.6, -1, 10], [-5, -3.4, -44]], [bow, [3.4, 0, 14], [-1.6, 0, -4]]);
+        danceLegs(r, [rise, [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1.6, -8, 40], [-0.4, -1.6, -8]], [coil, [3, -9, 40], [-2, -8, 30]], [pose, [2, -2, -10], dancerLeg(-96, 14.4, -60)], [bow, [5, 0, 14], [-5, -2, -20]], [end, [2.4, 0, 6], [-2.4, 0, -8]]);
         if (bow > 0.4) r.eyes = 'half';
         else if (turning || pose > 0.3) strikeFace(r);
       },
@@ -3977,215 +4078,238 @@ export const MOVES = {
   },
 
   // ---------- The Sky Dancer's moves (her own; docs/design/sky-dancer.md) ----------
-  // She dances on the air: every figure is drawn airborne (legs free, toes pointed), her gloved
-  // palms and her feet throwing the wind. Arms stay below her face (out front, wide or low); each
-  // figure gathers in, strikes early, and ends floating in a held pose that breathes.
+  // She dances on the air: every figure is drawn airborne (legs free, toes pointed, never standing),
+  // her gloved palms and her feet throwing the wind. Her figures are a dancer's, big and clear at
+  // game size: legs long and clear of the body (`dancerLeg`), knees tucked or split, the free arm
+  // flung wide (the glove hand stays below about 100 degrees and the free hand below her jaw, or they
+  // come up over her face). Each figure gathers in, strikes early, and ends floating in a held pose
+  // that breathes.
 
-  // Palm push (opener, the gust leaves at ~0.4): she gathers both palms at her chest, knees drawn
-  // up, then pushes them out and down at them, legs stretching long behind.
+  // Palm push (opener, the gust leaves at ~0.4): she gathers both palms at her chest with her knees
+  // tucked up, then pushes both palms out and down at them, tipping forward with her legs
+  // stretching long behind, like a swimmer on the wind.
   sdpalm(p) {
-    const gather = soft(seg(p, 0, 0.3));
-    const push = ease(seg(p, 0.3, 0.44));
+    const gather = soft(seg(p, 0, 0.28));
+    const push = ease(seg(p, 0.28, 0.42));
     const hold = soft(seg(p, 0.5, 1));
     return {
-      weapon: 90, arm: lerp(lerp(50, 30, gather), 72, push) - 6 * hold, lift: 1.5 * breathe(p) * hold, tilt: -0.06 * gather * (1 - push) + 0.1 * push * (1 - hold * 0.5),
+      weapon: 90, arm: lerp(lerp(50, 35, gather), 66, push) - 6 * hold, lift: 1.5 * breathe(p) * hold, tilt: -0.08 * gather * (1 - push) + 0.32 * push * (1 - hold * 0.4),
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(lerp(-2, 6, gather) * (1 - push) + 5 * push), q(lerp(-3, -6, gather) * (1 - push) - 5 * push)];
+        r.backArm = dancerHand([q(lerp(4 * gather, 6, push) * (1 - hold * 0.3)), q(lerp(-5 * gather, -1, push))]);
         r.hairLift = push > 0.3 ? 1 : -1;
         r.cape -= q(3 * push);
-        danceLegs(r, [gather * (1 - push), [3.6, -7, 50], [0.6, -6, 30]], [push, [2.4, -2, 10], [-8.6, -5, -50]], [hold, [3, -3.4, 20], [-6.4, -3.6, -36]]);
+        danceLegs(r, [gather * (1 - push), [4, -11, 50], [1, -10, 30]], [push, [-2, -5, -20], [-11, -8, -60]], [hold, [2, -6, 20], [-9, -7, -45]]);
         if (push > 0.3) strikeFace(r);
       },
     };
   },
-  // Scissor kick (second, ~0.45): the legs switch in the air, the front one kicking high and the
-  // wind leaving off its toe; the arms open wide for balance.
+  // Scissor kick (second, ~0.45): the legs switch in the air, the front one kicking high above her
+  // waist and the wind leaving off its toe, the body leaning back from it and both arms flung wide.
   sdscissor(p) {
-    const load = soft(seg(p, 0, 0.3));
-    const kick = ease(seg(p, 0.3, 0.46));
-    const hold = soft(seg(p, 0.55, 1));
+    const load = soft(seg(p, 0, 0.28));
+    const kick = ease(seg(p, 0.28, 0.44));
+    const hold = soft(seg(p, 0.56, 1));
     return {
-      weapon: 90, arm: lerp(45, 30, load) + 30 * kick - 10 * hold, tilt: -0.14 * kick * (1 - hold * 0.6) + 0.04 * load * (1 - kick), lift: 1.5 * breathe(p) * hold,
+      weapon: 90, arm: lerp(lerp(45, 35, load), 100, kick) - 8 * hold, tilt: -0.25 * kick * (1 - hold * 0.5) + 0.06 * load * (1 - kick), lift: 2 * kick + 1.5 * breathe(p) * hold,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(-4 - 4 * kick), q(-6 - 2 * kick)];
+        r.backArm = dancerHand([q(lerp(-4, -10, kick)), q(lerp(-6, -10, kick))]);
         r.hairLift = kick > 0.3 ? 1 : 0;
-        danceLegs(r, [load * (1 - kick), [-4.6, -4, -30], [4.4, -5, 40]], [kick, [10, -10, 70], [-6.4, -2.4, -30]], [hold, [5.6, -5, 40], [-5.4, -2.6, -24]]);
+        danceLegs(r, [load * (1 - kick), [-6, -8, -40], [5, -9, 40]], [kick, dancerLeg(110, 14.6, 60), [-9, -6, -40]], [hold, [10, -10, 40], [-8, -6, -36]]);
         if (kick > 0.3) strikeFace(r);
       },
     };
   },
-  // Aerial spin (third, ~0.5 all round her): two quick half turns with arms wide and legs pressed
-  // together, toes pointed down like a spinning top, ending open.
+  // Aerial spin (third, ~0.5 all round her): two quick half turns like a spinning top, knees drawn
+  // up together with the feet tucked behind, both arms raised in a wide V; she opens out of it into
+  // a star, arms and legs wide.
   sdspin(p) {
-    const a = ease(seg(p, 0.08, 0.62)) * 2;
-    const turning = p > 0.08 && p < 0.62;
-    const open = soft(seg(p, 0.62, 0.85));
+    const a = ease(seg(p, 0.06, 0.62)) * 2;
+    const turning = p > 0.06 && p < 0.62;
+    const up = soft(seg(p, 0, 0.16));
+    const open = soft(seg(p, 0.62, 0.84));
     return {
-      weapon: 90, arm: turning ? 86 : 80 - 20 * open, lift: 2 * bump(p, 0.08, 0.7) + breathe(p) * open, trail: turning,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      weapon: 90, arm: lerp(lerp(50, 100, up), 95, open), lift: 4 * bump(p, 0.06, 0.7) + breathe(p) * open, trail: turning,
+      turn: turning ? dancerTurn(a) : 1,
       rig: (r) => {
         r.air = true;
-        r.backArm = turning ? [-7, -5] : [q(-6 * (1 - open) - 2), q(-5 - 2 * open)];
+        r.backArm = dancerHand([q(lerp(-10 * up, -10, open)), q(lerp(-10 * up, -8, open))]);
         r.hairLift = turning ? -1 : 0;
-        r.cape -= q(4 * bump(p, 0.08, 0.7));
-        danceLegs(r, [turning ? 1 : 0, [0.6, -1, 6], [-0.6, -1, -6]], [open, [4.4, -4.4, 30], [-5.4, -3, -30]]);
+        r.cape -= q(4 * bump(p, 0.06, 0.7));
+        danceLegs(r, [up, [-2.6, -6, -40], [-4.4, -5, -40]], [open, [9, -8, 40], [-9, -8, -40]]);
         if (turning) strikeFace(r);
       },
     };
   },
-  // Crescent kick (the finish, the great gust leaves at ~0.5): she leans back and swings the front
-  // leg right round from behind, over and down in a crescent, both palms pushing after it, and
-  // hangs there stretched long.
+  // Crescent kick (the finish, the great gust leaves at ~0.48): she leans back with the leg drawn
+  // far behind her, swings it forward and up high in a crescent, arms flung wide,
+  // then chops it down and drives both palms after it, hanging there stretched long.
   sdcrescent(p) {
-    const wind = soft(seg(p, 0, 0.32));
-    const sweep = ease(seg(p, 0.32, 0.52));
+    const wind = soft(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.3, 0.44));
+    const chop = ease(seg(p, 0.44, 0.52));
     const hold = soft(seg(p, 0.56, 0.9)) * (1 - soft(seg(p, 0.92, 1)));
+    const phi = lerp(lerp(lerp(10, -75, wind), 132, sweep), 62, chop);
     return {
-      weapon: 90, arm: lerp(lerp(50, 20, wind), 80, sweep) - 8 * hold, tilt: -0.16 * wind * (1 - sweep) + 0.18 * sweep * (1 - hold * 0.5), lunge: 4 * sweep, lift: 3 * wind * (1 - sweep) + breathe(p) * hold,
+      weapon: 90, arm: lerp(lerp(lerp(50, 25, wind), 95, sweep), 68, chop) - 6 * hold, tilt: -0.2 * wind * (1 - sweep) - 0.12 * sweep * (1 - chop) + 0.22 * chop * (1 - hold * 0.5), lunge: 4 * chop, lift: 3 * wind * (1 - chop) + breathe(p) * hold,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(-6 * wind * (1 - sweep) + 5 * sweep), q(-6 * wind * (1 - sweep) - 4 * sweep)];
-        r.hairLift = sweep > 0.3 ? 1 : -1;
+        r.backArm = dancerHand([q(lerp(lerp(-6 * wind, -10, sweep), 6, chop)), q(lerp(lerp(-6 * wind, -10, sweep), -2, chop))]);
+        r.hairLift = chop > 0.3 ? 1 : -1;
         r.cape -= q(5 * sweep);
-        danceLegs(r, [wind * (1 - sweep), [-8, -7, -60], [2.4, -5, 40]], [sweep, [10.4, -5, 50], [-8, -4.4, -56]], [hold, [7, -3, 30], [-8.6, -5, -60]]);
+        danceLegs(r, [1, dancerLeg(phi, 14.6, phi < 0 ? -50 : 50), [-6, -5, -30]], [hold, [8, -8, 40], [-9, -7, -50]]);
         if (sweep > 0.2) strikeFace(r);
       },
     };
   },
-  // Twirl (opener in her pool, ~0.5): one turn with an arm drawn in, then it unfurls in a palm push.
+  // Twirl (opener in her pool, ~0.48): one turn wrapped up tight, arms in and a foot at her knee,
+  // then she unfurls: a palm pushes out after the gust, the free arm flies back and the
+  // back leg opens long into attitude.
   sdtwirl(p) {
     const a = ease(seg(p, 0.05, 0.42));
     const turning = p > 0.05 && p < 0.42;
     const push = ease(seg(p, 0.42, 0.54));
     const hold = soft(seg(p, 0.6, 1));
     return {
-      weapon: 90, arm: turning ? 30 : lerp(30, 80, push) - 10 * hold, trail: turning, lift: breathe(p) * hold,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      weapon: 90, arm: lerp(lerp(50, 30, soft(seg(p, 0, 0.1))), 85, push) - 8 * hold, trail: turning, lift: 2 * bump(p, 0.05, 0.5) + breathe(p) * hold, tilt: 0.12 * push * (1 - hold * 0.5),
+      turn: turning ? dancerTurn(a) : 1,
       rig: (r) => {
         r.air = true;
-        r.backArm = turning ? [3, -4] : [q(-6 * push), q(-4 - 2 * push)];
+        r.backArm = dancerHand([q(lerp(4 * soft(seg(p, 0, 0.1)), -9, push)), q(lerp(-6 * soft(seg(p, 0, 0.1)), -10, push) + 3 * hold)]);
         r.hairLift = turning ? -1 : 0;
-        danceLegs(r, [turning ? 1 : 0, [3, -7, 40], [-0.6, -1.4, -6]], [push, [3.6, -2.6, 20], [-7.4, -4, -40]], [hold, [3.4, -4, 24], [-5.6, -3, -30]]);
+        danceLegs(r, [soft(seg(p, 0, 0.1)), [2, -8, 40], [-0.4, -1, -8]], [push, [1, -3, -10], dancerLeg(-70, 13.4, -50)], [hold, [3, -5, 20], [-9, -9, -45]]);
         if (push > 0.3) strikeFace(r);
       },
     };
   },
-  // Flutter (second in her pool, gusts at ~0.3 and ~0.6): both arms beat down twice like wings,
-  // lifting her a little each time, legs fluttering below.
+  // Flutter (second in her pool, gusts at ~0.3 and ~0.6): both arms beat down twice like wings, from
+  // high and wide to low at her sides, lifting her on each beat, her
+  // legs fluttering below.
   sdflutter(p) {
-    const beat = (u) => Math.sin(Math.PI * clamp01(u));
-    const b1 = beat(seg(p, 0.1, 0.4));
-    const b2 = beat(seg(p, 0.4, 0.7));
-    const flap = Math.max(b1, b2);
-    const hold = soft(seg(p, 0.72, 1));
+    const k = lerp(lerp(lerp(lerp(lerp(0.3, 1, soft(seg(p, 0, 0.16))), 0, ease(seg(p, 0.18, 0.3))), 1, soft(seg(p, 0.32, 0.46))), 0, ease(seg(p, 0.48, 0.6))), 0.35, soft(seg(p, 0.7, 1)));
+    const s = Math.sin(p * Math.PI * 6);
+    const hold = soft(seg(p, 0.7, 1));
     return {
-      weapon: 90, arm: 100 - 70 * flap - 20 * hold, lift: 3 * flap + breathe(p) * hold,
+      weapon: 90, arm: lerp(35, 100, k), tilt: 0.16 * (1 - k) * (1 - hold) - 0.1 * k, lift: 3 * bump(p, 0.24, 0.5) + 3 * bump(p, 0.54, 0.84) + breathe(p) * hold,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(-6 + 4 * flap), q(-8 + 6 * flap)];
-        r.hairLift = flap > 0.5 ? 1 : -1;
-        danceLegs(r, [1, [2.6 + 2 * flap, -4.4 - 2 * flap, 24 + 16 * flap], [-3.4 - 2 * flap, -3, -24 - 10 * flap]], [hold, [3.4, -4, 20], [-5, -3, -26]]);
-        if (flap > 0.5) strikeFace(r);
+        r.backArm = dancerHand([q(lerp(-6, -10, k)), q(lerp(2, -10, k))]);
+        r.hairLift = k < 0.4 ? 1 : -1;
+        danceLegs(r, [1, [5 + 4 * s, -8 - 4 * s, 40], [-7 + 4 * s, -7 + 3 * s, -40]], [hold, [4, -7, 30], [-7, -7, -36]]);
+        if (k < 0.4 && p > 0.2) strikeFace(r);
       },
     };
   },
-  // Axe heel (third in her pool, ~0.55): the front leg rises straight up past her shoulder, then
-  // chops down, the wind falling off the heel onto whatever is below.
+  // Axe heel (third in her pool, ~0.54): the front leg rises high and straight out in front of her
+  // as she leans back and rises, arms open wide for balance, then chops down, the wind falling off her heel onto
+  // whatever is below, arms pulled down with it.
   sdheel(p) {
     const raise = soft(seg(p, 0, 0.4));
-    const chop = ease(seg(p, 0.42, 0.56));
+    const chop = ease(seg(p, 0.42, 0.54));
     const hold = soft(seg(p, 0.6, 1));
+    const phi = lerp(lerp(10, 118, raise), 45, chop);
     return {
-      weapon: 90, arm: lerp(40, 70, raise) - 30 * chop, tilt: -0.1 * raise * (1 - chop) + 0.12 * chop * (1 - hold * 0.6), lift: 3 * raise * (1 - chop) + breathe(p) * hold,
+      weapon: 90, arm: lerp(lerp(45, 95, raise), 40, chop) + 20 * hold, tilt: -0.24 * raise * (1 - chop) + 0.2 * chop * (1 - hold * 0.6), lift: 8 * raise * (1 - chop) + breathe(p) * hold,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(-5 - 2 * raise), q(-6 + 4 * chop)];
+        r.backArm = dancerHand([q(lerp(lerp(-5, -10, raise), -6, chop)), q(lerp(lerp(-4, -8, raise), 0, chop) - 6 * hold)]);
         r.hairLift = chop > 0.3 ? -1 : 1;
-        danceLegs(r, [raise * (1 - chop), [6, -15, 80], [-1, -1.4, -10]], [chop, [4.4, -1, -10], [-4, -3, -20]], [hold, [3.4, -4, 16], [-5, -3, -28]]);
+        danceLegs(r, [1, dancerLeg(phi, 14.6, 50), [lerp(-2, -7, chop), lerp(-2, -6, chop), lerp(-10, -30, chop)]], [hold, [8, -7, 40], [-7, -6, -30]]);
         if (chop > 0.2) strikeFace(r);
       },
     };
   },
-  // Sweeping kick (a finish in her pool, ~0.5): she turns once in the air with the back leg swung
-  // out long, and the wind sweeps off it round her; she ends on the turn, arms wide.
+  // Sweeping kick (a finish in her pool, ~0.4 round her, the gust at ~0.55): she tips over and turns
+  // once with the back leg swung out long behind her, arms wide, and the wind sweeps off it round
+  // her; she comes out of the turn in a floating attitude, arms wide.
   sdsweep(p) {
-    const a = ease(seg(p, 0.1, 0.6));
-    const turning = p > 0.1 && p < 0.6;
-    const hold = soft(seg(p, 0.62, 0.9)) * (1 - soft(seg(p, 0.92, 1)));
+    const a = ease(seg(p, 0.1, 0.56));
+    const into = soft(seg(p, 0, 0.12));
+    const turning = p > 0.1 && p < 0.56;
+    const hold = soft(seg(p, 0.56, 0.8)) * (1 - soft(seg(p, 0.92, 1)));
     return {
-      weapon: 90, arm: turning ? 80 : 84 - 12 * hold, trail: turning, lift: 2 * bump(p, 0.1, 0.6) + breathe(p) * hold,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      weapon: 90, arm: lerp(lerp(50, 95, into), 100, hold), trail: turning, lift: 3 * bump(p, 0.1, 0.6) + breathe(p) * hold, tilt: 0.2 * into * (1 - hold) - 0.1 * hold,
+      turn: turning ? dancerTurn(a) : 1,
       rig: (r) => {
         r.air = true;
-        r.backArm = turning ? [-7, -4] : [q(-7 * hold), q(-5)];
+        r.backArm = dancerHand([-10, q(lerp(-9 * into, -10, hold))]);
         r.hairLift = turning ? -1 : 0;
         r.cape -= q(4 * bump(p, 0.1, 0.62));
-        danceLegs(r, [turning ? 1 : 0, [0.6, -3, 10], [-11, -6, -70]], [hold, [4.6, -3.6, 24], [-8, -4.6, -50]]);
+        danceLegs(r, [into, [1, -2, -10], dancerLeg(-95, 14.6, -70)], [hold, [9, -12, 50], [-8, -6, -40]]);
         if (turning || hold > 0.3) strikeFace(r);
       },
     };
   },
-  // Rising spiral (Up + attack, ~0.4): she spirals straight up, one turn, arms sweeping up to her
-  // shoulders and legs pressed together, throwing them up with her.
+  // Rising spiral (Up + attack, ~0.4): she spirals straight up, one turn, both arms sweeping up into
+  // a wide V and her legs drawn up together, throwing them up with her; at the top she opens into
+  // a star.
   sdrise(p) {
-    const a = ease(seg(p, 0.1, 0.55));
-    const turning = p > 0.1 && p < 0.55;
-    const open = soft(seg(p, 0.55, 0.85));
+    const a = ease(seg(p, 0.08, 0.55));
+    const turning = p > 0.08 && p < 0.55;
+    const up = soft(seg(p, 0, 0.3));
+    const open = soft(seg(p, 0.58, 0.85));
     return {
-      weapon: 90, arm: turning ? lerp(40, 115, a) : lerp(115, 70, open), lift: 6 * bump(p, 0.05, 0.75), trail: turning,
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
+      weapon: 90, arm: lerp(lerp(50, 100, up), 95, open), lift: 10 * bump(p, 0.04, 0.85), trail: turning,
+      turn: turning ? dancerTurn(a) : 1,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(-4), q(-6 - 4 * a * (1 - open))];
+        r.backArm = dancerHand([q(lerp(-10 * up, -10, open)), q(lerp(-10 * up, -9, open))]);
         r.hairLift = -1;
-        danceLegs(r, [turning ? 1 : 0, [0.4, 0, 4], [-0.4, 0, -4]], [open, [4, -4.4, 24], [-5, -3, -28]]);
+        danceLegs(r, [up, [0.4, -1, -30], [-1.6, -2, -30]], [open, [7, -8, 30], [-7, -7, -30]]);
         if (turning) strikeFace(r);
       },
     };
   },
-  // Glide (out of a run, ~0.45): she lays out flat along the wind, both palms out in front, legs
-  // trailing together behind, then rights herself.
+  // Glide (out of a run, ~0.42): she lays out flat along the wind, both palms pushed out in front,
+  // legs trailing together behind, then rights herself.
   sdglide(p) {
-    const lay = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.7, 1)));
-    const push = ease(seg(p, 0.32, 0.46));
+    const lay = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.72, 1)));
+    const push = ease(seg(p, 0.3, 0.44));
     return {
-      weapon: 90, arm: lerp(60, 84, push), tilt: 0.3 * lay, lunge: 4 * lay,
+      weapon: 90, arm: lerp(60, 96, push) - 30 * soft(seg(p, 0.72, 1)), tilt: 0.5 * lay, lunge: 5 * lay,
       rig: (r) => {
         r.air = true;
-        r.backArm = [q(4 * push), q(-4 - 2 * push)];
+        r.backArm = dancerHand([q(8 * push * lay), q(-7 * push * lay)]);
         r.hairLift = 1;
         r.cape -= q(5 * lay);
-        danceLegs(r, [lay, [-6, -4.4, -40], [-9, -5, -60]]);
+        danceLegs(r, [lay, [-6, -5, -40], [-8, -6, -50]]);
         if (push > 0.3) strikeFace(r);
       },
     };
   },
-  // Sky Waltz (her finisher, 1.6 s): she rises with her arms lifting, turns slowly and then faster
-  // and faster as the tornado gathers round her, arms opening wide at the shoulders; at the peak she
-  // drives both palms straight down and the tornado slams them into the ground; she floats there in
-  // her pose, and curtsies to the sky.
+  // Sky Waltz (her finisher, 1.6 s): she rises with her arms lifting and turns, slowly then faster
+  // and faster as the tornado gathers, climbing higher; at the top she pulls in tight, then drives
+  // both palms straight down (~0.7) and the tornado slams them into the ground; she opens into her
+  // signature pose, floating high (glove high out in front, free arm flung wide, one leg
+  // pointed long in front and the other in attitude behind), and curtsies to the sky.
   sdwaltz(p) {
     const rise = soft(seg(p, 0, 0.14));
-    const a = easeIn(seg(p, 0.12, 0.64)) * 3;
-    const turning = p > 0.12 && p < 0.64;
-    const slam = ease(seg(p, 0.64, 0.72));
-    const pose = slam * (1 - soft(seg(p, 0.86, 0.92)));
-    const bow = soft(seg(p, 0.9, 0.97)) * (1 - soft(seg(p, 0.99, 1)));
-    const open = soft(seg(p, 0.12, 0.6));
+    const a = easeIn(seg(p, 0.12, 0.6)) * 3;
+    const turning = p > 0.12 && p < 0.6;
+    const open = soft(seg(p, 0.12, 0.55));
+    const climb = soft(seg(p, 0.3, 0.6));
+    const gather = soft(seg(p, 0.58, 0.64));
+    const slam = ease(seg(p, 0.64, 0.7));
+    const pose = soft(seg(p, 0.72, 0.8));
+    const bow = soft(seg(p, 0.9, 0.97));
+    const end = soft(seg(p, 0.98, 1));
+    const armT = lerp(50, 100, open);
     return {
-      weapon: 90, arm: turning ? lerp(40, 112, open) : lerp(lerp(112, 25, slam), 40, bow),
-      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2))) : 1,
-      lift: 5 * rise * (1 - bow * 0.5) + 2 * open * (turning ? 1 : 0) - 2 * slam * (1 - bow) + breathe(p) * pose, tilt: 0.06 * slam * (1 - bow) + 0.26 * bow, trail: turning,
+      weapon: 90, arm: lerp(lerp(lerp(lerp(lerp(armT, 30, gather), 10, slam), 100, pose), 30, bow), 50, end),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: (4 * rise + 6 * climb) * (1 - bow * 0.5) - 3 * slam * (1 - pose) + breathe(p) * pose, tilt: 0.2 * slam * (1 - pose) - 0.12 * pose * (1 - bow) + 0.3 * bow * (1 - end), trail: turning,
       rig: (r) => {
         r.air = true;
-        r.backArm = turning ? [q(-3 - 3 * open), q(-4 - 6 * open)] : [q(4 * slam - 6 * bow), q(-2 * slam - 2 * bow)];
-        r.hairLift = slam > 0.3 && bow < 0.4 ? 1 : -1;
-        r.cape -= q(5 * (turning ? 1 : pose));
-        danceLegs(r, [rise, [0.6, -1.4, 8], [-0.6, -1.4, -8]], [turning ? 1 : 0, [1.2, -3, 30], [-0.6, -1, -6]], [pose, [5, -4.4, 30], [-7, -4, -44]], [bow, [3.6, -1.6, 12], [-2.6, -1, -6]]);
+        r.backArm = dancerHand([
+          q(lerp(lerp(lerp(lerp(lerp(-2 - 9 * open, 4, gather), 3, slam), -10, pose), -10, bow), 0, end)),
+          q(lerp(lerp(lerp(lerp(lerp(-6 - 8 * open, -6, gather), 4, slam), -10, pose), -2, bow), 0, end)),
+        ]);
+        r.hairLift = slam > 0.3 && pose < 0.5 ? 1 : -1;
+        r.cape -= q(5 * (turning ? 1 : pose * (1 - bow)));
+        danceLegs(r, [rise, [0.6, -2, 8], [-0.6, -2, -8]], [turning ? 1 : 0, [2, -8, 40], [-0.4, -1, -10]], [gather, [3, -11, 50], [-1, -10, 30]], [pose, dancerLeg(70, 14, 40), dancerLeg(-70, 12.6, -50)], [bow, [4, -2, 14], [-4, -3, -20]], [end, [2, -3, 10], [-2, -3, -10]]);
         if (bow > 0.4) r.eyes = 'half';
-        else if (turning || pose > 0.3) strikeFace(r);
+        else if (turning || pose > 0.3 || slam > 0.3) strikeFace(r);
       },
     };
   },
@@ -4755,6 +4879,11 @@ const bend = (p, hit, pre = 1, post = 1) => {
   return p < hit ? hit * Math.pow(p / hit, pre) : hit + (1 - hit) * Math.pow((p - hit) / (1 - hit), post);
 };
 
+// The dancers' figures (Wind, Blade and Sky Dancer) are drawn to exact lines, with their own
+// follow-through: the body still leans and steps into each blow, but the arm and ring don't run on
+// past the line (a raised hand that overshot would come up over her face).
+const DANCER_LINES = /^(wd|bd|sd)[a-z]+$/;
+
 function sway(kind, progress, dur, mv, f = {}) {
   if (mv.weapon == null || mv.orbit || mv.poised || mv.pull != null || mv.nock) return mv;
   const back = rawMoveAt(kind, Math.max(0, progress - SWAY.window), dur);
@@ -4770,7 +4899,7 @@ function sway(kind, progress, dur, mv, f = {}) {
   // (it reads as a snap on the hit; research/anim.md 19, Saint11's overshot). It's how far they
   // moved over the last moment, carried on.
   const near = rawMoveAt(kind, Math.max(0, progress - SWAY.lead), dur);
-  const lim = 40 * (f.over ?? 1);
+  const lim = DANCER_LINES.test(kind) ? 0 : 40 * (f.over ?? 1);
   const over = (a, b, x = 1) => (a == null || b == null ? 0 : Math.max(-lim, Math.min(lim, (a - b) * SWAY.overshoot * (f.over ?? 1) * x)));
   const weapon = mv.weapon + over(mv.weapon, near.weapon);
   const arm = mv.arm == null ? mv.arm : mv.arm + over(mv.arm, near.arm, 0.6 * (f.armOver ?? 1));

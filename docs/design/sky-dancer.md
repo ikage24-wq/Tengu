@@ -52,3 +52,15 @@ carry over; the name is Sky Dancer).
   gauge (Tailwind / TAILWIND), aura, sounds, sky-blue gloves and outfit trim.
 - The Kitsune's fox-fire stars, illusions, decoy, trap, barrage and Nine-Tail Blaze are removed (the
   Shrine Maiden's fox guardian is separate and stays).
+
+## Animation pass (2026-11-03)
+
+Her figures were redrawn to read as airborne in the poses themselves, not only from the float
+(render/moves.js `sd*`; docs/design/wind-dancer.md gives the rig's limits): knees tuck before a push
+and the legs stretch long behind it (palm push, glide), the scissor kick goes above her waist, the
+spins and the rising spiral draw the legs up together with the arms in a wide V, the crescent swings
+the leg from far behind up high and chops it down, the axe heel raises a straight leg high in front
+and chops, the sweep swings the back leg out level through the turn, and the flutter beats both
+arms from high to low with the body tipping on each beat. Sky Waltz climbs through its turns, pulls
+in tight, drives both palms down for the slam, then opens into her signature pose: floating high,
+one leg pointed long in front and the other in attitude behind, arms wide.
