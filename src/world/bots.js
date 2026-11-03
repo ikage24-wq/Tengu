@@ -1,9 +1,12 @@
 // Other "players": generated characters who log in, walk around towns, chat, travel between
 // towns, open shops to sell their loot, wave at you now and then, and eventually log out for good.
-// In town they also fish off the pier, cook at the stove, stop to chat with each other, and emote;
+// In town they also cook at the stove, craft at the bench, pick the town's own spot and fish a
+// street-side nook (world/botlife.js), stop to chat with each other, and emote;
 // they wear titles and gear sets. They talk back to you (hellos, questions answered from the
 // game's own data, cheers when you level up or land a rare fish, emotes returned). A few hunt the
-// field map you're on (never taking the monsters by you, and rushing in when a queen comes back),
+// field map you're on (never taking the monsters by you, and rushing in when a queen comes back;
+// now and then working a life spot on the way, and a keen life-skiller or two going round the
+// map's spots: world/botlife.js),
 // and now and then the server shares news of someone's big moment.
 // Each one is built like a real character (level, job, stat build, rolled gear), so you can click
 // them to see their stats and gear. Nobody comes back after logging out, and no name repeats.
@@ -38,6 +41,9 @@ import { FISH } from '../data/fishing.js';
 import { MOBS } from '../data/mobs.js';
 import { createBody } from './physics.js';
 import { navOf, surfaceBelow } from './nav.js';
+import { rollLife, fitLifer, fieldLife, fieldLifeAfter, nightTip, townPastime, tickTownLife, stopTown } from './botlife.js';
+import { nodesOf } from './gathering.js';
+import { SPOTS } from '../data/fishing.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
@@ -168,8 +174,9 @@ function gearFor(char, slot, pro, rng, variant) {
   return makeEquip(def.id, { rng, rarity, variant: own });
 }
 
-// `level` and `jobs` (the job path, first job on) pick them instead of rolling.
-export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name, level = rollLevel(pro, rng), jobs = null } = {}) {
+// `level` and `jobs` (the job path, first job on) pick them instead of rolling. `life` ('keen' or
+// 'casual') picks how much they're into life skills (world/botlife.js; rolled otherwise).
+export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, name, level = rollLevel(pro, rng), jobs = null, life = null } = {}) {
   const char = createCharacter(name, makeLook(rng));
   while (char.level < Math.min(level, MAX_LEVEL)) gainExp(char, expToNext(char.level));
   for (const job of jobs ?? jobPath(char.level, rng)) {
@@ -204,6 +211,8 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
     const n = pro || rng() < 0.45 ? 4 : 2 + Math.floor(rng() * 2);
     for (const slot of [...SET_SLOTS].sort(() => rng() - 0.5).slice(0, n)) char.equipment[slot] = makeEquip(setPieceId(key, family, slot), { rng, rarity: rollRarity(rng) });
   }
+  // Life skill levels of their own (a few keen ones, most casual).
+  rollLife(char, life);
   const s = computeStats(char);
   char.hp = s.maxHp;
   char.mp = s.maxMp;
@@ -411,7 +420,7 @@ export function updateBots(bots, world, dt) {
     bots.waveIn = 25;
     const b = world.body;
     if (world.map.isTown && b.onGround && !world.dead) {
-      const near = bots.list.filter((x) => x.map === here && !x.waved && !x.shop && !x.party && ['idle', 'walk'].includes(x.state) && Math.abs(x.x - b.x) < 300);
+      const near = bots.list.filter((x) => x.map === here && !x.waved && !x.shop && !x.party && !x.life && ['idle', 'walk'].includes(x.state) && Math.abs(x.x - b.x) < 300);
       if (near.length) {
         const bot = pick(near, rng);
         bot.state = 'approach';
@@ -449,6 +458,7 @@ function goToPortal(bot, map, why) {
   }
   const p = portals.reduce((a, c) => (Math.abs(c.x - bot.x) < Math.abs(a.x - bot.x) ? c : a));
   endChat(bot);
+  stopTown(bot, map);
   bot.state = 'leave';
   bot.target = p.x;
   bot.why = why;
@@ -503,7 +513,16 @@ function behave(bot, bots, world, map, dt) {
     bot.x += Math.sign(d) * step;
     return Math.abs(d) <= 1;
   };
+  // (Called away from the stove or bench by something else: a wave, a chat, a duel.)
+  if (bot.life && !['life', 'walk'].includes(bot.state)) stopTown(bot, map);
   switch (bot.state) {
+    case 'life':
+      if (!tickTownLife(bot, bots, world, map, dt)) {
+        stopTown(bot, map);
+        bot.state = 'idle';
+        bot.timer = between(2, 6, rng);
+      }
+      break;
     case 'shop':
       bot.facing = world.body.x < bot.x ? -1 : 1;
       break;
@@ -575,8 +594,12 @@ function pastime(bot, bots, world, map) {
   const rng = bots.rng;
   const r = rng();
   const here = botsIn(bots, map.id);
+  // Now and then: the stove, the craft bench, the town's own spot or its fishing nook.
+  if (r < 0.16 && townPastime(bot, bots, world, map)) return true;
   if (r < 0.5) {
-    const mate = here.find((b) => b !== bot && b.state === 'idle' && !b.shop && Math.abs(b.x - bot.x) < 420 && Math.abs(b.x - world.body.x) > 30);
+    // (Not round the stove or the bench: that's where people work.)
+    const atWork = (x) => [map.stove, map.bench].some((w) => w != null && Math.abs(w - x) < 50);
+    const mate = here.find((b) => b !== bot && b.state === 'idle' && !b.shop && Math.abs(b.x - bot.x) < 420 && Math.abs(b.x - world.body.x) > 30 && !atWork(b.x));
     if (mate) {
       mate.state = 'chatwait';
       mate.timer = 12;
@@ -777,7 +800,7 @@ const huntCap = (map) => Math.max(2, Math.min(5, 1 + Math.floor(map.width / 700)
 
 // A player hunting here: built to the map's level, on a ledge away from you (walking in through
 // a portal when `walkIn`). `who` is someone back from town after dying here, as they were.
-function addHunter(bots, world, walkIn = false, who = null) {
+function addHunter(bots, world, walkIn = false, who = null, { lifer = false } = {}) {
   const rng = bots.rng;
   const map = world.map;
   const boss = raidBoss(world);
@@ -787,6 +810,8 @@ function addHunter(bots, world, walkIn = false, who = null) {
   const name = who?.name ?? makeName(bots.names, rng);
   const char = who?.char ?? makeBotCharacter(rng, { name, pro: false, level: Math.max(10, Math.floor(between(lo, hi + 5, rng))) });
   if (char.job === 'novice') return null;
+  // A keen life-skiller, out for the map's spots more than its monsters.
+  if (lifer && !who) fitLifer(char, map, rng);
   const nav = navOf(map);
   let x;
   let y;
@@ -806,11 +831,15 @@ function addHunter(bots, world, walkIn = false, who = null) {
     id: `hunter${bots.names.size}-${Math.floor(rng() * 1e6)}`, name, char, level: char.level, pro: false, hunter: true,
     guild: who ? who.guild : rng() < 0.4 ? pick(GUILDS, rng) : null, style: who?.style ?? makeStyle(rng), title: null,
     map: map.id, x, facing: 1, state: 'hunt', body: createBody(x, y),
-    session: between(90, 300, rng), stay: 999, nextLine: between(15, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
+    session: between(90, 300, rng) * (lifer ? 1.5 : 1), stay: 999, nextLine: between(15, 50, rng), bubble: null, waved: true, shop: null, appear: 1,
+    lifer: lifer || Boolean(who?.lifer),
   };
   bots.list.push(bot);
   return bot;
 }
+
+// How many life spots a map has (gathering and fishing), for its life-skillers.
+const spotsOf = (world) => nodesOf(world).length + (SPOTS[world.map.id] ?? []).length;
 
 function huntersHere(bots, world, dt) {
   const rng = bots.rng;
@@ -825,7 +854,10 @@ function huntersHere(bots, world, dt) {
       const cap = huntCap(map);
       // (A boss's own room fills up once the raid gathers.)
       const n = bandOf(map) ? 2 + Math.floor(rng() * (cap - 1)) : 0;
-      for (let i = 0; i < n; i++) addHunter(bots, world);
+      // (A map with spots to work usually has a life-skiller or two among them.)
+      const spots = spotsOf(world);
+      const lifers = spots >= 6 ? 1 + (rng() < 0.4 ? 1 : 0) : spots >= 3 && rng() < 0.7 ? 1 : 0;
+      for (let i = 0; i < n; i++) addHunter(bots, world, false, null, { lifer: i < Math.min(lifers, n - 1) });
     }
   }
   const hunters = bots.list.filter((b) => b.hunter && !b.gone);
@@ -849,12 +881,20 @@ function huntersHere(bots, world, dt) {
     bots.queenSeen = queen;
     gather(bots, world, queen, hooksFor(bots, world));
   }
+  // At night, someone points you at the map's night-only find (a look every few seconds).
+  bots.tipIn = (bots.tipIn ?? 4) - dt;
+  if (bots.tipIn <= 0) {
+    bots.tipIn = 5;
+    nightTip(bots, world, hunters, rng);
+  }
+  if (world.botPops?.length) world.botPops = world.botPops.filter((p) => world.now - p.at < 1);
   // Now and then someone walks in.
   bots.arriveIn -= dt;
   const cap = huntCap(map) + (queen ? 2 : 0);
   if (bots.arriveIn <= 0) {
     bots.arriveIn = between(30, 80, rng);
-    if (hunters.length < cap) addHunter(bots, world, true);
+    const lifers = hunters.filter((b) => b.lifer).length;
+    if (hunters.length < cap) addHunter(bots, world, true, null, { lifer: spotsOf(world) >= 3 && lifers < 2 && rng() < 0.3 });
   }
   // Someone who died here logs back in after a while and comes back for more.
   bots.returns = (bots.returns ?? []).filter((r) => world.now - r.at < 600);
@@ -887,7 +927,8 @@ function huntersHere(bots, world, dt) {
       if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
       const char = bot.char;
       char.hp = computeStats(char).maxHp;
-      bots.returns = [...(bots.returns ?? []), { at: world.now + between(40, 100, rng), map: map.id, who: { name: bot.name, char, guild: bot.guild, style: bot.style, title: bot.title } }];
+      bot.life = null;
+      bots.returns = [...(bots.returns ?? []), { at: world.now + between(40, 100, rng), map: map.id, who: { name: bot.name, char, guild: bot.guild, style: bot.style, title: bot.title, lifer: bot.lifer } }];
     }
     if (bot.state === 'logout') {
       bot.timer -= dt;
@@ -898,7 +939,10 @@ function huntersHere(bots, world, dt) {
       bot.gone = true;
       continue;
     }
+    // Now and then a life spot on the way (and a life-skiller's whole loop): world/botlife.js.
+    fieldLife(bot, world, dt, rng);
     tickHunter(bot, world, hunters, dt, rng);
+    fieldLifeAfter(bot, rng);
     bot.nextLine -= dt;
     if (bot.nextLine <= 0 && !bot.bubble) {
       bot.nextLine = between(90, 200, rng);
