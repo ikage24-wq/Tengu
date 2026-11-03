@@ -30,6 +30,7 @@ import { makeEquip } from '../core/items.js';
 import { recordBook } from '../core/collection.js';
 import { spotHere, startFishing, tickFishing } from './fishing.js';
 import { nodeHere, startGathering, tickGathering } from './gathering.js';
+import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -346,6 +347,11 @@ function interact(world) {
     world.events.push({ type: 'gacha' });
     return true;
   }
+  // A town's craft bench: craft (ui/crafting.js).
+  if (benchHere(world)) {
+    world.events.push({ type: 'craft' });
+    return true;
+  }
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });
@@ -578,8 +584,8 @@ export function updateWorld(world, dt, input) {
 
   // ----- Player control -----
   // While you fish, the line has the controls.
-  // (Gathering works the same way.)
-  const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed));
+  // (Gathering and crafting work the same way.)
+  const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed) || tickCrafting(world, dt, input.held, input.pressed));
   const held = input.locked || world.dead || fishing ? new Set() : input.held;
   const pressed = input.locked || world.dead || fishing ? new Set() : input.pressed;
   const intent = {

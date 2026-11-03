@@ -154,7 +154,7 @@ export function buildLabel(char) {
 function gearFor(char, slot, pro, rng, variant) {
   const job = JOBS[char.job];
   const weapons = job.weapons ?? [];
-  const wearable = (d) => !d.legacy && (!d.family || d.family === job.family || (d.starter && char.job === 'novice'));
+  const wearable = (d) => !d.legacy && !d.crafted && (!d.family || d.family === job.family || (d.starter && char.job === 'novice'));
   let pool = Object.values(ITEMS).filter((d) => d.slot === slot && d.reqLevel <= char.level && wearable(d) && (slot !== 'weapon' || weapons.includes(d.weaponType)));
   if (!pro) pool = pool.filter((d) => !d.endgame);
   else if (slot === 'weapon' && rng() < 0.75 && pool.some((d) => d.endgame)) pool = pool.filter((d) => d.endgame);

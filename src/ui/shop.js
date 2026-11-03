@@ -25,7 +25,7 @@ const H = 250;
 const LIST_W = 220;
 const ROW = 24;
 const GREEN = '#2f9f58';
-const SLOT_NAMES = { hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring' };
+const SLOT_NAMES = { hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring', ring: 'Ring', charm: 'Charm' };
 const STAT_SHORT = { watk: 'ATK', matk: 'M.ATK', wdef: 'DEF', mdef: 'M.DEF', str: 'STR', dex: 'DEX', int: 'INT', luk: 'LUK', hp: 'HP', mp: 'MP', acc: 'ACC', eva: 'AVD', speed: 'SPD', jump: 'JMP' };
 
 // A variant's color, darkened enough to read on the pale window.

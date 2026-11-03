@@ -551,6 +551,16 @@ const ICONS = {
     ctx.fill();
   },
   // A cog (the Arbalist Engineer's Pressure).
+  // A crafting hammer (the craft bench): a tilted handle and a chunky head.
+  hammer(ctx, s) {
+    ctx.save();
+    ctx.rotate(-0.6);
+    roundRect(ctx, -s * 0.07, -s * 0.12, s * 0.14, s * 0.62, s * 0.06);
+    ctx.fill();
+    roundRect(ctx, -s * 0.34, -s * 0.42, s * 0.68, s * 0.3, s * 0.08);
+    ctx.fill();
+    ctx.restore();
+  },
   cog(ctx, s) {
     ctx.beginPath();
     for (let i = 0; i < 32; i++) {

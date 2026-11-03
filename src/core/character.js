@@ -32,7 +32,7 @@ export function createCharacter(name, appearance) {
     gold: 0,
     skills: {},
     // Dressed in the outfit picked in the creator (pieces that come off; see items.js).
-    equipment: { weapon: null, hat: null, top: makeEquip('outfit_top'), bottom: makeEquip('outfit_bottom'), shoes: makeEquip('outfit_shoes'), gloves: null, cape: null, earring: null },
+    equipment: { weapon: null, hat: null, top: makeEquip('outfit_top'), bottom: makeEquip('outfit_bottom'), shoes: makeEquip('outfit_shoes'), gloves: null, cape: null, earring: null, ring: null, charm: null },
     gotOutfit: true,
     // Cash outfit pieces worn over the gear, by slot, and the Cash to buy them with.
     outfit: {},

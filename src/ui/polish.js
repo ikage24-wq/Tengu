@@ -6,7 +6,7 @@
 
 import { NPCS } from '../data/npcs.js';
 import { EQUIP_SLOTS } from '../data/items.js';
-import { itemName, POLISH_MAX, polishCost, polishGain, polish, oreFor, POLISH_GEMS, ORE_USE, boostedChance } from '../core/items.js';
+import { itemName, POLISH_MAX, polishCost, polishGain, polish, oreFor, POLISH_GEMS, ORE_USE, boostedChance, stonesFor } from '../core/items.js';
 import { countItem } from '../core/inventory.js';
 import { ITEMS } from '../data/items.js';
 import { COLORS, windowFrame, text, box, button, itemSlot, hover, clicked, tooltip, sparkle, icon, wrap } from './kit.js';
@@ -16,6 +16,9 @@ import { sfx } from '../audio/sfx.js';
 const W = 300;
 const H = 214;
 const NAMES = { watk: 'Weapon ATK', matk: 'Magic ATK', wdef: 'Weapon DEF', hp: 'Max HP', mp: 'Max MP' };
+
+// Bench-made polishing stones in the bag that fit the piece: the two best (one chip each).
+const bestStones = (char, inst) => stonesFor(inst).filter((g) => countItem(char.inventory, g.id) > 0).sort((a, b) => b.boost - a.boost).slice(0, 2).map((g) => ({ id: g.id, need: 1 }));
 
 export function polishWindow(ui, state, world) {
   const dlg = state.npc;
@@ -91,21 +94,23 @@ export function polishWindow(ui, state, world) {
   text(ctx, 'Next step', px, y + 60, { size: 7.5, bold: true, color: COLORS.muted });
   text(ctx, gain, px, y + 71, { size: 8.5, bold: true, color: '#3f9f5f' });
   // Ore for this piece's level, or a rare gem: click one to use it on the next tries.
-  const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...POLISH_GEMS.map((g) => ({ id: g.id, need: 1 }))].filter(Boolean);
+  const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...POLISH_GEMS.map((g) => ({ id: g.id, need: 1 })), ...bestStones(char, inst)].filter(Boolean);
   const have = (b) => countItem(char.inventory, b.id) >= b.need;
   if (dlg.boost && !boosts.some((b) => b.id === dlg.boost && have(b))) dlg.boost = null;
   text(ctx, `Chance ${Math.round(boostedChance(inst, dlg.boost) * 100)}%`, px, y + 87, { size: 8.5, bold: true, color: dlg.boost ? '#3f9f5f' : COLORS.ink });
   boosts.forEach((b, i) => {
-    const bx = px + 70 + i * 50;
+    // Two chips a row (a second row for bench-made stones).
+    const bx = px + 70 + (i % 2) * 50;
+    const by = y + 78 + Math.floor(i / 2) * 15;
     const on = dlg.boost === b.id;
     const ok = have(b);
     ctx.globalAlpha = ok ? 1 : 0.45;
-    box(ctx, bx, y + 78, 46, 13, { fill: on ? '#d8f5d0' : '#ffffff', edge: on ? '#3f9f5f' : th.light, r: 6, width: on ? 2 : 1 });
-    icon(ctx, 'drop', bx + 7, y + 84.5, 7, ITEMS[b.id].color);
-    text(ctx, `x${b.need} (${countItem(char.inventory, b.id)})`, bx + 13, y + 87.5, { size: 6.5, bold: true, color: COLORS.ink });
+    box(ctx, bx, by, 46, 13, { fill: on ? '#d8f5d0' : '#ffffff', edge: on ? '#3f9f5f' : th.light, r: 6, width: on ? 2 : 1 });
+    icon(ctx, 'drop', bx + 7, by + 6.5, 7, ITEMS[b.id].color);
+    text(ctx, `x${b.need} (${countItem(char.inventory, b.id)})`, bx + 13, by + 9.5, { size: 6.5, bold: true, color: COLORS.ink });
     ctx.globalAlpha = 1;
-    if (hover(ui, bx, y + 78, 46, 13)) tooltip(ui, `${ITEMS[b.id].name}: use ${b.need} a try for a better chance.${ok ? '' : ' (You need more: mine it on the fields.)'}`);
-    if (ok && clicked(ui, bx, y + 78, 46, 13)) dlg.boost = on ? null : b.id;
+    if (hover(ui, bx, by, 46, 13)) tooltip(ui, `${ITEMS[b.id].name}: use ${b.need} a try for a better chance.${ok ? '' : ' (You need more: mine it on the fields.)'}`);
+    if (ok && clicked(ui, bx, by, 46, 13)) dlg.boost = on ? null : b.id;
   });
   const cost = polishCost(inst);
   icon(ctx, 'coin', px + 4, y + 98, 8, COLORS.gold);
