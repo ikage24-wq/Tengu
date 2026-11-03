@@ -243,10 +243,20 @@ export function flushBubbles(ctx) {
     return { ...b, lines, w, h, bx: Math.round(Math.max(4, Math.min(636 - w, b.x - w / 2))), by: Math.round(b.y - h - 5) };
   });
   queued.length = 0;
-  // Lowest first; each later bubble moves up until it's clear of the ones already placed.
-  list.sort((a, b) => b.by - a.by);
-  const placed = [];
+  // A crowd talking at once is capped: the same words twice show once, at most two bubbles over
+  // people standing within a few steps of each other (the freshest), and five on screen, so a
+  // party bunched round you never becomes a wall of bubbles.
+  list.sort((a, b) => b.alpha - a.alpha || b.by - a.by);
+  const kept = [];
   for (const b of list) {
+    if (kept.length >= 5 || kept.some((o) => o.words === b.words)) continue;
+    if (kept.filter((o) => Math.abs(o.x - b.x) < 40 && Math.abs(o.y - b.y) < 40).length >= 2) continue;
+    kept.push(b);
+  }
+  // Lowest first; each later bubble moves up until it's clear of the ones already placed.
+  kept.sort((a, b) => b.by - a.by);
+  const placed = [];
+  for (const b of kept) {
     for (let guard = 0; guard < 8; guard++) {
       const hit = placed.find((o) => b.bx < o.bx + o.w + 2 && o.bx < b.bx + b.w + 2 && b.by < o.by + o.h + 3 && o.by < b.by + b.h + 3);
       if (!hit) break;

@@ -224,6 +224,34 @@ function dimWorld(ctx, state) {
   ctx.fillRect(0, 0, 640, 360);
 }
 
+// Where a window opens: its own spot, unless that lands on another open window or on the HUD's
+// left column (minimap, buffs, party): then the nearest spot that covers the least of them, so
+// windows opened one after another cascade instead of stacking exactly. A window you've dragged
+// keeps your spot.
+function placeWindow(state, key) {
+  const win = state.windows[key];
+  win.home ??= { x: win.x, y: win.y };
+  const w = win.w ?? 260;
+  const h = win.h ?? 220;
+  const others = Object.entries(state.windows).filter(([k, o]) => k !== key && o.open && o.w).map(([, o]) => o);
+  others.push({ x: 0, y: 0, w: 168, h: state.leftColumnY ?? 130 });
+  const cover = (x, y) => others.reduce((a, o) => a + Math.max(0, Math.min(x + w, o.x + o.w) - Math.max(x, o.x)) * Math.max(0, Math.min(y + h, o.y + o.h) - Math.max(y, o.y)), 0);
+  const clampX = (x) => Math.max(0, Math.min(640 - w, x));
+  const clampY = (y) => Math.max(8, Math.min(Math.max(8, 318 - h), y));
+  const spots = [[win.home.x, win.home.y]];
+  for (let k = 1; k <= 6; k++) spots.push([win.home.x + 26 * k, win.home.y + 18 * k], [win.home.x - 26 * k, win.home.y + 18 * k]);
+  for (let x = 170; x <= 640 - w; x += 20) for (const y of [win.home.y, 8, 30]) spots.push([x, y]);
+  let best = null;
+  for (const [sx, sy] of spots) {
+    const x = clampX(sx);
+    const y = clampY(sy);
+    const score = cover(x, y) + Math.hypot(x - win.home.x, y - win.home.y) * 2;
+    if (!best || score < best.score) best = { x, y, score };
+  }
+  win.x = Math.round(best.x);
+  win.y = Math.round(best.y);
+}
+
 // How long a closing window takes to fade away (s).
 const CLOSE = 0.14;
 
@@ -248,7 +276,10 @@ export function drawUi(ui, state, world) {
   // it's never stuck behind one you used earlier.
   for (const key of state.order) {
     const win = state.windows[key];
-    if (win.open && !win.wasOpen) state.order = [...state.order.filter((k) => k !== key), key];
+    if (win.open && !win.wasOpen) {
+      state.order = [...state.order.filter((k) => k !== key), key];
+      if (!win.moved) placeWindow(state, key);
+    }
     if (!win.open && win.wasOpen) win.closedAt = t;
     win.wasOpen = win.open;
   }

@@ -17,6 +17,7 @@ import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/
 import { boardPage } from './partyboard.js';
 import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
+import { withZoom } from '../render/pixel.js';
 import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
@@ -70,7 +71,8 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   ctx.save();
   roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
   ctx.clip();
-  drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking });
+  // (Rasterized at the portrait's own size, so the big figure stays smooth in HD.)
+  withZoom(2, () => drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
   ctx.restore();
 
   // The name ribbon.
@@ -478,7 +480,7 @@ function styleWindow(ui, state, world) {
   const char = world.char;
   dlg.tab ??= 0;
   box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 });
+  withZoom(2, () => drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 }));
   if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
   dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 50, h: 15 });
   dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 26, 24, 20, 32][dlg.tab], time: world.now, gap: 2 }).look;

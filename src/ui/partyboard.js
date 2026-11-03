@@ -11,6 +11,7 @@ import { partyMembers } from '../world/party.js';
 import { partyFriends } from '../net/together.js';
 import { boardOffers, takePartyQuest, dropPartyQuest, pqGoal, buyWithTokens, boardTurnsIn } from '../world/partyquest.js';
 import { COLORS, THEMES, text, box, button, wrap, fit, bar, icon, hover, tooltip } from './kit.js';
+import { minimapBottom } from './hud.js';
 
 const KIND_COLOR = { hunt: '#ff8f9f', gather: '#7fd1a0', defend: '#8fb8ff' };
 const KIND_ICON = { hunt: 'star', gather: 'leaf', defend: 'shield' };
@@ -74,12 +75,14 @@ export function drawPartyQuestCard(ui, state, world) {
   const q = world.char.partyQuest;
   if (!q || world.dungeon || state.windows.quests?.open) return;
   const { ctx } = ui;
-  const map = world.map;
-  const members = partyMembers(world.bots).length + partyFriends().length;
-  const top = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
-  const panelY = top + (Object.keys(world.char.buffs).length ? 30 : 0);
-  const y = members ? panelY + 18 + (members + 1) * 19 + 4 : panelY;
-  const x = 6;
+  // Under the party panel and its emote bar (the panel says where its column ends); when that
+  // column would run into the bottom HUD (or, on a phone, the thumb stick), it sits at the top
+  // beside the minimap instead.
+  const touch = Boolean(ui.input?.touch);
+  const colY = state.leftColumnY ?? minimapBottom(world);
+  const side = colY + 30 > (touch ? 214 : 300);
+  const x = side ? (settings.minimap ? 166 : 6) : 6;
+  const y = side ? 4 : colY;
   const w = 120;
   const col = KIND_COLOR[q.kind];
   const pop = Math.max(0, 1 - (world.now - (q.at ?? -9)) / 0.6);

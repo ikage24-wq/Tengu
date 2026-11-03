@@ -149,14 +149,38 @@ function controlsUp(t) {
 
 function overWindow(t, p) {
   if (!t.ui) return false;
-  return Object.values(t.ui.windows).some((w) => w.open && w.w && p.x >= w.x && p.x < w.x + w.w && p.y >= w.y && p.y < w.y + w.h) || Boolean(t.ui.menu);
+  return Object.values(t.ui.windows).some((w) => w.open && w.w && p.x >= w.x && p.x < w.x + w.w && p.y >= w.y && p.y < w.y + w.h) || Boolean(t.ui.menu) || inRect(t.ui.menuGrid && t.ui.menuGridRect, p.x, p.y, 0);
+}
+
+function inRect(r, x, y, pad) {
+  return Boolean(r) && x > r.x - pad && x < r.x + r.w + pad && y > r.y - pad && y < r.y + r.h + pad;
+}
+
+// A button whose circle reaches into an open window (or the phone's menu grid) fades away, so the
+// window under it reads and takes the taps; it eases back when the window closes.
+function covering(t, b, r) {
+  const ui = t.ui;
+  const rects = Object.values(ui.windows).filter((w) => w.open && w.w);
+  if (ui.menuGrid && ui.menuGridRect) rects.push(ui.menuGridRect);
+  return rects.some((w) => {
+    const cx = Math.max(w.x, Math.min(b.x, w.x + w.w));
+    const cy = Math.max(w.y, Math.min(b.y, w.y + w.h));
+    return Math.hypot(b.x - cx, b.y - cy) < r;
+  });
+}
+function fadeFor(t, name, b, r) {
+  const f = (t.fade ??= {});
+  const want = covering(t, b, r) ? 0 : 1;
+  f[name] = (f[name] ?? want) + (want - (f[name] ?? want)) * 0.25;
+  if (Math.abs(f[name] - want) < 0.02) f[name] = want;
+  return f[name];
 }
 
 function start(t, id, p, field) {
   const { input } = t;
   relayout();
   if (controlsUp(t) && !overWindow(t, p)) {
-    if (!t.stick && Math.hypot(p.x - STICK.x, p.y - STICK.y) < STICK.grab && p.y < 326) {
+    if (!t.stick && (t.fade?.stick ?? 1) > 0.5 && Math.hypot(p.x - STICK.x, p.y - STICK.y) < STICK.grab && p.y < 326) {
       t.stick = { id, x: p.x, y: p.y, dirs: new Set() };
       t.fingers.set(id, { kind: 'stick' });
       steer(t, p);
@@ -298,7 +322,10 @@ export function touchFrame(t, ctx, screen, world, ui) {
   relayout();
   const time = performance.now() / 1000;
   ctx.save();
-  drawStick(ctx, t);
+  STICK.alpha = fadeFor(t, 'stick', STICK, STICK.r + 6);
+  for (const [name, b] of Object.entries({ ATTACK, JUMP, LOOT, CHAT, EMOTE, PING })) b.alpha = fadeFor(t, name, b, b.r + 2);
+  ARC.forEach((b, i) => (b.alpha = fadeFor(t, `arc${i}`, b, b.r + 2)));
+  if (STICK.alpha > 0) drawStick(ctx, t);
   drawButton(ctx, t, ATTACK, time, () => icon(ctx, 'star', ATTACK.x, ATTACK.y - 2, 18, '#ffffff'));
   drawButton(ctx, t, JUMP, time, () => {
     ctx.fillStyle = '#ffffff';
@@ -344,7 +371,8 @@ export function touchFrame(t, ctx, screen, world, ui) {
 
 function drawStick(ctx, t) {
   const s = t.stick;
-  ctx.globalAlpha = Math.min(1, (s ? 0.62 : 0.4) * FADE);
+  const fade = STICK.alpha ?? 1;
+  ctx.globalAlpha = Math.min(1, (s ? 0.62 : 0.4) * FADE) * fade;
   ctx.fillStyle = '#fffaf8';
   ctx.beginPath();
   ctx.arc(STICK.x, STICK.y, STICK.r + 6, 0, Math.PI * 2);
@@ -373,7 +401,7 @@ function drawStick(ctx, t) {
   // The knob, which leans with your thumb.
   const kx = STICK.x + (s?.dx ?? 0);
   const ky = STICK.y + (s?.dy ?? 0);
-  ctx.globalAlpha = Math.min(1, (s ? 0.92 : 0.6) * FADE);
+  ctx.globalAlpha = Math.min(1, (s ? 0.92 : 0.6) * FADE) * fade;
   ctx.save();
   ctx.translate(kx, ky);
   ctx.scale(STICK.k, STICK.k);
@@ -399,9 +427,12 @@ function drawStick(ctx, t) {
 
 // A round candy button that sinks while held.
 function drawButton(ctx, t, b, time, face) {
+  const fade = b.alpha ?? 1;
+  if (fade <= 0) return;
   const held = b.code ? t.input.held.has(b.code) : false;
   const sink = held ? 2 : 0;
-  ctx.globalAlpha = Math.min(1, (held ? 0.95 : 0.72) * FADE);
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (held ? 0.95 : 0.72) * FADE) * fade;
   ctx.fillStyle = b.dark;
   ctx.beginPath();
   ctx.arc(b.x, b.y + 2, b.r, 0, Math.PI * 2);
@@ -419,7 +450,7 @@ function drawButton(ctx, t, b, time, face) {
   ctx.beginPath();
   ctx.arc(b.x, b.y + sink, b.r, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = fade;
   ctx.save();
   ctx.translate(0, sink);
   // The face is drawn at the normal size, scaled with the button.
@@ -430,4 +461,5 @@ function drawButton(ctx, t, b, time, face) {
   face();
   ctx.restore();
   if (b.label && b.r >= 16) text(ctx, b.label, b.x, b.y + b.r + 9 + sink, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: b.dark });
+  ctx.restore();
 }

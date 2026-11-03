@@ -10,7 +10,7 @@
 import { DISHES, SERVINGS, FEASTS } from '../data/cooking.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, windowFrame, text, box, button, hover, tooltip, fit, tabs, sparkle } from './kit.js';
+import { COLORS, windowFrame, text, box, button, hover, tooltip, fit, tabs, sparkle, icon } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { groundAt } from '../world/physics.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/life.js';
@@ -76,7 +76,8 @@ export function cookingWindow(ui, state, world) {
       if (hover(ui, ix, y + 4, 16, 16)) tooltip(ui, itemTooltip(char, id));
       ix += 22;
     }
-    if (button(ui, x + W - 62, y + 7, 42, 16, skilled(char, d) ? 'Cook' : `Lv ${needFor(d)}`, { primary: ok, enabled: ok, size: 7.5 })) {
+    if (!skilled(char, d)) locked(ctx, x + W - 62, y + 7, 42, 16, needFor(d));
+    else if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
       const n = cook(char, d, world);
       // She stirs, tosses and tastes it at the stove (render/life-moves.js).
       if (n) playLifePose(world, 'cook', { at: st, find: d.id });
@@ -87,6 +88,17 @@ export function cookingWindow(ui, state, world) {
   }
   const more = DISHES.length - list.length;
   text(ctx, more ? `${more} more recipe${more === 1 ? '' : 's'} to learn: catch new fish!` : 'You know every recipe!', win.x + 12, win.y + H - 10, { size: 7, color: COLORS.muted });
+}
+
+// A recipe your Cooking level can't make yet: not a button at all but a flat, dashed tag with a
+// lock and the level, so it never reads like a greyed-out Cook.
+function locked(ctx, x, y, w, h, lv) {
+  ctx.save();
+  ctx.setLineDash([2, 2]);
+  box(ctx, x, y + 1, w, h - 2, { fill: 'rgba(255,240,244,0.9)', edge: '#e8a0b4', r: (h - 2) / 2, width: 1 });
+  ctx.restore();
+  icon(ctx, 'lock', x + 9, y + h / 2, 7, COLORS.bad);
+  text(ctx, `Lv ${lv}`, x + w / 2 + 5, y + h / 2 + 2.6, { size: 7.5, bold: true, align: 'center', color: COLORS.bad });
 }
 
 // The Party Feasts tab: each tier's feast, what it needs, what it gives, and who it would feed.
@@ -113,7 +125,8 @@ function feastTab(ui, win, world, x, y, st) {
       ix += 19;
     }
     const skilled = feastSkilled(char, f);
-    if (button(ui, x + W - 58, y + 11, 40, 16, skilled ? 'Cook' : `Lv ${needFor(f)}`, { primary: ok, enabled: ok, size: 7.5 })) {
+    if (!skilled) locked(ctx, x + W - 58, y + 11, 40, 16, needFor(f));
+    else if (button(ui, x + W - 58, y + 11, 40, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
       const n = cookFeast(world, f);
       if (n) playLifePose(world, 'cook', { at: st, find: f.id });
       world.log(n ? `You cooked a ${f.name}! Eat it to serve the whole party.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
