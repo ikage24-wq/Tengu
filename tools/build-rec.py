@@ -424,6 +424,24 @@ S['teamcatch'] = [[('syringe', 0.0, 0.2, 0, 0), ('body', peak('body', 1.16, 1.46
 S['teamrevive'] = [[('astonish', 3.0, 1.3, 0, 0), ('light', 0.0, 1.0, -4, 0)]]
 S['teamburst'] = [[('bigboom', 0.0, 1.4, 0, 0), ('smash', peak('smash', 0, 0.6), 0.4, -4, 0)]]
 
+
+# ----- The emotes (ui/emotes.js): a little sound each, cute and short, timed to the pose -----
+F.update({
+    'xylo': 'UIMisc_Xylophone Ringtone 2_CB Sounddesign_APPlicable Sounds.wav',
+    'boing': 'Accept Boing Crunch.wav',
+    'musicboxc': 'SBmb_Music Box C 059.wav',
+    'musicboxb': 'SBmb_Music Box B 028.wav',
+    'chargedown': 'DSGNMisc_Charge Down Classic 1_RogueWaves_AnimeStudio.wav',
+})
+S['emoteCheer'] = [[('confetti', 0.1, 0.4, 0, 0), ('plucks', 0.0, 0.6, -4, 150)]]
+S['emoteDance'] = [[('xylo', 0.26, 1.5, 0, 0)]]
+S['emoteFlip'] = [[('pull', 0.5, 0.5, 0, 0), ('boing', 0.0, 0.55, -2, 550)]]
+S['emoteLove'] = [[('musicboxc', 0.0, 1.2, 0, 0)]]
+S['emoteThanks'] = [[('musicboxb', 0.02, 0.75, 0, 0)]]
+S['emoteFlex'] = [[('stone', 0.0, 0.3, -4, 0), ('pwr', 6.15, 0.45, 0, 500)]]
+S['emoteSleepy'] = [[('bassdown', 0.38, 1.5, 0, 0)]]
+S['emoteSad'] = [[('chargedown', 0.28, 1.0, 0, 0)]]
+
 missing=[k for k,v in F.items() if not os.path.exists(SRC+v)]
 if missing: sys.exit(f"missing {missing}")
 only = sys.argv[1:]

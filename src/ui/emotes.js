@@ -4,14 +4,14 @@
 import { text, box, hover, clicked } from './kit.js';
 
 export const EMOTES = [
-  { id: 'cheer', label: 'Cheer', pose: 'cheer', face: 'excited', dur: 1.2 },
-  { id: 'dance', label: 'Dance', pose: 'kagura', face: 'giggle', dur: 1.4 },
-  { id: 'flip', label: 'Flip', pose: 'flip', face: 'playful', dur: 0.8 },
-  { id: 'love', label: 'Love', pose: 'cheer', face: 'love', dur: 1 },
-  { id: 'pray', label: 'Thanks', pose: 'pray', face: 'shy', dur: 1.2 },
-  { id: 'flex', label: 'Flex', pose: 'roar', face: 'determined', dur: 1 },
-  { id: 'sleepy', label: 'Sleepy', pose: null, face: 'sleepy', dur: 0 },
-  { id: 'sad', label: 'Sad', pose: null, face: 'sad', dur: 0 },
+  { id: 'cheer', label: 'Cheer', pose: 'emcheer', face: 'excited', dur: 1.2 },
+  { id: 'dance', label: 'Dance', pose: 'emdance', face: 'giggle', dur: 2 },
+  { id: 'flip', label: 'Flip', pose: 'emflip', face: 'playful', dur: 1.1 },
+  { id: 'love', label: 'Love', pose: 'emlove', face: 'love', dur: 1.6 },
+  { id: 'pray', label: 'Thanks', pose: 'embow', face: 'shy', dur: 1.4 },
+  { id: 'flex', label: 'Flex', pose: 'emflex', face: 'determined', dur: 1.4 },
+  { id: 'sleepy', label: 'Sleepy', pose: 'emsleepy', face: 'sleepy', dur: 2.2 },
+  { id: 'sad', label: 'Sad', pose: 'emsad', face: 'sad', dur: 2 },
 ];
 
 export function playEmote(world, e) {

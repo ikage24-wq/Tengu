@@ -522,6 +522,16 @@ const R = {
   dollGiggle: { db: -21, vary: 6, max: 1, gap: 600, layers: [{ wave: 'sine', arp: [1568, 1760, 1568, 2093, 1760], arpStep: 55, vib: [14, 4], env: { a: 5, s: 260, d: 60 }, overtones: [3, 0.25] }] },
   dollHey: { db: -20, vary: 6, max: 1, gap: 400, layers: [{ wave: 'sine', f0: 1400, slide: 1.4, vib: [12, 3], env: { a: 4, s: 90, d: 60 }, overtones: [3, 0.25] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
+  // The emotes (ui/emotes.js): short and cute, one each (recorded, recorded.js; these chimes stand
+  // in until the recordings are ready).
+  emoteCheer: { db: -14, max: 1, layers: [sparkle('C7:40 E7:40 G7:240')] },
+  emoteDance: { db: -15, max: 1, layers: [sparkle('C7:120 E7:120 G7:120 E7:120 C8:300')] },
+  emoteFlip: { db: -15, max: 1, layers: [whoosh(400, 600, 2600, { focus: 0.4 })] },
+  emoteLove: { db: -15, max: 1, layers: [sparkle('E7:80 G7:80 C8:400')] },
+  emoteThanks: { db: -16, max: 1, layers: [sparkle('G6:120 C7:400')] },
+  emoteFlex: { db: -14, max: 1, layers: [thump(90, 200)] },
+  emoteSleepy: { db: -16, max: 1, layers: [sparkle('G6:300 E6:300 C6:600')] },
+  emoteSad: { db: -16, max: 1, layers: [sparkle('E6:300 D#6:300 D6:700')] },
   click: { db: -20, max: 2, layers: [{ rec: 'click', len: 90 }] },
   cursor: { db: -21, max: 2, layers: [{ rec: 'tick' }] },
   cancel: { db: -16, max: 2, layers: [{ rec: 'back', len: 200 }] },

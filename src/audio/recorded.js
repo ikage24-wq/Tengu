@@ -196,6 +196,15 @@ export const RECORDED = {
   teamcatch: { trim: -2.1, music: true },
   teamrevive: { trim: -1.4, music: true },
   teamburst: { trim: -3.8, music: true },
+  // The emotes.
+  emoteCheer: { trim: -1.8 },
+  emoteDance: { trim: 3.7 },
+  emoteFlip: { trim: -0.7 },
+  emoteLove: { trim: -2 },
+  emoteThanks: { trim: 7.1 },
+  emoteFlex: { trim: 2.2 },
+  emoteSleepy: { trim: -2.8 },
+  emoteSad: { trim: 8 },
 };
 
 // The files for a sound: assets/audio/rec/<name>.mp3, or <name>1.mp3, <name>2.mp3... for takes.

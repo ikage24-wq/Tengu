@@ -1024,6 +1024,8 @@ function liveFace(look, state, mv) {
   // thrilled fanged grin, then flat out, laughing.
   // A life-skill move acts its own face (picking, mining, fishing, cooking: render/life-moves.js).
   if (mv?.face) return mv.face;
+  // An emote (render/emote-moves.js) wears the emote's own expression, never the battle face.
+  if (mv?.expression) return faceFrame(look.face ?? 'smile', time);
   if (mv && state.flow) {
     const h = state.flow.heat;
     if (h < 0.45) return { lid: 0.2, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };

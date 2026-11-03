@@ -29,6 +29,8 @@ const OBS_BOSS_ROOMS = new Set(['observatory4', 'observatory5', 'observatory6'])
 const VOLCANO_BOSS_ROOMS = new Set(['volcano4', 'volcano5', 'volcano6']);
 const THEATRE_BOSS_ROOMS = new Set(['theatre4', 'theatre5', 'theatre6']);
 const WHALE_BOSS_ROOMS = new Set(['skywhale4', 'skywhale5', 'skywhale6']);
+// Each emote's sound (recipes.js, recorded.js).
+const EMOTE_SOUND = { cheer: 'emoteCheer', dance: 'emoteDance', flip: 'emoteFlip', love: 'emoteLove', pray: 'emoteThanks', flex: 'emoteFlex', sleepy: 'emoteSleepy', sad: 'emoteSad' };
 const TOWN_SONG = { sprout: 'town', harbor: 'harbor', crag: 'crag', grove: 'grove' };
 
 export function songFor(map, world = null) {
@@ -209,6 +211,12 @@ export function hearWorld(world, cam) {
   if (!first && char.gold < (m.gold0 ?? char.gold)) sfx('buy');
   m.sp = sp;
   m.gold0 = char.gold;
+
+  // ----- An emote (ui/emotes.js): its own little sound -----
+  if (world.heard?.emote && world.heard.at !== m.emoteAt) {
+    m.emoteAt = world.heard.at;
+    if (!first) sfx(EMOTE_SOUND[world.heard.emote] ?? 'emoteCheer');
+  }
 
   // ----- The music and the world around it -----
   // A fight is on while blows land or you're hurt, and for a few seconds after.

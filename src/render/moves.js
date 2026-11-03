@@ -14,6 +14,7 @@
 
 import { LIFE_MOVES, LIFE_MIN } from './life-moves.js';
 import { SOCIAL_MOVES, SOCIAL_MIN } from './social-moves.js';
+import { EMOTE_MOVES, EMOTE_MIN } from './emote-moves.js';
 
 const RES = 2;
 const q = (v) => Math.round(v * RES) / RES;
@@ -5153,6 +5154,9 @@ export const MOVES = {
   // (The other players' own moments, AFK to showing off, are in render/social-moves.js.)
   ...SOCIAL_MOVES,
 
+  // (The emotes, cheer to sad, are in render/emote-moves.js.)
+  ...EMOTE_MOVES,
+
   // A happy fist pump with a little hop.
   cheer(p) {
     const hop = bump(p, 0.15, 0.6);
@@ -5166,7 +5170,7 @@ export const MOVES = {
 // Long-feeling moves need a little more time than a quick swing to read properly.
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
-  guard: 0.45, pray: 0.5, cheer: 0.45, ...LIFE_MIN, ...SOCIAL_MIN, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
+  guard: 0.45, pray: 0.5, cheer: 0.45, ...LIFE_MIN, ...SOCIAL_MIN, ...EMOTE_MIN, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, whirlflip: 0.6, flashjump: 0.3, shadowrun: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,

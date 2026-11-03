@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Emote sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every emote (ui/emotes.js) frame by frame along a row, with its face, to check each
+// pose reads, escalates and keeps the face clear. ?weapon=sword_30&job=warrior&only=cheer (one emote, bigger)
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { EMOTES } = await import('/src/ui/emotes.js');
+const q = new URLSearchParams(location.search);
+const weapon = q.get('weapon') ?? 'sword_30';
+const job = q.get('job') ?? 'warrior';
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const only = q.get('only');
+const LIST = only ? EMOTES.filter((e) => e.id === only) : EMOTES;
+const STEPS = [0.04, 0.16, 0.28, 0.4, 0.52, 0.64, 0.76, 0.88, 0.97];
+const K = only ? 3.4 : 2.4, D = 1.5, CW = only ? 150 : 110, RH = only ? 230 : 150;
+const W = CW * STEPS.length + 70, H = LIST.length * RH + 20;
+const c = document.getElementById('c');
+c.width = W * D; c.height = H * D;
+const ctx = c.getContext('2d');
+ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff'; ctx.fillRect(0, 0, W, H);
+LIST.forEach((e, row) => {
+  const y = row * RH + RH - 20;
+  ctx.fillStyle = '#6a5a8a'; ctx.font = 'bold 13px Segoe UI, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText(e.label, 6, y - 50);
+  STEPS.forEach((p, i) => {
+    const x = 70 + i * CW + CW / 2;
+    ctx.save(); ctx.translate(x, y); ctx.scale(K, K);
+    setHd(true, K * D); nextFrame();
+    drawHero(ctx, { ...LOOK, face: e.face }, { weapon: { id: weapon } }, 0, 0, { facing: 1, job, pose: e.pose, progress: p, dur: e.dur, time: p * e.dur }, null);
+    ctx.restore();
+    ctx.fillStyle = '#9a8ab0'; ctx.font = '10px Segoe UI, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(p.toFixed(2), x, y + 14);
+  });
+});
+document.title = 'ready';
+</script>
