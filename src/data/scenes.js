@@ -245,22 +245,62 @@ export const MANOR_SCENES = {
     { card: 'Moonlit Manor', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
-  // The Armours meet the group in the ballroom.
+  // The Armours, staged: a music box starts up, the two suits glide together, bow, and waltz
+  // past each other and back in three-four time trailing music notes, then turn on you as one;
+  // Rondo lunges with her rapier.
   manor_waltz: [
+    { together: [{ cam: ['waltzrondo', 'waltzminuet'], up: 20, dur: 1.2 }, { walk: 'player', to: 'waltzrondo', gap: 170, speed: 110 }] },
     { who: null, text: 'The ballroom. A music box somewhere starts a waltz, and two suits of armour turn to face the door.' },
+    { together: [{ fx: 'notes', at: 'waltzrondo', top: true }, { walk: 'waltzrondo', to: 'waltzminuet', gap: 34, speed: 50 }, { walk: 'waltzminuet', to: 'waltzrondo', gap: 34, speed: 50 }] },
+    { together: [{ face: 'waltzrondo', to: 'waltzminuet' }, { face: 'waltzminuet', to: 'waltzrondo' }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.12, speed: 3.5 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.12, speed: 3.5 }, { emote: 'waltzminuet', kind: 'heart', dur: 1.4 }] },
+    { together: [{ walk: 'waltzrondo', by: 70, speed: 80 }, { walk: 'waltzminuet', by: -70, speed: 80 }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { fx: 'notes', at: 'waltzminuet', top: true }] },
+    { together: [{ walk: 'waltzrondo', by: -70, speed: 80 }, { walk: 'waltzminuet', by: 70, speed: 80 }, { act: 'waltzrondo', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { act: 'waltzminuet', move: 'sway', dur: 0.9, amp: 0.1, speed: 7 }, { fx: 'notes', at: 'waltzrondo', top: true }] },
+    { together: [{ face: 'waltzrondo', to: 'player' }, { face: 'waltzminuet', to: 'player' }, { mood: 'waltzrondo', as: 'happy' }, { mood: 'waltzminuet', as: 'happy' }] },
     { who: 'waltzrondo', text: 'Guests! At last. My lady, shall we show them how it is done?' },
+    { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { mood: 'waltzrondo', as: 'angry' }, { mood: 'waltzminuet', as: 'angry' }] },
     { who: 'waltzminuet', text: 'Oh, we shall. One, two, three... one, two, THREE!', mood: 'happy' },
+    { act: 'waltzrondo', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ flash: '#e6f8ff' }, { shake: 3, dur: 0.3 }, { fx: 'notes', at: 'waltzrondo', top: true, n: 14 }, { walk: 'player', away: 'waltzrondo', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Madame Velvet, staged: she glares down at the mud on her runner, wags a finger of a sleeve at
+  // you, jingles her ring of keys, and hurls a teacup that bursts into china at your feet.
   manor_velvet: [
+    { together: [{ cam: 'velvet', dur: 1.1 }, { walk: 'player', to: 'velvet', gap: 160, speed: 110 }, { mood: 'velvet', as: 'angry' }] },
+    { together: [{ face: 'velvet', to: 'player' }, { emote: 'velvet', kind: '!' }, { jump: 'velvet', height: 10 }] },
     { who: 'velvet', text: 'Mud. On MY runner. Do you know how long it takes to beat a hundred-year-old rug?', mood: 'angry' },
+    { together: [{ act: 'velvet', move: 'sway', dur: 1.2, amp: 0.08, speed: 12 }, { emote: 'velvet', kind: 'anger', dur: 1.6 }] },
+    { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { face: 'player', to: -1 }] },
+    { face: 'player', to: 'velvet' },
     { who: 'player', text: "We're here for the guests. They need to go home." },
+    { together: [{ fx: 'sparkle', at: 'velvet', n: 8 }, { act: 'velvet', move: 'windup', dur: 0.8 }] },
     { who: 'velvet', text: "Nobody leaves the party before the hostess says so. House rules. Tea, anyone? It's scalding.", mood: 'angry' },
+    { act: 'velvet', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.32 },
+    { together: [{ fx: 'china', at: 'player', n: 16 }, { shake: 3, dur: 0.3 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.6 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Lady Marigold, staged: the camera glides along her long table of sleepy guests to the hostess
+  // under the huge moon; petals drift off her as she sways, sad; she holds out her hand for a last
+  // waltz and sweeps a storm of petals.
   manor_marigold: [
+    { together: [{ cam: 'marigold', up: 30, dur: 2.2 }, { walk: 'player', to: 'marigold', gap: 170, speed: 100 }, { mood: 'marigold', as: 'happy' }] },
     { who: null, text: 'The roof, under a moon far too big. A table is laid for a hundred, every chair taken by a guest who looks very, very tired.' },
+    { together: [{ face: 'marigold', to: 'player' }, { jump: 'marigold', height: 12 }, { emote: 'marigold', kind: 'heart', dur: 1.6 }, { fx: 'petals', at: 'marigold', top: true }] },
     { who: 'marigold', text: 'Oh! More guests! How wonderful. Nobody ever stays, you know. So I make sure they do.' },
+    { together: [{ cam: ['player', 'marigold'], up: 20, dur: 0.9 }, { face: 'player', to: 'marigold' }] },
     { who: 'player', text: "They want to go home, Lady Marigold. And I think you're lonely, not cruel." },
+    { together: [{ mood: 'marigold', as: 'sad' }, { act: 'marigold', move: 'sway', dur: 2.4, amp: 0.06, speed: 2.4 }, { fx: 'petals', at: 'marigold', top: true, n: 8 }] },
     { who: 'marigold', text: "...Then dance with me. One last waltz. If you can keep up, I'll... think about it.", mood: 'sad' },
+    { together: [{ walk: 'marigold', to: 'player', gap: 90, speed: 50 }, { fx: 'notes', at: 'marigold', top: true }, { emote: 'player', kind: 'heart', dur: 1.2 }] },
+    { act: 'marigold', move: 'attack', dur: 1, async: true },
+    { wait: 0.35 },
+    { together: [{ flash: '#fff2c8' }, { fx: 'petals', at: 'marigold', n: 36 }, { shake: 2, dur: 0.4 }, { walk: 'player', away: 'marigold', by: 30, speed: 150 }] },
+    { wait: 0.6 },
+    { cam: 'player', dur: 0.7 },
   ],
   // She's freed at the end, not slain.
   manor_freed: [

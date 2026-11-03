@@ -268,6 +268,22 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'notes') {
+    // A music note bobbing up.
+    text(ctx, p.seed > 5 ? '\u266a' : '\u266b', x, y, { size: 9 + (p.seed % 3), bold: true, align: 'center', color: p.seed > 3 ? '#b88cff' : '#ff8fc1', outline: '#ffffff' });
+  } else if (p.kind === 'china') {
+    // A shard of fine china: white with a blue rim, spinning.
+    ctx.translate(x, y);
+    ctx.rotate(spin * 1.6);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(-3, -2);
+    ctx.lineTo(3, -1);
+    ctx.lineTo(0, 3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#6a8ad8';
+    ctx.fillRect(-3, -2, 6, 1);
   } else if (p.kind === 'dust') {
     // A soft round puff of floor dust, swelling and thinning.
     const u = p.t / p.life;
@@ -382,7 +398,7 @@ function drawLine(ctx, world, step, t, atTop = false) {
     if (atTop) roundRect(ctx, x + 3, y + 3, 113, H - 6, 11);
     else roundRect(ctx, x - 30, y - 70, 146, H + 70 - 3, 10);
     ctx.clip();
-    drawSpeaker(ctx, world, step, x + 60, y + H - 6, t);
+    drawSpeaker(ctx, world, step, x + 60, y + H - 6, t, atTop ? H - 14 : 130);
     ctx.restore();
   }
   const tx = narration ? x + 24 : x + 122;
@@ -414,7 +430,7 @@ const shadeInk = (c) => {
 
 // Whoever speaks, acting their line: heroes and NPCs at twice their size with the line's face and a
 // little bounce on each new line; queens as themselves; Hayate, still asleep, as a swirl of wind.
-function drawSpeaker(ctx, world, step, x, y, t) {
+function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
   const who = step.who;
   const pop = t < 0.25 ? Math.sin((t / 0.25) * Math.PI) * 3 : 0;
   ctx.save();
@@ -435,7 +451,8 @@ function drawSpeaker(ctx, world, step, x, y, t) {
   } else if (MOBS[who]) {
     const def = MOBS[who];
     const m = { def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: t, age: 9, dying: 0, uid: 9000 + who.length, aggroUntil: step.mood === 'angry' ? Infinity : 0, attackAt: -9, gloatAt: step.mood === 'happy' ? world.now + t : -9 };
-    const k = Math.min(1.1, 130 / def.h);
+    // (Scaled to the room it has: a boss in a box at the top fits inside it, head and all.)
+    const k = Math.min(1.1, room / def.h);
     ctx.translate(x, y - pop);
     ctx.scale(k, k);
     drawMonster(ctx, m, 0, 0, world.now + t, world.now + t);
