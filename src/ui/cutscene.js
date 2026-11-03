@@ -290,6 +290,44 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'coins') {
+    // A gold coin flipping as it flies.
+    ctx.translate(x, y);
+    ctx.scale(Math.cos(spin * 2), 1);
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#e8a83a';
+    ctx.fillRect(-0.6, -1.6, 1.2, 3.2);
+  } else if (p.kind === 'shells') {
+    // A little fan shell, pink or cream, tumbling.
+    ctx.translate(x, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = p.seed > 5 ? '#ffc8d8' : '#fff0dc';
+    ctx.beginPath();
+    ctx.moveTo(0, 2.4);
+    ctx.arc(0, 2.4, 3.4, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200,120,150,0.6)';
+    ctx.lineWidth = 0.6;
+    for (const a of [-0.4, 0, 0.4]) {
+      ctx.beginPath();
+      ctx.moveTo(0, 2.4);
+      ctx.lineTo(Math.sin(a) * 3.2, 2.4 - Math.cos(a) * 3.2);
+      ctx.stroke();
+    }
+  } else if (p.kind === 'clouds') {
+    // A soft puff of cloud drifting off, swelling and fading.
+    const u = p.t / p.life;
+    ctx.globalAlpha = Math.max(0, a) * 0.85;
+    ctx.fillStyle = '#ffffff';
+    for (const [dx, dy, r] of [[-4, 1, 4], [0, -2, 5], [5, 1, 4]]) {
+      ctx.beginPath();
+      ctx.arc(x + dx * (1 + u), y + dy, r * (1 + u * 0.8), 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else if (p.kind === 'shout') {
     // A ring of sound widening out from a megaphone.
     const u = p.t / p.life;

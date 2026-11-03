@@ -37,7 +37,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   // emotes and bursts.
   const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
-  const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers'];
+  const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
   const actor = (who) => who === 'player' || Boolean(NPCS[who]) || Boolean(MOBS[who]);
   const check = (st) => {

@@ -805,22 +805,64 @@ export const WHALE_SCENES = {
     { card: "Sky Whale's Back", sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
+  // Captain Gale, staged: the red panda captain stands with her back to you on the deck of the
+  // whale, spyglass to the sky as the wind snaps past; she lowers it, whirls round, swaggers up,
+  // flashes her cutlass, and sweeps it in a scatter of gold.
   skywhale_gale: [
+    { together: [{ cam: 'gale', up: 20, dur: 1.3 }, { walk: 'player', to: 'gale', gap: 200, speed: 100 }, { face: 'gale', to: 'player' }, { mood: 'gale', as: 'happy' }] },
+    { face: 'gale', to: 1 },
+    { together: [{ fx: 'wind', at: 'gale', top: true }, { act: 'gale', move: 'sway', dur: 1.6, amp: 0.05, speed: 3 }] },
     { who: null, text: 'A pirate airship is moored over the great blowhole, its sails snapping. On the rail, boot up, a captain lowers her spyglass.' },
+    { together: [{ face: 'gale', to: 'player' }, { emote: 'gale', kind: '!' }, { jump: 'gale', height: 12 }] },
     { who: 'gale', text: "Well, well. Stowaways on MY whale? I'll have you know salvage rights are first come, first served.", mood: 'happy' },
+    { together: [{ walk: 'gale', to: 'player', gap: 130, speed: 70 }, { act: 'gale', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }, { cam: ['player', 'gale'], up: 20, dur: 1 }] },
     { who: 'player', text: "She's not salvage. She's asleep, and she's sinking." },
+    { together: [{ mood: 'gale', as: 'angry' }, { act: 'gale', move: 'windup', dur: 0.8 }, { fx: 'sparkle', at: 'gale', top: true, n: 6 }, { fx: 'coins', at: 'gale', n: 6 }] },
     { who: 'gale', text: 'All the more reason to take what we can before she drops! Crew, cutlasses out!', mood: 'angry' },
+    { act: 'gale', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { fx: 'wind', at: 'player' }, { fx: 'coins', at: 'gale', n: 18 }, { walk: 'player', away: 'gale', by: 32, speed: 170 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.4 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // The Barnacle Matriarch, staged: the snail queen taps her coral staff and her barnacle children
+  // rattle in a scatter of shells; she sets off toward you at a snail's pace, very slowly, while
+  // you wait; then she raises the staff and a wave of shells rolls out.
   skywhale_matriarch: [
-    { who: null, text: 'Walls of shell and coral have grown right over the whale\'s back. On a throne of scallop, a lady crowned in conch shells taps her staff.' },
+    { together: [{ cam: 'matriarch', up: 20, dur: 1.3 }, { walk: 'player', to: 'matriarch', gap: 200, speed: 100 }, { mood: 'matriarch', as: 'angry' }] },
+    { who: null, text: "Walls of shell and coral have grown right over the whale's back. On a throne of scallop, a lady crowned in conch shells taps her staff." },
+    { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
+    { together: [{ jump: 'matriarch', height: 5 }, { fx: 'shells', at: 'matriarch', n: 6 }, { shake: 1, dur: 0.15 }] },
+    { together: [{ face: 'matriarch', to: 'player' }, { emote: 'matriarch', kind: 'anger', dur: 1.8 }] },
     { who: 'matriarch', text: 'We were here first, little landlubbers. Every barnacle on this whale is one of my children.', mood: 'angry' },
+    { together: [{ walk: 'matriarch', to: 'player', gap: 140, speed: 14 }, { cam: ['player', 'matriarch'], up: 20, dur: 1.2 }, { emote: 'player', kind: 'sweat', dur: 2.6 }, { wait: 2.6 }] },
+    { together: [{ emote: 'player', kind: '?', dur: 1.2 }, { face: 'player', to: 'matriarch' }] },
     { who: 'matriarch', text: 'If she sinks, we sink with her, and we LIKE it here. Go away.', mood: 'angry' },
+    { act: 'matriarch', move: 'windup', dur: 0.8 },
+    { act: 'matriarch', move: 'attack', dur: 1, async: true },
+    { wait: 0.32 },
+    { together: [{ shake: 4, dur: 0.5 }, { fx: 'shells', at: 'matriarch', n: 24 }, { fx: 'bubbles', at: 'matriarch', n: 10 }, { jump: 'player', height: 22 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // The Whale's Dream, staged: the whale's sleeping spirit floats above the brow, humming, clouds
+  // drifting off her; she rolls over in her sleep; she mumbles, gets cross at the noise, and
+  // slaps her tail down in a gust that blows the clouds away.
   skywhale_whaledream: [
+    { together: [{ cam: 'whaledream', up: 40, dur: 1.8 }, { walk: 'player', to: 'whaledream', gap: 200, speed: 90 }, { mood: 'whaledream', as: 'blink' }, { emote: 'whaledream', kind: 'zzz', dur: 8 }, { act: 'whaledream', move: 'float', dur: 2.4, height: 18, speed: 2.6 }] },
+    { together: [{ fx: 'clouds', at: 'whaledream' }, { fx: 'notes', at: 'whaledream', top: true }] },
     { who: null, text: "The whale's brow, open to the wind above the clouds. A giant figure of soft sky-blue drifts there, eyes closed, humming in her sleep." },
+    { together: [{ act: 'whaledream', move: 'sway', dur: 2.4, amp: 0.22, speed: 1.4 }, { fx: 'clouds', at: 'whaledream', n: 6 }] },
     { who: 'whaledream', text: '...mmh... just a little longer... the clouds are so warm down there...', mood: 'sad' },
+    { together: [{ cam: ['player', 'whaledream'], up: 30, dur: 0.9 }, { face: 'player', to: 'whaledream' }, { act: 'whaledream', move: 'float', dur: 1.8, height: 14, speed: 3 }] },
     { who: 'player', text: "If you sink any lower, you'll crash into the island. Wake up!" },
-    { who: 'whaledream', text: '...Who\'s that, singing so loud... let me sleep...', mood: 'angry' },
+    { together: [{ mood: 'whaledream', as: 'angry' }, { emote: 'whaledream', kind: 'anger', dur: 1.6 }, { act: 'whaledream', move: 'windup', dur: 0.8 }] },
+    { who: 'whaledream', text: "...Who's that, singing so loud... let me sleep...", mood: 'angry' },
+    { act: 'whaledream', move: 'attack', dur: 1, async: true },
+    { wait: 0.32 },
+    { together: [{ flash: '#d8f0ff' }, { shake: 5, dur: 0.5 }, { fx: 'clouds', at: 'whaledream', n: 12 }, { fx: 'wind', at: 'player' }, { walk: 'player', away: 'whaledream', by: 34, speed: 170 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
   skywhale_woken: [
     { who: 'whaledream', text: "...Oh! Oh my. I was dreaming I was a pebble at the bottom of the sea. Have I been asleep long?", mood: 'happy' },
