@@ -30,7 +30,7 @@ Down into the candy valley and the mines below it, then up the volcano's cone to
 
 ## Monsters (levels 35-39), on a new rig
 
-The **gummy rig** (render/mobs/gummyrig.js): the manor rig on springs. Every move is a bounce: the
+The **gummy rig** (render/mobs/candy.js): the manor rig on springs. Every move is a bounce: the
 hips ride a damped spring that overshoots and settles, hops land with a jiggle that runs out through
 hair, ears and props (never a squash of the body), and idle poses bob like a jelly.
 
@@ -58,3 +58,12 @@ hair, ears and props (never a squash of the body), and idle poses bob like a jel
 Sugar Gems (tokens), Lv 40 gear, the **Confectioner** set (a chef's toque with a cherry, a frilly
 apron collar, a cape of layered cake). Music: "Sugar Rush" (Latin house, D major, nylon guitar and
 trumpet) and, for the bosses, "Eruption" (B minor, brass stabs and timpani over a funk bass).
+
+## The 2026-11-03 redraw
+
+The sweets-folk and bosses were redrawn creature-first (render/mobs/candy.js and candyboss.js),
+retiring the costumed girls on the gummy rig: a see-through gummy bear boxer, a cotton-candy sheep
+with sugar-glass wings, a living lollipop in a witch hat, a peppermint whose wrapper ends are its
+arms, a chocolate-bar knight with a wafer sword, and a jelly bean ninja. Toffee is a chubby beaver
+smith with a caramel-dripping hammer, Gretel a gingerbread knight with a candy-cane lance and an
+iced cookie shield, and Queen Bonbon a giant three-tier cake with a face, a crown and a cherry.
