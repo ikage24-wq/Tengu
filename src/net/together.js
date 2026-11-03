@@ -7,6 +7,7 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
 import { loadMap } from '../world/world.js';
+import { friendWorking, friendFeast } from '../world/coop-life.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -371,6 +372,23 @@ function onZones(world, msg) {
   if (msg.callout) world.callout = { ...msg.callout, at: world.now };
 }
 
+// ---------- Co-op life skills (world/coop-life.js) ----------
+// 'work': you're working a life spot (sent when you start, and every few seconds while you keep
+// at it), so a party friend at the same spot gets the Together bonus. 'feast': you served a party
+// feast; party friends on your map get its buff. 'gift': a piece crafted for a party friend, sent
+// straight into their bag (gear whole, like a trade).
+
+const partyHere = (world) => partyFriends().filter((g) => g.map === world.map.id);
+
+function onGift(world, msg, g) {
+  if (msg.to !== online.id || !inParty(msg.id)) return;
+  const it = msg.item ?? {};
+  const id = it.inst?.id ?? it.id;
+  if (!ITEMS[id] || !tradable(id)) return;
+  const ok = it.inst ? addItem(world.char.inventory, { ...it.inst, uid: Date.now() * 100 + Math.floor(Math.random() * 100) }) : addItem(world.char.inventory, id, Math.max(1, Math.min(99, it.qty ?? 1)));
+  world.log(ok ? `${g.name} crafted ${ITEMS[id].name} for you! It's in your bag.` : `${g.name} made you ${ITEMS[id].name}, but your bag is full!`, ok ? '#ffe36b' : '#ffb3c6');
+}
+
 // ---------- The world's hooks (merged into world.net) ----------
 
 export const togetherApi = {
@@ -381,6 +399,21 @@ export const togetherApi = {
   zones(world, zones, callout) {
     shareZones(world, zones, callout);
   },
+  working(world, key) {
+    if (partyHere(world).length) send({ t: 'work', map: world.map.id, key });
+  },
+  // Returns the names of the party friends here who were fed.
+  feast(world, f) {
+    const here = partyHere(world);
+    if (here.length) send({ t: 'feast', map: world.map.id, feast: f.id });
+    return here.map((g) => g.name);
+  },
+  gift(world, to, item) {
+    if (!inParty(to) || !online.ghosts.has(to)) return false;
+    send({ t: 'gift', to, item: item.inst ? { inst: item.inst } : { id: item.id, qty: item.qty } });
+    return true;
+  },
+  partyFriends: () => partyFriends(),
 };
 
 export function handleTogether(world, msg, g) {
@@ -392,6 +425,14 @@ export function handleTogether(world, msg, g) {
       return;
     case 'zones':
       return onZones(world, msg);
+    case 'work':
+      if (inParty(msg.id)) friendWorking(world, msg.id, g.name, msg);
+      return;
+    case 'feast':
+      if (inParty(msg.id) && msg.map === world.map.id) friendFeast(world, g.name, msg.feast);
+      return;
+    case 'gift':
+      return onGift(world, msg, g);
     case 'party':
       return onParty(world, msg, g);
     case 'insp':

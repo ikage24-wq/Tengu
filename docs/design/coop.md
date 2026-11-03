@@ -31,3 +31,19 @@ chat gate (CLAUDE.md). Bots never take life spots from the player.
 Built in two waves: (1) team moves, easy grouping, co-op life skills; (2) co-op content, smarter
 bots and bots filling co-op, bot personalities and real-player feel. Each part is shown to the
 player before it is merged.
+
+## Part 4 built: co-op life skills (`world/coop-life.js`)
+- **Working together:** two or more of the party at the same vein, tree, herb patch or fishing
+  nook (within 6 s of each other) get one more find per helper (up to two), better rare odds and a
+  quarter more life EXP each, with a "Together!" pop and a mint sparkle over the spot. Bot party
+  members near you sometimes come over when you start, work it beside you with its own move, cheer
+  at the find and go back to hunting after; their work never rests the spot. Online, a `work`
+  message (sent at the start and every few seconds) gives a party friend at the same spot the bonus.
+- **Party feasts:** a Party Feasts tab at every stove, one feast per tier from a bigger batch of that
+  tier's dish ingredients (two of its dishes' bonuses together, 20 minutes). Eating it serves the
+  whole party on the map: bot members (their stats take it) and online party friends (`feast`
+  message); serving gives a little Cooking EXP per member fed.
+- **Crafting for a friend:** a "For" pill on the craft window picks a party member here; the piece
+  goes straight to them (a bot wears it if it suits them and thanks you through the chat gate; an
+  online friend gets it through a `gift` message), and gear made that way says "Made by" you.
+- Tests: `tests/coop-life.test.js`.

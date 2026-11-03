@@ -12,6 +12,7 @@ import { ITEMS } from '../data/items.js';
 import { isNight } from './daytime.js';
 import { isCalm } from './calm.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, skillOfKind, withExtra, LIFE_NAMES } from '../core/life.js';
+import { spotKey, startedWork, keepWorking, togetherBonus } from './coop-life.js';
 
 const key = (mapId, i) => `${mapId}:${i}`;
 
@@ -57,6 +58,8 @@ export function startGathering(world) {
   world.body.vx = 0;
   world.gathering = { ...here, kind, skill, perks, secs, t: 0 };
   world.pose = { kind: kind.move, t: secs, dur: secs, since: world.now };
+  // Party members may come and work it with you (world/coop-life.js).
+  startedWork(world, { key: spotKey(world, 'node', here.i), kind: 'node', node: here.node, x: here.node.x, y: here.node.y, pose: kind.move, secs });
   return null;
 }
 
@@ -78,6 +81,7 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
     return false;
   }
   g.t += dt;
+  keepWorking(world);
   const secs = g.secs ?? g.kind.secs;
   if (g.t < secs) return true;
   world.gathering = null;
@@ -86,12 +90,14 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   const [lo, hi] = g.kind.count;
   const got = {};
   // A calm map (world/calm.js) gives one more, and the skill's level may give another.
-  const n = withExtra(lo + Math.floor(rng() * (hi - lo + 1)) + (isCalm(world, world.map.id) ? 1 : 0), perks, rng);
+  // Working it together with the party gives more and rarer finds (world/coop-life.js).
+  const team = togetherBonus(world, spotKey(world, 'node', g.i), g.node.x, g.node.y);
+  const n = withExtra(lo + Math.floor(rng() * (hi - lo + 1)) + (isCalm(world, world.map.id) ? 1 : 0) + (team?.extra ?? 0), perks, rng);
   for (let k = 0; k < n; k++) {
     const id = roll(g.node.pool, rng);
     got[id] = (got[id] ?? 0) + 1;
   }
-  if (g.node.rare && rng() < g.node.rare[1] * perks.rare) got[g.node.rare[0]] = (got[g.node.rare[0]] ?? 0) + 1;
+  if (g.node.rare && rng() < g.node.rare[1] * perks.rare * (team?.rare ?? 1)) got[g.node.rare[0]] = (got[g.node.rare[0]] ?? 0) + 1;
   for (const [id, qty] of Object.entries(got)) {
     addItem(world.char.inventory, id, qty);
     world.log(`Got ${ITEMS[id].name}${qty > 1 ? ` x${qty}` : ''}.`, g.node.rare && id === g.node.rare[0] ? '#ffb3d1' : '#bff0dc');
@@ -100,6 +106,6 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   world.lastGathered = { x: g.node.x, y: g.node.y, items: Object.keys(got), at: world.now };
   world.nodeRest ??= {};
   world.nodeRest[key(world.map.id, g.i)] = world.now + g.kind.rest * perks.rest;
-  lifeAction(world, skill, { tier: g.node.tier ?? 1, kind: skill === 'mining' ? 'mine' : 'gather' });
+  lifeAction(world, skill, { tier: g.node.tier ?? 1, kind: skill === 'mining' ? 'mine' : 'gather', scale: team?.life ?? 1 });
   return false;
 }

@@ -2,12 +2,14 @@
 // crafting window (ui/crafting.js). Pressing Craft there starts a short crafting moment:
 //   world.crafting = { recipe, t, secs }: the hero works at the bench (the 'craft' move) and when
 //   t reaches secs the piece is made (core/crafting.js craft). Walking, jumping or pressing Up
-//   cancels it, and nothing is used up.
+//   cancels it, and nothing is used up. `forWho` (a party member, world/coop-life.js): the piece
+//   goes to them when it's made.
 
 import { craft, craftBlocker, BLOCKER_TEXT } from '../core/crafting.js';
 import { QUALITIES } from '../data/crafting.js';
 import { itemName } from '../core/items.js';
 import { groundAt } from './physics.js';
+import { deliverCraft } from './coop-life.js';
 
 export const BENCH_REACH = 30;
 // How long a craft takes: a tonic or stone is quick, gear takes a proper moment.
@@ -52,8 +54,11 @@ export function tickCrafting(world, dt, held, pressed, rng = Math.random) {
   world.crafting = null;
   world.map.benchWork = null;
   const result = craft(world, c.recipe, rng);
-  world.lastCrafted = { result, recipe: c.recipe, at: world.now };
+  // Made for a party member (world/coop-life.js): it goes straight to them.
+  const gave = result.ok && c.forWho ? deliverCraft(world, c.forWho, result, c.recipe) : false;
+  world.lastCrafted = { result, recipe: c.recipe, at: world.now, forWho: gave ? c.forWho : null };
   if (!result.ok) world.log?.(BLOCKER_TEXT[result.why] ?? "Couldn't make it.", '#ffb3c6');
+  else if (gave) world.log?.(`${c.recipe.quality && result.inst ? `${QUALITIES[result.quality].name} craft! ` : ''}Made with care for ${c.forWho.name}.`, '#d8f5d0');
   else if (result.inst) {
     const q = QUALITIES[result.quality];
     world.log?.(`You crafted ${c.recipe.quality ? `a ${q.name} ` : ''}${itemName(result.inst)}!`, result.quality === 2 ? '#ffd27a' : result.quality === 1 ? '#bfe0ff' : '#d8f5d0');

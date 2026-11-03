@@ -37,6 +37,8 @@ export function itemTooltip(char, id, inst = null) {
   // Bench-made (data/crafting.js): its quality, or the Artisan line it belongs to.
   if (inst?.quality != null) lines.push({ text: `⚒ ${QUALITIES[inst.quality].name} craft`, bold: true, color: QUALITIES[inst.quality].color });
   else if (def.crafted && def.type === 'equip') lines.push({ text: '⚒ Made at a craft bench', bold: true, color: '#3fb383' });
+  // Crafted for someone by a friend (world/coop-life.js).
+  if (inst?.madeBy) lines.push({ text: `♥ Made by ${inst.madeBy}`, bold: true, color: '#e0609a' });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
   if (def.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.element]} element`, bold: true, color: def.color === '#ffe36b' ? '#d9a440' : def.color });
   if (def.type === 'equip') {

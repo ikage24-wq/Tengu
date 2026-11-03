@@ -27,7 +27,25 @@ const smooth = (a, b, v) => {
 };
 const backOut = (k) => 1 + 2.4 * (k - 1) ** 3 + 1.4 * (k - 1) ** 2;
 
+// Working a spot together (world/coop-life.js), or a feast served: a small shared sparkle. A mint
+// ring blooms out from the spot, a leaf wisp curls up for each one working it (two to four, round
+// the spot), and motes drift off as it fades.
+function drawTogether(ctx, f, x, y, p) {
+  const t = f.t;
+  const n = Math.max(2, Math.min(4, f.n ?? 2));
+  groundRing(ctx, 'celringmint', x, y, Math.min(1, p * 2.2), 40);
+  const rise = easeOut(Math.min(1, t / 0.9));
+  const fade = 1 - smooth(0.6, 1, p);
+  for (let i = 0; i < n; i++) {
+    const a = t * 6 + (i / n) * Math.PI * 2;
+    fxSprite(ctx, 'celleafwisp', x + Math.cos(a) * 12 * (1 - rise * 0.5), y - 6 - rise * 34 + Math.sin(a) * 2.5, { t: t + i * 0.2, scale: 0.42, alpha: fade });
+  }
+  fxSprite(ctx, 'celmotes', x, y - 8 - rise * 10, { t, scale: 0.42, alpha: fade * smooth(0, 0.15, t) });
+  return true;
+}
+
 export function drawLifeFx(ctx, f, x, y, p) {
+  if (f.kind === 'together') return drawTogether(ctx, f, x, y, p);
   if (f.kind !== 'lifelevel') return false;
   const t = f.t;
   // The ring: out along the ground in the first half.

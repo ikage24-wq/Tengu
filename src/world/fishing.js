@@ -16,6 +16,7 @@ import { addItem, countItem } from '../core/inventory.js';
 import { DISHES } from '../data/cooking.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra, LIFE_NAMES } from '../core/life.js';
 import { ITEMS } from '../data/items.js';
+import { spotKey, startedWork, keepWorking, togetherBonus, workersAt } from './coop-life.js';
 
 export const ROD = 'fishing_rod';
 // The shop's rod, or a bench-made one (data/crafting.js).
@@ -40,8 +41,14 @@ export function startFishing(world) {
   world.body.vx = 0;
   world.fishing = { spot, phase: 'cast', t: 0, wait: 0, fish: null, perks: lifePerks(world.char, 'fishing') };
   world.pose = { kind: 'throw', t: 0.45, dur: 0.45, since: world.now };
+  // Party members may come and fish beside you (world/coop-life.js).
+  world.fishing.key = fishKey(world, spot);
+  startedWork(world, { key: world.fishing.key, kind: 'fish', spot, x: spot.x, y: spot.y, pose: 'fishwait', secs: 2.4 });
   return null;
 }
+
+const workersHere = (world, key) => workersAt(world, key).count;
+const fishKey = (world, spot) => spotKey(world, 'fish', (SPOTS[world.map.id] ?? []).indexOf(spot));
 
 // Rarer fish bite more often with a better rare chance (the skill's level and rod).
 function rollFish(spot, rng, rare = 1) {
@@ -64,11 +71,14 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
   }
   const hook = ['KeyZ', 'ControlLeft', 'ControlRight'].some((k) => pressed.has(k));
   f.t += dt;
+  if (f.phase !== 'catch' && f.phase !== 'miss') keepWorking(world);
   if (f.phase === 'cast' && f.t >= 0.5) {
     f.phase = 'wait';
     f.t = 0;
     const perks = f.perks ?? lifePerks(world.char, 'fishing');
-    f.fish = rollFish(f.spot, rng, perks.rare);
+    // Fishing side by side with the party: rarer fish bite more (world/coop-life.js).
+    const near = f.key ? workersHere(world, f.key) : 1;
+    f.fish = rollFish(f.spot, rng, perks.rare * (near > 1 ? 1 + 0.5 * Math.min(2, near - 1) : 1));
     f.wait = (BITE_WAIT[0] + rng() * (BITE_WAIT[1] - BITE_WAIT[0]) + (f.fish.rarity - 1) * 1.2) * perks.time;
     f.react = f.fish.react * perks.react;
     f.nibbles = [0.3, 0.6].map((u) => f.wait * u + rng() * 0.4);
@@ -107,7 +117,11 @@ function catchFish(world, f, rng) {
     f.t = 0;
     return;
   }
-  const n = withExtra(1, f.perks ?? lifePerks(char, 'fishing'), rng) > 1 && addItem(char.inventory, fish.id, 1) ? 2 : 1;
+  // Together with the party, one more comes up for each helper (world/coop-life.js).
+  const team = f.key ? togetherBonus(world, f.key, f.spot.bx ?? f.spot.x, f.spot.by ?? f.spot.y) : null;
+  const extra = (withExtra(1, f.perks ?? lifePerks(char, 'fishing'), rng) > 1 ? 1 : 0) + (team?.extra ?? 0);
+  let n = 1;
+  for (let k = 0; k < extra && addItem(char.inventory, fish.id, 1); k++) n += 1;
   f.phase = 'catch';
   f.t = 0;
   // The Fish page: how many.
@@ -118,12 +132,12 @@ function catchFish(world, f, rng) {
   world.pose = { kind: 'cheer', t: 0.9, dur: 0.9, since: world.now };
   // (The players around you notice a good one: world/bots.js.)
   world.lastCatch = { fish, at: world.now };
-  world.log(n > 1 ? `You caught two ${fish.name}s at once!${first ? ' (new!)' : ''}` : `You caught a ${fish.name}!${first ? ' (new!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
+  world.log(n > 1 ? `You caught ${n > 2 ? n : 'two'} ${fish.name}s at once!${first ? ' (new!)' : ''}` : `You caught a ${fish.name}!${first ? ' (new!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
   world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: fish.name, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });
   world.fishCaught = { fish, at: world.now };
   // A rarer fish is worth more to the skill.
-  lifeAction(world, 'fishing', { tier: f.spot.tier ?? 1, kind: 'fish', scale: 1 + (fish.rarity - 1) * 0.25 });
+  lifeAction(world, 'fishing', { tier: f.spot.tier ?? 1, kind: 'fish', scale: (1 + (fish.rarity - 1) * 0.25) * (team?.life ?? 1) });
   // Friends in your online room hear about it.
   world.net?.caught?.(world, fish);
   // A fish's own recipe comes with your first one.

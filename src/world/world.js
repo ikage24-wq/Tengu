@@ -37,6 +37,7 @@ import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
 import { nestKill } from './nest.js';
 import { DISH_BY_ID } from '../data/cooking.js';
+import { serveFeast } from './coop-life.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
@@ -223,6 +224,16 @@ export function useItem(world, id) {
     if (removeItem(world.char.inventory, id, 1) < 1) return false;
     world.log(`Returning to ${getMap(townOf(world)).name}.`, '#bff0dc');
     returnToTown(world);
+    return true;
+  }
+  // A party feast: served to everyone in the party here (world/coop-life.js).
+  if (def.effect?.feast) {
+    if (!serveFeast(world, id)) {
+      world.log(`No ${def.name} left.`, '#ffb3c6');
+      return false;
+    }
+    world.itemReadyAt = world.now + ITEM_DELAY;
+    world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
     return true;
   }
   // A dish: eaten for a little HP and its bonus for a while (different dishes add up; the same
