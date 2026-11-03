@@ -246,3 +246,34 @@ test('the Starlight Idol sings into her mic, belts with her head back, and ends 
     }
   }
 });
+
+// Life skills (render/life-moves.js): every move holds a tool that exists, keeps the weapon arm
+// at or below the shoulder whenever it's drawn in front (raised, it goes behind the head), keeps the
+// free hand below her jaw, acts its own face, and flows without a jump from moment to moment.
+test('life-skill moves: their own tools, nothing over the face, smooth all the way', async () => {
+  const { LIFE_MOVES } = await import('../src/render/life-moves.js');
+  const { moveAt } = await import('../src/render/moves.js');
+  const { toolShapes } = await import('../src/render/tools.js');
+  const { LIFE_BY_KIND } = await import('../src/render/life.js');
+  for (const kind of Object.values(LIFE_BY_KIND)) assert.ok(LIFE_MOVES[kind], `${kind} is a life move`);
+  const durs = { fishwait: 9, fishbite: 1, fishcatch: 1.4, cook: 2.4, craft: 2.6 };
+  for (const kind of Object.keys(LIFE_MOVES)) {
+    let last = null;
+    for (let i = 0; i <= 200; i++) {
+      const p = i / 200;
+      const mv = moveAt(kind, p, durs[kind] ?? 1.4);
+      for (const t of [mv.tool, mv.backTool].filter((t) => t && t !== 'none')) assert.ok(toolShapes(t), `${kind}: the ${t} is drawn`);
+      assert.ok(mv.face, `${kind} at ${p}: acts its own face`);
+      if (!mv.armBack) assert.ok(mv.arm <= 135, `${kind} at ${p}: the arm (${Math.round(mv.arm)}) stays clear of the face`);
+      const r = { frontLeg: [0, 0, 0], backLeg: [0, 0, 0], backArm: [0, 0], cape: 0 };
+      mv.rig?.(r);
+      assert.ok(r.backArm[1] >= -8, `${kind} at ${p}: the free hand stays below her jaw`);
+      // The angles move on smoothly (a blow is fast, never a teleport), unless the tool changes.
+      if (last && last.tool === mv.tool) {
+        assert.ok(Math.abs(mv.arm - last.arm) < 40, `${kind} at ${p}: the arm jumps ${Math.round(mv.arm - last.arm)}`);
+        assert.ok(Math.abs(mv.weapon - last.weapon) < 60, `${kind} at ${p}: the tool jumps ${Math.round(mv.weapon - last.weapon)}`);
+      }
+      last = mv;
+    }
+  }
+});

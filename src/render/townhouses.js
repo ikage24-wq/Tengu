@@ -285,18 +285,55 @@ export function moonTreeArt() {
 // Where the moon tree's lanterns hang (relative to its base center), for their glow and swing.
 export const MOON_LANTERNS = [[-100, -112], [-68, -106], [-38, -112], [40, -100], [70, -106], [100, -112]];
 
-// The town stove: a little brick oven with a copper pot bubbling on top and a wooden spoon,
-// a stack of firewood beside it. 56 wide, 58 tall (the fire and steam are drawn live).
+// The town stove: a round-shouldered brick oven with an arched firebox, a fat copper pot on top
+// with ring handles and a tea-towel over one, a ladle hanging on its hook, and a stack of split
+// logs at its foot. 56 wide, 58 tall. The fire, the pot's lid and the steam are drawn live
+// (render/town.js); the lid is stoveLidArt.
 export function stoveArt() {
-  return art('stove', 56, 58, () => {
-    const brick = ramp('#e8a98a', 0.75);
-    const pot = ramp('#e0956a', 0.8);
-    const out = [...stones(8, 30, 40, 28, brick, 4, { rowH: 6, blockW: 9 }), R(6, 27, 44, 4, brick.base), F(R(6, 30, 44, 1, brick.sh))];
-    out.push(E(28, 48, 9, 7, '#3a2d4f'), R(19, 48, 18, 10, '#3a2d4f'));
-    out.push(T([[12, 27], [14, 14], [42, 14], [44, 27]], pot.base), F(T([[30, 14], [42, 14], [44, 27], [32, 27]], pot.sh)), R(10, 12, 36, 3, pot.hi), F(R(10, 14, 36, 1, pot.sh)));
-    out.push(E(28, 13, 15, 2.4, '#ffd6a0'), F(E(24, 12.6, 5, 1, '#fff1c4')));
-    out.push(T([[38, 12], [46, 0], [48, 1], [40, 13]], '#c99a6b'), E(47, 0.6, 2.4, 1.6, '#c99a6b'));
-    for (const [x, y] of [[50, 50], [52, 54], [48, 54]]) out.push(E(x, y, 4, 2, '#a07a54'), F(E(x - 2, y, 1.2, 1.4, '#e8c69a')));
+  return art('stove2', 56, 58, () => {
+    const brick = ramp('#eaa58a', 0.85);
+    const mortar = ramp('#f6dccb', 0.6);
+    const pot = ramp('#eb9a6a', 0.9);
+    const out = [];
+    // The oven: brick courses with a rounded top and a hearth stone along the bottom.
+    out.push(T([[7, 57], [7, 33], [9, 30], [13, 28.6], [43, 28.6], [47, 30], [49, 33], [49, 57]], mortar.sh));
+    out.push(...stones(8, 30, 40, 26, brick, 4, { rowH: 5.2, blockW: 8.4 }));
+    out.push(F(T([[8, 30.6], [10, 29.4], [46, 29.4], [48, 30.6], [48, 31.6], [8, 31.6]], brick.hi)));
+    out.push(R(5, 55, 46, 3, mortar.base), F(R(5, 55, 46, 0.8, mortar.hi)), F(R(5, 57.2, 46, 0.8, mortar.sh)));
+    // The arched firebox: a keystone arch of lighter brick round a deep mouth.
+    out.push(T([[18, 55], [18, 45], [20, 40.6], [24, 38.2], [28, 37.6], [32, 38.2], [36, 40.6], [38, 45], [38, 55]], brick.hi));
+    out.push(F(T([[20.4, 55], [20.4, 46], [22, 42.4], [25, 40.4], [28, 40], [31, 40.4], [34, 42.4], [35.6, 46], [35.6, 55]], '#4a2f48')));
+    out.push(F(T([[22, 55], [22, 49], [28, 47], [34, 49], [34, 55]], '#7a3f4a')));
+    out.push(F(R(26.8, 37.2, 2.4, 2.6, mortar.base)));
+    // The pot: a wide belly, a rolled rim, ring handles, the warm glow of copper.
+    out.push(E(28, 19.6, 15.6, 9.4, pot.base));
+    out.push(F(E(31.4, 21.4, 11.6, 7.2, pot.sh)), F(E(24, 16.6, 7.6, 4.2, mix(pot.base, pot.hi, 0.5))), F(E(21.4, 15.4, 2.6, 1.4, '#fff1dc')));
+    out.push(F(R(13.6, 26.2, 28.8, 2.4, pot.deep)));
+    out.push(E(28, 11, 14.6, 2.6, pot.sh), F(E(28, 10.4, 13.6, 1.8, pot.hi)));
+    for (const sx of [11.4, 44.6]) out.push(E(sx, 17, 2.4, 2.4, pot.sh), F(E(sx, 17, 1.2, 1.2, mix(pot.base, '#fff6ea', 0.2))));
+    // A tea towel in pink gingham hung over the far handle.
+    out.push(T([[43, 16.4], [47.6, 16], [48.4, 25], [45.6, 26.4], [43.8, 24]], '#ffc8d8'), F(R(44.2, 18.6, 3.6, 0.9, '#ffffff')), F(R(44.6, 21.6, 3.4, 0.9, '#ffffff')), F(R(45.4, 17, 0.9, 8.4, '#ffe4ec')));
+    // The ladle on its hook on the oven's side.
+    out.push(R(4.6, 31, 1.4, 1.4, '#9a8fb0'), R(4.6, 32, 1, 12, '#c4815e'), E(5.1, 45.6, 2.6, 2, pot.base), F(E(5.6, 46.4, 1.6, 1.2, pot.sh)));
+    // Split logs stacked by the hearth, their cut ends showing rings.
+    const log = ramp('#b48464');
+    for (const [x, y] of [[52, 52], [52.4, 56], [48.6, 56]]) out.push(E(x, y, 3.6, 2.2, log.sh), F(E(x - 1.2, y, 1.6, 1.8, '#f0d4a8')), F(E(x - 1.2, y, 0.7, 0.8, '#c4955e')));
     return out;
+  }, false);
+}
+// The pot's lid, drawn live so it can rattle on the boil (render/town.js).
+export function stoveLidArt() {
+  return art('stovelid', 30, 8, () => {
+    const lid = ramp('#d98c62', 0.9);
+    return [E(15, 6, 13, 2.4, lid.base), F(E(16.6, 6.6, 9, 1.4, lid.sh)), F(E(12, 5.2, 6, 0.9, lid.hi)), E(15, 2.8, 2.6, 1.8, '#c4815e'), F(E(14.4, 2.2, 1.2, 0.7, '#f0c8a8'))];
+  }, false);
+}
+// One drawing of the fire in the firebox (k = 0, 1, 2), crossfaded live into the next.
+export function stoveFlameArt(k) {
+  return art(`stoveflame|${k}`, 16, 14, () => {
+    const lean = [-0.8, 0.4, 1][k];
+    const tall = [1, 0.86, 0.94][k];
+    const flame = (cx, h, w, c) => T([[cx - w, 13], [cx - w * 0.9, 13 - h * 0.45], [cx - w * 0.3 + lean * 0.5, 13 - h * 0.8], [cx + lean, 13 - h], [cx + w * 0.5 + lean * 0.4, 13 - h * 0.6], [cx + w, 13]], c);
+    return [flame(8, 12 * tall, 6, '#ff8a5c'), flame(7.6, 9 * tall, 4.4, '#ffb35a'), flame(8.2, 6 * tall, 2.6, '#ffe9a6'), E(8, 13, 6, 1, '#ffd27a')];
   }, false);
 }

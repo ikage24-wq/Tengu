@@ -14,6 +14,11 @@ export function createParticles() {
   return { list: [], trauma: 0, delayed: [], ambientTimer: 0, kick: { x: 0, y: 0 } };
 }
 
+// (Exported for the life-skill beats, render/life.js: chips, leaves, fluff, splashes.)
+export function addParticle(fx, p) {
+  add(fx, p);
+}
+
 function add(fx, p) {
   // The Particles setting thins or skips them; ambient motes are part of the scenery and stay.
   if (!p.ambient && settings.particles !== 'full' && (settings.particles === 'off' || Math.random() < 0.5)) return;

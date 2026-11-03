@@ -17,7 +17,8 @@ import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
+import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
 
@@ -465,31 +466,40 @@ export function drawStreet(ctx, map, cam, width, time) {
     // Lit windows breathe a little light at night.
     if (style === 'canal' || style === 'treehome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
   }
-  // The town stove, its fire flickering under the pot and steam curling up.
+  // The town stove: the fire licking in its arch (three drawings flowing one into the next), the
+  // pot's lid rattling on the boil now and then, and cel puffs of steam curling up and tearing
+  // apart. Every beat is phased from the stove's own place in town.
   if (map.stove != null) {
     const x = snap(map.stove - cam.x);
     const gy = ground(map.stove);
     if (x > -60 && x < width + 60) {
-      glowSoft(ctx, x, gy - 8, 22, '#ffb35a', 0.5 + 0.15 * Math.sin(time * 9));
+      const ph = map.stove * 0.017;
+      glowSoft(ctx, x, gy - 8, 24, '#ffb35a', 0.45 + 0.12 * Math.sin(time * 7 + ph) + 0.06 * Math.sin(time * 13.7));
       place(ctx, stoveArt(), x, gy + 2);
-      for (let k = 0; k < 3; k++) {
-        const u = (time * 0.6 + k / 3) % 1;
+      const f = (time * 7 + ph) % 3;
+      const i = Math.floor(f);
+      place(ctx, stoveFlameArt(i), x, gy + 0.6);
+      ctx.save();
+      ctx.globalAlpha = f - i;
+      place(ctx, stoveFlameArt((i + 1) % 3), x, gy + 0.6);
+      ctx.restore();
+      // The lid: still most of the time, then a burst of rattling as the pot boils up.
+      const boil = Math.max(0, Math.sin(time * 0.9 + ph)) ** 6;
+      const rattle = boil * Math.sin(time * 38) * 1.1;
+      const lift = boil * Math.abs(Math.sin(time * 19)) * 1.4;
+      ctx.save();
+      ctx.translate(x, gy - 46);
+      ctx.rotate(rattle * 0.05);
+      place(ctx, stoveLidArt(), 0, 2 - lift);
+      ctx.restore();
+      for (let k = 0; k < 4; k++) {
+        const u = (((time * (0.5 + 0.25 * boil) + k / 4 + ph) % 1) + 1) % 1;
+        const sx = x - 5 + k * 3.5 + Math.sin(u * 5 + k * 1.7 + time * 0.8) * (2 + u * 4);
+        const sy = gy - 50 - u * 30;
         ctx.save();
-        ctx.globalAlpha = 0.5 * Math.sin(Math.PI * u);
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x - 6 + k * 6 + Math.sin(u * 6 + k) * 3, gy - 50 - u * 26, 3 + u * 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = Math.min(1, u * 5) * (1 - u) ** 1.4 * 0.9;
+        puff(ctx, sx, sy, 2.2 + u * 4.5, '#ffffff', '#ece6fa', u > 0.55 ? (u - 0.55) / 0.45 : 0, k * 0.37);
         ctx.restore();
-      }
-      ctx.fillStyle = '#ffd66b';
-      for (let k = 0; k < 3; k++) {
-        const fl = 4 + Math.abs(Math.sin(time * 11 + k)) * 4;
-        ctx.beginPath();
-        ctx.moveTo(x - 6 + k * 6, gy - 2);
-        ctx.lineTo(x - 3 + k * 6, gy - 2 - fl);
-        ctx.lineTo(x + k * 6, gy - 2);
-        ctx.fill();
       }
     }
   }

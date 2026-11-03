@@ -12,6 +12,7 @@ import { COLORS, windowFrame, text, box, button, hover, tooltip, fit } from './k
 import { itemTooltip } from './tooltips.js';
 import { groundAt } from '../world/physics.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/life.js';
+import { playLifePose } from '../world/lifepose.js';
 
 const W = 320;
 const H = 236;
@@ -70,6 +71,8 @@ export function cookingWindow(ui, state, world) {
     }
     if (button(ui, x + W - 62, y + 7, 42, 16, skilled(char, d) ? 'Cook' : `Lv ${needFor(d)}`, { primary: ok, enabled: ok, size: 7.5 })) {
       const n = cook(char, d, world);
+      // She stirs, tosses and tastes it at the stove (render/life-moves.js).
+      if (n) playLifePose(world, 'cook', { at: st, find: d.id });
       world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}${n > SERVINGS ? ' (one extra!)' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
     }
     if (!skilled(char, d) && hover(ui, x + W - 62, y + 7, 42, 16)) tooltip(ui, [{ text: `Needs Cooking Lv ${needFor(d)}`, bold: true, color: COLORS.bad }]);
