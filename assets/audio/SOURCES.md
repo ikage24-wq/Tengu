@@ -15,12 +15,14 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
   chimes, wine glasses, cymbals, drums, zaps).
 
 - **Finished effects** (`rec/`, listed in `src/audio/recorded.js`): cut and layered from the
-  [Sonniss GDC 2026 Game Audio Bundle](https://gdc.sonniss.com/) ([licence](https://sonniss.com/gdc-bundle-license/)):
-  David Dumais Audio's Melee Weapons Pack 2, Epic Stock Media's Anime Game, Elemental Mutation,
-  Tower Defense, Fantasy Game 2 and Halloween Game kits, 344 Audio's Cinematic Fight, Medieval
-  Weapons and Elemental Palette, Alexander Kopeikin's Designed Ice, CB Sounddesign's Applicable
-  Sounds and Cinematic Sound Design's impacts and transitions. Rebuild with `python tools/build-rec.py`
-  (the bundle has to be downloaded by hand first).
+  Sonniss GDC [2024](https://sonniss.com/gameaudiogdc/) and [2026](https://gdc.sonniss.com/) Game
+  Audio Bundles ([licence](https://sonniss.com/gdc-bundle-license/)): weapons, impacts and
+  explosions (David Dumais Audio, Justsoundeffects, Bluezone, Federico Soler, Jake Fielding,
+  Cinematic Sound Design), magic and elements (Epic Stock Media, Alexander Kopeikin, Rescopic
+  Sound, InMotionAudio), cartoon, anime and interface sounds (Cinematic Sound Design, Rogue Waves,
+  Doex Studio, CB Sounddesign), creatures (344 Audio, Chupapsound) and the world (Justsoundeffects,
+  Jake Fielding, Nick McMahan, Pole Position, Systematic Sound, Ivo Vicic, Mechanical Wave). Rebuild
+  with `python tools/build-rec.py` (the bundles have to be downloaded by hand first).
 - **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 3, 4
   and 5 and Epic Boss Battle; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
   Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from
