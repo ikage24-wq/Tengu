@@ -2,18 +2,18 @@
 // (the dungeon-stage autopilot), a title card for each room, fading from one to the next.
 // Needs the game served at localhost:8000, playwright and ffmpeg (FFMPEG= to point at it; the
 // small ffmpeg that comes with playwright works, it only writes VP9, so name the file .webm).
-// Usage: node tools/record-dungeons.cjs <out.webm> [secondsPerRoom]
+// Usage: node tools/record-dungeons.cjs <out.webm> [secondsPerRoom] [room,room,... to film only those]
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const [outFile, perArg] = process.argv.slice(2);
+const [outFile, perArg, onlyArg] = process.argv.slice(2);
 const PER = Number(perArg ?? 4.5);
 const FPS = 30;
 const FADE = 8;
 // The rooms, in order: [map, title, subtitle].
-const ROOMS = [
+const ALL_ROOMS = [
   ['hollow3', 'Rootwood Hollow', 'Bramble Tunnels'],
   ['manor2', 'Moonlit Manor', 'The Portrait Gallery'],
   ['manor4', 'Moonlit Manor', 'The Library'],
@@ -31,6 +31,8 @@ const ROOMS = [
   ['theatre4', 'Dream Theatre', 'Act III: The Masked Ball'],
   ['theatre5', 'Dream Theatre', 'Backstage'],
 ];
+const TITLES = { aquarium1: 'The Coral Gate', aquarium2: 'The Kelp Gardens', aquarium4: 'The Moray Grotto', aquarium5: 'The Ink Abyss' };
+const ROOMS = onlyArg ? onlyArg.split(',').map((id) => ALL_ROOMS.find((r) => r[0] === id) ?? [id, id.startsWith('aquarium') ? 'Sunken Aquarium Palace' : id, TITLES[id] ?? '']) : ALL_ROOMS;
 const ffmpeg = process.env.FFMPEG ?? 'ffmpeg';
 const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(outFile)), 'frames-'));
 
@@ -70,6 +72,6 @@ const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(outFile)), 'frame
   const frames = fs.readdirSync(tmp).sort().map((f) => fs.readFileSync(path.join(tmp, f)));
   const codec = outFile.endsWith('.mp4') ? ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20'] : ['-c:v', 'libvpx-vp9', '-b:v', '3M', '-deadline', 'good', '-cpu-used', '4', '-row-mt', '1'];
   execFileSync(ffmpeg, ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-c:v', 'mjpeg', '-framerate', String(FPS), '-i', 'pipe:0', ...codec, outFile], { input: Buffer.concat(frames), maxBuffer: 1 << 30 });
-  fs.rmSync(tmp, { recursive: true, force: true });
+  if (!process.env.KEEP) fs.rmSync(tmp, { recursive: true, force: true });
   console.log('wrote', outFile, n, 'frames');
 })();

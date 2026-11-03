@@ -30,32 +30,31 @@ at the surface and every room is deeper and darker, ending at the throne on the 
 | 5 | The Ink Abyss | A deep shaft with ledges | **The tide surges** over the floor: climb; **mid-boss: Lady Abyssia**, the sea witch | |
 | 6 | The Throne of Tides | The great throne room on the sea floor | **Final boss: Queen Coralie** | |
 
-## Monsters (levels 20-24), on a new rig
+## Monsters (levels 20-24)
 
-The **fin rig** (render/mobs/searig.js): the manor rig's upper body with a mermaid tail in place of
-legs, a chain of tail bones that a wave runs down (from the hips to the fluke), keyed per
-animation. Everything here swims: nothing walks.
+Redrawn creature-first on 2026-11-03 (render/mobs/sea.js, helpers in render/mobs/critter.js): chibi
+sea creatures in the field monsters' style, each its own silhouette, about the hero's size. The
+first look (costumed girls on a tall mermaid rig) read as clunky and was retired.
 
-- **Jellyfish Maiden**: a jelly-bell hat, a skirt of trailing ribbon tentacles that pulse as she
-  drifts; stings with a lash of ribbons.
-- **Seahorse Knight**: a curled seahorse tail, coral armour, a narwhal-horn lance; bobs upright and
-  charges.
-- **Anglerfish Lamp Girl**: a lure dangling on a stalk over her head, a toothy grin, deep navy;
-  flashes the lure and lunges.
-- **Pearl Diver**: a ghostly diver girl in a glass bubble helmet (her face clear inside), flippers,
-  a net of pearls; frog-kicks and throws pearls.
-- **Starfish Dancer**: a mermaid with starfish hair clips who swims in pirouettes; a spinning tail
-  slap.
-- **Octopus Scholar**: an octopus girl on six curling arms with round glasses, juggling books; flings
-  a book and a puff of ink.
+- **Jelly Belle**: a round jelly bell with a face, a scalloped rim and ribbon tentacles; drifts with
+  a pulse and lashes two stinging ribbons.
+- **Seahorse Squire**: a chubby seahorse in a plumed helmet, a lance under its fin; bounces on its
+  curled tail and springs into a thrust.
+- **Lantern Angler**: a round anglerfish with a toothy grin; the lure flashes, then it lunges and
+  chomps.
+- **Pearl Otter**: an otter in a glass bubble helmet hugging a pearl; winds up and throws it.
+- **Star Twirler**: a starfish standing on two arms with a bow; skips on tiptoe and cartwheels into
+  a spinning slap.
+- **Octo Scholar**: a round octopus in glasses and a mortarboard; walks on curling arms and flings
+  its book in a puff of ink.
 
 ## Bosses
 
-- **The Twin Moray Sisters** (Grotto): two eel-tailed sisters, long serpent tails. One fights while
+- **The Twin Moray Sisters** (Grotto): two great round-headed eels rearing out of a coil on the floor (render/mobs/seaboss.js), Murri green with a coral crown, Ena gold with fin frills. One fights while
   the other hides in a burrow in the wall, out of reach, spitting bubbles; they swap now and then,
   and the one coming out lunges across the floor.
-- **Lady Abyssia, the Sea Witch** (Ink Abyss): a witch on eight great tentacles with a pearl
-  staff. Ink clouds on the floor, tentacles that sweep in from the walls, and the tide surging in the
+- **Lady Abyssia, the Sea Witch** (Ink Abyss): a big round octopus in a witch's hat curled into a
+  nautilus shell, with a pearl staff. Ink clouds on the floor, tentacles that sweep in from the walls, and the tide surging in the
   shaft (get up on a ledge).
 - **Queen Coralie, the Drowned Queen** (Throne): a grand mermaid queen with a coral crown and a
   trident. Phase 1 Tidal Strikes (trident lines), phase 2 the Whirlpool (it pulls everyone toward

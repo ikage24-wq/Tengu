@@ -1,563 +1,427 @@
-// Monster art: the Sunken Aquarium Palace's swimmers (the levels 20-25 group dungeon, 2026-11, see
-// docs/design/aquarium-palace.md), on the fin rig (searig.js: the manor rig's upper body on a
-// mermaid tail a swim wave runs down). Nothing here walks: they swim, drift, pulse and kick.
-//   jellymaid      Jellyfish Maiden: a jelly-bell hat, a skirt of ribbon tentacles pulsing as she
-//                  drifts; stings with a lash of ribbons.
-//   seahorseknight Seahorse Knight: a curled seahorse tail, coral armour and a horn lance; bobs
-//                  upright and thrusts.
-//   anglerlamp     Anglerfish Lamp Girl: a lure on a stalk over her head, a toothy grin; flashes the
-//                  lure and lunges.
-//   pearldiver     Pearl Diver: a ghostly diver girl in a glass bubble helmet with flippers and a
-//                  net of pearls; frog-kicks and throws a pearl.
-//   stardancer     Starfish Dancer: a mermaid with starfish clips who swims in pirouettes; a
-//                  spinning tail slap.
-//   octoscholar    Octopus Scholar: an octopus girl on six curling arms with round glasses,
-//                  juggling books; flings a book in a puff of ink.
-// All face right, the tail tip (or lowest arm) at the bottom.
+// Monster art: the Sunken Aquarium Palace's swimmers (the levels 20-25 group dungeon, see
+// docs/design/aquarium-palace.md). Redrawn creature-first (2026-11-03, the player's call: the old
+// costumed girls on one tall rig read as clunky): chibi sea creatures in the field monsters' style,
+// each its own silhouette so a room reads at a glance.
+//   jellymaid      Jelly Belle: a round jelly bell with a face, a scalloped rim and ribbon
+//                  tentacles; drifts with a pulse, lashes two stinging ribbons.
+//   seahorseknight Seahorse Squire: a chubby seahorse in a little plumed helmet with a lance;
+//                  bounces on its curled tail, springs forward in a thrust.
+//   anglerlamp     Lantern Angler: a round anglerfish with a toothy grin and a glowing lure;
+//                  the lure flashes, then it lunges and chomps.
+//   pearldiver     Pearl Otter: an otter in a glass bubble helmet hugging a pearl; swims with
+//                  little kicks, winds up and throws the pearl.
+//   stardancer     Star Twirler: a starfish standing on two of its arms with a bow; skips along on
+//                  tiptoe and cartwheels into a spinning slap.
+//   octoscholar    Octo Scholar: a round octopus in glasses and a mortarboard, a book in one arm;
+//                  walks on curling arms, flings the book in a puff of ink.
+// Every design faces right, its lowest point on the bottom edge. Attacks are four frames:
+// wind-up (the tell), strike, impact, recover.
 
-import { mix } from './kit.js';
-import { KIT } from './maidens.js';
-import { RW, RH, poseAt, solve, plant, limb3, inHead, drawRig } from './manorrig.js';
-import { armPart, legPart, bodice, headPart, hairOf, eyes, BANGS, SWEPT } from './manor.js';
-import { tailChain, drawTail, bubbles } from './searig.js';
+import { E, T, F, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, bubbles, ink, cuteFace, blob } from './critter.js';
 
-const { within, at, fpoly, opoly, ooval, dot, arcPts, oband, fband, taperW, line, sparkle, fade, backHair, round, soften, lerp, TAU } = KIT;
-
-const NOLEGS = [[0, 0], [0, 0]];
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
-function keyed(pose, f, mood, K) {
-  if (mood === 'dead') return K.dead;
-  let P;
-  if (pose === 'walk') P = poseAt(K.walk, f, 8);
-  else if (pose === 'attack') P = poseAt(K.attack, f, 3, false);
-  else P = poseAt(K.idle, f, 6);
-  if (mood === 'hurt') P = { ...P, lean: (P.lean ?? 0) - 0.22, tilt: -0.3, hip: [P.hip[0] - 1.5, P.hip[1]] };
-  return P;
-}
-// Swimming keys: the hip bobbing on the swim's beat, arms sculling.
-const swim = (y, lean, arms, extra = {}) => [0, 1, 2, 3].map((i) => {
-  const s = Math.sin((i / 4) * TAU);
-  return { hip: [36, y + s * 1.4], lean: lean + s * 0.03, tilt: 0.05 - s * 0.05, arms: arms(s), legs: NOLEGS, ...extra };
-});
+const phase = (pose, f) => f / frames(pose);
 
-// ---------- Jellyfish Maiden ----------
+// ---------- Jelly Belle ----------
 
-const JM = soften({
-  skin: '#f4f0ff', skinDk: '#dcd4f6', hair: '#c9b6ff', hairDk: '#9a84e0', hairLt: '#f0e8ff',
-  bell: '#ffb3e0', bellDk: '#e07ab8', bellLt: '#ffe6f6', rib: '#c9b6ff', ribDk: '#9a84e0', rib2: '#9fe8ff',
-  dress: '#ffd6f0', dressDk: '#f0a8d0', glow: '#fff0fa', spot: '#ffffff',
-});
-const JM_FACE = { skin: JM.skin, skinSh: '#dcd4f6', skinSh2: '#b8acdc', blush: '#ffa8d8', lip: '#e07ab8', lipLine: '#a84a8a', eye: eyes('#ff9fd8', '#a83a8a', '#ffe6f6', { rx: 3.6, ry: 3.2 }), brow: { c: '#9a84e0', kind: 'soft', w: 0.6 }, moods: { idle: { open: 0.75, mouth: 'smile' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const JM_K = {
-  walk: swim(36, 0.06, (s) => [[0.9 + s * 0.4, -0.9], [1.1 - s * 0.4, -1.1]]),
-  idle: [
-    { hip: [36, 37], lean: 0, tilt: 0.12, arms: [[1, -1], [1.2, -1.2]], legs: NOLEGS, pulse: 0 },
-    { hip: [36, 34.6], lean: 0, tilt: 0.18, arms: [[0.6, -0.6], [0.7, -0.7]], legs: NOLEGS, pulse: 1 },
-    { hip: [36, 35.6], lean: 0, tilt: 0.06, arms: [[1.1, -1.2], [1.3, -1.4]], legs: NOLEGS, pulse: 0.4 },
-  ],
-  attack: [
-    { hip: [34, 35], lean: -0.12, tilt: -0.1, arms: [[0.8, -1], [-0.8, -1.6]], legs: NOLEGS, lash: 0 },
-    { hip: [39, 36], lean: 0.18, tilt: 0.1, arms: [[0.4, -0.6], [1.6, -0.2]], legs: NOLEGS, lash: 1 },
-    { hip: [39, 36], lean: 0.14, tilt: 0.08, arms: [[0.4, -0.6], [1.7, -0.1]], legs: NOLEGS, lash: 1 },
-    { hip: [37, 36], lean: 0.02, tilt: 0.06, arms: [[1, -1], [1.2, -1.2]], legs: NOLEGS, lash: 0 },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS },
-};
+// Attack keys: dx/dy body shift, tilt (deg), lash (the two front ribbons whipping forward), zap:
+// sparks at the ribbon tips, pulse: the bell's rim.
+const JELLY_ATK = [
+  { dx: -2.4, dy: 1.2, tilt: -14, lash: -0.4, zap: 0, pulse: 1 },
+  { dx: 3.2, dy: -0.6, tilt: 16, lash: 1, zap: 0.6, pulse: 0 },
+  { dx: 3.6, dy: -0.4, tilt: 12, lash: 1.1, zap: 1, pulse: 0.2 },
+  { dx: 0.6, dy: 0.2, tilt: 2, lash: 0.2, zap: 0, pulse: 0.6 },
+];
 
-function jellymaid(pose, f, mood) {
-  const C = fade(JM, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, JM_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#4a3a8a');
-  const lash = pose === 'attack' ? P.lash ?? 0 : 0;
-  // The pulse: the skirt opens and closes like a bell as she drifts.
-  const pulse = 0.5 + 0.5 * Math.sin(ph * (pose === 'walk' ? 2 : 1));
-  const shapes = drawRig(S, {
-    behind: () => {
-      const out = [];
-      const [hx, hy] = S.hip;
-      // Ribbon tentacles trailing behind and below her, rippling, two colours.
-      for (let k = 0; k < 6; k++) {
-        const x0 = hx - 5 + k * 2.2;
-        const pts = KIT.flowPts([x0, hy + 6], Math.PI / 2 + 0.25 + k * 0.05 + (pose === 'walk' ? 0.3 : 0), 0.4, 22 + (k % 3) * 6 - pulse * 3, ph - k * 0.7, 0.4, 6, 0.9);
-        out.push(...oband(pts, (t) => lerp(1.8, 0.5, t), k % 2 ? C.rib : C.rib2, 4, 0.3));
-      }
-      return out;
-    },
-    backArm: () => armPart(S.arms[0], C.dressDk, C.skinDk),
-    body: () => {
-      const [hx, hy] = S.hip;
-      const out = [];
-      // The skirt: a jelly bell that opens and closes, scalloped, dotted.
-      const w = 7 + pulse * 2;
-      out.push(...opoly(round([[hx - 4, hy - 1.4], [hx + 4, hy - 1.4], [hx + w, hy + 6 - pulse], [hx + w - 2, hy + 8], [hx - w + 2, hy + 8], [hx - w, hy + 6 - pulse]], 2), C.bell));
-      for (let k = 0; k < 5; k++) out.push(...ooval(hx - w + 2 + k * ((w * 2 - 4) / 4), hy + 8.2, 1.4, 0.9, C.bellLt, 0, 0.25));
-      for (const [dx, dy] of [[-3, 3], [2, 4.4], [-0.4, 1.4]]) out.push(dot(hx + dx, hy + dy, 0.6, C.spot));
-      out.push(...bodice(S, C.dress, C.dressDk));
-      const [cx, cy] = S.chest;
-      out.push(...ooval(cx + 0.2, cy + 2.6, 1.3, 1.3, C.bell), dot(cx, cy + 2.3, 0.45, '#ffffff'));
-      out.push(...ooval(S.arms[1].sh[0], S.arms[1].sh[1] + 1, 2.4, 2.2, C.bellLt));
-      return out;
-    },
-    head: () => headPart(S, mood, JM_FACE, BANGS, HR, 1.15, null, () => {
-      // The jelly-bell hat: translucent dome with a glow and dots, its frilled rim lifting.
-      const lift = pulse * 0.8;
-      const out = [...opoly(round([[-9, -2 - lift], [-8, -8], [-3, -12.4], [3, -12.6], [8, -8.6], [9.4, -3 - lift], [6, -4], [2, -3.2], [-2, -3.4], [-6, -3]], 3), C.bell)];
-      out.push(fband(arcPts(-0.4, -7, 6, 4, 200, 300, 6), 0.9, C.bellLt, 1), dot(-3, -9, 0.7, C.spot), dot(2.6, -10, 0.6, C.spot), dot(5.4, -7, 0.5, C.spot));
-      for (let k = 0; k < 6; k++) out.push(...ooval(-8 + k * 3.4, -3 - lift * (k % 2) + 0.4, 1.4, 0.9, C.bellDk, 0, 0.25));
-      return out;
-    }),
-    frontArm: () => {
-      const A = S.arms[1];
-      const out = [...armPart(A, C.dress, C.skin)];
-      if (lash > 0.5) {
-        // A lash of stinging ribbons out ahead, crackling.
-        for (let k = 0; k < 3; k++) {
-          const pts = KIT.flowPts(A.hand, -0.1 + k * 0.18, -0.3, 18 + k * 3, ph + k, 0.3, 5);
-          out.push(...oband(pts, taperW(1.6, 0.4), k % 2 ? C.rib : C.rib2, 3, 0.3));
-        }
-        out.push(sparkle(A.hand[0] + 20, A.hand[1] - 1, 2, '#ffffff'), sparkle(A.hand[0] + 15, A.hand[1] + 5, 1.2, '#fff0fa'));
-      }
-      if (mood !== 'dead') out.push(...bubbles(S.head[0] + 7, S.head[1] - 10, f, n, '#eaf6ff'));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
-}
-
-// ---------- Seahorse Knight ----------
-
-const SK = soften({
-  skin: '#fff0e6', skinDk: '#f2d6c6', hair: '#ffcf6b', hairDk: '#e0a040', hairLt: '#fff0c0',
-  tail: '#ffb35a', tailDk: '#e0802a', tailLt: '#ffe0a8', fin: '#7fe0d0', finDk: '#4ab8a8',
-  armor: '#ff8a8a', armorDk: '#d85a6a', armorLt: '#ffd0d0', lance: '#fff6e6', lanceDk: '#d8c8b0', pearl: '#ffffff',
-});
-const SK_FACE = { skin: SK.skin, skinSh: '#f2d6c6', skinSh2: '#dcb0a6', blush: '#ffa8b8', lip: '#e0607e', lipLine: '#a83a58', eye: eyes('#4ab8a8', '#1a6a6a', '#c8f6ee', { tilt: 0.25, ry: 2.5 }), brow: { c: '#e0a040', kind: 'straight', w: 0.8 }, moods: { idle: { open: 0.9, mouth: 'smirk' }, angry: { mouth: 'grit' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const SK_K = {
-  // Upright, bobbing in hops like a seahorse, the tail curling under.
-  walk: [0, 1, 2, 3].map((i) => {
-    const s = Math.sin((i / 4) * TAU);
-    return { hip: [36, 40 - Math.abs(s) * 2.4], lean: 0.04, tilt: 0, arms: [[0.3, -1.4], [0.5, -1.6]], legs: NOLEGS, lance: -1.1 };
-  }),
-  idle: [
-    { hip: [36, 40], lean: -0.04, tilt: -0.04, arms: [[0.3, -1.4], [0.4, -1.5]], legs: NOLEGS, lance: -1.15 },
-    { hip: [36, 38.8], lean: -0.05, tilt: 0.04, arms: [[0.3, -1.5], [0.5, -1.6]], legs: NOLEGS, lance: -1.1 },
-    { hip: [36, 39.6], lean: -0.04, tilt: -0.06, arms: [[0.3, -1.4], [0.4, -1.5]], legs: NOLEGS, lance: -1.2 },
-  ],
-  attack: [
-    { hip: [32, 40], lean: -0.16, tilt: -0.1, arms: [[0.6, -1.2], [-0.6, -1.4]], legs: NOLEGS, lance: -0.2 },
-    { hip: [42, 41], lean: 0.24, tilt: 0.12, arms: [[-0.4, -0.6], [1.5, -0.2]], legs: NOLEGS, lance: 0 },
-    { hip: [42, 41], lean: 0.2, tilt: 0.1, arms: [[-0.4, -0.6], [1.55, -0.1]], legs: NOLEGS, lance: 0 },
-    { hip: [37, 40], lean: 0.02, tilt: 0, arms: [[0.3, -1.4], [0.4, -1.5]], legs: NOLEGS, lance: -1 },
-  ],
-  dead: { hip: [34, 60], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS, lance: 1.4 },
-};
-
-function seahorseknight(pose, f, mood) {
-  const C = fade(SK, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, SK_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#8a4a2a');
-  const A = S.arms[1];
-  const lA = A.a - Math.PI / 2 + (P.lance ?? 0);
-  const tip = [A.hand[0] + Math.cos(lA) * 20, A.hand[1] + Math.sin(lA) * 20];
-  const shapes = drawRig(S, {
-    behind: () => {
-      // The seahorse tail: down, then curling forward into a spiral under her.
-      const chain = tailChain([S.hip[0], S.hip[1] + 4], { base: 0.1, curl: -3.4, wave: 0.25, len: 34, n: 7 }, ph);
-      const out = [...oband(chain.pts, (t) => lerp(8, 1.6, t), C.tail, 4)];
-      const sp = KIT.spline(chain.pts, 4);
-      for (let i = 2; i < sp.length - 2; i += 2) out.push(fband([[sp[i][0] - 2, sp[i][1]], [sp[i][0] + 2, sp[i][1] + 0.6]], 0.5, C.tailDk, 1));
-      // A dorsal fin fluttering on her back.
-      const [hx, hy] = S.hip;
-      out.push(...opoly(round([[hx - 4, hy - 6], [hx - 9 - Math.sin(ph * 2), hy - 2], [hx - 8, hy + 4], [hx - 4, hy + 2]], 1), C.fin));
-      return out;
-    },
-    backArm: () => armPart(S.arms[0], C.armorDk, C.skinDk),
-    body: () => {
-      const out = [...bodice(S, C.armor, C.armorDk)];
-      const [hx, hy] = S.hip;
-      const [cx, cy] = S.chest;
-      // Coral armour: a scalloped skirt of plates, a shell breastplate, a coral pauldron.
-      for (let k = 0; k < 4; k++) out.push(...ooval(hx - 4.4 + k * 2.9, hy + 2.2, 2, 2.6, k % 2 ? C.armor : C.armorLt));
-      for (let k = 0; k < 4; k++) out.push(fband(arcPts(cx + 0.4, cy + 4.2, 1 + k * 0.9, 1 + k * 0.7, 200, 340, 5), 0.4, C.armorDk, 1));
-      const [sx, sy] = S.arms[1].sh;
-      out.push(...ooval(sx, sy + 0.6, 3, 2.6, C.armor), ...oband([[sx - 1, sy - 1], [sx + 1, sy - 4], [sx + 3, sy - 5]], taperW(1.2, 0.5), C.armorLt, 2, 0.3));
-      return out;
-    },
-    head: () => headPart(S, mood, SK_FACE, SWEPT, HR, 1.12, () => [...backHair(HR, 6), ...KIT.lockHair(KIT.flowPts([-6, -2], Math.PI / 2 + 0.3, 0.3, 12, ph - 0.7, 0.16, 5), 4, HR)], () => {
-      // A seahorse-crest helm: a coral ridge of fins along the crown and a snout visor tipped up.
-      const out = [...opoly(round([[-7.6, -2], [-7, -7.6], [-2.4, -10.6], [3.6, -10.4], [7.6, -6.6], [8, -4], [5, -5.6], [0, -7.4], [-5, -5.4], [-5.6, -1]], 2), C.armor)];
-      for (let k = 0; k < 4; k++) out.push(...opoly([[-4 + k * 2.6, -10 + Math.abs(k - 1.5) * 0.6], [-3 + k * 2.6, -13.4 + Math.abs(k - 1.5)], [-1.6 + k * 2.6, -10.2 + Math.abs(k - 1.5) * 0.6]], C.fin));
-      out.push(fband(arcPts(0, -5, 6.6, 4.4, 210, 330, 6), 0.6, C.armorLt, 1));
-      return out;
-    }),
-    frontArm: () => {
-      // The narwhal-horn lance, twisted, a pearl at the guard.
-      const out = [...oband([A.hand, tip], taperW(2.2, 0.3), C.lance, 1, 0.3)];
-      for (let k = 1; k < 6; k++) {
-        const u = k / 6;
-        const p = [lerp(A.hand[0], tip[0], u), lerp(A.hand[1], tip[1], u)];
-        out.push(line([[p[0] - Math.sin(lA) * 1.4, p[1] + Math.cos(lA) * 1.4], [p[0] + Math.cos(lA) * 1.2 + Math.sin(lA) * 1.2, p[1] + Math.sin(lA) * 1.2 - Math.cos(lA) * 1.2]], 0.35, C.lanceDk));
-      }
-      out.push(...ooval(A.hand[0] + Math.cos(lA) * 1.4, A.hand[1] + Math.sin(lA) * 1.4, 1.6, 1.6, C.pearl), ...armPart(A, C.armor, C.skin));
-      if (pose === 'attack' && (f === 1 || f === 2)) {
-        out.push(fband([[A.hand[0] - 4, A.hand[1]], [tip[0] + 4, tip[1]]], (t) => 2.4 * Math.sin(Math.PI * t), mix(C.fin, '#ffffff', 0.5), 1));
-        out.push(sparkle(tip[0] + 2, tip[1], 2.4, '#ffffff'), ...bubbles(tip[0] - 6, tip[1] + 2, f, n, '#eaf6ff', 4));
-      }
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
-}
-
-// ---------- Anglerfish Lamp Girl ----------
-
-const AL = soften({
-  skin: '#c8d0ff', skinDk: '#a8b0e8', hair: '#3a3a8a', hairDk: '#24246a', hairLt: '#6a6ac8',
-  tail: '#4a4aa8', tailDk: '#30307e', tailLt: '#7a7ad0', fin: '#6a8ae0', finDk: '#4a62c0',
-  dress: '#30307e', dressDk: '#22225e', lure: '#fff3a6', lureHot: '#ffffff', lureGlow: '#ffe066', stalk: '#6a6ac8', tooth: '#ffffff',
-});
-const AL_FACE = { skin: AL.skin, skinSh: '#a8b0e8', skinSh2: '#8890d0', blush: '#a8a0ff', lip: '#6a5ac8', lipLine: '#3a2a8a', eye: eyes('#fff066', '#a88a0a', '#ffffd0', { rx: 3.7, ry: 3.4, pupil: 'slit' }), brow: { c: '#24246a', kind: 'arched', w: 0.8 }, moods: { idle: { open: 0.95, mouth: 'grin' }, angry: { mouth: 'snarl' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const AL_K = {
-  walk: swim(37, 0.18, (s) => [[1.4 + s * 0.3, -0.9], [0.9 - s * 0.3, -1.2]]),
-  idle: [
-    { hip: [36, 38], lean: 0.08, tilt: 0.1, arms: [[0.6, -1.4], [0.8, -1.6]], legs: NOLEGS, lure: 0 },
-    { hip: [36, 36.6], lean: 0.1, tilt: 0.16, arms: [[0.6, -1.5], [0.9, -1.8]], legs: NOLEGS, lure: 1 },
-    { hip: [36, 37.6], lean: 0.06, tilt: 0.06, arms: [[0.6, -1.4], [0.8, -1.5]], legs: NOLEGS, lure: 0.4 },
-  ],
-  // The lure flares, then she lunges jaws first.
-  attack: [
-    { hip: [33, 37], lean: -0.16, tilt: -0.14, arms: [[0.8, -1.6], [0.6, -1.8]], legs: NOLEGS, lure: 1.5 },
-    { hip: [43, 38], lean: 0.32, tilt: 0.16, arms: [[-0.6, -0.4], [1.3, -0.4]], legs: NOLEGS, lure: 0.6 },
-    { hip: [43, 38], lean: 0.28, tilt: 0.14, arms: [[-0.6, -0.4], [1.4, -0.3]], legs: NOLEGS, lure: 0.4 },
-    { hip: [37, 38], lean: 0.08, tilt: 0.06, arms: [[0.6, -1.4], [0.8, -1.6]], legs: NOLEGS, lure: 0.2 },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS, lure: 0 },
-};
-
-function anglerlamp(pose, f, mood) {
-  const C = fade(AL, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, AL_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#10104a');
-  const glowK = mood === 'dead' ? 0 : P.lure ?? 0.3;
-  const shapes = drawRig(S, {
-    behind: () => drawTail(tailChain([S.hip[0], S.hip[1] + 4], { base: 0.35, curl: 0.9, wave: 0.55, len: 34 }, ph), 9, C, ph),
-    backArm: () => armPart(S.arms[0], C.dressDk, C.skinDk),
-    body: () => {
-      const out = [...bodice(S, C.dress, C.dressDk)];
-      const [cx, cy] = S.chest;
-      // Little glowing spots down the front like the deep-sea fish.
-      for (let k = 0; k < 4; k++) out.push(dot(cx + 1.6, cy + 1.4 + k * 3, 0.55, mix(C.lure, C.dress, 0.3)));
-      out.push(...ooval(S.arms[1].sh[0], S.arms[1].sh[1] + 1, 2.4, 2.2, C.dress));
-      return out;
-    },
-    head: () => headPart(S, mood, AL_FACE, BANGS, HR, 1.18, () => backHair(HR, 9), () => {
-      // The lure: a stalk from her crown curving out over her face, the lamp at its end glowing.
-      const sw = Math.sin(ph) * 1.2;
-      const lx = 10 + sw;
-      const ly = -14 + Math.cos(ph) * 0.8;
-      const out = [...oband([[-1, -8], [2, -16], [7, -18 + sw * 0.4], [lx, ly]], taperW(1.4, 0.7), C.stalk, 4, 0.3)];
-      out.push(...ooval(lx, ly + 2, 2.4 + glowK * 0.6, 2.6 + glowK * 0.6, C.lure), ...ooval(lx - 0.4, ly + 1.6, 1.1, 1.2, C.lureHot));
-      if (glowK > 0.8) out.push(sparkle(lx, ly + 2, 4 + glowK * 2, '#ffffff'));
-      // Two fin-ears and a row of tiny fang teeth showing at the grin.
-      out.push(...opoly([[-8, -2], [-12, -6 + sw * 0.3], [-11, 0]], C.fin), ...opoly([[-7.6, 1], [-11.4, 0.6], [-9, 3]], C.finDk));
-      return out;
-    }),
-    frontArm: () => {
-      const A = S.arms[1];
-      const out = [...armPart(A, C.dress, C.skin)];
-      if (pose === 'attack' && (f === 1 || f === 2)) {
-        // The chomp: a bite mark of teeth snapping shut ahead of her.
-        const [x, y] = [S.head[0] + 16, S.head[1] + 2];
-        out.push(...opoly([[x - 6, y - 5], [x + 6, y - 5], [x + 6, y - 3], [x - 6, y - 3]], C.tooth), ...opoly([[x - 6, y + 3], [x + 6, y + 3], [x + 6, y + 5], [x - 6, y + 5]], C.tooth));
-        for (let k = 0; k < 4; k++) out.push(fpoly([[x - 6 + k * 3, y - 3], [x - 4.5 + k * 3, y - 0.6], [x - 3 + k * 3, y - 3]], C.tooth), fpoly([[x - 6 + k * 3, y + 3], [x - 4.5 + k * 3, y + 0.6], [x - 3 + k * 3, y + 3]], C.tooth));
-        out.push(sparkle(x + 8, y, 2, C.lure));
-      }
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
-}
-
-// ---------- Pearl Diver ----------
-
-const PV = soften({
-  skin: '#eaf6ff', skinDk: '#cce0f2', hair: '#9fe8ff', hairDk: '#6ac0e0', hairLt: '#e6fbff',
-  suit: '#5ac8c8', suitDk: '#3a9aa8', suitLt: '#9ae6e0', glass: '#dff6ff', glassLt: '#ffffff', brass: '#ffd36b', brassDk: '#c8902a',
-  flip: '#ff9f6a', flipDk: '#e0703a', net: '#e8dcc8', pearl: '#ffffff', pearl2: '#ffe6f2',
-});
-const PV_FACE = { skin: PV.skin, skinSh: '#cce0f2', skinSh2: '#a8c4e0', blush: '#ffb4c4', lip: '#e07a8a', lipLine: '#a84a5a', eye: eyes('#5ac8c8', '#1a7a7a', '#d0f6f6', { rx: 3.5, ry: 3 }), brow: { c: '#6ac0e0', kind: 'soft', w: 0.6 }, moods: { idle: { open: 0.85, mouth: 'smile' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const PV_K = {
-  // A frog kick: legs fold, then shoot back straight, the body gliding forward between kicks.
-  walk: [
-    { hip: [36, 42], lean: 0.5, tilt: 0.1, arms: [[2.2, -0.2], [2.4, -0.2]], legs: [[-1, 0.2], [-1.1, 0.2]] },
-    { hip: [38, 41], lean: 0.55, tilt: 0.12, arms: [[1.2, -0.6], [1.4, -0.6]], legs: [[-0.2, 1.8], [-0.3, 1.9]] },
-    { hip: [36, 42], lean: 0.52, tilt: 0.08, arms: [[0.4, -0.2], [0.6, -0.2]], legs: [[-1.3, 0.1], [-1.25, 0.1]] },
-    { hip: [35, 42], lean: 0.5, tilt: 0.1, arms: [[1.6, -0.4], [1.8, -0.4]], legs: [[-1.2, 0.1], [-1.15, 0.2]] },
-  ],
-  idle: [
-    { hip: [36, 42], lean: 0.05, tilt: 0.1, arms: [[0.6, -0.8], [0.4, -1.4]], legs: [[0.1, 0.6], [-0.3, 0.9]] },
-    { hip: [36, 40.6], lean: 0.05, tilt: 0.16, arms: [[0.7, -0.9], [0.5, -1.5]], legs: [[0.3, 0.9], [-0.1, 0.6]] },
-    { hip: [36, 41.4], lean: 0.05, tilt: 0.06, arms: [[0.6, -0.8], [0.4, -1.4]], legs: [[0.1, 0.6], [-0.3, 0.9]] },
-  ],
-  attack: [
-    { hip: [34, 42], lean: -0.1, tilt: -0.1, arms: [[0.4, -0.8], [-1.6, -1.6]], legs: [[0.2, 0.6], [-0.4, 0.8]], throw: 1 },
-    { hip: [38, 42], lean: 0.2, tilt: 0.1, arms: [[-0.4, -0.4], [1.8, -0.4]], legs: [[-0.3, 0.6], [0.3, 0.4]], throw: 0 },
-    { hip: [38, 42], lean: 0.16, tilt: 0.08, arms: [[-0.4, -0.4], [1.9, -0.3]], legs: [[-0.3, 0.6], [0.3, 0.4]], throw: 0 },
-    { hip: [37, 42], lean: 0.05, tilt: 0.06, arms: [[0.6, -0.8], [0.4, -1.4]], legs: [[0.1, 0.6], [-0.3, 0.9]], throw: 0 },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: [[1.2, -1.4], [1, -1.2]] },
-};
-
-function flipperLeg(L, C, back) {
-  const out = [...limb3(L.hip, L.kn, L.ft, 3.2, 2.6, 2, back ? C.suitDk : C.suit)];
-  const a = Math.atan2(L.ft[1] - L.kn[1], L.ft[0] - L.kn[0]);
-  const [fx, fy] = L.ft;
-  const ex = fx + Math.cos(a) * 7;
-  const ey = fy + Math.sin(a) * 7;
-  out.push(...opoly(round([[fx - Math.sin(a) * 1.6, fy + Math.cos(a) * 1.6], [ex - Math.sin(a) * 3, ey + Math.cos(a) * 3], [ex + Math.sin(a) * 3, ey - Math.cos(a) * 3], [fx + Math.sin(a) * 1.6, fy - Math.cos(a) * 1.6]], 1), back ? C.flipDk : C.flip));
-  return out;
-}
-
-function pearldiver(pose, f, mood) {
-  const C = fade(PV, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, PV_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#1a5a7a');
-  const A = S.arms[1];
-  const shapes = drawRig(S, {
-    behind: () => {
-      // The net of pearls slung at her back, swinging.
-      const [hx, hy] = S.hip;
-      const sw = Math.sin(ph) * 1.4;
-      const out = [...ooval(hx - 5 + sw, hy + 1, 4, 3.6, C.net)];
-      for (let k = 0; k < 4; k++) out.push(...ooval(hx - 6.4 + sw + (k % 2) * 2.6, hy - 0.4 + Math.floor(k / 2) * 2.4, 1.2, 1.2, k % 2 ? C.pearl : C.pearl2, 0, 0.25));
-      out.push(line([[hx - 5 + sw, hy - 2.6], [S.chest[0], S.chest[1]]], 0.5, C.net));
-      return out;
-    },
-    backArm: () => armPart(S.arms[0], C.suitDk, C.skinDk),
-    backLeg: () => flipperLeg(S.legs[0], C, true),
-    body: () => {
-      const out = [...bodice(S, C.suit, C.suitDk)];
-      const [hx, hy] = S.hip;
-      const [cx, cy] = S.chest;
-      out.push(...opoly(round([[hx - 4, hy - 1.4], [hx + 4, hy - 1.4], [hx + 4.4, hy + 2.6], [hx - 4.4, hy + 2.6]], 1), C.suit));
-      // A brass belt and a stripe down the suit, a little air tank on her back.
-      out.push(line([[hx - 4, hy - 1], [hx + 4, hy - 1]], 1, C.brass), fband([[cx + 1.4, cy - 1], [hx + 1.6, hy - 1]], 0.7, C.suitLt, 1));
-      out.push(...opoly(round([[cx - 5.6, cy - 1], [cx - 3, cy - 1], [cx - 3, hy - 3], [cx - 5.6, hy - 3]], 2), C.brass));
-      return out;
-    },
-    frontLeg: () => flipperLeg(S.legs[1], C, false),
-    head: () => headPart(S, mood, PV_FACE, BANGS, HR, 1.12, () => [...backHair(HR, 6), ...KIT.lockHair(KIT.flowPts([-5, -3], Math.PI + 0.2, 0.6, 12, ph - 0.7, 0.3, 5), 3.6, HR)], () => {
-      // The glass bubble helmet: a clear dome over the whole head, a brass collar and a shine.
-      const out = [fband(arcPts(0, -1.4, 11, 11.4, 0, 360, 24), 0.9, C.glass, 1)];
-      out.push(fband(arcPts(-2, -4, 7.6, 7.6, 200, 250, 6), 1.2, C.glassLt, 1), dot(5.6, -7.6, 0.9, C.glassLt));
-      out.push(...opoly(round([[-9, 8], [9, 8], [8, 11], [-8, 11]], 1), C.brass), dot(-5, 9.4, 0.6, C.brassDk), dot(0, 9.6, 0.6, C.brassDk), dot(5, 9.4, 0.6, C.brassDk));
-      return out;
-    }),
-    frontArm: () => {
-      const out = [...armPart(A, C.suit, C.skin)];
-      if (pose === 'attack' && P.throw > 0.5) out.push(...ooval(A.hand[0], A.hand[1] - 1, 2, 2, C.pearl), dot(A.hand[0] - 0.6, A.hand[1] - 1.6, 0.6, '#ffffff'));
-      if (pose === 'attack' && (f === 1 || f === 2)) {
-        const k = f === 1 ? 1 : 1.6;
-        const px = A.hand[0] + 8 * k;
-        out.push(...ooval(px, A.hand[1] - 1, 2.2, 2.2, C.pearl), dot(px - 0.7, A.hand[1] - 1.8, 0.7, '#ffffff'), fband([[px - 9, A.hand[1]], [px - 2, A.hand[1] - 1]], (t) => 1.6 * t, mix(C.pearl2, '#ffffff', 0.4), 1));
-      }
-      if (mood !== 'dead') out.push(...bubbles(S.head[0] + 6, S.head[1] - 13, f, n, '#eaf6ff', 3));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
-}
-
-// ---------- Starfish Dancer ----------
-
-const SD = soften({
-  skin: '#fff0e6', skinDk: '#f2d6c6', hair: '#ff9a8a', hairDk: '#e06a6a', hairLt: '#ffd4c8',
-  tail: '#ff8fb8', tailDk: '#e0608e', tailLt: '#ffd0e2', fin: '#ffd36b', finDk: '#f0a82a',
-  top: '#ffd36b', topDk: '#e0a82a', star: '#ff9a5a', starDk: '#e0703a', shell: '#fff4f0',
-});
-const SD_FACE = { skin: SD.skin, skinSh: '#f2d6c6', skinSh2: '#dcb0a6', blush: '#ffa0a8', lip: '#e0607e', lipLine: '#a83a58', eye: eyes('#ff8f6a', '#a8401a', '#ffe0d0', { rx: 3.5, ry: 2.9, tilt: 0.1 }), brow: { c: '#e06a6a', kind: 'soft', w: 0.7 }, moods: { idle: { open: 0.9, mouth: 'grin' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const SD_K = {
-  // She swims in a dancer's line: arms up in fifth, then sweeping open, the tail rolling.
-  walk: swim(37, 0.1, (s) => [[2.4 - s * 0.6, -0.6], [2.6 + s * 0.4, -0.5]]),
-  idle: [
-    { hip: [36, 38], lean: -0.04, tilt: 0.12, arms: [[2.6, -0.4], [2.8, -0.5]], legs: NOLEGS, spin: 0 },
-    { hip: [36, 36.6], lean: -0.06, tilt: 0.2, arms: [[1.4, -0.4], [1.6, -0.4]], legs: NOLEGS, spin: 0 },
-    { hip: [36, 37.4], lean: -0.02, tilt: 0.06, arms: [[2.6, -0.4], [2.8, -0.5]], legs: NOLEGS, spin: 0 },
-  ],
-  // A spin (a clean mirror flip at the half turn) and a tail slap.
-  attack: [
-    { hip: [34, 37], lean: -0.1, tilt: -0.1, arms: [[2.8, -0.2], [2.9, -0.3]], legs: NOLEGS, spin: 0 },
-    { hip: [38, 36], lean: 0.1, tilt: 0.1, arms: [[1.6, 0], [1.6, 0]], legs: NOLEGS, spin: 1 },
-    { hip: [39, 37], lean: 0.16, tilt: 0.1, arms: [[1.2, -0.4], [1.8, -0.2]], legs: NOLEGS, spin: 0, slap: 1 },
-    { hip: [37, 37], lean: 0, tilt: 0.08, arms: [[2.6, -0.4], [2.8, -0.5]], legs: NOLEGS, spin: 0 },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS },
-};
-
-function starShape(x, y, r, c, a = 0) {
-  return opoly(Array.from({ length: 10 }, (_, i) => {
-    const rr = i % 2 ? r * 0.45 : r;
-    const t = a + (i * Math.PI) / 5 - Math.PI / 2;
-    return [x + Math.cos(t) * rr, y + Math.sin(t) * rr];
-  }), c, 0.3);
-}
-
-function stardancer(pose, f, mood) {
-  const C = fade(SD, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, SD_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#8a2a3a');
-  const slap = pose === 'attack' && f === 2;
-  const draw = () => drawRig(S, {
-    behind: () => {
-      const out = drawTail(tailChain([S.hip[0], S.hip[1] + 4], { base: slap ? -0.9 : 0.4, curl: slap ? -1.6 : 1.2, wave: 0.6, len: 36 }, ph), 9, C, ph);
-      for (const k of [0, 1]) out.push(...KIT.lockHair(KIT.flowPts([S.head[0] - 7, S.head[1] - 2 + k * 3], Math.PI / 2 + 0.6 + k * 0.2, 0.5, 18 - k * 4, ph - k * 0.6, 0.3, 5), 4.4 - k, HR));
-      return out;
-    },
-    backArm: () => armPart(S.arms[0], C.skinDk, C.skinDk),
-    body: () => {
-      const out = [...bodice(S, C.top, C.topDk)];
-      const [cx, cy] = S.chest;
-      out.push(...ooval(cx - 1.4, cy + 2.2, 1.8, 1.6, C.shell), ...ooval(cx + 2, cy + 2.2, 1.8, 1.6, C.shell));
-      for (let k = 0; k < 6; k++) out.push(dot(S.hip[0] - 3.6 + k * 1.4, S.hip[1] - 1.6 + Math.sin(k) * 0.3, 0.45, '#ffffff'));
-      return out;
-    },
-    head: () => headPart(S, mood, SD_FACE, SWEPT, HR, 1.15, null, () => [...starShape(-4.4, -7.4, 3, C.star, 0.2), ...starShape(2, -9, 2.2, C.starDk, -0.3), dot(-4.4, -7.4, 0.6, '#ffffff')]),
-    frontArm: () => {
-      const out = [...armPart(S.arms[1], C.skin, C.skin)];
-      if (pose === 'attack' && f === 1) for (let k = 0; k < 5; k++) out.push(...starShape(S.hip[0] + Math.cos(k * 1.26) * 16, S.hip[1] - 6 + Math.sin(k * 1.26) * 10, 1.6, k % 2 ? C.star : C.fin, k));
-      if (slap) out.push(fband(arcPts(S.hip[0] + 4, S.hip[1] + 14, 18, 12, -60, 40, 8), (t) => 3 * Math.sin(Math.PI * t), mix(C.tailLt, '#ffffff', 0.4), 1), sparkle(S.hip[0] + 20, S.hip[1] + 10, 2.4, '#ffffff'));
-      return out;
-    },
-  });
-  // The spin: the whole figure flips cleanly at the half turn (never squeezed).
-  const shapes = P.spin > 0.5 ? within((x, y) => [72 - x, y], draw) : draw();
-  return { w: RW, h: RH, res: 3, shapes };
-}
-
-// ---------- Octopus Scholar ----------
-
-const OS = soften({
-  skin: '#ffe6f0', skinDk: '#f2c8d8', hair: '#c86a9a', hairDk: '#a04a7a', hairLt: '#f0a8c8',
-  arm: '#ff9ab8', armDk: '#e0709a', armLt: '#ffd0e0', sucker: '#fff0f4',
-  coat: '#7a6ad8', coatDk: '#5a4ab8', lens: '#dff0ff', rim: '#ffd36b', book: '#7fd8a8', book2: '#ffb35a', book3: '#9fb8ff', page: '#fff8ec', ink: '#3a2a5a',
-});
-const OS_FACE = { skin: OS.skin, skinSh: '#f2c8d8', skinSh2: '#dca8bc', blush: '#ff9ab8', lip: '#e0607e', lipLine: '#a83a58', eye: eyes('#a86ad8', '#4a2a8a', '#ecdcff', { rx: 3.2, ry: 2.8 }), brow: { c: '#a04a7a', kind: 'soft', w: 0.7 }, moods: { idle: { open: 0.85, mouth: 'smile' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const OS_K = {
-  walk: swim(42, 0.04, (s) => [[0.8, -1.6 + s * 0.3], [0.9, -1.8 - s * 0.3]]),
-  idle: [
-    { hip: [36, 42], lean: -0.03, tilt: 0.08, arms: [[0.8, -1.8], [0.9, -2]], legs: NOLEGS },
-    { hip: [36, 41], lean: -0.04, tilt: 0.14, arms: [[0.9, -1.9], [1, -2.1]], legs: NOLEGS },
-    { hip: [36, 41.6], lean: -0.02, tilt: 0.04, arms: [[0.8, -1.8], [0.9, -2]], legs: NOLEGS },
-  ],
-  attack: [
-    { hip: [34, 42], lean: -0.12, tilt: -0.12, arms: [[0.8, -1.6], [-1.2, -1.8]], legs: NOLEGS },
-    { hip: [38, 42], lean: 0.18, tilt: 0.1, arms: [[0.4, -1], [1.8, -0.5]], legs: NOLEGS },
-    { hip: [38, 42], lean: 0.14, tilt: 0.08, arms: [[0.4, -1], [1.9, -0.4]], legs: NOLEGS },
-    { hip: [37, 42], lean: 0, tilt: 0.06, arms: [[0.8, -1.8], [0.9, -2]], legs: NOLEGS },
-  ],
-  dead: { hip: [34, 64], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS },
-};
-
-function bookShape(x, y, a, c, C) {
-  return within(at(x, y, a), () => [...opoly([[-3, -2.2], [3, -2.2], [3, 2.2], [-3, 2.2]], c), fpoly([[-2.4, -1.6], [2.4, -1.6], [2.4, 1.4], [-2.4, 1.4]], C.page), line([[0, -2.2], [0, 2.2]], 0.5, c)]);
-}
-
-function octoscholar(pose, f, mood) {
-  const C = fade(OS, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, OS_K);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#5a1a4a');
-  const [hx, hy] = S.hip;
-  // Six arms curling out under her, each with its own wave, back three darker.
-  const arm = (k, back) => {
-    const side = (k - 2.5) / 2.5;
-    const pts = [[hx + side * 3, hy + 2]];
-    // (Angles measured from straight down, + toward the front; each arm curls up at its tip.)
-    let a = -side * 0.45;
-    let [x, y] = pts[0];
-    for (let i = 1; i <= 6; i++) {
-      a += Math.sin(ph * (pose === 'walk' ? 2 : 1) - i * 0.9 + k) * 0.16 - side * 0.12 + (i > 3 ? -side * 0.25 : 0);
-      x -= Math.sin(a) * 4.8;
-      y += Math.cos(a) * 4.8;
-      pts.push([x, Math.min(y, 78)]);
+function jelly(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? JELLY_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const bell = ramp('#ffb3dc', { step: 10, turn: 14, sat: -6 });
+  const inner = '#ffe2f2';
+  const ribA = ramp('#c9b6ff', { step: 10 });
+  const ribB = ramp('#9fe8ff', { step: 10 });
+  // She hovers: a slow bob on the drift's beat, the rim opening and closing (the pulse that swims).
+  const pulse = A ? A.pulse : walk ? 0.5 + 0.5 * Math.sin(TAU * q * 2) : breath(q);
+  const bob = dead ? 0 : (walk ? Math.sin(TAU * q * 2 - 0.6) * 1.4 : -breath(q) * 1.2) + (A ? A.dy : 0);
+  const cx = 18 + (A ? A.dx : 0);
+  const cy = dead ? 34 : 15 + bob;
+  const tilt = dead ? 78 : A ? A.tilt : walk ? 7 + Math.sin(TAU * q * 2) * 3 : sway(q) * 3;
+  const rx = 12 + pulse * 1.1;
+  const ry = 10 - pulse * 0.7;
+  const out = [];
+  // Ribbon tentacles from under the rim, trailing back as she drifts; the front two whip forward
+  // on the lash.
+  const rimY = cy + 5.4;
+  const ribbons = [[-8, ribB, 0], [-4.4, ribA, 0.9], [-0.6, ribB, 1.8], [3, ribA, 2.6], [6.4, ribB, 3.3]];
+  ribbons.forEach(([dx, r, ph], i) => {
+    const front = i >= 3;
+    const lash = A && front ? A.lash : 0;
+    const base = dead ? 0 : lash > 0 ? 100 - lash * 105 : 98 + (walk ? 12 : 6) - lash * 30;
+    const amp = dead ? 0 : lash > 0.5 ? 6 : walk ? 26 : 16;
+    const len = lash > 0.5 ? 4.6 : 3.6 + (i % 2) * 0.4;
+    const j = chain(cx + dx, rimY, base, [len, len, len, len - 0.4, len - 0.8], dead ? () => 8 : wave(TAU * q * (walk ? 2 : 1) + ph, amp, 0.9, 0.15));
+    out.push(strand(j, (t) => 2.2 * (1 - t * 0.7), r.base), strand(j.map(([x, y]) => [x + 0.4, y + 0.3]), (t) => 0.8 * (1 - t), r.sh));
+    if (A?.zap && front) {
+      const tip = j.at(-1);
+      out.push(...star(tip[0] + 1, tip[1], 2.4 * A.zap, '#fff6a8'), ...star(tip[0] - 2, tip[1] - 2.4, 1.4 * A.zap, '#bff6ff'));
     }
-    const out = [...oband(pts, (t) => lerp(4.6, 1, t), back ? C.armDk : C.arm, 4, 0.4)];
-    const sp = KIT.spline(pts, 3);
-    for (let i = 2; i < sp.length - 2; i += 2) out.push(dot(sp[i][0] + 1, sp[i][1], 0.55, C.sucker));
-    return out;
-  };
-  const juggle = (k) => {
-    const u = ((f / n) + k / 3) % 1;
-    return [S.head[0] + 11 + Math.cos(u * TAU) * 6, S.head[1] - 9 - Math.abs(Math.sin(u * Math.PI)) * 5];
-  };
-  const shapes = drawRig(S, {
-    behind: () => [arm(0, true), arm(2, true), arm(4, true)].flat(),
-    backArm: () => armPart(S.arms[0], C.coatDk, C.skinDk),
-    body: () => {
-      const out = [...bodice(S, C.coat, C.coatDk)];
-      const [cx, cy] = S.chest;
-      // A scholar's short cape and a ribbon bow, a quill behind her ear later.
-      out.push(...opoly(round([[cx - 5, cy - 1.6], [cx + 5, cy - 1.6], [cx + 6, cy + 4], [cx - 6, cy + 4]], 2), C.coatDk), ...ooval(cx, cy - 0.6, 1.6, 1, C.rim, 0), dot(cx, cy - 0.6, 0.5, C.coat));
-      out.push(...[1, 3, 5].map((k) => arm(k, false)).flat());
-      return out;
-    },
-    head: () => headPart(S, mood, OS_FACE, BANGS, HR, 1.14, () => backHair(HR, 7), () => {
-      // Round glasses and a tiny mortarboard tipped on her curls.
-      const out = [fband(arcPts(2.4, 3, 2.4, 2.4, 0, 360, 14), 0.5, C.rim, 1), fband(arcPts(8.6, 3, 2, 2.2, 0, 360, 14), 0.5, C.rim, 1), line([[4.8, 3], [6.6, 3]], 0.4, C.rim)];
-      out.push(...within(at(1, -9.6, -0.2), () => [...opoly([[-6, 0], [6, 0], [7, -2.4], [-5, -2.4]], C.ink), ...opoly([[-2, 0], [3, 0], [3, 2], [-2, 2]], C.ink), line([[5, -1.2], [7, 3]], 0.4, C.rim), dot(7, 3.2, 0.7, C.rim)]));
-      return out;
-    }),
-    frontArm: () => {
-      const out = [...armPart(S.arms[1], C.coat, C.skin)];
-      // Three books juggled over her head (in the attack, one is flung).
-      const live = pose === 'attack' && f >= 1 ? 2 : 3;
-      for (let k = 0; k < live; k++) {
-        const [bx, by] = juggle(k);
-        out.push(...bookShape(bx, by, ph + k * 2, [C.book, C.book2, C.book3][k], C));
-      }
-      if (pose === 'attack' && (f === 1 || f === 2)) {
-        const A = S.arms[1];
-        const k = f === 1 ? 1 : 1.7;
-        out.push(...bookShape(A.hand[0] + 10 * k, A.hand[1] - 2, ph * 3, C.book3, C));
-        for (let i = 0; i < 4; i++) out.push(...ooval(A.hand[0] + 4 + i * 3, A.hand[1] + 4 + Math.sin(i) * 2, 2.2 - i * 0.3, 1.8 - i * 0.2, C.ink, 0, 0.3));
-      }
-      return out;
-    },
   });
-  return { w: RW, h: RH, res: 3, shapes };
+  // Frilly oral arms in the middle, short and ruffled.
+  for (const [dx, l] of [[-2, 7], [1.6, 8.4]]) {
+    const j = chain(cx + dx, rimY - 0.6, dead ? 0 : 92, [l / 3, l / 3, l / 3], dead ? () => 6 : wave(TAU * q + dx, 14, 0.8));
+    out.push(strand(j, (t) => 3 * (1 - t * 0.4), mix(bell.base, '#ffffff', 0.35)));
+    for (const p of j.slice(1)) out.push(F(E(p[0] + 1, p[1], 1.2, 0.8, bell.hi)));
+  }
+  // The bell: a dome with a lighter heart, a scalloped rim, freckle spots and a shine.
+  const body = [];
+  const dome = arcPts(cx, cy + 4, rx, ry + 3, 180, 360, 18);
+  body.push(T([...dome, [cx + rx, cy + 5], [cx - rx, cy + 5]], bell.base));
+  body.push(crescent(cx, cy + 4, rx, ry + 3, bell.sh, { k: 0.26, a0: 150, a1: 250 }));
+  body.push(F(O(cx + 1, cy, rx * 0.6, ry * 0.55, 0, inner, 16)));
+  for (let i = 0; i < 8; i++) {
+    const x = cx - rx + 1.5 + (i * (rx * 2 - 3)) / 7;
+    body.push(E(x, cy + 5.2, 1.9, 1.4, i % 2 ? bell.base : bell.sh));
+  }
+  for (const [x, y, r] of [[-6, -1.6, 0.9], [-3.4, -4.4, 0.7], [5.4, -3.6, 0.8], [7.4, 0.2, 0.6]]) body.push(F(E(cx + x, cy + y, r, r, '#ffffff')));
+  body.push(shine(cx + 2, cy + 1, rx * 0.8, ry * 0.7, mix(bell.hi, '#ffffff', 0.5), -10, 0.8));
+  // Her face, low on the bell's front.
+  body.push(...cuteFace(cx + 1.4, cy + 0.6, 0.95, mood, { iris: '#ff7ab8', lip: '#c04a8a', gap: 5, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: inner, mouthDy: 2.8 }));
+  out.push(...spin(body, cx, cy + 4, tilt));
+  if (A && f === 1) out.push(smear([[cx - 6, cy + 10], [cx + 4, cy + 12], [cx + 16, cy + 9]], 3, '#fff0fa'));
+  if (!dead) out.push(...bubbles(cx - 9, cy - 4, q, 2, 0.8));
+  return { w: 36, h: 44, res: 3, shapes: out };
+}
+
+// ---------- Seahorse Squire ----------
+
+const HORSE_ATK = [
+  { dx: -2.6, dy: 2.2, lance: -30, coil: 1.4, lean: -8, back: 4 },
+  { dx: 4.4, dy: -1.6, lance: 4, coil: -0.6, lean: 10, back: -3 },
+  { dx: 5, dy: -1, lance: 2, coil: -0.4, lean: 8, back: -4, hit: 1 },
+  { dx: 1, dy: 0.4, lance: -8, coil: 0.4, lean: 0, back: 0 },
+];
+
+// A short curved band (a belly plate).
+const arcBand = (x, y, w, c) => T([...arcPts(x, y, w, 1.2, 200, 340, 6), ...arcPts(x, y + 0.6, w * 0.9, 1, 340, 200, 6)], c);
+
+function seahorse(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? HORSE_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const skin = ramp('#ffb070', { step: 10, turn: 14, sat: -4 });
+  const belly = ramp('#ffe0a8', { step: 9 });
+  const steel = ramp('#b8c8e8', { step: 12 });
+  const plume = ramp('#ff6b8a', { step: 10 });
+  // It bounces upright on its curled tail: a hop each half cycle, the coil squeezing as it lands.
+  const hop = walk ? Math.abs(Math.sin(TAU * q * 2)) : 0;
+  const coil = A ? A.coil : walk ? (1 - hop) * 1.2 : breath(q) * 0.6;
+  const bx = 16 + (A ? A.dx : 0);
+  const by = (A ? A.dy : 0) - hop * 3.4 + (pose === 'idle' ? -breath(q) * 0.8 : 0);
+  const lean = dead ? 90 : A ? A.lean : walk ? 4 : sway(q) * 2;
+  const out = [];
+  const body = [];
+  // The curled tail: down from the belly, spiralling forward at the floor.
+  const tail = chain(bx - 2, by + 30, 92, [3, 3, 2.8, 2.6, 2.2, 1.8, 1.4], (i) => (i ? 34 + coil * 6 + (dead ? -20 : 0) : 0));
+  body.push(strand(tail, (t) => 6.4 * (1 - t * 0.78), skin.base), strand(tail.map(([x, y]) => [x - 0.6, y + 0.4]), (t) => 2.2 * (1 - t), skin.sh));
+  for (const p of tail.slice(1, 5)) body.push(F(E(p[0] + 0.6, p[1], 1.6, 0.5, skin.hi)));
+  // Dorsal fin fluttering on its back.
+  const fin = [];
+  for (let i = 0; i < 5; i++) {
+    const a = 180 + 16 * Math.sin(TAU * q * 3 + i * 0.9);
+    fin.push([bx - 7.4 + Math.cos(a * D2R) * 4.4, by + 18 + i * 2.2 + Math.sin(a * D2R) * 1.4 - 1.4]);
+  }
+  body.push(T([[bx - 6, by + 17], ...fin, [bx - 6, by + 28]], mix(skin.base, '#ffe6b0', 0.4)));
+  for (let i = 0; i < 4; i++) body.push(F(T([[bx - 6, by + 18 + i * 2.4], [fin[i][0] + 0.6, fin[i][1]], [bx - 6, by + 19 + i * 2.4]], skin.sh)));
+  // Belly and chest: a round pot belly with ridged plates.
+  body.push(...blob(bx, by + 22, 7.4, 9, skin));
+  body.push(F(O(bx + 3, by + 23, 3.6, 7.2, -8, belly.base, 16)));
+  for (let i = 0; i < 4; i++) body.push(F(arcBand(bx + 3.4, by + 18 + i * 3, 3.2, belly.sh)));
+  // The head: a big round head on a short neck, the tube snout out front.
+  const hx = bx + 2;
+  const hy = by + 10;
+  body.push(...limb([hx + 5, hy + 1.4], [hx + 12, hy + 2.2], 4.2, 3.2, skin.base), F(E(hx + 12.4, hy + 2.2, 1.6, 1.8, skin.sh)), F(E(hx + 12.8, hy + 2.2, 0.7, 0.9, '#8a3a3a')));
+  body.push(...blob(hx, hy, 7.6, 7, skin));
+  const atk = A ? (f === 1 || f === 2 ? 1 : 0.4) : 0;
+  body.push(...cuteFace(hx + 3, hy + 0.4, 1, mood, { iris: '#3a7ad8', gap: 3.4, atk, skin: skin.base, mouthDy: 3.4 }));
+  // The helmet: a round steel dome on the back of the head, a red plume.
+  body.push(T([...arcPts(hx - 0.6, hy - 1, 8.2, 7.6, 160, 300, 14), [hx - 0.6, hy - 1]], steel.base), F(T([...arcPts(hx - 0.6, hy - 1, 8.2, 7.6, 160, 205, 6), [hx - 2, hy - 1]], steel.sh)));
+  body.push(F(T([...arcPts(hx - 0.6, hy - 1, 8.4, 7.8, 238, 290, 6), ...arcPts(hx - 0.6, hy - 1, 6.6, 6, 290, 238, 6)], steel.hi)));
+  body.push(F(E(hx - 0.4, hy - 8.4, 1.2, 1.2, '#ffd36b')));
+  const pl = chain(hx - 1, hy - 8.6, -120, [2.6, 2.6, 2.4, 2], dead ? () => 10 : wave(TAU * q * 2 - 1, walk ? 22 : 12, 0.8));
+  body.push(strand(pl, (t) => 3.2 * (1 - t * 0.6), plume.base), strand(pl.map(([x, y]) => [x + 0.4, y + 0.6]), (t) => 1.2 * (1 - t), plume.sh));
+  // The lance, held under the pectoral fin: a striped cone with a guard.
+  // (Held low under the snout, tilted up a little; drawn back for the wind-up, thrust on the strike.)
+  const la = (A ? A.lance : -12 + (walk ? Math.sin(TAU * q * 2) * 4 : 0)) + (dead ? 70 : 0);
+  const gx = bx + 6 - (A ? A.back : 0);
+  const gy = by + 24;
+  const tipx = gx + Math.cos(la * D2R) * 20;
+  const tipy = gy + Math.sin(la * D2R) * 20;
+  const nx = -Math.sin(la * D2R);
+  const ny = Math.cos(la * D2R);
+  body.push(T([[gx + nx * 2.4, gy + ny * 2.4], [tipx, tipy], [gx - nx * 2.4, gy - ny * 2.4]], '#fff4e6'));
+  for (const t of [0.25, 0.5]) {
+    const x = gx + (tipx - gx) * t;
+    const y = gy + (tipy - gy) * t;
+    const w = 2.4 * (1 - t);
+    body.push(F(T([[x + nx * w, y + ny * w], [x + (tipx - gx) * 0.1 + nx * w * 0.8, y + (tipy - gy) * 0.1 + ny * w * 0.8], [x + (tipx - gx) * 0.1 - nx * w * 0.8, y + (tipy - gy) * 0.1 - ny * w * 0.8], [x - nx * w, y - ny * w]], '#ff8fa8')));
+  }
+  body.push(O(gx, gy, 1.2, 3.2, la, '#ffd36b'), F(E(gx - 1, gy + 0.6, 1.8, 1.4, skin.sh)));
+  // (Dead, it topples over onto the floor.)
+  out.push(...spin(body, bx, by + 30, lean).map((s) => s));
+  if (A && f === 1) out.push(smear([[gx - 4, gy + 1], [gx + 8, gy], [tipx + 2, tipy]], 3.4, '#fff8ec'));
+  if (A?.hit) out.push(...star(tipx + 2, tipy, 3, '#fff6a8'));
+  return { w: 44, h: 46, res: 3, shapes: dead ? spin(out, bx, 44, 0).map((s) => s) : out };
+}
+
+// ---------- Lantern Angler ----------
+
+const ANGLER_ATK = [
+  { dx: -3, lean: -10, gape: 0.2, flash: 1 },
+  { dx: 6, lean: 6, gape: 1, flash: 0.4 },
+  { dx: 6.6, lean: 4, gape: 0, flash: 0.2, bite: 1 },
+  { dx: 1.4, lean: 0, gape: 0.1, flash: 0 },
+];
+
+function angler(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? ANGLER_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const body = ramp('#4f5fb8', { step: 10, turn: 12, sat: 4 });
+  const belly = ramp('#9fb8ff', { step: 9 });
+  const fin = ramp('#7f9ae8', { step: 10 });
+  const bob = dead ? 0 : walk ? Math.sin(TAU * q * 2) * 1.2 : -breath(q) * 1;
+  const cx = 21 + (A ? A.dx : 0);
+  const cy = dead ? 24 : 18 + bob;
+  const lean = dead ? 170 : A ? A.lean : walk ? 4 + Math.sin(TAU * q * 2) * 2 : 0;
+  const gape = dead ? 0.2 : A ? A.gape : mood === 'angry' ? 0.3 : 0.08;
+  const out = [];
+  // Tail fin and the little pectoral fin, fanning on the swim.
+  const tw = Math.sin(TAU * q * 2) * (walk ? 18 : 8);
+  out.push(...spin([T([[cx - 13, cy], [cx - 21, cy - 7], [cx - 19, cy], [cx - 21, cy + 7]], fin.base), F(T([[cx - 13, cy], [cx - 19, cy - 1], [cx - 21, cy + 7]], fin.sh))], cx - 13, cy, tw));
+  // The body: a round ball with a pale belly and a few dark spots.
+  out.push(...blob(cx, cy, 14, 12, body));
+  out.push(F(T([...arcPts(cx + 1, cy + 1, 12.6, 10.6, 20, 160, 12), ...arcPts(cx + 1, cy + 5, 8, 5, 160, 20, 8)], belly.base)));
+  for (const [x, y, r] of [[-6, -6, 1.4], [-9, -1, 1.1], [-2, -8.6, 1]]) out.push(F(E(cx + x, cy + y, r, r * 0.8, body.sh)));
+  out.push(...spin([T([[cx - 1, cy + 4], [cx - 7, cy + 9], [cx - 2, cy + 8]], fin.base)], cx - 1, cy + 4, Math.sin(TAU * q * 3) * 18));
+  // The mouth: a wide grin across the front, little teeth; on the lunge it opens wide.
+  const mx = cx + 7;
+  const my = cy + 3;
+  const open = gape * 5;
+  out.push(T([[mx - 4, my], [mx + 7, my - 1.4], [mx + 7.4, my + 0.4 + open], [mx + 1, my + 1.6 + open], [mx - 4, my + 0.6]], '#3a1a3a'));
+  if (open > 1) out.push(F(E(mx + 2, my + open * 0.7, 3, 1.2, '#ff8fab')));
+  for (let i = 0; i < 4; i++) {
+    const tx = mx - 2 + i * 2.6;
+    out.push(F(T([[tx, my - 0.4 - i * 0.3], [tx + 1.2, my - 0.4 - i * 0.3], [tx + 0.6, my + 1.2 - i * 0.3]], '#fffaf2')));
+    if (open > 1) out.push(F(T([[tx, my + 1.4 + open - i * 0.2], [tx + 1.2, my + 1.4 + open - i * 0.2], [tx + 0.6, my - 0.2 + open - i * 0.2]], '#fffaf2')));
+  }
+  // Big cute eyes up front, and a blush (the grin is its mouth).
+  out.push(...cuteFace(cx + 5, cy - 3.6, 1.15, mood, { iris: '#ffd36b', gap: 4.4, atk: A ? (f === 1 ? 1 : 0.5) : 0, skin: body.base, mouthDy: null }));
+  // The lure: a stalk arching up and over, a glowing bulb that flashes.
+  const stalk = chain(cx + 2, cy - 11, -96, [3.4, 3.4, 3.2, 3], dead ? () => 30 : (i) => (i ? 24 : 0) + Math.sin(TAU * q * 2 - i) * 6);
+  const bulb = stalk.at(-1);
+  out.push(strand(stalk, (t) => 1.4 * (1 - t * 0.4), body.sh));
+  const fl = A ? A.flash : walk ? 0.2 + 0.2 * Math.sin(TAU * q * 4) : 0.15 + 0.15 * breath(q);
+  out.push(F(E(bulb[0], bulb[1], 4 + fl * 4, 4 + fl * 4, mix('#fff6c8', '#ffffff', 0.2))), E(bulb[0], bulb[1], 2.6, 2.6, '#ffe36b'), F(E(bulb[0] - 0.7, bulb[1] - 0.7, 1.1, 1.1, '#ffffff')));
+  if (fl > 0.8) out.push(...star(bulb[0] + 4, bulb[1] - 3, 2.6, '#fff6a8'), ...star(bulb[0] - 4, bulb[1] + 3, 1.6, '#fff6a8'));
+  const shapes = spin(out, cx, cy, lean);
+  if (A && f === 1) shapes.push(smear([[cx - 10, cy + 2], [cx, cy + 3], [cx + 18, cy + 3]], 4, '#cfe0ff'));
+  if (A?.bite) shapes.push(...star(cx + 17, cy + 2, 3.2, '#fff6a8'));
+  if (!dead) shapes.push(...bubbles(cx + 14, cy - 2, q, 2, 0.7));
+  return { w: 50, h: 36, res: 3, shapes };
+}
+
+// ---------- Pearl Otter ----------
+
+const OTTER_ATK = [
+  { dx: -2, lean: -12, arm: -150, pearl: 1 },
+  { dx: 2.6, lean: 10, arm: -20, pearl: 1, throw: 1 },
+  { dx: 3, lean: 8, arm: 10, pearl: 0 },
+  { dx: 0.6, lean: 0, arm: 40, pearl: 0 },
+];
+
+function otter(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? OTTER_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const fur = ramp('#b8845e', { step: 10, turn: 12, sat: -6 });
+  const cream = ramp('#fff0dc', { step: 8 });
+  const bob = dead ? 0 : walk ? Math.sin(TAU * q * 2) * 1.4 : -breath(q) * 0.9;
+  const bx = 17 + (A ? A.dx : 0);
+  const by = bob;
+  const lean = dead ? 80 : A ? A.lean : walk ? 6 : sway(q) * 2;
+  const out = [];
+  // Tail: a flat paddle wagging behind, and the webbed feet kicking.
+  const tail = chain(bx - 6, by + 26, 160, [3, 3, 2.6], dead ? () => 4 : wave(TAU * q * 2, walk ? 16 : 8));
+  out.push(strand(tail, (t) => 4.2 * (1 - t * 0.4), fur.sh));
+  for (const [ox, ph] of [[-2, 0], [3, 0.5]]) {
+    const kick = walk ? Math.sin(TAU * (q + ph) * 2) * 3 : 0;
+    out.push(...limb([bx + ox, by + 27], [bx + ox + 2 + kick * 0.4, by + 31 - Math.abs(kick) * 0.3], 3, 2.4, ox < 0 ? fur.sh : fur.base), F(E(bx + ox + 3 + kick * 0.4, by + 31.6, 2.2, 1, ox < 0 ? fur.deep : fur.sh)));
+  }
+  // Body: a round, soft body with a cream tummy.
+  const body = [];
+  body.push(...blob(bx, by + 21, 7.6, 8.4, fur));
+  body.push(F(O(bx + 2, by + 22.4, 4.4, 6.4, -6, cream.base, 16)));
+  // Head with its muzzle, ears, whiskers and nose.
+  const hx = bx + 2;
+  const hy = by + 10;
+  body.push(E(hx - 5.6, hy - 5, 2, 1.8, fur.sh), E(hx + 4.2, hy - 5.6, 2, 1.8, fur.base), F(E(hx + 4.2, hy - 5.4, 1, 0.9, '#ffb8c8')));
+  body.push(...blob(hx, hy, 7.6, 7, fur));
+  body.push(F(O(hx + 3, hy + 2.6, 4.2, 3, 0, cream.base, 14)));
+  body.push(F(E(hx + 6.4, hy + 1.4, 1.1, 0.8, '#4a2a2a')));
+  for (const [dy, a] of [[0.8, -6], [2.2, 6]]) body.push(F(T([[hx + 6.4, hy + dy + 1], [hx + 10.4, hy + dy + 1 + a * 0.12], [hx + 10.4, hy + dy + 1.3 + a * 0.12], [hx + 6.4, hy + dy + 1.3]], '#fff6f0')));
+  body.push(...cuteFace(hx + 1.6, hy - 0.6, 0.95, mood, { iris: '#6a3a2a', gap: 4.4, atk: A ? (f === 1 ? 1 : 0.4) : 0, skin: fur.base, mouthDy: 4 }));
+  // The pearl, hugged to the chest, or held up behind for the throw.
+  const arm = A ? A.arm : walk ? 30 + Math.sin(TAU * q * 2) * 6 : 34;
+  const sx = bx + 3;
+  const sy = by + 17;
+  const hand = [sx + Math.cos(arm * D2R) * 6.4, sy + Math.sin(arm * D2R) * 6.4];
+  body.push(...limb([sx, sy], hand, 3.2, 2.8, fur.base));
+  if (!A || A.pearl) body.push(E(hand[0] + 1, hand[1] - 0.6, 2.8, 2.8, '#f8f4ff'), crescent(hand[0] + 1, hand[1] - 0.6, 2.8, 2.8, '#d8d0f0', { k: 0.3 }), F(E(hand[0], hand[1] - 1.6, 1, 0.8, '#ffffff')));
+  body.push(...limb([bx - 2, by + 18], [bx + 2, by + 22], 2.8, 2.6, fur.sh));
+  // The glass helmet round the head, its brass collar, a glint.
+  const rim = arcPts(hx + 0.6, hy, 10.2, 10, 0, 360, 28);
+  for (let i = 0; i < rim.length - 1; i++) body.push(F(T([rim[i], rim[i + 1], [hx + 0.6 + (rim[i + 1][0] - hx - 0.6) * 0.92, hy + (rim[i + 1][1] - hy) * 0.92], [hx + 0.6 + (rim[i][0] - hx - 0.6) * 0.92, hy + (rim[i][1] - hy) * 0.92]], '#cfeefa')));
+  body.push(F(T([...arcPts(hx + 0.6, hy, 9, 8.8, 200, 250, 6), ...arcPts(hx + 0.6, hy, 7.6, 7.4, 250, 200, 6)], '#ffffff')));
+  body.push(F(T([[hx - 6, hy + 8], [hx + 7, hy + 8], [hx + 6.4, hy + 10.4], [hx - 5.4, hy + 10.4]], '#e0b04a')), F(T([[hx - 5.4, hy + 9.4], [hx + 6.6, hy + 9.4], [hx + 6.4, hy + 10.4], [hx - 5.4, hy + 10.4]], '#b8862a')));
+  out.push(...spin(body, bx, by + 30, lean));
+  if (A?.throw) out.push(smear([[bx - 4, by + 4], [bx + 6, by + 6], [bx + 16, by + 12]], 3, '#ffffff'), E(bx + 18, by + 12, 2.8, 2.8, '#f8f4ff'), F(E(bx + 17.4, by + 11, 1, 0.8, '#ffffff')));
+  if (!dead) out.push(...bubbles(hx + 2, by - 1, q, 3, 0.8));
+  return { w: 40, h: 34, res: 3, shapes: out };
+}
+
+// ---------- Star Twirler ----------
+
+const STAR_ATK = [
+  { spin: -28, dy: 2.4, dx: -1.6, tuck: 1 },
+  { spin: 150, dy: -4, dx: 3.4, tuck: 0.2 },
+  { spin: 330, dy: -1.6, dx: 6, tuck: 0, hit: 1 },
+  { spin: 360, dy: 0.4, dx: 2, tuck: 0.4 },
+];
+
+function starfish(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? STAR_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const skin = ramp('#ff9a7a', { step: 10, turn: 14, sat: -4 });
+  const dot = '#ffe0c8';
+  // She skips on tiptoe: a hop each step, her arms swinging, a little sway; idle, she sways.
+  const hop = walk ? Math.abs(Math.sin(TAU * q * 2)) : 0;
+  const cx = 18 + (A ? A.dx : 0);
+  const cy = (dead ? 29 : 18) - hop * 3 + (A ? A.dy : 0) + (pose === 'idle' ? -breath(q) * 0.8 : 0);
+  const rot = dead ? 90 : A ? A.spin : walk ? Math.sin(TAU * q * 2) * 8 : sway(q) * 4;
+  const tuck = A ? A.tuck : 0;
+  // Five arms: the head point, two arms, two legs: [angle, reach, kind].
+  const swing = walk ? Math.sin(TAU * q * 2) * 18 : pose === 'idle' ? Math.sin(TAU * q) * 8 : 0;
+  const arms = [
+    [-90, 11.6, 0],
+    [-18 - swing - tuck * 30, 11 - tuck * 3, 1],
+    [198 + swing + tuck * 30, 11 - tuck * 3, 1],
+    [62 + (walk ? -swing * 0.6 : 0) - tuck * 16, 13 - tuck * 3, 2],
+    [118 + (walk ? -swing * 0.6 : 0) + tuck * 16, 13 - tuck * 3, 2],
+  ];
+  const body = [];
+  for (const [a, len, kind] of arms) {
+    const tip = [cx + Math.cos(a * D2R) * len, cy + Math.sin(a * D2R) * len];
+    const far = kind && a > 90 && a < 270;
+    body.push(...limb([cx, cy], tip, 8, 3.2, far ? skin.sh : skin.base));
+    if (!far) body.push(F(E(cx + Math.cos(a * D2R) * len * 0.55 - 0.4, cy + Math.sin(a * D2R) * len * 0.55 - 0.6, 1.4, 0.8, skin.hi)));
+    for (const u of [0.45, 0.72]) body.push(F(E(cx + Math.cos(a * D2R) * len * u, cy + Math.sin(a * D2R) * len * u + 0.6, 0.6, 0.6, dot)));
+  }
+  body.push(...blob(cx, cy, 6.4, 6, skin, { lit: 0.8 }));
+  // A ruffled tutu round her middle and a bow on her head point.
+  for (let i = 0; i < 7; i++) body.push(F(E(cx - 6 + i * 2, cy + 4.6 + (i % 2) * 0.4, 2, 1.4, i % 2 ? '#ffe6f4' : '#ffc6e2')));
+  body.push(T([[cx - 0.4, cy - 11], [cx - 4.4, cy - 13.4], [cx - 4, cy - 9.4]], '#ff6b9a'), T([[cx + 0.4, cy - 11], [cx + 4.4, cy - 13.4], [cx + 4, cy - 9.4]], '#ff6b9a'), E(cx, cy - 11.2, 1.3, 1.3, '#ffb8d0'));
+  body.push(...cuteFace(cx + 0.8, cy - 1.4, 0.85, mood, { iris: '#7a4ad8', gap: 4.2, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: skin.base, mouthDy: 3 }));
+  const out = spin(body, cx, cy, rot);
+  if (A && (f === 1 || f === 2)) out.push(smear(arcPts(cx, cy, 15, 15, rot - 120, rot - 10, 8), 4, '#ffe0d4'));
+  if (A?.hit) out.push(...star(cx + 14, cy - 2, 3, '#fff6a8'));
+  return { w: 40, h: 36, res: 3, shapes: out };
+}
+
+// ---------- Octo Scholar ----------
+
+const OCTO_ATK = [
+  { dx: -1.6, lean: -8, arm: -140, book: 1 },
+  { dx: 2.4, lean: 8, arm: -20, book: 1, fling: 1 },
+  { dx: 2.8, lean: 6, arm: 10, book: 0, puff: 1 },
+  { dx: 0.6, lean: 0, arm: 30, book: 0 },
+];
+
+// An open book (blue cover, cream pages), turned by deg.
+function book(x, y, deg) {
+  const s = [T([[x - 5, y], [x, y + 1.6], [x + 5, y], [x + 5, y - 5], [x, y - 3.6], [x - 5, y - 5]], '#4f7ad8'), F(T([[x - 4.4, y - 0.6], [x - 0.2, y + 0.8], [x - 0.2, y - 3.8], [x - 4.4, y - 4.8]], '#fff8ec')), F(T([[x + 0.2, y + 0.8], [x + 4.4, y - 0.6], [x + 4.4, y - 4.8], [x + 0.2, y - 3.8]], '#f0e6d4'))];
+  for (const k of [1, 2]) s.push(F(T([[x - 3.8, y - k * 1.4 - 0.6], [x - 0.8, y - k * 1.4 + 0.2], [x - 0.8, y - k * 1.4 + 0.6], [x - 3.8, y - k * 1.4 - 0.2]], '#c9b8a8')));
+  return spin(s, x, y - 2, deg);
+}
+
+function octopus(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? OCTO_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const skin = ramp('#f58aa8', { step: 10, turn: 14, sat: -6 });
+  const spot = '#ffd0dc';
+  const cx = 19 + (A ? A.dx : 0);
+  const rise = walk ? Math.abs(Math.sin(TAU * q * 2)) * 1.2 : pose === 'idle' ? breath(q) * 0.9 : 0;
+  const cy = (dead ? 24 : 14) - rise;
+  const lean = dead ? 0 : A ? A.lean : walk ? 4 + Math.sin(TAU * q * 2) * 3 : sway(q) * 2;
+  const out = [];
+  // Six curling arms under the mantle, stepping in turn, the tips rolled up.
+  const roots = [[-8, 0], [-5, 0.33], [-1.6, 0.66], [1.8, 0.16], [5, 0.5], [8, 0.83]];
+  roots.forEach(([dx, ph], i) => {
+    const far = i % 2 === 0;
+    const lift = walk ? Math.max(0, Math.sin(TAU * (q + ph))) * 3 : 0;
+    const base = dead ? dx * 6 : 90 + dx * 4.4;
+    const j = chain(cx + dx, cy + 9.4, base, [3.6, 3.6, 3.2, 2.6, 2], (k) => (k ? (dx > 0 ? -1 : 1) * (12 + k * 10) - lift * 4 : 0));
+    out.push(strand(j, (t) => 4.4 * (1 - t * 0.72), far ? skin.sh : skin.base));
+    if (!far) for (const p of j.slice(1, 4)) out.push(F(E(p[0] + 0.3, p[1] + 1.2, 0.8, 0.6, spot)));
+  });
+  // The mantle: a big round head, spots, its face.
+  const body = [];
+  body.push(...blob(cx, cy, 11.4, 10.4, skin));
+  for (const [x, y, r] of [[-7, -4, 1.4], [-4, -8, 1.1], [-8.6, 1.4, 1]]) body.push(F(E(cx + x, cy + y, r, r * 0.8, spot)));
+  body.push(...cuteFace(cx + 2, cy + 2, 1, mood, { iris: '#8a5ad8', gap: 5.6, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: skin.base, mouthDy: 3.6 }));
+  // Round glasses over the eyes, and the mortarboard with its swinging tassel.
+  for (const [ex, r] of [[cx - 0.8, 2.6], [cx + 4.8, 2.9]]) {
+    const rim = arcPts(ex, cy + 2, r, r, 0, 360, 18);
+    for (let i = 0; i < rim.length - 1; i++) body.push(F(T([rim[i], rim[i + 1], [ex + (rim[i + 1][0] - ex) * 0.82, cy + 2 + (rim[i + 1][1] - cy - 2) * 0.82], [ex + (rim[i][0] - ex) * 0.82, cy + 2 + (rim[i][1] - cy - 2) * 0.82]], '#5a3a6a')));
+  }
+  body.push(F(T([[cx + 1.6, cy + 1.6], [cx + 2.2, cy + 1.6], [cx + 2.2, cy + 2.2], [cx + 1.6, cy + 2.2]], '#5a3a6a')));
+  body.push(T([[cx - 9, cy - 9.4], [cx + 1, cy - 13.4], [cx + 11, cy - 9.4], [cx + 1, cy - 5.4]], '#3a3060'), F(T([[cx + 1, cy - 5.4], [cx + 11, cy - 9.4], [cx + 11, cy - 8.2], [cx + 1, cy - 4.2]], '#2a2048')), E(cx + 1, cy - 9.6, 1.2, 0.8, '#ffd36b'));
+  const ts = chain(cx + 1, cy - 9.6, 30, [3, 3, 2], dead ? () => 40 : wave(TAU * q * 2, 20, 0.8));
+  body.push(strand(ts, 0.7, '#ffd36b'), F(E(ts.at(-1)[0], ts.at(-1)[1] + 0.6, 1, 1.4, '#ffd36b')));
+  // The book arm: a front arm curling up holding an open book; thrown on the attack.
+  const arm = A ? A.arm : walk ? -40 + Math.sin(TAU * q * 2) * 6 : -36 + sway(q) * 4;
+  const ar = chain(cx + 7, cy + 6, arm + 60, [3, 3, 2.8], () => -18);
+  body.push(strand(ar, (t) => 3.4 * (1 - t * 0.5), skin.base));
+  const hand = ar.at(-1);
+  if (!A || A.book) body.push(...book(hand[0] + 1, hand[1] - 2, A ? arm * 0.3 : -8 + Math.sin(TAU * q) * 4));
+  out.push(...spin(body, cx, cy + 9, lean));
+  if (A?.fling) out.push(smear([[cx, cy - 8], [cx + 10, cy - 6], [cx + 20, cy]], 3.4, '#e6e0ff'), ...book(cx + 22, cy, 30));
+  if (A?.puff) out.push(...ink(cx + 13, cy + 5, 1.1), ...book(cx + 28, cy + 4, 70));
+  return { w: 44, h: 38, res: 3, shapes: out };
 }
 
 export const ART = {
-  jellymaid: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 230, 170], draw: jellymaid },
-  seahorseknight: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 190], draw: seahorseknight },
-  anglerlamp: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [80, 240, 170], draw: anglerlamp },
-  pearldiver: { walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [70, 230, 170], draw: pearldiver },
-  stardancer: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [60, 200, 180], draw: stardancer },
-  octoscholar: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [80, 240, 180], draw: octoscholar },
+  jellymaid: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: jelly },
+  seahorseknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [70, 220, 190], draw: seahorse },
+  anglerlamp: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 210, 170], draw: angler },
+  pearldiver: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [80, 210, 170], draw: otter },
+  stardancer: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 180, 170], draw: starfish },
+  octoscholar: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [70, 220, 180], draw: octopus },
 };
 
 export const INFO = {
-  jellymaid: { name: 'Jellyfish Maiden', w: 26, h: 60 },
-  seahorseknight: { name: 'Seahorse Knight', w: 26, h: 62 },
-  anglerlamp: { name: 'Anglerfish Lamp Girl', w: 26, h: 62 },
-  pearldiver: { name: 'Pearl Diver', w: 30, h: 56 },
-  stardancer: { name: 'Starfish Dancer', w: 26, h: 62 },
-  octoscholar: { name: 'Octopus Scholar', w: 30, h: 60 },
+  jellymaid: { name: 'Jelly Belle', w: 26, h: 34 },
+  seahorseknight: { name: 'Seahorse Squire', w: 26, h: 42 },
+  anglerlamp: { name: 'Lantern Angler', w: 34, h: 30 },
+  pearldiver: { name: 'Pearl Otter', w: 26, h: 34 },
+  stardancer: { name: 'Star Twirler', w: 26, h: 32 },
+  octoscholar: { name: 'Octo Scholar', w: 30, h: 34 },
 };
