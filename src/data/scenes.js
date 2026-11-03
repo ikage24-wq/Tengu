@@ -521,22 +521,60 @@ export const OBS_SCENES = {
     { card: 'Star Observatory', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
+  // Folio, staged: the archivist is curled up reading, eyes shut, rocking gently on her huge
+  // book; she turns very slowly, shushes you as pages flutter up, then rears and slams the book
+  // shut in a gust that sends pages everywhere.
   observatory_folio: [
+    { together: [{ cam: 'folio', up: 20, dur: 1.4 }, { walk: 'player', to: 'folio', gap: 180, speed: 100 }, { mood: 'folio', as: 'blink' }, { act: 'folio', move: 'sway', dur: 2.6, amp: 0.04, speed: 2.4 }] },
     { who: null, text: 'The Archive. A thousand shelves, and a librarian with an enormous book who turns very slowly to look at you.' },
+    { together: [{ fx: 'pages', at: 'folio', n: 4 }, { wait: 0.6 }] },
+    { together: [{ face: 'folio', to: 'player' }, { mood: 'folio', as: 'angry' }, { emote: 'folio', kind: 'anger', dur: 1.8 }] },
     { who: 'folio', text: 'Shhh. SHHHHH. You are stamping. In MY archive. Do you have a library card?', mood: 'angry' },
+    { emote: 'player', kind: 'sweat', dur: 1.2, hold: true },
     { who: 'player', text: "We're going up to see Astraea." },
+    { together: [{ act: 'folio', move: 'windup', dur: 0.9 }, { fx: 'pages', at: 'folio', top: true, n: 8 }] },
     { who: 'folio', text: 'Then your books are overdue. ALL of them. Fines are payable at once!', mood: 'angry' },
+    { act: 'folio', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { fx: 'pages', at: 'folio', n: 24 }, { fx: 'wind', at: 'player' }, { walk: 'player', away: 'folio', by: 34, speed: 170 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // The Eclipse Twins, staged: in the orrery the sun-fox flares gold and the moon-rabbit glows
+  // silver; Luna glides in front of Sol, the room darkens to an eclipse with a ring of fire round
+  // them, and they spring apart and pounce from both sides.
   observatory_eclipse: [
+    { together: [{ cam: ['eclipsesol', 'eclipseluna'], up: 20, dur: 1.4 }, { walk: 'player', to: 'eclipsesol', gap: 180, speed: 100 }, { mood: 'eclipsesol', as: 'happy' }, { mood: 'eclipseluna', as: 'happy' }] },
     { who: null, text: 'The Orrery. Brass planets wheel slowly round a sun of glass. Two sisters float at its heart, one gold, one silver.' },
+    { together: [{ jump: 'eclipsesol', height: 18 }, { fx: 'sparkle', at: 'eclipsesol', top: true, n: 14 }, { face: 'eclipsesol', to: 'player' }] },
     { who: 'eclipsesol', text: 'Visitors, Luna! On the one night our lady stopped the sky.', mood: 'happy' },
+    { together: [{ jump: 'eclipseluna', height: 22 }, { fx: 'hearts', at: 'eclipseluna', n: 6 }, { face: 'eclipseluna', to: 'player' }] },
     { who: 'eclipseluna', text: "Then let's show them an eclipse they won't forget, Sol. Light and dark!", mood: 'happy' },
+    { together: [{ walk: 'eclipseluna', to: 'eclipsesol', gap: 6, speed: 90 }, { fade: 'out', dur: 1.4, to: 0.62, color: '#0e0a24' }] },
+    { together: [{ flash: '#ffd36b' }, { fx: 'sparkle', at: 'eclipsesol', n: 24 }, { shake: 2, dur: 0.6 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.6 },
+    { together: [{ fade: 'in', dur: 0.6 }, { walk: 'eclipseluna', by: 120, speed: 200 }, { walk: 'eclipsesol', by: -40, speed: 120 }] },
+    { together: [{ act: 'eclipsesol', move: 'attack', dur: 0.9 }, { act: 'eclipseluna', move: 'attack', dur: 0.9 }, { walk: 'player', away: 'eclipsesol', by: 26, speed: 150 }] },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Astraea, staged: the camera looks up from the crown of the tower at stars that do not move,
+  // then comes down to the starry stag, sad and still; she rears and stamps down a starburst, and
+  // for a moment the stars start falling again.
   observatory_astraea: [
+    { together: [{ cam: 'astraea', up: 150, dur: 0.01 }, { mood: 'astraea', as: 'sad' }] },
+    { together: [{ cam: 'astraea', up: 30, dur: 2.6 }, { walk: 'player', to: 'astraea', gap: 180, speed: 90 }] },
     { who: null, text: 'The crown of the tower, open to the sky. The great telescope points straight up at stars that do not move.' },
+    { together: [{ act: 'astraea', move: 'sway', dur: 2.2, amp: 0.04, speed: 2 }, { fx: 'sparkle', at: 'astraea', top: true, n: 8 }] },
     { who: 'astraea', text: 'Every night, stars fall. Every night, something I love burns out and is gone. So I stopped them.', mood: 'sad' },
+    { together: [{ cam: ['player', 'astraea'], up: 30, dur: 0.9 }, { face: 'player', to: 'astraea' }] },
     { who: 'player', text: "But a sky that doesn't turn is a sky that's dying. Let them go." },
-    { who: 'astraea', text: "...Then show me. Show me something worth letting fall for!", mood: 'angry' },
+    { together: [{ mood: 'astraea', as: 'angry' }, { act: 'astraea', move: 'windup', dur: 1 }, { fx: 'sparkle', at: 'astraea', top: true, n: 16 }] },
+    { who: 'astraea', text: '...Then show me. Show me something worth letting fall for!', mood: 'angry' },
+    { act: 'astraea', move: 'attack', dur: 1, async: true },
+    { wait: 0.32 },
+    { together: [{ flash: '#fff6c8' }, { shake: 5, dur: 0.5 }, { fx: 'sparkle', at: 'astraea', n: 26 }, { fx: 'starfall', at: 'astraea' }, { walk: 'player', away: 'astraea', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { wait: 1.2 },
+    { cam: 'player', dur: 0.7 },
   ],
   observatory_freed: [
     { who: 'astraea', text: "...Look. They're moving again. And there, a shooting star. It's... beautiful, isn't it?", mood: 'sad' },

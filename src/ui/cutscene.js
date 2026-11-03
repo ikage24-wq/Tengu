@@ -276,6 +276,7 @@ function drawSay(ctx, world, say, x, y, real) {
 
 // A bit of a burst: sparkles, little hearts, cherry petals, leaves, wind streaks or confetti.
 function drawBurst(ctx, p, x, y, real) {
+  if (p.t < 0) return;
   const a = Math.min(1, (p.life - p.t) / 0.4);
   ctx.save();
   ctx.globalAlpha = Math.max(0, a);
@@ -289,6 +290,28 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'pages') {
+    // A loose page, fluttering: a white sheet with lines of ink, flipping as it turns.
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(spin) * 0.8);
+    ctx.scale(Math.cos(spin * 1.3), 1);
+    ctx.fillStyle = '#fffaf0';
+    ctx.fillRect(-4, -5, 8, 10);
+    ctx.fillStyle = '#b8a8c8';
+    for (let k = 0; k < 3; k++) ctx.fillRect(-3, -3 + k * 3, 6, 0.8);
+  } else if (p.kind === 'starfall') {
+    // A falling star: a bright head with a fading streak behind it.
+    const len = 18;
+    const g = ctx.createLinearGradient(x, y, x - p.vx * 0.12, y - p.vy * 0.12);
+    g.addColorStop(0, 'rgba(255,248,210,1)');
+    g.addColorStop(1, 'rgba(255,248,210,0)');
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - (p.vx / 200) * len, y - (p.vy / 200) * len);
+    ctx.stroke();
+    sparkle(ctx, x, y, 2.4, '#fff6c8');
   } else if (p.kind === 'gears') {
     // A little brass cog, spinning as it falls.
     ctx.translate(x, y);
