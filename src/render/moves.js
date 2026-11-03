@@ -5138,7 +5138,6 @@ export const MOVES = {
     };
   },
 };
-// Chopping wood (data/gathering.js `wood` spots) swings like mining until it has a motion of its own.
 
 // Long-feeling moves need a little more time than a quick swing to read properly.
 export const MOVE_MIN = {
