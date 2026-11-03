@@ -492,7 +492,7 @@ export const SKILLS = {
 
   heavenslantern: skill({
     id: 'heavenslantern', name: 'Starfall', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'starlit', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs a full Constellation, and spends it. Draw the constellation across the sky star by star, then swing your wand down: it all comes crashing down as a shower of meteors on every monster ahead, ending in one great impact. Then blow on your wand tip.',
+    desc: 'Finisher: needs a full Constellation, and spends it. Draw the constellation across the sky star by star, then swing your wand down: it all comes crashing down as a shower of meteors on every monster ahead, ending in one great impact. Then strike a pose.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);

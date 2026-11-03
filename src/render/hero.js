@@ -2930,6 +2930,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     // back past the fist across the face when the blade points down.)
     const hilt = HILT[g.weapon.type];
     if (hilt && !g.weapon.fun) ctx.translate(0, -hilt * ws);
+    // (A move may slide the hand up the shaft, `mv.grip` art px from the grip toward the head: a
+    // staff spun from its middle or planted on its foot.)
+    if (mv?.grip) ctx.translate(0, mv.grip * ws);
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
     const el = g.weapon.element;

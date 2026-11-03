@@ -59,3 +59,22 @@ saves, Elowen's trial, the dungeon healer and her paths carry over; the name is 
 - Effects (tools/fx-art.js): `stbolt`, `stcomet`, `sthit`, `stconst`, `stmeteor`, `stwish`,
   `stveil`, `embwitch`. Icons, the Constellation gauge (seven stars), her aura, sounds.
 - Removed: the Spirit Doll and Kami's Favour.
+
+## Animation pass (2026-11-03)
+
+- Every wand cast now ends on a pose of its own instead of the same arm-out hold: the flick holds a
+  fencer's lunge, the twirl turns her shoulder with the wand pointed at the floor, the spin's throw
+  carries the wand down behind her into a finger-gun, the snap (the finisher) crouches and pulls
+  back, then whips the wand up overhead on her toes with a wink, the wink-cast tips the wand up
+  beside (never over) her cheek, the sweep runs on into a leaning arabesque, the hop lands on a
+  ta-da. Wand twirls go behind her head while the wand points up, so the star never crosses her face.
+- Wishing Star clasps the wand low and wishes, then raises it high on her toes; Star Veil ends
+  with the open palm pushing and the wand upright at her hip; Starfall ends with the wand flipped
+  up high in front, a hand on her hip and a wink (no more stab into the floor).
+- The staff has its own figures (render/moves.js `ss*`): a crescent arc over the top into a lunge,
+  a two-handed twirl from the middle of the staff (`grip` slides the hand up the shaft) ending
+  tucked under her arm, a planted cast (staff foot on the ground, free hand to the sky), a comet
+  flourish over the top that ends held high, a one-two of jabs back onto the shoulder, an air swing
+  from the hip, and a dash with the staff trailing low then whipped over. Her skills cast with a
+  staff use the staff's figures (`STAFF_FORM` in moveAt), same timing.
+
