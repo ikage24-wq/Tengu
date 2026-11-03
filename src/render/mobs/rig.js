@@ -79,3 +79,102 @@ export function attackPhase(m, now, recover = 0.55) {
   }
   return { antic: 0, strike: 0, since: -1, atk: false };
 }
+
+// ---------- A rig from a spec ----------
+// Most bosses are built from this: `makeRig(spec)` returns the `{ w, h, draw }` a design hangs on
+// its art. The spec gives:
+//   parts     in drawing order: { s: (a) => sprite, pivot: [x, y] in its box, parent: name or
+//             null (the feet), at: (S) => [x, y] in the parent's space, rot: (S) => radians,
+//             when: (a, S) => bool to skip it }
+//   pose      (m, a) => goals for the channels (numbers), from the boss's moves: a.t (clock),
+//             a.wp (walk phase, radians), a.walkW (0..1 walking), a.ph (attack phase), a.mood
+//   springs   { channel: [k, c] } (others: [220, 20]); during a strike `fast` channels stiffen
+//   follow    (S, a) => goals for loose channels that trail the others (capes, ears, tails),
+//             sprung with `springs` too (default loose: [90, 7])
+//   kick      { channel: speed } given when a blow lands on it
+//   stride    px walked per step cycle
+//   fx        (ctx, m, a, S, mat) live extras over the parts (glows, rings, trails)
+//   under     (ctx, m, a, S, mat) live extras under the parts
+export function makeRig(spec) {
+  const { w, h } = spec;
+  return {
+    w,
+    h,
+    draw(ctx, m, a) {
+      const st = (a.mo.rig ??= {});
+      const dt = a.dt;
+      a.walkW = spring(st, '_walk', a.moving ? 1 : 0, 60, 16, dt);
+      a.wp = ((m.odo ?? 0) / (spec.stride ?? 56)) * TAU;
+      a.ph = attackPhase(m, a.now, spec.recover);
+      a.face = m.hp <= 0 ? 'dead' : a.ph.atk ? 'angry' : a.mood;
+      a.atk = a.ph.atk ? 1 : 0;
+      if (a.mo.hitT !== st._hit) {
+        st._hit = a.mo.hitT;
+        if (m.hp > 0) for (const [k, v] of Object.entries(spec.kick ?? { tilt: -2 })) kick(st, k, v);
+      }
+      const fast = a.ph.strike > 0 || a.ph.antic > 0.8;
+      const S = {};
+      const sp = (name, goal, def) => {
+        const [k, c] = spec.springs?.[name] ?? def;
+        const f = fast && spec.fast?.includes(name);
+        S[name] = spring(st, name, goal, f ? Math.max(k, 800) : k, f ? Math.max(c, 44) : c, dt);
+      };
+      for (const [name, goal] of Object.entries(spec.pose(m, a))) sp(name, goal, [220, 20]);
+      if (spec.follow) for (const [name, goal] of Object.entries(spec.follow(S, a))) sp(name, goal, [90, 7]);
+      // Each part's place: its parent's, then moved to `at` and turned by `rot`.
+      const mats = {};
+      const matOf = (p) => {
+        if (typeof p === 'string') p = spec.byName[p];
+        if (mats[p.name]) return mats[p.name];
+        const base = p.parent ? matOf(spec.byName[p.parent]) : [1, 0, 0, 1, 0, 0];
+        const [x, y] = p.at ? p.at(S, a) : [0, 0];
+        const r = p.rot ? p.rot(S, a) : 0;
+        const c = Math.cos(r);
+        const s = Math.sin(r);
+        const [A, B, C, D, E, F] = base;
+        const tx = A * x + C * y + E;
+        const ty = B * x + D * y + F;
+        return (mats[p.name] = [A * c + C * s, B * c + D * s, -A * s + C * c, -B * s + D * c, tx, ty]);
+      };
+      spec.byName ??= Object.fromEntries(spec.parts.map((p) => [p.name, p]));
+      const look = { flash: a.flash, alpha: a.alpha };
+      ctx.save();
+      if (a.flip) ctx.scale(-1, 1);
+      if (spec.under) {
+        ctx.save();
+        spec.under(ctx, m, a, S, matOf);
+        ctx.restore();
+      }
+      for (const p of spec.parts) {
+        if (p.when && !p.when(a, S)) continue;
+        const M = matOf(p);
+        ctx.save();
+        ctx.transform(...M);
+        blit(ctx, p.s(a, S), -p.pivot[0], -p.pivot[1], look);
+        ctx.restore();
+      }
+      if (spec.fx) {
+        ctx.save();
+        spec.fx(ctx, m, a, S, matOf);
+        ctx.restore();
+      }
+      ctx.restore();
+    },
+  };
+}
+
+// Common motion: a breath (-1..1), a walk's step (sin, cos), and the poses blended for the boss's
+// state. `poses` holds idle, walk, antic, strike (any can be functions of the clock).
+export function stateBlend(a, idle, walk, antic, strike) {
+  const rest = Math.max(0, 1 - a.ph.antic - a.ph.strike);
+  const base = blend([[idle, 1 - a.walkW], [walk, a.walkW]]);
+  return blend([[base, rest], [antic, a.ph.antic], [strike, a.ph.strike]]);
+}
+
+// Draws something in a part's space, by its name (a glow on a staff's crystal...).
+export function inPart(ctx, matOf, part, fn) {
+  ctx.save();
+  ctx.transform(...matOf(part));
+  fn();
+  ctx.restore();
+}

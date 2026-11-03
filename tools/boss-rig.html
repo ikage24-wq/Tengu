@@ -102,6 +102,33 @@ function step(secs) {
 }
 window.step = step;
 window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+// A contact sheet of the rigged side at these moments of the script (seconds), shown over the page.
+window.sheet = async (times = [1.2, 3, 7, 7.32, 7.45, 8, 11.2, 11.4]) => {
+  t = 0;
+  const shots = [];
+  for (const at of times) {
+    while (t < at) step(1 / 30);
+    shots.push(window.frame());
+  }
+  const [sx, sy, sw, sh] = [700, 200, 540, 440];
+  const c = document.createElement('canvas');
+  const cols = 4;
+  const k = 0.45;
+  c.width = cols * sw * k;
+  c.height = Math.ceil(shots.length / cols) * sh * k;
+  const g = c.getContext('2d');
+  for (let i = 0; i < shots.length; i++) {
+    const im = new Image();
+    im.src = shots[i];
+    await im.decode();
+    g.drawImage(im, sx, sy, sw, sh, (i % cols) * sw * k, Math.floor(i / cols) * sh * k, sw * k, sh * k);
+  }
+  document.querySelectorAll('.sheet').forEach((e) => e.remove());
+  c.className = 'sheet';
+  c.style.cssText = 'position:fixed;left:0;top:0;z-index:9';
+  document.body.appendChild(c);
+  return [c.width, c.height];
+};
 window.ready = true;
 if (!q.has('record')) {
   let last = performance.now();

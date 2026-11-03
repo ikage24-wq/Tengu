@@ -17,7 +17,7 @@
 // Every design faces right, its lowest point on the bottom edge.
 
 import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob } from './critter.js';
-import { part, put, spring, kick, blend, attackPhase, lerp, smooth, clamp } from './rig.js';
+import { part, put, spring, kick, blend, attackPhase, lerp, smooth, clamp, makeRig, stateBlend, inPart } from './rig.js';
 
 const TEAL = '#5ff0d6';
 const PURP = '#b86cff';
@@ -571,6 +571,200 @@ function gnarl(pose, f, mood) {
   return { w: 132, h: 140, res: 3, shapes: dead ? spin(out, cx, 134, 0) : out };
 }
 
+// ---------- Tuskar, rigged ----------
+// (2026-11-03, the boss reanimation.) A barrel body on four legs that swing in a trot, a head on its
+// own neck with the tusks and snout, a fiery bristle ridge, and a curly little tail that wags. He
+// paws the ground with a front hoof as he winds up, head lowered, then lunges with his legs
+// reaching and his head driving the tusks up. Rig space: feet on the floor under his middle.
+const TK = { hide: ramp('#9a6a7a', { step: 10, turn: 12 }), plate: ramp('#5a6ab8', { step: 10 }) };
+const tkParts = {
+  leg: (front) => part(`tusk|leg|${front ? 'f' : 'b'}`, 20, 34, () => {
+    const c = front ? TK.hide.base : TK.hide.sh;
+    return [...limb([10, 4], [10, 27], 9, 8, c), O(10, 28, 6, 2.6, 0, '#3a2a3a', 14)];
+  }),
+  body: () => part('tusk|body', 92, 56, () => {
+    // The barrel, its armour plates and the fiery ridge, centred at (46, 30).
+    const cx = 46;
+    const cy = 30;
+    const out = [O(cx, cy, 40, 22, 0, TK.hide.base, 28), crescent(cx, cy, 40, 22, TK.hide.sh, { k: 0.28 }), F(O(cx + 6, cy + 10, 26, 8, 0, '#d8b0c0', 20))];
+    out.push(T([...arcPts(cx - 2, cy - 2, 36, 18, 190, 340, 16), ...arcPts(cx - 2, cy + 2, 32, 14, 340, 190, 16)], TK.plate.base));
+    for (let i = 0; i < 4; i++) out.push(F(strand(arcPts(cx - 2, cy - 2, 36, 18, 200 + i * 36, 220 + i * 36, 3), 1, TK.plate.hi)));
+    for (let i = 0; i < 7; i++) {
+      const a = (200 + i * 22) * D2R;
+      const x = cx - 2 + Math.cos(a) * 34;
+      const y = cy - 2 + Math.sin(a) * 17;
+      const h = 8 + (i % 3) * 1.2;
+      out.push(T([[x - 3, y + 2], [x + Math.cos(a) * h - 2, y + Math.sin(a) * h], [x + 3, y + 2]], i % 2 ? '#ff7a3a' : '#ffb03a'), F(T([[x - 1, y + 2], [x + Math.cos(a) * h * 0.6, y + Math.sin(a) * h * 0.6], [x + 1, y + 2]], '#ffe36b')));
+    }
+    return out;
+  }),
+  head: () => part('tusk|head', 48, 46, () => {
+    // The head centred at (24, 22); the neck joint is at (12, 26).
+    const hx = 24;
+    const hy = 22;
+    return [
+      T([[hx - 10, hy - 14], [hx - 6, hy - 24], [hx - 2, hy - 13]], TK.hide.sh),
+      ...blob(hx, hy, 16, 15, TK.hide),
+      O(hx + 13, hy + 6, 7, 6, 0, '#e8a8b8', 16), F(E(hx + 12, hy + 5, 1.4, 2, '#7a3a4a')), F(E(hx + 16, hy + 5, 1.4, 2, '#7a3a4a')),
+      ...[[5, 10], [10, 8]].flatMap(([x, l]) => [T([[hx + x, hy + 10], [hx + x + 2, hy + 10], [hx + x + 6, hy + 10 - l], [hx + x + 4, hy + 10 - l + 1]], '#fffaf2')]),
+    ];
+  }),
+  face: (mood, atk) => part(`tusk|face|${mood}|${atk}`, 26, 16, () => cuteFace(13, 8, 1.8, mood, { iris: TEAL, gap: 6, atk, skin: TK.hide.base, mouthDy: null })),
+  tail: () => part('tusk|tail', 16, 14, () => [...limb([2, 9], [9, 5], 2.8, 2.2, TK.hide.sh), O(11, 5, 3.2, 3.2, 0, TK.hide.sh, 12), F(O(11, 5, 1.4, 1.4, 0, TK.hide.base, 10))]),
+};
+const TUSK_LEGS = [['legB1', -24, false], ['legF1', 18, false], ['legB2', -16, true], ['legF2', 26, true]];
+const tuskarRig = makeRig({
+  w: 110,
+  h: 72,
+  stride: 60,
+  fast: ['x', 'tilt', 'head', 'legF1', 'legF2', 'legB1', 'legB2'],
+  kick: { tilt: -1.6, head: -3 },
+  springs: { legF1: [500, 30], legF2: [500, 30], legB1: [500, 30], legB2: [500, 30], tail: [60, 4] },
+  pose(m, a) {
+    const t = a.t;
+    const b = Math.sin(t * 2.2);
+    const s = Math.sin(a.wp);
+    const paw = Math.sin(t * 15);
+    const idle = { x: 0, y: -b, tilt: 0, head: Math.sin(t * 1.3) * 0.04, legF1: 0, legF2: 0, legB1: 0, legB2: 0, tail: Math.sin(t * 3) * 0.35 };
+    const walk = { x: 0, y: -Math.abs(s) * 2.4, tilt: s * 0.03, head: -s * 0.06, legF1: s * 0.45, legF2: -s * 0.45, legB1: -s * 0.45, legB2: s * 0.45, tail: Math.sin(t * 9) * 0.5 };
+    const antic = { x: -6, y: 2, tilt: -0.08, head: 0.28, legF1: 0.1, legF2: -0.5 + paw * 0.45, legB1: 0.15, legB2: 0.2, tail: Math.sin(t * 14) * 0.6 };
+    const strike = { x: 14, y: -1, tilt: 0.08, head: -0.35, legF1: -0.55, legF2: -0.6, legB1: 0.5, legB2: 0.55, tail: -0.6 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  parts: [
+    // (The far legs and the tail go behind the body, the near legs and head in front.)
+    { name: 'tail', parent: 'body', pivot: [2, 9], at: () => [-40, -6], rot: (S) => -0.4 + S.tail, s: () => tkParts.tail() },
+    ...TUSK_LEGS.slice(0, 2).map(([n, x, f]) => ({ name: n, parent: 'body', pivot: [10, 4], at: () => [x, 5], rot: (S) => S[n], s: () => tkParts.leg(f) })),
+    { name: 'body', pivot: [46, 30], at: (S) => [S.x, -28 + S.y], rot: (S) => S.tilt, s: () => tkParts.body() },
+    ...TUSK_LEGS.slice(2).map(([n, x, f]) => ({ name: n, parent: 'body', pivot: [10, 4], at: () => [x, 5], rot: (S) => S[n], s: () => tkParts.leg(f) })),
+    { name: 'head', parent: 'body', pivot: [12, 26], at: () => [24, 0], rot: (S) => S.head, s: () => tkParts.head() },
+    { name: 'face', parent: 'head', pivot: [13, 8], at: () => [14, -6], s: (a) => tkParts.face(a.face, a.atk) },
+  ],
+  fx(ctx, m, a, S, mat) {
+    // Dust kicked up by the pawing hoof, and puffs behind the lunge.
+    if (a.ph.antic > 0.2) for (let k = 0; k < 3; k++) {
+      const u = (a.t * 2.2 + k / 3) % 1;
+      ctx.globalAlpha = a.alpha * (1 - u) * 0.6 * a.ph.antic;
+      ctx.fillStyle = '#e8dccc';
+      ctx.beginPath();
+      ctx.arc(30 - u * 26 - k * 4, -2 - u * 6, 2 + u * 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (a.ph.since >= 0 && a.ph.since < 0.4) {
+      const u = a.ph.since / 0.4;
+      ctx.globalAlpha = a.alpha * (1 - u) * 0.7;
+      ctx.fillStyle = '#e8dccc';
+      for (const dx of [-30, -40, -22]) {
+        ctx.beginPath();
+        ctx.arc(dx - u * 14, -3 - u * 4, 3 + u * 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  },
+});
+
+// ---------- Gnarlroot, rigged ----------
+// (2026-11-03, the boss reanimation.) A big round-bellied trunk on spreading roots, a sleepy-grumpy
+// face set in the bark, a mossy crown of branches that trails the trunk on a spring, and two root
+// arms on shoulders. He sways and breathes, his heart knot pulsing; he shuffles his roots to walk;
+// for the slam he rears back with both arms high, then brings them crashing down in front.
+const GN = { bark: ramp('#8a6a5a', { step: 10, turn: 12 }) };
+const gnParts = {
+  roots: () => part('gnarl|roots', 132, 26, () => {
+    // The trunk's foot at (66, 22).
+    const out = [];
+    for (let i = 0; i < 6; i++) {
+      const a = 180 - i * 36;
+      const r = chain(66 + (i - 2.5) * 6, 20, a, [8, 8], (k) => (k ? (a > 90 ? -1 : 1) * 24 : 0));
+      out.push(strand(r, (t) => 7 * (1 - t * 0.7), i % 2 ? GN.bark.sh : GN.bark.base));
+    }
+    return out;
+  }),
+  trunk: () => part('gnarl|trunk', 72, 90, () => {
+    // The trunk's foot at (36, 86); its top at y 4.
+    const cx = 36;
+    const ty = 44;
+    const out = [T([[cx - 30, 86], [cx - 32, ty - 10], [cx - 26, ty - 40], [cx + 26, ty - 40], [cx + 32, ty - 10], [cx + 30, 86]], GN.bark.base), F(T([[cx + 18, ty - 40], [cx + 26, ty - 40], [cx + 32, ty - 10], [cx + 30, 86], [cx + 20, 86]], GN.bark.sh))];
+    for (const x of [-20, -8, 6]) out.push(F(strand([[cx + x, 82], [cx + x + 2, ty + 10], [cx + x - 1, ty - 20]], 1.2, GN.bark.deep)));
+    out.push(O(cx + 2, ty + 18, 7, 9, 0, PURP, 16), F(E(cx, ty + 15, 2.4, 3, '#ffffff')));
+    for (const [x, y] of [[-26, 56], [24, 64], [-22, 72]]) out.push(T([...arcPts(cx + x, y, 4, 3, 180, 360, 8)], '#ff8a6a'), R(cx + x - 1, y, 2, 3, '#fff0e0'));
+    return out;
+  }),
+  face: (mood, atk) => part(`gnarl|face|${mood}|${atk}`, 50, 34, () => [
+    O(25, 16, 20, 14, 0, mix(GN.bark.base, '#ffffff', 0.15), 20),
+    ...cuteFace(25, 16, 2.6, mood === 'idle' && !atk ? 'blink' : mood, { iris: TEAL, inkC: '#2a1a1a', gap: 6, atk, skin: GN.bark.base, mouthDy: 3.6, blushOn: true }),
+    F(strand([[13, 9], [25, 7], [41, 8]], 3, '#7fc06a')),
+  ]),
+  crown: () => part('gnarl|crown', 96, 44, () => {
+    // The crown's foot at (48, 38).
+    const out = [];
+    for (const [a, l] of [[-150, 18], [-120, 22], [-90, 24], [-60, 22], [-30, 18]]) {
+      const br = chain(48 + Math.cos(a * D2R) * 12, 38, a, [l / 2, l / 2], () => 0);
+      out.push(strand(br, (t) => 5 * (1 - t * 0.6), GN.bark.sh));
+      out.push(...[0, 1, 2].map((k) => E(br.at(-1)[0] + (k - 1) * 4, br.at(-1)[1] - (k % 2) * 3, 5, 4, k % 2 ? '#5aa04a' : '#7fc06a')));
+      out.push(F(E(br.at(-1)[0], br.at(-1)[1] - 2, 1.4, 1.4, TEAL)));
+    }
+    return out;
+  }),
+  arm: (back) => part(`gnarl|arm|${back ? 'b' : 'f'}`, 22, 42, () => {
+    // Hanging from the shoulder at (11, 4), fingers at the bottom.
+    const c = back ? GN.bark.sh : GN.bark.base;
+    const out = [strand([[11, 4], [13, 16], [10, 28], [11, 36]], (t) => 9 * (1 - t * 0.5), c)];
+    for (const a of [60, 90, 120]) out.push(...limb([11, 36], [11 + Math.cos(a * D2R) * 6, 36 + Math.sin(a * D2R) * 6], 2.4, 1.4, c));
+    return out;
+  }),
+};
+const gnarlRig = makeRig({
+  w: 100,
+  h: 136,
+  stride: 44,
+  fast: ['armF', 'armB', 'tilt', 'y'],
+  kick: { tilt: -1.2, crown: 3 },
+  springs: { crown: [70, 5], roots: [200, 18] },
+  pose(m, a) {
+    const t = a.t;
+    const b = Math.sin(t * 1.8);
+    const s = Math.sin(a.wp);
+    const idle = { tilt: Math.sin(t * 0.9) * 0.03, y: -b * 1.4, armF: -0.4 + Math.sin(t * 1.1) * 0.06, armB: 0.4 + Math.sin(t * 1.3) * 0.06, roots: 0 };
+    const walk = { tilt: s * 0.05, y: -Math.abs(s) * 2, armF: -0.4 - s * 0.25, armB: 0.4 + s * 0.25, roots: s * 3 };
+    const antic = { tilt: -0.12, y: -4, armF: -2.7, armB: 2.7, roots: 0 };
+    const strike = { tilt: 0.14, y: 3, armF: -0.9, armB: -0.5, roots: 0 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  follow: (S) => ({ crown: -S.tilt * 0.8 }),
+  parts: [
+    { name: 'roots', pivot: [66, 22], at: (S) => [S.roots * 0.3, 0], s: () => gnParts.roots() },
+    { name: 'armB', parent: 'trunk', pivot: [11, 4], at: (S) => [-28, -42 + S.y], rot: (S) => S.armB, s: () => gnParts.arm(true) },
+    { name: 'trunk', pivot: [36, 86], at: (S) => [0, S.y * 0.3], rot: (S) => S.tilt, s: () => gnParts.trunk() },
+    { name: 'crown', parent: 'trunk', pivot: [48, 38], at: (S) => [0, -78 + S.y], rot: (S) => S.crown, s: () => gnParts.crown() },
+    { name: 'face', parent: 'trunk', pivot: [25, 16], at: (S) => [4, -64 + S.y * 0.8], s: (a) => gnParts.face(a.face, a.atk) },
+    { name: 'armF', parent: 'trunk', pivot: [11, 4], at: (S) => [28, -42 + S.y], rot: (S) => S.armF, s: () => gnParts.arm(false) },
+  ],
+  fx(ctx, m, a, S, mat) {
+    // The heart knot's glow, pulsing.
+    if (m.hp > 0) inPart(ctx, mat, 'trunk', () => {
+      const p = 0.5 + 0.5 * Math.sin(a.t * 3);
+      const g = ctx.createRadialGradient(2, -24, 2, 2, -24, 16 + p * 4);
+      g.addColorStop(0, `rgba(220,170,255,${(0.45 + 0.25 * p) * a.alpha})`);
+      g.addColorStop(1, 'rgba(184,108,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-22, -48, 48, 48);
+    });
+    // The slam: a shock of leaves and purple spores out along the floor.
+    if (a.ph.since >= 0 && a.ph.since < 0.5) {
+      const u = a.ph.since / 0.5;
+      ctx.globalAlpha = a.alpha * (1 - u);
+      for (let k = 0; k < 8; k++) {
+        const sx = (k % 2 ? 1 : -1) * (20 + u * 50 + k * 4);
+        ctx.fillStyle = k % 3 ? PURP : '#7fc06a';
+        ctx.beginPath();
+        ctx.arc(sx, -4 - Math.sin(u * Math.PI) * (10 + k * 2), 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  },
+});
+
 export const ART = {
   rootling: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 14, atkMs: [45, 190, 140], draw: imp },
   sporecap: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [65, 250, 190], draw: shaman },
@@ -578,8 +772,8 @@ export const ART = {
   sporeling: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [40, 170, 120], draw: mite },
   sapling: { pad: 6, walk: 8, idle: 6, attack: 4, cycle: 2.4, atkMs: [60, 240, 180], draw: sapling },
   mothercapper: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [80, 150, 420, 220], draw: myconidQueen, rig: { w: 90, h: 100, draw: drawQueen } },
-  tuskar: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [70, 150, 380, 220], draw: boar },
-  gnarlroot: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 22, atkMs: [90, 160, 520, 260], draw: gnarl },
+  tuskar: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [70, 150, 380, 220], draw: boar, rig: tuskarRig },
+  gnarlroot: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 22, atkMs: [90, 160, 520, 260], draw: gnarl, rig: gnarlRig },
 };
 
 export const INFO = {
