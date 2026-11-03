@@ -233,49 +233,56 @@ export const MAPS = {
 
 
 
-  // The thieves' home port at dusk, in quarters: the market (Marlo's cart among tall pastel canal
-  // houses); the raised harbor plaza with the fountain and the Harbor Office; the back alley under
-  // washing lines (Vex's Den, and the warehouse you can climb behind it); then the pier, a walkable
-  // boardwalk over the water with rowboats tied up, the moored ship, and the lighthouse.
+  // Pastel Harbor (rebuilt 2026-11-03): the thieves' home port at dusk, round one landmark, a great
+  // pastel galleon moored at the docks with its sails furled (no wind to sail by). Left to right:
+  // the Fish Market (Marlo's cart and a fish stall among tall canal houses); Harbor Square, a
+  // gentle step up, with the fountain, the Harbor Office, the Party Board, the stove and the craft
+  // workshop; Thieves' Alley under washing lines (Vex's Den, and the warehouse you can climb); then
+  // the Docks: a boardwalk pier with rowboats (fishing off its end) and the galleon, whose stern
+  // deck, main deck and crow's nest you can climb, up its gangway ladder.
   harbor: {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
-    // The town stove, for cooking (data/cooking.js).
+    // The town stove (data/cooking.js) and the craft bench (data/crafting.js) in its workshop.
     stove: 700,
-    // The craft bench (data/crafting.js), on Harbor Square, past the Harbor Office.
-    bench: 1150,
-    width: 2600, height: 520, groundY: 480,
+    bench: 1180,
+    workshed: true,
+    width: 2900, height: 520, groundY: 480,
     look: { islands: 'planks', propKeep: 0.8 },
-    terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
+    terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],
     homeStyle: 'canal',
-    // Canal Row is one terrace of narrow houses wall to wall, each with its own gable (neck, bell,
-    // stepped); a house on the square and one in the alley; and the warehouse by the pier, whose
-    // loading gallery and roof are the climb (render/townhouses.js).
-    cottages: [[180, 'canal-neck'], [432, 'canal-bell'], [516, 'canal-step'], [600, 'canal-neck'], [1190, 'canal-bell'], [1420, 'canal-step'], [1775, 'warehouse']],
-    townPieces: [['pier', 2120]],
+    // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
+    cottages: [[150, 'canal-neck'], [234, 'canal-bell'], [600, 'canal-step'], [1420, 'canal-bell'], [1775, 'warehouse']],
+    townPieces: [['fishstall', 470], ['pier', 2080], ['galleon', 2520]],
     platforms: [
       // The warehouse's loading gallery and its roof (drawn with the warehouse).
       { x: 1661, y: 400, w: 228, bare: true }, { x: 1680, y: 320, w: 190, bare: true },
       // The pier's deck.
-      { x: 1972, y: 426, w: 296, bare: true },
+      { x: 1932, y: 426, w: 296, bare: true },
+      // The galleon: its stern deck, main deck and crow's nest (drawn with the ship).
+      { x: 2330, y: 352, w: 110, bare: true }, { x: 2446, y: 392, w: 238, bare: true }, { x: 2530, y: 272, w: 40, bare: true },
     ],
-    ropes: [],
+    ropes: [
+      // The gangway up to the stern deck, and the line up the mainmast to the crow's nest.
+      { x: 2322, top: 352, bottom: 480, ladder: true },
+      { x: 2550, top: 272, bottom: 392 },
+    ],
     portals: [
       { id: 'start', x: 900, y: 460, hidden: true },
       { id: 'west', x: 40, y: 480, to: 'meadow2', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 480, to: 'woods', toPortal: 'west' },
+      { id: 'east', x: 2840, y: 480, to: 'woods', toPortal: 'west' },
     ],
-    npcs: [{ id: 'marlo', x: 330 }, { id: 'posy', x: 870 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
+    npcs: [{ id: 'marlo', x: 340 }, { id: 'posy', x: 870 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
-      { name: 'Canal Row', from: 0, color: '#6aa8d8' },
+      { name: 'Fish Market', from: 0, color: '#6aa8d8' },
       { name: 'Harbor Square', from: 760, color: '#ffb38a', look: { sky: ['#ffd8c0', '#ffe8d8', '#fff4ea'] } },
       { name: "Thieves' Alley", from: 1280, color: '#8f6cc4', look: { sky: ['#c8b8e8', '#e0d4f4', '#f6f0ff'] } },
-      { name: 'The Pier', from: 1950, color: '#4fb0d8', look: { sky: ['#a8dcff', '#d0ecff', '#f2fbff'] } },
+      { name: 'The Docks', from: 1930, color: '#4fb0d8', look: { sky: ['#a8dcff', '#d0ecff', '#f2fbff'] } },
     ],
-    // Lamps that glow at night (world/daytime.js): the canal, the square, the alley, the lighthouse.
-    lamps: [{ x: 330, y: 440 }, { x: 700, y: 440 }, { x: 1060, y: 420 }, { x: 1320, y: 430 }, { x: 1880, y: 430 }, { x: 2120, y: 400 }, { x: 2440, y: 330 }],
-    deco: [['crates', 120], ['barrels', 720], ['alleylamp', 1320], ['laundryline', 1470], ['lighthouse', 2440]],
+    // Lamps that glow at night (world/daytime.js): the market, the square, the alley, the pier, the ship.
+    lamps: [{ x: 330, y: 440 }, { x: 700, y: 440 }, { x: 1060, y: 420 }, { x: 1320, y: 430 }, { x: 2000, y: 400 }, { x: 2120, y: 400 }, { x: 2390, y: 330 }],
+    deco: [['alleylamp', 1320], ['laundryline', 1470]],
     spawns: [],
   },
 

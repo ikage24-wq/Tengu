@@ -507,6 +507,87 @@ export function warehouseArt() {
   }, false);
 }
 
+// ---------- Pastel Harbor (the 2026-11-03 rebuild) ----------
+
+// The harbor's landmark: a great pastel galleon moored at the docks, 420 wide and 250 tall, bow to
+// the open sea (right). Its decks are the map's own ledges: the raised stern deck (up the gangway
+// ladder), the long main deck, and the crow's nest high on the mainmast. The sails are furled
+// (the wind has gone quiet); a pennant hangs limp at the top. A strip of water along its foot.
+export const GALLEON = { w: 420, h: 250, deck: 90, stern: 130, nest: 210, mast: 240 };
+export function galleonArt() {
+  return art('galleon', GALLEON.w, GALLEON.h, () => {
+    const W = GALLEON.w;
+    const H = GALLEON.h;
+    const hull = ramp('#ff9ec0', 0.8);
+    const band = ramp('#fff0e4', 0.7);
+    const wood = ramp('#b08a6a', 0.8);
+    const water = ramp('#7f8fe0', 0.8);
+    const sail = ramp('#fff8f0', 0.6);
+    const deckY = H - GALLEON.deck;
+    const sternY = H - GALLEON.stern;
+    const out = [];
+    // Masts and their furled sails behind the hull.
+    for (const [mx, top] of [[GALLEON.mast, H - GALLEON.nest - 34], [330, deckY - 120], [140, sternY - 70]]) {
+      out.push(R(mx - 3, top, 6, deckY - top, wood.base), F(R(mx + 1, top, 2, deckY - top, wood.sh)));
+      for (const [y, w] of [[top + 30, 70], [top + 70, 84]]) {
+        if (y > deckY - 20) continue;
+        out.push(R(mx - w / 2, y, w, 4, wood.base), E(mx, y + 6, w / 2 - 4, 6, sail.base), F(E(mx + 6, y + 8, w / 2 - 10, 3, sail.sh)));
+        for (let k = -2; k <= 2; k++) out.push(F(R(mx + k * (w / 6) - 0.5, y + 2, 1, 10, '#e8b8c8')));
+      }
+    }
+    // Rigging lines from the mastheads down to the rails.
+    for (const [a, b] of [[[GALLEON.mast, H - GALLEON.nest - 30], [70, sternY]], [[GALLEON.mast, H - GALLEON.nest - 30], [380, deckY]], [[330, deckY - 116], [410, deckY + 6]]]) {
+      const n = 20;
+      for (let i = 0; i < n; i++) {
+        const u = i / n;
+        out.push(F(R(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, 1, 1, '#8a6a5a')));
+      }
+    }
+    // The crow's nest: a round basket on the mainmast, a limp pennant above it.
+    const ny = H - GALLEON.nest;
+    out.push(R(GALLEON.mast - 22, ny, 44, 14, wood.base), F(R(GALLEON.mast - 22, ny, 44, 3, wood.hi)), F(R(GALLEON.mast + 14, ny, 8, 14, wood.sh)));
+    out.push(T([[GALLEON.mast + 3, ny - 34], [GALLEON.mast + 22, ny - 30], [GALLEON.mast + 3, ny - 26]], '#ff6b9a'));
+    // The hull: a long curved body, the stern castle raised at the back, the bow sweeping up.
+    const hullPts = [[18, sternY], [130, sternY], [134, deckY], [376, deckY], [408, deckY - 18], [414, deckY - 10], [392, H - 34], [360, H - 22], [70, H - 22], [34, H - 40]];
+    out.push(T(hullPts, hull.base), F(T([[300, deckY], [376, deckY], [408, deckY - 18], [414, deckY - 10], [392, H - 34], [360, H - 22], [310, H - 22]], hull.sh)));
+    out.push(F(T([[30, H - 52], [400, H - 52], [394, H - 40], [36, H - 40]], band.base)), F(R(30, H - 46, 366, 1.4, band.sh)));
+    out.push(...planks(18, sternY - 6, 118, 8, ramp('#e2b98a', 0.8), 1, 3, true), ...planks(130, deckY - 6, 250, 8, ramp('#e2b98a', 0.8), 1, 9, true));
+    // Rails along the decks.
+    for (let x = 22; x < 130; x += 8) out.push(R(x, sternY - 18, 1.8, 12, '#ffffff'));
+    out.push(...beam(18, sternY - 20, 116, 2.6, '#ffffff'));
+    for (let x = 140; x < 372; x += 8) out.push(R(x, deckY - 16, 1.8, 10, '#ffffff'));
+    out.push(...beam(134, deckY - 18, 244, 2.6, '#ffffff'));
+    // The stern castle's windows (lit gold) and the portholes along the hull.
+    for (let k = 0; k < 3; k++) out.push(R(40 + k * 26, sternY + 14, 16, 14, '#8a5a5a'), F(R(42 + k * 26, sternY + 16, 12, 10, '#ffd98a')), F(R(42 + k * 26, sternY + 16, 6, 5, '#fff6c9')));
+    for (let x = 160; x < 380; x += 34) out.push(E(x, deckY + 22, 6, 6, band.base), F(E(x, deckY + 22, 4.4, 4.4, '#ffd98a')), F(E(x - 1.4, deckY + 20.6, 1.6, 1.6, '#fff6c9')));
+    // The figurehead: a little gold star on the bow, and the anchor hanging at the cathead.
+    out.push(...[[414, deckY - 14]].flatMap(([x, y]) => [E(x, y, 6, 6, '#ffd36b'), F(E(x - 1.6, y - 1.6, 2, 2, '#fff6c8'))]));
+    out.push(R(385, deckY + 6, 2, 26, '#5a4a6a'), T([[378, deckY + 30], [394, deckY + 30], [386, deckY + 40]], '#6a6a80'));
+    // Life rings on the rail, and the gangway ladder down from the stern deck (drawn on the map).
+    out.push(E(110, sternY - 8, 6, 6, '#ffffff'), F(E(110, sternY - 8, 3, 3, hull.base)));
+    // The water at its foot, with a few glints.
+    out.push(R(0, H - 22, W, 22, water.base), F(R(0, H - 22, W, 2, water.hi)));
+    for (let k = 0; k < 9; k++) out.push(F(R(14 + k * 46, H - 14 + (k % 2) * 5, 18, 1.2, water.hi)));
+    return out;
+  }, false);
+}
+
+// A fish market stall: a counter of crushed ice with fish laid out, a striped awning on two
+// posts, a chalkboard of the day's catch.
+export function fishStallArt() {
+  return art('fishstall', 96, 92, () => {
+    const wood = ramp('#b08a6a', 0.8);
+    const out = [];
+    for (const x of [8, 84]) out.push(R(x, 22, 4, 70, wood.base), F(R(x + 2.6, 22, 1.4, 70, wood.sh)));
+    for (let k = 0; k < 8; k++) out.push(T([[4 + k * 11, 14], [15 + k * 11, 14], [15 + k * 11, 24], [9.5 + k * 11, 28], [4 + k * 11, 24]], k % 2 ? '#ffffff' : '#6aa8d8'));
+    out.push(F(R(4, 14, 88, 2, '#4f88c0')));
+    out.push(R(6, 58, 84, 34, wood.base), ...planks(6, 60, 84, 32, wood, 6, 3), R(4, 54, 88, 6, '#e8f6ff'), F(R(4, 54, 88, 1.6, '#ffffff')));
+    for (const [x, c] of [[16, '#a8c0e8'], [34, '#ffb0a0'], [52, '#c0d0e8'], [70, '#ffd0a0']]) out.push(E(x, 53, 8, 3, c), T([[x + 7, 53], [x + 11, 50], [x + 11, 56]], c), F(E(x - 4, 52.4, 1, 1, '#2a2a3a')));
+    out.push(R(30, 30, 36, 18, '#4a5a4a'), F(R(31, 31, 34, 16, '#3a4a3a')), F(R(34, 35, 20, 1, '#f0f0e0')), F(R(34, 39, 26, 1, '#f0f0e0')), F(R(34, 43, 14, 1, '#f0f0e0')));
+    return out;
+  }, false);
+}
+
 // The pier: a long boardwalk on posts over a strip of water, with lamp posts, a bollard and coiled
 // rope; two rowboats tied up alongside bob on the water (drawn live). 300 wide, 90 tall: its deck
 // is a ledge on the map 54px up.

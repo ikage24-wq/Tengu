@@ -19,7 +19,7 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
@@ -547,6 +547,15 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
     if (kind === 'plazatree') place(ctx, plazaTreeArt(0), snap(x), gy + 3);
+    else if (kind === 'galleon') {
+      // The galleon rocks very gently at its moorings.
+      const s = galleonArt();
+      ctx.save();
+      ctx.translate(snap(x), gy + 2);
+      ctx.rotate(Math.sin(time * 0.7 + wx * 0.01) * 0.006);
+      place(ctx, s, 0, Math.sin(time * 0.9) * 0.6);
+      ctx.restore();
+    } else if (kind === 'fishstall') place(ctx, fishStallArt(), snap(x), gy + 2);
     else if (kind === 'gatearch') {
       place(ctx, gateArchArt(), snap(x), gy + 2);
       hangingSign(ctx, x, gy - 118, map.name, time, wx);

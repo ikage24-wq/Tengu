@@ -44,7 +44,7 @@ export const TOWNSFOLK = {
       lines: ['No! Really?', 'Ooh, tell me more.', 'I saw shadows on the rooftops...'] },
     { id: 'hb-sneak', name: '???', kind: 'kid', seed: 94, look: { outfitColor: '#5a5878', hairColor: '#3b3650' },
       act: { type: 'stroll', a: 1320, b: 1900, speed: 34, pause: 2.5 }, lines: ['...', 'Nothing to see here.'], greet: ['Wasn\'t me!', 'Shh!'] },
-    { id: 'hb-cat', kind: 'cat', seed: 7, act: { type: 'nap', x: 1790, y: 320 } },
+    { id: 'hb-cat', kind: 'cat', seed: 7, act: { type: 'nap', x: 2546, y: 272 } },
     { id: 'hb-cat2', kind: 'cat', seed: 4, act: { type: 'stroll', a: 1980, b: 2380, speed: 20, pause: 5 } },
   ],
   crag: [

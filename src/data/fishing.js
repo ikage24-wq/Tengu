@@ -56,7 +56,7 @@ export const SPOTS = {
   meadow2: [{ x: 60, y: 952, face: 1, bx: 125, by: 998, tier: 1, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2, fish_perch: 1 } }],
   // Sprout Village's duck pond in the Garden Corner.
   sprout: [{ x: 2300, y: 480, face: -1, bx: 2232, by: 478, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1 } }],
-  harbor: [{ x: 2230, y: 426, face: 1, bx: 2300, by: 466, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
+  harbor: [{ x: 2190, y: 426, face: 1, bx: 2260, by: 466, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
   // Tier 2: the glade's waterfall pool.
   glade: [{ x: 880, y: 832, face: 1, bx: 945, by: 878, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6 } }],
   // Tier 3: the glowing pool by the Crystal Throne's gate, and the serpent's hot spring.

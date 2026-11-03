@@ -154,7 +154,7 @@ export const NODES = {
   // Lane and duskcaps in the Rune Garden at night.
   sprout: [{ ...SPOT.herb(1, 'clover'), x: 2400, y: 480 }],
   // Pastel Harbor: sea kelp washed up on the shore between the pier and the lighthouse.
-  harbor: [{ ...SPOT.herb(1, 'sea_kelp'), x: 2335, y: 480 }],
+  harbor: [{ ...SPOT.herb(1, 'sea_kelp'), x: 1990, y: 480 }],
   crag: [{ ...SPOT.ore(1), x: 1830, y: 480 }],
   grove: [
     { ...SPOT.herb(2, 'chanterelle'), x: 400, y: 480 },
