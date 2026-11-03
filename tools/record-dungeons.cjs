@@ -31,8 +31,8 @@ const ALL_ROOMS = [
   ['theatre4', 'Dream Theatre', 'Act III: The Masked Ball'],
   ['theatre5', 'Dream Theatre', 'Backstage'],
 ];
-const TITLES = { aquarium1: 'The Coral Gate', aquarium2: 'The Kelp Gardens', aquarium4: 'The Moray Grotto', aquarium5: 'The Ink Abyss', carnival1: 'The Midway', carnival3: 'The Coaster Yard', carnival6: 'The Ferris Wheel', theatre2: 'Act I: The Pirate Ship', theatre3: 'Act II: The Fairy Forest', theatre6: 'The Final Curtain', manor1: 'The Moonlit Garden', manor3: 'The Ballroom', manor5: 'The Endless Hallway', manor6: 'The Moonlit Rooftop' };
-const ROOMS = onlyArg ? onlyArg.split(',').map((id) => ALL_ROOMS.find((r) => r[0] === id) ?? [id, id.startsWith('aquarium') ? 'Sunken Aquarium Palace' : id.startsWith('carnival') ? 'Clockwork Carnival' : id.startsWith('theatre') ? 'Dream Theatre' : id.startsWith('manor') ? 'Moonlit Manor' : id, TITLES[id] ?? '']) : ALL_ROOMS;
+const TITLES = { aquarium1: 'The Coral Gate', aquarium2: 'The Kelp Gardens', aquarium4: 'The Moray Grotto', aquarium5: 'The Ink Abyss', carnival1: 'The Midway', carnival3: 'The Coaster Yard', carnival6: 'The Ferris Wheel', theatre2: 'Act I: The Pirate Ship', theatre3: 'Act II: The Fairy Forest', theatre6: 'The Final Curtain', manor1: 'The Moonlit Garden', manor3: 'The Ballroom', manor5: 'The Endless Hallway', manor6: 'The Moonlit Rooftop', observatory1: 'The Starlit Stair', observatory4: 'The Archive', observatory6: 'The Telescope Crown' };
+const ROOMS = onlyArg ? onlyArg.split(',').map((id) => ALL_ROOMS.find((r) => r[0] === id) ?? [id, id.startsWith('aquarium') ? 'Sunken Aquarium Palace' : id.startsWith('carnival') ? 'Clockwork Carnival' : id.startsWith('theatre') ? 'Dream Theatre' : id.startsWith('manor') ? 'Moonlit Manor' : id.startsWith('observatory') ? 'Star Observatory' : id, TITLES[id] ?? '']) : ALL_ROOMS;
 const ffmpeg = process.env.FFMPEG ?? 'ffmpeg';
 const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(outFile)), 'frames-'));
 

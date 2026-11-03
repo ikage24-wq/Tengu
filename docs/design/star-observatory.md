@@ -30,7 +30,7 @@ Each room is a floor of the tower, and the sky changes as you climb.
 
 ## Monsters (levels 30-34), on a new rig
 
-The **astral rig** (render/mobs/astralrig.js): the manor rig with orbiters. Each astral monster has
+The **astral rig** (render/mobs/astral.js): the manor rig with orbiters. Each astral monster has
 little things in orbit around it (moons, stars, pages, pebbles) on tilted rings that pass in front
 of and behind the body, and it drifts on a slow figure-eight instead of walking.
 
@@ -59,3 +59,12 @@ of and behind the body, and it drifts on a slow figure-eight instead of walking.
 Astral Shards (tokens), Lv 35 gear, the **Stargazer** set (a crescent circlet, a star-chart scarf, a
 cape of night sky with constellations). Music: "Clockwork Stars" (harpsichord over celesta, A minor,
 baroque-pop) and, for the bosses, "Event Horizon" (church organ and brass, C minor).
+
+## The 2026-11-03 redraw
+
+The sky-folk and bosses were redrawn creature-first (render/mobs/astral.js and astralboss.js),
+retiring the costumed girls on the astral rig: a comet-riding sparrow courier, a nebula-cloud
+witch, a hermit crab living in a brass telescope, a fluffy moth librarian with a lamp, a meteor
+rock golem with glowing cracks, and twin star ghosts holding hands. Folio is a grand bookworm in
+glasses on an enormous book, the Eclipse Twins a sun-fox in a blazing halo and a moon-rabbit before
+a crescent, and Astraea a starry stag with constellation antlers and a ring of orbiting stars.
