@@ -131,3 +131,20 @@ test("Granny Kelp's story ends with Old Lumen at the point: reeled in, counted, 
   assert.ok(!char.inventory.etc.some((e) => e.id === 'fish_lumen'), 'let go');
   assert.equal(bossFish(w, deep), null, 'once');
 });
+
+test('the boardwalk is fishable end to end, off whichever side you face, but not at the stove', async () => {
+  const { spotHere } = await import('../src/world/fishing.js');
+  const w = createWorld(createCharacter('Edge', {}));
+  loadMap(w, 'lagoon', 'start');
+  const put = (x, facing) => Object.assign(w.body, { x, y: 620, onGround: true, facing });
+  for (const x of [700, 1000, 1300, 1800]) {
+    put(x, 1);
+    const s = spotHere(w);
+    assert.ok(s, `fish at ${x}`);
+    assert.ok(s.bx > x, 'the line goes out in front');
+    put(x, -1);
+    assert.ok(spotHere(w).bx < x, 'and the other way when you turn');
+  }
+  put(MAPS.lagoon.stove, 1);
+  assert.equal(spotHere(w), null, 'the stove is for cooking');
+});

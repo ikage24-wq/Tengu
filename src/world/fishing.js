@@ -29,11 +29,25 @@ export const ROD = 'fishing_rod';
 // The shop's rod, or a bench-made one (data/crafting.js).
 export const hasRod = (char) => countItem(char.inventory, ROD) > 0 || (char.inventory.etc ?? []).some((e) => ITEMS[e.id]?.life?.slot === 'fishing');
 
-// The fishing spot you're standing at, or null.
+// The fishing spot you're standing at, or null. On a stretch of water (`span`) it's the spot as
+// fished from where you stand: the bobber out from you (or at its `fixed` place), facing the way
+// you face on a boardwalk (`anyFace`); `base` is the spot itself. Never right at the town's stove.
 export function spotHere(world) {
   const b = world.body;
   if (!b.onGround) return null;
-  return (SPOTS[world.map.id] ?? []).find((s) => Math.abs(s.x - b.x) < SPOT_REACH && Math.abs(s.y - b.y) < 6) ?? null;
+  if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 34) return null;
+  for (const s of SPOTS[world.map.id] ?? []) {
+    if (Math.abs(s.y - b.y) >= 6) continue;
+    if (!s.span) {
+      if (Math.abs(s.x - b.x) < SPOT_REACH) return s;
+      continue;
+    }
+    if (b.x < s.span[0] || b.x > s.span[1]) continue;
+    const face = s.anyFace ? b.facing || 1 : s.face;
+    const out = Math.abs(s.bx - s.x);
+    return { ...s, x: b.x, face, bx: s.fixed ? s.bx : b.x + face * out, base: s };
+  }
+  return null;
 }
 
 // Starts fishing at the spot you're on. Returns why not, or null.
@@ -60,7 +74,7 @@ export function startFishing(world) {
 }
 
 const workersHere = (world, key) => workersAt(world, key).count;
-const fishKey = (world, spot) => spotKey(world, 'fish', (SPOTS[world.map.id] ?? []).indexOf(spot));
+const fishKey = (world, spot) => spotKey(world, 'fish', (SPOTS[world.map.id] ?? []).indexOf(spot.base ?? spot));
 
 // Rarer fish bite more often with a better rare chance (the skill's level and rod).
 function rollFish(spot, rng, rare = 1) {

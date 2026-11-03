@@ -48,7 +48,17 @@ export function drawSpots(ctx, world, cam, time) {
     // Rings spreading on the water now and then (fish about), and a lily pad bobbing on them,
     // each on the spot's own beat.
     const seed = s.bx * 0.013;
-    if (!world.fishing || world.fishing.spot !== s) for (let k = 0; k < 2; k++) ripple(ctx, x + (k ? 9 : -7), y + 1, (((time * 0.4 + k * 0.5 + seed) % 1) + 1) % 1, 0.8);
+    const mine = world.fishing && (world.fishing.spot === s || world.fishing.spot.base === s);
+    if (s.span) {
+      // A stretch of water: fish rising all along it, and a sign at each end.
+      if (!s.fixed) for (let k = 0; k < 4; k++) {
+        const wx = s.span[0] + (s.span[1] - s.span[0]) * ((k + 0.5) / 4) + s.face * Math.abs(s.bx - s.x);
+        ripple(ctx, wx - cam.x, y + 1, (((time * 0.35 + k * 0.27 + seed) % 1) + 1) % 1, 0.8);
+      } else if (!mine) for (let k = 0; k < 2; k++) ripple(ctx, x + (k ? 9 : -7), y + 1, (((time * 0.4 + k * 0.5 + seed) % 1) + 1) % 1, 0.8);
+      for (const end of s.span) if (Math.abs(end - cam.x - 320) < 400) place(ctx, signArt('water'), end - cam.x, s.y - cam.y + 1);
+      continue;
+    }
+    if (!mine) for (let k = 0; k < 2; k++) ripple(ctx, x + (k ? 9 : -7), y + 1, (((time * 0.4 + k * 0.5 + seed) % 1) + 1) % 1, 0.8);
     if (!s.ice && !s.sky) place(ctx, padArt(), x - s.face * 16, y + 3 + Math.sin(time * 1.3 + seed) * 0.6);
     // A little wooden sign by where you stand, a fish painted on it, reeds at its foot.
     const sx = s.x - s.face * 18 - cam.x;

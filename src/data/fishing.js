@@ -11,6 +11,9 @@
 // TIER_LV[tier] in data/gathering.js), and what bites there (`pool`: fish id -> weight). The sea's
 // spots (`sea`: Lantern Lagoon and the voyage) each keep their own tier, cove to deep water. Every
 // spot is a quiet nook: a dock or a ledge of its own no monster walks to (the map rules).
+// A spot can be a stretch of water (`span`: [x1, x2], fish from anywhere along it; `x` is where
+// the other players stand to fish it): the bobber lands as far out from you as it does from `x`,
+// or always at `bx` with `fixed`; `anyFace` casts whichever way you're facing (off a boardwalk).
 
 export const FISH = [
   { id: 'fish_minnow', name: 'Sunny Minnow', color: '#ffd66b', fin: '#ffab5a', pattern: 'plain', price: 20, rarity: 1, react: 1.2, tier: 1 },
@@ -98,15 +101,19 @@ export const SPOTS = {
   // Lantern Lagoon: the cove's rock pools (anyone can fish them), the boardwalk's edges over the
   // lagoon, and the deep water off Lighthouse Point.
   lagoon: [
-    { x: 400, y: 700, face: 1, bx: 444, by: 703, sea: true, tier: 1, pool: { fish_goby: 6, fish_clown: 3, fish_seapony: 1, fish_starfish: 0.2 } },
-    { x: 740, y: 620, face: -1, bx: 690, by: 662, sea: true, tier: 2, pool: { fish_parrot: 6, fish_grouper: 3, fish_lagoonray: 2, fish_angler: 0.8, fish_clown: 2 } },
-    { x: 1460, y: 620, face: 1, bx: 1500, by: 662, sea: true, tier: 2, pool: { fish_parrot: 6, fish_grouper: 3, fish_lagoonray: 2, fish_angler: 0.8, fish_goby: 2 } },
-    { x: 2350, y: 440, face: 1, bx: 2385, by: 548, sea: true, deep: true, tier: 3, pool: { fish_tuna: 6, fish_mola: 2, fish_oarfish: 1.2, fish_marlin: 0.35, fish_grouper: 2 } },
+    // The cove's long rock pool.
+    { x: 400, y: 700, span: [345, 470], face: 1, bx: 434, by: 703, sea: true, tier: 1, pool: { fish_goby: 6, fish_clown: 3, fish_seapony: 1, fish_starfish: 0.2 } },
+    // The boardwalk, end to end: the west half over the shallows, the east half over the deeper
+    // lagoon (a line off the edge, either side).
+    { x: 900, y: 620, span: [650, 1150], anyFace: true, face: 1, bx: 946, by: 664, sea: true, tier: 1, pool: { fish_goby: 5, fish_clown: 3, fish_sardine: 3, fish_mackerel: 2, fish_seapony: 0.8 } },
+    { x: 1700, y: 620, span: [1240, 1850], anyFace: true, face: 1, bx: 1746, by: 664, sea: true, tier: 2, pool: { fish_parrot: 6, fish_grouper: 3, fish_lagoonray: 2, fish_angler: 0.8, fish_clown: 2 } },
+    // Off the cliff at the point, down into the deep water.
+    { x: 2350, y: 440, span: [2270, 2392], fixed: true, face: 1, bx: 2385, by: 548, sea: true, deep: true, tier: 3, pool: { fish_tuna: 6, fish_mola: 2, fish_oarfish: 1.2, fish_marlin: 0.35, fish_grouper: 2 } },
   ],
   // The Sea Biscuit's stern and bow, both ways: the open sea.
   ...Object.fromEntries(['voyage_out', 'voyage_home'].map((id) => [id, [
-    { x: 40, y: 420, face: -1, bx: 12, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
-    { x: 720, y: 420, face: 1, bx: 748, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
+    { x: 40, y: 420, span: [18, 150], fixed: true, face: -1, bx: 12, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
+    { x: 720, y: 420, span: [600, 742], fixed: true, face: 1, bx: 748, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
   ]])),
 };
 

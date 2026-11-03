@@ -1079,7 +1079,9 @@ function drawFar(ctx, t, cam, width, y0, time) {
         }
       });
       break;
-    case 'sea': {
+    case 'sea':
+    case 'lagoon':
+    case 'opensea': {
       ctx.fillRect(0, y0 - 30, width, 300);
       if (t.face === 'moon') {
         ctx.fillStyle = 'rgba(255,246,214,0.35)';
@@ -2738,6 +2740,41 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         if (s < 0.18) place(ctx, windmillArt(Math.floor(windTravel(time) * 4 + time + i) % 8), x + 65, y0 + 6);
         else if (s < 0.75) place(ctx, treeArt(hash(i), hash(i + 1) > 0.7, undefined, leanFrame(time, x + cam.x, 5, 0.1, i)), x + 65, y0 + 4);
       });
+      break;
+    // Lantern Lagoon's sea (render/lagoon.js): low islands with palms, and sailboats at anchor.
+    case 'lagoon':
+      repeat(cam.x, 0.45, 260, width, (i, x) => {
+        const s = hash(i + 11);
+        const cx = x + 130;
+        if (s < 0.55) {
+          const w = 50 + hash(i + 3) * 60;
+          ctx.fillStyle = mix(t.far, '#7fc8a0', 0.45);
+          ctx.beginPath();
+          ctx.ellipse(snap(cx), snap(y0 + 4), w, 12 + hash(i) * 6, 0, Math.PI, 0);
+          ctx.fill();
+          ctx.fillStyle = mix(t.far, '#fff0c8', 0.5);
+          ctx.fillRect(snap(cx - w), snap(y0 + 1), w * 2, 3);
+          for (let k = 0; k < 1 + Math.floor(hash(i + 7) * 3); k++) {
+            const px = cx - w * 0.5 + k * w * 0.45;
+            const lean = 3 + k * 2 + Math.sin(time * 0.8 + i + k) * 1.2;
+            ctx.strokeStyle = mix(t.far, '#8a6a52', 0.5);
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(px, y0 - 6);
+            ctx.quadraticCurveTo(px + lean * 0.5, y0 - 20, px + lean, y0 - 32);
+            ctx.stroke();
+            ctx.fillStyle = mix(t.far, '#4fa878', 0.55);
+            for (let f = 0; f < 5; f++) {
+              const a = -Math.PI / 2 + (f - 2) * 0.7 + Math.sin(time + f + i) * 0.05;
+              ctx.beginPath();
+              ctx.ellipse(px + lean + Math.cos(a) * 7, y0 - 32 + Math.sin(a) * 3 + 3, 8, 2.2, a, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        } else if (s < 0.85) place(ctx, boatArt(pick(['#ff9ec0', '#9fb8ff', '#ffe36b', '#9fe8d0'], hash(i + 2))), cx, y0 - 8 + Math.sin(time * 1.6 + i) * 2);
+      });
+      break;
+    case 'opensea':
       break;
     case 'sea':
       repeat(cam.x, 0.45, 220, width, (i, x) => {
