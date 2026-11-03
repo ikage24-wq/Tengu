@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Spots sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: every gathering spot kind in every tier, ready, resting just after use, and growing
+// back (a third, two thirds), drawn by the game's own spot renderer (render/gathering.js) on a
+// strip of grass, plus the fishing spot and the stove. ?zoom=3 (default 3), ?t=1.2 (the moment),
+// ?n=1 (draws n moments a second apart, stacked, to check motion).
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawNodes } = await import('/src/render/gathering.js');
+const KINDS = (await import('/src/data/gathering.js')).KINDS;
+const q = new URLSearchParams(location.search);
+const Z = Number(q.get('zoom') ?? 3);
+const T0 = Number(q.get('t') ?? 1.2);
+const ROWS = [
+  ['herb', [{ clover: 1 }, { mint_leaf: 1 }, { sage: 1 }, { star_anise: 1 }]],
+  ['flower', [{ daisy: 1 }, { bluebell: 1 }, { lotus_bloom: 1 }, { starbloom: 1 }]],
+  ['fruit', [{ cherry: 1 }, { apple: 1 }, { peach: 1 }, { starfruit: 1 }]],
+  ['honey', [{ honeycomb: 1 }, { honeycomb: 1 }, { honeycomb: 1 }, { honeycomb: 1 }]],
+  ['ore', [{ copper_ore: 1 }, { iron_ore: 1 }, { silver_ore: 1 }, { mithril_ore: 1 }]],
+  ['wood', [{ oak_log: 1 }, { maple_log: 1 }, { cedar_log: 1 }, { skywood_log: 1 }]],
+  ['fiber', [{ cotton: 1 }, { silkmoss: 1 }, { lotus_fiber: 1 }, { cloud_cotton: 1 }]],
+];
+const RARE = { ore: [['rose_quartz', 0.1], ['amethyst', 0.1], ['sapphire', 0.1], ['starstone', 0.1]] };
+const COLW = 64;
+const STATES = [['ready', 0], ['used', 1], ['growing', 0.66], ['nearly', 0.33]];
+const ROWH = 74;
+const W = 90 + 4 * STATES.length * COLW;
+const H = ROWS.length * ROWH + 20;
+const c = document.getElementById('c');
+c.width = W * Z;
+c.height = H * Z;
+const ctx = c.getContext('2d');
+ctx.setTransform(Z, 0, 0, Z, 0, 0);
+setHd(true, Z);
+nextFrame();
+ctx.fillStyle = '#f6f0ff';
+ctx.fillRect(0, 0, W, H);
+const nodes = [];
+const rest = {};
+const now = 1000;
+ROWS.forEach(([kind, pools], r) => {
+  const gy = 20 + r * ROWH + ROWH - 14;
+  ctx.fillStyle = r % 2 ? '#e9f5df' : '#f1f9e9';
+  ctx.fillRect(0, 20 + r * ROWH, W, ROWH);
+  ctx.fillStyle = '#a8d890';
+  ctx.fillRect(0, gy, W, 14);
+  ctx.fillStyle = '#3a2d4f';
+  ctx.font = 'bold 8px sans-serif';
+  ctx.fillText(kind, 6, gy - 30);
+  pools.forEach((pool, tier) => {
+    STATES.forEach(([, left], s) => {
+      const x = 90 + (tier * STATES.length + s) * COLW + COLW / 2;
+      const i = nodes.length;
+      nodes.push({ x, y: gy, kind, pool, rare: RARE[kind]?.[tier], tier: tier + 1 });
+      if (left > 0) rest[`sheet:${i}`] = now + left * (KINDS[kind]?.rest ?? 90);
+    });
+  });
+});
+ctx.font = '7px sans-serif';
+ctx.fillStyle = '#8f7cc4';
+for (let tier = 0; tier < 4; tier++) STATES.forEach(([name], s) => ctx.fillText(`T${tier + 1} ${name}`, 90 + (tier * STATES.length + s) * COLW + 14, 12));
+const world = { map: { id: 'sheet', nodes }, nodeRest: rest, now, dead: true, body: { x: -999, y: 0, onGround: false } };
+// (The renderer skips spots off a 640-wide view, so the sheet is drawn a view at a time.)
+for (let off = 0; off < W; off += 640) {
+  for (let offY = 0; offY < H; offY += 300) {
+    ctx.save();
+    ctx.translate(off, offY);
+    ctx.beginPath();
+    ctx.rect(0, 0, 640, 300);
+    ctx.clip();
+    drawNodes(ctx, world, { x: off, y: offY }, T0);
+    ctx.restore();
+  }
+}
+document.title = 'ready';
+</script>

@@ -19,7 +19,7 @@ import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp } from '../core/character.js';
 import { addItem } from '../core/inventory.js';
-import { makeEquip, itemName } from '../core/items.js';
+import { makeEquip, itemName, makeCash } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
 import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
@@ -29,6 +29,7 @@ import { recruitBot } from './bots.js';
 import { SKILLS } from '../data/skills.js';
 import { speak, contextOf } from './chatter.js';
 import { botChat } from './chatlog.js';
+import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
 import { loadMap } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
 import { MANOR_MECHS, MANOR_CHANNEL, manorSetup, tickManor, manorBoss, manorHitMul, manorKilled, turnPortrait, crestWords, CREST } from './manor.js';
@@ -41,6 +42,7 @@ import { WHALE_MECHS, WHALE_CHANNEL, whaleSetup, tickWhale, whaleBoss, whaleHitM
 import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
+import { HARD_PARTY, CHEST_TOKENS } from '../data/coop.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -161,10 +163,22 @@ function prep(bot) {
   bot.session = Math.max(bot.session ?? 0, 1800);
 }
 
+// Hard mode is for parties: you and at least one member (a party member, or a friend online in
+// your party), and only after a first clear. Returns why not, or null.
+export function partySize(world) {
+  return 1 + partyMembers(world.bots).filter((b) => !b.finder).length + (world.net?.partyFriendCount?.(world) ?? 0);
+}
+const HARD_SOLO = 'Hard mode is party-only: bring at least one party member.';
+export function hardBlocker(world, id = 'hollow') {
+  if (!world.char.dungeons?.[id]?.clears) return `Clear ${DUNGEONS[id].name} once to open Hard mode.`;
+  return partySize(world) < HARD_PARTY ? HARD_SOLO : null;
+}
+
 // Forms the group and goes in. Returns a reason string when it can't.
 export function startRun(world, id = 'hollow', { hard = false } = {}) {
   const plan = planGroup(world, id);
   if (plan.why) return plan.why;
+  if (hard && partySize(world) < HARD_PARTY) return HARD_SOLO;
   if (!world.bots) return 'No one else is online.';
   const def = DUNGEONS[id];
   const roles = {};
@@ -532,6 +546,13 @@ function openChest(world, o) {
   for (const it of reward.items) {
     const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === (def.token ?? 'hollow_acorn') ? 5 : 0);
     if (addItem(char.inventory, it.id, qty)) world.log(`Received ${ITEMS[it.id].name} x${qty}.`, ITEMS[it.id].color);
+  }
+  // Party Tokens (data/coop.js): three times as many on Hard, and Hard's own crown, sure on the
+  // first Hard clear and now and then after.
+  const tokens = run.hard ? CHEST_TOKENS.hard : CHEST_TOKENS.normal;
+  if (addItem(char.inventory, 'party_token', tokens)) world.log(`Received Party Token x${tokens}.`, ITEMS.party_token.color);
+  if (run.hard && (!rec.hardClears || Math.random() < 0.15) && addItem(char.inventory, makeCash('cash_rootwood_crown'))) {
+    world.log(`Hard clear! Received ${ITEMS.cash_rootwood_crown.name}, only found on Hard.`, '#7fd1a0');
   }
   // The records: clears, best grade and time, Hard unlocked.
   rec.clears += 1;
@@ -1209,12 +1230,12 @@ function tickZones(world, up, dt) {
 
 // Is (body) standing somewhere about to go off? Party members use it to dodge.
 export function dangerFor(world, body) {
-  return world.dungeon?.zones.find((z) => !z.hit && z.kind !== 'floor' && inZone(world, z, body)) ?? null;
+  return world.dungeon?.zones.find((z) => !z.hit && z.kind !== 'floor' && !shared(z) && inZone(world, z, body)) ?? null;
 }
 
 // The closest safe x on the floor from (body), out of every zone about to go off.
 export function safeX(world, body) {
-  const zones = world.dungeon.zones.filter((z) => !z.hit && z.kind !== 'floor');
+  const zones = world.dungeon.zones.filter((z) => !z.hit && z.kind !== 'floor' && !shared(z));
   const bad = (x) => zones.some((z) => inZone(world, z, { x, y: body.y, onGround: true }));
   for (let d = 0; d < world.map.width; d += 12) {
     for (const x of [body.x - d, body.x + d]) if (x > 24 && x < world.map.width - 24 && !bad(x)) return x;
@@ -1484,6 +1505,8 @@ export function roleThink(bot, world, rng) {
   const br = bot.brain;
   if (bot.down || !br.goal) return;
   const role = world.dungeon.roles[bot.id] ?? 'dps';
+  // Where they stand in the fight, as a group: world/botfight.js.
+  if (!dangerFor(world, bot.body)) placeInGroup(bot, world, role, navOf(world.map));
   const heart = world.mobs.find((m) => m.heartOpen && m.hp > 0);
   if (floodComing(world)) br.goal = ledgeGoal(world, br.goal.x, 'fight');
   else if (heart && role !== 'healer') br.goal = ledgeGoal(world, heart.x + (Math.sign(bot.body.x - heart.x) || 1) * 60, 'fight');
@@ -1565,20 +1588,22 @@ function thinkRole(bot, world, rng) {
     // Damage: saplings and adds first, then whatever the tank is fighting.
     const menders = fights.filter((m) => m.def.fight?.mender);
     const addsUp = fights.filter((m) => m.add && !m.def.fight?.mender);
-    const target = role === 'dps' ? nearest(menders, body) ?? nearest(addsUp, body) ?? (tankTarget?.hp > 0 ? tankTarget : null) ?? nearest(fights, body) : tankTarget?.hp > 0 ? tankTarget : nearest(fights, body);
+    // (Your target, or your ping, comes right after the saplings.)
+    const focus = focusOf(world);
+    const yours = focus && fights.includes(focus) ? focus : null;
+    const target = role === 'dps' ? nearest(menders, body) ?? yours ?? nearest(addsUp, body) ?? (tankTarget?.hp > 0 ? tankTarget : null) ?? nearest(fights, body) : tankTarget?.hp > 0 ? tankTarget : nearest(fights, body);
     br.target = target ?? null;
     if (!target) return;
     if (role === 'healer') {
-      // Healers hang back behind the tank, away from the middle of the fight.
-      const anchor = tank?.body ?? body;
-      const side = Math.sign(anchor.x - target.x) || -1;
+      // Healers hang back behind the monster, out of its way, at the back of the group.
+      const side = tank && tank.bot !== bot ? behindSide(tank.body, target, -1) : Math.sign(body.x - target.x) || -1;
       br.goal = goalAt(world, Math.max(30, Math.min(world.map.width - 30, target.x + side * 140)), target.y, 'fight');
       const low = up.some((g) => hpOf(world, g) / maxHpOf(world, g) < 0.85);
       if (low) br.target = null;
       return;
     }
-    // Ranged fighters stand on the tank's side so the monster faces away from them.
-    br.goal = spot(target, st.ranged && tank ? Math.sign(tank.body.x - target.x) || sideOf(target) : sideOf(target));
+    // Damage dealers flank it: behind the monster, the far side from the tank it's facing.
+    br.goal = spot(target, tank && tank.bot !== bot ? behindSide(tank.body, target, sideOf(target)) : sideOf(target));
     return;
   }
   br.target = null;
@@ -1700,6 +1725,8 @@ export function healerTurn(bot, world, rng) {
   }
   if (low.length) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
+    if (low[0].g.id === 'you' && low[0].f < 0.5) callOut(world, bot, 'heal');
+    else if (low[0].g.bot === bot && low[0].f < 0.5) callOut(world, bot, 'healSelf');
     bless(low[0].g);
     cast();
     return between(1.1, 1.5, rng);

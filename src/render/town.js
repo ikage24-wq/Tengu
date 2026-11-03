@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { tagFade } from './coop.js';
 import { drawMachine } from './gacha.js';
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
@@ -16,9 +17,14 @@ import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
+import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
+import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
+import { drawCraftBench } from './craftbench.js';
+import { botLifePose, holdFind } from './life.js';
+import { drawFriendFishing } from './fishing.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -464,33 +470,48 @@ export function drawStreet(ctx, map, cam, width, time) {
     // Lit windows breathe a little light at night.
     if (style === 'canal' || style === 'treehome') glowSoft(ctx, x, hy - s.h * 0.55, 46, '#ffe9a6', 0.16 + 0.04 * Math.sin(time * 1.3 + seed * 9));
   }
-  // The town stove, its fire flickering under the pot and steam curling up.
+  // The town stove: the fire licking in its arch (three drawings flowing one into the next), the
+  // pot's lid rattling on the boil now and then, and cel puffs of steam curling up and tearing
+  // apart. Every beat is phased from the stove's own place in town.
   if (map.stove != null) {
     const x = snap(map.stove - cam.x);
     const gy = ground(map.stove);
     if (x > -60 && x < width + 60) {
-      glowSoft(ctx, x, gy - 8, 22, '#ffb35a', 0.5 + 0.15 * Math.sin(time * 9));
+      const ph = map.stove * 0.017;
+      glowSoft(ctx, x, gy - 8, 24, '#ffb35a', 0.45 + 0.12 * Math.sin(time * 7 + ph) + 0.06 * Math.sin(time * 13.7));
       place(ctx, stoveArt(), x, gy + 2);
-      for (let k = 0; k < 3; k++) {
-        const u = (time * 0.6 + k / 3) % 1;
+      const f = (time * 7 + ph) % 3;
+      const i = Math.floor(f);
+      place(ctx, stoveFlameArt(i), x, gy + 0.6);
+      ctx.save();
+      ctx.globalAlpha = f - i;
+      place(ctx, stoveFlameArt((i + 1) % 3), x, gy + 0.6);
+      ctx.restore();
+      // The lid: still most of the time, then a burst of rattling as the pot boils up.
+      const boil = Math.max(0, Math.sin(time * 0.9 + ph)) ** 6;
+      const rattle = boil * Math.sin(time * 38) * 1.1;
+      const lift = boil * Math.abs(Math.sin(time * 19)) * 1.4;
+      ctx.save();
+      ctx.translate(x, gy - 46);
+      ctx.rotate(rattle * 0.05);
+      place(ctx, stoveLidArt(), 0, 2 - lift);
+      ctx.restore();
+      for (let k = 0; k < 4; k++) {
+        const u = (((time * (0.5 + 0.25 * boil) + k / 4 + ph) % 1) + 1) % 1;
+        const sx = x - 5 + k * 3.5 + Math.sin(u * 5 + k * 1.7 + time * 0.8) * (2 + u * 4);
+        const sy = gy - 50 - u * 30;
         ctx.save();
-        ctx.globalAlpha = 0.5 * Math.sin(Math.PI * u);
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(x - 6 + k * 6 + Math.sin(u * 6 + k) * 3, gy - 50 - u * 26, 3 + u * 4, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.globalAlpha = Math.min(1, u * 5) * (1 - u) ** 1.4 * 0.9;
+        puff(ctx, sx, sy, 2.2 + u * 4.5, '#ffffff', '#ece6fa', u > 0.55 ? (u - 0.55) / 0.45 : 0, k * 0.37);
         ctx.restore();
       }
-      ctx.fillStyle = '#ffd66b';
-      for (let k = 0; k < 3; k++) {
-        const fl = 4 + Math.abs(Math.sin(time * 11 + k)) * 4;
-        ctx.beginPath();
-        ctx.moveTo(x - 6 + k * 6, gy - 2);
-        ctx.lineTo(x - 3 + k * 6, gy - 2 - fl);
-        ctx.lineTo(x + k * 6, gy - 2);
-        ctx.fill();
-      }
     }
+  }
+  // The town's craft bench: its tools sway on their pegs, sparks hop off the anvil (more while
+  // someone works there: map.benchWork, set by world/crafting.js).
+  if (map.bench != null) {
+    const x = snap(map.bench - cam.x);
+    if (x > -60 && x < width + 60) drawCraftBench(ctx, map.theme, x, ground(map.bench), time, map.bench, map.benchWork ?? null);
   }
   // The town's capsule machine: its capsules rattle now and then, a glint slides over the globe,
   // and its crank turns while someone pulls (map.gachaTurn, set by the machine's window).
@@ -1040,6 +1061,41 @@ const ROUTINES = {
     const n = Math.min(4, 1 + Math.floor(seg(b.u, 0.15, 0.85) * 4));
     return { rig: { frontArm: arm(3 * k, -6 * k), backArm: arm(2 * k, -6 * k + (n % 2) * 0.5), hy: h(0.6 * k) }, face: n === 4 ? 'grin' : 'smile' };
   },
+  // Posy, keeper of the Party Board: reaching up to pin a fresh quest note (a pink slip with a
+  // heart), waving passers-by over to the board, and a little hop of a cheer when a party heads out.
+  posy(t) {
+    const b = bitAt(t, [['pin', 2.6], ['wave', 2], ['cheer', 1.1]], 1.8);
+    if (!b) return { face: 'smile' };
+    if (b.kind === 'cheer') return { pose: 'cheer', progress: b.u, face: 'excited' };
+    const k = inOut(b.u);
+    if (b.kind === 'wave') {
+      const sway = Math.sin(b.s * 9) * 2.4 * k;
+      return { facing: -1, rig: { frontArm: arm(3 * k + sway, -13 * k), tilt: -2 * k }, face: 'grin' };
+    }
+    // Up on tiptoe to the board, the note pressed flat, a tap to pin it, back down.
+    const up = soft(seg(b.u, 0.08, 0.3)) * (1 - soft(seg(b.u, 0.8, 0.95)));
+    const tap = Math.max(0, Math.sin(seg(b.u, 0.45, 0.6) * Math.PI)) * 1.5;
+    return {
+      facing: 1, rig: { frontArm: arm(4 * up + tap, -12 * up), hy: h(-0.8 * up), tilt: -3 * up }, face: up > 0.5 ? 'cool' : 'smile',
+      hands(ctx, front) {
+        if (up < 0.15) return;
+        ctx.save();
+        ctx.translate(front[0] + 1, front[1] - 2);
+        ctx.globalAlpha = Math.min(1, up * 2);
+        ctx.fillStyle = '#ffd6ea';
+        ctx.fillRect(-2.6, -3.2, 5.2, 5.6);
+        ctx.fillStyle = '#ff8fc1';
+        ctx.beginPath();
+        ctx.arc(-0.7, -0.8, 0.9, 0, TAU);
+        ctx.arc(0.7, -0.8, 0.9, 0, TAU);
+        ctx.moveTo(-1.6, -0.5);
+        ctx.lineTo(0, 1.3);
+        ctx.lineTo(1.6, -0.5);
+        ctx.fill();
+        ctx.restore();
+      },
+    };
+  },
   // Marlo, the merchant: flipping a coin from her thumb and catching it, a cheer for a sale, and a
   // pitch with both arms spread over her wares.
   marlo(t) {
@@ -1337,6 +1393,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
   }
   const said = [];
+  const tags = [];
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
@@ -1344,14 +1401,16 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;
-    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far);
+    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far, tags);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }
 
 // One player: login shimmer, shadow, the character in their pose, and their name tag (gold for
 // pros, green with a heart for party members, a title in gold and the guild underneath).
-function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
+const afkAt = new WeakMap();
+
+function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false, tags = null) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
     for (let i = 0; i < 8; i++) {
@@ -1364,13 +1423,30 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const body = bot.body ?? null;
   if (!body || body.onGround) shadow(ctx, x, y, body ? slopeAt(body.surface, body.x) : slope);
   const waving = bot.state === 'wave';
-  let pose = waving ? 'cheer' : ['walk', 'leave', 'approach'].includes(bot.state) || bot.moving ? 'walk' : 'idle';
+  // (Town walking eases in and out: standing still mid-stroll, they stand.)
+  const strolling = ['walk', 'leave', 'approach'].includes(bot.state) && (bot.speed == null || bot.speed > 4);
+  let pose = waving ? 'cheer' : strolling || bot.moving ? 'walk' : 'idle';
   let progress = waving ? (1.6 - bot.timer) / 1.6 : 0;
+  let dur = 0.5;
+  // A hop for the fun of it (up over the street and down: world/botsoul.js).
+  const hop = !body ? hopLift(bot) : 0;
+  if (hop > 0) {
+    pose = 'jump';
+    y -= hop;
+  }
   // A little emote, or a cheer at a catch.
   if (!body && bot.emote && !waving) {
     pose = bot.emote.pose;
     progress = bot.emote.t / bot.emote.dur;
+    dur = bot.emote.dur;
   }
+  // AFK: sat on the street, dozing, for as long as they're away.
+  if (!body && bot.afk) {
+    if (!afkAt.has(bot)) afkAt.set(bot, time);
+    pose = 'afk';
+    progress = 1;
+    dur = Math.max(0.01, time - afkAt.get(bot));
+  } else afkAt.delete(bot);
   if (body) {
     if (bot.attack) {
       pose = bot.attack.pose;
@@ -1379,17 +1455,30 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     else if (!body.onGround) pose = 'jump';
     else pose = Math.abs(body.vx) > 8 ? 'walk' : 'idle';
   }
+  // At a life spot, the stove or the bench, or fishing: the same moves and tools as yours, the
+  // find held up in their hand (render/life.js).
+  const life = bot.down ? null : botLifePose(bot, time);
+  if (life) {
+    pose = life.pose;
+    progress = life.progress;
+  }
   const own = bot.char.appearance;
-  const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : own;
+  // (Their mood shows on their face now and then: world/botsoul.js.)
+  const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : bot.moodFace && !bot.afk ? { ...own, face: bot.moodFace.face } : own;
   const gear = wornGear(bot.char);
   const seed = seedOf(bot.id);
   const facing = body ? body.facing : bot.facing;
   const anim = animFor(bot.id, body ? body.x : bot.x, facing, time, body);
   const state = {
-    pose, progress, dur: 0.5, vy: body?.vy, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
+    pose, progress, dur, vy: body ? body.vy : hop > 0 ? (bot.hop.t / bot.hop.dur < 0.5 ? -200 : 200) : undefined, time: time + seed * 0.37, seed, facing, job: bot.char.job, alpha: fade,
     // Party members fighting nearby stand on guard between swings.
     ready: Boolean(bot.party && bot.brain?.target), hurt: bot.hurt > 0,
   };
+  let tip = null;
+  if (life) {
+    Object.assign(state, { dur: life.dur, from: life.from, blend: life.blend, ready: false, onHands: holdFind(life.find) });
+    if (bot.life.kind === 'fish') state.onTool = (pt) => { tip = pt; };
+  }
   if (bot.down) {
     if (!fellAt.has(bot)) fellAt.set(bot, time);
     drawFallen(ctx, look, wornGear(bot.char), x, y, { ...state, alpha: 0.75 }, time - fellAt.get(bot));
@@ -1397,35 +1486,79 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   } else {
     fellAt.delete(bot);
     drawHero(ctx, look, gear, x, y, state, anim);
+    // Their line out on the water, to the float (where it is from where they're drawn).
+    if (life && bot.life.kind === 'fish') {
+      const s = bot.life.spot;
+      const wx = body ? body.x : bot.x;
+      const wy = body ? body.y : s.y;
+      drawFriendFishing(ctx, { face: s.face, bx: s.bx, by: s.by, phase: bot.life.phase }, x, y, { x: wx - x, y: wy - y }, time, tip);
+    }
   }
   ctx.save();
   if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;
+  ctx.globalAlpha *= tagFade(x, y);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;
   const w = ctx.measureText(label).width + pad;
   // A friend's tag is sky blue.
   const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
-  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null, r: 5, width: 1 });
+  // (A group of their own: the tag edged in their group's colour, so you can tell who's together.)
+  const crewEdge = !bot.party && bot.crew ? bot.crew.color : null;
+  // Tags of people standing together don't pile into an unreadable run: one that would land on
+  // a tag already drawn steps down a row (once), and past that it's left off.
+  let ty = y;
+  const th = 12 + (bot.inDungeon ? 6 : (bot.title ? 8 : 0) + (bot.guild ? 8 : 0));
+  if (tags) {
+    for (let k = 0; k < 2 && ty != null; k++) {
+      const hit = tags.find((o) => x - w / 2 < o.x1 + 2 && o.x0 < x + w / 2 + 2 && ty < o.y + o.h && o.y < ty + th);
+      if (!hit) break;
+      ty = k < 1 ? hit.y + hit.h : null;
+    }
+  }
+  if (ty == null && !hovered) {
+    ctx.restore();
+    if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
+    return;
+  }
+  ty ??= y;
+  tags?.push({ x0: x - w / 2, x1: x + w / 2, y: ty, h: th });
+  box(ctx, x - w / 2, ty + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : crewEdge ?? (bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null), r: 5, width: crewEdge ? 1.5 : 1 });
+  if (crewEdge) {
+    ctx.fillStyle = crewEdge;
+    ctx.beginPath();
+    ctx.arc(x + w / 2 + 4, ty + 7, 2, 0, TAU);
+    ctx.arc(x + w / 2 + 8.5, ty + 7, 2, 0, TAU);
+    ctx.fill();
+  }
+  // Away from the keyboard: a little AFK tag that breathes over their head.
+  if (bot.afk) {
+    const a = 0.75 + 0.25 * Math.sin(time * 2.2 + seed);
+    const was = ctx.globalAlpha;
+    ctx.globalAlpha = a * fade;
+    box(ctx, x - 11, y - 52 + Math.sin(time * 1.6 + seed) * 1.2, 22, 9, { fill: 'rgba(90,82,120,0.85)', edge: '#d9d0f0', r: 4.5, width: 1 });
+    text(ctx, 'AFK', x, y - 45.5 + Math.sin(time * 1.6 + seed) * 1.2, { size: 6, bold: true, align: 'center', color: '#f2ecff' });
+    ctx.globalAlpha = was;
+  }
 
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(x - w / 2 + 6, y + 10);
-    ctx.bezierCurveTo(x - w / 2 + 1, y + 6.5, x - w / 2 + 3.5, y + 3.5, x - w / 2 + 6, y + 5.8);
-    ctx.bezierCurveTo(x - w / 2 + 8.5, y + 3.5, x - w / 2 + 11, y + 6.5, x - w / 2 + 6, y + 10);
+    ctx.moveTo(x - w / 2 + 6, ty + 10);
+    ctx.bezierCurveTo(x - w / 2 + 1, ty + 6.5, x - w / 2 + 3.5, ty + 3.5, x - w / 2 + 6, ty + 5.8);
+    ctx.bezierCurveTo(x - w / 2 + 8.5, ty + 3.5, x - w / 2 + 11, ty + 6.5, x - w / 2 + 6, ty + 10);
     ctx.fill();
-  } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, y + 7, 2.6, '#ffd66b');
-  text(ctx, label, x + (pad > 10 ? 4 : 0), y + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
+  } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, ty + 7, 2.6, '#ffd66b');
+  text(ctx, label, x + (pad > 10 ? 4 : 0), ty + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
   // In a dungeon, everyone's HP shows under their name.
   if (bot.inDungeon && bot.hp != null) {
     const f = Math.max(0, bot.hp / bot.stats.maxHp);
-    box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
-    if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
+    box(ctx, x - 16, ty + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
+    if (f > 0) box(ctx, x - 16, ty + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
   } else {
     // The title they wear (gold), then their guild.
-    if (bot.title) text(ctx, bot.title, x, y + 20, { size: 6, bold: true, align: 'center', color: '#ffe08a', outline: 'rgba(60,40,20,0.7)' });
-    if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + (bot.title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+    if (bot.title) text(ctx, bot.title, x, ty + 20, { size: 6, bold: true, align: 'center', color: '#ffe08a', outline: 'rgba(60,40,20,0.7)' });
+    if (bot.guild) text(ctx, `<${bot.guild}>`, x, ty + (bot.title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
   }
   ctx.restore();
   if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
@@ -1434,11 +1567,12 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
 // Your party, on any map, wherever they are.
 export function drawParty(ctx, members, cam, width, time, hoverId = null) {
   const said = [];
+  const tags = [];
   for (const bot of members) {
     if (!bot.body) continue;
     const x = snap(bot.body.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said);
+    drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said, 0, false, tags);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }

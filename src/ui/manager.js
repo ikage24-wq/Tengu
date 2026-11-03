@@ -19,11 +19,14 @@ import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
+import { lifeWindow } from './life.js';
+import { craftingWindow } from './crafting.js';
 import { gachaWindow } from './gacha.js';
 import { tradeWindow } from './trade.js';
 import { tradeSay } from '../net/together.js';
 import { online } from '../net/online.js';
 import { drawMenu, drawPartyPanel } from './party.js';
+import { drawPartyQuestCard } from './partyboard.js';
 import { isGm } from '../world/gm.js';
 import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
@@ -33,6 +36,8 @@ import { checkArrival } from '../world/routes.js';
 import { sceneInput, drawScene, drawRadio } from './cutscene.js';
 import { drawGuide } from './guide.js';
 import { emoteWheel } from './emotes.js';
+import { drawPings } from './grouping.js';
+import { smartPing } from '../world/grouping.js';
 
 // Places quests send you: marked off on arrival (and, for a spot up high, once you climb there).
 function noteVisits(world) {
@@ -59,11 +64,13 @@ export function createUiState() {
       online: { x: 200, y: 30, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
+      life: { x: 150, y: 48, open: false, theme: 'mint', icon: 'leaf' },
+      craft: { x: 140, y: 44, open: false, theme: 'mint', icon: 'hammer' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
       trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'gacha', 'trade', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'craft', 'life', 'gacha', 'trade', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -79,7 +86,7 @@ export function createUiState() {
   };
 }
 
-const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet', KeyN: 'online', KeyB: 'collection' };
+const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet', KeyN: 'online', KeyB: 'collection', KeyG: 'life' };
 
 // Handles keys and world events before the world updates. Returns whether the world should
 // ignore player controls this frame.
@@ -105,6 +112,8 @@ export function routeInput(state, world, input, dt) {
       }
     } else if (e.type === 'cook') {
       state.windows.cook.open = true;
+    } else if (e.type === 'craft') {
+      state.windows.craft.open = true;
     } else if (e.type === 'gacha') {
       state.windows.gacha.open = true;
     } else if (e.type === 'death') {
@@ -133,8 +142,9 @@ export function routeInput(state, world, input, dt) {
 
   if (input.pressed.has('F9') && isGm(world.char)) state.windows.admin.open = !state.windows.admin.open;
   if (!isGm(world.char)) state.windows.admin.open = false;
-  // T: the emote wheel.
+  // T: the emote wheel. V: a ping for your party.
   if (input.pressed.has('KeyT')) state.emotes = !state.emotes;
+  if (input.pressed.has('KeyV') && !world.scene) smartPing(world);
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
   }
@@ -174,7 +184,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, gacha: gachaWindow, trade: tradeWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -196,7 +206,7 @@ function inside(win, m) {
 
 // How much the world dims behind what's open: most for dialogs that take over the controls,
 // a little for the big menus, a touch for the everyday windows you keep open while playing.
-const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, online: 0.1, collection: 0.12, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06 };
+const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, online: 0.1, collection: 0.12, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06, life: 0.06 };
 
 // Darkens the world (not the HUD) toward a deep plum, easing in and out, so open windows stand
 // apart from busy scenes.
@@ -214,6 +224,34 @@ function dimWorld(ctx, state) {
   ctx.fillRect(0, 0, 640, 360);
 }
 
+// Where a window opens: its own spot, unless that lands on another open window or on the HUD's
+// left column (minimap, buffs, party): then the nearest spot that covers the least of them, so
+// windows opened one after another cascade instead of stacking exactly. A window you've dragged
+// keeps your spot.
+function placeWindow(state, key) {
+  const win = state.windows[key];
+  win.home ??= { x: win.x, y: win.y };
+  const w = win.w ?? 260;
+  const h = win.h ?? 220;
+  const others = Object.entries(state.windows).filter(([k, o]) => k !== key && o.open && o.w).map(([, o]) => o);
+  others.push({ x: 0, y: 0, w: 168, h: state.leftColumnY ?? 130 });
+  const cover = (x, y) => others.reduce((a, o) => a + Math.max(0, Math.min(x + w, o.x + o.w) - Math.max(x, o.x)) * Math.max(0, Math.min(y + h, o.y + o.h) - Math.max(y, o.y)), 0);
+  const clampX = (x) => Math.max(0, Math.min(640 - w, x));
+  const clampY = (y) => Math.max(8, Math.min(Math.max(8, 318 - h), y));
+  const spots = [[win.home.x, win.home.y]];
+  for (let k = 1; k <= 6; k++) spots.push([win.home.x + 26 * k, win.home.y + 18 * k], [win.home.x - 26 * k, win.home.y + 18 * k]);
+  for (let x = 170; x <= 640 - w; x += 20) for (const y of [win.home.y, 8, 30]) spots.push([x, y]);
+  let best = null;
+  for (const [sx, sy] of spots) {
+    const x = clampX(sx);
+    const y = clampY(sy);
+    const score = cover(x, y) + Math.hypot(x - win.home.x, y - win.home.y) * 2;
+    if (!best || score < best.score) best = { x, y, score };
+  }
+  win.x = Math.round(best.x);
+  win.y = Math.round(best.y);
+}
+
 // How long a closing window takes to fade away (s).
 const CLOSE = 0.14;
 
@@ -225,10 +263,12 @@ export function drawUi(ui, state, world) {
   state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;
   state.typeField = null;
   dimWorld(ui.ctx, state);
+  drawPings(ui, state, world);
   drawHud(ui, state, world);
   // The guide arrow and pill, while a route is set.
   drawGuide(ui, state, world);
   drawPartyPanel(ui, state, world);
+  drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);
   const m = ui.mouse;
   const t = performance.now() / 1000;
@@ -236,7 +276,10 @@ export function drawUi(ui, state, world) {
   // it's never stuck behind one you used earlier.
   for (const key of state.order) {
     const win = state.windows[key];
-    if (win.open && !win.wasOpen) state.order = [...state.order.filter((k) => k !== key), key];
+    if (win.open && !win.wasOpen) {
+      state.order = [...state.order.filter((k) => k !== key), key];
+      if (!win.moved) placeWindow(state, key);
+    }
     if (!win.open && win.wasOpen) win.closedAt = t;
     win.wasOpen = win.open;
   }

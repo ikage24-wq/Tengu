@@ -393,16 +393,45 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       }
       return true;
     }
+    case 'gswheel': {
+      // Titan Breaker's somersaults: a wheel of steel round her as she turns over and over in the
+      // leap, rising with her (the move's lift, from its own timeline: this plays from 0.1 to 0.43
+      // of the 1.5 s move).
+      const mp = 0.1 + p * (0.5 / 1.5);
+      const u = Math.min(1, Math.max(0, (mp - 0.1) / 0.32));
+      const lift = 62 * Math.sin((1 - (1 - u) ** 3) * Math.PI / 2);
+      const a = Math.min(1, p / 0.12) * (p > 0.8 ? (1 - p) / 0.2 : 1);
+      fxSprite(ctx, 'celgswheel', x, y - 26 - lift, { t: time, scale: 0.95, flip, alpha: a });
+      return true;
+    }
+    case 'verdicthalo': {
+      // Grand Verdict's sun: a great halo of light rising and opening over the kneeling Paladin.
+      fxSprite(ctx, 'celhalo', x, y - 80 - 14 * Math.min(1, p * 2), { p, scale: 0.75 });
+      return true;
+    }
+    case 'axethrow': {
+      // Crimson Eclipse's throw: the axe spinning out in front and right round him in a great
+      // circle (dragging them in), then back to his hand.
+      const th = Math.PI * 2 * (p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) ** 2);
+      const R = 95 * Math.min(1, Math.sin(Math.PI * p) * 1.8);
+      fxSprite(ctx, 'celaxewheel', x + dir * Math.cos(th) * R, y - 30 + Math.sin(th) * R * 0.3, { t: time, scale: 0.55, flip });
+      return true;
+    }
     case 'bloodmoon': {
-      // The Berserker's moon: a crimson eclipse swelling in the sky behind the axe.
+      // The Berserker's moon: a crimson eclipse swelling in the sky behind the axe, and a giant axe
+      // of fire flying together out of embers over him, held until he smashes it down ('eclipse').
       const s = Math.min(1, p * 3) * (p > 0.85 ? (1 - p) / 0.15 : 1);
       fxSprite(ctx, 'celeclipse', x - dir * 8, y - 130, { t: time, scale: 1.1 * s, alpha: s });
+      if (p < 0.48) fxSprite(ctx, 'celrageaxeform', x + dir * 40, y - 70, { p: Math.min(1, p / 0.3), scale: 0.62, flip, alpha: p > 0.42 ? (0.48 - p) / 0.06 : 1 });
       return true;
     }
     case 'eclipse': {
-      // The crash under the moon: claw marks torn huge across the ground, the ground gashed open,
-      // fire bursting and a jagged shockwave ripping out.
+      // The crash under the moon: the giant axe of fire driven head-first into the ground and
+      // shattering, claw marks torn huge across the ground, the ground gashed open, fire bursting
+      // and a jagged shockwave ripping out.
       const r = f.r ?? 175;
+      const fall = Math.min(1, p / 0.1);
+      fxSprite(ctx, 'celrageaxe', x, y + 6 - 110 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 0.75, flip });
       fxSprite(ctx, 'celclawbig', x, y - 40, { p, scale: 0.95, flip });
       debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });

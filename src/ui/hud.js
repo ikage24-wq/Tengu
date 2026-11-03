@@ -26,6 +26,9 @@ import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
 import { inParty } from '../net/together.js';
+import { drawMinimapPings } from './grouping.js';
+import { groupReady, NEAR_BONUS } from '../world/teamwork.js';
+import { VW } from '../input.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -35,7 +38,9 @@ const LAV = THEMES.lavender;
 const TRAY_Y = 322;
 const TRAY_H = 34;
 const MENU_X = 221;
-const MENU_STEP = 15.9;
+const MENU_STEP = 14.4;
+// The menu buttons' radius (ten of them fit between the other two trays).
+const MENU_R = 7;
 const HK_X = 380;
 const HK_STEP = 21;
 const HK_D = 19;
@@ -191,10 +196,44 @@ export function drawHud(ui, state, world) {
   if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
-  tray(ctx, MENU_X, menus.length * MENU_STEP + 9);
-  menus.forEach(([label, key, hotkey, ic, theme], i) => {
-    const cx = MENU_X + 14 + i * MENU_STEP;
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['Life Skills', 'life', 'G', 'leaf', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  // On a phone ten 14 px bubbles are too small for a thumb: the tray folds into one big Menu
+  // button that opens a grid of big buttons (drawMenuGrid, at the end of the HUD).
+  if (ui.input?.touch) {
+    tray(ctx, MENU_X, 2 * MENU_R + 8.5 + 12);
+    const cx = MENU_X + 4.5 + 13;
+    const cy = TRAY_Y + TRAY_H / 2 - 1;
+    const th = THEMES.lavender;
+    const on = Boolean(state.menuGrid);
+    ctx.fillStyle = th.dark;
+    ctx.beginPath();
+    ctx.arc(cx, cy + 1.5, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = on ? th.main : th.light;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = th.dark;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    for (let i = -1; i <= 1; i++) box(ctx, cx - 6, cy - 1 + i * 4, 12, 2.4, { fill: on ? '#ffffff' : th.dark, edge: null, r: 1.2 });
+    if ((char.ap > 0 || char.sp > 0) && !on) {
+      ctx.fillStyle = COLORS.bad;
+      ctx.beginPath();
+      ctx.arc(cx + 10, cy - 10, 3.5 + Math.sin(t * 6) * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    if (clicked(ui, cx - 15, cy - 15, 30, 30)) {
+      state.menuGrid = !on;
+      state.menuGridAt = t;
+    }
+    hud.menus = menus;
+  } else tray(ctx, MENU_X, (menus.length - 1) * MENU_STEP + 2 * MENU_R + 8.5);
+  if (!ui.input?.touch) menus.forEach(([label, key, hotkey, ic, theme], i) => {
+    const cx = MENU_X + MENU_R + 4.5 + i * MENU_STEP;
     const cy = TRAY_Y + TRAY_H / 2 - 1;
     const th = THEMES[theme];
     const hot = hover(ui, cx - 8, cy - 8, 16, 16);
@@ -204,11 +243,11 @@ export function drawHud(ui, state, world) {
     const k = key === 'bag' ? bump(hud.bagAt) : 1;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 1.5, MENU_R * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
     ctx.fill();
     // A gloss along the top of the bubble.
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
@@ -218,9 +257,9 @@ export function drawHud(ui, state, world) {
     ctx.strokeStyle = th.dark;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 9 * k, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 8.4 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
     if (clicked(ui, cx - 8, cy - 8, 16, 16)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
@@ -337,7 +376,8 @@ export function drawHud(ui, state, world) {
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.stroke();
-    text(ctx, KEY_LABEL(code), x + 2, y + 4.2 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
+    // (On a phone there are no keys to name: the tag stays a plain dot.)
+    if (!ui.input?.touch) text(ctx, KEY_LABEL(code), x + 2, y + 4.2 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
     if (b && ui.mouse.right && hot) {
       delete char.hotkeys[code];
       ui.used = true;
@@ -347,7 +387,11 @@ export function drawHud(ui, state, world) {
 
   drawHits(ui, state, world);
   const gauge = gaugeOf(char);
-  if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0);
+  // On a phone the Attack and Jump buttons sit over the gauge's usual spot, so it moves left,
+  // over the hotkeys.
+  const gx = ui.input?.touch ? 404 : 566;
+  if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0, gx);
+  drawSideBySide(ui, world, gauge ? gx - 18 : ui.input?.touch ? 420 : 620);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -358,6 +402,58 @@ export function drawHud(ui, state, world) {
   if (settings.mapBanner) drawBanner(ctx, world, state);
   drawTutorial(ui, world);
   if (settings.showFps) drawFps(ctx, state);
+  if (ui.input?.touch && state.menuGrid) drawMenuGrid(ui, state, world);
+}
+
+// The phone's menu: the tray's ten windows as a grid of big buttons (icon and name) that pops up
+// over the menu button. A tap opens or closes one and folds the grid; a tap outside folds it too.
+function drawMenuGrid(ui, state, world) {
+  const { ctx } = ui;
+  const menus = state.hud?.menus ?? [];
+  const cols = 5;
+  const bw = 52;
+  const bh = 36;
+  const gap = 4;
+  const w = cols * bw + (cols - 1) * gap + 12;
+  const h = Math.ceil(menus.length / cols) * (bh + gap) - gap + 12;
+  const x = MENU_X;
+  const y = TRAY_Y - h - 6;
+  const age = performance.now() / 1000 - (state.menuGridAt ?? -9);
+  const e = Math.min(1, age / 0.16);
+  const pop = 1 - (1 - e) * (1 - e);
+  ctx.save();
+  ctx.globalAlpha = pop;
+  ctx.translate(x + 18, y + h);
+  ctx.scale(0.85 + 0.15 * pop, 0.85 + 0.15 * pop);
+  ctx.translate(-(x + 18), -(y + h));
+  softShadow(ctx, x, y, w, h, 12, 3);
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#c9b6ff', r: 12, width: 2 });
+  const char = world.char;
+  menus.forEach(([label, key, , ic, theme], i) => {
+    const bx = x + 6 + (i % cols) * (bw + gap);
+    const by = y + 6 + Math.floor(i / cols) * (bh + gap);
+    const th = THEMES[theme];
+    const open = state.windows[key].open;
+    const down = hover(ui, bx, by, bw, bh) && ui.mouse.down ? 1 : 0;
+    box(ctx, bx, by + 2, bw, bh - 2, { fill: th.dark, edge: null, r: 9 });
+    box(ctx, bx, by + down, bw, bh - 2, { fill: open ? th.main : th.light, edge: th.dark, r: 9, width: 1.2 });
+    icon(ctx, ic, bx + bw / 2, by + 12 + down, 12, open ? '#ffffff' : th.dark);
+    text(ctx, label === 'World Map' ? 'Map' : label === 'Life Skills' ? 'Life' : label === 'Cash Shop' ? 'Shop' : label, bx + bw / 2, by + 29 + down, { size: 7.5, bold: true, align: 'center', color: open ? '#ffffff' : th.ink ?? th.dark, outline: open ? th.dark : null });
+    if ((key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0)) {
+      ctx.fillStyle = COLORS.bad;
+      ctx.beginPath();
+      ctx.arc(bx + bw - 6, by + 6, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (clicked(ui, bx, by, bw, bh)) {
+      state.windows[key].open = !open;
+      state.menuGrid = false;
+    }
+  });
+  ctx.restore();
+  state.menuGridRect = { x, y, w, h };
+  // A tap anywhere else folds it (and still goes through to whatever is there).
+  if (ui.mouse.clicked && !hover(ui, x, y, w, h)) state.menuGrid = false;
 }
 
 // Loot you pick up flies into the Bag button: from where it lay, up and over on a curve, shrinking
@@ -378,7 +474,7 @@ function drawPickups(ctx, state, world, hud, t) {
     const e = k * k * (3 - 2 * k) * 0.4 + k * k * 0.6;
     const sx = f.x - cam.x;
     const sy = f.y - cam.y;
-    const ex = MENU_X + 14;
+    const ex = MENU_X + MENU_R + 4.5;
     const ey = TRAY_Y + TRAY_H / 2 - 1;
     const cx = (sx + ex) / 2;
     const cy = Math.min(sy, ey) - 70;
@@ -428,10 +524,14 @@ const GAUGES = {
   charge: { color: '#b8782a', hot: '#4fe0d0', icon: 'cog', name: 'Pressure', full: 'OVERDRIVE', notch: () => null, edge: 'rgba(79,224,208,', ink: '#5a3818',
     tip: 'Every bolt of yours that lands builds steam pressure; it fades once the fighting stops. Full (Overdrive), your crossbow vents steam and every shot fires a second bolt, and Big Bertha is ready.' },
 };
-function drawGauge(ui, world, kind, value) {
+function drawGauge(ui, world, kind, value, x = 566) {
   const { ctx } = ui;
   const G = GAUGES[kind];
-  const x = 566;
+  // Its labels centre over the gauge but never run past the screen's right edge.
+  const over = (str, size) => {
+    ctx.font = font(size, true);
+    return Math.min(x + 35, VW - 4 - ctx.measureText(str).width / 2);
+  };
   const y = TRAY_Y - 22;
   const k = Math.min(1, value / 100);
   const full = k >= 1;
@@ -461,13 +561,65 @@ function drawGauge(ui, world, kind, value) {
   }
   text(ctx, G.label ? G.label(value) : `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
   if (full) {
-    text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
+    text(ctx, G.full, over(G.full, 8), y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
     // A full gauge is what a finisher spends: say so when you know one.
     if (Object.values(SKILLS).some((k) => k.fullGauge && (world.char.skills[k.id] ?? 0) > 0)) {
-      text(ctx, 'FINISHER READY', x + 35, y - 13, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffe36b' : '#ffffff', outline: '#c8243a' });
+      const group = groupReady(world);
+      const say = group ? 'GROUP FINISHER READY' : 'FINISHER READY';
+      text(ctx, say, over(say, 8), y - 13, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? (group ? '#ffc58a' : '#ffe36b') : '#ffffff', outline: group ? '#c4567a' : '#c8243a' });
     }
   }
   if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
+}
+
+// Side by side (world/teamwork.js): a little party badge by the gauge while members fight near
+// you, a pip for each (up to three), easing in and out and bumping when one joins.
+const sideHud = new WeakMap();
+function drawSideBySide(ui, world, x) {
+  const { ctx } = ui;
+  const n = world.team?.near ?? 0;
+  const hud = sideHud.get(world) ?? sideHud.set(world, { a: 0, n: 0, bump: -9 }).get(world);
+  if (n > hud.n) hud.bump = world.now;
+  hud.n = n;
+  hud.a += ((n ? 1 : 0) - hud.a) * 0.15;
+  if (hud.a < 0.02) return;
+  const y = TRAY_Y - 14;
+  const pop = Math.max(0, 1 - (world.now - hud.bump) / 0.25);
+  ctx.save();
+  ctx.globalAlpha = hud.a;
+  box(ctx, x - 8, y - 8, 16, 16, { fill: 'rgba(255,250,248,0.94)', edge: '#ff9670', r: 8, width: 1.5 });
+  // Two little buddies shoulder to shoulder (rose and coral, the one in front bobbing), drawn
+  // bold so they read at this size.
+  ctx.save();
+  ctx.translate(x, y);
+  const k = 1 + pop * 0.3;
+  ctx.scale(k, k);
+  const buddy = (bx, by, fill) => {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.ellipse(bx, by + 4.2, 3.3, 2.8, 0, Math.PI, 0);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(bx, by - 0.6, 2.5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fill();
+  };
+  const bob = Math.sin(world.now * 3) * 0.4;
+  buddy(-2.4, -0.6, '#c4567a');
+  buddy(2.4, -0.2 + bob, '#ff9670');
+  ctx.restore();
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < hud.n ? '#ff9670' : 'rgba(196,86,122,0.25)';
+    ctx.beginPath();
+    ctx.arc(x - 4 + i * 4, y + 11, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  if (hover(ui, x - 8, y - 8, 16, 16)) tooltip(ui, [{ text: 'Side by Side', bold: true, color: '#c4567a' }, { text: `Fighting near ${hud.n} party member${hud.n === 1 ? '' : 's'}: +${Math.round(hud.n * NEAR_BONUS * 100)}% damage (up to 3).`, size: 8, color: COLORS.muted }]);
 }
 
 // A soft colour around the screen's edges (a full gauge's state).
@@ -610,17 +762,34 @@ function luma(hex) {
   return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
 }
 
-function drawMinimap(ui, world) {
-  const { ctx } = ui;
-  const map = world.map;
-  // (The minimap redraw: wider, and framed on the band of the map where things are, that band
-  // shown taller than it is wide-for-wide, so a flat town isn't a three-pixel strip.)
+// The minimap's size: 150 wide, its height framed on the band of the map where things are.
+function minimapBox(map) {
   const w = 150;
   const scale = w / map.width;
   const tops = [...(map.terrain ?? [[0, map.groundY]]).map(([, ty]) => ty), ...map.platforms.map((p) => p.y), ...map.ropes.map((r) => r.top)];
   const top = Math.max(0, Math.min(...tops) - 70);
   const span = map.height - top;
   const h = Math.max(44, Math.min(96, Math.round(span * scale * 1.6)));
+  return { w, scale, top, span, h };
+}
+
+// Where the left HUD column starts (under the minimap's frame, or the top when it's off): the
+// buffs, then the party panel and the party quest card stack from here.
+export function minimapBottom(world) {
+  return settings.minimap && world.map ? 20 + minimapBox(world.map).h + 4 + 6 : 8;
+}
+
+// The y under the buff row (the party panel starts here).
+export function buffsBottom(world) {
+  return minimapBottom(world) + (Object.keys(world.char.buffs).length ? 30 : 0);
+}
+
+function drawMinimap(ui, world) {
+  const { ctx } = ui;
+  const map = world.map;
+  // (The minimap redraw: wider, and framed on the band of the map where things are, that band
+  // shown taller than it is wide-for-wide, so a flat town isn't a three-pixel strip.)
+  const { w, scale, top, span, h } = minimapBox(map);
   const sy = h / span;
 
   const x = 8;
@@ -748,6 +917,8 @@ function drawMinimap(ui, world) {
     ctx.arc(gx, gy, mate ? 2.3 : 1.9, 0, Math.PI * 2);
     ctx.fill();
   }
+  // The party's pings.
+  drawMinimapPings(ctx, world, X, Y);
   // You: a pink arrow pointing the way you face, with a ring pulsing out from it.
   const px = x + world.body.x * scale;
   const py = Y(world.body.y) - 3;
@@ -792,8 +963,7 @@ function drawMinimap(ui, world) {
 function drawBuffs(ui, world) {
   const { ctx } = ui;
   const buffs = Object.entries(world.char.buffs);
-  const map = world.map;
-  const y = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
+  const y = minimapBottom(world);
   buffs.forEach(([id, b], i) => {
     const x = 8 + i * 22;
     const left = Math.max(0, b.until - world.now);
@@ -820,9 +990,10 @@ function drawBuffs(ui, world) {
 // The message log: each line on its own soft pill so it reads over any background.
 function drawLog(ui, world, state) {
   const { ctx } = ui;
-  const msgs = world.messages;
-  // While chatting the log sits above the chat bar and shows in full.
+  // While chatting the log sits above the chat bar and shows in full (on the Party tab, the
+  // party's lines only).
   const typing = state.chat?.typing != null;
+  const msgs = typing && state.chat.channel === 'party' && !state.chat.sendTo ? world.partyLog ?? [] : world.messages;
   ctx.font = font(8, true);
   msgs.forEach((m, i) => {
     const y = TRAY_Y - (typing ? 24 : 6) - (msgs.length - 1 - i) * 12;

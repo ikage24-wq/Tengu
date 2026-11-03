@@ -6707,6 +6707,1057 @@
     sparkle(ctx, PSILV, 34, -48, 12, 0.2);
   });
 
+  // ---------- The Warrior line's finishers, remade for the greatsword (2026-11-03) ----------
+  // Titan Breaker's somersaults: a wheel of steel standing up round her as her greatsword turns
+  // over and over in the leap: three crescents chasing each other round, white-hot at their heads,
+  // sparkles flung off. Loops (three-fold, so eight drawings make a smooth turn).
+  E.gswheel = asLight({
+    w: 320, h: 320, n: 8, fps: 16, px: 160, py: 160, loop: true,
+    draw(ctx, i) {
+      const c = 160;
+      const R = 128;
+      const ph = (i / 8) * (TAU / 3);
+      for (let j = 0; j < 3; j++) {
+        const a1 = ph + (j * TAU) / 3;
+        celCrescent(ctx, PAL.steel, c, c, R, a1 - 1.25, a1, 34, { seed: 801 + j });
+        sparkle(ctx, PAL.steel, c + Math.cos(a1) * (R - 8), c + Math.sin(a1) * (R - 8), 10 + (i % 2) * 3, a1);
+      }
+      const r = rng(810 + i);
+      for (let j = 0; j < 5; j++) {
+        const a = r() * TAU;
+        const d = R + 10 + r() * 22;
+        shard(ctx, PAL.steel, c + Math.cos(a) * d, c + Math.sin(a) * d, a + Math.PI / 2, 10, 2.6);
+      }
+    },
+  }, PAL.steel);
+
+  // Grand Verdict's halo: a great sun of light opening behind the kneeling Paladin: a ring with
+  // long and short rays round it, turning slowly while it holds, then the rays draw in and it
+  // breaks up into diamonds and sparkles.
+  E.halo = asLight({
+    w: 380, h: 380, n: 9, fps: 10, px: 190, py: 190,
+    draw(ctx, i) {
+      const c = 190;
+      const pal = PAL.holy;
+      const open = [0.45, 0.8, 1, 1, 1, 1, 0.9, 0, 0][i];
+      const rot = i * 0.06;
+      if (open > 0) {
+        for (let j = 0; j < 16; j++) {
+          const a = rot + (j / 16) * TAU;
+          const r0 = 86 * open;
+          const r1 = (j % 2 ? 128 : 172) * open * (i === 6 ? 0.8 : 1);
+          const w = j % 2 ? 7 : 11;
+          const n = [Math.cos(a + Math.PI / 2) * w, Math.sin(a + Math.PI / 2) * w];
+          inked(ctx, [[c + Math.cos(a) * r0 + n[0], c + Math.sin(a) * r0 + n[1]], [c + Math.cos(a) * r1, c + Math.sin(a) * r1], [c + Math.cos(a) * r0 - n[0], c + Math.sin(a) * r0 - n[1]]], pal[2], pal[4], 3);
+          fill(ctx, [[c + Math.cos(a) * r0 + n[0] * 0.4, c + Math.sin(a) * r0 + n[1] * 0.4], [c + Math.cos(a) * (r1 - 8), c + Math.sin(a) * (r1 - 8)], [c + Math.cos(a) * r0 - n[0] * 0.4, c + Math.sin(a) * r0 - n[1] * 0.4]], pal[0]);
+        }
+        celRing(ctx, pal, c, c, 84 * open, 16, { broken: i === 6 ? 0.5 : 0, seed: 820 });
+        celRing(ctx, pal, c, c, 52 * open, 6, { broken: i >= 5 ? 0.3 : 0, seed: 821 });
+        for (let j = 0; j < 4; j++) {
+          const a = -rot * 2 + (j / 4) * TAU;
+          diamond(ctx, pal, c + Math.cos(a) * 68 * open, c + Math.sin(a) * 68 * open, 7);
+        }
+        if (i >= 2 && i <= 5) for (let j = 0; j < 3; j++) sparkle(ctx, pal, c + Math.cos(rot * 3 + j * 2.1) * 150, c + Math.sin(rot * 3 + j * 2.1) * 150, 10 + ((i + j) % 2) * 4, j);
+      } else {
+        const k = (i - 6) / 2;
+        const r = rng(830);
+        for (let j = 0; j < 14; j++) {
+          const a = (j / 14) * TAU + r() * 0.3;
+          const d = 90 + k * 70 + r() * 30;
+          if (j % 2) diamond(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 7 * (1.2 - k * 0.6));
+          else sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 11 * (1.2 - k * 0.6), a);
+        }
+      }
+    },
+  }, PAL.holy);
+
+  // An axe as the effects draw it: a haft from the grip (0, 0) up to `top`, a broad crescent
+  // blade out to +x near the top and a spike back to -x.
+  function axeArt(ctx, pal, x, y, rot, L, k = L / 150, hw = k) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    inked(ctx, [[-6 * hw, 20 * hw], [6 * hw, 20 * hw], [6 * hw, -L], [-6 * hw, -L]], pal[3], pal[4], 4);
+    fill(ctx, [[-2 * hw, 16 * hw], [2 * hw, 16 * hw], [2 * hw, -L + 4], [-2 * hw, -L + 4]], pal[1]);
+    const hy = -L + 26 * k;
+    const blade = [[4 * k, hy - 24 * k], [36 * k, hy - 52 * k], [62 * k, hy - 30 * k], [70 * k, hy + 4 * k], [60 * k, hy + 36 * k], [34 * k, hy + 52 * k], [4 * k, hy + 26 * k]];
+    inked(ctx, blade, pal[2], pal[4], 4);
+    fill(ctx, [[30 * k, hy - 40 * k], [58 * k, hy - 24 * k], [64 * k, hy + 4 * k], [56 * k, hy + 30 * k], [32 * k, hy + 42 * k], [46 * k, hy + 4 * k]], pal[1]);
+    fill(ctx, [[54 * k, hy - 22 * k], [62 * k, hy + 4 * k], [54 * k, hy + 28 * k], [58 * k, hy + 4 * k]], pal[0]);
+    inked(ctx, [[-4 * k, hy - 14 * k], [-34 * k, hy], [-4 * k, hy + 14 * k]], pal[2], pal[4], 3.5);
+    diamond(ctx, pal, 0, hy, 8 * k, 1.2);
+    ctx.restore();
+  }
+  // Crimson Eclipse's throw: the Berserker's axe hurled spinning round him, a wheel of burning
+  // crescents behind it. Loops (one turn in eight drawings).
+  E.axewheel = asLight({
+    w: 240, h: 240, n: 8, fps: 24, px: 120, py: 120, loop: true,
+    draw(ctx, i) {
+      const c = 120;
+      const a = (i / 8) * TAU;
+      celCrescent(ctx, PAL.rage, c, c, 100, a - Math.PI / 2 - 1.6, a - Math.PI / 2, 30, { seed: 840, rough: 0.3 });
+      celCrescent(ctx, PAL.rage, c, c, 100, a + Math.PI / 2 - 1.6, a + Math.PI / 2, 22, { seed: 841, rough: 0.3 });
+      axeArt(ctx, PAL.rage, c, c + 30 * Math.cos(a) * 0, a, 84, 0.95, 0.75);
+      sparkle(ctx, PAL.rage, c + Math.cos(a - Math.PI / 2) * 96, c + Math.sin(a - Math.PI / 2) * 96, 9, a);
+    },
+  }, PAL.rage);
+
+  // The giant axe of fire (Crimson Eclipse's smash): driven head-first into the ground, held whole,
+  // then cracking apart into burning shards; and the same forming out of its shards.
+  function giantAxe(pal) {
+    const w = 330;
+    const h = 430;
+    const cx = 110;
+    const gy = 418;
+    return {
+      w, h, n: 5, fps: 18, px: cx, py: gy,
+      draw(ctx, i) {
+        if (i <= 1) {
+          // Upside down: the head at the bottom, biting into the ground, the haft rising out of it.
+          ctx.save();
+          ctx.translate(cx, 40);
+          ctx.scale(1, -1);
+          axeArt(ctx, pal, 0, 0, 0, 312, 2.7, 1.5);
+          ctx.restore();
+          if (i === 1) for (const [x, y] of [[cx + 60, 330], [cx - 20, 200], [cx + 10, 90]]) sparkle(ctx, pal, x, y, 12, 0.2);
+          return;
+        }
+        const k = (i - 1) / 3;
+        const R = rng(851);
+        for (let j = 0; j < 8; j++) {
+          const y = 40 + j * 42;
+          const x = cx + (j > 5 ? 60 : 0) + (R() - 0.5) * 30 + (j % 2 ? 1 : -1) * k * 44;
+          shard(ctx, pal, x, y - k * 30, -Math.PI / 2 + (R() - 0.5) * 1.2, 26 * (1.1 - k * 0.6), 7 * (1.1 - k * 0.6));
+        }
+        if (i < 4) for (let j = 0; j < 5; j++) sparkle(ctx, pal, cx + (R() - 0.3) * 120, 100 + R() * 260 - k * 40, 8, j);
+      },
+    };
+  }
+  E.rageaxe = asLight(giantAxe(PAL.rage), PAL.rage);
+  E.rageaxeform = { ...E.rageaxe, n: 5, fps: 14, draw: (ctx, i) => E.rageaxe.draw(ctx, [4, 3, 2, 1, 0][i]) };
+
+  // ---------- Team moves (world/teamwork.js) ----------
+  // The party's own colour, whoever's job it is: a warm sunrise peach with sky blue beside it, and
+  // the shape of two stars meeting (a high five): two friends' blows clinking together.
+  const TEAM = ['#ffffff', '#fff1dc', '#ffc58a', '#ff9670', '#c4567a'];
+  const TEAMSKY = PAL.sky;
+
+  // A Team Catch on a monster: two little stars, peach and sky, fly in from either side and clink
+  // together in a burst, a ring flicks out, and they break into beads and sparkles.
+  E.teamcatch = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 8, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 1) {
+          const d = [46, 18][i];
+          goldStar(ctx, c - d, c + d * 0.3, 15 + i * 3, -0.4 + i * 0.4, TEAM);
+          goldStar(ctx, c + d, c - d * 0.3, 15 + i * 3, 0.4 - i * 0.4, TEAMSKY);
+          for (const sd of [-1, 1]) speedLine(ctx, sd < 0 ? TEAM : TEAMSKY, c + sd * (d + 46), c - sd * (d * 0.3 + 14), c + sd * (d + 16), c - sd * (d * 0.3 + 4), 5);
+          return;
+        }
+        if (i <= 4) {
+          const k = (i - 2) / 2;
+          starburst(ctx, TEAM, c, c, [30, 38, 32][i - 2], 10, 901, { inner: 0.36, rot: i * 0.2 });
+          celRing(ctx, TEAMSKY, c, c, 34 + k * 40, 12 - k * 7, { broken: k * 0.5, seed: 902 });
+          goldStar(ctx, c - 12 - k * 22, c - 4, 12 - k * 4, -0.5 - k, TEAM);
+          goldStar(ctx, c + 12 + k * 22, c + 4, 12 - k * 4, 0.5 + k, TEAMSKY);
+          return;
+        }
+        const k = (i - 5) / 2;
+        const R = rng(903);
+        for (let j = 0; j < 10; j++) {
+          const a = (j / 10) * TAU + R() * 0.4;
+          const d = 46 + k * 40 + R() * 14;
+          const r = (j % 3 ? 6 : 9) * (1 - k * 0.6);
+          sparkle(ctx, j % 2 ? TEAM : TEAMSKY, c + Math.cos(a) * d, c + Math.sin(a) * d - k * 10, r, j);
+        }
+      },
+    };
+  })();
+
+  // A bead of the link between party members fighting side by side (loops): a small peach
+  // sparkle with a sky heart, breathing.
+  E.teamlink = {
+    w: 60, h: 60, n: 6, fps: 12, px: 30, py: 30, loop: true,
+    draw(ctx, i) {
+      const k = 0.5 + 0.5 * Math.sin((i / 6) * TAU);
+      sparkle(ctx, TEAM, 30, 30, 10 + k * 4, (i / 6) * 0.8);
+      sparkle(ctx, TEAMSKY, 30, 30, 4 + k * 1.5, 0.78 + (i / 6) * 0.8);
+    },
+  };
+
+  // Getting a fallen friend up: a ring of peach light at their feet, a column of sky-and-peach
+  // light rising through them, and stars drifting up as it fades.
+  E.teamrevive = (() => {
+    const w = 180;
+    const base = 250;
+    const cx = w / 2;
+    const col = (ctx, half, top) => {
+      const band = (k, colour, ink) => {
+        const pts = [[cx - half * k, base], [cx - half * k, top + half * k * 0.8], [cx, top], [cx + half * k, top + half * k * 0.8], [cx + half * k, base]];
+        if (ink) inked(ctx, pts, colour, ink, 4);
+        else fill(ctx, pts, colour);
+      };
+      band(1, TEAMSKY[2], TEAMSKY[4]);
+      band(0.72, TEAM[2]);
+      band(0.45, TEAM[1]);
+      band(0.2, TEAM[0]);
+    };
+    const ringAt = (ctx, y, r, th) => {
+      ctx.save();
+      ctx.translate(cx, y);
+      ctx.scale(1, 0.3);
+      celRing(ctx, TEAM, 0, 0, r, th, { seed: 911 });
+      ctx.restore();
+    };
+    return {
+      w, h: 270, n: 9, fps: 18, px: cx, py: base,
+      draw(ctx, i) {
+        if (i <= 4) {
+          const half = [6, 22, 30, 26, 18][i];
+          col(ctx, half, [170, 40, 16, 14, 30][i]);
+          ringAt(ctx, base - 4, 30 + i * 12, 14 - i);
+          if (i >= 2) ringAt(ctx, base - 60 - (i - 2) * 50, 34 - (i - 2) * 4, 9);
+        }
+        if (i >= 3) {
+          const k = (i - 3) / 5;
+          const R = rng(912);
+          for (let j = 0; j < 7; j++) {
+            const x = cx + (R() - 0.5) * 90;
+            const y = base - 40 - R() * 160 - k * 50;
+            if (j % 2) goldStar(ctx, x, y, 9 * (1.1 - k * 0.8), j, TEAM);
+            else sparkle(ctx, TEAMSKY, x, y, 8 * (1.1 - k * 0.8), j);
+          }
+        }
+      },
+    };
+  })();
+
+  // A Group Finisher's shared last burst: a star for each friend in a ring, linked, that snaps
+  // inward to one big peach star; it bursts with rings of sky and peach, then rains beads and stars.
+  E.teamburst = (() => {
+    const c = 190;
+    return {
+      w: 380, h: 380, n: 11, fps: 20, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) {
+          const r = [120, 80, 40][i];
+          for (let j = 0; j < 5; j++) {
+            const a = -Math.PI / 2 + (j / 5) * TAU + i * 0.5;
+            const a2 = -Math.PI / 2 + ((j + 1) / 5) * TAU + i * 0.5;
+            speedLine(ctx, TEAMSKY, c + Math.cos(a) * r, c + Math.sin(a) * r, c + Math.cos(a2) * r, c + Math.sin(a2) * r, 3);
+            goldStar(ctx, c + Math.cos(a) * r, c + Math.sin(a) * r, 16 - i * 2, a, j % 2 ? TEAMSKY : TEAM);
+          }
+          if (i === 2) goldStar(ctx, c, c, 30, 0, TEAM);
+          return;
+        }
+        if (i <= 7) {
+          const k = (i - 3) / 4;
+          celRing(ctx, TEAMSKY, c, c, 60 + k * 120, 26 - k * 18, { broken: Math.max(0, k - 0.3), seed: 921 });
+          celRing(ctx, TEAM, c, c, 40 + k * 80, 18 - k * 12, { broken: Math.max(0, k - 0.5), seed: 922 });
+          if (i <= 5) starburst(ctx, TEAM, c, c, [70, 86, 64][i - 3], 12, 923, { inner: 0.34, rot: i * 0.15 });
+          if (i <= 6) goldStar(ctx, c, c, [44, 52, 40, 24][i - 3], i * 0.2, TEAM);
+          for (let j = 0; j < 8; j++) {
+            const a = (j / 8) * TAU + 0.2;
+            const d = 70 + k * 100;
+            speedLine(ctx, j % 2 ? TEAMSKY : TEAM, c + Math.cos(a) * (d - 34), c + Math.sin(a) * (d - 34), c + Math.cos(a) * d, c + Math.sin(a) * d, 6 - k * 3);
+          }
+        }
+        if (i >= 6) {
+          const k = (i - 6) / 4;
+          const R = rng(924);
+          for (let j = 0; j < 16; j++) {
+            const a = R() * TAU;
+            const d = 90 + R() * 80 + k * 30;
+            const r = (j % 3 ? 7 : 11) * (1.1 - k * 0.7);
+            const x = c + Math.cos(a) * d;
+            const y = c + Math.sin(a) * d * 0.8 + k * 30;
+            if (j % 4 === 0) goldStar(ctx, x, y, r, j, TEAM);
+            else sparkle(ctx, j % 2 ? TEAM : TEAMSKY, x, y, r, j);
+          }
+        }
+      },
+    };
+  })();
+
+  // ---------- Two-person boss mechanics (world/coopboss.js, drawn by render/coop.js) ----------
+  // Each boss's telegraphs in its own colour and shapes. A shared blow is a gold ring on the floor
+  // with the boss's motif round its rim (the Queen Bee's honeycomb and bees, the Myconid Queen's
+  // little mushroom caps and spores, Tuskar's stomp: rocks and cracks); a two-sided guard is built
+  // of pieces the game lays round the boss (Old MacGoblin's red barn-door planks, Tuskar's flame
+  // bulwark, Gnarlroot's bark plates), each with an idle drawing, a cracked one for a struck half
+  // and a break; the Root Seal is a rune circle of roots with its stone, and its ribbon of light
+  // (and the twins' spore tether) is a short piece the game chains along the curve. Art units:
+  // G per game pixel.
+  const G = RAW;
+  const HONEY = ['#ffffff', '#fff3c4', '#ffd36a', '#e8a23a', '#9a5a1e'];
+  const SPOREP = ['#ffffff', '#ffe2ef', '#ffa6cc', '#e0659f', '#8a2a5e'];
+  const CREAMS = ['#ffffff', '#fffaf0', '#fff0d8', '#e8c8a8', '#9a6a5a'];
+  const BARN = ['#ffffff', '#ffd2c8', '#f2857a', '#c8505a', '#7a2a3a'];
+  const BARNW = ['#ffffff', '#ffffff', '#fff4ea', '#e8d2c8', '#8a5a5a'];
+  const BARK = ['#ffffff', '#f2e2cc', '#c89a72', '#8e6248', '#4a2e2a'];
+  const MOSS = ['#ffffff', '#e2ffc8', '#9de86a', '#5cba4a', '#2f7a46'];
+  const SEALG = ['#ffffff', '#dcffe8', '#7fd1a0', '#4fae7e', '#2a7f5c'];
+  const FRAY = ['#ffffff', '#ffd2cc', '#ff7a80', '#e0405a', '#8e1f48'];
+  const LAVP = ['#ffffff', '#f4eeff', '#ddd2f0', '#aa9ccc', '#6a5a9a'];
+  const loopK = (i, n) => i / n;
+
+  // A flat ring on the floor (an ellipse band, thinner across its near and far sides), in tones:
+  // deep, the colour, a light band, a white rim. `gaps` breaks it into arcs ([from, to] angles).
+  function floorRing(ctx, pal, cx, cy, rx, ry, th, { arcs = [[0, TAU]], a = 1 } = {}) {
+    const [core, light, mid, deep, ink] = pal;
+    const k = ry / rx;
+    ctx.save();
+    ctx.globalAlpha *= a;
+    const band = (o0, o1, colour, line) => {
+      for (const [a0, a1] of arcs) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx - o0, Math.max(1, ry - o0 * k * 1.4), 0, a0, a1);
+        ctx.ellipse(cx, cy, rx - o1, Math.max(1, ry - o1 * k * 1.4), 0, a1, a0, true);
+        ctx.closePath();
+        if (line) {
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = line;
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+        ctx.fillStyle = colour;
+        ctx.fill();
+      }
+    };
+    band(0, th, deep, ink);
+    band(0, th * 0.74, mid);
+    band(0, th * 0.44, light);
+    band(0, th * 0.16, core);
+    ctx.restore();
+  }
+  function floorDisc(ctx, colour, cx, cy, rx, ry, a) {
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU);
+    ctx.fillStyle = colour;
+    ctx.fill();
+    ctx.restore();
+  }
+  // A honeycomb cell, flattened onto the floor by `sy`.
+  function hexCell(ctx, pal, x, y, r, sy = 0.6, lit = 0) {
+    const pts = (k) => Array.from({ length: 6 }, (_, j) => [x + Math.cos((j * TAU) / 6) * r * k, y + Math.sin((j * TAU) / 6) * r * k * sy]);
+    inked(ctx, pts(1), pal[3], pal[4], 3);
+    fill(ctx, pts(0.78), lit > 0.5 ? pal[1] : pal[2]);
+    fill(ctx, pts(0.42).map(([px, py]) => [px - r * 0.12, py - r * 0.1 * sy]), lit > 0.5 ? pal[0] : pal[1]);
+  }
+  // A tiny bee: striped round body, white wings up or down.
+  function bee(ctx, x, y, s, flap, dir = 1) {
+    for (const up of [0, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(x - dir * s * 0.1 + up * s * 0.5 * dir, y - s * (flap ? 0.95 : 0.55), s * 0.42, s * (flap ? 0.62 : 0.4), dir * (flap ? -0.5 : -1.1), 0, TAU);
+      ctx.fillStyle = '#6a7ab8';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x - dir * s * 0.1 + up * s * 0.5 * dir, y - s * (flap ? 0.95 : 0.55), s * 0.32, s * (flap ? 0.5 : 0.3), dir * (flap ? -0.5 : -1.1), 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.ellipse(x, y, s * 0.78, s * 0.58, 0, 0, TAU);
+    ctx.fillStyle = HONEY[4];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x, y, s * 0.64, s * 0.46, 0, 0, TAU);
+    ctx.fillStyle = HONEY[2];
+    ctx.fill();
+    for (const o of [-0.18, 0.18]) {
+      ctx.fillStyle = '#5a3a3a';
+      ctx.fillRect(x + o * s * dir - s * 0.07, y - s * 0.42, s * 0.14, s * 0.84);
+    }
+    ctx.beginPath();
+    ctx.arc(x + dir * s * 0.5, y - s * 0.1, s * 0.12, 0, TAU);
+    ctx.fillStyle = '#3a2d4f';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x - dir * s * 0.15, y - s * 0.25, s * 0.22, s * 0.12, 0, 0, TAU);
+    ctx.fillStyle = '#fff6d0';
+    ctx.fill();
+  }
+  // A little mushroom cap with white spots on a cream stem.
+  function cap(ctx, x, y, r, pal = SPOREP, tilt = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(tilt);
+    inked(ctx, [[-r * 0.32, 0], [-r * 0.26, -r * 0.62], [r * 0.26, -r * 0.62], [r * 0.32, 0]], CREAMS[2], CREAMS[4], 3);
+    ctx.beginPath();
+    ctx.moveTo(-r, -r * 0.5);
+    ctx.quadraticCurveTo(-r * 0.9, -r * 1.55, 0, -r * 1.6);
+    ctx.quadraticCurveTo(r * 0.9, -r * 1.55, r, -r * 0.5);
+    ctx.quadraticCurveTo(0, -r * 0.3, -r, -r * 0.5);
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = pal[4];
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+    ctx.fillStyle = pal[3];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.86, -r * 0.6);
+    ctx.quadraticCurveTo(-r * 0.7, -r * 1.42, 0, -r * 1.44);
+    ctx.quadraticCurveTo(r * 0.6, -r * 1.4, r * 0.7, -r * 0.7);
+    ctx.quadraticCurveTo(0, -r * 0.55, -r * 0.86, -r * 0.6);
+    ctx.fillStyle = pal[2];
+    ctx.fill();
+    for (const [dx, dy, dr] of [[-0.42, -1.05, 0.2], [0.2, -1.22, 0.16], [0.5, -0.82, 0.13]]) {
+      ctx.beginPath();
+      ctx.arc(dx * r, dy * r, dr * r, 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  // A rock chunk (a rounded lump with a lit top face).
+  function chunk(ctx, x, y, r, seed, rot = 0) {
+    const R = rng(seed);
+    const n = 6;
+    const pts = Array.from({ length: n }, (_, j) => {
+      const a = rot + (j / n) * TAU;
+      const rr = r * (0.75 + R() * 0.35);
+      return [x + Math.cos(a) * rr, y + Math.sin(a) * rr * 0.8];
+    });
+    inked(ctx, pts, ROCK[3], ROCK[4], 3.5);
+    fill(ctx, pts.map(([px, py]) => [lerp(px, x, 0.25) - r * 0.08, lerp(py, y, 0.25) - r * 0.12]), ROCK[2]);
+    fill(ctx, pts.slice(3, 6).concat([[x, y - r * 0.1]]).map(([px, py]) => [lerp(px, x, 0.4), lerp(py, y, 0.4) - r * 0.2]), ROCK[1]);
+  }
+
+  // The share ring, looping (8 drawings: the motif turns one slot round the rim in a loop). Drawn
+  // for a 130 px wide ring; the game scales it a touch for wider ones.
+  const RX = 65 * G;
+  const RY = 9 * G;
+  function shareRing(motif) {
+    const cx = 250;
+    const cy = 120;
+    const n = 8;
+    return {
+      w: 500, h: 180, n, fps: 10, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const u = loopK(i, n);
+        // The floor inside: a soft gold wash with the motif faint in it.
+        floorDisc(ctx, HONEY[2], cx, cy, RX - 6, RY - 2, 0.26);
+        floorDisc(ctx, HONEY[1], cx, cy, RX * 0.7, RY * 0.66, 0.2);
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, RX - 10, RY - 4, 0, 0, TAU);
+        ctx.clip();
+        ctx.globalAlpha = 0.32;
+        if (motif === 'honey') {
+          for (let gx = -6; gx <= 6; gx++) for (let gy = -1; gy <= 1; gy++) {
+            const hx = cx + gx * 30 + (gy % 2 ? 15 : 0);
+            const hy = cy + gy * 12;
+            ctx.beginPath();
+            for (let j = 0; j <= 6; j++) ctx[j ? 'lineTo' : 'moveTo'](hx + Math.cos((j * TAU) / 6) * 14, hy + Math.sin((j * TAU) / 6) * 7);
+            ctx.strokeStyle = HONEY[0];
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+          }
+        } else if (motif === 'spore') {
+          const R = rng(711);
+          for (let j = 0; j < 22; j++) {
+            ctx.beginPath();
+            ctx.ellipse(cx + (R() - 0.5) * RX * 1.8, cy + (R() - 0.5) * RY * 1.6, 5 + R() * 4, 3 + R() * 2, 0, 0, TAU);
+            ctx.fillStyle = j % 2 ? SPOREP[1] : '#ffffff';
+            ctx.fill();
+          }
+        } else {
+          const R = rng(712);
+          ctx.strokeStyle = ROCK[4];
+          ctx.lineWidth = 3;
+          for (let j = 0; j < 7; j++) {
+            const a = (j / 7) * TAU + R() * 0.4;
+            ctx.beginPath();
+            let x = cx + Math.cos(a) * 20;
+            let y = cy + Math.sin(a) * 5;
+            ctx.moveTo(x, y);
+            for (let s = 1; s <= 4; s++) {
+              x = cx + Math.cos(a + (R() - 0.5) * 0.3) * (20 + s * RX * 0.2);
+              y = cy + Math.sin(a + (R() - 0.5) * 0.3) * (5 + s * RY * 0.2);
+              ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+        // The rim.
+        floorRing(ctx, HONEY, cx, cy, RX, RY, 13);
+        // The motif round the rim, turning one slot over the loop: the far side first.
+        const N = motif === 'honey' ? 16 : motif === 'spore' ? 10 : 12;
+        const spots = Array.from({ length: N }, (_, j) => {
+          const a = ((j + u) / N) * TAU;
+          return { j, a, x: cx + Math.cos(a) * (RX - 5), y: cy + Math.sin(a) * (RY - 2) };
+        }).sort((p, q) => p.y - q.y);
+        for (const s of spots) {
+          const depth = 0.8 + 0.2 * Math.sin(s.a);
+          if (motif === 'honey') hexCell(ctx, HONEY, s.x, s.y - 4, 13 * depth, 0.62, (s.j + i) % 8 === 0 ? 1 : 0);
+          else if (motif === 'spore') cap(ctx, s.x, s.y + 2, 12 * depth + Math.sin(u * TAU * 2 + s.j) * 1.2, SPOREP, Math.sin(u * TAU + s.j) * 0.12);
+          else chunk(ctx, s.x, s.y - 4 - Math.abs(Math.sin(u * TAU + s.j * 1.7)) * 9, 9 * depth, 720 + s.j);
+        }
+        // Idle life above it.
+        if (motif === 'honey') {
+          for (let k = 0; k < 2; k++) {
+            const a = u * TAU + k * Math.PI;
+            bee(ctx, cx + Math.cos(a) * RX * 0.85, cy - 34 + Math.sin(a) * RY * 1.4 + Math.sin(u * TAU * 4 + k) * 4, 11, i % 2, Math.sin(a) > 0 ? -1 : 1);
+          }
+        }
+        for (let k = 0; k < 5; k++) {
+          const v = (u + k / 5) % 1;
+          const x = cx + (k - 2) * RX * 0.38 + Math.sin(v * TAU + k) * 6;
+          const y = cy - 8 - v * 70;
+          ctx.save();
+          ctx.globalAlpha = Math.sin(v * Math.PI);
+          if (motif === 'spore') puff(ctx, SPOREP, x, y, 6 + v * 3, 730 + k);
+          else if (motif === 'stomp') puff(ctx, DUST, x, y + 20, 7 + v * 5, 740 + k);
+          else sparkle(ctx, HONEY, x, y, 6 - v * 2, v);
+          ctx.restore();
+        }
+      },
+    };
+  }
+  E.cohoney = shareRing('honey');
+  E.cospore = shareRing('spore');
+  E.costomp = shareRing('stomp');
+
+  // A revive under way (picked by progress): a peach ring on the floor round the fallen friend, its
+  // dim track filling clockwise from the top in full light, a star riding the leading edge, the
+  // floor inside warming as it closes.
+  E.teamrevivering = {
+    w: 260, h: 110, n: 12, fps: 12, px: 130, py: 55,
+    draw(ctx, i) {
+      const k = (i + 1) / 12;
+      const RXr = 32 * G;
+      const RYr = 10 * G;
+      floorDisc(ctx, TEAM[2], 130, 55, RXr - 6, RYr - 2, 0.12 + 0.22 * k);
+      floorRing(ctx, TEAM, 130, 55, RXr, RYr, 18, { a: 0.45 });
+      const a0 = -Math.PI / 2;
+      const a1 = a0 + TAU * k;
+      floorRing(ctx, k >= 1 ? ['#ffffff', '#ffffff', '#fff1dc', '#ffc58a', '#c4567a'] : TEAM, 130, 55, RXr, RYr, 24, { arcs: [[a0, a1]] });
+      sparkle(ctx, TEAM, 130 + Math.cos(a1) * (RXr - 6), 55 + Math.sin(a1) * (RYr - 2), 22 + 6 * k, i * 0.3);
+    },
+  };
+
+  // The blow gathering (picked by progress, not looped): a bright inner ring closing out toward
+  // the rim, the floor inside warming to white as it lands.
+  E.cosharefill = {
+    w: 500, h: 120, n: 10, fps: 10, px: 250, py: 60,
+    draw(ctx, i) {
+      const k = (i + 1) / 10;
+      floorDisc(ctx, i > 7 ? HONEY[1] : HONEY[2], 250, 60, (RX - 8) * k, (RY - 3) * k, 0.18 + 0.32 * k);
+      floorRing(ctx, i > 7 ? ['#ffffff', '#ffffff', '#fff6d0', '#ffd36a', '#e8a23a'] : HONEY, 250, 60, Math.max(14, (RX - 8) * k), Math.max(4, (RY - 3) * k), 6 + k * 4, { a: 0.75 + 0.25 * k });
+    },
+  };
+
+  // The blow coming down: a gold star bursting in the middle, the rim thrown out and breaking up,
+  // the motif flying (honey cells, mushroom caps and spores, rocks), then beads and sparkles.
+  function shareHit(motif) {
+    const cx = 300;
+    const cy = 190;
+    return {
+      w: 600, h: 260, n: 9, fps: 20, px: cx, py: cy,
+      draw(ctx, i) {
+        const k = i / 8;
+        const R = rng(750);
+        if (i <= 3) starburst(ctx, HONEY, cx, cy - 50 - i * 6, [50, 80, 70, 44][i], 10, 751, { inner: 0.35, rot: i * 0.2 });
+        if (i <= 5) {
+          const arcs = [];
+          const parts = 6 + i * 2;
+          for (let j = 0; j < parts; j++) arcs.push([(j / parts) * TAU, ((j + 1 - Math.min(0.85, i * 0.16)) / parts) * TAU]);
+          floorRing(ctx, HONEY, cx, cy, RX * (1 + k * 0.7), RY * (1 + k * 0.8), 14 * (1 - k * 0.7), { arcs });
+        }
+        for (let j = 0; j < 12; j++) {
+          const a = -Math.PI + (j / 11) * Math.PI + (R() - 0.5) * 0.3;
+          const d = (50 + R() * 50) * (0.5 + k * 3);
+          const x = cx + Math.cos(a) * d * 1.6;
+          const y = cy + Math.sin(a) * d * 0.9 + k * k * 120 - 20;
+          if (i >= 6) {
+            sparkle(ctx, j % 2 ? HONEY : motif === 'spore' ? SPOREP : HONEY, x, y, 7 * (1.3 - k), j);
+            continue;
+          }
+          if (i <= 3) {
+            if (motif === 'honey') hexCell(ctx, HONEY, x, y, 12, 1, j % 3 === 0 ? 1 : 0);
+            else if (motif === 'spore') (j % 2 ? cap(ctx, x, y, 11, SPOREP, a + k * 4) : puff(ctx, SPOREP, x, y, 10, 760 + j));
+            else chunk(ctx, x, y, 11, 770 + j, k * 3 + j);
+          } else shard(ctx, motif === 'spore' && j % 2 ? SPOREP : motif === 'stomp' && j % 2 ? ROCK : HONEY, x, y, a + Math.PI, 14 * (1.2 - k), 4.5 * (1.2 - k));
+        }
+        if (motif !== 'honey' && i >= 1 && i <= 4) for (let j = 0; j < 4; j++) {
+          ctx.save();
+          ctx.globalAlpha = 1 - k;
+          puff(ctx, motif === 'spore' ? SPOREP : DUST, cx + (j - 1.5) * (70 + k * 120), cy - 6 - k * 30, 12 + k * 10, 780 + j, { holes: k * 2 });
+          ctx.restore();
+        }
+      },
+    };
+  }
+  E.cohoneyhit = shareHit('honey');
+  E.cosporehit = shareHit('spore');
+  E.costomphit = shareHit('stomp');
+
+  // A pip over the ring for each player standing in it (a gold star turning on its heart), and the
+  // empty place still waiting for one (lilac, smaller).
+  function pipOf(pal, r) {
+    return {
+      w: 70, h: 70, n: 6, fps: 10, px: 35, py: 35, loop: true,
+      draw(ctx, i) {
+        const u = i / 6;
+        goldStar(ctx, 35, 35 + Math.sin(u * TAU) * 2, r, Math.sin(u * TAU) * 0.25, pal);
+        sparkle(ctx, pal, 35 + Math.cos(u * TAU) * r * 1.1, 35 - r * 0.6 + Math.sin(u * TAU) * r * 0.4, r * 0.3, u);
+      },
+    };
+  }
+  E.copip = pipOf(HONEY, 14);
+  E.copipoff = pipOf(LAVP, 10);
+
+  // ---------- The guard pieces ----------
+  // Drawn upright (long side along y, the outside to +x); the game lays them round the boss along
+  // the guard's arc, turned to it (flames stand upright), mirrored on the left.
+  const PW = 13 * G;
+  const PH = 24 * G;
+  function guardPiece(style, mode) {
+    const cx = 70;
+    const cy = 60 + PH / 2;
+    const n = mode === 'break' ? 7 : 6;
+    return {
+      w: 140, h: PH + 120, n, fps: mode === 'break' ? 18 : 10, px: cx, py: cy, loop: mode !== 'break',
+      draw(ctx, i) {
+        const u = i / n;
+        const crack = mode === 'crack';
+        const brk = mode === 'break' ? i / (n - 1) : 0;
+        if (style === 'flame') {
+          // A bulwark of fire: a glowing ember bar with tongues of flame rising off it.
+          const pal = crack ? ['#ffffff', '#ffffff', '#fff1c0', '#ffbe72', '#cc566a'] : PAL.fire;
+          if (mode === 'break') {
+            const R = rng(801);
+            for (let j = 0; j < 9; j++) {
+              const a = -Math.PI / 2 + (R() - 0.5) * 2.2;
+              const d = 20 + brk * 90 * (0.6 + R() * 0.6);
+              const x = cx + Math.cos(a) * d * 0.8;
+              const y = cy - 20 + Math.sin(a) * d + brk * brk * 40;
+              if (i < 3) tongue(ctx, PAL.fire, x, y, 9 * (1 - brk), 30 * (1 - brk), (R() - 0.5) * 10);
+              else if (i < 5) drop(ctx, PAL.fire, x, y, a, 6 * (1.2 - brk));
+              else sparkle(ctx, PAL.fire, x, y, 7 * (1.3 - brk), j);
+            }
+            return;
+          }
+          const lean = Math.sin(u * TAU) * 6;
+          inked(ctx, [[cx - PW * 0.55, cy + 10], [cx + PW * 0.55, cy + 10], [cx + PW * 0.45, cy + 24], [cx - PW * 0.45, cy + 24]], pal[3], pal[4], 3.5);
+          fill(ctx, [[cx - PW * 0.4, cy + 13], [cx + PW * 0.4, cy + 13], [cx + PW * 0.35, cy + 18], [cx - PW * 0.35, cy + 18]], pal[1]);
+          const tall = crack ? 0.7 : 1;
+          tongue(ctx, pal, cx - 13, cy + 12, 12, (40 + 10 * Math.sin(u * TAU + 1)) * tall, -6 + lean);
+          tongue(ctx, pal, cx + 13, cy + 12, 12, (44 + 10 * Math.sin(u * TAU + 3)) * tall, 6 + lean);
+          tongue(ctx, pal, cx, cy + 14, 17, (68 + 12 * Math.sin(u * TAU)) * tall, lean * 1.4);
+          if (crack) {
+            // Guttering: sparks spitting off it.
+            const R = rng(805 + i);
+            for (let j = 0; j < 4; j++) sparkle(ctx, PAL.fire, cx + (R() - 0.5) * 70, cy - 30 - R() * 50, 6 + R() * 3, j);
+          } else sparkle(ctx, PAL.fire, cx + Math.sin(u * TAU * 2) * 16, cy - 50 - u * 30, 5, u);
+          return;
+        }
+        // A plank (barn) or a bark plate, upright.
+        const body = style === 'barn' ? BARN : BARK;
+        const rock = crack ? Math.sin(u * TAU * 2) * 0.05 : Math.sin(u * TAU) * 0.025;
+        const half = (side, off, spin) => {
+          ctx.save();
+          ctx.translate(cx + off[0], cy + off[1]);
+          ctx.rotate(rock + spin);
+          ctx.translate(-cx, -cy);
+          ctx.beginPath();
+          if (side < 0) ctx.rect(cx - PW, cy - PH, PW * 2, PH);
+          else if (side > 0) ctx.rect(cx - PW, cy, PW * 2, PH);
+          if (side) ctx.clip();
+          if (style === 'barn') {
+            const x0 = cx - PW / 2;
+            const y0 = cy - PH / 2;
+            ctx.beginPath();
+            ctx.roundRect(x0 - 2, y0 - 2, PW + 4, PH + 4, 8);
+            ctx.fillStyle = body[4];
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(x0, y0, PW, PH, 7);
+            ctx.fillStyle = body[3];
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(x0, y0, PW - 6, PH - 5, 7);
+            ctx.fillStyle = body[2];
+            ctx.fill();
+            // Grain, a lit edge, the white trim and brace of a barn door, two nails.
+            ctx.strokeStyle = body[3];
+            ctx.lineWidth = 2;
+            for (const gx of [0.3, 0.62]) {
+              ctx.beginPath();
+              ctx.moveTo(x0 + PW * gx, y0 + 10);
+              ctx.bezierCurveTo(x0 + PW * gx + 4, y0 + PH * 0.4, x0 + PW * gx - 4, y0 + PH * 0.6, x0 + PW * gx + 2, y0 + PH - 12);
+              ctx.stroke();
+            }
+            fill(ctx, [[x0 + 5, y0 + 6], [x0 + 10, y0 + 6], [x0 + 10, y0 + PH - 8], [x0 + 5, y0 + PH - 8]], body[1]);
+            for (const ty of [y0 + 3, y0 + PH - 15]) {
+              inked(ctx, [[x0 + 1, ty], [x0 + PW - 1, ty], [x0 + PW - 1, ty + 12], [x0 + 1, ty + 12]], BARNW[2], BARNW[4], 2.5);
+              fill(ctx, [[x0 + 3, ty + 2], [x0 + PW - 3, ty + 2], [x0 + PW - 3, ty + 5], [x0 + 3, ty + 5]], '#ffffff');
+            }
+            inked(ctx, [[x0 + 2, y0 + PH - 22], [x0 + 12, y0 + PH - 22], [x0 + PW - 2, y0 + 22], [x0 + PW - 12, y0 + 22]], BARNW[2], BARNW[4], 2.5);
+            for (const ny of [y0 + 9, y0 + PH - 9]) {
+              ctx.beginPath();
+              ctx.arc(cx, ny, 2.6, 0, TAU);
+              ctx.fillStyle = '#6a5a7a';
+              ctx.fill();
+            }
+          } else {
+            // A bark plate: a rounded shield of ridged bark, moss on its top and a leaf sprouting.
+            const sh = (k, dx = 0, dy = 0) => {
+              ctx.beginPath();
+              ctx.ellipse(cx + dx, cy + dy, (PW / 2 + 4) * k, (PH / 2) * k, 0, 0, TAU);
+            };
+            sh(1.04);
+            ctx.fillStyle = body[4];
+            ctx.fill();
+            sh(1);
+            ctx.fillStyle = body[3];
+            ctx.fill();
+            sh(0.88, -3, -3);
+            ctx.fillStyle = body[2];
+            ctx.fill();
+            ctx.strokeStyle = body[3];
+            ctx.lineWidth = 3;
+            for (const gx of [-0.42, 0, 0.42]) {
+              ctx.beginPath();
+              ctx.moveTo(cx + gx * PW * 0.5, cy - PH * 0.4);
+              ctx.bezierCurveTo(cx + gx * PW * 0.6 + 5, cy - PH * 0.1, cx + gx * PW * 0.6 - 5, cy + PH * 0.15, cx + gx * PW * 0.5, cy + PH * 0.4);
+              ctx.stroke();
+            }
+            ctx.strokeStyle = body[1];
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx - PW * 0.32, cy - PH * 0.3);
+            ctx.quadraticCurveTo(cx - PW * 0.4, cy, cx - PW * 0.3, cy + PH * 0.25);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.ellipse(cx + 2, cy - PH * 0.38, PW * 0.34, 8, 0, 0, TAU);
+            ctx.fillStyle = MOSS[3];
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(cx, cy - PH * 0.4, PW * 0.24, 5, 0, 0, TAU);
+            ctx.fillStyle = MOSS[2];
+            ctx.fill();
+          }
+          ctx.restore();
+        };
+        if (mode === 'break') {
+          // It snaps across the middle, the halves tumbling out, then splinters, beads, sparkles.
+          if (i < 4) {
+            ctx.save();
+            ctx.globalAlpha = 1 - brk * 0.6;
+            half(-1, [brk * 50, -brk * 60], brk * 1.8);
+            half(1, [brk * 40, brk * 30], -brk * 1.4);
+            ctx.restore();
+          }
+          const R = rng(810);
+          for (let j = 0; j < 10; j++) {
+            const a = (R() - 0.5) * 2.6;
+            const d = 16 + brk * 100 * (0.5 + R() * 0.7);
+            const x = cx + Math.cos(a) * d;
+            const y = cy + Math.sin(a) * d * 0.9 + brk * brk * 40;
+            const pal = j % 3 === 0 ? (style === 'barn' ? BARNW : MOSS) : body;
+            if (i < 5) shard(ctx, pal, x, y, a + i, 16 * (1.1 - brk), 4.5 * (1.1 - brk));
+            if (i >= 3) sparkle(ctx, style === 'barn' ? BARN : MOSS, x, y - 10, 7 * (1.2 - brk), j);
+          }
+          return;
+        }
+        half(0, [0, 0], 0);
+        if (style === 'bark') {
+          // The leaf sprouting off its top, swaying.
+          leaf(ctx, cx + 6, cy - PH * 0.5 - 6, 11, -0.9 + Math.sin(u * TAU) * 0.25);
+          leaf(ctx, cx - 6, cy - PH * 0.5 - 2, 8, -2.3 + Math.sin(u * TAU + 1) * 0.2);
+        }
+        if (crack) {
+          // A split of light down it, glowing, splinters lifting.
+          const glowPal = style === 'barn' ? ['#ffffff', '#ffffff', '#fff3c4', '#ffd36a', '#e8a23a'] : ['#ffffff', '#ffffff', '#e2ffe8', '#9de8b8', '#4fae7e'];
+          const pts = [[cx + 2, cy - PH * 0.46], [cx - 6, cy - PH * 0.22], [cx + 5, cy - PH * 0.02], [cx - 4, cy + PH * 0.2], [cx + 3, cy + PH * 0.45]];
+          for (const [w, c] of [[10, glowPal[3]], [6, glowPal[2]], [2.6, '#ffffff']]) {
+            ctx.beginPath();
+            pts.forEach(([x, y], j) => ctx[j ? 'lineTo' : 'moveTo'](x, y));
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+          const R = rng(820 + i);
+          for (let j = 0; j < 3; j++) shard(ctx, body, cx + 14 + R() * 16, cy - PH * 0.3 + R() * PH * 0.6 - u * 10, -0.5 + R(), 10, 3);
+          sparkle(ctx, glowPal, cx + 2, cy - PH * 0.46 - 4 + Math.sin(u * TAU) * 3, 8 + 2 * Math.sin(u * TAU * 2), u);
+        } else {
+          // A glint sliding up it.
+          const gy = cy + PH * 0.42 - u * PH * 0.84;
+          ctx.save();
+          ctx.globalAlpha = Math.sin(u * Math.PI) * 0.8;
+          sparkle(ctx, style === 'barn' ? BARNW : MOSS, cx - PW * 0.25, gy, 5, u);
+          ctx.restore();
+        }
+      },
+    };
+  }
+  for (const style of ['barn', 'flame', 'bark']) {
+    E[`co${style}`] = guardPiece(style, 'idle');
+    E[`co${style}crack`] = guardPiece(style, 'crack');
+    E[`co${style}break`] = guardPiece(style, 'break');
+  }
+
+  // ---------- Gnarlroot's Root Seal ----------
+  // A rune circle of roots on the floor: two roots twisting round each other, curling off in
+  // tendrils, with leaf runes set in it that glow when someone stands on the seal (`held`: they
+  // burn white-mint, the floor inside lights and leaves sprout).
+  const SRX = 30 * G;
+  const SRY = 8 * G;
+  function sealCircle(held) {
+    const cx = 130;
+    const cy = 70;
+    const n = 8;
+    return {
+      w: 260, h: 120, n, fps: 8, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const u = i / n;
+        if (held) {
+          floorDisc(ctx, SEALG[2], cx, cy, SRX - 4, SRY - 1, 0.32);
+          floorDisc(ctx, SEALG[1], cx, cy, SRX * 0.6, SRY * 0.6, 0.4);
+        } else floorDisc(ctx, SEALG[3], cx, cy, SRX - 4, SRY - 1, 0.14);
+        // The two roots, twisting round the circle.
+        for (const ph of [0, Math.PI]) {
+          const pts = Array.from({ length: 61 }, (_, j) => {
+            const a = (j / 60) * TAU;
+            const wob = Math.sin(a * 5 + ph) * 5;
+            return [cx + Math.cos(a) * (SRX + wob), cy + Math.sin(a) * (SRY + wob * 0.3)];
+          });
+          for (const [w, c] of [[10, BARK[4]], [7, BARK[3]], [3.5, BARK[2]], [1.4, BARK[1]]]) {
+            ctx.beginPath();
+            pts.forEach(([x, y], j) => ctx[j ? 'lineTo' : 'moveTo'](x, y + (w < 5 ? -1 : 0)));
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+          }
+        }
+        // Tendrils curling off at four points.
+        for (let j = 0; j < 4; j++) {
+          const a = (j / 4) * TAU + 0.4;
+          const x = cx + Math.cos(a) * SRX;
+          const y = cy + Math.sin(a) * SRY;
+          const out = Math.cos(a) > 0 ? 1 : -1;
+          const sway = Math.sin(u * TAU + j) * 3;
+          for (const [w, c] of [[6, BARK[4]], [3.4, BARK[2]]]) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.bezierCurveTo(x + out * 14, y - 6, x + out * 22 + sway, y - 16, x + out * 14 + sway, y - 22);
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+          }
+          if (held) leaf(ctx, x + out * 14 + sway, y - 24, 7, out > 0 ? -0.8 : -2.3);
+        }
+        // The runes: little leaf-shaped marks set round it, turning slowly, glowing in turn.
+        for (let j = 0; j < 6; j++) {
+          const a = ((j + u) / 6) * TAU;
+          const x = cx + Math.cos(a) * SRX;
+          const y = cy + Math.sin(a) * SRY - 2;
+          const lit = held ? 1 : 0.5 + 0.5 * Math.sin(u * TAU - j);
+          const pal = held ? ['#ffffff', '#ffffff', '#e8fff2', '#9de8b8', '#2a7f5c'] : SEALG;
+          diamond(ctx, pal, x, y, 4.5 + lit * 1.5, 1.6);
+        }
+        if (held) for (let k = 0; k < 4; k++) {
+          const v = (u + k / 4) % 1;
+          ctx.save();
+          ctx.globalAlpha = Math.sin(v * Math.PI);
+          sparkle(ctx, SEALG, cx + (k - 1.5) * 34, cy - 6 - v * 40, 5, v);
+          ctx.restore();
+        }
+      },
+    };
+  }
+  E.coseal = sealCircle(false);
+  E.cosealheld = sealCircle(true);
+
+  // The seal stone: a rounded tablet of mossy stone with a leaf rune carved in it, the rune's
+  // light breathing.
+  E.cosealstone = {
+    w: 100, h: 110, n: 6, fps: 8, px: 50, py: 96, loop: true,
+    draw(ctx, i) {
+      const u = i / 6;
+      const x0 = 50 - 9 * G;
+      const y0 = 96 - 23 * G;
+      const W = 18 * G;
+      const H = 22 * G;
+      ctx.beginPath();
+      ctx.roundRect(x0 - 2, y0 - 2, W + 4, H + 4, 20);
+      ctx.fillStyle = SEALG[4];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(x0, y0, W, H, 18);
+      ctx.fillStyle = SEALG[3];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.roundRect(x0, y0, W - 7, H - 6, 18);
+      ctx.fillStyle = SEALG[2];
+      ctx.fill();
+      // Moss and a little root over its shoulder.
+      ctx.beginPath();
+      ctx.ellipse(50 - 6, y0 + 6, 18, 7, -0.1, 0, TAU);
+      ctx.fillStyle = MOSS[3];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(50 - 8, y0 + 4, 12, 4, -0.1, 0, TAU);
+      ctx.fillStyle = MOSS[2];
+      ctx.fill();
+      for (const [w, c] of [[6, BARK[4]], [3.2, BARK[2]]]) {
+        ctx.beginPath();
+        ctx.moveTo(x0 + W - 4, y0 + 10);
+        ctx.bezierCurveTo(x0 + W + 6, y0 + 22, x0 + W + 2, y0 + 44, x0 + W + 8, y0 + 60);
+        ctx.strokeStyle = c;
+        ctx.lineWidth = w;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+      }
+      // The rune: a leaf with its vein, breathing light.
+      const b = 0.5 + 0.5 * Math.sin(u * TAU);
+      const rx = 50 - 4;
+      const ry = y0 + H * 0.5;
+      ctx.save();
+      ctx.translate(rx, ry);
+      ctx.rotate(0.5);
+      for (const [k, c] of [[1.25, SEALG[4]], [1, b > 0.5 ? '#ffffff' : SEALG[1]], [0.6, '#ffffff']]) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 10 * k, 17 * k, 0, 0, TAU);
+        ctx.fillStyle = c;
+        ctx.fill();
+      }
+      ctx.strokeStyle = SEALG[3];
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(0, 14);
+      ctx.lineTo(0, -12);
+      ctx.moveTo(0, 2);
+      ctx.lineTo(6, -5);
+      ctx.moveTo(0, 6);
+      ctx.lineTo(-6, -1);
+      ctx.stroke();
+      ctx.restore();
+      fill(ctx, [[x0 + 8, y0 + 12], [x0 + 12, y0 + 12], [x0 + 12, y0 + 26], [x0 + 8, y0 + 26]], '#ffffff');
+      sparkle(ctx, SEALG, x0 + W - 6, y0 + 6 - b * 4, 3 + b * 3, u);
+    },
+  };
+  // Nobody on it: a mint leaf bobbing over it, pointing down, asking.
+  E.cosealask = {
+    w: 60, h: 80, n: 6, fps: 8, px: 30, py: 60, loop: true,
+    draw(ctx, i) {
+      const b = Math.sin((i / 6) * TAU) * 6;
+      ctx.save();
+      ctx.translate(30, 36 + b);
+      ctx.rotate(Math.PI / 2);
+      for (const [k, c] of [[1.2, SEALG[4]], [1, SEALG[2]], [0.62, SEALG[1]]]) {
+        ctx.beginPath();
+        ctx.moveTo(-14 * k, 0);
+        ctx.quadraticCurveTo(0, -12 * k, 16 * k, 0);
+        ctx.quadraticCurveTo(0, 12 * k, -14 * k, 0);
+        ctx.fillStyle = c;
+        ctx.fill();
+      }
+      ctx.restore();
+      sparkle(ctx, SEALG, 40, 26 + b, 4, i);
+    },
+  };
+  // A piece of the ribbon of light from the seal to Gnarlroot (the game chains them along the
+  // curve, turned to it): two strands of mint light braiding, a leaf riding it.
+  function chainPiece(pal, { leafy = false, frayed = false, seed = 1 } = {}) {
+    const L = 22 * G;
+    return {
+      w: L + 40, h: 70, n: 6, fps: 12, px: 20 + L / 2, py: 35, loop: true,
+      draw(ctx, i) {
+        const u = i / 6;
+        const x0 = 20;
+        for (const ph of [0, Math.PI]) {
+          const pts = Array.from({ length: 25 }, (_, j) => {
+            const v = j / 24;
+            return [x0 + v * L, 35 + Math.sin(v * TAU + u * TAU + ph) * 6];
+          });
+          const width = (v) => Math.sin(Math.PI * v) ** 0.6;
+          for (const [w, c] of [[9, pal[4]], [6.4, pal[3]], [4, pal[2]], [1.8, pal[0]]]) {
+            for (let j = 0; j < 24; j++) {
+              if (frayed && (j + i * 2 + (ph ? 7 : 0)) % 9 < 3) continue;
+              ctx.beginPath();
+              ctx.moveTo(...pts[j]);
+              ctx.lineTo(...pts[j + 1]);
+              ctx.strokeStyle = c;
+              ctx.lineWidth = Math.max(0.6, w * width((j + 0.5) / 24));
+              ctx.lineCap = 'round';
+              ctx.stroke();
+            }
+          }
+        }
+        const v = u;
+        if (leafy) leaf(ctx, x0 + v * L, 35 + Math.sin(v * TAU * 2) * 4 - 6, 6, v * TAU);
+        else if (!frayed) {
+          ctx.beginPath();
+          ctx.arc(x0 + L / 2, 35 + Math.sin(u * TAU) * 3, 4.5, 0, TAU);
+          ctx.fillStyle = pal[4];
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x0 + L / 2, 35 + Math.sin(u * TAU) * 3, 3.2, 0, TAU);
+          ctx.fillStyle = pal[1];
+          ctx.fill();
+        }
+        if (frayed) {
+          const R = rng(seed + i);
+          for (let j = 0; j < 2; j++) sparkle(ctx, pal, x0 + R() * L, 35 + (R() - 0.5) * 30, 5, j);
+        } else sparkle(ctx, pal, x0 + ((u + 0.5) % 1) * L, 35 + Math.cos(u * TAU) * 5, 4, u);
+      },
+    };
+  }
+  E.cosealbeam = chainPiece(SEALG, { leafy: true });
+  // The twin puffballs' tether: a pink spore-thread with a little spore bead on it; frayed and red
+  // once one of them is down and the other is about to call it back.
+  E.cotether = chainPiece(SPOREP);
+  E.cotetherfray = chainPiece(FRAY, { frayed: true, seed: 870 });
+
+  // Stepping onto the seal: the root circle flares, leaves burst up, sparkles.
+  E.cosealpop = {
+    w: 300, h: 200, n: 7, fps: 18, px: 150, py: 150,
+    draw(ctx, i) {
+      const k = i / 6;
+      if (i <= 4) floorRing(ctx, SEALG, 150, 150, SRX * (1 + k * 0.9), SRY * (1 + k * 0.9), 10 * (1 - k * 0.8), { a: 1 - k * 0.5 });
+      const R = rng(880);
+      for (let j = 0; j < 8; j++) {
+        const a = -Math.PI / 2 + (R() - 0.5) * 2.4;
+        const d = 10 + k * 90 * (0.6 + R() * 0.5);
+        const x = 150 + Math.cos(a) * d;
+        const y = 150 - 10 + Math.sin(a) * d * 0.9;
+        if (i < 4) leaf(ctx, x, y, 9 * (1.1 - k * 0.5), a + k * 3);
+        else sparkle(ctx, SEALG, x, y, 7 * (1.3 - k), j);
+      }
+      if (i <= 2) sparkle(ctx, SEALG, 150, 100 - i * 8, 16 - i * 3, 0);
+    },
+  };
+  // The twins down together (or one called back): a burst of pink spore puffs and caps.
+  E.cotwinpop = {
+    w: 260, h: 240, n: 8, fps: 18, px: 130, py: 130,
+    draw(ctx, i) {
+      const k = i / 7;
+      if (i <= 2) starburst(ctx, SPOREP, 130, 130, 30 + i * 14, 8, 890, { inner: 0.4 });
+      const R = rng(891);
+      for (let j = 0; j < 9; j++) {
+        const a = (j / 9) * TAU + R() * 0.3;
+        const d = 16 + k * 80;
+        const x = 130 + Math.cos(a) * d;
+        const y = 130 + Math.sin(a) * d * 0.8 + k * k * 30;
+        if (i < 3) puff(ctx, SPOREP, x, y, 12 * (1 - k * 0.5), 892 + j, { holes: k });
+        else if (i < 6) j % 2 ? cap(ctx, x, y, 8 * (1.2 - k), SPOREP, a) : shard(ctx, SPOREP, x, y, a, 12 * (1.1 - k), 4 * (1.1 - k));
+        else sparkle(ctx, SPOREP, x, y, 7 * (1.3 - k), j);
+      }
+    },
+  };
+
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

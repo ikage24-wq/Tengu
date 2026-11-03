@@ -38,6 +38,8 @@ test('cast, wait for the bite, hook it: a fish, its count, and its recipe', (t) 
   let seed = 7;
   t.mock.method(Math, 'random', () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648));
   const char = createCharacter('Hana', {});
+  // (The glade's pond is a tier 2 spot: it needs Fishing Lv 12.)
+  char.life = { fishing: { level: 12, exp: 0 } };
   const w = createWorld(char);
   loadMap(w, 'glade', 'west');
   w.god = true;

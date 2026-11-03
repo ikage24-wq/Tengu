@@ -152,7 +152,7 @@ test('every weapon keeps its blow on time and leans into it', async () => {
   const { moveAt, FEEL } = await import('../src/render/moves.js');
   for (const weapon of Object.keys(FEEL)) {
     for (const hit of [0.3, 0.45, 0.6]) {
-      const plain = moveAt('slash', hit, 0.4);
+      const plain = moveAt('slash', hit, 0.4, { weapon });
       const felt = moveAt('slash', hit, 0.4, { weapon, hit });
       assert.ok(Math.abs(plain.weapon - felt.weapon) < 1e-6 || FEEL[weapon].over || FEEL[weapon].twirl, `${weapon}: the blade is where it was when the blow lands`);
     }
@@ -175,5 +175,158 @@ test('every expression has its own idle loop', async () => {
     const key = frames.join('|');
     assert.ok(!seen.has(key), `${face} loops like ${seen.get(key)}`);
     seen.set(key, face);
+  }
+});
+
+test('the Warrior line swings round a fist kept under the chin, and nothing comes to rest before the face', async () => {
+  const { moveAt, FIST_CAP } = await import('../src/render/moves.js');
+  const { PATH_VARIANTS } = await import('../src/world/melee.js');
+  const commands = ['rising', 'airslash', 'airslash2', 'meteor', 'dashstab', 'plunge', 'dash', 'titanbreak', 'ascend', 'plaircut', 'pldive', 'consecrate', 'bash', 'dragrise', 'bkairchop', 'bkdive', 'bkgore', 'bodyslam', 'shieldrush', 'verdict', 'recklesscharge', 'rampage', 'eclipse'];
+  const moves = new Set(commands);
+  for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
+  for (const weapon of ['sword', 'axe', 'spear']) {
+    for (const kind of moves) {
+      for (let i = 0; i <= 40; i++) {
+        const mv = moveAt(kind, i / 40, 0.6, { weapon });
+        assert.ok(mv, kind);
+        assert.ok(mv.arm <= FIST_CAP + 0.01 || mv.arm >= 200, `${kind} with a ${weapon} raises the fist to ${mv.arm.toFixed(0)} at ${i / 40}`);
+      }
+      // The last pose: never the blade standing straight up in front of the face.
+      const end = moveAt(kind, 1, 0.6, { weapon });
+      const w = ((((end.weapon % 360) + 540) % 360) - 180);
+      assert.ok(!(w > -20 && w < 40) || end.orbit, `${kind} with a ${weapon} ends with the blade up before the face (${w.toFixed(0)})`);
+    }
+  }
+});
+
+test("the Paladin and the Berserker swing none of the Warrior's swings", async () => {
+  const { PATH_VARIANTS } = await import('../src/world/melee.js');
+  const own = (job) => new Set(PATH_VARIANTS[job].flat().map((s) => s.move));
+  const warrior = own('warrior');
+  for (const job of ['paladin', 'berserker']) for (const m of own(job)) assert.ok(!warrior.has(m), `${job} borrows ${m}`);
+});
+
+test('the Starlight Idol sings into her mic, belts with her head back, and ends each figure on its own pose', async () => {
+  const { moveAt } = await import('../src/render/moves.js');
+  const DUR = { sibeat: 0.4, sistep: 0.5, sihigh: 0.64, sikiss: 0.4, sishoulder: 0.56, sijump: 0.56, sipose: 0.62, siup: 0.44, siair: 0.38, sidash: 0.56, sisong: 1.2, sicheer: 0.9, silullaby: 1.2, sibow: 1.4, siconcert: 2.4 };
+  const SINGS = ['sibeat', 'sistep', 'sihigh', 'sishoulder', 'sijump', 'sipose', 'siup', 'sidash', 'sisong', 'silullaby', 'siconcert'];
+  const BELTS = ['sihigh', 'siup', 'sidash', 'sisong', 'sibow', 'siconcert'];
+  const base = () => ({ tx: 0, by: 0, hx: 0, hy: 0, frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0, hairLift: 0, cape: 0, eyes: 'open', mouth: null, tilt: 0 });
+  const at = (kind, p) => {
+    const mv = moveAt(kind, p, DUR[kind], { weapon: 'wand' });
+    const r = base();
+    mv.rig?.(r);
+    return { mv, r };
+  };
+  for (const kind of Object.keys(DUR)) {
+    let chin = false;
+    let back = 0;
+    for (let i = 0; i <= 60; i++) {
+      const { mv, r } = at(kind, i / 60);
+      // The mic under her chin: the hand low, the mic tipped forward so its head sits below her mouth.
+      if (mv.arm < 20 && mv.weapon > 25 && mv.weapon < 65) chin = true;
+      back = Math.min(back, r.tilt);
+      // With the hand low, the mic never stands straight up over her face.
+      if (mv.turn > 0) assert.ok(!(mv.arm < 30 && mv.weapon < 28), `${kind} stands the mic up over her face at ${i / 60}`);
+    }
+    if (SINGS.includes(kind)) assert.ok(chin, `${kind} never sings into the mic under her chin`);
+    if (BELTS.includes(kind)) assert.ok(back <= -10, `${kind} never throws her head back`);
+  }
+  // Each figure ends on its own pose (the string and its pool, the command moves, her skills).
+  const sig = (kind) => {
+    const { mv, r } = at(kind, 1);
+    return `${Math.round(mv.weapon / 20)},${Math.round(mv.arm / 20)},${r.eyes},${r.armSide},${r.backArm[1] < -12}`;
+  };
+  for (const set of [['sibeat', 'sistep', 'sihigh', 'sikiss', 'sishoulder', 'sijump', 'sipose'], ['siup', 'siair', 'sidash'], ['sisong', 'sicheer', 'silullaby', 'sibow', 'siconcert']]) {
+    const seen = new Map();
+    for (const kind of set) {
+      const s = sig(kind);
+      assert.ok(!seen.has(s), `${kind} ends on the same pose as ${seen.get(s)}`);
+      seen.set(s, kind);
+    }
+  }
+});
+
+// Life skills (render/life-moves.js): every move holds a tool that exists, keeps the weapon arm
+// at or below the shoulder whenever it's drawn in front (raised, it goes behind the head), keeps the
+// free hand below her jaw, acts its own face, and flows without a jump from moment to moment.
+test('life-skill moves: their own tools, nothing over the face, smooth all the way', async () => {
+  const { LIFE_MOVES } = await import('../src/render/life-moves.js');
+  const { moveAt } = await import('../src/render/moves.js');
+  const { toolShapes } = await import('../src/render/tools.js');
+  const { LIFE_BY_KIND } = await import('../src/render/life.js');
+  for (const kind of Object.values(LIFE_BY_KIND)) assert.ok(LIFE_MOVES[kind], `${kind} is a life move`);
+  const durs = { fishwait: 9, fishbite: 1, fishcatch: 1.4, cook: 2.4, craft: 2.6 };
+  for (const kind of Object.keys(LIFE_MOVES)) {
+    let last = null;
+    for (let i = 0; i <= 200; i++) {
+      const p = i / 200;
+      const mv = moveAt(kind, p, durs[kind] ?? 1.4);
+      for (const t of [mv.tool, mv.backTool].filter((t) => t && t !== 'none')) assert.ok(toolShapes(t), `${kind}: the ${t} is drawn`);
+      assert.ok(mv.face, `${kind} at ${p}: acts its own face`);
+      if (!mv.armBack) assert.ok(mv.arm <= 135, `${kind} at ${p}: the arm (${Math.round(mv.arm)}) stays clear of the face`);
+      const r = { frontLeg: [0, 0, 0], backLeg: [0, 0, 0], backArm: [0, 0], cape: 0 };
+      mv.rig?.(r);
+      assert.ok(r.backArm[1] >= -8, `${kind} at ${p}: the free hand stays below her jaw`);
+      // The angles move on smoothly (a blow is fast, never a teleport), unless the tool changes.
+      if (last && last.tool === mv.tool) {
+        assert.ok(Math.abs(mv.arm - last.arm) < 40, `${kind} at ${p}: the arm jumps ${Math.round(mv.arm - last.arm)}`);
+        assert.ok(Math.abs(mv.weapon - last.weapon) < 60, `${kind} at ${p}: the tool jumps ${Math.round(mv.weapon - last.weapon)}`);
+      }
+      last = mv;
+    }
+  }
+});
+
+// Mid-move, not just at the ends: whenever a Warrior-line blade stands about upright over the fist
+// at her chest (a rising cut, a spin coming round, a raise before a slam), it is drawn behind her
+// head, never across her face; and each of the line's moves ends on a pose of its own.
+test('the Warrior line never passes a blade across the face mid-move, and each move ends its own way', async () => {
+  const { moveAt } = await import('../src/render/moves.js');
+  const { weaponBehind, rigid } = await import('../src/render/hero.js');
+  const { PATH_VARIANTS } = await import('../src/world/melee.js');
+  const moves = new Set(['gsrise', 'gsspin', 'bkeclipse', 'dragrise', 'gstitan', 'plverdict', 'skysplit', 'leapchop']);
+  for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
+  for (const weapon of ['sword', 'axe']) {
+    for (const kind of moves) {
+      for (let i = 0; i <= 60; i++) {
+        const mv = rigid(moveAt(kind, i / 60, 0.8, { weapon }));
+        const up = ((((mv.weapon % 360) + 540) % 360) - 180);
+        if (up > -22 && up < 30 && mv.arm < 200) assert.ok(weaponBehind(weapon, mv.weapon, mv), `${kind} with a ${weapon} crosses her face at ${(i / 60).toFixed(2)}`);
+      }
+    }
+  }
+  const ends = ['gsdrop', 'gsrise', 'gsspin', 'gscleave', 'gstitan', 'leapchop', 'skysplit'];
+  const seen = new Map();
+  for (const kind of ends) {
+    const mv = moveAt(kind, 1, 0.8, { weapon: 'sword' });
+    const sig = `${Math.round((((mv.weapon % 360) + 360) % 360) / 15)}`;
+    assert.ok(!seen.has(sig), `${kind} ends on the same pose as ${seen.get(sig)}`);
+    seen.set(sig, kind);
+  }
+});
+
+// The Arbalist Engineer: each shot pushes the crossbow out to arm's length (her body and knees
+// read round it) and never up at her face, and her moves are different figures, not one crouch.
+test('the Arbalist Engineer aims out at arm\'s length, below her face, in figures of her own', async () => {
+  const { moveAt } = await import('../src/render/moves.js');
+  const kinds = ['aesnap', 'aedouble', 'aebrace', 'aerecoil', 'aeduck', 'aetriple', 'aeslide', 'aedeploy', 'aebertha'];
+  const shapes = new Set();
+  for (const kind of kinds) {
+    let reach = 0;
+    const sig = [];
+    for (let i = 0; i <= 40; i++) {
+      const mv = moveAt(kind, i / 40, 0.6, { weapon: 'crossbow' });
+      const r = { frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], cape: 0 };
+      mv.rig?.(r);
+      assert.ok(mv.arm <= 104, `${kind} raises the crossbow to her face at ${i / 40}`);
+      reach = Math.max(reach, mv.arm);
+      if (i % 8 === 0) sig.push(`${Math.round(mv.arm / 12)},${Math.round(r.backLeg[2] / 30)},${Math.round((r.squat ?? 0) / 2)},${Math.round((mv.lunge ?? 0) / 4)}`);
+    }
+    // (Deploying, she sets it aside; ducking, she fires up out of a crouch with it tucked in.)
+    if (kind !== 'aedeploy' && kind !== 'aeduck') assert.ok(reach >= 60, `${kind} never pushes the crossbow out (${Math.round(reach)})`);
+    const key = sig.join('|');
+    assert.ok(!shapes.has(key), `${kind} moves just like another`);
+    shapes.add(key);
   }
 });

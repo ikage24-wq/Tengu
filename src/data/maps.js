@@ -11,7 +11,9 @@
 //   job        towns that are a job's home, where its instructor lives
 //   plaza      in towns, where the fountain stands
 
-import { climb, lay } from './climb.js';
+import { climb, lay, settleSpots } from './climb.js';
+import { SPOTS } from './fishing.js';
+import { SPOT } from './gathering.js';
 
 export const MAPS = {
   // Sprout Village, laid out with room to breathe (the town rules: districts with a feel, everything
@@ -24,6 +26,8 @@ export const MAPS = {
     id: 'sprout', plaza: 1800, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1660,
+    // The craft bench (data/crafting.js), on Market Street, between Lulu's salon and Pip's goods.
+    bench: 1400,
     // The town's capsule machine (data/outfits-gacha.js).
     gacha: 1960,
     width: 3200, height: 520, groundY: 480,
@@ -52,7 +56,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'kestrel', x: 2480 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'posy', x: 2075 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
@@ -150,7 +154,7 @@ export const MAPS = {
     // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
     // cherry tree's crown in the boughs, the cloud pillar by the lookout.
     deco: [
-      ['flowerarch', 260], ['giantflower', 900, 0], ['pond', 2235], ['picnic', 1650], ['signpost', 2060],
+      ['flowerarch', 260], ['giantflower', 900, 0], ['bigpond', 2235], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
       ['sakura', 1200, 0, 440],
       ['cloudpillar', 880, 0, 280],
@@ -188,10 +192,10 @@ export const MAPS = {
     ...lay({
       width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 920, 280], [90, 840, 280]],
       zones: [
-        { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.08] }],
+        { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
           look: { sky: ['#6a8a6a', '#8aa88a', '#c8d8b8'], far: '#7a9a7a', mid: '#5a7a5a' } },
-        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }, { kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')] },
+        { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
           look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
       ],
       ledges: [
@@ -238,12 +242,14 @@ export const MAPS = {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
     // The town stove, for cooking (data/cooking.js).
     stove: 700,
+    // The craft bench (data/crafting.js), on Harbor Square, past the Harbor Office.
+    bench: 1150,
     width: 2600, height: 520, groundY: 480,
     look: { islands: 'planks', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
     homeStyle: 'canal',
     cottages: [180, 470, 600, 1190, 1420, 1720],
-    townPieces: [['pier', 2120]],
+    townPieces: [['pier', 2120], ['noticeboard', 830]],
     platforms: [
       // The rooftop hideout behind the Den, on stilts.
       { x: 1660, y: 400, w: 150, posts: true }, { x: 1740, y: 320, w: 150, posts: true },
@@ -256,7 +262,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'meadow2', toPortal: 'east' },
       { id: 'east', x: 2540, y: 480, to: 'woods', toPortal: 'west' },
     ],
-    npcs: [{ id: 'marlo', x: 330 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
+    npcs: [{ id: 'marlo', x: 330 }, { id: 'posy', x: 870 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
@@ -284,10 +290,10 @@ export const MAPS = {
     ...lay({
       width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
-        { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
+        { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [SPOT.ore(2), SPOT.ore(2)],
           look: { sky: ['#4a6a52', '#6a8a6a', '#a8c09a'], far: '#4f7a5a', mid: '#3f6a4a' } },
-        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)] },
+        { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.night(2)],
           look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
       ],
       ledges: [
@@ -336,11 +342,11 @@ export const MAPS = {
     ...lay({
       width: 2600, ground: 1120, by: 'y', quiet: [[40, 300, 160], [2380, 700, 200], [2540, 1120, 160]],
       zones: [
-        { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.15] }],
+        { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [SPOT.ore(2), SPOT.ore(2, { gem: 0.14 })],
           look: { sky: ['#2a2250', '#4a3a7a', '#8a7ab0'] } },
-        { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
+        { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.fiber(2), SPOT.wood(2)],
           look: { sky: ['#5a4a98', '#8a76c0', '#c8b8e8'] } },
-        { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }] },
+        { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.night(2)] },
       ],
       ledges: [
         // The Temple Roof, broken in the middle.
@@ -390,9 +396,9 @@ export const MAPS = {
       ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1110, top: 880, bottom: 1000 }, { x: 1490, top: 880, bottom: 1000 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
       quiet: [[40, 600, 160], [500, 720, 160], [1300, 1000, 200], [2100, 480, 160], [2540, 600, 160]],
       zones: [
-        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.15] }] },
-        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }] },
-        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.25] }] },
+        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.fiber(3), SPOT.herb(3, 'crystal_truffle'), SPOT.night(3)] },
+        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 })] },
       ],
       ledges: [
         // Glowcap Terraces: crystal shelves over the steps, and a high ledge.
@@ -437,12 +443,12 @@ export const MAPS = {
   sky: {
     id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
     ...lay({
-      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200]],
+      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200], [2760, 1040, 200]],
       zones: [
-        { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+        { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'], nodes: [SPOT.fruit(4, 'cloudberry'), SPOT.fiber(4)] },
+        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [SPOT.honey(4), SPOT.wood(4), SPOT.fiber(4)],
           look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
-        { name: 'Starlit Terrace', color: '#e0b84a', from: 2050, mobs: ['starspirit'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Starlit Terrace', color: '#e0b84a', from: 2050, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4), SPOT.night(4)],
           look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
       ],
       ledges: [
@@ -464,6 +470,9 @@ export const MAPS = {
         { x: 2650, y: 320, w: 300, thick: 44 },
         // The drifting cloud from the roost over to the terrace.
         { x: 1710, y: 480, w: 140, drift: { dx: 200, period: 9 } },
+        // A little cloud dock over the cloud sea in the quiet east corner, for fishing: no monster
+        // drifts down to it.
+        { x: 2790, y: 980, w: 95, posts: true },
       ],
     }),
     // A moving part per zone: a blossom on the cloud sea bouncing you up into the meadows, a
@@ -519,10 +528,10 @@ Object.assign(MAPS, {
       ropes: [{ x: 710, top: 600, bottom: 1000 }, { x: 1690, top: 560, bottom: 1000 }],
       quiet: [[40, 600, 160], [1450, 1000, 200], [2130, 300, 200]],
       zones: [
-        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'The Gorge', color: '#b05a4a', from: 700, mobs: ['pebblet', 'scorpip'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.1] }],
+        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.fiber(1)] },
+        { name: 'The Gorge', color: '#b05a4a', from: 700, mobs: ['pebblet', 'scorpip'], nodes: [SPOT.ore(1), SPOT.ore(1, { gem: 0.12 })],
           look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
-        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.wood(1), SPOT.night(1)],
           look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
       ],
       ledges: [
@@ -562,12 +571,14 @@ Object.assign(MAPS, {
     id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1600,
+    // The craft bench (data/crafting.js), on Forge Row, by Tora's forge.
+    bench: 1858,
     width: 2200, height: 520, groundY: 480,
     look: { propKeep: 0.8 },
     terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
     homeStyle: 'adobe',
     cottages: [530, 1400, 1950],
-    townPieces: [['arena', 1080]],
+    townPieces: [['arena', 1080], ['noticeboard', 1255]],
     platforms: [
       // The houses' flat roofs (their own art: nothing drawn for them), up the ladders.
       { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1902, y: 360, w: 96, bare: true },
@@ -578,7 +589,7 @@ Object.assign(MAPS, {
       { id: 'south', x: 60, y: 480, to: 'canyon', toPortal: 'north' },
       { id: 'ridge', x: 2130, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
     ],
-    npcs: [{ id: 'brann', x: 780 }, { id: 'tora', x: 1720 }],
+    npcs: [{ id: 'brann', x: 780 }, { id: 'posy', x: 1215 }, { id: 'tora', x: 1720 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
@@ -601,12 +612,14 @@ Object.assign(MAPS, {
     id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     // The town stove, for cooking (data/cooking.js).
     stove: 820,
+    // The craft bench (data/crafting.js), on the plaza, under the moon tree's boughs.
+    bench: 1000,
     width: 2400, height: 520, groundY: 480,
     look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
     homeStyle: 'treehome',
     cottages: [180, 640, 1980, 2180],
-    townPieces: [['moontree', 1110]],
+    townPieces: [['moontree', 1110], ['noticeboard', 1340]],
     platforms: [
       // A bough of the moon tree.
       { x: 1006, y: 324, w: 92, bare: true },
@@ -617,7 +630,7 @@ Object.assign(MAPS, {
       { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
       { id: 'east', x: 2340, y: 480, to: 'ruins', toPortal: 'west' },
     ],
-    npcs: [{ id: 'nim', x: 600 }, { id: 'elowen', x: 1500 }],
+    npcs: [{ id: 'nim', x: 600 }, { id: 'posy', x: 1300 }, { id: 'elowen', x: 1500 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
@@ -1136,7 +1149,7 @@ Object.assign(MAPS, {
 
 const SEA_LOOK = { skyline: 'reef', material: 'reef', critters: [], drift: 'bubble', face: null, light: 'cave', ceiling: false };
 
-MAPS.harbor.portals.push({ id: 'pier', x: 2300, y: 480, to: 'tidepool_pier', toPortal: 'west', label: 'Tidepool Pier' });
+MAPS.harbor.portals.push({ id: 'pier', x: 2180, y: 480, to: 'tidepool_pier', toPortal: 'west', label: 'Tidepool Pier' });
 
 Object.assign(MAPS, {
   // Tidepool Pier: a little pier off the east end of Pastel Harbor, over water glowing from below,
@@ -2202,10 +2215,10 @@ Object.assign(MAPS, {
       ropes: [{ x: 990, top: 640, bottom: 880 }],
       quiet: [[40, 880, 160], [900, 880, 300], [900, 800, 260], [900, 720, 260], [2340, 640, 160]],
       zones: [
-        { name: 'Flower Meadow', color: '#e889b4', from: 0, mobs: ['mossgolem', 'sylph'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Waterfall Pool', color: '#4fb0d8', from: 800, mobs: ['sylph'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.12] }],
+        { name: 'Flower Meadow', color: '#e889b4', from: 0, mobs: ['mossgolem', 'sylph'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2)] },
+        { name: 'Waterfall Pool', color: '#4fb0d8', from: 800, mobs: ['sylph'], nodes: [SPOT.ore(2)],
           look: { sky: ['#9fe4f0', '#d8f4f6', '#fffbe8'], far: '#9fd8c8', mid: '#7fc8b0' } },
-        { name: 'Sylph Grove', color: '#6fae5f', from: 1300, mobs: ['sylph', 'mossgolem'], nodes: [{ kind: 'honey', pool: { honeycomb: 1 } }],
+        { name: 'Sylph Grove', color: '#6fae5f', from: 1300, mobs: ['sylph', 'mossgolem'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
           look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8' } },
       ],
       ledges: [
@@ -2247,10 +2260,10 @@ Object.assign(MAPS, {
     ...climb({
       width: 2600, ground: 880, quiet: [[40, 880, 160]],
       zones: [
-        { name: 'Torii Steps', color: '#e0504a', rows: ['split', 'long'], mobs: ['nekomata'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Lantern Terraces', color: '#e0a040', rows: ['splitwide', 'tri', 'long'], mobs: ['nekomata', 'kitsunemiko'], nodes: [{ kind: 'fruit', pool: { cherry: 1 } }],
+        { name: 'Torii Steps', color: '#e0504a', rows: ['split', 'long'], mobs: ['nekomata'], nodes: [SPOT.wood(3), SPOT.fruit(3, 'shrine_plum')] },
+        { name: 'Lantern Terraces', color: '#e0a040', rows: ['splitwide', 'tri', 'long'], mobs: ['nekomata', 'kitsunemiko'], nodes: [SPOT.fruit(3, 'cherry'), SPOT.wood(3), SPOT.fruit(3, 'shrine_plum')],
           look: { sky: ['#ffb8a8', '#ffd8c8', '#fff0e4'] } },
-        { name: 'Hokora Heights', color: '#8f6cc4', rows: ['split', 'middle'], mobs: ['kitsunemiko'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+        { name: 'Hokora Heights', color: '#8f6cc4', rows: ['split', 'middle'], mobs: ['kitsunemiko'], nodes: [SPOT.ore(3), SPOT.night(3)],
           look: { sky: ['#c8a8e0', '#e8d0f0', '#fff0f4'] } },
       ],
     }),
@@ -2284,10 +2297,10 @@ Object.assign(MAPS, {
       ropes: [{ x: 590, top: 760, bottom: 880 }, { x: 1010, top: 760, bottom: 840 }, { x: 1390, top: 700, bottom: 840 }, { x: 1790, top: 560, bottom: 700 }],
       quiet: [[40, 880, 160]],
       zones: [
-        { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'rockgolem'], nodes: [{ kind: 'ore', pool: { copper_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+        { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.wood(3)] },
+        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.ore(3, { gem: 0.16 })],
           look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
-        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['rockgolem', 'lupina'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['rockgolem', 'lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.night(3)],
           look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
       ],
       ledges: [
@@ -2329,10 +2342,10 @@ Object.assign(MAPS, {
     ...climb({
       width: 2400, ground: 880, quiet: [[40, 880, 160], [2200, 880, 320], [2200, 800, 260], [2200, 720, 260], [1560, 560, 200]],
       zones: [
-        { name: 'Hot Spring Pools', color: '#e0705a', rows: ['wide', 'split'], mobs: ['lamia'], nodes: [{ kind: 'herb', pool: { clover: 1 } }] },
-        { name: 'Waterfall Steps', color: '#4fb0d8', rows: ['tri', 'long', 'splitwide'], mobs: ['lamia', 'shade'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }],
+        { name: 'Hot Spring Pools', color: '#e0705a', rows: ['wide', 'split'], mobs: ['lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.fiber(3)] },
+        { name: 'Waterfall Steps', color: '#4fb0d8', rows: ['tri', 'long', 'splitwide'], mobs: ['lamia', 'shade'], nodes: [SPOT.ore(3), SPOT.wood(3), SPOT.fiber(3)],
           look: { sky: ['#9fd8e8', '#cfeef0', '#fff4ea'] } },
-        { name: 'Steam Heights', color: '#8a86b0', rows: ['split', 'middle'], mobs: ['shade', 'lamia'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Steam Heights', color: '#8a86b0', rows: ['split', 'middle'], mobs: ['shade', 'lamia'], nodes: [SPOT.herb(3, 'steam_ginger'), SPOT.night(3)],
           look: { sky: ['#c8c4e0', '#e4e0f0', '#fff4f0'] } },
       ],
     }),
@@ -2365,10 +2378,10 @@ Object.assign(MAPS, {
     ...lay({
       width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1950, 1040, 260], [2000, 960, 260]],
       zones: [
-        { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.2] }] },
-        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }],
+        { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'], nodes: [SPOT.fruit(4, 'snow_peach'), SPOT.ore(4)] },
+        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [SPOT.ore(4), SPOT.night(4)],
           look: { sky: ['#9fb8e8', '#c8d8f4', '#eef4ff'] } },
-        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.3] }],
+        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [SPOT.ore(4, { gem: 0.2 }), SPOT.wood(4), SPOT.fruit(4, 'snow_peach')],
           look: { sky: ['#6a8ad0', '#a8c4f0', '#f0f6ff'] } },
       ],
       ledges: [
@@ -2419,10 +2432,10 @@ Object.assign(MAPS, {
       ropes: [{ x: 470, top: 520, bottom: 640 }, { x: 770, top: 640, bottom: 800 }, { x: 1010, top: 800, bottom: 1040 }, { x: 1590, top: 800, bottom: 1040 }, { x: 1830, top: 640, bottom: 800 }, { x: 2130, top: 520, bottom: 640 }],
       quiet: [[40, 520, 200], [880, 800, 260], [820, 640, 320], [2500, 440, 200]],
       zones: [
-        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [{ kind: 'herb', pool: { moonpetal: 1 }, night: true, look: 'moonpetal' }] },
-        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [{ kind: 'ore', pool: { silver_ore: 1 }, rare: ['rose_quartz', 0.3] }],
+        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
+        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
           look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
-        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [{ kind: 'herb', pool: { clover: 1 } }],
+        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4), SPOT.fiber(4)],
           look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
       ],
       ledges: [
@@ -2523,3 +2536,6 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
   const m = MAPS[id];
   m.portals.push({ id: 'homestone', x, y, to: m.town, toPortal: 'start', homestone: true, label: `Home: ${MAPS[m.town].name}` });
 }
+
+// Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).
+for (const m of Object.values(MAPS)) settleSpots(m, SPOTS[m.id]);

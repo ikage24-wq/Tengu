@@ -18,7 +18,7 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questTarget, setRoute } from '../world/routes.js';
 import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot, font } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { settings, saveSettings } from '../core/settings.js';
 
@@ -425,6 +425,21 @@ export function drawQuestTracker(ui, state, world) {
         const size = 6.5 * (1 + 0.45 * pop * pop);
         text(ctx, `${o.have}/${o.count}`, x + w - 9, oy + 6 + pop, { size, bold: true, align: 'right', color: done ? GREEN : pop > 0 ? th.ink : th.dark });
         bar(ctx, x + 15, oy + 8.2, w - 24, 2.6, o.have / o.count, done ? COLORS.good : th.main, null, { flash: pop });
+        // A party member's kill or find: a little rose heart and their name rise off the count.
+        const credit = world.partyCredit?.[`${c.id}|${o.mob ?? o.item}`];
+        const age = credit ? t - credit.at : 9;
+        if (age < 2.2) {
+          const u = age / 2.2;
+          ctx.globalAlpha = Math.min(1, age * 6) * (1 - u * u);
+          const rise = (1 - Math.pow(1 - u, 3)) * 5;
+          const label = `+${credit.name}`;
+          ctx.font = font(5.5, true);
+          const lw = ctx.measureText(label).width;
+          const lx = x + w - 30 - lw;
+          icon(ctx, 'heart', lx - 4, oy + 3 - rise, 5, '#ff6b9a');
+          text(ctx, label, lx, oy + 5 - rise, { size: 5.5, bold: true, color: '#e0659f' });
+          ctx.globalAlpha = 1;
+        }
       });
     }
     // A map pin: the guide trail straight to where the quest wants you now.

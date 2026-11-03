@@ -27,9 +27,10 @@ export function stale(world, text) {
 // `bot` says `text`: over their head, and in your chat log when it's their map and the log has
 // room. `important` skips the waits (an answer to you, party chat). `repeat` lets a line through
 // that was said lately (the middle of a little scripted chat between two). `log: false` keeps it
-// over their head only. Returns whether it was said.
+// over their head only. Someone AFK says nothing. Returns whether it was said.
 export function botChat(world, bot, text, { color = '#e6dcff', prefix = '', important = false, repeat = false, log = true } = {}) {
-  if (!text) return false;
+  // (Nobody types while they're away from the keyboard.)
+  if (!text || bot.afk) return false;
   const g = (world.chatGate ??= { last: -99, recent: [], said: new Map() });
   const key = shape(text, [world.char?.name, bot.name]);
   if (!key || (!repeat && g.said.has(key) && world.now - g.said.get(key) < SAME_FOR)) return false;

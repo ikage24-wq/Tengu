@@ -200,7 +200,7 @@ test('players nearby say hi back, answer a question, and cheer when you level up
   assert.ok(lines.some((l) => /gr|gz|congrats|ding|woo|level/i.test(l)), `cheers for the level (${lines.join(' | ')})`);
 });
 
-test('in town, players chat with each other and wear sets (no titles, rug shops, fishing or cooking)', () => {
+test('in town, players chat with each other and wear sets (no titles or rug shops)', () => {
   const world = createWorld(createCharacter('Me', {}));
   quiet(world);
   loadMap(world, 'harbor', 'start');
@@ -211,7 +211,8 @@ test('in town, players chat with each other and wear sets (no titles, rug shops,
     updateBots(bots, world, 0.1);
     for (const b of botsIn(bots, 'harbor')) seen.add(b.state);
   }
-  assert.ok(!seen.has('fish') && !seen.has('cook'), `nobody fishes or cooks (${[...seen]})`);
+  // (The old stand-in fishing and cooking are gone: real life skills are tested below.)
+  assert.ok(!seen.has('fish') && !seen.has('cook'), `no stand-in fishing or cooking (${[...seen]})`);
   assert.ok(seen.has('chat'), 'two chatted');
   assert.ok(!bots.list.some((b) => b.shop), 'no rug shops');
   const rng = seeded(9);
@@ -570,7 +571,7 @@ test('a party combo: your finisher brings the members fighting by you in with th
   for (let t = 0; t < 3 && !fin; t += 1 / 30) {
     world.now += 1 / 30;
     updateBots(bots, world, 1 / 30);
-    fin = pal.attack?.pose === 'verdict';
+    fin = pal.attack?.pose === 'plverdict';
   }
   assert.ok(fin, 'and their own finisher goes off');
 });
@@ -771,7 +772,7 @@ test('weather: rain comes and goes, and snow in winter', () => {
 test('a lucky drop: the players around react', async () => {
   const { luckyDrop } = await import('../src/world/social.js');
   const { makeEquip } = await import('../src/core/items.js');
-  const { world, bots, lines } = eventTown(421);
+  const { world, bots, lines } = eventTown(422);
   luckyDrop(bots, world, makeEquip('sword_10', { rarity: 3 }));
   townStep(world, bots, 6);
   assert.ok(lines.some((l) => /gz|lucky|farmed|crazy|fair|legendary/.test(l)), 'they react');
@@ -818,4 +819,204 @@ test('accepting a help request or a dungeon group never pushes your party past i
   assert.ok(joinGroup(bots, world, lead), 'and a group asks you to leave your party first');
   assert.equal(partyMembers(bots).length, PARTY_MAX);
   assert.ok(!world.dungeon);
+});
+
+// ---------- Life skills (world/botlife.js) ----------
+
+// A field with its players, run for `secs` (you standing still at the start), calling `each` every frame.
+function lifeField(mapId, seed, secs, { night = false, each = null } = {}) {
+  const world = createWorld(createCharacter('Tester', {}));
+  const lines = [];
+  world.log = (t) => lines.push({ t, at: world.now });
+  world.char.level = 20;
+  world.god = true;
+  const bots = createBots(world, seeded(seed), { clock: EVENING });
+  loadMap(world, mapId, 'start');
+  world.forceNight = night ? 1 : 0;
+  // (The world's own dice are seeded too, so a run always plays out the same way.)
+  const random = Math.random;
+  Math.random = seeded(seed + 1000);
+  try {
+    for (let t = 0; t < secs; t += 1 / 30) {
+      updateWorld(world, 1 / 30, NONE);
+      updateBots(bots, world, 1 / 30);
+      each?.(world, bots);
+    }
+  } finally {
+    Math.random = random;
+  }
+  return { world, bots, lines };
+}
+
+test('generated players have life levels of their own: most casual, some keen with tools', async () => {
+  const { lifeLevel, LIFE_SKILLS } = await import('../src/core/life.js');
+  const { ITEMS } = await import('../src/data/items.js');
+  const rng = seeded(31);
+  const chars = Array.from({ length: 300 }, (_, i) => makeBotCharacter(rng, { name: `life${i}` }));
+  const keen = chars.filter((c) => c.lifeStyle === 'keen');
+  assert.ok(keen.length > 15 && keen.length < 90, `a few keen life-skillers (${keen.length} of 300)`);
+  for (const c of chars) for (const s of LIFE_SKILLS) assert.ok(lifeLevel(c, s) >= 1 && lifeLevel(c, s) <= 50);
+  const top = (c) => Math.max(...LIFE_SKILLS.map((s) => lifeLevel(c, s)));
+  const avg = (list) => list.reduce((n, c) => n + top(c) / Math.max(1, c.level), 0) / list.length;
+  assert.ok(avg(keen) > avg(chars.filter((c) => c.lifeStyle !== 'keen')) * 1.4, 'keen ones are well ahead for their level');
+  assert.ok(keen.some((c) => Object.values(c.lifeTools ?? {}).some((id) => ITEMS[id]?.life)), 'keen ones carry bench-made tools');
+  // The same character gets the same levels (they don't shift the rest of its rolls).
+  const a = makeBotCharacter(seeded(5), { name: 'Same' });
+  const b = makeBotCharacter(seeded(5), { name: 'Same' });
+  assert.deepEqual(a.life, b.life);
+});
+
+test('players on a field work its ready life spots, leave them ready for you, and spread over the floors', async () => {
+  const { nodeReady } = await import('../src/world/gathering.js');
+  const worked = new Map();
+  const kinds = new Set();
+  const phases = new Set();
+  let resting = 0;
+  const { world, bots } = lifeField('meadow1', 11, 600, {
+    night: true,
+    each: (w, bs) => {
+      for (const b of bs.list) {
+        if (!b.hunter || !b.life || b.life.phase === 'walk') continue;
+        kinds.add(b.life.kind);
+        if (b.life.kind === 'node') worked.set(b.life.i, b.life.node);
+        else phases.add(b.life.phase);
+        // Working a spot is standing at it, on its floor.
+        const at = b.life.node ?? b.life.spot;
+        assert.ok(Math.abs(b.body.x - at.x) < 30 && Math.abs(b.body.y - at.y) < 6, 'at the spot itself');
+      }
+      // A spot a player just worked is still ready for you (only they wait for it to grow back).
+      for (const k of Object.keys(w.botRest ?? {})) if (!nodeReady(w, Number(k.split(':')[1]))) resting++;
+    },
+  });
+  assert.ok(worked.size >= 4, `several spots worked (${worked.size})`);
+  assert.equal(resting, 0, 'their work never uses a spot up for you');
+  assert.equal(Object.keys(world.nodeRest ?? {}).length, 0, 'nothing rests for you');
+  assert.ok(Object.keys(world.botRest ?? {}).length >= 3, 'the other players wait before working one again');
+  const floors = new Set([...worked.values()].map((n) => n.y));
+  assert.ok(floors.size >= 3, `worked on many floors (${[...floors]})`);
+  assert.ok(kinds.has('fish'), 'and someone sat at the fishing nook');
+  assert.ok(phases.has('wait') && phases.has('catch'), `waiting, then a catch (${[...phases]})`);
+  assert.ok(bots.list.some((b) => b.hunter && b.lifer) || worked.size >= 4, 'a keen life-skiller among them');
+});
+
+test('a player never takes the spot you are using, and gives one up the moment you start on it', async () => {
+  const { nodesOf, nodeReady, startGathering } = await import('../src/world/gathering.js');
+  const { fieldLife } = await import('../src/world/botlife.js');
+  const { createBody } = await import('../src/world/physics.js');
+  // You stand at a spot all along: nobody ever goes for it.
+  const world0 = createWorld(createCharacter('Tester', {}));
+  quiet(world0);
+  loadMap(world0, 'meadow1', 'start');
+  const target = nodesOf(world0).findIndex((n) => !n.night && n.kind === 'herb');
+  const spot = nodesOf(world0)[target];
+  let tried = 0;
+  lifeField('meadow1', 13, 300, {
+    each: (w, bs) => {
+      Object.assign(w.body, { x: spot.x, y: spot.y, vx: 0, vy: 0 });
+      for (const b of bs.list) if (b.life?.kind === 'node') {
+        tried++;
+        assert.notEqual(b.life.i, target, 'never the spot you are at');
+      }
+      // Nobody stands on or by the spot you're at.
+      for (const b of bs.list) if (b.body && b.life && b.life.phase !== 'walk' && Math.abs(b.body.x - spot.x) < 60 && Math.abs(b.body.y - spot.y) < 30) assert.fail('standing on your spot');
+    },
+  });
+  assert.ok(tried > 0, 'they worked other spots meanwhile');
+  // A player mid-work on a spot: you start on it, they let it go and it stays ready for you.
+  const world = createWorld(createCharacter('Tester', {}));
+  quiet(world);
+  world.char.level = 20;
+  loadMap(world, 'meadow1', 'start');
+  world.bots = { list: [] };
+  const char = makeBotCharacter(seeded(3), { name: 'Picker', level: 20, jobs: ['warrior'], life: 'keen' });
+  for (const s of ['gathering', 'mining', 'fishing']) char.life[s].level = 30;
+  const n0 = nodesOf(world).find((n) => !n.night);
+  const bot = { id: 'p1', name: 'Picker', char, level: 20, hunter: true, lifer: true, map: 'meadow1', x: n0.x - 12, facing: 1, body: createBody(n0.x - 12, n0.y), brain: { settled: false }, appear: 0 };
+  bot.body.onGround = true;
+  world.bots.list.push(bot);
+  world.body.x = 30;
+  for (let k = 0; k < 40 && !bot.life; k++) {
+    bot.lifeIn = 0;
+    fieldLife(bot, world, 1 / 30, seeded(k + 1));
+  }
+  assert.ok(bot.life, 'they went for a spot');
+  if (bot.life.kind !== 'node') return;
+  bot.life.phase = 'work';
+  const i = bot.life.i;
+  const n = nodesOf(world)[i];
+  Object.assign(world.body, { x: n.x + 6, y: n.y, onGround: true, vx: 0, vy: 0 });
+  assert.equal(startGathering(world), null, 'you can start on it');
+  fieldLife(bot, world, 1 / 30, seeded(9));
+  assert.equal(bot.life, null, 'they let it go');
+  assert.ok(nodeReady(world, i), 'still ready for you');
+});
+
+test('what players say about their life skills goes through the chat gate, names real things, and never repeats', async () => {
+  const { shape } = await import('../src/world/chatlog.js');
+  const { ITEMS } = await import('../src/data/items.js');
+  const { FISH } = await import('../src/data/fishing.js');
+  const { GATHERED } = await import('../src/data/gathering.js');
+  const finds = [...GATHERED.map((g) => g[1]), ...FISH.map((f) => f.name)];
+  const life = [];
+  for (const [map, seed] of [['cave', 4], ['meadow1', 11], ['woods', 3], ['sky', 3]]) {
+    const { lines, world } = lifeField(map, seed, 900, { night: true });
+    const said = lines.filter(({ t }) => /^[^:[★(]+: /.test(t));
+    // No line twice in ten minutes (names and numbers aside): the gate's rule.
+    const last = new Map();
+    for (const { t, at } of said) {
+      const who = t.slice(0, t.indexOf(':'));
+      const key = shape(t.slice(t.indexOf(': ') + 2), ['Tester', who]);
+      assert.ok(!(last.has(key) && at - last.get(key) < 600), `said twice: ${t}`);
+      last.set(key, at);
+    }
+    const ours = said.filter(({ t }) => finds.some((f) => t.toLowerCase().includes(f.toLowerCase())) || /fishing|gathering|mining|cooking|crafting/i.test(t));
+    life.push(...ours.map(({ t }) => t));
+    // A rare find from a vein names a real gem, and that vein's own.
+    for (const { t } of ours) {
+      const m = /got an? (.+?) out of the (.+?) vein/i.exec(t);
+      if (m) assert.ok(Object.values(ITEMS).some((d) => d.name.toLowerCase() === m[1].toLowerCase()), `a real gem (${t})`);
+    }
+    assert.ok(world.chatGate, 'the gate was used');
+  }
+  assert.ok(life.length >= 4, `players talk about their life skills now and then (${life.join(' / ')})`);
+  // Names are written as they are (no typos in an item's name).
+  assert.ok(life.filter((l) => finds.some((f) => l.toLowerCase().includes(f.toLowerCase()))).length >= 2, `by their real names (${life.join(' / ')})`);
+});
+
+test('in town players cook at the stove and craft at the bench, and ask where their next material is found', async () => {
+  const { whereFrom } = await import('../src/world/botlife.js');
+  const world = createWorld(createCharacter('Tester', {}));
+  const lines = quiet(world);
+  loadMap(world, 'grove', 'start');
+  const bots = createBots(world, seeded(3), { clock: EVENING });
+  const seen = new Set();
+  for (let t = 0; t < 900; t += 0.1) {
+    world.now += 0.1;
+    updateBots(bots, world, 0.1);
+    for (const b of botsIn(bots, 'grove')) {
+      if (b.state !== 'life') continue;
+      seen.add(b.life.kind);
+      if (b.life.kind === 'cook') assert.ok(Math.abs(b.x - world.map.stove) < 30, 'at the stove');
+      if (b.life.kind === 'craft') assert.ok(Math.abs(b.x - world.map.bench) < 30, 'at the bench');
+    }
+  }
+  assert.ok(seen.has('cook') && seen.has('craft'), `cooking and crafting (${[...seen]})`);
+  // Asking after a material names it and what it's for; an answer says where, from the data.
+  const asks = lines.filter((l) => /(where to find|where do u get|^[^:]+: lf) /i.test(l));
+  for (const l of asks) assert.ok(/for my |needs it|making /i.test(l), l);
+  assert.match(whereFrom('copper_ore'), /veins on (Petal Meadow|Clover Hills|Windy Canyon)/);
+  assert.match(whereFrom('sapphire'), /silver ore veins/);
+  assert.match(whereFrom('moonpetal'), /only opens at night/);
+  assert.match(whereFrom('fish_koi'), /bites at/);
+  assert.equal(whereFrom('no_such_thing'), null);
+});
+
+test('at night, someone near you points out where the night-only find is open', () => {
+  // (Someone has to come near you first: a few nights, one is plenty.)
+  const tip = ({ t }) => /moonpetal/i.test(t) && /(up|down|left|right|by u)/.test(t);
+  const nights = [7, 8, 9, 10, 11].map((seed) => lifeField('meadow1', seed, 300, { night: true }).lines.filter(tip));
+  assert.ok(nights.filter((n) => n.length).length >= 2, 'a tip about the Moonpetal and where it is');
+  assert.ok(nights.every((n) => n.length <= 1), 'once a night');
+  const day = lifeField('meadow1', 7, 120);
+  assert.ok(!day.lines.some(({ t }) => /open tonight|are out! theres one|only opens at night,/i.test(t)), 'not by day');
 });

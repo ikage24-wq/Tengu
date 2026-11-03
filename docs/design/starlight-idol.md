@@ -7,8 +7,8 @@ gauge is called Applause (Encore is the Wind Dancer's).
 
 ## Who she is
 
-A bright young idol whose wand is her microphone. She sings into it held out beside her face
-(never across it), bounces on the beat, sways her hips, points the mic at the monsters as the
+A bright young idol whose wand is her microphone. She sings into it held up under her chin
+(never across her face), throws her head back on the high notes, bounces on the beat, sways her hips, points the mic at the monsters as the
 notes fly, works the crowd with her free hand (a blown kiss, a wave, a hand on her heart) and
 ends every big moment on a pose with a wink.
 
@@ -43,6 +43,33 @@ ends every big moment on a pose with a wink.
   spotlights find her; everyone near is healed in full and warded, and three big beats of music
   blast the monsters back.
 - **Stage Presence** (passive): magic attack, MP, and every heal she gives mends more.
+
+## Animation rework (2026-11-03)
+
+An audit found her singing never reached the mic: it stayed level at her waist and most moves
+barely moved her. She is now re-rigged as a pop idol on stage (render/moves.js `si*`, rig helpers
+`SI`, `siPose`, `siFree`, `siHead` at the end of the file):
+
+- **The mic under her chin:** she sings into it held up from a low hand, its head below her mouth
+  and in front (never over her eyes); her mouth shapes the words a syllable at a time, a note
+  floats over her head, and her face is bright and blushing, never the fighters' scowl.
+- **Head back on the high notes:** the high note, the up-cast, the knee slide, the long note of
+  Healing Song, Curtain Call and Grand Concert's big note throw her head right back and lean her
+  back, up on her toes, free arm flung high.
+- **Each figure its own shape and end pose:** a dip and point with her hand on her hip (beat); a
+  step and touch, low then high (step); belt then the mic thrown out at full stretch (high note);
+  fingertips kissed with the mic dangling, then flung out with a wink (kiss); a pirouette into a
+  hip pop that settles on the mic at her chin with a wink (pose); "hey, hey, HEY!" pumps into a
+  heels-up jump, landing wide with a hand on her hip (Cheer); a sleepy cradle with her head resting
+  on her shoulder (Lullaby); and Grand Concert's run: curled low, sprung up as the stage lifts,
+  the intro swayed, a point on the first beat, a pirouette and a high thrust on the second, the
+  big note belted, a heels-up leap with the mic high on the third, and a held finale (feet wide,
+  mic out high, free arm up, a wink).
+- **Idle:** the mic swung by its cord at her side and flicked back up, a point at the crowd with
+  a nod and her hand on her hip, and a bar hummed into the mic, swaying (the Star Witch keeps her
+  own wand fidgets).
+- `tests/anim.test.js` checks the mic reaches her chin, the belts tip her head back, the mic never
+  stands up over her face, and every figure ends on its own pose.
 
 ## Status (2026-11-02)
 

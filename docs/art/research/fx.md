@@ -498,6 +498,16 @@ leaves dark fringes, so fade each drawing's opacity instead (both at full streng
   disappears behind it at the key moment.
 - Colour: a job's colour needs a second accent when its main hue is shared (the Archer's gold vs
   the Paladin's gold): the accent (sky blue) on every hit and trail is what says whose hit it is.
+- The Warrior line's finishers were remade for the big over-the-shoulder weapons (2026-11-03),
+  still one giant object each, now with the hero's own weapon in the act: Titan Breaker leaps into
+  two somersaults with the greatsword held out, so it wheels round her inside a wheel of steel
+  (`gswheel`), before the giant sword forms and she slams down with it; Grand Verdict plants the
+  blade and kneels under a rising sun of light (`halo`, drawn over her head so it never hides her),
+  then a rising swing as the sword of light falls; Crimson Eclipse hurls the axe spinning round him
+  in a burning wheel (`axewheel`, the held axe hidden while it flies), catches it, and smashes a
+  giant axe of fire (`rageaxe`) down under the blood moon. Lesson: a follow-through overshoot
+  (`sway` in moves.js) can swing a big weapon 40-60 degrees past a held pose, so aim holds short of
+  the face.
 - The Thief followed MapleStory's first-job Rogue: one book for both weapons, Double Stab for the
   dagger and Lucky Seven for the claw, so the player picks a side with their points before the
   2nd-job split (Assassin with claws, Bandit with daggers). Her shapes are the night's: smoke,

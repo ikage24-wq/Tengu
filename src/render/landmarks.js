@@ -2986,6 +2986,18 @@ const KINDS = {
       drawWaterfall(ctx, x, y, time, seed > 1 ? seed : 120, seed);
     },
   },
+  // A pond half as big again (the meadow's fishing pond, so the float reads), the same art scaled
+  // about its middle on the ground line.
+  bigpond: {
+    w: 165, h: 30,
+    draw(ctx, x, y, time, seed, wx) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1.5, 1.5);
+      KINDS.pond.draw(ctx, 0, 0, time, seed, wx);
+      ctx.restore();
+    },
+  },
   pond: {
     w: 110, h: 20,
     draw(ctx, x, y, time, seed, wx) {

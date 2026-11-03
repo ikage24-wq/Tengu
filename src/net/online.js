@@ -16,10 +16,12 @@ import { createAnim } from '../render/animator.js';
 import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
+import { coopHit, coopShared } from '../world/coopboss.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
 const MOBS_EVERY = 1 / 10;
+const COOP_EVERY = 1 / 5;
 const PROFILE_EVERY = 1.5;
 const GONE_AFTER = 10;
 
@@ -61,6 +63,8 @@ function reset() {
   online.claim = null;
   online.party = null;
   online.partyAsk = online.partyAsked = null;
+  online.joinAsk = online.joinAsked = null;
+  online.rosters = null;
   online.trade = null;
   if (online.world) online.world.net = null;
 }
@@ -242,6 +246,15 @@ export function tickNet(world, dt) {
   if (online.mobsIn <= 0 && online.claim === world.map.id && othersHere(world).length) {
     online.mobsIn = MOBS_EVERY;
     sendMobs(world);
+  }
+  // A boss's two-person mechanics (world/coopboss.js), for friends on the map to see.
+  online.coopIn = (online.coopIn ?? 0) - dt;
+  if (online.coopIn <= 0 && online.claim === world.map.id && !solo(world) && othersHere(world).length) {
+    online.coopIn = COOP_EVERY;
+    const c = coopShared(world, netId);
+    // (Once more after the last one ends, so friends' screens clear too.)
+    if (c.list.length || c.fx.length || online.coopWas) send({ t: 'coop', map: world.map.id, ...c });
+    online.coopWas = c.list.length > 0;
   }
   // Those who stop talking are gone.
   const now = performance.now() / 1000;
@@ -582,7 +595,9 @@ function onHit(world, msg) {
   if (!m || m.hp <= 0) return;
   // The same hit the player saw land in their own game: knockback, launch, holds and burns. In a
   // shared dungeon run it also stirs the monster's anger at them.
-  const dmg = world.dungeon ? noteHit(world, m, { damage: msg.d, party: msg.id, fromX: msg.x }) : msg.d;
+  let dmg = world.dungeon ? noteHit(world, m, { damage: msg.d, party: msg.id, fromX: msg.x }) : msg.d;
+  // (A boss's guard notes which side a friend struck from: world/coopboss.js.)
+  if (m.coop) dmg = coopHit(world, m, { damage: dmg, fromX: msg.x });
   if (hitMob(m, dmg, msg.x, world.now, { knock: msg.k, launch: msg.l })) {
     // Whoever struck the last blow tells everyone it fell (see 'dead'); this game only shares in
     // it, unless it hit the monster too.
@@ -608,6 +623,8 @@ function onDead(world, msg) {
   }
   m.hp = 0;
   m.byNet = true;
+  // (A party friend's kill shows as theirs on your quest tracker.)
+  if (online.party?.members.includes(msg.id)) m.killedByName = online.ghosts.get(msg.id)?.name ?? null;
   killMob(world, m, !m.mine);
 }
 

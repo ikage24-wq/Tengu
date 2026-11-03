@@ -151,6 +151,13 @@ export const NPCS = {
     greeting: "I've sailed that whale's back since I was knee-high to a kite. She's sinking in her sleep, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
+  // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
+  // region at your level, shared by everyone in your party, and Party Tokens to trade.
+  posy: {
+    id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',
+    look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },
+    greeting: "Hi hi! Fresh party quests on the board! Everyone in your party chips in, and everyone gets paid. Friends or not, the more the merrier!",
+  },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",

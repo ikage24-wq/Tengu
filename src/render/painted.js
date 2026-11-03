@@ -232,24 +232,76 @@ export function drawPaintedForest(ctx, t, cam, width, height, time, layerY, air)
   }
 }
 
+// Soft-focus sprites. The front layers' out-of-focus shapes are blurred once into small offscreen
+// canvases (per shape and drawing scale) and drawn from there every frame, moved and leaned for
+// their sway, instead of re-blurring each fill each frame (a canvas blur costs ~10 ms a fill
+// without a GPU). Each fill is blurred and laid in at the layer's alpha just as on screen, and
+// source-over stacks the same either way, so the sprite looks the same as drawing it live.
+const softCache = new Map();
+const SOFT_MAX = 72;
+function softSprite(ctx, key, hw, hh, blur, alpha, paint) {
+  const m = ctx.getTransform();
+  const scale = Math.round(Math.hypot(m.a, m.b) * 100) / 100 || 1;
+  const k = `${key}|${scale}`;
+  let s = softCache.get(k);
+  if (s) {
+    softCache.delete(k);
+    softCache.set(k, s);
+    return s;
+  }
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = Math.ceil(hw * 2 * scale);
+  c.height = Math.ceil(hh * 2 * scale);
+  const g = c.getContext('2d');
+  g.setTransform(scale, 0, 0, scale, hw * scale, hh * scale);
+  g.filter = `blur(${blur}px)`;
+  g.globalAlpha = alpha;
+  paint(g);
+  s = { c, hw, hh, w: c.width / scale, h: c.height / scale };
+  softCache.set(k, s);
+  if (softCache.size > SOFT_MAX) softCache.delete(softCache.keys().next().value);
+  return s;
+}
+const drawSoft = (ctx, s) => ctx.drawImage(s.c, -s.hw, -s.hh, s.w, s.h);
+
+// A soft clump drawn from its sprite. Its sway moves each blob by sway * (0.5 - sin(a) / 2), which
+// bends the clump's outline, so the sprite is kept at sway steps of 0.75 px and the rest of the
+// way (under 0.4 px) is a lean: the middle moves half of it, the top all of it, the foot none.
+// Clumps off the screen are skipped, so only the few in view hold sprites.
+const SWAY_STEP = 0.75;
+function softClump(ctx, x, y, r, c, seed, sway, blur, alpha, width, height) {
+  const hw = r * 1.36 + 9;
+  const hh = r * 1.17 + 10;
+  if (x + hw + 4 < 0 || x - hw - 4 > width || y + hh < 0 || y - hh > height) return;
+  const q = Math.round(sway / SWAY_STEP) * SWAY_STEP;
+  const s = softSprite(ctx, `clump|${seed}|${r}|${q}|${c.base}|${c.lit}`, hw, hh, blur, alpha, (g) => clump(g, 0, 0, r, c, seed, q));
+  if (!s) return;
+  const rest = sway - q;
+  ctx.save();
+  ctx.translate(x + rest * 0.5, y);
+  ctx.transform(1, 0, (-rest * 0.5) / (0.72 * 0.52 * r), 1, 0, 0);
+  drawSoft(ctx, s);
+  ctx.restore();
+}
+
 // Out-of-focus leaves drifting past in front of the player at the top corners and along the
 // bottom, darker and cooler than the play space, swaying.
 export function drawPaintedForestFront(ctx, t, cam, width, height, time) {
   const base = mix(shade(t.mid, -22), '#2a3a4a', 0.35);
   const c = { base, lit: mix(base, t.sun ?? '#fff6dc', 0.12), glint: mix(base, '#ffffff', 0.12), shadow: shade(base, -8) };
   ctx.save();
-  ctx.filter = 'blur(2.2px)';
-  ctx.globalAlpha = 0.82;
+  ctx.globalAlpha = 1;
   repeat(cam.x, 1.25, 520, width, (i, x) => {
     const sw = Math.sin(time * 0.7 + i * 1.7) * 3;
     if (hash(i + 61) < 0.55) {
       const y = -8 - cam.y * 0.02;
-      clump(ctx, x + hash(i + 62) * 200, y, 30 + hash(i + 63) * 14, c, i + 700, sw);
-      clump(ctx, x + hash(i + 62) * 200 + 34, y + 10, 22, c, i + 701, sw);
+      softClump(ctx, x + hash(i + 62) * 200, y, 30 + hash(i + 63) * 14, c, i + 700, sw, 2.2, 0.82, width, height);
+      softClump(ctx, x + hash(i + 62) * 200 + 34, y + 10, 22, c, i + 701, sw, 2.2, 0.82, width, height);
     }
     if (hash(i + 64) < 0.45) {
       const by = height + 18;
-      clump(ctx, x + 260 + hash(i + 65) * 160, by, 26 + hash(i + 66) * 10, c, i + 800, sw * 0.6);
+      softClump(ctx, x + 260 + hash(i + 65) * 160, by, 26 + hash(i + 66) * 10, c, i + 800, sw * 0.6, 2.2, 0.82, width, height);
     }
   });
   ctx.restore();
@@ -1064,24 +1116,36 @@ export function drawPigeons(ctx, map, cam, width, height, time, groundAt, heroX)
 // the bottom corners.
 export function drawPaintedTownFront(ctx, t, cam, width, height, time) {
   ctx.save();
-  ctx.filter = 'blur(2.4px)';
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 1;
+  // The bush is one sprite and its row of blooms another, so the blooms sway across it as before.
+  const body = softSprite(ctx, 'townbush', 58, 38, 2.4, 0.85, (g) => {
+    g.fillStyle = '#6a9a78';
+    g.beginPath();
+    g.ellipse(0, 0, 46, 26, 0, 0, Math.PI * 2);
+    g.fill();
+  });
   repeat(cam.x, 1.25, 560, width, (i, x) => {
     if (hash(i + 90) < 0.4) return;
-    const c = [['#f6a8c8', '#ffd0e2'], ['#a8c0f6', '#d0dcff'], ['#c8b0f2', '#e2d4ff']][((i % 3) + 3) % 3];
+    const v = ((i % 3) + 3) % 3;
+    const c = [['#f6a8c8', '#ffd0e2'], ['#a8c0f6', '#d0dcff'], ['#c8b0f2', '#e2d4ff']][v];
     const bx = x + hash(i + 91) * 300;
     const by = height + 10;
     const sw = Math.sin(time * 0.8 + i) * 2;
-    ctx.fillStyle = '#6a9a78';
-    ctx.beginPath();
-    ctx.ellipse(bx, by, 46, 26, 0, 0, Math.PI * 2);
-    ctx.fill();
-    for (let k = 0; k < 6; k++) {
-      ctx.fillStyle = c[k % 2];
-      ctx.beginPath();
-      ctx.arc(bx - 30 + k * 12 + sw, by - 14 - (k % 2) * 6, 9, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    const blooms = softSprite(ctx, `townblooms|${v}`, 51, 41, 2.4, 0.85, (g) => {
+      for (let k = 0; k < 6; k++) {
+        g.fillStyle = c[k % 2];
+        g.beginPath();
+        g.arc(-30 + k * 12, -14 - (k % 2) * 6, 9, 0, Math.PI * 2);
+        g.fill();
+      }
+    });
+    if (!body || !blooms) return;
+    ctx.save();
+    ctx.translate(bx, by);
+    drawSoft(ctx, body);
+    ctx.translate(sw, 0);
+    drawSoft(ctx, blooms);
+    ctx.restore();
   });
   ctx.restore();
 }

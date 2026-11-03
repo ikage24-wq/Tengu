@@ -32,6 +32,8 @@ export function loadGame(slot = 0) {
     char.outfit ??= {};
     char.cash ??= STARTING_CASH;
     char.inventory.cash ??= [];
+    // Saves from before life skills (core/life.js) start every skill at level 1.
+    char.life ??= {};
     // (A character from before the level cap came down to 50 is at the cap.)
     char.level = Math.min(char.level, MAX_LEVEL);
     dropRetiredItems(char);

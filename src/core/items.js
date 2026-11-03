@@ -3,6 +3,7 @@
 
 import { ITEMS, RARITIES, variantsFor, gauntletStars } from '../data/items.js';
 import { countItem, removeItem } from './inventory.js';
+import { STONES } from '../data/crafting.js';
 
 let nextUid = 1;
 
@@ -100,12 +101,18 @@ export function polishGain(inst) {
 // Mined ore (data/gathering.js) makes a try likelier to take: ORE_USE of the ore for the piece's
 // level, or one rare gem. Each tier of ore covers gear up to its `upTo` level.
 export const ORE_USE = 2;
-export const POLISH_ORES = [{ id: 'copper_ore', upTo: 29, boost: 0.12 }, { id: 'silver_ore', upTo: 49, boost: 0.12 }];
-export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }];
+// One ore for each region (data/gathering.js): copper for low gear, then iron, silver, and mithril for
+// anything above (the life-skills expansion); every gem works on any piece, the rarer the better.
+export const POLISH_ORES = [{ id: 'copper_ore', upTo: 19, boost: 0.12 }, { id: 'iron_ore', upTo: 29, boost: 0.12 }, { id: 'silver_ore', upTo: 44, boost: 0.12 }, { id: 'mithril_ore', upTo: 999, boost: 0.12 }];
+export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }, { id: 'amethyst', boost: 0.27 }, { id: 'sapphire', boost: 0.3 }, { id: 'starstone', boost: 0.34 }];
 export const oreFor = (inst) => POLISH_ORES.find((o) => (ITEMS[inst.id].reqLevel ?? 0) <= o.upTo) ?? null;
-// The chance with a boost (an ore or gem id, or null), capped so it's never certain.
+// Polishing stones made at a craft bench (data/crafting.js): one stone in place of the ore, for
+// gear up to the stone's level.
+export const POLISH_STONES = STONES.map(({ id, upTo, boost }) => ({ id, upTo, boost }));
+export const stonesFor = (inst) => POLISH_STONES.filter((s) => (ITEMS[inst.id].reqLevel ?? 0) <= s.upTo);
+// The chance with a boost (an ore, gem or stone id, or null), capped so it's never certain.
 export const boostedChance = (inst, boost) => {
-  const b = POLISH_ORES.find((o) => o.id === boost)?.boost ?? POLISH_GEMS.find((o) => o.id === boost)?.boost ?? 0;
+  const b = POLISH_ORES.find((o) => o.id === boost)?.boost ?? POLISH_GEMS.find((o) => o.id === boost)?.boost ?? POLISH_STONES.find((o) => o.id === boost)?.boost ?? 0;
   return Math.min(0.98, polishChance(inst) + b);
 };
 // One try, with an optional boost (an ore or gem id). Returns { ok, why } (why: 'max', 'gold' or
@@ -114,9 +121,10 @@ export function polish(char, inst, rng = Math.random, boost = null) {
   if ((inst.polish ?? 0) >= POLISH_MAX) return { ok: false, why: 'max' };
   const cost = polishCost(inst);
   if (char.gold < cost) return { ok: false, why: 'gold' };
-  const gem = POLISH_GEMS.some((g) => g.id === boost);
+  const stone = stonesFor(inst).some((g) => g.id === boost);
+  const gem = POLISH_GEMS.some((g) => g.id === boost) || stone;
   const need = gem ? 1 : ORE_USE;
-  if (boost && (!gem && oreFor(inst)?.id !== boost || countItem(char.inventory, boost) < need)) return { ok: false, why: 'ore' };
+  if (boost && ((!gem && oreFor(inst)?.id !== boost) || countItem(char.inventory, boost) < need)) return { ok: false, why: 'ore' };
   char.gold -= cost;
   if (boost) removeItem(char.inventory, boost, need);
   if (rng() >= boostedChance(inst, boost)) return { ok: false, why: null };

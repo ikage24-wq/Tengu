@@ -2,6 +2,8 @@
 // towns sit on the ring like stops on a roundabout, the fields between them; Ember Crag is the
 // mountain in the middle, up the canyon road; the far regions branch off the places they lead
 // from, and the Sky Garden floats off the north shore. Every place shows its name and level range.
+// Your party and your friends show as little faces by the place each is at (tap one to warp to
+// them or ask to join their party), and a bubble by your pin counts the players around you.
 // Tap any place for its monsters and how far it is, then "Show the way" to have the guide arrow
 // lead you there (world/routes.js), or fly to a town from any town.
 
@@ -12,8 +14,11 @@ import { JOBS } from '../data/jobs.js';
 import { travelTo } from '../world/world.js';
 import { levelRange, routeBetween, setRoute } from '../world/routes.js';
 import { COLORS, windowFrame, text, box, button, roundRect, font, tooltip } from './kit.js';
-import { online } from '../net/online.js';
-import { inParty } from '../net/together.js';
+import { online, othersHere } from '../net/online.js';
+import { inParty, warpTo, warpBlocker, askParty, partyBlocker, askJoinParty, joinPartyBlocker, leaderOf } from '../net/together.js';
+import { partyMembers } from '../world/party.js';
+import { askToJoin, joinBlocker, PINGS } from '../world/grouping.js';
+import { callBuddy } from '../world/buddies.js';
 
 // The map is drawn in its own 400x240 frame, shown K times larger.
 const K = 1.2;
@@ -700,6 +705,15 @@ export function worldMapWindow(ui, state, world) {
   // The stops (fields first, then towns over them), then every name on top.
   let hovered = null;
   let tapped = null;
+  // The people on the map, so a tap on a face goes to them, not the place under it.
+  const people = peopleSpots(world, here, time);
+  const personHot = people.find((q) => Math.abs(m.x - q.x) <= 7 && Math.abs(m.y - q.y) <= 7) ?? null;
+  if (personHot && ui.mouse.clicked && !ui.used) {
+    state.mapFriend = { kind: personHot.kind, id: personHot.id };
+    state.travelPick = null;
+    ui.mouse.clicked = false;
+    ui.used = true;
+  }
   const stops = Object.values(MAPS).filter(onMap).sort((a, b) => Number(Boolean(a.isTown)) - Number(Boolean(b.isTown)));
   for (const mp of stops) {
     const p = spot(mp);
@@ -711,6 +725,7 @@ export function worldMapWindow(ui, state, world) {
   for (const mp of stops) if (!mp.isTown) drawLabel(ctx, spot(mp).x, spot(mp).y, mp, pick?.id === mp.id);
   if (hovered && ui.mouse.clicked && !ui.used) {
     tapped = hovered;
+    state.mapFriend = null;
     ui.mouse.clicked = false;
     ui.used = true;
   }
@@ -735,15 +750,56 @@ export function worldMapWindow(ui, state, world) {
     ctx.fillStyle = '#ffffff';
     circle(ctx, px, py - 6, 2);
   }
-  // Friends online: a little badge with their initial by the stop they're at (rose for your party).
-  const friendHover = drawFriends(ctx, m, time, here);
+  // Pings from your party elsewhere: rings going out from that place.
+  for (const p of world.pings ?? []) {
+    const mp = getMap(p.map);
+    const stop = mp && (onMap(mp) ? mp : MAPS[mp.portals[0]?.to]);
+    if (!stop || !onMap(stop) || p.map === here) continue;
+    const sp = spot(stop);
+    const u = ((time - p.at) * 1.1) % 1;
+    ctx.save();
+    ctx.globalAlpha = (1 - u) * Math.max(0, Math.min(1, (p.until - time) / 0.8));
+    ctx.strokeStyle = PINGS[p.kind].color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, 5 + u * 12, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+  // Your party and friends: little faces by the place each is at; the players around you as a
+  // count by your pin.
+  drawPeople(ctx, people, personHot, time);
+  const crowd = crowdHere(world);
+  let crowdHot = false;
+  if (curOn && crowd.length) {
+    const p = spot(curOn);
+    const cx = p.x - (curOn.isTown ? 17 : 13);
+    const cy = p.y - (curOn.isTown ? 17 : 11);
+    const pulse = 1 + Math.sin(time * 2.4) * 0.04;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(pulse, pulse);
+    box(ctx, -8, -5.5, 16, 11, { fill: '#fff6d8', edge: '#e0b84a', r: 5.5, width: 1 });
+    ctx.fillStyle = '#c99a1f';
+    circle(ctx, -4, -0.6, 1.5);
+    ctx.beginPath();
+    ctx.arc(-4, 3.2, 2.4, Math.PI, Math.PI * 2);
+    ctx.fill();
+    text(ctx, `${crowd.length}`, 2.5, 2.6, { size: 6.5, bold: true, align: 'center', color: '#8a6a1a' });
+    ctx.restore();
+    crowdHot = Math.abs(m.x - cx) <= 8 && Math.abs(m.y - cy) <= 6;
+  }
   ctx.restore();
-  if (friendHover) tooltip(ui, [{ text: friendHover.name, bold: true, color: inParty(friendHover.id) ? '#e0659f' : '#4f95e0' }, { text: `Lv${friendHover.level ?? 1} ${JOBS[friendHover.job]?.name ?? ''}`, size: 8, color: COLORS.muted }, { text: `In ${getMap(friendHover.map)?.name ?? '...'}${inParty(friendHover.id) ? ' · your party' : ''}`, size: 8 }]);
+  if (personHot) {
+    const r = personHot.ref;
+    tooltip(ui, [{ text: r.name, bold: true, color: personHot.party ? '#e0659f' : '#4f95e0' }, { text: `Lv${r.char?.level ?? r.level ?? 1} ${JOBS[r.char?.job ?? r.job]?.name ?? ''}`, size: 8, color: COLORS.muted }, { text: `In ${getMap(r.map)?.name ?? '...'}${personHot.party ? ' · your party' : personHot.kind === 'bot' ? ' · friend' : ' · online'}`, size: 8 }, { text: 'Click to warp or party up', size: 7, color: COLORS.muted }]);
+  } else if (crowdHot) tooltip(ui, [{ text: `${crowd.length} player${crowd.length === 1 ? '' : 's'} here with you`, bold: true }, { text: crowd.slice(0, 6).map((b) => b.name).join(', ') + (crowd.length > 6 ? '...' : ''), size: 7.5, color: COLORS.muted }]);
   if (tapped) state.travelPick = tapped.id === state.travelPick ? null : tapped.id;
 
   // The bar under the map: the picked place (its level, monsters, how far), the way there, and a
   // flight if it's a town.
   const by = win.y + 22 + MAP_H * K + 4;
+  if (state.mapFriend && personBar(ui, state, world, win, by)) return;
   if (!pick) {
     text(ctx, 'Tap any place to see what lives there and how to get there.', win.x + 12, by + 13, { size: 8, color: COLORS.muted });
     if (world.route) {
@@ -780,39 +836,125 @@ export function worldMapWindow(ui, state, world) {
   }
 }
 
-// Friends in your online room, by the stop each is at; returns the one under the pointer.
-function drawFriends(ctx, m, time, here) {
-  if (online.status !== 'on') return null;
+// Your party, your friends (online in your room, or on the friends list), and where each is:
+// one spot per face, side by side by the place they're at.
+function peopleSpots(world, here, time) {
   const at = new Map();
-  for (const g of online.ghosts.values()) {
-    const mp = g.map && getMap(g.map);
-    if (!mp) continue;
+  const add = (mapId, entry) => {
+    const mp = mapId && getMap(mapId);
+    if (!mp) return;
     const stop = onMap(mp) ? mp : MAPS[mp.portals[0]?.to];
-    if (!stop || !onMap(stop)) continue;
+    if (!stop || !onMap(stop)) return;
     if (!at.has(stop.id)) at.set(stop.id, []);
-    at.get(stop.id).push(g);
-  }
-  let hot = null;
+    at.get(stop.id).push(entry);
+  };
+  if (online.status === 'on') for (const g of online.ghosts.values()) add(g.map, { kind: 'ghost', id: g.id, ref: g, party: inParty(g.id), look: g.look });
+  for (const b of partyMembers(world.bots)) add(b.away ? null : world.map.id, { kind: 'bot', id: b.id, ref: b, party: true, look: b.char?.appearance });
+  for (const b of world.bots?.list ?? []) if (b.buddy && !b.gone && !b.party && b.map) add(b.map, { kind: 'bot', id: b.id, ref: b, party: false, look: b.char?.appearance });
+  const out = [];
   for (const [id, list] of at) {
     const mp = MAPS[id];
     const p = spot(mp);
-    // Beside the stop (and beside your own pin there), side by side.
+    // Beside the stop (and beside your own pin there), side by side, party first.
+    list.sort((a, b) => Number(b.party) - Number(a.party));
     const base = p.x + (mp.isTown ? 13 : 9) + (id === here ? 4 : 0);
-    list.forEach((g, i) => {
-      const gx = base + 2 + i * 12;
-      const gy = p.y - (mp.isTown ? 10 : 6) - Math.abs(Math.sin(time * 3 + i)) * 1.5;
-      const mate = inParty(g.id);
-      ctx.fillStyle = '#ffffff';
-      circle(ctx, gx, gy, 6.5);
-      ctx.fillStyle = mate ? '#ff6b9a' : '#4f95e0';
-      circle(ctx, gx, gy, 5.2);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = font(6.5, true);
-      ctx.textAlign = 'center';
-      ctx.fillText((g.name ?? '?')[0].toUpperCase(), gx, gy + 2.3);
-      ctx.textAlign = 'left';
-      if (Math.abs(m.x - gx) <= 7 && Math.abs(m.y - gy) <= 7) hot = g;
+    list.slice(0, 5).forEach((e, i) => {
+      const seed = hash([...String(e.ref.name ?? e.id)].reduce((n, c) => (n * 31 + c.charCodeAt(0)) % 100000, 7)) * 1000;
+      out.push({ ...e, x: base + 2 + i * 11, y: p.y - (mp.isTown ? 10 : 6) - Math.abs(Math.sin(time * 3 + i)) * 1.5, seed });
     });
   }
-  return hot;
+  return out;
+}
+
+// Everyone around you on your map who isn't in your party.
+function crowdHere(world) {
+  const id = world.map.id;
+  const bots = (world.bots?.list ?? []).filter((b) => b.map === id && b.body && !b.party && !b.gone);
+  return [...bots, ...othersHere(world).filter((g) => !inParty(g.id))];
+}
+
+// A tiny chibi face: their own skin and hair colour, blinking on their own beat, in a ring (rose
+// for your party, sky blue for friends).
+function face(ctx, x, y, look, ringColor, time, seed, hot) {
+  const r = hot ? 6.6 : 6;
+  ctx.fillStyle = '#ffffff';
+  circle(ctx, x, y, r + 1.2);
+  ctx.fillStyle = ringColor;
+  circle(ctx, x, y, r);
+  const skin = look?.skinTone ?? '#fbd9bf';
+  const hair = look?.hairColor ?? '#7a5238';
+  ctx.fillStyle = skin;
+  circle(ctx, x, y + 0.6, r - 1.6);
+  // Hair: a cap with a swept fringe.
+  ctx.fillStyle = hair;
+  ctx.beginPath();
+  ctx.arc(x, y + 0.4, r - 1.3, Math.PI * 1.02, Math.PI * 1.98);
+  ctx.quadraticCurveTo(x + 1.5, y - 0.6, x, y - 1.2);
+  ctx.quadraticCurveTo(x - 1.5, y - 0.4, x - (r - 1.3), y + 0.3);
+  ctx.closePath();
+  ctx.fill();
+  const blink = ((time + (seed % 97) / 23) % 3.4) < 0.12;
+  ctx.fillStyle = '#4a3560';
+  for (const sx of [-1.6, 1.6]) {
+    if (blink) ctx.fillRect(x + sx - 0.7, y + 1.3, 1.4, 0.45);
+    else {
+      ctx.beginPath();
+      ctx.ellipse(x + sx, y + 1.4, 0.6, 0.85, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.fillStyle = 'rgba(255,120,150,0.55)';
+  circle(ctx, x - 2.6, y + 2.6, 0.7);
+  circle(ctx, x + 2.6, y + 2.6, 0.7);
+}
+
+function drawPeople(ctx, people, hot, time) {
+  for (const q of people) face(ctx, q.x, q.y, q.look, q.party ? '#ff6b9a' : '#4f95e0', time, q.seed, q === hot);
+}
+
+// The bar under the map for the person you tapped: where they are, and Warp, Join or Invite.
+// Returns false (so the place bar shows) once they're gone.
+function personBar(ui, state, world, win, by) {
+  const f = state.mapFriend;
+  const g = f.kind === 'ghost' ? online.ghosts.get(f.id) : world.bots?.list.find((b) => b.id === f.id && !b.gone);
+  if (!g || (f.kind === 'bot' && !g.party && !g.buddy)) {
+    state.mapFriend = null;
+    return false;
+  }
+  const { ctx } = ui;
+  const party = f.kind === 'ghost' ? inParty(g.id) : g.party;
+  const job = JOBS[g.char?.job ?? g.job];
+  const where = g.away ? 'in town' : g.map === world.map.id ? 'here with you' : `in ${getMap(g.map)?.name ?? '...'}`;
+  text(ctx, `${g.name}  ·  Lv${g.char?.level ?? g.level ?? 1} ${job?.name ?? ''}`, win.x + 12, by + 10, { size: 8.5, bold: true, color: party ? '#e0659f' : '#4f95e0' });
+  text(ctx, `${party ? 'Your party' : f.kind === 'ghost' ? 'Online with you' : 'Friend'}  ·  ${where}`, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
+  let bx = win.x + W - 12;
+  const btn = (label, why, run, opts = {}) => {
+    bx -= 58;
+    if (button(ui, bx, by + 4, 56, 16, label, { size: 7.5, enabled: !why, ...opts })) {
+      const no = run();
+      if (no) world.log(no, '#ffb3c6');
+    }
+    if (why && ui.mouse.x >= bx && ui.mouse.x < bx + 56 && ui.mouse.y >= by + 4 && ui.mouse.y < by + 20) tooltip(ui, [{ text: why, size: 8 }]);
+  };
+  if (!party) {
+    if (f.kind === 'ghost') {
+      const theirs = leaderOf(g.id) !== g.id || online.rosters?.has(g.id);
+      if (theirs && !online.party) btn('Join', joinPartyBlocker(g), () => askJoinParty(world, g.id), { theme: 'pink', primary: true });
+      else btn('Invite', partyBlocker(g), () => askParty(world, g.id), { theme: 'pink', primary: true });
+    } else {
+      btn('Join', joinBlocker(world, g), () => askToJoin(world, g), { theme: 'pink', primary: true });
+      btn('Invite', null, () => callBuddy(world.bots, world, g), { theme: 'pink' });
+    }
+  }
+  if (g.map !== world.map.id) {
+    btn('Warp', warpBlocker(world, g), () => {
+      const no = warpTo(world, g);
+      if (!no) {
+        win.open = false;
+        state.mapFriend = null;
+      }
+      return no;
+    }, { theme: 'sky', primary: true });
+  }
+  return true;
 }

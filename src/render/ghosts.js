@@ -1,6 +1,7 @@
 // Friends in your online room (see net/online.js), drawn on your map just like you are: their
 // own look, gear, moves, buffs and job aura, with a sky-blue name tag and their HP underneath.
 
+import { tagFade } from './coop.js';
 import { drawHero } from './hero.js';
 import { drawFallen } from './town.js';
 import { drawCombatAura } from './aura.js';
@@ -14,6 +15,7 @@ import { settings } from '../core/settings.js';
 import { othersHere, ghostPose } from '../net/online.js';
 import { botsHere } from '../net/dungeonrun.js';
 import { drawFriendFishing } from './fishing.js';
+import { friendFishPose } from './life.js';
 
 const TAG = 'rgba(58,128,214,0.86)';
 const TAG_EDGE = '#d6ecff';
@@ -33,7 +35,9 @@ export function drawGhosts(ctx, world, cam, width, time) {
     const dt = g.drawnAt == null ? 0 : Math.min(0.1, Math.max(0, time - g.drawnAt));
     g.drawnAt = time;
     stepAnim(g.anim, b, dt);
-    const p = ghostPose(g);
+    // A friend fishing plays the same fishing poses you do (render/life.js).
+    const p = g.fish ? friendFishPose(g.fish, time) : ghostPose(g);
+    let tip = null;
     const look = g.emote ? { ...g.look, face: g.emote } : g.look;
     const state = { ...p, time, facing: b.facing, hurt: g.hurt, alpha: g.dead ? 0.5 : 1, job: g.job, ready: !world.map.isTown, urgent: true };
     if (b.onGround) footShadow(ctx, x, y, 13, slopeAt(b.surface, b.x));
@@ -46,10 +50,10 @@ export function drawGhosts(ctx, world, cam, width, time) {
       const ay = y - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
       const scale = g.form ? 1.4 : 1;
       if (g.gauge) drawCombatAura(ctx, g.gauge, 'back', x, ay, time, scale, g.gk, b.facing);
-      drawHero(ctx, look, g.gear, x, y, state, g.anim);
+      drawHero(ctx, look, g.gear, x, y, g.fish ? { ...state, onTool: (pt) => { tip = pt; } } : state, g.anim);
       if (g.gauge) drawCombatAura(ctx, g.gauge, 'front', x, ay, time, scale, g.gk, b.facing);
       drawBuffEffects(ctx, g.buffs, 'front', x, y, time, world.now, b.facing);
-      if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time);
+      if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time, tip);
     }
     nameTag(ctx, g, x, y, time);
     if (g.bubble && settings.chatBubbles) drawBubble(ctx, x, y - 62, g.bubble.text, Math.min(1, g.bubble.t * 2));
@@ -58,6 +62,8 @@ export function drawGhosts(ctx, world, cam, width, time) {
 
 // A sky-blue tag with a twinkling star: a real friend, not one of the townsfolk.
 function nameTag(ctx, g, x, y, time) {
+  ctx.save();
+  ctx.globalAlpha *= tagFade(x, y);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${g.level ?? 1} ${g.name}`;
   const w = ctx.measureText(label).width + 18;
@@ -68,5 +74,5 @@ function nameTag(ctx, g, x, y, time) {
     const f = Math.max(0, Math.min(1, g.hp / g.maxHp));
     box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
     if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
-  }
+  }  ctx.restore();
 }

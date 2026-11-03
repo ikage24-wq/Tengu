@@ -1,0 +1,186 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a whole Rootwood Hollow run played by an autopilot hero with a found group, drawn
+// with the game's own renderer and HUD, for dungeon demo videos (tools/record-dungeon.cjs).
+// ?job=archer&level=12&seed=11, then from outside: window.sim(secs) plays without drawing,
+// window.step(secs) plays and draws, window.frame() gives the picture, window.info() the run's
+// state, window.caption(title, sub) a room card.
+import { makeBotCharacter, createBots, updateBots } from '../src/world/bots.js';
+import { createWorld, updateWorld } from '../src/world/world.js';
+import { startRun, groupOf, isUp } from '../src/world/dungeon.js';
+import { navOf, surfaceOf, surfaceBelow, findPath, followPath } from '../src/world/nav.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { text, box, beginUi } from '../src/ui/kit.js';
+import { createUiState, drawUi } from '../src/ui/manager.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+let n = Number(q.get('seed') ?? 11);
+const rng = () => {
+  n = (n * 1664525 + 1013904223) % 4294967296;
+  return n / 4294967296;
+};
+Math.random = rng;
+const level = Number(q.get('level') ?? 12);
+const char = makeBotCharacter(rng, { name: q.get('name') ?? 'Mochi', pro: true, level, jobs: [q.get('job') ?? 'archer'] });
+char.mapId = 'hollow_gate';
+const w = createWorld(char);
+w.log = () => {};
+w.bots = createBots(w, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
+const why = startRun(w);
+if (why) console.log('no run:', why);
+const cam = createCamera();
+const ui = createUiState();
+const input = { held: new Set(), pressed: new Set(), mouse: { x: -1, y: -1, down: false, clicked: false, double: false, released: false, right: false, wheel: 0 }, typed: [] };
+
+// The dungeon test's autopilot (tests/dungeon.test.js): fight what the group fights, step out of
+// telegraphs, jump the slam, light, free and pick up what the room needs, open the chest, leave.
+function pilot(world) {
+  const run = world.dungeon;
+  const b = world.body;
+  const held = new Set();
+  const pressed = new Set();
+  if (!run) return { held, pressed };
+  const go = (x) => {
+    if (Math.abs(x - b.x) > 6) held.add(x > b.x ? 'ArrowRight' : 'ArrowLeft');
+  };
+  const nav = navOf(world.map);
+  const goTo = (x, y) => {
+    const here = surfaceOf(nav, b);
+    if (here >= 0) {
+      const to = surfaceBelow(nav, x, y - 4);
+      world.pilotPath = findPath(nav, here, b.x, to, x);
+      if (!world.pilotPath) return go(x);
+    } else if (!world.pilotPath) {
+      if (b.rope) held.add(y > b.y ? 'ArrowDown' : 'ArrowUp');
+      return go(x);
+    }
+    const { intent, lost } = followPath(nav, b, world.pilotPath, x, 6);
+    if (lost) world.pilotPath = null;
+    if (intent.left) held.add('ArrowLeft');
+    if (intent.right) held.add('ArrowRight');
+    if (intent.up) held.add('ArrowUp');
+    if (intent.down) held.add('ArrowDown');
+    if (intent.jump) held.add('Space');
+  };
+  if (world.dead) return { held, pressed };
+  const fights = world.mobs.filter((m) => m.hp > 0 && m.engaged);
+  const danger = run.zones.find((z) => !z.hit && z.kind !== 'floor' && (z.kind === 'circle' ? Math.abs(b.x - z.x) < z.w / 2 + 8 : b.x >= z.x - 8 && b.x <= z.x + z.w + 8));
+  if (run.zones.some((z) => !z.hit && z.kind === 'floor' && z.warn - z.t < 0.3) && b.onGround) held.add('Space');
+  const room = run.room;
+  if (danger) {
+    const lo = danger.kind === 'circle' ? danger.x - danger.w / 2 - 20 : danger.x - 20;
+    const hi = danger.kind === 'circle' ? danger.x + danger.w / 2 + 20 : danger.x + danger.w + 20;
+    go(Math.abs(b.x - lo) < Math.abs(b.x - hi) && lo > 30 ? lo : hi);
+  } else if (fights.length) {
+    const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
+    const spot = t.x + (Math.sign(b.x - t.x) || -1) * 150;
+    if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
+    else if (Math.abs(b.x - spot) > 20) go(spot);
+    else {
+      b.facing = Math.sign(t.x - b.x) || 1;
+      held.add('KeyZ');
+      // Skills on the hotkeys now and then, so the run shows more than the basic combo.
+      if (Math.round(world.now * 60) % 50 === 0) pressed.add(['KeyQ', 'KeyW', 'KeyE'][Math.floor(rng() * 3)]);
+    }
+  } else if (room.cleared) {
+    const chest = room.objects.find((o) => o.kind === 'chest' && !o.done);
+    const door = world.map.portals.find((p) => p.sealed);
+    if (!chest && !door) return { held, pressed };
+    const [x, y] = chest ? [chest.x, chest.y] : [door.x, door.y];
+    goTo(x, y);
+    if (Math.abs(x - b.x) < 10 && Math.abs(y - b.y) < 4 && Math.round(world.now * 60) % 10 === 0) pressed.add('ArrowUp');
+  } else {
+    const key = room.keys.find((k) => !k.got);
+    const asleep = world.mobs.filter((m) => m.hp > 0 && !m.engaged);
+    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
+    if (key) goTo(key.x, key.y);
+    else if (obj) {
+      goTo(obj.x, obj.y);
+      if (Math.abs(obj.x - b.x) < 8 && Math.abs(obj.y - b.y) < 4 && !world.channel && b.onGround && Math.abs(b.vx) < 1) pressed.add('ArrowUp');
+    } else {
+      const tank = groupOf(world).find((g) => g.role === 'tank' && isUp(world, g));
+      if (tank) goTo(tank.body.x - 60, tank.body.y);
+    }
+  }
+  return { held, pressed };
+}
+
+let t = 0;
+let card = null;
+
+function tick() {
+  // (Scenes, like Gnarlroot falling asleep, play for a moment and are then clicked through.)
+  if (w.scene && w.scene.t > 2.5) w.scene = null;
+  const { held, pressed } = pilot(w);
+  updateWorld(w, 1 / 60, { held, pressed, locked: false });
+  updateBots(w.bots, w, 1 / 60);
+}
+
+function sim(secs) {
+  for (let k = 0; k < Math.round(secs * 60); k++) {
+    tick();
+    if (k % 6 === 0) updateCamera(cam, w, 0.1);
+  }
+  t += secs;
+}
+
+function step(secs) {
+  for (let k = 0; k < Math.round(secs * 60); k++) tick();
+  t += secs;
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, secs);
+  drawWorld(ctx, w, cam, t);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ui.cam = cam;
+  try {
+    drawUi(beginUi(ctx, input), ui, w);
+  } catch (e) {
+    console.log('hud', e.message);
+  }
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  if (card && card.a > 0) {
+    ctx.globalAlpha = Math.min(1, card.a);
+    ctx.font = 'bold 18px sans-serif';
+    const ww = Math.max(ctx.measureText(card.title).width, 120) + 44;
+    box(ctx, VW / 2 - ww / 2, 54, ww, card.sub ? 48 : 32, { fill: 'rgba(40,30,58,0.88)', edge: '#ffd66b', r: 12, width: 2 });
+    text(ctx, card.title, VW / 2, 76, { size: 16, bold: true, align: 'center', color: '#ffffff' });
+    if (card.sub) text(ctx, card.sub, VW / 2, 94, { size: 10, align: 'center', color: '#ffe6a8' });
+    ctx.globalAlpha = 1;
+    card.a -= secs / 3;
+  }
+}
+
+window.sim = sim;
+window.step = step;
+window.caption = (title, sub) => (card = title ? { title, sub, a: 1.6 } : null);
+window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+window.info = () => ({
+  map: w.map.id,
+  name: w.map.name,
+  inRun: !!w.dungeon,
+  done: !!w.dungeon?.done,
+  cleared: !!w.dungeon?.room?.cleared,
+  fighting: w.mobs.filter((m) => m.hp > 0 && m.engaged).length,
+  boss: w.mobs.some((m) => m.hp > 0 && m.def.boss && m.engaged),
+  left: w.mobs.filter((m) => m.hp > 0).length,
+});
+// (The effect strips and map art load first.)
+await new Promise((res) => setTimeout(res, 2500));
+window.ready = true;
+</script>
+</body></html>

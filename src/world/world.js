@@ -18,10 +18,11 @@ import { createBody, stepBody, knockBack, groundAt, blockWalls } from './physics
 import { startAgility, tickAgility } from './agility.js';
 import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js';
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
-import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood } from './combat.js';
+import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
+import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 import { lastRite } from './idol.js';
@@ -30,11 +31,15 @@ import { makeEquip } from '../core/items.js';
 import { recordBook } from '../core/collection.js';
 import { spotHere, startFishing, tickFishing } from './fishing.js';
 import { nodeHere, startGathering, tickGathering } from './gathering.js';
+import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
+import { teamHit, teamLanded, tickTeam } from './teamwork.js';
 import { nestKill } from './nest.js';
+import { tickCoop, coopHit, pqKill } from './coop.js';
 import { DISH_BY_ID } from '../data/cooking.js';
+import { serveFeast } from './coop-life.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
 const INVULN = 1.2;
@@ -87,6 +92,11 @@ export function createWorld(char) {
     log(text, color = '#fff9ee') {
       world.messages.push({ text, color, t: 6 });
       if (world.messages.length > 7) world.messages.shift();
+      // The party's own lines are kept apart too, for the chat's Party tab.
+      if (text.startsWith('[Party]')) {
+        (world.partyLog ??= []).push({ text, color, at: world.now });
+        if (world.partyLog.length > 7) world.partyLog.shift();
+      }
     },
   };
   loadMap(world, char.mapId, char.portal ?? 'start');
@@ -223,6 +233,16 @@ export function useItem(world, id) {
     returnToTown(world);
     return true;
   }
+  // A party feast: served to everyone in the party here (world/coop-life.js).
+  if (def.effect?.feast) {
+    if (!serveFeast(world, id)) {
+      world.log(`No ${def.name} left.`, '#ffb3c6');
+      return false;
+    }
+    world.itemReadyAt = world.now + ITEM_DELAY;
+    world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
+    return true;
+  }
   // A dish: eaten for a little HP and its bonus for a while (different dishes add up; the same
   // dish again starts its time over).
   if (def.effect?.food) {
@@ -346,6 +366,11 @@ function interact(world) {
     world.events.push({ type: 'gacha' });
     return true;
   }
+  // A town's craft bench: craft (ui/crafting.js).
+  if (benchHere(world)) {
+    world.events.push({ type: 'craft' });
+    return true;
+  }
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });
@@ -444,6 +469,8 @@ export function killMob(world, m, byParty = false) {
   world.onKill?.(m);
   calmKill(world);
   nestKill(world, m);
+  // (A party quest's shared count: world/partyquest.js.)
+  pqKill(world, m);
   if (m.def.boss) world.onBossDown?.(m);
   // (Someone you're helping may need this one: world/lives.js.)
   world.onAnyKill?.(m);
@@ -452,9 +479,12 @@ export function killMob(world, m, byParty = false) {
   const card = recordBook(char, m.def.id);
   if (card === 'card') world.log(`New Monster Book card: ${m.def.name}!`, '#c9a6ff');
   if (card === 'master') world.log(`${m.def.name} card mastered!`, '#ffe36b');
+  // (A party member's kill counts for your quests too, and the tracker shows whose it was.)
+  const by = byParty ? world.bots?.list.find((b) => b.id === m.killedBy && b.party)?.name ?? m.killedByName ?? null : null;
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
-    world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
+    world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}${by ? ` (${by})` : ''}`, '#bff0dc');
+    if (by) (world.partyCredit ??= {})[`${qid}|${m.def.id}`] = { name: by, at: world.now };
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   // A queen (or the Crystal King) drops a piece of her set for your job: always from her trial,
@@ -466,14 +496,7 @@ export function killMob(world, m, byParty = false) {
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
-  if (levels > 0) {
-    world.events.push({ type: 'levelup', level: char.level });
-    world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
-    world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
-    if (nextJobs(char.job, char.level).some((j) => j.level === char.level)) {
-      world.log('A new job is ready! Visit your instructor in their home town (M opens the world map).', '#ffe36b');
-    }
-  }
+  celebrateLevels(world, levels);
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
 }
 
@@ -578,8 +601,8 @@ export function updateWorld(world, dt, input) {
 
   // ----- Player control -----
   // While you fish, the line has the controls.
-  // (Gathering works the same way.)
-  const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed));
+  // (Gathering and crafting work the same way.)
+  const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed) || tickCrafting(world, dt, input.held, input.pressed));
   const held = input.locked || world.dead || fishing ? new Set() : input.held;
   const pressed = input.locked || world.dead || fishing ? new Set() : input.pressed;
   const intent = {
@@ -666,6 +689,7 @@ export function updateWorld(world, dt, input) {
 
   // ----- Melee strikes landing, then queued hits -----
   tickMelee(world, dt);
+  tickLater(world);
   const due = world.pending.filter((h) => h.at <= world.now);
   world.pending = world.pending.filter((h) => h.at > world.now);
   // Your hits on monsters other than the one you're on (the nearest) land at your job's `spread`
@@ -676,7 +700,13 @@ export function updateWorld(world, dt, input) {
     const m = h.mob;
     if (m.hp <= 0) continue;
     if (focus && m !== focus && !h.party) h.damage = Math.max(1, Math.round(h.damage * spread));
+    // (What you're fighting: your party focuses it, world/botfight.js.)
+    if (!h.party && !h.miss) world.youHit = { mob: m, at: world.now };
+    // Team moves: side by side, and catching a partymate's launch (world/teamwork.js).
+    teamHit(world, m, h);
     if (world.dungeon) h.damage = noteHit(world, m, h);
+    // (A boss's guard or armour: world/coopboss.js.)
+    if (m.coop) h.damage = coopHit(world, m, h);
     // Another player hunting here never lands a boss's last blow: that one's yours.
     if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));
     // (A monster a player hits goes after them, your party members too: it fights back.)
@@ -717,9 +747,13 @@ export function updateWorld(world, dt, input) {
         m.credited = true;
         world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: false, party: true });
         world.onStrangerKill?.(h.party, m);
-      } else killMob(world, m, Boolean(h.party));
+      } else {
+        if (h.party) m.killedBy = h.party;
+        killMob(world, m, Boolean(h.party));
+      }
       continue;
     }
+    teamLanded(world, m, h);
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
     const hold = h.freeze || h.stun || h.snare;
@@ -762,6 +796,8 @@ export function updateWorld(world, dt, input) {
   tickTutorial(world);
   tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id) });
   if (world.dungeon) tickDungeon(world, dt);
+  // Two-person boss mechanics and party quests (world/coop.js).
+  tickCoop(world, dt);
   // Online, the monsters on a map another player got to first are run by their game; this one
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));
@@ -793,6 +829,8 @@ export function updateWorld(world, dt, input) {
       world.invuln = 0.5;
     }
   }
+  // Team moves: revives, the side-by-side link, a Group Finisher's burst (world/teamwork.js).
+  tickTeam(world, dt);
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
   if (world.net) near.push(...world.net.bodies(world));

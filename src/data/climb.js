@@ -12,6 +12,18 @@
 
 const GAP = 80;
 const M = 100;
+// Gathering spots keep this far from any monster's patrol start on their floor (and from each
+// other, SPOT_APART), so you gather in peace and spots don't crowd.
+const SPOT_ROOM = 120;
+const SPOT_APART = 110;
+// The free place nearest `k` in the list that isn't crowding a spot already placed.
+function pickSpot(free, placed, k) {
+  const ok = ([x, y]) => !placed.some((n) => n.y === y && Math.abs(n.x - x) < SPOT_APART);
+  for (let d = 0; d < free.length; d++) {
+    for (const j of [k + d, k - d]) if (free[j] && ok(free[j])) return free[j];
+  }
+  return null;
+}
 
 // Row shapes, as [from, to] fractions of the map's width.
 const SHAPES = {
@@ -106,9 +118,9 @@ export function climb({ width, ground, zones, lookout = {}, quiet = [] }) {
   zones.forEach((z, zi) => {
     const spots = [];
     for (const r of floorsOf(zi)) for (const l of r.ledges) for (let x = l.x + 60; x <= l.x + l.w - 60; x += 70) spots.push([x, r.y]);
-    const free = spots.filter(([x, yy]) => clear(x, yy) && !spawns.some((s) => s.y === yy && Math.abs(s.x - x) < 90));
+    const free = spots.filter(([x, yy]) => clear(x, yy) && !spawns.some((s) => s.y === yy && Math.abs(s.x - x) < SPOT_ROOM));
     (z.nodes ?? []).forEach((n, i) => {
-      const at = free[Math.floor(((i + 1) * free.length) / ((z.nodes.length) + 1))];
+      const at = pickSpot(free, nodes, Math.floor(((i + 1) * free.length) / ((z.nodes.length) + 1)));
       if (at) nodes.push({ x: at[0], y: at[1], ...n });
     });
   });
@@ -167,9 +179,9 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
   const nodes = [];
   zones.forEach((z, zi) => {
     const free = [];
-    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y) && !spawns.some((s) => s.y === l.y && Math.abs(s.x - x) < 80)) free.push([x, l.y]);
+    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y) && !spawns.some((s) => s.y === l.y && Math.abs(s.x - x) < SPOT_ROOM)) free.push([x, l.y]);
     (z.nodes ?? []).forEach((n, i) => {
-      const at = free[Math.floor(((i + 1) * free.length) / (z.nodes.length + 1))];
+      const at = pickSpot(free, nodes, Math.floor(((i + 1) * free.length) / (z.nodes.length + 1)));
       if (at) nodes.push({ x: at[0], y: at[1], ...n });
     });
   });
@@ -178,4 +190,40 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
     zonesBy: by, zones: zones.map((z, i) => ({ name: z.name, color: z.color, from: i ? z.from : by === 'x' ? 0 : Infinity, ...(z.look ? { look: z.look } : {}) })),
     platforms, ropes, spawns, nodes,
   };
+}
+
+// After a map is finished (its homestone, field boss and extra portals added), slide each of its
+// gathering spots along its own floor to the nearest place that is clear of everything that
+// shares the floor: portals (where you arrive), monsters' patrols, rope and ladder ends, bounce
+// springs, updrafts (Up rides them, so a spot inside one would fight it), fishing spots and other
+// spots. A spot with no clear place on its floor is left out.
+export function settleSpots(map, fishing = []) {
+  if (!map.nodes?.length) return;
+  const same = (a, b) => Math.abs(a - b) < 10;
+  const floors = [
+    ...map.platforms.filter((p) => !p.drift && !p.thick).map((p) => [p.x, p.x + p.w, p.y]),
+    ...(map.terrain ?? []).slice(1).map((q, i) => [map.terrain[i][0], q[0], q[1], map.terrain[i][1]]).filter((f) => f[2] === f[3] && f[1] > f[0]),
+  ];
+  const placed = [];
+  const clear = (x, y) =>
+    map.portals.every((p) => !same(p.y ?? map.groundY, y) || Math.abs(p.x - x) >= SPOT_ROOM)
+    && map.spawns.every((s) => !same(s.y, y) || Math.abs(s.x - x) >= SPOT_ROOM)
+    && (map.ropes ?? []).every((r) => !(same(r.top, y) || same(r.bottom, y)) || Math.abs(r.x - x) >= 40)
+    && (map.springs ?? []).every((s) => !same(s.y, y) || Math.abs(s.x - x) >= 50)
+    && (map.updrafts ?? []).every((u) => y < u.top - 10 || y > u.bottom + 10 || Math.abs(u.x - x) >= u.w / 2 + 30)
+    && fishing.every((s) => !same(s.y, y) || Math.abs(s.x - x) >= 60)
+    && (map.npcs ?? []).every((n) => !same(map.groundY, y) || Math.abs(n.x - x) >= 60)
+    && placed.every((n) => !same(n.y, y) || Math.abs(n.x - x) >= SPOT_APART);
+  map.nodes = map.nodes.filter((n) => {
+    const f = floors.find(([a, b, y]) => same(y, n.y) && n.x >= a && n.x <= b);
+    if (!f) return false;
+    const tries = [];
+    for (let x = f[0] + 40; x <= f[1] - 40; x += 10) tries.push(x);
+    tries.sort((a, b) => Math.abs(a - n.x) - Math.abs(b - n.x));
+    const x = clear(n.x, n.y) ? n.x : tries.find((t) => clear(t, n.y));
+    if (x == null) return false;
+    n.x = x;
+    placed.push(n);
+    return true;
+  });
 }

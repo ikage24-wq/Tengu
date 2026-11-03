@@ -14,6 +14,7 @@ import { wornGear } from '../core/character.js';
 import { createAnim } from '../render/animator.js';
 import { setRunHandler } from './together.js';
 import { followerHurt, runHeal, followerRevive, followerWiped, leaderAct, joinRun } from '../world/dungeon.js';
+import { coopShared, applyCoopShared } from '../world/coopboss.js';
 
 const ROOM_EVERY = 0.25;
 const BOTS_EVERY = 1 / 15;
@@ -85,6 +86,10 @@ function tickRun(world, dt) {
       flood: room.flood ? [room.flood.state, Math.round(room.flood.t * 10) / 10] : null,
       dark: Math.max(0, (room.darkUntil ?? 0) - world.now), callout: run.callout,
     });
+    // The bosses' two-person mechanics (world/coopboss.js), so the group sees the same telegraphs.
+    const coop = coopShared(world, (m) => (m.net ??= `${online.id}:${m.uid}`));
+    if (coop.list.length || coop.fx.length || run.coopWas) send({ t: 'run', op: 'coop', map: world.map.id, ...coop });
+    run.coopWas = coop.list.length > 0;
   }
   if (run.botsIn <= 0) {
     run.botsIn = BOTS_EVERY;
@@ -136,6 +141,9 @@ function onRun(world, msg, g) {
       return;
     case 'bots':
       if (follows(world) && msg.map === world.map.id) applyBots(world, msg);
+      return;
+    case 'coop':
+      if (follows(world) && msg.map === world.map.id) applyCoopShared(world, msg);
       return;
     // From a friend, to the leader: their taunts, hooks, heals, buffs and room tasks.
     case 'provoke':

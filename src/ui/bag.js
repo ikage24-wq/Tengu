@@ -24,6 +24,7 @@ import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, itemSlot, itemShadow, fit } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
+import { equipTool, toolEquipped } from '../core/crafting.js';
 import { hotkeyAt } from './hud.js';
 
 const W = 332;
@@ -32,19 +33,20 @@ const CELL = 24;
 const SLOT = 22;
 const TAB_KEYS = ['equip', 'use', 'etc', 'cash'];
 const TAB_NAMES = ['Equip', 'Use', 'Etc', 'Cash'];
-const SLOT_NAMES = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring' };
+const SLOT_NAMES = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring', ring: 'Ring', charm: 'Charm' };
 const GREEN = '#2f9f58';
 const MINT = THEMES.mint;
 const LAV = THEMES.lavender;
 
 // The paper doll: four slots down each side of the hero.
-const LEFT = ['hat', 'top', 'bottom', 'shoes'];
+// (A fifth down each side: the bench-made ring and charm, data/crafting.js.)
+const LEFT = ['hat', 'top', 'bottom', 'shoes', 'ring'];
 // The outfit doll has a face slot too (glasses, masks), under the hat.
 const OUTFIT_LEFT = ['hat', 'face', 'top', 'bottom', 'shoes'];
-const RIGHT = ['weapon', 'gloves', 'cape', 'earring'];
+const RIGHT = ['weapon', 'gloves', 'cape', 'earring', 'charm'];
 
 // What an empty slot shows, greyed.
-const SLOT_GHOST = { hat: 'hat_0', face: 'look_casual_glasses_face', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'ear_5' };
+const SLOT_GHOST = { hat: 'hat_0', face: 'look_casual_glasses_face', top: 'top_0', bottom: 'bottom_0', shoes: 'shoes_0', weapon: 'sword_0', gloves: 'gloves_0', cape: 'cape_0', earring: 'ear_5', ring: 'ring_copper', charm: 'charm_oak' };
 
 // Short stat names for the compare chips, in the order they show.
 const STAT_SHORT = { watk: 'ATK', matk: 'M.ATK', wdef: 'DEF', mdef: 'M.DEF', str: 'STR', dex: 'DEX', int: 'INT', luk: 'LUK', hp: 'HP', mp: 'MP', acc: 'ACC', eva: 'AVD', speed: 'SPD', jump: 'JMP' };
@@ -165,8 +167,10 @@ export function bagWindow(ui, state, world) {
   const target = tryOn && ((tab === 'equip' && !outfit) || (tab === 'cash' && outfit)) ? ITEMS[tryOn.id].slot : null;
   const worn = outfit ? char.outfit ?? {} : char.equipment;
   const left = outfit ? OUTFIT_LEFT : LEFT;
-  const step = outfit ? 24 : 29;
-  [...left.map((s, i) => [s, lx + 4, i]), ...RIGHT.map((s, i) => [s, lx + lw - 4 - SLOT, i])].forEach(([slot, x, i]) => {
+  const step = 24;
+  // (The outfit doll has no ring or charm.)
+  const right = outfit ? RIGHT.filter((s) => s !== 'charm') : RIGHT;
+  [...left.map((s, i) => [s, lx + 4, i]), ...right.map((s, i) => [s, lx + lw - 4 - SLOT, i])].forEach(([slot, x, i]) => {
     dollSlot(ui, state, world, slot, x, oy + 51 + i * step, worn[slot], outfit, slot === target, win);
   });
 
@@ -533,6 +537,9 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
     }
     if (def.price) foot = `Sells for ${sellPrice(entry.id).toLocaleString()} gold each`;
     if (tab === 'use') label = 'Use';
+    // A life tool (data/crafting.js): equip it for its skill.
+    if (def.life) label = toolEquipped(char, entry.id) ? null : 'Equip';
+    if (def.life && toolEquipped(char, entry.id)) foot = 'In use for its skill';
   }
   if (foot) text(ctx, fit(ctx, foot, tw - (label ? 74 : 24) - (tab !== 'cash' ? 21 : 0), 6.5, false), tx, by + 11, { size: 6.5, color: tab === 'equip' ? COLORS.muted : COLORS.gold, bold: tab !== 'equip' });
   // Actions, right to left: the main one, drop on the ground, and the bin (which asks first).
@@ -570,5 +577,7 @@ function activate(state, world, tab, index) {
     bag.view = 1;
   } else if (tab === 'use') {
     useItem(world, entry.id);
+  } else if (ITEMS[entry.id]?.life && equipTool(char, entry.id)) {
+    world.log(`Now using your ${ITEMS[entry.id].name}.`, '#d8f5d0');
   }
 }

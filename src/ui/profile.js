@@ -13,12 +13,13 @@ import { buildLabel, buyFromShop, thank } from '../world/bots.js';
 import { PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { drawHero } from '../render/hero.js';
-import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot } from './kit.js';
+import { withZoom } from '../render/pixel.js';
+import { COLORS, windowFrame, tabs, text, box, button, hover, tooltip, well, sparkle, wrap, icon, font, itemSlot, fit } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { online } from '../net/online.js';
 import { askInspect, askParty, partyBlocker, inParty, askTrade } from '../net/together.js';
 
-const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings' };
+const SLOT_NAMES = { weapon: 'Weapon', hat: 'Hat', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings', ring: 'Ring', charm: 'Charm' };
 const STAT_COLORS = { str: '#ff7a6b', dex: '#3fc48a', int: '#5aa8ff', luk: '#f0b53a' };
 
 export function openProfile(state, who) {
@@ -62,7 +63,7 @@ export function profileWindow(ui, state, world) {
   ctx.beginPath();
   ctx.rect(lx + 2, ly + 2, 100, 110);
   ctx.clip();
-  drawHero(ctx, char.appearance, wornGear(char), lx + 52, ly + 104, { pose: 'idle', time: world.now, scale: 1.7, facing: 1, job: char.job });
+  withZoom(2, () => drawHero(ctx, char.appearance, wornGear(char), lx + 52, ly + 104, { pose: 'idle', time: world.now, scale: 1.7, facing: 1, job: char.job }));
   ctx.restore();
   const pro = bot?.pro;
   text(ctx, char.name, lx + 52, ly + 124, { size: 9.5, bold: true, align: 'center', color: pro ? '#c99a1f' : COLORS.ink });
@@ -108,16 +109,19 @@ export function profileWindow(ui, state, world) {
   let y = win.y + 46;
 
   if (page === 'Gear') {
+    // Two columns of five (the gear, then the jewellery and bench-made trinkets).
+    const cw = (rw - 4) / 2;
     EQUIP_SLOTS.forEach((slot, i) => {
       const inst = char.equipment[slot];
       const def = inst ? ITEMS[inst.id] : null;
-      const cy = y + i * 22;
+      const cx = rx + Math.floor(i / 5) * (cw + 4);
+      const cy = y + (i % 5) * 22;
       const rare = inst?.rarity ? RARITIES[inst.rarity] : null;
-      box(ctx, rx, cy, rw, 20, { fill: hover(ui, rx, cy, rw, 20) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
-      itemSlot(ctx, rx + 1, cy + 1, 18, inst, { shadow: false, fill: th.light, edge: th.light });
-      text(ctx, SLOT_NAMES[slot], rx + 24, cy + 8, { size: 6, color: COLORS.muted });
-      text(ctx, def ? itemName(inst) : '—', rx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
-      if (inst && hover(ui, rx, cy, rw, 20)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
+      box(ctx, cx, cy, cw, 20, { fill: hover(ui, cx, cy, cw, 20) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
+      itemSlot(ctx, cx + 1, cy + 1, 18, inst, { shadow: false, fill: th.light, edge: th.light });
+      text(ctx, SLOT_NAMES[slot], cx + 24, cy + 8, { size: 6, color: COLORS.muted });
+      text(ctx, def ? fit(ctx, itemName(inst), cw - 28, 7.5, true) : '—', cx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
+      if (inst && hover(ui, cx, cy, cw, 20)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
     });
     return;
   }

@@ -12,6 +12,7 @@ import { jobChain } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { createBody } from './physics.js';
 import { joinParty, partyMembers, LEVEL_GAP, PARTY_MAX } from './party.js';
+import { botChat } from './chatlog.js';
 
 export const BUDDY_MAX = 20;
 
@@ -225,7 +226,11 @@ function helpers(bots, world) {
     world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
     world.numbers.push({ x: b.x, y: b.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
     if (shrine) bot.attack = { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 };
-    say(bot, shrine ? pick(['blessed u!', 'heal!', 'there :)'], bots.rng) : pick(['here have a pot!', 'catch!! *throws pot*', 'drink this'], bots.rng));
+    // (Through the chat gate: two helpers never toss the same line, and a line said lately isn't
+    // said again; one of the others is, or the potion just flies.)
+    const lines = shrine ? ['blessed u!', 'heal!', 'there :)'] : ['here have a pot!', 'catch!! *throws pot*', 'drink this'];
+    const from = Math.floor(bots.rng() * lines.length);
+    for (let k = 0; k < lines.length; k++) if (botChat(world, bot, lines[(from + k) % lines.length], { important: true, log: false })) break;
   }
 }
 

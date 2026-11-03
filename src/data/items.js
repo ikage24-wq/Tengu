@@ -4,10 +4,12 @@
 
 import { SETS, SET_SLOTS, setPieceId } from './sets.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
-import { DISHES } from './cooking.js';
+import { DISHES, FEASTS } from './cooking.js';
 import { GATHERED } from './gathering.js';
+import { CRAFT_MATERIALS, craftedItemDefs } from './crafting.js';
 
-export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring'];
+// (Rings and charms are bench-made accessories, data/crafting.js.)
+export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'ring', 'charm'];
 
 export const ITEMS = {};
 
@@ -490,9 +492,17 @@ for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, pri
 for (const d of DISHES) {
   add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });
 }
+// Party feasts (world/coop-life.js): eaten by one, shared by the whole party on the map.
+for (const f of FEASTS) {
+  add({ id: f.id, name: f.name, type: 'use', price: Math.round(Object.values(f.needs).reduce((n, q) => n + q, 0) * 90 + f.heal * 0.4), effect: { feast: f.id, hp: f.heal }, color: f.colors[0], desc: `A party feast: everyone in your party on this map heals ${f.heal} HP and gets ${f.about} for ${Math.round(f.secs / 60)} minutes.` });
+}
 
 // Gathered and mined finds (data/gathering.js).
 for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'etc', gathered: true, price, color, desc });
+// The shared life-skill materials (ore, gems, logs, fibre) not already gathered above, and
+// everything the craft benches make (data/crafting.js).
+for (const [id, name, price, color, desc] of CRAFT_MATERIALS) if (!ITEMS[id]) add({ id, name, type: 'etc', gathered: true, price, color, desc });
+for (const def of craftedItemDefs(ITEMS, JOB_SETS, GEAR_LEVELS)) if (!ITEMS[def.id]) add(def);
 
 // The capsule machines' tickets (data/outfits-gacha.js): earned by playing, one turn of the crank.
 add({ id: 'gacha_ticket', name: 'Capsule Ticket', type: 'etc', price: 0, color: '#7fd17a', desc: "One turn of a town's capsule machine. Earned from daily quests, bosses, and dungeon treasure." });

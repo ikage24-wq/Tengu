@@ -13,13 +13,17 @@ import { respawn } from '../world/world.js';
 import { playScene } from '../world/story.js';
 import { SCENES } from '../data/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
-import { planGroup, startRun, leaveDungeon, clock } from '../world/dungeon.js';
+import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
+import { boardPage } from './partyboard.js';
+import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
+import { withZoom } from '../render/pixel.js';
 import { lookRows, sameLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { shopWindow } from './shop.js';
 import { polishWindow } from './polish.js';
+import { teamOf } from '../world/teamwork.js';
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -35,7 +39,7 @@ export function questMarker(char, npcId) {
 // ---------- Dialog ----------
 
 // Each NPC role gets its own color.
-const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint' };
+const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint', board: 'pink' };
 
 // A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
 // left, their name on a ribbon, and their words type out. Returns the text area, or null if the
@@ -67,7 +71,8 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   ctx.save();
   roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
   ctx.clip();
-  drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking });
+  // (Rasterized at the portrait's own size, so the big figure stays smooth in HD.)
+  withZoom(2, () => drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
   ctx.restore();
 
   // The name ribbon.
@@ -213,6 +218,10 @@ export function npcWindow(ui, state, world) {
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
+  if (npc.role === 'board') {
+    const pq = char.partyQuest;
+    choices.push({ label: 'Party quests', sub: pq ? `On one: ${pq.have}/${pq.need}` : `${boardOffers(world).length} on the board · shared rewards`, icon: 'friends', primary: true, run: () => (dlg.board = true) });
+  }
   if (npc.role === 'dungeon') choices.push({ label: `Enter ${DUNGEONS[npc.dungeon].name}`, sub: `Lv ${DUNGEONS[npc.dungeon].minLevel}+ · a group of four`, icon: 'star', primary: true, run: () => (dlg.dungeon = true) });
   if (npc.role === 'instructor') {
     const ready = nextJobs(char.job, char.level, char.quests).some((j) => j.family === npc.family);
@@ -223,7 +232,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -242,6 +251,12 @@ export function npcWindow(ui, state, world) {
   if (dlg.dungeon) {
     dlg.talking = false;
     dungeonPage(ui, state, world, npc, area);
+    return;
+  }
+
+  if (dlg.board) {
+    dlg.talking = false;
+    if (boardPage(ui, state, world, area)) dlg.board = false;
     return;
   }
 
@@ -421,14 +436,19 @@ function dungeonPage(ui, state, world, npc, area) {
   text(ctx, note, tx, by - 6, { size: 6.5, bold: true, color: th.dark });
   if (dailyReady) text(ctx, "★ Today's first clear: bonus Cash, Acorns and a set piece", tx, by + 3, { size: 6, bold: true, color: COLORS.gold });
   const dlg = state.npc;
+  // Hard is party-only (data/coop.js): a party of two or more, after a first clear.
+  const notHard = hardBlocker(world, def.id);
+  if (notHard) dlg.hard = false;
   if (rec?.clears) {
     for (const [i, mode] of ['Normal', 'Hard'].entries()) {
       const on = Boolean(dlg.hard) === (i === 1);
-      if (button(ui, tx + i * 46, by + 6, 44, 14, mode, { primary: on, size: 7, theme: i ? 'pink' : null })) dlg.hard = i === 1;
+      if (button(ui, tx + i * 46, by + 6, 44, 14, mode, { primary: on, size: 7, theme: i ? 'pink' : null, enabled: !i || !notHard })) dlg.hard = i === 1;
+      if (i && notHard && hover(ui, tx + i * 46, by + 6, 44, 14)) tooltip(ui, [{ text: 'Hard mode', bold: true }, { text: notHard, size: 7, color: COLORS.muted }]);
     }
+    if (!notHard) text(ctx, 'Hard: tougher, an extra boss move, 3x tokens, a Hard-only crown', tx + 96, by + 15, { size: 5.5, bold: true, color: '#e0659f' });
   }
   if (!plan.why && button(ui, tx + tw - 154, by, 74, 17, dlg.hard ? 'Go (Hard)' : 'Find group & go', { primary: true, size: 7.5 })) {
-    const why = startRun(world, def.id, { hard: Boolean(dlg.hard) && Boolean(rec?.clears) });
+    const why = startRun(world, def.id, { hard: Boolean(dlg.hard) && !notHard });
     if (why) world.log(why, '#ffb3c6');
     state.npc = null;
     state.windows.npc.open = false;
@@ -460,7 +480,7 @@ function styleWindow(ui, state, world) {
   const char = world.char;
   dlg.tab ??= 0;
   box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
-  drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 });
+  withZoom(2, () => drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 }));
   if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
   dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 50, h: 15 });
   dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 26, 24, 20, 32][dlg.tab], time: world.now, gap: 2 }).look;
@@ -514,7 +534,8 @@ export function deathWindow(ui, state, world) {
   ctx.stroke();
   text(ctx, 'You fainted!', x + W / 2, y + 36, { size: 14, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
   const loss = deathExpLoss(world.char.level, world.char.base.luk);
-  wrap(ctx, `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 18, y + 54, W - 36, { size: 8, color: COLORS.muted });
+  const helped = teamOf(world).some((t) => t.kind !== 'you' && t.up);
+  wrap(ctx, helped ? `Stay put and your party can stand by you to get you up, or wake up in town and lose ${loss} EXP.` : `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 18, y + 54, W - 36, { size: 8, color: COLORS.muted });
   ui.theme = th;
   if (button(ui, x + W / 2 - 56, y + H - 28, 112, 19, 'Return to town', { primary: true })) {
     respawn(world);

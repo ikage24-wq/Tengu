@@ -45,3 +45,15 @@ carry over; the name is Blade Dancer).
 - Effects (tools/fx-art.js): `bdring`, `bdbounce`, `bdhit`, `embblade`, `bdcarousel`. Icons,
   HUD gauge (Ricochet / CAROUSEL), aura, sounds (`bdbounce`, `bdcarousel`, `carouselfull`).
 - Outfit: the dancers' showgirl line, trimmed in her rose gold with gold gems.
+
+## Animation pass (2026-11-03)
+
+Her throws were redrawn so the empty hand never falls into a plain stance while the ring flies
+(render/moves.js `bd*`; docs/design/wind-dancer.md gives the rig's limits): the flick points after
+the ring on one toe with the back leg lifted; the cross toss crosses her arms over her chest, then
+springs them open with the back leg out; the hurl drives into a deep lunge with the back leg
+stretched long; the skim holds a low crouch; the lasso swings below her hand (free hand on her hip,
+foot pointed) and steps into a pointing lunge; the lob rises onto one toe, hand still raised; the
+spin hurl tips into an arabesque; the slide drops onto the back knee leaning back. Golden Carousel
+climbs about ten pixels through its turns, coils with the ring drawn behind her, and flings it into
+a held arabesque high in the air before the catch and curtsy.

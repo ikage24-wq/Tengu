@@ -136,13 +136,13 @@ export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 // through the line.
 export const PATH_COMBOS = {
   warrior: [
-    { move: 'slash', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
-    { move: 'slash2', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
-    { move: 'cross', dur: 0.5, step: 10, strikes: [
+    { move: 'gsdrop', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
+    { move: 'gsrise', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
+    { move: 'gsspin', dur: 0.5, step: 10, strikes: [
       { at: 0.22, pct: 65, reach: 74, h: 60, targets: 2, knock: 30, arc: [-115, 205], thick: 9 },
       { at: 0.72, pct: 75, reach: 74, h: 62, targets: 2, knock: 60, arc: [100, -215], thick: 9 },
     ] },
-    { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
+    { move: 'gscleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
   // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
   // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
@@ -369,24 +369,26 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.warrior[2], SWINGS.risecut, SWINGS.hammer],
     [PATH_COMBOS.warrior[3], SWINGS.leapchop, SWINGS.skysplit],
   ],
-  // The Paladin, steady and holy. Openers: her measured cut, a sweep, or a flash cut. Second: the
-  // shield bash, a shoulder check behind a flare of light that dazes, or a spinning backhand.
-  // Third: her lunging thrust, a rising cut that lifts them on light (Aegis Smite's old ascent),
-  // or a driving stab. Finisher: the two-handed smite, her shield slam that brings a great shield
-  // of light crashing down on them, or a leaping chop or sky-splitter that calls pillars of light
-  // down on everything they hit.
+  // The Paladin, steady and holy, every swing her own (none of the Warrior's). Openers: her
+  // measured cut, the Oath Cut (a held salute, then a chop), or the Dawn Step (a gliding step and
+  // a rising sweep). Second: the shield bash, a shoulder check behind a flare of light that dazes,
+  // the Halo Turn (a turn and a level ring), or her guard spin. Third: her lunging thrust, a rising
+  // cut that lifts them on light (Aegis Smite's old ascent), the Lance of Dawn (the blade lowered
+  // like a couched lance), or a kneeling stab. Finisher: the two-handed smite, her shield slam,
+  // Crusader's Fall (a leap and a drop blade-first, planted like a banner) or Sunrise Judgment
+  // (a kneeling bow, then one huge rising arc); the last two call pillars of light down.
   paladin: [
-    [PATH_COMBOS.paladin[0], SWINGS.sweep, SWINGS.flashcut],
+    [PATH_COMBOS.paladin[0], { ...SWINGS.sweep, move: 'ploath' }, { ...SWINGS.flashcut, move: 'pldawn' }],
     // (Her shoulder check is a shield rush: a few running steps behind a flare of light.)
-    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, SWINGS.spinback,
+    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, { ...SWINGS.spinback, move: 'plhalo', dur: 0.56 },
       { move: 'guardspin', dur: 0.56, step: 4, strikes: [{ at: 0.5, pct: 85, reach: 78, h: 60, around: true, targets: 4, knock: 100, arc: [0, 330], thick: 10, burst: 'aegis', stop: 0.04 }] }],
     [PATH_COMBOS.paladin[2],
       { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, burst: 'aegis', arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
-      SWINGS.drivestab,
+      { ...SWINGS.drivestab, move: 'pllance' },
       { move: 'kneelstab', dur: 0.62, step: 12, strikes: [{ at: 0.45, pct: 140, reach: 100, h: 48, targets: 3, pierce: true, knock: 210, stun: 0.3, burst: 'aegis', big: true, stop: 0.07, shake: 2 }] }],
     [PATH_COMBOS.paladin[3],
       { move: 'shieldslam', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
-      dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
+      { ...dressed(SWINGS.leapchop, { fx: 'pillar' }), move: 'plfall' }, { ...dressed(SWINGS.skysplit, { fx: 'pillar' }), move: 'plsunrise' }],
   ],
   // The Berserker, wild and heavy, and everything bleeds; none of his swings are the other paths'.
   // Openers: his wound-up cleave, or a blur of savage stabs. Second: the return cleave, a low whirl
@@ -458,7 +460,8 @@ export const PATH_VARIANTS = {
   ],
   // The Star Witch. Wand: a wink-cast or the flick; a sidearm sweep of three little stars or the
   // twirl; a hop-cast down from the top of a hop or the spin; a show-off spin of the wand or the snap.
-  // Staff: the thrust or a sweep; the swing or a spin; the plant or a hop-cast; the slam or a snap.
+  // Staff (her staff's own figures): the thrust or a crescent arc; the swing or a two-handed twirl;
+  // the plant or a planted cast; the slam or a comet flourish.
   starwand: [
     [PATH_COMBOS.starwand[0], { move: 'swwink', dur: 0.3, strikes: [{ at: 0.24, shot: 'stbolt', magic: true, pct: 74, range: 300, h: 60, knock: 25, speed: 760 }] }],
     [PATH_COMBOS.starwand[1], { move: 'swsweep', dur: 0.46, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 36, range: 300, h: 60, knock: 25, speed: 760, fan: 3, h: 110 }] }],
@@ -486,10 +489,10 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.66, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'swsweep', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'swspin', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'swhop', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
-    [PATH_COMBOS.starstaff[3], { move: 'swsnap', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.starstaff[0], { move: 'ssarc', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'sstwirl', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'sscast', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
+    [PATH_COMBOS.starstaff[3], { move: 'ssflourish', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -579,10 +582,10 @@ const ARCHER_COMMANDS = {
   starstaff: {
     up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
     air: [
-      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
-      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'ssair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
+      { move: 'ssair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+    dash: { move: 'ssdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
@@ -678,6 +681,22 @@ const PATH_DASH = {
   berserker: { move: 'leapchop', dur: 0.6, step: 64, carry: 0.5, strikes: [{ at: 0.55, pct: 150, reach: 86, h: 72, targets: 3, knock: 220, crack: true, bleed: { pct: 0.15, secs: 3 }, arc: [-105, 190], thick: 14, big: true, stop: 0.08, shake: 3 }] },
 };
 const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
+// The Paladin's and the Berserker's own command moves (the Warrior keeps the ones above). The
+// Paladin: up + attack, her rising cut on light; in the air, two oath chops, then Crusader's Fall
+// (blade-first, planted); down + attack, she drives the blade into the ground in a burst of
+// light. The Berserker: up + attack, his ripping uppercut; in the air, two wild overhead hacks,
+// then a body slam; running, Gore (a shoulder-first plow and a hack); down + attack, the slam.
+const PALADIN_COMMANDS = {
+  up: { ...LAUNCHER, move: 'ascend', strikes: LAUNCHER.strikes.map((st) => ({ ...st, burst: 'aegis' })) },
+  air: [{ ...AIR[0], move: 'plaircut' }, { ...AIR[1], move: 'plaircut' }, { ...AIR[2], move: 'pldive' }],
+  slam: { ...SLAM, move: 'consecrate', dur: 0.66, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.48, burst: 'aegis' })) },
+};
+const BERSERKER_COMMANDS = {
+  up: { ...LAUNCHER, move: 'dragrise', dur: 0.6, step: 18, strikes: LAUNCHER.strikes.map((st) => ({ ...st, at: 0.46, bleed: WOUND })) },
+  air: [{ ...AIR[0], move: 'bkairchop' }, { ...AIR[1], move: 'bkairchop' }, { ...AIR[2], move: 'bkdive' }],
+  dash: { ...PATH_DASH.berserker, move: 'bkgore', dur: 0.62 },
+  slam: { ...SLAM, move: 'bodyslam', dur: 0.72, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.55, bleed: WOUND })) },
+};
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);
 // The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
@@ -1183,7 +1202,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS }[pathOf(world)] ?? null;
+    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1199,7 +1218,7 @@ export function basicCombo(world) {
       return;
     }
     if (world.intent?.down && warriorPath(world.char) && world.stats.weaponType !== 'none') {
-      playStep(world, SLAM, 100, 'basicslam');
+      playStep(world, own?.slam ?? SLAM, 100, 'basicslam');
       world.combo = -1;
       return;
     }
@@ -1999,4 +2018,28 @@ function rain(world, s) {
     world.fx.push({ kind: 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
+}
+
+// The command moves a character of this job would play (up + attack, in the air, on the run), for
+// the bots that fight with them (world/botfight.js): the same moves you get, never someone else's.
+export function commandsOf(char, weaponType) {
+  const path = pathOf({ char, stats: { weaponType } });
+  if (ARCHER_COMMANDS[path]) return ARCHER_COMMANDS[path];
+  if (!MELEE.has(weaponType)) return null;
+  const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[path] ?? null;
+  const dash = own?.dash ?? PATH_DASH[hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null] ?? DASH;
+  return { up: own?.up ?? LAUNCHER, air: own?.air ?? AIR, dash };
+}
+
+// The procs a bot's basic swing or shot sets off, the same ones yours do (Blade Rush, Aegis Smite,
+// Ravage, Ribbon Lash, Gust Line, Whirlwind; Blast and Snare Arrow and the rest): `s` is the
+// swing's (or shot's) strike, `count` how many it caught. Returns { strikes } (extra blows, `due`
+// seconds after the swing's strike), { step } (a move that flows on, like the Whirlwind), or
+// { shot } (the shot as it flies, maybe a Blast Arrow).
+export function botProcs(char, weaponType, s, finisher, count, rng = Math.random) {
+  const world = { now: 0, strikes: [], char, stats: { weaponType }, faith: 0, body: { x: 0, facing: 1 } };
+  const key = finisher ? 'basic2' : 'basic0';
+  if (s.shot) return { shot: shotProcs(world, { ...s, key, finisher }, rng) };
+  bladeProcs(world, { ...s, dir: 1, scale: 100, key, finisher }, count, rng);
+  return { strikes: world.strikes, step: world.queuedStep?.step ?? null };
 }

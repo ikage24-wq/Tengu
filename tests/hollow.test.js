@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
-import { createBots, makeBotCharacter } from '../src/world/bots.js';
+import { createBots, makeBotCharacter, recruitBot } from '../src/world/bots.js';
+import { joinParty } from '../src/world/party.js';
 import { startRun, gradeOf, noteHit, HARD } from '../src/world/dungeon.js';
 import { MOBS } from '../src/data/mobs.js';
 
@@ -23,6 +24,8 @@ function run(opts = {}) {
   const w = createWorld(char);
   w.bots = createBots(w, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
   w.god = true;
+  // (Hard mode is party-only: data/coop.js.)
+  if (opts.hard) joinParty(w.bots, recruitBot(w.bots, w, { level: 12, jobs: ['warrior'] }), w);
   assert.equal(startRun(w, 'hollow', opts), null);
   return w;
 }

@@ -3,7 +3,7 @@
 // drop icons (icons/items.js); added to ITEM_ART so icons.js draws them like any other.
 
 import { FISH } from '../../data/fishing.js';
-import { DISHES } from '../../data/cooking.js';
+import { DISHES, FEASTS } from '../../data/cooking.js';
 import { ITEM_ART, hi, lt, sh, S, oval, bez3, rect, ball, tube, glint, twinkle, framed, W } from './items.js';
 
 // A fish swimming right: a plump body, a forked tail, fins, an eye, and its pattern.
@@ -56,3 +56,4 @@ function dishArt(d) {
 for (const f of FISH) ITEM_ART[f.id] = framed(fishArt(f));
 ITEM_ART.fishing_rod = framed(rodArt);
 for (const d of DISHES) ITEM_ART[d.id] = framed(dishArt(d));
+for (const f of FEASTS) ITEM_ART[f.id] = framed(dishArt(f));

@@ -229,6 +229,11 @@ const R = {
   // at the top of her leap (a cymbal swell into a fanfare).
   achit: { db: -18, vary: 8, max: 3, gap: 50, layers: [{ seq: 'E6:90', inst: 'pizzicato_strings', db: -4 }, sparkle('B7:40', { db: -12 })] },
   acfirework: { db: -11, vary: 6, max: 2, gap: 80, layers: [thump(180, 120, { db: -4 }), { rec: 'fireImpact', rate: 1.6, len: 300, db: -8 }, sparkle('C7:30 E7:60 G7:90 C8:120 G7:150', { db: -8 })] },
+  // Team moves (world/teamwork.js): a catch clinks two notes together (a high five), a revive
+  // rises on warm strings, a Group Finisher lands on the whole band.
+  teamcatch: { db: -12, vary: 4, max: 2, gap: 60, layers: [{ seq: 'G5+B5:40 D6+G6:160', synth: 'pluck', cut: 6000, ring: 0.2, tail: 200 }, sparkle('r:30 G7:60 D8:120', { db: -8 })] },
+  teamrevive: { db: -10, max: 1, room: true, layers: [{ seq: 'C5:140 E5:140 G5:140 C6:600', inst: 'celesta', db: -2 }, { seq: 'C4+G4+E5:900', inst: 'string_ensemble_1', attack: 0.15, db: -6 }, sparkle('r:420 C7:40 G7:300', { db: -8 })] },
+  teamburst: { db: -7, max: 1, duck: [-8, 1400], layers: [{ rec: 'punchHeavy', rate: 0.8, db: -2 }, thump(55, 600, { slide: -1.4, db: -2 }), { seq: 'C4+G4+C5+E5:1200', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('C7:30 E7:30 G7:30 C8:400', { db: -6 })] },
   trapsnap: { db: -11, vary: 6, max: 2, layers: [{ wave: 'sine', f0: 160, slide: 2.2, env: { a: 5, s: 140, d: 120 }, db: -4 }, { rec: 'wood', rate: 1.4, db: -8 }] },
   acburst: { db: -8, max: 1, room: true, duck: [-6, 1400], layers: [whoosh(600, 200, 3000, { focus: 0.6, db: -6 }), { seq: 'r:200 G4+C5+E5+G5:1000', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:200 C7:0 E7:60 G7:120 C8:180', { db: -8 })] },
   // The finishers' big moments: Titan Breaker's sword forming and the ground splitting under it,

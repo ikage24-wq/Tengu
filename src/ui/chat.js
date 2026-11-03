@@ -4,8 +4,9 @@
 
 import { NPCS } from '../data/npcs.js';
 import { FACE_STYLES } from '../render/hero.js';
-import { COLORS, text, box, roundRect, font } from './kit.js';
+import { COLORS, text, box, roundRect, font, clicked } from './kit.js';
 import { isGm, unlockGm, gmCommand } from '../world/gm.js';
+import { partySay, hasParty } from '../world/grouping.js';
 
 const MAX_LEN = 70;
 const BUBBLE_TIME = 4.5;
@@ -70,8 +71,14 @@ function send(chat, world, words) {
         return;
       }
     }
+    // /p words: to your party only.
+    if (cmd === 'p' && args.length) {
+      partyLine(chat, world, args.join(' '));
+      return;
+    }
     if (cmd === 'help') {
       world.log('Chat: Enter to talk. Emoticons like :) :D ;) >:( :3 <3 B) change your face.', '#bff0dc');
+      world.log('Party chat: Tab while typing (or /p words). V pings your party.', '#bff0dc');
       world.log(`/e <face> shows a face: ${FACE_STYLES.join(', ')}.`, '#bff0dc');
     } else if (cmd === 'e' && FACE_STYLES.includes(arg)) {
       world.emote = { face: arg, t: EMOTE_TIME };
@@ -83,6 +90,10 @@ function send(chat, world, words) {
   // A window with a chat of its own (trading) takes what's typed.
   if (chat.sendTo) {
     chat.sendTo(words);
+    return;
+  }
+  if (chat.channel === 'party') {
+    partyLine(chat, world, words);
     return;
   }
   world.log(`${name}: ${words}`, CHAT_COLOR);
@@ -105,6 +116,15 @@ function send(chat, world, words) {
   }
 }
 
+// A line to the party: only they hear it (no one else around answers).
+function partyLine(chat, world, words) {
+  if (!partySay(world, words)) return;
+  world.messages.at(-1).t = 14;
+  chat.history.push(words);
+  const face = emoteOf(words);
+  if (face) world.emote = { face, t: EMOTE_TIME };
+}
+
 // Handles typing while the chat bar is open. Returns true while it has the keyboard.
 export function chatInput(chat, world, input) {
   if (chat.typing === null) {
@@ -118,6 +138,8 @@ export function chatInput(chat, world, input) {
     if (ch === '\b') chat.typing = chat.typing.slice(0, -1);
     else if (chat.typing.length < MAX_LEN) chat.typing += ch;
   }
+  // Tab switches who hears you: everyone around, or just your party.
+  if (input.pressed.has('Tab')) chat.channel = chat.channel === 'party' ? 'all' : 'party';
   if (input.pressed.has('Escape')) {
     chat.typing = null;
     input.pressed.delete('Escape');
@@ -159,17 +181,34 @@ export function updateChat(chat, world, dt) {
 }
 
 // The chat bar along the bottom of the message log while typing.
+// The All and Party tabs sit on its right end: the Party tab shows the party's lines only, and
+// what you type goes to them alone.
+const PARTY_INK = '#2f9a68';
 export function drawChatBar(ui, chat, world) {
   if (chat.typing === null || chat.sendTo) return;
   const { ctx } = ui;
   const y = 311;
-  box(ctx, 4, y, 300, 15, { fill: 'rgba(255,255,255,0.92)', edge: COLORS.accent, r: 6 });
-  text(ctx, `${world.char.name}:`, 10, y + 11, { size: 8, bold: true, color: COLORS.accent });
+  const party = chat.channel === 'party';
+  const ink = party ? PARTY_INK : COLORS.accent;
+  box(ctx, 4, y, 300, 15, { fill: party ? 'rgba(236,255,244,0.95)' : 'rgba(255,255,255,0.92)', edge: ink, r: 6 });
+  const who = party ? `[Party] ${world.char.name}:` : `${world.char.name}:`;
+  text(ctx, who, 10, y + 11, { size: 8, bold: true, color: ink });
   ctx.font = font(8, true);
-  const nameW = ctx.measureText(`${world.char.name}:`).width;
+  const nameW = ctx.measureText(who).width;
   const caret = Math.floor(world.now * 2) % 2 ? '|' : '';
   text(ctx, chat.typing + caret, 14 + nameW, y + 11, { size: 8, color: COLORS.ink });
-  if (!chat.typing) text(ctx, 'Say something... (Enter to send, Esc to cancel, /help)', 14 + nameW, y + 11, { size: 8, color: COLORS.muted });
+  if (!chat.typing) text(ctx, party ? (hasParty(world) ? 'To your party... (Tab: everyone)' : 'No party yet (Tab: everyone)') : 'Say something... (Tab: party, /help)', 14 + nameW, y + 11, { size: 8, color: COLORS.muted });
+  // The tabs, eased in: the picked one lifts a little.
+  chat.tabEase = (chat.tabEase ?? 0) + ((party ? 1 : 0) - (chat.tabEase ?? 0)) * 0.25;
+  const tabs = [['all', 'All', COLORS.accent], ['party', 'Party', PARTY_INK]];
+  tabs.forEach(([id, label, c], i) => {
+    const on = chat.channel === id || (id === 'all' && !party);
+    const lift = (id === 'party' ? chat.tabEase : 1 - chat.tabEase) * 2;
+    const tx = 308 + i * 38;
+    box(ctx, tx, y + 1 - lift, 35, 13, { fill: on ? c : 'rgba(255,255,255,0.9)', edge: c, r: 6.5, width: 1.2 });
+    text(ctx, label, tx + 17.5, y + 10.5 - lift, { size: 7.5, bold: true, align: 'center', color: on ? '#ffffff' : c });
+    if (clicked(ui, tx, y, 35, 15)) chat.channel = id;
+  });
 }
 
 // Speech bubbles are queued while the scene draws (you, NPCs, the crowd, your party) and laid out
@@ -204,10 +243,20 @@ export function flushBubbles(ctx) {
     return { ...b, lines, w, h, bx: Math.round(Math.max(4, Math.min(636 - w, b.x - w / 2))), by: Math.round(b.y - h - 5) };
   });
   queued.length = 0;
-  // Lowest first; each later bubble moves up until it's clear of the ones already placed.
-  list.sort((a, b) => b.by - a.by);
-  const placed = [];
+  // A crowd talking at once is capped: the same words twice show once, at most two bubbles over
+  // people standing within a few steps of each other (the freshest), and five on screen, so a
+  // party bunched round you never becomes a wall of bubbles.
+  list.sort((a, b) => b.alpha - a.alpha || b.by - a.by);
+  const kept = [];
   for (const b of list) {
+    if (kept.length >= 5 || kept.some((o) => o.words === b.words)) continue;
+    if (kept.filter((o) => Math.abs(o.x - b.x) < 40 && Math.abs(o.y - b.y) < 40).length >= 2) continue;
+    kept.push(b);
+  }
+  // Lowest first; each later bubble moves up until it's clear of the ones already placed.
+  kept.sort((a, b) => b.by - a.by);
+  const placed = [];
+  for (const b of kept) {
     for (let guard = 0; guard < 8; guard++) {
       const hit = placed.find((o) => b.bx < o.bx + o.w + 2 && o.bx < b.bx + b.w + 2 && b.by < o.by + o.h + 3 && o.by < b.by + b.h + 3);
       if (!hit) break;

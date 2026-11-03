@@ -27,6 +27,7 @@ import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
+import { toolShapes } from './tools.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
@@ -1021,6 +1022,8 @@ function liveFace(look, state, mv) {
   // Endless Fox-Fire: her face builds with the barrage, not with each throw (that would flicker):
   // a fox spirit at play, never strained: sly, then playful (a cheeky tongue now and then), then a
   // thrilled fanged grin, then flat out, laughing.
+  // A life-skill move acts its own face (picking, mining, fishing, cooking: render/life-moves.js).
+  if (mv?.face) return mv.face;
   if (mv && state.flow) {
     const h = state.flow.heat;
     if (h < 0.45) return { lid: 0.2, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };
@@ -1028,6 +1031,9 @@ function liveFace(look, state, mv) {
     if (h < 1.4) return { lid: 0.05, mouth: beat(4) % 3 ? 'fang' : 'D', brows: [[0.1, 0.6], [0.1, 0.6]] };
     return { mouth: beat(4) % 2 ? 'D' : 'grin', brows: [[0.6, 0.1], [0.6, 0.1]], closed: beat(3) % 4 === 0 ? [true, true] : null };
   }
+  // The Starlight Idol performs, never scowls: bright raised brows, a blush, a note over her head
+  // as she sings (her moves shape the mouth and close or wink the eyes themselves).
+  if (mv && state.job === 'shrinemaiden') return { brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.2, mouth: 'cat', extra: ['note'] };
   if (mv) {
     const p = state.progress ?? 0;
     if (p < 0.3) return { lid: 0.25, cross: 0.5, mouth: 'grit', brows: [[-0.3, 0.7], [-0.3, 0.7]] };
@@ -1469,9 +1475,13 @@ function flightAt(p, G) {
 const legKey = ([dx, dy, tilt]) => [q(dx), q(dy), Math.round(tilt / 2) * 2];
 
 // How far the hips sink so every planted foot (one not lifted) can reach the ground.
+// `squat` is a depth on a 0-4 scale (1 a dip, 2 a crouch, 3 a deep crouch or kneel), counted in
+// SQUAT_DEPTH figure units each: the figure is drawn squashed (KY), so a squat taken as plain units
+// sank the hips barely a pixel and every crouch and kneel read as standing straight.
+const SQUAT_DEPTH = 2.2;
 function hipDrop(r) {
   if (r.air) return 0;
-  let drop = r.squat;
+  let drop = r.squat * SQUAT_DEPTH;
   for (const [dx, dy] of [r.frontLeg, r.backLeg]) {
     if (dy < -0.01) continue;
     drop = Math.max(drop, REST_LEG - Math.sqrt(Math.max(0, LEG * LEG - dx * dx)));
@@ -2155,6 +2165,14 @@ function weaponSprite(w, time, unstrung = false) {
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
 }
 
+// A life-skill tool held instead of the weapon (render/tools.js), drawn like a weapon.
+function toolSprite(kind) {
+  const def = toolShapes(kind);
+  if (!def) return null;
+  const s = sprite(`tool|${kind}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: null, anchors: def.anchors, tool: kind, size: def.size };
+}
+
 // A sprite's canvas size in art pixels (HD sprites hold several cells per art pixel).
 const logical = (s) => ({ cw: s.canvas.width / s.res, ch: s.canvas.height / s.res });
 
@@ -2249,6 +2267,47 @@ function weaponGlow(ctx, wpn, rarity, time, scale, draw) {
 // state: { pose, time, facing, progress, hurt, flash, alpha, scale, seed, vy }; anim: from createAnim().
 // (x, y) is the character's feet center in screen space.
 const WEAPON_SCALE = 1;
+// Weapons swung with the whole body, whose blade or head goes behind the head when it points back.
+const HEFTED = new Set(['sword', 'axe', 'spear', 'staff']);
+// Weapons drawn behind the body when they point up and back (over the shoulder).
+const BACKSLUNG = new Set(['sword', 'axe', 'spear', 'staff', 'bow']);
+// The big weapons swung round a fist at the chest: upright in a swing, they pass behind her head.
+const UPRIGHT_BEHIND = new Set(['sword', 'axe', 'spear']);
+// Whether the held weapon (or a life tool) is drawn behind the body at this angle: pointing up and
+// back over the shoulder, or (a sword, axe or spear in a swing) standing about upright over her
+// head, so it passes behind the head instead of across the face; a move can say so itself (`back`).
+export function weaponBehind(type, angle, mv = null, toolKind = null) {
+  const tipped = ((((angle % 360) + 540) % 360) - 180);
+  const overTop = !toolKind && mv?.weapon != null && UPRIGHT_BEHIND.has(type) && tipped >= -22 && tipped < 35;
+  return Boolean(mv?.armBack || (mv?.back ?? (overTop || ((toolKind ? true : BACKSLUNG.has(type)) && tipped < -22 && tipped > -165))));
+}
+// How far down its hilt a weapon is held (art px from the grip point toward the pommel).
+const HILT = { sword: 8, axe: 7.5, spear: 9 };
+
+// The Starlight Idol's idle with her mic (rests pointing down and forward at her hip, the head clear
+// of her face): she swings it round in a loop by its cord at her side and catches it; points it
+// out at the crowd with a little lean and a nod (her wink-and-point); and brings it up under her
+// chin to hum a bar, swaying, head rocking to the tune.
+function idolIdle(t, bit, env, bump, seg, lerp, q2) {
+  const hang = 118 + Math.sin(t * 2.4) * 8;
+  const b = bit([1.6, 1.8, 2.6]);
+  if (!b) return { arm: [0.5, 0], angle: hang, rig: { hx: q2(Math.sin(t * 2.4) * 0.3) } };
+  const k = env(b.u);
+  // Let down to dangle from her fingers by the cord and swung to and fro below her hand, out at
+  // her side, each swing bigger, then flicked back up into her grip with a sparkle.
+  if (b.i === 0) {
+    const swing = Math.sin(b.s * 7) * (40 + 45 * smooth(seg(b.u, 0, 0.6))) * k;
+    return { arm: [0.5 + 2.5 * k, 1.5 * k], angle: lerp(hang, 180, k) + swing, sparkle: b.u > 0.8 && b.u < 0.95, rig: { tilt: Math.round(2 * k), hx: q2(0.4 * Math.sin(b.s * 7) * k) } };
+  }
+  // The point: the mic out at the crowd, a lean in and a nod on the beat, free hand on her hip.
+  if (b.i === 1) {
+    const nod = bump(b.u, 0.45, 0.65);
+    return { arm: [lerp(0.5, 4, k), lerp(0, -3, k)], angle: lerp(hang, 82, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-3 * k + 3 * nod), hx: q2(0.5 * k) } };
+  }
+  // Humming a bar: the mic up under her chin (head well above it), swaying side to side.
+  const sway = Math.sin(b.s * 4.2) * k;
+  return { arm: [lerp(0.5, 2, k), lerp(0, -2.5, k)], angle: lerp(hang, 46, k), rig: { tilt: Math.round(-2 * k + 3 * sway), hx: q2(0.8 * sway), backArm: [q2(-3 * k - 1.5 * sway), q2(-1.5 * k)] } };
+}
 
 // Idle routines while standing still: each weapon has a few things it does, taken in turn with a
 // breather of the gentle loop between them, each easing in and out so the hands never jump.
@@ -2257,7 +2316,7 @@ const WEAPON_SCALE = 1;
 // head, a lean) acting along with it. Bare hands (`type` none) get theirs too.
 const smooth = (u) => u * u * (3 - 2 * u);
 const IDLE_REST = 3.2;
-function weaponIdle(type, t) {
+function weaponIdle(type, t, job) {
   const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
   const seg = (p, a, b) => Math.max(0, Math.min(1, (p - a) / (b - a)));
   const env = (u, a = 0.18, b = 0.82) => smooth(seg(u, 0, a)) * (1 - smooth(seg(u, b, 1)));
@@ -2277,104 +2336,88 @@ function weaponIdle(type, t) {
   };
   const rest = (angle, arm = [0, 0]) => ({ arm, angle });
   switch (type) {
-    case 'sword': {
-      const sway = 25 + Math.sin(t * 1.6) * 4;
-      const b = bit([1.2, 2.6, 2.4]);
-      if (!b) return rest(sway);
+    case 'sword':
+    case 'axe':
+    case 'spear':
+    case 'staff': {
+      // A greatsword lives on the shoulder: it rides there with the breath, gets hefted and
+      // bounced back down, is planted point-first to lean on, and gets a shoulder roll.
+      const sway = { sword: -58, axe: -52, spear: -62, staff: -46 }[type] + Math.sin(t * 1.6) * 3;
+      const b = bit([1.3, 2.6, 2.2]);
+      if (!b) return rest(sway, [1, -5]);
       const k = env(b.u);
-      // A flourish: the blade lifted and spun once round the hand.
-      if (b.i === 0) return { arm: [0.5 * bump(b.u, 0, 1), -3 * bump(b.u, 0, 1)], angle: sway - smooth(seg(b.u, 0.1, 0.9)) * 360 };
-      // Laid back over the shoulder, a lean back, the free hand on the hip.
-      if (b.i === 1) return { arm: [lerp(0, 1, k), lerp(0, -6, k)], angle: lerp(sway, -50, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-3 * k) } };
-      // Held up before the face to look down the edge, a glint running along it.
-      return { arm: [lerp(0, 3, k), lerp(0, -7, k)], angle: lerp(sway, 2, k), sparkle: k > 0.8 && b.u > 0.4 && b.u < 0.6, rig: { hx: q2(0.6 * k), hy: q2(0.6 * k) } };
-    }
-    case 'axe': {
-      const breathe = 16 + Math.sin(t * 2) * 3;
-      const b = bit([1.4, 2.6, 2.2]);
-      if (!b) return { arm: [1, -5], angle: breathe };
-      const k = env(b.u);
-      // Hefted up off the shoulder and settled back.
-      if (b.i === 0) { const heft = bump(b.u, 0, 1); return { arm: [1, -5 - 3 * heft], angle: breathe - 14 * heft }; }
-      // Brought down off the shoulder and leant on, head to the ground, both hands on the haft.
-      if (b.i === 1) return { arm: [lerp(1, 3, k), lerp(-5, 1, k)], angle: lerp(breathe, 150, k), rig: { backArm: [q2(3.4 * k), q2(0.5 * k)], tilt: Math.round(3 * k), by: q2(0.5 * k) } };
-      // The haft rolled in the hand so the head turns over and back, admiring it.
-      return { arm: [lerp(1, 2.5, k), lerp(-5, -6, k)], angle: breathe + Math.sin(b.s * 5) * 35 * k, rig: { hx: q2(0.5 * k) } };
-    }
-    case 'spear': {
-      const lean = 4 + Math.sin(t * 1.2) * 2;
-      const b = bit([1.2, 2.6, 2.4]);
-      if (!b) return { arm: [3, -3], angle: lean };
-      const k = env(b.u);
-      // A twirl round the hand.
-      if (b.i === 0) return { arm: [3, -3 - 2 * bump(b.u, 0, 1)], angle: lean + smooth(seg(b.u, 0.1, 0.9)) * 360 };
-      // Shouldered, sloped back, the free hand on the hip.
-      if (b.i === 1) return { arm: [lerp(3, 1, k), lerp(-3, -6, k)], angle: lerp(lean, -60, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6 } };
-      // Planted and leant on, the other arm flung out in a stretch.
-      return { arm: [3, -3 - 1 * k], angle: lean, rig: { backArm: [q2(-8 * k), q2(-6 * k)], tilt: Math.round(4 * k), tx: q2(0.6 * k) } };
+      // Hefted off the shoulder and dropped back on it with a little bounce.
+      if (b.i === 0) {
+        const heft = bump(b.u, 0, 0.6);
+        const bounce = bump(b.u, 0.6, 0.8) * 0.4;
+        return { arm: [1, -5 - 2.5 * heft + 1.5 * bounce], angle: sway - 16 * heft + 6 * bounce, rig: { by: q2(0.5 * bounce) } };
+      }
+      // Swung down off the shoulder, back and round low to point it out at arm's length (a dare),
+      // held, then swung back up the same way onto the shoulder (never past the face).
+      if (b.i === 1) {
+        const out = smooth(seg(b.u, 0, 0.25));
+        const back = smooth(seg(b.u, 0.72, 1));
+        return { arm: [lerp(1, 3.5, out * (1 - back)), lerp(-5, -1, out * (1 - back))], angle: lerp(sway, -272, out * (1 - back)), rig: { backArm: [q2(0.6 * out * (1 - back)), q2(-4.2 * out * (1 - back))], armSide: out * (1 - back) > 0.5 ? -1 : 0.6, tilt: Math.round(1 * out * (1 - back)) } };
+      }
+      // A shoulder roll: the blade rocks on the shoulder, the free arm stretched out.
+      return { arm: [1, -5 - Math.sin(b.s * 7) * 1.2 * k], angle: sway + Math.sin(b.s * 7) * 9 * k, rig: { backArm: [q2(-7 * k), q2(-5 * k)], tilt: Math.round(-2 * k) } };
     }
     case 'wand': {
-      const twirl = 25 + Math.sin(t * 3) * 18;
+      // The Starlight Idol's mic (her own fidgets; the Star Witch's wand ones are below).
+      if (job === 'shrinemaiden') return idolIdle(t, bit, env, bump, seg, lerp, q2);
+      // The wand rests pointing forward and down at her hip, so its star never comes up by her face.
+      const twirl = 115 + Math.sin(t * 3) * 12;
       const b = bit([1, 2.4, 2.2]);
-      if (!b) return { arm: [0.5, -2], angle: twirl };
+      if (!b) return { arm: [0.5, 0], angle: twirl };
       const k = env(b.u);
-      // A full spin in the fingers and a sparkle.
-      if (b.i === 0) return { arm: [0.5, -2 - 2 * bump(b.u, 0, 1)], angle: twirl + smooth(seg(b.u, 0, 0.8)) * 360, sparkle: b.u > 0.6 && b.u < 0.9 };
-      // Thinking: the wand's tip tapped against the chin, head tilted.
-      if (b.i === 1) return { arm: [lerp(0.5, 2.6, k), lerp(-2, -9 + 0.6 * Math.abs(Math.sin(b.s * 6)) * k, k)], angle: lerp(twirl, -20, k), rig: { tilt: Math.round(-4 * k), hy: q2(-0.5 * k) } };
-      // A little circle drawn in the air, sparkling.
+      // A full spin in the fingers out at her side, and a sparkle.
+      if (b.i === 0) return { arm: [0.5 + 1.5 * bump(b.u, 0, 1), 0], angle: twirl + smooth(seg(b.u, 0, 0.8)) * 360, sparkle: b.u > 0.6 && b.u < 0.9 };
+      // Thinking: the wand twiddled at her hip while she looks off, head tilted.
+      if (b.i === 1) return { arm: [lerp(0.5, 1.5, k), 0], angle: lerp(twirl, 140, k) + Math.sin(b.s * 6) * 14 * k, rig: { tilt: Math.round(-3 * k), hy: q2(-0.5 * k) } };
+      // A little circle drawn in the air out in front, sparkling.
       const a = b.s * 5;
-      return { arm: [lerp(0.5, 3 + Math.cos(a) * 1.6, k), lerp(-2, -6 + Math.sin(a) * 1.6, k)], angle: lerp(twirl, 10, k), sparkle: k > 0.6 };
-    }
-    case 'staff': {
-      const lean = 5 + Math.sin(t * 1.4) * 2;
-      const b = bit([1.2, 2.8, 2.2]);
-      if (!b) return { arm: [3, -4], angle: lean };
-      const k = env(b.u);
-      // Tapped on the ground, a glimmer going up.
-      if (b.i === 0) { const tap = bump(b.u, 0.2, 0.5); return { arm: [3, -4 - 3 * tap], angle: lean, sparkle: b.u > 0.48 && b.u < 0.7 }; }
-      // Both hands on it, leaning on it, resting the chin.
-      if (b.i === 1) return { arm: [3, lerp(-4, -7, k)], angle: lean, rig: { backArm: [q2(4 * k), q2(-7 * k)], tilt: Math.round(4 * k), tx: q2(0.6 * k), hy: q2(0.8 * k) } };
-      // Raised high overhead, glimmering.
-      return { arm: [lerp(3, 2, k), lerp(-4, -10, k)], angle: lean, sparkle: k > 0.7, rig: { tilt: Math.round(-3 * k), hy: q2(-0.6 * k) } };
+      return { arm: [lerp(0.5, 4 + Math.cos(a) * 1.4, k), lerp(0, -2 + Math.sin(a) * 1.4, k)], angle: lerp(twirl, 75, k), sparkle: k > 0.6 };
     }
     case 'bow': {
-      const sway = 25 + Math.sin(t * 1.3) * 4;
+      // The bow rests tipped forward so its top limb leans away from her face.
+      const sway = 58 + Math.sin(t * 1.3) * 4;
       const b = bit([1.6, 2.4, 2.4]);
       if (!b) return rest(sway);
       const k = env(b.u);
-      // Raised to check the string.
-      if (b.i === 0) { const c = bump(b.u, 0, 1); return { arm: [1.5 * c, -5 * c], angle: sway - 25 * c }; }
-      // Slung over the shoulder.
-      if (b.i === 1) return { arm: [lerp(0, -1, k), lerp(0, -6, k)], angle: lerp(sway, -40, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-2 * k) } };
-      // Turned over in the hand, once round, slow.
-      return { arm: [lerp(0, 2, k), lerp(0, -3, k)], angle: sway + smooth(seg(b.u, 0.2, 0.8)) * 360 };
+      // Held out to check the string.
+      if (b.i === 0) { const c = bump(b.u, 0, 1); return { arm: [2.5 * c, -1 * c], angle: sway + 20 * c }; }
+      // Slung back over the shoulder (behind her head).
+      if (b.i === 1) return { arm: [lerp(0, 1, k), lerp(0, -5, k)], angle: lerp(sway, -302, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-2 * k) } };
+      // The string plucked twice with the free hand, listening to it.
+      const pl = Math.max(0, Math.sin(b.s * 9)) * k;
+      return { arm: [lerp(0, 2, k), 0], angle: lerp(sway, 70, k), rig: { backArm: [q2(3 * k + pl), q2(-1 * k)], hy: q2(0.4 * k) } };
     }
     case 'crossbow': {
-      const hang = 55 + Math.sin(t * 1.5) * 3;
+      // The crossbow rests level at her waist (its stock along her side, never up at her mouth).
+      const hang = 12 + Math.sin(t * 1.5) * 3;
       const b = bit([1.6, 2.6, 2.4]);
-      if (!b) return rest(hang);
+      if (!b) return rest(hang, [0, 1.5]);
       const k = env(b.u);
-      // Brought up to aim a moment.
-      if (b.i === 0) { const aim = bump(b.u, 0, 1); return { arm: [2 * aim, -5 * aim], angle: hang - 50 * aim }; }
-      // Rested on the shoulder.
-      if (b.i === 1) return { arm: [lerp(0, 1, k), lerp(0, -6, k)], angle: lerp(hang, -30, k), rig: { tilt: Math.round(-2 * k) } };
-      // Held across the body while the free hand works the crank.
-      return { arm: [lerp(0, 2, k), lerp(0, -3, k)], angle: lerp(hang, 85, k), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-3 * k + 0.6 * Math.cos(b.s * 10) * k)], hy: q2(0.8 * k), hx: q2(0.4 * k) } };
+      // Brought up to sight along it a moment.
+      if (b.i === 0) { const aim = bump(b.u, 0, 1); return { arm: [2 * aim, -2 * aim], angle: hang - 8 * aim }; }
+      // Patted fondly with the free hand.
+      if (b.i === 1) { const pat = Math.abs(Math.sin(b.s * 7)) * k; return { arm: [lerp(0, 1, k), 0], angle: hang + 6 * k, rig: { backArm: [q2(4 * k), q2(-1 * k - pat)] } }; }
+      // Tipped down while the free hand works the crank.
+      return { arm: [lerp(0, 2, k), 0], angle: lerp(hang, 38, k), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-1 * k + 0.6 * Math.cos(b.s * 10) * k)], hx: q2(0.4 * k) } };
     }
     case 'dagger': {
       // The Wind Dancer's chakram (the dagger items): every fidget keeps the ring at her hip or
-      // out in front, never up by her face.
-      const wob = 160 + Math.sin(t * 2) * 5;
+      // out in front, never up by her face, and never down below her feet.
+      const wob = 138 + Math.sin(t * 2) * 5;
       const b = bit([1.3, 2, 1.8]);
-      if (!b) return rest(wob);
+      if (!b) return { arm: [1, -1], angle: wob };
       const k = env(b.u);
       // Tossed up spinning out in front of her and caught.
-      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [lerp(0, 3, k), -1 * bump(b.u, 0, 1)], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 14 }; }
+      if (b.i === 0) { const air = seg(b.u, 0.1, 0.9); return { arm: [lerp(1, 3, k), -1 - 1 * bump(b.u, 0, 1)], angle: wob + smooth(air) * 720, toss: Math.sin(air * Math.PI) * 14 }; }
       // Twirled round her hand at her hip, three turns.
-      if (b.i === 1) return { arm: [lerp(0, 3, k), lerp(0, 1, k)], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 1080 };
+      if (b.i === 1) return { arm: [lerp(1, 3, k), -1], angle: wob + smooth(seg(b.u, 0.15, 0.85)) * 1080 };
       // A little flourish: the ring swept out to the side and held there a beat, a showgirl's pose.
-      return { arm: [lerp(0, 5, k), lerp(0, -1.5, k)], angle: lerp(wob, 95, k) + Math.sin(b.s * 5) * 4 * k, rig: { backArm: [q2(-2 * k), q2(-5 * k)] } };
+      return { arm: [lerp(1, 5, k), lerp(-1, -1.5, k)], angle: lerp(wob, 95, k) + Math.sin(b.s * 5) * 4 * k, rig: { backArm: [q2(-2 * k), q2(-5 * k)] } };
     }
     case 'gauntlet': {
       const flex = 70 + Math.sin(t * 4) * 5;
@@ -2588,6 +2631,7 @@ function blendRig(r, ra, rb, k) {
 
 // The standing guard a finished move eases back into (the arm low and forward, the blade up).
 const SETTLE_POSE = { weapon: 62, arm: 30, lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false };
+const SHOULDER_SETTLE = Object.fromEntries([['sword', -58], ['axe', -52], ['spear', -62]].map(([k, w]) => [k, { ...SETTLE_POSE, weapon: w, arm: 48 }]));
 
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
@@ -2624,7 +2668,9 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   // so it never jumps from one throw to the next).
   if (moved && state.flow) moved = streamFlow(moved, state.flow, state.progress ?? 0, state.dur ?? 0.35);
   // A move that just ended eases back to the standing guard (`settle`, 0-1) instead of snapping.
-  if (moved && state.settle != null) moved = blendMove(moved, SETTLE_POSE, Math.min(1, state.settle));
+  // (A sword, axe or spear settles back onto the shoulder it rests on, so a move that ended low or
+  // high flows into the idle instead of easing to a guard and then snapping up to the shoulder.)
+  if (moved && state.settle != null) moved = blendMove(moved, SHOULDER_SETTLE[feel.weapon] ?? SETTLE_POSE, Math.min(1, state.settle));
   // The pose the arm and weapon are drawn from follows the same rule as the body (see `rigid`).
   moved = rigid(moved);
   // Walking, the whole body leans into the run and rises a little at each passing step.
@@ -2794,7 +2840,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const over = attack ? null : rig.armOver ?? null;
   rig.armIn = !attack && over == null;
   // (Bare hands have idle bits too, unless someone else is already moving the arms: an NPC.)
-  const idleW = !attack && pose === 'idle' && !state.ready && rig.view !== 'back' && (g.weapon || !state.rig) ? weaponIdle(g.weapon?.type ?? 'none', (state.time ?? 0) + (state.seed ?? 0) * 1.37) : null;
+  const idleW = !attack && pose === 'idle' && !state.ready && rig.view !== 'back' && (g.weapon || !state.rig) ? weaponIdle(g.weapon?.type ?? 'none', (state.time ?? 0) + (state.seed ?? 0) * 1.37, state.job) : null;
   // An arm the mood is already posing (crossed, on the hips, behind the back) keeps its pose: the
   // bit's own move for that arm is dropped rather than piled on top of it.
   const posed = rig.posed ?? {};
@@ -2808,6 +2854,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
       else rig[key] = (rig[key] ?? 0) + v;
     }
   }
+  // A greatsword (or an axe or spear) is carried over the shoulder, blade back behind the head
+  // and the grip at the chest, so it never hides the face (the hand comes up to the shoulder for it).
+  const shouldered = HEFTED.has(g.weapon?.type) && !attack && over == null && !state.ready && !idleW && rig.view !== 'back' && !state.rig;
+  if (shouldered) rig.frontArm = [rig.frontArm[0] + 1, rig.frontArm[1] - 5];
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
   const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
@@ -2830,7 +2880,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A bow being drawn (`mv.pull`) is drawn without its straight string; the string is bent back
   // to the draw hand live, with the arrow on it (see drawString).
   const drawn = (mv?.pull != null || mv?.twang > 0) && g.weapon?.type === 'bow' && !g.weapon.fun;
-  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
+  // A life-skill move swaps a tool into the weapon hand (or empties it: 'none').
+  const toolKind = mv?.tool ?? null;
+  const wpn = rig.view === 'back' ? null : toolKind ? (toolKind === 'none' ? null : toolSprite(toolKind)) : g.weapon ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
   const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : over != null ? { weapon: 0, arm: over } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
@@ -2855,12 +2907,39 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const armDy = bodyY;
 
   // (A chakram hangs from her hand down by her hip, the ring below it, never up by her face.)
-  const restAngle = { crossbow: 55, gauntlet: 70, dagger: 160 }[g.weapon?.type] ?? 25;
+  // (A greatsword rests back over the shoulder.)
+  const restAngle = { crossbow: 12, gauntlet: 70, dagger: 138, sword: -58, axe: -52, spear: -62, staff: -46, wand: 115, bow: 58 }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
-  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 20, dagger: 105 }[g.weapon?.type] ?? 62 : null;
-  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * 4 + (pose === 'jump' ? -15 : 0);
+  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 48, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62 : null;
+  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * (HEFTED.has(g.weapon?.type) ? 1 : 4) + (pose === 'jump' ? -15 : 0);
+  // Between moves the held weapon eases to where it should be (guard, shoulder, a fidget) instead
+  // of jumping there; a greatsword goes the long way, down and round behind her, rather than up
+  // across her face.
+  if (anim && g.weapon && rig.view !== 'back') {
+    const now = state.time ?? 0;
+    const was = anim.wpn;
+    if (angles || !was || now - was.t > 0.25 || now < was.t) anim.wpn = { a: weaponAngle, t: now };
+    else {
+      let d = ((((weaponAngle - was.a) % 360) + 540) % 360) - 180;
+      if (HEFTED.has(g.weapon.type)) {
+        const mid = (((was.a + d / 2) % 360) + 360) % 360;
+        if (Math.abs(d) > 40 && (mid < 35 || mid > 335)) d = d > 0 ? d - 360 : d + 360;
+      }
+      const a = Math.abs(d) < 0.5 ? weaponAngle : was.a + d * Math.min(1, (now - was.t) * 9);
+      anim.wpn = { a, t: now };
+      weaponAngle = a;
+    }
+  }
+  // A blade, haft or shaft pointing up and back (over the shoulder, a wind-up behind the head) is
+  // drawn behind the body, so it passes behind the head instead of across the face; a move can
+  // say so itself (`back`).
+  // In a swing, a sword, axe or spear standing about straight up from the fist at her chest would
+  // run its guard and blade (or axe head) right across her face as it passes over the top (a
+  // rising cut, a spin coming round, a raise before a slam): it goes behind her head instead, so
+  // it reads as wheeling over and behind her.
+  const behind = weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
@@ -2876,8 +2955,26 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.translate(snap(sx(hand[0])), snap(sy(hand[1]) - (idleW?.toss ?? 0) * scale));
     if (flip) ctx.scale(-1, 1);
     ctx.rotate((weaponAngle * Math.PI) / 180);
+    // (A greatsword is held at the end of its long hilt, by the pommel, so the hilt never sticks
+    // back past the fist across the face when the blade points down.)
+    const hilt = toolKind ? 0 : HILT[g.weapon.type];
+    if (hilt && !g.weapon.fun) ctx.translate(0, -hilt * ws);
+    // (A move may slide the hand up the shaft, `mv.grip` art px from the grip toward the head: a
+    // staff spun from its middle or planted on its foot.)
+    if (mv?.grip) ctx.translate(0, mv.grip * ws);
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
+    if (toolKind) {
+      const ts = ws * wpn.size;
+      paint(-(wpn.grip[0] + 1) * ts, -(wpn.grip[1] + 1) * ts, wpn.cw * ts, wpn.ch * ts);
+      // Where the rod's tip is on the canvas, for the fishing line (render/fishing.js).
+      if (state.onTool && wpn.anchors?.tip) {
+        const m = ctx.getTransform();
+        state.onTool(m.transformPoint(new DOMPoint((wpn.anchors.tip[0] - wpn.grip[0]) * ts, (wpn.anchors.tip[1] - wpn.grip[1]) * ts)));
+      }
+      ctx.restore();
+      return;
+    }
     const el = g.weapon.element;
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
@@ -2914,10 +3011,35 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const handsAt = () => {
     if (!state.onHands) return;
     const [, [bx, by]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
-    state.onHands(ctx, [sx(hand[0]), sy(hand[1])], [sx(squashX(bx + rig.tx)), sy(squashY(by + bodyY))], flip ? -1 : 1, scale);
+    state.onHands(ctx, [sx(hand[0]), sy(hand[1])], [sx(squashX(bx + rig.tx)), sy(squashY(by + bodyY))], flip ? -1 : 1, scale, mv);
   };
+  // A tool hanging from the free hand (a basket), behind the body like that hand.
+  const drawBackTool = () => {
+    const bt = mv?.backTool && toolSprite(mv.backTool);
+    if (!bt) return;
+    const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(snap(sx(squashX(wx + rig.tx))), snap(sy(squashY(wy + bodyY))));
+    if (flip) ctx.scale(-1, 1);
+    // It hangs straight down from the hand, swinging a little as she moves.
+    ctx.rotate(Math.PI + (mv.backToolA ?? 0) * (Math.PI / 180));
+    const bs = scale * bt.size;
+    ctx.drawImage(bt.canvas, -(bt.grip[0] + 1) * bs, -(bt.grip[1] + 1) * bs, bt.cw * bs, bt.ch * bs);
+    ctx.restore();
+  };
+  // The weapon arm raised behind the big head for a wind-up (`armBack`): drawn before the body.
+  const armBehind = attack && mv.armBack && over == null && rig.view !== 'back';
+  const drawArm = () => {
+    const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
+    blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  };
+  drawBackTool();
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
+  if (behind) drawWeapon();
+  if (armBehind) drawArm();
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (alpha > 0.5) {
     // Anchor points on the posed figure for the live gear effects.
@@ -2932,17 +3054,20 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (rig.view === 'back') return handsAt();
   if (!attack && over == null) {
     if (!wpn) return handsAt();
-    drawWeapon();
+    if (!behind) drawWeapon();
     const grip = sprite(`grip|${lookKey}|${gk}|${armKey}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow.slice(armShapesNow.handAt)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
     blit(ctx, grip, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return handsAt();
   }
-  drawWeapon();
+  if (armBehind) {
+    if (mv && !mv.fanBack) drawFan();
+    return handsAt();
+  }
+  if (!behind) drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
-  blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  drawArm();
   if (mv && !mv.fanBack) drawFan();
   handsAt();
 }

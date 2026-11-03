@@ -46,3 +46,17 @@ Acrobat Archer).
   `acburst`, `acaura`, `embacro`. Icons, the Combo gauge, her aura, sounds.
 - Bots: an Archer in the party skips, flips and rolls as she shoots, and casts Grand Somersault.
 - The old Archer's figures (draw, quickshot and the like) stay for the moves other jobs share.
+
+## Animation rework (2026-11-03)
+
+- Every draw is one clean archer's line (`bowDraw` in render/moves.js): the bow arm long and a
+  little low, the bow tipped back a touch so the arrow runs under her jaw (never through her lips),
+  the string hand anchored under the chin and the head held back off the string. After the loose
+  the bow rolls forward in her hand (the top limb tips away from her face), and between tricks it
+  sits low and tipped forward.
+- Shooting up: a backbend with the bow arm thrust up and out and the bow tipped right back, its top
+  limb passing behind her head. Pirouette: up on one toe with a passé knee, arms opened wide (bow
+  out ahead, tipped forward) for two turns. Grand Somersault: she pitches nose-down to aim, so the
+  arrows run out below her face, then tucks into one more forward turn on the drop.
+- Kneels (rolls, dives) now really kneel: the hips sink and the back knee goes down (a shared fix:
+  crouch depths in the rig were too shallow to read on the squashed figure).

@@ -207,7 +207,10 @@ export function updateDrama(bots, world, dt, hooks) {
   tick('duelIn', 90, 200, () => {
     if (d.duels.length) return;
     const here = bots.list.filter((o) => o.map === world.map.id && free(o));
-    const a = pick(here, rng);
+    // A challenge starts where people are standing about, so a crowd can gather to watch.
+    const near = (o) => here.filter((p) => p !== o && Math.abs(p.x - o.x) < 520).length;
+    const most = Math.max(0, ...here.map(near));
+    const a = pick(here.filter((o) => near(o) >= most * 0.6), rng);
     const b = a && here.filter((o) => o !== a && Math.abs(o.x - a.x) < 400).sort((x, y) => Math.abs(x.level - a.level) - Math.abs(y.level - a.level))[0];
     if (a && b) startDuel(d, bots, world, a, b);
   });

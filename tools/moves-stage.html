@@ -92,6 +92,10 @@ window.step = step;
 window.caption = (s) => (words = s);
 window.place = (x) => Object.assign(w.body, { x, y: w.map.groundY, vx: 0, vy: 0, onGround: true, rope: null, facing: 1 });
 window.frame = () => canvas.toDataURL('image/jpeg', 0.92);
+// (For recorders: fill the job's gauge, see which key holds which skill.)
+window.world = w;
+window.fill = () => { const g = gaugeOf(w.char); if (g) { w[g] = 100; w[`${g}At`] = w.now; } };
+window.keys = () => Object.fromEntries(Object.entries(c.hotkeys).map(([k, b]) => [k, b?.skill ?? b?.item ?? null]));
 window.ready = true;
 
 // ?record=PLAN: plays a plan and prints the frames (cropped round the hero, as data URLs, JSON)

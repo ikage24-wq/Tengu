@@ -41,12 +41,12 @@ function skill(def) {
 export const SKILLS = {
   // ---------- Novice ----------
   pebble: skill({
-    id: 'pebble', name: 'Star Pebble', job: 'novice', type: 'attack', maxLevel: 3, fx: 'pebble',
+    id: 'pebble', name: 'Star Pebble', job: 'novice', type: 'attack', maxLevel: 3, fx: 'pebble', lock: 0.45,
     desc: 'Flick a sparkly pebble at the nearest monster.',
     at: (lv) => ({ mp: 2, pct: 110 + lv * 25, hits: 1, targets: 1, range: { w: 220, h: 50 }, projectile: true }),
   }),
   quickstep: skill({
-    id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff',
+    id: 'quickstep', name: 'Quick Step', job: 'novice', type: 'buff', maxLevel: 3, fx: 'buff', lock: 0.55, landAt: 0.75,
     desc: 'Move and jump faster for a while.',
     at: (lv) => ({ mp: 8, duration: 60 + lv * 30, buff: { speed: 8 + lv * 4, jump: 3 + lv * 2 } }),
   }),
@@ -123,13 +123,14 @@ export const SKILLS = {
   }),
   titanbreak: skill({
     id: 'titanbreak', dmg: 1.2, name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Valor, and spends it. Crouch and leap high with the blade raised as a giant sword of steel forms above you, then crash down and split the ground in two, throwing everything around you into the air.',
+    desc: 'Finisher: needs full Valor, and spends it. Leap high, somersaulting inside a wheel of steel as your blade turns over and over, while a giant sword of steel forms above you; then crash down with it and split the ground in two, throwing everything around you into the air.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'titanbreak', dur: 1.5, step: 10, finisher: true, guard: 1.2, strikes: [
+        combo: [{ move: 'gstitan', dur: 1.5, step: 10, finisher: true, guard: 1.2, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gswheel', burstAt: 0, burstDur: 0.5, quiet: true, gauge: 0 },
           { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, burst: 'titanrise', burstAt: 0, quiet: true, gauge: 0 },
           { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'titanbreak', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
           { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'titanwave', burstAt: 0, big: true, stop: 0.05, shake: 3, gauge: 0 },
@@ -185,13 +186,14 @@ export const SKILLS = {
 
   grandverdict: skill({
     id: 'grandverdict', dmg: 1.75, name: 'Grand Verdict', job: 'paladin', type: 'attack', fx: 'judgment', icon: 'verdict', school: 'holy', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Faith, and spends it. Kneel, rise on a column of light, then drive a giant sword of light down on everything around you; pillars of light strike every monster it hits.',
+    desc: 'Finisher: needs full Faith, and spends it. Plant your blade and kneel as a sun of light rises over you, then rise on the light and swing as a giant sword of light drives down on everything around you; pillars of light strike every monster it hits.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'verdict', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
+        combo: [{ move: 'plverdict', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, burst: 'verdicthalo', burstAt: 0, burstDur: 1.0, quiet: true, rage: 0 },
           { at: 0.24, pct: k(60, 110), reach: 150, h: 130, around: true, targets, pull: 90, burst: 'consecrate', burstAt: 0, stop: 0.03, rage: 0 },
           { at: 0.66, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 120, launch: 440, burst: 'verdict', burstAt: 0, fx: 'pillar', big: true, stop: 0.16, shake: 8 },
           { at: 0.82, pct: k(150, 260), reach: 180, h: 150, around: true, targets, knock: 260, burst: 'consecrate', burstAt: 0, big: true, stop: 0.05, shake: 3 },
@@ -253,14 +255,15 @@ export const SKILLS = {
 
   crimsoneclipse: skill({
     id: 'crimsoneclipse', dmg: 2.5, name: 'Crimson Eclipse', job: 'berserker', type: 'attack', fx: 'quake', icon: 'eclipse', school: 'rage', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Rage, and spends it. A whirlwind spins you up into the air, sucking monsters in, then you crash down under a blood-red moon in one enormous smash.',
+    desc: 'Finisher: needs full Rage, and spends it. Hurl your axe spinning round you in a burning wheel that drags monsters in, catch it, leap up under a blood-red moon as a giant axe of fire forms over you, and smash down with it.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
       const whirl = (at, i) => ({ at, pct: k(60, 100), reach: 96, h: 120, around: true, targets, pull: 80, arc: [i % 2 ? 180 : 0, 300], thick: 12, stop: 0.02, rage: 0 });
       return {
         mp: k(30, 50), pct: k(440, 760), hits: 7, targets,
-        combo: [{ move: 'eclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
+        combo: [{ move: 'bkeclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'axethrow', burstAt: 0, burstDur: 0.58, quiet: true, rage: 0 },
           ...[0.08, 0.17, 0.26, 0.35, 0.44].map(whirl),
           { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
           { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },
@@ -489,7 +492,7 @@ export const SKILLS = {
 
   heavenslantern: skill({
     id: 'heavenslantern', name: 'Starfall', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'starlit', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs a full Constellation, and spends it. Draw the constellation across the sky star by star, then swing your wand down: it all comes crashing down as a shower of meteors on every monster ahead, ending in one great impact. Then blow on your wand tip.',
+    desc: 'Finisher: needs a full Constellation, and spends it. Draw the constellation across the sky star by star, then swing your wand down: it all comes crashing down as a shower of meteors on every monster ahead, ending in one great impact. Then strike a pose.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -524,7 +527,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.3, lv, m), secs: lerpf(2, 3.5, lv, m), bonus: lerpf(0.15, 0.3, lv, m) } }),
   }),
   springtrap: skill({
-    id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10,
+    id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, lock: 0.7, landAt: 0.4,
     desc: 'Set a little circus springboard down just ahead and give it a pat. The first monster to step on it is bounced high into the air. Up to three at once.',
     at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true }),
   }),
@@ -593,7 +596,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.3, lv, m), pct: lerp(50, 90, lv, m) } }),
   }),
   packhowl: skill({
-    id: 'packhowl', name: 'Smoke Bomb', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10,
+    id: 'packhowl', name: 'Smoke Bomb', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10, lock: 0.62, landAt: 0.4,
     desc: 'Slap a smoke bomb down at your feet: everything close round you is knocked back and stunned, loses track of you, and nothing touches you while the smoke is thick.',
     at: (lv, m) => ({ mp: lerp(10, 18, lv, m), pct: lerp(100, 170, lv, m), stun: lerpf(1, 2, lv, m), r: lerp(100, 140, lv, m), smoke: true }),
   }),
@@ -603,7 +606,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.1, 0.25, lv, m) } }),
   }),
   snacktime: skill({
-    id: 'snacktime', name: 'Showstopper', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'phantom', maxLevel: 10,
+    id: 'snacktime', name: 'Showstopper', job: 'beastmaster', type: 'buff', fx: 'buff', school: 'phantom', maxLevel: 10, lock: 0.8, landAt: 0.6,
     desc: 'Take a grand bow and snap your fingers: for a while your copies hit much harder.',
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: lerp(15, 30, lv, m), buff: { copyPower: lerpf(0.4, 1, lv, m) } }),
   }),
@@ -671,7 +674,7 @@ export const SKILLS = {
     },
   }),
   overclock: skill({
-    id: 'overclock', name: 'Overclock', job: 'stormcaller', type: 'buff', fx: 'buff', icon: 'overclock', school: 'brass', maxLevel: 10,
+    id: 'overclock', name: 'Overclock', job: 'stormcaller', type: 'buff', fx: 'buff', icon: 'overclock', school: 'brass', maxLevel: 10, lock: 0.8, landAt: 0.75,
     desc: 'Crank your crossbow past its limits: your next few bolts are heavy bolts that tear through every monster in their line, hitting far harder.',
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: 20, buff: { shots: lerp(3, 6, lv, m), power: lerpf(1.6, 2.2, lv, m) } }),
   }),
@@ -876,9 +879,9 @@ export const SKILLS = {
 
 // The move each skill plays (see render/moves.js), chosen to fit the skill and its job.
 const MOVES_BY_SKILL = {
-  pebble: 'throw', quickstep: 'cheer',
+  pebble: 'pebbleflick', quickstep: 'qstep',
   vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'ptbomb',
-  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aebrace', bigbertha: 'aebertha',
+  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aeoverclock', bigbertha: 'aebertha',
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',

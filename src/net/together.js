@@ -7,6 +7,10 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
 import { loadMap } from '../world/world.js';
+import { friendWorking, friendFeast } from '../world/coop-life.js';
+import { onPartyQuestMsg } from '../world/partyquest.js';
+import { friendLaunched, standUp, joinGroup } from '../world/teamwork.js';
+import { applyCoopShared } from '../world/coopboss.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -85,10 +89,78 @@ export function tickParty(world) {
   if (!online.party) send({ t: 'party', op: 'roster', leader: null, members: [], was: online.id });
 }
 
+// Every party in the room, by its leader (from the rosters everyone shares), so a friend's party
+// can be asked to take you in.
+function noteRoster(msg) {
+  const r = (online.rosters ??= new Map());
+  if (msg.was) r.delete(msg.was);
+  if (msg.leader && msg.members?.length > 1) r.set(msg.leader, msg.members);
+  else if (msg.leader) r.delete(msg.leader);
+}
+
+// The leader of the party friend `id` is in (themselves when they're on their own).
+export function leaderOf(id) {
+  if (online.party?.members.includes(id)) return online.party.leader;
+  for (const [lead, members] of online.rosters ?? []) if (members.includes(id) && online.ghosts.has(lead)) return lead;
+  return id;
+}
+const partySizeOf = (lead) => online.rosters?.get(lead)?.length ?? 1;
+
+// Why you can't ask to join friend `g`'s party now, or null.
+export function joinPartyBlocker(g) {
+  if (!g) return 'Not here';
+  if (inParty(g.id)) return 'Already in your party';
+  if (online.party) return 'Leave your party first';
+  if (online.joinAsked) return 'Waiting for an answer';
+  if (partySizeOf(leaderOf(g.id)) >= ONLINE_PARTY_MAX) return 'Their party is full';
+  return null;
+}
+
+// One click: the ask goes to their party's leader, who lets you in (or not).
+export function askJoinParty(world, id) {
+  const g = online.ghosts.get(id);
+  const why = joinPartyBlocker(g);
+  if (why) return why;
+  const lead = leaderOf(id);
+  online.joinAsked = lead;
+  send({ t: 'party', to: lead, op: 'join', name: world.char.name });
+  world.log(`You asked to join ${online.ghosts.get(lead)?.name ?? g.name}'s party.`, '#bff0dc');
+  return null;
+}
+
+// The leader's answer to someone asking to join.
+export function answerJoinParty(world, yes) {
+  const from = online.joinAsk;
+  online.joinAsk = null;
+  const g = from && online.ghosts.get(from);
+  if (!g) return;
+  if (!yes || (online.party && online.party.leader !== online.id) || (online.party?.members.length ?? 1) >= ONLINE_PARTY_MAX) {
+    send({ t: 'party', to: from, op: 'nojoin', full: yes });
+    return;
+  }
+  online.party ??= { leader: online.id, members: [online.id] };
+  if (!inParty(from)) online.party.members.push(from);
+  shareParty();
+  world.log(`${g.name} joined your party!`, '#bff0dc');
+}
+
 function onParty(world, msg, g) {
+  if (msg.op === 'roster') noteRoster(msg);
   if (msg.to && msg.to !== online.id) return;
   const p = online.party;
   switch (msg.op) {
+    case 'join':
+      if ((p && p.leader !== online.id) || (p?.members.length ?? 1) >= ONLINE_PARTY_MAX) send({ t: 'party', to: msg.id, op: 'nojoin', full: true });
+      else {
+        online.joinAsk = msg.id;
+        world.log(`${msg.name} asks to join your party! Open Play with Friends (N) to answer.`, '#ffe36b');
+      }
+      return;
+    case 'nojoin':
+      if (online.joinAsked !== msg.id) return;
+      online.joinAsked = null;
+      world.log(msg.full ? `${g.name}'s party is full.` : `${g.name} said no to your join request.`, '#ffb3c6');
+      return;
     case 'ask':
       if (p && p.leader !== msg.id) send({ t: 'party', to: msg.id, op: 'decline', busy: true });
       else if (!p) {
@@ -129,6 +201,7 @@ function onParty(world, msg, g) {
       if (msg.members.includes(online.id)) {
         const fresh = !p;
         online.party = { leader: msg.leader, members: msg.members };
+        online.joinAsked = null;
         if (fresh) world.log(`You joined ${g.name}'s party!`, '#bff0dc');
         else if (msg.leader === online.id && p.leader !== online.id) world.log("You're the party leader now.", '#ffe36b');
       } else if (mine) {
@@ -371,6 +444,58 @@ function onZones(world, msg) {
   if (msg.callout) world.callout = { ...msg.callout, at: world.now };
 }
 
+// ---------- Co-op life skills (world/coop-life.js) ----------
+// 'work': you're working a life spot (sent when you start, and every few seconds while you keep
+// at it), so a party friend at the same spot gets the Together bonus. 'feast': you served a party
+// feast; party friends on your map get its buff. 'gift': a piece crafted for a party friend, sent
+// straight into their bag (gear whole, like a trade).
+
+const partyHere = (world) => partyFriends().filter((g) => g.map === world.map.id);
+
+function onGift(world, msg, g) {
+  if (msg.to !== online.id || !inParty(msg.id)) return;
+  const it = msg.item ?? {};
+  const id = it.inst?.id ?? it.id;
+  if (!ITEMS[id] || !tradable(id)) return;
+  const ok = it.inst ? addItem(world.char.inventory, { ...it.inst, uid: Date.now() * 100 + Math.floor(Math.random() * 100) }) : addItem(world.char.inventory, id, Math.max(1, Math.min(99, it.qty ?? 1)));
+  world.log(ok ? `${g.name} crafted ${ITEMS[id].name} for you! It's in your bag.` : `${g.name} made you ${ITEMS[id].name}, but your bag is full!`, ok ? '#ffe36b' : '#ffb3c6');
+}
+
+// ---------- Pings, party chat, emotes and gathers, for the party ----------
+// Sent to the room; only your party acts on them.
+
+function onPartyNote(world, msg, g) {
+  if (!inParty(msg.id) || world.dungeon) return;
+  const hooks = setGroupHandler.fn;
+  switch (msg.t) {
+    case 'ping': {
+      const mob = msg.mob && msg.map === world.map.id ? world.mobs.find((m) => m.net === msg.mob || `${online.id}:${m.uid}` === msg.mob) ?? null : null;
+      hooks?.ping(world, msg.kind, { mob, x: msg.x, y: msg.y, from: msg.id, name: g.name, map: msg.map });
+      world.log(`[Party] ${g.name}: ${hooks?.label(msg.kind) ?? 'Ping!'}${msg.map !== world.map.id ? ` (${MAPS[msg.map]?.name ?? 'elsewhere'})` : mob ? ` (${mob.def.name})` : ''}`, hooks?.color(msg.kind) ?? '#9fe0b0');
+      return;
+    }
+    case 'pchat': {
+      const words = String(msg.text).slice(0, 80);
+      g.bubble = { text: words, t: 5 };
+      world.log(`[Party] ${g.name}: ${words}`, '#9fe0b0');
+      return;
+    }
+    case 'pemote':
+      // (Their face and pose show on them already; the party's log gets it too.)
+      world.log(`[Party] ${g.name} · ${String(msg.label ?? msg.emote).slice(0, 12)}`, '#9fe0b0');
+      return;
+    case 'gath':
+      if (msg.map !== world.map.id) return;
+      for (const id of (msg.items ?? []).slice(0, 6)) hooks?.gathered(world, id, 1, g.name);
+      return;
+  }
+}
+
+// The grouping hooks (world/grouping.js registers them, so this module needn't load it).
+export function setGroupHandler(fn) {
+  setGroupHandler.fn = fn;
+}
+
 // ---------- The world's hooks (merged into world.net) ----------
 
 export const togetherApi = {
@@ -381,7 +506,66 @@ export const togetherApi = {
   zones(world, zones, callout) {
     shareZones(world, zones, callout);
   },
+  working(world, key) {
+    if (partyHere(world).length) send({ t: 'work', map: world.map.id, key });
+  },
+  // Returns the names of the party friends here who were fed.
+  feast(world, f) {
+    const here = partyHere(world);
+    if (here.length) send({ t: 'feast', map: world.map.id, feast: f.id });
+    return here.map((g) => g.name);
+  },
+  gift(world, to, item) {
+    if (!inParty(to) || !online.ghosts.has(to)) return false;
+    send({ t: 'gift', to, item: item.inst ? { inst: item.inst } : { id: item.id, qty: item.qty } });
+    return true;
+  },
+  partyFriends: () => partyFriends(),
+  ping(world, p) {
+    if (online.party) send({ t: 'ping', kind: p.kind, map: p.map, x: Math.round(p.x), y: Math.round(p.y), mob: p.mob ? p.mob.net ?? `${online.id}:${p.mob.uid}` : null });
+  },
+  partyChat(world, words) {
+    if (online.party) send({ t: 'pchat', text: words });
+  },
+  partyEmote(world, id, label) {
+    if (online.party) send({ t: 'pemote', emote: id, label });
+  },
+  gathered(world, items) {
+    if (online.party) send({ t: 'gath', map: world.map.id, items });
+  },
+  // A party quest taken, or progress on it, for friends in your party (world/partyquest.js).
+  partyQuest(world, msg) {
+    for (const g of partyFriends()) send({ t: 'pq', to: g.id, ...msg });
+  },
+  partyFriendCount: () => partyFriends().length,
+  // Team moves (world/teamwork.js): your party friends on this map, and the word between games.
+  teamFriends(world) {
+    return partyFriends().filter((g) => g.map === world.map.id && g.body);
+  },
+  teamLaunch(world, m, chain) {
+    if (!online.party) return;
+    m.net ??= `${online.id}:${m.uid}`;
+    send({ t: 'team', op: 'launch', map: world.map.id, mob: m.net, chain });
+  },
+  teamRevive(world, to, pct) {
+    send({ t: 'team', op: 'revive', to, pct, name: world.char.name });
+  },
+  teamGroup(world) {
+    if (!online.party) return;
+    send({ t: 'team', op: 'group', map: world.map.id, x: Math.round(world.body.x), y: Math.round(world.body.y), name: world.char.name });
+  },
 };
+
+// A party friend's team move, worked out in their game: a launch you can catch, getting you back
+// up, or their Group Finisher calling you in.
+function onTeam(world, msg, g) {
+  if (!inParty(msg.id) || (msg.map && msg.map !== world.map.id)) return;
+  if (msg.op === 'launch') {
+    const m = world.mobs.find((o) => o.net === msg.mob || `${online.id}:${o.uid}` === msg.mob);
+    friendLaunched(world, m, msg.id, msg.chain ?? 0);
+  } else if (msg.op === 'revive' && msg.to === online.id) standUp(world, Math.min(1, Math.max(0.05, Number(msg.pct) || 0.3)), g?.name ?? 'A friend');
+  else if (msg.op === 'group' && Math.abs(msg.x - world.body.x) < 360 && Math.abs(msg.y - world.body.y) < 160) joinGroup(world);
+}
 
 export function handleTogether(world, msg, g) {
   switch (msg.t) {
@@ -392,10 +576,32 @@ export function handleTogether(world, msg, g) {
       return;
     case 'zones':
       return onZones(world, msg);
+    case 'coop':
+      // A field boss's two-person mechanics, from the game that runs it.
+      if (msg.map === world.map.id && !world.dungeon && world.net?.mirrored(world)) applyCoopShared(world, msg);
+      return;
+    case 'work':
+      if (inParty(msg.id)) friendWorking(world, msg.id, g.name, msg);
+      return;
+    case 'feast':
+      if (inParty(msg.id) && msg.map === world.map.id) friendFeast(world, g.name, msg.feast);
+      return;
+    case 'gift':
+      return onGift(world, msg, g);
     case 'party':
       return onParty(world, msg, g);
+    case 'pq':
+      if (msg.to === online.id && inParty(msg.id)) onPartyQuestMsg(world, msg, g.name);
+      return;
     case 'insp':
       return onInspect(world, msg, g);
+    case 'ping':
+    case 'pchat':
+    case 'pemote':
+    case 'gath':
+      return onPartyNote(world, msg, g);
+    case 'team':
+      return onTeam(world, msg, g);
     default:
       return onRun(world, msg, g);
   }

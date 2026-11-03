@@ -29,10 +29,10 @@ test('every spot stands on something, its finds are items, and each kind has a m
       for (const id of [...Object.keys(n.pool), ...(n.rare ? [n.rare[0]] : [])]) assert.ok(ITEMS[id]?.gathered, `${map} gives ${id}`);
     }
   }
-  // Every find is good for something: a dish, Tora's forge, or at least a shop.
+  // Every find is good for something: a dish, the craft bench or Tora's forge, and a shop buys it.
   for (const [id] of GATHERED) {
     const cooked = DISHES.some((d) => d.needs[id]);
-    assert.ok(cooked || /forge/.test(ITEMS[id].desc), `${id} has a use`);
+    assert.ok(cooked || /forge|craft bench/.test(ITEMS[id].desc), `${id} has a use`);
     assert.ok(ITEMS[id].price > 0, `${id} sells`);
   }
 });

@@ -20,8 +20,9 @@ function potionFor(level, rng) {
 // Equipment near the monster's level: anything from 15 below to 5 above. Unique gear is rarer,
 // and half the time it's something for the hero's own job (`fits`), so drops stay useful.
 function gearFor(level, rng, fits = null) {
-  // (Never above the level cap: the gear past 50 is only kept for old saves.)
-  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && d.reqLevel <= Math.min(level + 5, MAX_LEVEL) && d.reqLevel >= level - 15);
+  // (Never above the level cap: the gear past 50 is only kept for old saves. Bench-made pieces
+  // never drop: they're crafted, data/crafting.js.)
+  const near = Object.values(ITEMS).filter((d) => d.type === 'equip' && !d.legacy && !d.crafted && d.reqLevel <= Math.min(level + 5, MAX_LEVEL) && d.reqLevel >= level - 15);
   // One-of-a-kind outfits and endgame weapons are the rare part of the pool.
   const special = near.filter((d) => d.unique || d.endgame);
   let pool = special.length && rng() < 0.15 ? special : near.filter((d) => !d.unique && !d.endgame);

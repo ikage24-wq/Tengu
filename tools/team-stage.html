@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: team moves with a bot party (world/teamwork.js), driven from outside for demo videos:
+// window.step(dt, held, pressed), window.act(name), window.caption(text).
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { spawnMob } from '../src/world/mobs.js';
+import { MOBS } from '../src/data/mobs.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { text, box, beginUi } from '../src/ui/kit.js';
+import { drawHud } from '../src/ui/hud.js';
+import { bindFreeHotkey } from '../src/core/character.js';
+import { SKILLS } from '../src/data/skills.js';
+import { gaugeOf } from '../src/world/melee.js';
+import { makeBotCharacter, updateBots } from '../src/world/bots.js';
+import { joinParty } from '../src/world/party.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+const level = 45;
+const c = balanceChar('paladin', level);
+c.mp = c.baseMp = 99999;
+for (const id of Object.keys(c.skills)) if (SKILLS[id] && SKILLS[id].type !== 'passive') bindFreeHotkey(c, { skill: id });
+const w = createWorld(c);
+w.log = () => {};
+loadMap(w, 'woods', 'west');
+w.spawner.slots = [];
+w.mobs = [];
+w.god = true;
+Object.assign(w.body, { x: 300, y: w.map.groundY, facing: 1 });
+const base = Object.values(MOBS).filter((m) => !m.boss && m.level <= level - 8).sort((a, b) => b.level - a.level)[0];
+const homes = [440, 480, 520];
+for (const x of homes) {
+  const m = spawnMob(w.map, { mob: base.id, x, y: w.map.groundY });
+  m.def = { ...m.def, hp: 1e9, aggro: false, speed: 0, atk: 0 };
+  m.hp = 1e9;
+  w.mobs.push(m);
+}
+let n = 11;
+const rng = () => (n = (n * 1664525 + 1013904223) % 4294967296) / 4294967296;
+const bots = { list: [], memory: new Set(), names: new Set(), rng, replies: [], spawnIn: 9999, waveIn: 9999, newsIn: 9999 };
+w.bots = bots;
+const pals = [['Mochi', ['warrior', 'berserker']], ['Rin', ['thief', 'shinobi']]].map(([name, jobs], i) => {
+  const char = makeBotCharacter(rng, { name, level, jobs });
+  const p = { id: `p${i}`, name, char, level, style: {}, map: w.map.id, x: 400 + i * 160, facing: -1, state: 'idle', session: 1e9, stay: 1e9, nextLine: 1e9, appear: 0 };
+  bots.list.push(p);
+  joinParty(bots, p, w);
+  p.potions = 99;
+  return p;
+});
+const cam = createCamera();
+const keep = () => {
+  bots.list = bots.list.filter((b) => b.party);
+  w.mobs.forEach((m, i) => Object.assign(m, { hp: 1e9, x: homes[i], knockVx: 0 }));
+};
+for (let k = 0; k < 240; k++) {
+  keep();
+  updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+  updateBots(bots, w, 1 / 60);
+}
+let t = 0;
+let words = '';
+const hudState = { hud: {}, chat: null, windows: new Proxy({}, { get: (o, k) => (o[k] ??= {}) }) };
+window.pals = () => pals.map((p) => [p.name, p.body ? Math.round(p.body.x - w.body.x) : null, p.down, p.away, p.hp, p.reviveGoal?.for]);
+
+function step(dt, held = [], pressed = []) {
+  const steps = Math.round(dt * 60);
+  for (let k = 0; k < steps; k++) {
+    keep();
+    updateWorld(w, 1 / 60, { held: new Set(held), pressed: new Set(k === 0 ? pressed : []), locked: false });
+    updateBots(bots, w, 1 / 60);
+  }
+  t += dt;
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  hudState.cam = cam;
+  try { drawHud(beginUi(ctx, { mouse: { x: -1, y: -1, down: false, clicked: false } }), hudState, w); } catch (e) { console.log('HUD', e.message); }
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  if (words) {
+    ctx.font = 'bold 11px sans-serif';
+    const ww = ctx.measureText(words).width + 30;
+    box(ctx, VW / 2 - ww / 2, 14, ww, 26, { fill: 'rgba(40,30,58,0.86)', edge: '#ffb38a', r: 12, width: 2 });
+    text(ctx, words, VW / 2, 31, { size: 11, bold: true, align: 'center', color: '#ffffff' });
+  }
+}
+
+const ACTS = {
+  // A party member falls by you.
+  downPal: () => {
+    Object.assign(pals[1], { down: true, tomb: true, downAt: w.now, hp: 0 });
+    pals[1].body.x = w.body.x + 24;
+  },
+  // You fall.
+  downYou: () => {
+    w.dead = true;
+    w.char.hp = 0;
+    for (const p of pals) p.body.x = w.body.x + 170;
+  },
+  fill: () => {
+    const g = gaugeOf(w.char);
+    w[g] = 100;
+    for (const p of pals) if (p.fight) p.fight.gauge = 100;
+  },
+  gather: () => pals.forEach((p, i) => p.body && Object.assign(p.body, { x: 380 + i * 30, vx: 0 })),
+  palLaunch: () => w.pending.push({ at: w.now, mob: w.mobs[0], miss: false, damage: 300, crit: false, fromX: pals[0].body.x, stack: 0, knock: 0, launch: 420, party: pals[0].id }),
+};
+window.step = step;
+window.act = (a) => ACTS[a]();
+window.caption = (s) => (words = s);
+window.place = (x) => Object.assign(w.body, { x, y: w.map.groundY, vx: 0, vy: 0, onGround: true, rope: null, facing: 1 });
+window.frame = () => canvas.toDataURL('image/jpeg', 0.92);
+window.world = w;
+window.keys = () => Object.fromEntries(Object.entries(c.hotkeys).map(([k, b]) => [k, b?.skill ?? b?.item ?? null]));
+window.ready = true;
+</script>
+</body></html>

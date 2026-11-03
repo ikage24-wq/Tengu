@@ -55,3 +55,16 @@ and Elowen's trial carry over). She keeps to the staff.
 - Removed: the yokai troupe (the oni, the yuki-onna and the tengu: their code, drawings, outfits,
   hair, faces and sounds), the talismans, the star seal, the old dances, and the old Spirit Mage
   string that only her paths still used.
+
+## Animation pass (2026-11-03)
+
+Each figure now ends on its own held pose, measured and looking up: the fling ends on her toes with
+the orrery held high, gazing after the planet; conducting beats a real four (down, out, in, up) and
+closes the bar with the free hand raised; the ringed world sinks into a low bow, the orrery low
+to the side and a hand at her heart; the pirouette is a full turn (clean mirror flips, the staff
+kept behind her as she goes round) into an arabesque; tracing touches five stars in turn, then
+lowers the staff and points up at the figure. The commands keep her fist low (the air cast from the
+hip, the glide trailing the staff behind her and bringing it over the top), Lunar Tide stands the
+staff upright by her hip (not up her face), and Planetary Alignment floats down with the orrery
+lowered.
+
