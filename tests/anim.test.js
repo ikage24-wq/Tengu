@@ -177,3 +177,31 @@ test('every expression has its own idle loop', async () => {
     seen.set(key, face);
   }
 });
+
+test('the Warrior line swings round a fist kept under the chin, and nothing comes to rest before the face', async () => {
+  const { moveAt, FIST_CAP } = await import('../src/render/moves.js');
+  const { PATH_VARIANTS } = await import('../src/world/melee.js');
+  const commands = ['rising', 'airslash', 'airslash2', 'meteor', 'dashstab', 'plunge', 'dash', 'titanbreak', 'ascend', 'plaircut', 'pldive', 'consecrate', 'bash', 'dragrise', 'bkairchop', 'bkdive', 'bkgore', 'bodyslam', 'shieldrush', 'verdict', 'recklesscharge', 'rampage', 'eclipse'];
+  const moves = new Set(commands);
+  for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
+  for (const weapon of ['sword', 'axe', 'spear']) {
+    for (const kind of moves) {
+      for (let i = 0; i <= 40; i++) {
+        const mv = moveAt(kind, i / 40, 0.6, { weapon });
+        assert.ok(mv, kind);
+        assert.ok(mv.arm <= FIST_CAP + 0.01 || mv.arm >= 200, `${kind} with a ${weapon} raises the fist to ${mv.arm.toFixed(0)} at ${i / 40}`);
+      }
+      // The last pose: never the blade standing straight up in front of the face.
+      const end = moveAt(kind, 1, 0.6, { weapon });
+      const w = ((((end.weapon % 360) + 540) % 360) - 180);
+      assert.ok(!(w > -20 && w < 40) || end.orbit, `${kind} with a ${weapon} ends with the blade up before the face (${w.toFixed(0)})`);
+    }
+  }
+});
+
+test("the Paladin and the Berserker swing none of the Warrior's swings", async () => {
+  const { PATH_VARIANTS } = await import('../src/world/melee.js');
+  const own = (job) => new Set(PATH_VARIANTS[job].flat().map((s) => s.move));
+  const warrior = own('warrior');
+  for (const job of ['paladin', 'berserker']) for (const m of own(job)) assert.ok(!warrior.has(m), `${job} borrows ${m}`);
+});

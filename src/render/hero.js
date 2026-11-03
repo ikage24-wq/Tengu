@@ -2252,7 +2252,7 @@ const WEAPON_SCALE = 1;
 // Weapons swung with the whole body, whose blade or head goes behind the head when it points back.
 const HEFTED = new Set(['sword', 'axe', 'spear']);
 // How far down its hilt a weapon is held (art px from the grip point toward the pommel).
-const HILT = { sword: 8 };
+const HILT = { sword: 8, axe: 7.5, spear: 9 };
 
 // Idle routines while standing still: each weapon has a few things it does, taken in turn with a
 // breather of the gentle loop between them, each easing in and out so the hands never jump.
@@ -2281,10 +2281,12 @@ function weaponIdle(type, t) {
   };
   const rest = (angle, arm = [0, 0]) => ({ arm, angle });
   switch (type) {
-    case 'sword': {
+    case 'sword':
+    case 'axe':
+    case 'spear': {
       // A greatsword lives on the shoulder: it rides there with the breath, gets hefted and
       // bounced back down, is planted point-first to lean on, and gets a shoulder roll.
-      const sway = -58 + Math.sin(t * 1.6) * 3;
+      const sway = { sword: -58, axe: -52, spear: -62 }[type] + Math.sin(t * 1.6) * 3;
       const b = bit([1.3, 2.6, 2.2]);
       if (!b) return rest(sway, [1, -5]);
       const k = env(b.u);
@@ -2303,30 +2305,6 @@ function weaponIdle(type, t) {
       }
       // A shoulder roll: the blade rocks on the shoulder, the free arm stretched out.
       return { arm: [1, -5 - Math.sin(b.s * 7) * 1.2 * k], angle: sway + Math.sin(b.s * 7) * 9 * k, rig: { backArm: [q2(-7 * k), q2(-5 * k)], tilt: Math.round(-2 * k) } };
-    }
-    case 'axe': {
-      const breathe = 16 + Math.sin(t * 2) * 3;
-      const b = bit([1.4, 2.6, 2.2]);
-      if (!b) return { arm: [1, -5], angle: breathe };
-      const k = env(b.u);
-      // Hefted up off the shoulder and settled back.
-      if (b.i === 0) { const heft = bump(b.u, 0, 1); return { arm: [1, -5 - 3 * heft], angle: breathe - 14 * heft }; }
-      // Brought down off the shoulder and leant on, head to the ground, both hands on the haft.
-      if (b.i === 1) return { arm: [lerp(1, 3, k), lerp(-5, 1, k)], angle: lerp(breathe, 150, k), rig: { backArm: [q2(3.4 * k), q2(0.5 * k)], tilt: Math.round(3 * k), by: q2(0.5 * k) } };
-      // The haft rolled in the hand so the head turns over and back, admiring it.
-      return { arm: [lerp(1, 2.5, k), lerp(-5, -6, k)], angle: breathe + Math.sin(b.s * 5) * 35 * k, rig: { hx: q2(0.5 * k) } };
-    }
-    case 'spear': {
-      const lean = 4 + Math.sin(t * 1.2) * 2;
-      const b = bit([1.2, 2.6, 2.4]);
-      if (!b) return { arm: [3, -3], angle: lean };
-      const k = env(b.u);
-      // A twirl round the hand.
-      if (b.i === 0) return { arm: [3, -3 - 2 * bump(b.u, 0, 1)], angle: lean + smooth(seg(b.u, 0.1, 0.9)) * 360 };
-      // Shouldered, sloped back, the free hand on the hip.
-      if (b.i === 1) return { arm: [lerp(3, 1, k), lerp(-3, -6, k)], angle: lerp(lean, -60, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6 } };
-      // Planted and leant on, the other arm flung out in a stretch.
-      return { arm: [3, -3 - 1 * k], angle: lean, rig: { backArm: [q2(-8 * k), q2(-6 * k)], tilt: Math.round(4 * k), tx: q2(0.6 * k) } };
     }
     case 'wand': {
       const twirl = 25 + Math.sin(t * 3) * 18;
@@ -2823,9 +2801,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
       else rig[key] = (rig[key] ?? 0) + v;
     }
   }
-  // A greatsword is carried over the shoulder, blade back behind the head and the grip at the
-  // chest, so it never hides the face (the hand comes up to the shoulder for it).
-  const shouldered = g.weapon?.type === 'sword' && !attack && over == null && !state.ready && !idleW && rig.view !== 'back' && !state.rig;
+  // A greatsword (or an axe or spear) is carried over the shoulder, blade back behind the head
+  // and the grip at the chest, so it never hides the face (the hand comes up to the shoulder for it).
+  const shouldered = HEFTED.has(g.weapon?.type) && !attack && over == null && !state.ready && !idleW && rig.view !== 'back' && !state.rig;
   if (shouldered) rig.frontArm = [rig.frontArm[0] + 1, rig.frontArm[1] - 5];
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   const lookKey = JSON.stringify(look);
@@ -2875,7 +2853,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   // (A chakram hangs from her hand down by her hip, the ring below it, never up by her face.)
   // (A greatsword rests back over the shoulder.)
-  const restAngle = { crossbow: 55, gauntlet: 70, dagger: 160, sword: -58 }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: 55, gauntlet: 70, dagger: 160, sword: -58, axe: -52, spear: -62 }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
@@ -2890,7 +2868,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (angles || !was || now - was.t > 0.25 || now < was.t) anim.wpn = { a: weaponAngle, t: now };
     else {
       let d = ((((weaponAngle - was.a) % 360) + 540) % 360) - 180;
-      if (g.weapon.type === 'sword') {
+      if (HEFTED.has(g.weapon.type)) {
         const mid = (((was.a + d / 2) % 360) + 360) % 360;
         if (Math.abs(d) > 40 && (mid < 35 || mid > 335)) d = d > 0 ? d - 360 : d + 360;
       }

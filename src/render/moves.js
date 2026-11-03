@@ -512,6 +512,164 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Paladin's own greatsword forms (a holy knight: measured, upright, solemn) ----------
+  // Replacing the Warrior's swings she used to borrow. Steadier than the Warrior: planted feet,
+  // held salutes, blows that come down like verdicts; every one keeps the fist at the chest.
+
+  // Oath Cut: the blade swung off the shoulder out level in a knight's salute, held a beat, then
+  // brought down in one firm, upright chop.
+  ploath(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(-58, 84, t), arm: lerp(48, 56, t), tilt: -0.04 * t, rig: (r) => { r.frontLeg = [1.5, 0, 0]; r.backLeg = [-2, 0, -2]; r.backArm = [q(-1 * t), q(-2 * t)]; } };
+    }
+    const t = easeIn(seg(p, 0.36, 0.48));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(84, 152, t) - 14 * settle, arm: lerp(56, 40, t), lunge: 4 * t * (1 - 0.5 * settle), tilt: 0.12 * t * (1 - settle), trail: p > 0.34 && p < 0.6,
+      rig: (r) => { r.tx = 1; r.squat = t >= 1 && settle < 0.5 ? 1 : 0; lungeLegs(r, 0.8); r.backArm = [-2, -1]; if (t > 0) strikeFace(r); },
+    };
+  },
+
+  // Dawn Step: a long gliding step with the blade trailing low behind her, then it sweeps under
+  // and up in front as she arrives, like the sun coming up.
+  pldawn(p) {
+    if (p < 0.34) {
+      const t = ease(p / 0.34);
+      return { weapon: lerp(-58, -128, t), arm: lerp(48, 30, t), lunge: 4 * t, tilt: 0.08 * t, rig: (r) => { r.tx = 1; lungeLegs(r, 1.2); r.backArm = [-2, -2]; r.cape = -3; } };
+    }
+    const t = ease(seg(p, 0.34, 0.52));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-128, -276, t) + 36 * settle, arm: lerp(30, 54, t) - 6 * settle, lunge: 4 + 4 * t * (1 - 0.6 * settle), lift: 2 * bump(p, 0.34, 0.7), tilt: lerp(0.08, -0.06, t) * (1 - settle), trail: p < 0.62,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1 - 0.3 * settle); r.backArm = [-3, -3]; strikeFace(r); r.cape = -3; },
+    };
+  },
+
+  // Halo Turn: she turns her back with the blade held low behind her, and as she turns round
+  // again it comes round with her, level, in a wide ring.
+  plhalo(p) {
+    const u = ease(seg(p, 0.05, 0.62));
+    const settle = ease(seg(p, 0.72, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    return {
+      weapon: lerp(-58, 92, ease(seg(p, 0, 0.12))) + 360 * u + 50 * settle, arm: lerp(48, 52, u) - 8 * settle, lift: 3 * bump(p, 0.1, 0.65), lunge: 3 * u,
+      orbit: true, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.06 * (1 - settle), trail: p > 0.2 && p < 0.66,
+      rig: (r) => { r.tx = 1; r.frontLeg = [1.5, 0, 2]; r.backLeg = [-2.5, 0, -4]; r.backArm = [-3, -1]; r.cape = -3; if (u > 0.5) strikeFace(r); },
+    };
+  },
+
+  // Lance of Dawn: the blade on her shoulder lowers to point straight ahead like a couched
+  // lance as she drives forward behind it, and holds there, steady.
+  pllance(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(-58, 30, t), arm: lerp(48, 34, t), lunge: -3 * t, tilt: -0.06 * t, rig: (r) => { r.squat = 1; wideLegs(r); r.tx = -1; r.backArm = [2, -1]; } };
+    }
+    const t = ease(seg(p, 0.3, 0.44));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(30, 90, t) + 30 * settle, arm: lerp(34, 50, t) - 8 * settle, lunge: lerp(-3, 12, t) * (1 - 0.6 * settle), tilt: 0.14 * t * (1 - settle), trail: p < 0.5,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.4 - 0.5 * settle); r.backArm = [-4, -1]; strikeFace(r); r.cape = -4; },
+    };
+  },
+
+  // Crusader's Fall (a finisher): she leaps straight up with the blade turned point-down beneath
+  // her, and drops onto them, planting it in the ground like a banner; she lands kneeling by it.
+  plfall(p) {
+    if (p < 0.4) {
+      const crouch = ease(seg(p, 0, 0.1));
+      const up = ease(seg(p, 0.1, 0.4));
+      return {
+        weapon: lerp(-58, -182, ease(seg(p, 0.05, 0.36))), arm: lerp(48, 20, up), lift: 18 * up,
+        rig: (r) => { if (up > 0.15) tuck(r); else { r.squat = 2 * crouch; wideLegs(r); } r.backArm = [2, -1]; r.hairLift = up > 0.2 ? -1 : 0; r.cape = up > 0.2 ? -3 : 0; },
+      };
+    }
+    const t = easeIn(seg(p, 0.4, 0.55));
+    const settle = ease(seg(p, 0.75, 1));
+    return {
+      weapon: -182, arm: lerp(20, 12, t), lift: 18 * (1 - t), lunge: 2 * t, tilt: 0.06 * t * (1 - settle),
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 2; r.frontLeg = [2.5, 0, 6]; r.backLeg = [-2, 1, -16]; } r.backArm = [2, 1]; strikeFace(r); r.cape = t < 1 ? -3 : 0; },
+    };
+  },
+
+  // Sunrise Judgment (a finisher): she kneels with the blade on her shoulder and bows her head,
+  // a long held beat; then rises and swings it from behind her, down under and up in front in one
+  // huge rising arc, and holds it out high toward them.
+  plsunrise(p) {
+    if (p < 0.42) {
+      const t = ease(p / 0.2);
+      const hold = Math.sin(p * 50) * 0.3 * ease(seg(p, 0.2, 0.42));
+      return { weapon: lerp(-58, -96, t), arm: lerp(48, 40, t), tilt: 0.1 * t, lunge: hold, rig: (r) => { r.squat = 3; r.frontLeg = [2.5, 0, 6]; r.backLeg = [-2, 1, -16]; r.backArm = [2, 0]; r.eyes = 'blink'; } };
+    }
+    const t = ease(seg(p, 0.42, 0.62));
+    const settle = ease(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(-96, -282, t) + 30 * settle, arm: lerp(40, 58, t) - 10 * settle, lift: 5 * bump(p, 0.42, 0.85), lunge: 6 * t * (1 - 0.5 * settle), tilt: lerp(0.1, -0.12, t) * (1 - settle), trail: p < 0.7,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.1 - 0.3 * settle); r.backArm = [-5, -4]; strikeFace(r); r.hairLift = -1; r.cape = -4; },
+    };
+  },
+
+  // In the air: an oath chop, the blade out level, then down (both air steps).
+  plaircut(p) {
+    const out = ease(seg(p, 0, 0.3));
+    const t = easeIn(seg(p, 0.32, 0.46));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-58, 86, out) + 66 * t - 20 * settle, arm: lerp(46, 54, out) - 10 * t, tilt: 0.1 * t * (1 - settle), trail: p > 0.3 && p < 0.6,
+      rig: (r) => { tuck(r); r.backArm = [-2, -2]; r.cape = -3; if (t > 0) strikeFace(r); },
+    };
+  },
+
+  // The air dive: the blade turned point-down beneath her, dropping on them like a banner planted.
+  pldive(p) {
+    const turn = ease(seg(p, 0, 0.3));
+    return {
+      weapon: lerp(-58, -182, turn), arm: lerp(46, 18, turn), tilt: 0.05 * turn,
+      rig: (r) => { tuck(r); r.backArm = [2, -1]; r.hairLift = -1; r.cape = -3; if (turn > 0.8) strikeFace(r); },
+    };
+  },
+
+  // ---------- The Berserker's own command moves ----------
+  // In the air: he pitches forward into a wild overhead hack, the axe from behind his back.
+  bkairchop(p) {
+    if (p < 0.3) {
+      const t = ease(p / 0.3);
+      return { weapon: lerp(-52, -100, t), arm: lerp(46, 40, t), tilt: -0.2 * t, rig: (r) => { tuck(r); r.backArm = [2, -4]; r.hairLift = -1; } };
+    }
+    const t = easeIn(seg(p, 0.3, 0.46));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-100, 165, t) - 25 * settle, arm: lerp(40, 38, t) - 6 * settle, tilt: lerp(-0.2, 0.3, t) * (1 - 0.7 * settle), trail: p < 0.6,
+      rig: (r) => { tuck(r); r.backArm = [-4, 1]; strikeFace(r); r.hairLift = -1; r.cape = -4; },
+    };
+  },
+
+  // The air dive: the axe hauled up behind him, then he drops with it driven down in front.
+  bkdive(p) {
+    const cock = ease(seg(p, 0, 0.22));
+    const drive = ease(seg(p, 0.22, 0.38));
+    return {
+      weapon: lerp(lerp(-52, -100, cock), 160, drive), arm: lerp(lerp(46, 40, cock), 28, drive), tilt: lerp(-0.18 * cock, 0.2, drive), trail: drive > 0 && drive < 1,
+      rig: (r) => { tuck(r); r.backArm = [-3, -3]; r.hairLift = -1; if (drive > 0) strikeFace(r); r.cape = -4; },
+    };
+  },
+
+  // Gore (running): he drops his head and plows in shoulder-first with the axe held out wide,
+  // then hacks it across in front of him as he hits.
+  bkgore(p) {
+    if (p < 0.4) {
+      const t = ease(p / 0.4);
+      return { weapon: lerp(-52, -78, t), arm: lerp(46, 34, t), tilt: 0.3 * t, lunge: 3 * t, rig: (r) => { r.squat = 2; r.tx = 2; lungeLegs(r, 1.5); r.backArm = [3, 1]; r.cape = -4; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.4, 0.56));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-78, 128, t) - 15 * settle, arm: lerp(34, 52, t) - 10 * settle, tilt: 0.3 * (1 - settle), lunge: 3 + 7 * t * (1 - 0.6 * settle), trail: p < 0.66,
+      rig: (r) => { r.squat = settle < 0.5 ? 2 : 1; r.tx = 2; lungeLegs(r, 1.5 - 0.5 * settle); r.backArm = [-4, 0]; strikeFace(r); r.cape = -4; },
+    };
+  },
+
   // ---------- The Warrior's alternate combo swings (see PATH_VARIANTS in world/melee.js) ----------
   // Each stands in for a step of his combo now and then, so the string keeps changing. They're
   // played big, for power (the player asked for exaggerated, fun swings): deep crouches, long
@@ -4395,11 +4553,50 @@ export function streamFlow(mv, flow, p, dur) {
 
 // A move's pose at `progress` (0-1) of `dur` seconds. `feel` is how it's swung: { weapon (its type),
 // hit (when its first blow lands, 0-1), fin (a finisher) }.
+// A sword, axe or spear is held at the end of its haft and swung round a fist kept down at the
+// chest (the greatsword, over the shoulder: the player's pick), so the fist never comes up over
+// the face: an arm raised past the chest is eased down to just under the chin, and a wind-up
+// that hung the blade down behind a raised hand points it back over the shoulder instead.
+export const FIST_CAP = 60;
+// Moves that end with the blade standing up in front of the face (from before the greatsword):
+// from this point on, the blade tips back onto the shoulder instead.
+const SHOULDER_END = { spinback: 0.7, pommel: 0.6, risecut: 0.48, rising: 0.44, airslash2: 0.5, guardspin: 0.7, ascend: 0.5, shieldslam: 0.74, dragrise: 0.7, cleave2: 0.7, bodyslam: 0.72 };
+// Moves whose wind-up raised the blade straight up before the face (until the given moment): the
+// blade is drawn back over the shoulder for it instead, and comes over the top from there.
+const SHOULDER_WIND = { smite: 0.34, verdict: 0.42, gyre: 0.4 };
+export function hefted(mv, kind = null, p = 0) {
+  if (!mv || mv.arm == null) return mv;
+  let out = mv;
+  const arm = mv.arm;
+  if (arm > 50 && arm < 200) {
+    out = { ...mv, arm: 50 + (FIST_CAP - 50) * (1 - Math.exp(-(arm - 50) / 30)) };
+    if (arm > 100 && !mv.orbit && mv.weapon != null) {
+      const w = ((((mv.weapon % 360) + 540) % 360) - 180);
+      if (w < -95) out.weapon = -95 + (w + 95) * 0.25;
+    }
+  }
+  const wind = SHOULDER_WIND[kind];
+  if (wind != null && p < wind + 0.06 && out.weapon != null) {
+    const k = ease(seg(p, 0, 0.12)) * (1 - ease(seg(p, wind - 0.02, wind + 0.06)));
+    const w = ((((out.weapon % 360) + 540) % 360) - 180);
+    out = { ...out, weapon: lerp(w, -84, k) };
+  }
+  const end = SHOULDER_END[kind];
+  if (end != null && p > end && out.weapon != null) {
+    const k = ease(seg(p, end, Math.min(1, end + 0.2)));
+    const w = ((((out.weapon % 360) + 540) % 360) - 180);
+    out = { ...out, weapon: lerp(w, -58, k), arm: lerp(out.arm, 48, k), trail: false };
+  }
+  return out;
+}
+const HEFT = new Set(['sword', 'axe', 'spear']);
+
 export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (!MOVES[kind]) return null;
   const f = FEEL[feel?.weapon] ?? {};
   const p = bend(clamp01(progress), feel?.hit, f.pre, f.post);
-  const mv = after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
+  let mv = after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
+  if (HEFT.has(feel?.weapon)) mv = hefted(mv, kind, p);
   return DANCE_MOVES.has(kind) && DANCE_STYLES[danceStyle] ? DANCE_STYLES[danceStyle](mv, (q2) => rawMoveAt(kind, clamp01(q2), dur), p, dur, kind) : mv;
 }
 

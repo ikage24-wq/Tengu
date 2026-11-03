@@ -143,6 +143,14 @@ carry an improvement across every part of the game it applies to.
   wind up while the next shot is due, strike on the shot, hold about 0.2 s, then settle.
 - Face-kit shapes (`mobs/faces.js`) come out in plain coordinates: carry them through your part
   transform, or the face stays put while the head moves.
+- Big weapons on the chibi (the Warrior line's greatsword, axe and spear, the player's pick: big
+  anime swings, carried over the shoulder): the chibi's chin sits level with the shoulder, so any
+  fist raised past the chest covers the face. Keep the fist under the chin (`moves.js` `hefted`,
+  `FIST_CAP`) and swing the weapon round it instead; hold the weapon at the end of its haft
+  (`hero.js` `HILT`) so no hilt pokes back past the fist; draw a weapon tipped back over the
+  shoulder behind the body (`behind`), and send it back to the shoulder the long way round, down
+  and behind, never up past the face. A forward lean brings the head over the hand, so lean moves
+  need the fist lower still. The anim test checks every Warrior-line move.
 
 **Effects and game feel**
 - An impact plays in layers: a dark contrast beat, a flash that jumps from tiny to big, then sparks.

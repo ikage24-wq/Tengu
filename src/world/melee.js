@@ -369,24 +369,26 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.warrior[2], SWINGS.risecut, SWINGS.hammer],
     [PATH_COMBOS.warrior[3], SWINGS.leapchop, SWINGS.skysplit],
   ],
-  // The Paladin, steady and holy. Openers: her measured cut, a sweep, or a flash cut. Second: the
-  // shield bash, a shoulder check behind a flare of light that dazes, or a spinning backhand.
-  // Third: her lunging thrust, a rising cut that lifts them on light (Aegis Smite's old ascent),
-  // or a driving stab. Finisher: the two-handed smite, her shield slam that brings a great shield
-  // of light crashing down on them, or a leaping chop or sky-splitter that calls pillars of light
-  // down on everything they hit.
+  // The Paladin, steady and holy, every swing her own (none of the Warrior's). Openers: her
+  // measured cut, the Oath Cut (a held salute, then a chop), or the Dawn Step (a gliding step and
+  // a rising sweep). Second: the shield bash, a shoulder check behind a flare of light that dazes,
+  // the Halo Turn (a turn and a level ring), or her guard spin. Third: her lunging thrust, a rising
+  // cut that lifts them on light (Aegis Smite's old ascent), the Lance of Dawn (the blade lowered
+  // like a couched lance), or a kneeling stab. Finisher: the two-handed smite, her shield slam,
+  // Crusader's Fall (a leap and a drop blade-first, planted like a banner) or Sunrise Judgment
+  // (a kneeling bow, then one huge rising arc); the last two call pillars of light down.
   paladin: [
-    [PATH_COMBOS.paladin[0], SWINGS.sweep, SWINGS.flashcut],
+    [PATH_COMBOS.paladin[0], { ...SWINGS.sweep, move: 'ploath' }, { ...SWINGS.flashcut, move: 'pldawn' }],
     // (Her shoulder check is a shield rush: a few running steps behind a flare of light.)
-    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, SWINGS.spinback,
+    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, { ...SWINGS.spinback, move: 'plhalo', dur: 0.56 },
       { move: 'guardspin', dur: 0.56, step: 4, strikes: [{ at: 0.5, pct: 85, reach: 78, h: 60, around: true, targets: 4, knock: 100, arc: [0, 330], thick: 10, burst: 'aegis', stop: 0.04 }] }],
     [PATH_COMBOS.paladin[2],
       { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, burst: 'aegis', arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
-      SWINGS.drivestab,
+      { ...SWINGS.drivestab, move: 'pllance' },
       { move: 'kneelstab', dur: 0.62, step: 12, strikes: [{ at: 0.45, pct: 140, reach: 100, h: 48, targets: 3, pierce: true, knock: 210, stun: 0.3, burst: 'aegis', big: true, stop: 0.07, shake: 2 }] }],
     [PATH_COMBOS.paladin[3],
       { move: 'shieldslam', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
-      dressed(SWINGS.leapchop, { fx: 'pillar' }), dressed(SWINGS.skysplit, { fx: 'pillar' })],
+      { ...dressed(SWINGS.leapchop, { fx: 'pillar' }), move: 'plfall' }, { ...dressed(SWINGS.skysplit, { fx: 'pillar' }), move: 'plsunrise' }],
   ],
   // The Berserker, wild and heavy, and everything bleeds; none of his swings are the other paths'.
   // Openers: his wound-up cleave, or a blur of savage stabs. Second: the return cleave, a low whirl
@@ -678,6 +680,22 @@ const PATH_DASH = {
   berserker: { move: 'leapchop', dur: 0.6, step: 64, carry: 0.5, strikes: [{ at: 0.55, pct: 150, reach: 86, h: 72, targets: 3, knock: 220, crack: true, bleed: { pct: 0.15, secs: 3 }, arc: [-105, 190], thick: 14, big: true, stop: 0.08, shake: 3 }] },
 };
 const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
+// The Paladin's and the Berserker's own command moves (the Warrior keeps the ones above). The
+// Paladin: up + attack, her rising cut on light; in the air, two oath chops, then Crusader's Fall
+// (blade-first, planted); down + attack, she drives the blade into the ground in a burst of
+// light. The Berserker: up + attack, his ripping uppercut; in the air, two wild overhead hacks,
+// then a body slam; running, Gore (a shoulder-first plow and a hack); down + attack, the slam.
+const PALADIN_COMMANDS = {
+  up: { ...LAUNCHER, move: 'ascend', strikes: LAUNCHER.strikes.map((st) => ({ ...st, burst: 'aegis' })) },
+  air: [{ ...AIR[0], move: 'plaircut' }, { ...AIR[1], move: 'plaircut' }, { ...AIR[2], move: 'pldive' }],
+  slam: { ...SLAM, move: 'consecrate', dur: 0.66, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.48, burst: 'aegis' })) },
+};
+const BERSERKER_COMMANDS = {
+  up: { ...LAUNCHER, move: 'dragrise', dur: 0.6, step: 18, strikes: LAUNCHER.strikes.map((st) => ({ ...st, at: 0.46, bleed: WOUND })) },
+  air: [{ ...AIR[0], move: 'bkairchop' }, { ...AIR[1], move: 'bkairchop' }, { ...AIR[2], move: 'bkdive' }],
+  dash: { ...PATH_DASH.berserker, move: 'bkgore', dur: 0.62 },
+  slam: { ...SLAM, move: 'bodyslam', dur: 0.72, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.55, bleed: WOUND })) },
+};
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);
 // The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
@@ -1183,7 +1201,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS }[pathOf(world)] ?? null;
+    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1199,7 +1217,7 @@ export function basicCombo(world) {
       return;
     }
     if (world.intent?.down && warriorPath(world.char) && world.stats.weaponType !== 'none') {
-      playStep(world, SLAM, 100, 'basicslam');
+      playStep(world, own?.slam ?? SLAM, 100, 'basicslam');
       world.combo = -1;
       return;
     }
