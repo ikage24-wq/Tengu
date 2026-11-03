@@ -460,7 +460,8 @@ export const PATH_VARIANTS = {
   ],
   // The Star Witch. Wand: a wink-cast or the flick; a sidearm sweep of three little stars or the
   // twirl; a hop-cast down from the top of a hop or the spin; a show-off spin of the wand or the snap.
-  // Staff: the thrust or a sweep; the swing or a spin; the plant or a hop-cast; the slam or a snap.
+  // Staff (her staff's own figures): the thrust or a crescent arc; the swing or a two-handed twirl;
+  // the plant or a planted cast; the slam or a comet flourish.
   starwand: [
     [PATH_COMBOS.starwand[0], { move: 'swwink', dur: 0.3, strikes: [{ at: 0.24, shot: 'stbolt', magic: true, pct: 74, range: 300, h: 60, knock: 25, speed: 760 }] }],
     [PATH_COMBOS.starwand[1], { move: 'swsweep', dur: 0.46, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 36, range: 300, h: 60, knock: 25, speed: 760, fan: 3, h: 110 }] }],
@@ -488,10 +489,10 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.66, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'swsweep', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'swspin', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'swhop', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
-    [PATH_COMBOS.starstaff[3], { move: 'swsnap', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.starstaff[0], { move: 'ssarc', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'sstwirl', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'sscast', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
+    [PATH_COMBOS.starstaff[3], { move: 'ssflourish', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -581,10 +582,10 @@ const ARCHER_COMMANDS = {
   starstaff: {
     up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
     air: [
-      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
-      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'ssair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
+      { move: 'ssair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+    dash: { move: 'ssdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
