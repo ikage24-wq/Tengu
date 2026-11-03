@@ -19,7 +19,7 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { greatForgeArt, FORGE, galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
@@ -547,7 +547,18 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
     if (kind === 'plazatree') place(ctx, plazaTreeArt(0), snap(x), gy + 3);
-    else if (kind === 'galleon') {
+    else if (kind === 'greatforge') {
+      // The Great Forge: its fire breathing low (the bellows have no wind), a thin rope of smoke
+      // from the chimney, a spark now and then.
+      const s = greatForgeArt();
+      place(ctx, s, snap(x), gy + 2);
+      const left = x - FORGE.w / 2;
+      const top = gy + 2 - FORGE.h;
+      glowSoft(ctx, left + FORGE.mouth[0], gy - 12, 46, '#ff8a3a', 0.28 + 0.08 * Math.sin(time * 1.4 + wx * 0.01));
+      chimneySmoke(ctx, left + (FORGE.chimney[0] + FORGE.chimney[1]) / 2, top - 4, time, wx * 0.01);
+      const u = (time * 0.5) % 1;
+      if (u < 0.5) sparkleAt(ctx, left + FORGE.mouth[0] + Math.sin(time * 3) * 10, gy - 10 - u * 40, 1.6 * (1 - u * 2), '#ffd36b', 1 - u * 2);
+    } else if (kind === 'galleon') {
       // The galleon rocks very gently at its moorings.
       const s = galleonArt();
       ctx.save();

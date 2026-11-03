@@ -686,6 +686,59 @@ export function adobeArcadeArt(seed) {
   }, false);
 }
 
+// ---------- Ember Crag (the 2026-11-03 rebuild) ----------
+
+// The crag's landmark: the Great Forge, 260 wide and 240 tall, a stone forge hall with a glowing
+// furnace mouth, a giant leather bellows hanging slack at its side (no wind left to work it), and a
+// tall brick chimney. Its flat roof terrace (up the ladder at its west end) and the lookout on top
+// of the chimney are ledges on the map. The furnace glow and the thin smoke are drawn live.
+export const FORGE = { w: 260, h: 240, roof: 120, chimney: [186, 232], top: 234, mouth: [118, 84] };
+export function greatForgeArt() {
+  return art('greatforge', FORGE.w, FORGE.h, () => {
+    const W = FORGE.w;
+    const H = FORGE.h;
+    const stone = ramp('#c9a888', 0.7);
+    const brick = ramp('#c8705a', 0.8);
+    const wood = ramp('#8a5a3c', 0.8);
+    const leather = ramp('#a8664a', 0.8);
+    const roofY = H - FORGE.roof;
+    const out = [];
+    // The chimney: tall brick, banded with iron, a lookout rim at its top.
+    const [c0, c1] = FORGE.chimney;
+    out.push(...stones(c0, 6, c1 - c0, roofY - 6, brick, 3, { rowH: 6, blockW: 9 }));
+    for (const y of [40, 80]) out.push(R(c0 - 2, y, c1 - c0 + 4, 4, '#5a4a5a'), F(R(c0 - 2, y, c1 - c0 + 4, 1, '#8a7a8a')));
+    out.push(R(c0 - 6, 2, c1 - c0 + 12, 6, '#5a4a5a'), F(R(c0 - 6, 2, c1 - c0 + 12, 1.4, '#8a7a8a')));
+    for (let x = c0 - 4; x < c1 + 6; x += 6) out.push(R(x, -6, 1.6, 8, '#6a5a6a'));
+    out.push(R(c0 - 6, -8, c1 - c0 + 12, 2, '#6a5a6a'));
+    // The hall: thick stone walls, a stepped parapet on the roof terrace.
+    out.push(...stones(10, roofY, W - 20, H - roofY, stone, 7, { rowH: 10, blockW: 18 }));
+    out.push(F(R(W - 22, roofY, 12, H - roofY, stone.sh)));
+    out.push(R(6, roofY - 4, W - 12, 8, stone.hi), F(R(6, roofY + 2, W - 12, 2, stone.sh)));
+    for (let x = 8; x < W - 14; x += 22) out.push(R(x, roofY - 14, 12, 10, stone.base), F(R(x, roofY - 14, 12, 2, stone.hi)));
+    // The furnace mouth: a great arch of brick, the fire glowing low inside (and live, over it).
+    const [mx, mw] = FORGE.mouth;
+    const my = H - 70;
+    out.push(E(mx, my, mw / 2 + 8, 30, brick.base), R(mx - mw / 2 - 8, my, mw + 16, 70, brick.base));
+    for (let k = -3; k <= 3; k++) out.push(F(R(mx + k * 14 - 5, my - 30 + Math.abs(k) * 3, 10, 6, brick.hi)));
+    out.push(E(mx, my + 4, mw / 2 - 2, 24, '#3a1a1a'), R(mx - mw / 2 + 2, my + 4, mw - 4, 66, '#3a1a1a'));
+    out.push(F(E(mx, H - 14, mw / 2 - 6, 12, '#c84a2a')), F(E(mx, H - 12, mw / 2 - 14, 8, '#ff8a3a')), F(E(mx, H - 10, mw / 2 - 24, 4, '#ffd36b')));
+    out.push(R(mx - mw / 2 - 12, H - 6, mw + 24, 6, '#5a4a5a'));
+    // The anvil before it, and racks of blades on the wall.
+    out.push(T([[mx + 56, H - 20], [mx + 86, H - 20], [mx + 92, H - 28], [mx + 50, H - 28]], '#6a6a80'), R(mx + 62, H - 20, 18, 14, '#5a5a70'), R(mx + 58, H - 6, 26, 6, '#4a4a60'), F(R(mx + 52, H - 28, 38, 1.6, '#9a9ab0')));
+    for (let k = 0; k < 4; k++) out.push(R(30 + k * 12, roofY + 24, 3, 40, '#b8c0d8'), F(R(30 + k * 12, roofY + 24, 1, 40, '#e8eef8')), R(27 + k * 12, roofY + 60, 9, 3, wood.base));
+    out.push(...beam(22, roofY + 20, 56, 4, '#8a5a3c'));
+    // The giant bellows at the side, hanging slack and wrinkled: a wedge of leather on wood boards.
+    out.push(T([[W - 12, H - 80], [W - 12, H - 30], [W + 0, H - 40], [W + 0, H - 70]], wood.base));
+    out.push(T([[W - 68, H - 92], [W - 12, H - 76], [W - 12, H - 34], [W - 68, H - 22]], leather.base));
+    for (let k = 1; k < 5; k++) out.push(F(T([[W - 68 + k * 11, H - 90 + k * 3], [W - 64 + k * 11, H - 89 + k * 3], [W - 64 + k * 11, H - 25 - k * 2], [W - 68 + k * 11, H - 24 - k * 2]], leather.sh)));
+    out.push(R(W - 74, H - 96, 8, 78, wood.base), F(R(W - 72, H - 96, 2, 78, wood.hi)), R(W - 106, H - 62, 34, 5, wood.base));
+    // The warriors' banner hanging from the parapet.
+    out.push(R(150, roofY + 6, 26, 40, '#d0504a'), T([[150, roofY + 46], [163, roofY + 38], [176, roofY + 46]], '#d0504a'), F(R(150, roofY + 6, 26, 3, '#ffd36b')));
+    out.push(T([[156, roofY + 18], [163, roofY + 30], [170, roofY + 18]], '#ffd36b'), F(R(162, roofY + 14, 2, 18, '#ffe8a0')));
+    return out;
+  }, false);
+}
+
 // The sparring arena at the heart of the crag: a ring of sand with low posts and ropes, a banner at
 // each corner, a weapon rack and a gong. 280 wide, 96 tall.
 export function arenaArt() {

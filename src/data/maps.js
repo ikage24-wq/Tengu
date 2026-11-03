@@ -572,33 +572,40 @@ Object.assign(MAPS, {
 
 
 
-  // The warriors' home under the mesas, in quarters: the training yard (dummies and a totem) by the
-  // canyon road; the Warrior Hall; the raised plaza around the sparring arena; then the forge
-  // street with Tora's Forge, out to the Moonlit Ridge road. The sandstone houses have flat roofs
-  // you can climb onto by the ladders on their sides.
+  // Ember Crag (rebuilt 2026-11-03): the warriors' home under the mesas, round one landmark, the
+  // Great Forge, whose giant bellows hang slack (no wind to work them) so its fire burns low. Left
+  // to right: the Training Yard (dummies and a totem) by the canyon road, with a sandstone house;
+  // the Arena Plateau, a step up, with the Warrior Hall, the Party Board and the sparring arena;
+  // then Forge Row: Tora's Forge, the stove, the craft bench and the Great Forge, whose roof
+  // terrace (up its ladder) and chimney lookout you can climb, out to the Moonlit Ridge road.
   crag: {
     id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1600,
     // The craft bench (data/crafting.js), on Forge Row, by Tora's forge.
     bench: 1858,
-    width: 2200, height: 520, groundY: 480,
+    width: 2600, height: 520, groundY: 480,
     look: { propKeep: 0.8 },
-    terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
+    terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2600, 480]],
     homeStyle: 'adobe',
-    // Two sandstone houses and, on Forge Row, a wide arcade house with a roof garden (each roof a
-    // ledge up the ladder at its side).
-    cottages: [530, 1400, [1960, 'arcade']],
-    townPieces: [['arena', 1080]],
+    // Two sandstone houses (each flat roof a ledge up the ladder at its side), the sparring arena,
+    // and the Great Forge (render/townhouses.js).
+    cottages: [530, 1400],
+    townPieces: [['arena', 1080], ['greatforge', 2150]],
     platforms: [
       // The houses' flat roofs (their own art: nothing drawn for them), up the ladders.
-      { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1884, y: 390, w: 96, bare: true },
+      { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true },
+      // The Great Forge's roof terrace and its chimney lookout (drawn with the forge).
+      { x: 2030, y: 362, w: 176, bare: true }, { x: 2200, y: 244, w: 58, bare: true },
     ],
-    ropes: [{ x: 490, top: 360, bottom: 480, ladder: true }, { x: 1360, top: 336, bottom: 456, ladder: true }, { x: 1886, top: 390, bottom: 480, ladder: true }],
+    ropes: [
+      { x: 490, top: 360, bottom: 480, ladder: true }, { x: 1360, top: 336, bottom: 456, ladder: true },
+      { x: 2034, top: 362, bottom: 480, ladder: true }, { x: 2202, top: 244, bottom: 362, ladder: true },
+    ],
     portals: [
       { id: 'start', x: 960, y: 456, hidden: true },
       { id: 'south', x: 60, y: 480, to: 'canyon', toPortal: 'north' },
-      { id: 'ridge', x: 2130, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
+      { id: 'ridge', x: 2540, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
     ],
     npcs: [{ id: 'brann', x: 780 }, { id: 'posy', x: 1215 }, { id: 'tora', x: 1720 }],
     // Its districts, left to right, each named as you walk in (the town rules).
@@ -609,7 +616,7 @@ Object.assign(MAPS, {
       { name: 'Forge Row', from: 1520, color: '#e0703a', look: { sky: ['#ffb890', '#ffd8b8', '#fff0e0'] } },
     ],
     // Lamps that glow at night (world/daytime.js): the yard, the arena's braziers, the forge.
-    lamps: [{ x: 300, y: 440 }, { x: 900, y: 420 }, { x: 1260, y: 420 }, { x: 1720, y: 440, c: '#ffb070' }, { x: 2050, y: 440 }],
+    lamps: [{ x: 300, y: 440 }, { x: 900, y: 420 }, { x: 1260, y: 420 }, { x: 1720, y: 440, c: '#ffb070' }, { x: 2340, y: 440 }, { x: 2229, y: 220, c: '#ffb070' }],
     deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 450], ['brazier', 900], ['brazier', 1260]],
     spawns: [],
   },
