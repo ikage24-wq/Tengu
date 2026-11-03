@@ -26,7 +26,7 @@ export function collectionWindow(ui, state, world) {
   const x = win.x + 10;
   const y = win.y + 48;
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
-  else fishPage(ui, char, x, y, th);
+  else fishPage(ui, win, char, x, y, th);
 }
 
 // The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.
@@ -77,13 +77,17 @@ function book(ui, win, char, world, x, y, th) {
 }
 
 // The fish you've caught: each one's card with how many (a dark shape until then),
-// in its rarity's colour.
-function fishPage(ui, char, x, y, th) {
+// in its rarity's colour, three rows at a time, scrolled by the wheel.
+function fishPage(ui, win, char, x, y, th) {
   const { ctx } = ui;
   const cols = 5;
   const cw = 64;
   const ch = 50;
-  FISH.forEach((f, i) => {
+  const rows = 3;
+  const lines = Math.ceil(FISH.length / cols);
+  if (hover(ui, x, y, cols * cw, rows * ch)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
+  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, lines - rows));
+  FISH.slice(win.scroll * cols, (win.scroll + rows) * cols).forEach((f, i) => {
     const rec = char.fishBook?.[f.id];
     const cx = x + (i % cols) * cw;
     const cy = y + Math.floor(i / cols) * ch;
@@ -97,5 +101,6 @@ function fishPage(ui, char, x, y, th) {
     if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n}`, size: 8 }] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }]);
   });
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
-  text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip or Marlo, and look for the fish signs by the water.`, x, y + Math.ceil(FISH.length / cols) * ch + 8, { size: 7, bold: true, color: th.dark });
+  text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip or Marlo, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });
+  if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 18, { size: 6.5, align: 'right', color: COLORS.muted });
 }
