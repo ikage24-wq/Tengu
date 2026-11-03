@@ -72,6 +72,27 @@ export function drawScene(ui, world, cam) {
         if (a) drawSay(ctx, world, c.say, a.x - cam.x, a.y - cam.y - a.h - 8, real);
       }
     }
+    if (c.spot && cam) {
+      // The spotlight: dark all round, a soft ring of light on whoever it follows.
+      const a = actorAt(world, c.spot.who);
+      if (a) {
+        const sx = a.x - cam.x;
+        const sy = a.y - cam.y - a.h * 0.5;
+        const r = c.spot.r + a.h * 0.4;
+        const g = ctx.createRadialGradient(sx, sy, r * 0.7, sx, sy, r * 1.15);
+        g.addColorStop(0, 'rgba(14,8,28,0)');
+        g.addColorStop(1, `rgba(14,8,28,${0.78 * c.spot.a})`);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 640, 360);
+        ctx.fillStyle = `rgba(255,240,200,${0.08 * c.spot.a})`;
+        ctx.beginPath();
+        ctx.moveTo(sx - 18, 0);
+        ctx.lineTo(sx + 18, 0);
+        ctx.lineTo(sx + r, sy + a.h * 0.5);
+        ctx.lineTo(sx - r, sy + a.h * 0.5);
+        ctx.fill();
+      }
+    }
     if (c.fade.a > 0) {
       ctx.fillStyle = hexA(c.fade.color ?? '#1e1430', c.fade.a);
       ctx.fillRect(0, 0, 640, 360);
@@ -267,6 +288,22 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.fillStyle = p.kind === 'petals' ? (p.seed > 5 ? '#ffc6de' : '#ff9ec0') : (p.seed > 5 ? '#8fdc9a' : '#5fae7a');
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.kind === 'gears') {
+    // A little brass cog, spinning as it falls.
+    ctx.translate(x, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = p.seed > 5 ? '#e8b84a' : '#c8943a';
+    for (let k = 0; k < 6; k++) {
+      ctx.rotate(Math.PI / 3);
+      ctx.fillRect(-1, -4.2, 2, 2);
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#5a3a2a';
+    ctx.beginPath();
+    ctx.arc(0, 0, 1, 0, Math.PI * 2);
     ctx.fill();
   } else if (p.kind === 'bubbles') {
     // A bubble wobbling up, with a glint.

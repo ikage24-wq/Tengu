@@ -218,6 +218,11 @@ function drawMobs(ctx, world, cam, time) {
     if (under < 1) ctx.globalAlpha = under * under * (3 - 2 * under);
     // (In a cutscene the world's clock stands still; its monsters act on the scene's own.)
     const now = world.scene ? world.now + (world.cine?.clock ?? 0) : world.now;
+    // Lowering on a thread in a cutscene: the thread runs up out of sight.
+    if (m.cine?.thread && m.cine.lift > 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillRect(Math.round(x) - 0.5, -10, 1, y - m.def.h + 10);
+    }
     // Sunk into the floor in a cutscene (to rise out of it): drawn lower, cut off at the floor.
     const sink = m.cine?.sink ?? 0;
     if (sink > 0) {

@@ -16,16 +16,20 @@
 //   { fade: 'out' | 'in', dur, color }   the screen to a colour and back
 //   { flash: color }  { shake: strength, dur }
 //   { fx: kind, at, top }         a burst: sparkle hearts petals leaves wind confetti spores notes
-//                                 bubbles ink
+//                                 bubbles ink gears
 //                                 china (shards of a plate or cup), dust
 //                                 (puffs along the floor), rubble (falling from the ceiling); `top`
 //                                 bursts from the top of the actor (a tree's crown)
 //   { spawn: npc, x, facing }     an NPC steps into the scene ({ spawn, at: actor, by } too)
 //   { leave: actor }              they fade out of it
+//   { spot: actor, r, dur }       a spotlight: the stage goes dark but for a ring of light on
+//                                 them, following them (spot: null lifts it)
 //   { act: monster, move, dur }   a monster in the scene moves: 'attack' (its swing, once),
 //                                 'windup' (gathers and trembles, pawing), 'sway' (rocks about its
 //                                 feet, eased in and out; `amp` radians), 'sink' (drops out of
-//                                 sight into the floor at once), 'emerge' (rises back out of it)
+//                                 sight into the floor at once), 'emerge' (rises back out of it),
+//                                 'hoist' (up on a thread `from` px at once), 'descend' (lowers
+//                                 on it to the floor)
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
 //   { together: [steps] }         run several at once; done when all are
@@ -293,6 +297,12 @@ function runner(world, step) {
     const dur = step.dur ?? (step.move === 'attack' ? 0.9 : 1);
     let t = 0;
     if (step.move === 'attack') m.attackAt = world.now + (c.clock ?? 0);
+    if (step.move === 'hoist' || (step.move === 'descend' && !m.cine.lift)) {
+      m.cine.lift = step.from ?? 220;
+      m.cine.thread = true;
+      if (step.move === 'hoist') return () => true;
+    }
+    const lift0 = m.cine.lift ?? 0;
     if (step.move === 'sink') {
       m.cine.sink = m.def.h + 12;
       return () => true;
@@ -303,9 +313,24 @@ function runner(world, step) {
       const u = Math.min(1, t / dur);
       if (step.move === 'windup') m.windup = u < 1 ? dur - t : 0;
       if (step.move === 'emerge') m.cine.sink = sunk * (1 - easeInOut(u));
+      if (step.move === 'descend') m.cine.lift = lift0 * (1 - easeInOut(u));
       if (step.move === 'sway') m.cine.sway = u < 1 ? Math.sin(t * (step.speed ?? 5)) * (step.amp ?? 0.1) * Math.sin(u * Math.PI) : 0;
       if (u >= 1 && step.move === 'attack') m.attackAt = -9;
       return u >= 1;
+    };
+  }
+  if (step.spot !== undefined) {
+    const from = c.spot?.a ?? 0;
+    const to = step.spot ? 1 : 0;
+    if (step.spot) c.spot = { who: step.spot, r: step.r ?? 60, a: from };
+    if (!c.spot) return () => true;
+    const dur = step.dur ?? 0.6;
+    let t = 0;
+    return (dt, skip) => {
+      t = skip ? dur : t + dt;
+      c.spot.a = from + (to - from) * Math.min(1, t / dur);
+      if (t >= dur && !to) c.spot = null;
+      return t >= dur;
     };
   }
   if (step.leave) {
@@ -324,7 +349,7 @@ function runner(world, step) {
 
 // A burst of little things at a point: drawn by the cutscene window.
 function burst(c, kind, x, y, n) {
-  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : kind === 'bubbles' ? 14 : kind === 'ink' ? 26 : 12);
+  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : kind === 'bubbles' ? 14 : kind === 'ink' ? 26 : kind === 'gears' ? 14 : 12);
   if (kind === 'rubble' || kind === 'dust') {
     // Rubble shaken loose from the ceiling over a stretch of floor; dust kicked along the floor.
     for (let k = 0; k < count; k++) {
@@ -389,7 +414,7 @@ export function tickCine(world, dt, { skip = false } = {}) {
     p.y += p.vy * dt;
     p.vx = p.kind === 'notes' || p.kind === 'bubbles' ? Math.sin(p.t * 4 + p.seed) * 14 : p.kind === 'ink' ? p.vx * 0.94 : p.vx * (p.kind === 'dust' ? 0.93 : 0.97);
     // Spores drift up and away; petals and leaves flutter down; the rest fall.
-    p.vy = p.kind === 'notes' ? -18 : p.kind === 'bubbles' ? -26 : p.kind === 'ink' ? p.vy * 0.94 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
+    p.vy = p.kind === 'gears' ? p.vy + 200 * dt : p.kind === 'notes' ? -18 : p.kind === 'bubbles' ? -26 : p.kind === 'ink' ? p.vy * 0.94 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
   }
   c.bursts = c.bursts.filter((p) => p.t < p.life);
   if (c.flash) {
