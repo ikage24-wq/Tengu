@@ -32,7 +32,24 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   const firsts = ids.filter((id) => !QUESTS[id].prereq);
   assert.deepEqual(firsts, ['story_1_1']);
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
-  for (const sc of Object.values(SCENES)) for (const st of sc) assert.ok(st.card || typeof st.text === 'string', 'every step is a card or a line');
+  // Every step is a card, a line, or staging (world/director.js) that names real people and known
+  // emotes and bursts.
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'together'];
+  const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
+  const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti'];
+  const actor = (who) => who === 'player' || Boolean(NPCS[who]);
+  const check = (st) => {
+    if (st.card || (typeof st.text === 'string' && st.say === undefined)) return;
+    const kind = STAGING.find((k) => st[k] !== undefined);
+    assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
+    if (kind === 'together') return st.together.forEach(check);
+    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'spawn', 'leave']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real person: ${st[k]}`);
+    if (typeof st.to === 'string') assert.ok(actor(st.to), `to a real person: ${st.to}`);
+    if (st.emote) assert.ok(EMOTES.includes(st.kind ?? '!'), `a known emote: ${st.kind}`);
+    if (st.fx) assert.ok(BURSTS.includes(st.fx), `a known burst: ${st.fx}`);
+    if (st.say !== undefined) assert.equal(typeof st.text, 'string', 'a bubble has words');
+  };
+  for (const sc of Object.values(SCENES)) for (const st of sc) check(st);
 });
 
 test('the story is optional: every region is open, only its arenas wait for it', () => {

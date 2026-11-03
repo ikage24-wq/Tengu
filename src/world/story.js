@@ -13,6 +13,7 @@ import { SCENES, STORY_LOCKS, TRIALS } from '../data/story.js';
 import { MOBS } from '../data/mobs.js';
 import { questState } from '../core/quests.js';
 import { spawnMob } from './mobs.js';
+import { startCine, skipScene, endScene, isStaging } from './director.js';
 
 // ---------- Scenes ----------
 
@@ -20,6 +21,7 @@ import { spawnMob } from './mobs.js';
 export function playScene(world, id, vars = {}) {
   if (!id || !SCENES[id]) return;
   world.scene = { id, i: 0, t: 0, vars: { name: world.char.name, ...vars } };
+  startCine(world);
 }
 
 // A line or card's words with its {name} and {job} filled in.
@@ -30,14 +32,18 @@ export function sceneStep(world) {
   return sc ? SCENES[sc.id][sc.i] : null;
 }
 
-// Moves the scene on a line; past the last one it ends. `all` skips the rest.
+// Moves the scene on a line; past the last one it ends. `all` skips the rest (its staging plays
+// out at once, so everyone ends up where the scene leaves them: world/director.js).
 export function advanceScene(world, all = false) {
   const sc = world.scene;
   if (!sc) return;
-  sc.i = all ? SCENES[sc.id].length : sc.i + 1;
+  if (all) return skipScene(world);
+  sc.i += 1;
   sc.t = 0;
-  if (sc.i >= SCENES[sc.id].length) world.scene = null;
+  if (sc.i >= SCENES[sc.id].length) endScene(world);
 }
+
+export { isStaging };
 
 // ---------- Locks ----------
 

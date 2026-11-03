@@ -262,6 +262,11 @@ export function drawUi(ui, state, world) {
   // to type).
   state.chat.sendTo = online.trade ? (words) => tradeSay(world, words) : null;
   state.typeField = null;
+  // A cutscene clears the screen: no HUD, panels or windows, only the letterbox and the scene.
+  if (world.scene) {
+    drawScene(ui, world, state.cam);
+    return;
+  }
   dimWorld(ui.ctx, state);
   drawPings(ui, state, world);
   drawHud(ui, state, world);
@@ -353,7 +358,7 @@ export function drawUi(ui, state, world) {
   // The emote wheel, Bramble on the root radio in Rootwood Hollow, and a story scene over everything.
   emoteWheel(ui, state, world);
   drawRadio(ui, world);
-  drawScene(ui, world);
+  drawScene(ui, world, state.cam);
 }
 
 function withPop(ui, win, t, draw) {

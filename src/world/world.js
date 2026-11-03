@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
 import { tickTutorial } from './tutorial.js';
 import { getMap } from '../data/maps.js';
@@ -550,9 +551,10 @@ function overlaps(a, b) {
 // input: { held: Set<code>, pressed: Set<code>, locked: bool } (locked while a menu has focus)
 export function updateWorld(world, dt, input) {
   const char = world.char;
-  // A cutscene holds the world still until it's over.
+  // A cutscene holds the world still until it's over; only its staging moves (world/director.js).
   if (world.scene) {
     world.scene.t += dt;
+    tickCine(world, dt);
     return;
   }
   // Without a renderer draining it (tests, background tabs), keep the cue queue short.

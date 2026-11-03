@@ -70,6 +70,19 @@ export function updateCamera(cam, world, dt) {
   const map = world.map;
   const b = world.body;
   const fresh = !cam.ready || cam.mapId !== map.id;
+  // A cutscene holding the camera (world/director.js): it centres where the scene points, with any
+  // shake about that point. Otherwise the scene learns where the camera is, to pan from there.
+  const cine = world.cine;
+  if (cine && !fresh) {
+    if (cine.cam) {
+      const sh = cine.shake ? cine.shake.amp * (cine.shake.left / cine.shake.dur) : 0;
+      const t = performance.now() / 1000;
+      cam.x = Math.max(0, Math.min(map.width - VIEW_W, cine.cam.x - VIEW_W / 2 + Math.sin(t * 61) * sh));
+      cam.y = Math.max(0, Math.min(map.height - VIEW_H + BAR_ROOM, cine.cam.y - VIEW_H * 0.55 + Math.cos(t * 53) * sh * 0.6));
+      return;
+    }
+    cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
+  }
   // The lookahead turns around once you've faced the other way for a moment.
   if (b.facing !== cam.face) {
     cam.turned = (cam.turned ?? 0) + dt;
@@ -138,15 +151,28 @@ function drawNpcs(ctx, world, cam, time) {
     const x = n.x - cam.x;
     const y = groundAt(world.map, n.x) - cam.y;
     if (x < -40 || x > VIEW_W + 40) continue;
+    // An NPC acting in a cutscene walks, turns and hops as the scene directs (world/director.js).
+    if (n.cine) {
+      const c = n.cine;
+      const facing = c.facing ?? (world.body.x < n.x ? -1 : 1);
+      ctx.save();
+      ctx.globalAlpha = c.alpha ?? 1;
+      footShadow(ctx, x, y, 12 - Math.min(6, (c.lift ?? 0) * 0.3));
+      drawHero(ctx, npc.look, npc.gear ?? null, x, y - (c.lift ?? 0), { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle', time, seed: n.x % 97, facing, job: npc.showJob });
+      ctx.restore();
+      continue;
+    }
     // Each NPC runs their own idle routine, but turns to face you while you're close.
     const r = npcRoutine(n.id, time + (n.x % 97) * 0.1);
-    const close = near?.id === n.id;
+    const close = near?.id === n.id && !world.scene;
     const facing = r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1;
     const busy = r.pose && !close;
     const look = r.face ? { ...npc.look, face: r.face } : npc.look;
     footShadow(ctx, x, y, 12);
     drawHero(ctx, look, npc.gear ?? null, x, y - (r.lift ?? 0), { pose: busy ? r.pose : 'idle', progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob, rig: r.rig, onHands: r.hands });
     if (r.extra) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
+    // (During a cutscene, no name tags, markers or prompts: the scene has the stage.)
+    if (world.scene) continue;
     ctx.font = 'bold 8px sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;
@@ -580,6 +606,8 @@ function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
 
 // Speech bubbles over the player and NPCs; they fade out at the end.
 function drawBubbles(ctx, world, cam) {
+  // (A cutscene's own bubbles are the only ones while it plays.)
+  if (world.scene) return;
   for (const [who, bubble] of Object.entries(world.bubbles ?? {})) {
     const npc = who === 'player' ? null : world.map.npcs.find((n) => n.id === who);
     if (who !== 'player' && !npc) continue;

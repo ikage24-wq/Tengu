@@ -205,16 +205,33 @@ export const TRIALS = {
 
 export const SCENES = {
   // ----- Chapter 1 -----
+  // (Staged in the village itself, world/director.js: the camera opens on the cherry tree in a
+  // fall of petals, pans back to you, and Mira spots you and hurries over.)
   ch1_open: [
     { card: 'Chapter 1', sub: 'A New Breeze' },
+    { fade: 'out', dur: 0.35 },
+    { cam: { x: 1800, y: 370 }, dur: 0 },
+    { fade: 'in', dur: 0.9, async: true },
+    { fx: 'petals', at: { x: 1800, y: 320 }, n: 22 },
     { who: null, text: 'Sprout Village. Warm bread, cherry petals, and a wind chime that has not rung in weeks.' },
+    { cam: 'player', dur: 2.2 },
+    { emote: 'mira', kind: '!' },
+    { walk: 'mira', to: 'player', gap: 34, speed: 110 },
+    { together: [{ face: 'player', to: 'mira' }, { face: 'mira', to: 'player' }] },
+    { jump: 'mira' },
     { who: 'mira', text: "You made it! Welcome, welcome. I'm Mira. I look after newcomers around here.", mood: 'happy' },
-    { who: 'mira', text: "It's a little quiet lately. The wind used to sing through the village every morning..." },
+    { emote: 'mira', kind: 'sweat', dur: 1.8 },
+    { who: 'mira', text: "It's a little quiet lately. The wind used to sing through the village every morning...", mood: 'sad' },
+    { emote: 'mira', kind: 'idea' },
     { who: 'mira', text: "Oh, but listen to me! First things first: everyone should meet their neighbors.", mood: 'happy' },
+    { say: 'mira', text: 'Pip at the shop, then Kestrel at the Archer Lodge!' },
   ],
   ch1_hello: [
+    { emote: 'mira', kind: 'heart' },
     { who: 'mira', text: 'Pip already likes you, I can tell. And Kestrel nodded? That means he likes you too.', mood: 'happy' },
+    { emote: 'player', kind: '?' },
     { who: 'player', text: 'Mira... why did the wind stop?' },
+    { emote: 'mira', kind: 'sweat', dur: 1.6 },
     { who: 'mira', text: "That's a story for tea. For now, let's see how you do out in the meadow." },
   ],
   ch1_wind: [
@@ -227,11 +244,21 @@ export const SCENES = {
     { who: 'mira', text: "I think Hayate is asleep. Deeply. And I can't climb mountains anymore, but you..." },
     { who: 'mira', text: "You could find her. But first, you'll need a path of your own.", mood: 'happy' },
   ],
+  // (Staged: Mira steps close to give you her earring; it catches a wind that isn't there.)
   ch1_end: [
+    { emote: 'mira', kind: 'heart' },
+    { jump: 'mira' },
     { who: 'mira', text: "Look at you! A real adventurer. I'm so proud I could burst.", mood: 'happy' },
+    { walk: 'mira', to: 'player', gap: 24 },
+    { together: [{ face: 'mira', to: 'player' }, { face: 'player', to: 'mira' }] },
     { who: 'mira', text: "Here. This earring belonged to me when I was young. It always caught the wind." },
+    { fx: 'sparkle', at: 'player', n: 16 },
+    { wait: 0.5 },
+    { together: [{ fx: 'wind', at: 'player' }, { shake: 1.6, dur: 0.7 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.6 },
     { who: null, text: 'For a moment, the earring trembles, as if a breeze far away had remembered your name.' },
-    { who: 'mira', text: "Captain Rook in Pastel Harbor has been asking for help. Go on, and write me!" },
+    { who: 'mira', text: "Captain Rook in Pastel Harbor has been asking for help. Go on, and write me!", mood: 'happy' },
+    { emote: 'mira', kind: 'note' },
   ],
   // ----- Chapter 2 -----
   ch2_open: [

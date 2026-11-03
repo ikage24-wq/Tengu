@@ -1,13 +1,17 @@
 // Story cutscenes (world.scene, data/story.js): the screen letterboxes, a chapter's title card
 // sweeps in, and the story plays out line by line in a dialogue box with whoever is speaking drawn
-// big beside it, acting out the line (happy, sad, surprised, angry). Lines type out; Z, Space,
-// Enter, a click or a tap finishes the line or moves on; Esc skips the rest.
+// big beside it, acting out the line (happy, sad, surprised, angry). Between the lines the scene is
+// staged in the world itself (world/director.js): the camera pans, people walk, turn and hop,
+// emotes pop over their heads, speech bubbles type out over them, bursts of petals or sparkles,
+// fades, flashes and shakes. Lines and bubbles type out; Z, Space, Enter, a click or a tap finishes
+// one or moves on; holding Z (or the mouse) plays the staging faster; Esc skips the rest.
 
 import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { SCENES } from '../data/story.js';
 import { wornGear } from '../core/character.js';
-import { sceneStep, advanceScene, fillScene } from '../world/story.js';
+import { sceneStep, advanceScene, fillScene, isStaging } from '../world/story.js';
+import { groundAt } from '../world/physics.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
 import { COLORS, THEMES, text, wrap, box, softShadow, roundRect, sparkle, font } from './kit.js';
@@ -27,8 +31,12 @@ export function sceneInput(world, input) {
   if (!sc) return false;
   const step = sceneStep(world);
   const go = ['KeyZ', 'Space', 'Enter', 'NumpadEnter', 'ControlLeft', 'ArrowUp'].some((k) => input.pressed.has(k)) || input.mouse.clicked;
+  if (world.cine) world.cine.fast = input.held.has('KeyZ') || input.held.has('Space') || input.mouse.down;
   if (input.pressed.has('Escape')) advanceScene(world, true);
-  else if (step?.card) {
+  else if (isStaging(step)) {
+    // Staging plays out by itself; a press moves a speech bubble on.
+    if (go && world.cine) world.cine.go = true;
+  } else if (step?.card) {
     if ((go && sc.t > 0.6) || sc.t > CARD) advanceScene(world);
   } else if (go) {
     // A line still typing shows in full first.
@@ -41,21 +49,45 @@ export function sceneInput(world, input) {
   return true;
 }
 
-export function drawScene(ui, world) {
+export function drawScene(ui, world, cam) {
   const sc = world.scene;
   if (!sc) return;
   const { ctx } = ui;
   const step = sceneStep(world);
   if (!step) return;
-  const first = sc.i === 0 ? Math.min(1, sc.t / 0.35) : 1;
+  const c = world.cine;
+  const real = performance.now() / 1000;
+  if (c) {
+    c.shownAt ??= real;
+    // What the staging puts in the world: bursts, emotes, a speech bubble; then the fade and flash.
+    if (cam) {
+      for (const p of c.bursts) drawBurst(ctx, p, p.x - cam.x, p.y - cam.y, real);
+      for (const e of c.emotes) {
+        const a = actorAt(world, e.who);
+        if (a) drawEmote(ctx, e, a.x - cam.x, a.y - cam.y - 58, real);
+      }
+      if (c.say) {
+        const a = actorAt(world, c.say.who);
+        if (a) drawSay(ctx, world, c.say, a.x - cam.x, a.y - cam.y - 60, real);
+      }
+    }
+    if (c.fade.a > 0) {
+      ctx.fillStyle = hexA(c.fade.color ?? '#1e1430', c.fade.a);
+      ctx.fillRect(0, 0, 640, 360);
+    }
+    if (c.flash) {
+      ctx.fillStyle = hexA(c.flash.color, Math.max(0, c.flash.a) * 0.8);
+      ctx.fillRect(0, 0, 640, 360);
+    }
+  }
   // Letterbox bars slide in at the start.
-  const bar = BAR * easeOut(first);
+  const bar = BAR * easeOut(Math.min(1, (real - (c?.shownAt ?? real - 1)) / 0.35));
   ctx.fillStyle = 'rgba(30,20,48,0.94)';
   ctx.fillRect(0, 0, 640, bar);
   ctx.fillRect(0, 360 - bar, 640, bar);
   const filled = { ...step, text: fillScene(world, step.text), sub: fillScene(world, step.sub) };
   if (step.card) drawCard(ctx, filled, sc.t);
-  else drawLine(ctx, world, filled, sc.t);
+  else if (!isStaging(step)) drawLine(ctx, world, filled, sc.t);
   // Where you are in the scene, and how to skip it.
   const n = SCENES[sc.id].length;
   for (let k = 0; k < n; k++) {
@@ -64,7 +96,189 @@ export function drawScene(ui, world) {
     ctx.arc(320 - (n - 1) * 5 + k * 10, 18, k === sc.i ? 2.6 : 1.8, 0, Math.PI * 2);
     ctx.fill();
   }
-  text(ctx, 'Esc: skip', 630, 21, { size: 7, align: 'right', color: 'rgba(255,255,255,0.55)' });
+  text(ctx, isStaging(step) ? 'Hold Z: faster   Esc: skip' : 'Esc: skip', 630, 21, { size: 7, align: 'right', color: 'rgba(255,255,255,0.55)' });
+}
+
+const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
+
+// Where an actor's feet are (the hero, or an NPC on the map, lifted while they hop).
+function actorAt(world, who) {
+  if (who === 'player') return { x: world.body.x, y: world.body.y };
+  const n = world.map.npcs.find((q) => q.id === who);
+  return n ? { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0) } : null;
+}
+
+const easeOutBack = (u) => 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
+
+function heart(ctx, x, y, s, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y + s * 0.9);
+  ctx.bezierCurveTo(x - s * 1.4, y - s * 0.1, x - s * 0.7, y - s * 1.2, x, y - s * 0.45);
+  ctx.bezierCurveTo(x + s * 0.7, y - s * 1.2, x + s * 1.4, y - s * 0.1, x, y + s * 0.9);
+  ctx.fill();
+}
+
+// An emote over someone's head: it pops in with a little overshoot, bobs, and fades at the end.
+function drawEmote(ctx, e, x, y, real) {
+  const pop = easeOutBack(Math.min(1, e.t / 0.28));
+  const fade = Math.min(1, (e.dur - e.t) / 0.3);
+  const bob = Math.sin(e.t * 5) * 1.2;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, fade);
+  ctx.translate(Math.round(x + 10), Math.round(y + bob));
+  ctx.scale(pop, pop);
+  const k = e.kind;
+  if (k === 'sweat') {
+    // A drop sliding down the side of the head.
+    const s = Math.min(1, e.t / 0.6) * 6;
+    ctx.fillStyle = '#8fd0ff';
+    ctx.strokeStyle = '#4a8ac8';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(4, 14 + s - 6);
+    ctx.quadraticCurveTo(8, 14 + s, 4, 14 + s + 4);
+    ctx.quadraticCurveTo(0, 14 + s, 4, 14 + s - 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  if (k === 'anger') {
+    // The cross-shaped vein, throbbing.
+    const th = 1 + Math.max(0, Math.sin(e.t * 12)) * 0.15;
+    ctx.scale(th, th);
+    ctx.strokeStyle = '#ff4d6d';
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    for (const [a, b] of [[[-5, -5], [-1.5, -1.5]], [[5, -5], [1.5, -1.5]], [[-5, 5], [-1.5, 1.5]], [[5, 5], [1.5, 1.5]]]) {
+      ctx.beginPath();
+      ctx.moveTo(a[0], a[1]);
+      ctx.quadraticCurveTo(0, 0, b[0] + (a[0] > 0 ? 3 : -3), b[1]);
+      ctx.stroke();
+    }
+    ctx.restore();
+    return;
+  }
+  if (k === 'zzz') {
+    for (let i = 0; i < 3; i++) {
+      const u = ((e.t * 0.6 + i / 3) % 1);
+      ctx.globalAlpha = Math.max(0, fade) * (1 - u);
+      text(ctx, 'z', 2 + u * 10 + i * 2, -u * 18, { size: 7 + i * 2, bold: true, color: '#9fb8ff', outline: '#ffffff' });
+    }
+    ctx.restore();
+    return;
+  }
+  // The rest sit in a round white bubble with a little tail.
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#8f6cc4';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0, -4, 9, 0, Math.PI * 2);
+  ctx.moveTo(-4, 3);
+  ctx.lineTo(-7, 9);
+  ctx.lineTo(0, 4);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, -4, 8.2, 0, Math.PI * 2);
+  ctx.fill();
+  if (k === '!') text(ctx, '!', 0, 0.5, { size: 13, bold: true, align: 'center', color: '#ffb020', outline: '#7a4a10' });
+  else if (k === '?') text(ctx, '?', 0, 0.5, { size: 12, bold: true, align: 'center', color: '#4f95e0', outline: '#1e4a80' });
+  else if (k === 'heart') heart(ctx, 0, -4, 5 + Math.sin(e.t * 9) * 0.6, '#ff6b9a');
+  else if (k === 'note') text(ctx, '♪', 0.5, 0.5, { size: 12, bold: true, align: 'center', color: '#8f6cc4' });
+  else if (k === 'idea') {
+    ctx.fillStyle = '#ffe36b';
+    ctx.beginPath();
+    ctx.arc(0, -6, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#c8b8d8';
+    ctx.fillRect(-2, -2, 4, 3);
+    ctx.strokeStyle = '#ffd020';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i - 2) * 0.55;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 6.5, -6 + Math.sin(a) * 6.5);
+      ctx.lineTo(Math.cos(a) * 8, -6 + Math.sin(a) * 8);
+      ctx.stroke();
+    }
+  } else sparkle(ctx, 0, -4, 5 + Math.sin(e.t * 8), '#ffd36b');
+  ctx.restore();
+}
+
+// A speech bubble in the world over whoever speaks, the words typing out, a little arrow once
+// they're all there.
+function drawSay(ctx, world, say, x, y, real) {
+  const words = fillScene(world, say.text);
+  const W = Math.min(180, Math.max(60, words.length * 4.2 + 20));
+  ctx.font = font(8, false);
+  const lines = Math.max(1, Math.ceil(ctx.measureText(words).width / (W - 16)));
+  const H = 12 + lines * 10;
+  const bx = Math.max(6, Math.min(634 - W, x - W / 2));
+  const by = y - H;
+  const pop = easeOutBack(Math.min(1, say.t / 0.2));
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(pop, pop);
+  ctx.translate(-x, -y);
+  softShadow(ctx, bx, by, W, H, 8, 3);
+  box(ctx, bx, by, W, H, { fill: '#ffffff', edge: '#8f6cc4', r: 8, width: 1.6 });
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#8f6cc4';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x - 5, by + H - 1);
+  ctx.lineTo(x, by + H + 7);
+  ctx.lineTo(x + 5, by + H - 1);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillRect(x - 4, by + H - 2.5, 8, 2.5);
+  const chars = Math.floor(say.t * TYPE);
+  wrap(ctx, words, bx + 8, by + 13, W - 16, { size: 8, chars, lineHeight: 10, color: COLORS.ink });
+  if (chars >= words.length) {
+    const bob = Math.sin(real * 6) * 1.2;
+    ctx.fillStyle = '#ff8fc1';
+    ctx.beginPath();
+    ctx.moveTo(bx + W - 10, by + H - 8 + bob);
+    ctx.lineTo(bx + W - 5, by + H - 5 + bob);
+    ctx.lineTo(bx + W - 10, by + H - 2 + bob);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// A bit of a burst: sparkles, little hearts, cherry petals, leaves, wind streaks or confetti.
+function drawBurst(ctx, p, x, y, real) {
+  const a = Math.min(1, (p.life - p.t) / 0.4);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, a);
+  const spin = p.t * 6 + p.seed;
+  if (p.kind === 'sparkle') sparkle(ctx, x, y, 2 + Math.sin(spin) * 1, p.seed > 5 ? '#ffe36b' : '#ffffff');
+  else if (p.kind === 'hearts') heart(ctx, x, y, 2.6, p.seed > 5 ? '#ff6b9a' : '#ffb8dc');
+  else if (p.kind === 'petals' || p.kind === 'leaves') {
+    ctx.translate(x + Math.sin(spin) * 3, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = p.kind === 'petals' ? (p.seed > 5 ? '#ffc6de' : '#ff9ec0') : (p.seed > 5 ? '#8fdc9a' : '#5fae7a');
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.kind === 'wind') {
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = 1.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - Math.sign(p.vx) * 14, y);
+    ctx.quadraticCurveTo(x - Math.sign(p.vx) * 6, y - 4, x, y - 1);
+    ctx.stroke();
+  } else {
+    ctx.translate(x, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = ['#ffd36b', '#7fd8ff', '#ff9ab8', '#9fe0a8'][Math.floor(p.seed) % 4];
+    ctx.fillRect(-2, -1, 4, 2);
+  }
+  ctx.restore();
 }
 
 const easeOut = (u) => 1 - (1 - u) ** 3;
