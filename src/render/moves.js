@@ -4733,7 +4733,7 @@ export function hefted(mv, kind = null, p = 0) {
   }
   return out;
 }
-const HEFT = new Set(['sword', 'axe', 'spear', 'staff', 'dagger', 'gauntlet', 'wand', 'none']);
+const HEFT = new Set(['sword', 'axe', 'spear', 'staff']);
 // A staff is longer than she is tall: pointed steeply down it would run through the floor, so its
 // downward angles are eased toward level (front and back alike).
 function staffed(mv) {
