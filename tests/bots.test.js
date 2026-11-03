@@ -772,7 +772,7 @@ test('weather: rain comes and goes, and snow in winter', () => {
 test('a lucky drop: the players around react', async () => {
   const { luckyDrop } = await import('../src/world/social.js');
   const { makeEquip } = await import('../src/core/items.js');
-  const { world, bots, lines } = eventTown(421);
+  const { world, bots, lines } = eventTown(422);
   luckyDrop(bots, world, makeEquip('sword_10', { rarity: 3 }));
   townStep(world, bots, 6);
   assert.ok(lines.some((l) => /gz|lucky|farmed|crazy|fair|legendary/.test(l)), 'they react');

@@ -36,6 +36,7 @@ import { tickDaytime } from './daytime.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
 import { nestKill } from './nest.js';
+import { tickCoop, coopHit, pqKill } from './coop.js';
 import { DISH_BY_ID } from '../data/cooking.js';
 import { onStoryMap, tickStory, storyLock, spawnAllowed } from './story.js';
 
@@ -451,6 +452,8 @@ export function killMob(world, m, byParty = false) {
   world.onKill?.(m);
   calmKill(world);
   nestKill(world, m);
+  // (A party quest's shared count: world/partyquest.js.)
+  pqKill(world, m);
   if (m.def.boss) world.onBossDown?.(m);
   // (Someone you're helping may need this one: world/lives.js.)
   world.onAnyKill?.(m);
@@ -678,6 +681,8 @@ export function updateWorld(world, dt, input) {
     if (m.hp <= 0) continue;
     if (focus && m !== focus && !h.party) h.damage = Math.max(1, Math.round(h.damage * spread));
     if (world.dungeon) h.damage = noteHit(world, m, h);
+    // (A boss's guard or armour: world/coopboss.js.)
+    if (m.coop) h.damage = coopHit(world, m, h);
     // Another player hunting here never lands a boss's last blow: that one's yours.
     if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));
     // (A monster a player hits goes after them, your party members too: it fights back.)
@@ -763,6 +768,8 @@ export function updateWorld(world, dt, input) {
   tickTutorial(world);
   tickMochi(world, dt, { collect: (d) => collectDrop(world, d), useItem: (id) => useItem(world, id) });
   if (world.dungeon) tickDungeon(world, dt);
+  // Two-person boss mechanics and party quests (world/coop.js).
+  tickCoop(world, dt);
   // Online, the monsters on a map another player got to first are run by their game; this one
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));

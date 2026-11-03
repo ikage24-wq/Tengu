@@ -21,6 +21,7 @@ import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
 import { pickTargets } from './combat.js';
 import { SKILLS } from '../data/skills.js';
 import { inZone } from './story.js';
+import { coopAfterThink } from './coop.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -1019,6 +1020,8 @@ export function updateParty(bots, world, dt) {
     br.still = youStill ? br.still + dt : 0;
     live(bot, world, members, dt, rng, {
       think: () => think(bot, world, members, rng),
+      // (Boss mechanics and party quests: world/coop.js.)
+      afterThink: () => coopAfterThink(bot, world),
       idle: () => {
         // Standing about in town: look where you're headed if you're on the move, or at you if not.
         if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;

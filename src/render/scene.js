@@ -36,6 +36,7 @@ import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
+import { drawCoopBack, drawCoopFront } from './coop.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -261,6 +262,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawWarnings(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   if (world.dungeon) drawHollowBack(ctx, world, cam, time);
+  // Two-person boss mechanics and a defend quest's calm stone (render/coop.js).
+  drawCoopBack(ctx, world, cam, time);
   // Fishing spots by the water.
   drawSpots(ctx, world, cam, time);
   // Gathering and mining spots.
@@ -384,6 +387,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const drawFx = (g) => {
     drawEffects(g, world, cam, time);
     if (world.dungeon) drawDungeonFront(g, world, cam, time);
+    drawCoopFront(g, world, cam, time);
     drawZonesFront(g, world, cam, time);
     drawParticles(g, feel.fx, cam, time);
   };

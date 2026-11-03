@@ -1,0 +1,147 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: co-op content on stage, drawn with the game's renderer and HUD, for pictures and
+// videos. ?mode=board (Posy's Party Board in Sprout Village, with a party), queen (the Queen Bee's
+// shared honey bomb with a bot party), mac (Old MacGoblin's two-sided guard), gnarl (Gnarlroot's
+// Root Seal in Rootwood Hollow), twins (Hard: the Myconid Queen's tethered twins).
+// window.step(secs) plays and draws, window.sim(secs) plays only, window.frame() the picture.
+import { makeBotCharacter, createBots, updateBots, recruitBot } from '../src/world/bots.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { joinParty, partyMembers } from '../src/world/party.js';
+import { spawnMob } from '../src/world/mobs.js';
+import { startRun, noteHit } from '../src/world/dungeon.js';
+import { armBoss, mechOf, coopBosses } from '../src/world/coopboss.js';
+import { boardOffers, takePartyQuest } from '../src/world/partyquest.js';
+import { addItem } from '../src/core/inventory.js';
+import { navOf, surfaceBelow } from '../src/world/nav.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { beginUi } from '../src/ui/kit.js';
+import { createUiState, drawUi } from '../src/ui/manager.js';
+
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') ?? 'queen';
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+let n = Number(q.get('seed') ?? 7);
+const rng = () => {
+  n = (n * 1664525 + 1013904223) % 4294967296;
+  return n / 4294967296;
+};
+Math.random = rng;
+const LV = { board: 8, queen: 9, mac: 12, gnarl: 13, twins: 13 }[mode];
+const char = makeBotCharacter(rng, { name: 'Mochi', pro: true, level: LV, jobs: [q.get('job') ?? 'archer'] });
+const dungeon = mode === 'gnarl' || mode === 'twins';
+char.mapId = dungeon ? 'hollow_gate' : mode === 'board' ? 'sprout' : mode === 'queen' ? 'meadow1' : 'meadow2';
+const w = createWorld(char);
+w.log = () => {};
+w.bots = createBots(w, rng, { clock: () => new Date(2026, 10, 3, 15, 0) });
+const ui = createUiState();
+const cam = createCamera();
+const input = { held: new Set(), pressed: new Set(), mouse: { x: -1, y: -1, down: false, clicked: false, double: false, released: false, right: false, wheel: 0 }, typed: [] };
+const floor = (x, y) => {
+  const nav = navOf(w.map);
+  const s = nav.surfaces[surfaceBelow(nav, x, y - 4)];
+  return { x, y: s.yAt ? s.yAt(x) : s.y };
+};
+const put = (b, p) => Object.assign(b, { x: p.x, y: p.y, vx: 0, vy: 0, onGround: true, rope: null });
+let boss = null;
+
+if (dungeon) {
+  w.god = true;
+  char.dungeons = { hollow: { clears: 1, hardClears: 0, best: 'A', bestTime: 700, day: null } };
+  joinParty(w.bots, recruitBot(w.bots, w, { level: 13, jobs: ['warrior'] }), w);
+  joinParty(w.bots, recruitBot(w.bots, w, { level: 13, jobs: ['thief'] }), w);
+  startRun(w, 'hollow', { hard: mode === 'twins' });
+  loadMap(w, mode === 'gnarl' ? 'hollow6' : 'hollow2', 'west');
+  boss = w.mobs.find((m) => m.def.boss);
+  put(w.body, floor(boss.x - 200, w.map.groundY));
+  noteHit(w, boss, { damage: 1 });
+  if (mode === 'twins') boss.hp = boss.def.hp * 0.62;
+} else {
+  loadMap(w, char.mapId, mode === 'board' ? 'start' : 'west');
+  for (const job of ['thief', 'warrior']) joinParty(w.bots, recruitBot(w.bots, w, { level: LV, jobs: [job] }), w);
+  if (mode === 'board') {
+    const posy = w.map.npcs.find((p) => p.id === 'posy');
+    put(w.body, floor(posy.x - 40, w.map.groundY));
+    takePartyQuest(w, boardOffers(w)[0]);
+    w.char.partyQuest.have = 11;
+    addItem(w.char.inventory, 'party_token', 7);
+    ui.npc = { id: 'posy', board: true, talking: false };
+    ui.windows.npc.open = true;
+  } else {
+    w.god = q.get('god') !== '0';
+    w.mobs = w.mobs.filter((m) => Math.abs(m.x - 900) > 500);
+    const at = floor(900, w.map.groundY);
+    put(w.body, { x: at.x - 140, y: at.y });
+    partyMembers(w.bots).forEach((b, i) => put(b.body, { x: at.x - 190 - i * 30, y: at.y }));
+    boss = spawnMob(w.map, { mob: mode === 'queen' ? 'queenbee' : 'macgoblin', x: at.x, y: at.y });
+    boss.nested = true;
+    w.mobs.push(boss);
+    armBoss(w, boss);
+    if (mode === 'queen') mechOf(boss, 'split').next = 2.5;
+  }
+}
+for (let k = 0; k < 30; k++) updateCamera(cam, w, 0.1);
+
+// You: fight the boss from your side, and step into a share ring when one's marked.
+function pilot() {
+  const held = new Set();
+  const pressed = new Set();
+  if (!boss || boss.hp <= 0 || w.dead) return { held, pressed };
+  const b = w.body;
+  const ring = boss.coop?.mechs.find((s) => s.ring)?.ring;
+  const go = (x) => {
+    if (Math.abs(x - b.x) > 6) held.add(x > b.x ? 'ArrowRight' : 'ArrowLeft');
+  };
+  if (ring) go(ring.x - 10);
+  else if (Math.abs(b.x - (boss.x - 130)) > 30) go(boss.x - 130);
+  else {
+    b.facing = 1;
+    held.add('KeyZ');
+  }
+  return { held, pressed };
+}
+let t = 0;
+function tick() {
+  if (w.scene) w.scene = null;
+  const { held, pressed } = pilot();
+  updateWorld(w, 1 / 60, { held, pressed, locked: false });
+  updateBots(w.bots, w, 1 / 60);
+}
+window.sim = (secs) => {
+  for (let k = 0; k < Math.round(secs * 60); k++) tick();
+  t += secs;
+};
+window.step = (secs) => {
+  for (let k = 0; k < Math.round(secs * 60); k++) tick();
+  t += secs;
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, secs);
+  drawWorld(ctx, w, cam, t);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ui.cam = cam;
+  try {
+    drawUi(beginUi(ctx, input), ui, w);
+  } catch (e) {
+    console.log('hud', e.message);
+  }
+};
+window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+window.info = () => ({ boss: boss?.def.id, hp: boss ? Math.round(boss.hp) : null, mechs: coopBosses(w).flatMap((m) => m.coop.mechs.map((s) => ({ kind: s.def.kind, guard: s.guard, ring: Boolean(s.ring), heldBy: s.heldBy ?? null, pair: s.pair?.map((a) => Math.round(a.hp)) }))) });
+await new Promise((res) => setTimeout(res, 2500));
+window.step(0.05);
+document.title = 'ready';
+</script>
+</body></html>

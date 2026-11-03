@@ -56,7 +56,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'kestrel', x: 2480 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'posy', x: 2075 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
@@ -249,7 +249,7 @@ export const MAPS = {
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
     homeStyle: 'canal',
     cottages: [180, 470, 600, 1190, 1420, 1720],
-    townPieces: [['pier', 2120]],
+    townPieces: [['pier', 2120], ['noticeboard', 830]],
     platforms: [
       // The rooftop hideout behind the Den, on stilts.
       { x: 1660, y: 400, w: 150, posts: true }, { x: 1740, y: 320, w: 150, posts: true },
@@ -262,7 +262,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'meadow2', toPortal: 'east' },
       { id: 'east', x: 2540, y: 480, to: 'woods', toPortal: 'west' },
     ],
-    npcs: [{ id: 'marlo', x: 330 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
+    npcs: [{ id: 'marlo', x: 330 }, { id: 'posy', x: 870 }, { id: 'rook', x: 1060 }, { id: 'vex', x: 1560 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
@@ -578,7 +578,7 @@ Object.assign(MAPS, {
     terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
     homeStyle: 'adobe',
     cottages: [530, 1400, 1950],
-    townPieces: [['arena', 1080]],
+    townPieces: [['arena', 1080], ['noticeboard', 1255]],
     platforms: [
       // The houses' flat roofs (their own art: nothing drawn for them), up the ladders.
       { x: 482, y: 360, w: 96, bare: true }, { x: 1352, y: 336, w: 96, bare: true }, { x: 1902, y: 360, w: 96, bare: true },
@@ -589,7 +589,7 @@ Object.assign(MAPS, {
       { id: 'south', x: 60, y: 480, to: 'canyon', toPortal: 'north' },
       { id: 'ridge', x: 2130, y: 480, to: 'ridge', toPortal: 'west', label: 'Moonlit Ridge' },
     ],
-    npcs: [{ id: 'brann', x: 780 }, { id: 'tora', x: 1720 }],
+    npcs: [{ id: 'brann', x: 780 }, { id: 'posy', x: 1215 }, { id: 'tora', x: 1720 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [
@@ -619,7 +619,7 @@ Object.assign(MAPS, {
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
     homeStyle: 'treehome',
     cottages: [180, 640, 1980, 2180],
-    townPieces: [['moontree', 1110]],
+    townPieces: [['moontree', 1110], ['noticeboard', 1340]],
     platforms: [
       // A bough of the moon tree.
       { x: 1006, y: 324, w: 92, bare: true },
@@ -630,7 +630,7 @@ Object.assign(MAPS, {
       { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
       { id: 'east', x: 2340, y: 480, to: 'ruins', toPortal: 'west' },
     ],
-    npcs: [{ id: 'nim', x: 600 }, { id: 'elowen', x: 1500 }],
+    npcs: [{ id: 'nim', x: 600 }, { id: 'posy', x: 1300 }, { id: 'elowen', x: 1500 }],
     // Its districts, left to right, each named as you walk in (the town rules).
     zonesBy: 'x',
     zones: [

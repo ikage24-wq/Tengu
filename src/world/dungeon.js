@@ -19,7 +19,7 @@ import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp } from '../core/character.js';
 import { addItem } from '../core/inventory.js';
-import { makeEquip, itemName } from '../core/items.js';
+import { makeEquip, itemName, makeCash } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
 import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
@@ -34,6 +34,7 @@ import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarH
 import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
+import { HARD_PARTY, CHEST_TOKENS } from '../data/coop.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -154,10 +155,22 @@ function prep(bot) {
   bot.session = Math.max(bot.session ?? 0, 1800);
 }
 
+// Hard mode is for parties: you and at least one member (a party member, or a friend online in
+// your party), and only after a first clear. Returns why not, or null.
+export function partySize(world) {
+  return 1 + partyMembers(world.bots).filter((b) => !b.finder).length + (world.net?.partyFriendCount?.(world) ?? 0);
+}
+const HARD_SOLO = 'Hard mode is party-only: bring at least one party member.';
+export function hardBlocker(world, id = 'hollow') {
+  if (!world.char.dungeons?.[id]?.clears) return `Clear ${DUNGEONS[id].name} once to open Hard mode.`;
+  return partySize(world) < HARD_PARTY ? HARD_SOLO : null;
+}
+
 // Forms the group and goes in. Returns a reason string when it can't.
 export function startRun(world, id = 'hollow', { hard = false } = {}) {
   const plan = planGroup(world, id);
   if (plan.why) return plan.why;
+  if (hard && partySize(world) < HARD_PARTY) return HARD_SOLO;
   if (!world.bots) return 'No one else is online.';
   const def = DUNGEONS[id];
   const roles = {};
@@ -481,6 +494,13 @@ function openChest(world, o) {
   for (const it of reward.items) {
     const qty = it.qty * (run.hard ? 2 : 1) + (daily && it.id === 'hollow_acorn' ? 5 : 0);
     if (addItem(char.inventory, it.id, qty)) world.log(`Received ${ITEMS[it.id].name} x${qty}.`, ITEMS[it.id].color);
+  }
+  // Party Tokens (data/coop.js): three times as many on Hard, and Hard's own crown, sure on the
+  // first Hard clear and now and then after.
+  const tokens = run.hard ? CHEST_TOKENS.hard : CHEST_TOKENS.normal;
+  if (addItem(char.inventory, 'party_token', tokens)) world.log(`Received Party Token x${tokens}.`, ITEMS.party_token.color);
+  if (run.hard && (!rec.hardClears || Math.random() < 0.15) && addItem(char.inventory, makeCash('cash_rootwood_crown'))) {
+    world.log(`Hard clear! Received ${ITEMS.cash_rootwood_crown.name}, only found on Hard.`, '#7fd1a0');
   }
   // The records: clears, best grade and time, Hard unlocked.
   rec.clears += 1;
