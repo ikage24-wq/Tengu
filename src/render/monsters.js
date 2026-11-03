@@ -412,7 +412,11 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.
   const since = time - mo.hitT;
   // A light tint rather than solid white, so a crowd hit at once doesn't turn into white blobs.
-  const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? 0.8 : Math.max(0, 0.45 * (1 - (since - 0.03) / 0.07))) : 0);
+  // A very large monster (a boss like Gnarlroot) gets a shorter, fainter flash: a full white frame on
+  // something that fills the screen reads as a blink of the whole picture, not a hit.
+  const huge = Math.min(1, Math.max(0, (s.h * Math.abs(sy) - 60) / 60));
+  const peak = 0.8 - 0.5 * huge;
+  const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? peak : Math.max(0, (0.45 - 0.25 * huge) * (1 - (since - 0.03) / (0.07 - 0.03 * huge)))) : 0);
   blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);

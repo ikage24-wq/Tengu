@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { tagFade } from './coop.js';
 import { drawMachine } from './gacha.js';
 import { wornGear } from '../core/character.js';
 import { settings } from '../core/settings.js';
@@ -1466,6 +1467,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false, ta
   }
   ctx.save();
   if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;
+  ctx.globalAlpha *= tagFade(x, y);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;

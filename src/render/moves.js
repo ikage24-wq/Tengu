@@ -28,6 +28,10 @@ const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * M
 // bow springs straight in about 0.03 s, then rings down; research/archery.md 4, 6).
 const twang = (p, at) => (p < at ? 0 : Math.max(0, 1 - (p - at) / 0.14));
 
+// The Arbalist Engineer's aim: the crossbow pushed out to arm's length at chest height, clear of her
+// body and below her face (at the hip it hid her whole torso and her knees).
+const AE_AIM = 86;
+
 function tuck(r) {
   r.air = true;
   r.frontLeg = [2.6, -5, 10];
@@ -634,15 +638,16 @@ export const MOVES = {
   plverdict(p, dur) {
     if (p < 0.08) {
       const t = ease(p / 0.08);
-      return { weapon: lerp(-58, -182, t), arm: lerp(48, 14, t), tilt: 0.06 * t, rig: (r) => { r.squat = 2 * t; wideLegs(r); r.backArm = [2, 0]; } };
+      return { weapon: lerp(-58, 160, t), arm: lerp(48, 66, t), tilt: 0.06 * t, rig: (r) => { r.squat = 2 * t; wideLegs(r); r.backArm = [2, 0]; } };
     }
     if (p < 0.4) {
       const breath = Math.sin(p * dur * 6) * 0.3;
-      return { weapon: -182, arm: 14, tilt: 0.08, lunge: breath, rig: (r) => { r.squat = 3; r.frontLeg = [2.5, 0, 6]; r.backLeg = [-2, 1, -16]; r.backArm = [2, 1]; r.eyes = 'blink'; } };
+      // (The blade planted point-down out in front, her hand high on the pommel, so it stays in sight.)
+      return { weapon: 160, arm: 66, tilt: 0.08, lunge: breath, rig: (r) => { r.squat = 3; r.frontLeg = [2.5, 0, 6]; r.backLeg = [-2, 1, -16]; r.backArm = [2, 1]; r.eyes = 'blink'; } };
     }
     if (p < 0.55) {
       const t = ease(seg(p, 0.4, 0.55));
-      return { weapon: lerp(-182, -96, t), arm: lerp(14, 40, t), lift: 10 * t, tilt: lerp(0.08, -0.08, t), rig: (r) => { r.frontLeg = [1.5, -1, 4]; r.backLeg = [-2, -1, -6]; r.air = t > 0.3; r.backArm = [-2, -4]; r.hairLift = -1; r.cape = -3; } };
+      return { weapon: lerp(160, 264, t), arm: lerp(66, 40, t), lift: 10 * t, tilt: lerp(0.08, -0.08, t), rig: (r) => { r.frontLeg = [1.5, -1, 4]; r.backLeg = [-2, -1, -6]; r.air = t > 0.3; r.backArm = [-2, -4]; r.hairLift = -1; r.cape = -3; } };
     }
     const t = ease(seg(p, 0.55, 0.66));
     const settle = ease(seg(p, 0.78, 1));
@@ -2489,8 +2494,10 @@ export const MOVES = {
   },
 
   // ---------- The Arbalist Engineer's moves (her own; docs/design/arbalist.md) ----------
-  // An excited inventor with a crossbow of her own making, held low at the waist (arm about 25-35 degrees,
-  // the crossbow level or tipped a little up), never raised to her face. Every shot kicks: the
+  // An excited inventor with a crossbow of her own making. It rests low at the waist, and to shoot
+  // she pushes it out to arm's length in front of her (arm about `AE_AIM`, the crossbow level or
+  // tipped a little up), so her body, knees and crank hand all read round it; never raised to her
+  // face. Every shot kicks: the
   // crossbow jumps up and back and settles, and she reacts (a grin, a fist pump, a pat on the stock).
   // Her machine works: the free hand winds the crank at the butt in a full, visible circle behind her,
   // pumps a lever, pats it; she kneels on one knee to brace it, ducks, slides. Her moves are
@@ -2498,82 +2505,92 @@ export const MOVES = {
   // (A crossbow's angle: 0 is level forward, negative tips it up.)
 
   // Snap shot (opener, the bolt leaves at ~0.3): the crossbow hangs nose-down at her hip; she whips
-  // it up level, the weight pitching forward onto the front foot, and fires at once.
+  // it up and out to arm's length, the weight pitching forward onto the front foot, and fires at
+  // once; she holds it out a beat, cocky, the nose tipping up as she grins.
   aesnap(p) {
     const up = ease(seg(p, 0, 0.24));
     const kick = bump(p, 0.28, 0.5);
-    const hold = soft(seg(p, 0.6, 1));
+    const hold = soft(seg(p, 0.56, 0.9));
     return {
       poised: true,
-      weapon: lerp(34, -4, up) - 16 * kick + 6 * hold, arm: lerp(24, 32, up) + 6 * kick - 4 * hold, lunge: 2 * up * (1 - hold) - 3 * kick, tilt: 0.06 * up * (1 - hold) - 0.08 * kick,
+      weapon: lerp(40, -4, up) - 18 * kick - 10 * hold, arm: lerp(26, AE_AIM, up) + 6 * kick - 6 * hold, lunge: 3 * up * (1 - 0.5 * hold) - 3 * kick, tilt: 0.08 * up * (1 - hold) - 0.08 * kick,
       rig: (r) => {
-        r.backArm = kick > 0.1 ? [q(-3 * kick), q(-2 * kick)] : [q(lerp(-1, 4, up)), q(-1)];
+        r.backArm = kick > 0.1 ? [q(-4 * kick), q(-3 * kick)] : [q(lerp(-1, -3, up) + 2 * hold), q(lerp(-1, 1, up))];
         r.squat = q(0.8 * up * (1 - hold));
-        danceLegs(r, [up, [3, 0, 4], [-2.4, -0.6, -14]]);
+        danceLegs(r, [up, [4.4, 0, 8], [-3, -0.6, -16]], [hold, [3.6, 0, 6], [-2.6, 0, -10]]);
         if (kick > 0.3) strikeFace(r);
         else if (hold > 0.5) r.mouth = 'grin';
       },
     };
   },
-  // Double shot (second, bolts at ~0.28 and ~0.6): a shot, then she throws her free hand up and
-  // slams it down on the lever with a clack (the whole body bobbing with it), and a second shot.
+  // Double shot (second, bolts at ~0.28 and ~0.6): square on, feet wide, a shot; then she flings her
+  // free hand up behind her and slams it down on the lever with a clack (the whole body bobbing
+  // into it), and a second shot; she ends with the crossbow tipped up proudly, free hand on her hip.
   aedouble(p) {
+    const set = soft(seg(p, 0, 0.18));
     const k1 = bump(p, 0.26, 0.42);
     const lift = soft(seg(p, 0.36, 0.44)) * (1 - ease(seg(p, 0.46, 0.52)));
     const slam = bump(p, 0.46, 0.58);
     const k2 = bump(p, 0.58, 0.74);
-    const hold = soft(seg(p, 0.78, 1));
+    const hold = soft(seg(p, 0.76, 0.96));
     return {
       poised: true,
-      weapon: -4 - 14 * k1 - 16 * k2 + 6 * slam + 4 * hold, arm: 30 + 6 * (k1 + k2) - 3 * slam - 4 * hold, lunge: -2.5 * (k1 + k2), tilt: -0.05 * (k1 + k2) + 0.06 * slam,
+      weapon: lerp(20, -2, set) - 14 * k1 - 18 * k2 + 8 * slam - 22 * hold, arm: lerp(32, AE_AIM - 2, set) + 6 * (k1 + k2) - 6 * slam - 8 * hold, lunge: -2.5 * (k1 + k2), tilt: -0.05 * (k1 + k2) + 0.08 * slam - 0.04 * hold,
       rig: (r) => {
-        r.backArm = lift > 0.05 || slam > 0.05 ? [q(3 + 2 * lift), q(-1 - 7 * lift + 3 * slam)] : [q(3 - 4 * k1), q(-1 - 2 * k1)];
-        r.squat = q(1.4 * slam);
-        danceLegs(r, [1, [2.4, 0, 4], [-2.6, 0, -8]]);
+        r.backArm = hold > 0.05 ? [q(lerp(5, -3, hold)), q(lerp(0, 2, hold))]
+          : lift > 0.05 || slam > 0.05 ? [q(lerp(-4, 5, slam) * (1 - lift) - 4 * lift), q(-8 * lift + lerp(0, 1, slam) * (1 - lift))] : [q(-2 - 2 * k1), q(-1 - 2 * k1)];
+        r.squat = q(1.8 * slam + 0.6 * set);
+        danceLegs(r, [set, [4, 0, 6], [-4, 0, -10]]);
         if (k1 > 0.3 || k2 > 0.3) strikeFace(r);
+        else if (hold > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
         else if (lift > 0.5) r.mouth = 'grin';
-        else if (slam > 0.4) r.eyes = 'happy';
       },
     };
   },
-  // Brace and crank (third, the heavy bolt at ~0.55): she drops onto one knee, braces the stock on
-  // her front thigh, winds the crank at the butt twice round in big circles with a grin, then fires; the kick
-  // rocks her back on her heel.
+  // Brace and crank (third, the heavy bolt at ~0.55): she drops onto one knee, front knee up and the
+  // stock braced over it, the crossbow out in front; her free hand winds the crank at the butt round
+  // twice in big circles behind her with a grin, then she fires; the kick rocks her back on her heel.
   aebrace(p) {
-    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.84, 1)));
+    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.86, 1)));
     const crank = seg(p, 0.16, 0.5);
     const cranking = crank > 0 && crank < 1;
     const kick = bump(p, 0.52, 0.72);
+    const wind = cranking ? Math.sin(crank * Math.PI * 4) : 0;
     return {
       poised: true,
-      weapon: -4 - 22 * kick + 2 * Math.sin(crank * Math.PI * 4) * (cranking ? 1 : 0), arm: 26 + 8 * kick, lunge: -5 * kick, tilt: 0.06 * kneel - 0.1 * kick,
+      weapon: lerp(20, 2, kneel) - 26 * kick + 3 * wind, arm: lerp(30, AE_AIM - 6, kneel) + 8 * kick, lunge: -5 * kick, tilt: 0.04 * kneel - 0.12 * kick,
       rig: (r) => {
-        r.squat = q(3.2 * kneel);
-        r.by = q(cranking ? 0.5 * Math.sin(crank * Math.PI * 4) : 0);
-        r.backArm = cranking ? crankHand(crank * 2, 3.2) : kick > 0.1 ? [q(-4 * kick), q(-3 * kick)] : [3, -1];
-        danceLegs(r, [kneel, [3.6, 0, 8], [-5.8, 0, -76]]);
+        r.squat = q(4 * kneel);
+        r.by = q(0.6 * wind);
+        r.backArm = cranking ? crankHand(crank * 2, 4.6) : kick > 0.1 ? [q(-5 * kick), q(-3 * kick)] : [q(-2 * kneel), q(-1)];
+        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]]);
         if (cranking && crank > 0.15) r.mouth = 'grin';
         if (kick > 0.3) strikeFace(r);
+        else if (kneel > 0.5 && !cranking && p > 0.7) r.eyes = 'happy';
       },
     };
   },
-  // Recoil blast (the finish, ~0.48): she plants wide, fires the big bolt, and the kick throws her a
-  // hop back with the crossbow bucking up; she lands and pumps her fist.
+  // Recoil blast (the finish, ~0.48): she plants wide and low, the crossbow out at arm's length,
+  // fires the big bolt, and the kick throws her a hop back, the crossbow bucking right up; she lands
+  // in a skid on her back foot, front leg out, and ends with it propped up at her shoulder and her
+  // fist punched up.
   aerecoil(p) {
     const plant = soft(seg(p, 0, 0.3));
-    const kick = ease(seg(p, 0.46, 0.56)) * (1 - soft(seg(p, 0.62, 0.9)));
-    const hop = Math.sin(Math.PI * seg(p, 0.48, 0.78));
-    const pump = soft(seg(p, 0.82, 0.92)) * (1 - soft(seg(p, 0.97, 1)));
+    const kick = ease(seg(p, 0.46, 0.54)) * (1 - soft(seg(p, 0.6, 0.86)));
+    const hop = Math.sin(Math.PI * seg(p, 0.48, 0.72));
+    const skid = soft(seg(p, 0.66, 0.78)) * (1 - soft(seg(p, 0.84, 0.94)));
+    const pose = soft(seg(p, 0.82, 0.92));
     return {
       poised: true,
-      weapon: lerp(10, -2, plant) - 34 * kick, arm: lerp(28, 30, plant) + 10 * kick, lunge: -8 * hop, lift: 6 * hop, tilt: -0.16 * kick,
+      weapon: lerp(14, -6, plant) - 46 * kick - 34 * pose, arm: lerp(28, AE_AIM + 4, plant) + 12 * kick - 18 * pose, lunge: -10 * soft(seg(p, 0.48, 0.8)) * (1 - 0.4 * pose), lift: 6 * hop, tilt: 0.04 * plant * (1 - kick) - 0.2 * kick - 0.1 * skid,
       rig: (r) => {
-        r.squat = q(1.5 * plant * (1 - kick));
-        r.backArm = pump > 0.2 ? [q(3 * pump), q(-9 * pump)] : [3, -1];
-        r.hairLift = hop > 0.3 ? -1 : 0;
-        danceLegs(r, [plant * (1 - hop), [3.2, 0, 6], [-3.4, 0, -10]], [hop, [2, -3, 30], [-2, -2, -30]]);
-        if (pump > 0.4) r.eyes = 'happy';
-        else if (kick > 0.2) strikeFace(r);
+        r.squat = q(2 * plant * (1 - kick) * (1 - hop) + 2.4 * skid);
+        r.backArm = pose > 0.1 ? dancerHand([q(2 * pose), q(-9 * pose)]) : kick > 0.1 ? [q(-6 * kick), q(-4 * kick)] : [q(-2), q(0)];
+        r.hairLift = hop > 0.3 ? 1 : 0;
+        r.cape -= q(4 * hop);
+        danceLegs(r, [plant, [4.6, 0, 8], [-4.6, 0, -12]], [hop, [3, -3, 30], [-2, -2, -30]], [skid, [7, 0, 24], [-3, 0, -30]], [pose, [3.6, 0, 6], [-3.2, 0, -10]]);
+        if (pose > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
+        else if (kick > 0.2) [r.eyes, r.mouth] = ['blink', 'open'];
       },
     };
   },
@@ -2604,50 +2621,51 @@ export const MOVES = {
       },
     };
   },
-  // Duck and fire (second in her pool, ~0.4): she ducks right down, both knees bent and her head
-  // tucked low behind the stock, and fires up and out from the crouch.
+  // Duck and fire (second in her pool, ~0.4): she ducks right down onto her heels, both knees bent
+  // and her head tucked low behind the stock, and fires steeply up and out from the crouch.
   aeduck(p) {
     const duck = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.74, 1)));
     const kick = bump(p, 0.36, 0.56);
     return {
       poised: true,
-      weapon: -4 - 14 * duck - 14 * kick, arm: 24 + 6 * kick, tilt: 0.14 * duck - 0.06 * kick, lunge: -2 * kick,
+      weapon: -4 - 26 * duck - 16 * kick, arm: lerp(40, 50, duck) + 8 * kick, tilt: 0.12 * duck - 0.08 * kick, lunge: -2 * kick,
       rig: (r) => {
-        r.squat = q(3.6 * duck);
+        r.squat = q(4.4 * duck);
         r.hx = q(1 * duck);
         r.tilt = Math.round(2 * duck) * 2;
-        r.backArm = [q(3), q(-1 + 2 * duck)];
-        danceLegs(r, [duck, [3.4, 0, 10], [-3.4, 0, -14]]);
+        r.backArm = [q(4 * duck), q(-1 + 3 * duck)];
+        danceLegs(r, [duck, [4.4, 0, 14], [-4, 0, -18]]);
         if (kick > 0.3) strikeFace(r);
         else if (duck > 0.5) r.eyes = 'half';
       },
     };
   },
   // Triple crank (third in her pool, bolts at ~0.3, ~0.5, ~0.7): she leans back with the stock
-  // braced on her hip and hammers the crank round in big fast circles; the crossbow fires three
-  // times in a row, rattling her whole frame.
+  // braced on her hip, front foot planted out, and hammers the crank round in big fast circles; the
+  // crossbow fires three times in a row and each kick shoves her a step further back.
   aetriple(p) {
     const k = Math.max(bump(p, 0.28, 0.4), bump(p, 0.48, 0.6), bump(p, 0.68, 0.8));
+    const shots = soft(seg(p, 0.28, 0.36)) + soft(seg(p, 0.48, 0.56)) + soft(seg(p, 0.68, 0.76));
     const brace = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.84, 1)));
     const crank = seg(p, 0.16, 0.8);
     const cranking = crank > 0 && crank < 1;
     const rattle = cranking ? Math.sin(p * 90) * 0.5 : 0;
     return {
       poised: true,
-      weapon: -6 * brace - 12 * k + 2 * rattle, arm: 26 + 5 * k, lunge: -2 * k, tilt: -0.1 * brace - 0.05 * k,
+      weapon: lerp(16, -12, brace) - 12 * k + 2 * rattle, arm: lerp(30, 56, brace) + 5 * k, lunge: -2 * k - 1.6 * shots * (1 - soft(seg(p, 0.84, 1))), tilt: -0.14 * brace - 0.05 * k,
       rig: (r) => {
-        r.backArm = cranking ? crankHand(crank * 3, 3.4) : [3, -1];
+        r.backArm = cranking ? crankHand(crank * 3, 4.6) : [q(-2), q(-1)];
         r.by = q(rattle);
-        r.squat = q(1 * brace);
-        danceLegs(r, [brace, [3.4, 0, 8], [-2.6, 0, -8]]);
+        r.squat = q(1.4 * brace);
+        danceLegs(r, [brace, [5.4, 0, 14], [-2.6, 0, -6]]);
         if (k > 0.3) strikeFace(r);
         else if (cranking) r.mouth = 'grin';
       },
     };
   },
   // Sliding shot (a finish in her pool, ~0.45): she runs and drops into a baseball slide, the front
-  // leg out long and the back knee skidding, leaning right back with her hair streaming, fires a
-  // heavy bolt from the slide, then pops up and pats the stock.
+  // leg out long and the back knee skidding, leaning right back with her hair streaming and the
+  // crossbow out at arm's length, fires a heavy bolt from the slide, then pops up and pats the stock.
   aeslide(p) {
     const slide = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.66, 0.84)));
     const kick = bump(p, 0.42, 0.62);
@@ -2655,14 +2673,14 @@ export const MOVES = {
     const pat = bump(p, 0.86, 1);
     return {
       poised: true,
-      weapon: -8 * slide - 20 * kick, arm: 24 + 8 * kick, lunge: 8 * slide - 3 * kick, lift: 3 * pop, tilt: -0.22 * slide - 0.06 * kick,
+      weapon: -10 * slide - 22 * kick + 8 * pat, arm: lerp(32, AE_AIM, slide) + 8 * kick, lunge: 9 * slide - 3 * kick, lift: 3 * pop, tilt: -0.24 * slide - 0.06 * kick,
       rig: (r) => {
-        r.squat = q(3.6 * slide);
+        r.squat = q(4 * slide);
         r.air = pop > 0.4;
         r.backArm = pat > 0.2 ? [q(5), q(1 - 2 * pat)] : [q(-7 * slide), q(-1 - 2 * slide)];
         r.hairLift = slide > 0.4 ? 1 : 0;
         r.hx = q(-1.5 * slide);
-        danceLegs(r, [slide, [7, -0.6, 30], [-4.6, 0, -80]]);
+        danceLegs(r, [slide, [8, -0.6, 34], [-4.6, 0, -80]]);
         if (pat > 0.3) r.eyes = 'happy';
         else if (kick > 0.3) strikeFace(r);
         else if (slide > 0.5) r.mouth = 'grin';
@@ -2712,24 +2730,24 @@ export const MOVES = {
       },
     };
   },
-  // Deploy Turret (the turret appears at ~0.45): she drops to one knee, lowers the crossbow nose-down
-  // to the ground beside her, reaches forward and sets the turret down, gives it two pats, and
-  // jumps back up with a cheer.
+  // Deploy Turret (the turret appears at ~0.45): she lets the crossbow hang nose-down at her side
+  // out of the way, drops to one knee, reaches forward with her free hand and sets the turret down,
+  // gives it two pats, and jumps back up with a cheer.
   aedeploy(p) {
     const kneel = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 0.8)));
-    const shoulder = soft(seg(p, 0, 0.18)) * (1 - soft(seg(p, 0.7, 0.84)));
+    const sling = soft(seg(p, 0, 0.18)) * (1 - soft(seg(p, 0.72, 0.88)));
     const reach = soft(seg(p, 0.16, 0.36)) * (1 - soft(seg(p, 0.6, 0.7)));
     const place = bump(p, 0.36, 0.46);
     const pat = bump(p, 0.48, 0.54) + bump(p, 0.55, 0.61);
     const cheer = soft(seg(p, 0.8, 0.88)) * (1 - soft(seg(p, 0.97, 1)));
     return {
       poised: true,
-      weapon: lerp(10, 26, shoulder), arm: lerp(26, 18, shoulder), lift: 4 * bump(p, 0.78, 0.92), tilt: 0.12 * reach,
+      weapon: lerp(12, 30, sling), arm: lerp(28, 8, sling), lift: 4 * bump(p, 0.78, 0.92), tilt: 0.14 * reach,
       rig: (r) => {
-        r.squat = q(3.2 * kneel);
+        r.squat = q(3.6 * kneel);
         r.air = bump(p, 0.78, 0.92) > 0.4;
-        r.backArm = cheer > 0.1 ? [q(2 * cheer), q(-10 * cheer)] : [q(lerp(3, 8, reach)), q(lerp(-1, 5, reach) + 2 * place - 2.5 * pat)];
-        danceLegs(r, [kneel, [3.6, 0, 8], [-5.8, 0, -76]], [cheer, [1.2, -1.5, 6], [-1.2, -1.5, -6]]);
+        r.backArm = cheer > 0.1 ? dancerHand([q(2 * cheer), q(-10 * cheer)]) : [q(lerp(0, 9, reach)), q(lerp(-1, 5, reach) + 2 * place - 2.5 * pat)];
+        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]], [cheer, [1.2, -1.5, 6], [-1.2, -1.5, -6]]);
         if (cheer > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
         else if (pat > 0.3) r.eyes = 'happy';
         else if (reach > 0.5) r.mouth = 'grin';
@@ -2737,10 +2755,12 @@ export const MOVES = {
     };
   },
   // Big Bertha (her finisher, 1.6 s; the giant bolt at 0.65): the crossbow unfolds into a ballista
-  // (drawn as an effect over her) as she drops onto one knee behind it; she winds the crank round
-  // three times, her whole body bobbing into each turn; it shudders harder and harder as it charges,
-  // her eyes screwed half shut; then the giant bolt goes, the kick throws her up off her knee and
-  // skids her back with the crossbow bucking high; she settles, sooty, and pumps her fist with a grin.
+  // (drawn as an effect over her) as she drops onto one knee behind it, out at arm's length; she
+  // winds the crank round three times in big circles, her whole body bobbing into each turn; it
+  // shudders harder and harder as it charges, her eyes screwed half shut; then the giant bolt goes,
+  // the kick throws her up off her knee and skids her back with the crossbow bucking high; she
+  // lands, sooty, and holds her signature pose: feet wide, the crossbow propped up at her shoulder,
+  // her fist punched up and a big grin.
   aebertha(p) {
     const kneel = soft(seg(p, 0, 0.14)) * (1 - soft(seg(p, 0.64, 0.68)));
     const crank = seg(p, 0.14, 0.48);
@@ -2751,21 +2771,21 @@ export const MOVES = {
     const kick = ease(seg(p, 0.65, 0.69)) * (1 - soft(seg(p, 0.72, 0.9)));
     const thrown = Math.sin(Math.PI * seg(p, 0.65, 0.8));
     const skid = soft(seg(p, 0.65, 0.82));
-    const settle = soft(seg(p, 0.8, 0.88));
-    const grin = soft(seg(p, 0.88, 0.94)) * (1 - soft(seg(p, 0.99, 1)));
+    const settle = soft(seg(p, 0.8, 0.86)) * (1 - soft(seg(p, 0.86, 0.92)));
+    const pose = soft(seg(p, 0.86, 0.93));
     return {
       poised: true,
-      weapon: -4 - 2 * bob + 3 * shake - 46 * kick + 6 * charge, arm: 26 + 14 * kick, lunge: -14 * skid * (1 - 0.3 * grin) + 1.2 * shake, lift: 7 * thrown,
-      tilt: 0.06 * kneel + 0.03 * bob - 0.32 * kick + 0.02 * shake,
+      weapon: lerp(16, -4, kneel) - 2 * bob + 3 * shake - 52 * kick + 6 * charge - 40 * pose, arm: lerp(30, AE_AIM - 4, kneel) + 14 * kick - 14 * pose, lunge: -14 * skid * (1 - 0.3 * pose) + 1.2 * shake, lift: 7 * thrown + breathe(p) * 0.4 * pose,
+      tilt: 0.06 * kneel + 0.03 * bob - 0.32 * kick + 0.02 * shake - 0.06 * pose,
       rig: (r) => {
-        r.squat = q(3.4 * kneel + 1.6 * settle * (1 - grin));
+        r.squat = q(4 * kneel + 2 * settle);
         r.by = q(0.8 * bob);
         r.air = thrown > 0.4;
-        r.backArm = grin > 0.2 ? [q(3 * grin), q(-10 * grin)] : cranking ? crankHand(crank * 3, 3.4) : charge > 0 ? [q(3), q(-1)] : kick > 0.05 ? [q(-6 * kick), q(-5 * kick)] : [3, -1];
+        r.backArm = pose > 0.1 ? dancerHand([q(3 * pose), q(-10 * pose)]) : cranking ? crankHand(crank * 3, 4.6) : charge > 0 ? [q(-2), q(-1)] : kick > 0.05 ? [q(-6 * kick), q(-5 * kick)] : [-2, -1];
         r.hairLift = kick > 0.3 ? 1 : charge > 0.6 ? -1 : 0;
         r.cape -= q(4 * kick);
-        danceLegs(r, [kneel, [3.6, 0, 8], [-5.8, 0, -76]], [thrown, [2.6, -3, 24], [-2.6, -2.6, -30]], [settle * (1 - thrown), [3.6, 0, 6], [-3.6, 0, -12]], [grin, [2, 0, 4], [-2, 0, -6]]);
-        if (grin > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
+        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]], [thrown, [2.6, -3, 24], [-2.6, -2.6, -30]], [settle * (1 - thrown), [5, 0, 14], [-3.6, 0, -16]], [pose, [4.6, 0, 6], [-4.6, 0, -10]]);
+        if (pose > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
         else if (kick > 0.2) [r.eyes, r.mouth] = ['blink', 'open'];
         else if (charge > 0.2) [r.eyes, r.mouth] = ['half', 'grit'];
         else if (cranking) r.mouth = 'grin';
@@ -5369,6 +5389,61 @@ export function hefted(mv, kind = null, p = 0) {
   }
   return out;
 }
+// The Warrior line's moves each end on a pose of their own (they all used to settle into the same
+// blade-down-forward stance), and the finishers on a held signature pose: from `at` the move eases
+// (over `span`) into its end pose and holds it, breathing, until the settle back to the shoulder.
+// end: [at, span, { weapon, arm, lunge, tilt, lift }, rig(r, k)]; the blade takes the short way.
+const legsTo = (r, k, front, back) => {
+  const mixL = (a, b) => a.map((v, i) => (i === 2 ? Math.round(lerp(v, b[i], k) / 2) * 2 : q(lerp(v, b[i], k))));
+  r.frontLeg = mixL(r.frontLeg ?? [0.8, 0, 0], front);
+  r.backLeg = mixL(r.backLeg ?? [-0.8, 0, 0], back);
+};
+const handTo = (r, k, hand) => { r.backArm = [q(lerp(r.backArm?.[0] ?? 0, hand[0], k)), q(lerp(r.backArm?.[1] ?? 0, hand[1], k))]; };
+const END_POSES = {
+  // Shoulder Drop: she heaves the blade up and lays it flat across the back of her shoulders,
+  // free hand on her hip, pleased with it.
+  gsdrop: [0.66, 0.26, { weapon: -102, arm: 54, lunge: 1, tilt: -0.04 }, (r, k) => { r.squat = 0; legsTo(r, k, [2.4, 0, 4], [-1.6, 0, -4]); handTo(r, k, [-1, 2]); if (k > 0.6) r.mouth = 'grin'; }],
+  // Whirlwind: the spin carried on into a flourish, the blade swept out level in front, her free
+  // arm flung wide behind.
+  gsspin: [0.78, 0.18, { weapon: 104, arm: 58, lunge: 6, tilt: 0.1 }, (r, k) => { legsTo(r, k, [4.6, 0, 8], [-4, 0, -14]); handTo(r, k, [-7, -4]); r.hairLift = k > 0.5 ? 1 : 0; }],
+  // Greatsword Cleave: the blade left buried, she holds the crouch over it, a hand on her knee.
+  gscleave: [0.7, 0.24, { weapon: 154, arm: 42, lunge: 8, tilt: 0.16 }, (r, k) => { r.squat = 2; legsTo(r, k, [4, 0, 10], [-4, 0, -12]); handTo(r, k, [3, 2]); }],
+  // Leaping Chop: landed on one knee, the blade point-down beside her.
+  leapchop: [0.66, 0.24, { weapon: 176, arm: 32, lunge: 9, tilt: 0.04 }, (r, k) => { r.squat = q(3 * k); legsTo(r, k, [3.6, 0, 8], [-5.8, 0, -76]); handTo(r, k, [-4, -1]); }],
+  // Sky Splitter: she rips the blade out of the crater and sweeps it low behind her, crouched wide
+  // and leaning in, free hand forward, ready to go again.
+  skysplit: [0.72, 0.22, { weapon: 226, arm: 20, lunge: 10, tilt: 0.14 }, (r, k) => { r.squat = 2; legsTo(r, k, [5, 0, 10], [-5, 0, -10]); handTo(r, k, [4, 0]); }],
+  // Titan Breaker (a finisher): she stands up out of the landing and hoists the greatsword high
+  // behind her head, blade upright, her free fist thrust forward with a shout, and holds it.
+  gstitan: [0.8, 0.12, { weapon: -30, arm: 60, lunge: 4, tilt: -0.06 }, (r, k) => { r.squat = q(1 - k); legsTo(r, k, [4, 0, 6], [-4.4, 0, -10]); handTo(r, k, [5, -3]); r.cape = -3; if (k > 0.5) r.mouth = 'open'; }],
+  // Grand Verdict (a finisher): the blade held out level at them, judgement passed, her free hand on
+  // her heart, eyes half shut.
+  plverdict: [0.8, 0.12, { weapon: 86, arm: 60, lunge: 5, tilt: 0.04 }, (r, k) => { legsTo(r, k, [4, 0, 6], [-3, 0, -10]); handTo(r, k, [4, -4]); r.cape = -3; if (k > 0.5) [r.eyes, r.mouth] = ['half', null]; }],
+  // Crimson Eclipse (a finisher): the axe left planted head-down in the crater, he leans on the haft
+  // and throws his free fist up with a roar.
+  bkeclipse: [0.8, 0.12, { weapon: 172, arm: 30, lunge: 4, tilt: -0.04 }, (r, k) => { r.squat = 1; legsTo(r, k, [3.6, 0, 6], [-4, 0, -10]); handTo(r, k, [-3, -8]); r.hairLift = -1; if (k > 0.5) [r.eyes, r.mouth] = ['blink', 'open']; }],
+  // Oath Cut: the blade lowered point-down before her, both hands on the pommel: a knight at rest.
+  ploath: [0.72, 0.22, { weapon: 178, arm: 26, lunge: 2, tilt: 0 }, (r, k) => { r.squat = 0; legsTo(r, k, [1.4, 0, 0], [-1.6, 0, -2]); handTo(r, k, [5, 0]); if (k > 0.6) r.eyes = 'half'; }],
+  // Dawn Step: the blade lifted out up and forward like the sun she swept up, held there.
+  pldawn: [0.74, 0.2, { weapon: 52, arm: 58, lunge: 5, tilt: -0.04 }, (r, k) => { legsTo(r, k, [4, 0, 6], [-3.6, 0, -12]); handTo(r, k, [-5, -3]); }],
+  // Halo: the blade swept out low to the side, free palm open behind her.
+  plhalo: [0.74, 0.2, { weapon: 128, arm: 50, lunge: 3, tilt: 0.04 }, (r, k) => { legsTo(r, k, [3, 0, 4], [-3.4, 0, -8]); handTo(r, k, [-7, -5]); }],
+  // Lance: the thrust held out level, long and steady over the front foot.
+  pllance: [0.74, 0.2, { weapon: 92, arm: 60, lunge: 8, tilt: 0.1 }, (r, k) => { legsTo(r, k, [5.6, 0, 8], [-4.4, 0, -16]); handTo(r, k, [-6, -1]); }],
+};
+function heldEnd(mv, p, [at, span, pose, rig]) {
+  const k = soft(seg(p, at, at + span));
+  if (!mv || k <= 0 || mv.weapon == null) return mv;
+  const d = ((((pose.weapon - mv.weapon) % 360) + 540) % 360) - 180;
+  const hold = k >= 1 ? Math.sin(p * Math.PI * 6) * 0.3 : 0;
+  const base = mv.rig;
+  return {
+    ...mv, orbit: k > 0.5 ? false : mv.orbit, turn: k > 0.5 ? 1 : mv.turn,
+    weapon: mv.weapon + d * k + hold * 2, arm: lerp(mv.arm, pose.arm, k), lunge: lerp(mv.lunge ?? 0, pose.lunge ?? 0, k), tilt: lerp(mv.tilt ?? 0, pose.tilt ?? 0, k), lift: lerp(mv.lift ?? 0, pose.lift ?? 0, k),
+    trail: k < 0.3 && mv.trail,
+    rig: (r) => { base?.(r); rig(r, k); },
+  };
+}
 const HEFT = new Set(['sword', 'axe', 'spear', 'staff']);
 // A staff is longer than she is tall: pointed steeply down it would run through the floor, so its
 // downward angles are eased toward level (front and back alike).
@@ -5396,6 +5471,7 @@ export function moveAt(kind, progress, dur = 0.35, feel = null) {
   const f = FEEL[feel?.weapon] ?? {};
   const p = bend(clamp01(progress), feel?.hit, f.pre, f.post);
   let mv = after(sway(kind, p, dur, rawMoveAt(kind, p, dur), f), p, feel?.hit, f, feel?.fin);
+  if (END_POSES[kind]) mv = heldEnd(mv, p, END_POSES[kind]);
   if (HEFT.has(feel?.weapon)) mv = hefted(mv, kind, p);
   if (feel?.weapon === 'staff') mv = staffed(mv);
   return DANCE_MOVES.has(kind) && DANCE_STYLES[danceStyle] ? DANCE_STYLES[danceStyle](mv, (q2) => rawMoveAt(kind, clamp01(q2), dur), p, dur, kind) : mv;

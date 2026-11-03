@@ -182,11 +182,15 @@ export const LIFE_MOVES = {
     const end = soft(seg(p, 0.9, 1));
     // From the low ready (head down by the rock) up over the shoulder, then down into the rock.
     // (The second swing starts where the first one ended.)
-    const raised = lerp(110, -88 * k + 8 * s.hang, s.wind);
+    // (At the top the pick stands up behind her head, its head clear above her hair, so the big
+    // overhead arc reads at game size.)
+    const raised = lerp(110, -10 * k + 8 * s.hang, s.wind);
     const weapon = lerp(raised, 138, s.strike) - 28 * s.free * (first ? 1 : 0.5) + shiver - 20 * end;
-    const arm = lerp(lerp(first ? 48 : 74, 222, s.wind), 64, s.strike) + 10 * s.free * (first ? 1 : 0.5) + shiver * 0.5 - 14 * end;
+    const arm = lerp(lerp(first ? 48 : 74, 204, s.wind), 64, s.strike) + 10 * s.free * (first ? 1 : 0.5) + shiver * 0.5 - 14 * end;
     return {
-      tool: 'pickaxe', armBack: s.wind > 0.12 && s.strike < 0.45,
+      tool: 'pickaxe', armBack: arm > 128,
+      // (Raised, she holds it by the very end of the haft, so the pick stands clear above her hair.)
+      grip: -8 * top,
       weapon, arm, trail: s.strike > 0.1 && s.strike < 1,
       tilt: -0.16 * k * top + 0.2 * bit, lunge: -2 * top + 3 * bit, lift: 1.2 * top * k,
       hitAt,
@@ -208,7 +212,7 @@ export const LIFE_MOVES = {
     };
   },
 
-  // Chopping wood: the axe drawn back low behind her, the body coiling away, then swung flat into
+  // Chopping wood: the axe hauled up over her head, the body coiling back, then swung round and down into
   // the trunk at chest height; it bites and sticks (a held beat, chips flying), she wrenches it
   // out leaning back, and swings again harder. She ends looking up the shaking tree, pleased.
   chop(p) {
@@ -221,9 +225,14 @@ export const LIFE_MOVES = {
     const shiver = jolt(p, hitAt[0], 0.07, 3) + jolt(p, hitAt[1], 0.09, 4);
     const end = soft(seg(p, 0.92, 1));
     const big = first ? 1 : 1.15;
+    // Hauled right up over her head (the axe head standing clear above her hair, behind it), then
+    // brought round and down into the trunk in one big overhead arc.
+    const weapon = lerp(lerp(first ? 60 : 50, -8 * big, s.wind), 94, s.strike) - 30 * s.pull * (first ? 1 : 0.4) + shiver - 20 * end;
+    const arm = lerp(lerp(55, 198 + 8 * (big - 1) / 0.15, s.wind), 96, s.strike) - 30 * s.pull * (first ? 1 : 0.6) + shiver * 0.4 - 15 * end;
     return {
-      tool: 'axe', armBack: top > 0.3,
-      weapon: lerp(lerp(first ? 60 : 50, -70 * big, s.wind), 94, s.strike) - 30 * s.pull * (first ? 1 : 0.4) + shiver - 20 * end, arm: lerp(lerp(55, -25 * big, s.wind), 96, s.strike) - 30 * s.pull * (first ? 1 : 0.6) + shiver * 0.4 - 15 * end,
+      tool: 'axe', armBack: arm > 128,
+      grip: -8 * top,
+      weapon, arm,
       tilt: -0.14 * big * top + 0.14 * bit - 0.06 * s.pull * (1 - end) - 0.05 * end, lunge: -3 * top + 4 * bit - 2 * s.pull * (1 - end), lift: 0,
       trail: s.strike > 0.1 && s.strike < 1,
       hitAt,
@@ -329,7 +338,7 @@ export const LIFE_MOVES = {
     const tug = Math.sin(t * 26) * up;
     return {
       tool: up > 0.3 ? 'rod2' : 'rod1',
-      weapon: lerp(48, 26, up) + 4 * tug, arm: lerp(36, 58, up) + 3 * tug, lift: -6.5 * (1 - up) + 3 * startle, tilt: -0.1 * up + 0.03 * tug, lunge: -1.5 * up,
+      weapon: lerp(48, 42, up) + 4 * tug, arm: lerp(36, 68, up) + 3 * tug, lift: -6.5 * (1 - up) + 3 * startle, tilt: -0.1 * up + 0.03 * tug, lunge: -1.5 * up,
       face: { wide: true, mouth: t < 0.3 ? 'gasp' : 'grit', brows: [[1, -0.2], [1, -0.2]], extra: [`bang${Math.min(3, Math.floor(t * 14))}`, 'shock'] },
       rig: (r) => {
         r.squat = q(4 * (1 - up) + 1 * up);

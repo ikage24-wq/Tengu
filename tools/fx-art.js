@@ -7223,6 +7223,24 @@
   E.cospore = shareRing('spore');
   E.costomp = shareRing('stomp');
 
+  // A revive under way (picked by progress): a peach ring on the floor round the fallen friend, its
+  // dim track filling clockwise from the top in full light, a star riding the leading edge, the
+  // floor inside warming as it closes.
+  E.teamrevivering = {
+    w: 260, h: 110, n: 12, fps: 12, px: 130, py: 55,
+    draw(ctx, i) {
+      const k = (i + 1) / 12;
+      const RXr = 32 * G;
+      const RYr = 10 * G;
+      floorDisc(ctx, TEAM[2], 130, 55, RXr - 6, RYr - 2, 0.12 + 0.22 * k);
+      floorRing(ctx, TEAM, 130, 55, RXr, RYr, 18, { a: 0.45 });
+      const a0 = -Math.PI / 2;
+      const a1 = a0 + TAU * k;
+      floorRing(ctx, k >= 1 ? ['#ffffff', '#ffffff', '#fff1dc', '#ffc58a', '#c4567a'] : TEAM, 130, 55, RXr, RYr, 24, { arcs: [[a0, a1]] });
+      sparkle(ctx, TEAM, 130 + Math.cos(a1) * (RXr - 6), 55 + Math.sin(a1) * (RYr - 2), 22 + 6 * k, i * 0.3);
+    },
+  };
+
   // The blow gathering (picked by progress, not looped): a bright inner ring closing out toward
   // the rim, the floor inside warming to white as it lands.
   E.cosharefill = {

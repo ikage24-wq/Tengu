@@ -91,7 +91,16 @@ const guardSize = (def) => ({ rx: def.w * 0.62 + 8, ry: def.h * 0.62 + 6 });
 
 // ---------- On the floor, under everyone ----------
 
+// The share rings on screen this frame, so name tags standing in one step back (tagFade) and
+// the ring and the stars over it stay readable instead of a pile of labels on the floor.
+let ringsOnScreen = [];
+export function tagFade(x, y) {
+  for (const r of ringsOnScreen) if (Math.abs(x - r.x) < r.w / 2 + 6 && Math.abs(y - r.y) < 22) return 0.3;
+  return 1;
+}
+
 export function drawCoopBack(ctx, world, cam, time) {
+  ringsOnScreen = [];
   for (const m of coopBosses(world)) {
     for (const s of m.coop.mechs) {
       if (s.def.kind === 'split' && s.ring) drawRing(ctx, world, m, s.ring, cam, time);
@@ -110,6 +119,13 @@ function drawRing(ctx, world, m, r, cam, time) {
   const y = r.y - cam.y;
   const born = smooth(r.t / 0.35);
   const scale = (r.w / RING_W) * (0.8 + 0.2 * born);
+  ringsOnScreen.push({ x, y, w: r.w });
+  // A deep rim under the ring (its own drawing, darkened and a touch wider) so the gold reads on any
+  // ground, even gold-brown earth.
+  ctx.save();
+  ctx.filter = 'brightness(0.32) saturate(1.6)';
+  fxSprite(ctx, ringOf(m.def.id), x, y + 1, { t: time, scale: scale * 1.05, alpha: born * 0.7 });
+  ctx.restore();
   fxSprite(ctx, ringOf(m.def.id), x, y, { t: time, scale, alpha: born });
   fxSprite(ctx, 'celcosharefill', x, y, { p: p * 0.999, scale, alpha: born * (p > 0.8 ? 0.75 + 0.25 * Math.sin(time * 18) : 1) });
 }

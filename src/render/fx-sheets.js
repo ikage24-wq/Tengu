@@ -279,6 +279,7 @@ export const FX_SHEETS = {
   celteamcatch: { w: 202, h: 205, n: 8, fps: 30, px: 101, py: 109, d: 3, loop: false },
   celteamlink: { w: 50, h: 50, n: 6, fps: 12, px: 25, py: 25, d: 3, loop: true },
   celteamrevive: { w: 183, h: 284, n: 9, fps: 18, px: 91, py: 247, d: 3, loop: false },
+  celteamrevivering: { w: 242, h: 129, n: 12, fps: 12, px: 122, py: 66, d: 3, loop: false },
   celteamburst: { w: 383, h: 376, n: 11, fps: 20, px: 195, py: 188, d: 3, loop: false },
   celcohoney: { w: 432, h: 143, n: 8, fps: 10, px: 216, py: 96, d: 3, loop: true },
   celcospore: { w: 434, h: 143, n: 8, fps: 10, px: 216, py: 96, d: 3, loop: true },
