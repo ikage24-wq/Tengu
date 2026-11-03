@@ -12,6 +12,7 @@
 
 import { sprite, blit } from '../pixel.js';
 import { springStep } from '../animator.js';
+import { limb } from './critter.js';
 
 export const TAU = Math.PI * 2;
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -179,4 +180,20 @@ export function inPart(ctx, matOf, part, fn) {
   ctx.transform(...matOf(part));
   fn();
   ctx.restore();
+}
+
+// ---------- Chains ----------
+// Bendy things (necks, tails, tentacles, locks of hair) as a chain of tapered segments, each
+// hung from the end of the one before and turned by its own channel, so a wave runs down them and
+// the tips trail. `segs` is [[length, width at the root, width at the tip], ...]; `shape(i, len,
+// w0, w1)` draws segment i along +x from (w0 / 2 + 2, h / 2) (default: a plain tapered limb in
+// `color`); `rot(S, a, i)` turns it (the first one relative to the parent, the rest relative to
+// the segment before). Returns parts named `${name}0`, `${name}1`...
+export function chainParts(name, { parent, at, segs, key, color, shape, rot, when }) {
+  return segs.map(([len, w0, w1], i) => {
+    const h = Math.ceil(Math.max(w0, w1) + 4);
+    const x0 = w0 / 2 + 2;
+    const s = () => part(`${key}|seg${i}`, Math.ceil(len + w0 / 2 + w1 / 2 + 4), h, () => (shape ? shape(i, len, w0, w1, x0, h / 2) : limb([x0, h / 2], [x0 + len, h / 2], w0, w1, color)));
+    return { name: `${name}${i}`, parent: i ? `${name}${i - 1}` : parent, pivot: [x0, h / 2], at: i ? () => [segs[i - 1][0], 0] : at, rot: (S, a) => rot(S, a, i), s, when };
+  });
 }

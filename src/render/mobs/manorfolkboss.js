@@ -315,7 +315,7 @@ const rondoRig = makeRig({
     if (a.ph.since >= 0 && a.ph.since < 0.18) inPart(ctx, mat, 'rapier', () => {
       ctx.globalAlpha = a.alpha * (1 - a.ph.since / 0.18);
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(8, 4.6, 36, 0.8);
+      ctx.fillRect(6, -0.4, 36, 0.8);
     });
   },
 });
