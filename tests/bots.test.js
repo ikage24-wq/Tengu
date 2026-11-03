@@ -833,10 +833,17 @@ function lifeField(mapId, seed, secs, { night = false, each = null } = {}) {
   const bots = createBots(world, seeded(seed), { clock: EVENING });
   loadMap(world, mapId, 'start');
   world.forceNight = night ? 1 : 0;
-  for (let t = 0; t < secs; t += 1 / 30) {
-    updateWorld(world, 1 / 30, NONE);
-    updateBots(bots, world, 1 / 30);
-    each?.(world, bots);
+  // (The world's own dice are seeded too, so a run always plays out the same way.)
+  const random = Math.random;
+  Math.random = seeded(seed + 1000);
+  try {
+    for (let t = 0; t < secs; t += 1 / 30) {
+      updateWorld(world, 1 / 30, NONE);
+      updateBots(bots, world, 1 / 30);
+      each?.(world, bots);
+    }
+  } finally {
+    Math.random = random;
   }
   return { world, bots, lines };
 }
