@@ -23,7 +23,8 @@
 
 import { play, now, audioReady, duck, setDensity } from './engine.js';
 import { MATERIAL } from './materials.js';
-import { sfxBuffer } from './bank.js';
+import { sfxBuffer, isRecorded } from './bank.js';
+import { RECORDED } from './recorded.js';
 import { RECIPES } from './recipes.js';
 
 const UI = new Set(['click', 'cursor', 'cancel', 'open', 'close', 'denied', 'openPaper', 'openBag', 'skillUp', 'buy']);
@@ -80,7 +81,7 @@ function voice(name, o = {}) {
     at = Math.max(t, jingleEnd);
     jingleEnd = at + buf.duration * 0.9;
   }
-  const db = (r.db ?? -14) + (o.db ?? 0) + (ally ? ALLY_DB : 0);
+  const db = (r.db ?? -14) + (isRecorded(name) ? RECORDED[name].trim : 0) + (o.db ?? 0) + (ally ? ALLY_DB : 0);
   const v = play(buf, { bus: UI.has(name) ? 'ui' : o.bus ?? 'sfx', db, rate, pan: UI.has(name) ? 0 : o.pan, room: r.room ? 0.35 : 0, at });
   voices.push({ name, v, end: (at || t) + buf.duration / rate, ranked });
   if (ranked) {

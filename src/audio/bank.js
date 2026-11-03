@@ -13,6 +13,7 @@ import { SONGS } from './songs.js';
 import { loadSamples, transferables } from './samples.js';
 import { onUnlock, toBuffer, decodeFile } from './engine.js';
 import { trackFor } from './tracks.js';
+import { RECORDED, recFiles } from './recorded.js';
 
 const SFX_SR = 44100;
 const SONG_SR = 32000;
@@ -62,6 +63,8 @@ if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
 }
 onUnlock(() => {
   unlocked = true;
+  // The recorded effects (recorded.js) are decoded as soon as there's audio.
+  for (const name of Object.keys(RECORDED)) loadRecorded(name);
   for (const [name, variants] of raw) sfxBufs.set(name, variants.map((v) => toBuffer(v, SFX_SR)));
 });
 
@@ -127,6 +130,12 @@ function receive(m) {
 // A ready buffer for an effect (a random one of its variants), or null while it's still being
 // made (it's then moved to the front of the line).
 export function sfxBuffer(name) {
+  if (RECORDED[name]) {
+    const rec = recBufs.get(name);
+    if (rec) return rec[Math.floor(Math.random() * rec.length)];
+    loadRecorded(name);
+    // Until the recording is decoded, the recipe stands in.
+  }
   const bufs = sfxBufs.get(name);
   if (bufs) return bufs[Math.floor(Math.random() * bufs.length)];
   if (!RECIPES[name]) return null;
@@ -214,3 +223,19 @@ function trackBuffer(key, then) {
     });
   return null;
 }
+
+// ----- The recorded effects (recorded.js) -----
+const recBufs = new Map();
+const recAsked = new Set();
+function loadRecorded(name) {
+  if (!base || !unlocked || recAsked.has(name)) return;
+  recAsked.add(name);
+  Promise.all(recFiles(name).map((f) => fetch(new URL(f, base)).then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(`${f}: ${r.status}`)))).then(decodeFile)))
+    .then((bufs) => bufs.every(Boolean) && recBufs.set(name, bufs))
+    .catch((err) => {
+      recAsked.delete(name);
+      console.warn('sound', name, err);
+    });
+}
+// Whether a sound is playing from its recording yet (it then takes its loudness trim).
+export const isRecorded = (name) => recBufs.has(name);
