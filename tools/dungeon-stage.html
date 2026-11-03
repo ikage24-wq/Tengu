@@ -4,12 +4,17 @@
 <script type="module">
 // Dev tool: a whole Rootwood Hollow run played by an autopilot hero with a found group, drawn
 // with the game's own renderer and HUD, for dungeon demo videos (tools/record-dungeon.cjs).
-// ?job=archer&level=12&seed=11, then from outside: window.sim(secs) plays without drawing,
-// window.step(secs) plays and draws, window.frame() gives the picture, window.info() the run's
-// state, window.caption(title, sub) a room card.
+// ?job=archer&level=12&seed=11&dungeon=hollow, then from outside: window.sim(secs) plays without
+// drawing, window.step(secs) plays and draws, window.frame() gives the picture, window.info() the
+// run's state, window.caption(title, sub) a room card, window.room(mapId) jumps the run to one of
+// its rooms (any dungeon's: the run restarts for that dungeon), window.fade(a) a black fade over the
+// picture (for montages, tools/record-dungeons.cjs).
 import { makeBotCharacter, createBots, updateBots } from '../src/world/bots.js';
 import { createWorld, updateWorld } from '../src/world/world.js';
 import { startRun, groupOf, isUp } from '../src/world/dungeon.js';
+import { MAPS } from '../src/data/maps.js';
+import { DUNGEONS } from '../src/data/dungeons.js';
+import { loadMap } from '../src/world/world.js';
 import { navOf, surfaceOf, surfaceBelow, findPath, followPath } from '../src/world/nav.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
 import { setHd, nextFrame } from '../src/render/pixel.js';
@@ -34,11 +39,12 @@ const rng = () => {
 Math.random = rng;
 const level = Number(q.get('level') ?? 12);
 const char = makeBotCharacter(rng, { name: q.get('name') ?? 'Mochi', pro: true, level, jobs: [q.get('job') ?? 'archer'] });
-char.mapId = 'hollow_gate';
+const dungeon = q.get('dungeon') ?? 'hollow';
+char.mapId = DUNGEONS[dungeon].gate;
 const w = createWorld(char);
 w.log = () => {};
 w.bots = createBots(w, rng, { clock: () => new Date(2026, 9, 28, 20, 0) });
-const why = startRun(w);
+const why = startRun(w, dungeon);
 if (why) console.log('no run:', why);
 const cam = createCamera();
 const ui = createUiState();
@@ -163,9 +169,33 @@ function step(secs) {
     ctx.globalAlpha = 1;
     card.a -= secs / 3;
   }
+  if (fadeA > 0) {
+    ctx.fillStyle = `rgba(20,14,32,${fadeA})`;
+    ctx.fillRect(0, 0, VW, VH);
+  }
 }
 
+// Jumps the run to a room (restarting the run for that room's dungeon if it's another one), with
+// the group there and no arrival scene.
+function room(id) {
+  const d = MAPS[id].dungeon;
+  if (!w.dungeon || w.dungeon.id !== d) {
+    w.dungeon = null;
+    loadMap(w, DUNGEONS[d].gate, 'start');
+    const no = startRun(w, d);
+    if (no) return no;
+  }
+  loadMap(w, id, null);
+  w.scene = null;
+  w.cine = null;
+  w.god = true;
+  return w.map.id;
+}
+let fadeA = 0;
+
 window.sim = sim;
+window.room = room;
+window.fade = (a) => (fadeA = a);
 window.step = step;
 window.caption = (title, sub) => (card = title ? { title, sub, a: 1.6 } : null);
 window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
