@@ -973,6 +973,22 @@ function gacha_ticket() {
   return out;
 }
 
+// A Party Token: a round pink coin with a gold rim, two little hearts side by side on its face
+// (earned together), and a sparkle.
+function party_token() {
+  const pink = '#ffb0d8';
+  const out = [];
+  out.push(...ball(oval(8, 8.4, 6.6, 6.6, 0, 32), GOLD, { glow: 0.6 }));
+  out.push(...ball(oval(8, 8.4, 5.2, 5.2, 0, 28), pink, { glow: 0.5 }));
+  const heart = (cx, cy, r, c) => {
+    const pts = [...bez3([cx, cy + r * 1.1], [cx - r * 1.6, cy], [cx - r * 1.1, cy - r * 1.5], [cx, cy - r * 0.5], 8), ...bez3([cx, cy - r * 0.5], [cx + r * 1.1, cy - r * 1.5], [cx + r * 1.6, cy], [cx, cy + r * 1.1], 8).slice(1)];
+    return ball(pts, c, { glow: 0.8 });
+  };
+  out.push(...heart(6.3, 8.6, 1.9, '#ff6b9a'), ...heart(9.8, 8.2, 1.9, '#ffffff'));
+  out.push(twinkle(13.6, 2.8, 1.5), ...glint(4.6, 5.4, 0.5));
+  return out;
+}
+
 // A parcel in brown paper tied with a mint ribbon and a bow on top.
 function parcel() {
   const kraft = '#e8b97a';
@@ -1008,7 +1024,7 @@ function framed(draw) {
 
 const ART = {
   fluff, shell, sprout_leaf, mushcap, ribbon, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
-  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket,
+  bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket, party_token,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,
 };
 

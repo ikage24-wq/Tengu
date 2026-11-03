@@ -23,6 +23,7 @@ import { SKILLS } from '../data/skills.js';
 import { inZone } from './story.js';
 import { helpGoal, tickHelpers, tickBotBuffs } from './coop-life.js';
 import { packAt, chooseSkill, commandFor, beginStep, airborne, evade, focusOf, catchable, standBy, drink, tickCallouts, callFinisher, callout, holdFire } from './botfight.js';
+import { coopAfterThink } from './coop.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -1089,7 +1090,10 @@ export function updateParty(bots, world, dt) {
         if (help) {
           br.goal = help;
           br.target = null;
+          return;
         }
+        // (Boss mechanics and party quests: world/coop.js.)
+        coopAfterThink(bot, world);
       },
       // (In a dungeon, the tank gets the monster first.)
       canFight: !bot.lifeHelp && !holdFire(bot, world),

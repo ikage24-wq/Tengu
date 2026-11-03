@@ -8,6 +8,7 @@ import { MAPS } from '../data/maps.js';
 import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
 import { loadMap } from '../world/world.js';
 import { friendWorking, friendFeast } from '../world/coop-life.js';
+import { onPartyQuestMsg } from '../world/partyquest.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -530,6 +531,11 @@ export const togetherApi = {
   gathered(world, items) {
     if (online.party) send({ t: 'gath', map: world.map.id, items });
   },
+  // A party quest taken, or progress on it, for friends in your party (world/partyquest.js).
+  partyQuest(world, msg) {
+    for (const g of partyFriends()) send({ t: 'pq', to: g.id, ...msg });
+  },
+  partyFriendCount: () => partyFriends().length,
 };
 
 export function handleTogether(world, msg, g) {
@@ -551,6 +557,9 @@ export function handleTogether(world, msg, g) {
       return onGift(world, msg, g);
     case 'party':
       return onParty(world, msg, g);
+    case 'pq':
+      if (msg.to === online.id && inParty(msg.id)) onPartyQuestMsg(world, msg, g.name);
+      return;
     case 'insp':
       return onInspect(world, msg, g);
     case 'ping':

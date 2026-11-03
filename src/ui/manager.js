@@ -26,6 +26,7 @@ import { tradeWindow } from './trade.js';
 import { tradeSay } from '../net/together.js';
 import { online } from '../net/online.js';
 import { drawMenu, drawPartyPanel } from './party.js';
+import { drawPartyQuestCard } from './partyboard.js';
 import { isGm } from '../world/gm.js';
 import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
@@ -239,6 +240,7 @@ export function drawUi(ui, state, world) {
   // The guide arrow and pill, while a route is set.
   drawGuide(ui, state, world);
   drawPartyPanel(ui, state, world);
+  drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);
   const m = ui.mouse;
   const t = performance.now() / 1000;

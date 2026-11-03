@@ -109,6 +109,13 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
     quests: ['story_2_2', 'hollow_heart'],
   },
+  // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
+  // region at your level, shared by everyone in your party, and Party Tokens to trade.
+  posy: {
+    id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',
+    look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },
+    greeting: "Hi hi! Fresh party quests on the board! Everyone in your party chips in, and everyone gets paid. Friends or not, the more the merrier!",
+  },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
     building: 'cart', sign: "Marlo's Wares",

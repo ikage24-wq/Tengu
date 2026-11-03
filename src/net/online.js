@@ -16,6 +16,7 @@ import { createAnim } from '../render/animator.js';
 import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
+import { coopHit } from '../world/coopboss.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
@@ -584,7 +585,9 @@ function onHit(world, msg) {
   if (!m || m.hp <= 0) return;
   // The same hit the player saw land in their own game: knockback, launch, holds and burns. In a
   // shared dungeon run it also stirs the monster's anger at them.
-  const dmg = world.dungeon ? noteHit(world, m, { damage: msg.d, party: msg.id, fromX: msg.x }) : msg.d;
+  let dmg = world.dungeon ? noteHit(world, m, { damage: msg.d, party: msg.id, fromX: msg.x }) : msg.d;
+  // (A boss's guard notes which side a friend struck from: world/coopboss.js.)
+  if (m.coop) dmg = coopHit(world, m, { damage: dmg, fromX: msg.x });
   if (hitMob(m, dmg, msg.x, world.now, { knock: msg.k, launch: msg.l })) {
     // Whoever struck the last blow tells everyone it fell (see 'dead'); this game only shares in
     // it, unless it hit the monster too.

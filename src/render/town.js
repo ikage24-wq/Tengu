@@ -1030,6 +1030,41 @@ const ROUTINES = {
     const n = Math.min(4, 1 + Math.floor(seg(b.u, 0.15, 0.85) * 4));
     return { rig: { frontArm: arm(3 * k, -6 * k), backArm: arm(2 * k, -6 * k + (n % 2) * 0.5), hy: h(0.6 * k) }, face: n === 4 ? 'grin' : 'smile' };
   },
+  // Posy, keeper of the Party Board: reaching up to pin a fresh quest note (a pink slip with a
+  // heart), waving passers-by over to the board, and a little hop of a cheer when a party heads out.
+  posy(t) {
+    const b = bitAt(t, [['pin', 2.6], ['wave', 2], ['cheer', 1.1]], 1.8);
+    if (!b) return { face: 'smile' };
+    if (b.kind === 'cheer') return { pose: 'cheer', progress: b.u, face: 'excited' };
+    const k = inOut(b.u);
+    if (b.kind === 'wave') {
+      const sway = Math.sin(b.s * 9) * 2.4 * k;
+      return { facing: -1, rig: { frontArm: arm(3 * k + sway, -13 * k), tilt: -2 * k }, face: 'grin' };
+    }
+    // Up on tiptoe to the board, the note pressed flat, a tap to pin it, back down.
+    const up = soft(seg(b.u, 0.08, 0.3)) * (1 - soft(seg(b.u, 0.8, 0.95)));
+    const tap = Math.max(0, Math.sin(seg(b.u, 0.45, 0.6) * Math.PI)) * 1.5;
+    return {
+      facing: 1, rig: { frontArm: arm(4 * up + tap, -12 * up), hy: h(-0.8 * up), tilt: -3 * up }, face: up > 0.5 ? 'cool' : 'smile',
+      hands(ctx, front) {
+        if (up < 0.15) return;
+        ctx.save();
+        ctx.translate(front[0] + 1, front[1] - 2);
+        ctx.globalAlpha = Math.min(1, up * 2);
+        ctx.fillStyle = '#ffd6ea';
+        ctx.fillRect(-2.6, -3.2, 5.2, 5.6);
+        ctx.fillStyle = '#ff8fc1';
+        ctx.beginPath();
+        ctx.arc(-0.7, -0.8, 0.9, 0, TAU);
+        ctx.arc(0.7, -0.8, 0.9, 0, TAU);
+        ctx.moveTo(-1.6, -0.5);
+        ctx.lineTo(0, 1.3);
+        ctx.lineTo(1.6, -0.5);
+        ctx.fill();
+        ctx.restore();
+      },
+    };
+  },
   // Marlo, the merchant: flipping a coin from her thumb and catching it, a cheer for a sale, and a
   // pitch with both arms spread over her wares.
   marlo(t) {

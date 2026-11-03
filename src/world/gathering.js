@@ -6,6 +6,7 @@
 // Walking, jumping or pressing Up again stops. The world ignores the other controls meanwhile.
 // When each spot is ready again is kept per map in world.nodeRest ({ 'map:index': time }).
 
+import { pqGather } from './partyquest.js';
 import { NODES, KINDS, NODE_REACH } from '../data/gathering.js';
 import { addItem } from '../core/inventory.js';
 import { ITEMS } from '../data/items.js';
@@ -104,6 +105,8 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   }
   // (For the finds popping out of the spot, render/gathering.js.)
   world.lastGathered = { x: g.node.x, y: g.node.y, items: Object.keys(got), at: world.now };
+  // (A party quest may want them: world/partyquest.js.)
+  pqGather(world, got);
   world.nodeRest ??= {};
   world.nodeRest[key(world.map.id, g.i)] = world.now + g.kind.rest * perks.rest;
   lifeAction(world, skill, { tier: g.node.tier ?? 1, kind: skill === 'mining' ? 'mine' : 'gather', scale: team?.life ?? 1 });
