@@ -271,4 +271,9 @@ export const FX_SHEETS = {
   celptillusion: { w: 371, h: 229, n: 10, fps: 12, px: 188, py: 205, d: 3, loop: false },
   celptaura: { w: 152, h: 97, n: 8, fps: 10, px: 76, py: 52, d: 3, loop: true },
   celembphantom: { w: 124, h: 132, n: 5, fps: 12, px: 62, py: 81, d: 3, loop: false },
+  celgswheel: { w: 306, h: 322, n: 8, fps: 16, px: 164, py: 156, d: 3, loop: true },
+  celhalo: { w: 367, h: 355, n: 9, fps: 10, px: 185, py: 185, d: 3, loop: false },
+  celaxewheel: { w: 233, h: 233, n: 8, fps: 24, px: 116, py: 116, d: 3, loop: true },
+  celrageaxe: { w: 292, h: 422, n: 5, fps: 18, px: 99, py: 403, d: 3, loop: false },
+  celrageaxeform: { w: 292, h: 422, n: 5, fps: 14, px: 99, py: 403, d: 3, loop: false },
 };

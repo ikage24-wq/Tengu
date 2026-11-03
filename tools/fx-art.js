@@ -6707,6 +6707,135 @@
     sparkle(ctx, PSILV, 34, -48, 12, 0.2);
   });
 
+  // ---------- The Warrior line's finishers, remade for the greatsword (2026-11-03) ----------
+  // Titan Breaker's somersaults: a wheel of steel standing up round her as her greatsword turns
+  // over and over in the leap: three crescents chasing each other round, white-hot at their heads,
+  // sparkles flung off. Loops (three-fold, so eight drawings make a smooth turn).
+  E.gswheel = asLight({
+    w: 320, h: 320, n: 8, fps: 16, px: 160, py: 160, loop: true,
+    draw(ctx, i) {
+      const c = 160;
+      const R = 128;
+      const ph = (i / 8) * (TAU / 3);
+      for (let j = 0; j < 3; j++) {
+        const a1 = ph + (j * TAU) / 3;
+        celCrescent(ctx, PAL.steel, c, c, R, a1 - 1.25, a1, 34, { seed: 801 + j });
+        sparkle(ctx, PAL.steel, c + Math.cos(a1) * (R - 8), c + Math.sin(a1) * (R - 8), 10 + (i % 2) * 3, a1);
+      }
+      const r = rng(810 + i);
+      for (let j = 0; j < 5; j++) {
+        const a = r() * TAU;
+        const d = R + 10 + r() * 22;
+        shard(ctx, PAL.steel, c + Math.cos(a) * d, c + Math.sin(a) * d, a + Math.PI / 2, 10, 2.6);
+      }
+    },
+  }, PAL.steel);
+
+  // Grand Verdict's halo: a great sun of light opening behind the kneeling Paladin: a ring with
+  // long and short rays round it, turning slowly while it holds, then the rays draw in and it
+  // breaks up into diamonds and sparkles.
+  E.halo = asLight({
+    w: 380, h: 380, n: 9, fps: 10, px: 190, py: 190,
+    draw(ctx, i) {
+      const c = 190;
+      const pal = PAL.holy;
+      const open = [0.45, 0.8, 1, 1, 1, 1, 0.9, 0, 0][i];
+      const rot = i * 0.06;
+      if (open > 0) {
+        for (let j = 0; j < 16; j++) {
+          const a = rot + (j / 16) * TAU;
+          const r0 = 86 * open;
+          const r1 = (j % 2 ? 128 : 172) * open * (i === 6 ? 0.8 : 1);
+          const w = j % 2 ? 7 : 11;
+          const n = [Math.cos(a + Math.PI / 2) * w, Math.sin(a + Math.PI / 2) * w];
+          inked(ctx, [[c + Math.cos(a) * r0 + n[0], c + Math.sin(a) * r0 + n[1]], [c + Math.cos(a) * r1, c + Math.sin(a) * r1], [c + Math.cos(a) * r0 - n[0], c + Math.sin(a) * r0 - n[1]]], pal[2], pal[4], 3);
+          fill(ctx, [[c + Math.cos(a) * r0 + n[0] * 0.4, c + Math.sin(a) * r0 + n[1] * 0.4], [c + Math.cos(a) * (r1 - 8), c + Math.sin(a) * (r1 - 8)], [c + Math.cos(a) * r0 - n[0] * 0.4, c + Math.sin(a) * r0 - n[1] * 0.4]], pal[0]);
+        }
+        celRing(ctx, pal, c, c, 84 * open, 16, { broken: i === 6 ? 0.5 : 0, seed: 820 });
+        celRing(ctx, pal, c, c, 52 * open, 6, { broken: i >= 5 ? 0.3 : 0, seed: 821 });
+        for (let j = 0; j < 4; j++) {
+          const a = -rot * 2 + (j / 4) * TAU;
+          diamond(ctx, pal, c + Math.cos(a) * 68 * open, c + Math.sin(a) * 68 * open, 7);
+        }
+        if (i >= 2 && i <= 5) for (let j = 0; j < 3; j++) sparkle(ctx, pal, c + Math.cos(rot * 3 + j * 2.1) * 150, c + Math.sin(rot * 3 + j * 2.1) * 150, 10 + ((i + j) % 2) * 4, j);
+      } else {
+        const k = (i - 6) / 2;
+        const r = rng(830);
+        for (let j = 0; j < 14; j++) {
+          const a = (j / 14) * TAU + r() * 0.3;
+          const d = 90 + k * 70 + r() * 30;
+          if (j % 2) diamond(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 7 * (1.2 - k * 0.6));
+          else sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 11 * (1.2 - k * 0.6), a);
+        }
+      }
+    },
+  }, PAL.holy);
+
+  // An axe as the effects draw it: a haft from the grip (0, 0) up to `top`, a broad crescent
+  // blade out to +x near the top and a spike back to -x.
+  function axeArt(ctx, pal, x, y, rot, L, k = L / 150, hw = k) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    inked(ctx, [[-6 * hw, 20 * hw], [6 * hw, 20 * hw], [6 * hw, -L], [-6 * hw, -L]], pal[3], pal[4], 4);
+    fill(ctx, [[-2 * hw, 16 * hw], [2 * hw, 16 * hw], [2 * hw, -L + 4], [-2 * hw, -L + 4]], pal[1]);
+    const hy = -L + 26 * k;
+    const blade = [[4 * k, hy - 24 * k], [36 * k, hy - 52 * k], [62 * k, hy - 30 * k], [70 * k, hy + 4 * k], [60 * k, hy + 36 * k], [34 * k, hy + 52 * k], [4 * k, hy + 26 * k]];
+    inked(ctx, blade, pal[2], pal[4], 4);
+    fill(ctx, [[30 * k, hy - 40 * k], [58 * k, hy - 24 * k], [64 * k, hy + 4 * k], [56 * k, hy + 30 * k], [32 * k, hy + 42 * k], [46 * k, hy + 4 * k]], pal[1]);
+    fill(ctx, [[54 * k, hy - 22 * k], [62 * k, hy + 4 * k], [54 * k, hy + 28 * k], [58 * k, hy + 4 * k]], pal[0]);
+    inked(ctx, [[-4 * k, hy - 14 * k], [-34 * k, hy], [-4 * k, hy + 14 * k]], pal[2], pal[4], 3.5);
+    diamond(ctx, pal, 0, hy, 8 * k, 1.2);
+    ctx.restore();
+  }
+  // Crimson Eclipse's throw: the Berserker's axe hurled spinning round him, a wheel of burning
+  // crescents behind it. Loops (one turn in eight drawings).
+  E.axewheel = asLight({
+    w: 240, h: 240, n: 8, fps: 24, px: 120, py: 120, loop: true,
+    draw(ctx, i) {
+      const c = 120;
+      const a = (i / 8) * TAU;
+      celCrescent(ctx, PAL.rage, c, c, 100, a - Math.PI / 2 - 1.6, a - Math.PI / 2, 30, { seed: 840, rough: 0.3 });
+      celCrescent(ctx, PAL.rage, c, c, 100, a + Math.PI / 2 - 1.6, a + Math.PI / 2, 22, { seed: 841, rough: 0.3 });
+      axeArt(ctx, PAL.rage, c, c + 30 * Math.cos(a) * 0, a, 84, 0.95, 0.75);
+      sparkle(ctx, PAL.rage, c + Math.cos(a - Math.PI / 2) * 96, c + Math.sin(a - Math.PI / 2) * 96, 9, a);
+    },
+  }, PAL.rage);
+
+  // The giant axe of fire (Crimson Eclipse's smash): driven head-first into the ground, held whole,
+  // then cracking apart into burning shards; and the same forming out of its shards.
+  function giantAxe(pal) {
+    const w = 330;
+    const h = 430;
+    const cx = 110;
+    const gy = 418;
+    return {
+      w, h, n: 5, fps: 18, px: cx, py: gy,
+      draw(ctx, i) {
+        if (i <= 1) {
+          // Upside down: the head at the bottom, biting into the ground, the haft rising out of it.
+          ctx.save();
+          ctx.translate(cx, 40);
+          ctx.scale(1, -1);
+          axeArt(ctx, pal, 0, 0, 0, 312, 2.7, 1.5);
+          ctx.restore();
+          if (i === 1) for (const [x, y] of [[cx + 60, 330], [cx - 20, 200], [cx + 10, 90]]) sparkle(ctx, pal, x, y, 12, 0.2);
+          return;
+        }
+        const k = (i - 1) / 3;
+        const R = rng(851);
+        for (let j = 0; j < 8; j++) {
+          const y = 40 + j * 42;
+          const x = cx + (j > 5 ? 60 : 0) + (R() - 0.5) * 30 + (j % 2 ? 1 : -1) * k * 44;
+          shard(ctx, pal, x, y - k * 30, -Math.PI / 2 + (R() - 0.5) * 1.2, 26 * (1.1 - k * 0.6), 7 * (1.1 - k * 0.6));
+        }
+        if (i < 4) for (let j = 0; j < 5; j++) sparkle(ctx, pal, cx + (R() - 0.3) * 120, 100 + R() * 260 - k * 40, 8, j);
+      },
+    };
+  }
+  E.rageaxe = asLight(giantAxe(PAL.rage), PAL.rage);
+  E.rageaxeform = { ...E.rageaxe, n: 5, fps: 14, draw: (ctx, i) => E.rageaxe.draw(ctx, [4, 3, 2, 1, 0][i]) };
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

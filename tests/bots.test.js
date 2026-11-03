@@ -570,7 +570,7 @@ test('a party combo: your finisher brings the members fighting by you in with th
   for (let t = 0; t < 3 && !fin; t += 1 / 30) {
     world.now += 1 / 30;
     updateBots(bots, world, 1 / 30);
-    fin = pal.attack?.pose === 'verdict';
+    fin = pal.attack?.pose === 'plverdict';
   }
   assert.ok(fin, 'and their own finisher goes off');
 });

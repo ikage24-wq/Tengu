@@ -512,6 +512,99 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Warrior line's finishers, remade for the big weapons (2026-11-03) ----------
+
+  // Titan Breaker: a deep crouch with the blade dropped back low, then a huge leap with two
+  // forward somersaults, the greatsword held out so it wheels round her (a wheel of steel); a
+  // hang at the top with the blade hauled back over her shoulder as the giant sword forms above,
+  // then she falls with it in one overhead slam (lands at 0.62) and holds the landing, buried.
+  gstitan(p, dur) {
+    if (p < 0.1) {
+      const t = ease(p / 0.1);
+      const shake = t > 0.7 ? Math.sin(p * dur * 70) * 0.6 : 0;
+      return { weapon: lerp(-58, -122, t), arm: lerp(48, 30, t), lunge: -2 * t + shake, tilt: 0.1 * t, rig: (r) => { r.squat = 3; wideLegs(r); r.backArm = [2, 1]; r.eyes = t > 0.6 ? 'half' : undefined; } };
+    }
+    if (p < 0.42) {
+      const u = ease(seg(p, 0.1, 0.42));
+      const out = ease(seg(p, 0.1, 0.18));
+      return {
+        weapon: lerp(-122, 92, out), arm: lerp(30, 50, out), lift: 62 * Math.sin(u * Math.PI / 2), tilt: u * Math.PI * 4, trail: true,
+        rig: (r) => { tuck(r); r.backArm = [-2, -3]; r.hairLift = -1; r.cape -= 3; strikeFace(r); },
+      };
+    }
+    if (p < 0.56) {
+      const t = ease(seg(p, 0.42, 0.5));
+      const hang = Math.sin(seg(p, 0.42, 0.56) * Math.PI) * 2;
+      return { weapon: lerp(92, -62, t), arm: lerp(50, 44, t), lift: 62 + hang, tilt: -0.16 * t, rig: (r) => { r.frontLeg = [2, -3, 8]; r.backLeg = [-2.5, -1, -14]; r.air = true; r.backArm = [-3, -4]; r.hairLift = -1; r.cape -= 3; strikeFace(r); } };
+    }
+    const t = easeIn(seg(p, 0.56, 0.62));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-62, 150, ease(seg(p, 0.56, 0.61))) - 10 * settle, arm: lerp(44, 56, t) - 18 * settle, lift: 64 * (1 - t), lunge: 6 * t, tilt: lerp(-0.16, 0.3, t) * (1 - settle), trail: p < 0.68,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [-4, 1]; strikeFace(r); r.cape = -4; },
+    };
+  },
+
+  // Grand Verdict: she drives the blade point-down into the ground before her and kneels behind it
+  // with her head bowed while a sun of light rises over her; then she rises on the light, pulls the
+  // blade up round behind her, and swings it in one great rising arc as the sword of light falls
+  // (lands at 0.66), and holds it out toward them.
+  plverdict(p, dur) {
+    if (p < 0.08) {
+      const t = ease(p / 0.08);
+      return { weapon: lerp(-58, -182, t), arm: lerp(48, 14, t), tilt: 0.06 * t, rig: (r) => { r.squat = 2 * t; wideLegs(r); r.backArm = [2, 0]; } };
+    }
+    if (p < 0.4) {
+      const breath = Math.sin(p * dur * 6) * 0.3;
+      return { weapon: -182, arm: 14, tilt: 0.08, lunge: breath, rig: (r) => { r.squat = 3; r.frontLeg = [2.5, 0, 6]; r.backLeg = [-2, 1, -16]; r.backArm = [2, 1]; r.eyes = 'blink'; } };
+    }
+    if (p < 0.55) {
+      const t = ease(seg(p, 0.4, 0.55));
+      return { weapon: lerp(-182, -96, t), arm: lerp(14, 40, t), lift: 10 * t, tilt: lerp(0.08, -0.08, t), rig: (r) => { r.frontLeg = [1.5, -1, 4]; r.backLeg = [-2, -1, -6]; r.air = t > 0.3; r.backArm = [-2, -4]; r.hairLift = -1; r.cape = -3; } };
+    }
+    const t = ease(seg(p, 0.55, 0.66));
+    const settle = ease(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(-96, -282, t) + 24 * settle, arm: lerp(40, 56, t) - 8 * settle, lift: 10 * (1 - t), lunge: 6 * t * (1 - 0.5 * settle), tilt: lerp(-0.08, -0.12, t) * (1 - settle), trail: p < 0.72,
+      rig: (r) => { r.tx = 2; lungeLegs(r, 1.1 - 0.3 * settle); r.backArm = [-5, -4]; strikeFace(r); r.hairLift = -1; r.cape = -4; },
+    };
+  },
+
+  // Crimson Eclipse: he hauls the axe back and hurls it spinning round him in a great circle that
+  // drags them in, bracing and turning to follow it; catches it, leaps up against the blood moon
+  // with it raised behind him while a giant axe of fire forms over him, and smashes straight down
+  // (lands at 0.68).
+  bkeclipse(p, dur) {
+    if (p < 0.06) {
+      const t = ease(p / 0.06);
+      return { weapon: lerp(-52, -110, t), arm: lerp(46, 34, t), tilt: -0.15 * t, rig: (r) => { r.squat = 1; wideLegs(r); r.tx = -1; r.backArm = [3, -1]; r.hairLift = -1; } };
+    }
+    if (p < 0.42) {
+      const u = seg(p, 0.06, 0.42);
+      const turn = Math.cos(u * Math.PI * 2);
+      const shake = Math.sin(p * dur * 60) * 0.4;
+      return {
+        weapon: 90, arm: lerp(60, 50, u), thrown: 1, lunge: shake, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.05,
+        rig: (r) => { r.squat = 2; wideLegs(r); r.backArm = [-5, -3]; strikeFace(r); r.hairLift = -1; r.cape = -3; },
+      };
+    }
+    if (p < 0.62) {
+      const catchT = ease(seg(p, 0.42, 0.47));
+      const up = ease(seg(p, 0.47, 0.56));
+      const shake = Math.sin(p * dur * 70) * 0.6 * up;
+      return {
+        weapon: lerp(90, 250, catchT) + 40 * up, arm: lerp(50, 40, catchT), lift: 36 * up, lunge: shake, tilt: -0.18 * up,
+        rig: (r) => { if (up > 0.1) tuck(r); else { r.squat = 2; wideLegs(r); } r.backArm = [-1, -5]; r.hairLift = -1; r.cape = -3; strikeFace(r); },
+      };
+    }
+    const t = easeIn(seg(p, 0.62, 0.68));
+    const settle = ease(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(290, 520, ease(seg(p, 0.62, 0.67))) - 10 * settle, arm: lerp(40, 40, t) - 8 * settle, lift: 36 * (1 - t), lunge: 4 * t, tilt: lerp(-0.18, 0.3, t) * (1 - settle), trail: p < 0.72,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.6 ? 3 : 1; wideLegs(r); } r.backArm = [-4, 1]; strikeFace(r); r.cape = -4; },
+    };
+  },
+
   // ---------- The Paladin's own greatsword forms (a holy knight: measured, upright, solemn) ----------
   // Replacing the Warrior's swings she used to borrow. Steadier than the Warrior: planted feet,
   // held salutes, blows that come down like verdicts; every one keeps the fist at the chest.
