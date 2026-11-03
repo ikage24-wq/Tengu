@@ -86,3 +86,19 @@ game works out its own catches and revives and tells yours: net/together.js, `te
   gauge plays their own finisher a beat later.
 - Effects in the party's own colours (sunrise peach and sky blue, two stars meeting):
   `celteamcatch`, `celteamlink`, `celteamrevive`, `celteamburst` (tools/fx-art.js).
+
+- The telegraphs are Tengu's own effect art (tools/fx-art.js, the `celco*` strips), each in its
+  boss's shapes: the share ring's rim carries the Queen Bee's honeycomb and bees, the Myconid
+  Queen's mushroom caps and spores, or Tuskar's stomping rocks, with a gold star pip over it per
+  player standing in it; the guard is built of pieces laid round the boss (MacGoblin's red
+  barn-door planks, Tuskar's flame bulwark, Gnarlroot's bark plates) that crack on a struck side
+  and break apart; the Root Seal is a rune circle of roots with its stone, and its ribbon of light
+  (and the twins' spore tether, fraying red) is a short piece chained along the curve.
+- Online, the game running a boss sends its mechanics (`coop`, or `run`/`coop` in a shared
+  dungeon run) a few times a second: the ring and who's in it, the seal and whether it's held, the
+  guard and its struck sides, the twins, and any burst. Friends' games rebuild them on their copy
+  of the boss (world/coopboss.js `coopShared` / `applyCoopShared`).
+- Gnarlroot's Leaf Crown is a hat of its own (a twig circlet of oak and maple leaves, an acorn and
+  a glowing green gem; render/jobgear/acc.js `leafcrown`), never sold.
+- tools/coop-stage.html stages each of these for pictures and videos (modes board, queen, mac,
+  gnarl, twins, spore, tuskar, gnarlhard; `ui=0` hides the HUD).

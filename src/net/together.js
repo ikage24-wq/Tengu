@@ -10,6 +10,7 @@ import { loadMap } from '../world/world.js';
 import { friendWorking, friendFeast } from '../world/coop-life.js';
 import { onPartyQuestMsg } from '../world/partyquest.js';
 import { friendLaunched, standUp, joinGroup } from '../world/teamwork.js';
+import { applyCoopShared } from '../world/coopboss.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -575,6 +576,10 @@ export function handleTogether(world, msg, g) {
       return;
     case 'zones':
       return onZones(world, msg);
+    case 'coop':
+      // A field boss's two-person mechanics, from the game that runs it.
+      if (msg.map === world.map.id && !world.dungeon && world.net?.mirrored(world)) applyCoopShared(world, msg);
+      return;
     case 'work':
       if (inParty(msg.id)) friendWorking(world, msg.id, g.name, msg);
       return;

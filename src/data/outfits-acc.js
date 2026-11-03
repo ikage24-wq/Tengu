@@ -30,4 +30,6 @@ export const ACC_LOOKS = [
   { key: 'starcape', name: 'Starry Night Cape', slot: 'cape', style: 'fancy', cash: 2400, color: '#2e3f8a' },
   { key: 'bigbow', name: 'Giant Back Bow', slot: 'cape', style: 'fancy', cash: 1400, color: '#ff6b8a' },
   { key: 'teddy', name: 'Teddy Backpack', slot: 'cape', style: 'fancy', cash: 1500, color: '#c8905a' },
+  // Never sold: Gnarlroot's Leaf Crown, from a Hard Rootwood Hollow chest (data/coop.js).
+  { key: 'leafcrown', name: "Gnarlroot's Leaf Crown", slot: 'hat', style: 'fancy', cash: 0, color: '#7fd1a0', colors: false, unsold: true },
 ];
