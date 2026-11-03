@@ -23,8 +23,8 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
   Doex Studio, CB Sounddesign), creatures (344 Audio, Chupapsound) and the world (Justsoundeffects,
   Jake Fielding, Nick McMahan, Pole Position, Systematic Sound, Ivo Vicic, Mechanical Wave). Rebuild
   with `python tools/build-rec.py` (the bundles have to be downloaded by hand first).
-- **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 3, 4
-  and 5 and Epic Boss Battle; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
+- **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 2, 3, 4
+  and 5 and Epic Boss Battle; Tarush Singhal's Happy Ukulele Island Surfing Theme; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
   Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from
   [OpenGameArt](https://opengameart.org), all CC0.
 
