@@ -16,44 +16,37 @@ import { SPOTS } from './fishing.js';
 import { SPOT } from './gathering.js';
 
 export const MAPS = {
-  // Sprout Village, laid out with room to breathe (the town rules: districts with a feel, everything
-  // a short walk from the plaza, nothing important up a ladder). Left to right: Cottage Row by the
-  // west gate, where Mira welcomes you, and the inn you can climb (its porch roof and roof terrace);
-  // Market Street (Pip's goods, Lulu's salon, the stove); a duck pond in Garden Corner; Cherry Plaza, a
-  // step up, round the fountain and the great cherry tree (a branch to climb, where the cat naps);
-  // and the Archers' Quarter, Kestrel and the watchtower, the range, and a cottage by the east road.
+  // Sprout Village (rebuilt 2026-11-03): a countryside farm village round a great windmill whose
+  // sails have all but stopped (the wind has gone quiet: the story's first clue). Clean and
+  // spacious, one landmark per district, nothing important up a ladder. Left to right: Gate Lane,
+  // under the flowering gate arch, where Mira welcomes you, past two thatched cottages; Market
+  // Lane (Lulu's salon, Pip's goods, the craft workshop); Windmill Square, a gentle step up, the
+  // capsule machine, the windmill (its balcony up a ladder is a lookout), the stove and the
+  // fountain; Pond Garden, with the Party Board by the duck pond; and the Archers' Range, Kestrel,
+  // the watchtower and the targets, out to the meadow road.
   sprout: {
-    id: 'sprout', plaza: 1800,
-    // The fountain stands clear of the cherry tree, on the plaza's east side.
-    fountain: 1915, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
-    // The town stove, for cooking (data/cooking.js).
-    stove: 1660,
-    // The craft bench (data/crafting.js), on Market Street, between Lulu's salon and Pip's goods.
-    bench: 1400,
-    // The town's capsule machine (data/outfits-gacha.js).
-    gacha: 1995,
+    id: 'sprout', plaza: 1800, fountain: 2050, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    // The town stove (data/cooking.js), the craft bench (data/crafting.js) in its workshop, and the
+    // capsule machine (data/outfits-gacha.js), all round the square.
+    stove: 1950,
+    bench: 1410,
+    workshed: true,
+    gacha: 1655,
     width: 3200, height: 520, groundY: 480,
     look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
-    // (The street plan, 2026-11-02: Cottage Row, Market Street, Cherry Plaza raised a step in the
-    // middle with the shops round it, a quiet Garden Corner, then the Archers' Quarter.)
+    // The square is a gentle step up in the middle of the street.
     terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [3200, 480]],
-    // The street's buildings (render/townhouses.js), varied so the street has a rhythm: a cottage
-    // by the west gate, a tall townhouse, the inn (whose porch roof and roof terrace are the climb),
-    // a low bungalow on Market Street, and a cottage by the pond in Garden Corner.
-    cottages: [200, [440, 'townhouse'], [690, 'inn'], [1050, 'bungalow'], 2340],
-    townPieces: [['plazatree', 1800]],
-    // The craft bench stands in its own little open workshop.
-    workshed: true,
+    // Thatched cottages and a farmhouse along Gate Lane (render/townhouses.js).
+    cottages: [[600, 'farmhouse'], [850, 'thatch']],
+    townPieces: [['gatearch', 205], ['windmill', 1800]],
     platforms: [
-      // The inn's porch roof and its roof terrace (drawn with the inn).
-      { x: 578, y: 400, w: 224, bare: true }, { x: 616, y: 320, w: 148, bare: true },
-      // A branch of the plaza's cherry tree (the tree's own bough: nothing drawn for it).
-      { x: 1690, y: 330, w: 96, bare: true },
-      // The watchtower's deck (TOWER_DECK above the ground).
+      // The windmill's balcony (drawn with the windmill), up the ladder on its west side.
+      { x: 1740, y: 308, w: 120, bare: true },
+      // The watchtower's deck.
       { x: 2578, y: 320, w: 84 },
     ],
     ropes: [
-      { x: 1770, top: 330, bottom: 456 },
+      { x: 1748, top: 308, bottom: 456, ladder: true },
       { x: 2594, top: 320, bottom: 480, ladder: true },
     ],
     portals: [
@@ -62,18 +55,18 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1260 }, { id: 'pip', x: 1580 }, { id: 'posy', x: 2075 }, { id: 'kestrel', x: 2480 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2165 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
-      { name: 'Cottage Row', from: 0, color: '#e889b4' },
-      { name: 'Market Street', from: 900, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'] } },
-      { name: 'Cherry Plaza', from: 1460, color: '#ff7fb6' },
-      { name: 'Garden Corner', from: 2140, color: '#7fc89a' },
-      { name: "Archers' Quarter", from: 2420, color: '#4f9e55', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
+      { name: 'Gate Lane', from: 0, color: '#7fc89a' },
+      { name: 'Market Lane', from: 1000, color: '#e0a040', look: { sky: ['#ffd9b0', '#ffecd0', '#fff8ea'] } },
+      { name: 'Windmill Square', from: 1460, color: '#ff7fb6' },
+      { name: 'Pond Garden', from: 2140, color: '#4fb0d8', look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'] } },
+      { name: "Archers' Range", from: 2420, color: '#4f9e55' },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 300, y: 440 }, { x: 870, y: 440 }, { x: 1150, y: 440 }, { x: 1520, y: 416 }, { x: 2080, y: 416 }, { x: 2260, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
+    lamps: [{ x: 320, y: 440 }, { x: 960, y: 440 }, { x: 1450, y: 440 }, { x: 1600, y: 416 }, { x: 2000, y: 416 }, { x: 2270, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
       ['pond', 2220],
       ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],

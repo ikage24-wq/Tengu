@@ -205,15 +205,15 @@ export const TRIALS = {
 
 export const SCENES = {
   // ----- Chapter 1 -----
-  // (Staged in the village itself, world/director.js: the camera opens on the cherry tree in a
-  // fall of petals, pans back to you, and Mira spots you and hurries over.)
+  // (Staged in the village itself, world/director.js: the camera opens on the great windmill, its
+  // sails all but still, pans back to you, and Mira spots you and hurries over.)
   ch1_open: [
     { card: 'Chapter 1', sub: 'A New Breeze' },
     { fade: 'out', dur: 0.35 },
-    { cam: { x: 1800, y: 370 }, dur: 0 },
+    { cam: { x: 1800, y: 330 }, dur: 0 },
     { fade: 'in', dur: 0.9, async: true },
-    { fx: 'petals', at: { x: 1800, y: 320 }, n: 22 },
-    { who: null, text: 'Sprout Village. Warm bread, cherry petals, and a wind chime that has not rung in weeks.' },
+    { fx: 'petals', at: { x: 1800, y: 260 }, n: 16 },
+    { who: null, text: "Sprout Village. Warm bread, flower boxes, and a windmill whose sails haven't turned in weeks." },
     { cam: 'player', dur: 2.2 },
     { emote: 'mira', kind: '!' },
     { walk: 'mira', to: 'player', gap: 34, speed: 110 },

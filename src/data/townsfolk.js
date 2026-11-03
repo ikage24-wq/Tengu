@@ -33,7 +33,7 @@ export const TOWNSFOLK = {
       act: { type: 'stroll', a: 420, b: 680, speed: 12, pause: 6 }, lines: ['The well water is sweetest at dawn.', 'In my day, we shot with sticks!'], greet: ['Ah, a new face!', 'Mind the chickens, dear.'] },
     { id: 'sp-chick1', kind: 'chick', seed: 5, act: { type: 'peck', a: 380, b: 440 } },
     { id: 'sp-chick2', kind: 'chick', seed: 9, act: { type: 'peck', a: 410, b: 470 } },
-    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1734, y: 330 } },
+    { id: 'sp-cat', kind: 'cat', seed: 2, act: { type: 'nap', x: 1830, y: 308 } },
   ],
   harbor: [
     { id: 'hb-sailor', name: 'Bosun Gill', kind: 'person', seed: 61, look: { outfitColor: '#bfe0ff' },

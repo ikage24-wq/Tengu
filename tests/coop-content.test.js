@@ -227,12 +227,13 @@ test("Old MacGoblin's guard only breaks when he's struck from both sides, and bo
   coopHit(world, mac, { damage: 100, fromX: mac.x + 50 });
   assert.ok(!s.guard, 'struck from both sides: broken');
   assert.equal(coopHit(world, mac, { damage: 100, fromX: mac.x - 50 }), 125);
-  // It forms again after a while; the bot goes round to the side you're not on.
+  // It forms again after a while; the bot goes round to the side you're not on (it gets up to 12 s:
+  // how fast it arrives depends on its own dice).
   world.now += s.def.open + 0.1;
   s.planAt = 0;
   let round = false;
   let broke = false;
-  for (let i = 0; i < 60 * 8 && !broke; i++) {
+  for (let i = 0; i < 60 * 12 && !broke; i++) {
     world.body.x = mac.x - 60;
     updateWorld(world, DT, idle);
     updateBots(world.bots, world, DT);

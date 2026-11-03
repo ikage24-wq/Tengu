@@ -19,7 +19,7 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
@@ -466,10 +466,12 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -130 || x > width + 130) continue;
     const seed = hash(wx * 0.11 + 3);
     const style = kind ?? map.homeStyle ?? 'cottage';
-    const s = style.startsWith('canal') ? canalHouseArt(seed, style.split('-')[1] ?? pick(['step', 'bell', 'neck'], seed)) : style === 'warehouse' ? warehouseArt() : style === 'arcade' ? adobeArcadeArt(seed) : style === 'mushhome' ? mushHomeArt(seed) : style === 'adobe' ? adobeHouseArt(seed) : style === 'treehome' ? treeHomeArt(seed) : style === 'bungalow' ? bungalowArt(seed) : style === 'townhouse' ? townhouseArt(seed) : style === 'inn' ? innArt() : cottageArt(seed);
+    const s = style === 'thatch' ? thatchCottageArt(seed) : style === 'farmhouse' ? thatchCottageArt(seed, true) : style.startsWith('canal') ? canalHouseArt(seed, style.split('-')[1] ?? pick(['step', 'bell', 'neck'], seed)) : style === 'warehouse' ? warehouseArt() : style === 'arcade' ? adobeArcadeArt(seed) : style === 'mushhome' ? mushHomeArt(seed) : style === 'adobe' ? adobeHouseArt(seed) : style === 'treehome' ? treeHomeArt(seed) : style === 'bungalow' ? bungalowArt(seed) : style === 'townhouse' ? townhouseArt(seed) : style === 'inn' ? innArt() : cottageArt(seed);
     const hy = ground(wx);
     place(ctx, s, snap(x), hy + 2);
     if (style === 'cottage') chimneySmoke(ctx, x + (hash(seed * 3) > 0.5 ? -32 : 32), hy - 136, time, seed);
+    else if (style === 'thatch') chimneySmoke(ctx, x + 27, hy - 128, time, seed);
+    else if (style === 'farmhouse') chimneySmoke(ctx, x + 53, hy - 118, time, seed);
     else if (style === 'bungalow') chimneySmoke(ctx, x + 40, hy - 100, time, seed);
     else if (style === 'inn') glowSoft(ctx, x + 25, hy - 40, 18, '#ffe9a6', 0.3 + 0.06 * Math.sin(time * 1.7));
     // Lit windows breathe a little light at night.
@@ -545,6 +547,35 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
     if (kind === 'plazatree') place(ctx, plazaTreeArt(0), snap(x), gy + 3);
+    else if (kind === 'gatearch') {
+      place(ctx, gateArchArt(), snap(x), gy + 2);
+      hangingSign(ctx, x, gy - 118, map.name, time, wx);
+    } else if (kind === 'windmill') {
+      // The great windmill: its sails turn so slowly they barely move (the wind has stopped), a
+      // creak of a nudge now and then, as if a breeze had almost come back.
+      const s = windmillTowerArt();
+      place(ctx, s, snap(x), gy + 2);
+      const hx = x - WINDMILL.w / 2 + WINDMILL.hub[0];
+      const hy = gy + 2 - WINDMILL.h + WINDMILL.hub[1];
+      const nudge = Math.max(0, Math.sin(time * 0.6)) ** 8 * 0.25;
+      const a = time * 0.05 + nudge + wx * 0.01;
+      const sail = windmillSailArt();
+      for (let k = 0; k < 4; k++) {
+        ctx.save();
+        ctx.translate(hx, hy);
+        ctx.rotate(a + (k * Math.PI) / 2);
+        place(ctx, sail, 0, 0);
+        ctx.restore();
+      }
+      ctx.fillStyle = '#8a5a3a';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffd36b';
+      ctx.beginPath();
+      ctx.arc(hx, hy, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
     else if (kind === 'noticeboard') place(ctx, noticeboardArt(), snap(x), gy + 3);
     else if (kind === 'arena') place(ctx, arenaArt(), snap(x), gy + 4);
     else if (kind === 'pier') {

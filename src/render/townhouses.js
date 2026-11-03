@@ -237,6 +237,136 @@ export function workshedArt(roofC = '#9fb8ff') {
   }, false);
 }
 
+// ---------- Sprout Village (the 2026-11-03 rebuild: a countryside farm village) ----------
+
+// A thatched cottage: round-shouldered cream stone walls under a deep golden thatch that hangs low
+// and soft at the eaves, a round door, a round window with a flower box, a chimney through the
+// thatch. `long` makes the wide farmhouse version (two windows, a dormer).
+export function thatchCottageArt(seed, long = false) {
+  const W = long ? 172 : 120;
+  const H = long ? 118 : 128;
+  const wallC = pick(['#fff4e2', '#f8ecdc', '#fff0e8'], seed * 3);
+  const doorC = pick(['#7fb0e8', '#e88aa8', '#7fc89a'], seed * 5);
+  return art(`thatch|${long}|${wallC}|${doorC}`, W, H, () => {
+    const wall = ramp(wallC, 0.6);
+    const thatch = ramp('#f0c46a', 0.8);
+    const stone = ramp('#d8ccc0', 0.7);
+    const wood = ramp('#a87a5a', 0.8);
+    const door = ramp(doorC, 0.7);
+    const top = long ? 52 : 58;
+    const out = [];
+    // The chimney behind the thatch.
+    out.push(...stones(W - 40, 8, 14, 34, ramp('#d8b8b0', 0.7), seed, { rowH: 5, blockW: 7 }), ...beam(W - 42, 5, 18, 4, '#a8908a'));
+    // Walls: soft stone, rounded at the top corners, a stone foot.
+    out.push(T([[10, H], [10, top + 10], [16, top], [W - 16, top], [W - 10, top + 10], [W - 10, H]], wall.base), ...wallShade(10, top + 4, W - 20, H - top - 4, wall, 3));
+    out.push(...stones(8, H - 14, W - 16, 14, stone, seed * 5, { rowH: 7, blockW: 12 }));
+    // The thatch: a deep rounded hat of straw, layered with soft scalloped courses, eaves hanging low.
+    const ridge = 6;
+    out.push(T([[0, top + 14], [6, top - 2], [W * 0.3, ridge + 4], [W * 0.5, ridge], [W * 0.7, ridge + 4], [W - 6, top - 2], [W, top + 14], [W - 10, top + 18], [W * 0.5, top + 20], [10, top + 18]], thatch.base));
+    out.push(F(T([[W * 0.62, ridge + 2], [W * 0.7, ridge + 4], [W - 6, top - 2], [W, top + 14], [W - 10, top + 18], [W * 0.75, top + 19]], thatch.sh)));
+    for (let row = 0; row < 4; row++) {
+      const y = ridge + 12 + row * ((top + 6 - ridge) / 4);
+      const k = (y - ridge) / (top + 18 - ridge);
+      const x0 = W * 0.5 - (W * 0.2 + (W * 0.32) * k);
+      const x1 = W * 0.5 + (W * 0.2 + (W * 0.32) * k);
+      for (let x = x0; x < x1 - 4; x += 9) out.push(F(E(x + 4.5, y, 4.6, 2, x > W * 0.62 ? thatch.deep : thatch.sh)));
+    }
+    for (let x = 4; x < W - 6; x += 8) out.push(F(E(x + 4, top + 16 + Math.sin(x) * 1, 4.4, 2.4, thatch.sh)), F(R(x + 2, top + 15, 1, 5, thatch.deep)));
+    out.push(F(T([[6, top - 2], [W * 0.3, ridge + 4], [W * 0.34, ridge + 8], [12, top + 4]], thatch.hi)));
+    if (long) {
+      // A dormer peeking out of the thatch.
+      out.push(R(W * 0.42, ridge + 18, 22, 18, wall.base), T([[W * 0.42 - 4, ridge + 20], [W * 0.42 + 11, ridge + 8], [W * 0.42 + 26, ridge + 20]], thatch.base), F(E(W * 0.42 + 11, ridge + 28, 5, 5, '#ffd98a')), F(E(W * 0.42 + 9, ridge + 26, 2, 2, '#fff6c9')));
+    }
+    // The round door with its step and a little lamp, round windows with flower boxes.
+    const dx = long ? W - 52 : W * 0.6;
+    out.push(E(dx, H - 26, 13, 13, wood.sh), R(dx - 13, H - 26, 26, 22, wood.sh), E(dx, H - 25, 11, 11, door.base), R(dx - 11, H - 25, 22, 21, door.base), F(E(dx - 3, H - 30, 4, 4, door.hi)), F(R(dx - 0.5, H - 36, 1, 32, door.sh)), F(E(dx + 6, H - 16, 1.4, 1.4, '#ffe36b')));
+    out.push(...beam(dx - 16, H - 4, 32, 4, '#e2d8ee'));
+    out.push(R(dx + 15, H - 40, 2, 6, '#7a6a8a'), E(dx + 16, H - 31, 3, 3.6, '#fff3a6'), F(E(dx + 16.6, H - 30.4, 1.6, 2.2, '#ffe08a')));
+    const windows = long ? [30, 76] : [W * 0.26];
+    for (const wx of windows) {
+      out.push(E(wx, top + 34, 11, 11, '#ffffff'), F(E(wx, top + 34, 9, 9, '#ffd98a')), F(E(wx - 3, top + 31, 3.6, 3.6, '#fff6c9')), F(R(wx - 0.5, top + 25, 1, 18, '#ffffff')), F(R(wx - 9, top + 33.5, 18, 1, '#ffffff')));
+      out.push(...beam(wx - 13, top + 45, 26, 4, '#a87a5a'));
+      for (let k = 0; k < 5; k++) out.push(F(E(wx - 9 + k * 4.5, top + 44 + (k % 2), 2, 1.8, pick(BLOOMS, seed + k + wx))));
+    }
+    // A bush and a bed of flowers at the foot.
+    out.push(...foliage(long ? 14 : W - 14, H - 6, 9, 6, ramp('#8fdc9a'), seed * 3, { tips: 2 }));
+    for (let k = 0; k < 6; k++) out.push(F(E((long ? 100 : 16) + k * 4, H - 9 + (k % 2), 1.5, 1.5, pick(BLOOMS, seed + k * 2.1))));
+    return out;
+  }, false);
+}
+
+// The village gate: two stone posts wound with flowering vines, a curved wooden arch between them
+// (the village's name is hung on it live), lanterns on the posts.
+export function gateArchArt() {
+  return art('gatearch', 170, 132, () => {
+    const stone = ramp('#e2d8cc', 0.7);
+    const wood = ramp('#b8885a', 0.8);
+    const vine = ramp('#7fc06a', 0.8);
+    const out = [];
+    for (const x of [8, 140]) out.push(...stones(x, 40, 22, 92, stone, x, { rowH: 8, blockW: 11 }), ...beam(x - 3, 36, 28, 6, '#d8ccc0'), R(x + 7, 24, 8, 12, '#7a6a8a'), E(x + 11, 22, 5, 5, '#fff3a6'), F(E(x + 11.6, 22.6, 2.6, 3, '#ffe08a')));
+    // The arch: a curved beam spanning the posts.
+    const arch = [];
+    for (let i = 0; i <= 16; i++) {
+      const u = i / 16;
+      arch.push([18 + u * 134, 44 - Math.sin(u * Math.PI) * 22]);
+    }
+    for (let i = 0; i < arch.length - 1; i++) out.push(T([arch[i], arch[i + 1], [arch[i + 1][0], arch[i + 1][1] + 9], [arch[i][0], arch[i][1] + 9]], wood.base), F(T([arch[i], arch[i + 1], [arch[i + 1][0], arch[i + 1][1] + 2], [arch[i][0], arch[i][1] + 2]], wood.hi)));
+    // Vines wound up the posts and along the arch, with flowers.
+    for (const x of [8, 140]) for (let y = 128; y > 44; y -= 10) out.push(...foliage(x + 11 + Math.sin(y * 0.3) * 9, y, 5, 4, vine, y + x, { flat: true }));
+    for (let i = 1; i < arch.length - 1; i += 2) out.push(...foliage(arch[i][0], arch[i][1] + 2, 5, 3.6, vine, i, { flat: true }), F(E(arch[i][0] + 2, arch[i][1], 1.8, 1.8, pick(BLOOMS, i * 1.7))));
+    return out;
+  }, false);
+}
+
+// The great windmill in Sprout's square, 140 wide and 280 tall: a tapered white tower of stone on a
+// wide base, a thatched cap, a door and little windows, and a railed balcony (a ledge on the map)
+// round its middle. Its sails are drawn live by the town (render/town.js), turning slowly: the wind
+// has nearly stopped.
+export const WINDMILL = { w: 140, h: 280, hub: [70, 52], balcony: 150 };
+export function windmillTowerArt() {
+  return art('windmilltower', WINDMILL.w, WINDMILL.h, () => {
+    const wall = ramp('#fff8f0', 0.6);
+    const stone = ramp('#d8ccc0', 0.7);
+    const thatch = ramp('#f0c46a', 0.8);
+    const wood = ramp('#a87a5a', 0.8);
+    const H = WINDMILL.h;
+    const out = [];
+    // The tower: tapering from a wide base to the cap.
+    out.push(T([[20, H], [36, 60], [104, 60], [120, H]], wall.base), F(T([[86, 60], [104, 60], [120, H], [96, H]], wall.sh)));
+    for (const y of [110, 170, 230]) out.push(F(R(36 - (y - 60) * 0.06, y, 68 + (y - 60) * 0.12, 1.4, wall.sh)));
+    out.push(...stones(14, H - 26, 112, 26, stone, 11, { rowH: 9, blockW: 16 }));
+    // The cap: a thatched dome with a little finial.
+    out.push(T([[26, 66], [34, 40], [52, 24], [70, 18], [88, 24], [106, 40], [114, 66]], thatch.base), F(T([[80, 20], [88, 24], [106, 40], [114, 66], [92, 66]], thatch.sh)));
+    for (let x = 28; x < 112; x += 8) out.push(F(E(x + 4, 66, 4.4, 2.4, thatch.sh)));
+    out.push(F(T([[34, 40], [52, 24], [56, 28], [40, 44]], thatch.hi)), R(68, 6, 4, 14, wood.sh), E(70, 6, 4, 4, '#ffd36b'));
+    // Windows and the big arched door.
+    for (const [x, y] of [[62, 90], [70, 200]]) out.push(E(x + 6, y, 6, 6, '#a87a5a'), R(x, y, 12, 12, '#a87a5a'), F(E(x + 6, y, 4.4, 4.4, '#ffd98a')), F(R(x + 1.6, y, 8.8, 10, '#ffd98a')), F(E(x + 4, y - 2, 2, 2, '#fff6c9')));
+    out.push(E(70, H - 46, 15, 15, wood.sh), R(55, H - 46, 30, 42, wood.sh), ...planks(57, H - 45, 26, 41, wood, 3, 7), E(70, H - 45, 13, 13, wood.base), F(E(76, H - 22, 1.6, 1.6, '#ffe36b')));
+    // The balcony round its middle: a plank deck on brackets and a white railing.
+    const by = H - WINDMILL.balcony;
+    out.push(...planks(10, by - 1, 120, 7, ramp('#e2b98a', 0.8), 1, 5, true), ...beam(8, by + 5, 124, 3, '#b88a5a'));
+    for (let x = 24; x < 120; x += 24) out.push(T([[x, by + 8], [x + 8, by + 8], [x + 2, by + 18]], wood.sh));
+    for (let x = 12; x <= 126; x += 8) out.push(R(x, by - 12, 1.8, 11, '#ffffff'), F(R(x + 1.1, by - 12, 0.7, 11, '#e2d4c8')));
+    out.push(...beam(10, by - 14, 120, 2.6, '#ffffff'));
+    // Flower boxes on the rail, ivy up the base.
+    for (const x of [20, 104]) out.push(R(x - 6, by - 20, 14, 6, '#d98a6a'), ...foliage(x + 1, by - 22, 7, 4, ramp('#8fdc9a'), x, { tips: 3 }), F(E(x - 2, by - 24, 1.6, 1.6, '#ff9ec0')), F(E(x + 4, by - 23, 1.6, 1.6, '#ffe36b')));
+    for (let y = H - 20; y > H - 110; y -= 10) out.push(...foliage(28 + Math.sin(y * 0.2) * 3 + (H - y) * 0.06, y, 5, 4, ramp('#7fd19a'), y, { flat: true }));
+    return out;
+  }, false);
+}
+
+// One windmill sail (a lattice frame with cloth), pointing up from the hub, 104 long.
+export function windmillSailArt() {
+  return art('windmillsail', 30, 108, () => {
+    const wood = ramp('#a87a5a', 0.8);
+    const out = [R(13, 0, 4, 108, wood.base), F(R(15.6, 0, 1.4, 108, wood.sh))];
+    out.push(R(17, 6, 12, 74, '#fff8ee'), F(R(25, 6, 4, 74, '#ece0d6')));
+    for (let y = 10; y < 80; y += 10) out.push(F(R(17, y, 12, 1, wood.sh)));
+    for (const x of [21, 25]) out.push(F(R(x, 6, 1, 74, wood.sh)));
+    return out;
+  }, false);
+}
+
 // The giant cherry tree over Sprout's plaza, 240 wide and 220 tall: a broad twisting trunk, boughs
 // spreading over the plaza under a lumpy crown of pink, and a round wooden bench at its foot.
 export function plazaTreeArt(v = 0) {
