@@ -83,7 +83,8 @@ export function attackPhase(m, now, recover = 0.55) {
 // ---------- A rig from a spec ----------
 // Most bosses are built from this: `makeRig(spec)` returns the `{ w, h, draw }` a design hangs on
 // its art. The spec gives:
-//   parts     in drawing order: { s: (a) => sprite, pivot: [x, y] in its box, parent: name or
+//   parts     in drawing order: { name, s: (a, S) => sprite (none: a bare joint), pivot: [x, y]
+//             in its box, parent: name or
 //             null (the feet), at: (S) => [x, y] in the parent's space, rot: (S) => radians,
 //             when: (a, S) => bool to skip it }
 //   pose      (m, a) => goals for the channels (numbers), from the boss's moves: a.t (clock),
@@ -146,7 +147,8 @@ export function makeRig(spec) {
         ctx.restore();
       }
       for (const p of spec.parts) {
-        if (p.when && !p.when(a, S)) continue;
+        // (A part with no picture is just a joint for others to hang from.)
+        if (!p.s || (p.when && !p.when(a, S))) continue;
         const M = matOf(p);
         ctx.save();
         ctx.transform(...M);
