@@ -101,8 +101,10 @@ export function polishGain(inst) {
 // Mined ore (data/gathering.js) makes a try likelier to take: ORE_USE of the ore for the piece's
 // level, or one rare gem. Each tier of ore covers gear up to its `upTo` level.
 export const ORE_USE = 2;
-export const POLISH_ORES = [{ id: 'copper_ore', upTo: 29, boost: 0.12 }, { id: 'silver_ore', upTo: 49, boost: 0.12 }];
-export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }];
+// One ore for each region (data/gathering.js): copper for low gear, then iron, silver, and mithril for
+// anything above (the life-skills expansion); every gem works on any piece, the rarer the better.
+export const POLISH_ORES = [{ id: 'copper_ore', upTo: 19, boost: 0.12 }, { id: 'iron_ore', upTo: 29, boost: 0.12 }, { id: 'silver_ore', upTo: 44, boost: 0.12 }, { id: 'mithril_ore', upTo: 999, boost: 0.12 }];
+export const POLISH_GEMS = [{ id: 'rose_quartz', boost: 0.25 }, { id: 'amethyst', boost: 0.27 }, { id: 'sapphire', boost: 0.3 }, { id: 'starstone', boost: 0.34 }];
 export const oreFor = (inst) => POLISH_ORES.find((o) => (ITEMS[inst.id].reqLevel ?? 0) <= o.upTo) ?? null;
 // Polishing stones made at a craft bench (data/crafting.js): one stone in place of the ore, for
 // gear up to the stone's level.

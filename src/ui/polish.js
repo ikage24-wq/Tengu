@@ -18,6 +18,11 @@ const H = 214;
 const NAMES = { watk: 'Weapon ATK', matk: 'Magic ATK', wdef: 'Weapon DEF', hp: 'Max HP', mp: 'Max MP' };
 
 // Bench-made polishing stones in the bag that fit the piece: the two best (one chip each).
+// The gems shown: the best one or two you carry (or the rose quartz, so you know gems help).
+const bestGems = (char) => {
+  const held = POLISH_GEMS.filter((g) => countItem(char.inventory, g.id) > 0).sort((a, b) => b.boost - a.boost).slice(0, 2);
+  return (held.length ? held : POLISH_GEMS.slice(0, 1)).map((g) => ({ id: g.id, need: 1 }));
+};
 const bestStones = (char, inst) => stonesFor(inst).filter((g) => countItem(char.inventory, g.id) > 0).sort((a, b) => b.boost - a.boost).slice(0, 2).map((g) => ({ id: g.id, need: 1 }));
 
 export function polishWindow(ui, state, world) {
@@ -94,7 +99,7 @@ export function polishWindow(ui, state, world) {
   text(ctx, 'Next step', px, y + 60, { size: 7.5, bold: true, color: COLORS.muted });
   text(ctx, gain, px, y + 71, { size: 8.5, bold: true, color: '#3f9f5f' });
   // Ore for this piece's level, or a rare gem: click one to use it on the next tries.
-  const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...POLISH_GEMS.map((g) => ({ id: g.id, need: 1 })), ...bestStones(char, inst)].filter(Boolean);
+  const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...bestGems(char), ...bestStones(char, inst)].filter(Boolean);
   const have = (b) => countItem(char.inventory, b.id) >= b.need;
   if (dlg.boost && !boosts.some((b) => b.id === dlg.boost && have(b))) dlg.boost = null;
   text(ctx, `Chance ${Math.round(boostedChance(inst, dlg.boost) * 100)}%`, px, y + 87, { size: 8.5, bold: true, color: dlg.boost ? '#3f9f5f' : COLORS.ink });

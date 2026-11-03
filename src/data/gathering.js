@@ -9,8 +9,8 @@
 // world/daytime.js) }. Maps laid out with data/climb.js list their spots per zone instead (`nodes`
 // on each zone, made with SPOT below) and climb()/lay() place them on that zone's floors.
 // What the finds are for: cooking (data/cooking.js), crafting at a town craft bench (ore, gems,
-// wood and fibre: docs/design/life-skills.md), polishing at Tora's (copper and silver ore and rose
-// quartz make a try likelier to take, core/items.js), and selling.
+// wood and fibre: docs/design/life-skills.md), polishing at Tora's (each region's ore
+// and gem make a try likelier to take, core/items.js), and selling.
 
 export const KINDS = {
   herb: { verb: 'Gather', move: 'gather', secs: 1.1, rest: 75, count: [1, 2] },
@@ -74,7 +74,7 @@ export const GATHERED = [
   ['prickle_pear', 'Prickle Pear', 14, '#ff8fb8', 'A pink cactus fruit off the canyon mesas, cool and juicy inside. Churned into sorbet at a town stove; shops buy it.', 1],
   ['sea_kelp', 'Sea Kelp', 10, '#5aae7a', 'Salty kelp washed up on Dawnlight Beach. Simmered into soup at a town stove; shops buy it.', 1],
   ['moonpetal', 'Moonpetal', 40, '#c9c4ff', 'A flower that only opens at night, glowing softly. Steeped into Moonpetal Tea at a town stove; shops buy it.', 1],
-  ['copper_ore', 'Copper Ore', 10, '#e0915a', `${CRAFT} (tier 1). At Tora's forge, ore makes a polish more likely to take (gear up to Lv 29).`, 1],
+  ['copper_ore', 'Copper Ore', 10, '#e0915a', `${CRAFT} (tier 1). At Tora's forge, ore makes a polish more likely to take (gear up to Lv 19).`, 1],
   ['rose_quartz', 'Rose Quartz', 80, '#ffb3d1', `A rare pink crystal from copper veins. ${CRAFT} (tier 1); at Tora's forge it makes a polish much more likely to take.`, 1],
   ['oak_log', 'Oak Log', 8, '#b8865a', `A sturdy log from the meadow oaks. ${CRAFT} (tier 1).`, 1],
   ['cotton', 'Cotton Boll', 8, '#fff6ea', `A soft white boll from the field cotton. ${CRAFT} (tier 1).`, 1],
@@ -83,8 +83,8 @@ export const GATHERED = [
   ['whisperberry', 'Whisperberry', 22, '#9f8cff', 'A violet berry that hums in the breeze of the Whispering Glade. Baked into scones at a town stove; shops buy it.', 2],
   ['temple_mint', 'Temple Mint', 18, '#7fe0b0', 'Cool mint growing wild through the old temple stones. Brewed into tea at a town stove; shops buy it.', 2],
   ['duskcap', 'Duskcap', 70, '#7fe6d6', 'A mushroom that glows only after dark. Simmered into Night Soup at a town stove; shops buy it.', 2],
-  ['iron_ore', 'Iron Ore', 16, '#9a9aaa', `${CRAFT} (tier 2).`, 2],
-  ['amethyst', 'Amethyst', 140, '#b07ae0', `A rare violet gem from iron veins. ${CRAFT} (tier 2).`, 2],
+  ['iron_ore', 'Iron Ore', 16, '#9a9aaa', `${CRAFT} (tier 2). At Tora's forge, ore makes a polish more likely to take (gear Lv 20 to 29).`, 2],
+  ['amethyst', 'Amethyst', 140, '#b07ae0', `A rare violet gem from iron veins. ${CRAFT} (tier 2). At Tora's forge it makes a polish much more likely to take.`, 2],
   ['maple_log', 'Maple Log', 14, '#d0704a', `A red-grained log from the woodland maples. ${CRAFT} (tier 2).`, 2],
   ['silkmoss', 'Silkmoss', 14, '#a8d88a', `Long silky moss, spun into thread. ${CRAFT} (tier 2).`, 2],
   // Tier 3: Fox Shrine Path, Moonlit Ridge, Crystal Cave, Serpent Springs.
@@ -93,8 +93,8 @@ export const GATHERED = [
   ['crystal_truffle', 'Crystal Truffle', 34, '#c8e8ff', 'A rare truffle that grows round cave crystals, faintly sparkling. Baked into a gratin at a town stove; shops buy it.', 3],
   ['steam_ginger', 'Steam Ginger', 28, '#ffc88a', 'Warm ginger root from the hot-spring banks. Simmered into broth at a town stove; shops buy it.', 3],
   ['foxfire_lily', 'Foxfire Lily', 110, '#ffa86b', 'A lily lit by a little foxfire flame, only open at night. Steeped into tea at a town stove; shops buy it.', 3],
-  ['silver_ore', 'Silver Ore', 22, '#c8d0e0', `${CRAFT} (tier 3). At Tora's forge, ore makes a polish more likely to take (gear Lv 30 to 49).`, 3],
-  ['sapphire', 'Sapphire', 220, '#4f7ae0', `A rare deep-blue gem from silver veins. ${CRAFT} (tier 3).`, 3],
+  ['silver_ore', 'Silver Ore', 22, '#c8d0e0', `${CRAFT} (tier 3). At Tora's forge, ore makes a polish more likely to take (gear Lv 30 to 44).`, 3],
+  ['sapphire', 'Sapphire', 220, '#4f7ae0', `A rare deep-blue gem from silver veins. ${CRAFT} (tier 3). At Tora's forge it makes a polish much more likely to take.`, 3],
   ['cedar_log', 'Cedar Log', 22, '#c89a6a', `A fragrant log from the old shrine cedars. ${CRAFT} (tier 3).`, 3],
   ['lotus_fiber', 'Lotus Fibre', 22, '#ffc8dc', `Fine thread drawn from lotus stems by the water. ${CRAFT} (tier 3).`, 3],
   // Tier 4: Frozen Peak, Sky Garden, Starfall Heights, the Crystal Throne.
@@ -102,8 +102,8 @@ export const GATHERED = [
   ['cloudberry', 'Cloudberry', 46, '#ffc06b', 'An amber berry that only ripens above the clouds. Whipped into pavlova at a town stove; shops buy it.', 4],
   ['star_anise', 'Star Anise', 48, '#e0a85a', 'A star-shaped spice pod from Starfall, warm and sweet. Simmered into stew at a town stove; shops buy it.', 4],
   ['starbloom', 'Starbloom', 160, '#fff0a0', 'A flower that holds a fallen star, only open at night. Pressed into nectar at a town stove; shops buy it.', 4],
-  ['mithril_ore', 'Mithril Ore', 40, '#a8e0e8', `Light, shining ore from the highest veins. ${CRAFT} (tier 4).`, 4],
-  ['starstone', 'Starstone', 350, '#ffe9a6', `A rare gem with a star caught inside, from mithril veins. ${CRAFT} (tier 4).`, 4],
+  ['mithril_ore', 'Mithril Ore', 40, '#a8e0e8', `Light, shining ore from the highest veins. ${CRAFT} (tier 4). At Tora's forge, ore makes a polish more likely to take (gear Lv 45 and up).`, 4],
+  ['starstone', 'Starstone', 350, '#ffe9a6', `A rare gem with a star caught inside, from mithril veins. ${CRAFT} (tier 4). At Tora's forge it makes a polish far more likely to take.`, 4],
   ['skywood_log', 'Skywood Log', 34, '#e8d8ff', `A pale log from the trees that grow on clouds, light as a feather. ${CRAFT} (tier 4).`, 4],
   ['cloud_cotton', 'Cloud Cotton', 34, '#f4f8ff', `A puff of cloud you can spin into thread. ${CRAFT} (tier 4).`, 4],
 ];

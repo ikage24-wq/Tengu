@@ -154,7 +154,7 @@ export const MAPS = {
     // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
     // cherry tree's crown in the boughs, the cloud pillar by the lookout.
     deco: [
-      ['flowerarch', 260], ['giantflower', 900, 0], ['pond', 2235], ['picnic', 1650], ['signpost', 2060],
+      ['flowerarch', 260], ['giantflower', 900, 0], ['bigpond', 2235], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
       ['sakura', 1200, 0, 440],
       ['cloudpillar', 880, 0, 280],
