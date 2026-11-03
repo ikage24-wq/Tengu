@@ -407,9 +407,10 @@ function drawSpeaker(ctx, world, step, x, y, t) {
 
 // ---------- The root radio ----------
 
-// Bramble talking over the root radio during a Rootwood Hollow run: a little box low in the middle
-// with his face in a round frame, the line typing out, fading after a few seconds.
-export function drawRadio(ui, world) {
+// Someone talking over the root radio during a dungeon run: a small box at the top middle of the
+// screen, clear of the players and the floor, with their face in a round frame and the line typing
+// out, fading after a few seconds. While the room's name banner is up it eases down to sit under it.
+export function drawRadio(ui, world, banner = 0) {
   const r = world.radio;
   if (!r || world.scene) return;
   const age = world.now - r.at;
@@ -420,20 +421,17 @@ export function drawRadio(ui, world) {
   const { ctx } = ui;
   const a = Math.min(1, age / 0.25, (5.5 - age) / 0.5);
   const npc = NPCS[r.who];
-  const W = 300;
-  const H = 34;
-  // While a boss fight's floor telegraphs are up (a share ring, a seal), the box slides up and
-  // aside to the left under the party list, off the floor where the ring is, and lets the fight show
-  // through a little.
-  const tele = world.mobs?.some((m) => m.coop && m.hp > 0) ? 1 : 0;
-  r.aside = (r.aside ?? tele) + (tele - (r.aside ?? tele)) * 0.15;
-  const k = r.aside * r.aside * (3 - 2 * r.aside);
-  const x = 320 - W / 2 + (10 - (320 - W / 2)) * k;
-  const y = 268 - 84 * k;
+  const W = 250;
+  // Tall enough for the whole line, however it wraps (measured without drawing).
+  const H = Math.max(34, 19 + wrap(ctx, r.text, 0, 0, W - 46, { size: 7.5, chars: 0, lineHeight: 9 }));
+  const under = banner > 0 ? 1 : 0;
+  r.under = (r.under ?? under) + (under - (r.under ?? under)) * 0.15;
+  const x = 320 - W / 2;
+  const y = 6 + 52 * r.under * r.under * (3 - 2 * r.under);
   ctx.save();
-  ctx.globalAlpha = a * (1 - 0.15 * k);
-  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.95)', edge: '#a6dca2', r: 12, width: 2 });
-  // His face in a round frame, with little signal waves.
+  ctx.globalAlpha = a;
+  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.9)', edge: '#a6dca2', r: 12, width: 2 });
+  // Their face in a round frame, with little signal waves.
   ctx.save();
   ctx.beginPath();
   ctx.arc(x + 18, y + 17, 13, 0, Math.PI * 2);

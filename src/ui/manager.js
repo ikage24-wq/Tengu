@@ -357,7 +357,7 @@ export function drawUi(ui, state, world) {
   if (state.death) deathWindow(ui, state, world);
   // The emote wheel, Bramble on the root radio in Rootwood Hollow, and a story scene over everything.
   emoteWheel(ui, state, world);
-  drawRadio(ui, world);
+  drawRadio(ui, world, state.banner);
   drawScene(ui, world, state.cam);
 }
 
