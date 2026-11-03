@@ -2,7 +2,7 @@
 // the way a player reads it, and the fight starts. Same setup as tools/record-dungeons.cjs (the
 // game served on PORT or 8000, playwright, and ffmpeg via FFMPEG; name the file .webm for the
 // small ffmpeg that comes with playwright).
-// Usage: node tools/record-scene.cjs <out.webm> <room> [job]
+// Usage: node tools/record-scene.cjs <out.webm> <room> [job]   (LEVEL= the hero's level, 50 by default)
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -17,9 +17,14 @@ const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(outFile)), 'frame
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('pageerror', (e) => console.log('ERR', e.message));
-  await page.goto(`http://localhost:${process.env.PORT || 8000}/tools/dungeon-stage.html?job=${job ?? 'spiritmage'}&level=30&seed=7`);
+  await page.goto(`http://localhost:${process.env.PORT || 8000}/tools/dungeon-stage.html?job=${job ?? 'spiritmage'}&level=${process.env.LEVEL ?? 50}&seed=7`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
-  await page.evaluate((r) => window.room(r), roomId);
+  const at = await page.evaluate((r) => window.room(r), roomId);
+  if (at !== roomId) {
+    console.log('could not get into', roomId, ':', at);
+    await browser.close();
+    process.exit(1);
+  }
   await page.evaluate(() => window.watch());
   // Walk up unfilmed until the boss is near, then roll.
   for (let k = 0; k < 120; k++) {

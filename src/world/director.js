@@ -16,8 +16,8 @@
 //   { fade: 'out' | 'in', dur, color, to }   the screen to a colour (or `to` part way) and back
 //   { flash: color }  { shake: strength, dur }
 //   { fx: kind, at, top }         a burst: sparkle hearts petals leaves wind confetti spores notes
-//                                 bubbles ink gears pages starfall (stars streaking down from the
-//                                 sky over a stretch)
+//                                 bubbles ink gears pages sparks caramel crumbs starfall (stars
+//                                 streaking down from the sky over a stretch)
 //                                 china (shards of a plate or cup), dust
 //                                 (puffs along the floor), rubble (falling from the ceiling); `top`
 //                                 bursts from the top of the actor (a tree's crown)
@@ -350,7 +350,7 @@ function runner(world, step) {
 
 // A burst of little things at a point: drawn by the cutscene window.
 function burst(c, kind, x, y, n) {
-  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : kind === 'bubbles' ? 14 : kind === 'ink' ? 26 : kind === 'gears' ? 14 : kind === 'pages' ? 14 : kind === 'starfall' ? 18 : 12);
+  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : kind === 'bubbles' ? 14 : kind === 'ink' ? 26 : kind === 'gears' ? 14 : kind === 'pages' ? 14 : kind === 'starfall' ? 18 : kind === 'sparks' ? 16 : kind === 'caramel' ? 18 : kind === 'crumbs' ? 16 : 12);
   if (kind === 'rubble' || kind === 'dust' || kind === 'starfall') {
     // Rubble shaken loose from the ceiling over a stretch of floor; dust kicked along the floor.
     for (let k = 0; k < count; k++) {
@@ -367,9 +367,9 @@ function burst(c, kind, x, y, n) {
     const a = (k / count) * Math.PI * 2 + Math.random() * 0.4;
     const sp = kind === 'wind' ? 90 + Math.random() * 40 : 30 + Math.random() * 40;
     c.bursts.push({
-      kind, x, y, t: 0, life: kind === 'wind' ? 1.2 : kind === 'spores' || kind === 'notes' || kind === 'bubbles' || kind === 'ink' ? 1.6 + Math.random() * 0.8 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
-      vx: kind === 'wind' ? sp * (k % 2 ? 1 : -1) * 0.8 : Math.cos(a) * sp,
-      vy: kind === 'wind' ? -10 + Math.random() * 20 : Math.sin(a) * sp - (kind === 'petals' || kind === 'leaves' ? 10 : 30),
+      kind, x, y, t: 0, life: kind === 'sparks' ? 0.4 + Math.random() * 0.3 : kind === 'wind' ? 1.2 : kind === 'spores' || kind === 'notes' || kind === 'bubbles' || kind === 'ink' ? 1.6 + Math.random() * 0.8 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
+      vx: kind === 'wind' ? sp * (k % 2 ? 1 : -1) * 0.8 : Math.cos(a) * sp * (kind === 'sparks' ? 3 : kind === 'caramel' || kind === 'crumbs' ? 1.6 : 1),
+      vy: kind === 'wind' ? -10 + Math.random() * 20 : Math.sin(a) * sp * (kind === 'sparks' ? 3 : 1) - (kind === 'petals' || kind === 'leaves' ? 10 : kind === 'caramel' || kind === 'crumbs' ? 90 : 30),
     });
   }
 }
@@ -418,7 +418,7 @@ export function tickCine(world, dt, { skip = false } = {}) {
     p.y += p.vy * dt;
     p.vx = p.kind === 'notes' || p.kind === 'bubbles' ? Math.sin(p.t * 4 + p.seed) * 14 : p.kind === 'ink' ? p.vx * 0.94 : p.vx * (p.kind === 'dust' ? 0.93 : 0.97);
     // Spores drift up and away; petals and leaves flutter down; the rest fall.
-    p.vy = p.kind === 'starfall' ? p.vy : p.kind === 'pages' ? p.vy * 0.95 + 10 * dt : p.kind === 'gears' ? p.vy + 200 * dt : p.kind === 'notes' ? -18 : p.kind === 'bubbles' ? -26 : p.kind === 'ink' ? p.vy * 0.94 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
+    p.vy = p.kind === 'sparks' ? p.vy + 120 * dt : p.kind === 'caramel' || p.kind === 'crumbs' ? p.vy + 260 * dt : p.kind === 'starfall' ? p.vy : p.kind === 'pages' ? p.vy * 0.95 + 10 * dt : p.kind === 'gears' ? p.vy + 200 * dt : p.kind === 'notes' ? -18 : p.kind === 'bubbles' ? -26 : p.kind === 'ink' ? p.vy * 0.94 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
   }
   c.bursts = c.bursts.filter((p) => p.t < p.life);
   if (c.flash) {

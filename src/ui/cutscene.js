@@ -290,6 +290,35 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'sparks') {
+    // A forge spark: a short bright streak along its flight.
+    ctx.strokeStyle = p.seed > 5 ? '#ffe36b' : '#ff9a3a';
+    ctx.lineWidth = 1.4;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - p.vx * 0.03, y - p.vy * 0.03);
+    ctx.stroke();
+  } else if (p.kind === 'caramel') {
+    // A glossy drop of caramel (or frosting), stretching as it flies.
+    ctx.translate(x, y);
+    ctx.rotate(Math.atan2(p.vy, p.vx));
+    ctx.fillStyle = p.seed > 5 ? '#e89a3a' : '#f4b860';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 3 + Math.min(3, Math.hypot(p.vx, p.vy) / 80), 2.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(-1, -1.4, 1.4, 1);
+  } else if (p.kind === 'crumbs') {
+    // A crumb of gingerbread, tumbling.
+    ctx.translate(x, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = p.seed > 5 ? '#c07a4a' : '#a8603a';
+    ctx.fillRect(-1.6, -1.6, 3.2, 3.2);
+    if (p.seed > 7) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-1.6, -1.6, 3.2, 0.8);
+    }
   } else if (p.kind === 'pages') {
     // A loose page, fluttering: a white sheet with lines of ink, flipping as it turns.
     ctx.translate(x, y);

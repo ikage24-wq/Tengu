@@ -610,21 +610,72 @@ export const VOLCANO_SCENES = {
     { card: 'Candy Volcano', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
+  // Toffee, staged: the forge rings to her hammer, three strokes on the anvil in a spray of
+  // sparks; she looks up through the steam and grins, then tests her new hammer on the floor in a
+  // great splash of caramel.
   volcano_toffee: [
+    { together: [{ cam: 'toffee', up: 20, dur: 1.2 }, { walk: 'player', to: 'toffee', gap: 190, speed: 100 }, { face: 'toffee', to: 1 }, { mood: 'toffee', as: 'happy' }] },
+    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
+    { wait: 0.28 },
+    { together: [{ fx: 'sparks', at: 'toffee' }, { shake: 1.5, dur: 0.2 }, { wait: 0.5 }] },
+    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
+    { wait: 0.28 },
+    { together: [{ fx: 'sparks', at: 'toffee' }, { shake: 1.5, dur: 0.2 }, { wait: 0.5 }] },
+    { act: 'toffee', move: 'attack', dur: 0.75, async: true },
+    { wait: 0.28 },
+    { together: [{ fx: 'sparks', at: 'toffee', n: 24 }, { shake: 2, dur: 0.25 }, { wait: 0.5 }] },
     { who: null, text: 'The forge rings. A smith with a caramel hammer looks up from her anvil and grins through the steam.' },
+    { together: [{ face: 'toffee', to: 'player' }, { emote: 'toffee', kind: '!' }, { jump: 'toffee', height: 12 }] },
     { who: 'toffee', text: "Visitors! You're just in time. I need something to test my new hammer on!", mood: 'happy' },
-    { who: 'toffee', text: 'Hold still. Or don\'t. Moving targets are more fun!', mood: 'happy' },
+    { together: [{ cam: ['player', 'toffee'], up: 20, dur: 0.9 }, { emote: 'player', kind: 'sweat', dur: 1.4 }, { face: 'player', to: 'toffee' }] },
+    { who: 'toffee', text: "Hold still. Or don't. Moving targets are more fun!", mood: 'happy' },
+    { together: [{ act: 'toffee', move: 'windup', dur: 0.8 }, { walk: 'toffee', to: 'player', gap: 120, speed: 90 }] },
+    { act: 'toffee', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 5, dur: 0.5 }, { fx: 'caramel', at: 'toffee', n: 26 }, { fx: 'sparks', at: 'toffee' }, { jump: 'player', height: 24 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Gretel, staged: the gingerbread knight bars the way, beats her cookie shield three times in a
+  // shower of crumbs, salutes with her candy-cane lance, backs off to the end of the lists like a
+  // joust, and charges.
   volcano_gretel: [
+    { together: [{ cam: 'gretel', up: 20, dur: 1.2 }, { walk: 'player', to: 'gretel', gap: 190, speed: 100 }, { mood: 'gretel', as: 'angry' }] },
+    { together: [{ face: 'gretel', to: 'player' }, { emote: 'gretel', kind: '!' }] },
     { who: 'gretel', text: 'Halt! I am Gretel, Knight of the Gingerbread Wall. None shall pass to the crater!', mood: 'angry' },
+    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }] },
+    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 8 }, { shake: 1, dur: 0.15 }] },
+    { together: [{ jump: 'gretel', height: 8 }, { fx: 'crumbs', at: 'gretel', n: 12 }, { shake: 1.5, dur: 0.2 }] },
     { who: 'player', text: "The Queen's going to bury the whole island in caramel. Let us through." },
+    { together: [{ act: 'gretel', move: 'sway', dur: 0.8, amp: -0.12, speed: 4 }, { fx: 'sparkle', at: 'gretel', top: true }] },
+    { together: [{ walk: 'gretel', away: 'player', by: 110, speed: 120 }, { cam: ['player', 'gretel'], up: 20, dur: 1 }] },
+    { face: 'gretel', to: 'player' },
     { who: 'gretel', text: 'Then you will have to go through ME. En garde!', mood: 'angry' },
+    { act: 'gretel', move: 'windup', dur: 0.6 },
+    { together: [{ walk: 'gretel', to: 'player', gap: 60, speed: 360 }, { act: 'gretel', move: 'attack', dur: 0.5 }, { fx: 'crumbs', at: 'gretel', n: 10 }] },
+    { together: [{ flash: '#fff2d8' }, { shake: 4, dur: 0.4 }, { fx: 'crumbs', at: 'gretel', n: 20 }, { walk: 'player', away: 'gretel', by: 36, speed: 200 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.4 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Queen Bonbon, staged: the cake queen rocks round and round stirring her lake of caramel as it
+  // bubbles and spatters, bounces with glee, goes flustered at the word "buried", then scoops up
+  // a great dollop of frosting and flings it at you.
   volcano_bonbon: [
+    { together: [{ cam: 'bonbon', up: 30, dur: 1.4 }, { walk: 'player', to: 'bonbon', gap: 190, speed: 100 }, { mood: 'bonbon', as: 'happy' }, { act: 'bonbon', move: 'sway', dur: 2.6, amp: 0.07, speed: 4 }, { fx: 'caramel', at: 'bonbon', n: 8 }] },
     { who: null, text: 'The crater. A lake of bubbling caramel, islands of rock candy, and a queen in a gown of cake stirring it all with a giant spoon.' },
+    { together: [{ act: 'bonbon', move: 'sway', dur: 2, amp: 0.07, speed: 4 }, { fx: 'caramel', at: 'bonbon', n: 10 }, { fx: 'sparks', at: 'bonbon', n: 8 }] },
+    { together: [{ face: 'bonbon', to: 'player' }, { jump: 'bonbon', height: 14 }, { emote: 'bonbon', kind: 'heart', dur: 1.4 }] },
     { who: 'bonbon', text: 'More sugar! More heat! The biggest dessert in the WORLD, and everyone gets a slice!', mood: 'happy' },
+    { together: [{ cam: ['player', 'bonbon'], up: 20, dur: 0.9 }, { face: 'player', to: 'bonbon' }] },
     { who: 'player', text: 'If it erupts, everyone gets buried in it!' },
+    { together: [{ mood: 'bonbon', as: 'hurt' }, { emote: 'bonbon', kind: 'sweat', dur: 1.6, hold: true }] },
     { who: 'bonbon', text: "...Buried? Oh. Oh dear. Well, I'm not stopping now! Stir, stir, STIR!", mood: 'angry' },
+    { together: [{ mood: 'bonbon', as: 'angry' }, { act: 'bonbon', move: 'windup', dur: 0.8 }] },
+    { act: 'bonbon', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ fx: 'caramel', at: 'player', n: 22 }, { shake: 3, dur: 0.3 }, { jump: 'player', height: 16 }, { emote: 'player', kind: 'sweat', dur: 1.4 }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
   volcano_freed: [
     { who: 'bonbon', text: "...Oh my. I got rather carried away, didn't I? It's just... nobody ever stays for dessert.", mood: 'sad' },
