@@ -26,6 +26,7 @@ import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
 import { inParty } from '../net/together.js';
+import { drawMinimapPings } from './grouping.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -750,6 +751,8 @@ function drawMinimap(ui, world) {
     ctx.arc(gx, gy, mate ? 2.3 : 1.9, 0, Math.PI * 2);
     ctx.fill();
   }
+  // The party's pings.
+  drawMinimapPings(ctx, world, X, Y);
   // You: a pink arrow pointing the way you face, with a ring pulsing out from it.
   const px = x + world.body.x * scale;
   const py = Y(world.body.y) - 3;
@@ -822,9 +825,10 @@ function drawBuffs(ui, world) {
 // The message log: each line on its own soft pill so it reads over any background.
 function drawLog(ui, world, state) {
   const { ctx } = ui;
-  const msgs = world.messages;
-  // While chatting the log sits above the chat bar and shows in full.
+  // While chatting the log sits above the chat bar and shows in full (on the Party tab, the
+  // party's lines only).
   const typing = state.chat?.typing != null;
+  const msgs = typing && state.chat.channel === 'party' && !state.chat.sendTo ? world.partyLog ?? [] : world.messages;
   ctx.font = font(8, true);
   msgs.forEach((m, i) => {
     const y = TRAY_Y - (typing ? 24 : 6) - (msgs.length - 1 - i) * 12;

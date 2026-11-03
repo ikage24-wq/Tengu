@@ -5,13 +5,14 @@
 // profile), with Party, Warp and Trade buttons, the invites waiting on you, and a way out.
 
 import { COLORS, windowFrame, text, button, box, icon, sparkle, wrap, fit, hover, tooltip, clicked, tabs } from './kit.js';
-import { askTrade, answerTrade, warpTo, warpBlocker, askParty, answerParty, partyBlocker, inParty } from '../net/together.js';
+import { askTrade, answerTrade, warpTo, warpBlocker, askParty, answerParty, partyBlocker, inParty, askJoinParty, answerJoinParty, joinPartyBlocker, leaderOf } from '../net/together.js';
 import { openProfile } from './profile.js';
 import { online, hostRoom, joinRoom, leaveRoom, ROOM_MAX } from '../net/online.js';
 import { JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { buddiesOf, buddyOnline, callBuddy, answerHunt, removeBuddy, whereIs } from '../world/buddies.js';
 import { partyMembers, PARTY_MAX } from '../world/party.js';
+import { askToJoin, joinBlocker } from '../world/grouping.js';
 
 const W = 262;
 const H = 320;
@@ -71,7 +72,13 @@ export function onlineWindow(ui, state, world) {
       if (hover(ui, x - 2, y, 118, 22)) tooltip(ui, [{ text: r.me ? 'Your profile' : `${r.name}'s profile`, size: 8 }]);
       // A friend: invite them to your party, warp to them, or trade with them.
       if (!r.me) {
-        if (!inParty(r.id)) {
+        // In a party of their own (and you're free): Join asks its leader; otherwise Party invites.
+        const theirs = !inParty(r.id) && !online.party && (leaderOf(r.id) !== r.id || online.rosters?.has(r.id));
+        if (theirs) {
+          const jw = joinPartyBlocker(r);
+          if (button(ui, x + W - 128, y + 3, 34, 16, online.joinAsked === leaderOf(r.id) ? '...' : 'Join', { size: 7, enabled: !jw, theme: 'pink' })) askJoinParty(world, r.id);
+          if (hover(ui, x + W - 128, y + 3, 34, 16)) tooltip(ui, [{ text: jw ?? `Ask to join ${online.ghosts.get(leaderOf(r.id))?.name ?? r.name}'s party`, size: 8 }]);
+        } else if (!inParty(r.id)) {
           const pw = partyBlocker(r);
           if (button(ui, x + W - 128, y + 3, 34, 16, online.partyAsked === r.id ? '...' : 'Party', { size: 7, enabled: !pw, theme: 'pink' })) askParty(world, r.id);
           if (pw && hover(ui, x + W - 128, y + 3, 34, 16)) tooltip(ui, [{ text: pw, size: 8 }]);
@@ -97,6 +104,16 @@ export function onlineWindow(ui, state, world) {
       text(ctx, fit(ctx, `${name} invited you to a party!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
       if (button(ui, x + W - 92, y + 3, 36, 16, 'Join', { size: 7.5, primary: true })) answerParty(world, true);
       if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerParty(world, false);
+      y += 25;
+    }
+    // Someone asked to join your party.
+    if (online.joinAsk) {
+      const name = online.ghosts.get(online.joinAsk)?.name ?? 'Someone';
+      box(ctx, x - 2, y, W - 20, 22, { fill: '#ffe9f2', edge: '#ff8fc1', r: 8, width: 1.5 });
+      icon(ctx, 'friends', x + 9, y + 11, 10, '#ff6b9a');
+      text(ctx, fit(ctx, `${name} asks to join your party!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
+      if (button(ui, x + W - 92, y + 3, 36, 16, 'Let in', { size: 7.5, primary: true })) answerJoinParty(world, true);
+      if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerJoinParty(world, false);
       y += 25;
     }
     // Someone asked to trade.
@@ -196,9 +213,13 @@ function friendsTab(ui, state, world, win, x, y) {
     box(ctx, x + 5, y + 8, 6, 6, { fill: bot ? '#7ee081' : '#d4cbe8', edge: null, r: 3 });
     text(ctx, fit(ctx, snap.name, 100, 8, true), x + 16, y + 10, { size: 8, bold: true });
     const where = bot ? (bot.party ? 'in your party' : bot.map === world.map.id ? 'here' : whereIs(bot)) : `offline · ${ago(snap.seen)}`;
-    text(ctx, fit(ctx, `Lv${bot?.char.level ?? snap.level} ${jobName(jobOf(snap))} · ${where}`, 130, 6.5, false), x + 16, y + 18.5, { size: 6.5, color: bot ? COLORS.good : COLORS.muted });
+    text(ctx, fit(ctx, `Lv${bot?.char.level ?? snap.level} ${jobName(jobOf(snap))} · ${where}`, bot && !bot.party ? 104 : 130, 6.5, false), x + 16, y + 18.5, { size: 6.5, color: bot ? COLORS.good : COLORS.muted });
     if (bot && clicked(ui, x - 2, y, 150, 22)) openProfile(state, { kind: 'bot', id: bot.id });
     if (bot && !bot.party) {
+      // Join: you go to them (they lead), if your level fits where they hunt.
+      const jw = joinBlocker(world, bot);
+      if (button(ui, x + W - 134, y + 3, 38, 16, bot.joinAsk ? '...' : 'Join', { size: 7, enabled: !jw, theme: 'sky' })) askToJoin(world, bot);
+      if (hover(ui, x + W - 134, y + 3, 38, 16)) tooltip(ui, [{ text: `Join ${snap.name}'s party`, bold: true }, { text: jw ?? (bot.map === world.map.id ? 'They lead; you hunt together' : `They take you to ${whereIs(bot)}`), size: 8, color: COLORS.muted }]);
       if (button(ui, x + W - 92, y + 3, 40, 16, 'Invite', { size: 7, primary: true, enabled: !full, theme: 'pink' })) {
         const no = callBuddy(bots, world, bot);
         if (no) world.log(no, '#ffb3c6');

@@ -90,6 +90,11 @@ export function createWorld(char) {
     log(text, color = '#fff9ee') {
       world.messages.push({ text, color, t: 6 });
       if (world.messages.length > 7) world.messages.shift();
+      // The party's own lines are kept apart too, for the chat's Party tab.
+      if (text.startsWith('[Party]')) {
+        (world.partyLog ??= []).push({ text, color, at: world.now });
+        if (world.partyLog.length > 7) world.partyLog.shift();
+      }
     },
   };
   loadMap(world, char.mapId, char.portal ?? 'start');
@@ -470,9 +475,12 @@ export function killMob(world, m, byParty = false) {
   const card = recordBook(char, m.def.id);
   if (card === 'card') world.log(`New Monster Book card: ${m.def.name}!`, '#c9a6ff');
   if (card === 'master') world.log(`${m.def.name} card mastered!`, '#ffe36b');
+  // (A party member's kill counts for your quests too, and the tracker shows whose it was.)
+  const by = byParty ? world.bots?.list.find((b) => b.id === m.killedBy && b.party)?.name ?? m.killedByName ?? null : null;
   for (const qid of recordKill(char, m.def.id)) {
     const goal = QUESTS[qid].objectives.find((o) => o.type === 'kill' && o.mob === m.def.id);
-    world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}`, '#bff0dc');
+    world.log(`${QUESTS[qid].name}: ${char.quests[qid].kills[m.def.id]}/${goal.count} ${m.def.name}${by ? ` (${by})` : ''}`, '#bff0dc');
+    if (by) (world.partyCredit ??= {})[`${qid}|${m.def.id}`] = { name: by, at: world.now };
   }
   world.drops.push(...spawnDrops(rollLoot(m.def, Math.random, (d) => fitsJob(char, d)), m.x, m.y));
   // A queen (or the Crystal King) drops a piece of her set for your job: always from her trial,
@@ -729,7 +737,10 @@ export function updateWorld(world, dt, input) {
         m.credited = true;
         world.juice.push({ type: 'kill', x: m.x, y: m.y, w: m.def.w, h: m.def.h, boss: false, party: true });
         world.onStrangerKill?.(h.party, m);
-      } else killMob(world, m, Boolean(h.party));
+      } else {
+        if (h.party) m.killedBy = h.party;
+        killMob(world, m, Boolean(h.party));
+      }
       continue;
     }
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);

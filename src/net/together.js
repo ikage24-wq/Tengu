@@ -86,10 +86,78 @@ export function tickParty(world) {
   if (!online.party) send({ t: 'party', op: 'roster', leader: null, members: [], was: online.id });
 }
 
+// Every party in the room, by its leader (from the rosters everyone shares), so a friend's party
+// can be asked to take you in.
+function noteRoster(msg) {
+  const r = (online.rosters ??= new Map());
+  if (msg.was) r.delete(msg.was);
+  if (msg.leader && msg.members?.length > 1) r.set(msg.leader, msg.members);
+  else if (msg.leader) r.delete(msg.leader);
+}
+
+// The leader of the party friend `id` is in (themselves when they're on their own).
+export function leaderOf(id) {
+  if (online.party?.members.includes(id)) return online.party.leader;
+  for (const [lead, members] of online.rosters ?? []) if (members.includes(id) && online.ghosts.has(lead)) return lead;
+  return id;
+}
+const partySizeOf = (lead) => online.rosters?.get(lead)?.length ?? 1;
+
+// Why you can't ask to join friend `g`'s party now, or null.
+export function joinPartyBlocker(g) {
+  if (!g) return 'Not here';
+  if (inParty(g.id)) return 'Already in your party';
+  if (online.party) return 'Leave your party first';
+  if (online.joinAsked) return 'Waiting for an answer';
+  if (partySizeOf(leaderOf(g.id)) >= ONLINE_PARTY_MAX) return 'Their party is full';
+  return null;
+}
+
+// One click: the ask goes to their party's leader, who lets you in (or not).
+export function askJoinParty(world, id) {
+  const g = online.ghosts.get(id);
+  const why = joinPartyBlocker(g);
+  if (why) return why;
+  const lead = leaderOf(id);
+  online.joinAsked = lead;
+  send({ t: 'party', to: lead, op: 'join', name: world.char.name });
+  world.log(`You asked to join ${online.ghosts.get(lead)?.name ?? g.name}'s party.`, '#bff0dc');
+  return null;
+}
+
+// The leader's answer to someone asking to join.
+export function answerJoinParty(world, yes) {
+  const from = online.joinAsk;
+  online.joinAsk = null;
+  const g = from && online.ghosts.get(from);
+  if (!g) return;
+  if (!yes || (online.party && online.party.leader !== online.id) || (online.party?.members.length ?? 1) >= ONLINE_PARTY_MAX) {
+    send({ t: 'party', to: from, op: 'nojoin', full: yes });
+    return;
+  }
+  online.party ??= { leader: online.id, members: [online.id] };
+  if (!inParty(from)) online.party.members.push(from);
+  shareParty();
+  world.log(`${g.name} joined your party!`, '#bff0dc');
+}
+
 function onParty(world, msg, g) {
+  if (msg.op === 'roster') noteRoster(msg);
   if (msg.to && msg.to !== online.id) return;
   const p = online.party;
   switch (msg.op) {
+    case 'join':
+      if ((p && p.leader !== online.id) || (p?.members.length ?? 1) >= ONLINE_PARTY_MAX) send({ t: 'party', to: msg.id, op: 'nojoin', full: true });
+      else {
+        online.joinAsk = msg.id;
+        world.log(`${msg.name} asks to join your party! Open Play with Friends (N) to answer.`, '#ffe36b');
+      }
+      return;
+    case 'nojoin':
+      if (online.joinAsked !== msg.id) return;
+      online.joinAsked = null;
+      world.log(msg.full ? `${g.name}'s party is full.` : `${g.name} said no to your join request.`, '#ffb3c6');
+      return;
     case 'ask':
       if (p && p.leader !== msg.id) send({ t: 'party', to: msg.id, op: 'decline', busy: true });
       else if (!p) {
@@ -130,6 +198,7 @@ function onParty(world, msg, g) {
       if (msg.members.includes(online.id)) {
         const fresh = !p;
         online.party = { leader: msg.leader, members: msg.members };
+        online.joinAsked = null;
         if (fresh) world.log(`You joined ${g.name}'s party!`, '#bff0dc');
         else if (msg.leader === online.id && p.leader !== online.id) world.log("You're the party leader now.", '#ffe36b');
       } else if (mine) {
@@ -389,6 +458,41 @@ function onGift(world, msg, g) {
   world.log(ok ? `${g.name} crafted ${ITEMS[id].name} for you! It's in your bag.` : `${g.name} made you ${ITEMS[id].name}, but your bag is full!`, ok ? '#ffe36b' : '#ffb3c6');
 }
 
+// ---------- Pings, party chat, emotes and gathers, for the party ----------
+// Sent to the room; only your party acts on them.
+
+function onPartyNote(world, msg, g) {
+  if (!inParty(msg.id) || world.dungeon) return;
+  const hooks = setGroupHandler.fn;
+  switch (msg.t) {
+    case 'ping': {
+      const mob = msg.mob && msg.map === world.map.id ? world.mobs.find((m) => m.net === msg.mob || `${online.id}:${m.uid}` === msg.mob) ?? null : null;
+      hooks?.ping(world, msg.kind, { mob, x: msg.x, y: msg.y, from: msg.id, name: g.name, map: msg.map });
+      world.log(`[Party] ${g.name}: ${hooks?.label(msg.kind) ?? 'Ping!'}${msg.map !== world.map.id ? ` (${MAPS[msg.map]?.name ?? 'elsewhere'})` : mob ? ` (${mob.def.name})` : ''}`, hooks?.color(msg.kind) ?? '#9fe0b0');
+      return;
+    }
+    case 'pchat': {
+      const words = String(msg.text).slice(0, 80);
+      g.bubble = { text: words, t: 5 };
+      world.log(`[Party] ${g.name}: ${words}`, '#9fe0b0');
+      return;
+    }
+    case 'pemote':
+      // (Their face and pose show on them already; the party's log gets it too.)
+      world.log(`[Party] ${g.name} · ${String(msg.label ?? msg.emote).slice(0, 12)}`, '#9fe0b0');
+      return;
+    case 'gath':
+      if (msg.map !== world.map.id) return;
+      for (const id of (msg.items ?? []).slice(0, 6)) hooks?.gathered(world, id, 1, g.name);
+      return;
+  }
+}
+
+// The grouping hooks (world/grouping.js registers them, so this module needn't load it).
+export function setGroupHandler(fn) {
+  setGroupHandler.fn = fn;
+}
+
 // ---------- The world's hooks (merged into world.net) ----------
 
 export const togetherApi = {
@@ -414,6 +518,18 @@ export const togetherApi = {
     return true;
   },
   partyFriends: () => partyFriends(),
+  ping(world, p) {
+    if (online.party) send({ t: 'ping', kind: p.kind, map: p.map, x: Math.round(p.x), y: Math.round(p.y), mob: p.mob ? p.mob.net ?? `${online.id}:${p.mob.uid}` : null });
+  },
+  partyChat(world, words) {
+    if (online.party) send({ t: 'pchat', text: words });
+  },
+  partyEmote(world, id, label) {
+    if (online.party) send({ t: 'pemote', emote: id, label });
+  },
+  gathered(world, items) {
+    if (online.party) send({ t: 'gath', map: world.map.id, items });
+  },
 };
 
 export function handleTogether(world, msg, g) {
@@ -437,6 +553,11 @@ export function handleTogether(world, msg, g) {
       return onParty(world, msg, g);
     case 'insp':
       return onInspect(world, msg, g);
+    case 'ping':
+    case 'pchat':
+    case 'pemote':
+    case 'gath':
+      return onPartyNote(world, msg, g);
     default:
       return onRun(world, msg, g);
   }

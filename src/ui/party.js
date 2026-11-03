@@ -8,7 +8,9 @@ import { openProfile } from './profile.js';
 import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
 import { settings } from '../core/settings.js';
 import { online } from '../net/online.js';
-import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade } from '../net/together.js';
+import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade, askJoinParty, joinPartyBlocker, leaderOf } from '../net/together.js';
+import { askToJoin, joinBlocker } from '../world/grouping.js';
+import { partyEmoteBar } from './grouping.js';
 import { MAPS } from '../data/maps.js';
 import { askFriend, addBlocker, isBuddy, thanked } from '../world/buddies.js';
 import { helpOut } from '../world/lives.js';
@@ -38,6 +40,11 @@ function menuItems(state, world) {
     } else {
       const why = partyBlocker(g);
       items.push({ label: 'Invite to party', icon: 'heart', why, enabled: !why, run: () => askParty(world, g.id) });
+      // They're in a party of their own: one click asks its leader to take you in.
+      if (leaderOf(g.id) !== g.id || online.rosters?.has(g.id)) {
+        const no = joinPartyBlocker(g);
+        items.push({ label: 'Join their party', icon: 'friends', why: no, enabled: !no, run: () => askJoinParty(world, g.id) });
+      }
     }
     if (!online.trade) items.push({ label: 'Trade', icon: 'coin', run: () => askTrade(world, g.id) });
     return items;
@@ -49,6 +56,11 @@ function menuItems(state, world) {
   else {
     const why = inviteBlocker(world.bots, bot, world);
     items.push({ label: 'Invite to party', icon: 'heart', why, enabled: !why, run: () => invite(world.bots, bot, world) });
+    // Or ask to join theirs: they lead, and say yes if your level fits where they hunt.
+    if (!bot.lfg && !bot.shop) {
+      const no = joinBlocker(world, bot);
+      items.push({ label: bot.joinAsk ? 'Asked to join...' : 'Ask to join them', icon: 'friends', why: no, enabled: !no, run: () => askToJoin(world, bot) });
+    }
   }
   if (bot.helped && !bot.thanked) items.push({ label: 'Say thanks', icon: 'heart', run: () => thanked(world.bots, world) });
   if (bot.helpAsk && !bot.party) items.push({ label: 'Help them', icon: 'heart', run: () => helpOut(world.bots, world, bot) });
@@ -134,6 +146,7 @@ export function drawPartyPanel(ui, state, world) {
   const y = top + (Object.keys(world.char.buffs).length ? 30 : 0);
   const w = 120;
   const h = 18 + (members.length + friends.length + 1) * 19;
+  const lead = world.bots?.partyLead ?? null;
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
   box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
   icon(ctx, 'heart', x + 9, y + 8, 8, '#ffffff');
@@ -164,8 +177,8 @@ export function drawPartyPanel(ui, state, world) {
     }
   };
   const s = world.stats;
-  const lead = !online.party || online.party.leader === online.id;
-  row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run && lead,
+  const leadMe = (!online.party || online.party.leader === online.id) && !lead;
+  row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run && leadMe,
     () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17), run ? role('you') : null);
   // Friends online in your party: their HP, and where they are when it isn't here.
   friends.forEach((g, i) => {
@@ -182,9 +195,13 @@ export function drawPartyPanel(ui, state, world) {
     i += off;
     // (Their HP shows out in the field too, where monsters fight back; nothing while they're away.)
     const hp = bot.away || bot.down ? 0 : bot.hp == null || !bot.stats ? 1 : bot.hp / bot.stats.maxHp;
-    row(i + 1, bot.name, bot.level, bot.char.job, hp, false,
+    // (Away in town after a fall: the row says so, in place of their playstyle.)
+    const away = bot.away && !run ? { label: 'In town', color: '#9c86b8' } : null;
+    row(i + 1, bot.name, bot.level, bot.char.job, hp, !run && bot.id === lead,
       () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17),
-      run ? role(bot.id) : bot.ai ? PLAYSTYLES[bot.ai.kind] : null);
-    if (!run && bot.ai && hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
+      run ? role(bot.id) : away ?? (bot.ai ? PLAYSTYLES[bot.ai.kind] : null));
+    if (!run && bot.ai && hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}${bot.id === lead ? ' · leader' : ''}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: bot.away ? 'Back in town after a fall; walking back soon' : `Here in ${map.name}`, size: 7.5 }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
   });
+  // Quick emotes for the party, under it.
+  partyEmoteBar(ui, state, world, x, y + h + 3, w);
 }
