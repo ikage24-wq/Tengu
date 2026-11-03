@@ -329,8 +329,12 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   m.seenX = m.x;
   if (step < 40) m.odo = (m.odo ?? 0) + step;
   const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
-  // In-between poses are drawn in the background; until one is ready, its whole frame stands in.
-  const s = (frame % 1 && spriteLater(mobKey(m.def.art, frame, mood, pose), { kind: 'mob', art: m.def.art, pose, frame, mood })) || monsterSprite(m.def.art, Math.floor(frame), mood, pose);
+  // A rigged boss (render/mobs/rig.js) is posed live from its parts; its box stands in for a sprite.
+  // Everyone else: in-between poses are drawn in the background; until one is ready, its whole frame
+  // stands in.
+  // (globalThis.noRig: the old frames, for comparing the two.)
+  const rig = globalThis.noRig ? null : ARTS[m.def.art]?.rig;
+  const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(m.def.art, frame, mood, pose), { kind: 'mob', art: m.def.art, pose, frame, mood })) || monsterSprite(m.def.art, Math.floor(frame), mood, pose);
 
   // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
   let sqGoal = 0;
@@ -357,11 +361,12 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   }
 
   let alpha = 1;
-  let sx = 1 + mo.sq;
-  let sy = 1 / (1 + mo.sq);
-  if (boss) sy *= 1 + Math.sin(t * 2) * 0.015;
-  else if (!moving && pose !== 'attack') sy *= 1 + Math.sin(t * 3) * 0.012; // the idle frames breathe
-  if (tremble) x += Math.sin(time * 60) * tremble;
+  // (A rig moves by its bones alone: no squash, no breathing stretch, its own tremble.)
+  let sx = rig ? 1 : 1 + mo.sq;
+  let sy = rig ? 1 : 1 / (1 + mo.sq);
+  if (boss && !rig) sy *= 1 + Math.sin(t * 2) * 0.015;
+  else if (!boss && !moving && pose !== 'attack') sy *= 1 + Math.sin(t * 3) * 0.012; // the idle frames breathe
+  if (tremble && !rig) x += Math.sin(time * 60) * tremble;
   if (m.age < 0.3 && m.hp > 0) {
     // Spawn pop with a little overshoot.
     const k = m.age / 0.3;
@@ -411,7 +416,7 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   else if (mo.lean) ctx.rotate(mo.lean);
   // Rocking about its feet in a cutscene (tossing in its sleep, rearing up).
   if (m.cine?.sway && m.hp > 0) ctx.rotate(m.cine.sway);
-  if (mo.shear && m.hp > 0) ctx.transform(1, 0, mo.shear, 1, 0, 0);
+  if (mo.shear && m.hp > 0 && !rig) ctx.transform(1, 0, mo.shear, 1, 0, 0);
   ctx.scale(sx, sy);
   // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.
   const since = time - mo.hitT;
@@ -421,7 +426,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   const huge = Math.min(1, Math.max(0, (s.h * Math.abs(sy) - 60) / 60));
   const peak = 0.8 - 0.5 * huge;
   const flash = white || (m.flash > 0 || since < 0.1 ? (since < 0.03 ? peak : Math.max(0, (0.45 - 0.25 * huge) * (1 - (since - 0.03) / (0.07 - 0.03 * huge)))) : 0);
-  blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
+  if (rig) rig.draw(ctx, m, { t, now, dt: mo.dt, mood, moving, mo, flip: m.dir < 0, flash: flash / 8, alpha });
+  else blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);

@@ -17,6 +17,7 @@
 // Every design faces right, its lowest point on the bottom edge.
 
 import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob } from './critter.js';
+import { part, put, spring, kick, blend, attackPhase, lerp, smooth, clamp } from './rig.js';
 
 const TEAL = '#5ff0d6';
 const PURP = '#b86cff';
@@ -259,6 +260,205 @@ function myconidQueen(pose, f, mood) {
   return { w: 112, h: 108, res: 3, shapes: dead ? spin(out, cx, 104, 0) : out };
 }
 
+// ---------- The Myconid Queen, rigged ----------
+// (2026-11-03, the boss reanimation.) The same queen, cut into parts on a skeleton: root feet, a
+// plump stem body with a leafy collar and a skirt of gills, her face, a great spotted cap with a
+// little crown, a staff arm and a free arm. She breathes with her cap swaying a beat behind; she
+// waddles, planting her staff like a walking stick, the cap bouncing and settling; for the slam she
+// leans back and lifts the staff high over her head with her other hand flung up, then whips it
+// down so the cap snaps forward and a ring of spores bursts from the floor; a blow rocks her back
+// with the cap and crown wobbling after. Rig space: feet on the floor at (0, 0), facing right.
+
+const Q = {
+  stem: ramp('#fff0e4', { step: 8, turn: 12 }),
+  cap: ramp('#ff7aa8', { step: 10, turn: 12 }),
+  wood: '#8a5a3a',
+  // Where things hang on the body (body-local, from the bottom of the stem).
+  face: [4, -28],
+  capAt: [0, -45],
+  shoulderF: [19, -15],
+  shoulderB: [-13, -33],
+  skirt: [0, -4],
+  arm: 7,
+};
+
+const qParts = {
+  body: () => part('queen|body', 48, 52, () => {
+    const out = [...blob(24, 26, 20, 22, Q.stem)];
+    // A soft belly shine and the leafy collar under the cap.
+    out.push(F(O(30, 30, 6, 9, -10, '#fffaf4', 14)));
+    for (let i = 0; i < 7; i++) out.push(O(9 + i * 5, 8, 4, 2.4, (i - 3) * 16, i % 2 ? '#7fd06a' : '#5aa04a', 12));
+    return out;
+  }),
+  skirt: () => part('queen|skirt', 44, 10, () => Array.from({ length: 9 }, (_, i) => O(4 + i * 4.5, 5, 3.4, 2.4, (i - 4) * 10, i % 2 ? '#e8d8c8' : '#f4e8dc', 10))),
+  foot: () => part('queen|foot', 20, 10, () => [O(10, 6, 8, 3.4, 0, Q.stem.sh, 14), F(O(8, 5, 4, 1.2, 0, Q.stem.base, 10))]),
+  face: (mood, atk) => part(`queen|face|${mood}|${atk}`, 34, 26, () => cuteFace(17, 11, 2.4, mood, { iris: '#ff5a9a', lip: '#c03a6a', gap: 6, atk, skin: Q.stem.base, mouthDy: 3.8, lash: 1.8, wing: 1.8 })),
+  cap: () => part('queen|cap', 88, 38, () => {
+    // Local: the middle of the cap's base at (44, 33).
+    const cx = 44;
+    const by = 33;
+    const out = [T([...arcPts(cx, by, 40, 30, 180, 360, 26)], Q.cap.base), crescent(cx, by - 4, 40, 26, Q.cap.sh, { k: 0.26, a0: 300, a1: 380 })];
+    for (let i = 0; i < 16; i++) out.push(E(cx - 38 + i * 5.1, by + 0.6, 3, 2, i % 2 ? '#ffd0e0' : '#ffb8d0'));
+    for (const [x, y, r] of [[-24, -10, 5], [-8, -20, 6], [10, -16, 5], [24, -8, 4], [0, -6, 3.4], [-16, -22, 3]]) out.push(E(cx + x, by + y, r, r * 0.8, '#ffffff'), F(E(cx + x - r * 0.3, by + y - r * 0.3, r * 0.3, r * 0.2, '#fff6fa')));
+    out.push(shine(cx, by - 14, 40, 24, '#ffffff', -10, 1));
+    return out;
+  }),
+  crown: () => part('queen|crown', 26, 18, () => {
+    // Local: the middle of the band's foot at (13, 15).
+    const out = [];
+    for (let i = 0; i < 5; i++) out.push(T([[3 + i * 5, 14], [5 + i * 5, 6 - (i === 2 ? 4 : 0)], [7 + i * 5, 14]], '#ffd36b'));
+    out.push(R(3, 12, 22, 3, '#e8b84a'), F(E(14, 8, 1.8, 1.8, TEAL)), F(R(3, 12, 22, 1, '#fff0b0')));
+    return out;
+  }),
+  // An arm: from the shoulder at (4, 5) out along +x to a round hand.
+  arm: (back) => part(`queen|arm|${back ? 'b' : 'f'}`, 20, 10, () => {
+    const c = back ? Q.stem.sh : Q.stem.base;
+    return [...limb([4, 5], [4 + Q.arm, 5], 6, 5.6, c), O(4 + Q.arm, 5, 3.8, 3.6, 0, c, 14)];
+  }),
+  // The staff, upright: the grip at (6, 30), the crystal at the top.
+  staff: () => part('queen|staff', 12, 44, () => [...limb([6, 42], [6, 8], 2.6, 2.2, Q.wood), F(R(5.2, 12, 1, 26, '#b07a52')), E(6, 7, 4.6, 4.6, TEAL), F(E(4.6, 5.6, 1.6, 1.6, '#ffffff'))]),
+};
+
+// Poses: numbers only, blended by weight. tilt (body lean, + forward), y (body drop), armF / armB
+// (arm angle from +x, radians), staff (staff lean from upright, + forward), cap (cap's own tilt),
+// footF / footB (foot x offsets), liftF / liftB (foot lifts).
+function queenPose(m, a) {
+  const t = a.t;
+  const breath = Math.sin(t * 2.4);
+  const idle = { tilt: Math.sin(t * 1.2) * 0.025, y: -breath * 1.2, armF: 0.35, staff: 0.35 + Math.sin(t * 1.2) * 0.05, armB: 2.0 + Math.sin(t * 1.5) * 0.1, cap: 0, footF: 0, footB: 0, liftF: 0, liftB: 0 };
+  if (a.mood === 'happy') idle.y -= Math.abs(Math.sin(t * 7)) * 1.2;
+  if (a.mood === 'angry') idle.cap += 0.06;
+  const wp = ((m.odo ?? 0) / 58) * Math.PI * 2;
+  const s = Math.sin(wp);
+  const c = Math.cos(wp);
+  const walk = { tilt: s * 0.07, y: -Math.abs(s) * 2.2, armF: 0.35 - s * 0.25, staff: 0.2 + s * 0.32, armB: 2.0 + s * 0.4, cap: 0, footF: s * 6, footB: -s * 6, liftF: Math.max(0, c) * 3, liftB: Math.max(0, -c) * 3 };
+  // The slam: leaning back with the staff high overhead and the free hand flung up...
+  const antic = { tilt: -0.17, y: 2.5, armF: -1.25, staff: -0.85, armB: -1.0, cap: 0.1, footF: 2, footB: -2, liftF: 0, liftB: 0 };
+  // ...then whipped down and forward, the free arm thrown back.
+  const strike = { tilt: 0.22, y: 1.5, armF: 0.45, staff: 1.6, armB: 2.7, cap: -0.12, footF: 4, footB: -3, liftF: 0, liftB: 0 };
+  const rest = Math.max(0, 1 - a.ph.antic - a.ph.strike);
+  const base = blend([[idle, 1 - a.walkW], [walk, a.walkW]]);
+  return blend([[base, rest], [antic, a.ph.antic], [strike, a.ph.strike]]);
+}
+
+function drawQueen(ctx, m, a) {
+  const st = (a.mo.rig ??= {});
+  const dt = a.dt;
+  a.walkW = spring(st, 'walk', a.moving ? 1 : 0, 60, 16, dt);
+  a.ph = attackPhase(m, a.now);
+  const P = queenPose(m, a);
+  // A new blow rocks her back; the cap and crown wobble after.
+  if (a.mo.hitT !== st.hitT) {
+    st.hitT = a.mo.hitT;
+    if (m.hp > 0) {
+      kick(st, 'tilt', -2.2);
+      kick(st, 'cap', 3);
+    }
+  }
+  const fast = a.ph.strike > 0 || a.ph.antic > 0.8;
+  const tilt = spring(st, 'tilt', P.tilt, fast ? 700 : 220, fast ? 40 : 18, dt);
+  const y = spring(st, 'y', P.y, 300, 26, dt);
+  const armF = spring(st, 'armF', P.armF, fast ? 900 : 200, fast ? 46 : 20, dt);
+  const staff = spring(st, 'staff', P.staff, fast ? 900 : 180, fast ? 44 : 18, dt);
+  const armB = spring(st, 'armB', P.armB, 120, 9, dt);
+  // The cap trails the body: it eases toward leaning against the body's tilt, and overshoots.
+  const cap = spring(st, 'cap', P.cap - tilt * 0.55, 90, 7, dt);
+  const crown = spring(st, 'crown', -cap * 0.6, 150, 5, dt);
+  const skirt = spring(st, 'skirt', -tilt * 0.5, 110, 8, dt);
+  const footF = spring(st, 'footF', P.footF, 400, 30, dt);
+  const footB = spring(st, 'footB', P.footB, 400, 30, dt);
+  const look = { flash: a.flash, alpha: a.alpha };
+  const mood = m.hp <= 0 ? 'dead' : a.ph.atk ? 'angry' : a.mood;
+  const atk = a.ph.atk ? 1 : 0;
+
+  ctx.save();
+  if (a.flip) ctx.scale(-1, 1);
+  // Ambient spores drifting up off the back of her cap.
+  if (m.hp > 0) for (let k = 0; k < 3; k++) {
+    const u = (a.t * 0.32 + k / 3) % 1;
+    ctx.globalAlpha = a.alpha * (1 - u) * 0.8;
+    ctx.fillStyle = k % 2 ? '#ffd0e8' : '#ffe8f2';
+    ctx.beginPath();
+    ctx.arc(-34 + k * 7 + Math.sin(u * 7 + k) * 3, -58 - u * 34, 1.6 + u, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // The free arm, behind her (body-local, so it turns with her).
+  const body = (fn) => {
+    ctx.save();
+    ctx.translate(0, y);
+    ctx.rotate(tilt);
+    fn();
+    ctx.restore();
+  };
+  body(() => put(ctx, qParts.arm(true), [4, 5], Q.shoulderB[0], Q.shoulderB[1], armB, look));
+  // Root feet on the floor.
+  put(ctx, qParts.foot(), [10, 6], -10 + footB, -P.liftB, 0, look);
+  put(ctx, qParts.foot(), [10, 6], 10 + footF, -P.liftF, 0, look);
+  body(() => {
+    put(ctx, qParts.body(), [24, 50], 0, 0, 0, look);
+    put(ctx, qParts.skirt(), [22, 5], Q.skirt[0], Q.skirt[1], skirt, look);
+    put(ctx, qParts.face(mood, atk), [17, 11], Q.face[0], Q.face[1], 0, look);
+    // The cap and its crown.
+    ctx.save();
+    ctx.translate(Q.capAt[0], Q.capAt[1]);
+    ctx.rotate(cap);
+    put(ctx, qParts.cap(), [44, 33], 0, 0, 0, look);
+    put(ctx, qParts.crown(), [13, 15], 0, -28, crown, look);
+    ctx.restore();
+    // The staff in her hand, then the arm over it.
+    const hx = Q.shoulderF[0] + Math.cos(armF) * Q.arm;
+    const hy = Q.shoulderF[1] + Math.sin(armF) * Q.arm;
+    put(ctx, qParts.staff(), [6, 30], hx, hy, staff, look);
+    // The crystal's glow, drawn live so it can pulse (and flare in the slam).
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(staff);
+    const glow = ctx.createRadialGradient(0, -23, 1, 0, -23, 10 + a.ph.strike * 6);
+    glow.addColorStop(0, `rgba(160,255,236,${(0.45 + 0.15 * Math.sin(a.t * 3) + a.ph.antic * 0.3) * a.alpha})`);
+    glow.addColorStop(1, 'rgba(95,240,214,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(-18, -41, 36, 36);
+    ctx.restore();
+    put(ctx, qParts.arm(false), [4, 5], Q.shoulderF[0], Q.shoulderF[1], armF, look);
+    // A sweep of light behind the staff head as it comes down.
+    if (a.ph.since >= 0 && a.ph.since < 0.14) {
+      // (A short arc along the crystal's path, thinning out behind it.)
+      const u = a.ph.since / 0.14;
+      ctx.strokeStyle = '#e6fff8';
+      ctx.lineCap = 'round';
+      for (let k = 0; k < 3; k++) {
+        ctx.globalAlpha = a.alpha * (1 - u) * (0.55 - k * 0.15);
+        ctx.lineWidth = 4 - k;
+        ctx.beginPath();
+        ctx.arc(Q.shoulderF[0], Q.shoulderF[1], Q.arm + 22, -1.3 + k * 0.15, 0.55);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  });
+  // The ring of spores where the staff struck the floor.
+  if (a.ph.since >= 0 && a.ph.since < 0.6) {
+    const u = a.ph.since / 0.6;
+    const r = 8 + smooth(u) * 30;
+    ctx.globalAlpha = a.alpha * (1 - u) * 0.9;
+    ctx.strokeStyle = TEAL;
+    ctx.lineWidth = 3 * (1 - u) + 1;
+    ctx.beginPath();
+    ctx.ellipse(38, -1, r, r * 0.24, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    for (let k = 0; k < 6; k++) {
+      const ang = (k / 6) * Math.PI * 2;
+      ctx.fillStyle = k % 2 ? TEAL : '#ffd0e8';
+      ctx.beginPath();
+      ctx.arc(38 + Math.cos(ang) * r, -2 + Math.sin(ang) * r * 0.24 - u * 18, 1.8 * (1 - u) + 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
 // ---------- Tuskar the Behemoth ----------
 
 const BOAR_ATK = [
@@ -377,7 +577,7 @@ export const ART = {
   thornback: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 310, 230], draw: bear },
   sporeling: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 12, atkMs: [40, 170, 120], draw: mite },
   sapling: { pad: 6, walk: 8, idle: 6, attack: 4, cycle: 2.4, atkMs: [60, 240, 180], draw: sapling },
-  mothercapper: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [80, 150, 420, 220], draw: myconidQueen },
+  mothercapper: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [80, 150, 420, 220], draw: myconidQueen, rig: { w: 90, h: 100, draw: drawQueen } },
   tuskar: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 34, atkMs: [70, 150, 380, 220], draw: boar },
   gnarlroot: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 22, atkMs: [90, 160, 520, 260], draw: gnarl },
 };

@@ -1,0 +1,117 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Boss rig</title></head><body style="margin:0;background:#1e1830">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a rigged boss (render/mobs/rig.js) side by side with its old frames, both acting out the
+// same little script on a loop: standing, walking each way, two slams, two hits taken. For checking
+// the rig's motion and for before/after videos (tools/record-rig.cjs).
+// ?boss=mothercapper (any monster id). From outside: window.step(secs) plays and draws,
+// window.frame() gives the picture, window.length is the script's length in seconds.
+import { MOBS } from '../src/data/mobs.js';
+import { drawMonster } from '../src/render/monsters.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { text, box } from '../src/ui/kit.js';
+
+const q = new URLSearchParams(location.search);
+const def = MOBS[q.get('boss') ?? 'mothercapper'];
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+const FLOOR = 290;
+const ZOOM = 1.5;
+
+const fresh = (uid) => ({ def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', flash: 0, stagger: 0, phase: 0, age: 9, dying: 0, uid, aggroUntil: 0, attackAt: -9, gloatAt: -9, windup: 0 });
+const mobs = [fresh(1), fresh(2)];
+
+// The script: [seconds, what].
+const SCRIPT = [[2.4, 'idle'], [1.8, 'walk', 1], [1.8, 'walk', -1], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.6, 'hit'], [0.6, 'hit'], [1.6, 'idle']];
+const length = SCRIPT.reduce((a, s) => a + s[0], 0);
+window.length = length;
+let t = 0;
+
+function act(now) {
+  let at = t % length;
+  let i = 0;
+  while (at > SCRIPT[i][0]) at -= SCRIPT[i++][0];
+  const [dur, what, dir] = SCRIPT[i];
+  for (const m of mobs) {
+    m.state = what === 'walk' ? 'walk' : 'idle';
+    if (what === 'walk') {
+      m.dir = dir;
+      m.x = (dir > 0 ? -1 : 1) * 40 + dir * (at / dur) * 80;
+    } else if (what !== 'walk' && i > 0 && SCRIPT[i - 1][1] === 'walk') m.x = SCRIPT[i - 1][2] > 0 ? 40 : -40;
+    if (i < 3 || i > 3) m.dir = what === 'walk' ? dir : 1;
+    m.windup = what === 'windup' ? Math.max(0.001, dur - at) : 0;
+    if (what === 'blow' && m.blowFor !== Math.floor(t / length) * 100 + i) {
+      m.blowFor = Math.floor(t / length) * 100 + i;
+      m.attackAt = now;
+    }
+    if (what === 'hit' && m.hitFor !== Math.floor(t / length) * 100 + i) {
+      m.hitFor = Math.floor(t / length) * 100 + i;
+      m.flash = 0.15;
+    }
+    m.flash = Math.max(0, m.flash - 1 / 60);
+    if (i < 1) m.x = 0;
+  }
+  return what;
+}
+
+function draw() {
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  const g = ctx.createLinearGradient(0, 0, 0, VH);
+  g.addColorStop(0, '#3a2f5a');
+  g.addColorStop(1, '#6a4f7a');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.fillStyle = '#4a3a5a';
+  ctx.fillRect(0, FLOOR, VW, VH - FLOOR);
+  ctx.fillStyle = '#8a6a8a';
+  ctx.fillRect(0, FLOOR, VW, 2);
+  const now = t;
+  const what = act(now);
+  mobs.forEach((m, k) => {
+    globalThis.noRig = k === 0;
+    const cx = k === 0 ? 170 : 470;
+    ctx.save();
+    ctx.translate(cx, FLOOR);
+    ctx.scale(ZOOM, ZOOM);
+    drawMonster(ctx, m, m.x, 0, t, now);
+    ctx.restore();
+    globalThis.noRig = false;
+  });
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  box(ctx, 120, 20, 100, 22, { fill: 'rgba(255,255,255,0.12)', edge: null, r: 11 });
+  text(ctx, 'Before', 170, 35, { size: 10, bold: true, align: 'center', color: '#e8dcff' });
+  box(ctx, 420, 20, 100, 22, { fill: 'rgba(255,200,230,0.25)', edge: null, r: 11 });
+  text(ctx, 'After: rigged', 470, 35, { size: 10, bold: true, align: 'center', color: '#ffffff' });
+  text(ctx, `${def.name}  ·  ${what}`, 320, 340, { size: 9, align: 'center', color: '#d8c8f0' });
+}
+
+function step(secs) {
+  const n = Math.max(1, Math.round(secs * 60));
+  for (let k = 0; k < n; k++) t += 1 / 60;
+  draw();
+}
+window.step = step;
+window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+window.ready = true;
+if (!q.has('record')) {
+  let last = performance.now();
+  const loop = (ms) => {
+    t += Math.min(0.05, (ms - last) / 1000);
+    last = ms;
+    draw();
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+</script>
+</body></html>
