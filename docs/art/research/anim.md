@@ -350,3 +350,28 @@ player wants hero bodies in this style; see `avatar.md` for the proportions.
 - Readability (the player's note on the first pass): at game size the dance must be big. Wide
   arm spreads, real lifts onto the toes, deep bows, long sliding steps, and a clear held pose at
   each cast, with the wand waved delicately rather than swung like a club.
+
+## 7. Life skills (gathering, mining, chopping, fishing, cooking, crafting), 2026-11-03
+
+What reads in shipped games, and how Tengu's life moves use it (render/life-moves.js):
+- **MapleStory professions** (Herbalism and Mining, from the game itself): the character crouches
+  over the herb or swings a pick at the vein in a short loop, with a tool drawn in hand instead of
+  the weapon and sparkles on the node; nodes vanish when used. Applied: a tool in hand for every
+  action (render/tools.js), and spots that show a visible used state and grow back in stages
+  rather than vanishing (render/gathering.js).
+- **Stardew Valley tool swings** (the game itself): a big readable wind-up over the shoulder, a
+  quick strike, a few frames' hold on contact, and the hit target shakes (trees wobble and finally
+  topple away from the player). Applied: two weighty swings for the pick and axe, the arm going
+  behind the head on the wind-up so the face stays clear, a shiver of hit-stop on contact, the rock
+  jolting and the tree shuddering, and the tree toppling on the last chop.
+- **Animal Crossing fishing** (the game itself): cast, a long idle while the bobber floats, small
+  nibbles that dip it, then a strong pull under with a clear cue, and the catch held up proudly.
+  Applied: the wait is the hero's idle with life (sitting on the bank swinging her feet, humming,
+  a yawn and stretch), a lean-in at each nibble, a startled jump up at the bite, a tug of war, and
+  the fish swinging on the line under the raised rod.
+- **Cooking-game "taste" beats** (Cooking Mama, Ni no Kuni; the games themselves): stir in circles,
+  a toss, a taste with a blow on the spoon, and a big happy face with hearts. Applied as `cook`.
+- Face rule for props in hand: in this chibi rig the face sits right above the shoulder, so any hand
+  raised in front past the shoulder covers it. Life moves keep the weapon arm at or below the
+  shoulder in front (arm angle 135 or less) and draw it behind the head when raised
+  (`armBack`); tests/anim.test.js checks it.

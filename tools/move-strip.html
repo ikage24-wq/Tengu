@@ -9,10 +9,13 @@
 await import('/src/data/cash.js');
 const { setHd, nextFrame } = await import('/src/render/pixel.js');
 const { drawHero } = await import('/src/render/hero.js');
+// ?find=clover: the find a life-skill move holds up (render/life.js draws it the same way in game).
+const { holdFind } = await import('/src/render/life.js');
 const q = new URLSearchParams(location.search);
 const moves = (q.get('moves') ?? 'wdpique').split(',');
 const weapon = q.get('weapon') ?? 'dagger_30';
 const job = q.get('job') ?? 'thief';
+const find = q.get('find');
 const N = Number(q.get('n') ?? 9);
 const durs = (q.get('dur') ?? '').split(',').map(Number);
 const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
@@ -44,7 +47,7 @@ moves.forEach((mv, r) => {
     ctx.scale(K, K);
     setHd(true, K * D);
     nextFrame();
-    drawHero(ctx, LOOK, { weapon: { id: weapon } }, 0, 0, { pose: mv, progress: p, dur: durs[r] || 0.5, time: p, facing: 1, job, ready: true }, null);
+    drawHero(ctx, LOOK, { weapon: { id: weapon } }, 0, 0, { pose: mv, progress: p, dur: durs[r] || 0.5, time: p * (durs[r] || 0.5), facing: 1, job, ready: true, onHands: find ? holdFind(find) : null }, null);
     ctx.restore();
     ctx.fillStyle = '#8f7cc4';
     ctx.font = '10px Segoe UI, sans-serif';

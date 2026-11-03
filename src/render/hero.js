@@ -27,6 +27,7 @@ import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
+import { toolShapes } from './tools.js';
 import { drawElementAura, ELEMENTS } from './elements.js';
 import { walkPhase, walkBob, strideAt } from './animator.js';
 import { drawJobAura, AURA_JOBS } from './aura.js';
@@ -1021,6 +1022,8 @@ function liveFace(look, state, mv) {
   // Endless Fox-Fire: her face builds with the barrage, not with each throw (that would flicker):
   // a fox spirit at play, never strained: sly, then playful (a cheeky tongue now and then), then a
   // thrilled fanged grin, then flat out, laughing.
+  // A life-skill move acts its own face (picking, mining, fishing, cooking: render/life-moves.js).
+  if (mv?.face) return mv.face;
   if (mv && state.flow) {
     const h = state.flow.heat;
     if (h < 0.45) return { lid: 0.2, mouth: 'smirk', brows: [[0, 0.3], [0.5, -0.2]] };
@@ -2162,6 +2165,14 @@ function weaponSprite(w, time, unstrung = false) {
   return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: def.live, anchors: def.anchors };
 }
 
+// A life-skill tool held instead of the weapon (render/tools.js), drawn like a weapon.
+function toolSprite(kind) {
+  const def = toolShapes(kind);
+  if (!def) return null;
+  const s = sprite(`tool|${kind}`, () => ({ w: def.w, h: def.h, shapes: def.shapes, res: RES, soft: 'cel', crisp: true }));
+  return { ...s, ...logical(s), grip: def.grip, blade: def.blade, live: null, anchors: def.anchors, tool: kind, size: def.size };
+}
+
 // A sprite's canvas size in art pixels (HD sprites hold several cells per art pixel).
 const logical = (s) => ({ cw: s.canvas.width / s.res, ch: s.canvas.height / s.res });
 
@@ -2856,7 +2867,9 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A bow being drawn (`mv.pull`) is drawn without its straight string; the string is bent back
   // to the draw hand live, with the arrow on it (see drawString).
   const drawn = (mv?.pull != null || mv?.twang > 0) && g.weapon?.type === 'bow' && !g.weapon.fun;
-  const wpn = g.weapon && rig.view !== 'back' ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
+  // A life-skill move swaps a tool into the weapon hand (or empties it: 'none').
+  const toolKind = mv?.tool ?? null;
+  const wpn = rig.view === 'back' ? null : toolKind ? (toolKind === 'none' ? null : toolSprite(toolKind)) : g.weapon ? weaponSprite(g.weapon, state.time ?? 0, drawn) : null;
   const angles = mv ? { weapon: mv.weapon, arm: mv.arm } : over != null ? { weapon: 0, arm: over } : null;
 
   // Front arm layer; it moves with the upper body, which sinks with the hips.
@@ -2910,7 +2923,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // drawn behind the body, so it passes behind the head instead of across the face; a move can
   // say so itself (`back`).
   const tipped = ((((weaponAngle % 360) + 540) % 360) - 180);
-  const behind = mv?.back ?? (BACKSLUNG.has(g.weapon?.type) && tipped < -22 && tipped > -165);
+  const behind = mv?.armBack || (mv?.back ?? ((toolKind ? true : BACKSLUNG.has(g.weapon?.type)) && tipped < -22 && tipped > -165));
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
@@ -2928,13 +2941,24 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.rotate((weaponAngle * Math.PI) / 180);
     // (A greatsword is held at the end of its long hilt, by the pommel, so the hilt never sticks
     // back past the fist across the face when the blade points down.)
-    const hilt = HILT[g.weapon.type];
+    const hilt = toolKind ? 0 : HILT[g.weapon.type];
     if (hilt && !g.weapon.fun) ctx.translate(0, -hilt * ws);
     // (A move may slide the hand up the shaft, `mv.grip` art px from the grip toward the head: a
     // staff spun from its middle or planted on its foot.)
     if (mv?.grip) ctx.translate(0, mv.grip * ws);
     const time = state.time ?? 0;
     const paint = (ox, oy, w, h) => ctx.drawImage(wpn.canvas, ox, oy, w, h);
+    if (toolKind) {
+      const ts = ws * wpn.size;
+      paint(-(wpn.grip[0] + 1) * ts, -(wpn.grip[1] + 1) * ts, wpn.cw * ts, wpn.ch * ts);
+      // Where the rod's tip is on the canvas, for the fishing line (render/fishing.js).
+      if (state.onTool && wpn.anchors?.tip) {
+        const m = ctx.getTransform();
+        state.onTool(m.transformPoint(new DOMPoint((wpn.anchors.tip[0] - wpn.grip[0]) * ts, (wpn.anchors.tip[1] - wpn.grip[1]) * ts)));
+      }
+      ctx.restore();
+      return;
+    }
     const el = g.weapon.element;
     if (el) elementGlow(ctx, wpn, el, time, ws);
     if (g.weapon.rarity) weaponGlow(ctx, wpn, g.weapon.rarity, time, ws, paint);
@@ -2971,11 +2995,35 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const handsAt = () => {
     if (!state.onHands) return;
     const [, [bx, by]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
-    state.onHands(ctx, [sx(hand[0]), sy(hand[1])], [sx(squashX(bx + rig.tx)), sy(squashY(by + bodyY))], flip ? -1 : 1, scale);
+    state.onHands(ctx, [sx(hand[0]), sy(hand[1])], [sx(squashX(bx + rig.tx)), sy(squashY(by + bodyY))], flip ? -1 : 1, scale, mv);
   };
+  // A tool hanging from the free hand (a basket), behind the body like that hand.
+  const drawBackTool = () => {
+    const bt = mv?.backTool && toolSprite(mv.backTool);
+    if (!bt) return;
+    const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(snap(sx(squashX(wx + rig.tx))), snap(sy(squashY(wy + bodyY))));
+    if (flip) ctx.scale(-1, 1);
+    // It hangs straight down from the hand, swinging a little as she moves.
+    ctx.rotate(Math.PI + (mv.backToolA ?? 0) * (Math.PI / 180));
+    const bs = scale * bt.size;
+    ctx.drawImage(bt.canvas, -(bt.grip[0] + 1) * bs, -(bt.grip[1] + 1) * bs, bt.cw * bs, bt.ch * bs);
+    ctx.restore();
+  };
+  // The weapon arm raised behind the big head for a wind-up (`armBack`): drawn before the body.
+  const armBehind = attack && mv.armBack && over == null && rig.view !== 'back';
+  const drawArm = () => {
+    const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
+    blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  };
+  drawBackTool();
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
   if (behind) drawWeapon();
+  if (armBehind) drawArm();
   blit(ctx, body, left, top, { flip, flash: state.flash ?? 0, alpha, scale });
   if (alpha > 0.5) {
     // Anchor points on the posed figure for the live gear effects.
@@ -2996,11 +3044,14 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return handsAt();
   }
+  if (armBehind) {
+    if (mv && !mv.fanBack) drawFan();
+    return handsAt();
+  }
   if (!behind) drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
-  const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
-  blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
+  drawArm();
   if (mv && !mv.fanBack) drawFan();
   handsAt();
 }

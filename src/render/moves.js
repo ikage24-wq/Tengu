@@ -12,6 +12,8 @@
 //   twang, spares  the string ringing after the loose (0-1), and spare arrows held in the draw hand
 // `dur` is the move's length in seconds, so long ultimates can loop their motion.
 
+import { LIFE_MOVES, LIFE_MIN } from './life-moves.js';
+
 const RES = 2;
 const q = (v) => Math.round(v * RES) / RES;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -5124,62 +5126,8 @@ export const MOVES = {
     };
   },
 
-  // Gathering (world/gathering.js): crouch and lean in, rummage with the free hand, pluck the find
-  // out with a little hop and hold it up to look at, pleased. The weapon rests at her side.
-  gather(p) {
-    const down = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.6, 0.74)));
-    const rummage = bump(p, 0.24, 0.6) * Math.sin(p * 46);
-    const pluck = soft(seg(p, 0.6, 0.74));
-    const admire = pluck * (1 - soft(seg(p, 0.9, 1)));
-    return {
-      weapon: 20, arm: lerp(60, 50, down), tilt: 0.14 * down - 0.04 * admire, lunge: 2 * down, lift: 3 * bump(p, 0.6, 0.82),
-      rig: (r) => {
-        r.squat = down > 0.5 ? 2 : down > 0.15 ? 1 : 0;
-        r.backArm = [q(lerp(0, 4.5, down) + 0.8 * rummage - 1 * admire), q(lerp(0, 5, down) - 7 * admire)];
-        r.hairLift = pluck > 0.2 && pluck < 0.9 ? -1 : 0;
-        if (admire > 0.5) r.eyes = 'half';
-      },
-    };
-  },
-
-  // Picking fruit overhead (world/gathering.js): up on tiptoe, the free hand stretching up to the
-  // bunch, a tug that bounces her down off her toes, then the find held up to look at.
-  pluck(p) {
-    const reach = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.55, 0.7)));
-    const tug = bump(p, 0.5, 0.72);
-    const admire = soft(seg(p, 0.7, 0.82)) * (1 - soft(seg(p, 0.92, 1)));
-    return {
-      weapon: 20, arm: 60, tilt: -0.08 * reach + 0.05 * tug, lift: 3 * reach - 1.5 * tug,
-      rig: (r) => {
-        r.backArm = [q(1 + 1.5 * reach - 1 * admire), q(-9 * reach + 3 * tug - 5 * admire)];
-        r.hairLift = reach > 0.5 ? -1 : 0;
-        if (tug > 0.5) r.squat = 1;
-        if (admire > 0.5) r.eyes = 'half';
-      },
-    };
-  },
-
-  // Mining (world/gathering.js): three overhead chops at the rock with whatever she carries, a
-  // bounce off it on each strike, and a last shake of the arm when it's done.
-  mine(p) {
-    const n = 3;
-    const k = Math.min(n - 1, Math.floor(p * n));
-    const u = p * n - k;
-    const wind = soft(seg(u, 0, 0.45));
-    const hit = easeIn(seg(u, 0.45, 0.6));
-    const back = soft(seg(u, 0.65, 1)) * (k < n - 1 ? 1 : 0.6);
-    const strike = hit * (1 - back);
-    return {
-      weapon: lerp(lerp(30, -110, wind), 150, strike), arm: lerp(lerp(60, 175, wind), 40, strike),
-      tilt: lerp(-0.1 * wind, 0.16, strike), lift: 2 * wind * (1 - hit), trail: u > 0.4 && u < 0.65,
-      rig: (r) => {
-        r.tx = strike > 0.5 ? 2 : -1;
-        if (strike > 0.5) { r.squat = 1; wideLegs(r); }
-        r.backArm = [q(-1 - 1.5 * strike), q(-2 + 2 * strike)];
-        if (strike > 0.5) strikeFace(r);
-      },
-    };
-  },
+  // (The life-skill moves, gathering to crafting, are in render/life-moves.js.)
+  ...LIFE_MOVES,
 
   // A happy fist pump with a little hop.
   cheer(p) {
@@ -5194,7 +5142,7 @@ export const MOVES = {
 // Long-feeling moves need a little more time than a quick swing to read properly.
 export const MOVE_MIN = {
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
-  guard: 0.45, pray: 0.5, cheer: 0.45, gather: 1, pluck: 1, mine: 1.3, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
+  guard: 0.45, pray: 0.5, cheer: 0.45, ...LIFE_MIN, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
   spinshot: 0.4, hopshot: 0.45, pointblank: 0.45, hipfire: 0.3, vault: 0.5, downshot: 0.35, comet: 1.3, leapshot: 0.5, galeshot: 0.55, tailwind: 0.5, stormvolley: 1.5, slideshot: 0.4, kneelshot: 0.45, crankshot: 0.5, ballista: 0.65, rollshot: 0.5, steadyaim: 0.5, heartseeker: 1.5, titanbreak: 1.4, backstab: 0.5, assassinate: 1.5, crossflip: 0.6, spinkick: 0.4, whirlflip: 0.6, flashjump: 0.3, shadowrun: 0.3,
   kagura: 0.92, kaguraturn: 1.1, kagurafin: 1.32, bellshake: 1.1, sleevefan: 0.99, bowrise: 1.21, twirlstep: 1.1, kaguraup: 0.99, floatcast: 0.77, floatcast2: 0.88, glidecast: 0.99, spiritstep: 0.55, kaguraslam: 1.1, kagurabless: 1.2, kaguraward: 1.1, kaguralantern: 1.6,
@@ -5433,6 +5381,12 @@ function staffed(mv) {
 // would read as a wand's become the staff's own (same timing).
 const STAFF_FORM = { swtwirl: 'ssdouble', swsnap: 'ssflourish', swshowoff: 'ssflourish', swsweep: 'ssarc', swspin: 'sstwirl', swhop: 'sscast', swair: 'ssair', swdash: 'ssdash' };
 export function moveAt(kind, progress, dur = 0.35, feel = null) {
+  // Life-skill moves hold their own tool, so the weapon's feel doesn't bend them.
+  // (An arm raised past the shoulder goes behind the big head, so it never covers the face.)
+  if (LIFE_MOVES[kind]) {
+    const mv = rawMoveAt(kind, clamp01(progress), dur);
+    return mv.arm > 135 ? { ...mv, armBack: true } : mv;
+  }
   if (feel?.weapon === 'staff' && STAFF_FORM[kind]) kind = STAFF_FORM[kind];
   if (!MOVES[kind]) return null;
   const f = FEEL[feel?.weapon] ?? {};

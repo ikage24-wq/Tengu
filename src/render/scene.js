@@ -30,7 +30,8 @@ import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
-import { drawNodes } from './gathering.js';
+import { drawNodes, drawNodesFront } from './gathering.js';
+import { lifePose, lifeFind, holdFind, lifeBeats, onRodTip, clearRodTip, LIFE_POSES } from './life.js';
 import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
@@ -105,6 +106,9 @@ const DANCE_SETTLE = 0.32;
 
 export function playerPose(world) {
   const b = world.body;
+  // At a spot or fishing, the life skill's own move plays (render/life.js).
+  const life = lifePose(world);
+  if (life) return life;
   const last = world.lastPose;
   const settle = last && DANCE_MOVES.has(last.kind) ? DANCE_SETTLE : SETTLE;
   if (!world.pose && last && b.onGround && !b.rope && Math.abs(b.vx) <= 8 && world.now - last.endedAt < settle && MOVES[last.kind]) {
@@ -241,6 +245,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     if (e === 'jump') dust(feel.fx, b.x, b.y, 3);
   }
   if (element && !world.dead) elementAura(feel.fx, b.x, b.y, element, dt);
+  // The beats of a life skill: sparks off the rock, chips, leaves, fluff, steam, splashes.
+  lifeBeats(feel.fx, world);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
   const [ox, oy] = shakeOffset(feel.fx, time);
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
@@ -281,12 +287,18 @@ export function drawWorld(ctx, world, viewCam, time) {
   const hy = snap(b.y - cam.y);
   // After fighting (attacking or getting hit) the hero stays in a bouncy ready stance for a few
   // seconds before relaxing.
-  if (world.pose || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
+  if ((world.pose && !LIFE_POSES.has(world.pose.kind)) || world.attackTimer > 0 || world.invuln > 0.6) feel.lastFight = world.now;
   const ready = !world.map.isTown && world.now - (feel.lastFight ?? -99) < 4;
   const low = !world.map.isTown && world.char.hp < (world.stats?.maxHp ?? 1) * 0.3;
   // (Hidden in her own smoke through Grand Illusion, between vanishing and coming back for her bow.)
   const hidden = world.illusion && world.now > world.illusion.since + 0.25 && world.now < world.illusion.until - 0.2;
   const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : hidden ? 0 : blink ? 0.45 : 1, job: world.char.job, ready, low, urgent: true };
+  // At her life skills: the find held up in her hand, and where the rod's tip is for the line.
+  if (LIFE_POSES.has(p.pose)) {
+    heroState.onHands = holdFind(lifeFind(world));
+    heroState.onTool = onRodTip;
+  }
+  clearRodTip();
   const buffs = world.dead ? {} : world.char.buffs;
   drawBuffEffects(ctx, buffs, 'back', hx, hy, time, world.now, b.facing);
   const gear = wornGear(world.char);
@@ -325,6 +337,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
     drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    // A low plant she's kneeling at, in front of her hands.
+    drawNodesFront(ctx, world, cam, time);
     drawFoxWheel(ctx, world, hx, hy, time, 'front');
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     // The rod and line while you fish (and the Fish / Cook hints).

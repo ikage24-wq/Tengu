@@ -51,6 +51,17 @@ bench (`craft`, hammer, file, hold it up). The spots themselves are animated (sw
 glinting ore, bobbing floats, smoke from the stove, sparks on the anvil) and rest visibly after
 use.
 
+Built (part 4): the moves are in `render/life-moves.js` (`gather`, `pluck` for fruit and honey,
+`reap` for fibre with a sickle, `mine`, `chop`, the fishing set `fishcast` / `fishwait` /
+`fishperk` / `fishbite` / `fishcatch` / `fishmiss`, `cook`, `craft`), each holding its own tool
+(`render/tools.js`: pickaxe, axe, sickle, basket, rod, ladle, hammer, file). The kind of spot picks
+the move (`LIFE_BY_KIND` in `render/life.js`), whatever `KINDS[kind].move` says, and the move fits
+whatever length the world gives it. Cooking plays when a dish is cooked; the craft bench plays its
+move with `playLifePose(world, 'craft', { at: benchX, find: itemId })` (`world/lifepose.js`). The
+spots (`render/gathering.js`) are drawn per kind and tier (copper, iron, silver, mithril; oak,
+maple, cedar, skywood; cotton, silkmoss, lotus, cloud cotton), from a spot's `tier`, what it gives,
+or its region; dev sheet `tools/spots-sheet.html`.
+
 ## The player's choices (2026-11-03)
 - Crafted gear: a little better than drop and shop gear of the same level, with a quality roll
   that rises with Crafting level; hunters still get good gear from drops and bosses.

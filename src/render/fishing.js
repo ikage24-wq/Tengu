@@ -9,6 +9,10 @@ import { blit } from './pixel.js';
 import { text, box, COLORS } from '../ui/kit.js';
 import { spotHere } from '../world/fishing.js';
 import { groundAt } from '../world/physics.js';
+import { art, place } from './scenery.js';
+import { ramp } from './propkit.js';
+import { R, E, T, F } from './pixel.js';
+import { rodTip } from './life.js';
 
 const TAU = Math.PI * 2;
 
@@ -27,64 +31,142 @@ export function drawSpots(ctx, world, cam, time) {
     if (x < -60 || x > 700) continue;
     ctx.save();
     if (s.ice) {
-      // A round hole cut in the snow, dark blue water in it.
-      ctx.fillStyle = '#eef4ff';
-      ctx.beginPath();
-      ctx.ellipse(x, y + 2, 22, 6, 0, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = '#4f7ac8';
-      ctx.beginPath();
-      ctx.ellipse(x, y + 2, 16, 4, 0, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = '#8fb8ff';
-      ctx.fillRect(x - 8, y + 1, 7, 1);
+      // A round hole cut in the snow, deep blue water in it, a rim of packed snow and ice chips.
+      place(ctx, iceHoleArt(), x, y + 8);
+      ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 1.7 + s.bx * 0.02);
+      place(ctx, glintArt('#e8f4ff'), x - 6, y + 2);
     } else if (s.sky) {
-      // A little pool of night sky in the cloud, stars twinkling in it.
-      ctx.fillStyle = '#e6e0fa';
-      ctx.beginPath();
-      ctx.ellipse(x, y + 2, 26, 7, 0, 0, TAU);
-      ctx.fill();
-      ctx.fillStyle = '#2a2266';
-      ctx.beginPath();
-      ctx.ellipse(x, y + 2, 20, 5, 0, 0, TAU);
-      ctx.fill();
+      // A little pool of night sky in the cloud, its stars twinkling each on its own beat.
+      place(ctx, skyPoolArt(), x, y + 9);
       for (let k = 0; k < 5; k++) {
-        ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 3 + k * 1.7);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x - 14 + k * 7, y + ((k * 3) % 4), 1.4, 1.4);
+        ctx.globalAlpha = Math.max(0, Math.sin(time * 2.2 + k * 1.7 + s.bx * 0.01));
+        place(ctx, glintArt(k % 2 ? '#ffe680' : '#ffffff'), x - 14 + k * 7, y + 3 + ((k * 3) % 4));
       }
-      ctx.globalAlpha = 1;
     }
-    // Rings spreading on the water now and then: fish about.
-    for (let k = 0; k < 2; k++) {
-      const u = (time * 0.45 + k * 0.5) % 1;
-      ctx.globalAlpha = (1 - u) * 0.7;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.ellipse(x + (k ? 8 : -6), y, 3 + u * 12, 1 + u * 3, 0, 0, TAU);
-      ctx.stroke();
-    }
+    ctx.globalAlpha = 1;
     ctx.restore();
-    // A little wooden sign by where you stand, a fish painted on it.
+    // Rings spreading on the water now and then (fish about), and a lily pad bobbing on them,
+    // each on the spot's own beat.
+    const seed = s.bx * 0.013;
+    if (!world.fishing || world.fishing.spot !== s) for (let k = 0; k < 2; k++) ripple(ctx, x + (k ? 9 : -7), y + 1, (((time * 0.4 + k * 0.5 + seed) % 1) + 1) % 1, 0.8);
+    if (!s.ice && !s.sky) place(ctx, padArt(), x - s.face * 16, y + 3 + Math.sin(time * 1.3 + seed) * 0.6);
+    // A little wooden sign by where you stand, a fish painted on it, reeds at its foot.
     const sx = s.x - s.face * 18 - cam.x;
     const sy = s.y - cam.y;
-    ctx.fillStyle = '#a07a54';
-    ctx.fillRect(sx - 1, sy - 22, 2.4, 22);
-    box(ctx, sx - 10, sy - 30, 20, 12, { fill: '#e8c69a', edge: '#a07a54', r: 2, width: 1 });
-    ctx.fillStyle = '#5aa8ff';
-    ctx.beginPath();
-    ctx.ellipse(sx + 1, sy - 24, 5, 2.6, 0, 0, TAU);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(sx - 4, sy - 24);
-    ctx.lineTo(sx - 8, sy - 27);
-    ctx.lineTo(sx - 8, sy - 21);
-    ctx.fill();
+    place(ctx, signArt(s.ice ? 'ice' : s.sky ? 'sky' : 'water'), sx, sy + 1);
+    const lean = Math.sin(time * 1.1 + seed * 3) * 0.06;
+    ctx.save();
+    ctx.translate(sx + 7, sy);
+    ctx.rotate(lean);
+    place(ctx, reedArt(), 0, 1);
+    ctx.restore();
   }
 }
 
-// In front of the hero: the rod and line while fishing, the bite and the catch, and the hints.
+// The fishing sign: a post, a board with a fish painted on it (an icicle trim on the peak, a star
+// on the sky pool's).
+function signArt(kind) {
+  return art(`fish|sign|${kind}`, 24, 32, () => {
+    const wood = ramp('#d8a978');
+    const fish = ramp(kind === 'sky' ? '#b9a0f0' : '#7fc4ff');
+    return [
+      R(10.6, 10, 2.8, 22, wood.sh), F(R(10.6, 10, 1, 22, wood.base)),
+      R(2, 2, 20, 12, wood.base), F(R(2, 2, 20, 1.2, wood.hi)), F(R(2, 12.6, 20, 1.4, wood.sh)), F(R(19.6, 2, 2.4, 12, wood.sh)),
+      E(12, 8, 5, 2.8, fish.base), F(E(12.8, 8.8, 3.6, 1.6, fish.sh)), T([[7.4, 8], [4.4, 5.2], [4.4, 10.8]], fish.base), F(E(14.8, 7.2, 0.6, 0.6, '#3a2d4f')), F(E(11, 7, 1.6, 0.5, fish.hi)),
+      ...(kind === 'ice' ? [F(T([[3, 2], [5, 2], [4, 5]], '#e8f4ff')), F(T([[15, 2], [17, 2], [16, 4.4]], '#e8f4ff'))] : []),
+      ...(kind === 'sky' ? [F(T([[19, 0], [19.8, 2.4], [22, 2.6], [20.2, 3.8], [21, 6], [19, 4.6], [17, 6], [17.8, 3.8], [16, 2.6], [18.2, 2.4]], '#ffe680'))] : []),
+    ];
+  });
+}
+function iceHoleArt() {
+  return art('fish|icehole', 50, 14, () => {
+    const snow = ramp('#eef4ff', 0.6);
+    const water = ramp('#5a86d0');
+    return [
+      E(25, 7, 23, 6, snow.base), F(E(25, 5.6, 21, 4, snow.hi)),
+      E(25, 7.4, 16, 4, water.deep), F(E(25, 8, 14.6, 3.2, water.base)), F(E(21, 7.4, 7, 1, water.hi)),
+      F(T([[6, 4], [9, 2.6], [10, 4.6]], '#ffffff')), F(T([[40, 3.6], [43, 2.4], [43.4, 4.4]], '#ffffff')),
+    ];
+  });
+}
+function skyPoolArt() {
+  return art('fish|skypool', 56, 16, () => {
+    const cloud = ramp('#ece6fb', 0.6);
+    const night = ramp('#3a2e80');
+    return [
+      E(28, 8, 27, 7, cloud.base), E(8, 6, 8, 5, cloud.base), E(48, 6, 8, 5, cloud.base), F(E(24, 5, 18, 3, '#ffffff')),
+      E(28, 8.4, 20, 5, night.deep), F(E(28, 9, 18.6, 4.2, night.base)), F(E(23, 8.4, 8, 1.2, night.hi)),
+    ];
+  });
+}
+function glintArt(c) {
+  return art(`fish|glint|${c}`, 7, 7, () => [F(T([[3.5, 0.4], [4.1, 2.9], [6.6, 3.5], [4.1, 4.1], [3.5, 6.6], [2.9, 4.1], [0.4, 3.5], [2.9, 2.9]], c)), F(E(3.5, 3.5, 0.7, 0.7, '#ffffff'))], false);
+}
+function reedArt() {
+  return art('fish|reeds', 12, 20, () => {
+    const g = ramp('#86c878');
+    return [
+      T([[4, 19], [3.4, 6], [4.4, 19]], g.sh), T([[6, 19], [6.6, 3], [7, 19]], g.base), T([[8, 19], [9.6, 8], [8.8, 19]], g.base),
+      E(6.6, 4.4, 1, 2.6, '#b4805a'), F(E(6.3, 3.6, 0.4, 1.2, '#d8a978')),
+    ];
+  });
+}
+function padArt() {
+  return art('fish|pad', 18, 7, () => {
+    const g = ramp('#7fd08a');
+    return [T([[1, 4], [3, 1.4], [9, 0.6], [15, 1.4], [17, 4], [14, 6], [9.4, 6.4], [9, 3.6], [8.2, 6.4], [4, 6]], g.base), F(T([[9, 3.6], [15, 1.6], [17, 4], [14, 6], [9.4, 6.4]], g.sh)), F(E(5, 2.6, 2.4, 0.8, g.hi)), E(13.6, 2.2, 1.6, 1.2, '#ffc4dc'), F(E(13.4, 1.8, 0.6, 0.5, '#ffffff'))];
+  });
+}
+
+// The float: a round cork, cherry red over white, with a little antenna; it rides the ripples.
+function floatArt() {
+  return art('fish|float', 8, 10, () => {
+    const red = ramp('#ff6b8a');
+    const white = ramp('#fff8fb', 0.6);
+    return [
+      R(3.6, 0.4, 0.8, 3.4, '#ffd36a'),
+      E(4, 6, 3, 3, white.base), F(E(4.6, 6.8, 2, 2, white.sh)),
+      T([[1, 6], [1.4, 4.4], [2.6, 3.3], [4, 3], [5.4, 3.3], [6.6, 4.4], [7, 6]], red.base), F(T([[4.6, 3.1], [5.4, 3.3], [6.6, 4.4], [7, 6], [5.2, 6]], red.sh)),
+      F(E(2.6, 4.6, 0.8, 0.6, '#ffffff')),
+    ];
+  }, false);
+}
+
+// Cel rings spreading on the water: a lit front edge and a fainter back, `u` 0-1 through its life.
+function ripple(ctx, x, y, u, size = 1) {
+  const rx = (3 + u * 13) * size;
+  const ry = (1 + u * 3) * size;
+  ctx.save();
+  ctx.globalAlpha = (1 - u) ** 1.3 * 0.85;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.2 * (1 - u * 0.6);
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 0.1 * Math.PI, 0.9 * Math.PI);
+  ctx.stroke();
+  ctx.globalAlpha *= 0.5;
+  ctx.strokeStyle = '#d8f2ff';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, 0, 1.1 * Math.PI, 1.9 * Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// The line from the rod's tip down to (bx, by): it sags while slack, pulls straight when taut.
+function line(ctx, tip, bx, by, slack) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(tip[0], tip[1]);
+  ctx.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + slack, bx, by);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// In front of the hero: the line while fishing (the rod is in her hands, render/hero.js), the float
+// riding the water, dipping at a nibble and pulled under at a bite, the catch fought at the surface
+// and then swinging on the line under the raised rod; and the hints.
 export function drawFishing(ctx, world, cam, time, hx, hy) {
   const f = world.fishing;
   const b = world.body;
@@ -95,109 +177,105 @@ export function drawFishing(ctx, world, cam, time, hx, hy) {
     return;
   }
   const dir = f.spot.face;
-  const hand = [hx + dir * 7, hy - 20];
-  const flex = f.phase === 'bite' ? Math.sin(time * 40) * 3 + 4 : 0;
-  const tip = [hx + dir * 34, hy - 50 + flex];
-  ctx.save();
-  // The rod.
-  ctx.strokeStyle = '#a07a54';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(hand[0], hand[1]);
-  ctx.quadraticCurveTo(hand[0] + dir * 14, hand[1] - 20, tip[0], tip[1]);
-  ctx.stroke();
-  ctx.fillStyle = '#9aa8c6';
-  ctx.beginPath();
-  ctx.arc(hand[0] + dir * 3, hand[1] - 3, 2, 0, TAU);
-  ctx.fill();
-  // The bobber: flying out while casting, bobbing while waiting, pulled under at a bite.
+  // Where the hero drew the rod's tip this frame (or near her hand if she wasn't drawn).
+  const at = rodTip();
+  let tip = [hx + dir * 30, hy - 40];
+  if (at) {
+    const p = ctx.getTransform().inverse().transformPoint(at);
+    tip = [p.x, p.y];
+  }
   const bx0 = f.spot.bx - cam.x;
   const by0 = f.spot.by - cam.y;
+  const seed = f.spot.bx * 0.013;
   let bx = bx0;
-  let by = by0 - 2 + Math.sin(time * 2.4) * 1;
+  let by = by0 - 1 + Math.sin(time * 2.4 + seed) * 0.8;
+  let show = true;
   if (f.phase === 'cast') {
-    const u = Math.min(1, f.t / 0.5);
+    // The float flies out on an arc from the tip once the rod whips forward, and lands.
+    const u = Math.max(0, Math.min(1, (f.t - 0.22) / 0.28));
+    show = f.t > 0.2;
     bx = tip[0] + (bx0 - tip[0]) * u;
-    by = tip[1] + (by0 - tip[1]) * u - Math.sin(u * Math.PI) * 30;
-  } else if (f.phase === 'wait' && f.nibbles?.some((n) => Math.abs(f.t - n) < 0.15)) by += 2;
-  else if (f.phase === 'bite') by += 4 + Math.sin(time * 30) * 1.5;
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 0.8;
-  ctx.beginPath();
-  ctx.moveTo(tip[0], tip[1]);
-  ctx.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + (f.phase === 'bite' ? 0 : 14), bx, by - 3);
-  ctx.stroke();
-  if (f.phase !== 'catch') {
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(bx, by, 3, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#ff6b8a';
-    ctx.beginPath();
-    ctx.arc(bx, by, 3, Math.PI, TAU);
-    ctx.fill();
-  }
-  if (f.phase === 'bite') {
-    // The splash and a big "!" over your head: now!
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.2;
-    for (let k = 0; k < 2; k++) {
-      ctx.beginPath();
-      ctx.ellipse(bx, by0, 6 + k * 6 + (time * 30) % 6, 2 + k * 2, 0, 0, TAU);
-      ctx.stroke();
-    }
-    const pop = 1 + 0.2 * Math.sin(time * 20);
-    text(ctx, '!', hx, hy - 68, { size: 18 * pop, bold: true, align: 'center', color: '#ff6b8a', outline: '#ffffff' });
+    by = tip[1] + (by0 - tip[1]) * u - Math.sin(u * Math.PI) * 26;
+  } else if (f.phase === 'wait') {
+    const nib = f.nibbles?.find((n) => Math.abs(f.t - n) < 0.2);
+    if (nib != null) by += 2.2 * Math.sin(((f.t - nib + 0.2) / 0.4) * Math.PI);
+  } else if (f.phase === 'bite') by += 4 + Math.sin(time * 30) * 1.4;
+  if (f.phase !== 'cast') {
+    for (let k = 0; k < 2; k++) ripple(ctx, bx0, by0 + 1, (((time * 0.5 + k * 0.5 + seed) % 1) + 1) % 1, f.phase === 'bite' ? 1.4 : 1);
   }
   if (f.phase === 'catch' && world.fishCaught) {
-    // The fish leaps out of the water in an arc to you, twinkling.
-    const u = Math.min(1, f.t / 0.6);
-    const fx = bx0 + (hx - bx0) * u;
-    const fy = by0 + (hy - 70 - by0) * u - Math.sin(u * Math.PI) * 40;
+    // A tug of war at the surface, the heave, then the fish swinging on the line under the tip.
+    const t = f.t / 1.4;
     const icon = itemIcon(world.fishCaught.fish.id);
-    blit(ctx, icon, fx - 12, fy - 12, { scale: 1.5 });
-    for (let k = 0; k < 4; k++) {
-      ctx.globalAlpha = 1 - u;
-      ctx.fillStyle = k % 2 ? '#ffffff' : '#9fe8ff';
-      ctx.fillRect(fx + Math.cos(k * 1.6 + time * 4) * 12, fy + Math.sin(k * 1.6 + time * 4) * 8, 2, 2);
+    let fx;
+    let fy;
+    let rot;
+    if (t < 0.42) {
+      fx = bx0 + Math.sin(time * 22) * 3;
+      fy = by0 - 1 - Math.abs(Math.sin(time * 9)) * 3;
+      rot = Math.sin(time * 18) * 0.6;
+      ripple(ctx, bx0, by0 + 1, (time * 2.5) % 1, 1.2);
+      line(ctx, tip, fx, fy, 0);
+    } else {
+      const u = Math.max(0, Math.min(1, (t - 0.42) / 0.16));
+      const hang = [tip[0], tip[1] + 14];
+      const sw = u >= 1 ? Math.sin((t - 0.58) * 14) * Math.exp(-(t - 0.58) * 3) * 0.6 : 0;
+      fx = bx0 + (hang[0] - bx0) * u + Math.sin(sw) * 14;
+      fy = by0 + (hang[1] - by0) * u - Math.sin(u * Math.PI) * 26 + (1 - Math.cos(sw)) * 14;
+      rot = u < 1 ? -dir * 2.4 * u : (Math.PI / 2) * -dir + Math.sin(time * 16) * 0.25;
+      line(ctx, tip, fx, fy - 4, 0);
+      if (u < 1) {
+        for (let k = 0; k < 4; k++) {
+          ctx.globalAlpha = 1 - u;
+          ctx.fillStyle = k % 2 ? '#ffffff' : '#bfe8ff';
+          ctx.fillRect(fx + Math.cos(k * 1.6) * 6 * u, fy + 4 + k * 2 * u, 1.6, 1.6);
+          ctx.globalAlpha = 1;
+        }
+      }
     }
-    ctx.globalAlpha = 1;
+    ctx.save();
+    ctx.translate(fx, fy);
+    ctx.rotate(rot);
+    blit(ctx, icon, -9, -9, { scale: 1.1 });
+    ctx.restore();
+    return;
+  }
+  if (show) {
+    line(ctx, tip, bx, by - 3, f.phase === 'bite' ? 0 : f.phase === 'miss' ? 22 : 12);
+    place(ctx, floatArt(), bx, by + 3);
+  }
+  if (f.phase === 'bite') {
+    // Splash lines kicking up round the float as it's dragged under.
+    ctx.save();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    for (let k = 0; k < 3; k++) {
+      const a = -Math.PI / 2 + (k - 1) * 0.6;
+      const r0 = 7 + ((time * 20) % 3);
+      ctx.beginPath();
+      ctx.moveTo(bx0 + Math.cos(a) * r0, by0 - 2 + Math.sin(a) * r0 * 0.7);
+      ctx.lineTo(bx0 + Math.cos(a) * (r0 + 4), by0 - 2 + Math.sin(a) * (r0 + 4) * 0.7);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
   if (f.phase === 'wait') text(ctx, 'Wait for the bite... (Z to hook)', hx, hy - 66, { size: 7, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(58,45,79,0.7)' });
-  ctx.restore();
 }
 
 // A friend fishing (online): their rod, line and bobber, and a "!" when they've got a bite.
-export function drawFriendFishing(ctx, f, hx, hy, cam, time) {
+export function drawFriendFishing(ctx, f, hx, hy, cam, time, at = null) {
+  // (The rod is in their hands, drawn with them in the same fishing poses as yours; `at` is
+  // where its tip was drawn, render/life.js friendFishPose.)
   const dir = f.face;
-  const tip = [hx + dir * 34, hy - 50];
-  const bx = f.bx - cam.x;
-  const by = f.by - cam.y - 2 + (f.phase === 'bite' ? 4 : Math.sin(time * 2.4));
-  ctx.save();
-  ctx.strokeStyle = '#a07a54';
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(hx + dir * 7, hy - 20);
-  ctx.quadraticCurveTo(hx + dir * 21, hy - 40, tip[0], tip[1]);
-  ctx.stroke();
-  if (f.phase !== 'cast' && f.phase !== 'catch') {
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineWidth = 0.8;
-    ctx.beginPath();
-    ctx.moveTo(tip[0], tip[1]);
-    ctx.quadraticCurveTo((tip[0] + bx) / 2, Math.max(tip[1], by) + 14, bx, by - 3);
-    ctx.stroke();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(bx, by, 3, 0, TAU);
-    ctx.fill();
-    ctx.fillStyle = '#ff6b8a';
-    ctx.beginPath();
-    ctx.arc(bx, by, 3, Math.PI, TAU);
-    ctx.fill();
+  let tip = [hx + dir * 30, hy - 40];
+  if (at) {
+    const p = ctx.getTransform().inverse().transformPoint(at);
+    tip = [p.x, p.y];
   }
-  if (f.phase === 'bite') text(ctx, '!', hx, hy - 66, { size: 14, bold: true, align: 'center', color: '#ff6b8a', outline: '#ffffff' });
-  ctx.restore();
+  const bx = f.bx - cam.x;
+  const by = f.by - cam.y - 1 + (f.phase === 'bite' ? 4 + Math.sin(time * 30) * 1.4 : Math.sin(time * 2.4 + f.bx * 0.013) * 0.8);
+  if (f.phase === 'cast' || f.phase === 'catch') return;
+  for (let k = 0; k < 2; k++) ripple(ctx, f.bx - cam.x, f.by - cam.y + 1, (((time * 0.5 + k * 0.5 + f.bx * 0.013) % 1) + 1) % 1, f.phase === 'bite' ? 1.4 : 1);
+  line(ctx, tip, bx, by - 3, f.phase === 'bite' ? 0 : 12);
+  place(ctx, floatArt(), bx, by + 3);
 }

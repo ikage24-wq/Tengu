@@ -8,6 +8,7 @@ import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, box, button, hover, tooltip, fit } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { groundAt } from '../world/physics.js';
+import { playLifePose } from '../world/lifepose.js';
 
 const W = 320;
 const H = 236;
@@ -59,6 +60,8 @@ export function cookingWindow(ui, state, world) {
     }
     if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
       const n = cook(char, d);
+      // She stirs, tosses and tastes it at the stove (render/life-moves.js).
+      if (n) playLifePose(world, 'cook', { at: st, find: d.id });
       world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
     }
     y += ROW;
