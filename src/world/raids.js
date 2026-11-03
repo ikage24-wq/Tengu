@@ -11,6 +11,7 @@ import { hurtBot, joinCombo, partyMembers } from './party.js';
 import { buddyOnline, buddiesOf } from './buddies.js';
 import { botChat, stale } from './chatlog.js';
 import { happened } from './chatter.js';
+import { fullNear, queueBurst, answering } from './teamwork.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -119,16 +120,28 @@ function combos(bots, world) {
   bots.comboSeen = c.at;
   const rng = bots.rng;
   const b = world.body;
+  // Another member's gauge full too (a bot by you, or a friend online): a Group Finisher, everyone
+  // full joining in and spending theirs, ending in a shared burst (world/teamwork.js).
+  const full = fullNear(world);
+  const answer = answering(world);
+  const group = full.length > 0 || answer;
+  const friends = full.filter((o) => !o.fight);
   const joined = partyMembers(bots)
     .filter((m) => m.body && !m.down && !m.away && m.map === world.map.id && m.fight && m.fight.gauge >= 40 && Math.abs(m.body.x - b.x) < 360 && Math.abs(m.body.y - b.y) < 160)
     .filter((m, i) => joinCombo(m, world, 0.25 + i * 0.3));
+  if (group) {
+    // Friends online join in their own games, a beat apart.
+    if (!answer) world.net?.teamGroup?.(world);
+    queueBurst(world, 0.55 + (joined.length + friends.length) * 0.3, 1 + joined.length + friends.length + (answer ? 1 : 0));
+    if (!answer) world.log(`Group Finisher! ${[...joined, ...friends].map((m) => m.name).join(' and ')} join${joined.length + friends.length > 1 ? '' : 's'} in!`, '#ffb38a');
+  }
   if (!joined.length) return;
-  world.numbers.push({ x: b.x, y: b.y - 70, text: 'PARTY COMBO!', color: '#ffd24f', t: 0, crit: true, link: true });
+  world.numbers.push({ x: b.x, y: b.y - 70, text: group ? 'TEAM UP!' : 'PARTY COMBO!', color: group ? '#ffb38a' : '#ffd24f', t: 0, crit: true, link: true });
   world.juice.push({ type: 'screenflash', life: 0.1, color: '#fff3c4' });
-  world.log(`Party Combo! ${joined.map((m) => m.name).join(' and ')} join${joined.length > 1 ? '' : 's'} your finisher!`, '#ffd24f');
+  if (!group) world.log(`Party Combo! ${joined.map((m) => m.name).join(' and ')} join${joined.length > 1 ? '' : 's'} your finisher!`, '#ffd24f');
   joined.forEach((m, i) => {
     m.sayAt = world.now + 0.1 + i * 0.3;
-    m.sayLine = pick(['NOW!!', 'together!!', 'combo!!', 'all in!', 'go go go'], rng);
+    m.sayLine = pick(group ? ['all together!!', 'GROUP FINISH', 'full gauge go!!', 'lets end this'] : ['NOW!!', 'together!!', 'combo!!', 'all in!', 'go go go'], rng);
   });
 }
 

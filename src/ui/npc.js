@@ -22,6 +22,7 @@ import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover
 import { itemTooltip } from './tooltips.js';
 import { shopWindow } from './shop.js';
 import { polishWindow } from './polish.js';
+import { teamOf } from '../world/teamwork.js';
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -531,7 +532,8 @@ export function deathWindow(ui, state, world) {
   ctx.stroke();
   text(ctx, 'You fainted!', x + W / 2, y + 36, { size: 14, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
   const loss = deathExpLoss(world.char.level, world.char.base.luk);
-  wrap(ctx, `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 18, y + 54, W - 36, { size: 8, color: COLORS.muted });
+  const helped = teamOf(world).some((t) => t.kind !== 'you' && t.up);
+  wrap(ctx, helped ? `Stay put and your party can stand by you to get you up, or wake up in town and lose ${loss} EXP.` : `You'll wake up in town and lose ${loss} EXP. Higher LUK softens the loss.`, x + 18, y + 54, W - 36, { size: 8, color: COLORS.muted });
   ui.theme = th;
   if (button(ui, x + W / 2 - 56, y + H - 28, 112, 19, 'Return to town', { primary: true })) {
     respawn(world);

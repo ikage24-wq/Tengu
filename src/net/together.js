@@ -9,6 +9,7 @@ import { addItem, removeItem, countItem, TAB_SIZE } from '../core/inventory.js';
 import { loadMap } from '../world/world.js';
 import { friendWorking, friendFeast } from '../world/coop-life.js';
 import { onPartyQuestMsg } from '../world/partyquest.js';
+import { friendLaunched, standUp, joinGroup } from '../world/teamwork.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -536,7 +537,34 @@ export const togetherApi = {
     for (const g of partyFriends()) send({ t: 'pq', to: g.id, ...msg });
   },
   partyFriendCount: () => partyFriends().length,
+  // Team moves (world/teamwork.js): your party friends on this map, and the word between games.
+  teamFriends(world) {
+    return partyFriends().filter((g) => g.map === world.map.id && g.body);
+  },
+  teamLaunch(world, m, chain) {
+    if (!online.party) return;
+    m.net ??= `${online.id}:${m.uid}`;
+    send({ t: 'team', op: 'launch', map: world.map.id, mob: m.net, chain });
+  },
+  teamRevive(world, to, pct) {
+    send({ t: 'team', op: 'revive', to, pct, name: world.char.name });
+  },
+  teamGroup(world) {
+    if (!online.party) return;
+    send({ t: 'team', op: 'group', map: world.map.id, x: Math.round(world.body.x), y: Math.round(world.body.y), name: world.char.name });
+  },
 };
+
+// A party friend's team move, worked out in their game: a launch you can catch, getting you back
+// up, or their Group Finisher calling you in.
+function onTeam(world, msg, g) {
+  if (!inParty(msg.id) || (msg.map && msg.map !== world.map.id)) return;
+  if (msg.op === 'launch') {
+    const m = world.mobs.find((o) => o.net === msg.mob || `${online.id}:${o.uid}` === msg.mob);
+    friendLaunched(world, m, msg.id, msg.chain ?? 0);
+  } else if (msg.op === 'revive' && msg.to === online.id) standUp(world, Math.min(1, Math.max(0.05, Number(msg.pct) || 0.3)), g?.name ?? 'A friend');
+  else if (msg.op === 'group' && Math.abs(msg.x - world.body.x) < 360 && Math.abs(msg.y - world.body.y) < 160) joinGroup(world);
+}
 
 export function handleTogether(world, msg, g) {
   switch (msg.t) {
@@ -567,6 +595,8 @@ export function handleTogether(world, msg, g) {
     case 'pemote':
     case 'gath':
       return onPartyNote(world, msg, g);
+    case 'team':
+      return onTeam(world, msg, g);
     default:
       return onRun(world, msg, g);
   }

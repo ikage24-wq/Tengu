@@ -65,3 +65,24 @@ player before it is merged.
   mechanic (tethered Twin Puffballs, an Earthquake Stomp to share, a Bark Ward to break from both
   sides), and the chest pays three times the tokens and Gnarlroot's Leaf Crown, a Hard-only look.
 - tools/coop-stage.html stages each of these for pictures and videos.
+
+## Built: team moves (wave 1, part 1)
+
+All in world/teamwork.js; the same with bot party members and with friends online (a friend's
+game works out its own catches and revives and tells yours: net/together.js, `team` messages).
+
+- **Team Catch.** A monster one member launches can be caught in the air by another for 1.2 s:
+  +25% damage (+10% more per catch in a chain, up to +60%), it pops back up, "TEAM!" (x2, x3...)
+  and two stars clinking. Bots near a launch often go for the catch; their own launches are
+  yours to catch.
+- **Revive by standing by.** Stand by a fallen member for 2.5 s (a peach ring fills round them):
+  up with 30% HP. A hit taking a tenth of your HP at once, or walking off, breaks it. Bots walk
+  over to get you or each other up; a fallen bot in the field waits while someone helps.
+- **Side by side.** +4% damage for each member fighting within ~200 px (up to three), a party
+  badge with pips by the gauge, and soft beads of light linking you while you fight.
+- **Group Finisher.** Your finisher while another member near you has a full gauge: everyone
+  near joins a beat apart (the party combo), the full ones spending theirs, then a shared burst
+  and a short slow-motion beat. The HUD says GROUP FINISHER READY. A friend online with a full
+  gauge plays their own finisher a beat later.
+- Effects in the party's own colours (sunrise peach and sky blue, two stars meeting):
+  `celteamcatch`, `celteamlink`, `celteamrevive`, `celteamburst` (tools/fx-art.js).

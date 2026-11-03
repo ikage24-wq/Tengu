@@ -29,6 +29,7 @@ import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './
 import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
+import { drawTeamOverlay } from './team-fx.js';
 import { drawSpots, drawFishing } from './fishing.js';
 import { drawNodes, drawNodesFront } from './gathering.js';
 import { lifePose, lifeFind, holdFind, lifeBeats, botLifeBeats, onRodTip, clearRodTip, LIFE_POSES } from './life.js';
@@ -385,6 +386,7 @@ export function drawWorld(ctx, world, viewCam, time) {
     drawDarkness(ctx, world, cam, time);
   }
   const drawFx = (g) => {
+    drawTeamOverlay(g, world, cam, time);
     drawEffects(g, world, cam, time);
     if (world.dungeon) drawDungeonFront(g, world, cam, time);
     drawCoopFront(g, world, cam, time);

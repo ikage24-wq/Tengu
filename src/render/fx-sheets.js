@@ -276,4 +276,8 @@ export const FX_SHEETS = {
   celaxewheel: { w: 233, h: 233, n: 8, fps: 24, px: 116, py: 116, d: 3, loop: true },
   celrageaxe: { w: 292, h: 422, n: 5, fps: 18, px: 99, py: 403, d: 3, loop: false },
   celrageaxeform: { w: 292, h: 422, n: 5, fps: 14, px: 99, py: 403, d: 3, loop: false },
+  celteamcatch: { w: 202, h: 205, n: 8, fps: 30, px: 101, py: 109, d: 3, loop: false },
+  celteamlink: { w: 50, h: 50, n: 6, fps: 12, px: 25, py: 25, d: 3, loop: true },
+  celteamrevive: { w: 183, h: 284, n: 9, fps: 18, px: 91, py: 247, d: 3, loop: false },
+  celteamburst: { w: 383, h: 376, n: 11, fps: 20, px: 195, py: 188, d: 3, loop: false },
 };

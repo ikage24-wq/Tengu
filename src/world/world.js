@@ -35,6 +35,7 @@ import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
+import { teamHit, teamLanded, tickTeam } from './teamwork.js';
 import { nestKill } from './nest.js';
 import { tickCoop, coopHit, pqKill } from './coop.js';
 import { DISH_BY_ID } from '../data/cooking.js';
@@ -701,6 +702,8 @@ export function updateWorld(world, dt, input) {
     if (focus && m !== focus && !h.party) h.damage = Math.max(1, Math.round(h.damage * spread));
     // (What you're fighting: your party focuses it, world/botfight.js.)
     if (!h.party && !h.miss) world.youHit = { mob: m, at: world.now };
+    // Team moves: side by side, and catching a partymate's launch (world/teamwork.js).
+    teamHit(world, m, h);
     if (world.dungeon) h.damage = noteHit(world, m, h);
     // (A boss's guard or armour: world/coopboss.js.)
     if (m.coop) h.damage = coopHit(world, m, h);
@@ -750,6 +753,7 @@ export function updateWorld(world, dt, input) {
       }
       continue;
     }
+    teamLanded(world, m, h);
     // Ice freezes and stuns daze monsters in place (bosses shrug them off twice as fast);
     // venom and bleeding keep biting every second.
     const hold = h.freeze || h.stun || h.snare;
@@ -825,6 +829,8 @@ export function updateWorld(world, dt, input) {
       world.invuln = 0.5;
     }
   }
+  // Team moves: revives, the side-by-side link, a Group Finisher's burst (world/teamwork.js).
+  tickTeam(world, dt);
   // Monsters don't pop up right on top of you or your party.
   const near = [world.body, ...(world.bots?.list ?? []).filter((b) => b.party && b.body && b.map === world.map.id).map((b) => b.body)];
   if (world.net) near.push(...world.net.bodies(world));

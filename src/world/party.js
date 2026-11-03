@@ -344,6 +344,12 @@ function fieldSteer(bot, world, members) {
 // Decides where to be. Runs every few tenths of a second (each member's own reaction time), not
 // every frame, which keeps movement calm.
 function think(bot, world, members, rng) {
+  // Off to stand by a fallen partymate and get them up (world/teamwork.js).
+  if (bot.reviveGoal) {
+    bot.brain.target = null;
+    bot.brain.goal = bot.reviveGoal;
+    return;
+  }
   if (world.dungeon) return roleThink(bot, world, rng);
   if (!world.map.isTown) return hunt(bot, world, members, rng);
   const ai = bot.ai;
