@@ -710,21 +710,67 @@ export const THEATRE_SCENES = {
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
+  // Persona, staged: the two-coated cat muse waltzes alone under the chandeliers; she can't
+  // decide, so she flips between Comedy and Tragedy, the light flashing gold and blue faster and
+  // faster, until she sweeps both masks round at you.
   theatre_persona: [
+    { together: [{ cam: 'persona', up: 20, dur: 1.4 }, { walk: 'player', to: 'persona', gap: 190, speed: 100 }, { act: 'persona', move: 'sway', dur: 2.4, amp: 0.1, speed: 3.6 }, { fx: 'notes', at: 'persona', top: true }] },
     { who: null, text: 'The ballroom set glides in. Under the chandeliers a muse in a gown of two colours dances alone, a mask in each hand.' },
+    { together: [{ walk: 'persona', by: 40, speed: 60 }, { act: 'persona', move: 'sway', dur: 1.2, amp: 0.12, speed: 5 }] },
+    { together: [{ walk: 'persona', by: -40, speed: 60 }, { act: 'persona', move: 'sway', dur: 1.2, amp: 0.12, speed: 5 }] },
+    { together: [{ face: 'persona', to: 'player' }, { mood: 'persona', as: 'happy' }, { flash: '#ffd36b' }, { fx: 'confetti', at: 'persona', top: true, n: 12 }] },
     { who: 'persona', text: 'Oh, an audience! Shall I make you laugh?', mood: 'happy' },
+    { together: [{ mood: 'persona', as: 'sad' }, { flash: '#7fa8ff' }, { fx: 'sparkle', at: 'persona', top: true, n: 8 }] },
     { who: 'persona', text: '...Or shall I make you cry? I can never decide. Let us find out together!', mood: 'sad' },
+    { together: [{ mood: 'persona', as: 'happy' }, { flash: '#ffd36b' }, { wait: 0.35 }] },
+    { together: [{ mood: 'persona', as: 'sad' }, { flash: '#7fa8ff' }, { wait: 0.28 }] },
+    { together: [{ mood: 'persona', as: 'happy' }, { flash: '#ffd36b' }, { wait: 0.22 }] },
+    { together: [{ mood: 'persona', as: 'angry' }, { flash: '#7fa8ff' }, { act: 'persona', move: 'windup', dur: 0.5 }] },
+    { act: 'persona', move: 'attack', dur: 0.9, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 4, dur: 0.4 }, { fx: 'confetti', at: 'player', n: 14 }, { walk: 'player', away: 'persona', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.4 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Madame Directrice, staged: the parrot director spins round at the intrusion and bellows
+  // through her megaphone, rings of sound and feathers flying; she snaps her clapperboard, the
+  // take card cuts in, and ACTION.
   theatre_directrice: [
+    { together: [{ cam: 'directrice', up: 20, dur: 1.2 }, { walk: 'player', to: 'directrice', gap: 190, speed: 100 }, { face: 'directrice', to: 1 }] },
+    { together: [{ face: 'directrice', to: 'player' }, { jump: 'directrice', height: 16 }, { emote: 'directrice', kind: 'anger', dur: 2 }, { mood: 'directrice', as: 'angry' }, { fx: 'feathers', at: 'directrice', top: true }] },
+    { together: [{ act: 'directrice', move: 'windup', dur: 0.7 }, { fx: 'shout', at: 'directrice' }, { shake: 3, dur: 0.6 }] },
     { who: 'directrice', text: 'Who let the audience backstage?! This is a CLOSED set!', mood: 'angry' },
+    { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { walk: 'player', away: 'directrice', by: 16, speed: 60 }] },
     { who: 'player', text: 'Your play is making the whole island forget itself.' },
+    { together: [{ act: 'directrice', move: 'sway', dur: 1, amp: 0.1, speed: 9 }, { fx: 'feathers', at: 'directrice', top: true, n: 6 }] },
     { who: 'directrice', text: 'Then you will be my extras. Places, everyone! And... ACTION!', mood: 'angry' },
+    { together: [{ act: 'directrice', move: 'attack', dur: 0.8 }, { flash: '#ffffff' }, { fx: 'shout', at: 'directrice' }] },
+    { card: 'Take 1', sub: 'ACTION!' },
+    { together: [{ shake: 3, dur: 0.3 }, { fx: 'feathers', at: 'directrice', n: 14 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.4 },
+    { cam: 'player', dur: 0.7 },
   ],
+  // The Phantom Playwright, staged: the great stage dark but for one spotlight on his desk; ink
+  // wells up and the phantom rises out of it in a whirl of script pages; the final act's card is
+  // written in, and he slashes a stroke of ink across the stage.
   theatre_playwright: [
+    { fade: 'out', dur: 0.35, color: '#120c20' },
+    { together: [{ act: 'playwright', move: 'sink' }, { cam: 'playwright', up: 20, dur: 0 }, { spot: 'playwright', r: 50, dur: 0 }] },
+    { together: [{ fade: 'in', dur: 0.8 }, { walk: 'player', to: 'playwright', gap: 190, speed: 100 }] },
     { who: null, text: 'The great stage. A desk stands alone in a single spotlight, buried in pages. A pale figure in a half-mask lifts his quill.' },
+    { together: [{ fx: 'ink', at: 'playwright', n: 14 }, { act: 'playwright', move: 'emerge', dur: 1.8 }, { fx: 'pages', at: 'playwright', n: 12 }] },
+    { together: [{ fx: 'pages', at: 'playwright', top: true, n: 10 }, { face: 'playwright', to: 'player' }, { act: 'playwright', move: 'sway', dur: 1.4, amp: 0.05, speed: 3 }] },
     { who: 'playwright', text: 'Ah, my heroes arrive, exactly on cue. I wrote this scene for you.' },
+    { together: [{ spot: null, dur: 0.8 }, { cam: ['player', 'playwright'], up: 30, dur: 0.9 }, { face: 'player', to: 'playwright' }] },
     { who: 'player', text: 'Then write it a different ending.' },
+    { together: [{ mood: 'playwright', as: 'angry' }, { act: 'playwright', move: 'windup', dur: 0.9 }, { fx: 'pages', at: 'playwright', top: true, n: 14 }] },
     { who: 'playwright', text: 'Every story needs a villain, and every villain needs a final act. Let us find out who it is.', mood: 'angry' },
+    { card: 'The Final Act', sub: 'as written by the Phantom' },
+    { act: 'playwright', move: 'attack', dur: 1, async: true },
+    { wait: 0.32 },
+    { together: [{ fx: 'ink', at: 'player', n: 24 }, { shake: 5, dur: 0.5 }, { flash: '#2a1a3a' }, { walk: 'player', away: 'playwright', by: 30, speed: 160 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
   theatre_freed: [
     { who: 'playwright', text: '...Applause? For them? Nobody has ever applauded my ending before.', mood: 'sad' },

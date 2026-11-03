@@ -290,6 +290,28 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'shout') {
+    // A ring of sound widening out from a megaphone.
+    const u = p.t / p.life;
+    ctx.globalAlpha = Math.max(0, 1 - u) * 0.9;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y, 6 + u * 46, -0.7, 0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 6 + u * 46, Math.PI - 0.7, Math.PI + 0.7);
+    ctx.stroke();
+  } else if (p.kind === 'feathers') {
+    // A parrot feather see-sawing down.
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(spin) * 0.9);
+    ctx.fillStyle = ['#5fc06a', '#e8504a', '#ffd36b'][Math.floor(p.seed) % 3];
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 1.6, 4.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(-0.3, -4, 0.6, 8);
   } else if (p.kind === 'sparks') {
     // A forge spark: a short bright streak along its flight.
     ctx.strokeStyle = p.seed > 5 ? '#ffe36b' : '#ff9a3a';
