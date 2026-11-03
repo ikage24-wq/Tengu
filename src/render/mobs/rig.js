@@ -26,8 +26,9 @@ export const easeIn = (u) => clamp(u, 0, 1) ** 3;
 
 // One part's sprite: `shapes()` drawn in a w x h box (with `pad` room round it for anything that
 // pokes out), cached like any sprite.
-export function part(key, w, h, shapes, pad = 6) {
-  return sprite(`rig|${key}`, () => ({ w, h, shapes: shapes(), res: 2, soft: 'cel', crisp: true, selout: true, pad }));
+// (The box is rounded up to whole pixels: the rasterizer needs them.)
+export function part(key, w, h, shapes, pad = 6, res = 2) {
+  return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad }));
 }
 
 // Draws a part with its pivot (in its box) at (x, y), turned by `ang` radians.

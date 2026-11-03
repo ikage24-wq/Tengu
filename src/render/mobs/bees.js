@@ -12,6 +12,7 @@
 import { E, T, F, mix, shade, stroke } from './kit.js';
 import { easyEye, mouth, blush as cheek, sweat, tear, vein, deadEye, simpleEye, simpleMouth } from './faces.js';
 import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
+import { part, makeRig, stateBlend, inPart, chainParts } from './rig.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -471,10 +472,135 @@ function queenbee(pose, f, mood) {
   return { w: 84, h: 76, res: 3, shapes: shift(out, 6, 6) };
 }
 
+// ---------- The Queen Bee, rigged ----------
+// (2026-11-03, the boss reanimation.) A live skeleton (render/mobs/rig.js): her lacy wings really
+// buzz, her striped train of an abdomen trails behind her hover, her dainty legs dangle and sway,
+// her antennae bounce, her crown wobbles, and her honey dipper swings up over her head and down
+// into a splash of honey. Rig space: the floor under her at (0, 0).
+const QB = {
+  // (The wing's own two shapes, with its veins drawn a touch thicker to read at a part's size.)
+  wing: (key, len, wid, c, v) => part(`qbee|wing|${key}`, len + 4, wid * 2 + 4, () => [...wing(2, wid + 2, 0, len, wid, c, v).slice(0, 2), ...stroke([[2, wid + 2], [2 + len * 0.8, wid + 2 - len * 0.1]], 0.8, v), ...stroke([[2, wid + 2], [2 + len * 0.6, wid + 2 + len * 0.1]], 0.8, v)]),
+  tail: () => part('qbee|tail', 40, 30, () => {
+    const tx = 22;
+    const ty = 15;
+    const out = [E(tx, ty, 16, 12, HONEY.base)];
+    for (const [x0, x1] of [[-11, -7], [-3, 1], [5, 9]]) out.push(stripe(tx, ty, 16, 12, tx + x0, tx + x1, COCOA.base));
+    out.push(crescent(tx, ty, 16, 12, HONEY.sh, { k: 0.3, a0: 40, a1: 230 }), shine(tx, ty, 16, 12, HONEY.hi, 0, 1.1), F(T([[tx - 15.4, ty - 2], [tx - 21, ty + 1], [tx - 15, ty + 3.4]], COCOA.deep)));
+    return out;
+  }),
+  legs: () => part('qbee|legs', 18, 16, () => {
+    const out = [];
+    for (const [x] of [[-4], [0], [4]]) {
+      const top = [9 + x, 2];
+      const foot = [8 + x, 11];
+      out.push(...stroke([top, [top[0] + 1.2, 6.5], foot], 1.8, COCOA.base, false), F(E(top[0] + 0.6, top[1] + 4.6, 1.4, 0.8, GOLD.base)), E(foot[0], foot[1] + 0.4, 1.5, 1, COCOA.sh));
+    }
+    return out;
+  }),
+  body: () => part('qbee|body', 44, 40, () => {
+    const bx = 20;
+    const by = 22;
+    const out = [E(bx, by, 13, 12, HONEY.base), crescent(bx, by, 13, 12, HONEY.sh, { k: 0.3, a0: 50, a1: 220, jag: 0.6 })];
+    for (const [x, y] of [[-3, 2], [2, 2], [-0.5, 6], [4.5, 6], [-5.5, 6], [2, 10]]) {
+      const pts = [];
+      for (let k = 0; k < 6; k++) pts.push([bx + x + Math.cos((k / 6) * TAU) * 2.2, by + y + Math.sin((k / 6) * TAU) * 2]);
+      out.push(F(T(pts, GOLD.hi)), ...stroke([...pts, pts[0]], 0.35, GOLD.sh));
+    }
+    out.push(shine(bx, by, 13, 12, '#fff6d0', 0, 1));
+    for (let i = 0; i < 9; i++) {
+      const a = (-10 + i * 22) * D2R;
+      out.push(E(bx + 5 + Math.cos(a) * 9, by - 6 + Math.sin(a) * 3, 4.2, 3.4, i % 2 ? LACE : '#ffffff'), F(E(bx + 5 + Math.cos(a) * 9, by - 4.8 + Math.sin(a) * 3, 1.4, 0.9, '#f0e0ee')));
+    }
+    return out;
+  }),
+  head: (mood, atk) => part(`qbee|head|${mood}|${atk}`, 36, 36, () => {
+    const hx = 18;
+    const hy = 20;
+    const out = [E(hx, hy, 13, 12.2, FUZZ.base), crescent(hx, hy, 13, 12.2, FUZZ.sh, { k: 0.3, a0: 100, a1: 230, jag: 0.6 }), shine(hx, hy, 13, 12.2, '#ffffff', 0, 1.1)];
+    out.push(E(hx - 3, hy - 8, 10.4, 6, HONEY.base), crescent(hx - 3, hy - 8, 10.4, 6, HONEY.sh, { k: 0.35, a0: 120, a1: 220 }), O(hx + 7.4, hy - 6.4, 3.4, 2.2, -30, HONEY.base), F(E(hx - 4, hy - 10.6, 4, 1.4, HONEY.hi)));
+    beeFace(out, hx - 0.6, hy + 1, 1.85, mood, Boolean(atk), { queen: true });
+    if (mood !== 'dead') out.push(F(E(hx + 9, hy + 6.6, 0.5, 0.5, '#5a2a3a')));
+    return out;
+  }),
+  crown: () => part('qbee|crown', 18, 12, () => {
+    const cx = 9;
+    const cy = 8;
+    const out = [T([[cx - 7, cy + 2], [cx - 7, cy - 3], [cx - 4.6, cy - 1], [cx - 2.4, cy - 6], [cx, cy - 1.4], [cx + 2.4, cy - 6], [cx + 4.6, cy - 1], [cx + 7, cy - 3], [cx + 7, cy + 2]], GOLD.base), F(T([[cx - 7, cy + 2], [cx - 7, cy - 0.6], [cx + 7, cy - 0.6], [cx + 7, cy + 2]], GOLD.sh))];
+    out.push(F(T([[cx, cy - 4.8], [cx + 1.4, cy - 2.6], [cx + 1.2, cy - 1.4], [cx, cy - 0.8], [cx - 1.2, cy - 1.4], [cx - 1.4, cy - 2.6]], '#ff9a2a')));
+    return out;
+  }),
+  pom: (near) => part(`qbee|pom|${near}`, 6, 6, () => [E(3, 3, 2, 2, near ? GOLD.base : GOLD.sh), F(E(3.5, 2.4, 0.7, 0.5, '#fff6d0'))]),
+  arm: () => part('qbee|arm', 14, 8, () => [...stroke([[2, 4], [11, 4]], 2.4, COCOA.base, false), E(11, 4, 1.8, 1.8, COCOA.sh)]),
+  // The dipper along +x from the grip at (4, 6): the handle, then the fat ridged honey head.
+  dipper: () => part('qbee|dipper', 26, 12, () => {
+    const out = [...stroke([[1, 6], [17, 6]], 1.6, '#c98a5a', false), O(20, 6, 4.4, 3, 0, GOLD.base)];
+    for (const k of [-2, 0, 2]) out.push(...stroke([[20 + k, 3], [20 + k, 9]], 0.5, GOLD.sh));
+    return out;
+  }),
+};
+const queenBeeRig = makeRig({
+  w: 60,
+  h: 64,
+  stride: 1e9,
+  fast: ['arm', 'rear'],
+  kick: { rear: -1.6, crown: 4, a0: 4 },
+  springs: { tail: [70, 5], legs: [60, 4], crown: [90, 5], a0: [70, 5], a1: [60, 4], a2: [50, 3.5], a3: [45, 3] },
+  pose(m, a) {
+    const t = a.t;
+    const idle = { bob: -Math.sin(t * 2) * 2.8, rear: Math.sin(t * 1.2) * 0.05, arm: (-10 + 10 * Math.sin(t * 1.6)) * D2R, x: 0 };
+    const walk = { bob: -3.2 * Math.sin(t * 6), rear: 4 * D2R * Math.sin(t * 6 - 1.6), arm: 5 * D2R * Math.sin(t * 6 - 1), x: Math.sin(t * 6 - 1.2) };
+    const antic = { bob: 3, rear: -10 * D2R, arm: -165 * D2R, x: 0 };
+    const strike = { bob: -3, rear: 12 * D2R, arm: 52 * D2R, x: 0 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  follow: (S, a) => ({ tail: -S.rear * 1.6 + Math.sin(a.t * 2 - 1) * 0.06, legs: -S.rear * 1.2 - S.bob * 0.02, crown: -8 * D2R - S.rear * 0.8, a0: -2.1 - S.rear * 1.5, a1: -18 * D2R + Math.sin(a.t * 2.4) * 0.15, a2: -18 * D2R + Math.sin(a.t * 2.4 - 1) * 0.15, a3: -18 * D2R + Math.sin(a.t * 2.4 - 2) * 0.15 }),
+  parts: [
+    { name: 'root', at: (S) => [S.x, -26 + S.bob], rot: (S) => S.rear * 0.6 },
+    // The wings buzz: a fast beat between two angles (a pale blur of the other stroke behind).
+    { name: 'wingBlur', parent: 'root', pivot: [2, 9], at: () => [-6, -10], rot: (S, a) => (-90 - 48 + (0.5 + 0.5 * Math.sin(a.t * 38 + 1.5)) * -30) * D2R, s: () => QB.wing('blur', 20, 7, mix(WING, '#ffffff', 0.6), mix(WINGV, '#ffffff', 0.6)) },
+    { name: 'wingFar', parent: 'root', pivot: [2, 10], at: () => [-7, -10], rot: (S, a) => (-90 - 48 + lerp(-80, -30, 0.5 + 0.5 * Math.sin(a.t * 38)) * 0.6) * D2R, s: () => QB.wing('far', 22, 8, WING, WINGV) },
+    { name: 'tail', parent: 'root', pivot: [32, 9], at: () => [-6, 0], rot: (S) => S.tail, s: () => QB.tail() },
+    { name: 'legs', parent: 'root', pivot: [9, 2], at: () => [0, 8], rot: (S) => S.legs, s: () => QB.legs() },
+    { name: 'body', parent: 'root', pivot: [20, 22], at: () => [0, 0], s: () => QB.body() },
+    { name: 'wingNear', parent: 'root', pivot: [2, 10.6], at: () => [-4, -11], rot: (S, a) => (-90 - 30 + lerp(-80, -30, 0.5 + 0.5 * Math.sin(a.t * 38 + 0.4)) * 0.6) * D2R, s: () => QB.wing('near', 24, 8.6, mix(WING, '#ffffff', 0.2), WINGV) },
+    { name: 'head', parent: 'root', pivot: [18, 20], at: () => [10, -20], rot: (S) => -4 * D2R - S.rear * 0.3, s: (a) => QB.head(a.face, a.atk) },
+    ...[[-3, false], [2, true]].flatMap(([x, near], j) => [
+      ...chainParts(`ant${j}`, { parent: 'head', at: () => [x - 2, -12], key: 'qbee|ant', segs: [[4, 1, 1], [4, 1, 1], [3.6, 1, 1], [3, 1, 1]], color: COCOA.base, rot: (S, a, i) => S[`a${i}`] + (i === 0 && near ? 0.7 : 0) }),
+      { name: `pom${j}`, parent: `ant${j}3`, pivot: [3, 3], at: () => [3, 0], s: () => QB.pom(near) },
+    ]),
+    { name: 'crown', parent: 'head', pivot: [9, 8], at: () => [-2, -13.4], rot: (S) => S.crown, s: () => QB.crown() },
+    // (The dipper's angle reads like the old frames: 0 straight down, + swinging forward.)
+    { name: 'arm', parent: 'root', pivot: [2, 4], at: () => [8, -4], rot: (S) => Math.PI / 2 - S.arm, s: () => QB.arm() },
+    { name: 'dipper', parent: 'arm', pivot: [4, 6], at: () => [10, 0], s: () => QB.dipper() },
+  ],
+  fx(ctx, m, a, S, mat) {
+    // A drop of honey hanging off the dipper, and the splash where it lands.
+    inPart(ctx, mat, 'dipper', () => {
+      ctx.globalAlpha = a.alpha;
+      ctx.fillStyle = '#ffb020';
+      ctx.beginPath();
+      ctx.arc(16, 4 + (a.t * 3) % 2, 1.2, 0, TAU);
+      ctx.fill();
+    });
+    if (a.ph.since >= 0 && a.ph.since < 0.5) {
+      const u = a.ph.since / 0.5;
+      for (let i = 0; i < 8; i++) {
+        const ang = (-170 + i * 22) * D2R;
+        const r = 10 + 10 * u;
+        ctx.globalAlpha = a.alpha * (1 - u);
+        ctx.fillStyle = i % 2 ? GOLD.base : '#ffb020';
+        ctx.beginPath();
+        ctx.ellipse(28 + Math.cos(ang) * r, -6 + Math.sin(ang) * r * 0.5, 2 + u, 2.4 + u, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+  },
+});
+
 export const ART = {
   bumble: { walk: 8, idle: 6, attack: 4, stride: 30, atkMs: [60, 220, 160], draw: bumble },
   petalsprite: { walk: 8, idle: 6, attack: 4, stride: 24, atkMs: [70, 240, 200], draw: petalsprite },
-  queenbee: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [120, 420, 200, 240], draw: queenbee },
+  queenbee: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [120, 420, 200, 240], draw: queenbee, rig: queenBeeRig },
 };
 
 export const INFO = {

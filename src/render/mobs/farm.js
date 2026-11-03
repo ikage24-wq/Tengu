@@ -11,6 +11,7 @@
 import { E, T, F, mix, shade, stroke } from './kit.js';
 import { simpleEye, simpleMouth, deadEye, sweat, vein } from './faces.js';
 import { ramp, crescent, shine, smear, breath, sway, chain, wave } from './meadow.js';
+import { part, makeRig, stateBlend, inPart } from './rig.js';
 
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
@@ -449,8 +450,145 @@ function rotate(shapes, cx, cy, deg) {
   });
 }
 
+// ---------- Old MacGoblin, rigged ----------
+// (2026-11-03, the boss reanimation.) A live skeleton (render/mobs/rig.js): he stomps bow-legged,
+// his big belly and head a beat behind; his droopy ears flop on springs and the toadstool on his
+// straw hat bobs after his head; at rest he leans on his pitchfork planted beside him, and for the
+// slam he hoists it high over his hat and drives it into the ground in a burst of hay. Rig space:
+// the floor under him at (0, 0).
+const MG = {
+  leg: (near) => part(`mac|leg|${near}`, 22, 22, () => {
+    const c = near ? DENIM : { base: DENIM.sh };
+    return [...stroke([[8, 2], [near ? 9.5 : 6.5, 7], [8, 12]], 6, c.base, false), E(10, 14.4, 5.6, 3.2, near ? BOOT.base : BOOT.sh), F(E(11, 13.2, 2.6, 0.9, near ? BOOT.hi : BOOT.base))];
+  }),
+  farArm: () => part('mac|fararm', 16, 22, () => [...stroke([[12, 2], [5, 12], [9, 18]], 5, SK.sh, false), E(9, 18, 3, 3, SK.sh)]),
+  body: () => part('mac|body', 48, 46, () => {
+    const bx = 24;
+    const by = 24;
+    const out = [E(bx, by, 20, 19, SK.base), crescent(bx, by, 20, 19, SK.sh, { k: 0.3, a0: 60, a1: 220 }), E(bx, by + 5, 20, 15, DENIM.base), crescent(bx, by + 5, 20, 15, DENIM.sh, { k: 0.3, a0: 40, a1: 200 }), shine(bx, by + 5, 20, 15, DENIM.hi, 0, 0.9)];
+    out.push(T([[bx - 9, by - 12], [bx + 10, by - 12], [bx + 11, by + 2], [bx - 10, by + 2]], DENIM.base), F(T([[bx - 9, by - 12], [bx + 10, by - 12], [bx + 10, by - 10], [bx - 9, by - 10]], DENIM.hi)));
+    out.push(...stroke([[bx - 8, by - 11], [bx - 12, by - 20]], 2.6, DENIM.sh, false), ...stroke([[bx + 9, by - 11], [bx + 11, by - 20]], 2.6, DENIM.base, false));
+    for (const x of [bx - 7.6, bx + 8.6]) out.push(E(x, by - 11, 1.5, 1.5, '#f2c654'), F(E(x - 0.4, by - 11.4, 0.6, 0.5, '#fff2b8')));
+    const px = bx - 9;
+    const py = by + 9;
+    out.push(T([[px - 4, py - 3.4], [px + 4, py - 4], [px + 4.4, py + 3.6], [px - 3.6, py + 4]], '#d0504a'));
+    for (const k of [-1.6, 1.6]) out.push(...stroke([[px + k, py - 3.6], [px + k + 0.3, py + 3.8]], 0.6, '#f6dcc0'), ...stroke([[px - 3.8, py + k], [px + 4.2, py + k - 0.3]], 0.6, '#f6dcc0'));
+    out.push(E(bx + 2, by - 15, 9, 3.6, WHITE.base));
+    return out;
+  }),
+  // An ear from its root at (2, 4), drooping along +x.
+  ear: (near) => part(`mac|ear|${near}`, 20, 10, () => {
+    const c = near ? SK.base : SK.sh;
+    return [T([[2, 1], [18, 5], [2, 8]], c), F(T([[3, 2.5], [14, 5], [3, 6.5]], mix(c, '#ff9fb8', 0.35)))];
+  }),
+  head: () => part('mac|head', 40, 38, () => {
+    const hx = 18;
+    const hy = 18;
+    const out = [E(hx, hy, 14, 13, SK.base), crescent(hx, hy, 14, 13, SK.sh, { k: 0.3, a0: 100, a1: 230 }), shine(hx, hy, 14, 13, SK.hi, 0, 1)];
+    out.push(E(hx + 10, hy + 3, 4.2, 3.6, SK.base), crescent(hx + 10, hy + 3, 4.2, 3.6, SK.sh, { k: 0.4, a0: 60, a1: 200 }), F(E(hx + 11, hy + 1.6, 1.4, 0.9, '#ffffff')), F(E(hx + 9, hy + 5, 2, 1, mix(SK.base, '#ff9fb8', 0.5))));
+    return out;
+  }),
+  // Eyes, brows, the mouth and the moustache: everything that acts the mood.
+  face: (mood, atk) => part(`mac|face|${mood}|${atk}`, 30, 26, () => {
+    const hx = 10;
+    const hy = 12;
+    const dead = mood === 'dead';
+    const hurt = mood === 'hurt';
+    const angry = mood === 'angry' || atk;
+    const out = [];
+    const em = dead ? 'dead' : hurt ? 'hurt' : angry ? 'angry' : mood === 'happy' ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
+    const eo = { iris: angry ? '#d0504a' : '#c98a2e', ink: '#2a2420', lid: 0.35, mood: em };
+    const ey = hy - 1;
+    if (dead) out.push(...deadEye(hx - 1, ey, 2, { type: 'swirl', s: -1, c: '#2a2420' }), ...deadEye(hx + 7, ey, 2.4, { type: 'swirl', c: '#2a2420' }));
+    else out.push(...simpleEye(hx - 1, ey, { ...eo, s: -1, w: 2.2, h: 2.6 }), ...simpleEye(hx + 7, ey - 0.3, { ...eo, s: 1, w: 2.6, h: 3 }));
+    const bt = angry ? 14 : hurt ? -14 : 0;
+    for (const [x, sd] of [[hx - 1, -1], [hx + 7, 1]]) {
+      const y0 = ey - 4.6 + (hurt ? -1 : 0);
+      for (let k = 0; k < 4; k++) out.push(O(x + sd * (k - 1.5) * 1.6, y0 + sd * (k - 1.5) * Math.tan(bt * D2R) * 1.6 - (k % 2) * 0.6, 1.6, 1.2, k * 20, k % 2 ? WHITE.base : WHITE.hi, 10));
+    }
+    const mm = dead ? 'dead' : atk ? 'shout' : angry ? 'angry' : hurt ? 'hurt' : mood === 'happy' ? 'happy' : 'idle';
+    out.push(...simpleMouth(hx + 6, hy + 9.4, { k: 1.6, mood: mm, lip: '#5a3a2a' }));
+    const bristle = atk ? 2 : angry ? 1 : 0;
+    for (const sd of [-1, 1]) out.push(O(hx + 8 + sd * 4, hy + 7 + Math.abs(sd) * 0.4, 6 + bristle * 0.4, 2.6, sd * (14 + bristle * 6), WHITE.base, 14), F(O(hx + 8 + sd * 4.4, hy + 6.4, 3.6, 1, sd * 14, WHITE.hi, 10)));
+    out.push(O(hx + 6, hy + 12.6, 2.6, 2, 0, WHITE.sh, 10));
+    if (angry && !atk) out.push(...vein(hx - 7, hy - 7, 1.3));
+    if (hurt) out.push(...sweat(hx - 10, hy - 4, 1.4));
+    return out;
+  }),
+  hat: () => part('mac|hat', 46, 18, () => {
+    const cx = 23;
+    const cy = 12;
+    const out = [O(cx, cy + 1.5, 21, 4.2, -4, STRAW.base, 20), F(O(cx + 3, cy + 0.6, 15, 2, -4, STRAW.hi, 16)), E(cx, cy - 4, 11, 7, STRAW.base), crescent(cx, cy - 4, 11, 7, STRAW.sh, { k: 0.3, a0: 90, a1: 230 }), F(T([[cx - 11, cy - 1], [cx + 11, cy - 1.6], [cx + 11, cy + 1], [cx - 11, cy + 1.4]], '#d0504a'))];
+    for (let k = -3; k <= 3; k++) out.push(...stroke([[cx + k * 3, cy - 9 + Math.abs(k) * 0.6], [cx + k * 3.4, cy - 1.6]], 0.4, STRAW.sh));
+    return out;
+  }),
+  // The toadstool on top, from its foot at (7, 14).
+  mush: () => part('mac|mush', 14, 16, () => {
+    const out = [...stroke([[7, 14], [7.6, 9]], 2.4, WHITE.base, false), O(7.6, 7.4, 6, 3.6, 0, CAP.base, 16), crescent(7.6, 7.4, 6, 3.6, CAP.sh, { k: 0.3, a0: 30, a1: 180 })];
+    for (const [dx, dy, r] of [[-2.6, -1, 1.2], [1.6, -2, 1], [3.6, 0.4, 0.8], [-0.2, 0.6, 0.7]]) out.push(F(E(7.6 + dx, 7.4 + dy, r, r * 0.8, '#fff2e0')));
+    return out;
+  }),
+  arm: () => part('mac|arm', 22, 10, () => [...stroke([[3, 5], [17, 5]], 5.4, SK.base, false), E(17, 5, 3.6, 3.4, SK.base), F(E(18, 4, 1.2, 0.8, SK.hi))]),
+  // The pitchfork along +x from the grip at (16, 9): the butt behind, the tines ahead.
+  fork: () => part('mac|fork', 66, 18, () => {
+    const out = [...stroke([[2, 9], [50, 9]], 2.2, WOOD.base, false), ...stroke([[2, 9.6], [50, 9.6]], 0.6, WOOD.hi), ...stroke([[50, 4], [50, 14]], 1.8, STEEL[1], false)];
+    for (const k of [-4.4, 0, 4.4]) out.push(...stroke([[50, 9 + k], [60, 9 + k]], 1.4, STEEL[1], false), ...stroke([[50, 9.4 + k], [60, 9.4 + k]], 0.4, STEEL[0]), F(T([[60, 8.3 + k], [62, 9 + k], [60, 9.7 + k]], STEEL[2])));
+    return out;
+  }),
+};
+const macRig = makeRig({
+  w: 70,
+  h: 84,
+  stride: 48,
+  fast: ['arm', 'fork', 'rear'],
+  kick: { rear: 1.6, mush: 4, earF: 3 },
+  springs: { earF: [70, 4.5], earB: [60, 4], mush: [60, 4], hat: [110, 7], head: [140, 10] },
+  pose(m, a) {
+    const t = a.t;
+    const s = Math.sin(a.wp);
+    const dip = Math.abs(s);
+    const idle = { rear: Math.sin(t * 1.2) * 0.04, bob: Math.sin(t * 2) * 1.8, arm: 0.46, fork: -Math.PI / 2 + Math.sin(t * 1.2) * 0.03, legF: 0, legB: 0, x: 0 };
+    const walk = { rear: Math.sin(a.wp * 2 - 1) * 0.08, bob: dip * 3.4 - 1.7, arm: 0.46 + s * 0.05, fork: -Math.PI / 2 + s * 0.07, legF: -s * 0.5, legB: s * 0.5, x: s * 2.2 };
+    // Hoisted overhead, tines up and back...
+    const antic = { rear: -8 * D2R, bob: -3, arm: -1.75, fork: -1.9, legF: -0.1, legB: 0.15, x: 0 };
+    // ...then driven down in front of him, his whole weight behind it.
+    const strike = { rear: 12 * D2R, bob: 3, arm: 0.95, fork: 0.95, legF: -0.3, legB: 0.25, x: 0 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  follow: (S, a) => ({ head: S.rear * 0.4, hat: -6 * D2R - S.rear * 0.6, mush: -S.rear * 1.5 - S.bob * 0.04, earF: 0.35 - S.bob * 0.06 - S.rear, earB: 2.7 + S.bob * 0.06 + S.rear }),
+  parts: [
+    { name: 'root', at: (S) => [S.x, -26 + S.bob], rot: (S) => S.rear },
+    { name: 'legB', parent: 'root', pivot: [8, 2], at: () => [-6.4, 12], rot: (S) => S.legB, s: () => MG.leg(false) },
+    { name: 'legF', parent: 'root', pivot: [8, 2], at: () => [6.4, 12], rot: (S) => S.legF, s: () => MG.leg(true) },
+    { name: 'farArm', parent: 'root', pivot: [12, 2], at: () => [-12, -12], s: () => MG.farArm() },
+    { name: 'body', parent: 'root', pivot: [24, 24], at: () => [0, 0], s: () => MG.body() },
+    { name: 'earB', parent: 'root', pivot: [2, 4], at: () => [0, -31], rot: (S) => S.earB, s: () => MG.ear(false) },
+    { name: 'head', parent: 'root', pivot: [18, 18], at: () => [10, -29], rot: (S) => S.head, s: () => MG.head() },
+    { name: 'face', parent: 'head', pivot: [10, 12], at: () => [0, 0], s: (a) => MG.face(a.face, a.atk) },
+    { name: 'earF', parent: 'head', pivot: [2, 4], at: () => [8, -1], rot: (S) => S.earF - S.head, s: () => MG.ear(true) },
+    { name: 'hat', parent: 'head', pivot: [23, 12], at: () => [-1, -10], rot: (S) => S.hat - S.head, s: () => MG.hat() },
+    { name: 'mush', parent: 'hat', pivot: [7, 14], at: () => [2, -10], rot: (S) => S.mush, s: () => MG.mush() },
+    // The near arm and the fork in world terms: the fork's angle is where it points.
+    { name: 'arm', parent: 'root', pivot: [3, 5], at: () => [14, -12], rot: (S) => S.arm - S.rear, s: () => MG.arm() },
+    { name: 'fork', parent: 'arm', pivot: [16, 9], at: () => [14, 0], rot: (S) => S.fork - S.arm, s: () => MG.fork() },
+  ],
+  fx(ctx, m, a) {
+    // Hay and dust bursting up where the tines land.
+    if (a.ph.since >= 0 && a.ph.since < 0.6) {
+      const u = a.ph.since / 0.6;
+      for (let i = 0; i < 10; i++) {
+        const ang = (-160 + i * 16) * D2R;
+        const r = 8 + 18 * u;
+        ctx.globalAlpha = a.alpha * (1 - u);
+        ctx.fillStyle = i % 2 ? STRAW.base : STRAW.hi;
+        ctx.fillRect(40 + Math.cos(ang) * r, -2 + Math.sin(ang) * r * 0.7, 3, 1.4);
+      }
+    }
+  },
+});
+
 export const ART = {
-  macgoblin: { walk: 8, idle: 6, attack: 5, stride: 26, atkMs: [120, 460, 220, 260], draw: macgoblin },
+  macgoblin: { walk: 8, idle: 6, attack: 5, stride: 26, atkMs: [120, 460, 220, 260], draw: macgoblin, rig: macRig },
   strawimp: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [60, 240, 180], draw: strawimp },
   brownie: { walk: 8, idle: 6, attack: 4, stride: 16, atkMs: [70, 260, 200], draw: brownie },
   kamaitachi: { walk: 8, idle: 6, attack: 4, stride: 34, atkMs: [50, 220, 160], draw: kamaitachi },
