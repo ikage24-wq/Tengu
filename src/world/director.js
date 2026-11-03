@@ -15,9 +15,16 @@
 //   { wait: secs }
 //   { fade: 'out' | 'in', dur, color }   the screen to a colour and back
 //   { flash: color }  { shake: strength, dur }
-//   { fx: kind, at }              a burst: sparkle hearts petals leaves wind confetti spores
+//   { fx: kind, at, top }         a burst: sparkle hearts petals leaves wind confetti spores, dust
+//                                 (puffs along the floor), rubble (falling from the ceiling); `top`
+//                                 bursts from the top of the actor (a tree's crown)
 //   { spawn: npc, x, facing }     an NPC steps into the scene ({ spawn, at: actor, by } too)
 //   { leave: actor }              they fade out of it
+//   { act: monster, move, dur }   a monster in the scene moves: 'attack' (its swing, once),
+//                                 'windup' (gathers and trembles, pawing), 'sway' (rocks about its
+//                                 feet, eased in and out; `amp` radians)
+//   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
+//                                 hurt (null lets it go)
 //   { together: [steps] }         run several at once; done when all are
 //   any step with async: true     starts and lets the scene carry on at once
 //
@@ -75,7 +82,11 @@ function setFacing(world, who, dir) {
 }
 
 // Where a camera target is, as the point the camera centres on.
-function camPoint(world, target) {
+function camPoint(world, target, up = 0) {
+  if (up) {
+    const p = camPoint(world, target);
+    return p && { x: p.x, y: p.y - up };
+  }
   if (Array.isArray(target)) {
     const pts = target.map((t) => camPoint(world, t)).filter(Boolean);
     if (!pts.length) return null;
@@ -96,7 +107,7 @@ function runner(world, step) {
     return (dt, skip) => parts.map((p) => p(dt, skip)).every(Boolean);
   }
   if (step.cam !== undefined) {
-    const to = camPoint(world, step.cam);
+    const to = camPoint(world, step.cam, step.up ?? 0);
     if (!to) return () => true;
     const from = c.cam ?? c.view ?? to;
     const dur = step.dur ?? 1.4;
@@ -251,7 +262,7 @@ function runner(world, step) {
   if (step.fx) {
     // At an actor it bursts from about their chest (a boss's cap, a hero's heart); or at a point.
     const a = step.at && typeof step.at === 'object' ? step.at : actorAt(world, step.at ?? 'player');
-    if (a) burst(c, step.fx, a.x, a.y - (a.h ? a.h * 0.7 : 0), step.n);
+    if (a) burst(c, step.fx, a.x, step.fx === 'dust' ? a.y : a.y - (a.h ? a.h * (step.top ? 0.95 : 0.7) : 0), step.n);
     return () => true;
   }
   if (step.spawn) {
@@ -266,6 +277,26 @@ function runner(world, step) {
       t = skip ? 0.3 : t + dt;
       n.cine.alpha = Math.min(1, t / 0.3);
       return t >= 0.3;
+    };
+  }
+  if (step.mood !== undefined) {
+    const m = mobActor(world, step.mood);
+    if (m) m.cine.mood = step.as ?? null;
+    return () => true;
+  }
+  if (step.act) {
+    const m = mobActor(world, step.act);
+    if (!m) return () => true;
+    const dur = step.dur ?? (step.move === 'attack' ? 0.9 : 1);
+    let t = 0;
+    if (step.move === 'attack') m.attackAt = world.now + (c.clock ?? 0);
+    return (dt, skip) => {
+      t = skip ? dur : t + dt;
+      const u = Math.min(1, t / dur);
+      if (step.move === 'windup') m.windup = u < 1 ? dur - t : 0;
+      if (step.move === 'sway') m.cine.sway = u < 1 ? Math.sin(t * (step.speed ?? 5)) * (step.amp ?? 0.1) * Math.sin(u * Math.PI) : 0;
+      if (u >= 1 && step.move === 'attack') m.attackAt = -9;
+      return u >= 1;
     };
   }
   if (step.leave) {
@@ -284,7 +315,17 @@ function runner(world, step) {
 
 // A burst of little things at a point: drawn by the cutscene window.
 function burst(c, kind, x, y, n) {
-  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : 12);
+  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : 12);
+  if (kind === 'rubble' || kind === 'dust') {
+    // Rubble shaken loose from the ceiling over a stretch of floor; dust kicked along the floor.
+    for (let k = 0; k < count; k++) {
+      const side = k % 2 ? 1 : -1;
+      c.bursts.push(kind === 'rubble'
+        ? { kind, x: x + (Math.random() - 0.5) * 300, y: y - 190 - Math.random() * 60, t: 0, life: 1.6, seed: Math.random() * 10, vx: (Math.random() - 0.5) * 10, vy: 20 + Math.random() * 60 }
+        : { kind, x: x + side * Math.random() * 20, y: y - 2, t: 0, life: 0.8 + Math.random() * 0.5, seed: Math.random() * 10, vx: side * (30 + Math.random() * 50), vy: -6 - Math.random() * 10 });
+    }
+    return;
+  }
   for (let k = 0; k < count; k++) {
     const a = (k / count) * Math.PI * 2 + Math.random() * 0.4;
     const sp = kind === 'wind' ? 90 + Math.random() * 40 : 30 + Math.random() * 40;
@@ -327,6 +368,8 @@ export function tickCine(world, dt, { skip = false } = {}) {
     c.step = sc.i;
     c.run = null;
   }
+  // The scene's own clock, for its monsters' moves (the world's is paused).
+  c.clock = (c.clock ?? 0) + dt;
   // A monster that had only just appeared when the scene froze the world finishes appearing.
   for (const m of world.mobs ?? []) if (m.age < 0.3) m.age = Math.min(0.3, m.age + dt);
   for (const e of c.emotes) e.t += dt;
@@ -335,9 +378,9 @@ export function tickCine(world, dt, { skip = false } = {}) {
     p.t += dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
-    p.vx *= 0.97;
+    p.vx *= p.kind === 'dust' ? 0.93 : 0.97;
     // Spores drift up and away; petals and leaves flutter down; the rest fall.
-    p.vy = p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
+    p.vy = p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
   }
   c.bursts = c.bursts.filter((p) => p.t < p.life);
   if (c.flash) {
@@ -383,6 +426,13 @@ export function endScene(world) {
     delete n.cine;
   }
   world.map.npcs = world.map.npcs.filter((n) => !c.spawned.includes(n));
+  // Monsters let go of the faces and moves the scene gave them, and stay where it left them.
+  for (const m of world.mobs ?? []) {
+    if (!m.cine) continue;
+    delete m.cine;
+    m.windup = 0;
+    if (m.attackAt > world.now) m.attackAt = -9;
+  }
   world.body.vx = 0;
   world.cine = null;
 }

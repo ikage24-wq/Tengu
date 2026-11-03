@@ -99,6 +99,8 @@ export function monsterSprite(art, frame, mood = 'idle', pose = 'walk') {
 // and nervously.
 function moodOf(m, t, now, held) {
   if (m.hp <= 0) return 'dead';
+  // A face a cutscene holds on it (world/director.js): asleep, cross, sad...
+  if (m.cine?.mood) return m.cine.mood;
   if (m.flash > 0 || m.stagger > 0) return 'hurt';
   if (m.special?.warn > 0) return 'angry';
   if (held) return 'hurt';
@@ -407,6 +409,8 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   if (m.hp <= 0) ctx.rotate(rot);
   else if (m.air > 0) ctx.rotate(-(m.dir < 0 ? -1 : 1) * Math.min(0.5, (m.airV ?? 0) / 900) * 0.6 + mo.lean * 0.5);
   else if (mo.lean) ctx.rotate(mo.lean);
+  // Rocking about its feet in a cutscene (tossing in its sleep, rearing up).
+  if (m.cine?.sway && m.hp > 0) ctx.rotate(m.cine.sway);
   if (mo.shear && m.hp > 0) ctx.transform(1, 0, mo.shear, 1, 0, 0);
   ctx.scale(sx, sy);
   // The hit flash: one white frame, then a quick fade, so the hurt face reads through it.

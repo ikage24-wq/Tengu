@@ -216,7 +216,9 @@ function drawMobs(ctx, world, cam, time) {
     const dive = m.mech?.diving;
     const under = dive ? Math.max(0, Math.min(1, (dive.at - world.now - 1.2) / 0.8)) : 1;
     if (under < 1) ctx.globalAlpha = under * under * (3 - 2 * under);
-    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang) + (1 - under) * 34, time, world.now);
+    // (In a cutscene the world's clock stands still; its monsters act on the scene's own.)
+    const now = world.scene ? world.now + (world.cine?.clock ?? 0) : world.now;
+    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang) + (1 - under) * 34, time, now);
     ctx.globalAlpha = 1;
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;

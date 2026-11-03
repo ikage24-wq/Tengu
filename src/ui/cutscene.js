@@ -268,6 +268,22 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'dust') {
+    // A soft round puff of floor dust, swelling and thinning.
+    const u = p.t / p.life;
+    ctx.globalAlpha = Math.max(0, a) * 0.7;
+    ctx.fillStyle = p.seed > 5 ? '#e8dccc' : '#d8c8b4';
+    ctx.beginPath();
+    ctx.arc(x, y - u * 6, 3 + u * 7, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.kind === 'rubble') {
+    // A tumbling pebble or a crumb of root.
+    ctx.translate(x, y);
+    ctx.rotate(spin);
+    ctx.fillStyle = p.seed > 5 ? '#8a7a6a' : '#a8927a';
+    ctx.fillRect(-2, -1.6, 4, 3.2);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.fillRect(-2, -1.6, 2, 1);
   } else if (p.kind === 'spores') {
     // A soft pink puff, swelling a little as it drifts.
     const r = 1.6 + (p.t / p.life) * 2.4 + (p.seed % 1.5);
@@ -319,17 +335,20 @@ function drawCard(ctx, step, t) {
   ctx.restore();
 }
 
-// Whether a line's box goes at the top of the screen: it sits along the bottom unless the hero or
-// whoever speaks stands where it would cover them. Decided once per line, so it never jumps about.
+// Whether a line's box goes at the top of the screen: it sits along the bottom unless it would
+// cover the hero, whoever speaks, or a monster taking part in the scene (any of them, head to
+// feet). Decided once per line, so it never jumps about.
 function lineAtTop(world, step, cam) {
   const sc = world.scene;
   if (sc.boxFor === sc.i) return sc.boxTop;
   const top = 360 - BAR - 86 - 8;
-  const low = Boolean(cam) && [step.who, 'player'].some((who) => {
+  const cast = [step.who, 'player', ...(world.mobs ?? []).filter((m) => m.cine && m.hp > 0).map((m) => m.def.id)];
+  const low = Boolean(cam) && cast.some((who) => {
     const a = who && actorAt(world, who);
     if (!a) return false;
     const x = a.x - cam.x;
-    return x > 70 && x < 570 && a.y - cam.y > top - 6;
+    const feet = a.y - cam.y;
+    return x > 70 && x < 570 && feet > top + 4 && feet - a.h < top + 86;
   });
   sc.boxFor = sc.i;
   sc.boxTop = low;
@@ -359,8 +378,9 @@ function drawLine(ctx, world, step, t, atTop = false) {
   if (!narration) {
     ctx.save();
     // Along the bottom they peek out over the box; at the top they stay inside it.
-    if (atTop) roundRect(ctx, x + 3, y + 3, 150, H - 6, 11);
-    else roundRect(ctx, x - 30, y - 70, 150, H + 70 - 3, 10);
+    // (Clipped short of the words, so a long staff or blade never crosses them.)
+    if (atTop) roundRect(ctx, x + 3, y + 3, 113, H - 6, 11);
+    else roundRect(ctx, x - 30, y - 70, 146, H + 70 - 3, 10);
     ctx.clip();
     drawSpeaker(ctx, world, step, x + 60, y + H - 6, t);
     ctx.restore();

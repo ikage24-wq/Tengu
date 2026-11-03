@@ -175,15 +175,40 @@ export const HOLLOW_BOSS_SCENES = {
     { together: [{ jump: 'mothercapper', height: 18 }, { fx: 'spores', at: 'mothercapper', n: 30 }, { shake: 3, dur: 0.4 }] },
     { cam: 'player', dur: 0.7 },
   ],
+  // Tuskar, staged: you come up on him bristling in his den; he paws the floor till the old
+  // pillars shake loose rubble, winds up, and charges, skidding to a stop nose to nose with you.
   hollow_boar: [
-    { who: 'tuskar', text: "GRUNT. You smell like trouble. And acorns. Mostly trouble.", mood: 'angry' },
+    { together: [{ cam: 'tuskar', dur: 1.1 }, { walk: 'player', to: 'tuskar', gap: 150, speed: 110 }, { mood: 'tuskar', as: 'angry' }] },
+    { together: [{ face: 'tuskar', to: 'player' }, { emote: 'tuskar', kind: 'anger', dur: 2.2 }, { fx: 'dust', at: 'tuskar', n: 6 }] },
+    { who: 'tuskar', text: 'GRUNT. You smell like trouble. And acorns. Mostly trouble.', mood: 'angry' },
+    { together: [{ act: 'tuskar', move: 'windup', dur: 1.6 }, { fx: 'dust', at: 'tuskar' }, { shake: 2, dur: 1.4 }, { fx: 'rubble', at: 'tuskar' }] },
     { who: null, text: 'Tuskar paws the ground. The stone pillars of his den tremble.' },
+    { together: [{ emote: 'player', kind: 'sweat', dur: 1.2 }, { walk: 'player', away: 'tuskar', by: 20, speed: 60 }] },
     { who: 'tuskar', text: "Nobody gets past Tuskar! I'm the GATE. Well. The gate's guard. CHARGE!", mood: 'angry' },
+    { act: 'tuskar', move: 'windup', dur: 0.5 },
+    { together: [{ walk: 'tuskar', to: 'player', gap: 46, speed: 340 }, { act: 'tuskar', move: 'attack', dur: 0.45 }, { fx: 'dust', at: 'tuskar' }] },
+    { together: [{ shake: 5, dur: 0.5 }, { fx: 'dust', at: 'tuskar', n: 16 }, { jump: 'player', height: 22 }, { emote: 'player', kind: '!' }] },
+    { walk: 'player', away: 'tuskar', by: 40, speed: 160 },
+    { cam: 'player', dur: 0.6 },
   ],
+  // Gnarlroot, staged: the camera rises up the sleeping giant as he tosses and turns, shedding
+  // leaves; he mumbles about the wind, you promise to help him rest, and he wakes cross and slams
+  // his root arms down, shaking bark from the ceiling.
   hollow_gnarl: [
+    { together: [{ mood: 'gnarlroot', as: 'blink' }, { emote: 'gnarlroot', kind: 'zzz', dur: 6 }, { cam: 'gnarlroot', up: 50, dur: 1.6 }] },
     { who: null, text: 'The Heart of the Hollow. A great old root, tossing and turning, as tall as a house.' },
+    { together: [{ act: 'gnarlroot', move: 'sway', dur: 2.2, amp: 0.07, speed: 4 }, { fx: 'leaves', at: 'gnarlroot', top: true }] },
+    { together: [{ mood: 'gnarlroot', as: 'sad' }, { walk: 'player', to: 'gnarlroot', gap: 130, speed: 90 }] },
     { who: 'gnarlroot', text: 'Hrrmm... too noisy... too QUIET... the wind stopped singing... I cannot sleep...', mood: 'sad' },
+    { together: [{ cam: ['player', 'gnarlroot'], up: 20, dur: 0.9 }, { face: 'player', to: 'gnarlroot' }] },
+    { emote: 'player', kind: 'heart', dur: 1.2, hold: true },
     { who: 'player', text: "Then we'll help you rest. Hold still, old friend!" },
+    { together: [{ mood: 'gnarlroot', as: 'angry' }, { emote: 'gnarlroot', kind: 'anger', dur: 1.6 }] },
+    { act: 'gnarlroot', move: 'attack', dur: 1, async: true },
+    { wait: 0.3 },
+    { together: [{ shake: 6, dur: 0.6 }, { fx: 'leaves', at: 'gnarlroot', top: true, n: 20 }, { fx: 'rubble', at: 'gnarlroot' }, { emote: 'player', kind: '!' }, { jump: 'player', height: 14 }] },
+    { wait: 0.6 },
+    { cam: 'player', dur: 0.7 },
   ],
 };
 
