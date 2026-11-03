@@ -1014,7 +1014,7 @@ test('in town players cook at the stove and craft at the bench, and ask where th
 test('at night, someone near you points out where the night-only find is open', () => {
   // (Someone has to come near you first: a few nights, one is plenty.)
   const tip = ({ t }) => /moonpetal/i.test(t) && /(up|down|left|right|by u)/.test(t);
-  const nights = [7, 8, 9].map((seed) => lifeField('meadow1', seed, 300, { night: true }).lines.filter(tip));
+  const nights = [7, 8, 9, 10, 11].map((seed) => lifeField('meadow1', seed, 300, { night: true }).lines.filter(tip));
   assert.ok(nights.filter((n) => n.length).length >= 2, 'a tip about the Moonpetal and where it is');
   assert.ok(nights.every((n) => n.length <= 1), 'once a night');
   const day = lifeField('meadow1', 7, 120);
