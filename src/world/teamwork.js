@@ -18,6 +18,7 @@ import { navOf, surfaceOf, surfaceBelow } from './nav.js';
 import { physicalRange, magicRange, rollHit } from '../core/formulas.js';
 import { JOBS } from '../data/jobs.js';
 import { stale } from './chatlog.js';
+import { remember } from './botmemory.js';
 import { gaugeFull } from './melee.js';
 import { cast, castBlocker } from './combat.js';
 import { SKILLS } from '../data/skills.js';
@@ -252,6 +253,8 @@ function reviveOne(world, d, by) {
     const b = d.bot;
     Object.assign(b, { down: false, tomb: false, hp: Math.round(b.stats.maxHp * pct), invuln: 1.5 });
     b.reviveGoal = null;
+    // (They'll remember you picking them up: world/botmemory.js.)
+    if (by?.kind === 'you') remember(world.char, b, 'revive', null, world.map.id);
     const line = pick(by?.kind === 'you' ? [`ty ${world.char.name}!!`, 'saved me', 'back in it thx'] : [`thx ${by?.name ?? ''}!`, 'im up im up', 'phew']);
     if (!stale(world, line)) b.bubble = { text: line, t: 3.5 };
     world.log(`${byName === 'You' ? 'You' : byName} got ${b.name} back on their feet!`, '#bff0dc');

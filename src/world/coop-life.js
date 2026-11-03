@@ -28,6 +28,7 @@ import { computeStats } from '../core/stats.js';
 import { equipBlocker } from '../core/character.js';
 import { addLifeExp, lifeAction, lifeLevel, needFor, LIFE_COLOR } from '../core/life.js';
 import { botChat } from './chatlog.js';
+import { remember } from './botmemory.js';
 import { navOf, surfaceBelow } from './nav.js';
 
 export const TOGETHER_WINDOW = 6;
@@ -120,7 +121,13 @@ export function togetherBonus(world, key, x, y) {
   world.log?.(`Working together with ${names.join(' and ')}: extra finds!`, LIFE_COLOR);
   world.events?.push({ type: 'together', key, count });
   // Helpers who worked it cheer a little.
-  for (const bot of partyBotsHere(world)) if (bot.lifeHelp?.key === key) bot.lifeHelp.cheer = 0.9;
+  // (They'll remember working it with you: world/botmemory.js.)
+  for (const bot of partyBotsHere(world)) {
+    if (bot.lifeHelp?.key !== key) continue;
+    bot.lifeHelp.cheer = 0.9;
+    const h = bot.lifeHelp;
+    remember(world.char, bot, 'life', h.kind === 'fish' ? 'Fishing' : h.pose === 'mine' ? 'Mining' : 'Gathering', world.map.id);
+  }
   return { helpers, extra: helpers, rare: 1 + 0.5 * helpers, life: 1 + 0.25 * helpers };
 }
 
@@ -314,6 +321,7 @@ function giveBot(world, bot, item, name) {
     } else addItem(c.inventory, item.inst);
   } else addItem(c.inventory, item.id, item.qty);
   (bot.gifts ??= []).push({ id: item.inst?.id ?? item.id, from: world.char.name, at: world.now });
+  remember(world.char, bot, 'gift', name, world.map.id);
   const low = name.toLowerCase();
   const line = wore
     ? pick([`omg wearing the ${low} rn, ty ${world.char.name}!!`, `${low} equipped!! made by u, thats special`, `look look new ${low} :D`], Math.random)
