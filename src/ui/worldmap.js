@@ -4,7 +4,7 @@
 // Your party and your friends show as little faces by the place each is at (tap one to warp to
 // them or ask to join their party), and a bubble by your pin counts the players around you.
 // Tap any place for its monsters and how far it is, then "Show the way" to have the guide arrow
-// lead you there (world/routes.js), or fly to a town from any town.
+// lead you there (world/routes.js), or fly there from any town.
 
 import { MAPS, TOWNS, getMap } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
@@ -819,7 +819,8 @@ export function worldMapWindow(ui, state, world) {
   text(ctx, `${pick.name}${lv ? `  ·  ${lv}` : ''}${pick.isTown ? `  ·  ${JOBS[pick.job]?.name ?? ''} town` : ''}`, win.x + 12, by + 10, { size: 8.5, bold: true });
   text(ctx, mobs.length ? `${mobs.join(', ')}  ·  ${far}` : far, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
   let bx = win.x + W - 12;
-  if (pick.isTown && TOWNS.includes(pick.id) && pick.id !== here) {
+  // (Fly goes to any place on the map, but only takes off from a town.)
+  if (pick.id !== here) {
     const can = world.map.isTown;
     bx -= 76;
     if (button(ui, bx, by + 4, 74, 16, world.map.isTown ? 'Fly' : 'Fly (from town)', { primary: true, enabled: can, size: 7.5 })) {

@@ -177,12 +177,17 @@ export function travelCost() {
   return 0;
 }
 
-// Travel is only offered from a town. Returns a reason string when it can't happen.
-export function travelTo(world, townId) {
+// Fast travel leaves from a town and flies to any place on the world map (a town, a field, a
+// dungeon's gate). It lands on the place's arrival spot (a town's square or a gate's start, a
+// field's homestone), else its first portal. Returns a reason string when it can't happen.
+export function travelTo(world, mapId) {
   if (!world.map.isTown) return 'Fast travel leaves from towns.';
-  if (world.map.id === townId) return 'You are already here.';
-  loadMap(world, townId, 'start');
-  world.log(`You fly to ${getMap(townId).name}!`, '#bff0dc');
+  if (world.map.id === mapId) return 'You are already here.';
+  const map = getMap(mapId);
+  if (!map?.world || map.trial || map.dungeon) return "You can't fly there.";
+  const land = map.portals.find((p) => p.id === 'start') ?? map.portals.find((p) => p.homestone || p.id === 'homestone') ?? map.portals[0];
+  loadMap(world, mapId, land.id);
+  world.log(`You fly to ${map.name}!`, '#bff0dc');
   return null;
 }
 

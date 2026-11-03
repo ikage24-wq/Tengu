@@ -222,15 +222,31 @@ test('every town connects to every other town by road', () => {
   assert.deepEqual(new Set(TOWNS.map((t) => MAPS[t].job)), new Set(['archer', 'thief', 'warrior', 'mage']));
 });
 
-test('fast travel flies between towns for free, and only from a town', () => {
+test('fast travel flies for free from a town to any place on the map, and only from a town', () => {
   const w = newWorld();
   w.char.gold = 0;
   assert.equal(travelCost('sprout', 'grove'), 0);
   assert.equal(travelTo(w, 'grove'), null);
   assert.equal(w.map.id, 'grove');
-  loadMap(w, 'ruins', 'west');
+  // To a field (landing on its homestone) and to a dungeon's gate.
+  assert.equal(travelTo(w, 'ruins'), null);
+  assert.equal(w.map.id, 'ruins');
   assert.ok(travelTo(w, 'sprout'), 'no flights from the field');
   assert.equal(w.map.id, 'ruins');
+  loadMap(w, 'harbor', 'start');
+  assert.equal(travelTo(w, 'manor_gate'), null);
+  assert.equal(w.map.id, 'manor_gate');
+  // Never straight into a dungeon room.
+  loadMap(w, 'harbor', 'start');
+  assert.ok(travelTo(w, 'manor2'));
+  assert.equal(w.map.id, 'harbor');
+  // Every place on the map can be flown to from a town and lands on solid ground.
+  for (const m of Object.values(MAPS)) {
+    if (!m.world || m.trial || m.isTown) continue;
+    loadMap(w, 'sprout', 'start');
+    assert.equal(travelTo(w, m.id), null, m.id);
+    assert.equal(w.map.id, m.id);
+  }
 });
 
 test('chat sends a message, shows a bubble, and emoticons set a face', async () => {
