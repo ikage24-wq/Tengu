@@ -17,10 +17,11 @@ import { speak, contextOf } from './chatter.js';
 import { botChat } from './chatlog.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 import { roleThink, healerTurn, jumpNow } from './dungeon.js';
-import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf } from './melee.js';
+import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf, botProcs } from './melee.js';
 import { pickTargets } from './combat.js';
 import { SKILLS } from '../data/skills.js';
 import { inZone } from './story.js';
+import { packAt, chooseSkill, commandFor, beginStep, airborne, evade, focusOf, catchable, standBy, drink, tickCallouts, callFinisher, callout, holdFire } from './botfight.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -191,6 +192,13 @@ function huntTarget(bot, world, members) {
   const body = bot.body;
   const skip = (m) => br.skip?.mob === m && world.now < br.skip.until;
   const cur = br.target;
+  // In your party: a monster thrown up nearby to catch, then whatever you're fighting (or pinged).
+  if (bot.party) {
+    const up = catchable(bot, world);
+    if (up) return up;
+    const f = focusOf(world);
+    if (f && !skip(f) && Math.abs(f.x - body.x) < 520 && Math.abs(f.y - body.y) < 200) return f;
+  }
   if (cur && cur.hp > 0 && world.mobs.includes(cur) && !skip(cur) && !(helping(bot, world) && !br.rescuing)) return cur;
   br.rescuing = helping(bot, world);
   let best = null;
@@ -227,6 +235,16 @@ function hunt(bot, world, members, rng) {
   const body = bot.body;
   const st = ai.weapon;
   const nav = navOf(world.map);
+  // Someone in the party is down: whoever's helping goes and stands by them.
+  const by = bot.party ? standBy(bot, world, members, rng) : null;
+  if (by) {
+    const s = surfaceBelow(nav, by.x, by.y - 4);
+    if (s >= 0) {
+      br.target = null;
+      br.goal = { x: by.x, y: nav.surfaces[s].yAt(by.x), mode: 'follow', surface: s };
+      return;
+    }
+  }
   const target = huntTarget(bot, world, members);
   br.target = target;
   // Come to help with nothing to fight by you: they run over to you.
@@ -441,7 +459,7 @@ export function botSkills(char) {
   const chain = jobChain(char.job);
   const out = [];
   for (const s of Object.values(SKILLS)) {
-    if (!chain.includes(s.job) || s.movement) continue;
+    if (!chain.includes(s.job)) continue;
     const lv = Math.max(1, Math.min(s.maxLevel, Math.round(s.maxLevel * Math.min(1, (char.level - 8) / 40))));
     if (SPECIALS[s.id]) {
       const params = s.at(lv, s.maxLevel);
@@ -450,10 +468,12 @@ export function botSkills(char) {
       continue;
     }
     if (s.type !== 'attack') continue;
-    const combo = s.at(lv, s.maxLevel).combo;
+    // (Each path plays a skill its own way: a Paladin's Shield Rush for the Shoulder Charge.)
+    const at = s.at(lv, s.maxLevel);
+    const combo = at.paths?.[pathOf({ char, stats: computeStats(char) })] ?? at.combo;
     if (!combo || !combo.every((st) => st.strikes.every(plain))) continue;
     if (!combo.some((st) => st.strikes.some((k) => k.pct > 0 && (k.reach > 0 || k.shot)))) continue;
-    out.push({ id: s.id, steps: combo, full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job) });
+    out.push({ id: s.id, steps: combo, full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), charge: Boolean(s.movement) });
   }
   // Their finisher is their own path's (a Paladin's Grand Verdict, not the Warrior's Titan Breaker).
   const top = Math.max(-1, ...out.filter((s) => s.full).map((s) => s.rank));
@@ -462,21 +482,29 @@ export function botSkills(char) {
 
 // The next move of the fight: a step of the string they're on, or a skill (or their finisher)
 // between strings.
-function nextMove(bot, rng) {
+function nextMove(bot, world, m, rng) {
   const f = bot.fight;
   if (f.queue.length) return f.queue.shift();
   if (f.step === 0) {
-    const full = f.gauge >= GAUGE_FULL ? f.skills.filter((s) => s.full) : [];
-    // (A blessing only when someone needs one.)
+    // (A blessing only when someone needs one.) Otherwise the skill that fits: world/botfight.js.
     const heals = f.skills.filter((s) => s.heal && !s.full);
     const hurt = bot.hp != null && bot.hp < bot.stats.maxHp * 0.6;
-    const pool = full.length ? full : hurt && heals.length && rng() < 0.6 ? heals : rng() < bot.ai.special ? f.skills.filter((s) => !s.full && !s.heal) : [];
-    const sk = pool.length ? pool[Math.floor(rng() * pool.length)] : null;
+    const sk = hurt && heals.length && rng() < 0.6 ? heals[Math.floor(rng() * heals.length)] : chooseSkill(bot, world, m, f.gauge >= GAUGE_FULL, rng);
     if (sk) {
-      if (sk.full) f.gauge = 0;
+      if (sk.full) {
+        f.gauge = 0;
+        callFinisher(bot, world, sk, m);
+      }
       const steps = sk.steps.map((st, i) => ({ ...st, kind: sk.full ? 'finisher' : st.dur >= 1 ? 'heavy' : 'skill', tune: sk.tune, last: i === sk.steps.length - 1 }));
       f.queue = steps.slice(1);
       return steps[0];
+    }
+    // A command move: the launcher and an air combo, a catch, a dash out of a run.
+    const cmd = commandFor(bot, world, m, rng);
+    if (cmd) {
+      f.queue = cmd.slice(1);
+      if (cmd[0].hop && cmd[0].dur < 0.2) callout(world, bot, 'catch');
+      return cmd[0];
     }
     // (A weapon's plain combo has no choices to vary.)
     f.plan = f.pool.some((v) => v.length > 1) ? planCombo(f.pool, f.last, rng) : f.pool.map(() => 0);
@@ -498,7 +526,11 @@ function fight(bot, m, world, intent, rng) {
   const toward = m.x < body.x ? -1 : 1;
   if (!intent.left && !intent.right) body.facing = toward;
   if (world.now < f.readyAt || body.facing !== toward) return;
-  const step = nextMove(bot, rng);
+  // Air steps whose moment has passed (they came down, or never got up) are dropped.
+  if (f.queue[0]?.air && body.onGround && !bot.hop) f.queue = f.queue.filter((s) => !s.air);
+  const step = nextMove(bot, world, m, rng);
+  if (step.air && body.onGround && !bot.hop) return;
+  beginStep(bot, world, step);
   if (step.special) {
     SPECIALS[step.special].play(bot, world, m, rng, step.params, step.tune * (f.boost ?? 1));
     f.boost = null;
@@ -511,7 +543,17 @@ function fight(bot, m, world, intent, rng) {
     step.tune = (step.tune ?? 1) * f.boost;
     f.boost = null;
   }
+  // A basic swing or shot sets off their job's procs, as yours do.
+  const basic = step.kind === 'chain' || step.kind === 'basicFinisher';
+  const lead = basic ? step.strikes.find((k) => k.pct > 0) : null;
+  const procs = lead ? botProcs(bot.char, bot.stats.weaponType, lead, step.kind === 'basicFinisher', packAt(world, m), rng) : null;
+  if (procs?.shot && procs.shot !== lead) {
+    const shot = procs.shot.blast ? { ...procs.shot, pierce: true, targets: Math.max(3, procs.shot.targets ?? 1) } : procs.shot;
+    step.strikes = step.strikes.map((k) => (k === lead ? shot : k));
+  }
   play(bot, step, m, world, rng);
+  if (procs?.strikes?.length) play(bot, { dur: step.dur, strikes: procs.strikes.map((k) => ({ ...k, at: lead.at ?? 0.4, delay: k.due })) }, m, world, rng);
+  if (procs?.step && !f.queue.length) f.queue.unshift({ ...procs.step, kind: 'skill', last: true });
   // Stepping in (or hopping back) carries them along until the first blow, like you.
   const first = (step.carry ?? step.strikes[0]?.at ?? 0.4) * step.dur;
   if (step.step) bot.lunge = { v: (body.facing * step.step) / Math.max(0.05, first), until: world.now + first };
@@ -809,7 +851,21 @@ export const fieldDownOver = (bot, world) => bot.down && bot.tomb && world.now -
 function heal(bot, world, bots) {
   const char = world.char;
   const max = world.stats.maxHp;
+  // Themselves first when it's bad, then a partymate in trouble, then you.
+  const own = bot.stats.maxHp;
+  const mate = partyMembers(bots).find((o) => o !== bot && !o.down && o.body && o.map === world.map.id && o.hp < o.stats.maxHp * 0.5 && Math.abs(o.body.x - bot.body.x) < 400);
+  if ((bot.hp < own * 0.5 && char.hp >= max * 0.4) || (mate && char.hp >= max * 0.6)) {
+    const who = bot.hp < own * 0.5 ? bot : mate;
+    const add = Math.round(who.stats.maxHp * between(0.2, 0.3, bots.rng) + bot.stats.int * 2);
+    who.hp = Math.min(who.stats.maxHp, who.hp + add);
+    world.fx.push({ kind: 'heal', x: who.body.x, y: who.body.y, t: 0, dur: 0.8 });
+    world.numbers.push({ x: who.body.x, y: who.body.y - 52, text: `+${add}`, color: '#7ee081', t: 0, small: true });
+    bot.attack = { pose: 'pray', t: 0, dur: 0.7 };
+    if (who === bot) callout(world, bot, 'healSelf');
+    return true;
+  }
   if (char.hp >= max * 0.85 || world.dead) return false;
+  if (char.hp < max * 0.5) callout(world, bot, 'heal');
   const amount = Math.round(max * between(0.12, 0.2, bots.rng) + bot.stats.int * 2);
   char.hp = Math.min(max, char.hp + amount);
   // A Star Witch wishes a star down on you; a Starlight Idol sings to you; an Astronomer's moons
@@ -819,7 +875,7 @@ function heal(bot, world, bots) {
   world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
   bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
-  if (bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
+  if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }
 
@@ -851,6 +907,8 @@ function live(bot, world, peers, dt, rng, o) {
   // In a dungeon, hop over the Root Slam; out in the field, out of a queen's way.
   if (world.dungeon && jumpNow(world, body)) intent.jump = true;
   else if (!map.isTown) dodge(bot, world, intent, rng);
+  // Out of a heavy blow winding up at them.
+  if (!map.isTown) evade(bot, world, intent, rng, world.dungeon?.roles?.[bot.id] ?? null);
   // Walking into something and getting nowhere: plan again, and give up on that monster.
   const pushing = (intent.left || intent.right) && body.onGround;
   br.stall = pushing && Math.abs(body.x - (br.lastX ?? body.x)) < 0.3 ? (br.stall ?? 0) + dt : 0;
@@ -864,11 +922,14 @@ function live(bot, world, peers, dt, rng, o) {
   }
   stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
   carry(bot, world, dt, rng);
+  airborne(bot, world);
   br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;
   o.beforeFight?.();
   const m = br.target;
   const st = bot.ai.weapon;
-  if (o.canFight !== false && m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 && Math.abs(m.y - body.y) < Math.max(50, st.lift) && body.onGround) {
+  // (Mid-air in a command move, they keep at it up there.)
+  const aloft = !body.onGround && !body.rope && (bot.fight?.queue?.[0]?.air || bot.hop);
+  if (o.canFight !== false && m && m.hp > 0 && Math.abs(m.x - body.x) <= st.reach + m.def.w / 2 + (aloft ? 30 : 0) && Math.abs(m.y - body.y) < (aloft ? 170 : Math.max(50, st.lift)) && (body.onGround || aloft)) {
     // Turn to it once planted (walking sets their facing), and only swing at what they face.
     fight(bot, m, world, intent, rng);
   } else o.idle?.();
@@ -1019,6 +1080,8 @@ export function updateParty(bots, world, dt) {
     br.still = youStill ? br.still + dt : 0;
     live(bot, world, members, dt, rng, {
       think: () => think(bot, world, members, rng),
+      // (In a dungeon, the tank gets the monster first.)
+      canFight: !holdFire(bot, world),
       idle: () => {
         // Standing about in town: look where you're headed if you're on the move, or at you if not.
         if (map.isTown && br.stopped > 0.35 && br.goal?.mode !== 'fight') body.facing = youStill ? (b.x < body.x ? -1 : 1) : b.facing;
@@ -1026,6 +1089,8 @@ export function updateParty(bots, world, dt) {
     });
     // Healers patch you up between fights (or mid-fight if you're in trouble).
     if (world.dungeon) {
+      const healerUp = members.some((o) => o !== bot && !o.down && world.dungeon.roles[o.id] === 'healer');
+      drink(bot, world, healerUp, rng);
       if (world.dungeon.roles[bot.id] === 'healer') {
         br.healIn -= dt;
         if (br.healIn <= 0) br.healIn = healerTurn(bot, world, rng);
@@ -1043,4 +1108,6 @@ export function updateParty(bots, world, dt) {
       botChat(world, bot, line, { prefix: '[Party] ', color: '#9fe0b0' });
     }
   });
+  // What's coming, called out by whoever sees it.
+  if (members.length && !map.isTown) tickCallouts(world, members);
 }

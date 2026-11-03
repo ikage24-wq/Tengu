@@ -677,6 +677,8 @@ export function updateWorld(world, dt, input) {
     const m = h.mob;
     if (m.hp <= 0) continue;
     if (focus && m !== focus && !h.party) h.damage = Math.max(1, Math.round(h.damage * spread));
+    // (What you're fighting: your party focuses it, world/botfight.js.)
+    if (!h.party && !h.miss) world.youHit = { mob: m, at: world.now };
     if (world.dungeon) h.damage = noteHit(world, m, h);
     // Another player hunting here never lands a boss's last blow: that one's yours.
     if (h.stranger && m.def.boss) h.damage = Math.max(0, Math.min(h.damage, m.hp - 1));
