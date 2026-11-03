@@ -58,3 +58,12 @@ overshoot; a soft spotlight follows each performer on the floor.
 Encore Roses (tokens), Lv 45 gear, the **Leading Role** set (a laurel circlet with a star, a
 rose-and-ruff collar, a velvet stage cape). Music: "Opening Night" (swing jazz, B-flat, clarinet
 over a walking bass) and, for the bosses, "Showstopper" (G minor, big band brass and timpani).
+
+## The 2026-11-03 redraw
+
+The players and bosses were redrawn creature-first (render/mobs/stage.js and stageboss.js),
+retiring the costumed girls on the stage rig: a sheet ghost in a comedy mask, a flamingo showgirl,
+a mole stagehand with a wrench, a diva frog whose high note rings out, a chibi paper-lantern dragon
+and a hooded prompter bat. Persona is a cat split gold and blue holding Comedy and Tragedy, Madame
+Directrice a parrot in a beret with a megaphone and clapperboard, and the Phantom Playwright an ink
+phantom rising out of a giant inkwell with a great quill. Each stands in its own spotlight.
