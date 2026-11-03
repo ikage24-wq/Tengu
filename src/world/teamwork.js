@@ -143,7 +143,9 @@ function callCatch(world, m, by) {
   const rng = world.bots?.rng ?? Math.random;
   for (const b of partyMembers(world.bots)) {
     if (b.id === by || b.down || !b.body || b.map !== world.map.id || !b.brain || b.reviveGoal) continue;
-    if (!close(b.body, m, 170, 90) || rng() > 0.6) continue;
+    // (Your launches are theirs to catch often; another bot's only now and then, the player's
+    // pick, so a fight isn't one long juggle.)
+    if (!close(b.body, m, 170, 90) || rng() > (by === 'you' ? 0.6 : 0.15)) continue;
     b.brain.target = m;
     return;
   }

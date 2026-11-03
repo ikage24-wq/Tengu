@@ -477,5 +477,12 @@ export function catchable(bot, world) {
   if (!body?.onGround || !bot.stats) return null;
   const cmd = commandsOf(bot.char, bot.stats.weaponType);
   if (!cmd?.air?.length) return null;
-  return world.mobs.find((m) => m.hp > 0 && m.air > 24 && !mine(bot, world, m) && !m.def.boss && !(m.caught && world.now - m.caught.at < 1.5 && m.caught.by !== bot.id) && Math.abs(m.x - body.x) < 160 && Math.abs(m.y - body.y) < 60) ?? null;
+  // (Another bot's launch is caught only now and then: one roll per launch, the player's pick.)
+  const rng = world.bots?.rng ?? Math.random;
+  const ok = (m) => {
+    if (!m.lift || m.lift.by === 'you') return true;
+    if (m.lift.roll === undefined) m.lift.roll = rng() < 0.2;
+    return m.lift.roll;
+  };
+  return world.mobs.find((m) => m.hp > 0 && m.air > 24 && ok(m) && !mine(bot, world, m) && !m.def.boss && !(m.caught && world.now - m.caught.at < 1.5 && m.caught.by !== bot.id) && Math.abs(m.x - body.x) < 160 && Math.abs(m.y - body.y) < 60) ?? null;
 }
