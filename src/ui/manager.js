@@ -19,6 +19,7 @@ import { petWindow } from './pet.js';
 import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
+import { lifeWindow } from './life.js';
 import { gachaWindow } from './gacha.js';
 import { tradeWindow } from './trade.js';
 import { tradeSay } from '../net/together.js';
@@ -59,11 +60,12 @@ export function createUiState() {
       online: { x: 200, y: 30, open: false, theme: 'sky', icon: 'friends' },
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
+      life: { x: 150, y: 48, open: false, theme: 'mint', icon: 'leaf' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
       trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'gacha', 'trade', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'life', 'gacha', 'trade', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -79,7 +81,7 @@ export function createUiState() {
   };
 }
 
-const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet', KeyN: 'online', KeyB: 'collection' };
+const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet', KeyN: 'online', KeyB: 'collection', KeyG: 'life' };
 
 // Handles keys and world events before the world updates. Returns whether the world should
 // ignore player controls this frame.
@@ -174,7 +176,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, gacha: gachaWindow, trade: tradeWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -196,7 +198,7 @@ function inside(win, m) {
 
 // How much the world dims behind what's open: most for dialogs that take over the controls,
 // a little for the big menus, a touch for the everyday windows you keep open while playing.
-const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, online: 0.1, collection: 0.12, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06 };
+const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, online: 0.1, collection: 0.12, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06, life: 0.06 };
 
 // Darkens the world (not the HUD) toward a deep plum, easing in and out, so open windows stand
 // apart from busy scenes.

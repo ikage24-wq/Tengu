@@ -15,6 +15,18 @@ so an hour of life skills in a tier's region levels a character about as fast as
 there). Levels make the skill better (faster, more and rarer finds, better crafts) and open the
 next tier: `TIER_LEVEL = [, 1, 12, 24, 36]`.
 
+### Levels in play (built)
+- Every gather, mine, catch and dish gives life EXP and character EXP (shown over the hero). A
+  tier's own spots pay best; spots a tier below what the skill has opened pay half.
+- A spot or recipe of a richer region (`tier`, or its own `lv`) needs the skill's level; below it the
+  game says which level it needs.
+- Each level past 1: 1.2% quicker, 1.2% likelier to find one more (a second fish, an extra serving),
+  2% better rare chances, spots rest 0.6% less, a bite's window 0.6% longer. A tool
+  (`char.lifeTools[skill]`, an item with `life: { skill, speed, yield, rare }`) adds its own.
+- Character EXP: an hour of a tier's life actions pays 0.9-1.05x an hour of hunting there
+  (tests/life.test.js), by the hero's level, capped at the tier's top level.
+- The Life Skills window (G, and its menu button) shows each level, EXP, the next level and the tool.
+
 ## Regions, tiers and materials (shared names: every builder uses these ids)
 
 | Tier | Maps (level) | Ore | Gem (rare from ore) | Wood | Fibre |

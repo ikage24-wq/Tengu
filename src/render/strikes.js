@@ -12,6 +12,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
 import { drawThiefFx, moonRainPiece } from './thief-fx.js';
 import { drawHealFx } from './heal-fx.js';
+import { drawLifeFx } from './life-fx.js';
 import { drawSpiritFx, drawSpiritShot } from './spirit-fx.js';
 import { wash, deep } from './fxkit.js';
 
@@ -254,6 +255,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   if (drawWarriorFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawThiefFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawHealFx(ctx, f, x, y, p)) return true;
+  if (drawLifeFx(ctx, f, x, y, p)) return true;
   if (drawSpiritFx(ctx, f, x, y, p)) return true;
   const c = colors(f);
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;

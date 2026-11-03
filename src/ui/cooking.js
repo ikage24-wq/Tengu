@@ -1,6 +1,9 @@
 // The cooking window, opened at a town stove (data/cooking.js): the recipes you know, each with
 // what it needs (what you have of each, in green when it's enough) and what it does, and a Cook
 // button that serves the dish (SERVINGS of it) straight away.
+// Cooking is a life skill (core/life.js): each dish gives Cooking EXP and some character EXP, a
+// higher Cooking level sometimes serves one more, and a dish of a richer region (its `lv` or
+// `tier`) needs the level first.
 
 import { DISHES, SERVINGS } from '../data/cooking.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
@@ -8,20 +11,28 @@ import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, box, button, hover, tooltip, fit } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { groundAt } from '../world/physics.js';
+import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/life.js';
 
 const W = 320;
 const H = 236;
 const ROW = 34;
 
 export const knownRecipes = (char) => DISHES.filter((d) => !d.learn || (char.recipes ?? []).includes(d.id));
-const canCook = (char, d) => Object.entries(d.needs).every(([id, n]) => countItem(char.inventory, id) >= n);
+const hasAll = (char, d) => Object.entries(d.needs).every(([id, n]) => countItem(char.inventory, id) >= n);
+const skilled = (char, d) => lifeLevel(char, 'cooking') >= needFor(d);
+const canCook = (char, d) => hasAll(char, d) && skilled(char, d);
+// The region tier a dish belongs to: its own, or from how hearty it is.
+export const dishTier = (d) => d.tier ?? (d.heal <= 250 ? 1 : d.heal <= 500 ? 2 : d.heal <= 1000 ? 3 : 4);
 
-// Cooks `d`: uses the ingredients, adds the servings. Returns how many, or 0.
-export function cook(char, d) {
+// Cooks `d`: uses the ingredients, adds the servings. Returns how many, or 0. With the world, it's
+// a life action: Cooking EXP and character EXP, and the level's chance of one more serving.
+export function cook(char, d, world = null, rng = Math.random) {
   if (!canCook(char, d)) return 0;
   for (const [id, n] of Object.entries(d.needs)) removeItem(char.inventory, id, n);
-  addItem(char.inventory, d.id, SERVINGS);
-  return SERVINGS;
+  const n = world ? withExtra(SERVINGS, lifePerks(char, 'cooking'), rng) : SERVINGS;
+  addItem(char.inventory, d.id, n);
+  if (world) lifeAction(world, 'cooking', { tier: dishTier(d), kind: 'cook' });
+  return n;
 }
 
 export function cookingWindow(ui, state, world) {
@@ -57,10 +68,11 @@ export function cookingWindow(ui, state, world) {
       if (hover(ui, ix, y + 4, 16, 16)) tooltip(ui, itemTooltip(char, id));
       ix += 22;
     }
-    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
-      const n = cook(char, d);
-      world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
+    if (button(ui, x + W - 62, y + 7, 42, 16, skilled(char, d) ? 'Cook' : `Lv ${needFor(d)}`, { primary: ok, enabled: ok, size: 7.5 })) {
+      const n = cook(char, d, world);
+      world.log(n ? `You cooked ${n} ${d.name}${n > 1 ? 's' : ''}${n > SERVINGS ? ' (one extra!)' : ''}.` : 'Missing an ingredient!', n ? '#ffd6a0' : '#ffb3c6');
     }
+    if (!skilled(char, d) && hover(ui, x + W - 62, y + 7, 42, 16)) tooltip(ui, [{ text: `Needs Cooking Lv ${needFor(d)}`, bold: true, color: COLORS.bad }]);
     y += ROW;
   }
   const more = DISHES.length - list.length;

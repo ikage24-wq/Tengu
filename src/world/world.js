@@ -22,6 +22,7 @@ import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, ti
 import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
+import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
 import { lastRite } from './idol.js';
@@ -466,14 +467,7 @@ export function killMob(world, m, byParty = false) {
   // A boss falls with a short stop; its weight comes from the slow motion and flash after (see
   // render/particles.js).
   world.hitstop = Math.max(world.hitstop, m.def.boss ? 0.12 : 0.045);
-  if (levels > 0) {
-    world.events.push({ type: 'levelup', level: char.level });
-    world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
-    world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
-    if (nextJobs(char.job, char.level).some((j) => j.level === char.level)) {
-      world.log('A new job is ready! Visit your instructor in their home town (M opens the world map).', '#ffe36b');
-    }
-  }
+  celebrateLevels(world, levels);
   if (m.def.boss) world.log(`${m.def.name} has been defeated!`, '#ffe36b');
 }
 

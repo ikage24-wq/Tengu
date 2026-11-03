@@ -6,10 +6,15 @@
 //   miss   it got away, then you're done
 // Walking, jumping or pressing Up again stops fishing. The world ignores the other controls while
 // you fish.
+// Fishing is a life skill (core/life.js): a spot needs its level (the spot's `lv`, or its `tier`'s),
+// and the level and rod make bites come sooner, rare fish bite more, the window to hook a little
+// longer, and sometimes a second fish comes up with the first. Every catch gives life EXP and
+// character EXP.
 
 import { FISH_BY_ID, SPOTS, SPOT_REACH, BITE_WAIT } from '../data/fishing.js';
 import { addItem, countItem } from '../core/inventory.js';
 import { DISHES } from '../data/cooking.js';
+import { lifeLevel, lifePerks, lifeAction, needFor, withExtra, LIFE_NAMES } from '../core/life.js';
 
 export const ROD = 'fishing_rod';
 
@@ -25,15 +30,19 @@ export function startFishing(world) {
   const spot = spotHere(world);
   if (!spot) return 'There are no fish here.';
   if (countItem(world.char.inventory, ROD) < 1) return 'You need a Fishing Rod (Pip and Marlo sell them).';
+  const need = needFor(spot);
+  const have = lifeLevel(world.char, 'fishing');
+  if (have < need) return `These waters need Fishing Lv ${need} (yours is Lv ${have}). Fish the spots you can and you'll get there!`;
   world.body.facing = spot.face;
   world.body.vx = 0;
-  world.fishing = { spot, phase: 'cast', t: 0, wait: 0, fish: null };
+  world.fishing = { spot, phase: 'cast', t: 0, wait: 0, fish: null, perks: lifePerks(world.char, 'fishing') };
   world.pose = { kind: 'throw', t: 0.45, dur: 0.45, since: world.now };
   return null;
 }
 
-function rollFish(spot, rng) {
-  const entries = Object.entries(spot.pool);
+// Rarer fish bite more often with a better rare chance (the skill's level and rod).
+function rollFish(spot, rng, rare = 1) {
+  const entries = Object.entries(spot.pool).map(([id, w]) => [id, w * (1 + (rare - 1) * ((FISH_BY_ID[id]?.rarity ?? 1) - 1))]);
   let r = rng() * entries.reduce((n, [, w]) => n + w, 0);
   for (const [id, w] of entries) if ((r -= w) < 0) return FISH_BY_ID[id];
   return FISH_BY_ID[entries[0][0]];
@@ -55,8 +64,10 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
   if (f.phase === 'cast' && f.t >= 0.5) {
     f.phase = 'wait';
     f.t = 0;
-    f.fish = rollFish(f.spot, rng);
-    f.wait = BITE_WAIT[0] + rng() * (BITE_WAIT[1] - BITE_WAIT[0]) + (f.fish.rarity - 1) * 1.2;
+    const perks = f.perks ?? lifePerks(world.char, 'fishing');
+    f.fish = rollFish(f.spot, rng, perks.rare);
+    f.wait = (BITE_WAIT[0] + rng() * (BITE_WAIT[1] - BITE_WAIT[0]) + (f.fish.rarity - 1) * 1.2) * perks.time;
+    f.react = f.fish.react * perks.react;
     f.nibbles = [0.3, 0.6].map((u) => f.wait * u + rng() * 0.4);
   } else if (f.phase === 'wait') {
     if (hook) {
@@ -71,7 +82,7 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
     }
   } else if (f.phase === 'bite') {
     if (hook) catchFish(world, f, rng);
-    else if (f.t >= f.fish.react) {
+    else if (f.t >= (f.react ?? f.fish.react)) {
       world.log(`It got away... (it was a ${f.fish.name}!)`, '#ffb3c6');
       f.phase = 'miss';
       f.t = 0;
@@ -86,12 +97,14 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
 function catchFish(world, f, rng) {
   const fish = f.fish;
   const char = world.char;
+  // Sometimes a second one comes up with it.
   if (!addItem(char.inventory, fish.id, 1)) {
     world.log('Your Etc bag is full!', '#ffb3c6');
     f.phase = 'miss';
     f.t = 0;
     return;
   }
+  const n = withExtra(1, f.perks ?? lifePerks(char, 'fishing'), rng) > 1 && addItem(char.inventory, fish.id, 1) ? 2 : 1;
   f.phase = 'catch';
   f.t = 0;
   // The Fish page: how many.
@@ -102,10 +115,12 @@ function catchFish(world, f, rng) {
   world.pose = { kind: 'cheer', t: 0.9, dur: 0.9, since: world.now };
   // (The players around you notice a good one: world/bots.js.)
   world.lastCatch = { fish, at: world.now };
-  world.log(`You caught a ${fish.name}!${first ? ' (new!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
+  world.log(n > 1 ? `You caught two ${fish.name}s at once!${first ? ' (new!)' : ''}` : `You caught a ${fish.name}!${first ? ' (new!)' : ''}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
   world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: fish.name, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });
   world.fishCaught = { fish, at: world.now };
+  // A rarer fish is worth more to the skill.
+  lifeAction(world, 'fishing', { tier: f.spot.tier ?? 1, kind: 'fish', scale: 1 + (fish.rarity - 1) * 0.25 });
   // Friends in your online room hear about it.
   world.net?.caught?.(world, fish);
   // A fish's own recipe comes with your first one.

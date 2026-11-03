@@ -74,6 +74,8 @@ export function hearWorld(world, cam) {
       case 'leapburst': say('dash', { pan: p }); break;
       case 'blink': say('blink', { pan: p }); break;
       case 'gather': say('gather', { dur: f.dur, school: f.school, pan: p }); break;
+      // A life skill's level up: the little rising chime of a skill going up.
+      case 'lifelevel': sfx('skillUp'); break;
       case 'freeze': say('freeze', { pan: p }); break;
       // Each sight locking on ticks a step higher than the last (Rez; research/archery.md 26).
       case 'reticle': say('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;

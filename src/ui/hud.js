@@ -35,7 +35,9 @@ const LAV = THEMES.lavender;
 const TRAY_Y = 322;
 const TRAY_H = 34;
 const MENU_X = 221;
-const MENU_STEP = 15.9;
+const MENU_STEP = 14.4;
+// The menu buttons' radius (ten of them fit between the other two trays).
+const MENU_R = 7;
 const HK_X = 380;
 const HK_STEP = 21;
 const HK_D = 19;
@@ -191,10 +193,10 @@ export function drawHud(ui, state, world) {
   if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
-  tray(ctx, MENU_X, menus.length * MENU_STEP + 9);
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['Life Skills', 'life', 'G', 'leaf', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  tray(ctx, MENU_X, (menus.length - 1) * MENU_STEP + 2 * MENU_R + 8.5);
   menus.forEach(([label, key, hotkey, ic, theme], i) => {
-    const cx = MENU_X + 14 + i * MENU_STEP;
+    const cx = MENU_X + MENU_R + 4.5 + i * MENU_STEP;
     const cy = TRAY_Y + TRAY_H / 2 - 1;
     const th = THEMES[theme];
     const hot = hover(ui, cx - 8, cy - 8, 16, 16);
@@ -204,11 +206,11 @@ export function drawHud(ui, state, world) {
     const k = key === 'bag' ? bump(hud.bagAt) : 1;
     ctx.fillStyle = th.dark;
     ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + 1.5, MENU_R * k, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
     ctx.fill();
     // A gloss along the top of the bubble.
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
@@ -218,9 +220,9 @@ export function drawHud(ui, state, world) {
     ctx.strokeStyle = th.dark;
     ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(cx, cy + lift, 7.6 * k, 0, Math.PI * 2);
+    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 9 * k, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 8.4 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
     if (clicked(ui, cx - 8, cy - 8, 16, 16)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
@@ -378,7 +380,7 @@ function drawPickups(ctx, state, world, hud, t) {
     const e = k * k * (3 - 2 * k) * 0.4 + k * k * 0.6;
     const sx = f.x - cam.x;
     const sy = f.y - cam.y;
-    const ex = MENU_X + 14;
+    const ex = MENU_X + MENU_R + 4.5;
     const ey = TRAY_Y + TRAY_H / 2 - 1;
     const cx = (sx + ex) / 2;
     const cy = Math.min(sy, ey) - 70;

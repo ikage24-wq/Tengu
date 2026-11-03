@@ -424,6 +424,22 @@ const ICONS = {
     ctx.quadraticCurveTo(-s * 0.4, s * 0.02, 0, -s * 0.44);
     ctx.fill();
   },
+  // A sprouting leaf (life skills): a plump leaf on a curled stem, its vein cut out.
+  leaf(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.34, s * 0.4);
+    ctx.bezierCurveTo(-s * 0.46, -s * 0.12, -s * 0.02, -s * 0.46, s * 0.42, -s * 0.42);
+    ctx.bezierCurveTo(s * 0.44, s * 0.02, s * 0.1, s * 0.34, -s * 0.34, s * 0.4);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.lineWidth = s * 0.08;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.22, s * 0.26);
+    ctx.quadraticCurveTo(0, -s * 0.06, s * 0.3, -s * 0.3);
+    ctx.stroke();
+    ctx.globalCompositeOperation = 'source-over';
+  },
   flame(ctx, s) {
     ctx.beginPath();
     ctx.moveTo(0, -s * 0.46);
