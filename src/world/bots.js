@@ -161,11 +161,22 @@ export function buildLabel(char) {
 // The best few items a character could wear in a slot, picked with some luck: their own job's
 // set at their level, a weapon they can use, or now and then a unique outfit. `variant` is the
 // color they're going for (most players match their outfit).
+// (The item list by slot, worked out once: a new player showing up on the map rolls a full set,
+// and going through every item for each slot made that a visible hitch.)
+let bySlot = null;
+function itemsIn(slot) {
+  if (!bySlot) {
+    bySlot = new Map();
+    for (const d of Object.values(ITEMS)) if (d.slot) (bySlot.get(d.slot) ?? bySlot.set(d.slot, []).get(d.slot)).push(d);
+  }
+  return bySlot.get(slot) ?? [];
+}
+
 function gearFor(char, slot, pro, rng, variant) {
   const job = JOBS[char.job];
   const weapons = job.weapons ?? [];
   const wearable = (d) => !d.legacy && !d.crafted && (!d.family || d.family === job.family || (d.starter && char.job === 'novice'));
-  let pool = Object.values(ITEMS).filter((d) => d.slot === slot && d.reqLevel <= char.level && wearable(d) && (slot !== 'weapon' || weapons.includes(d.weaponType)));
+  let pool = itemsIn(slot).filter((d) => d.reqLevel <= char.level && wearable(d) && (slot !== 'weapon' || weapons.includes(d.weaponType)));
   if (!pro) pool = pool.filter((d) => !d.endgame);
   else if (slot === 'weapon' && rng() < 0.75 && pool.some((d) => d.endgame)) pool = pool.filter((d) => d.endgame);
   if (!pool.length) return null;

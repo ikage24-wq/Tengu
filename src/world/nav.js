@@ -42,7 +42,9 @@ export function navOf(map) {
   if (nav) return nav;
   const surfaces = surfacesOf(map);
   const ground = surfaces.findIndex((s) => s.ground);
-  nav = { surfaces, ground, edges: surfaces.map(() => []) };
+  // (`x1At`: where each surface's left end was when the moves were worked out; a drifting cloud's
+  // moves are shifted by how far it has glided since, see `driftShift`.)
+  nav = { surfaces, ground, edges: surfaces.map(() => []), x1At: surfaces.map((s) => s.x1) };
   const below = (x, y) => surfaceBelow(nav, x, y + 2);
   surfaces.forEach((a, i) => {
     surfaces.forEach((b, j) => {
@@ -147,6 +149,9 @@ export function findPath(nav, from, x, to, tx) {
 // Intents that carry a body along a path toward (tx) on the last surface. Advances (shifts)
 // the path as steps complete; returns { intent, lost } where lost means the body ended up
 // somewhere the path didn't expect (fell, got knocked off) and should plan again.
+// How far a drifting surface (a cloud) has glided since its moves were worked out.
+const driftShift = (nav, i) => (nav.surfaces[i]?.drift ? nav.surfaces[i].x1 - nav.x1At[i] : 0);
+
 export function followPath(nav, body, path, tx, near = 4) {
   const intent = { left: false, right: false, up: false, down: false, jump: false };
   const toward = (x, slack) => {
@@ -155,7 +160,10 @@ export function followPath(nav, body, path, tx, near = 4) {
     intent.left = x < body.x;
     return false;
   };
-  const step = path[0];
+  const raw = path[0];
+  // Moves off a cloud ride along with it.
+  const shift = raw ? driftShift(nav, raw.from) : 0;
+  const step = raw && shift ? { ...raw, x: raw.x + shift, land: raw.land == null ? raw.land : raw.land + shift } : raw;
   if (body.rope) {
     if (step?.kind === 'ropeDown') intent.down = true;
     else intent.up = true;
@@ -163,7 +171,22 @@ export function followPath(nav, body, path, tx, near = 4) {
   }
   if (!body.onGround) {
     // In the air: steer for the landing spot.
-    if (step && (step.kind === 'jump' || step.kind === 'walk')) toward(step.land ?? step.x, 3);
+    // Up level with (or above) the ledge they're after but not over it (lifted past it by an
+    // updraft, or a jump that went straight up): drift across onto it.
+    // Lifted by an updraft above where the path ends (or already over it, on the way down from
+    // one): straight there, skipping the steps between.
+    const last = path.length ? nav.surfaces[path[path.length - 1].to] : null;
+    if (last && (body.lifted || contains(last, body.x)) && body.y < last.yAt(Math.max(last.x1, Math.min(last.x2, body.x))) - 4) {
+      toward(Math.max(last.x1 + 10, Math.min(last.x2 - 10, tx)), 3);
+      return { intent, lost: false };
+    }
+    const s = step && (step.kind === 'jump' || step.kind === 'walk') ? nav.surfaces[step.to] : null;
+    const onto = s ? Math.max(s.x1 + 10, Math.min(s.x2 - 10, body.x)) : 0;
+    if (s && body.y < s.yAt(onto) - 4 && Math.abs(onto - body.x) > 4) toward(onto, 3);
+    else if (s) toward(step.land ?? step.x, 3);
+    // On the last ledge already (thrown up by a bounce flower on the way): drift on toward the goal
+    // rather than come down on the flower and bounce in place.
+    else if (!step) toward(tx, near);
     return { intent, lost: false };
   }
   const here = surfaceOf(nav, body);
@@ -183,6 +206,13 @@ export function followPath(nav, body, path, tx, near = 4) {
   // Line up with the takeoff spot (exactly, for ropes), then make the move.
   if (!toward(step.x, step.kind === 'jump' && step.land == null ? 6 : 3)) return { intent, lost: false };
   if (step.kind === 'jump') {
+    // Onto a cloud: wait at the takeoff until it has glided over the landing spot.
+    const to = nav.surfaces[step.to];
+    const land = step.land ?? step.x;
+    if (to?.drift && !(land >= to.x1 + 4 && land <= to.x2 - 4)) {
+      intent.left = intent.right = false;
+      return { intent, lost: false };
+    }
     intent.jump = true;
     if (step.land != null) toward(step.land, 0);
   } else if (step.kind === 'drop') {
