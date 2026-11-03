@@ -6836,6 +6836,151 @@
   E.rageaxe = asLight(giantAxe(PAL.rage), PAL.rage);
   E.rageaxeform = { ...E.rageaxe, n: 5, fps: 14, draw: (ctx, i) => E.rageaxe.draw(ctx, [4, 3, 2, 1, 0][i]) };
 
+  // ---------- Team moves (world/teamwork.js) ----------
+  // The party's own colour, whoever's job it is: a warm sunrise peach with sky blue beside it, and
+  // the shape of two stars meeting (a high five): two friends' blows clinking together.
+  const TEAM = ['#ffffff', '#fff1dc', '#ffc58a', '#ff9670', '#c4567a'];
+  const TEAMSKY = PAL.sky;
+
+  // A Team Catch on a monster: two little stars, peach and sky, fly in from either side and clink
+  // together in a burst, a ring flicks out, and they break into beads and sparkles.
+  E.teamcatch = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 8, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 1) {
+          const d = [46, 18][i];
+          goldStar(ctx, c - d, c + d * 0.3, 15 + i * 3, -0.4 + i * 0.4, TEAM);
+          goldStar(ctx, c + d, c - d * 0.3, 15 + i * 3, 0.4 - i * 0.4, TEAMSKY);
+          for (const sd of [-1, 1]) speedLine(ctx, sd < 0 ? TEAM : TEAMSKY, c + sd * (d + 46), c - sd * (d * 0.3 + 14), c + sd * (d + 16), c - sd * (d * 0.3 + 4), 5);
+          return;
+        }
+        if (i <= 4) {
+          const k = (i - 2) / 2;
+          starburst(ctx, TEAM, c, c, [30, 38, 32][i - 2], 10, 901, { inner: 0.36, rot: i * 0.2 });
+          celRing(ctx, TEAMSKY, c, c, 34 + k * 40, 12 - k * 7, { broken: k * 0.5, seed: 902 });
+          goldStar(ctx, c - 12 - k * 22, c - 4, 12 - k * 4, -0.5 - k, TEAM);
+          goldStar(ctx, c + 12 + k * 22, c + 4, 12 - k * 4, 0.5 + k, TEAMSKY);
+          return;
+        }
+        const k = (i - 5) / 2;
+        const R = rng(903);
+        for (let j = 0; j < 10; j++) {
+          const a = (j / 10) * TAU + R() * 0.4;
+          const d = 46 + k * 40 + R() * 14;
+          const r = (j % 3 ? 6 : 9) * (1 - k * 0.6);
+          sparkle(ctx, j % 2 ? TEAM : TEAMSKY, c + Math.cos(a) * d, c + Math.sin(a) * d - k * 10, r, j);
+        }
+      },
+    };
+  })();
+
+  // A bead of the link between party members fighting side by side (loops): a small peach
+  // sparkle with a sky heart, breathing.
+  E.teamlink = {
+    w: 60, h: 60, n: 6, fps: 12, px: 30, py: 30, loop: true,
+    draw(ctx, i) {
+      const k = 0.5 + 0.5 * Math.sin((i / 6) * TAU);
+      sparkle(ctx, TEAM, 30, 30, 10 + k * 4, (i / 6) * 0.8);
+      sparkle(ctx, TEAMSKY, 30, 30, 4 + k * 1.5, 0.78 + (i / 6) * 0.8);
+    },
+  };
+
+  // Getting a fallen friend up: a ring of peach light at their feet, a column of sky-and-peach
+  // light rising through them, and stars drifting up as it fades.
+  E.teamrevive = (() => {
+    const w = 180;
+    const base = 250;
+    const cx = w / 2;
+    const col = (ctx, half, top) => {
+      const band = (k, colour, ink) => {
+        const pts = [[cx - half * k, base], [cx - half * k, top + half * k * 0.8], [cx, top], [cx + half * k, top + half * k * 0.8], [cx + half * k, base]];
+        if (ink) inked(ctx, pts, colour, ink, 4);
+        else fill(ctx, pts, colour);
+      };
+      band(1, TEAMSKY[2], TEAMSKY[4]);
+      band(0.72, TEAM[2]);
+      band(0.45, TEAM[1]);
+      band(0.2, TEAM[0]);
+    };
+    const ringAt = (ctx, y, r, th) => {
+      ctx.save();
+      ctx.translate(cx, y);
+      ctx.scale(1, 0.3);
+      celRing(ctx, TEAM, 0, 0, r, th, { seed: 911 });
+      ctx.restore();
+    };
+    return {
+      w, h: 270, n: 9, fps: 18, px: cx, py: base,
+      draw(ctx, i) {
+        if (i <= 4) {
+          const half = [6, 22, 30, 26, 18][i];
+          col(ctx, half, [170, 40, 16, 14, 30][i]);
+          ringAt(ctx, base - 4, 30 + i * 12, 14 - i);
+          if (i >= 2) ringAt(ctx, base - 60 - (i - 2) * 50, 34 - (i - 2) * 4, 9);
+        }
+        if (i >= 3) {
+          const k = (i - 3) / 5;
+          const R = rng(912);
+          for (let j = 0; j < 7; j++) {
+            const x = cx + (R() - 0.5) * 90;
+            const y = base - 40 - R() * 160 - k * 50;
+            if (j % 2) goldStar(ctx, x, y, 9 * (1.1 - k * 0.8), j, TEAM);
+            else sparkle(ctx, TEAMSKY, x, y, 8 * (1.1 - k * 0.8), j);
+          }
+        }
+      },
+    };
+  })();
+
+  // A Group Finisher's shared last burst: a star for each friend in a ring, linked, that snaps
+  // inward to one big peach star; it bursts with rings of sky and peach, then rains beads and stars.
+  E.teamburst = (() => {
+    const c = 190;
+    return {
+      w: 380, h: 380, n: 11, fps: 20, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) {
+          const r = [120, 80, 40][i];
+          for (let j = 0; j < 5; j++) {
+            const a = -Math.PI / 2 + (j / 5) * TAU + i * 0.5;
+            const a2 = -Math.PI / 2 + ((j + 1) / 5) * TAU + i * 0.5;
+            speedLine(ctx, TEAMSKY, c + Math.cos(a) * r, c + Math.sin(a) * r, c + Math.cos(a2) * r, c + Math.sin(a2) * r, 3);
+            goldStar(ctx, c + Math.cos(a) * r, c + Math.sin(a) * r, 16 - i * 2, a, j % 2 ? TEAMSKY : TEAM);
+          }
+          if (i === 2) goldStar(ctx, c, c, 30, 0, TEAM);
+          return;
+        }
+        if (i <= 7) {
+          const k = (i - 3) / 4;
+          celRing(ctx, TEAMSKY, c, c, 60 + k * 120, 26 - k * 18, { broken: Math.max(0, k - 0.3), seed: 921 });
+          celRing(ctx, TEAM, c, c, 40 + k * 80, 18 - k * 12, { broken: Math.max(0, k - 0.5), seed: 922 });
+          if (i <= 5) starburst(ctx, TEAM, c, c, [70, 86, 64][i - 3], 12, 923, { inner: 0.34, rot: i * 0.15 });
+          if (i <= 6) goldStar(ctx, c, c, [44, 52, 40, 24][i - 3], i * 0.2, TEAM);
+          for (let j = 0; j < 8; j++) {
+            const a = (j / 8) * TAU + 0.2;
+            const d = 70 + k * 100;
+            speedLine(ctx, j % 2 ? TEAMSKY : TEAM, c + Math.cos(a) * (d - 34), c + Math.sin(a) * (d - 34), c + Math.cos(a) * d, c + Math.sin(a) * d, 6 - k * 3);
+          }
+        }
+        if (i >= 6) {
+          const k = (i - 6) / 4;
+          const R = rng(924);
+          for (let j = 0; j < 16; j++) {
+            const a = R() * TAU;
+            const d = 90 + R() * 80 + k * 30;
+            const r = (j % 3 ? 7 : 11) * (1.1 - k * 0.7);
+            const x = c + Math.cos(a) * d;
+            const y = c + Math.sin(a) * d * 0.8 + k * 30;
+            if (j % 4 === 0) goldStar(ctx, x, y, r, j, TEAM);
+            else sparkle(ctx, j % 2 ? TEAM : TEAMSKY, x, y, r, j);
+          }
+        }
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

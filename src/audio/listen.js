@@ -46,7 +46,9 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 's
   // The Acrobat Archer.
   'achit', 'acfirework', 'acburst', 'trapsnap',
   // The Astronomer.
-  'ashit', 'aswell', 'astide', 'asalign']);
+  'ashit', 'aswell', 'astide', 'asalign',
+  // Team moves.
+  'teamcatch', 'teamrevive', 'teamburst']);
 
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);

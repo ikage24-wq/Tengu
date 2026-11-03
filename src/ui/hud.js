@@ -26,6 +26,7 @@ import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
 import { inParty } from '../net/together.js';
+import { groupReady, NEAR_BONUS } from '../world/teamwork.js';
 
 const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
 const LAV = THEMES.lavender;
@@ -350,6 +351,7 @@ export function drawHud(ui, state, world) {
   drawHits(ui, state, world);
   const gauge = gaugeOf(char);
   if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0);
+  drawSideBySide(ui, world, gauge ? 548 : 620);
   if (settings.minimap) drawMinimap(ui, world);
   drawBuffs(ui, world);
   if (world.dungeon) {
@@ -466,10 +468,38 @@ function drawGauge(ui, world, kind, value) {
     text(ctx, G.full, x + 35, y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
     // A full gauge is what a finisher spends: say so when you know one.
     if (Object.values(SKILLS).some((k) => k.fullGauge && (world.char.skills[k.id] ?? 0) > 0)) {
-      text(ctx, 'FINISHER READY', x + 35, y - 13, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffe36b' : '#ffffff', outline: '#c8243a' });
+      const group = groupReady(world);
+      text(ctx, group ? 'GROUP FINISHER READY' : 'FINISHER READY', x + 35, y - 13, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? (group ? '#ffc58a' : '#ffe36b') : '#ffffff', outline: group ? '#c4567a' : '#c8243a' });
     }
   }
   if (hover(ui, x, y, 70, 16)) tooltip(ui, [{ text: G.name, bold: true, color: G.color }, { text: G.tip, size: 8, color: COLORS.muted }]);
+}
+
+// Side by side (world/teamwork.js): a little party badge by the gauge while members fight near
+// you, a pip for each (up to three), easing in and out and bumping when one joins.
+const sideHud = new WeakMap();
+function drawSideBySide(ui, world, x) {
+  const { ctx } = ui;
+  const n = world.team?.near ?? 0;
+  const hud = sideHud.get(world) ?? sideHud.set(world, { a: 0, n: 0, bump: -9 }).get(world);
+  if (n > hud.n) hud.bump = world.now;
+  hud.n = n;
+  hud.a += ((n ? 1 : 0) - hud.a) * 0.15;
+  if (hud.a < 0.02) return;
+  const y = TRAY_Y - 14;
+  const pop = Math.max(0, 1 - (world.now - hud.bump) / 0.25);
+  ctx.save();
+  ctx.globalAlpha = hud.a;
+  box(ctx, x - 8, y - 8, 16, 16, { fill: 'rgba(255,250,248,0.94)', edge: '#ff9670', r: 8, width: 1.5 });
+  badge(ctx, x, y, 'friends', '#c4567a', 1 + pop * 0.3 + Math.sin(world.now * 3) * 0.03);
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < hud.n ? '#ff9670' : 'rgba(196,86,122,0.25)';
+    ctx.beginPath();
+    ctx.arc(x - 4 + i * 4, y + 11, 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  if (hover(ui, x - 8, y - 8, 16, 16)) tooltip(ui, [{ text: 'Side by Side', bold: true, color: '#c4567a' }, { text: `Fighting near ${hud.n} party member${hud.n === 1 ? '' : 's'}: +${Math.round(hud.n * NEAR_BONUS * 100)}% damage (up to 3).`, size: 8, color: COLORS.muted }]);
 }
 
 // A soft colour around the screen's edges (a full gauge's state).
