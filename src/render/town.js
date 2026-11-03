@@ -1363,6 +1363,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
   }
   const said = [];
+  const tags = [];
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
@@ -1370,7 +1371,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;
-    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far);
+    drawBot(ctx, bot, x, gy, time, hoverId === bot.id, said, groundSlope(map, bot.x), far, tags);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }
@@ -1379,7 +1380,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
 // pros, green with a heart for party members, a title in gold and the guild underneath).
 const afkAt = new WeakMap();
 
-function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
+function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false, tags = null) {
   const fade = bot.state === 'logout' ? Math.max(0, bot.timer / 0.6) : 1 - bot.appear;
   if (bot.appear > 0 || bot.state === 'logout') {
     for (let i = 0; i < 8; i++) {
@@ -1473,12 +1474,30 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   const fill = hovered ? '#ff8fc1' : bot.party ? 'rgba(40,120,80,0.8)' : bot.buddy ? 'rgba(50,110,190,0.8)' : bot.pro ? 'rgba(120,80,10,0.75)' : 'rgba(40,36,60,0.6)';
   // (A group of their own: the tag edged in their group's colour, so you can tell who's together.)
   const crewEdge = !bot.party && bot.crew ? bot.crew.color : null;
-  box(ctx, x - w / 2, y + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : crewEdge ?? (bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null), r: 5, width: crewEdge ? 1.5 : 1 });
+  // Tags of people standing together don't pile into an unreadable run: one that would land on
+  // a tag already drawn steps down a row (once), and past that it's left off.
+  let ty = y;
+  const th = 12 + (bot.inDungeon ? 6 : (bot.title ? 8 : 0) + (bot.guild ? 8 : 0));
+  if (tags) {
+    for (let k = 0; k < 2 && ty != null; k++) {
+      const hit = tags.find((o) => x - w / 2 < o.x1 + 2 && o.x0 < x + w / 2 + 2 && ty < o.y + o.h && o.y < ty + th);
+      if (!hit) break;
+      ty = k < 1 ? hit.y + hit.h : null;
+    }
+  }
+  if (ty == null && !hovered) {
+    ctx.restore();
+    if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
+    return;
+  }
+  ty ??= y;
+  tags?.push({ x0: x - w / 2, x1: x + w / 2, y: ty, h: th });
+  box(ctx, x - w / 2, ty + 2, w, 10, { fill, edge: bot.pro ? '#ffd66b' : bot.party ? '#bff0dc' : crewEdge ?? (bot.buddy ? '#cfe8ff' : hovered ? '#ffffff' : null), r: 5, width: crewEdge ? 1.5 : 1 });
   if (crewEdge) {
     ctx.fillStyle = crewEdge;
     ctx.beginPath();
-    ctx.arc(x + w / 2 + 4, y + 7, 2, 0, TAU);
-    ctx.arc(x + w / 2 + 8.5, y + 7, 2, 0, TAU);
+    ctx.arc(x + w / 2 + 4, ty + 7, 2, 0, TAU);
+    ctx.arc(x + w / 2 + 8.5, ty + 7, 2, 0, TAU);
     ctx.fill();
   }
   // Away from the keyboard: a little AFK tag that breathes over their head.
@@ -1494,21 +1513,21 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   if (bot.party) {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(x - w / 2 + 6, y + 10);
-    ctx.bezierCurveTo(x - w / 2 + 1, y + 6.5, x - w / 2 + 3.5, y + 3.5, x - w / 2 + 6, y + 5.8);
-    ctx.bezierCurveTo(x - w / 2 + 8.5, y + 3.5, x - w / 2 + 11, y + 6.5, x - w / 2 + 6, y + 10);
+    ctx.moveTo(x - w / 2 + 6, ty + 10);
+    ctx.bezierCurveTo(x - w / 2 + 1, ty + 6.5, x - w / 2 + 3.5, ty + 3.5, x - w / 2 + 6, ty + 5.8);
+    ctx.bezierCurveTo(x - w / 2 + 8.5, ty + 3.5, x - w / 2 + 11, ty + 6.5, x - w / 2 + 6, ty + 10);
     ctx.fill();
-  } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, y + 7, 2.6, '#ffd66b');
-  text(ctx, label, x + (pad > 10 ? 4 : 0), y + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
+  } else if (bot.pro) sparkle(ctx, x - w / 2 + 6, ty + 7, 2.6, '#ffd66b');
+  text(ctx, label, x + (pad > 10 ? 4 : 0), ty + 9.5, { size: 7, bold: true, align: 'center', color: bot.party ? '#e6ffee' : bot.pro ? '#ffe9a0' : '#fff6c9' });
   // In a dungeon, everyone's HP shows under their name.
   if (bot.inDungeon && bot.hp != null) {
     const f = Math.max(0, bot.hp / bot.stats.maxHp);
-    box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
-    if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
+    box(ctx, x - 16, ty + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
+    if (f > 0) box(ctx, x - 16, ty + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
   } else {
     // The title they wear (gold), then their guild.
-    if (bot.title) text(ctx, bot.title, x, y + 20, { size: 6, bold: true, align: 'center', color: '#ffe08a', outline: 'rgba(60,40,20,0.7)' });
-    if (bot.guild) text(ctx, `<${bot.guild}>`, x, y + (bot.title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
+    if (bot.title) text(ctx, bot.title, x, ty + 20, { size: 6, bold: true, align: 'center', color: '#ffe08a', outline: 'rgba(60,40,20,0.7)' });
+    if (bot.guild) text(ctx, `<${bot.guild}>`, x, ty + (bot.title ? 28 : 20), { size: 6, bold: true, align: 'center', color: '#c9f2ff', outline: 'rgba(40,36,60,0.7)' });
   }
   ctx.restore();
   if (bot.bubble) said.push([x, y - (bot.shop ? 80 : 62), bot.bubble]);
@@ -1517,11 +1536,12 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
 // Your party, on any map, wherever they are.
 export function drawParty(ctx, members, cam, width, time, hoverId = null) {
   const said = [];
+  const tags = [];
   for (const bot of members) {
     if (!bot.body) continue;
     const x = snap(bot.body.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said);
+    drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said, 0, false, tags);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));
 }

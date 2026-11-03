@@ -6,10 +6,11 @@
 
 import { NPCS } from '../data/npcs.js';
 import { EQUIP_SLOTS } from '../data/items.js';
-import { itemName, POLISH_MAX, polishCost, polishGain, polish, oreFor, POLISH_GEMS, ORE_USE, boostedChance, stonesFor } from '../core/items.js';
+import { itemName, POLISH_MAX, polishCost, polishGain, polish, oreFor, POLISH_GEMS, POLISH_ORES, POLISH_STONES, ORE_USE, boostedChance, stonesFor } from '../core/items.js';
+import { drawItemIcon } from '../render/icons.js';
 import { countItem } from '../core/inventory.js';
 import { ITEMS } from '../data/items.js';
-import { COLORS, windowFrame, text, box, button, itemSlot, hover, clicked, tooltip, sparkle, icon, wrap } from './kit.js';
+import { COLORS, windowFrame, text, box, button, itemSlot, hover, clicked, tooltip, sparkle, icon, wrap, fit, font } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { sfx } from '../audio/sfx.js';
 
@@ -102,26 +103,45 @@ export function polishWindow(ui, state, world) {
   const boosts = [oreFor(inst) && { id: oreFor(inst).id, need: ORE_USE }, ...bestGems(char), ...bestStones(char, inst)].filter(Boolean);
   const have = (b) => countItem(char.inventory, b.id) >= b.need;
   if (dlg.boost && !boosts.some((b) => b.id === dlg.boost && have(b))) dlg.boost = null;
-  text(ctx, `Chance ${Math.round(boostedChance(inst, dlg.boost) * 100)}%`, px, y + 87, { size: 8.5, bold: true, color: dlg.boost ? '#3f9f5f' : COLORS.ink });
+  text(ctx, `Chance ${Math.round(boostedChance(inst, dlg.boost) * 100)}%`, px, y + 86, { size: 8.5, bold: true, color: dlg.boost ? '#3f9f5f' : COLORS.ink });
+  const cost = polishCost(inst);
+  text(ctx, `${cost.toLocaleString()} gold`, px + pw, y + 86, { size: 8.5, bold: true, align: 'right', color: char.gold >= cost ? COLORS.gold : COLORS.bad });
+  ctx.font = font(8.5, true);
+  icon(ctx, 'coin', px + pw - ctx.measureText(`${cost.toLocaleString()} gold`).width - 6, y + 83, 8, COLORS.gold);
+  // One tidy row of chips: each ore, gem or stone as its own icon with the chance it adds; the
+  // picked one sits on a bold green rim with a check. Its name (and what it costs a try) shows
+  // under the row for the one picked or pointed at.
+  const raw = (id) => (POLISH_ORES.find((o) => o.id === id) ?? POLISH_GEMS.find((o) => o.id === id) ?? POLISH_STONES.find((o) => o.id === id))?.boost ?? 0;
+  const cw = Math.min(44, (pw - (boosts.length - 1) * 4) / Math.max(1, boosts.length));
+  let named = boosts.find((b) => b.id === dlg.boost) ?? null;
   boosts.forEach((b, i) => {
-    // Two chips a row (a second row for bench-made stones).
-    const bx = px + 70 + (i % 2) * 50;
-    const by = y + 78 + Math.floor(i / 2) * 15;
+    const bx = px + i * (cw + 4);
+    const by = y + 92;
     const on = dlg.boost === b.id;
     const ok = have(b);
+    const hot = hover(ui, bx, by, cw, 18);
+    if (hot) named = b;
     ctx.globalAlpha = ok ? 1 : 0.45;
-    box(ctx, bx, by, 46, 13, { fill: on ? '#d8f5d0' : '#ffffff', edge: on ? '#3f9f5f' : th.light, r: 6, width: on ? 2 : 1 });
-    icon(ctx, 'drop', bx + 7, by + 6.5, 7, ITEMS[b.id].color);
-    text(ctx, `x${b.need} (${countItem(char.inventory, b.id)})`, bx + 13, by + 9.5, { size: 6.5, bold: true, color: COLORS.ink });
+    box(ctx, bx, by, cw, 18, { fill: on ? '#e2f8da' : hot && ok ? '#fffaf2' : '#ffffff', edge: on ? '#3f9f5f' : th.light, r: 7, width: on ? 2 : 1 });
+    drawItemIcon(ctx, b.id, bx + 2, by + 2, 0.875);
+    text(ctx, `+${Math.round(raw(b.id) * 100)}%`, bx + cw - 3, by + 12.5, { size: 7.5, bold: true, align: 'right', color: on ? '#3f9f5f' : COLORS.ink });
+    if (on) {
+      ctx.fillStyle = '#3f9f5f';
+      ctx.beginPath();
+      ctx.arc(bx + cw - 2, by + 1, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      icon(ctx, 'check', bx + cw - 2, by + 1, 5, '#ffffff');
+    }
     ctx.globalAlpha = 1;
-    if (hover(ui, bx, by, 46, 13)) tooltip(ui, `${ITEMS[b.id].name}: use ${b.need} a try for a better chance.${ok ? '' : ' (You need more: mine it on the fields.)'}`);
-    if (ok && clicked(ui, bx, by, 46, 13)) dlg.boost = on ? null : b.id;
+    if (ok && clicked(ui, bx, by, cw, 18)) dlg.boost = on ? null : b.id;
   });
-  const cost = polishCost(inst);
-  icon(ctx, 'coin', px + 4, y + 98, 8, COLORS.gold);
-  text(ctx, `${cost.toLocaleString()} gold`, px + 11, y + 101, { size: 8.5, bold: true, color: char.gold >= cost ? COLORS.gold : COLORS.bad });
-  wrap(ctx, dlg.boost ? `If it doesn't take, you lose the gold and the ${ITEMS[dlg.boost].name}.` : "If it doesn't take, you only lose the gold. Mined ore makes it likelier.", px, y + 116, pw, { size: 7, color: COLORS.muted });
-  if (button(ui, px, y + 136, 80, 20, 'Polish', { primary: true, enabled: char.gold >= cost, iconName: 'star' })) {
+  if (named) {
+    const n = countItem(char.inventory, named.id);
+    const line = `${ITEMS[named.id].name} · +${Math.round(raw(named.id) * 100)}% · uses ${named.need} a try (have ${n})`;
+    text(ctx, fit(ctx, line, pw, 7, true), px, y + 120, { size: 7, bold: true, color: have(named) ? (dlg.boost === named.id ? '#3f9f5f' : th.dark) : COLORS.bad });
+    text(ctx, have(named) ? (dlg.boost === named.id ? "Lost with the gold if it doesn't take." : 'Tap to use it on the next tries.') : 'You need more: mine it on the fields.', px, y + 130, { size: 7, color: COLORS.muted });
+  } else wrap(ctx, "If it doesn't take, you only lose the gold. Ore or a gem makes it likelier.", px, y + 120, pw, { size: 7, color: COLORS.muted, lineHeight: 10 });
+  if (button(ui, px, y + 138, 80, 20, 'Polish', { primary: true, enabled: char.gold >= cost, iconName: 'star' })) {
     const r = polish(char, inst, Math.random, dlg.boost ?? null);
     dlg.polishAt = world.now;
     dlg.polishOk = r.ok;

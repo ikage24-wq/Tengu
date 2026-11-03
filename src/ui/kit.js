@@ -76,8 +76,14 @@ const now = () => performance.now() / 1000;
 // Device pixels per UI pixel this frame, so text can sit on whole device pixels and stay crisp.
 let px = 1;
 
+// On a phone small text is held to a readable size (7.5 game pixels is about 8 on a phone held
+// sideways); the layouts drop their secondary lines there instead of shrinking them.
+let minText = 0;
+export const touchText = () => minText > 0;
+
 export function beginUi(ctx, input) {
   px = ctx.getTransform?.().a || 1;
+  minText = input?.touch ? 7.5 : 0;
   return { ctx, input, mouse: input.mouse, used: false, tooltip: null, dragging: null };
 }
 
@@ -100,7 +106,9 @@ export function clicked(ui, x, y, w, h) {
 }
 
 export function text(ctx, str, x, y, opts = {}) {
-  const { size = 9, color = COLORS.ink, align = 'left', bold = false, outline = null } = opts.role ? { ...TEXT[opts.role], ...opts } : opts;
+  const o = opts.role ? { ...TEXT[opts.role], ...opts } : opts;
+  const { color = COLORS.ink, align = 'left', bold = false, outline = null } = o;
+  const size = Math.max(o.size ?? 9, minText);
   ctx.font = font(size, bold);
   ctx.textAlign = align;
   x = snap(x);
@@ -119,7 +127,7 @@ export function text(ctx, str, x, y, opts = {}) {
 
 // Shortens text with an ellipsis to fit `w` pixels.
 export function fit(ctx, s, w, size, bold = true) {
-  ctx.font = font(size, bold);
+  ctx.font = font(Math.max(size, minText), bold);
   if (ctx.measureText(s).width <= w) return s;
   while (s.length > 3 && ctx.measureText(`${s}…`).width > w) s = s.slice(0, -1);
   return `${s}…`;
@@ -129,8 +137,9 @@ export function fit(ctx, s, w, size, bold = true) {
 // show, for typewriter text.
 export function wrap(ctx, str, x, y, width, opts = {}) {
   const o = opts.role ? { ...TEXT[opts.role], ...opts } : opts;
-  const { size = 9, color = COLORS.ink, bold = false, chars = Infinity } = o;
-  const lineHeight = o.lineHeight ?? size + 3;
+  const { color = COLORS.ink, bold = false, chars = Infinity } = o;
+  const size = Math.max(o.size ?? 9, minText);
+  const lineHeight = Math.max(o.lineHeight ?? size + 3, size + 1.5);
   ctx.font = font(size, bold);
   let line = '';
   let shown = 0;
@@ -871,6 +880,8 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
     if (m.down) {
       win.x = Math.round(Math.max(0, Math.min(640 - w, m.x - win.drag.dx)));
       win.y = Math.round(Math.max(8, Math.min(360 - 20, m.y - win.drag.dy)));
+      // (A window you've placed yourself stays where you put it from then on.)
+      if (win.x !== win.drag.x0 || win.y !== win.drag.y0) win.moved = true;
     } else {
       win.drag = null;
     }
@@ -1027,7 +1038,7 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
     return false;
   }
   if (m.clicked && hover(ui, x, y, w - 20, HEADER)) {
-    win.drag = { dx: m.x - x, dy: m.y - y };
+    win.drag = { dx: m.x - x, dy: m.y - y, x0: win.x, y0: win.y };
     ui.used = true;
     m.clicked = false;
   }
@@ -1082,13 +1093,24 @@ export function button(ui, x, y, w, h, label, { enabled = true, primary = false,
 }
 
 // Pill tabs in a soft track; the current one pops out in the window's color.
-export function tabs(ui, x, y, labels, current, { w = 46, h = 15 } = {}) {
+// `total` fits the row to that width instead: each tab as wide as its name plus an even share of
+// what's left, so a long name ("Character") never runs past the window.
+export function tabs(ui, x, y, labels, current, { w = 46, h = 15, total = null } = {}) {
   const { ctx } = ui;
   const th = ui.theme ?? THEMES.pink;
   let picked = current;
-  box(ctx, x - 2, y - 2, labels.length * (w + 2) + 2, h + 4, { fill: th.light, edge: null, r: (h + 4) / 2 });
+  let widths = labels.map(() => w);
+  if (total) {
+    ctx.font = font(Math.max(TEXT.tab.size, minText), TEXT.tab.bold);
+    const need = labels.map((l) => ctx.measureText(l).width);
+    const pad = (total - (labels.length - 1) * 2 - need.reduce((a, b) => a + b, 0)) / labels.length;
+    widths = need.map((n) => n + pad);
+  }
+  const lefts = widths.map((_, i) => widths.slice(0, i).reduce((a, b) => a + b + 2, 0));
+  box(ctx, x - 2, y - 2, widths.reduce((a, b) => a + b + 2, 0) + 2, h + 4, { fill: th.light, edge: null, r: (h + 4) / 2 });
   labels.forEach((label, i) => {
-    const tx = x + i * (w + 2);
+    const tx = x + lefts[i];
+    w = widths[i];
     const on = i === current;
     const hot = hover(ui, tx, y, w, h);
     // A pressed tab sinks a pixel straight away.

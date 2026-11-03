@@ -7,7 +7,19 @@ const cache = new Map();
 
 // HD graphics: lighting, glow, and positions snapped to the screen's own pixels (so the camera
 // glides). Sprites stay crisp pixel art either way.
-export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false, glowPass: false };
+export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false, glowPass: false, zoom: 1 };
+// Draws with sprites rasterized `z` times finer than the screen (portraits drawn big in dialogs
+// and windows, so a 2x figure stays smooth instead of showing doubled pixels). Kept apart in the
+// cache.
+export function withZoom(z, fn) {
+  const was = gfx.zoom;
+  gfx.zoom = gfx.hd ? Math.max(1, Math.round(z)) : 1;
+  try {
+    return fn();
+  } finally {
+    gfx.zoom = was;
+  }
+}
 // Rounds a position to the pixel grid: whole game pixels, or in HD the screen's own (finer) pixels,
 // so the camera and everything in the world glide instead of stepping.
 export const snap = (v) => (gfx.hd ? Math.round(v * gfx.scale) / gfx.scale : Math.round(v));
@@ -473,13 +485,14 @@ function remember(key, s) {
 
 // Returns a cached sprite { canvas, white, w, h, res } built by `build()` -> { w, h, shapes, palette, res, soft }.
 export function sprite(key, build) {
+  if (gfx.zoom !== 1) key = `${key}|z${gfx.zoom}`;
   let s = cache.get(key);
   if (s) {
     cache.delete(key);
     cache.set(key, s);
     return s;
   }
-  const { w, h, res, crisp, pad, raster } = rasterOf(build());
+  const { w, h, res, crisp, pad, raster } = rasterOf(build(), gfx.scale * gfx.zoom);
   return remember(key, { canvas: bake(raster), w, h, res, crisp, pad, white: null });
 }
 
@@ -498,6 +511,7 @@ export function spriteBudgeted(key, build, slot) {
     budget.at = budget.frame;
     budget.ms = 0;
   }
+  if (gfx.zoom !== 1) return sprite(key, build);
   const prev = lastOf.get(slot);
   if (prev && !cache.has(key) && budget.ms >= BUDGET_MS) return prev;
   const t = performance.now();

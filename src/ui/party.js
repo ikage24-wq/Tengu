@@ -5,7 +5,8 @@ import { JOBS } from '../data/jobs.js';
 import { ROLES } from '../data/dungeons.js';
 import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, PLAYSTYLES } from '../world/party.js';
 import { openProfile } from './profile.js';
-import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button } from './kit.js';
+import { COLORS, THEMES, text, box, hover, clicked, tooltip, icon, button, fit } from './kit.js';
+import { buffsBottom } from './hud.js';
 import { settings } from '../core/settings.js';
 import { online } from '../net/online.js';
 import { askParty, partyBlocker, inParty, kickFromParty, leaveOnlineParty, partyFriends, askTrade, askJoinParty, joinPartyBlocker, leaderOf } from '../net/together.js';
@@ -134,7 +135,11 @@ export function leaveAll(world) {
   leaveParty(world.bots, world);
 }
 
+// On a phone the left column has to stop above the thumb stick.
+const TOUCH_FLOOR = 214;
+
 export function drawPartyPanel(ui, state, world) {
+  state.leftColumnY = buffsBottom(world);
   const members = partyMembers(world.bots);
   const friends = world.dungeon ? [] : partyFriends();
   if (!members.length && !friends.length) return;
@@ -142,10 +147,18 @@ export function drawPartyPanel(ui, state, world) {
   const th = THEMES.mint;
   const x = 6;
   const map = world.map;
-  const top = settings.minimap ? 20 + Math.max(24, Math.round(map.height * (128 / map.width))) + 8 : 8;
-  const y = top + (Object.keys(world.char.buffs).length ? 30 : 0);
+  const y = state.leftColumnY;
   const w = 120;
-  const h = 18 + (members.length + friends.length + 1) * 19;
+  // On a phone the rows are slim (name and HP side by side) and the panel stops above the thumb
+  // stick: rows past that fold into a "+N more" line. The header folds the panel either way.
+  const touch = Boolean(ui.input?.touch);
+  const rowH = touch ? 14 : 19;
+  const total = members.length + friends.length + 1;
+  const fold = Boolean(state.partyFold);
+  const room = touch ? Math.max(1, Math.floor((TOUCH_FLOOR - y - 18) / rowH)) : total;
+  const shown = fold ? 0 : total > room ? room - 1 : total;
+  const more = fold ? 0 : total - shown;
+  const h = 18 + shown * rowH + (more ? 11 : 0) - (fold ? 3 : 0);
   const lead = world.bots?.partyLead ?? null;
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.88)', edge: th.main, r: 8, width: 1.5 });
   box(ctx, x + 2, y + 2, w - 4, 12, { fill: th.main, edge: null, r: 6 });
@@ -153,37 +166,52 @@ export function drawPartyPanel(ui, state, world) {
   // In a dungeon the panel shows the group: everyone's role and real HP.
   const run = world.dungeon;
   text(ctx, run ? 'Dungeon group' : friends.length ? `Party ${members.length + friends.length + 1}` : `Party ${members.length + 1}/${PARTY_MAX + 1}`, x + 17, y + 11, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  // A little chevron: the header folds the panel away and back.
+  text(ctx, fold ? '▸' : '▾', x + w - 40, y + 11, { size: 7, bold: true, align: 'center', color: '#ffffff' });
   if (!run && button(ui, x + w - 32, y + 2, 28, 12, 'Leave', { size: 6.5 })) leaveAll(world);
+  if (clicked(ui, x, y, w - 34, 14)) state.partyFold = !fold;
+  if (hover(ui, x, y, w - 34, 14)) tooltip(ui, fold ? 'Show the party' : 'Fold the party panel');
   const role = (id) => ROLES[run.roles[id] ?? 'dps'];
   const row = (i, name, level, job, hp, leader, onClick, onRight, hot, style = null) => {
-    const ry = y + 17 + i * 19;
-    box(ctx, x + 3, ry, w - 6, 17, { fill: hp <= 0 ? '#e8e0f0' : hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
-    if (leader) icon(ctx, 'crown', x + 10, ry + 6, 7, '#f0b53a');
+    if (i >= shown) return;
+    const ry = y + 17 + i * rowH;
+    const rh = rowH - 2;
+    box(ctx, x + 3, ry, w - 6, rh, { fill: hp <= 0 ? '#e8e0f0' : hot ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
+    const my = touch ? ry + rh / 2 : ry + 5.5;
+    if (leader) icon(ctx, 'crown', x + 10, my + 0.5, 7, '#f0b53a');
     else if (style) {
       ctx.fillStyle = style.color;
       ctx.beginPath();
-      ctx.arc(x + 9, ry + 5.5, 2.4, 0, Math.PI * 2);
+      ctx.arc(x + 9, my, 2.4, 0, Math.PI * 2);
       ctx.fill();
     }
-    text(ctx, name, x + (leader || style ? 14 : 7), ry + 8, { size: 6.5, bold: true });
-    text(ctx, `Lv${level} ${style ? style.label : JOBS[job].short ?? JOBS[job].name}`, x + w - 6, ry + 8, { size: 5.5, bold: Boolean(style), align: 'right', color: style ? style.color : COLORS.muted });
-    box(ctx, x + 7, ry + 11, w - 14, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
-    if (hp > 0) box(ctx, x + 7, ry + 11, Math.max(2, (w - 14) * hp), 3, { fill: hp < 0.3 ? '#ff6b8a' : run ? '#7ee081' : COLORS.hp, edge: null, r: 1.5 });
-    if (clicked(ui, x + 3, ry, w - 6, 17)) onClick();
-    if (ui.mouse.right && hover(ui, x + 3, ry, w - 6, 17)) {
+    const nx = x + (leader || style ? 14 : 7);
+    if (touch) {
+      // Slim: the name on the left, the HP bar on the right.
+      text(ctx, fit(ctx, name, 56, 7.5, true), nx, ry + rh / 2 + 2.8, { size: 7.5, bold: true });
+      box(ctx, x + 74, ry + rh / 2 - 1.5, w - 81, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
+      if (hp > 0) box(ctx, x + 74, ry + rh / 2 - 1.5, Math.max(2, (w - 81) * hp), 3, { fill: hp < 0.3 ? '#ff6b8a' : run ? '#7ee081' : COLORS.hp, edge: null, r: 1.5 });
+    } else {
+      text(ctx, name, nx, ry + 8, { size: 6.5, bold: true });
+      text(ctx, `Lv${level} ${style ? style.label : JOBS[job].short ?? JOBS[job].name}`, x + w - 6, ry + 8, { size: 5.5, bold: Boolean(style), align: 'right', color: style ? style.color : COLORS.muted });
+      box(ctx, x + 7, ry + 11, w - 14, 3, { fill: 'rgba(74,53,96,0.2)', edge: null, r: 1.5 });
+      if (hp > 0) box(ctx, x + 7, ry + 11, Math.max(2, (w - 14) * hp), 3, { fill: hp < 0.3 ? '#ff6b8a' : run ? '#7ee081' : COLORS.hp, edge: null, r: 1.5 });
+    }
+    if (clicked(ui, x + 3, ry, w - 6, rh)) onClick();
+    if (ui.mouse.right && hover(ui, x + 3, ry, w - 6, rh)) {
       ui.used = true;
       ui.mouse.right = false;
       onRight(ry);
     }
   };
+  const rowHot = (i) => i < shown && hover(ui, x + 3, y + 17 + i * rowH, w - 6, rowH - 2);
   const s = world.stats;
   const leadMe = (!online.party || online.party.leader === online.id) && !lead;
   row(0, world.char.name, world.char.level, world.char.job, world.dead ? 0 : world.char.hp / s.maxHp, !run && leadMe,
-    () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17, w - 6, 17), run ? role('you') : null);
+    () => openProfile(state, { kind: 'self' }), (ry) => openMenu(state, { kind: 'self', x: x + w + 2, y: ry }), rowHot(0), run ? role('you') : null);
   // Friends online in your party: their HP, and where they are when it isn't here.
   friends.forEach((g, i) => {
-    const ry = y + 17 + (i + 1) * 19;
-    const hot = hover(ui, x + 3, ry, w - 6, 17);
+    const hot = rowHot(i + 1);
     const away = g.map !== world.map.id;
     row(i + 1, g.name, g.level ?? 1, g.job ?? 'novice', g.dead ? 0 : (g.hp ?? 1) / (g.maxHp || 1), online.party.leader === g.id,
       () => openProfile(state, { kind: 'ghost', id: g.id }), (r) => openMenu(state, { kind: 'ghost', id: g.id, x: x + w + 2, y: r }), hot,
@@ -198,10 +226,16 @@ export function drawPartyPanel(ui, state, world) {
     // (Away in town after a fall: the row says so, in place of their playstyle.)
     const away = bot.away && !run ? { label: 'In town', color: '#9c86b8' } : null;
     row(i + 1, bot.name, bot.level, bot.char.job, hp, !run && bot.id === lead,
-      () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17),
+      () => openProfile(state, { kind: 'bot', id: bot.id }), (ry) => openMenu(state, { kind: 'bot', id: bot.id, x: x + w + 2, y: ry }), rowHot(i + 1),
       run ? role(bot.id) : away ?? (bot.ai ? PLAYSTYLES[bot.ai.kind] : null));
-    if (!run && bot.ai && hover(ui, x + 3, y + 17 + (i + 1) * 19, w - 6, 17)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}${bot.id === lead ? ' · leader' : ''}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: bot.away ? 'Back in town after a fall; walking back soon' : `Here in ${map.name}`, size: 7.5 }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
+    if (!run && bot.ai && rowHot(i + 1)) tooltip(ui, [{ text: `${bot.name} · ${PLAYSTYLES[bot.ai.kind].label}${bot.id === lead ? ' · leader' : ''}`, bold: true, color: PLAYSTYLES[bot.ai.kind].color }, { text: PLAYSTYLE_TEXT[bot.ai.kind], size: 8, color: COLORS.muted }, { text: bot.away ? 'Back in town after a fall; walking back soon' : `Here in ${map.name}`, size: 7.5 }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
   });
-  // Quick emotes for the party, under it.
-  partyEmoteBar(ui, state, world, x, y + h + 3, w);
+  if (more) {
+    text(ctx, `+${more} more`, x + w / 2, y + 17 + shown * rowH + 7, { size: 6.5, bold: true, align: 'center', color: COLORS.muted });
+    if (clicked(ui, x, y + 15 + shown * rowH, w, 11)) state.partyFold = true;
+  }
+  // Quick emotes for the party, under it (on a phone, the Emote button does this). The party
+  // quest card stacks under whatever is last.
+  const bar = touch ? 0 : partyEmoteBar(ui, state, world, x, y + h + 3, w);
+  state.leftColumnY = y + h + (bar ? 3 + bar : 0) + 4;
 }

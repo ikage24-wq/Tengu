@@ -108,8 +108,11 @@ export function craftingWindow(ui, state, world) {
     drawItemIcon(ctx, r.makes, lx + 4, y + 3);
     ctx.globalAlpha = 1;
     text(ctx, fit(ctx, `${itemName(r.makes)}${r.qty > 1 ? ` x${r.qty}` : ''}`, LIST_W - 34, 7.5, true), lx + 24, y + 10, { size: 7.5, bold: true, color: why === 'level' ? COLORS.muted : COLORS.ink });
-    const sub = why === 'level' ? `Needs Crafting Lv ${r.level}` : why === 'materials' ? 'Gather the materials' : why === 'bag' ? 'Bag full' : 'Ready to craft';
-    text(ctx, sub, lx + 24, y + 18.5, { size: 6, color: why === 'level' ? COLORS.bad : why ? COLORS.muted : COLORS.good, bold: !why });
+    // What's in the way, row by row: the level, or what you're short of (the first material and
+    // have/need), so each row says something of its own instead of the same line.
+    const short = why === 'materials' ? Object.entries(r.needs).find(([id, n]) => countItem(char.inventory, id) < n) : null;
+    const sub = why === 'level' ? `Needs Crafting Lv ${r.level}` : short ? `${ITEMS[short[0]]?.name ?? short[0]} ${countItem(char.inventory, short[0])}/${short[1]}` : why === 'bag' ? 'Bag full' : 'Ready to craft';
+    text(ctx, fit(ctx, sub, LIST_W - 34, 6, !why), lx + 24, y + 18.5, { size: 6, color: why === 'level' ? COLORS.bad : why ? COLORS.muted : COLORS.good, bold: !why });
     if (!why) sparkle(ctx, lx + LIST_W - 8, y + 11, 2.6 + Math.sin(performance.now() / 300 + y) * 0.6, COLORS.good);
     if (clicked(ui, lx, y, LIST_W, ROW - 3)) win.sel = r.id;
     y += ROW;

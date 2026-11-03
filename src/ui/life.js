@@ -12,7 +12,9 @@ import { lifeIcon } from '../render/life-fx.js';
 import { COLORS, windowFrame, text, box, bar, hover, tooltip, fit, sparkle, icon } from './kit.js';
 
 const W = 340;
-const H = 228;
+const H = 240;
+// The skills that take a tool (crafted at a bench); cooking and crafting don't.
+const TOOLED = { fishing: 'rod', mining: 'pickaxe', gathering: 'sickle' };
 const ROW = 38;
 const MINT = '#5fd3a0';
 
@@ -100,7 +102,9 @@ export function lifeWindow(ui, state, world) {
     text(ctx, `Lv ${level}`, nx + 80, y + 12, { size: 9 * lvScale, bold: true, align: 'right', color: th.ink });
     const fresh = t - a.flashAt;
     bar(ctx, nx, y + 17, 80, 9, a.shown, MINT, level >= LIFE_MAX ? 'MAX' : `${lifeExp(char, skill)} / ${need}`, { size: 6, flash: fresh < 0.25 ? 1 - fresh / 0.25 : 0 });
-    text(ctx, fit(ctx, ABOUT[skill], 92, 6, false), nx, y + 33, { size: 6, color: COLORS.muted });
+    // Under the bar, the tool in hand (if this skill takes one and you have it).
+    const held = TOOLED[skill] ? toolFor(char, skill) : null;
+    if (held) text(ctx, fit(ctx, held.name, 92, 6.5, true), nx, y + 33, { size: 6.5, bold: true, color: '#3f9f5f' });
 
     // What the next level gives, and the tool.
     const rx = x + 132;
@@ -121,8 +125,8 @@ export function lifeWindow(ui, state, world) {
     } else line = 'Next: better crafts as you level';
     text(ctx, 'NEXT LEVEL', rx, y + 10, { size: 5.5, bold: true, color: th.dark });
     text(ctx, fit(ctx, line, W - 148, 7, true), rx, y + 19, { size: 7, bold: true, color });
-    const tl = toolLine(tool);
-    text(ctx, fit(ctx, tl ? `Tool: ${tl}` : 'Tool: none yet (craft one at a bench)', W - 148, 6.5, false), rx, y + 30, { size: 6.5, color: tl ? '#3f9f5f' : COLORS.muted });
+    // What you do, in full (it used to be cut off under the bar).
+    text(ctx, fit(ctx, ABOUT[skill], W - 148, 6.5, false), rx, y + 30, { size: 6.5, color: COLORS.muted });
 
     if (hot) {
       const lines = [{ text: `${LIFE_NAMES[skill]} Lv ${level}`, bold: true, color: th.ink }];
@@ -130,9 +134,18 @@ export function lifeWindow(ui, state, world) {
       if (!PERKS[skill].length) lines.push({ text: 'Higher levels open recipes and roll better quality.', size: 8 });
       const nextTier = TIER_LEVEL.find((lv) => lv > level);
       if (nextTier) lines.push({ text: `Tier ${TIER_LEVEL.indexOf(nextTier)} opens at Lv ${nextTier}`, size: 8, color: COLORS.gold });
+      if (TOOLED[skill]) lines.push(tool ? { text: `Tool: ${toolLine(tool)}`, size: 8, color: '#3f9f5f' } : { text: 'No tool yet: craft one at a bench.', size: 8, color: COLORS.muted });
       lines.push({ text: 'Every action also gives character EXP.', size: 7.5, color: COLORS.muted });
       tooltip(ui, lines);
     }
     y += ROW;
+  }
+  // Tools: said once, for the skills still without one.
+  const missing = Object.keys(TOOLED).filter((s) => !toolFor(char, s));
+  if (missing.length) {
+    const names = missing.map((s) => ({ fishing: 'rod', mining: 'pickaxe', gathering: 'sickle' })[s]);
+    const list = names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0];
+    icon(ctx, 'hammer', x + 8, y + 5, 8, th.dark);
+    text(ctx, fit(ctx, `No ${list} yet: craft tools at a bench for quicker, bigger finds.`, W - 40, 7, false), x + 16, y + 8, { size: 7, color: COLORS.muted });
   }
 }

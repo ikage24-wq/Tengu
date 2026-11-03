@@ -57,7 +57,7 @@ export function optionsWindow(ui, state, world) {
   if (!windowFrame(ui, win, W, H, 'Options')) return;
   const { ctx } = ui;
   const th = ui.theme;
-  win.tab = tabs(ui, win.x + 8, win.y + 24, TAB_NAMES, win.tab ?? 0, { w: 40 });
+  win.tab = tabs(ui, win.x + 10, win.y + 24, TAB_NAMES, win.tab ?? 0, { total: W - 22 });
   const page = TAB_NAMES[win.tab];
   const x = win.x + 10;
   let y = win.y + 46;
