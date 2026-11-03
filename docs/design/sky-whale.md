@@ -30,7 +30,7 @@ brings players of levels 45-48.
 
 ## Monsters (levels 45-49), on a new rig
 
-The **sky rig** (render/mobs/skyrig.js) is built for wind. Every figure stands in a steady wind
+The **sky rig** (render/mobs/skyfolk.js) is built for wind. Every figure stands in a steady wind
 from ahead, with gusts on top of it. Hair, scarves, sashes, cloth and feathers stream back and
 ripple. Poses glide from one to the next with no snap: a long ease in and out, and a float that
 carries on between keys. Gliders hang and drift instead of stepping. Under each figure, little
@@ -79,3 +79,12 @@ wind lines and cloud wisps pass beneath the feet.
   on the head, a scarf that streams, a whale-tail cape).
 - **Music:** "Skyfarers" (epic folk in D Dorian, a fiddle hook over taiko toms) and, for the
   bosses, "Leviathan" (E minor, horns and strings over driving taiko).
+
+## The 2026-11-03 redraw
+
+The folk and bosses were redrawn creature-first (render/mobs/skyfolk.js and skyboss.js), retiring
+the costumed girls on the sky rig: a flying squirrel kite rider in goggles, a corgi shepherd with a
+cloud lamb, a seagull pirate gunner with a blunderbuss, a walrus barnacle knight with a coral lance,
+a storm-cloud harpist with lightning horns, and a puffin feather monk. Captain Gale is a red panda
+sky-pirate captain, the Barnacle Matriarch a snail queen in a barnacle-crusted conch, and the
+Whale's Dream a sleepy translucent baby sky whale full of stars.

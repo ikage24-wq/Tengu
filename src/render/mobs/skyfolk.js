@@ -1,570 +1,346 @@
-// Monster art: the folk of the Sky Whale's Back (the levels 45-50 group dungeon, 2026-11, see
-// docs/design/sky-whale.md), on the sky rig (skyrig.js: everything streams back in the wind, poses
-// glide key to key, and wind lines pass beneath them).
-//   kiterider       Kite Rider: a girl hanging from a big diamond kite, boots dangling; a diving
-//                   two-footed kick.
-//   shepherdess     Cloud Shepherdess: a fluffy wool dress, a crook, a little cloud sheep bobbing
-//                   beside her; the crook hooks.
-//   gunner          Sky Pirate Gunner: a tricorn with goggles pushed up on it, a bell-mouthed
-//                   blunderbuss; a shot and a puff of smoke.
-//   barnacleknight  Barnacle Knight: armour grown over with barnacles and shells, a coral lance; a
-//                   heavy thrust.
-//   harpist         Storm Harpist: a storm-cloud gown, a harp strung with lightning; a strum.
-//   monk            Feather Monk: robes, folded feather wings, prayer beads; a palm strike that
-//                   rings out a gust.
-// All face right, feet at the bottom.
+// Monster art: the folk of the Sky Whale's Back (the levels 45-50 group dungeon, see
+// docs/design/sky-whale.md). Redrawn creature-first (2026-11-03, the dungeon monster redesign:
+// chibi creatures with their own silhouettes; the costumed girls on the sky rig are retired).
+// Everything loose streams back in the high wind.
+//   kiterider       Kite Rider: a flying squirrel in goggles gliding on its own diamond membrane;
+//                   a diving two-footed kick.
+//   shepherdess     Cloud Shepherd: a corgi in a scarf with a crook, a little cloud lamb bobbing
+//                   beside it; the crook hooks.
+//   gunner          Sky Pirate Gunner: a seagull pirate in a tricorn and goggles with a
+//                   bell-mouthed blunderbuss; a shot and a puff of smoke.
+//   barnacleknight  Barnacle Knight: a walrus in barnacle-crusted armour with a coral lance; a heavy
+//                   thrust.
+//   harpist         Storm Harpist: a puffy dark storm cloud with lightning-bolt horns plucking a
+//                   harp; a strum that cracks a bolt.
+//   monk            Feather Monk: a round puffin in monk's robes with prayer beads; a palm strike
+//                   that rings out a gust.
+// Every design faces right, its lowest point on the bottom edge. Attacks are four frames:
+// wind-up (the tell), strike, impact, recover.
 
-import { mix } from './kit.js';
-import { KIT } from './maidens.js';
-import { RW, RH, solve, plant, limb3, drawRig } from './manorrig.js';
-import { armPart, legPart, gown, bodice, headPart, hairOf, eyes, BANGS, SWEPT } from './manor.js';
-import { driftAt, streamer, windUnder, puff, gust } from './skyrig.js';
-
-const { within, at, fpoly, opoly, ooval, dot, arcPts, oband, fband, taperW, line, sparkle, fade, backHair, round, soften, lerp, flowPts, lockHair, gem, TAU } = KIT;
+import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob } from './critter.js';
 
 const frames = (pose) => (pose === 'walk' ? 8 : pose === 'attack' ? 4 : 6);
-function keyed(pose, f, mood, K, float = 0) {
-  if (mood === 'dead') return K.dead;
-  let P;
-  if (pose === 'walk') P = driftAt(K.walk, f, 8, true, float);
-  else if (pose === 'attack') P = driftAt(K.attack, f, 3, false);
-  else P = driftAt(K.idle, f, 6, true, float);
-  if (mood === 'hurt') P = { ...P, lean: (P.lean ?? 0) - 0.24, tilt: -0.34, hip: [P.hip[0] - 1.5, P.hip[1]] };
-  return P;
+const phase = (pose, f) => f / frames(pose);
+// Wind lines streaking past behind a creature.
+export function windLines(x, y, q, n = 3, len = 12) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const u = (q * 2 + i / n) % 1;
+    const wx = x + 6 - u * 24;
+    const wy = y + (i - 1) * 6;
+    out.push(F(T([[wx, wy], [wx + len, wy - 0.4], [wx + len, wy + 0.4]], '#ffffff')));
+  }
+  return out;
 }
-const NOLEGS = [[0, 0], [0, 0]];
-const AIR = '#eaf6ff';
-
-// Hair blown back in the wind: a few long locks off the back of the head, streaming.
-const blown = (HR, ph, n = 3, len = 13, w = 3.6) => [0, 1, 2, 3].slice(0, n).flatMap((k) => lockHair(flowPts([-5 + k, -4 + k * 2.6], Math.PI - 0.45 - k * 0.12, -0.25, len - k * 2, ph * 2 - k * 0.6, 0.16 * gust(ph, k), 5), w - k * 0.5, HR));
+// A soft puff of cloud.
+export const cloudPuff = (x, y, r, c = '#ffffff') => [E(x - r * 0.7, y + r * 0.2, r * 0.7, r * 0.6, c), E(x + r * 0.7, y + r * 0.2, r * 0.7, r * 0.6, c), E(x, y - r * 0.2, r * 0.85, r * 0.8, c), F(E(x - r * 0.3, y - r * 0.5, r * 0.35, r * 0.2, '#ffffff'))];
 
 // ---------- Kite Rider ----------
 
-const KR = soften({
-  skin: '#ffe8d8', skinDk: '#f2c8b0', hair: '#ff9a3a', hairDk: '#d8701a', hairLt: '#ffc890',
-  jacket: '#3aa0e0', jacketDk: '#2a74b0', scarf: '#ffd36b', scarfDk: '#e0a82a', short: '#2a3a5a', boot: '#8a5a3a', bootDk: '#5a3a2a',
-  kite: '#ff5a7a', kiteDk: '#d83a5a', kite2: '#ffffff', spar: '#8a5a3a', tail: '#ffd36b', tail2: '#3aa0e0', goggle: '#9fe8ff',
-});
-const KR_FACE = { skin: KR.skin, skinSh: '#f2c8b0', skinSh2: '#d8a890', blush: '#ff9a8a', lip: '#e0504e', lipLine: '#a8302e', eye: eyes('#3a8ae0', '#1a4a9a', '#c8e8ff', { rx: 3.4, ry: 3.2 }), brow: { c: '#d8701a', kind: 'soft', w: 0.8 }, moods: { idle: { open: 1, mouth: 'grin' }, angry: { mouth: 'grin' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } } };
-// Hanging from the kite bar: legs swinging like a swing, kicking, tucking.
-// Strapped in a harness under the kite, hands on the control bar at her chest: legs swinging like a
-// swing, kicking, tucking; one hand waves.
-const KR_K = {
-  walk: [
-    { hip: [36, 46], lean: 0.12, tilt: 0.06, arms: [[1.5, -1.3], [1.7, -1.2]], legs: [[0.5, 0.4], [0.1, 0.6]] },
-    { hip: [36, 47], lean: 0.06, tilt: -0.04, arms: [[1.5, -1.3], [1.7, -1.2]], legs: [[0.1, 0.6], [0.5, 0.4]] },
-  ],
-  idle: [
-    { hip: [36, 46], lean: -0.02, tilt: 0.1, arms: [[1.5, -1.3], [1.7, -1.2]], legs: [[0.3, 0.6], [0.6, 0.2]] },
-    { hip: [36, 47], lean: 0.08, tilt: -0.06, arms: [[1.5, -1.3], [1.7, -1.2]], legs: [[-0.2, 0.9], [0.1, 0.8]] },
-    { hip: [36, 46], lean: 0, tilt: 0.14, arms: [[1.5, -1.3], [2.3, -0.4]], legs: [[0.6, 0.3], [0.4, 0.5]], wave: 1 },
-  ],
-  // Swing back, then both boots forward in a dive.
-  attack: [
-    { hip: [32, 45], lean: -0.3, tilt: -0.1, arms: [[1.3, -1.3], [1.5, -1.2]], legs: [[-0.6, 1.4], [-0.4, 1.4]] },
-    { hip: [42, 49], lean: -0.5, tilt: 0.1, arms: [[1.9, -1.2], [2.1, -1.1]], legs: [[1.7, 0.1], [1.6, 0.1]], kick: 1 },
-    { hip: [42, 49], lean: -0.46, tilt: 0.1, arms: [[1.9, -1.2], [2.1, -1.1]], legs: [[1.6, 0.15], [1.5, 0.15]], kick: 1 },
-    { hip: [37, 46], lean: 0, tilt: 0.06, arms: [[1.5, -1.3], [1.7, -1.2]], legs: [[0.3, 0.6], [0.6, 0.2]] },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: [[1.5, -2.7], [1.3, -2.5]] },
-};
+const SQUIRREL_ATK = [
+  { dy: -8, dx: -4, tilt: -20, kick: 0 },
+  { dy: 6, dx: 8, tilt: 34, kick: 1, smear: 1 },
+  { dy: 8, dx: 10, tilt: 30, kick: 1, hit: 1 },
+  { dy: 0, dx: 2, tilt: 4, kick: 0.2 },
+];
 
-function kiterider(pose, f, mood) {
-  const C = fade(KR, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, KR_K, 1);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#6a2a0a');
+function squirrel(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? SQUIRREL_ATK[f] : null;
   const dead = mood === 'dead';
-  const [B, A] = S.arms;
-  const bar = [(B.hand[0] + A.hand[0]) / 2, (B.hand[1] + A.hand[1]) / 2];
-  const shapes = drawRig(S, {
-    behind: () => {
-      const out = [...windUnder(S.hip[0], 77, ph)];
-      if (dead) return out;
-      // The kite: a big diamond tilted into the wind behind her shoulders (never over her face),
-      // harness lines down to her back and the control bar, a ribbon tail streaming.
-      const kx = S.chest[0] - 13;
-      const ky = S.chest[1] - 8 + Math.sin(ph) * 1.2;
-      const tilt = -0.7 + Math.sin(ph) * 0.06;
-      out.push(...within(at(kx, ky, tilt), () => [
-        ...opoly([[0, -14], [11, 0], [0, 9], [-11, 0]], C.kite), fpoly([[0, -14], [11, 0], [0, 0]], C.kite2), fpoly([[0, 9], [-11, 0], [0, 0]], C.kite2),
-        line([[0, -14], [0, 9]], 0.6, C.spar), line([[-11, 0], [11, 0]], 0.6, C.spar), ...gem(0, 0, 1.4, C.scarf),
-      ]));
-      out.push(line([[kx + 3, ky + 3], S.chest], 0.4, C.spar), line([[kx + 2, ky + 5], [S.hip[0] - 1, S.hip[1] - 2]], 0.4, C.spar), line([[kx + 4, ky + 1], bar], 0.3, C.spar));
-      const tail = flowPts([kx - 6, ky + 6], Math.PI * 0.8, 0.2, 22 * gust(ph), ph * 2.4, 0.4, 7);
-      out.push(fband(tail, 0.6, C.spar, 2));
-      for (let k = 1; k < tail.length; k += 2) out.push(...opoly([[tail[k][0] - 1.6, tail[k][1]], [tail[k][0], tail[k][1] - 1.4], [tail[k][0] + 1.6, tail[k][1]], [tail[k][0], tail[k][1] + 1.4]], k % 4 === 1 ? C.tail : C.tail2, 0.3));
-      out.push(...streamer([S.neck[0] - 1, S.neck[1] + 1], 16, ph, 2.6, C.scarf));
-      return out;
-    },
-    backArm: () => armPart(B, C.jacketDk, C.skinDk),
-    backLeg: () => legPart(S.legs[0], C.skinDk, C.bootDk),
-    body: () => {
-      const [hx, hy] = S.hip;
-      const out = [...opoly(round([[hx - 4.4, hy - 1.4], [hx + 4.4, hy - 1.4], [hx + 5, hy + 3.4], [hx - 5, hy + 3.4]], 1), C.short)];
-      out.push(...bodice(S, C.jacket, C.jacketDk));
-      const [cx, cy] = S.chest;
-      out.push(...oband([[cx - 4, cy - 1], [cx + 4, cy - 1.2]], 2.4, C.scarf, 1, 0.3), line([[cx + 1, cy + 1], [hx + 1, hy - 1.4]], 0.5, C.jacketDk));
-      out.push(dot(cx + 3, cy + 4, 0.7, C.scarf), dot(cx + 3, cy + 6.4, 0.7, C.scarf));
-      return out;
-    },
-    frontLeg: () => legPart(S.legs[1], C.skin, C.boot),
-    head: () => headPart(S, mood, KR_FACE, BANGS, HR, 1.14, () => [...backHair(HR, 4), ...blown(HR, ph, 3, 12)], () => [
-      // Flying goggles pushed up on her brow (never over the eyes), the strap round the head.
-      fband(arcPts(0.4, -2, 7.6, 6.4, 196, 344, 8), 0.9, C.short, 1), ...ooval(-2.4, -7.6, 2.2, 1.8, C.goggle), ...ooval(2.6, -7.8, 2.2, 1.8, C.goggle), dot(-3, -8.2, 0.6, '#ffffff'),
-    ]),
-    frontArm: () => {
-      const out = [...armPart(A, C.jacket, C.skin)];
-      if (P.kick > 0.5) {
-        const ft = S.legs[1].ft;
-        out.push(fband(arcPts(S.hip[0], S.hip[1], 22, 16, -40, 50, 8), (t) => 2.6 * Math.sin(Math.PI * t), mix(AIR, '#ffffff', 0.5), 1), sparkle(ft[0] + 4, ft[1], 3, '#ffffff'));
-      }
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+  const walk = pose === 'walk';
+  const fur = ramp('#c8946a', { step: 10, turn: 12 });
+  const glide = walk ? Math.sin(TAU * q * 2) * 2 : -breath(q) * 1.6;
+  const cx = 20 + (A ? A.dx : 0);
+  const cy = (dead ? 26 : 16) + (A ? A.dy : glide);
+  const tilt = dead ? 80 : A ? A.tilt : walk ? 8 : sway(q) * 4;
+  const out = [];
+  if (!dead) out.push(...windLines(cx - 8, cy + 2, q));
+  const body = [];
+  // The glide membrane: a diamond of fur stretched between paws, rippling.
+  const rip = Math.sin(TAU * q * 3) * 1.4;
+  body.push(T([[cx - 14, cy + 1 + rip], [cx, cy - 6], [cx + 12, cy + 1 - rip], [cx, cy + 9]], fur.sh), F(T([[cx - 12, cy + 1 + rip], [cx, cy - 4], [cx + 10, cy + 1 - rip], [cx, cy + 6]], mix(fur.base, '#fff0e0', 0.25))));
+  for (const [x, y] of [[-14, 1], [12, 1], [-6, 7], [6, 7]]) body.push(E(cx + x, cy + y, 1.6, 1.4, fur.base));
+  // A big fluffy tail streaming behind.
+  const tl = chain(cx - 6, cy + 4, 170, [4, 4, 4], wave(TAU * q * 2, 14, 0.8));
+  body.push(strand(tl, (t) => 7 * (1 - t * 0.2), fur.base), E(tl.at(-1)[0], tl.at(-1)[1], 4, 3.6, fur.hi));
+  // Feet: tucked when gliding, both out in front for the kick.
+  const k = A ? A.kick : 0;
+  for (const dy of [3, 6]) body.push(...limb([cx + 4, cy + dy], [cx + 6 + k * 8, cy + dy + 2 - k * 1], 2, 1.8, fur.sh), E(cx + 7 + k * 8, cy + dy + 2 - k, 1.6, 1.2, '#4a2a2a'));
+  // Head: round, big ears, goggles on the brow, a cream face.
+  const hx = cx + 6;
+  const hy = cy - 4;
+  body.push(T([[hx - 5, hy - 3], [hx - 6, hy - 10], [hx - 1, hy - 5]], fur.sh), T([[hx + 2, hy - 4], [hx + 3, hy - 11], [hx + 6, hy - 4]], fur.base));
+  body.push(...blob(hx, hy, 6.6, 6, fur), F(O(hx + 2, hy + 2, 4, 3, 0, '#fff0e0', 12)), E(hx + 6, hy + 1, 1, 0.8, '#4a2a2a'));
+  body.push(...cuteFace(hx + 1, hy, 0.85, mood, { iris: '#3a2a1a', gap: 4, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: fur.base, mouthDy: 3.2 }));
+  body.push(R(hx - 6, hy - 5, 12, 2, '#5a4a3a'), E(hx - 1, hy - 4.6, 2.2, 2, '#9fe0ff'), E(hx + 3.6, hy - 4.6, 2.2, 2, '#9fe0ff'), F(E(hx - 1.6, hy - 5.2, 0.7, 0.6, '#ffffff')));
+  out.push(...spin(body, cx, cy, tilt));
+  if (A?.smear) out.push(smear([[cx - 14, cy - 14], [cx, cy - 2], [cx + 14, cy + 10]], 5, '#fff0e0'));
+  if (A?.hit) out.push(...star(cx + 16, cy + 12, 3.2, '#fff6a8'));
+  return { w: 46, h: 38, res: 3, shapes: dead ? spin(out, cx, 36, 0) : out };
 }
 
-// ---------- Cloud Shepherdess ----------
+// ---------- Cloud Shepherd ----------
 
-const CS = soften({
-  skin: '#fff4ee', skinDk: '#f2d8cc', hair: '#c8a8f0', hairDk: '#9a7ad0', hairLt: '#ece0ff',
-  wool: '#ffffff', woolDk: '#d8e2f6', dress: '#9fd0ff', dressDk: '#6aa0e0', apron: '#fff6e0', crook: '#c8a070', crookDk: '#8a6a3a', ribbon: '#ff8ab0', boot: '#6a5a8a',
-  sheep: '#ffffff', sheepDk: '#d8e2f6', sheepFace: '#5a5a7a',
-});
-const CS_FACE = { skin: CS.skin, skinSh: '#f2d8cc', skinSh2: '#dcb8ac', blush: '#ffa8c0', lip: '#e0708e', lipLine: '#a8405e', eye: eyes('#7a6ad8', '#3a2a8a', '#e0d8ff', { rx: 3.2, ry: 3.4, tilt: -0.05 }), brow: { c: '#9a7ad0', kind: 'soft', w: 0.6 }, moods: { idle: { open: 0.7, mouth: 'smile' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-const CS_K = {
-  walk: [
-    { hip: [36, 46], lean: 0.06, tilt: 0.06, arms: [[0.4, -0.6], [0.9, -1.6]], legs: [[-0.4, 0.3], [0.4, 0.05]] },
-    { hip: [36, 45], lean: 0.04, tilt: -0.04, arms: [[-0.2, -0.4], [1, -1.6]], legs: [[0.4, 0.05], [-0.4, 0.3]] },
-  ],
-  // Leaning on the crook, then calling the sheep, then a hand shading her eyes.
-  idle: [
-    { hip: [36, 46], lean: 0.02, tilt: 0.1, arms: [[0.3, -0.6], [0.8, -1.6]], legs: [[-0.2, 0], [0.3, 0.1]] },
-    { hip: [36, 46], lean: -0.06, tilt: -0.1, arms: [[2, -1.6], [0.8, -1.6]], legs: [[-0.2, 0], [0.3, 0.1]] },
-    { hip: [36, 46], lean: 0.04, tilt: 0.14, arms: [[0.3, -0.6], [0.9, -1.8]], legs: [[-0.25, 0.1], [0.3, 0.1]] },
-  ],
-  // The crook swung up and over, hooking down.
-  attack: [
-    { hip: [35, 46], lean: -0.16, tilt: -0.12, arms: [[0.4, -0.6], [-0.6, -2]], legs: [[-0.3, 0.1], [0.4, 0.1]] },
-    { hip: [39, 46], lean: 0.3, tilt: 0.14, arms: [[0.2, -0.4], [1.9, -0.2]], legs: [[-0.5, 0.2], [0.5, 0.15]], hook: 1 },
-    { hip: [39, 46], lean: 0.26, tilt: 0.12, arms: [[0.2, -0.4], [1.7, 0]], legs: [[-0.5, 0.2], [0.5, 0.15]], hook: 1 },
-    { hip: [37, 46], lean: 0, tilt: 0.08, arms: [[0.3, -0.6], [0.8, -1.6]], legs: [[-0.2, 0], [0.3, 0.1]] },
-  ],
-  dead: { hip: [34, 60], lean: 0.5, tilt: 0.55, arms: [[0.1, 0.2], [0.3, 0.1]], legs: [[1.5, -2.7], [1.3, -2.5]] },
-};
+const CORGI_ATK = [
+  { crook: -150, lean: -8 },
+  { crook: -20, lean: 12, smear: 1 },
+  { crook: 20, lean: 14, hit: 1 },
+  { crook: -60, lean: 0 },
+];
 
-// The little cloud sheep: a fluffy round body, a dark face, stubby legs, bobbing.
-function cloudSheep(x, y, ph, C) {
-  const b = Math.sin(ph * 2) * 1.2;
-  return [
-    ...[[-2.4, 0.2], [2.4, 0.4]].flatMap(([dx]) => line([[x + dx, y + 3 + b], [x + dx, y + 6 + b]], 0.9, C.sheepFace)),
-    ...puff(x, y + b, 4.4, C.sheep, '#ffffff'), ...ooval(x + 4.6, y - 0.4 + b, 2, 2.2, C.sheepFace), ...ooval(x + 3.6, y - 2.4 + b, 1, 0.6, C.sheepFace, 0.4), dot(x + 5.2, y - 0.8 + b, 0.5, '#ffffff'),
-  ];
-}
-
-function shepherdess(pose, f, mood) {
-  const C = fade(CS, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, CS_K);
-  const S = plant(solve(P));
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#4a2a7a');
-  const A = S.arms[1];
-  const ca = P.hook ? A.a - Math.PI / 2 - 0.2 : -Math.PI / 2 + 0.1;
-  const foot = [A.hand[0] - Math.cos(ca) * 10, A.hand[1] - Math.sin(ca) * 10];
-  const top = [A.hand[0] + Math.cos(ca) * 12, A.hand[1] + Math.sin(ca) * 12];
-  const shapes = drawRig(S, {
-    behind: () => [...windUnder(S.hip[0], 77, ph), ...streamer([S.chest[0] - 2, S.chest[1] + 1], 12, ph, 1.6, C.ribbon, 1), ...(mood === 'dead' ? [] : cloudSheep(S.hip[0] - 16, 66 + Math.sin(ph) * 2, ph, C))],
-    backArm: () => armPart(S.arms[0], C.woolDk, C.skinDk),
-    backLeg: () => legPart(S.legs[0], C.dressDk, C.boot),
-    body: () => {
-      // A wool dress puffed like a cloud, an apron, a ribbon at the waist streaming back.
-      const g = gown(S, 13, 8, C.dress, C.dressDk, Math.sin(ph) * 0.8 - 0.6 * gust(ph));
-      const out = [...g.out];
-      const [hx, hy] = S.hip;
-      for (let k = 0; k < 5; k++) out.push(...ooval(hx - 8 + k * 4, hy + 12.4 + (k % 2) * 0.6, 2.4, 1.8, C.wool, 0, 0.25));
-      out.push(...opoly(round([[hx - 3, hy], [hx + 3.4, hy], [hx + 4, hy + 9], [hx - 3.4, hy + 9]], 1), C.apron, 0.3));
-      out.push(...bodice(S, C.dress, C.dressDk));
-      const [cx, cy] = S.chest;
-      for (let k = 0; k < 4; k++) out.push(...ooval(cx - 4 + k * 2.6, cy - 1 + Math.abs(k - 1.5) * 0.4, 1.6, 1.4, C.wool, 0, 0.25));
-      out.push(...ooval(hx - 4, hy, 1.4, 1, C.ribbon), ...streamer([hx - 5, hy], 10, ph, 1.4, C.ribbon, 2, 0.3));
-      return out;
-    },
-    frontLeg: () => legPart(S.legs[1], C.dress, C.boot),
-    head: () => headPart(S, mood, CS_FACE, BANGS, HR, 1.14, () => [...backHair(HR, 7), ...blown(HR, ph, 2, 11)], () => [
-      // A woolly bonnet with little sheep ears and a ribbon tie.
-      ...ooval(-0.6, -8.6, 8.4, 3.4, C.wool, -0.1), ...ooval(-7.6, -6, 2, 1.2, C.sheepDk, 0.6), ...ooval(6.4, -7, 2, 1.2, C.sheepDk, -0.6), dot(-3, -10.4, 1, C.ribbon),
-    ]),
-    frontArm: () => {
-      // The shepherd's crook: a long staff with a curl, a bell tied under the curl.
-      const out = [...oband([foot, top], 0.9, C.crook, 1, 0.3)];
-      const curl = arcPts(top[0] + Math.cos(ca + Math.PI / 2) * 3, top[1] + Math.sin(ca + Math.PI / 2) * 3, 3, 3, (ca * 180) / Math.PI - 90, (ca * 180) / Math.PI + 140, 8);
-      out.push(...oband(curl, 0.9, C.crook, 1, 0.3), ...ooval(top[0] + 1, top[1] + 2.4, 1.2, 1.4, '#ffd36b'));
-      out.push(...armPart(A, C.wool, C.skin));
-      if (P.hook) out.push(fband(arcPts(S.hip[0] + 4, S.hip[1] - 6, 24, 18, -90, 40, 8), (t) => 2.4 * Math.sin(Math.PI * t), mix(C.dress, '#ffffff', 0.5), 1), sparkle(top[0] + 4, top[1], 3, '#ffffff'));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+function corgi(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? CORGI_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const fur = ramp('#f0a050', { step: 10, turn: 12 });
+  const step = walk ? Math.sin(TAU * q * 2) : 0;
+  const cx = 22;
+  const cy = (dead ? 10 : 0) - Math.abs(step) * 1;
+  const lean = dead ? 86 : A ? A.lean : walk ? step * 3 : 0;
+  const out = [];
+  // The little cloud lamb bobbing along beside it.
+  if (!dead) {
+    const lx = cx - 14;
+    const ly = 20 + Math.sin(TAU * q * 2 + 1) * 2;
+    out.push(...cloudPuff(lx, ly, 5), E(lx + 4, ly - 1, 2.4, 2.2, '#fff4f0'), F(E(lx + 5, ly - 1.4, 0.5, 0.6, '#3a2a3a')), ...limb([lx - 2, ly + 4], [lx - 2, ly + 7], 0.8, 0.8, '#7a6a7a'), ...limb([lx + 2, ly + 4], [lx + 2, ly + 7], 0.8, 0.8, '#7a6a7a'));
+  }
+  const body = [];
+  // A long low corgi on stubby legs, standing up on its hind legs, a fluffy cream chest.
+  for (const [ox, s, c] of [[-3, step, fur.sh], [3, -step, fur.base]]) body.push(...limb([cx + ox, cy + 26], [cx + ox + Math.max(0, s) * 2, 34 - Math.max(0, s) * 1.6], 3.4, 3.2, c), O(cx + ox + 1 + Math.max(0, s) * 2, 34.6 - Math.max(0, s) * 1.6, 2.6, 1.4, 0, '#fff4e0', 12));
+  body.push(E(cx - 9, cy + 22, 3.4, 3, '#fff4e0'));
+  body.push(...blob(cx, cy + 20, 9, 8.4, fur), F(O(cx + 3, cy + 21, 5.4, 6.4, 0, '#fff4e0', 16)));
+  // The scarf streaming in the wind.
+  const sc = chain(cx - 3, cy + 12, 180, [4, 4, 4], wave(TAU * q * 2, 18, 0.8));
+  body.push(R(cx - 6, cy + 11, 12, 3, '#4fb0e0'), strand(sc, 3, '#4fb0e0'));
+  // Head: big pointy ears, a white blaze, a smiley muzzle.
+  const hx = cx + 2;
+  const hy = cy + 6;
+  body.push(T([[hx - 6, hy - 3], [hx - 7, hy - 13], [hx - 1, hy - 6]], fur.sh), F(T([[hx - 5.4, hy - 4], [hx - 6, hy - 10], [hx - 2.6, hy - 6]], '#ffc8a8')), T([[hx + 3, hy - 5], [hx + 5, hy - 14], [hx + 8, hy - 4]], fur.base), F(T([[hx + 4, hy - 5], [hx + 5.4, hy - 11], [hx + 7, hy - 5]], '#ffc8a8')));
+  body.push(...blob(hx, hy, 7.6, 6.6, fur), F(T([[hx + 1, hy - 6], [hx + 3, hy - 6], [hx + 5, hy + 4], [hx - 1, hy + 4]], '#fff4e0')), F(O(hx + 4, hy + 3, 4.4, 3, 0, '#fff4e0', 12)), E(hx + 7.6, hy + 1.6, 1.2, 1, '#3a2a2a'));
+  body.push(...cuteFace(hx + 1.6, hy - 0.4, 0.9, mood, { iris: '#5a3a1a', gap: 4.4, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: fur.base, mouthDy: 3.6 }));
+  // The crook.
+  const ca = A ? A.crook : walk ? -70 + step * 6 : -70;
+  const hand = [cx + 7, cy + 18];
+  const dir = [Math.cos(ca * D2R), Math.sin(ca * D2R)];
+  const top = [hand[0] + dir[0] * 16, hand[1] + dir[1] * 16];
+  body.push(...limb([cx + 4, cy + 17], hand, 2.6, 2.4, fur.base), ...limb([hand[0] - dir[0] * 8, hand[1] - dir[1] * 8], top, 1.2, 1.2, '#a87a4a'), strand(arcPts(top[0] + 3, top[1], 3, 3, 180, 380, 8), 1.2, '#a87a4a'));
+  out.push(...spin(body, cx, 34, lean));
+  if (A?.smear) out.push(smear([[cx, cy - 4], [cx + 14, cy + 2], [top[0] + 4, top[1]]], 4, '#fff4e0'));
+  if (A?.hit) out.push(...star(top[0] + 6, top[1], 3, '#fff6a8'));
+  return { w: 46, h: 36, res: 3, shapes: out };
 }
 
 // ---------- Sky Pirate Gunner ----------
 
-const GU = soften({
-  skin: '#f6d2b8', skinDk: '#e0b090', hair: '#2a2a3a', hairDk: '#14141e', hairLt: '#5a5a7a',
-  coat: '#c8304e', coatDk: '#8a1a36', shirt: '#fff6e0', shirtDk: '#e0d4b8', sash: '#ffd36b', pant: '#2a3a5a', boot: '#3a2a2a',
-  hat: '#2a2a3a', hatDk: '#14141e', trim: '#ffd36b', goggle: '#9fe8ff', gun: '#c8a070', gunDk: '#8a6a3a', brass: '#ffd36b', brassDk: '#c8902a', smoke: '#e6e6f0',
-});
-const GU_FACE = { skin: GU.skin, skinSh: '#e0b090', skinSh2: '#c89070', blush: '#ff9a8a', lip: '#c8504e', lipLine: '#8a302e', eye: eyes('#2aa08a', '#0a5a4a', '#c8f0e0', { tilt: 0.25, ry: 2.6, flicks: 2 }), brow: { c: '#14141e', kind: 'arched', w: 0.9 }, moods: { idle: { open: 0.85, mouth: 'smirk' }, angry: { mouth: 'grin' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'laugh' } } };
-const GU_K = {
-  walk: [
-    { hip: [36, 46], lean: 0.1, tilt: 0.04, arms: [[0.6, -1], [1, -1.6]], legs: [[-0.45, 0.2], [0.45, 0.05]] },
-    { hip: [36, 45], lean: 0.08, tilt: -0.04, arms: [[-0.1, -0.8], [1, -1.7]], legs: [[0.45, 0.05], [-0.45, 0.2]] },
-  ],
-  // Gun on the shoulder, spinning a coin, then sighting down the barrel.
-  idle: [
-    { hip: [36, 46], lean: -0.04, tilt: 0.08, arms: [[0.4, -1], [2.4, -2.2]], legs: [[-0.3, 0.05], [0.35, 0.05]] },
-    { hip: [36, 46], lean: -0.06, tilt: -0.08, arms: [[1.6, -1.4], [2.4, -2.2]], legs: [[-0.3, 0.05], [0.35, 0.05]], coin: 1 },
-    { hip: [36, 46], lean: 0.04, tilt: 0.04, arms: [[1.3, -0.2], [1.5, -0.3]], legs: [[-0.35, 0.05], [0.4, 0.1]], aim: 1 },
-  ],
-  attack: [
-    { hip: [36, 46], lean: -0.04, tilt: 0.02, arms: [[1.3, -0.2], [1.5, -0.3]], legs: [[-0.35, 0.05], [0.4, 0.1]], aim: 1 },
-    { hip: [33, 46], lean: -0.24, tilt: -0.16, arms: [[1.5, -0.6], [1.9, -0.8]], legs: [[-0.5, 0.1], [0.3, 0.1]], aim: 1, fire: 1 },
-    { hip: [34, 46], lean: -0.16, tilt: -0.1, arms: [[1.4, -0.4], [1.7, -0.5]], legs: [[-0.45, 0.1], [0.35, 0.1]], aim: 1, fire: 0.6 },
-    { hip: [36, 46], lean: -0.04, tilt: 0.08, arms: [[0.4, -1], [2.4, -2.2]], legs: [[-0.3, 0.05], [0.35, 0.05]] },
-  ],
-  dead: { hip: [34, 60], lean: 0.5, tilt: 0.55, arms: [[0.1, 0.2], [0.3, 0.1]], legs: [[1.5, -2.7], [1.3, -2.5]] },
-};
+const GULL_ATK = [
+  { aim: -8, recoil: 0, lean: -4 },
+  { aim: -4, recoil: 1, lean: -10, fire: 1 },
+  { aim: -12, recoil: 0.6, lean: -6, smoke: 1 },
+  { aim: -6, recoil: 0, lean: 0, smoke: 0.5 },
+];
 
-function gunner(pose, f, mood) {
-  const C = fade(GU, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, GU_K);
-  const S = plant(solve(P));
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#000010');
-  const A = S.arms[1];
+function gull(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? GULL_ATK[f] : null;
   const dead = mood === 'dead';
-  const ga = P.aim > 0.5 ? A.a - Math.PI / 2 + (P.fire ?? 0) * -0.3 : A.a - Math.PI / 2 + 0.9;
-  const butt = [A.hand[0] - Math.cos(ga) * 6, A.hand[1] - Math.sin(ga) * 6];
-  const muzzle = [A.hand[0] + Math.cos(ga) * 13, A.hand[1] + Math.sin(ga) * 13];
-  const nrm = [-Math.sin(ga), Math.cos(ga)];
-  const shapes = drawRig(S, {
-    behind: () => [...windUnder(S.hip[0], 77, ph), ...streamer([S.hip[0] - 4, S.hip[1] - 1], 9, ph, 1.6, C.sash, 0, 0.5), ...streamer([S.hip[0] - 5, S.hip[1] + 3], 10, ph, 3.6, C.coatDk, 1, 0.7)],
-    backArm: () => {
-      const out = [...armPart(S.arms[0], C.coatDk, C.skinDk)];
-      if (P.coin > 0.5) out.push(...ooval(S.arms[0].hand[0], S.arms[0].hand[1] - 4 - Math.abs(Math.sin(ph * 2)) * 3, 1.3 * Math.abs(Math.cos(ph * 3)) + 0.3, 1.3, C.brass));
-      return out;
-    },
-    backLeg: () => legPart(S.legs[0], C.pant, C.boot),
-    body: () => {
-      const [hx, hy] = S.hip;
-      const out = [...opoly(round([[hx - 4.6, hy - 1.4], [hx + 4.6, hy - 1.4], [hx + 7.6, hy + 9], [hx - 7, hy + 10]], 2), C.coat), fpoly([[hx - 1, hy], [hx + 2, hy], [hx + 3, hy + 9.4], [hx - 1.4, hy + 9.6]], C.shirtDk)];
-      out.push(...bodice(S, C.shirt, C.shirtDk));
-      const [cx, cy] = S.chest;
-      out.push(...opoly([[cx - 4.6, cy - 1], [cx - 1, cy + 7], [hx - 4, hy - 1], [hx - 5, hy - 1]], C.coat, 0.3), ...opoly([[cx + 4.6, cy - 1], [cx + 1.6, cy + 7], [hx + 4, hy - 1], [hx + 5, hy - 1]], C.coat, 0.3));
-      out.push(...oband([[hx - 4.6, hy - 1], [hx + 4.6, hy - 1.2]], 2, C.sash, 1, 0.3), ...KIT.gem(hx, hy - 1.1, 1, C.brass));
-      // A bandolier of little brass shells.
-      for (let k = 0; k < 5; k++) out.push(dot(lerp(cx + 4, hx - 3, k / 4), lerp(cy - 1, hy - 1.6, k / 4), 0.7, C.brass));
-      return out;
-    },
-    frontLeg: () => legPart(S.legs[1], C.pant, C.boot),
-    head: () => headPart(S, mood, GU_FACE, SWEPT, HR, 1.12, () => [...backHair(HR, 6), ...blown(HR, ph, 2, 10)], () => [
-      // A tricorn with gold trim, goggles riding on its brim (clear of the eyes), a feather streaming.
-      ...opoly(round([[-11, -6], [-3, -9.6], [8, -8], [11, -5.6], [5, -7], [-4, -7.4]], 1.4), C.hat), ...opoly(round([[-6, -8], [-3, -14], [5, -14], [7, -8]], 2), C.hat),
-      fband([[-11, -6], [-3, -9.6], [8, -8], [11, -5.6]], 0.6, C.trim, 1),
-      ...ooval(-1.6, -10.4, 2.2, 1.8, C.goggle), ...ooval(2.8, -10.6, 2.2, 1.8, C.goggle), line([[0.6, -10.6], [0.6, -10.4]], 0.6, C.brassDk),
-      ...streamer([-3, -13], 9, ph, 1.8, '#ffffff', 3, -0.4, 5),
-    ]),
-    frontArm: () => {
-      const out = [];
-      if (!dead) {
-        // The blunderbuss: a wooden stock, a brass barrel flaring to a bell mouth.
-        out.push(...oband([butt, A.hand], 2, C.gun, 1, 0.3));
-        out.push(...opoly([[A.hand[0] + nrm[0] * 1.2, A.hand[1] + nrm[1] * 1.2], [muzzle[0] + nrm[0] * 2.6, muzzle[1] + nrm[1] * 2.6], [muzzle[0] - nrm[0] * 2.6, muzzle[1] - nrm[1] * 2.6], [A.hand[0] - nrm[0] * 1.2, A.hand[1] - nrm[1] * 1.2]], C.brass));
-        out.push(fband([[muzzle[0] + nrm[0] * 2.6, muzzle[1] + nrm[1] * 2.6], [muzzle[0] - nrm[0] * 2.6, muzzle[1] - nrm[1] * 2.6]], 0.8, C.brassDk, 1));
-        if (P.fire > 0.5) {
-          const fx = muzzle[0] + Math.cos(ga) * 4;
-          const fy = muzzle[1] + Math.sin(ga) * 4;
-          out.push(...opoly([[fx - 2, fy - 3], [fx + 6, fy - 1], [fx + 9, fy], [fx + 6, fy + 1], [fx - 2, fy + 3]], '#ffd36b', 0.3), sparkle(fx + 8, fy, 3.4, '#ffffff'));
-        }
-        if (P.fire > 0.3) out.push(...puff(muzzle[0] + 2 - (1 - P.fire) * 8, muzzle[1] - 4 - (1 - P.fire) * 6, 3 + (1 - P.fire) * 3, C.smoke, '#ffffff'));
-      }
-      out.push(...armPart(A, C.coat, C.skin));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+  const walk = pose === 'walk';
+  const white = ramp('#f4f6ff', { step: 9, turn: 14 });
+  const grey = ramp('#a8b4c8', { step: 10 });
+  const step = walk ? Math.sin(TAU * q * 2) : 0;
+  const cx = 18;
+  const cy = (dead ? 10 : 0) - Math.abs(step) * 1;
+  const lean = dead ? 86 : A ? A.lean : walk ? step * 5 : 0;
+  const out = [];
+  const body = [];
+  for (const [ox, s] of [[-3, step], [3, -step]]) body.push(...limb([cx + ox, cy + 27], [cx + ox + Math.max(0, s) * 2, 34 - Math.max(0, s) * 1.6], 1.4, 1.2, '#ffb040'), T([[cx + ox - 2 + Math.max(0, s) * 2, 34.6], [cx + ox + 3 + Math.max(0, s) * 2, 34.6], [cx + ox + 1 + Math.max(0, s) * 2, 33]], '#ffb040'));
+  // A plump white gull, grey wings, a striped sailor shirt.
+  body.push(T([[cx - 8, cy + 18], [cx - 15, cy + 22], [cx - 8, cy + 24]], grey.sh));
+  body.push(...blob(cx, cy + 20, 9, 8.6, white), T([...arcPts(cx, cy + 22, 9, 7, -10, 190, 14)], '#ffffff'));
+  for (let i = 0; i < 3; i++) body.push(F(T([...arcPts(cx, cy + 22, 9, 7, 10 + i * 50, 30 + i * 50, 4), [cx, cy + 22]], '#4f7ad8')));
+  body.push(O(cx - 5, cy + 18, 6, 4, -20, grey.base, 14), F(O(cx - 6, cy + 17, 3, 1.6, -20, grey.hi, 10)));
+  // Head: round, a yellow beak, a tricorn with goggles pushed up on it.
+  const hx = cx + 2;
+  const hy = cy + 7;
+  body.push(...blob(hx, hy, 7, 6.4, white), T([[hx + 5, hy + 1], [hx + 12, hy + 2], [hx + 5, hy + 4]], '#ffc040'), F(E(hx + 11, hy + 2.6, 1, 0.8, '#ff6b4a')));
+  body.push(...cuteFace(hx + 1, hy, 0.85, mood, { iris: '#3a3a5a', gap: 4, atk: A ? 1 : 0, skin: white.base, mouthDy: null }));
+  body.push(T([[hx - 9, hy - 4], [hx, hy - 12], [hx + 9, hy - 4], [hx, hy - 6]], '#3a2a4a'), F(T([[hx - 8, hy - 4.6], [hx, hy - 11], [hx + 8, hy - 4.6], [hx, hy - 6.4]], '#4a3a5a')), F(R(hx - 5, hy - 7, 10, 1, '#e8b84a')));
+  body.push(E(hx - 2, hy - 8.4, 2, 1.6, '#9fe0ff'), E(hx + 2.6, hy - 8.4, 2, 1.6, '#9fe0ff'), F(R(hx - 6, hy - 9, 12, 0.6, '#5a4a3a')));
+  // The blunderbuss: a stubby gun with a flared bell mouth, recoiling.
+  const ga = A ? A.aim : walk ? -4 + step * 4 : -4;
+  const rc = A ? A.recoil * 3 : 0;
+  const g0 = [cx + 2 - rc, cy + 21];
+  const dir = [Math.cos(ga * D2R), Math.sin(ga * D2R)];
+  const muzzle = [g0[0] + dir[0] * 16, g0[1] + dir[1] * 16];
+  body.push(...limb([g0[0] - 4, g0[1] + 2], g0, 3, 2.6, '#8a5a3a'), ...limb(g0, muzzle, 2.4, 2.4, '#8a8aa0'), O(muzzle[0], muzzle[1], 2, 3.6, ga, '#a8a8c0', 12), F(O(muzzle[0] + 0.6, muzzle[1], 1, 2.4, ga, '#3a3a4a', 10)));
+  body.push(E(cx + 4, cy + 22, 2.6, 2.2, grey.base));
+  out.push(...spin(body, cx, 34, lean));
+  if (A?.fire) out.push(F(E(muzzle[0] + 5, muzzle[1], 5, 3.6, '#ffe36b')), F(E(muzzle[0] + 4, muzzle[1], 2.6, 1.8, '#ffffff')), ...star(muzzle[0] + 10, muzzle[1], 3.4, '#ffb040'));
+  if (A?.smoke) out.push(...cloudPuff(muzzle[0] + 8, muzzle[1] - 2, 4 * A.smoke + 1, '#d8d8e8'));
+  return { w: 44, h: 36, res: 3, shapes: out };
 }
 
 // ---------- Barnacle Knight ----------
 
-const BK = soften({
-  skin: '#e8f2f0', skinDk: '#c8dcd8', hair: '#3a8a8a', hairDk: '#1a5a5a', hairLt: '#7ad0c8',
-  plate: '#7ab0c0', plateDk: '#4a7a8a', plateLt: '#b8e0e8', barn: '#e8e0d0', barnDk: '#a89a80', shell: '#ffb3c6', shellDk: '#d87a96',
-  coral: '#ff7a8a', coralDk: '#c84a5a', kelp: '#3aa06a', kelpDk: '#1a6a4a', boot: '#2a4a5a',
-});
-const BK_FACE = { skin: BK.skin, skinSh: '#c8dcd8', skinSh2: '#a0bcb8', blush: '#ff9ab0', lip: '#a85a7a', lipLine: '#6a3a5a', eye: eyes('#ff7a8a', '#8a1a2a', '#ffd8dc', { tilt: 0.2, ry: 2.5 }), brow: { c: '#1a5a5a', kind: 'thick', w: 1 }, moods: { idle: { open: 0.8, mouth: 'calm' }, angry: { mouth: 'grit' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'smile' } } };
-// A heavy, slow guard: lance couched, shield of shell up.
-const BK_K = {
-  walk: [
-    { hip: [36, 46], lean: 0.12, tilt: 0.04, arms: [[0.9, -1.6], [1, -1.2]], legs: [[-0.5, 0.25], [0.5, 0.05]] },
-    { hip: [36, 45], lean: 0.1, tilt: -0.04, arms: [[0.9, -1.6], [1.1, -1.2]], legs: [[0.5, 0.05], [-0.5, 0.25]] },
-  ],
-  idle: [
-    { hip: [36, 46], lean: 0.02, tilt: 0.04, arms: [[0.9, -1.6], [0.6, -0.8]], legs: [[-0.35, 0.05], [0.4, 0.1]] },
-    { hip: [36, 46], lean: -0.04, tilt: -0.06, arms: [[0.9, -1.6], [0.7, -0.9]], legs: [[-0.35, 0.05], [0.4, 0.1]] },
-    { hip: [36, 47], lean: 0.06, tilt: 0.1, arms: [[0.9, -1.4], [0.6, -0.8]], legs: [[-0.4, 0.15], [0.45, 0.2]] },
-  ],
-  attack: [
-    { hip: [33, 47], lean: -0.14, tilt: -0.1, arms: [[0.9, -1.6], [0.4, -1.4]], legs: [[-0.55, 0.3], [0.3, 0.2]] },
-    { hip: [43, 46], lean: 0.36, tilt: 0.12, arms: [[0.6, -1.4], [1.6, -0.1]], legs: [[-0.8, 0.3], [0.8, 0.3]], thrust: 1 },
-    { hip: [43, 46], lean: 0.32, tilt: 0.1, arms: [[0.6, -1.4], [1.6, 0]], legs: [[-0.8, 0.3], [0.8, 0.3]], thrust: 1 },
-    { hip: [37, 46], lean: 0.02, tilt: 0.04, arms: [[0.9, -1.6], [0.6, -0.8]], legs: [[-0.35, 0.05], [0.4, 0.1]] },
-  ],
-  dead: { hip: [34, 60], lean: 0.5, tilt: 0.55, arms: [[0.1, 0.2], [0.3, 0.1]], legs: [[1.5, -2.7], [1.3, -2.5]] },
-};
+const WALRUS_ATK = [
+  { lance: -30, back: 6, lean: -8 },
+  { lance: -2, back: -6, lean: 12, smear: 1 },
+  { lance: 0, back: -8, lean: 14, hit: 1 },
+  { lance: -10, back: 0, lean: 2 },
+];
 
-const barnacle = (x, y, r, C) => [...ooval(x, y, r, r * 0.8, C.barn, 0, 0.3), ...ooval(x, y - r * 0.2, r * 0.4, r * 0.3, C.barnDk, 0, 0)];
-
-function barnacleknight(pose, f, mood) {
-  const C = fade(BK, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, BK_K);
-  const S = plant(solve(P, 1.04));
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#0a2a2a');
-  const [B, A] = S.arms;
-  const la = P.thrust ? 0 : -0.25;
-  const tip = [A.hand[0] + Math.cos(la) * 20, A.hand[1] + Math.sin(la) * 20];
-  const back = [A.hand[0] - Math.cos(la) * 8, A.hand[1] - Math.sin(la) * 8];
-  const shapes = drawRig(S, {
-    behind: () => [...windUnder(S.hip[0], 77, ph), ...streamer([S.chest[0] - 3, S.chest[1] - 1], 16, ph, 3, C.kelp, 0, 0.4), ...streamer([S.chest[0] - 2, S.chest[1] + 2], 12, ph, 2, C.kelpDk, 2, 0.6)],
-    backArm: () => {
-      // A round shield made of a great scallop shell.
-      const out = [...armPart(B, C.plateDk, C.plateDk)];
-      const [x, y] = B.hand;
-      out.push(...ooval(x + 2, y - 1, 6, 6.6, C.shell));
-      for (let k = -2; k <= 2; k++) out.push(line([[x + 2, y + 5], [x + 2 + k * 2.4, y - 6]], 0.5, C.shellDk));
-      out.push(...barnacle(x + 5, y + 2, 1.4, C));
-      return out;
-    },
-    backLeg: () => legPart(S.legs[0], C.plateDk, C.boot, 1.1),
-    body: () => {
-      const [hx, hy] = S.hip;
-      const out = [...opoly(round([[hx - 5, hy - 1.4], [hx + 5, hy - 1.4], [hx + 6.4, hy + 6], [hx - 6.4, hy + 6]], 1), C.plate)];
-      for (let k = 0; k < 4; k++) out.push(...opoly([[hx - 6 + k * 3.4, hy + 5.6], [hx - 4.4 + k * 3.4, hy + 9], [hx - 2.8 + k * 3.4, hy + 5.6]], C.plateDk, 0.3));
-      out.push(...bodice(S, C.plate, C.plateDk));
-      const [cx, cy] = S.chest;
-      // Pauldrons and a breastplate grown over with barnacles, a pink shell at the heart.
-      out.push(...ooval(cx - 4.6, cy - 0.4, 3, 2.4, C.plateLt), ...ooval(cx + 4.6, cy - 0.6, 3, 2.4, C.plateLt));
-      for (const [dx, dy, r] of [[-5, -1, 1.2], [-3.4, 0.6, 0.9], [4, -1.4, 1], [2, 5, 1.1], [-1.4, 7, 0.9]]) out.push(...barnacle(cx + dx, cy + dy, r, C));
-      out.push(...within(at(cx + 0.4, cy + 2.6, 0), () => [...opoly([[-2, 1.4], [0, -2], [2, 1.4]], C.shell, 0.3), line([[0, -1.4], [0, 1.2]], 0.3, C.shellDk)]));
-      return out;
-    },
-    frontLeg: () => legPart(S.legs[1], C.plate, C.boot, 1.1),
-    head: () => headPart(S, mood, BK_FACE, SWEPT, HR, 1.1, () => [...backHair(HR, 5), ...blown(HR, ph, 2, 10, 3)], () => [
-      // An open helm (the face clear) crested with a fin of coral, barnacles on the brow.
-      ...opoly(round([[-9, 0], [-8.6, -7], [-3, -11], [4, -11], [8.6, -6], [9, -2], [6.6, -3], [6, -7.4], [-5, -7.6], [-7, -1]], 1.6), C.plate),
-      ...opoly([[-5, -11], [-2, -17 + Math.sin(ph) * 0.6], [1, -12], [3, -16], [5, -11]], C.coral), ...barnacle(-6, -7, 1.2, C), ...barnacle(5.6, -7.6, 1, C),
-    ]),
-    frontArm: () => {
-      // The coral lance: a branched spear of red coral, couched under the arm.
-      const out = [...oband([back, tip], taperW(2.2, 0.6), C.coral, 1, 0.3)];
-      out.push(...oband([[lerp(back[0], tip[0], 0.55), lerp(back[1], tip[1], 0.55)], [lerp(back[0], tip[0], 0.7) + 1, lerp(back[1], tip[1], 0.7) - 4]], 0.7, C.coralDk, 1, 0.3));
-      out.push(...armPart(A, C.plate, C.plateDk, 1.1));
-      if (P.thrust) out.push(fband([[tip[0] - 26, tip[1]], [tip[0] + 6, tip[1]]], (t) => 2.4 * Math.sin(Math.PI * t), mix(C.coral, '#ffffff', 0.5), 1), sparkle(tip[0] + 4, tip[1], 3.4, '#ffffff'));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+function walrus(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? WALRUS_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const skin = ramp('#c89a8a', { step: 10, turn: 10 });
+  const steel = ramp('#8aa0b8', { step: 11 });
+  const step = walk ? Math.sin(TAU * q * 2) : 0;
+  const cx = 20;
+  const cy = (dead ? 8 : 0) - Math.abs(step) * 0.6;
+  const lean = dead ? 86 : A ? A.lean : walk ? step * 3 : 0;
+  const out = [];
+  const body = [];
+  // Flippers for feet, a heavy round body in barnacle-crusted plate.
+  for (const [ox, s, c] of [[-5, step, skin.sh], [5, -step, skin.base]]) body.push(O(cx + ox + 2 + Math.max(0, s) * 2, 34.4 - Math.max(0, s) * 1.4, 5, 2, 0, c, 14));
+  body.push(...blob(cx, cy + 22, 12, 11, skin));
+  body.push(T([...arcPts(cx, cy + 22, 12, 11, 190, 360, 14), [cx + 12, cy + 26], [cx - 10, cy + 28]], steel.base), F(T([...arcPts(cx, cy + 22, 12, 11, 300, 360, 6), [cx + 12, cy + 26], [cx + 8, cy + 26]], steel.sh)));
+  for (const [x, y, r] of [[-8, 16, 2], [-3, 13, 1.6], [6, 15, 1.8], [-6, 22, 1.4]]) body.push(E(cx + x, cy + y, r, r, '#e8e0d0'), F(E(cx + x, cy + y - 0.4, r * 0.4, r * 0.4, '#8a7a6a')));
+  body.push(E(cx + 8, cy + 19, 2, 1.6, '#ff8a7a'), E(cx + 9.4, cy + 18, 1, 1.4, '#ff8a7a'));
+  // Head: a round walrus head, bushy whiskers, two long tusks, a little helm.
+  const hx = cx + 4;
+  const hy = cy + 8;
+  body.push(...blob(hx, hy, 8.4, 7.6, skin), E(hx + 4, hy + 3.6, 3.4, 2.6, skin.hi), E(hx + 7.4, hy + 3.6, 3.4, 2.6, skin.hi));
+  for (let i = 0; i < 6; i++) body.push(F(E(hx + 3 + (i % 3) * 2, hy + 3 + Math.floor(i / 3) * 1.6, 0.4, 0.4, skin.deep)));
+  body.push(...limb([hx + 4, hy + 6], [hx + 4.4, hy + 13], 1.8, 1, '#fffaf2'), ...limb([hx + 7, hy + 6], [hx + 7.4, hy + 13], 1.8, 1, '#fffaf2'));
+  body.push(...cuteFace(hx + 2, hy - 1.4, 0.9, mood, { iris: '#2a3a5a', gap: 4.6, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: skin.base, mouthDy: null }));
+  body.push(T([...arcPts(hx - 0.6, hy - 2, 8.6, 6.6, 190, 350, 12)], steel.base), F(E(hx - 1, hy - 8, 1.6, 1.6, '#ff8a7a')));
+  // The coral lance: a branching pink spear.
+  const la = A ? A.lance : -16 + step * 3;
+  const hand = [cx + 10 - (A ? A.back : 0), cy + 22];
+  const dir = [Math.cos(la * D2R), Math.sin(la * D2R)];
+  const tip = [hand[0] + dir[0] * 20, hand[1] + dir[1] * 20];
+  body.push(...limb([hand[0] - dir[0] * 6, hand[1] - dir[1] * 6], tip, 2.6, 1.4, '#ff7a8a'));
+  for (const u of [0.4, 0.7]) {
+    const bx = hand[0] + dir[0] * 20 * u;
+    const by = hand[1] + dir[1] * 20 * u;
+    body.push(...limb([bx, by], [bx + 2, by - 4], 1.4, 1, '#ff9aa8'));
+  }
+  body.push(O(hand[0], hand[1], 3, 2.6, 0, skin.base, 12));
+  out.push(...spin(body, cx, 34, lean));
+  if (A?.smear) out.push(smear([[cx - 4, cy + 22], [cx + 10, cy + 20], [tip[0] + 4, tip[1]]], 5, '#ffe6ea'));
+  if (A?.hit) out.push(...star(tip[0] + 4, tip[1], 3.2, '#fff6a8'));
+  return { w: 48, h: 38, res: 3, shapes: out };
 }
 
 // ---------- Storm Harpist ----------
 
-const SHP = soften({
-  skin: '#f4f0ff', skinDk: '#dcd6f2', hair: '#5a6a9a', hairDk: '#3a4a7a', hairLt: '#9aaad8',
-  gown: '#6a7aa8', gownDk: '#4a5888', cloud: '#c8d0e8', cloudLt: '#eef2ff', harp: '#ffd36b', harpDk: '#c8902a', bolt: '#fff3a6', boltDk: '#7fd8ff',
-  mist: '#c8d0e8', mistDk: '#8a96c0', mistLt: '#ffffff',
-});
-const SHP_FACE = { skin: SHP.skin, skinSh: '#dcd6f2', skinSh2: '#b8b0dc', blush: '#c8b4f0', lip: '#7a6ab0', lipLine: '#4a3a8a', eye: eyes('#7fd8ff', '#1a5a9a', '#e0f6ff', { tilt: 0.1, ry: 2.8, flicks: 2 }), brow: { c: '#3a4a7a', kind: 'soft', w: 0.7 }, moods: { idle: { open: 0.65, mouth: 'smile' }, angry: { mouth: 'pout' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-// She floats on her own little storm cloud, harp in the crook of her arm.
-const SHP_K = {
-  walk: [0, 1, 2, 3].map((i) => ({ hip: [36, 44], lean: 0.1, tilt: 0.06 * Math.sin((i / 4) * TAU), arms: [[1, -1.6], [0.9, -1.2]], legs: NOLEGS })),
-  idle: [
-    { hip: [36, 44], lean: -0.02, tilt: 0.1, arms: [[1, -1.6], [0.9, -1.2]], legs: NOLEGS, pluck: 0 },
-    { hip: [36, 43], lean: 0.02, tilt: -0.06, arms: [[1, -1.6], [1.2, -1]], legs: NOLEGS, pluck: 1 },
-    { hip: [36, 44], lean: -0.02, tilt: 0.14, arms: [[1, -1.6], [0.8, -1.4]], legs: NOLEGS, pluck: 0 },
-  ],
-  attack: [
-    { hip: [35, 44], lean: -0.1, tilt: -0.1, arms: [[1, -1.6], [0.2, -2]], legs: NOLEGS },
-    { hip: [38, 44], lean: 0.16, tilt: 0.1, arms: [[1, -1.6], [1.6, -0.4]], legs: NOLEGS, strum: 1 },
-    { hip: [38, 44], lean: 0.14, tilt: 0.08, arms: [[1, -1.6], [1.7, -0.3]], legs: NOLEGS, strum: 1 },
-    { hip: [36, 44], lean: 0, tilt: 0.06, arms: [[1, -1.6], [0.9, -1.2]], legs: NOLEGS },
-  ],
-  dead: { hip: [34, 62], lean: 0.6, tilt: 0.5, arms: [[0.3, 0.2], [0.4, 0.2]], legs: NOLEGS },
-};
+const STORM_ATK = [
+  { strum: -1, bolt: 0 },
+  { strum: 1, bolt: 0.6 },
+  { strum: 1, bolt: 1.2, hit: 1 },
+  { strum: 0, bolt: 0.3 },
+];
 
-function bolt(a, b, k, c) {
-  const pts = [a];
-  for (let i = 1; i < 4; i++) pts.push([lerp(a[0], b[0], i / 4) + ((i + k) % 2 ? 1.6 : -1.6), lerp(a[1], b[1], i / 4) + ((i + k) % 2 ? -1 : 1)]);
-  pts.push(b);
-  return fband(pts, 0.7, c, 1);
-}
-
-function harpist(pose, f, mood) {
-  const C = fade(SHP, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, SHP_K, 1);
-  const S = solve(P);
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#1a2a4a');
-  const [B, A] = S.arms;
+function storm(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? STORM_ATK[f] : null;
   const dead = mood === 'dead';
-  // The harp sits in the crook of her back arm: a gold frame, strings of lightning.
-  const hb = [B.hand[0] + 4, B.hand[1] + 2];
-  const shapes = drawRig(S, {
-    behind: () => {
-      const out = [...windUnder(S.hip[0], 77, ph, C.cloudLt)];
-      // Her storm cloud under her, rumbling.
-      if (!dead) out.push(...puff(S.hip[0], S.hip[1] + 16 + Math.sin(ph) * 0.8, 9, C.cloud, C.cloudLt), ...puff(S.hip[0] - 8, S.hip[1] + 18, 5, C.mistDk, C.cloud));
-      out.push(...[0, 1, 2].flatMap((k) => lockHair(flowPts([S.head[0] - 5, S.head[1] - 1 + k * 3], Math.PI * 0.72 + k * 0.08, -0.5, 18 - k * 3, ph * 2 - k, 0.18 * gust(ph, k), 5), 4.4 - k, HR)));
-      return out;
-    },
-    backArm: () => armPart(B, C.gownDk, C.skinDk),
-    body: () => {
-      const g = gown(S, 15, 9, C.gown, C.gownDk, Math.sin(ph) * 0.8 - 0.8 * gust(ph));
-      const out = [...g.out, ...bodice(S, C.gown, C.gownDk)];
-      const [hx, hy] = S.hip;
-      // The hem frays into storm cloud; little bolts flicker in it.
-      for (let k = 0; k < 5; k++) out.push(...ooval(hx - 9 + k * 4.4, hy + 14.6 + (k % 2), 2.8, 2, C.cloud, 0, 0.25));
-      if (!dead && f % 3 === 0) out.push(bolt([hx - 4, hy + 15], [hx - 1, hy + 19], f, C.bolt));
-      const [cx, cy] = S.chest;
-      out.push(fband(arcPts(cx, cy + 1.4, 3.6, 1.8, 195, 345, 6), 0.8, C.cloudLt, 1));
-      return out;
-    },
-    head: () => headPart(S, mood, SHP_FACE, SWEPT, HR, 1.14, () => backHair(HR, 9), () => [
-      // A circlet with a lightning bolt.
-      fband(arcPts(0.4, -2, 7.6, 6, 200, 340, 8), 0.8, C.harp, 1), ...opoly([[-0.6, -11], [1.6, -11], [0.4, -8.6], [2, -8.6], [-1, -5.4], [0, -8], [-1.6, -8]], C.bolt, 0.3),
-    ]),
-    frontArm: () => {
-      const out = [];
-      if (!dead) {
-        // The harp's frame: a gold neck curling over, a pillar, the soundboard.
-        const top = [hb[0] + 2, hb[1] - 14];
-        out.push(...oband([hb, [hb[0] - 1, hb[1] - 8], top], 1.2, C.harp, 2, 0.3), ...oband([top, [hb[0] + 8, hb[1] - 10], [hb[0] + 10, hb[1] - 2]], 1, C.harp, 2, 0.3), ...oband([hb, [hb[0] + 10, hb[1] - 2]], 1.2, C.harpDk, 1, 0.3));
-        for (let k = 1; k < 5; k++) {
-          const a = [lerp(hb[0], hb[0] + 10, k / 5), lerp(hb[1], hb[1] - 2, k / 5)];
-          const b = [lerp(top[0], hb[0] + 10, k / 5) + 0.4, lerp(top[1], hb[1] - 2, k / 5) - 0.6];
-          out.push(P.strum || P.pluck ? bolt(a, b, k + f, C.bolt) : line([a, b], 0.35, C.boltDk));
-        }
-        if (P.strum) for (let k = 0; k < 3; k++) out.push(bolt([hb[0] + 10, hb[1] - 6], [hb[0] + 24 + k * 6, hb[1] - 12 + k * 6], k + f, k % 2 ? C.boltDk : C.bolt), sparkle(hb[0] + 26 + k * 6, hb[1] - 12 + k * 6, 2.4, '#ffffff'));
-      }
-      out.push(...armPart(A, C.gown, C.skin));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+  const walk = pose === 'walk';
+  const cloud = ramp('#7a88b0', { step: 10, turn: 10 });
+  const bob = dead ? 0 : walk ? Math.sin(TAU * q * 2) * 1.6 : -breath(q) * 1.4;
+  const cx = 18;
+  const cy = (dead ? 28 : 16) + bob;
+  const out = [];
+  // Rain dripping from the cloud's underside.
+  if (!dead) for (let i = 0; i < 4; i++) {
+    const u = (q * 2 + i * 0.27) % 1;
+    out.push(F(T([[cx - 7 + i * 5, cy + 9 + u * 14], [cx - 6.4 + i * 5, cy + 9 + u * 14], [cx - 6.7 + i * 5, cy + 12 + u * 14]], '#9fd0ff')));
+  }
+  // The puffy storm cloud body.
+  for (const [dx, dy, r, c] of [[-7, 3, 6, cloud.sh], [7, 3, 6, cloud.base], [0, 4, 7, cloud.base], [-4, -2, 6, cloud.base], [4, -3, 6, cloud.hi], [0, -5, 5, cloud.hi]]) out.push(E(cx + dx, cy + dy, r, r * 0.9, c));
+  // Lightning-bolt horns.
+  for (const s of [-1, 1]) out.push(T([[cx + s * 4, cy - 8], [cx + s * 7, cy - 14], [cx + s * 5, cy - 13], [cx + s * 8, cy - 19], [cx + s * 3, cy - 12], [cx + s * 5, cy - 12.6], [cx + s * 2, cy - 8]], '#ffe36b'));
+  out.push(...cuteFace(cx + 1.4, cy + 1, 0.95, mood, { iris: '#ffe36b', gap: 4.6, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: cloud.base, mouthDy: 3.4, blushOn: false }));
+  // The harp held out front: a gold frame with strings of light, plucked.
+  const hx = cx + 12;
+  const hy = cy + 2;
+  out.push(strand([[hx - 2, hy + 8], [hx - 3, hy - 4], [hx + 3, hy - 8], [hx + 6, hy - 4]], 1.6, '#e8b84a'), ...limb([hx - 2, hy + 8], [hx + 6, hy + 6], 1.4, 1.4, '#e8b84a'), ...limb([hx + 6, hy - 4], [hx + 6, hy + 6], 1.4, 1.4, '#e8b84a'));
+  const pl = A ? A.strum : Math.sin(TAU * q * 2) * 0.3;
+  for (let i = 0; i < 3; i++) out.push(F(strand([[hx - 1 + i * 2.4, hy - 3 - i], [hx - 1 + i * 2.4 + pl * (i === 1 ? 1 : 0.5), hy + 1.6], [hx - 1 + i * 2.4, hy + 7 - i * 0.4]], 0.5, '#fff6c8')));
+  out.push(E(cx + 8, cy + 3, 2.4, 2.2, cloud.hi));
+  if (A?.bolt) {
+    const k = A.bolt;
+    out.push(T([[hx + 8, hy - 4], [hx + 8 + 8 * k, hy - 1], [hx + 6 + 8 * k, hy], [hx + 10 + 14 * k, hy + 6], [hx + 6 + 8 * k, hy + 2], [hx + 8 + 8 * k, hy + 1], [hx + 6, hy - 2]], '#ffe36b'));
+    out.push(...star(hx + 10 + 14 * k, hy + 6, 2.6 * k, '#ffffff'));
+  }
+  if (A?.hit) out.push(...star(hx + 26, hy + 6, 3, '#fff6a8'));
+  return { w: 46, h: 40, res: 3, shapes: dead ? spin(out, cx, 36, 0) : out };
 }
 
 // ---------- Feather Monk ----------
 
-const FM = soften({
-  skin: '#ffe8d8', skinDk: '#f2c8b0', hair: '#f2f0ea', hairDk: '#c8c4b8', hairLt: '#ffffff',
-  robe: '#ffb347', robeDk: '#d8802a', under: '#fff6e0', underDk: '#e0d4b8', sash: '#c8304e', wing: '#ffffff', wingDk: '#d8e2f6', wingTip: '#9fd0ff',
-  bead: '#8a5a3a', beadLt: '#c8906a', ring: '#eaf6ff',
-});
-const FM_FACE = { skin: FM.skin, skinSh: '#f2c8b0', skinSh2: '#d8a890', blush: '#ffa890', lip: '#c8604e', lipLine: '#8a3a2e', eye: eyes('#c8902a', '#6a4a0a', '#fff0c8', { rx: 3.2, ry: 2.4, tilt: -0.05 }), brow: { c: '#c8c4b8', kind: 'soft', w: 0.8 }, moods: { idle: { open: 0.45, mouth: 'smile' }, angry: { open: 0.9, mouth: 'calm' }, hurt: { mouth: 'grimace' }, happy: { mouth: 'grin' } } };
-// Calm: a meditative stance, palms pressed, then the palm strike.
-const FM_K = {
-  walk: [
-    { hip: [36, 46], lean: 0.06, tilt: 0.02, arms: [[0.4, -1.6], [0.5, -1.7]], legs: [[-0.4, 0.2], [0.4, 0.05]] },
-    { hip: [36, 45], lean: 0.04, tilt: -0.02, arms: [[0.4, -1.6], [0.5, -1.7]], legs: [[0.4, 0.05], [-0.4, 0.2]] },
-  ],
-  idle: [
-    { hip: [36, 47], lean: 0, tilt: 0.04, arms: [[0.4, -1.6], [0.5, -1.7]], legs: [[-0.45, 0.3], [0.45, 0.3]] },
-    { hip: [36, 46], lean: -0.04, tilt: -0.04, arms: [[1.6, -0.6], [-0.2, -1.6]], legs: [[-0.45, 0.3], [0.45, 0.3]] },
-    { hip: [36, 47], lean: 0, tilt: 0.06, arms: [[0.4, -1.6], [0.5, -1.7]], legs: [[-0.45, 0.3], [0.45, 0.3]] },
-  ],
-  attack: [
-    { hip: [34, 48], lean: -0.1, tilt: -0.06, arms: [[0.6, -1.4], [-0.6, -1.8]], legs: [[-0.6, 0.5], [0.5, 0.4]] },
-    { hip: [41, 47], lean: 0.3, tilt: 0.1, arms: [[-0.4, -1], [1.6, -0.05]], legs: [[-0.9, 0.3], [0.7, 0.4]], palm: 1 },
-    { hip: [41, 47], lean: 0.26, tilt: 0.08, arms: [[-0.4, -1], [1.6, 0]], legs: [[-0.9, 0.3], [0.7, 0.4]], palm: 1 },
-    { hip: [37, 47], lean: 0, tilt: 0.04, arms: [[0.4, -1.6], [0.5, -1.7]], legs: [[-0.45, 0.3], [0.45, 0.3]] },
-  ],
-  dead: { hip: [34, 60], lean: 0.5, tilt: 0.55, arms: [[0.1, 0.2], [0.3, 0.1]], legs: [[1.5, -2.7], [1.3, -2.5]] },
-};
+const PUFFIN_ATK = [
+  { palm: -0.4, lean: -10, gust: 0 },
+  { palm: 1, lean: 12, gust: 0.6 },
+  { palm: 1.1, lean: 12, gust: 1.3, hit: 1 },
+  { palm: 0.2, lean: 2, gust: 0.4 },
+];
 
-function wing(root, ph, open, C, back) {
+function puffin(pose, f, mood) {
+  const q = phase(pose, f);
+  const A = pose === 'attack' ? PUFFIN_ATK[f] : null;
+  const dead = mood === 'dead';
+  const walk = pose === 'walk';
+  const black = ramp('#3a3a50', { step: 10, turn: 10 });
+  const robe = ramp('#ff9a3a', { step: 10, turn: 10 });
+  const step = walk ? Math.sin(TAU * q * 2) : 0;
+  const cx = 18;
+  const cy = (dead ? 10 : 0) - Math.abs(step) * 1;
+  const lean = dead ? 86 : A ? A.lean : walk ? step * 4 : sway(q) * 2;
   const out = [];
-  for (let k = 0; k < 5; k++) {
-    const a = Math.PI + 0.9 - k * 0.32 - open * 0.3 + Math.sin(ph * 2 - k * 0.5) * 0.05;
-    const len = 14 - k * 1.4 + open * 4;
-    const tip = [root[0] + Math.cos(a) * len, root[1] + Math.sin(a) * len];
-    out.push(...oband([root, [lerp(root[0], tip[0], 0.5), lerp(root[1], tip[1], 0.5) - 1], tip], (t) => Math.sin(Math.PI * Math.min(1, t + 0.2)) * 2.6 + 0.4, back ? C.wingDk : k === 0 ? C.wingTip : C.wing, 3, 0.3));
+  const body = [];
+  for (const [ox, s] of [[-3, step], [3, -step]]) body.push(O(cx + ox + 1 + Math.max(0, s) * 2, 34.4 - Math.max(0, s) * 1.4, 3, 1.4, 0, '#ff8a3a', 12));
+  // A round puffin body in an orange robe with a sash, prayer beads round the neck.
+  body.push(...blob(cx, cy + 22, 9, 10, black), T([[cx - 6, cy + 14], [cx + 8, cy + 14], [cx + 10, cy + 32], [cx - 8, cy + 32]], robe.base), F(T([[cx + 5, cy + 14], [cx + 8, cy + 14], [cx + 10, cy + 32], [cx + 6, cy + 32]], robe.sh)));
+  body.push(F(T([[cx - 6, cy + 16], [cx - 3, cy + 14], [cx + 8, cy + 28], [cx + 5, cy + 30]], '#c84a2a')));
+  for (let i = 0; i < 7; i++) body.push(E(cx - 5 + i * 1.8, cy + 13 + Math.sin((i / 6) * Math.PI) * 2.4, 0.9, 0.9, '#8a5a3a'));
+  // Head: a round puffin head, white cheeks, the big striped beak.
+  const hx = cx + 1;
+  const hy = cy + 7;
+  body.push(...blob(hx, hy, 7.4, 6.8, black), F(O(hx + 2, hy + 1, 5.4, 4.6, 0, '#ffffff', 14)));
+  body.push(T([[hx + 5, hy - 1], [hx + 11, hy + 1.4], [hx + 5, hy + 4.6]], '#ff6b3a'), F(T([[hx + 5, hy - 1], [hx + 7, hy - 0.2], [hx + 7, hy + 3.6], [hx + 5, hy + 4.6]], '#ffd36b')), F(T([[hx + 7.4, hy], [hx + 8, hy + 0.4], [hx + 8, hy + 3], [hx + 7.4, hy + 3.4]], '#3a3a50')));
+  body.push(...cuteFace(hx + 1.4, hy - 0.4, 0.85, mood, { iris: '#3a3a50', gap: 3.8, atk: A ? (f === 1 || f === 2 ? 1 : 0.3) : 0, skin: '#ffffff', mouthDy: null }));
+  body.push(F(T([[hx + 2.4, hy - 2], [hx + 3.4, hy - 3], [hx + 4.6, hy - 2]], '#ff6b3a')));
+  // Wing-hands: one in prayer, the other thrusting a palm strike.
+  const p = A ? A.palm : 0;
+  body.push(O(cx - 7, cy + 20, 2.6, 4, 20, black.base, 12));
+  body.push(...limb([cx + 5, cy + 18], [cx + 8 + p * 8, cy + 18 - p], 2.6, 2.2, black.base), O(cx + 9 + p * 8, cy + 18 - p, 2.2, 3, 0, black.hi, 10));
+  out.push(...spin(body, cx, 34, lean));
+  if (A?.gust) {
+    const k = A.gust;
+    for (let i = 0; i < 3; i++) out.push(F(T([...arcPts(cx + 20 + k * 4 * (i + 1), cy + 18, 3 * k * (i + 1) * 0.6, 5 * k * (i + 1) * 0.6, -60, 60, 8), ...arcPts(cx + 20 + k * 4 * (i + 1), cy + 18, 2 * k * (i + 1) * 0.6, 3.6 * k * (i + 1) * 0.6, 60, -60, 8)], '#e6f6ff')));
   }
-  return out;
-}
-
-function monk(pose, f, mood) {
-  const C = fade(FM, mood);
-  const n = frames(pose);
-  const ph = (f / n) * TAU;
-  const P = keyed(pose, f, mood, FM_K);
-  const S = plant(solve(P));
-  const HR = hairOf(C.hair, C.hairDk, C.hairLt, '#5a5a5a');
-  const A = S.arms[1];
-  const open = P.palm ?? 0;
-  const shapes = drawRig(S, {
-    behind: () => [...windUnder(S.hip[0], 77, ph), ...wing([S.chest[0] - 3, S.chest[1] + 1], ph, open, C, true), ...wing([S.chest[0] - 1, S.chest[1] + 2], ph + 0.4, open, C, false), ...streamer([S.hip[0] - 4, S.hip[1] - 1], 16, ph, 2.4, C.sash, 0, 0.3)],
-    backArm: () => armPart(S.arms[0], C.robeDk, C.skinDk),
-    backLeg: () => legPart(S.legs[0], C.robeDk, C.underDk),
-    body: () => {
-      const [hx, hy] = S.hip;
-      const out = [...opoly(round([[hx - 4.6, hy - 1.4], [hx + 4.6, hy - 1.4], [hx + 7, hy + 7], [hx - 7, hy + 7.4]], 2), C.robe)];
-      out.push(...bodice(S, C.under, C.underDk));
-      const [cx, cy] = S.chest;
-      // The robe wrapped over one shoulder, a sash, and prayer beads swinging.
-      out.push(...opoly([[cx + 4.6, cy - 1.4], [cx + 1, cy - 1.4], [hx - 4, hy - 1], [hx + 2, hy - 1]], C.robe, 0.3));
-      out.push(...oband([[hx - 4.6, hy - 1], [hx + 4.6, hy - 1.2]], 1.8, C.sash, 1, 0.3));
-      for (let k = 0; k < 9; k++) {
-        const t = k / 8;
-        out.push(dot(cx - 3 + t * 6 + Math.sin(ph + t * 2) * 0.4, cy - 0.6 + Math.sin(Math.PI * t) * 7, 0.8, k === 4 ? C.sash : k % 2 ? C.bead : C.beadLt));
-      }
-      return out;
-    },
-    frontLeg: () => legPart(S.legs[1], C.robe, C.under),
-    head: () => headPart(S, mood, FM_FACE, SWEPT, HR, 1.1, () => [...backHair(HR, 4), ...lockHair(flowPts([-4, -7], Math.PI + 0.2, 0.2, 11, ph * 2, 0.16 * gust(ph), 5), 3, HR)], () => [
-      // A topknot tied with a feather, the feather streaming.
-      ...ooval(-1, -10.4, 2.6, 2.2, C.hair), fband(arcPts(-1, -9.4, 2.4, 1, 200, 340, 5), 0.7, C.sash, 1),
-      ...oband(flowPts([-2, -11], Math.PI + 0.5, 0.3, 9, ph * 2.4, 0.2, 4), (t) => Math.sin(Math.PI * Math.min(1, t + 0.15)) * 1.8 + 0.3, C.wing, 3, 0.3),
-    ]),
-    frontArm: () => {
-      const out = [...armPart(A, C.robe, C.skin)];
-      if (P.palm) for (let r = 0; r < 3; r++) out.push(fband(arcPts(A.hand[0] + 2 + r * 4, A.hand[1], 3 + r * 4, 4 + r * 4.6, -60, 60, 7), 1 - r * 0.2, r % 2 ? C.wingTip : C.ring, 1), sparkle(A.hand[0] + 18, A.hand[1], 3, '#ffffff'));
-      return out;
-    },
-  });
-  return { w: RW, h: RH, res: 3, shapes };
+  if (A?.hit) out.push(...star(cx + 30, cy + 18, 3, '#fff6a8'));
+  return { w: 44, h: 36, res: 3, shapes: out };
 }
 
 export const ART = {
-  kiterider: { walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [80, 240, 180], draw: kiterider },
-  shepherdess: { walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 180], draw: shepherdess },
-  gunner: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 230, 170], draw: gunner },
-  barnacleknight: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [100, 280, 200], draw: barnacleknight },
-  harpist: { walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [90, 260, 190], draw: harpist },
-  monk: { walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 230, 170], draw: monk },
+  kiterider: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 26, atkMs: [80, 240, 180], draw: squirrel },
+  shepherdess: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 20, atkMs: [80, 240, 180], draw: corgi },
+  gunner: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: gull },
+  barnacleknight: { pad: 6, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [100, 280, 200], draw: walrus },
+  harpist: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 18, atkMs: [90, 260, 190], draw: storm },
+  monk: { pad: 8, walk: 8, idle: 6, attack: 4, stride: 22, atkMs: [70, 220, 170], draw: puffin },
 };
 
 export const INFO = {
-  kiterider: { name: 'Kite Rider', w: 28, h: 64 },
-  shepherdess: { name: 'Cloud Shepherdess', w: 28, h: 64 },
-  gunner: { name: 'Sky Pirate Gunner', w: 28, h: 66 },
-  barnacleknight: { name: 'Barnacle Knight', w: 32, h: 68 },
-  harpist: { name: 'Storm Harpist', w: 28, h: 64 },
-  monk: { name: 'Feather Monk', w: 28, h: 64 },
+  kiterider: { name: 'Kite Rider', w: 28, h: 30 },
+  shepherdess: { name: 'Cloud Shepherd', w: 26, h: 34 },
+  gunner: { name: 'Sky Pirate Gunner', w: 26, h: 34 },
+  barnacleknight: { name: 'Barnacle Knight', w: 30, h: 36 },
+  harpist: { name: 'Storm Harpist', w: 28, h: 32 },
+  monk: { name: 'Feather Monk', w: 26, h: 34 },
 };
