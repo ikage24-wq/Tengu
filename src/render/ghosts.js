@@ -1,6 +1,7 @@
 // Friends in your online room (see net/online.js), drawn on your map just like you are: their
 // own look, gear, moves, buffs and job aura, with a sky-blue name tag and their HP underneath.
 
+import { tagFade } from './coop.js';
 import { drawHero } from './hero.js';
 import { drawFallen } from './town.js';
 import { drawCombatAura } from './aura.js';
@@ -61,6 +62,8 @@ export function drawGhosts(ctx, world, cam, width, time) {
 
 // A sky-blue tag with a twinkling star: a real friend, not one of the townsfolk.
 function nameTag(ctx, g, x, y, time) {
+  ctx.save();
+  ctx.globalAlpha *= tagFade(x, y);
   ctx.font = 'bold 7px sans-serif';
   const label = `Lv${g.level ?? 1} ${g.name}`;
   const w = ctx.measureText(label).width + 18;
@@ -71,5 +74,5 @@ function nameTag(ctx, g, x, y, time) {
     const f = Math.max(0, Math.min(1, g.hp / g.maxHp));
     box(ctx, x - 16, y + 13, 32, 4, { fill: 'rgba(58,45,79,0.6)', edge: null, r: 2 });
     if (f > 0) box(ctx, x - 16, y + 13, Math.max(2, 32 * f), 4, { fill: f < 0.3 ? '#ff6b8a' : '#7ee081', edge: null, r: 2 });
-  }
+  }  ctx.restore();
 }

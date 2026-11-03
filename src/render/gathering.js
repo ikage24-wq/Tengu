@@ -306,10 +306,21 @@ function hiveArt(stage) {
       y += hh - 0.4;
     });
     out.push(E(cx, y - 0.6, 7.6, 1.6, st.sh));
-    // The doorway, and honey at its lip (gone while it refills).
+    // The doorway, and honey at its lip (gone while it refills). Ready, it's brimming: a big golden
+    // drip runs down the skep from the doorway and a glossy honey drop hangs off the bottom, with a
+    // wedge of comb peeking out, so it reads as ready at a glance; taken, the doorway shows an empty
+    // pale comb and the straw is a little dull.
     out.push(F(E(cx - 1.6, y - 4.4, 1.8, 1.4, '#7a4a3a')));
-    if (stage === 3) out.push(F(T([[cx - 3.6, y - 3.4], [cx + 0.4, y - 3.4], [cx - 0.6, y - 1.4], [cx - 1.6, y + 0.8], [cx - 2.6, y - 1.6]], '#ffb020')), F(E(cx - 2.2, y - 2.6, 0.6, 0.5, '#fff1c4')));
-    else if (stage > 0) out.push(F(E(cx - 1.6, y - 3.2, 1.2 * stage * 0.5, 0.6, '#ffc83a')));
+    if (stage === 3) {
+      const hy = ramp('#ffb020');
+      out.push(F(T([[cx - 4.2, y - 4.6], [cx + 0.8, y - 4.6], [cx + 0.2, y - 2], [cx - 0.6, y + 1.6], [cx - 1.6, y + 4.2], [cx - 2.8, y + 1.4], [cx - 3.6, y - 1.6]], hy.base)));
+      out.push(F(T([[cx - 3.4, y - 4], [cx - 1.8, y - 4], [cx - 2.2, y - 1], [cx - 2.6, y + 1]], hy.hi)));
+      out.push(E(cx - 1.6, y + 5, 1.6, 1.8, hy.base), F(E(cx - 2.1, y + 4.5, 0.6, 0.6, '#fff6d8')));
+      // A wedge of comb at the doorway, its cells lit.
+      out.push(F(T([[cx + 1.6, y - 6.4], [cx + 5, y - 6], [cx + 4.6, y - 3], [cx + 1.6, y - 3.6]], '#ffd36a')));
+      for (const [dx, dy] of [[2.6, -5.4], [4, -5.2], [3.3, -4.2]]) out.push(F(E(cx + dx, y + dy, 0.45, 0.4, '#e8a23a')));
+    } else if (stage > 0) out.push(F(E(cx - 1.6, y - 3.2, 0.7 + 0.9 * stage, 0.5 + 0.35 * stage, '#ffc83a')));
+    else out.push(F(E(cx - 1.6, y - 4.2, 1.2, 0.8, '#e8dcc8')), F(E(cx - 1.3, y - 4.4, 0.35, 0.3, '#c8b8a0')));
     return out;
   });
 }
@@ -354,6 +365,7 @@ function rockArt(tier, stage, gem) {
       return out;
     }
     const vis = stage / 3;
+    let seamFull = () => {};
     if (o.style === 'nugget') {
       for (const [dx, dy, r] of [[-5, -10, 2.2], [3, -13, 1.8], [7, -7, 2], [-9, -5, 1.6], [0, -6, 1.4]].slice(0, Math.ceil(5 * vis))) {
         out.push(E(cx + dx * k, gy + dy * k, r, r * 0.8, m.base), F(E(cx + dx * k + r * 0.3, gy + dy * k + r * 0.25, r * 0.6, r * 0.5, m.sh)), F(E(cx + dx * k - r * 0.35, gy + dy * k - r * 0.3, r * 0.4, r * 0.3, m.hi)));
@@ -362,6 +374,7 @@ function rockArt(tier, stage, gem) {
       const seam = (pts, w) => out.push(T([...pts.map(([x, y]) => [cx + x * k, gy + y * k - w]), ...pts.slice().reverse().map(([x, y]) => [cx + x * k, gy + y * k + w])], m.sh), F(T([...pts.map(([x, y]) => [cx + x * k, gy + y * k - w]), ...pts.slice().reverse().map(([x, y]) => [cx + x * k, gy + y * k - w * 0.2])], m.base)));
       seam([[-11, -5], [-6, -9], [-1, -8], [4, -12]], 1.1 * vis + 0.3);
       if (stage >= 2) seam([[2, -5], [7, -7], [11, -5]], 0.9);
+      seamFull = () => seam([[-9, -12], [-4, -14], [2, -15.5]], 1.3);
       for (const [dx, dy] of [[-6, -8], [6, -6.6]].slice(0, stage)) out.push(F(E(cx + dx * k, gy + dy * k, 1, 0.8, o.rust)));
     } else if (o.style === 'band') {
       for (const [y0, y1, w] of [[-12, -9, 1.3], [-6, -4, 1]].slice(0, stage >= 2 ? 2 : 1)) {
@@ -371,6 +384,14 @@ function rockArt(tier, stage, gem) {
     } else {
       const mr = ramp(o.ore);
       for (const [dx, w, hgt, lean] of [[-4, 3.6, 9, -1.6], [1, 4.4, 12, 0.6], [6, 3.2, 8, 2]].slice(0, stage)) out.push(...crystal(cx + dx * k, w, gy - 8 * k - hgt * 0.4, gy - 8 * k - hgt, gy - 7 * k, mr, lean));
+    }
+    // Fully grown back, the ore swells out of the rock: a fat extra vein and a bright glint over it,
+    // so a ready rock reads apart from one still filling in.
+    if (stage === 3) {
+      if (o.style === 'seam') seamFull();
+      else if (o.style === 'band') out.push(T([[cx - 6 * k, gy - 1 * k], [cx + 7 * k, gy - 3 * k], [cx + 7 * k, gy - 1.6 * k], [cx - 6 * k, gy + 0.4 * k]], m.base));
+      else if (o.style === 'nugget') out.push(E(cx + 10 * k, gy - 11 * k, 2.6, 2.1, m.base), F(E(cx + 9.3 * k, gy - 11.7 * k, 1, 0.8, m.hi)));
+      out.push(...sparkleShape(cx + 3 * k, gy - 17.5 * k, 2.6, '#ffffff'), ...sparkleShape(cx - 8 * k, gy - 11 * k, 1.5, m.hi));
     }
     if (gem && stage === 3) {
       const gr = ramp(gem);

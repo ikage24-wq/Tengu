@@ -2271,6 +2271,16 @@ const WEAPON_SCALE = 1;
 const HEFTED = new Set(['sword', 'axe', 'spear', 'staff']);
 // Weapons drawn behind the body when they point up and back (over the shoulder).
 const BACKSLUNG = new Set(['sword', 'axe', 'spear', 'staff', 'bow']);
+// The big weapons swung round a fist at the chest: upright in a swing, they pass behind her head.
+const UPRIGHT_BEHIND = new Set(['sword', 'axe', 'spear']);
+// Whether the held weapon (or a life tool) is drawn behind the body at this angle: pointing up and
+// back over the shoulder, or (a sword, axe or spear in a swing) standing about upright over her
+// head, so it passes behind the head instead of across the face; a move can say so itself (`back`).
+export function weaponBehind(type, angle, mv = null, toolKind = null) {
+  const tipped = ((((angle % 360) + 540) % 360) - 180);
+  const overTop = !toolKind && mv?.weapon != null && UPRIGHT_BEHIND.has(type) && tipped >= -22 && tipped < 35;
+  return Boolean(mv?.armBack || (mv?.back ?? (overTop || ((toolKind ? true : BACKSLUNG.has(type)) && tipped < -22 && tipped > -165))));
+}
 // How far down its hilt a weapon is held (art px from the grip point toward the pommel).
 const HILT = { sword: 8, axe: 7.5, spear: 9 };
 
@@ -2621,6 +2631,7 @@ function blendRig(r, ra, rb, k) {
 
 // The standing guard a finished move eases back into (the arm low and forward, the blade up).
 const SETTLE_POSE = { weapon: 62, arm: 30, lift: 0, lunge: 0, tilt: 0, turn: 1, stretch: 1, trail: false };
+const SHOULDER_SETTLE = Object.fromEntries([['sword', -58], ['axe', -52], ['spear', -62]].map(([k, w]) => [k, { ...SETTLE_POSE, weapon: w, arm: 48 }]));
 
 // Older pose names still used by callers map onto moves.
 const POSE_MOVES = { swing: 'slash', shoot: 'draw', cast: 'castforward' };
@@ -2657,7 +2668,9 @@ function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
   // so it never jumps from one throw to the next).
   if (moved && state.flow) moved = streamFlow(moved, state.flow, state.progress ?? 0, state.dur ?? 0.35);
   // A move that just ended eases back to the standing guard (`settle`, 0-1) instead of snapping.
-  if (moved && state.settle != null) moved = blendMove(moved, SETTLE_POSE, Math.min(1, state.settle));
+  // (A sword, axe or spear settles back onto the shoulder it rests on, so a move that ended low or
+  // high flows into the idle instead of easing to a guard and then snapping up to the shoulder.)
+  if (moved && state.settle != null) moved = blendMove(moved, SHOULDER_SETTLE[feel.weapon] ?? SETTLE_POSE, Math.min(1, state.settle));
   // The pose the arm and weapon are drawn from follows the same rule as the body (see `rigid`).
   moved = rigid(moved);
   // Walking, the whole body leans into the run and rises a little at each passing step.
@@ -2922,8 +2935,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A blade, haft or shaft pointing up and back (over the shoulder, a wind-up behind the head) is
   // drawn behind the body, so it passes behind the head instead of across the face; a move can
   // say so itself (`back`).
-  const tipped = ((((weaponAngle % 360) + 540) % 360) - 180);
-  const behind = mv?.armBack || (mv?.back ?? ((toolKind ? true : BACKSLUNG.has(g.weapon?.type)) && tipped < -22 && tipped > -165));
+  // In a swing, a sword, axe or spear standing about straight up from the fist at her chest would
+  // run its guard and blade (or axe head) right across her face as it passes over the top (a
+  // rising cut, a spin coming round, a raise before a slam): it goes behind her head instead, so
+  // it reads as wheeling over and behind her.
+  const behind = weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];

@@ -208,10 +208,16 @@ export function drawRadio(ui, world) {
   const npc = NPCS[r.who];
   const W = 300;
   const H = 34;
-  const x = 320 - W / 2;
-  const y = 268;
+  // While a boss fight's floor telegraphs are up (a share ring, a seal), the box slides up and
+  // aside to the left under the party list, off the floor where the ring is, and lets the fight show
+  // through a little.
+  const tele = world.mobs?.some((m) => m.coop && m.hp > 0) ? 1 : 0;
+  r.aside = (r.aside ?? tele) + (tele - (r.aside ?? tele)) * 0.15;
+  const k = r.aside * r.aside * (3 - 2 * r.aside);
+  const x = 320 - W / 2 + (10 - (320 - W / 2)) * k;
+  const y = 268 - 84 * k;
   ctx.save();
-  ctx.globalAlpha = a;
+  ctx.globalAlpha = a * (1 - 0.15 * k);
   box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.95)', edge: '#a6dca2', r: 12, width: 2 });
   // His face in a round frame, with little signal waves.
   ctx.save();

@@ -72,33 +72,12 @@ function linkBeads(ctx, a, b, cam, time, alpha) {
   }
 }
 
-// A revive under way: a thin peach ring on the ground round them, filling clockwise, with a bead
-// riding its leading edge (a supporting touch: the progress itself).
+// A revive under way: a peach ring on the floor round them (the effect art's own drawing, picked by
+// how far along it is), its track filling clockwise from the top with a star riding the leading
+// edge, the floor inside warming as it closes.
 function reviveRing(ctx, x, y, k, time) {
   if (gfx.glowPass) return;
-  ctx.save();
-  ctx.translate(x, y - 2);
-  ctx.scale(1, 0.38);
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(196,86,122,0.35)';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, 0, Math.PI * 2);
-  ctx.stroke();
-  const a0 = -Math.PI / 2;
-  const a1 = a0 + Math.PI * 2 * k;
-  ctx.strokeStyle = '#c4567a';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, a0, a1);
-  ctx.stroke();
-  ctx.strokeStyle = '#ffc58a';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(0, 0, 22, a0, a1);
-  ctx.stroke();
-  ctx.restore();
-  fxSprite(ctx, 'celteamlink', x + Math.cos(a1) * 22, y - 2 + Math.sin(a1) * 22 * 0.38, { t: time, scale: 0.3 });
+  fxSprite(ctx, 'celteamrevivering', x, y - 2, { p: Math.min(0.999, k), scale: 1 + 0.04 * Math.sin(time * 5) * k });
   // Little stars rise off it as it fills.
   for (let i = 0; i < 3; i++) {
     const u = (time * 0.8 + i / 3) % 1;

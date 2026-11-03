@@ -350,6 +350,11 @@ function axe(m0, t) {
       hh = 15;
       const bit = [[0.8, top + 4], [7.6, top - 0.6], [10.2, top + 7], [7.6, top + 15], [0.8, top + 10.4]];
       s.push(T(bit, m.blade), T(flipX(bit), m.blade));
+      // Shaded like the greatsword's steel: a violet-leaning bevel along the inner flat of each bit
+      // and a shine band across it, so the head reads as metal instead of a flat pale slab.
+      const bevel = [[0.8, top + 4], [5.6, top + 1.6], [5.6, top + 12.6], [0.8, top + 10.4]];
+      const shine = [[2.2, top + 5.6], [7.4, top + 3.6], [8, top + 5], [2.2, top + 6.8]];
+      for (const [b, sh] of [[bevel, shine], [flipX(bevel), flipX(shine)]]) s.push(T(b, mix(m.bladeDark, '#5a4a86', 0.3)), F(T(sh, mix(m.blade, '#ffffff', 0.7))));
       edge([[7.6, top - 0.4], [10.2, top + 7], [7.6, top + 14.8], [7, top + 13.4], [9, top + 7], [7, top + 1]]);
       edge(flipX([[7.6, top - 0.4], [10.2, top + 7], [7.6, top + 14.8], [7, top + 13.4], [9, top + 7], [7, top + 1]]));
       s.push(T([[-1.3, top + 0.4], [0, top - 3.6], [1.3, top + 0.4]], m.trim), R(-2.4, top + 2.4, 4.8, 9, m.trim), ...gem(0, top + 7, 1.4, m.gem));
@@ -1248,14 +1253,17 @@ function chakram(m, t, f = 0) {
     case 2: s.push(...rimBlades(4, RR - 0.4, 4.6 * k, 1.3, ring, { rot: Math.PI / 4, kind: 'leaf' })); break;
     case 3: s.push(...rimBlades(12, RR - 0.3, 2 * k, 0.8, ring)); break;
     case 4: s.push(...rimBlades(3, RR - 0.6, 6 * k, 1.4, ring, { rot: -Math.PI / 2, lean: 0.6, kind: 'hook' })); break;
-    case 5: s.push(...rimBlades(6, RR - 0.4, 4.4 * k, 1.2, m.trim, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' })); break;
+    // (Its wings are the ring's own metal with a bright edge, so a rose-gold ring stays rose gold
+    // instead of reading as a yellow spiky sun.)
+    case 5: s.push(...rimBlades(6, RR - 0.4, 4.4 * k, 1.2, ring, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' }), ...rimBlades(6, RR - 0.4, 2.6 * k, 0.5, m.edge, { rot: -Math.PI / 2, lean: 0.4, kind: 'wing' }).map(F)); break;
     case 6: s.push(...rimBlades(8, RR - 0.6, 3.6 * k, 1.4, ring, { kind: 'leaf' }), ...rimBlades(8, RR - 0.6, 2.2 * k, 0.6, m.edge, { kind: 'leaf' }).map(F)); break;
     case 7: s.push(...rimBlades(4, RR - 0.4, 5 * k, 1.5, ring, { rot: -Math.PI / 4, lean: 0.9, kind: 'hook' })); break;
     case 8: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.1, ring, { rot: -Math.PI / 2 }), ...rimBlades(4, RR - 0.4, 3.4 * k, 0.8, ring, { rot: -Math.PI / 4 })); break;
     case 9: s.push(...rimBlades(4, RR - 0.4, 5.4 * k, 1.5, m.trim, { rot: -Math.PI / 2 }), ...rimBlades(8, RR - 0.3, 1.8 * k, 0.8, ring, { rot: Math.PI / 8 })); break;
     case 10: {
-      const st = star(0, 0, RR + 3.4, GOLD, 0.3);
-      s.push(st, { ...st, pts: st.pts.map(([x, y]) => [x * 0.707 - y * 0.707, x * 0.707 + y * 0.707]) }, ...rimBlades(4, RR - 0.4, 4.2, 1.4, m.trim, { rot: -Math.PI / 4 }));
+      // Starsteel: eight long points round the rim in the ring's own metal, each with a bright edge
+      // (no filled star behind it, so the hole stays open and a rose-gold ring stays rose gold).
+      s.push(...rimBlades(8, RR - 0.4, 3.6, 1.5, ring, { rot: -Math.PI / 2 }), ...rimBlades(8, RR - 0.4, 2.2, 0.5, m.edge, { rot: -Math.PI / 2 }).map(F), ...rimBlades(4, RR - 0.4, 4.6, 1.2, mix(ring, '#ffffff', 0.25), { rot: -Math.PI / 4 }));
       break;
     }
     default: break;

@@ -37,7 +37,7 @@ import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
 import { drawHollowBack, drawHollowFront, drawDarkness } from './hollow.js';
-import { drawCoopBack, drawCoopFront } from './coop.js';
+import { drawCoopBack, drawCoopFront, tagFade } from './coop.js';
 import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
@@ -359,8 +359,11 @@ export function drawWorld(ctx, world, viewCam, time) {
     const label = world.char.name;
     const w = ctx.measureText(label).width + 10;
     const hot = world.hoverSelf;
+    ctx.save();
+    ctx.globalAlpha *= tagFade(hx, hy);
     box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
     text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    ctx.restore();
     // Your guild, like everyone else's, under that.
   }
 
