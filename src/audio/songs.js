@@ -7,8 +7,8 @@
 // The areas:
 // - Title: "Tengu Rising", disco house (122), D major, a piano hook, flute in the opening.
 // - Sprout Village: "Market Hop", future house (126), F major, a skipping pluck hook, bouncy bass.
-// - Meadows: "Over the Petal Hills" (140), D major, written by hand from the craft guide: a flute
-//   theme over pizzicato, a minor violin section, a harp breakdown, a brass climax, a marimba groove.
+// - Meadows: "Over the Petal Hills" (132), D major, written by hand from the craft guide: a verse
+//   and chorus on flute over piano and a walking bass, the band growing each time round.
 // - Pastel Harbor: "Seabreeze", tropical house (118), B-flat major, kalimba, shakers.
 // - Ember Crag: "Ember Strut", funky house (124), E minor, brass stabs, a house piano, funk bass.
 // - Forest: "Mossy Groove", afro house (120), A minor, balafon, toms and shakers, pan flute.
@@ -325,130 +325,110 @@ const town = edm({
   extra: { glock: ['glock', 'arp', 0.25] },
 });
 
-// ---------- The meadows: "Over the Petal Hills" (2026-11-03) ----------
-// The first song written from the craft guide (docs/audio/craft.md) instead of the old builder:
-// arranged by hand for the place. The meadows are where a new adventurer spends their first long
-// hours, hopping the hills and fighting the little monsters, so the song is bright, hopeful and
-// moving forward (D major, 140), and long enough (48 bars, about 82 s) with enough change not to
-// wear thin. Its theme is a "hop": a pickup leaping up to a held note, answered by a fall, then
-// sequenced higher; later sections develop it rather than add new tunes.
-//   intro    pizzicato and guitar alone, a kick creeping in
-//   A        the theme on flute over pizzicato, guitar and a bouncing bass, light drums
-//   A'       the theme again with the full band: strings under it, the snare in, a tom fill
-//   B        the relative minor, half-time: the violin sings a lyrical phrase, the flute answers
-//   break    the drums drop out: harp arpeggios and strings, the theme's hop echoing on the
-//            glockenspiel, then a riser and a snare roll
-//   top      the climax: the theme with the violin an octave under the flute, brass stabs off the
-//            beat, four on the floor, a run up into...
-//   groove   a playful interlude: the marimba plays with the hop, syncopated, over a funky beat,
-//            and hands back to the top of A
+// ---------- The meadows: "Over the Petal Hills" (2026-11-03, second version) ----------
+// Written as one song, not a patchwork of sections (the first try had six different sections, a
+// new tune and a new groove in each, and chords stacked by formula, and the player said it had no
+// coherence): a verse and a chorus whose tunes share one rhythm, one groove all the way through,
+// chords voiced by hand so each moves to the next by the smallest step over a bass line walking
+// down (D, C#, B...), and an arrangement that grows by adding parts rather than swapping them.
+// D major, 132: bright and hopeful for the first fields, steady enough to roam to for an hour.
+//   intro     piano and bass on the verse's chords, a kick coming in
+//   verse     the flute's tune (two four-bar phrases: a question that rises and an answer that
+//             falls back), piano and bass, a light beat
+//   chorus    the hook (the verse's rhythm, pushed off the beat, higher), strings under it, the
+//             full beat
+//   verse 2   the tune again with the guitar strumming in and the violin answering each phrase
+//   chorus 2  the hook with the violin an octave under it and the glockenspiel sparkling, then a
+//             last bar that runs back into the verse
+//   bridge    eight bars on the chorus chords, the piano carrying a fragment of the hook, the beat
+//             half time, building back to the top
 const MEADOW_INST = {
-  flute: { sample: 'flute', rel: 0.16, gate: 0.94 },
-  violin: { sample: 'violin', rel: 0.22, gate: 0.96 },
-  pizz: { sample: 'pizzicato_strings', rel: 0.18, gain: 0.95 },
-  guitar: { sample: 'acoustic_guitar_nylon', rel: 0.15, gain: 0.75, strum: 0.012 },
-  strings: { sample: 'string_ensemble_1', attack: 0.14, rel: 0.5, gain: 0.8 },
-  brass: { sample: 'brass_section', rel: 0.08, gate: 0.55 },
-  harp: { sample: 'orchestral_harp', rel: 0.6, gain: 0.9 },
+  flute: { sample: 'flute', rel: 0.2, gate: 0.97 },
+  violin: { sample: 'violin', rel: 0.25, gate: 0.97 },
+  piano: { sample: 'acoustic_grand_piano', rel: 0.3, gain: 0.8 },
+  guitar: { sample: 'acoustic_guitar_nylon', rel: 0.2, gain: 0.75, strum: 0.014 },
+  strings: { sample: 'string_ensemble_1', attack: 0.18, rel: 0.6, gain: 0.8 },
   glock: { sample: 'glockenspiel', rel: 0.5, gain: 0.6 },
-  marimba: { sample: 'marimba', rel: 0.25, gain: 0.9 },
-  bass: { sample: 'electric_bass_finger', rel: 0.1, gate: 0.82 },
-  riser: { synth: 'riser', gain: 0.6 },
+  bass: { sample: 'electric_bass_finger', rel: 0.12, gate: 0.9 },
 };
-const MCH = {
-  a: ['D', 'A', 'Bm', 'G', 'D', 'A', 'G', 'A'],
-  a2: ['D', 'A', 'Bm', 'G', 'D', 'A', 'G', 'D'],
-  b: ['Bm', 'G', 'D', 'A', 'Bm', 'G', 'Em', 'A'],
-  brk: ['G', 'A', 'F#m', 'Bm', 'G', 'A', 'Em', 'A'],
-  groove: ['G', 'A', 'D', 'Bm', 'G', 'A', 'Em', 'A'],
-};
-// The theme: the hop (a pickup leaping to a held note), its answer, the hop again higher.
-const THEME = ['r:2 A5:2 D6:2 F#6:4 E6:2 D6:2 A5:2', 'E6:6 C#6:2 A5:4 r:4', 'r:2 B5:2 D6:2 F#6:4 A6:2 G6:2 F#6:2', 'G6:6 E6:2 D6:4 r:4',
-  'r:2 A5:2 D6:2 F#6:4 E6:2 D6:2 A5:2', 'E6:4 F#6:2 G6:2 A6:6 r:2', 'B6:4 A6:2 G6:2 F#6:4 E6:2 D6:2'];
-const mBass = {
-  // Root on one, a push before three, up to the fifth and the octave.
-  hop: (sym) => `${nm(rootIn(sym, 2))}:4 r:2 ${nm(rootIn(sym, 2))}:2 ${nm(rootIn(sym, 2) + 7)}:4 ${nm(rootIn(sym, 3))}:4`,
-  // Half time: long roots for the minor section.
-  long: (sym) => `${nm(rootIn(sym, 2))}:6 r:2 ${nm(rootIn(sym, 2))}:4 ${nm(rootIn(sym, 2) + 7)}:4`,
-  // Funky: syncopated root and octave.
-  funk: (sym) => `${nm(rootIn(sym, 2))}:3 ${nm(rootIn(sym, 2))}:1 r:2 ${nm(rootIn(sym, 3))}:2 r:2 ${nm(rootIn(sym, 2))}:2 ${nm(rootIn(sym, 2) + 7)}:2 ${nm(rootIn(sym, 3))}:2`,
-};
-const offChords = (c) => (sym, len) => Array(len / 4).fill(`r:2 ${tones(sym, c)}:2`).join(' ');
+// Each chord voiced by hand, close to the one before it.
+const MV = { D: 'D4+F#4+A4', 'A/C#': 'C#4+E4+A4', Bm: 'B3+D4+F#4', 'F#m': 'C#4+F#4+A4', G: 'B3+D4+G4', 'D/F#': 'A3+D4+F#4', Em: 'B3+E4+G4', A: 'C#4+E4+A4', Gc: 'D4+G4+B4', Bmc: 'D4+F#4+B4' };
+const VERSE = ['D', 'A/C#', 'Bm', 'F#m', 'G', 'D/F#', 'Em', 'A'];
+const CHORUS = ['D', 'Gc', 'Bmc', 'A', 'D', 'Gc', 'A', 'D'];
+// The piano's comping, the same figure all song: on one, the "and" of two, and four.
+const comp = (list) => bars(...list.map((c) => `${MV[c]}:3 r:3 ${MV[c]}:2 r:4 ${MV[c]}:4`));
+const pad = (list) => bars(...list.map((c) => `${MV[c]}:16`));
+const strum = (list) => bars(...list.map((c) => `r:4 ${MV[c]}:2 r:2 r:4 ${MV[c]}:2 r:2`));
+// The bass walks down under the verse and steps between the chorus's roots.
+const VERSE_BASS = bars('D2:6 D2:2 D2:4 C#2:4', 'C#2:6 C#2:2 C#2:4 B1:4', 'B1:6 B1:2 B1:4 A1:4', 'F#1:6 F#1:2 F#1:4 F#1:4', 'G1:6 G1:2 G1:4 F#1:4', 'F#1:6 F#1:2 F#1:4 E1:4', 'E1:6 E1:2 E1:4 G1:4', 'A1:6 A1:2 A1:4 C#2:4');
+const CHORUS_BASS = bars('D2:6 D2:2 D2:4 F#2:4', 'G1:6 G1:2 G1:4 A1:4', 'B1:6 B1:2 B1:4 C#2:4', 'A1:6 A1:2 A1:4 C#2:4', 'D2:6 D2:2 D2:4 F#2:4', 'G1:6 G1:2 G1:4 A1:4', 'A1:6 A1:2 A1:4 C#2:4', 'D2:6 D2:2 D2:4 A1:4');
+// The verse's tune: one rhythm (long, long, held, step) through every phrase.
+const VERSE_TUNE = ['F#5:4 A5:4 D6:6 C#6:2', 'B5:4 A5:4 E5:8', 'F#5:4 B5:4 D6:6 C#6:2', 'A5:12 r:4', 'G5:4 B5:4 E6:6 D6:2', 'C#6:4 D6:4 A5:8', 'B5:4 C#6:4 D6:4 E6:4', 'C#6:12 r:4'];
+// The chorus's hook: the same idea, pushed off the beat and higher.
+const CHORUS_TUNE = ['r:2 A5:2 D6:3 E6:3 F#6:6', 'G6:4 F#6:4 E6:4 D6:4', 'r:2 F#5:2 B5:3 C#6:3 D6:6', 'E6:4 D6:4 C#6:8', 'r:2 A5:2 D6:3 E6:3 F#6:6', 'G6:4 A6:4 B6:6 A6:2', 'G6:4 F#6:4 E6:4 C#6:4', 'D6:12 r:4'];
+// The violin's answers in the second verse: in each phrase's held note and rest.
+const VERSE_ANSWER = ['r:16', 'r:8 A4:2 B4:2 C#5:4', 'r:16', 'r:12 A4:2 B4:2', 'r:16', 'r:8 F#4:2 G4:2 A4:4', 'r:16', 'r:12 E4:2 G4:2'];
+const BEAT = 'P.h.S.h.P.h.S.h.';
+const BEAT_FULL = 'P.h.S.h.P.hPS.hh';
 const meadow = {
-  name: 'meadow', bpm: 140, rows: 16, inst: MEADOW_INST, pump: 0.18, drums: 1, bright: 0.55, reverb: { room: 0.84, wet: 0.2 },
-  // In a fight: extra offbeat hats over the beat, or a beat where the song has none.
-  fight: { top: '..h...h...h...hh', kick: 'P.h.S.h.P.h.S.h.' },
+  name: 'meadow', bpm: 132, rows: 16, inst: MEADOW_INST, pump: 0.1, drums: 0.9, bright: 0.5, reverb: { room: 0.84, wet: 0.22 },
+  fight: { top: '..h...h...h...hh', kick: BEAT },
   tracks: {
-    flute: { inst: 'flute', gain: 0.55, verb: 0.28, echo: { rows: 3, fb: 0.15, wet: 0.08 } },
-    violin: { inst: 'violin', gain: 0.46, pan: -0.12, verb: 0.3 },
-    marimba: { inst: 'marimba', gain: 0.5, pan: 0.1, verb: 0.22 },
-    glock: { inst: 'glock', gain: 0.3, pan: 0.3, verb: 0.45, echo: { rows: 6, fb: 0.3, wet: 0.25 } },
-    pizz: { inst: 'pizz', gain: 0.3, pan: 0.25, verb: 0.2 },
-    guitar: { inst: 'guitar', gain: 0.24, pan: -0.3, verb: 0.2 },
-    strings: { inst: 'strings', gain: 0.26, pan: -0.05, verb: 0.4 },
-    brass: { inst: 'brass', gain: 0.3, pan: 0.15, verb: 0.25 },
-    harp: { inst: 'harp', gain: 0.32, pan: 0.2, verb: 0.4 },
+    flute: { inst: 'flute', gain: 0.56, verb: 0.3, echo: { rows: 4, fb: 0.12, wet: 0.06 } },
+    violin: { inst: 'violin', gain: 0.36, pan: -0.15, verb: 0.32 },
+    piano: { inst: 'piano', gain: 0.34, pan: 0.12, verb: 0.25 },
+    guitar: { inst: 'guitar', gain: 0.2, pan: -0.3, verb: 0.2 },
+    strings: { inst: 'strings', gain: 0.2, pan: -0.05, verb: 0.4 },
+    glock: { inst: 'glock', gain: 0.18, pan: 0.3, verb: 0.4 },
     bass: { inst: 'bass', gain: 0.42, verb: 0, low: true },
-    riser: { inst: 'riser', gain: 0.4, verb: 0.3 },
   },
   patterns: {
     intro: {
-      pizz: part(MCH.a.slice(0, 4), F.arp(67, 2)),
-      guitar: part(MCH.a.slice(0, 4), offChords(62)),
-      drums: bars('................', '................', 'P.......P.......', 'P.......P...P.P.'),
+      piano: comp(VERSE.slice(0, 4)),
+      bass: bars(...VERSE_BASS.split(' | ').slice(0, 4)),
+      drums: bars('................', '................', 'P.......P.......', 'P.......P...S.SS'),
     },
-    a: {
-      // (Kept light, the guitar and snare held back, so the full band in A' lands.)
-      flute: bars(...THEME, 'E6:8 r:4 A5:2 C#6:2'),
-      pizz: part(MCH.a, F.arp(67, 2)),
-      bass: part(MCH.a, mBass.hop),
-      drums: bars(...Array(7).fill('P.x...x.P.x...x.'), 'P.x...x.P.x.S.SS'),
+    verse: {
+      flute: bars(...VERSE_TUNE),
+      piano: comp(VERSE),
+      bass: VERSE_BASS,
+      drums: bars(...Array(7).fill(BEAT), 'P.h.S.h.P.h.S.SS'),
     },
-    a2: {
-      flute: bars(...THEME, 'D6:8 r:4 F#6:2 E6:2'),
-      pizz: part(MCH.a2, F.arp(67, 2)),
-      guitar: part(MCH.a2, offChords(62)),
-      strings: part(MCH.a2, F.hold(60)),
-      bass: part(MCH.a2, mBass.hop),
-      drums: bars('U.h.S.h.P.hPS.h.', ...Array(6).fill('P.h.S.h.P.hPS.h.'), 'P.h.S.h.P.t.t.tt'),
+    chorus: {
+      flute: bars(...CHORUS_TUNE),
+      piano: comp(CHORUS),
+      strings: pad(CHORUS),
+      bass: CHORUS_BASS,
+      drums: bars(`U${BEAT_FULL.slice(1)}`, ...Array(6).fill(BEAT_FULL), 'P.h.S.h.P.t.t.tt'),
     },
-    b: {
-      // The violin's call (four bars, low and lyrical), then the flute's answer, higher.
-      violin: bars('F#5:6 E5:2 D5:4 C#5:2 D5:2', 'B4:8 r:4 D5:2 E5:2', 'F#5:6 G5:2 A5:4 B5:2 A5:2', 'E5:12 r:4', 'r:16', 'r:16', 'r:16', 'r:16'),
-      flute: bars('r:16', 'r:16', 'r:16', 'r:16', 'r:4 D6:2 C#6:2 B5:4 F#6:4', 'G6:6 F#6:2 E6:4 D6:4', 'E6:4 G6:4 B6:4 A6:2 G6:2', 'A6:4 r:2 C#6:2 E6:4 G6:4'),
-      strings: part(MCH.b, F.hold(60)),
-      guitar: part(MCH.b, (sym, len) => Array(len / 8).fill(`${tones(sym, 62)}:3 r:5`).join(' ')),
-      bass: part(MCH.b, mBass.long),
-      drums: bars(...Array(7).fill('P...h...S...h.x.'), 'P...h...S.S.SSSS'),
+    verse2: {
+      flute: bars(...VERSE_TUNE),
+      violin: bars(...VERSE_ANSWER),
+      piano: comp(VERSE),
+      guitar: strum(VERSE),
+      bass: VERSE_BASS,
+      drums: bars(...Array(7).fill(BEAT_FULL), 'P.h.S.h.P.h.S.SS'),
     },
-    brk: {
-      harp: part(MCH.brk, F.arp(67, 2)),
-      strings: part(MCH.brk, F.hold(58)),
-      glock: bars('r:2 A6:2 D7:2 F#7:4 r:6', 'r:2 A6:2 C#7:2 E7:4 r:6', 'r:2 A6:2 C#7:2 F#7:4 r:6', 'r:2 B6:2 D7:2 F#7:4 r:6', 'r:2 B6:2 D7:2 G7:4 r:6', 'r:2 C#7:2 E7:2 A7:4 r:6', 'r:16', 'r:16'),
-      bass: bars('r:16', 'r:16', 'r:16', 'r:16', 'G2:16', 'A2:16', 'E2:16', 'A2:16'),
-      riser: bars('r:16', 'r:16', 'r:16', 'r:16', 'r:16', 'r:16', 'C4:16', '~:16'),
-      drums: bars('................', '................', '................', '................', '................', '................', 'S...S...S...S...', 'S.S.S.S.SSSSSSSS'),
+    chorus2: {
+      flute: bars(...CHORUS_TUNE.slice(0, 7), 'D6:4 E6:4 F#6:4 E6:4'),
+      violin: shift(bars(...CHORUS_TUNE.slice(0, 7), 'D6:4 E6:4 F#6:4 E6:4'), -12),
+      glock: bars(...CHORUS_TUNE.map((b, i) => (i % 2 ? 'r:16' : shift(b, 12)))),
+      piano: comp(CHORUS),
+      guitar: strum(CHORUS),
+      strings: pad(CHORUS),
+      bass: CHORUS_BASS,
+      drums: bars(`U${BEAT_FULL.slice(1)}`, ...Array(6).fill(BEAT_FULL), 'P.h.S.h.P.hPS.SS'),
     },
-    top: {
-      flute: bars(...THEME, 'E6:4 F#6:4 G6:4 A6:4'),
-      violin: bars(...shift(bars(...THEME, 'E6:4 F#6:4 G6:4 A6:4'), -12).split(' | ')),
-      brass: part(MCH.a, offChords(60)),
-      strings: part(MCH.a, F.hold(58)),
-      bass: part(MCH.a, F.octaves(2)),
-      drums: bars('U.h.Y.h.P.h.Y.h.', ...Array(6).fill('P.h.Y.h.P.h.Y.hh'), 'P.h.Y.h.SSSSSSSS'),
-    },
-    groove: {
-      // The hop turned playful: bounced, cut short, answered by the pizzicato.
-      marimba: bars('r:2 B5:1 r:1 D6:2 G6:2 r:2 F#6:1 r:1 D6:2 B5:2', 'C#6:2 r:2 E6:2 A6:2 r:4 G6:2 E6:2', 'r:2 A5:1 r:1 D6:2 F#6:2 r:2 E6:1 r:1 D6:2 A5:2', 'B5:4 r:4 F#6:2 r:2 D6:4',
-        'r:2 B5:1 r:1 D6:2 G6:2 r:2 B6:1 r:1 A6:2 G6:2', 'A6:2 r:2 E6:2 C#6:2 r:4 E6:2 A6:2', 'G6:2 E6:2 B5:2 E6:2 G6:2 B6:2 A6:2 G6:2', 'E6:4 r:4 A5:2 r:2 C#6:4'),
-      pizz: part(MCH.groove, (sym, len) => Array(len / 8).fill(`r:4 ${nm(chord(sym, 67).tones[1])}:2 ${nm(chord(sym, 67).tones[2])}:2`).join(' ')),
-      guitar: part(MCH.groove, offChords(62)),
-      bass: part(MCH.groove, mBass.funk),
-      drums: bars(...Array(7).fill('P..hS..hP.PhS..h'), 'P..hS..hP.t.t.tt'),
+    bridge: {
+      // The hook's first notes, quietly, on the piano; the strings swelling under; back to the top.
+      piano: bars('r:2 A4:2 D5:3 E5:3 F#5:6', `${MV.Gc}:16`, 'r:2 F#4:2 B4:3 C#5:3 D5:6', `${MV.A}:16`, 'r:2 A4:2 D5:3 E5:3 F#5:6', `${MV.Gc}:16`, `${MV.Em}:8 ${MV.A}:8`, `${MV.A}:16`),
+      strings: pad(['D', 'Gc', 'Bmc', 'A', 'D', 'Gc', 'Em', 'A']),
+      bass: bars('D2:16', 'G1:16', 'B1:16', 'A1:16', 'D2:16', 'G1:16', 'E1:8 E1:8', 'A1:8 A1:4 C#2:4'),
+      drums: bars('P.......S.......', 'P.......S.......', 'P.......S.......', 'P.......S.......', 'P...h...S...h...', 'P...h...S...h...', 'P.h.S.h.P.h.S.h.', 'P.h.S.h.S.S.SSSS'),
     },
   },
   intro: ['intro'],
-  order: ['a', 'a2', 'b', 'brk', 'top', 'groove'],
+  order: ['verse', 'chorus', 'verse2', 'chorus2', 'bridge'],
 };
 
 const harbor = edm({
