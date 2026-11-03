@@ -153,7 +153,7 @@ export const MAPS = {
     // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
     // cherry tree's crown in the boughs, the cloud pillar by the lookout.
     deco: [
-      ['flowerarch', 260], ['giantflower', 900, 0], ['bigpond', 2235], ['picnic', 1650], ['signpost', 2060],
+      ['flowerarch', 260], ['giantflower', 820, 0], ['bigpond', 2235], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
       ['sakura', 1200, 0, 440],
       ['cloudpillar', 880, 0, 280],
@@ -701,7 +701,7 @@ Object.assign(MAPS, {
       { id: 'east', x: 1540, y: 480, to: 'dock', toPortal: 'west', label: 'Sunny Dock' },
     ],
     npcs: [{ id: 'kuro', x: 260 }],
-    deco: [['scarecrow', 520], ['fence', 1100], ['signpost', 1460]],
+    deco: [['scarecrow', 520], ['fence', 1100], ['signpost', 1500]],
     spawns: [{ mob: 'puffle', x: 640, y: 480 }, { mob: 'puffle', x: 860, y: 480 }, { mob: 'puffle', x: 1060, y: 480 }, { mob: 'puffle', x: 1280, y: 480 }],
   },
   dock: {
@@ -755,7 +755,7 @@ Object.assign(MAPS, {
     terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
     platforms: [{ x: 400, y: G - 120, w: 160 }],
     ropes: [],
-    deco: [['bigtree', 262, 0], ['mushring', 520], ['giantshroom', 700, 2], ['signpost', 168], ['rootgate', 1080]],
+    deco: [['bigtree', 262, 0], ['mushring', 520], ['giantshroom', 700, 2], ['signpost', 120], ['rootgate', 1080]],
     portals: [
       { id: 'start', x: 760, y: G, hidden: true },
       { id: 'south', x: 60, y: G, to: 'canyon', toPortal: 'hollow' },
