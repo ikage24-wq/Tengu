@@ -22,6 +22,7 @@ import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { VW, VH } from '../src/input.js';
 import { text, box, beginUi } from '../src/ui/kit.js';
 import { createUiState, drawUi } from '../src/ui/manager.js';
+import { sceneStep, advanceScene, fillScene, isStaging } from '../src/world/story.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -126,7 +127,20 @@ function pilot(world) {
 let t = 0;
 let card = null;
 
+// Watching a scene (window.watch): it plays through the way a player reads it, each line held a
+// moment after it has typed out, each speech bubble too.
+function readScene() {
+  const sc = w.scene;
+  const st = sceneStep(w);
+  if (!st) return;
+  if (isStaging(st)) {
+    const say = w.cine?.say;
+    if (say && say.t > fillScene(w, say.text).length / 55 + 1.3) w.cine.go = true;
+  } else if (st.card ? sc.t > 2.8 : sc.t > fillScene(w, st.text).length / 55 + 1.5) advanceScene(w);
+}
+
 function tick() {
+  if (w.scene && watching) return (readScene(), updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false }));
   // (Scenes, like Gnarlroot falling asleep, play for a moment and are then clicked through.)
   // (A montage jumping between rooms skips the scenes outright: window.room sets noScenes.)
   if (w.scene && (noScenes || w.scene.t > 2.5)) {
@@ -198,6 +212,7 @@ function room(id) {
 }
 let fadeA = 0;
 let noScenes = false;
+let watching = false;
 
 window.sim = sim;
 window.room = room;
@@ -205,6 +220,13 @@ window.fade = (a) => (fadeA = a);
 window.step = step;
 window.caption = (title, sub) => (card = title ? { title, sub, a: 1.6 } : null);
 window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+// Scenes play out in full from here on (for filming them: tools/record-scene.cjs).
+window.watch = () => {
+  noScenes = false;
+  watching = true;
+};
+// How things stand: the scene playing, and how far the nearest boss is.
+window.state = () => ({ scene: w.scene?.id ?? null, boss: Math.min(9999, ...w.mobs.filter((m) => m.def.boss && m.hp > 0).map((m) => Math.abs(m.x - w.body.x))) });
 window.info = () => ({
   map: w.map.id,
   name: w.map.name,

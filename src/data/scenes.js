@@ -156,10 +156,24 @@ export const HOLLOW_SCENES = {
 
 // The bosses meet the group (each once a run), before the fight.
 export const HOLLOW_BOSS_SCENES = {
+  // The Myconid Queen, staged: you step up as the camera finds her fuming among her mushrooms,
+  // she stamps so the garden shakes and puffs spores, you hop back, the two of you square up, and
+  // she sets her spores on you.
   hollow_capper: [
+    { together: [{ cam: 'mothercapper', dur: 1.1 }, { walk: 'player', to: 'mothercapper', gap: 96, speed: 110 }] },
+    { together: [{ emote: 'mothercapper', kind: 'anger', dur: 2.4 }, { fx: 'spores', at: 'mothercapper', n: 10 }] },
     { who: 'mothercapper', text: 'Who is TRAMPLING my garden? My darlings were sleeping!', mood: 'angry' },
+    { jump: 'mothercapper', height: 26 },
+    { together: [{ shake: 4, dur: 0.5 }, { fx: 'spores', at: 'mothercapper' }, { emote: 'player', kind: '!' }] },
+    { walk: 'player', away: 'mothercapper', by: 28, speed: 120 },
+    { together: [{ cam: ['player', 'mothercapper'], dur: 0.8 }, { face: 'player', to: 'mothercapper' }] },
+    { emote: 'player', kind: 'sweat', dur: 1.2, hold: true },
     { who: 'player', text: "We're sorry! We're here to help Gnarlroot sleep." },
-    { who: 'mothercapper', text: "Help? Nobody HELPS anymore. Out, out, out! Spores, my sweets!", mood: 'angry' },
+    { face: 'mothercapper', to: 'player' },
+    { emote: 'mothercapper', kind: '?', dur: 1, hold: true },
+    { who: 'mothercapper', text: 'Help? Nobody HELPS anymore. Out, out, out! Spores, my sweets!', mood: 'angry' },
+    { together: [{ jump: 'mothercapper', height: 18 }, { fx: 'spores', at: 'mothercapper', n: 30 }, { shake: 3, dur: 0.4 }] },
+    { cam: 'player', dur: 0.7 },
   ],
   hollow_boar: [
     { who: 'tuskar', text: "GRUNT. You smell like trouble. And acorns. Mostly trouble.", mood: 'angry' },

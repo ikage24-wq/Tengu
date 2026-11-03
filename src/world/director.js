@@ -3,8 +3,10 @@
 // every other step is staging that plays out on the map while the world's own clock stays
 // paused (no monster moves, no buff runs out):
 //
-//   { cam: target, dur }          pan the camera to an actor, 'player', or { x, y } (eased)
+//   { cam: target, dur }          pan the camera to an actor, 'player', { x, y }, or a list of
+//                                 actors (it frames them all, between them) (eased)
 //   { walk: actor, to, by, gap }  walk to a place, another actor (stopping `gap` short), or by dx
+//   { walk: actor, away, by }     back off `by` px from another actor (whichever side they're on)
 //   { face: actor, to }           turn to face another actor, or 1 / -1
 //   { jump: actor }               a little hop
 //   { emote: actor, kind, dur }   an emote pops over their head: ! ? heart note sweat anger zzz
@@ -13,13 +15,14 @@
 //   { wait: secs }
 //   { fade: 'out' | 'in', dur, color }   the screen to a colour and back
 //   { flash: color }  { shake: strength, dur }
-//   { fx: kind, at }              a burst: sparkle hearts petals leaves wind confetti
+//   { fx: kind, at }              a burst: sparkle hearts petals leaves wind confetti spores
 //   { spawn: npc, x, facing }     an NPC steps into the scene ({ spawn, at: actor, by } too)
 //   { leave: actor }              they fade out of it
 //   { together: [steps] }         run several at once; done when all are
 //   any step with async: true     starts and lets the scene carry on at once
 //
-// Actors are 'player', an NPC on the map (or one spawned for the scene), by id. A step naming an
+// Actors are 'player', an NPC on the map (or one spawned for the scene), or a monster on the map
+// (by its id: a boss can walk, hop, turn, emote and speak in its own entrance), by id. A step naming an
 // actor who isn't there is passed over, so a scene never gets stuck. When the scene ends the
 // camera eases back to you, NPCs who walked go back to their places and the ones who came for the
 // scene leave. Skipping (Esc) plays the rest out at once, so everyone ends where the scene puts them.
@@ -38,11 +41,20 @@ export function startCine(world) {
   world.cine = { step: -1, run: null, bg: [], cam: null, view: null, fade: { a: 0 }, flash: null, shake: null, emotes: [], bursts: [], say: null, go: false, fast: false, moved: new Map(), spawned: [] };
 }
 
+// A monster on the map taking part in a scene, by its id (the first one still standing).
+export function mobActor(world, who) {
+  const m = world.mobs?.find((q) => q.def.id === who && q.hp > 0);
+  if (m) m.cine ??= {};
+  return m ?? null;
+}
+
 // Where an actor stands (feet), or null if they aren't here.
 function actorAt(world, who) {
-  if (who === 'player') return { x: world.body.x, y: world.body.y };
+  if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
   const n = world.map.npcs.find((q) => q.id === who);
-  return n ? { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0) } : null;
+  if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
+  const m = mobActor(world, who);
+  return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h } : null;
 }
 
 function npcOf(world, who) {
@@ -55,6 +67,7 @@ function npcOf(world, who) {
 
 function setFacing(world, who, dir) {
   if (who === 'player') world.body.facing = dir;
+  else if (mobActor(world, who) && !world.map.npcs.some((q) => q.id === who)) mobActor(world, who).dir = dir;
   else {
     const n = npcOf(world, who);
     if (n) n.cine.facing = dir;
@@ -63,6 +76,11 @@ function setFacing(world, who, dir) {
 
 // Where a camera target is, as the point the camera centres on.
 function camPoint(world, target) {
+  if (Array.isArray(target)) {
+    const pts = target.map((t) => camPoint(world, t)).filter(Boolean);
+    if (!pts.length) return null;
+    return { x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: Math.max(...pts.map((p) => p.y)) };
+  }
   if (target && typeof target === 'object') return { x: target.x, y: target.y ?? groundAt(world.map, target.x) - 30 };
   const a = actorAt(world, target ?? 'player');
   return a ? { x: a.x, y: a.y - 30 } : null;
@@ -100,13 +118,18 @@ function runner(world, step) {
       if (!other) return () => true;
       const side = Math.sign(start.x - other.x) || 1;
       target = other.x + side * (step.gap ?? 30);
+    } else if (step.away) {
+      const other = actorAt(world, step.away);
+      if (!other) return () => true;
+      target = start.x + (Math.sign(start.x - other.x) || -1) * (step.by ?? 30);
     } else if (step.by != null) target = start.x + step.by;
     if (target == null) return () => true;
     target = Math.max(10, Math.min(world.map.width - 10, target));
     const speed = step.speed ?? WALK;
     const n = who === 'player' ? null : npcOf(world, who);
+    const m = who === 'player' || n ? null : mobActor(world, who);
     return (dt, skip) => {
-      const x = who === 'player' ? world.body.x : n.x;
+      const x = who === 'player' ? world.body.x : n ? n.x : m.x;
       const dir = Math.sign(target - x);
       const nx = skip || Math.abs(target - x) <= speed * dt ? target : x + dir * speed * dt;
       const done = nx === target;
@@ -118,6 +141,12 @@ function runner(world, step) {
         if (b.onGround && !b.rope && Math.abs(g - b.y) < 24) b.y = g;
         b.vx = done ? 0 : dir * speed;
         if (dir) b.facing = dir;
+      } else if (m) {
+        // A monster walks in its own gait; the floor carries it.
+        m.x = nx;
+        m.y = groundAt(world.map, nx);
+        m.state = done ? 'idle' : 'walk';
+        if (dir) m.dir = dir;
       } else {
         n.x = nx;
         n.cine.walk = !done;
@@ -141,6 +170,7 @@ function runner(world, step) {
     const who = step.jump;
     if (!actorAt(world, who)) return () => true;
     const n = who === 'player' ? null : npcOf(world, who);
+    const m = who === 'player' || n ? null : mobActor(world, who);
     const b = world.body;
     const y0 = b.y;
     let t = 0;
@@ -150,6 +180,7 @@ function runner(world, step) {
       const u = Math.min(1, t / dur);
       const lift = Math.sin(u * Math.PI) * (step.height ?? 16);
       if (n) n.cine.lift = lift;
+      else if (m) m.cine.lift = lift;
       else {
         b.y = y0 - lift;
         b.onGround = u >= 1;
@@ -218,8 +249,9 @@ function runner(world, step) {
     return () => true;
   }
   if (step.fx) {
-    const at = camPoint(world, step.at ?? 'player');
-    if (at) burst(c, step.fx, at.x, at.y - (typeof step.at === 'object' ? 0 : 6), step.n);
+    // At an actor it bursts from about their chest (a boss's cap, a hero's heart); or at a point.
+    const a = step.at && typeof step.at === 'object' ? step.at : actorAt(world, step.at ?? 'player');
+    if (a) burst(c, step.fx, a.x, a.y - (a.h ? a.h * 0.7 : 0), step.n);
     return () => true;
   }
   if (step.spawn) {
@@ -252,12 +284,12 @@ function runner(world, step) {
 
 // A burst of little things at a point: drawn by the cutscene window.
 function burst(c, kind, x, y, n) {
-  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : 12);
+  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : 12);
   for (let k = 0; k < count; k++) {
     const a = (k / count) * Math.PI * 2 + Math.random() * 0.4;
     const sp = kind === 'wind' ? 90 + Math.random() * 40 : 30 + Math.random() * 40;
     c.bursts.push({
-      kind, x, y, t: 0, life: kind === 'wind' ? 1.2 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
+      kind, x, y, t: 0, life: kind === 'wind' ? 1.2 : kind === 'spores' ? 1.6 + Math.random() * 0.8 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
       vx: kind === 'wind' ? sp * (k % 2 ? 1 : -1) * 0.8 : Math.cos(a) * sp,
       vy: kind === 'wind' ? -10 + Math.random() * 20 : Math.sin(a) * sp - (kind === 'petals' || kind === 'leaves' ? 10 : 30),
     });
@@ -295,6 +327,8 @@ export function tickCine(world, dt, { skip = false } = {}) {
     c.step = sc.i;
     c.run = null;
   }
+  // A monster that had only just appeared when the scene froze the world finishes appearing.
+  for (const m of world.mobs ?? []) if (m.age < 0.3) m.age = Math.min(0.3, m.age + dt);
   for (const e of c.emotes) e.t += dt;
   c.emotes = c.emotes.filter((e) => e.t < e.dur);
   for (const p of c.bursts) {
@@ -302,7 +336,8 @@ export function tickCine(world, dt, { skip = false } = {}) {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     p.vx *= 0.97;
-    p.vy = p.kind === 'wind' ? p.vy * 0.95 : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
+    // Spores drift up and away; petals and leaves flutter down; the rest fall.
+    p.vy = p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
   }
   c.bursts = c.bursts.filter((p) => p.t < p.life);
   if (c.flash) {

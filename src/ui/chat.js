@@ -222,7 +222,9 @@ export function drawBubble(ctx, x, y, words, alpha = 1) {
   queued.push({ x, y, words, alpha });
 }
 
-export function flushBubbles(ctx) {
+export function flushBubbles(ctx, hide = false) {
+  // (While a cutscene plays, the crowd's chatter stays out of the way: dropped, not drawn.)
+  if (hide) queued.length = 0;
   if (!queued.length) return;
   ctx.save();
   ctx.font = font(8, true);

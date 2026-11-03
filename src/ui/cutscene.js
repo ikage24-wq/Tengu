@@ -11,6 +11,7 @@ import { MOBS } from '../data/mobs.js';
 import { SCENES } from '../data/story.js';
 import { wornGear } from '../core/character.js';
 import { sceneStep, advanceScene, fillScene, isStaging } from '../world/story.js';
+import { mobActor } from '../world/director.js';
 import { groundAt } from '../world/physics.js';
 import { drawHero } from '../render/hero.js';
 import { drawMonster } from '../render/monsters.js';
@@ -64,11 +65,11 @@ export function drawScene(ui, world, cam) {
       for (const p of c.bursts) drawBurst(ctx, p, p.x - cam.x, p.y - cam.y, real);
       for (const e of c.emotes) {
         const a = actorAt(world, e.who);
-        if (a) drawEmote(ctx, e, a.x - cam.x, a.y - cam.y - 58, real);
+        if (a) drawEmote(ctx, e, a.x - cam.x, a.y - cam.y - a.h - 6, real);
       }
       if (c.say) {
         const a = actorAt(world, c.say.who);
-        if (a) drawSay(ctx, world, c.say, a.x - cam.x, a.y - cam.y - 60, real);
+        if (a) drawSay(ctx, world, c.say, a.x - cam.x, a.y - cam.y - a.h - 8, real);
       }
     }
     if (c.fade.a > 0) {
@@ -87,7 +88,7 @@ export function drawScene(ui, world, cam) {
   ctx.fillRect(0, 360 - bar, 640, bar);
   const filled = { ...step, text: fillScene(world, step.text), sub: fillScene(world, step.sub) };
   if (step.card) drawCard(ctx, filled, sc.t);
-  else if (!isStaging(step)) drawLine(ctx, world, filled, sc.t);
+  else if (!isStaging(step)) drawLine(ctx, world, filled, sc.t, lineAtTop(world, step, cam));
   // Where you are in the scene, and how to skip it.
   const n = SCENES[sc.id].length;
   for (let k = 0; k < n; k++) {
@@ -101,11 +102,14 @@ export function drawScene(ui, world, cam) {
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;
 
-// Where an actor's feet are (the hero, or an NPC on the map, lifted while they hop).
+// Where an actor's feet are and how tall they stand (the hero, an NPC on the map, or a monster in
+// the scene, lifted while they hop).
 function actorAt(world, who) {
-  if (who === 'player') return { x: world.body.x, y: world.body.y };
+  if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
   const n = world.map.npcs.find((q) => q.id === who);
-  return n ? { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0) } : null;
+  if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
+  const m = mobActor(world, who);
+  return m ? { x: m.x, y: m.y - (m.cine.lift ?? 0), h: m.def.h } : null;
 }
 
 const easeOutBack = (u) => 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
@@ -264,6 +268,13 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'spores') {
+    // A soft pink puff, swelling a little as it drifts.
+    const r = 1.6 + (p.t / p.life) * 2.4 + (p.seed % 1.5);
+    ctx.fillStyle = p.seed > 5 ? 'rgba(255,170,210,0.75)' : 'rgba(255,224,240,0.8)';
+    ctx.beginPath();
+    ctx.arc(x + Math.sin(spin * 0.5) * 2, y, r, 0, Math.PI * 2);
+    ctx.fill();
   } else if (p.kind === 'wind') {
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = 1.4;
@@ -308,8 +319,26 @@ function drawCard(ctx, step, t) {
   ctx.restore();
 }
 
-// One line: the dialogue box along the bottom, the speaker drawn big on the left.
-function drawLine(ctx, world, step, t) {
+// Whether a line's box goes at the top of the screen: it sits along the bottom unless the hero or
+// whoever speaks stands where it would cover them. Decided once per line, so it never jumps about.
+function lineAtTop(world, step, cam) {
+  const sc = world.scene;
+  if (sc.boxFor === sc.i) return sc.boxTop;
+  const top = 360 - BAR - 86 - 8;
+  const low = Boolean(cam) && [step.who, 'player'].some((who) => {
+    const a = who && actorAt(world, who);
+    if (!a) return false;
+    const x = a.x - cam.x;
+    return x > 70 && x < 570 && a.y - cam.y > top - 6;
+  });
+  sc.boxFor = sc.i;
+  sc.boxTop = low;
+  return low;
+}
+
+// One line: the dialogue box along the bottom (or the top, clear of the actors), the speaker drawn
+// big on the left.
+function drawLine(ctx, world, step, t, atTop = false) {
   const who = step.who;
   const npc = who && NPCS[who];
   const mob = who && MOBS[who];
@@ -319,7 +348,7 @@ function drawLine(ctx, world, step, t) {
   const W = 470;
   const H = 86;
   const x = (640 - W) / 2;
-  const y = 360 - BAR - H - 8;
+  const y = atTop ? BAR + 12 : 360 - BAR - H - 8;
   softShadow(ctx, x, y, W, H, 12, 4);
   box(ctx, x, y, W, H, { fill: narration ? 'rgba(46,32,72,0.92)' : 'rgba(255,250,246,0.97)', edge: narration ? '#c9b6ff' : color, r: 14, width: 2.5 });
   roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 11);
@@ -329,7 +358,9 @@ function drawLine(ctx, world, step, t) {
   // The speaker stands in the box's left end, peeking out over its top.
   if (!narration) {
     ctx.save();
-    roundRect(ctx, x - 30, y - 70, 150, H + 70 - 3, 10);
+    // Along the bottom they peek out over the box; at the top they stay inside it.
+    if (atTop) roundRect(ctx, x + 3, y + 3, 150, H - 6, 11);
+    else roundRect(ctx, x - 30, y - 70, 150, H + 70 - 3, 10);
     ctx.clip();
     drawSpeaker(ctx, world, step, x + 60, y + H - 6, t);
     ctx.restore();

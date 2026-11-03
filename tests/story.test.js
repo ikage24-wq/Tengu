@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 
 import { QUESTS } from '../src/data/quests.js';
 import { NPCS } from '../src/data/npcs.js';
+import { MOBS } from '../src/data/mobs.js';
 import { MAPS } from '../src/data/maps.js';
 import { SCENES, STORY_LOCKS, TRIALS, STORY_QUESTS } from '../src/data/story.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
@@ -36,14 +37,17 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   // emotes and bursts.
   const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
-  const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti'];
-  const actor = (who) => who === 'player' || Boolean(NPCS[who]);
+  const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores'];
+  // People, and monsters (a boss acts in its own entrance); only people step in and out.
+  const actor = (who) => who === 'player' || Boolean(NPCS[who]) || Boolean(MOBS[who]);
   const check = (st) => {
     if (st.card || (typeof st.text === 'string' && st.say === undefined)) return;
     const kind = STAGING.find((k) => st[k] !== undefined);
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
     if (kind === 'together') return st.together.forEach(check);
-    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'spawn', 'leave']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real person: ${st[k]}`);
+    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
+    for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]], `${k} names a real person: ${st[k]}`);
+    if (Array.isArray(st.cam)) for (const w of st.cam) assert.ok(actor(w), `cam frames a real actor: ${w}`);
     if (typeof st.to === 'string') assert.ok(actor(st.to), `to a real person: ${st.to}`);
     if (st.emote) assert.ok(EMOTES.includes(st.kind ?? '!'), `a known emote: ${st.kind}`);
     if (st.fx) assert.ok(BURSTS.includes(st.fx), `a known burst: ${st.fx}`);

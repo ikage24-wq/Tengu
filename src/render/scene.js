@@ -199,7 +199,8 @@ function drawMobs(ctx, world, cam, time) {
   let boss = null;
   for (const m of world.mobs) {
     const x = m.x - cam.x;
-    const y = m.y - cam.y;
+    // A monster hopping in a cutscene (world/director.js) is lifted off its feet.
+    const y = m.y - cam.y - (m.cine?.lift ?? 0);
     if (x < -80 || x > VIEW_W + 80) continue;
     // In a dungeon a swing winds back, then lunges.
     const lean = m.windup > 0 ? -m.dir * 2.5 : m.lunge > 0 ? m.dir * 6 * (m.lunge / 0.18) : 0;
@@ -225,7 +226,7 @@ function drawMobs(ctx, world, cam, time) {
       box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
     }
   }
-  if (boss && boss.hp > 0) {
+  if (boss && boss.hp > 0 && !world.scene) {
     box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
     box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
     text(ctx, `${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
@@ -455,7 +456,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawZoneTitle(ctx, world, time);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
-  flushBubbles(ctx);
+  flushBubbles(ctx, Boolean(world.scene));
   // HD: a new map fades in from a soft glow instead of cutting straight in.
   const enter = time - (feel.enteredAt ?? -9);
   if (gfx.hd && enter < 0.5) {

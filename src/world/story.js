@@ -21,6 +21,9 @@ import { startCine, skipScene, endScene, isStaging } from './director.js';
 export function playScene(world, id, vars = {}) {
   if (!id || !SCENES[id]) return;
   world.scene = { id, i: 0, t: 0, vars: { name: world.char.name, ...vars } };
+  // The hero stops where they stand: no sliding on, no swing frozen halfway through.
+  if (world.body) world.body.vx = 0;
+  world.pose = null;
   startCine(world);
 }
 
