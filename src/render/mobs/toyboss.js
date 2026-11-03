@@ -15,6 +15,7 @@
 
 import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, strand, star, cuteFace, blob } from './critter.js';
 import { windKey } from './toy.js';
+import { part, makeRig, stateBlend, inPart, chainParts, smooth } from './rig.js';
 
 const frames = (pose) => (pose === 'attack' ? 5 : 8);
 const phase = (pose, f) => f / frames(pose);
@@ -257,10 +258,311 @@ function gearheart(pose, f, mood) {
   return { w: 116, h: 126, res: 3, shapes: out };
 }
 
+// ---------- The Carnival's bosses, rigged ----------
+// (2026-11-03, the boss reanimation.) Live skeletons (render/mobs/rig.js). Leonie balances on a
+// ball that really rolls, her tail and fez tassel swinging, and leaps off it in an arc to pounce,
+// her flaming hoop flickering. Madame Marionette swings on her thread like a pendulum, working the
+// bars so her two puppets dangle and kick on their strings. Queen Gearheart is clockwork: she moves
+// on the tick, her clock's hands and crown of gears turning, her key spinning, her wings beating.
+// Rig space: the floor under them at (0, 0).
+const DG = Math.PI / 180;
+
+// Leonie.
+const LN = { fur: ramp('#ffc46a', { step: 10, turn: 14, sat: -4 }), mane: ramp('#e8823a', { step: 10, turn: 10 }) };
+const lnParts = {
+  ball: () => part('leonie|ball', 40, 40, () => {
+    const out = [O(20, 20, 18, 18, 0, '#4f7ad8', 24), crescent(20, 20, 18, 18, '#3a5ab8', { k: 0.28 }), F(O(20, 20, 18, 5, 0, '#ffffff', 20)), F(O(20, 20, 18, 2.4, 0, '#ff6b8a', 20))];
+    for (let i = 0; i < 3; i++) out.push(...star(20 + Math.cos(i * 2.09) * 11, 20 + Math.sin(i * 2.09) * 11, 3, '#ffd36b', '#fff6c8'));
+    return out;
+  }),
+  ballShine: () => part('leonie|ballshine', 40, 40, () => [shine(20, 20, 18, 18, '#cfe0ff', 0, 1.1)]),
+  hoop: () => part('leonie|hoop', 20, 38, () => {
+    const out = [];
+    const ring = arcPts(10, 19, 7, 16, 0, 360, 24);
+    for (let i = 0; i < ring.length - 1; i++) out.push(T([ring[i], ring[i + 1], [10 + (ring[i + 1][0] - 10) * 0.8, 19 + (ring[i + 1][1] - 19) * 0.86], [10 + (ring[i][0] - 10) * 0.8, 19 + (ring[i][1] - 19) * 0.86]], '#e8b84a'));
+    return out;
+  }),
+  leg: (back) => part(`leonie|leg|${back}`, 12, 14, () => [...limb([6, 3], [5, 11], 7, 6, back ? LN.fur.sh : LN.fur.base)]),
+  torso: () => part('leonie|torso', 30, 28, () => [...blob(15, 14, 13, 12, LN.fur), F(O(18, 16, 7, 8, 0, '#fff0d0', 16))]),
+  head: () => part('leonie|head', 50, 50, () => {
+    const hx = 25;
+    const hy = 26;
+    return [...mane(hx, hy, 22, LN.mane.base, LN.mane.sh), E(hx - 9, hy - 10, 4.4, 4.4, LN.fur.sh), E(hx + 9, hy - 11, 4.4, 4.4, LN.fur.base), F(E(hx + 9, hy - 11, 2.4, 2.4, '#ffb0a0')), ...blob(hx, hy, 15, 13.4, LN.fur), F(O(hx + 5, hy + 5, 7, 5, 0, '#fff0d0', 14)), E(hx + 8, hy + 3, 2.2, 1.6, '#c0405a')];
+  }),
+  face: (mood, atk) => part(`leonie|face|${mood}|${atk}`, 28, 24, () => cuteFace(14, 9, 1.9, mood, { iris: '#ff9a2a', lip: '#c0405a', gap: 5, atk, skin: LN.fur.base, mouthDy: 4, lash: 1.5, wing: 1.4 })),
+  fez: () => part('leonie|fez', 16, 14, () => [T([[2, 12], [3, 3], [13, 3], [14, 12]], '#e0404a'), O(8, 3, 5, 1.6, 0, '#ff6b74', 12)]),
+  tuft: () => part('leonie|tuft', 12, 12, () => mane(6, 6, 4, LN.mane.base, LN.mane.sh)),
+  paw: () => part('leonie|paw', 18, 10, () => [...limb([3, 5], [14, 5], 5.4, 5, LN.fur.base), E(14, 5, 3.4, 3, LN.fur.hi)]),
+};
+const leonieRig = makeRig({
+  w: 60,
+  h: 100,
+  stride: 1e9,
+  recover: 0.6,
+  fast: ['lean', 'reach'],
+  kick: { lean: -1.6, tail0: 3 },
+  springs: { tail0: [90, 6], tail1: [70, 5], tail2: [55, 4], tassel: [50, 3.5], hoopY: [60, 5] },
+  pose(m, a) {
+    const t = a.t;
+    const b = Math.sin(t * 2.2);
+    const idle = { lean: Math.sin(t * 1.3) * 0.04, crouch: -b * 1.2, reach: 0, head: Math.sin(t * 1.5) * 0.05, hoopX: 30, hoopY: -54 + Math.sin(t * 1.6) * 2 };
+    const walk = { lean: Math.sin(t * 7) * 0.08, crouch: -Math.abs(Math.sin(t * 7)) * 1.6, reach: 0, head: Math.sin(t * 7) * 0.05, hoopX: 32, hoopY: -54 };
+    const antic = { lean: -8 * DG, crouch: 5, reach: 0, head: 0.12, hoopX: 28, hoopY: -60 };
+    const strike = { lean: 24 * DG, crouch: 0, reach: 1, head: -0.1, hoopX: 34, hoopY: -64 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  follow: (S) => ({ tail0: (180 + 34) * DG - S.lean * 2, tail1: 34 * DG - S.lean, tail2: 34 * DG, tassel: -30 * DG - S.lean * 2 }),
+  parts: [
+    { name: 'ball', pivot: [20, 20], at: () => [0, -18], rot: (S, a) => (a.m?.odo ?? 0) / 18, s: () => lnParts.ball() },
+    { name: 'ballShine', pivot: [20, 20], at: () => [0, -18], s: () => lnParts.ballShine() },
+    // She leaps off the ball in an arc on the strike: forward, up and down onto the target.
+    { name: 'lion', at: (S, a) => {
+      const k = a.ph.strike;
+      return [44 * k, -36 + S.crouch + 10 * k - Math.sin(k * Math.PI) * 30];
+    }, rot: (S) => S.lean },
+    ...chainParts('tail', { parent: 'lion', at: () => [-10, -10], key: 'leonie|tail', segs: [[6, 3.4, 3.2], [5, 3.2, 2.9], [5, 2.9, 2.6]], color: LN.fur.sh, rot: (S, a, i) => S[`tail${i}`] }),
+    { name: 'tuft', parent: 'tail2', pivot: [6, 6], at: () => [5, 0], s: () => lnParts.tuft() },
+    { name: 'legB', parent: 'lion', pivot: [6, 3], at: () => [-5, -8], s: () => lnParts.leg(true) },
+    { name: 'legF', parent: 'lion', pivot: [6, 3], at: () => [5, -8], s: () => lnParts.leg(false) },
+    { name: 'torso', parent: 'lion', pivot: [15, 14], at: () => [0, -16], s: () => lnParts.torso() },
+    { name: 'head', parent: 'torso', pivot: [25, 36], at: () => [3, -12], rot: (S) => S.head, s: () => lnParts.head() },
+    { name: 'face', parent: 'head', pivot: [14, 9], at: () => [2, -11], s: (a) => lnParts.face(a.face, a.atk) },
+    { name: 'fez', parent: 'head', pivot: [8, 12], at: () => [0, -23], s: () => lnParts.fez() },
+    ...chainParts('tas', { parent: 'fez', at: () => [0, -9], key: 'leonie|tassel', segs: [[3, 1, 1], [3, 1, 1], [2, 1, 1]], color: '#ffd36b', rot: (S, a, i) => (i ? 0.3 : S.tassel) }),
+    { name: 'paw', parent: 'torso', pivot: [3, 5], at: () => [8, -6], rot: (S) => (-40 + S.reach * 60) * DG, s: () => lnParts.paw() },
+    { name: 'hoop', pivot: [10, 19], at: (S) => [S.hoopX, S.hoopY], s: () => lnParts.hoop() },
+  ],
+  fx(ctx, m, a, S, mat) {
+    // Flames licking round the hoop.
+    inPart(ctx, mat, 'hoop', () => {
+      for (let i = 0; i < 8; i++) {
+        const ang = (i / 8) * TAU + a.t * 2;
+        const x = Math.cos(ang) * 8.4;
+        const y = Math.sin(ang) * 17.4;
+        const h = 4 + Math.sin(ang * 3 + a.t * 9) * 1.6;
+        ctx.globalAlpha = a.alpha;
+        ctx.fillStyle = '#ff8a3a';
+        ctx.beginPath();
+        ctx.moveTo(x - 2, y);
+        ctx.lineTo(x + Math.cos(ang) * h, y + Math.sin(ang) * h - 1);
+        ctx.lineTo(x + 2, y);
+        ctx.fill();
+        ctx.fillStyle = '#ffe36b';
+        ctx.fillRect(x - 1, y - 1, 2, 2);
+      }
+    });
+  },
+});
+// (The rig reads the monster for the ball's roll.)
+const leonieDraw = leonieRig.draw;
+leonieRig.draw = (ctx, m, a) => leonieDraw(ctx, m, { ...a, m });
+
+// Madame Marionette.
+const MN = { velvet: ramp('#7a4ab0', { step: 10, turn: 12 }), skin: ramp('#f4ecff', { step: 8 }), lace: '#fff8fc' };
+const mrParts = {
+  abdomen: () => part('marion|abdomen', 36, 32, () => {
+    const out = [...blob(18, 16, 16, 14, MN.velvet)];
+    for (const [x, y] of [[-4, -4], [2, 4], [-6, 6]]) out.push(F(E(18 + x, 16 + y, 1.6, 1.6, MN.lace)));
+    out.push(F(T([[16, 12], [20, 8], [24, 12], [20, 18]], '#ff9ac8')));
+    return out;
+  }),
+  head: () => part('marion|head', 40, 44, () => {
+    const hx = 20;
+    const hy = 26;
+    const out = [...blob(hx, hy, 15, 14, MN.skin)];
+    for (let i = 0; i < 8; i++) out.push(F(E(hx - 12 + i * 3.6, hy + 13, 2.2, 1.6, MN.lace)));
+    for (const sx of [-1, 1]) out.push(T([[hx - 2, hy - 13], [hx - 2 + sx * 12, hy - 20], [hx - 2 + sx * 11, hy - 8]], '#e0407a'), F(T([[hx - 2, hy - 13], [hx - 2 + sx * 9, hy - 17], [hx - 2 + sx * 8, hy - 11]], '#ff6b9a')));
+    out.push(E(hx - 2, hy - 13, 3, 3, '#ff8ab0'), F(E(hx + 1, hy - 8, 1.4, 1.4, '#ffd36b')));
+    return out;
+  }),
+  face: (mood, atk) => part(`marion|face|${mood}|${atk}`, 28, 22, () => cuteFace(14, 9, 1.9, mood, { iris: '#c03a8a', lip: '#a02a6a', gap: 5.4, atk, skin: MN.skin.base, mouthDy: 4, lash: 1.6, wing: 1.8 })),
+  bar: () => part('marion|bar', 22, 6, () => [...limb([3, 3], [19, 3], 2, 2, '#a87a4a')]),
+  doll: (k) => part(`marion|doll|${k}`, 12, 18, () => [R(3, 7, 6, 7, k ? '#ff9ac8' : '#9fd8ff'), E(6, 4, 3.6, 3.4, '#f4dcc0'), F(E(7, 3.6, 0.6, 0.8, '#3a2a3a')), F(E(4.8, 3.6, 0.5, 0.7, '#3a2a3a')), E(6, 1, 3.6, 1.6, k ? '#e0407a' : '#4f7ad8')]),
+  dollLeg: (k) => part(`marion|dleg|${k}`, 8, 12, () => [...limb([4, 2], [4, 9], 2, 1.8, k ? '#e8b888' : '#d8a878')]),
+};
+const legShape = (c) => (i, len, w0, w1, x0, y0) => [...limb([x0, y0], [x0 + len, y0], w0, w1, c), ...(i === 2 ? [E(x0 + len, y0, 1.8, 1.8, MN.lace)] : [])];
+const BACK_LEGS = [[-150, 0], [-170, 0.3], [160, 0.6], [140, 0.9]];
+const marionRig = makeRig({
+  w: 70,
+  h: 100,
+  stride: 1e9,
+  fast: ['bars', 'drop'],
+  kick: { swing: 2, p0: 3, p1: -3 },
+  springs: { swing: [14, 1.6], p0: [30, 2], p1: [26, 1.8], kick: [200, 10] },
+  pose(m, a) {
+    const t = a.t;
+    // (She moves in little marionette ticks.)
+    const tk = (q, n = 8) => {
+      const sv = q * n;
+      const i = Math.floor(sv);
+      return (i + Math.min(1, (sv - i) * 2.4) ** 0.6) / n;
+    };
+    const tq = tk((t * 0.25) % 1);
+    const idle = { bars: Math.sin(tq * TAU * 2) * 8 * DG, drop: Math.sin(t * 1.6) * 2, legs: Math.sin(t * 2) * 8 * DG, kick: Math.sin(tq * TAU * 4) * 0.6, swingGoal: Math.sin(t * 0.8) * 0.06 };
+    const antic = { bars: -14 * DG, drop: -8, legs: -12 * DG, kick: -0.5, swingGoal: -0.08 };
+    const strike = { bars: 20 * DG, drop: 8, legs: 12 * DG, kick: 1.2, swingGoal: 0.06 };
+    return stateBlend(a, idle, idle, antic, strike);
+  },
+  follow: (S) => ({ swing: S.swingGoal, p0: -S.swingGoal * 2 + S.bars * 0.6, p1: -S.swingGoal * 2 - S.bars * 0.6 }),
+  parts: [
+    // Hung from her thread far above: the whole of her swings from there.
+    { name: 'top', at: () => [0, -150], rot: (S) => S.swing },
+    { name: 'hang', parent: 'top', at: (S) => [0, 86 + S.drop] },
+    ...BACK_LEGS.flatMap(([deg, off], i) => chainParts(`leg${i}`, { parent: 'hang', at: () => [-6, 2], key: `marion|leg|${i % 2}`, segs: [[10, 4.4, 3.4], [9, 3.4, 2.6], [7, 2.6, 2.2]], shape: legShape(i % 2 ? MN.velvet.base : MN.velvet.sh), rot: (S, a, k) => (k ? -36 * DG - Math.sin(a.t * 2 + off) * 8 * DG : deg * DG + S.legs) })),
+    { name: 'abdomen', parent: 'hang', pivot: [18, 16], at: () => [-10, 8], s: () => mrParts.abdomen() },
+    { name: 'head', parent: 'hang', pivot: [20, 26], at: () => [10, -4], s: () => mrParts.head() },
+    { name: 'face', parent: 'head', pivot: [14, 9], at: () => [2, 0], s: (a) => mrParts.face(a.face, a.atk) },
+    ...[0, 1].flatMap((k) => {
+      const sd = k ? 1 : -1;
+      return [
+        ...chainParts(`fl${k}`, { parent: 'hang', at: () => [4 + k * 6, 6], key: 'marion|fl', segs: [[9, 4, 3.2], [9, 3.2, 2.4]], color: MN.velvet.base, rot: (S, a, i) => (i ? -30 * sd * DG : (60 - sd * 20) * DG) }),
+        { name: `bar${k}`, parent: `fl${k}1`, pivot: [11, 3], at: () => [9, 0], rot: (S) => -((60 - sd * 20) - 30 * sd) * DG - S.swing + S.bars * sd, s: () => mrParts.bar() },
+        // The puppet hangs on its strings from the bar, swinging on its own.
+        { name: `pup${k}`, parent: `bar${k}`, at: () => [0, 0], rot: (S) => -S.bars * sd + S[`p${k}`] },
+        { name: `doll${k}`, parent: `pup${k}`, pivot: [6, 0], at: () => [k ? 4 : -3, 24], s: () => mrParts.doll(k) },
+        { name: `dl${k}a`, parent: `doll${k}`, pivot: [4, 2], at: () => [-1, 14], rot: (S) => -S.kick * 0.5 * sd, s: () => mrParts.dollLeg(k) },
+        { name: `dl${k}b`, parent: `doll${k}`, pivot: [4, 2], at: () => [1, 14], rot: (S) => -S.kick * 0.9, s: () => mrParts.dollLeg(k) },
+      ];
+    }),
+  ],
+  under(ctx, m, a, S, mat) {
+    // Her silk thread, from far above down to her.
+    const [A, B, C, D, E, F] = mat('hang');
+    ctx.globalAlpha = a.alpha * 0.9;
+    ctx.strokeStyle = '#f6f0ff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mat('top')[4], mat('top')[5]);
+    ctx.lineTo(E, F - 20);
+    ctx.stroke();
+  },
+  fx(ctx, m, a, S, mat) {
+    // The puppets' strings, from each end of a bar to the doll's head and hands.
+    ctx.globalAlpha = a.alpha * 0.8;
+    ctx.strokeStyle = '#f6f0ff';
+    ctx.lineWidth = 0.6;
+    for (const k of [0, 1]) {
+      const bar = mat(`bar${k}`);
+      const doll = mat(`doll${k}`);
+      const at = (M, x, y) => [M[0] * x + M[2] * y + M[4], M[1] * x + M[3] * y + M[5]];
+      for (const [bx, dx, dy] of [[-8, -3, 1], [8, 3, 1], [-8, -4, 9], [8, 4, 9]]) {
+        const p = at(bar, bx, 0);
+        const q = at(doll, dx, dy);
+        ctx.beginPath();
+        ctx.moveTo(p[0], p[1]);
+        ctx.lineTo(q[0], q[1]);
+        ctx.stroke();
+      }
+    }
+  },
+});
+
+// Queen Gearheart.
+const GH = { brass: ramp('#e8b84a', { step: 10, turn: 10 }), teal: ramp('#5ac8b8', { step: 10, turn: 12 }), cream: ramp('#fff4dc', { step: 8 }) };
+const tickOf = (t, n = 8) => {
+  const sv = t * n;
+  const i = Math.floor(sv);
+  return (i + Math.min(1, (sv - i) * 2.4) ** 0.6) / n;
+};
+const ghParts = {
+  foot: () => part('gear|foot', 14, 18, () => [...limb([7, 2], [7, 14], 4, 3.4, GH.brass.sh), ...[-3, 0, 3].map((d) => E(7 + d + 1, 15.4, 1.8, 1.2, GH.brass.base))]),
+  key: (i) => part(`gear|key|${i}`, 20, 16, () => windKey(16, 8, i / 16, 3)),
+  wing: (sd) => part(`gear|wing|${sd}`, 22, 46, () => {
+    const wx = sd < 0 ? 20 : 2;
+    const wy = 14;
+    const out = [T([[wx, wy - 12], [wx + sd * 16, wy - 2], [wx + sd * 18, wy + 20], [wx + sd * 8, wy + 30], [wx, wy + 24]], sd < 0 ? GH.teal.sh : GH.teal.base)];
+    for (let i = 0; i < 3; i++) out.push(F(T([[wx, wy - 6 + i * 9], [wx + sd * (16 - i * 2), wy + i * 9], [wx + sd * (16 - i * 2), wy + 2 + i * 9], [wx, wy - 4 + i * 9]], GH.brass.base)));
+    return out;
+  }),
+  body: () => part('gear|body', 60, 64, () => {
+    const cx = 30;
+    const cy = 34;
+    const out = [...blob(cx, cy, 28, 30, GH.teal), O(cx + 2, cy + 8, 16, 16, 0, GH.brass.base, 24), O(cx + 2, cy + 8, 14, 14, 0, GH.cream.base, 24)];
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * TAU;
+      out.push(F(E(cx + 2 + Math.cos(ang) * 11.4, cy + 8 + Math.sin(ang) * 11.4, i % 3 ? 0.7 : 1.3, i % 3 ? 0.7 : 1.3, '#5a4a3a')));
+    }
+    // Ear tufts and the face disc.
+    const fx = cx + 4;
+    const fy = cy - 20;
+    out.push(T([[fx - 20, fy - 10], [fx - 26, fy - 26], [fx - 12, fy - 16]], GH.teal.sh), T([[fx + 18, fy - 12], [fx + 24, fy - 28], [fx + 10, fy - 18]], GH.teal.base));
+    out.push(O(fx, fy, 22, 17, 0, GH.cream.base, 24), crescent(fx, fy, 22, 17, GH.cream.sh, { k: 0.3, a0: 60, a1: 200 }));
+    out.push(T([[fx + 2, fy + 4], [fx + 7, fy + 6], [fx + 3, fy + 11]], '#ffb040'), F(T([[fx + 2, fy + 4], [fx + 7, fy + 6], [fx + 4, fy + 6.6]], '#ffd080')));
+    return out;
+  }),
+  face: (mood, atk) => part(`gear|face|${mood}|${atk}`, 34, 22, () => cuteFace(17, 9, 2.4, mood, { iris: '#2ab0a0', lip: '#a05a3a', gap: 6, atk, skin: GH.cream.base, mouthDy: null, lash: 1.8, wing: 1.8 })),
+  gear: (r) => part(`gear|cog|${r}`, r * 2 + 4, r * 2 + 4, () => gear(r + 2, r + 2, r, 0, GH.brass.base)),
+};
+const gearheartRig = makeRig({
+  w: 70,
+  h: 120,
+  stride: 40,
+  fast: ['wings', 'lift'],
+  kick: { lean: -1.4, wings: 2 },
+  springs: { lean: [300, 26] },
+  pose(m, a) {
+    const t = a.t;
+    // Everything on the tick: a stepped clock, eased into each step.
+    const tq = tickOf((t * 0.25) % 1);
+    const tock = Math.sin(tq * TAU * 2);
+    const s = Math.sin(a.wp);
+    const idle = { lean: tock * 0.05, lift: Math.abs(tock) * 1.2, wings: Math.sin(t * 1.2) * 4 * DG, footF: 0, footB: 0 };
+    const walk = { lean: s * 0.08, lift: Math.abs(s) * 2, wings: s * 10 * DG, footF: Math.max(0, s) * 4, footB: Math.max(0, -s) * 4 };
+    const antic = { lean: -0.06, lift: 6, wings: -70 * DG, footF: 0, footB: 0 };
+    const strike = { lean: 0.08, lift: -5, wings: 55 * DG, footF: 0, footB: 0 };
+    return stateBlend(a, idle, walk, antic, strike);
+  },
+  parts: [
+    { name: 'footB', pivot: [7, 2], at: (S) => [-10, -8 - S.footB], s: () => ghParts.foot() },
+    { name: 'footF', pivot: [7, 2], at: (S) => [10, -8 - S.footF], s: () => ghParts.foot() },
+    { name: 'root', at: (S) => [0, -10 - S.lift], rot: (S) => S.lean },
+    { name: 'key', parent: 'root', pivot: [16, 8], at: () => [-30, -32], s: (a) => ghParts.key(Math.floor(tickOf((a.t * 0.5) % 1, 16) * 16) % 16) },
+    { name: 'wingB', parent: 'root', pivot: [20, 2], at: () => [-24, -40], rot: (S) => S.wings, s: () => ghParts.wing(-1) },
+    { name: 'body', parent: 'root', pivot: [30, 62], at: () => [0, 0], s: () => ghParts.body() },
+    { name: 'face', parent: 'body', pivot: [17, 9], at: () => [4, -50], s: (a) => ghParts.face(a.face, a.atk) },
+    ...[[-12, -18, 6, 1], [0, -24, 8, -1], [12, -18, 6, 1]].map(([dx, dy, r, dir], i) => ({ name: `cog${i}`, parent: 'body', pivot: [r + 2, r + 2], at: () => [4 + dx, -48 + dy], rot: (S, a) => tickOf((a.t * 0.25) % 1) * TAU * 2 * dir, s: () => ghParts.gear(r) })),
+    { name: 'wingF', parent: 'root', pivot: [2, 2], at: () => [24, -40], rot: (S) => -S.wings, s: () => ghParts.wing(1) },
+  ],
+  fx(ctx, m, a, S, mat) {
+    // The clock's hands telling the tick, and the jewel in her crown.
+    inPart(ctx, mat, 'body', () => {
+      const cx = 2;
+      const cy = -20;
+      const tq = tickOf((a.t * 0.25) % 1);
+      ctx.globalAlpha = a.alpha;
+      ctx.strokeStyle = '#3a3050';
+      ctx.lineCap = 'round';
+      for (const [len, ang, w] of [[9, tq * TAU * 2 - Math.PI / 2, 1.4], [6, a.t * 0.06 - Math.PI / 2, 2]]) {
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(ang) * len, cy + Math.sin(ang) * len);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#e8b84a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 1.6, 0, TAU);
+      ctx.fill();
+    });
+    // The slam's burst of little gears.
+    if (a.ph.since >= 0 && a.ph.since < 0.6) {
+      const u = a.ph.since / 0.6;
+      for (let i = 0; i < 5; i++) {
+        ctx.save();
+        ctx.translate(40 + u * (10 + i * 8), -40 + i * 8 - Math.sin(u * Math.PI) * 14);
+        ctx.rotate(u * 8 + i);
+        ctx.globalAlpha = a.alpha * (1 - u);
+        ctx.drawImage(ghParts.gear(i % 2 ? 4 : 3).canvas, -6 - 6, -6 - 6, 24, 24);
+        ctx.restore();
+      }
+    }
+  },
+});
+
 export const ART = {
-  leonie: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [90, 160, 280, 220], draw: leonie },
-  marionetta: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 28, atkMs: [90, 200, 300, 220], draw: marionetta },
-  gearheart: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 240], draw: gearheart },
+  leonie: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [90, 160, 280, 220], draw: leonie, rig: leonieRig },
+  marionetta: { pad: 10, walk: 8, idle: 8, attack: 5, stride: 28, atkMs: [90, 200, 300, 220], draw: marionetta, rig: marionRig },
+  gearheart: { pad: 12, walk: 8, idle: 8, attack: 5, stride: 30, atkMs: [100, 180, 320, 240], draw: gearheart, rig: gearheartRig },
 };
 
 export const INFO = {
