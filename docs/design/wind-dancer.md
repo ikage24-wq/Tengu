@@ -54,3 +54,25 @@ Each gets its own string, procs, getaway move and finisher, built the same way.
   tailcoat with a tiara and plume fan, and a grand plumed crown with a feather bustle. Each path
   trims it in its own colour (render/hero.js PATH_TRIMS: the Blade Dancer's rose gold, the Sky Dancer's sky blue).
 - **Still to do:** her own skill icons (she wears the old Thief's for now), sounds.
+
+## Animation pass (2026-11-03)
+
+Her moves were redrawn to read at game size and keep her face clear (render/moves.js `wd*`):
+
+- **What the rig allows.** Her head is most of her height and starts right above the shoulders, so
+  the weapon arm stays at or under about 105-110 degrees (higher, the hand comes up over her face),
+  a raised chakram tips forward (weapon angle 65-75, out past her cheek, never pointing straight
+  up), and the free hand flies wide or low, never above her jaw (`dancerHand`). Big swings go under
+  (from low behind, past the hip, up in front), never over the top. The arm and ring keep to their
+  drawn line with no automatic run-on (`DANCER_LINES` in `sway`).
+- **Legs that read.** Working legs are long and clear of the body (`dancerLeg`: a straight leg at
+  an angle from the hip), so a kick is a kick: the arabesque's leg goes out level behind with the
+  body tipped well forward, the grand jeté and air split are flat splits, the fan kick sweeps up in
+  front while the ring waits at her hip, the pirouette has the foot at the knee (passé). A leg
+  raised much past level in front hides behind her head, so high kicks stop there.
+- **Each figure its own shape:** piqué (high ring line, back leg in attitude), pirouette (passé
+  turn, opening into a forward leg), arabesque (body horizontal), fouetté (the leg lashes out each
+  turn, then the ta-da pose with the ring high), chassé (feet meet in the air, long low lunge),
+  chaînés into a deep révérence; gloves: a lunge with both palms, a rond de bras that sweeps under,
+  a relevé on one toe, a pirouette into a high front kick, a twisting lunge. Grand Finale climbs
+  through three passé turns into a pose with the front leg kicked high, then a deep bow.
