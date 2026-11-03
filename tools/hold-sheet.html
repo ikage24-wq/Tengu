@@ -15,7 +15,7 @@ const weapon = q.get('weapon') ?? 'dagger_30';
 const job = q.get('job') ?? 'thief';
 const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
 const poses = [
-  ['stand', { pose: 'idle', time: 0.2 }], ['stand 2s', { pose: 'idle', time: 2.1 }], ['stand 5s', { pose: 'idle', time: 5.3 }], ['stand 9s', { pose: 'idle', time: 9.4 }],
+  ['stand', { pose: 'idle', time: 0.2 }], ['stand 2s', { pose: 'idle', time: 2.1 }], ['stand 5s', { pose: 'idle', time: 5.3 }], ['stand 9s', { pose: 'idle', time: 9.4 }], ['stand 7s', { pose: 'idle', time: 7.6 }], ['stand 12s', { pose: 'idle', time: 12.4 }],
   ['ready', { pose: 'idle', ready: true, time: 0.4 }], ['ready 1s', { pose: 'idle', ready: true, time: 1.3 }],
   ['walk', { pose: 'walk', time: 0.2 }], ['walk 2', { pose: 'walk', time: 0.45 }], ['jump', { pose: 'jump', time: 0.3 }],
   ['back', { pose: 'idle', time: 0.2, facing: -1 }],
@@ -24,7 +24,7 @@ const K = 4;
 const D = 1.5;
 const CW = 230;
 const W = CW * 5;
-const H = 2 * 260 + 20;
+const H = Math.ceil(poses.length / 5) * 260 + 20;
 const c = document.getElementById('c');
 c.width = W * D;
 c.height = H * D;

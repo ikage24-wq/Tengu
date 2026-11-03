@@ -136,13 +136,13 @@ export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 // through the line.
 export const PATH_COMBOS = {
   warrior: [
-    { move: 'slash', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
-    { move: 'slash2', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
-    { move: 'cross', dur: 0.5, step: 10, strikes: [
+    { move: 'gsdrop', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
+    { move: 'gsrise', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
+    { move: 'gsspin', dur: 0.5, step: 10, strikes: [
       { at: 0.22, pct: 65, reach: 74, h: 60, targets: 2, knock: 30, arc: [-115, 205], thick: 9 },
       { at: 0.72, pct: 75, reach: 74, h: 62, targets: 2, knock: 60, arc: [100, -215], thick: 9 },
     ] },
-    { move: 'cleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
+    { move: 'gscleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
   // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
   // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as

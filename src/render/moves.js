@@ -437,6 +437,81 @@ export const MOVES = {
     return p < 0.5 ? MOVES.slash(snap(p / 0.5)) : MOVES.slash2(snap((p - 0.5) / 0.5));
   },
 
+  // ---------- The Warrior's greatsword (the player's pick: big anime swings off the shoulder) ----------
+  // Every swing starts from the blade on her shoulder and wheels round her fist, which stays down
+  // at her chest, so the face is never covered; the blade passes behind her head on the way back
+  // (drawn behind the body, see hero.js `behind`).
+
+  // Shoulder Drop: the blade rocks further back off the shoulder, then comes over the top in one
+  // huge arc and buries its weight low in front, a step into it.
+  gsdrop(p) {
+    if (p < 0.28) {
+      const t = ease(p / 0.28);
+      return { weapon: lerp(-58, -92, t), arm: lerp(60, 48, t), tilt: -0.1 * t, lunge: -2 * t, rig: (r) => { r.squat = 1; r.tx = -1; wideLegs(r); r.backArm = [2, -2]; r.hairLift = -1; } };
+    }
+    const t = ease(seg(p, 0.28, 0.5));
+    const settle = ease(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-92, 150, t) - 18 * settle, arm: lerp(48, 56, t) - 16 * settle, lunge: lerp(-2, 7, t) * (1 - 0.6 * settle), tilt: 0.15 * t * (1 - settle), trail: p < 0.62,
+      rig: (r) => { r.tx = 2; r.squat = settle < 0.6 ? 1 : 0; lungeLegs(r, 1 - 0.4 * settle); r.backArm = [-3, -1]; strikeFace(r); r.cape = -2; },
+    };
+  },
+
+  // Rising Return: the blade drags low along the ground, then she rips it up and over in a rising
+  // arc with a hop, all the way back onto her shoulder.
+  gsrise(p) {
+    if (p < 0.25) {
+      const t = ease(p / 0.25);
+      return { weapon: lerp(132, 188, t), arm: lerp(40, 28, t), tilt: 0.06 * t, rig: (r) => { r.squat = 2; wideLegs(r); r.tx = 1; r.backArm = [1, 1]; } };
+    }
+    const t = ease(seg(p, 0.25, 0.55));
+    const back = ease(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(188, -42, t) - 16 * back, arm: lerp(28, 60, t) - 4 * back, lift: 7 * bump(p, 0.25, 0.85), tilt: lerp(0.06, -0.12, t) * (1 - back), trail: p < 0.66,
+      rig: (r) => { r.tx = 2; if (p < 0.75) tuck(r); else { r.squat = 1; wideLegs(r); } r.backArm = [-4, -3]; strikeFace(r); r.hairLift = -1; r.cape = -3; },
+    };
+  },
+
+  // Whirlwind: a quick cut down off the shoulder, then the whole body spins once with the blade
+  // out flat, and the second cut lands as she comes round.
+  gsspin(p) {
+    if (p < 0.3) {
+      const w = ease(seg(p, 0, 0.12));
+      const t = ease(seg(p, 0.12, 0.3));
+      return {
+        weapon: lerp(lerp(-58, -92, w), 128, t), arm: lerp(58, 56, t), lunge: 4 * t, tilt: 0.1 * t, trail: t > 0 && t < 1,
+        rig: (r) => { r.tx = t > 0 ? 2 : -1; lungeLegs(r, 0.8); r.backArm = [-2, -1]; if (t > 0) strikeFace(r); },
+      };
+    }
+    const u = ease(seg(p, 0.34, 0.74));
+    const settle = ease(seg(p, 0.78, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    return {
+      weapon: lerp(128, 95, ease(seg(p, 0.3, 0.38))) + 360 * u + 40 * settle, arm: 56 - 14 * settle, lift: 6 * bump(p, 0.34, 0.8), lunge: 4 + 5 * u * (1 - 0.5 * settle),
+      orbit: true, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)), tilt: 0.1 * (1 - settle), trail: p > 0.34 && p < 0.8,
+      rig: (r) => { r.tx = 2; if (u > 0 && u < 1) tuck(r); else { r.squat = 1; lungeLegs(r, 0.7); } r.backArm = [-4, -2]; r.hairLift = u > 0.1 && u < 0.9 ? -1 : 0; r.cape = -4; strikeFace(r); },
+    };
+  },
+
+  // Greatsword Cleave (the finisher): a crouch, a big leap with the blade hauled up behind her,
+  // and a falling overhead slam that buries it in the ground; she holds the landing.
+  gscleave(p) {
+    if (p < 0.32) {
+      const crouch = ease(seg(p, 0, 0.1));
+      const up = ease(seg(p, 0.1, 0.32));
+      return {
+        weapon: lerp(-58, -100, ease(p / 0.32)), arm: lerp(60, 50, up), lift: 16 * up, tilt: -0.16 * up, lunge: 3 * up,
+        rig: (r) => { if (up > 0.15) tuck(r); else { r.squat = 2 * crouch; wideLegs(r); } r.tx = -1; r.backArm = [-1, -5]; r.hairLift = up > 0.2 ? -1 : 0; r.cape = up > 0.2 ? -3 : 0; },
+      };
+    }
+    const t = easeIn(seg(p, 0.32, 0.5));
+    const settle = ease(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-100, 138, t) - 12 * settle, arm: lerp(50, 56, t) - 16 * settle, lift: 16 * (1 - t), lunge: 3 + 8 * t * (1 - 0.4 * settle), tilt: lerp(-0.16, 0.3, t) * (1 - settle), trail: p < 0.6,
+      rig: (r) => { if (t < 1) tuck(r); else { r.squat = settle < 0.5 ? 2 : 1; wideLegs(r); } r.tx = 2; r.backArm = [-4, 1]; strikeFace(r); r.hairLift = t < 1 ? -1 : 0; r.cape = -4; },
+    };
+  },
+
   // ---------- The Warrior's alternate combo swings (see PATH_VARIANTS in world/melee.js) ----------
   // Each stands in for a step of his combo now and then, so the string keeps changing. They're
   // played big, for power (the player asked for exaggerated, fun swings): deep crouches, long
