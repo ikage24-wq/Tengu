@@ -16,6 +16,7 @@
 //   { fade: 'out' | 'in', dur, color }   the screen to a colour and back
 //   { flash: color }  { shake: strength, dur }
 //   { fx: kind, at, top }         a burst: sparkle hearts petals leaves wind confetti spores notes
+//                                 bubbles ink
 //                                 china (shards of a plate or cup), dust
 //                                 (puffs along the floor), rubble (falling from the ceiling); `top`
 //                                 bursts from the top of the actor (a tree's crown)
@@ -23,7 +24,8 @@
 //   { leave: actor }              they fade out of it
 //   { act: monster, move, dur }   a monster in the scene moves: 'attack' (its swing, once),
 //                                 'windup' (gathers and trembles, pawing), 'sway' (rocks about its
-//                                 feet, eased in and out; `amp` radians)
+//                                 feet, eased in and out; `amp` radians), 'sink' (drops out of
+//                                 sight into the floor at once), 'emerge' (rises back out of it)
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
 //   { together: [steps] }         run several at once; done when all are
@@ -291,10 +293,16 @@ function runner(world, step) {
     const dur = step.dur ?? (step.move === 'attack' ? 0.9 : 1);
     let t = 0;
     if (step.move === 'attack') m.attackAt = world.now + (c.clock ?? 0);
+    if (step.move === 'sink') {
+      m.cine.sink = m.def.h + 12;
+      return () => true;
+    }
+    const sunk = m.cine.sink ?? 0;
     return (dt, skip) => {
       t = skip ? dur : t + dt;
       const u = Math.min(1, t / dur);
       if (step.move === 'windup') m.windup = u < 1 ? dur - t : 0;
+      if (step.move === 'emerge') m.cine.sink = sunk * (1 - easeInOut(u));
       if (step.move === 'sway') m.cine.sway = u < 1 ? Math.sin(t * (step.speed ?? 5)) * (step.amp ?? 0.1) * Math.sin(u * Math.PI) : 0;
       if (u >= 1 && step.move === 'attack') m.attackAt = -9;
       return u >= 1;
@@ -316,7 +324,7 @@ function runner(world, step) {
 
 // A burst of little things at a point: drawn by the cutscene window.
 function burst(c, kind, x, y, n) {
-  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : 12);
+  const count = n ?? (kind === 'wind' ? 10 : kind === 'confetti' ? 24 : kind === 'spores' ? 22 : kind === 'rubble' ? 16 : kind === 'notes' ? 8 : kind === 'bubbles' ? 14 : kind === 'ink' ? 26 : 12);
   if (kind === 'rubble' || kind === 'dust') {
     // Rubble shaken loose from the ceiling over a stretch of floor; dust kicked along the floor.
     for (let k = 0; k < count; k++) {
@@ -331,7 +339,7 @@ function burst(c, kind, x, y, n) {
     const a = (k / count) * Math.PI * 2 + Math.random() * 0.4;
     const sp = kind === 'wind' ? 90 + Math.random() * 40 : 30 + Math.random() * 40;
     c.bursts.push({
-      kind, x, y, t: 0, life: kind === 'wind' ? 1.2 : kind === 'spores' || kind === 'notes' ? 1.6 + Math.random() * 0.8 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
+      kind, x, y, t: 0, life: kind === 'wind' ? 1.2 : kind === 'spores' || kind === 'notes' || kind === 'bubbles' || kind === 'ink' ? 1.6 + Math.random() * 0.8 : 1 + Math.random() * 0.6, seed: Math.random() * 10,
       vx: kind === 'wind' ? sp * (k % 2 ? 1 : -1) * 0.8 : Math.cos(a) * sp,
       vy: kind === 'wind' ? -10 + Math.random() * 20 : Math.sin(a) * sp - (kind === 'petals' || kind === 'leaves' ? 10 : 30),
     });
@@ -379,9 +387,9 @@ export function tickCine(world, dt, { skip = false } = {}) {
     p.t += dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
-    p.vx = p.kind === 'notes' ? Math.sin(p.t * 4 + p.seed) * 14 : p.vx * (p.kind === 'dust' ? 0.93 : 0.97);
+    p.vx = p.kind === 'notes' || p.kind === 'bubbles' ? Math.sin(p.t * 4 + p.seed) * 14 : p.kind === 'ink' ? p.vx * 0.94 : p.vx * (p.kind === 'dust' ? 0.93 : 0.97);
     // Spores drift up and away; petals and leaves flutter down; the rest fall.
-    p.vy = p.kind === 'notes' ? -18 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
+    p.vy = p.kind === 'notes' ? -18 : p.kind === 'bubbles' ? -26 : p.kind === 'ink' ? p.vy * 0.94 : p.kind === 'china' ? p.vy + 260 * dt : p.kind === 'rubble' ? p.vy + 300 * dt : p.kind === 'dust' ? p.vy * 0.9 : p.kind === 'wind' ? p.vy * 0.95 : p.kind === 'spores' ? p.vy * 0.96 - 8 * dt : p.vy + (p.kind === 'petals' || p.kind === 'leaves' ? 14 : 60) * dt;
   }
   c.bursts = c.bursts.filter((p) => p.t < p.life);
   if (c.flash) {

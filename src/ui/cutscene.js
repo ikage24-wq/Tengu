@@ -268,6 +268,24 @@ function drawBurst(ctx, p, x, y, real) {
     ctx.beginPath();
     ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
     ctx.fill();
+  } else if (p.kind === 'bubbles') {
+    // A bubble wobbling up, with a glint.
+    const r = 1.8 + (p.seed % 2.4);
+    ctx.strokeStyle = 'rgba(200,240,255,0.9)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillRect(x - r * 0.5, y - r * 0.5, 1, 1);
+  } else if (p.kind === 'ink') {
+    // A blot of sea-witch ink, spreading and thinning.
+    const u = p.t / p.life;
+    ctx.globalAlpha = Math.max(0, a) * 0.85;
+    ctx.fillStyle = p.seed > 5 ? '#3a2a5a' : '#5a3a7a';
+    ctx.beginPath();
+    ctx.arc(x, y, 4 + u * 12, 0, Math.PI * 2);
+    ctx.fill();
   } else if (p.kind === 'notes') {
     // A music note bobbing up.
     text(ctx, p.seed > 5 ? '\u266a' : '\u266b', x, y, { size: 9 + (p.seed % 3), bold: true, align: 'center', color: p.seed > 3 ? '#b88cff' : '#ff8fc1', outline: '#ffffff' });

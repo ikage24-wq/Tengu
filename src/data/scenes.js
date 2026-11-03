@@ -339,21 +339,60 @@ export const AQUA_SCENES = {
     { card: 'Sunken Aquarium Palace', sub: 'Rank {grade}  ·  {time}' },
     { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
   ],
+  // The Twin Morays, staged: the grotto goes still, both eels gone into their holes; Murri slides
+  // up out of the floor in a gush of bubbles and peeks about, Ena rises on the far side, they
+  // slither together delighted, and both rear up and lunge at you.
   aquarium_moray: [
+    { fade: 'out', dur: 0.35, color: '#0e2a40' },
+    { together: [{ act: 'moraymurri', move: 'sink' }, { act: 'morayena', move: 'sink' }, { cam: 'moraymurri', dur: 0.1 }] },
+    { fade: 'in', dur: 0.6 },
     { who: null, text: 'A grotto full of holes. Something long and spotted slides out of one, and something long and golden watches from another.' },
+    { together: [{ fx: 'bubbles', at: 'moraymurri', n: 18 }, { act: 'moraymurri', move: 'emerge', dur: 1.2 }, { mood: 'moraymurri', as: 'happy' }] },
+    { together: [{ face: 'moraymurri', to: 'player' }, { emote: 'moraymurri', kind: '!' }] },
     { who: 'moraymurri', text: "Sister! Visitors! Nobody's visited since the palace went down.", mood: 'happy' },
+    { together: [{ cam: 'morayena', dur: 1 }, { fx: 'bubbles', at: 'morayena', n: 18 }, { act: 'morayena', move: 'emerge', dur: 1.2 }, { mood: 'morayena', as: 'happy' }] },
+    { together: [{ walk: 'morayena', to: 1110, speed: 120 }, { walk: 'moraymurri', to: 1030, speed: 120 }, { cam: ['moraymurri', 'morayena'], dur: 1.2 }] },
+    { together: [{ emote: 'morayena', kind: 'heart', dur: 1.4 }, { act: 'moraymurri', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }, { act: 'morayena', move: 'sway', dur: 1.2, amp: 0.08, speed: 6 }] },
+    { together: [{ face: 'morayena', to: 'player' }, { face: 'moraymurri', to: 'player' }, { walk: 'player', to: 'moraymurri', gap: 150, speed: 120 }] },
     { who: 'morayena', text: "Then let's keep them. One for you, one for me... and two to share.", mood: 'happy' },
+    { together: [{ act: 'moraymurri', move: 'attack', dur: 0.9 }, { act: 'morayena', move: 'attack', dur: 0.9 }, { fx: 'bubbles', at: 'player', n: 16 }, { jump: 'player', height: 20 }, { emote: 'player', kind: '!' }] },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Lady Abyssia, staged: the witch twirls her glowing pearl staff and giggles at the little
+  // air-breathers, then raises it, and ink floods the room in a dark swirl.
   aquarium_abyssia: [
+    { together: [{ cam: 'abyssia', up: 20, dur: 1.2 }, { walk: 'player', to: 'abyssia', gap: 170, speed: 110 }, { mood: 'abyssia', as: 'happy' }] },
+    { together: [{ act: 'abyssia', move: 'sway', dur: 1.6, amp: 0.07, speed: 5 }, { fx: 'sparkle', at: 'abyssia', top: true, n: 10 }, { fx: 'bubbles', at: 'abyssia', n: 8 }] },
     { who: 'abyssia', text: 'Oh, little air-breathers, all the way down here? The wards are failing, you know. I am making sure of it.', mood: 'happy' },
+    { together: [{ jump: 'abyssia', height: 10 }, { emote: 'abyssia', kind: 'note', dur: 1.2 }] },
+    { together: [{ emote: 'player', kind: 'anger', dur: 1.2 }, { face: 'player', to: 'abyssia' }] },
     { who: 'player', text: "You're the one draining the wards? The whole palace is drowning!" },
+    { together: [{ mood: 'abyssia', as: 'angry' }, { act: 'abyssia', move: 'windup', dur: 0.9 }, { fx: 'sparkle', at: 'abyssia', top: true, n: 14 }] },
     { who: 'abyssia', text: 'And when it does, the deep is mine. Ink, my darlings!', mood: 'angry' },
+    { act: 'abyssia', move: 'attack', dur: 1, async: true },
+    { wait: 0.3 },
+    { together: [{ fx: 'ink', at: 'abyssia', n: 30 }, { shake: 3, dur: 0.4 }, { fade: 'out', dur: 0.35, color: '#1a1030' }] },
+    { together: [{ fade: 'in', dur: 0.8 }, { walk: 'player', away: 'abyssia', by: 30, speed: 150 }, { emote: 'player', kind: 'sweat', dur: 1.2 }] },
+    { cam: 'player', dur: 0.7 },
   ],
+  // Queen Coralie, staged: she sleeps on her coral throne, bubbles drifting up off her; she wakes
+  // slow and sad, looks at you a long moment, then rises and drives her trident down in a burst
+  // of the sea.
   aquarium_coralie: [
+    { together: [{ mood: 'coralie', as: 'blink' }, { emote: 'coralie', kind: 'zzz', dur: 7 }, { cam: 'coralie', up: 40, dur: 1.8 }, { walk: 'player', to: 'coralie', gap: 170, speed: 90 }] },
+    { together: [{ fx: 'bubbles', at: 'coralie', top: true, n: 10 }, { act: 'coralie', move: 'sway', dur: 2.2, amp: 0.04, speed: 2 }] },
     { who: null, text: 'The throne room. A queen sits on a throne of coral, eyes closed, crown askew, the sea swirling slowly around her.' },
+    { together: [{ mood: 'coralie', as: 'sad' }, { emote: 'coralie', kind: '?', dur: 1.2, hold: true }, { face: 'coralie', to: 'player' }] },
     { who: 'coralie', text: '...Who disturbs the drowned court? My people are cold. My palace is dark. I have been asleep so long.', mood: 'sad' },
+    { together: [{ cam: ['player', 'coralie'], up: 20, dur: 0.9 }, { face: 'player', to: 'coralie' }] },
     { who: 'player', text: "We're here to wake you, your majesty. The wards can still be saved." },
+    { together: [{ mood: 'coralie', as: 'angry' }, { jump: 'coralie', height: 18 }, { fx: 'bubbles', at: 'coralie', n: 20 }] },
     { who: 'coralie', text: 'Then prove you are stronger than the tide that took us!', mood: 'angry' },
+    { act: 'coralie', move: 'attack', dur: 1, async: true },
+    { wait: 0.32 },
+    { together: [{ flash: '#bff0ff' }, { shake: 5, dur: 0.5 }, { fx: 'bubbles', at: 'coralie', n: 36 }, { fx: 'sparkle', at: 'coralie', n: 12 }, { jump: 'player', height: 18 }, { emote: 'player', kind: '!' }] },
+    { wait: 0.5 },
+    { cam: 'player', dur: 0.7 },
   ],
   aquarium_freed: [
     { who: 'coralie', text: '...The water is warm again. I remember. I remember the sun on the waves.', mood: 'sad' },

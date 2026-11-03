@@ -218,7 +218,16 @@ function drawMobs(ctx, world, cam, time) {
     if (under < 1) ctx.globalAlpha = under * under * (3 - 2 * under);
     // (In a cutscene the world's clock stands still; its monsters act on the scene's own.)
     const now = world.scene ? world.now + (world.cine?.clock ?? 0) : world.now;
-    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sign * amp * Math.sin(ang) + (1 - under) * 34, time, now);
+    // Sunk into the floor in a cutscene (to rise out of it): drawn lower, cut off at the floor.
+    const sink = m.cine?.sink ?? 0;
+    if (sink > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 200, y - 400, 400, 400);
+      ctx.clip();
+    }
+    drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sink + sign * amp * Math.sin(ang) + (1 - under) * 34, time, now);
+    if (sink > 0) ctx.restore();
     ctx.globalAlpha = 1;
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
     if (m.def.boss) boss = m;
