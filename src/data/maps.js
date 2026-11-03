@@ -26,6 +26,8 @@ export const MAPS = {
     id: 'sprout', plaza: 1800, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1660,
+    // The craft bench (data/crafting.js), on Market Street, between Lulu's salon and Pip's goods.
+    bench: 1400,
     // The town's capsule machine (data/outfits-gacha.js).
     gacha: 1960,
     width: 3200, height: 520, groundY: 480,
@@ -240,6 +242,8 @@ export const MAPS = {
     id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
     // The town stove, for cooking (data/cooking.js).
     stove: 700,
+    // The craft bench (data/crafting.js), on Harbor Square, past the Harbor Office.
+    bench: 1150,
     width: 2600, height: 520, groundY: 480,
     look: { islands: 'planks', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2600, 480]],
@@ -567,6 +571,8 @@ Object.assign(MAPS, {
     id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1600,
+    // The craft bench (data/crafting.js), on Forge Row, by Tora's forge.
+    bench: 1858,
     width: 2200, height: 520, groundY: 480,
     look: { propKeep: 0.8 },
     terrain: [[0, 480], [620, 480], [660, 456], [1500, 456], [1540, 480], [2200, 480]],
@@ -606,6 +612,8 @@ Object.assign(MAPS, {
     id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     // The town stove, for cooking (data/cooking.js).
     stove: 820,
+    // The craft bench (data/crafting.js), on the plaza, under the moon tree's boughs.
+    bench: 1000,
     width: 2400, height: 520, groundY: 480,
     look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],

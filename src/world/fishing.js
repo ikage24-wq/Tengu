@@ -15,8 +15,11 @@ import { FISH_BY_ID, SPOTS, SPOT_REACH, BITE_WAIT } from '../data/fishing.js';
 import { addItem, countItem } from '../core/inventory.js';
 import { DISHES } from '../data/cooking.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra, LIFE_NAMES } from '../core/life.js';
+import { ITEMS } from '../data/items.js';
 
 export const ROD = 'fishing_rod';
+// The shop's rod, or a bench-made one (data/crafting.js).
+export const hasRod = (char) => countItem(char.inventory, ROD) > 0 || (char.inventory.etc ?? []).some((e) => ITEMS[e.id]?.life?.slot === 'fishing');
 
 // The fishing spot you're standing at, or null.
 export function spotHere(world) {
@@ -29,7 +32,7 @@ export function spotHere(world) {
 export function startFishing(world) {
   const spot = spotHere(world);
   if (!spot) return 'There are no fish here.';
-  if (countItem(world.char.inventory, ROD) < 1) return 'You need a Fishing Rod (Pip and Marlo sell them).';
+  if (!hasRod(world.char)) return 'You need a Fishing Rod (Pip and Marlo sell them).';
   const need = needFor(spot);
   const have = lifeLevel(world.char, 'fishing');
   if (have < need) return `These waters need Fishing Lv ${need} (yours is Lv ${have}). Fish the spots you can and you'll get there!`;

@@ -50,7 +50,8 @@ export function startGathering(world) {
   const need = needFor(here.node);
   const have = lifeLevel(world.char, skill);
   if (have < need) return `This spot needs ${LIFE_NAMES[skill]} Lv ${need} (yours is Lv ${have}). Keep at the spots you can work and you'll get there!`;
-  const perks = lifePerks(world.char, skill);
+  // (Chopping wood uses the woodaxe; other gathering the sickle.)
+  const perks = lifePerks(world.char, skill, here.node.kind === 'wood' ? 'chopping' : skill);
   const secs = kind.secs * perks.time;
   world.body.facing = here.node.x >= world.body.x ? 1 : -1;
   world.body.vx = 0;
@@ -81,7 +82,7 @@ export function tickGathering(world, dt, held, pressed, rng = Math.random) {
   if (g.t < secs) return true;
   world.gathering = null;
   const skill = g.skill ?? skillOfKind(g.node.kind, g.kind);
-  const perks = g.perks ?? lifePerks(world.char, skill);
+  const perks = g.perks ?? lifePerks(world.char, skill, g.node?.kind === 'wood' ? 'chopping' : skill);
   const [lo, hi] = g.kind.count;
   const got = {};
   // A calm map (world/calm.js) gives one more, and the skill's level may give another.

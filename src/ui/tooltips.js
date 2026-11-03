@@ -8,6 +8,7 @@ import { itemName } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { COLORS } from './kit.js';
+import { QUALITIES } from '../data/crafting.js';
 
 const STAT_NAMES = {
   watk: 'Weapon ATK', matk: 'Magic ATK', wdef: 'Weapon DEF', mdef: 'Magic DEF', str: 'STR', dex: 'DEX', int: 'INT', luk: 'LUK',
@@ -33,6 +34,9 @@ export function itemTooltip(char, id, inst = null) {
   if (v) lines.push({ text: `◆ ${v.name} color`, bold: true, color: v.main === '#f3f0ea' || v.main === '#e8fbff' ? '#9a8fb8' : v.main });
   if (inst?.rarity) lines.push({ text: `★ ${rarity.name}`, bold: true, color: rarity.color });
   if (inst?.polish) lines.push({ text: `✦ Polished +${inst.polish}`, bold: true, color: '#e8a23c' });
+  // Bench-made (data/crafting.js): its quality, or the Artisan line it belongs to.
+  if (inst?.quality != null) lines.push({ text: `⚒ ${QUALITIES[inst.quality].name} craft`, bold: true, color: QUALITIES[inst.quality].color });
+  else if (def.crafted && def.type === 'equip') lines.push({ text: '⚒ Made at a craft bench', bold: true, color: '#3fb383' });
   if (def.unique) lines.push({ text: '♥ Unique look', bold: true, color: '#e06fa8' });
   if (def.element) lines.push({ text: `✦ ${ELEMENT_NAMES[def.element]} element`, bold: true, color: def.color === '#ffe36b' ? '#d9a440' : def.color });
   if (def.type === 'equip') {
@@ -75,6 +79,7 @@ export function itemTooltip(char, id, inst = null) {
     lines.push({ text: 'Never runs out: just one is enough.', color: COLORS.muted });
     lines.push({ text: 'The first set in your bag is thrown.', color: COLORS.muted });
   } else {
+    if (def.life && char?.lifeTools?.[def.life.slot] === id) lines.push({ text: '⚒ Equipped', bold: true, color: '#3fb383' });
     if (def.desc) lines.push({ text: def.desc, color: COLORS.muted });
   }
   if (def.price) lines.push({ text: `Sells for ${sellPrice(id, inst)} gold`, color: COLORS.gold, size: 8 });

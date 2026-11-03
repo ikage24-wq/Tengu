@@ -9,6 +9,7 @@ import { topShapes, sleeveColor, shoulderShapes, legLook, legShapes, hipShapes, 
 import { SCHOOL_COLORS } from './spells.js';
 import { ITEM_ART } from './icons/items.js';
 import './icons/food.js';
+import './icons/craft.js';
 import { SKILL_ART, skillTone } from './icons/skills.js';
 
 export { skillTone };
@@ -121,6 +122,8 @@ function itemShapes(def, variant = null) {
     if (icon) return icon;
   }
   if (def.design === 'job' || def.design === 'jewel') return fitShapes(wornShapes(def, variant));
+  // Bench-made trinkets with no worn look (rings, charms) are drawn like the drops (icons/craft.js).
+  if (def.type === 'equip' && !def.design && ITEM_ART[def.id]) return ITEM_ART[def.id]();
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
   if (def.type === 'equip') {

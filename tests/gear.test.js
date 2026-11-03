@@ -11,6 +11,8 @@ import { weaponShapes, weaponIcon, weaponFrames } from '../src/render/weapons.js
 import { gloveShapes } from '../src/render/weapon-designs.js';
 import { lookFor } from '../src/render/weapon-kit.js';
 import { pieceOf } from '../src/render/jobgear/index.js';
+import { ITEM_ART } from '../src/render/icons/items.js';
+import '../src/render/icons/craft.js';
 import { dropRetiredItems } from '../src/core/save.js';
 
 const seq = (...values) => {
@@ -34,9 +36,11 @@ test('every equip has a design the renderer draws', () => {
       case 'gloves': shapes = handShapes(10, 30, pc, '#ffffff'); break;
       case 'cape': shapes = capeShapes(def.design, c, 0, false, pc); break;
       case 'earring': shapes = earringShapes(def.design, c, pc); break;
+      // Bench-made rings and charms aren't worn on the figure: their own icon (render/icons/craft.js).
+      case 'ring': case 'charm': shapes = ITEM_ART[def.id]?.(); break;
     }
     assert.ok(shapes?.length, `${def.id} draws something`);
-    if (def.slot !== 'weapon') assert.ok(def.design, `${def.id} has a design`);
+    if (def.slot !== 'weapon' && def.slot !== 'ring' && def.slot !== 'charm') assert.ok(def.design, `${def.id} has a design`);
   }
 });
 

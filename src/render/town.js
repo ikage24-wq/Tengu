@@ -19,6 +19,7 @@ import { groundAt } from '../world/physics.js';
 import { LANDMARKS } from './landmarks.js';
 import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt } from './townhouses.js';
 import { ITEMS } from '../data/items.js';
+import { drawCraftBench } from './craftbench.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -491,6 +492,12 @@ export function drawStreet(ctx, map, cam, width, time) {
         ctx.fill();
       }
     }
+  }
+  // The town's craft bench: its tools sway on their pegs, sparks hop off the anvil (more while
+  // someone works there: map.benchWork, set by world/crafting.js).
+  if (map.bench != null) {
+    const x = snap(map.bench - cam.x);
+    if (x > -60 && x < width + 60) drawCraftBench(ctx, map.theme, x, ground(map.bench), time, map.bench, map.benchWork ?? null);
   }
   // The town's capsule machine: its capsules rattle now and then, a glint slides over the globe,
   // and its crank turns while someone pulls (map.gachaTurn, set by the machine's window).

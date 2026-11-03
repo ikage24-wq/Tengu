@@ -144,8 +144,10 @@ export function lifeAction(world, skill, { tier = 1, kind = 'gather', scale = 1 
 // Per level past 1: 1.2% quicker, 1.2% likelier to find one more, 2% better rare chances, spots
 // rest 0.6% less, and a bite's window is 0.6% longer. A tool (`char.lifeTools[skill]`, an item id
 // whose ITEMS entry has `life: { skill, speed, yield, rare }`) adds its own on top.
-export function toolFor(char, skill) {
-  const held = char.lifeTools?.[skill];
+// (A tool sits in its own slot: the same as its skill, except the woodaxe, `chopping`, a Gathering
+// tool kept apart from the sickle.)
+export function toolFor(char, skill, slot = skill) {
+  const held = char.lifeTools?.[slot];
   const id = typeof held === 'string' ? held : held?.id;
   const def = id ? ITEMS[id] : null;
   return def?.life && (def.life.skill ?? skill) === skill ? def : null;
@@ -165,7 +167,7 @@ export function perksAt(level, tool = null) {
   };
 }
 
-export const lifePerks = (char, skill) => perksAt(lifeLevel(char, skill), toolFor(char, skill));
+export const lifePerks = (char, skill, slot = skill) => perksAt(lifeLevel(char, skill), toolFor(char, skill, slot));
 
 // How many of a find you get, with the level's chance of one more.
 export const withExtra = (n, perks, rng = Math.random) => n + Math.floor(perks.extra) + (rng() < perks.extra % 1 ? 1 : 0);
