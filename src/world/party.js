@@ -24,6 +24,7 @@ import { inZone } from './story.js';
 import { helpGoal, tickHelpers, tickBotBuffs } from './coop-life.js';
 import { packAt, chooseSkill, commandFor, beginStep, airborne, evade, focusOf, catchable, standBy, drink, tickCallouts, callFinisher, callout, holdFire } from './botfight.js';
 import { coopAfterThink } from './coop.js';
+import { crewGoal } from './botsoul.js';
 
 export const PARTY_MAX = 5; // members besides you
 export const LEVEL_GAP = 5; // they can be at most this many levels above you
@@ -247,6 +248,13 @@ function hunt(bot, world, members, rng) {
       return;
     }
   }
+  // (Out with a group of their own, they keep near its leader: world/botsoul.js.)
+  const stay = bot.hunter && !helping(bot, world) ? crewGoal(bot, world, rng) : null;
+  if (stay) {
+    br.target = null;
+    br.goal = stay;
+    return;
+  }
   const target = huntTarget(bot, world, members);
   br.target = target;
   // Come to help with nothing to fight by you: they run over to you.
@@ -299,6 +307,12 @@ function hunt(bot, world, members, rng) {
 // Off to a random spot on a random ledge, for a while.
 function wander(bot, world, nav, rng) {
   const br = bot.brain;
+  const near = bot.hunter ? crewGoal(bot, world, rng, { wander: true }) : null;
+  if (near) {
+    br.goal = near;
+    br.wanderUntil = world.now + between(3, 6, rng);
+    return;
+  }
   const s = Math.floor(rng() * nav.surfaces.length);
   const surf = nav.surfaces[s];
   const x = between(Math.max(24, surf.x1 + 12), Math.min(world.map.width - 24, surf.x2 - 12), rng);

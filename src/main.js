@@ -66,7 +66,8 @@ preloadFxSprites();
 function startGame(char) {
   world = createWorld(char);
   world.settings = settings;
-  world.bots = createBots(world);
+  // (The crowd follows the game's day: world/botsoul.js populationAt.)
+  world.bots = createBots(world, Math.random, { daily: true });
   world.onKill = (m) => shareKill(world.bots, world, m);
   uiState = createUiState();
   camera = createCamera();
