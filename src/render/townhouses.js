@@ -686,6 +686,88 @@ export function adobeArcadeArt(seed) {
   }, false);
 }
 
+// ---------- Moonleaf Grove (the 2026-11-03 rebuild) ----------
+
+// The grove's landmark: the Starchime Tower, 200 wide and 300 tall, a slender mage tower of violet
+// stone. A wooden balcony rings it halfway up (up the ladder at its west side) and its open top deck
+// (up a second ladder) holds a great moon crystal under an iron crown of crystal wind chimes, which
+// hang silent: there is no wind left to ring them. Both are ledges on the map. The chimes, the
+// crystal's glow and the odd sparkle are drawn live (render/town.js).
+export const TOWER = { w: 200, h: 300, balcony: 130, deck: 230, crystal: [100, 40], crown: [100, 6, 56] };
+// Where the chimes hang from the crown (x relative to the tower's left edge, and their length).
+export const TOWER_CHIMES = [[52, 22], [66, 30], [82, 36], [118, 36], [134, 30], [148, 22]];
+export function starchimeTowerArt() {
+  return art('starchime', TOWER.w, TOWER.h, () => {
+    const H = TOWER.h;
+    const stone = ramp('#a89cd0', 0.75);
+    const trim = ramp('#e8e0f8', 0.6);
+    const wood = ramp('#8a6a9a', 0.8);
+    const cloth = ramp('#6a7ad0', 0.8);
+    const balY = H - TOWER.balcony;
+    const deckY = H - TOWER.deck;
+    const out = [];
+    // The shaft: violet stone courses, shaded on its right, trimmed in pale bands.
+    out.push(...stones(62, deckY, 76, H - deckY, stone, 11, { rowH: 9, blockW: 14 }));
+    out.push(F(R(122, deckY, 16, H - deckY, stone.sh)));
+    for (const y of [deckY + 4, balY + 14, H - 40]) out.push(R(58, y, 84, 5, trim.base), F(R(58, y, 84, 1.4, trim.hi)), F(R(126, y, 16, 5, trim.sh)));
+    // The plinth and its round door, lit from inside, with a moon over the lintel.
+    out.push(...stones(48, H - 36, 104, 36, stone, 4, { rowH: 9, blockW: 18 }), F(R(48, H - 36, 104, 2, stone.hi)));
+    out.push(E(100, H - 30, 16, 14, trim.base), R(84, H - 30, 32, 30, trim.base));
+    out.push(E(100, H - 28, 13, 12, wood.deep), R(87, H - 28, 26, 28, wood.deep));
+    out.push(F(E(100, H - 26, 10, 9, '#ffd98a')), F(R(90, H - 26, 20, 26, '#ffd98a')), F(R(99.2, H - 34, 1.6, 34, wood.deep)), F(E(106, H - 12, 1.6, 1.6, wood.deep)));
+    out.push(E(100, H - 48, 6, 6, '#fff3c4'), F(E(103, H - 49.5, 5, 5.4, stone.base)));
+    // Tall arched windows up the shaft, glowing gold, a star pane in the top one.
+    for (const [y, h] of [[balY + 30, 34], [deckY + 20, 40]]) {
+      out.push(E(100, y, 10, 9, trim.base), R(90, y, 20, h, trim.base));
+      out.push(F(E(100, y + 1, 7.6, 7.4, '#ffd98a')), F(R(92.4, y + 1, 15.2, h - 3, '#ffd98a')), F(R(92.4, y + 1, 6, h - 3, '#fff1c4')), F(R(99.4, y - 6, 1.2, h + 2, trim.sh)));
+    }
+    out.push(F(T([[100, deckY + 26], [103, deckY + 33], [110, deckY + 34], [104, deckY + 38], [106, deckY + 45], [100, deckY + 41], [94, deckY + 45], [96, deckY + 38], [90, deckY + 34], [97, deckY + 33]], '#fff8e0')));
+    // Little lit slits on the shaft's side, climbing.
+    for (const [x, y] of [[72, H - 70], [72, balY - 30], [72, deckY + 60]]) out.push(R(x, y, 6, 12, trim.base), F(R(x + 1.2, y + 1.2, 3.6, 9.6, '#ffd98a')));
+    // The balcony: a ring of planks round the shaft on carved brackets, a rail of posts.
+    out.push(...planks(18, balY - 2, 164, 7, ramp('#b89ac8', 0.8), 1, 12, true));
+    for (const x of [28, 58, 142, 172]) out.push(T([[x - 4, balY + 5], [x + 4, balY + 5], [x + 1, balY + 24], [x - 1, balY + 24]], wood.base), F(R(x + 1.6, balY + 5, 1.4, 18, wood.sh)));
+    for (let x = 22; x <= 178; x += 10) if (x < 62 || x > 138) out.push(R(x, balY - 16, 2, 14, trim.base));
+    out.push(...beam(18, balY - 18, 44, 2.6, trim.base), ...beam(138, balY - 18, 44, 2.6, trim.base));
+    // The mages' banner hung from the balcony: deep blue, a gold crescent, a tasseled hem.
+    out.push(R(150, balY + 8, 24, 46, cloth.base), T([[150, balY + 54], [162, balY + 46], [174, balY + 54]], cloth.base), F(R(150, balY + 8, 24, 3, '#ffd36b')));
+    out.push(E(162, balY + 26, 7, 7, '#ffd36b'), F(E(165, balY + 24, 6, 6.4, cloth.base)), F(R(161.4, balY + 54, 1.2, 6, '#ffd36b')));
+    // The top deck: a round stone parapet, a pale cornice.
+    out.push(...stones(40, deckY - 12, 120, 16, stone, 6, { rowH: 8, blockW: 12 }), R(36, deckY + 2, 128, 6, trim.base), F(R(36, deckY + 2, 128, 1.6, trim.hi)), F(R(140, deckY + 2, 24, 6, trim.sh)));
+    for (let x = 40; x < 160; x += 20) out.push(R(x, deckY - 18, 10, 6, stone.base), F(R(x, deckY - 18, 10, 1.6, stone.hi)));
+    // The crown: an iron arch on two pillars over the deck, a little star at its peak.
+    const [cx, cy, cr] = TOWER.crown;
+    for (const x of [cx - cr, cx + cr - 4]) out.push(R(x, cy + 14, 4, deckY - 18 - cy - 14, '#4a4a6a'), F(R(x, cy + 14, 1.2, deckY - 18 - cy - 14, '#8a8aaa')));
+    for (let i = 0; i <= 28; i++) {
+      const a = Math.PI * (i / 28);
+      out.push(R(cx - Math.cos(a) * cr - 1.6, cy + 16 - Math.sin(a) * 14, 3.2, 3.2, '#4a4a6a'));
+    }
+    out.push(T([[cx, cy - 6], [cx + 3, cy], [cx + 9, cy + 1], [cx + 4, cy + 4], [cx + 5, cy + 10], [cx, cy + 6], [cx - 5, cy + 10], [cx - 4, cy + 4], [cx - 9, cy + 1], [cx - 3, cy]], '#ffd36b'), F(E(cx - 1.6, cy + 2, 1.6, 1.6, '#fff6c8')));
+    // The moon crystal's pedestal (the crystal itself glows live).
+    const [kx, ky] = TOWER.crystal;
+    out.push(R(kx - 12, deckY - 22, 24, 6, trim.base), R(kx - 7, ky + 20, 14, deckY - 22 - ky - 20, stone.base), F(R(kx + 2, ky + 20, 5, deckY - 22 - ky - 20, stone.sh)));
+    return out;
+  }, false);
+}
+// One crystal chime (drawn live, hanging from the crown and barely swaying).
+export function chimeArt(len) {
+  return art(`chime|${len}`, 8, len + 4, () => [
+    R(3.6, 0, 0.8, len - 12, '#4a4a6a'),
+    T([[4, len - 13], [7, len - 8], [4, len + 2], [1, len - 8]], '#bfe6ff'),
+    F(T([[4, len - 13], [7, len - 8], [4, len + 2]], '#8fc0f0')),
+    F(R(2.6, len - 9, 1, 4, '#ffffff')),
+  ], false);
+}
+// The moon crystal on the tower's deck: a tall pale-blue gem.
+export function moonCrystalArt() {
+  return art('mooncrystal', 24, 40, () => [
+    T([[12, 0], [22, 14], [16, 40], [8, 40], [2, 14]], '#cfe8ff'),
+    F(T([[12, 0], [22, 14], [16, 40], [12, 40]], '#9fc8f0')),
+    F(T([[12, 0], [2, 14], [8, 40], [9, 40], [6, 14]], '#ffffff')),
+    F(R(11.4, 6, 1.2, 30, '#e8f4ff')),
+  ], false);
+}
+
 // ---------- Ember Crag (the 2026-11-03 rebuild) ----------
 
 // The crag's landmark: the Great Forge, 260 wide and 240 tall, a stone forge hall with a glowing

@@ -158,6 +158,6 @@ export const NODES = {
   crag: [{ ...SPOT.ore(1), x: 2400, y: 480 }],
   grove: [
     { ...SPOT.herb(2, 'chanterelle'), x: 400, y: 480 },
-    { ...SPOT.night(2), x: 2080, y: 480 },
+    { ...SPOT.night(2), x: 2190, y: 480 },
   ],
 };

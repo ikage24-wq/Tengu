@@ -622,10 +622,12 @@ Object.assign(MAPS, {
   },
 
 
-  // The mages' home in a starry night wood, in quarters: tree homes and Nim's spell shop by the
-  // woods road; the raised plaza under the great moon-lantern tree (its bough a ledge, up its
-  // rope); the Mage Tower; then the study circle (the rune circle and its moonstones) by the root
-  // gate to the ruins.
+  // Moonleaf Grove (rebuilt 2026-11-03): the mages' home in a starry night wood, round one
+  // landmark, the Starchime Tower, whose crystal wind chimes hang silent (no wind to ring them).
+  // Left to right: Lantern Lane by the woods road, with a tree home, Nim's spell shop and a
+  // glowcap home; the raised Moon Tree Plaza under the great lantern tree (its bough a ledge, up its
+  // rope); then the Rune Garden: the rune circle and its moonstones, and the Starchime Tower, whose
+  // balcony and top deck (up the ladders at its side) you can climb, by the root gate to the ruins.
   grove: {
     id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     // The town stove, for cooking (data/cooking.js).
@@ -636,14 +638,20 @@ Object.assign(MAPS, {
     look: { islands: 'planks', edges: 'glowcaps', propKeep: 0.8 },
     terrain: [[0, 480], [860, 480], [900, 456], [1340, 456], [1380, 480], [2400, 480]],
     homeStyle: 'treehome',
-    // Tree homes and giant glowcap mushroom homes, alternating so no two neighbours match.
-    cottages: [180, [712, 'mushhome'], 1980, [2170, 'mushhome']],
-    townPieces: [['moontree', 1110]],
+    // A tree home and a glowcap home on Lantern Lane, the moon tree, and the Starchime Tower
+    // (render/townhouses.js).
+    cottages: [180, [712, 'mushhome']],
+    townPieces: [['moontree', 1110], ['starchime', 2020]],
     platforms: [
       // A bough of the moon tree.
       { x: 1006, y: 324, w: 92, bare: true },
+      // The Starchime Tower's balcony and its top deck (drawn with the tower).
+      { x: 1938, y: 350, w: 164, bare: true }, { x: 1960, y: 250, w: 120, bare: true },
     ],
-    ropes: [{ x: 1086, top: 324, bottom: 456 }],
+    ropes: [
+      { x: 1086, top: 324, bottom: 456 },
+      { x: 1946, top: 350, bottom: 480, ladder: true }, { x: 2074, top: 250, bottom: 350, ladder: true },
+    ],
     portals: [
       { id: 'start', x: 1240, y: 456, hidden: true },
       { id: 'west', x: 40, y: 480, to: 'woods', toPortal: 'east' },
@@ -657,9 +665,10 @@ Object.assign(MAPS, {
       { name: 'Moon Tree Plaza', from: 880, color: '#c9a6ff', look: { sky: ['#8a7ad0', '#b8a8e8', '#e8e0ff'] } },
       { name: 'Rune Garden', from: 1380, color: '#9fe0b0', look: { sky: ['#7ac8b0', '#a8e0d0', '#e0f8ee'] } },
     ],
-    // Lamps that glow at night (world/daytime.js): the lane, the moon tree, the rune circle.
-    lamps: [{ x: 300, y: 440 }, { x: 760, y: 440 }, { x: 1110, y: 400, c: '#e6dcff' }, { x: 1800, y: 440, c: '#bfe6ff' }, { x: 2180, y: 440 }],
-    deco: [['moonstone', 1660], ['runecircle', 1800], ['moonstone', 1940], ['rootgate', 2280]],
+    // Lamps that glow at night (world/daytime.js): the lane, the moon tree, the rune circle, the
+    // tower's windows and its moon crystal.
+    lamps: [{ x: 300, y: 440 }, { x: 760, y: 440 }, { x: 1110, y: 400, c: '#e6dcff' }, { x: 1740, y: 440, c: '#bfe6ff' }, { x: 2020, y: 400 }, { x: 2020, y: 210, c: '#bfe6ff' }],
+    deco: [['moonstone', 1620], ['runecircle', 1740], ['moonstone', 1860], ['rootgate', 2290]],
     spawns: [],
   },
 

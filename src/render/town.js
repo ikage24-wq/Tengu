@@ -19,7 +19,7 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { greatForgeArt, FORGE, galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { starchimeTowerArt, chimeArt, moonCrystalArt, TOWER, TOWER_CHIMES, greatForgeArt, FORGE, galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
@@ -547,7 +547,28 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
     if (kind === 'plazatree') place(ctx, plazaTreeArt(0), snap(x), gy + 3);
-    else if (kind === 'greatforge') {
+    else if (kind === 'starchime') {
+      // The Starchime Tower: its moon crystal breathing softly, its chimes hanging all but still
+      // (no wind to ring them), now and then a faint sway and a sparkle, as if a breeze almost came.
+      place(ctx, starchimeTowerArt(), snap(x), gy + 2);
+      const left = x - TOWER.w / 2;
+      const top = gy + 2 - TOWER.h;
+      const [kx, ky] = TOWER.crystal;
+      const [ccx, ccy, ccr] = TOWER.crown;
+      glowSoft(ctx, left + kx, top + ky + 16, 40, '#bfe6ff', 0.25 + 0.12 * (0.5 + 0.5 * Math.sin(time * 1.1 + wx * 0.01)));
+      place(ctx, moonCrystalArt(), snap(left + kx), top + ky + 22 + Math.sin(time * 0.9) * 1.2);
+      const nudge = Math.max(0, Math.sin(time * 0.5)) ** 10;
+      for (const [cx, len] of TOWER_CHIMES) {
+        const a = Math.sin(time * 2.2 + cx * 0.3) * (0.015 + 0.09 * nudge);
+        const ay = top + ccy + 18 - Math.sqrt(Math.max(0, 1 - ((cx - ccx) / ccr) ** 2)) * 14;
+        ctx.save();
+        ctx.translate(left + cx, ay);
+        ctx.rotate(a);
+        place(ctx, chimeArt(len), 0, len + 4);
+        ctx.restore();
+        if (nudge > 0.6) sparkleAt(ctx, left + cx + Math.sin(time * 5 + cx) * 2, ay + len, 1.4 * nudge, '#e8f4ff', nudge);
+      }
+    } else if (kind === 'greatforge') {
       // The Great Forge: its fire breathing low (the bellows have no wind), a thin rope of smoke
       // from the chimney, a spark now and then.
       const s = greatForgeArt();
