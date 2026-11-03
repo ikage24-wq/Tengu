@@ -1,3 +1,5 @@
+// (Retired as the Manor's monster art on 2026-11-03: render/mobs/manorfolk.js draws them now. This
+// file's rig helpers stay, shared by the observatory, candy and sky monsters.)
 // Monster art: the Moonlit Manor monsters (the levels 15-20 group dungeon, 2026-11, see
 // docs/design/moonlit-manor.md), built on the manor rig (manorrig.js: a new, taller humanoid
 // skeleton keyed per animation and blended with eased in-betweens).

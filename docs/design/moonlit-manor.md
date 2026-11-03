@@ -105,3 +105,14 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
 3. Room tasks: lanterns, the portrait puzzle, the books, the chase.
 4. Bosses' moves.
 5. Rewards, the set, the story beat, bots and the group finder, tests.
+
+## The 2026-11-03 redraw
+
+The residents and bosses were redrawn creature-first (render/mobs/manorfolk.js and
+manorfolkboss.js), retiring the costumed girls on the manor rig (the rig stays for the dungeons
+that still use it): a china bunny doll with a parasol, a ghost-cat maid with a feather duster, a
+living candle bride, a topiary swan, a flame wisp in an iron lantern, a little empty suit of armour
+with a too-big helm, and a teapot in a top hat who pours hot tea. The waltzing armours are big
+chibi suits (Rondo slim and plumed with a rapier, Minuet bell-skirted with a fan-shield), Madame
+Velvet a plump plum ghost in a mob cap who hurls plates, and Lady Marigold a giant marigold
+blossom spirit who sweeps a storm of petals with her fan.

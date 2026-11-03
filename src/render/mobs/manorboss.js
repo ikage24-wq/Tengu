@@ -1,3 +1,5 @@
+// (Retired as the Manor's boss art on 2026-11-03: render/mobs/manorfolkboss.js draws them now.
+// Its trolley art stays, drawn in the housekeeper's room by render/manor.js.)
 // Monster art: the Moonlit Manor bosses (the levels 15-20 group dungeon, 2026-11, see
 // docs/design/moonlit-manor.md). Built on the manor rig like the manor monsters, then drawn grand
 // (`grand`: the whole figure, its strokes and its face scaled up together) to the queens' size.
