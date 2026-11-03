@@ -59,6 +59,13 @@ export const MATERIALS = {
   // The Dream Theatre: honey stage boards over a velvet-dark understage.
   stage: { lip: '#ffd36b', body: '#c88a5a', deep: '#8a5a3a', stone: '#e8b080', style: 'boards', blades: false, drip: null },
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
+  // Interior floors (the interior rule: a room's floor is its own material, never grass or soil).
+  // Polished parquet over a timber understage, for halls, kitchens and workshops.
+  parquet: { lip: '#f0c48a', body: '#b07a5a', deep: '#7a4a3a', stone: '#d8a070', style: 'boards', blades: false, drip: null },
+  // Sea-glass marble for the palace's inner halls.
+  marble: { lip: '#f4f2ff', body: '#8ab0d4', deep: '#5a7eaa', stone: '#d6e6f6', style: 'slab', blades: false, drip: null },
+  // The big top's ring: a sawdust floor over painted boards.
+  sawdust: { lip: '#f6dcae', body: '#b8805a', deep: '#8a5a3a', stone: '#e0b07e', style: 'boards', blades: false, drip: null },
 };
 
 // One breeze for the whole scene: a steady push with gusts every several seconds. Grass, flowers,
@@ -1016,10 +1023,15 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
 // beams, and little lamps hanging on chains, swaying from their own place in the room.
 function drawManorCeiling(ctx, m, map, cam, width, time) {
   const base = 16 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  // A room can tint it (`look.ceilingTint`: band, trim, swag, lamp).
+  const tint = map.look.ceilingTint ?? {};
+  const gold = tint.trim ?? '#ffd36b';
+  const swag = tint.swag ?? '#b05a8a';
+  const lamp = tint.lamp ?? '#ffe2a0';
   ctx.save();
-  ctx.fillStyle = m.deep;
+  ctx.fillStyle = tint.band ?? m.deep;
   ctx.fillRect(-2, -2, width + 4, base + 2);
-  ctx.fillStyle = '#ffd36b';
+  ctx.fillStyle = gold;
   ctx.fillRect(-2, base, width + 4, 2);
   ctx.fillStyle = m.stone;
   ctx.fillRect(-2, base - 3, width + 4, 1);
@@ -1027,25 +1039,25 @@ function drawManorCeiling(ctx, m, map, cam, width, time) {
   for (let i = Math.floor(cam.x / step) - 1; i * step - cam.x < width + step; i++) {
     const x = i * step - cam.x;
     // A beam end, then a swag of curtain hanging between this beam and the next.
-    ctx.fillStyle = shade(m.deep, -8);
+    ctx.fillStyle = shade(tint.band ?? m.deep, -8);
     ctx.fillRect(x - 5, base, 10, 8);
-    ctx.fillStyle = '#ffd36b';
+    ctx.fillStyle = gold;
     ctx.fillRect(x - 5, base + 7, 10, 1.5);
     const sway = Math.sin(time * 0.8 + i) * 1.5;
-    ctx.fillStyle = '#b05a8a';
+    ctx.fillStyle = swag;
     ctx.beginPath();
     ctx.moveTo(x + 6, base + 2);
     ctx.quadraticCurveTo(x + step / 2, base + 26 + sway, x + step - 6, base + 2);
     ctx.quadraticCurveTo(x + step / 2, base + 14 + sway, x + 6, base + 2);
     ctx.fill();
-    ctx.fillStyle = '#d888b0';
+    ctx.fillStyle = mix(swag, '#ffffff', 0.3);
     ctx.fillRect(x + step / 2 - 14, base + 17 + sway, 28, 1.5);
     // A lamp on a chain every other beam.
     if (i % 2 === 0) {
       const lx = x + Math.sin(time * 1.1 + i * 0.7) * 1.2;
       ctx.fillStyle = '#c8902a';
       ctx.fillRect(lx - 0.5, base + 8, 1, 14);
-      ctx.fillStyle = '#ffe2a0';
+      ctx.fillStyle = lamp;
       ctx.beginPath();
       ctx.ellipse(lx, base + 26, 4, 5, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -1056,8 +1068,182 @@ function drawManorCeiling(ctx, m, map, cam, width, time) {
   ctx.restore();
 }
 
+// The big top's ceiling: striped canvas sloping up out of view, its scalloped valance edge
+// stirring a little, a rope of pennants, and spotlights hung on the king pole's rigging.
+function drawTentCeiling(ctx, m, map, cam, width, time) {
+  const base = 20 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  const tint = map.look.ceilingTint ?? {};
+  const a = tint.band ?? '#e0405a';
+  const b = tint.trim ?? '#fff4e8';
+  ctx.save();
+  const stripe = 22;
+  for (let i = Math.floor(cam.x * 0.9 / stripe) - 1; i * stripe - cam.x * 0.9 < width + stripe; i++) {
+    const x = i * stripe - cam.x * 0.9;
+    ctx.fillStyle = i % 2 ? a : b;
+    ctx.beginPath();
+    ctx.moveTo(x - 6, -4);
+    ctx.lineTo(x + stripe - 6, -4);
+    ctx.lineTo(x + stripe, base);
+    ctx.lineTo(x, base);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // The scalloped valance.
+  for (let i = Math.floor(cam.x / 16) - 1; i * 16 - cam.x < width + 16; i++) {
+    const x = i * 16 - cam.x;
+    const s = Math.sin(time * 1.2 + i * 0.7) * 0.8;
+    ctx.fillStyle = i % 2 ? a : b;
+    ctx.beginPath();
+    ctx.ellipse(x + 8, base + 1 + s, 8, 5, 0, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = tint.fringe ?? '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(x + 8, base + 6 + s, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = shade(a, -30);
+  ctx.fillRect(-2, base - 1, width + 4, 1.4);
+  // A rope of pennants sagging between rigging points.
+  const step = 160;
+  for (let i = Math.floor(cam.x / step) - 1; i * step - cam.x < width + step; i++) {
+    const x0 = i * step - cam.x;
+    ctx.strokeStyle = '#8a6a5a';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x0, base + 6);
+    ctx.quadraticCurveTo(x0 + step / 2, base + 28, x0 + step, base + 6);
+    ctx.stroke();
+    for (let k = 1; k < 8; k++) {
+      const u = k / 8;
+      const px = x0 + u * step;
+      const py = base + 6 + 4 * u * (1 - u) * 22;
+      ctx.fillStyle = ['#ffd36b', '#7fd8ff', '#ff9ab8', '#9fe0a8'][(i + k) % 4];
+      ctx.beginPath();
+      ctx.moveTo(px - 3, py);
+      ctx.lineTo(px + 3, py);
+      ctx.lineTo(px, py + 6 + Math.sin(time * 2 + k) * 0.6);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// Timber beams across the top of the room (kitchens, workshops, forges, backstage): a dark ceiling
+// band, beam ends every so often, and lamps hanging on long cords, swaying from their own place.
+function drawBeamCeiling(ctx, m, map, cam, width, time) {
+  const base = 14 - Math.min(8, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  const tint = map.look.ceilingTint ?? {};
+  const wood = tint.band ?? '#8a5a44';
+  const lamp = tint.lamp ?? '#ffe2a0';
+  ctx.save();
+  ctx.fillStyle = shade(wood, -22);
+  ctx.fillRect(-2, -2, width + 4, base + 2);
+  ctx.fillStyle = wood;
+  ctx.fillRect(-2, base - 4, width + 4, 6);
+  ctx.fillStyle = shade(wood, 16);
+  ctx.fillRect(-2, base - 4, width + 4, 1.2);
+  const step = 96;
+  for (let i = Math.floor(cam.x / step) - 1; i * step - cam.x < width + step; i++) {
+    const x = i * step - cam.x;
+    ctx.fillStyle = wood;
+    ctx.fillRect(x - 6, base, 12, 10);
+    ctx.fillStyle = shade(wood, -16);
+    ctx.fillRect(x + 3, base, 3, 10);
+    ctx.fillStyle = shade(wood, 22);
+    ctx.beginPath();
+    ctx.ellipse(x, base + 10, 6, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (hash(i * 3.1) > 0.45) {
+      const len = 26 + hash(i * 5.3) * 30;
+      const sw = Math.sin(time * 1.1 + i) * 1.5;
+      const lx = x + step / 2 + sw;
+      ctx.strokeStyle = '#4a3a4a';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(x + step / 2, base);
+      ctx.lineTo(lx, base + len);
+      ctx.stroke();
+      ctx.fillStyle = shade(wood, -10);
+      ctx.beginPath();
+      ctx.moveTo(lx - 6, base + len + 4);
+      ctx.lineTo(lx, base + len - 1);
+      ctx.lineTo(lx + 6, base + len + 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = lamp;
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.arc(lx, base + len + 7, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.ellipse(lx, base + len + 6, 3, 2.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// The theatre's ceiling: a deep red velvet valance in pleats with a gold fringe and tasselled
+// tie-backs, and a gilded proscenium moulding above it.
+function drawCurtainCeiling(ctx, m, map, cam, width, time) {
+  const base = 18 - Math.min(8, Math.max(0, (map.height - 360 - cam.y) * 0.03));
+  const tint = map.look.ceilingTint ?? {};
+  const red = tint.band ?? '#c0304a';
+  const gold = tint.trim ?? '#ffd36b';
+  ctx.save();
+  ctx.fillStyle = shade(red, -40);
+  ctx.fillRect(-2, -2, width + 4, base);
+  ctx.fillStyle = gold;
+  ctx.fillRect(-2, base - 6, width + 4, 3);
+  ctx.fillStyle = shade(gold, -30);
+  for (let i = Math.floor(cam.x / 10) - 1; i * 10 - cam.x < width + 10; i++) ctx.fillRect(i * 10 - cam.x, base - 5, 4, 1.4);
+  const pleat = 12;
+  for (let i = Math.floor(cam.x / pleat) - 1; i * pleat - cam.x < width + pleat; i++) {
+    const x = i * pleat - cam.x;
+    const drop = 12 + Math.sin(i * 0.9) * 2 + Math.sin(time * 0.9 + i * 0.5) * 0.6;
+    const g = ctx.createLinearGradient(x, 0, x + pleat, 0);
+    g.addColorStop(0, shade(red, -18));
+    g.addColorStop(0.45, shade(red, 14));
+    g.addColorStop(1, shade(red, -22));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x, base - 3);
+    ctx.lineTo(x + pleat, base - 3);
+    ctx.lineTo(x + pleat, base + drop);
+    ctx.quadraticCurveTo(x + pleat / 2, base + drop + 4, x, base + drop);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = gold;
+    ctx.fillRect(x, base + drop + 1, pleat, 1.6);
+    ctx.fillStyle = shade(gold, -20);
+    for (let k = 1; k < pleat; k += 3) ctx.fillRect(x + k, base + drop + 2.6, 1, 2.4);
+  }
+  // Tasselled tie-backs.
+  for (let i = Math.floor(cam.x / 140) - 1; i * 140 - cam.x < width + 140; i++) {
+    const x = i * 140 - cam.x + 40;
+    const sw = Math.sin(time * 1.3 + i) * 1;
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, base + 14);
+    ctx.lineTo(x + sw, base + 26);
+    ctx.stroke();
+    ctx.fillStyle = gold;
+    ctx.beginPath();
+    ctx.arc(x + sw, base + 26, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(x + sw - 2, base + 27, 4, 5);
+  }
+  ctx.restore();
+}
+
 function drawCeiling(ctx, m, map, cam, width, time) {
   if (map.look.ceiling === 'manor') return drawManorCeiling(ctx, m, map, cam, width, time);
+  if (map.look.ceiling === 'tent') return drawTentCeiling(ctx, m, map, cam, width, time);
+  if (map.look.ceiling === 'beams') return drawBeamCeiling(ctx, m, map, cam, width, time);
+  if (map.look.ceiling === 'curtain') return drawCurtainCeiling(ctx, m, map, cam, width, time);
   // It hangs at the top of the view (the cave's roof is always just overhead), rising a little
   // as you climb.
   const base = 12 - Math.min(10, Math.max(0, (map.height - 360 - cam.y) * 0.03));
@@ -1296,7 +1482,7 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
 
 // A ledge drawn as a chunk of floating land: flat top, thick in the middle, tapering to a
 // rounded point underneath, with the lip on top and things dangling below.
-export function drawIsland(ctx, theme, p, cam, time, pi, look = null) {
+export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null) {
   theme = look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   camX = cam.x;
@@ -1304,6 +1490,17 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null) {
   const y = p.y - cam.y;
   const w = p.w;
   const style = p.style ?? look?.islands ?? 'earth';
+  if (style === 'gallery' || style === 'catwalk') {
+    // Hangers first (behind the ledge): up to the underside of the ledge above, or the ceiling.
+    const hangs = [x + Math.min(18, w * 0.2), x + w - Math.min(18, w * 0.2)];
+    for (const hx of hangs) {
+      const top = hangTop(map, p, hx + cam.x) - cam.y;
+      hanger(ctx, style, hx, top, y + 2, look?.trim ?? '#ffd36b', time, pi);
+    }
+    if (style === 'gallery') drawGallery(ctx, m, x, y, w, look?.trim ?? '#ffd36b', pi);
+    else drawCatwalk(ctx, m, x, y, w, look?.metal ?? '#8a7aa8', pi);
+    return;
+  }
   if (style !== 'earth') {
     if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges);
@@ -1641,6 +1838,153 @@ function drawStone(ctx, theme, m, x, y, w, d, cam, time, seed, deco) {
   ctx.lineWidth = 1;
   ctx.stroke();
   lip(ctx, m, [[x + 1, y], [x + w - 1, y]], time, seed + 70, Infinity, 6, deco);
+}
+
+// ---------- Interior ledges (the interior rule: ledges indoors are part of the building) ----------
+
+// Where a hanger above a ledge ends, in world y: the underside of the nearest ledge above it at
+// that x, or the room's ceiling (the top of the map).
+function hangTop(map, p, wx) {
+  let top = -40;
+  for (const q of map?.platforms ?? []) {
+    if (q === p || q.y >= p.y || wx < q.x || wx > q.x + q.w) continue;
+    top = Math.max(top, q.y + 16);
+  }
+  return top;
+}
+
+// A chain (gallery) or a pair of iron rods with a turnbuckle (catwalk) from `top` down to the ledge.
+function hanger(ctx, style, x, top, bottom, trim, time, seed) {
+  if (bottom - top < 6) return;
+  ctx.save();
+  if (style === 'gallery') {
+    // Chain links, alternating face-on and edge-on, in the trim's metal.
+    const dark = shade(trim, -34);
+    for (let yy = Math.max(top, -20); yy < bottom - 2; yy += 5) {
+      const k = Math.round((yy - top) / 5) % 2;
+      ctx.fillStyle = dark;
+      if (k) ctx.fillRect(x - 0.7, yy, 1.4, 5);
+      else {
+        ctx.strokeStyle = dark;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.ellipse(x, yy + 2.5, 1.6, 2.6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = hexA(trim, 0.8);
+        ctx.fillRect(x - 1.4, yy + 1, 0.8, 1.6);
+      }
+    }
+    ctx.fillStyle = trim;
+    ctx.beginPath();
+    ctx.ellipse(x, bottom - 1, 3, 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.fillStyle = '#6a6080';
+    ctx.fillRect(x - 3, Math.max(top, -20), 1.6, bottom - Math.max(top, -20));
+    ctx.fillRect(x + 1.4, Math.max(top, -20), 1.6, bottom - Math.max(top, -20));
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(x - 2.6, Math.max(top, -20), 0.6, bottom - Math.max(top, -20));
+    const ty = bottom - 22;
+    if (ty > top + 6) {
+      ctx.fillStyle = '#8a809e';
+      ctx.fillRect(x - 3.6, ty, 7.2, 6);
+      ctx.fillStyle = '#b8b0c8';
+      ctx.fillRect(x - 3.6, ty, 7.2, 1.2);
+    }
+  }
+  ctx.restore();
+}
+
+// A gallery: a mezzanine slab with a floor of the room's material on top, a moulded fascia with
+// a gilded rail and dentils, and a soft shadow under it. Ends finished with a corbel each.
+function drawGallery(ctx, m, x, y, w, trim, seed) {
+  const fascia = mix(m.body, m.deep, 0.25);
+  const line = edge(fascia);
+  ctx.save();
+  // The shadow it casts on the wall behind.
+  ctx.fillStyle = 'rgba(30,20,50,0.16)';
+  ctx.fillRect(x + 4, y + 18, w - 8, 6);
+  // The fascia and its mouldings.
+  ctx.fillStyle = fascia;
+  ctx.fillRect(x, y + 4, w, 14);
+  ctx.fillStyle = shade(fascia, -14);
+  ctx.fillRect(x, y + 15, w, 3);
+  ctx.fillStyle = trim;
+  ctx.fillRect(x - 1, y + 4, w + 2, 1.6);
+  ctx.fillRect(x, y + 13, w, 1.2);
+  ctx.fillStyle = shade(trim, -26);
+  for (let dx = 4; dx < w - 3; dx += 7) ctx.fillRect(x + dx, y + 7, 3, 3);
+  // Panels between the dentils and the lower rail, every so often a rosette.
+  ctx.fillStyle = hexA(trim, 0.85);
+  for (let dx = 24; dx < w - 20; dx += 48) {
+    ctx.beginPath();
+    ctx.arc(x + dx, y + 11.5, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 4.5, w - 1, 13);
+  // The floor on top: the room's own floor, a lit edge, a thin dark seam under it.
+  ctx.fillStyle = m.lip;
+  ctx.fillRect(x - 2, y - 1, w + 4, 5.5);
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillRect(x - 1, y - 0.5, w + 2, 1.2);
+  ctx.fillStyle = shade(m.lip, -24);
+  for (let dx = 12; dx < w; dx += 22 + hash(seed + dx) * 8) ctx.fillRect(x + dx, y + 0.8, 0.8, 3.6);
+  ctx.strokeStyle = edge(m.lip);
+  ctx.strokeRect(x - 1.5, y - 0.5, w + 3, 5);
+  // Corbels under each end.
+  for (const [cx, dir] of [[x + 3, 1], [x + w - 3, -1]]) {
+    ctx.fillStyle = fascia;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3 * dir, y + 18);
+    ctx.lineTo(cx + 7 * dir, y + 18);
+    ctx.quadraticCurveTo(cx + 2 * dir, y + 22, cx - 1 * dir, y + 30);
+    ctx.lineTo(cx - 3 * dir, y + 30);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = line;
+    ctx.stroke();
+    ctx.fillStyle = trim;
+    ctx.fillRect(cx - 4, y + 29, 3 + 2, 1.4);
+  }
+  ctx.restore();
+}
+
+// A catwalk: a grated deck on a light truss, a toe-board along the front, and the truss's zigzag
+// underneath, in painted iron (or timber, in the mine).
+function drawCatwalk(ctx, m, x, y, w, metal, seed) {
+  const dark = shade(metal, -26);
+  const line = edge(metal);
+  ctx.save();
+  // The truss: top and bottom chords and a zigzag web.
+  ctx.strokeStyle = dark;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y + 15);
+  ctx.lineTo(x + w - 2, y + 15);
+  for (let dx = 4; dx < w - 4; dx += 12) {
+    ctx.moveTo(x + dx, y + 6);
+    ctx.lineTo(x + dx + 6, y + 15);
+    ctx.lineTo(x + dx + 12, y + 6);
+  }
+  ctx.stroke();
+  // The deck: a grate with its slots, a lit edge and the toe-board.
+  ctx.fillStyle = metal;
+  ctx.fillRect(x, y - 1, w, 7);
+  ctx.fillStyle = shade(metal, 14);
+  ctx.fillRect(x, y - 1, w, 1.4);
+  ctx.fillStyle = dark;
+  for (let dx = 3; dx < w - 2; dx += 4) ctx.fillRect(x + dx, y + 1.6, 1.6, 2.6);
+  ctx.fillStyle = shade(metal, -12);
+  ctx.fillRect(x, y + 4.5, w, 1.8);
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y - 0.5, w - 1, 7);
+  // Rivets on the toe-board.
+  ctx.fillStyle = shade(metal, 22);
+  for (let dx = 6; dx < w - 4; dx += 16) ctx.fillRect(x + dx, y + 4.8, 1.2, 1.2);
+  ctx.restore();
 }
 
 function islandShape(x, y, w, d, seed) {

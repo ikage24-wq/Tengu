@@ -2551,3 +2551,39 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
 
 // Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).
 for (const m of Object.values(MAPS)) settleSpots(m, SPOTS[m.id]);
+
+// ---------- Interiors (the interior rule, docs/art/art-bible.md) ----------
+// Every room that is inside something is built like a room: a ceiling over it, a floor of its own
+// material, ledges that belong to the building (galleries hung on chains in halls, iron or timber
+// catwalks in workshops, forges, mines and backstage; the Hollow keeps its root ledges), and
+// indoor things on its floor instead of grass and flowers. Rooms that are outdoors (the manor's
+// garden and rooftop, the reef, the midway, the stage acts painted as outdoor sets) stay as they are.
+const GALLERY_PROPS = { props: ['candle', 'books', 'column', 'candle', 'orb'], ledgeProp: 'candle' };
+const SEA_HALL = { islands: 'gallery', material: 'marble', ceiling: 'manor', trim: '#bfeeff', ceilingTint: { band: '#2e5a86', trim: '#bfeeff', swag: '#4fb8c0', lamp: '#d8fbff' }, props: ['column', 'crystal', 'orb', 'crystal'], ledgeProp: 'crystal', edges: null };
+const THEATRE_HALL = { islands: 'gallery', material: 'parquet', ceiling: 'curtain', trim: '#ffd36b', props: ['column', 'lamp', 'poster', 'candle'], ledgeProp: 'candle', edges: null };
+const INTERIORS = {
+  // Inside the great tree: an earthen, root-hung ceiling over the root ledges.
+  hollow2: { ceiling: true }, hollow3: { ceiling: true }, hollow4: { ceiling: true }, hollow5: { ceiling: true }, hollow6: { ceiling: true },
+  // The manor's halls: galleries on gilded chains.
+  manor2: { islands: 'gallery', ...GALLERY_PROPS }, manor3: { islands: 'gallery', ...GALLERY_PROPS },
+  manor4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle', 'column'] }, manor5: { islands: 'gallery', ...GALLERY_PROPS },
+  // The palace's inner halls in sea-glass marble; the grotto is a cave.
+  aquarium3: SEA_HALL, aquarium6: SEA_HALL, aquarium4: { ceiling: true, props: ['rock', 'crystal', 'rock'], ledgeProp: 'crystal' },
+  // The carnival's buildings: the funhouse, the big top's ring, the toy workshop.
+  carnival2: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#a0507a', lamp: '#ffe2a0' }, props: ['poster', 'lantern', 'barrel'], ledgeProp: null, edges: null },
+  carnival4: { islands: 'catwalk', material: 'sawdust', ceiling: 'tent', metal: '#c06a8a', props: ['barrel', 'poster', 'crate', 'lantern'], ledgeProp: null, edges: null },
+  carnival5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#8a7aa8', props: ['crate', 'barrel', 'books', 'lantern'], ledgeProp: null, edges: null },
+  // The observatory's halls: galleries on brass chains.
+  observatory2: { islands: 'gallery', ...GALLERY_PROPS }, observatory3: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'orb', 'books', 'candle'] },
+  observatory4: { islands: 'gallery', ...GALLERY_PROPS, props: ['books', 'books', 'candle'] }, observatory5: { islands: 'gallery', ...GALLERY_PROPS, props: ['orb', 'column', 'candle'] },
+  // The volcano's insides: the mine (timber catwalks under rock), the kitchen and the forge.
+  volcano2: { islands: 'catwalk', ceiling: true, metal: '#9a6a4a', props: ['crate', 'barrel', 'torch', 'crystal'], ledgeProp: null, edges: null },
+  volcano3: { islands: 'gallery', material: 'parquet', ceiling: 'beams', trim: '#ff9ab8', ceilingTint: { band: '#9a6048' }, props: ['barrel', 'crate', 'lantern'], ledgeProp: null, edges: null },
+  volcano4: { islands: 'catwalk', ceiling: 'beams', metal: '#7a5a5a', ceilingTint: { band: '#6a3a3a', lamp: '#ffb070' }, props: ['barrel', 'torch', 'crate'], ledgeProp: null, edges: null },
+  // The theatre: its halls under the red valance; backstage under bare beams on catwalks; the
+  // acts are painted sets, so only the valance changes over them.
+  theatre1: THEATRE_HALL, theatre4: THEATRE_HALL, theatre6: THEATRE_HALL,
+  theatre2: { ceiling: 'curtain' }, theatre3: { ceiling: 'curtain' },
+  theatre5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#6a6080', props: ['crate', 'rack', 'poster', 'lantern'], ledgeProp: null, edges: null },
+};
+for (const [id, look] of Object.entries(INTERIORS)) MAPS[id].look = { ...MAPS[id].look, ...look };

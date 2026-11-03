@@ -3069,7 +3069,7 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
     // A drifting ledge glides on the same clock as the physics. It's drawn at its own spot with the
     // camera shifted the other way, so its texture and edge flowers ride along with it instead of
     // sliding over it.
-    else drawIsland(ctx, theme, p, p.drift ? { ...cam, x: cam.x - driftOffset(p, map.clock ?? 0) } : cam, time, pi, zoneLook(map, p.y, p.x + p.w / 2));
+    else drawIsland(ctx, theme, p, p.drift ? { ...cam, x: cam.x - driftOffset(p, map.clock ?? 0) } : cam, time, pi, zoneLook(map, p.y, p.x + p.w / 2), map);
   }
 }
 
@@ -3466,7 +3466,9 @@ function drawProps(ctx, t, map, cam, width, time) {
       const props = zoneAt(map, sy, wx)?.look?.props ?? t.props;
       let kind = props[Math.floor(hash(wx + si) * props.length)];
       // Ledges only get small things.
-      if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (t.ledgeProp ?? 'flower') : kind;
+      if (!s.ground && !SMALL_PROPS.includes(kind)) kind = BIG_PROPS.includes(kind) ? (map.look?.ledgeProp !== undefined ? map.look.ledgeProp : t.ledgeProp ?? 'flower') : kind;
+      // (An interior can leave its ledges bare: ledgeProp null.)
+      if (!kind) continue;
       prop(ctx, kind, snap(x), snap(sy - cam.y), seed, t, time, wx);
     }
   });
