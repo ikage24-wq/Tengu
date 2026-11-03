@@ -220,6 +220,10 @@ function huntTarget(bot, world, members) {
   const body = bot.body;
   const skip = (m) => (br.skip?.mob === m && world.now < br.skip.until) || br.outOfReach?.some((o) => o.mob === m && world.now < o.until);
   const cur = br.target;
+  // Called to a "Here!" marker: they head there first, and fight once they've arrived.
+  const spot = bot.pingSpot && world.now < bot.pingSpot.until ? bot.pingSpot : null;
+  if (spot && body && (Math.abs(body.x - spot.x) > 60 || Math.abs(body.y - spot.y) > 40)) return null;
+  if (spot) bot.pingSpot = null;
   // In your party: a monster thrown up nearby to catch, then whatever you're fighting (or pinged).
   if (bot.party) {
     const up = catchable(bot, world);

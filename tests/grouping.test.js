@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 
 import { createWorld, loadMap, updateWorld } from '../src/world/world.js';
 import { createCharacter } from '../src/core/character.js';
-import { makeBotCharacter } from '../src/world/bots.js';
+import { makeBotCharacter, updateBots, createBots } from '../src/world/bots.js';
 import { joinParty, partyMembers } from '../src/world/party.js';
 import { spawnMob } from '../src/world/mobs.js';
 import { acceptQuest } from '../src/core/quests.js';
@@ -188,6 +188,37 @@ test('pings: the party sees them, acts on them (focus, help, come), and friends 
     world.net = null;
     offline();
   }
+});
+
+test('a "Here!" ping brings the party to the marker, not to wherever you go next', () => {
+  const { world } = setup(20);
+  // (A real crowd's state, so the bots' own update can run.)
+  world.bots = createBots(world, seeded(5), { clock: () => new Date(2026, 9, 28, 20, 0) });
+  world.bots.list.length = 0;
+  world.mobs = [];
+  const a = make(world, 'Mochi', 20);
+  joinParty(world.bots, a, world);
+  tick(world, 0.5);
+  // (A monster by them, where you were: before, they'd stop to fight it instead of coming.)
+  const mob = spawnMob(world.map, { mob: 'snailbun', x: world.body.x + 30, y: world.map.groundY });
+  mob.def = { ...mob.def, hp: 1e9, atk: 0 };
+  mob.hp = 1e9;
+  world.mobs.push(mob);
+  const mark = { x: world.body.x + 400, y: world.body.y };
+  Object.assign(world.body, { x: mark.x, vx: 0 });
+  assert.ok(dropPing(world, 'here'), 'pinged');
+  // You walk off the other way at once; they still come to the marker.
+  Object.assign(world.body, { x: mark.x - 700 });
+  let reached = false;
+  const you = world.body.x;
+  for (let t = 0; t < 15 && !reached; t += 1 / 30) {
+    world.now += 1 / 30;
+    updateGrouping(world, 1 / 30);
+    updateBots(world.bots, world, 1 / 30);
+    world.body.x = you;
+    reached = Math.abs((a.body?.x ?? a.x) - mark.x) < 70;
+  }
+  assert.ok(reached, `came to the marker (at ${Math.round(a.body.x)}, marker ${mark.x})`);
 });
 
 test('party chat goes to the party only; members answer it, and quick emotes, in character', () => {
