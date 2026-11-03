@@ -904,11 +904,16 @@ export function tickHunter(bot, world, hunters, dt, rng) {
   live(bot, world, hunters, dt, rng, {
     think: () => hunt(bot, world, hunters, rng),
     canThink: !bot.leaving,
+    // (At a life spot, or on the way to one, they leave the monsters be: world/botlife.js.)
     afterThink: () => {
       if (bot.leaving) br.goal = bot.leaving;
+      else if (bot.life?.goal) {
+        br.goal = bot.life.goal;
+        br.target = null;
+      }
     },
     giveUp: bot.leaving ?? null,
-    canFight: !bot.leaving,
+    canFight: !bot.leaving && !bot.life,
     // (A monster that's wandered over to you is yours now.)
     beforeFight: () => {
       const m = br.target;

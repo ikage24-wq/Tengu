@@ -74,6 +74,24 @@ spots (`render/gathering.js`) are drawn per kind and tier (copper, iron, silver,
 maple, cedar, skywood; cotton, silkmoss, lotus, cloud cotton), from a spot's `tier`, what it gives,
 or its region; dev sheet `tools/spots-sheet.html`.
 
+## Other players at their life skills (built, `world/botlife.js`)
+- Every generated player has life levels: most casual (a skill or two picked up along the way),
+  about one in seven keen (two or three skills near their own level, with bench-made tools).
+- Out on a field, hunters now and then stop at a ready spot on their floor or nearby that their
+  levels can work, walk there over ledges and ropes, play the hero's own move and tool for it, and
+  move on. Their work never uses a spot up for the player (the player's rule, 2026-11-03): it stays
+  ready for you and only rests for the other players. Most maps with spots have a keen life-skiller or two going
+  round them in a loop, spread over the floors (they pick spots away from everyone else), and
+  sitting a while at the fishing nook (cast, wait with its nibbles, bite, catch). A spot the player
+  is at, near or walking toward is never taken, and a player working one steps off it when you
+  start on it or come over.
+- In town they cook at the stove, craft at the bench, pick the town's spot and fish a street-side
+  nook.
+- What they say goes through the chat gate and names the real thing: a rare find ("got an
+  Amethyst out of the iron ore vein!"), a life level and what it opens, a Superb or Masterwork
+  craft, the material their next craft needs (someone may answer where it's found, from the
+  data), and at night a tip about where the map's night-only find is open.
+
 ## The player's choices (2026-11-03)
 - Crafted gear: a little better than drop and shop gear of the same level, with a quality roll
   that rises with Crafting level; hunters still get good gear from drops and bosses.

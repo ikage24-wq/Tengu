@@ -21,6 +21,8 @@ import { cottageArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowbo
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
+import { botLifePose, holdFind } from './life.js';
+import { drawFriendFishing } from './fishing.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -1367,6 +1369,13 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     else if (!body.onGround) pose = 'jump';
     else pose = Math.abs(body.vx) > 8 ? 'walk' : 'idle';
   }
+  // At a life spot, the stove or the bench, or fishing: the same moves and tools as yours, the
+  // find held up in their hand (render/life.js).
+  const life = bot.down ? null : botLifePose(bot, time);
+  if (life) {
+    pose = life.pose;
+    progress = life.progress;
+  }
   const own = bot.char.appearance;
   const look = bot.bubble ? { ...own, face: /:D|!!|xD|<3/.test(bot.bubble.text) ? 'excited' : /uwu|:3|owo/.test(bot.bubble.text) ? 'cat' : 'grin' } : own;
   const gear = wornGear(bot.char);
@@ -1378,6 +1387,11 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
     // Party members fighting nearby stand on guard between swings.
     ready: Boolean(bot.party && bot.brain?.target), hurt: bot.hurt > 0,
   };
+  let tip = null;
+  if (life) {
+    Object.assign(state, { dur: life.dur, from: life.from, blend: life.blend, ready: false, onHands: holdFind(life.find) });
+    if (bot.life.kind === 'fish') state.onTool = (pt) => { tip = pt; };
+  }
   if (bot.down) {
     if (!fellAt.has(bot)) fellAt.set(bot, time);
     drawFallen(ctx, look, wornGear(bot.char), x, y, { ...state, alpha: 0.75 }, time - fellAt.get(bot));
@@ -1385,6 +1399,13 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false) {
   } else {
     fellAt.delete(bot);
     drawHero(ctx, look, gear, x, y, state, anim);
+    // Their line out on the water, to the float (where it is from where they're drawn).
+    if (life && bot.life.kind === 'fish') {
+      const s = bot.life.spot;
+      const wx = body ? body.x : bot.x;
+      const wy = body ? body.y : s.y;
+      drawFriendFishing(ctx, { face: s.face, bx: s.bx, by: s.by, phase: bot.life.phase }, x, y, { x: wx - x, y: wy - y }, time, tip);
+    }
   }
   ctx.save();
   if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;

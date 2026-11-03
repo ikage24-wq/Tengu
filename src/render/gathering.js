@@ -704,18 +704,21 @@ export function drawNodes(ctx, world, cam, time, front = false) {
     const kind = n.look ?? n.kind;
     let g = growthOf(world, n, i);
     // Being worked: once the find comes free (or the last blow lands) the spot shows it's taken.
-    const worked = work && work.i === i && lp;
+    // (Other players' work never uses a spot up for you, so it only shudders under their blows.)
+    const wlp = work && work.i === i ? lp : null;
+    const worked = Boolean(wlp);
     if (worked) {
-      const p = lp.progress ?? 0;
-      const at = { gather: 0.52, pluck: 0.62, reap: 0.66, mine: 0.84, chop: 0.8 }[lp.pose] ?? 0.9;
+      const p = wlp.progress ?? 0;
+      const at = { gather: 0.52, pluck: 0.62, reap: 0.66, mine: 0.84, chop: 0.8 }[wlp.pose] ?? 0.9;
       g = 1 - soft((p - at) / 0.16) * 0.67;
     }
+    const facing = world.body.facing;
     const pool = Object.keys(n.pool ?? {});
     const gemId = n.rare && GEMS[n.rare[0]] ? n.rare[0] : pool.find((id) => GEMS[id]);
     const s = {
       time, wx: n.x, tier: tierOf(n, world.map.id), g, ready: g >= 1 && !worked, jolt: jolted(n, world.now),
-      color: findColor(n, null), gem: gemId ? GEMS[gemId] : null, picked: worked && lp.pose === 'pluck' && lp.progress > 0.62,
-      fell: worked && lp.pose === 'chop' ? clamp01((lp.progress - 0.78) / 0.22) : 0, dir: world.body.facing < 0 ? -1 : 1,
+      color: findColor(n, null), gem: gemId ? GEMS[gemId] : null, picked: worked && wlp.pose === 'pluck' && wlp.progress > 0.62,
+      fell: worked && wlp.pose === 'chop' ? clamp01((wlp.progress - 0.78) / 0.22) : 0, dir: facing < 0 ? -1 : 1,
     };
     // Once the tree has fallen it's a stump until it grows back.
     if (n.kind === 'wood' && worked && s.fell >= 1) s.g = 0;
@@ -728,22 +731,23 @@ export function drawNodes(ctx, world, cam, time, front = false) {
     }
   });
   if (front) return;
-  // The finds hop out of the spot, arc up and twinkle, then fade.
-  const pop = world.lastGathered;
-  const since = pop ? world.now - pop.at : 9;
-  if (since < 1) {
-    pop.items.forEach((id, k) => {
-      if (!ITEMS[id]) return;
-      const u = Math.min(1, since * 2.2);
-      const x = pop.x - cam.x + (k - (pop.items.length - 1) / 2) * 12 * u;
-      const y = pop.y - cam.y - 14 - 22 * Math.sin(u * Math.PI * 0.5) + 4 * Math.max(0, since - 0.6);
-      const icon = itemIcon(id);
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, (1 - since) * 3);
-      const sc = 0.7 * (0.6 + 0.4 * soft(u));
-      blit(ctx, icon, x - 9 * sc, y - 9 * sc, { scale: sc });
-      ctx.restore();
-      twinkle(ctx, x + 5, y - 5, time * 1.5, k + 1, '#fff6c8', 0.9, 1);
-    });
+  // The finds hop out of the spot, arc up and twinkle, then fade (yours, and other players').
+  for (const pop of [world.lastGathered, ...(world.botPops ?? [])]) {
+    const since = pop ? world.now - pop.at : 9;
+    if (since < 1) {
+      pop.items.forEach((id, k) => {
+        if (!ITEMS[id]) return;
+        const u = Math.min(1, since * 2.2);
+        const x = pop.x - cam.x + (k - (pop.items.length - 1) / 2) * 12 * u;
+        const y = pop.y - cam.y - 14 - 22 * Math.sin(u * Math.PI * 0.5) + 4 * Math.max(0, since - 0.6);
+        const icon = itemIcon(id);
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, (1 - since) * 3);
+        const sc = 0.7 * (0.6 + 0.4 * soft(u));
+        blit(ctx, icon, x - 9 * sc, y - 9 * sc, { scale: sc });
+        ctx.restore();
+        twinkle(ctx, x + 5, y - 5, time * 1.5, k + 1, '#fff6c8', 0.9, 1);
+      });
+    }
   }
 }

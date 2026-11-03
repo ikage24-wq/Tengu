@@ -8,7 +8,7 @@ import { LIFE_MOVES } from './life-moves.js';
 import { itemIcon } from './icons.js';
 import { blit } from './pixel.js';
 import { ITEMS } from '../data/items.js';
-import { addParticle, sparks, dust, shake } from './particles.js';
+import { addParticle, sparks, dust, shake as shakeScreen } from './particles.js';
 import { groundAt } from '../world/physics.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -21,7 +21,7 @@ const secsOf = (g) => g.secs ?? g.kind?.secs ?? 1.2;
 
 // Fishing, phase by phase (world/fishing.js): the cast, the wait (sat on the bank, perking up at
 // each nibble), the bite, the catch, the miss.
-function fishingPose(f) {
+export function fishingPose(f) {
   if (f.phase === 'cast') return { pose: 'fishcast', progress: clamp01(f.t / 0.5), dur: 0.5 };
   if (f.phase === 'wait') {
     const n = f.nibbles?.find((at) => f.t >= at - 0.05 && f.t < at + 0.55);
@@ -121,13 +121,16 @@ function bits(fx, x, y, n, make) {
   for (let i = 0; i < n; i++) addParticle(fx, make(i));
 }
 
-function beat(fx, world, kind, k) {
-  const b = world.body;
+// `who`: someone else at their life skills (another player: their body, spot and stove or bench),
+// whose beats are the same but never shake your screen.
+function beat(fx, world, kind, k, who = null) {
+  const b = who?.body ?? world.body;
   const dir = b.facing < 0 ? -1 : 1;
-  const node = world.gathering?.node;
+  const node = who ? who.node : world.gathering?.node;
   const nx = node?.x ?? b.x + dir * 16;
   const ny = node?.y ?? b.y;
   const r = Math.random;
+  const shake = who ? () => {} : shakeScreen;
   if (kind === 'mine') {
     const big = k > 0;
     const x = nx - dir * 9;
@@ -164,7 +167,7 @@ function beat(fx, world, kind, k) {
     bits(fx, st, gy - 40, 5, (i) => ({ x: st + (r() - 0.5) * 10, y: gy - 40, vx: (r() - 0.5) * 30, vy: -70 - r() * 40, g: 260, drag: 1, life: 0.45 + r() * 0.2, size: 1.3, color: ['#ffb35a', '#ffe9a6', '#ff8a7a', '#9fe08f'][i % 4] }));
     bits(fx, st, gy - 46, 2, () => ({ x: st + (r() - 0.5) * 8, y: gy - 46, vx: (r() - 0.5) * 10, vy: -20, drag: 2, life: 0.8, size: 4, grow: 6, shape: 'puff', color: '#ffffff', shade: '#efe8fb' }));
   } else if (kind === 'craft') {
-    const x = (world.pose?.at ?? b.x + dir * 16) - dir * 2;
+    const x = ((who ? who.at : world.pose?.at) ?? b.x + dir * 16) - dir * 2;
     const y = groundAt(world.map, x) - 17;
     sparks(fx, x, y, k === 2, -dir, ['#ffe9a6', '#ffb35a', '#ffffff'], true);
   }
@@ -203,4 +206,64 @@ function splash(fx, x, y, size) {
   const r = Math.random;
   addParticle(fx, { x, y, vx: 0, vy: 0, life: 0.5 + 0.2 * size, size: 2, grow: 26 + 10 * size, shape: 'flatring', color: '#ffffff' });
   bits(fx, x, y, 3 + 3 * size, () => ({ x: x + (r() - 0.5) * 6, y, vx: (r() - 0.5) * (50 + 30 * size), vy: -60 - r() * (50 + 50 * size), g: 400, drag: 0.5, life: 0.5, size: 1 + 0.4 * size, color: r() < 0.5 ? '#ffffff' : '#bfe8ff' }));
+}
+
+// ---- Other players at their life skills (world/botlife.js) ----
+
+
+// A player's pose at a spot, the stove or the bench, or fishing (the same moves and tools as
+// yours), blended from phase to phase on the render clock; null while they walk there.
+export function botLifePose(bot, time) {
+  const L = bot.life;
+  if (!L || L.phase === 'walk') return null;
+  let p;
+  if (L.kind === 'fish') p = fishingPose(L);
+  else if (L.kind === 'node') {
+    const kind = LIFE_BY_KIND[L.node.look] ?? LIFE_BY_KIND[L.node.kind] ?? 'gather';
+    p = { pose: LIFE_MOVES[kind] ? kind : 'gather', progress: clamp01(L.t / L.secs), dur: L.secs };
+  } else p = { pose: L.kind, progress: clamp01(L.t / L.secs), dur: L.secs };
+  if (!LIFE_MOVES[p.pose]) return null;
+  const tr = (L.track ??= { kind: null, since: 0, last: null, from: null });
+  if (p.pose !== tr.kind) {
+    tr.from = tr.last && tr.last.pose !== p.pose ? { kind: tr.last.pose, progress: tr.last.progress, dur: tr.last.dur } : null;
+    tr.kind = p.pose;
+    tr.since = time;
+  }
+  tr.last = p;
+  const blend = (time - tr.since) / BLEND;
+  return { ...(tr.from && blend < 1 ? { ...p, from: tr.from, blend } : p), find: L.find ?? null };
+}
+
+// The beats of their moves: sparks off their rock, chips off their tree, steam off the stove, a
+// splash where their line lands. `bots`: the players drawn on screen.
+export function botLifeBeats(fx, world, bots, time) {
+  for (const bot of bots) {
+    const L = bot.life;
+    if (!L || L.phase === 'walk') continue;
+    const body = bot.body ?? { x: bot.x, y: groundAt(world.map, bot.x), facing: bot.facing };
+    const seen = (L.seen ??= { kind: null, p: 0, phase: null });
+    if (L.kind === 'fish') {
+      const s = L.spot;
+      if (seen.phase !== L.phase) {
+        if (L.phase === 'wait') splash(fx, s.bx, s.by, 0);
+        if (L.phase === 'bite') splash(fx, s.bx, s.by, 1);
+        if (L.phase === 'catch') splash(fx, s.bx, s.by, 2);
+      }
+      seen.phase = L.phase;
+      continue;
+    }
+    const pose = botLifePose(bot, time);
+    if (!pose) continue;
+    const p = pose.progress ?? 0;
+    if (pose.pose !== seen.kind || p < seen.p) {
+      seen.kind = pose.pose;
+      seen.p = 0;
+    }
+    const hits = LIFE_MOVES[pose.pose]?.(Math.min(1, p), pose.dur)?.hitAt ?? [];
+    const who = { body, node: L.node ?? null, at: L.at ?? null };
+    hits.forEach((h, k) => {
+      if (seen.p < h && p >= h) beat(fx, world, pose.pose, k, who);
+    });
+    seen.p = p;
+  }
 }

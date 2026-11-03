@@ -31,7 +31,7 @@ import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
 import { drawSpots, drawFishing } from './fishing.js';
 import { drawNodes, drawNodesFront } from './gathering.js';
-import { lifePose, lifeFind, holdFind, lifeBeats, onRodTip, clearRodTip, LIFE_POSES } from './life.js';
+import { lifePose, lifeFind, holdFind, lifeBeats, botLifeBeats, onRodTip, clearRodTip, LIFE_POSES } from './life.js';
 import { drawSpirit, drawSoured } from './spirit.js';
 import { nextStep } from '../world/routes.js';
 import { drawZonesBack, drawZonesFront, drawCallout } from './trial.js';
@@ -247,6 +247,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (element && !world.dead) elementAura(feel.fx, b.x, b.y, element, dt);
   // The beats of a life skill: sparks off the rock, chips, leaves, fluff, steam, splashes.
   lifeBeats(feel.fx, world);
+  // (And the other players' at theirs, the ones in view.)
+  if (world.bots) botLifeBeats(feel.fx, world, [...botsIn(world.bots, world.map.id), ...bodiedIn(world.bots, world.map.id)].filter((x) => x.life && Math.abs((x.body?.x ?? x.x) - viewCam.x - VIEW_W / 2) < VIEW_W), time);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
   const [ox, oy] = shakeOffset(feel.fx, time);
   const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
