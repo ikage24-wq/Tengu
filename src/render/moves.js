@@ -3473,15 +3473,17 @@ export const MOVES = {
   siup(p) {
     const prep = bump(p, 0, 0.2);
     const go = ease(seg(p, 0.16, 0.32));
-    const hold = soft(seg(p, 0.5, 1));
+    const hold = soft(seg(p, 0.5, 0.8));
+    const spring = bump(p, 0.16, 0.6);
     const [weapon, arm] = siPose(SI.sing, [go, [20, 144]], [hold, [28, 136]]);
     return {
-      weapon, arm, tilt: -0.1 * go * (1 - hold * 0.5), lift: 3 * go * (1 - hold * 0.6) - prep,
+      weapon, arm, tilt: -0.13 * go * (1 - hold * 0.5), lift: 10 * spring - 2.5 * prep + siBounce(p, 0.62),
       rig: (r) => {
-        r.squat = q(1.5 * prep);
+        r.squat = q(2.5 * prep);
+        r.air = spring > 0.3;
         siHead(r, 0.2 * prep + go * (1 - hold * 0.4));
         r.backArm = siFree([go, [-8, -16]]);
-        danceLegs(r, [prep, [1.4, 0, 4], [-1.4, 0, -6]], [go, [0.8, -1.4, 10], [-2, -2.6, -40]]);
+        danceLegs(r, [prep, [1.4, 0, 4], [-1.4, 0, -6]], [go, [0.8, -1.4, 10], [-2, -2.6, -40]], [spring, [0.4, -3.4, -20], [-1.8, -4.8, -60]]);
         if (go > 0.3) {
           r.eyes = 'happy';
           r.mouth = 'open';
@@ -3491,15 +3493,18 @@ export const MOVES = {
   },
   // In the air: knees tucked, she leans over and sings down at them, the mic pointed at the ground.
   siair(p) {
+    const wind = bump(p, 0, 0.3);
     const go = ease(seg(p, 0.16, 0.32));
-    const [weapon, arm] = siPose([100, 84], [go, [150, 72]]);
+    const after = soft(seg(p, 0.5, 1));
+    const [weapon, arm] = siPose([100, 84], [wind, [60, 40]], [go, [150, 72]], [after, [128, 80]]);
     return {
-      weapon, arm, tilt: 0.12 * go,
+      weapon, arm, tilt: -0.08 * wind + 0.2 * go * (1 - after * 0.5), lift: 2 * wind - 2 * go * (1 - after),
       rig: (r) => {
         r.air = true;
-        siHead(r, -0.3 - 0.3 * go);
-        r.backArm = siFree([1, [-8, -14 + 6 * go]]);
-        danceLegs(r, [1, [2.4, -4.6, 40], [-1.2, -3.6, 20]]);
+        siHead(r, 0.3 * wind - 0.3 - 0.4 * go);
+        r.backArm = siFree([1, [-8, -14 + 6 * go]], [after, [-10, -8]]);
+        r.hairLift = go > 0.3 && after < 0.5 ? -1 : 0;
+        danceLegs(r, [1, [2.4, -4.6, 40], [-1.2, -3.6, 20]], [go * (1 - after), [1.4, -3, 20], [-3, -5, -70]]);
         r.mouth = go > 0.3 ? 'open' : 'o';
       },
     };
@@ -3511,16 +3516,18 @@ export const MOVES = {
     const slide = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.8, 1)));
     const belt = soft(seg(p, 0.06, 0.24));
     const point = ease(seg(p, 0.42, 0.52));
-    const rock = soft(seg(p, 0.68, 0.96));
+    const rock = soft(seg(p, 0.68, 0.9));
+    const pop = bump(p, 0.62, 0.86);
     const [weapon, arm] = siPose(SI.guard, [belt, SI.belt], [point, SI.out], [rock, [122, 56]]);
     return {
-      weapon, arm, tilt: -0.22 * slide * (1 - point * 0.7) - 0.05 * rock, lunge: 4 * slide,
+      weapon, arm, tilt: -0.26 * slide * (1 - point * 0.7) - 0.06 * rock, lunge: 5 * slide, lift: 5 * pop + 0.8 * bump(p, 0.88, 1),
       rig: (r) => {
-        r.squat = q(4 * slide);
+        r.squat = q(5 * slide);
+        r.air = pop > 0.4;
         siHead(r, belt * (1 - point) * slide + 0.5 * rock);
         r.backArm = siFree([slide * (1 - point), [-8, -16]], [point * slide, [-12, -6]], [rock, [-8, -16]]);
         r.hairLift = slide > 0.4 ? 1 : 0;
-        danceLegs(r, [slide, [5.4, -0.6, 10], [-4.4, -1, -70]]);
+        danceLegs(r, [slide, [5.4, -0.6, 10], [-4.4, -1, -70]], [pop, [1.6, -2.4, 14], [-2.4, -4.4, -56]]);
         if (belt > 0.5 && point < 0.3) {
           r.eyes = 'happy';
           r.mouth = 'yell';
@@ -5486,8 +5493,37 @@ export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (END_POSES[kind]) mv = heldEnd(mv, p, END_POSES[kind]);
   if (HEFT.has(feel?.weapon)) mv = hefted(mv, kind, p);
   if (feel?.weapon === 'staff') mv = staffed(mv);
+  // A fighting move that ends on a long dead-still hold settles with two soft bounces instead of
+  // freezing (CLAUDE.md: nothing sits frozen), back to rest by its last moment.
+  const tail = frozenTail(kind, dur);
+  if (tail > 0.25) mv = { ...mv, lift: (mv.lift ?? 0) + settle(p, 1 - tail) };
   return DANCE_MOVES.has(kind) && DANCE_STYLES[danceStyle] ? DANCE_STYLES[danceStyle](mv, (q2) => rawMoveAt(kind, clamp01(q2), dur), p, dur, kind) : mv;
 }
+
+// How much of a fighting move's end (0-1 of its progress) the figure holds dead still: measured once
+// per move from its own poses. Life, social and emote moves keep their holds (a sit is a sit).
+const FROZEN = new Map();
+const restRig = () => ({ tx: 0, by: 0, hx: 0, hy: 0, frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0, hairLift: 0, cape: 0, eyes: 'open', mouth: null, tilt: 0 });
+function poseSig(mv) {
+  const r = restRig();
+  mv.rig?.(r);
+  return [mv.weapon, mv.arm, mv.lift ?? 0, mv.lunge ?? 0, (mv.tilt ?? 0) * 20, r.squat, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.tilt / 4, r.hx ?? 0].map((v) => Number(v) || 0);
+}
+function frozenTail(kind, dur) {
+  if (FROZEN.has(kind)) return FROZEN.get(kind);
+  let tail = 0;
+  if (!SOCIAL_MOVES[kind] && !EMOTE_MOVES[kind] && !LIFE_MOVES[kind]) {
+    const N = 60;
+    const end = poseSig(rawMoveAt(kind, 1, dur));
+    let k = N;
+    while (k > 0 && poseSig(rawMoveAt(kind, (k - 1) / N, dur)).reduce((a, v, j) => a + Math.abs(v - end[j]), 0) < 1.5) k--;
+    tail = (N - k) / N;
+  }
+  FROZEN.set(kind, tail);
+  return tail;
+}
+// Two soft bounces after `a` (the second smaller), at rest again before the end.
+const settle = (p, a) => 1.8 * bump(p, a, a + (1 - a) * 0.45) + 0.7 * bump(p, a + (1 - a) * 0.45, a + (1 - a) * 0.85);
 
 // Styles for the Spirit Mage's dance. Each reworks the base figures above: `mv` is the figure's
 // pose, `at(p)` its raw pose at another moment (for parts that trail behind), `p` and `dur` where it

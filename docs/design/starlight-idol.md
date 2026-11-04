@@ -119,3 +119,9 @@ Her string and its pool keep their figures but now dance across the stage:
   pirouette and a higher idol jump; bigger hip sways.
 - **No frozen holds:** the end poses settle sooner and then groove, two small bounces on the beat
   (`siBounce`), back to still by the end. The string is about a tenth quicker overall.
+
+Her command moves got the same (2026-11-04): the up-cast springs off the ground into a little
+jump with her heels kicked up; the air shot winds up before leaning down to sing, legs kicking out
+on the snap; the knee slide drops lower, slides further, and pops up out of it into the rock-star
+stance. Across every job, a fighting move that ended on a long dead-still hold now settles with two
+soft bounces (`frozenTail` and `settle` in render/moves.js).

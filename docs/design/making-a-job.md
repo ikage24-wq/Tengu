@@ -94,6 +94,16 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
 - **Never** use effect packs or code-drawn glows.
 - **Draw big things big.** For something that plays large, add a big version (`big()` in
   fx-art.js); it is re-rendered from the art at its own size rather than stretched.
+- **Drawn as big as what it hits (the player's standing ask, 2026-11-04).** Art units in
+  fx-art.js are strip pixels, a third of a game pixel: an art radius of 130 is 43 px in the game.
+  Measure the drawn size against the hit's reach and scale to it (a ring or zone to its radius, a
+  beam to its length); redraw the art larger (`grown()`) rather than stretching a small strip. A
+  blow that hits all round her far (a finisher's big blow) shows its reach on the ground (the
+  `shock` ring in her path's colour), and a blast that hits far away travels there and hits on
+  arrival (the Idol's concert blasts). The Idol's songs and stage, the Astronomer's well and the
+  shockwaves were all once a third of their reach.
+- **Ground effects go under everyone** (`GROUND_FX` in render/effects.js): rings, zones and stages
+  on the floor never wash over a face.
 - **Each job needs**:
   - its swipe or shot;
   - a hit mark that says whose hit it is;

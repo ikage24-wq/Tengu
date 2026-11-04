@@ -6230,7 +6230,7 @@
 
   // Gravity Well (loops): a small dark world hangs over the ground, silver rings spiralling in on it
   // and motes being drawn round and down into it.
-  E.aswell = (() => {
+  E.aswell = grown((() => {
     const c = 120;
     const cy = 90;
     const N = 10;
@@ -6258,7 +6258,7 @@
         planetArt(ctx, c, cy, 20, i / N, -0.5);
       },
     };
-  })();
+  })(), 3);
 
   // Lunar Tide (her buff): silver waves rising round her like a tide, crescent moons swept up in
   // them, then motes.
@@ -6292,7 +6292,7 @@
   // Planetary Alignment (her finisher): five planets pop into a row one by one, an orbit line
   // threading them; they hold, then a silver-white beam fires straight through the row and out,
   // and it all breaks into motes.
-  E.asalign = (() => {
+  E.asalign = grown((() => {
     const x0 = 40;
     const cy = 90;
     const pts = [[60, 22], [150, 30], [250, 38], [360, 30], [460, 24]];
@@ -6319,7 +6319,7 @@
         }
       },
     };
-  })();
+  })(), 2);
 
   // Her badge: a ringed planet with a crescent moon beside it.
   E.embastro = emblem(VIOLETSKY, (ctx) => {
@@ -7801,6 +7801,44 @@
     },
   };
 
+
+  // A finisher's shockwave racing out flat along the ground to the edge of its reach, in the path's
+  // own colour with its own shapes riding the ring (the Wind Dancer's crescent gusts, the Blade
+  // Dancer's little rings, the Sky Dancer's clouds, the Star Witch's stars), breaking up into
+  // sparkles. Drawn already flat (the ground is seen edge-on), its last radius 297 strip px
+  // (99 game px at scale 1); render/warrior-fx.js `shockOf` scales it to the reach.
+  function shockRing(pal, accent, rider, seed) {
+    const c = 320;
+    const cy = 90;
+    const SY = 0.3;
+    return {
+      w: 640, h: 180, n: 7, fps: 24, px: c, py: cy,
+      draw(ctx, i) {
+        const k = ease3(Math.min(1, (i + 0.6) / 5.2));
+        const r = 40 + 257 * k;
+        if (i <= 5) {
+          ctx.save();
+          ctx.translate(c, cy);
+          ctx.scale(1, SY);
+          celRing(ctx, pal, 0, 0, r, 22 * (1 - i / 7) + 6, { broken: i >= 4 ? 0.25 + (i - 4) * 0.25 : 0, seed });
+          ctx.restore();
+        }
+        const R = rng(seed + 7);
+        for (let j = 0; j < 12; j++) {
+          const a = (j / 12) * TAU + R() * 0.3;
+          const x = c + Math.cos(a) * r;
+          const y = cy + Math.sin(a) * r * SY - (i >= 5 ? (i - 4) * 8 : 0);
+          const z = (16 - i * 1.6) * (0.85 + R() * 0.3);
+          if (i <= 4) rider(ctx, j % 3 === 2 ? accent : pal, x, y, z, a, j);
+          else sparkle(ctx, j % 2 ? accent : pal, x, y, z * 0.8, j);
+        }
+      },
+    };
+  }
+  E.shockcoral = shockRing(CORAL, CREAM, (ctx, pal, x, y, z, a) => celCrescent(ctx, pal, x, y, z, -1.2 + a, 1.2 + a, z * 0.45, { inkW: 3 }), 901);
+  E.shockrose = shockRing(ROSEGOLD, GOLDRING, (ctx, pal, x, y, z) => celRing(ctx, pal, x, y, z * 0.8, z * 0.32), 911);
+  E.shocksky = shockRing(SKYB, SUNLIT, (ctx, pal, x, y, z, a, j) => (j % 3 === 2 ? sparkle(ctx, pal, x, y, z, j) : puff(ctx, CLOUDS, x, y, z * 0.75, 921 + j)), 921);
+  E.shockstar = shockRing(NIGHT, STARGOLD, (ctx, pal, x, y, z, a, j) => star5(ctx, j % 2 ? STARGOLD : pal, x, y, z, a), 931);
 
   window.FXART = E;
   window.FXHD = { render, RAW };

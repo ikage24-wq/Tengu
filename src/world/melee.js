@@ -562,12 +562,12 @@ const ARCHER_COMMANDS = {
   // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
   // hang in the air (the second a big one); a rock-star knee slide out of a run.
   idol: {
-    up: { move: 'siup', dur: 0.44, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    up: { move: 'siup', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
     air: [
       { move: 'siair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 170, drop: 60, knock: 30 }] },
       { move: 'siair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sibig', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 820, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'sidash', dur: 0.56, step: 50, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 880, targets: 2, pierce: true, knock: 100 }] },
+    dash: { move: 'sidash', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 880, targets: 2, pierce: true, knock: 100 }] },
   },
   // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
   // (the second a ringed world), and a glide out of a run.
@@ -1477,6 +1477,10 @@ function land(world, s) {
   if (s.arc) {
     world.fx.push({ kind: 'arc', snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
+  // A finisher's big blow all round her races a shockwave out along the ground to the edge of its
+  // reach, in her path's colour, so the whole area it hits shows (the dancers' and the Star Witch's).
+  const shock = s.around && s.big && !s.arc && (s.reach ?? 0) >= 150 && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
+  if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });

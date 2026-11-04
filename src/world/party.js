@@ -748,7 +748,7 @@ const SPECIALS = {
       const A = P.combo[0].strikes[0].align;
       const b = bot.body;
       const dir = b.facing;
-      world.fx.push({ kind: 'asalign', x: b.x + dir * 50, y: b.y - 40, dir, t: -0.2, dur: A.at + 0.9 });
+      world.fx.push({ kind: 'asalign', span: A.span, x: b.x + dir * 50, y: b.y - 40, dir, t: -0.2, dur: A.at + 0.9 });
       const range = magicRange(bot.stats, A.pct * tune * 1.3);
       world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < A.span && Math.abs(o.y - b.y) < 120)
         .forEach((o, i) => land(bot, world, o, A.at + 0.2, range, { stack: i, knock: 260, launch: 200, stun: 0.4, big: !i, burst: 'ashit', via: 'spell' }, rng));

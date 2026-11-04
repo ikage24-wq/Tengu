@@ -984,9 +984,10 @@ function drawFx(ctx, f, cam, time) {
 
 // The hero whose blows the smears and spikes belong to, so they line up with the weapon.
 let hero = null;
-// Effects that lie on the ground under everyone (the Starlight Idol's song rings and her stage):
+// Effects that lie on the ground under everyone (the Starlight Idol's song rings and her stage,
+// the Astronomer's Gravity Well):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby']);
+const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock']);
 export function drawEffects(ctx, world, cam, time) {
   hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
   for (const f of world.fx) if (!GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);

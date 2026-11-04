@@ -89,7 +89,7 @@ export function planetaryAlignment(world, s) {
   const A = s.align;
   const b = world.body;
   const dir = b.facing;
-  world.fx.push({ kind: 'asalign', x: b.x + dir * 50, y: b.y - 40, dir, t: 0, dur: A.at + 0.9 });
+  world.fx.push({ kind: 'asalign', span: A.span, x: b.x + dir * 50, y: b.y - 40, dir, t: 0, dur: A.at + 0.9 });
   world.juice.push({ type: 'shake', mag: 1.5, dur: 0.2 });
   world.mobs
     .filter((m) => alive(m) && (m.x - b.x) * dir > -20 && Math.abs(m.x - b.x) < A.span && Math.abs(mid(m) - (b.y - 40)) < 90)

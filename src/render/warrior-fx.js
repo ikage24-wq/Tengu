@@ -188,6 +188,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.85 : 0.6, rot: (seed - 0.5) * 0.4 }) || true;
     case 'siwave':
       return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.75 : 0.5) }) || true;
+    case 'shock':
+      // A finisher's shockwave racing out to the edge of its reach (world/melee.js).
+      return fxSprite(ctx, f.name, x, y + 2, { p, scale: f.r / 99 }) || true;
     case 'sishock': {
       // A blast of Grand Concert's music rolling out along the ground to the edge of its reach: the
       // monsters it passes are hit as it reaches them (world/idol.js).
@@ -216,12 +219,12 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'aswell': {
       const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
       if (fade <= 0) return true;
-      return fxSprite(ctx, 'celaswell', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 120, alpha: fade }) || true;
+      return fxSprite(ctx, 'celaswell', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 110, alpha: fade }) || true;
     }
     case 'astide':
       return fxSprite(ctx, 'celastide', x, y + 4, { p, scale: 0.6 }) || true;
     case 'asalign':
-      return fxSprite(ctx, 'celasalign', x, y, { p, scale: 2, flip }) || true;
+      return fxSprite(ctx, 'celasalign', x, y, { p, scale: ((f.span ?? 520) - 50) / 331, flip }) || true;
     case 'aehit':
       return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
     case 'aeboom':
