@@ -939,6 +939,7 @@ function skyLift(world, dur) {
   // (Rising just high enough to reach that height: v = sqrt(2gh).)
   const rise = Math.max(8, Math.min(SKY_CEIL, b.y - ((world.skyFloor ?? b.y) - world.skyHeight)));
   b.vy = Math.min(b.vy, -Math.sqrt(2 * GRAVITY * rise));
+  b.passAbove = world.skyFloor ?? b.y;
   world.hangUntil = Math.max(world.hangUntil ?? 0, world.now + dur + 0.5);
   world.skyAt = world.now;
 }
@@ -1872,7 +1873,8 @@ function fire(world, strike) {
   };
   // A little snap of the string (or flick of the wrist) as it goes; a heavy shot kicks back.
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
-  if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox, y: oy, dir: s.dir, t: 0, dur: 0.3 });
+  // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
+  if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
   else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });

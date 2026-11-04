@@ -180,6 +180,7 @@ const ROPE_REACH = 16;
 // speed, %, while wading; 100 for none).
 export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider = false, glide = 0, float = false, swim = false, climb = 100, wade = 100 } = {}) {
   body.dropTimer = Math.max(0, body.dropTimer - dt);
+  if (body.onGround && body.passAbove != null) body.passAbove = null;
   body.knockTimer = Math.max(0, body.knockTimer - dt);
   if (rider && !body.rope) ride(body, map, intent, dt);
 
@@ -276,11 +277,15 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
       if (!s.ground && body.dropTimer > 0) continue;
       if (body.x < s.x1 || body.x > s.x2) continue;
       const sy = s.yAt(body.x);
+      // (A Sky Dancer fighting in the air keeps to the floor she took off from: ledges above it
+      // don't catch her, so holding attack never climbs her up through the floors.)
+      if (!s.ground && body.passAbove != null && sy < body.passAbove - 4) continue;
       if (prevY <= sy + 1 && body.y >= sy) {
         body.y = sy;
         body.vy = 0;
         body.onGround = true;
         body.surface = s;
+        body.passAbove = null;
         break;
       }
     }

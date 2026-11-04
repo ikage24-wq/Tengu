@@ -1116,7 +1116,8 @@ export function drawWarnings(ctx, world, cam, time) {
   for (const m of world.mobs) {
     if (!m.special || m.special.warn <= 0) continue;
     const x = m.x - cam.x;
-    const y = m.y - cam.y;
+    // (On the floor the slam hits: a flyer's is the one it hovers over, world.js.)
+    const y = (m.def.fly ? m.spawn.y : m.y) - cam.y;
     const r = m.def.special.range;
     const q = 1 - m.special.warn / (m.def.special.warn || 1);
     ctx.save();

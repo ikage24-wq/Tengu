@@ -13,6 +13,10 @@
 import { R, E, T, F, C, BLUSH, arc, stroke, shade, mix, sparkLine, keyAt } from './kit.js';
 import { eye, brow, mouth, nose, blush as cheek, sweat, tear, vein, deadEye, band, simpleEye, simpleMouth, easyEye } from './faces.js';
 
+// A brow pose for a mood from a table of them: the scenes' sad face borrows the hurt brows and
+// surprised the happy ones; any other mood the table lacks gets its idle brows (never a crash).
+const browsFor = (table, mood) => table[mood === 'sad' ? 'hurt' : mood === 'surprised' ? 'happy' : mood] ?? table.idle;
+
 const TAU = Math.PI * 2;
 const D2R = Math.PI / 180;
 
@@ -534,7 +538,7 @@ function kitsune(pose, f, mood) {
   if (dead) head.push(...deadEye(eyeF[0], eyeF[1], 1.9, { type: 'swirl', s: -1, c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2.3, { type: 'swirl', c: lashC }));
   else head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.6, h: 2.1 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 2, h: 2.4 }));
   // Maro brows: lopsided (one cocked: smug), slammed into slants, lifted in a pained tilt.
-  const [ba, bf, bn] = { idle: [-6, 0.1, 0.8], angry: [34, -1.1, -1.1], hurt: [-30, 0.7, 0.7], happy: [-12, 0.7, 0.7], blink: [0, 0, 0], dead: [-15, 0.3, 0.3] }[mood];
+  const [ba, bf, bn] = browsFor({ idle: [-6, 0.1, 0.8], angry: [34, -1.1, -1.1], hurt: [-30, 0.7, 0.7], happy: [-12, 0.7, 0.7], blink: [0, 0, 0], dead: [-15, 0.3, 0.3] }, mood);
   head.push(...brow(eyeF[0] - 0.2, ey - 4 - bf, { s: -1, len: 1.3, angle: ba, th: 0.7, c: mark, shape: 'dot' }),
     ...brow(eyeN[0] + 0.1, ey - 4.3 - bn, { s: 1, len: 1.5, angle: ba, th: 0.78, c: mark, shape: 'dot' }));
   if (!dead) head.push(...cheek(hx - 3.8, ey + 3.4, 1.1, { on: cream.base, lines: happy ? 2 : 0 }), ...cheek(hx + 2.6, ey + 3.8, 1.3, { on: cream.base, lines: happy || hurt ? 3 : 0 }));
@@ -733,7 +737,7 @@ function tortoise(pose, f, mood) {
     head.push(...simpleEye(eyeF[0], eyeF[1], { ...so, s: -1, w: 1.3, h: 1.7 }), ...simpleEye(eyeN[0], eyeN[1], { ...so, s: 1, w: 1.6, h: 2 }));
   }
   // Brows: droopy and sleepy, knitted down hard in anger, tipped up in misery.
-  const [ba, bu] = { idle: [-14, 0.1], angry: [30, -0.9], hurt: [-28, 0.5], happy: [-10, 0.6], blink: [-16, -0.1], dead: [-20, 0] }[mood];
+  const [ba, bu] = browsFor({ idle: [-14, 0.1], angry: [30, -0.9], hurt: [-28, 0.5], happy: [-10, 0.6], blink: [-16, -0.1], dead: [-20, 0] }, mood);
   head.push(...brow(eyeF[0] - 0.1, ey - 3 - bu, { s: -1, len: 1.2, angle: ba, th: 0.7, arch: 0.3, c: '#4f8a52', shape: 'bushy' }),
     ...brow(eyeN[0] + 0.1, ey - 3.3 - bu, { s: 1, len: 1.6, angle: ba, th: 0.75, arch: 0.35, c: '#4f8a52', shape: 'bushy' }));
   if (!dead) head.push(...cheek(hx - 2.4, ey + 2.6, 0.9, { on: skin.base, lines: happy ? 2 : 0 }), ...cheek(hx + 1.6, ey + 2.9, 1, { on: skin.base, lines: happy ? 3 : 0 }));
@@ -898,7 +902,7 @@ function mandrake(pose, f, mood) {
   if (A && A.mouth === 0 && !dead && !hurt) Object.assign(act, { closed: 'squeeze', squeeze: 0.8 });
   if (dead) body.push(...deadEye(eyeF[0], eyeF[1], 1.7, { c: lashC }), ...deadEye(eyeN[0], eyeN[1], 2, { c: lashC }));
   else body.push(...easyEye(eyeF[0], eyeF[1], { ...me, ...act, s: -1, w: 2.3, h: 2.6, irisW: 0.68 }), ...easyEye(eyeN[0], eyeN[1], { ...me, ...act, s: 1, w: 2.6, h: 2.9, irisW: 0.68 }));
-  const [ba, bu] = hot && !A ? [36, -0.8] : A && A.mouth > 0 ? [30, -0.6] : { idle: [-16, 0.4], angry: [36, -0.8], hurt: [-30, 0.6], happy: [-12, 0.8], blink: [-12, 0.2], dead: [-22, 0.2] }[mood];
+  const [ba, bu] = hot && !A ? [36, -0.8] : A && A.mouth > 0 ? [30, -0.6] : browsFor({ idle: [-16, 0.4], angry: [36, -0.8], hurt: [-30, 0.6], happy: [-12, 0.8], blink: [-12, 0.2], dead: [-22, 0.2] }, mood);
   body.push(...brow(eyeF[0] - 0.2, ey - 3.6 - bu, { s: -1, len: 1.5, angle: ba, th: 0.6, arch: 0.4, c: '#9a6a4a' }),
     ...brow(eyeN[0] + 0.2, ey - 3.9 - bu, { s: 1, len: 1.7, angle: ba, th: 0.65, arch: 0.45, c: '#9a6a4a' }));
   if (!dead) body.push(...cheek(fx - 4.8, ey + 3.4, 1.3, { on: root, lines: happy || hurt ? 2 : 0 }), ...cheek(fx + 4, ey + 3.6, 1.4, { on: root, lines: happy || hurt ? 3 : 0 }));
@@ -1080,7 +1084,7 @@ function goblin(pose, f, mood) {
   else head.push(...easyEye(eyeF[0], eyeF[1], { ...ge, ...actF, s: -1, w: 2.1, h: 2.4 }), ...easyEye(eyeN[0], eyeN[1], { ...ge, ...actN, s: 1, w: 2.5, h: 2.6 }));
   // Bushy brows: one cocked, one low (scheming); crashing down; jumping up in shock.
   const bc = '#3f6a30';
-  const [af, uf, an, un] = { idle: [-14, 0.9, 16, -0.2], angry: [34, -0.9, 34, -1], hurt: [-26, 1.3, -10, 0.3], happy: [-10, 0.8, -10, 0.8], blink: [-6, 0.3, 10, 0], dead: [-18, 0.4, -18, 0.4] }[mood];
+  const [af, uf, an, un] = browsFor({ idle: [-14, 0.9, 16, -0.2], angry: [34, -0.9, 34, -1], hurt: [-26, 1.3, -10, 0.3], happy: [-10, 0.8, -10, 0.8], blink: [-6, 0.3, 10, 0], dead: [-18, 0.4, -18, 0.4] }, mood);
   head.push(...brow(eyeF[0] - 0.2, ey - 3.4 - uf, { s: -1, len: 1.6, angle: af, th: 0.85, arch: 0.3, c: bc, shape: 'bushy' }),
     ...brow(eyeN[0] + 0.1, ey - 3.6 - un, { s: 1, len: 1.9, angle: an, th: 0.9, arch: 0.3, c: bc, shape: 'bushy' }));
   if (!dead) head.push(...cheek(hx - 3.4, ey + 3.4, 1.2, { on: skin, lines: happy ? 2 : 0 }));
@@ -1360,7 +1364,7 @@ function jackalope(pose, f, mood) {
   if (A && f === 0 && !dead && !hurt) Object.assign(act, { lid: 0.35, slant: 0.9, pupil: 'pin', pupilC: '#ffe0e8' });
   if (dead) head.push(...deadEye(hx + 2.2, ey, 2.2, { type: 'swirl', c: lashC }));
   else head.push(...easyEye(hx + 6.5, ey - 0.3, { ...je, ...act, s: 1, w: 0.6, h: 2, ring: null, rim: 0.3, shine: 0.6, glint: false }), ...easyEye(hx + 2.2, ey, { ...je, ...act, s: 1, w: 2.5, h: 2.9 }));
-  const [ba, bu] = { idle: [-14, 0.5 + perk * 0.4], angry: [36, -0.9], hurt: [-30, 0.6], happy: [-10, 0.6], blink: [0, 0], dead: [-20, 0.3] }[mood];
+  const [ba, bu] = browsFor({ idle: [-14, 0.5 + perk * 0.4], angry: [36, -0.9], hurt: [-30, 0.6], happy: [-10, 0.6], blink: [0, 0], dead: [-20, 0.3] }, mood);
   head.push(...brow(hx + 1.5, ey - 3.7 - bu, { s: 1, len: 1.8, angle: ba, th: 0.8, arch: 0.3, c: '#6e58a0', shape: 'tuft' }));
   if (!dead) head.push(...cheek(hx + 0.4, ey + 4, 1.3, { on: fur, lines: happy || hurt ? 3 : 0 }), ...cheek(hx + 5.8, ey + 3.4, 0.7, { on: cream }));
   const mx = hx + 5.8;

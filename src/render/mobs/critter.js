@@ -112,12 +112,16 @@ export function cuteFace(cx, cy, k, mood, { iris = '#5a8ad8', inkC = '#2a1a3a', 
     return out;
   }
   const em = atk ? 'angry' : { idle: 'idle', angry: 'angry', hurt: 'hurt', happy: 'happy', blink: 'blink' }[mood] ?? 'idle';
-  out.push(...simpleEye(far[0], far[1], { s: -1, w: 1.5 * k, h: 1.9 * k, mood: em, iris, ink: inkC, lash, wing }), ...simpleEye(near[0], near[1], { s: 1, w: 1.75 * k, h: 2.2 * k, mood: em, iris, ink: inkC, lash, wing }));
+  // (Sad: heavy drooping lids; surprised: eyes a size bigger, the scenes' moods.)
+  const lid = !atk && mood === 'sad' ? 0.4 : 0;
+  const big = !atk && mood === 'surprised' ? 1.18 : 1;
+  out.push(...simpleEye(far[0], far[1], { s: -1, w: 1.5 * k * big, h: 1.9 * k * big, mood: em, iris, ink: inkC, lash, wing, lid }), ...simpleEye(near[0], near[1], { s: 1, w: 1.75 * k * big, h: 2.2 * k * big, mood: em, iris, ink: inkC, lash, wing, lid }));
   if (blushOn) out.push(...blush(far[0] - 0.6 * k, cy + 2.4 * k, 1.1 * k, { on: skin }), ...blush(near[0] + 0.4 * k, cy + 2.6 * k, 1.2 * k, { on: skin }));
-  const mm = atk > 0.5 ? 'shout' : mood === 'happy' ? 'happy' : mood === 'hurt' ? 'hurt' : mood === 'angry' || atk ? 'angry' : 'idle';
+  const mm = atk > 0.5 ? 'shout' : mood === 'happy' ? 'happy' : mood === 'hurt' ? 'hurt' : mood === 'surprised' ? 'shout' : mood === 'angry' || mood === 'sad' || atk ? 'angry' : 'idle';
   // (mouthDy null: the creature draws its own mouth, like the angler's grin.)
   if (mouthDy !== null) out.push(...simpleMouth(cx + 0.4 * k, cy + mouthDy * k, { k: k * 0.95, mood: mm, lip }));
   if (mood === 'hurt') out.push(...tear(near[0] + 0.6 * k, cy + 1.4 * k, 0.8 * k, { type: 'stream', len: 2.6 * k }));
+  if (mood === 'sad' && !atk) out.push(...tear(near[0] + 0.6 * k, cy + 1.6 * k, 0.6 * k, { type: 'stream', len: 1.6 * k }));
   if (mood === 'angry' && !atk) out.push(...vein(cx + 3.6 * k, cy - 3.4 * k, 0.6 * k));
   return out;
 }
