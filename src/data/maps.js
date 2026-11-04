@@ -726,10 +726,13 @@ Object.assign(MAPS, {
     stove: 1580,
     width: 2400, height: 760, groundY: 620,
     look: { sky: ['#ffb8a8', '#ffd8c0', '#fff0e0'], far: '#8fd8e0', mid: '#bfe8d8', midTrim: '#8fd0c0', skyline: 'lagoon', islands: 'planks', material: 'beach', propKeep: 0.75 },
-    terrain: [[0, 700], [500, 700], [620, 620], [1880, 620], [1880, 440], [2400, 440]],
-    // The lagoon under the boardwalk, the surf at the cove's edge, and the sea at the foot of the
-    // point (render/lagoon.js draws them, with the stilts, the stairs and the cliff).
-    lagoon: { surf: [0, 130], cove: [0, 640], deck: [620, 1880], cliff: [1880, 2400], sea: [2300, 2400], seaTop: 520 },
+    // (The cove's sand runs down into the sea at the west end, and the tide pool is sunk in it.)
+    terrain: [[0, 746], [90, 746], [172, 700], [345, 700], [357, 714], [458, 714], [470, 700], [500, 700], [620, 620], [1880, 620], [1880, 440], [2400, 440]],
+    // The sea lapping up the cove's sand, where the Sea Biscuit rides, and the tide pool.
+    water: [{ x1: 0, x2: 174, y: 708, kind: 'sea', sunk: false, open: [0, 174] }, { x1: 345, x2: 470, y: 704, kind: 'sea', sunk: false }],
+    // The lagoon under the boardwalk and the sea at the foot of the point (render/lagoon.js draws
+    // them, with the stilts, the stairs and the cliff).
+    lagoon: { cove: [0, 640], deck: [620, 1880], cliff: [1880, 2400], sea: [2300, 2400], seaTop: 520 },
     cottages: [],
     townPieces: [['palm', 170, 1], ['palm', 520, -1], ['beachspot', 316], ['sandcastle', 286], ['steamer', 70], ['rockpools', 420], ['lookout', 1970], ['stilthouse', 760], ['tackleshop', 880], ['stilthouse', 1040], ['lanternpole', 1200], ['derbyboard', 1260], ['stilthouse', 1360], ['noodlestall', 1530], ['stilthouse', 1720], ['lighthouse', 2080]],
     platforms: [

@@ -101,8 +101,8 @@ export const SPOTS = {
   // Lantern Lagoon: the cove's rock pools (anyone can fish them), the boardwalk's edges over the
   // lagoon, and the deep water off Lighthouse Point.
   lagoon: [
-    // The cove's long rock pool.
-    { x: 400, y: 700, span: [345, 470], face: 1, bx: 434, by: 703, sea: true, tier: 1, pool: { fish_goby: 6, fish_clown: 3, fish_seapony: 1, fish_starfish: 0.2 } },
+    // The cove's tide pool, sunk in the sand between its rocks.
+    { x: 330, y: 700, face: 1, bx: 405, by: 705, sea: true, tier: 1, pool: { fish_goby: 6, fish_clown: 3, fish_seapony: 1, fish_starfish: 0.2 } },
     // The boardwalk, end to end: the west half over the shallows, the east half over the deeper
     // lagoon (a line off the edge, either side).
     { x: 900, y: 620, span: [650, 1150], anyFace: true, face: 1, bx: 946, by: 664, sea: true, tier: 1, pool: { fish_goby: 5, fish_clown: 3, fish_sardine: 3, fish_mackerel: 2, fish_seapony: 0.8 } },

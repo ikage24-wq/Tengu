@@ -1579,7 +1579,34 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     return;
   }
   if (style !== 'earth') {
-    if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    if (style === 'planks') {
+      // A dock or footbridge over water stands on pilings driven down into it (the water's skin
+      // goes over their feet: render/water.js), each with a ring of ripples.
+      for (const wt of map?.water ?? []) {
+        if (wt.kind === 'ice' || p.x + w < wt.x1 || p.x > wt.x2) continue;
+        const n = Math.max(2, Math.round(w / 46));
+        for (let k = 0; k < n; k++) {
+          const wx = p.x + 8 + (k * (w - 16)) / (n - 1);
+          if (wx < wt.x1 + 2 || wx > wt.x2 - 2) continue;
+          const px = wx - cam.x;
+          const bottom = wt.y - cam.y + 10;
+          ctx.fillStyle = '#8a6a52';
+          ctx.fillRect(Math.round(px - 2.5), y + 4, 5, bottom - y - 4);
+          ctx.fillStyle = '#a8866a';
+          ctx.fillRect(Math.round(px - 2.5), y + 4, 1.5, bottom - y - 4);
+          const u = (time * 0.6 + wx * 0.013) % 1;
+          ctx.save();
+          ctx.globalAlpha = (1 - u) * 0.7;
+          ctx.strokeStyle = '#f4fffc';
+          ctx.lineWidth = 0.9;
+          ctx.beginPath();
+          ctx.ellipse(px, wt.y - cam.y + 1, 4 + u * 6, 1 + u, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    }
     else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);

@@ -15,6 +15,7 @@ import { R, E, T, F, mix, shade, snap } from './pixel.js';
 import { ramp, planks } from './propkit.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
+import { drawAfloat } from './water.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -696,37 +697,59 @@ export function drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time) {
     return true;
   }
   if (kind === 'steamer') {
-    const bob = Math.sin(time * 1.3) * 1.4;
-    place(ctx, steamerArt(), snap(x), gy + 22 + bob);
-    paddle(ctx, x - 75 + 60, gy + 22 + bob - 30, 1, time * 0.4);
-    puffs(ctx, x - 75 + 111, gy + 22 + bob - 92, time, 0.6, 3, 22);
-    // The gangplank to the sand.
+    // Afloat in the cove's water at her waterline, bobbing, her reflection under her
+    // (render/water.js), the gangplank down onto the sand.
+    const sea = (map.water ?? []).find((w) => wx >= w.x1 && wx <= w.x2);
+    const wy = (sea ? sea.y : groundAt(map, wx)) - cam.y;
+    drawAfloat(ctx, x, wy, 80, 10, time, wx, (c) => {
+      place(c, steamerArt(), 0, 6);
+      paddle(c, -15, -24, 1, time * 0.4);
+      puffs(c, 36, -86, time, 0.6, 3, 22);
+    }, { bob: 1.3, roll: 0.01 });
+    const lift = Math.sin(time * 0.9 + wx * 0.013) * 1.3;
+    const shore = groundAt(map, wx + 120) - cam.y;
     ctx.strokeStyle = '#8a6a52';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(snap(x + 60), snap(gy - 8 + bob));
-    ctx.lineTo(snap(x + 110), snap(gy));
+    ctx.moveTo(snap(x + 58), snap(wy - 14 + lift));
+    ctx.lineTo(snap(x + 120), snap(shore - 1));
+    ctx.stroke();
+    ctx.strokeStyle = '#c8a07a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(snap(x + 58), snap(wy - 15.5 + lift));
+    ctx.lineTo(snap(x + 120), snap(shore - 2.5));
     ctx.stroke();
     return true;
   }
   if (kind === 'rockpools') {
-    for (const [dx, rx] of [[15, 74]]) {
-      ctx.fillStyle = '#c8a888';
+    // The tide pool is sunk in the sand (the map's water, render/water.js): barnacled rocks
+    // hold it at each end, weed stirring off them.
+    for (const [dx, r, flip] of [[-66, 13, 1], [-52, 8, 1], [64, 15, -1], [80, 9, -1]]) {
+      const rxp = x + dx;
+      const ry = groundAt(map, wx + dx) - cam.y + 2;
+      ctx.fillStyle = '#a89cb0';
       ctx.beginPath();
-      ctx.ellipse(snap(x + dx), snap(gy + 2), rx + 4, 7, 0, 0, TAU);
+      ctx.ellipse(snap(rxp), snap(ry - r * 0.45), r, r * 0.7, 0, Math.PI, 0);
       ctx.fill();
-      ctx.fillStyle = WATER.top;
+      ctx.fillStyle = '#c4b8cc';
       ctx.beginPath();
-      ctx.ellipse(snap(x + dx), snap(gy + 2), rx, 5, 0, 0, TAU);
+      ctx.ellipse(snap(rxp - flip * r * 0.25), snap(ry - r * 0.6), r * 0.55, r * 0.35, 0, Math.PI, 0);
       ctx.fill();
-      ctx.fillStyle = WATER.glint;
-      ctx.fillRect(snap(x + dx - rx / 2 + Math.sin(time + dx) * 3), snap(gy + 1), 8, 1);
+      ctx.fillStyle = '#f2ece4';
+      for (let k = 0; k < 3; k++) ctx.fillRect(snap(rxp - r * 0.5 + k * r * 0.4), snap(ry - r * 0.5 - (k % 2) * 2), 1.6, 1.6);
+      ctx.strokeStyle = '#5aae7a';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(rxp + flip * r * 0.8, ry - 2);
+      ctx.quadraticCurveTo(rxp + flip * (r + 3), ry + 2, rxp + flip * (r + 4) + Math.sin(time * 1.4 + dx) * 2, ry + 6);
+      ctx.stroke();
     }
     // A starfish and a crab on the rocks.
     ctx.fillStyle = '#ff9e7a';
     for (let k = 0; k < 5; k++) {
       const t = (k / 5) * TAU - Math.PI / 2;
-      ctx.fillRect(snap(x + 60 + Math.cos(t) * 3), snap(gy - 3 + Math.sin(t) * 3), 2, 2);
+      ctx.fillRect(snap(x + 64 + Math.cos(t) * 3), snap(gy - 12 + Math.sin(t) * 3), 2, 2);
     }
     const cx = x - 80 + Math.sin(time * 0.6) * 14;
     ctx.fillStyle = '#ff6b5a';

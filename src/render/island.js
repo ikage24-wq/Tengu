@@ -21,6 +21,7 @@ import { R, E, T, F, mix, shade, snap } from './pixel.js';
 import { ramp, planks, hash } from './propkit.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
+import { drawAfloat } from './water.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c89a6a';
@@ -231,16 +232,12 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
   const gy = groundAt(map, wx) - cam.y;
   switch (kind) {
     case 'skiff': {
-      // Bobbing at the dock on the swell, rocking a little.
-      const wy = 552 - cam.y;
-      const bob = Math.sin(time * 1.3 + wx * 0.01) * 1.6;
-      const rock = Math.sin(time * 1.1 + 0.6) * 0.03;
-      ctx.save();
-      ctx.translate(snap(x), wy + 6 + bob);
-      ctx.rotate(rock);
-      place(ctx, skiffArt(), 0, 0);
-      pennant(ctx, 1.2, -54, time, 12, '#ff8a8a', wx);
-      ctx.restore();
+      // Afloat at the dock at her waterline, bobbing and rocking on the swell, her reflection
+      // under her (render/water.js).
+      drawAfloat(ctx, x, 552 - cam.y, 50, 6, time, wx, (c) => {
+        place(c, skiffArt(), 0, 6);
+        pennant(c, 1.2, -48, time, 12, '#ff8a8a', wx);
+      }, { bob: 1.6, roll: 0.03 });
       return true;
     }
     case 'conch': {
