@@ -15,6 +15,8 @@ export const STAT_KEYS = ['str', 'dex', 'int', 'luk'];
 const NOVICE_SP_LEVEL_CAP = 10;
 const START_STAT = 4;
 
+// Each family by its first job, for "for ... only" (the families' ids are older than the jobs' names).
+const FAMILY_PLURAL = { warrior: 'Warriors', mage: 'Star Witches', archer: 'Acrobat Archers', thief: 'Wind Dancers' };
 export function createCharacter(name, appearance) {
   return {
     name,
@@ -209,7 +211,7 @@ export function equipBlocker(char, inst) {
   if (JOBS[char.job].family === 'gm') return null;
   if (char.level < def.reqLevel) return `needs level ${def.reqLevel}`;
   // Starter job sets fit a Novice too, so they can dress for the job they're aiming at.
-  if (def.family && JOBS[char.job].family !== def.family && !(def.starter && char.job === 'novice')) return `for ${def.family}s only`;
+  if (def.family && JOBS[char.job].family !== def.family && !(def.starter && char.job === 'novice')) return `for ${FAMILY_PLURAL[def.family] ?? `${def.family}s`} only`;
   if (def.slot === 'weapon' && !JOBS[char.job].weapons.includes(def.weaponType)) return `${JOBS[char.job].name}s can't use this`;
   return null;
 }

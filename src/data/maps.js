@@ -238,7 +238,7 @@ export const MAPS = {
   // pastel galleon moored at the docks with its sails furled (no wind to sail by). Left to right:
   // the Fish Market (Marlo's cart and a fish stall among tall canal houses); Harbor Square, a
   // gentle step up, with the fountain, the Harbor Office, the Party Board, the stove and the craft
-  // workshop; Thieves' Alley under washing lines (Vex's Den, and the warehouse you can climb); then
+  // workshop; Dancers' Alley under washing lines (Vex's Wind Dance Hall, and the warehouse you can climb); then
   // the Docks: a boardwalk pier with rowboats (fishing off its end) and the galleon, whose stern
   // deck, main deck and crow's nest you can climb, up its gangway ladder.
   harbor: {
@@ -278,7 +278,7 @@ export const MAPS = {
     zones: [
       { name: 'Fish Market', from: 0, color: '#6aa8d8' },
       { name: 'Harbor Square', from: 760, color: '#ffb38a', look: { sky: ['#ffd8c0', '#ffe8d8', '#fff4ea'] } },
-      { name: "Thieves' Alley", from: 1280, color: '#8f6cc4', look: { sky: ['#c8b8e8', '#e0d4f4', '#f6f0ff'] } },
+      { name: "Dancers' Alley", from: 1280, color: '#8f6cc4', look: { sky: ['#c8b8e8', '#e0d4f4', '#f6f0ff'] } },
       { name: 'The Docks', from: 1930, color: '#4fb0d8', look: { sky: ['#a8dcff', '#d0ecff', '#f2fbff'] } },
     ],
     // Lamps that glow at night (world/daytime.js): the market, the square, the alley, the pier, the ship.

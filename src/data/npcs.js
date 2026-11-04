@@ -57,14 +57,14 @@ export const NPCS = {
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
   elowen: {
-    id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
-    building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
+    id: 'elowen', name: 'Elowen', title: 'Star Witch Instructor', role: 'instructor', family: 'mage',
+    building: 'mage', sign: 'Star Witch Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
     quests: ['story_3_1', 'story_3_2', 'story_6_1', 'story_6_2', 'story_6_3', 'elowen_dance', 'elowen_foxfire', 'spiritmage_trial'], showJob: 'spiritmage',
-    greeting: 'Moonleaf Grove welcomes you. Magic here is a dance with the spirits: they strike for you and they mend for you. Shall we begin?',
+    greeting: 'Moonleaf Grove welcomes you. Magic here is written in the stars: they fall for you and they mend for you. Shall we begin?',
   },
   kestrel: {
-    id: 'kestrel', name: 'Kestrel', title: 'Archer Instructor', role: 'instructor', family: 'archer',
+    id: 'kestrel', name: 'Kestrel', title: 'Acrobat Archer Instructor', role: 'instructor', family: 'archer',
     building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, ...outfit('archer', 50) },
     quests: ['kestrel_targets', 'kestrel_wings', 'archer_trial'], showJob: 'beastmaster',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
@@ -72,10 +72,10 @@ export const NPCS = {
   },
   vex: {
     id: 'vex', name: 'Vex', title: 'Wind Dancer Instructor', role: 'instructor', family: 'thief',
-    building: 'thief', sign: "Thieves' Den", gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
+    building: 'thief', sign: 'Wind Dance Hall', gear: { weapon: { id: 'dagger_50', variant: 'dark' }, ...outfit('thief', 50) },
     quests: ['story_4_1', 'story_4_2', 'story_4_3', 'vex_rumor', 'vex_shadows', 'vex_miko', 'thief_trial'], showJob: 'shinobi',
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
-    greeting: 'The harbor is ours after dark. Fast hands, light feet. Luck favors the bold.',
+    greeting: 'Every fight is a dance, and the harbor is my stage. Light feet, big finish. Shall we?',
   },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',

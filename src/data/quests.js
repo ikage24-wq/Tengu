@@ -106,24 +106,25 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Kestrel's trial for an archer before either level 30 path.
+  // Kestrel's trial for an Acrobat Archer before either level 30 path (the Phantom Trickster, the
+  // Arbalist Engineer).
   archer_trial: {
-    id: 'archer_trial', name: "The Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Ranger's way and the Sniper's way.",
+    id: 'archer_trial', name: "The Acrobat Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
+    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Phantom Trickster's way and the Arbalist Engineer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Elowen's trial for a Spirit Mage before either level 30 path (the Shrine Maiden, the Onmyoji).
+  // Elowen's trial for a Star Witch before either level 30 path (the Starlight Idol, the Astronomer).
   spiritmage_trial: {
     id: 'spiritmage_trial', name: "The Star Witch's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Shrine Maiden's way and the Onmyoji's way.",
+    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Starlight Idol's way and the Astronomer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Vex's trial for a thief before either level 30 path (the Blade Dancer, the Sky Dancer).
+  // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
   thief_trial: {
-    id: 'thief_trial', name: "The Thief's Trial", giver: 'vex', minLevel: 30, family: 'thief',
-    text: "Fast hands are nothing if the dark doesn't trust you. The Dullahans in the Twilight Ruins ride at night. Put 20 of them down before they see you coming, then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
+    id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',
+    text: "Pretty steps are nothing if you can't keep them up under pressure. The Dullahans in the Twilight Ruins ride at night, all armour and slow turns. Dance rings round 20 of them and bring them down, then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -329,7 +330,7 @@ export const QUESTS = {
   },
   vex_shadows: {
     id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
-    text: "A thief learns the roads by night. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
+    text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
     objectives: [
       { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back." },
