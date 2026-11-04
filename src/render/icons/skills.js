@@ -41,6 +41,7 @@ const BG = {
   midnight: ['#8a96e8', '#141a4a'],
   brassbg: ['#ffe6a8', '#5a3818'],
   rosegold: ['#ffe0cf', '#a8405a'],
+  coral: ['#ffcdb6', '#c23c48'],
   shrine: ['#f6f0ff', '#5a46a8'],
   idolbg: ['#ffe0f0', '#a83a7a'],
   acro: ['#d8fff0', '#1f8a6a'],
@@ -738,17 +739,6 @@ function steadyhands() {
   return out;
 }
 
-function lightfeet() {
-  const out = [...tile('mint', 'passive'), ...aura(9, 8, 6.6, '#f4fff0')];
-  // A boot with a little feathered wing, speed lines trailing behind it.
-  for (const [y, len] of [[5.4, 5], [8.2, 6.4], [11, 4.6]]) out.push(streak([1.2, y], [1.2 + len, y], 1, '#e8fff4'));
-  const boot = [[6.4, 3.4], [10.4, 3.4], [10.6, 10.4], [14.6, 11.4], [14.6, 14], [6.2, 14]];
-  out.push(...solid(boot, '#c8945a', { ink: '#5a3a20', d: 0.45, light: '#f0c890' }));
-  out.push(S(tube([[6.4, 12.6], [14.4, 12.6]], 0.5), '#5a3a20'));
-  out.push(...leaf([10.6, 6.4], [15, 2.4], 2.6, '#ffffff', { bend: 0.6, rib: '#c4e8d4' }).shapes);
-  out.push(...spark(13.8, 13.8, 0.9, '#fff3a6'));
-  return out;
-}
 
 // ---------- Archer paths ----------
 
@@ -1023,17 +1013,6 @@ function shadowdash() {
   return out;
 }
 
-function nimblefeet() {
-  const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
-  out.push(...swoosh(9, 12, 6.6, 4, 150, 260, 1.4, '#c4b6ff', { ink: '#2a1f5e' }));
-  const f = leaf([3.6, 13.4], [13.4, 2.4], 5, '#f8f4ff', { bend: -1.4, rib: '#c9b8ff', veins: 4, veinC: '#d8ccf0' });
-  out.push(drop([...f.A, ...f.B.slice().reverse()]), ...edge([...f.A, ...f.B.slice().reverse()], '#3a2a70', 0.45), ...f.shapes);
-  out.push(S(tube([[2.4, 14.8], [4.4, 12.6]], 0.55), '#c9b8ff'));
-  // Notches in the vane.
-  out.push(S([[9, 6], [11, 5.2], [10.6, 6]], '#4a3a90'), S([[6, 10.6], [5.6, 9.2], [6.6, 9.8]], '#4a3a90'));
-  out.push(...spark(13.6, 12.6, 1.2), ...spark(2.6, 3, 1.1, '#fff3a6'));
-  return out;
-}
 
 function backstab() {
   const out = [...tile('dusk', 'active'), ...aura(9, 8, 6.4, '#e6dcff')];
@@ -1045,13 +1024,6 @@ function backstab() {
   return out;
 }
 
-function daggermastery() {
-  const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
-  out.push(...solid(crescentPts(8, 8.4, 5.8), '#e8e4ff', { d: 0.4, ink: '#2a1a6a' }));
-  out.push(...sword([4.6, 13], [11.8, 3.4], { w: 2.2, gw: 3.4, glen: 2, guard: '#c9a6ff', grip: '#3a2d4f', gem: '#7fd8ff' }));
-  out.push(...glint(6, 5, 0.5), ...spark(13.6, 12.6, 1.1));
-  return out;
-}
 
 function moonlitassassin() {
   const out = [...tile('royal', 'active'), ...aura(8, 6, 6.8, '#e8e4ff', 1.1)];
@@ -1076,16 +1048,6 @@ function starfan() {
   return out;
 }
 
-function gauntletmastery() {
-  const out = [...tile('shadow', 'passive'), ...aura(8, 8, 6.6, '#e6dcff')];
-  // A gauntlet's knuckle plate with a star held up from it.
-  const glove = [[3.4, 15], [3.2, 10.4], [4.6, 8.6], [11.4, 8.6], [12.8, 10.4], [12.6, 15]];
-  out.push(...solid(glove, '#6a4ab8', { d: 0.45, ink: '#2a1a6a' }));
-  out.push(...[4.8, 7.1, 9.4, 11.6].map((x) => S(oval(x, 9.4, 1, 0.8, 0, 10), '#c9b4ff')));
-  out.push(...throwStar(8, 4.6, 3.6, -20));
-  out.push(...glint(5.6, 11.6, 0.5), ...spark(13.6, 3, 1.1, '#fff6ff'));
-  return out;
-}
 
 function fullmoonvolley() {
   const out = [...tile('royal', 'active'), ...aura(8, 6.4, 6.6, '#f2f0ff', 1.1)];
@@ -1192,6 +1154,148 @@ function skywaltz() {
   for (const [y, r] of [[13, 1.6], [11, 2.6], [8.8, 3.6], [6.4, 4.6], [3.8, 5.6]]) out.push(...swoosh(8, y, r, r * 0.38, -210, 40, 1, y < 8 ? W : SKYBLUE, { ink: SKYINK }));
   out.push(...featherIcon(11.6, 6.2, 14.2, 2.4, 1));
   out.push(...spark(3, 3, 1.2, SUNGOLD), ...spark(13.4, 12.6, 0.9));
+  return out;
+}
+
+// ---------- Wind Dancer (coral and cream: swirling ribbons, crescent gusts, spinning chakrams) ----------
+const WCORAL = '#f2655c';
+const WPEACH = '#ff9d88';
+const WCREAM = '#fff1e6';
+const WINK = '#8a2c48';
+// A ribbon along `pts`: a band that swells in the middle and tapers to its two ends.
+function wribbon(pts, w, c = WCORAL, o = {}) {
+  const fat = (t) => Math.max(0.25, w * Math.pow(Math.sin(Math.PI * (0.08 + t * 0.84)), o.flat ? 0.3 : 0.6));
+  const band = tube(pts, fat);
+  const out = [o.shadow === false ? null : drop(band, 0.7), ...edge(band, WINK, 0.35), S(band, c)];
+  // A lit edge running along the ribbon's upper side.
+  out.push(S(move(tube(pts.slice(1, -1), (t) => fat(t) * 0.32), -0.15, -0.25), o.light ?? mix(c, W, 0.55)));
+  return out;
+}
+// A spiral of `turns` from radius r0 out to r1 round (cx, cy), starting at angle a0 (degrees).
+const spiral = (cx, cy, r0, r1, a0, turns, sy = 1, n = 40) => Array.from({ length: n + 1 }, (_, i) => {
+  const t = i / n;
+  const a = (a0 + t * turns * 360) * D2R;
+  const r = r0 + (r1 - r0) * t;
+  return [cx + Math.cos(a) * r, cy + Math.sin(a) * r * sy];
+});
+// A chakram held on its rim: a coral ring with four cream blade points and a gold grip band.
+function wchakram(cx, cy, r, rot = 0) {
+  const out = [];
+  for (let k = 0; k < 4; k++) {
+    const a = (rot + 45 + k * 90) * D2R;
+    const p = (da, d) => [cx + Math.cos(a + da) * d, cy + Math.sin(a + da) * d];
+    out.push(...solid([p(-0.5, r * 0.9), p(0.18, r * 1.85), p(0.5, r * 0.9)], WCREAM, { shadow: false, d: 0.35, ink: WINK }));
+  }
+  const ring = arcPts(cx, cy, r, r, 0, 360, 30);
+  out.push(drop(tube(ring, r * 0.42)), ...edge(tube(ring, r * 0.42), WINK, 0.4), S(tube(ring, r * 0.42), WCORAL));
+  out.push(S(tube(arcPts(cx, cy, r * 1.05, r * 1.05, 190, 290, 12), r * 0.2), mix(WCORAL, W, 0.6)));
+  out.push(S(tube(arcPts(cx, cy, r * 0.78, r * 0.78, 0, 360, 24), r * 0.1), mix(WCORAL, WINK, 0.5)));
+  // The wrapped grip on the rim.
+  const g = (rot + 180) * D2R;
+  out.push(...solid(turn(rect(cx + Math.cos(g) * r - 0.9, cy + Math.sin(g) * r - 1.4, 1.8, 2.8), rot, cx + Math.cos(g) * r, cy + Math.sin(g) * r), GOLD, { shadow: false, d: 0.3, ink: '#8e5228' }));
+  return out;
+}
+// A satin ballet slipper at (x, y), tilted `deg`: a long rounded sole, the opening near its heel.
+function slipper(x, y, deg, c = WPEACH) {
+  const body = oval(x, y, 2.1, 4.4, deg, 28);
+  const open = oval(...turn([[x, y - 1.3]], deg, x, y)[0], 1.3, 2.4, deg, 20);
+  return [...solid(body, c, { d: 0.45, ink: WINK }), S(open, mix(c, '#a8385a', 0.5)), S(oval(...turn([[x - 0.8, y + 1.6]], deg, x, y)[0], 0.5, 1.4, deg, 12), mix(c, W, 0.6)),
+    S(oval(...turn([[x, y + 3.4]], deg, x, y)[0], 1.2, 0.7, deg, 12), WCREAM)];
+}
+// Pirouette: she whirls away, a coral and a cream ribbon spiralling round her spin and streaking behind.
+function pirouette() {
+  const out = [...tile('coral', 'active'), ...aura(9.4, 8, 6.4, '#fff1e6', 1.1)];
+  out.push(streak([0.6, 5.2], [5, 5.6], 0.8, WCREAM), streak([0.4, 11.4], [4.6, 10.6], 0.9, WCREAM));
+  out.push(...wribbon(spiral(9.6, 8, 1, 5.6, 200, 1.05, 0.62), 1.7, WCORAL));
+  out.push(...wribbon(spiral(9.6, 8, 1, 4.4, 20, 0.9, 0.62), 1.3, WCREAM, { light: W }));
+  out.push(...spark(9.6, 7.6, 1.6, W), ...spark(13.6, 2.6, 1, GOLD), ...spark(3, 14, 0.8));
+  return out;
+}
+// Ribbon Lash: two ribbons cracked across each other like whips, cuts flashing at their tips.
+function ribbonlash() {
+  const out = [...tile('coral', 'passive'), ...aura(8, 8, 6.6, '#ffe9df')];
+  out.push(...wribbon(bez3([2, 14], [6, 12], [4, 5], [13.4, 2.6], 16), 1.8, WCREAM, { light: W }));
+  out.push(...wribbon(bez3([14, 14], [10, 12], [12, 5], [2.6, 2.6], 16), 1.9, WCORAL));
+  out.push(...swoosh(13.4, 4.4, 2.4, 2.4, -150, -10, 0.9, W, { ink: WINK }), ...swoosh(2.6, 4.4, 2.4, 2.4, -170, -30, 0.9, W, { ink: WINK }));
+  out.push(...spark(14.2, 1.8, 1.1, W), ...spark(1.8, 1.8, 1.1, W), ...spark(8, 13.6, 0.8, GOLD));
+  return out;
+}
+// Gust Line: a crescent of wind flung down the line, speed streaks behind it.
+function gustline() {
+  const out = [...tile('coral', 'passive'), ...aura(10, 8, 6, '#fff1e6', 1.1)];
+  for (const [y, x0] of [[4.6, 0.6], [8, 0.2], [11.4, 0.8]]) out.push(streak([x0, y], [x0 + 5.6, y], 0.8, WCREAM));
+  out.push(...swoosh(5.6, 8, 7.4, 6.6, -62, 62, 3, WCORAL, { ink: WINK, core: WCREAM }));
+  out.push(...swoosh(4.2, 8, 5.4, 4.8, -55, 55, 1.4, WPEACH, { ink: WINK }));
+  out.push(...spark(13.6, 2.6, 1, W), ...spark(13.8, 13.2, 0.8, GOLD));
+  return out;
+}
+// Spotlight: a beam of light drops on a star pose; the stage glows under it.
+function spotlight() {
+  const out = [...tile('coral', 'buff')];
+  out.push(S([[6.4, 0.6], [9.6, 0.6], [14, 13.6], [2, 13.6]], '#ffe0d2'), S([[7.2, 0.6], [8.8, 0.6], [11.4, 13.6], [4.6, 13.6]], '#fff6ee'));
+  out.push(...solid(oval(8, 13.4, 5.6, 1.4, 0, 20), WPEACH, { shadow: false, d: 0.3, ink: WINK }));
+  out.push(...solid(starPts(8, 7.4, 3.8, 1.6, 5, -90), GOLD, { d: 0.35, ink: '#8e5228' }));
+  out.push(...wribbon([[3.4, 11.6], [4.6, 8.6], [3.2, 6], [4.4, 3.6]], 1, WCORAL, { shadow: false }), ...wribbon([[12.6, 11.6], [11.4, 8.6], [12.8, 6], [11.6, 3.6]], 1, WCORAL, { shadow: false }));
+  out.push(...glint(6.8, 6.4, 0.45), ...spark(13.6, 2.4, 0.9, W));
+  return out;
+}
+// Light Feet: a pair of satin ballet slippers hung by their ribbons, a crescent gust lifting them.
+function lightfeet() {
+  const out = [...tile('coral', 'passive'), ...aura(8, 8, 6.6, '#fff1e6')];
+  out.push(...swoosh(8, 10, 6.6, 4, 20, 160, 1.4, WCREAM, { ink: WINK }));
+  out.push(...wribbon([[5, 6.4], [6.4, 3.4], [8, 2.2]], 0.9, WCORAL, { shadow: false }), ...wribbon([[11, 6.4], [9.6, 3.4], [8, 2.2]], 0.9, WCORAL, { shadow: false }));
+  out.push(...slipper(5.2, 9.4, 18), ...slipper(10.8, 9.4, -18));
+  out.push(...solid(oval(8, 2.4, 1.2, 0.9, 0, 12), WCORAL, { shadow: false, d: 0.3, ink: WINK }));
+  out.push(...spark(13.6, 3.4, 1, W), ...spark(2.4, 3.4, 0.8, GOLD));
+  return out;
+}
+// Nimble: a dancer's folding fan flicked open, a gust curling off its edge.
+function nimblefeet() {
+  const out = [...tile('coral', 'passive'), ...aura(8, 8, 6.6, '#ffe9df')];
+  const o = [8, 13.4];
+  const blades = 7;
+  for (let k = 0; k < blades; k++) {
+    const a0 = (-160 + (k * 140) / blades) * D2R;
+    const a1 = (-160 + ((k + 1) * 140) / blades) * D2R;
+    const R1 = 7.4;
+    const R0 = 2;
+    const pts = [[o[0] + Math.cos(a0) * R0, o[1] + Math.sin(a0) * R0], [o[0] + Math.cos(a0) * R1, o[1] + Math.sin(a0) * R1], [o[0] + Math.cos(a1) * R1, o[1] + Math.sin(a1) * R1], [o[0] + Math.cos(a1) * R0, o[1] + Math.sin(a1) * R0]];
+    if (k === 0) out.push(drop(tube(arcPts(o[0], o[1], 4.8, 4.8, -160, -20, 16), 5.4)));
+    out.push(...edge(pts, WINK, 0.3), S(pts, k % 2 ? WCORAL : WCREAM));
+  }
+  out.push(S(tube(arcPts(o[0], o[1], 7.1, 7.1, -158, -22, 18), 0.6), GOLD));
+  out.push(...solid(oval(o[0], o[1], 1.3, 1.3, 0, 12), GOLD, { shadow: false, d: 0.3, ink: '#8e5228' }));
+  out.push(...swoosh(13.2, 9.4, 2.6, 4, -80, 60, 1, WPEACH, { ink: WINK }));
+  out.push(...spark(2.4, 3, 1, W), ...spark(14, 2.4, 0.8, GOLD));
+  return out;
+}
+// Chakram Mastery: her chakram, a ribbon tied to its grip.
+function daggermastery() {
+  const out = [...tile('coral', 'passive'), ...aura(8, 8, 6.6, '#fff1e6')];
+  out.push(...wribbon([[3.2, 10.4], [1.6, 13], [3.6, 14.6], [5.2, 13.8]], 1.1, WCREAM, { shadow: false, light: W }));
+  out.push(...wchakram(8.8, 7.2, 3.3, -30));
+  out.push(...spark(13.6, 13, 1, W), ...spark(2.6, 2.8, 0.8, GOLD));
+  return out;
+}
+// Glove Mastery: a coral dance glove, palm open, a crescent gust curling up out of it.
+function gauntletmastery() {
+  const out = [...tile('coral', 'passive'), ...aura(8, 7, 6.6, '#fff1e6')];
+  out.push(...swoosh(8.6, 6, 4.6, 4, -200, -20, 1.8, WCREAM, { ink: WINK }));
+  const hand = [[4.6, 15.4], [4.2, 11.6], [2.6, 9.6], [3.4, 9], [5.2, 10.4], [5.2, 7], [6.2, 6.6], [6.8, 9.4], [7.2, 6.2], [8.2, 6.2], [8.4, 9.4], [9.2, 6.8], [10.2, 7.2], [9.8, 10], [10.8, 8.4], [11.6, 8.8], [10.6, 12.4], [10.4, 15.4]];
+  out.push(...solid(hand, WCORAL, { d: 0.4, ink: WINK }));
+  out.push(...solid(rect(4.2, 13.4, 6.6, 2), WCREAM, { shadow: false, d: 0.3, ink: WINK }));
+  out.push(...spark(12.8, 3, 1.2, W), ...spark(13.4, 12.6, 0.8, GOLD));
+  return out;
+}
+// Grand Finale (her finisher): a rose of coral and cream ribbons spun up under a spotlight.
+function grandfinale() {
+  const out = [...tile('coral', 'active')];
+  out.push(S([[6, 0.6], [10, 0.6], [15.4, 15.4], [0.6, 15.4]], mix('#ffd4c0', W, 0.4)));
+  out.push(...aura(8, 9, 6.6, '#fff6ee', 1.2, 5));
+  out.push(...wribbon(spiral(8, 9.2, 0.6, 6, 0, 1.6, 0.86, 48), 1.6, WCORAL));
+  out.push(...wribbon(spiral(8, 9.2, 0.6, 4.4, 180, 1.4, 0.86, 40), 1.2, WCREAM, { light: W }));
+  out.push(...solid(oval(8, 9.2, 1.3, 1.2, 0, 12), WPEACH, { shadow: false, d: 0.3, ink: WINK }));
+  out.push(...spark(2.6, 4.6, 0.9, GOLD), ...spark(13.4, 4.4, 1, W), ...spark(13.6, 14, 0.8, GOLD));
   return out;
 }
 
@@ -1463,11 +1567,10 @@ const ART = {
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
   skymastery, updraft, zephyr, skywaltz,
+  pirouette, ribbonlash, gustline, spotlight, grandfinale,
   spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
-// The Wind Dancer's skills wear the old Thief's pictures until she has her own.
-Object.assign(ART, { pirouette: ART.shadowdash, ribbonlash: ART.twinfang, gustline: ART.starfan, spotlight: ART.quickhaste, lightfeet: ART.nimblefeet, grandfinale: ART.fullmoonvolley });
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint
 // the plate behind an icon to match it.
