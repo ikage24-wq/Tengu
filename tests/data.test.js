@@ -74,7 +74,8 @@ test('ropes hang from a surface and reach one below; ledges clear the ground', (
       const bottom = surfaces.some((s) => r.x >= s.x1 && r.x <= s.x2 && Math.abs(s.yAt(r.x) - r.bottom) < 2);
       assert.ok(ropeTop(map, r) && bottom, `${map.id}: rope at x=${r.x}`);
     }
-    for (const p of map.platforms) {
+    // (A footbridge or dock over a pool, `walkOn`, is level with the ground it leaves from.)
+    for (const p of map.platforms.filter((q) => !q.walkOn)) {
       for (let x = p.x; x <= p.x + p.w; x += 10) assert.ok(groundAt(map, x) - p.y >= 44, `${map.id}: ledge at (${p.x}, ${p.y}) sits on the ground at x ${x}`);
     }
   }
@@ -83,7 +84,7 @@ test('ropes hang from a surface and reach one below; ledges clear the ground', (
 test("town ledges stay clear of the NPCs' buildings", () => {
   for (const map of Object.values(MAPS).filter((m) => m.isTown)) {
     for (const n of map.npcs) {
-      for (const p of map.platforms) {
+      for (const p of map.platforms.filter((q) => !q.walkOn)) {
         const over = p.x < n.x + 75 && p.x + p.w > n.x - 75;
         assert.ok(!over || p.y + (p.thick ?? 40) < groundAt(map, n.x) - 170, `${map.id}: ledge at (${p.x}, ${p.y}) hides ${n.id}'s building`);
       }

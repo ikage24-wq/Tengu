@@ -23,12 +23,13 @@ import { NPCS } from '../data/npcs.js';
 import { groundAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
-import { starchimeTowerArt, chimeArt, moonCrystalArt, TOWER, TOWER_CHIMES, greatForgeArt, FORGE, galleonArt, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, rowboatArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
+import { starchimeTowerArt, chimeArt, moonCrystalArt, TOWER, TOWER_CHIMES, greatForgeArt, FORGE, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
 import { puff } from './fxkit.js';
 import { ITEMS } from '../data/items.js';
 import { drawCraftBench } from './craftbench.js';
 import { botLifePose, holdFind } from './life.js';
 import { drawFriendFishing } from './fishing.js';
+import { drawQuayBack, drawQuayFront } from './quay.js';
 import { drawLagoonGround, drawLagoonPiece, drawLagoonOverhead, drawVoyage, drawVoyageDeck } from './lagoon.js';
 
 const hash = (n) => {
@@ -436,7 +437,12 @@ export function drawStreet(ctx, map, cam, width, time) {
     drawVoyageDeck(ctx, map, cam, width, time);
     return;
   }
-  if (!map.isTown) return;
+  // A quay's sea and the boats riding in it (render/quay.js); its kerb goes in front, below.
+  drawQuayBack(ctx, map, cam, width, time);
+  if (!map.isTown) {
+    drawQuayFront(ctx, map, cam, width, time);
+    return;
+  }
   const ground = (wx) => snap(groundAt(map, wx) - cam.y);
   // Lantern Lagoon: the water under the boardwalk, the surf, the point's rock (render/lagoon.js).
   if (map.lagoon) drawLagoonGround(ctx, map, cam, width, 360, time);
@@ -598,14 +604,6 @@ export function drawStreet(ctx, map, cam, width, time) {
       chimneySmoke(ctx, left + (FORGE.chimney[0] + FORGE.chimney[1]) / 2, top - 4, time, wx * 0.01);
       const u = (time * 0.5) % 1;
       if (u < 0.5) sparkleAt(ctx, left + FORGE.mouth[0] + Math.sin(time * 3) * 10, gy - 10 - u * 40, 1.6 * (1 - u * 2), '#ffd36b', 1 - u * 2);
-    } else if (kind === 'galleon') {
-      // The galleon rocks very gently at its moorings.
-      const s = galleonArt();
-      ctx.save();
-      ctx.translate(snap(x), gy + 2);
-      ctx.rotate(Math.sin(time * 0.7 + wx * 0.01) * 0.006);
-      place(ctx, s, 0, Math.sin(time * 0.9) * 0.6);
-      ctx.restore();
     } else if (kind === 'fishstall') place(ctx, fishStallArt(), snap(x), gy + 2);
     else if (kind === 'gatearch') {
       place(ctx, gateArchArt(), snap(x), gy + 2);
@@ -638,11 +636,7 @@ export function drawStreet(ctx, map, cam, width, time) {
     }
     else if (kind === 'noticeboard') place(ctx, noticeboardArt(), snap(x), gy + 3);
     else if (kind === 'arena') place(ctx, arenaArt(), snap(x), gy + 4);
-    else if (kind === 'pier') {
-      place(ctx, pierArt(), snap(x), gy + 3);
-      // Rowboats tied up alongside, bobbing on the water strip.
-      for (const [dx, c, k] of [[-80, '#ff9ec0', 0], [70, '#8fd3ff', 1.7]]) place(ctx, rowboatArt(c), snap(x + dx), gy - 4 + Math.sin(time * 1.6 + k) * 1.5);
-    } else if (kind === 'moontree') {
+    else if (kind === 'pier') place(ctx, pierArt(), snap(x), gy + 3); else if (kind === 'moontree') {
       place(ctx, moonTreeArt(), snap(x), gy + 3);
       // Its lanterns, swaying a little and glowing.
       for (const [dx, dy] of MOON_LANTERNS) {
@@ -660,6 +654,7 @@ export function drawStreet(ctx, map, cam, width, time) {
       }
     }
   }
+  drawQuayFront(ctx, map, cam, width, time);
   // The lagoon's lantern strings over the boardwalk.
   drawLagoonOverhead(ctx, map, cam, width, time);
   // Houses fill the gaps between NPCs, portals, and the plaza (in towns not yet laid out with

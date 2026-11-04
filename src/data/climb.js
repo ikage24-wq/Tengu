@@ -170,11 +170,15 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
   const spawns = [];
   const counts = zones.map(() => 0);
   for (const l of floors) {
-    for (let x = l.x + 110; x <= l.x + l.w - 110; x += 280) {
+    const before = spawns.length;
+    const put = (x) => {
       const k = zoneOf(x, l.y);
-      if (!clear(x, l.y) || !zones[k].mobs?.length) continue;
+      if (!clear(x, l.y) || !zones[k].mobs?.length) return;
       spawns.push({ mob: zones[k].mobs[counts[k]++ % zones[k].mobs.length], x, y: l.y });
-    }
+    };
+    for (let x = l.x + 110; x <= l.x + l.w - 110; x += 280) put(x);
+    // A ledge whose middle is taken (its rope hangs there) still gets a monster at one end.
+    if (spawns.length === before && l.w >= 200) for (const x of [l.x + 60, l.x + l.w - 60]) if (spawns.length === before) put(x);
   }
   const nodes = [];
   zones.forEach((z, zi) => {
@@ -224,6 +228,41 @@ export function settleSpots(map, fishing = []) {
     if (x == null) return false;
     n.x = x;
     placed.push(n);
+    return true;
+  });
+}
+
+// Safe arrival (the map rules): slide each monster's starting spot along its own floor until it is
+// ARRIVE px from every portal on (or near) that floor, homestones and hidden arrival spots too
+// (flyers, which roam about 180 px round their spot, keep further off); one with no such place on
+// its floor is left out (it keeps clear of the floor's gathering spots `spots` too). Field bosses
+// keep their spot.
+const ARRIVE = 300;
+const ARRIVE_FLY = 320;
+const ARRIVE_FLOOR = 440;
+export function clearArrivals(map, mobs, spots = []) {
+  const same = (a, b) => Math.abs(a - b) < 10;
+  const floors = [
+    ...map.platforms.filter((p) => !p.drift).map((p) => [p.x, p.x + p.w, p.y]),
+    ...(map.terrain ?? [[0, map.groundY], [map.width, map.groundY]]).slice(1).map((q, i) => [map.terrain ? map.terrain[i][0] : 0, q[0], q[1], map.terrain ? map.terrain[i][1] : q[1]]).filter((f) => f[2] === f[3] && f[1] > f[0]),
+  ];
+  const ways = map.portals.map((p) => ({ x: p.x, y: p.y ?? map.groundY }));
+  map.spawns = map.spawns.filter((sp) => {
+    const def = mobs[sp.mob];
+    if (!def || def.boss) return true;
+    // (A walker on the very floor you arrive on could stroll up to you in a few seconds: further.)
+    const room = (w) => (def.fly ? ARRIVE_FLY : Math.abs(w.y - sp.y) < 10 ? ARRIVE_FLOOR : ARRIVE);
+    const reach = def.fly ? 140 : 90;
+    const clear = (x) => ways.every((w) => Math.abs(w.y - sp.y) > reach || Math.abs(w.x - x) >= room(w));
+    if (clear(sp.x)) return true;
+    const f = floors.find(([a, b, y]) => same(y, sp.y) && sp.x >= a && sp.x <= b);
+    if (!f) return false;
+    const tries = [];
+    for (let x = f[0] + 40; x <= f[1] - 40; x += 10) tries.push(x);
+    tries.sort((a, b) => Math.abs(a - sp.x) - Math.abs(b - sp.x));
+    const x = tries.find((t) => clear(t) && !map.spawns.some((o) => o !== sp && same(o.y, sp.y) && Math.abs(o.x - t) < 90) && !spots.some((n) => same(n.y, sp.y) && Math.abs(n.x - t) < SPOT_ROOM));
+    if (x == null) return false;
+    sp.x = x;
     return true;
   });
 }

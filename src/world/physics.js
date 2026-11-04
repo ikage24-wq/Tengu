@@ -55,7 +55,7 @@ export function surfacesOf(map) {
     list = [...groundPieces(map), ...map.platforms.map((p) => p.drift
       // A drifting ledge (a cloud) glides back and forth on the map's clock.
       ? { get x1() { return p.x + driftOffset(p, map.clock ?? 0); }, get x2() { return p.x + p.w + driftOffset(p, map.clock ?? 0); }, y: p.y, ground: false, drift: p, yAt: () => p.y }
-      : { x1: p.x, x2: p.x + p.w, y: p.y, ground: false, yAt: () => p.y })];
+      : { x1: p.x, x2: p.x + p.w, y: p.y, ground: false, ...(p.walkOn ? { walkOn: true } : {}), yAt: () => p.y })];
     surfaceCache.set(map, list);
   }
   return list;
@@ -128,7 +128,8 @@ export function groundAt(map, x) {
 // Water (a map's `water`: [{ x1, x2, y }], y the surface): the height of the surface at x, or
 // null. Walking through it is a wade; a swimming mount skims along its top.
 export function waterAt(map, x) {
-  for (const w of map.water ?? []) if (x >= w.x1 && x <= w.x2) return w.y;
+  // (A frozen lake is ground: you stand on its ice.)
+  for (const w of map.water ?? []) if (w.kind !== 'ice' && x >= w.x1 && x <= w.x2) return w.y;
   return null;
 }
 const WADE_DEPTH = 6;
@@ -266,7 +267,15 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
     if (was?.ground) {
       const piece = groundPieceAt(map, body.x);
       const gy = piece.yAt(body.x);
-      if (Math.abs(gy - prevY) <= STICK) {
+      // A footbridge (`walkOn`) level with the ground: you walk straight on over the water
+      // instead of down the bank (Down still drops you through it).
+      const bridge = gy > prevY + 1 && !intent.down && !(body.dropTimer > 0) && map.platforms.find((p) => p.walkOn && body.x >= p.x && body.x <= p.x + p.w && Math.abs(p.y - prevY) <= STICK);
+      if (bridge) {
+        body.y = bridge.y;
+        body.vy = 0;
+        body.onGround = true;
+        body.surface = surfacesOf(map).find((s) => !s.ground && s.y === bridge.y && s.x1 === bridge.x) ?? piece;
+      } else if (Math.abs(gy - prevY) <= STICK) {
         body.y = gy;
         body.vy = 0;
         body.onGround = true;

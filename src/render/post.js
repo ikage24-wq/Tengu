@@ -3,6 +3,7 @@
 // Only in HD graphics; the pixel-art look skips all of it.
 
 import { gfx } from './pixel.js';
+import { zoneLook } from './scenery.js';
 
 // Per map theme: the warm light from above, the cool shade below and in the corners, how strong
 // the light rays are (0 for night and underground maps), and how strongly pools of light gather
@@ -206,7 +207,8 @@ function drawPools(g, look, lights, w, h) {
 // The map's light over the world: rays, the warm glow from above, the cool shade and vignette,
 // and pools of light at `lights` ({ x, y, r, k?, c? } in screen space).
 export function drawLighting(ctx, map, cam, w, h, time, lights = []) {
-  const key = map.look?.light ?? map.theme;
+  // (A zone can bring its own light: an underground zone has no rays from above.)
+  const key = zoneLook(map, cam.y + h * 0.6, cam.x + w / 2)?.light ?? map.look?.light ?? map.theme;
   const theme = LOOKS[key] ? key : 'meadow';
   const look = LOOKS[theme];
   ctx.save();

@@ -9,11 +9,11 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 **(choice)** need the player's pick before building.
 
 ## A. Bugs and broken play
-- [ ] Fishing spots in Whispering Glade, Serpent Springs and Starfall Heights get you killed (Sylvana, Lamias, Selene and Star Spirits reach them). Give them ledges of their own.
-- [ ] Monsters wait at three arrivals: Serpent Springs from Frozen Peak and from Rose Grotto, Fox Shrine Path from the Carnival. Move those spawns 250 px+ away.
-- [ ] Crystal Cave's night-only Foxfire Lily never opens (caves count as indoors, so night never comes).
-- [ ] Monsters spawn on homestones (meadow1 exactly on it; cave, glade, shrine, springs close).
-- [ ] Overlapping portals: Mossy Woods Glade/Manor; Sky Garden Starfall portal on the homestone.
+- [x] Fishing spots in Whispering Glade, Serpent Springs and Starfall Heights get you killed (Sylvana, Lamias, Selene and Star Spirits reach them). Give them ledges of their own. (fixed: each pool is sunk behind stone lips monsters never cross, the queens walk floors of their own away from them, and a queen only notices you near her own floor)
+- [x] Monsters wait at three arrivals: Serpent Springs from Frozen Peak and from Rose Grotto, Fox Shrine Path from the Carnival. Move those spawns 250 px+ away. (fixed: every map's spawns now slide 300 px clear of every way in, 440 px on the floor you arrive on; Tamamo and Lilith moved off the arrival floors)
+- [x] Crystal Cave's night-only Foxfire Lily never opens (caves count as indoors, so night never comes). (fixed: night-only spots go by the clock under a roof too; the cave's night bloom is now a glowing duskcap)
+- [x] Monsters spawn on homestones (meadow1 exactly on it; cave, glade, shrine, springs close). (fixed, with the arrivals: homestones count as ways in)
+- [x] Overlapping portals: Mossy Woods Glade/Manor; Sky Garden Starfall portal on the homestone. (fixed: the manor way moved to the other end of the high bough, the Sky Garden homestone to the island below)
 - [x] Sky Dancer climbs up through the floors just by holding attack. (fixed)
 - [x] Queen Bee's slam warning floats 50 px above the floor it hits. (fixed)
 - [x] Five meadow monsters crash on a sad or surprised face; bosses can't look sad in scenes. (fixed)
@@ -49,25 +49,27 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Lady Marigold sinks 14 px into the floor (Marionette puppets, Tuskar, Myconid Queen a few px). (fixed)
 - [x] Boss props cross their faces in attacks (Coralie, Toffee, Bonbon, Captain Gale, Folio, Dame Minuet). (fixed)
 - [x] Turret head clicks through 4 poses without blending. (fixed)
-- [ ] Reused monsters out of theme: Wraith in Serpent Springs, Pegasus Foal on Frozen Peak, Crystal Golem on Moonlit Ridge.
+- [x] Reused monsters out of theme: Wraith in Serpent Springs, Pegasus Foal on Frozen Peak, Crystal Golem on Moonlit Ridge. (partly: Moonlit Ridge now has Meteor Golems, fallen stars from the observatory's road; no existing monster fits the hot springs or the snowfield at their level, so the Wraiths and Pegasus Foals stay until new ones are drawn for them)
 - [x] Leftover unused monster art tables (hollow.js, manor.js, old Hollow frames in bosses.js). (fixed)
 
 ## D. Maps and themes
 - [x] Candy Volcano's Gingerbread Ramparts and The Crater are plain cobble meadows: no wall and towers, no crater or caramel lake. (fixed)
 - [x] Dungeon rooms share one backdrop (Manor Gallery/Ballroom/Library/Hallway; the Library has no books; Carnival Midway/Coaster Yard/Ferris Wheel/gate). (fixed)
-- [ ] Underground zones under open sky with sun, clouds, rainbow and bunnies (Clover Hills Root Cellar, Mossy Woods Root Tunnels, Twilight Ruins Sunken Crypt).
-- [ ] December/January snow on every outdoor map, deserts and the tropics included; rain above the clouds (Sky Garden, Starfall). Weather by region.
-- [ ] Sprout's stone water fountain stamped into desert Ember Crag and Moonleaf Grove.
-- [ ] Sea gulls over the desert (crag theme critters).
-- [ ] Dawnlight Beach isn't a beach: sea fishing from a freshwater lily pond on stone bricks, no sand or sea.
-- [ ] Gathering finds that don't belong: lotus and shrine lily in the cave, cloud skywood and Starfall's starbloom on the Peak, cotton/oak/moonpetal in the desert canyon, meadow honey in the Sky Garden.
-- [ ] Moray Grotto (a cave) uses the palace backdrop and pink palace brick.
-- [ ] A Twilight Ruins column inside the Boar Den.
+- [x] Underground zones under open sky with sun, clouds, rainbow and bunnies (Clover Hills Root Cellar, Mossy Woods Root Tunnels, Twilight Ruins Sunken Crypt). (fixed: earth or stone all round, roots and glowing beads overhead, cave light, no sun, moon, clouds, rainbow, critters or weather)
+- [x] December/January snow on every outdoor map, deserts and the tropics included; rain above the clouds (Sky Garden, Starfall). Weather by region. (fixed: snowy peaks, temperate lands with winter snow, a rare shower in the desert, rain only in the tropics, nothing above the clouds or underground)
+- [x] Sprout's stone water fountain stamped into desert Ember Crag and Moonleaf Grove. (fixed: Ember Crag's hearth, a great living fire-bowl on a sandstone plinth; Moonleaf Grove's moon dial, a rune stone under a floating moon crystal)
+- [x] Dawnlight Beach isn't a beach: sea fishing from a freshwater lily pond on stone bricks, no sand or sea. (fixed: soft sand running down into the sea at the west end, a jetty out over it to fish from)
+- [x] Gathering finds that don't belong: lotus and shrine lily in the cave, cloud skywood and Starfall's starbloom on the Peak, cotton/oak/moonpetal in the desert canyon, meadow honey in the Sky Garden. (fixed: the cave has ore and a glowing duskcap, the Peak and the canyon ore seams that glint by moonlight, the Sky Garden cloudberries)
+- [x] Moray Grotto (a cave) uses the palace backdrop and pink palace brick. (fixed: a dark sea cave of its own, sea rock, crystals and weed)
 - [x] The theatre's confetti stage floor reused outdoors on the Sky Whale; its back reads as an ice wall. (fixed)
-- [ ] Crystal Cave's "Underground Lake" is a small glow puddle; Windy Canyon and Crystal Cave have very few monsters.
+- [x] Crystal Cave's "Underground Lake" is a small glow puddle; Windy Canyon and Crystal Cave have very few monsters. (fixed: a real lake fills the cavern floor with a crystal islet and the raft; the canyon has twice the monsters and the cave half again, on new ledges)
 - [ ] **(player: boss nests only)** Area boss nests on every hunting map (only Petal Meadow and Clover Hills have one). Secrets not now.
 - [ ] **(player: rework them)** Neighbouring hunting maps share a shape (three tall-climb pairs); Shrine and Springs are stacked full-width shelves. The dungeon gates are one stamped map.
-- [ ] Open-air dungeon rooms and the queen arenas ignore day and night.
+- [x] Open-air dungeon rooms and the queen arenas ignore day and night. (fixed: they follow the clock; the moonlit manor rooms, the sea palace and Lilith's grotto keep their own light)
+- [x] Sea gulls over the desert (crag theme critters). (fixed: desert hawks wheel on the thermals instead)
+- [x] A Twilight Ruins column inside the Boar Den. (fixed: the den's pillars are columns of earth bound in roots, moss and glowcaps; they fall in a heap of clods)
+- [x] Fishing ponds look out of place and just put there, and water sits on top of the floor (the player). (fixed: every spot's water is sunk into its map between real banks, each region's own: a lily pond under a footbridge in Petal Meadow and Sprout, a waterfall pool in the glade, an underground spring in the cellar, a hot spring with steam, a cave lake lit from below with crystals, a star pool, a gap in the cloud sea, a frozen lake with an ice hole, the sea up the sand at the beach and the cove, a tide pool between rocks; ripples, reeds, lily pads, fireflies at night, steam, motes; docks and bridges stand on pilings in the water)
+- [x] Ships drawn on the floor or floating over a blue strip (the player's harbor screenshot). (fixed: the harbor's walkway is the quay, the sea lies past its kerb at sea level; the galleon, the rowboat, the Sea Biscuit at both ends, Sunny Dock's boat and your island's skiff ride in it at their waterlines, bobbing, with reflections and foam; pier legs stand in the sea)
 
 ## E. UI and icons
 - [x] Wind Dancer skill icons are still the old ninja Thief's (masked face, shuriken, crossed daggers), violet not coral. (fixed)

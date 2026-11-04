@@ -50,6 +50,8 @@ export const MATERIALS = {
   manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
   // The Sunken Aquarium Palace: pale sea sand over pink coral stone.
   reef: { lip: '#fff0d6', body: '#e8b8c8', deep: '#c08aa8', stone: '#ffd8e2', style: 'slab', blades: false, drip: 'weed' },
+  // The Moray Grotto under the palace: dark sea rock, weed hanging off it, glowing faintly.
+  searock: { lip: '#9fe6d6', body: '#3e6a7a', deep: '#284a5a', stone: '#5a8a96', style: 'rock', blades: false, drip: 'weed', glow: '#9ff0e0' },
   // The Clockwork Carnival: painted boards over a sawdust-and-brick base.
   carnival: { lip: '#ff9ab8', body: '#c8906a', deep: '#a06a4a', stone: '#e8b88a', style: 'brick', blades: false, drip: null },
   // The Star Observatory: moonstone flags with brass inlay.
@@ -1745,7 +1747,34 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     return;
   }
   if (style !== 'earth') {
-    if (style === 'planks') drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    if (style === 'planks') {
+      // A dock or footbridge over water stands on pilings driven down into it (the water's skin
+      // goes over their feet: render/water.js), each with a ring of ripples.
+      for (const wt of map?.water ?? []) {
+        if (wt.kind === 'ice' || p.x + w < wt.x1 || p.x > wt.x2) continue;
+        const n = Math.max(2, Math.round(w / 46));
+        for (let k = 0; k < n; k++) {
+          const wx = p.x + 8 + (k * (w - 16)) / (n - 1);
+          if (wx < wt.x1 + 2 || wx > wt.x2 - 2) continue;
+          const px = wx - cam.x;
+          const bottom = wt.y - cam.y + 10;
+          ctx.fillStyle = '#8a6a52';
+          ctx.fillRect(Math.round(px - 2.5), y + 4, 5, bottom - y - 4);
+          ctx.fillStyle = '#a8866a';
+          ctx.fillRect(Math.round(px - 2.5), y + 4, 1.5, bottom - y - 4);
+          const u = (time * 0.6 + wx * 0.013) % 1;
+          ctx.save();
+          ctx.globalAlpha = (1 - u) * 0.7;
+          ctx.strokeStyle = '#f4fffc';
+          ctx.lineWidth = 0.9;
+          ctx.beginPath();
+          ctx.ellipse(px, wt.y - cam.y + 1, 4 + u * 6, 1 + u, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
+    }
     else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);

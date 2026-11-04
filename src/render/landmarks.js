@@ -2275,7 +2275,7 @@ function laundrylineArt(f) {
 
 // A little sailing ship tied up at the pier: a striped hull with portholes, a furled sail, and a
 // pennant on the mast.
-function shipArt(f, ph) {
+export function shipArt(f, ph) {
   return art(`ship|${f}|${ph}`, 200, 156, () => {
     const hull = ramp('#7a5a8a', 0.8);
     const trim = ramp('#ffd66b', 0.8);
@@ -2305,8 +2305,6 @@ function shipArt(f, ph) {
     for (const x of [44, 72, 128, 156]) out.push(F(E(x, 134, 5, 5, trim.base)), F(E(x, 134, 3.4, 3.4, '#9fd8ff')), F(E(x - 1, 133, 1.2, 1.2, '#ffffff')));
     // A lifebuoy and a coil of rope on the rail.
     out.push(F(E(30, 92, 7, 7, '#ffffff')), F(E(30, 92, 4, 4, hull.base)), F(R(23, 91, 3, 2, '#ff6b8a')), F(R(34, 91, 3, 2, '#ff6b8a')), E(170, 96, 8, 4, '#d9b88a'), F(E(170, 95, 4, 1.6, '#b8956a')));
-    // Water lapping at the waterline.
-    for (let x = 20; x < 186; x += 14) out.push(F(E(x, 151, 6, 2, '#bfe6ff')));
     return out;
   });
 }
@@ -2384,6 +2382,49 @@ function flameShapes(x, y, w, k) {
 }
 function flameArt(k) {
   return art(`flame|${k}`, 26, 34, () => flameShapes(13, 34, 22, k));
+}
+
+// ---------- Town centrepieces (each town its own, in place of a stock fountain) ----------
+
+// Ember Crag's hearth: a great bronze fire-bowl on a stepped sandstone plinth carved with the crag's
+// ember sigil, braziers' big sister, where the warriors' town keeps its fire. 96 wide, 74 tall to
+// the bowl's rim; the fire, its sparks and its heat are drawn live.
+function emberHearthArt() {
+  return art('emberhearth', 96, 74, () => {
+    const sand = ramp('#f2c48d', 0.7);
+    const bronze = ramp('#c8884a', 0.8);
+    const out = [E(48, 72, 46, 4, sand.deep)];
+    // Three steps, each lit along its top and shaded down its right.
+    for (const [x, y, w, h] of [[4, 60, 88, 14], [14, 46, 68, 14], [26, 34, 44, 12]]) {
+      out.push(R(x, y, w, h, sand.base), F(R(x, y, w, 2, sand.hi)), F(R(x + w - 8, y + 2, 8, h - 2, sand.sh)), F(R(x, y + h - 1.4, w, 1.4, sand.deep)));
+      for (let bx = x + 12; bx < x + w - 6; bx += 16) out.push(F(R(bx, y + 3, 1, h - 5, sand.sh)));
+    }
+    // The ember sigil carved in the middle step: a flame in a ring.
+    out.push(F(E(48, 53, 6, 5, sand.deep)), F(T([[45, 56], [48, 49], [51, 56]], '#e0703a')), F(T([[46.5, 56], [48, 52], [49.5, 56]], '#ffc34d')));
+    // The bowl: a wide bronze dish on a stem, coals glowing in it.
+    out.push(R(42, 26, 12, 8, bronze.sh), T([[22, 14], [74, 14], [66, 26], [30, 26]], bronze.base), F(T([[50, 14], [74, 14], [66, 26], [50, 26]], bronze.sh)),
+      R(20, 11, 56, 4, bronze.hi), F(R(20, 11, 56, 1, '#ffe2b0')), F(R(26, 19, 44, 1.4, bronze.deep)));
+    out.push(E(48, 12, 24, 3, '#6a3a2a'), F(E(48, 11.6, 20, 2, '#ff8a5c')), F(E(42, 11.4, 5, 1, '#ffd36b')), F(E(55, 11.6, 4, 1, '#ffd36b')));
+    return out;
+  });
+}
+
+// Moonleaf Grove's moon dial: a carved standing stone on a round dais, a crescent cut through its
+// head and runes down its face, and a moon crystal floating over it. 70 wide, 92 tall; the crystal,
+// the runes waking one by one and the motes circling it are drawn live.
+function moonDialArt() {
+  return art('moondial', 70, 92, () => {
+    const st = ramp('#c9c1dc', 0.7);
+    const out = [E(35, 89, 33, 4, st.deep), E(35, 85, 32, 5, st.sh), F(E(35, 83.6, 30, 4, st.base)), F(E(35, 83.6, 22, 2.6, '#8a7fb0')), F(E(35, 83.6, 19, 2, st.base))];
+    // The stone: a tall rounded slab, lit on the left.
+    out.push(T([[22, 84], [22, 30], [26, 20], [35, 16], [44, 20], [48, 30], [48, 84]], st.base), F(T([[35, 16], [44, 20], [48, 30], [48, 84], [38, 84]], st.sh)), F(R(23, 30, 2, 52, st.hi)));
+    // The crescent cut through its head.
+    out.push(F(E(35, 30, 6, 6, '#5a4e86')), F(E(37.4, 28.6, 5, 5, st.base)));
+    // Rune grooves down the face (they light up live).
+    for (let i = 0; i < 5; i++) out.push(F(diamond(35, 44 + i * 8, 2, 2.6, '#7a6ea6')));
+    out.push(tuft(10, 88, '#7fc9a0'), tuft(60, 88, '#8fd6aa'));
+    return out;
+  });
 }
 
 // ---------- Mage grove: the rune circle ----------
@@ -2681,6 +2722,67 @@ const KINDS = {
     },
   },
   // Mage grove.
+  // Ember Crag's plaza: the hearth, its fire breathing, sparks lifting off it on the hot air.
+  emberhearth: {
+    w: 96, h: 120,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, emberHearthArt(), x, y);
+      const top = y - 74 + 12;
+      glow(ctx, x, top - 18, 70, '#ffb36b', 0.45 * flicker(time, seed), true);
+      // Three tongues of fire, each on its own beat, the middle one the tallest.
+      for (const [dx, k, sc] of [[-12, 1, 1.1], [12, 2, 1.05], [0, 0, 1.55]]) {
+        ctx.save();
+        ctx.translate(x + dx, top + 2);
+        ctx.scale(sc, sc);
+        place(ctx, flameArt((Math.floor(time * 8 + seed * 3) + k) % 4), 0, 0);
+        ctx.restore();
+      }
+      // Sparks riding up on the heat, drifting as they cool.
+      for (let i = 0; i < 6; i++) {
+        const u = (time * 0.5 + i / 6 + seed) % 1;
+        const sx = x + Math.sin(time * 1.3 + i * 2.1) * 10 + (i - 2.5) * 4;
+        const sy = top - 20 - u * 60;
+        ctx.globalAlpha = (1 - u) * 0.9;
+        ctx.fillStyle = u < 0.4 ? '#fff2b0' : '#ffb36b';
+        ctx.fillRect(snap(sx), snap(sy), 1.6, 1.6);
+      }
+      ctx.globalAlpha = 1;
+    },
+  },
+  // Moonleaf Grove's plaza: the moon dial, its crystal floating and turning over the stone, the
+  // runes waking one after another, motes circling.
+  moondial: {
+    w: 70, h: 120,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, moonDialArt(), x, y);
+      for (let i = 0; i < 5; i++) {
+        const q = Math.max(0, Math.sin(time * 1.4 - i * 0.7 + seed));
+        glow(ctx, x, y - 92 + 44 + i * 8, 7, RUNE, 0.1 + 0.55 * q, true);
+      }
+      // The moon crystal: a crescent of pale crystal bobbing over the stone, its glint turning.
+      const cy = y - 92 - 8 + Math.sin(time * 1.1 + seed) * 3;
+      glow(ctx, x, cy, 30, '#d8ccff', 0.4 + 0.1 * Math.sin(time * 0.9), true);
+      ctx.fillStyle = '#eee8ff';
+      ctx.beginPath();
+      ctx.arc(x, cy, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b8a8f0';
+      ctx.beginPath();
+      ctx.arc(x + 3.4, cy - 1.6, 6.6, 0, Math.PI * 2);
+      ctx.fill();
+      const tw = (time * 0.6 + seed) % 1;
+      ctx.globalAlpha = Math.sin(tw * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(snap(x - 6 + tw * 6), snap(cy - 5), 1.4, 3);
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 4; i++) {
+        const a = time * 0.8 + (i * Math.PI) / 2;
+        const mx = x + Math.cos(a) * 18;
+        const my = cy + 4 + Math.sin(a) * 5;
+        glow(ctx, mx, my, 4, RUNE, Math.sin(a) > 0 ? 0.7 : 0.35, true);
+      }
+    },
+  },
   runecircle: {
     w: 140, h: 34,
     draw(ctx, x, y, time, seed) {

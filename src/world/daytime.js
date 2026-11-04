@@ -3,7 +3,7 @@
 // player sees the same hour and it carries on across reloads. `nightOf` is how dark it is, 0 (day)
 // to 1 (full night): dusk falls 18:30-21:00, full night until 4:30, dawn breaks by 6:30. The world
 // keeps it in world.night (and on the map, map.night, for the renderer); maps under a roof (caves,
-// dungeons, arenas) stay as they are.
+// the sea palace) keep their own light.
 //
 // At night: the sky darkens to stars and the moon, warm lights glow round you, the ways out and a
 // map's `lamps`, fireflies come out, some gathering spots only open (`night: true` in
@@ -24,7 +24,10 @@ export function nightOf(date) {
   return 0;
 }
 
-export const indoors = (map) => Boolean(map.dungeon || map.trial || map.look?.ceiling || map.theme === 'cave' || map.theme === 'hollow');
+// Under a roof: a room with a ceiling, a cave, the Hollow, the sea palace under the waves, or a
+// place with its own fixed light (`ownLight`: the manor's moonlit garden, Lilith's grotto). Open-air
+// dungeon rooms and the queens' arenas follow the clock like any field.
+export const indoors = (map) => Boolean(map.indoor || map.ownLight || map.look?.ceiling || map.theme === 'cave' || map.theme === 'hollow' || map.theme === 'aquarium');
 
 // Once a second is plenty: the light changes over hours.
 export function tickDaytime(world, dt) {
@@ -37,3 +40,5 @@ export function tickDaytime(world, dt) {
 }
 
 export const isNight = (world) => (world.map?.night ?? 0) >= 0.5;
+// Whether it's night by the clock, roof or no roof (what a night-only flower in a cave goes by).
+export const clockNight = (world) => (world.night ?? 0) >= 0.5;

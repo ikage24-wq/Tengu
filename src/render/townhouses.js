@@ -512,7 +512,7 @@ export function warehouseArt() {
 // The harbor's landmark: a great pastel galleon moored at the docks, 420 wide and 250 tall, bow to
 // the open sea (right). Its decks are the map's own ledges: the raised stern deck (up the gangway
 // ladder), the long main deck, and the crow's nest high on the mainmast. The sails are furled
-// (the wind has gone quiet); a pennant hangs limp at the top. A strip of water along its foot.
+// (the wind has gone quiet); a pennant hangs limp at the top. She floats in the quay's sea.
 export const GALLEON = { w: 420, h: 250, deck: 90, stern: 130, nest: 210, mast: 240 };
 export function galleonArt() {
   return art('galleon', GALLEON.w, GALLEON.h, () => {
@@ -521,7 +521,6 @@ export function galleonArt() {
     const hull = ramp('#ff9ec0', 0.8);
     const band = ramp('#fff0e4', 0.7);
     const wood = ramp('#b08a6a', 0.8);
-    const water = ramp('#7f8fe0', 0.8);
     const sail = ramp('#fff8f0', 0.6);
     const deckY = H - GALLEON.deck;
     const sternY = H - GALLEON.stern;
@@ -565,9 +564,7 @@ export function galleonArt() {
     out.push(R(385, deckY + 6, 2, 26, '#5a4a6a'), T([[378, deckY + 30], [394, deckY + 30], [386, deckY + 40]], '#6a6a80'));
     // Life rings on the rail, and the gangway ladder down from the stern deck (drawn on the map).
     out.push(E(110, sternY - 8, 6, 6, '#ffffff'), F(E(110, sternY - 8, 3, 3, hull.base)));
-    // The water at its foot, with a few glints.
-    out.push(R(0, H - 22, W, 22, water.base), F(R(0, H - 22, W, 2, water.hi)));
-    for (let k = 0; k < 9; k++) out.push(F(R(14 + k * 46, H - 14 + (k % 2) * 5, 18, 1.2, water.hi)));
+    // (The sea she rides in is the quay's: render/quay.js. Her keel is 22 px up the art.)
     return out;
   }, false);
 }
@@ -588,16 +585,15 @@ export function fishStallArt() {
   }, false);
 }
 
-// The pier: a long boardwalk on posts over a strip of water, with lamp posts, a bollard and coiled
-// rope; two rowboats tied up alongside bob on the water (drawn live). 300 wide, 90 tall: its deck
+// The pier: a long boardwalk on posts standing out in the sea, with lamp posts, a bollard and coiled
+// rope; rowboats tied up alongside ride the quay's sea (render/quay.js). 300 wide, 90 tall: its deck
 // is a ledge on the map 54px up.
 export function pierArt() {
   return art('pier', 300, 90, () => {
     const wood = ramp('#b08a6a', 0.8);
-    const water = ramp('#7f8fe0', 0.8);
-    const out = [R(0, 70, 300, 20, water.base), F(R(0, 70, 300, 2, water.hi))];
-    for (let k = 0; k < 8; k++) out.push(F(R(10 + k * 38, 78 + (k % 2) * 5, 14, 1.2, water.hi)));
-    for (let x = 6; x < 300; x += 36) out.push(R(x, 40, 7, 50, wood.sh), F(R(x, 40, 2, 50, wood.base)));
+    // Its legs go down into the quay's sea (render/quay.js puts the water's skin over their feet).
+    const out = [];
+    for (let x = 6; x < 300; x += 36) out.push(R(x, 40, 7, 44, wood.sh), F(R(x, 40, 2, 44, wood.base)), F(R(x - 1, 80, 9, 4, wood.deep)));
     out.push(...planks(0, 36, 300, 8, wood, 30, 3, true), F(R(0, 43, 300, 1.4, wood.deep)));
     for (const x of [40, 160, 280]) out.push(R(x - 1, 6, 3, 30, '#5a4a6a'), E(x + 0.5, 8, 4, 5, '#fff3a6'), F(E(x + 1.4, 9, 2.4, 3.4, '#ffe08a')), R(x - 3, 2, 7, 3, '#5a4a6a'));
     out.push(R(100, 28, 10, 9, '#8a8aa8'), E(105, 28, 6, 2.6, '#a8a8c4'), F(E(122, 34, 7, 2.4, '#e8d29a')), F(E(122, 32, 4.6, 1.6, '#d6b87a')));
