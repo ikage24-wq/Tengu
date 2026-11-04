@@ -11,16 +11,18 @@ import { computeStats } from '../core/stats.js';
 import { jobChain } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { createBody } from './physics.js';
-import { joinParty, partyMembers, LEVEL_GAP, PARTY_MAX } from './party.js';
-import { botChat } from './chatlog.js';
+import { joinParty, partyMembers, LEVEL_GAP, PARTY_MAX, mayAskAlong, askAlong, askDeclined } from './party.js';
+import { botChat, sayOneOf } from './chatlog.js';
 
 export const BUDDY_MAX = 20;
 
 const between = (a, b, rng) => a + rng() * (b - a);
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 
-function say(bot, text) {
-  if (text) bot.bubble = { text, t: 4.5 };
+// An answer to you, over their head, through the chat gate (world/chatlog.js): one of `lines`
+// that wasn't said lately.
+function say(world, bot, lines, rng = Math.random) {
+  sayOneOf(world, bot, [].concat(lines), rng, { important: true });
 }
 
 // ---------- Players as remembered ----------
@@ -80,14 +82,14 @@ function tickAsks(bots, world) {
     const keen = bot.party || bot.helped || bot.offered;
     const yes = keen || rng() < 0.7;
     if (!yes) {
-      say(bot, pick(['sorry i dont add randoms', 'maybe later', 'hmm no ty'], rng));
+      say(world, bot, ['sorry i dont add randoms', 'maybe later', 'hmm no ty'], rng);
       world.log(`${bot.name} declined your friend request.`, '#ffb3c6');
       continue;
     }
     if (isBuddy(world.char, bot.name) || buddiesOf(world.char).length >= BUDDY_MAX) continue;
     buddiesOf(world.char).push(snapshot(bot));
     bot.buddy = true;
-    say(bot, pick(['added!! :D', 'yay friends', 'added u!', 'omg yes', 'hehe hi friend'], rng));
+    say(world, bot, ['added!! :D', 'yay friends', 'added u!', 'omg yes', 'hehe hi friend'], rng);
     world.log(`${bot.name} is now your friend! (N: friends list)`, '#bfe0ff');
   }
 }
@@ -139,9 +141,9 @@ function tickBuddies(bots, world, dt, hooks) {
   }
   // A friend online (not with you) asks you to come hunt.
   const free = online.map((s) => buddyOnline(bots, s.name)).filter((b) => !b.party && !b.shop && b.state !== 'logout');
-  if (free.length && !bots.huntAsk && rng() < 0.5 && partyMembers(bots).length < PARTY_MAX) {
+  if (free.length && mayAskAlong(bots, world) && rng() < 0.5 && partyMembers(bots).length < PARTY_MAX) {
     const bot = pick(free, rng);
-    bots.huntAsk = { bot, until: world.now + 60 };
+    askAlong(bots, world, bot);
     world.log(`[Friend] ${bot.name}: ${pick(['wanna hunt together?', 'party up?? im bored', 'lets go grind!', 'u free? lets hunt'], rng)} (N to answer)`, '#bfe0ff');
   }
 }
@@ -161,7 +163,7 @@ export function callBuddy(bots, world, bot) {
     bot.appear = 1;
   }
   joinParty(bots, bot, world);
-  say(bot, pick(['omw!!', 'here!', 'lets gooo', 'party time :D'], bots.rng));
+  say(world, bot, ['omw!!', 'here!', 'lets gooo', 'party time :D'], bots.rng);
   world.log(`${bot.name} joined your party!`, '#bff0dc');
   if (bots.huntAsk?.bot === bot) bots.huntAsk = null;
   return null;
@@ -172,7 +174,8 @@ export function answerHunt(bots, world, yes) {
   if (!ask) return;
   bots.huntAsk = null;
   if (!yes) {
-    say(ask.bot, 'aw ok, next time!');
+    askDeclined(bots, world);
+    say(world, ask.bot, ['aw ok, next time!', 'np, another time', 'ok! ill be around']);
     return;
   }
   const no = callBuddy(bots, world, ask.bot);
@@ -201,7 +204,7 @@ function sendHelp(bots, world) {
   bot.helping = world.now + HELP_FOR;
   bot.gave = false;
   Object.assign(bot.brain ?? {}, { target: null, path: null });
-  say(bot, pick(['u ok??', 'i got u!', 'hang on!!', 'omg ur hp', 'coming!!'], rng));
+  say(world, bot, ['u ok??', 'i got u!', 'hang on!!', 'omg ur hp', 'coming!!'], rng);
   world.log(`${bot.name} rushes over to help you!`, '#bff0dc');
 }
 
@@ -240,7 +243,7 @@ export function thanked(bots, world) {
   if (!bot) return false;
   bot.thanked = true;
   const rng = bots.rng;
-  say(bot, pick(['np!! stay safe', 'anytime :D', 'np, watch ur hp', 'thats what friends are for... wait are we friends?'], rng));
+  say(world, bot, ['np!! stay safe', 'anytime :D', 'np, watch ur hp', 'thats what friends are for... wait are we friends?'], rng);
   if (!isBuddy(world.char, bot.name) && rng() < 0.6) {
     bot.offered = true;
     bot.nextOffer = world.now + 2.5;
@@ -252,7 +255,7 @@ function offers(bots, world) {
   for (const bot of bots.list) {
     if (!bot.nextOffer || world.now < bot.nextOffer || bot.bubble) continue;
     bot.nextOffer = null;
-    say(bot, pick(['add me? :D', 'wanna be friends?', 'add me if u want!'], bots.rng));
+    say(world, bot, ['add me? :D', 'wanna be friends?', 'add me if u want!'], bots.rng);
     world.log(`${bot.name} would like to be friends. (Right-click them: Add friend)`, '#bfe0ff');
   }
 }
@@ -263,7 +266,10 @@ function offers(bots, world) {
 export function updateBuddies(bots, world, dt, hooks) {
   tickAsks(bots, world);
   tickBuddies(bots, world, dt, hooks);
-  if (bots.huntAsk && (world.now > bots.huntAsk.until || bots.huntAsk.bot.gone)) bots.huntAsk = null;
+  if (bots.huntAsk && (world.now > bots.huntAsk.until || bots.huntAsk.bot.gone)) {
+    bots.huntAsk = null;
+    askDeclined(bots, world);
+  }
   sendHelp(bots, world);
   helpers(bots, world);
   offers(bots, world);

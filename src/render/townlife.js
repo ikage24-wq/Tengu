@@ -427,7 +427,7 @@ function drawPet(ctx, p, at, x, gy, time) {
       ctx.save();
       ctx.globalAlpha = 0.8 * (1 - z);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 6px sans-serif';
+      ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.fillText('z', snap(x - at.facing * 6 + z * 6), snap(gy - 14 - z * 12));
       ctx.restore();
     } else flipped(ctx, x, at.facing, () => place(ctx, catArt(coat, at.walking ? 'walk' : 'walk', at.walking ? Math.floor(time * 6) % 2 : 0), x, gy + 1));

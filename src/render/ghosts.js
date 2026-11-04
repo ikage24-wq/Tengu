@@ -72,7 +72,7 @@ export function drawGhosts(ctx, world, cam, width, time) {
 function nameTag(ctx, g, x, y, time) {
   ctx.save();
   ctx.globalAlpha *= tagFade(x, y);
-  ctx.font = 'bold 7px sans-serif';
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const label = `Lv${g.level ?? 1} ${g.name}`;
   const w = ctx.measureText(label).width + 18;
   box(ctx, x - w / 2, y + 2, w, 10, { fill: TAG, edge: TAG_EDGE, r: 5, width: 1 });

@@ -379,10 +379,9 @@ function ribbon() {
   return out;
 }
 
-function pebble() {
+function pebble(c = '#22a6a8', gloss = '#e8fff6', streak = '#b8fff0') {
   // A basilisk scute: a glossy jade-teal hexagonal plate with a raised keel and growth ridges,
   // nothing like a leaf (no point, no stem, no veins).
-  const c = '#22a6a8';
   const a = -12;
   const hex = (k, dy = 0) => turn([[8, 8 - 6.8 * k], [8 + 5.8 * k, 8 - 3.4 * k], [8 + 5.6 * k, 8 + 3.2 * k], [8, 8 + 6.8 * k], [8 - 5.6 * k, 8 + 3.2 * k], [8 - 5.8 * k, 8 - 3.4 * k]].map(([x, y]) => [x, y + dy]), a);
   const body = hex(1);
@@ -400,8 +399,8 @@ function pebble() {
   // The raised keel down the middle.
   out.push(line([kt, kb].map(([x, y], i) => [x + (i ? -0.4 : 0.4), y + (i ? -2.6 : 2.4)]), 0.55, hi(c)));
   // Gloss: a bright streak along the top-left edge and a glint.
-  out.push(S(tube([body[5], body[0]].map(([x, y]) => [x + 0.9, y + 0.9]), 0.55, 0.2), '#e8fff6'));
-  out.push(S(tube(turn([[11.6, 9.6], [9.4, 12.4]], a), 0.4, 0.15), mix(c, '#b8fff0', 0.5)));
+  out.push(S(tube([body[5], body[0]].map(([x, y]) => [x + 0.9, y + 0.9]), 0.55, 0.2), gloss));
+  out.push(S(tube(turn([[11.6, 9.6], [9.4, 12.4]], a), 0.4, 0.15), mix(c, streak, 0.5)));
   out.push(...glint(5, 4.6, 0.95));
   return out;
 }
@@ -446,8 +445,7 @@ function leaf_fragment() {
   return out;
 }
 
-function tusk() {
-  const c = '#fff4dc';
+function tusk(c = '#fff4dc', cord = '#a86a4a', bead = '#7fd3ff') {
   const spine = bez3([3.2, 2.4], [10.8, 1.6], [14.4, 7], [11.2, 15], 18);
   const out = [S(tube(spine, 5.4, 0.3), sh(c))];
   out.push(S(tube(spine.map(([x, y]) => [x - 0.45, y - 0.3]), 3.8, 0.2), c));
@@ -457,12 +455,11 @@ function tusk() {
   out.push(S(root, '#e9c79a'), S(cut(root, [5, 6], [1, 2.4]), '#d4a878'));
   out.push(S(oval(2.7, 2.6, 0.7, 2.4, 8, 18), '#f2d9b0'));
   // A leather cord tied round it.
-  const cord = '#a86a4a';
   const wrap = clip(tube(spine, 5.4, 0.3), [[5.2, -1], [7, -1], [6.4, 7], [4.6, 7]]);
   out.push(S(wrap, cord), S(cut(wrap, [6, 7], [6.4, -1]), sh(cord)));
   out.push(line([[5.2, 1.6], [6.8, 1.8]], 0.3, dk(cord)), line([[5, 3.4], [6.6, 3.6]], 0.3, dk(cord)));
   out.push(line(bez([5.6, 5.4], [5, 7.6], [3.8, 8.8], 6), 0.55, cord), line(bez([6.2, 5.4], [6.4, 7.8], [6, 9.4], 6), 0.55, sh(cord)));
-  out.push(...ball(oval(3.6, 9.4, 1, 1, 0, 14), '#7fd3ff', { glow: 0.8 }));
+  out.push(...ball(oval(3.6, 9.4, 1, 1, 0, 14), bead, { glow: 0.8 }));
   out.push(S(oval(3.3, 9.1, 0.3, 0.3, 0, 8), W));
   return out;
 }
@@ -681,8 +678,7 @@ function wool() {
   return out;
 }
 
-function feather() {
-  const c = '#8fd0ff';
+function feather(c = '#8fd0ff', vaneC = '#5aa8f0', downC = '#d8f0ff') {
   const b = [2.2, 14.6];
   const t = [14.2, 1.4];
   const L = leaf([3.6, 12.8], t, 6.4, c, { bend: -0.8, rib: '#f4fbff', veins: 0 });
@@ -694,14 +690,14 @@ function feather() {
   nick(B, 8, [1.2, -0.2]);
   const vane = [...A, ...B.reverse()];
   const out = [S(vane, sh(c)), S(clip(vane, side(t, [3, 13.6])), lt(c)), S(tube(L.mid.slice(0, 12), 2.6, 0.6), c)];
-  out.push(S(cut(vane, [16, 5], [8, -2]), '#5aa8f0'));
+  out.push(S(cut(vane, [16, 5], [8, -2]), vaneC));
   // Barbs.
   for (const i of [4, 7, 10]) {
     const p = L.mid[i];
     out.push(line([p, [p[0] + 1.6, p[1] + 1.6]], 0.26, sh(c)), line([p, [p[0] - 1.8, p[1] - 0.8]], 0.26, c));
   }
   // Downy fluff at the base and the quill.
-  out.push(...ball(oval(4.2, 12.2, 1.6, 1.1, -40, 16), '#d8f0ff', { glow: 0.7 }));
+  out.push(...ball(oval(4.2, 12.2, 1.6, 1.1, -40, 16), downC, { glow: 0.7 }));
   out.push(S(tube(bez(b, [3, 13.4], [4.6, 11.6], 6), 0.9, 0.7), '#e8f4ff'));
   out.push(S(tube(L.mid.slice(0, 13), 0.55, 0.2), '#f4fbff'));
   out.push(...glint(7, 5, 0.6));
@@ -1022,9 +1018,93 @@ function framed(draw) {
   };
 }
 
+// A Sylph's feather: spring-mint, with a breath of wind curling off its tip.
+function sylph_feather() {
+  const out = feather('#9fe8c8', '#4fc79a', '#e4fff2');
+  out.push(S(tube(bez([9.6, 1.2], [13.6, 0.6], [15, 3.6], 10), 0.45, 0.15), '#e4fff2'), twinkle(2.2, 3.2, 1.2), twinkle(14, 10.2, 0.8, '#d8fff0'));
+  return out;
+}
+
+// Selene's moon plume: a silver-lilac valkyrie feather with a gold crescent at its quill.
+function moon_plume() {
+  const out = feather('#d6cbff', '#9d86f0', '#f6f2ff');
+  const moon = clip(oval(3.4, 3.6, 2.6, 2.6, 0, 24), side([7, 7.4], [0.4, -0.6]));
+  const bite = oval(4.6, 2.6, 2.1, 2.1, 0, 24);
+  out.push(...ball(moon, GOLD, { glow: 0.9 }), S(bite, '#fff7e0'));
+  out.push(twinkle(14.2, 9.6, 1.3), twinkle(10.6, 14.2, 0.8, '#fff3a6'));
+  return out;
+}
+
+// Lupina's moon fang: a silvery wolf fang on a midnight cord with a moonstone bead.
+function moon_fang() {
+  const out = tusk('#eef0ff', '#5d5285', '#e0d4ff');
+  out.push(twinkle(13.6, 2.4, 1.3), twinkle(9.4, 12.6, 0.7, '#e8e4ff'));
+  return out;
+}
+
+// The Bramble Bear's claw: a thorny bark-brown hook on a green vine.
+function bramble_claw() {
+  const out = tusk('#e8c79a', '#6fae5a', '#ff8fa8');
+  for (const [x, y, a] of [[12.6, 6.2, 30], [13.4, 10, 70]]) out.push(S(turn([[x - 0.8, y], [x + 1.6, y - 0.4], [x - 0.4, y + 0.9]], a, x, y), '#6fae5a'));
+  return out;
+}
+
+// A Lamia's scale: a glossy rose-coral plate, keeled like a snake's.
+function lamia_scale() {
+  return pebble('#ff7f9e', '#fff0f4', '#ffd6e2');
+}
+
+// A Yuki-onna's snow gem: a clear ice-blue crystal holding a snowflake (no eye, no teeth: that's
+// the Mimic's).
+function snow_gem() {
+  const c = '#bfe8ff';
+  const g = 6;
+  const L = 1.4;
+  const Rx = 14.6;
+  const top = 2.2;
+  const tip = [8, 15.4];
+  const out = [];
+  out.push(S([[L, g], [4.6, top], [5.8, g]], lt(c)));
+  out.push(S([[4.6, top], [11.4, top], [10.2, g], [5.8, g]], hi(c)));
+  out.push(S([[11.4, top], [Rx, g], [10.2, g]], c));
+  out.push(S([[L, g], [5.8, g], tip], c));
+  out.push(S([[5.8, g], [10.2, g], tip], sh(c)));
+  out.push(S([[10.2, g], [Rx, g], tip], dk(c)));
+  for (const [p, q] of [[[L, g], [Rx, g]], [[5.8, g], tip], [[10.2, g], tip], [[4.6, top], [5.8, g]], [[11.4, top], [10.2, g]]]) out.push(line([p, q], 0.24, mix(c, '#5a8ac8', 0.45)));
+  // The snowflake inside: three crossed strokes with little barbs.
+  const cx = 8;
+  const cy = 8.6;
+  for (let k = 0; k < 3; k++) {
+    const a = (k * 60 + 90) * D2R;
+    const dx = Math.cos(a) * 2.8;
+    const dy = Math.sin(a) * 2.8;
+    out.push(line([[cx - dx, cy - dy], [cx + dx, cy + dy]], 0.4, W));
+  }
+  out.push(S(oval(cx, cy, 0.7, 0.7, 0, 12), W));
+  out.push(S(tube([[2.8, 5.4], [4.6, 3.2]], 0.42), W), twinkle(13.6, 1.8, 1.2));
+  return out;
+}
+
+// A Nekomata's bell: a round gold cat bell on a crimson cord tied in a bow.
+function nekomata_bell() {
+  const red = '#ff5f7e';
+  const out = [];
+  // The cord loop and its bow.
+  out.push(S(tube(bez([4.2, 4.6], [8, -0.6], [11.8, 4.6], 12), 1.1), sh(red)));
+  out.push(...ball(oval(5.2, 4.8, 2.3, 1.4, -24, 18), red), ...ball(oval(10.8, 4.8, 2.3, 1.4, 24, 18), red), ...ball(oval(8, 5.2, 1.2, 1.1, 0, 12), sh(red)));
+  // The bell: a gold ball with a band, a slit and its little ring at the foot.
+  const bell = oval(8, 10.4, 4.6, 4.4, 0, 32);
+  out.push(...ball(bell, GOLD, { glow: 1 }));
+  out.push(S(clip(bell, [[0, 9], [16, 9], [16, 10.1], [0, 10.1]]), sh(GOLD)), S(clip(bell, [[0, 8.4], [16, 8.4], [16, 9], [0, 9]]), '#fff3b0'));
+  out.push(S(oval(8, 12.6, 1.1, 1.1, 0, 14), dk(GOLD)), S(tube([[8, 12.8], [8, 14.6]], 0.6), dk(GOLD)));
+  out.push(...glint(5.8, 8.2, 0.7));
+  return out;
+}
+
 const ART = {
   fluff, shell, sprout_leaf, mushcap, ribbon, pebble, stinger, leaf_fragment, tusk, moss_stone, wisp_flame,
   bat_wing, bone_shard, crystal_gel, rock_core, shade_cloth, wool, feather, stardust, king_crystal, hollow_acorn, letter, parcel, gacha_ticket, party_token,
+  sylph_feather, moon_plume, lamia_scale, snow_gem, nekomata_bell, moon_fang, bramble_claw,
   red_potion, orange_potion, white_potion, blue_potion, mana_elixir, elixir, return_scroll,
 };
 

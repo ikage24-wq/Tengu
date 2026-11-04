@@ -6,12 +6,12 @@
 //     Hollow"). When it's yours, right-click them (Join their group) and they take you in.
 
 import { ITEMS, RARITIES } from '../data/items.js';
-import { DUNGEONS, roleOf, ROLES } from '../data/dungeons.js';
+import { DUNGEONS, roleOf, ROLES, dungeonForLevel } from '../data/dungeons.js';
 import { JOBS } from '../data/jobs.js';
 import { itemName } from '../core/items.js';
 import { joinParty, partyMembers } from './party.js';
 import { startRun } from './dungeon.js';
-import { botChat } from './chatlog.js';
+import { botChat, sayOneOf } from './chatlog.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -45,8 +45,9 @@ const LFG = (role, dungeon) => [`LF ${role} for ${dungeon}!!`, `need a ${role} f
 function lookingForGroup(M, bots, world) {
   const rng = bots.rng;
   const mine = roleOf(world.char.job, JOBS[world.char.job].family);
-  const def = DUNGEONS.hollow;
-  if (!mine || world.char.level < def.minLevel || world.dungeon || partyMembers(bots).length) return;
+  // (A dungeon for your level, so the shouts name the one you'd be running.)
+  const def = dungeonForLevel(world.char.level, rng);
+  if (!def || !mine || world.char.level < def.minLevel || world.dungeon || partyMembers(bots).length) return;
   // Someone whose group is missing exactly what you are.
   const bot = pick(bots.list.filter((b) => !b.party && !b.hunter && !b.gone && !b.shop && b.map === world.map.id && b.level >= def.minLevel && roleOf(b.char.job, JOBS[b.char.job].family) && roleOf(b.char.job, JOBS[b.char.job].family) !== mine), rng);
   if (!bot) return;
@@ -67,7 +68,11 @@ export function joinGroup(bots, world, bot) {
   const id = bot.lfg.dungeon;
   bot.lfg = null;
   joinParty(bots, bot, world);
-  bot.bubble = { text: pick(['yay a healer!! jk welcome', 'perfect, lets go', 'ty for joining!', 'group full, gogogo'], bots.rng), t: 4 };
+  // (A welcome about you and the run: your job, the seat you fill, the dungeon.)
+  const role = ROLES[roleOf(world.char.job, JOBS[world.char.job].family)]?.label.toLowerCase() ?? 'dps';
+  const job = JOBS[world.char.job].name;
+  const where = DUNGEONS[id].name;
+  sayOneOf(world, bot, [`a ${job}!! perfect, we needed a ${role}`, `yay our ${role} is here, ${where} lets go`, `welcome ${world.char.name}! ${where} time`, `${role} found, group full! gogogo`, `ty for joining! ive never had a ${job} ${role} before`], bots.rng, { important: true });
   const why = startRun(world, id);
   if (why) {
     world.log(why, '#ffb3c6');

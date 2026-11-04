@@ -54,7 +54,7 @@ export function touchLayout() {
   return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, RIDE, ...ARC] };
 }
 // The HUD's hotkey bubbles (see ui/hud.js).
-const HK = { x: 380, step: 21, y: 329.5, d: 19 };
+const HK = { x: 382, step: 21, y: 329.5, d: 19 };
 
 export function createTouch(canvas, input) {
   const t = { on: false, input, canvas, fingers: new Map(), stick: null, mouseId: null, screen: null, world: null, ui: null, lastTap: 0, keys: null };

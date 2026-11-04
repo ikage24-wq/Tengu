@@ -129,7 +129,7 @@ export const STORY_QUESTS = {
   story_5_2: s('story_5_2', 5, {
     name: 'Frost on the Mountain', giver: 'nim', minLevel: 34, prereq: 'story_5_1',
     text: "The cold is coming down from Frozen Peak... or going up to it? The Yuki-onna are carrying the warmth away in icy gems. Bring me 12 of them. I want to know where they're taking it.",
-    objectives: [{ type: 'visit', map: 'peak' }, { type: 'collect', item: 'crystal_gel', count: 12 }],
+    objectives: [{ type: 'visit', map: 'peak' }, { type: 'collect', item: 'snow_gem', count: 12 }],
     rewards: { exp: 60000, gold: 12000, items: [{ id: 'warrior_shoes_35', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch5_gems' },
   }),

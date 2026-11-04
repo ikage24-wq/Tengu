@@ -395,7 +395,7 @@ export function titleScreen(ui, time) {
   ctx.arc(17, 348, 3, 0, Math.PI * 2);
   ctx.fill();
   text(ctx, `Server online · ${WORLDS[world].name}`, 25, 351, { size: 7.5, bold: true, color: COLORS.ink });
-  text(ctx, 'Arrows move · Space jumps · Z attacks · X loots · Up talks', 320, 351, { size: 7.5, align: 'center', color: COLORS.muted });
+  text(ctx, ui.input?.touch ? 'Stick moves · Jump · Attack · Loot · push up to talk' : 'Arrows move · Space jumps · Z attacks · X loots · Up talks', 320, 351, { size: 7.5, align: 'center', color: COLORS.muted });
   text(ctx, `v${VERSION}`, 626, 351, { size: 7.5, bold: true, align: 'right', color: COLORS.ink });
   return pick;
 }

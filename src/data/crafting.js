@@ -69,7 +69,7 @@ export const ARTISAN = [
   { level: 10, tier: 1, name: 'Copperstitch', forged: 'Copperforged', color: '#e0a07a', accent: '#8fe0c0', craft: 5 },
   { level: 20, tier: 2, name: 'Ironweave', forged: 'Ironheart', color: '#9fb0c8', accent: '#ffcf7a', craft: 15 },
   { level: 30, tier: 3, name: 'Silverwork', forged: 'Silverwork', color: '#dfe6f5', accent: '#ff9ec0', craft: 27 },
-  { level: 40, tier: 4, name: 'Mithril', forged: 'Mithril', color: '#9fe6e0', accent: '#ffe36b', craft: 39 },
+  { level: 40, tier: 4, name: 'Moonweave', forged: 'Moonforged', color: '#9fe6e0', accent: '#ffe36b', craft: 39 },
   { level: 50, tier: 4, name: 'Starforged', forged: 'Starforged', color: '#ffe6a8', accent: '#b48cff', craft: 47 },
 ];
 // The weapons each gear family crafts (data/jobs.js: the jobs' own weapons).

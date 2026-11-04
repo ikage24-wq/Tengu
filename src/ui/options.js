@@ -44,8 +44,9 @@ const PAGES = {
 
 const CONTROLS = [
   ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
-  ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection: Monster Book, fish and mounts'], ['T', 'Emote wheel'], ['H', 'Ride your mount (on and off)'],
-  ['Enter', 'Chat'], ['Esc', 'Close windows / Options'], ['Drag', 'Move items, wear gear, set hotkeys'],
+  ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection (monsters, fish, mounts)'],
+  ['G', 'Life Skills'], ['O', 'Cash Shop'], ['P', 'Mochi pets'], ['Y', 'Decorate your island'], ['T', 'Emote wheel'], ['V', 'Ping for your party'], ['H', 'Ride your mount (on and off)'],
+  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['Drag', 'Move items, wear gear, set hotkeys'],
 ];
 
 const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];
@@ -53,7 +54,8 @@ const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];
 export function optionsWindow(ui, state, world) {
   const win = state.windows.options;
   const W = 300;
-  const H = 262;
+  // Tall enough for the longest page (Gameplay's eight rows) to sit clear of the Resume button.
+  const H = 284;
   if (!windowFrame(ui, win, W, H, 'Options')) return;
   const { ctx } = ui;
   const th = ui.theme;
@@ -64,11 +66,16 @@ export function optionsWindow(ui, state, world) {
 
   if (PAGES[page]) {
     // Longer pages pack their rows a little tighter so they stay clear of the buttons.
-    const step = PAGES[page].length > 6 ? 25.5 : 29;
+    const step = PAGES[page].length > 6 ? 26.5 : 29;
     for (const [key, label, desc, choices] of PAGES[page]) {
-      box(ctx, x - 2, y, W - 16, step - 3, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
+      // The description wraps in the room left of its pills or toggle, and the row grows to fit.
+      const room = (choices ? W - 22 - choices.length * 38 : W - 52) - 14;
+      // (Measured without drawing: `chars: 0` shows nothing and returns the height it would take.)
+      const descH = wrap(ctx, desc, 0, 0, room, { role: 'minor', lineHeight: 8.5, chars: 0 });
+      const rowH = step + Math.max(0, descH - 8.5);
+      box(ctx, x - 2, y, W - 16, rowH - 3, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });
       text(ctx, label, x + 6, y + 11, { size: 8.5, bold: true });
-      text(ctx, desc, x + 6, y + 21, { role: 'minor' });
+      wrap(ctx, desc, x + 6, y + 21, room, { role: 'minor', lineHeight: 8.5 });
       if (choices) {
         choices.forEach((c, i) => {
           const bx = x + W - 22 - choices.length * 38 + i * 38;
@@ -88,14 +95,15 @@ export function optionsWindow(ui, state, world) {
           saveSettings();
         }
       }
-      y += step;
+      y += rowH;
     }
     // The phone's screen in small, with the controls where they'll be.
     if (page === 'Phone') drawTouchPreview(ctx, x + (W - 16) / 2 - 64, y + 2, 128, 72, th);
   } else if (page === 'Controls') {
     CONTROLS.forEach(([keys, what], i) => {
       const cx = x + (i % 2) * 142;
-      const cy = y + Math.floor(i / 2) * 22;
+      // (Rows packed to fit every key above the Resume button.)
+      const cy = y + Math.floor(i / 2) * 18;
       ctx.font = font(7, true);
       const kw = Math.min(70, ctx.measureText(keys).width + 10);
       box(ctx, cx, cy, kw, 13, { fill: th.light, edge: th.main, r: 4, width: 1 });

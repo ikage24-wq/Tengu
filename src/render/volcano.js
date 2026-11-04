@@ -137,7 +137,7 @@ export function drawVolcanoBack(ctx, world, cam, time) {
       ctx.arc(cx, y - 97, 5, 0, TAU);
       ctx.fill();
       ctx.fillStyle = have === n ? '#9ae66a' : '#ffffff';
-      ctx.font = 'bold 8px sans-serif';
+      ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(`${have}/${n}`, cx + 7, y - 94);
     });

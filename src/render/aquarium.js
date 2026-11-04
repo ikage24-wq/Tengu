@@ -128,7 +128,7 @@ function drawBell(ctx, x, y, room, time) {
     ctx.fill();
     ctx.fillStyle = MARK_C[o.mark] ?? '#ffffff';
     ctx.globalAlpha = lit ? 1 : 0.7;
-    ctx.font = 'bold 7px sans-serif';
+    ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`${i + 1}`, cx, cy - 10);
     ctx.globalAlpha = 1;

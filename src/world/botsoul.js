@@ -38,7 +38,7 @@ import { botChat } from './chatlog.js';
 import { botLifeExp } from './botlife.js';
 import { gameHour } from './daytime.js';
 import { navOf, surfaceOf, surfaceBelow } from './nav.js';
-import { partyMembers, joinParty, PARTY_MAX, LEVEL_GAP } from './party.js';
+import { partyMembers, joinParty, PARTY_MAX, LEVEL_GAP, mayAskAlong, askAlong } from './party.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -246,7 +246,7 @@ export function goalLine(bot, rng) {
   if (!g) return null;
   const c = bot.char;
   if (g.kind === 'set') return pick([`farming ${g.from} for the ${g.setName} ${g.slot}, ${g.got}/${g.need} tries so far`, `still no ${ITEMS[g.item].name}... ${g.from} hates me`, `need the ${g.slot} for my ${g.setName} set`], rng);
-  if (g.kind === 'level') return pick([`${g.to - c.level} more levels to ${g.to}${g.to === 30 ? ' then job advance' : ''}`, `grinding ${g.mob}s at ${g.mapName} till ${g.to}`, `${g.mapName} is the best exp for me rn`], rng);
+  if (g.kind === 'level') return pick([`${g.to - c.level} more level${g.to - c.level === 1 ? '' : 's'} to ${g.to}${g.to === 30 ? ' then job advance' : ''}`, `grinding ${g.mob}s at ${g.mapName} till ${g.to}`, `${g.mapName} is the best exp for me rn`], rng);
   if (g.kind === 'craft') return pick([`saving ${g.matName} for my ${g.item}, ${g.got}/${g.n}`, `need ${g.n - g.got} more ${g.matName} then i can make the ${g.item}`], rng);
   if (g.kind === 'life') return pick([`almost ${LIFE_NAMES[g.skill].toLowerCase()} ${g.to}`, `${LIFE_NAMES[g.skill].toLowerCase()} grind, ${lifeLevel(c, g.skill)} to ${g.to}`], rng);
   return null;
@@ -415,12 +415,12 @@ function crewTalk(bots, world, crew, rng) {
 function askYouAlong(bots, world, crew, rng) {
   crew.asked = true;
   const lead = crew.lead;
-  if (bots.huntAsk || world.dungeon || partyMembers(bots).length + crew.members.length > PARTY_MAX || lead.level > world.char.level + LEVEL_GAP) return;
+  if (!mayAskAlong(bots, world) || world.dungeon || partyMembers(bots).length + crew.members.length > PARTY_MAX || lead.level > world.char.level + LEVEL_GAP) return;
   const mobs = (world.map.spawns ?? []).map((s) => MOBS[s.mob]).filter((d) => d && !d.boss);
   const mob = mobs.length ? pick(mobs, rng).name : 'monsters';
   const others = crew.members.filter((m) => m !== lead).map((m) => m.name).join(' and ');
   if (!botChat(world, lead, `${world.char.name} wanna join us? ${others} and me are doing ${mob}s`, { important: true })) return;
-  bots.huntAsk = { bot: lead, until: world.now + 60 };
+  askAlong(bots, world, lead);
   world.log?.(`(${lead.name}'s group asks you along: N to answer.)`, '#bfe0ff');
 }
 

@@ -14,6 +14,7 @@ import { FISH, SPOTS } from '../data/fishing.js';
 import { DISHES } from '../data/cooking.js';
 import { SETS } from '../data/sets.js';
 import { TRIALS } from '../data/story.js';
+import { DUNGEONS, dungeonForLevel } from '../data/dungeons.js';
 import { levelRange, routeBetween } from './routes.js';
 
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -51,7 +52,8 @@ const SLOTS = {
   rarefish: () => pick(FISH.filter((f) => f.rarity >= 3)).name,
   dish: () => pick(DISHES).name,
   queen: (c) => (c.level >= 18 ? pick(['Sylvana', 'Tamamo', 'Lilith', 'Selene'].slice(0, c.level >= 40 ? 4 : c.level >= 30 ? 3 : 2)) : null),
-  dungeon: () => 'Rootwood Hollow',
+  // (One their level runs: a lvl 40 talks about the Dream Theatre, not Rootwood Hollow.)
+  dungeon: (c) => dungeonForLevel(c.level ?? 10)?.name ?? null,
   // In a dungeon run: the room the group is in, and the boss there.
   room: (c) => c.room ?? null,
   boss: (c) => c.boss ?? null,
@@ -279,7 +281,8 @@ export function answer(said, ctx) {
     const short = mob.name.split(',')[0];
     if (trial) return `${short}: follow the story (★ quests) to her trial, then she comes back on ${MAPS[trial.field].name} for rematches`;
     const lair = Object.values(MAPS).find((m) => m.spawns?.some((sp) => sp.mob === mob.id));
-    return lair ? `${short} is at ${lair.dungeon ? 'the end of Rootwood Hollow' : lair.name}, bring a party!` : `${short} is a big boss, go with a party!`;
+    const run = lair?.dungeon ? Object.values(DUNGEONS).find((d) => d.rooms.includes(lair.id)) : null;
+    return lair ? `${short} is at ${run ? `the end of ${run.name}` : lair.name}, bring a party!` : `${short} is a big boss, go with a party!`;
   }
   if (npc) {
     const home = Object.values(MAPS).find((m) => m.npcs?.some((n) => n.id === npc.id));
@@ -297,7 +300,10 @@ export function answer(said, ctx) {
   if (has(w, ['polish', 'enhance', 'upgrade'])) return 'Tora in Ember Crag polishes gear up to +10, gets harder each step tho';
   if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and the Hollow chest gives Rootwood. full set = aura!';
   if (has(w, ['collection', 'book', 'cards'])) return 'press B for the Collection, a card for every monster you beat';
-  if (has(w, ['dungeon', 'hollow', 'warden'])) return 'Rootwood Hollow is at Hollow Gate, talk to the warden to make a group';
+  if (has(w, ['dungeon', 'dungeons', 'warden'])) {
+    const d = dungeonForLevel(level) ?? DUNGEONS.hollow;
+    return `at lvl ${Math.max(level, d.minLevel)} try ${d.name}, its at ${MAPS[d.gate]?.name ?? 'its gate'}. talk to the warden there to make a group`;
+  }
   if (has(w, ['job', 'advance', 'class'])) return level < 10 ? 'first job at lvl 10, visit the instructor in their town!' : 'second job is at lvl 30, ur instructor gives a trial';
   if (has(w, ['money', 'gold', 'meso', 'rich'])) return 'sell fish and drops, and grind a map at ur level. dishes sell well too';
   if (has(w, ['ap', 'stat', 'stats', 'str', 'dex', 'int', 'luk'])) return 'put AP in ur job\'s main stat, or just press Auto in stats (C)';

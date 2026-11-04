@@ -126,11 +126,11 @@ export const SIDE_SCENES = {
   ],
   trial_elowen_done: [
     { who: 'elowen', text: 'I felt every one of them go home. Peacefully. You have a gift, {name}.', mood: 'happy' },
-    { who: 'elowen', text: 'The Shrine Maiden purifies and protects. The Onmyoji commands talismans and spirits. Both are yours to choose.' },
+    { who: 'elowen', text: 'The Starlight Idol sings, and her songs heal everyone who hears them. The Astronomer calls planets and moons down out of the sky. Both are yours to choose.' },
   ],
   trial_vex: [
-    { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. They can't see you if you're fast enough." },
-    { who: 'vex', text: "Don't get caught. That's the only rule of this trade." },
+    { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. All that armour turns slow: spin round them and they'll never land a blow." },
+    { who: 'vex', text: "Never stand still. That's the only rule of the dance." },
   ],
   trial_vex_done: [
     { who: 'vex', text: "Twenty, and not a scratch on you. I'd almost think you were me.", mood: 'happy' },
@@ -899,8 +899,8 @@ export const JOB_SCENES = {
     { who: 'brann', text: 'Heavy blows, steady feet, and a big heart. Now go hit something that deserves it!' },
   ],
   archer: [
-    { card: 'A New Path', sub: 'Archer' },
-    { who: 'kestrel', text: 'From today you are an Archer, {name}. Keep your distance and your aim true.' },
+    { card: 'A New Path', sub: 'Acrobat Archer' },
+    { who: 'kestrel', text: 'From today you are an Acrobat Archer, {name}. Flip, tumble, and keep your aim true the whole way round.' },
     { who: 'kestrel', text: '...And keep your bowstring dry. That part nobody tells you.', mood: 'happy' },
   ],
   thief: [

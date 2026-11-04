@@ -70,7 +70,8 @@ export function craftingWindow(ui, state, world) {
 
   // ---- Categories ----
   const catWas = win.cat ?? 0;
-  win.cat = tabs(ui, ox + 128, oy + 25, CATEGORIES.map((c) => c.name), catWas, { w: Math.floor((W - 136) / CATEGORIES.length), h: 14 });
+  // (Sized to the labels and kept inside the frame: `total` fits all the tabs and their gaps.)
+  win.cat = tabs(ui, ox + 128, oy + 25, CATEGORIES.map((c) => c.name), catWas, { total: W - 140, h: 14 });
   if (win.cat !== catWas) Object.assign(win, { scroll: 0, sel: null });
   const cat = CATEGORIES[win.cat].key;
   let list = recipesIn(char, cat);

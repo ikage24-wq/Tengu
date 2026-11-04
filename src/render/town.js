@@ -357,7 +357,7 @@ function buildingArt(kind, time, wx = 0) {
 // A wooden sign hanging from two chains, with the building's name, swinging from its hooks in the
 // wind a moment after the gusts pass.
 function hangingSign(ctx, x, y, label, time, wx = x) {
-  ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = Math.round(ctx.measureText(label).width + 12);
   const r = ramp('#f0cf9a', 0.8);
   pivoted(ctx, x, y - 6, swing(time, wx, 1.3, wx * 0.01), () => {
@@ -970,7 +970,7 @@ function zzz(ctx, x, y, time) {
     ctx.save();
     ctx.globalAlpha = (1 - k) * 0.9;
     ctx.fillStyle = '#c9b6ff';
-    ctx.font = `bold ${5 + k * 3}px sans-serif`;
+    ctx.font = `800 ${5 + k * 3}px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
     ctx.fillText('z', x + 8 + k * 8, y - 44 - k * 14);
     ctx.restore();
   }
@@ -1667,7 +1667,7 @@ function drawTomb(ctx, x, y, since) {
   ctx.fillStyle = '#c4bcdc';
   ctx.fillRect(2.5, -14, 4.1, 13);
   ctx.fillStyle = '#7a6fa3';
-  ctx.font = 'bold 5px sans-serif';
+  ctx.font = '800 5px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('RIP', 0, -9);
   ctx.fillRect(-0.6, -7, 1.2, 4.5);
@@ -1751,7 +1751,7 @@ function shopBooth(ctx, x, gy, bot, time, hovered) {
     ctx.fillRect(ix - 1.2, gy - 5.6, 1, 1);
   });
   // The board, bobbing a touch.
-  ctx.font = 'bold 7px "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = Math.max(48, ctx.measureText(bot.shop.title).width + 14);
   const by = gy - 74 + Math.sin(time * 2 + bot.x * 0.01) * 1;
   box(ctx, x - w / 2, by, w, 14, { fill: hovered ? '#fff6c9' : '#ffffff', edge: '#ff9ec0', r: 5, width: 1.5 });
@@ -1887,7 +1887,7 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false, ta
   ctx.save();
   if (far && !hovered && !bot.party) ctx.globalAlpha = 0.3;
   ctx.globalAlpha *= tagFade(x, y);
-  ctx.font = 'bold 7px sans-serif';
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const label = `Lv${bot.level} ${bot.name}`;
   const pad = bot.pro || bot.party ? 18 : 10;
   const w = ctx.measureText(label).width + pad;

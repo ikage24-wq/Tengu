@@ -9,15 +9,16 @@
 import { inZone, isQueen } from './story.js';
 import { hurtBot, joinCombo, partyMembers } from './party.js';
 import { buddyOnline, buddiesOf } from './buddies.js';
-import { botChat, stale } from './chatlog.js';
+import { botChat, sayOver } from './chatlog.js';
 import { happened } from './chatter.js';
 import { fullNear, queueBurst, answering } from './teamwork.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
 
-function say(bot, text) {
-  if (text) bot.bubble = { text, t: 4 };
+// Over their head, through the chat gate (world/chatlog.js).
+function say(world, bot, text) {
+  if (text) sayOver(world, bot, text, { t: 4 });
 }
 
 // The boss on this map right now, if any (one the players can join: not a trial or a dungeon).
@@ -95,7 +96,7 @@ function callouts(bots, world) {
 // Her moves catch the players standing in them, as they catch you (a little softer).
 function zoneHits(bots, world) {
   world.onZoneHit = (z) => {
-    for (const b of raiders(bots, world)) if (inZone(world, z, b.body)) hurtBot(b, world, z.damage * 0.6, z.from?.x ?? z.x, bots.rng);
+    for (const b of raiders(bots, world)) if (inZone(world, z, b.body)) hurtBot(b, world, z.damage * 0.6, z.from?.x ?? z.x, bots.rng, z.from?.def ?? null);
   };
 }
 
@@ -107,7 +108,7 @@ function sayings(bots, world) {
     b.sayAt = null;
     if (b.down || b.gone) continue;
     if (b.sayShout) botChat(world, b, b.sayLine);
-    else if (!stale(world, b.sayLine)) say(b, b.sayLine);
+    else say(world, b, b.sayLine);
     b.sayShout = false;
   }
 }

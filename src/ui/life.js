@@ -118,12 +118,13 @@ export function lifeWindow(ui, state, world) {
       line = 'Mastered!';
       color = COLORS.gold;
     } else if (opens > 1) {
-      line = `Lv ${level + 1}: tier ${opens} spots and recipes open!`;
+      line = `Tier ${opens} spots and recipes open!`;
       color = COLORS.gold;
     } else if (PERKS[skill].length) {
-      line = `Next: ${PERKS[skill].map(([k, short]) => `+${show(pct(k, next) - pct(k, now))} ${short}`).slice(0, 2).join(', ')}`;
-    } else line = 'Next: better crafts as you level';
-    text(ctx, 'NEXT LEVEL', rx, y + 10, { size: 5.5, bold: true, color: th.dark });
+      line = PERKS[skill].map(([k, short]) => `+${show(pct(k, next) - pct(k, now))} ${short}`).slice(0, 2).join(', ');
+    } else line = 'Better crafts as you level';
+    // (The heading says "next level" once; the line under it just says what it brings.)
+    text(ctx, level >= LIFE_MAX ? 'LEVEL' : `AT LV ${level + 1}`, rx, y + 10, { size: 5.5, bold: true, color: th.dark });
     text(ctx, fit(ctx, line, W - 148, 7, true), rx, y + 19, { size: 7, bold: true, color });
     // What you do, in full (it used to be cut off under the bar).
     text(ctx, fit(ctx, ABOUT[skill], W - 148, 6.5, false), rx, y + 30, { size: 6.5, color: COLORS.muted });

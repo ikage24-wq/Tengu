@@ -125,6 +125,12 @@ export function text(ctx, str, x, y, opts = {}) {
   ctx.textAlign = 'left';
 }
 
+// The font text() draws a label of `size` in (held to the phone's readable size), for measuring
+// a label before drawing it, so pills and underlines fit the words they hold.
+export function textFont(size, bold = false) {
+  return font(Math.max(size, minText), bold);
+}
+
 // Shortens text with an ellipsis to fit `w` pixels.
 export function fit(ctx, s, w, size, bold = true) {
   ctx.font = font(Math.max(size, minText), bold);
@@ -363,6 +369,14 @@ export function sparkle(ctx, x, y, r, color) {
 // Little vector icons for window badges and menu buttons, drawn centered on (x, y) in a box `s`
 // wide.
 
+// The colour of an icon's cut-out details (a gift's ribbon, a shop's door): white on an inked
+// icon, and a soft violet shade when the icon itself is drawn in white (a lit menu bubble), so the
+// detail never vanishes into the shape around it.
+let iconInk = '#000000';
+function cutout() {
+  return /^#fff(fff)?$/i.test(String(iconInk)) ? 'rgba(90,63,122,0.45)' : '#ffffff';
+}
+
 const ICONS = {
   bag(ctx, s) {
     roundRect(ctx, -s * 0.38, -s * 0.18, s * 0.76, s * 0.6, s * 0.14);
@@ -371,7 +385,7 @@ const ICONS = {
     ctx.beginPath();
     ctx.arc(0, -s * 0.18, s * 0.18, Math.PI, 0);
     ctx.stroke();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.fillRect(-s * 0.1, -s * 0.02, s * 0.2, s * 0.12);
   },
   star(ctx, s) {
@@ -387,7 +401,7 @@ const ICONS = {
   book(ctx, s) {
     roundRect(ctx, -s * 0.4, -s * 0.34, s * 0.8, s * 0.68, s * 0.08);
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.fillRect(-s * 0.03, -s * 0.28, s * 0.06, s * 0.56);
     ctx.fillRect(-s * 0.3, -s * 0.16, s * 0.2, s * 0.05);
     ctx.fillRect(-s * 0.3, -s * 0.04, s * 0.2, s * 0.05);
@@ -398,7 +412,7 @@ const ICONS = {
     ctx.fill();
     ctx.fillRect(-s * 0.4, -s * 0.42, s * 0.8, s * 0.14);
     ctx.fillRect(-s * 0.4, s * 0.28, s * 0.8, s * 0.14);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     for (let i = 0; i < 3; i++) ctx.fillRect(-s * 0.18, -s * 0.18 + i * s * 0.14, s * 0.36, s * 0.05);
   },
   map(ctx, s) {
@@ -413,7 +427,7 @@ const ICONS = {
     ctx.lineTo(-s * 0.42, s * 0.4);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.beginPath();
     ctx.arc(s * 0.02, -s * 0.04, s * 0.11, 0, Math.PI * 2);
     ctx.fill();
@@ -494,7 +508,7 @@ const ICONS = {
     ctx.quadraticCurveTo(-s * 0.22, s * 0.32, -s * 0.34, s * 0.04);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.fillRect(-s * 0.06, -s * 0.28, s * 0.12, s * 0.56);
     ctx.fillRect(-s * 0.24, -s * 0.1, s * 0.48, s * 0.12);
   },
@@ -655,7 +669,7 @@ const ICONS = {
     ctx.lineTo(-s * 0.06, s * 0.36);
     ctx.quadraticCurveTo(-s * 0.28, -s * 0.1, 0, -s * 0.5);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = cutout();
     ctx.lineWidth = s * 0.07;
     ctx.beginPath();
     ctx.moveTo(0, -s * 0.36);
@@ -704,7 +718,7 @@ const ICONS = {
     ctx.ellipse(-s * 0.14, -s * 0.34, s * 0.14, s * 0.08, -0.4, 0, Math.PI * 2);
     ctx.ellipse(s * 0.14, -s * 0.34, s * 0.14, s * 0.08, 0.4, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.fillRect(-s * 0.05, -s * 0.26, s * 0.1, s * 0.64);
   },
   shop(ctx, s) {
@@ -715,7 +729,7 @@ const ICONS = {
     ctx.lineTo(s * 0.34, -s * 0.38);
     ctx.lineTo(s * 0.46, -s * 0.05);
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.fillRect(-s * 0.1, s * 0.1, s * 0.2, s * 0.27);
   },
   wand(ctx, s) {
@@ -746,7 +760,7 @@ const ICONS = {
     }
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.beginPath();
     ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
     ctx.fill();
@@ -773,7 +787,7 @@ const ICONS = {
   door(ctx, s) {
     roundRect(ctx, -s * 0.3, -s * 0.42, s * 0.6, s * 0.84, s * 0.1);
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.beginPath();
     ctx.arc(s * 0.14, s * 0.04, s * 0.06, 0, Math.PI * 2);
     ctx.fill();
@@ -845,7 +859,7 @@ const ICONS = {
     ctx.arc(0, -s * 0.06, s * 0.36, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillRect(-s * 0.2, s * 0.14, s * 0.4, s * 0.24);
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = cutout();
     ctx.beginPath();
     ctx.arc(-s * 0.14, -s * 0.04, s * 0.09, 0, Math.PI * 2);
     ctx.arc(s * 0.14, -s * 0.04, s * 0.09, 0, Math.PI * 2);
@@ -860,6 +874,7 @@ export function icon(ctx, name, x, y, s, color) {
   ctx.translate(x, y);
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
+  iconInk = color;
   draw(ctx, s);
   ctx.restore();
 }

@@ -19,7 +19,7 @@ import { ITEMS } from '../data/items.js';
 import { addItem } from '../core/inventory.js';
 import { botChat } from './chatlog.js';
 import { snapshot, remake, isBuddy } from './buddies.js';
-import { partyMembers, PARTY_MAX, LEVEL_GAP } from './party.js';
+import { partyMembers, PARTY_MAX, LEVEL_GAP, mayAskAlong, askAlong } from './party.js';
 import { soulRng } from './botsoul.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
@@ -250,11 +250,11 @@ function gifts(bots, world, rng) {
 // A good pal online (not with you) asks you along.
 function invites(bots, world, rng) {
   const char = world.char;
-  if (bots.huntAsk || world.dungeon || partyMembers(bots).length >= PARTY_MAX) return;
+  if (!mayAskAlong(bots, world) || world.dungeon || partyMembers(bots).length >= PARTY_MAX) return;
   const pals = bots.list.filter((b) => !b.gone && !b.party && !b.buddy && !b.shop && !b.afk && b.state !== 'logout' && b.level <= char.level + LEVEL_GAP && warmth(char, b.name) >= 8);
   const b = pals.length ? pick(pals, rng) : null;
   if (!b) return;
-  bots.huntAsk = { bot: b, until: world.now + 60 };
+  askAlong(bots, world, b);
   const where = MAPS[b.map]?.name;
   world.log?.(`[Whisper] ${b.name}: ${pick([`wanna hunt again? like last time`, where ? `im at ${where}, come hunt?` : 'come hunt with me?', `party up ${char.name}?`], rng)} (N to answer)`, '#ffc8f0');
 }

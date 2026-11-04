@@ -15,7 +15,7 @@ import { JOBS, jobChain } from '../data/jobs.js';
 import { ITEMS } from '../data/items.js';
 import { WEAPON_TYPES } from '../core/formulas.js';
 import { speak, contextOf } from './chatter.js';
-import { botChat } from './chatlog.js';
+import { botChat, sayOver } from './chatlog.js';
 import { navOf, findPath, followPath, surfaceBelow, surfaceOf } from './nav.js';
 import { roleThink, healerTurn, jumpNow } from './dungeon.js';
 import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf, botProcs } from './melee.js';
@@ -37,8 +37,30 @@ export function partyMembers(bots) {
   return bots ? bots.list.filter((b) => b.party) : [];
 }
 
-function say(bot, text) {
-  if (text) bot.bubble = { text, t: 4.5 };
+// Everything they say goes through the chat gate (world/chatlog.js): no line twice in ten minutes.
+// `important` for answers to something you did (skips their own half-minute wait).
+function say(world, bot, text, important = false) {
+  if (text) sayOver(world, bot, text, { important });
+}
+
+// Asks to come hunt (a friend, a pal, a group on the map) share one pace: at most one every few
+// minutes, and longer after you turn one down, so they stay a moment rather than a stream.
+const ASK_GAP = 300;
+const ASK_GAP_DECLINED = 600;
+
+export function mayAskAlong(bots, world) {
+  return !bots.huntAsk && world.now >= (bots.askAgainAt ?? 0);
+}
+
+// An ask just went out (`bot` asked you along for the next minute).
+export function askAlong(bots, world, bot) {
+  bots.huntAsk = { bot, until: world.now + 60 };
+  bots.askAgainAt = world.now + ASK_GAP;
+}
+
+// You said no (or let it lapse): the next ask waits longer.
+export function askDeclined(bots, world) {
+  bots.askAgainAt = Math.max(bots.askAgainAt ?? 0, world.now + ASK_GAP_DECLINED);
 }
 
 // Why a player can't be invited right now, or null.
@@ -66,12 +88,12 @@ function answer(bots, bot, world) {
   bot.invite = null;
   // The party may have filled up while they were thinking it over.
   if (partyMembers(bots).length >= PARTY_MAX) {
-    say(bot, 'aw party full');
+    say(world, bot, 'aw party full', true);
     world.log(`${bot.name} couldn't join: your party is full.`, '#ffb3c6');
     return;
   }
   joinParty(bots, bot, world);
-  say(bot, speak(bots.memory, 'joined', ctx, bot.style, rng));
+  say(world, bot, speak(bots.memory, 'joined', ctx, bot.style, rng), true);
   world.log(`${bot.name} joined your party!`, '#bff0dc');
 }
 
@@ -99,7 +121,7 @@ export function dismiss(bots, bot, world, { quiet = false } = {}) {
   bot.party = false;
   bot.body = null;
   bot.attack = null;
-  if (!quiet) say(bot, speak(bots.memory, 'leaving', { player: world.char.name }, bot.style, bots.rng));
+  if (!quiet) say(world, bot, speak(bots.memory, 'leaving', { player: world.char.name }, bot.style, bots.rng));
   if (world.map.isTown && bot.map === world.map.id) {
     bot.state = 'idle';
     bot.timer = between(2, 5, bots.rng);
@@ -119,7 +141,7 @@ export function leaveParty(bots, world) {
 
 export function kick(bots, bot, world) {
   dismiss(bots, bot, world, { quiet: true });
-  say(bot, 'aw ok');
+  say(world, bot, 'aw ok', true);
   world.log(`${bot.name} was removed from the party.`, '#d4cbe8');
 }
 
@@ -709,7 +731,7 @@ function bless(bot, world, rng, pct, r, big) {
   // You, when she's on your side.
   if ((bot.party || helping(bot, world)) && !world.dead) mend(world.body, (add) => (world.char.hp = Math.min(world.stats.maxHp, world.char.hp + add)), world.stats.maxHp);
   if (big) world.juice.push({ type: 'shake', mag: 1, dur: 0.2 });
-  if (!bot.bubble && rng() < 0.3) say(bot, pick2(['heal!', 'blessings~', 'feel better!', 'hp up!']));
+  if (!bot.bubble && rng() < 0.3) say(world, bot, pick2(['heal!', 'blessings~', 'feel better!', 'hp up!']));
 }
 
 const SPECIALS = {
@@ -805,7 +827,7 @@ function dodge(bot, world, intent, rng) {
 }
 
 // Something big (a queen's move) hitting a member out in the field.
-export function hurtBot(bot, world, raw, fromX, rng = Math.random) {
+export function hurtBot(bot, world, raw, fromX, rng = Math.random, by = null) {
   if (bot.down || !bot.body || !bot.stats) return;
   bot.hp ??= bot.stats.maxHp;
   const dmg = damageTaken(raw, bot.stats.wdef, rng);
@@ -814,7 +836,7 @@ export function hurtBot(bot, world, raw, fromX, rng = Math.random) {
   bot.lunge = null;
   knockBack(bot.body, fromX);
   world.numbers.push({ x: bot.body.x, y: bot.body.y - bot.body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
-  if (bot.hp <= 0) fall(bot, world, rng);
+  if (bot.hp <= 0) fall(bot, world, rng, by);
 }
 
 // A party combo: you let your finisher loose, and the members fighting by you join in with theirs.
@@ -878,6 +900,7 @@ function takeHits(bot, world, dt, rng) {
         bot.hurt = 0.3;
         bot.lunge = null;
         knockBack(body, m.x);
+        bot.hitBy = { def: m.def, at: world.now };
         world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `${dmg}`, color: '#ff8fa8', t: 0, small: true });
       } else world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'MISS', color: '#d4cbe8', t: 0, small: true });
     }
@@ -891,22 +914,29 @@ function takeHits(bot, world, dt, rng) {
       bot.hp = Math.min(max, bot.hp + add);
       world.fx.push({ kind: 'heal', x: body.x, y: body.y, t: 0, dur: 0.6 });
       world.numbers.push({ x: body.x, y: body.y - body.h - 14, text: `+${add}`, color: '#7ee081', t: 0, small: true });
-      if (!bot.potions && !bot.bubble && rng() < 0.6) say(bot, pick2(['last pot...', 'out of pots uh oh', 'shouldve bought more pots']));
-    } else if (!bot.bubble && rng() < 0.3) say(bot, pick2(['no pots!!', 'help', 'im gonna die lol', 'hp hp hp']));
+      if (!bot.potions && !bot.bubble && rng() < 0.6) say(world, bot, pick2(['last pot...', 'out of pots uh oh', 'shouldve bought more pots']));
+    } else if (!bot.bubble && rng() < 0.3) say(world, bot, pick2(['no pots!!', 'help', 'im gonna die lol', 'hp hp hp']));
   }
-  if (bot.hp <= 0) fall(bot, world, rng);
+  if (bot.hp <= 0) fall(bot, world, rng, bot.hitBy && world.now - bot.hitBy.at < 3 ? bot.hitBy.def : null);
 }
 
 const touches = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
-function fall(bot, world, rng) {
+// They fall, and say so: about what actually got them (`by`, the monster's def), when they know:
+// a field monster by its kind ("that warg"), a boss or queen by her own name ("Tamamo got me").
+function fall(bot, world, rng, by = null) {
   bot.down = true;
   bot.tomb = true;
   bot.downAt = world.now;
   bot.attack = null;
   bot.lunge = null;
   bot.brain.target = null;
-  say(bot, pick2(['x_x', 'noooo', 'rip me', 'i died lol', 'LAG', 'how', 'that snail hits hard wtf', 'brb dying']));
+  const named = by && (by.boss || by.queen || /,/.test(by.name));
+  const k = by ? (named ? by.name.split(',')[0] : by.name.toLowerCase()) : null;
+  const lines = !by ? ['x_x', 'noooo', 'rip me', 'i died lol', 'how', 'brb dying']
+    : named ? [`${k} got me x_x`, `rip me, ${k} wins`, `${k} hits so hard wtf`, `${k}: 1 me: 0`, `how is ${k} this strong`]
+    : [`that ${k} hits hard wtf`, `${k} got me x_x`, `rip me, ${k} wins`, `how did the ${k} do that much`, `killed by a ${k} lol`];
+  say(world, bot, pick2(lines), true);
   if (bot.party) world.log(`${bot.name} died! They'll be back in a bit.`, '#ff8fa8');
 }
 
@@ -941,7 +971,7 @@ function heal(bot, world, bots) {
   world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
   bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
-  if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
+  if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(world, bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }
 
@@ -1063,7 +1093,7 @@ function walkBackIn(bot, world) {
   bot.body = createBody(p ? p.x : b.x - b.facing * FOLLOW_GAP, p ? p.y : b.y);
   bot.appear = 1;
   Object.assign(bot.brain, { goal: null, target: null, path: null });
-  say(bot, pick2(['back!! sorry', 'im back, that was embarrassing', 'bought more pots this time', 'ok round 2', 'did u miss me']));
+  say(world, bot, pick2(['back!! sorry', 'im back, that was embarrassing', 'bought more pots this time', 'ok round 2', 'did u miss me']));
   world.log(`${bot.name} is back.`, '#9fe0b0');
 }
 
@@ -1077,7 +1107,7 @@ export function shareKill(bots, world, mob) {
       autoAssignAp(bot.char);
       bot.level = bot.char.level;
       bot.stats = computeStats(bot.char);
-      say(bot, speak(bots.memory, 'levelUp', { player: world.char.name, level: bot.level }, bot.style, bots.rng));
+      say(world, bot, speak(bots.memory, 'levelUp', { player: world.char.name, level: bot.level }, bot.style, bots.rng), true);
       world.fx.push({ kind: 'levelup', x: bot.body?.x ?? bot.x, y: bot.body?.y ?? groundAt(world.map, bot.x), t: 0, dur: 1.6 });
       world.log(`${bot.name} reached level ${bot.level}!`, '#ffe36b');
     }

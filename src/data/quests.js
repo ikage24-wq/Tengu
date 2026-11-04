@@ -32,7 +32,7 @@ export const QUESTS = {
   },
   first_steps: {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
-    text: "Every adventurer needs a weapon! Take this sword and some tonics. Equip it from your bag (I), then head east to Petal Meadow.",
+    text: "Kuro found you a weapon, I see! An adventurer needs sturdy clothes too, so take these Cotton Shorts and some tonics, put them on from your bag, then head east to Petal Meadow.",
     objectives: [],
     rewards: { exp: 10, gold: 50, items: [{ id: 'bottom_0', qty: 1 }, { id: 'red_potion', qty: 10 }] },
   },
@@ -106,24 +106,25 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Kestrel's trial for an archer before either level 30 path.
+  // Kestrel's trial for an Acrobat Archer before either level 30 path (the Phantom Trickster, the
+  // Arbalist Engineer).
   archer_trial: {
-    id: 'archer_trial', name: "The Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Ranger's way and the Sniper's way.",
+    id: 'archer_trial', name: "The Acrobat Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
+    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Phantom Trickster's way and the Arbalist Engineer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Elowen's trial for a Spirit Mage before either level 30 path (the Shrine Maiden, the Onmyoji).
+  // Elowen's trial for a Star Witch before either level 30 path (the Starlight Idol, the Astronomer).
   spiritmage_trial: {
     id: 'spiritmage_trial', name: "The Star Witch's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Shrine Maiden's way and the Onmyoji's way.",
+    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Starlight Idol's way and the Astronomer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Vex's trial for a thief before either level 30 path (the Blade Dancer, the Sky Dancer).
+  // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
   thief_trial: {
-    id: 'thief_trial', name: "The Thief's Trial", giver: 'vex', minLevel: 30, family: 'thief',
-    text: "Fast hands are nothing if the dark doesn't trust you. The Dullahans in the Twilight Ruins ride at night. Put 20 of them down before they see you coming, then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
+    id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',
+    text: "Pretty steps are nothing if you can't keep them up under pressure. The Dullahans in the Twilight Ruins ride at night, all armour and slow turns. Dance rings round 20 of them and bring them down, then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 40000, gold: 8000, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -329,7 +330,7 @@ export const QUESTS = {
   },
   vex_shadows: {
     id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
-    text: "A thief learns the roads by night. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
+    text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
     objectives: [
       { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
       { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back." },
@@ -341,13 +342,13 @@ export const QUESTS = {
   nim_chimes: {
     id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
     text: "The Sylphs in the Whispering Glade, past Mossy Woods, keep stealing my wind chimes to play with! Shoo 20 of them away and bring back 8 of the feathers they shed.",
-    objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'feather', count: 8 }],
+    objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'sylph_feather', count: 8 }],
     rewards: { exp: 12000, gold: 3500, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24,
-    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 Fox Fluff from the Nekomata, and leave a prayer at the shrine for me.",
-    objectives: [{ type: 'collect', item: 'fluff', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
+    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me.",
+    objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
     rewards: { exp: 22000, gold: 5000, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   vex_miko: {
@@ -365,13 +366,13 @@ export const QUESTS = {
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31,
     text: "Serpent Springs, off the Crystal Cave! Hot pools, steam, the works. I'm opening a spa... once someone clears the Lamia out. Bring me 15 of their scales as proof, they'll make lovely tiles.",
-    objectives: [{ type: 'collect', item: 'pebble', count: 15 }, { type: 'kill', mob: 'lamia', count: 20 }],
+    objectives: [{ type: 'collect', item: 'lamia_scale', count: 15 }, { type: 'kill', mob: 'lamia', count: 20 }],
     rewards: { exp: 60000, gold: 15000, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
-    text: "Snow season! For my winter line I need 12 icy gems from the Yuki-onna on Frozen Peak and 10 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
-    objectives: [{ type: 'collect', item: 'crystal_gel', count: 12 }, { type: 'collect', item: 'wool', count: 10 }],
+    text: "Snow season! For my winter line I need 12 Snow Gems from the Yuki-onna on Frozen Peak and 10 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
+    objectives: [{ type: 'collect', item: 'snow_gem', count: 12 }, { type: 'collect', item: 'wool', count: 10 }],
     rewards: { exp: 80000, gold: 12000, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
   },
   rook_stars: {

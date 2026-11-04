@@ -34,8 +34,9 @@ import { updateDrama, serverTime, ONLINE, timeLine } from './drama.js';
 import { updateEvents } from './events.js';
 import { updateLives } from './lives.js';
 import { updateSocial, luckyDrop } from './social.js';
-import { botChat, stale } from './chatlog.js';
+import { botChat, stale, sayOver, sayOneOf } from './chatlog.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
+import { dungeonForLevel } from '../data/dungeons.js';
 import { GEAR_FAMILIES } from '../data/items.js';
 import { FISH } from '../data/fishing.js';
 import { MOBS } from '../data/mobs.js';
@@ -60,7 +61,21 @@ const PER_TOWN = 8; // most in one town at once
 // Where players of each level hang out, following the hunting grounds around each town: Sprout
 // Village for beginners, Ember Crag and Pastel Harbor in the middle, Moonleaf Grove for the
 // high-level maps and the Crystal King.
-const TOWN_LEVELS = { sprout: [1, 12], crag: [10, 25], harbor: [15, 35], grove: [30, 99] };
+const TOWN_LEVELS = { sprout: [1, 12], crag: [10, 25], harbor: [15, 35], grove: [30, 99], lagoon: [15, 99] };
+// The towns players hang out in: the four, and Lantern Lagoon across the sea, where anglers go
+// (a smaller crowd, mostly there to fish its nooks and the derby). `PULL` weighs how often a town
+// is picked against the others.
+const BOT_TOWNS = [...TOWNS, 'lagoon'];
+const CROWD = { lagoon: 5 };
+const PULL = { lagoon: 0.5 };
+const capOf = (t) => CROWD[t] ?? PER_TOWN;
+// Where town players stroll in a map (`walkSpan` keeps them off a town's cliff), and the ways in
+// and out they use: the town's paths and its ferry, never someone's front door.
+const spanOf = (map) => map.walkSpan ?? [140, map.width - 140];
+const waysOf = (map) => {
+  const [a, b] = spanOf(map);
+  return map.portals.filter((p) => (p.ferry || !p.hidden) && !p.door && p.x >= a - 20 && p.x <= b + 20);
+};
 const WALK = 46;
 const PRO_RATE = 0.05;
 
@@ -262,19 +277,19 @@ export function createBots(world, rng = Math.random, { clock = () => new Date(),
 function townFor(bots, level, not = null) {
   const rng = bots.rng;
   const counts = townCounts(bots);
-  const open = TOWNS.filter((t) => t !== not && counts[t] < PER_TOWN);
+  const open = BOT_TOWNS.filter((t) => t !== not && counts[t] < capOf(t));
   if (!open.length) return null;
   const fits = open.filter((t) => level >= TOWN_LEVELS[t][0] && level <= TOWN_LEVELS[t][1]);
   const pool = fits.length && rng() < 0.9 ? fits : open;
   // Weighted toward the town with fewer people so nowhere piles up.
-  const weights = pool.map((t) => 1 / (1 + counts[t]));
+  const weights = pool.map((t) => (PULL[t] ?? 1) / (1 + counts[t]));
   let r = rng() * weights.reduce((a, b) => a + b, 0);
   for (let i = 0; i < pool.length; i++) if ((r -= weights[i]) <= 0) return pool[i];
   return pool[pool.length - 1];
 }
 
 function townCounts(bots) {
-  const counts = Object.fromEntries(TOWNS.map((t) => [t, 0]));
+  const counts = Object.fromEntries(BOT_TOWNS.map((t) => [t, 0]));
   // (Special visitors, the merchant, a GM, don't take anyone's place.)
   for (const b of bots.list) if (!b.party && !b.hunter && !b.merchant && !b.gm && counts[b.map] != null) counts[b.map]++;
   return counts;
@@ -282,12 +297,12 @@ function townCounts(bots) {
 
 function freeX(map, bots, rng) {
   for (let i = 0; i < 20; i++) {
-    const x = between(140, map.width - 140, rng);
+    const x = between(...spanOf(map), rng);
     const clear = !map.npcs.some((n) => Math.abs(n.x - x) < 60) && !map.portals.some((p) => Math.abs(p.x - x) < 60)
       && Math.abs((map.plaza ?? -999) - x) > 50 && !bots.list.some((b) => b.map === map.id && Math.abs(b.x - x) < 50);
     if (clear) return x;
   }
-  return between(140, map.width - 140, rng);
+  return between(...spanOf(map), rng);
 }
 
 // `who` logs in someone you know (a friend) as they are; now and then in the town you're in
@@ -343,7 +358,7 @@ function hooksFor(bots, world) {
       const inst = makeEquip(def.id, { rng: bots.rng, rarity: 1, variant: 'roll' });
       return { inst, id: def.id, qty: 1, price: Math.max(500, Math.round(def.price * 0.7 / 10) * 10) };
     },
-    say: (b, text) => say(b, text),
+    say: (b, text) => say(world, b, text),
     shout: (b, text) => shout(b, bots, world, text),
     addHunter: (who) => (huntable(world) ? addHunter(bots, world, true, who) : null),
     makeChar: makeBotCharacter,
@@ -368,8 +383,10 @@ export function recruitBot(bots, world, { level, jobs }) {
   return bot;
 }
 
-function say(bot, text) {
-  bot.bubble = { text, t: 4.5 };
+// Over their head, through the chat gate (world/chatlog.js): never a line said in the last ten
+// minutes. `important` for an answer to you.
+function say(world, bot, text, important = false) {
+  if (text) sayOver(world, bot, text, { important });
 }
 
 // Advances everyone: comings and goings, walking, chatting, and the occasional wave.
@@ -415,7 +432,7 @@ export function updateBots(bots, world, dt) {
       else {
         bot.state = 'logout';
         bot.timer = 0.6;
-        if (rng() < 0.6) say(bot, speak(bots.memory, 'bye', ctx, bot.style, rng) ?? 'bye');
+        if (rng() < 0.6) say(world, bot, speak(bots.memory, 'bye', ctx, bot.style, rng) ?? 'bye');
       }
     } else if (bot.stay <= 0 && !['leave', 'logout', 'approach', 'wave', 'duel', 'watch', 'meet', 'follow', 'afk', 'event', 'dummy', 'hide', 'life'].includes(bot.state)) {
       goToPortal(bot, map, 'travel');
@@ -470,7 +487,7 @@ export function updateBots(bots, world, dt) {
 }
 
 function goToPortal(bot, map, why) {
-  const portals = map.portals.filter((p) => !p.hidden);
+  const portals = waysOf(map);
   if (!portals.length) {
     bot.gone = why === 'logout';
     return;
@@ -500,7 +517,7 @@ function depart(bot, bots) {
 function arrive(bot, bots, world) {
   const rng = bots.rng;
   // (Off to somewhere in particular: the wandering merchant's town.)
-  const town = bot.session > 0 ? (bot.dest && townCounts(bots)[bot.dest] < PER_TOWN ? bot.dest : townFor(bots, bot.level, bot.from)) : null;
+  const town = bot.session > 0 ? (bot.dest && townCounts(bots)[bot.dest] < capOf(bot.dest) ? bot.dest : townFor(bots, bot.level, bot.from)) : null;
   bot.dest = null;
   if (!town) {
     bot.gone = true;
@@ -511,7 +528,7 @@ function arrive(bot, bots, world) {
   bot.stay = between(70, 200, rng);
   bot.waved = bot.waved && rng() < 0.7;
   // Walk in through a portal if you're there to see it.
-  const portal = pick(map.portals.filter((p) => !p.hidden), rng);
+  const portal = pick(waysOf(map), rng);
   if (town === world.map.id && portal) {
     bot.x = portal.x;
     bot.state = 'walk';
@@ -551,7 +568,7 @@ function behave(bot, bots, world, map, dt) {
       bot.timer -= dt;
       if (bot.timer <= 0 && !pastime(bot, bots, world, map)) {
         bot.state = 'walk';
-        bot.target = Math.max(120, Math.min(map.width - 120, bot.x + between(-260, 260, rng)));
+        bot.target = Math.max(spanOf(map)[0] - 20, Math.min(spanOf(map)[1] + 20, bot.x + between(-260, 260, rng)));
       }
       break;
     case 'walk':
@@ -616,7 +633,8 @@ function pastime(bot, bots, world, map) {
   const r = rng();
   const here = botsIn(bots, map.id);
   // Now and then: the stove, the craft bench, the town's own spot or its fishing nook.
-  if (r < 0.16 && townPastime(bot, bots, world, map)) return true;
+  // (At Lantern Lagoon, the anglers are mostly there for its fishing.)
+  if (r < (map.id === 'lagoon' ? 0.6 : 0.16) && townPastime(bot, bots, world, map)) return true;
   if (r < 0.5 && !wantsToGreet(bots, world, bot)) {
     // (Not round the stove or the bench: that's where people work.)
     const atWork = (x) => [map.stove, map.bench].some((w) => w != null && Math.abs(w - x) < 50);
@@ -945,7 +963,7 @@ function huntersHere(bots, world, dt) {
     const b = addHunter(bots, world, true, back.who);
     if (b) {
       b.appear = 1;
-      say(b, pick(['ok im back', 'round 2', 'bought 50 pots this time', 'that was so embarrassing', 'i have returned', 'revenge time'], rng));
+      sayOneOf(world, b, ['ok im back', 'round 2', 'bought 50 pots this time', 'that was so embarrassing', 'i have returned', 'revenge time'], rng);
     }
   }
   for (const bot of hunters) {
@@ -958,14 +976,14 @@ function huntersHere(bots, world, dt) {
       else {
         bot.state = 'logout';
         bot.timer = 0.6;
-        if (rng() < 0.5) say(bot, speak(bots.memory, 'bye', {}, bot.style, rng) ?? 'bye');
+        if (rng() < 0.5) say(world, bot, speak(bots.memory, 'bye', {}, bot.style, rng) ?? 'bye');
       }
     }
     // Died here: a few seconds under the tombstone, then back to town (and back here later).
     if (fieldDownOver(bot, world) && bot.state !== 'logout') {
       bot.state = 'logout';
       bot.timer = 0.6;
-      if (rng() < 0.5) say(bot, pick(['brb', 'back to town...', 'ugh', 'this map is cursed'], rng));
+      if (rng() < 0.5) sayOneOf(world, bot, ['brb', 'back to town...', 'ugh', 'this map is cursed'], rng);
       const char = bot.char;
       char.hp = computeStats(char).maxHp;
       bot.life = null;
@@ -1011,7 +1029,11 @@ function news(bots, world, dt) {
     },
     () => (who.level >= 20 ? `${who.name} reached level ${who.level}!` : null),
     () => (who.level >= 30 && who.char.job !== 'novice' ? `${who.name} became a ${JOBS[who.char.job].name}!` : null),
-    () => (who.level >= 14 ? `${who.name}'s group cleared Rootwood Hollow${rng() < 0.3 ? ' on Hard' : ''}!` : null),
+    () => {
+      // (A dungeon their level runs, so the news names every one of them.)
+      const d = dungeonForLevel(who.level - 2, rng);
+      return d ? `${who.name}'s group cleared ${d.name}${who.level >= d.minLevel + 4 && rng() < 0.4 ? ' on Hard' : ''}!` : null;
+    },
     () => (who.level >= 20 ? `${who.name} passed ${pick(queens, rng)}'s trial!` : null),
     () => (who.level >= 25 ? `${who.name} polished their gear to +10!` : null),
     () => (who.level >= 20 ? `${who.name} completed the ${pick(Object.values(SETS), rng).name} set!` : null),
@@ -1050,9 +1072,9 @@ export function buyFromShop(bot, index, char, addItem) {
   return { ok: true, text: `Bought ${name}${entry.qty > 1 ? ` x${entry.qty}` : ''} from ${bot.name} for ${priceText(entry.price)} gold.` };
 }
 
-export function thank(bots, bot, playerName) {
-  const line = speak(bots.memory, 'thanks', { player: playerName }, bot.style, bots.rng);
-  if (line) say(bot, line);
+export function thank(bots, bot, world) {
+  const line = speak(bots.memory, 'thanks', { player: world.char.name }, bot.style, bots.rng);
+  if (line) say(world, bot, line, true);
 }
 
 // The players standing in a map right now (for drawing and clicking).
