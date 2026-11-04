@@ -1405,8 +1405,9 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const long = longSleeves(g.top.design, g.top);
   const body = [];
   const out = [];
-  body.push(...legShapes(12, legs, g.shoes, true, [0, a > 0 ? -a * 1.6 : 0, 0]));
-  body.push(...legShapes(15.6, legs, g.shoes, false, [0, a < 0 ? a * 1.6 : 0, 0]));
+  // Each knee draws up as the hand on its side pulls down (a smooth cycle, `rig.climb` -2.5..2.5).
+  body.push(...legShapes(12, legs, g.shoes, true, [0, -Math.max(0, a) * 1.4, 0]));
+  body.push(...legShapes(15.6, legs, g.shoes, false, [0, Math.min(0, a) * 1.4, 0]));
   body.push(...hipShapes(legs));
   body.push(...topShapes('tee', g.top.color));
   // From behind, job capes show their own shape (scarves, banners, wings); others a plain drape.
@@ -1427,7 +1428,10 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   out.push(...(nape.length ? [...nape, ...(hatTucks(g.hat) ? [] : hairOf(look, null).top)] : [F(E(HEAD_X, 14.6, 10.2, 10, skinRamp(skin).sh1)), F(E(HEAD_X, 14.2, 9.6, 9.6, skin))]));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
-  const arms = [...arm(11.3, 27.6, 13, 3 + a, sleeve, long, g, skin), ...arm(19.2, 27.6, 18, 3 - a, sleeve, long, g, skin)];
+  // (Each hand in turn reaches high over the head and pulls down to the chin, the other passing it.)
+  // (A straight arm reaches about 18 on the figure; pulled down, the hand comes to the shoulders
+  // with the elbow out.)
+  const arms = [...arm(11.3, 27.6, 13.4 - 0.5 * a, 22 + 1.7 * a, sleeve, long, g, skin), ...arm(19.2, 27.6, 17.6 + 0.5 * a, 22 - 1.7 * a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
     const wing = capeShapes(g.cape.design, g.cape.color, 0, rig.flap);
     arms.push(...wing);
@@ -1436,6 +1440,9 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
 }
 
 // ---------- Pose solving ----------
+
+// Rope px climbed per full hand-over-hand cycle.
+const CLIMB_CYCLE = 36;
 
 // Walk and run cycles: frames per two steps. Each foot is planted from heel strike (toe up) to
 // toe-off (heel rolling up) and slides back exactly as fast as the ground goes by: over its
@@ -1982,8 +1989,13 @@ function solveRig(state, anim, mv = null) {
 
   if (pose === 'climb') {
     r.view = 'back';
-    const f = Math.floor(((anim ? anim.climb : t * 20) / 10) % 4 + 4) % 4;
-    r.climb = [2, 0, -2, 0][f];
+    // Hand over hand, on a smooth cycle: one full cycle (a reach and a pull with each hand) every
+    // CLIMB_CYCLE px climbed, so the hands and knees move with the climb itself and stop with it;
+    // held still on the rope, she breathes and sways a little.
+    const y = anim ? anim.climb : t * 40;
+    const s = Math.sin((y / CLIMB_CYCLE) * Math.PI * 2);
+    r.climb = Math.round(s * 2.5 * 4) / 4;
+    r.tx = Math.round(Math.sin(t * 1.6 + seed) * 0.5 * 4) / 4;
     return r;
   }
 
@@ -2281,7 +2293,55 @@ const UPRIGHT_BEHIND = new Set(['sword', 'axe', 'spear']);
 export function weaponBehind(type, angle, mv = null, toolKind = null) {
   const tipped = ((((angle % 360) + 540) % 360) - 180);
   const overTop = !toolKind && mv?.weapon != null && UPRIGHT_BEHIND.has(type) && tipped >= -22 && tipped < 35;
-  return Boolean(mv?.armBack || (mv?.back ?? (overTop || ((toolKind ? true : BACKSLUNG.has(type)) && tipped < -22 && tipped > -165))));
+  // (A crossbow slung on her back, nose up behind her, out of a move.)
+  const slung = !toolKind && !mv && type === 'crossbow' && tipped < -40 && tipped > -175;
+  return Boolean(mv?.armBack || (mv?.back ?? (overTop || slung || ((toolKind ? true : BACKSLUNG.has(type)) && tipped < -22 && tipped > -165))));
+}
+// How close a weapon may come to the floor under her (art px).
+const FLOOR_PAD = 1;
+// The weapon's angle raised toward level (and on toward upright) by as little as it takes for all of it to stay
+// above the floor; `hand` is where the hand is on the figure. The weapon's extent comes from its own
+// drawing (its canvas round the grip, less a little empty margin, turned with it), shifted
+// by how far down the hilt it's held (`hilt`) or up the shaft (`mv.grip`), then carried through the
+// whole-body lean and lift exactly as `drawMoved` draws them (a lunge forward tips the front low).
+function aboveFloor(angle, hand, wpn, hilt, mv) {
+  const shift = (mv?.grip ?? 0) - hilt;
+  // The head end at its full width (a ring, a crossbar, a blade), the grip end along its line only
+  // (a handle or a pommel is thin).
+  const head = 2 - wpn.grip[1] + shift;
+  const pts = [[2 - wpn.grip[0], head], [wpn.cw - 2 - wpn.grip[0], head], [0, wpn.ch - 2 - wpn.grip[1] + shift]];
+  const feet = H - OY;
+  const { pivot: pk, tilt } = leanOf({ lift: mv?.lift ?? 0, tilt: mv?.tilt ?? 0 });
+  const pivot = -H * pk;
+  const ts = Math.sin(tilt);
+  const tc = Math.cos(tilt);
+  const lift = mv?.lift ?? 0;
+  const low = (a) => {
+    const r = (a * Math.PI) / 180;
+    const sn = Math.sin(r);
+    const c = Math.cos(r);
+    let m = -Infinity;
+    for (const [x, y] of pts) {
+      // The point on the figure (from her feet, facing right), then leaned and lifted.
+      const px = hand[0] - 15.5 + (x * c - y * sn) * WEAPON_SCALE;
+      const py = hand[1] - feet + (x * sn + y * c) * WEAPON_SCALE;
+      m = Math.max(m, px * ts + (py - pivot) * tc + pivot - lift);
+    }
+    return m;
+  };
+  if (low(angle) <= -FLOOR_PAD) return angle;
+  const norm = ((((angle % 360) + 540) % 360) - 180);
+  // Raised toward upright on the side it already leans (through level), by as little as clears the
+  // floor; if nothing does (a big head held right down by her shins), as near clear as it gets.
+  const step = norm >= 0 ? -1 : 1;
+  let best = angle;
+  let bestLow = low(angle);
+  for (let d = 2; d <= Math.abs(norm); d += 2) {
+    const l = low(norm + step * d);
+    if (l <= -FLOOR_PAD) return angle + step * d;
+    if (l < bestLow) [best, bestLow] = [angle + step * d, l];
+  }
+  return best;
 }
 // How far down its hilt a weapon is held (art px from the grip point toward the pommel).
 const HILT = { sword: 8, axe: 7.5, spear: 9 };
@@ -2318,6 +2378,12 @@ function idolIdle(t, bit, env, bump, seg, lerp, q2) {
 // head, a lean) acting along with it. Bare hands (`type` none) get theirs too.
 const smooth = (u) => u * u * (3 - 2 * u);
 const IDLE_REST = 3.2;
+// The bow's resting angle and hand spot: slung low across her back (see weaponIdle).
+const BOW_REST = -84;
+const BOW_ARM = [-0.5, -2.5];
+// The crossbow's: slung on her back, nose up behind her shoulder.
+const CROSSBOW_REST = -62;
+const CROSSBOW_ARM = [-1, -3];
 function weaponIdle(type, t, job) {
   const bump = (p, a, b) => (p < a || p > b ? 0 : Math.sin(((p - a) / (b - a)) * Math.PI));
   const seg = (p, a, b) => Math.max(0, Math.min(1, (p - a) / (b - a)));
@@ -2381,31 +2447,36 @@ function weaponIdle(type, t, job) {
       return { arm: [lerp(0.5, 4 + Math.cos(a) * 1.4, k), lerp(0, -2 + Math.sin(a) * 1.4, k)], angle: lerp(twirl, 75, k), sparkle: k > 0.6 };
     }
     case 'bow': {
-      // The bow rests tipped forward so its top limb leans away from her face.
-      const sway = 58 + Math.sin(t * 1.3) * 4;
-      const b = bit([1.6, 2.4, 2.4]);
-      if (!b) return rest(sway);
+      // The bow is slung low across her back (tipped well back, drawn behind her), so it never
+      // covers her face or her outfit; each fidget brings it round in front of her below the chin.
+      const sway = BOW_REST + Math.sin(t * 1.3) * 3;
+      const b = bit([1.8, 2.4, 2.6]);
+      if (!b) return rest(sway, BOW_ARM);
       const k = env(b.u);
-      // Held out to check the string.
-      if (b.i === 0) { const c = bump(b.u, 0, 1); return { arm: [2.5 * c, -1 * c], angle: sway + 20 * c }; }
-      // Slung back over the shoulder (behind her head).
-      if (b.i === 1) return { arm: [lerp(0, 1, k), lerp(0, -5, k)], angle: lerp(sway, -302, k), rig: { backArm: [q2(0.6 * k), q2(-4.2 * k)], armSide: k > 0.5 ? -1 : 0.6, tilt: Math.round(-2 * k) } };
-      // The string plucked twice with the free hand, listening to it.
+      // Brought round and held out level at arm's length to sight down the string, then slung back.
+      if (b.i === 0) { const c = env(b.u, 0.3, 0.7); return { arm: [lerp(BOW_ARM[0], 3, c), lerp(BOW_ARM[1], -2, c)], angle: lerp(sway, -96, c), rig: { tilt: Math.round(-1 * c) } }; }
+      // A shrug that settles the bow on her back, the free hand tugging the sling.
+      if (b.i === 1) { const sh = bump(b.u, 0.2, 0.6); return { arm: [BOW_ARM[0], BOW_ARM[1] - 1.5 * sh], angle: sway - 8 * sh, rig: { backArm: [q2(1.5 * k), q2(-5 * k)], armSide: k > 0.5 ? -1 : 0.6, by: q2(-0.5 * sh) } }; }
+      // Brought round level at her waist and the string plucked twice with the free hand.
       const pl = Math.max(0, Math.sin(b.s * 9)) * k;
-      return { arm: [lerp(0, 2, k), 0], angle: lerp(sway, 70, k), rig: { backArm: [q2(3 * k + pl), q2(-1 * k)], hy: q2(0.4 * k) } };
+      return { arm: [lerp(BOW_ARM[0], 2, k), lerp(BOW_ARM[1], 0, k)], angle: lerp(sway, -100, k), rig: { backArm: [q2(3 * k + pl), q2(-1 * k)], hy: q2(0.4 * k) } };
     }
     case 'crossbow': {
-      // The crossbow rests level at her waist (its stock along her side, never up at her mouth).
-      const hang = 12 + Math.sin(t * 1.5) * 3;
-      const b = bit([1.6, 2.6, 2.4]);
-      if (!b) return rest(hang, [0, 1.5]);
-      const k = env(b.u);
-      // Brought up to sight along it a moment.
-      if (b.i === 0) { const aim = bump(b.u, 0, 1); return { arm: [2 * aim, -2 * aim], angle: hang - 8 * aim }; }
-      // Patted fondly with the free hand.
-      if (b.i === 1) { const pat = Math.abs(Math.sin(b.s * 7)) * k; return { arm: [lerp(0, 1, k), 0], angle: hang + 6 * k, rig: { backArm: [q2(4 * k), q2(-1 * k - pat)] } }; }
-      // Tipped down while the free hand works the crank.
-      return { arm: [lerp(0, 2, k), 0], angle: lerp(hang, 38, k), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-1 * k + 0.6 * Math.cos(b.s * 10) * k)], hx: q2(0.4 * k) } };
+      // The crossbow is slung on her back, nose up behind her shoulder (drawn behind her), so it
+      // never covers her face or her outfit; each fidget swings it down round her side (nose low,
+      // never past her face) to the front and back again.
+      const hang = CROSSBOW_REST + Math.sin(t * 1.5) * 3;
+      const b = bit([2, 2.6, 2.6]);
+      if (!b) return rest(hang, CROSSBOW_ARM);
+      const k = env(b.u, 0.28, 0.72);
+      const front = (a) => lerp(hang, a - 360, k);
+      const arm = (x, y) => [lerp(CROSSBOW_ARM[0], x, k), lerp(CROSSBOW_ARM[1], y, k)];
+      // Swung round and brought up to sight along it a moment.
+      if (b.i === 0) { const aim = bump(b.u, 0.3, 0.7); return { arm: arm(2 + aim, -1 - aim), angle: front(12 - 6 * aim) }; }
+      // Swung round to her waist and patted fondly with the free hand.
+      if (b.i === 1) { const pat = Math.abs(Math.sin(b.s * 7)) * k; return { arm: arm(1, 0.5), angle: front(14), rig: { backArm: [q2(4 * k), q2(-1 * k - pat)] } }; }
+      // Tipped down at her side while the free hand works the crank.
+      return { arm: arm(2, 0.5), angle: front(38), rig: { backArm: [q2(3.4 * k + 0.6 * Math.sin(b.s * 10) * k), q2(-1 * k + 0.6 * Math.cos(b.s * 10) * k)], hx: q2(0.4 * k) } };
     }
     case 'dagger': {
       // The Wind Dancer's chakram (the dagger items): every fidget keeps the ring at her hip or
@@ -2910,11 +2981,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   // (A chakram hangs from her hand down by her hip, the ring below it, never up by her face.)
   // (A greatsword rests back over the shoulder.)
-  const restAngle = { crossbow: 12, gauntlet: 70, dagger: 138, sword: -58, axe: -52, spear: -62, staff: -46, wand: 115, bow: 58 }[g.weapon?.type] ?? 25;
+  const restAngle = { crossbow: CROSSBOW_REST, gauntlet: 70, dagger: 138, sword: -58, axe: -52, spear: -62, staff: -46, wand: 115, bow: BOW_REST }[g.weapon?.type] ?? 25;
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
-  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: 48, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62 : null;
+  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: -76, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62 : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * (HEFTED.has(g.weapon?.type) ? 1 : 4) + (pose === 'jump' ? -15 : 0);
   // Between moves the held weapon eases to where it should be (guard, shoulder, a fidget) instead
   // of jumping there; a greatsword goes the long way, down and round behind her, rather than up
@@ -2941,7 +3012,16 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // run its guard and blade (or axe head) right across her face as it passes over the top (a
   // rising cut, a spin coming round, a raise before a slam): it goes behind her head instead, so
   // it reads as wheeling over and behind her.
-  const behind = weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind);
+  // A bow raised upright to shoot (drawn, loosed or ringing) goes behind her big head: held out at
+  // arm's length its top limb would otherwise run across her face; the string comes back to her
+  // cheek behind it, and the grip, the lower limb and the arrow show past her.
+  // Nothing sinks through the floor: a low pose (a crouch, a hanging rest, a wind-up dipped low)
+  // that would push either end of the weapon below her feet tips it just enough toward level to keep
+  // it on the floor's surface (a lift in the air raises the floor's line with her).
+  if (wpn && !toolKind && g.weapon && rig.view !== 'back') weaponAngle = aboveFloor(weaponAngle, [squashX(hand[0]), squashY(hand[1])], wpn, HILT[g.weapon.type] ?? 0, mv);
+  const upright = Math.abs(((((weaponAngle % 360) + 540) % 360) - 180)) < 40;
+  const bowUp = !toolKind && g.weapon?.type === 'bow' && mv && mv.front == null && (drawn || mv.snap > 0) && upright;
+  const behind = bowUp || weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind);
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
@@ -3054,6 +3134,27 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     const arm = sprite(`arm|${lookKey}|${gk}|${armKey}|${over != null ? 's' : 'c'}`, () => ({ w: W, h: H, shapes: move(squash(armShapesNow), 0, 0), res: RES, soft: 'cel', crisp: over == null, selout: true }));
     blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
   };
+  // Seen from behind (climbing), the weapon is slung across her back, swaying a little with the
+  // climb: a long one diagonally from hip to shoulder, a small one hanging at her hip.
+  const drawSlung = () => {
+    if (!g.weapon || toolKind) return;
+    const slung = weaponSprite(g.weapon, state.time ?? 0);
+    if (!slung) return;
+    const long = ['sword', 'axe', 'spear', 'staff', 'bow', 'crossbow'].includes(g.weapon.type);
+    const sway = (rig.climb ?? 0) * 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(snap(sx(squashX((long ? 15.5 : 19) + rig.tx))), snap(sy(squashY(long ? 35 : 38))));
+    if (flip) ctx.scale(-1, 1);
+    ctx.rotate((((long ? (g.weapon.type === 'crossbow' ? -60 : 38) : 160) + sway) * Math.PI) / 180);
+    // (A long one is centred on her back and carried a little smaller than in hand, held by its
+    // strap; a small one hangs from its grip.)
+    const k = ws * (long ? 0.72 : 0.9);
+    if (long) ctx.drawImage(slung.canvas, (-slung.cw / 2) * k, (-slung.ch / 2) * k, slung.cw * k, slung.ch * k);
+    else ctx.drawImage(slung.canvas, -(slung.grip[0] + 1) * k, -(slung.grip[1] + 1) * k, slung.cw * k, slung.ch * k);
+    ctx.restore();
+  };
   drawBackTool();
   drawOffhand();
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
@@ -3071,7 +3172,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
       feet: pt(15.5, squashY(55)), hands: pt(hand[0], hand[1]), back: pt(squashX(10.5 + rig.tx), squashY(32 + bodyY)), w: 4 * scale,
     }, scale, flip ? -1 : 1, (state.time ?? 0) + (state.seed ?? 0) * 1.37);
   }
-  if (rig.view === 'back') return handsAt();
+  if (rig.view === 'back') {
+    drawSlung();
+    return handsAt();
+  }
   if (!attack && over == null) {
     if (!wpn) return handsAt();
     if (!behind) drawWeapon();

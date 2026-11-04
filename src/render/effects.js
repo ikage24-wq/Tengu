@@ -108,7 +108,9 @@ function drawShot(ctx, f, cam) {
       // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'sinote' ? 1 : 1.05, alpha: f.split ? 0.85 : 1 });
+      // (Born small at the mic and grown to full in its first moment, so it never sits on her face.)
+      const born = bornAt(f);
+      fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (f.shot === 'sinote' ? 1 : 1.05) * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
       break;
     }
     case 'stbolt': case 'stcomet': case 'stmeteor': {
@@ -117,7 +119,10 @@ function drawShot(ctx, f, cam) {
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
       const name = f.shot === 'stbolt' ? 'celstbolt' : f.shot === 'stcomet' ? 'celstcomet' : 'celstmeteor';
-      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'stbolt' ? 0.75 : f.shot === 'stcomet' ? 0.75 : 0.75, alpha: f.split ? 0.85 : 1 });
+      // (A star or comet is born small at the wand's tip and its tail grows out behind it as it
+      // flies, so the tail never lies back over her; a meteor falls in from the sky full size.)
+      const born = f.shot === 'stmeteor' ? 1 : bornAt(f);
+      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: 0.75 * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
       break;
     }
     case 'skygust': case 'skygustbig': {
@@ -891,7 +896,7 @@ function drawFx(ctx, f, cam, time) {
       // of light for the Paladin, a white-hot burst and claws for the Berserker, a big cross of
       // cuts and sparks for the Warrior), and the Shinobi's a splash of ink.
       if (f.crit) {
-        if (f.path === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: 1 });
+        if (f.path === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: 0.72 });
         else if (f.path === 'steel') fxSprite(ctx, 'celcross', x, y, { p, scale: 1.15, rot: ((f.seed ?? 0.5) - 0.5) * 0.8 });
         else if (f.path === 'rage') {
           fxSprite(ctx, 'celhitred', x, y, { p, scale: 0.95 });
@@ -1041,17 +1046,31 @@ function bladePath(f) {
 
 
 
+// A spell's growth out of the wand or mic: 0.3 of its size as it leaves, full by the time it has
+// flown clear of the caster (about 0.12 s), eased.
+function bornAt(f) {
+  const u = Math.min(1, Math.max(0, f.t) / 0.12);
+  return 0.3 + 0.7 * u * u * (3 - 2 * u);
+}
+
 // A blade's cut: the swipe (Tengu's own art, fx-sprites.js) laid along the blade's own path through
 // the move (sampled from the hero's pose, `bladePath`), sized to the reach: steel blue, the
-// Paladin's gold (and any heavy blow's but the Warrior's), or the Berserker's rose red. A cut all around (a whirl) is
+// Paladin's gold (and any heavy blow's but the Warrior's), the Berserker's rose red, or the Wind
+// Dancer's coral ribbon. A cut all around (a whirl) is
 // the spin slash instead.
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'coral' ? 'celslashcoral' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (school === 'rosegold') {
     // The Blade Dancer's cuts come from her ring spinning round her: its ring-cut, seen flat.
     fxSprite(ctx, 'celbdhit', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 36, sy: f.flat ? 0.42 : 0.8, flip: (f.dir || 1) < 0 });
+    return;
+  }
+  if (f.flat && school === 'coral') {
+    // The Wind Dancer's whirl: her own swirl of coral and cream ribbons round her, seen flat.
+    // (Flattened round her waist and kept to her reach, so its ribbons pass round her, not over her face.)
+    fxSprite(ctx, 'celwdswirl', f.x - cam.x, f.y - cam.y + 4, { p, scale: (f.r ?? 60) / 88, sy: 0.38, alpha: 0.9, flip: (f.dir || 1) < 0 });
     return;
   }
   if (f.flat && (school === 'ink' || school === 'shadow')) {
@@ -1144,11 +1163,46 @@ let numberSide = 0;
 const backOut = (p) => 1 + 2.7 * (p - 1) ** 3 + 1.7 * (p - 1) ** 2;
 const isDamage = (n) => /^\d+$/.test(n.text) && !n.small && n.color !== '#ff6b8a';
 
+// Hits on one monster stack into a readable column (the way MapleStory's do): each number keeps a
+// line's height clear above the newer one under it, so a quick string of hits reads as a list,
+// never a pile. The push is eased (a spring toward where it must be), so numbers glide up, never jump.
+const NUMBER_LINE = 13;
+let stackedAt = -1;
+function stackNumbers(numbers) {
+  const now = performance.now() / 1000;
+  const dt = stackedAt < 0 ? 1 / 60 : Math.min(0.1, now - stackedAt);
+  stackedAt = now;
+  const cols = new Map();
+  for (const n of numbers) {
+    if (n.mob == null || n.t < NUMBER_DELAY) continue;
+    if (!cols.has(n.mob)) cols.set(n.mob, []);
+    cols.get(n.mob).push(n);
+  }
+  for (const col of cols.values()) {
+    // Newest first: each older one must sit at least a line above the one after it.
+    col.sort((a, b) => a.t - b.t);
+    let newer = null;
+    for (const n of col) {
+      const rise = (k) => easeOut(Math.min(1, (k.t - NUMBER_DELAY) / 0.6)) * 24 + Math.max(0, k.t - NUMBER_DELAY - 0.6) * 6;
+      const line = NUMBER_LINE * (n.crit ? 1.25 : n.small ? 0.8 : 1);
+      let want = 0;
+      if (newer) {
+        const newerY = newer.y - rise(newer) - (newer.lift ?? 0);
+        const myY = n.y - rise(n);
+        want = Math.max(0, myY - (newerY - line));
+      }
+      n.lift = (n.lift ?? 0) + (Math.max(want, n.lift ?? 0) - (n.lift ?? 0)) * Math.min(1, dt * 18);
+      newer = n;
+    }
+  }
+}
+
 export function drawNumbers(ctx, world, cam) {
   ctx.save();
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
   const totals = new Map();
+  stackNumbers(world.numbers);
   for (const n of world.numbers) {
     if (n.t < NUMBER_DELAY) continue;
     n.side ??= (numberSide = -numberSide || 1);
@@ -1166,7 +1220,7 @@ export function drawNumbers(ctx, world, cam) {
     const size = gfx.hd ? base * pop : Math.round(base * pop);
     const rise = easeOut(Math.min(1, age / 0.6)) * 24 + Math.max(0, age - 0.6) * 6;
     const x = n.x - cam.x + n.side * (n.small ? 4 : 9) * easeOut(Math.min(1, age / 0.5));
-    const y = n.y - cam.y - rise;
+    const y = n.y - cam.y - rise - (n.lift ?? 0);
     ctx.globalAlpha = (p > 0.7 ? (1 - p) / 0.3 : 1) * (n.party ? 0.6 : tier < 1 ? 0.85 : 1);
     if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
     ctx.font = font(size, true);
@@ -1182,7 +1236,7 @@ export function drawNumbers(ctx, world, cam) {
       const g = totals.get(key) ?? { sum: 0, count: 0, top: Infinity, x: n.x, oldest: 0, youngest: 9 };
       g.sum += Number(n.text);
       g.count++;
-      g.top = Math.min(g.top, n.y);
+      g.top = Math.min(g.top, n.y - (n.lift ?? 0));
       g.oldest = Math.max(g.oldest, n.t);
       g.youngest = Math.min(g.youngest, n.t);
       totals.set(key, g);

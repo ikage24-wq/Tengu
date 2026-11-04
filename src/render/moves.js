@@ -2623,14 +2623,16 @@ export const MOVES = {
     const pop = bump(p, 0.78, 0.96);
     return {
       poised: true,
-      weapon: lerp(20, 2, kneel) - 26 * kick + 3 * wind, arm: lerp(30, AE_AIM - 6, kneel) + 8 * kick, lunge: 3 * kneel - 7 * kick, tilt: 0.06 * kneel - 0.16 * kick + 0.03 * wind,
-      lift: 3 * kick + 6 * pop,
+      weapon: lerp(20, -16, kneel) - 26 * kick + 4 * wind, arm: lerp(30, AE_AIM + 10, kneel) + 8 * kick * (1 - kneel * 0.25), lunge: 3 * kneel - 7 * kick, tilt: 0.1 * kneel - 0.16 * kick + 0.03 * wind,
+      lift: -3 * kneel + 3 * kick + 6 * pop,
       rig: (r) => {
-        r.squat = q(4 * kneel);
+        r.squat = q(5 * kneel);
         r.air = pop > 0.4;
         r.by = q(1 * wind);
-        r.backArm = cranking ? crankHand(crank * 2, 4.6) : kick > 0.1 ? [q(-5 * kick), q(-3 * kick)] : [q(-2 * kneel), q(-1)];
-        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]], [pop, [2, -2.6, 20], [-2.2, -3.4, -40]]);
+        // The crank wound in big circles up over the stock, behind her, where it reads above the crossbow.
+        r.backArm = cranking ? [q(-5 + 5.5 * Math.cos(crank * Math.PI * 4)), q(-6 + 5.5 * Math.sin(crank * Math.PI * 4))] : kick > 0.1 ? [q(-5 * kick), q(-3 * kick)] : [q(-2 * kneel), q(-1 - 3 * kneel)];
+        r.hairLift = cranking && Math.sin(crank * Math.PI * 4) < 0 ? -1 : 0;
+        danceLegs(r, [kneel, [5, 0, 14], [-6.6, 1.4, -86]], [pop, [2, -2.6, 20], [-2.2, -3.4, -40]]);
         if (cranking && crank > 0.15) r.mouth = 'grin';
         if (pop > 0.4) r.eyes = 'happy';
         if (kick > 0.3) strikeFace(r);
@@ -4098,7 +4100,7 @@ export const MOVES = {
     const hold = soft(seg(p, 0.6, 0.84));
     const twirl = seg(p, 0.6, 0.9);
     return {
-      weapon: lerp(lerp(46, rollOn(BOW_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(46, BOW_ARM, raise), BOW_LOW, hold) + 3 * s.kick,
+      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(46, BOW_ARM, raise), BOW_LOW, hold) + 3 * s.kick,
       lift: 11 * skip + acBounce(p, 0.6), lunge: 4 * skip - 3 * s.kick, tilt: -0.08 * skip * (1 - s.pull) - 0.04 * s.pull - 0.08 * s.kick,
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
@@ -4391,9 +4393,11 @@ export const MOVES = {
     const click = bump(p, 0.58, 0.78);
     // The hand's path round her shoulder: forward and low, up over her head, out wide behind her.
     const ang = lerp(-0.3, 3.5, soft(sweep));
+    // The draw and the loose from an arabesque: up on her front toes, the back leg lifted high.
+    const arab = soft(seg(p, 0.28, 0.4)) * (1 - soft(seg(p, 0.6, 0.74)));
     return {
-      weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(36, PT_ARM, raise), 40, hold), lunge: 3 * bump(p, 0.02, 0.4) - 2 * s.kick, tilt: -0.12 * bump(p, 0.02, 0.3) - 0.04 * s.kick + 0.06 * click,
-      lift: 4 * bump(p, 0.04, 0.34) + 7 * click + ptFloat(p, 0.78),
+      weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(36, PT_ARM, raise), 40, hold), lunge: 3 * bump(p, 0.02, 0.4) - 2 * s.kick, tilt: -0.12 * bump(p, 0.02, 0.3) - 0.04 * s.kick + 0.06 * click + 0.12 * arab,
+      lift: 4 * bump(p, 0.04, 0.34) + 3 * arab + 7 * click + ptFloat(p, 0.78),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         bowDraw(r, s, raise);
@@ -4403,7 +4407,7 @@ export const MOVES = {
         r.cape -= q(4 * bump(p, 0.1, 0.36));
         r.hairLift = bump(p, 0.1, 0.3) > 0.5 ? -1 : 0;
         r.air = click > 0.35;
-        danceLegs(r, [bump(p, 0.02, 0.32), [1.8, -1.4, 4], [-1.2, -2, -24]], [s.pull, [2.2, 0, 4], [-1.8, -0.4, -10]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
+        danceLegs(r, [bump(p, 0.02, 0.32), [1.8, -1.4, 4], [-1.2, -2, -24]], [arab, [1, -0.4, 2], [-6.4, -5, -72]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
         if (sweeping) r.eyes = 'half';
         if (click > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
         else if (hold > 0.4) [r.eyes, r.mouth] = ['half', 'cat'];
@@ -4421,8 +4425,10 @@ export const MOVES = {
     const swirl = bump(p, 0.02, 0.4);
     const hop = bump(p, 0.04, 0.3);
     const hold = soft(seg(p, 0.72, 0.88));
+    // Dropped to one knee for the second arrow, the cape pooling round her.
+    const kneel = soft(seg(p, 0.4, 0.5)) * (1 - soft(seg(p, 0.74, 0.9)));
     return {
-      weapon: lerp(PT_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), 40, Math.max(tuckIn, hold * 0.6)) + 8 * sh.kick, arm: lerp(PT_ARM, 34, Math.max(tuckIn, hold * 0.5)), turn: turned ? -1 : 1,
+      weapon: lerp(PT_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), BOW_REST, Math.max(tuckIn, hold)) + 8 * sh.kick, arm: lerp(PT_ARM, 34, Math.max(tuckIn, hold * 0.5)) + 8 * kneel, turn: turned ? -1 : 1,
       pull: tuckIn > 0.1 ? 0 : sh.pull, nock: tuckIn <= 0.1 && sh.nock, twang: Math.max(s1.twang, s2.twang), lunge: 3 * swirl - 2 * sh.kick, lift: 8 * hop + ptFloat(p, 0.7), tilt: 0.1 * Math.sin(seg(p, 0.02, 0.4) * Math.PI * 2) - 0.04 * sh.kick,
       rig: (r) => {
         r.cape -= q(6 * swirl);
@@ -4430,7 +4436,9 @@ export const MOVES = {
         bowDraw(r, sh);
         if (tuckIn > 0.1) r.backArm = [q(-5 * tuckIn), q(-5 * tuckIn)];
         r.air = hop > 0.35;
-        danceLegs(r, [swirl, [1, -0.8, 6], [-2, -1.6, -20]], [hop, [1.4, -3.4, 30], [-1.6, -3, -40]]);
+        r.squat = q(4 * kneel);
+        r.cape -= q(-2 * kneel);
+        danceLegs(r, [swirl, [1, -0.8, 6], [-2, -1.6, -20]], [hop, [1.4, -3.4, 30], [-1.6, -3, -40]], [kneel, [4.6, 0, 12], [-5.8, 1.4, -84]]);
         if (sh.kick > 0.3) strikeFace(r);
         else if (turned) r.eyes = 'half';
       },
@@ -4444,8 +4452,8 @@ export const MOVES = {
     const leap = bump(p, 0.3, 0.56);
     const bow = soft(seg(p, 0.66, 0.8)) * (1 - soft(seg(p, 0.86, 0.96)));
     return {
-      weapon: lerp(lerp(rollOn(PT_AIM, s), 40, p < 0.2 ? 1 : reveal), 50, bow) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 44, p < 0.2 ? 1 : reveal), 40, bow), lunge: 5 * leap - 3 * s.kick, tilt: -0.08 * s.kick + 0.28 * bow - 0.1 * reveal,
-      lift: 4 * reveal + 9 * leap + ptFloat(p, 0.88),
+      weapon: lerp(lerp(rollOn(PT_AIM, s), 40, p < 0.2 ? 1 : reveal), 50, bow) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 44, p < 0.2 ? 1 : reveal), 40, bow), lunge: 5 * leap - 3 * s.kick, tilt: -0.08 * s.kick + 0.28 * bow - 0.1 * reveal - 0.1 * leap,
+      lift: 4 * reveal + 18 * leap + ptFloat(p, 0.88),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         bowDraw(r, s);
@@ -4453,7 +4461,7 @@ export const MOVES = {
         else if (bow > 0.1) r.backArm = [q(4 * bow), q(2 * bow)];
         r.cape -= q(4 * reveal + 3 * s.kick);
         r.air = leap > 0.35;
-        danceLegs(r, [reveal, [2.4, -1.6, 4], [-2.4, -1.6, -6]], [leap, [2.6, -3, 30], [-2.6, -3.6, -54]], [bow, [1.6, 0, 4], [-2.4, -1, -30]]);
+        danceLegs(r, [reveal, [2.4, -1.6, 4], [-2.4, -1.6, -6]], [leap, [3, -6, 56], [-0.6, -6.4, -10]], [bow, [1.6, 0, 4], [-2.4, -1, -30]]);
         if (s.kick > 0.3) strikeFace(r);
         else if (bow > 0.3) [r.eyes, r.mouth] = ['half', 'cat'];
         else if (reveal > 0.4) r.mouth = 'grin';
@@ -4480,7 +4488,8 @@ export const MOVES = {
         if (raise < 0.6) r.backArm = [q(lerp(2, 3, cock) + 8 * flick), q(-1 - 4 * cock - 3 * flick)];
         if (s.snap > 0) r.backArm = [q(-6 + 4 * hold), -1];
         r.air = skip > 0.4 || click > 0.35;
-        danceLegs(r, [cock, [1.8, 0, 4], [-1.4, -0.8, -16]], [flick, [3.6, 0, 6], [-2.6, -3, -54]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
+        r.squat = q(2 * flick);
+        danceLegs(r, [cock, [1.8, 0, 4], [-1.4, -0.8, -16]], [flick, [5.4, 0, 14], [-5.6, 0.4, -46]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
         if (flick > 0.3) r.eyes = 'wink';
         else if (click > 0.4) [r.eyes, r.mouth] = ['half', 'grin'];
         else if (hold > 0.5) r.mouth = 'cat';
@@ -5939,8 +5948,10 @@ const siSyllable = (p, seed) => ['o', 'ah', 'e', 'ah', 'o', 'open'][(Math.floor(
 const BOW_ARM = 56;
 const BOW_AIM = -10;
 const PT_ARM = 46;
-// Between shots (wind-ups and held ends) the bow sits low and tipped forward, off her face.
-const BOW_REST = 46;
+// Between shots (wind-ups and held ends) the bow is slung low behind her, tipped well back, the
+// way she carries it standing (render/hero.js), off her face and her outfit; it comes up behind
+// her head into the aim.
+const BOW_REST = -92;
 const BOW_LOW = 46;
 const PT_AIM = 16;
 // After the loose the bow rolls forward in her hand (a real archer's follow-through: the top limb

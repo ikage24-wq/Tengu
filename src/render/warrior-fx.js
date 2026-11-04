@@ -173,7 +173,9 @@ export function debris(ctx, x, y, p, w, school = null) {
 // star of light, the Berserker's claw marks, the Thief's violet X, a burst for anyone else.
 export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1 } = {}) {
   const k = big ? 1.15 : 0.85;
-  if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k });
+  // (The Paladin's star is drawn smaller than the others' marks: its rays reach far, and full size
+  // on a monster beside her it swallowed her.)
+  if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k * 0.6 });
   else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
@@ -315,6 +317,40 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celbdbounce', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, flip, rot: (seed - 0.5) * 0.5 }) || true;
     case 'bdcarousel':
       return fxSprite(ctx, 'celbdcarousel', x, y + 4, { p }) || true;
+    // Ribbon Lash on a Blade Dancer: two rose-gold rings whip once round her waist out to the
+    // blow's reach (eased out and in, flattened round her, behind her on the far side), then spark.
+    case 'bdorbit': {
+      const r = (f.r ?? 76) * 0.8;
+      const go = p * p * (3 - 2 * p);
+      const fade = Math.min(1, p * 6, (1 - p) * 5);
+      for (let i = 0; i < 2; i++) {
+        const a = -Math.PI / 2 + i * Math.PI + dir * go * Math.PI * 2.2;
+        const rx = r * Math.min(1, 0.35 + p * 2);
+        fxSprite(ctx, 'celbdring', x + Math.cos(a) * rx, y - 20 + Math.sin(a) * rx * 0.22, { t: f.t + i * 0.1, flip: Math.sin(a) * dir > 0, scale: 0.62, alpha: fade * (Math.sin(a) < 0 ? 0.75 : 1) });
+      }
+      if (p > 0.7) fxSprite(ctx, 'celbdbounce', x + dir * r * 0.9, y - 22, { p: (p - 0.7) / 0.3, scale: 0.5, flip });
+      return true;
+    }
+    // Gust Line on a Blade Dancer: a ring flung skimming down the line to the end of its reach,
+    // slowing as it goes, and a ricochet spark where it turns.
+    case 'bdskim': {
+      const r = f.r ?? 210;
+      const go = 1 - (1 - Math.min(1, p / 0.75)) ** 2;
+      const fade = Math.min(1, p * 8, (1 - p) * 4);
+      fxSprite(ctx, 'celbdring', x + dir * r * 0.8 * go, y - 24, { t: f.t, flip, scale: 0.9, alpha: fade });
+      if (p > 0.6) fxSprite(ctx, 'celbdbounce', x + dir * r * 0.8, y - 26, { p: (p - 0.6) / 0.4, scale: 0.7, flip });
+      return true;
+    }
+    // Gust Line on a Sky Dancer: a crescent of wind racing down the line, growing as it goes, and
+    // a cloud bursting where it ends.
+    case 'skyline': {
+      const r = f.r ?? 210;
+      const go = 1 - (1 - Math.min(1, p / 0.7)) ** 2;
+      const fade = Math.min(1, p * 8, (1 - p) * 4);
+      fxSprite(ctx, 'celskygust', x + dir * r * 0.8 * go, y - 26, { t: f.t, flip, scale: 0.9 + 0.5 * go, alpha: fade });
+      if (p > 0.55) fxSprite(ctx, 'celskyhit', x + dir * r * 0.8, y - 26, { p: (p - 0.55) / 0.45, scale: 0.6, flip });
+      return true;
+    }
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.
@@ -363,7 +399,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'pillar': {
       // A pillar of light on the monster, a star of light bursting in it.
       lightPillar(ctx, 'celpillarholy', x, y, p, 120);
-      fxSprite(ctx, 'celholyhit', x, y - 26, { p: Math.min(1, p * 1.4), scale: 0.8 });
+      fxSprite(ctx, 'celholyhit', x, y - 26, { p: Math.min(1, p * 1.4), scale: 0.5 });
       return true;
     }
     case 'aegis': {

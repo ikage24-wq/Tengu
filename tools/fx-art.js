@@ -4972,6 +4972,39 @@
   E.wdswirl = grown(WDSWIRL, 1.6);
   E.wdswirlbig = grown(WDSWIRL, 4);
 
+  // Her cut (her basic blows with the chakram): a coral ribbon whips along the blade's arc with a
+  // cream ribbon riding inside it, twisting as it goes, then unravels into beads and sparkles. The
+  // same geometry and swing as every blade swipe, so the game lays it along her own swing.
+  E.slashcoral = {
+    w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+    draw(ctx, i) {
+      const cx = 130;
+      const cy = 150;
+      const R = 100;
+      const a0 = (-168 * Math.PI) / 180;
+      const a1 = (-12 * Math.PI) / 180;
+      const head = [0.45, 0.8, 1, 1, 1, 1, 1, 1][i];
+      const tail = [0, 0, 0.08, 0.3, 0.5, 0.7, 1, 1][i];
+      const at = (rr, u) => [cx + Math.cos(a0 + (a1 - a0) * u) * rr, cy + Math.sin(a0 + (a1 - a0) * u) * rr];
+      if (head - tail > 0.05) {
+        const span = (u) => tail + (head - tail) * u;
+        ribbon(ctx, CORAL, (u) => at(R - 8, span(u)), (u) => (3 + 13 * Math.pow(u, 1.3)) * Math.sin(Math.PI * Math.min(1, u * 1.15)) + 1.5, { twist: 1.2 });
+        ribbon(ctx, CREAM, (u) => at(R - 30, span(u)), (u) => (2 + 6 * u) * Math.sin(Math.PI * Math.min(1, u * 1.1)) + 1, { twist: 0.8 });
+        if (i >= 1 && i <= 3) sparkle(ctx, CORAL, ...at(R - 4, head), 16 - (i - 1) * 3, 0.3);
+      }
+      if (i >= 4) {
+        const k = (i - 4) / 3;
+        const Rn = rng(95);
+        for (let j = 0; j < 7; j++) {
+          const u = j / 6;
+          const [x, y] = at(R - 12 + (Rn() - 0.5) * 16 + k * 16, u);
+          if (i < 6) shard(ctx, j % 2 ? CORAL : CREAM, x, y, a0 + (a1 - a0) * u + Math.PI / 2, 12 * (1 - k * 0.5), 4);
+          else sparkle(ctx, j % 2 ? CORAL : CREAM, x, y - k * 10, 8, j);
+        }
+      }
+    },
+  };
+
   // Her mark on a monster: a ring snaps round it and spins, a crescent gust cuts across, then the
   // ring breaks into beads and a ribbon of sparkles.
   E.wdhit = (() => {
