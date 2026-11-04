@@ -26,7 +26,7 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [ ] Two weapons per type share a name (Mithril Sword lv 30 and lv 40).
 
 ## B. Classes and heroes
-- [ ] **(choice)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves".
+- [ ] **(player: own version per path)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves".
 - [ ] The Wind Dancer's Ribbon Lash and Gust Line proc for the Blade and Sky Dancer too (coral swirls on a rose-gold dancer).
 - [ ] The Wind Dancer's basic cuts draw the Warrior's steel-blue swipe and spin ring.
 - [x] Arbalist's steam puff on her face on every shot. (fixed)
@@ -41,8 +41,8 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [ ] Damage numbers pile into unreadable stacks.
 
 ## C. Monsters and bosses
-- [ ] **(choice)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults, clashing with the chibi cast. Redraw chibi and rig.
-- [ ] **(choice)** The field monster girls (Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna) have thin adult proportions and faces too small to read.
+- [ ] **(player: keep their look, just rig)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults. Rig them like the dungeon bosses, keeping their taller look.
+- [ ] **(player: keep their look)** ~~The field monster girls (Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna) have thin adult proportions and faces too small to read.~~ Kept as a deliberate contrast.
 - [ ] Puff Bun mount's ear covers the rider's face.
 - [ ] 15 older field monsters have hit boxes half their drawn height.
 - [ ] Rootwood Hollow bosses (Tuskar, Gnarlroot, Myconid Queen) look flat and generic; the Corrupted Sapling looks like a placeholder.
@@ -65,8 +65,8 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [ ] A Twilight Ruins column inside the Boar Den.
 - [ ] The theatre's confetti stage floor reused outdoors on the Sky Whale; its back reads as an ice wall.
 - [ ] Crystal Cave's "Underground Lake" is a small glow puddle; Windy Canyon and Crystal Cave have very few monsters.
-- [ ] **(choice)** Missing per-map secrets (only Mossy Woods has one) and area boss nests (only Petal Meadow and Clover Hills).
-- [ ] **(choice)** Neighbouring hunting maps share a shape (three tall-climb pairs); Shrine and Springs are stacked full-width shelves. The dungeon gates are one stamped map.
+- [ ] **(player: boss nests only)** Area boss nests on every hunting map (only Petal Meadow and Clover Hills have one). Secrets not now.
+- [ ] **(player: rework them)** Neighbouring hunting maps share a shape (three tall-climb pairs); Shrine and Springs are stacked full-width shelves. The dungeon gates are one stamped map.
 - [ ] Open-air dungeon rooms and the queen arenas ignore day and night.
 
 ## E. UI and icons
