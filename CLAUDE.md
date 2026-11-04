@@ -191,6 +191,12 @@ there and update the status file as they get done.
 
 ## Other standing rules
 
+- **Never check retired jobs (the player's standing rule, 2026-11-04).** Retired jobs (the ones in
+  `RETIRED_JOBS` in `src/data/jobs.js`, the Ranger and Sniper, the old Spirit Mage, Shrine Maiden and
+  Onmyoji designs, and any move, effect or code left only for them, such as `shotsOf` in
+  `world/melee.js`) are never audited, measured, recorded, reworked or reported on. Audits and
+  sweeps cover only the jobs a player can be today (`JOBS` in `src/data/jobs.js`) and the moves and
+  effects those jobs actually play.
 - Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
   commits.
 - When reporting to the user, describe what changed in the game in plain words: no code, file
