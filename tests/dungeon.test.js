@@ -67,6 +67,25 @@ test('novices and full roles are turned away', () => {
   assert.match(planGroup(world).why, /Tank/);
 });
 
+test('friends online at the gate always come along, even sharing your role', () => {
+  const rng = seeded(9);
+  for (const [mine, theirs, want] of [
+    ['warrior', ['warrior'], ['tank', 'tank', 'healer', 'dps']],
+    ['spiritmage', ['spiritmage'], ['tank', 'healer', 'healer', 'dps']],
+    ['archer', ['thief'], ['tank', 'healer', 'dps', 'dps']],
+    ['warrior', ['warrior', 'warrior', 'warrior', 'archer'], ['tank', 'tank', 'tank', 'tank']],
+  ]) {
+    const world = heroAt(rng, 20, [mine]);
+    const friends = theirs.map((job, i) => ({ id: `f${i}`, name: `Friend${i}`, job, level: 20 }));
+    world.net = { friendsAtGate: () => friends };
+    const plan = planGroup(world);
+    assert.deepEqual(plan.slots.map((s) => s.role), want, `${mine} with ${theirs}`);
+    const came = plan.slots.filter((s) => s.who?.friend).length;
+    assert.equal(came, Math.min(3, theirs.length), 'every friend who fits in a group of four comes');
+    assert.equal(plan.slots.length, 4);
+  }
+});
+
 test('every dungeon room is laid out and every monster in it exists', () => {
   for (const [dg, id] of Object.values(DUNGEONS).flatMap((d) => d.rooms.map((r) => [d.id, r]))) {
     const map = MAPS[id];

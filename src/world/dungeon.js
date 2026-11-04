@@ -110,12 +110,24 @@ export function planGroup(world, id = 'hollow') {
     slots.push({ role, who });
     return true;
   };
-  take(mine, 'you');
-  // Friends online at the gate come along first.
-  for (const g of world.net?.friendsAtGate?.(world) ?? []) {
-    const role = roleOf(g.job, JOBS[g.job].family);
-    if (take(role, { friend: g })) continue;
-  }
+  // Real players always get a seat in their own role, even a second Warrior or Star Witch: the seat
+  // they push out is the one the finder would have filled (a DPS seat first, the tank's last).
+  const seat = (role, who) => {
+    if (take(role, who)) return true;
+    if (!open.length) return false;
+    for (const give of ['dps', 'healer', 'tank']) {
+      const i = open.indexOf(give);
+      if (i >= 0) {
+        open.splice(i, 1);
+        break;
+      }
+    }
+    slots.push({ role, who });
+    return true;
+  };
+  seat(mine, 'you');
+  // Friends online at the gate come along first (a group holds four: any past that stay behind).
+  for (const g of world.net?.friendsAtGate?.(world) ?? []) seat(roleOf(g.job, JOBS[g.job].family), { friend: g });
   for (const bot of party) {
     const role = roleOf(bot.char.job, JOBS[bot.char.job].family);
     if (!role) return { why: `${bot.name} needs a job before they can come.` };
