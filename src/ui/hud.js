@@ -39,10 +39,10 @@ const LAV = THEMES.lavender;
 const TRAY_Y = 322;
 const TRAY_H = 34;
 const MENU_X = 221;
-const MENU_STEP = 14.4;
-// The menu buttons' radius (ten of them fit between the other two trays).
-const MENU_R = 7;
-const HK_X = 380;
+const MENU_STEP = 13.2;
+// The menu buttons' radius (eleven of them fit between the other two trays).
+const MENU_R = 6.4;
+const HK_X = 382;
 const HK_STEP = 21;
 const HK_D = 19;
 const HK_Y = TRAY_Y + (TRAY_H - HK_D) / 2;
@@ -197,7 +197,7 @@ export function drawHud(ui, state, world) {
   if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
   // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
-  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['Life Skills', 'life', 'G', 'leaf', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Options', 'options', 'Esc', 'gear', 'gold']];
+  const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['Life Skills', 'life', 'G', 'leaf', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Collection', 'collection', 'B', 'crown', 'gold'], ['Options', 'options', 'Esc', 'gear', 'gold']];
   // On a phone ten 14 px bubbles are too small for a thumb: the tray folds into one big Menu
   // button that opens a grid of big buttons (drawMenuGrid, at the end of the HUD).
   if (ui.input?.touch) {
@@ -237,7 +237,7 @@ export function drawHud(ui, state, world) {
     const cx = MENU_X + MENU_R + 4.5 + i * MENU_STEP;
     const cy = TRAY_Y + TRAY_H / 2 - 1;
     const th = THEMES[theme];
-    const hot = hover(ui, cx - 8, cy - 8, 16, 16);
+    const hot = hover(ui, cx - 6.6, cy - 8, 13.2, 16);
     const open = state.windows[key].open;
     // Lifts under the mouse and sinks onto its lip the moment it's pressed.
     const lift = hot && ui.mouse.down ? 1.5 : hot ? -1.5 : 0;
@@ -260,9 +260,9 @@ export function drawHud(ui, state, world) {
     ctx.beginPath();
     ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
     ctx.stroke();
-    icon(ctx, ic, cx, cy + lift, 8.4 * k, open ? '#ffffff' : th.dark);
+    icon(ctx, ic, cx, cy + lift, 7.8 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
-    if (clicked(ui, cx - 8, cy - 8, 16, 16)) state.windows[key].open = !open;
+    if (clicked(ui, cx - 6.6, cy - 8, 13.2, 16)) state.windows[key].open = !open;
     const alert = (key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0);
     if (alert) {
       ctx.fillStyle = COLORS.bad;
@@ -440,7 +440,7 @@ function drawMenuGrid(ui, state, world) {
     box(ctx, bx, by + 2, bw, bh - 2, { fill: th.dark, edge: null, r: 9 });
     box(ctx, bx, by + down, bw, bh - 2, { fill: open ? th.main : th.light, edge: th.dark, r: 9, width: 1.2 });
     icon(ctx, ic, bx + bw / 2, by + 12 + down, 12, open ? '#ffffff' : th.dark);
-    text(ctx, label === 'World Map' ? 'Map' : label === 'Life Skills' ? 'Life' : label === 'Cash Shop' ? 'Shop' : label, bx + bw / 2, by + 29 + down, { size: 7.5, bold: true, align: 'center', color: open ? '#ffffff' : th.ink ?? th.dark, outline: open ? th.dark : null });
+    text(ctx, label === 'World Map' ? 'Map' : label === 'Life Skills' ? 'Life' : label === 'Cash Shop' ? 'Shop' : label === 'Collection' ? 'Book' : label, bx + bw / 2, by + 29 + down, { size: 7.5, bold: true, align: 'center', color: open ? '#ffffff' : th.ink ?? th.dark, outline: open ? th.dark : null });
     if ((key === 'stats' && char.ap > 0) || (key === 'skills' && char.sp > 0)) {
       ctx.fillStyle = COLORS.bad;
       ctx.beginPath();
