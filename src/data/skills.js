@@ -86,14 +86,14 @@ export const SKILLS = {
           // Shield Rush: she raises her blade flat before her and a wall of golden light snaps up;
           // she marches in behind it in heavy steps, shoving and gathering monsters up ahead of
           // her, then plants the blade and the wall bursts in pillars of light that stun them.
-          paladin: [{ move: 'shieldrush', dur: 0.9, step: k(90, 140), carry: 0.74, guard: 0.8, wall: true, strikes: [
+          paladin: [{ move: 'shieldrush', dur: 0.84, step: k(90, 140), carry: 0.74, guard: 0.8, wall: true, strikes: [
             ...[0.22, 0.4, 0.58].map((at) => ({ at, pct: k(35, 60), reach: 50, h: 70, targets: 5, knock: 180, stop: 0.02 })),
             { at: 0.8, pct: k(110, 190), reach: 70, h: 90, targets: 5, knock: 90, stun: k(1, 1.8), fx: 'pillar', burst: 'shieldslam', burstAt: 0.45, big: true, stop: 0.08, shake: 4 },
           ] }],
           // Reckless Charge: he hunches low and sprints, the axe dragging sparks along the ground,
           // trampling through everything in his way, then leaps and crashes down in a cleave that
           // tears the ground open.
-          berserker: [{ move: 'recklesscharge', dur: 0.95, step: k(100, 160), carry: 0.66, guard: 0.85, trail: true, strikes: [
+          berserker: [{ move: 'recklesscharge', dur: 0.88, step: k(100, 160), carry: 0.66, guard: 0.85, trail: true, strikes: [
             ...[0.25, 0.45].map((at) => ({ at, pct: k(45, 80), reach: 46, h: 64, around: true, targets: 5, knock: 70, launch: 140, bleed: { pct: 0.15, secs: 3 }, stop: 0.02 })),
             { at: 0.8, pct: k(140, 230), reach: 90, h: 90, around: true, targets: 5, knock: 260, launch: 300, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.1, shake: 5 },
           ] }],
@@ -129,8 +129,8 @@ export const SKILLS = {
       const targets = k(8, 12);
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'gstitan', dur: 1.5, step: 10, finisher: true, guard: 1.2, strikes: [
-          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gswheel', burstAt: 0, burstDur: 0.5, quiet: true, gauge: 0 },
+        combo: [{ move: 'gstitan', dur: 1.38, step: 10, finisher: true, guard: 1.2, strikes: [
+          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gswheel', burstAt: 0, burstDur: 0.46, quiet: true, gauge: 0 },
           { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, burst: 'titanrise', burstAt: 0, quiet: true, gauge: 0 },
           { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'titanbreak', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
           { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'titanwave', burstAt: 0, big: true, stop: 0.05, shake: 3, gauge: 0 },
@@ -162,7 +162,7 @@ export const SKILLS = {
       const targets = k(6, 9);
       return {
         mp: k(14, 24), pct: k(140, 240), hits: 2, targets, mend: lerpf(0.06, 0.12, lv, m),
-        combo: [{ move: 'consecrate', dur: 0.9, step: 4, strikes: [
+        combo: [{ move: 'consecrate', dur: 0.84, step: 4, strikes: [
           { at: 0.46, pct: k(140, 240), reach: 120, h: 90, around: true, targets, knock: 60, provoke: lerpf(3, 5, lv, m), burst: 'consecrate', burstAt: 0, big: true, stop: 0.08, shake: 3 },
           { at: 0.8, pct: k(110, 190), reach: 130, h: 90, around: true, targets, knock: 30, launch: 220, burst: 'consecrate', burstAt: 0, stop: 0.04, shake: 1 },
         ] }],
@@ -192,8 +192,8 @@ export const SKILLS = {
       const targets = k(8, 12);
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'plverdict', dur: 1.6, step: 0, finisher: true, guard: 1.3, strikes: [
-          { at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, burst: 'verdicthalo', burstAt: 0, burstDur: 1.0, quiet: true, rage: 0 },
+        combo: [{ move: 'plverdict', dur: 1.46, step: 0, finisher: true, guard: 1.3, strikes: [
+          { at: 0.05, pct: 0, reach: 0, h: 0, targets: 0, burst: 'verdicthalo', burstAt: 0, burstDur: 0.92, quiet: true, rage: 0 },
           { at: 0.24, pct: k(60, 110), reach: 150, h: 130, around: true, targets, pull: 90, burst: 'consecrate', burstAt: 0, stop: 0.03, rage: 0 },
           { at: 0.66, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 120, launch: 440, burst: 'verdict', burstAt: 0, fx: 'pillar', big: true, stop: 0.16, shake: 8 },
           { at: 0.82, pct: k(150, 260), reach: 180, h: 150, around: true, targets, knock: 260, burst: 'consecrate', burstAt: 0, big: true, stop: 0.05, shake: 3 },
@@ -234,7 +234,7 @@ export const SKILLS = {
       const chop = (at, arc) => ({ at, pct: k(110, 190), reach: 82, h: 70, targets, knock: 40, arc, thick: 12, rage: 0 });
       return {
         mp: 0, pct: k(110, 190), hits: 4, targets,
-        combo: [{ move: 'rampage', dur: 1.45, step: 30, carry: 0.6, strikes: [
+        combo: [{ move: 'rampage', dur: 1.32, step: 30, carry: 0.6, strikes: [
           chop(0.064, [-150, 230]), chop(0.227, [110, -240]), chop(0.384, [-150, 230]),
           { at: 0.724, pct: k(300, 520), reach: 120, h: 92, around: true, targets: targets + 2, knock: 300, launch: 250, crack: true, big: true, burst: 'rageburst', stop: 0.14, shake: 7, rage: 0 },
         ] }],
@@ -262,8 +262,8 @@ export const SKILLS = {
       const whirl = (at, i) => ({ at, pct: k(60, 100), reach: 96, h: 120, around: true, targets, pull: 80, arc: [i % 2 ? 180 : 0, 300], thick: 12, stop: 0.02, rage: 0 });
       return {
         mp: k(30, 50), pct: k(440, 760), hits: 7, targets,
-        combo: [{ move: 'bkeclipse', dur: 1.6, step: 6, finisher: true, guard: 1.3, strikes: [
-          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'axethrow', burstAt: 0, burstDur: 0.58, quiet: true, rage: 0 },
+        combo: [{ move: 'bkeclipse', dur: 1.46, step: 6, finisher: true, guard: 1.3, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'axethrow', burstAt: 0, burstDur: 0.53, quiet: true, rage: 0 },
           ...[0.08, 0.17, 0.26, 0.35, 0.44].map(whirl),
           { at: 0.47, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bloodmoon', burstAt: 0, rage: 0 },
           { at: 0.68, pct: k(440, 760), reach: 175, h: 150, around: true, targets, knock: 300, launch: 380, crack: true, burst: 'eclipse', burstAt: 0, big: true, stop: 0.16, shake: 8, rage: 0 },

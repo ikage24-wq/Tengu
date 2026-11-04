@@ -697,7 +697,7 @@ test('Demon Form: when Rage fills, every swing strikes twice and Rage holds unti
     v.char.skills.demonform = 10;
     if (demon) addRage(v, 100);
     v.mobs = v.mobs.slice(0, 1);
-    v.mobs[0].x = v.body.x + 105;
+    v.mobs[0].x = v.body.x + 110; // (just past a normal swing and its step in)
     const hp = v.mobs[0].hp;
     dice(0.5, () => {
       updateWorld(v, DT, press('KeyZ'));

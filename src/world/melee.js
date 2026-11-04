@@ -136,13 +136,13 @@ export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 // through the line.
 export const PATH_COMBOS = {
   warrior: [
-    { move: 'gsdrop', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
-    { move: 'gsrise', dur: 0.4, step: 7, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
-    { move: 'gsspin', dur: 0.5, step: 10, strikes: [
+    { move: 'gsdrop', dur: 0.36, step: 11, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
+    { move: 'gsrise', dur: 0.36, step: 11, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
+    { move: 'gsspin', dur: 0.44, step: 16, strikes: [
       { at: 0.22, pct: 65, reach: 74, h: 60, targets: 2, knock: 30, arc: [-115, 205], thick: 9 },
       { at: 0.72, pct: 75, reach: 74, h: 62, targets: 2, knock: 60, arc: [100, -215], thick: 9 },
     ] },
-    { move: 'gscleave', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
+    { move: 'gscleave', dur: 0.56, step: 19, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
   ],
   // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
   // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
@@ -229,15 +229,15 @@ export const PATH_COMBOS = {
     { move: 'ssslam', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 175, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] },
   ],
   paladin: [
-    { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
-    { move: 'bash', dur: 0.44, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 60, h: 62, knock: 120, stun: 0.4, burst: 'aegis' }] },
-    { move: 'pthrust', dur: 0.4, step: 16, strikes: [{ at: 0.42, pct: 105, reach: 90, h: 44, knock: 70, pierce: true, targets: 2 }] },
-    { move: 'smite', dur: 0.66, step: 12, finisher: true, strikes: [{ at: 0.43, pct: 200, reach: 92, h: 80, targets: 3, knock: 200, arc: [-95, 185], thick: 13, big: true, crack: true, stop: 0.08, shake: 3 }] },
+    { move: 'pslash', dur: 0.38, step: 10, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
+    { move: 'bash', dur: 0.4, step: 19, strikes: [{ at: 0.42, pct: 85, reach: 60, h: 62, knock: 120, stun: 0.4, burst: 'aegis' }] },
+    { move: 'pthrust', dur: 0.36, step: 26, strikes: [{ at: 0.42, pct: 105, reach: 90, h: 44, knock: 70, pierce: true, targets: 2 }] },
+    { move: 'smite', dur: 0.6, step: 19, finisher: true, strikes: [{ at: 0.43, pct: 200, reach: 92, h: 80, targets: 3, knock: 200, arc: [-95, 185], thick: 13, big: true, crack: true, stop: 0.08, shake: 3 }] },
   ],
   berserker: [
-    { move: 'cleave1', dur: 0.52, step: 8, strikes: [{ at: 0.4, pct: 115, reach: 80, h: 60, targets: 2, knock: 70, arc: [-150, 230], thick: 11 }] },
-    { move: 'cleave2', dur: 0.52, step: 8, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
-    { move: 'reaver', dur: 0.8, step: 16, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
+    { move: 'cleave1', dur: 0.46, step: 13, strikes: [{ at: 0.4, pct: 115, reach: 80, h: 60, targets: 2, knock: 70, arc: [-150, 230], thick: 11 }] },
+    { move: 'cleave2', dur: 0.46, step: 13, strikes: [{ at: 0.42, pct: 120, reach: 80, h: 66, targets: 2, knock: 60, launch: 160, arc: [110, -240], thick: 11 }] },
+    { move: 'reaver', dur: 0.72, step: 26, finisher: true, strikes: [{ at: 0.47, pct: 270, reach: 96, h: 76, targets: 3, knock: 250, arc: [-110, 200], thick: 15, big: true, crack: true, stop: 0.1, shake: 4 }] },
   ],
   // The Arbalist Engineer (the Stormcaller remade; docs/design/arbalist.md), her crossbow at the hip:
   // a snap shot, a double shot with a lever pumped between, a brace-and-crank heavy bolt through two,
@@ -321,21 +321,21 @@ const AE_SHOTS = {
 // lightly but quickly, heavy ones hold a longer stop, shake the screen and throw monsters far.
 // The big swings the warrior paths share (each path dresses them its own way below).
 const SWINGS = {
-  sweep: { move: 'sweep', dur: 0.42, step: 8, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
-  jabs: { move: 'jabs', dur: 0.44, step: 8, strikes: [
+  sweep: { move: 'sweep', dur: 0.38, step: 13, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
+  jabs: { move: 'jabs', dur: 0.4, step: 13, strikes: [
     { at: 0.2, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
     { at: 0.45, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
     { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
   ] },
-  flashcut: { move: 'flashcut', dur: 0.4, step: 34, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] },
-  spinback: { move: 'spinback', dur: 0.46, step: 10, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, around: true, targets: 4, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
-  pommel: { move: 'pommel', dur: 0.4, step: 10, strikes: [{ at: 0.4, pct: 70, reach: 50, h: 56, knock: 70, stun: 0.6, stop: 0.06, shake: 1 }] },
-  shove: { move: 'shove', dur: 0.38, step: 14, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
-  drivestab: { move: 'drivestab', dur: 0.5, step: 22, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] },
-  risecut: { move: 'risecut', dur: 0.48, step: 14, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
-  hammer: { move: 'hammer', dur: 0.8, step: 10, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] },
-  leapchop: { move: 'leapchop', dur: 0.66, step: 22, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, crack: true, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
-  skysplit: { move: 'skysplit', dur: 0.95, step: 24, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] },
+  flashcut: { move: 'flashcut', dur: 0.36, step: 39, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] },
+  spinback: { move: 'spinback', dur: 0.42, step: 16, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, around: true, targets: 4, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
+  pommel: { move: 'pommel', dur: 0.36, step: 16, strikes: [{ at: 0.4, pct: 70, reach: 50, h: 56, knock: 70, stun: 0.6, stop: 0.06, shake: 1 }] },
+  shove: { move: 'shove', dur: 0.34, step: 22, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
+  drivestab: { move: 'drivestab', dur: 0.44, step: 25, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] },
+  risecut: { move: 'risecut', dur: 0.44, step: 22, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
+  hammer: { move: 'hammer', dur: 0.72, step: 16, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] },
+  leapchop: { move: 'leapchop', dur: 0.6, step: 25, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, crack: true, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
+  skysplit: { move: 'skysplit', dur: 0.86, step: 28, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] },
 };
 // A swing with something added to every blow of it (a path's own touch).
 const dressed = (step, fields) => ({ ...step, strikes: step.strikes.map((st) => ({ ...st, ...fields })) });
@@ -380,14 +380,14 @@ export const PATH_VARIANTS = {
   paladin: [
     [PATH_COMBOS.paladin[0], { ...SWINGS.sweep, move: 'ploath' }, { ...SWINGS.flashcut, move: 'pldawn' }],
     // (Her shoulder check is a shield rush: a few running steps behind a flare of light.)
-    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.5, step: 34, carry: 0.42 }, { ...SWINGS.spinback, move: 'plhalo', dur: 0.56 },
-      { move: 'guardspin', dur: 0.56, step: 4, strikes: [{ at: 0.5, pct: 85, reach: 78, h: 60, around: true, targets: 4, knock: 100, arc: [0, 330], thick: 10, burst: 'aegis', stop: 0.04 }] }],
+    [PATH_COMBOS.paladin[1], { ...dressed(SWINGS.shove, { stun: 0.4, burst: 'aegis' }), move: 'shieldrush', dur: 0.44, step: 39, carry: 0.42 }, { ...SWINGS.spinback, move: 'plhalo', dur: 0.5 },
+      { move: 'guardspin', dur: 0.5, step: 6, strikes: [{ at: 0.5, pct: 85, reach: 78, h: 60, around: true, targets: 4, knock: 100, arc: [0, 330], thick: 10, burst: 'aegis', stop: 0.04 }] }],
     [PATH_COMBOS.paladin[2],
-      { move: 'ascend', dur: 0.5, step: 8, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, burst: 'aegis', arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
+      { move: 'ascend', dur: 0.44, step: 13, strikes: [{ at: 0.45, pct: 120, reach: 80, h: 84, targets: 3, knock: 40, launch: 380, burst: 'aegis', arc: [100, -215], thick: 10, big: true, stop: 0.06 }] },
       { ...SWINGS.drivestab, move: 'pllance' },
-      { move: 'kneelstab', dur: 0.62, step: 12, strikes: [{ at: 0.45, pct: 140, reach: 100, h: 48, targets: 3, pierce: true, knock: 210, stun: 0.3, burst: 'aegis', big: true, stop: 0.07, shake: 2 }] }],
+      { move: 'kneelstab', dur: 0.56, step: 19, strikes: [{ at: 0.45, pct: 140, reach: 100, h: 48, targets: 3, pierce: true, knock: 210, stun: 0.3, burst: 'aegis', big: true, stop: 0.07, shake: 2 }] }],
     [PATH_COMBOS.paladin[3],
-      { move: 'shieldslam', dur: 0.72, step: 14, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
+      { move: 'shieldslam', dur: 0.64, step: 22, finisher: true, strikes: [{ at: 0.5, pct: 220, reach: 92, h: 80, targets: 4, knock: 220, stun: 0.8, arc: [-95, 185], thick: 14, burst: 'shieldslam', burstAt: 0.55, big: true, stop: 0.1, shake: 5 }] },
       { ...dressed(SWINGS.leapchop, { fx: 'pillar' }), move: 'plfall' }, { ...dressed(SWINGS.skysplit, { fx: 'pillar' }), move: 'plsunrise' }],
   ],
   // The Berserker, wild and heavy, and everything bleeds; none of his swings are the other paths'.
@@ -398,16 +398,16 @@ export const PATH_VARIANTS = {
   // the ground open.
   berserker: [
     [PATH_COMBOS.berserker[0],
-      { move: 'flurry', dur: 0.5, step: 10, strikes: [0.15, 0.35, 0.55, 0.75].map((at, i) => ({ at, pct: 34, reach: 82, h: 52, targets: 2, pierce: true, knock: i === 3 ? 140 : 15, bleed: WOUND, stop: i === 3 ? 0.05 : 0 })) }],
+      { move: 'flurry', dur: 0.44, step: 16, strikes: [0.15, 0.35, 0.55, 0.75].map((at, i) => ({ at, pct: 34, reach: 82, h: 52, targets: 2, pierce: true, knock: i === 3 ? 140 : 15, bleed: WOUND, stop: i === 3 ? 0.05 : 0 })) }],
     [PATH_COMBOS.berserker[1],
-      { move: 'axehurl', dur: 0.62, step: 8, strikes: [
+      { move: 'axehurl', dur: 0.56, step: 13, strikes: [
         { at: 0.42, pct: 65, reach: 98, h: 60, around: true, targets: 4, knock: 40, bleed: WOUND, arc: [0, 330], thick: 12, stop: 0.03 },
         { at: 0.68, pct: 80, reach: 98, h: 60, around: true, targets: 4, knock: 130, bleed: WOUND, arc: [180, 330], thick: 12, big: true, stop: 0.05, shake: 1 },
       ] },
-      { move: 'gyre', dur: 0.55, step: 16, strikes: [{ at: 0.5, pct: 120, reach: 80, h: 56, around: true, targets: 4, knock: 90, bleed: WOUND, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] }],
+      { move: 'gyre', dur: 0.5, step: 26, strikes: [{ at: 0.5, pct: 120, reach: 80, h: 56, around: true, targets: 4, knock: 90, bleed: WOUND, arc: [0, 330], thick: 11, big: true, stop: 0.05, rage: 8 }] }],
     [PATH_COMBOS.berserker[2],
-      { move: 'bodyslam', dur: 0.9, step: 20, finisher: true, strikes: [{ at: 0.55, pct: 250, reach: 96, h: 80, around: true, targets: 5, knock: 260, launch: 240, bleed: WOUND, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.12, shake: 6 }] },
-      { move: 'dragrise', dur: 0.95, step: 34, carry: 0.42, trail: true, finisher: true, strikes: [{ at: 0.5, pct: 270, reach: 100, h: 110, targets: 4, knock: 120, launch: 440, bleed: WOUND, arc: [80, -175], thick: 16, crack: true, burst: 'rageburst', burstAt: 0.4, big: true, stop: 0.12, shake: 5 }] }],
+      { move: 'bodyslam', dur: 0.8, step: 23, finisher: true, strikes: [{ at: 0.55, pct: 250, reach: 96, h: 80, around: true, targets: 5, knock: 260, launch: 240, bleed: WOUND, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.12, shake: 6 }] },
+      { move: 'dragrise', dur: 0.86, step: 39, carry: 0.42, trail: true, finisher: true, strikes: [{ at: 0.5, pct: 270, reach: 100, h: 110, targets: 4, knock: 120, launch: 440, bleed: WOUND, arc: [80, -175], thick: 16, crack: true, burst: 'rageburst', burstAt: 0.4, big: true, stop: 0.12, shake: 5 }] }],
   ],
   // The Archer, nimble and showy, her gold hawk arrows in every shot. Openers: her snap shot, a
   // stomping kick then a shot point-blank, or a twirl that looses two. Second: her double shot,
@@ -663,13 +663,13 @@ export function airLeap(world) {
 // The command variants of a melee basic combo (any blade, axe, spear, dagger or bare hands).
 const MELEE = new Set(['sword', 'axe', 'spear', 'dagger', 'none']);
 // Up + attack: a rising launcher that throws them up and hops you after them (`hop`, px/s).
-const LAUNCHER = { move: 'rising', dur: 0.5, step: 8, strikes: [{ at: 0.4, pct: 120, reach: 72, h: 86, targets: 3, knock: 30, launch: 480, hop: 400, arc: [80, -175], thick: 11, big: true, stop: 0.06 }] };
+const LAUNCHER = { move: 'rising', dur: 0.46, step: 13, strikes: [{ at: 0.4, pct: 120, reach: 72, h: 86, targets: 3, knock: 30, launch: 480, hop: 400, arc: [80, -175], thick: 11, big: true, stop: 0.06 }] };
 // In the air: two cuts that keep you hanging (`hang`), then a dive that slams into the ground
 // and lands its blow on touchdown (`dive`: the fall speed; the strike marked `onLand`).
 const AIR = [
-  { move: 'airslash', dur: 0.36, hang: true, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205] }] },
-  { move: 'airslash2', dur: 0.36, hang: true, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 84, targets: 2, knock: 15, launch: 170, arc: [100, -215] }] },
-  { move: 'meteor', dur: 0.5, dive: 760, finisher: true, strikes: [{ onLand: true, pct: 210, reach: 84, h: 70, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] },
+  { move: 'airslash', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205] }] },
+  { move: 'airslash2', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 84, targets: 2, knock: 15, launch: 170, arc: [100, -215] }] },
+  { move: 'meteor', dur: 0.46, dive: 760, finisher: true, strikes: [{ onLand: true, pct: 210, reach: 84, h: 70, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] },
 ];
 // Running into an attack: a lunging thrust through the line.
 const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ at: 0.38, pct: 140, reach: 84, h: 52, targets: 3, pierce: true, knock: 200, big: true, stop: 0.05, shake: 1 }] };
@@ -677,10 +677,10 @@ const DASH = { move: 'dashstab', dur: 0.46, step: 44, carry: 0.55, strikes: [{ a
 // Running + attack, the paths' own: the Paladin drives her shield shoulder in behind a flare of
 // light that dazes them; the Berserker leaps into a chop that tears the ground.
 const PATH_DASH = {
-  paladin: { move: 'bash', dur: 0.48, step: 56, carry: 0.45, strikes: [{ at: 0.42, pct: 140, reach: 64, h: 62, targets: 3, knock: 240, stun: 0.6, burst: 'aegis', burstAt: 0.7, big: true, stop: 0.06, shake: 2 }] },
-  berserker: { move: 'leapchop', dur: 0.6, step: 64, carry: 0.5, strikes: [{ at: 0.55, pct: 150, reach: 86, h: 72, targets: 3, knock: 220, crack: true, bleed: { pct: 0.15, secs: 3 }, arc: [-105, 190], thick: 14, big: true, stop: 0.08, shake: 3 }] },
+  paladin: { move: 'bash', dur: 0.44, step: 64, carry: 0.45, strikes: [{ at: 0.42, pct: 140, reach: 64, h: 62, targets: 3, knock: 240, stun: 0.6, burst: 'aegis', burstAt: 0.7, big: true, stop: 0.06, shake: 2 }] },
+  berserker: { move: 'leapchop', dur: 0.56, step: 74, carry: 0.5, strikes: [{ at: 0.55, pct: 150, reach: 86, h: 72, targets: 3, knock: 220, crack: true, bleed: { pct: 0.15, secs: 3 }, arc: [-105, 190], thick: 14, big: true, stop: 0.08, shake: 3 }] },
 };
-const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
+const SLAM = { move: 'plunge', dur: 0.58, step: 29, strikes: [{ at: 0.56, pct: 170, reach: 88, h: 80, around: true, targets: 4, knock: 220, crack: true, big: true, stop: 0.09, shake: 4 }] };
 // The Paladin's and the Berserker's own command moves (the Warrior keeps the ones above). The
 // Paladin: up + attack, her rising cut on light; in the air, two oath chops, then Crusader's Fall
 // (blade-first, planted); down + attack, she drives the blade into the ground in a burst of
@@ -689,13 +689,13 @@ const SLAM = { move: 'plunge', dur: 0.62, step: 18, strikes: [{ at: 0.56, pct: 1
 const PALADIN_COMMANDS = {
   up: { ...LAUNCHER, move: 'ascend', strikes: LAUNCHER.strikes.map((st) => ({ ...st, burst: 'aegis' })) },
   air: [{ ...AIR[0], move: 'plaircut' }, { ...AIR[1], move: 'plaircut' }, { ...AIR[2], move: 'pldive' }],
-  slam: { ...SLAM, move: 'consecrate', dur: 0.66, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.48, burst: 'aegis' })) },
+  slam: { ...SLAM, move: 'consecrate', dur: 0.6, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.48, burst: 'aegis' })) },
 };
 const BERSERKER_COMMANDS = {
-  up: { ...LAUNCHER, move: 'dragrise', dur: 0.6, step: 18, strikes: LAUNCHER.strikes.map((st) => ({ ...st, at: 0.46, bleed: WOUND })) },
+  up: { ...LAUNCHER, move: 'dragrise', dur: 0.56, step: 29, strikes: LAUNCHER.strikes.map((st) => ({ ...st, at: 0.46, bleed: WOUND })) },
   air: [{ ...AIR[0], move: 'bkairchop' }, { ...AIR[1], move: 'bkairchop' }, { ...AIR[2], move: 'bkdive' }],
-  dash: { ...PATH_DASH.berserker, move: 'bkgore', dur: 0.62 },
-  slam: { ...SLAM, move: 'bodyslam', dur: 0.72, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.55, bleed: WOUND })) },
+  dash: { ...PATH_DASH.berserker, move: 'bkgore', dur: 0.58 },
+  slam: { ...SLAM, move: 'bodyslam', dur: 0.66, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.55, bleed: WOUND })) },
 };
 // The warrior paths fight in a blade's reach and put their weight into it.
 const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);

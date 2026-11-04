@@ -317,7 +317,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     }
     case 'aegis': {
       // A shield of light snapping up in front of the shove, then shattering into hexes.
-      fxSprite(ctx, 'celshield', x + dir * 20, y - 28, { p, scale: 0.75, sx: 0.7 });
+      fxSprite(ctx, 'celshield', x + dir * 20, y - 30, { p, scale: 0.95, sx: 0.7 });
       return true;
     }
     case 'shieldwall': {
@@ -366,7 +366,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       groundRing(ctx, 'celringholy', x, y, p, r * 1.1);
       for (const sd of [-1, -0.5, 0.5, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * 0.6, y, Math.min(1, p * 1.1 + Math.abs(sd) * 0.08), 110);
       const fall = Math.min(1, p / 0.12);
-      fxSprite(ctx, 'celsword', x, y + 4 - 160 * (1 - fall * fall), { p: p < 0.3 ? 0 : (p - 0.3) / 0.7, scale: 0.8 });
+      fxSprite(ctx, 'celsword', x, y + 4 - 160 * (1 - fall * fall), { p: p < 0.3 ? 0 : (p - 0.3) / 0.7, scale: 1.1 });
       if (p > 0.1) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.1) / 0.9, scale: 1.1 });
       return true;
     }
@@ -386,8 +386,12 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // out of it, a ring racing out.
       const r = f.r ?? 170;
       const fall = Math.min(1, p / 0.1);
-      fxSprite(ctx, pathTint(f.school, 'celsteelsword', 'celsword', 'celragesword'), x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.05 });
-      fxSprite(ctx, pathTint(f.school, 'celfissurebig', 'celfissuregoldbig', 'celfissureredbig'), x, y, { p, scale: r / 230 });
+      fxSprite(ctx, pathTint(f.school, 'celsteelsword', 'celsword', 'celragesword'), x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.25 });
+      // The split runs out both ways to the edge of the blow's reach: the main fissure under the
+      // sword and a crack racing on from each end of it, a beat behind.
+      const fissure = pathTint(f.school, 'celfissurebig', 'celfissuregoldbig', 'celfissureredbig');
+      fxSprite(ctx, fissure, x, y, { p, scale: r / 230 });
+      for (const sd of [-1, 1]) if (p > 0.05) fxSprite(ctx, fissure, x + sd * r * 0.5, y, { p: (p - 0.05) / 0.95, scale: (r / 230) * 0.8, flip: sd < 0 });
       debris(ctx, x, y, p, r * 0.8, f.school);
       if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 1.1 });
       groundRing(ctx, ringOf(f.school), x, y, p, r * 1.1);
@@ -425,7 +429,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // circle (dragging them in), then back to his hand.
       const th = Math.PI * 2 * (p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) ** 2);
       const R = 95 * Math.min(1, Math.sin(Math.PI * p) * 1.8);
-      fxSprite(ctx, 'celaxewheel', x + dir * Math.cos(th) * R, y - 30 + Math.sin(th) * R * 0.3, { t: time, scale: 0.55, flip });
+      fxSprite(ctx, 'celaxewheel', x + dir * Math.cos(th) * R, y - 30 + Math.sin(th) * R * 0.3, { t: time, scale: 0.9, flip });
       return true;
     }
     case 'bloodmoon': {
@@ -442,8 +446,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // and a jagged shockwave ripping out.
       const r = f.r ?? 175;
       const fall = Math.min(1, p / 0.1);
-      fxSprite(ctx, 'celrageaxe', x, y + 6 - 110 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 0.75, flip });
-      fxSprite(ctx, 'celclawbig', x, y - 40, { p, scale: 0.95, flip });
+      fxSprite(ctx, 'celrageaxe', x, y + 6 - 110 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1, flip });
+      fxSprite(ctx, 'celclawbig', x, y - 44, { p, scale: 1.25, flip });
       debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       groundWave(ctx, 'rage', x, y, p, r);

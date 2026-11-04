@@ -5463,6 +5463,121 @@ function heldEnd(mv, p, [at, span, pose, rig]) {
     rig: (r) => { base?.(r); rig(r, k); },
   };
 }
+// The Warrior line's footwork (2026-11-04, the Starlight Idol treatment in each path's own idiom):
+// every swing travels and lands with the feet, then settles with a beat of its own instead of
+// freezing. Each path moves its own way:
+//   skip  (the Warrior): a cocky skip into the swing, front knee up and back heel kicked, landing
+//         with the blade in a wide stamped plant; a bounce on the toes after.
+//   march (the Paladin): a knight's measured advance: the front knee raised high and stamped down
+//         as the blow lands, the shield side driven in behind it; one firm settle, never a hop for
+//         its own sake.
+//   bound (the Berserker): wild bounding leaps, both legs flung back, crashing down into a deep
+//         crouch that rocks him forward; a heavy shoulder heave after.
+// A move's `beats` are [at, height] (several for a move with several blows; `at` defaults to the
+// move's first blow); `pre` how long before the beat the step starts; `drive` px of forward drive
+// into the blow; `lean` an extra pitch into the landing; `b` the size of the settle bounces and
+// `settleAt` when they start (by default soon after the last beat).
+const STEP_STYLES = {
+  skip: { air: [[2.6, -4.6, 18], [-2.4, -4.6, -60]], plant: [[4.4, 0, 6], [-4.2, 0, -12]], squat: 2, lean: 0.1, b: 1, hk: 1.5 },
+  march: { air: [[2.8, -5.6, 28], [-2.4, 0, -8]], plant: [[4.8, 0, 6], [-3.6, 0, -10]], squat: 1, lean: 0.07, b: 0.6, hk: 1.2 },
+  bound: { air: [[3, -6, 30], [-3, -6.4, -80]], plant: [[5, 0, 10], [-5, 0, -14]], squat: 3, lean: 0.16, b: 1.4, hk: 1.6 },
+};
+const FOOTWORK = {
+  // The Warrior.
+  gsdrop: { s: 'skip', beats: [[null, 6]], drive: 4 },
+  gsrise: { s: 'skip', beats: [[0.55, 5]], pre: 0.3, b: 1.2 },
+  gsspin: { s: 'skip', beats: [[0.6, 5]], pre: 0.3, drive: 3 },
+  gscleave: { s: 'skip', beats: [[0.5, 8]], pre: 0.4, drive: 6, b: 1.3 },
+  sweep: { s: 'skip', beats: [[null, 4]], drive: 6 },
+  jabs: { s: 'skip', beats: [[0.2, 3], [0.45, 2], [0.7, 3]], pre: 0.14, drive: 4, b: 0.8 },
+  flashcut: { s: 'skip', beats: [[null, 5]], drive: 8 },
+  spinback: { s: 'skip', beats: [[0.58, 3]], pre: 0.3 },
+  shove: { s: 'skip', beats: [[null, 3]], drive: 7, lean: 0.12 },
+  drivestab: { s: 'skip', beats: [[null, 4]], drive: 10 },
+  pommel: { s: 'skip', beats: [[null, 3]], drive: 4 },
+  risecut: { s: 'skip', beats: [[null, 0]], b: 1.4 },
+  hammer: { s: 'skip', beats: [[0.56, 4]], pre: 0.3, drive: 5, b: 1.3 },
+  leapchop: { s: 'skip', beats: [[0.55, 6]], pre: 0.45, b: 1.3 },
+  skysplit: { s: 'skip', beats: [[0.6, 0]], b: 1.5 },
+  plunge: { s: 'skip', beats: [[0.56, 0]], b: 1.4 },
+  gstitan: { s: 'skip', beats: [[0.62, 0]], b: 1.2, settleAt: 0.86 },
+  // The Paladin.
+  pslash: { s: 'march', beats: [[null, 1.5]], drive: 4 },
+  bash: { s: 'march', beats: [[null, 1.5]], drive: 7, lean: 0.12 },
+  pthrust: { s: 'march', beats: [[null, 1]], drive: 8 },
+  smite: { s: 'march', beats: [[0.43, 3]], pre: 0.32, drive: 5, b: 0.9 },
+  ploath: { s: 'march', beats: [[null, 0]], drive: 3 },
+  pldawn: { s: 'march', beats: [[null, 2]], drive: 6 },
+  // (Shield Rush: one shove in a basic string; as the skill, a march of stamps behind the wall.)
+  shieldrush: { s: 'march', beats: (dur) => (dur > 0.7 ? [[0.22, 1.5], [0.4, 1.5], [0.58, 1.5], [0.8, 2.5]] : [[null, 1.5]]), pre: 0.14, drive: 4 },
+  plhalo: { s: 'march', beats: [[null, 2]], b: 0.7 },
+  guardspin: { s: 'march', beats: [[null, 1.5]] },
+  ascend: { s: 'march', beats: [[null, 3]], b: 1 },
+  pllance: { s: 'march', beats: [[null, 1]], drive: 10 },
+  kneelstab: { s: 'march', beats: [[null, 0]], drive: 6 },
+  shieldslam: { s: 'march', beats: [[0.5, 4]], pre: 0.32, b: 1 },
+  plfall: { s: 'march', beats: [[0.55, 5]], pre: 0.45, b: 1.2 },
+  plsunrise: { s: 'march', beats: [[0.6, 4]], pre: 0.35, b: 1 },
+  consecrate: { s: 'march', beats: [[null, 3]], pre: 0.3, b: 0.8 },
+  plverdict: { s: 'march', beats: [[0.66, 0]], b: 1, settleAt: 0.86 },
+  // The Berserker.
+  cleave1: { s: 'bound', beats: [[null, 6]], drive: 6 },
+  cleave2: { s: 'bound', beats: [[null, 5]], drive: 4 },
+  reaver: { s: 'bound', beats: [[0.47, 6]], pre: 0.4, b: 1.5 },
+  flurry: { s: 'bound', beats: [[0.15, 3], [0.55, 2], [0.75, 3]], pre: 0.12, drive: 5, b: 1 },
+  axehurl: { s: 'bound', beats: [[0.42, 3], [0.68, 3]], pre: 0.2 },
+  gyre: { s: 'bound', beats: [[0.5, 6]], pre: 0.3 },
+  bodyslam: { s: 'bound', beats: [[0.55, 6]], pre: 0.4, b: 1.6 },
+  dragrise: { s: 'bound', beats: [[null, 0]], b: 1.4 },
+  bkgore: { s: 'bound', beats: [[null, 4]], drive: 10 },
+  recklesscharge: { s: 'bound', beats: [[0.8, 0]], b: 1.4 },
+  rampage: { s: 'bound', beats: [[0.064, 2], [0.227, 4], [0.384, 4], [0.724, 0]], pre: 0.12, b: 1.4 },
+  bkeclipse: { s: 'bound', beats: [[0.68, 0]], b: 1.2, settleAt: 0.86 },
+};
+function footwork(mv, p, dur, fw, hit) {
+  if (!mv) return mv;
+  const S = STEP_STYLES[fw.s];
+  const beats = (typeof fw.beats === 'function' ? fw.beats(dur) : fw.beats).map(([at, h]) => [at ?? hit ?? 0.45, h]);
+  const pre = fw.pre ?? 0.26;
+  let up = 0;
+  let air = 0;
+  let plant = 0;
+  let from = 0.02;
+  for (const [at, h] of beats) {
+    const a = Math.max(from, at - pre);
+    if (h > 0 && at > a) {
+      const k = bump(p, a, at);
+      up += h * S.hk * k;
+      air = Math.max(air, clamp01(k * 1.6));
+    }
+    plant = Math.max(plant, bump(p, at - 0.02, Math.min(1, at + 0.16)));
+    from = at + 0.04;
+  }
+  const first = beats[0][0];
+  const last = beats[beats.length - 1][0];
+  const drive = (fw.drive ?? 0) * ease(seg(p, Math.max(0, first - pre), first)) * (1 - soft(seg(p, last + 0.12, 1)));
+  const s = fw.settleAt ?? Math.min(0.88, last + 0.22);
+  const bounce = (fw.b ?? S.b) * (1.8 * bump(p, s, s + (1 - s) * 0.45) + 0.7 * bump(p, s + (1 - s) * 0.45, s + (1 - s) * 0.85)) / 1.8;
+  const base = mv.rig;
+  return {
+    ...mv,
+    lift: (mv.lift ?? 0) + up + bounce * 2.6,
+    lunge: (mv.lunge ?? 0) + drive,
+    tilt: (mv.tilt ?? 0) + (fw.lean ?? S.lean) * plant,
+    rig: (r) => {
+      base?.(r);
+      // (A march lifts the knee without leaving the ground; the others leave it.)
+      if (air > 0.05) {
+        if (fw.s !== 'march' || up > 1.2) r.air = true;
+        legsTo(r, air, S.air[0], S.air[1]);
+      } else if (plant > 0.05 && !r.air) {
+        legsTo(r, plant * 0.8, S.plant[0], S.plant[1]);
+        r.squat = Math.max(r.squat ?? 0, q(S.squat * plant));
+      }
+      if (fw.s === 'bound' && plant > 0.4) r.hairLift = 1;
+    },
+  };
+}
 const HEFT = new Set(['sword', 'axe', 'spear', 'staff']);
 // A staff is longer than she is tall: pointed steeply down it would run through the floor, so its
 // downward angles are eased toward level (front and back alike).
@@ -5493,6 +5608,7 @@ export function moveAt(kind, progress, dur = 0.35, feel = null) {
   if (END_POSES[kind]) mv = heldEnd(mv, p, END_POSES[kind]);
   if (HEFT.has(feel?.weapon)) mv = hefted(mv, kind, p);
   if (feel?.weapon === 'staff') mv = staffed(mv);
+  if (FOOTWORK[kind]) mv = footwork(mv, p, dur, FOOTWORK[kind], feel?.hit);
   // A fighting move that ends on a long dead-still hold settles with two soft bounces instead of
   // freezing (CLAUDE.md: nothing sits frozen), back to rest by its last moment.
   const tail = frozenTail(kind, dur);
