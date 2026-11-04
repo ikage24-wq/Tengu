@@ -296,3 +296,7 @@ old towns "clutter and slop" and asked for everything to look perfect.
   a mobile turning, a pet that lives there. (In code: a map with `indoor: true` drops its town's
   outdoor look in `roomLook`, render/scenery.js, its town's outdoor particles, and plays the
   `room` ambience.) Check every new room for this before showing it.
+- **The floor you walk on is the room's floor (the player's rule, 2026-11-04).** A room painted as
+  one picture paints its floor all the way down past the bottom of the view, and the map draws no
+  ground strip of its own over or under it (`look.floor: 'painted'`), so the boards, tiles or
+  tatami under your feet are the ones in the room, never a default strip of another material.

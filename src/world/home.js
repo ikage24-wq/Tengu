@@ -98,7 +98,7 @@ export function homeInside() {
   return {
     id: 'home_in', name: 'Your Hut', theme: 'harbor', isTown: true, private: true, home: true, indoor: true, town: 'harbor', music: 'lagoon',
     width: 640, height: 400, groundY: 360,
-    look: { ceiling: true, sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
     cottages: [],
     terrain: [[0, 360], [640, 360]],
     platforms: [{ x: 70, y: 262, w: 150, bare: true, shelf: true }, { x: 420, y: 262, w: 150, bare: true, shelf: true }],

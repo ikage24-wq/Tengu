@@ -193,16 +193,16 @@ function terraceArt() {
 }
 
 function roomArt() {
-  return art('isle-hutroom', 640, 360, () => {
+  return art('isle-hutroom', 640, 480, () => {
     const wall = ramp('#ffe8d0', 0.6);
     const floor = ramp('#d8a878', 0.8);
     const beam = ramp('#b8865a', 0.8);
-    const out = [R(0, 0, 640, 360, wall.base)];
+    const out = [R(0, 0, 640, 480, wall.base)];
     for (let x = 0; x < 640; x += 22) out.push(F(R(x, 0, 1.2, 300, wall.sh)), F(R(x + 6, 40 + hash(x) * 120, 6, 1, wall.hi)));
     // Wainscot and skirting.
     out.push(R(0, 250, 640, 50, mix(wall.base, '#ffc8b0', 0.35)), F(R(0, 250, 640, 3, wall.hi)), F(R(0, 296, 640, 4, beam.sh)));
     // The floor boards.
-    out.push(...planks(0, 300, 640, 60, floor, 16, 21));
+    out.push(...planks(0, 300, 640, 180, floor, 16, 21));
     // Ceiling beams.
     out.push(R(0, 0, 640, 16, beam.base), F(R(0, 14, 640, 2, beam.sh)));
     for (const x of [40, 230, 410, 600]) out.push(R(x - 6, 0, 12, 300, beam.base), F(R(x - 6, 0, 3, 300, beam.hi)), F(R(x + 3, 0, 3, 300, beam.sh)));
@@ -217,7 +217,7 @@ function roomArt() {
       for (const bx of [sx + 14, sx + 136]) out.push(T([[bx - 2, 267], [bx + 2, 267], [bx + 2, 280], [bx - 8, 267]], beam.sh));
     }
     // A round rug.
-    out.push(E(320, 336, 120, 16, '#ffb3cf'), F(E(320, 336, 100, 12, '#ffd2e6')), F(E(320, 336, 60, 7, '#ffb3cf')));
+    out.push(E(320, 354, 124, 16, '#ffb3cf'), F(E(320, 354, 104, 12, '#ffd2e6')), F(E(320, 354, 62, 7, '#ffb3cf')));
     return out;
   }, false);
 }
@@ -410,7 +410,8 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
       return true;
     }
     case 'hutroom':
-      place(ctx, roomArt(), snap(x), 360 - cam.y);
+      // (The floor runs past the bottom of the view: you walk on the hut's own boards.)
+      place(ctx, roomArt(), snap(x), 480 - cam.y);
       return true;
     default:
       return false;

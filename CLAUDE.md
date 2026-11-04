@@ -96,7 +96,8 @@ drawing is for small supporting touches only (a tracer line, a sight's ticks).
 nothing of the outdoors in it: no birds, butterflies, gulls, fireflies or other critters, no
 petals, leaves, snow, rain or outdoor motes drifting through, no street life, no sky, and no
 birdsong or outdoor sounds. The outside shows only through a window or door; the room's own life
-(a fire, steam, lanterns, a hammock) is drawn with it. Rooms set `indoor: true` (and a ceiling)
+(a fire, steam, lanterns, a hammock) is drawn with it, and the floor you walk on is the room's own
+painted floor, never a default ground strip (`look.floor: 'painted'`). Rooms set `indoor: true` (and a ceiling)
 so the outdoor look, particles and ambience stay outside; see `docs/art/art-bible.md`, "Exterior
 and interior design", and check every room for it before showing it.
 

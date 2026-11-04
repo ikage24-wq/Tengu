@@ -2703,7 +2703,8 @@ for (const h of Object.values(SWEETHEARTS)) {
   MAPS[`swh_${h.id}`] = {
     id: `swh_${h.id}`, name: `${h.name}'s House`, theme: town.theme, isTown: true, private: true, indoor: true, town: town.town, music: town.music,
     width: 640, height: 400, groundY: 360,
-    look: { ceiling: true, sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
+    // (Its floor is painted with the room, render/sweethouses.js: no ground strip of its own.)
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
     cottages: [],
     terrain: [[0, 360], [640, 360]],
     platforms: [], ropes: [],

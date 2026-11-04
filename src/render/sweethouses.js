@@ -206,9 +206,13 @@ const EXT = {
 };
 
 // ---------- Inside ----------
+// A room's picture runs from its ceiling down past the bottom of the view, so the floor you walk on
+// (at y 360) is the room's own painted floor all the way down (the map draws no ground of its own:
+// `look.floor: 'painted'`).
+export const ROOM_H = 480;
 
 // A rug on the floor (where you walk), round and soft, with a border.
-const rug = (cx, c, trim) => [E(cx, 334, 120, 15, mix(c, '#5a4a6a', 0.25)), E(cx, 333, 116, 13, c), E(cx, 333, 96, 9, trim), E(cx, 333, 88, 7, c)];
+const rug = (cx, c, trim) => [E(cx, 354, 124, 16, mix(c, '#5a4a6a', 0.25)), E(cx, 353, 120, 14, c), E(cx, 353, 100, 10, trim), E(cx, 353, 92, 8, c)];
 
 // A room's door out (its style is the house's own), with its mat.
 function door(x, w, h, c, trim, kind) {
@@ -225,11 +229,11 @@ function door(x, w, h, c, trim, kind) {
   return out;
 }
 const ROOM = {
-  poppy: () => art('swr-poppy', 640, 360, () => {
+  poppy: () => art('swr-poppy', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#ffe8ee')];
     // Pink-and-cream striped wallpaper, a checkered floor.
     for (let x = 0; x < 640; x += 32) out.push(F(R(x, 0, 16, 300, '#fff4f6')));
-    for (let x = 0; x < 640; x += 40) for (let y = 300; y < 360; y += 20) out.push(R(x + ((y / 20) % 2) * 20, y, 20, 20, '#ff9ec0'), R(x + (1 - (y / 20) % 2) * 20, y, 20, 20, '#fff6ee'));
+    for (let x = 0; x < 640; x += 40) for (let y = 300; y < ROOM_H; y += 20) out.push(R(x + ((y / 20) % 2) * 20, y, 20, 20, '#ff9ec0'), R(x + (1 - (y / 20) % 2) * 20, y, 20, 20, '#fff6ee'));
     out.push(R(0, 296, 640, 6, '#e8b8a0'));
     // The big brick oven, its mouth glowing.
     out.push(...stones(40, 140, 150, 160, ramp('#d98a6a', 0.8), 11), E(115, 220, 40, 34, '#3a2420'), E(115, 228, 34, 22, '#ff8a3a'), F(E(115, 232, 26, 14, '#ffd36b')), R(60, 136, 110, 8, '#b8705a'));
@@ -249,10 +253,10 @@ const ROOM = {
     out.push(...rug(320, '#ff9ec0', '#fff3f6'), ...door(608, 48, 104, '#e5485f', WHITE, 'heart'));
     return out;
   }, false),
-  lark: () => art('swr-lark', 640, 360, () => {
+  lark: () => art('swr-lark', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#e8f2fa')];
     for (let x = 0; x < 640; x += 22) out.push(F(R(x, 0, 1.2, 300, '#c8dceb')));
-    out.push(...planks(0, 300, 640, 60, ramp('#a8c0d0', 0.8), 16, 3));
+    out.push(...planks(0, 300, 640, ROOM_H - 300, ramp('#a8c0d0', 0.8), 16, 3));
     // Bookshelves stuffed full, floor to beam.
     for (const bx of [20, 480]) {
       out.push(R(bx, 40, 140, 260, '#a8805a'), R(bx + 6, 46, 128, 250, '#7a5a42'));
@@ -273,10 +277,10 @@ const ROOM = {
     out.push(...rug(320, '#5fb8d8', '#e8f6ff'), ...door(450, 44, 100, '#5f8fd8', WHITE, 'porthole'));
     return out;
   }, false),
-  rowan: () => art('swr-rowan', 640, 360, () => {
+  rowan: () => art('swr-rowan', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#f2e6d6')];
     out.push(...stones(0, 180, 640, 120, ramp('#d8d0c8', 0.7), 41));
-    out.push(...planks(0, 300, 640, 60, ramp('#b8865a', 0.8), 14, 7));
+    out.push(...planks(0, 300, 640, ROOM_H - 300, ramp('#b8865a', 0.8), 14, 7));
     // A great stone fireplace, the kettle (a bit scorched) on its hook.
     out.push(...stones(240, 120, 160, 180, ramp('#c8c0b8', 0.75), 5), R(270, 190, 100, 110, '#3a2420'), E(320, 280, 40, 14, '#ff8a3a'), R(230, 112, 180, 12, '#a8805a'));
     out.push(R(319, 190, 2, 40, '#5a5a6a'), E(320, 240, 14, 11, '#3a3a4a'), F(E(316, 236, 5, 3, '#5a5a6a')));
@@ -294,12 +298,12 @@ const ROOM = {
     out.push(...rug(320, '#8fb8e8', '#f2f6ff'), ...door(605, 56, 140, '#a8805a', '#5a5a6a', 'bands'));
     return out;
   }, false),
-  yuzu: () => art('swr-yuzu', 640, 360, () => {
+  yuzu: () => art('swr-yuzu', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#fff4e8')];
     // Shoji walls, tatami floor.
     for (let x = 0; x < 640; x += 40) out.push(R(x, 0, 3, 300, '#c8a888'));
     for (let y = 0; y < 300; y += 30) out.push(F(R(0, y, 640, 2, '#d8c0a0')));
-    for (let x = 0; x < 640; x += 120) out.push(R(x, 300, 118, 60, '#d8e0a0'), F(R(x, 300, 118, 4, '#5a8a4a')), F(R(x + 58, 304, 2, 56, '#c8d090')));
+    for (let x = 0; x < 640; x += 120) out.push(R(x, 300, 118, ROOM_H - 300, '#d8e0a0'), F(R(x, 300, 118, 4, '#5a8a4a')), F(R(x + 58, 304, 2, ROOM_H - 304, '#c8d090')));
     // A low table with tea, cushions round it.
     out.push(R(230, 262, 180, 10, '#a8503a'), R(240, 272, 10, 28, '#8a3a2a'), R(390, 272, 10, 28, '#8a3a2a'), E(300, 258, 14, 6, WHITE), E(340, 256, 8, 6, '#9fe0a0'), E(200, 300, 30, 8, '#ff8a6a'), E(440, 300, 30, 8, '#ff8a6a'));
     // Fox masks hung on the wall.
@@ -315,11 +319,11 @@ const ROOM = {
     out.push(...door(60, 52, 120, '#a8503a', '#fff8e8', 'shoji'));
     return out;
   }, false),
-  celeste: () => art('swr-celeste', 640, 360, () => {
+  celeste: () => art('swr-celeste', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#2f2f68')];
     // The ceiling a star map, constellations drawn in gold.
     for (let i = 0; i < 60; i++) out.push(F(star(hash(i * 1.3) * 640, hash(i * 2.7) * 200, 1 + hash(i) * 2, i % 4 ? '#c8c8ff' : GOLD)));
-    out.push(...planks(0, 300, 640, 60, ramp('#5f5fb8', 0.8), 16, 4));
+    out.push(...planks(0, 300, 640, ROOM_H - 300, ramp('#5f5fb8', 0.8), 16, 4));
     // The big telescope on its mount, aimed at the slit in the dome.
     out.push(R(300, 220, 40, 80, '#8a6a4a'), R(290, 296, 60, 6, '#6a4a3a'));
     // A bed with moon pillows and a starry quilt.
@@ -340,12 +344,12 @@ const ROOM = {
     out.push(...rug(250, '#8f7fe0', '#c8c8ff'), ...door(420, 44, 104, '#4a4aa8', GOLD, 'moon'));
     return out;
   }, false),
-  marlowe: () => art('swr-marlowe', 640, 360, () => {
+  marlowe: () => art('swr-marlowe', 640, ROOM_H, () => {
     const out = [R(0, 0, 640, 300, '#d8a878')];
     // Curved ship's planking, ribs, a deck floor.
     for (let y = 0; y < 300; y += 18) out.push(F(R(0, y, 640, 1.4, '#b8865a')));
     for (const x of [60, 220, 420, 580]) out.push(R(x - 6, 0, 12, 300, '#a8704a'), F(R(x - 6, 0, 3, 300, '#c88a5a')));
-    out.push(...planks(0, 300, 640, 60, ramp('#c89a6a', 0.8), 16, 8));
+    out.push(...planks(0, 300, 640, ROOM_H - 300, ramp('#c89a6a', 0.8), 16, 8));
     // Sea charts on the wall, the ship's wheel.
     for (const [x, y, w, h] of [[90, 60, 110, 80], [440, 50, 120, 90]]) out.push(R(x, y, w, h, '#f6e8c8'), F(R(x + 8, y + 10, w - 16, 1, '#a8805a')), F(E(x + w * 0.4, y + h * 0.5, w * 0.2, h * 0.2, '#9fd8ff')), F(T([[x + w * 0.6, y + h * 0.3], [x + w * 0.7, y + h * 0.4], [x + w * 0.62, y + h * 0.45]], '#e5485f')));
     out.push(E(320, 190, 46, 46, '#8a5a3a'), E(320, 190, 38, 38, '#d8a878'), E(320, 190, 10, 10, '#8a5a3a'));
@@ -360,7 +364,7 @@ const ROOM = {
     // round-topped hatch out.
     for (let i = 0; i < 6; i++) for (let j = 0; j < 4; j++) out.push(F(R(i * 14, j * 14, 14, 1.2, '#f6e8c8')), F(R(i * 14, j * 14, 1.2, 14, '#f6e8c8')));
     out.push(star(46, 30, 6, '#ff9e7a'));
-    out.push(...rug(320, '#2f5fb8', '#f6e8c8'), star(320, 336, 8, GOLD), ...door(605, 46, 108, '#8a5a3a', GOLD, 'porthole'));
+    out.push(...rug(320, '#2f5fb8', '#f6e8c8'), star(320, 355, 8, GOLD), ...door(605, 46, 108, '#8a5a3a', GOLD, 'porthole'));
     return out;
   }, false),
 };
@@ -374,7 +378,7 @@ export function drawSweetHouse(ctx, map, kind, wx, extra, cam, width, time) {
   const x = wx - cam.x;
   const night = map.night ?? 0;
   if (kind.startsWith('swroom_')) {
-    place(ctx, ROOM[id](), Math.round(x), Math.round(360 - cam.y));
+    place(ctx, ROOM[id](), Math.round(x), Math.round(ROOM_H - cam.y));
     roomLife(ctx, id, x - 320, 360 - cam.y - 360, time);
     return true;
   }

@@ -715,6 +715,9 @@ function groundRuns(map, cam) {
 }
 
 export function drawTerrain(ctx, theme, map, cam, width, height, time) {
+  // A room whose picture paints its own floor (your hut, the Sweethearts' rooms) draws no ground
+  // strip over it: you walk on the room's floor.
+  if (map.look?.floor === 'painted') return;
   theme = map.look?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   const deco = map.look?.edges ?? null;
