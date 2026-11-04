@@ -78,3 +78,20 @@ Kestrel's trial carry over; the name is Arbalist Engineer).
   px long and ~70 tall (its hit band is 140); the hit mark ~40-58 px; Sticky Bolt's blast ~66 px
   round (its reach is 50-80; it was ~26); Steam Vent's steam ~60 px round for its 80 px reach (was
   ~13). Muzzle and leap puffs keep their size.
+
+## Her own Acrobat skills (2026-11-04)
+
+The Acrobat Archer's skills she keeps (same numbers) are now her own gadgets (`src/data/path-skills.js`):
+
+- **Handspring is Steam Hop** (`aejet`): she crouches and slaps the valve on her belt, her boots blast
+  steam and she rockets over the monster in a tucked arc with the crossbow hugged low and her free
+  arm windmilling; lands in a skid with another burst of steam, spins round on her heel and fires back.
+- **Grand Somersault is Bolt Mortar** (`aemortar`): down on one knee she stands the crossbow on its
+  stock at arm's length, nose to the sky, cranks it three times, and fires a brass shell straight up
+  with a kick that rocks her back; it bursts high overhead (`celaeshell`: a brass flash, a teal ring,
+  cogs and steam) and a hail of her teal bolts rains down on everything below while she watches with
+  her head tipped back, bounces up pumping her fist, and gives a thumbs up.
+- **Springboard is Spring Mine** (`aewind`): a wide squat, the brass plate dropped in front of her,
+  its key wound round twice with her whole body swinging into it, a test poke, and two hops back
+  pointing at it. The mine (`celaemine`) blinks teal with its key turning, and goes off in a jump of
+  its lid, cogs and steam.

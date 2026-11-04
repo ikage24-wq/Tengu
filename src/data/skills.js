@@ -68,7 +68,8 @@ export const SKILLS = {
   }),
   whirlwind: skill({
     id: 'whirlwind', name: 'Whirlwind', job: 'warrior', type: 'passive', fx: null, school: 'steel',
-    desc: 'The last swing of your combo sometimes spins on into a whirlwind that sucks monsters in, hits everything around you five times, then flings them away, hit or miss. Always, if the swing catches three or more.',
+    desc: 'The last swing of your combo sometimes spins on into a whirlwind that sucks monsters in, hits everything around you five times, then flings them away, hit or miss. Always, if the swing catches three or more. A Paladin turns her blade flat over her head like a rotor of light (Halo Rotor); a Berserker is dragged round and round by his axe (Maelstrom).',
+    pathNames: { paladin: 'Halo Rotor', berserker: 'Maelstrom' },
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.6, lv, m), crowd: 3, pct: lerp(40, 72, lv, m), targets: lerp(4, 8, lv, m) } }),
   }),
   shouldercharge: skill({
@@ -123,7 +124,8 @@ export const SKILLS = {
   }),
   titanbreak: skill({
     id: 'titanbreak', dmg: 1.2, name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Valor, and spends it. Leap high, somersaulting inside a wheel of steel as your blade turns over and over, while a giant sword of steel forms above you; then crash down with it and split the ground in two, throwing everything around you into the air.',
+    desc: 'Finisher: needs full Valor, and spends it. Leap high, somersaulting inside a wheel of steel as your blade turns over and over, while a giant sword of steel forms above you; then crash down with it and split the ground in two, throwing everything around you into the air. A Paladin raises a great crest of light and brings it down with her blade (Heaven\'s Seal); a Berserker pounces like a beast and falls on them as a meteor of fire (Skyfall Rend).',
+    pathNames: { paladin: 'Heaven\'s Seal', berserker: 'Skyfall Rend' },
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
@@ -135,6 +137,28 @@ export const SKILLS = {
           { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'titanbreak', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
           { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'titanwave', burstAt: 0, big: true, stop: 0.05, shake: 3, gauge: 0 },
         ] }],
+        // Each warrior path's own (the same two blows; data/path-skills.js).
+        paths: {
+          // Heaven's Seal: a knight's salute, the blade raised high while a great golden crest of
+          // light gathers over her; she rises on her toes, then brings the blade down in one planted,
+          // two-handed chop and the crest slams down with it; she turns the blade point-down and
+          // drives it in, and pillars of light burst up in a ring round her.
+          paladin: [{ move: 'plseal', dur: 1.38, step: 10, finisher: true, guard: 1.2, strikes: [
+            { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'plcrest', burstAt: 0, burstDur: 0.78, quiet: true, gauge: 0 },
+            { at: 0.6, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'plsealfall', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
+            { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, stun: 0.5, burst: 'plsealwave', burstAt: 0, burstDur: 0.8, big: true, stop: 0.05, shake: 3, gauge: 0 },
+          ] }],
+          // Skyfall Rend: he drops into a beast's crouch and howls as fire flares under him, pounces
+          // high with the axe flung back and his free hand clawed, falls on them wrapped in a meteor
+          // of rose fire and smashes down, tearing the ground open in claw gashes; then wrenches the
+          // axe up out of the earth in a burst of fire.
+          berserker: [{ move: 'bkpounce', dur: 1.38, step: 40, carry: 0.6, finisher: true, guard: 1.2, strikes: [
+            { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bkhowl', burstAt: 0, burstDur: 0.42, quiet: true, gauge: 0 },
+            { at: 0.36, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bkmeteor', burstAt: 0, burstDur: 0.36, follow: true, quiet: true, gauge: 0 },
+            { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, bleed: { pct: 0.15, secs: 3 }, burst: 'bkrend', burstAt: 0, big: true, stop: 0.16, shake: 8, gauge: 0 },
+            { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'rageburst', burstAt: 0, burstDur: 0.6, big: true, stop: 0.05, shake: 3, gauge: 0 },
+          ] }],
+        },
       };
     },
   }),
@@ -294,6 +318,23 @@ export const SKILLS = {
           { move: 'swtwirl', dur: 0.46, step: 12, carry: 0.6, strikes: [bolt(0.3, k(95, 165), -4), bolt(0.5, k(95, 165), 4)] },
           { move: 'swsnap', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(240, 400), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 800, knock: 180, big: true, stop: 0.06, shake: 2 }] },
         ],
+        // Each path sings or turns it her own way (same numbers; see "Per-path skill versions" in
+        // world/combat.js). The Starlight Idol: a call into the crowd (a note), a twirl and an echo
+        // (two notes), then a crescendo belted down the line (her big burst of sound). The
+        // Astronomer: a tap of the orrery that sends a silver moon, a turn of it that sends two, then
+        // the orrery spun like a wheel that rolls a great ringed world through the line.
+        paths: {
+          shrinemaiden: [
+            { move: 'sicall', dur: 0.36, step: 10, strikes: [{ ...bolt(0.3, k(150, 260)), shot: 'sinote' }] },
+            { move: 'siecho', dur: 0.46, step: 12, carry: 0.6, strikes: [{ ...bolt(0.3, k(95, 165), -4), shot: 'sinote' }, { ...bolt(0.5, k(95, 165), 4), shot: 'sinote' }] },
+            { move: 'sicrescendo', dur: 0.56, step: 14, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: k(240, 400), range: 320, h: 80, targets: k(2, 4), pierce: true, speed: 820, knock: 180, big: true, stop: 0.06, shake: 2 }] },
+          ],
+          onmyoji: [
+            { move: 'astap', dur: 0.36, step: 8, strikes: [{ ...bolt(0.3, k(150, 260)), shot: 'asmoon', speed: 760 }] },
+            { move: 'astwin', dur: 0.46, step: 10, carry: 0.6, strikes: [{ ...bolt(0.3, k(95, 165), -4), shot: 'asmoon', speed: 760 }, { ...bolt(0.5, k(95, 165), 4), shot: 'asmoon', speed: 760 }] },
+            { move: 'aswheel', dur: 0.56, step: 12, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: k(240, 400), range: 320, h: 80, targets: k(2, 4), pierce: true, speed: 600, knock: 180, big: true, stop: 0.06, shake: 2 }] },
+          ],
+        },
       };
     },
   }),
@@ -306,6 +347,13 @@ export const SKILLS = {
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
         combo: [{ move: 'swblink', dur: 0.5, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sthit', burstAt: 0, burstDur: 0.4 }] }],
+        // The Starlight Idol slides across the stage on her knees like a rock star, mic up, hearts
+        // flying; the Astronomer fades into a silver crescent, drifts ahead like moonlight and
+        // waxes back into herself.
+        paths: {
+          shrinemaiden: [{ move: 'sislide', dur: 0.5, step: k(120, 180), carry: 0.6, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sihearts', burstAt: 0, burstDur: 0.5 }] }],
+          onmyoji: [{ move: 'asphase', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'asphase', burstAt: 0, burstDur: 0.5 }] }],
+        },
       };
     },
   }),
@@ -319,6 +367,12 @@ export const SKILLS = {
       return {
         mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
         combo: [{ move: 'swshowoff', dur: 0.54, step: 12, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(220, 380), range: 360, h: 80, targets: k(5, 8), pierce: true, speed: 840, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        // The Starlight Idol plants her feet and belts one power note that tears down the line; the
+        // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
+        paths: {
+          shrinemaiden: [{ move: 'sipower', dur: 0.54, step: 8, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: k(220, 380), range: 360, h: 90, targets: k(5, 8), pierce: true, speed: 860, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+          onmyoji: [{ move: 'asheave', dur: 0.54, step: 10, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: k(220, 380), range: 360, h: 90, targets: k(5, 8), pierce: true, speed: 620, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        },
       };
     },
   }),
@@ -332,9 +386,16 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       const range = { w: 440, h: 160, around: true };
+      const wish = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst, burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } });
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'swwish', dur: 0.8, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'stwish', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
+        combo: [{ move: 'swwish', dur: 0.8, step: 0, strikes: [wish('stwish')] }],
+        // The Starlight Idol hugs the mic and sings a ballad, hearts drifting down over everyone; the
+        // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
+        paths: {
+          shrinemaiden: [{ move: 'siballad', dur: 0.8, step: 0, strikes: [wish('siballad')] }],
+          onmyoji: [{ move: 'asmoonrise', dur: 0.8, step: 0, strikes: [wish('asmoonfall')] }],
+        },
       };
     },
   }),
@@ -346,9 +407,17 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       const range = { w: 440, h: 160, around: true };
+      const veil = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst, burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } });
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'swveil', dur: 0.72, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'stveil', burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
+        combo: [{ move: 'swveil', dur: 0.72, step: 0, strikes: [veil('stveil')] }],
+        // The Starlight Idol sweeps the mic out over the crowd and holds a harmony, rings of sound
+        // settling over everyone; the Astronomer draws an orbit round herself with the staff and
+        // silver moons take it up round the party.
+        paths: {
+          shrinemaiden: [{ move: 'siharmony', dur: 0.72, step: 0, strikes: [veil('siharmony')] }],
+          onmyoji: [{ move: 'ashalo', dur: 0.72, step: 0, strikes: [veil('asveil')] }],
+        },
       };
     },
   }),
@@ -503,6 +572,22 @@ export const SKILLS = {
           { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'stmeteor', school: 'starlit', gauge: 0 },
           { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'starfallimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
+        // The Starlight Idol's: she throws the mic up to the sky ("everybody!"), notes pour down on
+        // them, and she leaps and belts the last note down into one great blast of sound. The
+        // Astronomer's: she lifts the orrery and stops the sky; little planets fall ahead of her,
+        // and she brings the staff down for one great ringed world to land.
+        paths: {
+          shrinemaiden: [{ move: 'siencore', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
+            { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'siharmony', burstAt: 0, burstDur: 0.9 },
+            { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'sinote', school: 'idol', gauge: 0 },
+            { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'sifinale', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          ] }],
+          onmyoji: [{ move: 'asmeteor', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
+            { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'asveil', burstAt: 0, burstDur: 0.9 },
+            { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'asplanet', school: 'astral', gauge: 0 },
+            { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'asimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          ] }],
+        },
       };
     },
   }),
@@ -528,18 +613,34 @@ export const SKILLS = {
   }),
   springtrap: skill({
     id: 'springtrap', name: 'Springboard', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, lock: 0.7, landAt: 0.4,
-    desc: 'Set a little circus springboard down just ahead and give it a pat. The first monster to step on it is bounced high into the air. Up to three at once.',
-    at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true }),
+    desc: 'Set a little circus springboard down just ahead and give it a pat. The first monster to step on it is bounced high into the air. Up to three at once. A Phantom Trickster sets down her top hat instead (Top Hat), an Arbalist Engineer winds up a brass spring mine (Spring Mine).',
+    pathNames: { beastmaster: 'Top Hat', stormcaller: 'Spring Mine' },
+    // (Each archer path sets its own: data/path-skills.js.)
+    at: (lv, m) => ({ mp: lerp(8, 14, lv, m), pct: lerp(180, 300, lv, m), life: lerp(12, 20, lv, m), trap: true, paths: { beastmaster: { anim: 'pthattrap', look: 'hat' }, stormcaller: { anim: 'aewind', look: 'mine' } } }),
   }),
   vault: skill({
     id: 'vault', name: 'Handspring', job: 'archer', type: 'attack', fx: null, icon: 'vault', maxLevel: 10, school: 'hawk', movement: true,
-    desc: 'Run in and handspring right over the monster in front of you, land behind it, and turn to shoot it. Nothing touches you mid-flip.',
+    desc: 'Run in and handspring right over the monster in front of you, land behind it, and turn to shoot it. Nothing touches you mid-flip. A Phantom Trickster vanishes in a puff of smoke and steps out behind it (Vanishing Act); an Arbalist Engineer rockets over it on her steam boots (Steam Hop).',
+    pathNames: { beastmaster: 'Vanishing Act', stormcaller: 'Steam Hop' },
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: k(110, 180), hits: 1, targets: 1,
         combo: [{ move: 'achandspring', dur: 0.66, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
+        paths: {
+          // Vanishing Act: she sweeps her cape across her with a flourish and is gone in a puff of
+          // plum smoke; she steps out of another behind it with a twirl and looses back at it.
+          beastmaster: [{ move: 'ptvanish', dur: 0.66, step: k(100, 140), carry: 0.6, guard: 0.6, vanish: [0.24, 0.56], strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
+          // Steam Hop: she crouches and slaps the valve on her belt; her boots blast steam and she
+          // rockets over it in a tucked arc, the crossbow hugged to her chest, lands skidding, spins
+          // round and fires.
+          stormcaller: [{ move: 'aejet', dur: 0.66, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [
+            { at: 0.14, pct: 0, reach: 0, h: 0, targets: 0, burst: 'aesteam', burstAt: 0, burstDur: 0.5, quiet: true, gauge: 0 },
+            { at: 0.64, pct: 0, reach: 0, h: 0, targets: 0, burst: 'aesteam', burstAt: 0, burstDur: 0.4, quiet: true, gauge: 0 },
+            { at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 },
+          ] }],
+        },
       };
     },
   }),
@@ -556,7 +657,8 @@ export const SKILLS = {
   }),
   cometarrow: skill({
     id: 'cometarrow', name: 'Grand Somersault', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs a full Combo, and spends it. Crouch deep and launch yourself into a huge triple somersault high above the screen; at the top a ring of gold bursts round you and you rain golden arrows down on everything below, then land with a wink.',
+    desc: 'Finisher: needs a full Combo, and spends it. Crouch deep and launch yourself into a huge triple somersault high above the screen; at the top a ring of gold bursts round you and you rain golden arrows down on everything below, then land with a wink. A Phantom Trickster levitates and tips a giant top hat over them (Levitation); an Arbalist Engineer fires a mortar shell that bursts into a hail of bolts (Bolt Mortar).',
+    pathNames: { beastmaster: 'Levitation', stormcaller: 'Bolt Mortar' },
     weapons: ['bow', 'crossbow'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -566,6 +668,24 @@ export const SKILLS = {
           { at: 0.58, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'acburst', burstAt: 0, burstDur: 0.8, gauge: 0 },
           { at: 0.6, rain: k(12, 16), pct: k(120, 200), rainW: 420, around: true, span: 0.3, knock: 60, launch: 140, variant: 'acarrow', school: 'acro', gauge: 0 },
         ] }],
+        paths: {
+          // Levitation: the magician's levitation trick. She sweeps her cape round herself and floats
+          // slowly up, lying back on the air; at the top a giant top hat appears over the stage, tips
+          // over and pours plum arrows, cards and doves down on everything below while she draws and
+          // looses into it; then she drifts down and takes her bow.
+          beastmaster: [{ move: 'ptlevitate', dur: 1.9, step: 0, finisher: true, guard: 1.7, strikes: [
+            { at: 0.48, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'pthat', burstAt: 0, burstDur: 0.95, gauge: 0 },
+            { at: 0.6, rain: k(12, 16), pct: k(120, 200), rainW: 420, around: true, span: 0.3, knock: 60, launch: 140, variant: 'ptarrow', school: 'phantom', gauge: 0 },
+          ] }],
+          // Bolt Mortar: down on one knee, she plants the crossbow's stock on the ground pointing at
+          // the sky, cranks it three times and fires a brass shell straight up with a kick that rocks
+          // her back; it bursts high overhead into a ring of cogs and steam and a hail of teal bolts
+          // comes down on everything below, while she shades her eyes and pumps her fist.
+          stormcaller: [{ move: 'aemortar', dur: 1.9, step: 0, finisher: true, guard: 1.7, strikes: [
+            { at: 0.44, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'aeshell', burstAt: 0, burstDur: 1.0, gauge: 0 },
+            { at: 0.6, rain: k(12, 16), pct: k(120, 200), rainW: 420, around: true, span: 0.3, knock: 60, launch: 140, variant: 'aebolt', school: 'brass', gauge: 0 },
+          ] }],
+        },
       };
     },
   }),
@@ -714,6 +834,13 @@ export const SKILLS = {
       return {
         mp: k(10, 6), pct: k(60, 110), hits: 2, targets: 5,
         combo: [{ move: 'wdchaine', dur: 0.45, step: k(110, 170), carry: 0.6, guard: 0.5, trail: true, strikes: [{ ...hit(0.25), burst: 'wdswirl', burstAt: 0, burstDur: 0.4 }, hit(0.55)] }],
+        // The Blade Dancer promenades across on her toes with both rings whirling round her at
+        // arm's length, and catches them with a hip pop; the Sky Dancer is lifted on a sky-blue whirl
+        // and turns through the air like a leaf on the wind. (Same numbers; world/combat.js.)
+        paths: {
+          shinobi: [{ move: 'bdpromenade', dur: 0.45, step: k(110, 170), carry: 0.6, guard: 0.5, trail: true, strikes: [{ ...hit(0.25), fx: 'bdhit', burst: 'bdorbit', burstAt: 0, burstDur: 0.45 }, { ...hit(0.55), fx: 'bdhit' }] }],
+          kitsune: [{ move: 'sdzephyr', dur: 0.45, step: k(110, 170), carry: 0.6, guard: 0.5, trail: true, strikes: [{ ...hit(0.25), fx: 'skyhit', burst: 'skyupdraft', burstAt: 0, burstDur: 0.45 }, { ...hit(0.55), fx: 'skyhit' }] }],
+        },
       };
     },
   }),
@@ -768,6 +895,22 @@ export const SKILLS = {
           cut(0.28), cut(0.36), cut(0.44), cut(0.52), cut(0.6),
           { at: 0.74, pct: k(420, 720), reach: 200, h: 160, around: true, targets, knock: 280, launch: 360, fx: 'wdhit', big: true, stop: 0.15, shake: 7, gauge: 0 },
         ] }],
+        // The Blade Dancer's (a ring revue): she tosses her ring high and turns under it as rose-gold
+        // rings cascade round her, cutting, then catches it in a high kick line and they all fly
+        // out. The Sky Dancer's (a cloudburst): she spirals up into a gathering storm of clouds,
+        // hangs at the top, and dives down through it in a spinning heel drop that bursts it open.
+        paths: {
+          shinobi: [{ move: 'bdrevue', dur: 1.35, step: 0, finisher: true, guard: 1.26, strikes: [
+            { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bdrevue', burstAt: 0, burstDur: 1.17, quiet: true, gauge: 0 },
+            ...[0.28, 0.36, 0.44, 0.52, 0.6].map((at) => ({ ...cut(at), fx: 'bdhit' })),
+            { at: 0.74, pct: k(420, 720), reach: 200, h: 160, around: true, targets, knock: 280, launch: 360, fx: 'bdhit', big: true, stop: 0.15, shake: 7, gauge: 0 },
+          ] }],
+          kitsune: [{ move: 'sdcloudburst', dur: 1.35, step: 0, finisher: true, guard: 1.26, strikes: [
+            { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'skycloudburst', burstAt: 0, burstDur: 1.17, quiet: true, gauge: 0, floor: true },
+            ...[0.28, 0.36, 0.44, 0.52, 0.6].map((at) => ({ ...cut(at), fx: 'skyhit' })),
+            { at: 0.74, pct: k(420, 720), reach: 200, h: 160, around: true, targets, knock: 280, launch: 360, fx: 'skyhit', big: true, stop: 0.15, shake: 7, gauge: 0 },
+          ] }],
+        },
       };
     },
   }),

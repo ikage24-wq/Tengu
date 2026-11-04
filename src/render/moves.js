@@ -702,6 +702,181 @@ export const MOVES = {
     };
   },
 
+  // ---------- The warrior paths' own versions of the Warrior's skills (data/path-skills.js) ----------
+
+  // Heaven's Seal (the Paladin's Titan Breaker, 1.38 s; blows at 0.6 and 0.8). No leap and no
+  // somersaults: a knight's rite. She raises the blade upright in a salute (drawn behind her head)
+  // and rises slowly onto her toes, eyes closed, while the crest of light gathers over her; draws it
+  // back over her shoulder, then brings it down in one planted two-handed chop with a stamp (0.6);
+  // sweeps it back up to the heavens as the pillars of light answer (0.8), and lowers it to hold it
+  // out before her, low and level, like a knight at the end of an oath.
+  plseal(p, dur) {
+    const raise = soft(seg(p, 0, 0.14));
+    const rise = soft(seg(p, 0.14, 0.42));
+    const back = soft(seg(p, 0.42, 0.52));
+    const chop = easeIn(seg(p, 0.52, 0.6));
+    const turnDown = ease(seg(p, 0.7, 0.8));
+    const drive = soft(seg(p, 0.84, 0.96));
+    const settle = soft(seg(p, 0.86, 1));
+    const breath = Math.sin(p * dur * 6) * 0.4 * rise * (1 - back);
+    let weapon = lerp(-58, 6, raise) - 46 * back;
+    if (chop > 0) weapon = lerp(-40, 150, chop);
+    if (turnDown > 0) weapon = lerp(150, 372, turnDown) - 268 * drive;
+    weapon -= 6 * settle;
+    const lifted = 3 * rise * (1 - back) + 4 * turnDown * (1 - drive);
+    return {
+      weapon, arm: lerp(48, 52, raise) - 6 * back + 4 * chop - 4 * turnDown - 4 * drive,
+      lift: lifted + breath, lunge: 6 * chop * (1 - 0.6 * turnDown) - 1.5 * back, tilt: -0.08 * back + 0.2 * chop * (1 - turnDown) - 0.08 * turnDown * (1 - drive),
+      trail: p > 0.5 && p < 0.82,
+      rig: (r) => {
+        if (chop <= 0) {
+          // Heels together, up on her toes for the rite.
+          r.frontLeg = [q(lerp(0.8, 1.2, rise)), q(-0.8 * rise), 4];
+          r.backLeg = [q(lerp(-0.8, -1.4, rise)), q(-0.8 * rise), -4];
+          r.backArm = [q(-1 - 2 * back), q(-1 - 2 * rise)];
+          r.eyes = rise > 0.2 && back < 0.5 ? 'blink' : undefined;
+        } else {
+          if (turnDown > 0.5) { r.squat = q(1 - drive); wideLegs(r); } else lungeLegs(r, 1.2);
+          r.backArm = turnDown > 0.5 && drive < 0.5 ? [-4, -5] : drive >= 0.5 ? [2, 1] : [-3, -2];
+          r.tx = 1;
+          if (settle < 0.5) strikeFace(r);
+        }
+        r.cape = -3 * Math.max(back, chop * (1 - settle));
+        r.hairLift = rise > 0.3 && chop < 1 ? -1 : 0;
+      },
+    };
+  },
+
+  // Halo Rotor (the Paladin's Whirlwind, 0.9 s; four pulling blows, the fling at 0.75): the blade
+  // turned flat over her head like the rotor of a great bell-tower clock, sweeping round over her
+  // twice as she marches round under it; then she brings it down and drives it forward in a
+  // shield-shove (0.75), and holds it out level.
+  plrotor(p) {
+    const up = soft(seg(p, 0, 0.1));
+    const u = seg(p, 0.08, 0.68);
+    const spinning = p > 0.08 && p < 0.68;
+    const ph = u * Math.PI * 4;
+    const down = easeIn(seg(p, 0.68, 0.75));
+    const settle = soft(seg(p, 0.82, 1));
+    // Over the top, front to back and round again (a half turn each sweep).
+    const over = 78 * Math.sin(ph);
+    const weapon = spinning ? over : down > 0 ? lerp(0, 112, down) - 8 * settle : lerp(-58, 0, up);
+    return {
+      weapon, arm: lerp(48, 56, up) - 4 * down, orbit: spinning, turn: spinning ? Math.sign(Math.cos(ph / 2) || 1) * Math.max(0.4, Math.abs(Math.cos(ph / 2))) : 1,
+      lift: 2 * bump(p, 0.08, 0.68), lunge: 7 * down * (1 - 0.5 * settle), tilt: 0.16 * down * (1 - settle) - 0.04 * up * (1 - down),
+      trail: spinning || (p > 0.66 && p < 0.78),
+      rig: (r) => {
+        if (spinning) {
+          const s = Math.sin(ph);
+          r.frontLeg = [q(1.6 + 1.6 * s), s > 0 ? q(-1.4 * s) : 0, Math.round(12 * s / 2) * 2];
+          r.backLeg = [q(-1.6 + 1.6 * s), s < 0 ? q(1.4 * s) : 0, Math.round(-12 * s / 2) * 2];
+        } else if (down > 0) lungeLegs(r, 1.2 - 0.3 * settle);
+        else wideLegs(r);
+        r.backArm = down > 0 ? [3, -2] : [-2, -2];
+        r.cape = spinning ? -4 : -2;
+        r.hairLift = spinning ? -1 : 0;
+        if (spinning || (down > 0.3 && settle < 0.5)) strikeFace(r);
+      },
+    };
+  },
+
+  // Skyfall Rend (the Berserker's Titan Breaker, 1.38 s; blows at 0.62 and 0.8). A beast's pounce,
+  // not a knight's leap: he drops into a crouch with the axe trailing back and the free hand clawed
+  // at the ground, shaking and howling as fire flares under him; springs high and long with the axe
+  // flung back over his head, body arched and limbs spread like a leaping cat; tips over and falls
+  // on them head-first in a meteor of fire, smashing the axe down (0.62) and crouching over it,
+  // shaking; then wrenches it up out of the ground (0.8) and roars with it held out to the side.
+  bkpounce(p, dur) {
+    const crouch = soft(seg(p, 0, 0.14));
+    const howl = p < 0.2 ? Math.sin(p * dur * 70) * 0.7 * crouch : 0;
+    const leap = seg(p, 0.18, 0.62);
+    const air = p > 0.18 && p < 0.62;
+    const arch = soft(seg(p, 0.18, 0.3)) * (1 - soft(seg(p, 0.4, 0.52)));
+    const dive = soft(seg(p, 0.42, 0.56)) * (1 - ease(seg(p, 0.6, 0.64)));
+    const smash = easeIn(seg(p, 0.54, 0.62));
+    const buried = p >= 0.62 && p < 0.75;
+    const shake = buried ? Math.sin(p * dur * 80) * 0.6 * (1 - seg(p, 0.62, 0.75)) : 0;
+    const rip = ease(seg(p, 0.75, 0.8));
+    const roar = soft(seg(p, 0.82, 0.9));
+    const settle = soft(seg(p, 0.9, 1));
+    let weapon = lerp(-58, -128, crouch);
+    if (air) weapon = lerp(-128, -196, soft(seg(p, 0.18, 0.34))) + 356 * smash;
+    if (p >= 0.62) weapon = lerp(160, 40, rip) + 64 * roar - 8 * settle;
+    const lift = air ? 66 * Math.sin(Math.PI * leap) ** 0.8 : 0;
+    return {
+      weapon, arm: air ? lerp(30, 56, smash) : p >= 0.62 ? lerp(40, 56, rip) - 10 * roar : lerp(48, 28, crouch),
+      lift: lift + (buried ? 0 : 3 * rip * (1 - roar)), lunge: howl + shake + (air ? 4 * dive : 0) + 4 * rip * (1 - roar),
+      tilt: 0.34 * crouch * (p < 0.2 ? 1 : 0) - 0.3 * arch + 0.55 * dive + (p >= 0.62 ? 0.3 * (1 - rip) - 0.18 * rip * (1 - roar) : 0) * (1 - settle),
+      trail: p > 0.5 && p < 0.82,
+      rig: (r) => {
+        if (p < 0.18) {
+          r.squat = q(3 * crouch);
+          r.frontLeg = [q(3.4 * crouch + 0.8), 0, Math.round(10 * crouch / 2) * 2];
+          r.backLeg = [q(-4 * crouch - 0.8), q(1 * crouch), Math.round(-40 * crouch / 2) * 2];
+          r.backArm = [q(2 + 3 * crouch), q(2 * crouch)];
+          if (crouch > 0.4) strikeFace(r);
+          r.hairLift = crouch > 0.5 ? 1 : 0;
+        } else if (air) {
+          r.air = true;
+          // Limbs flung out in the leap, gathered in as he dives.
+          legsTo(r, 1, arch > 0.3 ? [3.4, -4.6, 34] : [2.6, -5, 10], arch > 0.3 ? [-4, -5.6, -76] : [-1.6, -2.6, -10]);
+          r.backArm = arch > 0.3 ? [-6, -6] : [3, -2];
+          r.hairLift = -1;
+          r.cape = -6;
+          strikeFace(r);
+        } else {
+          if (rip < 0.5) { r.squat = 3; wideLegs(r); } else { r.squat = q(1 - settle); r.frontLeg = [3.4, 0, 6]; r.backLeg = [-3.6, 0, -12]; }
+          r.backArm = roar > 0.2 ? [q(-6 * roar), q(-5 * roar)] : [3, 2];
+          r.hairLift = rip > 0.3 ? -1 : 1;
+          if (settle < 0.7) strikeFace(r);
+        }
+      },
+    };
+  },
+
+  // Maelstrom (the Berserker's Whirlwind, 0.9 s; four pulling blows, the heave at 0.75): the axe
+  // swung out at arm's length and its weight drags him round, three turns faster and faster, leaning
+  // back against it with his feet skidding and stumbling along; he wrenches it up over his shoulder
+  // and heaves it down in front of him (0.75), and stands bent over it, panting.
+  bkmaelstrom(p) {
+    const wind = soft(seg(p, 0, 0.08));
+    const u = seg(p, 0.08, 0.66);
+    const spinning = p > 0.08 && p < 0.66;
+    // (Slow to get going, then faster and faster: three whole turns.)
+    const turns = 3 * u ** 1.5;
+    const a = turns * Math.PI * 2;
+    const lift = ease(seg(p, 0.66, 0.71));
+    const heave = easeIn(seg(p, 0.71, 0.75));
+    const settle = soft(seg(p, 0.82, 1));
+    const pant = p > 0.82 ? Math.sin(p * 40) * 0.4 * (1 - settle) : 0;
+    let weapon = lerp(-58, 100, wind);
+    if (spinning) weapon = 100 + turns * 360;
+    if (p >= 0.66) weapon = 1180 - 130 * lift + 190 * heave - 6 * settle;
+    const wob = spinning ? Math.sin(a * 1.5) : 0;
+    return {
+      weapon, arm: spinning ? 58 : lerp(56, 46, heave) - 6 * settle, orbit: spinning,
+      turn: spinning ? Math.sign(Math.cos(a) || 1) * Math.max(0.35, Math.abs(Math.cos(a))) : 1,
+      lift: (spinning ? 2 * Math.abs(wob) : 0) + 4 * lift * (1 - heave), lunge: 2 * wob + 6 * heave * (1 - 0.5 * settle) + pant, tilt: (spinning ? -0.14 : 0) - 0.16 * lift * (1 - heave) + 0.32 * heave * (1 - settle),
+      trail: spinning || (p > 0.66 && p < 0.8),
+      rig: (r) => {
+        if (spinning) {
+          r.frontLeg = [q(3 + wob), wob > 0 ? q(-1.6 * wob) : 0, Math.round(16 * wob / 2) * 2];
+          r.backLeg = [q(-3 + wob), wob < 0 ? q(1.6 * wob) : 0, -14];
+          r.backArm = [-5, -4];
+          r.hairLift = -1;
+          r.cape = -6;
+          strikeFace(r);
+        } else if (p >= 0.66) {
+          r.squat = heave > 0.5 ? q(3 - 2 * settle) : 0;
+          if (heave > 0) wideLegs(r); else lungeLegs(r, 0.8);
+          r.backArm = heave > 0.5 ? [3, 2] : [-3, -4];
+          if (settle < 0.6) strikeFace(r);
+          else r.mouth = 'open';
+        } else { r.squat = q(wind); wideLegs(r); r.backArm = [2, 0]; }
+      },
+    };
+  },
+
   // ---------- The Paladin's own greatsword forms (a holy knight: measured, upright, solemn) ----------
   // Replacing the Warrior's swings she used to borrow. Steadier than the Warrior: planted feet,
   // held salutes, blows that come down like verdicts; every one keeps the fist at the chest.
@@ -2551,6 +2726,67 @@ export const MOVES = {
     };
   },
 
+  // The Wind Dancer's skills, her way (data/skills.js `paths`):
+  // Ring promenade (her Pirouette, cuts at ~0.25 and ~0.55): up on her toes she promenades forward
+  // in two slow showgirl turns, back leg lifted in attitude and the ring swung out at arm's length
+  // (both rings whirl round her waist, the bdorbit effect); out of the second turn she stops dead
+  // and pops her hip, free hand on it and the ring held up out to the side, with a wink.
+  bdpromenade(p) {
+    const rise = soft(seg(p, 0, 0.1));
+    const a = ease(seg(p, 0.08, 0.62)) * 2;
+    const turning = p > 0.08 && p < 0.62;
+    const pop = soft(seg(p, 0.64, 0.8));
+    const hit = bump(p, 0.6, 0.76);
+    return {
+      weapon: turning ? 100 + 10 * Math.sin(a * Math.PI * 2) : lerp(108, 128, pop), arm: turning ? 98 : lerp(92, 66, pop),
+      turn: turning ? dancerTurn(a) : 1,
+      lift: 3 * rise * (1 - pop) + (turning ? 3 * Math.abs(Math.sin(a * Math.PI)) : 0) + 3 * hit + ballon(p, 0.78) * 0.6,
+      tilt: -0.08 * rise * (1 - pop) + 0.14 * hit - 0.08 * pop, lunge: 3 * bump(p, 0.5, 0.82), trail: turning,
+      rig: (r) => {
+        r.air = turning && Math.abs(Math.sin(a * Math.PI)) > 0.6;
+        r.backArm = turning ? dancerHand([-10, -9]) : [q(lerp(-8, 0.6, pop)), q(lerp(-7, -4.2, pop))];
+        if (pop > 0.5) r.armSide = -1;
+        r.hairLift = turning ? -1 : hit > 0.4 ? 1 : 0;
+        r.cape -= q(4 * bump(p, 0.08, 0.66));
+        danceLegs(r, [rise, [0.6, -2, 6], [-0.6, -2, -6]], [turning ? 1 : 0, [1, -2, 8], dancerLeg(-80, 13, -50)], [pop, [3, 0, 6], [-1.4, -1.6, -24]]);
+        if (pop > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (turning) strikeFace(r);
+      },
+    };
+  },
+  // Ring revue (her Grand Finale, 1.35 s; cuts from ~0.28, the big one at ~0.74): she tosses her
+  // ring straight up underhand and, empty-handed, turns under it faster and faster, arms raised in a
+  // wide V, as rose-gold rings cascade round her (the bdrevue effect); she catches it coming down
+  // and snaps into a showgirl's high kick, the ring thrust out and every ring flying out with it;
+  // then a "ta-da": arms flung wide and low, feet crossed, a wink.
+  bdrevue(p) {
+    const dip = soft(seg(p, 0, 0.08));
+    const toss = ease(seg(p, 0.08, 0.14));
+    const a = easeIn(seg(p, 0.16, 0.62)) * 3;
+    const turning = p > 0.16 && p < 0.62;
+    const vee = soft(seg(p, 0.14, 0.24)) * (1 - soft(seg(p, 0.6, 0.66)));
+    const grab = soft(seg(p, 0.62, 0.68));
+    const kick = ease(seg(p, 0.68, 0.74)) * (1 - soft(seg(p, 0.86, 0.92)));
+    const tada = soft(seg(p, 0.88, 0.96));
+    return {
+      weapon: lerp(lerp(lerp(lerp(150, 200, dip), 40, toss), 100, grab), 160, tada), arm: lerp(lerp(lerp(lerp(lerp(50, 0, dip), 104, toss), 100, vee), 96, kick), 34, tada),
+      thrown: rel(p, 0.13, 0.64), turn: turning ? dancerTurn(a) : 1,
+      lift: 2 * toss * (1 - vee) + 10 * soft(seg(p, 0.2, 0.6)) * (1 - grab) + 4 * bump(p, 0.62, 0.74) + ballon(p, 0.74) * (1 - tada),
+      tilt: -0.1 * dip * (1 - toss) - 0.12 * kick + 0.06 * tada, lunge: 5 * kick, trail: turning,
+      rig: (r) => {
+        r.air = turning || bump(p, 0.62, 0.74) > 0.5;
+        r.squat = q(2 * dip * (1 - toss) + 1.5 * bump(p, 0.86, 0.94));
+        r.backArm = dancerHand([q(lerp(lerp(lerp(0, -10, vee), -10, kick), -10, tada)), q(lerp(lerp(lerp(-2, -10, vee), -10, kick), -1, tada))]);
+        r.hairLift = turning || kick > 0.4 ? -1 : 0;
+        r.cape -= q(5 * (turning ? 1 : kick));
+        danceLegs(r, [dip * (1 - toss), [2, 0, 6], [-2, 0, -8]], [turning ? 1 : 0, [1.2, -6, 30], [-0.4, -1.6, -8]], [kick, dancerLeg(115, 14.6, 60), [-1.4, -1, -10]], [tada, [1.4, 0, -4], [0.8, -0.6, 6]]);
+        if (tada > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (turning) r.eyes = 'happy';
+        else if (kick > 0.3 || toss > 0.3) strikeFace(r);
+      },
+    };
+  },
+
   // ---------- The Arbalist Engineer's moves (her own; docs/design/arbalist.md) ----------
   // An excited inventor with a crossbow of her own making. It rests low at the waist, and to shoot
   // she pushes it out to arm's length in front of her (arm about `AE_AIM`, the crossbow level or
@@ -2862,6 +3098,118 @@ export const MOVES = {
         else if (kick > 0.2) [r.eyes, r.mouth] = ['blink', 'open'];
         else if (charge > 0.2) [r.eyes, r.mouth] = ['half', 'grit'];
         else if (cranking) r.mouth = 'grin';
+      },
+    };
+  },
+
+  // ---------- Her own versions of the Acrobat Archer's skills (data/path-skills.js) ----------
+
+  // Steam Hop (her Handspring, 0.66 s; the bolt at 0.8): no flip, a gadget. She crouches and slaps
+  // the valve on her belt; her boots blast steam and she rockets up and over in a tucked arc, the
+  // crossbow hugged nose-down at her hip and her free arm windmilling; she lands in a skid, spins
+  // round on her heel, whips the crossbow out and fires back the way she came.
+  aejet(p) {
+    const crouch = soft(seg(p, 0, 0.12)) * (1 - ease(seg(p, 0.12, 0.16)));
+    const slap = bump(p, 0.06, 0.14);
+    const hop = Math.sin(Math.PI * seg(p, 0.14, 0.62));
+    const flying = p > 0.14 && p < 0.62;
+    const skid = soft(seg(p, 0.6, 0.66)) * (1 - soft(seg(p, 0.68, 0.76)));
+    const up = soft(seg(p, 0.68, 0.78));
+    const kick = bump(p, 0.8, 0.94);
+    const hold = soft(seg(p, 0.9, 1));
+    const turn = p < 0.64 ? 1 : p < 0.8 ? -1 : 1;
+    const mill = flying ? seg(p, 0.14, 0.62) * Math.PI * 4 : 0;
+    return {
+      poised: true, turn,
+      weapon: lerp(40 + 22 * hop, -4, up) - 18 * kick - 8 * hold, arm: lerp(22 - 12 * hop, AE_AIM, up) + 6 * kick - 6 * hold,
+      lift: 46 * hop - 2 * crouch + 1.2 * Math.abs(aeRock(p, 0.9)), lunge: -4 * skid - 4 * kick, tilt: 0.1 * crouch + (flying ? 0.18 * Math.cos(Math.PI * seg(p, 0.14, 0.62)) : 0) - 0.16 * skid - 0.12 * kick + 0.06 * aeRock(p, 0.9),
+      rig: (r) => {
+        if (flying && hop > 0.15) {
+          tuck(r);
+          r.backArm = [q(-3 + 4 * Math.cos(mill)), q(-3 + 3 * Math.sin(mill))];
+          r.hairLift = -1;
+          r.cape -= 3;
+          r.mouth = 'open';
+        } else if (p < 0.2) {
+          r.squat = q(3 * crouch);
+          wideLegs(r);
+          r.backArm = [q(1 + 2 * slap), q(2 + 2 * slap)];
+          if (slap > 0.4) r.eyes = 'happy';
+        } else {
+          r.squat = q(2 * skid);
+          danceLegs(r, [skid, [5, 0, 14], [-3.6, 0.6, -40]], [up, [4, 0, 8], [-3, -0.6, -16]], [hold, [3.6, 0, 6], [-2.6, 0, -10]]);
+          r.backArm = kick > 0.1 ? [q(-4 * kick), q(-3 * kick)] : [-3, -1];
+          r.hairLift = skid > 0.3 ? 1 : 0;
+          if (kick > 0.3) strikeFace(r);
+          else if (hold > 0.5) r.mouth = 'grin';
+        }
+      },
+    };
+  },
+
+  // Bolt Mortar (her Grand Somersault, 1.9 s; the shell at 0.44, the hail ~0.6 to ~0.85): down on
+  // one knee, she stands the crossbow up on its stock out at arm's length, nose to the sky, and
+  // winds the crank three times with her body bobbing into each turn; it shudders as it builds, then
+  // the shell goes straight up (0.44) with a kick that rocks her back onto her heels; she tips her
+  // head right back to watch it burst, bounces up as the bolts come down, pumping her fist three
+  // times, and ends with the crossbow slung low and a thumbs up.
+  aemortar(p, dur) {
+    const kneel = soft(seg(p, 0, 0.12)) * (1 - soft(seg(p, 0.58, 0.66)));
+    const stand = soft(seg(p, 0.08, 0.16)) * (1 - soft(seg(p, 0.46, 0.56)));
+    const crank = seg(p, 0.14, 0.36);
+    const cranking = crank > 0 && crank < 1;
+    const bob = cranking ? Math.sin(crank * Math.PI * 6) : 0;
+    const charge = seg(p, 0.36, 0.44) * (p < 0.44 ? 1 : 0);
+    const shake = charge * Math.sin(p * dur * 120);
+    const kick = ease(seg(p, 0.44, 0.47)) * (1 - soft(seg(p, 0.5, 0.62)));
+    const look = soft(seg(p, 0.46, 0.54)) * (1 - soft(seg(p, 0.86, 0.92)));
+    const cheer = seg(p, 0.62, 0.86);
+    const pump = cheer > 0 && cheer < 1 ? Math.abs(Math.sin(cheer * Math.PI * 3)) : 0;
+    const pose = soft(seg(p, 0.88, 0.95));
+    return {
+      poised: true,
+      weapon: lerp(lerp(30, -76, stand), 40, pose) + 3 * shake - 14 * kick - 2 * bob, arm: lerp(lerp(26, 100, stand), 22, pose) + 4 * kick,
+      lift: 6 * bump(p, 0.62, 0.74) + 3 * pump + breathe(p) * 0.4 * pose, lunge: 1.2 * shake - 6 * kick, tilt: 0.04 * bob - 0.06 * stand - 0.24 * kick - 0.1 * look + 0.06 * aeRock(p, 0.9),
+      rig: (r) => {
+        r.squat = q(4 * kneel);
+        r.by = q(0.8 * bob);
+        r.backArm = cranking ? crankHand(crank * 3, 4.6) : pump > 0.05 ? dancerHand([q(1 + pump), q(-8 * pump)]) : pose > 0.1 ? [q(6 * pose), q(-5 * pose)] : kick > 0.05 ? [q(-6 * kick), q(-4 * kick)] : [-2, -1];
+        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]], [bump(p, 0.62, 0.74), [2.4, -2.6, 20], [-2.2, -2.6, -24]], [pose, [4.2, 0, 6], [-4, 0, -10]]);
+        // Head tipped right back to watch the shell burst.
+        r.tilt = (r.tilt ?? 0) - Math.round(12 * look / 2) * 2;
+        if (pose > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
+        else if (pump > 0.3) [r.eyes, r.mouth] = ['happy', 'open'];
+        else if (kick > 0.2) [r.eyes, r.mouth] = ['blink', 'open'];
+        else if (look > 0.4) r.mouth = 'open';
+        else if (charge > 0.2) [r.eyes, r.mouth] = ['half', 'grit'];
+        else if (cranking) r.mouth = 'grin';
+      },
+    };
+  },
+
+  // Spring Mine (her Springboard; the mine is down at ~0.4): she squats with her knees wide, drops
+  // the brass plate in front of her, winds its key round twice with her whole body swinging into
+  // each turn, gives it a test poke (it twangs), and hops back two steps pointing at it with a grin.
+  aewind(p) {
+    const squat = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.68, 0.78)));
+    const drop = bump(p, 0.18, 0.32);
+    const wind = seg(p, 0.34, 0.6);
+    const winding = wind > 0 && wind < 1;
+    const a = wind * Math.PI * 4;
+    const poke = bump(p, 0.6, 0.68);
+    const hop = bump(p, 0.72, 0.82) + bump(p, 0.82, 0.92) * 0.7;
+    const point = soft(seg(p, 0.8, 0.9));
+    return {
+      poised: true,
+      weapon: lerp(20, 34, squat), arm: lerp(26, 10, squat), lift: 4 * hop, lunge: -5 * soft(seg(p, 0.72, 0.92)) + 1.5 * poke, tilt: 0.16 * squat + (winding ? 0.04 * Math.sin(a) : 0),
+      rig: (r) => {
+        r.squat = q(3.4 * squat);
+        r.air = hop > 0.4;
+        r.backArm = winding ? [q(8 + 2.6 * Math.cos(a)), q(4 + 2.6 * Math.sin(a))] : point > 0.1 ? [q(lerp(4, 8, point)), q(-3 * point)] : [q(lerp(0, 8, squat) + 1.5 * poke), q(lerp(-1, 4, squat) + 2 * drop - 1 * poke)];
+        danceLegs(r, [squat, [4.4, 0, 16], [-4.4, 0, -16]], [hop, [1.8, -2.4, 18], [-2.2, -2.8, -30]], [point, [3.4, 0, 6], [-2.4, 0, -8]]);
+        if (point > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (poke > 0.4) r.eyes = 'happy';
+        else if (winding) r.mouth = 'grin';
       },
     };
   },
@@ -3813,6 +4161,211 @@ export const MOVES = {
     };
   },
 
+
+  // The Star Witch's skills, her way (data/skills.js `paths`):
+  // Call out (her Shooting Star's first, the note at ~0.3): "I can't hear you!": she cups her free
+  // hand to her ear and leans toward them, the mic at her chin, then snaps the mic out at them and
+  // the note flies; she ends pointing it, free hand waving high.
+  sicall(p) {
+    const lean = soft(seg(p, 0, 0.18));
+    const out = ease(seg(p, 0.2, 0.3));
+    const hold = soft(seg(p, 0.38, 0.72));
+    const hop = bump(p, 0.18, 0.42);
+    const [weapon, arm] = siPose(SI.guard, [lean, SI.sing], [out, SI.out], [hold, [92, 100]]);
+    return {
+      weapon, arm, lunge: -2 * lean * (1 - out) + 5 * out, tilt: 0.14 * lean * (1 - out) + 0.08 * out * (1 - hold), lift: 4 * hop + siBounce(p, 0.44),
+      rig: (r) => {
+        r.air = hop > 0.4;
+        siHead(r, -0.4 * lean * (1 - out) + 0.3 * out);
+        r.backArm = siFree([lean, [-2, -11]], [out, [-10, -8]], [hold, [-9, -14 + 2 * Math.sin(p * Math.PI * 8)]]);
+        danceLegs(r, [lean * (1 - out), [2.4, 0, 6], [-1.2, -1.4, -20]], [out, [3, 0, 6], [-2.4, 0, -10]], [hop, [1.6, -2.4, 14], [-2.4, -4.4, -56]]);
+        if (lean > 0.5 && out < 0.3) [r.eyes, r.mouth] = ['half', 'o'];
+        else if (hold > 0.5) [r.eyes, r.mouth] = ['happy', 'grin'];
+        else r.mouth = 'open';
+      },
+    };
+  },
+  // Echo (its second, notes at ~0.3 and ~0.5): a quick turn with the mic tucked in, a note sung
+  // out low at them as she comes round, then she sways the other way and sings the echo with the
+  // mic raised high; she ends back at her chin, eyes shut, free hand cupped at her ear for the echo.
+  siecho(p) {
+    const a = ease(seg(p, 0.02, 0.24));
+    const turning = p > 0.02 && p < 0.24;
+    const n1 = ease(seg(p, 0.22, 0.3)) * (1 - soft(seg(p, 0.34, 0.42)));
+    const n2 = ease(seg(p, 0.42, 0.5)) * (1 - soft(seg(p, 0.6, 0.72)));
+    const listen = soft(seg(p, 0.62, 0.8));
+    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.06)), SI.spin], [n1, [104, 74]], [n2, SI.high], [listen, SI.sing]);
+    return {
+      weapon, arm, turn: turning ? dancerTurn(a) : 1, trail: turning,
+      lunge: 4 * n1 - 1.5 * n2, tilt: 0.1 * n1 - 0.1 * n2 + 0.05 * listen, lift: 3 * bump(p, 0, 0.26) + 4 * bump(p, 0.38, 0.56) + siBounce(p, 0.72) * 0.6,
+      rig: (r) => {
+        r.air = bump(p, 0.38, 0.56) > 0.5;
+        siHead(r, turning ? 0 : 0.2 * n1 + 0.5 * n2 - 0.3 * listen);
+        r.backArm = turning ? [q(-3), q(-3)] : siFree([n1, [-11, -6]], [n2, [-8, -14]], [listen, [-2, -11]]);
+        r.hairLift = turning ? -1 : n2 > 0.4 ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [0.8, -4, 30], [-0.6, -1.2, -8]], [n1, [3.6, 0, 6], [-1.6, -1, -14]], [n2, [0.6, -1.4, 8], [-3.4, 0, -10]], [listen, [1.4, 0, 4], [0.2, -1.4, -18]]);
+        if (turning) r.eyes = 'happy';
+        else if (listen > 0.5) [r.eyes, r.mouth] = ['happy', 'o'];
+        else r.mouth = n2 > 0.3 ? 'yell' : 'open';
+      },
+    };
+  },
+  // Crescendo (its finish, the burst at ~0.48): she starts low, knees bent, singing soft into the
+  // mic with her head tucked down; she rises and rises on her toes as the note grows, head going
+  // back to belt it, then stamps forward and drives the mic out low at them as the sound bursts;
+  // she holds a rock pose: knee bent, mic thrust out low, free arm flung up behind, head down.
+  sicrescendo(p) {
+    const low = soft(seg(p, 0, 0.12)) * (1 - soft(seg(p, 0.14, 0.4)));
+    const grow = soft(seg(p, 0.12, 0.4)) * (1 - ease(seg(p, 0.42, 0.48)));
+    const drive = ease(seg(p, 0.42, 0.48));
+    const hold = soft(seg(p, 0.56, 0.86));
+    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.1)), SI.sing], [grow, SI.belt], [drive, [110, 82]], [hold, [118, 78]]);
+    return {
+      weapon, arm, lunge: 9 * drive * (1 - hold * 0.3), tilt: 0.08 * low - 0.1 * grow + 0.22 * drive * (1 - hold * 0.4), lift: -2 * low + 5 * grow + 0.6 * breathe(p * 3) * grow,
+      rig: (r) => {
+        r.squat = q(3 * low + 3 * drive);
+        siHead(r, -0.8 * low + grow - 0.7 * hold);
+        r.backArm = siFree([low, [2, -3]], [grow, [-7, -12]], [drive, [-11, -16]]);
+        r.hairLift = drive > 0.3 ? 1 : grow > 0.5 ? -1 : 0;
+        r.cape -= q(5 * drive);
+        danceLegs(r, [low, [2.4, 0, 8], [-2.2, 0, -10]], [grow, [0.8, -1.6, 8], [-0.8, -1.8, -10]], [drive, [6, 0, 10], [-6, -1, -24]]);
+        if (low > 0.5) [r.eyes, r.mouth] = ['happy', siSyllable(p, 3)];
+        else if (grow > 0.4) [r.eyes, r.mouth] = ['happy', 'yell'];
+        else if (drive > 0.3) r.mouth = hold > 0.6 ? 'grin' : 'yell';
+      },
+    };
+  },
+  // Knee slide (her Star Step): a skip, then she drops onto both knees and slides across the stage
+  // like a rock star, leaning back with her head thrown back and the free arm flung up, singing to
+  // the sky; she pops back up onto her feet with a hop and a wink.
+  sislide(p) {
+    const skip = bump(p, 0, 0.16);
+    const kneel = soft(seg(p, 0.1, 0.2)) * (1 - soft(seg(p, 0.66, 0.78)));
+    const pop = bump(p, 0.68, 0.88);
+    const hold = soft(seg(p, 0.82, 1));
+    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0.04, 0.18)), SI.belt], [hold, [80, 94]]);
+    return {
+      weapon, arm, lift: 4 * skip + 5 * pop - 2 * kneel, tilt: -0.2 * kneel + 0.06 * hold, lunge: 2 * skip,
+      rig: (r) => {
+        r.air = skip > 0.45 || pop > 0.45;
+        r.squat = q(4 * kneel);
+        siHead(r, 1.0 * kneel + 0.2 * hold);
+        r.backArm = siFree([kneel, [-9, -16]], [hold, [-10, -9]]);
+        r.hairLift = kneel > 0.5 ? 1 : pop > 0.4 ? -1 : 0;
+        r.cape -= q(5 * kneel);
+        danceLegs(r, [skip, [1.6, -2.4, 14], [-2.4, -4.4, -56]], [kneel, [3, 1, 40], [-3.8, 1.2, -64]], [pop, [1.4, -3, 30], [-2, -3.4, -40]], [hold, [2.6, 0, 6], [-2.4, 0, -10]]);
+        if (kneel > 0.5) [r.eyes, r.mouth] = ['happy', 'yell'];
+        else if (hold > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+  // Power note (her Comet, the blast at ~0.48): feet planted wide, she grips the mic in both hands
+  // at her chin, draws a breath, then leans into it and belts one long note straight at them, hair
+  // blown back, the note trembling (a vibrato in her shoulders); she flicks her hair back out of
+  // it, mic swung down at her side and her free fist pumped up.
+  sipower(p) {
+    const plant = soft(seg(p, 0, 0.16));
+    const breath = soft(seg(p, 0.12, 0.36)) * (1 - ease(seg(p, 0.38, 0.46)));
+    const blast = ease(seg(p, 0.4, 0.48)) * (1 - soft(seg(p, 0.76, 0.86)));
+    const flick = soft(seg(p, 0.78, 0.92));
+    const vib = blast * Math.sin(p * Math.PI * 36) * 0.6;
+    const [weapon, arm] = siPose(SI.guard, [plant, SI.sing], [blast, [52, 26]], [flick, [150, 34]]);
+    return {
+      weapon, arm, lunge: 4 * blast, tilt: -0.06 * breath + 0.2 * blast, lift: 2 * breath + vib,
+      rig: (r) => {
+        r.squat = q(2.5 * plant * (1 - flick * 0.5));
+        siHead(r, 0.3 * breath - 0.3 * blast + 0.4 * bump(p, 0.8, 0.96));
+        r.backArm = flick > 0.1 ? siFree([1 - flick, [3, -4]], [flick, [-8, -14]]) : [q(lerp(-2, 3, plant)), q(lerp(-2, -4, plant))];
+        r.hairLift = blast > 0.3 ? 1 : flick > 0.3 ? -1 : 0;
+        r.cape -= q(5 * blast);
+        danceLegs(r, [plant, [3.6, 0, 4], [-3.6, 0, -4]], [flick, [2.6, 0, 6], [-2.4, -1, -14]]);
+        if (breath > 0.5) [r.eyes, r.mouth] = ['half', 'o'];
+        else if (blast > 0.3) [r.eyes, r.mouth] = ['happy', 'yell'];
+        else if (flick > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+  // Ballad (her Wishing Star, the heal at ~0.55): she sinks onto one knee and serenades them, mic
+  // hugged to her chest in both hands and eyes shut; on the long note she rises and lifts the mic up
+  // to the sky, free hand on her heart, as hearts drift down; she ends standing, head tipped, mic
+  // held low, hand still on her heart.
+  siballad(p) {
+    const kneel = soft(seg(p, 0.02, 0.2)) * (1 - soft(seg(p, 0.38, 0.54)));
+    const rise = soft(seg(p, 0.4, 0.56));
+    const sway = Math.sin(seg(p, 0.1, 0.45) * Math.PI * 2) * kneel;
+    const end = soft(seg(p, 0.8, 0.96));
+    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.14)), SI.chest], [rise, SI.up], [end, [120, 30]]);
+    return {
+      weapon, arm, lift: -2 * kneel + 3 * rise * (1 - end) + 0.6 * breathe(p * 2) * rise, tilt: 0.06 * sway + 0.08 * kneel - 0.08 * rise * (1 - end),
+      rig: (r) => {
+        r.squat = q(3 * kneel);
+        siHead(r, -0.6 * kneel + 0.7 * rise * (1 - end) - 0.4 * end + 0.2 * sway);
+        r.backArm = siFree([soft(seg(p, 0, 0.14)), [3, -4]], [rise, [3, -7]]);
+        r.hairLift = rise > 0.3 && end < 0.5 ? -1 : 0;
+        danceLegs(r, [kneel, [3.4, 0, 8], [-3.8, 1.2, -60]], [rise * (1 - end), [0.8, -1.6, 8], [-0.8, -1.6, -10]], [end, [1.6, 0, 4], [0.2, -1.4, -18]]);
+        if (kneel > 0.5) [r.eyes, r.mouth] = ['happy', siSyllable(p, 5)];
+        else if (rise > 0.4 && end < 0.5) [r.eyes, r.mouth] = ['happy', 'open'];
+        else if (end > 0.5) [r.eyes, r.mouth] = ['half', 'cat'];
+      },
+    };
+  },
+  // Harmony (her Star Veil, ~0.55): she sweeps the mic out across the whole crowd, from low on one
+  // side up and over to the other, stepping with it, then opens both arms wide and holds one long
+  // harmony up on her toes as rings of sound settle over everyone; she ends pointing the mic down at
+  // the floor with a little bounce, free hand on her hip.
+  siharmony(p) {
+    const sweep = soft(seg(p, 0.04, 0.46));
+    const open = soft(seg(p, 0.46, 0.58)) * (1 - soft(seg(p, 0.8, 0.92)));
+    const fin = soft(seg(p, 0.82, 0.94));
+    const swept = [lerp(140, 70, sweep), lerp(60, 108, Math.sin(sweep * Math.PI)) - 20 * sweep];
+    const [weapon, arm] = siPose(swept, [open, [96, 92]], [fin, [130, 56]]);
+    return {
+      weapon, arm, lunge: 3 * Math.sin(sweep * Math.PI) - 1.5 * open, tilt: 0.1 * Math.cos(sweep * Math.PI) * (1 - open) - 0.08 * open, lift: 3 * open + 0.6 * breathe(p * 2) * open + siBounce(p, 0.86) * fin,
+      rig: (r) => {
+        siHead(r, 0.2 + 0.6 * open - 0.3 * fin);
+        r.backArm = siFree([sweep, [-6, -6]], [open, [-11, -9]], [fin, SI.hip]);
+        if (fin > 0.5) r.armSide = -1;
+        r.hairLift = open > 0.4 ? -1 : 0;
+        danceLegs(r, [Math.max(0, Math.cos(sweep * Math.PI)) * (1 - open), [0.6, -1, 8], [-3, 0, -6]], [Math.max(0, -Math.cos(sweep * Math.PI)) * (1 - open), [3.4, 0, 6], [-0.6, -1, -10]], [open, [1, -1.6, 8], [-1, -1.8, -10]], [fin, [2.6, 0, 4], [-1.4, -1.6, -24]]);
+        if (open > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
+        else if (fin > 0.5) [r.eyes, r.mouth] = ['open', 'cat'];
+        else r.mouth = siSyllable(p, 6);
+      },
+    };
+  },
+  // Encore (her Starfall, 1.45 s; the notes rain from ~0.66, the blast at ~0.86): she thrusts the
+  // mic up to the sky and yells "everybody!", head back; bounces on the beat three times with it
+  // raised; pumps it up and down as the notes come pouring down; crouches and leaps with her heels
+  // kicked up; and belts the last note down at them as she lands, the blast tearing out round her.
+  // She ends down on one knee, mic thrust up high, free arm out, head back, with a wink.
+  siencore(p) {
+    const yell = soft(seg(p, 0.02, 0.12)) * (1 - soft(seg(p, 0.16, 0.24)));
+    const beat = Math.abs(Math.sin(seg(p, 0.16, 0.5) * Math.PI * 3)) * (p > 0.16 && p < 0.5 ? 1 : 0);
+    const pump = Math.sin(seg(p, 0.5, 0.66) * Math.PI * 4) * (p > 0.5 && p < 0.66 ? 1 : 0);
+    const crouch = bump(p, 0.64, 0.72);
+    const leap = Math.sin(Math.PI * seg(p, 0.7, 0.84));
+    const down = ease(seg(p, 0.82, 0.87)) * (1 - soft(seg(p, 0.9, 0.96)));
+    const fin = soft(seg(p, 0.9, 0.97));
+    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.08)), SI.up], [Math.max(0, pump), SI.high], [down, [112, 70]], [fin, [40, 124]]);
+    return {
+      weapon, arm, lift: 3 * yell + 5 * beat + 13 * leap - 2 * crouch - 3 * fin, tilt: -0.1 * yell + 0.2 * down - 0.06 * fin, lunge: 3 * leap + 4 * down,
+      rig: (r) => {
+        r.air = beat > 0.5 || leap > 0.2;
+        r.squat = q(2.5 * crouch + 2 * down + 3 * fin);
+        siHead(r, yell + 0.3 * beat - 0.6 * down + 0.8 * fin);
+        r.backArm = siFree([yell, [-8, -15]], [beat, [-10, -13]], [down, [-11, -12]], [fin, [-11, -8]]);
+        r.hairLift = leap > 0.3 || beat > 0.5 ? -1 : down > 0.3 ? 1 : 0;
+        r.cape -= q(5 * Math.max(leap, down));
+        danceLegs(r, [beat, [1.6, -2.4, 14], [-2.4, -4.4, -56]], [crouch, [2.4, 0, 6], [-2.4, 0, -8]], [leap, [1.6, -3.4, 30], [-2.4, -4, -40]], [down, [4, 0, 8], [-4, -0.6, -14]], [fin, [3.4, 0, 8], [-3.8, 1.2, -60]]);
+        if (yell > 0.4) [r.eyes, r.mouth] = ['happy', 'yell'];
+        else if (fin > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (down > 0.3) r.mouth = 'yell';
+        else r.mouth = siSyllable(p, 7);
+        if (beat > 0.6) r.eyes = 'happy';
+      },
+    };
+  },
+
   // ---------- The Astronomer's moves (her own; docs/design/astronomer.md) ----------
   // A calm, dreamy stargazer who conducts the planets like a slow dance: every figure flows (soft
   // in and out, never a snap), her gaze drifts up to the sky between casts, and the staff moves in
@@ -4078,6 +4631,191 @@ export const MOVES = {
         if (draw > 0.2 && fire < 0.3) r.eyes = 'half';
         else if (fire > 0.3 && down < 0.5) r.mouth = 'open';
         if (down > 0.4) [r.eyes, r.mouth] = ['happy', 'cat'];
+      },
+    };
+  },
+
+
+  // The Star Witch's skills, her way (data/skills.js `paths`), all unhurried:
+  // Orrery tap (her Shooting Star's first, the moon leaves at ~0.3): she lets the staff swing back
+  // like a pendulum, then taps the orrery over and forward with it, rising onto her toes, and a
+  // silver moon swings off; she watches it go, head tipped, the staff held out.
+  astap(p) {
+    const lift = soft(seg(p, 0, 0.2));
+    const tap = soft(seg(p, 0.2, 0.3));
+    const hold = soft(seg(p, 0.4, 0.8));
+    return {
+      weapon: lerp(lerp(-46, -100, lift), 88, tap) - 10 * hold, arm: lerp(lerp(45, 30, lift), 62, tap) - 4 * hold,
+      lunge: 3 * tap, tilt: -0.05 * lift * (1 - tap) + 0.05 * tap * (1 - hold) - 0.04 * hold, lift: 3 * lift + asDrift(p, 0.34, 2),
+      rig: (r) => {
+        r.air = asDrift(p, 0.34, 2) > 1.4;
+        r.backArm = [q(lerp(lerp(-2, 3, lift), -5, tap)), q(lerp(-2, -6, lift) + 2 * tap)];
+        danceLegs(r, [lift * (1 - tap), [0.8, -1.2, 6], [-1, -1.4, -8]], [tap, [2.2, 0, 4], [-1.8, -0.8, -12]], [asDrift(p, 0.34, 1), ...AS_FLOAT]);
+        r.eyes = hold > 0.4 ? 'happy' : 'half';
+      },
+    };
+  },
+  // Twin moons (its second, moons at ~0.3 and ~0.5): she turns the orrery in a slow figure eight
+  // before her (swung back first, then over and out), the free hand circling round it like a moon round its world: a moon slips off at
+  // the bottom of the first loop and another at the second; she ends with the staff upright before
+  // her and the free hand open, palm up, eyes half shut.
+  astwin(p) {
+    const W = [[0, -46], [0.12, -96], [0.3, 92], [0.4, 44], [0.5, 96], [0.66, 34]];
+    const A = [[0, 45], [0.12, 50], [0.3, 62], [0.4, 52], [0.5, 60], [0.66, 46]];
+    const loop = seg(p, 0.08, 0.6);
+    return {
+      weapon: starKeys(p, W), arm: starKeys(p, A), lunge: 2 * (bump(p, 0.2, 0.36) + bump(p, 0.4, 0.56)), tilt: 0.04 * Math.sin(loop * Math.PI * 4),
+      lift: 2 * Math.sin(Math.PI * loop) ** 2 + asDrift(p, 0.62, 2),
+      rig: (r) => {
+        r.air = asDrift(p, 0.62, 2) > 1.4;
+        const c = loop * Math.PI * 4;
+        r.backArm = loop > 0 && loop < 1 ? [q(3 + 3 * Math.cos(c)), q(-6 + 3 * Math.sin(c))] : [q(lerp(-2, 5, soft(seg(p, 0.6, 0.8)))), q(lerp(-2, -7, soft(seg(p, 0.6, 0.8))))];
+        danceLegs(r, [bump(p, 0.2, 0.36), [2.4, 0, 4], [-1.4, -0.6, -8]], [bump(p, 0.4, 0.56), [2, -0.6, 8], [-1.8, 0, -6]], [asDrift(p, 0.62, 1), ...AS_FLOAT]);
+        r.eyes = 'half';
+        if (p > 0.7) r.mouth = 'cat';
+      },
+    };
+  },
+  // Orrery wheel (its finish, the ringed world rolls out at ~0.5): she winds the orrery round in two
+  // slow circles behind her like a music box's key, sinking back with it and gathering the planet,
+  // then brings it over and pushes it out level before her and the ringed world rolls down the line; she floats on her toes after it, free hand guiding it on.
+  aswheel(p) {
+    const wheel = soft(seg(p, 0.06, 0.46));
+    const push = ease(seg(p, 0.44, 0.52));
+    const hold = soft(seg(p, 0.6, 0.9));
+    return {
+      weapon: lerp(-46 - 80 * wheel + 25 * Math.sin(wheel * Math.PI * 4), 90, push) - 8 * hold, arm: lerp(lerp(45, 30, wheel) + 10 * Math.sin(wheel * Math.PI), 70, push) - 6 * hold, trail: wheel > 0 && wheel < 1,
+      lunge: -2 * wheel * (1 - push) + 6 * push * (1 - hold * 0.4), tilt: -0.06 * Math.sin(wheel * Math.PI) + 0.08 * push * (1 - hold), lift: 2 * Math.sin(wheel * Math.PI) + asDrift(p, 0.52, 4),
+      rig: (r) => {
+        r.air = asDrift(p, 0.52, 4) > 2;
+        r.backArm = [q(lerp(lerp(-2, 4, wheel), -8, push) + 2 * hold), q(lerp(-2, -4, wheel) - 2 * push)];
+        r.hairLift = push > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(3 * push);
+        danceLegs(r, [wheel * (1 - push), [1.6, 0, 4], [-2.4, 0, -10]], [push, [3, 0, 6], [-2.6, -0.6, -14]], [asDrift(p, 0.52, 1), ...AS_FLOAT]);
+        r.eyes = push > 0.3 ? 'happy' : 'half';
+        if (hold > 0.5) r.mouth = 'cat';
+      },
+    };
+  },
+  // Moon phase (her Star Step): she draws the staff in beside her and closes her eyes, wanes into
+  // a silver crescent (the asphase effect) and drifts ahead low and level like moonlight, the staff
+  // trailing behind her and her free hand leading; she waxes back into herself and settles softly
+  // onto her toes.
+  asphase(p) {
+    const draw = soft(seg(p, 0, 0.18));
+    const drift = soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.66, 0.86)));
+    const settle = soft(seg(p, 0.72, 0.92));
+    return {
+      weapon: lerp(lerp(lerp(-46, -100, draw), -112, drift), -46, settle), arm: lerp(lerp(lerp(45, 30, draw), 22, drift), 46, settle),
+      lift: 2 * draw * (1 - drift) + 7 * drift + asDrift(p, 0.8, 2), tilt: 0.3 * drift, lunge: 3 * drift,
+      rig: (r) => {
+        r.air = drift > 0.3 || asDrift(p, 0.8, 2) > 1.4;
+        r.backArm = [q(lerp(lerp(-2, 3, draw), 8, drift) * (1 - settle) + 4 * settle), q(lerp(-2, -6, drift) * (1 - settle) - 6 * settle)];
+        r.hairLift = drift > 0.4 ? 1 : 0;
+        r.cape -= q(5 * drift);
+        danceLegs(r, [draw * (1 - drift), [0.6, -0.6, 2], [-0.6, -0.6, -2]], [drift, [-2, -4, -30], [-5, -4, -50]], [settle, [1.2, -1, 6], [-1.2, -1.2, -8]]);
+        r.eyes = drift > 0.3 || draw > 0.6 ? 'happy' : 'half';
+      },
+    };
+  },
+  // Heave (her Comet, the ringed world leaves at ~0.5): she sinks low with the staff dipped behind
+  // her and takes it in both hands, then heaves it up from the ground and over in one long
+  // two-handed swing, rising onto her toes, and a great ringed world is flung down the line; she
+  // ends drifting, staff raised before her, free hand floating up, gazing after it.
+  asheave(p) {
+    const sink = soft(seg(p, 0, 0.3));
+    const heave = soft(seg(p, 0.3, 0.5));
+    const hold = soft(seg(p, 0.56, 0.86));
+    return {
+      weapon: lerp(lerp(-46, -150, sink), 66, heave) - 6 * hold, arm: lerp(lerp(45, 28, sink), 70, heave) - 6 * hold, trail: heave > 0 && heave < 1,
+      lunge: -3 * sink * (1 - heave) + 6 * heave * (1 - hold * 0.4), tilt: 0.12 * sink * (1 - heave) - 0.08 * heave * (1 - hold) + 0.02 * hold, lift: -2 * sink * (1 - heave) + 5 * bump(p, 0.36, 0.66) + asDrift(p, 0.6, 3),
+      rig: (r) => {
+        r.air = bump(p, 0.36, 0.66) > 0.5 || asDrift(p, 0.6, 3) > 1.5;
+        r.squat = q(3 * sink * (1 - heave));
+        r.backArm = heave < 0.6 ? [q(lerp(-2, 4, sink)), q(lerp(-2, 1, sink))] : [q(lerp(4, -3, hold)), q(lerp(-4, -11, hold))];
+        r.hairLift = heave > 0.3 && hold < 0.5 ? -1 : 0;
+        r.cape -= q(4 * heave * (1 - hold));
+        danceLegs(r, [sink * (1 - heave), [3, 0, 8], [-3.4, -0.4, -14]], [heave, [2, -1.4, 12], [-2.4, -1.4, -22]], [asDrift(p, 0.6, 1), ...AS_FLOAT]);
+        if (sink > 0.5 && heave < 0.3) r.eyes = 'half';
+        else if (hold > 0.4) r.eyes = 'happy';
+      },
+    };
+  },
+  // Moonrise (her Wishing Star, the heal at ~0.55): she turns her face up to the sky, lets the
+  // orrery sink low behind her and draws it up over her shoulder, so it hangs behind her head like a
+  // lantern of moonlight; the free hand rises palm up to meet the moon sinking down, and she floats
+  // up on her toes; she ends with the staff resting on her shoulder and the hand on her heart.
+  asmoonrise(p) {
+    const look = soft(seg(p, 0, 0.2));
+    const draw = soft(seg(p, 0.14, 0.5));
+    const meet = soft(seg(p, 0.4, 0.58)) * (1 - soft(seg(p, 0.8, 0.94)));
+    const rest = soft(seg(p, 0.8, 0.96));
+    return {
+      weapon: lerp(lerp(lerp(-46, -110, look), -40, draw), -50, rest), arm: lerp(lerp(lerp(45, 30, look), 34, draw), 40, rest),
+      lift: 6 * meet + breathe(p) * 0.6 * meet, tilt: -0.08 * meet - 0.03 * look,
+      rig: (r) => {
+        r.air = meet > 0.5;
+        r.backArm = [q(lerp(lerp(-2, -3, meet), 3, rest)), q(lerp(lerp(-2, -13, meet), -4, rest))];
+        r.hairLift = meet > 0.4 ? -1 : 0;
+        danceLegs(r, [meet, ...AS_FLOAT], [rest, [1, 0, 2], [-1.2, 0, -4]]);
+        r.eyes = rest > 0.5 ? 'happy' : meet > 0.3 ? 'happy' : 'half';
+        if (meet > 0.4) r.mouth = 'o';
+        else if (rest > 0.5) r.mouth = 'cat';
+      },
+    };
+  },
+  // Halo (her Star Veil, ~0.55): staff held out low at arm's length, she turns once right round on
+  // her toes, its head drawing an orbit round her (kept behind her as she goes, off her face); then
+  // she brings it round to rest out low before her and lifts her free hand, and silver moons take up
+  // the orbit round the party; she ends with the free hand drawn back in, eyes shut.
+  ashalo(p) {
+    const out = soft(seg(p, 0, 0.1));
+    const a = seg(p, 0.08, 0.48);
+    const turning = p > 0.08 && p < 0.48;
+    const plant = soft(seg(p, 0.48, 0.58));
+    const lift = soft(seg(p, 0.56, 0.7)) * (1 - soft(seg(p, 0.82, 0.94)));
+    const rest = soft(seg(p, 0.84, 0.96));
+    return {
+      weapon: lerp(lerp(lerp(-46, 120, out), 104, plant), 100, rest), arm: lerp(lerp(lerp(45, 38, out), 46, plant), 28, rest), orbit: turning, back: turning || undefined,
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1, trail: turning,
+      lunge: 3 * plant * (1 - rest), lift: 4 * bump(p, 0.06, 0.5) + 3 * lift, tilt: 0.04 * plant - 0.06 * lift,
+      rig: (r) => {
+        r.air = bump(p, 0.06, 0.5) > 0.6;
+        r.backArm = turning ? [q(-5), q(-6)] : [q(lerp(lerp(-2, -4, lift), 5, rest)), q(lerp(lerp(-3, -13, lift), -2, rest))];
+        r.hairLift = turning ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [0.8, -5, 40], [-0.4, -1.2, -2]], [plant, [1.6, 0, 4], [-1.6, 0, -6]], [lift, [0.8, -1.2, 6], [-0.8, -1.4, -8]]);
+        r.eyes = rest > 0.4 || lift > 0.4 ? 'happy' : 'half';
+        if (rest > 0.5) r.mouth = 'cat';
+      },
+    };
+  },
+  // Meteor shower (her Starfall, 1.45 s; planets fall from ~0.66, the great one lands at ~0.86):
+  // she floats up and lifts the orrery high to the sky in both hands and stops it, stirring the
+  // stars round in slow circles with its head, hair drifting up; little planets begin to fall
+  // ahead of her; she sinks and brings the staff slowly down before her, pointing to where the great
+  // ringed world will land, dips with it as it lands, and kneels with the staff held out low, gazing up.
+  asmeteor(p) {
+    const rise = soft(seg(p, 0, 0.2));
+    const stir = seg(p, 0.2, 0.6);
+    const on = stir > 0 && stir < 1 ? 1 : 0;
+    const lower = soft(seg(p, 0.62, 0.84));
+    const dip = bump(p, 0.84, 0.92);
+    const kneel = soft(seg(p, 0.88, 0.98));
+    const sw = 14 * Math.sin(stir * Math.PI * 4) * on;
+    return {
+      weapon: lerp(lerp(lerp(-46, 40, rise) + sw, 128, lower), 140, kneel), arm: lerp(lerp(lerp(45, 112, rise) + 6 * Math.cos(stir * Math.PI * 4) * on, 50, lower), 34, kneel),
+      lift: 8 * rise * (1 - lower) + breathe(p) * rise * (1 - lower) - 2 * dip - 3 * kneel, tilt: -0.1 * rise * (1 - lower) + 0.1 * lower * (1 - kneel) + 0.08 * dip, lunge: 4 * lower * (1 - kneel * 0.5),
+      rig: (r) => {
+        r.air = rise > 0.4 && lower < 0.6;
+        r.squat = q(2 * dip + 3 * kneel);
+        r.backArm = [q(lerp(lerp(lerp(-2, -4, rise), 5, lower), 3, kneel)), q(lerp(lerp(lerp(-2, -12, rise), -5, lower), -6, kneel))];
+        r.hairLift = rise > 0.4 && lower < 0.5 ? -1 : 0;
+        r.cape -= q(4 * lower * (1 - kneel));
+        danceLegs(r, [rise * (1 - lower), ...AS_FLOAT], [lower * (1 - kneel), [2.6, 0, 6], [-2.4, -0.6, -12]], [kneel, [3.4, 0, 8], [-3.8, 1.2, -60]]);
+        if (rise > 0.4 && lower < 0.4) r.eyes = 'happy';
+        else if (kneel > 0.5) [r.eyes, r.mouth] = ['happy', 'cat'];
+        else r.eyes = 'half';
+        if (dip > 0.5) r.mouth = 'o';
       },
     };
   },
@@ -4672,6 +5410,116 @@ export const MOVES = {
     };
   },
 
+  // ---------- Her own versions of the Acrobat Archer's skills (data/path-skills.js) ----------
+
+  // Vanishing Act (her Handspring, 0.66 s; gone from 0.24 to 0.56, the arrow at 0.8): no flip. She
+  // flicks her free hand out and sweeps the cape round across her with a half turn, a wink, and is
+  // gone in a puff of smoke; she steps out of another behind it already turning (her back to where
+  // she went), draws as she comes round and looses back at it, then lets the trick land.
+  ptvanish(p) {
+    const flick = soft(seg(p, 0, 0.1)) * (1 - soft(seg(p, 0.1, 0.2)));
+    const sweep = seg(p, 0.08, 0.24);
+    const gone = p > 0.24 && p < 0.56;
+    const out = soft(seg(p, 0.56, 0.66));
+    const s = bowShot(p, 0.66, 0.8);
+    const raise = soft(seg(p, 0.6, 0.7));
+    const hold = soft(seg(p, 0.86, 1));
+    // Turned away from where she's going as she steps out, then round to face it (her facing flips
+    // with the shot at 0.8, so the drawing turns with it).
+    const turn = p < 0.08 ? 1 : p < 0.24 ? (sweep < 0.5 ? 1 : -1) : p < 0.8 ? -1 : 1;
+    return {
+      weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(36, PT_ARM, raise), 40, hold),
+      turn, pull: s.pull, nock: s.nock && raise > 0.3, twang: s.twang,
+      lift: 3 * bump(p, 0.06, 0.24) + 4 * bump(p, 0.54, 0.7) + ptFloat(p, 0.86), lunge: -2 * s.kick + 2 * out * (1 - raise), tilt: -0.08 * flick + 0.1 * bump(p, 0.1, 0.24) - 0.04 * s.kick,
+      rig: (r) => {
+        if (p < 0.24) {
+          // The free hand flicked out, then the cape swept round across her.
+          r.backArm = sweep > 0 ? [q(lerp(-6, 6, soft(sweep))), q(-2 - 3 * Math.sin(Math.PI * sweep))] : [q(-6 * flick), q(-4 * flick)];
+          r.cape -= q(6 * Math.sin(Math.PI * sweep));
+          danceLegs(r, [flick, [2.4, 0, 6], [-2.6, -0.6, -14]], [Math.sin(Math.PI * sweep), [1.2, -3, 24], [-0.6, -1, -8]]);
+          r.air = bump(p, 0.06, 0.24) > 0.5;
+          r.eyes = sweep > 0.4 ? 'wink' : undefined;
+          r.mouth = 'cat';
+        } else if (gone) {
+          r.squat = 1;
+          r.backArm = [3, -2];
+        } else {
+          bowDraw(r, s, raise);
+          danceLegs(r, [out * (1 - raise), [2.4, -3, 26], [-1.6, -2, -24]], [raise, [3, 0, 6], [-2.8, 0, -12]]);
+          r.cape -= q(4 * out * (1 - raise));
+          if (s.kick > 0.3) r.mouth = 'grin';
+          else if (hold > 0.4) [r.eyes, r.mouth] = ['half', 'cat'];
+        }
+      },
+    };
+  },
+
+  // Levitation (her Grand Somersault, 1.9 s; the hat at ~0.48, the arrows ~0.6 to ~0.85): the
+  // magician's levitation trick. She sweeps the cape round herself with a whirl, then floats slowly
+  // up off the floor and tips back until she lies flat on the air, toes pointed, one hand trailing;
+  // at the top she swings upright and snaps her fingers high (the giant hat appears over the stage),
+  // draws up at it and looses arrow after arrow into it (it pours them down on everything below),
+  // drifts back down with her cape billowing and sinks into a deep stage bow.
+  ptlevitate(p, dur) {
+    const whirl = seg(p, 0.03, 0.12);
+    const whirling = p > 0.03 && p < 0.12;
+    const float = soft(seg(p, 0.1, 0.42));
+    const lie = soft(seg(p, 0.16, 0.34)) * (1 - soft(seg(p, 0.4, 0.48)));
+    const snap = soft(seg(p, 0.44, 0.5)) * (1 - soft(seg(p, 0.52, 0.56)));
+    const aim = soft(seg(p, 0.54, 0.6)) * (1 - soft(seg(p, 0.84, 0.88)));
+    const loose = rel(p, 0.6, 0.84) ? Math.abs(Math.sin(seg(p, 0.6, 0.84) * Math.PI * 4)) : 0;
+    const drop = soft(seg(p, 0.84, 0.94));
+    const bow = soft(seg(p, 0.93, 0.98)) * (1 - soft(seg(p, 0.99, 1)) * 0.3);
+    const high = float * (1 - drop);
+    return {
+      weapon: aim > 0.05 ? lerp(BOW_REST, PT_AIM - 50, aim) + 6 * loose : lerp(BOW_REST, 60, bow), arm: aim > 0.05 ? lerp(40, PT_ARM + 30, aim) : lerp(36, 40, bow),
+      pull: aim > 0.5 ? 1 - loose : 0, nock: aim > 0.5 && loose < 0.5, twang: loose > 0.8 ? 1 : 0,
+      turn: whirling ? Math.sign(Math.cos(whirl * Math.PI * 2) || 1) : 1,
+      lift: 50 * high + breathe(p) * 1.5 * high + 3 * bump(p, 0.03, 0.12), tilt: -1.15 * lie - 0.1 * aim + 0.32 * bow,
+      rig: (r) => {
+        r.air = high > 0.08;
+        if (whirling) { r.backArm = [-2, -6]; r.cape -= 5; }
+        else if (aim > 0.3) bowDraw(r, { pull: 1 - loose, snap: loose > 0.8 ? 0.5 : 0 });
+        else if (snap > 0.05) r.backArm = dancerHand([q(2 * snap), q(-12 * snap)]);
+        else if (bow > 0.05) r.backArm = [q(5 * bow), q(1 * bow)];
+        else r.backArm = [q(2 * float), q(3 * lie)];
+        // Legs together and long, toes pointed, as she lies on the air.
+        if (high > 0.08) danceLegs(r, [Math.max(lie, 0.6), [1.2, -0.6, 8], [-0.6, -0.6, -8]], [aim, [2, -2.6, 20], [-1.6, -1.6, -20]]);
+        else danceLegs(r, [bow, [1.8, 0, 4], [-3.4, -1, -36]]);
+        r.cape -= q(4 * Math.max(high * 0.8, drop * (1 - bow)));
+        r.hairLift = lie > 0.3 ? 1 : drop > 0.2 && bow < 0.5 ? -1 : 0;
+        r.squat = q(1.5 * bow + bump(p, 0.9, 0.96));
+        if (snap > 0.3) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (lie > 0.4) [r.eyes, r.mouth] = ['blink', 'cat'];
+        else if (aim > 0.5) strikeFace(r);
+        else if (bow > 0.3) r.eyes = 'happy';
+      },
+    };
+  },
+
+  // Top Hat (her Springboard; the hat is down at ~0.4): she tips her hat to them, sweeps it off
+  // in a bow and sets it down on the floor brim-up, taps it twice with the tip of her bow, and
+  // straightens up with a finger snap and a smirk.
+  pthattrap(p) {
+    const tip = soft(seg(p, 0, 0.12)) * (1 - soft(seg(p, 0.14, 0.22)));
+    const bowDown = soft(seg(p, 0.16, 0.36)) * (1 - soft(seg(p, 0.66, 0.8)));
+    const set = soft(seg(p, 0.22, 0.4));
+    const tap = bump(p, 0.44, 0.52) + bump(p, 0.54, 0.62);
+    const snap = soft(seg(p, 0.8, 0.88)) * (1 - soft(seg(p, 0.95, 1)) * 0.5);
+    return {
+      weapon: lerp(BOW_REST, 112, bowDown) + 14 * tap, arm: lerp(36, 52, bowDown) - 6 * tap, tilt: 0.32 * bowDown, lunge: 2 * bowDown,
+      lift: ptFloat(p, 0.8),
+      rig: (r) => {
+        r.backArm = tip > 0.05 ? dancerHand([q(1 * tip), q(-8 * tip)]) : snap > 0.05 ? dancerHand([q(2 * snap), q(-12 * snap)]) : [q(lerp(0, 7, set) * bowDown), q(lerp(0, 4, set) * bowDown)];
+        danceLegs(r, [bowDown, [2.2, 0, 4], [-3.4, -1, -34]]);
+        r.squat = q(1.2 * bowDown);
+        if (tip > 0.4) r.eyes = 'wink';
+        else if (tap > 0.4) r.mouth = 'cat';
+        else if (snap > 0.4) [r.eyes, r.mouth] = ['half', 'grin'];
+      },
+    };
+  },
+
   // ---------- The Sky Dancer's moves (her own; docs/design/sky-dancer.md) ----------
   // She dances on the air: every figure is drawn airborne (legs free, toes pointed, never standing),
   // her gloved palms and her feet throwing the wind. Her figures are a dancer's, big and clear at
@@ -4910,6 +5758,61 @@ export const MOVES = {
         danceLegs(r, [rise, [0.6, -2, 8], [-0.6, -2, -8]], [turning ? 1 : 0, [2, -8, 40], [-0.4, -1, -10]], [gather, [3, -11, 50], [-1, -10, 30]], [pose, dancerLeg(70, 14, 40), dancerLeg(-70, 12.6, -50)], [bow, [4, -2, 14], [-4, -3, -20]], [end, [2, -3, 10], [-2, -3, -10]]);
         if (bow > 0.4) r.eyes = 'half';
         else if (turning || pose > 0.3 || slam > 0.3) strikeFace(r);
+      },
+    };
+  },
+
+  // The Wind Dancer's skills, her way (data/skills.js `paths`):
+  // Zephyr turn (her Pirouette, cuts at ~0.25 and ~0.55): a sky-blue whirl lifts her (the
+  // skyupdraft effect) and she drifts forward turning like a leaf on the wind, tipped forward in a
+  // stag leap (front knee bent, back leg long), both arms spread low like wings; she rights herself
+  // and floats down, arms open, toes pointed, with a cheeky smile.
+  sdzephyr(p) {
+    const up = soft(seg(p, 0, 0.14));
+    const a = ease(seg(p, 0.1, 0.64)) * 2;
+    const turning = p > 0.1 && p < 0.64;
+    const open = soft(seg(p, 0.64, 0.82));
+    return {
+      weapon: 90, arm: lerp(lerp(50, 62, up), 84, open), turn: turning ? dancerTurn(a) : 1, trail: turning,
+      lift: 12 * up * (1 - 0.5 * open) + 2 * Math.sin(a * Math.PI) * (turning ? 1 : 0) + ballon(p, 0.7), lunge: 4 * bump(p, 0.1, 0.7), tilt: 0.3 * up * (1 - open) - 0.06 * open,
+      rig: (r) => {
+        r.air = true;
+        r.backArm = dancerHand([q(lerp(-7 * up, -9, open)), q(lerp(1 * up, -6, open))]);
+        r.hairLift = turning ? -1 : 0;
+        r.cape -= q(4 * bump(p, 0.08, 0.7));
+        danceLegs(r, [up, [4, -9, 60], dancerLeg(-100, 14.6, -60)], [open, [2.4, -5, 20], [-3, -6, -30]]);
+        if (open > 0.5) [r.eyes, r.mouth] = ['happy', 'cat'];
+        else if (turning) strikeFace(r);
+      },
+    };
+  },
+  // Cloudburst (her Grand Finale, 1.35 s; cuts from ~0.28, the big one at ~0.74): she spirals up
+  // into a gathering storm of clouds (the skycloudburst effect), arms sweeping up into a wide V and
+  // faster with every turn; at the top she curls into a ball, hangs a beat, then unrolls into a
+  // diving axe heel, the leg chopping down from high over her head as the clouds burst open; she
+  // floats back up on the blast into a star, arms and legs flung wide, and dips her head to it.
+  sdcloudburst(p) {
+    const a = easeIn(seg(p, 0.04, 0.46)) * 2.5;
+    const turning = p > 0.04 && p < 0.46;
+    const climb = soft(seg(p, 0.02, 0.46));
+    const curl = soft(seg(p, 0.46, 0.54)) * (1 - ease(seg(p, 0.62, 0.68)));
+    const raise = ease(seg(p, 0.6, 0.68));
+    const chop = ease(seg(p, 0.68, 0.75));
+    const star = soft(seg(p, 0.78, 0.88)) * (1 - soft(seg(p, 0.94, 1)) * 0.5);
+    const phi = lerp(lerp(20, 125, raise), 40, chop);
+    return {
+      weapon: 90, arm: lerp(lerp(lerp(lerp(45, 100, soft(seg(p, 0, 0.2))), 28, curl), 64, chop), 98, star), turn: turning ? dancerTurn(a) : 1, trail: turning,
+      lift: 14 * climb * (1 - chop) + 2 * curl - 4 * chop * (1 - star) + 6 * star + ballon(p, 0.88) * 0.6, lunge: 6 * chop * (1 - star), tilt: 0.14 * curl - 0.18 * raise * (1 - chop) + 0.3 * chop * (1 - star) + 0.12 * soft(seg(p, 0.92, 1)),
+      rig: (r) => {
+        r.air = true;
+        const v = soft(seg(p, 0, 0.2));
+        r.backArm = dancerHand([q(lerp(lerp(lerp(-10 * v, 3, curl), -6, chop), -10, star)), q(lerp(lerp(lerp(-10 * v, -3, curl), 2, chop), -10, star))]);
+        r.hairLift = chop > 0.3 && star < 0.5 ? 1 : -1;
+        r.cape -= q(5 * Math.max(turning ? 1 : 0, chop));
+        danceLegs(r, [turning ? 1 : 0, [0.4, -1, -30], [-1.6, -2, -30]], [curl, [3, -11, 60], [1, -10, 40]], [raise, dancerLeg(phi, 14.6, 50), [-6, -6, -30]], [star, [9, -8, 40], [-9, -8, -40]]);
+        if (curl > 0.5) r.eyes = 'half';
+        else if (star > 0.5) [r.eyes, r.mouth] = ['happy', 'grin'];
+        else if (turning || chop > 0.2) strikeFace(r);
       },
     };
   },
@@ -5338,6 +6241,7 @@ export const MOVES = {
 
 // Long-feeling moves need a little more time than a quick swing to read properly.
 export const MOVE_MIN = {
+  pthattrap: 0.7, aewind: 0.7,
   overhead: 0.45, plunge: 0.55, rising: 0.45, spin: 0.42, flip: 0.45, slam: 0.45, castup: 0.5, roar: 0.5,
   guard: 0.45, pray: 0.5, cheer: 0.45, ...LIFE_MIN, ...SOCIAL_MIN, ...EMOTE_MIN, draw: 0.38, aimshot: 0.5, skyshot: 0.5, castspin: 0.45, barrage: 0.4,
   flurry: 0.4, dash: 0.35, vanish: 0.3, cleave: 0.55, cross: 0.45, sweep: 0.4, spinback: 0.45, shove: 0.35, risecut: 0.45, leapchop: 0.6, jabs: 0.4, flashcut: 0.34, drivestab: 0.4, hammer: 0.7, skysplit: 0.9, quickshot: 0.3, bash: 0.4, rampage: 1.3, meteor: 0.4, landslam: 0.3, dashstab: 0.4, verdict: 1.5, eclipse: 1.5, pslash: 0.35, pthrust: 0.35, ascend: 0.45, smite: 0.6, consecrate: 0.8, salute: 0.5, cleave1: 0.45, cleave2: 0.45, gyre: 0.45, reaver: 0.7, warroar: 0.6, axehurl: 0.55, bodyslam: 0.8, dragrise: 0.8, shieldslam: 0.6, shieldrush: 0.8, recklesscharge: 0.85,
@@ -5674,6 +6578,9 @@ const FOOTWORK = {
   plsunrise: { s: 'march', beats: [[0.6, 4]], pre: 0.35, b: 1 },
   consecrate: { s: 'march', beats: [[null, 3]], pre: 0.3, b: 0.8 },
   plverdict: { s: 'march', beats: [[0.66, 0]], b: 1, settleAt: 0.86 },
+  // (Her own Titan Breaker and Whirlwind: data/path-skills.js.)
+  plseal: { s: 'march', beats: [[0.6, 2], [0.8, 0]], pre: 0.08, b: 1, settleAt: 0.88 },
+  plrotor: { s: 'march', beats: [[0.75, 2]], pre: 0.1, b: 0.8 },
   // The Berserker.
   cleave1: { s: 'bound', beats: [[null, 6]], drive: 6 },
   cleave2: { s: 'bound', beats: [[null, 5]], drive: 4 },
@@ -5687,6 +6594,9 @@ const FOOTWORK = {
   recklesscharge: { s: 'bound', beats: [[0.8, 0]], b: 1.4 },
   rampage: { s: 'bound', beats: [[0.064, 2], [0.227, 4], [0.384, 4], [0.724, 0]], pre: 0.12, b: 1.4 },
   bkeclipse: { s: 'bound', beats: [[0.68, 0]], b: 1.2, settleAt: 0.86 },
+  // (His own Titan Breaker and Whirlwind: data/path-skills.js.)
+  bkpounce: { s: 'bound', beats: [[0.62, 0], [0.8, 0]], b: 1.4, settleAt: 0.9 },
+  bkmaelstrom: { s: 'bound', beats: [[0.75, 3]], pre: 0.1, b: 1.3 },
 };
 function footwork(mv, p, dur, fw, hit) {
   if (!mv) return mv;

@@ -431,7 +431,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'sinote' || f.variant === 'asplanet' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -443,12 +443,12 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'sinote' || f.variant === 'asplanet' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
         // A gold arrow's landing is the Archer's own hit burst (drawn with the hit).
-        if (f.variant === 'hawkarrow' || f.variant === 'moonstar' || f.variant === 'stmeteor') return true;
+        if (f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
         const k = (p - hit) / (1 - hit);
         ctx.globalAlpha = 1 - k;
         glow(ctx, x, cy, 28 * (1 - k) + 6, c.light, 1 - k);
@@ -753,6 +753,21 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     case 'acarrow':
       // Grand Somersault's arrows: gold arrows with mint ribbons, falling steeply.
       fxSprite(ctx, 'celacarrow', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
+      break;
+    case 'ptarrow':
+      // Levitation's arrows (the Phantom Trickster's): plum arrows trailing smoke, falling steeply.
+      fxSprite(ctx, 'celptarrow', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
+      break;
+    case 'aebolt':
+      // Bolt Mortar's hail (the Arbalist Engineer's): brass bolts streaking teal, falling steeply.
+      fxSprite(ctx, 'celaebolt', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
+    case 'sinote':
+      // Starfall as the Starlight Idol's encore: pink notes pouring down.
+      fxSprite(ctx, 'celsinote', x, y, { t: time, rot: 1.2, scale: 0.5 * s });
+      break;
+    case 'asplanet':
+      // Starfall as the Astronomer's meteor shower: little ringed planets falling.
+      fxSprite(ctx, 'celasplanet', x, y, { t: time, rot: 1.2, scale: 0.5 * s });
       break;
     case 'stmeteor':
       // Starfall's meteors: a gold star trailing midnight fire, falling down and right.

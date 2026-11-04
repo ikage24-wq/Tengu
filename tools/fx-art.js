@@ -7974,6 +7974,239 @@
   // loops and gold stars riding it.
   E.shockmint = shockRing(SHOWG, MINT, (ctx, pal, x, y, z, a, j) => (j % 2 ? goldStar(ctx, x, y, z * 0.8, a) : sparkle(ctx, MINT, x, y, z, j)), 951);
 
+
+  // ---------- The second jobs' own versions of their first job's skills (data/path-skills.js) ----------
+
+  // Heaven's Seal (the Paladin's Titan Breaker): a great kite-shield crest of gold light with her
+  // white cross on it and a gold star at its heart, inside a halo, gathering out of motes (frames
+  // 0-4), then shining (5-7: its rays turn and the motes circle; the game holds and loops these).
+  E.plcrest = (() => {
+    const c = 160;
+    const pal = PAL.holy;
+    const kite = (k) => [[-60, -70], [60, -70], [64, 0], [0, 86], [-64, 0]].map(([x, y]) => [c + x * k, c + y * k]);
+    return {
+      w: 320, h: 330, n: 8, fps: 12, px: c, py: c,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 5);
+        const shine = i >= 5 ? (i - 5) / 3 : 0;
+        if (i >= 3) starburst(ctx, pal, c, c, 120 + 10 * Math.sin(shine * TAU), 12, 1201, { inner: 0.62, rot: shine * 0.5 });
+        celRing(ctx, pal, c, c, 30 + 100 * k, 10, { broken: i < 3 ? 0.5 : 0, seed: 1202 });
+        if (i < 4) {
+          // Motes of light rushing in to where the crest forms.
+          const R = rng(1203);
+          for (let j = 0; j < 12; j++) {
+            const a = R() * TAU;
+            const d = 150 * (1 - k) + 40;
+            sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 10 - i * 1.5, j);
+          }
+        }
+        inked(ctx, kite(k), pal[2], pal[4], 6);
+        fill(ctx, kite(k * 0.8).map(([x, y]) => [x, y - 4]), pal[1]);
+        // Her cross, white, on the crest.
+        const s = k;
+        fill(ctx, [[-10, -54], [10, -54], [10, -22], [42, -22], [42, -2], [10, -2], [10, 58], [-10, 58], [-10, -2], [-42, -2], [-42, -22], [-10, -22]].map(([x, y]) => [c + x * s, c + y * s]), pal[0]);
+        if (i >= 2) {
+          // The gold star at its heart.
+          const pts = (r) => Array.from({ length: 10 }, (_, j) => {
+            const a = -Math.PI / 2 + (j * Math.PI) / 5 + shine * 0.3;
+            const rr = j % 2 ? r * 0.45 : r;
+            return [c + Math.cos(a) * rr, c - 12 + Math.sin(a) * rr];
+          });
+          inked(ctx, pts(26 * k), pal[2], pal[4], 4);
+          fill(ctx, pts(16 * k), pal[0]);
+        }
+        if (i >= 5) for (let j = 0; j < 6; j++) {
+          const a = shine * TAU * 0.5 + (j / 6) * TAU;
+          sparkle(ctx, pal, c + Math.cos(a) * 140, c + Math.sin(a) * 140 * 0.9, 9, j);
+        }
+      },
+    };
+  })();
+
+  // Skyfall Rend (the Berserker's Titan Breaker): the meteor of rose fire he falls in, head first:
+  // a blazing teardrop round him with three claw-shaped flames raking back up its tail, embers
+  // flying off (loops; drawn pointing down, the game turns it along his fall).
+  E.bkmeteor = (() => {
+    const c = 110;
+    const gy = 250;
+    const pal = PAL.rage;
+    return {
+      w: 220, h: 300, n: 4, fps: 16, px: c, py: gy - 60, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 4) * TAU;
+        // The tail of fire streaming up behind him (tongues pointing up, swaying).
+        for (let j = 0; j < 3; j++) tongue(ctx, PAL.fire, c + (j - 1) * 34, gy - 50, 26 - Math.abs(j - 1) * 6, 190 - Math.abs(j - 1) * 50, Math.sin(ph + j * 1.7) * 14);
+        // The claws: three long raking streaks up the tail.
+        for (let j = 0; j < 3; j++) {
+          const x = c + (j - 1) * 30;
+          inked(ctx, [[x - 6, gy - 60], [x + 8 + Math.sin(ph + j) * 4, gy - 230 + Math.abs(j - 1) * 30], [x + 8, gy - 60]], pal[2], pal[4], 4);
+          fill(ctx, [[x - 1, gy - 70], [x + 6 + Math.sin(ph + j) * 4, gy - 200 + Math.abs(j - 1) * 30], [x + 5, gy - 70]], pal[0]);
+        }
+        // The blazing head of the meteor (round him), white-hot at the front.
+        tongue(ctx, pal, c, gy - 10, 70, 150, Math.sin(ph) * 8);
+        ctx.beginPath();
+        ctx.arc(c, gy - 30, 38, 0, TAU);
+        ctx.fillStyle = pal[0];
+        ctx.globalAlpha = 0.85;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        const R = rng(1211 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, PAL.fire, c + (R() - 0.5) * 180, gy - 60 - R() * 200, 6 + R() * 4, j);
+      },
+    };
+  })();
+
+  // Levitation (the Phantom Trickster's Grand Somersault): a giant top hat over the stage. It pops
+  // out of a puff of smoke (0-2), tips over (3-4) and pours plum arrows, cards and doves out of its
+  // brim down onto everything below (5-9), then vanishes in smoke (10-11).
+  E.pthat = (() => {
+    const c = 190;
+    const cy = 140;
+    const hat = (ctx, x, y, s, rot) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.scale(s, s);
+      // Crown and brim (the crown up from the brim at y 0), a silver band, a red card tucked in it.
+      inked(ctx, [[-56, 0], [-50, -120], [-46, -132], [46, -132], [50, -120], [56, 0]], PLUM[3], PLUM[4], 6);
+      fill(ctx, [[-44, -6], [-40, -116], [-14, -120], [-18, -6]], PLUM[2]);
+      inked(ctx, [[-56, -34], [56, -34], [56, -14], [-56, -14]], PSILV[2], PSILV[4], 4);
+      inked(ctx, [[-96, -4], [96, -4], [104, 8], [96, 18], [-96, 18], [-104, 8]], PLUM[3], PLUM[4], 6);
+      fill(ctx, [[-90, 0], [90, 0], [94, 6], [-94, 6]], PLUM[2]);
+      cardArt(ctx, 30, -40, 34, 0.25, 1, 1);
+      ctx.restore();
+    };
+    return {
+      w: 380, h: 420, n: 12, fps: 12, px: c, py: cy,
+      draw(ctx, i) {
+        if (i <= 1 || i >= 10) for (let j = 0; j < 7; j++) {
+          const a = (j / 7) * TAU;
+          const k = i >= 10 ? 1 + (i - 10) * 0.4 : 0.6 + i * 0.4;
+          puff(ctx, SMOKE, c + Math.cos(a) * 70 * k, cy - 30 + Math.sin(a) * 40 * k, 30 * (i >= 11 ? 0.7 : 1), 1221 + j, { lobes: 5, holes: i >= 11 ? 0.5 : 0 });
+        }
+        if (i >= 11) return;
+        const pop = i === 0 ? 0.5 : i === 1 ? 1.1 : 1;
+        // (It appears brim-up like a magician's hat, then flips over so its open crown faces the stage.)
+        const rot = i <= 2 ? Math.PI : i === 3 ? 2.1 : i === 4 ? 0.8 : 0.08 * Math.sin(i * 1.3);
+        hat(ctx, c, cy, pop, rot);
+        if (i >= 5 && i <= 9) {
+          // Pouring out of it: a stream of plum arrows point-down, cards and doves.
+          const R = rng(1222 + i);
+          for (let j = 0; j < 6; j++) {
+            const y = cy + 30 + ((j * 46 + i * 23) % 240);
+            const x = c + (R() - 0.5) * 120 * (0.5 + (y - cy) / 240);
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(Math.PI / 2 + (R() - 0.5) * 0.3);
+            plumArrow(ctx, 0, 0, 46, 0.8);
+            ctx.restore();
+          }
+          for (let j = 0; j < 4; j++) cardArt(ctx, c + (R() - 0.5) * 200, cy + 60 + R() * 200, 26, R() * 3, Math.cos(i + j), j);
+          if (i % 2) doveArt(ctx, c + (i - 7) * 40, cy + 120 + (i % 3) * 30, 22, i % 4 < 2 ? 1 : -1);
+          for (let j = 0; j < 4; j++) sparkle(ctx, PSILV, c + (R() - 0.5) * 240, cy + R() * 260, 8, j);
+        }
+      },
+    };
+  })();
+
+  // Top Hat (the Phantom Trickster's Springboard): her top hat set down on the floor, brim-up and
+  // rocking a little with a silver twinkle (frames 0-3, loops); frames 4-7 it springs: the hat
+  // hops, a burst of doves and cards flies up out of it and smoke puffs round the brim.
+  E.pttrap = grown((() => {
+    const c = 80;
+    const gy = 110;
+    return {
+      w: 160, h: 130, n: 8, fps: 10, px: c, py: gy,
+      draw(ctx, i) {
+        const fire = i >= 4 ? i - 4 : -1;
+        const rock = fire < 0 ? Math.sin((i / 4) * TAU) * 0.06 : 0;
+        const hop = fire < 0 ? 0 : [14, 8, 3, 0][fire];
+        ctx.save();
+        ctx.translate(c, gy - hop);
+        ctx.rotate(rock);
+        // Upside down on the floor: the crown down, the brim and its open top up.
+        inked(ctx, [[-22, 0], [-20, -34], [20, -34], [22, 0]], PLUM[3], PLUM[4], 3);
+        inked(ctx, [[-22, -12], [22, -12], [22, -6], [-22, -6]], PSILV[2], PSILV[4], 2);
+        inked(ctx, [[-36, -38], [36, -38], [38, -33], [36, -29], [-36, -29], [-38, -33]], PLUM[3], PLUM[4], 3);
+        fill(ctx, [[-24, -36], [24, -36], [24, -34], [-24, -34]], PLUM[4]);
+        ctx.restore();
+        if (fire < 0 && i % 2 === 0) sparkle(ctx, PSILV, c + 18, gy - 44, 6, i);
+        if (fire >= 0) {
+          if (fire <= 2) for (let j = 0; j < 3; j++) puff(ctx, SMOKE, c + (j - 1) * 26, gy - 36 - hop - fire * 4, 9 - fire * 2, 1231 + j, { lobes: 4, holes: fire >= 1 ? 0.5 : 0 });
+          for (let j = 0; j < 2; j++) doveArt(ctx, c + (j ? 26 : -26) + (j ? 1 : -1) * fire * 10, gy - 60 - fire * 16, 14, fire % 2 ? 1 : -1);
+          for (let j = 0; j < 3; j++) cardArt(ctx, c + (j - 1) * (18 + fire * 10), gy - 50 - fire * 12 - j * 6, 18, j + fire, Math.cos(fire + j), j);
+        }
+      },
+    };
+  })(), 2);
+
+  // Bolt Mortar (the Arbalist Engineer's Grand Somersault): her shell bursting high over the stage:
+  // a brass flash and a teal ring blasting out, cogs and rivets flying, a ring of steam spreading
+  // and thinning (one-shot).
+  E.aeshell = grown((() => {
+    const c = 140;
+    return {
+      w: 280, h: 260, n: 9, fps: 16, px: c, py: c,
+      draw(ctx, i) {
+        const k = Math.min(1, i / 5);
+        if (i <= 2) starburst(ctx, BRASS, c, c, [36, 70, 86][i], 12, 1241, { inner: 0.3 });
+        if (i >= 1 && i <= 5) celRing(ctx, TEALE, c, c, 30 + 90 * k, 12 * (1 - k * 0.6), { broken: i >= 4 ? 0.4 : 0, seed: 1242 });
+        if (i >= 2) {
+          if (i <= 6) puff(ctx, STEAM, c, c, 26 + 14 * k, 1243, { holes: i >= 4 ? 0.3 + (i - 4) * 0.2 : 0, lobes: 7 });
+          for (let j = 0; j < 7; j++) {
+            const a = (j / 7) * TAU + 0.3;
+            cogArt(ctx, c + Math.cos(a) * (40 + 80 * k), c + Math.sin(a) * (40 + 80 * k) + k * k * 30, 12 * (1 - k * 0.4), 6, i * 0.7 + j);
+          }
+        }
+        if (i >= 5) for (let j = 0; j < 6; j++) sparkle(ctx, TEALE, c + Math.cos(j * 1.3) * 110, c + Math.sin(j * 1.9) * 80 + (i - 5) * 8, 8 - (i - 5), j);
+      },
+    };
+  })(), 1.4);
+
+  // Spring Mine (the Arbalist Engineer's Springboard): a brass plate on the floor with a coiled
+  // spring under a riveted lid and a wind-up key turning on top, a teal light blinking (frames 0-3,
+  // loops); frames 4-7 it goes off: the lid springs up on the coil, cogs fly and steam bursts out.
+  E.aemine = grown((() => {
+    const c = 80;
+    const gy = 112;
+    return {
+      w: 160, h: 140, n: 8, fps: 10, px: c, py: gy,
+      draw(ctx, i) {
+        const fire = i >= 4 ? i - 4 : -1;
+        const up = fire < 0 ? 0 : [34, 24, 12, 4][fire];
+        inked(ctx, [[c - 34, gy], [c + 34, gy], [c + 30, gy - 8], [c - 30, gy - 8]], BRASS[3], BRASS[4], 3);
+        for (let k = 0; k < 4; k++) {
+          const y = gy - 10 - k * (3 + up / 4);
+          inked(ctx, [[c - 12, y], [c + 12, y - 2], [c + 12, y], [c - 12, y + 2]], BRASS[2], BRASS[4], 2);
+        }
+        const ly = gy - 22 - up;
+        inked(ctx, [[c - 26, ly], [c + 26, ly], [c + 26, ly + 6], [c - 26, ly + 6]], BRASS[2], BRASS[4], 3);
+        for (const sd of [-1, 1]) fill(ctx, [[c + sd * 20 - 2, ly + 2], [c + sd * 20 + 2, ly + 2], [c + sd * 20 + 2, ly + 4], [c + sd * 20 - 2, ly + 4]], BRASS[4]);
+        // The teal light, blinking.
+        if (fire >= 0 || i % 2 === 0) {
+          ctx.beginPath();
+          ctx.arc(c + 12, ly - 2, 4, 0, TAU);
+          ctx.fillStyle = TEALE[2];
+          ctx.fill();
+        }
+        // The key, turning (seen edge-on as it turns).
+        const turn = Math.cos((i / 4) * TAU);
+        ctx.save();
+        ctx.translate(c - 6, ly - 8);
+        ctx.scale(Math.max(0.2, Math.abs(turn)), 1);
+        inked(ctx, [[-2, 6], [2, 6], [2, -2], [-2, -2]], BRASS[2], BRASS[4], 2);
+        inked(ctx, Array.from({ length: 12 }, (_, j) => [Math.cos((j / 12) * TAU) * 8 - 9, Math.sin((j / 12) * TAU) * 6 - 6]), BRASS[2], BRASS[4], 2);
+        inked(ctx, Array.from({ length: 12 }, (_, j) => [Math.cos((j / 12) * TAU) * 8 + 9, Math.sin((j / 12) * TAU) * 6 - 6]), BRASS[2], BRASS[4], 2);
+        ctx.restore();
+        if (fire >= 0) {
+          if (fire <= 2) puff(ctx, STEAM, c, gy - 10, 10 + fire * 2, 1251, { lobes: 5, holes: fire >= 1 ? 0.5 : 0 });
+          for (let j = 0; j < 3; j++) cogArt(ctx, c + (j - 1) * (20 + fire * 12), ly - 14 - fire * 10 + Math.abs(j - 1) * 6, 8, 6, fire + j);
+          if (fire <= 1) starburst(ctx, TEALE, c, ly - 6, 20 + fire * 8, 8, 1252, { inner: 0.36 });
+        }
+      },
+    };
+  })(), 2);
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

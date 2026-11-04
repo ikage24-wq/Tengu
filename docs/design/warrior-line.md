@@ -34,3 +34,31 @@ Effects, measured against the hits' reach:
 - The Paladin's shield flare on a bash is a fifth bigger.
 - The big rings (Titan Breaker, Grand Verdict, Crimson Eclipse, Hallowed Ground, Rampage) already
   ran out to their reach and were left as they were.
+
+## Each path's own Warrior skills (2026-11-04)
+
+The Warrior's skills stay with the paths (same key, numbers and purpose), but each path now plays
+them its own way (the player's pick, "own version per path"). The mechanism is generic and lives in
+`src/data/path-skills.js`: a skill's `at()` returns `paths` keyed by job id (a combo array, or an
+object laid over its params), and `pathNames` gives its name per path in the skills window.
+
+- **Shoulder Charge:** Shield Rush (Paladin) and Reckless Charge (Berserker), as before.
+- **Titan Breaker:** the Paladin's **Heaven's Seal** (`plseal`): no leap; a knight's rite. She raises
+  the blade upright in a salute and rises on her toes, eyes closed, while a great gold crest of light
+  (`celplcrest`, a kite shield with her cross and gold star in a halo) gathers over her; one planted
+  two-handed chop with a stamp brings the crest down onto them (a cross of light, gold rock, a ring
+  out to the reach); she swoops the blade back up to the sky and pillars of light burst up in a ring
+  out to the aftershock's reach, then holds it out low and level. The Berserker's **Skyfall Rend**
+  (`bkpounce`): a beast's crouch and a howl as fire flares under him, a long pounce with the axe flung
+  back and limbs spread, then he falls head-first in a meteor of rose fire (`celbkmeteor`, carried
+  with him, under him) and smashes down; claw gashes tear the ground and a jagged ring rips out; he
+  wrenches the axe up out of the earth in a burst of fire and roars.
+- **Whirlwind** (the proc after a combo's last swing; `WHIRLS` in world/melee.js): the Paladin's
+  **Halo Rotor** (`plrotor`): the blade swept round flat over her head like a rotor while she marches
+  under it, gold arcs overhead, ending in a forward shield-shove that flares her light shield and
+  stuns. The Berserker's **Maelstrom** (`bkmaelstrom`): dragged round three times faster and faster by
+  the axe at arm's length, skidding, then a wrench over the shoulder and a heave down that bursts in
+  fire and makes them bleed.
+- Blade Rush, War Cry and Iron Guard play no move of their own; they already come in each path's
+  colour. `tests/melee.test.js` checks that no second job plays another job's move when it casts a
+  skill.

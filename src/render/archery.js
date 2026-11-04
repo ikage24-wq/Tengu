@@ -374,6 +374,18 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // Firework Arrow going off.
       // (drawn about as wide as the blast it deals, 50-80 px round its target)
       return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 }) || true;
+    case 'pthat':
+      // Levitation: the giant top hat over the stage, flipping over and pouring her arrows, cards and
+      // doves down on everything below.
+      return fxSprite(ctx, 'celpthat', x, y - 150, { p, scale: 1 }) || true;
+    case 'aeshell': {
+      // Bolt Mortar: her brass shell streaking straight up from the crossbow, then bursting high
+      // overhead in a ring of teal, cogs and steam.
+      const up = Math.min(1, p / 0.12);
+      if (p < 0.12) fxSprite(ctx, 'celaebig', x + (f.dir || 1) * 8, y - 30 - 130 * up * up, { t: time, rot: -Math.PI / 2, scale: 0.5 });
+      else fxSprite(ctx, 'celaeshell', x, y - 170, { p: (p - 0.12) / 0.88, scale: 0.95 });
+      return true;
+    }
     case 'acburst':
       // Grand Somersault: the gold ring of arrows bursting round her at the top of her leap.
       return fxSprite(ctx, 'celacburst', x, y - 80, { p, scale: 0.9 }) || true;
@@ -443,6 +455,12 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
         const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
         return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.6, alpha: a2 }) || true;
       }
+      // (The Phantom Trickster's top hat, rocking brim-up; the Arbalist Engineer's spring mine, its
+      // key turning and its light blinking.)
+      if (f.look === 'hat' || f.look === 'mine') {
+        const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
+        return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: Math.floor(time * 6) % 4, scale: 0.6, alpha: a2 }) || true;
+      }
       // Spring Trap, armed on the ground (it fades in as it's set, and out as it rusts away).
       const a = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
       fxSprite(ctx, 'celtrap', x, y, { t: time, scale: 0.6, alpha: a });
@@ -450,6 +468,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     }
     case 'trapsnap': {
       if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
+      if (f.look === 'hat' || f.look === 'mine') return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
       // The trap snapping shut on a monster, sparks and dust flying.
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;

@@ -2730,3 +2730,39 @@ test("an Archer's air leap springs her up and back and looses a shot from the to
   tap(w, ['Space']);
   assert.ok(w.body.vy >= vy, 'no air jump');
 });
+
+// Each second job plays its first job's skills its own way (data/path-skills.js): the same skill and
+// numbers, but its own move. A move belongs to the job whose skill or basic string plays it; no
+// second job may play another job's move when it casts any skill it can cast (or when the
+// Warrior's Whirlwind spins on out of its swings).
+test("no second job plays another job's move when casting any skill it can cast", async () => {
+  const { SKILLS } = await import('../src/data/skills.js');
+  const { JOBS, jobChain } = await import('../src/data/jobs.js');
+  const { pathMoves } = await import('../src/data/path-skills.js');
+  const { whirlMoveOf } = await import('../src/world/melee.js');
+  // (Still to get their own versions, in the other half of this pass; take a job out as it's done.)
+  const NOT_YET = new Set();
+  const owners = new Map();
+  const own = (move, job) => (owners.get(move) ?? owners.set(move, new Set()).get(move)).add(job);
+  for (const s of Object.values(SKILLS)) {
+    if (!JOBS[s.job] || s.type === 'passive') continue;
+    for (const m of pathMoves({ ...s, at: (lv, max) => ({ ...s.at(lv, max), paths: undefined }) }, s.maxLevel, s.job)) own(m, s.job);
+    for (const job of Object.keys(s.at(s.maxLevel, s.maxLevel).paths ?? {})) for (const m of pathMoves(s, s.maxLevel, job)) own(m, job);
+  }
+  for (const job of Object.keys(PATH_VARIANTS)) if (JOBS[job]) for (const step of PATH_VARIANTS[job]) for (const v of step) own(v.move, job);
+  own(whirlMoveOf({ job: 'warrior' }), 'warrior');
+  const second = Object.values(JOBS).filter((j) => j.tier === 2 && !j.hidden && !NOT_YET.has(j.id));
+  assert.ok(second.length >= 4);
+  for (const { id: job } of second) {
+    const chain = jobChain(job);
+    for (const s of Object.values(SKILLS)) {
+      // (Everyone keeps the Novice's beginner skills as they are.)
+      if (!chain.includes(s.job) || s.type === 'passive' || !(JOBS[s.job].tier >= 1)) continue;
+      for (const m of pathMoves(s, s.maxLevel, job)) {
+        const by = [...(owners.get(m) ?? [])].filter((j) => j !== job);
+        assert.equal(by.length, 0, `${job} casting ${s.id} plays ${m}, ${by.join('/')}'s move`);
+      }
+    }
+    if (chain.includes('warrior')) assert.notEqual(whirlMoveOf({ job }), whirlMoveOf({ job: 'warrior' }), `${job} spins the Warrior's Whirlwind`);
+  }
+});

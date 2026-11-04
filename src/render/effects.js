@@ -993,7 +993,9 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado']);
+const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+  // (the first jobs' skills as the paths play them: data/skills.js `paths`)
+  'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {
   hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
   for (const f of world.fx) if (!GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);

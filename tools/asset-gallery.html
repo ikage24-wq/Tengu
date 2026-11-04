@@ -1,0 +1,107 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Asset gallery</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the asset library, every piece animated and grouped by theme and kind, on a soft
+// ground line, with its name. ?theme=spring shows one theme; ?k=3 sets the size; ?t=1.2 freezes
+// the clock at a moment (for pictures).
+import { ASSET_THEMES, drawAsset } from '../src/render/assets/index.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+
+const q = new URLSearchParams(location.search);
+const K = Number(q.get('k') ?? 3);
+const themes = q.get('theme') ? ASSET_THEMES.filter((t) => q.get('theme').split(',').includes(t.id)) : ASSET_THEMES;
+const KINDS = ['furniture', 'prop', 'landmark', 'monster', 'cosmetic'];
+const LABEL = { furniture: 'Furniture', prop: 'Props', landmark: 'Landmarks', monster: 'Monsters', cosmetic: 'Cosmetics' };
+const W = 1280;
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Lay the pieces out in rows by kind, wrapping at the page width.
+const rows = [];
+for (const t of themes) {
+  rows.push({ title: t.name });
+  for (const kind of KINDS) {
+    const list = t.assets.filter((a) => a.kind === kind);
+    if (!list.length) continue;
+    rows.push({ sub: LABEL[kind] });
+    let row = [];
+    let used = 20;
+    for (const a of list) {
+      const cw = Math.max(a.w * K + 24, 140);
+      if (used + cw > W && row.length) {
+        rows.push({ items: row });
+        row = [];
+        used = 20;
+      }
+      row.push({ a, x: used + cw / 2 });
+      used += cw;
+    }
+    if (row.length) rows.push({ items: row });
+  }
+}
+let H = 10;
+for (const r of rows) H += r.title ? 40 : r.sub ? 26 : Math.max(...r.items.map((i) => i.a.h)) * K + 40;
+c.width = W;
+c.height = H;
+
+function frame(time) {
+  nextFrame();
+  setHd(true, K);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#f6f0ff';
+  ctx.fillRect(0, 0, W, H);
+  let y = 10;
+  for (const r of rows) {
+    if (r.title) {
+      ctx.fillStyle = '#5a3f7a';
+      ctx.fillRect(0, y, W, 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px Segoe UI, sans-serif';
+      ctx.fillText(r.title, 16, y + 22);
+      y += 40;
+      continue;
+    }
+    if (r.sub) {
+      ctx.fillStyle = '#8a72b8';
+      ctx.font = 'bold 14px Segoe UI, sans-serif';
+      ctx.fillText(r.sub, 16, y + 18);
+      y += 26;
+      continue;
+    }
+    const rh = Math.max(...r.items.map((i) => i.a.h)) * K + 40;
+    const base = y + rh - 22;
+    ctx.fillStyle = '#e8dcf6';
+    ctx.fillRect(0, base, W, 3);
+    for (const { a, x } of r.items) {
+      ctx.save();
+      ctx.translate(x, base);
+      ctx.scale(K, K);
+      drawAsset(ctx, a, 0, 0, time);
+      ctx.restore();
+      ctx.fillStyle = '#3a2d4f';
+      ctx.font = 'bold 12px Segoe UI, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(a.name, x, base + 17);
+      ctx.textAlign = 'left';
+    }
+    y += rh;
+  }
+}
+const fixed = q.get('t');
+if (fixed != null) {
+  frame(Number(fixed));
+  setTimeout(() => {
+    frame(Number(fixed));
+    document.title = 'ready';
+  }, 1500);
+} else {
+  const loop = (now) => {
+    frame(now / 1000);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+</script>

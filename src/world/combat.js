@@ -3,6 +3,7 @@
 
 import { thrownStars } from '../core/items.js';
 import { SKILLS, skillAt } from '../data/skills.js';
+import { pathParams } from '../data/path-skills.js';
 import { JOBS } from '../data/jobs.js';
 import { WEAPON_TYPES, physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core/formulas.js';
 import { mobBox } from './mobs.js';
@@ -10,7 +11,7 @@ import { ITEMS } from '../data/items.js';
 import { MOVE_MIN, basicMove, defaultMove } from '../render/moves.js';
 import { healMembers, buffMembers, reviveTarget, reviveMember, provoke } from './dungeon.js';
 import { mirrorDodge, smokeBomb } from './phantom.js';
-import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, hasFaith, hasRage, healAround, setTrap } from './melee.js';
+import { hasCombo, hasPathCombo, basicCombo, skillCombo, addRage, addAim, RAGE_MAX, outgoing, gaugeOf, gaugeFull, AFTER, pathSchool, schoolFor, SCHOOL_TEXT, bulwarkWave, inForm, formSkill, healAround, setTrap } from './melee.js';
 
 // The element of the player's weapon (endgame weapons only); attack effects take it on.
 export function weaponElement(char) {
@@ -264,7 +265,8 @@ export function cast(world, skillId, rng = Math.random) {
   const s = skillId ? SKILLS[skillId] : null;
   const element = weaponElement(char);
   const ranged = WEAPON_TYPES[stats.weaponType]?.ranged;
-  let params = s ? skillAt(skillId, char.skills[skillId]) : ranged ? BASIC_RANGED : BASIC_MELEE;
+  // (Each path plays its first job's skills its own way: data/path-skills.js.)
+  let params = s ? pathParams(skillAt(skillId, char.skills[skillId]), char.job) : ranged ? BASIC_RANGED : BASIC_MELEE;
   const type = s ? s.type : 'attack';
 
   char.mp -= params.mp ?? 0;
@@ -275,9 +277,6 @@ export function cast(world, skillId, rng = Math.random) {
     return { ok: true };
   }
   if (params.combo) {
-    // A skill a warrior path does its own way (Shoulder Charge: Shield Rush, Reckless Charge).
-    const path = hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null;
-    if (params.paths?.[path]) params = { ...params, combo: params.paths[path] };
     if (s.school && params.flare) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: 0.5, big: true });
     let scale = 100;
     // A Link: a skill started right after a combo finisher connects (a basic combo's last blow, or
@@ -318,7 +317,7 @@ export function cast(world, skillId, rng = Math.random) {
   // The move to play: the skill's own, or the next step of the weapon's basic-attack combo
   // (the combo resets after a short pause).
   let pose;
-  if (s) pose = s.anim ?? defaultMove(type, stats.weaponType, params);
+  if (s) pose = params.anim ?? s.anim ?? defaultMove(type, stats.weaponType, params);
   else {
     world.combo = now - (world.lastBasic ?? -9) < 0.9 ? (world.combo ?? 0) + 1 : 0;
     world.lastBasic = now;
@@ -343,7 +342,7 @@ export function cast(world, skillId, rng = Math.random) {
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';
   if (s?.school && magical) world.fx.push({ kind: 'castcircle', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.2), big: lock >= 1 });
   // (The Wind Dancer's big skills bring their own spotlight and ribbons, never another job's pillar.)
-  else if (s?.school && s.school !== 'coral' && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
+  else if (s?.school && s.school !== 'coral' && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: schoolFor(char, s.school), x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
 
   let area = params.range;
   if (type === 'blink') {

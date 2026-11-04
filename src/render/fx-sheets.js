@@ -323,4 +323,10 @@ export const FX_SHEETS = {
   celcotetherfray: { w: 98, h: 64, n: 6, fps: 12, px: 49, py: 32, d: 3, loop: true },
   celcosealpop: { w: 320, h: 161, n: 7, fps: 18, px: 160, py: 105, d: 3, loop: false },
   celcotwinpop: { w: 204, h: 183, n: 8, fps: 18, px: 101, py: 68, d: 3, loop: false },
+  celplcrest: { w: 323, h: 334, n: 8, fps: 12, px: 169, py: 169, d: 3, loop: false },
+  celbkmeteor: { w: 183, h: 319, n: 4, fps: 16, px: 84, py: 196, d: 3, loop: true },
+  celpthat: { w: 264, h: 400, n: 12, fps: 12, px: 123, py: 141, d: 3, loop: false },
+  celpttrap: { w: 306, h: 242, n: 8, fps: 10, px: 153, py: 225, d: 3, loop: false },
+  celaeshell: { w: 356, h: 351, n: 9, fps: 16, px: 181, py: 174, d: 3, loop: false },
+  celaemine: { w: 271, h: 187, n: 8, fps: 10, px: 136, py: 161, d: 3, loop: false },
 };

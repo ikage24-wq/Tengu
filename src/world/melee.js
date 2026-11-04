@@ -75,7 +75,11 @@ export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? '
 // Trickster, brass for the Arbalist Engineer.
 // And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Sky Dancer's sky blue.
 export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'aerial' : hasShadow(char) ? 'coral' : 'shadow');
-export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' ? thiefSchool(char) : school);
+// The Wind Dancer's coral skills and the Star Witch's starlit ones the same way (each path plays
+// them its own way, data/skills.js `paths`): the Blade Dancer's rose gold, the Sky Dancer's sky
+// blue; the Starlight Idol's pink, the Astronomer's violet.
+const starSchool = (char) => (hasGrace(char) ? 'idol' : hasBinding(char) ? 'astral' : 'starlit');
+export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' || school === 'coral' ? thiefSchool(char) : school === 'starlit' ? starSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
 
@@ -1329,6 +1333,13 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.wall) world.fx.push({ kind: 'shieldwall', follow: true, ahead: 22, x: body.x + body.facing * 22, y: body.y, dir: body.facing, t: 0, dur: dur * 0.82 });
   // A blink (Backstab) leaves a puff of smoke where she melts away and another where she steps out.
   if (step.blink) for (const [at, dx] of [[0.11, 0], [0.4, step.step]]) world.fx.push({ kind: 'blinksmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.7 });
+  // A stage vanish (the Phantom Trickster's): gone in a puff of her plum smoke at `from` and back out
+  // of another where she lands at `to` (fractions of the move); unseen in between.
+  if (step.vanish) {
+    const [from, to] = step.vanish;
+    world.vanish = { since: now + from * dur, until: now + to * dur };
+    for (const [at, dx] of [[from - 0.04, 0], [to - 0.06, step.step]]) world.fx.push({ kind: 'ptsmoke', x: body.x + body.facing * dx, y: body.y, dir: body.facing, t: -at * dur, dur: 0.6 });
+  }
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
@@ -1500,7 +1511,7 @@ function land(world, s) {
   }
   if (s.burst) {
     // (`floor`: on the ground she took off from, for the Sky Dancer's tornado while she's up in the air.)
-    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: s.floor && !body.onGround ? world.skyFloor ?? body.y : body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random() });
+    world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: s.floor && !body.onGround ? world.skyFloor ?? body.y : body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random(), follow: s.follow || undefined });
   }
   // The mage line's support spells land with the cast: a buff on her and the party round her
   // (`grant`).
@@ -1626,14 +1637,26 @@ function ravageStrikes(world, s, p) {
   world.strikes.push(chop(0.1, [-150, 230], 40), chop(0.24, [110, -240], 90));
 }
 
-// Whirlwind's spin: carried forward, four pulling hits all around, then a fling.
-function whirlStep(p) {
-  const hit = (at, i) => ({ at, pct: p.pct, reach: 80, h: 76, around: true, targets: p.targets, pull: 70, arc: [i % 2 ? 180 : 0, 300], thick: 10, stop: 0.02, gauge: 2 });
-  return { move: 'spin', dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
+// Whirlwind's spin: carried forward, four pulling hits all around, then a fling. Each warrior path
+// whirls its own way (the same hits; data/path-skills.js has the rule): the Paladin's Halo Rotor
+// turns the greatsword flat over her head like a rotor of light, marching round under it, and
+// brings it down in a shield-shove; the Berserker's Maelstrom is dragged round and round by the axe
+// at arm's length, stumbling on, and wrenches it over in a savage heave.
+const WHIRLS = {
+  warrior: { move: 'spin', arcs: (i) => [i % 2 ? 180 : 0, 300] },
+  paladin: { move: 'plrotor', arcs: (i) => (i % 2 ? [70, -140] : [-70, 140]), fling: { arc: [150, -110], burst: 'aegis', burstAt: 0.5, stun: 0.4 } },
+  berserker: { move: 'bkmaelstrom', arcs: (i) => [i % 2 ? 200 : 20, 300], fling: { arc: [-130, 260], thick: 14, burst: 'rageburst', burstAt: 0.15, bleed: { pct: 0.15, secs: 3 } } },
+};
+function whirlStep(p, char) {
+  const chain = char ? jobChain(char.job) : [];
+  const W = WHIRLS[[...chain].reverse().find((j) => WHIRLS[j])] ?? WHIRLS.warrior;
+  const hit = (at, i) => ({ at, pct: p.pct, reach: 80, h: 76, around: true, targets: p.targets, pull: 70, arc: W.arcs(i), thick: 10, stop: 0.02, gauge: 2 });
+  return { move: W.move, dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
     ...[0.15, 0.3, 0.45, 0.6].map(hit),
-    { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4 },
+    { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4, ...W.fling },
   ] };
 }
+export const whirlMoveOf = (char) => whirlStep({ pct: 0, targets: 0 }, char).move;
 
 // Judgment (Paladin, at full Faith): holy swords rain down ahead, and their light mends you and
 // the party around you.
@@ -1703,7 +1726,7 @@ function bladeProcs(world, s, count, rng = Math.random) {
   if (world.queuedStep) return;
   const queue = (step, key, school) => (world.queuedStep = { at: world.now + 0.12, step, key, school });
   const whirl = procOf(char, 'whirlwind');
-  if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl), 'procwhirlwind', pathSchool(char));
+  if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl, char), 'procwhirlwind', pathSchool(char));
 }
 
 // ---------- Archer procs ----------
@@ -1757,7 +1780,9 @@ export function setTrap(world, x, p) {
   const traps = (world.traps ??= []);
   const y = world.body.y;
   if (traps.length >= TRAPS) traps.shift().fx.dur = 0;
-  const fx = { kind: 'trap', x, y, t: 0, dur: p.life, look: world.char.job === 'archer' ? 'spring' : null };
+  // (Each archer path's own: the Acrobat's springboard, the Trickster's top hat, the Engineer's spring
+  // mine; `look` comes with the skill's path version, data/path-skills.js.)
+  const fx = { kind: 'trap', x, y, t: 0, dur: p.life, look: p.look ?? (world.char.job === 'archer' ? 'spring' : null) };
   world.fx.push(fx);
   traps.push({ x, y, until: world.now + p.life, pct: p.pct, fx });
 }
@@ -1799,7 +1824,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.doll) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,

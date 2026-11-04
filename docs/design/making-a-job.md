@@ -59,6 +59,12 @@ blow).
   (each set with its own finisher and mastery, gated by `weapons`), so the player chooses where
   the points go, and its own basic combo and command moves for each weapon.
 
+- **A second job plays its first job's skills its own way.** Same skill, key and numbers, but its
+  own move and effects, in its own colour and shapes (`paths` in the skill's `at()`, keyed by job id,
+  with `pathNames` for its name; the mechanism is `src/data/path-skills.js`). A new path isn't done
+  until every skill it can cast plays its own move (`tests/melee.test.js`, "no second job plays
+  another job's move").
+
 - **Check names before using them on the world.** The world already keeps the player's key
   presses as `intent`, so a gauge can't be called that.
 

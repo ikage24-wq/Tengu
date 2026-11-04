@@ -71,3 +71,9 @@ Acrobat Archer).
   px; Firework Arrow ~58 px round (its blast is 50-80; it was ~20); Grand Somersault's ring ~95 px
   round (was ~31), and her rain now lands as a gold ring racing out to its 210 px edge
   (`celshockmint`); the springboard is half again as big.
+
+## Her skills in her paths (2026-11-04)
+
+Her paths keep Handspring, Springboard and Grand Somersault but play them their own way
+(`src/data/path-skills.js`): the Phantom Trickster's Vanishing Act, Top Hat and Levitation, the
+Arbalist Engineer's Steam Hop, Spring Mine and Bolt Mortar (see their design docs). Hers are unchanged.

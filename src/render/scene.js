@@ -393,7 +393,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   const ready = !world.map.isTown && world.now - (feel.lastFight ?? -99) < 4;
   const low = !world.map.isTown && world.char.hp < (world.stats?.maxHp ?? 1) * 0.3;
   // (Hidden in her own smoke through Grand Illusion, between vanishing and coming back for her bow.)
-  const hidden = world.illusion && world.now > world.illusion.since + 0.25 && world.now < world.illusion.until - 0.2;
+  // (And through a stage vanish, the Trickster's Vanishing Act, from one puff of smoke to the next.)
+  const hidden = (world.illusion && world.now > world.illusion.since + 0.25 && world.now < world.illusion.until - 0.2) || (world.vanish && world.now > world.vanish.since && world.now < world.vanish.until);
   const heroState = { ...p, time, facing: b.facing, hurt: world.invuln > 0.6 && !world.pose, alpha: world.dead ? 0.5 : hidden ? 0 : blink ? 0.45 : 1, job: world.char.job, ready, low, urgent: true };
   // At her life skills: the find held up in her hand, and where the rod's tip is for the line.
   if (LIFE_POSES.has(p.pose)) {

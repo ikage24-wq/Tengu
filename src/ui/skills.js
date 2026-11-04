@@ -8,6 +8,7 @@
 // one and press a hotkey) to bind them.
 
 import { SKILLS } from '../data/skills.js';
+import { pathName } from '../data/path-skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { learnSkill, canLearn, maxSkill, replaced } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
@@ -160,7 +161,7 @@ function listRow(ui, state, world, s, x, y, w, win) {
   const tone = skillBadge(ctx, s, x + 13, y + 13, 10, 1, lv, open, hot);
   const nameW = w - 54;
   ctx.globalAlpha = lv || open ? 1 : 0.6;
-  text(ctx, fit(ctx, s.name, nameW, 8), x + 27, y + 11, { size: 8, bold: true, color: COLORS.ink });
+  text(ctx, fit(ctx, pathName(s, char.job), nameW, 8), x + 27, y + 11, { size: 8, bold: true, color: COLORS.ink });
   ctx.globalAlpha = 1;
   // The level gauge in the skill's hue, and the level.
   const gw = nameW - 18;
@@ -203,7 +204,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
   const tone = skillBadge(ctx, s, x + 24, y + 24, 18, 2, lv, open, hot);
   if (hot && lv && s.type !== 'passive') tooltip(ui, [{ text: 'Drag onto a hotkey to bind', bold: true }]);
   if (lv && s.type !== 'passive' && clicked(ui, x + 6, y + 6, 36, 36)) win.carry = { id: s.id, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
-  text(ctx, fit(ctx, s.name, tw, 9.5), tx, y + 15, { size: 9.5, bold: true, color: lv ? th.ink : COLORS.muted });
+  text(ctx, fit(ctx, pathName(s, char.job), tw, 9.5), tx, y + 15, { size: 9.5, bold: true, color: lv ? th.ink : COLORS.muted });
   text(ctx, `${KIND_NAMES[kind]} · ${JOBS[s.job].name}`, tx, y + 25, { size: 7, color: COLORS.muted });
   // The level gauge, big.
   box(ctx, tx, y + 30, tw - 30, 5, { fill: COLORS.cell, edge: null, r: 2.5 });

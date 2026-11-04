@@ -74,3 +74,21 @@ Built, replacing the Beastmaster in place (the path keeps the `beastmaster` id a
   ~22 px; the hit mark ~36-50 px. Smoke Bomb's smoke is ~120 px wide (was ~30 for a 100-140 px
   reach) and a plum ring of smoke and cards rolls out to the reach (`celshockplum`). Trick puffs
   and Grand Illusion's smoke are larger too.
+
+## Her own Acrobat skills (2026-11-04)
+
+The Acrobat Archer's skills she keeps (same numbers) are now her own tricks (`src/data/path-skills.js`):
+
+- **Handspring is Vanishing Act** (`ptvanish`): a flick of the hand and a cape sweep with a half turn
+  and a wink, and she is gone in a puff of plum smoke (actually unseen, `world.vanish`); she steps out
+  of another puff behind the monster already turning, draws as she comes round and looses back.
+- **Grand Somersault is Levitation** (`ptlevitate`): the magician's levitation. A whirl of the cape,
+  then she floats up and lies back flat on the air, toes pointed; at the top she swings upright and
+  snaps her fingers, a giant top hat (`celpthat`) appears over the stage, flips over and pours plum
+  arrows, cards and doves down on everything below while she looses up into it (the rain falls as
+  her plum arrows); she drifts down into a deep stage bow.
+- **Springboard is Top Hat** (`pthattrap`): she tips her hat, sweeps it off in a bow, sets it down
+  brim-up and taps it twice with her bow; it rocks with a twinkle until a monster steps in, then hops
+  and doves and cards burst out of it as it flings them up (`celpttrap`).
+- Firework Arrow already bursts in her smoke, and the trap's spring and the buff power-up come in her
+  plum now too.

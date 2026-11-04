@@ -21,6 +21,7 @@ import { roleThink, healerTurn, jumpNow } from './dungeon.js';
 import { COMBOS, PATH_VARIANTS, AFTER, planCombo, pathOf, botProcs } from './melee.js';
 import { pickTargets } from './combat.js';
 import { SKILLS } from '../data/skills.js';
+import { pathParams } from '../data/path-skills.js';
 import { inZone } from './story.js';
 import { helpGoal, tickHelpers, tickBotBuffs } from './coop-life.js';
 import { packAt, chooseSkill, commandFor, beginStep, airborne, evade, focusOf, catchable, standBy, drink, tickCallouts, callFinisher, callout, holdFire } from './botfight.js';
@@ -550,13 +551,13 @@ export function botSkills(char) {
     if (SPECIALS[s.id]) {
       const params = s.at(lv, s.maxLevel);
       const sp = SPECIALS[s.id];
-      out.push({ id: s.id, steps: [{ move: sp.move, dur: sp.dur, strikes: [], special: s.id, params }], full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), heal: sp.heal });
+      out.push({ id: s.id, steps: [{ move: params.paths?.[char.job]?.[0]?.move ?? sp.move, dur: sp.dur, strikes: [], special: s.id, params }], full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), heal: sp.heal });
       continue;
     }
     if (s.type !== 'attack') continue;
     // (Each path plays a skill its own way: a Paladin's Shield Rush for the Shoulder Charge.)
     const at = s.at(lv, s.maxLevel);
-    const combo = at.paths?.[pathOf({ char, stats: computeStats(char) })] ?? at.combo;
+    const combo = pathParams(at, char.job).combo;
     if (!combo || !combo.every((st) => st.strikes.every(plain))) continue;
     if (!combo.some((st) => st.strikes.some((k) => k.pct > 0 && (k.reach > 0 || k.shot)))) continue;
     out.push({ id: s.id, steps: combo, full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), charge: Boolean(s.movement) });
