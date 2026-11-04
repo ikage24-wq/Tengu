@@ -47,8 +47,14 @@ const SPOT = {
   sprout: cell(0, 'middle'), hollow_gate: cell(1, 'middle'), canyon: cell(2, 'middle'), crag: cell(3, 'middle'), ridge: cell(4, 'middle'),
   observatory_steps: cell(5, 'middle'), grove: cell(6, 'middle'),
   meadow1: cell(1, 'south'), meadow2: cell(2, 'south'), harbor: cell(3, 'south'), glade: cell(4, 'south'), woods: cell(5, 'south'),
-  tidepool_pier: cell(2, 'coast'), manor_gate: cell(4, 'coast'),
+  tidepool_pier: cell(2, 'coast'), lagoon: cell(3, 'coast'), manor_gate: cell(4, 'coast'),
+  // Off the coast: Dawnlight Isle, where you wash up, on its own islet in the north-west sea.
+  dawnbeach: cell(0, 'sky'), trainfield: cell(1, 'sky'), dock: cell(2, 'sky'),
 };
+// The places reached by boat (no flying there): Lantern Lagoon over the water from the harbor, and
+// the three maps of Dawnlight Isle.
+const BY_SEA = new Set(['lagoon', 'dawnbeach', 'trainfield', 'dock']);
+const ISLE = ['dawnbeach', 'trainfield', 'dock'];
 const spot = (m) => SPOT[m.id] ?? m.world;
 // The island's middle and size (a rounded, squarish island that fills the frame).
 const CX = 250;
@@ -60,6 +66,7 @@ const REGION = {
   meadow: { fill: '#dcf2b4', ids: ['sprout', 'hollow_gate', 'meadow1', 'meadow2'] },
   highland: { fill: '#f9e0b8', ids: ['canyon', 'crag', 'ridge'] },
   harbor: { fill: '#ffe6cc', ids: ['harbor', 'tidepool_pier'] },
+  lagoon: { fill: '#c9eef0', ids: ['lagoon'] },
   forest: { fill: '#c2e6b4', ids: ['glade', 'woods', 'manor_gate'] },
   crystal: { fill: '#ddd2f6', ids: ['bossroom', 'cave'] },
   moon: { fill: '#ecd8f6', ids: ['ruins', 'shrine', 'carnival_gate', 'observatory_steps', 'grove'] },
@@ -91,9 +98,11 @@ const EDGE = {
   manor: '#7a6ab8', carnival: '#e0709a', observatory: '#6a8ad8', candy: '#e889b4', theatre: '#c0607a', skywhale: '#5aa8d8',
 };
 // The places on the map (not the queens' trial arenas, which belong to their regions).
-const onMap = (m) => m.world && !m.trial;
+const onMap = (m) => (m.world || BY_SEA.has(m.id)) && !m.trial;
 // Each job town's colour.
 const JOB_COLORS = { archer: '#6fcf8a', thief: '#9b7cd6', warrior: '#ff8a5c', mage: '#7fa8ff' };
+// A town with no job of its own: Lantern Lagoon in its lagoon teal.
+const TOWN_COLORS = { lagoon: '#4fbfcf' };
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -103,7 +112,14 @@ const hash = (n) => {
 // Roads drawn on the map: one per pair of maps joined by a portal, except the long ones that would
 // cross or crowd the others (the journeys they make are already shown by other roads; the guide's
 // route still follows every real road).
-const HIDDEN = new Set(['grove|springs', 'grove|peak', 'grove|sky', 'grove|starfall', 'cave|sky', 'cave|grove', 'harbor|woods', 'grove|ruins']);
+const HIDDEN = new Set(['grove|springs', 'grove|peak', 'grove|sky', 'grove|starfall', 'cave|sky', 'cave|grove', 'harbor|woods', 'grove|ruins', 'harbor|lagoon', 'dock|sprout']);
+// The boat routes, drawn as sea lanes (corners from the first id of the sorted pair to the second):
+// the ferry from the harbor's pier round to the lagoon, and the boat from Sunny Dock to the island
+// (it sails off toward Sprout Village's coast).
+const LANES = {
+  'harbor|lagoon': [cell(3, 'south'), { x: 285, y: ROW.south }, { x: 285, y: ROW.coast }, cell(3, 'coast')],
+  'dock|sprout': [cell(2, 'sky'), { x: 215, y: ROW.sky }, { x: 215, y: 56 }],
+};
 // How the guide's route draws a hidden road: along the shown roads beside it (the stops between,
 // in order from the first id of the sorted pair to the second).
 const DRAW_VIA = { 'grove|ruins': ['shrine'], 'cave|grove': ['ruins', 'shrine'], 'harbor|woods': ['glade'] };
@@ -168,32 +184,7 @@ function drawSea(ctx, ox, oy, time) {
     sparkleAt(ctx, ox + hash(i + 40) * MAP_W, oy + hash(i + 41) * MAP_H, 1.2 + (k - 0.5) * 3);
   }
   ctx.globalAlpha = 1;
-  // A sailboat sailing to and fro in the open water off the north-west corner, bobbing.
-  const a = time * 0.08;
-  const bx = ox + 50 + Math.sin(a) * 30;
-  const by = oy + 44 + Math.sin(time * 2) * 0.8;
-  const dir = Math.cos(a) > 0 ? 1 : -1;
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.beginPath();
-  ctx.ellipse(bx - dir * 6, by + 2, 6, 1, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#c98a5a';
-  ctx.beginPath();
-  ctx.moveTo(bx - 5, by - 1);
-  ctx.lineTo(bx + 5, by - 1);
-  ctx.lineTo(bx + 3, by + 2);
-  ctx.lineTo(bx - 3, by + 2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.moveTo(bx, by - 10);
-  ctx.lineTo(bx + 4 * dir, by - 2);
-  ctx.lineTo(bx, by - 2);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#ff9fb8';
-  ctx.fillRect(bx - 0.4, by - 12, 3 * dir || 3, 1.6);
+  // (The boats sail the sea lanes: drawLanes.)
   ctx.restore();
 }
 
@@ -419,6 +410,35 @@ function drawPlaces(ctx, ox, oy, time) {
     ctx.fill();
     ctx.globalAlpha = 1;
   }
+  // Lantern Lagoon: stilt houses over the water and a string of lanterns glowing between them.
+  {
+    const [x, y] = at('lagoon', 0, 6);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 3, 30, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    for (const [dx, roof] of [[-22, '#ff9fb8'], [22, '#9fd8e8']]) {
+      ctx.fillStyle = '#a8764a';
+      ctx.fillRect(x + dx - 3.5, y - 1, 1, 5);
+      ctx.fillRect(x + dx + 2.5, y - 1, 1, 5);
+      house(ctx, x + dx, y, 0.8, roof);
+    }
+    ctx.strokeStyle = 'rgba(90,63,122,0.45)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(x - 19, y - 5);
+    ctx.quadraticCurveTo(x, y + 1, x + 19, y - 5);
+    ctx.stroke();
+    for (let i = 0; i < 5; i++) {
+      const u = (i + 1) / 6;
+      const lx = x - 19 + 38 * u;
+      const ly = y - 5 + 6 * 4 * u * (1 - u) * 0.5 + 1;
+      ctx.globalAlpha = 0.7 + 0.3 * Math.sin(time * 3 + i * 1.7);
+      ctx.fillStyle = ['#ffd27a', '#ff9fb8', '#ffe36b'][i % 3];
+      circle(ctx, lx, ly, 1.1);
+    }
+    ctx.globalAlpha = 1;
+  }
   // The ruins: broken columns.
   {
     const [x, y] = at('ruins', 0, -4);
@@ -476,6 +496,116 @@ function drawPlaces(ctx, ox, oy, time) {
     ctx.fillStyle = '#6a5aa8';
     ctx.fillRect(x - 4, y - 9, 8, 9);
     for (const dx of [-4, -1, 2]) ctx.fillRect(x + dx, y - 11, 2, 2);
+  }
+}
+
+// Dawnlight Isle off the north-west coast: a long sandy islet with a palm, the practice field's
+// grass and Sunny Dock's planks reaching into the sea, the surf breathing round it.
+function drawIsle(ctx, ox, oy, time) {
+  const a = SPOT[ISLE[0]];
+  const b = SPOT[ISLE[2]];
+  const cx = ox + (a.x + b.x) / 2 - 4;
+  const cy = oy + a.y + 6;
+  const rx = (b.x - a.x) / 2 + 24;
+  const blob = (grow, wob = 0) => {
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const t = (i / 48) * Math.PI * 2;
+      const k = 1 + 0.05 * Math.sin(t * 3 + 0.7) + wob * Math.sin(time * 1.4 + t * 2);
+      const x = cx + Math.cos(t) * (rx + grow) * k;
+      const y = cy + Math.sin(t) * (13 + grow) * k;
+      if (i) ctx.lineTo(x, y);
+      else ctx.moveTo(x, y);
+    }
+    ctx.closePath();
+  };
+  ctx.fillStyle = 'rgba(40,90,140,0.18)';
+  blob(4);
+  ctx.save();
+  ctx.translate(1.5, 3);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  blob(6, 0.01);
+  ctx.fill();
+  ctx.fillStyle = '#ffe9c4';
+  blob(3);
+  ctx.fill();
+  ctx.fillStyle = '#c4e6b0';
+  blob(-2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(90,63,122,0.28)';
+  ctx.lineWidth = 1;
+  blob(3);
+  ctx.stroke();
+  // The beach end you wake up on (warm sand), a palm leaning over it, and the dock's planks.
+  const [bx, by] = [ox + a.x, oy + a.y];
+  ctx.fillStyle = '#ffe9c4';
+  ctx.beginPath();
+  ctx.ellipse(bx - 6, by + 4, 16, 8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const sw = Math.sin(time * 1.3) * 0.6;
+  ctx.strokeStyle = '#a8764a';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(bx - 14, by + 4);
+  ctx.quadraticCurveTo(bx - 15, by - 4, bx - 11 + sw, by - 9);
+  ctx.stroke();
+  ctx.fillStyle = '#6fbf7a';
+  for (const ang of [-2.6, -1.9, -1.1, -0.4]) {
+    ctx.beginPath();
+    ctx.ellipse(bx - 11 + sw + Math.cos(ang) * 4, by - 9 + Math.sin(ang) * 2.4, 4, 1.3, ang, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const [dx, dy] = [ox + b.x, oy + b.y];
+  ctx.fillStyle = '#c99a6b';
+  ctx.fillRect(dx + 8, dy - 1.5, 16, 3);
+  ctx.fillStyle = '#a8764a';
+  for (const k of [10, 15, 20]) ctx.fillRect(dx + k, dy + 1.5, 1.2, 3);
+}
+
+// The boat routes: dashed sea lanes in white over the water, drifting the way the boats go, with a
+// little sailboat bobbing along each.
+function drawLanes(ctx, ox, oy, time) {
+  for (const [key, pts] of Object.entries(LANES)) {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // (Sea blue, so a boat's lane never reads as one of the white sky roads.)
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    pts.forEach((q, i) => (i ? ctx.lineTo(ox + q.x, oy + q.y) : ctx.moveTo(ox + q.x, oy + q.y)));
+    ctx.stroke();
+    ctx.strokeStyle = '#4f9fe0';
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([2.5, 3.5]);
+    ctx.lineDashOffset = -time * 6;
+    ctx.beginPath();
+    pts.forEach((q, i) => (i ? ctx.lineTo(ox + q.x, oy + q.y) : ctx.moveTo(ox + q.x, oy + q.y)));
+    ctx.stroke();
+    ctx.restore();
+    // The boat, gliding to and fro along the lane's middle stretch.
+    const [p, q] = [pts[1], pts[2]];
+    const u = 0.5 + 0.42 * Math.sin(time * 0.35 + key.length);
+    const x = ox + p.x + (q.x - p.x) * u;
+    const y = oy + p.y + (q.y - p.y) * u + Math.sin(time * 2 + key.length) * 0.6;
+    const dir = Math.cos(time * 0.35 + key.length) >= 0 ? 1 : -1;
+    ctx.fillStyle = '#c98a5a';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y - 1);
+    ctx.lineTo(x + 4, y - 1);
+    ctx.lineTo(x + 2.5, y + 1.6);
+    ctx.lineTo(x - 2.5, y + 1.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(x, y - 8);
+    ctx.lineTo(x + 3.2 * dir, y - 1.6);
+    ctx.lineTo(x, y - 1.6);
+    ctx.closePath();
+    ctx.fill();
   }
 }
 
@@ -557,6 +687,11 @@ function drawRoute(ctx, ox, oy, time, path) {
     if (via) {
       const stops = [from, ...(from < to ? via : [...via].reverse()), to];
       for (let k = 1; k < stops.length; k++) traceRoad(ctx, ox, oy, SPOT[stops[k - 1]], SPOT[stops[k]], false);
+    } else if (LANES[key]) {
+      const pts = from < to ? LANES[key] : [...LANES[key]].reverse();
+      for (const q of pts) ctx.lineTo(ox + q.x, oy + q.y);
+      const b = spot(MAPS[to]);
+      ctx.lineTo(ox + b.x, oy + b.y);
     } else if (HIDDEN.has(key)) {
       const b = spot(MAPS[to]);
       ctx.lineTo(ox + b.x, oy + b.y);
@@ -591,7 +726,7 @@ function drawSky(ctx, ox, oy, time) {
 
 // A town's stop: a round badge in its colour with a little roof on it, and its name on a pill.
 function drawTown(ctx, x, y, m, picked, time) {
-  const color = JOB_COLORS[m.job] ?? COLORS.accent;
+  const color = JOB_COLORS[m.job] ?? TOWN_COLORS[m.id] ?? COLORS.accent;
   const r = picked ? 11.5 + Math.sin(time * 5) * 0.8 : 10;
   ctx.fillStyle = 'rgba(90,63,122,0.2)';
   circle(ctx, x + 1, y + 2, r);
@@ -698,14 +833,17 @@ export function worldMapWindow(ui, state, world) {
   roundRect(ctx, 0, 0, MAP_W, MAP_H, 10);
   ctx.clip();
   drawIsland(ctx, 0, 0, time);
+  drawIsle(ctx, 0, 0, time);
+  drawLanes(ctx, 0, 0, time);
   drawPlaces(ctx, 0, 0, time);
   drawRoads(ctx, 0, 0, time);
   drawRoute(ctx, 0, 0, time, pathIds?.filter((id) => onMap(MAPS[id])));
   drawSky(ctx, 0, 0, time);
   drawClouds(ctx, 0, 0, time);
   ctx.restore();
-  box(ctx, 8, 8, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
-  text(ctx, 'Tengu Island', 45, 18.5, { size: 8.5, bold: true, align: 'center', color: INK });
+  // (The island's name in the south-west corner of the sea, clear of Dawnlight Isle up north.)
+  box(ctx, 8, MAP_H - 23, 74, 15, { fill: '#ffffff', edge: '#f4bcd8', r: 7.5, width: 1.5 });
+  text(ctx, 'Tengu Island', 45, MAP_H - 12.5, { size: 8.5, bold: true, align: 'center', color: INK });
 
   // The stops (fields first, then towns over them), then every name on top.
   let hovered = null;
@@ -815,12 +953,17 @@ export function worldMapWindow(ui, state, world) {
   }
   const mobs = [...new Set((pick.spawns ?? []).filter((s) => !s.after && !MOBS[s.mob].boss).map((s) => MOBS[s.mob].name))];
   const lv = levelRange(pick);
-  const far = pick.id === here ? 'You are here' : path ? `${path.length} map${path.length === 1 ? '' : 's'} away` : 'No road from here yet';
-  text(ctx, `${pick.name}${lv ? `  ·  ${lv}` : ''}${pick.isTown ? `  ·  ${JOBS[pick.job]?.name ?? ''} town` : ''}`, win.x + 12, by + 10, { size: 8.5, bold: true });
+  const isle = ISLE.includes(pick.id);
+  const far = pick.id === here ? 'You are here' : isle ? 'Dawnlight Isle, off the coast, where you washed up' : path ? `${path.length} map${path.length === 1 ? '' : 's'} away${BY_SEA.has(pick.id) ? ', by boat' : ''}` : 'No road from here yet';
+  text(ctx, `${pick.name}${lv ? `  ·  ${lv}` : ''}${pick.isTown ? (JOBS[pick.job] ? `  ·  ${JOBS[pick.job].name} town` : '  ·  town') : ''}`, win.x + 12, by + 10, { size: 8.5, bold: true });
   text(ctx, mobs.length ? `${mobs.join(', ')}  ·  ${far}` : far, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
   let bx = win.x + W - 12;
   // (Fly goes to any place on the map, but only takes off from a town.)
-  if (pick.id !== here) {
+  if (pick.id !== here && BY_SEA.has(pick.id)) {
+    // (No flying over the sea: the ferry from Pastel Harbor goes to the lagoon.)
+    text(ctx, isle ? 'No boat back there' : 'By ferry from Pastel Harbor', bx - 4, by + 15, { size: 7, bold: true, align: 'right', color: '#4f95e0' });
+    bx -= ctx.measureText(isle ? 'No boat back there' : 'By ferry from Pastel Harbor').width + 12;
+  } else if (pick.id !== here) {
     const can = world.map.isTown;
     bx -= 76;
     if (button(ui, bx, by + 4, 74, 16, world.map.isTown ? 'Fly' : 'Fly (from town)', { primary: true, enabled: can, size: 7.5 })) {
