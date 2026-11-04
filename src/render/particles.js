@@ -385,7 +385,8 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
   }
   fx.delayed = fx.delayed.filter((d) => d.at > 0);
 
-  const amb = AMBIENT[world.map.theme];
+  // (Indoors, none of the town's outdoor motes: no petals or sea glints drifting round a room.)
+  const amb = world.map.indoor ? null : AMBIENT[world.map.theme];
   if (amb) {
     fx.ambientTimer -= dt * amb.rate;
     while (fx.ambientTimer <= 0) {

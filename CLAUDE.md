@@ -92,6 +92,14 @@ anime effects; every effect in `assets/fx/` is now Tengu's own. Look at
 references first (research/fx.md section 6, MapleStory) for what each moment should show. Code
 drawing is for small supporting touches only (a tracer line, a sight's ticks).
 
+**Indoors is indoors (the player's standing rule, 2026-11-04).** A room inside a building has
+nothing of the outdoors in it: no birds, butterflies, gulls, fireflies or other critters, no
+petals, leaves, snow, rain or outdoor motes drifting through, no street life, no sky, and no
+birdsong or outdoor sounds. The outside shows only through a window or door; the room's own life
+(a fire, steam, lanterns, a hammock) is drawn with it. Rooms set `indoor: true` (and a ceiling)
+so the outdoor look, particles and ambience stay outside; see `docs/art/art-bible.md`, "Exterior
+and interior design", and check every room for it before showing it.
+
 **The character never squashes, stretches or narrows (the player's standing rule, for every
 move, job and future animation).** Moves may lift, lunge, lean, crouch, tuck and flip the figure,
 but it is always drawn at its own width and height: a spin is a clean mirror flip at each half

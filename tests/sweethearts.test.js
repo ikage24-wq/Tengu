@@ -240,3 +240,17 @@ test('the Sweethearts are home in their rooms at night, walking in through their
   w.forceNight = 0;
   loadMap(w, 'sprout', 'start');
 });
+
+test('indoors is indoors: rooms keep none of the outdoors (critters, drift, street life, weather)', async () => {
+  const { roomLook } = await import('../src/render/scenery.js');
+  const { THEMES } = await import('../src/render/scenery.js');
+  const rooms = Object.values(MAPS).filter((m) => m.indoor);
+  assert.ok(rooms.length >= 7, 'the hut and the six rooms');
+  for (const m of rooms) {
+    assert.ok(m.look?.ceiling, `${m.id} has a ceiling (so no weather or night sky)`);
+    const t = roomLook(m, { ...(THEMES?.[m.theme] ?? {}), ...m.look });
+    assert.deepEqual(t.critters, [], m.id);
+    assert.equal(t.drift, null, m.id);
+    assert.equal(t.painted, null, m.id);
+  }
+});

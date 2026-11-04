@@ -3718,9 +3718,15 @@ function drawDrift(ctx, t, cam, width, height, time, which = 'mid') {
 // Everything in front of the characters: the nearest band of drifting petals or sparks. (Nothing
 // hangs into the top of the view: out-of-focus leaf clumps, branches and garlands hanging from
 // nothing read as clutter, and were taken out.)
+// Indoors is indoors (the player's standing rule, 2026-11-04): a room inside a house (`map.indoor`:
+// your hut, the Sweethearts' rooms) keeps nothing of the outdoors its town's look would bring in:
+// no birds hopping on the floor, butterflies, gulls or fireflies, no petals, leaves or snow drifting
+// through it, and none of a painted town's street life. Its own life is drawn with the room.
+export const roomLook = (map, t) => (map.indoor ? { ...t, critters: [], drift: null, painted: null, edges: null } : t);
+
 export function drawSceneFront(ctx, map, cam, width, height, time) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
-  const t = map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme];
+  const t = roomLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme]);
   if (t.painted === 'forest') drawPaintedForestFront(ctx, t, cam, width, height, time);
   if (t.painted === 'town') drawPaintedTownFront(ctx, t, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time, 'front');
@@ -3794,7 +3800,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
   // tall map's zones restyle it again as you climb.
-  const day = backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height, width);
+  const day = roomLook(map, backdropLook(map, map.look ? { ...THEMES[theme], ...map.look } : THEMES[theme], cam, height, width));
   // At night (world/daytime.js) the sky darkens to stars and the moon, and fireflies come out.
   const t = map.night > 0 ? nightLook(day, map.night) : day;
   // Layers sit just above the ground when the camera is at the bottom of the map, and scroll

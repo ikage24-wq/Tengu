@@ -101,6 +101,13 @@ const PLACES = {
     day: [['woodCreak', 5, 11], ['windChime', 7, 14]],
     night: [['woodCreak', 5, 11], ['windChime', 7, 14]],
   },
+  // Inside a house (your hut, the Sweethearts' rooms): hushed, the outdoors shut out (no birdsong,
+  // gulls or crickets); a floorboard now and then, a far chime.
+  room: {
+    bed: { lp: 260, hp: 50, db: -42, lfo: 0.03, depth: 0.2 },
+    day: [['woodCreak', 9, 20], ['windChime', 20, 40]],
+    night: [['woodCreak', 10, 22]],
+  },
   // Moonlit Manor: a hushed old house, floorboards creaking, a far-off chime somewhere upstairs.
   manor: {
     bed: { lp: 320, hp: 50, db: -31, lfo: 0.04, depth: 0.5 },
@@ -119,6 +126,7 @@ export function placeOf(map) {
   if (map.dungeon === 'theatre' || map.theme === 'theatre') return 'theatre';
   if (map.dungeon === 'skywhale' || map.theme === 'skywhale') return 'skywhale';
   if (map.dungeon || map.theme === 'hollow') return 'hollow';
+  if (map.indoor) return 'room';
   if (map.isTown) return 'town';
   if (map.theme === 'grove' || map.theme === 'shrine' || map.theme === 'springs') return 'forest';
   return PLACES[map.theme] ? map.theme : 'meadow';

@@ -286,3 +286,13 @@ old towns "clutter and slop" and asked for everything to look perfect.
   fixed to a wall or hung from the ceiling on chains. No floating islands with rounded rock
   undersides.
 - Light comes from lamps, chandeliers, windows and glowing fixtures, never a sun.
+- **Indoors is indoors (the player's rule, 2026-11-04: "learn the difference between interior
+  design and exterior").** Nothing of the outdoors lives in a room: no birds hopping on the floor,
+  butterflies, gulls, fireflies or squirrels; no petals, leaves, snow or rain drifting through; no
+  sea glints, pollen or outdoor motes; no street life passing; no sun, moon, clouds or open sky; no
+  birdsong, gulls or crickets in the sound (a room is hushed: a floorboard, a chime, its own
+  fire or kettle). The outside shows only through a window, a porthole or an open door. A room's
+  life is its own and drawn with it: an oven's fire, steam off a tray, lanterns swaying, a hammock,
+  a mobile turning, a pet that lives there. (In code: a map with `indoor: true` drops its town's
+  outdoor look in `roomLook`, render/scenery.js, its town's outdoor particles, and plays the
+  `room` ambience.) Check every new room for this before showing it.
