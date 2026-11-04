@@ -400,14 +400,14 @@ const marionRig = makeRig({
     const tq = tk((t * 0.25) % 1);
     const idle = { bars: Math.sin(tq * TAU * 2) * 8 * DG, drop: Math.sin(t * 1.6) * 2, legs: Math.sin(t * 2) * 8 * DG, kick: Math.sin(tq * TAU * 4) * 0.6, swingGoal: Math.sin(t * 0.8) * 0.06 };
     const antic = { bars: -14 * DG, drop: -8, legs: -12 * DG, kick: -0.5, swingGoal: -0.08 };
-    const strike = { bars: 20 * DG, drop: 8, legs: 12 * DG, kick: 1.2, swingGoal: 0.06 };
+    const strike = { bars: 20 * DG, drop: 5, legs: 12 * DG, kick: 1.2, swingGoal: 0.06 };
     return stateBlend(a, idle, idle, antic, strike);
   },
   follow: (S) => ({ swing: S.swingGoal, p0: -S.swingGoal * 2 + S.bars * 0.6, p1: -S.swingGoal * 2 - S.bars * 0.6 }),
   parts: [
     // Hung from her thread far above: the whole of her swings from there.
     { name: 'top', at: () => [0, -150], rot: (S) => S.swing },
-    { name: 'hang', parent: 'top', at: (S) => [0, 86 + S.drop] },
+    { name: 'hang', parent: 'top', at: (S) => [0, 76 + S.drop] },
     ...BACK_LEGS.flatMap(([deg, off], i) => chainParts(`leg${i}`, { parent: 'hang', at: () => [-6, 2], key: `marion|leg|${i % 2}`, segs: [[10, 4.4, 3.4], [9, 3.4, 2.6], [7, 2.6, 2.2]], shape: legShape(i % 2 ? MN.velvet.base : MN.velvet.sh), rot: (S, a, k) => (k ? -36 * DG - Math.sin(a.t * 2 + off) * 8 * DG : deg * DG + S.legs) })),
     { name: 'abdomen', parent: 'hang', pivot: [18, 16], at: () => [-10, 8], s: () => mrParts.abdomen() },
     { name: 'head', parent: 'hang', pivot: [20, 26], at: () => [10, -4], s: () => mrParts.head() },

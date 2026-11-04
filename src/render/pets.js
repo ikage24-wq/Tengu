@@ -11,8 +11,11 @@ export function drawPets(ctx, world, cam, time, layer) {
   const tr = world.turret;
   if (tr && tr.map === world.map.id && layer === 'back') {
     const since = world.now - tr.firedAt;
-    const frame = since < 0.12 ? 4 : since < 0.24 ? 5 : Math.floor(time * 4) % 4;
+    // The swivel eases between its four drawings (a fractional frame blends into the next).
+    const sw = (world.now * 4) % 4;
+    const frame = since < 0.12 ? 4 : since < 0.24 ? 5 : sw;
+    const next = since < 0.24 ? undefined : (Math.floor(sw) + 1) % 4;
     const up = Math.min(1, (world.now - tr.since) / 0.25);
-    fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, scale: 0.5 * up, flip: tr.dir < 0 });
+    fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, next, scale: 0.5 * up, flip: tr.dir < 0 });
   }
 }

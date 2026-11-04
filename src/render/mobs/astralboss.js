@@ -300,6 +300,10 @@ const folioRig = makeRig({
   follow: (S, a) => ({ ant: Math.sin(a.t * 3) * 0.2 - (S.w4 + S.w3) * 0.5 }),
   parts: [
     { name: 'bookL', pivot: [46, 6], at: () => [0, -8], s: () => foParts.bookL() },
+    // The right half of the book swings up and over onto the left to shut, and a page turns over
+    // by itself now and then: both behind the worm, so neither ever crosses her face.
+    { name: 'bookR', pivot: [0, 6], at: () => [4, -8], rot: (S) => -S.shut * 3.0, s: () => foParts.bookR() },
+    { name: 'page', pivot: [0, 4], at: () => [2, -9], rot: (S, a) => -Math.min(1, ((a.t * 0.5) % 2)) * Math.PI, s: () => foParts.page(), when: (a, S) => S.shut < 0.1 },
     // The worm's spine: bare joints, each segment a ball drawn level at its joint.
     ...[0, 1, 2, 3, 4].map((i) => ({ name: `w${i}`, parent: i ? `w${i - 1}` : null, at: i ? () => [[10, 10, 10, 9][i - 1], 0] : () => [-26, -14], rot: (S) => S[`w${i}`] })),
     ...[0, 1, 2, 3, 4].map((i) => ({ name: `ball${i}`, parent: `w${i}`, pivot: [13, 13], at: () => [0, 0], rot: (S) => -[0, 1, 2, 3, 4].slice(0, i + 1).reduce((v, k) => v + S[`w${k}`], 0), s: () => foParts.seg(i) })),
@@ -309,10 +313,6 @@ const folioRig = makeRig({
       { name: `bob${sd}`, parent: `ant${sd > 0 ? 'f' : 'b'}1`, pivot: [4, 4], at: () => [5, 0], s: () => foParts.bob() },
     ]),
     { name: 'head', parent: 'headJ', pivot: [20, 22], at: () => [0, 0], s: (a) => foParts.head(a.face, a.atk) },
-    // The right half of the book swings up and over onto the left to shut.
-    { name: 'bookR', pivot: [0, 6], at: () => [4, -8], rot: (S) => -S.shut * 3.0, s: () => foParts.bookR() },
-    // A page turning over by itself now and then.
-    { name: 'page', pivot: [0, 4], at: () => [2, -9], rot: (S, a) => -Math.min(1, ((a.t * 0.5) % 2)) * Math.PI, s: () => foParts.page(), when: (a, S) => S.shut < 0.1 },
   ],
   fx(ctx, m, a) {
     if (a.ph.since >= 0 && a.ph.since < 0.5) {

@@ -373,9 +373,10 @@ const minuetRig = makeRig({
     { name: 'tier2', parent: 'tier1', pivot: [38, 2], at: () => [0, 11], rot: (S) => S.t2 - S.t1, s: () => mnParts.tier(2) },
     { name: 'tier3', parent: 'tier2', pivot: [38, 2], at: () => [0, 11], rot: (S) => S.t3 - S.t2, s: () => mnParts.tier(3) },
     { name: 'bodice', parent: 'root', pivot: [14, 22], at: () => [0, -50], s: () => mnParts.bodice() },
-    { name: 'helm', parent: 'bodice', pivot: [18, 26], at: () => [2, -30], rot: (S) => S.head, s: (a) => mnParts.helm(a.face, a.atk) },
+    // (The fan passes behind the head, so it never crosses the face in a swing.)
     { name: 'arm', parent: 'bodice', pivot: [3, 5], at: () => [8, -12], rot: (S) => S.fan * 0.4, s: () => mnParts.arm() },
     { name: 'fan', parent: 'arm', pivot: [4, 20], at: () => [11, 0], rot: (S) => S.fan, s: () => mnParts.fan() },
+    { name: 'helm', parent: 'bodice', pivot: [18, 26], at: () => [2, -30], rot: (S) => S.head, s: (a) => mnParts.helm(a.face, a.atk) },
   ],
   fx(ctx, m, a, S) {
     // The spin's sweep of steel along the floor.
@@ -523,7 +524,7 @@ const marigoldRig = makeRig({
   },
   follow: (S) => ({ r0: -S.lean * 0.6, r1: -S.lean * 0.9, r2: -S.lean * 1.2, r3: -S.lean * 1.5, bloom: S.head - S.lean * 0.5 }),
   parts: [
-    { name: 'root', at: (S) => [0, -40 + S.y], rot: (S) => S.lean },
+    { name: 'root', at: (S) => [0, -53 + S.y - Math.min(9, (S.lean + S.r3) ** 2 * 160 + S.lean ** 2 * 60)], rot: (S) => S.lean },
     { name: 'r0', parent: 'root', pivot: [40, 4], at: () => [0, 2], rot: (S) => S.r0, s: () => mgParts.row(0) },
     { name: 'r1', parent: 'r0', pivot: [40, 4], at: () => [0, 12], rot: (S) => S.r1 - S.r0, s: () => mgParts.row(1) },
     { name: 'r2', parent: 'r1', pivot: [40, 4], at: () => [0, 12], rot: (S) => S.r2 - S.r1, s: () => mgParts.row(2) },
@@ -545,7 +546,7 @@ const marigoldRig = makeRig({
         ctx.globalAlpha = a.alpha * (1 - u);
         ctx.fillStyle = i % 2 ? '#ffb03a' : '#ff8a2a';
         ctx.beginPath();
-        ctx.ellipse(40 + Math.cos(ang) * r * 0.6, -36 + Math.sin(ang) * r * 0.5, 3, 1.6, ang, 0, TAU);
+        ctx.ellipse(40 + Math.cos(ang) * r * 0.6, -49 + Math.sin(ang) * r * 0.5, 3, 1.6, ang, 0, TAU);
         ctx.fill();
       }
     }

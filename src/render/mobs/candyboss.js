@@ -260,10 +260,11 @@ const toffeeRig = makeRig({
     { name: 'legF', parent: 'root', pivot: [10, 3], at: (S) => [10, -15 + S.crouch * 0.3], rot: (S) => S.legF, s: () => tfParts.leg(false) },
     { name: 'body', parent: 'root', pivot: [26, 24], at: (S) => [0, -30 + S.crouch], s: () => tfParts.body() },
     { name: 'knot', parent: 'body', pivot: [12, 4], at: () => [-15, -38], rot: (S) => S.knot, s: () => tfParts.knot() },
-    { name: 'head', parent: 'body', pivot: [28, 36], at: () => [4, -22], rot: (S) => S.head, s: () => tfParts.head() },
-    { name: 'face', parent: 'head', pivot: [15, 9], at: () => [4, -11], s: (a) => tfParts.face(a.face, a.atk) },
+    // (The hammer passes behind the head, so it never crosses the face in a swing.)
     { name: 'arm', parent: 'body', pivot: [4, 6], at: () => [20, -10], rot: (S) => S.hammer, s: () => tfParts.arm() },
     { name: 'hammer', parent: 'arm', pivot: [8, 15], at: () => [12, 0], s: () => tfParts.hammer() },
+    { name: 'head', parent: 'body', pivot: [28, 36], at: () => [4, -22], rot: (S) => S.head, s: () => tfParts.head() },
+    { name: 'face', parent: 'head', pivot: [15, 9], at: () => [4, -11], s: (a) => tfParts.face(a.face, a.atk) },
   ],
   fx(ctx, m, a, S, mat) {
     // Caramel dripping straight down off the hammer's head, whichever way it's held.
@@ -409,13 +410,14 @@ const bonbonRig = makeRig({
   follow: (S) => ({ t0: S.stir * 0.5, t1: S.stir * 1.1, t2: S.stir * 1.6 }),
   parts: [
     { name: 'tier0', pivot: [38, 26], at: (S) => [0, S.base], rot: (S) => S.t0, s: () => bbParts.tier(0) },
+    // (The spoon arm hangs behind the cake, so the spoon never crosses her face in a swing.)
+    { name: 'arm', parent: 'tier1', pivot: [3, 5], at: () => [24, -10], rot: (S) => S.spoon, s: () => bbParts.arm() },
+    { name: 'spoon', parent: 'arm', pivot: [2, 8], at: () => [8, 0], s: (a) => bbParts.spoon(!(a.ph.since >= 0 && a.ph.since < 0.9)) },
     { name: 'tier1', parent: 'tier0', pivot: [30, 24], at: (S) => [0, -20 - S.rise * 0.6], rot: (S) => S.t1 - S.t0, s: () => bbParts.tier(1) },
     { name: 'face', parent: 'tier1', pivot: [17, 9], at: () => [6, -9], s: (a) => bbParts.face(a.face, a.atk) },
     { name: 'tier2', parent: 'tier1', pivot: [22, 22], at: (S) => [0, -18 - S.rise * 0.6], rot: (S) => S.t2 - S.t1, s: () => bbParts.tier(2) },
     { name: 'crown', parent: 'tier2', pivot: [15, 30], at: () => [0, -16], s: () => bbParts.crown() },
     { name: 'armL', parent: 'tier1', pivot: [3, 5], at: () => [-22, -10], rot: (S, a) => 2.5 + Math.sin(a.t * 2) * 0.2, s: () => bbParts.arm() },
-    { name: 'arm', parent: 'tier1', pivot: [3, 5], at: () => [24, -10], rot: (S) => S.spoon, s: () => bbParts.arm() },
-    { name: 'spoon', parent: 'arm', pivot: [2, 8], at: () => [8, 0], s: (a) => bbParts.spoon(!(a.ph.since >= 0 && a.ph.since < 0.9)) },
   ],
   fx(ctx, m, a) {
     // The flung dollop of frosting, and sprinkles drifting up off her.

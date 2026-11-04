@@ -525,10 +525,11 @@ const coralieRig = makeRig({
     { name: 'fin', parent: 'tail4', pivot: [28, 14], at: () => [9, 0], rot: (S) => -(S.t0 + S.t1 + S.t2 + S.t3 + S.t4) + S.lean + Math.sin(S.t4 * 3) * 0.3, s: () => crParts.fin() },
     { name: 'skirt', parent: 'root', pivot: [20, 2], at: () => [0, -4], rot: (S) => S.skirt, s: () => crParts.skirt() },
     { name: 'body', parent: 'root', pivot: [15, 13], at: () => [0, -10], s: () => crParts.body() },
-    { name: 'head', parent: 'body', pivot: [28, 40], at: () => [0, -30], rot: (S, a) => Math.sin(a.t * 1.2) * 0.04, s: () => crParts.head() },
-    { name: 'face', parent: 'head', pivot: [16, 9], at: () => [6, 0], s: (a) => crParts.face(a.face, a.atk) },
+    // (The trident passes behind the head, so it never crosses the face in a swing.)
     { name: 'arm', parent: 'body', pivot: [3, 4], at: () => [10, -2], rot: (S) => S.tri + 40 * DG, s: () => crParts.arm() },
     { name: 'trident', parent: 'arm', pivot: [20, 9], at: () => [10, 0], rot: (S) => -40 * DG, s: () => crParts.trident() },
+    { name: 'head', parent: 'body', pivot: [28, 40], at: () => [0, -30], rot: (S, a) => Math.sin(a.t * 1.2) * 0.04, s: () => crParts.head() },
+    { name: 'face', parent: 'head', pivot: [16, 9], at: () => [6, 0], s: (a) => crParts.face(a.face, a.atk) },
   ],
   fx(ctx, m, a) {
     // The burst of sea where the trident is driven down.
