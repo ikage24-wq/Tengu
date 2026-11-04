@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#fff4f8">
+<canvas id="c" width="1440" height="560"></canvas>
+<script type="module">
+// Dev tool: first sketches of the six new characters you can date (samples for the player), each in
+// their outfit with their own colours, cycling through a few expressions.
+import { drawHero } from '../src/render/hero.js';
+import { wornGear } from '../src/core/character.js';
+
+const ctx = document.getElementById('c').getContext('2d');
+const Z = 4;
+const fit = (o) => wornGear({ equipment: {}, outfit: Object.fromEntries(Object.entries(o).map(([s, id]) => [s, { id }])) });
+const CAST = [
+  { name: 'Poppy', role: 'Sunny baker · Sprout Village', faces: ['grin', 'excited', 'giggle'],
+    look: { hairStyle: 'ribbonbuns', hairColor: '#ffc07a', hairTip: '#ff9a6a', skinTone: '#ffe2cc', eyeColor: '#d07a2a', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'grin' },
+    gear: fit({ top: 'cash_casual_chef', bottom: 'cash_casual_flowerskirt', shoes: 'cash_casual_loafers' }) },
+  { name: 'Lark', role: 'Shy lighthouse poet · Lantern Lagoon', faces: ['shy', 'lookdown', 'smile'],
+    look: { hairStyle: 'swoop', hairColor: '#4a5a8a', hairTip: '#7f9ad0', skinTone: '#fff0e6', eyeColor: '#5a7ab8', eyeStyle: 'droopy', face: 'shy' },
+    gear: fit({ top: 'cash_casual_cardigan', bottom: 'cash_casual_trackpants', hat: 'cash_casual_glasses' }) },
+  { name: 'Rowan', role: 'Gentle giant knight · Ember Crag', faces: ['smile', 'nervous', 'proud'],
+    look: { hairStyle: 'messycrop', hairColor: '#a8603a', skinTone: '#e7b48f', eyeColor: '#3f9a5a', eyeStyle: 'round', browStyle: 'thick', face: 'smile' },
+    gear: fit({ top: 'cash_casual_flannel', bottom: 'cash_casual_cargo', shoes: 'cash_casual_hightops' }) },
+  { name: 'Yuzu', role: 'Playful fox spirit · Moonleaf Grove', faces: ['playful', 'smugcat', 'bleh'],
+    look: { hairStyle: 'feathertips', hairColor: '#ff9a4f', hairTip: '#fff4e0', skinTone: '#fff0e6', eyeColor: '#e0602a', eyeStyle: 'cat', earStyle: 'fox', earTip: '#fff4e0', tail: 'fox', tailTip: '#fff4e0', face: 'playful' },
+    gear: fit({ top: 'cash_costume_yukata' }) },
+  { name: 'Celeste', role: 'Sleepy stargazer · the Observatory', faces: ['sleepy', 'love', 'dizzy'],
+    look: { hairStyle: 'cascade', hairColor: '#c9b6ff', hairTip: '#fff3c4', skinTone: '#fff0e6', eyeColor: '#7a52cc', eyeStyle: 'star', face: 'sleepy' },
+    gear: fit({ top: 'cash_costume_pajamas' }) },
+  { name: 'Marlowe', role: 'Cheeky young sailor · Pastel Harbor', faces: ['smug', 'grin', 'toldyou'],
+    look: { hairStyle: 'surfer', hairColor: '#3fb8b0', hairTip: '#bff0e8', skinTone: '#d9a07a', eyeColor: '#2f6ab8', eyeStyle: 'round', face: 'smug' },
+    gear: fit({ top: 'cash_costume_pirate' }) },
+];
+
+function step(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, 560);
+  g.addColorStop(0, '#ffe8f2'); g.addColorStop(1, '#fff8f0');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1440, 560);
+  CAST.forEach((c, i) => {
+    const x = 120 + i * 240;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#ffd6e6';
+    ctx.beginPath(); ctx.ellipse(x, 430, 90, 14, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
+    const face = c.faces[Math.floor(t / 1.6 + i) % c.faces.length];
+    drawHero(ctx, { ...c.look, face }, c.gear, x / Z, 430 / Z, { pose: 'idle', time: t + i, seed: i * 7, facing: 1 });
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#5a3a6a'; ctx.font = 'bold 26px sans-serif'; ctx.fillText(c.name, x, 482);
+    ctx.fillStyle = '#9a7aa8'; ctx.font = '15px sans-serif'; ctx.fillText(c.role, x, 506);
+  });
+}
+window.step = step;
+if (!location.search.includes('manual')) {
+  const t0 = performance.now();
+  const loop = (now) => { step((now - t0) / 1000); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0.5);
+</script></body></html>
