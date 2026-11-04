@@ -548,9 +548,10 @@ export const SKILLS = {
     desc: 'Quicker on the draw: you shoot faster and aim truer.',
     at: (lv, m) => ({ passive: { attackSpeed: lerpf(0.03, 0.15, lv, m), acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m) } }),
   }),
-  lightfeet: skill({
-    id: 'lightfeet', name: 'Light Feet', job: 'archer', type: 'passive', grows: true, fx: null,
-    desc: 'Light on your feet: you run faster and dodge more.',
+  // (Its own id: the Wind Dancer's Light Feet once shared 'lightfeet' and silently replaced it.)
+  springstep: skill({
+    id: 'springstep', name: 'Spring Step', job: 'archer', type: 'passive', grows: true, fx: null, icon: 'springstep',
+    desc: 'A tumbler\'s spring in every step: you run faster and dodge more.',
     at: (lv, m) => ({ passive: { speed: lerp(3, 18, lv, m), eva: lerp(3, 25, lv, m) } }),
   }),
   cometarrow: skill({

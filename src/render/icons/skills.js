@@ -740,6 +740,19 @@ function steadyhands() {
 }
 
 
+// The Acrobat Archer's Spring Step: a boot with a little feathered wing, speed lines behind it.
+function springstep() {
+  const out = [...tile('mint', 'passive'), ...aura(9, 8, 6.6, '#f4fff0')];
+  // A boot with a little feathered wing, speed lines trailing behind it.
+  for (const [y, len] of [[5.4, 5], [8.2, 6.4], [11, 4.6]]) out.push(streak([1.2, y], [1.2 + len, y], 1, '#e8fff4'));
+  const boot = [[6.4, 3.4], [10.4, 3.4], [10.6, 10.4], [14.6, 11.4], [14.6, 14], [6.2, 14]];
+  out.push(...solid(boot, '#c8945a', { ink: '#5a3a20', d: 0.45, light: '#f0c890' }));
+  out.push(S(tube([[6.4, 12.6], [14.4, 12.6]], 0.5), '#5a3a20'));
+  out.push(...leaf([10.6, 6.4], [15, 2.4], 2.6, '#ffffff', { bend: 0.6, rib: '#c4e8d4' }).shapes);
+  out.push(...spark(13.8, 13.8, 0.9, '#fff3a6'));
+  return out;
+}
+
 // ---------- Archer paths ----------
 
 // A longbow from the lower tip to the upper, bowed toward `side`, with its string.
@@ -1561,7 +1574,7 @@ const ART = {
   bladerush, whirlwind, shouldercharge, warcry, ironguard, swordmastery, toughness, titanbreak,
   paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
-  blastarrow, snarearrow, springtrap, vault, steadyhands, lightfeet, cometarrow,
+  blastarrow, snarearrow, springtrap, vault, steadyhands, springstep, lightfeet, cometarrow,
   beastmastery, wildhunt, wolfpounce, hawkstrike, packhowl, loyalguard, alpha, snacktime, stampede,
   engmastery, stickybolt, clusterbolt, steamvent, deployturret, overclock, bigbertha,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
