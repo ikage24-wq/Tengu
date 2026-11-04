@@ -87,6 +87,7 @@ window.world = w;
 window.cam = cam;
 window.skillsOf = () => Object.keys(c.skills).filter((id) => SKILLS[id] && SKILLS[id].type !== 'passive');
 window.skillName = (id) => SKILLS[id]?.name ?? id;
+window.skillJob = (id) => SKILLS[id]?.job;
 if (!q.has('manual')) {
   let last = performance.now();
   const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
