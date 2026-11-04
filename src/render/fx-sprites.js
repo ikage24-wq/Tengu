@@ -43,7 +43,7 @@ function framePos(s, { p, t } = {}) {
 // mirrors it (face the other way), `rot` turns it (radians), `alpha` fades it, `sx`/`sy` stretch
 // it. A `frame` picks one drawing and holds it; otherwise the next drawing blends in as the
 // effect moves toward it.
-export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false, rot = 0, alpha = 1, sx = 1, sy = 1 } = {}) {
+export function fxSprite(ctx, name, x, y, { p, t, frame, next: then, scale = 1, flip = false, rot = 0, alpha = 1, sx = 1, sy = 1 } = {}) {
   const { name: strip, s, k: big } = sheetOf(name);
   const img = s && image(strip);
   if (!img || alpha <= 0) return false;
@@ -60,9 +60,10 @@ export function fxSprite(ctx, name, x, y, { p, t, frame, scale = 1, flip = false
   ctx.translate(x, y);
   if (rot) ctx.rotate(rot);
   ctx.scale((flip ? -k : k) * sx, k * sy);
-  // The in-between: both drawings full for the middle of the step, each fading at its own end.
-  const next = s.loop ? (f + 1) % s.n : f + 1;
-  const frac = frame == null && next < s.n ? pos - f : 0;
+  // The in-between: both drawings full for the middle of the step, each fading at its own end. A
+  // fractional `frame` with `next` given blends too (a loop inside part of a strip).
+  const next = then ?? (s.loop ? (f + 1) % s.n : f + 1);
+  const frac = (frame == null || then != null) && next < s.n ? pos - f : 0;
   ctx.globalAlpha = a * Math.min(1, 2 * (1 - frac));
   ctx.drawImage(img, f * s.w, 0, s.w, s.h, -s.px, -s.py, s.w, s.h);
   if (frac > 0) {

@@ -107,10 +107,14 @@ BODIES.bun = {
       const ip = rot([[x - 1.2, 16 + by], [x + 1.4, 16 + by], [x + 1.7, 17 + by - len * 0.52], [x + 0.6, 17 + by - len * 0.85], [x - 1.1, 17 + by - len * 0.58]], x, 17 + by, -a);
       return [T(pts, tone), F(T(ip, inner))];
     };
-    const eA = 0.55 + P.earA * 0.7 + P.earLag * 0.6;
+    // The ears stand at the front of the head and the rider sits back on the shoulders, so however
+    // far they stream the tips stay ahead of the rider's face; a soft limit keeps a full trail just
+    // above the bunny's back rather than across the rider.
+    const raw = 0.55 + P.earA * 0.7 + P.earLag * 0.6;
+    const eA = 1.1 * Math.tanh(raw / 1.1);
     const fy = GROUND - 2.6;
     const back = [
-      ...ear(39, 16, eA + 0.18, c.sh, c.sh2),
+      ...ear(43, 14.5, eA + 0.14, c.sh, c.sh2),
       // far feet
       E(17 - P.feetB * 0.8, fy - P.feetB * 0.2, 4.2, 2.6, c.sh), E(41 + P.feetF * 0.4, fy - P.feetF * 0.3, 3.2, 2.4, c.sh),
     ];
@@ -131,11 +135,11 @@ BODIES.bun = {
       F(E(bx + 15.4, 27 + by, 2, 0.9, c.cheek)), F(E(bx + 8.6, 27 + by, 1.6, 0.8, c.cheek)),
       F(T([[bx + 16.6, 25.6 + by - nose], [bx + 17.8, 25.6 + by - nose], [bx + 17.2, 26.4 + by - nose]], c.nose)),
       ...(P.joy > 0.4 ? [F(E(bx + 15.6, 28.6 + by, 0.9, 0.7, '#c2507a'))] : []),
-      ...ear(42, 18, eA, c.base, c.ear),
+      ...ear(46, 16, eA, c.base, c.ear),
     ];
     return { back, front };
   },
-  seat: (P) => ({ x: 27, y: 15 + P.crouch, lean: P.pitch * 0.6 - P.hop * 0.004 }),
+  seat: (P) => ({ x: 23, y: 15.5 + P.crouch, lean: P.pitch * 0.6 - P.hop * 0.004 }),
   lift: (P) => P.hop,
 };
 
