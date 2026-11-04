@@ -1746,8 +1746,9 @@ test("a Sky Dancer's every blow lifts her: she stays up while she attacks, and d
   assert.ok(low > 10, `she stays up while she keeps attacking (lowest ${low.toFixed(0)}px)`);
   assert.ok(high < 130, `but never flies off (highest ${high.toFixed(0)}px)`);
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'her gusts land');
-  // Let go: a soft drift down, then she lands.
-  run(w, 0.8);
+  // Let go: a soft drift down, then she lands. (She hovers about 55-65 px up, so at the drift's
+  // 70 px/s she's still on her way down half a second later.)
+  run(w, 0.5);
   assert.ok(!w.body.onGround && w.body.vy <= 75, `drifting down (${w.body.vy.toFixed(0)}px/s)`);
   run(w, 4);
   assert.ok(w.body.onGround, 'and lands');
