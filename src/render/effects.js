@@ -101,7 +101,7 @@ function drawShot(ctx, f, cam) {
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
       const name = f.shot === 'asplanet' ? 'celasplanet' : f.shot === 'asbig' ? 'celasbig' : 'celasmoon';
-      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'asmoon' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'asplanet' ? 0.75 : f.shot === 'asbig' ? 0.8 : 0.3, alpha: f.split ? 0.85 : 1 });
+      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'asmoon' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'asplanet' ? 0.75 : f.shot === 'asbig' ? 0.8 : 0.8, alpha: f.split ? 0.85 : 1 });
       break;
     }
     case 'sinote': case 'sibig': {
@@ -117,7 +117,7 @@ function drawShot(ctx, f, cam) {
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
       const name = f.shot === 'stbolt' ? 'celstbolt' : f.shot === 'stcomet' ? 'celstcomet' : 'celstmeteor';
-      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'stbolt' ? 0.75 : f.shot === 'stcomet' ? 0.85 : 0.75, alpha: f.split ? 0.85 : 1 });
+      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'stbolt' ? 0.75 : f.shot === 'stcomet' ? 0.75 : 0.75, alpha: f.split ? 0.85 : 1 });
       break;
     }
     case 'skygust': case 'skygustbig': {

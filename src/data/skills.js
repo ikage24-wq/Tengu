@@ -286,13 +286,13 @@ export const SKILLS = {
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const bolt = (at, pct, oy = 0) => ({ at, shot: 'stbolt', magic: true, pct, range: 300, h: 60, knock: 30, speed: 780, oy });
+      const bolt = (at, pct, oy = 0) => ({ at, shot: 'stbolt', magic: true, pct, range: 300, h: 60, knock: 30, speed: 880, oy });
       return {
         mp: k(8, 16), pct: k(150, 260), hits: 4, targets: 1,
         combo: [
-          { move: 'swflick', dur: 0.4, strikes: [bolt(0.3, k(150, 260))] },
-          { move: 'swtwirl', dur: 0.5, strikes: [bolt(0.3, k(95, 165), -4), bolt(0.5, k(95, 165), 4)] },
-          { move: 'swsnap', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(240, 400), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 720, knock: 180, big: true, stop: 0.06, shake: 2 }] },
+          { move: 'swflick', dur: 0.36, step: 10, strikes: [bolt(0.3, k(150, 260))] },
+          { move: 'swtwirl', dur: 0.46, step: 12, carry: 0.6, strikes: [bolt(0.3, k(95, 165), -4), bolt(0.5, k(95, 165), 4)] },
+          { move: 'swsnap', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(240, 400), range: 320, h: 70, targets: k(2, 4), pierce: true, speed: 800, knock: 180, big: true, stop: 0.06, shake: 2 }] },
         ],
       };
     },
@@ -318,7 +318,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'swshowoff', dur: 0.6, step: 0, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(220, 380), range: 360, h: 80, targets: k(5, 8), pierce: true, speed: 760, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        combo: [{ move: 'swshowoff', dur: 0.54, step: 12, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: k(220, 380), range: 360, h: 80, targets: k(5, 8), pierce: true, speed: 840, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
       };
     },
   }),
@@ -334,7 +334,7 @@ export const SKILLS = {
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'swwish', dur: 0.9, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'stwish', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
+        combo: [{ move: 'swwish', dur: 0.8, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst: 'stwish', burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } }] }],
       };
     },
   }),
@@ -348,7 +348,7 @@ export const SKILLS = {
       const range = { w: 440, h: 160, around: true };
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'swveil', dur: 0.8, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'stveil', burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
+        combo: [{ move: 'swveil', dur: 0.72, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'stveil', burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } }] }],
       };
     },
   }),
@@ -448,7 +448,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(22, 40), pct: k(240, 400), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'asglobe', dur: 1.1, step: 0, strikes: [{ at: 0.56, shot: 'asbig', magic: true, pct: k(240, 400), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 460, knock: 220, launch: 100, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
+        combo: [{ move: 'asglobe', dur: 0.95, step: 0, strikes: [{ at: 0.56, shot: 'asbig', magic: true, pct: k(240, 400), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 540, knock: 220, launch: 100, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
       };
     },
   }),
@@ -460,7 +460,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(35, 60), pct: k(55, 100), hits: 1, targets: 0,
-        combo: [{ move: 'aswell', dur: 1.1, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
+        combo: [{ move: 'aswell', dur: 0.95, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
       };
     },
   }),
@@ -473,7 +473,7 @@ export const SKILLS = {
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'astide', dur: 1, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'astide', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { moonPower: kf(0.4, 0.9), moonHaste: 0.6 } } }] }],
+        combo: [{ move: 'astide', dur: 0.85, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'astide', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { moonPower: kf(0.4, 0.9), moonHaste: 0.6 } } }] }],
       };
     },
   }),
@@ -485,7 +485,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
-        combo: [{ move: 'asalign', dur: 2.2, step: 0, strikes: [{ at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, align: { span: 520, at: 1.15, pct: k(300, 520) } }] }],
+        combo: [{ move: 'asalign', dur: 2, step: 0, strikes: [{ at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, align: { span: 520, at: 1.04, pct: k(300, 520) } }] }],
       };
     },
   }),
@@ -498,7 +498,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: k(500, 860), hits: 14, targets: 12,
-        combo: [{ move: 'swstarfall', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
+        combo: [{ move: 'swstarfall', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
           { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'starfallsky', burstAt: 0, burstDur: 0.9 },
           { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'stmeteor', school: 'starlit', gauge: 0 },
           { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'starfallimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },

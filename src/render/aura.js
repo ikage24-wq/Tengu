@@ -291,7 +291,7 @@ function bindingAura(ctx, x, y, t, s, k, layer) {
   for (let i = 0; i < n; i++) {
     const a = t * 0.9 + (i / n) * Math.PI * 2;
     if ((Math.sin(a) > 0) !== (layer !== 'back')) continue;
-    fxSprite(ctx, 'celasmoon', x + Math.cos(a) * 26 * s, y - 22 * s + Math.sin(a) * 7 * s, { t: t + i, scale: s * (0.3 + 0.05 * Math.sin(a)) });
+    fxSprite(ctx, 'celasmoon', x + Math.cos(a) * 26 * s, y - 22 * s + Math.sin(a) * 7 * s, { t: t + i, scale: s * (0.42 + 0.06 * Math.sin(a)) });
   }
   if (layer !== 'back' && k >= 1) fxSprite(ctx, 'celembastro', x, y - 66 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
