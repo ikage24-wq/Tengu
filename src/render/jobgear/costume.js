@@ -91,6 +91,30 @@ const tail = (x, y, len, w, c, sw = 0, lean = 0) => T([[x - w / 2, y], [x + w / 
 // ---------- Tops ----------
 
 const TOPS = {
+  // ----- The Sweethearts' own (data/sweethearts.js) -----
+  // Poppy: a cream blouse under a strawberry-print bib apron, a heart pocket, frilled edges.
+  swbaker: (p) => [T(TORSO, '#fff6ec'), side(TORSO, 12, -1, '#f2e4d6'), T([[MID - 4.4, 27], [MID + 4.4, 27], [MID + 4.8, 35.8], [MID - 4.8, 35.8]], p.main),
+    frill(MID - 4.6, MID + 4.6, 26.6, MID - 5, MID + 5, 28, 5, 0.5, WHITE), ...[[12.6, 30], [17.4, 29.4], [14.4, 33.4], [18.6, 33.6]].flatMap(([x, y]) => [E(x, y, 0.9, 1, RED), F(E(x, y - 0.9, 0.7, 0.35, '#5fbf7a')), F(E(x - 0.3, y - 0.2, 0.2, 0.2, '#ffe0a0'))]),
+    T([[MID - 1.6, 30.6], [MID, 32.6], [MID + 1.6, 30.6], [MID + 0.8, 29.8], [MID, 30.4], [MID - 0.8, 29.8]], WHITE), F(limb(MID - 4.6, 27, MID - 6, 25.8, 0.4, 0.4, p.main)), F(limb(MID + 4.6, 27, MID + 6, 25.8, 0.4, 0.4, p.main))],
+  // Lark: an oversized cable-knit sweater, cables down the front, a quill pinned at the collar.
+  swpoet: (p) => [T(TORSO, p.main), ...round(p), ...[12.4, MID, 18.6].map((x) => F(limb(x, 27, x, 35.4, 0.7, 0.7, darker(p.main, 0.12)))), ...[12.4, MID, 18.6].flatMap((x) => [28.4, 30.8, 33.2].map((y) => F(E(x, y, 0.9, 0.5, lighter(p.main, 0.12))))),
+    E(MID, 26, 5, 1.6, lighter(p.main, 0.1)), band(TORSO, 34.6, 35.8, darker(p.main, 0.16)), F(limb(19.6, 25.4, 22.4, 21.6, 0.5, 0.2, WHITE)), F(limb(19.6, 25.4, 20.4, 24.2, 0.35, 0.3, '#5a7ab8'))],
+  // Rowan: a rounded breastplate over a sky tabard with a sun crest, a daisy tucked in the strap.
+  swknight: (p) => [T(TORSO, '#dfe6f2'), side(TORSO, 12, -1, '#b8c4d8'), F(limb(19.4, 27, 19.6, 33, 0.9, 0.7, WHITE)), T([[MID - 3.4, 28], [MID + 3.4, 28], [MID + 3, 36], [MID - 3, 36]], p.main),
+    ...burst(MID, 31.6, 2.4, GOLD, 8), F(E(MID, 31.6, 1, 1, '#fff2a8')), band(TORSO, 34.4, 35.8, '#7a5a3a'), R(MID - 1.2, 34.2, 2.4, 1.8, GOLD), F(limb(11.4, 26.4, 17.6, 33, 0.7, 0.7, '#7a5a3a')),
+    ...ring(6, (i) => F(E(12.6 + Math.cos((i / 6) * Math.PI * 2) * 0.9, 27.8 + Math.sin((i / 6) * Math.PI * 2) * 0.9, 0.6, 0.6, WHITE))), F(E(12.6, 27.8, 0.5, 0.5, GOLD))],
+  // Yuzu: a white haori trimmed in orange over a red-orange kimono, a red obi with a little bell.
+  swfox: (p) => [T(TORSO, WHITE), side(TORSO, 12, -1, '#efe6f0'), T([[MID - 3, 25.8], [MID + 1, 25.8], [MID + 3.4, 31.6], [MID + 1.6, 33]], p.main), T([[MID - 3.2, 25.8], [MID - 1.6, 25.8], [MID + 2.6, 32.4], [MID + 1.4, 33.2]], darker(p.main, 0.15)),
+    F(limb(10.2, 26.4, 10, 35.6, 0.8, 0.8, p.main)), F(limb(20.8, 26.4, 21, 35.6, 0.8, 0.8, p.main)), band(TORSO, 31.6, 35, RED), band(TORSO, 33, 33.5, GOLD),
+    E(MID + 1.6, 34.8, 1, 1, GOLD), F(E(MID + 1.6, 35.2, 0.4, 0.3, '#8a5a1a')), ...[[12.6, 28.4], [18.4, 29.6]].map(([x, y]) => leaf(x, y, 2, 0.6, 30, '#ff9a4f'))],
+  // Celeste: a midnight robe drawn with a constellation, a crescent-moon brooch at the throat.
+  swstar: (p) => [T(TORSO, p.main), ...round(p), T([[MID - 2.4, 25.8], [MID + 2.4, 25.8], [MID, 28.4]], lighter(p.main, 0.2)),
+    ...[[11.6, 28.6, 13.6, 31], [13.6, 31, 17.4, 30.2], [17.4, 30.2, 19.6, 33.4]].map(([a, b, c, d]) => F(limb(a, b, c, d, 0.18, 0.18, '#c8c8ff'))), ...[[11.6, 28.6], [13.6, 31], [17.4, 30.2], [19.6, 33.4]].map(([x, y], i) => star(x, y, i % 2 ? 0.9 : 1.2, GOLD)),
+    T([[MID - 1, 26.2], [MID + 1.2, 25.8], [MID + 1.8, 27.4], [MID + 0.4, 28.6], [MID + 0.8, 27.4], [MID - 0.2, 26.8]], GOLD), band(TORSO, 34.6, 35.8, lighter(p.main, 0.15)), sparkle(19.8, 28.4, 0.6)],
+  // Marlowe: a navy-and-white striped sailor shirt under an open blue jacket, a red neckerchief.
+  swsailor: (p) => [T(TORSO, WHITE), ...[27.4, 29.4, 31.4, 33.4].map((y) => band(TORSO, y, y + 0.9, '#2a3a6a')), 
+    T([[9.6, 25.8], [12.6, 25.8], [13, 35.8], [9.4, 35.8]], p.main), T([[18.4, 25.8], [21.4, 25.8], [21.6, 35.8], [18, 35.8]], p.main), ...[29, 32].map((y) => button(12.4, y, GOLD)),
+    T([[MID - 3, 25.6], [MID + 3, 25.6], [MID + 0.6, 29.6], [MID - 0.6, 29.6]], RED), F(E(MID, 28.4, 1, 0.8, darker(RED, 0.15))), T([[MID - 0.6, 29], [MID + 0.6, 29], [MID + 1.4, 31.6], [MID - 1.4, 31.6]], RED)],
   // A navy yukata printed with fireworks: crossed collar, a two-tone obi with a braided cord and a
   // charm.
   yukata: (p) => [T(TORSO, p.main), ...round(p), T([[MID - 3, 25.8], [MID + 1, 25.8], [MID + 3.4, 31.6], [MID + 1.6, 33]], SHIRT), T([[MID - 3.2, 25.8], [MID - 1.6, 25.8], [MID + 2.6, 32.4], [MID + 1.4, 33.2]], p.deep),
@@ -153,11 +177,19 @@ const TOPS = {
 };
 
 // Upper-arm colours (the default is p.main) and which sleeves run to the wrist.
-const SLEEVES = { ballgown: (p) => p.light, cheer: () => WHITE, mermaid: () => '#e6f8ff', snow: () => WHITE };
-const LONG = new Set(['yukata', 'gothic', 'pajamas', 'astronaut', 'detective', 'tuxedo', 'pirate', 'aviator', 'snow']);
+const SLEEVES = { swbaker: () => '#fff6ec', swknight: () => '#dfe6f2', swfox: () => WHITE, swsailor: (p) => p.main, ballgown: (p) => p.light, cheer: () => WHITE, mermaid: () => '#e6f8ff', snow: () => WHITE };
+const LONG = new Set(['swpoet', 'swknight', 'swfox', 'swstar', 'swsailor', 'yukata', 'gothic', 'pajamas', 'astronaut', 'detective', 'tuxedo', 'pirate', 'aviator', 'snow']);
 
 // Over each shoulder.
 const SHOULDERS = {
+  // Poppy's puffed sleeves; Lark's chunky knit; Rowan's round pauldrons; Yuzu's wide hanging
+  // haori sleeves; Celeste's bell sleeves with stars; Marlowe's jacket shoulders with gold.
+  swbaker: () => [E(0, 0.6, 3, 2.6, '#fff6ec'), F(E(-0.6, -0.2, 1.4, 0.9, WHITE)), ...scallops(-2.6, 2.6, 2.8, 4, 0.4, '#ffd2e0')],
+  swpoet: (p) => [E(0, 0.8, 3.2, 2.8, p.main), F(limb(-1.4, -0.6, -1.2, 2.6, 0.5, 0.5, darker(p.main, 0.12))), F(limb(1.4, -0.6, 1.2, 2.6, 0.5, 0.5, darker(p.main, 0.12)))],
+  swknight: (p) => [E(0, 0.4, 3.8, 3, '#dfe6f2'), F(E(-0.8, -0.6, 1.8, 1, WHITE)), F(R(-3.4, 1.8, 6.8, 0.9, p.main)), F(E(0, 0.4, 0.7, 0.7, GOLD))],
+  swfox: (p) => [T([[-2.4, -0.6], [2.8, -0.6], [3.6, 6.4], [1.4, 9], [-2.8, 8], [-3, 2]], WHITE), F(limb(-2.8, 7.8, 1.4, 8.8, 0.7, 0.7, p.main)), leaf(0.4, 4.2, 2, 0.6, 60, '#ff9a4f')],
+  swstar: (p) => [T([[-2.6, -0.6], [2.6, -0.6], [3.8, 5.6], [-3.8, 5.6]], p.main), ...scallops(-3.4, 3.4, 5.6, 4, 0.5, lighter(p.main, 0.2)), star(0.4, 2.2, 0.8, GOLD)],
+  swsailor: (p) => [E(0, 0.6, 3, 2.4, p.main), F(R(-2.6, 1.6, 5.2, 0.7, GOLD))],
   // The yukata's wide hanging furisode sleeve, printed with a firework.
   yukata: (p) => [T([[-2.4, -0.6], [2.8, -0.6], [3.6, 6.4], [1.4, 9], [-2.8, 8], [-3, 2]], p.main), ...burst(0.4, 4.6, 1.6, GOLD, 6), F(limb(-2.6, 7.6, 1.4, 8.6, 0.6, 0.6, darker(p.main, 0.2)))],
   // Puffed sleeves with a bell of lace.
@@ -181,6 +213,12 @@ const SHOULDERS = {
 // ---------- Legs ----------
 
 const LEGS = {
+  swbaker: () => ({ top: WHITE, low: WHITE, pad: null, cuff: '#ffd2e0' }),
+  swpoet: () => ({ top: '#3a4a7a', low: '#3a4a7a', pad: null }),
+  swknight: () => ({ top: '#6a5a7a', low: '#dfe6f2', pad: '#b8c4d8' }),
+  swfox: (p) => ({ top: p.main, low: p.main, pad: null, cuff: WHITE }),
+  swstar: (p) => ({ top: p.main, low: p.main, pad: null }),
+  swsailor: (p, s) => ({ top: '#2a3a6a', low: s, pad: null, cuff: '#2a3a6a' }),
   yukata: (p) => ({ top: p.main, low: p.main, pad: null, cuff: WHITE }),
   gothic: () => ({ top: '#e8e0ee', low: '#e8e0ee', pad: null, cuff: INK }),
   pajamas: (p) => ({ top: p.main, low: p.main, pad: null, cuff: WHITE }),
@@ -198,6 +236,19 @@ const LEGS = {
 // ---------- Skirts, coats and tails over the legs ----------
 
 const SKIRTS = {
+  // Poppy: a pink skirt to the knee with a white apron panel and a scalloped hem.
+  swbaker: (p) => [skirt(45, 4, p.main), T([[MID - 3.6, 35], [MID + 3.6, 35], [MID + 4.6, 44], [MID - 4.6, 44]], '#fff6ec'), ...scallops(MID - 4.6, MID + 4.6, 44, 5, 0.6, WHITE),
+    ...[[13.2, 38.4], [17.6, 39.8], [15, 42]].flatMap(([x, y]) => [E(x, y, 0.9, 1, RED), F(E(x, y - 0.9, 0.7, 0.35, '#5fbf7a'))]), ...scallops(6.6, 24.4, 45, 9, 0.5, darker(p.main, 0.12))],
+  // Lark: the sweater's long hem over the trousers.
+  swpoet: (p) => [skirt(39.4, 1, p.main), skirtBand(39.4, 1, 34.2, 38.2, 39.4, darker(p.main, 0.16))],
+  // Rowan: the tabard to the knee over mail, its sun again.
+  swknight: (p) => [skirt(44, 1.4, '#b8c4d8'), T([[MID - 3.2, 35], [MID + 3.2, 35], [MID + 3.6, 46], [MID - 3.6, 46]], p.main), ...burst(MID, 41, 1.8, GOLD, 6), F(R(MID - 3.6, 45.2, 7.2, 0.8, GOLD))],
+  // Yuzu: a red-orange hakama, pleated, to the ankle.
+  swfox: (p) => [skirt(52, 3, p.main, 34.6), ...[12.4, 15.5, 18.6].map((x) => F(limb(x, 36, x + (x - MID) * 0.4, 52, 0.4, 0.4, darker(p.main, 0.15)))), skirtBand(52, 3, 34.6, 34.6, 36, RED)],
+  // Celeste: the robe to the floor, stars scattered, a silver hem.
+  swstar: (p) => [skirt(55, 4.6, p.main), ...[[10.6, 40], [20, 42.6], [13, 48], [18.6, 51], [MID, 44.6]].map(([x, y], i) => (i % 2 ? sparkle(x, y, 0.8, '#c8c8ff') : star(x, y, 0.9, GOLD))), skirtBand(55, 4.6, 34.2, 53.8, 55, '#c8c8ff')],
+  // Marlowe: the jacket's open skirts over rolled-up trousers.
+  swsailor: (p) => [T([[9.4, 34.4], [12.8, 34.4], [12.6, 40], [8.6, 40]], p.main), T([[18.2, 34.4], [21.6, 34.4], [22.4, 40], [18.4, 40]], p.main), R(9.6, 34.4, 12, 1.4, '#7a5a3a'), F(R(MID - 0.6, 34.6, 1.2, 1, GOLD))],
   // Straight to the ankles with fireworks bursting over it, the overlap running down the front.
   yukata: (p) => [skirt(52, 0.6, p.main, 34.8), T([[MID + 1.4, 35], [MID + 3, 35], [MID + 5, 52], [MID + 2.8, 52]], p.deep), skirtBand(52, 0.6, 34.8, 50.6, 52, darker(p.main, 0.2)),
     ...burst(12, 41, 2.6, GOLD), ...burst(18.6, 46.4, 2.2, '#ff9ec0'), ...burst(11.4, 49, 1.4, '#8fd3ff', 6), sparkle(20, 40, 0.8, GOLD), sparkle(15, 44.6, 0.6)],
@@ -247,6 +298,13 @@ const SKIRTS = {
 // ---------- Shoes (in the foot's frame: x toward the toe, y down to the sole) ----------
 
 const SHOES = {
+  // Red Mary Janes; navy ankle boots; steel sabatons; geta; moon slippers; deck boots.
+  swbaker: (p, k, c) => [k.shaft(1.4, c(WHITE), 3), k.sole(c(RED)), k.poly([[-2.4, -0.6], [2.4, -0.6], [2.4, 0], [-2.4, 0]], c(RED)), k.dot(1.4, 0.6, 0.5, c(WHITE))],
+  swpoet: (p, k, c) => [k.shaft(3, c('#2a3a6a'), 3.2), k.sole(c('#2a3a6a')), k.poly([[-3, 2.2], [3, 2.2], [2.8, 3.2], [-2.8, 3.2]], c('#1a2440'))],
+  swknight: (p, k, c) => [k.shaft(4, c('#dfe6f2'), 3.6), k.sole(c('#b8c4d8')), k.poly([[-3.2, -0.6], [3.2, -0.6], [3.2, 0.4], [-3.2, 0.4]], c(WHITE)), k.dot(1.6, 1.2, 0.5, c(GOLD))],
+  swfox: (p, k, c) => [k.shaft(2, c(WHITE), 3), k.poly([[-2.8, 1.6], [2.8, 1.6], [2.8, 3.2], [-2.8, 3.2]], c('#c8905a')), k.poly([[-2.6, 3.2], [-1.6, 3.2], [-1.6, 4], [-2.6, 4]], c('#8a5a3a')), k.poly([[1.6, 3.2], [2.6, 3.2], [2.6, 4], [1.6, 4]], c('#8a5a3a')), k.poly([[-0.4, -0.6], [0.4, -0.6], [1.6, 1.6], [-1.6, 1.6]], c(RED))],
+  swstar: (p, k, c) => [k.poly([[-3, -1], [3, -1], [3.4, 2], [3, 3], [-3, 3], [-3.4, 2]], c(lighter(p.main, 0.15))), k.poly([[1.4, -0.8], [3.2, -2], [2.6, 0], [1.6, 0.4]], c(GOLD))],
+  swsailor: (p, k, c) => [k.shaft(4.4, c('#5a3a2a'), 3.2), k.sole(c('#3a2418')), k.shaft(1, c('#7a5a3a'), 3.6), k.dot(0.4, -2.4, 0.4, c(GOLD))],
   yukata: (p, k, c) => [k.shaft(2, c(WHITE), 3), k.poly([[-2.8, 1.6], [2.8, 1.6], [2.8, 3.2], [-2.8, 3.2]], c('#c8905a')), k.poly([[-2.6, 3.2], [-1.6, 3.2], [-1.6, 4], [-2.6, 4]], c('#8a5a3a')), k.poly([[1.6, 3.2], [2.6, 3.2], [2.6, 4], [1.6, 4]], c('#8a5a3a')),
     k.poly([[-2.4, -0.4], [2.4, -0.4], [2.6, 1.6], [-2.6, 1.6]], c(WHITE)), k.poly([[-0.4, -0.6], [0.4, -0.6], [1.6, 1.6], [-1.6, 1.6]], c(RED))],
   // Platform Mary Janes with a bow.
@@ -273,6 +331,25 @@ const SHOES = {
 // ---------- Headpieces ----------
 
 const HATS = {
+  // Poppy: a big cream kerchief bow on top of her buns, a strawberry clip, a dusting of flour.
+  swbaker: () => [T([[15.5, 1.6], [9.4, -2.4], [8.4, 1.8], [9.8, 4.4], [15.5, 2.8]], '#fff6ec'), T([[15.5, 1.6], [21.6, -2.4], [22.6, 1.8], [21.2, 4.4], [15.5, 2.8]], '#fff6ec'),
+    F(T([[15.5, 1.8], [10.4, -0.8], [10, 1.6], [15.5, 2.4]], WHITE)), E(15.5, 2.2, 1.6, 1.4, '#ffd2e0'), E(22.6, 7.4, 1.6, 1.8, RED), F(E(22.6, 6, 1.2, 0.6, '#5fbf7a')), sparkle(8.2, 4.6, 0.7, WHITE), sparkle(24, 2.6, 0.6, WHITE)],
+  // Lark: a little shell clip holding back the far side of her fringe.
+  swpoet: () => [T([[21.6, 7.6], [24.4, 5.4], [26, 8.6]], '#ffd2e0'), ...ring(4, (i) => F(limb(23.8, 8, 22 + i * 1.2, 6, 0.2, 0.2, '#e8a0b8')))],
+  // Rowan: a daisy tucked behind his ear.
+  swknight: () => [...ring(7, (i) => F(E(23.6 + Math.cos((i / 7) * Math.PI * 2) * 1.4, 11 + Math.sin((i / 7) * Math.PI * 2) * 1.4, 0.9, 0.9, WHITE))), E(23.6, 11, 0.8, 0.8, GOLD), leaf(22.2, 12, 2, 0.5, 150, '#5fbf7a')],
+  // Yuzu: a white fox mask tipped up on the side of her head, red markings, and a maple leaf.
+  swfox: () => [E(7, 6.6, 3, 3.4, WHITE), T([[4.6, 4.6], [5.4, 2.4], [6.4, 4.2]], WHITE), T([[7.6, 4.2], [8.6, 2.4], [9.4, 4.6]], WHITE), F(limb(5.2, 6.4, 6.4, 7, 0.4, 0.3, RED)), F(limb(8.8, 6.4, 7.6, 7, 0.4, 0.3, RED)), F(E(7, 8.6, 0.5, 0.3, RED)),
+    leaf(24, 4, 2.6, 0.9, -60, '#ff7a4a'), leaf(24, 4, 2.2, 0.8, -100, '#ffb04a'), leaf(24, 4, 2.2, 0.8, -20, '#ffb04a')],
+  // Celeste: a long floppy nightcap with a star pompom that bobs and swings.
+  swstar: (p, m) => {
+    const s = (m?.hair ?? 0) * 0.8;
+    return [hoop(15.5, 12.4, 12.4, 11.8, 10.6, 10, p.main, 190, 350, 16), T([[6, 3], [25, 3], [28 + s, 8], [31 + s * 1.4, 15], [27.4 + s * 1.2, 13], [23, 6]], p.main),
+      ...scallops(4, 27, 4.4, 9, 0.7, lighter(p.main, 0.25)), star(10, 1, 0.8, GOLD), star(19, 0.4, 0.7, GOLD), star(31 + s * 1.4, 16, 1.8, GOLD), F(star(31 + s * 1.4, 16, 0.9, '#fff2a8'))];
+  },
+  // Marlowe: a captain's cap tipped back, an anchor badge, a gold cord.
+  swsailor: () => [dome(15.5, 6.6, 10.4, 5.4, WHITE), T([[4.4, 6.6], [26.6, 6.6], [27.4, 8.6], [3.6, 8.6]], '#2a3a6a'), T([[17, 8.4], [27, 8.4], [29.6, 10.6], [18, 10]], '#1a2440'), F(R(5, 6.2, 21, 0.8, GOLD)),
+    F(E(15.5, 4, 1.4, 1.4, GOLD)), F(limb(15.5, 3, 15.5, 5.2, 0.35, 0.35, '#2a3a6a')), F(limb(14.4, 4.8, 16.6, 4.8, 0.3, 0.3, '#2a3a6a'))],
   // A big kanzashi: a cluster of flowers with dangling strands of tiny blossoms that sway, and a
   // festival mask tipped up on the far side.
   yukata: (p, m) => {
@@ -343,6 +420,11 @@ const HATS = {
   },
 };
 const HAT_BACKS = {
+  // Poppy's kerchief tails.
+  swbaker: (p, m) => {
+    const sw = m?.sway ?? 0;
+    return [tail(14, 3, 6, 1.6, '#fff6ec', sw, -1.4), tail(17, 3, 5, 1.6, '#fff6ec', sw, 1.4)];
+  },
   // The gothic headband's long ribbons.
   gothic: (p, m) => {
     const sw = m?.sway ?? 0;
@@ -361,6 +443,8 @@ const HAT_BACKS = {
 function hand(t, p, hx, hy, ex, ey) {
   const at = (u) => [hx + (ex - hx) * u, hy + (ey - hy) * u];
   switch (keyOf(t)) {
+    // Rowan's soft steel gauntlets.
+    case 'swknight': return [limb(...at(0.1), ...at(0.45), 4.4, 4.2, '#dfe6f2'), E(hx, hy, 2.3, 2.2, '#dfe6f2'), F(E(hx - 0.6, hy - 0.7, 0.9, 0.6, WHITE))];
     // A sleepy star pillow hugged in the front hand.
     case 'pajamas': return hx > 15.5 ? [star(hx + 0.6, hy - 0.4, 3.2, '#ffe36b'), F(star(hx + 0.4, hy - 0.8, 1.8, '#fff2a8')), F(E(hx - 0.4, hy - 0.4, 0.3, 0.3, INK)), F(E(hx + 1.2, hy - 0.4, 0.3, 0.3, INK)), E(hx, hy + 0.6, 1.8, 1.8, p.main)] : [E(hx, hy, 1.9, 1.9, p.main)];
     case 'astronaut': return [limb(...at(0.1), ...at(0.45), 4.6, 4.6, '#ff8a3c'), E(hx, hy, 2.4, 2.4, p.main), F(E(hx - 0.6, hy - 0.6, 0.8, 0.6, WHITE))];
@@ -384,6 +468,26 @@ function hand(t, p, hx, hy, ex, ey) {
 function capeBack(t, p, m) {
   const sw = m?.sway ?? 0;
   switch (keyOf(t)) {
+    // Poppy's apron strings tied in a bow at the back.
+    case 'swbaker': return [T([[11, 33], [6, 30.4], [5.6, 35], [11, 34.6]], WHITE), T([[20.2, 33], [25.2, 30.4], [25.6, 35], [20.2, 34.6]], WHITE), tail(13, 34, 8, 1.8, WHITE, sw, -1), tail(18.2, 34, 7, 1.8, WHITE, sw, 1)];
+    // Lark's long striped scarf, streaming out behind.
+    case 'swpoet': {
+      const w = (u) => [11 - u * 12 + sw * u * 1.8, 26.6 + u * 7 + Math.sin(u * Math.PI * 2) * 1.2];
+      const top = ring(7, (i) => w(i / 6));
+      const end = w(1);
+      return [T([...top, [end[0], end[1] + 2.8], ...ring(7, (i) => {
+        const [x, y] = w(1 - i / 6);
+        return [x, y + 2.8 - (1 - i / 6) * 0.4];
+      })], '#ffd34d'), ...ring(4, (i) => F(limb(...w(0.15 + i * 0.22), ...w(0.15 + i * 0.22).map((v, j) => v + (j ? 2.6 : 0)), 0.6, 0.6, '#ff8a6a')))];
+    }
+    // Rowan's short sky-blue cape.
+    case 'swknight': return [T([[8.4, 25.4], [22.6, 25.4], [25 + sw, 44], [6 + sw, 44]], p.main), F(limb(9 + sw * 0.3, 28, 7 + sw, 43, 0.6, 0.4, lighter(p.main, 0.12))), F(R(6 + sw, 43.2, 19, 0.8, GOLD))];
+    // Yuzu's big obi bow at the back.
+    case 'swfox': return [T([[11, 32], [4, 28.4], [3.4, 35], [11, 34.6]], RED), T([[20.2, 32], [27.2, 28.4], [27.8, 35], [20.2, 34.6]], RED), F(T([[10, 32.6], [5.4, 30], [5, 33.6], [10, 34]], '#ff9a6a')), tail(13, 34, 9, 2.4, RED, sw, -1), tail(18.2, 34, 8, 2.4, RED, sw, 1)];
+    // Celeste's starry cape, to the floor.
+    case 'swstar': return [T([[8, 25.4], [23, 25.4], [27.6 + sw, 54], [3.4 + sw, 54]], darker(p.main, 0.12)), ...[[7, 44], [24, 47], [12, 51], [20, 38], [15.5, 46]].map(([x, y], i) => (i % 2 ? sparkle(x + sw, y, 0.9, '#c8c8ff') : star(x + sw, y, 1, GOLD)))];
+    // Marlowe's jacket tails.
+    case 'swsailor': return [T([[9, 33.6], [22, 33.6], [23.4 + sw, 42], [7.6 + sw, 42]], darker(p.main, 0.1)), F(R(7.6 + sw, 41.2, 15.8, 0.8, GOLD))];
     // The obi's big two-tone butterfly bow, its ends trailing.
     case 'yukata': return [T([[11, 31], [3, 26.4], [1.8, 33.6], [11, 34.4]], '#ffd34d'), T([[20.2, 31], [28.2, 26.4], [29.4, 33.6], [20.2, 34.4]], '#ffd34d'),
       F(T([[10, 31.6], [4.4, 28.4], [3.6, 32.6], [10, 33.6]], '#ff8a5a')), F(T([[21.2, 31.6], [26.8, 28.4], [27.6, 32.6], [21.2, 33.6]], '#ff8a5a')),
@@ -425,6 +529,8 @@ function capeBack(t, p, m) {
 }
 function capeFront(t, p) {
   switch (keyOf(t)) {
+    // Lark's scarf wrapped round the neck, one end down the front.
+    case 'swpoet': return [E(MID, 26.2, 5.4, 1.8, '#ffd34d'), ...[MID - 3, MID, MID + 3].map((x) => F(R(x - 0.4, 25, 0.8, 2.4, '#ff8a6a'))), T([[MID + 2.2, 26.6], [MID + 4.2, 26.6], [MID + 4.8, 33], [MID + 3, 32.8]], '#ffd34d'), F(R(MID + 3.2, 29, 1.6, 0.8, '#ff8a6a'))];
     case 'astronaut': return [limb(11.6, 26.2, 11.4, 33, 1.6, 1.6, '#8a92a8'), limb(19.6, 26.2, 19.8, 33, 1.6, 1.6, '#8a92a8')];
     // The phantom's high collar and clasp chain.
     case 'tuxedo': return [T([[9, 21.4], [11.6, 25.8], [9.4, 26.4], [7, 22.4]], p.main), T([[22, 21.4], [19.4, 25.8], [21.6, 26.4], [24, 22.4]], p.main), F(limb(11.6, 26.4, 19.4, 26.4, 0.3, 0.3, GOLD)), F(E(11.6, 26.4, 0.6, 0.6, GOLD)), F(E(19.4, 26.4, 0.6, 0.6, GOLD))];

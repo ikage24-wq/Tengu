@@ -17,6 +17,13 @@ export const COSTUME_LOOKS = [
   { key: 'mermaid', name: 'Pearl Mermaid', slot: 'top', style: 'costume', cash: 3600, color: '#3fc0c8', covers: [...body, 'cape'] },
   { key: 'aviator', name: 'Sky Pilot', slot: 'top', style: 'costume', cash: 3000, color: '#8a5a3a', covers: [...body, 'gloves', 'cape'] },
   { key: 'snow', name: 'Snow Princess', slot: 'top', style: 'costume', cash: 3600, color: '#8fc8ff', covers: [...body, 'gloves', 'cape'] },
+  // The six Sweethearts' own outfits (data/sweethearts.js): never sold, theirs alone.
+  { key: 'swbaker', name: "Poppy's Strawberry Apron", slot: 'top', style: 'costume', cash: 0, color: '#ff8fae', covers: [...body, 'cape'], unsold: true },
+  { key: 'swpoet', name: "Lark's Cable Knit", slot: 'top', style: 'costume', cash: 0, color: '#8fc8c8', covers: [...body, 'cape'], unsold: true },
+  { key: 'swknight', name: "Rowan's Soft Steel", slot: 'top', style: 'costume', cash: 0, color: '#8fb8e8', covers: [...body, 'gloves', 'cape'], unsold: true },
+  { key: 'swfox', name: "Yuzu's Shrine Haori", slot: 'top', style: 'costume', cash: 0, color: '#ff7a4a', covers: [...body, 'cape'], unsold: true },
+  { key: 'swstar', name: "Celeste's Constellation Robe", slot: 'top', style: 'costume', cash: 0, color: '#4a4aa8', covers: [...body, 'cape'], unsold: true },
+  { key: 'swsailor', name: "Marlowe's Sea Stripes", slot: 'top', style: 'costume', cash: 0, color: '#2f5fb8', covers: [...body, 'cape'], unsold: true },
   // Swim and dance: whole beach and stage looks (sold in the Swim style).
   { key: 'sailorswim', name: 'Sailor Swimsuit', slot: 'top', style: 'swim', cash: 2200, color: '#2e4f9a', covers: body },
   { key: 'gymnast', name: 'Starlight Gymnast Leotard', slot: 'top', style: 'swim', cash: 2600, color: '#8a5ae8', covers: [...body, 'gloves'] },
