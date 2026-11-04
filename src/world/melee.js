@@ -32,6 +32,8 @@ import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
+import { strikePose } from '../render/hero.js';
+import { wornGear } from '../core/character.js';
 import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from './phantom.js';
 import { tickIdol, sing, curtainCall, grandConcert } from './idol.js';
 import { tickAstro, gravityWell, planetaryAlignment } from './astro.js';
@@ -1659,9 +1661,23 @@ function formEcho(world, s) {
   if (!(world.formSwing && world.now < world.formSwing.until)) world.formSwing = { kind: s.move, since: world.now + 0.13 - s.at * s.dur, dur: s.dur, until: world.now + 0.13 + (1 - s.at) * s.dur };
 }
 
-// Ribbon Lash (Wind Dancer): two lashes of ribbon a beat after the blow, all round her.
+// The Wind Dancer's two passives in each dancer's own look: ribbons and a crescent gust for the Wind
+// Dancer herself, two rose-gold rings orbiting and one skimming down the line for the Blade
+// Dancer, clouds bursting and a sky-blue crescent of wind for the Sky Dancer.
+const DANCER_PROCS = {
+  coral: { hit: 'wdhit', lash: 'wdswirl', gust: 'wdgust' },
+  rosegold: { hit: 'bdhit', lash: 'bdorbit', gust: 'bdskim' },
+  aerial: { hit: 'skyhit', lash: 'skyhit', gust: 'skyline' },
+};
+const dancerLook = (char) => {
+  const school = thiefSchool(char);
+  return { school, ...(DANCER_PROCS[school] ?? DANCER_PROCS.coral) };
+};
+
+// Ribbon Lash: two lashes a beat after the blow, all round her.
 function lashStrikes(world, s, p) {
-  const lash = (delay, burst) => procStrike(world, s, 'procribbonlash', delay, { pct: p.pct, reach: 76, h: 70, around: true, targets: p.targets, knock: 30, fx: 'wdhit', school: 'coral', ...(burst ? { burst: 'wdswirl', burstAt: 0, burstDur: 0.4 } : {}) });
+  const L = dancerLook(world.char);
+  const lash = (delay, burst) => procStrike(world, s, 'procribbonlash', delay, { pct: p.pct, reach: 76, h: 70, around: true, targets: p.targets, knock: 30, fx: L.hit, school: L.school, ...(burst ? { burst: L.lash, burstAt: 0, burstDur: 0.4 } : {}) });
   world.strikes.push(lash(0.1, true), lash(0.24, false));
 }
 
@@ -1676,9 +1692,12 @@ function bladeProcs(world, s, count, rng = Math.random) {
   }
   // Only the ground combo's own finisher flows on (not a dive, a slam, or a dash).
   if (!s.finisher || !/^basic\d$/.test(s.key)) return;
-  // Gust Line (Wind Dancer): the string's last blow flings a gust down the line.
+  // Gust Line: the string's last blow flings a gust down the line.
   const gust = procOf(char, 'gustline');
-  if (gust) world.strikes.push(procStrike(world, s, 'procgustline', 0.12, { pct: gust.pct, reach: 210, h: 70, targets: gust.targets, pierce: true, knock: 160, fx: 'wdhit', burst: 'wdgust', burstAt: 0.15, burstDur: 0.45, school: 'coral', stop: 0.04, shake: 1 }));
+  if (gust) {
+    const L = dancerLook(char);
+    world.strikes.push(procStrike(world, s, 'procgustline', 0.12, { pct: gust.pct, reach: 210, h: 70, targets: gust.targets, pierce: true, knock: 160, fx: L.hit, burst: L.gust, burstAt: 0.15, burstDur: 0.45, school: L.school, stop: 0.04, shake: 1 }));
+  }
   const judgment = procOf(char, 'judgment');
   if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
   if (world.queuedStep) return;
@@ -1817,6 +1836,16 @@ export function dollHit(world, m, f, at = 0) {
   shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
 }
 
+// Where the wand's tip is (from her feet, facing right) at the moment a shot leaves it; null where
+// the figure can't be worked out (no drawing, as in the tests' bare worlds).
+function wandTip(world, s) {
+  try {
+    return strikePose(world.char.appearance, wornGear(world.char), s.move, s.at, s.dur, 1, 1, { hit: s.hit, fin: s.finisher })?.tip ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, strike) {
   // Overclock: her next few bolts go out heavy.
@@ -1844,6 +1873,13 @@ function fire(world, strike) {
   // (A copy's arrow leaves from where the copy stands.)
   let ox = (s.from?.x ?? body.x) + s.dir * 10;
   let oy = (s.from?.y ?? body.y) - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
+  // A wand's spell leaves its tip, where the pose points it at the moment it's cast (not her chest).
+  // (Worked out exactly as the figure is drawn, render/hero.js `strikePose`.)
+  const tip = !s.from && s.move && world.stats.weaponType === 'wand' && world.char.appearance ? wandTip(world, s) : null;
+  if (tip) {
+    ox = body.x + s.dir * tip[0];
+    oy = body.y + tip[1] + (s.oy ?? 0);
+  }
   // Wild Hunt's arrows peel off the leaf swinging round toward them.
   if (s.leaf && world.barrage) {
     const run = world.barrage;

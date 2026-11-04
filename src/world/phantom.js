@@ -79,7 +79,7 @@ export function doveBurst(world, m, delay, p) {
 // them, and makes her hard to touch for a moment. Always true (it never fails).
 export function smokeBomb(world, params) {
   const b = world.body;
-  world.fx.push({ kind: 'ptsmoke', big: true, x: b.x, y: b.y, t: 0, dur: 0.7 });
+  world.fx.push({ kind: 'ptsmoke', big: true, bomb: true, x: b.x, y: b.y, t: 0, dur: 0.7 });
   // A ring of smoke and cards rolls out to the edge of what it catches.
   world.fx.push({ kind: 'shock', name: 'celshockplum', x: b.x, y: b.y, r: params.r, t: 0, dur: 0.45 });
   world.invuln = Math.max(world.invuln ?? 0, 0.6);

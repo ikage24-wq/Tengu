@@ -27,18 +27,18 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 
 ## B. Classes and heroes
 - [ ] **(player: own version per path)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves".
-- [ ] The Wind Dancer's Ribbon Lash and Gust Line proc for the Blade and Sky Dancer too (coral swirls on a rose-gold dancer).
-- [ ] The Wind Dancer's basic cuts draw the Warrior's steel-blue swipe and spin ring.
+- [x] The Wind Dancer's Ribbon Lash and Gust Line proc for the Blade and Sky Dancer too (coral swirls on a rose-gold dancer). (fixed)
+- [x] The Wind Dancer's basic cuts draw the Warrior's steel-blue swipe and spin ring. (fixed)
 - [x] Arbalist's steam puff on her face on every shot. (fixed)
-- [ ] The bow's top limb covers the archer's face at release (Acrobat, Trickster), and touches the mouth idle/walking.
-- [ ] Own effects drawn over the hero: Star Witch comet spawns over her, Idol notes start on her face, Paladin's hit burst swallows her, Trickster smoke becomes a screen-high wall.
-- [ ] Weapons sink through the floor in low poses (Warrior, Berserker, Astronomer, Novice; chakram below the feet standing).
-- [ ] Phantom Trickster's and Arbalist's basic moves read as the same pose; no kneel-and-crank.
-- [ ] Star Witch's star leaves her chest while the wand points down and back.
-- [ ] Climbing is stiff: a back view with a stepped 2 px leg shift, no arm motion, weapon vanishes.
-- [ ] Bow and crossbow cover the outfit in idle and walk.
-- [ ] Costume fit: bunny pajama hood band and hair through it, tiny sailor cap, Sky Pilot scarf hooks.
-- [ ] Damage numbers pile into unreadable stacks.
+- [x] The bow's top limb covers the archer's face at release (Acrobat, Trickster), and touches the mouth idle/walking. (fixed)
+- [x] Own effects drawn over the hero: Star Witch comet spawns over her, Idol notes start on her face, Paladin's hit burst swallows her, Trickster smoke becomes a screen-high wall. (fixed)
+- [x] Weapons sink through the floor in low poses (Warrior, Berserker, Astronomer, Novice; chakram below the feet standing). (fixed)
+- [x] Phantom Trickster's and Arbalist's basic moves read as the same pose; no kneel-and-crank. (fixed)
+- [x] Star Witch's star leaves her chest while the wand points down and back. (fixed)
+- [x] Climbing is stiff: a back view with a stepped 2 px leg shift, no arm motion, weapon vanishes. (fixed)
+- [x] Bow and crossbow cover the outfit in idle and walk. (fixed)
+- [x] Costume fit: bunny pajama hood band and hair through it, tiny sailor cap, Sky Pilot scarf hooks. (fixed)
+- [x] Damage numbers pile into unreadable stacks. (fixed)
 
 ## C. Monsters and bosses
 - [ ] **(player: keep their look, just rig)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults. Rig them like the dungeon bosses, keeping their taller look.

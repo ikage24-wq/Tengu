@@ -208,6 +208,7 @@ export const FX_SHEETS = {
   celwdswirl: { w: 428, h: 428, n: 8, fps: 26, px: 214, py: 214, d: 3, loop: false },
   celwdswirlbig: { w: 1013, h: 1013, n: 8, fps: 26, px: 506, py: 506, d: 3, loop: false },
   celwdgustfar: { w: 498, h: 197, n: 8, fps: 30, px: 56, py: 104, d: 3, loop: false },
+  celslashcoral: { w: 226, h: 129, n: 8, fps: 30, px: 113, py: 123, d: 3, loop: false, r: 93.75, mid: -1.571, turn: 1 },
   celwdhit: { w: 243, h: 242, n: 7, fps: 30, px: 120, py: 122, d: 3, loop: false },
   celwdgust: { w: 325, h: 199, n: 8, fps: 30, px: 75, py: 106, d: 3, loop: false },
   celembdancer: { w: 144, h: 154, n: 5, fps: 12, px: 72, py: 82, d: 3, loop: false },

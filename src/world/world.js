@@ -824,10 +824,10 @@ export function updateWorld(world, dt, input) {
     }
     const top = m.y - (m.air ?? 0) - m.def.h - 8 - h.stack * 15;
     if (h.miss) {
-      world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0 });
+      world.numbers.push({ x: m.x, y: top, text: 'MISS', color: '#d4cbe8', t: 0, mob: m.uid });
       continue;
     }
-    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit, weight: h.damage / m.def.hp, party: Boolean(h.party) });
+    world.numbers.push({ x: m.x, y: top, text: `${h.damage}`, color: h.crit ? '#ffb347' : '#fff6fb', t: 0, crit: h.crit, small: h.small && !h.crit, weight: h.damage / m.def.hp, party: Boolean(h.party), mob: m.uid });
     // Your own hits keep the hit counter going (see HITS_WINDOW).
     if (!h.party) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;

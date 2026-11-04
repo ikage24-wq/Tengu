@@ -375,8 +375,15 @@ const HATS = {
   pajamas: (p, m) => {
     const s = (m?.hair ?? 0) * 0.6;
     const ear = (x0, dir) => [T([[x0 - 1.6, 4], [x0 + 1.6, 4], [x0 + dir * 4 + s, -6], [x0 + dir * 3 + s, -9.6], [x0 + dir * 0.6 + s, -8]], p.main), F(T([[x0 - 0.6, 3], [x0 + 0.8, 3], [x0 + dir * 3 + s, -6.2], [x0 + dir * 2 + s, -8]], '#ffc2d6'))];
-    return [...ear(10, -1), ...ear(21, 1), hoop(15.5, 13.4, 13, 12.4, 11, 10.6, p.main, 190, 350, 16), T([[3.6, 9.6], [27.4, 9.6], [28.2, 13], [2.8, 13]], WHITE),
-      ...scallops(3.6, 27.4, 12.6, 9, 0.6, WHITE), star(8, 6, 0.9, '#ffe36b'), star(23, 5.6, 0.9, '#ffe36b'), sparkle(15.5, 3, 0.8)];
+    // (A whole hood over the top of her head, so no hair pokes through it, framed round the face
+    // by a fluffy white brim that arcs up over the brow instead of a band straight across it; the
+    // sides come down over her cheeks' outer edge like a real hood.)
+    const brim = (u) => [3.4 + u * 24.2, 11.2 - Math.sin(u * Math.PI) * 2.4];
+    return [...ear(10, -1), ...ear(21, 1), dome(15.5, 11.6, 13.2, 11.4, p.main),
+      T([[2.3, 10.6], [6.4, 10.6], [6.2, 20.6], [4.2, 22.2], [2.4, 19.2]], p.main), T([[28.7, 10.6], [24.6, 10.6], [24.8, 20.6], [26.8, 22.2], [28.6, 19.2]], p.main),
+      F(T([[2.6, 12], [3.8, 12], [3.8, 20.4], [2.8, 19]], darker(p.main, 0.12))), F(T([[28.4, 12], [27.2, 12], [27.2, 20.4], [28.2, 19]], darker(p.main, 0.12))),
+      ...ring(12, (i) => E(...brim(i / 11), 1.25, 1.05, WHITE)), ...ring(11, (i) => F(E(...brim((i + 0.5) / 11), 0.7, 0.55, '#eef0ff'))),
+      star(8.4, 5.4, 0.9, '#ffe36b'), star(22.8, 5, 0.9, '#ffe36b'), sparkle(15.5, 2.6, 0.8)];
   },
   // A bubble helmet: rim and shine only (the face shows), an antenna with a blinking light.
   astronaut: (p, m) => [hoop(15.5, 14.4, 15, 14.4, 14, 13.4, '#dfe6f5', 0, 360, 28), F(hoop(15.5, 14.4, 13.2, 12.6, 12.2, 11.6, '#bfe6ff', 200, 262, 6)), F(hoop(15.5, 14.4, 13.2, 12.6, 12.4, 11.8, '#bfe6ff', 20, 50, 4)),
@@ -513,13 +520,24 @@ function capeBack(t, p, m) {
     case 'mermaid': return [tail(10.6, 34, 18, 3, mix(p.main, WHITE, 0.45), sw, -3), tail(20.4, 34, 16, 3, mix(p.main, WHITE, 0.45), sw, 3), sparkle(6 + sw, 46, 0.7), sparkle(25 + sw, 44, 0.6)];
     // The long white scarf streaming out behind.
     case 'aviator': {
-      const w = (u) => [11 - u * 13 + sw * u * 1.6, 27 + u * 6 + Math.sin(u * Math.PI * 2) * 1.4];
-      const top = ring(7, (i) => w(i / 6));
+      // (Flown out from the neck at shoulder height like a pennant in the slipstream, widening and
+      // rippling toward its fringed end, never a thin hook at her hip.)
+      const w = (u) => [11 - u * 14 + sw * u * 1.6, 25.4 + u * 3 - Math.sin(u * Math.PI * 2 + sw * 0.3) * 1.1 * u];
+      const half = (u) => 1.3 + u * 0.9;
+      const top = ring(9, (i) => {
+        const [x, y] = w(i / 8);
+        return [x, y - half(i / 8)];
+      });
+      const bot = ring(9, (i) => {
+        const [x, y] = w(1 - i / 8);
+        return [x, y + half(1 - i / 8)];
+      });
       const end = w(1);
-      return [T([...top, [end[0], end[1] + 3], ...ring(7, (i) => {
-        const [x, y] = w(1 - i / 6);
-        return [x, y + 3 - (1 - i / 6) * 0.6];
-      })], WHITE), ...ring(3, (i) => F(R(end[0] - 0.4 + i * 1.1, end[1] + 2.8, 0.5, 1.6, '#d8d8e4'))), F(limb(...w(0.2), ...w(0.8), 0.4, 0.4, '#e6e6ee'))];
+      return [T([...top, ...bot], WHITE), F(T([...ring(9, (i) => {
+        const [x, y] = w(i / 8);
+        return [x, y + half(i / 8) * 0.2];
+      }), ...bot], '#e6e6ee')),
+      ...ring(4, (i) => F(R(end[0] - 1.6 + i * 0.1, end[1] - 1.8 + i * 1.2, 1.4, 0.45, '#d8d8e4')))];
     }
     // A long ice-blue cape with snowflakes and a fur hem.
     case 'snow': return [T([[8, 25.4], [23, 25.4], [27.6 + sw, 53], [3.4 + sw, 53]], p.main), ...flake(8 + sw, 46, 1.6, WHITE), ...flake(23 + sw, 48, 1.4, WHITE), ...flake(15.5 + sw, 51, 1, WHITE),
@@ -636,7 +654,9 @@ Object.assign(SHOES, {
 });
 Object.assign(HATS, {
   // A little white sailor cap tipped back, a navy band, a gold star.
-  sailorswim: (p) => [E(16.6, 3.4, 7.4, 2.6, WHITE), dome(16.6, 3.4, 5.6, 4.2, WHITE), F(R(11, 2.2, 11.2, 1.2, p.main)), star(16.6, 0.6, 0.9, '#ffe36b')],
+  // (Sized to her head, tipped back a touch: a real sailor's cap, not a token on top.)
+  sailorswim: (p) => [dome(16, 5, 9, 6, WHITE), F(dome(16, 5, 9, 2.4, '#e6ecf8')), E(16, 5.2, 11.4, 2.8, WHITE), F(E(16, 5.6, 10.4, 1.6, '#dfe6f4')),
+    F(R(7.6, 3.2, 16.8, 1.6, p.main)), star(16, 0.9, 1.2, '#ffe36b'), F(star(16, 0.9, 0.5, WHITE))],
   // A big scrunchie round a high ponytail, with a star clip.
   gymnast: (p) => [...ring(7, (i) => {
     const a = (i / 7) * Math.PI * 2;
