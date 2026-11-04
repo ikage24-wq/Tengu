@@ -148,9 +148,9 @@ export const PATH_COMBOS = {
   // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
   // she lands, and a split leap loosing a big arrow from mid-air.
   archer: [
-    { move: 'acskip', dur: 0.46, step: 8, strikes: [{ at: 0.5, shot: 'acarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'acflip', dur: 0.62, step: -16, carry: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -4 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'acsplit', dur: 0.66, step: 14, carry: 0.6, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 180, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'acskip', dur: 0.42, step: 18, strikes: [{ at: 0.5, shot: 'acarrow', pct: 92, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'acflip', dur: 0.56, step: -14, carry: 0.6, strikes: [{ at: 0.38, shot: 'acarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -4 }, { at: 0.62, shot: 'acarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'acsplit', dur: 0.6, step: 26, carry: 0.6, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 180, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Thief, by weapon. Her back flips come in the middle of a string, never at its end (the
   // player's call): she flips out, and the next blow darts straight back in (`owed`, playStep),
@@ -243,18 +243,18 @@ export const PATH_COMBOS = {
   // a snap shot, a double shot with a lever pumped between, a brace-and-crank heavy bolt through two,
   // and a recoil blast that kicks her back as a heavy bolt tears through the line.
   stormcaller: [
-    { move: 'aesnap', dur: 0.4, strikes: [{ at: 0.3, shot: 'aebolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
-    { move: 'aedouble', dur: 0.5, strikes: [{ at: 0.28, shot: 'aebolt', pct: 55, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.6, shot: 'aebolt', pct: 60, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
-    { move: 'aebrace', dur: 0.6, strikes: [{ at: 0.55, shot: 'aebolt', pct: 120, range: 320, h: 60, knock: 30, speed: 1000, targets: 2, pierce: true, knock: 90 }] },
-    { move: 'aerecoil', dur: 0.66, step: -4, finisher: true, strikes: [{ at: 0.48, shot: 'aebig', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
+    { move: 'aesnap', dur: 0.36, step: 12, strikes: [{ at: 0.3, shot: 'aebolt', pct: 90, range: 320, h: 60, knock: 30, speed: 1000 }] },
+    { move: 'aedouble', dur: 0.46, step: 8, strikes: [{ at: 0.28, shot: 'aebolt', pct: 55, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.6, shot: 'aebolt', pct: 60, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
+    { move: 'aebrace', dur: 0.54, step: 16, strikes: [{ at: 0.55, shot: 'aebolt', pct: 120, range: 320, h: 60, knock: 30, speed: 1000, targets: 2, pierce: true, knock: 90 }] },
+    { move: 'aerecoil', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.48, shot: 'aebig', pct: 185, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
   ],
   // The Phantom Trickster (the Beastmaster replaced; docs/design/phantom-trickster.md), every shot
   // dressed up as a trick: a magician's flourish before the draw, a cape swirl coming round to loose
   // two, and a "ta-da" reveal loosing a big arrow, ending in a little bow.
   beastmaster: [
-    { move: 'ptflourish', dur: 0.52, strikes: [{ at: 0.52, shot: 'ptarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860 }] },
-    { move: 'ptswirl', dur: 0.64, strikes: [{ at: 0.38, shot: 'ptarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -3 }, { at: 0.66, shot: 'ptarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, oy: 3 }] },
-    { move: 'ptreveal', dur: 0.7, finisher: true, strikes: [{ at: 0.54, shot: 'ptbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'ptflourish', dur: 0.48, step: 14, strikes: [{ at: 0.52, shot: 'ptarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'ptswirl', dur: 0.58, step: 16, carry: 0.5, strikes: [{ at: 0.38, shot: 'ptarrow', pct: 56, range: 300, h: 60, knock: 25, speed: 860, oy: -3 }, { at: 0.66, shot: 'ptarrow', pct: 60, range: 300, h: 60, knock: 25, speed: 860, oy: 3 }] },
+    { move: 'ptreveal', dur: 0.64, step: 22, carry: 0.6, finisher: true, strikes: [{ at: 0.54, shot: 'ptbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
   ],
 };
 
@@ -293,24 +293,24 @@ function shotsOf(L) {
 // The Acrobat Archer's own pool: a forward roll into a kneeling shot, a pirouette into a fan of three,
 // and a front flip loosing a big arrow from the top of it.
 const ACRO_SHOTS = {
-  roll: { move: 'acroll', dur: 0.6, step: 30, carry: 0.42, strikes: [{ at: 0.6, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, knock: 60 }] },
-  spin: { move: 'acspin', dur: 0.62, strikes: [{ at: 0.6, shot: 'acarrow', pct: 46, range: 300, h: 60, knock: 25, speed: 860, fan: 3, h: 110, knock: 40 }] },
-  front: { move: 'acfront', dur: 0.64, step: 26, carry: 0.7, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
+  roll: { move: 'acroll', dur: 0.54, step: 38, carry: 0.42, strikes: [{ at: 0.6, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, knock: 60 }] },
+  spin: { move: 'acspin', dur: 0.56, step: 12, strikes: [{ at: 0.6, shot: 'acarrow', pct: 46, range: 300, h: 60, knock: 25, speed: 860, fan: 3, h: 110, knock: 40 }] },
+  front: { move: 'acfront', dur: 0.58, step: 32, carry: 0.7, finisher: true, strikes: [{ at: 0.5, shot: 'acbig', pct: 185, range: 340, h: 64, targets: 3, pierce: true, speed: 920, knock: 220, big: true, stop: 0.06, shake: 2 }] },
 };
 // The Phantom Trickster's own pool: a card flicked then a quick shot, a lazy lean firing two from
 // the hip, and a curtsy rising into a big arrow.
 const PT_SHOTS = {
-  card: { move: 'ptcard', dur: 0.5, strikes: [{ at: 0.5, shot: 'ptarrow', pct: 98, range: 300, h: 60, knock: 25, speed: 860 }] },
-  lean: { move: 'ptlean', dur: 0.6, strikes: [{ at: 0.36, shot: 'ptarrow', pct: 54, range: 300, h: 60, knock: 25, speed: 860, knock: 20 }, { at: 0.62, shot: 'ptarrow', pct: 58, range: 300, h: 60, knock: 25, speed: 860 }] },
-  curtsy: { move: 'ptcurtsy', dur: 0.66, finisher: true, strikes: [{ at: 0.6, shot: 'ptbig', pct: 190, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
+  card: { move: 'ptcard', dur: 0.46, step: 16, strikes: [{ at: 0.5, shot: 'ptarrow', pct: 98, range: 300, h: 60, knock: 25, speed: 860 }] },
+  lean: { move: 'ptlean', dur: 0.54, step: -16, carry: 0.84, strikes: [{ at: 0.36, shot: 'ptarrow', pct: 54, range: 300, h: 60, knock: 25, speed: 860, knock: 20 }, { at: 0.62, shot: 'ptarrow', pct: 58, range: 300, h: 60, knock: 25, speed: 860 }] },
+  curtsy: { move: 'ptcurtsy', dur: 0.6, step: 20, carry: 0.6, finisher: true, strikes: [{ at: 0.6, shot: 'ptbig', pct: 190, range: 340, h: 64, targets: 3, pierce: true, speed: 900, knock: 220, big: true, stop: 0.06, shake: 2 }] },
 };
 // The Arbalist Engineer's own pool: a gunslinger twirl and a shot, a duck-and-fire, a triple crank
 // that rattles out three bolts, and a sliding shot.
 const AE_SHOTS = {
-  twirl: { move: 'aetwirl', dur: 0.46, strikes: [{ at: 0.42, shot: 'aebolt', pct: 92, range: 320, h: 60, knock: 30, speed: 1000 }] },
-  duck: { move: 'aeduck', dur: 0.46, strikes: [{ at: 0.4, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 60 }] },
-  triple: { move: 'aetriple', dur: 0.6, strikes: [{ at: 0.3, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000 }, { at: 0.5, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.7, shot: 'aebolt', pct: 46, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
-  slide: { move: 'aeslide', dur: 0.6, step: 30, carry: 0.4, finisher: true, strikes: [{ at: 0.45, shot: 'aebig', pct: 175, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
+  twirl: { move: 'aetwirl', dur: 0.42, step: 10, strikes: [{ at: 0.42, shot: 'aebolt', pct: 92, range: 320, h: 60, knock: 30, speed: 1000 }] },
+  duck: { move: 'aeduck', dur: 0.42, step: 14, strikes: [{ at: 0.4, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 60 }] },
+  triple: { move: 'aetriple', dur: 0.54, step: -10, carry: 0.8, strikes: [{ at: 0.3, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000 }, { at: 0.5, shot: 'aebolt', pct: 42, range: 320, h: 60, knock: 30, speed: 1000, oy: -2 }, { at: 0.7, shot: 'aebolt', pct: 46, range: 320, h: 60, knock: 30, speed: 1000, oy: 2 }] },
+  slide: { move: 'aeslide', dur: 0.54, step: 40, carry: 0.4, finisher: true, strikes: [{ at: 0.45, shot: 'aebig', pct: 175, range: 360, h: 64, targets: 3, pierce: true, speed: 1050, knock: 220, big: true, stop: 0.07, shake: 3, muzzle: 'aesteam' }] },
 };
 
 // A path's combo with a choice of swings at each step, so holding attack doesn't play the same
@@ -611,34 +611,34 @@ const ARCHER_COMMANDS = {
   // the same kick-out shot at whatever is below.
   archer: {
     down: { move: 'acair', dur: 0.48, strikes: [{ at: 0.42, shot: 'acarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'acup', dur: 0.5, strikes: [{ at: 0.5, shot: 'acarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
+    up: { move: 'acup', dur: 0.46, strikes: [{ at: 0.5, shot: 'acarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
     air: [
       { move: 'acair', dur: 0.42, hang: true, strikes: [{ at: 0.42, shot: 'acarrow', pct: 75, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 170, drop: 50, knock: 30 }] },
       { move: 'acair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.42, shot: 'acbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 920, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'acdive', dur: 0.62, step: 50, carry: 0.45, strikes: [{ at: 0.58, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
+    dash: { move: 'acdive', dur: 0.56, step: 56, carry: 0.45, strikes: [{ at: 0.58, shot: 'acarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
   },
   // The Phantom Trickster: a hand on her hip shooting up at fliers, floating with her cape billowing
   // to shoot down (the second a big one), and a smoke-step glide out of a run.
   beastmaster: {
     down: { move: 'ptair', dur: 0.46, strikes: [{ at: 0.4, shot: 'ptarrow', pct: 95, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'ptup', dur: 0.5, strikes: [{ at: 0.46, shot: 'ptarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
+    up: { move: 'ptup', dur: 0.46, strikes: [{ at: 0.46, shot: 'ptarrow', pct: 105, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
     air: [
       { move: 'ptair', dur: 0.42, hang: true, strikes: [{ at: 0.4, shot: 'ptarrow', pct: 75, range: 300, h: 60, knock: 25, speed: 860, fan: 2, range: 280, h: 170, drop: 50, knock: 30 }] },
       { move: 'ptair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ptbig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 900, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'ptdash', dur: 0.6, step: 56, carry: 0.5, guard: 0.4, strikes: [{ at: 0.58, shot: 'ptarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
+    dash: { move: 'ptdash', dur: 0.54, step: 62, carry: 0.5, guard: 0.4, strikes: [{ at: 0.58, shot: 'ptarrow', pct: 100, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true, knock: 90 }] },
   },
   // The Arbalist Engineer: a bolt fired up and out at fliers, down at whatever is below, two down
   // from a hang in the air (the second a heavy one), and a roll out of a run that comes up firing.
   stormcaller: {
     down: { move: 'aeair', dur: 0.44, strikes: [{ at: 0.3, shot: 'aebolt', pct: 95, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 220, drop: 120, knock: 40 }] },
-    up: { move: 'aeup', dur: 0.44, strikes: [{ at: 0.36, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
+    up: { move: 'aeup', dur: 0.4, strikes: [{ at: 0.36, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 190, lift: 50, knock: 20, launch: 360, big: true, stop: 0.05 }] },
     air: [
       { move: 'aeair', dur: 0.4, hang: true, strikes: [{ at: 0.32, shot: 'aebolt', pct: 75, range: 320, h: 60, knock: 30, speed: 1000, fan: 2, range: 280, h: 170, drop: 50 }] },
       { move: 'aeair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.32, shot: 'aebig', fan: 2, pct: 95, range: 280, h: 190, drop: 60, knock: 120, speed: 1050, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'aeroll', dur: 0.56, step: 44, carry: 0.45, strikes: [{ at: 0.52, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 90, stop: 0.04 }] },
+    dash: { move: 'aeroll', dur: 0.5, step: 50, carry: 0.45, strikes: [{ at: 0.52, shot: 'aebolt', pct: 105, range: 320, h: 60, knock: 30, speed: 1000, knock: 90, stop: 0.04 }] },
   },
 };
 // The archers' air leap (world/agility.js): jump again in mid-air and she springs up and back in a
