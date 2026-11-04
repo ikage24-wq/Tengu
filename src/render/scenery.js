@@ -48,7 +48,7 @@ export const THEMES = {
     sky: ['#ffab8a', '#ffd3a1', '#fff1d6'], sun: '#fff1c9', far: '#f2b98c', mid: '#e8a86b', midTrim: '#c97f4f',
     ground: '#f2c48d', groundDeep: '#dfa56c', trim: '#ffe2b8', ledge: '#dca06e', ledgeTrim: '#f6cf9a', ledgeShade: '#b5784a',
     skyline: 'mesas', props: ['torch', 'rock', 'cactus', 'barrel', 'dummy'],
-    critters: ['bird', 'gull'], drift: 'ember', face: 'sun',
+    critters: ['bird', 'hawk'], drift: 'ember', face: 'sun',
   },
   // The mages' home: a starry night forest with glowing treehouses and floating lanterns.
   grove: {
@@ -982,6 +982,34 @@ function drawSky(ctx, t, theme, width, height, time) {
       ctx.beginPath();
       ctx.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
       ctx.fill();
+    }
+  }
+  // Underground: the rock (or earth) overhead, roots and drips hanging from it, swaying a little
+  // (the root tunnels' own far layer draws its earthen ceiling).
+  if (t.underground && t.skyline !== 'roots') {
+    const rock = mix(t.sky[0], '#000000', 0.25);
+    ctx.fillStyle = rock;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    for (let x = 0; x <= width; x += 16) ctx.lineTo(x, 26 + Math.sin(x * 0.05) * 6 + hash(Math.floor(x / 16)) * 8);
+    ctx.lineTo(width, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = mix(t.sky[0], t.midTrim ?? t.mid, 0.5);
+    ctx.lineWidth = 1.4;
+    for (let i = 0; i < 14; i++) {
+      const x = hash(i * 7.3) * width;
+      const len = 18 + hash(i * 3.1) * 34;
+      const sway = Math.sin(time * 0.7 + i * 1.3) * 2;
+      ctx.beginPath();
+      ctx.moveTo(x, 28);
+      ctx.quadraticCurveTo(x + sway * 0.5, 28 + len * 0.6, x + sway, 28 + len);
+      ctx.stroke();
+      // A glowing bead of light on some of them (the zone's own light: glowworms, spores).
+      if (i % 3 === 0) {
+        const tw = 0.5 + 0.5 * Math.sin(time * 1.6 + i);
+        glow(ctx, x + sway, 30 + len, 8, '#d8ffc0', 0.35 * tw);
+      }
     }
   }
   // The sun (or moon) smiles down and bobs gently.
@@ -3592,6 +3620,39 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
       ctx.stroke();
     }
   }
+  // Desert hawks ride the thermals: two wheel in slow wide circles high over the mesas, wings
+  // spread and fingered at the tips, banking as they turn, a lazy flap now and then.
+  if (kinds.includes('hawk')) {
+    for (let i = 0; i < 2; i++) {
+      const a = time * (0.22 + i * 0.05) + i * 2.4;
+      const cx = (((hash(i + 11) * 1400 - cam.x * 0.15) % 900) + 900) % 900 - 130;
+      const hx = cx + Math.cos(a) * (70 + i * 30);
+      const hy = 60 + i * 26 + Math.sin(a) * 16;
+      const bank = Math.sin(a) * 0.5;
+      const flap = Math.max(0, Math.sin(time * 5 + i * 3)) ** 6 * 3;
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.scale(Math.cos(a) > 0 ? 1 : -1, 1);
+      ctx.rotate(bank * 0.3);
+      ctx.fillStyle = '#9a5a4a';
+      ctx.beginPath();
+      ctx.moveTo(-11, -1 - flap);
+      ctx.quadraticCurveTo(-5, -4 - flap * 0.5, 0, -1);
+      ctx.quadraticCurveTo(5, -4 - flap * 0.5, 11, -1 - flap);
+      ctx.lineTo(9, 0.5 - flap);
+      ctx.lineTo(10, 1.4 - flap);
+      ctx.quadraticCurveTo(4, -0.6, 1.5, 2);
+      ctx.lineTo(0, 3.6);
+      ctx.lineTo(-1.5, 2);
+      ctx.quadraticCurveTo(-4, -0.6, -10, 1.4 - flap);
+      ctx.lineTo(-9, 0.5 - flap);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#c88a6a';
+      ctx.fillRect(-1, -1.6, 2, 1.6);
+      ctx.restore();
+    }
+  }
   // Fireflies drift and pulse.
   if (kinds.includes('firefly')) {
     for (let i = 0; i < 9; i++) {
@@ -3792,7 +3853,7 @@ function backdropLook(map, base, cam, height, width = 640) {
 const NIGHT = { sky: ['#1a1646', '#33296e', '#5a4790'], far: '#3a3274', mid: '#463c84', midTrim: '#5a4e9a' };
 function nightLook(t, k) {
   const out = blendLook(t, { ...t, ...NIGHT, far: mix(t.far, NIGHT.far, 0.75), mid: mix(t.mid, NIGHT.mid, 0.7), midTrim: mix(t.midTrim ?? t.mid, NIGHT.midTrim, 0.7) }, k);
-  if (k < 0.5) return out;
+  if (k < 0.5 || t.underground) return out;
   return { ...out, face: 'moon', stars: true, rainbow: 0, critters: [...new Set([...(t.critters ?? []).filter((c) => c !== 'butterfly'), 'firefly'])] };
 }
 
@@ -3820,7 +3881,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
-    if (t.painted !== 'forest' && !['reef', 'manorhall', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    if (t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

@@ -2,6 +2,7 @@
 // and ambient motes per map theme. Nothing here affects gameplay.
 
 import { snap } from './pixel.js';
+import { zoneLook } from './scenery.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
@@ -398,7 +399,8 @@ export function updateParticles(fx, dt, world, cam, viewW, viewH) {
   }
 
   // Weather (world/lives.js): rain streaking down, or snow drifting, across the view.
-  if (world.weather) {
+  // (None falls in an underground zone: render/scenery.js zones.)
+  if (world.weather && !zoneLook(world.map, cam.y + viewH * 0.6, cam.x + viewW / 2)?.underground) {
     const rain = world.weather === 'rain';
     fx.weatherTimer = (fx.weatherTimer ?? 0) - dt * (rain ? 110 : 26);
     while (fx.weatherTimer <= 0) {

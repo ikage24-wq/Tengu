@@ -235,10 +235,12 @@ export function settleSpots(map, fishing = []) {
 // Safe arrival (the map rules): slide each monster's starting spot along its own floor until it is
 // ARRIVE px from every portal on (or near) that floor, homestones and hidden arrival spots too
 // (flyers, which roam about 180 px round their spot, keep further off); one with no such place on
-// its floor is left out. Field bosses keep their spot.
+// its floor is left out (it keeps clear of the floor's gathering spots `spots` too). Field bosses
+// keep their spot.
 const ARRIVE = 300;
 const ARRIVE_FLY = 320;
-export function clearArrivals(map, mobs) {
+const ARRIVE_FLOOR = 440;
+export function clearArrivals(map, mobs, spots = []) {
   const same = (a, b) => Math.abs(a - b) < 10;
   const floors = [
     ...map.platforms.filter((p) => !p.drift).map((p) => [p.x, p.x + p.w, p.y]),
@@ -248,16 +250,17 @@ export function clearArrivals(map, mobs) {
   map.spawns = map.spawns.filter((sp) => {
     const def = mobs[sp.mob];
     if (!def || def.boss) return true;
-    const room = def.fly ? ARRIVE_FLY : ARRIVE;
-    const reach = def.fly ? 140 : 60;
-    const clear = (x) => ways.every((w) => Math.abs(w.y - sp.y) > reach || Math.abs(w.x - x) >= room);
+    // (A walker on the very floor you arrive on could stroll up to you in a few seconds: further.)
+    const room = (w) => (def.fly ? ARRIVE_FLY : Math.abs(w.y - sp.y) < 10 ? ARRIVE_FLOOR : ARRIVE);
+    const reach = def.fly ? 140 : 90;
+    const clear = (x) => ways.every((w) => Math.abs(w.y - sp.y) > reach || Math.abs(w.x - x) >= room(w));
     if (clear(sp.x)) return true;
     const f = floors.find(([a, b, y]) => same(y, sp.y) && sp.x >= a && sp.x <= b);
     if (!f) return false;
     const tries = [];
     for (let x = f[0] + 40; x <= f[1] - 40; x += 10) tries.push(x);
     tries.sort((a, b) => Math.abs(a - sp.x) - Math.abs(b - sp.x));
-    const x = tries.find((t) => clear(t) && !map.spawns.some((o) => o !== sp && same(o.y, sp.y) && Math.abs(o.x - t) < 90));
+    const x = tries.find((t) => clear(t) && !map.spawns.some((o) => o !== sp && same(o.y, sp.y) && Math.abs(o.x - t) < 90) && !spots.some((n) => same(n.y, sp.y) && Math.abs(n.x - t) < SPOT_ROOM));
     if (x == null) return false;
     sp.x = x;
     return true;

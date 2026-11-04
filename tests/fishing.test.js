@@ -63,7 +63,8 @@ test('cast, wait for the bite, hook it: a fish, its count, and its recipe', (t) 
   assert.equal(w.fishing.phase, 'bite');
   const fish = w.fishing.fish;
   step(w, 0.05, 'KeyZ');
-  assert.equal(countItem(char.inventory, fish.id), 1);
+  // (Now and then a second one comes up with it: world/fishing.js.)
+  assert.ok([1, 2].includes(countItem(char.inventory, fish.id)), 'the catch is in the bag');
   assert.equal(char.fishBook[fish.id].n, 1);
   const learned = DISHES.find((d) => d.learn === fish.id);
   if (learned) assert.ok(char.recipes.includes(learned.id));

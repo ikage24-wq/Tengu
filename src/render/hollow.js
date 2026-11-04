@@ -5,7 +5,7 @@
 // glowcaps, the warnings, and the doors.
 
 import { R, E, T, F, mix } from './pixel.js';
-import { ramp, stones } from './propkit.js';
+import { ramp } from './propkit.js';
 import { art, place, face } from './scenery.js';
 import { sproutArt } from './dungeon.js';
 import { groupOf } from '../world/dungeon.js';
@@ -43,15 +43,38 @@ function bounceArt(squash) {
 }
 
 // A stone pillar holding up the den's roof, or its tumbled pieces once Tuskar has hit it.
+// The Boar Den's pillars are the den's own: a column of packed earth and stones bound in great
+// twisting roots, moss on the ledges of it and glowcaps sprouting from the cracks (a charging boar
+// brings one down in a heap of clods and snapped root ends).
 function pillarArt(broken) {
   return art(`hl-pillar|${broken}`, 44, 120, () => {
-    const st = ramp('#b8a8c8', 0.75);
+    const earth = ramp('#b48a74', 0.75);
+    const root = ramp('#8f6a66', 0.8);
+    const moss = '#a6dca2';
+    const out = [];
     if (broken) {
-      return [...stones(4, 96, 36, 24, st, 7, { rowH: 8, blockW: 12 }), T([[8, 96], [14, 84], [22, 90], [30, 82], [36, 96]], st.base), F(T([[22, 90], [30, 82], [36, 96], [26, 96]], st.sh)),
-        F(E(10, 118, 4, 1.4, '#a6dca2')), F(E(34, 118, 3, 1.2, '#a6dca2'))];
+      // The stump: earth heaped round snapped roots, clods rolled off to the sides.
+      out.push(T([[2, 120], [6, 100], [14, 92], [28, 94], [38, 102], [42, 120]], earth.base), F(T([[22, 93], [28, 94], [38, 102], [42, 120], [24, 120]], earth.sh)));
+      for (const [x, lean] of [[12, -1], [22, 0.4], [31, 1]]) out.push(T([[x - 3, 104], [x + lean * 6 - 1.6, 84], [x + lean * 6 + 2, 86], [x + 3, 104]], root.base), F(T([[x + lean * 6 - 1.6, 84], [x + lean * 6 + 2, 86], [x + lean * 6 + 1, 89]], root.hi)));
+      out.push(E(4, 117, 4, 3, earth.base), F(E(4, 116, 2.4, 1.2, earth.hi)), E(41, 118, 3.4, 2.4, earth.sh), F(E(16, 96, 5, 1.6, moss)), F(E(33, 100, 4, 1.4, moss)));
+      return out;
     }
-    return [...stones(8, 8, 28, 108, st, 3, { rowH: 12, blockW: 14 }), R(4, 0, 36, 8, st.base), F(R(4, 6, 36, 2, st.sh)), R(4, 112, 36, 8, st.base), F(R(30, 112, 10, 8, st.sh)),
-      F(E(14, 60, 4, 2, '#a6dca2')), F(E(30, 92, 3.4, 1.8, '#a6dca2')), F(T([[20, 30], [24, 44], [21, 52]], st.deep))];
+    // The core: packed earth, lumpy at the edges, a few stones pressed into it.
+    out.push(T([[9, 120], [7, 90], [10, 60], [8, 30], [12, 4], [32, 4], [36, 30], [34, 60], [37, 90], [35, 120]], earth.base));
+    out.push(F(T([[24, 4], [32, 4], [36, 30], [34, 60], [37, 90], [35, 120], [26, 120]], earth.sh)), F(R(10, 8, 2, 104, earth.hi)));
+    for (const [x, y, r] of [[18, 22, 3.4], [27, 48, 2.8], [15, 74, 3], [26, 100, 3.6]]) out.push(F(E(x, y, r, r * 0.7, '#cdb4a0')), F(E(x - 0.8, y - 0.8, r * 0.5, r * 0.3, '#e8d4c4')));
+    // Roots spiralling up round it: thick bands crossing the front, each lit along its top.
+    for (let k = 0; k < 4; k++) {
+      const y0 = 116 - k * 30;
+      out.push(T([[4, y0], [40, y0 - 18], [40, y0 - 11], [4, y0 + 7]], root.base), F(T([[4, y0], [40, y0 - 18], [40, y0 - 16], [4, y0 + 2]], root.hi)), F(T([[22, y0 - 6], [40, y0 - 15], [40, y0 - 11], [22, y0 - 2]], root.sh)));
+    }
+    // Feet of the roots splaying out into the floor, and the root crown on top.
+    out.push(T([[0, 120], [8, 108], [12, 120]], root.base), T([[32, 120], [38, 106], [44, 120]], root.base), F(T([[38, 106], [44, 120], [40, 120]], root.sh)));
+    out.push(T([[6, 6], [14, 0], [22, 4], [30, 0], [38, 6], [34, 10], [10, 10]], root.base), F(T([[14, 0], [22, 4], [30, 0], [26, 3], [18, 3]], root.hi)));
+    // Moss on the root bands, and glowcaps in the cracks.
+    for (const [x, y] of [[12, 84], [30, 56], [16, 28]]) out.push(F(E(x, y, 4, 1.6, moss)));
+    for (const [x, y, c] of [[36, 72, '#7fe6d6'], [8, 46, '#ffb0d0']]) out.push(F(R(x - 0.6, y, 1.2, 4, '#f4e8dc')), F(E(x, y, 3, 2, c)), F(E(x - 1, y - 0.6, 1, 0.6, '#ffffff')));
+    return out;
   }, false);
 }
 

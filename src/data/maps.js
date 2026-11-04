@@ -15,7 +15,12 @@ import { SWEETHEARTS } from './sweethearts.js';
 import { climb, lay, settleSpots, clearArrivals } from './climb.js';
 import { MOBS } from './mobs.js';
 import { SPOTS } from './fishing.js';
-import { SPOT } from './gathering.js';
+import { SPOT, NODES } from './gathering.js';
+
+// An underground zone's look (a cellar, root tunnels, a crypt): earth or stone all round instead
+// of sky, lit by its own glow: no sun, moon, stars, clouds or rainbow, no butterflies, birds or
+// bunnies (fireflies and spores instead), no weather and no light rays from above.
+const underground = (look) => ({ skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], painted: null, face: null, stars: false, shooting: false, rainbow: 0, critters: ['firefly'], drift: 'spore', light: 'cave', underground: true, ...look });
 
 export const MAPS = {
   // Sprout Village (rebuilt 2026-11-03): a countryside farm village round a great windmill whose
@@ -201,7 +206,7 @@ export const MAPS = {
       terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [2400, 1000]],
       zones: [
         { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
-          look: { sky: ['#6a8a6a', '#8aa88a', '#c8d8b8'], far: '#7a9a7a', mid: '#5a7a5a' } },
+          look: underground({ sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58' }) },
         { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')] },
         { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
           look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
@@ -314,7 +319,7 @@ export const MAPS = {
       width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
         { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [SPOT.ore(2), SPOT.ore(2)],
-          look: { sky: ['#4a6a52', '#6a8a6a', '#a8c09a'], far: '#4f7a5a', mid: '#3f6a4a' } },
+          look: underground({ sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a' }) },
         { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)] },
         { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.night(2)],
           look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
@@ -370,7 +375,7 @@ export const MAPS = {
       width: 2600, ground: 1120, by: 'y', quiet: [[40, 300, 160], [2380, 700, 200], [2540, 1120, 160]],
       zones: [
         { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [SPOT.ore(2), SPOT.ore(2, { gem: 0.14 })],
-          look: { sky: ['#2a2250', '#4a3a7a', '#8a7ab0'] } },
+          look: underground({ sky: ['#1e1a3a', '#2e2852', '#46406e'], far: '#2c2650', mid: '#3a3462', midTrim: '#5a5288', skyline: 'columns', drift: 'sparkle' }) },
         { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.fiber(2), SPOT.wood(2)],
           look: { sky: ['#5a4a98', '#8a76c0', '#c8b8e8'] } },
         { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.night(2)] },
@@ -434,6 +439,7 @@ export const MAPS = {
         // crystal islet in the middle where you fish (only the raft goes there).
         { x: 840, y: 800, w: 220 }, { x: 1540, y: 800, w: 220 }, { x: 1150, y: 760, w: 300 },
         { x: 820, y: 640, w: 240 }, { x: 1560, y: 640, w: 240 }, { x: 1170, y: 600, w: 260 },
+        { x: 900, y: 540, w: 240 }, { x: 1460, y: 540, w: 240 }, { x: 1170, y: 460, w: 260 },
         { x: 1245, y: 872, w: 110, style: 'stone' },
         // Shade Spires: spires climbing out, and the ledge with the way to the sky.
         { x: 1850, y: 640, w: 220 }, { x: 2250, y: 520, w: 260 }, { x: 2300, y: 420, w: 240 },
@@ -606,7 +612,8 @@ Object.assign(MAPS, {
   // then Forge Row: Tora's Forge, the stove, the craft bench and the Great Forge, whose roof
   // terrace (up its ladder) and chimney lookout you can climb, out to the Moonlit Ridge road.
   crag: {
-    id: 'crag', plaza: 1300, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
+    // (Its plaza's centrepiece is the hearth, a great fire-bowl, not a fountain.)
+    id: 'crag', plaza: 1300, fountain: false, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     // The town stove, for cooking (data/cooking.js).
     stove: 1600,
     // The craft bench (data/crafting.js), on Forge Row, by Tora's forge.
@@ -644,7 +651,7 @@ Object.assign(MAPS, {
     ],
     // Lamps that glow at night (world/daytime.js): the yard, the arena's braziers, the forge.
     lamps: [{ x: 300, y: 440 }, { x: 900, y: 420 }, { x: 1260, y: 420 }, { x: 1720, y: 440, c: '#ffb070' }, { x: 2340, y: 440 }, { x: 2229, y: 220, c: '#ffb070' }],
-    deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 450], ['brazier', 900], ['brazier', 1260]],
+    deco: [['totem', 160], ['dummy', 300], ['dummy', 380], ['weaponrack', 450], ['brazier', 900], ['emberhearth', 1300]],
     spawns: [],
   },
 
@@ -656,7 +663,8 @@ Object.assign(MAPS, {
   // rope); then the Rune Garden: the rune circle and its moonstones, and the Starchime Tower, whose
   // balcony and top deck (up the ladders at its side) you can climb, by the root gate to the ruins.
   grove: {
-    id: 'grove', plaza: 1240, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
+    // (Its plaza's centrepiece is the moon dial, a rune stone under a floating moon crystal.)
+    id: 'grove', plaza: 1240, fountain: false, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     // The town stove, for cooking (data/cooking.js).
     stove: 820,
     // The craft bench (data/crafting.js), on the plaza, under the moon tree's boughs.
@@ -695,7 +703,7 @@ Object.assign(MAPS, {
     // Lamps that glow at night (world/daytime.js): the lane, the moon tree, the rune circle, the
     // tower's windows and its moon crystal.
     lamps: [{ x: 300, y: 440 }, { x: 760, y: 440 }, { x: 1110, y: 400, c: '#e6dcff' }, { x: 1740, y: 440, c: '#bfe6ff' }, { x: 2020, y: 400 }, { x: 2020, y: 210, c: '#bfe6ff' }],
-    deco: [['moonstone', 1620], ['runecircle', 1740], ['moonstone', 1860], ['rootgate', 2290]],
+    deco: [['moondial', 1232], ['moonstone', 1620], ['runecircle', 1740], ['moonstone', 1860], ['rootgate', 2290]],
     spawns: [],
   },
 
@@ -1408,7 +1416,8 @@ Object.assign(MAPS, {
     width: 1500, height: 420, groundY: G,
     platforms: [{ x: 300, y: 300, w: 140 }, { x: 1060, y: 300, w: 140 }, { x: 650, y: 300, w: 200 }],
     ropes: [],
-    look: { sky: ['#0e2a3a', '#1a3e4e', '#3a6a6a'], far: '#163a44', mid: '#244e56', midTrim: '#ffd36b', ...SEA_LOOK },
+    // A sea cave under the palace, not one of its halls: dark sea rock all round, crystals and weed.
+    look: { sky: ['#0a2232', '#163848', '#2a5a62'], far: '#14343e', mid: '#1e4650', midTrim: '#7fe6d6', ...SEA_LOOK, skyline: 'crystals', material: 'searock' },
     burrows: [120, 1380],
     portals: [
       { id: 'west', x: 40, y: G, to: 'aquarium3', toPortal: 'east' },
@@ -2423,8 +2432,9 @@ Object.assign(MAPS, {
   // Moonlit Ridge is a walk along a ridgeline, side by side (data/climb.js lay()): the ground itself
   // rises and falls. The Moonlit Meadow in the west, a low saddle among the moonstones where a
   // moonbeam lifts you; the Wolf Den on the rocky knoll and the dip beyond it, the Lupina's home,
-  // with a ledge drifting over the dip; and the Howling Rock in the east, the high summit of the
-  // Rock Golems, where a vent bounces you up onto the great howling rock itself.
+  // with a ledge drifting over the dip; and the Howling Rock in the east, the high summit where
+  // fallen stars have woken as Meteor Golems (the observatory's road leaves from it), and a vent
+  // bounces you up onto the great howling rock itself.
   ridge: {
     id: 'ridge', name: 'Moonlit Ridge', theme: 'ridge', town: 'crag', world: { x: 246, y: 104 },
     ...lay({
@@ -2435,9 +2445,9 @@ Object.assign(MAPS, {
       quiet: [[40, 880, 160]],
       zones: [
         { name: 'Moonlit Meadow', color: '#6a8ad0', from: 0, mobs: ['lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.wood(3)] },
-        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.ore(3, { gem: 0.16 })],
+        { name: 'Wolf Den', color: '#8a7ab0', from: 600, mobs: ['lupina', 'meteorgolem'], nodes: [SPOT.ore(3), SPOT.ore(3, { gem: 0.16 })],
           look: { sky: ['#2a2e6a', '#4a4e8a', '#8a8ac0'] } },
-        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['rockgolem', 'lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.night(3)],
+        { name: 'Howling Rock', color: '#a8b8e0', from: 1400, mobs: ['meteorgolem', 'lupina'], nodes: [SPOT.herb(3, 'moon_thyme'), SPOT.night(3)],
           look: { sky: ['#1e2058', '#3a3c7a', '#6a6aa8'] } },
       ],
       ledges: [
@@ -2463,7 +2473,7 @@ Object.assign(MAPS, {
     deco: [['moonstone', 400], ['moonstone', 1200, 0, 840], ['howlrock', 800, 0, 760], ['howlrock', 2150, 0, 480], ['moonstone', 1650, 1, 700]],
     lamps: [{ x: 400, y: 850 }, { x: 800, y: 720 }, { x: 2150, y: 440 }],
     spirit: { x: 1700, y: 480 },
-    habitats: { lupina: { play: true, home: { x: 800, y: 760 } }, rockgolem: { naps: true } },
+    habitats: { lupina: { play: true, home: { x: 800, y: 760 } }, meteorgolem: { naps: true } },
   },
 
 
@@ -2693,7 +2703,7 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
 }
 
 // Safe arrival (the map rules): no monster starts near a way in, a homestone or where you appear.
-for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS);
+for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS, NODES[m.id]);
 
 // Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).
 for (const m of Object.values(MAPS)) settleSpots(m, SPOTS[m.id]);

@@ -50,6 +50,8 @@ export const MATERIALS = {
   manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
   // The Sunken Aquarium Palace: pale sea sand over pink coral stone.
   reef: { lip: '#fff0d6', body: '#e8b8c8', deep: '#c08aa8', stone: '#ffd8e2', style: 'slab', blades: false, drip: 'weed' },
+  // The Moray Grotto under the palace: dark sea rock, weed hanging off it, glowing faintly.
+  searock: { lip: '#9fe6d6', body: '#3e6a7a', deep: '#284a5a', stone: '#5a8a96', style: 'rock', blades: false, drip: 'weed', glow: '#9ff0e0' },
   // The Clockwork Carnival: painted boards over a sawdust-and-brick base.
   carnival: { lip: '#ff9ab8', body: '#c8906a', deep: '#a06a4a', stone: '#e8b88a', style: 'brick', blades: false, drip: null },
   // The Star Observatory: moonstone flags with brass inlay.

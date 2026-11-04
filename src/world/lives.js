@@ -83,10 +83,28 @@ export function questKill(bots, world, m) {
 
 const SNOWY = (map) => /snow|frost|ice|winter/.test(`${map.theme} ${map.id} ${JSON.stringify(map.look?.props ?? [])} ${JSON.stringify(map.deco ?? [])}`);
 
+// Weather by region (the map rules): what can fall where.
+//   null       under a roof or underground, or above the clouds (no rain falls up there)
+//   snowy      the peaks: snow all year
+//   tropic     the lagoon, the islands and the open sea: rain, never snow
+//   dry        the desert canyon, Ember Crag and the candy volcano: a rare shower, never snow
+//   temperate  everywhere else: rain, and snow in December and January
+const HIGH = new Set(['sky', 'starfall', 'terrace', 'cloudcatch_pier']);
+const TROPIC = new Set(['lagoon', 'voyage_out', 'voyage_home', 'voyage_isle', 'dawnbeach', 'dock', 'trainfield', 'home']);
+export function climate(map) {
+  if (map.dungeon || map.indoor || map.ownLight || map.look?.ceiling || ['cave', 'hollow', 'aquarium'].includes(map.theme)) return null;
+  if (HIGH.has(map.id) || map.theme === 'sky' || map.theme === 'skywhale') return null;
+  if (SNOWY(map)) return 'snowy';
+  if (TROPIC.has(map.id) || map.home) return 'tropic';
+  if (map.theme === 'crag' || map.theme === 'candy') return 'dry';
+  return 'temperate';
+}
+
 function weatherTick(L, bots, world, dt, hooks) {
   const rng = bots.rng;
   const map = world.map;
-  if (map.dungeon || map.look?.ceiling) {
+  const kind = climate(map);
+  if (!kind) {
     world.weather = null;
     return;
   }
@@ -98,9 +116,9 @@ function weatherTick(L, bots, world, dt, hooks) {
   if (L.weatherIn <= 0) {
     L.weatherIn = between(120, 300, rng);
     const month = hooks.now() ? new Date(hooks.now()).getMonth() : 0;
-    const snow = SNOWY(map) || month === 11 || month === 0;
+    const snow = kind === 'snowy' || (kind === 'temperate' && (month === 11 || month === 0));
     const was = world.weather;
-    world.weather = rng() < 0.3 ? (snow ? 'snow' : 'rain') : null;
+    world.weather = rng() < (kind === 'dry' ? 0.08 : 0.3) ? (snow ? 'snow' : 'rain') : null;
     if (world.weather && world.weather !== was) world.log?.(world.weather === 'snow' ? `Snow starts to fall on ${map.name}.` : `It starts to rain on ${map.name}.`, '#bfe0ff');
     else if (!world.weather && was) world.log?.(`The ${was} stops.`, '#bfe0ff');
   }
