@@ -106,3 +106,16 @@ The player called her clunky, small, slow and not matching her hit areas. Found 
 - **Snappier:** her notes fly faster (880, big notes 820), and her songs take less time to sing
   (Healing Song and Lullaby 0.95 s, Cheer 0.8 s, Curtain Call 1.15 s, Grand Concert 2.1 s with
   its beats brought forward).
+
+## Footwork pass (2026-11-04, the player's pick: "more bounce and travel")
+
+Her string and its pool keep their figures but now dance across the stage:
+
+- **Travel:** each step carries her forward as she sings (beat 10, step-touch 14, high note 16,
+  kiss 10, over the shoulder 8, idol jump 22, idol pose 12), so a held string moves her into the
+  fight instead of planting her.
+- **Bounce:** a hop with the back heel kicked up as the mic snaps out (beat), a hop on each step
+  (step-touch), a leap forward into the high note's blast, a skip on the blown kiss, a springier
+  pirouette and a higher idol jump; bigger hip sways.
+- **No frozen holds:** the end poses settle sooner and then groove, two small bounces on the beat
+  (`siBounce`), back to still by the end. The string is about a tenth quicker overall.

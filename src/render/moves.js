@@ -3279,17 +3279,19 @@ export const MOVES = {
     const sing = soft(seg(p, 0, 0.14));
     const dip = bump(p, 0.04, 0.26);
     const out = ease(seg(p, 0.22, 0.32));
-    const hold = soft(seg(p, 0.42, 0.9));
+    const hop = bump(p, 0.18, 0.44);
+    const hold = soft(seg(p, 0.4, 0.75));
     const [weapon, arm] = siPose(SI.guard, [sing, SI.sing], [out, SI.out], [hold, [80, 90]]);
     return {
-      weapon, arm, lunge: 3 * out - dip * (1 - out), tilt: -0.05 * dip * (1 - out) + 0.08 * out * (1 - hold * 0.6), lift: -dip,
+      weapon, arm, lunge: 5 * out - 2 * dip * (1 - out), tilt: -0.08 * dip * (1 - out) + 0.12 * out * (1 - hold * 0.6), lift: -2 * dip + 5 * hop + siBounce(p, 0.48),
       rig: (r) => {
-        r.squat = q(1.5 * dip);
+        r.squat = q(2 * dip);
+        r.air = hop > 0.35;
         siHead(r, 0.25 * sing * (1 - out) + 0.25 * out);
         r.backArm = siFree([sing, [-4, -2]], [out, [-11, -7]], [hold, SI.hip]);
         if (hold > 0.5) r.armSide = -1;
         r.hairLift = out > 0.3 && hold < 0.5 ? 1 : 0;
-        danceLegs(r, [dip, [1.8, 0, 6], [-1.2, -0.6, -8]], [out, [3, 0, 6], [-2.4, 0, -10]], [hold, [2.6, 0, 4], [-1.4, -1.6, -24]]);
+        danceLegs(r, [dip, [1.8, 0, 6], [-1.2, -0.6, -8]], [out, [3, 0, 6], [-2.4, 0, -10]], [hop, [1.6, -2.4, 14], [-2.4, -4.4, -56]], [hold, [2.6, 0, 4], [-1.4, -1.6, -24]]);
         if (out < 0.3) {
           r.mouth = siSyllable(p, 0);
           if (dip > 0.5) r.eyes = 'happy';
@@ -3304,16 +3306,18 @@ export const MOVES = {
     const sing = soft(seg(p, 0, 0.14)) * (1 - ease(seg(p, 0.18, 0.3))) + soft(seg(p, 0.36, 0.48)) * (1 - ease(seg(p, 0.48, 0.6)));
     const b1 = ease(seg(p, 0.18, 0.3)) * (1 - soft(seg(p, 0.36, 0.48)));
     const b2 = ease(seg(p, 0.48, 0.6));
-    const hold = soft(seg(p, 0.66, 1));
+    const hold = soft(seg(p, 0.64, 0.9));
     const sway = Math.sin(seg(p, 0, 0.6) * Math.PI * 2);
+    const hop = Math.max(bump(p, 0.12, 0.32), bump(p, 0.42, 0.62));
     const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.14)), SI.sing], [b1, [100, 76]], [soft(seg(p, 0.34, 0.5)) * (1 - b2), [50, 6]], [b2, SI.high]);
     return {
-      weapon, arm, tilt: 0.07 * sway * (1 - b2) - 0.05 * b2, lunge: 2.5 * b1 - 1.5 * b2,
+      weapon, arm, tilt: 0.11 * sway * (1 - b2) - 0.07 * b2, lunge: 4 * b1 - 1.5 * b2, lift: 4 * hop + siBounce(p, 0.66),
       rig: (r) => {
+        r.air = hop > 0.4;
         siHead(r, 0.25 * sing + 0.2 * b2 + 0.2 * sway * (1 - b2));
         r.backArm = siFree([b1, [-10, -5]], [Math.max(0, -sway) * (1 - b2), [-5, -2]], [b2, [-12, -6]]);
         r.hairLift = Math.abs(sway) > 0.6 ? Math.sign(sway) : 0;
-        danceLegs(r, [Math.max(0, sway), [3.6, 0, 6], [-0.4, -1, -10]], [Math.max(0, -sway), [0.8, -1, 8], [-3.4, 0, -6]], [b2, [0.6, 0, 4], [-3.4, -1.6, -30]]);
+        danceLegs(r, [Math.max(0, sway), [3.6, 0, 6], [-0.4, -1, -10]], [Math.max(0, -sway), [0.8, -1, 8], [-3.4, 0, -6]], [hop * (1 - b2), [1.6, -2.4, 14], [-2.4, -4.4, -56]], [b2, [0.6, 0, 4], [-3.4, -1.6, -30]]);
         if (sing > 0.5) r.mouth = siSyllable(p, 1);
         else if (b1 > 0.5 || b2 > 0.5) r.mouth = 'open';
         if (hold > 0.5) {
@@ -3330,17 +3334,19 @@ export const MOVES = {
   sihigh(p) {
     const belt = soft(seg(p, 0.02, 0.34));
     const blast = ease(seg(p, 0.4, 0.5));
-    const hold = soft(seg(p, 0.58, 0.95));
+    const hold = soft(seg(p, 0.56, 0.85));
+    const leap = bump(p, 0.34, 0.56);
     const [weapon, arm] = siPose(SI.guard, [belt, SI.belt], [blast, [78, 112]], [hold, [70, 108]]);
     return {
       weapon, arm, tilt: -0.14 * belt * (1 - blast) + 0.16 * blast * (1 - hold * 0.5), lunge: -2.5 * belt * (1 - blast) + 7 * blast * (1 - hold * 0.4),
-      lift: (2 + 0.6 * breathe(p * 2)) * belt * (1 - blast),
+      lift: (3.5 + 0.8 * breathe(p * 2)) * belt * (1 - blast) + 6 * leap + siBounce(p, 0.6),
       rig: (r) => {
+        r.air = leap > 0.4;
         siHead(r, belt * (1 - blast) - 0.2 * blast);
         r.backArm = siFree([belt, [-8, -16]], [blast, [-12, -8]], [hold, [-11, -10]]);
         r.hairLift = blast > 0.3 && hold < 0.5 ? 1 : belt > 0.5 ? -1 : 0;
         r.cape -= q(4 * blast);
-        danceLegs(r, [belt * (1 - blast), [1.2, -1.2, 6], [-1.2, -1.4, -10]], [blast, [3.8, 0, 6], [-3.4, -0.6, -16]], [hold, [3.6, 0, 6], [-2.6, -2.2, -40]]);
+        danceLegs(r, [belt * (1 - blast), [1.2, -1.2, 6], [-1.2, -1.4, -10]], [blast, [3.8, 0, 6], [-3.4, -0.6, -16]], [leap, [1.6, -2.4, 14], [-2.4, -4.4, -56]], [hold, [3.6, 0, 6], [-2.6, -2.2, -40]]);
         if (belt > 0.3 && blast < 0.3) {
           r.eyes = 'happy';
           r.mouth = 'yell';
@@ -3358,14 +3364,16 @@ export const MOVES = {
   sikiss(p) {
     const up = soft(seg(p, 0, 0.2));
     const fling = ease(seg(p, 0.22, 0.32));
-    const hold = soft(seg(p, 0.42, 0.95));
+    const hold = soft(seg(p, 0.4, 0.75));
+    const skip = bump(p, 0.2, 0.44);
     const [weapon, arm] = siPose(SI.guard, [up, SI.kiss], [fling, [118, 104]], [hold, [135, 96]]);
     return {
-      weapon, arm, lift: 1.5 * up * (1 - fling), lunge: 3 * fling * (1 - hold * 0.4), tilt: -0.04 * up * (1 - fling) + 0.08 * fling * (1 - hold),
+      weapon, arm, lift: 2.5 * up * (1 - fling) + 4 * skip + siBounce(p, 0.48), lunge: 5 * fling * (1 - hold * 0.4), tilt: -0.04 * up * (1 - fling) + 0.08 * fling * (1 - hold),
       rig: (r) => {
         siHead(r, -0.4 * up * (1 - fling) + 0.3 * fling);
         r.backArm = siFree([up, [-3, -3]], [fling, [-10, -11]], [hold, [-8, -6]]);
-        danceLegs(r, [up, [0.8, -1.2, 4], [-0.8, -2.4, -30]], [fling, [2.6, 0, 6], [-1.4, -2, -34]]);
+        r.air = skip > 0.4;
+        danceLegs(r, [up, [0.8, -1.2, 4], [-0.8, -2.4, -30]], [fling, [2.6, 0, 6], [-1.4, -2, -34]], [skip, [1.6, -2.4, 14], [-2.4, -4.4, -56]]);
         if (fling < 0.2) {
           if (up > 0.5) {
             r.eyes = 'happy';
@@ -3390,7 +3398,7 @@ export const MOVES = {
     const sway = Math.sin(seg(p, 0.04, 0.44) * Math.PI * 2);
     const [weapon, arm] = turned ? siPose(SI.sing, [pt1, [70, 70]]) : siPose(SI.sing, [pt2, SI.out], [hold, [72, 104]]);
     return {
-      weapon, arm, turn: turned ? -1 : 1, lunge: 3 * pt2 * (1 - hold * 0.5), tilt: turned ? -0.04 + 0.04 * sway : 0.06 * pt2 * (1 - hold),
+      weapon, arm, turn: turned ? -1 : 1, lunge: 4 * pt2 * (1 - hold * 0.5), tilt: turned ? -0.04 + 0.07 * sway : 0.09 * pt2 * (1 - hold), lift: 1.2 * Math.abs(sway) * away + 3 * bump(p, 0.44, 0.6) + siBounce(p, 0.66),
       rig: (r) => {
         siHead(r, turned ? 0.4 - 0.3 * pt1 : -0.6 * hold);
         r.backArm = turned ? [q(-3 + 2 * sway), q(-4)] : siFree([pt2, [-11, -7]], [hold, [-7, -3]]);
@@ -3416,7 +3424,7 @@ export const MOVES = {
     const land = bump(p, 0.7, 0.88);
     const [weapon, arm] = siPose(SI.sing, [raise, SI.up], [sing, [116, 92]]);
     return {
-      weapon, arm, lift: 13 * hop - 1.5 * crouch, tilt: 0.06 * sing * (1 - land),
+      weapon, arm, lift: 18 * hop - 2.5 * crouch, tilt: 0.08 * sing * (1 - land),
       rig: (r) => {
         r.air = hop > 0.15;
         r.squat = q(1.5 * (crouch + land));
@@ -3441,7 +3449,7 @@ export const MOVES = {
     const hold = soft(seg(p, 0.56, 0.95));
     const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.1)), SI.spin], [pop, [52, 124]], [hold, SI.sing]);
     return {
-      weapon, arm, lift: 2 * bump(p, 0.06, 0.38), lunge: 4 * pop * (1 - hold * 0.5), tilt: -0.06 * pop,
+      weapon, arm, lift: 5 * bump(p, 0.06, 0.38) + siBounce(p, 0.52), lunge: 5 * pop * (1 - hold * 0.5), tilt: -0.08 * pop,
       turn: turning ? Math.sign(Math.cos(spin * Math.PI * 2)) || 1 : 1, trail: turning,
       rig: (r) => {
         siHead(r, turning ? 0.2 : 0.4 * pop + 0.2 * hold);
@@ -5604,6 +5612,9 @@ function siHead(r, back) {
   }
 }
 // Singing: the mouth shaping the words of the line, a syllable at a time.
+// Her follow-through after a blow lands: two little bounces on the beat, the second smaller, so a
+// held end pose keeps grooving and settles instead of freezing (back to 0 by the end).
+const siBounce = (p, a) => 1.8 * bump(p, a, a + (1 - a) * 0.45) + 0.7 * bump(p, a + (1 - a) * 0.45, a + (1 - a) * 0.85);
 const siSyllable = (p, seed) => ['o', 'ah', 'e', 'ah', 'o', 'open'][(Math.floor(p * 11) + seed) % 6];
 
 // ---------- The archers' shared draw (the Acrobat Archer and the Phantom Trickster) ----------
