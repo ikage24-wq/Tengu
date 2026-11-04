@@ -94,3 +94,11 @@ the spotlight never washes over a face. Her swirl is drawn to each blow's reach 
 Spotlight's dazzle 160-230, was a fixed 44), and her big gusts (fouetté, lunge, Gust Line, the
 glove puffs) race down the line to the end of the ground they cut (was 50 px). Wide blows all round
 her (the flourish, Spotlight) send her coral shockwave out to their edge.
+
+## Twin chakrams (2026-11-04, the player's ask: "would be nice if dancer has dual weapons")
+
+The chakrams were always meant as a pair, but only the weapon hand held one. Now the second ring
+rides in her free hand (render/hero.js `drawOffhand`): gripped on its rim, turned the way that
+forearm points, so every dance arm (the arabesque's line, the fouetté's whip, the spins) swings a
+ring too. It is drawn behind the body like that far hand, so it never crosses her face. The Blade
+Dancer (same chakrams) gets the pair too; the glove set already wears a glove on both hands.

@@ -3031,6 +3031,23 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     ctx.drawImage(bt.canvas, -(bt.grip[0] + 1) * bs, -(bt.grip[1] + 1) * bs, bt.cw * bs, bt.ch * bs);
     ctx.restore();
   };
+  // Twin chakrams (the dancers' dagger, docs/design/wind-dancer.md): the second ring rides in the
+  // free hand, gripped on its rim and turned the way that forearm points, drawn behind the body like
+  // that far hand, so it never crosses her face. (Not while she holds a life-skill tool.)
+  const drawOffhand = () => {
+    if (!wpn || toolKind || g.weapon?.type !== 'dagger' || g.weapon.fun || rig.view === 'back' || mv?.backTool || mv?.fan != null) return;
+    const [[ex, ey], [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
+    // (0 = hanging straight down, 90 = pointing forward, as the weapon hand's angle.)
+    const fore = (Math.atan2(wx - ex, wy - ey) * 180) / Math.PI;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.imageSmoothingEnabled = false;
+    ctx.translate(snap(sx(squashX(wx + rig.tx))), snap(sy(squashY(wy + bodyY))));
+    if (flip) ctx.scale(-1, 1);
+    ctx.rotate(((fore + 20) * Math.PI) / 180);
+    ctx.drawImage(wpn.canvas, -(wpn.grip[0] + 1) * ws, -(wpn.grip[1] + 1) * ws, wpn.cw * ws, wpn.ch * ws);
+    ctx.restore();
+  };
   // The weapon arm raised behind the big head for a wind-up (`armBack`): drawn before the body.
   const armBehind = attack && mv.armBack && over == null && rig.view !== 'back';
   const drawArm = () => {
@@ -3038,6 +3055,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     blit(ctx, arm, left + (flip ? -armDx : armDx) * KX * scale, top + armDy * KY * scale, { flip, flash: state.flash ?? 0, alpha, scale });
   };
   drawBackTool();
+  drawOffhand();
   // A held weapon is drawn in front of the body, with the hand drawn again on top so it grips
   // the handle.
   if (behind) drawWeapon();
