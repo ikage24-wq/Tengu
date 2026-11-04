@@ -64,3 +64,18 @@ and chops, the sweep swings the back leg out level through the turn, and the flu
 arms from high to low with the body tipping on each beat. Sky Waltz climbs through its turns, pulls
 in tight, drives both palms down for the slam, then opens into her signature pose: floating high,
 one leg pointed long in front and the other in attitude behind, arms wide.
+
+## Footwork and effects pass (2026-11-04)
+
+She dances on the air with more lift and travel: every figure of her strings carries her forward
+(8-16 px, the glide 84) and is about a tenth quicker, and her gusts fly about 15% faster. She swoops
+up into the gather and dives into the push, beats her legs in a cabriole before the scissor kick
+(`CABRIOLE` in render/moves.js), sails higher through the spins and the axe heel, and dives on each
+chop; after each figure she floats back up with two soft bobs instead of hanging still. Sky Waltz
+is a tenth shorter, climbs higher and dives harder into the slam.
+
+Sky Waltz's tornado is drawn twice its old size and wider at its foot, so it spans the monsters it
+lifts (200 px), and the slam's ring races out to 230; it stands behind her, never over her face.
+Updraft's whirl is about 100 px across (was 32). Her aerial spin and sweeping kick send a ring of
+wind out to their reach with clouds bursting at both edges (they had only a small cloud), and her
+gusts in flight are a little larger.

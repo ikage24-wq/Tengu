@@ -762,8 +762,8 @@ export const SKILLS = {
       const cut = (at) => ({ at, pct: k(70, 120), reach: 180, h: 150, around: true, targets, knock: 10, pull: 60, fx: 'wdhit', quiet: true, stop: 0.03, gauge: 0 });
       return {
         mp: k(30, 50), pct: k(420, 720), hits: 6, targets,
-        combo: [{ move: 'wdencore', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'wdfinale', burstAt: 0, burstDur: 1.3, quiet: true, gauge: 0 },
+        combo: [{ move: 'wdencore', dur: 1.35, step: 0, finisher: true, guard: 1.26, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'wdfinale', burstAt: 0, burstDur: 1.17, quiet: true, gauge: 0 },
           cut(0.28), cut(0.36), cut(0.44), cut(0.52), cut(0.6),
           { at: 0.74, pct: k(420, 720), reach: 200, h: 160, around: true, targets, knock: 280, launch: 360, fx: 'wdhit', big: true, stop: 0.15, shake: 7, gauge: 0 },
         ] }],
@@ -806,8 +806,8 @@ export const SKILLS = {
       const ring = (i) => ({ at: 0.66, shot: 'ringbig', around: true, pick: i, bounce: k(3, 5), pct: k(160, 260), range: 420, h: 200, knock: 160, launch: 220, speed: 900, gauge: 0, big: !i, stop: i ? 0 : 0.12, shake: i ? 0 : 6 });
       return {
         mp: k(30, 50), pct: k(160, 260), hits: 10, targets,
-        combo: [{ move: 'bdcarousel', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
-          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bdcarousel', burstAt: 0, burstDur: 1.4, quiet: true, gauge: 0 },
+        combo: [{ move: 'bdcarousel', dur: 1.44, step: 0, finisher: true, guard: 1.35, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bdcarousel', burstAt: 0, burstDur: 1.26, quiet: true, gauge: 0 },
           cut(0.2), cut(0.3), cut(0.4), cut(0.5), cut(0.58),
           ...[0, 1, 2, 3, 4, 5].map(ring),
         ] }],
@@ -849,8 +849,8 @@ export const SKILLS = {
       const lift = (at) => ({ at, pct: k(60, 100), reach: 200, h: 220, around: true, targets, knock: 0, launch: 220, pull: 50, fx: 'skyhit', quiet: true, stop: 0.03, gauge: 0 });
       return {
         mp: k(30, 50), pct: k(440, 740), hits: 6, targets,
-        combo: [{ move: 'sdwaltz', dur: 1.6, step: 0, finisher: true, guard: 1.5, strikes: [
-          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'skytornado', burstAt: 0, burstDur: 1.4, floor: true, quiet: true, gauge: 0 },
+        combo: [{ move: 'sdwaltz', dur: 1.44, step: 0, finisher: true, guard: 1.35, strikes: [
+          { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'skytornado', burstAt: 0, burstDur: 1.26, floor: true, quiet: true, gauge: 0 },
           lift(0.22), lift(0.32), lift(0.42), lift(0.52), lift(0.6),
           { at: 0.7, pct: k(440, 740), reach: 230, h: 240, around: true, targets, knock: 200, crack: true, fx: 'skyhit', big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],

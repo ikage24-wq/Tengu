@@ -126,7 +126,7 @@ function drawShot(ctx, f, cam) {
       const big = f.shot === 'skygustbig';
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, 'celskygust', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: big ? 1.3 : 0.8 });
+      fxSprite(ctx, 'celskygust', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: big ? 1.45 : 0.95 });
       break;
     }
     case 'ring': case 'ringbig': {
@@ -135,7 +135,7 @@ function drawShot(ctx, f, cam) {
       const big = f.shot === 'ringbig';
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, 'celbdring', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (big ? 1.15 : 0.8) * (f.twin ? 0.85 : 1), alpha: f.twin ? 0.85 : 1 });
+      fxSprite(ctx, 'celbdring', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (big ? 1.3 : 0.92) * (f.twin ? 0.85 : 1), alpha: f.twin ? 0.85 : 1 });
       break;
     }
     case 'arrow': case 'pierce': {
@@ -985,9 +985,10 @@ function drawFx(ctx, f, cam, time) {
 // The hero whose blows the smears and spikes belong to, so they line up with the weapon.
 let hero = null;
 // Effects that lie on the ground under everyone (the Starlight Idol's song rings and her stage,
-// the Astronomer's Gravity Well):
+// the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
+// Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock']);
+const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado']);
 export function drawEffects(ctx, world, cam, time) {
   hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
   for (const f of world.fx) if (!GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);

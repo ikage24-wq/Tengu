@@ -103,7 +103,8 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   }
   // The Wind Dancer's: no pillar, her swirl of ribbons with her badge rising out of it.
   if (school === 'coral') {
-    fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.9 });
+    fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.56 });
+
     if (p > 0.15) fxSprite(ctx, EMBLEMS.coral, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
@@ -164,15 +165,21 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
     case 'wdhit':
       return fxSprite(ctx, 'celwdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, rot: (seed - 0.5) * 0.6 }) || true;
-    case 'wdswirl':
-      return fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: 0.95 }) || true;
+    // Her swirl and her gusts are drawn as far as the blow reaches (`f.r`, its reach): the swirl
+    // round her out to it (a wide one flattened round her waist), the gust racing down the line to
+    // its end.
+    case 'wdswirl': {
+      const r = f.r ?? 70;
+      if (r > 110) return fxSprite(ctx, 'celwdswirlbig', x, y - 44, { p, scale: r / 184, sy: 0.42 }) || true;
+      return fxSprite(ctx, 'celwdswirl', x, y - 26, { p, scale: r / 74, sy: r > 80 ? 0.7 : 1 }) || true;
+    }
     case 'wdgust':
-      return fxSprite(ctx, 'celwdgust', x - dir * 30, y - 28, { p, flip }) || true;
-    // A puff of wind off her palms (each blow with gloves): a small crescent gust.
+      return fxSprite(ctx, 'celwdgustfar', x - dir * 10, y - 28, { p, flip, scale: ((f.r ?? 130) * 0.8) / 150 }) || true;
+    // A puff of wind off her palms (each blow with gloves): a smaller crescent gust out to the blow's reach.
     case 'wdpuff':
-      return fxSprite(ctx, 'celwdgust', x - dir * 10, y - 26, { p, flip, scale: 0.5 }) || true;
+      return fxSprite(ctx, 'celwdgustfar', x - dir * 10, y - 26, { p, flip, scale: ((f.r ?? 95) * 0.8) / 150 }) || true;
     case 'wdfinale':
-      return fxSprite(ctx, 'celwdfinale', x, y + 4, { p, scale: 1.1 }) || true;
+      return fxSprite(ctx, 'celwdfinale', x, y + 4, { p }) || true;
     // The Blade Dancer's (rose gold): her ring-cut on a monster, the spark where a ring ricochets,
     // and Golden Carousel's rings on their track.
     // The Sky Dancer's (sky blue): her cloud on a monster, Updraft's rising whirl, and Sky Waltz's
@@ -254,19 +261,26 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'starfallimpact':
       fxSprite(ctx, 'celsthit', x, y - 30, { p, scale: 1.4 });
       return fxSprite(ctx, 'celstwish', x, y + 4, { p: 0.4 + 0.6 * p, scale: 1.3 }) || true;
+    // On a monster, her cloud; as a blow's burst all round her (`f.r`), clouds bursting at both edges
+    // of its reach, clear of her face (the wind ring out to its reach comes from world/melee.js).
     case 'skyhit':
+      if (f.r) {
+        const cx = x - dir * f.r * 0.3;
+        for (const s of [-1, 1]) fxSprite(ctx, 'celskyhit', cx + s * f.r * 0.72, y - 22, { p, scale: 0.75, flip: s < 0 });
+        return true;
+      }
       return fxSprite(ctx, 'celskyhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.7 : 0.5 }) || true;
     case 'skyupdraft':
-      fxSprite(ctx, 'celskywhirl', x, y + 4, { t: p * 0.9, scale: 0.5, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      return fxSprite(ctx, 'celskyhit', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.5 }) || true;
+      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: p * 0.9, scale: (f.r ?? 80) / 130, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
+      return fxSprite(ctx, 'celskyhit', x, y - 40, { p, scale: 0.8 }) || true;
     case 'skytornado':
-      return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 1.25 }) || true;
+      return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 1.15 }) || true;
     case 'bdhit':
       return fxSprite(ctx, 'celbdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.75 : 0.55, rot: (seed - 0.5) * 0.6 }) || true;
     case 'bdbounce':
       return fxSprite(ctx, 'celbdbounce', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, flip, rot: (seed - 0.5) * 0.5 }) || true;
     case 'bdcarousel':
-      return fxSprite(ctx, 'celbdcarousel', x, y + 4, { p, scale: 0.85 }) || true;
+      return fxSprite(ctx, 'celbdcarousel', x, y + 4, { p }) || true;
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.
