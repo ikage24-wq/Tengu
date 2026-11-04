@@ -1779,6 +1779,19 @@ test('Tailwind builds faster in the air, fades once the fighting stops, and full
   assert.ok(Math.abs(v.body.y - y1) < 12, 'and she hovers there');
 });
 
+// Every Sky Dancer move lifts her off the ground, so a skill's step has to carry her through the air
+// (her Pirouette drifts her across like a leaf on the wind, as the Blade Dancer's promenade does).
+test("the Sky Dancer's Pirouette carries her through the air and hits what she passes", () => {
+  const w = thiefPath('kitsune');
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + 110 + i * 40, hp: 1e9 }));
+  w.char.skills.pirouette = 10;
+  const x0 = w.body.x;
+  assert.ok(cast(w, 'pirouette').ok);
+  run(w, 1);
+  assert.ok(w.body.x - x0 > 100, `she travels (${(w.body.x - x0).toFixed(0)}px)`);
+  assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and her whirl hits');
+});
+
 test('Updraft throws them up in a rising whirl, and Zephyr sends a second gust in the air', () => {
   const gusts = (skills) => {
     const w = thiefPath('kitsune');

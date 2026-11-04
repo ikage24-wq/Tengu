@@ -1326,7 +1326,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   }
   world.owed = ownStep && dx <= -15 ? -dx : 0;
   const first = (step.carry ?? step.strikes[0].at) * dur;
-  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first };
+  // (The Sky Dancer dances her steps in the air: her lunge carries her through it, a leaf on the wind.)
+  if (dx) world.lunge = { v: (body.facing * dx) / Math.max(0.05, first), until: now + first, air: hasTails(world.char) };
   if (step.guard) world.invuln = Math.max(world.invuln, step.guard);
   // A dash leaves speed lines and a shock cone along its path.
   // Shield Rush's wall of light, carried before her as she marches.
@@ -1422,7 +1423,7 @@ export function tickMelee(world, dt) {
     return;
   }
   if (world.lunge) {
-    if (world.now >= world.lunge.until || !b.onGround) world.lunge = null;
+    if (world.now >= world.lunge.until || (!b.onGround && !world.lunge.air)) world.lunge = null;
     else b.x = Math.max(b.w / 2, Math.min(world.map.width - b.w / 2, b.x + world.lunge.v * dt));
   }
   // Air cuts hold you up; landing ends the air combo, and a dive lands its blow on touchdown.

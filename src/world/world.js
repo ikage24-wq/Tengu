@@ -21,7 +21,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -751,7 +751,9 @@ export function updateWorld(world, dt, input) {
   const ride = rideStep(world, bodyIntent, pressed, dt);
   if (!ride) startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(ride ?? null), rider: true });
+    // (The Sky Dancer on full Tailwind hovers where she is unless Up or Down flies her.)
+    const hover = !world.body.onGround && world.body.vy >= 0 && skyFlight(world) && !intent.up && !intent.down;
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
   }
   rideAfter(world);
   if (!ride) tickAgility(world, dt, blockWalls);
