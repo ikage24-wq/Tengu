@@ -55,7 +55,7 @@ export const JOBS = {
   shrinemaiden: {
     id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Starlight Idol', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand'],
-    blurb: 'A pop idol whose wand is her microphone: the heart of any party. Her songs hang in the air where she sings them, mending everyone, cheering them on or lulling the monsters; her heals and hits build Applause, and full, her songs reach twice as far. Curtain Call raises the fallen, and Grand Concert heals everyone in full. The healer of any dungeon group.',
+    blurb: 'A pop idol whose wand is her microphone: the heart of any party. Her songs hang in the air where she sings them, mending everyone, cheering them on or lulling the monsters; her heals and hits build Applause, and full, her songs reach half again as far. Curtain Call raises the fallen, and Grand Concert heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
     id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Astronomer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',

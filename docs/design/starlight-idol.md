@@ -30,7 +30,7 @@ ends every big moment on a pose with a wink.
   air; a rock-star knee slide out of a run.
 - **Applause** (her gauge, internally Grace): the crowd cheers her heals most (more for every ally
   they reach), and her songs and notes that land; it fades once the fighting stops. Full (**Live
-  Show**): her songs reach twice as far and mend half again as much.
+  Show**): her songs reach half again as far and mend half again as much.
 - **Songs that linger** (world/idol.js): each song hangs in the air where she sang it for a while,
   a ring on the ground that works on whoever stands in it every beat; one of each at a time.
   - **Healing Song** (replaces Wishing Star): heals her and the party at once, then keeps mending
@@ -125,3 +125,20 @@ jump with her heels kicked up; the air shot winds up before leaning down to sing
 on the snap; the knee slide drops lower, slides further, and pops up out of it into the rock-star
 stance. Across every job, a fighting move that ended on a long dead-still hold now settles with two
 soft bounces (`frozenTail` and `settle` in render/moves.js).
+
+## Song rings redrawn (2026-11-04, the player: "Idol skills are waaaay too big and bland")
+
+Sized to their reach, the old song drawings (a flat filled disc with notes and hearts drawn on it)
+grew with the ring: on full Applause the ring covered most of the screen and its notes came out as
+big as she is, soft and blurry, over a flat pink wash. Now:
+
+- **Smaller reach:** Healing Song and Lullaby 110-140 (were 130-170), Cheer 115-150 (140-180),
+  and Live Show makes them reach half again as far (was twice).
+- **No disc:** a song is a thin glowing staff ring on the ground at its exact reach (`sistaff*`,
+  three staff lines with a bright bead running round each) ridden by its little shapes
+  (`sibead*`: Healing Song's pink and gold notes and hearts, Cheer's gold stars, notes and hearts,
+  Lullaby's lilac moons, sleepy z's and notes), spaced round the edge, each bobbing on the beat and
+  twinkling, popping in round the ring as it starts, a few floating up off it. The shapes stay the
+  same small, crisp size at any reach (render/warrior-fx.js `songRing`). Her Applause aura uses
+  the same ring, small, at her feet.
+- Grand Concert's rolling blasts and the cast bursts are smaller too.

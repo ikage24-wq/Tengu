@@ -378,7 +378,7 @@ export const SKILLS = {
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(40, 70), pct: 0, hits: 0, targets: 0, range: { w: 400, h: 180, around: true },
-        combo: [{ move: 'sisong', dur: 0.95, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.22, 0.38), healR: 220, song: { kind: 'heal', r: k(130, 170), dur: k(8, 14), every: 1, heal: kf(0.03, 0.055) } }] }],
+        combo: [{ move: 'sisong', dur: 0.95, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.22, 0.38), healR: 220, song: { kind: 'heal', r: k(110, 140), dur: k(8, 14), every: 1, heal: kf(0.03, 0.055) } }] }],
       };
     },
   }),
@@ -390,7 +390,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0, range: { w: 400, h: 180, around: true },
-        combo: [{ move: 'sicheer', dur: 0.8, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'cheer', r: k(140, 180), dur: k(10, 18), every: 1, watk: k(8, 22), matk: k(8, 22) } }] }],
+        combo: [{ move: 'sicheer', dur: 0.8, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'cheer', r: k(115, 150), dur: k(10, 18), every: 1, watk: k(8, 22), matk: k(8, 22) } }] }],
       };
     },
   }),
@@ -402,7 +402,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 55), pct: k(50, 95), hits: 1, targets: 0,
-        combo: [{ move: 'silullaby', dur: 0.95, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'lull', r: k(130, 170), dur: k(6, 10), every: 0.6, pct: k(50, 95) } }] }],
+        combo: [{ move: 'silullaby', dur: 0.95, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'lull', r: k(110, 140), dur: k(6, 10), every: 0.6, pct: k(50, 95) } }] }],
       };
     },
   }),

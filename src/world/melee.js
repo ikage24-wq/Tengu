@@ -1087,7 +1087,7 @@ export function addSpirit(world, n, kind = 'harm') {
 export const constellation = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
 // Applause (internally Grace): the Starlight Idol's gauge, in place of Spirit. The crowd cheers for
 // her heals (most, more the more allies they reach), her songs laid on the party, and her notes
-// that land; it fades once the fighting stops. Full (LIVE SHOW), her songs reach twice as far and
+// that land; it fades once the fighting stops. Full (LIVE SHOW), her songs reach half again as far and
 // mend more (world/idol.js), and her finisher, Grand Concert, is ready.
 export const GRACE_MAX = 100;
 const GRACE_HOLD = 6;

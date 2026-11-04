@@ -5984,71 +5984,96 @@
     };
   })(), 1.8);
 
-  // A song hanging in the air (loops): a ring of staff lines on the ground round her and notes (or
-  // the song's own shapes) rising off it and fading, at their own phases, so it never stops moving.
-  function songZone(pal, accent, shapes, seed) {
-    const c = 160;
-    const gy = 170;
-    const N = 10;
+
+  // A song's beads: the little shapes that ring a song where it hangs (render/warrior-fx.js
+  // `songRing` places them round its edge, each bobbing and twinkling, and lifts a few off it), so
+  // the ring is exactly its reach at any size while each shape stays small and crisp. One drawing
+  // per shape (the game holds a frame per bead): Healing Song's pink notes and hearts, Cheer's gold
+  // stars and notes, Lullaby's lilac moons and sleepy z's.
+  function songBeads(shapes) {
+    const c = 40;
     return {
-      w: 320, h: 190, n: N, fps: 10, px: c, py: gy, loop: true,
+      w: 80, h: 80, n: shapes.length, fps: 1, px: c, py: c + 6,
       draw(ctx, i) {
-        ctx.save();
-        ctx.translate(c, gy - 10);
-        ctx.scale(1, 0.24);
-        ctx.globalAlpha = 0.2;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 140, 140, 0, 0, TAU);
-        ctx.fillStyle = pal[2];
-        ctx.fill();
-        ctx.globalAlpha = 1;
+        shapes[i](ctx, c, c + 6);
+      },
+    };
+  }
+  const moonArt2 = (pal) => (ctx, x, y) => {
+    const s = 15;
+    ctx.save();
+    ctx.translate(x, y - 4);
+    ctx.rotate(-0.4);
+    const moon = [...Array.from({ length: 12 }, (_, k) => [Math.cos(-1.9 + (k / 11) * 3.8) * s, Math.sin(-1.9 + (k / 11) * 3.8) * s]), ...Array.from({ length: 12 }, (_, k) => [s * 0.45 + Math.cos(1.6 - (k / 11) * 3.2) * s * 0.8, Math.sin(1.6 - (k / 11) * 3.2) * s * 0.8])];
+    inked(ctx, moon, pal[2], pal[4], 3);
+    fill(ctx, moon.slice(2, 10).map(([px, py]) => [px * 0.7 - 2, py * 0.7]), pal[1]);
+    ctx.restore();
+  };
+  const zArt = (pal) => (ctx, x, y) => {
+    const z = 11;
+    y -= 4;
+    inked(ctx, [[x - z, y - z], [x + z, y - z], [x + z, y - z * 0.6], [x - z * 0.3, y + z * 0.6], [x + z, y + z * 0.6], [x + z, y + z], [x - z, y + z], [x - z, y + z * 0.6], [x + z * 0.3, y - z * 0.6], [x - z, y - z * 0.6]], pal[2], pal[4], 3);
+  };
+  // A song's staff: the thin ring on the ground its beads ride (three staff lines, flat, its last
+  // radius 420 strip px = 140 game px; render/warrior-fx.js `songRing` scales it to the song's
+  // reach), a bright bead running round each line so it shimmers as it loops.
+  function songStaff(pal) {
+    const c = 440;
+    const cy = 150;
+    const R0 = 420;
+    const SY = 0.3;
+    const N = 8;
+    return {
+      w: 880, h: 300, n: N, fps: 8, px: c, py: cy, loop: true,
+      draw(ctx, i) {
         for (let k = 0; k < 3; k++) {
+          const r = R0 - k * 14;
+          ctx.save();
+          ctx.translate(c, cy);
+          ctx.scale(1, SY);
           ctx.beginPath();
-          ctx.ellipse(0, 0, 130 - k * 9, 130 - k * 9, (i / N) * TAU * 0.1, 0, TAU);
-          ctx.strokeStyle = k === 1 ? pal[2] : pal[3];
-          ctx.lineWidth = k === 1 ? 3.6 : 2.2;
+          ctx.ellipse(0, 0, r, r, 0, 0, TAU);
+          ctx.strokeStyle = pal[4];
+          ctx.lineWidth = k === 1 ? 9 : 6;
+          ctx.globalAlpha = 0.55;
           ctx.stroke();
-        }
-        // Beads running round the staff, so the ring itself keeps moving.
-        for (let k = 0; k < 10; k++) {
-          const a = (k / 10 + i / N / 10) * TAU;
-          ctx.beginPath();
-          ctx.ellipse(Math.cos(a) * 121, Math.sin(a) * 121, 4, 15, 0, 0, TAU);
-          ctx.fillStyle = accent[1];
-          ctx.fill();
-        }
-        ctx.restore();
-        const R = rng(seed);
-        for (let j = 0; j < 16; j++) {
-          const a = (j / 16) * TAU + R() * 0.4;
-          const u = (j / 16 + ((j * 7) % 16) / 16 + i / N) % 1;
-          const x = c + Math.cos(a) * 120 * (1 - u * 0.35);
-          const y = gy - 10 + Math.sin(a) * 28 - u * 110;
-          const s = 10 * Math.sin(Math.PI * Math.min(1, u * 1.15 + 0.08));
-          if (s < 2) continue;
-          shapes(ctx, j % 3 === 2 ? accent : pal, x, y, s, j, u);
+          ctx.strokeStyle = k === 1 ? pal[2] : pal[1];
+          ctx.lineWidth = k === 1 ? 5 : 3;
+          ctx.globalAlpha = 1;
+          ctx.stroke();
+          ctx.restore();
+          for (let j = 0; j < 4; j++) {
+            const a = ((j + k * 0.33) / 4 + i / N / 4) * TAU;
+            ctx.beginPath();
+            ctx.ellipse(c + Math.cos(a) * r, cy + Math.sin(a) * r * SY, 7, 4, 0, 0, TAU);
+            ctx.fillStyle = pal[0];
+            ctx.fill();
+          }
         }
       },
     };
   }
-  // Healing Song: pink notes and hearts rising from a pink staff ring.
-  E.sisong = grown(songZone(IDOLPINK, SHOWGOLD, (ctx, pal, x, y, s, j, u) => (j % 2 ? heartArt(ctx, pal, x, y, s * 0.9, Math.sin(u * 6) * 0.3) : noteArt(ctx, pal, x, y, s, Math.sin(u * 6 + j) * 0.3, j % 4 === 0)), 431), 3);
-  // Cheer: gold stars and notes bouncing up off a gold ring, pink hearts among them.
-  E.sicheer = grown(songZone(SHOWGOLD, IDOLPINK, (ctx, pal, x, y, s, j, u) => (j % 2 ? sparkle(ctx, pal, x, y, s * 1.1, u * 4) : j % 3 === 2 ? heartArt(ctx, pal, x, y, s * 0.9) : noteArt(ctx, pal, x, y, s, Math.sin(u * 8) * 0.4)), 441), 3);
-  // Lullaby: soft lilac notes, little crescent moons and sleepy z's drifting up slowly.
-  E.silullaby = grown(songZone(LULLABY, IDOLPINK, (ctx, pal, x, y, s, j, u) => {
-    if (j % 3 === 0) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-0.4);
-      const moon = [...Array.from({ length: 12 }, (_, k) => [Math.cos(-1.9 + (k / 11) * 3.8) * s, Math.sin(-1.9 + (k / 11) * 3.8) * s]), ...Array.from({ length: 12 }, (_, k) => [s * 0.45 + Math.cos(1.6 - (k / 11) * 3.2) * s * 0.8, Math.sin(1.6 - (k / 11) * 3.2) * s * 0.8])];
-      inked(ctx, moon, pal[2], pal[4], 2.5);
-      ctx.restore();
-    } else if (j % 3 === 1) {
-      const z = s * 0.8;
-      inked(ctx, [[x - z, y - z], [x + z, y - z], [x + z, y - z * 0.6], [x - z * 0.3, y + z * 0.6], [x + z, y + z * 0.6], [x + z, y + z], [x - z, y + z], [x - z, y + z * 0.6], [x + z * 0.3, y - z * 0.6], [x - z, y - z * 0.6]], pal[2], pal[4], 2.5);
-    } else noteArt(ctx, pal, x, y, s, Math.sin(u * 4) * 0.3);
-  }, 451), 3);
+  E.sistaffsong = songStaff(IDOLPINK);
+  E.sistaffcheer = songStaff(SHOWGOLD);
+  E.sistafflull = songStaff(LULLABY);
+  E.sibeadsong = songBeads([
+    (ctx, x, y) => noteArt(ctx, IDOLPINK, x - 4, y + 10, 16, -0.15),
+    (ctx, x, y) => heartArt(ctx, IDOLPINK, x, y - 2, 17, 0.1),
+    (ctx, x, y) => noteArt(ctx, SHOWGOLD, x - 8, y + 10, 13, 0.1, true),
+    (ctx, x, y) => heartArt(ctx, SHOWGOLD, x, y - 2, 14, -0.15),
+  ]);
+  E.sibeadcheer = songBeads([
+    (ctx, x, y) => sparkle(ctx, SHOWGOLD, x, y - 4, 20, 0),
+    (ctx, x, y) => noteArt(ctx, SHOWGOLD, x - 4, y + 10, 16, 0.15),
+    (ctx, x, y) => heartArt(ctx, IDOLPINK, x, y - 2, 15, 0.1),
+    (ctx, x, y) => sparkle(ctx, IDOLPINK, x, y - 4, 16, 0.6),
+  ]);
+  E.sibeadlull = songBeads([
+    moonArt2(LULLABY),
+    zArt(LULLABY),
+    (ctx, x, y) => noteArt(ctx, LULLABY, x - 4, y + 10, 15, -0.2),
+    (ctx, x, y) => sparkle(ctx, LULLABY, x, y - 4, 15, 0.3),
+  ]);
 
   // A song cast (the burst when she starts singing one, and Grand Concert's music blasts): sound
   // waves opening out both ways from her, notes thrown off them, then sparkles.

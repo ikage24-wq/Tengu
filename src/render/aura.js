@@ -8,7 +8,7 @@
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
 import { fxSprite } from './fx-sprites.js';
-import { lightPillar } from './warrior-fx.js';
+import { lightPillar, songRing } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -263,7 +263,7 @@ function spiritAura(ctx, x, y, t, s, k, layer) {
 // her and her badge, a heart with a note on it, shines over her head.
 function graceAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celsisong', x, y + 2, { frame: Math.floor(t * (4 + 6 * k)) % 10, scale: s * (0.1 + 0.06 * k), alpha: Math.min(0.85, (k - 0.15) * 2) });
+    if (k > 0.15) songRing(ctx, 'heal', x, y + 2, s * (16 + 8 * k), 1 + t * (0.6 + 0.8 * k), Math.min(0.85, (k - 0.15) * 2));
     return;
   }
   if (k >= 1) {

@@ -27,6 +27,40 @@ const EMBLEMS = { phantom: 'celembphantom', acro: 'celembacro', astral: 'celemba
 // strips), so scales stay near 1.
 const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringmint', 'celringink', 'celringfox', 'celringspirit']);
 
+// A Starlight Idol song where it hangs: its little shapes (`celsibead*`, one drawing each) ringing
+// the ground out to its reach `r`, each bobbing on the beat and twinkling, the ring turning slowly,
+// the far side a touch smaller and dimmer; they pop in round the ring as it starts, and a few float
+// up off it and fade. The ring is its exact reach at any size, and the shapes stay small and crisp.
+const BEADS = { heal: 'celsibeadsong', cheer: 'celsibeadcheer', lull: 'celsibeadlull' };
+const STAFFS = { heal: 'celsistaffsong', cheer: 'celsistaffcheer', lull: 'celsistafflull' };
+export function songRing(ctx, kind, x, y, r, t, fade = 1) {
+  const name = BEADS[kind] ?? BEADS.heal;
+  const ry = r * 0.3;
+  const n = Math.max(8, Math.round((2 * Math.PI * Math.sqrt((r * r + ry * ry) / 2)) / 24));
+  const slow = kind === 'lull' ? 0.5 : 1;
+  // The staff it rides, opening out to the reach as it starts.
+  const open = 1 - (1 - Math.min(1, t / 0.3)) ** 3;
+  fxSprite(ctx, STAFFS[kind] ?? STAFFS.heal, x, y, { t, scale: (r / 140) * open, alpha: fade * 0.9 });
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + t * 0.22 * slow;
+    const far = Math.sin(a) < 0;
+    const born = Math.min(1, Math.max(0, (t - (i / n) * 0.3) / 0.18));
+    if (born <= 0) continue;
+    const pop = born < 1 ? 1 + 0.35 * Math.sin(born * Math.PI) : 1;
+    const bob = 3 * Math.abs(Math.sin(t * 3.2 * slow + i * 1.3));
+    const tw = 0.88 + 0.12 * Math.sin(t * 5 + i * 2.1);
+    fxSprite(ctx, name, x + Math.cos(a) * r, y + Math.sin(a) * ry - 4 - bob, { frame: i % 4, scale: (far ? 1.0 : 1.2) * tw * pop * born, alpha: fade * (far ? 0.75 : 1) });
+  }
+  // A few float up off the ring and fade (slower for the Lullaby).
+  for (let k = 0; k < 5; k++) {
+    const u = (t * 0.45 * slow + k / 5) % 1;
+    const a = k * 2.4 + Math.floor(t * 0.45 * slow + k / 5) * 1.7;
+    const lift = Math.sin(Math.PI * u);
+    fxSprite(ctx, name, x + Math.cos(a) * r * 0.8 + Math.sin(u * 6 + k) * 4, y + Math.sin(a) * ry - 10 - u * 46, { frame: (k + 1) % 4, scale: 1.05 * lift, alpha: fade * lift * Math.min(1, t * 2) });
+  }
+  return true;
+}
+
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32, alpha = 1 } = {}) {
   if (r > 60 && BIG.has(name)) fxSprite(ctx, `${name}big`, x, y, { p, scale: r / (38 * 2.6), sy, alpha });
@@ -194,7 +228,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'sihit':
       return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.85 : 0.6, rot: (seed - 0.5) * 0.4 }) || true;
     case 'siwave':
-      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.75 : 0.5) }) || true;
+      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.6 : 0.4) }) || true;
     case 'shock':
       // A finisher's shockwave racing out to the edge of its reach (world/melee.js).
       return fxSprite(ctx, f.name, x, y + 2, { p, scale: f.r / 99 }) || true;
@@ -204,18 +238,18 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const u = Math.min(1, f.t / f.dur);
       const go = 1 - (1 - u) ** 2;
       const fade = Math.min(1, (1 - u) * 4);
-      return fxSprite(ctx, 'celsibig', x + f.dir * f.r * go, y, { t: f.t, flip: f.dir < 0, scale: (f.big ? 1.5 : 1.15) * (0.8 + 0.4 * go), alpha: fade }) || true;
+      return fxSprite(ctx, 'celsibig', x + f.dir * f.r * go, y, { t: f.t, flip: f.dir < 0, scale: (f.big ? 1 : 0.8) * (0.8 + 0.4 * go), alpha: fade }) || true;
     }
     case 'idolsong': {
       const S = f.song;
-      const name = S.kind === 'cheer' ? 'celsicheer' : S.kind === 'lull' ? 'celsilullaby' : 'celsisong';
       const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
       if (fade <= 0) return true;
-      return fxSprite(ctx, name, x, y + 2, { t: f.t, scale: S.r / 130, alpha: fade }) || true;
+      return songRing(ctx, S.kind, x, y, S.r, f.t, fade) || true;
     }
     case 'sisong': case 'sicheer': case 'silullaby': {
+      // A song's ring sung once (the party's healer bots, a raise): smaller, and gone again.
       const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 3);
-      return fxSprite(ctx, `cel${f.kind}`, x, y + 2, { t: f.t, scale: f.big ? 0.9 : 0.5, alpha: fade }) || true;
+      return songRing(ctx, f.kind === 'sicheer' ? 'cheer' : f.kind === 'silullaby' ? 'lull' : 'heal', x, y, f.big ? 110 : 60, f.t, fade) || true;
     }
     case 'sistage':
       return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 1.2 }) || true;

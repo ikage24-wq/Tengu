@@ -1747,9 +1747,14 @@ test("a Sky Dancer's every blow lifts her: she stays up while she attacks, and d
   assert.ok(high < 130, `but never flies off (highest ${high.toFixed(0)}px)`);
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'her gusts land');
   // Let go: a soft drift down, then she lands. (She hovers about 55-65 px up, so at the drift's
-  // 70 px/s she's still on her way down half a second later.)
-  run(w, 0.5);
-  assert.ok(!w.body.onGround && w.body.vy <= 75, `drifting down (${w.body.vy.toFixed(0)}px/s)`);
+  // 70 px/s she's still on her way down half a second later; let go in the middle of a diving
+  // chop, the dive carries her to the ground first.)
+  let dove = false;
+  for (let i = 0; i < 0.5 * 60; i++) {
+    updateWorld(w, DT, idle);
+    if (w.body.onGround && i < 20) dove = true;
+  }
+  assert.ok(dove || (!w.body.onGround && w.body.vy <= 75), `drifting down (${w.body.vy.toFixed(0)}px/s)`);
   run(w, 4);
   assert.ok(w.body.onGround, 'and lands');
 });
@@ -2398,7 +2403,7 @@ test('the Starlight Idol sings her own notes and her own pool of moves, and they
   assert.equal(w.spirit ?? 0, 0, 'and no stars');
 });
 
-test('Healing Song heals at once, then hangs in the air mending whoever stands in it; Live Show reaches twice as far', () => {
+test('Healing Song heals at once, then hangs in the air mending whoever stands in it; Live Show reaches half again as far', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   assert.ok(cast(w, 'grandblessing').ok);
@@ -2410,14 +2415,14 @@ test('Healing Song heals at once, then hangs in the air mending whoever stands i
   run(w, 3);
   assert.ok(w.char.hp > after, 'and keeps mending her while she stands in it');
   assert.ok(w.grace > 5, `healing builds Applause (${w.grace})`);
-  // Live Show: sung again on full Applause, it reaches twice as far.
+  // Live Show: sung again on full Applause, it reaches half again as far.
   w.grace = 100;
   w.graceAt = 1e9;
   settleCast(w, 1);
   assert.ok(cast(w, 'grandblessing').ok);
   run(w, 0.7);
   const live = w.songs.find((s) => s.kind === 'heal');
-  assert.ok(live.live && live.r >= song.r * 2 - 1, `Live Show: ${live.r} against ${song.r}`);
+  assert.ok(live.live && live.r >= song.r * 1.5 - 1, `Live Show: ${live.r} against ${song.r}`);
   assert.equal(w.songs.filter((s) => s.kind === 'heal').length, 1, 'one healing song at a time');
 });
 

@@ -9,7 +9,7 @@
 //                                 knock her out leaves her standing instead (her Encore), once
 //   Grand Concert                 her finisher: the stage rises under her, everyone in reach is
 //                                 healed in full, and the music blasts the monsters back, three beats
-// Live Show (full Applause, world/melee.js): her songs reach twice as far and mend more.
+// Live Show (full Applause, world/melee.js): her songs reach half again as far and mend more.
 
 import { dollHit, healAround, liveShow } from './melee.js';
 import { applyBuff } from './combat.js';
@@ -18,7 +18,7 @@ import { SKILLS } from '../data/skills.js';
 
 const alive = (m) => m && m.hp > 0;
 // Live Show: how much further her songs reach, and how much more they mend.
-export const LIVE_REACH = 2;
+export const LIVE_REACH = 1.5;
 export const LIVE_HEAL = 1.5;
 
 // ---------- The songs ----------
@@ -111,7 +111,7 @@ function tickConcert(world) {
   if (!C) return;
   while (C.done < C.beats.length && world.now >= C.beats[C.done]) {
     const last = ++C.done === C.beats.length;
-    world.fx.push({ kind: 'siwave', big: true, scale: last ? 0.85 : 0.65, x: C.x, y: C.y - 30, t: 0, dur: 0.6 });
+    world.fx.push({ kind: 'siwave', big: true, scale: last ? 0.6 : 0.45, x: C.x, y: C.y - 30, t: 0, dur: 0.6 });
     for (const dir of [-1, 1]) world.fx.push({ kind: 'sishock', big: last, dir, r: C.r, x: C.x, y: C.y - 26, t: 0, dur: SHOCK });
     world.juice.push({ type: 'shake', mag: last ? 3 : 1.5, dur: last ? 0.25 : 0.12 });
     world.mobs
