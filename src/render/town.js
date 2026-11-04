@@ -3,6 +3,8 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { drawMount } from './mounts.js';
+import { MOUNTS } from '../data/mounts.js';
 import { tagFade } from './coop.js';
 import { drawMachine } from './gacha.js';
 import { wornGear } from '../core/character.js';
@@ -1578,7 +1580,13 @@ function drawBot(ctx, bot, x, y, time, hovered, said, slope = 0, far = false, ta
     if (bot.tomb) drawTomb(ctx, x + facing * 11, y, time - fellAt.get(bot));
   } else {
     fellAt.delete(bot);
-    drawHero(ctx, look, gear, x, y, state, anim);
+    // Riding (world/botride.js): their mount, moving as they do.
+    if (bot.riding && body && !body.rope && MOUNTS[bot.riding]) {
+      const top = 125 * (MOUNTS[bot.riding].speed / 100);
+      if (body.onGround && bot.rideAir) bot.rideLand = time;
+      bot.rideAir = !body.onGround;
+      drawMount(ctx, bot, bot.riding, x, y, time, { facing, speed: Math.abs(body.vx) / top, air: !body.onGround, vy: body.vy, landAt: bot.rideLand ?? -9 }, { look });
+    } else drawHero(ctx, look, gear, x, y, state, anim);
     // Their line out on the water, to the float (where it is from where they're drawn).
     if (life && bot.life.kind === 'fish') {
       const s = bot.life.spot;

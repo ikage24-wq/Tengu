@@ -24,6 +24,8 @@ import { drawBuffEffects } from './buffs.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
+import { drawMount } from './mounts.js';
+import { rideMotion } from '../world/mount.js';
 import { copiesOf, copyAt } from '../world/phantom.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
 import { botsIn, bodiedIn } from '../world/bots.js';
@@ -336,6 +338,22 @@ export function drawWorld(ctx, world, viewCam, time) {
   // A queen's moves about to land.
   drawZonesBack(ctx, world, cam, time);
   drawDrops(ctx, world, cam, time);
+  // A mount hiding on the map until it's found (its `finds`): it idles there, a sparkle over it.
+  for (const f of world.map.finds ?? []) {
+    if (!f.mount || world.char.mounts?.includes(f.mount)) continue;
+    const fx = Math.round(f.x - cam.x);
+    if (fx < -60 || fx > VIEW_W + 60) continue;
+    drawMount(ctx, f, f.mount, fx, Math.round(f.y - cam.y), time, { facing: -1 });
+    const tw = (Math.sin(time * 3 + f.x) + 1) / 2;
+    ctx.save();
+    ctx.globalAlpha = 0.5 + tw * 0.5;
+    ctx.fillStyle = '#fff6c0';
+    ctx.translate(fx + 6, f.y - cam.y - 34 - tw * 3);
+    ctx.rotate(time);
+    ctx.fillRect(-0.8, -3.5, 1.6, 7);
+    ctx.fillRect(-3.5, -0.8, 7, 1.6);
+    ctx.restore();
+  }
   drawMobs(ctx, world, cam, time);
   // A Beastmaster's wolf and bear walk behind her; her hawk flies over her (drawn after her).
   drawPets(ctx, world, cam, time, 'back');
@@ -404,7 +422,20 @@ export function drawWorld(ctx, world, viewCam, time) {
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
-    drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    // Riding: the mount with the hero in its seat (render/mounts.js). On a rope the gecko clings
+    // to it head up behind the climbing hero; the other mounts are stowed while you climb.
+    const ride = world.riding;
+    if (ride && !ride.stowed && !b.rope) drawMount(ctx, world, ride.id, hx, hy, world.now, rideMotion(world), { look });
+    else {
+      if (ride && b.rope && !ride.stowed) {
+        ctx.save();
+        ctx.translate(hx, hy - 18);
+        ctx.rotate(-Math.PI / 2);
+        drawMount(ctx, world, ride.id, 0, 18, world.now, rideMotion(world));
+        ctx.restore();
+      }
+      drawHero(ctx, look, gear, hx, hy, heroState, feel.anim);
+    }
     // A low plant she's kneeling at, in front of her hands.
     drawNodesFront(ctx, world, cam, time);
     drawFoxWheel(ctx, world, hx, hy, time, 'front');

@@ -5,6 +5,7 @@
 // their hits back to it. A monster's fall gives everyone on the map their share (full EXP to
 // those who hit it, a party share to the rest), and each player rolls their own loot.
 
+import { rideMotion } from '../world/mount.js';
 import { openLink, newCode } from './link.js';
 import { spawnMob, hitMob } from '../world/mobs.js';
 import { MOBS } from '../data/mobs.js';
@@ -348,6 +349,8 @@ function sendMe(world) {
     hp: c.hp, mhp: world.stats.maxHp,
     gauge, gk: gauge ? (inForm(world) ? 1 : (world[gauge] ?? 0) / 100) : 0, form: inForm(world),
     buffs, emote: world.emote?.face ?? null,
+    // Riding (world/mount.js): which mount, and its trick right now, so friends see it move.
+    ride: world.riding && !world.riding.stowed ? { id: world.riding.id, s: rideMotion(world)?.special ?? null, h: round(world.riding.hoverLeft ?? 1) } : null,
     // Fishing: where their bobber is and how it's going.
     fish: world.fishing ? { bx: world.fishing.spot.bx, by: world.fishing.spot.by, face: world.fishing.spot.face, phase: world.fishing.phase } : null,
     fx: takeFx(world), nums: takeNumbers(world),
@@ -505,6 +508,7 @@ function onMe(world, msg) {
   g.form = msg.form;
   g.emote = msg.emote;
   g.fish = msg.fish ?? null;
+  g.ride = msg.ride ?? null;
   g.buffs = {};
   for (const [id, b] of Object.entries(msg.buffs ?? {})) g.buffs[id] = { ...b, until: world.now + b.until };
   if (msg.map !== world.map.id || solo(world)) return;

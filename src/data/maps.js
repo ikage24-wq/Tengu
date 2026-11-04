@@ -55,7 +55,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2165 }, { id: 'kestrel', x: 2480 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2165 }, { id: 'clover', x: 2340 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
@@ -315,6 +315,9 @@ export const MAPS = {
         { x: 200, y: 600, w: 300 }, { x: 900, y: 600, w: 400 }, { x: 1700, y: 600, w: 300 },
         { x: 500, y: 520, w: 300 }, { x: 1300, y: 520, w: 300 },
         { x: 850, y: 440, w: 500, thick: 44 },
+        // A twig off to the side of the highest bough, half hidden in the leaves, where the Ivy Gecko
+        // suns itself (the map's secret: a mount, data/mounts.js).
+        { x: 1450, y: 432, w: 76 },
         // The log drifting between the boughs.
         { x: 810, y: 520, w: 120, style: 'planks', drift: { dx: 360, period: 10 } },
       ],
@@ -333,6 +336,7 @@ export const MAPS = {
     deco: [['mushring', 1100], ['bigtree', 380, 0, 680], ['hollowlog', 1000, 0, 680], ['giantshroom', 1900, 1, 680], ['stumphouse', 1050, 0, 440]],
     lamps: [{ x: 1100, y: 970 }, { x: 1050, y: 400 }, { x: 650, y: 980 }],
     spirit: { x: 1500, y: 400 },
+    finds: [{ x: 1488, y: 432, mount: 'gecko', say: 'It scurried up your arm and settled on your shoulder.' }],
     habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true, home: { x: 1100, y: 1000 } }, mossgolem: { naps: true } },
   },
 

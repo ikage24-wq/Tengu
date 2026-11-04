@@ -53,6 +53,7 @@ export const TOKEN_SHOP = [
   { id: 'gacha_ticket', qty: 1, cost: 6, about: 'One turn of the capsule machine' },
   { id: 'elixir', qty: 3, cost: 4, about: 'Three Rainbow Elixirs' },
   { id: 'hollow_acorn', qty: 3, cost: 5, about: 'For Rootwood gear' },
+  { id: 'mount_nimbus', qty: 1, cost: 40, about: 'A sleepy cloud mount that floats over gaps' },
 ];
 
 // ---------- Two-person boss mechanics ----------

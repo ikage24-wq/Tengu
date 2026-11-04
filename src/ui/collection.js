@@ -1,16 +1,20 @@
 // The Collection window (B): the Monster Book (a card for every monster: shown once you've
-// defeated one, a silhouette until then, with a star once mastered) and the fish you've caught.
+// defeated one, a silhouette until then, with a star once mastered), the fish you've caught, and
+// your mounts (each one moving on its card; pick the one H rides, or see how to earn the rest).
 
 import { MOBS } from '../data/mobs.js';
 import { masteryAt } from '../core/collection.js';
 import { drawMonster } from '../render/monsters.js';
 import { drawItemIcon } from '../render/icons.js';
 import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
-import { COLORS, windowFrame, tabs, text, box, hover, tooltip, sparkle, fit } from './kit.js';
+import { COLORS, windowFrame, tabs, text, box, hover, tooltip, sparkle, fit, wrap, button } from './kit.js';
+import { MOUNTS, MOUNT_IDS } from '../data/mounts.js';
+import { drawMount } from '../render/mounts.js';
+import { ownsMount, mountUp } from '../world/mount.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish'];
+const TABS = ['Monster Book', 'Fish', 'Mounts'];
 
 // Monsters by level, the bosses after.
 const ORDER = Object.keys(MOBS).sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -26,7 +30,8 @@ export function collectionWindow(ui, state, world) {
   const x = win.x + 10;
   const y = win.y + 48;
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
-  else fishPage(ui, win, char, x, y, th);
+  else if (win.tab === 1) fishPage(ui, win, char, x, y, th);
+  else mountsPage(ui, win, world, x, y, th);
 }
 
 // The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.
@@ -103,4 +108,43 @@ function fishPage(ui, win, char, x, y, th) {
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
   text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip, Marlo or Mister Brine, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 18, { size: 6.5, align: 'right', color: COLORS.muted });
+}
+
+// Your mounts: a card each, the mount moving on it (trotting along if it's the one you ride),
+// its trick, and a button to choose it; the ones you haven't got stand in shadow with how to earn
+// them.
+const cardRiders = Object.fromEntries(MOUNT_IDS.map((id) => [id, {}]));
+function mountsPage(ui, win, world, x, y, th) {
+  const { ctx } = ui;
+  const char = world.char;
+  const cols = 3;
+  const cw = 107;
+  const ch = 94;
+  MOUNT_IDS.forEach((id, i) => {
+    const def = MOUNTS[id];
+    const own = ownsMount(char, id);
+    const chosen = own && char.mount === id;
+    const cx = x + (i % cols) * cw;
+    const cy = y + Math.floor(i / cols) * ch;
+    box(ctx, cx, cy, cw - 5, ch - 5, { fill: chosen ? '#fff6d6' : own ? '#ffffff' : '#f2ecf8', edge: chosen ? '#f0c64a' : own ? th.light : '#e2d8ee', r: 9, width: chosen ? 2 : 1.2 });
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(cx + 2, cy + 2, cw - 9, 46);
+    ctx.clip();
+    if (!own) ctx.filter = 'brightness(0) opacity(0.22)';
+    ctx.translate(cx + (cw - 5) / 2, cy + 46);
+    ctx.scale(0.72, 0.72);
+    drawMount(ctx, cardRiders[id], id, 0, 0, world.now, { facing: 1, speed: chosen ? 0.6 : 0 });
+    ctx.restore();
+    text(ctx, def.name, cx + 6, cy + 56, { size: 8, bold: true, color: own ? COLORS.ink : COLORS.muted });
+    wrap(ctx, own ? def.trickText : def.hint, cx + 6, cy + 64, cw - 16, { size: 5.6, lineHeight: 6.6, color: own ? COLORS.ink : COLORS.muted });
+    if (own && !chosen && button(ui, cx + cw - 41, cy + 49, 34, 12, 'Choose', { size: 6.5, primary: true })) {
+      char.mount = id;
+      if (world.riding) mountUp(world, id);
+    }
+    if (chosen) text(ctx, 'Riding with H', cx + cw - 9, cy + 57, { size: 6, bold: true, align: 'right', color: '#c9961f' });
+    if (hover(ui, cx, cy, cw - 5, ch - 5)) tooltip(ui, own ? [{ text: def.name, bold: true }, { text: def.about, size: 7 }, { text: `Speed ${def.speed}%  ·  Jump ${def.jump}%`, size: 7, color: COLORS.muted }] : [{ text: 'Not found yet', bold: true }, { text: def.hint, size: 7 }]);
+  });
+  const got = MOUNT_IDS.filter((id) => ownsMount(char, id)).length;
+  text(ctx, `${got} / ${MOUNT_IDS.length} mounts  ·  Press H to ride. Attacking hops you off.`, x, y + 2 * ch + 4, { size: 7, bold: true, color: th.dark });
 }

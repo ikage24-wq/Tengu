@@ -260,7 +260,9 @@ export function answer(said, ctx) {
   const map = findName(w, Object.values(MAPS).filter((m) => !m.trial && !m.dungeon));
   // (Bosses answer to their first name too: "where is Tamamo".)
   const mob = findName(w, Object.values(MOBS)) ?? Object.values(MOBS).find((m) => m.boss && (new RegExp(`\\b${lc(m.name.split(/[ ,]/)[0])}\\b`).test(w) || (m.name.includes(', the ') && w.includes(lc(m.name.split(', the ')[1]))))) ?? null;
-  const npc = findName(w, Object.values(NPCS));
+  // (A place named after someone is the place: "Clover Hills" isn't Clover.)
+  const npc0 = findName(w, Object.values(NPCS));
+  const npc = npc0 && !(map && lc(map.name).includes(lc(npc0.name))) ? npc0 : null;
   const fish = findName(w, FISH);
   const dish = findName(w, DISHES);
   if (dish) return `${dish.name}: ${Object.entries(dish.needs).map(([id, n]) => `${n} ${ITEMS[id]?.name ?? id}`).join(' + ')} at any town stove. ${dish.about}!`;
@@ -290,6 +292,7 @@ export function answer(said, ctx) {
   }
   // Topics.
   if (has(w, ['fish', 'fishing', 'rod', 'bobber'])) return 'buy a rod from Pip or Marlo, stand at ripples on the water, press up, then attack the second it bites!';
+  if (has(w, ['mount', 'mounts', 'ride', 'riding', 'bunny', 'bun'])) return level < 15 ? 'mounts! Clover in Sprout gives u a Puff Bun at lvl 15, then press H to ride' : 'Clover in Sprout has the Puff Bun quest, then theres more to find. H to ride, attacking hops u off';
   if (has(w, ['cook', 'stove', 'recipe', 'food'])) return 'every town has a stove, press up at it. a pot makes 2 dishes';
   if (has(w, ['polish', 'enhance', 'upgrade'])) return 'Tora in Ember Crag polishes gear up to +10, gets harder each step tho';
   if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and the Hollow chest gives Rootwood. full set = aura!';

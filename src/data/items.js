@@ -492,6 +492,9 @@ for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, pri
 // The Fishing Derby's winner's medal (world/derby.js): a keepsake.
 add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ffd66b', desc: 'Nori hands these to the biggest catch of a Fishing Derby. She has a whole drawer of them.' });
 // Mister Brine's lantern bait (Lantern Lagoon): fish bite twice as fast for your next 10 casts.
+// Mount keys (data/mounts.js): using one gives you the mount for good.
+add({ id: 'mount_kettle', name: 'Kettle Racer Key', type: 'use', price: 0, effect: { mount: 'kettle' }, color: '#f4a98a', desc: 'A little brass key on a ribbon. Use it and the Kettle Racer is yours: a teakettle on wheels with a steam dash.' });
+add({ id: 'mount_nimbus', name: 'Nimbus Whistle', type: 'use', price: 0, effect: { mount: 'nimbus' }, color: '#dfe6fb', desc: 'Blow it and a sleepy little cloud drifts down to you. Use it and Nimbus is yours: it floats over gaps.' });
 add({ id: 'lantern_bait', name: 'Lantern Bait', type: 'use', price: 180, effect: { bait: 10 }, color: '#ffd27a', desc: 'Glowing shrimp the fish cannot resist. Fish bite twice as fast for your next 10 casts.' });
 for (const d of DISHES) {
   add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });

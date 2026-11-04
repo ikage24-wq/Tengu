@@ -125,6 +125,19 @@ export function groundAt(map, x) {
   return groundPieceAt(map, x).yAt(x);
 }
 
+// Water (a map's `water`: [{ x1, x2, y }], y the surface): the height of the surface at x, or
+// null. Walking through it is a wade; a swimming mount skims along its top.
+export function waterAt(map, x) {
+  for (const w of map.water ?? []) if (x >= w.x1 && x <= w.x2) return w.y;
+  return null;
+}
+const WADE_DEPTH = 6;
+// Whether a body's feet are down in water deep enough to wade.
+export const wading = (map, body) => {
+  const wy = waterAt(map, body.x);
+  return wy != null && body.y > wy + WADE_DEPTH;
+};
+
 // Stops a body walking (or flying) into a cliff wall that rises above its feet.
 export function blockWalls(map, body, nx) {
   const dir = Math.sign(nx - body.x);
@@ -162,7 +175,10 @@ export function ropeTop(map, r) {
 const ROPE_REACH = 16;
 
 // intent: { left, right, up, down, jump } booleans. `speed` and `jump` are percentages (100 = normal).
-export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider = false } = {}) {
+// Riding a mount adds: `glide` (a fall speed held to while Jump is held), `float` (no gravity this
+// step: a hover), `swim` (water's surface holds you up), `climb` (rope speed, %), and `wade` (the
+// speed, %, while wading; 100 for none).
+export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider = false, glide = 0, float = false, swim = false, climb = 100, wade = 100 } = {}) {
   body.dropTimer = Math.max(0, body.dropTimer - dt);
   body.knockTimer = Math.max(0, body.knockTimer - dt);
   if (rider && !body.rope) ride(body, map, intent, dt);
@@ -178,7 +194,7 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
       return;
     }
     const dir = (intent.down ? 1 : 0) - (intent.up ? 1 : 0);
-    body.y += dir * CLIMB_SPEED * dt;
+    body.y += dir * CLIMB_SPEED * (climb / 100) * dt;
     body.vx = 0;
     body.vy = 0;
     if (body.y <= r.top) {
@@ -215,7 +231,7 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
   // ----- Walk / air control -----
   const move = (intent.right ? 1 : 0) - (intent.left ? 1 : 0);
   if (body.knockTimer <= 0) {
-    const target = move * WALK_SPEED * (speed / 100);
+    const target = move * WALK_SPEED * (speed / 100) * (wade < 100 && !swim && wading(map, body) ? wade / 100 : 1);
     const accel = body.onGround ? 1600 : 900;
     if (body.vx < target) body.vx = Math.min(target, body.vx + accel * dt);
     else if (body.vx > target) body.vx = Math.max(target, body.vx - accel * dt);
@@ -237,7 +253,9 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
   // ----- Gravity and landing -----
   const prevY = body.y;
   const was = body.onGround ? body.surface : null;
-  body.vy = Math.min(MAX_FALL, body.vy + GRAVITY * dt);
+  body.vy = float ? 0 : Math.min(MAX_FALL, body.vy + GRAVITY * dt);
+  body.gliding = Boolean(glide) && intent.jump && !body.onGround && body.vy > glide && !was;
+  if (body.gliding) body.vy = glide;
   body.x = blockWalls(map, body, Math.max(body.w / 2, Math.min(map.width - body.w / 2, body.x + body.vx * dt)));
   body.y += body.vy * dt;
 
@@ -277,6 +295,17 @@ export function stepBody(body, map, intent, dt, { speed = 100, jump = 100, rider
       body.onGround = true;
       body.surface = piece;
     }
+  }
+  // A swimmer is held up by the water: it rides the surface (and bobs back up to it from below).
+  body.swimming = false;
+  const wy = swim ? waterAt(map, body.x) : null;
+  if (wy != null && body.vy >= 0 && body.y >= wy - 0.5) {
+    // Below the surface it floats back up (quickly, but not in a snap).
+    body.y = Math.max(wy, body.y - 220 * dt);
+    body.vy = 0;
+    body.onGround = true;
+    body.swimming = true;
+    body.surface = { x1: body.x - 1, x2: body.x + 1, y: wy, ground: false, water: true, yAt: () => wy };
   }
   if (!body.onGround) body.surface = null;
 }

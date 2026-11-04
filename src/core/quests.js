@@ -177,13 +177,19 @@ export function completeQuest(char, id) {
     else addItem(char.inventory, r.id, r.qty);
   }
   char.gold += q.rewards.gold;
+  // A mount (data/mounts.js) is yours for good.
+  const mount = q.rewards.mount && !char.mounts?.includes(q.rewards.mount) ? q.rewards.mount : null;
+  if (mount) {
+    (char.mounts ??= []).push(mount);
+    char.mount ??= mount;
+  }
   char.cash = (char.cash ?? 0) + CASH_PER_QUEST + (q.rewards.cash ?? 0);
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = q.daily ? { state: 'done', day: today() } : { state: 'done' };
   if (q.daily) char.dailiesDone = (char.dailiesDone ?? 0) + 1;
   // Anything left over from carrying it (a quest item never delivered) goes.
   for (const g of q.gives ?? []) removeItem(char.inventory, g.id, countItem(char.inventory, g.id));
-  return { ...q.rewards, items, levels };
+  return { ...q.rewards, items, levels, mount };
 }
 
 // The item a reward actually gives this hero: job gear rewards become their own job's piece.

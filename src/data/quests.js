@@ -42,6 +42,13 @@ export const QUESTS = {
     objectives: [{ type: 'collect', item: 'fluff', count: 8 }],
     rewards: { exp: 60, gold: 200, items: [{ id: 'hat_0', qty: 1 }] },
   },
+  // The first mount (data/mounts.js): Clover's runaway Puff Buns.
+  bun_buddy: {
+    id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 15,
+    text: "The Mandrakes in Clover Hills screamed so loud my Puff Buns bolted! Quiet 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. It's yours to ride!",
+    objectives: [{ type: 'kill', mob: 'sproutling', count: 15 }, { type: 'collect', item: 'clover', count: 8 }],
+    rewards: { exp: 900, gold: 600, items: [], mount: 'bun' },
+  },
   snail_trouble: {
     id: 'snail_trouble', name: 'Tortoise Trouble', giver: 'pip', minLevel: 3,
     text: "Moss Tortoises keep nibbling my crates! Defeat 12 of them and I'll pay you in tonics.",

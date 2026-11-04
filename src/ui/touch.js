@@ -19,9 +19,10 @@ const BASE = {
   CHAT: { x: 622, y: 136, r: 11, code: null, label: 'Chat', color: '#c9b6ff', dark: '#7a5cc8' },
   EMOTE: { x: 622, y: 164, r: 11, code: 'KeyT', label: 'Emote', color: '#ffc6e0', dark: '#e0659f' },
   PING: { x: 622, y: 192, r: 11, code: 'KeyV', label: 'Ping', color: '#bfe6ff', dark: '#3f8fd0' },
+  RIDE: { x: 622, y: 220, r: 11, code: 'KeyH', label: 'Ride', color: '#c8f0d8', dark: '#3fa878' },
 };
 const DEAD = 11;
-let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, ARC;
+let STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, RIDE, ARC;
 const FADE = 1;
 // Lays the controls out from the settings: left-handed play mirrors the whole set.
 function relayout() {
@@ -38,6 +39,7 @@ function relayout() {
   CHAT = place(BASE.CHAT, VW, 150);
   EMOTE = place(BASE.EMOTE, VW, 150);
   PING = place(BASE.PING, VW, 150);
+  RIDE = place(BASE.RIDE, VW, 150);
   // Skill buttons in an arc above the Attack button (mirrored with it).
   ARC = [195, 230, 265, 300].map((deg) => {
     const a = (deg * Math.PI) / 180;
@@ -49,7 +51,7 @@ relayout();
 // Where the controls sit now (for the preview in Options).
 export function touchLayout() {
   relayout();
-  return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, ...ARC] };
+  return { fade: FADE, parts: [STICK, ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, RIDE, ...ARC] };
 }
 // The HUD's hotkey bubbles (see ui/hud.js).
 const HK = { x: 380, step: 21, y: 329.5, d: 19 };
@@ -186,7 +188,7 @@ function start(t, id, p, field) {
       steer(t, p);
       return;
     }
-    const buttons = [ATTACK, JUMP, LOOT, EMOTE, PING, ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
+    const buttons = [ATTACK, JUMP, LOOT, EMOTE, PING, ...(t.world?.char?.mounts?.length ? [RIDE] : []), ...arcKeys(t.world).map((k, i) => ({ ...ARC[i], code: k.code }))];
     const hit = buttons.find((b) => near(p, b));
     if (hit) {
       press(input, hit.code);
@@ -323,7 +325,7 @@ export function touchFrame(t, ctx, screen, world, ui) {
   const time = performance.now() / 1000;
   ctx.save();
   STICK.alpha = fadeFor(t, 'stick', STICK, STICK.r + 6);
-  for (const [name, b] of Object.entries({ ATTACK, JUMP, LOOT, CHAT, EMOTE, PING })) b.alpha = fadeFor(t, name, b, b.r + 2);
+  for (const [name, b] of Object.entries({ ATTACK, JUMP, LOOT, CHAT, EMOTE, PING, RIDE })) b.alpha = fadeFor(t, name, b, b.r + 2);
   ARC.forEach((b, i) => (b.alpha = fadeFor(t, `arc${i}`, b, b.r + 2)));
   if (STICK.alpha > 0) drawStick(ctx, t);
   drawButton(ctx, t, ATTACK, time, () => icon(ctx, 'star', ATTACK.x, ATTACK.y - 2, 18, '#ffffff'));
@@ -344,6 +346,8 @@ export function touchFrame(t, ctx, screen, world, ui) {
   drawButton(ctx, t, CHAT, time, () => icon(ctx, 'chat', CHAT.x, CHAT.y, 11, '#ffffff'));
   drawButton(ctx, t, EMOTE, time, () => icon(ctx, 'heart', EMOTE.x, EMOTE.y, 10, '#ffffff'));
   drawButton(ctx, t, PING, time, () => icon(ctx, 'pin', PING.x, PING.y, 10, '#ffffff'));
+  // Ride (once you have a mount): on and off your mount.
+  if (world?.char?.mounts?.length) drawButton(ctx, t, RIDE, time, () => icon(ctx, 'paw', RIDE.x, RIDE.y, 10, '#ffffff'));
   arcKeys(world).forEach((k, i) => {
     const b = { ...ARC[i], code: k.code, color: '#fffaf8', dark: '#9a7cc8' };
     drawButton(ctx, t, b, time, () => {

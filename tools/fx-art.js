@@ -786,6 +786,33 @@
     },
   };
 
+  // A mount appearing or put away (render/mounts.js): a ring of pastel cloud puffs bursts out
+  // round the rider, sparkles pop at its rim, then the puffs drift up and break into beads.
+  const POOF = ['#ffffff', '#fff2fa', '#f6d8ee', '#d8bce8', '#8f6fae'];
+  E.mountpoof = {
+    w: 200, h: 170, n: 9, fps: 20, px: 100, py: 140,
+    draw(ctx, i) {
+      const k = i / 8;
+      const u = Math.min(1, i / 3);
+      const out = u * u * (3 - 2 * u);
+      const fade = i > 4 ? (i - 4) / 4 : 0;
+      for (let j = 0; j < 7; j++) {
+        const a = Math.PI + (j / 6) * Math.PI;
+        const d = 22 + out * 44;
+        const r = (18 - j % 2 * 5) * (0.6 + out * 0.5) * (1 - fade * 0.75);
+        if (r > 2) puff(ctx, POOF, 100 + Math.cos(a) * d, 128 + Math.sin(a) * d * 0.7 - k * 16, r, 300 + j, { holes: Math.max(0, fade * 1.2), lobes: 4 });
+      }
+      if (i < 6) puff(ctx, POOF, 100, 112 - k * 10, 28 * (1 - k * 0.8), 311, { holes: Math.max(0, (i - 2) / 3) });
+      for (let j = 0; j < 5; j++) {
+        const life = i - 1 - (j % 3);
+        if (life < 0 || life > 4) continue;
+        const a = -Math.PI / 2 + (j - 2) * 0.62;
+        const d = 40 + life * 12;
+        sparkle(ctx, POOF, 100 + Math.cos(a) * d, 120 + Math.sin(a) * d * 0.8, [6, 10, 8, 5, 3][life], 0.2 * j);
+      }
+    },
+  };
+
   // ---------- Fire and blood (the Berserker) ----------
   // A fire, looping: tongues born at the base every few frames, rising, swaying and tapering to a
   // point, embers flicking up.

@@ -2,6 +2,7 @@
 
 import { NPCS } from '../data/npcs.js';
 import { sfx } from '../audio/sfx.js';
+import { MOUNTS } from '../data/mounts.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
@@ -220,6 +221,14 @@ export function npcWindow(ui, state, world) {
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
+  // Clover the Puff Bun keeper: your mounts, in the Collection.
+  if (npc.role === 'stable' && char.mounts?.length) {
+    choices.push({ label: 'My mounts', sub: `${char.mounts.length} found · press H to ride`, icon: 'paw', run: () => {
+      Object.assign(state.windows.collection, { open: true, tab: 2, scroll: 0 });
+      state.npc = null;
+      state.windows.npc.open = false;
+    } });
+  }
   if (npc.role === 'board') {
     const pq = char.partyQuest;
     choices.push({ label: 'Party quests', sub: pq ? `On one: ${pq.have}/${pq.need}` : `${boardOffers(world).length} on the board · shared rewards`, icon: 'friends', primary: true, run: () => (dlg.board = true) });
@@ -415,6 +424,11 @@ function questPage(ui, state, world, npc, area, key) {
     if (r) {
       world.log(`Quest complete: ${q.name}! +${r.exp} EXP, +${r.gold} gold`, '#ffe36b');
       for (const it of r.items) world.log(`Received ${ITEMS[it.id].name}${it.qty > 1 ? ` x${it.qty}` : ''}.`, ITEMS[it.id].color);
+      if (r.mount) {
+        world.log(`New mount: ${MOUNTS[r.mount].name}! ${MOUNTS[r.mount].trickText}`, '#ffe36b');
+        world.log('Press H to ride (pick mounts in the Collection, B).', '#bff0dc');
+        world.events.push({ type: 'mount', id: r.mount });
+      }
       if (r.levels) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
       if (q.scenes?.done) playScene(world, q.scenes.done);
       dlg.quest = null;

@@ -45,6 +45,11 @@ function drawTogether(ctx, f, x, y, p) {
 }
 
 export function drawLifeFx(ctx, f, x, y, p) {
+  // Getting on or off a mount: a ring of pastel puffs and sparkles (world/mount.js).
+  if (f.kind === 'mountpoof') {
+    fxSprite(ctx, 'celmountpoof', x, y + 2, { p, scale: 0.42 });
+    return true;
+  }
   if (f.kind === 'together') return drawTogether(ctx, f, x, y, p);
   if (f.kind !== 'lifelevel') return false;
   const t = f.t;

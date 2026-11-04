@@ -1,6 +1,8 @@
 // Friends in your online room (see net/online.js), drawn on your map just like you are: their
 // own look, gear, moves, buffs and job aura, with a sky-blue name tag and their HP underneath.
 
+import { drawMount } from './mounts.js';
+import { MOUNTS } from '../data/mounts.js';
 import { tagFade } from './coop.js';
 import { drawHero } from './hero.js';
 import { drawFallen } from './town.js';
@@ -50,7 +52,13 @@ export function drawGhosts(ctx, world, cam, width, time) {
       const ay = y - (p.pose ? moveAt(p.pose, p.progress ?? 0, p.dur)?.lift ?? 0 : 0);
       const scale = g.form ? 1.4 : 1;
       if (g.gauge) drawCombatAura(ctx, g.gauge, 'back', x, ay, time, scale, g.gk, b.facing);
-      drawHero(ctx, look, g.gear, x, y, g.fish ? { ...state, onTool: (pt) => { tip = pt; } } : state, g.anim);
+      // Riding: their mount, moving as they do (render/mounts.js).
+      if (g.ride && MOUNTS[g.ride.id] && !b.rope) {
+        const top = 125 * (MOUNTS[g.ride.id].speed / 100);
+        if (g.ride.s !== 'glide' && g.ride.s !== 'hover' && !b.onGround !== g.rideAir) g.rideLand = b.onGround ? time : g.rideLand;
+        g.rideAir = !b.onGround;
+        drawMount(ctx, g, g.ride.id, x, y, time, { facing: b.facing, speed: Math.abs(b.vx) / top, air: !b.onGround, vy: b.vy, special: g.ride.s, hoverLeft: g.ride.h, landAt: g.rideLand ?? -9 }, { look });
+      } else drawHero(ctx, look, g.gear, x, y, g.fish ? { ...state, onTool: (pt) => { tip = pt; } } : state, g.anim);
       if (g.gauge) drawCombatAura(ctx, g.gauge, 'front', x, ay, time, scale, g.gk, b.facing);
       drawBuffEffects(ctx, g.buffs, 'front', x, y, time, world.now, b.facing);
       if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time, tip);

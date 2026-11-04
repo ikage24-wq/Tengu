@@ -53,6 +53,10 @@ export function songFor(map, world = null) {
 }
 
 const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
+// Each mount's jump, step (and how far apart its steps are), for world/mount.js riding.
+const MOUNT_JUMP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'jump', gecko: 'jump' };
+const MOUNT_STEP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'turtleStep', gecko: 'geckoPatter' };
+const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, gecko: 16 };
 const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Spirit Mage and her doll.
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
@@ -95,6 +99,8 @@ export function hearWorld(world, cam) {
       case 'gather': say('gather', { dur: f.dur, school: f.school, pan: p }); break;
       // A life skill's level up: the little rising chime of a skill going up.
       case 'lifelevel': sfx('skillUp'); break;
+      // Getting on or off a mount: a soft poof with a little rising (or falling) chime.
+      case 'mountpoof': say(f.on ? 'mountOn' : 'mountOff', { pan: p }); break;
       case 'freeze': say('freeze', { pan: p }); break;
       // Each sight locking on ticks a step higher than the last (Rez; research/archery.md 26).
       case 'reticle': say('lockOn', { pan: p, rate: Math.pow(2, (2 * Math.min(8, f.n ?? 0)) / 12) }); break;
@@ -178,6 +184,28 @@ export function hearWorld(world, cam) {
     if ((world.charge ?? 0) >= 100 && !(m.charge >= 100)) sfx('overdrive');
     if (world.char.job === 'spiritmage' && (world.spirit ?? 0) >= 100 && !(m.spirit >= 100)) sfx('allstars');
     // Jumps, landings, steps, and climbing.
+    // Riding, the mount's own sounds stand in for your feet (world/mount.js).
+    const ride = world.riding && !world.riding.stowed ? world.riding.id : null;
+    if (ride) {
+      if (m.ground && !b.onGround && !b.rope && b.vy < -50) sfx(MOUNT_JUMP[ride], { pan: 0 });
+      if (!m.ground && b.onGround && m.map === world.map.id) sfx(b.swimming ? 'turtleSplash' : 'land', { pan: 0 });
+      if (world.now < (world.riding.dashUntil ?? 0) && !(m.dashing)) sfx('kettleWhistle', { pan: 0 });
+      m.dashing = world.now < (world.riding.dashUntil ?? 0);
+      if (b.gliding && !m.gliding) sfx('craneGlide', { pan: 0 });
+      m.gliding = b.gliding;
+      if (world.riding.hovering && !m.hovering) sfx('nimbusPuff', { pan: 0 });
+      m.hovering = world.riding.hovering;
+      if ((b.onGround || (b.rope && ride === 'gecko')) && m.map === world.map.id) {
+        m.walked = (m.walked ?? 0) + Math.abs(b.x - m.x) + (b.rope ? Math.abs(b.y - m.y) : 0);
+        if (m.walked > MOUNT_STRIDE[ride]) {
+          m.walked = 0;
+          sfx(b.swimming ? 'turtleSplash' : MOUNT_STEP[ride], { pan: 0 });
+        }
+      } else m.walked = 0;
+    }
+    if (ride) {
+      // (handled above)
+    } else {
     if (m.ground && !b.onGround && !b.rope && b.vy < -50) sfx('jump', { pan: 0 });
     if (!m.ground && b.onGround && m.map === world.map.id) sfx('land', { hard: (m.fall ?? 0) > 520, pan: 0 });
     if (b.onGround && m.map === world.map.id) {
@@ -194,6 +222,7 @@ export function hearWorld(world, cam) {
         m.climbed = 0;
         sfx('climb');
       }
+    }
     }
   } else {
     m.items = countItems(char);

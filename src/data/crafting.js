@@ -217,6 +217,9 @@ for (const [kind, k] of Object.entries(TOOL_KINDS)) {
 }
 
 export const RECIPE_BY_ID = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
+// The Kettle Racer's key (data/mounts.js): a mount you make yourself, from copper, iron and maple.
+recipe({ id: 'craft_mount_kettle', cat: 'tool', tier: 2, level: 12, needs: { copper_ore: 10, iron_ore: 6, maple_log: 4 }, makes: 'mount_kettle' });
+
 export const CATEGORIES = [
   { key: 'gear', name: 'Gear' },
   { key: 'accessory', name: 'Trinkets' },

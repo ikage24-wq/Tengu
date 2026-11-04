@@ -44,7 +44,7 @@ const PAGES = {
 
 const CONTROLS = [
   ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
-  ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection: Monster Book and fish'], ['T', 'Emote wheel'],
+  ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection: Monster Book, fish and mounts'], ['T', 'Emote wheel'], ['H', 'Ride your mount (on and off)'],
   ['Enter', 'Chat'], ['Esc', 'Close windows / Options'], ['Drag', 'Move items, wear gear, set hotkeys'],
 ];
 

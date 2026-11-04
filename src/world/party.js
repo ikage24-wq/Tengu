@@ -5,6 +5,7 @@
 // and drop loot for you). They chat and level up alongside you, until you leave the party (or
 // they log off).
 
+import { botRide } from './botride.js';
 import { createBody, stepBody, groundAt, knockBack } from './physics.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, autoAssignAp } from '../core/character.js';
@@ -983,7 +984,9 @@ function live(bot, world, peers, dt, rng, o) {
     br.goal = o.giveUp ?? null;
     br.stall = 0;
   }
-  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed), jump: 100, rider: true });
+  // On a mount when they're getting about, off it to fight or work (world/botride.js).
+  const rideK = botRide(bot, world, intent, dt, { fighting: Boolean(br.target) && !map.isTown, busy: Boolean(bot.attack) });
+  stepBody(body, map, intent, dt, { speed: Math.min(135, (bot.stats.speed + 8) * bot.ai.speed) * rideK, jump: 100, rider: true });
   carry(bot, world, dt, rng);
   airborne(bot, world);
   br.stopped = body.onGround && Math.abs(body.vx) < 8 ? (br.stopped ?? 0) + dt : 0;

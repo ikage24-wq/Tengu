@@ -42,6 +42,7 @@ export const FX_SHEETS = {
   celquakegold: { w: 238, h: 191, n: 9, fps: 22, px: 116, py: 154, d: 3, loop: false },
   celquakered: { w: 294, h: 148, n: 9, fps: 22, px: 148, py: 114, d: 3, loop: false },
   celdust: { w: 151, h: 118, n: 7, fps: 20, px: 66, py: 82, d: 3, loop: false },
+  celmountpoof: { w: 200, h: 124, n: 9, fps: 20, px: 99, py: 102, d: 3, loop: false },
   celfire: { w: 144, h: 170, n: 8, fps: 16, px: 72, py: 140, d: 3, loop: true },
   celragefire: { w: 130, h: 157, n: 8, fps: 16, px: 64, py: 146, d: 3, loop: true },
   celblood: { w: 202, h: 135, n: 6, fps: 22, px: 103, py: 83, d: 3, loop: false },

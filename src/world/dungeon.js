@@ -25,6 +25,7 @@ import { knockBack } from './physics.js';
 import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
+import { giveMount } from './mount.js';
 import { recruitBot } from './bots.js';
 import { SKILLS } from '../data/skills.js';
 import { speak, contextOf } from './chatter.js';
@@ -566,6 +567,8 @@ function openChest(world, o) {
   if (run.hard && (!rec.hardClears || Math.random() < 0.15) && addItem(char.inventory, makeCash('cash_rootwood_crown'))) {
     world.log(`Hard clear! Received ${ITEMS.cash_rootwood_crown.name}, only found on Hard.`, '#7fd1a0');
   }
+  // Your first Hard clear anywhere: a Paper Crane folds itself from the boss's crown (data/mounts.js).
+  if (run.hard) giveMount(world, 'crane', "It folded itself out of the boss's crown.");
   // The records: clears, best grade and time, Hard unlocked.
   rec.clears += 1;
   if (run.hard) rec.hardClears += 1;

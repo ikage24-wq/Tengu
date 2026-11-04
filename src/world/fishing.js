@@ -15,6 +15,7 @@
 // character EXP. Every catch has a length (data/fishing.js rollSize): the Fish page keeps your
 // biggest, and the Fishing Derby goes by it (world/derby.js). Lantern bait halves the wait.
 
+import { giveMount } from './mount.js';
 import { FISH_BY_ID, SPOTS, SPOT_REACH, BITE_WAIT, rollSize } from '../data/fishing.js';
 import { addItem, countItem } from '../core/inventory.js';
 import { DISHES } from '../data/cooking.js';
@@ -73,6 +74,8 @@ export function startFishing(world) {
   return null;
 }
 
+// How often a catch at sea brings the Shell Skipper (about one in 60 catches).
+const TURTLE_CHANCE = 1 / 60;
 const workersHere = (world, key) => workersAt(world, key).count;
 const fishKey = (world, spot) => spotKey(world, 'fish', (SPOTS[world.map.id] ?? []).indexOf(spot.base ?? spot));
 
@@ -242,6 +245,9 @@ function catchFish(world, f, rng) {
   lifeAction(world, 'fishing', { tier: f.spot.tier ?? 1, kind: 'fish', scale: (1 + (fish.rarity - 1) * 0.25) * (team?.life ?? 1) });
   // Friends in your online room hear about it.
   world.net?.caught?.(world, fish);
+  // A sea turtle that's been watching the line swims up after a catch at sea, now and then, and
+  // decides to stay (data/mounts.js: Shell Skipper).
+  if (f.spot.sea && !char.mounts?.includes('turtle') && rng() < TURTLE_CHANCE) giveMount(world, 'turtle', 'A sea turtle swam up to your line and wants to come along.');
   // A fish's own recipe comes with your first one.
   if (first) {
     const dish = DISHES.find((d) => d.learn === fish.id);

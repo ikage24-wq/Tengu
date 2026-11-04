@@ -35,6 +35,8 @@ import { nodeHere, startGathering, tickGathering } from './gathering.js';
 import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
 import { tickVoyage } from './voyage.js';
+import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
+import { WADE, MOUNTS } from '../data/mounts.js';
 import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -251,6 +253,16 @@ export function useItem(world, id) {
     world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
     return true;
   }
+  // A mount's key or whistle: the mount is yours (world/mount.js).
+  if (def.effect?.mount) {
+    if (ownsMount(world.char, def.effect.mount)) {
+      world.log(`You already have ${MOUNTS[def.effect.mount].name}.`, '#ffb3c6');
+      return false;
+    }
+    if (removeItem(world.char.inventory, id, 1) < 1) return false;
+    giveMount(world, def.effect.mount);
+    return true;
+  }
   // Lantern bait: the next casts bite sooner (world/fishing.js).
   if (def.effect?.bait) {
     if (removeItem(world.char.inventory, id, 1) < 1) return false;
@@ -358,6 +370,13 @@ function interact(world) {
   if (portal) {
     loadMap(world, portal.to, portal.toPortal);
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
+    return true;
+  }
+  // A mount hiding on this map (its `finds`: data/mounts.js): Up beside it and it's yours.
+  const find = (world.map.finds ?? []).find((f) => f.mount && !ownsMount(world.char, f.mount) && Math.abs(f.x - b.x) < 30 && Math.abs(f.y - b.y) < 8);
+  if (find) {
+    giveMount(world, find.mount, find.say ?? null);
+    world.fx.push({ kind: 'mountpoof', on: true, mount: find.mount, x: find.x, y: find.y, t: 0, dur: 0.45 });
     return true;
   }
   const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6);
@@ -547,6 +566,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   // (A Shrine Maiden's Last Rite keeps her standing, once.)
   if (char.hp <= 0 && !world.dead && !lastRite(world)) {
     world.dead = true;
+    dismount(world, { quiet: true, hop: false });
     world.events.push({ type: 'death' });
     world.log('You fainted...', '#ff6b8a');
   }
@@ -660,14 +680,22 @@ export function updateWorld(world, dt, input) {
   // air barrage). Its finisher roots her as any move does.
   const streaming = basicHeld && Boolean(world.barrage) && world.recoverKind === 'basic' && !world.pose?.fin;
   const rooted = !streaming && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
+  // Riding (world/mount.js): H gets on and off; an attack or a skill hops you off and goes off at
+  // once; fishing, gathering and crafting put the mount away.
+  if (pressed.has('KeyH')) toggleMount(world);
+  if (world.riding && (fishing || world.fishing || world.gathering || world.crafting)) dismount(world, { quiet: true, hop: false });
+  if (world.riding && (attackKeys.some((k) => pressed.has(k) || held.has(k)) || Object.entries(char.hotkeys).some(([code, b]) => b?.skill && pressed.has(code)))) dismount(world, { hop: false });
   const bodyIntent = rooted ? { ...intent, left: false, right: false, jump: false } : intent;
   const wasX = world.body.x;
-  // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js).
-  startAgility(world, intent, pressed);
+  // A Thief's flash jump and shadow dash, an Archer's air leap (world/agility.js); riding, the
+  // mount's own trick instead.
+  const ride = rideStep(world, bodyIntent, pressed, dt);
+  if (!ride) startAgility(world, intent, pressed);
   if (!(pressed.has('ArrowUp') && interact(world))) {
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), rider: true });
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(ride ?? null), rider: true });
   }
-  tickAgility(world, dt, blockWalls);
+  rideAfter(world);
+  if (!ride) tickAgility(world, dt, blockWalls);
   world.stillTime = Math.abs(world.body.x - wasX) < 0.01 && world.body.onGround ? world.stillTime + dt : 0;
   // What the controls ask for (attacks read Up for a launcher), and how long you've been running
   // (an attack after a short run becomes a dash attack).

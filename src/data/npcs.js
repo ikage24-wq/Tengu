@@ -153,6 +153,14 @@ export const NPCS = {
   },
   // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the
   // region at your level, shared by everyone in your party, and Party Tokens to trade.
+  // Clover keeps the Puff Buns, marshmallow bunnies you can ride, in Sprout's Pond Garden. Soft
+  // spoken and a little scatterbrained; her buns are always getting out.
+  clover: {
+    id: 'clover', name: 'Clover', title: 'Puff Bun Keeper', role: 'stable',
+    look: { hairStyle: 'fluffybob', hairColor: '#fff0f6', hairTip: '#ffb3cf', skinTone: '#fff0e6', eyeColor: '#d0608a', outfitColor: '#ffe3ef', eyeStyle: 'big', earStyle: 'bunny', face: 'smile' },
+    greeting: "Oh! Hello! Have you seen a fluffy white bun go by? ...Never mind, there are always more. Do you like riding things?",
+    quests: ['bun_buddy'],
+  },
   posy: {
     id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',
     look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },

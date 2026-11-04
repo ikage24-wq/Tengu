@@ -38,6 +38,25 @@ const R = {
   portal: { db: -15, max: 1, room: true, layers: [{ rec: 'teleIn' }, { seq: 'C6:60 E6:60 G6:60 C7:300', inst: 'celesta', db: -8 }] },
   dash: { db: -17, vary: 5, max: 1, layers: [{ rec: 'windWhoosh', len: 600 }] },
   blink: { db: -15, max: 1, room: true, layers: [{ rec: 'teleOut', len: 800 }, sparkle('G6:30 C7:30 E7:150', { at: 40, db: -10 })] },
+  // ---------- Mounts (world/mount.js) ----------
+  // Getting on: a soft poof and a little rising chime; off: the poof and the chime falling.
+  mountOn: { db: -16, max: 1, layers: [{ rec: 'soft', rate: 1.2, len: 220 }, whoosh(260, 500, 2200, { focus: 0.3, db: -10 }), sparkle('C6:45 E6:45 G6:45 C7:260', { db: -11 })] },
+  mountOff: { db: -17, max: 1, layers: [{ rec: 'soft', rate: 1.05, len: 220 }, whoosh(240, 1800, 500, { focus: 0.3, db: -12 }), sparkle('G6:45 E6:45 C6:200', { db: -13 })] },
+  // Puff Bun: a marshmallow boing.
+  bunHop: { db: -21, vary: 7, max: 1, layers: [{ rec: 'slime', rate: 1.5, len: 170 }, { wave: 'sine', f0: 300, slide: 1.4, env: { a: 3, s: 30, d: 90 }, db: -10 }] },
+  // Paper Crane: a crisp flap of paper, and a soft rush as it settles into a glide.
+  craneFlap: { db: -22, vary: 8, max: 1, layers: [{ rec: 'bookFlip', rate: 1.35, len: 130 }] },
+  craneGlide: { db: -21, max: 1, layers: [whoosh(700, 600, 1600, { focus: 0.25, db: -2 }), { rec: 'bookFlip', rate: 1.1, len: 140, db: -6 }] },
+  // Nimbus: a soft cloudy puff.
+  nimbusPuff: { db: -24, vary: 6, max: 1, layers: [whoosh(260, 300, 1100, { focus: 0.35 })] },
+  // Kettle Racer: the lid's rattle, and its whistle on a steam dash.
+  kettleRattle: { db: -25, vary: 10, max: 1, layers: [{ rec: 'metalClick', rate: 1.3, len: 90 }] },
+  kettleWhistle: { db: -18, max: 1, layers: [{ wave: 'sine', f0: 1500, slide: 0.35, env: { a: 30, s: 260, d: 160 }, overtones: [2, 0.15], db: -6 }, whoosh(420, 900, 3200, { focus: 0.3, db: -8 })] },
+  // Shell Skipper: a heavy little plod on land, a splash in the water.
+  turtleStep: { db: -24, vary: 8, max: 1, layers: [{ rec: 'soft', rate: 0.8, len: 140 }, thump(110, 70, { db: -10 })] },
+  turtleSplash: { db: -21, vary: 8, max: 1, layers: [{ rec: 'splash', rate: 1.2, len: 220 }] },
+  // Ivy Gecko: quick little pattering feet.
+  geckoPatter: { db: -27, vary: 12, max: 2, layers: [{ rec: 'tick', rate: 0.75, len: 60 }] },
   // ---------- Swings and blows ----------
   // A swing: a swept whoosh with a recorded blade's edge in it; heavier swings are lower and longer.
   // Swings, by weapon (sfx.js picks them); every take peaks about 0.06 s in.
