@@ -5,7 +5,7 @@ import { expToNext } from '../core/exp.js';
 import { physicalRange, magicRange, accuracy, avoid } from '../core/formulas.js';
 import { spendAp, autoAssignAp, apPlan, STAT_KEYS, stats, wornGear } from '../core/character.js';
 import { drawHero } from '../render/hero.js';
-import { COLORS, windowFrame, button, text, box, bar, hover, tooltip, well, sparkle, roundRect, fit, font, darken } from './kit.js';
+import { COLORS, windowFrame, button, text, box, bar, hover, clicked, tooltip, well, sparkle, roundRect, fit, font, darken } from './kit.js';
 
 // ---------- Stats ----------
 
@@ -85,6 +85,9 @@ export function statsWindow(ui, state, world) {
   if (hover(ui, x + 86, y - 1, lw - 86, 16)) tooltip(ui, [{ text: 'Auto-assign', bold: true }, { text: `Mostly ${primary.toUpperCase()}, with enough ${secondary.toUpperCase()} to keep hitting.`, size: 8, color: COLORS.muted }]);
   y += 20;
   let preview = null;
+  // How many points a + adds: 1, or 5 (the +5 pill below, or Shift held on a keyboard).
+  const shift5 = ui.input.held.has('ShiftLeft') || ui.input.held.has('ShiftRight');
+  const apStep = win.apStep === 5 || shift5 ? 5 : 1;
   for (const k of STAT_KEYS) {
     const main = k === primary;
     const hotRow = hover(ui, x, y, lw, 19);
@@ -103,12 +106,20 @@ export function statsWindow(ui, state, world) {
       text(ctx, tag, x + lw - 38, y + 12, { size: 5.5, bold: true, align: 'center', color: main ? '#ffffff' : COLORS.muted });
     }
     const bx = x + lw - 21;
-    if (button(ui, bx, y + 2, 18, 15, '+', { enabled: char.ap > 0, primary: char.ap > 0, size: 9 })) spendAp(char, k, ui.input.held.has('ShiftLeft') ? 5 : 1);
+    if (button(ui, bx, y + 2, 18, 15, '+', { enabled: char.ap > 0, primary: char.ap > 0, size: 9 })) spendAp(char, k, apStep);
     if (char.ap > 0 && hover(ui, bx, y + 2, 18, 15)) preview = k;
     if (hotRow && !hover(ui, bx, y + 2, 18, 15)) tooltip(ui, [{ text: k.toUpperCase(), bold: true, color: STAT_COLORS[k] }, { text: STAT_ABOUT[k], size: 8 }, ...(bonus ? [{ text: `${char.base[k]} from AP, +${bonus} from gear and skills`, size: 8, color: COLORS.muted }] : [])]);
     y += 22;
   }
-  text(ctx, 'Shift + click: 5 at once', x + lw / 2, y + 6, { size: 6, align: 'center', color: COLORS.muted });
+  // The step for the + buttons, as two little pills (what a phone uses; Shift does it on a keyboard).
+  text(ctx, ui.input?.touch ? 'Each + adds' : 'Each + adds (Shift: 5)', x + 2, y + 7, { size: 6, color: COLORS.muted });
+  [1, 5].forEach((n, i) => {
+    const px = x + lw - 46 + i * 24;
+    const on = (win.apStep ?? 1) === n;
+    box(ctx, px, y, 22, 10, { fill: on ? th.main : hover(ui, px, y, 22, 10) ? '#ffffff' : th.light, edge: on ? th.dark : null, r: 5, width: 1 });
+    text(ctx, `+${n}`, px + 11, y + 7.5, { size: 6.5, bold: true, align: 'center', color: on ? '#ffffff' : th.ink });
+    if (clicked(ui, px, y, 22, 10)) win.apStep = n;
+  });
 
   // ---- What it adds up to ----
   const rx = x + lw + 6;
@@ -117,7 +128,7 @@ export function statsWindow(ui, state, world) {
   well(ctx, rx, ry, rw, H - 33, th);
   text(ctx, 'Combat', rx + 8, ry + 12, { size: 7.5, bold: true, color: th.dark });
   const now = combatRows(char, s);
-  const n = preview ? Math.min(char.ap, ui.input.held.has('ShiftLeft') ? 5 : 1) : 0;
+  const n = preview ? Math.min(char.ap, apStep) : 0;
   const next = preview ? combatRows(char, stats({ ...char, base: { ...char.base, [preview]: char.base[preview] + n } }, world.now)) : null;
   // Some points only show once a few add up (defense steps every 4 STR, say).
   if (preview) text(ctx, next.some((r, i) => r[1] !== now[i][1]) ? `+${n} ${preview.toUpperCase()}` : `+${n} ${preview.toUpperCase()}: builds up`, rx + rw - 8, ry + 12, { size: 7, bold: true, align: 'right', color: GREEN });

@@ -170,7 +170,7 @@ export function shopWindow(ui, state, world) {
       tooltip(ui, gain ? [{ text: `Sell for ${gain.toLocaleString()} gold`, bold: true }, ...junk.slice(0, 8).map((o) => ({ text: `${ITEMS[o.id].name} x${o.qty}`, size: 7 })), ...(junk.length > 8 ? [{ text: `and ${junk.length - 8} more`, size: 7, color: COLORS.muted }] : []), { text: 'Keeps what your quests and recipes need.', size: 7, color: COLORS.muted }]
         : [{ text: 'No junk to sell', bold: true }, { text: 'Monster drops your quests and recipes need are kept.', size: 7, color: COLORS.muted }]);
     }
-  } else text(ctx, 'Double-click: buy or sell one · Shift: 10', win.x + W - 70, fy + 11.5, { size: 6.5, align: 'right', color: COLORS.muted });
+  } else text(ctx, ui.input?.touch ? 'Double-tap: buy or sell one' : 'Double-click: buy or sell one · Shift: 10', win.x + W - 70, fy + 11.5, { size: 6.5, align: 'right', color: COLORS.muted });
   if (button(ui, win.x + W - 62, fy, 54, 16, 'Back', { size: 8 })) dlg.mode = null;
 }
 
@@ -353,7 +353,9 @@ function details(ui, world, dlg, e, x, y, w, h, th, shift) {
     text(ctx, `${dlg.qty}`, x + 42, sy + 9.5, { size: 8, bold: true, align: 'center', color: COLORS.ink });
     if (hover(ui, x + 25, sy, 34, 13)) dlg.qty -= ui.mouse.wheel;
     if (button(ui, x + 62, sy, 16, 15, '+', { size: 9 })) dlg.qty += step;
-    if (button(ui, x + 81, sy, 26, 15, 'Max', { size: 6.5 })) dlg.qty = max;
+    // (Ten at a time with a tap, for a phone with no Shift key.)
+    if (button(ui, x + 81, sy, 24, 15, '+10', { size: 6.5 })) dlg.qty += 10;
+    if (button(ui, x + 108, sy, 26, 15, 'Max', { size: 6.5 })) dlg.qty = max;
     dlg.qty = Math.max(1, Math.min(max, dlg.qty));
   }
   const each = dlg.tab === 0 ? unitCost(def, variant) : unitGain(def, e);

@@ -435,9 +435,11 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
       text(ctx, `${ask.qty}`, sx + 39, sy + 9.5, { size: 8.5, bold: true, align: 'center', color: COLORS.ink });
       if (hover(ui, sx + 19, sy, 40, 13)) ask.qty -= ui.mouse.wheel;
       if (button(ui, sx + 62, sy, 16, 15, '+', { size: 9 })) ask.qty += ui.input.held?.has('ShiftLeft') ? 10 : 1;
-      if (button(ui, sx + 81, sy, 26, 15, 'All', { size: 7 })) ask.qty = max;
+      // (Ten at a tap, for a phone with no Shift key.)
+      if (button(ui, sx + 81, sy, 24, 15, '+10', { size: 6.5 })) ask.qty += 10;
+      if (button(ui, sx + 108, sy, 26, 15, 'All', { size: 7 })) ask.qty = max;
       ask.qty = Math.max(1, Math.min(max, ask.qty));
-      text(ctx, 'It stays on the ground for a while; X picks it back up.', x + 52, y + h - 26, { size: 6, color: COLORS.muted });
+      text(ctx, ui.input?.touch ? 'It stays on the ground for a while; Loot picks it back up.' : 'It stays on the ground for a while; X picks it back up.', x + 52, y + h - 26, { size: 6, color: COLORS.muted });
       if (button(ui, x + w - 104, y + h - 20, 50, 15, 'Cancel', { size: 7.5 })) bagOf(state).dropAsk = null;
       if (button(ui, x + w - 50, y + h - 20, 44, 15, 'Drop', { theme: 'peach', size: 7.5 })) {
         if (dropOnGround(world, ask.tab, at, ask.qty)) bagOf(state).sel = -1;
@@ -471,8 +473,9 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
   }
   if (!entry) {
     icon(ctx, 'bag', x + w / 2, y + h / 2 - 10, 16, th.light);
-    text(ctx, 'Hover an item to see it here.', x + w / 2, y + h / 2 + 8, { size: 7.5, bold: true, align: 'center', color: COLORS.muted });
-    text(ctx, 'Double-click to use or equip · X picks up loot', x + w / 2, y + h / 2 + 18, { size: 6.5, align: 'center', color: COLORS.muted });
+    const touch = ui.input?.touch;
+    text(ctx, touch ? 'Tap an item to see it here.' : 'Hover an item to see it here.', x + w / 2, y + h / 2 + 8, { size: 7.5, bold: true, align: 'center', color: COLORS.muted });
+    text(ctx, touch ? 'Double-tap to use or equip · Loot picks up drops' : 'Double-click to use or equip · X picks up loot', x + w / 2, y + h / 2 + 18, { size: 6.5, align: 'center', color: COLORS.muted });
     return;
   }
   const def = ITEMS[entry.id];
