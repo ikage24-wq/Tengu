@@ -67,3 +67,14 @@ Kestrel's trial carry over; the name is Arbalist Engineer).
   her knee and skids her back; she settles and pumps her fist. The roll hugs the crossbow along her
   back (no more poking through the floor).
 - The free hand's crank sits at the butt behind her hip: in front, the big crossbow hides it.
+
+## Footwork and effects pass (2026-11-04)
+
+- Every shot has a body behind it: she hops in to the snap shot, jumps up to slam the lever, slides
+  into the brace and pops up after it, scoots in to duck and springs up, and each kick bucks her up
+  and back (the triple crank shoves her a step back each bolt). Ends rock heel to toe and settle
+  (`aeRock`). Steps carry her 8-40 px; about a tenth quicker.
+- Effects at their real size: bolts ~39 px (were ~25), heavy bolts ~76 px, Big Bertha's bolt ~220
+  px long and ~70 tall (its hit band is 140); the hit mark ~40-58 px; Sticky Bolt's blast ~66 px
+  round (its reach is 50-80; it was ~26); Steam Vent's steam ~60 px round for its 80 px reach (was
+  ~13). Muzzle and leap puffs keep their size.

@@ -60,3 +60,14 @@ Acrobat Archer).
   arrows run out below her face, then tucks into one more forward turn on the drop.
 - Kneels (rolls, dives) now really kneel: the hips sink and the back knee goes down (a shared fix:
   crouch depths in the rig were too shallow to read on the squashed figure).
+
+## Footwork and effects pass (2026-11-04)
+
+- Her string travels: the skip, split leap, roll and front flip carry her well forward (18-38 px a
+  step), the pirouette hops out into its fan, the handspring still springs back. Leaps are higher,
+  the skip kicks the back heel up, and every trick ends with two springy skips on the spot
+  (`acBounce`) instead of a held pose. About a tenth quicker throughout.
+- Effects redrawn at their real size: arrows ~37 px (were ~20), big arrows ~70 px, the hit star ~40
+  px; Firework Arrow ~58 px round (its blast is 50-80; it was ~20); Grand Somersault's ring ~95 px
+  round (was ~31), and her rain now lands as a gold ring racing out to its 210 px edge
+  (`celshockmint`); the springboard is half again as big.

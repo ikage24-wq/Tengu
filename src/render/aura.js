@@ -201,7 +201,7 @@ function chargeAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
     if (k > 0.2) for (let i = 0; i < (k >= 1 ? 3 : 1 + Math.floor(k * 2)); i++) {
       const u = (t * (0.8 + k) + i / 3) % 1;
-      fxSprite(ctx, 'celaesteam', x + (i - 1) * 9 * s, y - 2 * s, { p: u, scale: s * (0.18 + 0.12 * k), alpha: Math.min(1, (k - 0.2) * 2) * (1 - u * 0.5) });
+      fxSprite(ctx, 'celaesteam', x + (i - 1) * 9 * s, y - 2 * s, { p: u, scale: s * (0.075 + 0.05 * k), alpha: Math.min(1, (k - 0.2) * 2) * (1 - u * 0.5) });
     }
     return;
   }

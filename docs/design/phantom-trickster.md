@@ -62,3 +62,15 @@ Built, replacing the Beastmaster in place (the path keeps the `beastmaster` id a
 - The run's smoke-step glides in a long low lunge along the floor. Grand Illusion has real beats at
   both ends of her vanishing: arms flung open, a whirl, a high finger snap; then she springs out of
   the smoke with a half turn, lands arms wide ("ta-da"), and takes a deep, slow stage bow.
+
+## Footwork and effects pass (2026-11-04)
+
+- She moves like a showman now: a glide forward into the flourish, the cape swirl lifts her off
+  the floor, the card flick skips in, the curtsy springs up into its shot, the "ta-da" leaps
+  forward into the big arrow, and the lazy lean is a moonwalk backward. After a trick she clicks
+  her heels in the air, and settles with a slow rise onto her toes and back (`ptFloat`). About a
+  tenth quicker.
+- Effects at their real size: arrows ~32 px (were ~17), cards ~16 px (were 4-5, specks), doves
+  ~22 px; the hit mark ~36-50 px. Smoke Bomb's smoke is ~120 px wide (was ~30 for a 100-140 px
+  reach) and a plum ring of smoke and cards rolls out to the reach (`celshockplum`). Trick puffs
+  and Grand Illusion's smoke are larger too.

@@ -2511,14 +2511,17 @@ export const MOVES = {
   aesnap(p) {
     const up = ease(seg(p, 0, 0.24));
     const kick = bump(p, 0.28, 0.5);
-    const hold = soft(seg(p, 0.56, 0.9));
+    const hold = soft(seg(p, 0.54, 0.8));
+    const hopIn = bump(p, 0.0, 0.24);
     return {
       poised: true,
-      weapon: lerp(40, -4, up) - 18 * kick - 10 * hold, arm: lerp(26, AE_AIM, up) + 6 * kick - 6 * hold, lunge: 3 * up * (1 - 0.5 * hold) - 3 * kick, tilt: 0.08 * up * (1 - hold) - 0.08 * kick,
+      weapon: lerp(40, -4, up) - 18 * kick - 10 * hold, arm: lerp(26, AE_AIM, up) + 6 * kick - 6 * hold, lunge: 4 * up * (1 - 0.5 * hold) - 4 * kick, tilt: 0.12 * up * (1 - hold) - 0.12 * kick + 0.06 * aeRock(p, 0.56),
+      lift: 6 * hopIn + 3 * kick + 1.4 * Math.abs(aeRock(p, 0.56)),
       rig: (r) => {
+        r.air = hopIn > 0.4 || kick > 0.6;
         r.backArm = kick > 0.1 ? [q(-4 * kick), q(-3 * kick)] : [q(lerp(-1, -3, up) + 2 * hold), q(lerp(-1, 1, up))];
         r.squat = q(0.8 * up * (1 - hold));
-        danceLegs(r, [up, [4.4, 0, 8], [-3, -0.6, -16]], [hold, [3.6, 0, 6], [-2.6, 0, -10]]);
+        danceLegs(r, [up, [4.4, 0, 8], [-3, -0.6, -16]], [hopIn, [2.6, -2.6, 24], [-2.4, -3.6, -46]], [kick, [3, -1.4, 20], [-2.4, -1, -16]], [hold, [3.6, 0, 6], [-2.6, 0, -10]]);
         if (kick > 0.3) strikeFace(r);
         else if (hold > 0.5) r.mouth = 'grin';
       },
@@ -2533,15 +2536,18 @@ export const MOVES = {
     const lift = soft(seg(p, 0.36, 0.44)) * (1 - ease(seg(p, 0.46, 0.52)));
     const slam = bump(p, 0.46, 0.58);
     const k2 = bump(p, 0.58, 0.74);
-    const hold = soft(seg(p, 0.76, 0.96));
+    const hold = soft(seg(p, 0.74, 0.88));
+    const jump = bump(p, 0.34, 0.52);
     return {
       poised: true,
-      weapon: lerp(20, -2, set) - 14 * k1 - 18 * k2 + 8 * slam - 22 * hold, arm: lerp(32, AE_AIM - 2, set) + 6 * (k1 + k2) - 6 * slam - 8 * hold, lunge: -2.5 * (k1 + k2), tilt: -0.05 * (k1 + k2) + 0.08 * slam - 0.04 * hold,
+      weapon: lerp(20, -2, set) - 14 * k1 - 18 * k2 + 8 * slam - 22 * hold, arm: lerp(32, AE_AIM - 2, set) + 6 * (k1 + k2) - 6 * slam - 8 * hold, lunge: 2 * set - 3.5 * (k1 + k2), tilt: -0.08 * (k1 + k2) + 0.12 * slam - 0.04 * hold + 0.05 * aeRock(p, 0.76),
+      lift: 6 * jump + 2 * k2 + 1.2 * Math.abs(aeRock(p, 0.76)),
       rig: (r) => {
+        r.air = jump > 0.4;
         r.backArm = hold > 0.05 ? [q(lerp(5, -3, hold)), q(lerp(0, 2, hold))]
           : lift > 0.05 || slam > 0.05 ? [q(lerp(-4, 5, slam) * (1 - lift) - 4 * lift), q(-8 * lift + lerp(0, 1, slam) * (1 - lift))] : [q(-2 - 2 * k1), q(-1 - 2 * k1)];
-        r.squat = q(1.8 * slam + 0.6 * set);
-        danceLegs(r, [set, [4, 0, 6], [-4, 0, -10]]);
+        r.squat = q(2.4 * slam + 0.6 * set);
+        danceLegs(r, [set, [4, 0, 6], [-4, 0, -10]], [jump, [2.4, -3, 30], [-2.4, -3.4, -40]]);
         if (k1 > 0.3 || k2 > 0.3) strikeFace(r);
         else if (hold > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
         else if (lift > 0.5) r.mouth = 'grin';
@@ -2552,20 +2558,24 @@ export const MOVES = {
   // stock braced over it, the crossbow out in front; her free hand winds the crank at the butt round
   // twice in big circles behind her with a grin, then she fires; the kick rocks her back on her heel.
   aebrace(p) {
-    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.86, 1)));
+    const kneel = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.76, 0.88)));
     const crank = seg(p, 0.16, 0.5);
     const cranking = crank > 0 && crank < 1;
     const kick = bump(p, 0.52, 0.72);
     const wind = cranking ? Math.sin(crank * Math.PI * 4) : 0;
+    const pop = bump(p, 0.78, 0.96);
     return {
       poised: true,
-      weapon: lerp(20, 2, kneel) - 26 * kick + 3 * wind, arm: lerp(30, AE_AIM - 6, kneel) + 8 * kick, lunge: -5 * kick, tilt: 0.04 * kneel - 0.12 * kick,
+      weapon: lerp(20, 2, kneel) - 26 * kick + 3 * wind, arm: lerp(30, AE_AIM - 6, kneel) + 8 * kick, lunge: 3 * kneel - 7 * kick, tilt: 0.06 * kneel - 0.16 * kick + 0.03 * wind,
+      lift: 3 * kick + 6 * pop,
       rig: (r) => {
         r.squat = q(4 * kneel);
-        r.by = q(0.6 * wind);
+        r.air = pop > 0.4;
+        r.by = q(1 * wind);
         r.backArm = cranking ? crankHand(crank * 2, 4.6) : kick > 0.1 ? [q(-5 * kick), q(-3 * kick)] : [q(-2 * kneel), q(-1)];
-        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]]);
+        danceLegs(r, [kneel, [4.6, 0, 10], [-6.2, 0, -80]], [pop, [2, -2.6, 20], [-2.2, -3.4, -40]]);
         if (cranking && crank > 0.15) r.mouth = 'grin';
+        if (pop > 0.4) r.eyes = 'happy';
         if (kick > 0.3) strikeFace(r);
         else if (kneel > 0.5 && !cranking && p > 0.7) r.eyes = 'happy';
       },
@@ -2583,7 +2593,7 @@ export const MOVES = {
     const pose = soft(seg(p, 0.82, 0.92));
     return {
       poised: true,
-      weapon: lerp(14, -6, plant) - 46 * kick - 34 * pose, arm: lerp(28, AE_AIM + 4, plant) + 12 * kick - 18 * pose, lunge: -10 * soft(seg(p, 0.48, 0.8)) * (1 - 0.4 * pose), lift: 6 * hop, tilt: 0.04 * plant * (1 - kick) - 0.2 * kick - 0.1 * skid,
+      weapon: lerp(14, -6, plant) - 46 * kick - 34 * pose, arm: lerp(28, AE_AIM + 4, plant) + 12 * kick - 18 * pose, lunge: 2 * plant * (1 - kick) - 14 * soft(seg(p, 0.48, 0.8)) * (1 - 0.4 * pose), lift: 10 * hop + 1.4 * Math.abs(aeRock(p, 0.86)), tilt: 0.06 * plant * (1 - kick) - 0.26 * kick - 0.12 * skid + 0.05 * aeRock(p, 0.86),
       rig: (r) => {
         r.squat = q(2 * plant * (1 - kick) * (1 - hop) + 2.4 * skid);
         r.backArm = pose > 0.1 ? dancerHand([q(2 * pose), q(-9 * pose)]) : kick > 0.1 ? [q(-6 * kick), q(-4 * kick)] : [q(-2), q(0)];
@@ -2625,18 +2635,21 @@ export const MOVES = {
   // Duck and fire (second in her pool, ~0.4): she ducks right down onto her heels, both knees bent
   // and her head tucked low behind the stock, and fires steeply up and out from the crouch.
   aeduck(p) {
-    const duck = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.74, 1)));
+    const duck = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.64, 0.8)));
     const kick = bump(p, 0.36, 0.56);
+    const pop = bump(p, 0.7, 0.92);
     return {
       poised: true,
-      weapon: -4 - 26 * duck - 16 * kick, arm: lerp(40, 50, duck) + 8 * kick, tilt: 0.12 * duck - 0.08 * kick, lunge: -2 * kick,
+      weapon: -4 - 26 * duck - 16 * kick, arm: lerp(40, 50, duck) + 8 * kick, tilt: 0.14 * duck - 0.1 * kick - 0.05 * pop, lunge: 3 * duck - 3 * kick, lift: 7 * pop,
       rig: (r) => {
+        r.air = pop > 0.4;
         r.squat = q(4.4 * duck);
         r.hx = q(1 * duck);
         r.tilt = Math.round(2 * duck) * 2;
         r.backArm = [q(4 * duck), q(-1 + 3 * duck)];
-        danceLegs(r, [duck, [4.4, 0, 14], [-4, 0, -18]]);
+        danceLegs(r, [duck, [4.4, 0, 14], [-4, 0, -18]], [pop, [1.8, -3, 24], [-2, -3.2, -44]]);
         if (kick > 0.3) strikeFace(r);
+        else if (pop > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
         else if (duck > 0.5) r.eyes = 'half';
       },
     };
@@ -2653,7 +2666,7 @@ export const MOVES = {
     const rattle = cranking ? Math.sin(p * 90) * 0.5 : 0;
     return {
       poised: true,
-      weapon: lerp(16, -12, brace) - 12 * k + 2 * rattle, arm: lerp(30, 56, brace) + 5 * k, lunge: -2 * k - 1.6 * shots * (1 - soft(seg(p, 0.84, 1))), tilt: -0.14 * brace - 0.05 * k,
+      weapon: lerp(16, -12, brace) - 12 * k + 2 * rattle, arm: lerp(30, 56, brace) + 5 * k, lunge: -3 * k - 2.2 * shots * (1 - soft(seg(p, 0.84, 1))), tilt: -0.16 * brace - 0.08 * k + 0.05 * aeRock(p, 0.82), lift: 2.6 * k + 1.2 * Math.abs(aeRock(p, 0.82)),
       rig: (r) => {
         r.backArm = cranking ? crankHand(crank * 3, 4.6) : [q(-2), q(-1)];
         r.by = q(rattle);
@@ -2674,7 +2687,7 @@ export const MOVES = {
     const pat = bump(p, 0.86, 1);
     return {
       poised: true,
-      weapon: -10 * slide - 22 * kick + 8 * pat, arm: lerp(32, AE_AIM, slide) + 8 * kick, lunge: 9 * slide - 3 * kick, lift: 3 * pop, tilt: -0.24 * slide - 0.06 * kick,
+      weapon: -10 * slide - 22 * kick + 8 * pat, arm: lerp(32, AE_AIM, slide) + 8 * kick, lunge: 11 * slide - 3 * kick, lift: 8 * pop, tilt: -0.28 * slide - 0.08 * kick + 0.06 * pop,
       rig: (r) => {
         r.squat = q(4 * slide);
         r.air = pop > 0.4;
@@ -2694,8 +2707,8 @@ export const MOVES = {
     const kick = bump(p, 0.32, 0.52);
     return {
       poised: true,
-      weapon: lerp(0, -45, up) + 10 * kick, arm: lerp(27, 28, up), lunge: 0,
-      rig: (r) => { r.backArm = [q(3), q(-2)]; danceLegs(r, [up, [1.4, 0, 4], [-1.6, 0, -6]]); if (kick > 0.3) strikeFace(r); },
+      weapon: lerp(0, -45, up) + 10 * kick, arm: lerp(27, 28, up), lunge: -2 * kick, lift: 4 * kick + 1.2 * Math.abs(aeRock(p, 0.56)), tilt: -0.06 * up - 0.06 * kick + 0.05 * aeRock(p, 0.56),
+      rig: (r) => { r.backArm = [q(3), q(-2)]; r.air = kick > 0.5; danceLegs(r, [up, [1.4, 0, 4], [-1.6, 0, -6]], [kick, [2, -2, 20], [-2, -2.6, -30]]); if (kick > 0.3) strikeFace(r); },
     };
   },
   // In the air: she tips it down past her knees and fires at whatever is below.
@@ -2704,8 +2717,8 @@ export const MOVES = {
     const kick = bump(p, 0.28, 0.5);
     return {
       poised: true,
-      weapon: lerp(0, 55, down) - 12 * kick, arm: 33 - 6 * kick,
-      rig: (r) => { r.air = true; r.backArm = [q(-4), q(-6)]; danceLegs(r, [1, [2.4, -3, 30], [-2.4, -2, -30]]); if (kick > 0.3) strikeFace(r); },
+      weapon: lerp(0, 55, down) - 12 * kick, arm: 33 - 6 * kick, lift: 3 * kick, tilt: 0.1 * down - 0.08 * kick,
+      rig: (r) => { r.air = true; r.backArm = [q(-4), q(-6)]; danceLegs(r, [1, [2.4, -3, 30], [-2.4, -2, -30]], [kick, [3, -4.4, 50], [-1.4, -4, -10]]); if (kick > 0.3) strikeFace(r); },
     };
   },
   // Out of a run: a forward roll with the crossbow hugged tight along her back, coming up on one
@@ -3979,18 +3992,18 @@ export const MOVES = {
     const skip = Math.sin(Math.PI * seg(p, 0.05, 0.5));
     const raise = soft(seg(p, 0.02, 0.24));
     const s = bowShot(p, 0.2, 0.5);
-    const hold = soft(seg(p, 0.66, 1));
+    const hold = soft(seg(p, 0.6, 0.84));
     const twirl = seg(p, 0.6, 0.9);
     return {
       weapon: lerp(lerp(46, rollOn(BOW_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(46, BOW_ARM, raise), BOW_LOW, hold) + 3 * s.kick,
-      lift: 6 * skip, lunge: 2 * skip - 3 * s.kick, tilt: -0.04 * s.pull - 0.06 * s.kick,
+      lift: 11 * skip + acBounce(p, 0.6), lunge: 4 * skip - 3 * s.kick, tilt: -0.08 * skip * (1 - s.pull) - 0.04 * s.pull - 0.08 * s.kick,
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
-        r.air = skip > 0.2;
+        r.air = skip > 0.2 || acBounce(p, 0.6) > 2;
         bowDraw(r, s, raise);
         if (s.snap > 0) r.backArm = [q(-6 + 3 * hold + 1.5 * Math.cos(twirl * Math.PI * 4)), q(-2 - 3 * hold + 1.5 * Math.sin(twirl * Math.PI * 4))];
         else if (raise < 0.6) r.backArm = [q(lerp(-1, 2, raise)), q(lerp(2, -1, raise))];
-        danceLegs(r, [skip, [2.6, -3.6, 34], [-1.6, -1.2, -24]], [hold, [2, 0, 4], [-0.8, -1.2, -24]]);
+        danceLegs(r, [skip, [2.6, -3.6, 34], [-2.4, -3.8, -60]], [hold, [2, 0, 4], [-0.8, -1.2, -24]], [bump(p, 0.62, 0.8), [1.6, -2.6, 20], [-2, -3.6, -50]]);
         if (s.kick > 0.3) strikeFace(r);
         else if (hold > 0.5) r.eyes = 'wink';
       },
@@ -4002,11 +4015,12 @@ export const MOVES = {
     const f = backflip(seg(p, 0.08, 0.66), 0.9);
     const s1 = bowShot(p, 0.12, 0.38);
     const s2 = bowShot(p, 0.42, 0.62);
-    const hold = soft(seg(p, 0.7, 1));
+    const hold = soft(seg(p, 0.7, 0.86));
     const sh = p < 0.4 ? s1 : s2;
     const rz = soft(seg(p, 0, 0.12));
     return {
-      ...f, weapon: lerp(lerp(BOW_REST, BOW_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), rz), BOW_REST, hold) + 8 * sh.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, rz), BOW_LOW, hold), pull: sh.pull, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
+      // (Once round, the turn is wound back to upright, so the bounces after it lean from the feet.)
+      ...f, lift: f.lift + acBounce(p, 0.72), tilt: p >= 0.66 ? 0 : f.tilt, weapon: lerp(lerp(BOW_REST, BOW_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), rz), BOW_REST, hold) + 8 * sh.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, rz), BOW_LOW, hold), pull: sh.pull, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
       rig: (r) => {
         f.rig(r);
         bowDraw(r, sh);
@@ -4022,10 +4036,10 @@ export const MOVES = {
     const leap = Math.sin(Math.PI * seg(p, 0.1, 0.74));
     const split = soft(seg(p, 0.16, 0.36)) * (1 - soft(seg(p, 0.6, 0.72)));
     const s = bowShot(p, 0.16, 0.5);
-    const land = bump(p, 0.7, 0.88);
-    const hold = soft(seg(p, 0.8, 1));
+    const land = bump(p, 0.7, 0.86);
+    const hold = soft(seg(p, 0.78, 0.92));
     return {
-      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.18))), BOW_REST, hold) + 10 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.18))), BOW_LOW, hold) + 4 * s.kick, lift: 22 * leap - 2 * crouch, lunge: 3 * leap - 4 * s.kick, tilt: -0.06 * split - 0.08 * s.kick,
+      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.18))), BOW_REST, hold) + 10 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.18))), BOW_LOW, hold) + 4 * s.kick, lift: 30 * leap - 3 * crouch + acBounce(p, 0.84), lunge: 5 * leap - 4 * s.kick, tilt: -0.1 * split - 0.1 * s.kick + 0.08 * land,
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         r.air = leap > 0.15;
@@ -4046,18 +4060,21 @@ export const MOVES = {
     const roll = ease(seg(p, 0.02, 0.42));
     const rolling = p > 0.02 && p < 0.42;
     const s = bowShot(p, 0.38, 0.6);
-    const kneel = soft(seg(p, 0.38, 0.5)) * (1 - soft(seg(p, 0.82, 1)));
+    const kneel = soft(seg(p, 0.38, 0.5)) * (1 - soft(seg(p, 0.72, 0.84)));
+    const pop = bump(p, 0.74, 0.92);
     return {
-      weapon: rolling ? 30 : lerp(rollOn(BOW_AIM, s), BOW_REST, soft(seg(p, 0.8, 1))) + 8 * s.kick, arm: rolling ? 50 : lerp(BOW_ARM, BOW_LOW, soft(seg(p, 0.8, 1))),
-      tilt: rolling ? roll * Math.PI * 2 : -0.05 * s.kick, lift: rolling ? 6 * Math.sin(roll * Math.PI) : 0, lunge: rolling ? 4 : -3 * s.kick,
+      weapon: rolling ? 30 : lerp(rollOn(BOW_AIM, s), BOW_REST, soft(seg(p, 0.72, 0.86))) + 8 * s.kick, arm: rolling ? 50 : lerp(BOW_ARM, BOW_LOW, soft(seg(p, 0.72, 0.86))),
+      tilt: rolling ? roll * Math.PI * 2 : -0.07 * s.kick - 0.06 * pop, lift: rolling ? 9 * Math.sin(roll * Math.PI) : 6 * pop, lunge: rolling ? 5 : -3 * s.kick + 2 * pop,
       pull: rolling ? 0 : s.pull, nock: !rolling && s.nock, twang: s.twang,
       rig: (r) => {
         if (rolling) tuck(r);
         r.squat = q(3 * kneel);
+        r.air = pop > 0.35;
         if (rolling) r.backArm = [-2, -3];
         else bowDraw(r, s);
-        danceLegs(r, [kneel, [3.4, 0, 10], [-5.5, 0, -70]]);
+        danceLegs(r, [kneel, [3.4, 0, 10], [-5.5, 0, -70]], [pop, [2.2, -3, 24], [-2.4, -3.8, -56]]);
         if (s.kick > 0.3) strikeFace(r);
+        else if (pop > 0.3) r.eyes = 'wink';
       },
     };
   },
@@ -4071,10 +4088,11 @@ export const MOVES = {
     const out = soft(seg(p, 0.36, 0.46));
     const up = rise * (1 - out);
     const s = bowShot(p, 0.42, 0.6);
-    const hold = soft(seg(p, 0.7, 1));
+    const hold = soft(seg(p, 0.68, 0.86));
+    const hopOut = bump(p, 0.34, 0.5);
     return {
       weapon: lerp(lerp(lerp(BOW_REST, 64, up), rollOn(BOW_AIM, s), out), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(lerp(BOW_LOW, 100, up), BOW_ARM, out), BOW_LOW, hold),
-      lift: 3 * up, lunge: -3 * s.kick,
+      lift: 5 * up + 6 * hopOut + acBounce(p, 0.68), lunge: 3 * hopOut - 3 * s.kick, tilt: -0.08 * hopOut - 0.06 * s.kick,
       turn: turning ? Math.sign(Math.cos(a * Math.PI * 4) || 1) : 1,
       pull: out < 0.9 ? 0 : s.pull, nock: out >= 0.9 && s.nock, twang: s.twang,
       rig: (r) => {
@@ -4083,7 +4101,8 @@ export const MOVES = {
         if (s.snap > 0) r.backArm = [q(-6 + 4 * hold), q(-3 - 3 * hold)];
         r.hairLift = turning ? -1 : 0;
         r.cape -= turning ? 3 : 0;
-        danceLegs(r, [up, [1.2, -4.4, 34], [-0.4, -1.6, -6]], [s.pull * out, [2.4, 0, 4], [-2.2, 0, -8]]);
+        r.air = hopOut > 0.4;
+        danceLegs(r, [up, [1.2, -4.4, 34], [-0.4, -1.6, -6]], [hopOut * out, [1.6, -2.6, 20], [-2.4, -4, -56]], [s.pull * out, [2.4, 0, 4], [-2.2, 0, -8]]);
         if (turning) r.eyes = 'happy';
         else if (s.kick > 0.3) strikeFace(r);
         else if (hold > 0.5) r.eyes = 'wink';
@@ -4097,10 +4116,10 @@ export const MOVES = {
     const hop = Math.sin(Math.PI * seg(p, 0.1, 0.7));
     const flip = ease(seg(p, 0.12, 0.42));
     const s = bowShot(p, 0.34, 0.5);
-    const land = bump(p, 0.68, 0.86);
-    const hold = soft(seg(p, 0.82, 1));
+    const land = bump(p, 0.68, 0.84);
+    const hold = soft(seg(p, 0.8, 0.94));
     return {
-      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.2))), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.2))), BOW_LOW, hold), lift: 26 * hop, tilt: flip * Math.PI * 2 - 0.06 * s.kick + 0.16 * hold,
+      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.2))), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.2))), BOW_LOW, hold), lift: 32 * hop - 2.5 * crouch + 0.6 * acBounce(p, 0.84), tilt: (flip < 1 ? flip * Math.PI * 2 : 0) - 0.06 * s.kick + 0.16 * hold,
       pull: s.pull, nock: s.nock, twang: s.twang, lunge: 2 * hop,
       rig: (r) => {
         if (flip < 1 && hop > 0.2) tuck(r);
@@ -4121,8 +4140,9 @@ export const MOVES = {
     const bend = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.78, 1)));
     const s = bowShot(p, 0.22, 0.5);
     return {
-      weapon: lerp(BOW_REST, -58, bend) + 8 * s.kick, arm: lerp(BOW_LOW, 128, bend), tilt: -0.28 * bend, lunge: -2 * s.kick, pull: s.pull, nock: s.nock, twang: s.twang,
+      weapon: lerp(BOW_REST, -58, bend) + 8 * s.kick, arm: lerp(BOW_LOW, 128, bend), tilt: -0.28 * bend, lunge: -2 * s.kick, lift: 5 * bump(p, 0.44, 0.7) + acBounce(p, 0.72) * 0.6, pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
+        r.air = bump(p, 0.44, 0.7) > 0.4;
         r.backArm = s.snap > 0 ? [q(-5 + 4 * (1 - bend)), q(-4)] : [q(lerp(1, -1, s.pull)), q(lerp(1, -1, s.pull))];
         r.hx = q(-2 * bend);
         r.tilt = Math.round(-3 * bend) * 2;
@@ -4264,11 +4284,13 @@ export const MOVES = {
     const sweeping = p > 0.02 && p < 0.3;
     const raise = soft(seg(p, 0.24, 0.36));
     const s = bowShot(p, 0.32, 0.52);
-    const hold = soft(seg(p, 0.66, 1));
+    const hold = soft(seg(p, 0.62, 0.8));
+    const click = bump(p, 0.58, 0.78);
     // The hand's path round her shoulder: forward and low, up over her head, out wide behind her.
     const ang = lerp(-0.3, 3.5, soft(sweep));
     return {
-      weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(36, PT_ARM, raise), 40, hold), lunge: -2 * s.kick, tilt: -0.07 * bump(p, 0.02, 0.3) - 0.04 * s.kick,
+      weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(36, PT_ARM, raise), 40, hold), lunge: 3 * bump(p, 0.02, 0.4) - 2 * s.kick, tilt: -0.12 * bump(p, 0.02, 0.3) - 0.04 * s.kick + 0.06 * click,
+      lift: 4 * bump(p, 0.04, 0.34) + 7 * click + ptFloat(p, 0.78),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         bowDraw(r, s, raise);
@@ -4277,9 +4299,11 @@ export const MOVES = {
         if (s.snap > 0) r.backArm = [q(-6 + 4 * hold), q(-2 + 2 * hold)];
         r.cape -= q(4 * bump(p, 0.1, 0.36));
         r.hairLift = bump(p, 0.1, 0.3) > 0.5 ? -1 : 0;
-        danceLegs(r, [bump(p, 0.02, 0.32), [1.8, 0, 4], [-1.2, -1.2, -24]], [s.pull, [2.2, 0, 4], [-1.8, -0.4, -10]]);
+        r.air = click > 0.35;
+        danceLegs(r, [bump(p, 0.02, 0.32), [1.8, -1.4, 4], [-1.2, -2, -24]], [s.pull, [2.2, 0, 4], [-1.8, -0.4, -10]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
         if (sweeping) r.eyes = 'half';
-        if (hold > 0.4) [r.eyes, r.mouth] = ['half', 'cat'];
+        if (click > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (hold > 0.4) [r.eyes, r.mouth] = ['half', 'cat'];
       },
     };
   },
@@ -4292,16 +4316,18 @@ export const MOVES = {
     const s2 = bowShot(p, 0.44, 0.66);
     const sh = p < 0.42 ? s1 : s2;
     const swirl = bump(p, 0.02, 0.4);
-    const hold = soft(seg(p, 0.76, 1));
+    const hop = bump(p, 0.04, 0.3);
+    const hold = soft(seg(p, 0.72, 0.88));
     return {
       weapon: lerp(PT_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), 40, Math.max(tuckIn, hold * 0.6)) + 8 * sh.kick, arm: lerp(PT_ARM, 34, Math.max(tuckIn, hold * 0.5)), turn: turned ? -1 : 1,
-      pull: tuckIn > 0.1 ? 0 : sh.pull, nock: tuckIn <= 0.1 && sh.nock, twang: Math.max(s1.twang, s2.twang), lunge: -2 * sh.kick, lift: 2 * swirl,
+      pull: tuckIn > 0.1 ? 0 : sh.pull, nock: tuckIn <= 0.1 && sh.nock, twang: Math.max(s1.twang, s2.twang), lunge: 3 * swirl - 2 * sh.kick, lift: 8 * hop + ptFloat(p, 0.7), tilt: 0.1 * Math.sin(seg(p, 0.02, 0.4) * Math.PI * 2) - 0.04 * sh.kick,
       rig: (r) => {
         r.cape -= q(6 * swirl);
         r.hairLift = swirl > 0.4 ? -1 : 0;
         bowDraw(r, sh);
         if (tuckIn > 0.1) r.backArm = [q(-5 * tuckIn), q(-5 * tuckIn)];
-        danceLegs(r, [swirl, [1, -0.8, 6], [-2, -1.6, -20]]);
+        r.air = hop > 0.35;
+        danceLegs(r, [swirl, [1, -0.8, 6], [-2, -1.6, -20]], [hop, [1.4, -3.4, 30], [-1.6, -3, -40]]);
         if (sh.kick > 0.3) strikeFace(r);
         else if (turned) r.eyes = 'half';
       },
@@ -4312,16 +4338,19 @@ export const MOVES = {
   ptreveal(p) {
     const reveal = soft(seg(p, 0.02, 0.2)) * (1 - soft(seg(p, 0.26, 0.34)));
     const s = bowShot(p, 0.3, 0.54);
-    const bow = soft(seg(p, 0.7, 0.86)) * (1 - soft(seg(p, 0.94, 1)));
+    const leap = bump(p, 0.3, 0.56);
+    const bow = soft(seg(p, 0.66, 0.8)) * (1 - soft(seg(p, 0.86, 0.96)));
     return {
-      weapon: lerp(lerp(rollOn(PT_AIM, s), 40, p < 0.2 ? 1 : reveal), 50, bow) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 44, p < 0.2 ? 1 : reveal), 40, bow), lunge: -3 * s.kick, tilt: -0.06 * s.kick + 0.24 * bow - 0.06 * reveal,
+      weapon: lerp(lerp(rollOn(PT_AIM, s), 40, p < 0.2 ? 1 : reveal), 50, bow) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 44, p < 0.2 ? 1 : reveal), 40, bow), lunge: 5 * leap - 3 * s.kick, tilt: -0.08 * s.kick + 0.28 * bow - 0.1 * reveal,
+      lift: 4 * reveal + 9 * leap + ptFloat(p, 0.88),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         bowDraw(r, s);
         if (reveal > 0.05) r.backArm = [q(-8 * reveal), q(-6 * reveal)];
         else if (bow > 0.1) r.backArm = [q(4 * bow), q(2 * bow)];
         r.cape -= q(4 * reveal + 3 * s.kick);
-        danceLegs(r, [reveal, [2.4, 0, 4], [-2.4, 0, -6]], [bow, [1.6, 0, 4], [-2.4, -1, -30]]);
+        r.air = leap > 0.35;
+        danceLegs(r, [reveal, [2.4, -1.6, 4], [-2.4, -1.6, -6]], [leap, [2.6, -3, 30], [-2.6, -3.6, -54]], [bow, [1.6, 0, 4], [-2.4, -1, -30]]);
         if (s.kick > 0.3) strikeFace(r);
         else if (bow > 0.3) [r.eyes, r.mouth] = ['half', 'cat'];
         else if (reveal > 0.4) r.mouth = 'grin';
@@ -4336,17 +4365,21 @@ export const MOVES = {
     const flick = ease(seg(p, 0.1, 0.16)) * (1 - soft(seg(p, 0.24, 0.34)));
     const raise = soft(seg(p, 0.24, 0.34));
     const s = bowShot(p, 0.3, 0.5);
-    const hold = soft(seg(p, 0.66, 1));
+    const hold = soft(seg(p, 0.62, 0.8));
+    const skip = bump(p, 0.04, 0.28);
+    const click = bump(p, 0.58, 0.78);
     return {
       weapon: lerp(lerp(BOW_REST, rollOn(PT_AIM, s), raise), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(32, PT_ARM, raise), 40, hold),
-      lunge: 2.5 * flick - 2 * s.kick, tilt: -0.06 * cock + 0.1 * flick,
+      lunge: 4 * flick - 2 * s.kick, tilt: -0.1 * cock + 0.14 * flick + 0.06 * click, lift: 5 * skip + 7 * click + ptFloat(p, 0.78),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         bowDraw(r, s, raise);
         if (raise < 0.6) r.backArm = [q(lerp(2, 3, cock) + 8 * flick), q(-1 - 4 * cock - 3 * flick)];
         if (s.snap > 0) r.backArm = [q(-6 + 4 * hold), -1];
-        danceLegs(r, [cock, [1.8, 0, 4], [-1.4, -0.8, -16]], [flick, [3.6, 0, 6], [-2.6, -1.6, -30]]);
+        r.air = skip > 0.4 || click > 0.35;
+        danceLegs(r, [cock, [1.8, 0, 4], [-1.4, -0.8, -16]], [flick, [3.6, 0, 6], [-2.6, -3, -54]], [click, [0.4, -3.6, 18], [-0.4, -3.8, -22]]);
         if (flick > 0.3) r.eyes = 'wink';
+        else if (click > 0.4) [r.eyes, r.mouth] = ['half', 'grin'];
         else if (hold > 0.5) r.mouth = 'cat';
       },
     };
@@ -4360,7 +4393,7 @@ export const MOVES = {
     const s2 = bowShot(p, 0.4, 0.62);
     const sh = p < 0.38 ? s1 : s2;
     return {
-      weapon: lerp(40, 46, lean) + 8 * sh.kick, arm: lerp(34, 30, lean), tilt: -0.32 * lean - 0.04 * sh.kick, lunge: -1.5 * sh.kick,
+      weapon: lerp(40, 46, lean) + 8 * sh.kick, arm: lerp(34, 30, lean), tilt: -0.36 * lean - 0.05 * sh.kick, lunge: -1.5 * sh.kick, lift: 1.6 * Math.abs(Math.sin(seg(p, 0, 0.84) * Math.PI * 3)) * lean + ptFloat(p, 0.82),
       pull: sh.pull * 0.8, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
       rig: (r) => {
         r.backArm = sh.snap > 0 ? [q(-3 + 2 * sh.snap), 2] : [q(2 - 5 * sh.pull), q(2)];
@@ -4368,7 +4401,9 @@ export const MOVES = {
         r.hx = q(-1 * lean);
         r.tilt = Math.round(-3 * lean) * 2;
         r.cape -= q(2 * lean);
-        danceLegs(r, [lean, [5, -0.4, 24], [-1.4, 0, -4]]);
+        // Moonwalking: the feet trade places as she glides, the front heel lifting in turn.
+        const slide = Math.sin(seg(p, 0, 0.84) * Math.PI * 3) * lean;
+        danceLegs(r, [lean, [5, -0.4, 24], [-1.4, 0, -4]], [Math.max(0, slide) * 0.6, [4, -1.4, 30], [-2.2, 0, -8]], [Math.max(0, -slide) * 0.6, [5.4, 0, 20], [-0.6, -1.6, -24]]);
         r.eyes = 'half';
         if (lean > 0.5) r.mouth = 'cat';
       },
@@ -4379,16 +4414,18 @@ export const MOVES = {
   ptcurtsy(p) {
     const dip = soft(seg(p, 0.02, 0.24)) * (1 - soft(seg(p, 0.3, 0.42)));
     const s = bowShot(p, 0.38, 0.6);
-    const hold = soft(seg(p, 0.72, 1));
+    const hold = soft(seg(p, 0.7, 0.86));
+    const rise = bump(p, 0.32, 0.6);
     return {
-      weapon: lerp(lerp(rollOn(PT_AIM, s), 70, dip), BOW_REST, hold) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 40, dip), 40, hold), tilt: 0.16 * dip - 0.06 * s.kick, lunge: -3 * s.kick,
+      weapon: lerp(lerp(rollOn(PT_AIM, s), 70, dip), BOW_REST, hold) + 10 * s.kick, arm: lerp(lerp(PT_ARM, 40, dip), 40, hold), tilt: 0.22 * dip - 0.08 * s.kick - 0.06 * rise, lunge: 4 * rise - 3 * s.kick, lift: -2 * dip + 9 * rise + ptFloat(p, 0.76),
       pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         r.squat = q(2 * dip);
         bowDraw(r, s);
         if (dip > 0.05) r.backArm = [q(-6 * dip), q(2 * dip)];
         else if (s.snap > 0) r.backArm = [q(-6 + 4 * hold), -1];
-        danceLegs(r, [dip, [2, 0, 4], [-4.5, 1.6, -60]]);
+        r.air = rise > 0.35;
+        danceLegs(r, [dip, [2, 0, 4], [-4.5, 1.6, -60]], [rise, [2, -3.2, 26], [-2.2, -3.6, -50]]);
         if (dip > 0.4) r.eyes = 'happy';
         else if (s.kick > 0.3) strikeFace(r);
         else if (hold > 0.4) [r.eyes, r.mouth] = ['half', 'cat'];
@@ -4402,7 +4439,7 @@ export const MOVES = {
     const up = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.8, 1)));
     const s = bowShot(p, 0.18, 0.46);
     return {
-      weapon: lerp(BOW_REST, -56, up) + 8 * s.kick, arm: lerp(40, 124, up), tilt: -0.1 * up, lunge: -1.5 * s.kick, pull: s.pull, nock: s.nock, twang: s.twang,
+      weapon: lerp(BOW_REST, -56, up) + 8 * s.kick, arm: lerp(40, 124, up), tilt: -0.1 * up, lunge: -1.5 * s.kick, lift: 3 * up + 4 * bump(p, 0.42, 0.66) + ptFloat(p, 0.7), pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         r.backArm = s.snap > 0 ? [q(-3), q(lerp(-3, 3, soft(s.snap)))] : s.pull > 0.05 ? [q(lerp(1, -1, s.pull)), q(lerp(1, -1, s.pull))] : [-3, 3];
         r.hx = q(-1.5 * up);
@@ -5766,6 +5803,15 @@ function siHead(r, back) {
 // Singing: the mouth shaping the words of the line, a syllable at a time.
 // Her follow-through after a blow lands: two little bounces on the beat, the second smaller, so a
 // held end pose keeps grooving and settles instead of freezing (back to 0 by the end).
+// The Acrobat Archer's follow-through: two springy skips on the spot after the blow, the second
+// smaller, the way a gymnast bounces out of a landing (back to 0 by the end).
+const acBounce = (p, a) => 3.4 * bump(p, a, a + (1 - a) * 0.5) + 1.3 * bump(p, a + (1 - a) * 0.5, a + (1 - a) * 0.92);
+// The Phantom Trickster's: an unhurried rise onto her toes and a slow sink back, a showman letting
+// the trick land (back to 0 by the end).
+const ptFloat = (p, a) => { const u = seg(p, a, 1); return 2.6 * Math.sin(Math.PI * u) * (1 - 0.5 * u); };
+// The Arbalist Engineer's: the machine's kick rocking her heel to toe and back, dying away (a tilt
+// that ends level).
+const aeRock = (p, a) => { const u = seg(p, a, 1); return Math.sin(u * Math.PI * 3) * (1 - u); };
 const siBounce = (p, a) => 1.8 * bump(p, a, a + (1 - a) * 0.45) + 0.7 * bump(p, a + (1 - a) * 0.45, a + (1 - a) * 0.85);
 const siSyllable = (p, seed) => ['o', 'ah', 'e', 'ah', 'o', 'open'][(Math.floor(p * 11) + seed) % 6];
 

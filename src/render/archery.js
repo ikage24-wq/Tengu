@@ -157,7 +157,7 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
       const left = Math.cos(nose) < 0;
       const name = { ptarrow: 'celptarrow', ptbig: 'celptbig', ptcard: 'celptcard', ptdove: 'celptdove' }[f.shot];
       const upright = f.shot === 'ptcard' || f.shot === 'ptdove';
-      fxSprite(ctx, name, x, y, { t: time + (f.seed ?? 0), flip: left, rot: upright ? 0 : left ? nose + Math.PI : nose, scale: { ptarrow: 0.5, ptbig: 0.62, ptcard: 0.32, ptdove: 0.4 }[f.shot] * (f.split ? 0.85 : 1) });
+      fxSprite(ctx, name, x, y, { t: time + (f.seed ?? 0), flip: left, rot: upright ? 0 : left ? nose + Math.PI : nose, scale: { ptarrow: 0.5, ptbig: 0.62, ptcard: 0.6, ptdove: 0.6 }[f.shot] * (f.split ? 0.85 : 1) });
       return true;
     }
     case 'acarrow': case 'acbig': {
@@ -356,13 +356,14 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
   switch (f.kind) {
     case 'pthit':
       // The Phantom Trickster's arrow landing: a silver flash, a puff of plum smoke, three cards.
-      return fxSprite(ctx, 'celpthit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.6 : 0.44 }) || true;
+      return fxSprite(ctx, 'celpthit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.75 : 0.55 }) || true;
     case 'ptsmoke':
       // A puff of her stage smoke (vanishing, appearing, a copy popping, Smoke Bomb).
-      return fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: f.small ? 0.35 : 0.7 }) || true;
+      // (Smoke Bomb's is as wide as it reaches, `big`; a trick's puff, `small`, still reads.)
+      return fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: f.big ? 1 : f.small ? 0.3 : 0.55 }) || true;
     case 'ptillusion':
       // Grand Illusion: the great ring of stage smoke, cards fluttering down through it.
-      return fxSprite(ctx, 'celptillusion', x, y + 4, { p, scale: 1 }) || true;
+      return fxSprite(ctx, 'celptillusion', x, y + 4, { p, scale: 1.1 }) || true;
     case 'achit': {
       // The Acrobat Archer's arrow landing: a gold star popping in a loop of mint ribbon, then
       // confetti; heavy shots are bigger.
@@ -370,10 +371,11 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     }
     case 'acfirework':
       // Firework Arrow going off.
-      return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.6 }) || true;
+      // (drawn about as wide as the blast it deals, 50-80 px round its target)
+      return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 }) || true;
     case 'acburst':
       // Grand Somersault: the gold ring of arrows bursting round her at the top of her leap.
-      return fxSprite(ctx, 'celacburst', x, y - 72, { p, scale: 0.7 }) || true;
+      return fxSprite(ctx, 'celacburst', x, y - 80, { p, scale: 0.9 }) || true;
     case 'hawkhit': {
       // An Archer's arrow landing: a gold star pops with a sky-blue swoosh across it and gold
       // feathers burst off; heavy shots and crits add a gold ring racing out along the ground.
@@ -438,7 +440,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // (The Acrobat Archer's springboard, bobbing on its spring.)
       if (f.look === 'spring') {
         const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
-        return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.4, alpha: a2 }) || true;
+        return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.6, alpha: a2 }) || true;
       }
       // Spring Trap, armed on the ground (it fades in as it's set, and out as it rusts away).
       const a = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
@@ -446,7 +448,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'trapsnap': {
-      if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.4 }) || true;
+      if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
       // The trap snapping shut on a monster, sparks and dust flying.
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;

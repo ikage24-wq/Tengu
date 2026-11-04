@@ -79,7 +79,9 @@ export function doveBurst(world, m, delay, p) {
 // them, and makes her hard to touch for a moment. Always true (it never fails).
 export function smokeBomb(world, params) {
   const b = world.body;
-  world.fx.push({ kind: 'ptsmoke', x: b.x, y: b.y, t: 0, dur: 0.7 });
+  world.fx.push({ kind: 'ptsmoke', big: true, x: b.x, y: b.y, t: 0, dur: 0.7 });
+  // A ring of smoke and cards rolls out to the edge of what it catches.
+  world.fx.push({ kind: 'shock', name: 'celshockplum', x: b.x, y: b.y, r: params.r, t: 0, dur: 0.45 });
   world.invuln = Math.max(world.invuln ?? 0, 0.6);
   const caught = world.mobs.filter((m) => alive(m) && Math.abs(m.x - b.x) <= params.r + m.def.w / 2 && Math.abs(m.y - b.y) < 90);
   // (They lose track of her while the smoke hangs, blows and all: tickPhantom keeps them lost.)
