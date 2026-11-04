@@ -180,7 +180,7 @@ export function profileWindow(ui, state, world) {
     if (button(ui, rx + rw - 42, cy + 2, 38, 16, 'Buy', { primary: true, enabled: world.char.gold >= it.price, size: 7.5 })) {
       const r = buyFromShop(bot, index, world.char, addItem);
       if (r) world.log(r.text, r.ok ? '#bff0dc' : '#ffb3c6');
-      if (r?.ok) thank(world.bots, bot, world.char.name);
+      if (r?.ok) thank(world.bots, bot, world);
     }
   });
   if (!bot.shop?.items.length) text(ctx, 'Sold out!', rx + rw / 2, y + 40, { size: 9, align: 'center', color: COLORS.muted });

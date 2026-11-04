@@ -832,18 +832,23 @@ test('accepting a help request or a dungeon group never pushes your party past i
 
 // A field with its players, run for `secs` (you standing still at the start), calling `each` every frame.
 function lifeField(mapId, seed, secs, { night = false, each = null } = {}) {
-  const world = createWorld(createCharacter('Tester', {}));
-  const lines = [];
-  world.log = (t) => lines.push({ t, at: world.now });
-  world.char.level = 20;
-  world.god = true;
-  const bots = createBots(world, seeded(seed), { clock: EVENING });
-  loadMap(world, mapId, 'start');
-  world.forceNight = night ? 1 : 0;
-  // (The world's own dice are seeded too, so a run always plays out the same way.)
+  // A run always plays out the same way: the world's own dice are seeded from the very start (the
+  // monsters' first places included), and its clocks are fixed (the game hour, the server's
+  // evening), never the real time the test happens to run at.
   const random = Math.random;
   Math.random = seeded(seed + 1000);
+  const lines = [];
+  let world;
+  let bots;
   try {
+    world = createWorld(createCharacter('Tester', {}));
+    world.log = (t) => lines.push({ t, at: world.now });
+    world.char.level = 20;
+    world.god = true;
+    world.dayClock = EVENING;
+    world.forceNight = night ? 1 : 0;
+    bots = createBots(world, seeded(seed), { clock: EVENING });
+    loadMap(world, mapId, 'start');
     for (let t = 0; t < secs; t += 1 / 30) {
       updateWorld(world, 1 / 30, NONE);
       updateBots(bots, world, 1 / 30);

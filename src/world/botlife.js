@@ -532,8 +532,9 @@ export function townPastime(bot, bots, world, map) {
   const ground = (s) => Math.abs(groundAt(map, s.x) - s.y) < 4;
   const nodes = choices(bot, world, { x: bot.x, y: groundAt(map, bot.x) }, rng).filter((c) => ground(c) && c.kind === 'node');
   if (nodes.length) opts.push(['node', 0.6]);
-  const fish = (SPOTS[map.id] ?? []).map((s, si) => ({ s, si })).filter(({ s, si }) => ground(s) && lifeLevel(char, 'fishing') >= needFor(s) && free(`f${si}`) && !playerUsingSpot(world, s));
-  if (fish.length) opts.push(['fish', 1 + lifeLevel(char, 'fishing') / 12]);
+  const span = map.walkSpan ?? [0, map.width];
+  const fish = (SPOTS[map.id] ?? []).map((s, si) => ({ s, si })).filter(({ s, si }) => ground(s) && s.x >= span[0] && s.x <= span[1] && lifeLevel(char, 'fishing') >= needFor(s) && free(`f${si}`) && !playerUsingSpot(world, s));
+  if (fish.length) opts.push(['fish', (1 + lifeLevel(char, 'fishing') / 12) * (map.id === 'lagoon' ? 4 : 1)]);
   if (!opts.length) return false;
   let r = rng() * opts.reduce((s, [, w]) => s + w, 0);
   const kind = (opts.find(([, w]) => (r -= w) < 0) ?? opts[0])[0];

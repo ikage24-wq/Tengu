@@ -63,10 +63,10 @@ export function membersHere(world) {
   return out;
 }
 
-function hurt(world, g, raw, fromX) {
+function hurt(world, g, raw, fromX, by = null) {
   if (g.remote) return;
   if (world.dungeon) return hurtMember(world, g, raw, fromX, { knock: true });
-  if (g.bot) return hurtBot(g.bot, world, raw, fromX);
+  if (g.bot) return hurtBot(g.bot, world, raw, fromX, Math.random, by);
   if (!world.dead) hurtPlayer(world, raw, fromX);
 }
 
@@ -143,11 +143,11 @@ const TICK = {
     const raw = m.def.atk * def.hit;
     if (inside.length) {
       const each = raw / inside.length;
-      for (const g of inside) hurt(world, g, each, r.x);
+      for (const g of inside) hurt(world, g, each, r.x, m.def);
       world.log?.(inside.length > 1 ? `${def.name} shared by ${inside.length}!` : `${def.name} lands on you alone!`, inside.length > 1 ? '#ffe36b' : '#ffb3c6');
     } else {
       // Nobody took it: it bursts wide over the whole floor around it.
-      for (const g of members) if (Math.abs(g.body.x - r.x) < 320 && Math.abs(g.body.y - r.y) < 30) hurt(world, g, raw * 1.4, r.x);
+      for (const g of members) if (Math.abs(g.body.x - r.x) < 320 && Math.abs(g.body.y - r.y) < 30) hurt(world, g, raw * 1.4, r.x, m.def);
       world.log?.(`Nobody stood in the ring: ${def.name} bursts wide!`, '#ffb3c6');
     }
     world.juice.push({ type: 'shake', mag: inside.length > 1 ? 4 : 7, dur: 0.5 });

@@ -17,7 +17,7 @@ import { partyMembers } from './party.js';
 import { navOf, surfaceOf, surfaceBelow } from './nav.js';
 import { physicalRange, magicRange, rollHit } from '../core/formulas.js';
 import { JOBS } from '../data/jobs.js';
-import { stale } from './chatlog.js';
+import { sayOneOf } from './chatlog.js';
 import { remember } from './botmemory.js';
 import { gaugeFull } from './melee.js';
 import { cast, castBlocker } from './combat.js';
@@ -115,8 +115,7 @@ export function teamHit(world, m, h) {
     // The one who caught it says so now and then (their own words, not every time).
     const bot = me.bot;
     if (bot && yours && !bot.bubble && Math.random() < 0.3) {
-      const line = pick(L.chain > 2 ? [`${L.chain} in a row!!`, 'keep it up keep it up', 'juggle!!'] : ['caught it!', 'got ur launch', 'mine!!', 'nice pass']);
-      if (!stale(world, line)) bot.bubble = { text: line, t: 3 };
+      sayOneOf(world, bot, L.chain > 2 ? [`${L.chain} in a row!!`, 'keep it up keep it up', 'juggle!!'] : ['caught it!', 'got ur launch', 'mine!!', 'nice pass'], Math.random, { t: 3 });
     }
   }
   if (k !== 1) h.damage = Math.max(1, Math.round(h.damage * k));
@@ -235,8 +234,7 @@ function sendHelper(world, team, d, r) {
   best.brain.path = null;
   best.brain.think = Math.min(best.brain.think, 0.1);
   if (!best.bubble && Math.random() < 0.6) {
-    const line = pick(d.kind === 'you' ? ['hold on im coming!!', `${world.char.name} dont move`, 'omw to get u up'] : [`got ${d.name}`, `${d.name} hang on`, 'getting them up!']);
-    if (!stale(world, line)) best.bubble = { text: line, t: 3 };
+    sayOneOf(world, best, d.kind === 'you' ? ['hold on im coming!!', `${world.char.name} dont move`, 'omw to get u up'] : [`got ${d.name}`, `${d.name} hang on`, 'getting them up!'], Math.random, { important: true, t: 3 });
   }
 }
 
@@ -255,8 +253,7 @@ function reviveOne(world, d, by) {
     b.reviveGoal = null;
     // (They'll remember you picking them up: world/botmemory.js.)
     if (by?.kind === 'you') remember(world.char, b, 'revive', null, world.map.id);
-    const line = pick(by?.kind === 'you' ? [`ty ${world.char.name}!!`, 'saved me', 'back in it thx'] : [`thx ${by?.name ?? ''}!`, 'im up im up', 'phew']);
-    if (!stale(world, line)) b.bubble = { text: line, t: 3.5 };
+    sayOneOf(world, b, by?.kind === 'you' ? [`ty ${world.char.name}!!`, 'saved me', 'back in it thx'] : [by?.name && `thx ${by.name}!`, 'im up im up', 'phew'], Math.random, { important: true, t: 3.5 });
     world.log(`${byName === 'You' ? 'You' : byName} got ${b.name} back on their feet!`, '#bff0dc');
     return;
   }

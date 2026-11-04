@@ -29,7 +29,7 @@ import { giveMount } from './mount.js';
 import { recruitBot } from './bots.js';
 import { SKILLS } from '../data/skills.js';
 import { speak, contextOf } from './chatter.js';
-import { botChat } from './chatlog.js';
+import { botChat, sayOneOf } from './chatlog.js';
 import { placeInGroup, focusOf, behindSide, shared, callout as callOut } from './botfight.js';
 import { loadMap } from './world.js';
 import { radio, roomSetup, tickRoom, cheerOf, capperPhases, sporeSprout, pillarHit, boarPhases, gnarlPhases, heartMultiplier, hollowCalmed, floodComing, onFloor } from './hollow.js';
@@ -223,7 +223,8 @@ function endRun(world) {
     bot.inDungeon = false;
     bot.hp = null;
     if (bot.finder) {
-      bot.bubble = { text: run.done ? pick(['gg!', 'ty for the run!', 'gg wp <3', 'that was fun', 'gg ez']) : pick(['gl!', 'cya', 'oh ok bye', 'brb food']), t: 4 };
+      const where = DUNGEONS[run.id]?.name;
+      sayOneOf(world, bot, run.done ? ['gg!', 'ty for the run!', 'gg wp <3', where && `${where} cleared, ty all`, 'that was fun'] : ['gl!', 'cya', 'oh ok bye', 'brb food'], Math.random, { important: true, t: 4 });
       dismiss(world.bots, bot, world, { quiet: true });
     }
   }

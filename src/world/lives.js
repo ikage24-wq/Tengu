@@ -10,7 +10,7 @@ import { MOBS } from '../data/mobs.js';
 import { MAPS } from '../data/maps.js';
 import { joinParty, partyMembers, PARTY_MAX } from './party.js';
 import { addItem } from '../core/inventory.js';
-import { botChat } from './chatlog.js';
+import { botChat, sayOneOf } from './chatlog.js';
 
 const pick = (list, rng) => list[Math.floor(rng() * list.length)];
 const between = (a, b, rng) => a + rng() * (b - a);
@@ -55,7 +55,8 @@ export function helpOut(bots, world, bot) {
   bot.helpAsk = null;
   bots.lives.ask = null;
   bot.quest = { mob: ask.mob, n: ask.n, got: 0 };
-  bot.bubble = { text: pick(['omg thank u!!', 'ur the best', 'yay lets go!'], bots.rng), t: 4 };
+  const mob = MOBS[ask.mob].name.toLowerCase();
+  sayOneOf(world, bot, [`omg thank u!! ${ask.n} ${mob}s, lets go`, `ur the best, ${mob}s r this way`, `yay! ${ask.n} ${mob}s and im done`], bots.rng, { important: true });
   world.log(`${bot.name} joined your party: help them hunt ${ask.n} ${MOBS[ask.mob].name}s.`, '#bff0dc');
 }
 
@@ -65,7 +66,7 @@ export function questKill(bots, world, m) {
     const q = b.quest;
     if (!q || q.mob !== m.def.id || q.done) continue;
     q.got += 1;
-    if (q.got === Math.ceil(q.n / 2)) b.bubble = { text: `${q.got}/${q.n}! halfway`, t: 3 };
+    if (q.got === Math.ceil(q.n / 2)) sayOneOf(world, b, [`${q.got}/${q.n}! halfway`, `${q.got} ${m.def.name.toLowerCase()}s down, ${q.n - q.got} to go`], bots.rng, { important: true, t: 3 });
     if (q.got < q.n) continue;
     q.done = true;
     b.helped = true;
@@ -73,7 +74,7 @@ export function questKill(bots, world, m) {
     const gold = 300 + b.level * 40;
     world.char.gold += gold;
     addItem(world.char.inventory, 'elixir', 1);
-    b.bubble = { text: pick(['QUEST DONE!! thank u so much', 'finally!! ur a lifesaver', 'done!! here, take this'], bots.rng), t: 5 };
+    sayOneOf(world, b, ['QUEST DONE!! thank u so much', 'finally!! ur a lifesaver', 'done!! here, take this'], bots.rng, { important: true, t: 5 });
     world.log(`${b.name} finished their quest! They give you ${gold} gold and an Elixir as thanks.`, '#ffe36b');
     world.juice.push({ type: 'confetti', x: b.body?.x ?? world.body.x, y: (b.body?.y ?? world.body.y) - 60, w: 80, count: 24 });
   }

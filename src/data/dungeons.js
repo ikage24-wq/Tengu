@@ -117,6 +117,13 @@ export const DUNGEONS = {
   },
 };
 
+// A dungeon someone of `level` would run now: one of the two newest their level opens (so the
+// server's groups and news name every dungeon, each at the levels that run it). Null under the first.
+export function dungeonForLevel(level, rng = Math.random) {
+  const open = Object.values(DUNGEONS).filter((d) => d.minLevel <= level).sort((a, b) => b.minLevel - a.minLevel).slice(0, 2);
+  return open.length ? open[Math.floor(rng() * open.length)] : null;
+}
+
 export const ROLES = {
   tank: { label: 'Tank', color: '#5aa8ff' },
   healer: { label: 'Healer', color: '#7ee081' },

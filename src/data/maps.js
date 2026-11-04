@@ -700,6 +700,8 @@ Object.assign(MAPS, {
     // The lagoon under the boardwalk, the surf at the cove's edge, and the sea at the foot of the
     // point (render/lagoon.js draws them, with the stilts, the stairs and the cliff).
     lagoon: { surf: [0, 130], cove: [0, 640], deck: [620, 1880], cliff: [1880, 2400], sea: [2300, 2400], seaTop: 520 },
+    // Where the other players stroll: the cove and the boardwalk (the point is up a cliff).
+    walkSpan: [150, 1850],
     cottages: [],
     townPieces: [['palm', 170, 1], ['palm', 520, -1], ['beachspot', 316], ['sandcastle', 286], ['steamer', 70], ['rockpools', 420], ['lookout', 1970], ['stilthouse', 760], ['tackleshop', 880], ['stilthouse', 1040], ['lanternpole', 1200], ['derbyboard', 1260], ['stilthouse', 1360], ['noodlestall', 1530], ['stilthouse', 1720], ['lighthouse', 2080]],
     platforms: [
