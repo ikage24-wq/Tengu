@@ -87,3 +87,22 @@ ids, so saves, Elowen's trial and the dungeon healer seat carry over). She keeps
   Healing Song and raises the fallen with Curtain Call.
 - Removed: the kitsune guardian (her code, drawings, outfits, hair styles and sounds), the Shrine
   Maiden's dances, gohei, torii and purification circle.
+
+## Size, reach and pace pass (2026-11-04)
+
+The player called her clunky, small, slow and not matching her hit areas. Found and fixed:
+
+- **Her effects were drawn a third of their real size.** Her art was authored as if one art unit
+  were a game pixel (it is a third of one), so the song rings covered about a third of the ground
+  they work on, and her notes, hit marks, sound waves and stage were tiny. They are now redrawn
+  larger from the same art (`grown()` in tools/fx-art.js, rendered at the new size, not stretched):
+  notes x2, big note and hit mark x1.8, waves x2.4, stage x1.6, song rings x3, and each song ring
+  is drawn exactly at its reach (`S.r / 130`), Live Show's doubled reach included.
+- **Song rings and the stage lie on the ground under everyone** (`drawGroundFx`), so they never
+  wash over her face or the monsters'. The stage rises lower so it doesn't hide her legs.
+- **Grand Concert's music visibly reaches the monsters:** each beat sends a blast of sound rolling
+  out both ways along the ground to the edge of its reach (`sishock`), and each monster is hit the
+  moment the blast reaches it, not on the beat. The bot Idol's concert does the same.
+- **Snappier:** her notes fly faster (880, big notes 820), and her songs take less time to sing
+  (Healing Song and Lullaby 0.95 s, Cheer 0.8 s, Curtain Call 1.15 s, Grand Concert 2.1 s with
+  its beats brought forward).

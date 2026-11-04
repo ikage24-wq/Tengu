@@ -96,25 +96,42 @@ export function lastRite(world) {
 export function grandConcert(world, s) {
   const C = s.concert;
   const b = world.body;
-  world.concert = { x: b.x, y: b.y, r: C.r, pct: C.pct, key: s.key, beats: C.beats.map((t) => world.now + t), done: 0, end: world.now + C.beats.at(-1) + 0.6 };
+  world.concert = { x: b.x, y: b.y, r: C.r, pct: C.pct, key: s.key, beats: C.beats.map((t) => world.now + t), done: 0, hits: [], end: world.now + C.beats.at(-1) + SHOCK + 0.1 };
   world.fx.push({ kind: 'sistage', x: b.x, y: b.y, t: 0, dur: C.beats.at(-1) + 0.9 });
   // Everyone in reach is healed in full (a finisher's heal: it builds no Applause).
   healAround(world, b.x, b.y, 1, C.r, false);
   applyBuff(world, 'thousandtorii', { duration: C.wardDur, buff: { barrier: C.ward }, range: { w: C.r * 2, h: 200, around: true } });
   world.juice.push({ type: 'shake', mag: 2, dur: 0.25 });
 }
+// Each beat sends the music rolling out both ways along the ground to the edge of its reach
+// (SHOCK s to get there); a monster is hit the moment the blast reaches it, not on the beat.
+const SHOCK = 0.32;
 function tickConcert(world) {
   const C = world.concert;
   if (!C) return;
   while (C.done < C.beats.length && world.now >= C.beats[C.done]) {
     const last = ++C.done === C.beats.length;
-    world.fx.push({ kind: 'siwave', big: true, x: C.x, y: C.y - 30, t: 0, dur: 0.6 });
+    world.fx.push({ kind: 'siwave', big: true, scale: last ? 0.85 : 0.65, x: C.x, y: C.y - 30, t: 0, dur: 0.6 });
+    for (const dir of [-1, 1]) world.fx.push({ kind: 'sishock', big: last, dir, r: C.r, x: C.x, y: C.y - 26, t: 0, dur: SHOCK });
     world.juice.push({ type: 'shake', mag: last ? 3 : 1.5, dur: last ? 0.25 : 0.12 });
     world.mobs
       .filter((m) => alive(m) && Math.abs(m.x - C.x) < C.r + m.def.w / 2 && Math.abs(m.y - C.y) < 120)
-      .forEach((m, i) => dollHit(world, m, { pct: C.pct, x: C.x, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, stop: i ? 0 : last ? 0.08 : 0.04, shake: 0, big: last && !i, burst: 'sihit', gauge: 0, key: C.key }));
+      .forEach((m) => {
+        // When the blast (easing out as it rolls) reaches it.
+        const u = Math.min(1, Math.max(0, Math.abs(m.x - C.x) - m.def.w / 2) / C.r);
+        C.hits.push({ at: world.now + SHOCK * (1 - Math.sqrt(1 - u)), m, last });
+      });
   }
-  if (world.now >= C.end) world.concert = null;
+  let first = true;
+  C.hits = C.hits.filter((h) => {
+    if (world.now < h.at) return true;
+    if (alive(h.m)) {
+      dollHit(world, h.m, { pct: C.pct, x: C.x, knock: h.last ? 260 : 120, launch: h.last ? 260 : 80, stun: 0.3, stop: first ? (h.last ? 0.08 : 0.04) : 0, shake: 0, big: h.last && first, burst: 'sihit', gauge: 0, key: C.key });
+      first = false;
+    }
+    return false;
+  });
+  if (world.now >= C.end && !C.hits.length) world.concert = null;
 }
 
 export function tickIdol(world) {

@@ -755,11 +755,11 @@ const SPECIALS = {
     },
   },
   blessing: { move: 'swwish', dur: 0.9, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
-  grandblessing: { move: 'sisong', dur: 1.2, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  grandblessing: { move: 'sisong', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
   // monsters round her back.
   thousandtorii: {
-    move: 'siconcert', dur: 2.4,
+    move: 'siconcert', dur: 2.1,
     play: (bot, world, m, rng, P, tune) => {
       const C = P.combo[0].strikes[0].concert;
       const b = bot.body;
@@ -769,8 +769,10 @@ const SPECIALS = {
       C.beats.forEach((at, k) => {
         const last = k === C.beats.length - 1;
         world.fx.push({ kind: 'siwave', big: true, x: b.x, y: b.y - 30, t: -at, dur: 0.6 });
+        for (const dir of [-1, 1]) world.fx.push({ kind: 'sishock', big: last, dir, r: C.r, x: b.x, y: b.y - 26, t: -at, dur: 0.32 });
+        // (Each monster is hit as the rolling blast reaches it.)
         world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < C.r + o.def.w / 2 && Math.abs(o.y - b.y) < 120)
-          .forEach((o, i) => land(bot, world, o, at, range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'sihit', via: 'spell' }, rng));
+          .forEach((o, i) => land(bot, world, o, at + 0.32 * (1 - Math.sqrt(1 - Math.min(1, Math.max(0, Math.abs(o.x - b.x) - o.def.w / 2) / C.r))), range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'sihit', via: 'spell' }, rng));
       });
     },
   },

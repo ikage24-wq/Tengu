@@ -1719,10 +1719,10 @@ export function healerTurn(bot, world, rng) {
   const star = witch || maiden;
   const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sisong' : witch ? 'stwish' : 'astide', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 1.2 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
   const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'astide', dur: star ? 0.8 : 1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 1.2 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
@@ -1775,7 +1775,7 @@ export function healerTurn(bot, world, rng) {
         world.fx.push({ kind: 'sihit', big: true, x: fallen.body.x, y: fallen.body.y - 10, h: 0, t: 0, dur: 0.7 });
         world.fx.push({ kind: 'sisong', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
       }
-      bot.attack = maiden ? { pose: 'sibow', t: 0, dur: 1.4 } : { pose: 'pray', t: 0, dur: 1 };
+      bot.attack = maiden ? { pose: 'sibow', t: 0, dur: 1.15 } : { pose: 'pray', t: 0, dur: 1 };
       return maiden ? 1.5 : 1.2;
     }
   }

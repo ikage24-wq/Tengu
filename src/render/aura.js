@@ -263,7 +263,7 @@ function spiritAura(ctx, x, y, t, s, k, layer) {
 // her and her badge, a heart with a note on it, shines over her head.
 function graceAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15) fxSprite(ctx, 'celsisong', x, y + 2, { frame: Math.floor(t * (4 + 6 * k)) % 10, scale: s * (0.3 + 0.18 * k), alpha: Math.min(0.85, (k - 0.15) * 2) });
+    if (k > 0.15) fxSprite(ctx, 'celsisong', x, y + 2, { frame: Math.floor(t * (4 + 6 * k)) % 10, scale: s * (0.1 + 0.06 * k), alpha: Math.min(0.85, (k - 0.15) * 2) });
     return;
   }
   if (k >= 1) {

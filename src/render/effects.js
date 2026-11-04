@@ -108,7 +108,7 @@ function drawShot(ctx, f, cam) {
       // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'sinote' ? 0.7 : 0.75, alpha: f.split ? 0.85 : 1 });
+      fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'sinote' ? 1 : 1.05, alpha: f.split ? 0.85 : 1 });
       break;
     }
     case 'stbolt': case 'stcomet': case 'stmeteor': {
@@ -984,9 +984,15 @@ function drawFx(ctx, f, cam, time) {
 
 // The hero whose blows the smears and spikes belong to, so they line up with the weapon.
 let hero = null;
+// Effects that lie on the ground under everyone (the Starlight Idol's song rings and her stage):
+// drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
+const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby']);
 export function drawEffects(ctx, world, cam, time) {
   hero = world.char ? { look: world.char.appearance, gear: wornGear(world.char) } : null;
-  for (const f of world.fx) drawFx(ctx, f, cam, time);
+  for (const f of world.fx) if (!GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);
+}
+export function drawGroundFx(ctx, world, cam, time) {
+  for (const f of world.fx) if (GROUND_FX.has(f.kind)) drawFx(ctx, f, cam, time);
 }
 
 // Where the weapon was at the moment a blow landed (offsets from the feet), or null.

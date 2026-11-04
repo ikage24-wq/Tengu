@@ -11,7 +11,7 @@ import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
 import { gameHour } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
-import { drawEffects, drawWarnings, drawNumbers, drawDrops } from './effects.js';
+import { drawEffects, drawGroundFx, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
 import { nearbyNpc } from '../world/world.js';
 import { groundAt } from '../world/physics.js';
@@ -333,6 +333,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
+  drawGroundFx(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
   if (world.dungeon) drawHollowBack(ctx, world, cam, time);
   if (world.dungeon) drawManorBack(ctx, world, cam, time);

@@ -73,7 +73,7 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   }
   // The Starlight Idol's: no pillar, a burst of sound waves and notes, her badge rising.
   if (school === 'idol') {
-    fxSprite(ctx, 'celsiwave', x, y - 26, { p, scale: 0.6 });
+    fxSprite(ctx, 'celsiwave', x, y - 26, { p, scale: 0.3 });
     if (p > 0.15) fxSprite(ctx, EMBLEMS.idol, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
@@ -143,7 +143,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
-  else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.4 });
+  else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.4, rot: (seed - 0.5) * 0.4 });
   else if (school === 'phantom') fxSprite(ctx, 'celpthit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.4 });
   else if (school === 'acro') fxSprite(ctx, 'celachit', x, y, { p, scale: k * 0.5, rot: (seed - 0.5) * 0.4 });
   else if (school === 'astral') fxSprite(ctx, 'celashit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.6 });
@@ -185,22 +185,30 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // song hanging in the air (a ring on the ground for as long as it lasts), a song's ring sung
     // once (the party's healer bots), and Grand Concert's stage.
     case 'sihit':
-      return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5, rot: (seed - 0.5) * 0.4 }) || true;
+      return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.85 : 0.6, rot: (seed - 0.5) * 0.4 }) || true;
     case 'siwave':
-      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.big ? 1 : 0.6 }) || true;
+      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.75 : 0.5) }) || true;
+    case 'sishock': {
+      // A blast of Grand Concert's music rolling out along the ground to the edge of its reach: the
+      // monsters it passes are hit as it reaches them (world/idol.js).
+      const u = Math.min(1, f.t / f.dur);
+      const go = 1 - (1 - u) ** 2;
+      const fade = Math.min(1, (1 - u) * 4);
+      return fxSprite(ctx, 'celsibig', x + f.dir * f.r * go, y, { t: f.t, flip: f.dir < 0, scale: (f.big ? 1.5 : 1.15) * (0.8 + 0.4 * go), alpha: fade }) || true;
+    }
     case 'idolsong': {
       const S = f.song;
       const name = S.kind === 'cheer' ? 'celsicheer' : S.kind === 'lull' ? 'celsilullaby' : 'celsisong';
       const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
       if (fade <= 0) return true;
-      return fxSprite(ctx, name, x, y + 2, { t: f.t, scale: S.r / 150, alpha: fade }) || true;
+      return fxSprite(ctx, name, x, y + 2, { t: f.t, scale: S.r / 130, alpha: fade }) || true;
     }
     case 'sisong': case 'sicheer': case 'silullaby': {
       const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 3);
-      return fxSprite(ctx, `cel${f.kind}`, x, y + 2, { t: f.t, scale: f.big ? 1.2 : 0.6, alpha: fade }) || true;
+      return fxSprite(ctx, `cel${f.kind}`, x, y + 2, { t: f.t, scale: f.big ? 0.9 : 0.5, alpha: fade }) || true;
     }
     case 'sistage':
-      return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 0.8 }) || true;
+      return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 1.2 }) || true;
     // The Astronomer's (violet and silver): her hit (a crescent passing and a ring opening), Gravity
     // Well hanging where she pointed for as long as it lasts, Lunar Tide, and the planets aligning.
     case 'ashit':

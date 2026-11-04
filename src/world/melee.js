@@ -210,9 +210,9 @@ export const PATH_COMBOS = {
   // (a note on each beat), and the high note: she belts, then throws the mic out as a burst of sound
   // blasts through the line.
   idol: [
-    { move: 'sibeat', dur: 0.4, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 700 }] },
-    { move: 'sistep', dur: 0.5, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 700, oy: -3 }, { at: 0.6, shot: 'sinote', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 700, oy: 3 }] },
-    { move: 'sihigh', dur: 0.64, finisher: true, strikes: [{ at: 0.5, shot: 'sibig', magic: true, pct: 165, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'sibeat', dur: 0.4, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 880 }] },
+    { move: 'sistep', dur: 0.5, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 880, oy: -3 }, { at: 0.6, shot: 'sinote', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 880, oy: 3 }] },
+    { move: 'sihigh', dur: 0.64, finisher: true, strikes: [{ at: 0.5, shot: 'sibig', magic: true, pct: 165, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Astronomer (the Onmyoji remade; docs/design/astronomer.md), conducting the planets with her
   // orrery: a long arc flinging a planet, a slow conducted circle sending two, and a ringed world
@@ -472,11 +472,11 @@ export const PATH_VARIANTS = {
   // singing over her shoulder. Finisher: the high note or her idol pose; now and then an idol jump
   // in place of the second, singing down at them from the top of it.
   idol: [
-    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.4, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 700, knock: 30 }] }],
+    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.4, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 880, knock: 30 }] }],
     [PATH_COMBOS.idol[1],
-      { move: 'sishoulder', dur: 0.56, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 44, range: 300, h: 64, knock: 20, speed: 700, oy: -2 }, { at: 0.6, shot: 'sinote', magic: true, pct: 52, range: 300, h: 64, knock: 20, speed: 700, oy: 2 }] },
-      { move: 'sijump', dur: 0.56, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 700, h: 150, drop: 40, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 660, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+      { move: 'sishoulder', dur: 0.56, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 44, range: 300, h: 64, knock: 20, speed: 880, oy: -2 }, { at: 0.6, shot: 'sinote', magic: true, pct: 52, range: 300, h: 64, knock: 20, speed: 880, oy: 2 }] },
+      { move: 'sijump', dur: 0.56, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 880, h: 150, drop: 40, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
@@ -562,12 +562,12 @@ const ARCHER_COMMANDS = {
   // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
   // hang in the air (the second a big one); a rock-star knee slide out of a run.
   idol: {
-    up: { move: 'siup', dur: 0.44, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 700, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    up: { move: 'siup', dur: 0.44, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
     air: [
-      { move: 'siair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 700, range: 260, h: 170, drop: 60, knock: 30 }] },
-      { move: 'siair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sibig', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 660, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'siair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 170, drop: 60, knock: 30 }] },
+      { move: 'siair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sibig', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 820, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'sidash', dur: 0.56, step: 50, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 700, targets: 2, pierce: true, knock: 100 }] },
+    dash: { move: 'sidash', dur: 0.56, step: 50, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 880, targets: 2, pierce: true, knock: 100 }] },
   },
   // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
   // (the second a ringed world), and a glide out of a run.
