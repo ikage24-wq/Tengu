@@ -189,13 +189,20 @@ export function followPath(nav, body, path, tx, near = 4) {
     else if (!step) toward(tx, near);
     return { intent, lost: false };
   }
-  const here = surfaceOf(nav, body);
+  let here = surfaceOf(nav, body);
+  // A footbridge level with the ground (physics.js `walkOn`) carries you along that ground's way:
+  // on it counts as on the ground the path is walking.
+  if (step && here !== step.to && here !== step.from && nav.surfaces[here]?.walkOn && nav.surfaces[step.from]?.ground) here = step.from;
   if (step && here === step.to) {
     path.shift();
     return followPath(nav, body, path, tx, near);
   }
   if (!step) {
     toward(tx, near);
+    // Heading down the bank of a pool on this same piece of ground: hold Down so a footbridge over
+    // it doesn't carry them across (physics.js `walkOn`).
+    const s = nav.surfaces[here];
+    if (s?.ground && s.yAt(Math.max(s.x1, Math.min(s.x2, tx))) > body.y + 8) intent.down = true;
     return { intent, lost: false };
   }
   if (here !== step.from) return { intent, lost: true };

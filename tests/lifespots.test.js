@@ -42,7 +42,9 @@ test('every map in the region table has spots, each with its tier, level and a r
       if (n.kind === 'ore') assert.deepEqual([Object.keys(n.pool)[0], n.rare?.[0]], [own.ore, own.gem], `${id}: its tier's ore and gem`);
       if (n.kind === 'wood') assert.equal(Object.keys(n.pool)[0], own.wood, `${id}: its tier's wood`);
       if (n.kind === 'fiber') assert.equal(Object.keys(n.pool)[0], own.fiber, `${id}: its tier's fibre`);
-      if (n.night) assert.equal(Object.keys(n.pool)[0], own.night, `${id}: its region's night rare`);
+      // A night spot is a night-only bloom (its region's, or one of a lower region's that fits the
+      // map better: a cave's glowing duskcap) or a gem seam that only glints by moonlight.
+      if (n.night && n.kind !== 'ore') assert.ok(TIER_FINDS.some((t, k) => k <= tier && t?.night === Object.keys(n.pool)[0]), `${id}: a night-only find`);
     }
   }
   // Each region has its ore, wood, fibre and night rare somewhere.
@@ -90,7 +92,7 @@ test('fishing spots are only by water, quiet nooks no monster reaches, each with
     const m = MAPS[id];
     for (const s of spots) {
       // Water: a pond or pool by the bobber, the sea (a harbor's, the sky's cloud sea), or a hole in the lake ice.
-      const wet = s.ice || s.sky || ['harbor', 'sky'].includes(m.theme) || (m.deco ?? []).some((d) => WATER.includes(d[0]) && Math.abs(d[1] - s.bx) < 120);
+      const wet = s.ice || s.sky || ['harbor', 'sky'].includes(m.theme) || (m.water ?? []).some((w) => s.bx >= w.x1 && s.bx <= w.x2) || (m.quay && s.bx >= m.quay.x1 && s.bx <= m.quay.x2) || (m.deco ?? []).some((d) => WATER.includes(d[0]) && Math.abs(d[1] - s.bx) < 120);
       assert.ok(wet, `${id}: the fishing spot is by water`);
       if (!s.sea) assert.equal(s.tier, MAP_TIER[id], `${id}: the fishing spot is its region's tier`);
       for (const f of Object.keys(s.pool)) assert.ok(FISH.find((q) => q.id === f).tier <= s.tier, `${id}: ${f} belongs to this region or below`);

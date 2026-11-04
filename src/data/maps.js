@@ -12,7 +12,8 @@
 //   plaza      in towns, where the fountain stands
 
 import { SWEETHEARTS } from './sweethearts.js';
-import { climb, lay, settleSpots } from './climb.js';
+import { climb, lay, settleSpots, clearArrivals } from './climb.js';
+import { MOBS } from './mobs.js';
 import { SPOTS } from './fishing.js';
 import { SPOT } from './gathering.js';
 
@@ -36,7 +37,9 @@ export const MAPS = {
     width: 3200, height: 520, groundY: 480,
     look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
     // The square is a gentle step up in the middle of the street.
-    terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [3200, 480]],
+    // (The duck pond in Pond Garden is sunk into the lawn under a little footbridge.)
+    terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [2168, 480], [2196, 516], [2276, 516], [2304, 480], [3200, 480]],
+    water: [{ x1: 2168, x2: 2304, y: 490, kind: 'pond' }],
     // Thatched cottages and a farmhouse along Gate Lane (render/townhouses.js).
     cottages: [[600, 'farmhouse']],
     townPieces: [['gatearch', 205], ['windmill', 1800]],
@@ -45,6 +48,8 @@ export const MAPS = {
       { x: 1740, y: 308, w: 120, bare: true },
       // The watchtower's deck.
       { x: 2578, y: 320, w: 84 },
+      // The footbridge over the duck pond.
+      { x: 2168, y: 480, w: 136, style: 'planks', walkOn: true },
     ],
     ropes: [
       { x: 1748, top: 308, bottom: 456, ladder: true },
@@ -56,7 +61,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2165 }, { id: 'clover', x: 2340 }, { id: 'kestrel', x: 2480 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2152 }, { id: 'clover', x: 2340 }, { id: 'kestrel', x: 2480 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
@@ -69,7 +74,6 @@ export const MAPS = {
     // Street lamps that glow at night (world/daytime.js).
     lamps: [{ x: 320, y: 440 }, { x: 960, y: 440 }, { x: 1450, y: 440 }, { x: 1600, y: 416 }, { x: 2000, y: 416 }, { x: 2270, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
-      ['pond', 2220],
       ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
       ['bowrack', 2740], ['fence', 2825], ['archtarget', 2880, 0], ['archtarget', 2940, 1], ['archtarget', 3000, 2], ['haystack', 3050, 1],
@@ -86,7 +90,7 @@ export const MAPS = {
   // ropes at both ends, a long floor between, gaps to drop through. No monsters near the portals.
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
-    width: 2400, height: 1040, groundY: 1000,
+    width: 2400, height: 1080, groundY: 1000,
     look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
     zones: [
       { name: 'Petal Fields', from: Infinity, color: '#e889b4' },
@@ -94,7 +98,9 @@ export const MAPS = {
       { name: 'Blossom Boughs', from: 560, color: '#e06fa6', look: { sky: ['#ffb0d0', '#ffd2e6', '#fff0f6'], far: '#f6c2da', mid: '#f0b6d2', midTrim: '#e08cba', islands: 'planks', props: ['flower', 'tuft'] } },
       { name: 'Petal Clouds', from: 320, color: '#8fa8f0', look: { sky: ['#b8dcff', '#e0f0ff', '#fff6fc'], far: '#e8e6ff', mid: '#f4eaff', midTrim: '#d8ccf6', material: 'sky', edges: null, props: ['flower'] } },
     ],
-    terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2400, 1000]],
+    // (In the east corner the lily pond is sunk into the meadow between two low stone lips.)
+    terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2140, 1000], [2140, 992], [2172, 992], [2200, 1036], [2280, 1036], [2308, 992], [2340, 992], [2340, 1000], [2400, 1000]],
+    water: [{ x1: 2172, x2: 2308, y: 1010, kind: 'pond' }],
     platforms: [
       // Petal Fields.
       { x: 180, y: 920, w: 880 }, { x: 1300, y: 920, w: 880 },
@@ -110,9 +116,9 @@ export const MAPS = {
       // Petal Clouds: two banks of cloud with a drifting one between, and the lookout on top.
       { x: 500, y: 280, w: 500 }, { x: 1400, y: 280, w: 500 },
       { x: 1000, y: 280, w: 150, drift: { dx: 250, period: 9 } },
-      // The fishing dock over the pond in the quiet east corner, a hop up from the ground: no
-      // monster lives on it, so you can fish in peace.
-      { x: 2195, y: 952, w: 95, posts: true },
+      // The footbridge over the lily pond in the quiet east corner: the tortoises never cross the
+      // pond's stone lips, so you can fish from it in peace.
+      { x: 2172, y: 992, w: 136, style: 'planks', walkOn: true },
       { x: 900, y: 200, w: 400, thick: 44 },
     ],
     // A moving part per zone: bounce blossoms in the fields (one up the hill, one at the end of the
@@ -134,7 +140,7 @@ export const MAPS = {
       { x: 1200, w: 60, top: 250, bottom: 440, kind: 'petals' },
     ],
     ropes: [
-      { x: 200, top: 920, bottom: 1000, ladder: true }, { x: 2160, top: 920, bottom: 1000, ladder: true },
+      { x: 200, top: 920, bottom: 1000, ladder: true }, { x: 2110, top: 920, bottom: 1000, ladder: true },
       { x: 600, top: 840, bottom: 920 }, { x: 1800, top: 840, bottom: 920 },
       { x: 760, top: 760, bottom: 840 }, { x: 1640, top: 760, bottom: 840 },
       { x: 460, top: 680, bottom: 760 }, { x: 1960, top: 680, bottom: 760 },
@@ -154,7 +160,7 @@ export const MAPS = {
     // A landmark per zone: the giant flower and the fishing pond in the fields, the hive on the banks, the
     // cherry tree's crown in the boughs, the cloud pillar by the lookout.
     deco: [
-      ['flowerarch', 260], ['giantflower', 820, 0], ['bigpond', 2235], ['picnic', 1650], ['signpost', 2060],
+      ['flowerarch', 260], ['giantflower', 820, 0], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
       ['sakura', 1200, 0, 440],
       ['cloudpillar', 880, 0, 280],
@@ -190,7 +196,9 @@ export const MAPS = {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
     look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
     ...lay({
-      width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 920, 280], [90, 840, 280]],
+      width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 1036, 320], [90, 920, 280], [90, 840, 280]],
+      // The cellar's spring, sunk into its floor against the west wall behind a stone lip.
+      terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [2400, 1000]],
       zones: [
         { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
           look: { sky: ['#6a8a6a', '#8aa88a', '#c8d8b8'], far: '#7a9a7a', mid: '#5a7a5a' } },
@@ -204,7 +212,7 @@ export const MAPS = {
         // Shelves in the Root Cellar, and the dock at its underground spring.
         { x: 300, y: 920, w: 300 }, { x: 950, y: 920, w: 400 }, { x: 1900, y: 920, w: 300 },
         { x: 600, y: 840, w: 240 }, { x: 1400, y: 840, w: 260 },
-        { x: 40, y: 952, w: 95, posts: true },
+        { x: 104, y: 992, w: 92, style: 'stone', walkOn: true },
         // The Hayloft Ridge, and the old tree's hilltop.
         { x: 250, y: 620, w: 300 }, { x: 1800, y: 620, w: 300 },
         { x: 550, y: 540, w: 300 }, { x: 1500, y: 540, w: 300 },
@@ -217,6 +225,7 @@ export const MAPS = {
     // bale bouncing you up from the fields, and the ledge drifting along the ridge.
     updrafts: [{ x: 750, w: 50, top: 670, bottom: 1000, kind: 'chaff' }],
     springs: [{ x: 1500, y: 700, up: 170, kind: 'hay' }],
+    water: [{ x1: 0, x2: 196, y: 1010, kind: 'spring', open: [0] }],
     portals: [
       { id: 'west', x: 40, y: 700, to: 'meadow1', toPortal: 'east' },
       { id: 'east', x: 2340, y: 700, to: 'harbor', toPortal: 'west' },
@@ -224,7 +233,7 @@ export const MAPS = {
     npcs: [],
     // A landmark per zone: the spring pool in the cellar, the scarecrow and the barn in the fields,
     // the old tree on the ridge.
-    deco: [['pond', 120], ['scarecrow', 400, 0, 700], ['barn', 1200, 0, 700], ['haystack', 900, 0, 700], ['fence', 1600, 1, 700], ['cart', 2000, 0, 700], ['signpost', 2200, 0, 700], ['beehive', 1900, 0, 620], ['bigtree', 1200, 1, 460]],
+    deco: [['scarecrow', 400, 0, 700], ['barn', 1200, 0, 700], ['haystack', 900, 0, 700], ['fence', 1600, 1, 700], ['cart', 2000, 0, 700], ['signpost', 2200, 0, 700], ['beehive', 1900, 0, 620], ['bigtree', 1200, 1, 460]],
     lamps: [{ x: 110, y: 930 }, { x: 1200, y: 650 }, { x: 1250, y: 340 }],
     spirit: { x: 1700, y: 420 },
     // The area boss (world/nest.js): after enough hunting, Old MacGoblin storms out of the barn.
@@ -253,7 +262,11 @@ export const MAPS = {
     homeStyle: 'canal',
     // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
     cottages: [[150, 'canal-neck'], [234, 'canal-bell'], [1420, 'canal-bell'], [1775, 'warehouse']],
-    townPieces: [['fishstall', 470], ['pier', 2080], ['galleon', 2520]],
+    townPieces: [['fishstall', 470], ['pier', 2080]],
+    // The Docks lie on the sea (render/quay.js): the walkway is the quay, the sea beyond its kerb,
+    // the galleon and the rowboats riding in it, the pier's legs standing in it.
+    quay: { x1: 1880, x2: 2900, sea: 30, kerb: 'wood', piles: [1905, 2745], under: [[1932, 2228]],
+      boats: [{ kind: 'rowboat', x: 2276, color: '#8fd3ff' }, { kind: 'galleon', x: 2520 }, { kind: 'steamer', x: 2830 }] },
     platforms: [
       // The warehouse's loading gallery and its roof (drawn with the warehouse).
       { x: 1661, y: 400, w: 228, bare: true }, { x: 1680, y: 320, w: 190, bare: true },
@@ -405,25 +418,28 @@ export const MAPS = {
     look: { ceiling: true },
     ...lay({
       width: 2600, ground: 1000, by: 'x',
-      terrain: [[0, 600], [400, 600], [400, 720], [800, 720], [800, 880], [1100, 880], [1100, 1000], [1500, 1000], [1500, 880], [1800, 880], [1800, 720], [2200, 720], [2200, 600], [2600, 600]],
-      // Ropes down each crystal step, hanging beside it from the top.
-      ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1110, top: 880, bottom: 1000 }, { x: 1490, top: 880, bottom: 1000 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
-      quiet: [[40, 600, 160], [500, 720, 160], [1300, 1000, 200], [2100, 480, 160], [2540, 600, 160]],
+      terrain: [[0, 600], [400, 600], [400, 720], [800, 720], [800, 880], [1000, 880], [1000, 944], [1600, 944], [1600, 880], [1800, 880], [1800, 720], [2200, 720], [2200, 600], [2600, 600]],
+      // Ropes down each crystal step, hanging beside it from the top (and out of the lake).
+      ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1010, top: 880, bottom: 944 }, { x: 1590, top: 880, bottom: 944 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
+      quiet: [[40, 600, 160], [500, 720, 160], [1300, 944, 320], [1300, 872, 120], [1300, 760, 200], [1700, 880, 120], [2100, 480, 160], [2540, 600, 160], [350, 440, 140], [1300, 600, 140], [2420, 420, 130]],
       zones: [
-        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
-        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.fiber(3), SPOT.herb(3, 'crystal_truffle'), SPOT.night(3)] },
-        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 })] },
+        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle'), SPOT.ore(3)] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.ore(3), SPOT.herb(3, 'crystal_truffle'), SPOT.herb(3, 'duskcap', { night: true })] },
+        { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 }), SPOT.herb(3, 'crystal_truffle')] },
       ],
       ledges: [
-        // Glowcap Terraces: crystal shelves over the steps, and a high ledge.
-        { x: 120, y: 520, w: 240 }, { x: 500, y: 560, w: 220 }, { x: 560, y: 640, w: 220 },
-        // The lake: crystal outcrops over the shore.
-        { x: 850, y: 800, w: 200 }, { x: 1550, y: 800, w: 200 }, { x: 1180, y: 900, w: 240 }, { x: 1150, y: 760, w: 300 },
+        // Glowcap Terraces: crystal shelves over the steps, and high ledges.
+        { x: 120, y: 520, w: 240 }, { x: 500, y: 560, w: 220 }, { x: 560, y: 640, w: 220 }, { x: 220, y: 440, w: 260 }, { x: 620, y: 480, w: 240 },
+        // The lake: crystal outcrops over each shore, an arch of crystal over the water, and the
+        // crystal islet in the middle where you fish (only the raft goes there).
+        { x: 840, y: 800, w: 220 }, { x: 1540, y: 800, w: 220 }, { x: 1150, y: 760, w: 300 },
+        { x: 820, y: 640, w: 240 }, { x: 1560, y: 640, w: 240 }, { x: 1170, y: 600, w: 260 },
+        { x: 1245, y: 872, w: 110, style: 'stone' },
         // Shade Spires: spires climbing out, and the ledge with the way to the sky.
-        { x: 1850, y: 640, w: 220 }, { x: 2250, y: 520, w: 260 },
+        { x: 1850, y: 640, w: 220 }, { x: 2250, y: 520, w: 260 }, { x: 2300, y: 420, w: 240 },
         { x: 1900, y: 480, w: 280, thick: 44 },
-        // The crystal raft ferrying across the lake.
-        { x: 1100, y: 880, w: 130, style: 'stone', drift: { dx: 270, period: 10 } },
+        // The crystal raft ferrying across the lake, shore to shore past the islet.
+        { x: 1000, y: 880, w: 130, style: 'stone', drift: { dx: 470, period: 14 } },
       ],
     }),
     // A moving part per zone: a vent on the terraces, the raft across the lake, and crystal dust
@@ -433,15 +449,17 @@ export const MAPS = {
     portals: [
       { id: 'west', x: 40, y: 600, to: 'ruins', toPortal: 'east' },
       { id: 'east', x: 2100, y: 480, to: 'sky', toPortal: 'west' },
-      { id: 'boss', x: 1300, y: 1000, to: 'bossroom', toPortal: 'west', label: 'Throne' },
+      { id: 'boss', x: 1700, y: 880, to: 'bossroom', toPortal: 'west', label: 'Throne' },
       // The mine road back down to Sprout Village (the ring round the island).
       { id: 'sprout', x: 500, y: 720, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
     ],
     npcs: [],
     // A landmark per zone: glowing pools on the terraces, a great crystal by the throne's gate at
     // the lake, a crystal spire in the east.
-    deco: [['glowpool', 240, 0, 600], ['glowpool', 1200, 0, 1000], ['crystalspire', 1400, 1, 1000], ['stalagmite', 950, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
-    lamps: [{ x: 240, y: 580 }, { x: 1300, y: 960 }, { x: 2100, y: 440 }],
+    // The underground lake fills the cavern's floor, lit from below (render/water.js).
+    water: [{ x1: 1000, x2: 1600, y: 900, kind: 'cave' }],
+    deco: [['glowpool', 240, 0, 600], ['crystalspire', 1760, 1, 880], ['stalagmite', 900, 0, 880], ['crystalspire', 1940, 0, 720], ['stalagmite', 2400, 0, 600]],
+    lamps: [{ x: 240, y: 580 }, { x: 1300, y: 850 }, { x: 2100, y: 440 }],
     spirit: { x: 1300, y: 640 },
     habitats: { crystalslime: { naps: true, home: { x: 240, y: 600 } }, rockgolem: { naps: true }, shade: { play: true } },
   },
@@ -457,10 +475,12 @@ export const MAPS = {
   sky: {
     id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
     ...lay({
-      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200], [2760, 1040, 200]],
+      width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200], [2620, 1040, 260]],
+      // In the quiet east corner the cloud parts on the open sky below: a gap to fish.
+      terrain: [[0, 1040], [2496, 1040], [2524, 1078], [2616, 1078], [2644, 1040], [3000, 1040]],
       zones: [
         { name: 'Cloud Meadows', color: '#ff9ec7', from: 0, mobs: ['cloudsheep'], nodes: [SPOT.fruit(4, 'cloudberry'), SPOT.fiber(4)] },
-        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [SPOT.honey(4), SPOT.wood(4), SPOT.fiber(4)],
+        { name: 'Harpy Roost', color: '#4f95e0', from: 1000, mobs: ['windbird'], nodes: [SPOT.fruit(4, 'cloudberry'), SPOT.wood(4), SPOT.fiber(4)],
           look: { sky: ['#8fc8ff', '#c8e4ff', '#fff6ee'] } },
         { name: 'Starlit Terrace', color: '#e0b84a', from: 2050, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4), SPOT.night(4)],
           look: { sky: ['#6a6ad0', '#a8a0e8', '#fff0d8'], stars: true } },
@@ -484,15 +504,16 @@ export const MAPS = {
         { x: 2650, y: 320, w: 300, thick: 44 },
         // The drifting cloud from the roost over to the terrace.
         { x: 1710, y: 480, w: 140, drift: { dx: 200, period: 9 } },
-        // A little cloud dock over the cloud sea in the quiet east corner, for fishing: no monster
+        // A little cloud dock out over the gap in the quiet east corner, for fishing: no monster
         // drifts down to it.
-        { x: 2790, y: 980, w: 95, posts: true },
+        { x: 2570, y: 1040, w: 76, walkOn: true },
       ],
     }),
     // A moving part per zone: a blossom on the cloud sea bouncing you up into the meadows, a
     // skyward wind through the roost (Up to ride it), and the drifting cloud to the terrace.
     springs: [{ x: 470, y: 1040, up: 170, kind: 'blossom' }],
     updrafts: [{ x: 1450, w: 56, top: 450, bottom: 1040, kind: 'gust' }],
+    water: [{ x1: 2496, x2: 2644, y: 1054, kind: 'cloud' }],
     portals: [
       { id: 'west', x: 40, y: 1040, to: 'cave', toPortal: 'east' },
       { id: 'peak', x: 2940, y: 1040, to: 'peak', toPortal: 'east', label: 'Frozen Peak' },
@@ -542,20 +563,21 @@ Object.assign(MAPS, {
       ropes: [{ x: 710, top: 600, bottom: 1000 }, { x: 1690, top: 560, bottom: 1000 }],
       quiet: [[40, 600, 160], [1450, 1000, 200], [2130, 300, 200]],
       zones: [
-        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.fiber(1)] },
+        { name: 'West Mesa', color: '#c97a3a', from: 0, mobs: ['pebblet'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.ore(1)] },
         { name: 'The Gorge', color: '#b05a4a', from: 700, mobs: ['pebblet', 'scorpip'], nodes: [SPOT.ore(1), SPOT.ore(1, { gem: 0.12 })],
           look: { sky: ['#ffcf9e', '#ffe4c4', '#fff4e4'] } },
-        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.wood(1), SPOT.night(1)],
+        { name: 'East Mesa', color: '#6a7ad0', from: 1700, mobs: ['scorpip'], nodes: [SPOT.fruit(1, 'prickle_pear'), SPOT.ore(1, { gem: 0.14 }), SPOT.ore(1, { gem: 0.3, night: true })],
           look: { sky: ['#9fc8ff', '#cfe4ff', '#fff0e0'] } },
       ],
       ledges: [
-        // The West Mesa's rocks.
-        { x: 150, y: 520, w: 300 },
-        // The rope bridge over the gorge, and ledges down its walls.
+        // The West Mesa's rocks, stacked up to a high shelf.
+        { x: 150, y: 520, w: 300 }, { x: 470, y: 520, w: 220 }, { x: 300, y: 440, w: 280 },
+        // The rope bridge over the gorge, and ledges down both its walls to hunt round.
         { x: 700, y: 600, w: 990, style: 'bridge' },
         { x: 750, y: 900, w: 260 }, { x: 1450, y: 880, w: 220 }, { x: 900, y: 790, w: 240 }, { x: 1300, y: 770, w: 240 },
+        { x: 1100, y: 880, w: 260 }, { x: 760, y: 700, w: 240 }, { x: 1420, y: 680, w: 240 },
         // The East Mesa's crags and the windmill lookout.
-        { x: 1900, y: 460, w: 300 }, { x: 2000, y: 300, w: 260, thick: 44 },
+        { x: 1900, y: 460, w: 300 }, { x: 2160, y: 380, w: 230 }, { x: 2000, y: 300, w: 260, thick: 44 },
       ],
     }),
     // A moving part per zone: a vent on the west mesa, a gust from the gorge floor back up to the
@@ -765,16 +787,18 @@ Object.assign(MAPS, {
   dawnbeach: {
     id: 'dawnbeach', name: 'Dawnlight Beach', theme: 'harbor', town: 'sprout',
     width: 1500, height: 560, groundY: 480,
-    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', islands: 'planks', material: 'beach' },
-    terrain: [[0, 480], [1500, 480]],
-    platforms: [{ x: 520, y: 432, w: 140 }, { x: 760, y: 360, w: 220 }],
+    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', islands: 'planks', material: 'sand' },
+    // The sand runs down into the sea at the west end, where a little jetty reaches out.
+    terrain: [[0, 556], [150, 556], [270, 480], [1500, 480]],
+    water: [{ x1: 0, x2: 272, y: 492, kind: 'sea', sunk: false, open: [0, 272] }],
+    platforms: [{ x: 520, y: 432, w: 140 }, { x: 760, y: 360, w: 220 }, { x: 96, y: 474, w: 176, style: 'planks', walkOn: true }],
     ropes: [{ x: 800, top: 360, bottom: 480 }],
     portals: [
-      { id: 'start', x: 140, y: 480, hidden: true },
+      { id: 'start', x: 330, y: 480, hidden: true },
       { id: 'east', x: 1440, y: 480, to: 'trainfield', toPortal: 'west', label: 'Practice Field' },
     ],
     npcs: [{ id: 'kuro', x: 1120 }],
-    deco: [['pond', 300], ['crates', 200], ['barrels', 440], ['signpost', 1360]],
+    deco: [['crates', 420], ['barrels', 470], ['signpost', 1360]],
     spawns: [],
   },
   trainfield: {
@@ -804,7 +828,9 @@ Object.assign(MAPS, {
       { id: 'boat', x: 1180, y: 480, to: 'sprout', toPortal: 'start', label: 'Boat to Sprout Village' },
     ],
     npcs: [{ id: 'kuro', x: 760 }],
-    deco: [['crates', 220], ['barrels', 420], ['ship', 1000], ['lighthouse', 1240]],
+    deco: [['crates', 220], ['barrels', 420], ['lighthouse', 1240]],
+    // The boat to Sprout Village rides at the quay (render/quay.js).
+    quay: { x1: 560, x2: 1300, sea: 26, kerb: 'wood', piles: [640, 1130], boats: [{ kind: 'ship', x: 960 }] },
     spawns: [],
   },
 });
@@ -1039,7 +1065,7 @@ Object.assign(MAPS, {
 const MANOR_OUT = { skyline: 'manor', material: 'manorgarden', critters: ['firefly'], drift: 'mote', face: 'moon', light: 'dusk' };
 const MANOR_IN = { skyline: 'manorhall', material: 'manor', critters: [], drift: 'mote', face: null, light: 'cave', ceiling: 'manor' };
 
-MAPS.woods.portals.push({ id: 'manor', x: 1300, y: 440, to: 'manor_gate', toPortal: 'south', label: 'Moonlit Manor' });
+MAPS.woods.portals.push({ id: 'manor', x: 910, y: 440, to: 'manor_gate', toPortal: 'south', label: 'Moonlit Manor' });
 
 Object.assign(MAPS, {
   // Manor Hill: the garden path up from the treetops of Mossy Woods to the manor's iron gates, where
@@ -1065,7 +1091,7 @@ Object.assign(MAPS, {
   // spout on a beat and throw you up a terrace (the first one, by the gate, up to a hidden ledge).
   // Light the three garden lanterns; the front door waits at the top.
   manor1: {
-    id: 'manor1', name: 'The Moonlit Garden', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    id: 'manor1', name: 'The Moonlit Garden', theme: 'manor', town: 'harbor', dungeon: 'manor', ownLight: true,
     ...lay({
       width: 2200, ground: 760,
       ledges: [
@@ -1224,7 +1250,7 @@ Object.assign(MAPS, {
   // The Moonlit Rooftop: the slate roof under a moon far too big, chimneys to stand on, a
   // weathervane at the top, and a long party table laid for a hundred. Lady Marigold is waiting.
   manor6: {
-    id: 'manor6', name: 'The Moonlit Rooftop', theme: 'manor', town: 'harbor', dungeon: 'manor',
+    id: 'manor6', name: 'The Moonlit Rooftop', theme: 'manor', town: 'harbor', dungeon: 'manor', ownLight: true,
     width: 1600, height: 420, groundY: G,
     platforms: [
       { x: 230, y: 296, w: 74 }, { x: 560, y: 300, w: 74 }, { x: 966, y: 300, w: 74 }, { x: 1296, y: 296, w: 74 },
@@ -2308,19 +2334,21 @@ MAPS.cave.portals.push({ id: 'springs', x: 2540, y: 600, to: 'springs', toPortal
 
 Object.assign(MAPS, {
   // The Whispering Glade is a walk across, side by side (data/climb.js lay()): the Flower Meadow in
-  // the west, low and rolling among giant flowers, where blossoms bounce you up and Sylvana roams;
-  // the Waterfall Pool in the middle, where the falls pour down a cliff into a pool (the fishing
-  // dock sits at its quiet edge) and the mist floats you up the cliff; and the Sylph Grove on the
-  // high plateau to the east, treetop ledges with a leaf drifting between them, and Sylvana's Bower
-  // at the far end of the glade.
+  // the west, low and rolling among giant flowers, where blossoms bounce you up; the Waterfall Pool
+  // in the middle, where the falls pour down a cliff into a sunken pool you can wade, behind a mossy
+  // bank no Treant climbs (the fishing dock juts from the bank over the water, a quiet nook of its
+  // own) and the mist floats you up the cliff; and the Sylph Grove on the high plateau to the east,
+  // where Sylvana roams, treetop ledges with a leaf drifting between them, and her Bower at the far
+  // end of the glade.
   glade: {
     id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 },
     look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3, islands: 'branch' },
     ...lay({
       width: 2400, ground: 880, by: 'x',
-      terrain: [[0, 880], [1000, 880], [1000, 640], [2400, 640]],
-      ropes: [{ x: 990, top: 640, bottom: 880 }],
-      quiet: [[40, 880, 160], [900, 880, 300], [900, 800, 260], [900, 720, 260], [2340, 640, 160]],
+      // The meadow, the mossy bank (a step up), the pool's bed sunk below it, and the cliff.
+      terrain: [[0, 880], [720, 880], [720, 840], [800, 840], [800, 920], [1000, 920], [1000, 640], [2400, 640]],
+      ropes: [{ x: 990, top: 640, bottom: 920 }],
+      quiet: [[40, 880, 160], [900, 920, 300], [760, 840, 100], [900, 800, 260], [900, 720, 260], [2340, 640, 160]],
       zones: [
         { name: 'Flower Meadow', color: '#e889b4', from: 0, mobs: ['mossgolem', 'sylph'], nodes: [SPOT.fruit(2, 'whisperberry'), SPOT.fiber(2)] },
         { name: 'Waterfall Pool', color: '#4fb0d8', from: 800, mobs: ['sylph'], nodes: [SPOT.ore(2)],
@@ -2331,9 +2359,9 @@ Object.assign(MAPS, {
       ledges: [
         // The Flower Meadow: low flower ledges.
         { x: 150, y: 800, w: 260 }, { x: 300, y: 720, w: 240 }, { x: 600, y: 640, w: 200 },
-        // The Waterfall Pool: steps up beside the falls, and the fishing dock at the pool.
-        { x: 450, y: 800, w: 300 }, { x: 650, y: 720, w: 240 },
-        { x: 860, y: 832, w: 95, posts: true },
+        // The Waterfall Pool: steps up beside the falls, and the fishing dock off the bank.
+        { x: 450, y: 800, w: 240 }, { x: 650, y: 720, w: 240 },
+        { x: 796, y: 840, w: 104, posts: true, walkOn: true },
         // The Sylph Grove: treetop ledges over the plateau.
         { x: 1200, y: 560, w: 300 }, { x: 1600, y: 480, w: 320 }, { x: 2000, y: 560, w: 280 },
         { x: 1400, y: 400, w: 280 }, { x: 1850, y: 320, w: 300 },
@@ -2344,12 +2372,14 @@ Object.assign(MAPS, {
     // A moving part per zone: blossoms bouncing you up in the meadow, the waterfall's mist floating
     // you up the cliff (Up to ride it), and the drifting leaf in the grove.
     springs: [{ x: 420, y: 880, up: 170, kind: 'blossom' }],
-    updrafts: [{ x: 955, w: 50, top: 610, bottom: 880, kind: 'mist' }],
+    updrafts: [{ x: 955, w: 50, top: 610, bottom: 920, kind: 'mist' }],
+    // The pool under the falls, waist-deep on its bed.
+    water: [{ x1: 800, x2: 1000, y: 894, kind: 'spring' }],
     portals: [{ id: 'west', x: 40, y: 880, to: 'woods', toPortal: 'glade' }],
     npcs: [],
     // A landmark per zone: the giant flowers in the meadow, the waterfall and its pool, the great
     // tree in the grove.
-    deco: [['giantflower', 260, 0], ['giantflower', 700, 2], ['pond', 890], ['waterfall', 958, 240, 880], ['bigtree', 1680, 1, 640], ['giantflower', 2150, 1, 640]],
+    deco: [['giantflower', 260, 0], ['giantflower', 640, 2], ['waterfall', 958, 240, 894], ['bigtree', 1680, 1, 640], ['giantflower', 2150, 1, 640]],
     lamps: [{ x: 900, y: 810 }, { x: 1700, y: 600 }, { x: 2300, y: 610 }],
     spirit: { x: 2200, y: 400 },
     habitats: { sylph: { play: true, naps: true }, mossgolem: { naps: true, home: { x: 260, y: 880 } } },
@@ -2467,8 +2497,8 @@ Object.assign(MAPS, {
     npcs: [],
     // A landmark per zone: the hot springs on the pools floor (the east one with the fishing dock),
     // the waterfall on the steps, a spring at the top.
-    deco: [['hotspring', 860], ['hotspring', 1620], ['hotspring', 2250], ['waterfall', 1500, 80, 560], ['hotspring', 1100, 0, 240]],
-    lamps: [{ x: 2230, y: 810 }, { x: 1500, y: 520 }, { x: 1100, y: 200 }],
+    deco: [['hotspring', 860], ['hotspring', 1620], ['waterfall', 1500, 80, 560], ['hotspring', 1100, 0, 240]],
+    lamps: [{ x: 2150, y: 840 }, { x: 1500, y: 520 }, { x: 1100, y: 200 }],
     spirit: { x: 1600, y: 200 },
     habitats: { lamia: { naps: true, home: { x: 860, y: 880 } }, shade: { play: true } },
   },
@@ -2483,12 +2513,14 @@ Object.assign(MAPS, {
   peak: {
     id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 },
     ...lay({
-      width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1950, 1040, 260], [2000, 960, 260]],
+      width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1990, 1136, 160], [1950, 1040, 260], [2000, 960, 260]],
+      // The frozen lake lies sunk in the snowfield in the quiet east corner, behind snowy lips.
+      terrain: [[0, 1120], [1840, 1120], [1840, 1112], [1880, 1112], [1880, 1136], [2100, 1136], [2100, 1120], [2200, 1120]],
       zones: [
         { name: 'Frozen Lake', color: '#7ab8e8', mobs: ['cloudsheep', 'yukionna'], nodes: [SPOT.fruit(4, 'snow_peach'), SPOT.ore(4)] },
-        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [SPOT.ore(4), SPOT.night(4)],
+        { name: 'Icefall Crevasse', color: '#8f8ad0', from: 760, mobs: ['yukionna', 'cloudsheep'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.3, night: true })],
           look: { sky: ['#9fb8e8', '#c8d8f4', '#eef4ff'] } },
-        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [SPOT.ore(4, { gem: 0.2 }), SPOT.wood(4), SPOT.fruit(4, 'snow_peach')],
+        { name: 'Summit', color: '#e8f4ff', from: 480, mobs: ['yukionna'], nodes: [SPOT.ore(4, { gem: 0.2 }), SPOT.ore(4), SPOT.fruit(4, 'snow_peach')],
           look: { sky: ['#6a8ad0', '#a8c4f0', '#f0f6ff'] } },
       ],
       ledges: [
@@ -2501,14 +2533,14 @@ Object.assign(MAPS, {
         { x: 1700, y: 880, w: 420 }, { x: 1150, y: 960, w: 440 }, { x: 500, y: 1040, w: 520 },
         // The ice floe drifting across the crevasse.
         { x: 1040, y: 660, w: 130, drift: { dx: 300, period: 10 } },
-        // The ice-fishing dock on the lake.
-        { x: 1900, y: 1072, w: 95, posts: true },
       ],
     }),
     // A moving part per zone: a frost vent on the summit, the drifting floe in the crevasse, and a
     // howling wind up from the lake (Up to ride it).
     springs: [{ x: 1040, y: 340, up: 160, kind: 'gust' }],
     updrafts: [{ x: 1050, w: 56, top: 470, bottom: 1120, kind: 'gust' }],
+    // The lake's ice (drawn as a frozen sheet: you stand on it and fish through a hole).
+    water: [{ x1: 1880, x2: 2100, y: 1136, kind: 'ice' }],
     portals: [
       { id: 'west', x: 40, y: 280, to: 'springs', toPortal: 'east' },
       { id: 'east', x: 2140, y: 1120, to: 'sky', toPortal: 'peak' },
@@ -2517,7 +2549,7 @@ Object.assign(MAPS, {
     // A landmark per zone: the great pine on the summit, a snowman on the crevasse ledges, the
     // snowmen and pines round the frozen lake.
     deco: [['snowpine', 420, 0, 280], ['snowman', 900, 0, 740], ['snowman', 640], ['snowpine', 1000, 1], ['snowpine', 1480, 0], ['snowman', 1700]],
-    lamps: [{ x: 900, y: 180 }, { x: 1950, y: 1050 }, { x: 900, y: 710 }],
+    lamps: [{ x: 900, y: 180 }, { x: 1950, y: 1100 }, { x: 900, y: 710 }],
     spirit: { x: 1800, y: 300 },
     habitats: { yukionna: { play: true, naps: true }, cloudsheep: { naps: true, home: { x: 640, y: 1120 } } },
   },
@@ -2534,10 +2566,10 @@ Object.assign(MAPS, {
     look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
     ...lay({
       width: 2600, ground: 1040, by: 'x',
-      terrain: [[0, 520], [460, 520], [460, 640], [760, 640], [760, 800], [1000, 800], [1000, 1040], [1600, 1040], [1600, 800], [1840, 800], [1840, 640], [2140, 640], [2140, 520], [2600, 520]],
+      terrain: [[0, 520], [460, 520], [460, 640], [760, 640], [760, 800], [846, 800], [870, 840], [950, 840], [974, 800], [1000, 800], [1000, 1040], [1600, 1040], [1600, 800], [1840, 800], [1840, 640], [2140, 640], [2140, 520], [2600, 520]],
       // Ropes down each cliff step, hanging beside the wall from its top.
       ropes: [{ x: 470, top: 520, bottom: 640 }, { x: 770, top: 640, bottom: 800 }, { x: 1010, top: 800, bottom: 1040 }, { x: 1590, top: 800, bottom: 1040 }, { x: 1830, top: 640, bottom: 800 }, { x: 2130, top: 520, bottom: 640 }],
-      quiet: [[40, 520, 200], [880, 800, 260], [820, 640, 320], [2500, 440, 200]],
+      quiet: [[40, 520, 200], [880, 800, 260], [910, 840, 120], [820, 640, 320], [2500, 440, 200]],
       zones: [
         { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
         { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
@@ -2554,19 +2586,21 @@ Object.assign(MAPS, {
         { x: 2250, y: 440, w: 300, thick: 44 },
         // The star-cloud ferry, gliding rim to rim across the valley.
         { x: 760, y: 640, w: 150, drift: { dx: 930, period: 16 } },
-        // The fishing dock by the star pool on the west steps.
-        { x: 800, y: 752, w: 95, posts: true },
+        // The cloud dock out over the star pool on the west steps.
+        { x: 840, y: 800, w: 70, walkOn: true },
       ],
     }),
     // A moving part per zone: the ferry on the west rim's steps, starlight rising from the crater
     // (Up to ride it, and catch the ferry going over), and a vent up to the east rim's island.
     updrafts: [{ x: 1300, w: 56, top: 610, bottom: 1040, kind: 'wisplight' }],
     springs: [{ x: 2300, y: 520, up: 120, kind: 'gust' }],
+    // The star pool sunk in the west rim's lower step: night sky in the cloud.
+    water: [{ x1: 846, x2: 974, y: 812, kind: 'star' }],
     portals: [{ id: 'west', x: 40, y: 520, to: 'sky', toPortal: 'starfall' }, { id: 'whale', x: 2550, y: 520, to: 'cloudcatch_pier', toPortal: 'west', label: 'Cloudcatch Pier' }],
     npcs: [],
     // A landmark per zone: a cloud pillar on the west rim, the moonstones round the crater, the
     // gazebo on the east rim's island.
-    deco: [['cloudpillar', 300], ['glowpool', 900], ['moonstone', 1200], ['moonstone', 1450], ['cloudpillar', 2000], ['skygazebo', 2380, 0, 440]],
+    deco: [['cloudpillar', 300], ['moonstone', 1200], ['moonstone', 1450], ['cloudpillar', 2000], ['skygazebo', 2380, 0, 440]],
     lamps: [{ x: 860, y: 730 }, { x: 1300, y: 1000 }, { x: 2380, y: 400 }],
     spirit: { x: 1300, y: 760 },
     habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1300, y: 1040 } } },
@@ -2611,6 +2645,8 @@ Object.assign(MAPS, {
     [['moonstone', 700], ['cloudpillar', 260], ['cloudpillar', 1140]], ['starfall', 'terrace']),
 });
 
+// Lilith's grotto behind the waterfall keeps its own rose-lit dusk, day or night.
+MAPS.grotto.ownLight = true;
 MAPS.glade.portals.push({ id: 'bower', x: 2340, y: 640, to: 'bower', toPortal: 'west', label: "Sylvana's Bower" });
 // The shrine path's petal cloud.
 MAPS.shrine.platforms.push({ x: 975, y: 400, w: 150, drift: { dx: 500, period: 11 } });
@@ -2619,16 +2655,28 @@ MAPS.springs.portals.push({ id: 'volcano', x: 2340, y: 880, to: 'sugar_trail', t
 MAPS.ridge.portals.push({ id: 'observatory', x: 2360, y: 560, to: 'observatory_steps', toPortal: 'west', label: 'Star Observatory' });
 MAPS.shrine.portals.push({ id: 'carnival', x: 2400, y: 880, to: 'carnival_gate', toPortal: 'west', label: 'Clockwork Carnival' });
 MAPS.shrine.portals.push({ id: 'sanctum', x: 1450, y: 240, to: 'sanctum', toPortal: 'west', label: "Tamamo's Sanctum" });
+// The Crystal Cave's gathering spots, on the quiet ledges kept for them round the lake (its floors
+// are busy with monsters, so they're placed by hand).
+MAPS.cave.nodes.push(
+  { ...SPOT.ore(3), x: 350, y: 440 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 1300, y: 600 },
+  { ...SPOT.herb(3, 'duskcap', { night: true }), x: 1300, y: 760 }, { ...SPOT.ore(3, { gem: 0.18 }), x: 2420, y: 420 },
+);
 // Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
-MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 2180, y: 832, w: 95, posts: true });
+MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 1990, y: 872, w: 120, style: 'stone', walkOn: true });
+// The hot spring sunk into the east corner of the pools floor, behind a stone lip the Lamias never
+// cross: you fish it from a flat stone jutting out over the water.
+MAPS.springs.terrain = [[0, 880], [1960, 880], [1960, 872], [1990, 872], [2024, 920], [2300, 920], [2300, 880], [2400, 880]];
+MAPS.springs.height = 960;
+MAPS.springs.water = [{ x1: 1990, x2: 2300, y: 894, kind: 'hot' }];
+for (const r of MAPS.springs.ropes) if (r.bottom === 880 && r.x > 1940 && r.x < 2320) r.x = 1930;
 MAPS.springs.portals.push({ id: 'grotto', x: 1560, y: 560, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2500, y: 440, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
 // every ten minutes or so after they fall.
-MAPS.glade.spawns.push({ mob: 'sylvana', x: 600, y: 880, respawn: 600 });
-MAPS.shrine.spawns.push({ mob: 'tamamo', x: 2200, y: 880, respawn: 600 });
-MAPS.springs.spawns.push({ mob: 'lilith', x: 1300, y: 880, respawn: 600 });
+MAPS.glade.spawns.push({ mob: 'sylvana', x: 1800, y: 640, respawn: 600 });
+MAPS.shrine.spawns.push({ mob: 'tamamo', x: 1300, y: 720, respawn: 600 });
+MAPS.springs.spawns.push({ mob: 'lilith', x: 500, y: 400, respawn: 600 });
 MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 
 // A shortcut home (the map rules): a homestone on a ledge at each big hunting map's far end, far
@@ -2636,13 +2684,16 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
   meadow1: [1900, 360], meadow2: [200, 700], woods: [1950, 920], ruins: [2220, 900], cave: [2380, 520],
-  sky: [2800, 320], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
+  sky: [2460, 400], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };
 for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
   const m = MAPS[id];
   m.portals.push({ id: 'homestone', x, y, to: m.town, toPortal: 'start', homestone: true, label: `Home: ${MAPS[m.town].name}` });
 }
+
+// Safe arrival (the map rules): no monster starts near a way in, a homestone or where you appear.
+for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS);
 
 // Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).
 for (const m of Object.values(MAPS)) settleSpots(m, SPOTS[m.id]);

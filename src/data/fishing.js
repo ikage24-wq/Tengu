@@ -82,22 +82,22 @@ export const BITE_WAIT = [2.5, 6];
 
 export const SPOTS = {
   // Tier 1: the beach, the meadows' ponds, and the towns' water.
-  dawnbeach: [{ x: 380, y: 480, face: -1, bx: 300, by: 478, tier: 1, pool: { fish_minnow: 6, fish_sardine: 4, fish_puffer: 1 } }],
-  meadow1: [{ x: 2272, y: 952, face: -1, bx: 2235, by: 998, tier: 1, pool: { fish_minnow: 6, fish_carp: 4, fish_perch: 1.5 } }],
-  meadow2: [{ x: 60, y: 952, face: 1, bx: 125, by: 998, tier: 1, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2, fish_perch: 1 } }],
+  dawnbeach: [{ x: 150, y: 474, face: -1, bx: 70, by: 494, tier: 1, pool: { fish_minnow: 6, fish_sardine: 4, fish_puffer: 1 } }],
+  meadow1: [{ x: 2212, y: 992, face: 1, bx: 2262, by: 1011, tier: 1, pool: { fish_minnow: 6, fish_carp: 4, fish_perch: 1.5 } }],
+  meadow2: [{ x: 150, y: 992, face: -1, bx: 70, by: 1011, tier: 1, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2, fish_perch: 1 } }],
   // Sprout Village's duck pond in the Garden Corner.
-  sprout: [{ x: 2300, y: 480, face: -1, bx: 2232, by: 478, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1 } }],
-  harbor: [{ x: 2190, y: 426, face: 1, bx: 2260, by: 466, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
+  sprout: [{ x: 2268, y: 480, face: -1, bx: 2210, by: 491, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1 } }],
+  harbor: [{ x: 2190, y: 426, face: 1, bx: 2242, by: 451, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3 } }],
   // Tier 2: the glade's waterfall pool.
-  glade: [{ x: 880, y: 832, face: 1, bx: 945, by: 878, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6 } }],
+  glade: [{ x: 872, y: 840, face: 1, bx: 950, by: 894, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6 } }],
   // Tier 3: the glowing pool by the Crystal Throne's gate, and the serpent's hot spring.
-  cave: [{ x: 1145, y: 1000, face: 1, bx: 1205, by: 998, tier: 3, pool: { fish_cavefish: 6, fish_eel: 2, fish_char: 1 } }],
-  springs: [{ x: 2200, y: 832, face: 1, bx: 2260, by: 870, tier: 3, pool: { fish_hotfish: 6, fish_char: 2, fish_koi: 1.5, fish_eel: 1.5, fish_dragonkoi: 0.3 } }],
+  cave: [{ x: 1330, y: 872, face: 1, bx: 1420, by: 901, tier: 3, pool: { fish_cavefish: 6, fish_eel: 2, fish_char: 1 } }],
+  springs: [{ x: 2090, y: 872, face: 1, bx: 2180, by: 895, tier: 3, pool: { fish_hotfish: 6, fish_char: 2, fish_koi: 1.5, fish_eel: 1.5, fish_dragonkoi: 0.3 } }],
   // Tier 4: ice fishing on the frozen lake, the cloud sea off the Sky Garden's cloud dock, and the
   // star pool at Starfall.
-  peak: [{ x: 1920, y: 1072, face: 1, bx: 2030, by: 1118, ice: true, tier: 4, pool: { fish_icefish: 6, fish_auroratrout: 4, fish_trout: 1, fish_seraph: 0.4 } }],
-  sky: [{ x: 2838, y: 980, face: -1, bx: 2745, by: 1036, tier: 4, pool: { fish_cloudcarp: 6, fish_comet: 2, fish_nebularay: 0.6, fish_whale: 0.6 } }],
-  starfall: [{ x: 830, y: 752, face: 1, bx: 905, by: 796, sky: true, tier: 4, pool: { fish_comet: 5, fish_seraph: 3, fish_starfish: 2, fish_nebularay: 0.8, fish_whale: 0.5 } }],
+  peak: [{ x: 1960, y: 1136, face: 1, bx: 2036, by: 1136, ice: true, tier: 4, pool: { fish_icefish: 6, fish_auroratrout: 4, fish_trout: 1, fish_seraph: 0.4 } }],
+  sky: [{ x: 2616, y: 1040, face: -1, bx: 2535, by: 1055, tier: 4, pool: { fish_cloudcarp: 6, fish_comet: 2, fish_nebularay: 0.6, fish_whale: 0.6 } }],
+  starfall: [{ x: 870, y: 800, face: 1, bx: 925, by: 813, sky: true, tier: 4, pool: { fish_comet: 5, fish_seraph: 3, fish_starfish: 2, fish_nebularay: 0.8, fish_whale: 0.5 } }],
   // Lantern Lagoon: the cove's rock pools (anyone can fish them), the boardwalk's edges over the
   // lagoon, and the deep water off Lighthouse Point.
   lagoon: [

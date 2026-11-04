@@ -59,7 +59,9 @@ export function drawSpots(ctx, world, cam, time) {
       continue;
     }
     if (!mine) for (let k = 0; k < 2; k++) ripple(ctx, x + (k ? 9 : -7), y + 1, (((time * 0.4 + k * 0.5 + seed) % 1) + 1) % 1, 0.8);
-    if (!s.ice && !s.sky) place(ctx, padArt(), x - s.face * 16, y + 3 + Math.sin(time * 1.3 + seed) * 0.6);
+    // (A lily pad only on a lily pond.)
+    const wk = (world.map.water ?? []).find((w) => s.bx >= w.x1 && s.bx <= w.x2)?.kind;
+    if (wk === 'pond') place(ctx, padArt(), x - s.face * 16, y + 3 + Math.sin(time * 1.3 + seed) * 0.6);
     // A little wooden sign by where you stand, a fish painted on it, reeds at its foot.
     const sx = s.x - s.face * 18 - cam.x;
     const sy = s.y - cam.y;

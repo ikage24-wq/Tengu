@@ -10,7 +10,7 @@ import { pqGather } from './partyquest.js';
 import { NODES, KINDS, NODE_REACH } from '../data/gathering.js';
 import { addItem } from '../core/inventory.js';
 import { ITEMS } from '../data/items.js';
-import { isNight } from './daytime.js';
+import { clockNight } from './daytime.js';
 import { isCalm } from './calm.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, skillOfKind, withExtra, LIFE_NAMES } from '../core/life.js';
 import { spotKey, startedWork, keepWorking, togetherBonus } from './coop-life.js';
@@ -22,9 +22,10 @@ export function nodesOf(world) {
   return NODES[world.map.id] ?? world.map.nodes ?? [];
 }
 
-// A night spot (`night: true`) is only there at night.
+// A night spot (`night: true`) is only there at night (by the clock: a cave's glowing night
+// bloom opens at night too, though no dark falls under the rock).
 export function nodeOpen(world, n) {
-  return !n.night || isNight(world);
+  return !n.night || clockNight(world);
 }
 
 export function nodeReady(world, i) {

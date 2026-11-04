@@ -63,6 +63,9 @@ export function storyLock(world, map, portal) {
 // Each queen's moves: what they're called, how often, and what they put on the ground. Damage is
 // a share of the queen's own slam (`special.damage`). Colours tint the warnings; `fx` is the effect
 // that bursts where a move lands.
+// How far above or below her own floor a queen notices the hero (a floor or so).
+const NOTICE_DY = 150;
+
 const QUEENS = {
   sylvana: {
     color: '#ff7fb6', light: '#ffe0ef',
@@ -142,8 +145,10 @@ export function tickStory(world, dt, hurt) {
     for (const m of world.mobs) {
       const style = QUEENS[m.def.id];
       if (!style || m.hp <= 0) continue;
-      // Only once she's in the fight (hurt, or the hero close).
-      if (!(m.aggroUntil > world.now) && Math.abs(world.body.x - m.x) > 420) continue;
+      // Only once she's in the fight (hurt, or the hero close: near her along her floor and no
+      // more than a floor or so above or below it, so someone fishing or passing on a
+      // ledge of their own high over her isn't picked out).
+      if (!(m.aggroUntil > world.now) && (Math.abs(world.body.x - m.x) > 420 || Math.abs(world.body.y - m.y) > NOTICE_DY)) continue;
       queenTurn(world, m, style, dt);
     }
   }
@@ -195,9 +200,9 @@ function queenTurn(world, m, style, dt) {
     s.adds.shift();
     if (style.adds.mob) {
       for (let i = 0; i < style.adds.n; i++) {
-        const x = Math.max(60, Math.min(world.map.width - 60, m.x + (i % 2 ? 1 : -1) * (160 + i * 40)));
-        // (On the ground where it lands: a field queen's map has cliffs and rises, not one floor.)
-        const a = spawnMob(world.map, { mob: style.adds.mob, x, y: groundAt(world.map, x) });
+        // (On her own floor, beside her: a field queen's map has cliffs, rises and ledges.)
+        const x = Math.max(m.x1 + 20, Math.min(m.x2 - 20, Math.max(60, Math.min(world.map.width - 60, m.x + (i % 2 ? 1 : -1) * (160 + i * 40)))));
+        const a = spawnMob(world.map, { mob: style.adds.mob, x, y: m.def.fly ? groundAt(world.map, x) : m.y });
         a.aggroUntil = Infinity;
         a.add = true;
         world.mobs.push(a);
@@ -236,8 +241,10 @@ function addZones(world, m, zones, base) {
 
 function addZonesHere(world, m, zones, base) {
   for (const z of zones) {
-    // Circles land on whatever the hero is standing on; everything else on the floor.
-    const y = z.kind === 'circle' ? (z.high ? world.map.groundY : world.body.onGround ? world.body.y : world.map.groundY) : world.map.groundY;
+    // Circles land on whatever the hero is standing on; everything else on her own floor (a field
+    // queen may walk a plateau or a crag, not the map's ground line).
+    const floor = m.def.fly ? world.map.groundY : Math.round(m.y);
+    const y = z.kind === 'circle' ? (z.high ? floor : world.body.onGround ? world.body.y : floor) : floor;
     world.zones.push({ t: 0, hit: false, after: 0, y, from: m, damage: Math.round(base * z.k), color: QUEENS[m.def.id].color, light: QUEENS[m.def.id].light, ...z });
   }
 }
@@ -249,11 +256,12 @@ function callout(world, m, title, sub) {
 // Whether `body` is standing where zone `z` goes off.
 export function inZone(world, z, body) {
   if (z.kind === 'circle') return Math.abs(body.x - z.x) < z.w / 2 + 6 && Math.abs(body.y - z.y) < 16;
-  if (z.kind === 'floor') return body.onGround && Math.abs(body.y - world.map.groundY) < 2;
+  const floor = z.y ?? world.map.groundY;
+  if (z.kind === 'floor') return body.onGround && Math.abs(body.y - floor) < 2;
   if (z.kind === 'pillar') return Math.abs(body.x - z.x) < z.w / 2 + 4;
   // A lane hits along the floor (a low one only those on it; jumping clears it).
   if (z.low && !body.onGround) return false;
-  return body.x >= z.x - 6 && body.x <= z.x + z.w + 6 && Math.abs(body.y - world.map.groundY) < 34;
+  return body.x >= z.x - 6 && body.x <= z.x + z.w + 6 && Math.abs(body.y - floor) < 34;
 }
 
 // The queen a trial arena is for (for the map's name card), or null.

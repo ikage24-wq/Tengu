@@ -578,18 +578,7 @@ export function steamerArt() {
 function drawFerryJetty(ctx, map, wx, cam, time) {
   const gy = groundAt(map, wx) - cam.y;
   const x = wx - cam.x;
-  // The water along the quay wall, the steamer moored in it (small: she's further out), and the
-  // signpost by the captain.
-  water(ctx, x - 40, x + 56, gy + 6, gy + 44, time, wx);
-  const k = 0.55;
-  const bob = Math.sin(time * 1.4) * 1.2;
-  ctx.save();
-  ctx.translate(snap(x + 10), snap(gy + 30 + bob));
-  ctx.scale(k, k);
-  place(ctx, steamerArt(), 0, 0);
-  ctx.restore();
-  paddle(ctx, x + 10 + k * (60 - 75), gy + 30 + bob - k * 30, k, time * 0.6);
-  puffs(ctx, x + 10 + k * (111 - 75), gy + 30 + bob - k * 92, time, 0.4, 3, 18);
+  // (The sea along the quay and the steamer riding in it are the harbor's quay: render/quay.js.)
   const r = ramp(WOOD, 0.8);
   const sx = x - 66;
   ctx.fillStyle = r.sh;
@@ -606,6 +595,11 @@ function drawFerryJetty(ctx, map, wx, cam, time) {
   ctx.font = 'bold 6px sans-serif';
   ctx.fillText('LAGOON', snap(sx - 15), snap(gy - 37.5));
 }
+
+// The Sea Biscuit's paddle wheel and funnel smoke, for drawing her afloat at the harbor's quay
+// (render/quay.js), in her own art's units.
+export const steamerPaddle = (ctx, x, y, k, a) => paddle(ctx, x, y, k, a);
+export const steamerPuffs = (ctx, x, y, time) => puffs(ctx, x, y, time, 0.4, 3, 18);
 
 // A paddle wheel turning, centred at (x, y) screen, radius 14 * k.
 function paddle(ctx, x, y, k, a) {

@@ -2275,7 +2275,7 @@ function laundrylineArt(f) {
 
 // A little sailing ship tied up at the pier: a striped hull with portholes, a furled sail, and a
 // pennant on the mast.
-function shipArt(f, ph) {
+export function shipArt(f, ph) {
   return art(`ship|${f}|${ph}`, 200, 156, () => {
     const hull = ramp('#7a5a8a', 0.8);
     const trim = ramp('#ffd66b', 0.8);
@@ -2305,8 +2305,6 @@ function shipArt(f, ph) {
     for (const x of [44, 72, 128, 156]) out.push(F(E(x, 134, 5, 5, trim.base)), F(E(x, 134, 3.4, 3.4, '#9fd8ff')), F(E(x - 1, 133, 1.2, 1.2, '#ffffff')));
     // A lifebuoy and a coil of rope on the rail.
     out.push(F(E(30, 92, 7, 7, '#ffffff')), F(E(30, 92, 4, 4, hull.base)), F(R(23, 91, 3, 2, '#ff6b8a')), F(R(34, 91, 3, 2, '#ff6b8a')), E(170, 96, 8, 4, '#d9b88a'), F(E(170, 95, 4, 1.6, '#b8956a')));
-    // Water lapping at the waterline.
-    for (let x = 20; x < 186; x += 14) out.push(F(E(x, 151, 6, 2, '#bfe6ff')));
     return out;
   });
 }
