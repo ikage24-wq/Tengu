@@ -124,7 +124,7 @@ const pop = (e) => (e <= 0 ? 0 : e >= 0.2 ? 1 : e < 0.1 ? (e / 0.1) * 1.3 : 1.3 
 // chases, a sweat drop when hit, and music notes or z's while it lazes about.
 function drawEmote(ctx, m, mood, x, top, t, now) {
   ctx.save();
-  ctx.font = 'bold 9px sans-serif';
+  ctx.font = '800 9px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.textAlign = 'center';
   const hx = x + (m.dir < 0 ? -1 : 1) * m.def.w * 0.32;
   // A bubble that pops in with an overshoot and holds.
@@ -196,7 +196,7 @@ function drawEmote(ctx, m, mood, x, top, t, now) {
       const u = (t * 0.45 + k / 3) % 1;
       ctx.globalAlpha = Math.sin(u * Math.PI);
       ctx.fillStyle = '#8f7cc4';
-      ctx.font = `bold ${6 + u * 5}px sans-serif`;
+      ctx.font = `800 ${6 + u * 5}px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif`;
       ctx.fillText('z', hx + u * 7, top - 1 - u * 13);
     }
   } else if (m.state === 'idle' && m.hp > 0) {

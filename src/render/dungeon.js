@@ -93,7 +93,7 @@ function shadow(ctx, x, y, rx, alpha = 0.16) {
 
 function zzz(ctx, x, y, time) {
   ctx.save();
-  ctx.font = 'bold 6px sans-serif';
+  ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.fillStyle = '#c9b8ff';
   for (let k = 0; k < 2; k++) {
     const u = (time * 0.45 + k / 2) % 1;

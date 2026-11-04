@@ -687,7 +687,7 @@ DRAW.mushroom = DRAW.herb;
 const HINT_Y = { fruit: 76, wood: 82, honey: 56, flower: 42, ore: 42, fiber: 40, herb: 36 };
 
 function hint(ctx, x, y, label, on) {
-  ctx.font = 'bold 8px sans-serif';
+  ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = ctx.measureText(label).width + 12;
   ctx.globalAlpha = on ? 1 : 0.7;
   box(ctx, x - w / 2, y, w, 12, { fill: '#ffffff', edge: on ? COLORS.accent : COLORS.muted, r: 6 });

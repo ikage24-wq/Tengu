@@ -18,7 +18,7 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questTarget, setRoute } from '../world/routes.js';
 import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot, font } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot, font, textFont } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { settings, saveSettings } from '../core/settings.js';
 
@@ -185,7 +185,7 @@ function listRow(ui, char, id, x, y, w, on, th) {
 // A small heading with a rule after it.
 function section(ctx, label, x, y, w, th) {
   text(ctx, label, x, y, { size: 7, bold: true, color: th.dark });
-  ctx.font = '800 7px sans-serif';
+  ctx.font = textFont(7, true);
   const lw = ctx.measureText(label).width + 4;
   box(ctx, x + lw, y - 3, w - lw, 1, { fill: th.light, edge: null, r: 0.5 });
 }

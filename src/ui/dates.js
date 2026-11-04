@@ -4,7 +4,7 @@
 
 import { SWEETHEARTS } from '../data/sweethearts.js';
 import { DATES, startDate, dateBlocker } from '../world/dates.js';
-import { COLORS, text, box, button, wrap, hover, tooltip } from './kit.js';
+import { COLORS, text, box, button, wrap, hover, tooltip, textFont } from './kit.js';
 import { VW } from '../input.js';
 import { sfx } from '../audio/sfx.js';
 
@@ -101,7 +101,7 @@ function drawStars(ctx, d) {
     ctx.fill();
     if (s.got === true && u < 1.2) {
       ctx.fillStyle = '#ffe36b';
-      ctx.font = 'bold 8px sans-serif';
+      ctx.font = textFont(8, true);
       ctx.textAlign = 'center';
       ctx.fillText('wish!', sx, sy - 10);
     }
@@ -135,7 +135,7 @@ function drawDance(ctx, d) {
     ctx.arc(nx, y, 10, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px sans-serif';
+    ctx.font = textFont(12, true);
     ctx.textAlign = 'center';
     ctx.fillText(GLYPH[n.key], nx, y + 4);
   }

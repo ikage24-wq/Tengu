@@ -258,7 +258,7 @@ export function drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time) {
       ctx.strokeStyle = '#a8805a';
       ctx.strokeRect(-14, 2, 28, 13);
       ctx.fillStyle = '#d0608a';
-      ctx.font = 'bold 6px sans-serif';
+      ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('BUILDS', 0, 11);
       ctx.restore();

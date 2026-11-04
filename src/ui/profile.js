@@ -109,19 +109,24 @@ export function profileWindow(ui, state, world) {
   let y = win.y + 46;
 
   if (page === 'Gear') {
-    // Two columns of five (the gear, then the jewellery and bench-made trinkets).
+    // Two columns of five (the gear, then the jewellery and bench-made trinkets). Each row is tall
+    // enough for a long name on two lines ("Thornweave Bracers" never cut to "Thornweave Bra...").
     const cw = (rw - 4) / 2;
+    const rh = 28;
     EQUIP_SLOTS.forEach((slot, i) => {
       const inst = char.equipment[slot];
       const def = inst ? ITEMS[inst.id] : null;
       const cx = rx + Math.floor(i / 5) * (cw + 4);
-      const cy = y + (i % 5) * 22;
+      const cy = y + (i % 5) * (rh + 2);
       const rare = inst?.rarity ? RARITIES[inst.rarity] : null;
-      box(ctx, cx, cy, cw, 20, { fill: hover(ui, cx, cy, cw, 20) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
-      itemSlot(ctx, cx + 1, cy + 1, 18, inst, { shadow: false, fill: th.light, edge: th.light });
-      text(ctx, SLOT_NAMES[slot], cx + 24, cy + 8, { size: 6, color: COLORS.muted });
-      text(ctx, def ? fit(ctx, itemName(inst), cw - 28, 7.5, true) : '—', cx + 24, cy + 16.5, { size: 7.5, bold: true, color: rare ? rare.color : def ? COLORS.ink : COLORS.muted });
-      if (inst && hover(ui, cx, cy, cw, 20)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
+      box(ctx, cx, cy, cw, rh, { fill: hover(ui, cx, cy, cw, rh) ? '#ffffff' : '#fffdfb', edge: th.light, r: 6, width: 1 });
+      itemSlot(ctx, cx + 2, cy + (rh - 22) / 2, 22, inst, { shadow: false, fill: th.light, edge: th.light });
+      text(ctx, SLOT_NAMES[slot], cx + 28, cy + 8, { size: 6, color: COLORS.muted });
+      const color = rare ? rare.color : def ? COLORS.ink : COLORS.muted;
+      const [l1, l2] = def ? twoLines(ctx, itemName(inst), cw - 32, 7) : ['—', ''];
+      text(ctx, l1, cx + 28, cy + 16.5, { size: 7, bold: true, color });
+      if (l2) text(ctx, l2, cx + 28, cy + 24.5, { size: 7, bold: true, color });
+      if (inst && hover(ui, cx, cy, cw, rh)) tooltip(ui, itemTooltip(world.char, inst.id, inst));
     });
     return;
   }
@@ -184,4 +189,16 @@ export function profileWindow(ui, state, world) {
     }
   });
   if (!bot.shop?.items.length) text(ctx, 'Sold out!', rx + rw / 2, y + 40, { size: 9, align: 'center', color: COLORS.muted });
+}
+
+// A name on up to two lines in `w`: as many words as fit on the first, the rest on the second
+// (cut short only if even that runs over).
+function twoLines(ctx, name, w, size) {
+  ctx.font = font(size, true);
+  const words = name.split(' ');
+  let first = words[0];
+  let k = 1;
+  while (k < words.length && ctx.measureText(`${first} ${words[k]}`).width <= w) first += ` ${words[k++]}`;
+  const rest = words.slice(k).join(' ');
+  return [fit(ctx, first, w, size, true), rest ? fit(ctx, rest, w, size, true) : ''];
 }

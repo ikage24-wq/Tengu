@@ -3298,9 +3298,9 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       const onRoute = p.id === routeId;
       const lv = dest && !dest.dungeon && !p.door && !dest.home ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
       const out = p.x < 200 ? -1 : p.x > map.width - 200 ? 1 : 0;
-      ctx.font = 'bold 7px sans-serif';
+      ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       const nw = ctx.measureText(name).width;
-      ctx.font = '6px sans-serif';
+      ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       const lw = lv ? ctx.measureText(lv).width + 5 : 0;
       const w = nw + lw + 10 + (out ? 7 : 0) + (onRoute ? 8 : 0);
       const bx = Math.round(x - w / 2);
@@ -3327,10 +3327,10 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
         tx += 8;
       }
       ctx.fillStyle = onRoute ? '#ffffff' : '#5a3f7a';
-      ctx.font = 'bold 7px sans-serif';
+      ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.fillText(name, tx, by + 8.6);
       if (lv) {
-        ctx.font = '6px sans-serif';
+        ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
         ctx.fillStyle = onRoute ? '#ffe9f2' : '#9c86b8';
         ctx.fillText(lv, tx + nw + 5, by + 8.4);
       }
@@ -3461,7 +3461,7 @@ function prop(ctx, kind, x, y, seed, t, time, wx = x) {
 // Sleepy "z"s floating up from something napping.
 function zzz(ctx, x, y, time, seed) {
   ctx.save();
-  ctx.font = 'bold 6px sans-serif';
+  ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.fillStyle = '#8f7cc4';
   for (let k = 0; k < 2; k++) {
     const u = (time * 0.5 + k / 2 + seed) % 1;

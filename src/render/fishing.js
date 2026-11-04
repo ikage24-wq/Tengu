@@ -17,7 +17,7 @@ import { rodTip } from './life.js';
 const TAU = Math.PI * 2;
 
 function hint(ctx, x, y, label) {
-  ctx.font = 'bold 8px sans-serif';
+  ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   const w = ctx.measureText(label).width + 12;
   box(ctx, x - w / 2, y, w, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
   text(ctx, label, x, y + 9, { size: 8, bold: true, align: 'center', color: COLORS.accent });

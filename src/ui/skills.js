@@ -11,7 +11,7 @@ import { SKILLS } from '../data/skills.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { learnSkill, canLearn, maxSkill, replaced } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
-import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon } from './kit.js';
+import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon, textFont } from './kit.js';
 import { describeSkill } from './tooltips.js';
 import { hotkeyAt } from './hud.js';
 
@@ -128,7 +128,7 @@ export function skillsWindow(ui, state, world) {
     drawSkillIcon(ctx, s.id, m.x - 8, m.y - 10);
     ctx.globalAlpha = 1;
     const label = hotkeyAt(m.x, m.y) ? 'Set hotkey' : 'Drop on a hotkey';
-    ctx.font = '800 6.5px sans-serif';
+    ctx.font = textFont(6.5, true);
     const tw = ctx.measureText(label).width + 10;
     box(ctx, m.x - tw / 2, m.y - 24, tw, 10, { fill: th.main, edge: null, r: 5 });
     text(ctx, label, m.x, m.y - 16.5, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
@@ -213,7 +213,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
   // What it does, then now and next.
   let ly = wrap(ctx, s.desc ?? '', x + 8, y + 53, w - 16, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;
   const block = (label, body, color, fill) => {
-    ctx.font = '500 7px sans-serif';
+    ctx.font = textFont(7);
     const lines = Math.max(1, Math.ceil(ctx.measureText(body).width / (w - 40)));
     const bh = 6 + lines * 9;
     box(ctx, x + 6, ly - 7, w - 12, bh, { fill, edge: null, r: 8 });

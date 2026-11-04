@@ -22,7 +22,7 @@ import { questsWanting } from '../core/quests.js';
 import { useItem, dropItem as dropOnGround } from '../world/world.js';
 import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, itemSlot, itemShadow, fit } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, sparkle, itemSlot, itemShadow, fit, textFont } from './kit.js';
 import { itemTooltip, sellPrice } from './tooltips.js';
 import { equipTool, toolEquipped } from '../core/crafting.js';
 import { hotkeyAt } from './hud.js';
@@ -159,7 +159,7 @@ export function bagWindow(ui, state, world) {
   drawHero(ctx, char.appearance, gear, cx, oy + 160, { pose: 'idle', time: world.now, scale: 1.2 });
   if (fits) {
     const label = wearable ? (overDoll ? 'Drop to wear' : 'Drag here to wear') : 'Trying on';
-    ctx.font = '800 6.5px sans-serif';
+    ctx.font = textFont(6.5, true);
     const tw = ctx.measureText(label).width + 10;
     box(ctx, cx - tw / 2, oy + 48, tw, 10, { fill: th.main, edge: null, r: 5 });
     text(ctx, label, cx, oy + 55.6, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: th.ink });
@@ -242,7 +242,7 @@ export function bagWindow(ui, state, world) {
       const ground = d.from === 'bag' && overGround(ui, state, win);
       const hint = d.from === 'bag' && hotkeyAt(m.x, m.y) && tab === 'use' ? 'Set hotkey' : d.from === 'bag' && overBin ? 'Throw away?' : ground ? (tab === 'cash' ? "Can't drop Cash items" : 'Drop on the ground') : null;
       if (hint) {
-        ctx.font = '800 6.5px sans-serif';
+        ctx.font = textFont(6.5, true);
         const tw = ctx.measureText(hint).width + 10;
         const fill = hint === 'Set hotkey' ? LAV.main : hint === 'Drop on the ground' ? THEMES.peach.dark : COLORS.bad;
         box(ctx, m.x - tw / 2, m.y - 25, tw, 10, { fill, edge: null, r: 5 });
@@ -350,7 +350,7 @@ function dollSlot(ui, state, world, slot, x, y, inst, outfit, lit, win) {
 
 // A small badge in a cell's top-left corner.
 function chip(ctx, x, y, label, fill) {
-  ctx.font = '800 5px sans-serif';
+  ctx.font = textFont(5, true);
   const w = Math.max(8, ctx.measureText(label).width + 5);
   box(ctx, x - 1, y - 2, w, 7.5, { fill, edge: '#ffffff', r: 3.75, width: 1 });
   text(ctx, label, x - 1 + w / 2, y + 3.6, { size: 5, bold: true, align: 'center', color: '#ffffff' });
@@ -500,7 +500,7 @@ function details(ui, state, world, tab, x, y, w, h, entry, index) {
     for (const [k, v, d] of compareStats(char, entry)) {
       const s = `${STAT_SHORT[k]} ${v}`;
       const ds = d ? ` ${d > 0 ? '+' : ''}${d}` : '';
-      ctx.font = '800 7px sans-serif';
+      ctx.font = textFont(7, true);
       const sw = ctx.measureText(s).width;
       const cw = sw + (ds ? ctx.measureText(ds).width : 0) + 8;
       // A second row keeps clear of the buttons.

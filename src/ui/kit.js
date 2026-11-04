@@ -125,6 +125,12 @@ export function text(ctx, str, x, y, opts = {}) {
   ctx.textAlign = 'left';
 }
 
+// The font text() draws a label of `size` in (held to the phone's readable size), for measuring
+// a label before drawing it, so pills and underlines fit the words they hold.
+export function textFont(size, bold = false) {
+  return font(Math.max(size, minText), bold);
+}
+
 // Shortens text with an ellipsis to fit `w` pixels.
 export function fit(ctx, s, w, size, bold = true) {
   ctx.font = font(Math.max(size, minText), bold);

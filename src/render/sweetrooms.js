@@ -637,7 +637,7 @@ export function roomLife(ctx, id, ox, oy, time) {
       if ((time % 6) < 3) {
         ctx.globalAlpha = Math.sin(((time % 6) / 3) * Math.PI) * 0.8;
         ctx.fillStyle = '#c8a8e8';
-        ctx.font = 'bold 6px sans-serif';
+        ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
         ctx.fillText('z', cx + 20 + (time % 6) * 2, oy + 270 - (time % 6) * 4);
         ctx.globalAlpha = 1;
       }

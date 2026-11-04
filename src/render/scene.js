@@ -183,7 +183,7 @@ function drawNpcs(ctx, world, cam, time) {
     if (r.extra) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
     // (During a cutscene, no name tags, markers or prompts: the scene has the stage.)
     if (world.scene) continue;
-    ctx.font = 'bold 8px sans-serif';
+    ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
     const label = npc.name;
     const w = ctx.measureText(label).width + 10;
     const hovered = world.hoverNpc === n.id;
@@ -468,7 +468,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (world.map.water) drawWaterFront(ctx, world.map, cam, VIEW_W, time, [b, ...bodiedIn(world.bots, world.map.id).map((x) => x.body).filter(Boolean)]);
   // Your own name tag, like everyone else's; click it (or you) to see your profile.
   if (!world.dead) {
-    ctx.font = 'bold 7px sans-serif';
+    ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
     const label = world.char.name;
     const w = ctx.measureText(label).width + 10;
     const hot = world.hoverSelf;

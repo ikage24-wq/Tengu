@@ -603,7 +603,7 @@ function drawFerryJetty(ctx, map, wx, cam, time) {
   ctx.lineTo(snap(sx + 22), snap(gy - 34));
   ctx.fill();
   ctx.fillStyle = '#3a8ab0';
-  ctx.font = 'bold 6px sans-serif';
+  ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.fillText('LAGOON', snap(sx - 15), snap(gy - 37.5));
 }
 
@@ -652,11 +652,11 @@ export function drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time) {
   if (kind === 'derbyboard') {
     place(ctx, derbyBoardArt(), snap(x), gy + 2);
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 7px sans-serif';
+    ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('FISHING DERBY', snap(x), snap(gy - 75.5));
     ctx.fillStyle = '#6a5a7a';
-    ctx.font = '6px sans-serif';
+    ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
     for (const [k, line] of (map.derbyLines ?? ['Every hour,', 'on the hour!', 'Biggest catch', 'wins!']).slice(0, 4).entries()) ctx.fillText(line, snap(x), snap(gy - 58 + k * 8));
     ctx.textAlign = 'left';
     return true;
@@ -1119,7 +1119,7 @@ export function drawVoyage(ctx, map, cam, width, height, time, progress) {
   }
   // Her name on the bow, and the anchor hanging at the hawse.
   ctx.fillStyle = HULL.navy;
-  ctx.font = 'bold 7px sans-serif';
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.fillText('SEA BISCUIT', snap(x1 - 104), snap(deck + 22));
   ctx.strokeStyle = '#6a6a88';
   ctx.lineWidth = 1.6;
@@ -1491,7 +1491,7 @@ export function drawVoyageDeck(ctx, map, cam, width, time) {
   ctx.fillStyle = '#fff4e0';
   ctx.fillRect(snap(hx + 18), snap(roof + 4), 58, 9);
   ctx.fillStyle = HULL.navy;
-  ctx.font = 'bold 6px sans-serif';
+  ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
   ctx.fillText('SEA BISCUIT', snap(hx + 21), snap(roof + 11));
   const sw = Math.sin(time * 1.2) * 0.2;
   ctx.save();

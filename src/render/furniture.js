@@ -343,17 +343,17 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
     if (def.show === 'fish') {
       if (n.fish) drawItemIcon(ctx, n.fish, x - 8, top + 1, 1);
       ctx.fillStyle = '#5a3a2a';
-      ctx.font = 'bold 3.6px sans-serif';
+      ctx.font = '800 3.6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(n.text, x, y - 2.4, def.w - 8);
     } else if (def.show === 'grade') {
       ctx.fillStyle = '#8a5a1a';
-      ctx.font = 'bold 6px sans-serif';
+      ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(n.text, x, top + 12);
     } else if (def.show === 'derby') {
       ctx.fillStyle = '#8a5a1a';
-      ctx.font = 'bold 5px sans-serif';
+      ctx.font = '800 5px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(n.text, x, top + 15);
     } else if (def.show === 'crown' && n.on) {
