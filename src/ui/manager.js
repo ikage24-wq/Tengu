@@ -1,5 +1,8 @@
 // Window state and routing: hotkeys for windows, binding skills/items to hotkeys, and world events.
 
+import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorate.js';
+import { button } from './kit.js';
+import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
 import { HOTKEYS } from '../core/character.js';
@@ -148,7 +151,9 @@ export function routeInput(state, world, input, dt) {
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
   }
-  if (input.pressed.has('Escape')) {
+  // Y: decorate your island (ui/decorate.js; it handles its own Esc while on).
+  if (input.pressed.has('KeyY')) toggleDecorate(state, world);
+  if (input.pressed.has('Escape') && !decorating(state)) {
     if (state.menu) state.menu = null;
     else if (state.npc) {
       state.npc = null;
@@ -275,6 +280,9 @@ export function drawUi(ui, state, world) {
   drawPartyPanel(ui, state, world);
   drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);
+  // Decorating your island, under the windows; and its button while you're at home.
+  drawDecorate(ui, state, world);
+  if (canDecorate(world) && !decorating(state) && !state.npc && button(ui, VW - 84, 50, 76, 17, 'Decorate (Y)', { size: 7, primary: true, iconName: 'hammer' })) toggleDecorate(state, world);
   const m = ui.mouse;
   const t = performance.now() / 1000;
   // A window that just opened (by hotkey, menu button, or anything else) comes to the front, so

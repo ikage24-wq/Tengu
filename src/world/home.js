@@ -108,11 +108,19 @@ export function homeInside() {
   };
 }
 
-// Puts the current island (and the hut) into the map list, with the island's fishing spots.
-export function refreshHome(char) {
-  const { map, spots } = homeMap(char.home?.stage ?? 1);
+// Puts the current island (and the hut) into the map list, with the island's fishing spots. A
+// visitor's `guest` is the friend whose island it is (net/visit.js): their stage, their furniture.
+export function refreshHome(char, guest = null) {
+  const { map, spots } = homeMap((guest ?? char).home?.stage ?? 1);
   MAPS.home = map;
   MAPS.home_in = homeInside();
+  if (guest) {
+    map.guestOf = guest;
+    MAPS.home_in.guestOf = guest;
+    map.name = `${guest.name}'s Island`;
+    MAPS.home_in.name = `${guest.name}'s Hut`;
+    map.portals.find((p) => p.id === 'hut').label = `${guest.name}'s Hut`;
+  }
   SPOTS.home = spots;
   return map;
 }

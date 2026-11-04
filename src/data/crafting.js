@@ -20,6 +20,8 @@
 
 // The skill level each tier needs (core/life.js TIER_LEVEL; kept here too so the item catalogue
 // can load this without the character code, and tests/crafting.test.js checks they match).
+import { FURNITURE } from './furniture.js';
+
 export const TIER_LEVEL = [0, 1, 12, 24, 36];
 
 export const CRAFT_MATERIALS = [
@@ -220,12 +222,16 @@ export const RECIPE_BY_ID = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
 // The Kettle Racer's key (data/mounts.js): a mount you make yourself, from copper, iron and maple.
 recipe({ id: 'craft_mount_kettle', cat: 'tool', tier: 2, level: 12, needs: { copper_ore: 10, iron_ore: 6, maple_log: 4 }, makes: 'mount_kettle' });
 
+// Furniture (data/furniture.js), in the Home tab.
+for (const f of FURNITURE) recipe({ id: `craft_${f.id}`, cat: 'home', tier: f.level >= 24 ? 3 : f.level >= 12 ? 2 : 1, level: f.level, needs: f.needs, makes: f.id, stage: f.stage });
+
 export const CATEGORIES = [
   { key: 'gear', name: 'Gear' },
   { key: 'accessory', name: 'Trinkets' },
   { key: 'tool', name: 'Tools' },
   { key: 'potion', name: 'Tonics' },
   { key: 'stone', name: 'Stones' },
+  { key: 'home', name: 'Home' },
 ];
 
 // ---------- The items it makes ----------

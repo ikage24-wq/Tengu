@@ -225,7 +225,9 @@ export function npcWindow(ui, state, world) {
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
   // Shelly builds your island up (world/home.js).
-  if (npc.role === 'builder') {
+  if (npc.role === 'builder' && world.map.guestOf) {
+    choices.push({ label: 'Lovely island!', sub: `This is ${world.map.guestOf.name}'s. I built it all!`, icon: 'heart', run: () => say(world, 'shelly', `Isn't it? ${world.map.guestOf.name} brings me the best bits. Come back any time!`) });
+  } else if (npc.role === 'builder') {
     const n = nextStageNeeds(char);
     choices.push(n ? { label: `Build: ${n.def.name}`, sub: n.def.about, icon: 'hammer', primary: true, run: () => (dlg.build = true) } : { label: 'All built!', sub: 'Your island is finished. Make it yours!', icon: 'star', run: () => say(world, 'shelly', "It's perfect, isn't it? I might need a bigger shell...") });
   }

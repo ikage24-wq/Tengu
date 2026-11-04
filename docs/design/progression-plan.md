@@ -170,7 +170,8 @@ jobs.)
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).
 - [ ] **Phase 8: Levels 50–100.** New regions and story, 3rd jobs at 60, 4th at 100.
 - [ ] **Phase 9: Life content.** Fun Fair, mounts, home, crafting. Mounts done 2026-11-04 (six, each
-  with its own trick: docs/design/mounts.md); the home island next.
+  with its own trick: docs/design/mounts.md); your island, Shelly's five stages, furniture,
+  decorating and visits done the same day (docs/design/home-island.md). The Fun Fair is left.
 
 ## Open questions for the user
 

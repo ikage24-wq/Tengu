@@ -115,7 +115,9 @@ function findPortal(map, id) {
 
 export function loadMap(world, mapId, portalId) {
   // Your island is built fresh from how far Shelly has got (world/home.js).
-  if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char);
+  if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char, world.visiting ?? null);
+  // (Leaving a friend's island ends the visit: net/visit.js.)
+  else world.visiting = null;
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
@@ -259,6 +261,13 @@ export function useItem(world, id) {
   // The Home Shell: home to your island, and back where you were (world/home.js).
   if (def.effect?.home) {
     const char = world.char;
+    if (!char.home && world.visiting) {
+      const back = world.visitBack;
+      world.visiting = null;
+      if (back && MAPS[back.map]) loadMap(world, back.map, 'start');
+      else loadMap(world, 'harbor', 'ferry');
+      return true;
+    }
     if (!char.home) {
       world.log('The shell hums... but you have no island to go home to yet. Captain Rook in Pastel Harbor might know of one.', '#ffb3c6');
       return false;
@@ -680,8 +689,11 @@ export function updateWorld(world, dt, input) {
   // While you fish, the line has the controls.
   // (Gathering and crafting work the same way.)
   const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed) || tickCrafting(world, dt, input.held, input.pressed));
-  const held = input.locked || world.dead || fishing ? new Set() : input.held;
-  const pressed = input.locked || world.dead || fishing ? new Set() : input.pressed;
+  // (Decorating your island: only walking and jumping; the keys belong to the furniture.)
+  const MOVE = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'AltLeft', 'AltRight'];
+  const only = (set) => (world.decorating ? new Set([...set].filter((k) => MOVE.includes(k))) : set);
+  const held = input.locked || world.dead || fishing ? new Set() : only(input.held);
+  const pressed = input.locked || world.dead || fishing ? new Set() : only(input.pressed);
   const intent = {
     left: held.has('ArrowLeft'),
     right: held.has('ArrowRight'),
@@ -770,7 +782,7 @@ export function updateWorld(world, dt, input) {
     }
   }
   // Auto-loot (a setting, passed in as world.settings) picks things up without holding X.
-  if ((held.has('KeyX') || world.settings?.autoLoot) && world.lootTimer <= 0 && pickUp(world, held.has('KeyX'))) world.lootTimer = 0.12;
+  if ((held.has('KeyX') || (world.settings?.autoLoot && !world.decorating)) && world.lootTimer <= 0 && pickUp(world, held.has('KeyX'))) world.lootTimer = 0.12;
 
   // ----- Melee strikes landing, then queued hits -----
   tickMelee(world, dt);

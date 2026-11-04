@@ -26,6 +26,7 @@ import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
 import { drawMount } from './mounts.js';
 import { drawWaterBack, drawWaterFront } from './water.js';
+import { drawFurniture } from './furniture.js';
 import { rideMotion } from '../world/mount.js';
 import { copiesOf, copyAt } from '../world/phantom.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
@@ -320,6 +321,11 @@ export function drawWorld(ctx, world, viewCam, time) {
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time), routePortal?.id);
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
+  // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.
+  if (world.map.home) {
+    const owner = world.map.guestOf ?? world.char;
+    drawFurniture(ctx, world.map, owner.home?.placed, cam, VIEW_W, time, owner);
+  }
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);

@@ -38,6 +38,8 @@ const R = {
   portal: { db: -15, max: 1, room: true, layers: [{ rec: 'teleIn' }, { seq: 'C6:60 E6:60 G6:60 C7:300', inst: 'celesta', db: -8 }] },
   dash: { db: -17, vary: 5, max: 1, layers: [{ rec: 'windWhoosh', len: 600 }] },
   blink: { db: -15, max: 1, room: true, layers: [{ rec: 'teleOut', len: 800 }, sparkle('G6:30 C7:30 E7:150', { at: 40, db: -10 })] },
+  // Furniture set down (ui/decorate.js): a soft wooden knock and a little settle.
+  furnPlace: { db: -16, vary: 6, max: 2, layers: [{ rec: 'wood', rate: 1.2, len: 160 }, thump(160, 70, { db: -10 }), { rec: 'soft', rate: 1.3, len: 120, db: -8, at: 60 }] },
   // ---------- Mounts (world/mount.js) ----------
   // Getting on: a soft poof and a little rising chime; off: the poof and the chime falling.
   mountOn: { db: -16, max: 1, layers: [{ rec: 'soft', rate: 1.2, len: 220 }, whoosh(260, 500, 2200, { focus: 0.3, db: -10 }), sparkle('C6:45 E6:45 G6:45 C7:260', { db: -11 })] },

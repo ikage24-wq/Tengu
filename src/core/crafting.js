@@ -20,6 +20,9 @@ export const hasMaterials = (char, r) => Object.entries(r.needs).every(([id, n])
 
 // Why `r` can't be made right now ('level', 'materials', 'bag'), or null.
 export function craftBlocker(char, r) {
+  // Furniture needs an island to put it on, built far enough along (data/furniture.js).
+  if (r.cat === 'home' && !char.home) return 'island';
+  if (r.stage && (char.home?.stage ?? 0) < r.stage) return 'stage';
   if (lifeLevel(char, 'crafting') < r.level) return 'level';
   if (!hasMaterials(char, r)) return 'materials';
   const def = ITEMS[r.makes];
@@ -29,7 +32,7 @@ export function craftBlocker(char, r) {
   if (!stacks && list.length >= TAB_SIZE) return 'bag';
   return null;
 }
-export const BLOCKER_TEXT = { level: 'Your Crafting level is too low.', materials: 'Missing materials.', bag: 'Your bag is full.' };
+export const BLOCKER_TEXT = { island: 'You need an island to put it on: ask Captain Rook in Pastel Harbor.', stage: 'Shelly needs to build your island further first.', level: 'Your Crafting level is too low.', materials: 'Missing materials.', bag: 'Your bag is full.' };
 
 // The chance of each quality [Fine, Superb, Masterwork] for a quality recipe, rising with your
 // Crafting level and with every level you are past the recipe's own.

@@ -37,8 +37,40 @@ replacing it. Nothing withers and there is no upkeep.
 
 ## The hut inside
 
-One cosy room: plank walls, beams, a big round window onto the sea, a rug and two wall shelves.
-It is ready for furniture (next).
+One cosy room: plank walls, beams, a big round window onto the sea, a mint door, a rug and two
+wall shelves to put things on.
+
+## Furniture and decorating (just for looks: the player's choice)
+
+- **Crafted** at any bench, in the new **Home** tab, from what you gather, mine, fish and hunt.
+  Recipes need an island; the bakery set opens with the Tide Pond (stage 2), Starry Night with the
+  Rocky Rise (3), the crown cushion with Coral Islet (4).
+- **23 pieces in four sets:** Seaside Cottage (driftwood table and chair, wave quilt bed, shell
+  lamp, rope hammock, fishing net), Sweet Bakery (cake stand table, macaron stool, cupcake lamp,
+  strawberry rug, bakery shelf, cake under glass), Starry Night (crescent moon bed, star string
+  lights, brass telescope that turns, spinning planet globe, moon floor lamp, star clock that
+  keeps the game's time), Trophies and Catches (record catch plaque showing your biggest fish,
+  mount figurine of the mount you ride, dungeon cup with your best grade, crown cushion that gets a
+  crown once you clear a dungeon on Hard, derby ribbon with your Fishing Derby wins).
+- **Decorate mode** (Y, or the Decorate button at home): your furniture in a bar at the bottom,
+  by set. Pick a piece and a see-through preview follows the pointer, snapped to where it would
+  go: soft green where it fits, soft red with a reason where it doesn't ("Put it on a table or a
+  shelf", "It bumps into the Shell Lamp", "It would get wet!") and the blocking piece outlined.
+  Click to set it down (it hops and settles with a wooden knock); click a placed piece to move
+  it; F or right-click flips; Delete puts it away for free; Ctrl+Z / Ctrl+Y undo and redo; Shift
+  places off the grid. You can walk about while decorating.
+- **Where things go:** floor pieces on the ground or a ledge (never in the water), rugs on the
+  floor, small pieces on tables and shelves, wall pieces inside on the back wall, string lights
+  from the ceiling beam or under a deck. Some pieces are inside-only (beds, wall pieces) or
+  outside-only (the hammock). A table with something on it has to be cleared before it moves.
+  Up to 60 pieces on the island and 60 in the hut.
+
+## Visiting friends
+
+Online, right-click a friend and **Visit their island**: you arrive at their dock and see their
+island at its own stage with their furniture and their records on the trophies. Their game tells
+them you've come. Only people on the same island see each other there. You can't move their
+furniture. Your Home Shell or their skiff takes you back.
 
 ## Water
 

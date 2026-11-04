@@ -2,6 +2,7 @@
 // looking at a friend's profile, trading, warping to a friend, fishing side by side, and a returning queen's moves reaching
 // everyone on her map. Shared dungeon runs are in net/dungeonrun.js.
 
+import { onVisit } from './visit.js';
 import { online, send, othersHere } from './online.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
@@ -588,6 +589,8 @@ export function handleTogether(world, msg, g) {
       return;
     case 'gift':
       return onGift(world, msg, g);
+    case 'visit':
+      return onVisit(world, msg, g);
     case 'party':
       return onParty(world, msg, g);
     case 'pq':

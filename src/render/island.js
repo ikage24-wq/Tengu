@@ -211,6 +211,11 @@ function roomArt() {
     // The door out, mint like the outside, with its little window and knob.
     out.push(T([[294, 300], [294, 236], [300, 226], [340, 226], [346, 236], [346, 300]], '#ffffff'));
     out.push(T([[298, 300], [298, 238], [303, 230], [337, 230], [342, 238], [342, 300]], '#8fd8c0'), F(R(319.4, 230, 1.2, 70, '#6fb8a0')), E(334, 268, 1.8, 1.8, '#ffd36b'), E(320, 246, 6, 6, '#ffffff'), F(E(320, 246, 4.4, 4.4, '#bfe8ff')));
+    // The two wall shelves (the room's `shelf` ledges, y 262): boards on curly brackets.
+    for (const sx of [70, 420]) {
+      out.push(...planks(sx, 262, 150, 5, beam, 6, sx), F(R(sx, 262, 150, 1.2, beam.hi)));
+      for (const bx of [sx + 14, sx + 136]) out.push(T([[bx - 2, 267], [bx + 2, 267], [bx + 2, 280], [bx - 8, 267]], beam.sh));
+    }
     // A round rug.
     out.push(E(320, 336, 120, 16, '#ffb3cf'), F(E(320, 336, 100, 12, '#ffd2e6')), F(E(320, 336, 60, 7, '#ffb3cf')));
     return out;
