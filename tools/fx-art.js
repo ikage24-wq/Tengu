@@ -4938,8 +4938,10 @@
   }
 
   // Her swirl: two ribbons curl round her as she spins (coral and cream), meet in a ring, then
-  // unwind and scatter into beads.
-  E.wdswirl = (() => {
+  // unwind and scatter into beads. Drawn 1.6x (74 game px across its reach at scale 1) and again
+  // 4x for the wide blows (Spotlight's, 184 at scale 1), so the game scales it to each blow's
+  // reach without stretching (the 2026-11-04 pass: it was a third of the reach it marked).
+  const WDSWIRL = (() => {
     const c = 130;
     return {
       w: 260, h: 260, n: 8, fps: 26, px: c, py: c,
@@ -4967,6 +4969,8 @@
       },
     };
   })();
+  E.wdswirl = grown(WDSWIRL, 1.6);
+  E.wdswirlbig = grown(WDSWIRL, 4);
 
   // Her mark on a monster: a ring snaps round it and spins, a crescent gust cuts across, then the
   // ring breaks into beads and a ribbon of sparkles.
@@ -5018,7 +5022,32 @@
     };
   })();
 
+  // The gust of a big blow (the fouetté's, the lunge's, Gust Line's, a glove push's puff): the
+  // crescent races out down the line with its ribbon streaming behind, so the game can scale it to
+  // the length of ground the blow cuts (its leading edge ends 150 game px ahead at scale 1).
+  E.wdgustfar = (() => {
+    const cx = 40;
+    const cy = 120;
+    return {
+      w: 600, h: 240, n: 8, fps: 30, px: cx, py: cy,
+      draw(ctx, i) {
+        const k = ease3(Math.min(1, (i + 0.5) / 5.5));
+        const x = cx - 40 + k * 400;
+        if (i < 6) {
+          const th = [26, 40, 46, 44, 38, 28][i];
+          celCrescent(ctx, CORAL, x, cy, 90, -1.1, 1.1, th, { seed: 91, inkW: 4 });
+          celCrescent(ctx, CREAM, x - 26, cy, 70, -0.9, 0.9, th * 0.4, { seed: 92, inkW: 3 });
+          ribbon(ctx, CREAM, (u) => [x - 20 - u * (60 + k * 200), cy - 70 + Math.sin(u * 6 + i) * 14 + u * 24], (u) => 9 * (1 - u), { twist: 1 });
+          for (const dy of [-44, 0, 44]) speedLine(ctx, CORAL, x - 60 - k * 150, cy + dy, x - 4, cy + dy * 0.9, 3);
+        } else {
+          for (let j = 0; j < 7; j++) sparkle(ctx, j % 2 ? CORAL : CREAM, x + 50 + Math.cos(j * 1.7) * 36, cy + (j - 3) * 24, 10, j);
+        }
+      },
+    };
+  })();
+
   // Her badge, rising in her buff's pillar: a chakram with a ribbon bow.
+
   E.embdancer = emblem(CORAL, (ctx, pal) => {
     const band = (r0, r1, colour) => {
       ctx.beginPath();
@@ -5044,47 +5073,73 @@
   // Grand Finale (her finisher): a spotlight beam drops on her, coral and cream ribbons spiral up
   // round it into a great rose of ribbons, then it bursts open in a ring of rings and a shower of
   // sparkles, like the curtain coming down on a show.
+  // Drawn as wide as the ground it cuts (the 2026-11-04 pass): her rose of ribbons whirls out round
+  // her to 180 game px either side (its cuts' reach), and the burst races out along the ground to
+  // 200 (the last blow's), at scale 1.
   E.wdfinale = (() => {
-    const c = 220;
-    const gy = 380;
+    const c = 600;
+    const gy = 400;
+    const oy = gy - 96;
     return {
-      w: 440, h: 420, n: 12, fps: 20, px: c, py: gy,
+      w: 1200, h: 430, n: 12, fps: 20, px: c, py: gy,
       draw(ctx, i) {
-        const k = i / 11;
         // The spotlight.
         if (i <= 8) {
-          const w = [40, 70, 80, 80, 80, 76, 64, 46, 24][i];
+          const w = [56, 96, 112, 112, 112, 106, 90, 64, 34][i];
           ctx.save();
           ctx.globalAlpha = 0.85;
           fill(ctx, [[c - w * 0.35, 0], [c + w * 0.35, 0], [c + w, gy], [c - w, gy]], CREAM[1]);
           fill(ctx, [[c - w * 0.15, 0], [c + w * 0.15, 0], [c + w * 0.45, gy], [c - w * 0.45, gy]], CREAM[0]);
           ctx.restore();
         }
-        // Ribbons spiralling up round it.
+        // The rose: ribbons whirling out round her on a wide flat orbit, crescent cuts riding its
+        // rim (behind her first, then in front).
         if (i >= 1 && i <= 8) {
+          const rx = Math.min(540, 150 + (i - 1) * 85);
+          const ry = rx * 0.24;
+          for (const [phase, pal] of [[0, CORAL], [Math.PI, CREAM], [Math.PI / 2, CORAL], [Math.PI * 1.5, CREAM]]) {
+            ribbon(ctx, pal, (u) => {
+              const a = phase + i * 1.1 + u * 1.9;
+              return [c + Math.cos(a) * rx, oy + Math.sin(a) * ry - Math.cos(a * 2) * 14];
+            }, (u) => 14 * Math.sin(Math.PI * u) * (i >= 7 ? 0.7 : 1), { twist: 2 });
+            if (i >= 3) {
+              const a = phase + i * 1.1 + 1.9;
+              const x = c + Math.cos(a) * rx;
+              const y = oy + Math.sin(a) * ry;
+              celCrescent(ctx, pal === CORAL ? CORAL : CREAM, x, y, 44, a + 0.6, a + 2.2, 14, { seed: 105, inkW: 3 });
+            }
+          }
+          // And up the light, the rose climbing round her.
           const up = Math.min(1, i / 5);
-          for (const [phase, pal] of [[0, CORAL], [Math.PI, CREAM], [Math.PI / 2, CORAL]]) {
+          for (const [phase, pal] of [[0, CORAL], [Math.PI, CREAM]]) {
             ribbon(ctx, pal, (u) => {
               const a = phase + u * 7 + i * 0.5;
-              const r = 70 + u * 40 + (i > 5 ? (i - 5) * 30 : 0);
+              const r = 80 + u * 50;
               return [c + Math.cos(a) * r, gy - 20 - u * 300 * up + Math.sin(a) * 18];
             }, (u) => 11 * Math.sin(Math.PI * u), { twist: 2 });
           }
         }
-        // The burst: rings racing out, and sparkles showering down.
+        // The burst: a ring racing out along the ground to the edge of the last blow, rings popping
+        // round her, and sparkles showering down over the whole stage.
         if (i >= 6) {
           const b = (i - 6) / 5;
-          if (i <= 9) celRing(ctx, CORAL, c, gy - 170, 60 + b * 140, 16 * (1 - b * 0.6), { broken: i >= 8 ? 0.5 : 0, seed: 101 });
-          if (i <= 8) celRing(ctx, CREAM, c, gy - 170, 30 + b * 90, 10, { seed: 102 });
+          if (i <= 10) {
+            ctx.save();
+            ctx.translate(c, gy - 8);
+            ctx.scale(1, 0.26);
+            celRing(ctx, CORAL, 0, 0, 160 + b * 440, 26 * (1 - b * 0.6), { broken: i >= 9 ? 0.5 : 0, seed: 106 });
+            ctx.restore();
+          }
+          if (i <= 9) celRing(ctx, CORAL, c, gy - 170, 60 + b * 150, 16 * (1 - b * 0.6), { broken: i >= 8 ? 0.5 : 0, seed: 101 });
+          if (i <= 8) celRing(ctx, CREAM, c, gy - 170, 30 + b * 100, 10, { seed: 102 });
           const R = rng(103);
-          for (let j = 0; j < 14; j++) {
-            const x = c + (R() - 0.5) * 380;
-            const y = gy - 330 + R() * 120 + b * 160;
-            sparkle(ctx, j % 2 ? CORAL : CREAM, x, y, 14 * (1.2 - b * 0.5), j);
+          for (let j = 0; j < 22; j++) {
+            const x = c + (R() - 0.5) * 1120;
+            const y = gy - 330 + R() * 160 + b * 150;
+            sparkle(ctx, j % 2 ? CORAL : CREAM, x, y, 15 * (1.2 - b * 0.5), j);
           }
         }
-        if (i === 6 || i === 7) starburst(ctx, CORAL, c, gy - 170, 90 - (i - 6) * 20, 10, 104, { inner: 0.3 });
-        void k;
+        if (i === 6 || i === 7) starburst(ctx, CORAL, c, gy - 170, 100 - (i - 6) * 20, 10, 104, { inner: 0.3 });
       },
     };
   })();
@@ -5189,17 +5244,19 @@
   // Golden Carousel (her finisher): rings gather on an orbit round her, riding it faster and
   // faster under a gold track like a carousel's; then they fly out in every direction, the track
   // bursts into a ring of sparks, and gold sparkles rain down.
+  // (Drawn as wide as its cuts reach, the 2026-11-04 pass: the gathered track is 120 game px out
+  // either side at scale 1, where it was 50.)
   E.bdcarousel = (() => {
-    const c = 240;
-    const gy = 300;
+    const c = 560;
+    const gy = 320;
     const oy = gy - 90;
     return {
-      w: 480, h: 320, n: 12, fps: 20, px: c, py: gy,
+      w: 1120, h: 340, n: 12, fps: 20, px: c, py: gy,
       draw(ctx, i) {
         const gather = Math.min(1, (i + 1) / 4);
         const fly = i >= 8 ? (i - 7) / 4 : 0;
-        const rx = 150 * (1.25 - gather * 0.25);
-        const ry = 46 * (1.25 - gather * 0.25);
+        const rx = 360 * (1.15 - gather * 0.15);
+        const ry = 84 * (1.15 - gather * 0.15);
         const turn = [0, 0.3, 0.7, 1.2, 1.9, 2.7, 3.6, 4.6, 5.2][Math.min(8, i)];
         // The track: a gold band on the orbit (its back half first, behind the rings).
         if (i <= 8) {
@@ -5212,7 +5269,7 @@
         const rings = [];
         for (let k = 0; k < 6; k++) {
           const a = (k / 6) * TAU + turn;
-          const d = 1 + fly * 1.6;
+          const d = 1 + fly * 0.4;
           rings.push([c + Math.cos(a) * rx * d, oy + Math.sin(a) * ry * d - fly * 60 * Math.abs(Math.cos(a)), Math.sin(a), a]);
         }
         rings.sort((a, b) => a[2] - b[2]);
@@ -5228,14 +5285,15 @@
               ctx.restore();
             }
             if (fly && i < 10) speedLine(ctx, ROSEGOLD, x - Math.cos(a) * 90, y + Math.abs(Math.cos(a)) * 30 - Math.sin(a) * 30, x, y, 5);
-            chakram(ctx, x, y, (26 + depth * 6) * (i === 0 ? 0.5 : 1), turn * 2 + a, 0.8, depth > 0 ? ROSEGOLD : GOLDRING);
+            chakram(ctx, x, y, (32 + depth * 7) * (i === 0 ? 0.5 : 1), turn * 2 + a, 0.8, depth > 0 ? ROSEGOLD : GOLDRING);
           } else sparkle(ctx, GOLDRING, x, y, 12, a);
         }
-        if (i === 8 || i === 9) starburst(ctx, GOLDRING, c, oy, 80 - (i - 8) * 18, 12, 142, { inner: 0.3 });
+        if (i === 8 || i === 9) starburst(ctx, GOLDRING, c, oy, 100 - (i - 8) * 20, 12, 142, { inner: 0.3 });
         if (i >= 8) {
           const R = rng(143);
-          for (let j = 0; j < 12; j++) sparkle(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + (R() - 0.5) * 420, oy - 120 + R() * 60 + fly * 110, 12 * (1.2 - fly * 0.5), j);
+          for (let j = 0; j < 20; j++) sparkle(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + (R() - 0.5) * 1040, oy - 120 + R() * 60 + fly * 110, 13 * (1.2 - fly * 0.5), j);
         }
+
       },
     };
   })();
@@ -5339,7 +5397,12 @@
     };
   })();
 
+  // Updraft's rising whirl (and her up command's): the same whirlwind drawn 2.5x, about 80 game px
+  // across at scale 1, the width of what it throws up.
+  E.skywhirlbig = grown(E.skywhirl, 2.5);
+
   // Her badge: a white wing over a little cloud, with a sun sparkle.
+
   E.embsky = emblem(SKYB, (ctx) => {
     puff(ctx, CLOUDS, 0, 22, 26, 181, { lobes: 5 });
     for (let k = 0; k < 5; k++) feather(ctx, k % 2 ? SKYB : CLOUDS, -6 + k * 7, -2 - k * 6, 44 - k * 4, -0.5 - k * 0.32);
@@ -5349,19 +5412,22 @@
   // Sky Waltz (her finisher): a tornado gathers round her, spinning up from the ground into a great
   // column with feathers and clouds caught in it; then it slams down, bursting out along the
   // ground in a ring of wind and clouds, sunlight sparkling down.
-  E.skytornado = (() => {
-    const c = 220;
-    const gy = 400;
+  // (Drawn twice its old size and wider at the base, the 2026-11-04 pass: the column's foot spans
+  // the monsters it lifts and the slam's ring races out to 200 game px at scale 1, where the whole
+  // tornado had been a third of the ground it works on.)
+  E.skytornado = grown((() => {
+    const c = 330;
+    const gy = 330;
     return {
-      w: 440, h: 420, n: 12, fps: 18, px: c, py: gy,
+      w: 660, h: 350, n: 12, fps: 18, px: c, py: gy,
       draw(ctx, i) {
         if (i <= 7) {
           const grow = Math.min(1, (i + 1) / 5);
           const rings = 7;
           for (let k = 0; k < rings; k++) {
             const u = k / (rings - 1);
-            const y = gy - 20 - u * 330 * grow;
-            const r = (40 + u * 120) * (0.6 + 0.4 * grow);
+            const y = gy - 20 - u * 270 * grow;
+            const r = (70 + u * 110) * (0.6 + 0.4 * grow);
             const a0 = i * 1.3 + k * 0.8;
             ctx.save();
             ctx.translate(c + Math.sin(u * 3 + i * 0.7) * 10 * u, y);
@@ -5373,7 +5439,7 @@
           for (let j = 0; j < 6; j++) {
             const u = R();
             const a = R() * TAU + i;
-            feather(ctx, j % 2 ? SUNLIT : SKYB, c + Math.cos(a) * (50 + u * 110), gy - 40 - u * 300 * grow, 24, a);
+            feather(ctx, j % 2 ? SUNLIT : SKYB, c + Math.cos(a) * (50 + u * 110), gy - 40 - u * 240 * grow, 24, a);
           }
         }
         // The slam: rings bursting out along the ground, clouds rolling, sunlight raining.
@@ -5382,16 +5448,16 @@
           ctx.save();
           ctx.translate(c, gy - 10);
           ctx.scale(1, 0.32);
-          celRing(ctx, SKYB, 0, 0, 80 + b * 140, 24 * (1 - b * 0.6), { broken: i >= 10 ? 0.5 : 0, seed: 193 });
+          celRing(ctx, SKYB, 0, 0, 100 + b * 200, 24 * (1 - b * 0.6), { broken: i >= 10 ? 0.5 : 0, seed: 193 });
           ctx.restore();
-          for (const s of [-1, 1]) for (let j = 0; j < 3; j++) puff(ctx, CLOUDS, c + s * (60 + b * 120 + j * 30), gy - 20 - j * 8, 26 * (1 - b * 0.5) - j * 4, 194 + j, { holes: b > 0.5 ? 0.4 : 0, lobes: 5 });
+          for (const s of [-1, 1]) for (let j = 0; j < 3; j++) puff(ctx, CLOUDS, c + s * (80 + b * 180 + j * 30), gy - 20 - j * 8, 26 * (1 - b * 0.5) - j * 4, 194 + j, { holes: b > 0.5 ? 0.4 : 0, lobes: 5 });
           if (i <= 9) starburst(ctx, SUNLIT, c, gy - 40, 80 - (i - 8) * 20, 10, 195, { inner: 0.3 });
           const R = rng(196);
-          for (let j = 0; j < 10; j++) sparkle(ctx, j % 2 ? SUNLIT : SKYB, c + (R() - 0.5) * 380, gy - 300 + R() * 100 + b * 150, 12 * (1.2 - b * 0.5), j);
+          for (let j = 0; j < 10; j++) sparkle(ctx, j % 2 ? SUNLIT : SKYB, c + (R() - 0.5) * 560, gy - 250 + R() * 90 + b * 130, 12 * (1.2 - b * 0.5), j);
         }
       },
     };
-  })();
+  })(), 2);
 
   // ---------- The Star Witch (midnight blue and gold: stars, comets, constellations) ----------
   // docs/design/star-witch.md. Her shapes: five-point gold stars with white cores, midnight-blue

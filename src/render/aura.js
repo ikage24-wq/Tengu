@@ -241,8 +241,8 @@ function momentumAura(ctx, x, y, t, s, k, layer) {
 // head.
 function shadowAura(ctx, x, y, t, s, k, layer) {
   if (layer === 'back') {
-    if (k > 0.15 && k < 1) fxSprite(ctx, 'celwdswirl', x, y, { frame: 4, scale: s * (0.45 + 0.3 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2), rot: t * (0.5 + k) });
-    if (k >= 1) fxSprite(ctx, 'celwdswirl', x, y, { t: (t * 0.6) % 0.3, scale: s * 0.8, sy: 0.3 });
+    if (k > 0.15 && k < 1) fxSprite(ctx, 'celwdswirl', x, y, { frame: 4, scale: s * (0.28 + 0.19 * k), sy: 0.3, alpha: Math.min(1, (k - 0.15) * 2), rot: t * (0.5 + k) });
+    if (k >= 1) fxSprite(ctx, 'celwdswirl', x, y, { t: (t * 0.6) % 0.3, scale: s * 0.5, sy: 0.3 });
     return;
   }
   if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });

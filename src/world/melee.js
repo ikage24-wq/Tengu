@@ -163,36 +163,36 @@ export const PATH_COMBOS = {
   // the line. With gloves: a port de bras push, a rond de bras, a relevé that lifts them, and a
   // pirouette that opens into a burst of ribbons.
   thiefdagger: [
-    { move: 'wdpique', dur: 0.3, step: 8, strikes: [{ at: 0.42, pct: 85, reach: 68, h: 56, knock: 30, arc: [170, -140], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdspin', dur: 0.36, step: 6, strikes: [{ at: 0.5, pct: 90, reach: 70, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdarabesque', dur: 0.5, step: 10, strikes: [{ at: 0.25, pct: 60, reach: 72, h: 54, targets: 2, knock: 20, pierce: true, fx: 'wdhit' }, { at: 0.5, pct: 70, reach: 72, h: 58, targets: 2, knock: 60, arc: [-60, 260], thick: 6, fx: 'wdhit' }] },
-    { move: 'wdfouette', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.4, pct: 170, reach: 130, h: 66, targets: 4, pierce: true, knock: 200, launch: 140, fx: 'wdhit', burst: 'wdgust', burstAt: 0.25, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] },
+    { move: 'wdpique', dur: 0.27, step: 14, strikes: [{ at: 0.42, pct: 85, reach: 68, h: 56, knock: 30, arc: [170, -140], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdspin', dur: 0.32, step: 12, strikes: [{ at: 0.5, pct: 90, reach: 70, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdarabesque', dur: 0.45, step: 16, strikes: [{ at: 0.25, pct: 60, reach: 72, h: 54, targets: 2, knock: 20, pierce: true, fx: 'wdhit' }, { at: 0.5, pct: 70, reach: 72, h: 58, targets: 2, knock: 60, arc: [-60, 260], thick: 6, fx: 'wdhit' }] },
+    { move: 'wdfouette', dur: 0.54, step: 16, finisher: true, strikes: [{ at: 0.4, pct: 170, reach: 130, h: 66, targets: 4, pierce: true, knock: 200, launch: 140, fx: 'wdhit', burst: 'wdgust', burstAt: 0.25, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] },
   ],
   thiefstar: [
-    { move: 'wdpalm', dur: 0.32, step: 6, strikes: [{ at: 0.42, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdrond', dur: 0.38, step: 4, strikes: [{ at: 0.5, pct: 90, reach: 92, h: 66, targets: 2, pierce: true, knock: 70, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdrise', dur: 0.44, step: 0, strikes: [{ at: 0.42, pct: 110, reach: 90, h: 110, targets: 3, knock: 20, launch: 300, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
-    { move: 'wdflourish', dur: 0.5, step: 0, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 96, h: 90, around: true, targets: 5, knock: 220, launch: 200, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] },
+    { move: 'wdpalm', dur: 0.29, step: 12, strikes: [{ at: 0.42, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdrond', dur: 0.34, step: 10, strikes: [{ at: 0.5, pct: 90, reach: 92, h: 66, targets: 2, pierce: true, knock: 70, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdrise', dur: 0.4, step: 6, strikes: [{ at: 0.42, pct: 110, reach: 90, h: 110, targets: 3, knock: 20, launch: 300, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] },
+    { move: 'wdflourish', dur: 0.45, step: 8, finisher: true, strikes: [{ at: 0.5, pct: 170, reach: 96, h: 90, around: true, targets: 5, knock: 220, launch: 200, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] },
   ],
   // The Thief's paths. The Blade Dancer (docs/design/blade-dancer.md): every blow a throw or a
   // catch of her ring (`bounce`: it ricochets on to that many more monsters, then flies home to her
   // hand). A backhand flick that bounces once, a cross toss of two rings, a turning catch that cuts
   // all round her as it comes home, and a sidearm hurl that ricochets through four.
   shinobi: [
-    { move: 'bdflick', dur: 0.42, strikes: [{ at: 0.36, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 30, speed: 760 }] },
-    { move: 'bdcross', dur: 0.46, strikes: [{ at: 0.3, shot: 'ring', bounce: 0, pct: 60, range: 250, h: 60, knock: 20, speed: 780, oy: -3 }, { at: 0.5, shot: 'ring', bounce: 0, pct: 65, range: 250, h: 60, knock: 30, speed: 780, oy: 3 }] },
-    { move: 'bdcatch', dur: 0.5, step: 4, strikes: [{ at: 0.5, pct: 95, reach: 68, h: 60, around: true, targets: 3, knock: 50, arc: [-90, 360], thick: 6, fx: 'bdhit' }] },
-    { move: 'bdhurl', dur: 0.62, step: 6, finisher: true, strikes: [{ at: 0.46, shot: 'ringbig', bounce: 3, pct: 165, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] },
+    { move: 'bdflick', dur: 0.38, step: 10, strikes: [{ at: 0.36, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 30, speed: 850 }] },
+    { move: 'bdcross', dur: 0.41, step: 8, strikes: [{ at: 0.3, shot: 'ring', bounce: 0, pct: 60, range: 250, h: 60, knock: 20, speed: 870, oy: -3 }, { at: 0.5, shot: 'ring', bounce: 0, pct: 65, range: 250, h: 60, knock: 30, speed: 870, oy: 3 }] },
+    { move: 'bdcatch', dur: 0.45, step: 12, strikes: [{ at: 0.5, pct: 95, reach: 68, h: 60, around: true, targets: 3, knock: 50, arc: [-90, 360], thick: 6, fx: 'bdhit' }] },
+    { move: 'bdhurl', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.46, shot: 'ringbig', bounce: 3, pct: 165, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] },
   ],
   // The Sky Dancer (docs/design/sky-dancer.md): she dances on the air, every blow lifting her
   // (skyLift) and throwing a crescent of wind down at them from her palms or her feet. A palm push,
   // a scissor kick, an aerial spin that blows a ring of wind round her, and a crescent kick that
   // hurls a great gust through the line.
   kitsune: [
-    { move: 'sdpalm', dur: 0.4, strikes: [{ at: 0.4, shot: 'skygust', pct: 90, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] },
-    { move: 'sdscissor', dur: 0.46, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] },
-    { move: 'sdspin', dur: 0.5, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
-    { move: 'sdcrescent', dur: 0.62, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 760, big: true, stop: 0.07, shake: 2 }] },
+    { move: 'sdpalm', dur: 0.36, step: 10, strikes: [{ at: 0.4, shot: 'skygust', pct: 90, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] },
+    { move: 'sdscissor', dur: 0.41, step: 12, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] },
+    { move: 'sdspin', dur: 0.45, step: 8, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
+    { move: 'sdcrescent', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 870, big: true, stop: 0.07, shake: 2 }] },
   ],
   // The Star Witch (the Spirit Mage remade; docs/design/star-witch.md): every cast out in about a
   // fifth of a second, then a held pose. With a wand: a flick that sends a star bolt, a twirl that
@@ -424,25 +424,25 @@ export const PATH_VARIANTS = {
   // down as she lands. Finish: the fouetté, or chaînés turns into a bow.
   thiefdagger: [
     [PATH_COMBOS.thiefdagger[0],
-      { move: 'wdchasse', dur: 0.32, step: 26, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 70, h: 50, targets: 2, knock: 30, pierce: true, fx: 'wdhit' }] }],
+      { move: 'wdchasse', dur: 0.29, step: 32, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 70, h: 50, targets: 2, knock: 30, pierce: true, fx: 'wdhit' }] }],
     [PATH_COMBOS.thiefdagger[1],
-      { move: 'wdfankick', dur: 0.4, step: 4, strikes: [{ at: 0.45, pct: 90, reach: 64, h: 76, targets: 2, knock: 40, launch: 140, arc: [150, -160], thick: 6, fx: 'wdhit' }] }],
+      { move: 'wdfankick', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 90, reach: 64, h: 76, targets: 2, knock: 40, launch: 140, arc: [150, -160], thick: 6, fx: 'wdhit' }] }],
     [PATH_COMBOS.thiefdagger[2],
-      { move: 'wdjete', dur: 0.5, step: 30, carry: 0.6, strikes: [{ at: 0.52, pct: 130, reach: 70, h: 64, targets: 3, knock: 70, arc: [-30, 200], thick: 7, fx: 'wdhit' }] }],
+      { move: 'wdjete', dur: 0.45, step: 38, carry: 0.6, strikes: [{ at: 0.52, pct: 130, reach: 70, h: 64, targets: 3, knock: 70, arc: [-30, 200], thick: 7, fx: 'wdhit' }] }],
     [PATH_COMBOS.thiefdagger[3],
-      { move: 'wdchaine', dur: 0.6, step: 40, carry: 0.7, finisher: true, strikes: [{ at: 0.3, pct: 70, reach: 70, h: 60, around: true, targets: 4, knock: 40, fx: 'wdhit' }, { at: 0.55, pct: 120, reach: 76, h: 64, around: true, targets: 4, knock: 210, launch: 160, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] }],
+      { move: 'wdchaine', dur: 0.54, step: 48, carry: 0.7, finisher: true, strikes: [{ at: 0.3, pct: 70, reach: 70, h: 60, around: true, targets: 4, knock: 40, fx: 'wdhit' }, { at: 0.55, pct: 120, reach: 76, h: 64, around: true, targets: 4, knock: 210, launch: 160, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.45, big: true, stop: 0.08, shake: 3 }] }],
   ],
   // The Wind Dancer with gloves: a push or a gliding chassé; a rond de bras or a fan kick; a relevé or
   // a grand jeté; the opening pirouette or a lunge that drives a gust down the line.
   thiefstar: [
     [PATH_COMBOS.thiefstar[0],
-      { move: 'wdchasse', dur: 0.32, step: 22, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
+      { move: 'wdchasse', dur: 0.29, step: 28, carry: 0.5, strikes: [{ at: 0.4, pct: 85, reach: 100, h: 56, targets: 2, pierce: true, knock: 60, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
     [PATH_COMBOS.thiefstar[1],
-      { move: 'wdfankick', dur: 0.4, step: 4, strikes: [{ at: 0.45, pct: 90, reach: 90, h: 76, targets: 2, pierce: true, knock: 50, launch: 120, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
+      { move: 'wdfankick', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 90, reach: 90, h: 76, targets: 2, pierce: true, knock: 50, launch: 120, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
     [PATH_COMBOS.thiefstar[2],
-      { move: 'wdjete', dur: 0.5, step: 26, carry: 0.6, strikes: [{ at: 0.52, pct: 120, reach: 100, h: 70, targets: 3, pierce: true, knock: 80, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
+      { move: 'wdjete', dur: 0.45, step: 34, carry: 0.6, strikes: [{ at: 0.52, pct: 120, reach: 100, h: 70, targets: 3, pierce: true, knock: 80, fx: 'wdhit', burst: 'wdpuff', burstAt: 0.2, burstDur: 0.3 }] }],
     [PATH_COMBOS.thiefstar[3],
-      { move: 'wdlunge', dur: 0.56, step: 8, carry: 0.4, finisher: true, strikes: [{ at: 0.46, pct: 170, reach: 140, h: 66, targets: 4, pierce: true, knock: 220, fx: 'wdhit', burst: 'wdgust', burstAt: 0.2, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] }],
+      { move: 'wdlunge', dur: 0.5, step: 14, carry: 0.4, finisher: true, strikes: [{ at: 0.46, pct: 170, reach: 140, h: 66, targets: 4, pierce: true, knock: 220, fx: 'wdhit', burst: 'wdgust', burstAt: 0.2, burstDur: 0.4, big: true, stop: 0.08, shake: 3 }] }],
   ],
   // The Blade Dancer. Openers: her flick, or a ring skimmed low along the ground. Second: the cross
   // toss, or the lasso swung faster and faster that bounces twice. Third: the turning catch, or an
@@ -450,13 +450,13 @@ export const PATH_VARIANTS = {
   // that cuts round her and lets the ring fly out of the second turn.
   shinobi: [
     [PATH_COMBOS.shinobi[0],
-      { move: 'bdskip', dur: 0.42, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 40, speed: 800, oy: 6 }] }],
+      { move: 'bdskip', dur: 0.38, step: 14, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 270, h: 60, knock: 40, speed: 900, oy: 6 }] }],
     [PATH_COMBOS.shinobi[1],
-      { move: 'bdlasso', dur: 0.55, strikes: [{ at: 0.56, shot: 'ring', bounce: 2, pct: 90, range: 280, h: 60, knock: 40, speed: 820 }] }],
+      { move: 'bdlasso', dur: 0.5, step: 10, strikes: [{ at: 0.56, shot: 'ring', bounce: 2, pct: 90, range: 280, h: 60, knock: 40, speed: 920 }] }],
     [PATH_COMBOS.shinobi[2],
-      { move: 'bdlob', dur: 0.5, strikes: [{ at: 0.34, shot: 'ring', lob: 40, bounce: 1, pct: 100, range: 260, h: 90, knock: 20, launch: 200, speed: 640 }] }],
+      { move: 'bdlob', dur: 0.45, step: 8, strikes: [{ at: 0.34, shot: 'ring', lob: 40, bounce: 1, pct: 100, range: 260, h: 90, knock: 20, launch: 200, speed: 720 }] }],
     [PATH_COMBOS.shinobi[3],
-      { move: 'bdspinhurl', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 820, big: true, stop: 0.07, shake: 2 }] }],
+      { move: 'bdspinhurl', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] }],
   ],
   // The Star Witch. Wand: a wink-cast or the flick; a sidearm sweep of three little stars or the
   // twirl; a hop-cast down from the top of a hop or the spin; a show-off spin of the wand or the snap.
@@ -499,13 +499,13 @@ export const PATH_VARIANTS = {
   // chopped down on them. Finisher: the crescent kick or a sweeping kick that turns her once round.
   kitsune: [
     [PATH_COMBOS.kitsune[0],
-      { move: 'sdtwirl', dur: 0.46, strikes: [{ at: 0.48, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }] }],
+      { move: 'sdtwirl', dur: 0.41, step: 10, strikes: [{ at: 0.48, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] }],
     [PATH_COMBOS.kitsune[1],
-      { move: 'sdflutter', dur: 0.55, strikes: [{ at: 0.3, shot: 'skygust', pct: 55, range: 260, h: 200, drop: 70, knock: 30, speed: 700 }, { at: 0.6, shot: 'skygust', pct: 60, range: 260, h: 200, drop: 70, knock: 30, speed: 700, oy: 4 }] }],
+      { move: 'sdflutter', dur: 0.5, step: 8, strikes: [{ at: 0.3, shot: 'skygust', pct: 55, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }, { at: 0.6, shot: 'skygust', pct: 60, range: 260, h: 200, drop: 70, knock: 30, speed: 800, oy: 4 }] }],
     [PATH_COMBOS.kitsune[2],
-      { move: 'sdheel', dur: 0.55, strikes: [{ at: 0.54, shot: 'skygust', pct: 110, range: 200, h: 220, drop: 110, targets: 2, pierce: true, knock: 40, launch: -200, speed: 760 }] }],
+      { move: 'sdheel', dur: 0.5, step: 12, strikes: [{ at: 0.54, shot: 'skygust', pct: 110, range: 200, h: 220, drop: 110, targets: 2, pierce: true, knock: 40, launch: -200, speed: 870 }] }],
     [PATH_COMBOS.kitsune[3],
-      { move: 'sdsweep', dur: 0.6, finisher: true, strikes: [{ at: 0.4, pct: 90, reach: 100, h: 130, around: true, targets: 5, knock: 160, fx: 'skyhit', burst: 'skyhit' }, { at: 0.55, shot: 'skygustbig', pct: 130, range: 300, h: 220, drop: 80, targets: 3, pierce: true, knock: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
+      { move: 'sdsweep', dur: 0.54, step: 12, finisher: true, strikes: [{ at: 0.4, pct: 90, reach: 100, h: 130, around: true, targets: 5, knock: 160, fx: 'skyhit', burst: 'skyhit' }, { at: 0.55, shot: 'skygustbig', pct: 130, range: 300, h: 220, drop: 80, targets: 3, pierce: true, knock: 180, speed: 870, big: true, stop: 0.06, shake: 2 }] }],
   ],
   archer: [
     [PATH_COMBOS.archer[0], ACRO_SHOTS.roll],
@@ -590,21 +590,21 @@ const ARCHER_COMMANDS = {
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
   kitsune: {
-    up: { move: 'sdrise', dur: 0.5, strikes: [{ at: 0.4, pct: 110, reach: 80, h: 200, targets: 4, knock: 20, launch: 420, fx: 'skyhit', burst: 'skyupdraft', big: true, stop: 0.04 }] },
+    up: { move: 'sdrise', dur: 0.45, strikes: [{ at: 0.4, pct: 110, reach: 80, h: 200, targets: 4, knock: 20, launch: 420, fx: 'skyhit', burst: 'skyupdraft', big: true, stop: 0.04 }] },
     air: [],
-    dash: { move: 'sdglide', dur: 0.5, step: 70, carry: 0.5, strikes: [{ at: 0.42, shot: 'skygust', pct: 120, range: 280, h: 120, targets: 3, pierce: true, knock: 140, speed: 820, big: true, stop: 0.04 }] },
+    dash: { move: 'sdglide', dur: 0.45, step: 84, carry: 0.5, strikes: [{ at: 0.42, shot: 'skygust', pct: 120, range: 280, h: 120, targets: 3, pierce: true, knock: 140, speed: 940, big: true, stop: 0.04 }] },
   },
   // The Thief with a gauntlet: a star flung up at whatever flies, stars thrown down from a hang in
   // the air, and a star thrown out of a run.
   // The Wind Dancer with gloves: a gust swept up at whatever flies, gusts pushed down from a hang
   // in the air, and a cartwheel of wind out of a run.
   thiefstar: {
-    up: { move: 'wdrise', dur: 0.44, strikes: [{ at: 0.42, pct: 100, reach: 90, h: 190, targets: 3, knock: 20, launch: 360, fx: 'wdhit', big: true, stop: 0.04 }] },
+    up: { move: 'wdrise', dur: 0.4, step: 6, strikes: [{ at: 0.42, pct: 100, reach: 90, h: 190, targets: 3, knock: 20, launch: 360, fx: 'wdhit', big: true, stop: 0.04 }] },
     air: [
-      { move: 'wdairspin', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 75, reach: 100, h: 170, targets: 3, knock: 30, fx: 'wdhit' }] },
-      { move: 'wdairsplit', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 95, reach: 110, h: 190, targets: 4, knock: 120, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.4, big: true, stop: 0.05, shake: 1 }] },
+      { move: 'wdairspin', dur: 0.31, hang: true, strikes: [{ at: 0.45, pct: 75, reach: 100, h: 170, targets: 3, knock: 30, fx: 'wdhit' }] },
+      { move: 'wdairsplit', dur: 0.36, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 95, reach: 110, h: 190, targets: 4, knock: 120, fx: 'wdhit', burst: 'wdswirl', burstAt: 0, burstDur: 0.4, big: true, stop: 0.05, shake: 1 }] },
     ],
-    dash: { move: 'wdchaine', dur: 0.5, step: 50, carry: 0.6, strikes: [{ at: 0.45, pct: 95, reach: 90, h: 70, targets: 3, around: true, knock: 90, fx: 'wdhit' }] },
+    dash: { move: 'wdchaine', dur: 0.45, step: 58, carry: 0.6, strikes: [{ at: 0.45, pct: 95, reach: 90, h: 70, targets: 3, around: true, knock: 90, fx: 'wdhit' }] },
   },
   // The Acrobat Archer: a backbend shot up at fliers, legs kicked out shooting down from a hang in
   // the air (the second a big one), a dive roll out of a run coming up shooting, and Down + attack:
@@ -713,22 +713,22 @@ const DAGGER_COMMANDS = {
 // The Wind Dancer's chakram commands (her own figures): a relevé that lifts them, a turning cut and
 // a split that cuts down in the air, and chaînés through the line out of a run.
 const DANCER_COMMANDS = {
-  up: { move: 'wdrise', dur: 0.44, step: 0, strikes: [{ at: 0.4, pct: 105, reach: 70, h: 90, targets: 3, knock: 20, launch: 440, hop: 380, arc: [80, -175], thick: 6, fx: 'wdhit', big: true, stop: 0.05 }] },
+  up: { move: 'wdrise', dur: 0.4, step: 0, strikes: [{ at: 0.4, pct: 105, reach: 70, h: 90, targets: 3, knock: 20, launch: 440, hop: 380, arc: [80, -175], thick: 6, fx: 'wdhit', big: true, stop: 0.05 }] },
   air: [
-    { move: 'wdairspin', dur: 0.34, hang: true, strikes: [{ at: 0.45, pct: 85, reach: 66, h: 80, around: true, targets: 3, knock: 10, launch: 140, fx: 'wdhit' }] },
-    { move: 'wdairsplit', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 120, reach: 70, h: 84, targets: 3, knock: 140, launch: 120, arc: [-30, 200], thick: 6, fx: 'wdhit', big: true, stop: 0.05, shake: 1 }] },
+    { move: 'wdairspin', dur: 0.31, hang: true, strikes: [{ at: 0.45, pct: 85, reach: 66, h: 80, around: true, targets: 3, knock: 10, launch: 140, fx: 'wdhit' }] },
+    { move: 'wdairsplit', dur: 0.36, hang: true, finisher: true, strikes: [{ at: 0.45, pct: 120, reach: 70, h: 84, targets: 3, knock: 140, launch: 120, arc: [-30, 200], thick: 6, fx: 'wdhit', big: true, stop: 0.05, shake: 1 }] },
   ],
-  dash: { move: 'wdchaine', dur: 0.5, step: 60, carry: 0.6, strikes: [{ at: 0.3, pct: 90, reach: 70, h: 64, targets: 3, around: true, knock: 60, fx: 'wdhit' }, { at: 0.6, pct: 110, reach: 70, h: 64, targets: 3, around: true, knock: 180, fx: 'wdhit', big: true, stop: 0.04 }] },
+  dash: { move: 'wdchaine', dur: 0.45, step: 68, carry: 0.6, strikes: [{ at: 0.3, pct: 90, reach: 70, h: 64, targets: 3, around: true, knock: 60, fx: 'wdhit' }, { at: 0.6, pct: 110, reach: 70, h: 64, targets: 3, around: true, knock: 180, fx: 'wdhit', big: true, stop: 0.04 }] },
 };
 // The Blade Dancer's commands (her own figures): an underhand lob that throws them up, rings flicked
 // down from the air (the second, two at once), and a sliding throw out of a run that bounces twice.
 const BLADE_COMMANDS = {
-  up: { move: 'bdlob', dur: 0.5, strikes: [{ at: 0.34, shot: 'ring', bounce: 1, pct: 110, range: 220, h: 200, lift: 80, knock: 20, launch: 420, hop: 360, speed: 700, big: true, stop: 0.04 }] },
+  up: { move: 'bdlob', dur: 0.45, step: 8, strikes: [{ at: 0.34, shot: 'ring', bounce: 1, pct: 110, range: 220, h: 200, lift: 80, knock: 20, launch: 420, hop: 360, speed: 780, big: true, stop: 0.04 }] },
   air: [
-    { move: 'bdairflick', dur: 0.36, hang: true, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 240, h: 170, drop: 60, knock: 20, speed: 800 }] },
-    { move: 'bdairtwin', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ring', fan: 2, bounce: 1, pct: 80, range: 250, h: 190, drop: 80, knock: 80, speed: 820, big: true, stop: 0.04, shake: 1 }] },
+    { move: 'bdairflick', dur: 0.32, hang: true, strikes: [{ at: 0.42, shot: 'ring', bounce: 1, pct: 85, range: 240, h: 170, drop: 60, knock: 20, speed: 900 }] },
+    { move: 'bdairtwin', dur: 0.38, hang: true, finisher: true, strikes: [{ at: 0.4, shot: 'ring', fan: 2, bounce: 1, pct: 80, range: 250, h: 190, drop: 80, knock: 80, speed: 920, big: true, stop: 0.04, shake: 1 }] },
   ],
-  dash: { move: 'bdslide', dur: 0.5, step: 60, carry: 0.45, strikes: [{ at: 0.42, shot: 'ring', bounce: 2, pct: 120, range: 270, h: 60, knock: 120, speed: 860, big: true, stop: 0.04 }] },
+  dash: { move: 'bdslide', dur: 0.45, step: 72, carry: 0.45, strikes: [{ at: 0.42, shot: 'ring', bounce: 2, pct: 120, range: 270, h: 60, knock: 120, speed: 960, big: true, stop: 0.04 }] },
 };
 // How long you must have been running for an attack to become a dash attack.
 const DASH_AFTER = 0.3;
@@ -1479,7 +1479,10 @@ function land(world, s) {
   }
   // A finisher's big blow all round her races a shockwave out along the ground to the edge of its
   // reach, in her path's colour, so the whole area it hits shows (the dancers' and the Star Witch's).
-  const shock = s.around && s.big && !s.arc && (s.reach ?? 0) >= 150 && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
+  // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
+  // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
+  const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
+  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });

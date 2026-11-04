@@ -76,3 +76,21 @@ Her moves were redrawn to read at game size and keep her face clear (render/move
   chaînés into a deep révérence; gloves: a lunge with both palms, a rond de bras that sweeps under,
   a relevé on one toe, a pirouette into a high front kick, a twisting lunge. Grand Finale climbs
   through three passé turns into a pose with the front leg kicked high, then a deep bow.
+
+## Footwork and effects pass (2026-11-04)
+
+The Starlight Idol treatment, in ballet terms. Every blow of her strings now travels (each step
+carries her 10-48 px forward, the chaînés finish and the jeté the furthest) and is about a tenth
+quicker. She springs: the piqué is a temps levé with the back heel kicked up, the pirouette sails,
+the arabesque springs a sissonne between its two cuts, the fouetté leaps into the whip, the fan kick
+and the rond de bras hop on the standing foot, the glove push and the twisting lunge skip in, and
+the relevé is a real sauté in passé. Instead of freezing in an end pose she comes down out of it
+with two little rebounds (`ballon` in render/moves.js). Grand Finale is a tenth shorter and she
+jumps on the burst.
+
+Effects now cover what they hit: Grand Finale's rose of ribbons whirls out to 180 px either side
+(its cuts' reach; it was 70) and the burst races out along the ground; it lies behind everyone, so
+the spotlight never washes over a face. Her swirl is drawn to each blow's reach (flourish 96,
+Spotlight's dazzle 160-230, was a fixed 44), and her big gusts (fouetté, lunge, Gust Line, the
+glove puffs) race down the line to the end of the ground they cut (was 50 px). Wide blows all round
+her (the flourish, Spotlight) send her coral shockwave out to their edge.

@@ -57,3 +57,16 @@ foot pointed) and steps into a pointing lunge; the lob rises onto one toe, hand 
 spin hurl tips into an arabesque; the slide drops onto the back knee leaning back. Golden Carousel
 climbs about ten pixels through its turns, coils with the ring drawn behind her, and flings it into
 a held arabesque high in the air before the catch and curtsy.
+
+## Footwork and effects pass (2026-11-04)
+
+A showgirl's footwork: every throw of her strings steps her forward (8-18 px, the slide 72) and is
+about a tenth quicker; her rings fly about an eighth faster. She skips into the flick with the front
+knee popped up (the kick-line skip, `KICKLINE` in render/moves.js) and bounces while it flies, hops
+on the cross toss's second ring, sails through the turning catch, leaps off the coil into the hurl,
+bobs on her heels with each pass of the lasso, springs after the lob, and pops up out of the crouch
+and the slide; held poses settle with two little rebounds. Golden Carousel is a tenth shorter and
+climbs higher.
+
+Golden Carousel's track is drawn as wide as its cuts reach (120 px either side, was 50) with
+bigger rings, behind everyone; her ring in flight is a little larger (about 35 px, the big one 50).
