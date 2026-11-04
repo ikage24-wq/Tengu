@@ -1,0 +1,80 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: riding each mount (data/mounts.js) on a little test field drawn with the game's own
+// renderer: flat meadow, a high ledge with a rope up to it, and a pool of water. Driven from
+// outside, frame by frame: window.step(dt, held, pressed), window.place(x, y), window.caption(text),
+// window.frame() (the canvas as a JPEG data URL). ?mount=bun picks the mount.
+import { createCharacter } from '../src/core/character.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { MAPS } from '../src/data/maps.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { text, box } from '../src/ui/kit.js';
+import { giveMount } from '../src/world/mount.js';
+import { MOUNTS } from '../src/data/mounts.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = 2;
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+
+MAPS.ride_field = {
+  id: 'ride_field', name: 'Ride Field', theme: 'meadow', town: 'sprout',
+  look: { sky: ['#bfe8ff', '#e2f4ff', '#f8fff2'], far: '#cfe8d0', mid: '#a8dca0', midTrim: '#8fd39a', edges: 'flowers' },
+  width: 1800, height: 640, groundY: 520,
+  terrain: [[0, 520], [1000, 520], [1040, 568], [1440, 568], [1480, 520], [1800, 520]],
+  water: [{ x1: 1010, x2: 1470, y: 532 }],
+  platforms: [{ x: 160, y: 330, w: 260 }],
+  ropes: [{ x: 180, top: 330, bottom: 520 }],
+  portals: [{ id: 'start', x: 80, y: 520, hidden: true }],
+  npcs: [], spawns: [], deco: [],
+};
+const id = q.get('mount') ?? 'bun';
+const c = createCharacter('Hana', { hairStyle: q.get('hair') ?? 'twintails', hairColor: '#ffb3cf', eyeColor: '#7a52cc', eyeStyle: 'sparkle' });
+c.level = 30;
+const w = createWorld(c);
+w.log = () => {};
+loadMap(w, 'ride_field', 'start');
+w.mobs = [];
+w.god = true;
+w.forceNight = Number(q.get('night') ?? 0);
+giveMount(w, id);
+w.char.mount = id;
+const cam = createCamera();
+for (let k = 0; k < 240; k++) updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
+let t = 0;
+let words = '';
+function step(dt, held = [], pressed = []) {
+  const n = Math.max(1, Math.round(dt * 60));
+  for (let k = 0; k < n; k++) updateWorld(w, 1 / 60, { held: new Set(held), pressed: new Set(k === 0 ? pressed : []), locked: false });
+  t += dt;
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  updateCamera(cam, w, dt);
+  drawWorld(ctx, w, cam, t);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  box(ctx, 10, 10, 210, 30, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 10, width: 2 });
+  text(ctx, MOUNTS[id].name, 22, 30, { size: 13, bold: true, color: '#4a3560' });
+  if (words) {
+    ctx.font = 'bold 11px sans-serif';
+    const ww = ctx.measureText(words).width + 30;
+    box(ctx, VW / 2 - ww / 2, VH - 44, ww, 26, { fill: 'rgba(40,30,58,0.86)', edge: '#ffd66b', r: 12, width: 2 });
+    text(ctx, words, VW / 2, VH - 27, { size: 11, bold: true, align: 'center', color: '#ffffff' });
+  }
+}
+window.step = step;
+window.caption = (s) => (words = s);
+window.place = (x, y = w.map.groundY) => Object.assign(w.body, { x, y, vx: 0, vy: 0, onGround: true, rope: null, facing: 1 });
+window.frame = () => canvas.toDataURL('image/jpeg', 0.9);
+window.world = w;
+window.ready = true;
+</script></body></html>

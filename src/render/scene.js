@@ -25,6 +25,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
 import { drawMount } from './mounts.js';
+import { drawWaterBack, drawWaterFront } from './water.js';
 import { rideMotion } from '../world/mount.js';
 import { copiesOf, copyAt } from '../world/phantom.js';
 import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
@@ -315,6 +316,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   // The portal on your guided route, if you're following one.
   const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time), routePortal?.id);
+  // Water to wade into, behind everyone (render/water.js).
+  drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
   drawWarnings(ctx, world, cam, time);
@@ -446,6 +449,8 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   drawBuffEffects(ctx, buffs, 'front', hx, hy, time, world.now, b.facing);
   drawSupport(ctx, buffs, hx, hy, time, world.now);
+  // ...and its skin over the legs of anyone in it, with ripples round them.
+  if (world.map.water) drawWaterFront(ctx, world.map, cam, VIEW_W, time, [b, ...bodiedIn(world.bots, world.map.id).map((x) => x.body).filter(Boolean)]);
   // Your own name tag, like everyone else's; click it (or you) to see your profile.
   if (!world.dead) {
     ctx.font = 'bold 7px sans-serif';
