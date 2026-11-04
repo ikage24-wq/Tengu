@@ -373,9 +373,10 @@ const minuetRig = makeRig({
     { name: 'tier2', parent: 'tier1', pivot: [38, 2], at: () => [0, 11], rot: (S) => S.t2 - S.t1, s: () => mnParts.tier(2) },
     { name: 'tier3', parent: 'tier2', pivot: [38, 2], at: () => [0, 11], rot: (S) => S.t3 - S.t2, s: () => mnParts.tier(3) },
     { name: 'bodice', parent: 'root', pivot: [14, 22], at: () => [0, -50], s: () => mnParts.bodice() },
-    { name: 'helm', parent: 'bodice', pivot: [18, 26], at: () => [2, -30], rot: (S) => S.head, s: (a) => mnParts.helm(a.face, a.atk) },
+    // (The fan passes behind the head, so it never crosses the face in a swing.)
     { name: 'arm', parent: 'bodice', pivot: [3, 5], at: () => [8, -12], rot: (S) => S.fan * 0.4, s: () => mnParts.arm() },
     { name: 'fan', parent: 'arm', pivot: [4, 20], at: () => [11, 0], rot: (S) => S.fan, s: () => mnParts.fan() },
+    { name: 'helm', parent: 'bodice', pivot: [18, 26], at: () => [2, -30], rot: (S) => S.head, s: (a) => mnParts.helm(a.face, a.atk) },
   ],
   fx(ctx, m, a, S) {
     // The spin's sweep of steel along the floor.

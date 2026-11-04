@@ -261,12 +261,13 @@ const galeRig = makeRig({
     { name: 'legB', parent: 'root', pivot: [8, 3], at: () => [-8, -17], rot: (S) => S.legB, s: () => glParts.leg(true) },
     { name: 'legF', parent: 'root', pivot: [8, 3], at: () => [8, -17], rot: (S) => S.legF, s: () => glParts.leg(false) },
     { name: 'torso', parent: 'root', pivot: [20, 38], at: () => [0, -15], s: () => glParts.torso() },
+    // (The cutlass passes behind the head, so it never crosses the face in a swing.)
+    { name: 'arm', parent: 'torso', pivot: [3, 5], at: () => [10, -30], rot: (S) => S.blade * 0.5 + 0.3, s: () => glParts.arm() },
+    { name: 'cutlass', parent: 'arm', pivot: [4, 7], at: () => [10, 0], rot: (S) => S.blade * 0.5 - 0.3, s: () => glParts.cutlass() },
     { name: 'head', parent: 'torso', pivot: [22, 34], at: () => [4, -40], rot: (S) => S.head, s: () => glParts.head() },
     { name: 'face', parent: 'head', pivot: [14, 9], at: () => [4, -12], s: (a) => glParts.face(a.face, a.atk) },
     { name: 'hat', parent: 'head', pivot: [28, 16], at: () => [0, -26], rot: (S) => S.hat - S.head, s: () => glParts.hat() },
     ...chainParts('p', { parent: 'hat', at: () => [-6, -8], key: 'gale|plume', segs: [[8, 7, 5], [8, 5, 3.4], [7, 3.4, 1.6]], color: '#ffffff', rot: (S, a, i) => S[`p${i}`] }),
-    { name: 'arm', parent: 'torso', pivot: [3, 5], at: () => [10, -30], rot: (S) => S.blade * 0.5 + 0.3, s: () => glParts.arm() },
-    { name: 'cutlass', parent: 'arm', pivot: [4, 7], at: () => [10, 0], rot: (S) => S.blade * 0.5 - 0.3, s: () => glParts.cutlass() },
   ],
   under(ctx, m, a) {
     // Wind streaming past her.
