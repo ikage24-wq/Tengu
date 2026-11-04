@@ -41,6 +41,20 @@ export const LOOK_TABS = [
   { label: 'Outfit', rows: [{ key: 'outfit', label: 'Style', thumb: 'body' }, { key: 'outfitColor', label: 'Color' }] },
 ];
 
+// A look with every key filled: a save from before a key existed (or missing some) gets the
+// default for it (one hair colour, the style's own bangs, the first of everything else), so the
+// salon and the picker always have a real value to show and change.
+const LOOK_DEFAULTS = { hairTip: 'none', hairBangs: 'auto', eyeStyle: 'jewel', earStyle: 'round' };
+export function fullLook(look = {}) {
+  const out = { ...(look ?? {}) };
+  for (const opt of LOOK_OPTIONS) {
+    if (out[opt.key] != null) continue;
+    const d = LOOK_DEFAULTS[opt.key];
+    out[opt.key] = opt.options.includes(d) ? d : opt.options[0];
+  }
+  return out;
+}
+
 export const sameLook = (a, b) => LOOK_OPTIONS.every((o) => a?.[o.key] === b?.[o.key]);
 
 export function randomLook(rng = Math.random) {

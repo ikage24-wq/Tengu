@@ -24,7 +24,7 @@ import { datePage } from './dates.js';
 import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
 import { withZoom } from '../render/pixel.js';
-import { lookRows, sameLook, LOOK_TABS } from './looks.js';
+import { lookRows, sameLook, fullLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { shopWindow } from './shop.js';
@@ -225,7 +225,7 @@ export function npcWindow(ui, state, world) {
   }
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
-  if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
+  if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
   // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).
   if (npc.role === 'sweetheart') choices.push(...sweetheartChoices(world, state, npc));
   // Shelly builds your island up (world/home.js).
@@ -613,14 +613,16 @@ function styleWindow(ui, state, world) {
   const { ctx } = ui;
   const char = world.char;
   dlg.tab ??= 0;
+  // (Always a whole look, even from a save that's missing some of its keys.)
+  dlg.look = dlg.look ? fullLook(dlg.look) : fullLook(char.appearance);
   box(ctx, win.x + 8, win.y + 24, 104, H - 32, { fill: '#fdf3fb', edge: COLORS.cellEdge, r: 6 });
   withZoom(2, () => drawHero(ctx, dlg.look, wornGear(char), win.x + 60, win.y + 190, { pose: 'idle', time: world.now, scale: 2.2 }));
-  if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, char.appearance) })) dlg.look = { ...char.appearance };
+  if (button(ui, win.x + 20, win.y + H - 30, 80, 15, 'As before', { size: 8, enabled: !sameLook(dlg.look, fullLook(char.appearance)) })) dlg.look = fullLook(char.appearance);
   dlg.tab = tabs(ui, win.x + 124, win.y + 26, LOOK_TABS.map((t) => t.label), dlg.tab, { w: 50, h: 15 });
   dlg.look = lookRows(ui, dlg.look, dlg.tab, win.x + 122, win.y + 46, W - 132, { cell: [20, 26, 24, 20, 32][dlg.tab], time: world.now, gap: 2 }).look;
   const cost = npc.styleCost;
   const by = win.y + H - 22;
-  if (button(ui, win.x + 122, by, 110, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost && !sameLook(dlg.look, char.appearance) })) {
+  if (button(ui, win.x + 122, by, 110, 15, `Done (${cost}g)`, { primary: true, enabled: char.gold >= cost && !sameLook(dlg.look, fullLook(char.appearance)) })) {
     char.gold -= cost;
     char.appearance = dlg.look;
     world.log('Lulu: You look adorable!', '#ffc2d6');

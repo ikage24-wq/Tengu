@@ -135,11 +135,11 @@ export const MOBS = {
   // Yuki-onna on Frozen Peak.
   sylph: mob({
     id: 'sylph', name: 'Sylph', level: 21, hp: 700, atk: 64, def: 14, acc: 48, eva: 12, exp: 500, gold: [26, 66],
-    speed: 70, w: 24, h: 46, art: 'sylph', fly: true, drops: [{ id: 'feather', chance: 0.45 }],
+    speed: 70, w: 24, h: 46, art: 'sylph', fly: true, drops: [{ id: 'sylph_feather', chance: 0.45 }],
   }),
   nekomata: mob({
     id: 'nekomata', name: 'Nekomata', level: 23, hp: 820, atk: 76, def: 16, acc: 54, eva: 14, exp: 600, gold: [30, 74],
-    speed: 74, gait: 'dart', w: 24, h: 46, art: 'nekomata', drops: [{ id: 'fluff', chance: 0.45 }],
+    speed: 74, gait: 'dart', w: 24, h: 46, art: 'nekomata', drops: [{ id: 'nekomata_bell', chance: 0.45 }],
   }),
   kitsunemiko: mob({
     id: 'kitsunemiko', name: 'Kitsune Miko', level: 27, hp: 1250, atk: 86, def: 24, acc: 58, eva: 10, exp: 790, gold: [38, 92],
@@ -147,15 +147,15 @@ export const MOBS = {
   }),
   lupina: mob({
     id: 'lupina', name: 'Lupina', level: 29, hp: 1500, atk: 96, def: 28, acc: 62, eva: 10, exp: 900, gold: [42, 100],
-    speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'tusk', chance: 0.45 }],
+    speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'moon_fang', chance: 0.45 }],
   }),
   lamia: mob({
     id: 'lamia', name: 'Lamia', level: 33, hp: 2500, atk: 116, def: 40, acc: 68, eva: 8, exp: 1320, gold: [52, 124],
-    speed: 36, w: 28, h: 50, art: 'lamia', drops: [{ id: 'pebble', chance: 0.5 }],
+    speed: 36, w: 28, h: 50, art: 'lamia', drops: [{ id: 'lamia_scale', chance: 0.5 }],
   }),
   yukionna: mob({
     id: 'yukionna', name: 'Yuki-onna', level: 36, hp: 2800, atk: 128, def: 36, acc: 74, eva: 12, exp: 1520, gold: [56, 136],
-    speed: 32, w: 24, h: 50, art: 'yukionna', drops: [{ id: 'crystal_gel', chance: 0.45 }],
+    speed: 32, w: 24, h: 50, art: 'yukionna', drops: [{ id: 'snow_gem', chance: 0.45 }],
   }),
 
   // Rootwood Hollow (the Lv 10 dungeon). In a dungeon monsters don't hurt on touch: they swing at
@@ -173,7 +173,7 @@ export const MOBS = {
   }),
   thornback: mob({
     id: 'thornback', name: 'Bramble Bear', level: 12, hp: 900, atk: 52, def: 14, acc: 34, eva: 3, exp: 420, gold: [20, 50],
-    speed: 36, w: 46, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'tusk', chance: 0.4 }],
+    speed: 36, w: 46, h: 34, art: 'thornback', drops: [{ id: 'hollow_acorn', chance: 0.4 }, { id: 'bramble_claw', chance: 0.4 }],
     fight: { every: 1.8, reach: 32, windup: 0.45 },
   }),
   sporeling: mob({
@@ -618,7 +618,7 @@ export const MOBS = {
   selene: mob({
     id: 'selene', name: 'Selene, the Moon Valkyrie', level: 50, hp: 190000, atk: 290, def: 66, acc: 118, eva: 14, exp: 150000,
     gold: [5000, 9000], speed: 40, w: 62, h: 122, art: 'selene', boss: true,
-    drops: [{ id: 'stardust', chance: 1, qty: 20 }, { id: 'king_crystal', chance: 0.5 }, { id: 'elixir', chance: 1, qty: 5 }],
+    drops: [{ id: 'stardust', chance: 1, qty: 20 }, { id: 'moon_plume', chance: 0.5 }, { id: 'elixir', chance: 1, qty: 5 }],
     special: { kind: 'slam', every: 5.5, warn: 1.2, damage: 480, range: 440 },
   }),
 };

@@ -32,7 +32,7 @@ export const QUESTS = {
   },
   first_steps: {
     id: 'first_steps', name: 'First Steps', giver: 'mira', minLevel: 1,
-    text: "Every adventurer needs a weapon! Take this sword and some tonics. Equip it from your bag (I), then head east to Petal Meadow.",
+    text: "Kuro found you a weapon, I see! An adventurer needs sturdy clothes too, so take these Cotton Shorts and some tonics, put them on from your bag, then head east to Petal Meadow.",
     objectives: [],
     rewards: { exp: 10, gold: 50, items: [{ id: 'bottom_0', qty: 1 }, { id: 'red_potion', qty: 10 }] },
   },
@@ -341,13 +341,13 @@ export const QUESTS = {
   nim_chimes: {
     id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
     text: "The Sylphs in the Whispering Glade, past Mossy Woods, keep stealing my wind chimes to play with! Shoo 20 of them away and bring back 8 of the feathers they shed.",
-    objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'feather', count: 8 }],
+    objectives: [{ type: 'kill', mob: 'sylph', count: 20 }, { type: 'collect', item: 'sylph_feather', count: 8 }],
     rewards: { exp: 12000, gold: 3500, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24,
-    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 Fox Fluff from the Nekomata, and leave a prayer at the shrine for me.",
-    objectives: [{ type: 'collect', item: 'fluff', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
+    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me.",
+    objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
     rewards: { exp: 22000, gold: 5000, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   vex_miko: {
@@ -365,13 +365,13 @@ export const QUESTS = {
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31,
     text: "Serpent Springs, off the Crystal Cave! Hot pools, steam, the works. I'm opening a spa... once someone clears the Lamia out. Bring me 15 of their scales as proof, they'll make lovely tiles.",
-    objectives: [{ type: 'collect', item: 'pebble', count: 15 }, { type: 'kill', mob: 'lamia', count: 20 }],
+    objectives: [{ type: 'collect', item: 'lamia_scale', count: 15 }, { type: 'kill', mob: 'lamia', count: 20 }],
     rewards: { exp: 60000, gold: 15000, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',
-    text: "Snow season! For my winter line I need 12 icy gems from the Yuki-onna on Frozen Peak and 10 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
-    objectives: [{ type: 'collect', item: 'crystal_gel', count: 12 }, { type: 'collect', item: 'wool', count: 10 }],
+    text: "Snow season! For my winter line I need 12 Snow Gems from the Yuki-onna on Frozen Peak and 10 Cloud Manes from the Pegasus Foals up there. You'll get the first parka, of course!",
+    objectives: [{ type: 'collect', item: 'snow_gem', count: 12 }, { type: 'collect', item: 'wool', count: 10 }],
     rewards: { exp: 80000, gold: 12000, items: [{ id: 'cash_casual_parka', qty: 1 }, { id: 'cash_casual_mittens', qty: 1 }] },
   },
   rook_stars: {
