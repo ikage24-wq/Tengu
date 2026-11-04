@@ -39,6 +39,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { tickDate, DATES } from './dates.js';
+import { movedAway, welcomeHome } from './sweethearts.js';
 import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -149,6 +150,8 @@ export function loadMap(world, mapId, portalId) {
   world.concert = null;
   world.well = null;
   world.events.push({ type: 'map', mapId: map.id });
+  // Home to whoever lives with you: a welcome, and some mornings a dish (world/sweethearts.js).
+  if (map.home && !map.indoor) welcomeHome(world);
   onMapLoaded(world);
   onStoryMap(world);
 }
@@ -425,7 +428,7 @@ function interact(world) {
     world.fx.push({ kind: 'mountpoof', on: true, mount: find.mount, x: find.x, y: find.y, t: 0, dur: 0.45 });
     return true;
   }
-  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6);
+  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id);
   if (npc) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
@@ -462,7 +465,7 @@ function interact(world) {
 
 export function nearbyNpc(world) {
   const b = world.body;
-  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6) ?? null;
+  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id) ?? null;
 }
 
 // The hit counter: every hit you land within this many seconds of the last adds one; a pause

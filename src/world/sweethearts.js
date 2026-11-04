@@ -5,11 +5,13 @@
 // and `char.partner` (the one you're dating, or living with once `char.livingWith` is set too).
 // One sweetheart at a time; breaking up is gentle: hearts drop a little, and you can make up later.
 
-import { SWEETHEARTS, HEART, MAX_HEARTS, BOUQUET_AT, GIFT_PTS, TALK_PTS, BOUQUET, RING } from '../data/sweethearts.js';
+import { SWEETHEARTS, HEART, MAX_HEARTS, BOUQUET_AT, GIFT_PTS, TALK_PTS, BOUQUET, RING, AT_HOME } from '../data/sweethearts.js';
 import { ITEMS } from '../data/items.js';
-import { removeItem } from '../core/inventory.js';
+import { removeItem, addItem } from '../core/inventory.js';
 import { today } from '../core/quests.js';
 import { SCENES } from '../data/story.js';
+import { recruitBot } from './bots.js';
+import { joinParty, partyMembers } from './party.js';
 
 // Their heart scenes join the game's cutscenes as sw_<id>_<key> (world/story.js playScene).
 export const sceneId = (id, key) => `sw_${id}_${key}`;
@@ -112,7 +114,7 @@ export function giveGift(world, id, itemId, day = today()) {
     return { kind: 'bouquet', line: s.gift.love[0], gained: 60, scene: dueScene(char, id) };
   }
   if (itemId === RING) {
-    char.livingWith = id;
+    moveIn(char, id);
     return { kind: 'ring', line: "Yes. Yes! Of course yes. When do I move in? Is now too soon?", gained: 0, scene: null };
   }
   h.gifted = day;
@@ -131,9 +133,77 @@ export function breakUp(world, id) {
   const char = world.char;
   if (char.partner !== id) return false;
   char.partner = null;
-  if (char.livingWith === id) char.livingWith = null;
+  if (char.livingWith === id) {
+    char.livingWith = null;
+    // (They take their own piece back to town with them.)
+    if (char.home) char.home.placed = char.home.placed.filter((p) => p.theirs !== id);
+  }
   const h = heartsOf(char, id);
   h.romance = false;
   addPts(char, id, -150);
   return true;
 }
+
+// ---------- Living together ----------
+
+// Moving in: they live on your island from now on, and bring a piece of their own into the hut
+// (on a shelf or the floor, wherever there's room; it's theirs, so it isn't in your bag).
+export function moveIn(char, id) {
+  char.livingWith = id;
+  char.partner = id;
+  const own = AT_HOME[id];
+  char.home ??= { stage: 1, back: null, placed: [], bag: {} };
+  if (own?.piece && !char.home.placed.some((p) => p.theirs === id)) {
+    const spots = { surface: [[150, 262], [490, 262]], wall: [[150, 200], [500, 200]], floor: [[560, 360], [90, 360]] };
+    const layer = { bake_cake: 'surface', star_globe: 'surface', sea_net: 'wall', trophy_plaque: 'wall', star_lamp: 'floor', bake_stool: 'floor' }[own.piece];
+    const [x, y] = (spots[layer] ?? spots.floor).find(([sx]) => !char.home.placed.some((p) => p.map === 'home_in' && Math.abs(p.x - sx) < 24)) ?? spots.floor[0];
+    char.home.placed.push({ uid: 9000 + Object.keys(SWEETHEARTS).indexOf(id), id: own.piece, map: 'home_in', x, y, flip: false, theirs: id });
+  }
+}
+
+// Whether a townsperson is out of town because they live with you now (they're on your island).
+export const movedAway = (char, npcId) => Boolean(SWEETHEARTS[npcId] && char.livingWith === npcId);
+
+// Coming home: a welcome, and once a day a dish they cooked for you. Returns what they said, or null.
+export function welcomeHome(world, day = today()) {
+  const char = world.char;
+  const id = char.livingWith;
+  if (!id || !world.map.home || world.map.guestOf) return null;
+  const h = heartsOf(char, id);
+  const s = SWEETHEARTS[id];
+  if (h.fedDay === day) return null;
+  h.fedDay = day;
+  const own = AT_HOME[id];
+  const dish = own.dish[(day.length + h.pts) % own.dish.length];
+  const ok = ITEMS[dish] && addItem(char.inventory, dish, 1);
+  const line = s.talk[5][(day.length + 1) % s.talk[5].length];
+  world.log?.(`${s.name}: ${line}`, '#ffc2dc');
+  if (ok) world.log?.(`${s.name} made you ${ITEMS[dish].name}!`, '#ffd6a0');
+  return { line, dish: ok ? dish : null };
+}
+
+// Adventuring together: your sweetheart joins your party (in their own job and outfit) and fights
+// beside you; ask again to send them home. Returns a reason, or null.
+export function bringAlong(world) {
+  const char = world.char;
+  const id = char.partner;
+  if (!id || !world.bots) return 'Only your sweetheart can come along.';
+  const there = partyMembers(world.bots).find((b) => b.sweetheart === id);
+  if (there) {
+    there.sweetheart = null;
+    there.leaving = true;
+    there.session = 0;
+    return null;
+  }
+  if (partyMembers(world.bots).length >= 5) return 'Your party is full.';
+  const s = SWEETHEARTS[id];
+  const bot = recruitBot(world.bots, world, { level: Math.max(10, char.level), jobs: [AT_HOME[id].job] });
+  Object.assign(bot, { name: s.name, sweetheart: id, finder: null, session: 99999, stay: 99999 });
+  bot.char.name = s.name;
+  bot.char.appearance = { ...s.look };
+  bot.char.outfit = { top: { id: `cash_costume_${s.outfit}`, variant: null } };
+  joinParty(world.bots, bot, world);
+  world.log?.(`${s.name} is coming along! Ask again to send them home.`, '#ff8fc4');
+  return null;
+}
+export const alongside = (world) => Boolean(world.bots && partyMembers(world.bots).some((b) => b.sweetheart && b.sweetheart === world.char.partner));

@@ -158,3 +158,40 @@ test('every date has a time limit, and running out still ends it kindly', () => 
   assert.equal(w.date, null);
   assert.ok(w.dateEnded.gained > 0, 'even a clumsy dance is a nice time');
 });
+
+// ---------- Living together ----------
+import { moveIn, welcomeHome, bringAlong, movedAway } from '../src/world/sweethearts.js';
+import { AT_HOME } from '../src/data/sweethearts.js';
+import { createBots } from '../src/world/bots.js';
+import { partyMembers } from '../src/world/party.js';
+
+test('moving in: they live on your island, bring their own piece, and greet you with a dish', () => {
+  const w = player();
+  w.char.home = { stage: 2, placed: [], bag: {} };
+  addHearts(w.char, 'rowan', 10 * HEART);
+  moveIn(w.char, 'rowan');
+  assert.ok(movedAway(w.char, 'rowan'));
+  assert.ok(w.char.home.placed.some((p) => p.id === AT_HOME.rowan.piece && p.theirs === 'rowan'));
+  loadMap(w, 'home', 'dock');
+  assert.ok(w.map.npcs.some((n) => n.id === 'rowan'), 'on the island');
+  const dishes = AT_HOME.rowan.dish.reduce((n, id) => n + countItem(w.char.inventory, id), 0);
+  assert.equal(dishes, 1, 'a dish when you come home');
+  assert.equal(welcomeHome(w), null, 'once a day');
+  breakUp(w, 'rowan');
+  assert.ok(!w.char.home.placed.some((p) => p.theirs === 'rowan'), 'they take their piece back to town');
+});
+
+test('your sweetheart can come adventuring in your party, in their own job and look', () => {
+  const w = player();
+  w.char.level = 20;
+  w.bots = createBots(w, () => 0.4);
+  addHearts(w.char, 'lark', 7 * HEART);
+  addItem(w.char.inventory, BOUQUET, 1);
+  giveGift(w, 'lark', BOUQUET);
+  assert.equal(bringAlong(w), null);
+  const bot = partyMembers(w.bots).find((b) => b.sweetheart === 'lark');
+  assert.ok(bot);
+  assert.equal(bot.name, 'Lark');
+  assert.equal(bot.char.appearance.hairStyle, SWEETHEARTS.lark.look.hairStyle);
+  assert.equal(bot.char.job, AT_HOME.lark.job);
+});

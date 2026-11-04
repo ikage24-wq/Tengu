@@ -17,6 +17,7 @@ function islandOf(char) {
     dungeons: Object.fromEntries(Object.entries(char.dungeons ?? {}).map(([id, r]) => [id, { best: r.best, hardClears: r.hardClears ?? 0 }])),
     mount: char.mount ?? null,
     derbyWins: char.derbyWins ?? 0,
+    livingWith: char.livingWith ?? null,
   };
 }
 

@@ -11,6 +11,7 @@ import { SPOTS } from '../data/fishing.js';
 import { SPOT } from '../data/gathering.js';
 import { HOME_STAGES, HOME_MAX, HOME_SEA_POOL, HOME_POND_POOL } from '../data/home.js';
 import { countItem, removeItem } from '../core/inventory.js';
+import { AT_HOME } from '../data/sweethearts.js';
 
 const G = 540;
 const SEA = 620;
@@ -112,6 +113,9 @@ export function homeInside() {
 // visitor's `guest` is the friend whose island it is (net/visit.js): their stage, their furniture.
 export function refreshHome(char, guest = null) {
   const { map, spots } = homeMap((guest ?? char).home?.stage ?? 1);
+  // Whoever lives here with you (world/sweethearts.js) spends their day on the island.
+  const partner = (guest ?? char).livingWith;
+  if (partner && AT_HOME[partner]) map.npcs.push({ id: partner, x: AT_HOME[partner].x });
   MAPS.home = map;
   MAPS.home_in = homeInside();
   if (guest) {

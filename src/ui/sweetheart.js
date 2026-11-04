@@ -4,7 +4,7 @@
 
 import { SWEETHEARTS, HEART, MAX_HEARTS, BOUQUET, RING } from '../data/sweethearts.js';
 import { ITEMS } from '../data/items.js';
-import { heartsOf, heartLevel, talkTo, giveGift, giftBlocker, isPartner, livesWith, breakUp, sceneId, markSeen } from '../world/sweethearts.js';
+import { heartsOf, heartLevel, talkTo, giveGift, giftBlocker, isPartner, livesWith, breakUp, sceneId, markSeen, bringAlong, alongside } from '../world/sweethearts.js';
 import { playScene } from '../world/story.js';
 import { today } from '../core/quests.js';
 import { drawItemIcon } from '../render/icons.js';
@@ -78,6 +78,15 @@ export function sweetheartChoices(world, state, npc) {
   const gifted = h.gifted === today();
   out.push({ label: 'Give a gift', sub: gifted ? 'One a day: come back tomorrow' : 'Something they love?', icon: 'gift', primary: !gifted, run: () => (dlg.gift = true) });
   if (heartLevel(char, id) >= 3) out.push({ label: 'Ask on a date', sub: `${SWEETHEARTS[id].name} loves a ${dateName(SWEETHEARTS[id].date)}`, icon: 'heart', run: () => (dlg.date = true) });
+  if (isPartner(char, id)) {
+    const with_ = alongside(world);
+    out.push({ label: with_ ? 'Head home for now' : 'Come adventuring', sub: with_ ? 'They go back to waiting for you' : 'They join your party and fight beside you', icon: 'friends', run: () => {
+      const why = bringAlong(world);
+      if (why) world.log(why, '#ffb3c6');
+      state.npc = null;
+      state.windows.npc.open = false;
+    } });
+  }
   if (isPartner(char, id)) out.push({ label: livesWith(char, id) ? 'Move back to town' : 'Say goodbye', sub: 'Stop being sweethearts (you can make up)', icon: 'door', run: () => (dlg.breakup = true) });
   return out;
 }

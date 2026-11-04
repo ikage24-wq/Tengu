@@ -153,6 +153,8 @@ function drawNpcs(ctx, world, cam, time) {
   for (const n of world.map.npcs) {
     // (Out on a date with you, they're at your side instead.)
     if (world.date?.id === n.id) continue;
+    // (Living with you now, they're on your island, not in town.)
+    if (!world.map.home && world.char.livingWith === n.id) continue;
     const npc = NPCS[n.id];
     const x = n.x - cam.x;
     const y = groundAt(world.map, n.x) - cam.y;
