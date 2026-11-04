@@ -17,13 +17,13 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Sky Dancer climbs up through the floors just by holding attack. (fixed)
 - [x] Queen Bee's slam warning floats 50 px above the floor it hits. (fixed)
 - [x] Five meadow monsters crash on a sad or surprised face; bosses can't look sad in scenes. (fixed)
-- [ ] Overhead chat skips the chat gate: repeats ("hp hp hp" 5 s apart), "that snail hits hard" after any death, generic recruit lines. Route every say() through the gate; death lines name the killer.
-- [ ] Lantern Lagoon is a town no bot ever visits; server news only ever names Rootwood Hollow; "1 more levels"; group invites too often.
-- [ ] Flaky test "players on a field work its ready life spots" (reads the real clock).
-- [ ] Salon breaks on a save missing look keys.
-- [ ] Mira's first quest says "take this sword", gives shorts.
-- [ ] Drops named after other monsters (Lamia "Basilisk Scale", Yuki-onna "Mimic Gem", Sylph "Harpy Feather", Nekomata "Fox Fluff", Selene "King Crystal", Prismaris "Heaven's Gohei").
-- [ ] Two weapons per type share a name (Mithril Sword lv 30 and lv 40).
+- [x] Overhead chat skips the chat gate: repeats ("hp hp hp" 5 s apart), "that snail hits hard" after any death, generic recruit lines. Route every say() through the gate; death lines name the killer. (fixed)
+- [x] Lantern Lagoon is a town no bot ever visits; server news only ever names Rootwood Hollow; "1 more levels"; group invites too often. (fixed)
+- [x] Flaky test "players on a field work its ready life spots" (reads the real clock). (fixed)
+- [x] Salon breaks on a save missing look keys. (fixed)
+- [x] Mira's first quest says "take this sword", gives shorts. (fixed)
+- [x] Drops named after other monsters (Lamia "Basilisk Scale", Yuki-onna "Mimic Gem", Sylph "Harpy Feather", Nekomata "Fox Fluff", Selene "King Crystal", Prismaris "Heaven's Gohei"). (fixed)
+- [x] Two weapons per type share a name (Mithril Sword lv 30 and lv 40). (fixed)
 
 ## B. Classes and heroes
 - [ ] **(choice)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves".
@@ -73,10 +73,10 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [ ] Wind Dancer skill icons are still the old ninja Thief's (masked face, shuriken, crossed daggers), violet not coral.
 - [ ] 77 items show the generic placeholder icon (newer drops, every herb and fruit, all furniture and trophies, mount keys, Royal Jelly, Home Shell).
 - [ ] 30 clothes and basic gear share one stock shape per slot (Lulu's jacket, sweater, overalls, dress...).
-- [ ] Options: Gameplay's last row under the Resume button; Sound descriptions under the volume pills.
-- [ ] Crafting tabs stick out past the window.
-- [ ] Lantern Lagoon, Dawnlight Beach and Sunny Dock missing from the World Map.
-- [ ] Phone players get keyboard-only hints and can't buy ×10 or add 5 AP.
-- [ ] Stale job names: Elowen offers "the Shrine Maiden and the Onmyoji"; "The Thief's Trial"; "Archer" not "Acrobat Archer".
-- [ ] Controls page missing G, O, P, Y.
-- [ ] Profile gear names cut short; labels measured in one font and drawn in another; Cash Shop menu bubble loses its icon; gacha Dew Sparkle icon unreadable; no menu button for Collection; Life Skills repeats "next level".
+- [x] Options: Gameplay's last row under the Resume button; Sound descriptions under the volume pills. (fixed)
+- [x] Crafting tabs stick out past the window. (fixed)
+- [x] Lantern Lagoon, Dawnlight Beach and Sunny Dock missing from the World Map. (fixed)
+- [x] Phone players get keyboard-only hints and can't buy ×10 or add 5 AP. (fixed)
+- [x] Stale job names: Elowen offers "the Shrine Maiden and the Onmyoji"; "The Thief's Trial"; "Archer" not "Acrobat Archer". (fixed)
+- [x] Controls page missing G, O, P, Y. (fixed)
+- [ ] Profile gear names cut short; labels measured in one font and drawn in another; Cash Shop menu bubble loses its icon; gacha Dew Sparkle icon unreadable; no menu button for Collection; Life Skills repeats "next level". (fixed, all but the gacha Dew Sparkle icon, which is art and waits for the icon pass)
