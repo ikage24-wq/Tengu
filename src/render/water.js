@@ -511,7 +511,7 @@ export function drawAfloat(ctx, x, waterY, w, line, time, wx, draw, { roll = 0.0
     ctx.beginPath();
     ctx.rect(x - w, waterY + 0.5 + s * 3, w * 2, 3);
     ctx.clip();
-    ctx.globalAlpha = 0.3 * (1 - s / 8);
+    ctx.globalAlpha = 0.24 * (1 - s / 8);
     ctx.translate(x + Math.sin(time * 2 + s * 1.3 + wx * 0.02) * (0.6 + s * 0.25), waterY * 2 - keelY + 2 * line);
     ctx.scale(1, -1);
     ctx.rotate(-tilt);
