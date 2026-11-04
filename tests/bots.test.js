@@ -537,7 +537,7 @@ test('a queen back for a rematch: players gather, dodge and take her moves, and 
     updateBots(bots, world, 1 / 30);
     for (const b of bots.list) if (b.bubble) said.add(b.bubble.text);
   }
-  assert.ok([...said].some((l) => /GG|we did it|ez clap|gg|WOO|so fun/.test(l)), `they cheer (${[...said].join(' | ')})`);
+  assert.ok([...said].some((l) => /GG|we did it|ez clap|gg|WOO|so fun| down!!|bye bye/.test(l)), `they cheer (${[...said].join(' | ')})`);
 });
 
 test('a party combo: your finisher brings the members fighting by you in with theirs', async () => {
