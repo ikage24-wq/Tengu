@@ -4019,7 +4019,8 @@ export const MOVES = {
     const sh = p < 0.4 ? s1 : s2;
     const rz = soft(seg(p, 0, 0.12));
     return {
-      ...f, lift: f.lift + acBounce(p, 0.72), weapon: lerp(lerp(BOW_REST, BOW_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), rz), BOW_REST, hold) + 8 * sh.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, rz), BOW_LOW, hold), pull: sh.pull, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
+      // (Once round, the turn is wound back to upright, so the bounces after it lean from the feet.)
+      ...f, lift: f.lift + acBounce(p, 0.72), tilt: p >= 0.66 ? 0 : f.tilt, weapon: lerp(lerp(BOW_REST, BOW_AIM + 20 * (soft(s1.snap) * (1 - s2.pull) + soft(s2.snap)), rz), BOW_REST, hold) + 8 * sh.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, rz), BOW_LOW, hold), pull: sh.pull, nock: sh.nock, twang: Math.max(s1.twang, s2.twang),
       rig: (r) => {
         f.rig(r);
         bowDraw(r, sh);
@@ -4118,7 +4119,7 @@ export const MOVES = {
     const land = bump(p, 0.68, 0.84);
     const hold = soft(seg(p, 0.8, 0.94));
     return {
-      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.2))), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.2))), BOW_LOW, hold), lift: 32 * hop - 2.5 * crouch + 0.6 * acBounce(p, 0.84), tilt: flip * Math.PI * 2 - 0.06 * s.kick + 0.16 * hold,
+      weapon: lerp(lerp(BOW_REST, rollOn(BOW_AIM, s), soft(seg(p, 0, 0.2))), BOW_REST, hold) + 8 * s.kick, arm: lerp(lerp(BOW_LOW, BOW_ARM, soft(seg(p, 0, 0.2))), BOW_LOW, hold), lift: 32 * hop - 2.5 * crouch + 0.6 * acBounce(p, 0.84), tilt: (flip < 1 ? flip * Math.PI * 2 : 0) - 0.06 * s.kick + 0.16 * hold,
       pull: s.pull, nock: s.nock, twang: s.twang, lunge: 2 * hop,
       rig: (r) => {
         if (flip < 1 && hop > 0.2) tuck(r);
