@@ -92,7 +92,7 @@ function drawShot(ctx, f, cam) {
       // Bertha's enormous one.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 2, alpha: f.split ? 0.85 : 1 });
+      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 2.2, alpha: f.split ? 0.85 : 1 });
       break;
     }
     case 'asplanet': case 'asbig': case 'asmoon': {

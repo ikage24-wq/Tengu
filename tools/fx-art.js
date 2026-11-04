@@ -5624,7 +5624,7 @@
   }
 
   // Her bolt in flight (loops, toward +x): teal energy streaking behind a brass bolt.
-  E.aebolt = (() => {
+  E.aebolt = grown((() => {
     const cx = 120;
     const cy = 40;
     return {
@@ -5635,10 +5635,10 @@
         sparkle(ctx, TEALE, cx - 60 - (i % 2) * 10, cy - 10 + (i % 2) * 18, 5, i);
       },
     };
-  })();
+  })(), 1.6);
 
   // A heavy bolt (her finishes, Overclock, Big Bertha): a big bolt wrapped in teal rings.
-  E.aebig = (() => {
+  E.aebig = grown((() => {
     const cx = 200;
     const cy = 60;
     return {
@@ -5656,10 +5656,10 @@
         }
       },
     };
-  })();
+  })(), 1.6);
 
   // Her mark on a monster: a teal burst, cogs flying off spinning, a puff of steam.
-  E.aehit = (() => {
+  E.aehit = grown((() => {
     const c = 110;
     return {
       w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
@@ -5672,10 +5672,10 @@
         }
       },
     };
-  })();
+  })(), 1.8);
 
   // A sticky or cluster bolt bursting: a brass and teal blast, cogs and rivets, a ring of steam.
-  E.aeboom = (() => {
+  E.aeboom = grown((() => {
     const c = 130;
     return {
       w: 260, h: 240, n: 8, fps: 26, px: c, py: c + 40,
@@ -5697,10 +5697,10 @@
         }
       },
     };
-  })();
+  })(), 2);
 
   // A puff of steam venting (Overdrive, Steam Vent, the recoil): it bursts out and drifts up.
-  E.aesteam = (() => {
+  E.aesteam = grown((() => {
     const c = 90;
     return {
       w: 180, h: 180, n: 7, fps: 20, px: c, py: c + 40,
@@ -5710,7 +5710,7 @@
         if (i <= 3) for (const sd of [-1, 1]) puff(ctx, STEAM, c + sd * (20 + k * 40), c + 30 - k * 20, 12 + k * 10, 332 + sd, { lobes: 4 });
       },
     };
-  })();
+  })(), 2.5);
 
   // Her turret, a machine she sets down: a brass tripod, a crank drum and a little crossbow head with
   // a teal eye. Frames 0-3 idle (the head swivels a little, the drum turns), 4-5 firing (the head
@@ -6379,7 +6379,7 @@
 
   // Her arrow in flight (loops, toward +x): a gold arrow with a mint ribbon curling behind it and a
   // couple of sparkles.
-  E.acarrow = (() => {
+  E.acarrow = grown((() => {
     const cx = 120;
     const cy = 40;
     return {
@@ -6390,11 +6390,11 @@
         for (let j = 0; j < 2; j++) sparkle(ctx, SHOWG, cx - 70 - j * 24, cy + (j ? 10 : -10) * Math.sin((i / 6) * TAU), 6 - j * 1.5, i + j);
       },
     };
-  })();
+  })(), 1.8);
 
   // Her big arrow (finishers, Showtime): a bigger gold arrow wrapped in two mint ribbons spiralling
   // round it, a star burst at its head.
-  E.acbig = (() => {
+  E.acbig = grown((() => {
     const cx = 190;
     const cy = 60;
     return {
@@ -6407,10 +6407,10 @@
         starburst(ctx, SHOWG, cx + 4, cy, 18 + (i % 2) * 4, 8, 601, { inner: 0.4, rot: i * 0.3 });
       },
     };
-  })();
+  })(), 1.6);
 
   // Her mark on a monster: a gold star pops with a mint ribbon looping round it, then confetti flies.
-  E.achit = (() => {
+  E.achit = grown((() => {
     const c = 100;
     return {
       w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
@@ -6427,11 +6427,11 @@
         if (i >= 5) for (let j = 0; j < 3; j++) sparkle(ctx, SHOWG, c + (j - 1) * 30, c - 30 - (i - 5) * 8, 7, j);
       },
     };
-  })();
+  })(), 1.8);
 
   // Firework Arrow (her Blast Arrow proc): a firework bursting where the arrow lands, rays of gold
   // and mint shooting out and drooping, crackling into sparkles.
-  E.acfirework = (() => {
+  E.acfirework = grown((() => {
     const c = 120;
     return {
       w: 240, h: 240, n: 8, fps: 24, px: c, py: c,
@@ -6455,7 +6455,7 @@
         }
       },
     };
-  })();
+  })(), 2.4);
 
   // Ribbon Snare (her Snare Arrow proc): a mint ribbon looped round a monster, fluttering, its bow
   // knotted at the front (loops while it is held).
@@ -6483,7 +6483,7 @@
   // Her springboard (Spring Trap): a little striped circus springboard on the ground, its board
   // bobbing on the spring (frames 0-3, loops); frames 4-7 it fires (the board snaps up, a gold star
   // and a "boing" of rings).
-  E.acspring = (() => {
+  E.acspring = grown((() => {
     const c = 80;
     const gy = 100;
     return {
@@ -6516,11 +6516,11 @@
         }
       },
     };
-  })();
+  })(), 2);
 
   // Grand Somersault: at the top of her leap a great gold ring of light bursts round her, arrows
   // fanning out of it all the way round and down, confetti everywhere (one-shot, played over her).
-  E.acburst = (() => {
+  E.acburst = grown((() => {
     const c = 160;
     return {
       w: 320, h: 320, n: 9, fps: 14, px: c, py: c,
@@ -6536,7 +6536,7 @@
         if (i >= 3) confetti(ctx, c, c + (i - 3) * 10, 100 + (i - 3) * 16, 18, 643, 7);
       },
     };
-  })();
+  })(), 2.4);
 
   // Showtime (her gauge full; internally Momentum): gold stars and mint ribbons twirling round her.
   E.acaura = (() => {
@@ -6619,7 +6619,7 @@
 
   // Her arrow in flight (loops, toward +x): a plum arrow with a wisp of smoke curling behind and
   // silver sparkles.
-  E.ptarrow = (() => {
+  E.ptarrow = grown((() => {
     const cx = 120;
     const cy = 40;
     return {
@@ -6631,10 +6631,10 @@
         for (let j = 0; j < 2; j++) sparkle(ctx, PSILV, cx - 40 - j * 26, cy + (j ? 12 : -12) * Math.cos(ph), 6 - j, i + j);
       },
     };
-  })();
+  })(), 1.8);
 
   // Her big arrow: a bigger plum arrow trailing smoke, the four suits tumbling in its wake.
-  E.ptbig = (() => {
+  E.ptbig = grown((() => {
     const cx = 190;
     const cy = 60;
     return {
@@ -6647,10 +6647,10 @@
         starburst(ctx, PSILV, cx + 2, cy, 16 + (i % 2) * 4, 8, 712, { inner: 0.4 });
       },
     };
-  })();
+  })(), 1.6);
 
   // Her mark on a monster: a silver flash, a puff of plum smoke, and three cards fanning out of it.
-  E.pthit = (() => {
+  E.pthit = grown((() => {
     const c = 100;
     return {
       w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
@@ -6665,11 +6665,11 @@
         if (i >= 5) for (let j = 0; j < 4; j++) sparkle(ctx, PSILV, c + (j - 1.5) * 26, c - 50 - (i - 5) * 8, 7, j);
       },
     };
-  })();
+  })(), 1.8);
 
   // A puff of stage smoke (vanishing and appearing, her copies coming and going): plum smoke
   // billowing out round a silver flash, then thinning into sparkles.
-  E.ptsmoke = (() => {
+  E.ptsmoke = grown((() => {
     const c = 90;
     const gy = 150;
     return {
@@ -6684,26 +6684,26 @@
         if (i >= 4) for (let j = 0; j < 6; j++) sparkle(ctx, PSILV, c + Math.cos(j) * 50, gy - 60 - (i - 4) * 14 + Math.sin(j * 2) * 30, 8 - (i - 4) * 2, j);
       },
     };
-  })();
+  })(), 3);
 
   // A silver dove in flight (loops, toward +x): Dove Arrow's doves.
-  E.ptdove = {
+  E.ptdove = grown({
     w: 90, h: 70, n: 4, fps: 12, px: 50, py: 35, loop: true,
     draw(ctx, i) {
       doveArt(ctx, 50, 38, 22, [1, 0, -1, 0][i]);
     },
-  };
+  }, 2);
   // A spinning card in flight (loops): Card Trick's cards.
-  E.ptcard = {
+  E.ptcard = grown({
     w: 60, h: 60, n: 6, fps: 24, px: 30, py: 30, loop: true,
     draw(ctx, i) {
       cardArt(ctx, 30, 30, 34, 0.5, Math.cos((i / 6) * TAU), i % 4);
     },
-  };
+  }, 2);
 
   // Grand Illusion: a great ring of stage smoke bursts open round her, silver stars scattering and
   // cards fluttering down through it.
-  E.ptillusion = (() => {
+  E.ptillusion = grown((() => {
     const c = 180;
     const gy = 220;
     return {
@@ -6722,7 +6722,7 @@
         }
       },
     };
-  })();
+  })(), 1.6);
 
   // Illusion (her gauge; full: her copies shoot with every arrow): silver sparkles and two little
   // cards turning round her.
@@ -7839,6 +7839,12 @@
   E.shockrose = shockRing(ROSEGOLD, GOLDRING, (ctx, pal, x, y, z) => celRing(ctx, pal, x, y, z * 0.8, z * 0.32), 911);
   E.shocksky = shockRing(SKYB, SUNLIT, (ctx, pal, x, y, z, a, j) => (j % 3 === 2 ? sparkle(ctx, pal, x, y, z, j) : puff(ctx, CLOUDS, x, y, z * 0.75, 921 + j)), 921);
   E.shockstar = shockRing(NIGHT, STARGOLD, (ctx, pal, x, y, z, a, j) => star5(ctx, j % 2 ? STARGOLD : pal, x, y, z, a), 931);
+  // The Phantom Trickster's (Smoke Bomb): a plum ring of stage smoke rolling out, playing cards
+  // tumbling along it.
+  E.shockplum = shockRing(PLUM, PSILV, (ctx, pal, x, y, z, a, j) => (j % 3 === 2 ? sparkle(ctx, PSILV, x, y, z, j) : j % 3 === 1 ? puff(ctx, SMOKE, x, y, z * 0.8, 941 + j, { lobes: 4 }) : cardArt(ctx, x, y, z * 1.4, a + Math.PI / 2, Math.cos(a * 3), j % 4)), 941);
+  // The Acrobat Archer's (Grand Somersault's landing): a gold ring racing out with mint ribbon
+  // loops and gold stars riding it.
+  E.shockmint = shockRing(SHOWG, MINT, (ctx, pal, x, y, z, a, j) => (j % 2 ? goldStar(ctx, x, y, z * 0.8, a) : sparkle(ctx, MINT, x, y, z, j)), 951);
 
   window.FXART = E;
   window.FXHD = { render, RAW };

@@ -55,13 +55,13 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   }
   // The Phantom Trickster's: no pillar, a puff of stage smoke with her badge rising out of it.
   if (school === 'phantom') {
-    fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: 0.55 });
+    fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: 0.4 });
     if (p > 0.15) fxSprite(ctx, EMBLEMS.phantom, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   // The Acrobat Archer's: no pillar, a firework going off over her with her badge rising.
   if (school === 'acro') {
-    fxSprite(ctx, 'celacfirework', x, y - 40, { p, scale: 0.5 });
+    fxSprite(ctx, 'celacfirework', x, y - 40, { p, scale: 0.4 });
     if (p > 0.15) fxSprite(ctx, EMBLEMS.acro, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
@@ -79,7 +79,7 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
   }
   // The Arbalist Engineer's: no pillar, a burst of steam with her badge turning in it.
   if (school === 'brass') {
-    fxSprite(ctx, 'celaesteam', x, y + 4, { p, scale: 0.8 });
+    fxSprite(ctx, 'celaesteam', x, y + 4, { p, scale: 0.45 });
     if (p > 0.15) fxSprite(ctx, EMBLEMS.brass, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5, rot: p * 2 });
     return;
   }
@@ -228,15 +228,17 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'aehit':
       return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
     case 'aeboom':
-      return fxSprite(ctx, 'celaeboom', x, y + 2, { p, scale: f.small ? 0.4 : 0.65 }) || true;
+      // (as wide as the blast: a sticky bolt's 50-80 px, a bomblet's ~30)
+      return fxSprite(ctx, 'celaeboom', x, y + 2, { p, scale: f.small ? 0.4 : 0.85 }) || true;
     case 'aesteam':
-      return fxSprite(ctx, 'celaesteam', x, y + 2, { p, scale: f.small ? 0.3 : 0.6, flip }) || true;
+      // (Steam Vent's blast, `big`, is as wide as it reaches; a muzzle puff, `small`, still reads.)
+      return fxSprite(ctx, 'celaesteam', x, y + 2, { p, scale: f.big ? 1.15 : f.small ? 0.18 : 0.4, flip }) || true;
     case 'aestick': {
       // A sticky bolt stuck in the monster, its teal light blinking faster as it's about to burst.
       const m = f.mob;
       const sx = (m ? m.x - cam.x : x) - 4;
       const sy = (m ? m.y - (m.air ?? 0) - m.def.h / 2 - cam.y : y - 20);
-      return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.45, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
+      return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.32, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
     }
     case 'aeballista':
       return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;

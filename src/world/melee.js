@@ -2022,6 +2022,8 @@ function rain(world, s) {
     world.fx.push({ kind: 'rain', variant: s.variant ?? 'arrow', school: s.school ?? 'wind', x, y: m ? m.y : body.y, h: m ? m.def.h : 20, t: -delay, dur: 0.45, seed: k });
     if (m) shotHit(world, s, m, delay + 0.18, k % 3);
   }
+  // Grand Somersault's arrows land as a ring of gold racing out to the edge of the rain.
+  if (s.around && s.school === 'acro') world.fx.push({ kind: 'shock', name: 'celshockmint', x: body.x, y: body.y, r: s.rainW / 2, t: -0.3, dur: 0.6 });
 }
 
 // The command moves a character of this job would play (up + attack, in the air, on the run), for

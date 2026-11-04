@@ -38,7 +38,7 @@ export function ventGuard(world, fromX) {
   const p = procOf(world.char, 'steamvent');
   if (!p || world.dead || Math.random() >= p.chance) return 0;
   const b = world.body;
-  world.fx.push({ kind: 'aesteam', x: b.x, y: b.y, t: 0, dur: 0.7 });
+  world.fx.push({ kind: 'aesteam', big: true, x: b.x, y: b.y, t: 0, dur: 0.7 });
   near(world, b.x, b.y, p.r, 100).forEach((o, k) => gadgetHit(world, o, { x: b.x, pct: p.pct, knock: 240, stun: 0.3, stop: k ? 0 : 0.04, burst: 'aehit', stack: k, key: 'procsteamvent' }, 0.05));
   void fromX;
   return p.cut;
