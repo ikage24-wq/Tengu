@@ -15,7 +15,10 @@ dates as shared activities, the name "Sweethearts"). Pictures: `docs/design/samp
 | Celeste, sleepy stargazer | Moonleaf Grove, Rune Garden | an observatory cottage with a turning telescope and a crescent-moon door | night of stargazing |
 | Marlowe, cheeky young sailor | Pastel Harbor, Fish Market | a cabin under an upturned boat, portholes, an anchor, a rope ladder and a flag | fishing date |
 
-Each house's door leads into their own room, decorated in their style (built 2026-11-04, the
+Each house's door leads into their own room, decorated in their style and full of their things
+(redrawn in detail the same day: mouldings, panelling, lamps and candles, pictures, plants, shelves of
+little things, and moving bits like Poppy's sleeping cat, Rowan's fire, Yuzu's lanterns, Celeste's
+fairy-light stars and Marlowe's swinging lantern) (built 2026-11-04, the
 player's ask: "give them all their own decorated house"): Poppy's pink kitchen with the glowing
 brick oven and a table of cakes; Lark's study of bookshelves, a writing desk and a round sea window
 the lighthouse beam sweeps past; Rowan's hall with a great fireplace, shields, armour and daisies

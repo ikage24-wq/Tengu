@@ -2702,14 +2702,16 @@ for (const h of Object.values(SWEETHEARTS)) {
   town.portals.push({ id: `swh_${h.id}`, x: h.house, y: Math.round(groundOf(town, h.house)), to: `swh_${h.id}`, toPortal: 'door', label: `${h.name}'s House`, door: true });
   MAPS[`swh_${h.id}`] = {
     id: `swh_${h.id}`, name: `${h.name}'s House`, theme: town.theme, isTown: true, private: true, indoor: true, town: town.town, music: town.music,
-    width: 640, height: 400, groundY: 360,
+    // (Just tall enough that the camera shows the whole wall up to the ceiling line, with you on
+    // the floor above the status bar.)
+    width: 640, height: 372, groundY: 344,
     // (Its floor is painted with the room, render/sweethouses.js: no ground strip of its own.)
     look: { ceiling: true, floor: 'painted', sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
     cottages: [],
-    terrain: [[0, 360], [640, 360]],
+    terrain: [[0, 344], [640, 344]],
     platforms: [], ropes: [],
     townPieces: [[`swroom_${h.id}`, 320]],
-    portals: [{ id: 'door', x: ROOM_DOOR[h.id], y: 360, to: h.map, toPortal: `swh_${h.id}`, label: 'Outside', door: true }, { id: 'start', x: ROOM_DOOR[h.id], y: 360, hidden: true }],
+    portals: [{ id: 'door', x: ROOM_DOOR[h.id], y: 344, to: h.map, toPortal: `swh_${h.id}`, label: 'Outside', door: true }, { id: 'start', x: ROOM_DOOR[h.id], y: 344, hidden: true }],
     npcs: [], spawns: [], deco: [], lamps: [{ x: 320, y: 120, c: '#ffd27a' }],
   };
 }
