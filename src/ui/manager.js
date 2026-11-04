@@ -2,6 +2,7 @@
 
 import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorate.js';
 import { button } from './kit.js';
+import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
@@ -280,6 +281,8 @@ export function drawUi(ui, state, world) {
   drawPartyPanel(ui, state, world);
   drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);
+  // A date in progress (ui/dates.js): its card and its moments.
+  drawDateHud(ui, world);
   // Decorating your island, under the windows; and its button while you're at home.
   drawDecorate(ui, state, world);
   if (canDecorate(world) && !decorating(state) && !state.npc && button(ui, VW - 84, 50, 76, 17, 'Decorate (Y)', { size: 7, primary: true, iconName: 'hammer' })) toggleDecorate(state, world);

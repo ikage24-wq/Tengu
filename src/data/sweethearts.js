@@ -21,6 +21,7 @@ export const TALK_PTS = 20;
 
 export const SWEETHEARTS = {
   poppy: {
+    dateLines: { great: "That was the best day I've had in ages. My cheeks hurt from smiling!", good: "That was so nice. Same time tomorrow? I'm joking. Unless?", okay: 'Hee, that was a little chaotic. I liked it anyway!' },
     id: 'poppy', name: 'Poppy', title: 'Sunny Baker', map: 'sprout', x: 1560, color: '#ff8fae',
     outfit: 'swbaker', date: 'cook',
     look: { hairStyle: 'ribbonbuns', hairColor: '#ffc07a', hairTip: '#ff9a6a', skinTone: '#ffe2cc', eyeColor: '#d07a2a', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'grin' },
@@ -53,6 +54,7 @@ export const SWEETHEARTS = {
     },
   },
   lark: {
+    dateLines: { great: "I'm going to write about today. All of it. Every second.", good: 'That was... really lovely. Thank you for asking me.', okay: 'It was nice just being out with you, even like that.' },
     id: 'lark', name: 'Lark', title: 'Lighthouse Poet', map: 'lagoon', x: 460, color: '#8fc8c8',
     outfit: 'swpoet', date: 'stars',
     look: { hairStyle: 'swoop', hairColor: '#4a5a8a', hairTip: '#7f9ad0', skinTone: '#fff0e6', eyeColor: '#5a7ab8', eyeStyle: 'droopy', face: 'shy' },
@@ -85,6 +87,7 @@ export const SWEETHEARTS = {
     },
   },
   rowan: {
+    dateLines: { great: "Best. Day. Ever. I'm going to tell Brann about it until he begs me to stop.", good: "That was grand! You're good company, you know that?", okay: "Ha, we'll get it right next time. I had fun anyway!" },
     id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 1000, color: '#8fb8e8',
     outfit: 'swknight', date: 'ride',
     look: { hairStyle: 'messycrop', hairColor: '#a8603a', skinTone: '#e7b48f', eyeColor: '#3f9a5a', eyeStyle: 'round', browStyle: 'thick', face: 'smile' },
@@ -117,6 +120,7 @@ export const SWEETHEARTS = {
     },
   },
   yuzu: {
+    dateLines: { great: "Okay that was SO fun. You're not allowed to be this fun. It's my job!", good: 'Hee, not bad, human. Not bad at all. Again soon?', okay: "Pfft, you were hopeless. ...I had fun though. Don't tell anyone." },
     id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 820, color: '#ff7a4a',
     outfit: 'swfox', date: 'dance',
     look: { hairStyle: 'feathertips', hairColor: '#ff9a4f', hairTip: '#fff4e0', skinTone: '#fff0e6', eyeColor: '#e0602a', eyeStyle: 'cat', earStyle: 'fox', earTip: '#fff4e0', tail: 'fox', tailTip: '#fff4e0', face: 'playful' },
@@ -149,6 +153,7 @@ export const SWEETHEARTS = {
     },
   },
   celeste: {
+    dateLines: { great: "I didn't fall asleep once. That's how much I liked it.", good: 'Mm... that was nice. The stars seemed closer.', okay: 'That was sweet. Even the sleepy parts. Especially those.' },
     id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1720, color: '#4a4aa8',
     outfit: 'swstar', date: 'stars',
     look: { hairStyle: 'cascade', hairColor: '#c9b6ff', hairTip: '#fff3c4', skinTone: '#fff0e6', eyeColor: '#7a52cc', eyeStyle: 'star', face: 'sleepy' },
@@ -181,6 +186,7 @@ export const SWEETHEARTS = {
     },
   },
   marlowe: {
+    dateLines: { great: "Now THAT'S what I call an adventure! Best crew ever!", good: 'Not bad, first mate. Not bad at all.', okay: 'Heh, rough waters today. Still the best company on the island.' },
     id: 'marlowe', name: 'Marlowe', title: 'Cheeky Young Sailor', map: 'harbor', x: 965, color: '#2f5fb8',
     outfit: 'swsailor', date: 'fish',
     look: { hairStyle: 'surfer', hairColor: '#3fb8b0', hairTip: '#bff0e8', skinTone: '#d9a07a', eyeColor: '#2f6ab8', eyeStyle: 'round', face: 'smug' },

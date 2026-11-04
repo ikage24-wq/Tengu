@@ -151,6 +151,8 @@ export function playerPose(world) {
 function drawNpcs(ctx, world, cam, time) {
   const near = nearbyNpc(world);
   for (const n of world.map.npcs) {
+    // (Out on a date with you, they're at your side instead.)
+    if (world.date?.id === n.id) continue;
     const npc = NPCS[n.id];
     const x = n.x - cam.x;
     const y = groundAt(world.map, n.x) - cam.y;
@@ -433,6 +435,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
+    // On a date: your sweetheart beside you, walking (or on a Puff Bun on a ride) (world/dates.js).
+    if (world.date) drawDateBuddy(ctx, world, cam, time);
     // Riding: the mount with the hero in its seat (render/mounts.js). On a rope the gecko clings
     // to it head up behind the climbing hero; the other mounts are stowed while you climb.
     const ride = world.riding;
@@ -818,4 +822,22 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     }
     ctx.restore();
   }
+}
+
+// Your date at your side: walking along (their walk cycle runs from how they move), or riding a Puff
+// Bun beside your mount.
+const buddyAnim = { anim: null, last: 0 };
+function drawDateBuddy(ctx, world, cam, time) {
+  const d = world.date;
+  const npc = NPCS[d.id];
+  const bd = d.buddy;
+  const x = Math.round(bd.x - cam.x);
+  const y = Math.round(bd.y - cam.y);
+  footShadow(ctx, x, y, 12);
+  if (d.kind === 'ride' && world.riding) {
+    drawMount(ctx, bd, 'bun', x, y, world.now, { facing: bd.facing, speed: Math.min(1, Math.abs(bd.vx) / 160) }, { look: npc.look });
+    return;
+  }
+  const moving = Math.abs(bd.vx) > 10;
+  drawHero(ctx, d.kind === 'stars' || d.kind === 'dance' ? { ...npc.look, face: d.kind === 'dance' ? 'excited' : 'love' } : npc.look, npc.gear ?? null, x, y, { pose: d.kind === 'dance' ? 'emdance' : moving ? 'walk' : 'idle', progress: (time * 0.5) % 1, dur: 2, time, seed: 7, facing: bd.facing });
 }

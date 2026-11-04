@@ -36,6 +36,8 @@ export function cook(char, d, world = null, rng = Math.random) {
   const n = world ? withExtra(SERVINGS, lifePerks(char, 'cooking'), rng) : SERVINGS;
   addItem(char.inventory, d.id, n);
   if (world) lifeAction(world, 'cooking', { tier: dishTier(d), kind: 'cook' });
+  // (What you just made, for a cooking date: world/dates.js.)
+  if (world) world.lastCooked = { id: d.id, at: world.now };
   return n;
 }
 

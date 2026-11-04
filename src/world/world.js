@@ -38,6 +38,7 @@ import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
+import { tickDate, DATES } from './dates.js';
 import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -691,7 +692,10 @@ export function updateWorld(world, dt, input) {
   const fishing = !input.locked && (tickFishing(world, dt, input.held, input.pressed) || tickGathering(world, dt, input.held, input.pressed) || tickCrafting(world, dt, input.held, input.pressed));
   // (Decorating your island: only walking and jumping; the keys belong to the furniture.)
   const MOVE = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Space', 'AltLeft', 'AltRight'];
-  const only = (set) => (world.decorating ? new Set([...set].filter((k) => MOVE.includes(k))) : set);
+  // (On a date's moment, stargazing or dancing, the keys are the moment's: world/dates.js.)
+  if (world.date) tickDate(world, dt, input.locked ? new Set() : input.pressed);
+  const moment = Boolean(world.date && DATES[world.date.kind].moment);
+  const only = (set) => (moment ? new Set() : world.decorating ? new Set([...set].filter((k) => MOVE.includes(k))) : set);
   const held = input.locked || world.dead || fishing ? new Set() : only(input.held);
   const pressed = input.locked || world.dead || fishing ? new Set() : only(input.pressed);
   const intent = {

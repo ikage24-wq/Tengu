@@ -103,3 +103,58 @@ test('saying goodbye is gentle: hearts dip a little, and you can make up', () =>
   assert.ok(heartLevel(w.char, 'marlowe') >= before - 2);
   assert.equal(giveGift(w, 'marlowe', BOUQUET).kind, 'bouquet', 'made up');
 });
+
+// ---------- Dates (world/dates.js) ----------
+import { startDate, tickDate, finishDate, DATES } from '../src/world/dates.js';
+import { loadMap } from '../src/world/world.js';
+import { FISH } from '../src/data/fishing.js';
+
+test('a date is a shared activity: done together it brings you much closer, once a day', () => {
+  const w = player();
+  loadMap(w, 'grove', 'start');
+  w.forceNight = 1;
+  addHearts(w.char, 'celeste', 3 * HEART);
+  assert.equal(startDate(w, 'celeste', 'stars'), null);
+  assert.ok(w.date);
+  // Wish on every star as it crosses the middle.
+  w.rng = () => 0.5;
+  for (let i = 0; i < 60 * 40 && w.date; i++) {
+    const d = w.date;
+    const ready = d.stars.some((s) => s.got == null && Math.abs((d.t - s.t0) / 1.6 - 0.5) < 0.05);
+    tickDate(w, 1 / 60, ready ? new Set(['Space']) : new Set());
+  }
+  assert.equal(w.date, null);
+  assert.equal(w.dateEnded.rating, 'great');
+  assert.ok(heartsOf(w.char, 'celeste').pts >= 3 * HEART + 120, 'stargazing is her favourite, so even more');
+  assert.match(startDate(w, 'celeste', 'stars'), /today/);
+});
+
+test('a fishing date counts the fish you catch together; a cooking date the dish you make', () => {
+  const w = player();
+  addHearts(w.char, 'marlowe', 3 * HEART);
+  w.char.lifeTools = { rod: { id: 'rod_1' } };
+  assert.equal(startDate(w, 'marlowe', 'fish'), null);
+  for (let i = 0; i < 3; i++) {
+    w.now += 5;
+    w.fishCaught = { fish: FISH[i], size: 20, at: w.now };
+    tickDate(w, 1 / 60);
+  }
+  assert.equal(w.date, null);
+  assert.ok(w.dateEnded.gained > 0);
+  addHearts(w.char, 'poppy', 3 * HEART);
+  assert.equal(startDate(w, 'poppy', 'cook'), null);
+  w.now += 3;
+  w.lastCooked = { id: SWEETHEARTS.poppy.loves.find((x) => x.startsWith('dish_')), at: w.now };
+  tickDate(w, 1 / 60);
+  assert.equal(w.dateEnded.id, 'poppy');
+  assert.equal(w.dateEnded.rating, 'great', 'a dish she loves');
+});
+
+test('every date has a time limit, and running out still ends it kindly', () => {
+  const w = player();
+  addHearts(w.char, 'yuzu', 3 * HEART);
+  startDate(w, 'yuzu', 'dance');
+  for (let i = 0; i < 60 * (DATES.dance.time + 2) && w.date; i++) tickDate(w, 1 / 60);
+  assert.equal(w.date, null);
+  assert.ok(w.dateEnded.gained > 0, 'even a clumsy dance is a nice time');
+});
