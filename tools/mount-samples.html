@@ -1,0 +1,138 @@
+<!doctype html>
+<html><body style="margin:0;background:#cfeec6">
+<canvas id="c" width="1200" height="440"></canvas>
+<script type="module">
+// Dev tool: mount concepts (samples for the player), the hero riding each, moving their own way.
+//   Puff Bun      a marshmallow bunny: hops in big springy bounds, ears trailing
+//   Paper Crane   folded washi paper: wings beat, then it glides
+//   Nimbus        a sleepy little cloud: floats, puffs drifting off behind
+// ?manual and window.step(t) for stills.
+import { drawPosed } from '../src/render/hero.js';
+import { sprite, blit, R, E, T, F, mix, shade } from '../src/render/pixel.js';
+import { randomLook } from '../src/ui/looks.js';
+
+const ctx = document.getElementById('c').getContext('2d');
+const ZOOM = 4;
+const look = { ...randomLook(() => 0.37), hairStyle: 'twintails', hairColor: '#ffb3cf', hairTip: '#ff8fb8', eyeColor: '#7a52cc' };
+const SIT = { air: true, frontLeg: [3, -3, 50], backLeg: [1.5, -3, 50] };
+const ss = (t) => t * t * (3 - 2 * t);
+const W = 56, H = 40;
+const mk = (key, shapes) => sprite(`mountsample|${key}`, () => ({ w: W, h: H, shapes, res: 3, soft: 'cel', crisp: true, selout: true }));
+const rot = (pts, cx, cy, a) => pts.map(([x, y]) => [cx + (x - cx) * Math.cos(a) - (y - cy) * Math.sin(a), cy + (x - cx) * Math.sin(a) + (y - cy) * Math.cos(a)]);
+
+// ---------- Puff Bun ----------
+function bunShapes(ear, foot) {
+  const base = '#fff6f9', sh = '#f3d3e2', sh2 = '#dcb2d0', pink = '#ffb3cf';
+  const e = Math.round(ear * 10) / 10;
+  const earPts = (x, len, droop) => rot([[x - 2.4, 14], [x + 2.4, 14], [x + 3, 14 - len * 0.5], [x + 1, 14 - len], [x - 2.2, 14 - len * 0.6]], x, 14, -0.45 - droop);
+  const f = Math.round(foot * 10) / 10;
+  return [
+    // back ear, body, front ear
+    T(earPts(37, 15, e + 0.15), sh), F(T(earPts(37.5, 11, e + 0.15).map(([x, y], i) => [x + (i < 2 ? 0 : 0.6), y + 0.8]), sh2)),
+    E(10 + f, 34, 4.2, 3, sh), E(36 - f, 34, 4.2, 3, sh),
+    E(24, 24, 20, 11.5, base), F(E(24, 30, 18, 5, sh)), F(E(28, 18, 9, 3.5, '#ffffff')),
+    E(4.5, 22, 3.4, 3.4, base),
+    T(earPts(40, 17, e), base), F(T(earPts(40.4, 12, e).map(([x, y], i) => [x + (i < 2 ? 0 : 0.5), y + 0.7]), pink)),
+    E(14 - f, 34.5, 4.5, 3.2, base), F(E(14 - f, 35.6, 3.8, 1.5, sh)),
+    // face on the front (left side of the sprite before flipping: we draw facing right, so front = x high)
+    F(E(41, 21, 1.1, 1.5, '#3a2d4f')), F(E(41.3, 20.4, 0.45, 0.45, '#ffffff')),
+    F(E(44.2, 25, 1.9, 0.8, '#ffc2d8')), F(E(39, 25, 1.4, 0.7, '#ffc2d8')),
+    F(T([[42.4, 24], [43.4, 24], [42.9, 24.7]], '#e8799f')),
+  ];
+}
+// ---------- Paper Crane ----------
+function craneShapes(flap) {
+  const paper = '#ffd1e1', fold = '#f2a9c4', deep = '#d986aa', light = '#fff1f6', dot = '#ffffff';
+  const wy = 16 - flap * 14;
+  return [
+    T([[22, 20], [34, 21], [16 + flap * 2, wy - 2], [12 + flap * 3, wy + 1]], deep), // far wing
+    T([[8, 24], [22, 17], [38, 19], [30, 30], [14, 29]], paper), // body
+    F(T([[14, 29], [30, 30], [24, 25]], fold)),
+    T([[34, 21], [38, 19], [47, 7], [50, 6.4], [49, 8.5], [41, 22]], paper), // neck
+    T([[47, 7], [52.5, 7.8], [49, 8.5]], fold), // beak / head fold
+    T([[8, 24], [1, 16], [3, 15.6], [14, 22]], fold), // tail
+    T([[20, 20], [32, 21], [18 + flap * 3, wy], [10 + flap * 4, wy + 4]], paper), // near wing
+    F(T([[20, 20], [32, 21], [24 + flap * 1.5, (20 + wy) / 2 + 1]], light)),
+    F(E(20, 26, 0.9, 0.9, dot)), F(E(25, 27, 0.7, 0.7, dot)), F(E(16, 25.5, 0.6, 0.6, dot)),
+    F(E(48.6, 7.4, 0.55, 0.55, '#3a2d4f')),
+  ];
+}
+// ---------- Nimbus ----------
+function cloudShapes(puff) {
+  const base = '#ffffff', sh = '#dde4fb', sh2 = '#c3c6ee', tint = '#fff4c9';
+  const p = Math.round(puff * 10) / 10;
+  return [
+    E(12, 27, 7 + p, 6, sh), E(44, 27, 7 - p, 6, sh),
+    E(28, 24, 15, 9, base), E(15, 24, 8, 7 + p * 0.5, base), E(41, 23, 8.5, 7.5 - p * 0.5, base), E(22, 18, 7, 6, base), E(34, 17, 7, 6.5, base),
+    F(E(28, 30, 17, 3.2, sh)), F(E(30, 14.5, 4, 2, '#ffffff')), F(E(20, 16.5, 3, 1.4, tint)),
+    // sleepy face
+    F(T([[38.4, 23], [41, 23], [40.6, 23.8], [38.8, 23.8]], '#3a2d4f')), F(T([[43.4, 23], [46, 23], [45.6, 23.8], [43.8, 23.8]], '#3a2d4f')),
+    F(E(42.2, 26.4, 0.9, 0.6, '#e8799f')), F(E(37.5, 25.8, 1.6, 0.7, '#ffd2e3')), F(E(47.2, 25.8, 1.4, 0.7, '#ffd2e3')),
+  ];
+}
+
+const mounts = [
+  { name: 'Puff Bun', draw(t, x, y) {
+      const hop = (t * 1.6) % 1;
+      const air = Math.sin(Math.PI * Math.min(1, hop / 0.8));
+      const lift = hop < 0.8 ? air * 14 : 0;
+      const ear = hop < 0.8 ? 0.5 - air * 0.25 + (hop < 0.15 ? 0.3 : 0) : 0.75 - (hop - 0.8) * 2;
+      const foot = hop < 0.8 ? air * 2.5 : 0;
+      const s = mk(`bun|${Math.round(ear * 10)}|${Math.round(foot * 10)}`, bunShapes(ear, foot));
+      ctx.fillStyle = 'rgba(58,45,79,0.18)';
+      ctx.beginPath(); ctx.ellipse(x, y, 16 - lift * 0.4, 2.5, 0, 0, 7); ctx.fill();
+      const by = y - lift;
+      drawPosed(ctx, look, x - 3, by - 18, SIT);
+      blit(ctx, s, x - W / 2, by - H + 3);
+    } },
+  { name: 'Paper Crane', draw(t, x, y) {
+      const c = (t * 0.7) % 1;
+      const flap = c < 0.45 ? 0.5 + 0.5 * Math.sin(c / 0.45 * Math.PI * 4) : 0.35 + 0.05 * Math.sin(t * 3);
+      const bob = Math.sin(t * 2.2) * 2 + (c < 0.45 ? -2 : 0);
+      const s = mk(`crane|${Math.round(flap * 8)}`, craneShapes(Math.round(flap * 8) / 8));
+      ctx.fillStyle = 'rgba(58,45,79,0.12)';
+      ctx.beginPath(); ctx.ellipse(x, y, 13, 2, 0, 0, 7); ctx.fill();
+      const by = y - 18 + bob;
+      drawPosed(ctx, look, x - 3, by - 9, SIT);
+      blit(ctx, s, x - W / 2, by - H + 10);
+    } },
+  { name: 'Nimbus', draw(t, x, y) {
+      const bob = Math.sin(t * 1.7) * 2.2;
+      const puff = Math.sin(t * 2.6) * 0.8;
+      const s = mk(`cloud|${Math.round(puff * 10)}`, cloudShapes(puff));
+      ctx.fillStyle = 'rgba(58,45,79,0.12)';
+      ctx.beginPath(); ctx.ellipse(x, y, 15, 2.2, 0, 0, 7); ctx.fill();
+      // puffs drifting off behind
+      for (let i = 0; i < 4; i++) {
+        const k = ((t * 0.8 + i / 4) % 1);
+        ctx.globalAlpha = (1 - k) * 0.8;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(x - 24 - k * 16, y - 18 + bob + Math.sin(i * 2 + t) * 2, 3.5 * (1 - k * 0.6), 0, 7); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      const by = y - 12 + bob;
+      drawPosed(ctx, look, x - 1, by - 18, SIT);
+      blit(ctx, s, x - W / 2, by - H + 8);
+    } },
+];
+
+function step(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const g = ctx.createLinearGradient(0, 0, 0, 440);
+  g.addColorStop(0, '#cfe8ff'); g.addColorStop(1, '#f2fbff');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 1200, 440);
+  ctx.fillStyle = '#a9d99c'; ctx.fillRect(0, 380, 1200, 60);
+  ctx.fillStyle = '#8cc983'; ctx.fillRect(0, 380, 1200, 4);
+  ctx.setTransform(ZOOM, 0, 0, ZOOM, 0, 0);
+  mounts.forEach((m, i) => m.draw(t + i * 0.3, 50 + i * 100, 95));
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.font = 'bold 22px sans-serif'; ctx.fillStyle = '#5a4a78'; ctx.textAlign = 'center';
+  mounts.forEach((m, i) => ctx.fillText(m.name, (50 + i * 100) * ZOOM, 420));
+}
+window.step = step;
+if (!location.search.includes('manual')) {
+  const t0 = performance.now();
+  const loop = (now) => { step((now - t0) / 1000); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0.6);
+</script></body></html>
