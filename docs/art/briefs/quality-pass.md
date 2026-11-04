@@ -43,14 +43,14 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 ## C. Monsters and bosses
 - [ ] **(choice)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults, clashing with the chibi cast. Redraw chibi and rig.
 - [ ] **(choice)** The field monster girls (Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna) have thin adult proportions and faces too small to read.
-- [ ] Puff Bun mount's ear covers the rider's face.
-- [ ] 15 older field monsters have hit boxes half their drawn height.
-- [ ] Rootwood Hollow bosses (Tuskar, Gnarlroot, Myconid Queen) look flat and generic; the Corrupted Sapling looks like a placeholder.
-- [ ] Lady Marigold sinks 14 px into the floor (Marionette puppets, Tuskar, Myconid Queen a few px).
-- [ ] Boss props cross their faces in attacks (Coralie, Toffee, Bonbon, Captain Gale, Folio, Dame Minuet).
-- [ ] Turret head clicks through 4 poses without blending.
+- [x] Puff Bun mount's ear covers the rider's face. (fixed)
+- [x] 15 older field monsters have hit boxes half their drawn height. (fixed)
+- [x] Rootwood Hollow bosses (Tuskar, Gnarlroot, Myconid Queen) look flat and generic; the Corrupted Sapling looks like a placeholder. (fixed)
+- [x] Lady Marigold sinks 14 px into the floor (Marionette puppets, Tuskar, Myconid Queen a few px). (fixed)
+- [x] Boss props cross their faces in attacks (Coralie, Toffee, Bonbon, Captain Gale, Folio, Dame Minuet). (fixed)
+- [x] Turret head clicks through 4 poses without blending. (fixed)
 - [ ] Reused monsters out of theme: Wraith in Serpent Springs, Pegasus Foal on Frozen Peak, Crystal Golem on Moonlit Ridge.
-- [ ] Leftover unused monster art tables (hollow.js, manor.js, old Hollow frames in bosses.js).
+- [x] Leftover unused monster art tables (hollow.js, manor.js, old Hollow frames in bosses.js). (fixed)
 
 ## D. Maps and themes
 - [ ] Candy Volcano's Gingerbread Ramparts and The Crater are plain cobble meadows: no wall and towers, no crater or caramel lake.

@@ -43,11 +43,11 @@ export const MOBS = {
   }),
   brownie: mob({
     id: 'brownie', name: 'Kitchen Brownie', level: 7, hp: 105, atk: 22, def: 5, acc: 20, eva: 3, exp: 48, gold: [7, 20],
-    speed: 34, w: 23, h: 43, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }],
+    speed: 34, w: 22, h: 43, art: 'brownie', drops: [{ id: 'brownie_crumb', chance: 0.5 }],
   }),
   kamaitachi: mob({
     id: 'kamaitachi', name: 'Wind Ferret', level: 9, hp: 150, atk: 28, def: 7, acc: 24, eva: 5, exp: 72, gold: [9, 26],
-    speed: 70, gait: 'dart', w: 38, h: 27, art: 'kamaitachi', drops: [{ id: 'wind_whisker', chance: 0.45 }],
+    speed: 70, gait: 'dart', w: 34, h: 27, art: 'kamaitachi', drops: [{ id: 'wind_whisker', chance: 0.45 }],
   }),
   // Clover Hills' area boss (world/nest.js, render/mobs/farm.js): the Toadstool Goblins' grumpy
   // old farmer chief bursts out of the big barn once enough of the hills has been hunted, and
@@ -60,7 +60,7 @@ export const MOBS = {
   }),
   sproutling: mob({
     id: 'sproutling', name: 'Mandrake', level: 4, hp: 45, atk: 13, def: 2, acc: 14, eva: 1, exp: 22, gold: [4, 12],
-    speed: 34, w: 20, h: 42, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }],
+    speed: 34, w: 18, h: 42, art: 'sproutling', drops: [{ id: 'sprout_leaf', chance: 0.5 }],
   }),
   mushkin: mob({
     id: 'mushkin', name: 'Toadstool Goblin', level: 6, hp: 85, atk: 19, def: 4, acc: 18, eva: 2, exp: 40, gold: [6, 18],
@@ -68,16 +68,16 @@ export const MOBS = {
   }),
   piglet: mob({
     id: 'piglet', name: 'Jackalope', level: 8, hp: 125, atk: 25, def: 6, acc: 22, eva: 3, exp: 56, gold: [8, 24],
-    speed: 66, gait: 'bound', w: 27, h: 38, art: 'piglet', drops: [{ id: 'ribbon', chance: 0.45 }],
+    speed: 66, gait: 'bound', w: 26, h: 38, art: 'piglet', drops: [{ id: 'ribbon', chance: 0.45 }],
   }),
   // Windy Canyon, on the road up to Ember Crag.
   pebblet: mob({
     id: 'pebblet', name: 'Basilisk Hatchling', level: 9, hp: 150, atk: 28, def: 9, acc: 24, eva: 3, exp: 72, gold: [9, 26],
-    speed: 36, w: 32, h: 32, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }],
+    speed: 36, w: 28, h: 32, art: 'pebblet', drops: [{ id: 'pebble', chance: 0.5 }],
   }),
   scorpip: mob({
     id: 'scorpip', name: 'Manticore Cub', level: 12, hp: 250, atk: 37, def: 10, acc: 30, eva: 5, exp: 190, gold: [13, 34],
-    speed: 58, gait: 'stalk', w: 34, h: 37, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }],
+    speed: 58, gait: 'stalk', w: 32, h: 37, art: 'scorpip', drops: [{ id: 'stinger', chance: 0.45 }],
   }),
   leafling: mob({
     id: 'leafling', name: 'Dryad', level: 11, hp: 210, atk: 33, def: 8, acc: 28, eva: 4, exp: 168, gold: [12, 32],
@@ -85,7 +85,7 @@ export const MOBS = {
   }),
   boarlet: mob({
     id: 'boarlet', name: 'Warg', level: 14, hp: 330, atk: 43, def: 12, acc: 34, eva: 5, exp: 240, gold: [16, 40],
-    speed: 82, gait: 'stalk', w: 44, h: 37, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }],
+    speed: 82, gait: 'stalk', w: 38, h: 37, art: 'boarlet', drops: [{ id: 'tusk', chance: 0.45 }],
     // (Tuskar calls them into his den in Rootwood Hollow, where they fight like its own.)
     fight: { every: 1.6, reach: 30, windup: 0.4 },
   }),
@@ -119,7 +119,7 @@ export const MOBS = {
   }),
   cloudsheep: mob({
     id: 'cloudsheep', name: 'Pegasus Foal', level: 38, hp: 3250, atk: 136, def: 40, acc: 76, eva: 11, exp: 1720, gold: [60, 150],
-    speed: 52, w: 42, h: 43, art: 'cloudsheep', drops: [{ id: 'wool', chance: 0.5 }],
+    speed: 52, w: 40, h: 43, art: 'cloudsheep', drops: [{ id: 'wool', chance: 0.5 }],
   }),
   windbird: mob({
     id: 'windbird', name: 'Sky Harpy', level: 43, hp: 4250, atk: 160, def: 45, acc: 84, eva: 15, exp: 2240, gold: [70, 170],
@@ -127,7 +127,7 @@ export const MOBS = {
   }),
   starspirit: mob({
     id: 'starspirit', name: 'Star Seraph', level: 48, hp: 5650, atk: 186, def: 55, acc: 92, eva: 16, exp: 2880, gold: [80, 200],
-    speed: 34, w: 38, h: 47, art: 'starspirit', fly: true, drops: [{ id: 'stardust', chance: 0.45 }],
+    speed: 34, w: 34, h: 47, art: 'starspirit', fly: true, drops: [{ id: 'stardust', chance: 0.45 }],
   }),
 
   // Spirit maidens out of myth, living on the mid and late maps: Sylph in Whispering Glade, Nekomata

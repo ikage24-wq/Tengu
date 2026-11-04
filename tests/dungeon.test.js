@@ -665,7 +665,7 @@ test('the group finder brings only real jobs, and helpers use only their own rea
 });
 
 test('every dungeon monster and boss draws every frame as flat shapes', async () => {
-  for (const file of ['manor', 'manorboss', 'sea', 'seaboss', 'toy', 'toyboss', 'astral', 'astralboss', 'candy', 'candyboss', 'stage', 'stageboss', 'skyfolk', 'skyboss']) {
+  for (const file of ['hollowfolk', 'manorfolk', 'manorfolkboss', 'sea', 'seaboss', 'toy', 'toyboss', 'astral', 'astralboss', 'candy', 'candyboss', 'stage', 'stageboss', 'skyfolk', 'skyboss']) {
     const { ART } = await import(`../src/render/mobs/${file}.js`);
     for (const [art, a] of Object.entries(ART)) {
       for (const [pose, n] of [['walk', a.walk], ['idle', a.idle], ['attack', a.attack]]) {
