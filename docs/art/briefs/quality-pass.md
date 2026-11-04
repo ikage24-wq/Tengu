@@ -41,7 +41,7 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Damage numbers pile into unreadable stacks. (fixed)
 
 ## C. Monsters and bosses
-- [ ] **(player: keep their look, just rig)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults. Rig them like the dungeon bosses, keeping their taller look.
+- [x] **(player: keep their look, just rig)** The four queens (Sylvana, Tamamo, Lilith, Selene) are unrigged (they squash and stretch) and drawn as tall adults. Rig them like the dungeon bosses, keeping their taller look. (fixed)
 - [ ] **(player: keep their look)** ~~The field monster girls (Sylph, Nekomata, Kitsune Miko, Lupina, Lamia, Yuki-onna) have thin adult proportions and faces too small to read.~~ Kept as a deliberate contrast.
 - [x] Puff Bun mount's ear covers the rider's face. (fixed)
 - [x] 15 older field monsters have hit boxes half their drawn height. (fixed)
