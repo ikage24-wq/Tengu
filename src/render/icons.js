@@ -122,6 +122,8 @@ const CASH_BADGE = [E(13.2, 2.8, 2.8, 2.8, '#ff8fc1'), F(R(12.7, 1, 1, 3.6, '#ff
 function itemShapes(def, variant = null) {
   if (def.type === 'cash') {
     if (def.cover?.fun) return [...fitShapes(JOB_GEAR[def.cover.fun].cover(def.cover.t).shapes), ...CASH_BADGE];
+    // A look whose worn piece is too small or spread out to read in a cell has a drawing of its own.
+    if (def.skin && ITEM_ART[def.skin]) return [...ITEM_ART[def.skin](), ...CASH_BADGE];
     const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant) : itemShapes(ITEMS[def.skin], variant);
     return [...look, ...CASH_BADGE];
   }
@@ -180,7 +182,7 @@ export function itemIcon(id, variant = null) {
   const def = ITEMS[id];
   const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
   const fine = look.design === 'job' || look.design === 'jewel' || wornIcon(look);
-  const art = def.type !== 'cash' && ITEM_ART[id];
+  const art = def.type !== 'cash' ? ITEM_ART[id] : def.skin && ITEM_ART[def.skin];
   const detail = art ? { res: 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
   const gear = look.type === 'equip';
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));

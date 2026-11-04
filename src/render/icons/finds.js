@@ -875,7 +875,24 @@ function trophy_ribbon() {
   return out;
 }
 
+// ---------- Looks too small to read worn ----------
+
+// Dew Sparkle (a capsule-machine face piece: dewdrop gems on the cheeks): two cut dewdrops on a
+// blush of pink, glinting.
+function dewsparkle() {
+  const c = '#a8e8ff';
+  const drop = (x, y, r) => {
+    const pts = [...bez3([x, y - r * 1.9], [x + r * 0.5, y - r * 1], [x + r * 1.05, y - r * 0.4], [x + r, y + r * 0.2], 8), ...arcPts(x, y + r * 0.2, r, r * 0.95, 0, 180, 10).slice(1), ...bez3([x - r, y + r * 0.2], [x - r * 1.05, y - r * 0.4], [x - r * 0.5, y - r], [x, y - r * 1.9], 8).slice(1)];
+    return [...ball(pts, c, { glow: 0.8 }), S([[x, y - r * 1.6], [x - r * 0.55, y - r * 0.2], [x, y + r * 0.6]], hi(c)), S(oval(x - r * 0.4, y - r * 0.1, r * 0.22, r * 0.45, 20, 10), W)];
+  };
+  const out = [S(oval(5.4, 12.6, 3.4, 1.4, 0, 16), '#ffc8d8'), S(oval(11.6, 13.2, 2.6, 1.1, 0, 14), '#ffc8d8')];
+  out.push(...drop(5.6, 9.4, 3.4), ...drop(11.8, 10.8, 2.4));
+  out.push(twinkle(12.6, 3.4, 2, '#ffffff'), twinkle(2.2, 3, 1.1, '#e6faff'), twinkle(14.6, 8, 0.9, '#e6faff'));
+  return out;
+}
+
 const ART = {
+  look_gacha_dewsparkle_face: dewsparkle,
   royal_jelly, home_shell, mount_kettle, mount_nimbus, lantern_bait,
   bee_fuzz, sprite_petal, straw_tuft, brownie_crumb, wind_whisker, moonlit_ribbon, porcelain_shard, candle_wax, tide_pearl, sea_glass,
   jelly_ribbon, golden_ticket, astral_shard, sugar_gem, taffy_twist, cocoa_bean, encore_rose, sequin, script_page, sky_scale, sky_silk,

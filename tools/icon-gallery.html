@@ -12,7 +12,7 @@ import { ITEM_ART } from '../src/render/icons/items.js';
 import { drawItemIcon } from '../src/render/icons.js';
 
 const q = new URLSearchParams(location.search);
-const ids = (q.get('ids') ?? Object.keys(ITEM_ART).join(',')).split(',').filter((id) => ITEM_ART[id]);
+const ids = (q.get('ids') ?? Object.keys(ITEM_ART).join(',')).split(',').filter((id) => ITEM_ART[id] && ITEMS[id]);
 const COLS = 2;
 const ROW = 112;
 const COL = 640;
