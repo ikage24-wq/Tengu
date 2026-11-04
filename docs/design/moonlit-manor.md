@@ -77,6 +77,9 @@ more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the H
 - **Bosses** drawn on the same rig scaled up (render/mobs/manorboss.js, `grand` scales the figure,
   its strokes and its face together): Dame Rondo and Dame Minuet (the Waltzing Armours), Madame
   Velvet with her trolley, Lady Marigold in her gown of marigold petals.
+- (2026-11-03/04: the monsters and bosses were redrawn as chibi creatures in render/mobs/manorfolk.js
+  and manorfolkboss.js on the boss rig; the first art and its rig were removed, and
+  render/mobs/manorboss.js keeps only the trolley for the hallway chase.)
 - **Rooms** (data/maps.js, world/manor.js, render/manor.js): the gate is Manor Hill, off the top
   bough of Mossy Woods, with Mr. Pumpkins. Garden fountains spout on a beat and throw you up the
   terraces; the gallery's portraits turn and lock on the crest's picture (a new crest each run);
