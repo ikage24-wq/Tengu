@@ -6,7 +6,9 @@
 // move in with you on your island (world/sweethearts.js). One sweetheart at a time; breaking up is
 // gentle, and you can make up later.
 //
-//   map, x      where they live (their spot in town, and their idle bits: render/town.js)
+//   map, x      where they stand in town (their idle bits: render/town.js)
+//   house       where their house stands on that map (render/sweethouses.js); its door leads to
+//               their room inside (MAPS.swh_<id>)
 //   loves       gifts that mean the most (+80); likes (+45); dislikes (-20); anything else +20
 //   date        the kind of date they love most (world/dates.js: fish, ride, stars, cook, dance)
 //   talk        what they say when you chat, by how close you are (0-2, 3-5, 6-8 hearts, 9+, and
@@ -21,9 +23,9 @@ export const TALK_PTS = 20;
 
 export const SWEETHEARTS = {
   poppy: {
-    spot: ['sw_bakery', 0],
     dateLines: { great: "That was the best day I've had in ages. My cheeks hurt from smiling!", good: "That was so nice. Same time tomorrow? I'm joking. Unless?", okay: 'Hee, that was a little chaotic. I liked it anyway!' },
-    id: 'poppy', name: 'Poppy', title: 'Sunny Baker', map: 'sprout', x: 1560, color: '#ff8fae',
+    id: 'poppy', name: 'Poppy', title: 'Sunny Baker', map: 'sprout', x: 945, color: '#ff8fae',
+    house: 850,
     outfit: 'swbaker', date: 'cook',
     look: { hairStyle: 'ribbonbuns', hairColor: '#ffc07a', hairTip: '#ff9a6a', skinTone: '#ffe2cc', eyeColor: '#d07a2a', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'grin' },
     about: "Sprout's baker, up before the sun. Hugs first, asks later. Secretly afraid her bakes aren't good enough.",
@@ -55,9 +57,9 @@ export const SWEETHEARTS = {
     },
   },
   lark: {
-    spot: ['sw_poetnook', -46],
     dateLines: { great: "I'm going to write about today. All of it. Every second.", good: 'That was... really lovely. Thank you for asking me.', okay: 'It was nice just being out with you, even like that.' },
-    id: 'lark', name: 'Lark', title: 'Lighthouse Poet', map: 'lagoon', x: 460, color: '#8fc8c8',
+    id: 'lark', name: 'Lark', title: 'Lighthouse Poet', map: 'lagoon', x: 1954, color: '#8fc8c8',
+    house: 2178,
     outfit: 'swpoet', date: 'stars',
     look: { hairStyle: 'swoop', hairColor: '#4a5a8a', hairTip: '#7f9ad0', skinTone: '#fff0e6', eyeColor: '#5a7ab8', eyeStyle: 'droopy', face: 'shy' },
     about: 'Helps Granny Kelp keep the lighthouse and writes poems nobody is allowed to read. Says more on paper than out loud.',
@@ -89,9 +91,9 @@ export const SWEETHEARTS = {
     },
   },
   rowan: {
-    spot: ['sw_knightpost', 58],
     dateLines: { great: "Best. Day. Ever. I'm going to tell Brann about it until he begs me to stop.", good: "That was grand! You're good company, you know that?", okay: "Ha, we'll get it right next time. I had fun anyway!" },
-    id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 1000, color: '#8fb8e8',
+    id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 2310, color: '#8fb8e8',
+    house: 2410,
     outfit: 'swknight', date: 'ride',
     look: { hairStyle: 'messycrop', hairColor: '#a8603a', skinTone: '#e7b48f', eyeColor: '#3f9a5a', eyeStyle: 'round', browStyle: 'thick', face: 'smile' },
     about: "Ember Crag's biggest knight and its softest heart. Guards the arena, grows daisies in his helmet, burns water.",
@@ -123,9 +125,9 @@ export const SWEETHEARTS = {
     },
   },
   yuzu: {
-    spot: ['sw_foxshrine', -10],
     dateLines: { great: "Okay that was SO fun. You're not allowed to be this fun. It's my job!", good: 'Hee, not bad, human. Not bad at all. Again soon?', okay: "Pfft, you were hopeless. ...I had fun though. Don't tell anyone." },
-    id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 820, color: '#ff7a4a',
+    id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 440, color: '#ff7a4a',
+    house: 335,
     outfit: 'swfox', date: 'dance',
     look: { hairStyle: 'feathertips', hairColor: '#ff9a4f', hairTip: '#fff4e0', skinTone: '#fff0e6', eyeColor: '#e0602a', eyeStyle: 'cat', earStyle: 'fox', earTip: '#fff4e0', tail: 'fox', tailTip: '#fff4e0', face: 'playful' },
     about: 'A young fox spirit who lives in the Moon Tree and borrows things. Teases everyone; goes pink when teased back.',
@@ -157,9 +159,9 @@ export const SWEETHEARTS = {
     },
   },
   celeste: {
-    spot: ['sw_stargaze', 36],
     dateLines: { great: "I didn't fall asleep once. That's how much I liked it.", good: 'Mm... that was nice. The stars seemed closer.', okay: 'That was sweet. Even the sleepy parts. Especially those.' },
-    id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1720, color: '#4a4aa8',
+    id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1800, color: '#4a4aa8',
+    house: 1690,
     outfit: 'swstar', date: 'stars',
     look: { hairStyle: 'cascade', hairColor: '#c9b6ff', hairTip: '#fff3c4', skinTone: '#fff0e6', eyeColor: '#7a52cc', eyeStyle: 'star', face: 'sleepy' },
     about: 'Charts the stars all night and naps all day, usually somewhere odd. Knows every constellation; forgets lunch.',
@@ -191,9 +193,9 @@ export const SWEETHEARTS = {
     },
   },
   marlowe: {
-    spot: ['sw_drydock', 72],
     dateLines: { great: "Now THAT'S what I call an adventure! Best crew ever!", good: 'Not bad, first mate. Not bad at all.', okay: 'Heh, rough waters today. Still the best company on the island.' },
     id: 'marlowe', name: 'Marlowe', title: 'Cheeky Young Sailor', map: 'harbor', x: 520, color: '#2f5fb8',
+    house: 610,
     outfit: 'swsailor', date: 'fish',
     look: { hairStyle: 'surfer', hairColor: '#3fb8b0', hairTip: '#bff0e8', skinTone: '#d9a07a', eyeColor: '#2f6ab8', eyeStyle: 'round', face: 'smug' },
     about: "Captain Rook's ward, fixing up an old boat on the docks. Boasts about the sea; has never sailed past the lighthouse.",

@@ -3,7 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
-import { drawSweetSpot } from './sweetspots.js';
+import { drawSweetHouse } from './sweethouses.js';
 import { drawIslandPiece } from './island.js';
 import { drawMount } from './mounts.js';
 import { MOUNTS } from '../data/mounts.js';
@@ -560,8 +560,8 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your island's own pieces (render/island.js).
     if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
-    // A Sweetheart's own spot (render/sweetspots.js).
-    if (drawSweetSpot(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // A Sweetheart's house, and their room inside (render/sweethouses.js).
+    if (drawSweetHouse(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);

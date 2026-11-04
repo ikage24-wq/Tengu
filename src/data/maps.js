@@ -38,7 +38,7 @@ export const MAPS = {
     // The square is a gentle step up in the middle of the street.
     terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [3200, 480]],
     // Thatched cottages and a farmhouse along Gate Lane (render/townhouses.js).
-    cottages: [[600, 'farmhouse'], [850, 'thatch']],
+    cottages: [[600, 'farmhouse']],
     townPieces: [['gatearch', 205], ['windmill', 1800]],
     platforms: [
       // The windmill's balcony (drawn with the windmill), up the ladder on its west side.
@@ -252,7 +252,7 @@ export const MAPS = {
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],
     homeStyle: 'canal',
     // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
-    cottages: [[150, 'canal-neck'], [234, 'canal-bell'], [600, 'canal-step'], [1420, 'canal-bell'], [1775, 'warehouse']],
+    cottages: [[150, 'canal-neck'], [234, 'canal-bell'], [1420, 'canal-bell'], [1775, 'warehouse']],
     townPieces: [['fishstall', 470], ['pier', 2080], ['galleon', 2520]],
     platforms: [
       // The warehouse's loading gallery and its roof (drawn with the warehouse).
@@ -718,7 +718,7 @@ Object.assign(MAPS, {
       // guide: world/routes.js).
       { id: 'pier', x: 260, y: 700, hidden: true, to: 'harbor', toPortal: 'ferry', ferry: true },
     ],
-    npcs: [{ id: 'bobbin', x: 220 }, { id: 'brine', x: 880 }, { id: 'nori', x: 1200 }, { id: 'coral', x: 1520 }, { id: 'kelp', x: 2230 }],
+    npcs: [{ id: 'bobbin', x: 220 }, { id: 'brine', x: 880 }, { id: 'nori', x: 1200 }, { id: 'coral', x: 1520 }, { id: 'kelp', x: 2255 }],
     zonesBy: 'x',
     zones: [
       { name: 'Shell Cove', from: 0, color: '#ffd6a0' },
@@ -2683,9 +2683,32 @@ const INTERIORS = {
 };
 for (const [id, look] of Object.entries(INTERIORS)) MAPS[id].look = { ...MAPS[id].look, ...look };
 
-// The Sweethearts live in their towns (data/sweethearts.js): each stands at their own spot.
+// The Sweethearts live in their towns (data/sweethearts.js), each by their own house
+// (render/sweethouses.js), whose door leads into their room: a cosy inside like your hut's.
+const groundOf = (map, x) => {
+  const t = map.terrain;
+  if (!t) return map.groundY;
+  for (let i = 1; i < t.length; i++) {
+    if (x <= t[i][0]) return t[i - 1][1] + (t[i][1] - t[i - 1][1]) * ((x - t[i - 1][0]) / (t[i][0] - t[i - 1][0] || 1));
+  }
+  return t[t.length - 1][1];
+};
+// Where each room's door stands (render/sweethouses.js draws it in the house's own style).
+const ROOM_DOOR = { poppy: 608, lark: 450, rowan: 605, yuzu: 60, celeste: 420, marlowe: 605 };
 for (const h of Object.values(SWEETHEARTS)) {
-  MAPS[h.map].npcs.push({ id: h.id, x: h.x });
-  // Their own spot behind them (render/sweetspots.js).
-  (MAPS[h.map].townPieces ??= []).push([h.spot[0], h.x + h.spot[1]]);
+  const town = MAPS[h.map];
+  town.npcs.push({ id: h.id, x: h.x });
+  (town.townPieces ??= []).push([`swhouse_${h.id}`, h.house]);
+  town.portals.push({ id: `swh_${h.id}`, x: h.house, y: Math.round(groundOf(town, h.house)), to: `swh_${h.id}`, toPortal: 'door', label: `${h.name}'s House`, door: true });
+  MAPS[`swh_${h.id}`] = {
+    id: `swh_${h.id}`, name: `${h.name}'s House`, theme: town.theme, isTown: true, private: true, indoor: true, town: town.town, music: town.music,
+    width: 640, height: 400, groundY: 360,
+    look: { ceiling: true, sky: ['#ffe8d8', '#fff2e6', '#fff8f0'], material: 'parquet', propKeep: 1 },
+    cottages: [],
+    terrain: [[0, 360], [640, 360]],
+    platforms: [], ropes: [],
+    townPieces: [[`swroom_${h.id}`, 320]],
+    portals: [{ id: 'door', x: ROOM_DOOR[h.id], y: 360, to: h.map, toPortal: `swh_${h.id}`, label: 'Outside', door: true }, { id: 'start', x: ROOM_DOOR[h.id], y: 360, hidden: true }],
+    npcs: [], spawns: [], deco: [], lamps: [{ x: 320, y: 120, c: '#ffd27a' }],
+  };
 }

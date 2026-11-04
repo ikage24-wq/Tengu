@@ -150,14 +150,14 @@ export const NODES = {
     { ...SPOT.ore(4, { gem: 0.3 }), x: 1020, y: 290 },
   ],
   // Towns: a cozy spot or two, never in the way. Sprout's Garden Corner has a flower bed by the
-  // duck pond; Ember Crag a copper seam behind the forge; Moonleaf Grove chanterelles on Lantern
+  // duck pond; Ember Crag a copper seam beside the forge; Moonleaf Grove chanterelles on Lantern
   // Lane and duskcaps in the Rune Garden at night.
   sprout: [{ ...SPOT.herb(1, 'clover'), x: 2400, y: 480 }],
   // Pastel Harbor: sea kelp washed up on the shore between the pier and the lighthouse.
   harbor: [{ ...SPOT.herb(1, 'sea_kelp'), x: 1990, y: 480 }],
-  crag: [{ ...SPOT.ore(1), x: 2400, y: 480 }],
+  crag: [{ ...SPOT.ore(1), x: 1900, y: 480 }],
   grove: [
-    { ...SPOT.herb(2, 'chanterelle'), x: 400, y: 480 },
+    { ...SPOT.herb(2, 'chanterelle'), x: 740, y: 480 },
     { ...SPOT.night(2), x: 2190, y: 480 },
   ],
 };
