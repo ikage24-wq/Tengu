@@ -523,7 +523,7 @@ const marigoldRig = makeRig({
   },
   follow: (S) => ({ r0: -S.lean * 0.6, r1: -S.lean * 0.9, r2: -S.lean * 1.2, r3: -S.lean * 1.5, bloom: S.head - S.lean * 0.5 }),
   parts: [
-    { name: 'root', at: (S) => [0, -40 + S.y], rot: (S) => S.lean },
+    { name: 'root', at: (S) => [0, -53 + S.y - Math.min(9, (S.lean + S.r3) ** 2 * 160 + S.lean ** 2 * 60)], rot: (S) => S.lean },
     { name: 'r0', parent: 'root', pivot: [40, 4], at: () => [0, 2], rot: (S) => S.r0, s: () => mgParts.row(0) },
     { name: 'r1', parent: 'r0', pivot: [40, 4], at: () => [0, 12], rot: (S) => S.r1 - S.r0, s: () => mgParts.row(1) },
     { name: 'r2', parent: 'r1', pivot: [40, 4], at: () => [0, 12], rot: (S) => S.r2 - S.r1, s: () => mgParts.row(2) },
@@ -545,7 +545,7 @@ const marigoldRig = makeRig({
         ctx.globalAlpha = a.alpha * (1 - u);
         ctx.fillStyle = i % 2 ? '#ffb03a' : '#ff8a2a';
         ctx.beginPath();
-        ctx.ellipse(40 + Math.cos(ang) * r * 0.6, -36 + Math.sin(ang) * r * 0.5, 3, 1.6, ang, 0, TAU);
+        ctx.ellipse(40 + Math.cos(ang) * r * 0.6, -49 + Math.sin(ang) * r * 0.5, 3, 1.6, ang, 0, TAU);
         ctx.fill();
       }
     }
