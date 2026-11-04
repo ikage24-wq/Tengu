@@ -11,10 +11,17 @@ import { COLORS, windowFrame, tabs, text, box, hover, tooltip, sparkle, fit, wra
 import { MOUNTS, MOUNT_IDS } from '../data/mounts.js';
 import { drawMount } from '../render/mounts.js';
 import { ownsMount, mountUp } from '../world/mount.js';
+import { SWEETHEARTS, SWEETHEART_IDS } from '../data/sweethearts.js';
+import { heartsOf, isPartner, livesWith } from '../world/sweethearts.js';
+import { drawHearts } from './sweetheart.js';
+import { drawHero } from '../render/hero.js';
+import { NPCS } from '../data/npcs.js';
+import { getMap } from '../data/maps.js';
+import { ITEMS } from '../data/items.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish', 'Mounts'];
+const TABS = ['Monster Book', 'Fish', 'Mounts', 'Sweethearts'];
 
 // Monsters by level, the bosses after.
 const ORDER = Object.keys(MOBS).sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -31,7 +38,8 @@ export function collectionWindow(ui, state, world) {
   const y = win.y + 48;
   if (win.tab === 0) book(ui, win, char, world, x, y, th);
   else if (win.tab === 1) fishPage(ui, win, char, x, y, th);
-  else mountsPage(ui, win, world, x, y, th);
+  else if (win.tab === 2) mountsPage(ui, win, world, x, y, th);
+  else sweetheartsPage(ui, win, world, x, y, th);
 }
 
 // The book: a grid of cards, scrolled by the wheel, with what it's all worth along the bottom.
@@ -147,4 +155,38 @@ function mountsPage(ui, win, world, x, y, th) {
   });
   const got = MOUNT_IDS.filter((id) => ownsMount(char, id)).length;
   text(ctx, `${got} / ${MOUNT_IDS.length} mounts  ·  Press H to ride. Attacking hops you off.`, x, y + 2 * ch + 4, { size: 7, bold: true, color: th.dark });
+}
+
+// The Sweethearts: each one's card (them, idling), their hearts, where to find them, and the gifts
+// you've found they love.
+function sweetheartsPage(ui, win, world, x, y, th) {
+  const { ctx } = ui;
+  const char = world.char;
+  const cw = 107;
+  const ch = 94;
+  SWEETHEART_IDS.forEach((id, i) => {
+    const s = SWEETHEARTS[id];
+    const h = heartsOf(char, id);
+    const cx = x + (i % 3) * cw;
+    const cy = y + Math.floor(i / 3) * ch;
+    const partner = isPartner(char, id);
+    box(ctx, cx, cy, cw - 5, ch - 5, { fill: partner ? '#fff0f6' : '#ffffff', edge: partner ? '#ff8fc4' : th.light, r: 9, width: partner ? 2 : 1.2 });
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(cx + 2, cy + 2, 40, ch - 9);
+    ctx.clip();
+    ctx.translate(cx + 22, cy + 62);
+    ctx.scale(0.6, 0.6);
+    drawHero(ctx, s.look, NPCS[id].gear, 0, 0, { pose: 'idle', time: world.now + i, seed: i * 5, facing: 1 });
+    ctx.restore();
+    text(ctx, s.name, cx + 44, cy + 12, { size: 8, bold: true, color: COLORS.ink });
+    text(ctx, s.title, cx + 44, cy + 20, { size: 5.6, color: COLORS.muted });
+    drawHearts(ctx, cx + 47, cy + 29, h.pts, { partner, size: 2.2 });
+    const where = livesWith(char, id) ? 'Lives with you' : getMap(s.map).name;
+    text(ctx, where, cx + 44, cy + 40, { size: 5.8, bold: true, color: livesWith(char, id) ? '#c84a7a' : th.dark });
+    const loved = Object.entries(h.known ?? {}).filter(([, k]) => k === 'love').map(([it]) => ITEMS[it]?.name).filter(Boolean);
+    wrap(ctx, loved.length ? `Loves: ${loved.join(', ')}` : 'Try a gift to learn what they love.', cx + 44, cy + 50, cw - 52, { size: 5.4, lineHeight: 6.4, color: COLORS.muted });
+    if (h.dates) text(ctx, `${h.dates} date${h.dates > 1 ? 's' : ''}`, cx + cw - 9, cy + ch - 10, { size: 5.6, bold: true, align: 'right', color: '#c84a7a' });
+  });
+  text(ctx, char.partner ? `Your sweetheart: ${SWEETHEARTS[char.partner].name}` : 'Chat each day, give gifts, and ask them out. A Promise Bouquet (6 hearts) starts romance.', x, y + 2 * ch + 4, { size: 7, bold: true, color: th.dark });
 }
