@@ -3288,14 +3288,15 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
     const y = p.y - cam.y;
     // A gateway in the region's own style, its swirl turning inside (a homestone is a small rune
     // stone instead, with its sign lower down).
+    // (A `door` is a building's own door: no gateway, only its name over it.)
     if (p.homestone) drawHomestone(ctx, x, y, time, p.x);
-    else drawPortalGate(ctx, map, x, y, time, p.x);
-    const top = p.homestone ? 62 : 94;
+    else if (!p.door) drawPortalGate(ctx, map, x, y, time, p.x);
+    const top = p.homestone ? 62 : p.door ? 78 : 94;
     const dest = MAPS[p.to];
     const name = p.label ?? dest?.name;
     if (name) {
       const onRoute = p.id === routeId;
-      const lv = dest && !dest.dungeon ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
+      const lv = dest && !dest.dungeon && !p.door && !dest.home ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
       const out = p.x < 200 ? -1 : p.x > map.width - 200 ? 1 : 0;
       ctx.font = 'bold 7px sans-serif';
       const nw = ctx.measureText(name).width;

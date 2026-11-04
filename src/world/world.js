@@ -4,7 +4,7 @@
 import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
 import { tickTutorial } from './tutorial.js';
-import { getMap } from '../data/maps.js';
+import { getMap, MAPS } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { itemName, itemColors } from '../core/items.js';
 import { QUESTS } from '../data/quests.js';
@@ -34,9 +34,10 @@ import { spotHere, startFishing, tickFishing } from './fishing.js';
 import { nodeHere, startGathering, tickGathering } from './gathering.js';
 import { benchHere, tickCrafting } from './crafting.js';
 import { tickDaytime } from './daytime.js';
-import { tickVoyage } from './voyage.js';
+import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
+import { refreshHome } from './home.js';
 import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -113,6 +114,8 @@ function findPortal(map, id) {
 }
 
 export function loadMap(world, mapId, portalId) {
+  // Your island is built fresh from how far Shelly has got (world/home.js).
+  if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char);
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
@@ -253,6 +256,33 @@ export function useItem(world, id) {
     world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.5, color: def.color });
     return true;
   }
+  // The Home Shell: home to your island, and back where you were (world/home.js).
+  if (def.effect?.home) {
+    const char = world.char;
+    if (!char.home) {
+      world.log('The shell hums... but you have no island to go home to yet. Captain Rook in Pastel Harbor might know of one.', '#ffb3c6');
+      return false;
+    }
+    if (world.dungeon || world.trial || world.map.voyage || world.scene) {
+      world.log("The shell's song is too faint here. Try again outside.", '#ffb3c6');
+      return false;
+    }
+    world.fx.push({ kind: 'mountpoof', on: false, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
+    if (world.map.home) {
+      const back = char.home.back;
+      if (back && MAPS[back.map] && !MAPS[back.map].home) {
+        loadMap(world, back.map, 'start');
+        Object.assign(world.body, { x: Math.max(20, Math.min(world.map.width - 20, back.x)), y: groundAt(world.map, back.x) });
+      } else loadMap(world, 'harbor', 'ferry');
+      world.log(`Back to ${world.map.name}.`, '#cfe8ff');
+    } else {
+      char.home.back = { map: world.map.id, x: Math.round(world.body.x) };
+      loadMap(world, 'home', 'dock');
+      world.log('You hold the shell to your ear... and you hear your island\'s waves. Home!', '#ffc2d4');
+    }
+    world.fx.push({ kind: 'mountpoof', on: true, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
+    return true;
+  }
   // A mount's key or whistle: the mount is yours (world/mount.js).
   if (def.effect?.mount) {
     if (ownsMount(world.char, def.effect.mount)) {
@@ -370,6 +400,12 @@ function interact(world) {
   if (portal) {
     loadMap(world, portal.to, portal.toPortal);
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
+    return true;
+  }
+  // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
+  if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
+    setSail(world);
+    world.log('You cast off in your skiff, back toward Pastel Harbor.', '#9fe8ff');
     return true;
   }
   // A mount hiding on this map (its `finds`: data/mounts.js): Up beside it and it's yours.

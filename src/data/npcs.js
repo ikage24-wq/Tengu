@@ -100,7 +100,7 @@ export const NPCS = {
     building: 'office', sign: 'Harbor Office',
     look: { hairStyle: 'wolfsleek', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5aa8ff', outfitColor: '#7fb8ff', eyeStyle: 'round', face: 'grin' },
     greeting: 'The harbor needs brave folks. Got time for a job?',
-    quests: ['story_2_1', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
+    quests: ['story_2_1', 'island_deed', 'canyon_eggs', 'canyon_stingers', 'canyon_lookout', 'mush_menace', 'leaf_samples', 'restless_ruins', 'crystal_heart', 'rook_harpies', 'rook_stars', 'daily_harbor'],
   },
   bramble: {
     id: 'bramble', name: 'Bramble', title: 'Hollow Warden', role: 'dungeon', dungeon: 'hollow',
@@ -160,6 +160,14 @@ export const NPCS = {
     look: { hairStyle: 'fluffybob', hairColor: '#fff0f6', hairTip: '#ffb3cf', skinTone: '#fff0e6', eyeColor: '#d0608a', outfitColor: '#ffe3ef', eyeStyle: 'big', earStyle: 'bunny', face: 'smile' },
     greeting: "Oh! Hello! Have you seen a fluffy white bun go by? ...Never mind, there are always more. Do you like riding things?",
     quests: ['bun_buddy'],
+  },
+  // Shelly, a hermit crab carpenter who came with your island (world/home.js): she builds it up a
+  // stage at a time from what you bring her. Cheerful, proud of her work, shy when it's quiet; she
+  // has grown into a bigger shell every time she's built a bigger house.
+  shelly: {
+    id: 'shelly', name: 'Shelly', title: 'Island Carpenter', role: 'builder',
+    look: { hairStyle: 'fluffybob', hairColor: '#ff9a8a', hairTip: '#ffd2c8', skinTone: '#fff0e6', eyeColor: '#c8506a', outfitColor: '#fff0e6', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'smile' },
+    greeting: "Ooh, a visitor! Oh, it's you, it's YOUR island! Bring me the bits and I'll build you something lovely. I've got a whole shell full of ideas!",
   },
   posy: {
     id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',

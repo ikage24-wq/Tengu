@@ -43,6 +43,8 @@ export const MATERIALS = {
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },
+  // Your island's cove: soft sand in wind-rippled layers, shells and pebbles in it.
+  sand: { lip: '#fff6dc', body: '#f6dcae', deep: '#e0b886', stone: '#fff0d0', style: 'sand', blades: false, drip: null },
   // Moonlit Manor: violet brick and moonlit stone inside; clipped lawn over garden flagstones out.
   manor: { lip: '#e6d6ff', body: '#7a5aa8', deep: '#54407e', stone: '#a88ad8', style: 'brick', blades: false, drip: 'vine' },
   manorgarden: { lip: '#8ee08a', body: '#9a84c8', deep: '#6a5498', stone: '#c4b4e6', style: 'flagstone', blades: true, drip: 'vine', joint: '#8ee08a' },
@@ -311,6 +313,76 @@ function paintTile(g, m, theme) {
           }
         });
       }
+    }
+  } else if (m.style === 'sand') {
+    // Soft sand: wind-rippled bands (each a pale crest over a soft shadow), with little shells,
+    // pebbles and the odd starfish in it, never a block or a joint.
+    for (let row = 0; row < 7; row++) {
+      const y0 = row * (TH / 7) + 4;
+      wrap((dx, dy) => {
+        g.strokeStyle = hexA(m.deep, 0.45);
+        g.lineWidth = 1.4;
+        g.beginPath();
+        for (let x = 0; x <= TW; x += 4) {
+          const y = y0 + Math.sin((x / TW) * Math.PI * 2 * (2 + (row % 2)) + row * 1.7) * 2.2;
+          if (x) g.lineTo(x + dx, y + dy);
+          else g.moveTo(x + dx, y + dy);
+        }
+        g.stroke();
+        g.strokeStyle = 'rgba(255,250,236,0.7)';
+        g.lineWidth = 1;
+        g.beginPath();
+        for (let x = 0; x <= TW; x += 4) {
+          const y = y0 - 1.6 + Math.sin((x / TW) * Math.PI * 2 * (2 + (row % 2)) + row * 1.7) * 2.2;
+          if (x) g.lineTo(x + dx, y + dy);
+          else g.moveTo(x + dx, y + dy);
+        }
+        g.stroke();
+      });
+    }
+    for (let i = 0; i < 16; i++) {
+      const k = seed + i * 11;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const kind = hash(k + 2);
+      wrap((dx, dy) => {
+        if (kind < 0.45) {
+          // a pebble
+          g.fillStyle = mix(m.deep, '#c8b8d8', 0.4);
+          g.beginPath();
+          g.ellipse(x + dx, y + dy, 2.2, 1.5, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = 'rgba(255,255,255,0.6)';
+          g.fillRect(x + dx - 1, y + dy - 1, 1, 0.8);
+        } else if (kind < 0.85) {
+          // a little scallop shell
+          g.fillStyle = ['#ffd2e0', '#fff0e0', '#ffe0c8'][Math.floor(hash(k + 3) * 3)];
+          g.beginPath();
+          g.moveTo(x + dx, y + dy + 1.5);
+          g.arc(x + dx, y + dy + 1.5, 3, Math.PI, 0);
+          g.closePath();
+          g.fill();
+          g.strokeStyle = hexA(m.deep, 0.8);
+          g.lineWidth = 0.5;
+          for (let r = -2; r <= 2; r++) {
+            g.beginPath();
+            g.moveTo(x + dx, y + dy + 1.5);
+            g.lineTo(x + dx + r * 1.2, y + dy - 1.2);
+            g.stroke();
+          }
+        } else {
+          // a starfish
+          g.fillStyle = '#ffb08a';
+          g.beginPath();
+          for (let a = 0; a < 10; a++) {
+            const r = a % 2 ? 1.2 : 3;
+            const ang = -Math.PI / 2 + (a * Math.PI) / 5;
+            g.lineTo(x + dx + Math.cos(ang) * r, y + dy + Math.sin(ang) * r);
+          }
+          g.closePath();
+          g.fill();
+        }
+      });
     }
   } else if (m.style === 'boards') {
     // Long stage boards, staggered, with grain lines, nail heads and the odd tape mark.

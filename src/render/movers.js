@@ -145,6 +145,58 @@ function vent(ctx, x, y, time, since) {
 
 // A bouncy mushroom: a fat red cap with cream spots on a stubby stem, swaying a little; stepped
 // on, the cap squashes down, springs up past its rest and wobbles back, spores puffing off it.
+// A giant clam on your island's beach: it breathes slowly, its lid ajar; stepped on, it snaps
+// down, flings itself open and settles back, a pearl winking inside and droplets flying.
+function clam(ctx, x, y, time, since, wx) {
+  const k = since < 1 ? since : 9;
+  const fling = k < 0.07 ? -k / 0.07 : k < 9 ? Math.exp(-(k - 0.07) * 5) * Math.cos((k - 0.07) * 18) : 0;
+  const breathe = Math.sin(time * 1.1 + wx) * 0.04;
+  const open = Math.max(-0.05, 0.22 + breathe + fling * 0.5);
+  const shell = (a, top) => {
+    ctx.save();
+    ctx.translate(x - 13, y - 5);
+    ctx.rotate(-a);
+    ctx.fillStyle = top ? '#ffd2e0' : '#ffc2d4';
+    ctx.strokeStyle = '#c8708e';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(13, 0, 15, top ? 8 : 6, 0, top ? Math.PI : 0, top ? Math.PI * 2 : Math.PI);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = '#e8a0b8';
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(13, 0);
+      ctx.lineTo(13 + i * 5.5, top ? -7 : 5);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+  shell(0, false);
+  // The pearl inside, catching the light.
+  const tw = 0.6 + 0.4 * Math.sin(time * 2.3 + wx);
+  ctx.fillStyle = '#fffaf2';
+  ctx.beginPath();
+  ctx.arc(x, y - 6, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(255,255,255,${tw})`;
+  ctx.fillRect(x - 1.6, y - 8, 1.4, 1.4);
+  shell(open, true);
+  if (since < 0.8) {
+    ctx.fillStyle = '#c8f4ff';
+    for (let i = 0; i < 6; i++) {
+      const a = -Math.PI / 2 + (i - 2.5) * 0.4;
+      const d = 6 + since * 60;
+      ctx.globalAlpha = 1 - since / 0.8;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * d, y - 8 + Math.sin(a) * d + since * since * 60, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
 function shroom(ctx, x, y, time, since, wx) {
   const k = since < 0.9 ? since : 9;
   const s = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
@@ -265,6 +317,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
     else if (s.kind === 'spring') springboard(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'shroom') shroom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
+    else if (s.kind === 'clam') clam(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
     else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
 }

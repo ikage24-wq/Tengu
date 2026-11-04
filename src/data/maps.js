@@ -733,9 +733,9 @@ Object.assign(MAPS, {
   // The voyage there and back on the Sea Biscuit: the steamer's deck is the map, and the sea runs
   // past (render/lagoon.js). No monsters; fish off the stern while you sail. world/voyage.js
   // brings you in to port after `dur` seconds.
-  ...Object.fromEntries([['voyage_out', 'lagoon', 'pier', 'To Lantern Lagoon'], ['voyage_home', 'harbor', 'ferry', 'To Pastel Harbor']].map(([id, to, toPortal, name]) => [id, {
-    id, name: `The Sea Biscuit: ${name}`, theme: 'harbor', town: to, music: 'voyage',
-    voyage: { to, toPortal, dur: 55 },
+  ...Object.fromEntries([['voyage_out', 'lagoon', 'pier', 'To Lantern Lagoon'], ['voyage_home', 'harbor', 'ferry', 'To Pastel Harbor'], ['voyage_isle', 'home', 'dock', 'To Your Island']].map(([id, to, toPortal, name]) => [id, {
+    id, name: `The Sea Biscuit: ${name}`, theme: 'harbor', town: to === 'home' ? 'harbor' : to, music: 'voyage',
+    voyage: { to, toPortal, dur: id === 'voyage_isle' ? 30 : 55, ...(id === 'voyage_isle' ? { calls: 'isle' } : {}) },
     width: 760, height: 520, groundY: 420,
     look: { sky: ['#9fd8ff', '#cdeeff', '#f2fbff'], far: '#a8e0f0', mid: '#bfe8f6', midTrim: '#9fd8e8', skyline: 'opensea', islands: 'planks', material: 'parquet', propKeep: 1 },
     terrain: [[0, 420], [760, 420]],

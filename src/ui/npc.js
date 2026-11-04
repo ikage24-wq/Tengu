@@ -3,6 +3,8 @@
 import { NPCS } from '../data/npcs.js';
 import { sfx } from '../audio/sfx.js';
 import { MOUNTS } from '../data/mounts.js';
+import { HOME_STAGES } from '../data/home.js';
+import { nextStageNeeds, buildNext } from '../world/home.js';
 import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
@@ -10,12 +12,13 @@ import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
 import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
 import { advanceJob, wornGear } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
-import { respawn } from '../world/world.js';
+import { respawn, loadMap } from '../world/world.js';
 import { playScene } from '../world/story.js';
 import { SCENES } from '../data/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
 import { boardPage } from './partyboard.js';
+import { say } from './chat.js';
 import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
 import { withZoom } from '../render/pixel.js';
@@ -221,6 +224,11 @@ export function npcWindow(ui, state, world) {
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
+  // Shelly builds your island up (world/home.js).
+  if (npc.role === 'builder') {
+    const n = nextStageNeeds(char);
+    choices.push(n ? { label: `Build: ${n.def.name}`, sub: n.def.about, icon: 'hammer', primary: true, run: () => (dlg.build = true) } : { label: 'All built!', sub: 'Your island is finished. Make it yours!', icon: 'star', run: () => say(world, 'shelly', "It's perfect, isn't it? I might need a bigger shell...") });
+  }
   // Clover the Puff Bun keeper: your mounts, in the Collection.
   if (npc.role === 'stable' && char.mounts?.length) {
     choices.push({ label: 'My mounts', sub: `${char.mounts.length} found · press H to ride`, icon: 'paw', run: () => {
@@ -243,6 +251,14 @@ export function npcWindow(ui, state, world) {
     };
     choices.push({ label: `Sail to ${route.name}`, sub: 'About a minute at sea · fish off the stern', icon: 'star', primary: true, run: sail(false) });
     if (hasSailed(char)) choices.push({ label: 'Full steam ahead', sub: `Straight to ${route.name}`, icon: 'door', run: sail(true) });
+  }
+  // From the harbor he'll run you out to your own island too (world/home.js).
+  if (npc.role === 'ferry' && world.map.id === 'harbor' && char.home) {
+    choices.push({ label: 'Sail to your island', sub: 'Half a minute at sea · fish off the stern', icon: 'heart', run: () => {
+      dlg.bye = true;
+      setSail(world, { island: true });
+      sfx('waveWash');
+    } });
   }
   // Nori and the Fishing Derby (world/derby.js): when it's on, and how it works.
   if (npc.role === 'derby') {
@@ -267,7 +283,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -292,6 +308,12 @@ export function npcWindow(ui, state, world) {
   if (dlg.board) {
     dlg.talking = false;
     if (boardPage(ui, state, world, area)) dlg.board = false;
+    return;
+  }
+
+  if (dlg.build) {
+    dlg.talking = false;
+    buildPage(ui, state, world, area);
     return;
   }
 
@@ -438,6 +460,53 @@ function questPage(ui, state, world, npc, area, key) {
     return;
   }
   if (button(ui, tx + tw - 74, by, 74, 17, 'Back') || ui.input.pressed?.has('Backspace')) dlg.quest = null;
+}
+
+// ---------- Shelly's building page ----------
+
+// The next stage: what it adds, what she needs (with what you have), and Build.
+function buildPage(ui, state, world, area) {
+  const { ctx } = ui;
+  const dlg = state.npc;
+  const char = world.char;
+  const n = nextStageNeeds(char);
+  const { x: tx, w: tw, theme: th } = area;
+  if (!n) {
+    dlg.build = false;
+    return;
+  }
+  text(ctx, `Stage ${n.stage}: ${n.def.name}`, tx, area.y, { size: 9, bold: true, color: th.ink });
+  wrap(ctx, n.def.about, tx, area.y + 12, tw, { size: 7, lineHeight: 9, color: COLORS.muted });
+  let x = tx;
+  const y = area.y + 34;
+  for (const it of n.items) {
+    const ok = it.have >= it.need;
+    itemSlot(ctx, x, y, 26, { id: it.id, qty: 1 }, { count: false, edge: ok ? '#9fe0a0' : '#f4bcd8' });
+    text(ctx, `${Math.min(it.have, it.need)}/${it.need}`, x + 13, y + 36, { size: 6.5, bold: true, align: 'center', color: ok ? '#3f9f5f' : COLORS.bad });
+    if (hover(ui, x, y, 26, 26)) tooltip(ui, [{ text: ITEMS[it.id].name, bold: true }, { text: `You have ${it.have}, she needs ${it.need}`, size: 7 }]);
+    x += 34;
+  }
+  const goldOk = n.haveGold >= n.gold;
+  text(ctx, `${n.gold.toLocaleString()} gold`, x + 4, y + 16, { size: 8, bold: true, color: goldOk ? COLORS.gold : COLORS.bad });
+  const ready = goldOk && n.items.every((i) => i.have >= i.need);
+  const by = area.bottom - 16;
+  if (button(ui, tx + tw - 154, by, 74, 17, ready ? 'Build it!' : 'Not yet', { primary: ready, enabled: ready, size: 8 })) {
+    const r = buildNext(char);
+    if (typeof r === 'number') {
+      world.log(`Shelly built ${HOME_STAGES[r].name}! ${HOME_STAGES[r].about}`, '#ffe36b');
+      // (The island grows round you: reloaded with you just where you stood.)
+      const x0 = world.body.x;
+      loadMap(world, 'home', 'dock');
+      Object.assign(world.body, { x: x0, y: world.map.groundY });
+      world.fx.push({ kind: 'mountpoof', on: true, x: world.body.x + 40, y: world.body.y, t: 0, dur: 0.45 });
+      say(world, 'shelly', ['Ta-daa! Do you love it? I love it.', "Done! Mind the paint, it's still wet.", 'Another job well clawed!'][r % 3]);
+      state.npc = null;
+      state.windows.npc.open = false;
+      return;
+    }
+    world.log(r, '#ffb3c6');
+  }
+  if (button(ui, tx + tw - 74, by, 74, 17, 'Back')) dlg.build = false;
 }
 
 // ---------- Dungeon group finder ----------

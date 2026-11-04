@@ -172,6 +172,8 @@ function drawNpcs(ctx, world, cam, time) {
     const busy = r.pose && !close;
     const look = r.face ? { ...npc.look, face: r.face } : npc.look;
     footShadow(ctx, x, y, 12);
+    // (Something they carry behind them: Shelly's shell.)
+    r.back?.(ctx, x, y - (r.lift ?? 0), time, facing);
     drawHero(ctx, look, npc.gear ?? null, x, y - (r.lift ?? 0), { pose: busy ? r.pose : 'idle', progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob, rig: r.rig, onHands: r.hands });
     if (r.extra) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
     // (During a cutscene, no name tags, markers or prompts: the scene has the stage.)

@@ -298,7 +298,7 @@ function spawn(bots, world, { quiet = false, who = null, here = false, at = null
   bots.names.add(name.toLowerCase());
   const char = who?.char ?? makeBotCharacter(rng, { name });
   // (Someone you know always gets in, even with every town at its usual crowd.)
-  const town = at?.map ?? (who && world.map.isTown && (here || rng() < 0.5) ? world.map.id : townFor(bots, char.level) ?? (who ? pick(TOWNS, rng) : null));
+  const town = at?.map ?? (who && world.map.isTown && !world.map.private && (here || rng() < 0.5) ? world.map.id : townFor(bots, char.level) ?? (who ? pick(TOWNS, rng) : null));
   if (!town) return null;
   const map = MAPS[town];
   const bot = {

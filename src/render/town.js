@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { drawIslandPiece } from './island.js';
 import { drawMount } from './mounts.js';
 import { MOUNTS } from '../data/mounts.js';
 import { tagFade } from './coop.js';
@@ -556,6 +557,8 @@ export function drawStreet(ctx, map, cam, width, time) {
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // Your island's own pieces (render/island.js).
+    if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
@@ -802,7 +805,132 @@ function coin(ctx, x, y, spin) {
   ctx.fillRect(x - 0.4, y - 1.4, 0.8, 1.2);
 }
 
+// Shelly's shell, on her back: a big pink spiral conch she's grown into, riding on her shoulders
+// (it bobs a beat after her and tips as she leans). Drawn behind her (the routine's `back`).
+function shellyShell(ctx, x, y, time, facing, lean = 0) {
+  const bob = Math.sin(time * 2.1 - 0.5) * 0.6;
+  ctx.save();
+  ctx.translate(x - facing * 13, y - 19 + bob);
+  ctx.rotate(facing * (-0.25 + lean * 0.4));
+  ctx.scale(facing * 1.15, 1.15);
+  const tone = (r, c) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.ellipse(r[0], r[1], r[2], r[3], 0, 0, TAU);
+    ctx.fill();
+  };
+  tone([0, 0, 14.5, 12.5], '#a85a7a');
+  tone([0, 0, 13.5, 11.5], '#ffc2d4');
+  tone([3, 3, 9, 7], '#f2a0bc');
+  tone([-3, -4, 5, 3], '#ffe0ea');
+  // its spiral, winding in to a point
+  ctx.strokeStyle = '#d07a9a';
+  ctx.lineWidth = 1.3;
+  ctx.beginPath();
+  for (let i = 0; i <= 40; i++) {
+    const a = i * 0.42;
+    const r = 11 * (1 - i / 44);
+    const px = Math.cos(a) * r;
+    const py = Math.sin(a) * r * 0.85;
+    if (i) ctx.lineTo(px, py);
+    else ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  // a few spines along the top
+  ctx.fillStyle = '#ffe0ea';
+  for (const a of [-2.4, -1.8, -1.2]) {
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * 12 - 2, Math.sin(a) * 10.5);
+    ctx.lineTo(Math.cos(a) * 17, Math.sin(a) * 15);
+    ctx.lineTo(Math.cos(a) * 12 + 2, Math.sin(a) * 10.5);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+// Her coral crab-claw mittens, on her hands; `snap` closes them (0 open, 1 shut).
+function crabClaw(ctx, x, y, facing, snap = 0) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(facing, 1);
+  ctx.fillStyle = '#c8506a';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 3.4, 3, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ff8a8a';
+  ctx.beginPath();
+  ctx.ellipse(0, -0.2, 2.8, 2.4, 0, 0, TAU);
+  ctx.fill();
+  const open = 0.7 * (1 - snap);
+  for (const sgn of [-1, 1]) {
+    ctx.save();
+    ctx.rotate(sgn * open);
+    ctx.fillStyle = '#ff8a8a';
+    ctx.beginPath();
+    ctx.ellipse(3.2, sgn * 1.1, 2.6, 1.2, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+// A little wooden mallet in a claw.
+function mallet(ctx, x, y, a) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(a);
+  ctx.fillStyle = '#a8805a';
+  ctx.fillRect(-0.8, -11, 1.6, 11);
+  ctx.fillStyle = '#e8c890';
+  ctx.fillRect(-4, -15, 8, 5);
+  ctx.fillStyle = '#c89a6a';
+  ctx.fillRect(-4, -11, 8, 1);
+  ctx.restore();
+}
+
+const cloverBun = {};
 const ROUTINES = {
+  // Shelly, the hermit crab carpenter on your island: tapping away with her mallet, measuring with
+  // her claws held apart and squinting, and (shy, when it's quiet) tucking down into her shell and
+  // peeking out again. Her claws click now and then.
+  shelly(t) {
+    const b = bitAt(t, [['tap', 2.6], ['measure', 2.2], ['tuck', 2.4]], 2.2);
+    const back = (lean) => (ctx, x, y, time, facing) => shellyShell(ctx, x, y, time, facing, lean);
+    const clawsAt = (snapF, malletA = null) => (ctx, front, backHand) => {
+      if (malletA != null) mallet(ctx, front[0], front[1], malletA);
+      crabClaw(ctx, front[0], front[1], 1, snapF(0));
+      crabClaw(ctx, backHand[0], backHand[1], -1, snapF(1));
+    };
+    if (!b) {
+      const click = Math.max(0, Math.sin(t * 7)) ** 8;
+      return { face: 'smile', back: back(0), hands: clawsAt(() => click) };
+    }
+    if (b.kind === 'tap') {
+      const k = inOut(b.u);
+      const beat = Math.abs(Math.sin(b.s * 7));
+      return { face: 'determined', back: back(0.15 * k), rig: { frontArm: arm(3 * k, (-6 + beat * 4) * k), tilt: 4 * k, hy: h(0.6 * k) }, hands: clawsAt(() => 0.3, -1.2 + beat * 0.9 * k) };
+    }
+    if (b.kind === 'measure') {
+      const k = inOut(b.u);
+      const wide = 1 + Math.sin(b.s * 3) * 0.4;
+      return { face: 'mmhm', back: back(0), rig: { frontArm: arm(4 * k * wide, -4 * k), backArm: arm(-1 * k, -4 * k), hy: h(0.5 * k) }, hands: clawsAt(() => 0) };
+    }
+    const k = inOut(b.u, 0.2, 0.8);
+    return { face: k > 0.5 ? 'shy' : 'smile', back: back(0.4 * k), rig: { squat: Math.round(2 * k), hy: h(2 * k), tilt: -3 * k, frontArm: arm(-1 * k, -2 * k), backArm: arm(1 * k, -2 * k) }, hands: clawsAt(() => k) };
+  },
+  // Clover, the Puff Bun keeper: a bun hops round her feet; she kneels to pat it, and laughs when it
+  // nuzzles her.
+  clover(t) {
+    const b = bitAt(t, [['pat', 2.4], ['laugh', 1.6]], 2.4);
+    const bun = (ctx, x, y, time, facing) => {
+      const hop = (time * 0.9) % 1;
+      const bx = x + 18 + Math.sin(time * 0.45) * 10;
+      cloverBun.x = bx;
+      drawMount(ctx, cloverBun, 'bun', bx, y, time, { facing: Math.cos(time * 0.45) >= 0 ? 1 : -1, speed: hop < 0.5 ? 0.4 : 0 });
+    };
+    if (!b) return { face: 'smile', extra: bun };
+    const k = inOut(b.u);
+    if (b.kind === 'pat') return { facing: 1, face: 'excited', extra: bun, rig: { squat: Math.round(2 * k), hy: h(1.5 * k), tilt: 6 * k, frontArm: arm(4 * k, (2 + Math.sin(b.s * 9) * 1.2) * k) } };
+    return { face: 'grin', extra: bun, rig: { hy: h(-0.5 * k), tilt: -4 * k, backArm: arm(2 * k, -5 * k) } };
+  },
   // Mira, the guide: a wave hello, a little cheer, and pointing the way east.
   mira(t) {
     const b = bitAt(t, [['wave', 1.8], ['cheer', 1.1], ['point', 1.8]], 2);
@@ -1477,7 +1605,8 @@ const ITEM_COLORS = (id) => ITEMS[id]?.color ?? '#ffffff';
 export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = null, player = null) {
   if (!map.isTown || !settings.showCrowd) return;
   drawTownLife(ctx, map, cam, width, time, player);
-  for (const p of villagersOf(map)) {
+  // (Nobody strolls through your own island: it is yours.)
+  for (const p of map.private ? [] : villagersOf(map)) {
     const at = stroll(p, time);
     const x = snap(at.x - cam.x);
     const gy = snap(groundAt(map, at.x) - cam.y);

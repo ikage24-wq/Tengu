@@ -42,6 +42,13 @@ export const QUESTS = {
     objectives: [{ type: 'collect', item: 'fluff', count: 8 }],
     rewards: { exp: 60, gold: 200, items: [{ id: 'hat_0', qty: 1 }] },
   },
+  // Your island (data/home.js): Captain Rook hands you the deed to a little cove he can't use.
+  island_deed: {
+    id: 'island_deed', name: 'A Deed to a Little Island', giver: 'rook', minLevel: 10,
+    text: "An old sailor left me the deed to a tiny beach cove out past the harbor. I'm too busy to ever go! Take it, and this Home Shell: hold it to your ear and it takes you home, wherever you are. There's a hermit crab carpenter living there who'll build it up for you. Oh, and your skiff's tied up at the end of the quay.",
+    objectives: [],
+    rewards: { exp: 300, gold: 200, items: [{ id: 'home_shell', qty: 1 }], island: true },
+  },
   // The first mount (data/mounts.js): Clover's runaway Puff Buns.
   bun_buddy: {
     id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 15,

@@ -111,7 +111,7 @@ export const SPOTS = {
     { x: 2350, y: 440, span: [2270, 2392], fixed: true, face: 1, bx: 2385, by: 548, sea: true, deep: true, tier: 3, pool: { fish_tuna: 6, fish_mola: 2, fish_oarfish: 1.2, fish_marlin: 0.35, fish_grouper: 2 } },
   ],
   // The Sea Biscuit's stern and bow, both ways: the open sea.
-  ...Object.fromEntries(['voyage_out', 'voyage_home'].map((id) => [id, [
+  ...Object.fromEntries(['voyage_out', 'voyage_home', 'voyage_isle'].map((id) => [id, [
     { x: 40, y: 420, span: [18, 150], fixed: true, face: -1, bx: 12, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
     { x: 720, y: 420, span: [600, 742], fixed: true, face: 1, bx: 748, by: 466, sea: true, tier: 1, pool: { fish_flying: 6, fish_sardine: 3, fish_mackerel: 3, fish_dorado: 2, fish_seapony: 0.4, fish_starfish: 0.15 } },
   ]])),

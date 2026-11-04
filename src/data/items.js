@@ -492,6 +492,9 @@ for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, pri
 // The Fishing Derby's winner's medal (world/derby.js): a keepsake.
 add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ffd66b', desc: 'Nori hands these to the biggest catch of a Fishing Derby. She has a whole drawer of them.' });
 // Mister Brine's lantern bait (Lantern Lagoon): fish bite twice as fast for your next 10 casts.
+// Your island's Home Shell (world/home.js): used anywhere it takes you home; used at home it takes
+// you back where you were. Never used up.
+add({ id: 'home_shell', name: 'Home Shell', type: 'use', price: 0, effect: { home: true }, keep: true, color: '#ffc2d4', desc: 'A pink spiral shell. Hold it to your ear and you hear your island\'s waves. Use it to go home, and again to go back where you were. It never gets used up.' });
 // Mount keys (data/mounts.js): using one gives you the mount for good.
 add({ id: 'mount_kettle', name: 'Kettle Racer Key', type: 'use', price: 0, effect: { mount: 'kettle' }, color: '#f4a98a', desc: 'A little brass key on a ribbon. Use it and the Kettle Racer is yours: a teakettle on wheels with a steam dash.' });
 add({ id: 'mount_nimbus', name: 'Nimbus Whistle', type: 'use', price: 0, effect: { mount: 'nimbus' }, color: '#dfe6fb', desc: 'Blow it and a sleepy little cloud drifts down to you. Use it and Nimbus is yours: it floats over gaps.' });

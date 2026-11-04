@@ -177,6 +177,8 @@ export function completeQuest(char, id) {
     else addItem(char.inventory, r.id, r.qty);
   }
   char.gold += q.rewards.gold;
+  // Your island (world/home.js): its deed.
+  if (q.rewards.island && !char.home) char.home = { stage: 1, back: null, placed: [], bag: {} };
   // A mount (data/mounts.js) is yours for good.
   const mount = q.rewards.mount && !char.mounts?.includes(q.rewards.mount) ? q.rewards.mount : null;
   if (mount) {
