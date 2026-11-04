@@ -78,3 +78,27 @@ saves, Elowen's trial, the dungeon healer and her paths carry over; the name is 
   from the hip, and a dash with the staff trailing low then whipped over. Her skills cast with a
   staff use the staff's figures (`STAFF_FORM` in moveAt), same timing.
 
+
+## Footwork and effects pass (2026-11-04)
+
+The Starlight Idol treatment, in the Star Witch's own showing-off way:
+
+- **Travel:** every step of both strings and their pools carries her forward (wand: flick 10,
+  twirl 12, spin 14, snap 18, wink 8, sweep 14, hop 20, show-off 12; staff: 8-16), the run-cast
+  slides 56, and Shooting Star and Comet step in too.
+- **Bounce:** a skip into the flick, the wink-cast, the sweep and the staff's thrust and crescent
+  (front knee thrown high, `SW_SKIP`); a skip between the twirl's two points; the spin is a
+  spinning hop; the snap and the comet flourish leap higher; the staff vaults up before the plant
+  and jumps into the slam; the up-cast springs off the ground. Bigger leans and lunges throughout.
+- **No frozen ends:** each pose is held sooner and then she bobs on her toes twice, pleased with
+  herself (`swBob`), back to rest by the end; Star Veil too.
+- **Snappier:** her strings about a tenth quicker; stars 860, comets 780 (Shooting Star 880/800,
+  Comet 840); Wishing Star 0.8 s, Star Veil 0.72 s, Starfall 1.45 s.
+- **Effects drawn to size** (game px, measured): the star bolt went from a 10 px speck to 24 px
+  (star) with a 45 px tail; the comet from 24 to 44 px; meteors from 12 to 26 px (Starfall's rain
+  18 px); her hit mark from 20-30 to 42-60 px; Starfall's impact flash 60 to 120 px across. Each is
+  redrawn larger from the same art (`grown()`), not stretched.
+- **Starfall's constellation spans the sky it rains from:** it was 86 px wide over a 380 px rain;
+  now a four-times redraw (`stsky`) spread over the whole stretch ahead of her.
+- **Wishing Star and Star Veil show who they reach:** a ring of her stars races out to their
+  220 px party reach.

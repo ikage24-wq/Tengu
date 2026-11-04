@@ -5428,7 +5428,7 @@
   }
 
   // Her star bolt in flight (loops, toward +x): a spinning gold star with a midnight tail.
-  E.stbolt = (() => {
+  E.stbolt = grown((() => {
     const cx = 100;
     const cy = 50;
     return {
@@ -5438,10 +5438,10 @@
         star5(ctx, STARGOLD, cx, cy, 20, (i / 6) * ((Math.PI * 2) / 5));
       },
     };
-  })();
+  })(), 2.2);
 
   // A comet (the staff's, and big bolts): a big star head with a long tail and sparks.
-  E.stcomet = (() => {
+  E.stcomet = grown((() => {
     const cx = 170;
     const cy = 70;
     return {
@@ -5452,11 +5452,11 @@
         star5(ctx, STARGOLD, cx, cy, 30, (i / 6) * ((Math.PI * 2) / 5));
       },
     };
-  })();
+  })(), 2);
 
   // Her mark on a monster: a gold starburst, a little constellation of four stars snapping shut
   // round it, then the stars twinkle out.
-  E.sthit = (() => {
+  E.sthit = grown((() => {
     const c = 110;
     const pts = [[c - 52, c - 30], [c + 10, c - 58], [c + 56, c - 6], [c - 14, c + 50]];
     return {
@@ -5475,7 +5475,7 @@
         if (i >= 5) for (let j = 0; j < pts.length; j++) sparkle(ctx, j % 2 ? NIGHT : STARGOLD, pts[j][0], pts[j][1] - (i - 4) * 8, 9 - (i - 5) * 3, j);
       },
     };
-  })();
+  })(), 2);
 
   // Her constellation (the gauge over her head, and Starfall's): seven stars light one by one
   // (frame k shows k stars), joined by threads as they light; the last frame glows full.
@@ -5494,8 +5494,12 @@
     },
   };
 
+  // Starfall's constellation, drawn across the whole stretch of sky her meteors fall from (the
+  // same seven stars as the gauge, redrawn four times larger rather than stretched).
+  E.stsky = grown(E.stconst, 4);
+
   // A meteor falling (Starfall's rain), toward +x and down; loops.
-  E.stmeteor = (() => {
+  E.stmeteor = grown((() => {
     const cx = 150;
     const cy = 150;
     return {
@@ -5505,7 +5509,7 @@
         star5(ctx, STARGOLD, cx, cy, 24, i * 0.4);
       },
     };
-  })();
+  })(), 2.2);
 
   // Wishing Star (her heal): a star falls from the sky into a soft column of gold light over the
   // party, then gold sparkles rise and drift away.
@@ -6164,7 +6168,7 @@
 
   // Her planet in flight (loops, toward +x): a little ringed planet rolling, an orbit's arc trailing
   // behind it with silver motes.
-  E.asplanet = (() => {
+  E.asplanet = grown((() => {
     const cx = 100;
     const cy = 50;
     return {
@@ -6176,10 +6180,10 @@
         planetArt(ctx, cx, cy, 14, i / 6, -0.35);
       },
     };
-  })();
+  })(), 2.6);
 
   // Her great ringed planet (finishers): big, two rings, a wide orbit trailing it and motes.
-  E.asbig = (() => {
+  E.asbig = grown((() => {
     const cx = 160;
     const cy = 80;
     return {
@@ -6192,11 +6196,11 @@
         planetArt(ctx, cx, cy, 30, i / 6, -0.3, 2);
       },
     };
-  })();
+  })(), 1.8);
 
   // Her mark on a monster: a silver crescent sweeps round it like a moon passing, a violet ring
   // opens out, then silver motes drift off.
-  E.ashit = (() => {
+  E.ashit = grown((() => {
     const c = 100;
     return {
       w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
@@ -6210,11 +6214,11 @@
         }
       },
     };
-  })();
+  })(), 1.8);
 
   // One of her moons (loops): a little silver moon with a faint violet glow, turning slowly; it
   // rides her orbit (the gauge) and flies off at monsters on its own.
-  E.asmoon = {
+  E.asmoon = grown({
     w: 60, h: 60, n: 8, fps: 10, px: 30, py: 30, loop: true,
     draw(ctx, i) {
       ctx.save();
@@ -6226,7 +6230,7 @@
       ctx.restore();
       moonArt(ctx, 30, 30, 12, -0.6 + (i / 8) * TAU);
     },
-  };
+  }, 2);
 
   // Gravity Well (loops): a small dark world hangs over the ground, silver rings spiralling in on it
   // and motes being drawn round and down into it.

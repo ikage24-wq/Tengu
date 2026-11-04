@@ -247,10 +247,11 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'stveil':
       return fxSprite(ctx, 'celstveil', x, y + 4, { p, scale: 0.6 }) || true;
     case 'starfallsky':
-      return fxSprite(ctx, 'celstconst', x + dir * 80, y - 120, { frame: Math.min(7, Math.floor(p * 9)), scale: 1.1 }) || true;
+      // (Spread over the whole stretch her meteors fall on: rainFrom 20, rainW 380.)
+      return fxSprite(ctx, 'celstsky', x + dir * 210, y - 130, { frame: Math.min(7, Math.floor(p * 9)), scale: 1.2 }) || true;
     case 'starfallimpact':
       fxSprite(ctx, 'celsthit', x, y - 30, { p, scale: 1.4 });
-      return fxSprite(ctx, 'celstwish', x, y + 4, { p: 0.4 + 0.6 * p, scale: 0.9 }) || true;
+      return fxSprite(ctx, 'celstwish', x, y + 4, { p: 0.4 + 0.6 * p, scale: 1.3 }) || true;
     case 'skyhit':
       return fxSprite(ctx, 'celskyhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.7 : 0.5 }) || true;
     case 'skyupdraft':

@@ -200,10 +200,10 @@ export const PATH_COMBOS = {
   // comet through the line. With a staff: a thrust that fires a comet, a swing that lobs one, a
   // plant that calls a meteor down from the sky (`sky`), and a slam that sends a great comet.
   starwand: [
-    { move: 'swflick', dur: 0.34, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 78, range: 300, h: 60, knock: 25, speed: 760 }] },
-    { move: 'swtwirl', dur: 0.46, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 48, range: 300, h: 60, knock: 25, speed: 760, oy: -3 }, { at: 0.5, shot: 'stbolt', magic: true, pct: 52, range: 300, h: 60, knock: 25, speed: 760, oy: 3 }] },
-    { move: 'swspin', dur: 0.5, strikes: [{ at: 0.56, shot: 'stbolt', magic: true, pct: 90, range: 300, h: 60, knock: 25, speed: 760, targets: 2, pierce: true }] },
-    { move: 'swsnap', dur: 0.58, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 160, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'swflick', dur: 0.31, step: 10, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 78, range: 300, h: 60, knock: 25, speed: 860 }] },
+    { move: 'swtwirl', dur: 0.42, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 48, range: 300, h: 60, knock: 25, speed: 860, oy: -3 }, { at: 0.5, shot: 'stbolt', magic: true, pct: 52, range: 300, h: 60, knock: 25, speed: 860, oy: 3 }] },
+    { move: 'swspin', dur: 0.45, step: 14, strikes: [{ at: 0.56, shot: 'stbolt', magic: true, pct: 90, range: 300, h: 60, knock: 25, speed: 860, targets: 2, pierce: true }] },
+    { move: 'swsnap', dur: 0.52, step: 18, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 160, range: 320, h: 70, knock: 120, speed: 780, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Starlight Idol (the Shrine Maiden remade; docs/design/starlight-idol.md), singing into her
   // mic: a line sung with a dip on the beat and the mic swung out (a note flies), a step and touch
@@ -218,15 +218,15 @@ export const PATH_COMBOS = {
   // orrery: a long arc flinging a planet, a slow conducted circle sending two, and a ringed world
   // swept out low that rolls through the line. Her planets are heavy and unhurried.
   astro: [
-    { move: 'asfling', dur: 0.5, strikes: [{ at: 0.42, shot: 'asplanet', magic: true, pct: 90, range: 300, h: 64, knock: 40, speed: 520 }] },
-    { move: 'asconduct', dur: 0.6, strikes: [{ at: 0.35, shot: 'asplanet', magic: true, pct: 52, range: 300, h: 64, knock: 40, speed: 520, oy: -3 }, { at: 0.65, shot: 'asplanet', magic: true, pct: 56, range: 300, h: 64, knock: 40, speed: 520, oy: 3 }] },
-    { move: 'asring', dur: 0.66, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: 175, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'asfling', dur: 0.45, step: 12, strikes: [{ at: 0.42, shot: 'asplanet', magic: true, pct: 90, range: 300, h: 64, knock: 40, speed: 600 }] },
+    { move: 'asconduct', dur: 0.54, step: 10, carry: 0.6, strikes: [{ at: 0.35, shot: 'asplanet', magic: true, pct: 52, range: 300, h: 64, knock: 40, speed: 600, oy: -3 }, { at: 0.65, shot: 'asplanet', magic: true, pct: 56, range: 300, h: 64, knock: 40, speed: 600, oy: 3 }] },
+    { move: 'asring', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: 175, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   starstaff: [
-    { move: 'ssthrust', dur: 0.46, step: 4, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 92, range: 320, h: 70, knock: 120, speed: 700 }] },
-    { move: 'ssswing', dur: 0.5, strikes: [{ at: 0.44, shot: 'stcomet', magic: true, pct: 98, range: 320, h: 70, knock: 120, speed: 700, lob: 30, h: 110 }] },
-    { move: 'ssplant', dur: 0.55, strikes: [{ at: 0.42, shot: 'stmeteor', sky: true, magic: true, pct: 115, range: 280, h: 90, targets: 2, knock: 60, launch: 120, speed: 600 }] },
-    { move: 'ssslam', dur: 0.62, step: 4, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 175, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] },
+    { move: 'ssthrust', dur: 0.42, step: 12, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 92, range: 320, h: 70, knock: 120, speed: 780 }] },
+    { move: 'ssswing', dur: 0.45, step: 12, strikes: [{ at: 0.44, shot: 'stcomet', magic: true, pct: 98, range: 320, h: 70, knock: 120, speed: 780, lob: 30, h: 110 }] },
+    { move: 'ssplant', dur: 0.5, step: 8, strikes: [{ at: 0.42, shot: 'stmeteor', sky: true, magic: true, pct: 115, range: 280, h: 90, targets: 2, knock: 60, launch: 120, speed: 680 }] },
+    { move: 'ssslam', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 175, range: 320, h: 70, knock: 120, speed: 780, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.42, step: 6, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -463,10 +463,10 @@ export const PATH_VARIANTS = {
   // Staff (her staff's own figures): the thrust or a crescent arc; the swing or a two-handed twirl;
   // the plant or a planted cast; the slam or a comet flourish.
   starwand: [
-    [PATH_COMBOS.starwand[0], { move: 'swwink', dur: 0.3, strikes: [{ at: 0.24, shot: 'stbolt', magic: true, pct: 74, range: 300, h: 60, knock: 25, speed: 760 }] }],
-    [PATH_COMBOS.starwand[1], { move: 'swsweep', dur: 0.46, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 36, range: 300, h: 60, knock: 25, speed: 760, fan: 3, h: 110 }] }],
-    [PATH_COMBOS.starwand[2], { move: 'swhop', dur: 0.48, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 88, range: 300, h: 60, knock: 25, speed: 760, h: 150, drop: 40, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.starwand[3], { move: 'swshowoff', dur: 0.55, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 155, range: 320, h: 70, knock: 120, speed: 700, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.starwand[0], { move: 'swwink', dur: 0.27, step: 8, strikes: [{ at: 0.24, shot: 'stbolt', magic: true, pct: 74, range: 300, h: 60, knock: 25, speed: 860 }] }],
+    [PATH_COMBOS.starwand[1], { move: 'swsweep', dur: 0.42, step: 14, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 36, range: 300, h: 60, knock: 25, speed: 860, fan: 3, h: 110 }] }],
+    [PATH_COMBOS.starwand[2], { move: 'swhop', dur: 0.44, step: 20, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 88, range: 300, h: 60, knock: 25, speed: 860, h: 150, drop: 40, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starwand[3], { move: 'swshowoff', dur: 0.5, step: 12, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 155, range: 320, h: 70, knock: 120, speed: 780, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Starlight Idol. Openers: a line on the beat or a blown kiss. Second: the step and touch or
   // singing over her shoulder. Finisher: the high note or her idol pose; now and then an idol jump
@@ -482,17 +482,17 @@ export const PATH_VARIANTS = {
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
   // night sky in both arms.
   astro: [
-    [PATH_COMBOS.astro[0], { move: 'asgaze', dur: 0.56, strikes: [{ at: 0.48, shot: 'asplanet', sky: true, magic: true, pct: 96, range: 280, h: 90, targets: 2, knock: 50, launch: 100, speed: 520 }] }],
+    [PATH_COMBOS.astro[0], { move: 'asgaze', dur: 0.5, step: 8, strikes: [{ at: 0.48, shot: 'asplanet', sky: true, magic: true, pct: 96, range: 280, h: 90, targets: 2, knock: 50, launch: 100, speed: 600 }] }],
     [PATH_COMBOS.astro[1],
-      { move: 'aspirouette', dur: 0.6, strikes: [{ at: 0.55, shot: 'asplanet', magic: true, pct: 108, range: 300, h: 64, knock: 40, speed: 520, targets: 2, pierce: true }] },
-      { move: 'astrace', dur: 0.62, strikes: [{ at: 0.58, shot: 'asplanet', magic: true, pct: 110, range: 300, h: 64, knock: 40, speed: 520, lob: 30, h: 110 }] }],
-    [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.66, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 480, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+      { move: 'aspirouette', dur: 0.54, step: 14, strikes: [{ at: 0.55, shot: 'asplanet', magic: true, pct: 108, range: 300, h: 64, knock: 40, speed: 600, targets: 2, pierce: true }] },
+      { move: 'astrace', dur: 0.56, step: 10, carry: 0.6, strikes: [{ at: 0.58, shot: 'asplanet', magic: true, pct: 110, range: 300, h: 64, knock: 40, speed: 600, lob: 30, h: 110 }] }],
+    [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.6, step: 12, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'ssarc', dur: 0.48, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 700, fan: 2, h: 110 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'sstwirl', dur: 0.52, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 700, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'sscast', dur: 0.5, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 700, h: 150, drop: 40 }] }],
-    [PATH_COMBOS.starstaff[3], { move: 'ssflourish', dur: 0.6, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 700, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.starstaff[0], { move: 'ssarc', dur: 0.44, step: 14, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 70, range: 320, h: 70, knock: 120, speed: 780, fan: 2, h: 110 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'sstwirl', dur: 0.47, step: 10, strikes: [{ at: 0.56, shot: 'stcomet', magic: true, pct: 100, range: 320, h: 70, knock: 120, speed: 780, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'sscast', dur: 0.45, step: 10, strikes: [{ at: 0.42, shot: 'stcomet', magic: true, pct: 105, range: 320, h: 70, knock: 120, speed: 780, h: 150, drop: 40 }] }],
+    [PATH_COMBOS.starstaff[3], { move: 'ssflourish', dur: 0.54, step: 14, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 70, knock: 120, speed: 780, targets: 4, pierce: true, knock: 220, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -552,12 +552,12 @@ const ARCHER_COMMANDS = {
   // The Star Witch: a star shot up at whatever flies, flicked down from a hang in the air (the
   // second time two), and a slide-cast out of a run; a comet with the staff.
   starwand: {
-    up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    up: { move: 'swup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 860, big: true, stop: 0.04 }] },
     air: [
-      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
-      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'swair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 860 }] },
+      { move: 'swair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 860, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'swdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stbolt', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+    dash: { move: 'swdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.38, shot: 'stbolt', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 900 }] },
   },
   // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
   // hang in the air (the second a big one); a rock-star knee slide out of a run.
@@ -572,20 +572,20 @@ const ARCHER_COMMANDS = {
   // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
   // (the second a ringed world), and a glide out of a run.
   astro: {
-    up: { move: 'asup', dur: 0.5, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 112, range: 300, h: 64, knock: 40, speed: 520, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    up: { move: 'asup', dur: 0.46, step: 6, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 112, range: 300, h: 64, knock: 40, speed: 600, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
     air: [
-      { move: 'asair', dur: 0.44, hang: true, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 84, range: 300, h: 64, knock: 40, speed: 520, range: 260, h: 170, drop: 60 }] },
-      { move: 'asair', dur: 0.5, hang: true, finisher: true, strikes: [{ at: 0.34, shot: 'asbig', magic: true, pct: 112, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 480, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'asair', dur: 0.44, hang: true, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 84, range: 300, h: 64, knock: 40, speed: 600, range: 260, h: 170, drop: 60 }] },
+      { move: 'asair', dur: 0.5, hang: true, finisher: true, strikes: [{ at: 0.34, shot: 'asbig', magic: true, pct: 112, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 540, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'asglide', dur: 0.6, step: 50, carry: 0.55, strikes: [{ at: 0.44, shot: 'asplanet', magic: true, pct: 118, range: 300, h: 64, knock: 40, speed: 520, targets: 2, pierce: true, knock: 100 }] },
+    dash: { move: 'asglide', dur: 0.56, step: 62, carry: 0.55, strikes: [{ at: 0.44, shot: 'asplanet', magic: true, pct: 118, range: 300, h: 64, knock: 40, speed: 600, targets: 2, pierce: true, knock: 100 }] },
   },
   starstaff: {
-    up: { move: 'swup', dur: 0.4, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.04 }] },
+    up: { move: 'swup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 860, big: true, stop: 0.04 }] },
     air: [
-      { move: 'ssair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
-      { move: 'ssair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 760, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'ssair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 860 }] },
+      { move: 'ssair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 860, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'ssdash', dur: 0.5, step: 44, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 800 }] },
+    dash: { move: 'ssdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 900 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
@@ -1481,6 +1481,8 @@ function land(world, s) {
   // reach, in her path's colour, so the whole area it hits shows (the dancers' and the Star Witch's).
   const shock = s.around && s.big && !s.arc && (s.reach ?? 0) >= 150 && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
+  // The Star Witch's party spells (Wishing Star, Star Veil) ring out over everyone they reach.
+  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });

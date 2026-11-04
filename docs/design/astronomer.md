@@ -68,3 +68,23 @@ hip, the glide trailing the staff behind her and bringing it over the top), Luna
 staff upright by her hip (not up her face), and Planetary Alignment floats down with the orrery
 lowered.
 
+
+## Footwork and effects pass (2026-11-04)
+
+The Starlight Idol treatment, in the Astronomer's calm way: she never hops, she floats.
+
+- **Travel:** her string and pool glide her forward (fling 12, conducting 10, ringed world 16,
+  stargaze 8, pirouette 14, tracing 10, gathering 12); the glide out of a run goes 62.
+- **Float instead of bounce:** the fling's arc lifts her off her toes and she drifts after the
+  planet; each conducted beat lifts her a little; she floats up on the ringed world's breath, the
+  stargaze, the pirouette, the tracing and the gathering (knees softly drawn, toes pointed:
+  `AS_FLOAT`), and the up-cast and the glide float too.
+- **No frozen ends:** instead of a held pose she drifts up and sinks slowly back like a feather
+  (`asDrift`, one slow rise and fall, never a bounce), and the ringed world's bow rises a little
+  out of itself; Ringed Planet too.
+- **Snappier, still unhurried:** her string about a tenth quicker; planets 600, ringed worlds 540;
+  Ringed Planet and Gravity Well 0.95 s, Lunar Tide 0.85 s, Planetary Alignment 2.0 s (the beam a
+  little sooner).
+- **Effects drawn to size** (game px, measured): her planet went from 10-12 px to 26-32 px; the
+  ringed world from 28 to 50 px; her hit mark from 24-34 to 42-60 px; her moons from 2-4 px specks
+  to about 10 px round her and 18 px in flight. All redrawn larger from the same art (`grown()`).
