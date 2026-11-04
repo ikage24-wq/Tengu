@@ -21,6 +21,7 @@ export const TALK_PTS = 20;
 
 export const SWEETHEARTS = {
   poppy: {
+    spot: ['sw_bakery', 0],
     dateLines: { great: "That was the best day I've had in ages. My cheeks hurt from smiling!", good: "That was so nice. Same time tomorrow? I'm joking. Unless?", okay: 'Hee, that was a little chaotic. I liked it anyway!' },
     id: 'poppy', name: 'Poppy', title: 'Sunny Baker', map: 'sprout', x: 1560, color: '#ff8fae',
     outfit: 'swbaker', date: 'cook',
@@ -54,6 +55,7 @@ export const SWEETHEARTS = {
     },
   },
   lark: {
+    spot: ['sw_poetnook', -46],
     dateLines: { great: "I'm going to write about today. All of it. Every second.", good: 'That was... really lovely. Thank you for asking me.', okay: 'It was nice just being out with you, even like that.' },
     id: 'lark', name: 'Lark', title: 'Lighthouse Poet', map: 'lagoon', x: 460, color: '#8fc8c8',
     outfit: 'swpoet', date: 'stars',
@@ -87,6 +89,7 @@ export const SWEETHEARTS = {
     },
   },
   rowan: {
+    spot: ['sw_knightpost', 58],
     dateLines: { great: "Best. Day. Ever. I'm going to tell Brann about it until he begs me to stop.", good: "That was grand! You're good company, you know that?", okay: "Ha, we'll get it right next time. I had fun anyway!" },
     id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 1000, color: '#8fb8e8',
     outfit: 'swknight', date: 'ride',
@@ -120,6 +123,7 @@ export const SWEETHEARTS = {
     },
   },
   yuzu: {
+    spot: ['sw_foxshrine', -10],
     dateLines: { great: "Okay that was SO fun. You're not allowed to be this fun. It's my job!", good: 'Hee, not bad, human. Not bad at all. Again soon?', okay: "Pfft, you were hopeless. ...I had fun though. Don't tell anyone." },
     id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 820, color: '#ff7a4a',
     outfit: 'swfox', date: 'dance',
@@ -153,6 +157,7 @@ export const SWEETHEARTS = {
     },
   },
   celeste: {
+    spot: ['sw_stargaze', 36],
     dateLines: { great: "I didn't fall asleep once. That's how much I liked it.", good: 'Mm... that was nice. The stars seemed closer.', okay: 'That was sweet. Even the sleepy parts. Especially those.' },
     id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1720, color: '#4a4aa8',
     outfit: 'swstar', date: 'stars',
@@ -186,8 +191,9 @@ export const SWEETHEARTS = {
     },
   },
   marlowe: {
+    spot: ['sw_drydock', 72],
     dateLines: { great: "Now THAT'S what I call an adventure! Best crew ever!", good: 'Not bad, first mate. Not bad at all.', okay: 'Heh, rough waters today. Still the best company on the island.' },
-    id: 'marlowe', name: 'Marlowe', title: 'Cheeky Young Sailor', map: 'harbor', x: 965, color: '#2f5fb8',
+    id: 'marlowe', name: 'Marlowe', title: 'Cheeky Young Sailor', map: 'harbor', x: 520, color: '#2f5fb8',
     outfit: 'swsailor', date: 'fish',
     look: { hairStyle: 'surfer', hairColor: '#3fb8b0', hairTip: '#bff0e8', skinTone: '#d9a07a', eyeColor: '#2f6ab8', eyeStyle: 'round', face: 'smug' },
     about: "Captain Rook's ward, fixing up an old boat on the docks. Boasts about the sea; has never sailed past the lighthouse.",

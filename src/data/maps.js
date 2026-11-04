@@ -2684,4 +2684,8 @@ const INTERIORS = {
 for (const [id, look] of Object.entries(INTERIORS)) MAPS[id].look = { ...MAPS[id].look, ...look };
 
 // The Sweethearts live in their towns (data/sweethearts.js): each stands at their own spot.
-for (const h of Object.values(SWEETHEARTS)) MAPS[h.map].npcs.push({ id: h.id, x: h.x });
+for (const h of Object.values(SWEETHEARTS)) {
+  MAPS[h.map].npcs.push({ id: h.id, x: h.x });
+  // Their own spot behind them (render/sweetspots.js).
+  (MAPS[h.map].townPieces ??= []).push([h.spot[0], h.x + h.spot[1]]);
+}

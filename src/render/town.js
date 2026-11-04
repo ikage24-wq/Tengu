@@ -3,6 +3,7 @@
 // and each NPC's own idle routine. Everything is drawn from time alone, so nothing here keeps
 // state; layouts are seeded so they never jitter.
 
+import { drawSweetSpot } from './sweetspots.js';
 import { drawIslandPiece } from './island.js';
 import { drawMount } from './mounts.js';
 import { MOUNTS } from '../data/mounts.js';
@@ -559,6 +560,8 @@ export function drawStreet(ctx, map, cam, width, time) {
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your island's own pieces (render/island.js).
     if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // A Sweetheart's own spot (render/sweetspots.js).
+    if (drawSweetSpot(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;
     if (x < -160 || x > width + 160) continue;
     const gy = ground(wx);
@@ -887,7 +890,164 @@ function mallet(ctx, x, y, a) {
 }
 
 const cloverBun = {};
+// Little props for the Sweethearts' bits, drawn at their hands.
+function prop(ctx, kind, x, y, k = 1, time = 0) {
+  if (k <= 0.02) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  if (kind === 'dough') {
+    ctx.fillStyle = '#fff0d8';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4, 2.6, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-2, -1.6, 1.4, 0.8);
+  } else if (kind === 'tart') {
+    ctx.fillStyle = '#e0a060';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 2.6, 1.4, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ff6b8a';
+    ctx.beginPath();
+    ctx.arc(0, -1, 1, 0, TAU);
+    ctx.fill();
+  } else if (kind === 'notebook') {
+    ctx.fillStyle = '#5a7ab8';
+    ctx.fillRect(-4, -3, 8, 6);
+    ctx.fillStyle = '#fffaf0';
+    ctx.fillRect(-3.4, -2.4, 6.8, 4.8);
+    ctx.strokeStyle = '#a8a0c0';
+    ctx.lineWidth = 0.4;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-2.6, -1.2 + i * 1.3);
+      ctx.lineTo(2.6 - (i === 2 ? (Math.sin(time * 3) + 1) * 1.2 : 0), -1.2 + i * 1.3);
+      ctx.stroke();
+    }
+  } else if (kind === 'cloth') {
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 2.6, 1.8, 0.4, 0, TAU);
+    ctx.fill();
+  } else if (kind === 'daisy') {
+    ctx.strokeStyle = '#5fbf7a';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -5);
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 6; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.cos((i / 6) * TAU) * 1.4, -5 + Math.sin((i / 6) * TAU) * 1.4, 0.9, 0, TAU);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.arc(0, -5, 0.8, 0, TAU);
+    ctx.fill();
+  } else if (kind === 'spyglass') {
+    ctx.fillStyle = '#c8902a';
+    ctx.fillRect(-1, -1.2, 9, 2.4);
+    ctx.fillStyle = '#ffd36b';
+    ctx.fillRect(-1, -1.2, 9, 0.8);
+    ctx.fillStyle = '#8a5a1a';
+    ctx.fillRect(7, -1.6, 2, 3.2);
+  } else if (kind === 'rope') {
+    ctx.strokeStyle = '#e8c890';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.2, 0, TAU * 0.85 + Math.sin(time * 4) * 0.4);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// Celeste dozing: z's drifting up and fading.
+function zzz(ctx, x, y, time) {
+  for (let i = 0; i < 3; i++) {
+    const k = (time * 0.5 + i / 3) % 1;
+    ctx.save();
+    ctx.globalAlpha = (1 - k) * 0.9;
+    ctx.fillStyle = '#c9b6ff';
+    ctx.font = `bold ${5 + k * 3}px sans-serif`;
+    ctx.fillText('z', x + 8 + k * 8, y - 44 - k * 14);
+    ctx.restore();
+  }
+}
+
 const ROUTINES = {
+  // ----- The Sweethearts (data/sweethearts.js) -----
+  // Poppy: kneading dough on the counter, sneaking a taste of a tart, a happy twirl.
+  poppy(t) {
+    const b = bitAt(t, [['knead', 3], ['taste', 2.2], ['twirl', 1.4]], 2);
+    if (!b) return { face: 'grin' };
+    const k = inOut(b.u);
+    if (b.kind === 'knead') {
+      const push = Math.abs(Math.sin(b.s * 5));
+      return { face: 'determined', rig: { frontArm: arm(3 * k, (1 + push * 2) * k), backArm: arm(3.6 * k, (1 + push * 2) * k), tilt: (4 + push * 3) * k, hy: h(push * 0.6 * k) }, hands: (ctx, f) => prop(ctx, 'dough', f[0] + 1, f[1] + 1, k) };
+    }
+    if (b.kind === 'taste') {
+      const bite = bump(b.u, 0.45, 0.6);
+      return { face: bite > 0.2 ? 'love' : 'excited', rig: { frontArm: arm(1.6 * k, -7 * k), hy: h(-0.4 * k) }, hands: (ctx, f) => prop(ctx, 'tart', f[0], f[1] - 1, k * (1 - bump(b.u, 0.5, 0.95) * 0.4)) };
+    }
+    return { pose: 'cheer', progress: b.u, face: 'grin' };
+  },
+  // Lark: writing a line in her notebook (head down), looking out to sea with a hand on her scarf,
+  // hiding shyly behind her sleeves.
+  lark(t) {
+    const b = bitAt(t, [['write', 3.4], ['gaze', 3], ['hide', 1.8]], 2.4);
+    if (!b) return { face: 'shy' };
+    const k = inOut(b.u);
+    if (b.kind === 'write') return { face: 'lookdown', rig: { frontArm: arm(2.4 * k, -2.6 * k), backArm: arm(2.6 * k, -2.4 * k), hy: h(0.8 * k), tilt: 3 * k }, hands: (ctx, f, bk) => prop(ctx, 'notebook', (f[0] + bk[0]) / 2, (f[1] + bk[1]) / 2 - 1, k, b.s) };
+    if (b.kind === 'gaze') return { facing: -1, face: 'smile', rig: { backArm: arm(1.4 * k, -6 * k), hy: h(-0.5 * k), tilt: -2 * k } };
+    return { face: 'shy', rig: { frontArm: arm(1.2 * k, -9 * k), backArm: arm(1.6 * k, -9 * k), squat: Math.round(k), hy: h(1 * k) } };
+  },
+  // Rowan: polishing his sword's guard with a cloth, a big stretch, stopping to smell a daisy.
+  rowan(t) {
+    const b = bitAt(t, [['polish', 3], ['stretch', 2], ['sniff', 2.4]], 2.2);
+    if (!b) return { face: 'smile' };
+    const k = inOut(b.u);
+    if (b.kind === 'polish') {
+      const rub = Math.sin(b.s * 9);
+      return { facing: 1, face: 'determined', rig: { frontArm: arm((4 + rub * 1.4) * k, -3 * k), tilt: 4 * k }, hands: (ctx, f) => prop(ctx, 'cloth', f[0], f[1], k) };
+    }
+    if (b.kind === 'stretch') return { face: 'sleepy', rig: { frontArm: arm(1 * k, -13 * k), backArm: arm(-1 * k, -13 * k), hy: h(-1.2 * k), tilt: -4 * k } };
+    return { face: 'love', rig: { frontArm: arm(1.4 * k, -7 * k), hy: h(0.4 * k), tilt: 3 * k }, hands: (ctx, f) => prop(ctx, 'daisy', f[0] + 0.4, f[1], k) };
+  },
+  // Yuzu: crouching to pounce (and a little hop), peeking out with a grin, chasing her own tail.
+  yuzu(t) {
+    const b = bitAt(t, [['pounce', 1.6], ['peek', 2], ['tail', 1.8]], 1.8);
+    if (!b) return { face: 'playful' };
+    const k = inOut(b.u, 0.1, 0.9);
+    if (b.kind === 'pounce') {
+      const hop = bump(b.u, 0.55, 0.85);
+      return { face: hop > 0.1 ? 'excited' : 'smugcat', lift: hop * 10, rig: { squat: hop > 0.1 ? 0 : Math.round(2 * k), frontArm: arm(3 * k, (-1 - hop * 6) * k), backArm: arm(3 * k, (-1 - hop * 6) * k), tilt: 6 * k } };
+    }
+    if (b.kind === 'peek') return { face: 'bleh', rig: { tilt: -8 * k, hx: h(-1.2 * k), backArm: arm(2 * k, -6 * k) } };
+    // Round and round after her tail: a clean flip each half turn.
+    return { facing: Math.floor(b.s * 4) % 2 ? -1 : 1, face: 'excited', rig: { squat: 1, tilt: 4 * k } };
+  },
+  // Celeste: dozing off on her feet (z's), squinting through a curled hand like a telescope, counting
+  // stars with a finger.
+  celeste(t) {
+    const b = bitAt(t, [['doze', 3.6], ['scope', 2.4], ['count', 2.6]], 2.4);
+    if (!b) return { face: 'sleepy', extra: (ctx, x, y, time) => zzz(ctx, x, y, time) };
+    const k = inOut(b.u);
+    if (b.kind === 'doze') return { face: 'sleepy', rig: { tilt: 7 * k, hx: h(0.6 * k), hy: h(1 * k) }, extra: (ctx, x, y, time) => zzz(ctx, x, y, time) };
+    if (b.kind === 'scope') return { face: 'excited', rig: { frontArm: arm(2 * k, -9.5 * k), hy: h(-0.6 * k), tilt: -5 * k } };
+    const point = Math.floor(b.s * 2.4) % 3;
+    return { face: 'smile', rig: { frontArm: arm((1 + point * 1.4) * k, -12 * k), hy: h(-0.4 * k), tilt: -4 * k } };
+  },
+  // Marlowe: scanning the sea with his spyglass, a swagger with his hands on his hips, tying a knot.
+  marlowe(t) {
+    const b = bitAt(t, [['spy', 2.8], ['swagger', 2], ['knot', 2.6]], 2);
+    if (!b) return { face: 'smug' };
+    const k = inOut(b.u);
+    if (b.kind === 'spy') return { facing: -1, face: 'excited', rig: { frontArm: arm(2.4 * k, -9 * k), tilt: -3 * k }, hands: (ctx, f) => prop(ctx, 'spyglass', f[0], f[1] - 1, k) };
+    if (b.kind === 'swagger') return { face: 'toldyou', rig: { frontArm: arm(-1.6 * k, 1 * k), backArm: arm(-1.6 * k, 1 * k), tilt: -4 * k, hy: h(-0.6 * k) } };
+    return { face: 'determined', rig: { frontArm: arm(2.6 * k, -2 * k), backArm: arm(2.8 * k, -2 * k), hy: h(0.6 * k), tilt: 4 * k }, hands: (ctx, f, bk) => prop(ctx, 'rope', (f[0] + bk[0]) / 2, (f[1] + bk[1]) / 2, k, t) };
+  },
   // Shelly, the hermit crab carpenter on your island: tapping away with her mallet, measuring with
   // her claws held apart and squinting, and (shy, when it's quiet) tucking down into her shell and
   // peeking out again. Her claws click now and then.
