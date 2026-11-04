@@ -1152,7 +1152,7 @@ Object.assign(MAPS, {
     ],
     // The chandelier's chain: climb it to the ledge in the dome (the room's secret).
     ropes: [{ x: 750, top: 170, bottom: G }],
-    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN },
+    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'manorball' },
     chandelier: { x: 750 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor2', toPortal: 'east' },
@@ -1182,7 +1182,7 @@ Object.assign(MAPS, {
         { name: 'The Rare Books', color: '#8fd8e8', from: 450, mobs: [] },
       ],
     }),
-    look: { sky: ['#20183a', '#3e2e5e', '#8a6aa0'], far: '#3a2a4a', mid: '#6a4a5a', midTrim: '#ffd36b', ...MANOR_IN },
+    look: { sky: ['#20183a', '#3e2e5e', '#8a6aa0'], far: '#3a2a4a', mid: '#6a4a5a', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'library' },
     task: { kind: 'light', object: 'book', label: 'Catch the lost books' },
     storms: true,
     portals: [
@@ -1210,7 +1210,7 @@ Object.assign(MAPS, {
     width: 3600, height: 420, groundY: G,
     platforms: [{ x: 640, y: 320, w: 80 }, { x: 1460, y: 320, w: 80 }, { x: 2360, y: 320, w: 80 }, { x: 3200, y: 300, w: 90 }, { x: 3330, y: 230, w: 90 }],
     ropes: [],
-    look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN },
+    look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN, skyline: 'hallway' },
     task: { kind: 'light', object: 'lever', label: 'Pull the door levers' },
     chase: { start: 300, from: -40, to: 3000, speed: 80, speedUp: 4, top: 128, damage: 120, plates: 3.6 },
     doors: [{ x: 1120, lever: 0 }, { x: 2040, lever: 1 }, { x: 2860, lever: 2 }],
@@ -1488,7 +1488,7 @@ Object.assign(MAPS, {
         { name: 'The Prize Booths', color: '#7fd8ff', from: 1800, mobs: [] },
       ],
     }),
-    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT },
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'midway' },
     task: { kind: 'light', object: 'windbox', label: 'Wind the music boxes' },
     portals: [
       { id: 'out', x: 50, y: 600, to: 'carnival_gate', toPortal: 'door', label: 'Leave' },
@@ -1552,7 +1552,7 @@ Object.assign(MAPS, {
       { x: 1860, y: 300, w: 200 }, { x: 2280, y: 300, w: 180 }, { x: 1180, y: 220, w: 120 },
     ],
     ropes: [{ x: 1240, top: 220, bottom: G }],
-    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT },
+    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT, skyline: 'coaster' },
     coaster: { every: 9, speed: 520, damage: 180 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival2', toPortal: 'east' },
@@ -1614,7 +1614,7 @@ Object.assign(MAPS, {
     platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
     // The wheel's spoke ladder, up to a car at its hub (the room's secret).
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT },
+    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'ferris' },
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival5', toPortal: 'east' },
       { id: 'out', x: 1660, y: G, to: 'carnival_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -1934,7 +1934,7 @@ Object.assign(MAPS, {
     width: 2000, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 160 }, { x: 900, y: 300, w: 200 }, { x: 1680, y: 300, w: 160 }, { x: 950, y: 220, w: 100 }],
     ropes: [{ x: 1000, top: 220, bottom: G }],
-    look: { sky: ['#ff8a6a', '#ffb88a', '#ffe8c0'], far: '#c86a5a', mid: '#e08a6a', midTrim: '#ffffff', ...SUGAR, skyline: 'candy' },
+    look: { sky: ['#ff8a6a', '#ffb88a', '#ffe8c0'], far: '#c86a5a', mid: '#e08a6a', midTrim: '#ffffff', ...SUGAR, skyline: 'ramparts', material: 'gingerbread', props: ['barrel', 'flower', 'crate', 'flower'] },
     portals: [
       { id: 'west', x: 40, y: G, to: 'volcano4', toPortal: 'east' },
       { id: 'east', x: 1960, y: G, to: 'volcano6', toPortal: 'west', sealed: true },
@@ -1953,7 +1953,7 @@ Object.assign(MAPS, {
       { x: 790, y: 220, w: 120 },
     ],
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater' },
+    look: { sky: ['#5a1a2a', '#c84a4a', '#ffb06a'], far: '#7a2a2a', mid: '#a04040', midTrim: '#ffd36b', ...SUGAR, skyline: 'crater', material: 'rockcandy', critters: [], props: ['crystal', 'rock', 'crystal'] },
     flood: { every: 18, warn: 3, last: 6, damage: 80, color: 'caramel', name: 'The caramel rises!' },
     lateFlood: true,
     portals: [
@@ -2148,7 +2148,7 @@ Object.assign(MAPS, {
   cloudcatch_pier: {
     id: 'cloudcatch_pier', name: 'Cloudcatch Pier', theme: 'skywhale', town: 'grove', world: { x: 400, y: 30 }, music: 'skywhale',
     width: 1200, height: 420, groundY: G,
-    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', skyline: 'whale', material: 'stage', critters: ['gull'], drift: 'sparkle', face: 'sun' },
+    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', skyline: 'whale', material: 'dockwood', critters: ['gull'], drift: 'sparkle', face: 'sun' },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
     ropes: [],
     deco: [['signpost', 160]],
@@ -2170,7 +2170,7 @@ Object.assign(MAPS, {
       { x: 1180, y: 220, w: 140 }, { x: 2040, y: 300, w: 240 },
     ],
     ropes: [{ x: 390, top: 300, bottom: G }, { x: 1250, top: 220, bottom: G }, { x: 1750, top: 300, bottom: G }, { x: 2160, top: 300, bottom: G }],
-    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', ...WHALE, skyline: 'tail', material: 'stage' },
+    look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', ...WHALE, skyline: 'tail', material: 'dockwood' },
     task: { kind: 'light', object: 'mooring', label: 'Tie down the moorings' },
     tailflip: { every: 13, push: 150 },
     portals: [
@@ -2243,7 +2243,7 @@ Object.assign(MAPS, {
     width: 1700, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 200 }, { x: 1340, y: 300, w: 200 }, { x: 620, y: 230, w: 120 }, { x: 960, y: 230, w: 120 }],
     ropes: [{ x: 260, top: 300, bottom: G }, { x: 1440, top: 300, bottom: G }, { x: 650, top: 230, bottom: G }, { x: 1050, top: 230, bottom: G }],
-    look: { sky: ['#4a7ad0', '#8ab8f0', '#ffe0c0'], far: '#6a90d0', mid: '#98c0ec', midTrim: '#ffffff', ...WHALE, skyline: 'deck', material: 'stage' },
+    look: { sky: ['#4a7ad0', '#8ab8f0', '#ffe0c0'], far: '#6a90d0', mid: '#98c0ec', midTrim: '#ffffff', ...WHALE, skyline: 'deck', material: 'dockwood' },
     geysers: [{ x: 850, w: 80, every: 9, up: 190 }],
     portals: [
       { id: 'west', x: 40, y: G, to: 'skywhale3', toPortal: 'east' },

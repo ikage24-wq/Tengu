@@ -151,7 +151,7 @@ export const THEMES = {
   skywhale: {
     sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], sun: '#fffbe6', far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff',
     ground: '#6a8ac0', groundDeep: '#4a6a9a', trim: '#eaf6ff', ledge: '#e8b080', ledgeTrim: '#ffd36b', ledgeShade: '#8a5a3a',
-    skyline: 'whaleback', props: ['cloudpuff', 'tuft'],
+    skyline: 'whaleback', props: ['cloudpuff', 'cloudpuff', 'pebble'],
     critters: ['gull'], drift: 'sparkle', face: 'sun',
   },
   // The Dream Theatre: a dusky violet evening over the clouds, gold marquee lights, velvet.
@@ -1144,11 +1144,29 @@ function drawFar(ctx, t, cam, width, y0, time) {
     case 'manorhall':
       drawFarManorHall(ctx, t, cam, width, y0, time);
       break;
+    case 'manorball':
+      drawFarManorBall(ctx, t, cam, width, y0, time);
+      break;
+    case 'library':
+      drawFarLibrary(ctx, t, cam, width, y0, time);
+      break;
+    case 'hallway':
+      drawFarHallway(ctx, t, cam, width, y0, time);
+      break;
     case 'reef':
       drawFarReef(ctx, t, cam, width, y0, time);
       break;
     case 'carnival':
       drawFarCarnival(ctx, t, cam, width, y0, time);
+      break;
+    case 'midway':
+      drawFarMidway(ctx, t, cam, width, y0, time);
+      break;
+    case 'coaster':
+      drawFarCoaster(ctx, t, cam, width, y0, time);
+      break;
+    case 'ferris':
+      drawFarFerris(ctx, t, cam, width, y0, time);
       break;
     case 'stars':
       drawFarStars(ctx, t, cam, width, y0, time);
@@ -1156,6 +1174,9 @@ function drawFar(ctx, t, cam, width, y0, time) {
     case 'candy':
     case 'crater':
       drawFarCandy(ctx, t, cam, width, y0, time, t.skyline === 'crater');
+      break;
+    case 'ramparts':
+      drawFarRamparts(ctx, t, cam, width, y0, time);
       break;
     case 'candycave':
     case 'forge':
@@ -1537,6 +1558,995 @@ function hallPortraitArt(who, look) {
       E(18, 46, 12, 10, shade(bg, -16)), E(18, 22, 8, 9, '#fff0e6'), E(18, 15, 9, 6, hair),
       E(15 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), E(21 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), R(16, 27, 4, 1, '#d86a8a'),
     ];
+  });
+}
+
+// ---------- Each room of the Manor and the Carnival its own backdrop ----------
+// (The quality pass: the Ballroom, the Library and the Hallway no longer share the Gallery's
+// windows and portraits, and the Midway, the Coaster Yard and the Ferris Wheel no longer share the
+// Gates' far view: each room shows what it is.)
+
+const GILT = '#e8c068';
+const GILT_D = '#a87a36';
+// A flame on a candle wick at (x, y), flickering on its own beat.
+function candleFlame(ctx, x, y, time, i, r = 1.6) {
+  ctx.fillStyle = '#ffb35a';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 1.7 + Math.sin(time * 9 + i * 1.3) * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff2c0';
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * 0.4, r * 0.5, r * 0.9, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// The Ballroom, far back: a wall of tall gilt mirrors, each catching the chandelier's light in a
+// sheen that slides across it, pilasters between, rose swags hung over the tops.
+function drawFarManorBall(ctx, t, cam, width, y0, time) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  const gilt = mix(GILT, t.far, 0.35);
+  const giltD = mix(GILT_D, t.far, 0.35);
+  repeat(cam.x, 0.2, 150, width, (i, x) => {
+    const mx = x + 40;
+    const top = y0 - 200;
+    const mw = 70;
+    // Pilaster between mirrors, fluted, with a gilt capital.
+    ctx.fillStyle = shade(t.far, 10);
+    ctx.fillRect(snap(x + 128), snap(top - 20), 16, y0 - top + 10);
+    ctx.fillStyle = shade(t.far, -6);
+    for (let f = 0; f < 3; f++) ctx.fillRect(snap(x + 131 + f * 4), snap(top), 1.5, y0 - top - 30);
+    ctx.fillStyle = gilt;
+    ctx.fillRect(snap(x + 124), snap(top - 26), 24, 8);
+    // The mirror: a gilt frame round an arched pane of soft moonlit glass.
+    const pane = (inset) => {
+      ctx.beginPath();
+      ctx.moveTo(mx + inset, y0 - 20);
+      ctx.lineTo(mx + inset, top + 35);
+      ctx.arc(mx + mw / 2, top + 35, mw / 2 - inset, Math.PI, 0);
+      ctx.lineTo(mx + mw - inset, y0 - 20);
+      ctx.closePath();
+    };
+    pane(-5);
+    ctx.fillStyle = giltD;
+    ctx.fill();
+    pane(-3);
+    ctx.fillStyle = gilt;
+    ctx.fill();
+    pane(2);
+    const g = ctx.createLinearGradient(mx, top, mx + mw, y0);
+    g.addColorStop(0, mix(t.sky[2], '#ffffff', 0.35));
+    g.addColorStop(1, mix(t.far, t.sky[1], 0.5));
+    ctx.fillStyle = g;
+    ctx.fill();
+    // The sheen sliding across the glass, and the chandelier's lights twinkling in it.
+    ctx.save();
+    pane(2);
+    ctx.clip();
+    const u = ((time * 0.12 + hash(i)) % 1.4) - 0.2;
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(mx + u * 140 - 40, top);
+    ctx.lineTo(mx + u * 140 - 22, top);
+    ctx.lineTo(mx + u * 140 - 62, y0);
+    ctx.lineTo(mx + u * 140 - 80, y0);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    for (let k = 0; k < 4; k++) {
+      const tw = 0.5 + 0.5 * Math.sin(time * 2.4 + k * 1.7 + i);
+      ctx.fillStyle = '#fff6d0';
+      ctx.globalAlpha = tw;
+      ctx.fillRect(snap(mx + 14 + hash(i + k) * (mw - 28)), snap(top + 30 + hash(i + k + 5) * 80), 2, 2);
+    }
+    ctx.restore();
+    // A rose swag draped from this mirror's crown to the next.
+    ctx.strokeStyle = mix('#e07aa8', t.far, 0.25);
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(mx + mw / 2, top - 6);
+    ctx.quadraticCurveTo(mx + mw / 2 + 75, top + 30 + Math.sin(time * 0.6 + i) * 2, mx + mw / 2 + 150, top - 6);
+    ctx.stroke();
+    ctx.fillStyle = gilt;
+    ctx.beginPath();
+    ctx.arc(mx + mw / 2, top - 8, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.fillStyle = shade(t.far, -8);
+  ctx.fillRect(0, snap(y0 - 24), width, 600);
+  ctx.fillStyle = gilt;
+  ctx.fillRect(0, snap(y0 - 24), width, 2);
+}
+// The Ballroom's middle plane: gilt candelabra, gilt chairs with rose cushions along the wall
+// waiting for the dancers, and now and then a harp.
+function drawMidManorBall(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 160, width, (i, x) => {
+    const s = hash(i + 4);
+    const cx = x + 80;
+    if (s < 0.5) {
+      // A candelabrum: a tall gilt stem on a foot, five arms of candles.
+      ctx.fillStyle = GILT_D;
+      ctx.fillRect(snap(cx - 1.5), snap(y0 - 70), 3, 74);
+      ctx.beginPath();
+      ctx.ellipse(cx, y0 + 2, 9, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = GILT;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - 16, y0 - 82);
+      ctx.quadraticCurveTo(cx - 16, y0 - 68, cx, y0 - 68);
+      ctx.quadraticCurveTo(cx + 16, y0 - 68, cx + 16, y0 - 82);
+      ctx.moveTo(cx - 8, y0 - 86);
+      ctx.quadraticCurveTo(cx - 8, y0 - 74, cx, y0 - 74);
+      ctx.quadraticCurveTo(cx + 8, y0 - 74, cx + 8, y0 - 86);
+      ctx.stroke();
+      for (const [dx, dy] of [[-16, -82], [-8, -86], [0, -90], [8, -86], [16, -82]]) {
+        ctx.fillStyle = '#fff6e6';
+        ctx.fillRect(snap(cx + dx - 1.5), snap(y0 + dy - 7), 3, 7);
+        candleFlame(ctx, cx + dx, y0 + dy - 10, time, i * 5 + dx);
+      }
+      glow(ctx, cx, y0 - 92, 34, '#ffd27a', 0.3 + 0.08 * Math.sin(time * 5 + i));
+    } else if (s < 0.85) {
+      // Two gilt chairs side by side, rose seats.
+      for (const dx of [-14, 14]) {
+        const ch = cx + dx;
+        ctx.fillStyle = GILT_D;
+        ctx.fillRect(snap(ch - 7), snap(y0 - 14), 2, 18);
+        ctx.fillRect(snap(ch + 5), snap(y0 - 14), 2, 18);
+        ctx.fillStyle = GILT;
+        ctx.beginPath();
+        ctx.roundRect(ch - 7, y0 - 38, 14, 22, [7, 7, 2, 2]);
+        ctx.fill();
+        ctx.fillStyle = '#e07aa8';
+        ctx.beginPath();
+        ctx.roundRect(ch - 5, y0 - 35, 10, 17, [5, 5, 1, 1]);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(ch - 8, y0 - 17, 16, 5, 2);
+        ctx.fill();
+      }
+    } else {
+      // A golden harp, its strings shimmering.
+      ctx.strokeStyle = GILT;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 10, y0 + 2);
+      ctx.lineTo(cx - 10, y0 - 70);
+      ctx.quadraticCurveTo(cx + 8, y0 - 80, cx + 16, y0 - 54);
+      ctx.lineTo(cx + 4, y0 + 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#fff6dc';
+      ctx.lineWidth = 0.8;
+      for (let k = 1; k < 6; k++) {
+        ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 6 + k);
+        ctx.beginPath();
+        ctx.moveTo(cx - 10 + k * 2.4, y0 - 70 + k * 1.5);
+        ctx.lineTo(cx - 10 + k * 2.4, y0 - k * 1.2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  });
+}
+
+// The Library, far back: bookcases floor to ceiling, every shelf packed with spines of every
+// colour (some leaning, a gap here and there), a rolling ladder on its rail, and a round window
+// of moonlight between the bays now and then.
+function drawFarLibrary(ctx, t, cam, width, y0, time) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  const wood = mix('#7a4a3a', t.far, 0.3);
+  const woodD = mix('#4a2a2a', t.far, 0.3);
+  const spines = ['#c84a5a', '#4a7ac8', '#5aa878', '#e8b44a', '#8a5ac8', '#e07a4a', '#3a8a8a', '#c8a07a'];
+  const top = y0 - 230;
+  const shelf = 30;
+  repeat(cam.x, 0.2, 130, width, (i, x) => {
+    if (Math.abs(i) % 5 === 3) {
+      // A round window between bays, moonlight falling from it.
+      const wx = x + 65;
+      const wy = y0 - 140;
+      ctx.fillStyle = woodD;
+      ctx.beginPath();
+      ctx.arc(wx, wy, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = mix(t.sky[2], '#ffffff', 0.3);
+      ctx.beginPath();
+      ctx.arc(wx, wy, 29, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = woodD;
+      ctx.fillRect(snap(wx - 1.5), snap(wy - 29), 3, 58);
+      ctx.fillRect(snap(wx - 29), snap(wy - 1.5), 58, 3);
+      ctx.save();
+      ctx.globalAlpha = 0.1 + 0.03 * Math.sin(time * 0.7 + i);
+      ctx.fillStyle = '#fff6dc';
+      ctx.beginPath();
+      ctx.moveTo(wx - 28, wy);
+      ctx.lineTo(wx + 28, wy);
+      ctx.lineTo(wx + 90, y0 + 40);
+      ctx.lineTo(wx + 10, y0 + 40);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
+    // The case: sides, a crown, shelves; then the books on each shelf.
+    ctx.fillStyle = woodD;
+    ctx.fillRect(snap(x + 4), snap(top), 122, y0 - top + 10);
+    ctx.fillStyle = wood;
+    ctx.fillRect(snap(x + 4), snap(top - 10), 122, 10);
+    ctx.fillRect(snap(x + 4), snap(top), 6, y0 - top + 10);
+    ctx.fillRect(snap(x + 120), snap(top), 6, y0 - top + 10);
+    for (let s = 0; top + s * shelf < y0 - 4; s++) {
+      const sy = top + s * shelf;
+      let bx = x + 12;
+      let n = 0;
+      while (bx < x + 116) {
+        const k = i * 97 + s * 13 + n++;
+        const bw = 4 + Math.floor(hash(k) * 5);
+        if (bx + bw > x + 118) break;
+        if (hash(k + 50) > 0.93) {
+          bx += bw + 3;
+          continue;
+        }
+        const bh = shelf - 8 - hash(k + 3) * 8;
+        const c = mix(spines[Math.floor(hash(k + 7) * spines.length)], t.far, 0.32);
+        const lean = hash(k + 60) > 0.94;
+        ctx.fillStyle = c;
+        if (lean) {
+          ctx.beginPath();
+          ctx.moveTo(bx, sy + shelf - 3);
+          ctx.lineTo(bx + bw, sy + shelf - 3);
+          ctx.lineTo(bx + bw + 6, sy + shelf - 3 - bh);
+          ctx.lineTo(bx + 6, sy + shelf - 3 - bh);
+          ctx.fill();
+          bx += bw + 6;
+          continue;
+        }
+        ctx.fillRect(snap(bx), snap(sy + shelf - 3 - bh), bw, bh);
+        ctx.fillStyle = mix(c, '#fff0c8', 0.45);
+        ctx.fillRect(snap(bx), snap(sy + shelf - 3 - bh + 3), bw, 1.2);
+        ctx.fillRect(snap(bx), snap(sy + shelf - 8), bw, 1.2);
+        bx += bw + 0.5;
+      }
+      ctx.fillStyle = wood;
+      ctx.fillRect(snap(x + 8), snap(sy + shelf - 3), 114, 4);
+    }
+  });
+  // The ladder rail along the top, and a rolling ladder leaning on it.
+  ctx.fillStyle = mix(GILT_D, t.far, 0.2);
+  ctx.fillRect(0, snap(top + 18), width, 3);
+  repeat(cam.x, 0.2, 520, width, (i, x) => {
+    const lx = x + 200 + hash(i) * 200;
+    ctx.strokeStyle = mix('#a87050', t.far, 0.2);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(lx, top + 18);
+    ctx.lineTo(lx + 40, y0);
+    ctx.moveTo(lx + 22, top + 18);
+    ctx.lineTo(lx + 62, y0);
+    ctx.stroke();
+    ctx.lineWidth = 2;
+    for (let r = 1; r < 9; r++) {
+      const f = r / 9;
+      ctx.beginPath();
+      ctx.moveTo(lx + 40 * f, top + 18 + (y0 - top - 18) * f);
+      ctx.lineTo(lx + 22 + 40 * f, top + 18 + (y0 - top - 18) * f);
+      ctx.stroke();
+    }
+  });
+}
+// The Library's middle plane: reading tables under green lamps, a great globe turning on its
+// stand, books piled up, and a book or two fluttering loose along the shelves.
+function drawMidLibrary(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 200, width, (i, x) => {
+    const s = hash(i + 4);
+    const cx = x + 100;
+    if (s < 0.45) {
+      // A reading table with a banker's lamp and a pile of books.
+      ctx.fillStyle = '#6a3a2a';
+      ctx.fillRect(snap(cx - 30), snap(y0 - 28), 60, 6);
+      ctx.fillRect(snap(cx - 26), snap(y0 - 22), 4, 26);
+      ctx.fillRect(snap(cx + 22), snap(y0 - 22), 4, 26);
+      ctx.fillStyle = '#c8a050';
+      ctx.fillRect(snap(cx - 12), snap(y0 - 48), 2, 20);
+      ctx.fillStyle = '#3aa070';
+      ctx.beginPath();
+      ctx.ellipse(cx - 11, y0 - 48, 10, 5, 0, Math.PI, 0);
+      ctx.fill();
+      glow(ctx, cx - 11, y0 - 38, 28, '#ffe6a0', 0.35 + 0.05 * Math.sin(time * 3 + i));
+      for (let b = 0; b < 3; b++) {
+        ctx.fillStyle = ['#c84a5a', '#4a7ac8', '#e8b44a'][b];
+        ctx.fillRect(snap(cx + 6 + b), snap(y0 - 34 - b * 4), 16 - b * 2, 4);
+      }
+    } else if (s < 0.7) {
+      // The globe on its stand, its lands turning slowly.
+      ctx.fillStyle = '#8a5a3a';
+      ctx.fillRect(snap(cx - 1.5), snap(y0 - 24), 3, 28);
+      ctx.fillRect(snap(cx - 10), snap(y0), 20, 4);
+      ctx.fillStyle = '#7ac0e0';
+      ctx.beginPath();
+      ctx.arc(cx, y0 - 40, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, y0 - 40, 16, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.fillStyle = '#8ad08a';
+      const u = (time * 6 + i * 40) % 64;
+      for (const [ox, oy, rx, ry] of [[0, -6, 7, 4], [20, 4, 6, 6], [40, -2, 9, 4]]) {
+        for (const w of [-64, 0]) {
+          ctx.beginPath();
+          ctx.ellipse(cx - 32 + ((ox + u) % 64) + w + 32, y0 - 40 + oy, rx, ry, 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+      ctx.strokeStyle = GILT;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(cx, y0 - 40, 19, Math.PI * 0.6, Math.PI * 2.4);
+      ctx.stroke();
+    } else {
+      // An armchair, deep green, a book left open on its arm.
+      ctx.fillStyle = '#2f7a5a';
+      ctx.beginPath();
+      ctx.roundRect(cx - 18, y0 - 44, 36, 34, 10);
+      ctx.fill();
+      ctx.fillStyle = '#3a9a6e';
+      ctx.beginPath();
+      ctx.roundRect(cx - 24, y0 - 24, 48, 22, 8);
+      ctx.fill();
+      ctx.fillStyle = '#fff4dc';
+      ctx.beginPath();
+      ctx.moveTo(cx + 14, y0 - 26);
+      ctx.lineTo(cx + 20, y0 - 30);
+      ctx.lineTo(cx + 26, y0 - 26);
+      ctx.lineTo(cx + 20, y0 - 24);
+      ctx.fill();
+    }
+  });
+  // A loose book fluttering along, wings beating, its path from its own place in the room.
+  for (let k = 0; k < 2; k++) {
+    const u = (time * 0.05 + k * 0.5) % 1;
+    const bx = ((k * 431 + u * width * 1.6 - cam.x * 0.45) % (width + 100) + width + 100) % (width + 100) - 50;
+    const by = y0 - 120 - k * 40 + Math.sin(time * 1.3 + k) * 14;
+    const f = Math.sin(time * 10 + k) * 5;
+    ctx.fillStyle = ['#c84a5a', '#4a7ac8'][k];
+    ctx.beginPath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx - 9, by - 3 - f);
+    ctx.lineTo(bx - 8, by + 4 - f * 0.4);
+    ctx.closePath();
+    ctx.moveTo(bx, by);
+    ctx.lineTo(bx + 9, by - 3 - f);
+    ctx.lineTo(bx + 8, by + 4 - f * 0.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fff4dc';
+    ctx.fillRect(snap(bx - 0.5), snap(by - 2), 1.5, 6);
+  }
+}
+
+// The Endless Hallway, far back: striped wallpaper with little damask dots, a picture rail and
+// panelled wainscot, tall doors with glowing fanlights, and sconces flickering between them.
+function drawFarHallway(ctx, t, cam, width, y0, time) {
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, 0, width, 600);
+  const stripe = shade(t.far, 7);
+  repeat(cam.x, 0.2, 24, width, (i, x) => {
+    ctx.fillStyle = stripe;
+    ctx.fillRect(snap(x), 0, 10, y0);
+    ctx.fillStyle = mix(t.far, t.midTrim, 0.25);
+    for (let y = 20 + (Math.abs(i) % 2) * 14; y < y0 - 40; y += 28) ctx.fillRect(snap(x + 16), snap(y), 2, 2);
+  });
+  ctx.fillStyle = mix(GILT_D, t.far, 0.3);
+  ctx.fillRect(0, snap(y0 - 200), width, 3);
+  repeat(cam.x, 0.2, 360, width, (i, x) => {
+    const dx = x + 120;
+    // The door: a frame, two tall panels, a brass knob, and a fanlight warm from the room beyond.
+    ctx.fillStyle = shade(t.far, -16);
+    ctx.fillRect(snap(dx - 6), snap(y0 - 156), 72, 160);
+    ctx.fillStyle = mix('#7a4a5a', t.far, 0.3);
+    ctx.fillRect(snap(dx), snap(y0 - 130), 60, 134);
+    ctx.fillStyle = mix('#8a5a6a', t.far, 0.3);
+    ctx.fillRect(snap(dx + 6), snap(y0 - 122), 21, 50);
+    ctx.fillRect(snap(dx + 33), snap(y0 - 122), 21, 50);
+    ctx.fillRect(snap(dx + 6), snap(y0 - 62), 21, 54);
+    ctx.fillRect(snap(dx + 33), snap(y0 - 62), 21, 54);
+    ctx.fillStyle = GILT;
+    ctx.beginPath();
+    ctx.arc(dx + 52, y0 - 66, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+    const lit = 0.6 + 0.4 * Math.sin(time * 0.6 + i * 2.1);
+    ctx.fillStyle = mix(shade(t.far, -16), '#ffd88a', lit);
+    ctx.beginPath();
+    ctx.arc(dx + 30, y0 - 132, 26, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = shade(t.far, -16);
+    ctx.lineWidth = 1.5;
+    for (let r = 1; r < 5; r++) {
+      const a = Math.PI + (r / 5) * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(dx + 30, y0 - 132);
+      ctx.lineTo(dx + 30 + Math.cos(a) * 26, y0 - 132 + Math.sin(a) * 26);
+      ctx.stroke();
+    }
+    // Sconces either side of the door.
+    for (const sx of [dx - 70, dx + 130]) {
+      ctx.fillStyle = GILT_D;
+      ctx.fillRect(snap(sx - 4), snap(y0 - 100), 8, 3);
+      ctx.fillStyle = '#fff6e6';
+      ctx.fillRect(snap(sx - 1.5), snap(y0 - 110), 3, 10);
+      candleFlame(ctx, sx, y0 - 113, time, i * 3 + sx * 0.01);
+      glow(ctx, sx, y0 - 112, 26, '#ffd27a', 0.3 + 0.08 * Math.sin(time * 6 + i + sx));
+    }
+  });
+  ctx.fillStyle = shade(t.far, -10);
+  ctx.fillRect(0, snap(y0 - 34), width, 600);
+  repeat(cam.x, 0.2, 60, width, (i, x) => {
+    ctx.strokeStyle = shade(t.far, -18);
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(snap(x + 6), snap(y0 - 28), 48, 22);
+  });
+  ctx.fillStyle = t.farLit;
+  ctx.fillRect(0, snap(y0 - 34), width, 2);
+}
+// The Hallway's middle plane: grandfather clocks with their pendulums swinging, side tables with
+// vases of flowers, and tall potted ferns.
+function drawMidHallway(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 210, width, (i, x) => {
+    const s = hash(i + 4);
+    const cx = x + 100;
+    if (s < 0.45) {
+      // A grandfather clock: a hood with its face, the long case with a window on the pendulum.
+      ctx.fillStyle = '#6a3a3a';
+      ctx.fillRect(snap(cx - 12), snap(y0 - 100), 24, 104);
+      ctx.beginPath();
+      ctx.arc(cx, y0 - 100, 14, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#fff4dc';
+      ctx.beginPath();
+      ctx.arc(cx, y0 - 96, 9, 0, Math.PI * 2);
+      ctx.fill();
+      const hr = time * 0.05 + i;
+      ctx.strokeStyle = '#3a2d4f';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx, y0 - 96);
+      ctx.lineTo(cx + Math.cos(hr * 12) * 7, y0 - 96 + Math.sin(hr * 12) * 7);
+      ctx.moveTo(cx, y0 - 96);
+      ctx.lineTo(cx + Math.cos(hr) * 5, y0 - 96 + Math.sin(hr) * 5);
+      ctx.stroke();
+      ctx.fillStyle = '#3a2030';
+      ctx.fillRect(snap(cx - 7), snap(y0 - 80), 14, 56);
+      const sw = Math.sin(time * Math.PI + i) * 0.35;
+      ctx.strokeStyle = GILT;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx, y0 - 78);
+      ctx.lineTo(cx + Math.sin(sw) * 40, y0 - 78 + Math.cos(sw) * 40);
+      ctx.stroke();
+      ctx.fillStyle = GILT;
+      ctx.beginPath();
+      ctx.arc(cx + Math.sin(sw) * 42, y0 - 78 + Math.cos(sw) * 42, 4, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (s < 0.8) {
+      // A side table with a vase of flowers, nodding in the draught.
+      ctx.fillStyle = '#6a3a3a';
+      ctx.fillRect(snap(cx - 18), snap(y0 - 30), 36, 5);
+      ctx.fillRect(snap(cx - 14), snap(y0 - 25), 3, 29);
+      ctx.fillRect(snap(cx + 11), snap(y0 - 25), 3, 29);
+      ctx.fillStyle = '#c8d8f0';
+      ctx.beginPath();
+      ctx.ellipse(cx, y0 - 38, 6, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      const nod = Math.sin(time * 1.1 + i) * 1.5;
+      for (const [fx, fy, c] of [[-6, -54, '#ff9ec0'], [0, -58, '#ffe36b'], [6, -53, '#c9a6ff']]) {
+        ctx.strokeStyle = '#6fbf5a';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx, y0 - 44);
+        ctx.lineTo(cx + fx + nod, y0 + fy);
+        ctx.stroke();
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.arc(cx + fx + nod, y0 + fy, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // A tall fern in a pot, its fronds swaying.
+      ctx.fillStyle = '#c8806a';
+      ctx.beginPath();
+      ctx.moveTo(cx - 9, y0 - 18);
+      ctx.lineTo(cx + 9, y0 - 18);
+      ctx.lineTo(cx + 6, y0 + 4);
+      ctx.lineTo(cx - 6, y0 + 4);
+      ctx.fill();
+      ctx.strokeStyle = '#5aa878';
+      ctx.lineWidth = 3;
+      for (let f = 0; f < 5; f++) {
+        const a = -Math.PI / 2 + (f - 2) * 0.45 + Math.sin(time * 1.2 + i + f) * 0.05;
+        ctx.beginPath();
+        ctx.moveTo(cx, y0 - 18);
+        ctx.quadraticCurveTo(cx + Math.cos(a) * 20, y0 - 18 + Math.sin(a) * 30, cx + Math.cos(a) * 30, y0 - 18 + Math.sin(a) * 26 + 10);
+        ctx.stroke();
+      }
+    }
+  });
+}
+
+// ---------- The Carnival's outdoor rooms ----------
+
+// A striped, scalloped awning from x to x + w at y, in two colours.
+function awning(ctx, x, y, w, h, c1, c2) {
+  const n = Math.max(3, Math.round(w / 12));
+  const sw = w / n;
+  for (let k = 0; k < n; k++) {
+    ctx.fillStyle = k % 2 ? c2 : c1;
+    ctx.beginPath();
+    ctx.moveTo(x + k * sw, y);
+    ctx.lineTo(x + (k + 1) * sw, y);
+    ctx.lineTo(x + (k + 1) * sw, y + h);
+    ctx.arc(x + (k + 0.5) * sw, y + h, sw / 2, 0, Math.PI);
+    ctx.fill();
+  }
+}
+// A string of bulbs drooping from (x0, y) to (x1, y), lights chasing along it.
+function bulbString(ctx, x0, x1, y, sag, time, i, wire) {
+  ctx.strokeStyle = wire;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x0, y);
+  ctx.quadraticCurveTo((x0 + x1) / 2, y + sag * 2, x1, y);
+  ctx.stroke();
+  for (let k = 1; k < 8; k++) {
+    const f = k / 8;
+    const bx = x0 + (x1 - x0) * f;
+    const by = y + sag * 4 * f * (1 - f);
+    const on = (Math.floor(time * 5) + k + i) % 3 === 0;
+    ctx.fillStyle = on ? '#fff6c0' : pick(['#ff7aa8', '#ffd36b', '#7fd8ff', '#9ae66a'], hash(i * 8 + k));
+    ctx.beginPath();
+    ctx.arc(bx, by + 2, on ? 2.4 : 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    if (on) glow(ctx, bx, by + 2, 9, '#ffe2a0', 0.45);
+  }
+}
+
+// The Midway, far back: the carousel's striped canopy rising over a long row of game stalls under
+// their awnings, strings of bulbs between, the evening sky behind.
+function drawFarMidway(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 30, 26, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  // The carousel, far off, its canopy and flags turning.
+  repeat(cam.x, 0.1, 700, width, (i, x) => {
+    const cx = x + 350;
+    const cy = y0 - 60;
+    const far = (c) => mix(c, t.far, 0.4);
+    ctx.fillStyle = far('#ffe6c8');
+    ctx.fillRect(cx - 70, cy, 140, 84);
+    const rot = (time * 0.4 + i) % (Math.PI * 2);
+    for (let k = 0; k < 10; k++) {
+      ctx.fillStyle = far(k % 2 ? '#ffffff' : '#ff6a8a');
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 70);
+      ctx.lineTo(cx - 80 + k * 16, cy);
+      ctx.lineTo(cx - 64 + k * 16, cy);
+      ctx.fill();
+    }
+    awning(ctx, cx - 80, cy - 2, 160, 6, far('#ffd36b'), far('#ffffff'));
+    ctx.fillStyle = far('#ffd36b');
+    ctx.fillRect(cx - 1, cy - 90, 2, 22);
+    ctx.beginPath();
+    ctx.moveTo(cx + 1, cy - 90);
+    ctx.lineTo(cx + 12 + Math.sin(time * 3 + i) * 2, cy - 86);
+    ctx.lineTo(cx + 1, cy - 82);
+    ctx.fill();
+    // Horses rising and falling under it, side on.
+    for (let k = 0; k < 5; k++) {
+      const hx = cx - 56 + ((k * 28 + time * 20) % 140);
+      const hy = cy + 40 + Math.sin(time * 2 + k * 1.3) * 8;
+      ctx.fillStyle = far(k % 2 ? '#ffffff' : '#ffd0e0');
+      ctx.fillRect(hx - 0.5, cy + 6, 1, 70);
+      ctx.beginPath();
+      ctx.ellipse(hx, hy, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillRect(hx + 5, hy - 8, 3, 7);
+    }
+    glow(ctx, cx, cy + 40, 90, '#ffd27a', 0.25 + 0.05 * Math.sin(time * 2));
+  });
+  // A long row of stalls, nearer.
+  repeat(cam.x, 0.2, 110, width, (i, x) => {
+    const c = pick(['#ff6a8a', '#ffb347', '#6ac8e0', '#9a6ae0', '#6ad09a'], hash(i));
+    ctx.fillStyle = shade(t.far, -6);
+    ctx.fillRect(snap(x + 8), snap(y0 - 40), 94, 64);
+    ctx.fillStyle = mix('#ffd88a', t.far, 0.25 + 0.15 * Math.sin(time + i));
+    ctx.fillRect(snap(x + 14), snap(y0 - 26), 82, 30);
+    awning(ctx, x + 4, y0 - 52, 102, 10, mix(c, t.far, 0.3), mix('#ffffff', t.far, 0.3));
+    ctx.fillStyle = mix('#fff0c0', t.far, 0.2);
+    ctx.fillRect(snap(x + 34), snap(y0 - 66), 42, 12);
+    bulbString(ctx, x + 4, x + 114, y0 - 70, 6, time, i, shade(t.far, -18));
+  });
+}
+// The Midway's middle plane: prize booths with plush toys and ring-toss bottles, a popcorn cart
+// steaming, and a balloon seller's bunch bobbing on its strings.
+function drawMidMidway(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 230, width, (i, x) => {
+    const s = hash(i + 4);
+    const cx = x + 110;
+    if (s < 0.5) {
+      // A prize booth: posts, a striped awning, plushies hanging on the back, bottles on the counter.
+      const c = pick(['#ff6a8a', '#ffb347', '#6ac8e0'], hash(i + 1));
+      ctx.fillStyle = '#c8906a';
+      ctx.fillRect(snap(cx - 40), snap(y0 - 64), 4, 68);
+      ctx.fillRect(snap(cx + 36), snap(y0 - 64), 4, 68);
+      ctx.fillStyle = '#fff0e0';
+      ctx.fillRect(snap(cx - 36), snap(y0 - 60), 72, 40);
+      awning(ctx, cx - 44, y0 - 76, 88, 10, c, '#ffffff');
+      for (let p = 0; p < 4; p++) {
+        const px = cx - 26 + p * 17;
+        const sway = Math.sin(time * 1.6 + p + i) * 1.5;
+        ctx.strokeStyle = '#8a6a5a';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(px, y0 - 60);
+        ctx.lineTo(px + sway, y0 - 52);
+        ctx.stroke();
+        ctx.fillStyle = ['#ffb0c8', '#c8a07a', '#a8d8ff', '#ffe08a'][p];
+        ctx.beginPath();
+        ctx.arc(px + sway, y0 - 46, 5, 0, Math.PI * 2);
+        ctx.arc(px + sway - 4, y0 - 51, 2, 0, Math.PI * 2);
+        ctx.arc(px + sway + 4, y0 - 51, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#3a2d4f';
+        ctx.fillRect(snap(px + sway - 2), snap(y0 - 47), 1, 1);
+        ctx.fillRect(snap(px + sway + 1), snap(y0 - 47), 1, 1);
+      }
+      ctx.fillStyle = c;
+      ctx.fillRect(snap(cx - 42), snap(y0 - 20), 84, 24);
+      ctx.fillStyle = '#ffffff';
+      for (let k = 0; k < 6; k++) ctx.fillRect(snap(cx - 40 + k * 14), snap(y0 - 20), 7, 24);
+      for (let b = 0; b < 5; b++) {
+        ctx.fillStyle = ['#7fd8a8', '#7fb8ff', '#ff9ec0'][b % 3];
+        ctx.fillRect(snap(cx - 22 + b * 10), snap(y0 - 30), 4, 10);
+        ctx.fillRect(snap(cx - 21 + b * 10), snap(y0 - 34), 2, 4);
+      }
+    } else if (s < 0.75) {
+      // The popcorn cart, red and gold, steam curling off the kernels.
+      ctx.fillStyle = '#e04a5a';
+      ctx.fillRect(snap(cx - 18), snap(y0 - 30), 36, 24);
+      ctx.fillStyle = '#e8f4ff';
+      ctx.fillRect(snap(cx - 14), snap(y0 - 56), 28, 26);
+      ctx.fillStyle = '#fff4c0';
+      for (let k = 0; k < 12; k++) {
+        ctx.beginPath();
+        ctx.arc(cx - 11 + hash(i * 12 + k) * 22, y0 - 34 - hash(i * 12 + k + 3) * 12, 2.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#e04a5a';
+      ctx.beginPath();
+      ctx.moveTo(cx - 20, y0 - 56);
+      ctx.lineTo(cx, y0 - 68);
+      ctx.lineTo(cx + 20, y0 - 56);
+      ctx.fill();
+      ctx.fillStyle = '#ffd36b';
+      for (const wx of [-12, 12]) {
+        ctx.beginPath();
+        ctx.arc(cx + wx, y0 - 4, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      for (let k = 0; k < 3; k++) {
+        const u = (time * 0.4 + k / 3) % 1;
+        ctx.globalAlpha = 0.4 * Math.sin(u * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(cx - 6 + k * 6 + Math.sin(u * 6 + k) * 3, y0 - 72 - u * 24, 3 + u * 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    } else {
+      // A balloon seller's bunch, tied to a post, bobbing on its strings.
+      ctx.fillStyle = '#c8906a';
+      ctx.fillRect(snap(cx - 1.5), snap(y0 - 40), 3, 44);
+      for (let b = 0; b < 6; b++) {
+        const bx = cx - 18 + (b % 3) * 18 + Math.sin(time * 1.4 + b + i) * 3;
+        const by = y0 - 84 - Math.floor(b / 3) * 18 + Math.cos(time * 1.1 + b) * 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(cx, y0 - 40);
+        ctx.lineTo(bx, by + 9);
+        ctx.stroke();
+        ctx.fillStyle = ['#ff6a8a', '#ffd36b', '#7fd8ff', '#9ae66a', '#c9a6ff', '#ff9a5a'][b];
+        ctx.beginPath();
+        ctx.ellipse(bx, by, 7, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        ctx.ellipse(bx - 2.4, by - 3, 1.6, 2.6, -0.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+  });
+}
+
+// The coaster's track over a stretch of world: its height at world x (rises, a big drop, hills).
+const trackY = (wx, y0) => y0 - 120 + Math.sin(wx * 0.006) * 60 + Math.sin(wx * 0.017 + 1) * 18;
+// The Coaster Yard, far back: the great wooden coaster running across the sky on its trestles of
+// criss-cross timber, lights along the rails, and the train racing round it, up and down.
+function drawFarCoaster(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 30, 24, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  const off = cam.x * 0.2;
+  const timber = mix('#c8a07a', t.far, 0.45);
+  // Trestles under the track: legs and crossed braces every 30 px of world.
+  ctx.strokeStyle = timber;
+  ctx.lineWidth = 1.4;
+  repeat(cam.x, 0.2, 30, width, (i, x) => {
+    const ty = trackY(i * 30, y0);
+    const ty2 = trackY(i * 30 + 30, y0);
+    ctx.beginPath();
+    ctx.moveTo(x, ty);
+    ctx.lineTo(x, y0 + 24);
+    for (let y = ty; y < y0 + 10; y += 28) {
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 30, Math.min(y0 + 24, y + 28 + (ty2 - ty)));
+      ctx.moveTo(x + 30, y + (ty2 - ty));
+      ctx.lineTo(x, Math.min(y0 + 24, y + 28));
+    }
+    ctx.stroke();
+  });
+  // The rails, lit at intervals.
+  ctx.strokeStyle = mix('#ff7aa8', t.far, 0.25);
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let x = -10; x <= width + 10; x += 6) ctx.lineTo(x, trackY(x + off, y0));
+  ctx.stroke();
+  repeat(cam.x, 0.2, 40, width, (i, x) => {
+    const on = (Math.floor(time * 6) + i) % 5 === 0;
+    ctx.fillStyle = on ? '#fff6c0' : mix('#ffd36b', t.far, 0.3);
+    ctx.beginPath();
+    ctx.arc(x, trackY(i * 40, y0) - 3, on ? 2.2 : 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  // The train: three cars riding the rails, tilting with the track, quick on the drops.
+  const lap = width * 2.2;
+  const head = ((time * 160) % lap) - width * 0.6;
+  for (let k = 0; k < 3; k++) {
+    const sx = head - k * 22;
+    if (sx < -30 || sx > width + 30) continue;
+    const wy = trackY(sx + off, y0);
+    const a = Math.atan2(trackY(sx + off + 4, y0) - wy, 4);
+    ctx.save();
+    ctx.translate(sx, wy - 4);
+    ctx.rotate(a);
+    ctx.fillStyle = mix(['#ffd36b', '#7fd8ff', '#ff7aa8'][k], t.far, 0.2);
+    ctx.beginPath();
+    ctx.roundRect(-10, -8, 20, 9, 3);
+    ctx.fill();
+    ctx.fillStyle = mix('#fff0e6', t.far, 0.2);
+    for (const dx of [-5, 3]) {
+      ctx.beginPath();
+      ctx.arc(dx, -10, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+// The yard's middle plane: the nearest trestle legs, braced, a lift-hill chain humming up one,
+// stacks of crates and cable drums, and a sign warning riders to keep their arms in.
+function drawMidCoaster(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 260, width, (i, x) => {
+    const lx = x + 60;
+    ctx.fillStyle = '#b8885a';
+    ctx.fillRect(snap(lx), snap(y0 - 150), 7, 154);
+    ctx.fillRect(snap(lx + 60), snap(y0 - 150), 7, 154);
+    ctx.strokeStyle = '#a07048';
+    ctx.lineWidth = 3;
+    for (let y = y0 - 140; y < y0 - 20; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(lx + 4, y);
+      ctx.lineTo(lx + 63, y + 40);
+      ctx.moveTo(lx + 63, y);
+      ctx.lineTo(lx + 4, y + 40);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#ff7aa8';
+    ctx.fillRect(snap(lx - 6), snap(y0 - 156), 80, 7);
+    // Lift-hill chain links crawling up on the odd one.
+    if (hash(i + 3) > 0.5) {
+      ctx.fillStyle = '#9aa8c6';
+      for (let k = 0; k < 8; k++) {
+        const u = ((time * 0.6 + k / 8) % 1);
+        ctx.fillRect(snap(lx + 30), snap(y0 - u * 150), 3, 4);
+      }
+    }
+    const s = hash(i + 5);
+    if (s < 0.5) {
+      for (const [dx, dy, w] of [[100, 0, 26], [128, 0, 22], [112, -22, 22]]) {
+        ctx.fillStyle = '#c8945a';
+        ctx.fillRect(snap(lx + dx), snap(y0 + dy - 22), w, 22);
+        ctx.strokeStyle = '#8a5a3a';
+        ctx.lineWidth = 1.4;
+        ctx.strokeRect(snap(lx + dx + 2), snap(y0 + dy - 20), w - 4, 18);
+        ctx.beginPath();
+        ctx.moveTo(lx + dx + 2, y0 + dy - 20);
+        ctx.lineTo(lx + dx + w - 2, y0 + dy - 2);
+        ctx.stroke();
+      }
+    } else if (s < 0.8) {
+      ctx.fillStyle = '#ffd36b';
+      ctx.fillRect(snap(lx + 120), snap(y0 - 50), 3, 54);
+      ctx.beginPath();
+      ctx.moveTo(lx + 121, y0 - 76);
+      ctx.lineTo(lx + 143, y0 - 50);
+      ctx.lineTo(lx + 99, y0 - 50);
+      ctx.fill();
+      ctx.fillStyle = '#3a2d4f';
+      ctx.fillRect(snap(lx + 120), snap(y0 - 68), 3, 10);
+      ctx.fillRect(snap(lx + 120), snap(y0 - 56), 3, 3);
+    } else {
+      ctx.fillStyle = '#8a6a9a';
+      ctx.beginPath();
+      ctx.arc(lx + 120, y0 - 16, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#5a4a6a';
+      ctx.beginPath();
+      ctx.arc(lx + 120, y0 - 16, 7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+}
+
+// The Ferris Wheel, far back: the great wheel itself filling the sky, turning slowly, its rim
+// lights chasing round, the cars swinging gently as they ride, on its tall A-frame legs.
+function drawFarFerris(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 30, 22, true);
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 20), width, 400);
+  const cx = width * 0.55 - cam.x * 0.06;
+  const cy = y0 - 150;
+  const r = 140;
+  const rim = mix('#fff0e6', t.far, 0.3);
+  const turn = time * 0.08;
+  // The legs.
+  ctx.fillStyle = mix('#c8b8e0', t.far, 0.4);
+  for (const s of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + s * 70, y0 + 30);
+    ctx.lineTo(cx + s * 58, y0 + 30);
+    ctx.lineTo(cx, cy + 16);
+    ctx.fill();
+  }
+  // Spokes and the double rim.
+  ctx.strokeStyle = rim;
+  ctx.lineWidth = 1.4;
+  for (let k = 0; k < 16; k++) {
+    const a = turn + (k / 16) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 3;
+  for (const rr of [r, r - 10]) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Rim lights chasing round.
+  for (let k = 0; k < 48; k++) {
+    const a = turn + (k / 48) * Math.PI * 2;
+    const on = (Math.floor(time * 8) + k) % 6 < 2;
+    ctx.fillStyle = on ? '#fff6c0' : pick(['#ff7aa8', '#ffd36b', '#7fd8ff'], (k % 3) / 3);
+    ctx.beginPath();
+    ctx.arc(cx + Math.cos(a) * (r - 5), cy + Math.sin(a) * (r - 5), on ? 2.4 : 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // The cars, hanging level and swinging a little as they ride.
+  for (let k = 0; k < 16; k++) {
+    const a = turn + (k / 16) * Math.PI * 2;
+    const px = cx + Math.cos(a) * r;
+    const py = cy + Math.sin(a) * r;
+    const sw = Math.sin(time * 1.4 + k) * 0.12;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(sw);
+    ctx.strokeStyle = rim;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 6);
+    ctx.stroke();
+    ctx.fillStyle = mix(['#ff7aa8', '#ffd36b', '#7fd8ff', '#9ae66a'][k % 4], t.far, 0.25);
+    ctx.beginPath();
+    ctx.roundRect(-9, 6, 18, 14, [8, 8, 3, 3]);
+    ctx.fill();
+    ctx.fillStyle = mix('#fff4c8', t.far, 0.2 + 0.2 * Math.sin(time + k));
+    ctx.fillRect(-6, 9, 12, 5);
+    ctx.restore();
+  }
+  // The hub, gilded, with a star.
+  ctx.fillStyle = '#ffd36b';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fill();
+  glow(ctx, cx, cy, 40, '#ffe2a0', 0.35 + 0.08 * Math.sin(time * 2));
+  // Small tents round its foot.
+  repeat(cam.x, 0.2, 300, width, (i, x) => {
+    const tx = x + 40 + hash(i) * 120;
+    for (let k = 0; k < 4; k++) {
+      ctx.fillStyle = k % 2 ? shade(t.far, 8) : mix(t.far, '#ffd36b', 0.3);
+      ctx.beginPath();
+      ctx.moveTo(tx + 30, y0 - 40);
+      ctx.lineTo(tx + k * 15, y0 + 20);
+      ctx.lineTo(tx + (k + 1) * 15, y0 + 20);
+      ctx.fill();
+    }
+  });
+}
+// The plaza at the wheel's foot: globe lamps on curly posts, flower planters, benches, and the
+// ticket kiosk with its striped roof.
+function drawMidFerris(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 190, width, (i, x) => {
+    const s = hash(i + 4);
+    const cx = x + 90;
+    // A globe lamp on every bay.
+    ctx.fillStyle = '#4a3a6a';
+    ctx.fillRect(snap(cx - 1.5), snap(y0 - 70), 3, 74);
+    ctx.strokeStyle = '#4a3a6a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx + 8, y0 - 70, 8, Math.PI, Math.PI * 1.9);
+    ctx.stroke();
+    ctx.fillStyle = '#fff2c8';
+    ctx.beginPath();
+    ctx.arc(cx, y0 - 76, 6, 0, Math.PI * 2);
+    ctx.fill();
+    glow(ctx, cx, y0 - 76, 24, '#ffe2a0', 0.4 + 0.08 * Math.sin(time * 4 + i));
+    if (s < 0.4) {
+      // A bench.
+      ctx.fillStyle = '#c8806a';
+      ctx.fillRect(snap(cx + 24), snap(y0 - 22), 44, 4);
+      ctx.fillRect(snap(cx + 24), snap(y0 - 34), 44, 3);
+      ctx.fillRect(snap(cx + 24), snap(y0 - 28), 44, 3);
+      ctx.fillStyle = '#4a3a6a';
+      ctx.fillRect(snap(cx + 27), snap(y0 - 18), 3, 22);
+      ctx.fillRect(snap(cx + 62), snap(y0 - 18), 3, 22);
+    } else if (s < 0.75) {
+      // A planter of flowers, nodding.
+      ctx.fillStyle = '#e8b0c8';
+      ctx.fillRect(snap(cx + 28), snap(y0 - 16), 40, 20);
+      for (let f = 0; f < 6; f++) {
+        const fx = cx + 32 + f * 6.4;
+        const nod = Math.sin(time * 1.4 + f + i) * 1.2;
+        ctx.fillStyle = '#6fbf5a';
+        ctx.fillRect(snap(fx), snap(y0 - 24), 1.2, 8);
+        ctx.fillStyle = ['#ff9ec0', '#ffe36b', '#c9a6ff'][f % 3];
+        ctx.beginPath();
+        ctx.arc(fx + nod, y0 - 26, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // The ticket kiosk.
+      ctx.fillStyle = '#ffe6f0';
+      ctx.fillRect(snap(cx + 26), snap(y0 - 50), 36, 54);
+      ctx.fillStyle = '#fff6c8';
+      ctx.fillRect(snap(cx + 32), snap(y0 - 42), 24, 16);
+      for (let k = 0; k < 4; k++) {
+        ctx.fillStyle = k % 2 ? '#ffffff' : '#ff6a8a';
+        ctx.beginPath();
+        ctx.moveTo(cx + 44, y0 - 70);
+        ctx.lineTo(cx + 22 + k * 11, y0 - 50);
+        ctx.lineTo(cx + 33 + k * 11, y0 - 50);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffd36b';
+      ctx.fillRect(snap(cx + 30), snap(y0 - 22), 28, 4);
+    }
   });
 }
 
@@ -1981,19 +2991,27 @@ function drawFarStarHall(ctx, t, cam, width, y0, time, kind) {
 // candy-cane trees and lollipop flowers swaying.
 function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
   if (crater) {
-    // Inside the crater: its glowing walls rising on both sides, sparks drifting up.
-    ctx.fillStyle = t.far;
-    ctx.fillRect(0, snap(y0 - 40), width, 400);
-    glow(ctx, width / 2, y0 + 20, width * 0.6, '#ffb06a', 0.35 + 0.05 * Math.sin(time * 2));
-    for (let k = 0; k < 20; k++) {
-      const u = (time * 0.15 + hash(k)) % 1;
-      ctx.fillStyle = k % 2 ? '#ffd36b' : '#ff8a5a';
-      ctx.globalAlpha = Math.sin(u * Math.PI);
-      ctx.fillRect(((hash(k + 9) * width - cam.x * 0.1) % width + width) % width, y0 + 20 - u * 260, 2, 2);
-    }
-    ctx.globalAlpha = 1;
+    drawFarCrater(ctx, t, cam, width, y0, time);
     return;
   }
+  drawCandyCone(ctx, t, cam, width, y0, time);
+  // Gumdrop hills in a row of candy colours.
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 24), width, 400);
+  repeat(cam.x, 0.2, 140, width, (i, x) => {
+    const c = pick(['#ff9ab8', '#ffd36b', '#9ae6a8', '#9fd8ff', '#c9a6ff'], hash(i));
+    const h = 50 + hash(i + 3) * 40;
+    ctx.fillStyle = mix(c, t.far, 0.45);
+    ctx.beginPath();
+    ctx.ellipse(x + 70, y0 + 30, 70, h, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', t.far, 0.4);
+    for (let k = 0; k < 5; k++) ctx.fillRect(snap(x + 40 + k * 14), snap(y0 + 30 - h * 0.7 + (k % 2) * 8), 2, 2);
+  });
+}
+
+// The volcano's cone, with a slow plume of pink steam curling from its top.
+function drawCandyCone(ctx, t, cam, width, y0, time) {
   // The cone, with a slow plume of pink steam curling from its top.
   const vx = width * 0.65 - cam.x * 0.06;
   const p = new Path2D();
@@ -2018,19 +3036,267 @@ function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  // Gumdrop hills in a row of candy colours.
+}
+
+// ---------- The Candy Volcano's last two rooms ----------
+
+const GINGER = '#c8844e';
+const GINGER_L = '#e2a66c';
+const GINGER_D = '#9a5a34';
+const ICING = '#fff8f2';
+// A wavy line of piped icing from (x0, y) to (x1, y), its waves keyed to the world (`wx`).
+function pipe(ctx, x0, x1, y, w = 2, amp = 1.4, c = ICING, wx = 0) {
+  ctx.strokeStyle = c;
+  ctx.lineWidth = w;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let x = x0; x <= x1; x += 3) ctx.lineTo(x, y + Math.sin((x + wx) * 0.7) * amp);
+  ctx.stroke();
+}
+// A gingerbread tower: a round drum with icing bands and lit windows, a candy-striped cone roof and
+// a pennant that streams in the wind. `k` fades it toward the far colour.
+function gingerTower(ctx, t, cx, base, w, h, time, i, k) {
+  const c = (col) => mix(col, t.far, k);
+  ctx.fillStyle = c(GINGER_D);
+  ctx.fillRect(cx - w / 2, base - h, w, h);
+  ctx.fillStyle = c(GINGER);
+  ctx.fillRect(cx - w / 2 + 2, base - h, w - 6, h);
+  ctx.fillStyle = c(GINGER_L);
+  ctx.fillRect(cx - w / 2 + 3, base - h, 3, h);
+  for (let x = -w / 2; x < w / 2 - 1; x += 7) {
+    ctx.fillStyle = c(GINGER);
+    ctx.fillRect(cx + x, base - h - 6, 5, 6);
+  }
+  // The roof: pink and white candy stripes.
+  const rt = base - h - 6;
+  const rh = h * 0.55;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx - w / 2 - 4, rt);
+  ctx.lineTo(cx, rt - rh);
+  ctx.lineTo(cx + w / 2 + 4, rt);
+  ctx.closePath();
+  ctx.fillStyle = c('#ffffff');
+  ctx.fill();
+  ctx.clip();
+  ctx.fillStyle = c('#ff7aa8');
+  for (let s = -3; s < 8; s++) {
+    ctx.beginPath();
+    ctx.moveTo(cx - w, rt - s * 10);
+    ctx.lineTo(cx + w, rt - s * 10 - 14);
+    ctx.lineTo(cx + w, rt - s * 10 - 9);
+    ctx.lineTo(cx - w, rt - s * 10 + 5);
+    ctx.fill();
+  }
+  ctx.restore();
+  // Icing bands, and a window or two lit from inside (each on its own beat).
+  for (const f of [0.18, 0.62]) pipe(ctx, cx - w / 2, cx + w / 2 - 2, base - h * (1 - f), 2, 1.2, c(ICING), i * 31);
+  for (const f of [0.38, 0.8]) {
+    const on = Math.sin(time * 0.5 + i * 1.9 + f * 7) > -0.3;
+    ctx.fillStyle = on ? '#ffe6a0' : c(GINGER_D);
+    ctx.beginPath();
+    ctx.roundRect(cx - 3, base - h * (1 - f) - 5, 6, 9, [3, 3, 0, 0]);
+    ctx.fill();
+    if (on && k < 0.4) glow(ctx, cx, base - h * (1 - f), 12, '#ffd27a', 0.3);
+  }
+  // The pennant on its pole.
+  const top = rt - rh;
+  ctx.fillStyle = c('#ffffff');
+  ctx.fillRect(cx - 0.5, top - 12, 1.5, 12);
+  const fl = Math.sin(time * 3 + i) * 2;
+  ctx.fillStyle = c(Math.abs(i) % 2 ? '#9ae66a' : '#ff7aa8');
+  ctx.beginPath();
+  ctx.moveTo(cx + 1, top - 12);
+  ctx.quadraticCurveTo(cx + 7, top - 11 + fl, cx + 13, top - 9 + fl * 1.4);
+  ctx.quadraticCurveTo(cx + 7, top - 7 + fl, cx + 1, top - 6);
+  ctx.fill();
+}
+
+// The Gingerbread Ramparts, far back: the cone rising behind, and the castle's outer wall running
+// away along the ridge, its towers flying pennants.
+function drawFarRamparts(ctx, t, cam, width, y0, time) {
+  drawCandyCone(ctx, t, cam, width, y0, time);
   ctx.fillStyle = t.far;
   ctx.fillRect(0, snap(y0 + 24), width, 400);
-  repeat(cam.x, 0.2, 140, width, (i, x) => {
-    const c = pick(['#ff9ab8', '#ffd36b', '#9ae6a8', '#9fd8ff', '#c9a6ff'], hash(i));
-    const h = 50 + hash(i + 3) * 40;
-    ctx.fillStyle = mix(c, t.far, 0.45);
+  const wy = y0 - 6;
+  ctx.fillStyle = mix(GINGER, t.far, 0.55);
+  ctx.fillRect(0, snap(wy), width, 60);
+  repeat(cam.x, 0.2, 14, width, (i, x) => ctx.fillRect(snap(x), snap(wy - 6), 9, 7));
+  pipe(ctx, 0, width, wy + 3, 1.6, 1, mix(ICING, t.far, 0.4), cam.x * 0.2);
+  repeat(cam.x, 0.2, 230, width, (i, x) => gingerTower(ctx, t, x + 60 + hash(i) * 90, wy + 30, 26 + hash(i + 2) * 8, 70 + hash(i + 3) * 40, time, i, 0.5));
+}
+
+// Right behind the wall-walk: the parapet's merlons in iced gingerbread with gumdrops on some, a
+// tower now and then with its pennant, and candy-cane lamps between, their flames flickering.
+function drawMidRamparts(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 420, width, (i, x) => gingerTower(ctx, t, x + 140 + hash(i + 7) * 120, y0 + 4, 40, 120 + hash(i + 1) * 30, time, i + 20, 0.18));
+  const top = y0 - 30;
+  ctx.fillStyle = GINGER_D;
+  ctx.fillRect(0, snap(top + 8), width, 40);
+  ctx.fillStyle = GINGER;
+  ctx.fillRect(0, snap(top + 10), width, 40);
+  repeat(cam.x, 0.45, 34, width, (i, x) => {
+    ctx.fillStyle = GINGER_D;
+    ctx.fillRect(snap(x), snap(top - 4), 22, 14);
+    ctx.fillStyle = GINGER;
+    ctx.fillRect(snap(x + 1), snap(top - 3), 19, 13);
+    ctx.fillStyle = GINGER_L;
+    ctx.fillRect(snap(x + 2), snap(top - 3), 4, 12);
+    ctx.strokeStyle = ICING;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.ellipse(x + 70, y0 + 30, 70, h, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.fillStyle = mix('#ffffff', t.far, 0.4);
-    for (let k = 0; k < 5; k++) ctx.fillRect(snap(x + 40 + k * 14), snap(y0 + 30 - h * 0.7 + (k % 2) * 8), 2, 2);
+    ctx.roundRect(x + 3, top - 1, 15, 9, 3);
+    ctx.stroke();
+    ctx.fillStyle = GINGER_D;
+    ctx.fillRect(snap(x + 28), snap(top + 14), 1.5, 12);
+    ctx.fillRect(snap(x + 11), snap(top + 30), 1.5, 12);
+    if (hash(i + 3) > 0.7) {
+      ctx.fillStyle = pick(['#ff7aa8', '#9ae66a', '#ffd36b', '#7fd8ff'], hash(i + 5));
+      ctx.beginPath();
+      ctx.ellipse(x + 10.5, top - 4, 5, 4.4, 0, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(snap(x + 8), snap(top - 7), 2, 1.5);
+    }
   });
+  pipe(ctx, 0, width, top + 12, 2.2, 1.4, ICING, cam.x * 0.45);
+  repeat(cam.x, 0.45, 260, width, (i, x) => {
+    const lx = x + 70;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(snap(lx - 1.5), snap(top - 40), 3, 40);
+    ctx.fillStyle = '#e0304e';
+    for (let y = top - 38; y < top; y += 7) ctx.fillRect(snap(lx - 1.5), snap(y), 3, 3);
+    ctx.fillStyle = '#ffe6a0';
+    ctx.beginPath();
+    ctx.ellipse(lx, top - 44, 3.4, 4.4 + Math.sin(time * 9 + i) * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    glow(ctx, lx, top - 44, 22, '#ffd27a', 0.35 + 0.08 * Math.sin(time * 6 + i));
+  });
+}
+
+// The caramel's surface: a band from y down, its waves running on world time and place.
+function caramelLake(ctx, width, y, depth, time, wx, amp, c, lit) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(0, y + depth);
+  for (let x = 0; x <= width + 8; x += 8) ctx.lineTo(x, y + Math.sin(time * 1.2 + (x + wx) * 0.03) * amp + Math.sin(time * 0.7 + (x + wx) * 0.011) * amp);
+  ctx.lineTo(width + 8, y + depth);
+  ctx.fill();
+  ctx.strokeStyle = lit;
+  ctx.lineWidth = 1.4;
+  for (let r = 0; r < 3; r++) {
+    const yy = y + 8 + r * 12;
+    const off = (((wx * (1 + r * 0.2)) % 60) + 60) % 60;
+    ctx.beginPath();
+    for (let x = -off; x <= width; x += 60) {
+      const wv = Math.sin(time + (x + wx) * 0.02 + r) * 1.2;
+      ctx.moveTo(x + r * 20, yy + wv);
+      ctx.quadraticCurveTo(x + r * 20 + 12, yy - 2 + wv, x + r * 20 + 26, yy + wv);
+    }
+    ctx.stroke();
+  }
+}
+// An islet of rock candy: a toffee crust with a cluster of crystal spires on it, bobbing.
+function candyIsle(ctx, t, x, y, s, time, i, k) {
+  const c = (col) => mix(col, t.far, k);
+  const bob = Math.sin(time * 0.8 + i * 1.7) * 1.5;
+  ctx.fillStyle = c('#7a3a2a');
+  ctx.beginPath();
+  ctx.ellipse(x, y + bob, 30 * s, 8 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const cols = ['#ff9ad8', '#ffd36b', '#9fd8ff', '#ffb0c8'];
+  for (let n = 0; n < 4; n++) {
+    const px = x + (n - 1.5) * 12 * s + hash(i + n) * 4;
+    const h = (18 + hash(i + n + 3) * 26) * s * (n === 1 || n === 2 ? 1.3 : 0.8);
+    const w = 6 * s;
+    const col = cols[(((i + n) % 4) + 4) % 4];
+    ctx.fillStyle = c(col);
+    ctx.beginPath();
+    ctx.moveTo(px - w, y + bob);
+    ctx.lineTo(px - w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px, y + bob - h);
+    ctx.lineTo(px + w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px + w, y + bob);
+    ctx.fill();
+    ctx.fillStyle = c(mix(col, '#ffffff', 0.55));
+    ctx.beginPath();
+    ctx.moveTo(px - w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px, y + bob - h);
+    ctx.lineTo(px, y + bob - 2);
+    ctx.lineTo(px - w * 0.7, y + bob - 2);
+    ctx.fill();
+  }
+}
+// The Crater, far back: its walls of dark rock closing in on both sides, veined with glowing
+// caramel, the sky glowing over the rim, and the caramel lake below with rock-candy islands
+// bobbing in it and bubbles rising and popping.
+function drawFarCrater(ctx, t, cam, width, y0, time) {
+  glow(ctx, width / 2, y0 - 120, width * 0.55, '#ffb06a', 0.3 + 0.05 * Math.sin(time * 2));
+  const rock = { ...t, far: shade(t.far, -14), farLit: shade(t.far, 8) };
+  for (const side of [-1, 1]) {
+    const sx = side < 0 ? -2 : width + 2;
+    const shift = cam.x * 0.08;
+    const p = new Path2D();
+    p.moveTo(sx, y0 + 60);
+    for (let k = 0; k <= 12; k++) {
+      const f = k / 12;
+      p.lineTo(sx - side * (width * 0.34 * Math.pow(1 - f, 0.8) + 30 + Math.sin(k * 2.1 + side * shift * 0.01) * 14), y0 + 40 - f * 260);
+    }
+    p.lineTo(sx, y0 - 230);
+    p.closePath();
+    litFill(ctx, rock, p, -side * 2, 1.5);
+    // Seams of glowing caramel running down it, pulsing on their own beat.
+    ctx.strokeStyle = '#ffb04a';
+    ctx.lineWidth = 1.6;
+    for (let k = 0; k < 3; k++) {
+      const x0 = sx - side * (40 + k * 60);
+      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 1.5 + k + side);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 - 150 + k * 30);
+      ctx.lineTo(x0 - side * 10, y0 - 100 + k * 30);
+      ctx.lineTo(x0 + side * 4, y0 - 60 + k * 30);
+      ctx.lineTo(x0 - side * 8, y0 + 10);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  caramelLake(ctx, width, y0 - 46, 400, time, cam.x * 0.18, 1.2, '#c8742e', '#ffc06a');
+  repeat(cam.x, 0.2, 240, width, (i, x) => candyIsle(ctx, t, x + 80 + hash(i) * 80, y0 - 40, 0.7 + hash(i + 1) * 0.3, time, i, 0.35));
+  for (let k = 0; k < 7; k++) {
+    const u = (time * 0.35 + hash(k + 4)) % 1;
+    const bx = ((hash(k + 1) * width * 1.3 - cam.x * 0.2) % width + width) % width;
+    ctx.globalAlpha = u < 0.85 ? 0.8 : ((1 - u) / 0.15) * 0.8;
+    ctx.strokeStyle = '#ffd08a';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(bx, y0 - 30 - u * 14, 2 + u * 4, Math.PI, 0);
+    ctx.stroke();
+  }
+  for (let k = 0; k < 20; k++) {
+    const u = (time * 0.15 + hash(k)) % 1;
+    ctx.fillStyle = k % 2 ? '#ffd36b' : '#ff8a5a';
+    ctx.globalAlpha = Math.sin(u * Math.PI);
+    ctx.fillRect(((hash(k + 9) * width - cam.x * 0.1) % width + width) % width, y0 + 20 - u * 260, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+}
+// Closer in: the caramel lake right behind the floor, bigger rock-candy isles drifting in it, and
+// steam curling off the hot surface.
+function drawMidCrater(ctx, t, cam, width, y0, time) {
+  caramelLake(ctx, width, y0 - 26, 60, time, cam.x * 0.45, 1.8, '#e0903a', '#ffd08a');
+  repeat(cam.x, 0.45, 300, width, (i, x) => {
+    if (hash(i + 2) < 0.75) candyIsle(ctx, t, x + 90 + hash(i) * 120, y0 - 22, 1.1 + hash(i + 4) * 0.4, time, i + 30, 0);
+  });
+  for (let k = 0; k < 6; k++) {
+    const u = (time * 0.12 + hash(k + 20)) % 1;
+    const sx = ((hash(k + 21) * width * 1.4 - cam.x * 0.45) % width + width) % width;
+    ctx.globalAlpha = 0.25 * Math.sin(u * Math.PI);
+    ctx.fillStyle = '#fff0e0';
+    ctx.beginPath();
+    ctx.arc(sx + Math.sin(u * 5 + k) * 8, y0 - 22 - u * 70, 6 + u * 14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 // Inside the mine and the kitchen: licorice beams and rock-candy crystals glowing; in the forge, the
@@ -2887,8 +4153,32 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
     case 'carnival':
       drawMidCarnival(ctx, t, cam, width, y0, time);
       break;
+    case 'midway':
+      drawMidMidway(ctx, t, cam, width, y0, time);
+      break;
+    case 'coaster':
+      drawMidCoaster(ctx, t, cam, width, y0, time);
+      break;
+    case 'ferris':
+      drawMidFerris(ctx, t, cam, width, y0, time);
+      break;
+    case 'manorball':
+      drawMidManorBall(ctx, t, cam, width, y0, time);
+      break;
+    case 'library':
+      drawMidLibrary(ctx, t, cam, width, y0, time);
+      break;
+    case 'hallway':
+      drawMidHallway(ctx, t, cam, width, y0, time);
+      break;
     case 'candy':
       drawMidCandy(ctx, t, cam, width, y0, time);
+      break;
+    case 'ramparts':
+      drawMidRamparts(ctx, t, cam, width, y0, time);
+      break;
+    case 'crater':
+      drawMidCrater(ctx, t, cam, width, y0, time);
       break;
     case 'theatre':
       drawMidTheatre(ctx, t, cam, width, y0, time);
@@ -3820,7 +5110,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
-    if (t.painted !== 'forest' && !['reef', 'manorhall', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    if (t.painted !== 'forest' && !['reef', 'manorhall', 'manorball', 'library', 'hallway', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

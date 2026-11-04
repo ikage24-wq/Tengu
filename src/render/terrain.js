@@ -56,8 +56,16 @@ export const MATERIALS = {
   starstone: { lip: '#fff3a6', body: '#8a8ac0', deep: '#5a5a90', stone: '#c4c4ec', style: 'flagstone', blades: false, drip: null, joint: '#ffd36b' },
   // The Candy Volcano: biscuit ground under a pink icing lip.
   candy: { lip: '#ff9ab8', body: '#e0a878', deep: '#b8805a', stone: '#f6d0a8', style: 'slab', blades: false, drip: 'vine' },
+  // The Gingerbread Ramparts' wall-walk: big iced gingerbread blocks with candy buttons.
+  gingerbread: { lip: '#fff8f2', body: '#c8844e', deep: '#9a5a34', stone: '#e2a66c', style: 'ginger', blades: false, drip: null, icing: '#fff8f2' },
+  // The Crater's islands: rock candy, crystal facets in sugar pinks and ambers over a toffee crust.
+  rockcandy: { lip: '#ffd0ec', body: '#8a4a3a', deep: '#5a2a24', stone: '#ff9ad8', style: 'rockcandy', blades: false, drip: null, glow: '#ffd08a' },
   // The Sky Whale's Back: the whale's own blue-grey hide in broad plates, a pale lip like its belly.
-  whaleskin: { lip: '#eaf6ff', body: '#6a8ac0', deep: '#4a6a9a', stone: '#9ab8e0', style: 'slab', blades: false, drip: null },
+  // (The quality pass: smooth hide with long belly grooves, mottling and barnacles, not slabs that
+  // read as an ice wall; its lip the pale skin of the whale's flank.)
+  whaleskin: { lip: '#b8cdee', body: '#6a80bc', deep: '#4c5c96', stone: '#8ea6dc', style: 'hide', blades: false, drip: null },
+  // The whale's docks and decks: weathered sea planks, salt-pale, with rope lashings (no stage tape).
+  dockwood: { lip: '#e8d4b0', body: '#a88a6e', deep: '#6e5848', stone: '#d4bc98', style: 'boards', blades: false, drip: null, tape: false, rope: '#e8d8b0' },
   // The Dream Theatre: honey stage boards over a velvet-dark understage.
   stage: { lip: '#ffd36b', body: '#c88a5a', deep: '#8a5a3a', stone: '#e8b080', style: 'boards', blades: false, drip: null },
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
@@ -410,13 +418,173 @@ function paintTile(g, m, theme) {
           g.fillStyle = m.deep;
           g.fillRect(x0 + dx + 2, y + dy + h * 0.5 - 0.6, 1.2, 1.2);
           g.fillRect(x0 + dx + w - 4, y + dy + h * 0.5 - 0.6, 1.2, 1.2);
-          if (hash(k + 3) > 0.9) {
+          if (m.tape !== false && hash(k + 3) > 0.9) {
             g.fillStyle = hash(k + 4) > 0.5 ? '#ff7aa8' : '#7fd8ff';
             g.fillRect(x0 + dx + w * 0.4, y + dy + 1, 5, h - 2);
+          }
+          // Sea planks: a rope lashing round the odd board, and knots in the grain.
+          if (m.rope && hash(k + 5) > 0.82) {
+            g.fillStyle = m.rope;
+            for (let r = 0; r < 3; r++) g.fillRect(x0 + dx + w * 0.3 + r * 2.2, y + dy, 1.4, h);
+            g.fillStyle = hexA(m.deep, 0.4);
+            for (let r = 0; r < 3; r++) g.fillRect(x0 + dx + w * 0.3 + r * 2.2 + 1.4, y + dy, 0.6, h);
+          }
+          if (m.rope && hash(k + 6) > 0.7) {
+            g.fillStyle = hexA(m.deep, 0.5);
+            g.beginPath();
+            g.ellipse(x0 + dx + w * (0.55 + hash(k + 7) * 0.3), y + dy + h * 0.5, 2.2, 1.3, 0, 0, Math.PI * 2);
+            g.fill();
           }
         });
         x += w;
       }
+    }
+  } else if (m.style === 'hide') {
+    // A whale's hide: smooth skin in soft tone bands, long grooves running along it (lit on their
+    // upper lip), pale mottles, and the odd little cluster of barnacles.
+    for (let row = 0; row < 9; row++) {
+      const y = row * (TH / 9) + 4;
+      const k = seed + row * 17;
+      g.fillStyle = mix(m.body, row % 2 ? m.stone : m.deep, 0.12 + hash(k) * 0.12);
+      g.fillRect(0, y - 4, TW, TH / 9);
+      wrap((dx, dy) => {
+        g.strokeStyle = hexA(m.deep, 0.75);
+        g.lineWidth = 1.1;
+        g.lineCap = 'round';
+        g.beginPath();
+        g.moveTo(dx - 4, y + dy + 6);
+        for (let x = 0; x <= TW + 8; x += 16) g.lineTo(x + dx, y + dy + 6 + Math.sin((x / TW) * Math.PI * 2 * 2 + row) * 1.6);
+        g.stroke();
+        g.strokeStyle = hexA(m.stone, 0.55);
+        g.lineWidth = 0.8;
+        g.beginPath();
+        g.moveTo(dx - 4, y + dy + 4.6);
+        for (let x = 0; x <= TW + 8; x += 16) g.lineTo(x + dx, y + dy + 4.6 + Math.sin((x / TW) * Math.PI * 2 * 2 + row) * 1.6);
+        g.stroke();
+      });
+    }
+    for (let i = 0; i < 6 * AREA; i++) {
+      const k = seed + i * 5.3 + 40;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const r = 1.6 + hash(k + 2) * 3;
+      wrap((dx, dy) => {
+        g.fillStyle = hexA(m.stone, 0.45);
+        g.beginPath();
+        g.ellipse(x + dx, y + dy, r * 1.6, r, 0, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+    for (let i = 0; i < AREA; i++) {
+      const k = seed + i * 9.7 + 90;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      wrap((dx, dy) => {
+        for (let b = 0; b < 4; b++) {
+          const bx = x + dx + (b % 2) * 4.4 - 2 + hash(k + b) * 1.5;
+          const by = y + dy + Math.floor(b / 2) * 3.6;
+          g.fillStyle = m.deep;
+          g.beginPath();
+          g.ellipse(bx, by + 0.8, 2.4, 1.9, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = '#e8e2d4';
+          g.beginPath();
+          g.ellipse(bx, by, 2.2, 1.7, 0, 0, Math.PI * 2);
+          g.fill();
+          g.fillStyle = '#a89c8c';
+          g.beginPath();
+          g.ellipse(bx, by - 0.2, 0.8, 0.6, 0, 0, Math.PI * 2);
+          g.fill();
+        }
+      });
+    }
+  } else if (m.style === 'ginger') {
+    // Gingerbread blocks laid like a wall, each with piped icing round its face, a lit top edge,
+    // and here and there a candy button pressed into it.
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 5; col++) {
+        const k = seed + row * 13 + col;
+        const w = TW / 5;
+        const h = TH / 4;
+        const x = col * w + (row % 2) * (w / 2);
+        const y = row * h;
+        wrap((dx, dy) => {
+          g.fillStyle = m.deep;
+          rounded(g, x + dx + 1, y + dy + 1, w - 2, h - 2, 4);
+          g.fill();
+          g.fillStyle = mix(m.body, m.stone, hash(k) * 0.35);
+          rounded(g, x + dx + 1, y + dy + 1, w - 3, h - 4, 4);
+          g.fill();
+          g.fillStyle = hexA(m.stone, 0.7);
+          rounded(g, x + dx + 4, y + dy + 3, w - 10, 2.4, 1.2);
+          g.fill();
+          g.strokeStyle = m.icing;
+          g.lineWidth = 1.5;
+          g.beginPath();
+          for (let u = 0; u <= 1.001; u += 0.05) {
+            const px = x + dx + 6 + (w - 15) * u;
+            g.lineTo(px, y + dy + 7 + Math.sin(u * Math.PI * 6) * 1.1);
+          }
+          g.stroke();
+          g.beginPath();
+          for (let u = 0; u <= 1.001; u += 0.05) {
+            const px = x + dx + 6 + (w - 15) * u;
+            g.lineTo(px, y + dy + h - 8 + Math.sin(u * Math.PI * 6 + 1) * 1.1);
+          }
+          g.stroke();
+          for (let d = 0; d < 9; d++) {
+            g.fillStyle = hexA(m.deep, 0.5);
+            g.fillRect(x + dx + 8 + hash(k + d) * (w - 18), y + dy + 11 + hash(k + d + 9) * (h - 22), 1.2, 1.2);
+          }
+          if (hash(k + 3) > 0.62) {
+            g.fillStyle = ['#ff7aa8', '#9ae66a', '#7fd8ff', '#ffd36b'][Math.floor(hash(k + 4) * 4)];
+            g.beginPath();
+            g.arc(x + dx + w * 0.5, y + dy + h * 0.5, 3.2, 0, Math.PI * 2);
+            g.fill();
+            g.fillStyle = 'rgba(255,255,255,0.7)';
+            g.fillRect(x + dx + w * 0.5 - 1.6, y + dy + h * 0.5 - 2, 1.4, 1.2);
+          }
+        });
+      }
+    }
+  } else if (m.style === 'rockcandy') {
+    // Toffee crust packed with rock-candy crystals: faceted shards, each lit on one face, glinting.
+    const cols = ['#ff9ad8', '#ffd36b', '#9fd8ff', '#ffb0c8', '#c9a6ff'];
+    // Toffee strata first, so the crust shows between the crystals.
+    for (let row = 0; row < 5; row++) {
+      g.fillStyle = mix(m.body, row % 2 ? m.deep : '#b8704a', 0.25);
+      g.fillRect(0, row * (TH / 5) + 6, TW, 5);
+    }
+    for (let i = 0; i < 7 * AREA; i++) {
+      const k = seed + i * 4.1;
+      const x = hash(k) * TW;
+      const y = hash(k + 1) * TH;
+      const r = 4 + hash(k + 2) * 5;
+      const a = hash(k + 3) * Math.PI;
+      const c = cols[Math.floor(hash(k + 4) * cols.length)];
+      wrap((dx, dy) => {
+        const pts = [0, 1, 2, 3, 4, 5].map((n) => {
+          const an = a + (n / 6) * Math.PI * 2;
+          const rr = r * (n % 2 ? 0.7 : 1);
+          return [x + dx + Math.cos(an) * rr, y + dy + Math.sin(an) * rr * 0.8];
+        });
+        g.fillStyle = mix(c, m.deep, 0.35);
+        poly(g, pts);
+        g.fill();
+        g.fillStyle = mix(c, m.body, 0.15);
+        poly(g, [pts[0], pts[1], pts[2], pts[3], [x + dx, y + dy]]);
+        g.fill();
+        g.fillStyle = mix(c, '#ffffff', 0.5);
+        poly(g, [pts[3], pts[4], [x + dx, y + dy]]);
+        g.fill();
+      });
+    }
+    for (let i = 0; i < 3 * AREA; i++) {
+      const k = seed + i * 7.7 + 60;
+      wrap((dx, dy) => {
+        g.fillStyle = '#ffffff';
+        g.fillRect(hash(k) * TW + dx, hash(k + 1) * TH + dy, 1.4, 1.4);
+      });
     }
   } else if (m.style === 'strata') {
     // Layered sandstone: wavy bands, cracks, and flecks of grit.

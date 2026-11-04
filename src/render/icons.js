@@ -10,6 +10,7 @@ import { SCHOOL_COLORS } from './spells.js';
 import { ITEM_ART } from './icons/items.js';
 import './icons/food.js';
 import './icons/craft.js';
+import './icons/finds.js';
 import { SKILL_ART, skillTone } from './icons/skills.js';
 
 export { skillTone };
@@ -50,6 +51,16 @@ function designShapes(def, c, l, d) {
     case 'royal': return [R(4, 2, 8, 3, W), R(3, 5, 10, 10, c), R(3, 13, 10, 2, GOLD)];
     case 'gauntlet': return [R(4, 6, 8, 8, '#dfe6f5'), R(4, 3, 2, 4, '#dfe6f5'), R(7, 2, 2, 5, '#dfe6f5'), R(10, 3, 2, 4, '#dfe6f5'), R(4, 12, 8, 2, c)];
     case 'drop': return [E(5, 10, 2, 2.5, c), E(11, 10, 2, 2.5, c), R(5, 4, 1, 4, GOLD), R(11, 4, 1, 4, GOLD)];
+    // Shoes, side on and in pairs; gloves and studs as a pair (the basic sets and the starters).
+    case 'sneakers': return [0, 8].flatMap((x) => [R(x + 0.5, 9, 4, 4, c), E(x + 4.6, 11.2, 2.6, 1.9, c), R(x + 0.5, 12.6, 7, 1.8, W), R(x + 0.5, 14.2, 7, 0.6, '#d8d0e8'), R(x + 1.5, 8.4, 2.4, 1, l), P(x + 2.5, 10.4, W), P(x + 4, 10, W)]);
+    case 'boots': case 'leatherboots': case 'starboots': {
+      const extra = { boots: (x) => [R(x + 1, 4, 4, 1.2, l)], leatherboots: (x) => [R(x + 0.4, 3.4, 5.2, 2.2, d), R(x + 1, 8.6, 4, 0.9, d), P(x + 3.6, 8.6, GOLD)], starboots: (x) => [R(x + 0.6, 3.6, 4.8, 1.4, GOLD), E(x + 3, 8.6, 1.3, 1.3, GOLD), P(x + 2.6, 8.2, W)] }[def.design];
+      return [0, 8].flatMap((x) => [R(x + 1, 4, 4, 9, c), E(x + 5, 12.4, 2.4, 1.8, c), R(x + 1, 12.4, 6, 1.8, c), R(x + 1, 14, 6.6, 1, d), R(x + 1.6, 5, 1, 7, l), ...extra(x)]);
+    }
+    case 'mitten': return [0, 8].flatMap((x) => [E(x + 4, 7.4, 3, 3.6, c), E(x + 1, 8.4, 1.3, 1.8, c), R(x + 1.4, 10.4, 5.4, 3.4, l), R(x + 1.4, 11.4, 5.4, 0.8, d), P(x + 3, 6, l)]);
+    case 'cuffed': return [0, 8].flatMap((x) => [R(x + 1.4, 5.4, 4.4, 5, c), R(x + 1.4, 2.6, 1.1, 3.4, c), R(x + 2.8, 2, 1.1, 3.8, c), R(x + 4.2, 2.6, 1.1, 3.4, c), E(x + 0.9, 7.6, 1, 1.6, c), R(x + 0.6, 10.2, 6, 3.6, l), R(x + 0.6, 13, 6, 0.8, d)]);
+    case 'starter': return def.slot === 'shoes' ? [0, 8].flatMap((x) => [E(x + 4, 11.4, 3.4, 2.4, c), R(x + 0.6, 11.4, 6.8, 2.4, c), R(x + 0.6, 13.4, 7, 1, d), E(x + 2.6, 10.6, 1.6, 0.8, shade(c, -30)), R(x + 4.4, 10, 1.6, 0.8, l)]) : null;
+    case 'stud': return [4.5, 11.5].flatMap((x) => [E(x, 9, 2.6, 2.6, c), E(x - 0.8, 8.2, 1, 1, l), P(x - 1, 8, W), R(x - 0.5, 4.6, 1, 2.2, GOLD)]);
     case 'star': return [R(3, 10, 5, 1, c), R(5, 8, 1, 5, c), R(9, 10, 5, 1, c), R(11, 8, 1, 5, c), R(5, 4, 1, 4, GOLD), R(11, 4, 1, 4, GOLD)];
     default: return null;
   }
@@ -111,6 +122,8 @@ const CASH_BADGE = [E(13.2, 2.8, 2.8, 2.8, '#ff8fc1'), F(R(12.7, 1, 1, 3.6, '#ff
 function itemShapes(def, variant = null) {
   if (def.type === 'cash') {
     if (def.cover?.fun) return [...fitShapes(JOB_GEAR[def.cover.fun].cover(def.cover.t).shapes), ...CASH_BADGE];
+    // A look whose worn piece is too small or spread out to read in a cell has a drawing of its own.
+    if (def.skin && ITEM_ART[def.skin]) return [...ITEM_ART[def.skin](), ...CASH_BADGE];
     const look = def.cover ? weaponIcon('sword', def.cover.theme ? 21 : def.cover.tier, def.cover.theme ?? null, def.cover.theme ? null : variant) : itemShapes(ITEMS[def.skin], variant);
     return [...look, ...CASH_BADGE];
   }
@@ -126,6 +139,12 @@ function itemShapes(def, variant = null) {
   if (def.type === 'equip' && !def.design && ITEM_ART[def.id]) return ITEM_ART[def.id]();
   const designed = def.type === 'equip' ? designShapes(def, c, l, d) : null;
   if (designed) return designed;
+  // Everyday clothes and basic gear (Lulu's jackets and dresses, the starter and cotton-to-leather
+  // sets) are drawn from how they look worn, like job gear, so no two share a stock shape.
+  if (wornIcon(def)) {
+    const worn = fitShapes(wornShapes(def, variant));
+    if (worn.length) return worn;
+  }
   if (def.type === 'equip') {
     switch (def.slot) {
       case 'hat': return [E(8, 9, 7, 5, c), R(1, 10, 14, 3, d), P(5, 6, l)];
@@ -154,13 +173,16 @@ function itemShapes(def, variant = null) {
   return [E(8, 9, 5, 5, c), E(6, 7, 2, 2, l), P(10, 12, d)];
 }
 
+const WORN_SLOTS = new Set(['top', 'bottom', 'shoes', 'gloves', 'cape', 'earring']);
+const wornIcon = (def) => def.type === 'equip' && def.design && WORN_SLOTS.has(def.slot) && !ITEM_ART[def.id] && !designShapes(def, def.color, def.color, def.color);
+
 // Worn-shape icons rasterize at twice the detail so small parts survive the shrink; hand-drawn
 // drops and tonics at three times, with a crisp inked outline.
 export function itemIcon(id, variant = null) {
   const def = ITEMS[id];
   const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
-  const fine = look.design === 'job' || look.design === 'jewel';
-  const art = def.type !== 'cash' && ITEM_ART[id];
+  const fine = look.design === 'job' || look.design === 'jewel' || wornIcon(look);
+  const art = def.type !== 'cash' ? ITEM_ART[id] : def.skin && ITEM_ART[def.skin];
   const detail = art ? { res: 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
   const gear = look.type === 'equip';
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));

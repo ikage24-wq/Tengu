@@ -53,8 +53,8 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Leftover unused monster art tables (hollow.js, manor.js, old Hollow frames in bosses.js). (fixed)
 
 ## D. Maps and themes
-- [ ] Candy Volcano's Gingerbread Ramparts and The Crater are plain cobble meadows: no wall and towers, no crater or caramel lake.
-- [ ] Dungeon rooms share one backdrop (Manor Gallery/Ballroom/Library/Hallway; the Library has no books; Carnival Midway/Coaster Yard/Ferris Wheel/gate).
+- [x] Candy Volcano's Gingerbread Ramparts and The Crater are plain cobble meadows: no wall and towers, no crater or caramel lake. (fixed)
+- [x] Dungeon rooms share one backdrop (Manor Gallery/Ballroom/Library/Hallway; the Library has no books; Carnival Midway/Coaster Yard/Ferris Wheel/gate). (fixed)
 - [ ] Underground zones under open sky with sun, clouds, rainbow and bunnies (Clover Hills Root Cellar, Mossy Woods Root Tunnels, Twilight Ruins Sunken Crypt).
 - [ ] December/January snow on every outdoor map, deserts and the tropics included; rain above the clouds (Sky Garden, Starfall). Weather by region.
 - [ ] Sprout's stone water fountain stamped into desert Ember Crag and Moonleaf Grove.
@@ -63,20 +63,20 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [ ] Gathering finds that don't belong: lotus and shrine lily in the cave, cloud skywood and Starfall's starbloom on the Peak, cotton/oak/moonpetal in the desert canyon, meadow honey in the Sky Garden.
 - [ ] Moray Grotto (a cave) uses the palace backdrop and pink palace brick.
 - [ ] A Twilight Ruins column inside the Boar Den.
-- [ ] The theatre's confetti stage floor reused outdoors on the Sky Whale; its back reads as an ice wall.
+- [x] The theatre's confetti stage floor reused outdoors on the Sky Whale; its back reads as an ice wall. (fixed)
 - [ ] Crystal Cave's "Underground Lake" is a small glow puddle; Windy Canyon and Crystal Cave have very few monsters.
 - [ ] **(player: boss nests only)** Area boss nests on every hunting map (only Petal Meadow and Clover Hills have one). Secrets not now.
 - [ ] **(player: rework them)** Neighbouring hunting maps share a shape (three tall-climb pairs); Shrine and Springs are stacked full-width shelves. The dungeon gates are one stamped map.
 - [ ] Open-air dungeon rooms and the queen arenas ignore day and night.
 
 ## E. UI and icons
-- [ ] Wind Dancer skill icons are still the old ninja Thief's (masked face, shuriken, crossed daggers), violet not coral.
-- [ ] 77 items show the generic placeholder icon (newer drops, every herb and fruit, all furniture and trophies, mount keys, Royal Jelly, Home Shell).
-- [ ] 30 clothes and basic gear share one stock shape per slot (Lulu's jacket, sweater, overalls, dress...).
+- [x] Wind Dancer skill icons are still the old ninja Thief's (masked face, shuriken, crossed daggers), violet not coral. (fixed)
+- [x] 77 items show the generic placeholder icon (newer drops, every herb and fruit, all furniture and trophies, mount keys, Royal Jelly, Home Shell). (fixed)
+- [x] 30 clothes and basic gear share one stock shape per slot (Lulu's jacket, sweater, overalls, dress...). (fixed)
 - [x] Options: Gameplay's last row under the Resume button; Sound descriptions under the volume pills. (fixed)
 - [x] Crafting tabs stick out past the window. (fixed)
 - [x] Lantern Lagoon, Dawnlight Beach and Sunny Dock missing from the World Map. (fixed)
 - [x] Phone players get keyboard-only hints and can't buy ×10 or add 5 AP. (fixed)
 - [x] Stale job names: Elowen offers "the Shrine Maiden and the Onmyoji"; "The Thief's Trial"; "Archer" not "Acrobat Archer". (fixed)
 - [x] Controls page missing G, O, P, Y. (fixed)
-- [ ] Profile gear names cut short; labels measured in one font and drawn in another; Cash Shop menu bubble loses its icon; gacha Dew Sparkle icon unreadable; no menu button for Collection; Life Skills repeats "next level". (fixed, all but the gacha Dew Sparkle icon, which is art and waits for the icon pass)
+- [x] Profile gear names cut short; labels measured in one font and drawn in another; Cash Shop menu bubble loses its icon; gacha Dew Sparkle icon unreadable; no menu button for Collection; Life Skills repeats "next level". (fixed)
