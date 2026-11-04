@@ -381,8 +381,11 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   let puff = -1;
   if (m.hp <= 0) {
     const d = deathPose(m, mo, m.dying ?? 0);
-    sx *= d.sx;
-    sy *= d.sy;
+    // (A rigged boss falls by its bones, in its own death pose: never squashed.)
+    if (!rig) {
+      sx *= d.sx;
+      sy *= d.sy;
+    }
     x += d.dx;
     lift = -d.dy;
     rot = d.rot;

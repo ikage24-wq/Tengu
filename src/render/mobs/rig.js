@@ -86,7 +86,8 @@ export function attackPhase(m, now, recover = 0.55) {
 // Most bosses are built from this: `makeRig(spec)` returns the `{ w, h, draw }` a design hangs on
 // its art. The spec gives:
 //   parts     in drawing order: { name, s: (a, S) => sprite (none: a bare joint), pivot: [x, y]
-//             in its box, parent: name or
+//             in its box (or (a, S) => [x, y]), alpha: (a, S) => 0..1, clip: (a, S) => [x, y, w, h]
+//             around the pivot, parent: name or
 //             null (the feet), at: (S) => [x, y] in the parent's space, rot: (S) => radians,
 //             when: (a, S) => bool to skip it }
 //   pose      (m, a) => goals for the channels (numbers), from the boss's moves: a.t (clock),
@@ -151,10 +152,22 @@ export function makeRig(spec) {
       for (const p of spec.parts) {
         // (A part with no picture is just a joint for others to hang from.)
         if (!p.s || (p.when && !p.when(a, S))) continue;
+        // (A part may fade in and out (`alpha`), and may show only a window of itself (`clip`, a
+        // rect around its pivot): one drawing cut in two at a seam a sash or a belt hides.)
+        const lk = p.alpha ? { ...look, alpha: look.alpha * clamp(p.alpha(a, S), 0, 1) } : look;
+        if (lk.alpha <= 0.01) continue;
         const M = matOf(p);
+        const s = p.s(a, S);
+        const pv = typeof p.pivot === 'function' ? p.pivot(a, S) : p.pivot;
         ctx.save();
         ctx.transform(...M);
-        blit(ctx, p.s(a, S), -p.pivot[0], -p.pivot[1], look);
+        if (p.clip) {
+          const [cx, cy, cw, ch] = p.clip(a, S);
+          ctx.beginPath();
+          ctx.rect(cx, cy, cw, ch);
+          ctx.clip();
+        }
+        blit(ctx, s, -pv[0], -pv[1], lk);
         ctx.restore();
       }
       if (spec.fx) {

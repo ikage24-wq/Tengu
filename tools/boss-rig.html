@@ -5,7 +5,7 @@
 // Dev tool: a rigged boss (render/mobs/rig.js) side by side with its old frames, both acting out the
 // same little script on a loop: standing, walking each way, two slams, two hits taken. For checking
 // the rig's motion and for before/after videos (tools/record-rig.cjs).
-// ?boss=mothercapper (any monster id). From outside: window.step(secs) plays and draws,
+// ?boss=mothercapper (any monster id), &die to end on its death. From outside: window.step(secs) plays and draws,
 // window.frame() gives the picture, window.length is the script's length in seconds.
 import { MOBS } from '../src/data/mobs.js';
 import { drawMonster } from '../src/render/monsters.js';
@@ -29,7 +29,8 @@ const fresh = (uid) => ({ def, x: 0, y: 0, hp: def.hp, dir: 1, state: 'idle', fl
 const mobs = [fresh(1), fresh(2)];
 
 // The script: [seconds, what].
-const SCRIPT = [[2.4, 'idle'], [1.8, 'walk', 1], [1.8, 'walk', -1], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.6, 'hit'], [0.6, 'hit'], [1.6, 'idle']];
+// (?die adds the death at the end.)
+const SCRIPT = [[2.4, 'idle'], [1.8, 'walk', 1], [1.8, 'walk', -1], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.8, 'idle'], [0.55, 'windup'], [1.4, 'blow'], [0.6, 'hit'], [0.6, 'hit'], [1.6, 'idle'], ...(q.has('die') ? [[0.9, 'die']] : [])];
 const length = SCRIPT.reduce((a, s) => a + s[0], 0);
 window.length = length;
 let t = 0;
@@ -56,6 +57,8 @@ function act(now) {
       m.flash = 0.15;
     }
     m.flash = Math.max(0, m.flash - 1 / 60);
+    m.hp = what === 'die' ? 0 : def.hp;
+    m.dying = what === 'die' ? at : 0;
     if (i < 1) m.x = 0;
   }
   return what;

@@ -9,10 +9,13 @@
 //            with a crescent halo, a winged helm, a moon spear, and a crescent shield
 // Each has her own eyes and her own gait. Parts are polygons pushed through a small transform
 // stack (`within`) so a torso, a head, or an arm can tilt as one piece. All face right, feet at
-// the bottom.
+// the bottom. In play they are rigged (the end of this file): cut into parts from this drawing and
+// posed live on a skeleton, keeping their tall look; the frames stay for portraits and galleries.
 
 import { E, T, F, C, L, INK, shade, mix } from './kit.js';
 import { heroineHead, heroineBrows, heroineTop } from './heroine.js';
+import { sprite, blit } from '../pixel.js';
+import { makeRig, stateBlend, smooth, easeOut } from './rig.js';
 
 const TAU = Math.PI * 2;
 const PI = Math.PI;
@@ -342,11 +345,13 @@ function inHead(hx, hy, fn) {
 // slow and wide, and every tip traces a figure-8 (a sideways swing with a half-period lift).
 // Locks are dragged back on the walk and hang with gravity when the head and body tilt (`turn`).
 function hairMotion(tm, o) {
-  const turn = o.turn ?? 0;
+  // (Cut for the rig: the hair hangs still and straight; the rig swings it.)
+  const turn = CUT ? 0 : o.turn ?? 0;
   return (t, len = 0, layer = {}) => {
     let dx = 0;
     let dy = 0;
-    if (tm.atk) dx = (o.swing ?? 0) * t ** (layer.fq > 1 ? 0.9 : 1.2) * (layer.amp ?? 1);
+    if (CUT) dx = 0;
+    else if (tm.atk) dx = (o.swing ?? 0) * t ** (layer.fq > 1 ? 0.9 : 1.2) * (layer.amp ?? 1);
     else if (!o.still) {
       const p = tm.phAt(tm.f - (layer.lag ?? 1) - t * (layer.travel ?? 1));
       const q = (o.fq ?? 1) * (layer.fq ?? 1) * p + (o.p0 ?? 0);
@@ -565,6 +570,17 @@ function hairCap(R, o) {
 // The fringe's lower edge, left to right, for the face's forehead shadow (look.bangs).
 const bangsOf = (edge) => edge.filter(([x, , k]) => k !== 'p' && x < 12.8).map(([x, y]) => [x, y]).reverse();
 
+// ---------- Cutting a queen into rig parts ----------
+// The queens are posed live on a rig (see the end of this file). Each part is cut from the queen's
+// own drawing: the drawing below runs once in a still, upright rest pose with CUT set, and every
+// `mark(out, name)` starts a new part, so the rig's parts are exactly her drawn art.
+let CUT = null;
+const mark = (out, name) => {
+  if (CUT) CUT.marks.push([name, out.length]);
+};
+// The rest pose: standing still and upright (the constant tilts cancelled), hair hanging straight.
+const REST = { bob: 0, lean: 0, tilt: 0.025, headA: 0.05, drop: 0, swing: 0 };
+
 // ---------- Shared motion ----------
 
 // The idle's eight frames, as points on the breathing cycle (in turns; the body is lowest at a
@@ -711,6 +727,12 @@ function tamamo(pose, f, mood) {
     fanOpen = 0.5;
     fanAng = 20;
   }
+  if (CUT) {
+    ({ bob, lean, tilt, headA, drop, swing } = REST);
+    spread = 1;
+    tlen = 1;
+    burst = 0;
+  }
   const hipY = G - 50;
   const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
   const hx = bx - 0.4;
@@ -724,13 +746,14 @@ function tamamo(pose, f, mood) {
   const tails = [];
   for (let i = 0; i < 9; i++) {
     const side = (i - 4) / 4;
-    const wave = atk ? Math.sin(a * 1.2 - i * 0.6) * 0.04 : (walk ? 0.09 : 0.075) * Math.sin(ph - i * 0.7);
+    const wave = CUT ? 0 : atk ? Math.sin(a * 1.2 - i * 0.6) * 0.04 : (walk ? 0.09 : 0.075) * Math.sin(ph - i * 0.7);
     let ang = -PI / 2 + side * 1.22 * spread + wave - (walk ? 0.1 : 0);
     if (dead) ang = -PI * 0.62 - (i / 8) * PI * 0.36;
     tails.push({ i, side, ang, wave });
   }
   tails.sort((p, q) => Math.abs(q.side) - Math.abs(p.side));
   for (const { i, side, ang, wave } of tails) {
+    mark(out, `tail${i}`);
     const len = (dead ? 54 : 62 + (1 - Math.abs(side)) * 8) * tlen;
     const pts = [root];
     let aa = ang;
@@ -759,8 +782,9 @@ function tamamo(pose, f, mood) {
     const dir = Math.atan2(tp[1] - prev[1], tp[0] - prev[0]);
     const tipX = tp[0] + Math.cos(dir) * 2;
     const tipY = tp[1] + Math.sin(dir) * 2;
-    // Fox-fire on every tip.
-    if (!dead) {
+    // Fox-fire on every tip (on the rig, its own flickering part).
+    if (CUT) CUT.pts[`tip${i}`] = [tipX, tipY];
+    else if (!dead) {
       const fl = (1 + 0.25 * Math.sin(ph * 2 + i * 1.7)) * (1 + burst * 0.7);
       out.push(foval(tipX, tipY - 1, 4.4 * fl, 4 * fl, mix(fireC[1], '#ffffff', 0.3)));
       out.push(...flame(tipX, tipY + 2.4, 11 * fl, 3.6 * Math.min(1.5, fl), -side * 2 + Math.sin(ph * 2 + i) * 1.4, fireC));
@@ -777,11 +801,15 @@ function tamamo(pose, f, mood) {
   // It widens below the jaw (never tucking in under the skull) and is a shade darker than the crown.
   const RB = backRamp(R);
   within(Th, () => inHead(hx, hy, () => {
+    mark(out, 'hair0');
     out.push(clump(flow([[-12, -6], [-16, 8], [-18, 24], [-18.6, 40], [-17.2, 56]], lag, backLayer(0)), 8.4, RB.sh2, { end: 0.3 }));
     out.push(...lock(flow([[-10.4, -4], [-14.4, 10], [-15.6, 26], [-15.2, 42], [-13.8, 57.5]], lag, backLayer(1)), 6.8, RB, { hi: [0.1, 0.3] }));
+    mark(out, 'hair1');
     out.push(...lock(flow([[-7, -2], [-10.2, 12], [-11.2, 28], [-10.8, 42], [-10.4, 53]], lag, backLayer(2)), 6.2, RB, { hi: [0.14, 0.3] }));
+    mark(out, 'hair2');
     out.push(...lock(flow([[-3.6, 2], [-5.6, 14], [-6.4, 28], [-6, 40], [-6.6, 47.5]], lag, backLayer(3)), 4.8, RB));
   }));
+  mark(out, 'sleeveB');
   within(Tu, () => {
     const sw = swing;
     const top = G - 82;
@@ -792,6 +820,7 @@ function tamamo(pose, f, mood) {
 
   // ---- The robes: an inner crimson kimono, layered collars, a gold obi, and the long white
   // uchikake hanging open over them, its hem padded and sweeping into a train.
+  mark(out, 'robe');
   {
     const top = G - 82;
     const P = (x, y) => Tu(x, y);
@@ -853,7 +882,9 @@ function tamamo(pose, f, mood) {
     within(Tu, () => {
       const oy = top + 22;
       // The bow: two hanging ends that sway, two broad loops, and the knot.
+      mark(out, 'bowEnds');
       for (const [dx, len] of [[-1, 16], [1.5, 20]]) out.push(strip([[bx - 14 + dx, oy + 2], [bx - 17 + dx + swing * 0.5, oy + len * 0.5], [bx - 18 + dx + swing, oy + len]], (t) => 5.4 - t, K.goldDk, { n: 3 }), strip([[bx - 14 + dx, oy + 2], [bx - 17 + dx + swing * 0.5, oy + len * 0.5], [bx - 18 + dx + swing, oy + len]], (t) => 3.6 - t, K.gold, { n: 3, flat: true }));
+      mark(out, 'obi');
       for (const [ang, r] of [[-2.3, 8], [2.5, 7]]) {
         const cx = bx - 14 + Math.cos(ang) * r * 0.9 + swing * 0.2;
         const cy = oy + Math.sin(ang) * r * 0.75;
@@ -875,7 +906,7 @@ function tamamo(pose, f, mood) {
 
   // ---- Head, hair, ears, and crown.
   const headPart = () => within(Th, () => {
-    const earTw = hurt ? -0.55 : dead ? -0.8 : angry ? -0.2 : 0.05 * Math.sin(ph * 2 + 0.4) + (walk ? -0.12 : 0);
+    const earTw = CUT ? 0 : hurt ? -0.55 : dead ? -0.8 : angry ? -0.2 : 0.05 * Math.sin(ph * 2 + 0.4) + (walk ? -0.12 : 0);
     const ear = (ex, ey, a0, sc) =>
       within(rot(ex, ey, a0 + earTw), () => {
         out.push(poly([[ex - 6 * sc, ey + 2], [ex - 4.6 * sc, ey - 9 * sc], [ex - 1 * sc, ey - 17 * sc], [ex + 2.4 * sc, ey - 9 * sc], [ex + 5 * sc, ey + 2]], K.hairDk));
@@ -884,15 +915,21 @@ function tamamo(pose, f, mood) {
         out.push(fpoly([[ex - 1.6 * sc, ey - 13.4 * sc], [ex - 1 * sc, ey - 17 * sc], [ex + 0.2 * sc, ey - 13 * sc]], K.tailDk));
         for (let k = 0; k < 3; k++) out.push(line([[ex - 2 + k * 1.6, ey + 0.6], [ex - 1.6 + k * 1.3 + Math.sin(ph + k) * 0.4, ey - 4.6 - k]], 0.7, K.tip));
       });
+    mark(out, 'earB');
     ear(hx - 7, hy - 9, -0.45, 0.92);
+    mark(out, 'head');
     out.push(...queenHead(hx, hy, mood, TAMAMO_FACE));
     // Hime-cut hair: the crown and straight-cut fringe, and the chin-length side locks.
     inHead(hx, hy, () => {
       out.push(...hairCap(R, TAMAMO_HAIR));
+      mark(out, 'side');
       out.push(...pair(flow([[-7.6, -3], [-8.6, 5], [-8.8, 12], [-8.8, 16.4]], lag, SIDE), flow([[-4.8, -3], [-5.1, 5], [-5, 11], [-4.8, 14.4]], lag, SIDE), 3.6, 3.4, R, { r0: 1, pk: 0.55, k: 2.4, end: 0.15, line: true, short: 3 }));
     });
+    mark(out, 'top');
     out.push(...queenTop(hx, hy, mood, TAMAMO_FACE));
+    mark(out, 'earF');
     ear(hx + 4.5, hy - 11.5, 0.12, 1);
+    mark(out, 'crown');
     // Kanzashi, reduced to two glyphs that still read at 1x: a gold tiara of three points around
     // one crimson jewel, and a crimson flower pin with a single gold chain swinging a beat behind.
     const cy0 = hy - 14.6;
@@ -907,6 +944,7 @@ function tamamo(pose, f, mood) {
     out.push(...gem(hx + 1, cy0 + 1.8, 2.2, K.crimson));
     const px = hx - 11;
     const py = hy - 7;
+    mark(out, 'chain');
     {
       const sx = swing * 0.6 + (atk ? -lean * 0.3 : 0);
       const c0 = [px - 0.4, py + 2];
@@ -914,6 +952,7 @@ function tamamo(pose, f, mood) {
       const c2 = [c0[0] + sx - 0.8, c0[1] + 11];
       out.push(line(spline([c0, c1, c2], 3), 0.7, K.goldDk), foval(c2[0], c2[1] + 1.2, 1.3, 1.8, K.gold, 0, 10));
     }
+    mark(out, 'pin');
     out.push(...blossom(px, py, 3.6, K.crimson, K.gold, 0.3), dot(px - 0.5, py - 0.5, 0.5, '#ffffff'));
   });
 
@@ -969,6 +1008,7 @@ function tamamo(pose, f, mood) {
   });
 
   headPart();
+  mark(out, 'xarm');
   nearArm();
 
   // Fox-fire wisps drifting around her when roused.
@@ -1073,6 +1113,7 @@ function sylvana(pose, f, mood) {
     handAt = [bx + 18, G - 18];
     backHand = [bx - 16, G - 20];
   }
+  if (CUT) ({ bob, lean, tilt, headA, drop, swing } = REST);
   const glow = angry || atk ? S.veinHot : dead ? '#cfe6d6' : mix(S.vein, '#ffffff', 0.2 + 0.2 * Math.sin(ph));
   const top = G - 82;
   const hipY = G - 50;
@@ -1084,7 +1125,7 @@ function sylvana(pose, f, mood) {
 
   // Fireflies circling her; the far half of the orbit is drawn behind.
   const flies = (front) => {
-    if (dead) return;
+    if (dead || CUT) return;
     for (let k = 0; k < 6; k++) {
       const t = ph + (k / 6) * TAU + (atk ? a * 0.5 : 0);
       if (Math.sin(t) > 0 !== front) continue;
@@ -1114,6 +1155,7 @@ function sylvana(pose, f, mood) {
       [-4.4, 2, 36, 5, null, -2.4],
     ];
     locks.forEach(([x0, y0, len, w, dark, drift], k) => {
+      mark(out, `hair${k}`);
       const pts = [];
       for (let j = 0; j <= 4; j++) {
         const y = y0 + (len * j) / 4;
@@ -1139,18 +1181,21 @@ function sylvana(pose, f, mood) {
   for (let k = 0; k < 8; k++) {
     const side = k < 4 ? -1 : 1;
     const j = k < 4 ? k : k - 4;
-    const ripple = walk ? Math.sin(ph - k * 0.9) : atk ? 0.4 * Math.sin(a + k) : Math.sin(ph - k * 0.7) * 0.4;
+    const ripple = CUT ? 0 : walk ? Math.sin(ph - k * 0.9) : atk ? 0.4 * Math.sin(a + k) : Math.sin(ph - k * 0.7) * 0.4;
     const x0 = bx + side * (8 + j * 6) + lean * 0.4;
     const len = (10 + j * 5) * (1 + ripple * 0.18) * (dead ? 1.3 : 1) * (atk && side > 0 ? 1 + lash * 0.3 : 1);
     const rise = Math.max(0, ripple) * 2.2;
     roots.push({ pts: [[x0, G - 6], [x0 + side * len * 0.4, G - 2.5 - rise], [x0 + side * len * 0.8, G - 1 - rise * 0.5], [x0 + side * len, G - 0.6]], w: 4.8 - j * 0.5 });
   }
-  for (const r of roots) {
+  roots.forEach((r, k) => {
+    mark(out, `root${k}`);
+    if (CUT) CUT.pts[`root${k}`] = r.pts[0];
     out.push(taper(r.pts, r.w + 1.2, 1, S.woodDk, { tip: true, n: 3 }), taper(r.pts, r.w, 0.6, S.wood, { n: 3 }));
     out.push(line(spline(r.pts, 2).slice(1, 4).map(([x, y]) => [x, y - r.w * 0.2]), 0.6, S.woodLt));
-  }
+  });
 
   // ---- A long mantle of layered leaves falling from her shoulders into a train behind.
+  mark(out, 'mantle');
   within(Tu, () => {
     const sw = swing;
     const edge = [];
@@ -1173,6 +1218,7 @@ function sylvana(pose, f, mood) {
   });
 
   // ---- The far arm, resting on the gown.
+  mark(out, 'xarmB');
   within(Tu, () => {
     const sh = [bx - 7, top + 2];
     const tgt = [backHand[0] - lean, backHand[1] - bob - drop];
@@ -1205,12 +1251,17 @@ function sylvana(pose, f, mood) {
       out.push(poly(pts.map(([x, y]) => [x, y + 0.9]), cDk), poly(pts, c));
     };
     const sw = swing;
+    mark(out, 'tier0');
     tierAt(G - 26 - drop * 0.1, G - 6 - drop * 0.1, 19, 33, S.moss, S.mossDk, 9, sw * 0.9, 0);
+    mark(out, 'tier1');
     tierAt(G - 40, G - 22, 15, 26, S.leaf2, S.leaf2Dk, 7, sw * 0.6, 2);
+    mark(out, 'tier2');
     tierAt(waist - 2, G - 36, 9.5, 18, S.leaf, S.leafDk, 6, sw * 0.3, 4);
     // Blossoms tucked into the tiers.
+    mark(out, 'blooms');
     for (const [x, y, r] of [[bx - 14, G - 24, 2.4], [bx + 10, G - 30, 2.2], [bx + 2, G - 11, 2]]) out.push(...blossom(x + sw * 0.5, y, r, S.bloom, '#fff6a0', x * 0.1));
     // Bodice of overlapping leaf scales, with a moss sash at the waist.
+    mark(out, 'bodice');
     const bod = round([[bx - 9, top + 2], [bx - 10.6, top + 10], [bx - 7.4, top + 17], [bx - 8, waist], [bx + 8.6, waist], [bx + 8.6, top + 17], [bx + 11.6, top + 10], [bx + 9.4, top + 2], [bx + 2, top - 1]], 2);
     out.push(poly(bod.map(([x, y]) => [x + (x - bx) * 0.08, y + 0.6]), S.leafDk), poly(bod, S.leaf));
     for (let r = 0; r < 2; r++) {
@@ -1233,12 +1284,14 @@ function sylvana(pose, f, mood) {
 
   // ---- Head: birch skin with glowing veins, willow hair, and the blossoming branch crown.
   within(Th, () => {
+    mark(out, 'head');
     out.push(...queenHead(hx, hy, mood, SYLVANA_FACE));
     // A glowing vein down the jaw, clear of the eyes.
     if (!dead) out.push(line(spline([[hx + 12.6, hy + 6.4], [hx + 12.2, hy + 9], [hx + 10.4, hy + 11.6], [hx + 10.8, hy + 13.4]], 3), 0.5, glow), dot(hx + 10.8, hy + 13.4, 0.55, glow));
     // The willow crown of hair, and two willow locks falling before the shoulder.
     inHead(hx, hy, () => {
       out.push(...hairCap(R, SYLVANA_HAIR));
+      mark(out, 'side');
       const pa = flow([[-8, -3], [-9, 8], [-10.6, 18], [-9.4, 27], [-10.6, 33]], lag, SIDE);
       const pb = flow([[-4.8, -3], [-5.4, 8], [-7, 16], [-6.2, 23], [-7, 27]], lag, SIDE);
       out.push(...pair(pa, pb, 3.8, 3.4, R, { r0: 1, pk: 0.35, k: 1.4, end: 0.12, line: true, hi: [0.1, 0.3], short: 4 }));
@@ -1248,14 +1301,16 @@ function sylvana(pose, f, mood) {
         out.push(...leaf(x + side * 1.4, y, PI / 2 + side * 0.8, 4.4, 2.2, side > 0 ? S.hairLt : S.hair));
       }
     });
+    mark(out, 'top');
     out.push(...queenTop(hx, hy, mood, SYLVANA_FACE));
+    mark(out, 'crown');
     // The crown: two branching antlers of living wood, blossoms at the forks, wisteria hanging.
     const brSw = Math.sin(ph - 0.5) * (walk ? 0.8 : 0.5);
     const branches = [
       { m: [[hx - 3, hy - 12], [hx - 8, hy - 21], [hx - 14, hy - 27], [hx - 21, hy - 30]], t: [[1, [hx - 6, hy - 33]], [2, [hx - 15, hy - 37]]] },
       { m: [[hx + 4, hy - 13], [hx + 9, hy - 22], [hx + 15, hy - 27], [hx + 22, hy - 29]], t: [[1, [hx + 8, hy - 32]], [2, [hx + 17, hy - 36]]] },
     ];
-    for (const b of branches) {
+    branches.forEach((b, bi) => {
       const up = (p) => [hx + (p[0] - hx) * 1.18, hy - 12 + (p[1] - hy + 12) * 1.25];
       b.m = b.m.map(up);
       b.t = b.t.map(([i, e]) => [i, up(e)]);
@@ -1265,18 +1320,22 @@ function sylvana(pose, f, mood) {
       out.push(...blossom(b.m[1][0], b.m[1][1] - 0.6, 2.3, S.bloom, '#fff6a0', 0.3), ...blossom(b.t[1][1][0], b.t[1][1][1] + 1, 1.7, '#ffffff', S.bloomDk, 0.9));
       // Wisteria hanging from the branch tip, swinging a beat behind.
       const [wx, wy] = b.m[3];
+      mark(out, `wis${bi}`);
+      if (CUT) CUT.pts[`wis${bi}`] = [wx, wy + 1];
       for (let j = 0; j < 5; j++) {
         const t = j / 4;
         const x = wx + brSw * t * 2 + swing * t * 0.6;
         const y = wy + 2 + j * 3.2;
         out.push(foval(x - 0.6, y, 1.6 - t * 0.6, 1.3 - t * 0.3, j % 2 ? S.wisLt : S.wis, 0, 10), foval(x + 0.8, y + 1.2, 1.5 - t * 0.6, 1.2 - t * 0.3, j % 2 ? S.wis : S.wisLt, 0, 10));
       }
-    }
+      mark(out, 'crown');
+    });
     out.push(...blossom(hx + 9, hy - 10, 2.8, S.bloom, '#fff6a0', 0.1), ...blossom(hx + 12.4, hy - 7.2, 1.8, '#ffffff', S.bloomDk, 0.6));
   });
 
   // ---- The near arm: birch skin, a leaf bracelet, and a glowing seed above the open palm.
   // In the attack she lifts it and thorned vines whip out from the ground ahead.
+  mark(out, 'xarm');
   within(Tu, () => {
     const sh = [bx + 7, top + 2];
     const tgt = [handAt[0] - lean, handAt[1] - bob - drop];
@@ -1432,6 +1491,11 @@ function lilith(pose, f, mood) {
     handAt = [bx + 16, G - 18];
   }
   if (angry && !atk) wingA += 0.18;
+  if (CUT) {
+    ({ bob, lean, tilt, headA, drop, swing } = REST);
+    wingA = 0;
+    curl = 0;
+  }
   const top = G - 82;
   const hipY = G - 48;
   const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
@@ -1473,8 +1537,11 @@ function lilith(pose, f, mood) {
     tips.forEach((t) => out.push(taper([Wr, t], 1.8 * k, 0.5 * k, bone, { n: 1, tip: true })));
     out.push(fpoly([[Wr[0] - 1, Wr[1]], [Wr[0] + Math.cos(A2 + (far ? -1.6 : 1.6)) * 5, Wr[1] + Math.sin(A2 + (far ? -1.6 : 1.6)) * 5 - 2], [Wr[0] + 1, Wr[1] - 1]], D.goldLt));
   };
+  mark(out, 'wingF');
   if (!dead) wing(Tu(bx - 2, top + 6), -0.8, 0.95, true);
+  mark(out, 'wingN');
   wing(Tu(bx - 7, top + 8), dead ? -2.3 : -2.3, 1.12, false);
+  mark(out, 'xtail');
 
   // ---- The tail: slim, swinging against the hips, curling into a heart.
   {
@@ -1506,9 +1573,12 @@ function lilith(pose, f, mood) {
 
   // ---- Long wavy hair falling down her back, splitting into locks at the ends.
   within(Th, () => inHead(hx, hy, () => {
+    mark(out, 'hair0');
     out.push(clump(wavy(-12, -6, 62, -8, 0, backLayer(0)), 10, RB.sh2, { end: 0.3, r0: 0.9 }));
     out.push(...lock(wavy(-11, -4, 64, -5, 0.6, backLayer(1)), 7, RB, { hi: [0.08, 0.24] }));
+    mark(out, 'hair1');
     out.push(...lock(wavy(-7, -2, 56, -4, 1.4, backLayer(2)), 6.6, RB, { hi: [0.12, 0.26] }));
+    mark(out, 'hair2');
     out.push(...lock(wavy(-3.6, 2, 46, -3, 2.2, backLayer(3)), 5, RB));
   }));
 
@@ -1548,6 +1618,7 @@ function lilith(pose, f, mood) {
     hem.push([lerp(bx + 14 + (dead ? 8 : 0), bx - 26 - (dead ? 6 : 0) - (walk ? 2 : 0), t) + Math.sin(t * 7 + ph * (walk ? 2 : 1)) * 0.8, G - 0.4 - (i % 2 ? 1.2 : 0)]);
   }
   const train = [bx - 34 - (walk ? 3 : 0) - swing, G - 0.2];
+  mark(out, 'skirt');
   {
     const back = [Tu(bx - 8.6, G - 58), Tu(bx - 11, G - 48), ...(drop ? [] : [[bx - 16 + lean * 0.3, G - 28]])];
     out.push(T([Tu(bx + 4, G - 58), Tu(bx + 6, G - 40), ...hem, train, ...back.slice().reverse()], D.blackDk));
@@ -1557,14 +1628,18 @@ function lilith(pose, f, mood) {
       out.push(strip([t0, [lerp(t0[0], x1, 0.5), lerp(t0[1], G, 0.5)], [x1 + swing * 0.5, G - 2]], (t) => 2.2 * Math.sin(PI * Math.min(1, t + 0.1)), D.blackLt, { n: 3, flat: true }));
     }
   }
-  if (walk || atk) out.push(T([Tu(bx + 7, G - 36), [bx + 19, G - 1], [bx - 4, G - 1], Tu(bx - 2, G - 34)], D.wineDk));
+  // (On the rig she always stands in the slit gown, a leg showing through.)
+  mark(out, 'slit');
+  if (walk || atk || CUT) out.push(T([Tu(bx + 7, G - 36), [bx + 19, G - 1], [bx - 4, G - 1], Tu(bx - 2, G - 34)], D.wineDk));
+  mark(out, 'xlegs');
   if (!dead) out.push(...legAt([bx - 2, hipY], PI, true), ...legAt([bx + 1, hipY], 0, false));
+  mark(out, 'panel');
   {
     // The front panel covers the hips and falls to the floor; its wine-lined edge is the slit.
     const slitTop = Tu(bx + 8, G - 36);
     const hemFront = [bx + 17 + (walk ? -Math.cos(ph) * 3 : 0) + (dead ? 10 : 0), G - 0.6];
     const panel = [Tu(bx + 9.5, G - 58), Tu(bx + 11, G - 47), slitTop, [lerp(slitTop[0], hemFront[0], 0.5) - 1.5, lerp(slitTop[1], G, 0.5)], hemFront, hem[3], [bx + 2, G - 20], Tu(bx + 1, G - 50), Tu(bx + 2, G - 58)];
-    if (walk || atk) {
+    if (walk || atk || CUT) {
       // In stride, the near leg passes in front of the panel's lower half.
       out.push(T(panel.slice(0, 3).concat([Tu(bx + 4, G - 30), Tu(bx + 1, G - 50), Tu(bx + 2, G - 58)]), D.black));
     } else {
@@ -1576,6 +1651,7 @@ function lilith(pose, f, mood) {
   }
 
   // ---- Torso: corset, sleeves, collar.
+  mark(out, 'torso');
   within(Tu, () => {
     const waist = G - 58;
     out.push(poly(round([[bx - 8.4, top + 2], [bx - 10.2, top + 10], [bx - 7.6, top + 17], [bx - 8.4, waist + 2], [bx + 9.6, waist + 2], [bx + 9, top + 17], [bx + 11.8, top + 10], [bx + 9.6, top + 2], [bx + 2, top - 2]], 2), D.black));
@@ -1594,6 +1670,7 @@ function lilith(pose, f, mood) {
   });
 
   // ---- The far arm holds the heart scepter upright.
+  mark(out, 'xarmB');
   within(Tu, () => {
     const sh = [bx - 7, top + 3];
     const hand0 = dead ? [bx - 16, G - 20 - drop] : [bx - 19, G - 62 + (atk ? key([-6, 2, 2, 1, 0], a) : 0)];
@@ -1617,6 +1694,7 @@ function lilith(pose, f, mood) {
 
   // ---- Head: dark violet hair, curling horns, a jewelled tiara.
   within(Th, () => {
+    mark(out, 'head');
     // Ram horns: from the crown they sweep up and back, then curl down and forward.
     const hornPts = (far) => (far
       ? [[hx - 5, hy - 10], [hx - 8, hy - 18], [hx - 14, hy - 22.5], [hx - 20, hy - 21], [hx - 22, hy - 15.5], [hx - 18.6, hy - 12.4]]
@@ -1653,10 +1731,12 @@ function lilith(pose, f, mood) {
     const ty = hy - 7 + Math.sin((278 * PI) / 180) * 6.6;
     out.push(heart(tx, ty - 0.6, 3, D.goldDk), heart(tx, ty - 0.8, 2.2, D.gem), dot(tx - 0.6, ty - 1.4, 0.45, '#ffffff'));
     // The wavy lock over the front shoulder.
+    mark(out, 'side');
     inHead(hx, hy, () => out.push(...pair(wavy(-8.2, -3, 40, -1.2, 3, SIDE), wavy(-5, -3, 30, -0.6, 3.6, SIDE), 4.6, 3.6, R, { r0: 1, pk: 0.3, k: 1.3, end: 0.1, line: true, hi: [0.08, 0.26], short: 5 })));
   });
 
   // ---- The near arm: a hand on the hip, or blowing a kiss in the attack.
+  mark(out, 'xarm');
   within(Tu, () => {
     const sh = [bx + 6.5, top + 3];
     const tgt = [handAt[0] - lean, handAt[1] - bob - drop];
@@ -1811,6 +1891,11 @@ function selene(pose, f, mood) {
     swing = 0;
     shieldHand = [bx - 18, G - 14];
   }
+  if (CUT) {
+    ({ bob, lean, tilt, headA, drop, swing } = REST);
+    stance = 0;
+    flash = 0;
+  }
   const top = G - 82;
   const hipY = G - 48;
   const Tu = chain(shift(lean, bob + drop), rot(bx, hipY, tilt - 0.025));
@@ -1823,13 +1908,16 @@ function selene(pose, f, mood) {
   // ---- The crescent halo behind her head, with a soft glow and (when roused) rays.
   if (!dead) {
     const [cx, cy] = Th(hx - 3, hy - 4);
-    const pulse = 1 + 0.03 * Math.sin(ph);
+    const pulse = CUT ? 1 : 1 + 0.03 * Math.sin(ph);
+    if (CUT) CUT.pts.halo = [cx, cy];
+    mark(out, 'rays');
     if (angry || atk) {
       for (let k = 0; k < 8; k++) {
         const t = (k / 8) * TAU + ph * 0.25;
         out.push(F(T([[cx + Math.cos(t - 0.06) * 18, cy + Math.sin(t - 0.06) * 18], [cx + Math.cos(t) * (25 + (k % 2) * 3), cy + Math.sin(t) * (25 + (k % 2) * 3)], [cx + Math.cos(t + 0.06) * 18, cy + Math.sin(t + 0.06) * 18]], mix(M.glow, '#ffffff', 0.4))));
       }
     }
+    mark(out, 'halo');
     out.push(F(T(crescentPts(cx, cy, 22 * pulse, 6.4, -0.2), mix(moonGlow, '#ffffff', 0.45))), F(T(crescentPts(cx, cy, 21 * pulse, 5.2, -0.2), moonGlow)), F(T(crescentPts(cx, cy, 20 * pulse, 2.2, -0.2), '#ffffff')));
     for (const k of [0.15, 0.5, 0.85]) {
       const t = -0.2 + PI * 0.3 + k * PI * 1.4;
@@ -1838,6 +1926,7 @@ function selene(pose, f, mood) {
   }
 
   // ---- The cape: indigo outside, a starry lining that shows as it billows.
+  mark(out, 'cape');
   within(Tu, () => {
     const sw = swing;
     const edge = [];
@@ -1863,6 +1952,7 @@ function selene(pose, f, mood) {
   const lag = hairMotion(tm, { amp: walk ? 1.4 : 1.2, fq: walk ? 2 : 1, p0: walk ? -1.2 : 0, drag: walk ? -2.4 : 0, bob: walk ? (p) => 2.4 * Math.abs(Math.sin(p)) : (p) => 0.5 * Math.sin(p), swing, still: dead, turn: tilt + headA });
   const R = SELENE_RAMP;
   const RB = backRamp(R);
+  mark(out, 'braid');
   within(Th, () => inHead(hx, hy, () => {
     const R = RB;
     const sp = spline(flow([[-10, 2], [-14, 14], [-16, 28], [-15.6, 42], [-14.6, 52]], lag, backLayer(1)), 3);
@@ -1905,6 +1995,7 @@ function selene(pose, f, mood) {
       out.push(dot(sx + 0.3 + Math.cos(t) * (r - 1.1), sy - 0.3 + Math.sin(t) * (r - 1.1), 0.7, M.silverDk));
     }
   };
+  mark(out, 'xarmB');
   if (!dead) {
     within(Tu, () => {
       const sh = [bx - 7, top + 3];
@@ -1945,8 +2036,10 @@ function selene(pose, f, mood) {
     if (!far) res.push(line([[k[0] + 1.6, k[1] + 3], [an[0] + 1.6, an[1] - 2]], 0.6, M.silverLt));
     return res;
   };
+  mark(out, 'xlegs');
   out.push(...legAt([bx - 2, hipY], PI, true));
   out.push(...legAt([bx + 1.5, hipY], 0, false));
+  mark(out, 'skirt');
 
   // ---- Torso: a lavender skirt under silver tassets, a sculpted breastplate, gorget, pauldrons.
   within(Tu, () => {
@@ -1961,6 +2054,7 @@ function selene(pose, f, mood) {
       out.push(line([[x0 + dx + 0.6, waist + 12], [x0 + dx + 8.4, waist + 11.4]], 0.8, M.gold));
     }
     // Breastplate.
+    mark(out, 'torso');
     const bp = round([[bx - 9, top + 2], [bx - 10.8, top + 10], [bx - 8, top + 18], [bx - 8.8, waist + 1], [bx + 9.2, waist + 1], [bx + 9, top + 18], [bx + 11.8, top + 11], [bx + 10, top + 2], [bx + 2, top - 1]], 2);
     out.push(poly(bp, M.silverDk), poly(bp.map(([x, y]) => [x + (bx + 2 - x) * 0.08, y + 0.4]), M.silver));
     out.push(F(T(ovalPts(bx + 6, top + 10, 4.4, 3.6, 16, -0.3).map(([x, y]) => X(x, y)), M.silverLt)), line(spline([[bx - 2, top + 6], [bx + 4, top + 12.4], [bx + 11, top + 9]], 3), 0.6, M.silverDk));
@@ -1973,13 +2067,16 @@ function selene(pose, f, mood) {
 
   // ---- Head: platinum hair, a winged silver circlet-helm.
   within(Th, () => {
+    mark(out, 'head');
     out.push(...queenHead(hx, hy, mood, SELENE_FACE));
     // Hair: the crown and parted fringe, a thin shadow under the helm's brim, and the side lock.
     inHead(hx, hy, () => {
       out.push(...hairCap(R, SELENE_HAIR));
       out.push(fpoly([[14.6, -6.6], [8, -9.2], [2, -10.6], [-5, -10.2], [-10, -7.6], [-14, -3], [-13.8, -1.4], [-10.4, -5.4], [-5, -7.6], [2, -8], [8, -6.8], [14.6, -3.6]], R.sh1));
+      mark(out, 'side');
       out.push(...pair(flow([[-7.6, -3], [-8.6, 7], [-8.4, 15], [-7.8, 20]], lag, SIDE), flow([[-5, -3], [-5.4, 6], [-5, 12.6], [-4.6, 16.4]], lag, SIDE), 3.4, 3, R, { r0: 1, pk: 0.3, k: 1.4, end: 0.12, line: true, hi: [0.1, 0.3], short: 3 }));
     });
+    mark(out, 'top');
     out.push(...queenTop(hx, hy, mood, SELENE_FACE));
     // The helm: a silver cap with a lavender gem at the brow and white wings sweeping back.
     const brim = [[hx + 14.4, hy - 5], [hx + 8, hy - 7.6], [hx + 2, hy - 9], [hx - 5, hy - 8.6], [hx - 10, hy - 6], [hx - 13.4, hy - 1.6]];
@@ -1988,7 +2085,7 @@ function selene(pose, f, mood) {
     out.push(taper(arcPts(hx, hy - 4.6, 14.6, 12.8, 230, 300, 6), 1.6, 0.8, M.silverLt, { n: 1, flat: true }));
     out.push(line(brim.map(([x, y]) => [x, y + 0.4]), 1, M.gold));
     out.push(...gem(hx + 6, hy - 9, 1.9, M.lavDk));
-    const wf = Math.sin(ph * (walk ? 2 : 1) - 0.6) * (walk ? 0.08 : 0.05) + (hurt ? -0.2 : 0);
+    const wf = CUT ? 0 : Math.sin(ph * (walk ? 2 : 1) - 0.6) * (walk ? 0.08 : 0.05) + (hurt ? -0.2 : 0);
     const helmWing = (x0, y0, k, c, cd) =>
       within(rot(x0, y0, wf), () => {
         const fs = [[0.55, 9], [0.25, 13], [-0.05, 15], [-0.35, 14], [-0.62, 11]];
@@ -2000,10 +2097,12 @@ function selene(pose, f, mood) {
         });
         out.push(dot(x0, y0, 2, M.gold), dot(x0 - 0.4, y0 - 0.4, 0.7, '#ffffff'));
       });
+    mark(out, 'hwing');
     helmWing(hx - 7, hy - 9, 1.15, '#ffffff', '#d6dcf6');
   });
 
   // ---- The near arm and the moon spear.
+  mark(out, 'xarm');
   within(Tu, () => {
     const sh = [bx + 6.5, top + 3];
     const tgt = [spearHand[0] - lean, spearHand[1] - bob - drop];
@@ -2068,11 +2167,989 @@ function selene(pose, f, mood) {
   return finish(out, W, H, dead);
 }
 
+// ---------- The queens, rigged ----------
+// (2026-11-04, the quality pass.) Each queen keeps her own tall, grown-up look (a deliberate
+// contrast to the chibi dungeon bosses), but instead of whole-body frames she is cut into parts on
+// a skeleton and posed live, like the dungeon bosses (render/mobs/rig.js). The parts are her own
+// drawing, cut by the `mark`s above from one still rest pose; arms, legs and props are drawn as
+// their own parts with the same helpers. Bones turn and springs trail (hair, tails, sleeves,
+// capes, wings, wisteria), so nothing is ever squashed or stretched. Rig space: her feet at (0, 0),
+// facing right; the `at0` points below are in her drawing's frame.
+
+const DRAW = { tamamo, sylvana, lilith, selene };
+const DEG = PI / 180;
+
+// Her drawing in the rest pose for a mood, cut into its named slices (and the points it noted).
+const cuts = new Map();
+function cutOf(q, mood) {
+  const key = `${q}|${mood}`;
+  let c = cuts.get(key);
+  if (c) return c;
+  CUT = { marks: [], pts: {} };
+  let shapes;
+  let got;
+  try {
+    shapes = DRAW[q]('idle', 0, mood).shapes;
+  } finally {
+    got = CUT;
+    CUT = null;
+  }
+  const slices = {};
+  got.marks.forEach(([name, at], i) => {
+    const end = i + 1 < got.marks.length ? got.marks[i + 1][1] : shapes.length;
+    (slices[name] ??= []).push(...shapes.slice(at, end));
+  });
+  c = { slices, pts: got.pts };
+  cuts.set(key, c);
+  return c;
+}
+const ptOf = (q, name) => cutOf(q, 'idle').pts[name];
+
+function boxOf(shapes) {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  const add = (x, y) => {
+    x0 = Math.min(x0, x);
+    x1 = Math.max(x1, x);
+    y0 = Math.min(y0, y);
+    y1 = Math.max(y1, y);
+  };
+  for (const s of shapes) {
+    if (s.t === 'p') for (const [x, y] of s.pts) add(x + s.x, y + s.y);
+    else if (s.t === 'e') {
+      add(s.x - s.rx, s.y - s.ry);
+      add(s.x + s.rx, s.y + s.ry);
+    } else {
+      add(s.x, s.y);
+      add(s.x + s.w, s.y + s.h);
+    }
+  }
+  return { x0, y0, x1, y1 };
+}
+
+const FACES = ['idle', 'blink', 'happy', 'angry', 'hurt', 'dead'];
+const faceOf = (a) => (FACES.includes(a.face) ? a.face : 'idle');
+
+// A rig part from shapes (built for a mood, in any space) and its pivot in that space: the box is
+// fitted round the drawing (with room for a mood's face) and the pivot found in it.
+function qp(key, build, pivot, moodOf = null) {
+  let box = null;
+  const boxFor = () => {
+    if (!box) {
+      const b = boxOf(build(moodOf ? moodOf({ face: 'idle' }) : 'idle'));
+      const m = moodOf ? 3 : 1;
+      const ox = Math.floor(b.x0) - m;
+      const oy = Math.floor(b.y0) - m;
+      box = { ox, oy, w: Math.ceil(b.x1) + m - ox, h: Math.ceil(b.y1) + m - oy };
+    }
+    return box;
+  };
+  return {
+    s: (a) => {
+      const mood = moodOf ? moodOf(a) : 'idle';
+      const { ox, oy, w, h } = boxFor();
+      return sprite(`rig|queen|${key}|${mood}`, () => ({ w, h, res: 3, soft: 'cel', crisp: true, selout: true, pad: 3, shapes: build(mood).map((s) => ({ ...s, x: s.x - ox, y: s.y - oy })) }));
+    },
+    pivot: () => {
+      const { ox, oy } = boxFor();
+      return [pivot[0] - ox, pivot[1] - oy];
+    },
+  };
+}
+// A part cut from her drawing (slices joined in order), pivoting on a point of the frame. `mood`:
+// true to follow her face's mood, or one fixed mood.
+function slice(q, names, pivot, mood = null) {
+  const list = [].concat(names);
+  const fixed = typeof mood === 'string';
+  const moodOf = mood === true ? faceOf : fixed ? () => mood : null;
+  return qp(`${q}|${list.join('+')}${fixed ? `|${mood}` : ''}`, (md) => list.flatMap((n) => cutOf(q, md).slices[n] ?? []), pivot, moodOf);
+}
+// A part drawn for the rig in its own space, pivoting on (0, 0).
+const drawn = (key, build) => qp(key, build, [0, 0]);
+
+// A rig spec in her frame's terms: each part's joint `at0` is a point of the frame (a child's
+// default: its parent's joint), `off(S, a)` moves it live, `clip` is a window of the frame.
+function queenRig({ bx, G, parts, ...spec }) {
+  const byName = Object.fromEntries(parts.map((p) => [p.name, p]));
+  const at0 = (n) => (n ? byName[n].at0 ?? (byName[n].parent ? at0(byName[n].parent) : [bx, G]) : [bx, G]);
+  return makeRig({
+    ...spec,
+    parts: parts.map((p) => {
+      const me = at0(p.name);
+      const base = at0(p.parent);
+      const b = [me[0] - base[0], me[1] - base[1]];
+      const o = { name: p.name, parent: p.parent ?? null, rot: p.rot, when: p.when, alpha: p.alpha };
+      o.at = p.off
+        ? (S, a) => {
+            const [dx, dy] = p.off(S, a);
+            return [b[0] + dx, b[1] + dy];
+          }
+        : () => b;
+      if (p.clip) {
+        const [x, y, w, h] = p.clip;
+        o.clip = () => [x - me[0], y - me[1], w, h];
+      }
+      if (p.part) {
+        o.s = p.part.s;
+        o.pivot = p.part.pivot;
+      }
+      return o;
+    }),
+  });
+}
+
+// Arm angles (radians: 0 forward, PI/2 down) that put the hand at `hand` from the shoulder `sh`,
+// the elbow bending toward `dir`; poses blend these angles, so an elbow never flips.
+function armAt(k, sh, hand, a, b, dir) {
+  const { k: el, f } = bend(sh, hand, a, b, dir);
+  const un = (v) => (v < -PI / 2 ? v + TAU : v);
+  return { [`${k}u`]: un(Math.atan2(el[1] - sh[1], el[0] - sh[0])), [`${k}f`]: un(Math.atan2(f[1] - el[1], f[0] - el[0])) };
+}
+const elbowOf = (S, k, L1) => [Math.cos(S[`${k}u`]) * L1, Math.sin(S[`${k}u`]) * L1];
+const wristOf = (S, k, L1, L2) => [Math.cos(S[`${k}u`]) * L1 + Math.cos(S[`${k}f`]) * L2, Math.sin(S[`${k}u`]) * L1 + Math.sin(S[`${k}f`]) * L2];
+// An arm's upper and lower parts on the torso joint.
+const armParts = (k, sh, L1, upper, fore) => [
+  { name: `${k}U`, parent: 'hip', at0: sh, rot: (S) => S[`${k}u`], part: upper },
+  { name: `${k}F`, parent: 'hip', at0: sh, off: (S) => elbowOf(S, k, L1), rot: (S) => S[`${k}f`], part: fore },
+];
+// An upper arm or a forearm drawn along +x from its joint.
+const bone = (key, len, w0, w1, w2, c, dk, more = () => []) => drawn(key, () => [...limb([0, 0], [len / 2, 0], [len, 0], w0, w1, w2, c, dk), ...more()]);
+
+// A leg in rig space: the hip on the torso joint (at `hipY` above the feet, `dx` along the hips),
+// the foot at (fx, fy), the knee bending forward. Remembered for the frame.
+function legOf(S, name, hipY, dx, fx, fy, L1, L2) {
+  const key = `_${name}`;
+  if (S[key]) return S[key];
+  const h = [S.x + dx * Math.cos(S.lean), -hipY + S.y + dx * Math.sin(S.lean)];
+  const { k, f } = bend(h, [fx, fy], L1, L2, 1);
+  return (S[key] = { h, k, f, a1: Math.atan2(k[1] - h[1], k[0] - h[0]), a2: Math.atan2(f[1] - k[1], f[0] - k[0]) });
+}
+const legParts = (name, thigh, shin, foot, at) => [
+  { name: `${name}T`, off: (S) => at(S).h, rot: (S) => at(S).a1, part: thigh },
+  { name: `${name}S`, off: (S) => at(S).k, rot: (S) => at(S).a2, part: shin },
+  { name: `${name}P`, off: (S) => at(S).f, rot: (S) => S.toe ?? 0, part: foot },
+];
+
+// A point of a placed part, in rig space.
+const where = (mat, name, x = 0, y = 0) => {
+  const [A, B, C, D, E, F] = mat(name);
+  return [A * x + C * y + E, B * x + D * y + F];
+};
+// Draws a part's sprite at (x, y) in rig space (effects: fox-fire, hearts, fireflies...).
+function stamp(ctx, p, a, x, y, ang = 0, alpha = 1, k = 1) {
+  if (alpha <= 0.01) return;
+  const pv = p.pivot();
+  ctx.save();
+  ctx.translate(x, y);
+  if (ang) ctx.rotate(ang);
+  if (k !== 1) ctx.scale(k, k);
+  blit(ctx, p.s(a), -pv[0], -pv[1], { alpha: a.alpha * Math.min(1, alpha) });
+  ctx.restore();
+}
+// A mood's pull on a pose, eased by the springs: adds `off` to the goals while it holds.
+const add = (goal, off, w = 1) => {
+  if (w > 0) for (const [k, v] of Object.entries(off)) goal[k] = (goal[k] ?? 0) + v * w;
+  return goal;
+};
+// A quick flick now and then (an ear, a lock): 0 most of the time, 1 for a beat every `every` s.
+const flick = (t, every, seed = 0) => {
+  const u = (t + seed) % every;
+  return u < 0.22 ? Math.sin((u / 0.22) * PI) : 0;
+};
+
+// ---------- Tamamo, rigged ----------
+// A kitsune empress: she glides without steps, her nine tails fanned like a peacock's train, each
+// on its own spring so a wave runs across them; her ears twitch and flatten. The attack is a fan
+// dance: she sweeps the fan low and back, gathering fox-fire at her hip, then up and forward in a
+// wide arc that throws the fire out ahead. Her face is never behind the fan.
+const TQ = { bx: 82, G: 149.4 };
+{
+  const { bx, G } = TQ;
+  TQ.top = G - 82;
+  TQ.hip = [bx, G - 50];
+  TQ.neck = [bx - 0.4, G - 103.5 + 13];
+  TQ.hx = bx - 0.4;
+  TQ.hy = G - 103.5;
+  TQ.sh = [bx + 6, G - 80];
+}
+const TL = [14, 13];
+const tArm = (hand, dir = -1) => armAt('n', TQ.sh, hand, TL[0], TL[1], dir);
+const TA = {
+  idle: tArm([TQ.bx + 22, TQ.G - 64]),
+  walk: tArm([TQ.bx + 20, TQ.G - 68]),
+  antic: tArm([TQ.bx + 4, TQ.G - 56]),
+  strike: tArm([TQ.bx + 36, TQ.G - 84]),
+  hurt: tArm([TQ.bx + 14, TQ.G - 72]),
+  dead: tArm([TQ.bx + 22, TQ.G - 44]),
+};
+const TAILS = [0, 1, 2, 3, 4, 5, 6, 7, 8].sort((p, q) => Math.abs(q - 4) - Math.abs(p - 4));
+const tFlame = (hot) => drawn(`tamamo|flame|${hot}`, () => {
+  const c = hot ? FIRE_HOT : FIRE;
+  const k = hot ? 1.3 : 1;
+  return [foval(0, -1, 4.4 * k, 4 * k, mix(c[1], '#ffffff', 0.3)), ...flame(0, 2.4, 11 * k, 3.6 * k, 0, c)];
+});
+const tWisp = drawn('tamamo|wisp', () => [foval(0, 0, 3.2, 3, mix(FIRE_HOT[1], '#ffffff', 0.3)), ...flame(0, 2, 9, 2.6, 0, FIRE_HOT)]);
+const tSpark = drawn('tamamo|spark', () => [sparkle(0, 0, 7, '#ffffff'), foval(0, 0, 3.4, 3.4, FIRE_HOT[1])]);
+const tParts = {
+  upper: bone('tamamo|armU', TL[0], 9, 8.7, 8.4, K.robe, K.robeDk),
+  fore: bone('tamamo|armF', TL[1] - 0.6, 8.4, 8.2, 8, K.robe, K.robeDk),
+  // The long hanging sleeve, drawn hanging from the elbow with the forearm level.
+  drape: drawn('tamamo|drape', () => {
+    const wr = [13, 0];
+    const d = [[2, -3], [wr[0] + 1.2, -3], [wr[0] + 2, 2.6], [wr[0] - 2, 11.4], [wr[0] - 6, 19], [-8, 21], [-7, 9.5], [-3.4, 2]];
+    return [
+      poly(round(d.map(([x, y]) => [x - 0.5, y + 0.6]), 2), K.robeDk),
+      poly(round(d, 2), K.robe),
+      line(spline(d.slice(3, 6), 2), 2, K.crimson),
+      line(spline(d.slice(3, 6), 2).map(([x, y]) => [x, y + 1.2]), 0.8, K.gold),
+      line([d[1], d[2]], 1.6, K.crimson),
+      line([[d[1][0] + 0.8, d[1][1]], [d[2][0] + 0.8, d[2][1]]], 0.7, K.pink),
+      fpoly([[wr[0] - 4, 10], [wr[0] - 6, 16], [wr[0] - 9, 14]], K.gold),
+    ];
+  }),
+  // The fan, open, its rivet at the wrist, pointing along +x.
+  fan: drawn('tamamo|fan', () => {
+    const out = [];
+    const span = 1.96;
+    const hx2 = 1.4;
+    const hy2 = 0;
+    const R = 14;
+    const outerA = arcPts(hx2, hy2, R, R, (-span / 2) * (180 / PI), (span / 2) * (180 / PI), 10);
+    const innerA = arcPts(hx2, hy2, R * 0.42, R * 0.42, (span / 2) * (180 / PI), (-span / 2) * (180 / PI), 6);
+    const midA = arcPts(hx2, hy2, R * 0.78, R * 0.78, (span / 2) * (180 / PI), (-span / 2) * (180 / PI), 10);
+    out.push(poly([...outerA, ...innerA], K.crimsonDk), poly([...outerA.map(([x, y]) => [hx2 + (x - hx2) * 0.96, hy2 + (y - hy2) * 0.96]), ...midA], K.crimson), poly([...midA.slice().reverse(), ...innerA], K.goldLt));
+    for (let k = 0; k <= 10; k += 2) {
+      const [x, y] = outerA[k];
+      out.push(line([[hx2 + (x - hx2) * 0.42, hy2 + (y - hy2) * 0.42], [hx2 + (x - hx2) * 0.97, hy2 + (y - hy2) * 0.97]], 0.45, K.goldDk));
+    }
+    out.push(...blossom(lerp(hx2, outerA[3][0], 0.86), lerp(hy2, outerA[3][1], 0.86), 2.2, '#ffe1ea', K.gold, 0.3), ...blossom(lerp(hx2, outerA[7][0], 0.88), lerp(hy2, outerA[7][1], 0.88), 1.8, '#ffe1ea', K.gold, 0.9));
+    out.push(line(outerA.map(([x, y]) => [hx2 + (x - hx2) * 1.02, hy2 + (y - hy2) * 1.02]), 0.8, K.gold));
+    out.push(taper([[hx2 - 2, hy2], [hx2 + Math.cos(-span / 2) * R, hy2 + Math.sin(-span / 2) * R]], 1.4, 1, K.wood, { n: 1 }));
+    out.push(dot(hx2, hy2, 0.8, K.gold));
+    return out;
+  }),
+  hand: drawn('tamamo|hand', () => hand(0, 0, 0, K.skin, K.skinDk)),
+};
+const tamamoRig = queenRig({
+  ...TQ,
+  w: 70,
+  h: 118,
+  stride: 60,
+  recover: 0.6,
+  fast: ['lean', 'nu', 'nf', 'fan', 'x'],
+  kick: { lean: -1.4, head: -2.6, ear: -6, t4: 2, t3: 1.6, t5: 1.6 },
+  springs: { ear: [320, 11], spread: [70, 9], heat: [60, 14], y: [160, 16] },
+  pose(m, a) {
+    const t = a.t;
+    const br = Math.sin(t * 1.5);
+    const g = Math.sin(a.wp);
+    const idle = { x: 0, y: -br * 0.7, lean: Math.sin(t * 0.8) * 0.015, head: Math.sin(t * 1.1 - 0.6) * 0.04 + flick(t, 6.1, 2) * 0.05, ...TA.idle, fan: -62 * DEG + Math.sin(t * 2.4 + 0.5) * 0.16, spread: 1 + Math.sin(t * 0.7) * 0.03, heat: 0 };
+    idle.nf += Math.sin(t * 2.4) * 0.07;
+    // The glide: no steps, a rise once a cycle, the tails swept back a little.
+    const walk = { x: 1, y: -0.9 - 0.9 * g, lean: 0.045 + 0.015 * Math.sin(a.wp - 0.5), head: -0.02 + 0.03 * Math.sin(a.wp - 1.3), ...TA.walk, fan: -48 * DEG + g * 0.08, spread: 0.94, heat: 0 };
+    const antic = { x: -2, y: 1.2, lean: -0.09, head: -0.1, ...TA.antic, fan: 150 * DEG, spread: 0.82, heat: 1 };
+    const strike = { x: 2.5, y: -0.6, lean: 0.09, head: 0.06, ...TA.strike, fan: -8 * DEG, spread: 1.26, heat: 1 };
+    const goal = stateBlend(a, idle, walk, antic, strike);
+    goal.ear = -flick(t, 4.3) * 0.32 - flick(t, 7.7, 1.3) * 0.22 - a.walkW * 0.12;
+    if (a.mood === 'angry') add(goal, { spread: 0.08, heat: 1, ear: -0.2 });
+    if (a.mood === 'hurt') add(goal, { lean: -0.07, head: -0.14, spread: -0.1, ear: -0.55, x: -1.5 });
+    if (a.face === 'dead') Object.assign(goal, { x: 1, y: 14, lean: 0.16, head: 0.34, spread: 1.18, heat: 0, ear: -0.8, ...TA.dead, fan: 20 * DEG });
+    return goal;
+  },
+  follow: (S, a) => {
+    const t = a.t;
+    const f = {};
+    for (let i = 0; i < 9; i++) {
+      const side = (i - 4) / 4;
+      f[`t${i}`] = side * (S.spread - 1) * 1.22 + 0.075 * Math.sin(t * 1.3 - i * 0.7) - S.lean * 0.6 - a.walkW * 0.1 + (a.face === 'dead' ? side * 0.35 : 0);
+    }
+    const hang = -(S.lean + S.head);
+    for (let k = 0; k < 3; k++) f[`h${k}`] = hang * 0.8 + Math.sin(t * 1.1 - k * 0.6) * 0.025 + a.walkW * 0.07;
+    f.side = hang * 0.9 + Math.sin(t * 1.9) * 0.03 + a.walkW * 0.05;
+    f.chain = hang + Math.sin(t * 1.7) * 0.07 + a.walkW * 0.1;
+    f.sleeve = -S.lean * 0.7 + Math.sin(t * 1.2) * 0.03 + a.walkW * 0.08;
+    f.skirt = S.lean * 0.3 + a.walkW * 0.01;
+    f.bow = -S.lean * 0.9 + Math.sin(t * 1.4) * 0.05 + a.walkW * 0.12;
+    f.drape = S.nf * 0.45 - S.lean * 0.6 + Math.sin(t * 1.3) * 0.04 + a.walkW * 0.12;
+    return f;
+  },
+  parts: [
+    { name: 'hip', at0: TQ.hip, off: (S) => [S.x, S.y], rot: (S) => S.lean },
+    { name: 'head', parent: 'hip', at0: TQ.neck, rot: (S) => S.head },
+    ...TAILS.flatMap((i) => {
+      const root = [TQ.bx - 5, TQ.G - 51];
+      const tip = () => ptOf('tamamo', `tip${i}`);
+      // (The flame stands upright whatever the tail does, and flickers.)
+      const up = (S, a) => -(S.lean + S[`t${i}`]) + Math.sin(a.t * 7 + i * 1.7) * 0.12;
+      const flameAt = (S) => {
+        const [x, y] = tip();
+        return [x - root[0], y - root[1]];
+      };
+      return [
+        { name: `tail${i}`, parent: 'hip', at0: root, rot: (S) => S[`t${i}`], part: slice('tamamo', `tail${i}`, root) },
+        { name: `fire${i}`, parent: `tail${i}`, at0: root, off: flameAt, rot: up, part: tFlame(false), alpha: (a, S) => (a.face === 'dead' ? 0 : 1 - S.heat) },
+        { name: `hot${i}`, parent: `tail${i}`, at0: root, off: flameAt, rot: up, part: tFlame(true), alpha: (a, S) => (a.face === 'dead' ? 0 : S.heat) },
+      ];
+    }),
+    ...[[-12, -6], [-7, -2], [-3.6, 2]].map(([x, y], k) => {
+      const at0 = [TQ.hx + x, TQ.hy + y];
+      return { name: `hair${k}`, parent: 'head', at0, rot: (S) => S[`h${k}`], part: slice('tamamo', `hair${k}`, at0) };
+    }),
+    { name: 'sleeveB', parent: 'hip', at0: [TQ.bx - 6, TQ.top + 2], rot: (S) => S.sleeve, part: slice('tamamo', 'sleeveB', [TQ.bx - 6, TQ.top + 2]) },
+    // The robes are one drawing cut at the obi: the skirt stays on the floor, the bodice moves with her.
+    { name: 'skirt', at0: [TQ.bx, TQ.G - 60], off: (S) => [S.x * 0.4, 0], rot: (S) => S.skirt, part: slice('tamamo', 'robe', [TQ.bx, TQ.G - 60]), clip: [-40, TQ.G - 62, 260, 80] },
+    { name: 'bodice', parent: 'hip', part: slice('tamamo', 'robe', TQ.hip), clip: [-40, -40, 260, TQ.G - 58 + 40] },
+    { name: 'bowEnds', parent: 'hip', at0: [TQ.bx - 14, TQ.G - 58], rot: (S) => S.bow, part: slice('tamamo', 'bowEnds', [TQ.bx - 14, TQ.G - 58]) },
+    { name: 'obi', parent: 'hip', part: slice('tamamo', 'obi', TQ.hip) },
+    { name: 'earB', parent: 'head', at0: [TQ.hx - 7, TQ.hy - 9], rot: (S) => S.ear * 0.85, part: slice('tamamo', 'earB', [TQ.hx - 7, TQ.hy - 9]) },
+    // (The head joint is listed first; its drawing comes here, over her robes.)
+    { name: 'headDraw', parent: 'head', part: slice('tamamo', ['head', 'top'], TQ.neck, true) },
+    { name: 'side', parent: 'head', at0: [TQ.hx - 6, TQ.hy - 3], rot: (S) => S.side, part: slice('tamamo', 'side', [TQ.hx - 6, TQ.hy - 3]) },
+    { name: 'earF', parent: 'head', at0: [TQ.hx + 4.5, TQ.hy - 11.5], rot: (S) => S.ear, part: slice('tamamo', 'earF', [TQ.hx + 4.5, TQ.hy - 11.5]) },
+    { name: 'crown', parent: 'head', part: slice('tamamo', 'crown', TQ.neck) },
+    { name: 'chain', parent: 'head', at0: [TQ.hx - 11.4, TQ.hy - 5], rot: (S) => S.chain, part: slice('tamamo', 'chain', [TQ.hx - 11.4, TQ.hy - 5]) },
+    { name: 'pin', parent: 'head', part: slice('tamamo', 'pin', TQ.neck) },
+    ...armParts('n', TQ.sh, TL[0], tParts.upper, tParts.fore),
+    { name: 'drape', parent: 'hip', at0: TQ.sh, off: (S) => elbowOf(S, 'n', TL[0]), rot: (S) => S.drape, part: tParts.drape },
+    { name: 'fan', parent: 'hip', at0: TQ.sh, off: (S) => wristOf(S, 'n', TL[0], TL[1]), rot: (S) => S.fan, part: tParts.fan },
+    { name: 'hand', parent: 'hip', at0: TQ.sh, off: (S) => wristOf(S, 'n', TL[0], TL[1]), rot: (S) => S.fan + 0.2, part: tParts.hand },
+  ],
+  fx(ctx, m, a, S, mat) {
+    const t = a.t;
+    // Fox-fire gathering at the fan in the wind-up...
+    if (a.ph.antic > 0.05 && a.face !== 'dead') {
+      const [cx, cy] = where(mat, 'fan', 9, 0);
+      for (let k = 0; k < 3; k++) {
+        const ang = (k / 3) * TAU + t * 5;
+        stamp(ctx, tWisp, a, cx + Math.cos(ang) * 6, cy + Math.sin(ang) * 4.5 - 2, 0, a.ph.antic, 0.6 + a.ph.antic * 0.3);
+      }
+    }
+    // ...thrown out ahead on the sweep.
+    const since = a.ph.since;
+    if (since >= 0 && since < 0.7 && a.face !== 'dead') {
+      const u = since / 0.7;
+      const [cx, cy] = where(mat, 'fan', 10, 0);
+      for (let k = 0; k < 7; k++) {
+        const ang = (k / 7) * TAU + u * 3;
+        const r = 5 + easeOut(u) * 14;
+        stamp(ctx, tWisp, a, cx + easeOut(u) * 38 + Math.cos(ang) * r, cy + Math.sin(ang) * r * 0.8 - u * 8, 0, 1 - smooth((u - 0.45) / 0.55), 0.95 + (k % 3) * 0.2);
+      }
+      if (since < 0.16) stamp(ctx, tSpark, a, cx + 4, cy, 0, 1 - since / 0.16);
+    }
+    // Fox-fire wisps drifting round her when roused or pleased.
+    if ((a.mood === 'angry' || a.mood === 'happy') && !a.ph.atk && a.face !== 'dead') {
+      for (let k = 0; k < 3; k++) {
+        const ang = t * 1.2 + (k / 3) * TAU;
+        stamp(ctx, tWisp, a, Math.cos(ang) * 40, -79 + Math.sin(ang) * 10, 0, 0.9, 0.8);
+      }
+    }
+  },
+});
+
+// ---------- Sylvana, rigged ----------
+// A forest queen: she flows rather than walks, her gown of leaf tiers hung one from the next so a
+// ripple runs down it, her roots stirring along the ground, the willow locks and the wisteria on
+// her antlers swaying a beat behind. She cups a glowing seed; for the attack she lifts her hand to
+// call the forest (light gathering in the palm, thorned vines rising coiled from the ground), then
+// sweeps it down and the vines whip forward.
+const SQ = { bx: 70, G: 149.4 };
+{
+  const { bx, G } = SQ;
+  SQ.top = G - 82;
+  SQ.hip = [bx, G - 50];
+  SQ.hx = bx - 0.4;
+  SQ.hy = G - 103.5;
+  SQ.neck = [SQ.hx, SQ.hy + 13];
+  SQ.sh = [bx + 7, SQ.top + 2];
+  SQ.shB = [bx - 7, SQ.top + 2];
+}
+const SL = [14, 13];
+const sArm = (hand, dir = -1) => armAt('n', SQ.sh, hand, SL[0], SL[1], dir);
+const sArmB = (hand) => armAt('b', SQ.shB, hand, SL[0], SL[1], -1);
+const SA = {
+  idle: { ...sArm([SQ.bx + 20, SQ.G - 66]), ...sArmB([SQ.bx - 15, SQ.G - 54]) },
+  walk: { ...sArm([SQ.bx + 19, SQ.G - 68]), ...sArmB([SQ.bx - 16, SQ.G - 55]) },
+  antic: { ...sArm([SQ.bx + 28, SQ.G - 104]), ...sArmB([SQ.bx - 22, SQ.G - 62]) },
+  strike: { ...sArm([SQ.bx + 38, SQ.G - 76]), ...sArmB([SQ.bx - 18, SQ.G - 58]) },
+  dead: { ...sArm([SQ.bx + 20, SQ.G - 40]), ...sArmB([SQ.bx - 16, SQ.G - 36]) },
+};
+const sGlow = mix(S.vein, '#ffffff', 0.3);
+const sParts = {
+  upperB: bone('sylvana|armBU', SL[0], 6, 5.4, 4.8, S.skinDk, shade(S.skinDk, -10)),
+  foreB: bone('sylvana|armBF', SL[1], 4.8, 4.2, 3.6, S.skinDk, shade(S.skinDk, -10), () => hand(SL[1], 0, 0, S.skinDk, shade(S.skinDk, -8))),
+  upper: bone('sylvana|armU', SL[0], 6, 5.4, 4.8, S.skin, S.skinDk),
+  fore: bone('sylvana|armF', SL[1], 4.8, 4.1, 3.4, S.skin, S.skinDk, () => [
+    line([[1.3, 1], [SL[1] * 0.85, 0.8]], 0.5, sGlow),
+    ...leaf(SL[1] * 0.8, 0, 2.4, 5, 2.6, S.leaf),
+    ...leaf(SL[1] * 0.8, 0, -2.4, 5, 2.6, S.leaf2),
+  ]),
+  hand: drawn('sylvana|hand', () => hand(0, 0, 0, S.skin, S.skinDk, 0.8)),
+  seed: drawn('sylvana|seed', () => [dot(0, 0, 3.6, mix(S.vein, '#ffffff', 0.5)), dot(0, 0, 2, S.vein), ...leaf(0, -1, -1.2, 3.4, 2, S.leaf), dot(-0.6, -0.6, 0.6, '#ffffff')]),
+  gather: drawn('sylvana|gather', () => [dot(0, 0, 5, mix(S.veinHot, '#ffffff', 0.55)), dot(0, 0, 2.8, S.veinHot), sparkle(0, 0, 6, '#ffffff')]),
+  fly: drawn('sylvana|fly', () => [sparkle(0, 0, 2.4, S.flyGlow), dot(0, 0, 0.9, S.fly)]),
+  // A segment of a thorned vine along +x (thinner toward the tip; the last one flowers).
+  vine: (i) => (sVines[i] ??= drawn(`sylvana|vine${i}`, () => {
+    const w0 = lerp(4.8, 1.4, i / 6);
+    const w1 = lerp(4.8, 1.4, (i + 1) / 6);
+    const out = [dot(0, 0, w0 / 2 + 0.6, S.woodDk), taper([[0, 0], [9.5, 0]], w0 + 1.4, w1 + 1.2, S.woodDk, { n: 1 }), taper([[0, 0], [9.5, 0]], w0, w1, S.leaf2Dk, { n: 1 }), line([[1, -w0 * 0.22], [8.5, -w1 * 0.22]], 0.5, S.leafLt)];
+    const sd = i % 2 ? 1 : -1;
+    out.push(fpoly([[4, sd * w0 * 0.3], [5.5, sd * (w0 * 0.5 + 2.4)], [6.6, sd * w0 * 0.3]], S.thorn));
+    if (i % 2) out.push(...leaf(3, -sd * w0 * 0.4, -sd * 1.6, 4, 2.2, S.leaf));
+    if (i === 5) out.push(...blossom(10, 0, 2.4, S.bloomDk, '#fff6a0', 0.2));
+    return out;
+  })),
+};
+const sVines = [];
+const wisParts = [];
+const wisPart = (k) => (wisParts[k] ??= slice('sylvana', `wis${k}`, ptOf('sylvana', `wis${k}`)));
+// Fireflies circling her (the far half of the orbit behind her).
+function sylvanaFlies(ctx, a, front) {
+  if (a.face === 'dead') return;
+  const r = a.ph.atk ? 46 : a.mood === 'angry' ? 44 : 38;
+  for (let k = 0; k < 6; k++) {
+    const t = a.t * 0.9 + (k / 6) * TAU;
+    if (Math.sin(t) > 0 !== front) continue;
+    const x = Math.cos(t) * r;
+    const y = -66 + Math.sin(t) * 12 + Math.sin(t * 3 + k) * 4 - k * 3;
+    stamp(ctx, sParts.fly, a, x, y, 0, 0.7 + 0.3 * Math.sin(a.t * 4 + k * 2), front ? 1.1 : 1);
+  }
+}
+const sylvanaRig = queenRig({
+  ...SQ,
+  w: 64,
+  h: 122,
+  stride: 50,
+  recover: 0.6,
+  fast: ['lean', 'nu', 'nf', 'nh', 'bu', 'bf'],
+  kick: { lean: -1.4, head: -2.8, mantle: 2, k0: 1.5, w0: 3, w1: 3 },
+  springs: { y: [150, 15] },
+  pose(m, a) {
+    const t = a.t;
+    const br = Math.sin(t * 1.4);
+    const g = Math.sin(a.wp);
+    const idle = { x: 0, y: -br * 0.8, lean: Math.sin(t * 0.9) * 0.014, head: Math.sin(t * 1.1 - 0.8) * 0.04, ...SA.idle };
+    idle.nu += br * 0.03;
+    idle.nh = idle.nf - 0.3 + Math.sin(t * 1.7) * 0.06;
+    // The flow: a slow rise and settle, swaying side to side.
+    const walk = { x: 1, y: -1.1 - 1.1 * g, lean: 0.02 + 0.03 * Math.sin(a.wp + 0.4), head: -0.035 * Math.sin(a.wp + 0.4), ...SA.walk };
+    walk.nh = walk.nf - 0.3;
+    const antic = { x: -1.5, y: 1.4, lean: -0.08, head: -0.12, ...SA.antic, nh: -1.4 };
+    const strike = { x: 2.5, y: -0.6, lean: 0.09, head: 0.07, ...SA.strike };
+    strike.nh = strike.nf - 0.2;
+    const goal = stateBlend(a, idle, walk, antic, strike);
+    if (a.mood === 'hurt') add(goal, { lean: -0.07, head: -0.15, x: -1.5 });
+    if (a.face === 'dead') Object.assign(goal, { x: 1, y: 14, lean: 0.14, head: 0.36, ...SA.dead, nh: SA.dead.nf });
+    return goal;
+  },
+  follow: (S, a) => {
+    const t = a.t;
+    const hang = -(S.lean + S.head);
+    const f = {};
+    for (let k = 0; k < 5; k++) f[`h${k}`] = hang * 0.8 + Math.sin(t * 0.9 - k * 0.7) * 0.035 + a.walkW * 0.08;
+    f.side = hang * 0.9 + Math.sin(t * 1.6) * 0.04 + a.walkW * 0.05;
+    for (let k = 0; k < 2; k++) f[`w${k}`] = hang + Math.sin(t * 1.5 + k * 1.9) * 0.08 + a.walkW * 0.1;
+    f.mantle = -S.lean * 0.8 + Math.sin(t * 1.1) * 0.025 + a.walkW * 0.07;
+    // The tiers sway out one after another, the lowest the most and the latest.
+    const sway = Math.sin(t * 1.2) * 0.012 + a.walkW * Math.sin(a.wp) * 0.02;
+    f.k2 = S.lean * 0.3 + sway;
+    f.k1 = S.lean * 0.36 + sway * 1.3;
+    f.k0 = S.lean * 0.4 + sway * 1.5;
+    for (let k = 0; k < 8; k++) {
+      const side = k < 4 ? -1 : 1;
+      const rip = a.walkW * Math.sin(a.wp - k * 0.9) * 0.12 + (1 - a.walkW) * Math.sin(t * 1.3 - k * 0.7) * 0.04;
+      f[`r${k}`] = -side * Math.max(-0.02, rip);
+    }
+    return f;
+  },
+  parts: [
+    { name: 'hip', at0: SQ.hip, off: (S) => [S.x, S.y], rot: (S) => S.lean },
+    { name: 'head', parent: 'hip', at0: SQ.neck, rot: (S) => S.head },
+    ...[[-12.4, -6], [-10.6, -4], [-15, 2], [-7.6, -2], [-4.4, 2]].map(([x, y], k) => {
+      const at0 = [SQ.hx + x, SQ.hy + y];
+      return { name: `hair${k}`, parent: 'head', at0, rot: (S) => S[`h${k}`], part: slice('sylvana', `hair${k}`, at0) };
+    }),
+    ...[0, 1, 2, 3, 4, 5, 6, 7].map((k) => {
+      const at0 = [SQ.bx + (k < 4 ? -1 : 1) * (8 + (k % 4) * 6), SQ.G - 6];
+      return { name: `root${k}`, at0, rot: (S) => S[`r${k}`], part: slice('sylvana', `root${k}`, at0) };
+    }),
+    { name: 'mantle', parent: 'hip', at0: [SQ.bx - 9, SQ.top + 1], rot: (S) => S.mantle, part: slice('sylvana', 'mantle', [SQ.bx - 9, SQ.top + 1]) },
+    ...armParts('b', SQ.shB, SL[0], sParts.upperB, sParts.foreB),
+    // The gown's tiers, each hung from the one above (drawn lowest first).
+    { name: 'tier2', at0: [SQ.bx, SQ.G - 60], off: (S) => [S.x * 0.5, S.y * 0.5], rot: (S) => S.k2 },
+    { name: 'tier1', parent: 'tier2', at0: [SQ.bx, SQ.G - 40], rot: (S) => S.k1 - S.k2 },
+    { name: 'tier0', parent: 'tier1', at0: [SQ.bx, SQ.G - 26], rot: (S) => S.k0 - S.k1, part: slice('sylvana', 'tier0', [SQ.bx, SQ.G - 26]) },
+    { name: 'tier1d', parent: 'tier1', part: slice('sylvana', 'tier1', [SQ.bx, SQ.G - 40]) },
+    { name: 'tier2d', parent: 'tier2', part: slice('sylvana', 'tier2', [SQ.bx, SQ.G - 60]) },
+    { name: 'blooms', parent: 'tier1', part: slice('sylvana', 'blooms', [SQ.bx, SQ.G - 40]) },
+    { name: 'bodice', parent: 'hip', part: slice('sylvana', 'bodice', SQ.hip) },
+    { name: 'headDraw', parent: 'head', part: slice('sylvana', ['head', 'top', 'crown'], SQ.neck, true) },
+    { name: 'side', parent: 'head', at0: [SQ.hx - 6.4, SQ.hy - 3], rot: (S) => S.side, part: slice('sylvana', 'side', [SQ.hx - 6.4, SQ.hy - 3]) },
+    ...[0, 1].map((k) => ({
+      name: `wis${k}`,
+      parent: 'head',
+      off: () => {
+        const [x, y] = ptOf('sylvana', `wis${k}`);
+        return [x - SQ.neck[0], y - SQ.neck[1]];
+      },
+      rot: (S) => S[`w${k}`],
+      part: { s: (a) => wisPart(k).s(a), pivot: () => wisPart(k).pivot() },
+    })),
+    ...armParts('n', SQ.sh, SL[0], sParts.upper, sParts.fore),
+    { name: 'hand', parent: 'hip', at0: SQ.sh, off: (S) => wristOf(S, 'n', SL[0], SL[1]), rot: (S) => S.nh, part: sParts.hand },
+  ],
+  under(ctx, m, a) {
+    sylvanaFlies(ctx, a, false);
+  },
+  fx(ctx, m, a, S, mat) {
+    const t = a.t;
+    const dead = a.face === 'dead';
+    const [wx, wy] = where(mat, 'hand', 0, 0);
+    // The seed of light floating over her palm, or the forest's light gathering in the raised hand.
+    const atk = Math.max(a.ph.antic, a.ph.strike);
+    if (!dead) stamp(ctx, sParts.seed, a, wx + 2, wy - 7 + Math.sin(t * 2.2), 0, 1 - smooth(atk * 2));
+    if (!dead && a.ph.antic > 0.05) stamp(ctx, sParts.gather, a, wx + 1, wy - 4, t * 2, a.ph.antic, 0.6 + a.ph.antic * 0.5);
+    // Thorned vines: rising coiled from the ground in the wind-up, whipping forward on the blow.
+    let grow = 0;
+    let lash = 0;
+    if (a.ph.antic > 0) grow = a.ph.antic;
+    const since = a.ph.since;
+    if (since >= 0) {
+      lash = easeOut(since / 0.14);
+      grow = 1 - smooth((since - 0.5) / 0.4);
+    }
+    if (grow > 0.01 && !dead) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-40, -200, 300, 200.5);
+      ctx.clip();
+      [[24, 1, 0], [33, -1, 1.7], [42, 1, 3.1]].forEach(([x0, sd, ph], v) => {
+        let x = x0 - lash * (6 + v * 3);
+        let y = (1 - grow) * 60;
+        let ang = 0;
+        for (let i = 0; i < 6; i++) {
+          const coil = (i ? 0 : -PI / 2) + sd * 0.7 * Math.sin(i * 1.3 + t * 5 + ph) * (i ? 1 : 0.3);
+          const whip = (i ? 0.24 : -1.05 - v * 0.12) + Math.sin(t * 9 - i + ph) * 0.05 * (1 - lash * 0.6);
+          ang += lerp(coil, whip, lash);
+          stamp(ctx, sParts.vine(i), a, x, y, ang);
+          x += Math.cos(ang) * 9.5;
+          y += Math.sin(ang) * 9.5;
+        }
+      });
+      ctx.restore();
+    }
+    sylvanaFlies(ctx, a, true);
+  },
+});
+
+// ---------- Lilith, rigged ----------
+// A succubus queen: a slow runway stride, hips rolling, shoulders countering, a leg through the
+// slit of her gown; her bat wings breathe open and shut, her heart-tipped tail curls in a wave that
+// runs down it, and her heart scepter stands at her side. The attack is a blown kiss: hand to her
+// lips (never over her face), wings pulled in, then flung open as she blows a stream of hearts.
+const LQ = { bx: 78, G: 147.4 };
+{
+  const { bx, G } = LQ;
+  LQ.top = G - 82;
+  LQ.hip = [bx, G - 48];
+  LQ.hx = bx - 0.4;
+  LQ.hy = G - 103.5;
+  LQ.neck = [LQ.hx, LQ.hy + 13];
+  LQ.sh = [bx + 6.5, LQ.top + 3];
+  LQ.shB = [bx - 7, LQ.top + 3];
+}
+const LL = [13.5, 12.5];
+const LB = [13, 12];
+const lArm = (hand, dir) => armAt('n', LQ.sh, hand, LL[0], LL[1], dir);
+const lArmB = (hand) => armAt('b', LQ.shB, hand, LB[0], LB[1], -1);
+const LA = {
+  idle: { ...lArm([LQ.bx + 14, LQ.G - 54], 1), ...lArmB([LQ.bx - 19, LQ.G - 62]) },
+  walk: { ...lArm([LQ.bx + 13, LQ.G - 55], 1), ...lArmB([LQ.bx - 19, LQ.G - 63]) },
+  antic: { ...lArm([LQ.bx + 24, LQ.G - 84], -1), ...lArmB([LQ.bx - 19, LQ.G - 68]) },
+  strike: { ...lArm([LQ.bx + 38, LQ.G - 84], -1), ...lArmB([LQ.bx - 19, LQ.G - 60]) },
+  dead: { ...lArm([LQ.bx + 16, LQ.G - 34], 1), ...lArmB([LQ.bx - 16, LQ.G - 34]) },
+};
+// The tail at rest (from its root), in three curved pieces along her drawn curve, each hung from
+// the end of the one before so a wave runs down it into the heart.
+const LTAIL = (() => {
+  const pts = spline([[0, 0], [-10, 10], [-22, 20], [-34, 18], [-40, 8], [-36, -2]], 2);
+  const n = pts.length - 1;
+  return [[0, 4], [4, 7], [7, n]].map(([i0, i1]) => ({ pts: pts.slice(i0, i1 + 1).map(([x, y]) => [x - pts[i0][0], y - pts[i0][1]]), u0: i0 / n, u1: i1 / n }));
+})();
+const lHeart = (c, r = 4) => drawn(`lilith|heart|${c}|${r}`, () => [heart(0, 0, r + 1, '#ffffff'), heart(0, 0, r, c), dot(-r * 0.35, -r * 0.3, Math.max(0.4, r * 0.18), '#ffffff')]);
+const lParts = {
+  tail: (i) => drawn(`lilith|tail${i}`, () => {
+    const { pts, u0, u1 } = LTAIL[i];
+    const w0 = lerp(3.4, 1.6, u0);
+    const w1 = lerp(3.4, 1.6, u1);
+    const out = [dot(0, 0, w0 / 2, D.blackDk), taper(pts, w0, w1, D.blackDk, { n: 3 }), taper(pts.map(([x, y]) => [x + 0.3, y - 0.3]), w0 * 0.65, w1 * 0.62, D.blackLt, { n: 3, flat: true })];
+    if (i === 2) {
+      const e = pts[pts.length - 1];
+      const p = pts[pts.length - 2];
+      const ang = Math.atan2(e[1] - p[1], e[0] - p[0]) - PI / 2;
+      const hx = e[0] + Math.cos(ang + PI / 2) * 3;
+      const hy = e[1] + Math.sin(ang + PI / 2) * 3;
+      out.push(heart(hx, hy, 4.4, D.wineDk, ang + PI), heart(hx, hy, 3.2, D.gem, ang + PI));
+    }
+    return out;
+  }),
+  thigh: (far) => drawn(`lilith|thigh|${far}`, () => {
+    const c = far ? D.blackDk : D.black;
+    const out = limb([0, 0], [11, 0], [22, 0], 7.6, 6.5, 5.4, c, shade(c, -10));
+    if (!far) out.push(line([[16.5, -3], [17.5, 3]], 1.4, D.wine));
+    return out;
+  }),
+  shin: (far) => drawn(`lilith|shin|${far}`, () => {
+    const c = far ? D.blackDk : D.black;
+    const out = limb([0, 0], [10.5, 0], [21, 0], 5.4, 4.4, 3.4, c, shade(c, -10));
+    if (!far) out.push(line([[4, -1.4], [17, -1]], 0.6, D.blackLt));
+    return out;
+  }),
+  boot: (far) => drawn(`lilith|boot|${far}`, () => {
+    const c = far ? D.blackDk : D.black;
+    return [poly(round([[-2.2, -1.2], [2.2, -1.2], [6.2, 5.4], [2.4, 6.1], [-1.8, 2.2]], 2), c), taper([[-1.2, 1.6], [-1.8, 5.8]], 1.4, 0.8, D.wineDk, { n: 1 })];
+  }),
+  upperB: bone('lilith|armBU', LB[0], 5.8, 5.3, 4.8, D.blackDk, shade(D.blackDk, -10)),
+  foreB: bone('lilith|armBF', LB[1], 4.8, 4.6, 4.4, D.blackDk, shade(D.blackDk, -10), () => [poly([[LB[1] - 3, -3], [LB[1] + 2, -3], [LB[1] + 2, 3], [LB[1] - 3, 3]], D.wineDk)]),
+  // The heart scepter, held upright at the wrist, its foot on the floor.
+  scepter: drawn('lilith|scepter', () => {
+    const st = -24;
+    const gy = st - 5;
+    const out = [taper([[0.5, 58], [0, st]], 2.6, 2.2, D.goldDk, { n: 1 }), line([[0.6, 56], [0.2, st + 2]], 0.6, D.goldLt)];
+    out.push(...hand(0, 0, -PI / 2, D.skinDk, shade(D.skinDk, -8)));
+    for (const s of [-1, 1]) out.push(poly([[0, gy + 1], [s * 5, gy - 4], [s * 9, gy - 3], [s * 7, gy], [s * 8, gy + 2], [s * 3, gy + 3]], D.goldDk), fpoly([[s * 1.4, gy], [s * 5, gy - 3], [s * 8, gy - 2.4], [s * 3, gy + 1.4]], D.gold));
+    out.push(heart(0, gy + 0.6, 5, D.wineDk), heart(0, gy + 0.2, 4, D.gem), heart(-0.6, gy - 0.6, 1.8, '#ffc2df'), dot(-1.6, gy - 1.6, 0.7, '#ffffff'));
+    out.push(oval(0, st + 1, 2.4, 1.4, D.gold, 0, 10));
+    return out;
+  }),
+  upper: bone('lilith|armU', LL[0], 5.2, 4.7, 4.2, D.black, D.blackDk, () => ball(0, 1, 5.2, 4.4, D.black, { dark: D.blackDk, light: D.blackLt })),
+  fore: bone('lilith|armF', LL[1], 4.2, 3.8, 3.4, D.black, D.blackDk, () => {
+    const cx = LL[1] * 0.82;
+    return [poly([[cx, -2], [cx, 2], [LL[1], 4.4], [LL[1], -4.4]], D.wine), line([[LL[1], 4.4], [LL[1], -4.4]], 0.8, D.gold)];
+  }),
+  hand: (open) => drawn(`lilith|hand|${open}`, () => hand(1.5, 0, 0, D.skin, D.skinDk, open)),
+  spark: drawn('lilith|spark', () => [heart(0, 0, 2.2, D.pink), sparkle(3, -2, 2.2, '#ffffff')]),
+  burst: drawn('lilith|burst', () => [sparkle(0, 0, 8, '#ffffff'), heart(0, 0, 3, '#ffd6ec')]),
+};
+const lHearts = [lHeart(D.violet), lHeart(D.gem), lHeart(D.pink)];
+const lHeartsSm = [lHeart(D.pink, 2.2), lHeart(D.gem, 2.2)];
+// Where her feet stand for each pose (rig space), and the stride.
+function lilithFeet(a) {
+  const s = (ph) => [9 * Math.cos(a.wp + ph), -6 - 6 * Math.max(0, -Math.sin(a.wp + ph))];
+  const [nx, ny] = s(0);
+  const [fx, fy] = s(PI);
+  return {
+    idle: { fnx: 5.5, fny: -6, ffx: -5, ffy: -6 },
+    walk: { fnx: nx, fny: ny, ffx: fx - 0.5, ffy: fy },
+    antic: { fnx: 3, fny: -6, ffx: -7, ffy: -6 },
+    strike: { fnx: 11, fny: -6, ffx: -7, ffy: -6 },
+  };
+}
+const lilithRig = queenRig({
+  ...LQ,
+  w: 62,
+  h: 120,
+  stride: 36,
+  recover: 0.6,
+  fast: ['lean', 'nu', 'nf', 'nh', 'wing', 'fnx'],
+  kick: { lean: -1.4, head: -3, wing: -3, c1: 2, c2: 3 },
+  springs: { wing: [110, 9], open: [200, 20], y: [260, 22], sc: [60, 8], fnx: [300, 26], fny: [300, 26], ffx: [300, 26], ffy: [300, 26] },
+  pose(m, a) {
+    const t = a.t;
+    const ft = lilithFeet(a);
+    const step = Math.sin(a.wp * 2);
+    const idle = { x: 0, y: -Math.sin(t * 1.5) * 0.6, lean: Math.sin(t * 1.2) * 0.014, head: Math.sin(t * 1.1 - 0.7) * 0.04 - 0.02, ...LA.idle, wing: 0.1 * Math.sin(t * 1.3 - 0.3), open: 0, ...ft.idle };
+    idle.nh = idle.nf + 0.9;
+    idle.bu += Math.sin(t * 1.2) * 0.02;
+    // The runway stride: hips roll twice a cycle, the head counters.
+    const walk = { x: 0.6, y: -1.1 * Math.abs(Math.cos(a.wp)) + 0.5, lean: 0.045 * step, head: -0.03 * step, ...LA.walk, wing: -0.1 + 0.14 * Math.sin(a.wp * 2 - 0.6), open: 0, ...ft.walk };
+    walk.nh = walk.nf + 0.9;
+    const antic = { x: -1, y: 0.4, lean: -0.06, head: 0.08, ...LA.antic, nh: -2.4, wing: -0.45, open: 0, ...ft.antic };
+    const strike = { x: 2.5, y: -0.6, lean: 0.07, head: -0.06, ...LA.strike, nh: -0.25, wing: 0.5, open: 1, ...ft.strike };
+    const goal = stateBlend(a, idle, walk, antic, strike);
+    if (a.mood === 'angry') add(goal, { wing: 0.18 });
+    if (a.mood === 'hurt') add(goal, { lean: -0.07, head: -0.16, wing: -0.25, x: -1.5 });
+    if (a.face === 'dead') Object.assign(goal, { x: 1, y: 18, lean: 0.12, head: 0.38, wing: -0.9, ...LA.dead, nh: LA.dead.nf + 0.9, open: 0, fnx: 14, fny: -3, ffx: -10, ffy: -3 });
+    return goal;
+  },
+  follow: (S, a) => {
+    const t = a.t;
+    const hang = -(S.lean + S.head);
+    const f = {};
+    for (let k = 0; k < 3; k++) f[`h${k}`] = hang * 0.8 + Math.sin(t * 1.1 - k * 0.6) * 0.03 + a.walkW * (0.06 + 0.06 * Math.sin(a.wp * 2 - 1.1 - k * 0.4));
+    f.side = hang * 0.9 + Math.sin(t * 1.7) * 0.04 + a.walkW * 0.06 * Math.sin(a.wp * 2 - 1.1);
+    // The tail: a wave running down it, swinging against the hips.
+    for (let i = 0; i < 3; i++) f[`c${i}`] = Math.sin(t * 1.6 - i * 0.9) * 0.1 * (1 + i * 0.3) - S.lean * (i ? 0.4 : 1.2) + a.walkW * 0.12 * Math.sin(a.wp * 2 - 1.1 - i * 0.7) + (a.face === 'dead' ? 0.3 : 0);
+    f.sc = a.face === 'dead' ? -1.3 : -S.lean * 0.7;
+    f.skirt = S.lean * 0.3 + a.walkW * 0.03 * Math.sin(a.wp * 2);
+    return f;
+  },
+  parts: [
+    { name: 'hip', at0: LQ.hip, off: (S) => [S.x, S.y], rot: (S) => S.lean },
+    { name: 'head', parent: 'hip', at0: LQ.neck, rot: (S) => S.head },
+    { name: 'wingF', parent: 'hip', at0: [LQ.bx - 2, LQ.top + 6], rot: (S) => -S.wing * 0.8, part: slice('lilith', 'wingF', [LQ.bx - 2, LQ.top + 6]) },
+    { name: 'wingN', parent: 'hip', at0: [LQ.bx - 7, LQ.top + 8], rot: (S) => S.wing, part: slice('lilith', 'wingN', [LQ.bx - 7, LQ.top + 8]) },
+    // The tail: each segment hung from the end of the one before, turned by its own spring.
+    { name: 'tail0', parent: 'hip', at0: [LQ.bx - 9, LQ.G - 52], rot: (S) => S.c0, part: lParts.tail(0) },
+    ...[1, 2].map((i) => ({ name: `tail${i}`, parent: `tail${i - 1}`, off: () => LTAIL[i - 1].pts.at(-1), rot: (S) => S[`c${i}`], part: lParts.tail(i) })),
+    ...[[-12, -6], [-7, -2], [-3.6, 2]].map(([x, y], k) => {
+      const at0 = [LQ.hx + x, LQ.hy + y];
+      return { name: `hair${k}`, parent: 'head', at0, rot: (S) => S[`h${k}`], part: slice('lilith', `hair${k}`, at0) };
+    }),
+    { name: 'skirt', at0: [LQ.bx, LQ.G - 58], off: (S) => [S.x * 0.4, 0], rot: (S) => S.skirt, part: slice('lilith', 'skirt', [LQ.bx, LQ.G - 58]) },
+    // (The far leg passes behind the slit's lining; the near one shows through it.)
+    ...legParts('legF', lParts.thigh(true), lParts.shin(true), lParts.boot(true), (S) => legOf(S, 'legF', 48, -2, S.ffx, S.ffy, 22, 21)),
+    { name: 'slit', parent: 'skirt', part: slice('lilith', 'slit', [LQ.bx, LQ.G - 58]) },
+    ...legParts('legN', lParts.thigh(false), lParts.shin(false), lParts.boot(false), (S) => legOf(S, 'legN', 48, 1, S.fnx, S.fny, 22, 21)),
+    { name: 'panel', at0: [LQ.bx, LQ.G - 58], off: (S) => [S.x * 0.5, 0], rot: (S) => S.skirt * 1.2, part: slice('lilith', 'panel', [LQ.bx, LQ.G - 58]) },
+    { name: 'torso', parent: 'hip', part: slice('lilith', 'torso', LQ.hip) },
+    ...armParts('b', LQ.shB, LB[0], lParts.upperB, lParts.foreB),
+    { name: 'scepter', parent: 'hip', at0: LQ.shB, off: (S) => wristOf(S, 'b', LB[0], LB[1]), rot: (S) => S.sc, part: lParts.scepter },
+    { name: 'headDraw', parent: 'head', part: slice('lilith', 'head', LQ.neck, true) },
+    { name: 'side', parent: 'head', at0: [LQ.hx - 6.6, LQ.hy - 3], rot: (S) => S.side, part: slice('lilith', 'side', [LQ.hx - 6.6, LQ.hy - 3]) },
+    ...armParts('n', LQ.sh, LL[0], lParts.upper, lParts.fore),
+    { name: 'hand', parent: 'hip', at0: LQ.sh, off: (S) => wristOf(S, 'n', LL[0], LL[1]), rot: (S) => S.nh, part: lParts.hand(0), alpha: (a, S) => 1 - S.open },
+    { name: 'handOpen', parent: 'hip', at0: LQ.sh, off: (S) => wristOf(S, 'n', LL[0], LL[1]), rot: (S) => S.nh, part: lParts.hand(1), alpha: (a, S) => S.open },
+  ],
+  fx(ctx, m, a, S, mat) {
+    const t = a.t;
+    if (a.face === 'dead') return;
+    const [hx, hy] = where(mat, 'hand', 4, 0);
+    if (a.ph.antic > 0.3) stamp(ctx, lParts.spark, a, hx + 2, hy - 5, 0, (a.ph.antic - 0.3) / 0.7);
+    // The kiss: a stream of hearts from her palm, fanning out and drifting up.
+    const since = a.ph.since;
+    if (since >= 0 && since < 1) {
+      for (let k = 0; k < 8; k++) {
+        const v = clamp(since * 1.4 - (k % 3) * 0.08, 0, 1);
+        if (v <= 0) continue;
+        const ang = -1.25 + (k / 7) * 1.55 + Math.sin(v * 6 + k) * 0.08;
+        const d = 6 + easeOut(v) * 40 * (0.75 + (k % 3) * 0.2);
+        const sz = (k % 2 ? 0.8 : 1.1) * Math.min(1.15, 0.5 + v * 2);
+        stamp(ctx, lHearts[k % 3], a, hx + Math.cos(ang) * d, hy + Math.sin(ang) * d - v * 10, Math.sin(k + v * 4) * 0.3, 1 - smooth((v - 0.6) / 0.4), sz);
+      }
+      if (since < 0.18) stamp(ctx, lParts.burst, a, hx + 4, hy - 2, 0, 1 - since / 0.18);
+    }
+    // A few hearts float about her when she is pleased or roused.
+    if ((a.mood === 'happy' || a.mood === 'angry') && !a.ph.atk) {
+      for (let k = 0; k < 3; k++) {
+        const u = (t * 0.35 + k / 3) % 1;
+        const x = (k === 1 ? -36 : 30 + k * 4) + Math.sin(u * TAU + k) * 3;
+        stamp(ctx, lHeartsSm[a.mood === 'angry' ? 1 : 0], a, x, -60 - u * 30 - k * 6, 0, Math.sin(u * PI), 1.4 - u * 0.4);
+      }
+    }
+  },
+});
+
+// ---------- Selene, rigged ----------
+// A star queen in silver: a heroic armoured march with high knees and a firm footfall, the starry
+// cape and the braid swinging behind, the helm's wings fluttering, the crescent halo behind her
+// head (its rays turning when roused). The attack is a spear thrust: she cocks the moon spear back
+// level below her chin, shield up, feet planting wide, then drives it forward in a crescent flash.
+const MQ = { bx: 76, G: 149.4 };
+{
+  const { bx, G } = MQ;
+  MQ.top = G - 82;
+  MQ.hip = [bx, G - 48];
+  MQ.hx = bx - 0.4;
+  MQ.hy = G - 103.5;
+  MQ.neck = [MQ.hx, MQ.hy + 13];
+  MQ.sh = [bx + 6.5, MQ.top + 3];
+  MQ.shB = [bx - 7, MQ.top + 3];
+}
+const ML = [13, 12.5];
+const MB = [13, 12];
+const mArm = (hand, dir) => armAt('n', MQ.sh, hand, ML[0], ML[1], dir);
+const mArmB = (hand) => armAt('b', MQ.shB, hand, MB[0], MB[1], -1);
+const MA = {
+  idle: { ...mArm([MQ.bx + 24, MQ.G - 62], 1), ...mArmB([MQ.bx - 17, MQ.G - 60]), spear: -1.36 },
+  walk: { ...mArm([MQ.bx + 21, MQ.G - 66], 1), ...mArmB([MQ.bx - 16, MQ.G - 60]), spear: -1.12 },
+  antic: { ...mArm([MQ.bx - 4, MQ.G - 76], -1), ...mArmB([MQ.bx - 8, MQ.G - 68]), spear: -0.1 },
+  strike: { ...mArm([MQ.bx + 34, MQ.G - 76], 1), ...mArmB([MQ.bx - 22, MQ.G - 62]), spear: 0.02 },
+  dead: { ...mArm([MQ.bx + 20, MQ.G - 36], 1), ...mArmB([MQ.bx - 18, MQ.G - 34]), spear: 0.4 },
+};
+const mParts = {
+  upperB: bone('selene|armBU', MB[0], 5.8, 5.4, 5, M.silverDk, shade(M.silverDk, -10)),
+  foreB: bone('selene|armBF', MB[1], 5, 4.8, 4.6, M.silverDk, shade(M.silverDk, -10)),
+  shield: drawn('selene|shield', () => {
+    const r = 13;
+    const tl = 0.12;
+    const out = [T(ovalPts(0, 0, r + 1.4, r + 1.4, 26, tl), M.silverDk), T(ovalPts(0.3, -0.3, r, r, 26, tl), M.silver), T(ovalPts(0.6, -0.4, r - 2.4, r - 2.4, 24, tl), M.lav)];
+    out.push(F(T(ovalPts(2, -3, r - 5, r - 6, 20, tl - 0.6), M.lavLt)));
+    out.push(F(T(crescentPts(0.6, -0.4, 7.4, 3.2, -0.5), M.goldDk)), F(T(crescentPts(0.8, -0.6, 6.8, 2.4, -0.5), M.gold)));
+    out.push(star(3, -2, 1.8, '#ffffff'));
+    for (let k = 0; k < 4; k++) {
+      const t = (k / 4) * TAU + 0.8;
+      out.push(dot(0.3 + Math.cos(t) * (r - 1.1), -0.3 + Math.sin(t) * (r - 1.1), 0.7, M.silverDk));
+    }
+    return out;
+  }),
+  thigh: (far) => drawn(`selene|thigh|${far}`, () => limb([0, 0], [10.5, 0], [21, 0], 8, 7, 6, far ? M.lavDk : M.lav, far ? shade(M.lavDk, -8) : M.lavDk)),
+  shin: (far) => drawn(`selene|shin|${far}`, () => {
+    const dk = far ? shade(M.silverDk, -6) : M.silverDk;
+    const sil = far ? M.silverDk : M.silver;
+    const L = 21;
+    const out = limb([0, 0], [L / 2, 0], [L, 0], 6, 5, 4.2, far ? M.lavDk : M.lav, far ? shade(M.lavDk, -8) : M.lavDk);
+    const shinW = (w) => (t) => w * (t < 0.35 ? lerp(0.92, 1, t / 0.35) : lerp(1, 0.72, (t - 0.35) / 0.65));
+    out.push(strip([[2, 0], [L / 2, 0.5], [L, 0]], shinW(7), dk, { n: 3 }), strip([[2, 0.2], [L / 2, 0.6], [L, 0.2]], shinW(5.6), sil, { n: 3, flat: true }));
+    out.push(oval(0, 0.6, 3.2, 3.6, dk, 0, 18), oval(-0.3, 0.85, 2.3, 2.7, sil, 0, 18), dot(-0.4, 1.2, 0.8, M.gold));
+    if (!far) out.push(line([[3, -1.6], [L - 2, -1.6]], 0.6, M.silverLt));
+    return out;
+  }),
+  boot: (far) => drawn(`selene|boot|${far}`, () => {
+    const dk = far ? shade(M.silverDk, -6) : M.silverDk;
+    const sil = far ? M.silverDk : M.silver;
+    return [poly(round([[-3, -1.6], [2.4, -1.8], [8.6, 3.2], [6.4, 4.6], [-3.2, 4.6]], 2), dk), fpoly(round([[-2.2, -0.9], [2, -1.1], [7, 3], [-2.2, 3.2]], 2), sil)];
+  }),
+  pauldron: drawn('selene|pauldron', () => [...ball(-0.5, 1, 6.4, 5.2, M.silver, { dark: M.silverDk, light: M.silverLt }), line(arcPts(-0.5, 2, 6.2, 4, 10, 170, 6), 1, M.gold), line(arcPts(-0.5, 4.6, 6.6, 3.4, 15, 165, 6), 0.8, M.silverDk)]),
+  upper: bone('selene|armU', ML[0], 5.2, 4.9, 4.6, M.lav, M.lavDk),
+  fore: bone('selene|armF', ML[1], 4.6, 4.3, 4, M.lav, M.lavDk, () => {
+    const L = ML[1];
+    return [taper([[L * 0.12, 0], [L, 0]], 5.8, 4.8, M.silverDk, { n: 1 }), taper([[L * 0.12 - 0.3, -0.3], [L - 0.2, -0.2]], 4.6, 3.8, M.silver, { n: 1, flat: true }), line([[L * 0.75, -2], [L * 0.75, 2]], 0.8, M.gold)];
+  }),
+  // The moon spear along +x from the grip.
+  spear: drawn('selene|spear', () => {
+    const out = [];
+    const butt = [-58, 0];
+    const head = [26, 0];
+    const tipP = [41, 0];
+    out.push(taper([butt, head], 2.4, 2.2, M.steel, { n: 1 }), line([[butt[0], 0.5], [head[0], 0.5]], 0.6, M.lavLt));
+    for (const t of [0.1, 0.62, 0.7]) {
+      const x = lerp(butt[0], head[0], t);
+      out.push(line([[x - 1.2, 0], [x + 1.2, 0]], 3.2, M.gold));
+    }
+    out.push(dot(butt[0], 0, 1.6, M.goldDk));
+    out.push(poly([[head[0], 2.6], [head[0] + 6, 3.4], tipP, [head[0] + 6, -3.4], [head[0], -2.6]], M.silverDk));
+    out.push(fpoly([head, [head[0] + 6, 2.6], tipP], M.silverLt), fpoly([head, tipP, [head[0] + 6, -2.6]], M.silver));
+    out.push(F(T(crescentPts(head[0] - 1.5, 0, 6.4, 2.8, PI), M.goldDk)), F(T(crescentPts(head[0] - 1.4, 0, 5.8, 2, PI), M.gold)));
+    out.push(...gem(head[0] - 1, 0, 1.5, M.lav));
+    return out;
+  }),
+  ribbon: drawn('selene|ribbon', () => [taper([[0, 0], [-1.6, 6], [-3.4, 10]], 1.8, 0.8, M.lav, { n: 2, flat: true })]),
+  hand: drawn('selene|hand', () => hand(0, 0, 0, M.lav, M.lavDk)),
+  glow: drawn('selene|glow', () => [dot(0, 0, 3.4, mix(M.glow, '#ffffff', 0.5)), sparkle(0, 0, 5, '#ffffff')]),
+  flash: drawn('selene|flash', () => [F(T(crescentPts(0, 0, 14, 14 * 0.42, PI), mix(M.glow, '#ffffff', 0.5))), F(T(crescentPts(0, 0, 14 * 0.92, 14 * 0.26, PI), '#ffffff')), sparkle(6, 0, 6, '#ffffff')]),
+  motes: [drawn('selene|mote0', () => [star(0, 0, 2.2, M.star)]), drawn('selene|mote1', () => [star(0, 0, 2.2, M.lavLt)])],
+};
+const haloParts = {};
+const haloPart = (name) => (haloParts[name] ??= slice('selene', name === 'rays' ? 'rays' : 'halo', ptOf('selene', 'halo'), name === 'halo' ? 'idle' : 'angry'));
+function seleneFeet(a) {
+  const s = (ph) => [10 * Math.cos(a.wp + ph), -4.4 - 9 * Math.max(0, -Math.sin(a.wp + ph))];
+  const [nx, ny] = s(0);
+  const [fx, fy] = s(PI);
+  return {
+    idle: { fnx: 6.5, fny: -4.4, ffx: -7, ffy: -4.4 },
+    walk: { fnx: 1.5 + nx, fny: ny, ffx: -2 + fx, ffy: fy },
+    antic: { fnx: 14.5, fny: -4.4, ffx: -15, ffy: -4.4 },
+    strike: { fnx: 14.5, fny: -4.4, ffx: -15, ffy: -4.4 },
+  };
+}
+const seleneRig = queenRig({
+  ...MQ,
+  w: 62,
+  h: 122,
+  stride: 40,
+  recover: 0.6,
+  fast: ['lean', 'nu', 'nf', 'spear', 'bu', 'bf', 'x'],
+  kick: { lean: -1.4, head: -2.6, hw: -4, cape: 2, braid: 2 },
+  springs: { heat: [60, 14], y: [260, 22], fnx: [320, 28], fny: [320, 28], ffx: [320, 28], ffy: [320, 28], cape: [45, 5], braid: [55, 5] },
+  pose(m, a) {
+    const t = a.t;
+    const ft = seleneFeet(a);
+    const fall = Math.abs(Math.sin(a.wp));
+    const idle = { x: 0, y: -Math.sin(t * 1.5) * 0.6, lean: Math.sin(t * 0.8) * 0.008, head: Math.sin(t * 1.1 - 0.7) * 0.03, ...MA.idle, heat: 0, ...ft.idle };
+    idle.nu += Math.sin(t * 1.5) * 0.02;
+    idle.spear += Math.sin(t * 1.1) * 0.02;
+    // The march: a firm footfall drops the body on each step; the shield arm counter-swings.
+    const walk = { x: 1.4, y: -2 + fall * 2.4, lean: 0.03 + 0.015 * Math.sin(a.wp * 2), head: -0.03, ...MA.walk, heat: 0, ...ft.walk };
+    walk.bu += Math.sin(a.wp) * 0.2;
+    walk.bf += Math.sin(a.wp) * 0.2;
+    const antic = { x: -2.5, y: 2.5, lean: -0.08, head: 0.06, ...MA.antic, heat: 1, ...ft.antic };
+    const strike = { x: 4, y: 2, lean: 0.11, head: 0.05, ...MA.strike, heat: 1, ...ft.strike };
+    const goal = stateBlend(a, idle, walk, antic, strike);
+    if (a.mood === 'angry') add(goal, { heat: 1 });
+    if (a.mood === 'hurt') add(goal, { lean: -0.07, head: -0.14, x: -1.5 });
+    if (a.face === 'dead') Object.assign(goal, { x: 1, y: 18, lean: 0.18, head: 0.4, heat: 0, ...MA.dead, fnx: 16, fny: -3, ffx: -12, ffy: -3 });
+    return goal;
+  },
+  follow: (S, a) => {
+    const t = a.t;
+    const hang = -(S.lean + S.head);
+    return {
+      cape: -S.lean * 1.1 + Math.sin(t * 1.1) * 0.03 + a.walkW * (0.12 + 0.04 * Math.sin(a.wp * 2)),
+      braid: hang * 0.9 + Math.sin(t * 1.2) * 0.04 + a.walkW * (0.1 + 0.08 * Math.sin(a.wp * 2 - 1.2)),
+      side: hang * 0.9 + Math.sin(t * 1.8) * 0.03,
+      sk: S.lean * 0.4 + a.walkW * 0.05 * Math.sin(a.wp * 2),
+      hw: Math.sin(t * 1.4 - 0.6) * 0.05 + a.walkW * 0.08 * Math.sin(a.wp * 2 - 0.6) - (a.mood === 'hurt' ? 0.2 : 0),
+      rib: -S.lean + Math.sin(t * 1.6) * 0.1 + a.walkW * 0.15,
+    };
+  },
+  parts: [
+    { name: 'hip', at0: MQ.hip, off: (S) => [S.x, S.y], rot: (S) => S.lean },
+    { name: 'head', parent: 'hip', at0: MQ.neck, rot: (S) => S.head },
+    ...[['rays', (a, S) => S.heat], ['halo', (a, S) => 1 - S.heat], ['haloHot', (a, S) => S.heat]].map(([name, alpha]) => ({
+      name,
+      parent: 'head',
+      off: () => {
+        const [x, y] = ptOf('selene', 'halo');
+        return [x - MQ.neck[0], y - MQ.neck[1]];
+      },
+      rot: name === 'rays' ? (S, a) => a.t * 0.25 : undefined,
+      part: { s: (a) => haloPart(name).s(a), pivot: () => haloPart(name).pivot() },
+      alpha: (a, S) => (a.face === 'dead' ? 0 : alpha(a, S)),
+    })),
+    { name: 'cape', parent: 'hip', at0: [MQ.bx, MQ.top], rot: (S) => S.cape, part: slice('selene', 'cape', [MQ.bx, MQ.top]) },
+    { name: 'braid', parent: 'head', at0: [MQ.hx - 10, MQ.hy + 2], rot: (S) => S.braid, part: slice('selene', 'braid', [MQ.hx - 10, MQ.hy + 2]) },
+    ...armParts('b', MQ.shB, MB[0], mParts.upperB, mParts.foreB),
+    { name: 'shield', parent: 'hip', at0: MQ.shB, off: (S) => wristOf(S, 'b', MB[0], MB[1]), rot: (S) => -S.lean * 0.5, part: mParts.shield },
+    ...legParts('legF', mParts.thigh(true), mParts.shin(true), mParts.boot(true), (S) => legOf(S, 'legF', 48, -2, S.ffx, S.ffy, 21, 21)),
+    ...legParts('legN', mParts.thigh(false), mParts.shin(false), mParts.boot(false), (S) => legOf(S, 'legN', 48, 1.5, S.fnx, S.fny, 21, 21)),
+    { name: 'skirt', parent: 'hip', at0: [MQ.bx, MQ.G - 58], rot: (S) => S.sk, part: slice('selene', 'skirt', [MQ.bx, MQ.G - 58]) },
+    { name: 'torso', parent: 'hip', part: slice('selene', 'torso', MQ.hip) },
+    { name: 'headDraw', parent: 'head', part: slice('selene', ['head', 'top'], MQ.neck, true) },
+    { name: 'side', parent: 'head', at0: [MQ.hx - 6.3, MQ.hy - 3], rot: (S) => S.side, part: slice('selene', 'side', [MQ.hx - 6.3, MQ.hy - 3]) },
+    { name: 'hwing', parent: 'head', at0: [MQ.hx - 7, MQ.hy - 9], rot: (S) => S.hw, part: slice('selene', 'hwing', [MQ.hx - 7, MQ.hy - 9]) },
+    { name: 'pauldron', parent: 'hip', at0: MQ.sh, rot: (S) => (S.nu - PI / 2) * 0.2, part: mParts.pauldron },
+    ...armParts('n', MQ.sh, ML[0], mParts.upper, mParts.fore),
+    { name: 'spear', parent: 'hip', at0: MQ.sh, off: (S) => wristOf(S, 'n', ML[0], ML[1]), rot: (S) => S.spear, part: mParts.spear },
+    {
+      name: 'ribbon',
+      parent: 'hip',
+      at0: MQ.sh,
+      off: (S) => {
+        const [x, y] = wristOf(S, 'n', ML[0], ML[1]);
+        return [x + Math.cos(S.spear) * 23, y + Math.sin(S.spear) * 23];
+      },
+      rot: (S) => S.rib,
+      part: mParts.ribbon,
+    },
+    { name: 'hand', parent: 'hip', at0: MQ.sh, off: (S) => wristOf(S, 'n', ML[0], ML[1]), rot: (S) => S.spear, part: mParts.hand },
+  ],
+  fx(ctx, m, a, S, mat) {
+    if (a.face === 'dead') return;
+    const [tx, ty] = where(mat, 'spear', 41, 0);
+    if (a.ph.antic > 0.2) stamp(ctx, mParts.glow, a, tx, ty, a.t * 3, (a.ph.antic - 0.2) / 0.8);
+    // The crescent flash of the thrust, ahead of the blade.
+    const since = a.ph.since;
+    if (since >= 0 && since < 0.4) {
+      const u = since / 0.4;
+      stamp(ctx, mParts.flash, a, tx + 4 + easeOut(u) * 10, ty, 0, 1 - smooth((u - 0.3) / 0.7), 0.75 + easeOut(u) * 0.6);
+    }
+    // Moonlit motes drifting up when roused or pleased.
+    if ((a.mood === 'angry' || a.mood === 'happy') && !a.ph.atk) {
+      for (let k = 0; k < 4; k++) {
+        const u = (a.t * 0.3 + k / 4) % 1;
+        stamp(ctx, mParts.motes[k % 2], a, -30 + k * 20 + Math.sin(u * TAU + k) * 3, -30 - u * 70, 0, Math.sin(u * PI), 0.6 + Math.sin(u * PI) * 0.6);
+      }
+    }
+  },
+});
+
 export const ART = {
-  tamamo: { walk: 8, idle: 8, attack: 5, stride: 60, atkMs: [70, 140, 360, 200], draw: tamamo },
-  sylvana: { walk: 8, idle: 8, attack: 5, stride: 50, atkMs: [80, 150, 400, 220], draw: sylvana },
-  lilith: { walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [70, 140, 360, 200], draw: lilith },
-  selene: { pad: 8, walk: 8, idle: 8, attack: 5, stride: 40, atkMs: [60, 140, 380, 200], draw: selene },
+  tamamo: { walk: 8, idle: 8, attack: 5, stride: 60, atkMs: [70, 140, 360, 200], draw: tamamo, rig: tamamoRig },
+  sylvana: { walk: 8, idle: 8, attack: 5, stride: 50, atkMs: [80, 150, 400, 220], draw: sylvana, rig: sylvanaRig },
+  lilith: { walk: 8, idle: 8, attack: 5, stride: 36, atkMs: [70, 140, 360, 200], draw: lilith, rig: lilithRig },
+  selene: { pad: 8, walk: 8, idle: 8, attack: 5, stride: 40, atkMs: [60, 140, 380, 200], draw: selene, rig: seleneRig },
 };
 
 export const INFO = {
