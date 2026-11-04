@@ -151,7 +151,7 @@ export const THEMES = {
   skywhale: {
     sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], sun: '#fffbe6', far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff',
     ground: '#6a8ac0', groundDeep: '#4a6a9a', trim: '#eaf6ff', ledge: '#e8b080', ledgeTrim: '#ffd36b', ledgeShade: '#8a5a3a',
-    skyline: 'whaleback', props: ['cloudpuff', 'tuft'],
+    skyline: 'whaleback', props: ['cloudpuff', 'cloudpuff', 'pebble'],
     critters: ['gull'], drift: 'sparkle', face: 'sun',
   },
   // The Dream Theatre: a dusky violet evening over the clouds, gold marquee lights, velvet.
@@ -1157,6 +1157,9 @@ function drawFar(ctx, t, cam, width, y0, time) {
     case 'crater':
       drawFarCandy(ctx, t, cam, width, y0, time, t.skyline === 'crater');
       break;
+    case 'ramparts':
+      drawFarRamparts(ctx, t, cam, width, y0, time);
+      break;
     case 'candycave':
     case 'forge':
       drawFarCandyCave(ctx, t, cam, width, y0, time, t.skyline === 'forge');
@@ -1981,19 +1984,27 @@ function drawFarStarHall(ctx, t, cam, width, y0, time, kind) {
 // candy-cane trees and lollipop flowers swaying.
 function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
   if (crater) {
-    // Inside the crater: its glowing walls rising on both sides, sparks drifting up.
-    ctx.fillStyle = t.far;
-    ctx.fillRect(0, snap(y0 - 40), width, 400);
-    glow(ctx, width / 2, y0 + 20, width * 0.6, '#ffb06a', 0.35 + 0.05 * Math.sin(time * 2));
-    for (let k = 0; k < 20; k++) {
-      const u = (time * 0.15 + hash(k)) % 1;
-      ctx.fillStyle = k % 2 ? '#ffd36b' : '#ff8a5a';
-      ctx.globalAlpha = Math.sin(u * Math.PI);
-      ctx.fillRect(((hash(k + 9) * width - cam.x * 0.1) % width + width) % width, y0 + 20 - u * 260, 2, 2);
-    }
-    ctx.globalAlpha = 1;
+    drawFarCrater(ctx, t, cam, width, y0, time);
     return;
   }
+  drawCandyCone(ctx, t, cam, width, y0, time);
+  // Gumdrop hills in a row of candy colours.
+  ctx.fillStyle = t.far;
+  ctx.fillRect(0, snap(y0 + 24), width, 400);
+  repeat(cam.x, 0.2, 140, width, (i, x) => {
+    const c = pick(['#ff9ab8', '#ffd36b', '#9ae6a8', '#9fd8ff', '#c9a6ff'], hash(i));
+    const h = 50 + hash(i + 3) * 40;
+    ctx.fillStyle = mix(c, t.far, 0.45);
+    ctx.beginPath();
+    ctx.ellipse(x + 70, y0 + 30, 70, h, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', t.far, 0.4);
+    for (let k = 0; k < 5; k++) ctx.fillRect(snap(x + 40 + k * 14), snap(y0 + 30 - h * 0.7 + (k % 2) * 8), 2, 2);
+  });
+}
+
+// The volcano's cone, with a slow plume of pink steam curling from its top.
+function drawCandyCone(ctx, t, cam, width, y0, time) {
   // The cone, with a slow plume of pink steam curling from its top.
   const vx = width * 0.65 - cam.x * 0.06;
   const p = new Path2D();
@@ -2018,19 +2029,267 @@ function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  // Gumdrop hills in a row of candy colours.
+}
+
+// ---------- The Candy Volcano's last two rooms ----------
+
+const GINGER = '#c8844e';
+const GINGER_L = '#e2a66c';
+const GINGER_D = '#9a5a34';
+const ICING = '#fff8f2';
+// A wavy line of piped icing from (x0, y) to (x1, y), its waves keyed to the world (`wx`).
+function pipe(ctx, x0, x1, y, w = 2, amp = 1.4, c = ICING, wx = 0) {
+  ctx.strokeStyle = c;
+  ctx.lineWidth = w;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  for (let x = x0; x <= x1; x += 3) ctx.lineTo(x, y + Math.sin((x + wx) * 0.7) * amp);
+  ctx.stroke();
+}
+// A gingerbread tower: a round drum with icing bands and lit windows, a candy-striped cone roof and
+// a pennant that streams in the wind. `k` fades it toward the far colour.
+function gingerTower(ctx, t, cx, base, w, h, time, i, k) {
+  const c = (col) => mix(col, t.far, k);
+  ctx.fillStyle = c(GINGER_D);
+  ctx.fillRect(cx - w / 2, base - h, w, h);
+  ctx.fillStyle = c(GINGER);
+  ctx.fillRect(cx - w / 2 + 2, base - h, w - 6, h);
+  ctx.fillStyle = c(GINGER_L);
+  ctx.fillRect(cx - w / 2 + 3, base - h, 3, h);
+  for (let x = -w / 2; x < w / 2 - 1; x += 7) {
+    ctx.fillStyle = c(GINGER);
+    ctx.fillRect(cx + x, base - h - 6, 5, 6);
+  }
+  // The roof: pink and white candy stripes.
+  const rt = base - h - 6;
+  const rh = h * 0.55;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(cx - w / 2 - 4, rt);
+  ctx.lineTo(cx, rt - rh);
+  ctx.lineTo(cx + w / 2 + 4, rt);
+  ctx.closePath();
+  ctx.fillStyle = c('#ffffff');
+  ctx.fill();
+  ctx.clip();
+  ctx.fillStyle = c('#ff7aa8');
+  for (let s = -3; s < 8; s++) {
+    ctx.beginPath();
+    ctx.moveTo(cx - w, rt - s * 10);
+    ctx.lineTo(cx + w, rt - s * 10 - 14);
+    ctx.lineTo(cx + w, rt - s * 10 - 9);
+    ctx.lineTo(cx - w, rt - s * 10 + 5);
+    ctx.fill();
+  }
+  ctx.restore();
+  // Icing bands, and a window or two lit from inside (each on its own beat).
+  for (const f of [0.18, 0.62]) pipe(ctx, cx - w / 2, cx + w / 2 - 2, base - h * (1 - f), 2, 1.2, c(ICING), i * 31);
+  for (const f of [0.38, 0.8]) {
+    const on = Math.sin(time * 0.5 + i * 1.9 + f * 7) > -0.3;
+    ctx.fillStyle = on ? '#ffe6a0' : c(GINGER_D);
+    ctx.beginPath();
+    ctx.roundRect(cx - 3, base - h * (1 - f) - 5, 6, 9, [3, 3, 0, 0]);
+    ctx.fill();
+    if (on && k < 0.4) glow(ctx, cx, base - h * (1 - f), 12, '#ffd27a', 0.3);
+  }
+  // The pennant on its pole.
+  const top = rt - rh;
+  ctx.fillStyle = c('#ffffff');
+  ctx.fillRect(cx - 0.5, top - 12, 1.5, 12);
+  const fl = Math.sin(time * 3 + i) * 2;
+  ctx.fillStyle = c(Math.abs(i) % 2 ? '#9ae66a' : '#ff7aa8');
+  ctx.beginPath();
+  ctx.moveTo(cx + 1, top - 12);
+  ctx.quadraticCurveTo(cx + 7, top - 11 + fl, cx + 13, top - 9 + fl * 1.4);
+  ctx.quadraticCurveTo(cx + 7, top - 7 + fl, cx + 1, top - 6);
+  ctx.fill();
+}
+
+// The Gingerbread Ramparts, far back: the cone rising behind, and the castle's outer wall running
+// away along the ridge, its towers flying pennants.
+function drawFarRamparts(ctx, t, cam, width, y0, time) {
+  drawCandyCone(ctx, t, cam, width, y0, time);
   ctx.fillStyle = t.far;
   ctx.fillRect(0, snap(y0 + 24), width, 400);
-  repeat(cam.x, 0.2, 140, width, (i, x) => {
-    const c = pick(['#ff9ab8', '#ffd36b', '#9ae6a8', '#9fd8ff', '#c9a6ff'], hash(i));
-    const h = 50 + hash(i + 3) * 40;
-    ctx.fillStyle = mix(c, t.far, 0.45);
+  const wy = y0 - 6;
+  ctx.fillStyle = mix(GINGER, t.far, 0.55);
+  ctx.fillRect(0, snap(wy), width, 60);
+  repeat(cam.x, 0.2, 14, width, (i, x) => ctx.fillRect(snap(x), snap(wy - 6), 9, 7));
+  pipe(ctx, 0, width, wy + 3, 1.6, 1, mix(ICING, t.far, 0.4), cam.x * 0.2);
+  repeat(cam.x, 0.2, 230, width, (i, x) => gingerTower(ctx, t, x + 60 + hash(i) * 90, wy + 30, 26 + hash(i + 2) * 8, 70 + hash(i + 3) * 40, time, i, 0.5));
+}
+
+// Right behind the wall-walk: the parapet's merlons in iced gingerbread with gumdrops on some, a
+// tower now and then with its pennant, and candy-cane lamps between, their flames flickering.
+function drawMidRamparts(ctx, t, cam, width, y0, time) {
+  repeat(cam.x, 0.45, 420, width, (i, x) => gingerTower(ctx, t, x + 140 + hash(i + 7) * 120, y0 + 4, 40, 120 + hash(i + 1) * 30, time, i + 20, 0.18));
+  const top = y0 - 30;
+  ctx.fillStyle = GINGER_D;
+  ctx.fillRect(0, snap(top + 8), width, 40);
+  ctx.fillStyle = GINGER;
+  ctx.fillRect(0, snap(top + 10), width, 40);
+  repeat(cam.x, 0.45, 34, width, (i, x) => {
+    ctx.fillStyle = GINGER_D;
+    ctx.fillRect(snap(x), snap(top - 4), 22, 14);
+    ctx.fillStyle = GINGER;
+    ctx.fillRect(snap(x + 1), snap(top - 3), 19, 13);
+    ctx.fillStyle = GINGER_L;
+    ctx.fillRect(snap(x + 2), snap(top - 3), 4, 12);
+    ctx.strokeStyle = ICING;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.ellipse(x + 70, y0 + 30, 70, h, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.fillStyle = mix('#ffffff', t.far, 0.4);
-    for (let k = 0; k < 5; k++) ctx.fillRect(snap(x + 40 + k * 14), snap(y0 + 30 - h * 0.7 + (k % 2) * 8), 2, 2);
+    ctx.roundRect(x + 3, top - 1, 15, 9, 3);
+    ctx.stroke();
+    ctx.fillStyle = GINGER_D;
+    ctx.fillRect(snap(x + 28), snap(top + 14), 1.5, 12);
+    ctx.fillRect(snap(x + 11), snap(top + 30), 1.5, 12);
+    if (hash(i + 3) > 0.7) {
+      ctx.fillStyle = pick(['#ff7aa8', '#9ae66a', '#ffd36b', '#7fd8ff'], hash(i + 5));
+      ctx.beginPath();
+      ctx.ellipse(x + 10.5, top - 4, 5, 4.4, 0, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(snap(x + 8), snap(top - 7), 2, 1.5);
+    }
   });
+  pipe(ctx, 0, width, top + 12, 2.2, 1.4, ICING, cam.x * 0.45);
+  repeat(cam.x, 0.45, 260, width, (i, x) => {
+    const lx = x + 70;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(snap(lx - 1.5), snap(top - 40), 3, 40);
+    ctx.fillStyle = '#e0304e';
+    for (let y = top - 38; y < top; y += 7) ctx.fillRect(snap(lx - 1.5), snap(y), 3, 3);
+    ctx.fillStyle = '#ffe6a0';
+    ctx.beginPath();
+    ctx.ellipse(lx, top - 44, 3.4, 4.4 + Math.sin(time * 9 + i) * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    glow(ctx, lx, top - 44, 22, '#ffd27a', 0.35 + 0.08 * Math.sin(time * 6 + i));
+  });
+}
+
+// The caramel's surface: a band from y down, its waves running on world time and place.
+function caramelLake(ctx, width, y, depth, time, wx, amp, c, lit) {
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.moveTo(0, y + depth);
+  for (let x = 0; x <= width + 8; x += 8) ctx.lineTo(x, y + Math.sin(time * 1.2 + (x + wx) * 0.03) * amp + Math.sin(time * 0.7 + (x + wx) * 0.011) * amp);
+  ctx.lineTo(width + 8, y + depth);
+  ctx.fill();
+  ctx.strokeStyle = lit;
+  ctx.lineWidth = 1.4;
+  for (let r = 0; r < 3; r++) {
+    const yy = y + 8 + r * 12;
+    const off = (((wx * (1 + r * 0.2)) % 60) + 60) % 60;
+    ctx.beginPath();
+    for (let x = -off; x <= width; x += 60) {
+      const wv = Math.sin(time + (x + wx) * 0.02 + r) * 1.2;
+      ctx.moveTo(x + r * 20, yy + wv);
+      ctx.quadraticCurveTo(x + r * 20 + 12, yy - 2 + wv, x + r * 20 + 26, yy + wv);
+    }
+    ctx.stroke();
+  }
+}
+// An islet of rock candy: a toffee crust with a cluster of crystal spires on it, bobbing.
+function candyIsle(ctx, t, x, y, s, time, i, k) {
+  const c = (col) => mix(col, t.far, k);
+  const bob = Math.sin(time * 0.8 + i * 1.7) * 1.5;
+  ctx.fillStyle = c('#7a3a2a');
+  ctx.beginPath();
+  ctx.ellipse(x, y + bob, 30 * s, 8 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const cols = ['#ff9ad8', '#ffd36b', '#9fd8ff', '#ffb0c8'];
+  for (let n = 0; n < 4; n++) {
+    const px = x + (n - 1.5) * 12 * s + hash(i + n) * 4;
+    const h = (18 + hash(i + n + 3) * 26) * s * (n === 1 || n === 2 ? 1.3 : 0.8);
+    const w = 6 * s;
+    const col = cols[(((i + n) % 4) + 4) % 4];
+    ctx.fillStyle = c(col);
+    ctx.beginPath();
+    ctx.moveTo(px - w, y + bob);
+    ctx.lineTo(px - w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px, y + bob - h);
+    ctx.lineTo(px + w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px + w, y + bob);
+    ctx.fill();
+    ctx.fillStyle = c(mix(col, '#ffffff', 0.55));
+    ctx.beginPath();
+    ctx.moveTo(px - w * 0.8, y + bob - h * 0.75);
+    ctx.lineTo(px, y + bob - h);
+    ctx.lineTo(px, y + bob - 2);
+    ctx.lineTo(px - w * 0.7, y + bob - 2);
+    ctx.fill();
+  }
+}
+// The Crater, far back: its walls of dark rock closing in on both sides, veined with glowing
+// caramel, the sky glowing over the rim, and the caramel lake below with rock-candy islands
+// bobbing in it and bubbles rising and popping.
+function drawFarCrater(ctx, t, cam, width, y0, time) {
+  glow(ctx, width / 2, y0 - 120, width * 0.55, '#ffb06a', 0.3 + 0.05 * Math.sin(time * 2));
+  const rock = { ...t, far: shade(t.far, -14), farLit: shade(t.far, 8) };
+  for (const side of [-1, 1]) {
+    const sx = side < 0 ? -2 : width + 2;
+    const shift = cam.x * 0.08;
+    const p = new Path2D();
+    p.moveTo(sx, y0 + 60);
+    for (let k = 0; k <= 12; k++) {
+      const f = k / 12;
+      p.lineTo(sx - side * (width * 0.34 * Math.pow(1 - f, 0.8) + 30 + Math.sin(k * 2.1 + side * shift * 0.01) * 14), y0 + 40 - f * 260);
+    }
+    p.lineTo(sx, y0 - 230);
+    p.closePath();
+    litFill(ctx, rock, p, -side * 2, 1.5);
+    // Seams of glowing caramel running down it, pulsing on their own beat.
+    ctx.strokeStyle = '#ffb04a';
+    ctx.lineWidth = 1.6;
+    for (let k = 0; k < 3; k++) {
+      const x0 = sx - side * (40 + k * 60);
+      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(time * 1.5 + k + side);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 - 150 + k * 30);
+      ctx.lineTo(x0 - side * 10, y0 - 100 + k * 30);
+      ctx.lineTo(x0 + side * 4, y0 - 60 + k * 30);
+      ctx.lineTo(x0 - side * 8, y0 + 10);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  caramelLake(ctx, width, y0 - 46, 400, time, cam.x * 0.18, 1.2, '#c8742e', '#ffc06a');
+  repeat(cam.x, 0.2, 240, width, (i, x) => candyIsle(ctx, t, x + 80 + hash(i) * 80, y0 - 40, 0.7 + hash(i + 1) * 0.3, time, i, 0.35));
+  for (let k = 0; k < 7; k++) {
+    const u = (time * 0.35 + hash(k + 4)) % 1;
+    const bx = ((hash(k + 1) * width * 1.3 - cam.x * 0.2) % width + width) % width;
+    ctx.globalAlpha = u < 0.85 ? 0.8 : ((1 - u) / 0.15) * 0.8;
+    ctx.strokeStyle = '#ffd08a';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(bx, y0 - 30 - u * 14, 2 + u * 4, Math.PI, 0);
+    ctx.stroke();
+  }
+  for (let k = 0; k < 20; k++) {
+    const u = (time * 0.15 + hash(k)) % 1;
+    ctx.fillStyle = k % 2 ? '#ffd36b' : '#ff8a5a';
+    ctx.globalAlpha = Math.sin(u * Math.PI);
+    ctx.fillRect(((hash(k + 9) * width - cam.x * 0.1) % width + width) % width, y0 + 20 - u * 260, 2, 2);
+  }
+  ctx.globalAlpha = 1;
+}
+// Closer in: the caramel lake right behind the floor, bigger rock-candy isles drifting in it, and
+// steam curling off the hot surface.
+function drawMidCrater(ctx, t, cam, width, y0, time) {
+  caramelLake(ctx, width, y0 - 26, 60, time, cam.x * 0.45, 1.8, '#e0903a', '#ffd08a');
+  repeat(cam.x, 0.45, 300, width, (i, x) => {
+    if (hash(i + 2) < 0.75) candyIsle(ctx, t, x + 90 + hash(i) * 120, y0 - 22, 1.1 + hash(i + 4) * 0.4, time, i + 30, 0);
+  });
+  for (let k = 0; k < 6; k++) {
+    const u = (time * 0.12 + hash(k + 20)) % 1;
+    const sx = ((hash(k + 21) * width * 1.4 - cam.x * 0.45) % width + width) % width;
+    ctx.globalAlpha = 0.25 * Math.sin(u * Math.PI);
+    ctx.fillStyle = '#fff0e0';
+    ctx.beginPath();
+    ctx.arc(sx + Math.sin(u * 5 + k) * 8, y0 - 22 - u * 70, 6 + u * 14, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 // Inside the mine and the kitchen: licorice beams and rock-candy crystals glowing; in the forge, the
@@ -2889,6 +3148,12 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
       break;
     case 'candy':
       drawMidCandy(ctx, t, cam, width, y0, time);
+      break;
+    case 'ramparts':
+      drawMidRamparts(ctx, t, cam, width, y0, time);
+      break;
+    case 'crater':
+      drawMidCrater(ctx, t, cam, width, y0, time);
       break;
     case 'theatre':
       drawMidTheatre(ctx, t, cam, width, y0, time);
