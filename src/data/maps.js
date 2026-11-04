@@ -1150,7 +1150,7 @@ Object.assign(MAPS, {
     ],
     // The chandelier's chain: climb it to the ledge in the dome (the room's secret).
     ropes: [{ x: 750, top: 170, bottom: G }],
-    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN },
+    look: { sky: ['#2a1e4e', '#5a3a86', '#c48ad0'], far: '#40306a', mid: '#6a4a96', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'manorball' },
     chandelier: { x: 750 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor2', toPortal: 'east' },
@@ -1180,7 +1180,7 @@ Object.assign(MAPS, {
         { name: 'The Rare Books', color: '#8fd8e8', from: 450, mobs: [] },
       ],
     }),
-    look: { sky: ['#20183a', '#3e2e5e', '#8a6aa0'], far: '#3a2a4a', mid: '#6a4a5a', midTrim: '#ffd36b', ...MANOR_IN },
+    look: { sky: ['#20183a', '#3e2e5e', '#8a6aa0'], far: '#3a2a4a', mid: '#6a4a5a', midTrim: '#ffd36b', ...MANOR_IN, skyline: 'library' },
     task: { kind: 'light', object: 'book', label: 'Catch the lost books' },
     storms: true,
     portals: [
@@ -1208,7 +1208,7 @@ Object.assign(MAPS, {
     width: 3600, height: 420, groundY: G,
     platforms: [{ x: 640, y: 320, w: 80 }, { x: 1460, y: 320, w: 80 }, { x: 2360, y: 320, w: 80 }, { x: 3200, y: 300, w: 90 }, { x: 3330, y: 230, w: 90 }],
     ropes: [],
-    look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN },
+    look: { sky: ['#1e1838', '#3e2e60', '#7a5aa0'], far: '#36284e', mid: '#5a3e6a', midTrim: '#ffb3cf', ...MANOR_IN, skyline: 'hallway' },
     task: { kind: 'light', object: 'lever', label: 'Pull the door levers' },
     chase: { start: 300, from: -40, to: 3000, speed: 80, speedUp: 4, top: 128, damage: 120, plates: 3.6 },
     doors: [{ x: 1120, lever: 0 }, { x: 2040, lever: 1 }, { x: 2860, lever: 2 }],
@@ -1486,7 +1486,7 @@ Object.assign(MAPS, {
         { name: 'The Prize Booths', color: '#7fd8ff', from: 1800, mobs: [] },
       ],
     }),
-    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT },
+    look: { sky: ['#2a2a6a', '#7a4aa8', '#ff9ab8'], far: '#4a3a8a', mid: '#6a4aa8', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'midway' },
     task: { kind: 'light', object: 'windbox', label: 'Wind the music boxes' },
     portals: [
       { id: 'out', x: 50, y: 600, to: 'carnival_gate', toPortal: 'door', label: 'Leave' },
@@ -1550,7 +1550,7 @@ Object.assign(MAPS, {
       { x: 1860, y: 300, w: 200 }, { x: 2280, y: 300, w: 180 }, { x: 1180, y: 220, w: 120 },
     ],
     ropes: [{ x: 1240, top: 220, bottom: G }],
-    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT },
+    look: { sky: ['#1e2a5a', '#5a3a8a', '#ff8a8a'], far: '#3a3070', mid: '#5a4a90', midTrim: '#ff7aa8', ...FAIR_OUT, skyline: 'coaster' },
     coaster: { every: 9, speed: 520, damage: 180 },
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival2', toPortal: 'east' },
@@ -1612,7 +1612,7 @@ Object.assign(MAPS, {
     platforms: [{ x: 240, y: 300, w: 90 }, { x: 560, y: 300, w: 90 }, { x: 1050, y: 300, w: 90 }, { x: 1370, y: 300, w: 90 }, { x: 800, y: 220, w: 100 }],
     // The wheel's spoke ladder, up to a car at its hub (the room's secret).
     ropes: [{ x: 850, top: 220, bottom: G }],
-    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT },
+    look: { sky: ['#1a1a4a', '#4a2a7a', '#c86aa8'], far: '#2e2a66', mid: '#4a3a86', midTrim: '#ffd36b', ...FAIR_OUT, skyline: 'ferris' },
     portals: [
       { id: 'west', x: 40, y: G, to: 'carnival5', toPortal: 'east' },
       { id: 'out', x: 1660, y: G, to: 'carnival_gate', toPortal: 'start', label: 'Exit', sealed: true },
