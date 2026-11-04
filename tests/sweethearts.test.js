@@ -195,3 +195,48 @@ test('your sweetheart can come adventuring in your party, in their own job and l
   assert.equal(bot.char.appearance.hairStyle, SWEETHEARTS.lark.look.hairStyle);
   assert.equal(bot.char.job, AT_HOME.lark.job);
 });
+
+// ---------- Going home at night (world/goinghome.js) ----------
+import { ROOM_SPOT } from '../src/world/goinghome.js';
+import { updateWorld } from '../src/world/world.js';
+import { greetingFor } from '../src/ui/sweetheart.js';
+
+test('the Sweethearts are home in their rooms at night, walking in through their own door, and out by day', () => {
+  const w = player();
+  loadMap(w, 'sprout', 'start');
+  const inTown = (id, map) => MAPS[map].npcs.some((n) => n.id === id);
+  const inRoom = (id) => MAPS[`swh_${id}`].npcs.find((n) => n.id === id);
+  const tick = (s) => { for (let i = 0; i < s * 60; i++) updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false }); };
+  w.forceNight = 0;
+  tick(1.2);
+  assert.ok(inTown('poppy', 'sprout') && !inRoom('poppy'), 'in town by day');
+  // Dusk while you're beside her: she walks to her door and goes in, fading through it.
+  w.body.x = 1000;
+  w.forceNight = 1;
+  tick(1.2);
+  const n = MAPS.sprout.npcs.find((q) => q.id === 'poppy');
+  assert.ok(n?.going, 'on her way home');
+  tick(6);
+  assert.ok(!inTown('poppy', 'sprout'), 'gone in');
+  assert.equal(inRoom('poppy')?.x, ROOM_SPOT.poppy, 'at her spot in the kitchen');
+  // The others, off-screen, are simply home too.
+  for (const id of ['lark', 'rowan', 'yuzu', 'celeste', 'marlowe']) assert.ok(inRoom(id), id);
+  // Knock late and she has her own words for it.
+  loadMap(w, 'swh_poppy', 'door');
+  assert.ok(w.map.npcs.some((q) => q.id === 'poppy'));
+  assert.ok(SWEETHEARTS.poppy.late.includes(greetingFor(w, 'poppy')));
+  // Dawn while you're in her kitchen: she heads out of the door, and is back at her spot in town.
+  w.forceNight = 0;
+  tick(1.2);
+  tick(8);
+  assert.ok(!inRoom('poppy') && inTown('poppy', 'sprout'));
+  assert.equal(MAPS.sprout.npcs.find((q) => q.id === 'poppy').x, SWEETHEARTS.poppy.x);
+  // Whoever lives with you isn't in town or at their old house.
+  w.char.livingWith = 'lark';
+  w.forceNight = 1;
+  tick(1.2);
+  assert.ok(!inRoom('lark'));
+  w.char.livingWith = null;
+  w.forceNight = 0;
+  loadMap(w, 'sprout', 'start');
+});

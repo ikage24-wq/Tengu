@@ -24,6 +24,13 @@ Celeste's starry bedroom with the big telescope, a planet mobile and star charts
 cabin with the wheel, sea charts, ships in bottles, a hammock and a treasure chest. Rooms are just
 yours (no one wanders in).
 
+**They go home at night** (the player's pick): from dusk each one is in their room, by their own
+thing (Poppy at her cake table, Lark at her desk, Rowan by the fire, Yuzu at the tea table, Celeste
+by her bed, Marlowe by his hammock), and from dawn back at their spot in town. Be there when the
+hour turns and they walk to their door and fade through it (or come out and stroll to their spot).
+Knock late and they have words of their own for it, warmer the closer you are. Whoever lives with
+you stays on your island, and a date stays at your side.
+
 Each has their own outfit (never sold), idle habits with props (Poppy kneads and tastes, Lark
 writes and hides in her scarf, Rowan polishes his sword and sniffs daisies, Yuzu pounces and chases
 her tail, Celeste dozes with z's and counts stars, Marlowe uses his spyglass and ties knots), their

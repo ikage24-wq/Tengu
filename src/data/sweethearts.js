@@ -7,6 +7,7 @@
 // gentle, and you can make up later.
 //
 //   map, x      where they stand in town (their idle bits: render/town.js)
+//   late        what they say when you visit them at home at night
 //   house       where their house stands on that map (render/sweethouses.js); its door leads to
 //               their room inside (MAPS.swh_<id>)
 //   loves       gifts that mean the most (+80); likes (+45); dislikes (-20); anything else +20
@@ -26,6 +27,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "That was the best day I've had in ages. My cheeks hurt from smiling!", good: "That was so nice. Same time tomorrow? I'm joking. Unless?", okay: 'Hee, that was a little chaotic. I liked it anyway!' },
     id: 'poppy', name: 'Poppy', title: 'Sunny Baker', map: 'sprout', x: 945, color: '#ff8fae',
     house: 850,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "Oh! Hello! I'm setting the dough for the morning. Mind the flour, it gets everywhere.",
+      "Came by this late? Sit, sit. There's a warm bun on the table with your name on it.",
+      "I hoped you'd knock. I baked one heart-shaped tonight. Don't tell anyone. It's yours.",
+    ],
     outfit: 'swbaker', date: 'cook',
     look: { hairStyle: 'ribbonbuns', hairColor: '#ffc07a', hairTip: '#ff9a6a', skinTone: '#ffe2cc', eyeColor: '#d07a2a', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'grin' },
     about: "Sprout's baker, up before the sun. Hugs first, asks later. Secretly afraid her bakes aren't good enough.",
@@ -60,6 +67,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "I'm going to write about today. All of it. Every second.", good: 'That was... really lovely. Thank you for asking me.', okay: 'It was nice just being out with you, even like that.' },
     id: 'lark', name: 'Lark', title: 'Lighthouse Poet', map: 'lagoon', x: 1954, color: '#8fc8c8',
     house: 2178,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "...You found my house. Um. Please don't read the papers on the desk.",
+      "The beam goes past the window every few seconds. I count them when I can't sleep. Forty so far.",
+      "I wrote something tonight. It's about you. You can't read it. ...Maybe later.",
+    ],
     outfit: 'swpoet', date: 'stars',
     look: { hairStyle: 'swoop', hairColor: '#4a5a8a', hairTip: '#7f9ad0', skinTone: '#fff0e6', eyeColor: '#5a7ab8', eyeStyle: 'droopy', face: 'shy' },
     about: 'Helps Granny Kelp keep the lighthouse and writes poems nobody is allowed to read. Says more on paper than out loud.',
@@ -94,6 +107,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "Best. Day. Ever. I'm going to tell Brann about it until he begs me to stop.", good: "That was grand! You're good company, you know that?", okay: "Ha, we'll get it right next time. I had fun anyway!" },
     id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 2310, color: '#8fb8e8',
     house: 2410,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "Ah! A visitor! Mind your head. Well, you don't have to. I do.",
+      "Sit by the fire. I'm polishing. The sword likes the company. So do I.",
+      "The fire's warmer when you're here. That's not how fires work. I checked.",
+    ],
     outfit: 'swknight', date: 'ride',
     look: { hairStyle: 'messycrop', hairColor: '#a8603a', skinTone: '#e7b48f', eyeColor: '#3f9a5a', eyeStyle: 'round', browStyle: 'thick', face: 'smile' },
     about: "Ember Crag's biggest knight and its softest heart. Guards the arena, grows daisies in his helmet, burns water.",
@@ -128,6 +147,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "Okay that was SO fun. You're not allowed to be this fun. It's my job!", good: 'Hee, not bad, human. Not bad at all. Again soon?', okay: "Pfft, you were hopeless. ...I had fun though. Don't tell anyone." },
     id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 440, color: '#ff7a4a',
     house: 335,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "You came to MY house? At night? Bold. I like it. Sit on a cushion. Not that one, that's a trap.",
+      "Want tea? It's in a teacup I definitely bought. From somewhere.",
+      "I left the lanterns on for you. Spirits do that. ...Fine, I do that.",
+    ],
     outfit: 'swfox', date: 'dance',
     look: { hairStyle: 'feathertips', hairColor: '#ff9a4f', hairTip: '#fff4e0', skinTone: '#fff0e6', eyeColor: '#e0602a', eyeStyle: 'cat', earStyle: 'fox', earTip: '#fff4e0', tail: 'fox', tailTip: '#fff4e0', face: 'playful' },
     about: 'A young fox spirit who lives in the Moon Tree and borrows things. Teases everyone; goes pink when teased back.',
@@ -162,6 +187,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "I didn't fall asleep once. That's how much I liked it.", good: 'Mm... that was nice. The stars seemed closer.', okay: 'That was sweet. Even the sleepy parts. Especially those.' },
     id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1800, color: '#4a4aa8',
     house: 1690,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "Mm... oh, it's you. Come look, Saturn's up... I think. Or I dreamed it.",
+      "Stay a while. The stars come out properly after midnight. So do I.",
+      "I named a star after you tonight. The bright one. Don't check the charts.",
+    ],
     outfit: 'swstar', date: 'stars',
     look: { hairStyle: 'cascade', hairColor: '#c9b6ff', hairTip: '#fff3c4', skinTone: '#fff0e6', eyeColor: '#7a52cc', eyeStyle: 'star', face: 'sleepy' },
     about: 'Charts the stars all night and naps all day, usually somewhere odd. Knows every constellation; forgets lunch.',
@@ -196,6 +227,12 @@ export const SWEETHEARTS = {
     dateLines: { great: "Now THAT'S what I call an adventure! Best crew ever!", good: 'Not bad, first mate. Not bad at all.', okay: 'Heh, rough waters today. Still the best company on the island.' },
     id: 'marlowe', name: 'Marlowe', title: 'Cheeky Young Sailor', map: 'harbor', x: 520, color: '#2f5fb8',
     house: 610,
+    // At home late (world/goinghome.js): a friend, close, sweethearts.
+    late: [
+      "Ahoy! Welcome aboard. Well, below decks. Well, my house. Wipe your boots.",
+      "Doing knots. Night watch, see? A sailor never sleeps. Much.",
+      "Stay till the lamp goes out? I'll show you the map of where we're sailing someday.",
+    ],
     outfit: 'swsailor', date: 'fish',
     look: { hairStyle: 'surfer', hairColor: '#3fb8b0', hairTip: '#bff0e8', skinTone: '#d9a07a', eyeColor: '#2f6ab8', eyeStyle: 'round', face: 'smug' },
     about: "Captain Rook's ward, fixing up an old boat on the docks. Boasts about the sea; has never sailed past the lighthouse.",

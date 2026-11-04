@@ -40,6 +40,7 @@ import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
+import { settleSweethearts, tickGoingHome } from './goinghome.js';
 import { tickDerby } from './derby.js';
 import { calmKill, tickCalm, isCalm, soothes, CALM_EXP } from './calm.js';
 import { tickHabits, napping } from './habits.js';
@@ -123,6 +124,8 @@ export function loadMap(world, mapId, portalId) {
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
+  // The Sweethearts are in town by day and at home in their rooms at night (world/goinghome.js).
+  settleSweethearts(world);
   world.char.mapId = map.id;
   world.char.portal = portal.id;
   world.body = createBody(portal.x, portal.y);
@@ -428,7 +431,7 @@ function interact(world) {
     world.fx.push({ kind: 'mountpoof', on: true, mount: find.mount, x: find.x, y: find.y, t: 0, dur: 0.45 });
     return true;
   }
-  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id);
+  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going);
   if (npc) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
@@ -465,7 +468,7 @@ function interact(world) {
 
 export function nearbyNpc(world) {
   const b = world.body;
-  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id) ?? null;
+  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going) ?? null;
 }
 
 // The hit counter: every hit you land within this many seconds of the last adds one; a pause
@@ -647,6 +650,7 @@ export function updateWorld(world, dt, input) {
   // The map's moving parts run on the world's clock; its light follows the real one.
   world.map.clock = world.now;
   tickDaytime(world, dt);
+  tickGoingHome(world, dt);
   tickCalm(world);
   // On the Sea Biscuit, the trip's clock (world/voyage.js).
   tickVoyage(world, dt);

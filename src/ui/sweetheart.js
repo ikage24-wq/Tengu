@@ -47,7 +47,9 @@ export function greetingFor(world, id) {
   const s = SWEETHEARTS[id];
   const char = world.char;
   const tier = livesWith(char, id) ? 5 : isPartner(char, id) ? 4 : Math.min(3, Math.floor(heartLevel(char, id) / 3));
-  const lines = s.talk[tier];
+  // Visiting them at home at night (world/goinghome.js), they've their own words for it.
+  const late = world.map.id === `swh_${id}` && s.late;
+  const lines = late ? [s.late[isPartner(char, id) ? 2 : heartLevel(char, id) >= 5 ? 1 : 0]] : s.talk[tier];
   return lines[(heartsOf(char, id).pts + today().length) % lines.length].replace(/\{name\}/g, char.name);
 }
 
