@@ -225,6 +225,10 @@ recipe({ id: 'craft_mount_kettle', cat: 'tool', tier: 2, level: 12, needs: { cop
 // Furniture (data/furniture.js), in the Home tab.
 for (const f of FURNITURE) recipe({ id: `craft_${f.id}`, cat: 'home', tier: f.level >= 24 ? 3 : f.level >= 12 ? 2 : 1, level: f.level, needs: f.needs, makes: f.id, stage: f.stage });
 
+// The Sweethearts' special gifts (data/sweethearts.js), in the Gifts tab.
+recipe({ id: 'craft_promise_bouquet', cat: 'gift', tier: 1, level: 4, needs: { cherry: 3, moonpetal: 2, clover: 3, cotton: 1 }, makes: 'promise_bouquet' });
+recipe({ id: 'craft_seashell_ring', cat: 'gift', tier: 2, level: 14, needs: { silver_ore: 2, rose_quartz: 1, shell: 3 }, makes: 'seashell_ring' });
+
 export const CATEGORIES = [
   { key: 'gear', name: 'Gear' },
   { key: 'accessory', name: 'Trinkets' },
@@ -232,6 +236,7 @@ export const CATEGORIES = [
   { key: 'potion', name: 'Tonics' },
   { key: 'stone', name: 'Stones' },
   { key: 'home', name: 'Home' },
+  { key: 'gift', name: 'Gifts' },
 ];
 
 // ---------- The items it makes ----------

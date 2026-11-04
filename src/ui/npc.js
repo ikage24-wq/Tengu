@@ -19,6 +19,8 @@ import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
 import { boardPage } from './partyboard.js';
 import { say } from './chat.js';
+import { sweetheartChoices, drawSweetheartHeader, giftPage, breakupPage, greetingFor } from './sweetheart.js';
+import { datePage } from './dates.js';
 import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
 import { withZoom } from '../render/pixel.js';
@@ -224,6 +226,8 @@ export function npcWindow(ui, state, world) {
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: { ...char.appearance } }) });
+  // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).
+  if (npc.role === 'sweetheart') choices.push(...sweetheartChoices(world, state, npc));
   // Shelly builds your island up (world/home.js).
   if (npc.role === 'builder' && world.map.guestOf) {
     choices.push({ label: 'Lovely island!', sub: `This is ${world.map.guestOf.name}'s. I built it all!`, icon: 'heart', run: () => say(world, 'shelly', `Isn't it? ${world.map.guestOf.name} brings me the best bits. Come back any time!`) });
@@ -285,7 +289,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -316,6 +320,22 @@ export function npcWindow(ui, state, world) {
   if (dlg.build) {
     dlg.talking = false;
     buildPage(ui, state, world, area);
+    return;
+  }
+  if (npc.role === 'sweetheart') drawSweetheartHeader(ui, world, npc, area);
+  if (dlg.gift) {
+    dlg.talking = false;
+    giftPage(ui, state, world, npc, area);
+    return;
+  }
+  if (dlg.breakup) {
+    dlg.talking = false;
+    breakupPage(ui, state, world, npc, area);
+    return;
+  }
+  if (dlg.date) {
+    dlg.talking = false;
+    datePage(ui, state, world, npc, area);
     return;
   }
 
@@ -362,9 +382,12 @@ export function npcWindow(ui, state, world) {
 
   // The greeting, typed out, with a bouncing sparkle when it's done; then the choices in two
   // columns, each with its number key.
-  const chars = typed(ui, dlg, `hi:${dlg.id}`, world, area, npc.greeting);
-  const end = wrap(ctx, npc.greeting, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });
-  if (chars >= npc.greeting.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);
+  // (A Sweetheart says something for how close you are, or what they just said to your chat.)
+  dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
+  const hello = dlg.words ?? npc.greeting;
+  const chars = typed(ui, dlg, `hi:${dlg.id}:${hello.length}`, world, area, hello);
+  const end = wrap(ctx, hello, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });
+  if (chars >= hello.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);
   const colW = (tw - 6) / 2;
   choices.forEach((c, i) => {
     const bx = tx + (i % 2) * (colW + 6);

@@ -9,6 +9,11 @@ import { SWEETHEARTS, HEART, MAX_HEARTS, BOUQUET_AT, GIFT_PTS, TALK_PTS, BOUQUET
 import { ITEMS } from '../data/items.js';
 import { removeItem } from '../core/inventory.js';
 import { today } from '../core/quests.js';
+import { SCENES } from '../data/story.js';
+
+// Their heart scenes join the game's cutscenes as sw_<id>_<key> (world/story.js playScene).
+export const sceneId = (id, key) => `sw_${id}_${key}`;
+for (const s of Object.values(SWEETHEARTS)) for (const [key, lines] of Object.entries(s.scenes)) SCENES[sceneId(s.id, key)] = lines;
 
 export const heartsOf = (char, id) => ((char.hearts ??= {})[id] ??= { pts: 0, talked: null, gifted: null, seen: {}, romance: false, dates: 0 });
 export const heartLevel = (char, id) => Math.min(MAX_HEARTS, Math.floor((char.hearts?.[id]?.pts ?? 0) / HEART));
@@ -112,6 +117,8 @@ export function giveGift(world, id, itemId, day = today()) {
   }
   h.gifted = day;
   const kind = giftKind(id, itemId);
+  // (You remember how they took it: the gift page shows it next time.)
+  (h.known ??= {})[itemId] = kind;
   const gained = GIFT_PTS[kind];
   addPts(char, id, gained);
   const line = pick(s.gift[kind], h.pts / 7 + itemId.length);

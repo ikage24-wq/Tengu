@@ -45,6 +45,31 @@ function drawTogether(ctx, f, x, y, p) {
 }
 
 export function drawLifeFx(ctx, f, x, y, p) {
+  // A Sweetheart pleased with you: little hearts float up and fade (ui/sweetheart.js).
+  if (f.kind === 'hearts') {
+    for (let i = 0; i < (f.n ?? 3); i++) {
+      const k = Math.min(1, Math.max(0, p * 1.3 - i * 0.12));
+      if (k <= 0 || k >= 1) continue;
+      const hx = x + (i - ((f.n ?? 3) - 1) / 2) * 9 + Math.sin(k * 6 + i) * 3;
+      const hy = y - k * 34;
+      const r = 3.4 * (k < 0.2 ? k / 0.2 : 1);
+      ctx.save();
+      ctx.globalAlpha = 1 - Math.max(0, (k - 0.6) / 0.4);
+      ctx.fillStyle = i % 2 ? '#ffb3cf' : '#ff6b9a';
+      ctx.strokeStyle = '#c84a7a';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(hx, hy + r * 0.9);
+      ctx.bezierCurveTo(hx - r * 1.2, hy, hx - r * 0.9, hy - r * 0.9, hx, hy - r * 0.25);
+      ctx.bezierCurveTo(hx + r * 0.9, hy - r * 0.9, hx + r * 1.2, hy, hx, hy + r * 0.9);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(hx - r * 0.5, hy - r * 0.3, r * 0.35, r * 0.35);
+      ctx.restore();
+    }
+    return true;
+  }
   // Getting on or off a mount: a ring of pastel puffs and sparkles (world/mount.js).
   if (f.kind === 'mountpoof') {
     fxSprite(ctx, 'celmountpoof', x, y + 2, { p, scale: 0.42 });
