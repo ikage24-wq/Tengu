@@ -3,6 +3,8 @@
 // an NPC can also carry `gear` (same shape as the player's equipment) to show it off. In towns,
 // `building` is the stall or hall drawn behind them (see render/town.js) and `sign` its name.
 
+import { SWEETHEARTS } from './sweethearts.js';
+import { COSTUME_LOOKS } from './outfits-costume.js';
 import { ITEMS, GEAR_FAMILIES, JOB_SLOTS, jobGearId } from './items.js';
 import { JOBS } from './jobs.js';
 
@@ -254,4 +256,15 @@ export function shopStock(npc, char) {
   const rank = (d) => (d.type !== 'equip' ? 0 : d.slot === 'weapon' ? 1 : d.slot === 'earring' ? 3 : 2);
   const order = new Map(out.map((id, i) => [id, i]));
   return out.sort((a, b) => rank(ITEMS[a]) - rank(ITEMS[b]) || (rank(ITEMS[a]) ? ITEMS[a].reqLevel - ITEMS[b].reqLevel : 0) || order.get(a) - order.get(b));
+}
+
+// The six Sweethearts (data/sweethearts.js): townsfolk you can befriend or date, each in their own
+// outfit (data/outfits-costume.js, never sold).
+for (const h of Object.values(SWEETHEARTS)) {
+  const covers = ['top', ...(COSTUME_LOOKS.find((c) => c.key === h.outfit)?.covers ?? [])];
+  NPCS[h.id] = {
+    id: h.id, name: h.name, title: h.title, role: 'sweetheart', look: h.look,
+    gear: Object.fromEntries(covers.map((slot) => [slot, { id: `look_costume_${h.outfit}_${slot}`, variant: null }])),
+    greeting: h.talk[0][0],
+  };
 }

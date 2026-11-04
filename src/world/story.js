@@ -8,6 +8,7 @@
 //     her own, each shown on the ground (or as a beam) a moment before it lands, so it can be read
 //     and dodged: step out, jump, get up on a ledge.
 
+import { groundAt } from './physics.js';
 import { QUESTS } from '../data/quests.js';
 import { SCENES, STORY_LOCKS, TRIALS } from '../data/story.js';
 import { MOBS } from '../data/mobs.js';
@@ -121,7 +122,7 @@ export function onStoryMap(world) {
   const t = TRIALS[world.map.trial];
   if (!t) return;
   if (questState(world.char, t.quest) !== 'active') return;
-  const m = spawnMob(world.map, { mob: t.boss, x: t.x, y: world.map.groundY });
+  const m = spawnMob(world.map, { mob: t.boss, x: t.x, y: groundAt(world.map, t.x) });
   m.trialOf = world.map.trial;
   m.aggroUntil = Infinity;
   world.mobs.push(m);
@@ -195,7 +196,8 @@ function queenTurn(world, m, style, dt) {
     if (style.adds.mob) {
       for (let i = 0; i < style.adds.n; i++) {
         const x = Math.max(60, Math.min(world.map.width - 60, m.x + (i % 2 ? 1 : -1) * (160 + i * 40)));
-        const a = spawnMob(world.map, { mob: style.adds.mob, x, y: world.map.groundY });
+        // (On the ground where it lands: a field queen's map has cliffs and rises, not one floor.)
+        const a = spawnMob(world.map, { mob: style.adds.mob, x, y: groundAt(world.map, x) });
         a.aggroUntil = Infinity;
         a.add = true;
         world.mobs.push(a);

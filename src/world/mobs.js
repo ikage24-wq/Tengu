@@ -38,19 +38,21 @@ export function spawnMob(map, spawn) {
   const x1 = def.fly ? Math.max(def.w, spawn.x - 180) : surface.x1 + def.w / 2;
   const x2 = def.fly ? Math.min(map.width - def.w, spawn.x + 180) : surface.x2 - def.w / 2;
   const x = Math.max(x1, Math.min(x2, spawn.x));
+  // A flyer hovers over its spot, never below the ground there.
+  const hover = def.fly ? Math.min(spawn.y - HOVER, Math.min(groundAt(map, x), groundAt(map, x - def.w / 2), groundAt(map, x + def.w / 2)) - FLY_CLEAR) : 0;
   return {
     uid: nextUid++,
     def,
     spawn,
     x,
-    y: def.fly ? spawn.y - HOVER : surface.yAt(x),
-    baseY: def.fly ? spawn.y - HOVER : surface.yAt(x),
+    y: def.fly ? hover : surface.yAt(x),
+    baseY: def.fly ? hover : surface.yAt(x),
     // Walkers follow their surface's height (up and down slopes).
     yAt: def.fly ? null : surface.yAt,
     // Flyers keep clear of the solid ground under them (`floorAt`) and drift back to their own
     // hover height (`homeY`) once a chase is over.
     floorAt: def.fly ? (fx) => groundAt(map, fx) : null,
-    homeY: def.fly ? spawn.y - HOVER : null,
+    homeY: def.fly ? hover : null,
     x1, x2,
     hp: def.hp,
     dir: Math.random() < 0.5 ? -1 : 1,
@@ -230,8 +232,26 @@ function keepAloft(m, x0, dt) {
   if (!m.floorAt) return;
   const floor = flyFloor(m, m.x);
   if (m.baseY <= floor) return;
-  if (m.baseY - floor > 10 && m.x !== x0 && m.baseY <= flyFloor(m, x0) + 0.5) m.x = x0;
-  m.baseY -= Math.min(m.baseY - floor, RISE * dt);
+  const deep = m.baseY - floor;
+  // Blocked by rising ground: it holds back and climbs over, smoothly.
+  if (deep > 10 && m.x !== x0 && m.baseY <= flyFloor(m, x0) + 0.5) {
+    m.x = x0;
+    m.baseY -= Math.min(deep, RISE * dt);
+    return;
+  }
+  // (Pushed or pulled into the rock, with nowhere to back out to: it rises out quickly.)
+  m.baseY -= Math.min(deep, Math.max(RISE, deep * 6) * dt);
+}
+
+// However a flyer was moved (yanked, launched, wandered), it never ends up inside the rock: a
+// last guard after every move.
+function unburyFlyer(m) {
+  if (!m.def.fly || !m.floorAt) return;
+  const floor = flyFloor(m, m.x);
+  if (m.baseY > floor + 6) {
+    m.baseY = floor;
+    m.y = m.baseY + Math.sin(m.phase * 2.2) * 6;
+  }
 }
 
 // Moves one monster. `player` is { x, y } so aggro'd monsters can chase.
@@ -244,10 +264,14 @@ export function updateMob(m, player, dt, now) {
   }
   m.flash = Math.max(0, m.flash - dt);
   m.age += dt;
-  if (tickYank(m, dt) || tickAir(m, dt)) return null;
+  if (tickYank(m, dt) || tickAir(m, dt)) {
+    unburyFlyer(m);
+    return null;
+  }
   // Frozen solid: no moving, no animating, no winding up, until the ice cracks.
   if (m.frozenUntil > now) {
     m.stagger = 0;
+    unburyFlyer(m);
     return null;
   }
   m.phase += dt;
@@ -308,12 +332,16 @@ export function updateMob(m, player, dt, now) {
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }
   if (m.x >= m.x2) { m.x = m.x2; m.dir = -1; }
   if (m.def.fly) {
-    if (!chasing && m.homeY != null && m.baseY !== m.homeY) {
-      const back = m.homeY - m.baseY;
+    // Drifting back to its hover height, never down below the ground it's over (its home may be
+    // on a lower floor than where it has wandered).
+    const home = m.homeY != null && m.floorAt ? Math.min(m.homeY, flyFloor(m, m.x)) : m.homeY;
+    if (!chasing && home != null && m.baseY !== home) {
+      const back = home - m.baseY;
       m.baseY += Math.sign(back) * Math.min(Math.abs(back), HOME_DRIFT * dt);
     }
     keepAloft(m, x0, dt);
     m.y = m.baseY + Math.sin(m.phase * 2.2) * 6;
+    unburyFlyer(m);
   }
   else if (m.yAt) m.y = m.yAt(m.x);
   return event;

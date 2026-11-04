@@ -514,17 +514,18 @@ test('a queen back for a rematch: players gather, dodge and take her moves, and 
   world.mobs.push(queen);
   let hurt = 0;
   const seen = new Set();
+  const came = new Set();
   for (let t = 0; t < 25; t += 1 / 30) {
     updateWorld(world, 1 / 30, NONE);
     updateBots(bots, world, 1 / 30);
+    for (const b of bots.list) if (b.raid) came.add(b.id);
     for (const n of world.numbers) if (n.small && n.color === '#ff8fa8' && !seen.has(n)) {
       seen.add(n);
       hurt++;
     }
   }
   // (Counting everyone who came: some may have fallen to her by now.)
-  const raid = bots.list.filter((b) => b.raid);
-  assert.ok(raid.length >= 3, `players gathered (${raid.length})`);
+  assert.ok(came.size >= 3, `players gathered (${came.size})`);
   assert.ok(lines.some((l) => /Players are gathering/.test(l)));
   assert.ok(hurt > 0, 'her moves (or her touch) caught some of them');
   // Down she goes: everyone cheers.
@@ -774,8 +775,14 @@ test('a lucky drop: the players around react', async () => {
   const { makeEquip } = await import('../src/core/items.js');
   const { world, bots, lines } = eventTown(422);
   luckyDrop(bots, world, makeEquip('sword_10', { rarity: 3 }));
-  townStep(world, bots, 6);
-  assert.ok(lines.some((l) => /gz|lucky|farmed|crazy|fair|legendary/.test(l)), 'they react');
+  // (The town's chat log is paced, so in a busy square a reaction may only be said over their
+  // heads: either counts.)
+  const said = new Set();
+  for (let t = 0; t < 8; t += 0.5) {
+    townStep(world, bots, 0.5);
+    for (const b of bots.list) if (b.bubble?.text) said.add(b.bubble.text);
+  }
+  assert.ok([...lines, ...said].some((l) => /gz|lucky|farmed|crazy|fair|legendary/.test(l)), 'they react');
 });
 
 test('a dungeon group looking for your role takes you in', async () => {

@@ -11,6 +11,7 @@
 //   job        towns that are a job's home, where its instructor lives
 //   plaza      in towns, where the fountain stands
 
+import { SWEETHEARTS } from './sweethearts.js';
 import { climb, lay, settleSpots } from './climb.js';
 import { SPOTS } from './fishing.js';
 import { SPOT } from './gathering.js';
@@ -2681,3 +2682,6 @@ const INTERIORS = {
   theatre5: { islands: 'catwalk', material: 'parquet', ceiling: 'beams', metal: '#6a6080', props: ['crate', 'rack', 'poster', 'lantern'], ledgeProp: null, edges: null },
 };
 for (const [id, look] of Object.entries(INTERIORS)) MAPS[id].look = { ...MAPS[id].look, ...look };
+
+// The Sweethearts live in their towns (data/sweethearts.js): each stands at their own spot.
+for (const h of Object.values(SWEETHEARTS)) MAPS[h.map].npcs.push({ id: h.id, x: h.x });
