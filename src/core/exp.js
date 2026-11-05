@@ -3,9 +3,10 @@
 // Each level's EXP is what a player earns in its share of those hours at about 10 kills a minute
 // on the monsters of that level (tools/hunt-rate.mjs measures real hunting; its autopilot, with
 // every skill maxed and ideal gear, kills 15-40 a minute), smoothed so every level is a steady
-// step up from the last. The first levels stay quick (a few minutes); then about 15-25 minutes a
-// level in the 10s, 30-40 in the 20s, 50-60 in the 30s and an hour or more in the 40s:
-// about 1 h to level 10, 4.5 h to 20, 10.5 h to 30, 20 h to 40 and 30 h to 50.
+// step up from the last. The first levels are quick (a few minutes each) so the opening hour
+// carries you to your first job; the climb steepens through the teens, then about 30-40 minutes a
+// level in the 20s, 50-60 in the 30s and an hour or more in the 40s. Timed with the whole quest
+// list (tools/playthrough.mjs): see docs/design/main-story.md, "Pacing".
 // The cap is 50 for now (where the story ends); past it the curve grows 5.48% a level.
 
 export const MAX_LEVEL = 50;
@@ -13,8 +14,8 @@ export const MAX_LEVEL = 50;
 // table[level] = EXP needed to go from `level` to `level + 1`.
 const table = [
   0,
-  160, 240, 420, 750, 1300, 2200, 3700, 5900, 8900, 13000,
-  18000, 24000, 32000, 39000, 47000, 57000, 70000, 86000, 100000, 120000,
+  60, 100, 160, 250, 400, 640, 1000, 1600, 2500, 3900,
+  5800, 8600, 12800, 19000, 28000, 41000, 60000, 86000, 100000, 120000,
   140000, 150000, 170000, 190000, 220000, 240000, 270000, 300000, 340000, 380000,
   420000, 460000, 500000, 540000, 590000, 640000, 690000, 760000, 830000, 900000,
   970000, 1000000, 1100000, 1200000, 1300000, 1400000, 1500000, 1600000, 1700000,

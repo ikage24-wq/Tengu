@@ -13,8 +13,8 @@ import { ITEMS } from '../src/data/items.js';
 const fresh = () => createCharacter('Tester', {});
 
 test('EXP curve: quick first levels, then a steady climb to about 30 hours at 50', () => {
-  assert.equal(expToNext(1), 160);
-  assert.equal(expToNext(10), 13000);
+  assert.equal(expToNext(1), 60);
+  assert.equal(expToNext(10), 3900);
   assert.equal(expToNext(30), 380000);
   // Every level asks more than the one before, never a sudden wall.
   for (let l = 2; l < MAX_LEVEL; l++) {

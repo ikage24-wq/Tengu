@@ -185,6 +185,12 @@ to 50), and the EXP curve (`src/core/exp.js`) was set for a player at about 10 k
 reach 50 in about 30 hours: 1 h to 10, 4.5 h to 20, 10.5 h to 30, 20 h to 40. Total EXP to 50 went
 from 6.9 million to 21 million. The other players (bots) earn EXP at the same hunting pace.
 
+**Timed 2026-11-05** (`tools/playthrough.mjs`: a Warrior/Berserker doing every story and side quest
+open to them, 91 quests, hunting the best-paying map between): about 31.5 hours to the ending at a
+normal player's pace (15 at a perfect one). Level 10 at about 40 minutes (the first levels were
+made quicker the same day), 20 at about 11 hours (the 10s are full of side stories), 30 at 16,
+40 at 23, 50 at 31.5. Starfall Heights' flyers now keep over its floors, with walkers added.
+
 **Target: about 30 hours to level 50 for a player who does the story and some side stories
 (recommended; the player confirms the number before the curve changes).** Roughly:
 
