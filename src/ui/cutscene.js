@@ -23,7 +23,9 @@ const TYPE = 55; // characters a second
 const CARD = 2.8; // how long a title card stays up on its own
 
 // Each face a line can carry, for heroes and NPCs.
-const FACES = { happy: 'excited', sad: 'sad', surprised: 'shock', angry: 'angry' };
+const FACES = { happy: 'excited', sad: 'sad', surprised: 'shock', angry: 'angry', smug: 'smug',
+  // Malvina's own faces (render/hero.js): her scheming smirk, the big laugh, a blush, a tantrum.
+  scheme: 'scheme', ohoho: 'ohoho', fluster: 'fluster', tantrum: 'tantrum' };
 // The queens' and kings' name ribbons, in their own colours.
 const COLORS_OF = { sylvana: '#5fb87f', tamamo: '#f08a3a', lilith: '#e0507e', selene: '#7a96e0', crystalking: '#9a7ae0', gnarlroot: '#8a6a4a', hayate: '#5aa8c8' };
 

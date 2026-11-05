@@ -8,7 +8,7 @@ import { MAPS } from '../src/data/maps.js';
 import { ITEMS } from '../src/data/items.js';
 import { surfacesOf, groundAt } from '../src/world/physics.js';
 
-const ACTS = new Set(['stroll', 'chase', 'shoot', 'train', 'spar', 'smith', 'cast', 'read', 'chat', 'nap', 'peck']);
+const ACTS = new Set(['stroll', 'chase', 'shoot', 'train', 'spar', 'smith', 'cast', 'read', 'chat', 'nap', 'peck', 'gag']);
 const KINDS = new Set(['person', 'kid', 'cat', 'dog', 'chick']);
 
 test('every town has residents, and each one is set up right', () => {

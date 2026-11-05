@@ -36,6 +36,10 @@
 //                                 easing in and out)
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
+//   { perform: npc, move, dur, as }  they play one of their own moves (render/moves.js, e.g.
+//                                 Malvina's vohoho), wearing the expression `as` while they do, then
+//                                 go back to standing (`dur` defaults to the move's own length)
+//   { expr: npc, as }             holds an expression on an NPC (as: null lets it go)
 //   { trip: npc, dur }            they stumble, pitch forward flat on their face (sliding a little),
 //                                 lie there a beat, and pop back up (the figure only tilts, at its
 //                                 own size)
@@ -62,6 +66,7 @@ import { SCENES } from '../data/story.js';
 import { groundAt } from './physics.js';
 import { seat } from './mount.js';
 import { indoors } from './daytime.js';
+import { MOVE_MIN } from '../render/moves.js';
 
 const WALK = 72;
 const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
@@ -233,6 +238,28 @@ function runner(world, step) {
   }
   if (step.wind !== undefined) {
     world.windHold = !step.wind;
+    return () => true;
+  }
+  if (step.perform) {
+    const n = npcOf(world, step.perform);
+    if (!n) return () => true;
+    const dur = step.dur ?? (MOVE_MIN[step.move] ?? 1.4) * 1.15;
+    const before = n.cine.face;
+    let t = 0;
+    n.cine.move = { kind: step.move, p: 0, dur };
+    if (step.as) n.cine.face = step.as;
+    return (dt, skip) => {
+      t = skip ? dur : t + dt;
+      n.cine.move.p = Math.min(1, t / dur);
+      if (t < dur) return false;
+      n.cine.move = null;
+      if (step.as) n.cine.face = before;
+      return true;
+    };
+  }
+  if (step.expr) {
+    const n = npcOf(world, step.expr);
+    if (n) n.cine.face = step.as ?? null;
     return () => true;
   }
   if (step.trip) {

@@ -505,3 +505,25 @@ test('the finale plays through under the windmill, with the friends you made, an
     assert.ok(w.map.npcs.every((n) => !n.cine), 'everyone is back to themselves');
   }
 });
+
+test("Malvina's villain story plays through at her tower, and the party guests go home after", () => {
+  for (const id of ['malv_minion_done', 'malv_well_done', 'malv_mob_done', 'malv_diary_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'sprout', 'start');
+    const home = Object.fromEntries(w.map.npcs.map((n) => [n.id, n.x]));
+    w.body.x = home.malvina - 120;
+    playScene(w, id);
+    let performed = false;
+    for (let k = 0; k < 300 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.map.npcs.find((n) => n.id === 'malvina')?.cine?.move) performed = true;
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(performed, `${id}: Malvina plays her own moves`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    for (const n of w.map.npcs) assert.equal(n.x, home[n.id], `${id}: ${n.id} is back where they stand`);
+  }
+});

@@ -173,6 +173,20 @@ export const NPCS = {
     look: { hairStyle: 'fluffybob', hairColor: '#ff9a8a', hairTip: '#ffd2c8', skinTone: '#fff0e6', eyeColor: '#c8506a', outfitColor: '#fff0e6', eyeStyle: 'sparkle', browStyle: 'stubby', face: 'smile' },
     greeting: "Ooh, a visitor! Oh, it's you, it's YOUR island! Bring me the bits and I'll build you something lovely. I've got a whole shell full of ideas!",
   },
+  // Malvina Grimsworth, Sprout Village's self-declared villainess, in her spooky little tower on
+  // the edge of the village square (where everyone can see it). Every scheme she hatches turns
+  // out helpful: her poisons heal, her curses are blessings, and nobody is afraid of her, which
+  // she finds deeply upsetting. (Her daily curse is world/malvina.js; her own moves are
+  // render/villain-moves.js.)
+  malvina: {
+    id: 'malvina', name: 'Malvina Grimsworth', title: 'Villainess (Self-Declared)', role: 'shop',
+    building: 'villaintower', sign: 'KEEP OUT!',
+    look: { hairStyle: 'villainess', hairColor: '#c8304a', skinTone: '#fff0e6', eyeColor: '#ffc040', eyeStyle: 'villain', browStyle: 'sharp', outfit: 'villainessbare', outfitColor: '#3a2a48', earStyle: 'round', face: 'scheme' },
+    greeting: "Ohohoho! Trembling, are we? You SHOULD be. Browse my wares of pure EVIL, peasant. ...They're very reasonably priced.",
+    shop: ['vial_of_despair', 'poisoned_apple', 'bottled_scream'],
+    quests: ['malv_minion', 'malv_well', 'malv_mob', 'malv_diary'],
+    chatter: ['Ohohoho!', 'Fear me! ...Please?', 'Today I shall do something TERRIBLE. After lunch.', 'Why does everyone keep THANKING me?'],
+  },
   posy: {
     id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',
     look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },

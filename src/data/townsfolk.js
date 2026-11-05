@@ -18,7 +18,16 @@
 //     chat    stand and talk, facing `facing`
 //     nap     (pets) curl up and sleep, at `y` if not on the ground
 //     peck    (chicks) hop about between a and b
+//     gag     a visitor's bit: walk between a and b and play one of `moves` ([move, face, secs])
+//             at each end, in turn (facing `faceTo` if set)
+//   when     [from, to] game hours: a visitor only in town then (Malvina's rounds)
 //   lines    what they say now and then; `greet` when you walk up to them
+
+import { NPCS } from './npcs.js';
+
+// Malvina Grimsworth on her rounds of the island (her tower is in Sprout Village): a few hours of
+// each game day in each of the other towns, up to no good, which comes out as some good.
+const MALVINA = (over) => ({ name: 'Malvina', kind: 'person', seed: 66, look: { ...NPCS.malvina.look }, ...over });
 
 export const TOWNSFOLK = {
   sprout: [
@@ -46,6 +55,10 @@ export const TOWNSFOLK = {
       act: { type: 'stroll', a: 1320, b: 1900, speed: 34, pause: 2.5 }, lines: ['...', 'Nothing to see here.'], greet: ['Wasn\'t me!', 'Shh!'] },
     { id: 'hb-cat', kind: 'cat', seed: 7, act: { type: 'nap', x: 2546, y: 272 } },
     { id: 'hb-cat2', kind: 'cat', seed: 4, act: { type: 'stroll', a: 1980, b: 2380, speed: 20, pause: 5 } },
+    // Putting up WANTED posters of herself. Nobody takes them down; people keep framing them.
+    MALVINA({ id: 'hb-malvina', when: [6, 10], act: { type: 'gag', a: 1215, b: 1320, moves: [['vpoint', 'scheme', 2], ['vohoho', 'ohoho', 2.2], ['vstomp', 'tantrum', 2.2]] },
+      lines: ['WANTED: Malvina Grimsworth. Extremely dangerous. ...Is my hair nice in this drawing?', 'Have you seen this terrible villain? It\'s me. I\'m the terrible villain.', 'Someone FRAMED my wanted poster. In a nice frame. With a little bow.', 'Ohohoho! Pastel Harbor shall tremble! ...Is that crêpe stand open?'],
+      greet: ['YOU! Minion! Act natural.', 'Ohoho! Fancy meeting you here.', 'Shh! I\'m on a villainous errand.'] }),
   ],
   crag: [
     { id: 'cg-trainee1', name: 'Rusk', kind: 'person', seed: 15, look: { outfitColor: '#ffb38a' }, gear: { weapon: { id: 'sword_50' } },
@@ -59,6 +72,10 @@ export const TOWNSFOLK = {
     { id: 'cg-smith', name: 'Cinder', kind: 'person', seed: 58, look: { outfitColor: '#c98e66' }, gear: { weapon: { id: 'axe_25' } },
       act: { type: 'smith', x: 1808, facing: -1 }, lines: ['Hot hot hot!', 'Tora says the blade sings when it\'s ready.'] },
     { id: 'cg-dog', kind: 'dog', seed: 6, act: { type: 'stroll', a: 700, b: 1480, speed: 40, pause: 4 } },
+    // Sabotaging the sparring: she "hid" the practice swords (polished them and put them back).
+    MALVINA({ id: 'cg-malvina', when: [12, 16], act: { type: 'gag', a: 915, b: 985, faceTo: 1, moves: [['vscheme', 'scheme', 2.2], ['vstomp', 'tantrum', 2.2], ['vswirl', 'smug', 1.8]] },
+      lines: ['I have sabotaged every sword in Ember Crag! ...I polished them. They gleam. It is UNBEARABLE.', 'Spar harder! Exhaust yourselves! ...Do stretch first, though.', 'I put HOT PEPPERS in the trainees\' lunch! They said it was the best chili they\'ve ever had.', 'Brann called me "a valued member of the community." How DARE he.'],
+      greet: ['Minion! Did anyone see me?', 'Ohoho! The crag is MINE. For an hour or so.', 'Shh! Sabotage in progress.'] }),
   ],
   grove: [
     { id: 'gv-student1', name: 'Luma', kind: 'person', seed: 19, look: { outfitColor: '#e0cfff' }, gear: { weapon: { id: 'staff_50' } },
@@ -70,6 +87,10 @@ export const TOWNSFOLK = {
     { id: 'gv-lamp', name: 'Fen', kind: 'person', seed: 56, look: { outfitColor: '#fff3a6' },
       act: { type: 'stroll', a: 120, b: 680, speed: 16, pause: 4 }, lines: ['Another lantern, another wish.', 'Lovely glow tonight.'], greet: ['Evening!', 'Watch the roots, traveller.'] },
     { id: 'gv-cat', kind: 'cat', seed: 8, look: { coat: '#3b3650' }, act: { type: 'nap', x: 1040, y: 324 } },
+    // Brewing a dreadful curse under the moon tree. It keeps coming out as a lullaby.
+    MALVINA({ id: 'gv-malvina', when: [18, 22], act: { type: 'gag', a: 1120, b: 1200, moves: [['vscheme', 'scheme', 2.2], ['vohoho', 'ohoho', 2.2], ['vfluster', 'fluster', 2.4]] },
+      lines: ['Double, double, toil and... towel and bubble? Elowen, how does it GO?', 'I have cursed this grove with ETERNAL SLEEP! ...The owls say they feel very rested.', 'Moonlight, nightshade, the tears of a— oh, it\'s chamomile again.', 'Fear the night, for Malvina walks it! ...Not too late. I like my sleep.'],
+      greet: ['Ohoho! A night stroll, minion?', 'You! Fetch me an eye of newt! ...Or a grape. Similar shape.', 'Shh! The curse is nearly ready.'] }),
   ],
   // Lantern Lagoon: Pearl at the noodle pots beside her twin, a sailor hauling the Sea Biscuit's
   // crates up from the cove, two kids racing the boardwalk, an old angler with his tide tables,

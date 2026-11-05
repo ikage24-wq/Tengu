@@ -31,6 +31,7 @@ import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
 import { storageWindow } from './storage.js';
 import { polishWindow } from './polish.js';
+import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
 import { teamOf } from '../world/teamwork.js';
 import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
 import { derbyClock, standings, PRIZES } from '../world/derby.js';
@@ -249,6 +250,19 @@ export function npcWindow(ui, state, world) {
   }
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
+  // Malvina's daily curse (world/malvina.js): a blessing in a terrible name, once a day.
+  if (npc.id === 'malvina' && char.quests?.malv_minion?.state === 'done') {
+    const c = curseOfDay();
+    choices.push(canCurse(char)
+      ? { label: 'Curse me!', sub: `Today: ${c.name} · ${c.about}, 30 min`, icon: 'star', primary: true, run: () => {
+        layCurse(char, world.now);
+        world.log(`Cursed! ${c.name}: ${c.about} for 30 minutes.`, '#e0a0f0');
+        world.fx.push({ kind: 'potion', x: world.body.x, y: world.body.y, t: 0, dur: 0.6, color: '#8a3aa8' });
+        sfx('buff');
+        say(world, 'malvina', c.line);
+      } }
+      : { label: 'Curse me again!', sub: 'One curse a day. Come back tomorrow.', icon: 'star', run: () => say(world, 'malvina', "Greedy! One curse a day, minion. Even EVIL has opening hours.") });
+  }
   if (npc.storage) choices.push({ label: 'Storage', sub: npc.storage, icon: 'bag', run: () => (dlg.mode = 'storage') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
   // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).

@@ -13,6 +13,7 @@ import { drawBubble } from '../ui/chat.js';
 import { settings } from '../core/settings.js';
 import { groundAt } from '../world/physics.js';
 import { TOWNSFOLK } from '../data/townsfolk.js';
+import { gameHour } from '../world/daytime.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -141,6 +142,21 @@ const ACTS = {
     // A nod now and then while the other one talks.
     const c = ((t + (p.act.offset ?? 0)) % 7 + 7) % 7;
     return { x: p.act.x, facing: p.act.facing, pose: c < 0.8 ? 'cheer' : 'idle', progress: c / 0.8, dur: 0.8, face: c < 3 ? 'grin' : 'smile' };
+  },
+  // A visitor with a bit to do (Malvina on her rounds): walks between a and b, and at each end
+  // plays one of her own moves (render/moves.js), in turn, wearing its face.
+  gag(p, t) {
+    const speed = p.act.speed ?? 18;
+    const pause = p.act.pause ?? 5;
+    const walk = (p.act.b - p.act.a) / speed;
+    const at = stroll(p.act.a, p.act.b, speed, pause, t);
+    if (at.paused == null) return { ...at, pose: 'walk', face: p.act.walkFace ?? null };
+    const lap = Math.floor((((t % 1e6) + 1e6) % 1e6) / (walk + pause));
+    const [move, face, secs] = p.act.moves[lap % p.act.moves.length];
+    const u = at.paused / secs;
+    const facing = p.act.faceTo ?? at.facing;
+    if (u >= 1) return { ...at, facing, pose: 'idle', face };
+    return { ...at, facing, pose: move, progress: u, dur: secs, face };
   },
   nap(p, t) {
     return { x: p.act.x, y: p.act.y, facing: hash(p.seed) < 0.5 ? -1 : 1, pose: 'nap' };
@@ -377,7 +393,10 @@ export function drawTownLife(ctx, map, cam, width, time, player = null) {
   const folk = TOWNSFOLK[map.id];
   if (!folk || !map.isTown || !settings.showCrowd) return;
   const said = [];
+  const hour = gameHour(new Date());
   for (const p of folk) {
+    // A visitor (Malvina on her rounds) is only in town for her hours of the game's day.
+    if (p.when && !(hour >= p.when[0] && hour < p.when[1])) continue;
     const at = ACTS[p.act.type](p, time);
     const wx = at.x;
     const x = snap(wx - cam.x);

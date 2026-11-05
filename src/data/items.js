@@ -441,6 +441,11 @@ export const gauntletStars = (level) => STARS.reduce((best, s) => (s.level <= (l
 add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 62, effect: { mp: 300, mpPct: 0.3 }, color: '#a58cff', desc: 'Restores 300 MP and 30% of your max MP.' });
 add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 300, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
 add({ id: 'royal_jelly', name: 'Royal Jelly', type: 'use', price: 80, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#fff2b8', desc: "The Queen Bee's own. Restores half your HP and MP." });
+// Malvina Grimsworth's "cursed" wares (data/npcs.js): sinister names, perfectly nice effects.
+add({ id: 'vial_of_despair', name: 'Vial of Despair', type: 'use', price: 45, effect: { hp: 250, hpPct: 0.15, mp: 150 }, color: '#8a3aa8', desc: 'Restores 250 HP, 15% of your max HP and 150 MP. "Drink it and DESPAIR!" It tastes of blackcurrant.' });
+add({ id: 'poisoned_apple', name: 'Totally Poisoned Apple', type: 'use', price: 20, effect: { hpPct: 0.3 }, color: '#d0284a', desc: "Restores 30% of your max HP. It isn't poisoned. She tried. It's a very good apple." });
+add({ id: 'bottled_scream', name: 'Bottled Scream', type: 'use', price: 30, effect: { returnTown: true }, color: '#c8a0e0', desc: 'Uncork it to flee to the nearest town, screaming. A Homeward Scroll, but louder.' });
+add({ id: 'hex_brew', name: 'Hex Brew', type: 'etc', quest: true, price: 0, color: '#7a2a8a', desc: 'A flask of something bubbling and purple. Malvina says it will turn the well water black and bitter. It smells of strawberries.' });
 add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 40, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });
 
 // ---------- Monster drops (etc) ----------

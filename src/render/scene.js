@@ -174,7 +174,10 @@ function drawNpcs(ctx, world, cam, time) {
       }
       // (Their legs step with the ground they cover, like yours: render/animator.js.)
       const anim = animFor(`npc|${world.map.id}|${n.id}`, n.x, facing, time);
-      drawHero(ctx, npc.look, npc.gear ?? null, x, y - (c.lift ?? 0), { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle', time, seed: n.x % 97, facing, job: npc.showJob }, anim);
+      // (A move the scene gave them, `perform`, and a face it holds on them, `look`.)
+      const look = c.face ? { ...npc.look, face: c.face } : npc.look;
+      const pose = c.move && !c.walk ? { pose: c.move.kind, progress: c.move.p, dur: c.move.dur } : { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle' };
+      drawHero(ctx, look, npc.gear ?? null, x, y - (c.lift ?? 0), { ...pose, time, seed: n.x % 97, facing, job: npc.showJob }, c.move ? null : anim);
       ctx.restore();
       continue;
     }

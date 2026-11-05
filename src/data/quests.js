@@ -214,6 +214,39 @@ export const QUESTS = {
     rewards: { exp: 1900, gold: 170, items: [{ id: 'return_scroll', qty: 5 }, { id: 'red_potion', qty: 20 }] },
   },
 
+  // Malvina Grimsworth's story: the villainess whose every evil scheme comes out helpful.
+  malv_minion: {
+    id: 'malv_minion', name: 'A Minion Is Required', giver: 'malvina', minLevel: 4,
+    text: "You there! Yes, you, with the face. Congratulations: you are now my MINION. Fetch me 8 Sprite Petals and 6 Bumble Fuzz from the meadow. I shall brew a Wilting Powder so vile that every flower in Sprout Village droops in SHAME. Ohohoho! ...Off you go. Wear a hat, it's sunny.",
+    objectives: [{ type: 'collect', item: 'sprite_petal', count: 8 }, { type: 'collect', item: 'bee_fuzz', count: 6 }],
+    rewards: { exp: 800, gold: 130, items: [{ id: 'vial_of_despair', qty: 3 }] },
+  },
+  malv_well: {
+    id: 'malv_well', name: 'The Well Shall Run Black', giver: 'malvina', minLevel: 6, prereq: 'malv_minion',
+    gives: [{ id: 'hex_brew' }],
+    text: "The flowers... BLOOMED. Enormous. People are taking PICTURES. Fine. Phase Two. Pour this Hex Brew into Mira's well and the water will turn black and bitter! Then thin out 10 Toadstool Goblins in the woods, so nobody can bring fresh mushrooms to cheer the village up. I am so evil it frightens even me.",
+    objectives: [
+      { type: 'deliver', npc: 'mira', item: 'hex_brew', say: "Malvina sent this? Oh, how sweet. *pours* ...Goodness, the water's gone pink and fizzy, and my sore feet stopped aching the moment I paddled in it! Tell her thank you. No, tell her LOUDLY." },
+      { type: 'kill', mob: 'mushkin', count: 10 },
+    ],
+    rewards: { exp: 850, gold: 90, items: [{ id: 'vial_of_despair', qty: 3 }, { id: 'poisoned_apple', qty: 5 }] },
+  },
+  malv_mob: {
+    id: 'malv_mob', name: 'The Torches Are Coming', giver: 'malvina', minLevel: 7, prereq: 'malv_well',
+    text: "Minion. MINION. Lights. Gathering at night. Whispering. Posy's been seen buying ROPE. It's a mob, I know a mob when I see one, I've read every book about them. Go and find out what Posy is planning, and bring me 10 Straw Tufts from the Scarecrow Imps: I am building scarecrow guards. Very frightening ones. With little hats.",
+    objectives: [
+      { type: 'talk', npc: 'posy', say: "Shhh! The rope is for BUNTING! We're throwing Malvina a surprise party, 'Thank You, Malvina Day'! The flowers, the well, she's helped everyone! Don't you dare tell her. Just get her to stay home tonight." },
+      { type: 'collect', item: 'straw_tuft', count: 10 },
+    ],
+    rewards: { exp: 1200, gold: 100, items: [{ id: 'vial_of_despair', qty: 4 }] },
+  },
+  malv_diary: {
+    id: 'malv_diary', name: 'The Villain Diary', giver: 'malvina', minLevel: 9, prereq: 'malv_mob',
+    text: "A... party. For me. They CHEERED. Do you know how hard it is to look menacing with a party hat on? I must restore my terrible reputation at once. Bring me 10 Jackalope Antlers from Clover Hills: I shall wear a crown of antlers so dreadful that children weep. ...Not too much. Just a little sniffle.",
+    objectives: [{ type: 'collect', item: 'ribbon', count: 10 }],
+    rewards: { exp: 2500, gold: 180, title: 'Minion of Malvina', items: [{ id: 'vial_of_despair', qty: 5 }, { id: 'bottled_scream', qty: 5 }] },
+  },
+
   lulu_gossip: {
     id: 'lulu_gossip', name: 'Town Gossip', giver: 'lulu', minLevel: 3,
     text: "Be a dear and ask around: what does everyone think of my new window display? Mira, Pip and Kestrel. Don't tell them I sent you!",

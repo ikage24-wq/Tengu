@@ -269,6 +269,36 @@ function kioskArt(pose) {
   }, false);
 }
 
+// Malvina Grimsworth's tower (data/npcs.js `villaintower`): a would-be villain's lair in the middle
+// of the prettiest village on the island. Purple stone, a steep witch's-hat roof with a bat for a
+// weathervane, a round window glowing violet, two lanterns burning lilac, an arched door under the
+// KEEP OUT sign (the sign is the NPC's) and, in front of it, a pink welcome mat with a heart; a box
+// of flowers on the sill, because she can't help herself.
+function towerArt(pose) {
+  return art(`villaintower|${pose}`, 74, 112, () => {
+    const s = poseLean(pose);
+    const stone = ramp('#8a6aa8', 0.7);
+    const out = [...stones(16, 38, 42, 74, stone, 7, { rowH: 7, blockW: 11 }), ...wallShade(16, 38, 42, 74, stone, 3)];
+    // The flared base, a course of darker stones.
+    out.push(...stones(13, 100, 48, 12, ramp('#6a4a88', 0.7), 3, { rowH: 6, blockW: 12 }));
+    out.push(...gable(9, 65, 42, 6, '#4e3460', 4));
+    // The bat weathervane, its wings tipping with the wind.
+    const tip = s * 1.2;
+    out.push(F(R(36.4, 0.6, 1.2, 6, '#3a2648')), T([[37, 2.6], [31.4, 0.2 - tip], [32.4, 2.4], [30.6, 3.4], [33.6, 3.6], [37, 4]], '#2e1e3e'), T([[37, 2.6], [42.6, 0.2 + tip], [41.6, 2.4], [43.4, 3.4], [40.4, 3.6], [37, 4]], '#2e1e3e'));
+    // The round window, glowing violet, with a sill and its flower box.
+    out.push(E(37, 58, 8.4, 8.4, '#3a2648'), F(E(37, 58, 7, 7, '#c8a0ff')), F(E(35.4, 56.4, 4, 4, '#ecdcff')), F(R(36.4, 51, 1.2, 14, '#3a2648')), F(R(30, 57.4, 14, 1.2, '#3a2648')));
+    out.push(...beam(28, 66, 18, 2.4, '#c8a888'), R(29, 68.4, 16, 4, '#a8794e'));
+    for (const [fx, fc] of [[31, '#ff8fc1'], [35, '#ffd66b'], [39, '#ff8fc1'], [43, '#ffffff']]) out.push(F(E(fx, 67, 1.6, 1.6, fc)), F(E(fx, 67, 0.6, 0.6, '#ffe36b')));
+    // The arched door and its gold ring; two lilac lanterns either side.
+    out.push(E(37, 86, 10, 7, '#3a2648'), R(27, 86, 20, 26, '#3a2648'), F(E(37, 87, 8.6, 6, '#6a2a48')), F(R(28.4, 87, 17.2, 25, '#6a2a48')), F(R(36.6, 82, 0.8, 30, '#4a1e34')));
+    out.push(F(E(41.4, 99, 1.4, 1.4, '#ffd66b')), F(E(41.4, 99, 0.6, 0.6, '#6a2a48')));
+    for (const lx of [21, 53]) out.push(F(R(lx - 0.5, 82, 1, 4, '#3a2648')), E(lx, 89, 2.6, 3.4, '#3a2648'), F(E(lx, 89, 1.8, 2.6, '#e6c8ff')), F(E(lx - 0.5, 88, 0.8, 1.2, '#ffffff')));
+    // The welcome mat (pink, a heart in the middle), right under the KEEP OUT sign.
+    out.push(F(R(25, 109.4, 24, 2.6, '#ff9ec8')), F(R(25, 109.4, 24, 0.6, '#ffc2dc')), F(E(37, 110.6, 1.4, 1, '#ff4f86')));
+    return out;
+  }, false);
+}
+
 function officeArt() {
   return art('office', 90, 82, () => {
     const wall = ramp('#e8f4ff', 0.6);
@@ -352,6 +382,7 @@ function buildingArt(kind, time, wx = 0) {
   if (HALLS[kind]) return hallArt(kind, pose, ph);
   if (kind === 'kiosk') return kioskArt(windPose(time, wx, 0.2));
   if (kind === 'office') return officeArt();
+  if (kind === 'villaintower') return towerArt(windPose(time, wx, 0.2));
   return null;
 }
 
@@ -992,6 +1023,14 @@ function zzz(ctx, x, y, time) {
 }
 
 const ROUTINES = {
+  // Malvina Grimsworth: scheming over a plan, a burst of "ohohoho!", pointing at nobody in
+  // particular, a swirl of her cape for no audience at all (render/villain-moves.js).
+  malvina(t) {
+    const b = bitAt(t, [['vscheme', 4.4], ['vohoho', 2.2], ['vpoint', 2], ['vswirl', 1.8]], 3.2);
+    if (!b) return { face: 'scheme' };
+    const face = { vscheme: 'scheme', vohoho: 'ohoho', vpoint: 'scheme', vswirl: 'smug' }[b.kind];
+    return { pose: b.kind, progress: b.u, face };
+  },
   // ----- The Sweethearts (data/sweethearts.js) -----
   // Poppy: kneading dough on the counter, sneaking a taste of a tart, a happy twirl.
   poppy(t) {
