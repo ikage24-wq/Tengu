@@ -470,3 +470,38 @@ test("chapter 10's whale scenes play through at Cloudcatch Pier where Skipper Ni
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test('the finale plays through under the windmill, with the friends you made, and the wind comes back', () => {
+  const chains = ['pip_lunch', 'bramble_charge', 'clover_parade', 'tora_cores'];
+  for (const finished of [[], chains]) {
+    const char = createCharacter('Hana', {});
+    for (const q of finished) char.quests[q] = { state: 'done' };
+    char.windBack = true;
+    const w = createWorld(char);
+    loadMap(w, 'sprout', 'start');
+    const mira = w.map.npcs.find((n) => n.id === 'mira');
+    const miraX = mira.x;
+    w.body.x = mira.x + 60;
+    playScene(w, 'wind_finale');
+    const lines = SCENES[w.scene.id].filter((st) => st.who === 'bramble').length;
+    assert.equal(lines > 0, finished.length > 0, 'Bramble only charges in if you finished his story');
+    let wasHeld = false;
+    let returned = false;
+    for (let k = 0; k < 300 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      if (w.windHold) wasHeld = true;
+      else if (wasHeld) returned = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, 'the finale finished');
+    assert.ok(wasHeld, 'the wind waited for its moment');
+    assert.ok(returned, 'and came back during the scene');
+    assert.ok(!w.windHold, 'and stays back afterwards');
+    assert.ok(Math.abs(w.body.x - 1830) < 80, 'you stand under the windmill');
+    assert.equal(w.map.npcs.find((n) => n.id === 'mira').x, miraX, 'Mira goes home to her spot');
+    assert.ok(!w.map.npcs.some((n) => ['rook', 'tora', 'elowen', 'nim', 'bramble'].includes(n.id)), 'the guests go home');
+    assert.ok(w.map.npcs.every((n) => !n.cine), 'everyone is back to themselves');
+  }
+});

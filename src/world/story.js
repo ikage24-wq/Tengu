@@ -19,8 +19,22 @@ import { startCine, skipScene, endScene, isStaging } from './director.js';
 // ---------- Scenes ----------
 
 // `vars` fill in a line's {job} (and {name} is always the hero).
+// A scene with steps that play only once some quests are done (`when`: an id or a list of them)
+// is played as its own copy holding just the steps this hero has earned.
+const done = (char, when) => [when].flat().every((q) => char.quests?.[q]?.state === 'done');
+function sceneFor(char, id) {
+  const steps = SCENES[id];
+  const keep = (st) => !st.when || done(char, st.when);
+  if (!steps.some((st) => st.when || st.together?.some((x) => x.when))) return id;
+  const out = steps.filter(keep).map((st) => (st.together ? { ...st, together: st.together.filter(keep) } : st)).filter((st) => !st.together || st.together.length);
+  const key = `${id}~${out.length}~${steps.map((st, i) => (keep(st) ? 1 : 0) + (st.together ? st.together.map((x) => (keep(x) ? 1 : 0)).join('') : '')).join('')}`;
+  SCENES[key] ??= out;
+  return key;
+}
+
 export function playScene(world, id, vars = {}) {
   if (!id || !SCENES[id]) return;
+  id = sceneFor(world.char, id);
   world.scene = { id, i: 0, t: 0, vars: { name: world.char.name, ...vars } };
   // The hero stops where they stand: no sliding on, no swing frozen halfway through.
   if (world.body) world.body.vx = 0;

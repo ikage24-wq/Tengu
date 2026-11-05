@@ -316,6 +316,14 @@ GEAR_LEVELS.forEach((level, t) => {
   });
 });
 
+// Hayate's Feather: the earring Mira gave you at the start of the story, caught by the wind at its
+// end (data/story.js, The Wind Returns). A little better than the level-50 earrings, and yours alone.
+add({
+  id: 'hayate_feather', name: "Hayate's Feather", type: 'equip', slot: 'earring', design: 'jewel', tier: 9, reqLevel: 50,
+  family: null, stats: { matk: 11, mp: 130, hp: 60, mdef: 14, str: 3, dex: 3, int: 3, luk: 3 }, price: 1, color: '#bfe9ff', untradable: true,
+  desc: "Mira's old earring, the one that always caught the wind. It caught Hayate's, and kept a feather of it.",
+});
+
 // The job set (or earrings) for a slot at a level.
 export function jobGearId(family, slot, level) {
   const L = Math.max(5, Math.min(100, Math.floor(level / 5) * 5));

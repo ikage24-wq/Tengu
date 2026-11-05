@@ -185,6 +185,14 @@ export function completeQuest(char, id) {
     (char.mounts ??= []).push(mount);
     char.mount ??= mount;
   }
+  // A title to wear under your name (the story's last chapter gives one).
+  if (q.rewards.title) {
+    if (!(char.titles ??= []).includes(q.rewards.title)) char.titles.push(q.rewards.title);
+    char.title = q.rewards.title;
+  }
+  // The wind comes back to the island for this hero (the story's ending): render/town.js and
+  // world/calm.js.
+  if (q.rewards.windBack) char.windBack = true;
   char.cash = (char.cash ?? 0) + CASH_PER_QUEST + (q.rewards.cash ?? 0);
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = q.daily ? { state: 'done', day: today() } : { state: 'done' };

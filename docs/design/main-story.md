@@ -240,7 +240,10 @@ How to get there without making it a grind (the game's own rule against chores):
    Ending on Theatre Row; she performs the Playwright's script, the story so far).
 9. [x] Chapter 10: the Sky Whale, Selene, Prismaris (2026-11-05: Skipper Nimbus gives The Sinking
    Whale; Selene now at 46, Home Again at 47, the Crystal King at 49).
-10. [ ] The Wind Returns: the level-50 finale and its rewards.
+10. [x] The Wind Returns: the level-50 finale and its rewards (2026-11-05: Mira's last quest, a
+   midnight festival under the windmill with the friends whose stories you finished, Hayate waking;
+   the windmill, the Starchime chimes and the Great Forge come alive, maps sour half as fast, the
+   title, Hayate's Feather and the plaque). Still to do: Hayate has no portrait of her own yet.
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in
 the game, fix what looks wrong, send a video, then wait for the player before the next.

@@ -330,7 +330,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   // The portal on your guided route, if you're following one.
   const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
-  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time), routePortal?.id);
+  drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time, { wind: world.char.windBack && !world.windHold, name: world.char.name }), routePortal?.id);
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.
@@ -485,6 +485,8 @@ export function drawWorld(ctx, world, viewCam, time) {
     ctx.globalAlpha *= tagFade(hx, hy);
     box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
     text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    // Your title under it, if you wear one (earned in the story: core/quests.js).
+    if (world.char.title) text(ctx, world.char.title, hx, hy + 19, { size: 6, bold: true, align: 'center', color: '#ffe9a8', shadow: true });
     ctx.restore();
     // Your guild, like everyone else's, under that.
   }

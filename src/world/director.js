@@ -39,6 +39,14 @@
 //   { trip: npc, dur }            they stumble, pitch forward flat on their face (sliding a little),
 //                                 lie there a beat, and pop back up (the figure only tilts, at its
 //                                 own size)
+//   { place: actor, x }           puts them at x at once, standing on the floor there (for moving
+//                                 people while the screen is faded out)
+//   { wind: false | true }        holds back the wind's return for the scene (false), then lets it
+//                                 come back (true): the windmill, chimes and forge come alive
+//                                 (render/town.js) at that moment instead of when the scene began
+//   { night: 0..1 }               the scene's own time of day (the finale's midnight), whatever the
+//                                 clock says; the clock takes over again when the scene ends
+//   any step with when: questId   (or a list) plays only if those quests are done (world/story.js)
 //   { ride: mount }               you climb onto a mount you own (in a puff of clouds), and stay
 //                                 on it after the scene; { ride: null } gets you off
 //   { together: [steps] }         run several at once; done when all are
@@ -53,6 +61,7 @@
 import { SCENES } from '../data/story.js';
 import { groundAt } from './physics.js';
 import { seat } from './mount.js';
+import { indoors } from './daytime.js';
 
 const WALK = 72;
 const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
@@ -198,6 +207,32 @@ function runner(world, step) {
       dir = other ? Math.sign(other.x - actorAt(world, who).x) || 1 : null;
     }
     if (dir) setFacing(world, who, dir);
+    return () => true;
+  }
+  if (step.place) {
+    const x = step.x;
+    if (step.place === 'player') {
+      const b = world.body;
+      b.x = x;
+      b.y = groundAt(world.map, x);
+      b.vx = 0;
+      b.vy = 0;
+      b.onGround = true;
+    } else {
+      const n = npcOf(world, step.place);
+      if (n) n.x = x;
+    }
+    return () => true;
+  }
+  if (step.night !== undefined) {
+    if (!('nightWas' in c)) c.nightWas = world.forceNight;
+    world.forceNight = step.night;
+    world.night = step.night;
+    if (!indoors(world.map)) world.map.night = step.night;
+    return () => true;
+  }
+  if (step.wind !== undefined) {
+    world.windHold = !step.wind;
     return () => true;
   }
   if (step.trip) {
@@ -531,5 +566,7 @@ export function endScene(world) {
     if (m.attackAt > world.now) m.attackAt = -9;
   }
   world.body.vx = 0;
+  world.windHold = false;
+  if ('nightWas' in c) world.forceNight = c.nightWas;
   world.cine = null;
 }

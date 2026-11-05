@@ -430,7 +430,10 @@ function fountainWater(ctx, x, gy, time) {
 
 // Draws houses, NPC buildings, and the fountain along the street. Called from the scenery, after
 // the ground and before ledges and props.
-export function drawStreet(ctx, map, cam, width, time) {
+// `hero`: { wind, name } (the wind back on the island for this hero, at the story's end: the
+// windmill turns, the chimes ring, the forge roars, and the plaque under the windmill bears its name).
+export function drawStreet(ctx, map, cam, width, time, hero = {}) {
+  const wind = Boolean(hero.wind);
   // The Sea Biscuit's deck at sea (render/lagoon.js): the sea, her hull and her deck.
   if (map.voyage) {
     drawVoyage(ctx, map, cam, width, 360, time, map.voyageAt ?? 0);
@@ -582,9 +585,10 @@ export function drawStreet(ctx, map, cam, width, time) {
       const [ccx, ccy, ccr] = TOWER.crown;
       glowSoft(ctx, left + kx, top + ky + 16, 40, '#bfe6ff', 0.25 + 0.12 * (0.5 + 0.5 * Math.sin(time * 1.1 + wx * 0.01)));
       place(ctx, moonCrystalArt(), snap(left + kx), top + ky + 22 + Math.sin(time * 0.9) * 1.2);
-      const nudge = Math.max(0, Math.sin(time * 0.5)) ** 10;
+      // (With the wind back, they swing and ring all the time.)
+      const nudge = wind ? 0.75 + 0.25 * Math.sin(time * 0.7) : Math.max(0, Math.sin(time * 0.5)) ** 10;
       for (const [cx, len] of TOWER_CHIMES) {
-        const a = Math.sin(time * 2.2 + cx * 0.3) * (0.015 + 0.09 * nudge);
+        const a = Math.sin(time * (wind ? 3.1 : 2.2) + cx * 0.3) * (0.015 + (wind ? 0.16 : 0.09) * nudge);
         const ay = top + ccy + 18 - Math.sqrt(Math.max(0, 1 - ((cx - ccx) / ccr) ** 2)) * 14;
         ctx.save();
         ctx.translate(left + cx, ay);
@@ -600,10 +604,13 @@ export function drawStreet(ctx, map, cam, width, time) {
       place(ctx, s, snap(x), gy + 2);
       const left = x - FORGE.w / 2;
       const top = gy + 2 - FORGE.h;
-      glowSoft(ctx, left + FORGE.mouth[0], gy - 12, 46, '#ff8a3a', 0.28 + 0.08 * Math.sin(time * 1.4 + wx * 0.01));
+      // (With the wind back, the bellows fill: the fire roars bright and the sparks fly thick.)
+      glowSoft(ctx, left + FORGE.mouth[0], gy - 12, wind ? 64 : 46, '#ff8a3a', (wind ? 0.42 : 0.28) + 0.08 * Math.sin(time * (wind ? 2.6 : 1.4) + wx * 0.01));
       chimneySmoke(ctx, left + (FORGE.chimney[0] + FORGE.chimney[1]) / 2, top - 4, time, wx * 0.01);
-      const u = (time * 0.5) % 1;
-      if (u < 0.5) sparkleAt(ctx, left + FORGE.mouth[0] + Math.sin(time * 3) * 10, gy - 10 - u * 40, 1.6 * (1 - u * 2), '#ffd36b', 1 - u * 2);
+      for (let k = 0; k < (wind ? 3 : 1); k++) {
+        const u = (time * (wind ? 0.9 : 0.5) + k / 3) % 1;
+        if (u < 0.5) sparkleAt(ctx, left + FORGE.mouth[0] + Math.sin(time * 3 + k * 2) * 12, gy - 10 - u * 50, 1.6 * (1 - u * 2), '#ffd36b', 1 - u * 2);
+      }
     } else if (kind === 'fishstall') place(ctx, fishStallArt(), snap(x), gy + 2);
     else if (kind === 'gatearch') {
       place(ctx, gateArchArt(), snap(x), gy + 2);
@@ -615,8 +622,9 @@ export function drawStreet(ctx, map, cam, width, time) {
       place(ctx, s, snap(x), gy + 2);
       const hx = x - WINDMILL.w / 2 + WINDMILL.hub[0];
       const hy = gy + 2 - WINDMILL.h + WINDMILL.hub[1];
+      // (With the wind back, the sails turn properly, a steady sweep that gusts a little.)
       const nudge = Math.max(0, Math.sin(time * 0.6)) ** 8 * 0.25;
-      const a = time * 0.05 + nudge + wx * 0.01;
+      const a = wind ? time * 0.7 + Math.sin(time * 0.4) * 0.3 + wx * 0.01 : time * 0.05 + nudge + wx * 0.01;
       const sail = windmillSailArt();
       for (let k = 0; k < 4; k++) {
         ctx.save();
@@ -633,6 +641,14 @@ export function drawStreet(ctx, map, cam, width, time) {
       ctx.beginPath();
       ctx.arc(hx, hy, 2.6, 0, Math.PI * 2);
       ctx.fill();
+      // The plaque at its foot, with the name of the one who brought the wind back.
+      if (wind && hero.name) {
+        ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+        const label = `${hero.name}, the One Who Showed Up`;
+        const pw = ctx.measureText(label).width + 12;
+        box(ctx, x - pw / 2, gy - 34, pw, 12, { fill: '#c9a46a', edge: '#7a5a34', r: 3, width: 1.5 });
+        text(ctx, label, x, gy - 25.5, { size: 6, bold: true, align: 'center', color: '#4a3220' });
+      }
     }
     else if (kind === 'noticeboard') place(ctx, noticeboardArt(), snap(x), gy + 3);
     else if (kind === 'arena') place(ctx, arenaArt(), snap(x), gy + 4);

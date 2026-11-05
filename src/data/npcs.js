@@ -20,7 +20,7 @@ export const NPCS = {
     building: 'kiosk', sign: 'Info',
     look: { hairStyle: 'candy', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
-    quests: ['story_1_1', 'story_1_2', 'story_1_3', 'story_festival', 'story_1_4', 'story_7_1', 'story_7_2', 'first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
+    quests: ['story_1_1', 'story_1_2', 'story_1_3', 'story_festival', 'story_1_4', 'story_7_1', 'story_7_2', 'story_wind', 'first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
   },
   // Kuro, a young tengu who keeps Dawnlight Isle, the tutorial island: he shows new adventurers
   // the ropes and sees them onto the boat to Sprout Village.

@@ -10,7 +10,7 @@ import { MAPS } from '../src/data/maps.js';
 import { MOUNTS } from '../src/data/mounts.js';
 import { SCENES, STORY_LOCKS, TRIALS, STORY_QUESTS } from '../src/data/story.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
-import { acceptQuest, questState, completeQuest } from '../src/core/quests.js';
+import { acceptQuest, questState, completeQuest, noteTalk } from '../src/core/quests.js';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { playScene, advanceScene, storyLock } from '../src/world/story.js';
 
@@ -36,7 +36,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
   // Every step is a card, a line, or staging (world/director.js) that names real people and known
   // emotes and bursts.
-  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'trip', 'together'];
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
@@ -47,7 +47,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
     if (kind === 'together') return st.together.forEach(check);
     for (const k of ['act', 'mood']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
-    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
+    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip', 'place']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
     if (st.fx && typeof st.at === 'object') assert.ok(Number.isFinite(st.at.x) && Number.isFinite(st.at.y), 'a burst at a real place');
     else if (st.fx && st.at !== undefined) assert.ok(actor(st.at), `a burst on a real actor: ${st.at}`);
     for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]], `${k} names a real person: ${st[k]}`);
@@ -136,4 +136,18 @@ test('important side quests and every job advancement have scenes, naming real s
   playScene(w, 'job_path', { job: 'Paladin' });
   const { fillScene } = await import('../src/world/story.js');
   assert.equal(fillScene(w, SCENES.job_path[2].text), 'I am a Paladin now.');
+});
+
+test('The Wind Returns: at level 50, a title, Hayate\'s Feather, and the wind back for good', () => {
+  const char = createCharacter('Hana', {});
+  gainExp(char, 3e7);
+  for (const id of Object.keys(STORY_QUESTS)) if (id !== 'story_wind') char.quests[id] = { state: 'done' };
+  acceptQuest(char, 'story_wind');
+  for (const npc of ['pip', 'rook', 'tora', 'elowen']) noteTalk(char, npc);
+  const r = completeQuest(char, 'story_wind');
+  assert.ok(r, 'handed in');
+  assert.equal(char.title, 'the One Who Showed Up');
+  assert.ok(char.titles.includes('the One Who Showed Up'));
+  assert.equal(char.windBack, true);
+  assert.ok(char.inventory.equip.some((e) => e.id === 'hayate_feather'));
 });

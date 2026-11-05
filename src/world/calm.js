@@ -18,7 +18,8 @@ export const soothes = (map) => Boolean(map && map.spawns?.length && !map.isTown
 export function calmOf(world, mapId = world.map.id) {
   const c = (world.calm ??= {})[mapId];
   if (!c) return START;
-  return Math.max(0, c.v - (world.now - c.at) * DECAY);
+  // (Once the wind is back, the island remembers you: maps sour half as fast.)
+  return Math.max(0, c.v - (world.now - c.at) * DECAY * (world.char?.windBack ? 0.5 : 1));
 }
 
 function setCalm(world, mapId, v) {
