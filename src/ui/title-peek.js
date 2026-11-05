@@ -10,6 +10,7 @@ import { NPCS } from '../data/npcs.js';
 import { drawHero } from '../render/hero.js';
 import { drawHayate } from '../render/hayate.js';
 import { withZoom } from '../render/pixel.js';
+import { castGear } from './title-cast.js';
 import { clicked, roundRect, font, text, COLORS } from './kit.js';
 import { sfx } from '../audio/sfx.js';
 
@@ -198,7 +199,7 @@ export function drawPeekers(ui, time, letters, drawLetter, active = true) {
     if (gag.who === 'hayate') drawHayate(ctx, 0, 0, time, { s: S, awake: bonked, talking: false });
     else {
       const npc = NPCS[gag.who];
-      drawHero(ctx, { ...npc.look, face: mood }, npc.gear ?? {}, 0, 0, { pose: 'idle', time, seed: 5, scale: S, facing: p.facing, talking });
+      drawHero(ctx, { ...npc.look, face: mood }, castGear(gag.who), 0, 0, { pose: 'idle', time, seed: 5, scale: S, facing: p.facing, talking });
     }
   });
   ctx.restore();

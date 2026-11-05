@@ -19,6 +19,7 @@ import { withZoom } from '../render/pixel.js';
 import { font, text, roundRect } from './kit.js';
 import { sfx } from '../audio/sfx.js';
 import { logoTheft } from './title-peek.js';
+import { castGear } from './title-cast.js';
 
 // The game's name, as the logo spells it (one word a row).
 export const TITLE = ['WINDBAG', 'ISLAND'];
@@ -88,7 +89,7 @@ function drawCast(ctx, T, time) {
     if (id !== 'marlo' && bow > 0 && bow < 1) [pose, progress] = ['embow', bow];
     const talking = LINES.some(([a0, b0, who]) => who === id && T > a0 && T < b0);
     const npc = NPCS[id];
-    withZoom(2, () => drawHero(ctx, { ...npc.look, face: c.face(T) }, npc.gear ?? {}, x, FLOOR, { pose, progress, dur: 1, time, seed: id.length, scale: S, facing, talking }, pose === 'walk' || pose === 'idle' ? a : null));
+    withZoom(2, () => drawHero(ctx, { ...npc.look, face: c.face(T) }, castGear(id), x, FLOOR, { pose, progress, dur: 1, time, seed: id.length, scale: S, facing, talking }, pose === 'walk' || pose === 'idle' ? a : null));
     if (id === 'marlo') popcorn(ctx, x - 16, FLOOR - 30, time);
     if (id === 'tora' && T > 31.8 && T < 37) stars(ctx, x, FLOOR - 70, time);
   }
