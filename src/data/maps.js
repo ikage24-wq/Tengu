@@ -2583,10 +2583,10 @@ Object.assign(MAPS, {
       ropes: [{ x: 470, top: 520, bottom: 640 }, { x: 770, top: 640, bottom: 800 }, { x: 1010, top: 800, bottom: 1040 }, { x: 1590, top: 800, bottom: 1040 }, { x: 1830, top: 640, bottom: 800 }, { x: 2130, top: 520, bottom: 640 }],
       quiet: [[40, 520, 200], [880, 800, 260], [910, 840, 120], [820, 640, 320], [2500, 440, 200]],
       zones: [
-        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
-        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
+        { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird', 'shepherdess', 'kiterider'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
+        { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'monk', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
           look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
-        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4)],
+        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit', 'harpist', 'monk'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4)],
           look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
       ],
       ledges: [
@@ -2622,7 +2622,9 @@ Object.assign(MAPS, {
     deco: [['cloudpillar', 300], ['moonstone', 1200], ['moonstone', 1450], ['cloudpillar', 2000], ['skygazebo', 2380, 0, 440]],
     lamps: [{ x: 860, y: 730 }, { x: 1300, y: 1000 }, { x: 2380, y: 400 }],
     spirit: { x: 1300, y: 760 },
-    habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1300, y: 1040 } } },
+    habitats: { windbird: { play: true }, starspirit: { naps: true, home: { x: 1300, y: 1040 } }, shepherdess: { naps: true }, monk: { naps: true }, kiterider: { play: true } },
+    // Its flyers keep over the floors they live on, not out over the open crater (world/mobs.js).
+    flyersStay: true,
   },
 
 });

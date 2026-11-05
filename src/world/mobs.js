@@ -34,9 +34,12 @@ function surfaceFor(map, x, y) {
 export function spawnMob(map, spawn) {
   const def = MOBS[spawn.mob];
   const surface = surfaceFor(map, spawn.x, spawn.y);
-  // Walkers stay on their ledge; flyers roam a band around their spawn point.
-  const x1 = def.fly ? Math.max(def.w, spawn.x - 180) : surface.x1 + def.w / 2;
-  const x2 = def.fly ? Math.min(map.width - def.w, spawn.x + 180) : surface.x2 - def.w / 2;
+  // Walkers stay on their ledge; flyers roam a band around their spawn point. On a map built over
+  // open sky (`flyersStay`: Starfall Heights' crater), a flyer keeps over the floor it lives on (a
+  // little past its ends), never out over the gap where a fighter on foot can't reach it.
+  const keep = def.fly && map.flyersStay;
+  const x1 = def.fly ? Math.max(def.w, spawn.x - 180, keep ? surface.x1 - 24 : -Infinity) : surface.x1 + def.w / 2;
+  const x2 = def.fly ? Math.min(map.width - def.w, spawn.x + 180, keep ? surface.x2 + 24 : Infinity) : surface.x2 - def.w / 2;
   const x = Math.max(x1, Math.min(x2, spawn.x));
   // A flyer hovers over its spot, never below the ground there.
   const hover = def.fly ? Math.min(spawn.y - HOVER, Math.min(groundAt(map, x), groundAt(map, x - def.w / 2), groundAt(map, x + def.w / 2)) - FLY_CLEAR) : 0;
