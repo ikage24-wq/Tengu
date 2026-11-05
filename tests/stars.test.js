@@ -19,7 +19,7 @@ const run = (w, seconds) => {
 
 function thief(level = 25, weapon = 'gauntlet_20') {
   const c = createCharacter('T', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   c.level = level;
   advanceJob(c, 'thief');
   c.equipment.weapon = makeEquip(weapon, {});

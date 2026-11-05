@@ -12,14 +12,19 @@ import { ITEMS } from '../src/data/items.js';
 
 const fresh = () => createCharacter('Tester', {});
 
-test('EXP curve matches the classic shape', () => {
-  assert.equal(expToNext(1), 15);
-  assert.equal(expToNext(5), 135);
-  assert.equal(expToNext(6), 372);
-  assert.equal(expToNext(10), 1716);
-  assert.equal(expToNext(20), 20216);
-  assert.equal(expToNext(30), 95700);
-  assert.ok(expToNext(49) > expToNext(40));
+test('EXP curve: quick first levels, then a steady climb to about 30 hours at 50', () => {
+  assert.equal(expToNext(1), 160);
+  assert.equal(expToNext(10), 13000);
+  assert.equal(expToNext(30), 380000);
+  // Every level asks more than the one before, never a sudden wall.
+  for (let l = 2; l < MAX_LEVEL; l++) {
+    assert.ok(expToNext(l) > expToNext(l - 1), `level ${l} asks more than ${l - 1}`);
+    if (l > 10) assert.ok(expToNext(l) / expToNext(l - 1) < 1.5, `level ${l} is a step, not a wall`);
+  }
+  // About 21 million EXP from 1 to 50 (the 30-hour pace, docs/design/main-story.md).
+  let total = 0;
+  for (let l = 1; l < MAX_LEVEL; l++) total += expToNext(l);
+  assert.ok(total > 20e6 && total < 22e6, `total ${total}`);
   assert.equal(expToNext(MAX_LEVEL), Infinity);
 });
 
@@ -73,7 +78,7 @@ test('leveling gives AP, novice SP up to level 10, and HP growth', () => {
 test('job advancement needs the level and adds HP, MP, and SP', () => {
   const c = fresh();
   assert.equal(advanceJob(c, 'warrior'), false);
-  gainExp(c, 20000);
+  gainExp(c, 110000);
   assert.ok(c.level >= 10);
   const hpBefore = c.baseHp;
   const spBefore = c.sp;
@@ -82,13 +87,13 @@ test('job advancement needs the level and adds HP, MP, and SP', () => {
   assert.equal(c.baseHp, hpBefore + 350);
   assert.equal(c.sp, spBefore + 1);
   const lv = c.level;
-  gainExp(c, 1000000);
+  gainExp(c, 4000000);
   assert.equal(c.sp, spBefore + 1 + 3 * (c.level - lv), 'three SP per level after advancing');
 });
 
 test('a Novice\'s first job gives back every stat point spent', () => {
   const c = fresh();
-  gainExp(c, 20000);
+  gainExp(c, 110000);
   autoAssignAp(c);
   assert.ok(c.base.str > 4, 'a Novice with a sword (or nothing) grows STR');
   const spent = c.ap;
@@ -101,7 +106,7 @@ test('a Novice\'s first job gives back every stat point spent', () => {
   assert.ok(c.base.int > c.base.str);
   // Later jobs keep what's spent.
   const before = { ...c.base };
-  gainExp(c, 10000000);
+  gainExp(c, 30000000);
   c.quests = {};
   for (const j of ['shrinemaiden', 'onmyoji']) if (advanceJob(c, j)) break;
   for (const k of Object.keys(before)) assert.ok(c.base[k] >= before[k]);
@@ -109,7 +114,7 @@ test('a Novice\'s first job gives back every stat point spent', () => {
 
 test('auto-assign spends every AP into the family stats', () => {
   const c = fresh();
-  gainExp(c, 20000);
+  gainExp(c, 110000);
   advanceJob(c, 'thief');
   autoAssignAp(c);
   assert.equal(c.ap, 0);
@@ -119,7 +124,7 @@ test('auto-assign spends every AP into the family stats', () => {
 
 test('skills: learning needs SP and the right job, and binds a hotkey', () => {
   const c = fresh();
-  gainExp(c, 20);
+  gainExp(c, 160);
   assert.ok(c.sp >= 1);
   assert.equal(learnSkill(c, 'bladerush'), false, 'warrior skill locked for novices');
   assert.equal(learnSkill(c, 'pebble'), true);

@@ -77,7 +77,7 @@ test('the story is optional: every region is open, only its arenas wait for it',
 
 test("a queen waits in her arena for her trial, and roams her region as a field boss", () => {
   const char = createCharacter('Hana', {});
-  gainExp(char, 1e6);
+  gainExp(char, 4e6);
   char.tutorial = null;
   const w = createWorld(char);
   w.god = true;

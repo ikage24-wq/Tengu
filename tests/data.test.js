@@ -203,7 +203,7 @@ test('the tracker follows every quest until you pin your own, and new quests joi
 
 test('errands: talks go in order, a delivery hands the item over, a visit can need a climb', () => {
   const c = createCharacter('Hana', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   // Lulu's gossip: Mira, then Pip, then Kestrel.
   acceptQuest(c, 'lulu_gossip');
   assert.ok(waitingToTalk(c, 'mira'));
@@ -237,7 +237,7 @@ test('errands: talks go in order, a delivery hands the item over, a visit can ne
 
 test('a daily quest comes back the next day', () => {
   const c = createCharacter('Hana', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   acceptQuest(c, 'daily_meadow');
   for (let i = 0; i < 15; i++) recordKill(c, 'mushkin');
   assert.ok(completeQuest(c, 'daily_meadow'));

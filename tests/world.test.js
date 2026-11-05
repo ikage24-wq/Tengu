@@ -176,7 +176,7 @@ test('dying costs EXP and respawns you in town', () => {
 
 test('the boss slam hurts players standing on the floor', () => {
   const w = newWorld();
-  gainExp(w.char, 1e7);
+  gainExp(w.char, 3e7);
   loadMap(w, 'bossroom', 'west');
   const boss = w.mobs.find((m) => m.def.boss);
   assert.ok(boss);

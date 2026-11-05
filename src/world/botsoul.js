@@ -186,6 +186,17 @@ export function goalProgress(char, g) {
 
 const isDone = (char, g) => goalProgress(char, g) >= 1;
 
+// EXP a second for someone hunting at this level the way a player does (about 10 kills a minute
+// on monsters of their level), so the other players level at the pace you do (core/exp.js).
+const HUNT_EXP = new Map();
+function huntExp(level) {
+  if (!HUNT_EXP.has(level)) {
+    const near = Object.values(MOBS).filter((m) => !m.boss && m.exp > 0 && Math.abs(m.level - level) <= 2).map((m) => m.exp).sort((a, b) => a - b);
+    HUNT_EXP.set(level, ((near[Math.floor(near.length / 2)] ?? expToNext(level) / 600) * 10) / 60);
+  }
+  return HUNT_EXP.get(level);
+}
+
 // A few seconds of play toward it (`secs`; `busy`: out hunting, so it goes faster).
 export function workGoal(bot, secs, rng, { hunting = false } = {}) {
   const s = soulOf(bot, rng);
@@ -197,7 +208,7 @@ export function workGoal(bot, secs, rng, { hunting = false } = {}) {
   if (g.kind === 'craft' && rng() < 0.012 * secs * keen) g.got = Math.min(g.n, g.got + 1 + (rng() < 0.3 ? 1 : 0));
   if (g.kind === 'level' && !bot.party) {
     const before = c.level;
-    gainExp(c, Math.ceil(expToNext(c.level) * 0.0035 * secs * keen));
+    gainExp(c, Math.ceil(huntExp(c.level) * secs * keen));
     if (c.level > before) {
       autoAssignAp(c);
       bot.level = c.level;

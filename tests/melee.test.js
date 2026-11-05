@@ -19,7 +19,7 @@ const idle = { held: new Set(), pressed: new Set(), locked: false };
 // A level 25 warrior in Mossy Woods with a row of very sturdy boars in front.
 function arena(weapon = 'sword_20') {
   const c = createCharacter('W', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   advanceJob(c, 'warrior');
   c.equipment.weapon = makeEquip(weapon, {});
   const w = createWorld(c);
@@ -439,7 +439,7 @@ test("both warrior paths wait on Brann's trial", async () => {
   w.char.quests.warrior_trial.state = 'done';
   assert.ok(advanceJob(w.char, 'berserker'));
   const mage = createCharacter('M', {});
-  gainExp(mage, 1e6);
+  gainExp(mage, 4e6);
   advanceJob(mage, 'mage');
   assert.equal(questState(mage, 'warrior_trial'), 'locked', 'only warriors take it');
 });
@@ -926,7 +926,7 @@ test('Rage makes every Berserker blow hit harder, and his blows land heavier tha
 function archer(job, weapon = job === 'stormcaller' ? 'crossbow_20' : 'bow_20') {
   const w = arena(weapon);
   const c = createCharacter('A', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   advanceJob(c, 'archer');
   c.quests.archer_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, job), `advanced to ${job}`);
@@ -949,7 +949,7 @@ test("both archer paths wait on Kestrel's trial, and each keeps to its own weapo
   const { JOBS } = await import('../src/data/jobs.js');
   const { roleOf } = await import('../src/data/dungeons.js');
   const c = createCharacter('A', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   advanceJob(c, 'archer');
   assert.equal(advanceJob(c, 'beastmaster'), false, 'no path before the trial');
   assert.equal(questState(c, 'archer_trial'), 'available');
@@ -1606,7 +1606,7 @@ function thiefPath(job) {
   const weapon = job === 'shinobi' ? 'dagger_20' : 'gauntlet_20';
   const w = arena(weapon);
   const c = createCharacter('T', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   advanceJob(c, 'thief');
   c.quests.thief_trial = { state: 'done', kills: {} };
   assert.ok(advanceJob(c, job), `advanced to ${job}`);
@@ -1627,7 +1627,7 @@ const castNow = (w, id) => {
 test("both thief paths wait on Vex's trial, and each keeps to its own weapon", async () => {
   const { JOBS } = await import('../src/data/jobs.js');
   const c = createCharacter('T', {});
-  gainExp(c, 1e6);
+  gainExp(c, 4e6);
   advanceJob(c, 'thief');
   assert.equal(advanceJob(c, 'shinobi'), false, 'not before the trial');
   assert.deepEqual(JOBS.shinobi.weapons, ['dagger']);

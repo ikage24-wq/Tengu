@@ -175,8 +175,15 @@ Starfall Heights, Sky Whale's Back (dungeon 45), the Moon Terrace, the Crystal T
 ## Reaching 50 has to mean something
 
 ### Pacing
-Today a player can reach 50 in roughly 4 to 6 hours of play: about 5,000 monsters by hunting
-alone, and quests pay about 40% of all the EXP on the way. Too fast for 50 to feel earned.
+Before 2026-11-05 a player could reach 50 in roughly 4 to 6 hours: about 5,000 monsters by
+hunting alone, and quests paid about 40% of all the EXP on the way. Too fast for 50 to feel earned.
+
+**Done 2026-11-05:** the hunting maps first got monsters sized to their floors (the Crystal Cave
+and Starfall Heights rebuilt with room to hunt), then `tools/hunt-rate.mjs` measured real hunting
+(an autopilot hero, every skill maxed, ideal gear: 15-40 kills a minute, about 4-5 hours from 12
+to 50), and the EXP curve (`src/core/exp.js`) was set for a player at about 10 kills a minute to
+reach 50 in about 30 hours: 1 h to 10, 4.5 h to 20, 10.5 h to 30, 20 h to 40. Total EXP to 50 went
+from 6.9 million to 21 million. The other players (bots) earn EXP at the same hunting pace.
 
 **Target: about 30 hours to level 50 for a player who does the story and some side stories
 (recommended; the player confirms the number before the curve changes).** Roughly:
@@ -212,8 +219,9 @@ How to get there without making it a grind (the game's own rule against chores):
 
 ## Build order (check in with the player between each)
 
-1. [ ] Pacing: confirm the target hours with the player, then reshape the EXP curve and re-place
-   the story quests' levels. Measure real kill rates per band before and after.
+1. [x] Pacing: monsters sized to the maps, the cave and Starfall rebuilt, real kill rates
+   measured, the EXP curve set for about 30 hours to 50 (2026-11-05). The story quests' levels get
+   re-placed chapter by chapter as each is built.
 2. [ ] Chapters 1-3: the festival clue, Gnarlroot's memory.
 3. [ ] Chapter 4: Moonlit Manor in the story.
 4. [ ] Chapter 5: Sylvana and the Aquarium.
