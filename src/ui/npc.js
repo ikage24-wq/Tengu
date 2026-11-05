@@ -25,7 +25,7 @@ import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
 import { withZoom } from '../render/pixel.js';
 import { lookRows, sameLook, fullLook, LOOK_TABS } from './looks.js';
-import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot, paper, tape, doodle, sticker, roughRect } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
@@ -62,22 +62,37 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   const y = 322 - H;
   Object.assign(win, { x, y, w: W, h: H });
   ui.theme = th;
-  softShadow(ctx, x, y, W, H, 12, 4);
-  // The same soft rim as the windows: a light halo, the theme colour, a white inner line.
-  box(ctx, x - 2, y - 2, W + 4, H + 4, { fill: null, edge: th.light, r: 16, width: 3 });
-  box(ctx, x, y, W, H, { fill: 'rgba(255,250,246,0.97)', edge: th.main, r: 14, width: 2.5 });
-  roundRect(ctx, x + 3, y + 3, W - 6, H - 6, 11);
+  // (Scrapbook: a page of the hero's scrapbook, ruled, with the speaker's photo stuck on at the
+  // left, peeking out over the top, and their name on a strip of washi tape.)
+  paper(ctx, x, y, W, H, { fill: '#fffbf2', edge: th.ink, r: 7, seed: 23, width: 1.8 });
+  ctx.save();
+  roughRect(ctx, x, y, W, H, 7, 23, 0.6);
+  ctx.clip();
   ctx.strokeStyle = th.light;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 0.8;
+  for (let ly = y + 30; ly < y + H - 4; ly += 12) {
+    ctx.beginPath();
+    ctx.moveTo(x + 100, ly);
+    ctx.lineTo(x + W - 4, ly);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
 
-  // The NPC, drawn big on a soft round stage, peeking over the top of the box.
+  // The speaker's photo: a white print taped at a tilt, the NPC drawn big, peeking over the top.
   const px = x + 52;
-  const g = ctx.createRadialGradient(px, y + H - 34, 4, px, y + H - 34, 46);
-  g.addColorStop(0, th.light);
-  g.addColorStop(1, 'rgba(255,255,255,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(px - 50, y + H - 84, 100, 84);
+  ctx.save();
+  ctx.translate(px, y + H / 2 + 4);
+  ctx.rotate(-0.04);
+  ctx.fillStyle = 'rgba(70,40,90,0.2)';
+  ctx.fillRect(-40, -H / 2 + 6, 82, H - 14);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-42, -H / 2 + 4, 82, H - 14);
+  ctx.fillStyle = th.light;
+  ctx.fillRect(-37, -H / 2 + 9, 72, H - 30);
+  ctx.restore();
+  tape(ctx, px - 34, y + 10, 22, 8, -0.6, th.main, { pattern: 'dots', alpha: 0.85 });
   ctx.save();
   roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
   ctx.clip();
@@ -85,29 +100,24 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   withZoom(2, () => drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
   ctx.restore();
 
-  // The name ribbon.
+  // The name on washi tape, the title written beside it.
   ctx.font = font(10, true);
   const nw = ctx.measureText(npc.name).width;
   ctx.font = font(7, true);
   const tw = ctx.measureText(npc.title).width;
   const rx = x + 104;
-  box(ctx, rx, y - 9, nw + tw + 30, 18, { fill: th.main, edge: '#ffffff', r: 9, width: 2 });
+  tape(ctx, rx + (nw + tw + 30) / 2, y, nw + tw + 34, 17, -0.015, th.main, { pattern: 'stripes', alpha: 0.95 });
   text(ctx, npc.name, rx + 10, y + 4, { size: 10, bold: true, color: '#ffffff', outline: th.ink });
-  text(ctx, npc.title, rx + 18 + nw, y + 3.5, { size: 7, bold: true, color: th.light });
+  text(ctx, npc.title, rx + 18 + nw, y + 3.5, { size: 7, bold: true, color: '#ffffff', outline: th.ink });
+  doodle(ctx, 'heart', x + W - 14, y + H - 12, 3.4, th.main, world.now);
 
-  // Close.
+  // Close: a round sticker with a hand-drawn cross.
   const cx = x + W - 20;
   const cy = y + 6;
   const hot = hover(ui, cx, cy, 13, 13);
-  ctx.fillStyle = hot ? '#ff6b8a' : '#ffffff';
-  ctx.beginPath();
-  ctx.arc(cx + 6.5, cy + 6.5, 6.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = hot ? '#e04a6c' : th.dark;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  ctx.strokeStyle = hot ? '#ffffff' : th.dark;
-  ctx.lineWidth = 1.8;
+  sticker(ctx, cx + 6.5, cy + 6.5, 5.6, hot ? '#ff6b8a' : th.light, { edge: hot ? '#e04a6c' : th.dark });
+  ctx.strokeStyle = hot ? '#ffffff' : th.ink;
+  ctx.lineWidth = 1.7;
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(cx + 4, cy + 4);
@@ -673,8 +683,9 @@ export function deathWindow(ui, state, world) {
   const th = THEMES.pink;
   ctx.fillStyle = 'rgba(70,40,100,0.4)';
   ctx.fillRect(0, 0, 640, 360);
-  softShadow(ctx, x, y, W, H, 12, 5);
-  box(ctx, x, y, W, H, { fill: '#fffaf6', edge: th.dark, r: 12, width: 2 });
+  paper(ctx, x, y, W, H, { fill: '#fffbf2', edge: th.ink, r: 7, seed: 41, width: 1.8 });
+  tape(ctx, x + 14, y + 4, 26, 9, -0.6, th.light, { pattern: 'stripes', alpha: 0.9 });
+  tape(ctx, x + W - 14, y + 4, 26, 9, 0.6, th.light, { pattern: 'stripes', alpha: 0.9 });
   // A cracked heart bobbing sadly above the card.
   const bob = Math.sin(world.now * 2.5) * 2;
   ctx.fillStyle = '#ffffff';

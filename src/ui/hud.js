@@ -6,7 +6,7 @@ import { expToNext } from '../core/exp.js';
 import { countItem } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken } from './kit.js';
+import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker } from './kit.js';
 import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
 import { heartbeat } from '../render/aura.js';
@@ -46,14 +46,15 @@ const HK_X = 382;
 const HK_STEP = 21;
 const HK_D = 19;
 const HK_Y = TRAY_Y + (TRAY_H - HK_D) / 2;
-// A tray: a cream pill with a pink rim, a white inner line and a soft drop shadow.
-function tray(ctx, x, w, edge = '#f4bcd8') {
-  softShadow(ctx, x, TRAY_Y, w, TRAY_H, TRAY_H / 2, 3);
-  box(ctx, x, TRAY_Y, w, TRAY_H, { fill: '#fffaf8', edge, r: TRAY_H / 2, width: 2 });
-  roundRect(ctx, x + 2.5, TRAY_Y + 2.5, w - 5, TRAY_H - 5, TRAY_H / 2 - 2.5);
-  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+// A tray: a strip of scrapbook paper with a hand-drawn rim, taped down at both ends with washi
+// tape (the rim blushes red at low HP: `edge`).
+const TAPES = ['#ffb8d4', '#b8dcff', '#c8f0b0', '#ffe08a'];
+function tray(ctx, x, w, edge = null) {
+  const seed = Math.round(x + w) % 41;
+  paper(ctx, x, TRAY_Y, w, TRAY_H, { fill: '#fffbf2', edge: edge && edge !== '#f4bcd8' ? edge : '#8a6a9a', r: 8, seed, width: 1.6 });
+  const c = TAPES[seed % TAPES.length];
+  tape(ctx, x + 4, TRAY_Y + 4, 18, 8, -0.75, c, { pattern: seed % 2 ? 'dots' : 'stripes', alpha: 0.85 });
+  tape(ctx, x + w - 4, TRAY_Y + TRAY_H - 4, 18, 8, -0.75, c, { pattern: seed % 2 ? 'stripes' : 'dots', alpha: 0.85 });
 }
 
 // Bar feedback, from how a value changed since last frame: the chunk just lost holds for a
@@ -242,24 +243,8 @@ export function drawHud(ui, state, world) {
     // Lifts under the mouse and sinks onto its lip the moment it's pressed.
     const lift = hot && ui.mouse.down ? 1.5 : hot ? -1.5 : 0;
     const k = key === 'bag' ? bump(hud.bagAt) : 1;
-    ctx.fillStyle = th.dark;
-    ctx.beginPath();
-    ctx.arc(cx, cy + 1.5, MENU_R * k, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = open ? th.main : hot ? '#ffffff' : th.light;
-    ctx.beginPath();
-    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
-    ctx.fill();
-    // A gloss along the top of the bubble.
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    ctx.beginPath();
-    ctx.ellipse(cx - 1.5, cy + lift - 4, 4, 2, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = th.dark;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(cx, cy + lift, MENU_R * k, 0, Math.PI * 2);
-    ctx.stroke();
+    // (Scrapbook: a round sticker, lifting off the page under the mouse, pressed flat on a click.)
+    sticker(ctx, cx, cy + lift, MENU_R * k - 1, open ? th.main : hot ? '#ffffff' : th.light, { edge: th.dark, lift: 1.5 - lift * 0.5 });
     icon(ctx, ic, cx, cy + lift, 7.8 * k, open ? '#ffffff' : th.dark);
     if (hot) tooltip(ui, [{ text: label, bold: true, color: th.dark }, { text: `Hotkey: ${hotkey}`, size: 8, color: COLORS.muted }]);
     if (clicked(ui, cx - 6.6, cy - 8, 13.2, 16)) state.windows[key].open = !open;
@@ -798,9 +783,12 @@ function drawMinimap(ui, world) {
   const y = 20;
   const X = (v) => x + v * scale;
   const Y = (v) => y + (v - top) * sy;
-  softShadow(ctx, x - 4, y - 16, w + 8, h + 20, 12, 3);
-  box(ctx, x - 4, y - 16, w + 8, h + 20, { fill: 'rgba(255,250,248,0.94)', edge: '#f4bcd8', r: 12, width: 2 });
-  box(ctx, x - 1, y - 13, w + 2, 11, { fill: SKY.main, edge: null, r: 5.5 });
+  // (Scrapbook: the map is a snapshot pasted onto paper, its name on a strip of tape.)
+  paper(ctx, x - 4, y - 16, w + 8, h + 20, { fill: '#fffbf2', edge: '#8a6a9a', r: 7, seed: 11, width: 1.6 });
+  ctx.font = font(7.5, true);
+  const nw = Math.min(w, ctx.measureText(map.name).width + 26);
+  tape(ctx, x - 1 + nw / 2, y - 7.5, nw, 11, -0.015, SKY.main, { pattern: 'stripes', alpha: 0.92 });
+  tape(ctx, x + w + 1, y + h + 1, 16, 7, -0.7, '#ffd6ea', { pattern: 'dots', alpha: 0.85 });
   icon(ctx, 'map', x + 6, y - 7.5, 8, '#ffffff');
   text(ctx, map.name, x + 13, y - 4.5, { size: 7.5, bold: true, color: '#ffffff', outline: SKY.ink });
   ctx.save();

@@ -180,8 +180,12 @@ export function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-export function box(ctx, x, y, w, h, { fill = COLORS.panel, edge = COLORS.panelEdge, r = 6, width = 1.5 } = {}) {
-  roundRect(ctx, x, y, w, h, r);
+export function box(ctx, x, y, w, h, { fill = COLORS.panel, edge = COLORS.panelEdge, r = 6, width = 1.5, plain = false } = {}) {
+  // (Scrapbook: anything card-sized is cut from paper by hand, a slight wobble and gentler
+  // corners; thin pills and bars stay smooth so they read cleanly. The wobble comes from the
+  // card's own size, so it never shimmers or changes as a window is dragged.)
+  if (!plain && h >= 14 && w >= 20) roughRect(ctx, x, y, w, h, Math.min(r, 6), Math.round(w * 3 + h * 7) % 61, Math.min(0.6, h / 30));
+  else roundRect(ctx, x, y, w, h, r);
   if (fill) {
     ctx.fillStyle = fill;
     ctx.fill();
@@ -204,16 +208,190 @@ export function softShadow(ctx, x, y, w, h, r, dy = 4) {
   ctx.fill();
 }
 
-// An inset well for grouping content inside a window.
-export function well(ctx, x, y, w, h, theme = THEMES.pink, r = 10) {
-  box(ctx, x, y, w, h, { fill: '#ffffff', edge: theme.light, r, width: 1.5 });
+
+// ---------- The scrapbook look (the player's pick for the whole UI, 2026-11-05) ----------
+// Windows are pages of a hero's scrapbook: cream paper with a hand-drawn rim, held on by washi
+// tape, with pencil doodles in the margins and stickers for badges and buttons. Every wobble is
+// fixed by the shape's own size and place (never random per frame), so nothing shimmers.
+
+// A rounded rectangle traced by hand: each edge bows and wobbles a little.
+export function roughRect(ctx, x, y, w, h, r = 6, seed = 0, amp = 0.7) {
+  const wob = (k) => Math.sin(seed * 1.7 + k * 2.3) * amp + Math.sin(seed * 0.9 + k * 5.1) * amp * 0.5;
+  const pts = [];
+  const side = (x0, y0, x1, y1, n, k0) => {
+    for (let i = 0; i < n; i++) {
+      const u = i / n;
+      const nx = -(y1 - y0);
+      const ny = x1 - x0;
+      const len = Math.hypot(nx, ny) || 1;
+      const d = wob(k0 + i) * Math.sin(u * Math.PI);
+      pts.push([x0 + (x1 - x0) * u + (nx / len) * d, y0 + (y1 - y0) * u + (ny / len) * d]);
+    }
+  };
+  const n = (len) => Math.max(2, Math.round(len / 18));
+  ctx.beginPath();
+  side(x + r, y, x + w - r, y, n(w), 0);
+  pts.push([x + w - r * 0.3, y + r * 0.3]);
+  side(x + w, y + r, x + w, y + h - r, n(h), 20);
+  pts.push([x + w - r * 0.3, y + h - r * 0.3]);
+  side(x + w - r, y + h, x + r, y + h, n(w), 40);
+  pts.push([x + r * 0.3, y + h - r * 0.3]);
+  side(x, y + h - r, x, y + r, n(h), 60);
+  pts.push([x + r * 0.3, y + r * 0.3]);
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i <= pts.length; i++) {
+    const [ax, ay] = pts[i - 1];
+    const [bx, by] = pts[i % pts.length];
+    ctx.quadraticCurveTo(ax, ay, (ax + bx) / 2, (ay + by) / 2);
+  }
+  ctx.closePath();
+}
+
+// A sheet of paper lying on the scene: a soft offset shadow, the cream sheet, a hand-drawn rim.
+export function paper(ctx, x, y, w, h, { fill = '#fffbf2', edge = '#8a6a9a', r = 6, seed = 0, shadow = true, width = 1.6 } = {}) {
+  if (shadow) {
+    ctx.fillStyle = 'rgba(70,40,90,0.22)';
+    roughRect(ctx, x + 2.5, y + 3.5, w, h, r, seed + 3, 0.6);
+    ctx.fill();
+  }
+  ctx.fillStyle = fill;
+  roughRect(ctx, x, y, w, h, r, seed, 0.6);
+  ctx.fill();
+  if (edge) {
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = width;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+}
+
+// A strip of washi tape: translucent, its two ends torn in a zigzag, striped or dotted.
+export function tape(ctx, cx, cy, w, h, angle, color, { pattern = 'stripes', alpha = 0.85 } = {}) {
   ctx.save();
-  roundRect(ctx, x, y, w, h, r);
+  ctx.translate(cx, cy);
+  ctx.rotate(angle);
+  const half = w / 2;
+  const zig = 2.2;
+  ctx.beginPath();
+  ctx.moveTo(-half, -h / 2);
+  ctx.lineTo(half, -h / 2);
+  for (let k = 0; k <= 4; k++) ctx.lineTo(half + (k % 2 ? -zig : 0), -h / 2 + (h * k) / 4);
+  ctx.lineTo(-half, h / 2);
+  for (let k = 4; k >= 0; k--) ctx.lineTo(-half + (k % 2 ? zig : 0), -h / 2 + (h * k) / 4);
+  ctx.closePath();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fill();
   ctx.clip();
-  ctx.fillStyle = theme.light;
   ctx.globalAlpha = 0.35;
-  ctx.fillRect(x, y, w, 3);
+  ctx.fillStyle = '#ffffff';
+  if (pattern === 'stripes') {
+    for (let sx = -half - h; sx < half; sx += 7) {
+      ctx.beginPath();
+      ctx.moveTo(sx, h / 2);
+      ctx.lineTo(sx + 3, h / 2);
+      ctx.lineTo(sx + 3 + h, -h / 2);
+      ctx.lineTo(sx + h, -h / 2);
+      ctx.fill();
+    }
+  } else {
+    for (let sx = -half + 3; sx < half; sx += 6) for (let sy = -h / 2 + 3; sy < h / 2; sy += 5) {
+      ctx.beginPath();
+      ctx.arc(sx + ((sy * 7) % 3), sy, 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   ctx.restore();
+}
+
+// A pencil doodle in a margin: a star, a heart, a swirl or a little sparkle burst.
+export function doodle(ctx, kind, x, y, s, color, t = 0) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 1.6 + x * 0.1) * 0.6);
+  ctx.rotate(Math.sin(t * 1.1 + y * 0.1) * 0.08);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (kind === 'star') {
+    for (let k = 0; k <= 10; k++) {
+      const r = k % 2 ? s * 0.42 : s;
+      const a = -Math.PI / 2 + (k * Math.PI) / 5;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+  } else if (kind === 'heart') {
+    ctx.moveTo(0, s * 0.8);
+    ctx.bezierCurveTo(-s * 1.3, -s * 0.1, -s * 0.6, -s, 0, -s * 0.35);
+    ctx.bezierCurveTo(s * 0.6, -s, s * 1.3, -s * 0.1, 0, s * 0.8);
+  } else if (kind === 'swirl') {
+    for (let k = 0; k < 28; k++) {
+      const a = k * 0.42;
+      const r = (k / 28) * s;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+  } else {
+    for (let k = 0; k < 4; k++) {
+      const a = (k * Math.PI) / 4;
+      ctx.moveTo(Math.cos(a) * s * 0.35, Math.sin(a) * s * 0.35);
+      ctx.lineTo(Math.cos(a) * s, Math.sin(a) * s);
+      ctx.moveTo(-Math.cos(a) * s * 0.35, -Math.sin(a) * s * 0.35);
+      ctx.lineTo(-Math.cos(a) * s, -Math.sin(a) * s);
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A round sticker: a white die-cut border round a coloured disc, lying a little lifted.
+export function sticker(ctx, x, y, r, fill, { edge = null, lift = 1.2 } = {}) {
+  ctx.fillStyle = 'rgba(70,40,90,0.25)';
+  ctx.beginPath();
+  ctx.arc(x + 0.6, y + lift, r + 1.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x, y, r + 1.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+  if (edge) {
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+// Photo corners: four little paper triangles holding a picture (or an item cell) in place.
+export function photoCorners(ctx, x, y, w, h, color, k = 4) {
+  ctx.fillStyle = color;
+  for (const [cx, cy, dx, dy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) {
+    ctx.beginPath();
+    ctx.moveTo(cx - dx, cy - dy);
+    ctx.lineTo(cx + dx * k, cy - dy);
+    ctx.lineTo(cx - dx, cy + dy * k);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+// An inset well for grouping content inside a window.
+// (Scrapbook: a card pasted onto the page, white with a pencil rim in the theme's colour.)
+export function well(ctx, x, y, w, h, theme = THEMES.pink, r = 10) {
+  const seed = Math.round(w * 2 + h) % 37;
+  ctx.fillStyle = 'rgba(70,40,90,0.1)';
+  roughRect(ctx, x + 1, y + 1.5, w, h, Math.min(r, 6), seed + 1, 0.5);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  roughRect(ctx, x, y, w, h, Math.min(r, 6), seed, 0.5);
+  ctx.fill();
+  ctx.strokeStyle = theme.dark;
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 1.1;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
 }
 
 // The plate behind a skill icon, centered on (x, y) with radius r. Its shape says what kind of
@@ -311,6 +489,8 @@ export function itemSlot(ctx, x, y, s, item, { state = null, edge = '#eadcf3', f
   const sel = state === 'selected' || state === 'target';
   box(ctx, x, y, s, s, { fill: state === 'target' ? '#fff6d0' : sel ? '#fff3c4' : state === 'hot' && item ? '#ffffff' : fill, edge: sel ? COLORS.select : edge, r, width: sel ? 2 : 1 });
   slotEdges(ctx, x, y, s, s, r);
+  // (Scrapbook: an item picked or under the mouse is held in by photo corners.)
+  if (item && (sel || state === 'hot')) photoCorners(ctx, x + 0.5, y + 0.5, s - 1, s - 1, sel ? '#c89a3a' : '#b89ad0', Math.max(3, s * 0.2));
   const isz = 16 * scale;
   const ix = Math.round(x + (s - isz) / 2);
   const iy = Math.round(y + (s - isz) / 2);
@@ -937,148 +1117,63 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   const { x, y } = win;
   const t = now();
 
-  // Soft shadow, then the cream body with a two-tone border, all bubbly round corners.
-  const R = 14;
-  softShadow(ctx, x, y, w, h, R, 4);
-  roundRect(ctx, x, y, w, h, R);
-  ctx.fillStyle = '#fffaf6';
-  ctx.fill();
-  // A faint wash of the theme color toward the bottom, and (the UI redraw) a soft polka-dot
-  // pattern over the body, like printed fabric.
+  // A scrapbook page: lifted cream paper with a hand-drawn rim in the theme's ink, faint ruled
+  // lines (a margin line down the left), the title on a strip of washi tape across the top, a
+  // sticker for its icon, tape holding a corner down, and pencil doodles in the margins.
+  const seed = (w * 7 + h * 13) % 97;
+  paper(ctx, x, y, w, h, { fill: '#fffbf2', edge: theme.ink, r: 7, seed, width: 1.8 });
   ctx.save();
+  roughRect(ctx, x, y, w, h, 7, seed, 0.6);
   ctx.clip();
-  ctx.fillStyle = theme.light;
-  ctx.globalAlpha = 0.35;
-  ctx.fillRect(x, y + h - 14, w, 14);
-  ctx.globalAlpha = 0.16;
-  for (let py = y + HEADER + 8, row = 0; py < y + h; py += 12, row++) {
-    for (let px = x + 8 + (row % 2) * 6; px < x + w; px += 12) {
-      ctx.beginPath();
-      ctx.arc(px, py, 1.3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-  // A stitched seam just inside the rim, below the title.
-  ctx.save();
-  roundRect(ctx, x + 5, y + HEADER + 4, w - 10, h - HEADER - 9, R - 5);
-  ctx.setLineDash([2.5, 2.5]);
   ctx.strokeStyle = theme.light;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-  // A soft halo of the theme's light tint round the rim keeps the edge from melting into a scene
-  // of the same pastel, without a hard dark line.
-  roundRect(ctx, x - 2, y - 2, w + 4, h + 4, R + 2);
-  ctx.strokeStyle = theme.light;
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  roundRect(ctx, x, y, w, h, R);
-  ctx.strokeStyle = theme.main;
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-  roundRect(ctx, x + 2.5, y + 2.5, w - 5, h - 5, R - 2.5);
-  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  // The title ribbon with a scalloped lower edge.
-  ctx.save();
-  roundRect(ctx, x, y, w, h, R);
-  ctx.clip();
-  const g = ctx.createLinearGradient(x, y, x, y + HEADER);
-  g.addColorStop(0, theme.light);
-  g.addColorStop(0.5, theme.main);
-  g.addColorStop(1, theme.main);
-  ctx.fillStyle = g;
-  ctx.fillRect(x, y, w, HEADER);
-  ctx.beginPath();
-  for (let sx = x; sx < x + w; sx += 8) ctx.arc(sx + 4, y + HEADER, 4, 0, Math.PI);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
-  ctx.fillRect(x, y + 2, w, 4);
-  ctx.restore();
-
-  // Twinkles on the ribbon.
-  for (let i = 0; i < 2; i++) {
-    const k = 0.5 + 0.5 * Math.sin(t * 2.5 + i * 2);
-    ctx.globalAlpha = 0.5 + 0.5 * k;
-    sparkle(ctx, x + w - 40 - i * 14, y + 7 + i * 4, 1.5 + k * 1.5, '#ffffff');
-  }
-  // Tiny stars twinkling in the bottom corners.
-  for (const [sx, ph] of [[x + 11, 0], [x + w - 11, 1.7]]) {
-    const k = 0.5 + 0.5 * Math.sin(t * 1.8 + ph);
-    ctx.globalAlpha = 0.45 + 0.45 * k;
-    sparkle(ctx, sx, y + h - 10, 1.6 + k * 1.2, theme.main);
-  }
-  ctx.globalAlpha = 1;
-  // A little bow tied on the ribbon, its tails swaying.
-  {
-    const bx0 = x + w - 62;
-    const by0 = y + 4;
-    const sw = Math.sin(t * 1.6) * 0.6;
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = theme.dark;
-    ctx.lineWidth = 1;
-    for (const dir of [-1, 1]) {
-      ctx.beginPath();
-      ctx.moveTo(bx0 + dir * 1.5, by0 + 1);
-      ctx.lineTo(bx0 + dir * 4 + sw, by0 + 8);
-      ctx.lineTo(bx0 + dir * 1.6 + sw, by0 + 8.6);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.ellipse(bx0 + dir * 3.6, by0, 3.4, 2.2, dir * 0.35, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = 0.8;
+  for (let ly = y + HEADER + 14; ly < y + h - 6; ly += 12) {
     ctx.beginPath();
-    ctx.arc(bx0, by0, 1.6, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(x + 4, ly);
+    ctx.lineTo(x + w - 4, ly);
     ctx.stroke();
   }
-
-  // The icon badge, sitting over the ribbon's corner.
-  const bx = x + 13;
-  const by = y + 8.5;
-  ctx.save();
-  ctx.fillStyle = '#ffffff';
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = '#ff8fa8';
   ctx.beginPath();
-  ctx.arc(bx, by, 9.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-  ctx.strokeStyle = theme.dark;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(bx, by, 9.5, 0, Math.PI * 2);
+  ctx.moveTo(x + 6, y + HEADER + 2);
+  ctx.lineTo(x + 6, y + h - 4);
   ctx.stroke();
-  icon(ctx, iconName, bx, by + 0.5, 12, theme.dark);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  // The title tape: a long strip across the top, tilted a hair, its ends torn.
+  ctx.font = font(10, true);
+  const tw = Math.min(w - 50, ctx.measureText(title).width + 46);
+  tape(ctx, x + 8 + tw / 2, y + 8.5, tw, 15, -0.012, theme.main, { pattern: 'stripes', alpha: 0.92 });
+  // A scrap of tape on the bottom corner holding the page down.
+  tape(ctx, x + w - 8, y + h - 5, 22, 8, -0.7, theme.light, { pattern: 'dots', alpha: 0.9 });
+  // Doodles in the margin, pencilled in the theme's colour.
+  doodle(ctx, ['star', 'heart', 'swirl', 'spark'][seed % 4], x + 13, y + h - 11, 3.4, theme.main, t);
+  doodle(ctx, 'spark', x + w - 46, y + 8, 3, '#ffffff', t + 1);
+
+  // The icon sticker, overlapping the tape's start.
+  sticker(ctx, x + 13, y + 8.5, 8.5, '#ffffff', { edge: theme.dark });
+  icon(ctx, iconName, x + 13, y + 9, 11, theme.dark);
 
   text(ctx, title, x + 27, y + 12.5, { size: 10, bold: true, color: '#ffffff', outline: theme.ink });
 
-  // Close button: a round candy button that blushes red under the mouse.
+  // Close: a little round sticker with a hand-drawn cross, blushing red under the mouse.
   const cx = x + w - 17;
   const cy = y + 2;
   const hot = hover(ui, cx, cy, 13, 13);
-  ctx.fillStyle = hot ? '#ff6b8a' : '#ffffff';
-  ctx.beginPath();
-  ctx.arc(cx + 6.5, cy + 6.5, 6.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = hot ? '#e04a6c' : theme.dark;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  sticker(ctx, cx + 6.5, cy + 6.5, 5.6, hot ? '#ff6b8a' : theme.light, { edge: hot ? '#e04a6c' : theme.dark });
   ctx.save();
   ctx.translate(cx + 6.5, cy + 6.5);
   if (hot) ctx.rotate(Math.PI / 4 * 0.5);
-  ctx.strokeStyle = hot ? '#ffffff' : theme.dark;
-  ctx.lineWidth = 1.8;
+  ctx.strokeStyle = hot ? '#ffffff' : theme.ink;
+  ctx.lineWidth = 1.7;
   ctx.lineCap = 'round';
   ctx.beginPath();
-  ctx.moveTo(-2.5, -2.5);
-  ctx.lineTo(2.5, 2.5);
+  ctx.moveTo(-2.4, -2.6);
+  ctx.quadraticCurveTo(0.2, -0.2, 2.6, 2.4);
   ctx.moveTo(2.5, -2.5);
-  ctx.lineTo(-2.5, 2.5);
+  ctx.quadraticCurveTo(-0.1, 0.3, -2.5, 2.6);
   ctx.stroke();
   ctx.restore();
   if (clicked(ui, cx, cy, 13, 13)) {
@@ -1105,26 +1200,38 @@ export function button(ui, x, y, w, h, label, { enabled = true, primary = false,
   const down = hot && ui.mouse.down;
   const r = (h - 2) / 2;
   const lip = 2;
-  const face = !enabled ? '#efe8f4' : th ? th.main : '#ffffff';
-  const lipColor = !enabled ? '#ddd2e8' : th ? th.dark : '#dccbee';
+  const face = !enabled ? '#f1ebf4' : th ? th.main : '#fffbf2';
   const dy = down ? lip : hot ? -0.5 : 0;
-  box(ctx, x, y + lip, w, h - lip, { fill: lipColor, edge: null, r });
-  box(ctx, x, y + dy, w, h - lip, { fill: face, edge: null, r });
+  // A sticker label: a shadow it lifts off (pressing it flat), a white die-cut border, the
+  // coloured face with a hand-drawn rim and a soft shine.
+  // (Its wobble comes from its own size and label, so a button in a dragged window keeps its shape.)
+  const seed = Math.round(w * 3 + h * 5 + String(label).length * 7) % 53;
+  const rr = Math.min(r, 6);
+  if (enabled && !down) {
+    ctx.fillStyle = 'rgba(70,40,90,0.24)';
+    roughRect(ctx, x + 0.5, y + lip + 0.5, w, h - lip, rr, seed + 5, 0.5);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffffff';
+  roughRect(ctx, x - 1.3, y + dy - 1.3, w + 2.6, h - lip + 2.6, rr + 1, seed, 0.5);
+  ctx.fill();
+  ctx.fillStyle = face;
+  roughRect(ctx, x, y + dy, w, h - lip, rr, seed, 0.5);
+  ctx.fill();
   if (enabled) {
     ctx.save();
-    roundRect(ctx, x, y + dy, w, h - lip, r);
     ctx.clip();
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillRect(x, y + dy, w, (h - lip) * 0.42);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillRect(x, y + dy, w, (h - lip) * 0.4);
     if (hot) {
       ctx.fillStyle = 'rgba(255,255,255,0.18)';
       ctx.fillRect(x, y + dy, w, h);
     }
     ctx.restore();
   }
-  roundRect(ctx, x, y + dy, w, h - lip, r);
-  ctx.strokeStyle = !enabled ? '#ddd2e8' : th ? th.dark : COLORS.cellEdge;
-  ctx.lineWidth = 1;
+  roughRect(ctx, x, y + dy, w, h - lip, rr, seed, 0.5);
+  ctx.strokeStyle = !enabled ? '#ddd2e8' : th ? th.ink : '#8a6a9a';
+  ctx.lineWidth = 1.1;
   ctx.stroke();
   const color = !enabled ? '#b8a8c8' : th ? '#ffffff' : COLORS.ink;
   const ty = y + dy + (h - lip) / 2 + size / 2.8;
@@ -1155,7 +1262,17 @@ export function tabs(ui, x, y, labels, current, { w = 46, h = 15, total = null }
     widths = need.map((n) => n + pad);
   }
   const lefts = widths.map((_, i) => widths.slice(0, i).reduce((a, b) => a + b + 2, 0));
-  box(ctx, x - 2, y - 2, widths.reduce((a, b) => a + b + 2, 0) + 2, h + 4, { fill: th.light, edge: null, r: (h + 4) / 2 });
+  // Index tabs on a page divider: paper tabs with rounded tops along a pencilled line; the open one
+  // stands a little taller in the window's colour.
+  const all = widths.reduce((a, b) => a + b + 2, 0) - 2;
+  ctx.strokeStyle = th.ink;
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x - 3, y + h + 0.5);
+  ctx.lineTo(x + all + 3, y + h + 0.5);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
   labels.forEach((label, i) => {
     const tx = x + lefts[i];
     w = widths[i];
@@ -1163,15 +1280,27 @@ export function tabs(ui, x, y, labels, current, { w = 46, h = 15, total = null }
     const hot = hover(ui, tx, y, w, h);
     // A pressed tab sinks a pixel straight away.
     const dy = hot && ui.mouse.down ? 1 : 0;
+    const up = on ? 1.5 : hot ? 0.8 : 0;
+    const top = y + dy - up;
+    const r = Math.min(5, h / 2.5);
+    ctx.beginPath();
+    ctx.moveTo(tx, y + h);
+    ctx.lineTo(tx, top + r);
+    ctx.quadraticCurveTo(tx, top, tx + r, top);
+    ctx.lineTo(tx + w - r, top);
+    ctx.quadraticCurveTo(tx + w, top, tx + w, top + r);
+    ctx.lineTo(tx + w, y + h);
+    ctx.closePath();
+    ctx.fillStyle = on ? th.main : hot ? '#ffffff' : th.light;
+    ctx.fill();
+    ctx.strokeStyle = on ? th.ink : th.dark;
+    ctx.lineWidth = on ? 1.3 : 0.9;
+    ctx.stroke();
     if (on) {
-      box(ctx, tx, y + dy, w, h, { fill: th.main, edge: th.dark, r: h / 2, width: 1 });
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      roundRect(ctx, tx + 2, y + 1 + dy, w - 4, h * 0.38, h / 4);
-      ctx.fill();
-    } else if (hot) {
-      box(ctx, tx, y + dy, w, h, { fill: dy ? th.light : 'rgba(255,255,255,0.75)', edge: null, r: h / 2 });
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillRect(tx + 2, top + 2, w - 4, h * 0.3);
     }
-    text(ctx, label, tx + w / 2, y + h - 4.5 + dy, { role: 'tab', align: 'center', color: on ? '#ffffff' : th.ink, outline: on ? th.ink : null });
+    text(ctx, label, tx + w / 2, y + h - 4.5 + dy - (on ? 1 : 0), { role: 'tab', align: 'center', color: on ? '#ffffff' : th.ink, outline: on ? th.ink : null });
     if (clicked(ui, tx, y, w, h)) picked = i;
   });
   return picked;
@@ -1320,18 +1449,16 @@ export function endUi(ui) {
   x = Math.max(4, Math.min(636 - w, x));
   y = Math.max(4, y);
   const accent = lines[0]?.color ?? COLORS.accent;
-  softShadow(ctx, x, y, w, h, 12, 3);
-  box(ctx, x, y, w, h, { fill: 'rgba(255,251,253,0.98)', edge: null, r: 12 });
+  // A sticky note: pale yellow paper with a highlighter stripe down the side, taped on at the top.
+  paper(ctx, x, y, w, h, { fill: '#fffbe2', edge: '#c8b070', r: 4, seed: Math.round(w + h) % 31, width: 1.2 });
   ctx.save();
-  roundRect(ctx, x, y, w, h, 12);
+  roughRect(ctx, x, y, w, h, 4, Math.round(w + h) % 31, 0.6);
   ctx.clip();
+  ctx.globalAlpha = 0.85;
   ctx.fillStyle = accent;
   ctx.fillRect(x, y, 4, h);
   ctx.restore();
-  roundRect(ctx, x, y, w, h, 12);
-  ctx.strokeStyle = '#f4bcd8';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  tape(ctx, x + w / 2, y + 1, Math.min(34, w * 0.4), 7, 0.04, '#ffd6ea', { pattern: 'dots', alpha: 0.8 });
   let ty = y + 5;
   for (const l of lines) {
     ty += (l.size ?? 9) + 3;

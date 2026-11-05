@@ -422,6 +422,15 @@ carry an improvement across every part of the game it applies to.
   0.12 of the width) and unfilled, or they wash over the fighters standing in them.
 
 **Maps and UI**
+- The UI is a hero's scrapbook (the player's pick, 2026-11-05): windows are taped-in pages of cream
+  paper with a hand-drawn rim in the theme's ink and faint ruled lines, the title on washi tape,
+  the icon and close on round stickers, pencil doodles in the margins, index tabs on a pencilled
+  line, sticker buttons that lift off the page and press flat, photo corners on the picked item
+  cell, sticky-note tooltips, and taped paper strips for the bottom bar (`kit.js` `paper`, `tape`,
+  `doodle`, `sticker`, `photoCorners`, `roughRect`). Every card-sized `box` is cut by hand; thin
+  bars stay smooth so they read cleanly. Wobbles come from a shape's own size, never per frame,
+  so nothing shimmers. The menus before the game (title, save files, dressing rooms, costume
+  department) are the theatre backstage instead.
 - Far silhouettes: flat, no outline, a lit rim on the upper-left by filling the shape in the rim
   colour and then its body shifted 2 px down-right (`litFill` in scenery.js); behind them one still
   simpler ridge, almost the sky's colour. Water takes a per-map ramp (`WATERS` in landmarks.js).
