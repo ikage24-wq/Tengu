@@ -694,14 +694,18 @@ export function drawStreet(ctx, map, cam, width, time) {
   for (const n of map.npcs) {
     const npc = NPCS[n.id];
     if (!npc.building) continue;
-    const x = snap(n.x - cam.x);
+    // Someone a cutscene brings over from another map leaves their stall at home, and someone
+    // walking about in one leaves theirs where it stands.
+    if (n.cine?.spawned) continue;
+    const hx = n.cine?.homeX ?? n.x;
+    const x = snap(hx - cam.x);
     if (x < -80 || x > width + 80) continue;
-    const s = buildingArt(npc.building, time, n.x);
+    const s = buildingArt(npc.building, time, hx);
     if (!s) continue;
-    const gy = ground(n.x);
+    const gy = ground(hx);
     place(ctx, s, x, gy);
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
-    if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, n.x);
+    if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, hx);
   }
 }
 

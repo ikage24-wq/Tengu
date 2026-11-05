@@ -79,7 +79,11 @@ function npcOf(world, who) {
   const n = world.map.npcs.find((q) => q.id === who);
   if (!n) return null;
   n.cine ??= {};
-  if (!world.cine.moved.has(n) && !n.cine.spawned) world.cine.moved.set(n, n.x);
+  if (!world.cine.moved.has(n) && !n.cine.spawned) {
+    world.cine.moved.set(n, n.x);
+    // (Their stall or hall stays where it stands while they walk about: render/town.js.)
+    n.cine.homeX = n.x;
+  }
   return n;
 }
 
