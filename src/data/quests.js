@@ -339,9 +339,12 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  // Elowen's story (her Star Witches'): the teapot she and Mira broke as apprentices, each keeping
+  // half (Mira the pot, Elowen the lid; data/scenes.js letter_open). The real quarrel was never
+  // about the teapot, and at the end Mira comes to the Grove to put it back together.
   elowen_dance: {
     id: 'elowen_dance', name: 'Dance of the Dryads', giver: 'elowen', minLevel: 15, family: 'mage',
-    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Calm 15 of them, and bring me 7 of their leaves to press into charms.",
+    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Calm 15 of them, and bring me 7 of their leaves to press into charms. Festival charms. Not that I'm going.",
     objectives: [{ type: 'kill', mob: 'leafling', count: 15 }, { type: 'collect', item: 'leaf_fragment', count: 7 }],
     rewards: { exp: 9700, gold: 320, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -362,11 +365,24 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'sylph', count: 15 }, { type: 'collect', item: 'sylph_feather', count: 6 }],
     rewards: { exp: 26000, gold: 700, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
+  elowen_wisps: {
+    id: 'elowen_wisps', name: 'Kettle Lights', giver: 'elowen', minLevel: 20, prereq: 'elowen_dance', family: 'mage',
+    text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",
+    objectives: [{ type: 'collect', item: 'wisp_flame', count: 8 }],
+    rewards: { exp: 16000, gold: 410, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
+  },
   elowen_foxfire: {
-    id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24,
-    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there are restless. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me.",
+    id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24, prereq: 'elowen_wisps', family: 'mage',
+    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there grant courage, they say. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me. I'll need it.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
     rewards: { exp: 24000, gold: 620, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  elowen_lid: {
+    id: 'elowen_lid', name: 'The Lid, Returned', giver: 'elowen', minLevel: 25, prereq: 'elowen_foxfire', family: 'mage',
+    text: "I can't take it to her myself. My knees won't let me. Will you carry the lid to Mira in Sprout Village? It's wrapped, so she can choose not to open it. Then come back and tell me what her face did.",
+    gives: [{ id: 'parcel' }],
+    objectives: [{ type: 'deliver', npc: 'mira', item: 'parcel', say: "The lid? She kept it, all these years? Oh, that silly, stubborn witch. Go back and tell her to put the kettle on. I'm coming." }],
+    rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   vex_miko: {
     id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26,

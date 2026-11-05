@@ -30,6 +30,10 @@ export const QUEST_SCENES = {
   kestrel_glade: { done: 'kestrel_glade_done' },
   kestrel_wings: { done: 'kestrel_wings_done' },
   spiritmage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
+  elowen_dance: { done: 'elowen_dance_done' },
+  elowen_wisps: { done: 'elowen_wisps_done' },
+  elowen_foxfire: { done: 'elowen_foxfire_done' },
+  elowen_lid: { done: 'elowen_lid_done' },
   thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
 };
 
@@ -191,6 +195,40 @@ export const SIDE_SCENES = {
   trial_kestrel_done: [
     { who: 'kestrel', text: '...Hm. Clean shots. Not bad at all.', mood: 'happy' },
     { who: 'kestrel', text: 'The Phantom Trickster makes her arrows vanish and her own copies shoot beside her. The Arbalist Engineer builds her own crossbow and blows things up with it. Which are you?' },
+  ],
+  // ----- Elowen's teapot -----
+  elowen_dance_done: [
+    { who: 'elowen', text: 'Seven leaves, pressed and charmed. They dance again. Thank you.', mood: 'happy' },
+    { together: [{ fx: 'leaves', at: 'elowen', n: 10 }, { emote: 'player', kind: '?', dur: 1.2 }] },
+    { who: 'player', text: "Festival charms? You said you weren't going." },
+    { together: [{ emote: 'elowen', kind: 'sweat', dur: 1.4 }, { wait: 0.5 }] },
+    { who: 'elowen', text: "Mira will be there. Long ago we broke our teacher's teapot between us. She kept the pot, I kept the lid. Silly, isn't it?", mood: 'sad' },
+  ],
+  elowen_wisps_done: [
+    { together: [{ fx: 'sparkle', at: 'elowen', n: 16 }, { wait: 0.6 }] },
+    { who: null, text: 'Elowen holds a little porcelain lid in the wisp-light. Painted stars on it wake, one by one.' },
+    { who: 'elowen', text: "I'll tell you the truth, {name}. It was never about the teapot.", mood: 'sad' },
+    { who: 'elowen', text: "Our teacher chose Mira to keep this Grove. I said cruel things, threw the lid, and left. Then Mira gave the Grove to me anyway, and went home to Sprout.", mood: 'sad' },
+    { who: 'elowen', text: "I never thanked her. Not once in all these years.", mood: 'sad' },
+  ],
+  elowen_foxfire_done: [
+    { together: [{ fx: 'notes', at: 'elowen', n: 8 }, { wait: 0.4 }] },
+    { who: null, text: 'Elowen ties one last Nekomata bell to the lid. It chimes, small and clear.' },
+    { who: 'elowen', text: 'The foxes say courage is just fear that has said its prayers. Mine are said.', mood: 'happy' },
+    { together: [{ face: 'elowen', to: 'player' }, { emote: 'elowen', kind: 'sweat', dur: 1.2 }] },
+    { who: 'elowen', text: '...Mostly said. Come back when you can. I have one more favour to ask.' },
+  ],
+  elowen_lid_done: [
+    { who: 'player', text: 'She cried a little. Then she said to put the kettle on. She was coming.' },
+    // (Elowen stands at 1500 in Moonleaf Grove: the hero steps to her left, Mira comes up the path on her right.)
+    { together: [{ emote: 'elowen', kind: '!', dur: 1.2 }, { walk: 'player', to: 1430, speed: 70 }, { spawn: 'mira', x: 1650, facing: -1 }] },
+    { together: [{ walk: 'mira', to: 'elowen', gap: 34, speed: 60 }, { face: 'elowen', to: 'mira' }] },
+    { who: 'mira', text: "I brought the pot. It's chipped. So am I. Hello, Elowen.", mood: 'happy' },
+    { who: 'elowen', text: "Mira, I'm sorry. For all of it. And thank you, for the Grove. I should have said so a long time ago.", mood: 'sad' },
+    { who: null, text: 'The lid settles onto the pot with a soft click. Starlight pours from the spout, and the old teapot begins to sing.' },
+    { together: [{ fx: 'notes', at: 'elowen', n: 14 }, { fx: 'sparkle', at: 'mira', n: 14 }, { emote: 'mira', kind: 'heart', dur: 1.8 }, { emote: 'elowen', kind: 'heart', dur: 1.8 }] },
+    { who: 'mira', text: 'Same time next spring? And every spring after.', mood: 'happy' },
+    { who: 'elowen', text: "Every spring. Now, {name}, come back at level 30. A Star Witch's trial waits, and you've earned your tea.", mood: 'happy' },
   ],
   trial_elowen: [
     { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home." },

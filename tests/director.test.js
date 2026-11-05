@@ -132,3 +132,22 @@ test("Kestrel's arrow story plays through in Sprout Village", () => {
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("Elowen's teapot story plays through in Moonleaf Grove, and Mira comes to tea", () => {
+  for (const id of ['elowen_dance_done', 'elowen_wisps_done', 'elowen_foxfire_done', 'elowen_lid_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'west');
+    const elowen = w.map.npcs.find((n) => n.id === 'elowen');
+    w.body.x = elowen.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.ok(!w.map.npcs.some((n) => n.id === 'mira'), `${id}: Mira goes home after tea`);
+  }
+});
