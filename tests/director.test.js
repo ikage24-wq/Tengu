@@ -188,3 +188,22 @@ test("Marlo's dream-jar story plays through on Pastel Harbor", () => {
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("Tora's Great Forge story plays through in Ember Crag", () => {
+  for (const id of ['tora_handles_done', 'tora_bellows_done', 'tora_draught_done', 'cores_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'crag', 'start');
+    const tora = w.map.npcs.find((n) => n.id === 'tora');
+    w.body.x = tora.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.equal(w.map.npcs.find((n) => n.id === 'tora').x, tora.x, `${id}: Tora is back at her forge`);
+  }
+});

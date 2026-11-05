@@ -79,7 +79,7 @@ export const NPCS = {
   },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
-    quests: ['tora_handles', 'brann_forge', 'tora_cores'],
+    quests: ['tora_handles', 'tora_bellows', 'brann_forge', 'tora_draught', 'tora_cores'],
     // She polishes gear at her forge (ui/polish.js).
     polish: true,
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },

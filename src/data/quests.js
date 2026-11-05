@@ -279,15 +279,31 @@ export const QUESTS = {
   },
 
   // Ember Crag.
+  // Tora's story: the Great Forge's fire has burned low since the wind stopped. She rigs bellows
+  // to work by hand, and when the old girl finally roars, every flame leans one way: something
+  // out past the Crystal Cave is drinking the island's warmth. Geode Cores hold heat nothing can
+  // take, so they light her for good, and the trail leads on to the cold springs (chapter 5).
   tora_handles: {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
-    text: "The best hilts are Heartwood, straight from a Treant in Mossy Woods. Bring me 12 and I'll put an edge on your gear.",
+    text: "The best hilts are Heartwood, straight from a Treant in Mossy Woods. Bring me 12 and I'll put an edge on your gear. Maybe I'll keep a couple back. Don't ask what for.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
+  tora_bellows: {
+    id: 'tora_bellows', name: 'Wings for the Old Girl', giver: 'tora', minLevel: 21, prereq: 'tora_handles',
+    text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots. Bring me 10 and we'll wake the old girl up together.",
+    objectives: [{ type: 'collect', item: 'bat_wing', count: 10 }],
+    rewards: { exp: 21000, gold: 550, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  tora_draught: {
+    id: 'tora_draught', name: 'Follow the Lean', giver: 'tora', minLevel: 25, prereq: 'tora_bellows',
+    text: "Every flame on Forge Row leans the same way now: toward the Crystal Cave. Go and see where my heat is going. Climb up to the high crystal ledges where the air moves, and clear 20 Gem Mimics off the shelves on your way. They bite.",
+    objectives: [{ type: 'visit', map: 'cave', above: 450, place: 'the high crystal ledges of the Glowcap Terraces' }, { type: 'kill', mob: 'crystalslime', count: 20 }],
+    rewards: { exp: 25000, gold: 660, items: [{ id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
   tora_cores: {
-    id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_handles',
-    text: "Geode Cores burn hotter than any coal. 10 from the Crystal Golems and I'll forge you a proper pair of gloves, made for your trade.",
+    id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
+    text: "Geode Cores burn hotter than any coal, and they hold their heat like a grudge: nothing can drink it out of them. 10 from the Crystal Golems and the old girl roars for good. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
     rewards: { exp: 44000, gold: 990, items: [{ id: 'warrior_gloves_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
