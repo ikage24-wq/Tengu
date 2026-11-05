@@ -879,8 +879,8 @@ Object.assign(STYLES, {
   },
   // Malvina Grimsworth's (the would-be villainess): two colossal drills down to her knees, tied
   // up high under a pair of bat wings shaped out of her own hair (scalloped, each scallop with
-  // its own shine), a long sheet behind, and a sharp widow's-peak fringe. Plum-black, the drills
-  // fading to a vivid tip colour.
+  // its own shine), a short sheet behind, and a sharp widow's-peak fringe. She wears it in one
+  // colour, crimson (the player tried a two-tone fade and turned it down).
   villainess(r, m) {
     // Each wing spreads out sideways from the knot like a bat's: a leading edge up to a little
     // claw, then three scalloped fingers along the trailing edge, a bone running to each.
