@@ -752,42 +752,63 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     const gy = ground(hx);
     place(ctx, s, x, gy);
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
-    if (npc.building === 'villaintower' && npc.sign) {
-      // Malvina's sign hangs off an iron bracket out of the tower's side, under the eaves.
-      towerBracket(ctx, x, gy);
-      hangingSign(ctx, x + 38, gy - 54, npc.sign, time, hx + 38);
-    } else if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, hx);
+    if (npc.sign) mountedSign(ctx, npc.building, x, gy, npc.sign, time, hx);
   }
 }
 
-// The wrought-iron bracket on Malvina's tower: a wall plate under the eaves, an arm reaching out
-// past the wall with a curl at its tip, and a tie rod up to the wall holding it level.
-function towerBracket(ctx, x, gy) {
-  const y = gy - 62;
-  const x0 = x + 12;
-  const x1 = x + 64;
+// Where each building's sign hangs: an iron arm out of the wall on the `side` with room beside it,
+// the wall's edge `wall` px from the middle, the arm `arm` px up from the ground (under the eaves),
+// and the iron's colours.
+const IRON = { iron: '#3a2f3e', hi: '#6a5a6e', bolt: '#ffd66b' };
+const SIGN_MOUNTS = {
+  kiosk: { wall: 29, arm: 48, side: 1 },
+  office: { wall: 37, arm: 52, side: -1 },
+  warrior: { wall: 46, arm: 62, side: 1 },
+  mage: { wall: 46, arm: 58, side: 1 },
+  archer: { wall: 46, arm: 62, side: -1 },
+  thief: { wall: 46, arm: 62, side: 1 },
+  villaintower: { wall: 21, arm: 62, side: 1, iron: '#2e1e3e', hi: '#5a4270', bolt: '#c8a0ff' },
+};
+
+// A building's sign on its wrought-iron bracket: a plate bolted to the wall under the eaves, an
+// arm reaching out past the wall with a curl at its tip, a tie rod up to the wall holding it level,
+// and the sign swinging on its chains from the arm, clear of the wall.
+function mountedSign(ctx, kind, x, gy, label, time, wx) {
+  const m = SIGN_MOUNTS[kind] ?? { wall: 30, arm: 50, side: 1 };
+  const c = { ...IRON, ...m };
+  const d = m.side;
+  ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  const w = Math.round(ctx.measureText(label).width + 12);
+  const wallX = x + d * m.wall;
+  const sx = wallX + d * (w / 2 + 3);
+  const y = gy - m.arm;
+  const tipX = sx + d * (w / 2 + 4);
+  const a = Math.min(wallX - d * 3, tipX);
+  const b = Math.max(wallX - d * 3, tipX);
   ctx.save();
-  ctx.strokeStyle = '#2e1e3e';
+  ctx.strokeStyle = c.iron;
   ctx.lineCap = 'round';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(x + 21, gy - 69);
-  ctx.lineTo(x1 - 4, y);
+  ctx.moveTo(wallX, y - 7);
+  ctx.lineTo(tipX - d * 4, y);
   ctx.stroke();
   ctx.beginPath();
-  ctx.arc(x1 - 1.5, y - 1.5, 1.8, Math.PI * 0.5, Math.PI * 2.2);
+  if (d > 0) ctx.arc(tipX - 1.5, y - 1.5, 1.8, Math.PI * 0.5, Math.PI * 2.2);
+  else ctx.arc(tipX + 1.5, y - 1.5, 1.8, Math.PI * 0.8, Math.PI * 2.5, true);
   ctx.stroke();
   ctx.restore();
-  ctx.fillStyle = '#2e1e3e';
-  ctx.fillRect(x0, y, x1 - x0 - 1, 1.6);
-  ctx.fillStyle = '#5a4270';
-  ctx.fillRect(x0, y, x1 - x0 - 1, 0.6);
+  ctx.fillStyle = c.iron;
+  ctx.fillRect(a, y, b - a, 1.6);
+  ctx.fillStyle = c.hi;
+  ctx.fillRect(a, y, b - a, 0.6);
   // The plate, bolted to the wall.
-  ctx.fillStyle = '#2e1e3e';
-  ctx.fillRect(x + 18, y - 3, 4, 7);
-  ctx.fillStyle = '#c8a0ff';
-  ctx.fillRect(x + 19.4, y - 2, 1, 1);
-  ctx.fillRect(x + 19.4, y + 2, 1, 1);
+  ctx.fillStyle = c.iron;
+  ctx.fillRect(wallX - 2, y - 3, 4, 7);
+  ctx.fillStyle = c.bolt;
+  ctx.fillRect(wallX - 0.6, y - 2, 1, 1);
+  ctx.fillRect(wallX - 0.6, y + 2, 1, 1);
+  hangingSign(ctx, sx, y + 8, label, time, wx + (sx - x));
 }
 
 // A soft round glow (lit windows, lanterns).
