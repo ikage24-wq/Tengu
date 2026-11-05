@@ -15,6 +15,8 @@
 
 import { sprite, blit, R, E, T, F } from './pixel.js';
 import { drawPosed } from './hero.js';
+import { ik, limb, pawCycle, bone } from './quadruped.js';
+import { MOUNTS } from '../data/mounts.js';
 
 const TAU = Math.PI * 2;
 export const MW = 64;
@@ -59,6 +61,9 @@ function follow(st, target, dt, k = 260, damp = 0.72) {
     const to = target[key];
     let x = st.P[key];
     if (typeof to !== 'number' || typeof x !== 'number') continue;
+    // (A gait's numbers, `g_`, come straight from the ground covered: on a spring, a planted paw
+    // would lag behind the ground and skate.)
+    if (key.startsWith('g_')) continue;
     let v = st.V[key] ?? 0;
     const kk = key.endsWith('Lag') ? k * 0.45 : k;
     const cc = key.endsWith('Lag') ? 2 * Math.sqrt(kk) * 0.55 : c;
@@ -78,27 +83,72 @@ function follow(st, target, dt, k = 260, damp = 0.72) {
 // rider sits [x, y] in the box, with the rider's pose and lean.
 const BODIES = {};
 
-// Puff Bun: a marshmallow bunny. Ground gait is a run of hops: crouch, spring (hind feet kick
-// back), tuck in the air, land on the forefeet. Ears trail on their own spring.
+// Puff Bun: a marshmallow bunny. It goes in real rabbit bounds, timed by the ground covered (one
+// bound every HOP px): the long hind feet push off (heels lifting, toes last to leave), it sails
+// with the hind feet trailing and the forepaws tucked, reaches down and lands on the forepaws,
+// nose dipping, then the hind feet swing in ahead of them and it pushes off again. Every paw on
+// the ground stays where it landed while the bunny goes over it. Ears trail on their own spring.
+const HOP = 34;
+// The parts of a bound (fractions of it): airborne, forepaws down, hind feet down.
+const BUN_AIR = [0.12, 0.72];
+const BUN_FORE = [0.7, 0.95];
+const BUN_HIND = [0.86, 1.14];
+const inSpan = (ph, [a, b]) => (ph - a + 2) % 1 < b - a;
+const spanU = (ph, [a, b]) => ((ph - a + 2) % 1) / (b - a);
 BODIES.bun = {
+  stride: HOP,
   colors: { base: '#fff6f9', sh: '#f6dbe8', sh2: '#e2bcd6', ear: '#ffb3cf', cheek: '#ffc2d8', nose: '#e8799f' },
   pose(m, t) {
-    const run = m.speed > 0.15 && !m.air;
+    const run = m.speed > 0.15 && !m.air ? 1 : 0;
     if (m.air) {
       const up = m.vy < 0;
-      return { hop: 0, crouch: 0, earA: up ? 0.95 : -0.15, earLag: up ? 0.6 : -0.35, feetF: up ? 2.2 : 3.2, feetB: up ? 4.5 : 2.2, pitch: up ? -0.12 : 0.1, nose: 0, eyes: 1, joy: 1 };
+      return { g_ph: 0, g_hop: 0, g_run: 0, g_air: up ? 1 : 2, crouch: 0, earA: up ? 0.95 : -0.15, earLag: up ? 0.6 : -0.35, pitch: up ? -0.12 : 0.1, nose: 0, eyes: 1, joy: 1 };
     }
     const land = Math.max(0, 1 - (t - m.landAt) / 0.22);
+    const ph = ((m.ph % 1) + 1) % 1;
     if (run) {
-      const ph = (t * 2.3 * (0.7 + m.speed * 0.4)) % 1;
-      const up = Math.sin(Math.PI * seg(ph, 0.18, 0.9));
-      return { hop: up * 9, crouch: ph < 0.18 ? 2.2 * (1 - ph / 0.18) : ph > 0.9 ? 2.2 * seg(ph, 0.9, 1) : 0, earA: 0.75 - up * 0.45, earLag: -up * 0.5, feetF: up * 2.6, feetB: up * 4.6, pitch: (ph < 0.5 ? -0.1 : 0.08) * up, nose: 0, eyes: 1, joy: up };
+      const flying = inSpan(ph, BUN_AIR);
+      const up = flying ? Math.sin(Math.PI * spanU(ph, BUN_AIR)) : 0;
+      // Nose up as the hind feet push, nose down coming in to land.
+      const pitch = inSpan(ph, [0.95, 1.12]) ? -0.1 : ph > 0.45 && ph < 0.86 ? 0.09 : 0;
+      const crouch = inSpan(ph, [0.74, 0.98]) ? 1.6 * Math.sin(Math.PI * spanU(ph, [0.74, 0.98])) : 0;
+      return { g_ph: ph, g_hop: up * 8.5, g_run: 1, g_air: 0, crouch, earA: 0.75 - up * 0.45, earLag: -up * 0.5, pitch, nose: 0, eyes: 1, joy: up };
     }
     const twitch = Math.max(0, Math.sin(t * 9)) * (Math.sin(t * 0.7) > 0.6 ? 1 : 0);
     const flick = Math.sin(t * 0.43) > 0.93 ? Math.sin(t * 22) * 0.15 : 0;
-    return { hop: 0, crouch: land * 2.6 + Math.sin(t * 1.6) * 0.35, earA: 0.25 + land * -0.4 + Math.sin(t * 1.6 - 0.6) * 0.06 + flick, earLag: 0, feetF: 0, feetB: 0, pitch: 0, nose: twitch, eyes: blinkAt(t, 3), joy: land * 0.6 };
+    return { g_ph: 0, g_hop: 0, g_run: 0, g_air: 0, crouch: land * 2.6 + Math.sin(t * 1.6) * 0.35, earA: 0.25 + land * -0.4 + Math.sin(t * 1.6 - 0.6) * 0.06 + flick, earLag: 0, pitch: 0, nose: twitch, eyes: blinkAt(t, 3), joy: land * 0.6 };
   },
-  shapes(P, time) {
+  // Where the hind toe and forepaw are (x from the body's middle, lift off the ground) and the
+  // hind foot's tilt, at a point in the bound.
+  feet(P) {
+    const ph = P.g_ph;
+    if (P.g_air) return P.g_air === 1 ? { hx: -14, hl: 3, ha: 0.9, fx: 15, fl: 4 } : { hx: -6, hl: 1.5, ha: 0.1, fx: 15, fl: 1 };
+    if (!P.g_run) return { hx: -7, hl: 0, ha: 0, fx: 12, fl: 0 };
+    const hr = (HOP * (BUN_HIND[1] - BUN_HIND[0])) / 2;
+    const fr = (HOP * (BUN_FORE[1] - BUN_FORE[0])) / 2;
+    let h;
+    if (inSpan(ph, BUN_HIND)) {
+      // Planted: the toe stays put as the bunny goes over it; the heel lifts for the push.
+      const u = spanU(ph, BUN_HIND);
+      h = { hx: -7 + hr * (1 - 2 * u), hl: 0, ha: u > 0.45 ? 0.9 * ss((u - 0.45) / 0.55) : 0 };
+    } else {
+      // Flying: trailing out behind, then swung in under the body ahead of the forepaws.
+      const u = spanU(ph, [BUN_HIND[1] - 1, BUN_HIND[0]]);
+      const trail = -7 - hr - 7 * Math.sin(Math.PI * Math.min(1, u / 0.6));
+      h = { hx: u < 0.6 ? trail : -7 - hr + 2 * hr * ss((u - 0.6) / 0.4), hl: 2 * Math.sin(Math.PI * u), ha: 0.9 * (1 - ss(u / 0.7)) + 0.3 * Math.sin(Math.PI * u) };
+    }
+    let f;
+    if (inSpan(ph, BUN_FORE)) {
+      const u = spanU(ph, BUN_FORE);
+      f = { fx: 12 + fr * (1 - 2 * u), fl: 0 };
+    } else {
+      // Tucked up under the chest in the air, then reaching forward and down to land.
+      const u = spanU(ph, [BUN_FORE[1] - 1, BUN_FORE[0]]);
+      f = { fx: 12 - fr + (2 * fr + 3) * ss(u) - 3 * ss((u - 0.8) / 0.2), fl: 3.4 * Math.sin(Math.PI * u) };
+    }
+    return { ...h, ...f };
+  },
+  shapes(P) {
     const c = this.colors;
     const by = P.crouch;
     const ear = (x, len, a, tone, inner) => {
@@ -112,13 +162,39 @@ BODIES.bun = {
     // above the bunny's back rather than across the rider.
     const raw = 0.55 + P.earA * 0.7 + P.earLag * 0.6;
     const eA = 1.1 * Math.tanh(raw / 1.1);
-    const fy = GROUND - 2.6;
+    const bx = 30;
+    const ft = this.feet(P);
+    const gy = GROUND - 1.2;
+    // A hind leg: the thigh down from the haunch to the heel, and the long foot out to the toe at
+    // (tx, ty), its heel lifting as it tilts up by `a`.
+    const hindFoot = (tx, ty, a, tone, sole, hip) => {
+      const hx = tx - Math.cos(a) * 7.6;
+      const hy = ty - Math.sin(a) * 7.6;
+      const { knee } = ik(hip[0], hip[1], hx, hy - 0.6, 4.2, 4.6, -1);
+      const nx = Math.sin(a);
+      const ny = -Math.cos(a);
+      return [
+        E(hip[0], hip[1], 4.6, 4.6, tone),
+        bone(hip, knee, 9.4, 6.6, tone),
+        E(knee[0], knee[1], 3.3, 3.3, tone),
+        bone(knee, [hx, hy - 0.6], 6.4, 4.4, tone),
+        T([[hx + nx * 2.4, hy + ny * 2.4], [tx + nx * 1.9, ty + ny * 1.9], [tx + 1.4, ty - 0.4], [tx + 0.8, ty + 0.9], [hx - nx * 1.2, hy - ny * 1.2], [hx - 2.4, hy - 0.6]], tone),
+        E(tx + 0.4, ty - 0.4, 2.6, 1.8, tone),
+        F(T([[hx - nx * 0.5, hy - ny * 0.5], [tx - 0.2, ty + 0.6], [tx + 1.2, ty + 0.3], [tx, ty - 0.2]], sole)),
+      ];
+    };
+    // A forepaw on its short leg down from the chest.
+    const fore = (rootX, px, lift, tone, sock) => {
+      const root = [rootX, 35 + by];
+      const { knee, paw } = ik(root[0], root[1], px, gy - lift, 4, 4.8, 1);
+      return limb(root, knee, paw, { w0: 5, w1: 3.4, w2: 3.2, c: tone, sock, pawRx: 2.4, pawRy: 1.5, toe: 0.6 });
+    };
     const back = [
       ...ear(43, 14.5, eA + 0.14, c.sh, c.sh2),
-      // far feet
-      E(17 - P.feetB * 0.8, fy - P.feetB * 0.2, 4.2, 2.6, c.sh), E(41 + P.feetF * 0.4, fy - P.feetF * 0.3, 3.2, 2.4, c.sh),
+      // the far hind foot and forepaw, a touch behind the near ones
+      ...hindFoot(bx + ft.hx + 1.6, gy - ft.hl - 0.6, ft.ha, c.sh, c.sh2, [bx - 8.4, 32.6 + by]),
+      ...fore(bx + 11.4, bx + ft.fx + 1.6, ft.fl + 0.4, c.sh, c.sh),
     ];
-    const bx = 30;
     const body = rot([[bx - 19, 30 + by], [bx - 15, 19 + by], [bx - 4, 13.5 + by], [bx + 9, 14 + by], [bx + 16, 19 + by], [bx + 18, 27 + by], [bx + 14, 37 + by], [bx, 40 + by], [bx - 14, 39 + by]], bx, 30 + by, P.pitch);
     const nose = P.nose > 0.5 ? 0.25 : 0;
     const front = [
@@ -127,9 +203,10 @@ BODIES.bun = {
       F(E(bx + 1, 18 + by, 9, 2.8, '#ffffff')),
       // the cotton tail
       E(bx - 19, 26 + by, 3.4, 3.4, '#ffffff'), F(E(bx - 19.5, 27.5 + by, 2.2, 1.4, c.sh)),
-      // near hind foot (kicks back on the spring) and forefoot
-      E(bx - 11 - P.feetB, fy - P.feetB * 0.25 + Math.min(by, 1), 5, 3, c.base), F(E(bx - 11 - P.feetB, fy + 1.2 - P.feetB * 0.25 + Math.min(by, 1), 4, 1.3, c.sh)),
-      E(bx + 11 + P.feetF * 0.5, fy - P.feetF * 0.35 + Math.min(by, 1), 3.6, 2.6, c.base),
+      // the near haunch, its long foot, and the near forepaw
+      ...hindFoot(bx + ft.hx, gy - ft.hl, ft.ha, c.base, c.sh, [bx - 10, 33 + by]),
+      E(bx - 10.6, 31.6 + by, 6, 5.4, c.base), F(E(bx - 11, 34.6 + by, 4.6, 1.8, c.sh)),
+      ...fore(bx + 10, bx + ft.fx, ft.fl, c.base, '#ffffff'),
       // face, at the front
       ...eye(bx + 12.4, 23 + by, P.eyes),
       F(E(bx + 15.4, 27 + by, 2, 0.9, c.cheek)), F(E(bx + 8.6, 27 + by, 1.6, 0.8, c.cheek)),
@@ -139,8 +216,8 @@ BODIES.bun = {
     ];
     return { back, front };
   },
-  seat: (P) => ({ x: 23, y: 15.5 + P.crouch, lean: P.pitch * 0.6 - P.hop * 0.004 }),
-  lift: (P) => P.hop,
+  seat: (P) => ({ x: 23, y: 15.5 + P.crouch, lean: P.pitch * 0.6 - P.g_hop * 0.004 }),
+  lift: (P) => P.g_hop,
 };
 
 // Paper Crane: folded washi. It floats a hand's breadth off the ground and beats its wings to
@@ -309,27 +386,62 @@ BODIES.kettle = {
   lift: () => 0,
 };
 
-// Shell Skipper: a sea turtle. On land it plods, front flippers rowing in turn; on water it skims,
-// flippers sweeping wide, a wake behind it.
+// Shell Skipper: a sea turtle. On land it hauls itself along the way sea turtles do: a front
+// flipper digs its tip into the ground and pulls back under the shell (the tip staying where it dug
+// in while the shell slides over it), lifts and reaches forward again, the other side half a pull
+// behind, the hind flippers shoving in turn; the shell rides up on each pull and the head pokes
+// forward with it. Timed by the ground covered. On water it skims, flippers sweeping wide, a wake
+// behind it.
+const SKIP = { stride: 13, duty: 0.62 };
 BODIES.turtle = {
+  stride: SKIP.stride,
   colors: { shell: '#7fd1b9', shellSh: '#4fa89a', shellLt: '#c8f4e2', plate: '#fff1d0', skin: '#bfe8a8', skinSh: '#8cc983', belly: '#fff6d8' },
   pose(m, t) {
     if (m.special === 'swim') {
       const s = Math.sin(t * 6);
-      return { row: s, rowLag: s * 0.5, head: 0.1, bob: Math.sin(t * 3) * 0.8, step: 0, eyes: blinkAt(t, 13), sink: 6 };
+      return { g_ph: 0, g_walk: 0, row: s, rowLag: s * 0.5, head: 0.1, bob: Math.sin(t * 3) * 0.8, eyes: blinkAt(t, 13), sink: 6 };
     }
     if (m.speed > 0.15 && !m.air) {
-      const s = Math.sin(t * 6.5);
-      return { row: s * 0.6, rowLag: s * 0.3, head: Math.sin(t * 13) * 0.08, bob: Math.abs(s) * 1.2, step: s, eyes: 1, sink: 0 };
+      const ph = ((m.ph % 1) + 1) % 1;
+      // The shell rides up on each pull (twice a stride, one flipper then the other).
+      const pull = Math.abs(Math.sin(ph * Math.PI * 2));
+      return { g_ph: ph, g_walk: 1, g_bob: pull * 1.1, g_head: pull * 1.4, row: 0, rowLag: 0, head: 0, bob: 0, eyes: 1, sink: 0 };
     }
-    return { row: Math.sin(t * 1.2) * 0.08, rowLag: 0, head: Math.sin(t * 0.9) * 0.1 + (Math.sin(t * 0.37) > 0.9 ? -0.3 : 0), bob: Math.sin(t * 1.2) * 0.4, step: 0, eyes: blinkAt(t, 13), sink: 0 };
+    return { g_ph: 0, g_walk: 0, g_bob: 0, g_head: 0, row: Math.sin(t * 1.2) * 0.08, rowLag: 0, head: Math.sin(t * 0.9) * 0.1 + (Math.sin(t * 0.37) > 0.9 ? -0.3 : 0), bob: Math.sin(t * 1.2) * 0.4, eyes: blinkAt(t, 13), sink: 0 };
   },
   shapes(P) {
     const c = this.colors;
-    const y = 30 - P.bob + P.sink;
-    const flip = (x0, y0, a, len, tone) => T(rot([[x0, y0 - 1.6], [x0 + len, y0 - 0.4], [x0 + len * 0.9, y0 + 2], [x0, y0 + 2.2]], x0, y0, a), tone);
-    const back = [flip(42, y + 5, 0.6 - P.row * 0.6, 9, c.skinSh), flip(20, y + 6, 2.4 + P.rowLag * 0.4, 7, c.skinSh)];
-    const hx = 50;
+    const walk = P.g_walk;
+    const y = 30 - P.bob - (P.g_bob ?? 0) + P.sink;
+    const gy = GROUND - 1;
+    // A flipper as a paddle from its root out to the tip, wide in the middle.
+    const paddle = (root, tip, w, tone) => {
+      const dx = tip[0] - root[0];
+      const dy = tip[1] - root[1];
+      const L = Math.hypot(dx, dy) || 1;
+      const nx = -dy / L;
+      const ny = dx / L;
+      const m1 = [root[0] + dx * 0.45, root[1] + dy * 0.45];
+      return T([[root[0] + nx * w * 0.35, root[1] + ny * w * 0.35], [m1[0] + nx * w * 0.6, m1[1] + ny * w * 0.6], [tip[0] + nx * 0.6, tip[1] + ny * 0.6], [tip[0] + dx / L * 0.8, tip[1] + dy / L * 0.8], [tip[0] - nx * 0.8, tip[1] - ny * 0.8], [m1[0] - nx * w * 0.5, m1[1] - ny * w * 0.5], [root[0] - nx * w * 0.35, root[1] - ny * w * 0.35]], tone);
+    };
+    const flipTip = (root, ph, front) => {
+      if (!walk) {
+        // Standing or swimming: the old sweep about the shoulder.
+        const a = front ? 0.9 - P.row * 0.9 : 2.2 + P.rowLag * 0.5;
+        const len = front ? 10 : 7.5;
+        return [root[0] + Math.cos(a) * len * (front ? 1 : 1), root[1] + Math.sin(a) * len * 0.5 + (P.sink ? 0 : 3)];
+      }
+      const [dx, up] = pawCycle(ph, SKIP.duty, (SKIP.stride * SKIP.duty) / 2, 2.6);
+      return [root[0] + (front ? 6 : -4) + dx, gy - up];
+    };
+    const ph = P.g_ph;
+    const rootFN = [38, y + 5.5];
+    const rootHN = [19, y + 6.5];
+    const back = [
+      paddle([rootFN[0] + 3, rootFN[1] - 0.5], flipTip([rootFN[0] + 3, rootFN[1] - 0.5], ph + 0.5, true), 3.6, c.skinSh),
+      paddle([rootHN[0] + 2, rootHN[1] - 0.5], flipTip([rootHN[0] + 2, rootHN[1] - 0.5], ph, false), 3, c.skinSh),
+    ];
+    const hx = 50 + (P.g_head ?? 0);
     const hy = y + 1 + P.head * 6;
     const front = [
       // head and neck
@@ -343,39 +455,49 @@ BODIES.turtle = {
       ...[[22, y - 3.5], [30, y - 5], [38, y - 3.5]].map(([x, py]) => F(T([[x - 3.6, py], [x - 1.6, py - 3], [x + 1.8, py - 3], [x + 3.6, py], [x + 1.8, py + 3], [x - 1.6, py + 3]], c.shellLt))),
       F(E(26, y - 7.4, 4, 1.2, '#ffffff')),
       ...[16, 22, 28, 34, 40, 45].map((x) => F(E(x, y + 3.8, 1.1, 0.8, c.plate))),
-      // the near flippers: front rows, back paddles
-      flip(38, y + 6, 0.9 - P.row * 0.9, 10, c.skin), flip(19, y + 6.5, 2.2 + P.rowLag * 0.5, 7.5, c.skin),
+      // the near flippers: the front one hauls, the hind one shoves
+      paddle(rootFN, flipTip(rootFN, ph, true), 4, c.skin),
+      paddle(rootHN, flipTip(rootHN, ph + 0.5, false), 3.4, c.skin),
     ];
     return { back, front, wake: P.sink > 3 };
   },
-  seat: (P) => ({ x: 29, y: 21 - P.bob + P.sink, lean: 0 }),
+  seat: (P) => ({ x: 29, y: 21 - P.bob - (P.g_bob ?? 0) + P.sink, lean: 0 }),
   lift: () => 0,
 };
 
-// Ivy Gecko: a leaf-green gecko with a blossom crest and a curled tail. It scurries on diagonal pairs
-// of legs (near-front with far-back), tail swinging the other way; on a rope it climbs, head up.
+// Ivy Gecko: a leaf-green gecko with a blossom crest and a curled tail. It scurries in a sprawl,
+// elbows and knees up above its back, on diagonal pairs (near fore with far hind), each sticky foot
+// planted toes-splayed while the body slides over it; the tail swings against the step and the head
+// sways. Timed by the ground covered. On a rope it climbs, head up.
+const GECKO = { stride: 17, duty: 0.55 };
 BODIES.gecko = {
+  stride: GECKO.stride,
   colors: { skin: '#9fe0a0', sh: '#6fbf86', sh2: '#4f9e7a', belly: '#e8ffd8', spot: '#ffe36b', bloom: '#ff9ec7', bloomLt: '#ffd2e6' },
   pose(m, t) {
     if (m.special === 'climb') {
       const s = Math.sin(t * 12);
-      return { stride: s, tail: s * 0.3, tailLag: s * 0.4, head: 0, crest: s * 0.1, eyes: 1, climb: 1, lick: 0 };
+      return { g_ph: (t * 1.9) % 1, g_walk: 1, tail: s * 0.3, tailLag: s * 0.4, head: 0, crest: s * 0.1, eyes: 1, lick: 0 };
     }
     if (m.speed > 0.15 || m.air) {
-      const s = m.air ? 0.6 : Math.sin(t * 15);
-      return { stride: s, tail: -s * 0.35, tailLag: -s * 0.5, head: s * 0.04, crest: -s * 0.15, eyes: 1, climb: 0, lick: 0 };
+      const ph = m.air ? 0.25 : ((m.ph % 1) + 1) % 1;
+      const s = Math.sin(ph * Math.PI * 2);
+      return { g_ph: ph, g_walk: m.air ? 0 : 1, tail: -s * 0.35, tailLag: -s * 0.5, head: s * 0.04, crest: -s * 0.15, eyes: 1, lick: 0 };
     }
     const lick = Math.sin(t * 0.55) > 0.92 ? 1 : 0;
-    return { stride: 0, tail: Math.sin(t * 1.5) * 0.2, tailLag: Math.sin(t * 1.5 - 1) * 0.25, head: Math.sin(t * 1.1) * 0.05, crest: Math.sin(t * 1.5 - 0.4) * 0.1, eyes: blinkAt(t, 17), climb: 0, lick };
+    return { g_ph: 0, g_walk: 0, tail: Math.sin(t * 1.5) * 0.2, tailLag: Math.sin(t * 1.5 - 1) * 0.25, head: Math.sin(t * 1.1) * 0.05, crest: Math.sin(t * 1.5 - 0.4) * 0.1, eyes: blinkAt(t, 17), lick };
   },
   shapes(P) {
     const c = this.colors;
     const y = 33;
-    const leg = (x, fwd, tone) => {
-      const k = fwd;
-      return T([[x - 1.6, y + 1], [x + 1.6, y + 1], [x + 2.2 + k * 3, GROUND - 1.2 + Math.max(0, -k) * -1.4], [x - 1 + k * 3, GROUND - 0.4 + Math.max(0, -k) * -1.4]], tone);
+    const gy = GROUND - 1;
+    // A sprawled leg: up out of the side to the elbow (or knee), down to the foot, toes splayed.
+    const leg = (root, ph, front, tone, toeTone) => {
+      const [dx, up] = P.g_walk ? pawCycle(ph, GECKO.duty, (GECKO.stride * GECKO.duty) / 2, 2.6) : [0, 0];
+      const foot = [root[0] + (front ? 2.4 : -1.6) + dx, gy - up];
+      const { knee, paw } = ik(root[0], root[1], foot[0], foot[1], 5.6, 7, 'up');
+      const toes = [-0.9, 0, 0.9].map((a) => F(E(paw[0] + Math.cos(a) * 1.8 + 0.6, paw[1] + 0.2 + Math.sin(a) * 0.6, 1.1, 0.7, toeTone)));
+      return [...limb(root, knee, paw, { w0: 3.4, w1: 2.4, w2: 2.2, c: tone, sock: tone, pawRx: 1.6, pawRy: 0.9, toe: 0.4 }), ...toes];
     };
-    const toes = (x, fwd, tone) => F(E(x + 0.6 + fwd * 3, GROUND - 0.8, 2.2, 0.9, tone));
     // the tail: a curl of beads
     const tail = [];
     let tx = 13;
@@ -387,7 +509,8 @@ BODIES.gecko = {
       [tx, ty] = at(tx, ty, a, 2.7);
       a -= 0.16 + P.tailLag * 0.12 + i * 0.07;
     }
-    const back = [leg(42, -P.stride, c.sh2), leg(20, P.stride, c.sh2), ...tail.map(([x, py, r]) => E(x, py, r, r, c.sh))];
+    const ph = P.g_ph;
+    const back = [...leg([41, y + 1.4], ph + 0.5, true, c.sh2, c.sh2), ...leg([21, y + 1.4], ph, false, c.sh2, c.sh2), ...tail.map(([x, py, r]) => E(x, py, r, r, c.sh))];
     const hy = y - 5 + P.head * 20;
     const front = [
       ...tail.map(([x, py, r]) => E(x, py - 0.4, r * 0.82, r * 0.82, c.skin)),
@@ -400,11 +523,11 @@ BODIES.gecko = {
       ...(P.lick ? [F(E(54.6, hy + 2.8, 1.8, 0.7, '#ff7fa8'))] : [F(E(52.8, hy + 2.4, 0.9, 0.4, INK))]),
       ...[0, 1, 2, 3, 4].map((i) => E(...at(44.6, hy - 5 + P.crest * 3, (i / 5) * TAU + P.crest, 1.5), 1.3, 1.3, c.bloom)), F(E(44.6, hy - 5 + P.crest * 3, 0.9, 0.9, c.bloomLt)),
       // the near legs
-      leg(40, P.stride, c.skin), toes(40, P.stride, c.sh), leg(19, -P.stride, c.skin), toes(19, -P.stride, c.sh),
+      ...leg([39, y + 2.4], ph, true, c.skin, c.sh), ...leg([19, y + 2.4], ph + 0.5, false, c.skin, c.sh),
     ];
     return { back, front };
   },
-  seat: (P) => ({ x: 28, y: 25, lean: P.stride * 0.02 }),
+  seat: (P) => ({ x: 28, y: 25, lean: Math.sin(P.g_ph * TAU) * 0.02 * P.g_walk }),
   lift: () => 0,
 };
 
@@ -449,6 +572,11 @@ export function drawMount(ctx, who, mount, x, y, time, motion, rider = null) {
   const dt = Math.max(0, Math.min(0.1, time - st.last));
   st.last = time;
   const m = { speed: 0, air: false, vy: 0, special: null, landAt: -9, hoverLeft: 1, ...motion };
+  // How far through its stride it is, from the ground it has covered (its share of top speed times
+  // the mount's top speed in px/s), so its feet keep pace with the ground at any speed.
+  const topSpeed = 125 * ((MOUNTS[mount]?.speed ?? 100) / 100);
+  if (!m.air && m.special !== 'swim' && m.special !== 'climb') st.dist = (st.dist ?? 0) + Math.min(1.6, m.speed) * topSpeed * dt;
+  m.ph = body.stride ? (st.dist ?? 0) / body.stride : 0;
   const target = body.pose(m, time);
   const P = follow(st, target, dt);
   const facing = m.facing < 0 ? -1 : 1;
@@ -458,7 +586,7 @@ export function drawMount(ctx, who, mount, x, y, time, motion, rider = null) {
   const top = Math.round(y - GROUND - lift);
   // The pose is rounded (a quarter pixel, a twentieth of a radian) before it's drawn, so a gait
   // comes round to the same sprites every cycle; lift is applied when blitting, not in the shapes.
-  const qp = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, typeof v !== 'number' ? v : k === 'roll' ? Math.round((v % 1) * 12) / 12 : k === 'hop' ? 0 : q(v, 4)]));
+  const qp = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, typeof v !== 'number' ? v : k === 'roll' ? Math.round((v % 1) * 12) / 12 : k === 'g_hop' ? 0 : k === 'g_ph' ? Math.round(v * 24) / 24 : q(v, 4)]));
   const { back, front, steam, wake } = body.shapes(qp, time);
   const backS = partSprite(mount, 'b', qp, time, back);
   const frontS = partSprite(mount, 'f', qp, time, front);

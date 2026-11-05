@@ -11,6 +11,7 @@ import { drawTerrain, drawIsland, drawLadder, wind, windTravel, windAt } from '.
 import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
+import { drawCat } from './critters.js';
 import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPigeons, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate } from './portals.js';
 import { levelRange } from '../world/routes.js';
@@ -710,14 +711,6 @@ function cactusArt(blink) {
 function rackArt() {
   return art('rack', 26, 24, () => [R(2, 6, 22, 2, '#8a5a3c'), R(2, 20, 22, 2, '#8a5a3c'), R(3, 6, 2, 18, '#8a5a3c'), R(21, 6, 2, 18, '#8a5a3c'),
     R(8, 2, 1.6, 18, '#dfe6f5'), R(7, 14, 3.6, 1.2, '#ffd66b'), R(13, 0, 1.6, 20, '#dfe6f5'), T([[12, 1], [13.8, -2], [15.6, 1]], '#dfe6f5'), R(17.6, 4, 1.4, 16, '#c99a6b'), E(18.3, 5, 2.4, 1.6, '#dfe6f5')]);
-}
-
-function catArt(color, frame) {
-  return art(`cat|${color}|${frame}`, 16, 14, () => {
-    const tail = [-1, 0, 1][frame];
-    return [E(7, 9.6, 5, 4, color), E(10.6, 5, 3.6, 3.2, color), T([[8, 3], [8.4, 0], [10, 2]], color), T([[11.4, 2], [13, 0], [13.4, 3]], color),
-      T([[2.6, 10], [0.4 + tail, 4], [2 + tail, 3.6], [3.8, 9]], color), ...face(10.6, 5.2, 1.3, 'happy', 'none'), F(E(10.6, 6.6, 0.4, 0.3, '#ff8fa8'))];
-  });
 }
 
 const posterArt = () => art('poster', 16, 26, () => [R(7, 10, 2, 16, '#8a5a3c'), R(1, 1, 14, 13, '#fff4e0'), F(R(3, 2.6, 10, 1.2, '#c99a6b')), F(E(8, 7.6, 2.6, 2.6, '#c9b8ff')), F(R(5.4, 6.4, 5.2, 1, '#3a2d4f')), F(R(3, 11.6, 10, 0.8, '#d9b88f'))]);
@@ -4746,7 +4739,9 @@ function prop(ctx, kind, x, y, seed, t, time, wx = x) {
     case 'dummy': return place(ctx, dummyArt(blinking(time, seed)), x, y + (Math.floor(time * 2 + seed * 9) % 6 === 0 ? -1 : 0));
     case 'cactus': return place(ctx, cactusArt(blinking(time, seed)), x, y);
     case 'rack': return place(ctx, rackArt(), x, y);
-    case 'cat': return place(ctx, catArt(pick(['#ffb38a', '#f2f2ff', '#7a6a8a', '#3b3650'], seed * 7), Math.floor(time * 2 + seed * 4) % 3), x, y, { flip: seed > 0.6 });
+    // A cat sat about the place, tail round its feet, ears and tail tip twitching, now and then
+    // licking a paw (render/critters.js).
+    case 'cat': return drawCat(ctx, `prop|${Math.round(wx)}`, pick(['#ffb38a', '#f2f2ff', '#7a6a8a', '#3b3650'], seed * 7), x, y, wx, seed > 0.6 ? -1 : 1, time, 'sit');
     case 'poster': return place(ctx, posterArt(), x, y);
     case 'lantern':
       // The paper lantern swings on its hook; its light follows it.

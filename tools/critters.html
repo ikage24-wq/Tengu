@@ -1,0 +1,103 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Critters</title></head>
+<body style="margin:0;background:#2a2238;color:#fff;font:12px sans-serif">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the town's animals and the four-legged mounts, live, magnified, for checking poses and
+// gaits. ?still=<seconds> freezes the clock (for pose sheets); ?slow=<k> slows it down.
+import { drawDog, drawCat } from '../src/render/critters.js';
+import { drawMount } from '../src/render/mounts.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+const q = new URLSearchParams(location.search);
+const S = Number(q.get('scale') ?? 4);
+const W = 300, H = 200;
+const canvas = document.getElementById('c');
+canvas.width = W * S; canvas.height = H * S;
+const ctx = canvas.getContext('2d');
+const still = q.get('still');
+const slow = Number(q.get('slow') ?? 1);
+const t0 = performance.now();
+function frame() {
+  const time = still != null ? Number(still) : ((performance.now() - t0) / 1000) * slow;
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#e4edd8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.setTransform(S, 0, 0, S, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, S);
+  ctx.fillStyle = '#b9c9a8';
+  for (const gy of [45, 95, 145, 195]) ctx.fillRect(0, gy, W, 1);
+  // Row 1: the dog running back and forth, standing, bowing.
+  const run = (time * 62) % 380 - 40;
+  drawDog(ctx, 'dog-run', run % 300, 45, run, 1, time, 'run');
+  drawDog(ctx, 'dog-stand', 60, 95, 60, 1, time, 'stand');
+  drawDog(ctx, 'dog-bow', 120, 95, 120, -1, time, 'bow');
+  // Row 2: cats.
+  const walk = (time * 20) % 340 - 20;
+  drawCat(ctx, 'cat-walk', '#f5c48a', walk, 95, walk, 1, time, 'walk');
+  drawCat(ctx, 'cat-sit', '#7a6a8a', 190, 95, 190, 1, time, 'sit');
+  drawCat(ctx, 'cat-nap', '#f2f2ff', 250, 95, 250, -1, time, 'nap');
+  // Rows 3-4: the four-legged mounts walking and standing.
+  const who = (window.__who ??= {});
+  for (const [i, m] of ['bun', 'gecko', 'turtle'].entries()) {
+    const sp = 0.9;
+    const x = ((time * 110 * sp + i * 100) % 360) - 30;
+    drawMount(ctx, (who[m] ??= {}), m, x, 145, time, { facing: 1, speed: sp, air: false, vy: 0, landAt: -9, worldX: x }, null);
+    drawMount(ctx, (who[m + 's'] ??= {}), m, 50 + i * 95, 195, time, { facing: 1, speed: 0, air: false, vy: 0, landAt: -9, worldX: 0 }, null);
+  }
+  if (still == null) requestAnimationFrame(frame);
+}
+// ?sheet=town or ?sheet=mounts: a pose sheet instead. Each row one animal, eight frames: across
+// one stride for a walker (the same animal stepped along an eighth of its stride a frame), or a few
+// seconds apart standing still.
+function sheet(which) {
+  const W8 = (k) => 10 + k / 60;
+  const mount = (id, stride, top) => {
+    const who = {};
+    const dt = stride / 8 / top;
+    return (k) => drawMount(ctx, who, id, 32, 0, 10 + k * dt, { facing: 1, speed: 1, air: false, vy: 0, landAt: -9 }, null);
+  };
+  const still = (id) => (k, i) => drawMount(ctx, {}, id, 32, 0, i * 1.3, { facing: 1, speed: 0, air: false, vy: 0, landAt: -9 }, null);
+  const rows = which === 'mounts' ? [
+    ['puff bun', mount('bun', 34, 162.5), true, 66, 52],
+    ['puff bun standing', still('bun'), false, 66, 52],
+    ['ivy gecko', mount('gecko', 17, 175), true, 66, 52],
+    ['ivy gecko standing', still('gecko'), false, 66, 52],
+    ['shell skipper', mount('turtle', 13, 143.75), true, 66, 52],
+    ['shell skipper standing', still('turtle'), false, 66, 52],
+  ] : [
+    ['dog run', (k) => drawDog(ctx, 'sd', 22, 0, (k * 19) / 8, 1, W8(k), 'run'), true, 44, 34],
+    ['dog stand', (k, i) => drawDog(ctx, 'ss' + i, 22, 0, 0, 1, i * 1.7, 'stand'), false, 44, 34],
+    ['dog bow', (k, i) => drawDog(ctx, 'sb' + i, 22, 0, 0, 1, i * 0.05, 'bow'), false, 44, 34],
+    ['cat walk', (k) => drawCat(ctx, 'cw', '#f5c48a', 22, 0, (k * 11) / 8, 1, W8(k), 'walk'), true, 44, 34],
+    ['cat sit', (k, i) => drawCat(ctx, 'cs' + i, '#7a6a8a', 22, 0, 0, 1, i * 1.9, 'sit'), false, 44, 34],
+    ['cat nap', (k, i) => drawCat(ctx, 'cn' + i, '#f2f2ff', 22, 0, 0, 1, i * 0.5, 'nap'), false, 44, 34],
+  ];
+  const CW = Math.max(...rows.map((r) => r[3]));
+  const tops = [];
+  let y = 0;
+  for (const r of rows) { tops.push(y); y += r[4]; }
+  canvas.width = 8 * CW * S; canvas.height = y * S;
+  nextFrame();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#e4edd8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  setHd(true, S);
+  for (const [r, [name, draw, walking, , rh]] of rows.entries()) {
+    // (A walker is primed off the sheet first, so it's already in its stride.)
+    if (walking) {
+      ctx.setTransform(S, 0, 0, S, -9999, -9999);
+      for (let k = -8; k < 0; k++) draw(k, k);
+    }
+    for (let i = 0; i < 8; i++) {
+      ctx.setTransform(S, 0, 0, S, i * CW * S, (tops[r] + rh - 3) * S);
+      ctx.imageSmoothingEnabled = false;
+      ctx.fillStyle = '#b9c9a8'; ctx.fillRect(0, 0, CW, 0.5);
+      draw(i, i);
+    }
+    ctx.setTransform(S, 0, 0, S, 0, tops[r] * S);
+    ctx.fillStyle = '#556'; ctx.font = '5px sans-serif'; ctx.fillText(name, 1, 5);
+  }
+}
+if (q.has('sheet')) sheet(q.get('sheet')); else frame();
+</script>
+</body></html>
