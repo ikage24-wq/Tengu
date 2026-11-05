@@ -118,7 +118,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   marina: {
-    id: 'marina', name: 'Marina', title: 'Harbor Diver', role: 'dungeon', dungeon: 'aquarium',
+    id: 'marina', name: 'Marina', title: 'Harbor Diver', role: 'dungeon', quests: ['story_tide', 'story_coralie'], dungeon: 'aquarium',
     look: { hairStyle: 'wolf', hairColor: '#7fd8e8', skinTone: '#e7b48f', eyeColor: '#1f7a8b', outfitColor: '#5ac8c8', eyeStyle: 'sparkle', face: 'grin' },
     greeting: 'The palace down there is glowing again. My bubble charm takes four at a time: a tank, a healer, two fighters. Hold your breath!',
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],

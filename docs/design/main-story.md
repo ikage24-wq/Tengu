@@ -227,7 +227,8 @@ How to get there without making it a grind (the game's own rule against chores):
 3. [x] Chapter 4: Moonlit Manor in the story (2026-11-05: two Elowen quests, An Invitation and
    The Last Waltz, since quests are handed in to whoever gave them; the clocks clue lands in the
    second one's ending).
-4. [ ] Chapter 5: Sylvana and the Aquarium.
+4. [x] Chapter 5: Sylvana and the Aquarium (2026-11-05: Marina gives The Still Tide, asking Granny
+   Kelp and Rook, and The Drowned Queen; Vex's chapter now starts at 23).
 5. [ ] Chapter 6: Carnival and Tamamo.
 6. [ ] Chapter 7: the Observatory and the midpoint twist.
 7. [ ] Chapter 8: Candy Volcano and Lilith.

@@ -135,9 +135,27 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch3_trial', win: 'ch3_win', done: 'ch3_end' },
   }),
 
+  story_tide: s('story_tide', 5, {
+    name: 'The Still Tide', giver: 'marina', minLevel: 21, prereq: 'story_3_2',
+    text: "The sea's stopped turning. No tide in, no tide out, and the palace down there has gone dark. Ask the folk who know the water: Granny Kelp at the lighthouse, and Captain Rook. If they say it's stuck too, it's not just me being dramatic. I'm never dramatic. I'm a diver.",
+    objectives: [
+      { type: 'talk', npc: 'kelp', say: "The tide? It stopped the night of the festival, dearie. I was up watching for falling stars. Not one fell, and the sea went flat as a plate. Old Lumen stopped waving too. Don't tell him I noticed." },
+      { type: 'talk', npc: 'rook', say: "The tide? Stuck at half for weeks, kid. My tea won't even slosh. You know how unsettling it is when your tea won't slosh?" },
+    ],
+    rewards: { exp: 9000, gold: 300, items: [{ id: 'orange_potion', qty: 20 }] },
+    scenes: { accept: 'tide_open', done: 'tide_done' },
+  }),
+  story_coralie: s('story_coralie', 5, {
+    name: 'The Drowned Queen', giver: 'marina', minLevel: 22, prereq: 'story_tide',
+    text: "Right. We're going down. Four of you, one bubble charm, deep breaths. Wake Queen Coralie in the Sunken Aquarium Palace, and ask her what she remembers. ...I said deep breaths, not dramatic gasps.",
+    objectives: [{ type: 'kill', mob: 'coralie', count: 1 }],
+    rewards: { exp: 26000, gold: 700, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    scenes: { done: 'coralie_done' },
+  }),
+
   // ---------- Chapter 6: Foxfire at Dusk (23-30) ----------
   story_4_1: s('story_4_1', 6, {
-    name: 'Tricks on the Road', giver: 'vex', minLevel: 22, prereq: 'story_3_2',
+    name: 'Tricks on the Road', giver: 'vex', minLevel: 23, prereq: 'story_coralie',
     text: "Travellers on the Fox Shrine Path keep coming back with empty pockets and leaves in their purses. Somebody's robbing people on MY island, and it isn't me. Unacceptable. Calm 20 Nekomata and look around.",
     objectives: [{ type: 'visit', map: 'shrine' }, { type: 'kill', mob: 'nekomata', count: 20 }],
     rewards: { exp: 26000, gold: 680, items: [{ id: 'white_potion', qty: 15 }] },
@@ -357,6 +375,33 @@ export const SCENES = {
     { who: 'bramble', text: "The same night as Mira's festival. The same night the lullaby stopped. That's not bad luck, that's a pattern.", mood: 'surprised' },
     { who: 'bramble', text: 'Rule 44: when the sky does something strange, go and see Elowen. She will have made it about her by now, but she will be right.', mood: 'happy' },
   ],
+  // ----- Chapter 5: the still tide -----
+  tide_open: [
+    { together: [{ emote: 'marina', kind: '!', dur: 1.2 }, { jump: 'marina', height: 10 }] },
+    { who: 'marina', text: "Psst! You! You look like you can hold your breath. Can you? How long? I can do four minutes. I'm doing it right now.", mood: 'happy' },
+    { together: [{ emote: 'player', kind: '?', dur: 1.2 }, { wait: 0.4 }] },
+    { who: 'marina', text: "...No I'm not. I'm talking. Anyway!", mood: 'surprised' },
+    { who: 'marina', text: "The sea's stopped turning. No tide in, no tide out. The palace down there has been dark for weeks, and the Drowned Queen won't wake.", mood: 'sad' },
+  ],
+  tide_done: [
+    { who: 'player', text: "Granny Kelp says the sea went flat the night of the festival. And Rook says his tea won't even slosh." },
+    { together: [{ emote: 'marina', kind: '!', dur: 1.4 }, { fx: 'bubbles', at: 'marina', n: 10 }] },
+    { who: 'marina', text: "The festival? The night the stars didn't fall? That's the night the palace's bubble wards started failing!", mood: 'surprised' },
+    { who: 'marina', text: "Everything's stuck on that one night. The stars, the sea, Rook's tea. Somebody pressed pause on the whole island.", mood: 'sad' },
+  ],
+  coralie_done: [
+    { who: 'player', text: "Queen Coralie's awake. Before she fell asleep, she said, the sky went still like a painting, and the tide forgot which way to go." },
+    { together: [{ emote: 'marina', kind: '!', dur: 1.2 }, { wait: 0.4 }] },
+    { who: 'marina', text: 'A painting. Stars stuck in a painting. And the sea copying it, because it didn\'t know what else to do.', mood: 'sad' },
+    { together: [{ face: 'marina', to: -1 }, { fx: 'bubbles', at: { x: 700, y: 352 }, n: 18 }, { wait: 0.6 }] },
+    { together: [{ fx: 'bubbles', at: { x: 560, y: 352 }, n: 18 }, { fx: 'sparkle', at: { x: 640, y: 344 }, n: 10 }] },
+    { who: null, text: 'Out past the pier, for the first time in weeks, a small wave rolls in. Then another. Then one rolls back out.' },
+    { together: [{ face: 'marina', to: 'player' }, { jump: 'marina', height: 16 }, { fx: 'bubbles', at: 'marina', n: 16 }] },
+    { who: 'marina', text: "Did you see that? A wave! A whole wave! I have never been so pleased to see water move.", mood: 'happy' },
+    { together: [{ face: 'marina', to: 'player' }, { emote: 'marina', kind: 'heart', dur: 1.8 }] },
+    { who: 'marina', text: "My mum used to dive the palace gardens when they were lit. I've only ever seen them dark. Tonight I'm going to see them glow. Thank you.", mood: 'happy' },
+    { who: 'marina', text: "Oh, and Vex up at the harbor was asking for you. She looked furious. Professionally furious.", mood: 'surprised' },
+  ],
   // ----- Chapter 4 -----
   party_open: [
     { card: 'Chapter 4', sub: 'The Party That Never Ends' },
@@ -404,7 +449,7 @@ export const SCENES = {
   ],
   ch3_end: [
     { who: 'elowen', text: 'Sylvana is smiling again, and the glade sings on its own. She also sent me forty pages of happy poems. Forty.', mood: 'happy' },
-    { who: 'elowen', text: "But she's the first, not the last. Vex has been asking for you in Pastel Harbor. Count your pockets afterwards." },
+    { who: 'elowen', text: "But she's the first, not the last. A diver called Marina at Tidepool Pier, past Pastel Harbor, sent word: the sea has gone still. Do take her a towel." },
   ],
   // ----- Chapter 4 -----
   ch4_open: [
