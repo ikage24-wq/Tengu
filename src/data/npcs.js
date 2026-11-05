@@ -66,7 +66,7 @@ export const NPCS = {
   kestrel: {
     id: 'kestrel', name: 'Kestrel', title: 'Acrobat Archer Instructor', role: 'instructor', family: 'archer',
     building: 'archer', sign: 'Archer Lodge', gear: { weapon: { id: 'bow_50' }, ...outfit('archer', 50) },
-    quests: ['kestrel_targets', 'kestrel_wings', 'archer_trial'], showJob: 'beastmaster',
+    quests: ['kestrel_targets', 'kestrel_canyon', 'kestrel_glade', 'kestrel_wings', 'archer_trial'], showJob: 'beastmaster',
     look: { hairStyle: 'ponytail', hairColor: '#9be08f', skinTone: '#fbd9bf', eyeColor: '#2f6b3a', outfitColor: '#8ee3a6', eyeStyle: 'round', face: 'cat' },
     greeting: 'Sprout Village is archer country! Keep your distance and your aim true.',
   },

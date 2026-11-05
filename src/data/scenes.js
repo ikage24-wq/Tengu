@@ -25,6 +25,10 @@ export const QUEST_SCENES = {
   brann_forge: { done: 'brann_forge_done' },
   brann_howl: { done: 'brann_howl_done' },
   archer_trial: { accept: 'trial_kestrel', done: 'trial_kestrel_done' },
+  kestrel_targets: { done: 'kestrel_targets_done' },
+  kestrel_canyon: { done: 'kestrel_canyon_done' },
+  kestrel_glade: { done: 'kestrel_glade_done' },
+  kestrel_wings: { done: 'kestrel_wings_done' },
   spiritmage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
 };
@@ -148,6 +152,37 @@ export const SIDE_SCENES = {
   trial_brann_done: [
     { who: 'brann', text: "Look at that. Not a step back. You've got a warrior's heart, {name}.", mood: 'happy' },
     { who: 'brann', text: 'Two paths now. The Paladin, who shields everyone. Or the Berserker, who ends fights fast. Choose with your heart.' },
+  ],
+  // ----- Kestrel's arrow -----
+  kestrel_targets_done: [
+    { who: 'kestrel', text: 'Fifteen Jackalopes! Quick eyes. You might make an archer yet.', mood: 'happy' },
+    { together: [{ emote: 'clover', kind: 'note', dur: 1.4 }, { emote: 'kestrel', kind: 'anger', dur: 1.4 }] },
+    { who: 'clover', text: "Careful, {name}. Ask her about the Spring Fair arrow sometime. Hee hee.", mood: 'happy' },
+    { who: 'kestrel', text: "Clover! That was ten years ago!", mood: 'angry' },
+    { together: [{ emote: 'kestrel', kind: 'sweat', dur: 1.4 }, { face: 'kestrel', to: 'player' }] },
+    { who: 'kestrel', text: "...I shot one straight up off Windy Canyon to win the fair. It never came down. The whole village still laughs.", mood: 'sad' },
+  ],
+  kestrel_canyon_done: [
+    { who: 'player', text: 'At the top the wind never stops. It blows east, hard, all the way to the trees.' },
+    { together: [{ emote: 'kestrel', kind: 'idea', dur: 1.4 }, { fx: 'wind', at: 'kestrel' }] },
+    { who: 'kestrel', text: 'East... to the Whispering Glade. It never fell. It flew.', mood: 'surprised' },
+    { who: 'kestrel', text: "And the Sylphs there keep anything that catches the light. Oh, they'd love my arrow.", mood: 'happy' },
+  ],
+  kestrel_glade_done: [
+    { who: null, text: "Among the stolen wind chimes at the top of the Glade lay one green-fletched arrow, straight as the day it was made." },
+    { together: [{ emote: 'kestrel', kind: '!', dur: 1.2 }, { jump: 'kestrel', height: 16 }, { fx: 'feathers', at: 'kestrel', n: 10 }] },
+    { who: 'kestrel', text: "That's it! That's MINE! Look, my initials on the shaft!", mood: 'surprised' },
+    { together: [{ emote: 'kestrel', kind: 'heart', dur: 1.4 }, { wait: 0.6 }] },
+    { who: 'kestrel', text: "Ten years in a Sylph nest. It went further than any arrow on this island. Nobody ever believed me.", mood: 'happy' },
+  ],
+  kestrel_wings_done: [
+    { who: 'kestrel', text: 'Imp-wing fletching. Lighter than air. Everybody out here! I want witnesses this time!', mood: 'happy' },
+    { together: [{ walk: 'clover', to: 'kestrel', gap: 105, speed: 90 }, { walk: 'posy', to: 'kestrel', gap: 145, speed: 140 }, { emote: 'clover', kind: '!', dur: 1 }, { emote: 'posy', kind: '!', dur: 1 }] },
+    { together: [{ face: 'kestrel', to: 'player' }, { fx: 'wind', at: 'kestrel' }, { wait: 0.8 }] },
+    { who: null, text: 'Kestrel breathes out and looses it straight up. It climbs out of sight... and a long moment later drops, true as a plumb line, into her open hand.' },
+    { together: [{ fx: 'confetti', at: 'kestrel', n: 30 }, { emote: 'clover', kind: 'heart', dur: 1.6 }, { emote: 'posy', kind: 'heart', dur: 1.6 }, { jump: 'kestrel', height: 14 }] },
+    { who: 'clover', text: "All right, all right! It lands! We'll stop laughing. Mostly.", mood: 'happy' },
+    { who: 'kestrel', text: "Keep your aim true and the wind will bring it home, {name}. Come see me at level 30. Your trial's waiting.", mood: 'happy' },
   ],
   trial_kestrel: [
     { who: 'kestrel', text: 'Wraiths drift. They dodge. They vanish. A real archer hits them anyway.' },

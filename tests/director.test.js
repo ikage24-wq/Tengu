@@ -115,3 +115,20 @@ test("Brann's shield story plays through at Ember Crag", () => {
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("Kestrel's arrow story plays through in Sprout Village", () => {
+  for (const id of ['kestrel_targets_done', 'kestrel_canyon_done', 'kestrel_glade_done', 'kestrel_wings_done']) {
+    const w = inSprout();
+    const kestrel = w.map.npcs.find((n) => n.id === 'kestrel');
+    w.body.x = kestrel.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

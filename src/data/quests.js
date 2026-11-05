@@ -161,6 +161,9 @@ export const QUESTS = {
     objectives: [{ type: 'collect', item: 'fluff', count: 9 }, { type: 'collect', item: 'ribbon', count: 7 }],
     rewards: { exp: 2000, gold: 170, items: [{ id: 'cash_casual_cardigan', qty: 1 }] },
   },
+  // Kestrel's story (her archers'): the arrow she shot off Windy Canyon at the Spring Fair when she
+  // was a girl. It never came down, everyone laughed, and she's never lived it down. The wind
+  // carried it to the Whispering Glade, where the Sylphs have kept it as treasure ever since.
   kestrel_targets: {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
     text: "Standing targets teach you nothing. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
@@ -318,9 +321,21 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'boarlet', count: 25 }],
     rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  kestrel_canyon: {
+    id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets', family: 'archer',
+    text: "Fine, you heard the story. Everyone has. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
+    objectives: [{ type: 'visit', map: 'canyon', above: 310, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
+    rewards: { exp: 5600, gold: 180, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  kestrel_glade: {
+    id: 'kestrel_glade', name: 'Sylph Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
+    text: "The wind up there blows east, all the way to the Whispering Glade. And Sylphs steal anything shiny or clever. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
+    objectives: [{ type: 'visit', map: 'glade', above: 330, place: 'the Sylphs\' hoard at the top of the Glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
+    rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
+  },
   kestrel_wings: {
-    id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 20, family: 'archer',
-    text: "Imps flit about the Twilight Ruins faster than any Jackalope. Shoot down 15, and bring me 7 Imp Wings for my fletching.",
+    id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade', family: 'archer',
+    text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
