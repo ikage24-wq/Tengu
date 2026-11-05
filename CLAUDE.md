@@ -217,6 +217,17 @@ there and update the status file as they get done.
   a story's humour grows from who the character is (Nim's shyness and her bedtime storybooks, Marlo's
   money-grubbing), never a new random theme each step, and parodies are things that character would
   do. Each story still lands one sincere beat under the jokes at its end.
+- **Every quest giver's quests are one short story (the player's standing rule, 2026-11-05).** A
+  giver's loose quests become a chain of about 4 steps (`prereq`), with a scene played where the
+  giver stands after every step (`QUEST_SCENES` and `SIDE_SCENES` in `src/data/scenes.js`): a twist
+  in the middle that no other story has used, and an ending that lands a sincere beat and points to
+  what comes next. Keep the giver's personality and lore, and make it funny from who they are (the
+  rule above). Stage scenes with care: only people who stand near the giver (others come in with
+  `spawn`), fixed spots so nobody overlaps a person, a prop or water, the camera framing what the
+  words describe, and new cutscene moves or effects when a moment needs them (`ride`, `trip`,
+  bursts at a place). Rewards pay about twice what hunting the same monsters would. Add a
+  play-through test in `tests/director.test.js`, watch every scene in the game, fix what looks
+  wrong, and send pictures or a video.
 - Bot and NPC chat must never read generic, spammy or repetitive (the player's standing ask).
   Everything the other players say goes through the chat gate (`src/world/chatlog.js`: no repeats
   for ten minutes, one line of their own per 30 s, a paced chat log), and every line is about
