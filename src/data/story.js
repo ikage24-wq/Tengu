@@ -277,8 +277,15 @@ export const STORY_QUESTS = {
     rewards: { exp: 130000, gold: 2000, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch6_stars' },
   }),
+  story_whale: s('story_whale', 10, {
+    name: 'The Sinking Whale', giver: 'nimbus', minLevel: 45, prereq: 'story_6_2',
+    text: "The Moon Terrace floats too high to walk to, but my old girl can fly you up. If she weren't asleep. And sinking. And covered in pirates. Take three friends over the Sky Whale's back from tail to brow, see off the captain and the barnacles, and wake her gently. She's grumpy before breakfast. Same as me.",
+    objectives: [{ type: 'kill', mob: 'whaledream', count: 1 }],
+    rewards: { exp: 120000, gold: 2000, items: [{ id: 'warrior_hat_45', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 10 }] },
+    scenes: { accept: 'whale_open', done: 'whale_done' },
+  }),
   story_6_3: s('story_6_3', 10, {
-    name: 'The Moon Valkyrie', giver: 'elowen', minLevel: 48, prereq: 'story_6_2',
+    name: 'The Moon Valkyrie', giver: 'elowen', minLevel: 46, prereq: 'story_whale',
     text: "Selene guards Hayate's sleep on the Moon Terrace at the far end of Starfall Heights. She will test you, she won't hold back, and she won't give a tragic speech either. She thinks those are tacky. Show her the island is worth waking for.",
     objectives: [{ type: 'kill', mob: 'selene', count: 1 }],
     trial: 'terrace',
@@ -288,14 +295,14 @@ export const STORY_QUESTS = {
 
   // ---------- Chapter 10: The Crystal King (45-50) ----------
   story_7_1: s('story_7_1', 10, {
-    name: 'Home Again', giver: 'mira', minLevel: 45, prereq: 'story_6_3',
+    name: 'Home Again', giver: 'mira', minLevel: 47, prereq: 'story_6_3',
     text: "You're back! Oh, look at you. Sit. Tea. Tell me everything... and then, I'm afraid, there's one more thing. Captain Rook says the Crystal Cave has gone completely dark. Caves are usually dark, dear. This is extra.",
     objectives: [{ type: 'talk', npc: 'rook', say: "The throne room's dark as a pocket. Prismaris has been drinking every bit of light on the island. I lit a candle down there and it got nervous and left. Go easy on him, kid... but go." }],
     rewards: { exp: 100000, gold: 1700, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch7_open', done: 'ch7_rook' },
   }),
   story_7_2: s('story_7_2', 10, {
-    name: 'Heart of Crystal', giver: 'mira', minLevel: 45, prereq: 'story_7_1',
+    name: 'Heart of Crystal', giver: 'mira', minLevel: 49, prereq: 'story_7_1',
     text: "Prismaris, the Crystal King, sits on his throne deep in the Crystal Cave. Bring the light home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
     rewards: { exp: 400000, gold: 2700, items: [{ id: 'warrior_hat_50', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 20 }] },
@@ -726,8 +733,29 @@ export const SCENES = {
     { who: 'player', text: 'So what will she do?' },
     { together: [{ emote: 'elowen', kind: 'sweat', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'elowen', text: 'Win, usually. Do not let her.', mood: 'sad' },
+    { who: 'elowen', text: "Oh, and you'll need a ride. The terrace floats far too high to walk to. Skipper Nimbus at Cloudcatch Pier, past Starfall, has a whale. It's sinking. Do sort that out first.", mood: 'happy' },
+  ],
+  whale_open: [
+    { together: [{ emote: 'nimbus', kind: '!', dur: 1.2 }, { jump: 'nimbus', height: 10 }] },
+    { who: 'nimbus', text: "Hold onto your hat! ...Ha. Habit. I don't even have a hat. The wind took it twenty years ago, and I never bought another.", mood: 'happy' },
+    { who: 'nimbus', text: 'Forty years the wind flew my ponytail out behind me like a flag. Now it just HANGS there. It is deeply unnatural.', mood: 'angry' },
+    { together: [{ face: 'nimbus', to: 1 }, { wait: 0.6 }, { fx: 'clouds', at: 'nimbus', n: 8 }] },
+    { who: 'nimbus', text: "The wind held my old girl up. Now it's gone, she's sinking in her sleep, and the pirates are picking her clean. I've sailed her back since I was knee-high to a kite.", mood: 'sad' },
+  ],
+  whale_done: [
+    { who: 'player', text: "She's awake. She said she dreamt she was a pebble at the bottom of the sea." },
+    { together: [{ shake: 2.4, dur: 0.8 }, { fx: 'clouds', at: { x: 400, y: 300 }, n: 16 }, { fx: 'clouds', at: { x: 700, y: 280 }, n: 14 }, { face: 'nimbus', to: -1 }] },
+    { who: null, text: 'Out beyond the pier, a mountain of soft sky-blue rises up through the clouds, and a great tail sweeps once.' },
+    { together: [{ fx: 'wind', at: 'nimbus' }, { fx: 'wind', at: 'player' }, { emote: 'nimbus', kind: '!', dur: 1.2 }, { jump: 'nimbus', height: 14 }] },
+    { who: null, text: "And the tail's gust, the first wind on the island in weeks, blows Skipper Nimbus's ponytail straight out like a flag." },
+    { together: [{ face: 'nimbus', to: 'player' }, { emote: 'nimbus', kind: 'heart', dur: 1.8 }, { fx: 'sparkle', at: 'nimbus', n: 12 }] },
+    { who: 'nimbus', text: "MY PONYTAIL! Look at it go! Oh, I have missed that. Forty years, and she still can't wake up without making a scene.", mood: 'happy' },
+    { who: 'nimbus', text: "She'll carry you up past the clouds to the Moon Terrace, kid, where Selene keeps watch. Whatever's down in the dark, you'll go in from the top of the sky. Make it count.", mood: 'happy' },
+    { who: 'nimbus', text: "Go and tell your witch friend in the Grove you've got a ride. I'm going to stand here and enjoy the breeze.", mood: 'happy' },
   ],
   ch6_trial: [
+    { who: 'player', text: "Skipper Nimbus's whale is awake. She'll carry me up to the Moon Terrace." },
+    { who: 'elowen', text: 'Then go. Stand up straight. And if she makes a speech after all, do tell me. I will never let her forget it.', mood: 'happy' },
     { who: null, text: 'The Moon Terrace. Stars fall like slow snow. A knight in silver stands between you and the sky.' },
     { who: 'selene', text: 'Hayate sleeps. She is tired, traveller. Tired of a world that only takes.', mood: 'sad' },
     { who: 'player', text: "Let me guess. You're lonely, and this is a cry for—" },

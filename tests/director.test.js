@@ -452,3 +452,21 @@ test("chapter 9's new scenes play through on Theatre Row where Madame Encore sta
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("chapter 10's whale scenes play through at Cloudcatch Pier where Skipper Nimbus stands", () => {
+  for (const id of ['whale_open', 'whale_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'cloudcatch_pier', 'start');
+    const nimbus = w.map.npcs.find((n) => n.id === 'nimbus');
+    w.body.x = nimbus.x - 70;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

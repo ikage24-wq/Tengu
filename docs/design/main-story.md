@@ -238,7 +238,8 @@ How to get there without making it a grind (the game's own rule against chores):
    Just Desserts on the Sugar Trail; Bonbon saw the warmth flow to the grotto; Lilith now at 38).
 8. [x] Chapter 9: the Dream Theatre (2026-11-05: Madame Encore gives Opening Night and A Better
    Ending on Theatre Row; she performs the Playwright's script, the story so far).
-9. [ ] Chapter 10: the Sky Whale, Selene, Prismaris.
+9. [x] Chapter 10: the Sky Whale, Selene, Prismaris (2026-11-05: Skipper Nimbus gives The Sinking
+   Whale; Selene now at 46, Home Again at 47, the Crystal King at 49).
 10. [ ] The Wind Returns: the level-50 finale and its rewards.
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in

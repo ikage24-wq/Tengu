@@ -148,7 +148,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   nimbus: {
-    id: 'nimbus', name: 'Skipper Nimbus', title: 'Whale Sailor', role: 'dungeon', dungeon: 'skywhale',
+    id: 'nimbus', name: 'Skipper Nimbus', title: 'Whale Sailor', role: 'dungeon', quests: ['story_whale'], dungeon: 'skywhale',
     look: { hairStyle: 'ponytail', hairColor: '#8ac8ff', skinTone: '#f2c8a8', eyeColor: '#2a74c8', outfitColor: '#3a74c8', eyeStyle: 'round', face: 'grin' },
     greeting: "I've sailed that whale's back since I was knee-high to a kite. She's sinking in her sleep, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
