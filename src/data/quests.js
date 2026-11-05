@@ -14,7 +14,7 @@ export const QUESTS = {
   // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
   tut_hello: {
     id: 'tut_hello', name: 'Washed Ashore', giver: 'kuro', minLevel: 1,
-    text: "Here, some tonics and a practice sword. You'll get your job's own weapon when you pick a job at level 10.",
+    text: "Here, some tonics and a practice sword. You'll get your job's own weapon when you pick a job at level 5.",
     objectives: [],
     rewards: { exp: 5, gold: 9, items: [{ id: 'sword_0', qty: 1 }, { id: 'red_potion', qty: 5 }] },
   },

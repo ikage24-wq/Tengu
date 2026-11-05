@@ -50,7 +50,7 @@ export const STORY_QUESTS = {
     scenes: { done: 'ch1_wind' },
   }),
   story_1_3: s('story_1_3', 2, {
-    name: 'Grumbling Hills', giver: 'mira', minLevel: 6, prereq: 'story_1_2',
+    name: 'Grumbling Hills', giver: 'mira', minLevel: 6, prereq: 'story_1_4',
     text: "Clover Hills is worse. The Toadstool Goblins are stealing laundry right off the lines! Only socks. Only LEFT socks. Calm 12 of them and bring me 5 of their caps. I want to see if they're... sour.",
     objectives: [{ type: 'kill', mob: 'mushkin', count: 12 }, { type: 'collect', item: 'mushcap', count: 5 }],
     rewards: { exp: 2200, gold: 190, items: [] },
@@ -63,8 +63,8 @@ export const STORY_QUESTS = {
     rewards: { exp: 1800, gold: 130, items: [{ id: 'orange_potion', qty: 10 }] },
     scenes: { done: 'ch2_festival' },
   }),
-  story_1_4: s('story_1_4', 2, {
-    name: 'A Path of Your Own', giver: 'mira', minLevel: 10, prereq: 'story_festival',
+  story_1_4: s('story_1_4', 1, {
+    name: 'A Path of Your Own', giver: 'mira', minLevel: 5, prereq: 'story_1_2',
     text: "You're ready for a path of your own! Visit an instructor: Kestrel here, Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
     objectives: [{ type: 'job', tier: 1 }],
     rewards: { exp: 2000, gold: 240, items: [{ id: 'ear_10', qty: 1, variant: 'roll' }] },
@@ -73,7 +73,7 @@ export const STORY_QUESTS = {
 
   // ---------- Chapter 3: Roots Run Deep (10-15) ----------
   story_2_1: s('story_2_1', 3, {
-    name: 'Rumbles Underfoot', giver: 'rook', minLevel: 10, prereq: 'story_1_4',
+    name: 'Rumbles Underfoot', giver: 'rook', minLevel: 10, prereq: 'story_festival',
     text: "Mira sent you? Good. The whole harbor shakes at night, and it's coming from under Windy Canyon. Go up there and find Bramble at the Hollow Gate. He knows the old roots. He also has a lot of rules. Nod along.",
     objectives: [{ type: 'visit', map: 'canyon' }, { type: 'talk', npc: 'bramble', say: "Rook's right. Gnarlroot, the old heart of the Hollow, is tossing in his sleep. Something's troubling him. And before you ask: no, you can't go in alone. Nobody goes in alone." }],
     rewards: { exp: 2500, gold: 200, items: [{ id: 'orange_potion', qty: 20 }] },
@@ -389,7 +389,7 @@ export const SCENES = {
   ch1_sour: [
     { who: 'mira', text: 'Sour all right. These caps are grumpier than a rainy Monday. One of them hissed at me.', mood: 'sad' },
     { who: 'mira', text: "I think Hayate is asleep. Deeply. I can't climb mountains any more, but you..." },
-    { who: 'mira', text: 'You could find her! But first you need a path of your own. And better trousers.', mood: 'happy' },
+    { who: 'mira', text: "You could find her! You've a path of your own now. Next: better trousers.", mood: 'happy' },
   ],
   ch2_festival: [
     { who: null, text: 'Mira untangles the bunting from the antlers, one star-shaped flag at a time, and lays it out on the grass.' },
@@ -402,7 +402,7 @@ export const SCENES = {
     { who: 'mira', text: "Well... the stars didn't fall. Not one. We waited up till midnight and they just... hung there. Everyone went home grumpy.", mood: 'sad' },
     { together: [{ emote: 'mira', kind: '!', dur: 1.4 }, { jump: 'mira', height: 10 }] },
     { who: 'mira', text: "Oh. Oh my. That was the night the wind stopped. The tortoises, the goblins, the windmill... it all went sour that very night!", mood: 'surprised' },
-    { who: 'mira', text: "I'll write it down. In the margin of a mug. Now go and find a path of your own, dear; this is a job for someone with a job.", mood: 'happy' },
+    { who: 'mira', text: "I'll write it down. In the margin of a mug. Captain Rook in Pastel Harbor has been asking for help, dear. Go on, and write me! The map's on... no. You know. Go!", mood: 'happy' },
   ],
   // (Staged: Mira steps close to give you her earring; it catches a wind that isn't there.)
   ch1_end: [
@@ -417,7 +417,7 @@ export const SCENES = {
     { together: [{ fx: 'wind', at: 'player' }, { shake: 1.6, dur: 0.7 }, { emote: 'player', kind: '!' }] },
     { wait: 0.6 },
     { who: null, text: 'For a moment, the earring trembles, as if a breeze far away had remembered your name.' },
-    { who: 'mira', text: "Captain Rook in Pastel Harbor has been asking for help. Go on, and write me! The map's on... no. You know. Go!", mood: 'happy' },
+    { who: 'mira', text: "Go and get used to your new job, dear. And come back soon: the hills past the meadow have gone grumpy too.", mood: 'happy' },
     { emote: 'mira', kind: 'note' },
   ],
   // ----- Chapter 2 -----

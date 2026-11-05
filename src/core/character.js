@@ -12,7 +12,7 @@ import { makeEquip } from './items.js';
 import { deathExpLoss } from './formulas.js';
 
 export const STAT_KEYS = ['str', 'dex', 'int', 'luk'];
-const NOVICE_SP_LEVEL_CAP = 10;
+const NOVICE_SP_LEVEL_CAP = 5;
 const START_STAT = 4;
 // Which gold scale a character's purse is in (2: the rebalance where 100 is little, 1,000 is
 // decent and 100,000 is a lot). core/save.js brings older saves up to it.

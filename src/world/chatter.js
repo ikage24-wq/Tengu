@@ -9,7 +9,7 @@ import { ITEMS } from '../data/items.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { NPCS } from '../data/npcs.js';
-import { JOBS } from '../data/jobs.js';
+import { JOBS, FIRST_JOB_LEVEL } from '../data/jobs.js';
 import { FISH, SPOTS } from '../data/fishing.js';
 import { DISHES } from '../data/cooking.js';
 import { SETS } from '../data/sets.js';
@@ -304,7 +304,7 @@ export function answer(said, ctx) {
     const d = dungeonForLevel(level) ?? DUNGEONS.hollow;
     return `at lvl ${Math.max(level, d.minLevel)} try ${d.name}, its at ${MAPS[d.gate]?.name ?? 'its gate'}. talk to the warden there to make a group`;
   }
-  if (has(w, ['job', 'advance', 'class'])) return level < 10 ? 'first job at lvl 10, visit the instructor in their town!' : 'second job is at lvl 30, ur instructor gives a trial';
+  if (has(w, ['job', 'advance', 'class'])) return level < FIRST_JOB_LEVEL ? `first job at lvl ${FIRST_JOB_LEVEL}, visit the instructor in their town!` : 'second job is at lvl 30, ur instructor gives a trial';
   if (has(w, ['money', 'gold', 'meso', 'rich'])) return 'sell fish and drops, and grind a map at ur level. dishes sell well too';
   if (has(w, ['ap', 'stat', 'stats', 'str', 'dex', 'int', 'luk'])) return 'put AP in ur job\'s main stat, or just press Auto in stats (C)';
   if (has(w, ['pet', 'mochi'])) return 'Mochis are in the Mochi window (P), they pick up loot for u {emote}';

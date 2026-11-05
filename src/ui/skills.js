@@ -9,7 +9,7 @@
 
 import { SKILLS } from '../data/skills.js';
 import { pathName } from '../data/path-skills.js';
-import { JOBS, jobChain } from '../data/jobs.js';
+import { JOBS, jobChain, FIRST_JOB_LEVEL } from '../data/jobs.js';
 import { learnSkill, canLearn, maxSkill, replaced } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
 import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon, textFont } from './kit.js';
@@ -107,9 +107,9 @@ export function skillsWindow(ui, state, world) {
   const dx = lx + LIST_W + 6;
   details(ui, state, world, SKILLS[win.pick], dx, ly, win.x + W - 8 - dx, H - 55, win);
 
-  if (job === 'novice' && char.level >= 10 && chain.length === 1) {
+  if (job === 'novice' && char.level >= FIRST_JOB_LEVEL && chain.length === 1) {
     box(ctx, lx, win.y + H - 22, LIST_W, 15, { fill: '#fff0f7', edge: COLORS.accent, r: 7.5 });
-    text(ctx, 'Lv 10: pick a job! (M for the map)', lx + LIST_W / 2, win.y + H - 11.5, { size: 7, bold: true, align: 'center', color: COLORS.accent });
+    text(ctx, `Lv ${FIRST_JOB_LEVEL}: pick a job! (M for the map)`, lx + LIST_W / 2, win.y + H - 11.5, { size: 7, bold: true, align: 'center', color: COLORS.accent });
   }
 
   // ---- Dragging a skill onto the hotkey bar ----

@@ -12,7 +12,8 @@ it, and tick it off here.
 
 - Levels 1–100 and gear every 5 levels up to 100, but maps and monsters only go up to about 50.
 - Quests: 9, loose, no story thread. Every map is open from the start.
-- Jobs: Warrior, Archer and Thief get a first job at 10 and two paths at 30 after a trial. The
+- Jobs: Warrior, Archer and Thief get a first job at 5 (moved from 10 on 2026-11-05, the player's
+  call: the plain Novice stretch was boring) and two paths at 30 after a trial. The
   Mage was removed; a new magic class is being built from scratch.
 - Group content: Rootwood Hollow (Lv 10, tank/healer/2 DPS, three bosses) and the Crystal King
   (Dancing Green and Roxy's Boss Rush were a test boss, removed 2026-10-29).

@@ -8,7 +8,7 @@ import { createWorld } from '../src/world/world.js';
 import { createCharacter } from '../src/core/character.js';
 import { addItem } from '../src/core/inventory.js';
 import { computeStats } from '../src/core/stats.js';
-import { JOBS } from '../src/data/jobs.js';
+import { JOBS, FIRST_JOB_LEVEL } from '../src/data/jobs.js';
 import { TOWNS } from '../src/data/maps.js';
 
 // A weekday evening, so how many are online (it follows the clock) is the same every run.
@@ -27,7 +27,7 @@ test('generated players are real characters with a job for their level and gear 
   for (let i = 0; i < 60; i++) {
     const c = makeBotCharacter(rng, { name: `p${i}` });
     assert.ok(c.level >= 1 && c.level <= 70);
-    if (c.level < 10) assert.equal(c.job, 'novice');
+    if (c.level < FIRST_JOB_LEVEL) assert.equal(c.job, 'novice');
     else assert.notEqual(c.job, 'novice');
     assert.equal(c.ap, 0, 'every point is spent');
     const w = c.equipment.weapon;

@@ -1,4 +1,5 @@
-// Jobs: a Novice start, four first jobs at level 10, and second-job branches at level 30.
+// Jobs: a Novice start, four first jobs at level 5 (FIRST_JOB_LEVEL: the player's call, 2026-11-05,
+// so the plain Novice stretch is short), and second-job branches at level 30.
 // HP/MP growth follows the classic split: warriors tanky, mages MP-heavy, archers and thieves between.
 //
 // Balance (tools/tune.mjs finds these from the real game, tools/balance.mjs measures it): `power`
@@ -17,34 +18,37 @@ export const FAMILY_STATS = {
   gm: { primary: 'int', secondary: 'luk' },
 };
 
-// Every class follows the same template: a first job at 10, then two paths at 30 after a trial.
+// Every class follows the same template: a first job at 5, then two paths at 30 after a trial.
+// The level a Novice picks their first job at.
+export const FIRST_JOB_LEVEL = 5;
+
 export const JOBS = {
   novice: {
     id: 'novice', name: 'Novice', family: 'beginner', tier: 0, parent: null,
     hp: 16, mp: 12, advanceHp: 0, advanceMp: 0,
     weapons: ['none', 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'],
-    blurb: 'Everyone starts here. Train up to level 10, then pick a path.',
+    blurb: 'Everyone starts here. Train up to level 5, then pick a path.',
   },
 
   warrior: {
-    id: 'warrior', guard: 0.85, power: 0.68, spread: 0.53, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: 10,
+    id: 'warrior', guard: 0.85, power: 0.68, spread: 0.53, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
   // The Spirit Mage: a young shrine mage whose spirits strike and heal (remade from scratch; the
   // old Mage is retired). Damage and support at once, with the Spirit Doll at her side.
   spiritmage: {
-    id: 'spiritmage', power: 0.52, spread: 0.83, name: 'Star Witch', family: 'mage', tier: 1, parent: 'novice', level: 10,
+    id: 'spiritmage', power: 0.52, spread: 0.83, name: 'Star Witch', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
     blurb: 'A bright young witch who casts like she\'s showing off, with INT: quick star bolts from a wand, or heavy comets and meteors from a staff, every spell out in a flash. Her spells and heals light the stars of her Constellation; all seven lit, her bolts split into three. Two star heals let her keep a party going.',
   },
   archer: {
-    id: 'archer', power: 1.45, spread: 0.72, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: 10,
+    id: 'archer', power: 1.45, spread: 0.72, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
     blurb: 'A show-off who shoots mid-trick with DEX: skips, flips, splits and rolls, a short trick bow loosed from the top of each. Her hits in a row build Combo, and her flips keep it going; full (Showtime), every shot splits into three. Handspring, Springboard, and Grand Somersault: a huge leap raining golden arrows down.',
   },
   thief: {
-    id: 'thief', power: 0.75, spread: 1.45, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: 10,
+    id: 'thief', power: 0.75, spread: 1.45, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
     blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
   },

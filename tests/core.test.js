@@ -66,11 +66,11 @@ test('rollHit respects defense and reports crits', () => {
   assert.equal(armored.damage, 50);
 });
 
-test('leveling gives AP, novice SP up to level 10, and HP growth', () => {
+test('leveling gives AP, novice SP up to level 5 (the first job), and HP growth', () => {
   const c = fresh();
   gainExp(c, 1e9);
   assert.equal(c.level, MAX_LEVEL);
-  assert.equal(c.sp, 9, 'novices only earn SP up to level 10');
+  assert.equal(c.sp, 4, 'novices only earn SP up to level 5');
   assert.equal(c.ap, 9 + 5 * (MAX_LEVEL - 1));
   assert.ok(c.baseHp > 50);
 });

@@ -90,7 +90,8 @@ Clover Hills. The first clue: the same night.
   ribbons from Jackalopes; Mira realises everything went sour *that* night. Gag: Mira's festival
   stall sold 300 commemorative mugs, all still in her cupboard.
 - 10 A Path of Your Own (Mira): pick your job. *Exists.* Ends with the earring that catches a wind
-  that isn't there.
+  that isn't there. **Moved to level 5 and to chapter 1 (2026-11-05: first jobs at 5)**, straight
+  after the tortoises; the goblins and the festival follow as your first outings in your new job.
 
 ### Chapter 3: Roots Run Deep (10-15)
 Windy Canyon, Rootwood Hollow (dungeon 10).

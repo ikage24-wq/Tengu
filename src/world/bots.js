@@ -22,7 +22,7 @@ import { expToNext } from '../core/exp.js';
 import { makeEquip, makeCash, rollRarity, itemName } from '../core/items.js';
 import { CASH_ITEMS } from '../data/cash.js';
 import { ITEMS, EQUIP_SLOTS } from '../data/items.js';
-import { JOBS, FAMILY_STATS } from '../data/jobs.js';
+import { JOBS, FAMILY_STATS, FIRST_JOB_LEVEL } from '../data/jobs.js';
 import { MAPS, TOWNS } from '../data/maps.js';
 import { HAIR_STYLES, PICKABLE_EYE_STYLES, OUTFIT_STYLES, FACE_STYLES, BROW_STYLES } from '../render/hero.js';
 import { speak, moodFor, makeStyle, price as priceText, reply, answer, conversation, voiced, contextOf } from './chatter.js';
@@ -138,7 +138,7 @@ function rollLevel(pro, rng) {
 // The job path a character of this level would be on. Warriors, archers and thieves advance to a
 // level 30 path (the Mage was removed; a new magic class is being built).
 function jobPath(level, rng) {
-  if (level < 10) return ['novice'];
+  if (level < FIRST_JOB_LEVEL) return ['novice'];
   const first = pick(['warrior', 'archer', 'thief', 'spiritmage'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
