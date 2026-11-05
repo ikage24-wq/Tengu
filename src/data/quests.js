@@ -324,14 +324,14 @@ export const QUESTS = {
   },
   nim_cape: {
     id: 'nim_cape', name: 'The Caped Candle', giver: 'nim', minLevel: 23, prereq: 'nim_candles',
-    text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like it's waiting for a dramatic camera angle. The Imps up there think it's their boss now. Clear 15 Imps on the roof and bring it home? Please don't tell it I said 'big'.",
+    text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like the hero on the cover of the storybook I read them. I-I may have read it to them too many times. The Imps up there think it's their boss now. Clear 15 Imps on the roof and bring it home? Please don't tell it I said 'big'.",
     objectives: [{ type: 'visit', map: 'ruins', above: 440, place: 'the Temple Roof of the Twilight Ruins' }, { type: 'kill', mob: 'gloombat', count: 15 }],
     rewards: { exp: 15000, gold: 380, items: [{ id: 'mana_elixir', qty: 10 }] },
   },
 
   nim_stardust: {
     id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38, prereq: 'nim_cape',
-    text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Star Seraphs sing, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like on the posters.",
+    text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Star Seraphs sing, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like in the books.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'collect', item: 'stardust', count: 10 }],
     rewards: { exp: 110000, gold: 1600, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { done: 'stardust_done' },
