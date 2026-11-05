@@ -4,6 +4,7 @@ import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorat
 import { drawQuestFx } from './questfx.js';
 import { button, text } from './kit.js';
 import { settings } from '../core/settings.js';
+import { editingLayout, toggleLayoutEditor, drawLayoutEditor } from './layout.js';
 import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
@@ -155,6 +156,9 @@ export function routeInput(state, world, input, dt) {
   updateChat(state.chat, world, dt);
   if (!state.npc && !state.death && chatInput(state.chat, world, input)) return true;
 
+  // F2: the layout editor (ui/layout.js); while it's open it has the mouse and keys.
+  if (input.pressed.has('F2')) toggleLayoutEditor();
+  if (editingLayout()) return true;
   if (input.pressed.has('F9') && isGm(world.char)) state.windows.admin.open = !state.windows.admin.open;
   if (!isGm(world.char)) state.windows.admin.open = false;
   // T: the emote wheel. V: a ping for your party.
@@ -309,6 +313,11 @@ export function drawUi(ui, state, world) {
   drawPartyPanel(ui, state, world);
   drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);
+  // Editing the layout: the HUD under the editor, no windows.
+  if (editingLayout()) {
+    drawLayoutEditor(ui);
+    return;
+  }
   // A date in progress (ui/dates.js): its card and its moments.
   drawDateHud(ui, world);
   // Decorating your island, under the windows; and its button while you're at home.

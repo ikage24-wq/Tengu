@@ -301,6 +301,8 @@ function details(ui, char, id, x0, y0, w0, h0, th, world = null) {
 const seen = new Map();
 const POP = 0.6;
 
+// Where the card was last drawn (for the layout editor, ui/layout.js).
+export let trackerBox = null;
 export function drawQuestTracker(ui, state, world) {
   const log = state.windows.quests;
   if (log.open) return;
@@ -324,6 +326,7 @@ export function drawQuestTracker(ui, state, world) {
   const covered = Object.values(state.windows).some((win) => win.open && win.w && m.x >= win.x && m.x < win.x + win.w && m.y >= win.y && m.y < win.y + win.h);
   const press = (bx, by, bw, bh) => !covered && clicked(ui, bx, by, bw, bh);
 
+  trackerBox = { x, y, w, h };
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.86)', edge: th.main, r: 8, width: 1.2 });
   const hotHead = !covered && hover(ui, x, y, w - 28, 14);
   box(ctx, x + 2, y + 2, w - 4, 11, { fill: hotHead || state.trackerDrag ? th.dark : th.main, edge: null, r: 5.5 });

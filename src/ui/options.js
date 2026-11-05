@@ -5,6 +5,7 @@
 import { settings, saveSettings, resetSettings } from '../core/settings.js';
 import { applyVolumes } from '../audio/engine.js';
 import { touchLayout } from './touch.js';
+import { toggleLayoutEditor } from './layout.js';
 import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, font } from './kit.js';
 
 const PAGES = {
@@ -47,7 +48,7 @@ const CONTROLS = [
   ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
   ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection (monsters, fish, mounts)'],
   ['G', 'Life Skills'], ['O', 'Cash Shop'], ['P', 'Mochi pets'], ['Y', 'Decorate your island'], ['T', 'Emote wheel'], ['V', 'Ping for your party'], ['H', 'Ride your mount (on and off)'],
-  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['`', 'Hide the interface'], ['Double-click a title', 'Fold a window away'], ['Drag', 'Move items, wear gear, set hotkeys'],
+  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['`', 'Hide the interface'], ['F2', 'Edit layout: move, resize, hide'], ['Double-click a title', 'Fold a window away'], ['Drag', 'Move items, wear gear, set hotkeys'],
 ];
 
 const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];
@@ -99,8 +100,12 @@ export function optionsWindow(ui, state, world) {
       y += rowH;
     }
     // Everything you've moved, folded or resized back where it started.
-    if (page === 'Interface' && button(ui, x, y + 1, W - 20, 18, 'Reset layout (windows, minimap, quest card)', { size: 7.5, iconName: 'map' })) {
-      Object.assign(settings, { windowPos: {}, minimapPos: null, minimapMin: false, minimapSize: 'normal', trackerPos: null });
+    if (page === 'Interface' && button(ui, x, y + 1, (W - 24) / 2, 18, 'Edit layout (F2)', { size: 7.5, primary: true, iconName: 'map' })) {
+      win.open = false;
+      toggleLayoutEditor(true);
+    }
+    if (page === 'Interface' && button(ui, x + (W - 24) / 2 + 4, y + 1, (W - 24) / 2, 18, 'Reset layout', { size: 7.5 })) {
+      Object.assign(settings, { windowPos: {}, layout: {}, minimapPos: null, minimapMin: false, minimapSize: 'normal', trackerPos: null });
       saveSettings();
       for (const w of Object.values(state.windows)) {
         if (!w.key) continue;

@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS = {
   minimapSize: 'normal', // 'small' | 'normal' | 'big'
   minimapPos: null, // where the minimap was dragged to ({ x, y }), or null for the top left
   minimapMin: false, // folded down to its name
+  layout: {}, // each HUD piece moved, resized or hidden (ui/layout.js): { hotkeys: { dx, dy, s, hide } }
   mapBanner: true,
   showFps: false,
   messageLog: true,

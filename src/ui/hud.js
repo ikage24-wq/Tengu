@@ -21,7 +21,8 @@ import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
 import { MATERIALS } from '../render/terrain.js';
 import { questMarker } from './npc.js';
-import { drawQuestTracker } from './quests.js';
+import { drawQuestTracker, trackerBox } from './quests.js';
+import { beginPiece, endPiece, piece, intoPiece, layoutOf } from './layout.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
@@ -156,6 +157,8 @@ export function drawHud(ui, state, world) {
   const low = hpR < 0.2 && char.hp > 0;
   const beat = low ? 0.5 + 0.5 * Math.sin(t * 7) : 0;
   if (low) lowHpVignette(ctx, 0.25 + 0.3 * beat);
+  // (Each piece of the HUD can be moved, resized or hidden: ui/layout.js.)
+  let part = beginPiece(ui, 'player', { x: 4, y: TRAY_Y, w: 216, h: TRAY_H });
   tray(ctx, 4, 216, low && beat > 0.5 ? '#ff9fb4' : '#f4bcd8');
 
   const hud = state.hud;
@@ -197,6 +200,8 @@ export function drawHud(ui, state, world) {
   text(ctx, char.gold >= 10000 ? price(char.gold) : char.gold.toLocaleString(), ex + 10, TRAY_Y + 28, { size: 7, bold: true, color: COLORS.gold });
   if (hover(ui, ex, TRAY_Y + 19, 44, 11)) tooltip(ui, [{ text: `${char.gold.toLocaleString()} gold`, bold: true, color: COLORS.gold }]);
 
+  endPiece(part);
+  part = beginPiece(ui, 'menus', { x: MENU_X, y: TRAY_Y, w: 156, h: TRAY_H });
   // ----- Menu buttons: round candy buttons in their own tray, a dot when points are waiting -----
   const menus = [['Bag', 'bag', 'I', 'bag', 'peach'], ['Stats', 'stats', 'C', 'star', 'pink'], ['Skills', 'skills', 'K', 'book', 'lavender'], ['Quests', 'quests', 'L', 'scroll', 'mint'], ['Life Skills', 'life', 'G', 'leaf', 'mint'], ['World Map', 'worldmap', 'M', 'map', 'sky'], ['Cash Shop', 'cashshop', 'O', 'gift', 'pink'], ['Mochi', 'pet', 'P', 'heart', 'pink'], ['Friends', 'online', 'N', 'friends', 'sky'], ['Collection', 'collection', 'B', 'crown', 'gold'], ['Options', 'options', 'Esc', 'gear', 'gold']];
   // On a phone ten 14 px bubbles are too small for a thumb: the tray folds into one big Menu
@@ -260,8 +265,10 @@ export function drawHud(ui, state, world) {
     }
   });
 
+  endPiece(part);
   drawPickups(ctx, state, world, hud, t);
 
+  part = beginPiece(ui, 'hotkeys', { x: HK_X - 6, y: TRAY_Y, w: HOTKEYS.length * HK_STEP + 10, h: TRAY_H });
   // Hotkeys: little keycaps with a lip, the key printed in a corner tab. A key sinks when pressed;
   // a skill it casts pops with a white flash, and one you can't afford shakes instead. Skills
   // without the MP for them grey out under a blue veil and flash a white rim when they're ready
@@ -370,22 +377,29 @@ export function drawHud(ui, state, world) {
     }
     clicked(ui, x, y, D, D);
   });
+  endPiece(part);
 
   drawHits(ui, state, world);
   const gauge = gaugeOf(char);
   // On a phone the Attack and Jump buttons sit over the gauge's usual spot, so it moves left,
   // over the hotkeys.
   const gx = ui.input?.touch ? 404 : 566;
-  if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0, gx);
-  drawSideBySide(ui, world, gauge ? gx - 18 : ui.input?.touch ? 420 : 620);
-  if (settings.minimap) drawMinimap(ui, world);
-  drawBuffs(ui, world);
+  piece(ui, 'gauge', { x: gx - 22, y: TRAY_Y - 32, w: 94, h: 30 }, () => {
+    if (gauge) drawGauge(ui, world, gauge, world[gauge] ?? 0, gx);
+    drawSideBySide(ui, world, gauge ? gx - 18 : ui.input?.touch ? 420 : 620);
+  });
+  if (settings.minimap) {
+    const p = miniAt();
+    const mb = minimapBox(world.map);
+    piece(ui, 'minimap', { x: p.x - 4, y: p.y - 16, w: mb.w + 8, h: settings.minimapMin ? 14 : mb.h + 20 }, () => drawMinimap(ui, world));
+  }
+  piece(ui, 'buffs', { x: 8, y: minimapBottom(world), w: Math.max(3, Object.keys(world.char.buffs).length) * 22, h: 28 }, () => drawBuffs(ui, world));
   if (world.dungeon) {
     drawDungeonTracker(ui, world);
     drawCallout(ctx, world);
   } else if (world.map.id === 'lagoon' && world.derby && !world.derby.done && derbyClock(world).on) drawDerbyBoard(ui, world);
-  else if (settings.questTracker) drawQuestTracker(ui, state, world);
-  if (settings.messageLog || state.chat?.typing != null) drawLog(ui, world, state);
+  else if (settings.questTracker) piece(ui, 'tracker', trackerBox ?? { x: 496, y: 6, w: 138, h: 15 }, () => drawQuestTracker(ui, state, world));
+  if (settings.messageLog || state.chat?.typing != null) piece(ui, 'log', { x: 4, y: TRAY_Y - 82, w: 262, h: 78 }, () => drawLog(ui, world, state));
   if (settings.mapBanner) drawBanner(ctx, world, state);
   drawTutorial(ui, world);
   if (settings.showFps) drawFps(ctx, state);
@@ -476,7 +490,9 @@ function drawPickups(ctx, state, world, hud, t) {
 }
 
 // The hotkey slot under a point on screen (for dragging items onto the bar), or null.
-export function hotkeyAt(x, y) {
+export function hotkeyAt(sx, sy) {
+  // (The hotkeys may have been moved or resized: ui/layout.js.)
+  const [x, y] = intoPiece('hotkeys', sx, sy);
   const i = Math.floor((x - HK_X) / HK_STEP);
   if (i < 0 || i >= HOTKEYS.length || x > HK_X + i * HK_STEP + HK_D) return null;
   return y >= HK_Y && y < HK_Y + HK_D ? HOTKEYS[i] : null;
@@ -756,7 +772,8 @@ const miniAt = () => settings.minimapPos ?? { x: 8, y: 20 };
 // Whether it's in its usual corner (the left column of buffs and party cards stacks under it there).
 const miniHome = () => {
   const p = miniAt();
-  return p.x < 40 && p.y < 40;
+  const o = layoutOf('minimap');
+  return p.x < 40 && p.y < 40 && Math.abs(o.dx) < 30 && Math.abs(o.dy) < 30 && o.s === 1 && !o.hide;
 };
 function minimapBox(map) {
   const w = MINI_W[settings.minimapSize] ?? 150;
