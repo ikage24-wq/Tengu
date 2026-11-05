@@ -57,6 +57,7 @@ test('the guide leads to a place and stops on arrival; a quest knows where it wa
   char.quests.first_steps = { state: 'done' };
   acceptQuest(char, 'fluffy');
   assert.equal(questTarget(char, 'fluffy'), 'meadow1', 'Fox Fluff comes from the Kitsune Kits in Petal Meadow');
+  char.quests.snail_trouble = { state: 'done' };
   acceptQuest(char, 'pip_parcel');
   assert.equal(questTarget(char, 'pip_parcel'), 'harbor', 'the parcel goes to Rook at the harbor');
 });

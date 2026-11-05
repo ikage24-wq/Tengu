@@ -226,3 +226,22 @@ test("Nim's runaway-candle story plays through in Moonleaf Grove", () => {
     assert.ok(!w.cine || (w.cine.fade.a === 0 && !w.cine.spot), `${id}: the lights come back up`);
   }
 });
+
+test("Pip's never-left-the-shop story plays through in Sprout Village", () => {
+  for (const id of ['pip_snails_done', 'pip_parcel_done', 'pip_souvenirs_done', 'pip_lunch_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'sprout', 'start');
+    const pip = w.map.npcs.find((n) => n.id === 'pip');
+    w.body.x = pip.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.equal(w.map.npcs.find((n) => n.id === 'pip').x, pip.x, `${id}: Pip is back behind her counter`);
+  }
+});

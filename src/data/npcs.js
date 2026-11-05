@@ -38,7 +38,7 @@ export const NPCS = {
     shop: ['fishing_rod', 'red_potion', 'orange_potion', 'blue_potion', 'return_scroll', ...arms(0, 10, 'sword', 'axe', 'spear', 'wand', 'staff', 'bow', 'crossbow', 'dagger', 'gauntlet'), ...armor(0), 'ear_5', 'ear_10'],
     // Job gear for your own job (a Novice sees every job's starter set), by level.
     stockLevels: [5, 10],
-    quests: ['snail_trouble', 'pip_parcel'],
+    quests: ['snail_trouble', 'pip_parcel', 'pip_souvenirs', 'pip_lunch'],
   },
   lulu: {
     id: 'lulu', name: 'Lulu', title: 'Stylist', role: 'stylist',

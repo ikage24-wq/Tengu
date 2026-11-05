@@ -56,12 +56,16 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'sproutling', count: 15 }, { type: 'collect', item: 'clover', count: 8 }],
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
   },
+  // Pip's story: the shopkeeper who has never once left her counter, because shopkeepers
+  // "can't". She orders a compass for herself, collects the world as souvenirs, and when Mira
+  // says nobody ever told her she couldn't, she closes for lunch and goes as far as the gate.
   snail_trouble: {
     id: 'snail_trouble', name: 'Tortoise Trouble', giver: 'pip', minLevel: 3,
-    text: "Moss Tortoises keep nibbling my crates! Defeat 12 of them and I'll pay you in tonics.",
+    text: "Moss Tortoises keep nibbling my crates! Defeat 12 of them and I'll pay you in tonics. PLUS a loyalty stamp! Ten stamps gets you... something. I haven't decided. It's very exciting.",
     objectives: [{ type: 'kill', mob: 'snailbun', count: 12 }],
     rewards: { exp: 290, gold: 36, items: [{ id: 'red_potion', qty: 15 }, { id: 'blue_potion', qty: 5 }] },
   },
+
   sprout_sweep: {
     id: 'sprout_sweep', name: 'Sprout Sweep', giver: 'mira', minLevel: 5, prereq: 'fluffy',
     text: 'Mandrakes are screaming all over Clover Hills, past the meadow. Defeat 10 of them!',
@@ -139,12 +143,28 @@ export const QUESTS = {
 
   // Sprout Village.
   pip_parcel: {
-    id: 'pip_parcel', name: 'Special Delivery', giver: 'pip', minLevel: 3,
-    text: "This parcel came in for Captain Rook, but I can't leave the shop! Pastel Harbor is just past Petal Meadow, the other way from the hills. Would you take it to him?",
+    id: 'pip_parcel', name: 'Special Delivery', giver: 'pip', minLevel: 3, prereq: 'snail_trouble',
+    text: "This parcel's for Captain Rook in Pastel Harbor, just past Petal Meadow. I'd take it myself, but I can't leave the shop! Shopkeepers can't. Everyone knows that. Probably. Mind the corners, it's fragile. And mysterious.",
     gives: [{ id: 'parcel' }],
-    objectives: [{ type: 'deliver', npc: 'rook', item: 'parcel', say: "A parcel from Pip? Ha! My new compass, finally. Tell her thanks!" }],
+    objectives: [{ type: 'deliver', npc: 'rook', item: 'parcel', say: "A parcel from Pip? The tag says... 'From Pip. To Pip. Do not open until brave.' Ha! I think this one's hers, kid. Take it back to her, and tell her the harbor's lovely this time of year." }],
     rewards: { exp: 180, gold: 70, items: [{ id: 'return_scroll', qty: 3 }, { id: 'red_potion', qty: 10 }] },
   },
+  pip_souvenirs: {
+    id: 'pip_souvenirs', name: 'Souvenirs of the World', giver: 'pip', minLevel: 5, prereq: 'pip_parcel',
+    text: "Will you bring me souvenirs from out there? I want to know what the world feels like. 6 Sprite Petals from the Petal Sprites in Petal Meadow, and 6 Straw Tufts from the Scarecrow Imps in Clover Hills. For display. Not for sale. Probably not for sale.",
+    objectives: [{ type: 'collect', item: 'sprite_petal', count: 6 }, { type: 'collect', item: 'straw_tuft', count: 6 }],
+    rewards: { exp: 1100, gold: 110, items: [{ id: 'red_potion', qty: 15 }] },
+  },
+  pip_lunch: {
+    id: 'pip_lunch', name: 'Closed for Lunch', giver: 'pip', minLevel: 8, prereq: 'pip_souvenirs',
+    text: "I'm going to do it. I'm going to leave the shop. For one whole lunch. First, ask Mira if shopkeepers are even allowed. Then clear 15 Jackalopes out of Clover Hills, in case I go really far. I won't. But in case.",
+    objectives: [
+      { type: 'talk', npc: 'mira', say: "Allowed? Oh, sweetheart. Nobody ever said Pip couldn't leave. She just never asked. Tell her the gate's been open her whole life." },
+      { type: 'kill', mob: 'piglet', count: 15 },
+    ],
+    rewards: { exp: 1900, gold: 170, items: [{ id: 'return_scroll', qty: 5 }, { id: 'red_potion', qty: 20 }] },
+  },
+
   lulu_gossip: {
     id: 'lulu_gossip', name: 'Town Gossip', giver: 'lulu', minLevel: 3,
     text: "Be a dear and ask around: what does everyone think of my new window display? Mira, Pip and Kestrel. Don't tell them I sent you!",

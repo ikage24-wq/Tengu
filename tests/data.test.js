@@ -219,6 +219,7 @@ test('errands: talks go in order, a delivery hands the item over, a visit can ne
   assert.ok(c.inventory.cash.some((e) => e.id === 'cash_casual_bow'), 'an outfit piece as a reward');
   assert.ok(c.cash > cashBefore);
   // Pip's parcel: carried from the start, gone once Rook has it.
+  c.quests.snail_trouble = { state: 'done' };
   acceptQuest(c, 'pip_parcel');
   assert.equal(countItem(c.inventory, 'parcel'), 1);
   noteTalk(c, 'rook');
