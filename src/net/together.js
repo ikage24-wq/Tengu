@@ -12,6 +12,7 @@ import { friendWorking, friendFeast } from '../world/coop-life.js';
 import { onPartyQuestMsg } from '../world/partyquest.js';
 import { friendLaunched, standUp, joinGroup } from '../world/teamwork.js';
 import { applyCoopShared } from '../world/coopboss.js';
+import { setSail, setSailHandler, ROUTES } from '../world/voyage.js';
 
 // ---------- A party of friends ----------
 // online.party while you're in one: { leader, members: [ids, yours too] }. The leader invites; the
@@ -605,9 +606,28 @@ export function handleTogether(world, msg, g) {
       return onPartyNote(world, msg, g);
     case 'team':
       return onTeam(world, msg, g);
+    case 'sail':
+      return onSail(world, msg, g);
     default:
       return onRun(world, msg, g);
   }
+}
+
+// ---------- Sailing together ----------
+// Setting sail with Captain Bobbin takes your party friends on the same quay aboard with you: the
+// same voyage (or straight there), so you share the deck and dock together.
+setSailHandler((world, { from, quick }) => {
+  const friends = partyFriends().filter((g) => g.map === from);
+  for (const g of friends) send({ t: 'sail', to: g.id, from, quick });
+  if (friends.length) world.log(`${friends.map((g) => g.name).join(' and ')} ${friends.length > 1 ? 'come' : 'comes'} aboard with you!`, '#9fe8ff');
+});
+
+function onSail(world, msg, g) {
+  if (msg.to !== online.id || !inParty(msg.id) || !ROUTES[msg.from]) return;
+  // Only if you're on that quay and free to go (not in a scene, a dungeon, or knocked out).
+  if (world.map.id !== msg.from || world.dungeon || world.scene || world.dead) return;
+  world.log(`${g.name} brings you aboard the Sea Biscuit!`, '#9fe8ff');
+  setSail(world, { quick: msg.quick, brought: true });
 }
 
 // Shared dungeon runs plug in here (net/dungeonrun.js sets it; kept on the function itself, which

@@ -19,14 +19,24 @@ export const ISLAND_ROUTE = { voyage: 'voyage_isle', to: 'home', toPortal: 'dock
 export const routeFrom = (world) => ROUTES[world.map.id] ?? null;
 export const hasSailed = (char) => (char.voyages ?? 0) > 0;
 
-// Sets sail: the long way (on deck, with the sea going by), or straight there.
-export function setSail(world, { quick = false, island = false } = {}) {
+// Sailing with friends: your online party friends standing on the same quay come aboard with you
+// (net/together.js plugs in here, kept on the function, which exists before either module loads).
+export function setSailHandler(fn) {
+  setSailHandler.fn = fn;
+}
+
+// Sets sail: the long way (on deck, with the sea going by), or straight there. `brought`: a friend
+// took you aboard with them (their choice of the long way or straight there stands).
+export function setSail(world, { quick = false, island = false, brought = false } = {}) {
   // (From your island, your skiff takes you back to the harbor on the way home's voyage.)
   const route = island ? ISLAND_ROUTE : world.map.home ? ROUTES.lagoon : routeFrom(world);
   if (!route) return false;
   if (island && !world.char.home) return false;
   if (island) world.char.home.back = { map: world.map.id, x: Math.round(world.body.x) };
-  if (quick && hasSailed(world.char)) {
+  // (Only between the ports: your island is yours, and friends come to it by visiting.)
+  const from = world.map.id;
+  if (!brought && !island && ROUTES[from]) setSailHandler.fn?.(world, { from, quick: quick && hasSailed(world.char) });
+  if (quick && (hasSailed(world.char) || brought)) {
     arrive(world, route.to, route.toPortal);
     return true;
   }

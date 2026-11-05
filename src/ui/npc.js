@@ -255,7 +255,10 @@ export function npcWindow(ui, state, world) {
       setSail(world, { quick });
       sfx('waveWash');
     };
-    choices.push({ label: `Sail to ${route.name}`, sub: 'About a minute at sea · fish off the stern', icon: 'star', primary: true, run: sail(false) });
+    // (Party friends on the quay come aboard with you: net/together.js.)
+    const crew = (world.net?.partyFriends?.() ?? []).filter((g) => g.map === world.map.id).length;
+    const along = crew ? ` · ${crew} ${crew > 1 ? 'friends come' : 'friend comes'} too` : '';
+    choices.push({ label: `Sail to ${route.name}`, sub: `About a minute at sea · fish off the stern${along}`, icon: 'star', primary: true, run: sail(false) });
     if (hasSailed(char)) choices.push({ label: 'Full steam ahead', sub: `Straight to ${route.name}`, icon: 'door', run: sail(true) });
   }
   // From the harbor he'll run you out to your own island too (world/home.js).

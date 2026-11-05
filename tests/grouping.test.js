@@ -305,3 +305,41 @@ test('shared quest progress: party kills count for your quests and show whose th
     offline();
   }
 });
+
+test('online: setting sail takes your party friends on the quay aboard with you, and a friend brings you aboard theirs', async () => {
+  const { setSail } = await import('../src/world/voyage.js');
+  const { world, lines } = setup(20);
+  loadMap(world, 'harbor', 'ferry');
+  const { sent, ghost } = goOnline(world);
+  try {
+    const kai = ghost('kai', 'Kai');
+    const zed = ghost('zed', 'Zed');
+    ghost('ivy', 'Ivy').map = 'sprout';
+    online.party = { leader: 'me', members: ['me', 'kai', 'ivy'] };
+    assert.ok(setSail(world));
+    assert.equal(world.map.id, 'voyage_out');
+    // Kai (in the party, on the quay) is asked aboard; Zed (not in it) and Ivy (in town) aren't.
+    const asks = sent.filter((m) => m.t === 'sail');
+    assert.deepEqual(asks.map((m) => m.to), ['kai']);
+    assert.equal(asks[0].from, 'harbor');
+    assert.ok(lines.some((l) => l.includes('Kai comes aboard')));
+
+    // The other way round: Kai sets sail from the harbor, and you're on the quay.
+    loadMap(world, 'harbor', 'ferry');
+    world.voyage = null;
+    handleTogether(world, { t: 'sail', id: 'kai', to: 'me', from: 'harbor', quick: false }, kai);
+    assert.equal(world.map.id, 'voyage_out', 'brought aboard');
+    // Someone outside your party, or a sailing from a port you're not at, takes no one.
+    loadMap(world, 'harbor', 'ferry');
+    handleTogether(world, { t: 'sail', id: 'zed', to: 'me', from: 'harbor', quick: false }, zed);
+    assert.equal(world.map.id, 'harbor');
+    handleTogether(world, { t: 'sail', id: 'kai', to: 'me', from: 'lagoon', quick: false }, kai);
+    assert.equal(world.map.id, 'harbor');
+    // Straight there with a friend who knows the way, even on your first trip.
+    world.char.voyages = 0;
+    handleTogether(world, { t: 'sail', id: 'kai', to: 'me', from: 'harbor', quick: true }, kai);
+    assert.equal(world.map.id, 'lagoon');
+  } finally {
+    offline();
+  }
+});
