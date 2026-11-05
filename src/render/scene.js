@@ -615,6 +615,8 @@ function drawLeafWheel(ctx, world, run, hx, hy, time, layer) {
 // behind her, each doing what she does and bobbing on its own; and through Grand
 // Illusion, a ring of them round the screen, each drawing and loosing at the monster nearest it.
 const COPY_TINT = '#9a4a9a';
+// (The copies, the phantom, the shadow and the clones all move with you, so they step on your
+// stride, `feel.anim`: on a clock of their own their feet skated whenever you walked.)
 function drawCopies(ctx, world, look, gear, cam, state, time) {
   const n = copiesOf(world);
   for (let k = n - 1; k >= 0; k--) {
@@ -623,7 +625,7 @@ function drawCopies(ctx, world, look, gear, cam, state, time) {
     const x = snap(c.x - cam.x);
     const y = snap(c.y - cam.y);
     const flicker = 0.85 + 0.15 * Math.sin(time * 7 + k * 2);
-    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, job: 'beastmaster', alpha: state.alpha * 0.62 * flicker }));
+    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, job: 'beastmaster', alpha: state.alpha * 0.62 * flicker }, feel.anim));
   }
   const I = world.illusion;
   if (!I) return;
@@ -649,7 +651,7 @@ function drawPhantom(ctx, world, look, gear, x, y, state) {
   const t = state.time ?? 0;
   const flicker = 0.9 + 0.1 * Math.sin(t * 9) * Math.sin(t * 3.7);
   fxSprite(ctx, 'celshadowaura', px, y + 4, { t: t * 0.8, scale: 0.42, alpha: 0.75 * state.alpha });
-  drawTinted(ctx, px, y, '#2e2266', 0.78, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.5 * flicker }));
+  drawTinted(ctx, px, y, '#2e2266', 0.78, (c) => drawHero(c, look, gear, px, y, { ...state, ...pose, job: null, alpha: state.alpha * 0.5 * flicker }, live ? null : feel.anim));
 }
 
 // The two forms' looks: the glow round the hero, and the tint of the shadow (Demon Form only).
@@ -670,11 +672,11 @@ function drawForm(ctx, world, look, gear, x, y, state, time) {
   fxSprite(ctx, form.glow, x, y + 10, { t: time, scale: 1.6 + 0.25 * breath + 0.15 * blink, alpha: Math.min(1, 0.45 + 0.3 * breath + 0.4 * blink) });
   if (!form.shadow) return;
   const sx = x - state.facing * (live ? 8 : 12);
-  drawTinted(ctx, sx, y, form.shadow, 0.85, (c) => drawHero(c, look, gear, sx, y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) }));
+  drawTinted(ctx, sx, y, form.shadow, 0.85, (c) => drawHero(c, look, gear, sx, y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) }, live ? null : feel.anim));
 }
 
 function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
-  const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }));
+  const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }, feel.anim));
   if (buffs.shadowpartner) {
     clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, '#1e1650', 0.85);
   }

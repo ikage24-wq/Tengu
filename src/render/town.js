@@ -1809,10 +1809,12 @@ function drawTomb(ctx, x, y, since) {
 
 export function animFor(key, x, facing, time, body = null) {
   let a = anims.get(key);
-  if (!a) {
-    a = { anim: createAnim(), x, t: time };
-    anims.set(key, a);
-  }
+  // (Each one used goes to the back of the line, so the one dropped when there are too many is the
+  // walker seen longest ago, never someone still walking about: dropped, their stride started over
+  // every frame and their legs froze while they glided.)
+  if (a) anims.delete(key);
+  else a = { anim: createAnim(), x, t: time };
+  anims.set(key, a);
   const dt = Math.max(0, Math.min(0.1, time - a.t));
   const vx = dt > 0 ? (x - a.x) / dt : 0;
   a.x = x;
