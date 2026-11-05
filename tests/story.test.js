@@ -48,6 +48,8 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     if (kind === 'together') return st.together.forEach(check);
     for (const k of ['act', 'mood']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
     for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
+    if (st.fx && typeof st.at === 'object') assert.ok(Number.isFinite(st.at.x) && Number.isFinite(st.at.y), 'a burst at a real place');
+    else if (st.fx && st.at !== undefined) assert.ok(actor(st.at), `a burst on a real actor: ${st.at}`);
     for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]], `${k} names a real person: ${st[k]}`);
     if (st.spot) assert.ok(actor(st.spot), `spot follows a real actor: ${st.spot}`);
     if (Array.isArray(st.cam)) for (const w of st.cam) assert.ok(actor(w), `cam frames a real actor: ${w}`);

@@ -15,7 +15,7 @@
 //   { wait: secs }
 //   { fade: 'out' | 'in', dur, color, to }   the screen to a colour (or `to` part way) and back
 //   { flash: color }  { shake: strength, dur }
-//   { fx: kind, at, top }         a burst: sparkle hearts petals leaves wind confetti spores notes
+//   { fx: kind, at, top }         a burst (`at` an actor, or a place { x, y }): sparkle hearts petals leaves wind confetti spores notes
 //                                 bubbles ink gears pages sparks caramel crumbs feathers coins
 //                                 shells clouds shout
 //                                 (rings of sound) starfall (stars
@@ -74,6 +74,8 @@ export function mobActor(world, who) {
 
 // Where an actor stands (feet), or null if they aren't here.
 function actorAt(world, who) {
+  // (A place rather than a person: a burst out at sea, a glow at the top of a tower.)
+  if (who && typeof who === 'object') return { x: who.x, y: who.y, h: 0 };
   if (who === 'player') return { x: world.body.x, y: world.body.y, h: 52 };
   const n = world.map.npcs.find((q) => q.id === who);
   if (n) return { x: n.x, y: groundAt(world.map, n.x) - (n.cine?.lift ?? 0), h: 52 };
