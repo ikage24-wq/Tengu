@@ -119,7 +119,7 @@ export const SIDE_SCENES = {
     { who: 'malvina', text: 'I KNEW IT! A MOB! To your posts, minion! Raise the scarecrows! Light the... the... I don\'t own torches. Light the candles!', mood: 'tantrum' },
     { fade: 'out', dur: 0.7, color: '#1a1030' },
     { together: [{ night: 1 }, { place: 'posy', x: 1980 }, { place: 'pip', x: 2020 }, { place: 'lulu', x: 2060 }, { place: 'mira', x: 2100 }, { cam: ['player', 'malvina'], up: 20, dur: 0.1 }] },
-    { card: 'That night', sub: 'Lanterns bob up the lane towards the tower. A lot of them.' },
+    { card: 'That night', sub: 'Lanterns. Lots and lots of lanterns.' },
     { fade: 'in', dur: 0.8 },
     { together: [{ walk: 'posy', to: 1700, speed: 70 }, { walk: 'pip', to: 1740, speed: 70 }, { walk: 'lulu', to: 1780, speed: 70 }, { walk: 'mira', to: 1820, speed: 70 }, { cam: ['posy', 'malvina'], up: 20, dur: 2.4 }, { face: 'player', to: 'posy' }] },
     { together: [{ perform: 'malvina', move: 'vstomp', as: 'tantrum' }, { shake: 1, dur: 0.3 }, { emote: 'player', kind: 'sweat', dur: 1.4 }] },
