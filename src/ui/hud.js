@@ -6,7 +6,7 @@ import { expToNext } from '../core/exp.js';
 import { countItem } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker } from './kit.js';
+import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker, photoCorners, roughRect } from './kit.js';
 import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
 import { heartbeat } from '../render/aura.js';
@@ -296,32 +296,49 @@ export function drawHud(ui, state, world) {
     const y = HK_Y + rise;
     const D = HK_D;
     const hot = hover(ui, x, y, D, D);
-    box(ctx, x, y + 1.5, D, D, { fill: '#dccbee', edge: null, r: D / 2 });
-    // While a skill or potion is being dragged from a window, every slot shows it can take it,
-    // and the one under the mouse lights up. An empty slot is a dimmer, dashed bubble.
+    // (Scrapbook: each hotkey is a little photo print, white-bordered and tilted its own way, the
+    // skill or item as its picture and the key on a scrap of washi tape. An empty one is a spot
+    // pencilled in with a dashed line.)
     const target = carrying && hot;
-    box(ctx, x, y + sink, D, D, { fill: target ? '#fff3c4' : hot ? '#ffffff' : b ? '#fffdfb' : '#f7f0fc', edge: target ? COLORS.select : carrying ? LAV.dark : b ? LAV.main : null, r: D / 2, width: target ? 2 : 1.2 });
-    if (!b && !carrying) {
-      ctx.save();
-      ctx.setLineDash([2, 2]);
-      roundRect(ctx, x + 0.5, y + 0.5 + sink, D - 1, D - 1, D / 2);
-      ctx.strokeStyle = '#d6c4ec';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-    }
+    const tilt = ((i % 3) - 1) * 0.035;
     const c0 = D / 2;
+    ctx.save();
+    ctx.translate(x + c0, y + c0 + sink);
+    ctx.rotate(tilt);
+    if (b || carrying) {
+      if (!sink) {
+        ctx.fillStyle = 'rgba(70,40,90,0.25)';
+        ctx.fillRect(-c0 + 1, -c0 + 2, D, D);
+      }
+      ctx.fillStyle = target ? '#fff3c4' : '#ffffff';
+      ctx.fillRect(-c0, -c0, D, D);
+      ctx.strokeStyle = target ? COLORS.select : hot ? LAV.dark : '#c8b8d8';
+      ctx.lineWidth = target ? 1.6 : 0.8;
+      ctx.strokeRect(-c0, -c0, D, D);
+      ctx.fillStyle = b ? '#f3ecfb' : '#fbf7ff';
+      ctx.fillRect(-c0 + 1.8, -c0 + 1.8, D - 3.6, D - 3.6);
+    } else {
+      ctx.setLineDash([2, 1.6]);
+      ctx.strokeStyle = '#b8a4d0';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-c0 + 1, -c0 + 1, D - 2, D - 2);
+      ctx.setLineDash([]);
+    }
+    if (target || (hot && b)) photoCorners(ctx, -c0 - 0.5, -c0 - 0.5, D + 1, D + 1, target ? '#c89a3a' : LAV.dark, 4);
+    ctx.restore();
     if (b?.skill) {
       const pop = !k.short && age < 0.16 ? 1 + 0.15 * Math.sin((age / 0.16) * Math.PI) : 1;
       ctx.save();
       ctx.translate(x + c0, y + c0 + sink);
+      ctx.rotate(tilt);
       ctx.scale(pop, pop);
       ctx.beginPath();
-      ctx.arc(0, 0, D / 2 - 1, 0, Math.PI * 2);
+      ctx.rect(-c0 + 1.8, -c0 + 1.8, D - 3.6, D - 3.6);
       ctx.clip();
       drawSkillIcon(ctx, b.skill, -8, -8);
       if (noMp) {
-        roundRect(ctx, -8, -8, 16, 16, 3);
+        ctx.beginPath();
+        ctx.rect(-c0, -c0, D, D);
         ctx.globalCompositeOperation = 'saturation';
         ctx.fillStyle = '#808080';
         ctx.fill();
@@ -330,26 +347,26 @@ export function drawHud(ui, state, world) {
         ctx.fill();
       }
       if (!k.short && age < 0.12) {
-        roundRect(ctx, -8, -8, 16, 16, 3);
         ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - age / 0.12)})`;
-        ctx.fill();
+        ctx.fillRect(-c0, -c0, D, D);
       }
       ctx.restore();
-      // A cast sends a ring rippling out of the bubble.
+      // A cast sends a square ripple out from the print.
       if (!k.short && age < 0.3) {
         const u = age / 0.3;
+        const g = 1 + 7 * u;
         ctx.globalAlpha = 1 - u;
         ctx.strokeStyle = LAV.main;
         ctx.lineWidth = 2 * (1 - u) + 0.5;
-        ctx.beginPath();
-        ctx.arc(x + c0, y + c0 + sink, D / 2 + 1 + 7 * u, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.strokeRect(x - g, y - g + sink, D + g * 2, D + g * 2);
         ctx.globalAlpha = 1;
       }
       const ready = t - k.readyAt;
       if (ready < 0.3) {
         ctx.globalAlpha = 1 - ready / 0.3;
-        box(ctx, x - 1, y - 1 + sink, D + 2, D + 2, { fill: null, edge: '#ffffff', r: D / 2 + 1, width: 2 });
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x - 1, y - 1 + sink, D + 2, D + 2);
         ctx.globalAlpha = 1;
       }
       if (hot) tooltip(ui, skillTooltip(char, b.skill));
@@ -361,16 +378,9 @@ export function drawHud(ui, state, world) {
       text(ctx, `${n}`, x + D, y + D + sink, { size: 6, bold: true, align: 'right', color: '#ffffff', outline: COLORS.ink });
       if (hot) tooltip(ui, itemTooltip(char, b.item));
     }
-    // The key, on a little round tag at the top-left of the bubble.
-    ctx.fillStyle = b ? LAV.main : '#cdb8ec';
-    ctx.beginPath();
-    ctx.arc(x + 2, y + 2 + sink, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    // (On a phone there are no keys to name: the tag stays a plain dot.)
-    if (!ui.input?.touch) text(ctx, KEY_LABEL(code), x + 2, y + 4.2 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff' });
+    // The key on a scrap of washi tape across the top-left corner.
+    tape(ctx, x + 2.5, y + 1.5 + sink, 11, 6.5, -0.5, b ? '#ff9ec8' : '#d8c8ec', { pattern: 'stripes', alpha: 0.95 });
+    if (!ui.input?.touch) text(ctx, KEY_LABEL(code), x + 2.5, y + 3.7 + sink, { size: 5.5, bold: true, align: 'center', color: '#ffffff', outline: b ? '#c04a86' : '#9a88b8' });
     if (b && ui.mouse.right && hot) {
       delete char.hotkeys[code];
       ui.used = true;
@@ -1095,7 +1105,10 @@ function drawLog(ui, world, state) {
     if (a <= 0) return;
     ctx.globalAlpha = a;
     const w = ctx.measureText(m.text).width;
-    box(ctx, 4, y - 8.5, w + 10, 11, { fill: 'rgba(58,40,82,0.55)', edge: null, r: 5.5 });
+    // (Scrapbook: each line on its own slip of dark paper, torn a little unevenly.)
+    ctx.fillStyle = 'rgba(58,40,82,0.62)';
+    roughRect(ctx, 4, y - 8.5, w + 10, 11, 3, Math.round(w) % 23, 0.35);
+    ctx.fill();
     text(ctx, m.text, 9, y, { size: 8, bold: true, color: m.color });
   });
   ctx.globalAlpha = 1;

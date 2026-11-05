@@ -4,7 +4,7 @@
 
 import { NPCS } from '../data/npcs.js';
 import { FACE_STYLES } from '../render/hero.js';
-import { COLORS, text, box, roundRect, font, clicked } from './kit.js';
+import { COLORS, text, font, clicked, paper, tape, roughRect } from './kit.js';
 import { isGm, unlockGm, gmCommand } from '../world/gm.js';
 import { partySay, hasParty } from '../world/grouping.js';
 
@@ -190,7 +190,15 @@ export function drawChatBar(ui, chat, world) {
   const y = 311;
   const party = chat.channel === 'party';
   const ink = party ? PARTY_INK : COLORS.accent;
-  box(ctx, 4, y, 300, 15, { fill: party ? 'rgba(236,255,244,0.95)' : 'rgba(255,255,255,0.92)', edge: ink, r: 6 });
+  // (Scrapbook: a strip of lined paper you write on, taped down at its end, your name in ink.)
+  paper(ctx, 4, y, 300, 15, { fill: party ? '#f0fff6' : '#fffbf2', edge: ink, r: 4, seed: 7, width: 1.4 });
+  ctx.strokeStyle = party ? 'rgba(80,170,120,0.35)' : 'rgba(255,143,193,0.35)';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(8, y + 12.5);
+  ctx.lineTo(300, y + 12.5);
+  ctx.stroke();
+  tape(ctx, 302, y + 3, 16, 7, 0.6, party ? '#b8f0cc' : '#ffd6ea', { pattern: 'dots', alpha: 0.9 });
   const who = party ? `[Party] ${world.char.name}:` : `${world.char.name}:`;
   text(ctx, who, 10, y + 11, { size: 8, bold: true, color: ink });
   ctx.font = font(8, true);
@@ -205,8 +213,22 @@ export function drawChatBar(ui, chat, world) {
     const on = chat.channel === id || (id === 'all' && !party);
     const lift = (id === 'party' ? chat.tabEase : 1 - chat.tabEase) * 2;
     const tx = 308 + i * 38;
-    box(ctx, tx, y + 1 - lift, 35, 13, { fill: on ? c : 'rgba(255,255,255,0.9)', edge: c, r: 6.5, width: 1.2 });
-    text(ctx, label, tx + 17.5, y + 10.5 - lift, { size: 7.5, bold: true, align: 'center', color: on ? '#ffffff' : c });
+    // Index tabs on the strip's end: paper tabs, the picked one standing a little taller.
+    const top = y + 1 - lift;
+    ctx.beginPath();
+    ctx.moveTo(tx, y + 14);
+    ctx.lineTo(tx, top + 4);
+    ctx.quadraticCurveTo(tx, top, tx + 4, top);
+    ctx.lineTo(tx + 31, top);
+    ctx.quadraticCurveTo(tx + 35, top, tx + 35, top + 4);
+    ctx.lineTo(tx + 35, y + 14);
+    ctx.closePath();
+    ctx.fillStyle = on ? c : '#fffbf2';
+    ctx.fill();
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 1.1;
+    ctx.stroke();
+    text(ctx, label, tx + 17.5, y + 10.5 - lift, { size: 7.5, bold: true, align: 'center', color: on ? '#ffffff' : c, outline: on ? '#5a3f7a' : null });
     if (clicked(ui, tx, y, 35, 15)) chat.channel = id;
   });
 }
@@ -270,25 +292,30 @@ export function flushBubbles(ctx, hide = false) {
   ctx.restore();
 }
 
+// (Scrapbook: a speech bubble cut from paper by hand, pencilled round, lying a little lifted.)
 function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha }) {
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = '#ffffff';
-  ctx.strokeStyle = '#c9a6ff';
-  ctx.lineWidth = 1;
+  const seed = Math.round(w + h) % 29;
   // The tail reaches down to the speaker; a bubble that moved up gets a longer, slimmer one.
   const tip = Math.max(by + h + 5, y - 4);
   const half = tip - (by + h) > 8 ? 2.5 : 4;
+  ctx.fillStyle = 'rgba(70,40,90,0.18)';
+  roughRect(ctx, bx + 1.5, by + 2, w, h, 5, seed + 2, 0.45);
+  ctx.fill();
+  ctx.fillStyle = '#fffdf6';
+  ctx.strokeStyle = '#8a6a9a';
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x - half, by + h - 1);
-  ctx.lineTo(x, tip);
-  ctx.lineTo(x + half, by + h - 1);
+  ctx.quadraticCurveTo(x - 0.5, by + h + (tip - by - h) * 0.5, x + 0.5, tip);
+  ctx.quadraticCurveTo(x + half * 0.3, by + h + 2, x + half, by + h - 1);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  roundRect(ctx, bx + 0.5, by + 0.5, w, h, 6);
+  roughRect(ctx, bx + 0.5, by + 0.5, w, h, 5, seed, 0.45);
   ctx.fill();
   ctx.stroke();
-  // Cover the tail's seam with the bubble's own white.
+  // Cover the tail's seam with the bubble's own paper.
   ctx.fillRect(x - half + 1, by + h - 1.5, half * 2 - 2, 2.5);
   ctx.fillStyle = COLORS.ink;
   ctx.textAlign = 'center';
