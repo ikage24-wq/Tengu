@@ -32,7 +32,7 @@ const stepTop = (i) => ({ x: ROOM_X(i) + 62, y: ROOM_FLOOR });
 const stepFoot = (i) => ({ x: ROOM_X(i) + 62, y: STAGE });
 const stageSpot = () => ({ x: 246, y: STAGE });
 
-function backdrop(ctx, time) {
+export function backstage(ctx, time) {
   ctx.fillStyle = '#3a2440';
   ctx.fillRect(0, 0, 640, 360);
   for (let y = 0, row = 0; y < 300; y += 16, row++) {
@@ -295,7 +295,7 @@ export function dressingRooms(ui, time, chars, state, live) {
   const dt = Math.max(0, Math.min(0.1, time - (state.roomsT ?? time)));
   state.roomsT = time;
   state.heroes ??= {};
-  backdrop(ctx, time);
+  backstage(ctx, time);
   platform(ctx, time);
   let click = null;
   for (let i = 0; i < chars.length; i++) {
