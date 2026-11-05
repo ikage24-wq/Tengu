@@ -13,6 +13,7 @@ import { createAnim, stepAnim } from '../render/animator.js';
 import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
 import { lookRows, randomLook, LOOK_TABS } from './looks.js';
+import { drawPeekers, drawPeekerTalk, logoTheft } from './title-peek.js';
 
 export { randomLook };
 
@@ -53,6 +54,12 @@ const QUOTE_MAKERS = [
     'Every sound made by hand. Mostly by beeping.',
     'The bots are learning. Be nice to them.',
     'Your bag is full. Of dreams.',
+    'Kill 10 snails. Then 10 more. Then 10 more.',
+    'Quest givers do not move. It\'s in their contract.',
+    'Drop rate: yes.',
+    'Contains one (1) dramatic reveal.',
+    'Now 30 hours long. The training montage is extra.',
+    'Grinding is a lifestyle, not a choice.',
   ]),
 ];
 const quote = oneOf(QUOTE_MAKERS)();
@@ -166,44 +173,106 @@ function logo(ctx, time) {
   ctx.rotate(-0.5 + Math.sin(time * 1.4 + 1) * 0.08);
   feather(ctx, 46);
   ctx.restore();
-  ctx.save();
-  ctx.font = font(60, true);
-  ctx.textAlign = 'center';
-  ctx.lineJoin = 'round';
-  // A soft drop shadow, the deep outline, then the pink rim.
-  ctx.fillStyle = 'rgba(90,40,110,0.35)';
-  ctx.fillText('Tengu', cx + 3, cy + 5);
-  ctx.strokeStyle = '#7a3f9e';
-  ctx.lineWidth = 12;
-  ctx.strokeText('Tengu', cx, cy);
-  ctx.strokeStyle = '#ff8fc1';
-  ctx.lineWidth = 6;
-  ctx.strokeText('Tengu', cx, cy);
-  const g = ctx.createLinearGradient(0, cy - 44, 0, cy + 4);
-  g.addColorStop(0, '#ffffff');
-  g.addColorStop(0.55, '#fff3fa');
-  g.addColorStop(1, '#ffc2df');
-  ctx.fillStyle = g;
-  ctx.fillText('Tengu', cx, cy);
+  // The letters, each on its own bob and wobble (and one missing while Marlo has it), drawn on a
+  // layer of their own so the glint sweeps across the letters only.
+  const sc = ctx.getTransform().a || 1;
+  logoLayer ??= document.createElement('canvas');
+  if (logoLayer.width !== Math.round(640 * sc)) {
+    logoLayer.width = Math.round(640 * sc);
+    logoLayer.height = Math.round(150 * sc);
+  }
+  const lc = logoLayer.getContext('2d');
+  lc.setTransform(sc, 0, 0, sc, 0, 0);
+  lc.clearRect(0, 0, 640, 150);
+  lc.font = font(60, true);
+  const spots = letterSpots(lc, cx, cy, time);
+  spots.forEach((sp, i) => {
+    if (i !== logoTheft.letter) letterShape(lc, sp.ch, sp.x, sp.y, sp.rot, 'back');
+  });
+  spots.forEach((sp, i) => {
+    if (i !== logoTheft.letter) letterShape(lc, sp.ch, sp.x, sp.y, sp.rot, 'face');
+  });
   // The glint: a bright slash sweeping across the letters every few seconds.
   const k = (time % 4) / 0.8;
   if (k < 1) {
-    ctx.globalCompositeOperation = 'source-atop';
+    lc.globalCompositeOperation = 'source-atop';
     const gx = cx - 110 + k * 220;
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.beginPath();
-    ctx.moveTo(gx, cy + 6);
-    ctx.lineTo(gx + 14, cy - 50);
-    ctx.lineTo(gx + 24, cy - 50);
-    ctx.lineTo(gx + 10, cy + 6);
-    ctx.fill();
+    lc.fillStyle = 'rgba(255,255,255,0.85)';
+    lc.beginPath();
+    lc.moveTo(gx, cy + 6);
+    lc.lineTo(gx + 14, cy - 50);
+    lc.lineTo(gx + 24, cy - 50);
+    lc.lineTo(gx + 10, cy + 6);
+    lc.fill();
+    lc.globalCompositeOperation = 'source-over';
   }
-  ctx.restore();
+  ctx.drawImage(logoLayer, 0, 0, 640, 150);
+  // The stolen letter, thrown back: it falls into its slot and lands with a bounce. (While the
+  // thief holds it, the thief's own drawing carries it.)
+  const gone = logoTheft.letter;
+  let missing = gone >= 0;
+  if (gone >= 0 && logoTheft.back != null) {
+    const sp = spots[gone];
+    const u = Math.max(0, Math.min(1, (time - logoTheft.back) / 0.9));
+    if (u > 0) {
+      const fall = u < 0.6 ? (u / 0.6) ** 2 : 1 - Math.abs(Math.sin(((u - 0.6) / 0.4) * Math.PI)) * 0.12;
+      drawLetter(ctx, sp.ch, sp.x, -40 + (sp.y + 40) * fall, (1 - u) * 6);
+      missing = u < 0.6;
+    }
+  }
   for (let i = 0; i < 6; i++) {
     const a = time * 1.5 + i;
     sparkle(ctx, cx + Math.cos(a) * 120, cy - 18 + Math.sin(a * 1.3) * 26, 2.5 + (i % 3), i % 2 ? '#ffffff' : '#ffe36b');
   }
-  text(ctx, quote, cx, cy + 22, { size: 11, bold: true, align: 'center', color: '#ffffff', outline: '#b062c8' });
+  text(ctx, missing ? 'HEY! Give that back!' : quote, cx, cy + 22, { size: 11, bold: true, align: 'center', color: '#ffffff', outline: missing ? '#d8343a' : '#b062c8' });
+  return spots;
+}
+let logoLayer = null;
+// One logo letter: its shadow and outlines ('back'), or its cream-to-pink face ('face').
+function letterShape(c, ch, x, y, rot, part) {
+  c.save();
+  c.translate(x, y);
+  c.rotate(rot);
+  c.font = font(60, true);
+  c.textAlign = 'center';
+  c.lineJoin = 'round';
+  if (part === 'back') {
+    c.fillStyle = 'rgba(90,40,110,0.35)';
+    c.fillText(ch, 3, 5);
+    c.strokeStyle = '#7a3f9e';
+    c.lineWidth = 12;
+    c.strokeText(ch, 0, 0);
+    c.strokeStyle = '#ff8fc1';
+    c.lineWidth = 6;
+    c.strokeText(ch, 0, 0);
+  } else {
+    const g = c.createLinearGradient(0, -44, 0, 4);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.55, '#fff3fa');
+    g.addColorStop(1, '#ffc2df');
+    c.fillStyle = g;
+    c.fillText(ch, 0, 0);
+  }
+  c.restore();
+}
+// A whole letter on its own (the stolen one, out of its slot).
+export function drawLetter(c, ch, x, y, rot) {
+  letterShape(c, ch, x, y, rot, 'back');
+  letterShape(c, ch, x, y, rot, 'face');
+}
+// Each letter's spot: laid out along the word, bobbing on its own beat and rocking a little.
+const WORD = 'Tengu';
+let widths = null;
+function letterSpots(ctx, cx, cy, time) {
+  widths ??= [...WORD].map((ch) => ctx.measureText(ch).width - 2);
+  const total = widths.reduce((a, b) => a + b, 0);
+  let x = cx - total / 2;
+  return [...WORD].map((ch, i) => {
+    const sx = x + widths[i] / 2;
+    x += widths[i];
+    const beat = time * 3.2 - i * 0.7;
+    return { ch, x: sx, y: cy - Math.max(0, Math.sin(beat)) * 5, rot: Math.sin(beat * 0.5 + i) * 0.07 };
+  });
 }
 // A crow-black tengu feather along +x, `len` px: a quill and two vanes with a blue sheen.
 function feather(ctx, len) {
@@ -330,6 +399,8 @@ function hangingSign(ctx, x, y, w, h, swing) {
 
 let awake = false;
 let awakeAt = 0;
+// The prompt, changing its mind every few seconds.
+const PRESS = ['Press any key', 'Press any key. Not that one.', 'Press the Any key', 'Press any key (we believe in you)', 'Still waiting. Press any key.'];
 // MMO-style login: logo, world select, and a status bar. Returns true on Enter World.
 export function titleScreen(ui, time) {
   const { ctx } = ui;
@@ -340,7 +411,9 @@ export function titleScreen(ui, time) {
   cast(ctx, time, cam);
   petals(ctx, time);
   dayLight(ctx, part, time);
-  logo(ctx, time);
+  const letters = logo(ctx, time);
+  // The folk popping in for a close-up (a click on a face is theirs, not the screen's).
+  drawPeekers(ui, time, letters, drawLetter);
 
   // The first key or click wakes the screen; then World Select drops in on its sign.
   let pick = false;
@@ -348,9 +421,10 @@ export function titleScreen(ui, time) {
     const k = 0.55 + 0.45 * Math.sin(time * 3);
     ctx.globalAlpha = k;
     ctx.font = font(11, true);
-    const tw = ctx.measureText('Press any key').width + 30;
+    const ask = PRESS[Math.floor(time / 5) % PRESS.length];
+    const tw = ctx.measureText(ask).width + 30;
     box(ctx, 320 - tw / 2, 196, tw, 22, { fill: 'rgba(255,247,252,0.92)', edge: '#f4bcd8', r: 11, width: 2 });
-    text(ctx, 'Press any key', 320, 211, { size: 11, bold: true, align: 'center', color: '#b062c8' });
+    text(ctx, ask, 320, 211, { size: 11, bold: true, align: 'center', color: '#b062c8' });
     ctx.globalAlpha = 1;
     if (ui.input.pressed.size || ui.mouse.clicked) {
       awake = true;
@@ -397,6 +471,7 @@ export function titleScreen(ui, time) {
   text(ctx, `Server online · ${WORLDS[world].name}`, 25, 351, { size: 7.5, bold: true, color: COLORS.ink });
   text(ctx, ui.input?.touch ? 'Stick moves · Jump · Attack · Loot · push up to talk' : 'Arrows move · Space jumps · Z attacks · X loots · Up talks', 320, 351, { size: 7.5, align: 'center', color: COLORS.muted });
   text(ctx, `v${VERSION}`, 626, 351, { size: 7.5, bold: true, align: 'right', color: COLORS.ink });
+  drawPeekerTalk(ctx);
   return pick;
 }
 
