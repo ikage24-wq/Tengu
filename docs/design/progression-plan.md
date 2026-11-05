@@ -176,6 +176,9 @@ jobs.)
 - [ ] **Phase 9: Life content.** Fun Fair, mounts, home, crafting. Mounts done 2026-11-04 (six, each
   with its own trick: docs/design/mounts.md); your island, Shelly's five stages, furniture,
   decorating and visits done the same day (docs/design/home-island.md). The Fun Fair is left.
+- [ ] **Later: name tag and speech bubble styles in the Cash Shop** (the player's plan,
+  2026-11-05). Players will buy looks for their name tag and their speech bubbles. Until then
+  everyone has the default: the name pill, and the hand-cut paper bubble from the scrapbook UI.
 
 ## Open questions for the user
 
