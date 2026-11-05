@@ -475,4 +475,25 @@ export const LIFE_MOVES = {
 };
 
 // The shortest each can be and still read (render/moves.js MOVE_MIN).
+// Every life move is done standing (or kneeling, or sat) on the spot, so a lean in toward the
+// work is taken at the hips, never by sliding the whole figure: the feet stay planted while the
+// body above them leans in, rocks with each file stroke or stir, and draws back. (Pushed as one
+// piece, their feet skated about under them.) A lunge in px is the same shift of the torso, which
+// is drawn narrowed by the figure's width scale.
+const FIGURE_KX = 0.66;
+function planted(move) {
+  const lunge = move.lunge ?? 0;
+  if (!lunge) return move;
+  const rig = move.rig;
+  return {
+    ...move,
+    lunge: 0,
+    rig: (r) => {
+      rig?.(r);
+      r.tx = q((r.tx ?? 0) + lunge / FIGURE_KX);
+    },
+  };
+}
+for (const [kind, move] of Object.entries(LIFE_MOVES)) LIFE_MOVES[kind] = (...args) => planted(move(...args));
+
 export const LIFE_MIN = { gather: 0.9, pluck: 0.9, reap: 1, mine: 1.2, chop: 1.2, fishcast: 0.45, fishwait: 1, fishperk: 0.5, fishbite: 0.5, fishcatch: 1.2, fishmiss: 0.8, cook: 2, craft: 2.2 };
