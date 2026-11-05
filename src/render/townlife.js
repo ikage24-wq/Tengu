@@ -271,36 +271,61 @@ function book(ctx, x, y, t, dir) {
 const INK = '#3a2d4f';
 
 // A cat: curled up asleep (breathing, `f` 0-1), or walking (`f` the step).
-function catArt(coat, pose, f) {
-  return art(`tl-cat|${coat}|${pose}|${f}`, 24, 16, () => {
+// A four-legged trot. `p` (0-1) is how far through one stride the pet is, from how far it has
+// trotted; legs go in diagonal pairs. A planted paw slides back exactly as far as the ground goes
+// by (a stride is 4 * reach px), then lifts and swings forward to land again. Rounded to eighths so
+// the frames can be kept.
+const PAW_FRAMES = 8;
+function pawAt(p, reach) {
+  const u = ((p % 1) + 1) % 1;
+  if (u < 0.5) return [reach - 4 * reach * u, 0];
+  const v = (u - 0.5) * 2;
+  return [-reach + 2 * reach * (0.5 - 0.5 * Math.cos(Math.PI * v)), Math.sin(Math.PI * v) * 1.6];
+}
+
+// A pet's stride phase for frame keys: whole eighths.
+const pawFrame = (d, stride) => Math.floor(((d / stride) % 1) * PAW_FRAMES) / PAW_FRAMES;
+
+const CAT_REACH = 1.5;
+const CAT_STRIDE = CAT_REACH * 4;
+function catArt(coat, pose, p) {
+  return art(`tl-cat|${coat}|${pose}|${p}`, 24, 16, () => {
     const out = [];
     if (pose === 'nap') {
-      const b = f ? 0.6 : 0;
+      const b = p ? 0.6 : 0;
       out.push(E(12, 11 - b / 2, 9, 5 + b / 2, coat), F(E(13, 13, 7, 2.6, mixShade(coat))), E(5, 10, 4.4, 3.8, coat),
         T([[2.4, 7.4], [3.2, 3.8], [5.4, 6.6]], coat), T([[5.6, 6.4], [7.4, 3.6], [8.2, 7.2]], coat),
         F(R(3.2, 10, 1.8, 0.6, INK)), F(R(6, 10, 1.8, 0.6, INK)), E(19, 13.4, 5, 1.8, coat), F(E(22.6, 13.4, 1.6, 1.4, '#ffffff')));
     } else {
-      const step = f ? 1 : -1;
-      out.push(R(6 + step, 10, 2, 6, coat), R(16 - step, 10, 2, 6, coat), E(12, 9, 8, 4.4, coat), F(E(13, 11, 6, 2, mixShade(coat))),
-        R(9 - step, 10, 2, 6, mixShade(coat)), R(19 + step, 10, 2, 6, mixShade(coat)), E(20, 5.6, 4.2, 3.8, coat),
+      const [ax, al] = pawAt(p, CAT_REACH);
+      const [bx, bl] = pawAt(p + 0.5, CAT_REACH);
+      const tail = Math.sin(p * Math.PI * 2);
+      out.push(R(6 + ax, 10, 2, 6 - al, coat), R(16 + bx, 10, 2, 6 - bl, coat), E(12, 9, 8, 4.4, coat), F(E(13, 11, 6, 2, mixShade(coat))),
+        R(9 + bx, 10, 2, 6 - bl, mixShade(coat)), R(19 + ax, 10, 2, 6 - al, mixShade(coat)), E(20, 5.6, 4.2, 3.8, coat),
         T([[17.2, 3], [17.8, -0.4 + 0.6], [19.6, 2.4]], coat), T([[20.6, 2.2], [22.4, 0.2], [23, 3.4]], coat),
-        F(E(21.6, 5.2, 0.6, 0.8, INK)), F(E(23.2, 6.6, 0.8, 0.5, '#ff9fb8')), T([[4.6, 8], [1, 2.4 + step], [2.6, 2 + step], [5.8, 7]], coat));
+        F(E(21.6, 5.2, 0.6, 0.8, INK)), F(E(23.2, 6.6, 0.8, 0.5, '#ff9fb8')), T([[4.6, 8], [1, 2.4 + tail], [2.6, 2 + tail], [5.8, 7]], coat));
     }
     return out;
   });
 }
 
-function dogArt(pose, f) {
-  return art(`tl-dog|${pose}|${f}`, 26, 20, () => {
+// The dog: standing, `p` is 0 or 1 (a weight shift and a wag); running, the stride phase.
+const DOG_REACH = 2;
+const DOG_STRIDE = DOG_REACH * 4;
+function dogArt(pose, p) {
+  return art(`tl-dog|${pose}|${p}`, 26, 20, () => {
     const coat = '#e6b47a';
     const dark = '#b8814e';
-    const step = f ? 1.4 : -1.4;
-    const out = [R(6 + step, 12, 2.4, 8, dark), R(17 - step, 12, 2.4, 8, dark), E(12, 11, 9, 5, coat), F(E(13, 13, 7, 2.4, '#fff4e6')),
-      R(9 - step, 12, 2.4, 8, coat), R(20 + step, 12, 2.4, 8, coat), E(21, 6.4, 4.8, 4.4, coat), E(24.2, 8, 2.6, 2, '#fff4e6'),
+    const run = pose === 'run';
+    const [ax, al] = run ? pawAt(p, DOG_REACH) : [p ? 1.4 : -1.4, 0];
+    const [bx, bl] = run ? pawAt(p + 0.5, DOG_REACH) : [-ax, 0];
+    const out = [R(6 + ax, 12, 2.4, 8 - al, dark), R(17 + bx, 12, 2.4, 8 - bl, dark), E(12, 11, 9, 5, coat), F(E(13, 13, 7, 2.4, '#fff4e6')),
+      R(9 + bx, 12, 2.4, 8 - bl, coat), R(20 + ax, 12, 2.4, 8 - al, coat), E(21, 6.4, 4.8, 4.4, coat), E(24.2, 8, 2.6, 2, '#fff4e6'),
       F(E(25.6, 7.2, 0.9, 0.8, INK)), F(E(22, 5.6, 0.6, 0.8, INK)), E(18.6, 5.4, 1.8, 3.6, dark)];
     // The tail wags.
-    out.push(T([[3.6, 9], [f ? -0.4 : 1, f ? 3 : 4.6], [f ? 1.4 : 2.6, f ? 2.4 : 4], [5, 8]], coat));
-    if (pose === 'run') out.push(F(E(25, 10.6, 1.2, 1.6, '#ff8fa8')));
+    const w = run ? (Math.sin(p * Math.PI * 4) > 0 ? 1 : 0) : p;
+    out.push(T([[3.6, 9], [w ? -0.4 : 1, w ? 3 : 4.6], [w ? 1.4 : 2.6, w ? 2.4 : 4], [5, 8]], coat));
+    if (run) out.push(F(E(25, 10.6, 1.2, 1.6, '#ff8fa8')));
     return out;
   });
 }
@@ -414,7 +439,9 @@ export function drawTownLife(ctx, map, cam, width, time, player = null) {
     const kid = p.kind === 'kid';
     const scale = kid ? 0.78 : 1;
     footShadow(ctx, x, gy, kid ? 9 : 12, 0);
-    const anim = animFor(p.id, wx, facing, time);
+    // (A child is drawn smaller, so each step covers less ground: their stride is timed against
+    // the ground as they'd cover it at full size, or their planted feet would slip.)
+    const anim = animFor(p.id, wx / scale, facing, time);
     const state = { pose: at.pose, progress: at.progress ?? 0, dur: at.dur ?? 0.5, time: time + p.seed, seed: p.seed, facing, ready: at.ready ?? false };
     if (kid) {
       ctx.save();
@@ -427,6 +454,21 @@ export function drawTownLife(ctx, map, cam, width, time, player = null) {
     if (talk) said.push([x, gy - (kid ? 50 : 62), talk.text]);
   }
   if (settings.chatBubbles) for (const [x, y, words] of said) drawBubble(ctx, x, y, words);
+}
+
+// How far each pet has trotted, so its legs step with the ground it covers instead of on a clock.
+const odometers = new Map();
+function odometer(id, wx) {
+  const o = odometers.get(id);
+  if (!o) {
+    odometers.set(id, { x: wx, d: 0 });
+    return 0;
+  }
+  const dx = Math.abs(wx - o.x);
+  // (A jump in position, arriving on the map, isn't walking.)
+  if (dx < 40) o.d += dx;
+  o.x = wx;
+  return o.d;
 }
 
 function drawPet(ctx, p, at, x, gy, time) {
@@ -449,14 +491,21 @@ function drawPet(ctx, p, at, x, gy, time) {
       ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.fillText('z', snap(x - at.facing * 6 + z * 6), snap(gy - 14 - z * 12));
       ctx.restore();
-    } else flipped(ctx, x, at.facing, () => place(ctx, catArt(coat, at.walking ? 'walk' : 'walk', at.walking ? Math.floor(time * 6) % 2 : 0), x, gy + 1));
+    } else {
+      // Her paws step with the ground she covers, and stop when she does.
+      const d = odometer(p.id, at.x);
+      flipped(ctx, x, at.facing, () => place(ctx, catArt(coat, 'walk', pawFrame(d, CAT_STRIDE)), x, gy + 1));
+    }
     return;
   }
   // The dog.
   footShadow(ctx, x, gy, 11, 0);
+  // Running, the paws step with the ground covered and the body bounds twice a stride; standing,
+  // a slow shift of weight.
   const running = at.pose === 'walk' || at.walking;
-  const f = running ? Math.floor(time * 10) % 2 : Math.floor(time * 6) % 2;
-  const bounce = running ? Math.abs(Math.sin(time * 14)) * 1.5 : 0;
+  const d = odometer(p.id, at.x);
+  const f = running ? pawFrame(d, DOG_STRIDE) : Math.floor(time * 6) % 2;
+  const bounce = running ? Math.abs(Math.sin((d / DOG_STRIDE) * Math.PI * 2)) * 1.2 : 0;
   flipped(ctx, x, at.facing, () => place(ctx, dogArt(running ? 'run' : 'stand', f), x, gy + 1 - bounce));
 }
 
