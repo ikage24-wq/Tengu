@@ -433,16 +433,18 @@ export const MAPS = {
         { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 }), SPOT.herb(3, 'crystal_truffle')] },
       ],
       ledges: [
-        // Glowcap Terraces: crystal shelves over the steps, and high ledges.
-        { x: 120, y: 520, w: 240 }, { x: 500, y: 560, w: 220 }, { x: 560, y: 640, w: 220 }, { x: 220, y: 440, w: 260 }, { x: 620, y: 480, w: 240 },
+        // Glowcap Terraces: long crystal shelves over the steps, and the high ledges (rebuilt
+        // 2026-11-05 wider and more of them, so the terraces hunt in a loop).
+        { x: 40, y: 520, w: 330 }, { x: 200, y: 440, w: 380 }, { x: 440, y: 640, w: 320 }, { x: 470, y: 560, w: 300 }, { x: 600, y: 480, w: 240 },
         // The lake: crystal outcrops over each shore, an arch of crystal over the water, and the
         // crystal islet in the middle where you fish (only the raft goes there).
-        { x: 840, y: 800, w: 220 }, { x: 1540, y: 800, w: 220 }, { x: 1150, y: 760, w: 300 },
-        { x: 820, y: 640, w: 240 }, { x: 1560, y: 640, w: 240 }, { x: 1170, y: 600, w: 260 },
-        { x: 900, y: 540, w: 240 }, { x: 1460, y: 540, w: 240 }, { x: 1170, y: 460, w: 260 },
+        { x: 820, y: 800, w: 300 }, { x: 1480, y: 800, w: 300 }, { x: 1150, y: 760, w: 300 },
+        { x: 800, y: 640, w: 320 }, { x: 1480, y: 640, w: 320 }, { x: 1140, y: 600, w: 320 },
+        { x: 860, y: 540, w: 260 }, { x: 1480, y: 540, w: 260 }, { x: 1100, y: 460, w: 400 },
+        { x: 1140, y: 680, w: 320 },
         { x: 1245, y: 872, w: 110, style: 'stone' },
         // Shade Spires: spires climbing out, and the ledge with the way to the sky.
-        { x: 1850, y: 640, w: 220 }, { x: 2250, y: 520, w: 260 }, { x: 2300, y: 420, w: 240 },
+        { x: 1830, y: 640, w: 320 }, { x: 1820, y: 560, w: 260 }, { x: 2250, y: 520, w: 300 }, { x: 2280, y: 420, w: 280 },
         { x: 1900, y: 480, w: 280, thick: 44 },
         // The crystal raft ferrying across the lake, shore to shore past the islet.
         { x: 1000, y: 880, w: 130, style: 'stone', drift: { dx: 470, period: 14 } },
@@ -2584,15 +2586,22 @@ Object.assign(MAPS, {
         { name: 'West Rim', color: '#8fa8f0', from: 0, mobs: ['windbird'], nodes: [SPOT.night(4), SPOT.herb(4, 'star_anise')] },
         { name: 'Fallen Star Crater', color: '#e0b84a', from: 1000, mobs: ['starspirit', 'windbird'], nodes: [SPOT.ore(4), SPOT.ore(4, { gem: 0.2 })],
           look: { sky: ['#2a1e58', '#5a3f8c', '#c08ad6'] } },
-        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4), SPOT.fiber(4)],
+        { name: 'East Rim', color: '#c8b8ff', from: 1600, mobs: ['starspirit'], nodes: [SPOT.herb(4, 'star_anise'), SPOT.wood(4)],
           look: { sky: ['#141238', '#3a2f7c', '#8a7ad0'] } },
       ],
       ledges: [
-        // Islands floating over the crater.
-        { x: 1050, y: 960, w: 220 }, { x: 1330, y: 960, w: 220 },
+        // Islands floating over the crater, in tiers either side of the starlight column (rebuilt
+        // 2026-11-05 with more and wider star-cloud floors, so the heights hunt like a real map).
+        { x: 1030, y: 960, w: 240 }, { x: 1330, y: 960, w: 240 },
         { x: 1150, y: 880, w: 300 },
-        // A ledge over the west rim, and the east rim's high island with the way to the terrace.
-        { x: 100, y: 440, w: 260 },
+        { x: 1020, y: 800, w: 240 }, { x: 1340, y: 800, w: 240 },
+        { x: 1020, y: 560, w: 220 }, { x: 1360, y: 560, w: 220 },
+        // Star-cloud terraces over the west rim and its steps (none over the star pool).
+        { x: 60, y: 440, w: 380 }, { x: 240, y: 360, w: 380 },
+        { x: 500, y: 560, w: 300 }, { x: 560, y: 480, w: 360 },
+        // The east rim: clouds over its steps, and its high island with the way to the terrace.
+        { x: 1620, y: 720, w: 200 }, { x: 1640, y: 480, w: 300 }, { x: 1880, y: 560, w: 240 },
+        { x: 2160, y: 360, w: 300 },
         { x: 2250, y: 440, w: 300, thick: 44 },
         // The star-cloud ferry, gliding rim to rim across the valley.
         { x: 760, y: 640, w: 150, drift: { dx: 930, period: 16 } },
@@ -2680,6 +2689,9 @@ MAPS.springs.height = 960;
 MAPS.springs.water = [{ x1: 1990, x2: 2300, y: 894, kind: 'hot' }];
 for (const r of MAPS.springs.ropes) if (r.bottom === 880 && r.x > 1940 && r.x < 2320) r.x = 1930;
 MAPS.springs.portals.push({ id: 'grotto', x: 1560, y: 560, to: 'grotto', toPortal: 'west', label: 'Rose Grotto' });
+// Cloud cotton on the high cloud by the Moon Terrace, a quiet spot above the busy east rim
+// (placed by hand: the rim's own floors are full of monsters).
+MAPS.starfall.nodes.push({ ...SPOT.fiber(4), x: 2240, y: 360 });
 MAPS.starfall.portals.push({ id: 'terrace', x: 2500, y: 440, to: 'terrace', toPortal: 'west', label: 'Moon Terrace' });
 
 // The queens roam their regions as field bosses (from the start: the story is optional), back
