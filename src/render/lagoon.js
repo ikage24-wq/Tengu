@@ -1161,14 +1161,16 @@ export function drawVoyage(ctx, map, cam, width, height, time, progress) {
     ctx.arc(snap(x0 + 18), snap(deck + 18), 5.5, (k / 4) * TAU, (k / 4) * TAU + 0.5);
     ctx.stroke();
   }
-  // The paddle box: a sunburst fan over the wheel, coral and cream with a gold rim, and the wheel
-  // turning in the opening below it.
+  // The paddle box: on her side, a half-round housing over the top of the wheel, a sunburst of
+  // coral and cream with a gold rim, sitting on the hull just under the deck's edge. The wheel
+  // turns beneath it, one centre with the box, its lower blades dipping into the sea in front.
   const px = 300 - cam.x;
-  const pr = 46;
-  paddleWheel(ctx, px, deck + 30, 32, -time * 2.4, time, sea);
+  const pc = sea + 6;
+  const pr = 36;
+  paddleWheel(ctx, px, pc, 28, -time * 2.4, time, sea);
   ctx.save();
   ctx.beginPath();
-  ctx.arc(px, deck + 12, pr, Math.PI, 0);
+  ctx.arc(px, pc, pr, Math.PI, 0);
   ctx.closePath();
   ctx.clip();
   for (let k = 0; k < 9; k++) {
@@ -1176,8 +1178,8 @@ export function drawVoyage(ctx, map, cam, width, height, time, progress) {
     const a1 = Math.PI + ((k + 1) / 9) * Math.PI;
     ctx.fillStyle = k % 2 ? HULL.cream : HULL.coral;
     ctx.beginPath();
-    ctx.moveTo(px, deck + 12);
-    ctx.arc(px, deck + 12, pr, a0, a1);
+    ctx.moveTo(px, pc);
+    ctx.arc(px, pc, pr, a0, a1);
     ctx.closePath();
     ctx.fill();
   }
@@ -1185,15 +1187,17 @@ export function drawVoyage(ctx, map, cam, width, height, time, progress) {
   ctx.strokeStyle = HULL.gold;
   ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.arc(px, deck + 12, pr, Math.PI, 0);
+  ctx.arc(px, pc, pr, Math.PI, 0);
   ctx.stroke();
+  // Its lower edge: a gold sill the wheel turns under.
   ctx.fillStyle = HULL.gold;
+  ctx.fillRect(snap(px - pr - 1.5), snap(pc - 1), pr * 2 + 3, 3);
   ctx.beginPath();
-  ctx.arc(px, deck + 12, 9, Math.PI, 0);
+  ctx.arc(px, pc, 9, Math.PI, 0);
   ctx.fill();
   ctx.fillStyle = HULL.coral;
   ctx.beginPath();
-  ctx.arc(px, deck + 12, 5, Math.PI, 0);
+  ctx.arc(px, pc, 5, Math.PI, 0);
   ctx.fill();
 
   // ----- The sea in front of her -----
