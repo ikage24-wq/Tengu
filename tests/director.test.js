@@ -377,3 +377,21 @@ test("chapter 5's new scenes play through at Tidepool Pier where Marina stands",
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("chapter 6's new scenes play through at the Carnival Gates where Tock stands", () => {
+  for (const id of ['fair_open', 'fair_done', 'gearheart_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'carnival_gate', 'start');
+    const tock = w.map.npcs.find((n) => n.id === 'tock');
+    w.body.x = tock.x - 70;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

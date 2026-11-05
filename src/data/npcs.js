@@ -124,7 +124,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   tock: {
-    id: 'tock', name: 'Tock', title: 'Runaway Tin Soldier', role: 'dungeon', dungeon: 'carnival',
+    id: 'tock', name: 'Tock', title: 'Runaway Tin Soldier', role: 'dungeon', quests: ['story_fair', 'story_gearheart'], dungeon: 'carnival',
     look: { hairStyle: 'bob', hairColor: '#ff8a5a', skinTone: '#fbd9bf', eyeColor: '#3a4aa8', outfitColor: '#e04a5a', eyeStyle: 'round', face: 'determined' },
     greeting: "Psst! I ran away from the Carnival. Her Majesty is wound too tight and none of us can stop. Bring three friends and help me wind her down!",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
