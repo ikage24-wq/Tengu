@@ -231,7 +231,9 @@ How to get there without making it a grind (the game's own rule against chores):
    Kelp and Rook, and The Drowned Queen; Vex's chapter now starts at 23).
 5. [x] Chapter 6: Carnival and Tamamo (2026-11-05: Vex sends you to Tock, who gives A Fair Nobody
    Built and Wound Too Tight at the Carnival Gates; his message leads back to Vex and Tamamo).
-6. [ ] Chapter 7: the Observatory and the midpoint twist.
+6. [x] Chapter 7: the Observatory and the midpoint twist (2026-11-05: Nim gives Charts That Don't
+   Move and The Star Keeper; the twist plays at her shop with Elowen and Mira; the springs
+   chapter now starts at 33).
 7. [ ] Chapter 8: Candy Volcano and Lilith.
 8. [ ] Chapter 9: the Dream Theatre.
 9. [ ] Chapter 10: the Sky Whale, Selene, Prismaris.

@@ -90,7 +90,7 @@ export const NPCS = {
   },
   nim: {
     id: 'nim', name: 'Nim', title: 'Spell Shop', role: 'shop',
-    quests: ['story_5_1', 'story_5_2', 'story_5_3', 'nim_chimes', 'nim_candles', 'nim_cape', 'nim_stardust'],
+    quests: ['story_charts', 'story_astraea', 'story_5_1', 'story_5_2', 'story_5_3', 'nim_chimes', 'nim_candles', 'nim_cape', 'nim_stardust'],
     building: 'magic', sign: "Nim's Spells",
     look: { hairStyle: 'hime', hairColor: '#b9a7ff', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#c9b8ff', outfit: 'sweater', eyeStyle: 'star', face: 'shy' },
     greeting: 'W-welcome... wands, staves, moonberry tonics, and charmed earrings. Mind the floating candles.',

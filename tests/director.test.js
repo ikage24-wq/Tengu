@@ -395,3 +395,24 @@ test("chapter 6's new scenes play through at the Carnival Gates where Tock stand
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("chapter 7's scenes play through at Nim's shop, and Elowen and Mira come for the twist", () => {
+  for (const id of ['charts_open', 'charts_done', 'falling_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'start');
+    const nim = w.map.npcs.find((n) => n.id === 'nim');
+    const elowenX = w.map.npcs.find((n) => n.id === 'elowen').x;
+    w.body.x = nim.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.ok(!w.map.npcs.some((n) => n.id === 'mira'), `${id}: Mira goes home to Sprout`);
+    assert.equal(w.map.npcs.find((n) => n.id === 'elowen').x, elowenX, `${id}: Elowen goes back to her tower`);
+  }
+});

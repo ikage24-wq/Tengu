@@ -191,9 +191,28 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch4_trial', win: 'ch4_win', done: 'ch4_end' },
   }),
 
+  // ---------- Chapter 7: The Night the Sky Stood Still (30-34) ----------
+  story_charts: s('story_charts', 7, {
+    name: "Charts That Don't Move", giver: 'nim', minLevel: 30, prereq: 'story_4_3',
+    text: "My star charts stopped working. The stars haven't moved in weeks. I-I asked them nicely. Twice. Professor Lumen at the Observatory Steps, past Moonlit Ridge, knows the sky. Could you ask him? And Lupina's wolves on the ridge have been howling at the stuck moon for weeks: calm 20 of them on the way. Sorry. That's a lot.",
+    objectives: [
+      { type: 'kill', mob: 'lupina', count: 20 },
+      { type: 'talk', npc: 'lumen', say: "Stopped? Of course they've stopped! Astraea stopped them! Fascinating! Terrible! Mostly fascinating! Tell the little spell-seller I have the key to Astraea's tower. Bring three friends and a good neck: there's a lot of looking up." },
+    ],
+    rewards: { exp: 27000, gold: 720, items: [{ id: 'white_potion', qty: 20 }] },
+    scenes: { accept: 'charts_open', done: 'charts_done' },
+  }),
+  story_astraea: s('story_astraea', 7, {
+    name: 'The Star Keeper', giver: 'nim', minLevel: 31, prereq: 'story_charts',
+    text: "Please set the sky going again. Climb the Star Observatory with three friends (Professor Lumen will let you in) and free Astraea. And if she has any notes about that night... could you bring them? I'll wait here and worry. I'm very good at it.",
+    objectives: [{ type: 'kill', mob: 'astraea', count: 1 }],
+    rewards: { exp: 60000, gold: 1200, items: [{ id: 'warrior_top_30', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 5 }] },
+    scenes: { done: 'falling_done' },
+  }),
+
   // ---------- Chapter 8: Steam and Roses (33-39) ----------
   story_5_1: s('story_5_1', 8, {
-    name: 'Cold Springs', giver: 'nim', minLevel: 31, prereq: 'story_4_3',
+    name: 'Cold Springs', giver: 'nim', minLevel: 33, prereq: 'story_astraea',
     text: "T-the hot springs past the Crystal Cave are going cold! Without them my moonberries won't grow. Could you go and see? I'd go, but the Lamia there are in a terrible mood, and also there are... people. Sorry.",
     objectives: [{ type: 'visit', map: 'springs' }, { type: 'kill', mob: 'lamia', count: 20 }],
     rewards: { exp: 50000, gold: 1100, items: [{ id: 'mana_elixir', qty: 10 }] },
@@ -528,12 +547,55 @@ export const SCENES = {
   ],
   ch4_end: [
     { who: 'vex', text: 'Pockets are full again, and the foxes leave little gifts instead. One left a card. With a signature. I am so proud.', mood: 'happy' },
-    { who: 'vex', text: "Nim in Moonleaf Grove sent a panicked note. Eleven apologies and the word 'cold'. Go." },
+    { who: 'vex', text: "Nim in Moonleaf Grove sent a panicked note. Eleven apologies and the word 'stars'. Go." },
+  ],
+  // ----- Chapter 7: the twist -----
+  charts_open: [
+    { card: 'Chapter 7', sub: 'The Night the Sky Stood Still' },
+    { who: 'nim', text: 'My star charts stopped working. The stars haven\'t moved in weeks. I-I asked them nicely. Twice.', mood: 'sad' },
+    { who: 'nim', text: "Professor Lumen knows the sky. Could you ask him for me? He talks very fast and very kindly, and I panic.", mood: 'sad' },
+  ],
+  charts_done: [
+    { who: 'player', text: 'Professor Lumen says Astraea stopped the stars. On purpose.' },
+    { together: [{ emote: 'nim', kind: '!', dur: 1.4 }, { jump: 'nim', height: 10 }] },
+    { who: 'nim', text: "On purpose? You can DO that? I-I wasn't even allowed to stop my candles.", mood: 'surprised' },
+    { who: 'nim', text: "If the stars don't move, the night can't end, and wishes can't go anywhere. Every wish since the festival is just... stuck up there.", mood: 'sad' },
+  ],
+  falling_done: [
+    { together: [{ walk: 'player', to: 680, speed: 80 }, { face: 'nim', to: 1 }] },
+    { together: [{ face: 'player', to: 'nim' }, { cam: ['nim', 'player'], dur: 0.8 }] },
+    { who: 'player', text: 'Astraea is free, and the stars are turning again. She gave me her record from festival night.' },
+    { together: [{ emote: 'nim', kind: '!', dur: 1.2 }, { fx: 'pages', at: 'nim', n: 12 }] },
+    { who: 'nim', text: "Her record? The real one? C-can I read it? Out loud? I've been practising out loud.", mood: 'surprised' },
+    { who: null, text: 'Nim opens the little book. The last page is dated festival night, in very neat, very upset handwriting.' },
+    { together: [{ spot: 'nim', r: 54, dur: 0.8 }, { fx: 'sparkle', at: 'nim', n: 10 }] },
+    { who: 'nim', text: "'Midnight. The brightest star I have ever seen is falling. I cannot bear to lose another one. So I have stopped the sky.'" },
+    { together: [{ shake: 1.4, dur: 0.6 }, { wait: 0.4 }] },
+    { who: 'nim', text: "'...It did not fall. It turned, and it went DOWN. Into the ground, under the Crystal Cave. I stopped every star on the island, and I still could not save it.'", mood: 'sad' },
+    { together: [{ spot: null, dur: 0.6 }, { emote: 'nim', kind: 'sweat', dur: 1.4 }] },
+    { who: 'nim', text: 'S-sorry, book. That was very loud of me.', mood: 'sad' },
+    { together: [{ walk: 'elowen', to: 770, speed: 190 }, { cam: ['nim', 'player', 'elowen'], dur: 1.6 }, { fx: 'sparkle', at: 'elowen', n: 8 }] },
+    { together: [{ face: 'elowen', to: 'nim' }, { emote: 'elowen', kind: '!', dur: 1.2 }] },
+    { who: null, text: 'Elowen sweeps in from across the grove. She has, of course, made an entrance.' },
+    { who: 'elowen', text: "A star that falls into the ground is no star. That was Hayate's light.", mood: 'surprised' },
+    { together: [{ spawn: 'mira', x: 360, facing: 1 }, { walk: 'mira', to: 520, speed: 100 }, { emote: 'mira', kind: 'note', dur: 1.4 }] },
+    { together: [{ face: 'mira', to: 'nim' }, { cam: ['mira', 'elowen'], dur: 1 }] },
+    { who: 'mira', text: 'I heard there was drama, so I brought biscuits.', mood: 'happy' },
+    { who: 'elowen', text: 'Of course you did.', mood: 'angry' },
+    { who: 'mira', text: "So something under the island has had Hayate's light since the festival. That's why she sleeps. That's why the wind stopped. All of it.", mood: 'sad' },
+    { who: 'elowen', text: 'Something frightened enough to swallow a star. Nothing brave does a thing like that.', mood: 'sad' },
+    { who: 'nim', text: 'Th-then the springs going cold... the warmth sliding downhill... is it all going down there too?', mood: 'surprised' },
+    { together: [{ emote: 'mira', kind: 'heart', dur: 1.6 }, { face: 'mira', to: 'player' }] },
+    { who: 'mira', text: "Then we go and get it back. All of us. ...Well. You go, dear. We'll make the tea.", mood: 'happy' },
+    { who: 'elowen', text: 'And the biscuits. Mine.', mood: 'happy' },
+    { who: 'mira', text: 'Mine.', mood: 'happy' },
+    { together: [{ emote: 'nim', kind: 'idea', dur: 1.4 }, { jump: 'nim', height: 10 }] },
+    { who: 'nim', text: 'I-I\'ll make a chart. Elowen, can I borrow your string?', mood: 'happy' },
   ],
   // ----- Chapter 5 -----
   ch5_open: [
     { card: 'Chapter 8', sub: 'Steam and Roses' },
-    { who: 'nim', text: 'The springs are going c-cold! My moonberries need the steam, and the Lamia are so grumpy, and I had to tell the postman about it. Out loud.', mood: 'sad' },
+    { who: 'nim', text: 'And now the springs are going c-cold! The warmth is sliding downhill, just like the fox said, down where the light went. My moonberries need the steam, and I had to tell the postman about it. Out loud.', mood: 'sad' },
   ],
   ch5_cold: [
     { who: 'nim', text: "The Lamia said the warmth is being 'taken'. Taken! Where would warmth go? On holiday?", mood: 'surprised' },
