@@ -348,6 +348,9 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'leafling', count: 15 }, { type: 'collect', item: 'leaf_fragment', count: 7 }],
     rewards: { exp: 9700, gold: 320, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  // Vex's story (her Wind Dancers'): Tora's good hammer, which Vex "borrowed" to build a secret
+  // stage on the harbor for its first dance festival, then lost to the Kitsune Miko's light
+  // fingers. On opening night it goes home to Tora, who knew all along.
   vex_shadows: {
     id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
     text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
@@ -384,11 +387,24 @@ export const QUESTS = {
     objectives: [{ type: 'deliver', npc: 'mira', item: 'parcel', say: "The lid? She kept it, all these years? Oh, that silly, stubborn witch. Go back and tell her to put the kettle on. I'm coming." }],
     rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
+  vex_stage: {
+    id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows', family: 'thief',
+    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in Mossy Woods: bring me 8. Don't tell anyone what it's for. You don't know what it's for.",
+    objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
+    rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
+  },
   vex_miko: {
-    id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26,
-    text: "The Kitsune Miko on the Fox Shrine Path are 'borrowing' from every traveler. Teach 25 of them some manners. Quietly, if you can.",
+    id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage', family: 'thief',
+    text: "Someone stole a hammer I stole. From ME. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers. Teach 25 of them some manners and get it back, before Tora counts her tools.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
     rewards: { exp: 31000, gold: 830, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  vex_festival: {
+    id: 'vex_festival', name: 'Opening Night', giver: 'vex', minLevel: 27, prereq: 'vex_miko', family: 'thief',
+    text: "Stage built, hammer found, conscience... loud. Take it back to Tora in Ember Crag, wrapped nicely. Say it fell into a pond for a year. Then come straight back: the show starts tonight, and I want you in the front row.",
+    gives: [{ id: 'parcel' }],
+    objectives: [{ type: 'deliver', npc: 'tora', item: 'parcel', say: "My good hammer! Polished, even. That rascal. Tell her I'll be at her show, front row, and she's buying the snacks." }],
+    rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   brann_ruins: {
     id: 'brann_ruins', name: 'Where the Line Broke', giver: 'brann', minLevel: 22, prereq: 'brann_stand', family: 'warrior',

@@ -151,3 +151,22 @@ test("Elowen's teapot story plays through in Moonleaf Grove, and Mira comes to t
     assert.ok(!w.map.npcs.some((n) => n.id === 'mira'), `${id}: Mira goes home after tea`);
   }
 });
+
+test("Vex's hammer story plays through on Pastel Harbor, and Tora comes to the show", () => {
+  for (const id of ['vex_shadows_done', 'vex_stage_done', 'vex_miko_done', 'vex_festival_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'harbor', 'west');
+    const vex = w.map.npcs.find((n) => n.id === 'vex');
+    w.body.x = vex.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.ok(!w.map.npcs.some((n) => n.id === 'tora'), `${id}: Tora goes home to her forge`);
+  }
+});

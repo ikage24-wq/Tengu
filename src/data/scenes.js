@@ -35,6 +35,10 @@ export const QUEST_SCENES = {
   elowen_foxfire: { done: 'elowen_foxfire_done' },
   elowen_lid: { done: 'elowen_lid_done' },
   thief_trial: { accept: 'trial_vex', done: 'trial_vex_done' },
+  vex_shadows: { done: 'vex_shadows_done' },
+  vex_stage: { done: 'vex_stage_done' },
+  vex_miko: { done: 'vex_miko_done' },
+  vex_festival: { done: 'vex_festival_done' },
 };
 
 export const SIDE_SCENES = {
@@ -237,6 +241,42 @@ export const SIDE_SCENES = {
   trial_elowen_done: [
     { who: 'elowen', text: 'I felt every one of them go home. Peacefully. You have a gift, {name}.', mood: 'happy' },
     { who: 'elowen', text: 'The Starlight Idol sings, and her songs heal everyone who hears them. The Astronomer calls planets and moons down out of the sky. Both are yours to choose.' },
+  ],
+  // ----- Vex and Tora's hammer -----
+  vex_shadows_done: [
+    { who: 'vex', text: 'Canyon, crag and back before my tea went cold. Nice legs. On a dancer, I mean.', mood: 'happy' },
+    { who: 'player', text: "Tora says hi. And she wants her good hammer back." },
+    { together: [{ emote: 'vex', kind: 'sweat', dur: 1.6 }, { jump: 'vex', height: 10 }] },
+    { who: 'vex', text: "Hammer? What hammer? I've never held a hammer in my life. Look at these hands.", mood: 'surprised' },
+    { together: [{ face: 'vex', to: 'player' }, { wait: 0.6 }] },
+    { who: 'vex', text: "...I borrowed it. For a good cause. A secret one. Don't look at me like that.", mood: 'sad' },
+  ],
+  vex_stage_done: [
+    { together: [{ emote: 'vex', kind: 'note', dur: 1.4 }, { fx: 'leaves', at: 'vex', n: 8 }] },
+    { who: 'vex', text: "Lovely boards. Fine, you've earned the secret. Look at the end of the pier, under the sail cloth.", mood: 'happy' },
+    { who: null, text: 'Half a stage stands at the water\'s edge, painted with stars, a string of paper lanterns waiting to be lit.' },
+    { who: 'vex', text: "The first Harbor Dance Festival. Nobody here has ever danced on a real stage. I wanted them to.", mood: 'happy' },
+    { together: [{ emote: 'vex', kind: 'anger', dur: 1.6 }, { shake: 2, dur: 0.4 }] },
+    { who: 'vex', text: "Only now the hammer's gone. Somebody stole it from my stage. From ME. Fox prints all over the boards.", mood: 'angry' },
+  ],
+  vex_miko_done: [
+    { who: null, text: "You hold up Tora's good hammer, only a little sticky, with a fox-fur ribbon somebody tied round the handle." },
+    { together: [{ emote: 'vex', kind: 'heart', dur: 1.4 }, { jump: 'vex', height: 14 }, { fx: 'sparkle', at: 'vex', n: 12 }] },
+    { who: 'vex', text: "My hero! Well, Tora's hero. Well, the stage's hero.", mood: 'happy' },
+    { who: 'vex', text: "Last nail goes in tonight. And then... I suppose I have to give it back. Ugh. Honesty.", mood: 'sad' },
+  ],
+  vex_festival_done: [
+    { who: 'player', text: "Tora says she'll be in the front row. And you're buying the snacks." },
+    { together: [{ emote: 'vex', kind: '!', dur: 1.2 }, { walk: 'player', by: -50, speed: 70 }] },
+    { together: [{ spawn: 'tora', at: 'vex', by: 110, facing: -1 }, { fx: 'notes', at: 'vex', n: 10 }] },
+    { together: [{ walk: 'tora', to: 'vex', gap: 40, speed: 70 }, { face: 'vex', to: 'tora' }] },
+    { who: 'tora', text: "Did you think I didn't notice, rascal? I watched you take it. I just wanted to see what you'd build.", mood: 'happy' },
+    { who: 'vex', text: "...You knew? The whole time? Then why didn't you say?", mood: 'surprised' },
+    { who: 'tora', text: "Because you'd never have finished it if you thought anyone was watching. Next time, ask. Now dance.", mood: 'happy' },
+    { together: [{ jump: 'vex', height: 18 }, { fx: 'confetti', at: 'vex', n: 34 }, { fx: 'notes', at: 'vex', n: 14 }] },
+    { who: null, text: 'The paper lanterns flicker on down the pier. Vex dances the opening number alone, then pulls the whole harbor up onto the stage.' },
+    { together: [{ emote: 'tora', kind: 'heart', dur: 1.8 }, { emote: 'player', kind: 'heart', dur: 1.8 }, { jump: 'vex', height: 14 }] },
+    { who: 'vex', text: "Light feet, big finish, {name}. Come find me at level 30 for your trial. Tonight, though? We dance.", mood: 'happy' },
   ],
   trial_vex: [
     { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. All that armour turns slow: spin round them and they'll never land a blow." },
