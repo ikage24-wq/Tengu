@@ -165,6 +165,9 @@ jobs.)
   Call, Grand Concert finisher; the dungeon healer) or the Astronomer (2026-11-02, replacing the
   Onmyoji: an orrery staff, moons that orbit her and fly off on their own, Ringed Planet, Gravity
   Well, Lunar Tide, Planetary Alignment finisher).
+- [ ] **Phase 5b: The story from 1 to 50.** Ten chapters with a twist at 30, every dungeon in the
+  plot, slower and meaningful levelling (about 30 hours to 50), and a level-50 finale where the
+  wind returns. The full plan and its checklist: `docs/design/main-story.md`.
 - [ ] **Phase 6: Bosses and routines.** Normal/Hard, weekly clears, dungeon tokens, daily
   dungeon bonus, daily town tasks and town currencies, Boss Rush grades.
 - [ ] **Phase 7: Account bonus board** (Legion) and earned outfits (rebalance Cash).
