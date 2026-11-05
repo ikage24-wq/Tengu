@@ -1,5 +1,6 @@
-// The title screen's peekers: the island's own folk keep popping into the screen in a big
-// close-up, one at a time, from the bottom, a side, or hanging upside down from the top, each with
+// The title screen's peekers: once the opening show is over (title-show.js), the island's folk who
+// aren't in it keep popping in for a big close-up, one at a time: up out of the orchestra pit, in
+// from behind a curtain, or hanging upside down from the rafters, each with
 // a line of their own (from who they are: Marlo sells, Nim apologises, Mira can't leave her spot).
 // Each gag peeks in a little first (anticipation), pops the rest of the way with an overshoot,
 // says its line, then ducks out fast. Click a face and they yelp and duck. Now and then Marlo
@@ -20,13 +21,12 @@ const HEAD_R = 15;
 // Who pops in, how, with which face and what they say. `faces`: [peeking, popped].
 export const GAGS = [
   { who: 'marlo', kind: 'side', faces: ['smug', 'sassy'], lines: ['Psst. Title screen\'s free. Leaving it is 5 gold.', 'Rare item! Only slightly cursed. Interested?', 'Press any key. Premium keys sold separately.'] },
-  { who: 'nim', kind: 'up', faces: ['nervous', 'shy'], lines: ['Oh! S-sorry! I was reading down here...', 'Is it... bedtime story time yet?', 'I-I\'m not peeking. This is a coincidence.'] },
   { who: 'mira', kind: 'top', faces: ['excited', 'excited'], lines: ['Hi! I have a quest! Come to me. I can\'t move.', 'Kill ten snails and I\'ll say "thanks"!', 'Press I for your bag! Press any key first!'] },
-  { who: 'pip', kind: 'up', faces: ['grin', 'grin'], lines: ['Delivery for... the title screen? Sign here.', 'Potions! Get your potions! Before the game starts!'] },
   { who: 'lulu', kind: 'side', faces: ['judging', 'sassy'], lines: ['That outfit? On MY title screen? 200 gold. Now.', 'Hold still. You have menu on your face.'] },
-  { who: 'tora', kind: 'up', faces: ['determined', 'grin'], lines: ['I could upgrade that logo. +1. Might explode.', 'Fresh off the anvil! It\'s a title screen!'] },
   { who: 'clover', kind: 'side', faces: ['shock', 'cat'], lines: ['Have you seen a puff bun? Round. Bouncy. Bites.', 'Ooh! Do you like riding things?'] },
   { who: 'kelp', kind: 'up', faces: ['sleepy', 'smile'], lines: ['Back in my day the title screen was a rock.', 'Mind the steps, dearie. And the logo.'] },
+  { who: 'shelly', kind: 'up', faces: ['excited', 'excited'], lines: ['Ooh! I could build you a better stage. Bring me 40 planks!', 'Is that set load-bearing? It is NOT.'] },
+  { who: 'nori', kind: 'top', faces: ['proud', 'grin'], lines: ['Island record holder, coming through!', 'Biggest catch wins! ...Is the logo a fish?'] },
   { who: 'rook', kind: 'top', faces: ['grin', 'grin'], lines: ['Ahoy! Title screen ahoy! ...That\'s the joke.', 'Got time for a job? It\'s a quest. It\'s the same thing.'] },
   { who: 'hayate', kind: 'side', faces: ['sleepy', 'sleepy'], lines: ['Zzz... five more minutes... zzz...', 'Mmh... is it the finale yet...? Zzz...'] },
 ];
@@ -147,8 +147,9 @@ export function drawPeekerTalk(ctx) {
 }
 
 // `letters`: the logo's letters' spots ({ x, y }), so the thief knows where to reach.
-export function drawPeekers(ui, time, letters, drawLetter) {
+export function drawPeekers(ui, time, letters, drawLetter, active = true) {
   const { ctx } = ui;
+  if (!active) next = Math.max(next, time + 1.5);
   if (!gag && time >= next) {
     gag = pickGag();
     gag.start = time;
@@ -158,7 +159,7 @@ export function drawPeekers(ui, time, letters, drawLetter) {
       gag.letter = letters.length - 1 - Math.floor(Math.random() * 2);
       gag.line = gag.lines[0];
     }
-    if (gag.kind === 'top' && gag.x > 200 && gag.x < 440) gag.x = 120;
+    if (gag.kind === 'top') gag.x = gag.x < 320 ? 96 : 544;
     gag.y = 230 + Math.random() * 70;
     gag.say = 1.25;
     gag.hold = gag.say + gag.line.length / 22 + 1.6;

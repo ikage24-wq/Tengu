@@ -1,19 +1,15 @@
-// Title (world select), character select, and character creator screens.
+// Title, character select, and character creator screens.
 
 import { MAPS } from '../data/maps.js';
 import { VERSION } from '../version.js';
 import { JOBS } from '../data/jobs.js';
-import { drawSceneBack } from '../render/scenery.js';
 import { drawHero } from '../render/hero.js';
 import { COLORS, THEMES, text, box, button, tabs, wrap, bar, hover, clicked, roundRect, font, softShadow, icon, tooltip, lighten, darken, toggle } from './kit.js';
-import { paintFan } from '../render/props.js';
-import { lookFor } from '../render/townlife.js';
-import { groundAt } from '../world/physics.js';
-import { createAnim, stepAnim } from '../render/animator.js';
 import { stats, wornGear } from '../core/character.js';
 import { expToNext } from '../core/exp.js';
 import { lookRows, randomLook, LOOK_TABS } from './looks.js';
-import { drawPeekers, drawPeekerTalk, logoTheft } from './title-peek.js';
+import { drawPeekers, drawPeekerTalk } from './title-peek.js';
+import { drawShow, drawBlock } from './title-show.js';
 
 export { randomLook };
 
@@ -27,12 +23,6 @@ function sparkle(ctx, x, y, r, color) {
   ctx.quadraticCurveTo(x, y, x - r, y);
   ctx.quadraticCurveTo(x, y, x, y - r);
   ctx.fill();
-}
-
-function backdrop(ctx, time) {
-  const map = MAPS.meadow1;
-  const cam = { x: (time * 30) % (map.width - 640), y: map.height - 360 };
-  drawSceneBack(ctx, map, cam, 640, 360, time, null);
 }
 
 // A silly subtitle under the logo, rolled fresh on every page load.
@@ -64,10 +54,6 @@ const QUOTE_MAKERS = [
 ];
 const quote = oneOf(QUOTE_MAKERS)();
 
-// The login screen's world list; the game itself is single-player.
-const WORLDS = [{ name: 'Tengu', color: '#ff9ec0' }];
-let world = 0;
-
 // A fixed frame like the in-game windows, without dragging or a close button.
 function panel(ctx, x, y, w, h, title) {
   ctx.fillStyle = 'rgba(90,63,122,0.18)';
@@ -91,388 +77,25 @@ function panel(ctx, x, y, w, h, title) {
 }
 
 
-function petals(ctx, time) {
-  const colors = ['#ffc2dc', '#ffffff', '#ffd9ec'];
-  for (let i = 0; i < 18; i++) {
-    const r1 = (i * 0.618) % 1;
-    const r2 = (i * 0.414 + 0.3) % 1;
-    const x = (r1 * 680 + time * (12 + r2 * 14) + Math.sin(time * 1.3 + i) * 18) % 680 - 20;
-    const y = (r2 * 380 + time * (18 + r1 * 16)) % 380 - 10;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(time * (1 + r1) + i);
-    ctx.scale(1, 0.5 + 0.5 * Math.abs(Math.sin(time * 2 + i)));
-    ctx.fillStyle = colors[i % 3];
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 3, 1.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-}
-
 // ---------- Title screen ----------
 
-// The time of day, from the player's own clock: 'dawn', 'day', 'dusk' or 'night'.
-function dayPart() {
-  const h = new Date().getHours();
-  return h >= 5 && h < 8 ? 'dawn' : h >= 8 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night';
-}
-// The light over the meadow for that time: a wash over everything, and a glow at the horizon.
-const DAY_LIGHT = {
-  dawn: { wash: 'rgba(255,190,170,0.16)', glow: 'rgba(255,214,170,0.35)' },
-  day: null,
-  dusk: { wash: 'rgba(255,140,120,0.2)', glow: 'rgba(255,170,110,0.4)' },
-  night: { wash: 'rgba(40,40,110,0.42)', glow: 'rgba(120,120,220,0.25)' },
-};
-function dayLight(ctx, part, time) {
-  const L = DAY_LIGHT[part];
-  if (!L) return;
-  ctx.fillStyle = L.wash;
-  ctx.fillRect(0, 0, 640, 360);
-  const g = ctx.createLinearGradient(0, 120, 0, 300);
-  g.addColorStop(0, 'rgba(255,255,255,0)');
-  g.addColorStop(1, L.glow);
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 120, 640, 180);
-  if (part !== 'night') return;
-  // Stars twinkling over the hills, and fireflies drifting in the grass.
-  for (let i = 0; i < 40; i++) {
-    const x = (i * 157.3) % 640;
-    const y = (i * 73.7) % 150;
-    ctx.globalAlpha = 0.4 + 0.6 * Math.abs(Math.sin(time * 1.3 + i));
-    sparkle(ctx, x, y, 1 + (i % 3) * 0.6, '#ffffff');
-  }
-  for (let i = 0; i < 14; i++) {
-    const x = (i * 89 + Math.sin(time * 0.5 + i) * 30 + 640) % 640;
-    const y = 240 + Math.sin(time * 0.7 + i * 2) * 30 + (i % 4) * 14;
-    ctx.globalAlpha = 0.5 + 0.5 * Math.sin(time * 3 + i);
-    const f = ctx.createRadialGradient(x, y, 0, x, y, 5);
-    f.addColorStop(0, 'rgba(255,250,170,1)');
-    f.addColorStop(1, 'rgba(255,250,170,0)');
-    ctx.fillStyle = f;
-    ctx.fillRect(x - 5, y - 5, 10, 10);
-  }
-  ctx.globalAlpha = 1;
-}
-
-// The logo: "Tengu" in fat letters with a deep outline, a pink inner rim and a cream-to-pink
-// face, a crimson tengu's fan and a black feather tucked behind it, bobbing gently, a glint
-// sweeping across now and then.
-function logo(ctx, time) {
-  const bob = Math.sin(time * 2) * 2;
-  const cx = 320;
-  const cy = 72 + bob;
-  // The fan behind the letters, opening and closing a little, and a feather crossed under it.
-  ctx.save();
-  ctx.translate(cx + 96, cy - 22);
-  ctx.rotate(-1.1 + Math.sin(time * 1.2) * 0.06);
-  paintFan(ctx, 4.2, 0.85 + 0.1 * Math.sin(time * 1.6));
-  ctx.restore();
-  ctx.save();
-  ctx.translate(cx - 118, cy - 6);
-  ctx.rotate(-0.5 + Math.sin(time * 1.4 + 1) * 0.08);
-  feather(ctx, 46);
-  ctx.restore();
-  // The letters, each on its own bob and wobble (and one missing while Marlo has it), drawn on a
-  // layer of their own so the glint sweeps across the letters only.
-  const sc = ctx.getTransform().a || 1;
-  logoLayer ??= document.createElement('canvas');
-  if (logoLayer.width !== Math.round(640 * sc)) {
-    logoLayer.width = Math.round(640 * sc);
-    logoLayer.height = Math.round(150 * sc);
-  }
-  const lc = logoLayer.getContext('2d');
-  lc.setTransform(sc, 0, 0, sc, 0, 0);
-  lc.clearRect(0, 0, 640, 150);
-  lc.font = font(60, true);
-  const spots = letterSpots(lc, cx, cy, time);
-  spots.forEach((sp, i) => {
-    if (i !== logoTheft.letter) letterShape(lc, sp.ch, sp.x, sp.y, sp.rot, 'back');
-  });
-  spots.forEach((sp, i) => {
-    if (i !== logoTheft.letter) letterShape(lc, sp.ch, sp.x, sp.y, sp.rot, 'face');
-  });
-  // The glint: a bright slash sweeping across the letters every few seconds.
-  const k = (time % 4) / 0.8;
-  if (k < 1) {
-    lc.globalCompositeOperation = 'source-atop';
-    const gx = cx - 110 + k * 220;
-    lc.fillStyle = 'rgba(255,255,255,0.85)';
-    lc.beginPath();
-    lc.moveTo(gx, cy + 6);
-    lc.lineTo(gx + 14, cy - 50);
-    lc.lineTo(gx + 24, cy - 50);
-    lc.lineTo(gx + 10, cy + 6);
-    lc.fill();
-    lc.globalCompositeOperation = 'source-over';
-  }
-  ctx.drawImage(logoLayer, 0, 0, 640, 150);
-  // The stolen letter, thrown back: it falls into its slot and lands with a bounce. (While the
-  // thief holds it, the thief's own drawing carries it.)
-  const gone = logoTheft.letter;
-  let missing = gone >= 0;
-  if (gone >= 0 && logoTheft.back != null) {
-    const sp = spots[gone];
-    const u = Math.max(0, Math.min(1, (time - logoTheft.back) / 0.9));
-    if (u > 0) {
-      const fall = u < 0.6 ? (u / 0.6) ** 2 : 1 - Math.abs(Math.sin(((u - 0.6) / 0.4) * Math.PI)) * 0.12;
-      drawLetter(ctx, sp.ch, sp.x, -40 + (sp.y + 40) * fall, (1 - u) * 6);
-      missing = u < 0.6;
-    }
-  }
-  for (let i = 0; i < 6; i++) {
-    const a = time * 1.5 + i;
-    sparkle(ctx, cx + Math.cos(a) * 120, cy - 18 + Math.sin(a * 1.3) * 26, 2.5 + (i % 3), i % 2 ? '#ffffff' : '#ffe36b');
-  }
-  text(ctx, missing ? 'HEY! Give that back!' : quote, cx, cy + 22, { size: 11, bold: true, align: 'center', color: '#ffffff', outline: missing ? '#d8343a' : '#b062c8' });
-  return spots;
-}
-let logoLayer = null;
-// One logo letter: its shadow and outlines ('back'), or its cream-to-pink face ('face').
-function letterShape(c, ch, x, y, rot, part) {
-  c.save();
-  c.translate(x, y);
-  c.rotate(rot);
-  c.font = font(60, true);
-  c.textAlign = 'center';
-  c.lineJoin = 'round';
-  if (part === 'back') {
-    c.fillStyle = 'rgba(90,40,110,0.35)';
-    c.fillText(ch, 3, 5);
-    c.strokeStyle = '#7a3f9e';
-    c.lineWidth = 12;
-    c.strokeText(ch, 0, 0);
-    c.strokeStyle = '#ff8fc1';
-    c.lineWidth = 6;
-    c.strokeText(ch, 0, 0);
-  } else {
-    const g = c.createLinearGradient(0, -44, 0, 4);
-    g.addColorStop(0, '#ffffff');
-    g.addColorStop(0.55, '#fff3fa');
-    g.addColorStop(1, '#ffc2df');
-    c.fillStyle = g;
-    c.fillText(ch, 0, 0);
-  }
-  c.restore();
-}
-// A whole letter on its own (the stolen one, out of its slot).
-export function drawLetter(c, ch, x, y, rot) {
-  letterShape(c, ch, x, y, rot, 'back');
-  letterShape(c, ch, x, y, rot, 'face');
-}
-// Each letter's spot: laid out along the word, bobbing on its own beat and rocking a little.
-const WORD = 'Tengu';
-let widths = null;
-function letterSpots(ctx, cx, cy, time) {
-  widths ??= [...WORD].map((ch) => ctx.measureText(ch).width - 2);
-  const total = widths.reduce((a, b) => a + b, 0);
-  let x = cx - total / 2;
-  return [...WORD].map((ch, i) => {
-    const sx = x + widths[i] / 2;
-    x += widths[i];
-    const beat = time * 3.2 - i * 0.7;
-    return { ch, x: sx, y: cy - Math.max(0, Math.sin(beat)) * 5, rot: Math.sin(beat * 0.5 + i) * 0.07 };
-  });
-}
-// A crow-black tengu feather along +x, `len` px: a quill and two vanes with a blue sheen.
-function feather(ctx, len) {
-  ctx.fillStyle = '#2a2440';
-  ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(len * 0.5, -len * 0.22, len, 0);
-  ctx.quadraticCurveTo(len * 0.5, len * 0.22, 0, 0);
-  ctx.fill();
-  ctx.strokeStyle = '#5a6fb8';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(len * 0.2, -len * 0.06);
-  ctx.quadraticCurveTo(len * 0.55, -len * 0.14, len * 0.9, -len * 0.02);
-  ctx.stroke();
-  ctx.strokeStyle = '#d8cfe8';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(-len * 0.12, 0);
-  ctx.lineTo(len * 0.95, 0);
-  ctx.stroke();
-}
-
-// The title's own stage: Petal Meadow's look, but a long open field of gentle rolling hills
-// with no floating platforms or ladders, and a few garden pieces along the way. The camera drifts
-// slowly along it like an opening shot.
-const TITLE_W = 9000;
-const TITLE_G = 322;
-const TITLE_MAP = (() => {
-  const terrain = [[0, TITLE_G]];
-  for (let x = 400; x < TITLE_W; x += 400) terrain.push([x, TITLE_G - Math.round(10 + 10 * Math.sin(x * 0.0021) + 6 * Math.sin(x * 0.0057))]);
-  terrain.push([TITLE_W, TITLE_G]);
-  const kinds = ['flowerarch', 'beehive', 'picnic', 'signpost'];
-  const deco = [];
-  for (let x = 300, i = 0; x < TITLE_W; x += 520 + (i * 137) % 260, i++) deco.push([kinds[i % kinds.length], x]);
-  return { ...MAPS.meadow1, id: 'title', width: TITLE_W, height: 360, groundY: TITLE_G, terrain, platforms: [], ropes: [], portals: [], spawns: [], npcs: [], deco };
-})();
-const CAM_SPEED = 12;
-
-// Who's out in the meadow: a few heroes of different jobs strolling across, each doing their
-// weapon's idle bits when they stop for a breather.
-const CAST = [
-  { look: 71, weapon: 'sword_30', speed: 26, start: 0, dir: 1 },
-  { look: 12, weapon: 'bow_30', speed: 22, start: 230, dir: 1 },
-  { look: 33, weapon: 'staff_30', speed: 18, start: 520, dir: -1 },
-  { look: 5, weapon: 'dagger_30', speed: 30, start: 400, dir: -1 },
-];
-const castLooks = CAST.map((c) => lookFor(c.look));
-// Each one's walk cycle runs on the ground they cover (render/animator.js), so their feet plant.
-const castAnims = CAST.map(() => createAnim());
-let castT = null;
-function cast(ctx, time, cam) {
-  const map = TITLE_MAP;
-  const feet = (x) => groundAt(map, x + cam.x) - cam.y;
-  const span = 760;
-  const dt = castT == null ? 0 : Math.max(0, Math.min(0.1, time - castT));
-  castT = time;
-  const onScreen = (wx) => ((((wx - cam.x) + 60) % span) + span) % span - 60;
-  CAST.forEach((c, i) => {
-    // Walk for a while, stop for a breather, walk on; wrapping round the screen.
-    const cycle = 14;
-    const ph = (time + i * 3.1) % cycle;
-    const walking = ph < 9;
-    const walked = Math.floor((time + i * 3.1) / cycle) * 9 + Math.min(ph, 9);
-    const x = onScreen(c.start + c.dir * walked * c.speed);
-    const a = castAnims[i];
-    stepAnim(a, { vx: walking ? c.dir * c.speed : 0, vy: 0, onGround: true, rope: false, facing: c.dir, y: 0 }, dt);
-    drawHero(ctx, castLooks[i], { weapon: { id: c.weapon } }, Math.round(x), Math.round(feet(x)), { pose: walking ? 'walk' : 'idle', time: time + i * 7, seed: i * 11, facing: c.dir, urgent: false }, a);
-  });
-}
-
-// The wooden sign World Select hangs on: two ropes from the top of the screen, a plank board with
-// a cream face, swinging gently. It drops in on its ropes after the first key press.
-function hangingSign(ctx, x, y, w, h, swing) {
-  ctx.save();
-  ctx.translate(x + w / 2, y - 24);
-  ctx.rotate(swing);
-  ctx.translate(-(x + w / 2), -(y - 24));
-  // A leafy twig across above it (so the ropes don't run over the logo).
-  const ty = y - 24;
-  ctx.strokeStyle = '#8a5a3a';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(x - 12, ty + 2);
-  ctx.quadraticCurveTo(x + w / 2, ty - 5, x + w + 12, ty + 1);
-  ctx.stroke();
-  for (const [lx, ly, rot] of [[x - 14, ty - 2, -0.6], [x - 6, ty + 6, 0.5], [x + w + 14, ty - 3, 0.6], [x + w + 6, ty + 5, -0.4], [x + w / 2 + 10, ty - 6, 0.2]]) {
-    ctx.save();
-    ctx.translate(lx, ly);
-    ctx.rotate(rot);
-    ctx.fillStyle = '#8fd18a';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 6, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.lineWidth = 2;
-  for (const rx of [x + 22, x + w - 22]) {
-    ctx.beginPath();
-    ctx.moveTo(rx, ty - 1);
-    ctx.lineTo(rx, y + 4);
-    ctx.stroke();
-  }
-  softShadow(ctx, x, y, w, h, 12, 4);
-  box(ctx, x, y, w, h, { fill: '#d9a46c', edge: '#8a5a3a', r: 12, width: 2 });
-  ctx.strokeStyle = 'rgba(138,90,58,0.35)';
-  ctx.lineWidth = 1;
-  for (let py = y + 9; py < y + h - 4; py += 9) {
-    ctx.beginPath();
-    ctx.moveTo(x + 6, py);
-    ctx.lineTo(x + w - 6, py);
-    ctx.stroke();
-  }
-  for (const rx of [x + 22, x + w - 22]) {
-    ctx.fillStyle = '#f2c94c';
-    ctx.beginPath();
-    ctx.arc(rx, y + 5, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  box(ctx, x + 7, y + 12, w - 14, h - 19, { fill: '#fff8f2', edge: '#f4bcd8', r: 9, width: 1.5 });
-  ctx.restore();
-}
-
-let awake = false;
-let awakeAt = 0;
-// The prompt, changing its mind every few seconds.
-const PRESS = ['Press any key', 'Press any key. Not that one.', 'Press the Any key', 'Press any key (we believe in you)', 'Still waiting. Press any key.'];
-// MMO-style login: logo, world select, and a status bar. Returns true on Enter World.
+// The title is a show that goes wrong (title-show.js), and the island's folk pop in for close-ups
+// once it's over (title-peek.js). Any key skips the show; after it, any key (or a click that isn't
+// on a face) goes on to character select.
 export function titleScreen(ui, time) {
   const { ctx } = ui;
-  const map = TITLE_MAP;
-  const part = dayPart();
-  const cam = { x: (time * CAM_SPEED) % (TITLE_W - 700), y: 0 };
-  drawSceneBack(ctx, map, cam, 640, 360, time, null);
-  cast(ctx, time, cam);
-  petals(ctx, time);
-  dayLight(ctx, part, time);
-  const letters = logo(ctx, time);
-  // The folk popping in for a close-up (a click on a face is theirs, not the screen's).
-  drawPeekers(ui, time, letters, drawLetter);
-
-  // The first key or click wakes the screen; then World Select drops in on its sign.
-  let pick = false;
-  if (!awake) {
-    const k = 0.55 + 0.45 * Math.sin(time * 3);
-    ctx.globalAlpha = k;
-    ctx.font = font(11, true);
-    const ask = PRESS[Math.floor(time / 5) % PRESS.length];
-    const tw = ctx.measureText(ask).width + 30;
-    box(ctx, 320 - tw / 2, 196, tw, 22, { fill: 'rgba(255,247,252,0.92)', edge: '#f4bcd8', r: 11, width: 2 });
-    text(ctx, ask, 320, 211, { size: 11, bold: true, align: 'center', color: '#b062c8' });
-    ctx.globalAlpha = 1;
-    if (ui.input.pressed.size || ui.mouse.clicked) {
-      awake = true;
-      awakeAt = time;
-      ui.mouse.clicked = false;
-    }
-  } else {
-    // Dropping in with a bounce, then a slow swing.
-    const u = Math.min(1, (time - awakeAt) / 0.6);
-    const drop = 1 + 2.7 * (u - 1) ** 3 + 1.7 * (u - 1) ** 2;
-    const px = 230, pw = 180, ph = 84 + WORLDS.length * 22;
-    const py = 134 - (1 - drop) * 240;
-    const swing = Math.sin(time * 1.4) * 0.012 + (1 - u) * 0.05 * Math.sin(time * 9);
-    hangingSign(ctx, px, py, pw, ph, swing);
-    ctx.save();
-    ctx.translate(px + pw / 2, py - 24);
-    ctx.rotate(swing);
-    ctx.translate(-(px + pw / 2), -(py - 24));
-    text(ctx, 'World Select', px + pw / 2, py + 27, { size: 10, bold: true, align: 'center', color: '#ffffff', outline: '#8a5a3a' });
-    WORLDS.forEach((w, i) => {
-      const ry = py + 34 + i * 22;
-      const on = i === world;
-      box(ctx, px + 14, ry, pw - 28, 19, { fill: on ? '#ffe9f4' : hover(ui, px + 14, ry, pw - 28, 19) ? '#ffffff' : COLORS.cell, edge: on ? COLORS.accent : COLORS.cellEdge, r: 9.5 });
-      ctx.fillStyle = w.color;
-      ctx.beginPath();
-      ctx.arc(px + 25, ry + 9.5, 4, 0, Math.PI * 2);
-      ctx.fill();
-      text(ctx, w.name, px + 34, ry + 13, { size: 9, bold: true });
-      if (u >= 1 && clicked(ui, px + 14, ry, pw - 28, 19)) world = i;
-    });
-    const by = py + 34 + WORLDS.length * 22 + 5;
-    const enter = button(ui, px + 16, by, pw - 32, 22, 'Enter World', { primary: true, size: 10 });
-    pick = u >= 1 && (enter || ui.input.pressed.has('Enter'));
-    text(ctx, `${WORLDS[world].name} · Channel 1`, px + pw / 2, by + 34, { size: 7.5, align: 'center', color: COLORS.muted });
-    ctx.restore();
-  }
-
-  // Status bar: a soft pill along the bottom.
-  box(ctx, 6, 340, 628, 16, { fill: 'rgba(255,247,252,0.85)', edge: '#f4bcd8', r: 8, width: 1.5 });
-  ctx.fillStyle = COLORS.good;
-  ctx.beginPath();
-  ctx.arc(17, 348, 3, 0, Math.PI * 2);
-  ctx.fill();
-  text(ctx, `Server online · ${WORLDS[world].name}`, 25, 351, { size: 7.5, bold: true, color: COLORS.ink });
-  text(ctx, ui.input?.touch ? 'Stick moves · Jump · Attack · Loot · push up to talk' : 'Arrows move · Space jumps · Z attacks · X loots · Up talks', 320, 351, { size: 7.5, align: 'center', color: COLORS.muted });
-  text(ctx, `v${VERSION}`, 626, 351, { size: 7.5, bold: true, align: 'right', color: COLORS.ink });
+  const keyed = ui.input.pressed.size > 0;
+  const show = drawShow(ctx, time, quote, keyed);
+  drawPeekers(ui, time, show.letters, (c, ch, x, y, rot) => drawBlock(c, ch, x, y, rot, 30, 12), show.settled);
   drawPeekerTalk(ctx);
-  return pick;
+  text(ctx, `v${VERSION}`, 634, 356, { size: 6.5, bold: true, align: 'right', color: 'rgba(255,240,220,0.5)' });
+  if (show.skipped || !show.settled) {
+    ui.mouse.clicked = false;
+    return false;
+  }
+  const go = keyed || ui.mouse.clicked;
+  ui.mouse.clicked = false;
+  return go;
 }
 
 // --- Character select: a big tree with two rings of character slots, like a classic MMO lobby.

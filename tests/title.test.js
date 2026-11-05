@@ -15,3 +15,11 @@ test('the title screen peekers are real island folk, each with short lines of th
     }
   }
 });
+
+test('the title show stars real island folk and spells the name on its blocks', async () => {
+  const { TITLE } = await import('../src/ui/title-show.js');
+  assert.equal(TITLE.length, 2);
+  for (const word of TITLE) assert.match(word, /^[A-Z]+$/);
+  // Who's in the show stays out of the close-ups (they're busy on stage).
+  for (const g of GAGS) assert.ok(!['encore', 'pip', 'nim', 'tora'].includes(g.who), `${g.who} isn't also on stage`);
+});
