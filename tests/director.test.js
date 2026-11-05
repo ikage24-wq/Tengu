@@ -341,3 +341,21 @@ test('the new chapter 2 and 3 scenes play through where Mira and Bramble stand',
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("chapter 4's scenes play through where Elowen stands", () => {
+  for (const id of ['party_open', 'party_invite', 'party_clocks']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'start');
+    const elowen = w.map.npcs.find((n) => n.id === 'elowen');
+    w.body.x = elowen.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

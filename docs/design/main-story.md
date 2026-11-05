@@ -224,7 +224,9 @@ How to get there without making it a grind (the game's own rule against chores):
    re-placed chapter by chapter as each is built.
 2. [x] Chapters 1-3: the festival clue, Gnarlroot's memory (2026-11-05; the story now has ten
    chapter numbers, the later chapters' cards renumbered to match).
-3. [ ] Chapter 4: Moonlit Manor in the story.
+3. [x] Chapter 4: Moonlit Manor in the story (2026-11-05: two Elowen quests, An Invitation and
+   The Last Waltz, since quests are handed in to whoever gave them; the clocks clue lands in the
+   second one's ending).
 4. [ ] Chapter 5: Sylvana and the Aquarium.
 5. [ ] Chapter 6: Carnival and Tamamo.
 6. [ ] Chapter 7: the Observatory and the midpoint twist.

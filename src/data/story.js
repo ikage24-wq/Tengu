@@ -98,9 +98,29 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch3_root_open', done: 'ch3_root_done' },
   }),
 
+  // ---------- Chapter 4: The Party That Never Ends (15-20) ----------
+  story_invite: s('story_invite', 4, {
+    name: 'An Invitation', giver: 'elowen', minLevel: 15, prereq: 'story_root',
+    text: "An invitation came for me. To Lady Marigold's party on Manor Hill. Written a hundred years ago, dated last month, addressed to 'the Most Dramatic Witch in the Grove'. Accurate. But I do not do parties, I do entrances. Take my reply to Mr. Pumpkins at the manor gate, and mind the Wargs in Mossy Woods: clear 15 of them, they keep crashing it.",
+    gives: [{ id: 'letter' }],
+    objectives: [
+      { type: 'kill', mob: 'boarlet', count: 15 },
+      { type: 'deliver', npc: 'pumpkins', item: 'letter', say: "An RSVP? Nobody's RSVP'd in a hundred years. The guests just arrive, and never go home. Tell the witch the party's every night, and the dress code is 'forever'." },
+    ],
+    rewards: { exp: 7200, gold: 210, items: [{ id: 'orange_potion', qty: 15 }] },
+    scenes: { accept: 'party_open', done: 'party_invite' },
+  }),
+  story_waltz: s('story_waltz', 4, {
+    name: 'The Last Waltz', giver: 'elowen', minLevel: 16, prereq: 'story_invite',
+    text: "A party that never ends. The guests never go home. And somebody has to tell the hostess, gently. That somebody is you, with a group of four: Mr. Pumpkins will let you into Moonlit Manor. Dance with her, if you must. Bring me back anything strange.",
+    objectives: [{ type: 'kill', mob: 'marigold', count: 1 }],
+    rewards: { exp: 20000, gold: 600, items: [{ id: 'warrior_top_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+    scenes: { done: 'party_clocks' },
+  }),
+
   // ---------- Chapter 5: Whispers in the Glade (18-23) ----------
   story_3_1: s('story_3_1', 5, {
-    name: 'A Song Out of Tune', giver: 'elowen', minLevel: 16, prereq: 'story_root',
+    name: 'A Song Out of Tune', giver: 'elowen', minLevel: 18, prereq: 'story_waltz',
     text: "Listen. Can you hear it? Someone is weeping in the Whispering Glade, past Mossy Woods, very loudly and very dramatically. Trust me, I know dramatic. The Sylphs have gone wild with it. Go gently: calm 15 of them, and find out who.",
     objectives: [{ type: 'visit', map: 'glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
     rewards: { exp: 17000, gold: 450, items: [{ id: 'mana_elixir', qty: 5 }] },
@@ -336,6 +356,31 @@ export const SCENES = {
     { together: [{ emote: 'bramble', kind: '!', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'bramble', text: "The same night as Mira's festival. The same night the lullaby stopped. That's not bad luck, that's a pattern.", mood: 'surprised' },
     { who: 'bramble', text: 'Rule 44: when the sky does something strange, go and see Elowen. She will have made it about her by now, but she will be right.', mood: 'happy' },
+  ],
+  // ----- Chapter 4 -----
+  party_open: [
+    { card: 'Chapter 4', sub: 'The Party That Never Ends' },
+    { together: [{ emote: 'elowen', kind: 'sparkle', dur: 1.6 }, { fx: 'sparkle', at: 'elowen', n: 10 }] },
+    { who: 'elowen', text: "'To the Most Dramatic Witch in the Grove.' Well. At least somebody on this island has taste.", mood: 'happy' },
+    { who: null, text: 'The invitation is yellow with age and smells of old roses. The date at the bottom is last month.' },
+    { who: 'elowen', text: 'A hundred-year-old letter, sent last month. Rule 44 of Bramble, I suppose: when something strange happens, it comes to me.', mood: 'surprised' },
+  ],
+  party_invite: [
+    { who: 'player', text: "Mr. Pumpkins says the party's every night, nobody goes home, and the dress code is 'forever'." },
+    { together: [{ emote: 'elowen', kind: 'sweat', dur: 1.4 }, { wait: 0.4 }] },
+    { who: 'elowen', text: "Forever. I own nothing that goes with forever. That settles it: you're going.", mood: 'surprised' },
+    { who: 'elowen', text: "Lady Marigold has been throwing that party since before Mira was born. If her guests can't go home, something has gone wrong with her night. Find out what.", mood: 'sad' },
+  ],
+  party_clocks: [
+    { who: 'player', text: "The guests have gone home. And every clock in the manor stopped at the same minute. Midnight." },
+    { together: [{ fx: 'gears', at: 'player', n: 12 }, { emote: 'elowen', kind: '!', dur: 1.4 }] },
+    { who: null, text: 'You hold up a little gold pocket watch from Lady Marigold\'s table. Its hands have not moved since midnight on festival night.' },
+    { who: 'elowen', text: "Mira's festival. Gnarlroot's stars that stood still. And now a manor's clocks, stopped at midnight. The same night, three times.", mood: 'surprised' },
+    { together: [{ emote: 'elowen', kind: 'idea', dur: 1.4 }, { fx: 'pages', at: 'elowen', n: 12 }] },
+    { who: 'elowen', text: 'I shall make a chart. With string. And a great deal of pointing.', mood: 'happy' },
+    { together: [{ face: 'elowen', to: 'player' }, { wait: 0.6 }] },
+    { who: 'elowen', text: "A hundred years of parties and nobody to dance with... I know a little about shutting a door and waiting for someone to knock. I'm glad you knocked on hers.", mood: 'sad' },
+    { who: 'elowen', text: "Rest a while. When you're ready, come back: the Glade has been crying lately, and I don't think it's a coincidence any more.", mood: 'happy' },
   ],
   // ----- Chapter 3 -----
   ch3_open: [
