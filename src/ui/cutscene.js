@@ -597,7 +597,7 @@ const shadeInk = (c) => {
 };
 
 // Whoever speaks, acting their line: heroes and NPCs at twice their size with the line's face and a
-// little bounce on each new line; queens as themselves; Hayate as the great Tengu, sleepy or awake.
+// little bounce on each new line; queens as themselves; Hayate as a sleepy princess, or awake.
 function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
   const who = step.who;
   const pop = t < 0.25 ? Math.sin((t / 0.25) * Math.PI) * 3 : 0;
@@ -625,9 +625,10 @@ function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
     ctx.scale(k, k);
     drawMonster(ctx, m, 0, 0, world.now + t, world.now + t);
   } else if (who === 'hayate') {
-    // The great Tengu herself (render/hayate.js): asleep and nodding, or (her happy lines) awake.
-    // (Scaled to the room it has: her cloud of hair and tokin stand taller than anyone, so in a box
-    // at the top she shrinks to fit, cap and all.)
+    // Hayate herself, the sleepy princess (render/hayate.js): asleep and nodding, or (her happy
+    // lines) awake.
+    // (Scaled to the room it has: her cloud of hair and crown stand taller than anyone, so in a box
+    // at the top she shrinks to fit, crown and all.)
     drawHayate(ctx, x, y - pop, world.now + t, { s: Math.min(2, room / 50), awake: step.mood === 'happy', talking });
   }
   ctx.restore();

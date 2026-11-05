@@ -243,8 +243,8 @@ How to get there without making it a grind (the game's own rule against chores):
 10. [x] The Wind Returns: the level-50 finale and its rewards (2026-11-05: Mira's last quest, a
    midnight festival under the windmill with the friends whose stories you finished, Hayate waking;
    the windmill, the Starchime chimes and the Great Forge come alive, maps sour half as fast, the
-   title, Hayate's Feather and the plaque). Hayate's portrait was drawn the same day (the Sleepy Sky Granny the player picked:
-   render/hayate.js).
+   title, Hayate's Feather and the plaque). Hayate's portrait was drawn the same day: a sleepy princess in a gown and crystal
+   crown, the player's call (render/hayate.js).
 
 Each step: write the quests and scenes, stage them with care, play-through tests, watch them in
 the game, fix what looks wrong, send a video, then wait for the player before the next.
