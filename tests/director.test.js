@@ -416,3 +416,21 @@ test("chapter 7's scenes play through at Nim's shop, and Elowen and Mira come fo
     assert.equal(w.map.npcs.find((n) => n.id === 'elowen').x, elowenX, `${id}: Elowen goes back to her tower`);
   }
 });
+
+test("chapter 8's new scenes play through on the Sugar Trail where Chef Praline stands", () => {
+  for (const id of ['dessert_open', 'dessert_done', 'bonbon_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'sugar_trail', 'start');
+    const praline = w.map.npcs.find((n) => n.id === 'praline');
+    w.body.x = praline.x - 70;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

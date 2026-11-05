@@ -234,7 +234,8 @@ How to get there without making it a grind (the game's own rule against chores):
 6. [x] Chapter 7: the Observatory and the midpoint twist (2026-11-05: Nim gives Charts That Don't
    Move and The Star Keeper; the twist plays at her shop with Elowen and Mira; the springs
    chapter now starts at 33).
-7. [ ] Chapter 8: Candy Volcano and Lilith.
+7. [x] Chapter 8: Candy Volcano and Lilith (2026-11-05: Chef Praline gives Dessert Emergency and
+   Just Desserts on the Sugar Trail; Bonbon saw the warmth flow to the grotto; Lilith now at 38).
 8. [ ] Chapter 9: the Dream Theatre.
 9. [ ] Chapter 10: the Sky Whale, Selene, Prismaris.
 10. [ ] The Wind Returns: the level-50 finale and its rewards.

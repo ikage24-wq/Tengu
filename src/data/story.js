@@ -225,8 +225,22 @@ export const STORY_QUESTS = {
     rewards: { exp: 79000, gold: 1600, items: [{ id: 'warrior_shoes_35', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch5_gems' },
   }),
+  story_dessert: s('story_dessert', 8, {
+    name: 'Dessert Emergency', giver: 'praline', minLevel: 35, prereq: 'story_5_2',
+    text: "Welcome back to the kitchen! Today's challenge: stop a queen from burying the island in caramel. Queen Bonbon is stirring the volcano hotter and hotter to make up for the warmth that vanished. I need a cold meringue the size of a house. Calm 15 Pegasus Foals on Frozen Peak and bring me 6 Cloud Manes. Yes, chef!",
+    objectives: [{ type: 'kill', mob: 'cloudsheep', count: 15 }, { type: 'collect', item: 'wool', count: 6 }],
+    rewards: { exp: 33000, gold: 700, items: [{ id: 'white_potion', qty: 20 }] },
+    scenes: { accept: 'dessert_open', done: 'dessert_done' },
+  }),
+  story_bonbon: s('story_bonbon', 8, {
+    name: 'Just Desserts', giver: 'praline', minLevel: 36, prereq: 'story_dessert',
+    text: "The meringue is chilled, plated and very, very large. Take three friends into the Candy Volcano, get it to Queen Bonbon, and cool her down. Gently. She's sensitive about her baking. And ask her where she thinks the warmth went. A queen notices these things.",
+    objectives: [{ type: 'kill', mob: 'bonbon', count: 1 }],
+    rewards: { exp: 70000, gold: 1400, items: [{ id: 'warrior_bottom_35', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 6 }] },
+    scenes: { done: 'bonbon_done' },
+  }),
   story_5_3: s('story_5_3', 8, {
-    name: 'The Rose Grotto', giver: 'nim', minLevel: 37, prereq: 'story_5_2',
+    name: 'The Rose Grotto', giver: 'nim', minLevel: 38, prereq: 'story_bonbon',
     text: "The gems glow with rose light... it's Lilith! She's taking the springs' warmth down to her grotto behind the waterfall in Serpent Springs. In my books, this is where the hero says something brave. I-I'll just say please. Please bring the warmth home.",
     objectives: [{ type: 'kill', mob: 'lilith', count: 1 }],
     trial: 'grotto',
@@ -604,6 +618,30 @@ export const SCENES = {
   ch5_gems: [
     { who: 'nim', text: 'These gems... they glow pink inside. Rose pink.', mood: 'surprised' },
     { who: 'nim', text: "Lilith, the Rose Queen. She keeps a night garden in a grotto behind the springs' waterfall. Sh-she's very glamorous. I'd hide behind you." },
+    { together: [{ emote: 'nim', kind: 'sweat', dur: 1.6 }, { wait: 0.4 }] },
+    { who: 'nim', text: "B-but first... Chef Praline on the Sugar Trail sent me a cake with HELP written on it in icing. I ate a bit before I read it. Sorry. Please go and see her.", mood: 'sad' },
+  ],
+  dessert_open: [
+    { together: [{ jump: 'praline', height: 12 }, { emote: 'praline', kind: '!', dur: 1.2 }, { fx: 'caramel', at: 'praline', n: 10 }] },
+    { who: 'praline', text: "Welcome back to the kitchen! I'm Chef Praline, and today, our dessert is trying to kill us!", mood: 'happy' },
+    { who: 'praline', text: "I was Queen Bonbon's pastry chef until she started stirring the volcano. She says the island's gone cold, so she's making it warm again. With caramel. All of it.", mood: 'sad' },
+    { together: [{ shake: 1.6, dur: 0.5 }, { fx: 'caramel', at: { x: 1100, y: 340 }, n: 16 }, { emote: 'praline', kind: 'sweat', dur: 1.4 }] },
+    { who: 'praline', text: "Hear that? That's the volcano asking for more sugar. The answer is no, chef. The answer is meringue.", mood: 'angry' },
+  ],
+  dessert_done: [
+    { who: 'praline', text: "Cloud Manes! Whisked, chilled, piped. Look at those peaks. I could cry. I won't, it'll make the meringue weep.", mood: 'happy' },
+    { together: [{ fx: 'clouds', at: 'praline', n: 12 }, { fx: 'sparkle', at: 'praline', n: 10 }] },
+    { who: null, text: 'Chef Praline pipes a meringue the size of a garden shed onto a tray and pats it lovingly. It is very cold. It is mildly frightening.' },
+    { who: 'praline', text: "She's not cruel, you know. She just thinks the island needs warming up, and she's never once made a small dessert in her life.", mood: 'sad' },
+  ],
+  bonbon_done: [
+    { who: 'player', text: "Queen Bonbon has cooled down. She said somebody stole all the warmth, and she was only putting some back." },
+    { together: [{ emote: 'praline', kind: '!', dur: 1.2 }, { wait: 0.4 }] },
+    { who: 'player', text: "She saw it go. Rose-pink, flowing down through the springs, into a grotto behind the waterfall." },
+    { who: 'praline', text: "Rose-pink. Down. Of course it's going down. Everything in this story goes down.", mood: 'surprised' },
+    { together: [{ emote: 'praline', kind: 'heart', dur: 1.8 }, { fx: 'caramel', at: 'praline', n: 8 }] },
+    { who: 'praline', text: "Did she say anything about me? ...She did? 'Nobody ever stays for dessert'? Oh, Your Majesty. I'm going back. Somebody has to taste the cake.", mood: 'happy' },
+    { who: 'praline', text: "Go and tell the little spell-seller, chef. And whoever's behind that waterfall, tell them from me: it's RAW.", mood: 'happy' },
   ],
   ch5_trial: [
     { who: null, text: 'Behind the waterfall, roses bloom in the dark, every one of them warm as a hearth.' },
@@ -611,6 +649,8 @@ export const SCENES = {
     { who: 'lilith', text: "Without the wind there's no spring, no summer. So I borrowed a little warmth. Well. All of it. Is that so terrible?" },
     { who: 'player', text: "Let me guess. You're lonely, and this is a cry for help." },
     { who: 'lilith', text: 'Who TOLD you? Was it the fox? It was the fox.', mood: 'angry' },
+    { who: 'player', text: "Also, Chef Praline asked me to tell you: it's RAW." },
+    { who: 'lilith', text: '...WHAT is raw? Darling? What is raw?', mood: 'surprised' },
   ],
   ch5_win: [
     { who: 'lilith', text: 'My roses... they were all I had left of the sunshine.', mood: 'sad' },

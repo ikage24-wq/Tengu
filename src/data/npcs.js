@@ -136,7 +136,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   praline: {
-    id: 'praline', name: 'Chef Praline', title: 'Runaway Confectioner', role: 'dungeon', dungeon: 'volcano',
+    id: 'praline', name: 'Chef Praline', title: 'Runaway Confectioner', role: 'dungeon', quests: ['story_dessert', 'story_bonbon'], dungeon: 'volcano',
     look: { hairStyle: 'fluffybob', hairColor: '#c88a5a', skinTone: '#fbd9bf', eyeColor: '#a8520a', outfitColor: '#ffffff', eyeStyle: 'sparkle', face: 'grin' },
     greeting: "I was the Queen's pastry chef until she started stirring the volcano! If it blows, we're all dessert. Bring a tank, a healer and two fighters... and a spoon.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
