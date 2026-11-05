@@ -223,7 +223,7 @@ export function equipBlocker(char, inst) {
 // Equips the bag item at `index`, swapping out whatever was in that slot.
 // A first job comes with its first weapon: the instructor hands over the level-5 weapon of the
 // job's own kind and it goes straight into your hands (what you held goes to your bag; with the bag
-// full, the new one waits in your hands and the old one is kept there too). Returns its id.
+// full, you keep holding the old one and the new one goes to the bag instead). Returns its id.
 export function giveStarterWeapon(char, jobId) {
   const job = JOBS[jobId];
   if (job?.tier !== 1) return null;
