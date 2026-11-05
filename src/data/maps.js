@@ -428,8 +428,8 @@ export const MAPS = {
       ropes: [{ x: 410, top: 600, bottom: 720 }, { x: 810, top: 720, bottom: 880 }, { x: 1010, top: 880, bottom: 944 }, { x: 1590, top: 880, bottom: 944 }, { x: 1790, top: 720, bottom: 880 }, { x: 2190, top: 600, bottom: 720 }],
       quiet: [[40, 600, 160], [500, 720, 160], [1300, 944, 320], [1300, 872, 120], [1300, 760, 200], [1700, 880, 120], [2100, 480, 160], [2540, 600, 160], [350, 440, 140], [1300, 600, 140], [2420, 420, 130]],
       zones: [
-        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle'), SPOT.ore(3)] },
-        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.ore(3), SPOT.herb(3, 'crystal_truffle'), SPOT.herb(3, 'duskcap', { night: true })] },
+        { name: 'Glowcap Terraces', color: '#4fb0d8', from: 0, mobs: ['crystalslime', 'rockgolem'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
+        { name: 'Underground Lake', color: '#8a7ab0', from: 800, mobs: ['rockgolem', 'crystalslime', 'shade'], nodes: [SPOT.ore(3), SPOT.herb(3, 'crystal_truffle')] },
         { name: 'Shade Spires', color: '#5d5285', from: 1800, mobs: ['shade', 'rockgolem'], nodes: [SPOT.ore(3, { gem: 0.18 }), SPOT.herb(3, 'crystal_truffle')] },
       ],
       ledges: [

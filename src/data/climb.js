@@ -16,6 +16,14 @@ const M = 100;
 // other, SPOT_APART), so you gather in peace and spots don't crowd.
 const SPOT_ROOM = 120;
 const SPOT_APART = 110;
+// How many monsters a hand-laid hunting map holds (lay): a spawn point (a pair of monsters) per
+// MOB_FLOOR px of floor, MOB_POINTS[0] to [1] points a map, never closer than MOB_GAP on a floor,
+// about the density of a good MapleStory training map. A spawn keeps NODE_ROOM from a gathering
+// spot on its floor (its pair stands within 25 px of it), so you can gather without being bumped.
+const MOB_FLOOR = 180;
+const MOB_POINTS = [22, 30];
+const MOB_GAP = 120;
+const NODE_ROOM = 95;
 // The free place nearest `k` in the list that isn't crowding a spot already placed.
 function pickSpot(free, placed, k) {
   const ok = ([x, y]) => !placed.some((n) => n.y === y && Math.abs(n.x - x) < SPOT_APART);
@@ -137,8 +145,9 @@ export function climb({ width, ground, zones, lookout = {}, quiet = [] }) {
 // nothing within a jump below it gets a rope down to whatever is under it, so every ledge can be
 // reached; monsters and gathering spots spread over each zone's ledges (and its stretch of the
 // ground) as in climb().
-// lay({ width, ground, ledges, by, zones: [{ name, color, look, from, mobs, nodes }], quiet })
-export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrain = null, ropes: extra = [] }) {
+// lay({ width, ground, ledges, by, zones: [{ name, color, look, from, mobs, nodes }], quiet, monsters })
+// (`monsters` sets how many spawn points the map holds, instead of sizing them to its floor.)
+export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrain = null, ropes: extra = [], monsters = null }) {
   const platforms = ledges.map((l) => ({ ...l }));
   // The ground: flat at `ground`, or shaped by a `terrain` line (cliffs as two points at one x).
   const pts = terrain ?? [[0, ground], [width, ground]];
@@ -167,28 +176,57 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
   }
   const clear = (x, y) => !ropes.some((rp) => Math.abs(rp.x - x) < 50 && (rp.top === y || rp.bottom === y)) && !quiet.some(([qx, qy, qr]) => Math.abs(qx - x) < qr && Math.abs(qy - y) < 10);
   const floors = [...grounds, ...platforms.filter((l) => !l.drift && !l.thick)];
-  const spawns = [];
-  const counts = zones.map(() => 0);
-  for (const l of floors) {
-    const before = spawns.length;
-    const put = (x) => {
-      const k = zoneOf(x, l.y);
-      if (!clear(x, l.y) || !zones[k].mobs?.length) return;
-      spawns.push({ mob: zones[k].mobs[counts[k]++ % zones[k].mobs.length], x, y: l.y });
-    };
-    for (let x = l.x + 110; x <= l.x + l.w - 110; x += 280) put(x);
-    // A ledge whose middle is taken (its rope hangs there) still gets a monster at one end.
-    if (spawns.length === before && l.w >= 200) for (const x of [l.x + 60, l.x + l.w - 60]) if (spawns.length === before) put(x);
-  }
+  // Gathering spots first (one per wish, spread over the zone's floors), so the monsters, added
+  // next, make room for them rather than crowding them out.
   const nodes = [];
   zones.forEach((z, zi) => {
     const free = [];
-    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y) && !spawns.some((s) => s.y === l.y && Math.abs(s.x - x) < SPOT_ROOM)) free.push([x, l.y]);
+    for (const l of floors) for (let x = l.x + 50; x <= l.x + l.w - 50; x += 60) if (zoneOf(x, l.y) === zi && clear(x, l.y)) free.push([x, l.y]);
     (z.nodes ?? []).forEach((n, i) => {
       const at = pickSpot(free, nodes, Math.floor(((i + 1) * free.length) / (z.nodes.length + 1)));
       if (at) nodes.push({ x: at[0], y: at[1], ...n });
     });
   });
+  // Monsters, sized to the map (each spawn point holds a pair: world/mobs.js): about one point
+  // per MOB_FLOOR px of floor, MOB_POINTS[0] to [1] points a map. Every ledge you can fight on
+  // gets one first, then the rest go where the floor is emptiest, so no stretch stands bare; all
+  // keep clear of ropes, quiet spots (portals, docks) and gathering spots.
+  const spawns = [];
+  const counts = zones.map(() => 0);
+  const length = floors.reduce((a, l) => a + l.w, 0);
+  const target = monsters ?? Math.max(MOB_POINTS[0], Math.min(MOB_POINTS[1], Math.round(length / MOB_FLOOR)));
+  const ok = (l, x) => {
+    const k = zoneOf(x, l.y);
+    return clear(x, l.y) && zones[k].mobs?.length && !nodes.some((n) => n.y === l.y && Math.abs(n.x - x) < NODE_ROOM) && !spawns.some((s) => s.y === l.y && Math.abs(s.x - x) < MOB_GAP);
+  };
+  const spots = (l) => {
+    const out = [];
+    for (let x = l.x + 60; x <= l.x + l.w - 60; x += 20) if (ok(l, x)) out.push(x);
+    return out;
+  };
+  const put = (l, x) => {
+    const k = zoneOf(x, l.y);
+    spawns.push({ mob: zones[k].mobs[counts[k]++ % zones[k].mobs.length], x, y: l.y });
+  };
+  const mine = (l) => spawns.filter((s) => s.y === l.y && s.x >= l.x && s.x <= l.x + l.w).map((s) => s.x);
+  for (const l of [...floors].filter((f) => f.w >= 160).sort((p, q) => q.w - p.w)) {
+    const xs = spots(l);
+    const mid = l.x + l.w / 2;
+    if (xs.length) put(l, xs.reduce((best, x) => (Math.abs(x - mid) < Math.abs(best - mid) ? x : best)));
+  }
+  while (spawns.length < target) {
+    let pick = null;
+    for (const l of floors) {
+      const xs = spots(l);
+      if (!xs.length) continue;
+      const room = l.w / (mine(l).length + 1);
+      if (!pick || room > pick.room) pick = { l, xs, room };
+    }
+    if (!pick) break;
+    const have = mine(pick.l);
+    const gap = (x) => Math.min(x - pick.l.x, pick.l.x + pick.l.w - x, ...have.map((m) => Math.abs(m - x)));
+    put(pick.l, pick.xs.reduce((best, x) => (gap(x) > gap(best) ? x : best)));
+  }
   return {
     width, height: Math.max(...pts.map((q) => q[1])) + 40, groundY: ground, terrain: pts,
     zonesBy: by, zones: zones.map((z, i) => ({ name: z.name, color: z.color, from: i ? z.from : by === 'x' ? 0 : Infinity, ...(z.look ? { look: z.look } : {}) })),
