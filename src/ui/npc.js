@@ -10,7 +10,7 @@ import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
 import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
-import { advanceJob, wornGear } from '../core/character.js';
+import { advanceJob, wornGear, giveStarterWeapon } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn, loadMap } from '../world/world.js';
 import { playScene } from '../world/story.js';
@@ -380,6 +380,9 @@ export function npcWindow(ui, state, world) {
       if (picked) {
         advanceJob(char, j.id);
         world.log(`You are now a ${j.name}! Spend your new SP in the Skills window (K).`, '#ffe36b');
+        // Your first weapon of your new kind, straight into your hands.
+        const weapon = giveStarterWeapon(char, j.id);
+        if (weapon) world.log(`${npc.name} hands you a ${ITEMS[weapon].name}. It's in your hands already.`, ITEMS[weapon].color ?? '#ffe36b');
         if (char.refunded) world.log(`Your ${char.refunded} stat points are back: put them into ${(FAMILY_STATS[j.family] ?? FAMILY_STATS.beginner).primary.toUpperCase()} in Stats (C), or press Auto.`, '#ffe36b');
         char.refunded = 0;
         world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });

@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { expToNext, MAX_LEVEL } from '../src/core/exp.js';
 import { physicalRange, magicRange, hitChance, levelGapFactor, deathExpLoss, rollHit } from '../src/core/formulas.js';
 import {
-  createCharacter, gainExp, advanceJob, autoAssignAp, learnSkill, maxSkill, equipFromBag, stats, usePotion, applyDeath,
+  createCharacter, gainExp, advanceJob, giveStarterWeapon, autoAssignAp, learnSkill, maxSkill, equipFromBag, stats, usePotion, applyDeath,
 } from '../src/core/character.js';
 import { addItem, countItem, removeItem, STACK_MAX, sortTab, createInventory, moveItem } from '../src/core/inventory.js';
 import { makeEquip } from '../src/core/items.js';
@@ -235,4 +235,16 @@ test('Sell junk sells monster drops, but keeps what quests and known recipes nee
   assert.equal(count(c.inventory, 'bone_shard'), 0);
   assert.equal(count(c.inventory, 'sprout_leaf'), 4);
   assert.equal(count(c.inventory, 'fish_minnow'), 2);
+});
+
+test('a first job comes with its first weapon, straight into your hands', () => {
+  for (const [job, weapon] of [['warrior', 'sword_5'], ['archer', 'bow_5'], ['thief', 'dagger_5'], ['spiritmage', 'wand_5']]) {
+    const c = fresh();
+    gainExp(c, 2000);
+    const held = c.equipment.weapon;
+    assert.ok(advanceJob(c, job), `${job} at level ${c.level}`);
+    assert.equal(giveStarterWeapon(c, job), weapon);
+    assert.equal(c.equipment.weapon.id, weapon, `a ${job} holds a ${weapon}`);
+    if (held) assert.ok(c.inventory.equip.some((e) => e === held), 'what you held is in your bag');
+  }
 });
