@@ -1,11 +1,13 @@
 // Loot: what a monster drops, how it falls, and picking it up.
 
-import { ITEMS } from '../data/items.js';
+import { ITEMS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { MAX_LEVEL } from '../core/exp.js';
 import { makeEquip, rollRarity } from '../core/items.js';
 import { surfacesOf } from './physics.js';
 
-const GEAR_CHANCE = 0.045;
+// Random gear near the monster's level is the smaller share now: each monster's own table
+// (data/mobs.js) carries a signature prize worth hunting it for.
+const GEAR_CHANCE = 0.025;
 const POTION_CHANCE = 0.12;
 const LIFETIME = 90;
 const PICKUP_RANGE = 26;
@@ -31,6 +33,16 @@ function gearFor(level, rng, fits = null) {
   return pool[Math.floor(rng() * pool.length)].id;
 }
 
+// A monster's signature piece for a slot: one job's gear for it at the monster's level, the
+// hero's own job's when `fits` knows it.
+function signatureGear(slot, level, rng, fits = null) {
+  const L = Math.min(level, MAX_LEVEL);
+  const ids = slot === 'earring' ? [jobGearId(null, slot, L)] : GEAR_FAMILIES.map((f) => jobGearId(f, slot, L));
+  const own = fits ? ids.filter((id) => fits(ITEMS[id])) : [];
+  const pool = own.length ? own : ids;
+  return pool[Math.floor(rng() * pool.length)];
+}
+
 // Rolls a monster's loot. Returns plain descriptions; spawnDrops turns them into world objects.
 export function rollLoot(def, rng = Math.random, fits = null) {
   const loot = [];
@@ -38,8 +50,11 @@ export function rollLoot(def, rng = Math.random, fits = null) {
   loot.push({ kind: 'gold', amount: gmin + Math.floor(rng() * (gmax - gmin + 1)) });
   for (const d of def.drops) {
     if (rng() >= d.chance) continue;
+    // A signature prize by slot (`gear`): the hero's own job's piece for it at the monster's level
+    // (or, with no hero to fit, any job's). Like all signature gear it is Rare or better.
+    const id = d.gear ? signatureGear(d.gear, def.level, rng, fits) : d.id;
     // Equipment on a monster's own list (like a boss's signature weapon) drops as rolled gear.
-    if (ITEMS[d.id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(d.id, { rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
+    if (ITEMS[id].type === 'equip') loot.push({ kind: 'item', inst: makeEquip(id, { rng, rarity: Math.max(1, rollRarity(rng)), variant: 'roll' }) });
     else loot.push({ kind: 'item', id: d.id, qty: d.qty ?? 1 });
   }
   if (rng() < POTION_CHANCE) loot.push({ kind: 'item', id: potionFor(def.level, rng), qty: 1 });

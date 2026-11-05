@@ -305,7 +305,7 @@ test('the vault clams open only in the bell\u2019s order, and a wrong one shuts 
 
 test('a group goes round the Clockwork Carnival: music boxes, springs and balloons, the coaster, Leonie, the strings, the queen', () => {
   const random = Math.random;
-  const rng = seeded(37);
+  const rng = seeded(38);
   Math.random = rng;
   try {
     const world = heroAt(rng, 28, ['archer'], 'carnival_gate');
