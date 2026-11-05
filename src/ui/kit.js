@@ -27,17 +27,17 @@ if (typeof document !== 'undefined' && document.fonts?.load) {
 
 export const COLORS = {
   panel: '#fffaf6',
-  panelEdge: '#c9a6e8',
+  panelEdge: '#d8a8cc',
   title: '#ffb8dc',
-  title2: '#c9b6ff',
+  title2: '#f5b8d0',
   ink: '#5a3f7a',
-  muted: '#9c86b8',
+  muted: '#a88a9e',
   accent: '#ff8fc1',
   good: '#4fbf72',
   bad: '#ff6b8a',
   gold: '#e8a23c',
-  cell: '#f6eefb',
-  cellEdge: '#e2d3f0',
+  cell: '#fbf1f4',
+  cellEdge: '#ecd6e4',
   select: '#ffd84f',
   hp: '#ff6b8a',
   mp: '#6fb8ff',
@@ -48,9 +48,10 @@ export const COLORS = {
 export const THEMES = {
   pink: { main: '#ff8fc1', light: '#ffd6ea', dark: '#e0659f', ink: '#a8467a' },
   peach: { main: '#ffab7a', light: '#ffe2cf', dark: '#e98450', ink: '#a85a2f' },
-  lavender: { main: '#b48cff', light: '#e8dcff', dark: '#9068e0', ink: '#6a48ad' },
+  // (Warmed toward orchid and honey: the scrapbook's palette leans warm, with blue kept for MP.)
+  lavender: { main: '#cf8ad8', light: '#f4dcf4', dark: '#ad62bb', ink: '#7a3a84' },
   mint: { main: '#5fd3a0', light: '#d2f5e4', dark: '#3fb383', ink: '#2a7f5c' },
-  sky: { main: '#6fb8ff', light: '#d6ebff', dark: '#4f95e0', ink: '#336aa8' },
+  sky: { main: '#f0b45a', light: '#fde8c4', dark: '#d18f32', ink: '#8a5414' },
   gold: { main: '#ffc94f', light: '#fff0c4', dark: '#e0a52f', ink: '#9a6a12' },
   ruby: { main: '#ff4f8a', light: '#ffd3e4', dark: '#d12e68', ink: '#86204a' },
 };

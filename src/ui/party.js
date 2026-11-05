@@ -218,8 +218,8 @@ export function drawPartyPanel(ui, state, world) {
     const away = g.map !== world.map.id;
     row(i + 1, g.name, g.level ?? 1, g.job ?? 'novice', g.dead ? 0 : (g.hp ?? 1) / (g.maxHp || 1), online.party.leader === g.id,
       () => openProfile(state, { kind: 'ghost', id: g.id }), (r) => openMenu(state, { kind: 'ghost', id: g.id, x: x + w + 2, y: r }), hot,
-      { label: away ? (MAPS[g.map]?.name ?? '...') : JOBS[g.job]?.short ?? JOBS[g.job]?.name ?? '', color: away ? '#9c86b8' : '#4f95e0' });
-    if (hot) tooltip(ui, [{ text: `${g.name} · friend online`, bold: true, color: '#4f95e0' }, { text: away ? `In ${MAPS[g.map]?.name ?? 'somewhere'}` : 'Here with you', size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
+      { label: away ? (MAPS[g.map]?.name ?? '...') : JOBS[g.job]?.short ?? JOBS[g.job]?.name ?? '', color: away ? '#9c86b8' : '#3fae86' });
+    if (hot) tooltip(ui, [{ text: `${g.name} · friend online`, bold: true, color: '#3fae86' }, { text: away ? `In ${MAPS[g.map]?.name ?? 'somewhere'}` : 'Here with you', size: 8, color: COLORS.muted }, { text: 'Click for profile · right-click for options', size: 7, color: COLORS.muted }]);
   });
   const off = friends.length;
   members.forEach((bot, i) => {

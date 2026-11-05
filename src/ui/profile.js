@@ -69,7 +69,7 @@ export function profileWindow(ui, state, world) {
   text(ctx, char.name, lx + 52, ly + 124, { size: 9.5, bold: true, align: 'center', color: pro ? '#c99a1f' : COLORS.ink });
   if (pro) sparkle(ctx, lx + 8, ly + 120, 3, '#ffd66b');
   text(ctx, `Lv ${char.level} ${JOBS[char.job].name}`, lx + 52, ly + 136, { size: 7, align: 'center', color: COLORS.muted });
-  if (bot?.guild) text(ctx, `<${bot.guild}>`, lx + 52, ly + 147, { size: 7, bold: true, align: 'center', color: '#4f95e0' });
+  if (bot?.guild) text(ctx, `<${bot.guild}>`, lx + 52, ly + 147, { size: 7, bold: true, align: 'center', color: '#3fae86' });
   const tag = (label, y, fill) => {
     ctx.font = font(7, true);
     const w = ctx.measureText(label).width + 12;
@@ -89,7 +89,7 @@ export function profileWindow(ui, state, world) {
   else if (bot?.shop) tag('Shop open', ly + 184, '#ff8fc1');
   // A friend online: invite them, or trade.
   if (friend) {
-    if (inParty(friend.id)) tag('In your party', ly + 169, '#4f95e0');
+    if (inParty(friend.id)) tag('In your party', ly + 169, '#3fae86');
     else {
       const why = partyBlocker(friend);
       if (button(ui, lx + 6, ly + 166, 92, 15, why === 'Waiting for an answer' ? 'Invited...' : 'Invite to party', { size: 7, primary: true, enabled: !why, iconName: 'heart' })) askParty(world, friend.id);

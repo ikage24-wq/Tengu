@@ -440,7 +440,7 @@ function drawMenuGrid(ui, state, world) {
   ctx.scale(0.85 + 0.15 * pop, 0.85 + 0.15 * pop);
   ctx.translate(-(x + 18), -(y + h));
   softShadow(ctx, x, y, w, h, 12, 3);
-  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#c9b6ff', r: 12, width: 2 });
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#e8b8d4', r: 12, width: 2 });
   const char = world.char;
   menus.forEach(([label, key, , ic, theme], i) => {
     const bx = x + 6 + (i % cols) * (bw + gap);
@@ -979,7 +979,7 @@ function drawMinimap(ui, world) {
     ctx.fillStyle = '#ffffff';
     roundRect(ctx, px - 3, py - 8, 6, 8, 3);
     ctx.fill();
-    ctx.fillStyle = '#9b6cff';
+    ctx.fillStyle = '#cf8ad8';
     roundRect(ctx, px - 2.2, py - 7.2, 4.4, 7.2, 2.2);
     ctx.fill();
     ctx.fillStyle = '#e6dcff';
@@ -1036,7 +1036,7 @@ function drawMinimap(ui, world) {
     ctx.beginPath();
     ctx.arc(gx, gy, mate ? 3.3 : 2.7, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = g.dead ? '#b8a8c8' : mate ? '#ff6b9a' : '#4f95e0';
+    ctx.fillStyle = g.dead ? '#b8a8c8' : mate ? '#ff6b9a' : '#3fae86';
     ctx.beginPath();
     ctx.arc(gx, gy, mate ? 2.3 : 1.9, 0, Math.PI * 2);
     ctx.fill();

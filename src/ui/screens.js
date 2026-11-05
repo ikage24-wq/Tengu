@@ -104,8 +104,8 @@ export function titleScreen(ui, time) {
 
 // Each save file's colour (the same as its playbill's band).
 const FILE_COLORS = ['#d83a5a', '#4a8ad8', '#3aa878'];
-const FAMILY_COLOR = { beginner: '#6fb8ff', warrior: '#ff8a5c', archer: '#5fd3a0', thief: '#9b7bd8', mage: '#ff8fc1', gm: '#ffc94f' };
-const familyColor = (c) => FAMILY_COLOR[JOBS[c?.job]?.family] ?? '#b48cff';
+const FAMILY_COLOR = { beginner: '#f0b45a', warrior: '#ff8a5c', archer: '#5fd3a0', thief: '#9b7bd8', mage: '#ff8fc1', gm: '#ffc94f' };
+const familyColor = (c) => FAMILY_COLOR[JOBS[c?.job]?.family] ?? '#cf8ad8';
 
 function leaves(ctx, x, y, r, color) {
   ctx.fillStyle = color;
@@ -192,7 +192,7 @@ function infoCard(ui, c, x, y, w, live, time) {
   [['map', MAPS[c.mapId]?.name ?? ''], ['coin', c.gold.toLocaleString()]].forEach(([ic, v], i) => {
     const ry = y + 136 + i * 17;
     box(ctx, x + 12, ry, w - 24, 14, { fill: COLORS.cell, edge: null, r: 7 });
-    icon(ctx, ic, x + 22, ry + 7, 8, i ? '#f0b53a' : '#6fb8ff');
+    icon(ctx, ic, x + 22, ry + 7, 8, i ? '#f0b53a' : '#3fae86');
     text(ctx, v, x + w - 18, ry + 10, { size: 8, bold: true, align: 'right' });
   });
   const s = stats(c);

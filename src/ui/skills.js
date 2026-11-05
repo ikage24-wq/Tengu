@@ -44,7 +44,7 @@ function learnBlocker(char, s) {
 // for buffs, a rounded square for everything you cast. Grey and faded when out of reach.
 function skillBadge(ctx, s, cx, cy, r, scale, lv, open, hot) {
   const kind = kindOf(s);
-  const [toneLight, toneDeep] = skillTone(s.id) ?? ['#e8dcff', '#9068e0'];
+  const [toneLight, toneDeep] = skillTone(s.id) ?? ['#f4dcf4', '#ad62bb'];
   skillPlate(ctx, cx, cy, r, kind, lv ? lighten(toneLight, 0.35) : COLORS.cell, lv ? toneDeep : '#d8cce6');
   const half = 8 * scale;
   if (hot && lv) ctx.filter = 'brightness(1.12) saturate(1.15)';
@@ -170,7 +170,7 @@ function listRow(ui, state, world, s, x, y, w, win) {
   text(ctx, `${lv}/${s.maxLevel}`, x + 27 + gw + 2, y + 19.5, { size: 6.5, bold: true, color: lv ? COLORS.ink : COLORS.muted });
   const key = hotkeyOf(char, s.id);
   if (key) {
-    box(ctx, x + 2, y - 1, 9, 7.5, { fill: '#b48cff', edge: '#ffffff', r: 3.75, width: 1 });
+    box(ctx, x + 2, y - 1, 9, 7.5, { fill: '#cf8ad8', edge: '#ffffff', r: 3.75, width: 1 });
     text(ctx, key, x + 6.5, y + 4.6, { size: 5, bold: true, align: 'center', color: '#ffffff' });
   }
   if (button(ui, x + w - 19, y + 4, 16, 16, '+', { enabled: open, primary: open, size: 9 })) {
@@ -238,7 +238,7 @@ function details(ui, state, world, s, x, y, w, h, win) {
   else if (key) hint = `On hotkey ${key}`;
   else hint = 'Drag it onto a hotkey';
   if (key && s.type !== 'passive') {
-    box(ctx, x + 8, fy + 2, 11, 11, { fill: '#b48cff', edge: '#ffffff', r: 5.5, width: 1 });
+    box(ctx, x + 8, fy + 2, 11, 11, { fill: '#cf8ad8', edge: '#ffffff', r: 5.5, width: 1 });
     text(ctx, key, x + 13.5, fy + 10.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
   }
   text(ctx, fit(ctx, hint, w - (lv >= s.maxLevel ? 76 : 110) - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), fy + 10.5, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });

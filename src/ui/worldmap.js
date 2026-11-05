@@ -935,7 +935,7 @@ export function worldMapWindow(ui, state, world) {
   ctx.restore();
   if (personHot) {
     const r = personHot.ref;
-    tooltip(ui, [{ text: r.name, bold: true, color: personHot.party ? '#e0659f' : '#4f95e0' }, { text: `Lv${r.char?.level ?? r.level ?? 1} ${JOBS[r.char?.job ?? r.job]?.name ?? ''}`, size: 8, color: COLORS.muted }, { text: `In ${getMap(r.map)?.name ?? '...'}${personHot.party ? ' · your party' : personHot.kind === 'bot' ? ' · friend' : ' · online'}`, size: 8 }, { text: 'Click to warp or party up', size: 7, color: COLORS.muted }]);
+    tooltip(ui, [{ text: r.name, bold: true, color: personHot.party ? '#e0659f' : '#3fae86' }, { text: `Lv${r.char?.level ?? r.level ?? 1} ${JOBS[r.char?.job ?? r.job]?.name ?? ''}`, size: 8, color: COLORS.muted }, { text: `In ${getMap(r.map)?.name ?? '...'}${personHot.party ? ' · your party' : personHot.kind === 'bot' ? ' · friend' : ' · online'}`, size: 8 }, { text: 'Click to warp or party up', size: 7, color: COLORS.muted }]);
   } else if (crowdHot) tooltip(ui, [{ text: `${crowd.length} player${crowd.length === 1 ? '' : 's'} here with you`, bold: true }, { text: crowd.slice(0, 6).map((b) => b.name).join(', ') + (crowd.length > 6 ? '...' : ''), size: 7.5, color: COLORS.muted }]);
   if (tapped) state.travelPick = tapped.id === state.travelPick ? null : tapped.id;
 
@@ -961,7 +961,7 @@ export function worldMapWindow(ui, state, world) {
   // (Fly goes to any place on the map, but only takes off from a town.)
   if (pick.id !== here && BY_SEA.has(pick.id)) {
     // (No flying over the sea: the ferry from Pastel Harbor goes to the lagoon.)
-    text(ctx, isle ? 'No boat back there' : 'By ferry from Pastel Harbor', bx - 4, by + 15, { size: 7, bold: true, align: 'right', color: '#4f95e0' });
+    text(ctx, isle ? 'No boat back there' : 'By ferry from Pastel Harbor', bx - 4, by + 15, { size: 7, bold: true, align: 'right', color: '#3fae86' });
     bx -= ctx.measureText(isle ? 'No boat back there' : 'By ferry from Pastel Harbor').width + 12;
   } else if (pick.id !== here) {
     const can = world.map.isTown;
@@ -1058,7 +1058,7 @@ function face(ctx, x, y, look, ringColor, time, seed, hot) {
 }
 
 function drawPeople(ctx, people, hot, time) {
-  for (const q of people) face(ctx, q.x, q.y, q.look, q.party ? '#ff6b9a' : '#4f95e0', time, q.seed, q === hot);
+  for (const q of people) face(ctx, q.x, q.y, q.look, q.party ? '#ff6b9a' : '#3fae86', time, q.seed, q === hot);
 }
 
 // The bar under the map for the person you tapped: where they are, and Warp, Join or Invite.
@@ -1074,7 +1074,7 @@ function personBar(ui, state, world, win, by) {
   const party = f.kind === 'ghost' ? inParty(g.id) : g.party;
   const job = JOBS[g.char?.job ?? g.job];
   const where = g.away ? 'in town' : g.map === world.map.id ? 'here with you' : `in ${getMap(g.map)?.name ?? '...'}`;
-  text(ctx, `${g.name}  ·  Lv${g.char?.level ?? g.level ?? 1} ${job?.name ?? ''}`, win.x + 12, by + 10, { size: 8.5, bold: true, color: party ? '#e0659f' : '#4f95e0' });
+  text(ctx, `${g.name}  ·  Lv${g.char?.level ?? g.level ?? 1} ${job?.name ?? ''}`, win.x + 12, by + 10, { size: 8.5, bold: true, color: party ? '#e0659f' : '#3fae86' });
   text(ctx, `${party ? 'Your party' : f.kind === 'ghost' ? 'Online with you' : 'Friend'}  ·  ${where}`, win.x + 12, by + 21, { size: 7, color: COLORS.muted });
   let bx = win.x + W - 12;
   const btn = (label, why, run, opts = {}) => {

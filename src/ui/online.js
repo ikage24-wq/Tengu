@@ -61,7 +61,7 @@ export function onlineWindow(ui, state, world) {
     for (const r of rows) {
       box(ctx, x - 2, y, W - 20, 22, { fill: r.me ? '#fff3c4' : '#ffffff', edge: r.me ? COLORS.select : th.light, r: 8, width: 1 });
       const mate = r.me ? Boolean(online.party) : inParty(r.id);
-      icon(ctx, mate ? 'heart' : 'user', x + 9, y + 11, 11, r.me ? COLORS.gold : mate ? '#ff6b9a' : '#4f95e0');
+      icon(ctx, mate ? 'heart' : 'user', x + 9, y + 11, 11, r.me ? COLORS.gold : mate ? '#ff6b9a' : '#3fae86');
       if (online.party && (r.me ? online.party.leader === online.id : online.party.leader === r.id)) icon(ctx, 'crown', x + 9, y + 2, 7, '#f0b53a');
       text(ctx, fit(ctx, `${r.name}${r.me ? ' (you)' : ''}`, 78, 8, true), x + 20, y + 10, { size: 8, bold: true });
       const where = MAPS[r.map]?.name ?? '';
@@ -190,7 +190,7 @@ function friendsTab(ui, state, world, win, x, y) {
   const ask = bots?.huntAsk;
   if (ask) {
     box(ctx, x - 2, y, W - 20, 22, { fill: '#e6f3ff', edge: '#7ec8ff', r: 8, width: 1.5 });
-    icon(ctx, 'friends', x + 9, y + 11, 10, '#4f95e0');
+    icon(ctx, 'friends', x + 9, y + 11, 10, '#3fae86');
     text(ctx, fit(ctx, `${ask.bot.name} wants to hunt!`, W - 130, 8, true), x + 20, y + 14, { size: 8, bold: true });
     if (button(ui, x + W - 92, y + 3, 36, 16, 'Join', { size: 7.5, primary: true })) answerHunt(bots, world, true);
     if (button(ui, x + W - 54, y + 3, 34, 16, 'No', { size: 7.5 })) answerHunt(bots, world, false);
