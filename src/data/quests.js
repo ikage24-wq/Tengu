@@ -316,20 +316,27 @@ export const QUESTS = {
 
   // Moonleaf Grove.
   nim_candles: {
-    id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'vex_rumor',
-    text: "Y-you heard? My floating candles got loose and turned into Will-o'-Wisps... they're haunting the Twilight Ruins now. Could you bring back 12 Wisp Flames? Gently, please.",
+    id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
+    text: "M-my floating candles ran away in the night. They left a note. It just says BYE. Now they're Will-o'-Wisps haunting the Twilight Ruins. Could you bring back 12 Wisp Flames? Gently, please. They're going through a phase.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 12 }],
     rewards: { exp: 24000, gold: 620, items: [{ id: 'mana_elixir', qty: 10 }, { id: 'ear_20', qty: 1, variant: 'roll' }] },
+    scenes: { accept: 'candles_open', done: 'candles_done' },
   },
+  nim_cape: {
+    id: 'nim_cape', name: 'The Caped Candle', giver: 'nim', minLevel: 23, prereq: 'nim_candles',
+    text: "One candle is still out there. The big one. Every night it climbs to the Temple Roof of the Twilight Ruins and just stands there, glowing, like it's waiting for a dramatic camera angle. The Imps up there think it's their boss now. Clear 15 Imps on the roof and bring it home? Please don't tell it I said 'big'.",
+    objectives: [{ type: 'visit', map: 'ruins', above: 440, place: 'the Temple Roof of the Twilight Ruins' }, { type: 'kill', mob: 'gloombat', count: 15 }],
+    rewards: { exp: 15000, gold: 380, items: [{ id: 'mana_elixir', qty: 10 }] },
+  },
+
   nim_stardust: {
-    id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38,
-    text: "There's a ledge at the very top of the Sky Garden where the Star Seraphs sing. Go up and see it, then bring me 10 Stardust? I want to make a wish candle.",
-    objectives: [
-      { type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' },
-      { type: 'collect', item: 'stardust', count: 10 },
-    ],
+    id: 'nim_stardust', name: 'Stardust Wishes', giver: 'nim', minLevel: 38, prereq: 'nim_cape',
+    text: "I want to make a real wish candle, out of Stardust. Go up to the very top of the Sky Garden where the Star Seraphs sing, then bring me 10 Stardust? This time the candles and I make the wish together. As a team. Like on the posters.",
+    objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'collect', item: 'stardust', count: 10 }],
     rewards: { exp: 110000, gold: 1600, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
+    scenes: { done: 'stardust_done' },
   },
+
 
   // The instructors: a short story each, between your first job and the trial at 30.
   // Brann's: the shield he lost holding a doorway in the Twilight Ruins, the scared recruit he
@@ -381,12 +388,16 @@ export const QUESTS = {
   },
 
   // ---------- The far regions ----------
+  // Nim's story: she wishes on a candle for the wind to come back, and her floating candles,
+  // who overheard, run off to find it for her. The biggest one becomes a caped "hero" on the
+  // Temple Roof. They come home, and Nim and her candles make the wish together, as a team.
   nim_chimes: {
     id: 'nim_chimes', name: 'Stolen Chimes', giver: 'nim', minLevel: 19,
-    text: "The Sylphs in the Whispering Glade, past Mossy Woods, keep stealing my wind chimes to play with! Shoo 15 of them away and bring back 6 of the feathers they shed.",
+    text: "Th-the Sylphs in the Whispering Glade keep stealing my wind chimes. They wear them as earrings. They look really good in them, which makes it worse. Shoo 15 of them away and bring back 6 of the feathers they shed? As a, um, trade? Is that how trading works?",
     objectives: [{ type: 'kill', mob: 'sylph', count: 15 }, { type: 'collect', item: 'sylph_feather', count: 6 }],
     rewards: { exp: 26000, gold: 700, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
+
   elowen_wisps: {
     id: 'elowen_wisps', name: 'Kettle Lights', giver: 'elowen', minLevel: 20, prereq: 'elowen_dance', family: 'mage',
     text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. Yes, a magic teapot. Every mage has one, it's in the handbook. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",

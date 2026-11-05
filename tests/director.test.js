@@ -207,3 +207,22 @@ test("Tora's Great Forge story plays through in Ember Crag", () => {
     assert.equal(w.map.npcs.find((n) => n.id === 'tora').x, tora.x, `${id}: Tora is back at her forge`);
   }
 });
+
+test("Nim's runaway-candle story plays through in Moonleaf Grove", () => {
+  for (const id of ['nim_chimes_done', 'candles_open', 'candles_done', 'nim_cape_done', 'stardust_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'start');
+    const nim = w.map.npcs.find((n) => n.id === 'nim');
+    w.body.x = nim.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.ok(!w.cine || (w.cine.fade.a === 0 && !w.cine.spot), `${id}: the lights come back up`);
+  }
+});
