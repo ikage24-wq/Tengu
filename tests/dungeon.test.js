@@ -112,7 +112,7 @@ test("a tank's hits make several times the threat", () => {
 });
 
 // A plain autopilot: fight what the group fights, step out of telegraphs, jump the slam, light,
-// free, and pick up what the room needs, then walk through the exit (opening the chest first).
+// free, and pick up what the room needs, then walk through the exit (the clear's rewards arrive on their own).
 // It finds its way between floors (ropes, drops, jumps) the way party members do.
 function pilot(world) {
   const run = world.dungeon;
@@ -160,15 +160,14 @@ function pilot(world) {
       held.add('KeyZ');
     }
   } else if (room.cleared) {
-    const chest = room.objects.find((o) => o.kind === 'chest' && !o.done);
     const door = world.map.portals.find((p) => p.sealed);
-    const [x, y] = chest ? [chest.x, chest.y] : [door.x, door.y];
+    const [x, y] = [door.x, door.y];
     goTo(x, y);
     if (Math.abs(x - b.x) < 10 && Math.abs(y - b.y) < 4 && Math.round(world.now * 60) % 10 === 0) pressed.add('ArrowUp');
   } else {
     const key = room.keys.find((k) => !k.got);
     const asleep = world.mobs.filter((m) => m.hp > 0 && !m.engaged);
-    const obj = room.objects.find((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && (o.kind !== 'clam' || room.bell.order[room.bell.next] === o.id) && (o.kind !== 'starlamp' || room.lamps.press.has(o.id)) && (o.kind !== 'dispenser' || (room.recipe.need[o.colour] ?? 0) > (room.recipe.have[o.colour] ?? 0)) && (o.kind !== 'cue' || room.cues.seq[room.cues.next] === o.id) && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
+    const obj = room.objects.find((o) => !o.done && (o.kind !== 'clam' || room.bell.order[room.bell.next] === o.id) && (o.kind !== 'starlamp' || room.lamps.press.has(o.id)) && (o.kind !== 'dispenser' || (room.recipe.need[o.colour] ?? 0) > (room.recipe.have[o.colour] ?? 0)) && (o.kind !== 'cue' || room.cues.seq[room.cues.next] === o.id) && !asleep.some((m) => Math.abs(m.x - o.x) < 170 && Math.abs(m.y - o.y) < 60));
     if (key) goTo(key.x, key.y);
     else if (obj) {
       goTo(obj.x, obj.y);
@@ -181,7 +180,7 @@ function pilot(world) {
   return { held, pressed };
 }
 
-test('a group clears Rootwood Hollow from the first room to the chest', () => {
+test('a group clears Rootwood Hollow from the first room to the last', () => {
   const random = Math.random;
   const rng = seeded(11);
   Math.random = rng;
@@ -203,7 +202,7 @@ test('a group clears Rootwood Hollow from the first room to the chest', () => {
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'hollow_gate');
     for (const id of DUNGEONS.hollow.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.hollow.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.hollow.reward.gold, 'the clear paid out');
     // The finder's recruits said goodbye.
     assert.equal(partyMembers(world.bots).length, 0);
   } finally {
@@ -233,7 +232,7 @@ test('a group clears Moonlit Manor: lanterns, the portrait puzzle, the Armours, 
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'manor_gate');
     for (const id of DUNGEONS.manor.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.manor.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.manor.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -279,7 +278,7 @@ test('a group dives the Sunken Aquarium Palace: corals, currents, the clam vault
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'tidepool_pier');
     for (const id of DUNGEONS.aquarium.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.aquarium.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.aquarium.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -326,7 +325,7 @@ test('a group goes round the Clockwork Carnival: music boxes, springs and balloo
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'carnival_gate');
     for (const id of DUNGEONS.carnival.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.carnival.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.carnival.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -354,7 +353,7 @@ test('a group climbs the Star Observatory: lamps, the constellation, low gravity
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'observatory_steps');
     for (const id of DUNGEONS.observatory.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.observatory.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.observatory.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -408,7 +407,7 @@ test('a group climbs the Candy Volcano: the valley, the mine, the recipe, the fo
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'sugar_trail');
     for (const id of DUNGEONS.volcano.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.volcano.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.volcano.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -454,7 +453,7 @@ test('a group plays the Dream Theatre: the lobby, the ship, the forest, the ball
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'theatre_row');
     for (const id of DUNGEONS.theatre.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.theatre.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.theatre.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }
@@ -506,7 +505,7 @@ test("a group crosses the Sky Whale's Back: the docks, the market, the lungs, th
     assert.ok(done, `finished (got as far as ${[...seen].at(-1)})`);
     assert.equal(world.map.id, 'cloudcatch_pier');
     for (const id of DUNGEONS.skywhale.rooms) assert.ok(seen.has(id), id);
-    assert.ok(world.char.gold >= gold + DUNGEONS.skywhale.reward.gold, 'opened the chest');
+    assert.ok(world.char.gold >= gold + DUNGEONS.skywhale.reward.gold, 'the clear paid out');
   } finally {
     Math.random = random;
   }

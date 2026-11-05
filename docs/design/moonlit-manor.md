@@ -62,7 +62,7 @@ own), and the bosses at the quality of the queens or better (render/mobs/queens.
 
 ## Rewards
 
-The chest: EXP, gold, Cash, your job's Lv 20 gear in a rolled colour, **Moonlit Ribbons** (the
+The rewards for clearing it: EXP, gold, Cash, your job's Lv 20 gear in a rolled colour, **Moonlit Ribbons** (the
 dungeon's tokens), grown by the run's grade and doubled on Hard; the first clear of the day adds
 more. Its own gear set, **Moonlit Masquerade** (a masquerade outfit), like the Hollow's Rootwood set.
 

@@ -71,7 +71,7 @@ export function questKill(bots, world, m) {
     q.done = true;
     b.helped = true;
     remember(world.char, b, 'quest', MOBS[q.mob]?.name ?? null, world.map.id);
-    const gold = 300 + b.level * 40;
+    const gold = 40 + b.level * 6;
     world.char.gold += gold;
     addItem(world.char.inventory, 'elixir', 1);
     sayOneOf(world, b, ['QUEST DONE!! thank u so much', 'finally!! ur a lifesaver', 'done!! here, take this'], bots.rng, { important: true, t: 5 });

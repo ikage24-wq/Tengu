@@ -129,7 +129,7 @@ function grindMap(level) {
   return best;
 }
 
-// Who drops a set: a queen or the Crystal King by name, or Rootwood Hollow's chest.
+// Who drops a set: a queen or the Crystal King by name, or clearing Rootwood Hollow.
 function setSource(key) {
   const dungeon = Object.values(DUNGEONS).find((d) => d.set === key);
   if (dungeon) return dungeon.name;

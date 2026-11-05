@@ -14,6 +14,10 @@ export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves',
 
 export const ITEMS = {};
 
+// Gear costs more the higher its level: close to its base price at level 10, about three times
+// it at level 50 (a level 50 weapon is about 20,000 gold), so the best pieces are worth saving for.
+const gearPrice = (base, level) => Math.round(base * (1 + 2.3 * (level / 50) ** 2));
+
 function add(def) {
   ITEMS[def.id] = def;
   return def;
@@ -99,7 +103,7 @@ for (const [type, line] of Object.entries(WEAPON_LINES)) {
       id: `${type}_${level}`,
       name: t === 0 ? line.names[0] : `${MATERIALS[t - 1]} ${WEAPON_NOUNS[type][Math.floor((t - 1) / 4)]}`,
       type: 'equip', slot: 'weapon', weaponType: type, tier: t, element: null, main: line.main,
-      reqLevel: level, family: null, stats, price: Math.round(100 + 1.6 * level * level + 40 * level), color: WEAPON_COLORS[t],
+      reqLevel: level, family: null, stats, price: gearPrice(100 + 1.6 * level * level + 40 * level, level), color: WEAPON_COLORS[t],
     });
   });
   for (const theme of ENDGAME_THEMES) {
@@ -161,7 +165,7 @@ for (const [slot, kind] of Object.entries(ARMOR_KINDS)) {
       reqLevel: tier.level,
       family: null,
       stats,
-      price: Math.round(60 + 90 * t * t + 250 * t),
+      price: gearPrice(60 + 90 * t * t + 250 * t, tier.level),
       color: tier.color,
       // Only the cotton starter set is still sold and dropped; the rest stay so old saves keep
       // what they wear (the job sets below replaced them).
@@ -272,7 +276,7 @@ for (const family of GEAR_FAMILIES) {
         // The first sets let a Novice dress for the job they're aiming at.
         starter: t === 0,
         stats: jobGearStats(family, slot, level),
-        price: Math.round((60 + 0.9 * level * level + 25 * level) * (slot === 'top' ? 1.3 : 1)),
+        price: gearPrice((60 + 0.9 * level * level + 25 * level) * (slot === 'top' ? 1.3 : 1), level),
         color: set.colors[t],
       });
     }
@@ -290,7 +294,7 @@ for (const [key, set] of Object.entries(SETS)) {
         id: setPieceId(key, family, slot),
         name: `${set.name} ${JOB_SETS[family].nouns[slot](t)}`,
         type: 'equip', slot, design: 'job', family, tier: t, reqLevel: set.level, set: key,
-        stats, price: Math.round((60 + 0.9 * set.level * set.level + 25 * set.level) * 2), color: set.color,
+        stats, price: gearPrice((60 + 0.9 * set.level * set.level + 25 * set.level) * 2, set.level), color: set.color,
       });
     }
   }
@@ -308,7 +312,7 @@ GEAR_LEVELS.forEach((level, t) => {
   for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
   add({
     id: `ear_${level}`, name: EARRING_NAMES[t], type: 'equip', slot: 'earring', design: 'jewel', tier: t, reqLevel: level,
-    family: null, stats, price: Math.round(120 + 1.1 * level * level + 30 * level), color: EARRING_COLORS[t],
+    family: null, stats, price: gearPrice(120 + 1.1 * level * level + 30 * level, level), color: EARRING_COLORS[t],
   });
 });
 
@@ -387,7 +391,7 @@ for (const u of UNIQUE_ARMOR) {
   for (const k of Object.keys(stats)) if (!stats[k]) delete stats[k];
   add({
     id: u.id, name: u.name, type: 'equip', slot: u.slot, design: u.design, unique: true,
-    tier: t, reqLevel: u.level, family: null, stats, price: Math.round(300 + 140 * t * t + 400 * t), color: u.color,
+    tier: t, reqLevel: u.level, family: null, stats, price: gearPrice(300 + 140 * t * t + 400 * t, u.level), color: u.color,
   });
 }
 
@@ -405,10 +409,10 @@ export const RARITIES = [
 
 // ---------- Consumables ----------
 
-add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 50, effect: { hp: 50, hpPct: 0.1 }, color: '#ff6b8a', desc: 'Restores 50 HP and 10% of your max HP.' });
-add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 160, effect: { hp: 150, hpPct: 0.2 }, color: '#ffa94d', desc: 'Restores 150 HP and 20% of your max HP.' });
-add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 320, effect: { hp: 300, hpPct: 0.3 }, color: '#fff7ea', desc: 'Restores 300 HP and 30% of your max HP.' });
-add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 200, effect: { mp: 100, mpPct: 0.15 }, color: '#6fb8ff', desc: 'Restores 100 MP and 15% of your max MP.' });
+add({ id: 'red_potion', name: 'Strawberry Tonic', type: 'use', price: 5, effect: { hp: 50, hpPct: 0.1 }, color: '#ff6b8a', desc: 'Restores 50 HP and 10% of your max HP.' });
+add({ id: 'orange_potion', name: 'Peach Tonic', type: 'use', price: 16, effect: { hp: 150, hpPct: 0.2 }, color: '#ffa94d', desc: 'Restores 150 HP and 20% of your max HP.' });
+add({ id: 'white_potion', name: 'Milk Tonic', type: 'use', price: 32, effect: { hp: 300, hpPct: 0.3 }, color: '#fff7ea', desc: 'Restores 300 HP and 30% of your max HP.' });
+add({ id: 'blue_potion', name: 'Blueberry Tonic', type: 'use', price: 20, effect: { mp: 100, mpPct: 0.15 }, color: '#6fb8ff', desc: 'Restores 100 MP and 15% of your max MP.' });
 // Throwing stars: a gauntlet throws its own, better ones the higher its level (no stars to buy,
 // carry or run out of). `watk` adds to your attack; `element` gives the star's hits that
 // element's impact; `color` tints the star in flight.
@@ -426,69 +430,69 @@ export const STARS = [
 // The stars a gauntlet of `level` throws.
 export const gauntletStars = (level) => STARS.reduce((best, s) => (s.level <= (level ?? 0) ? s : best), STARS[0]);
 
-add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 620, effect: { mp: 300, mpPct: 0.3 }, color: '#a58cff', desc: 'Restores 300 MP and 30% of your max MP.' });
-add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 3000, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
-add({ id: 'royal_jelly', name: 'Royal Jelly', type: 'use', price: 800, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#fff2b8', desc: "The Queen Bee's own. Restores half your HP and MP." });
-add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 400, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });
+add({ id: 'mana_elixir', name: 'Moonberry Tonic', type: 'use', price: 62, effect: { mp: 300, mpPct: 0.3 }, color: '#a58cff', desc: 'Restores 300 MP and 30% of your max MP.' });
+add({ id: 'elixir', name: 'Rainbow Elixir', type: 'use', price: 300, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#ffd66b', desc: 'Restores half your HP and MP.' });
+add({ id: 'royal_jelly', name: 'Royal Jelly', type: 'use', price: 80, effect: { hpPct: 0.5, mpPct: 0.5 }, color: '#fff2b8', desc: "The Queen Bee's own. Restores half your HP and MP." });
+add({ id: 'return_scroll', name: 'Homeward Scroll', type: 'use', price: 40, effect: { returnTown: true }, color: '#bff0dc', desc: 'Takes you back to the nearest town.' });
 
 // ---------- Monster drops (etc) ----------
 
 const ETC = [
-  ['fluff', 'Fox Fluff', 4, '#fff0fa'],
-  ['shell', 'Mossy Scute', 6, '#ff9ec0'],
-  ['bee_fuzz', 'Bumble Fuzz', 5, '#ffd65a'],
-  ['sprite_petal', 'Sprite Petal', 7, '#ffb7d3'],
-  ['straw_tuft', 'Straw Tuft', 10, '#f2d27a'],
-  ['brownie_crumb', 'Brownie Crumbs', 14, '#9a6a4a'],
-  ['wind_whisker', 'Wind Whisker', 18, '#bfe6ff'],
-  ['sprout_leaf', 'Mandrake Leaf', 9, '#9be08f'],
-  ['mushcap', 'Toadstool Cap', 12, '#ff7a7a'],
-  ['ribbon', 'Jackalope Antler', 15, '#ff6b9a'],
-  ['pebble', 'Basilisk Scale', 18, '#cfc4b2'],
-  ['stinger', 'Manticore Stinger', 24, '#ff6b9a'],
-  ['leaf_fragment', 'Dryad Leaf', 20, '#7fd17a'],
-  ['tusk', 'Warg Fang', 26, '#fff4dc'],
-  ['moss_stone', 'Heartwood', 34, '#8fbf7a'],
-  ['wisp_flame', 'Wisp Flame', 40, '#ffcf5a'],
-  ['bat_wing', 'Imp Wing', 44, '#9b86d6'],
-  ['bone_shard', 'Bone Shard', 50, '#efe8d8'],
-  ['crystal_gel', 'Mimic Gem', 58, '#9fe8ff'],
-  ['rock_core', 'Geode Core', 70, '#a898c8'],
-  ['shade_cloth', 'Wraith Shroud', 78, '#5d5285'],
-  ['wool', 'Cloud Mane', 86, '#ffffff'],
-  ['feather', 'Harpy Feather', 95, '#9fd8ff'],
-  ['stardust', 'Stardust', 110, '#ffe36b'],
-  ['king_crystal', 'King Crystal', 5000, '#c9a6ff'],
+  ['fluff', 'Fox Fluff', 1, '#fff0fa'],
+  ['shell', 'Mossy Scute', 2, '#ff9ec0'],
+  ['bee_fuzz', 'Bumble Fuzz', 1, '#ffd65a'],
+  ['sprite_petal', 'Sprite Petal', 2, '#ffb7d3'],
+  ['straw_tuft', 'Straw Tuft', 3, '#f2d27a'],
+  ['brownie_crumb', 'Brownie Crumbs', 4, '#9a6a4a'],
+  ['wind_whisker', 'Wind Whisker', 5, '#bfe6ff'],
+  ['sprout_leaf', 'Mandrake Leaf', 2, '#9be08f'],
+  ['mushcap', 'Toadstool Cap', 3, '#ff7a7a'],
+  ['ribbon', 'Jackalope Antler', 4, '#ff6b9a'],
+  ['pebble', 'Basilisk Scale', 5, '#cfc4b2'],
+  ['stinger', 'Manticore Stinger', 6, '#ff6b9a'],
+  ['leaf_fragment', 'Dryad Leaf', 5, '#7fd17a'],
+  ['tusk', 'Warg Fang', 7, '#fff4dc'],
+  ['moss_stone', 'Heartwood', 9, '#8fbf7a'],
+  ['wisp_flame', 'Wisp Flame', 10, '#ffcf5a'],
+  ['bat_wing', 'Imp Wing', 11, '#9b86d6'],
+  ['bone_shard', 'Bone Shard', 13, '#efe8d8'],
+  ['crystal_gel', 'Mimic Gem', 15, '#9fe8ff'],
+  ['rock_core', 'Geode Core', 18, '#a898c8'],
+  ['shade_cloth', 'Wraith Shroud', 20, '#5d5285'],
+  ['wool', 'Cloud Mane', 22, '#ffffff'],
+  ['feather', 'Harpy Feather', 24, '#9fd8ff'],
+  ['stardust', 'Stardust', 28, '#ffe36b'],
+  ['king_crystal', 'King Crystal', 1250, '#c9a6ff'],
   // Each monster its own drop, named for what it is.
-  ['sylph_feather', 'Sylph Feather', 92, '#9fe8c8'],
-  ['nekomata_bell', 'Nekomata Bell', 78, '#ffd25a'],
-  ['lamia_scale', 'Lamia Scale', 118, '#ff7f9e'],
-  ['snow_gem', 'Snow Gem', 124, '#bfe8ff'],
-  ['moon_plume', 'Valkyrie Moon Plume', 5000, '#d6cbff'],
-  ['moon_fang', 'Moonhowl Fang', 104, '#eef0ff'],
-  ['bramble_claw', 'Bramble Claw', 120, '#e8c79a'],
-  ['hollow_acorn', 'Hollow Acorn', 300, '#d99a5a'],
-  ['moonlit_ribbon', 'Moonlit Ribbon', 360, '#c9a6ff'],
-  ['porcelain_shard', 'Porcelain Shard', 46, '#ffe6ee'],
-  ['candle_wax', 'Ghost Candle Wax', 48, '#fff4d6'],
-  ['tide_pearl', 'Tide Pearl', 420, '#bfeeff'],
-  ['sea_glass', 'Sea Glass', 58, '#9fe8d8'],
-  ['jelly_ribbon', 'Jelly Ribbon', 54, '#ffb3e0'],
-  ['golden_ticket', 'Golden Ticket', 500, '#ffd36b'],
-  ['astral_shard', 'Astral Shard', 600, '#c9b6ff'],
-  ['sugar_gem', 'Sugar Gem', 720, '#ff9ad8'],
-  ['taffy_twist', 'Taffy Twist', 90, '#ffb3cf'],
-  ['cocoa_bean', 'Cocoa Bean', 96, '#8a5a3a'],
-  ['encore_rose', 'Encore Rose', 860, '#e0405a'],
-  ['sequin', 'Stage Sequin', 104, '#ffd0e4'],
-  ['script_page', 'Torn Script Page', 110, '#f6ecd6'],
-  ['sky_scale', 'Sky Scale', 1000, '#9fd0ff'],
-  ['sky_silk', 'Sky Silk', 120, '#eaf6ff'],
-  ['barnacle_shell', 'Barnacle Shell', 128, '#ece4d4'],
-  ['moth_scale', 'Moth Scale', 74, '#f0e0c8'],
-  ['meteorite', 'Meteorite Chip', 82, '#ff9a5a'],
-  ['tin_spring', 'Tin Spring', 64, '#d8e2f6'],
-  ['music_cylinder', 'Music Cylinder', 70, '#c9a6ff'],
+  ['sylph_feather', 'Sylph Feather', 23, '#9fe8c8'],
+  ['nekomata_bell', 'Nekomata Bell', 20, '#ffd25a'],
+  ['lamia_scale', 'Lamia Scale', 30, '#ff7f9e'],
+  ['snow_gem', 'Snow Gem', 31, '#bfe8ff'],
+  ['moon_plume', 'Valkyrie Moon Plume', 1250, '#d6cbff'],
+  ['moon_fang', 'Moonhowl Fang', 26, '#eef0ff'],
+  ['bramble_claw', 'Bramble Claw', 30, '#e8c79a'],
+  ['hollow_acorn', 'Hollow Acorn', 75, '#d99a5a'],
+  ['moonlit_ribbon', 'Moonlit Ribbon', 90, '#c9a6ff'],
+  ['porcelain_shard', 'Porcelain Shard', 12, '#ffe6ee'],
+  ['candle_wax', 'Ghost Candle Wax', 12, '#fff4d6'],
+  ['tide_pearl', 'Tide Pearl', 105, '#bfeeff'],
+  ['sea_glass', 'Sea Glass', 15, '#9fe8d8'],
+  ['jelly_ribbon', 'Jelly Ribbon', 14, '#ffb3e0'],
+  ['golden_ticket', 'Golden Ticket', 125, '#ffd36b'],
+  ['astral_shard', 'Astral Shard', 150, '#c9b6ff'],
+  ['sugar_gem', 'Sugar Gem', 180, '#ff9ad8'],
+  ['taffy_twist', 'Taffy Twist', 23, '#ffb3cf'],
+  ['cocoa_bean', 'Cocoa Bean', 24, '#8a5a3a'],
+  ['encore_rose', 'Encore Rose', 215, '#e0405a'],
+  ['sequin', 'Stage Sequin', 26, '#ffd0e4'],
+  ['script_page', 'Torn Script Page', 28, '#f6ecd6'],
+  ['sky_scale', 'Sky Scale', 250, '#9fd0ff'],
+  ['sky_silk', 'Sky Silk', 30, '#eaf6ff'],
+  ['barnacle_shell', 'Barnacle Shell', 32, '#ece4d4'],
+  ['moth_scale', 'Moth Scale', 19, '#f0e0c8'],
+  ['meteorite', 'Meteorite Chip', 21, '#ff9a5a'],
+  ['tin_spring', 'Tin Spring', 16, '#d8e2f6'],
+  ['music_cylinder', 'Music Cylinder', 18, '#c9a6ff'],
 ];
 
 for (const [id, name, price, color] of ETC) {
@@ -496,7 +500,7 @@ for (const [id, name, price, color] of ETC) {
 }
 
 // Fishing and cooking (data/fishing.js, data/cooking.js): the rod, every fish, and the dishes.
-add({ id: 'fishing_rod', name: 'Fishing Rod', type: 'etc', price: 300, stack: 1, color: '#c99a6b', desc: 'Stand at a fishing spot by the water and press Up to cast. Tap Attack when the bobber dips!' });
+add({ id: 'fishing_rod', name: 'Fishing Rod', type: 'etc', price: 100, stack: 1, color: '#c99a6b', desc: 'Stand at a fishing spot by the water and press Up to cast. Tap Attack when the bobber dips!' });
 for (const f of FISH) add({ id: f.id, name: f.name, type: 'etc', fish: true, price: f.price, color: f.color, desc: `A ${RARITY_NAMES[f.rarity].toLowerCase()} fish. Cook it at a town stove, or sell it.` });
 // The Fishing Derby's winner's medal (world/derby.js): a keepsake.
 add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ffd66b', desc: 'Nori hands these to the biggest catch of a Fishing Derby. She has a whole drawer of them.' });
@@ -510,13 +514,13 @@ add({ id: 'seashell_ring', name: 'Seashell Ring', type: 'etc', price: 0, color: 
 // Mount keys (data/mounts.js): using one gives you the mount for good.
 add({ id: 'mount_kettle', name: 'Kettle Racer Key', type: 'use', price: 0, effect: { mount: 'kettle' }, color: '#f4a98a', desc: 'A little brass key on a ribbon. Use it and the Kettle Racer is yours: a teakettle on wheels with a steam dash.' });
 add({ id: 'mount_nimbus', name: 'Nimbus Whistle', type: 'use', price: 0, effect: { mount: 'nimbus' }, color: '#dfe6fb', desc: 'Blow it and a sleepy little cloud drifts down to you. Use it and Nimbus is yours: it floats over gaps.' });
-add({ id: 'lantern_bait', name: 'Lantern Bait', type: 'use', price: 180, effect: { bait: 10 }, color: '#ffd27a', desc: 'Glowing shrimp the fish cannot resist. Fish bite twice as fast for your next 10 casts.' });
+add({ id: 'lantern_bait', name: 'Lantern Bait', type: 'use', price: 45, effect: { bait: 10 }, color: '#ffd27a', desc: 'Glowing shrimp the fish cannot resist. Fish bite twice as fast for your next 10 casts.' });
 for (const d of DISHES) {
-  add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 120 + d.heal * 0.4), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });
+  add({ id: d.id, name: d.name, type: 'use', price: Math.round(Object.keys(d.needs).length * 30 + d.heal * 0.1), effect: { food: d.id, hp: d.heal }, color: d.colors[0], desc: `Heals ${d.heal} HP. ${d.about} for ${Math.round(d.secs / 60)} minutes.` });
 }
 // Party feasts (world/coop-life.js): eaten by one, shared by the whole party on the map.
 for (const f of FEASTS) {
-  add({ id: f.id, name: f.name, type: 'use', price: Math.round(Object.values(f.needs).reduce((n, q) => n + q, 0) * 90 + f.heal * 0.4), effect: { feast: f.id, hp: f.heal }, color: f.colors[0], desc: `A party feast: everyone in your party on this map heals ${f.heal} HP and gets ${f.about} for ${Math.round(f.secs / 60)} minutes.` });
+  add({ id: f.id, name: f.name, type: 'use', price: Math.round(Object.values(f.needs).reduce((n, q) => n + q, 0) * 22 + f.heal * 0.1), effect: { feast: f.id, hp: f.heal }, color: f.colors[0], desc: `A party feast: everyone in your party on this map heals ${f.heal} HP and gets ${f.about} for ${Math.round(f.secs / 60)} minutes.` });
 }
 
 // Gathered and mined finds (data/gathering.js).
@@ -525,11 +529,11 @@ for (const [id, name, price, color, desc] of GATHERED) add({ id, name, type: 'et
 // everything the craft benches make (data/crafting.js).
 for (const [id, name, price, color, desc] of CRAFT_MATERIALS) if (!ITEMS[id]) add({ id, name, type: 'etc', gathered: true, price, color, desc });
 // Furniture for your island (data/furniture.js): kept in the Etc bag until it's placed.
-for (const f of FURNITURE) add({ id: f.id, name: f.name, type: 'etc', furniture: true, price: 40, color: FURN_SETS[f.set].color, desc: `${f.desc} (${FURN_SETS[f.set].name}; place it in Decorate mode on your island.)` });
+for (const f of FURNITURE) add({ id: f.id, name: f.name, type: 'etc', furniture: true, price: 10, color: FURN_SETS[f.set].color, desc: `${f.desc} (${FURN_SETS[f.set].name}; place it in Decorate mode on your island.)` });
 for (const def of craftedItemDefs(ITEMS, JOB_SETS, GEAR_LEVELS)) if (!ITEMS[def.id]) add(def);
 
 // The capsule machines' tickets (data/outfits-gacha.js): earned by playing, one turn of the crank.
-add({ id: 'gacha_ticket', name: 'Capsule Ticket', type: 'etc', price: 0, color: '#7fd17a', desc: "One turn of a town's capsule machine. Earned from daily quests, bosses, and dungeon treasure." });
+add({ id: 'gacha_ticket', name: 'Capsule Ticket', type: 'etc', price: 0, color: '#7fd17a', desc: "One turn of a town's capsule machine. Earned from daily quests, bosses, and clearing dungeons." });
 
 // Quest items: carried for a quest (a delivery), never sold or dropped.
 add({ id: 'letter', name: 'Sealed Letter', type: 'etc', quest: true, price: 0, color: '#ff9ec0', desc: 'For someone special. Deliver it by talking to them.' });

@@ -1,4 +1,4 @@
-// The hero's level up, however the EXP came (a kill, a dungeon chest, a life action): a word in the
+// The hero's level up, however the EXP came (a kill, a dungeon clear, a life action): a word in the
 // log, the level-up burst at their feet (render/effects.js), the jingle (audio/listen.js hears the
 // level change), and a note when a new job is ready.
 

@@ -208,14 +208,14 @@ export function drawHollowFront(ctx, world, cam, time) {
     ctx.restore();
   }
   // The Sprouts you've freed, cheering along behind you; once the Heart is calm, dancing round
-  // the chest with little hearts.
+  // you with little hearts.
   const n = Math.min(4, run.cheer ?? 0);
   const b = world.body;
-  const chest = room.cleared && room.objects.find((o) => o.kind === 'chest');
+  const party = room.cleared && run.done ? b : null;
   for (let k = 0; k < n; k++) {
-    if (chest) {
+    if (party) {
       const a = time * 1.6 + (k / n) * TAU;
-      const sx = chest.x + Math.cos(a) * 40 - cam.x;
+      const sx = party.x + Math.cos(a) * 40 - cam.x;
       const hop = Math.abs(Math.sin(time * 7 + k)) * 10;
       place(ctx, sproutArt(true, Math.floor(time * 6 + k) % 2), sx, gy - hop);
       const u = (time * 0.8 + k / n) % 1;

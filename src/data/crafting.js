@@ -25,22 +25,22 @@ import { FURNITURE } from './furniture.js';
 export const TIER_LEVEL = [0, 1, 12, 24, 36];
 
 export const CRAFT_MATERIALS = [
-  ['copper_ore', 'Copper Ore', 10, '#e0915a', 'Mined from cliffs and caves on the meadow side of the island. Craft it at a bench, or bring it to Tora\'s forge.'],
-  ['iron_ore', 'Iron Ore', 18, '#a8aab8', 'Grey ore from the woods and ruins. Craft it into gear, tools and polishing stones at a bench.'],
-  ['silver_ore', 'Silver Ore', 22, '#c8d0e0', 'Bright ore from the shrine hills and caves. Craft it at a bench, or bring it to Tora\'s forge.'],
-  ['mithril_ore', 'Mithril Ore', 40, '#9fe6e0', 'Light, cool ore from the peaks and the sky. The finest crafts need it.'],
-  ['rose_quartz', 'Rose Quartz', 80, '#ffb3d1', 'A rare pink crystal found in copper veins. Set into rings and earrings at a bench.'],
-  ['amethyst', 'Amethyst', 120, '#b48cff', 'A rare violet crystal found in iron veins. Set into rings and earrings at a bench.'],
-  ['sapphire', 'Sapphire', 170, '#6f9cff', 'A rare blue gem found in silver veins. Set into rings and earrings at a bench.'],
-  ['starstone', 'Starstone', 260, '#ffe9a6', 'A rare gem with a star caught inside, found in mithril veins. The heart of Starforged crafts.'],
-  ['oak_log', 'Oak Log', 8, '#c99a6b', 'Sturdy oak from the meadows. Handles, rods and bows are made from it at a bench.'],
-  ['maple_log', 'Maple Log', 15, '#d98a5a', 'Red-grained maple from the woods. Craft it into tools and gear at a bench.'],
-  ['cedar_log', 'Cedar Log', 24, '#b0705a', 'Fragrant cedar from the shrine hills. Craft it into tools and gear at a bench.'],
-  ['skywood_log', 'Skywood Log', 38, '#cfe0ff', 'Pale, feather-light wood from the sky isles. The finest handles are made from it.'],
-  ['cotton', 'Cotton', 7, '#fff4f8', 'Soft cotton bolls from the meadows. Spun into cloth for gear and charms at a bench.'],
-  ['silkmoss', 'Silkmoss', 14, '#b8e0a8', 'A fine, silky moss from the woods. Woven into gear and charms at a bench.'],
-  ['lotus_fiber', 'Lotus Fiber', 22, '#ffc6e0', 'Fibre drawn from the lotus by the springs. Woven into gear and charms at a bench.'],
-  ['cloud_cotton', 'Cloud Cotton', 36, '#f4f8ff', 'Cotton as light as a cloud, from the sky isles. Woven into the finest gear.'],
+  ['copper_ore', 'Copper Ore', 3, '#e0915a', 'Mined from cliffs and caves on the meadow side of the island. Craft it at a bench, or bring it to Tora\'s forge.'],
+  ['iron_ore', 'Iron Ore', 5, '#a8aab8', 'Grey ore from the woods and ruins. Craft it into gear, tools and polishing stones at a bench.'],
+  ['silver_ore', 'Silver Ore', 6, '#c8d0e0', 'Bright ore from the shrine hills and caves. Craft it at a bench, or bring it to Tora\'s forge.'],
+  ['mithril_ore', 'Mithril Ore', 10, '#9fe6e0', 'Light, cool ore from the peaks and the sky. The finest crafts need it.'],
+  ['rose_quartz', 'Rose Quartz', 20, '#ffb3d1', 'A rare pink crystal found in copper veins. Set into rings and earrings at a bench.'],
+  ['amethyst', 'Amethyst', 30, '#b48cff', 'A rare violet crystal found in iron veins. Set into rings and earrings at a bench.'],
+  ['sapphire', 'Sapphire', 43, '#6f9cff', 'A rare blue gem found in silver veins. Set into rings and earrings at a bench.'],
+  ['starstone', 'Starstone', 65, '#ffe9a6', 'A rare gem with a star caught inside, found in mithril veins. The heart of Starforged crafts.'],
+  ['oak_log', 'Oak Log', 2, '#c99a6b', 'Sturdy oak from the meadows. Handles, rods and bows are made from it at a bench.'],
+  ['maple_log', 'Maple Log', 4, '#d98a5a', 'Red-grained maple from the woods. Craft it into tools and gear at a bench.'],
+  ['cedar_log', 'Cedar Log', 6, '#b0705a', 'Fragrant cedar from the shrine hills. Craft it into tools and gear at a bench.'],
+  ['skywood_log', 'Skywood Log', 10, '#cfe0ff', 'Pale, feather-light wood from the sky isles. The finest handles are made from it.'],
+  ['cotton', 'Cotton', 2, '#fff4f8', 'Soft cotton bolls from the meadows. Spun into cloth for gear and charms at a bench.'],
+  ['silkmoss', 'Silkmoss', 4, '#b8e0a8', 'A fine, silky moss from the woods. Woven into gear and charms at a bench.'],
+  ['lotus_fiber', 'Lotus Fiber', 6, '#ffc6e0', 'Fibre drawn from the lotus by the springs. Woven into gear and charms at a bench.'],
+  ['cloud_cotton', 'Cloud Cotton', 9, '#f4f8ff', 'Cotton as light as a cloud, from the sky isles. Woven into the finest gear.'],
 ];
 
 // Each region tier's materials, and the monster drops of its maps that go into its crafts.
@@ -119,15 +119,15 @@ export const STONES = [
 // Tonics brewed from herbs. Some make the shops' tonics (cheaper this way, a batch at a time),
 // two are the bench's own.
 export const TONICS = [
-  { id: 'herb_salve', name: 'Clover Salve', effect: { hpPct: 0.25, mpPct: 0.15 }, price: 420, color: '#9fe0a0', desc: 'A cooling green salve. Restores 25% of your max HP and 15% of your max MP.' },
-  { id: 'moon_draught', name: 'Moonpetal Draught', effect: { hpPct: 0.4, mpPct: 0.4 }, price: 1500, color: '#c9c4ff', desc: 'Moonpetal steeped with honey. Restores 40% of your max HP and MP.' },
+  { id: 'herb_salve', name: 'Clover Salve', effect: { hpPct: 0.25, mpPct: 0.15 }, price: 105, color: '#9fe0a0', desc: 'A cooling green salve. Restores 25% of your max HP and 15% of your max MP.' },
+  { id: 'moon_draught', name: 'Moonpetal Draught', effect: { hpPct: 0.4, mpPct: 0.4 }, price: 375, color: '#c9c4ff', desc: 'Moonpetal steeped with honey. Restores 40% of your max HP and MP.' },
   // One of each region's own, from its herbs (the player's pick: every herb has a use at the bench
   // as well as the stove), and a rare one from the night flowers.
-  { id: 'meadow_cordial', name: 'Meadow Cordial', effect: { hpPct: 0.3, mpPct: 0.1 }, price: 260, color: '#ff8fa8', desc: 'Wild strawberries and prickle pear, pressed sweet. Restores 30% of your max HP and 10% of your max MP.' },
-  { id: 'forest_brew', name: 'Forest Mint Brew', effect: { hpPct: 0.3, mpPct: 0.3 }, price: 700, color: '#8fe0b0', desc: 'Temple mint and chanterelle, brewed earthy and bright. Restores 30% of your max HP and MP.' },
-  { id: 'shrine_infusion', name: 'Shrine Thyme Infusion', effect: { hpPct: 0.45, mpPct: 0.35 }, price: 1400, color: '#ffc8a0', desc: 'Moon thyme, steam ginger and a shrine plum, steeped warm. Restores 45% of your max HP and 35% of your max MP.' },
-  { id: 'starlight_nectar', name: 'Starlight Nectar', effect: { hpPct: 0.6, mpPct: 0.5 }, price: 2600, color: '#ffe9a6', desc: 'Cloudberries and snow peach with a star of anise. Restores 60% of your max HP and half your max MP.' },
-  { id: 'nightbloom_elixir', name: 'Nightbloom Elixir', effect: { hpPct: 1, mpPct: 1 }, price: 6000, color: '#c9a6ff', desc: 'Brewed from flowers that only open at night. Restores all your HP and MP.' },
+  { id: 'meadow_cordial', name: 'Meadow Cordial', effect: { hpPct: 0.3, mpPct: 0.1 }, price: 65, color: '#ff8fa8', desc: 'Wild strawberries and prickle pear, pressed sweet. Restores 30% of your max HP and 10% of your max MP.' },
+  { id: 'forest_brew', name: 'Forest Mint Brew', effect: { hpPct: 0.3, mpPct: 0.3 }, price: 175, color: '#8fe0b0', desc: 'Temple mint and chanterelle, brewed earthy and bright. Restores 30% of your max HP and MP.' },
+  { id: 'shrine_infusion', name: 'Shrine Thyme Infusion', effect: { hpPct: 0.45, mpPct: 0.35 }, price: 350, color: '#ffc8a0', desc: 'Moon thyme, steam ginger and a shrine plum, steeped warm. Restores 45% of your max HP and 35% of your max MP.' },
+  { id: 'starlight_nectar', name: 'Starlight Nectar', effect: { hpPct: 0.6, mpPct: 0.5 }, price: 650, color: '#ffe9a6', desc: 'Cloudberries and snow peach with a star of anise. Restores 60% of your max HP and half your max MP.' },
+  { id: 'nightbloom_elixir', name: 'Nightbloom Elixir', effect: { hpPct: 1, mpPct: 1 }, price: 1500, color: '#c9a6ff', desc: 'Brewed from flowers that only open at night. Restores all your HP and MP.' },
 ];
 
 // ---------- Recipes ----------

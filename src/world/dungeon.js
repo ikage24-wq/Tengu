@@ -43,7 +43,7 @@ import { WHALE_MECHS, WHALE_CHANNEL, whaleSetup, tickWhale, whaleBoss, whaleHitM
 import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
-import { HARD_PARTY, CHEST_TOKENS } from '../data/coop.js';
+import { HARD_PARTY, CLEAR_TOKENS } from '../data/coop.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -216,6 +216,7 @@ export function startRun(world, id = 'hollow', { hard = false } = {}) {
 // The run is over: you left (or finished). Finder recruits say goodbye and go.
 function endRun(world) {
   const run = world.dungeon;
+  if (!run.paid && roomCleared(world) && DUNGEONS[run.id].rooms.at(-1) === world.map.id) clearRewards(world);
   world.dungeon = null;
   world.channel = null;
   for (const bot of partyMembers(world.bots)) {
@@ -340,7 +341,7 @@ function checkClear(world) {
   const last = DUNGEONS[run.id].rooms.at(-1) === world.map.id;
   if (last) {
     run.done = true;
-    callout(world, `${DUNGEONS[run.id].name} cleared!`, 'Open the chest for your reward');
+    callout(world, `${DUNGEONS[run.id].name} cleared!`, 'Your rewards are on their way');
   } else {
     callout(world, 'Room cleared!', 'The way ahead is open');
     radio(world, `clear:${world.map.id}`);
@@ -356,7 +357,7 @@ export function portalSealed(world, portal) {
   return Boolean(portal.sealed && world.dungeon && !roomCleared(world));
 }
 
-// ---------- Talking to the room: glowcaps, cages, the chest ----------
+// ---------- Talking to the room: glowcaps, cages ----------
 
 const CHANNEL = { glowcap: 1, cage: 1.5, ...MANOR_CHANNEL, ...AQUA_CHANNEL, ...CARNIVAL_CHANNEL, ...OBS_CHANNEL, ...VOLCANO_CHANNEL, ...THEATRE_CHANNEL, ...WHALE_CHANNEL };
 // What the log says when someone finishes one (the cages and portraits have their own).
@@ -368,19 +369,10 @@ function objectNear(world, body, reach = 26) {
   return room.objects.find((o) => !o.done && Math.abs(o.x - body.x) < reach && Math.abs(body.y - o.y) <= 4) ?? null;
 }
 
-// Up near something usable: start lighting or freeing it, or open the chest.
+// Up near something usable: start lighting or freeing it.
 export function dungeonInteract(world) {
   const o = objectNear(world, world.body);
   if (!o) return false;
-  if (o.kind === 'cache') {
-    openCache(world, o);
-    return true;
-  }
-  if (o.kind === 'chest') {
-    if (!roomCleared(world)) world.log(DUNGEONS[world.dungeon.id].chestLocked ?? 'The chest is sealed. Finish the room first!', '#ffb3c6');
-    else openChest(world, o);
-    return true;
-  }
   if (world.dungeon.room.objects.some((x) => x.engagedBy && x !== o)) return true;
   world.channel = { obj: o, t: o.progress * CHANNEL[o.kind], dur: CHANNEL[o.kind], x: world.body.x };
   return true;
@@ -503,31 +495,15 @@ function setPieceFor(char, set) {
   return setPieceId(set, family, pick(missing.length ? missing : SET_SLOTS));
 }
 
-// A room's hidden cache (its secret): tucked off the main way, never needed to go on, open any
-// time. A handful of gold, a Hollow Acorn and potions, doubled on Hard.
-function openCache(world, o) {
-  const run = world.dungeon;
-  const char = world.char;
-  const k = run.hard ? HARD.reward : 1;
-  o.done = true;
-  o.open = true;
-  const gold = Math.round((150 + Math.random() * 150) * k);
-  char.gold += gold;
-  world.log(`A hidden cache! +${gold} gold`, '#ffe36b');
-  for (const [id, qty] of [[DUNGEONS[run.id].token ?? 'hollow_acorn', k], [Math.random() < 0.5 ? 'orange_potion' : 'white_potion', 3 * k], ['gacha_ticket', 1]]) {
-    if (ITEMS[id] && addItem(char.inventory, id, qty)) world.log(`Received ${ITEMS[id].name} x${qty}.`, ITEMS[id].color);
-  }
-  world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' });
-  world.fx.push({ kind: 'levelup', x: o.x, y: o.y, t: 0, dur: 1.2 });
-}
-
-function openChest(world, o) {
+// The rewards for clearing a dungeon. Nothing to open: they land in your bag a moment after the
+// last room is cleared (tickDungeon), once the boss's own scene has played.
+function clearRewards(world) {
   const run = world.dungeon;
   const def = DUNGEONS[run.id];
   const reward = def.reward;
   const char = world.char;
-  o.done = true;
-  o.open = true;
+  run.paid = true;
+  const o = world.body;
   const secs = world.now - run.start;
   const grade = gradeOf(secs, run.wipes, run.downs);
   // The first clear of the day brings a bonus; Hard doubles everything.
@@ -540,10 +516,10 @@ function openChest(world, o) {
   const levels = gainExp(char, exp);
   char.gold += gold;
   char.cash = (char.cash ?? 0) + cash;
-  world.log(`Treasure! +${exp} EXP, +${gold} gold, +${cash} Cash`, '#ffe36b');
+  world.log(`Dungeon cleared! +${exp} EXP, +${gold} gold, +${cash} Cash`, '#ffe36b');
   const give = (inst) => {
     if (addItem(char.inventory, inst)) world.log(`Received ${itemName(inst)}!`, '#ffd66b');
-    else world.log(`Your bag is full, so the ${itemName(inst)} stays in the chest...`, '#ffb3c6');
+    else world.log(`Your bag is full, so the ${itemName(inst)} is left behind...`, '#ffb3c6');
   };
   const family = JOBS[char.job].family;
   const slot = pick(JOB_SLOTS);
@@ -563,7 +539,7 @@ function openChest(world, o) {
   }
   // Party Tokens (data/coop.js): three times as many on Hard, and Hard's own crown, sure on the
   // first Hard clear and now and then after.
-  const tokens = run.hard ? CHEST_TOKENS.hard : CHEST_TOKENS.normal;
+  const tokens = run.hard ? CLEAR_TOKENS.hard : CLEAR_TOKENS.normal;
   if (addItem(char.inventory, 'party_token', tokens)) world.log(`Received Party Token x${tokens}.`, ITEMS.party_token.color);
   if (run.hard && (!rec.hardClears || Math.random() < 0.15) && addItem(char.inventory, makeCash('cash_rootwood_crown'))) {
     world.log(`Hard clear! Received ${ITEMS.cash_rootwood_crown.name}, only found on Hard.`, '#7fd1a0');
@@ -1268,6 +1244,8 @@ export function jumpNow(world, body) {
 
 export function tickDungeon(world, dt) {
   const run = world.dungeon;
+  // The clear's rewards: a beat after the last room is cleared, and never over a scene.
+  if (!run.paid && roomCleared(world) && DUNGEONS[run.id].rooms.at(-1) === world.map.id && !world.scene && (run.payAt ??= world.now + 1.5) <= world.now) clearRewards(world);
   // Following a friend's run: their game runs the room; yours keeps your own side of it.
   if (following(world)) return followRoom(world, dt);
   const group = groupOf(world);
@@ -1661,7 +1639,7 @@ function thinkRole(bot, world, rng) {
       return;
     }
     const busy = new Set(group.filter((g) => g.bot && g.bot !== bot).map((g) => g.bot.brain?.task));
-    const todo = room.objects.filter((o) => !o.done && o.kind !== 'chest' && o.kind !== 'cache' && !busy.has(o) && safe(o.x) && world.channel?.obj !== o && nextClam(room, o, world.now, world));
+    const todo = room.objects.filter((o) => !o.done && !busy.has(o) && safe(o.x) && world.channel?.obj !== o && nextClam(room, o, world.now, world));
     const o = role === 'dps' ? nearest(todo, body) : null;
     if (o) {
       br.task = o;

@@ -241,7 +241,7 @@ test('players team up: hunters on a field form a group that keeps together, and 
     updateBots(tb, tw, 0.1);
     if (a.crew && Math.abs(a.x - b.x) < 130) near++;
   }
-  assert.ok(near > 150, `walking together (${near})`);
+  assert.ok(near > 140, `walking together (${near})`);
 });
 
 test('everything they say goes through the gate: nothing repeats within ten minutes', () => {

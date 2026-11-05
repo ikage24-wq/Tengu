@@ -15,11 +15,12 @@ const STAT_NAMES = {
   hp: 'Max HP', mp: 'Max MP', acc: 'Accuracy', eva: 'Avoid', speed: 'Speed', jump: 'Jump', critRate: 'Crit rate', critDamage: 'Crit damage',
 };
 
-// Shops pay 40% of the price (the full price for monster drops).
+// Shops pay the full price for monster drops and finds, 40% for potions and food, and a tenth
+// for gear (gear is dear to buy, and it drops often enough that it must not out-earn hunting).
 export function sellPrice(id, inst = null) {
   const def = ITEMS[id];
   const price = def.price || 0;
-  return Math.max(1, Math.floor(price * (def.type === 'etc' ? 1 : 0.4)));
+  return Math.max(1, Math.floor(price * (def.type === 'etc' ? 1 : def.type === 'equip' ? 0.1 : 0.4)));
 }
 
 const SLOT_LOOKS = { hat: 'hat', top: 'top', bottom: 'bottom', shoes: 'shoes', gloves: 'gloves', cape: 'cape', earring: 'earrings', weapon: 'weapon' };

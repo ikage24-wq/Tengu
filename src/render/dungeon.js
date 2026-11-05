@@ -1,10 +1,10 @@
 // Interactive dungeon objects for Rootwood Hollow, in the scenery's outlined chibi style: lamp
-// mushrooms to light, root cages holding sprouts, thorny root seals over doorways, treasure chests,
+// mushrooms to light, root cages holding sprouts, thorny root seals over doorways,
 // root keys, and the floor telegraphs for boss attacks with the bursts they end in. Everything is
 // drawn in screen space with (x, y) the bottom center on the floor; `time` (seconds) animates.
 
 import { R, E, T, F, mix } from './pixel.js';
-import { ramp, bark, stones, planks } from './propkit.js';
+import { ramp, bark, stones } from './propkit.js';
 import { art, place, face } from './scenery.js';
 import { puff, crown, shock, wisp, starFlash, easeOut } from './fxkit.js';
 
@@ -399,88 +399,6 @@ export function drawSeal(ctx, x, y, open, time) {
   glow(ctx, x, y - 37, 7 + pulse * 2, '#d8ffe8', 0.35 + pulse * 0.3);
   ctx.globalAlpha = 0.6 + 0.4 * pulse;
   sparkle(ctx, x + 6, y - 46, 1.6 + pulse, '#e6fff0');
-  ctx.globalAlpha = 1;
-}
-
-// ---------- Chest ----------
-
-const CHEST_WOOD = ramp('#b9805e', 0.8);
-const CHEST_LID = ramp('#c98d68', 0.8);
-const GOLD_R = ramp(GOLD, 0.8);
-// A gold strap or rim with a three-step shine: lit band, base, shade, and a hard glint.
-const strap = (x, y, w, h) => [R(x, y, w, h, GOLD), F(R(x, y, w * 0.36, h, GOLD_R.hi)), F(R(x + w * 0.68, y, w * 0.32, h, GOLD_R.sh)), F(R(x + 0.3, y + 1, 0.8, 0.8, '#ffffff'))];
-const rim = (x, y, w, h) => [R(x, y, w, h, GOLD), F(R(x, y, w, h * 0.34, GOLD_R.hi)), F(R(x, y + h * 0.7, w, h * 0.3, GOLD_R.sh)), F(R(x + 2, y + 0.2, 1, 0.6, '#ffffff'))];
-
-// Hand-shaded: plank grain on the body, the domed lid lit on its upper left and turning into
-// shade on the right, gold straps and iron corner caps that shine in three steps.
-function chestArt(open) {
-  const lift = open ? 9 : 0;
-  return art(`dg-chest|${open}`, 36, 28 + lift, () => {
-    const b = 12 + lift;
-    const out = [];
-    if (open) {
-      // The lid tipped back, seen from inside, and the treasure peeking out.
-      out.push(T([[3.4, b + 1], [0.6, 1.4], [35.4, 1.4], [32.6, b + 1]], '#c98d68'), T([[5.6, b], [3.6, 4], [32.4, 4], [30.4, b]], '#8a5a48'));
-      for (let k = 0; k < 3; k++) out.push(F(R(4.6 + k * 0.4, 6.4 + k * 3.4, 27 - k * 0.8, 0.6, '#6e4636')));
-      out.push(...rim(0.6, 0.4, 34.8, 2.6), E(18, b - 0.6, 13.4, 4.2, GOLD), F(E(19.4, b + 0.4, 12, 3, GOLD_R.sh)), F(E(17, b - 1.4, 11, 2.8, GOLD)),
-        E(10, b - 1.4, 4, 2.4, '#ffe38a'), E(25, b - 2, 4.4, 2.6, '#ffe38a'),
-        F(E(12, b - 2, 1.6, 0.8, '#fff6c9')), F(E(21, b - 3.4, 1.6, 0.8, '#fff6c9')), F(E(26, b - 3, 1.4, 0.7, '#fff6c9')), E(16.6, b - 3.2, 1.6, 1.6, '#ff9ec0'), F(E(16.2, b - 3.6, 0.5, 0.5, '#ffffff')));
-    } else {
-      out.push(T([[2, 13], [3, 6], [8, 2.4], [18, 1.4], [28, 2.4], [33, 6], [34, 13]], '#c98d68'),
-        F(R(4, 6.4, 28, 0.6, CHEST_LID.sh)), F(R(3, 9.6, 30, 0.6, CHEST_LID.sh)),
-        F(T([[4, 7.6], [7.6, 3.4], [16, 2.4], [16, 3.4], [9, 4.6], [5.4, 8]], CHEST_LID.hi)),
-        F(T([[27.4, 2.6], [33, 6], [34, 13], [30.4, 13], [30.6, 7]], CHEST_LID.sh)), F(R(2, 11.6, 32, 1.4, CHEST_LID.sh)));
-    }
-    out.push(...planks(2, b, 32, 15, CHEST_WOOD, 3, 5, true), F(R(31.2, b, 2.8, 15, CHEST_WOOD.sh)), F(R(2, b + 1.6, 32, 1.4, CHEST_WOOD.deep)));
-    out.push(...strap(6, b + (open ? 0 : -10), 2.6, open ? 15 : 25), ...strap(27.4, b + (open ? 0 : -10), 2.6, open ? 15 : 25), ...rim(1.6, b - 0.6, 32.8, 2.4));
-    // Iron corner caps.
-    for (const cx of [1.6, 30.4]) out.push(R(cx, b + 11, 4, 4, IRON.base), F(R(cx, b + 11, 4, 1, IRON.hi)), F(R(cx + 2.8, b + 12, 1.2, 3, IRON.sh)), F(R(cx + 0.6, b + 11.6, 0.8, 0.8, '#ffffff')));
-    // The leaf clasp.
-    out.push(T([[18, b - 3], [21.6, b + 1.6], [18, b + 7], [14.4, b + 1.6]], GOLD), F(T([[18, b - 3], [21.6, b + 1.6], [18, b + 7]], GOLD_R.sh)), F(T([[18, b - 1], [19.8, b + 1.8], [18, b + 4.6], [16.2, b + 1.8]], LEAF)), F(R(17.7, b - 0.4, 0.6, 4.6, '#d8ffe8')), F(R(15.6, b + 0.6, 0.8, 0.8, '#ffffff')));
-    return out;
-  }, false);
-}
-
-// A root-wood treasure chest about 36 wide and 28 tall, trimmed in gold with a leaf clasp.
-// Closed, sparkles twinkle on it; open, the lid tips back and golden light pours out.
-export function drawChest(ctx, x, y, open, time) {
-  shadow(ctx, x, y, 17);
-  if (!open) {
-    place(ctx, chestArt(false), x, y);
-    for (let k = 0; k < 3; k++) {
-      const tw = Math.max(0, Math.sin(time * 2.6 + k * 2.1));
-      ctx.globalAlpha = tw;
-      sparkle(ctx, x + [-11, 9, 15][k], y - [22, 26, 12][k], 1 + tw * 2, k === 1 ? '#ffffff' : '#fff1a6');
-    }
-    ctx.globalAlpha = 1;
-    return;
-  }
-  const oy = y - 17;
-  glow(ctx, x, oy, 28, '#ffe38a', 0.55);
-  place(ctx, chestArt(true), x, y);
-  // Beams fanning up out of the chest.
-  ctx.save();
-  for (let k = 0; k < 5; k++) {
-    const a = -Math.PI / 2 + (k - 2) * 0.3 + Math.sin(time * 0.9 + k) * 0.05;
-    const len = 34 + Math.sin(time * 2 + k * 1.7) * 5 + (k % 2 ? 0 : 8);
-    const g = ctx.createLinearGradient(x, oy, x + Math.cos(a) * len, oy + Math.sin(a) * len);
-    g.addColorStop(0, 'rgba(255,240,170,0.6)');
-    g.addColorStop(1, 'rgba(255,236,150,0)');
-    ctx.fillStyle = g;
-    const half = 0.09;
-    ctx.beginPath();
-    ctx.moveTo(x + Math.cos(a) * 3, oy);
-    ctx.lineTo(x + Math.cos(a - half) * len, oy + Math.sin(a - half) * len);
-    ctx.lineTo(x + Math.cos(a + half) * len, oy + Math.sin(a + half) * len);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-  for (let k = 0; k < 5; k++) {
-    const u = (time * 0.7 + k / 5) % 1;
-    ctx.globalAlpha = Math.sin(u * Math.PI);
-    sparkle(ctx, x + Math.sin(k * 2.3 + u * 3) * 12, oy - 4 - u * 30, 1.4 + (k % 2), k % 2 ? '#ffffff' : '#ffe36b');
-  }
   ctx.globalAlpha = 1;
 }
 

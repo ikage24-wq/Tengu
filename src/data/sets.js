@@ -1,5 +1,5 @@
 // Gear sets: four matching pieces (hat, top, gloves, cape) for every job, dropped by the queens,
-// the Crystal King, and Rootwood Hollow's chest (a piece for your own job each time; certain from a trial, sometimes from a
+// the Crystal King, and clearing Rootwood Hollow (a piece for your own job each time; certain from a trial, sometimes from a
 // rematch). Wearing more of a set adds its bonuses: at 2, 3 and 4 pieces. Each set has its own look
 // (render/jobgear/sets.js: its own hat and back piece, its motif on each job's top and gloves) and,
 // with all four pieces on, an aura of its theme.
@@ -9,12 +9,12 @@ export const SET_SLOTS = ['hat', 'top', 'gloves', 'cape'];
 const all = (n) => ({ str: n, dex: n, int: n, luk: n });
 
 export const SETS = {
-  // Rootwood Hollow's own set, from the chest at its heart (data/dungeons.js).
+  // Rootwood Hollow's own set, from clearing it (data/dungeons.js).
   rootwood: {
     name: 'Rootwood', level: 15, color: '#b98e78', accent: '#a6dca2',
     bonus: { 2: { hp: 80 }, 3: { watk: 4, matk: 4 }, 4: { str: 4, dex: 4, int: 4, luk: 4, hp: 150 } },
   },
-  // Moonlit Manor's own set: a masquerade outfit, from the chest on the rooftop.
+  // Moonlit Manor's own set: a masquerade outfit, from clearing the rooftop.
   moonlit: {
     name: 'Moonlit Masquerade', level: 20, color: '#7a6ad8', accent: '#ffb3cf',
     bonus: { 2: { mp: 120, eva: 10 }, 3: { watk: 5, matk: 5 }, 4: { str: 5, dex: 5, int: 5, luk: 5, hp: 220 } },

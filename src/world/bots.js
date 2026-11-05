@@ -356,7 +356,7 @@ function hooksFor(bots, world) {
     },
     equipFor: (def) => {
       const inst = makeEquip(def.id, { rng: bots.rng, rarity: 1, variant: 'roll' });
-      return { inst, id: def.id, qty: 1, price: Math.max(500, Math.round(def.price * 0.7 / 10) * 10) };
+      return { inst, id: def.id, qty: 1, price: Math.max(100, Math.round(def.price * 0.7 / 10) * 10) };
     },
     say: (b, text) => say(world, b, text),
     shout: (b, text) => shout(b, bots, world, text),

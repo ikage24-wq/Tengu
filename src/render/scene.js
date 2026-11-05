@@ -49,7 +49,7 @@ import { drawVolcanoBack, drawVolcanoFront, drawVolcanoObject, VOLCANO_HINT } fr
 import { drawTheatreBack, drawTheatreFront, drawTheatreObject, THEATRE_HINT } from './theatre.js';
 import { drawWhaleBack, drawWhaleFront, drawWhaleObject, WHALE_HINT } from './skywhale.js';
 import { drawCoopBack, drawCoopFront, tagFade } from './coop.js';
-import { drawGlowcap, drawCage, drawSeal, drawChest, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
+import { drawGlowcap, drawCage, drawSeal, drawRootKey, drawZone, drawZoneHit } from './dungeon.js';
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
 import { drawGlowing, drawLighting, drawNight } from './post.js';
@@ -690,7 +690,7 @@ function drawBubbles(ctx, world, cam) {
 
 // ---------- Dungeons ----------
 
-// The room's things on the floor: glowcaps, cages, keys, the chest, roots sealing the exit, and
+// The room's things on the floor: glowcaps, cages, keys, roots sealing the exit, and
 // the warnings of boss moves about to go off.
 function drawDungeonBack(ctx, world, cam, time) {
   const run = world.dungeon;
@@ -707,13 +707,12 @@ function drawDungeonBack(ctx, world, cam, time) {
     const gy = (o.y ?? world.map.groundY) - cam.y;
     if (o.kind === 'glowcap') drawGlowcap(ctx, x, gy, o.done, time + o.id);
     else if (o.kind === 'cage') drawCage(ctx, x, gy, o.done, o.done ? 1 : o.progress, time + o.id);
-    else if (o.kind === 'chest' || o.kind === 'cache') drawChest(ctx, x, gy, Boolean(o.open), time);
     else if (!drawManorObject(ctx, o, x, gy, time) && !drawAquaObject(ctx, o, x, gy, time, world.now) && !drawCarnivalObject(ctx, o, x, gy, time, world.now) && !drawObsObject(ctx, o, x, gy, time, world.now) && !drawVolcanoObject(ctx, o, x, gy, time, world.now) && !drawTheatreObject(ctx, o, x, gy, time, world.now)) drawWhaleObject(ctx, o, x, gy, time, world.now);
     // A hint over what you can use.
     const near = !o.done && Math.abs(o.x - world.body.x) < 26 && Math.abs((o.y ?? world.map.groundY) - world.body.y) <= 4 && world.body.onGround && !world.channel;
-    if (near && (o.kind !== 'chest' || room.cleared)) {
+    if (near) {
       box(ctx, x - 24, gy - 62, 48, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
-      text(ctx, o.kind === 'chest' ? '▲ Open' : o.kind === 'cage' ? '▲ Free' : MANOR_HINT[o.kind] ?? AQUA_HINT[o.kind] ?? CARNIVAL_HINT[o.kind] ?? OBS_HINT[o.kind] ?? VOLCANO_HINT[o.kind] ?? THEATRE_HINT[o.kind] ?? WHALE_HINT[o.kind] ?? '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });
+      text(ctx, o.kind === 'cage' ? '▲ Free' : MANOR_HINT[o.kind] ?? AQUA_HINT[o.kind] ?? CARNIVAL_HINT[o.kind] ?? OBS_HINT[o.kind] ?? VOLCANO_HINT[o.kind] ?? THEATRE_HINT[o.kind] ?? WHALE_HINT[o.kind] ?? '▲ Light', x, gy - 53, { size: 8, bold: true, align: 'center', color: COLORS.accent });
     }
   }
   for (const k of room.keys) if (!k.got) drawRootKey(ctx, k.x - cam.x, k.y - cam.y, time + k.t);

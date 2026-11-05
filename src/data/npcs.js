@@ -45,8 +45,8 @@ export const NPCS = {
     quests: ['lulu_gossip', 'lulu_runway', 'lulu_winter'],
     building: 'salon', sign: "Lulu's Salon",
     look: { hairStyle: 'odango', hairColor: '#c9a6ff', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#ffc2d6', eyeStyle: 'sparkle', face: 'excited' },
-    greeting: 'New hair? New clothes? A fresh look is 500 gold, and my boutique has the cutest outfits!',
-    styleCost: 500,
+    greeting: 'New hair? New clothes? A fresh look is 200 gold, and my boutique has the cutest outfits!',
+    styleCost: 200,
     shop: ['denim_jacket', 'cozy_sweater', 'overalls', 'sundress', 'school_blazer', 'puffer_jacket', 'maid_dress', 'pleated_skirt', 'blue_jeans', 'cargo_pants', 'long_skirt', 'hoodie', 'sailor_top'],
   },
   brann: {

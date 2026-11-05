@@ -1059,7 +1059,7 @@ function drawDungeonTracker(ui, world) {
   else if (left) rows.push({ label: `Clear the room (${left} left)`, done: false });
   const task = taskProgress(world);
   if (task) rows.push({ label: `${task.label} ${task.have}/${task.need}`, done: task.have >= task.need });
-  if (run.room?.cleared) rows.push({ label: run.done ? 'Open the chest, then exit' : 'Head through the exit', done: false, next: true });
+  if (run.room?.cleared) rows.push({ label: 'Head through the exit', done: false, next: true });
   const h = 30 + rows.length * 10;
   box(ctx, x, y, w, h, { fill: 'rgba(255,250,246,0.85)', edge: th.main, r: 8, width: 1.2 });
   box(ctx, x + 2, y + 2, w - 4, 11, { fill: th.main, edge: null, r: 5.5 });

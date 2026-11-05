@@ -145,12 +145,12 @@ export const HOLLOW_SCENES = {
     { who: 'gnarlroot', text: '...so... quiet now... the little ones... cheering...', mood: 'sad' },
     { who: null, text: 'The great roots sag and settle. Somewhere deep in the Hollow, a lullaby starts up: the Sprouts, humming.' },
     { who: 'gnarlroot', text: '...thank you... sleep... at last...', mood: 'happy' },
-    { who: null, text: 'Gnarlroot snores. The whole Hollow snores with him. The chest by the exit glows warm.' },
+    { who: null, text: 'Gnarlroot snores. The whole Hollow snores with him.' },
   ],
   // The run's result card ({grade}, {time}, {notes}, {bonus} filled in at the chest).
   hollow_results: [
     { card: 'Rootwood Hollow', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
 };
 
@@ -243,7 +243,7 @@ export const HOLLOW_RADIO = {
 export const MANOR_SCENES = {
   manor_results: [
     { card: 'Moonlit Manor', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // The Armours, staged: a music box starts up, the two suits glide together, bow, and waltz
   // past each other and back in three-four time trailing music notes, then turn on you as one;
@@ -307,7 +307,7 @@ export const MANOR_SCENES = {
     { who: 'marigold', text: '...You kept up. All of you. Nobody has danced with me like that in a hundred years.', mood: 'sad' },
     { who: null, text: 'One by one, the guests at the long table stand, stretch, and drift away down the hill toward home.' },
     { who: 'marigold', text: "Go on, then. All of you. Thank you for coming to my party. Truly.", mood: 'happy' },
-    { who: null, text: 'The moon dims to its usual size. Lady Marigold fades with a smile, and the chest by the chimney stops glowing so coldly.' },
+    { who: null, text: 'The moon dims to its usual size. Lady Marigold fades with a smile.' },
   ],
 };
 
@@ -337,7 +337,7 @@ export const MANOR_RADIO = {
 export const AQUA_SCENES = {
   aquarium_results: [
     { card: 'Sunken Aquarium Palace', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // The Twin Morays, staged: the grotto goes still, both eels gone into their holes; Murri slides
   // up out of the floor in a gush of bubbles and peeks about, Ena rises on the far side, they
@@ -427,7 +427,7 @@ export const AQUA_RADIO = {
 export const CARNIVAL_SCENES = {
   carnival_results: [
     { card: 'Clockwork Carnival', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Leonie, staged: the Big Top goes dark, a drumroll, and a spotlight finds the lioness on her
   // star-print ball; she leaps sky-high in a shower of confetti, rolls up to you, bows to the
@@ -519,7 +519,7 @@ export const CARNIVAL_RADIO = {
 export const OBS_SCENES = {
   observatory_results: [
     { card: 'Star Observatory', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Folio, staged: the archivist is curled up reading, eyes shut, rocking gently on her huge
   // book; she turns very slowly, shushes you as pages flutter up, then rears and slams the book
@@ -608,7 +608,7 @@ export const OBS_RADIO = {
 export const VOLCANO_SCENES = {
   volcano_results: [
     { card: 'Candy Volcano', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Toffee, staged: the forge rings to her hammer, three strokes on the anvil in a spray of
   // sparks; she looks up through the steam and grins, then tests her new hammer on the floor in a
@@ -708,7 +708,7 @@ export const VOLCANO_RADIO = {
 export const THEATRE_SCENES = {
   theatre_results: [
     { card: 'Dream Theatre', sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Persona, staged: the two-coated cat muse waltzes alone under the chandeliers; she can't
   // decide, so she flips between Comedy and Tragedy, the light flashing gold and blue faster and
@@ -803,7 +803,7 @@ export const THEATRE_RADIO = {
 export const WHALE_SCENES = {
   skywhale_results: [
     { card: "Sky Whale's Back", sub: 'Rank {grade}  ·  {time}' },
-    { who: null, text: '{notes}. Rank bonus on the treasure: +{bonus}.' },
+    { who: null, text: '{notes}. Rank bonus on your rewards: +{bonus}.' },
   ],
   // Captain Gale, staged: the red panda captain stands with her back to you on the deck of the
   // whale, spyglass to the sky as the wind snaps past; she lowers it, whirls round, swaggers up,

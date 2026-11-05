@@ -11,11 +11,11 @@ import { FISH } from '../data/fishing.js';
 export const DERBY = { mins: 5, warn: 1 };
 // Prizes: gold and lantern bait for the top three, and for everyone who entered.
 export const PRIZES = [
-  { gold: 2500, bait: 5, medal: true },
-  { gold: 1500, bait: 3 },
-  { gold: 800, bait: 2 },
+  { gold: 600, bait: 5, medal: true },
+  { gold: 350, bait: 3 },
+  { gold: 200, bait: 2 },
 ];
-export const ENTRY_PRIZE = { gold: 200, bait: 1 };
+export const ENTRY_PRIZE = { gold: 50, bait: 1 };
 
 const clockOf = (world) => (world.dayClock ?? (() => new Date()))();
 // The derby an hour's top belongs to: its key, and how far into it we are (seconds).

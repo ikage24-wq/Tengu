@@ -87,7 +87,7 @@ const POLISH_CHANCE = [0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5, 0.42, 0.36, 0.3];
 export const polishChance = (inst) => POLISH_CHANCE[inst.polish ?? 0] ?? 0;
 export function polishCost(inst) {
   const L = ITEMS[inst.id].reqLevel ?? 0;
-  return Math.round((150 + L * L * 3 + L * 40) * (1 + (inst.polish ?? 0) * 0.6));
+  return Math.round((75 + L * L * 1.5 + L * 20) * (1 + (inst.polish ?? 0) * 0.6));
 }
 // What one more step adds: attack on a weapon (magic attack on a wand or staff), magic and MP on an
 // earring, defense and HP on everything else.

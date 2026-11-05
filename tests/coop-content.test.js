@@ -13,7 +13,7 @@ import { countItem } from '../src/core/inventory.js';
 import { startRun, hardBlocker, dungeonInteract, groupOf, noteHit } from '../src/world/dungeon.js';
 import { boardOffers, takePartyQuest, pqGather, onPartyQuestMsg, buyWithTokens } from '../src/world/partyquest.js';
 import { armBoss, coopHit, tickCoopBosses, mechOf, mechsFor, inRing, onSeal } from '../src/world/coopboss.js';
-import { CHEST_TOKENS, COOP_MECHS, HARD_MECHS, PQ_KINDS } from '../src/data/coop.js';
+import { CLEAR_TOKENS, COOP_MECHS, HARD_MECHS, PQ_KINDS } from '../src/data/coop.js';
 import { MOBS } from '../src/data/mobs.js';
 import { NPCS } from '../src/data/npcs.js';
 import { MAPS } from '../src/data/maps.js';
@@ -356,15 +356,17 @@ test('Hard mode needs a party of two or more and pays more tokens, with its own 
   joinParty(world.bots, recruitBot(world.bots, world, { level: 12, jobs: ['warrior'] }), world);
   assert.equal(hardBlocker(world), null);
   assert.equal(startRun(world, 'hollow', { hard: true }), null);
-  // The chest at the end.
+  // The clear's rewards land on their own a moment after the last room is cleared.
   loadMap(world, 'hollow6', 'west');
   world.dungeon.room.cleared = true;
-  const chest = world.dungeon.room.objects.find((o) => o.kind === 'chest');
-  Object.assign(world.body, { x: chest.x, y: chest.y, onGround: true });
-  assert.ok(dungeonInteract(world));
-  assert.equal(countItem(world.char.inventory, 'party_token'), CHEST_TOKENS.hard);
+  for (let i = 0; i < 60 * 4 && !world.dungeon.paid; i++) {
+    world.scene = null;
+    updateWorld(world, DT, idle);
+  }
+  assert.ok(world.dungeon.paid, 'the clear paid out');
+  assert.equal(countItem(world.char.inventory, 'party_token'), CLEAR_TOKENS.hard);
   assert.ok(world.char.inventory.cash.some((c) => c.id === 'cash_rootwood_crown'), 'the Hard-only crown');
-  assert.ok(CHEST_TOKENS.hard >= CHEST_TOKENS.normal * 2);
+  assert.ok(CLEAR_TOKENS.hard >= CLEAR_TOKENS.normal * 2);
 });
 
 test('the Party Board quests stay out of the way of a solo player in town', () => {

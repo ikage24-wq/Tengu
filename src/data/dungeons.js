@@ -13,15 +13,14 @@ export const DUNGEONS = {
     rooms: ['hollow1', 'hollow2', 'hollow3', 'hollow4', 'hollow5', 'hollow6'],
     // Group finder levels for the players it brings in, by role.
     recruit: { tank: [11, 13], healer: [11, 13], dps: [10, 13] },
-    // The chest at the end: EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
+    // The clear's rewards: EXP, gold, Cash, a piece of your job's Lv 15 gear in a rolled color,
     // and Hollow Acorns, all grown by the run's grade (S +50%, A +25%, B +10%) and doubled on Hard.
     // The first clear of each day adds Cash and Acorns.
-    reward: { exp: 6000, gold: 2500, cash: 600, gearLevel: 15, items: [{ id: 'hollow_acorn', qty: 5 }, { id: 'elixir', qty: 3 }] },
-    // Its own gear set (data/sets.js), from the chest: a piece for your job on Hard or the day's
+    reward: { exp: 6000, gold: 300, cash: 600, gearLevel: 15, items: [{ id: 'hollow_acorn', qty: 5 }, { id: 'elixir', qty: 3 }] },
+    // Its own gear set (data/sets.js), from clearing it: a piece for your job on Hard or the day's
     // first clear, half the time otherwise.
     set: 'rootwood',
     token: 'hollow_acorn',
-    chestLocked: 'The chest is wrapped in roots. Calm Gnarlroot first!',
   },
   // The second group dungeon (docs/design/moonlit-manor.md): a haunted manor on the hill above
   // Mossy Woods, spooky-cute, six rooms with a puzzle room and a chase.
@@ -31,11 +30,10 @@ export const DUNGEONS = {
     gate: 'manor_gate', warden: 'pumpkins',
     rooms: ['manor1', 'manor2', 'manor3', 'manor4', 'manor5', 'manor6'],
     recruit: { tank: [16, 18], healer: [16, 18], dps: [15, 18] },
-    // The chest on the roof: your job's Lv 20 gear, Moonlit Ribbons and potions, grown by grade.
-    reward: { exp: 14000, gold: 5000, cash: 800, gearLevel: 20, items: [{ id: 'moonlit_ribbon', qty: 5 }, { id: 'elixir', qty: 4 }] },
+    // The rewards for the rooftop: your job's Lv 20 gear, Moonlit Ribbons and potions, grown by grade.
+    reward: { exp: 14000, gold: 400, cash: 800, gearLevel: 20, items: [{ id: 'moonlit_ribbon', qty: 5 }, { id: 'elixir', qty: 4 }] },
     set: 'moonlit',
     token: 'moonlit_ribbon',
-    chestLocked: "The chest's lid is held shut by moonlight. Free Lady Marigold first!",
   },
   // The third (docs/design/aquarium-palace.md): a mermaid queen's sunken palace, a dive from the
   // surface down to her throne.
@@ -45,10 +43,9 @@ export const DUNGEONS = {
     gate: 'tidepool_pier', warden: 'marina',
     rooms: ['aquarium1', 'aquarium2', 'aquarium3', 'aquarium4', 'aquarium5', 'aquarium6'],
     recruit: { tank: [21, 23], healer: [21, 23], dps: [20, 23] },
-    reward: { exp: 26000, gold: 8000, cash: 1000, gearLevel: 25, items: [{ id: 'tide_pearl', qty: 5 }, { id: 'elixir', qty: 5 }] },
+    reward: { exp: 26000, gold: 500, cash: 1000, gearLevel: 25, items: [{ id: 'tide_pearl', qty: 5 }, { id: 'elixir', qty: 5 }] },
     set: 'tidecaller',
     token: 'tide_pearl',
-    chestLocked: 'The chest is held shut by the current. Bring Queen Coralie back to herself first!',
   },
   // The fourth (docs/design/clockwork-carnival.md): a wind-up fairground that never stops, a loop
   // round the rides.
@@ -58,10 +55,9 @@ export const DUNGEONS = {
     gate: 'carnival_gate', warden: 'tock',
     rooms: ['carnival1', 'carnival2', 'carnival3', 'carnival4', 'carnival5', 'carnival6'],
     recruit: { tank: [26, 28], healer: [26, 28], dps: [25, 28] },
-    reward: { exp: 42000, gold: 12000, cash: 1200, gearLevel: 30, items: [{ id: 'golden_ticket', qty: 5 }, { id: 'elixir', qty: 6 }] },
+    reward: { exp: 42000, gold: 600, cash: 1200, gearLevel: 30, items: [{ id: 'golden_ticket', qty: 5 }, { id: 'elixir', qty: 6 }] },
     set: 'harlequin',
     token: 'golden_ticket',
-    chestLocked: 'The chest is ticking. Wind Queen Gearheart down first!',
   },
   // The fifth (docs/design/star-observatory.md): a tower of stars at the top of Moonlit Ridge, a
   // climb floor by floor to the telescope.
@@ -71,10 +67,9 @@ export const DUNGEONS = {
     gate: 'observatory_steps', warden: 'lumen',
     rooms: ['observatory1', 'observatory2', 'observatory3', 'observatory4', 'observatory5', 'observatory6'],
     recruit: { tank: [31, 33], healer: [31, 33], dps: [30, 33] },
-    reward: { exp: 64000, gold: 16000, cash: 1400, gearLevel: 35, items: [{ id: 'astral_shard', qty: 5 }, { id: 'elixir', qty: 6 }] },
+    reward: { exp: 64000, gold: 700, cash: 1400, gearLevel: 35, items: [{ id: 'astral_shard', qty: 5 }, { id: 'elixir', qty: 6 }] },
     set: 'stargazer',
     token: 'astral_shard',
-    chestLocked: 'The chest is frozen in starlight. Let Astraea set the stars turning first!',
   },
   // The sixth (docs/design/candy-volcano.md): a mountain of sugar behind Serpent Springs, down a
   // candy valley and its mines, then up the cone to the crater.
@@ -84,10 +79,9 @@ export const DUNGEONS = {
     gate: 'sugar_trail', warden: 'praline',
     rooms: ['volcano1', 'volcano2', 'volcano3', 'volcano4', 'volcano5', 'volcano6'],
     recruit: { tank: [36, 38], healer: [36, 38], dps: [35, 38] },
-    reward: { exp: 92000, gold: 22000, cash: 1600, gearLevel: 40, items: [{ id: 'sugar_gem', qty: 5 }, { id: 'elixir', qty: 7 }] },
+    reward: { exp: 92000, gold: 800, cash: 1600, gearLevel: 40, items: [{ id: 'sugar_gem', qty: 5 }, { id: 'elixir', qty: 7 }] },
     set: 'confectioner',
     token: 'sugar_gem',
-    chestLocked: 'The chest is sealed in hot caramel. Calm Queen Bonbon first!',
   },
   // The seventh (docs/design/dream-theatre.md): a theatre floating on a cloud off the Sky Garden,
   // played act by act, then backstage, then the final curtain.
@@ -97,10 +91,9 @@ export const DUNGEONS = {
     gate: 'theatre_row', warden: 'encore',
     rooms: ['theatre1', 'theatre2', 'theatre3', 'theatre4', 'theatre5', 'theatre6'],
     recruit: { tank: [41, 43], healer: [41, 43], dps: [40, 43] },
-    reward: { exp: 120000, gold: 28000, cash: 1800, gearLevel: 45, items: [{ id: 'encore_rose', qty: 5 }, { id: 'elixir', qty: 8 }] },
+    reward: { exp: 120000, gold: 900, cash: 1800, gearLevel: 45, items: [{ id: 'encore_rose', qty: 5 }, { id: 'elixir', qty: 8 }] },
     set: 'leading_role',
     token: 'encore_rose',
-    chestLocked: 'The chest is locked behind the curtain. The play has to end first!',
   },
   // The eighth (docs/design/sky-whale.md): a town on a giant whale swimming through the sky over
   // Starfall Heights, crossed from its tail to its brow.
@@ -110,10 +103,9 @@ export const DUNGEONS = {
     gate: 'cloudcatch_pier', warden: 'nimbus',
     rooms: ['skywhale1', 'skywhale2', 'skywhale3', 'skywhale4', 'skywhale5', 'skywhale6'],
     recruit: { tank: [46, 48], healer: [46, 48], dps: [45, 48] },
-    reward: { exp: 150000, gold: 34000, cash: 2000, gearLevel: 50, items: [{ id: 'sky_scale', qty: 5 }, { id: 'elixir', qty: 10 }] },
+    reward: { exp: 150000, gold: 1000, cash: 2000, gearLevel: 50, items: [{ id: 'sky_scale', qty: 5 }, { id: 'elixir', qty: 10 }] },
     set: 'skyfarer',
     token: 'sky_scale',
-    chestLocked: 'The chest is buried in sleepy cloud. Wake the whale first!',
   },
 };
 

@@ -63,7 +63,7 @@ player before it is merged.
   boss), hold the seal, and call it out through the chat gate. Alone they're all still winnable.
 - **Hard mode is party-only** (two or more, after a first clear): each Hollow boss gets one more
   mechanic (tethered Twin Puffballs, an Earthquake Stomp to share, a Bark Ward to break from both
-  sides), and the chest pays three times the tokens and Gnarlroot's Leaf Crown, a Hard-only look.
+  sides), and the clear pays three times the tokens and Gnarlroot's Leaf Crown, a Hard-only look.
 - tools/coop-stage.html stages each of these for pictures and videos.
 
 ## Built: team moves (wave 1, part 1)

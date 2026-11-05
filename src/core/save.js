@@ -5,7 +5,7 @@ import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
-import { settleSkills } from './character.js';
+import { settleSkills, ECON } from './character.js';
 import { MAX_LEVEL } from './exp.js';
 
 // Slot 0 keeps the original key so saves from before character slots still load.
@@ -36,6 +36,12 @@ export function loadGame(slot = 0) {
     char.life ??= {};
     // (A character from before the level cap came down to 50 is at the cap.)
     char.level = Math.min(char.level, MAX_LEVEL);
+    // Saves from before gold was rebalanced (everything now pays and costs about a quarter of
+    // what it did) keep a quarter of their gold, so an old character isn't suddenly rich.
+    if ((char.econ ?? 1) < ECON) {
+      char.gold = Math.round((char.gold ?? 0) * 0.25);
+      char.econ = ECON;
+    }
     dropRetiredItems(char);
     updateRetiredJobs(char);
     // Keep new item ids from colliding with saved ones.

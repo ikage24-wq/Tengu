@@ -249,7 +249,7 @@ there and update the status file as they get done.
   - **Safe arrival:** no monsters at portals or where you appear.
   - **A landmark per zone:** one big piece you recognise from far away (a giant mushroom, a
     shrine bell), so you always know where you are.
-  - **A secret per big map:** one hidden find worth finding (a hidden ledge with a chest, a rare
+  - **A secret per big map:** one hidden find worth finding (a hidden ledge with a view, a rare
     monster, a shortcut), never just flavour.
   - **Bots use the whole map:** bot players spread across every floor and zone like real players,
     not bunched on the ground floor.

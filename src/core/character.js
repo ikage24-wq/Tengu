@@ -14,6 +14,9 @@ import { deathExpLoss } from './formulas.js';
 export const STAT_KEYS = ['str', 'dex', 'int', 'luk'];
 const NOVICE_SP_LEVEL_CAP = 10;
 const START_STAT = 4;
+// Which gold scale a character's purse is in (2: the rebalance where 100 is little, 1,000 is
+// decent and 100,000 is a lot). core/save.js brings older saves up to it.
+export const ECON = 2;
 
 // Each family by its first job, for "for ... only" (the families' ids are older than the jobs' names).
 const FAMILY_PLURAL = { warrior: 'Warriors', mage: 'Star Witches', archer: 'Acrobat Archers', thief: 'Wind Dancers' };
@@ -32,6 +35,7 @@ export function createCharacter(name, appearance) {
     hp: 50,
     mp: 5,
     gold: 0,
+    econ: ECON,
     skills: {},
     // Dressed in the outfit picked in the creator (pieces that come off; see items.js).
     equipment: { weapon: null, hat: null, top: makeEquip('outfit_top'), bottom: makeEquip('outfit_bottom'), shoes: makeEquip('outfit_shoes'), gloves: null, cape: null, earring: null, ring: null, charm: null },

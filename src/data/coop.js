@@ -6,14 +6,14 @@ import { ITEMS } from './items.js';
 import './cash.js';
 
 // ---------- Party Tokens ----------
-// Earned by every member when a party quest is done, and from dungeon chests (more on Hard).
+// Earned by every member when a party quest is done, and for clearing a dungeon (more on Hard).
 // Spent at the Party Board on things worth having.
 ITEMS.party_token = {
   id: 'party_token', name: 'Party Token', type: 'etc', price: 0, color: '#ffb0d8',
-  desc: 'Earned together: party quests and dungeon chests. Trade them at any Party Board.',
+  desc: 'Earned together: party quests and dungeon clears. Trade them at any Party Board.',
 };
 
-// Hard mode's own cosmetic: only from the chest at the end of a Hard run (the first Hard clear
+// Hard mode's own cosmetic: only from clearing a Hard run (the first Hard clear
 // always brings it). A crown of Gnarlroot's own leaves, worn in the hat slot.
 ITEMS.cash_rootwood_crown = {
   id: 'cash_rootwood_crown', type: 'cash', price: 0, name: "Gnarlroot's Leaf Crown", slot: 'hat', style: 'fancy', cash: 0,
@@ -44,7 +44,7 @@ export const WAVE_GAP = 4;
 // The reward for every member, by your level.
 export const pqReward = (kind, level) => ({
   exp: Math.round((50 * level * level + 300) * (kind === 'defend' ? 1.3 : 1)),
-  gold: Math.round((90 * level + 200) * (kind === 'defend' ? 1.3 : 1)),
+  gold: Math.round((12 * level + 40) * (kind === 'defend' ? 1.3 : 1)),
   tokens: PQ_KINDS[kind].tokens,
 });
 
@@ -79,7 +79,7 @@ export const HARD_MECHS = {
   tuskar: { kind: 'split', name: 'Earthquake Stomp', every: 18, first: 12, warn: 3.4, w: 140, hit: 4.4 },
   gnarlroot: { kind: 'sides', name: 'Bark Ward', guard: 0.5, broken: 1.2, window: 1.8, open: 8 },
 };
-// Hard mode: you need a party of two or more (you and at least one member), and the chest pays
+// Hard mode: you need a party of two or more (you and at least one member), and the clear pays
 // more Party Tokens.
 export const HARD_PARTY = 2;
-export const CHEST_TOKENS = { normal: 2, hard: 6 };
+export const CLEAR_TOKENS = { normal: 2, hard: 6 };

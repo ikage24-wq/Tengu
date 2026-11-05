@@ -63,7 +63,7 @@ first look (costumed girls on a tall mermaid rig) read as clunky and was retired
 
 ## Rewards
 
-The chest: EXP, gold, Cash, your job's Lv 25 gear, **Tide Pearls** (the tokens), and the
+The rewards for clearing it: EXP, gold, Cash, your job's Lv 25 gear, **Tide Pearls** (the tokens), and the
 **Tidecaller** set (a shell crown, a pearl collar, a fin cape).
 
 ## Music

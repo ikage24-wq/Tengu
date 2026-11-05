@@ -73,7 +73,7 @@ const SLOTS = {
   job: (c) => c.jobName ?? null,
   mob: (c) => (c.mobsHere?.length ? pick(c.mobsHere) : null),
   map: (c) => c.next ?? null,
-  price: () => price(pick([2, 5, 8, 12, 25, 40]) * 1000),
+  price: () => price(pick([20, 50, 80, 120, 250, 400])),
   set: () => pick(Object.values(SETS)).name,
 };
 
@@ -298,7 +298,7 @@ export function answer(said, ctx) {
   if (has(w, ['mount', 'mounts', 'ride', 'riding', 'bunny', 'bun'])) return level < 15 ? 'mounts! Clover in Sprout gives u a Puff Bun at lvl 15, then press H to ride' : 'Clover in Sprout has the Puff Bun quest, then theres more to find. H to ride, attacking hops u off';
   if (has(w, ['cook', 'stove', 'recipe', 'food'])) return 'every town has a stove, press up at it. a pot makes 2 dishes';
   if (has(w, ['polish', 'enhance', 'upgrade'])) return 'Tora in Ember Crag polishes gear up to +10, gets harder each step tho';
-  if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and the Hollow chest gives Rootwood. full set = aura!';
+  if (has(w, ['set', 'sets'])) return 'queens drop set pieces for ur job, and clearing the Hollow gives Rootwood. full set = aura!';
   if (has(w, ['collection', 'book', 'cards'])) return 'press B for the Collection, a card for every monster you beat';
   if (has(w, ['dungeon', 'dungeons', 'warden'])) {
     const d = dungeonForLevel(level) ?? DUNGEONS.hollow;
