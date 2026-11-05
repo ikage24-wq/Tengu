@@ -88,7 +88,7 @@ export const QUESTS = {
   },
   tusk_trader: {
     id: 'tusk_trader', name: 'Fang Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
-    text: "Warg fangs sell like hotcakes. Bring me 15 and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
+    text: "Warg fangs sell like hotcakes. Hotcakes, meanwhile, sell like Warg fangs. The market is confusing. Bring me 15 and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
     objectives: [{ type: 'collect', item: 'tusk', count: 15 }],
     rewards: { exp: 16000, gold: 480, items: [] },
   },
@@ -166,7 +166,7 @@ export const QUESTS = {
   // carried it to the Whispering Glade, where the Sylphs have kept it as treasure ever since.
   kestrel_targets: {
     id: 'kestrel_targets', name: 'Moving Targets', giver: 'kestrel', minLevel: 7,
-    text: "Standing targets teach you nothing. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
+    text: "Standing targets teach you nothing. They just stand there. Smug. The Jackalopes in Clover Hills never stop hopping: catch 15 of them, whatever you fight with, and you'll have quick eyes for life.",
     objectives: [{ type: 'kill', mob: 'piglet', count: 15 }],
     rewards: { exp: 1700, gold: 120, items: [{ id: 'orange_potion', qty: 15 }] },
   },
@@ -252,7 +252,7 @@ export const QUESTS = {
   // is that bathhouse, open again.
   marlo_scales: {
     id: 'marlo_scales', name: 'Shiny Scales', giver: 'marlo', minLevel: 9,
-    text: "Basilisk scales! Ladies in the capital sew them on their gloves. Bring me 15 and I'll make it worth your while.",
+    text: "Basilisk scales! Ladies in the capital sew them on their gloves. Next month it'll be something else. Fashion! Bring me 15 before the trend dies and I'll make it worth your while.",
     objectives: [{ type: 'collect', item: 'pebble', count: 15 }],
     rewards: { exp: 4300, gold: 270, items: [] },
   },
@@ -285,25 +285,25 @@ export const QUESTS = {
   // take, so they light her for good, and the trail leads on to the cold springs (chapter 5).
   tora_handles: {
     id: 'tora_handles', name: 'Heartwood Handles', giver: 'tora', minLevel: 17,
-    text: "The best hilts are Heartwood, straight from a Treant in Mossy Woods. Bring me 12 and I'll put an edge on your gear. Maybe I'll keep a couple back. Don't ask what for.",
+    text: "The best hilts are Heartwood, straight off a Treant in Mossy Woods. Bring me 12. Why 12? Because 10 felt lazy and 15 felt mean. I'll put an edge on your gear, and maybe keep a couple back. Don't ask what for.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 12 }],
     rewards: { exp: 22000, gold: 570, items: [] },
   },
   tora_bellows: {
     id: 'tora_bellows', name: 'Wings for the Old Girl', giver: 'tora', minLevel: 21, prereq: 'tora_handles',
-    text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots. Bring me 10 and we'll wake the old girl up together.",
+    text: "Bellows need leather that breathes. Imp wings, from the Twilight Ruins: thin as paper, tough as boots, slightly judgy. Bring me 10. Yes, the Imps are using them. They'll walk. Builds character.",
     objectives: [{ type: 'collect', item: 'bat_wing', count: 10 }],
     rewards: { exp: 21000, gold: 550, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
   tora_draught: {
     id: 'tora_draught', name: 'Follow the Lean', giver: 'tora', minLevel: 25, prereq: 'tora_bellows',
-    text: "Every flame on Forge Row leans the same way now: toward the Crystal Cave. Go and see where my heat is going. Climb up to the high crystal ledges where the air moves, and clear 20 Gem Mimics off the shelves on your way. They bite.",
+    text: "Every flame on Forge Row is leaning toward the Crystal Cave like it heard gossip. Go and see where my heat is going. Climb to the high crystal ledges where the air moves, and clear 20 Gem Mimics on the way. They look like treasure. They are not treasure. They bite.",
     objectives: [{ type: 'visit', map: 'cave', above: 450, place: 'the high crystal ledges of the Glowcap Terraces' }, { type: 'kill', mob: 'crystalslime', count: 20 }],
     rewards: { exp: 25000, gold: 660, items: [{ id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   tora_cores: {
     id: 'tora_cores', name: 'Hot Iron', giver: 'tora', minLevel: 30, prereq: 'tora_draught',
-    text: "Geode Cores burn hotter than any coal, and they hold their heat like a grudge: nothing can drink it out of them. 10 from the Crystal Golems and the old girl roars for good. Her first fire makes you a proper pair of gloves, made for your trade.",
+    text: "Geode Cores burn hotter than any coal and hold their heat like a grudge: nothing can slurp it out of them. 10 from the Crystal Golems. They'll say they need them. Everybody says that. Her first fire makes you a proper pair of gloves, made for your trade.",
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
     rewards: { exp: 44000, gold: 990, items: [{ id: 'warrior_gloves_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -336,25 +336,25 @@ export const QUESTS = {
   // held it for (Tora, his blacksmith now), and the night it comes back to him.
   brann_stand: {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
-    text: "A warrior holds the line. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back. Let's see what you're made of.",
+    text: "A warrior holds the line. That's it. That's the whole class. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back. Sideways is fine. I checked the rules.",
     objectives: [{ type: 'kill', mob: 'boarlet', count: 25 }],
     rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_canyon: {
     id: 'kestrel_canyon', name: 'The Arrow That Never Landed', giver: 'kestrel', minLevel: 12, prereq: 'kestrel_targets', family: 'archer',
-    text: "Fine, you heard the story. Everyone has. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
+    text: "Fine, you heard the story. Everyone has. There's a song. It rhymes 'Kestrel' with 'never fell'. I shot it from the very top of Windy Canyon and it never came down. Climb up there and tell me what the wind does. Mind the Manticore Cubs nesting on the ledges: calm 15 of them.",
     objectives: [{ type: 'visit', map: 'canyon', above: 310, place: 'the very top of Windy Canyon' }, { type: 'kill', mob: 'scorpip', count: 15 }],
     rewards: { exp: 5600, gold: 180, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
   },
   kestrel_glade: {
     id: 'kestrel_glade', name: 'Sylph Treasure', giver: 'kestrel', minLevel: 21, prereq: 'kestrel_canyon', family: 'archer',
-    text: "The wind up there blows east, all the way to the Whispering Glade. And Sylphs steal anything shiny or clever. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
+    text: "The wind up there blows east, all the way to the Whispering Glade. And Sylphs steal anything shiny or clever, which explains my arrow AND my lunchbox. Go to the top of the Glade where they keep their hoard, and calm 15 of them so you can look. Please.",
     objectives: [{ type: 'visit', map: 'glade', above: 330, place: 'the Sylphs\' hoard at the top of the Glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
     rewards: { exp: 13500, gold: 360, items: [{ id: 'mana_elixir', qty: 5 }] },
   },
   kestrel_wings: {
     id: 'kestrel_wings', name: 'Wings in the Dark', giver: 'kestrel', minLevel: 22, prereq: 'kestrel_glade', family: 'archer',
-    text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. This time, it lands.",
+    text: "Its fletching's in tatters, but the shaft is straight as the day I made it. Imp Wings make the best feathers there are. Shoot down 15 Imps in the Twilight Ruins and bring me 7 of their wings. Only about half of them drop one. Where do the other wings go? Nobody knows. Science can't explain it. This time, it lands.",
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -363,7 +363,7 @@ export const QUESTS = {
   // about the teapot, and at the end Mira comes to the Grove to put it back together.
   elowen_dance: {
     id: 'elowen_dance', name: 'Dance of the Dryads', giver: 'elowen', minLevel: 15, family: 'mage',
-    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Calm 15 of them, and bring me 7 of their leaves to press into charms. Festival charms. Not that I'm going.",
+    text: "The Dryads of Mossy Woods dance with the wind, but they've forgotten the steps. Now they just sway, like uncles at a wedding. Calm 15 of them, and bring me 7 of their leaves to press into charms. Festival charms. Not that I'm going.",
     objectives: [{ type: 'kill', mob: 'leafling', count: 15 }, { type: 'collect', item: 'leaf_fragment', count: 7 }],
     rewards: { exp: 9700, gold: 320, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -372,10 +372,10 @@ export const QUESTS = {
   // fingers. On opening night it goes home to Tora, who knew all along.
   vex_shadows: {
     id: 'vex_shadows', name: 'Shadow Run', giver: 'vex', minLevel: 15, family: 'thief',
-    text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now.",
+    text: "A dancer's legs carry the whole show. Run to the top of Windy Canyon, cross to Ember Crag and say hi to Tora for me. Quick feet now. Training-montage pace. I'll hum.",
     objectives: [
       { type: 'visit', map: 'canyon', above: 330, place: 'the top of Windy Canyon' },
-      { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back." },
+      { type: 'talk', npc: 'tora', say: "Vex sent you? Ha. Tell that rascal I want my good hammer back. She thinks I didn't notice. I notice EVERYTHING. ...Have you seen my glasses?" },
     ],
     rewards: { exp: 8000, gold: 410, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -389,32 +389,32 @@ export const QUESTS = {
   },
   elowen_wisps: {
     id: 'elowen_wisps', name: 'Kettle Lights', giver: 'elowen', minLevel: 20, prereq: 'elowen_dance', family: 'mage',
-    text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",
+    text: "Our teacher's teapot only sang when the lid and the pot were warmed in wisp-light together. Yes, a magic teapot. Every mage has one, it's in the handbook. If I'm ever to give the lid back, it should be ready. Bring me 8 Wisp Flames from the Will-o'-Wisps in the Twilight Ruins, next door.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 8 }],
     rewards: { exp: 16000, gold: 410, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
   elowen_foxfire: {
     id: 'elowen_foxfire', name: 'A Fox-Fire Offering', giver: 'elowen', minLevel: 24, prereq: 'elowen_wisps', family: 'mage',
-    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there grant courage, they say. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me. I'll need it.",
+    text: "Past the Twilight Ruins, the Fox Shrine Path climbs to a little shrine on the top terrace. The foxes there grant courage, they say. Bring 10 of the little bells the Nekomata wear to hang at the shrine, and leave a prayer there for me. A long one. Use big words. I'll need it.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
     rewards: { exp: 24000, gold: 620, items: [{ id: 'white_potion', qty: 20 }, { id: 'warrior_hat_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   elowen_lid: {
     id: 'elowen_lid', name: 'The Lid, Returned', giver: 'elowen', minLevel: 25, prereq: 'elowen_foxfire', family: 'mage',
-    text: "I can't take it to her myself. My knees won't let me. Will you carry the lid to Mira in Sprout Village? It's wrapped, so she can choose not to open it. Then come back and tell me what her face did.",
+    text: "I can't take it to her myself. My knees won't let me. My pride won't either, but mostly the knees. Will you carry the lid to Mira in Sprout Village? It's wrapped, so she can choose not to open it. Then come back and tell me what her face did. In detail.",
     gives: [{ id: 'parcel' }],
-    objectives: [{ type: 'deliver', npc: 'mira', item: 'parcel', say: "The lid? She kept it, all these years? Oh, that silly, stubborn witch. Go back and tell her to put the kettle on. I'm coming." }],
+    objectives: [{ type: 'deliver', npc: 'mira', item: 'parcel', say: "The lid? She kept it, all these years? Oh, that silly, stubborn, dramatic witch. Go back and tell her to put the kettle on. I'm coming. I'm bringing biscuits, so she can't win." }],
     rewards: { exp: 9000, gold: 300, items: [{ id: 'ear_25', qty: 1, variant: 'roll' }] },
   },
   vex_stage: {
     id: 'vex_stage', name: 'Quick Feet, Quiet Hands', giver: 'vex', minLevel: 18, prereq: 'vex_shadows', family: 'thief',
-    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in Mossy Woods: bring me 8. Don't tell anyone what it's for. You don't know what it's for.",
+    text: "The hammer's for a good cause, and that's all I'm saying. A good cause also needs boards. Heartwood, from the Treants in Mossy Woods: bring me 8. Don't tell anyone what it's for. You don't know what it's for. Nobody knows anything. Act natural.",
     objectives: [{ type: 'collect', item: 'moss_stone', count: 8 }],
     rewards: { exp: 14600, gold: 380, items: [{ id: 'warrior_gloves_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
   vex_miko: {
     id: 'vex_miko', name: 'Miko Mischief', giver: 'vex', minLevel: 26, prereq: 'vex_stage', family: 'thief',
-    text: "Someone stole a hammer I stole. From ME. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers. Teach 25 of them some manners and get it back, before Tora counts her tools.",
+    text: "Someone stole a hammer I stole. From ME. The audacity. Kitsune Miko, on the Fox Shrine Path: little fox ears, sticky fingers, no respect for professionals. Teach 25 of them some manners and get it back, before Tora counts her tools.",
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
     rewards: { exp: 31000, gold: 830, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -427,31 +427,31 @@ export const QUESTS = {
   },
   brann_ruins: {
     id: 'brann_ruins', name: 'Where the Line Broke', giver: 'brann', minLevel: 22, prereq: 'brann_stand', family: 'warrior',
-    text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. By morning my shield was gone and I couldn't tell you where. Climb up there for me. The Dullahans still walk that wall: put 15 of them to rest on the way.",
+    text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. Picture it in black and white, with rain. By morning my shield was gone. Climb up there for me. The Dullahans still patrol that wall because nobody told them the war ended: put 15 of them to rest on the way.",
     objectives: [{ type: 'visit', map: 'ruins', above: 310, place: 'the old gatehouse at the top of the ruins' }, { type: 'kill', mob: 'boneknight', count: 15 }],
     rewards: { exp: 17000, gold: 450, items: [{ id: 'white_potion', qty: 10 }] },
   },
   brann_forge: {
     id: 'brann_forge', name: "The Smith's Secret", giver: 'tora', minLevel: 24, prereq: 'brann_ruins', family: 'warrior',
-    text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
+    text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since, next to my feelings. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
     objectives: [{ type: 'collect', item: 'bone_shard', count: 10 }],
     rewards: { exp: 23000, gold: 600, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   brann_howl: {
     id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28, prereq: 'brann_forge', family: 'warrior',
-    text: "Tora told me. I can't hold it yet. Not after that night. You carry it. Climb the howling rock on Moonlit Ridge with it raised, and calm 25 of Lupina's pack under it. If it still holds, maybe I can too.",
+    text: "Tora told me. I can't hold it yet. Not after that night. I'd need a training montage first, and we don't have the budget. You carry it. Climb the howling rock on Moonlit Ridge with it raised, and calm 25 of Lupina's pack under it. If it still holds, maybe I can too.",
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
     rewards: { exp: 34000, gold: 900, items: [{ id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
   marlo_key: {
     id: 'marlo_key', name: 'The Brass Key', giver: 'marlo', minLevel: 23, prereq: 'tusk_trader',
-    text: "Grandma's bathhouse key went missing on the Fox Shrine Path the night we fled. Nekomata hoard anything that jingles, so it's in one of their bell piles, I'd bet my cart on it. Bring me 8 Nekomata Bells and let's see.",
+    text: "Grandma's bathhouse key went missing on the Fox Shrine Path the night we fled. Nekomata hoard anything that jingles, so it's in one of their bell piles. I'd bet my cart on it. Not the jar. Never the jar. Bring me 8 Nekomata Bells and let's see.",
     objectives: [{ type: 'collect', item: 'nekomata_bell', count: 8 }],
     rewards: { exp: 18000, gold: 480, items: [{ id: 'warrior_bottom_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
   marlo_spa: {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31, prereq: 'marlo_key',
-    text: "Serpent Springs, off the Crystal Cave. Hot pools, steam, Grandma's tiles. The Lamia still lounge in it like they own the place. Clear them out and bring me 9 of their scales for new tiles. Then we open.",
+    text: "Serpent Springs, off the Crystal Cave. Hot pools, steam, Grandma's tiles. The Lamia still lounge in it like they own the place. They don't pay rent. I've asked. Clear them out and bring me 9 of their scales for new tiles. Then we open.",
     objectives: [{ type: 'collect', item: 'lamia_scale', count: 9 }, { type: 'kill', mob: 'lamia', count: 10 }],
     rewards: { exp: 57000, gold: 1200, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
   },

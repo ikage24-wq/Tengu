@@ -208,6 +208,13 @@ there and update the status file as they get done.
   recommendation first, instead of deciding alone. Show samples (pictures or short videos) before
   the full build and between stages, and fold the player's answers back into the work. Small
   polish and fixes that are clearly better don't need asking; the freedom rule covers those.
+- **The game is funny, goofy and satirical (the player's standing rule, 2026-11-05).** All writing
+  (quest text, scenes, NPC lines, story, bot chat, item text) pokes fun at RPG and MMO habits
+  (fetch quests, "kill 20 of X", drop rates, quest givers who never leave their spot, grinding),
+  town life and business, and anime, cartoon, movie and comic clichés (training montages, power-up
+  speeches, rivals, dramatic reveals), plus plain silliness. Parody the clichés, never copy a
+  specific show or game. Every character keeps their own personality and the jokes come from it,
+  and each story still lands one sincere beat under the jokes at its end.
 - Bot and NPC chat must never read generic, spammy or repetitive (the player's standing ask).
   Everything the other players say goes through the chat gate (`src/world/chatlog.js`: no repeats
   for ten minutes, one line of their own per 30 s, a paced chat log), and every line is about
