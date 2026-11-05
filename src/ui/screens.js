@@ -10,6 +10,7 @@ import { expToNext } from '../core/exp.js';
 import { lookRows, randomLook, LOOK_TABS } from './looks.js';
 import { drawPeekers, drawPeekerTalk } from './title-peek.js';
 import { drawShow, drawBlock } from './title-show.js';
+import { dressingRooms } from './dressing.js';
 
 export { randomLook };
 
@@ -99,12 +100,8 @@ export function titleScreen(ui, time) {
   return go;
 }
 
-// --- Character select: a big tree with a ring of four spots, one per hero in this world.
+// --- Character select: the theatre's dressing rooms, one per hero in this world (ui/dressing.js).
 
-const SLOT_X = [88, 172, 288, 372];
-const RING_Y = 236;
-const slotPos = (i) => [SLOT_X[i % 4], RING_Y];
-// Each job family's colour, for the card's accents and the glow under a hero's spot.
 // Each save file's colour (the same as its playbill's band).
 const FILE_COLORS = ['#d83a5a', '#4a8ad8', '#3aa878'];
 const FAMILY_COLOR = { beginner: '#6fb8ff', warrior: '#ff8a5c', archer: '#5fd3a0', thief: '#9b7bd8', mage: '#ff8fc1', gm: '#ffc94f' };
@@ -115,155 +112,6 @@ function leaves(ctx, x, y, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
-}
-
-// A paper lantern hanging from a ring, glowing and swaying.
-function lantern(ctx, x, y, time, i) {
-  const sw = Math.sin(time * 1.6 + i) * 2;
-  ctx.strokeStyle = '#8a5a3a';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + sw, y + 8);
-  ctx.stroke();
-  const lx = x + sw;
-  const g = ctx.createRadialGradient(lx, y + 14, 0, lx, y + 14, 16);
-  g.addColorStop(0, `rgba(255,220,150,${0.45 + 0.1 * Math.sin(time * 3 + i)})`);
-  g.addColorStop(1, 'rgba(255,220,150,0)');
-  ctx.fillStyle = g;
-  ctx.fillRect(lx - 16, y - 2, 32, 32);
-  ctx.fillStyle = i % 2 ? '#ff9ec0' : '#ffb86b';
-  ctx.beginPath();
-  ctx.ellipse(lx, y + 14, 5, 6.5, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.45)';
-  ctx.fillRect(lx - 1.5, y + 9, 1.5, 9);
-  ctx.fillStyle = '#8a5a3a';
-  ctx.fillRect(lx - 3, y + 7, 6, 1.5);
-  ctx.fillRect(lx - 3, y + 20, 6, 1.5);
-}
-
-function ring(ctx, y, time, tier) {
-  // Underside, face, and a mossy top edge with a few flowers.
-  box(ctx, 44, y + 2, 372, 18, { fill: '#b98a5c', edge: null, r: 9 });
-  box(ctx, 44, y - 6, 372, 18, { fill: '#f3d6a6', edge: '#d4a574', r: 9 });
-  ctx.fillStyle = '#8fd18a';
-  for (let x = 54; x < 410; x += 14) ctx.fillRect(x, y - 7, 8, 3);
-  const flowers = ['#ffb8dc', '#ffffff', '#ffe36b'];
-  for (let i = 0; i < 9; i++) leaves(ctx, 64 + i * 41 + (i % 2) * 9, y - 6, 2.5, flowers[i % 3]);
-  ctx.strokeStyle = '#7cc47a';
-  ctx.lineWidth = 2;
-  for (const vx of [70, 150, 330, 398]) {
-    ctx.beginPath();
-    ctx.moveTo(vx, y + 18);
-    ctx.quadraticCurveTo(vx + 6, y + 28, vx - 2, y + 36);
-    ctx.stroke();
-  }
-  // Lanterns between the spots.
-  [130, 230, 330].forEach((lx, i) => lantern(ctx, lx, y + 18, time, i + tier * 3));
-}
-
-// Sky and soft hills, so nothing from a real map pokes through the tree; clouds drifting by.
-function lobbySky(ctx, time) {
-  const g = ctx.createLinearGradient(0, 0, 0, 360);
-  g.addColorStop(0, '#9edcff');
-  g.addColorStop(1, '#e6f6ff');
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 640, 360);
-  ctx.fillStyle = 'rgba(255,255,255,0.85)';
-  for (let i = 0; i < 4; i++) {
-    const x = ((i * 190 + time * (6 + i * 2)) % 760) - 80;
-    const y = 30 + i * 22;
-    for (const [dx, dy, r] of [[0, 0, 12], [14, -5, 15], [30, 0, 11], [14, 4, 12]]) leaves(ctx, x + dx, y + dy, r, 'rgba(255,255,255,0.85)');
-  }
-  [[60, 330, 130], [300, 350, 150], [560, 320, 140]].forEach(([x, y, r]) => leaves(ctx, x, y, r, '#c4ebc0'));
-  [[180, 380, 140], [470, 390, 150]].forEach(([x, y, r]) => leaves(ctx, x, y, r, '#a8e09a'));
-}
-
-function tree(ctx, time) {
-  // Trunk with a flared base and soft grain.
-  ctx.fillStyle = '#c89b6d';
-  ctx.beginPath();
-  ctx.moveTo(186, 20);
-  ctx.lineTo(274, 20);
-  ctx.quadraticCurveTo(270, 260, 300, 340);
-  ctx.lineTo(160, 340);
-  ctx.quadraticCurveTo(190, 260, 186, 20);
-  ctx.fill();
-  ctx.fillStyle = '#ddb487';
-  ctx.fillRect(196, 20, 10, 300);
-  ctx.strokeStyle = '#a87a52';
-  ctx.lineWidth = 2;
-  for (const gx of [222, 242, 258]) {
-    ctx.beginPath();
-    ctx.moveTo(gx, 40);
-    ctx.quadraticCurveTo(gx + 8, 180, gx - 4, 330);
-    ctx.stroke();
-  }
-  // Treehouse windows in the trunk, lit warm, and a little round door at the foot.
-  for (const [wx, wy] of [[228, 132], [218, 290]]) {
-    box(ctx, wx - 9, wy - 11, 18, 22, { fill: '#ffe6a8', edge: '#8a5a3a', r: 9, width: 2 });
-    ctx.fillStyle = '#8a5a3a';
-    ctx.fillRect(wx - 0.75, wy - 10, 1.5, 20);
-    ctx.fillRect(wx - 8, wy, 16, 1.5);
-  }
-  box(ctx, 216, 318, 26, 26, { fill: '#a8714a', edge: '#6e4a30', r: 13, width: 2 });
-  leaves(ctx, 236, 332, 1.6, '#f2c94c');
-  // Canopy.
-  const greens = ['#7cc47a', '#8fd18a', '#a8e09a'];
-  [[90, 30, 50], [170, 10, 60], [260, 0, 66], [350, 22, 56], [420, 50, 40], [40, 60, 34], [220, 60, 40], [310, 70, 34], [130, 72, 36]]
-    .forEach(([x, y, r], i) => leaves(ctx, x + Math.sin(time + i) * 1.5, y, r, greens[i % 3]));
-  for (let i = 0; i < 14; i++) leaves(ctx, 40 + i * 28, 70 + (i % 3) * 10, 12, greens[(i + 1) % 3]);
-  // Bunting strung across under the canopy.
-  const flags = ['#ff9ec0', '#ffe36b', '#9edcff', '#b8f0c8', '#c9a6ff'];
-  ctx.strokeStyle = '#8a5a3a';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(56, 96);
-  ctx.quadraticCurveTo(230, 122, 404, 96);
-  ctx.stroke();
-  for (let i = 0; i < 15; i++) {
-    const u = (i + 0.5) / 15;
-    const fx = 56 + u * 348;
-    const fy = 96 + 2 * u * (1 - u) * 26 * 2 * 0.5 + Math.sin(time * 2 + i) * 0.6;
-    ctx.fillStyle = flags[i % flags.length];
-    ctx.beginPath();
-    ctx.moveTo(fx - 5, fy);
-    ctx.lineTo(fx + 5, fy);
-    ctx.lineTo(fx, fy + 8);
-    ctx.fill();
-  }
-  // Sunbeams through the leaves.
-  ctx.save();
-  ctx.globalAlpha = 0.12 + Math.sin(time * 0.8) * 0.03;
-  ctx.fillStyle = '#ffffff';
-  for (const bx of [250, 330, 400]) {
-    ctx.beginPath();
-    ctx.moveTo(bx, 0);
-    ctx.lineTo(bx + 24, 0);
-    ctx.lineTo(bx - 70, 340);
-    ctx.lineTo(bx - 120, 340);
-    ctx.fill();
-  }
-  ctx.restore();
-  ring(ctx, RING_Y, time, 0);
-}
-
-// Leaves drifting down past the tree.
-function fallingLeaves(ctx, time) {
-  for (let i = 0; i < 10; i++) {
-    const r1 = (i * 0.618) % 1;
-    const x = (r1 * 460 + Math.sin(time * 1.1 + i) * 20 + time * 6) % 460;
-    const y = ((i * 0.37) % 1 * 360 + time * (14 + r1 * 10)) % 380 - 10;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(Math.sin(time * 2 + i) * 0.8);
-    ctx.fillStyle = i % 3 ? '#8fd18a' : '#ffb8dc';
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 3, 1.6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
 }
 
 // An empty spot: a flower bud on a short stem, glowing, with a "+" on it. Hovered it parts a
@@ -308,9 +156,9 @@ function infoCard(ui, c, x, y, w, live, time) {
   const cx = x + w / 2;
   if (!c) {
     bud(ctx, cx, y + 92, time, 0.6 + 0.4 * Math.sin(time * 1.5));
-    text(ctx, 'An empty spot', cx, y + 124, { size: 13, bold: true, align: 'center', color: COLORS.ink });
-    text(ctx, 'Nobody lives here yet.', cx, y + 144, { size: 8, align: 'center', color: COLORS.muted });
-    text(ctx, 'Plant a new hero on the tree.', cx, y + 156, { size: 8, align: 'center', color: COLORS.muted });
+    text(ctx, 'An empty dressing room', cx, y + 124, { size: 12, bold: true, align: 'center', color: COLORS.ink });
+    text(ctx, 'Auditions are open.', cx, y + 144, { size: 8, align: 'center', color: COLORS.muted });
+    text(ctx, 'Cast a new hero in this world.', cx, y + 156, { size: 8, align: 'center', color: COLORS.muted });
     return button(ui, x + 12, y + H - 44, w - 24, 32, 'Create', { primary: true, size: 14, enabled: live }) ? 'create' : null;
   }
   // The portrait.
@@ -377,69 +225,15 @@ export function selectScreen(ui, time, chars, state) {
   const { ctx } = ui;
   const keys = ui.input.pressed;
   const live = !state.confirm;
-  lobbySky(ctx, time);
-  tree(ctx, time);
-
-  // The chosen hero steps forward and waves for a moment.
-  if (state.slot !== state.shown) {
-    state.shown = state.slot;
-    state.pickedAt = time;
-  }
-  const since = time - (state.pickedAt ?? -9);
-
+  // The dressing rooms (ui/dressing.js): click a room to pick its hero, again to start; an empty
+  // room goes straight to casting a new one.
   let pick = null;
-  chars.forEach((c, i) => {
-    const [x, y] = slotPos(i);
-    const on = i === state.slot;
-    const hot = live && hover(ui, x - 18, y - 56, 36, 58);
-    // A soft glow on the branch under a hero, in their job's colour; brighter when chosen.
-    const g = ctx.createRadialGradient(x, y - 1, 0, x, y - 1, 22);
-    const glow = c ? familyColor(c) : '#ffd6ea';
-    g.addColorStop(0, on ? '#fff6c0' : glow);
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.globalAlpha = on ? 0.9 : 0.55;
-    ctx.fillStyle = g;
-    ctx.fillRect(x - 22, y - 10, 44, 16);
-    ctx.globalAlpha = 1;
-    if (on) {
-      const sg = ctx.createLinearGradient(0, y - 80, 0, y);
-      sg.addColorStop(0, 'rgba(255,248,200,0)');
-      sg.addColorStop(1, `rgba(255,248,200,${0.45 + 0.1 * Math.sin(time * 3)})`);
-      ctx.fillStyle = sg;
-      ctx.beginPath();
-      ctx.moveTo(x - 8, y - 80);
-      ctx.lineTo(x + 8, y - 80);
-      ctx.lineTo(x + 20, y);
-      ctx.lineTo(x - 20, y);
-      ctx.fill();
-    }
-    if (c) {
-      // Chosen: a hop and a cheer, then back to their idle bits.
-      const hop = on && since < 0.9 ? Math.max(0, Math.sin((since / 0.45) * Math.PI)) * 6 * (since < 0.45 ? 1 : 0) : 0;
-      const cheer = on && since < 1.1;
-      drawHero(ctx, c.appearance, wornGear(c), x, y - hop, { pose: cheer ? 'cheer' : 'idle', progress: Math.min(1, since / 1.1), dur: 1.1, time: time + i * 3.7, seed: i, facing: 1 });
-      ctx.font = font(8, true);
-      const tw = ctx.measureText(c.name).width + 12;
-      box(ctx, x - tw / 2, y + 3, tw, 12, { fill: on ? familyColor(c) : 'rgba(70,50,95,0.8)', edge: on ? '#ffffff' : null, r: 6, width: 1.2 });
-      text(ctx, c.name, x, y + 12, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: on ? darken(familyColor(c), 0.35) : null });
-    } else {
-      bud(ctx, x, y, time, on ? Math.min(1, since / 0.5) : hot ? 0.3 : 0);
-    }
-    if (on) {
-      const ay = y - 66 + Math.sin(time * 5) * 2;
-      ctx.fillStyle = COLORS.select;
-      ctx.beginPath();
-      ctx.moveTo(x - 6, ay);
-      ctx.lineTo(x + 6, ay);
-      ctx.lineTo(x, ay + 7);
-      ctx.fill();
-    }
-    if (live && clicked(ui, x - 18, y - 56, 36, 58)) {
-      if (on) pick = c ? 'start' : 'create';
-      state.slot = i;
-    }
-  });
-  fallingLeaves(ctx, time);
+  const click = dressingRooms(ui, time, chars, state, live);
+  if (click) {
+    if (!chars[click.slot]) pick = 'create';
+    else if (click.again) pick = 'start';
+    state.slot = click.slot;
+  }
 
   const c = chars[state.slot];
   if (live) {
