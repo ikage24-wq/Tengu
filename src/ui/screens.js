@@ -80,12 +80,13 @@ function panel(ctx, x, y, w, h, title) {
 // ---------- Title screen ----------
 
 // The title is a show that goes wrong (title-show.js), and the island's folk pop in for close-ups
-// once it's over (title-peek.js). Any key skips the show; after it, any key (or a click that isn't
+// once it's over (title-peek.js). Any key, click or tap skips the show; after it, any key (or a click that isn't
 // on a face) goes on to character select.
 export function titleScreen(ui, time) {
   const { ctx } = ui;
   const keyed = ui.input.pressed.size > 0;
-  const show = drawShow(ctx, time, quote, keyed);
+  // Any key, click or tap skips the show.
+  const show = drawShow(ctx, time, quote, keyed || ui.mouse.clicked);
   drawPeekers(ui, time, show.letters, (c, ch, x, y, rot) => drawBlock(c, ch, x, y, rot, 30, 12), show.settled);
   drawPeekerTalk(ctx);
   text(ctx, `v${VERSION}`, 634, 356, { size: 6.5, bold: true, align: 'right', color: 'rgba(255,240,220,0.5)' });
@@ -449,7 +450,7 @@ export function selectScreen(ui, time, chars, state) {
     if (keys.has('Delete') && c) state.confirm = true;
   }
 
-  if (button(ui, 8, 8, 86, 18, '< World Select', { size: 8, enabled: live })) pick = 'back';
+  if (button(ui, 8, 8, 56, 18, '< Title', { size: 8, enabled: live })) pick = 'back';
 
   // World badge: a pill with ribbon tails, the world's gem, the channel and a server light.
   const px = 446, pw = 182;
