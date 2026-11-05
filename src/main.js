@@ -5,10 +5,11 @@ import { beginUi, endUi } from './ui/kit.js';
 import { titleScreen, selectScreen, creatorScreen, randomLook } from './ui/screens.js';
 import { createUiState, routeInput, drawUi } from './ui/manager.js';
 import { createCharacter } from './core/character.js';
-import { addItem } from './core/inventory.js';
+import { addItem, countItem } from './core/inventory.js';
+import { ITEMS } from './data/items.js';
 import { saveGame, loadGame, deleteSave, worldChars, loadWorld, createWorldFile, deleteWorld, copyWorld, addPlayTime, FILES } from './core/save.js';
 import { filesScreen } from './ui/files.js';
-import { createWorld, updateWorld } from './world/world.js';
+import { createWorld, updateWorld, useItem } from './world/world.js';
 import { groundAt } from './world/physics.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
 import { settings, loadSettings } from './core/settings.js';
@@ -19,7 +20,7 @@ import { updateGrouping } from './world/grouping.js';
 import { partyMembers, shareKill } from './world/party.js';
 import { openMenu } from './ui/party.js';
 import { openProfile } from './ui/profile.js';
-import { unlock } from './audio/engine.js';
+import { unlock, setAway } from './audio/engine.js';
 import { hearWorld, hearUi } from './audio/listen.js';
 import { updateMusic } from './audio/music.js';
 import { stopAmbience } from './audio/ambience.js';
@@ -119,7 +120,24 @@ function newCharacter(name, look, slot = 0, tutorial = true, file = 0) {
 
 window.addEventListener('visibilitychange', () => {
   if (document.hidden && world) saveGame(world.char);
+  setAway(document.hidden);
 });
+window.addEventListener('blur', () => setAway(true));
+window.addEventListener('focus', () => setAway(false));
+
+// Auto potion (Options > Gameplay): when HP or MP drops below the line, a tonic from your hotkeys
+// (the first one bound that restores it), as soon as you could drink one by hand.
+function autoPotion(world) {
+  const line = { '30%': 0.3, '50%': 0.5 }[settings.autoPotion];
+  if (!line || world.dead || world.scene) return;
+  const s = world.stats;
+  const char = world.char;
+  for (const [stat, max, keys] of [['hp', s.maxHp, ['hp', 'hpPct']], ['mp', s.maxMp, ['mp', 'mpPct']]]) {
+    if (char[stat] >= max * line) continue;
+    const id = Object.values(char.hotkeys).map((b) => b?.item).find((it) => it && keys.some((k) => ITEMS[it]?.effect?.[k]) && !ITEMS[it].effect.food && countItem(char.inventory, it) > 0);
+    if (id && useItem(world, id)) return;
+  }
+}
 
 let last = performance.now();
 let acc = 0;
@@ -263,6 +281,7 @@ function step(now) {
     // Everything the other players set off this frame is theirs: its sounds play softer, behind
     // yours (listen.js).
     const before = new Set([...world.fx, ...world.juice]);
+    autoPotion(world);
     updateBots(world.bots, world, dt);
     updateGrouping(world, dt);
     for (const f of world.fx) if (!before.has(f)) f.ally = true;
@@ -317,8 +336,12 @@ function step(now) {
 // One bad frame never freezes the game: the next frame is booked first, and an error is logged
 // (once per message) and the frame's input let go, so play carries on.
 const crashes = new Set();
+let drawnAt = 0;
 function frame(now) {
   requestAnimationFrame(frame);
+  // Battery saver (Options > Display > Frame rate): every other refresh at most.
+  if (settings.fps === '30' && now - drawnAt < 1000 / 30 - 4) return;
+  drawnAt = now;
   try {
     step(now);
   } catch (err) {
@@ -342,7 +365,7 @@ function npcPointer(ui) {
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
-    if (settings.npcClick) npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
+    npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
     // Party members and other players hunting, wherever they are on the map.
     if (!npc) bot = bodiedIn(world.bots, world.map.id).find((b) => Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {

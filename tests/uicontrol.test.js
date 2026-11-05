@@ -44,3 +44,24 @@ test('a moved, resized HUD piece takes the mouse with it, and hidden ones see no
     settings.layout = had;
   }
 });
+
+test('keys rebind: the action moves, its old key goes quiet, and a clash swaps', async () => {
+  const { bind, gameCode, physOf, resetKeys } = await import('../src/core/keys.js');
+  const had = settings.keys;
+  try {
+    settings.keys = {};
+    assert.equal(gameCode('KeyI'), 'KeyI');
+    bind('KeyI', 'KeyU');
+    assert.equal(gameCode('KeyU'), 'KeyI', 'U opens the Bag now');
+    assert.equal(gameCode('KeyI'), null, 'and I does nothing');
+    bind('KeyI', 'KeyC');
+    assert.equal(gameCode('KeyC'), 'KeyI', 'C opens the Bag');
+    assert.equal(physOf('KeyC'), 'KeyU', 'and Stats went onto the Bag\'s old key');
+    assert.equal(gameCode('KeyU'), 'KeyC');
+    assert.equal(bind('KeyI', 'Escape'), false, 'Esc is never taken');
+    resetKeys();
+    assert.equal(gameCode('KeyC'), 'KeyC');
+  } finally {
+    settings.keys = had;
+  }
+});

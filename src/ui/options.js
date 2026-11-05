@@ -6,50 +6,69 @@ import { settings, saveSettings, resetSettings } from '../core/settings.js';
 import { applyVolumes } from '../audio/engine.js';
 import { touchLayout } from './touch.js';
 import { toggleLayoutEditor } from './layout.js';
-import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, font } from './kit.js';
+import { ACTIONS, bind, physOf, keyName, resetKeys } from '../core/keys.js';
+import { COLORS, windowFrame, tabs, text, toggle, button, box, hover, clicked, wrap, tooltip } from './kit.js';
 
+// Every option here is one a player would really reach for (the "no useless features" rule).
+// A row: [setting, label, what it does, choices (pills) or a toggle].
 const PAGES = {
   Display: [
+    ['fullscreen', 'Fullscreen', 'Fill the whole screen. Esc or F11 leaves it too.'],
     ['hdGraphics', 'HD graphics', 'Lighting, glow, and a smooth-gliding camera.'],
-    ['particles', 'Particles', 'Dust, sparks, petals, and footsteps.', ['full', 'reduced', 'off']],
-    ['jobAuras', 'Job auras', 'The glow around advanced jobs while idle.'],
-    ['weaponEffects', 'Weapon effects', 'Live effects on weapons and elemental footsteps.'],
+    ['effects', 'Effects', 'Particles, job auras and weapon effects. Lower it on slow devices.', ['full', 'reduced', 'off']],
+    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
+    ['fps', 'Frame rate', '30 saves battery on laptops and phones.', ['max', '30']],
+    ['showCrowd', 'Townsfolk and players', 'Villagers and other players wandering the towns.'],
   ],
   Interface: [
     ['minimap', 'Minimap', 'Drag it by its name; fold it or resize it with its stickers.'],
     ['minimapSize', 'Minimap size', 'How big the minimap is.', ['small', 'normal', 'big']],
     ['questTracker', 'Quest tracker', 'Your pinned quests on a card you can drag anywhere.'],
     ['messageLog', 'Message log', 'Loot, quest, and system messages.'],
-    ['mapBanner', 'Map name banner', 'The ribbon that drops in when you enter a map.'],
-    ['monsterHp', 'Monster HP bars', 'Health bars over hurt monsters.'],
-    ['showFps', 'FPS counter', 'Frames per second, for the curious.'],
+    ['chatBubbles', 'Chat bubbles', 'Speech bubbles over people who talk.'],
+    ['showFps', 'Show FPS', 'Frames per second, to check how smoothly it runs.'],
   ],
   Sound: [
     ['masterVolume', 'Volume', 'Everything at once.', ['off', 'low', 'mid', 'high']],
     ['musicVolume', 'Music', 'A tune for every town, field, dungeon, and boss.', ['off', 'low', 'mid', 'high']],
     ['sfxVolume', 'Sound effects', 'Hits, spells, steps, loot, menus, and voices.', ['off', 'low', 'mid', 'high']],
+    ['muteAway', 'Mute when away', "Quiet while you're in another window or tab."],
   ],
   Gameplay: [
-    ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
-    ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
-    ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
-    ['autoStats', 'Auto stats', 'Stat points go where your job needs them as soon as you level up.'],
+    ['autoPotion', 'Auto potion', 'Drinks a tonic from your hotkeys when HP or MP drops below this.', ['off', '30%', '50%']],
     ['autoLoot', 'Auto-loot', 'Pick up items just by walking over them.'],
-    ['npcClick', 'Click NPCs to talk', 'Click any NPC on screen to open their dialog.'],
-    ['showCrowd', 'Townsfolk and players', 'Villagers and other players wandering the towns.'],
-    ['chatBubbles', 'Chat bubbles', 'Speech bubbles over people who talk.'],
+    ['autoStats', 'Auto stats', 'Stat points go where your job needs them as soon as you level up.'],
+    ['damageNumbers', 'Damage numbers', 'Numbers pop up over monsters you hit.'],
+    ['monsterHp', 'Monster HP bars', 'Health bars over hurt monsters.'],
+    ['hitStop', 'Hit-stop', 'Strong hits freeze the action for an instant.'],
   ],
   Phone: [
     ['touchLeft', 'Left-handed', 'The stick on the right, the buttons on the left.'],
   ],
 };
 
-const CONTROLS = [
-  ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
-  ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection (monsters, fish, mounts)'],
-  ['G', 'Life Skills'], ['O', 'Cash Shop'], ['P', 'Mochi pets'], ['Y', 'Decorate your island'], ['T', 'Emote wheel'], ['V', 'Ping for your party'], ['H', 'Ride your mount (on and off)'],
-  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['`', 'Hide the interface'], ['F2', 'Edit layout: move, resize, hide'], ['Double-click a title', 'Fold a window away'], ['Drag', 'Move items, wear gear, set hotkeys'],
-];
+// Settings that aren't a plain field: Fullscreen is the window's own state, and Effects sets the
+// three effect switches together.
+const SPECIAL = {
+  fullscreen: {
+    get: () => Boolean(typeof document !== 'undefined' && document.fullscreenElement),
+    set: (on) => {
+      if (on) document.documentElement.requestFullscreen?.().catch(() => {});
+      else document.exitFullscreen?.().catch(() => {});
+    },
+  },
+  effects: {
+    get: () => settings.effects ?? 'full',
+    set: (v) => Object.assign(settings, { effects: v, particles: v, jobAuras: v === 'full', weaponEffects: v !== 'off' }),
+  },
+};
+const getOpt = (key) => (SPECIAL[key] ? SPECIAL[key].get() : settings[key]);
+function setOpt(key, v) {
+  if (SPECIAL[key]) SPECIAL[key].set(v);
+  else settings[key] = v;
+  saveSettings();
+  applyVolumes();
+}
 
 const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];
 
@@ -81,21 +100,15 @@ export function optionsWindow(ui, state, world) {
       if (choices) {
         choices.forEach((c, i) => {
           const bx = x + W - 22 - choices.length * 38 + i * 38;
-          const on = settings[key] === c;
+          const on = getOpt(key) === c;
           box(ctx, bx, y + 7, 36, 13, { fill: on ? th.main : hover(ui, bx, y + 7, 36, 13) ? '#ffffff' : th.light, edge: on ? th.dark : null, r: 6.5, width: 1 });
           text(ctx, c, bx + 18, y + 16.5, { size: 7, bold: true, align: 'center', color: on ? '#ffffff' : th.ink });
-          if (clicked(ui, bx, y + 7, 36, 13) && !on) {
-            settings[key] = c;
-            saveSettings();
-            applyVolumes();
-          }
+          if (clicked(ui, bx, y + 7, 36, 13) && !on) setOpt(key, c);
         });
       } else {
-        const v = toggle(ui, x + W - 50, y + 7, settings[key]);
-        if (v !== settings[key]) {
-          settings[key] = v;
-          saveSettings();
-        }
+        const was = getOpt(key);
+        const v = toggle(ui, x + W - 50, y + 7, was);
+        if (v !== was) setOpt(key, v);
       }
       y += rowH;
     }
@@ -117,16 +130,30 @@ export function optionsWindow(ui, state, world) {
     // The phone's screen in small, with the controls where they'll be.
     if (page === 'Phone') drawTouchPreview(ctx, x + (W - 16) / 2 - 64, y + 2, 128, 72, th);
   } else if (page === 'Controls') {
-    CONTROLS.forEach(([keys, what], i) => {
+    // Every action and its key; click a key, then press the new one (two actions swap if they
+    // clash). Esc always closes and opens Options, so it isn't on the list.
+    const listening = win.listen;
+    if (listening && ui.input.raw?.length) {
+      const k = ui.input.raw[0];
+      if (k !== 'Escape') bind(listening, k);
+      win.listen = null;
+      ui.input.pressed.clear();
+    }
+    ACTIONS.forEach(([code, what], i) => {
       const cx = x + (i % 2) * 142;
-      // (Rows packed to fit every key above the Resume button.)
-      const cy = y + Math.floor(i / 2) * 16.5;
-      ctx.font = font(7, true);
-      const kw = Math.min(70, ctx.measureText(keys).width + 10);
-      box(ctx, cx, cy, kw, 13, { fill: th.light, edge: th.main, r: 4, width: 1 });
-      text(ctx, keys, cx + kw / 2, cy + 9.5, { size: keys.length > 12 ? 5.5 : 7, bold: true, align: 'center', color: th.ink });
-      wrap(ctx, what, cx + kw + 5, cy + 9.5, 132 - kw, { size: 7, lineHeight: 8, color: COLORS.ink });
+      const cy = y + Math.floor(i / 2) * 11.4;
+      const on = listening === code;
+      const name = on ? '...' : keyName(physOf(code));
+      const moved = physOf(code) !== code;
+      const hot = hover(ui, cx, cy, 34, 10.5);
+      box(ctx, cx, cy, 34, 10.5, { fill: on ? th.main : hot ? '#ffffff' : th.light, edge: moved ? th.dark : th.main, r: 3, width: moved ? 1.4 : 0.8 });
+      text(ctx, name, cx + 17, cy + 8, { size: name.length > 4 ? 5.5 : 6.5, bold: true, align: 'center', color: on ? '#ffffff' : th.ink });
+      text(ctx, what, cx + 38, cy + 8, { size: 6.5, color: COLORS.ink });
+      if (hot && !on) tooltip(ui, [{ text: `Change: ${what}`, bold: true }, { text: 'Click, then press the new key', size: 7, color: COLORS.muted }]);
+      if (clicked(ui, cx, cy, 34, 10.5)) win.listen = on ? null : code;
     });
+    if (listening) text(ctx, 'Press the new key (Esc keeps the old one).', x + 76, win.y + H - 12, { size: 7, bold: true, color: th.dark });
+    if (button(ui, x, win.y + H - 24, 70, 18, 'Reset keys', { size: 7.5 })) resetKeys();
   } else {
     const char = world.char;
     box(ctx, x - 2, y, W - 16, 40, { fill: '#ffffff', edge: th.light, r: 8, width: 1.2 });

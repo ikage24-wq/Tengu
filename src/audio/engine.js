@@ -99,11 +99,18 @@ export function unlock() {
 }
 
 // Picks up the volume settings (call after they change).
+// Quiet while the game's window isn't the one you're using (settings.muteAway), back on return.
+let away = false;
+export function setAway(on) {
+  away = on;
+  applyVolumes();
+}
+
 export function applyVolumes() {
   if (!ac) return;
   const t = ac.currentTime;
   const sfxV = level(settings.sfxVolume);
-  master.gain.setTargetAtTime(level(settings.masterVolume), t, 0.05);
+  master.gain.setTargetAtTime(away && settings.muteAway ? 0 : level(settings.masterVolume), t, 0.05);
   buses.sfx.gain.setTargetAtTime(sfxV, t, 0.05);
   buses.ui.gain.setTargetAtTime(sfxV, t, 0.05);
   buses.voice.gain.setTargetAtTime(sfxV, t, 0.05);

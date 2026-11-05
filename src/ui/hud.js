@@ -23,6 +23,7 @@ import { MATERIALS } from '../render/terrain.js';
 import { questMarker } from './npc.js';
 import { drawQuestTracker, trackerBox } from './quests.js';
 import { beginPiece, endPiece, piece, intoPiece, layoutOf } from './layout.js';
+import { keyName, physOf } from '../core/keys.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
 import { currentLesson, skipLesson } from '../world/tutorial.js';
 import { othersHere } from '../net/online.js';
@@ -32,7 +33,8 @@ import { groupReady, NEAR_BONUS } from '../world/teamwork.js';
 import { VW } from '../input.js';
 import { standings, derbyClock } from '../world/derby.js';
 
-const KEY_LABEL = (code) => code.replace('Key', '').replace('Digit', '');
+// (The key a hotkey is on now, after any rebinding.)
+const KEY_LABEL = (code) => keyName(physOf(code));
 const LAV = THEMES.lavender;
 // The HUD floats over the world as three soft pastel trays instead of one strip across the
 // bottom: you (portrait, bars, EXP, gold) on the left, the menu buttons in the middle, and the
@@ -410,7 +412,7 @@ export function drawHud(ui, state, world) {
   } else if (world.map.id === 'lagoon' && world.derby && !world.derby.done && derbyClock(world).on) drawDerbyBoard(ui, world);
   else if (settings.questTracker) piece(ui, 'tracker', trackerBox ?? { x: 496, y: 6, w: 138, h: 15 }, () => drawQuestTracker(ui, state, world));
   if (settings.messageLog || state.chat?.typing != null) piece(ui, 'log', { x: 4, y: TRAY_Y - 82, w: 262, h: 78 }, () => drawLog(ui, world, state));
-  if (settings.mapBanner) drawBanner(ctx, world, state);
+  drawBanner(ctx, world, state);
   drawTutorial(ui, world);
   if (settings.showFps) drawFps(ctx, state);
   if (ui.input?.touch && state.menuGrid) drawMenuGrid(ui, state, world);

@@ -9,6 +9,8 @@ export const DEFAULT_SETTINGS = {
   screenShake: 'full', // 'full' | 'low' | 'off'
   hitStop: true,
   damageNumbers: true,
+  effects: 'full', // 'full' | 'reduced' | 'off': sets the three below together (Options)
+  fps: 'max', // 'max' | '30' (battery saver)
   particles: 'full', // 'full' | 'reduced' | 'off'
   jobAuras: true,
   weaponEffects: true,
@@ -23,18 +25,19 @@ export const DEFAULT_SETTINGS = {
   minimapSize: 'normal', // 'small' | 'normal' | 'big'
   minimapPos: null, // where the minimap was dragged to ({ x, y }), or null for the top left
   minimapMin: false, // folded down to its name
+  keys: {}, // actions moved onto other keys (core/keys.js): { KeyI: 'KeyU' }
   layout: {}, // each HUD piece moved, resized or hidden (ui/layout.js): { hotkeys: { dx, dy, s, hide } }
-  mapBanner: true,
   showFps: false,
   messageLog: true,
   // Sound ('off' | 'low' | 'mid' | 'high')
   masterVolume: 'mid',
   musicVolume: 'mid',
   sfxVolume: 'high',
+  muteAway: true, // quiet while the game's window isn't the one you're using
   // Gameplay
+  autoPotion: 'off', // 'off' | '30%' | '50%': a tonic from your hotkeys when HP or MP drops below it
   autoStats: true, // stat points placed for your job as soon as you get them
   autoLoot: false,
-  npcClick: true,
   // Phone and tablet controls
   touchLeft: false, // the stick on the right, the buttons on the left
 };

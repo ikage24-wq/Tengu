@@ -152,6 +152,8 @@ export function routeInput(state, world, input, dt) {
     state.windows.npc.open = false;
     return true;
   }
+  // The Controls page waiting for a new key has the keyboard (ui/options.js catches the key).
+  if (state.windows.options.open && state.windows.options.listen) return true;
   // While the chat bar is open it has the keyboard.
   updateChat(state.chat, world, dt);
   if (!state.npc && !state.death && chatInput(state.chat, world, input)) return true;
