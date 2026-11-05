@@ -25,7 +25,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   assert.ok(ids.length >= 15);
   for (const id of ids) {
     const q = QUESTS[id];
-    assert.ok(q.story && q.chapter >= 1 && q.chapter <= 7, id);
+    assert.ok(q.story && q.chapter >= 1 && q.chapter <= 10, id);
     assert.ok(NPCS[q.giver].quests.includes(id), `${q.giver} offers ${id}`);
     for (const k of ['accept', 'done', 'win']) if (q.scenes?.[k]) assert.ok(SCENES[q.scenes[k]], `${id} scene ${q.scenes[k]}`);
     if (q.prereq) assert.ok(STORY_QUESTS[q.prereq], `${id} follows another story step`);

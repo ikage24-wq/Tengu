@@ -222,7 +222,8 @@ How to get there without making it a grind (the game's own rule against chores):
 1. [x] Pacing: monsters sized to the maps, the cave and Starfall rebuilt, real kill rates
    measured, the EXP curve set for about 30 hours to 50 (2026-11-05). The story quests' levels get
    re-placed chapter by chapter as each is built.
-2. [ ] Chapters 1-3: the festival clue, Gnarlroot's memory.
+2. [x] Chapters 1-3: the festival clue, Gnarlroot's memory (2026-11-05; the story now has ten
+   chapter numbers, the later chapters' cards renumbered to match).
 3. [ ] Chapter 4: Moonlit Manor in the story.
 4. [ ] Chapter 5: Sylvana and the Aquarium.
 5. [ ] Chapter 6: Carnival and Tamamo.

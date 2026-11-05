@@ -16,19 +16,22 @@
 import { SIDE_SCENES, JOB_SCENES, HOLLOW_SCENES, HOLLOW_BOSS_SCENES, MANOR_SCENES, AQUA_SCENES, CARNIVAL_SCENES, OBS_SCENES, VOLCANO_SCENES, THEATRE_SCENES, WHALE_SCENES } from './scenes.js';
 
 export const CHAPTERS = [
-  { n: 1, title: 'A New Breeze', levels: '1-10' },
-  { n: 2, title: 'Roots Run Deep', levels: '10-15' },
-  { n: 3, title: 'Whispers in the Glade', levels: '15-22' },
-  { n: 4, title: 'Foxfire at Dusk', levels: '22-30' },
-  { n: 5, title: 'Steam and Roses', levels: '30-40' },
-  { n: 6, title: 'Moon over Starfall', levels: '40-50' },
-  { n: 7, title: 'The Crystal King', levels: '45-50' },
+  { n: 1, title: 'A New Breeze', levels: '1-5' },
+  { n: 2, title: 'Sour Hills', levels: '5-10' },
+  { n: 3, title: 'Roots Run Deep', levels: '10-15' },
+  { n: 4, title: 'The Party That Never Ends', levels: '15-20' },
+  { n: 5, title: 'Whispers in the Glade', levels: '18-23' },
+  { n: 6, title: 'Foxfire at Dusk', levels: '23-30' },
+  { n: 7, title: 'The Night the Sky Stood Still', levels: '30-34' },
+  { n: 8, title: 'Steam and Roses', levels: '33-39' },
+  { n: 9, title: 'Above the Clouds', levels: '40-44' },
+  { n: 10, title: 'The Crystal King', levels: '45-50' },
 ];
 
 const s = (id, chapter, fields) => ({ id, story: true, chapter, ...fields });
 
 export const STORY_QUESTS = {
-  // ---------- Chapter 1: A New Breeze ----------
+  // ---------- Chapter 1: A New Breeze (1-5) and Chapter 2: Sour Hills (5-10) ----------
   story_1_1: s('story_1_1', 1, {
     name: 'Welcome to Sprout', giver: 'mira', minLevel: 1,
     text: "Every new face in Sprout Village gets a proper hello. It's the tutorial! I mean, it's tradition. Go say hi to Pip at the shop and Kestrel at the Archer Lodge, then come back to me!",
@@ -46,46 +49,64 @@ export const STORY_QUESTS = {
     rewards: { exp: 300, gold: 38, items: [{ id: 'orange_potion', qty: 10 }] },
     scenes: { done: 'ch1_wind' },
   }),
-  story_1_3: s('story_1_3', 1, {
+  story_1_3: s('story_1_3', 2, {
     name: 'Grumbling Hills', giver: 'mira', minLevel: 6, prereq: 'story_1_2',
     text: "Clover Hills is worse. The Toadstool Goblins are stealing laundry right off the lines! Only socks. Only LEFT socks. Calm 12 of them and bring me 5 of their caps. I want to see if they're... sour.",
     objectives: [{ type: 'kill', mob: 'mushkin', count: 12 }, { type: 'collect', item: 'mushcap', count: 5 }],
     rewards: { exp: 2200, gold: 190, items: [] },
-    scenes: { done: 'ch1_sour' },
+    scenes: { accept: 'ch2_sour_open', done: 'ch1_sour' },
   }),
-  story_1_4: s('story_1_4', 1, {
-    name: 'A Path of Your Own', giver: 'mira', minLevel: 10, prereq: 'story_1_3',
+  story_festival: s('story_festival', 2, {
+    name: 'The Last Festival', giver: 'mira', minLevel: 8, prereq: 'story_1_3',
+    text: "The Jackalopes in Clover Hills have been wearing the bunting from the Falling Star Festival on their antlers for weeks. Nobody's taken it down. It doesn't feel... finished. Calm 15 of them and bring me back 6 antlers with the bunting still on. Gently. They think they look lovely.",
+    objectives: [{ type: 'kill', mob: 'piglet', count: 15 }, { type: 'collect', item: 'ribbon', count: 6 }],
+    rewards: { exp: 1800, gold: 130, items: [{ id: 'orange_potion', qty: 10 }] },
+    scenes: { done: 'ch2_festival' },
+  }),
+  story_1_4: s('story_1_4', 2, {
+    name: 'A Path of Your Own', giver: 'mira', minLevel: 10, prereq: 'story_festival',
     text: "You're ready for a path of your own! Visit an instructor: Kestrel here, Brann in Ember Crag, Vex in Pastel Harbor, or Elowen in Moonleaf Grove. M opens the world map. You knew that. I know you knew that. Then come home and tell me everything!",
     objectives: [{ type: 'job', tier: 1 }],
     rewards: { exp: 2000, gold: 240, items: [{ id: 'ear_10', qty: 1, variant: 'roll' }] },
     scenes: { done: 'ch1_end' },
   }),
 
-  // ---------- Chapter 2: Roots Run Deep ----------
-  story_2_1: s('story_2_1', 2, {
+  // ---------- Chapter 3: Roots Run Deep (10-15) ----------
+  story_2_1: s('story_2_1', 3, {
     name: 'Rumbles Underfoot', giver: 'rook', minLevel: 10, prereq: 'story_1_4',
     text: "Mira sent you? Good. The whole harbor shakes at night, and it's coming from under Windy Canyon. Go up there and find Bramble at the Hollow Gate. He knows the old roots. He also has a lot of rules. Nod along.",
     objectives: [{ type: 'visit', map: 'canyon' }, { type: 'talk', npc: 'bramble', say: "Rook's right. Gnarlroot, the old heart of the Hollow, is tossing in his sleep. Something's troubling him. And before you ask: no, you can't go in alone. Nobody goes in alone." }],
     rewards: { exp: 2500, gold: 200, items: [{ id: 'orange_potion', qty: 20 }] },
     scenes: { accept: 'ch2_open', done: 'ch2_found' },
   }),
-  story_2_2: s('story_2_2', 2, {
+  story_2_2: s('story_2_2', 3, {
     name: 'Heart of the Hollow', giver: 'bramble', minLevel: 12, prereq: 'story_2_1',
     text: "Gather a group and go down into Rootwood Hollow. One tank, one healer, two fighters. Gnarlroot isn't wicked, he's frightened. Calm him, and the canyon will rest again. And nobody. Charges. In.",
     objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
     rewards: { exp: 12000, gold: 900, items: [{ id: 'warrior_gloves_10', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch2_end' },
   }),
+  story_root: s('story_root', 3, {
+    name: 'What the Root Remembers', giver: 'bramble', minLevel: 13, prereq: 'story_2_2',
+    text: "Gnarlroot talks in his sleep now, and I wrote it all down. Rule 41: listen to roots. Take my scroll to Elowen in Moonleaf Grove, she reads spirits. And clear 15 Manticore Cubs off the canyon road first, they keep waking him. Quietly. Nobody charges.",
+    gives: [{ id: 'parcel' }],
+    objectives: [
+      { type: 'kill', mob: 'scorpip', count: 15 },
+      { type: 'deliver', npc: 'elowen', item: 'parcel', say: "'The night the stars stood still.' Hm. Rule 41, rule 42, rule 43... does he number his sandwiches too? Tell Bramble the stars standing still is not a dream. Something went very wrong in the sky that night. I shall look into it. Dramatically." },
+    ],
+    rewards: { exp: 6000, gold: 200, items: [{ id: 'orange_potion', qty: 15 }] },
+    scenes: { accept: 'ch3_root_open', done: 'ch3_root_done' },
+  }),
 
-  // ---------- Chapter 3: Whispers in the Glade ----------
-  story_3_1: s('story_3_1', 3, {
-    name: 'A Song Out of Tune', giver: 'elowen', minLevel: 16, prereq: 'story_2_2',
+  // ---------- Chapter 5: Whispers in the Glade (18-23) ----------
+  story_3_1: s('story_3_1', 5, {
+    name: 'A Song Out of Tune', giver: 'elowen', minLevel: 16, prereq: 'story_root',
     text: "Listen. Can you hear it? Someone is weeping in the Whispering Glade, past Mossy Woods, very loudly and very dramatically. Trust me, I know dramatic. The Sylphs have gone wild with it. Go gently: calm 15 of them, and find out who.",
     objectives: [{ type: 'visit', map: 'glade' }, { type: 'kill', mob: 'sylph', count: 15 }],
     rewards: { exp: 17000, gold: 450, items: [{ id: 'mana_elixir', qty: 5 }] },
     scenes: { accept: 'ch3_open', done: 'ch3_crying' },
   }),
-  story_3_2: s('story_3_2', 3, {
+  story_3_2: s('story_3_2', 5, {
     name: 'The Dryad Queen', giver: 'elowen', minLevel: 20, prereq: 'story_3_1',
     text: "It's Sylvana, the Dryad Queen. Her bower is at the far end of the glade, past the waterfall. She won't listen to words right now; she's at the throwing-the-whole-forest stage of feelings. Show her your heart, stand your ground, and duck.",
     objectives: [{ type: 'kill', mob: 'sylvana', count: 1 }],
@@ -94,22 +115,22 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch3_trial', win: 'ch3_win', done: 'ch3_end' },
   }),
 
-  // ---------- Chapter 4: Foxfire at Dusk ----------
-  story_4_1: s('story_4_1', 4, {
+  // ---------- Chapter 6: Foxfire at Dusk (23-30) ----------
+  story_4_1: s('story_4_1', 6, {
     name: 'Tricks on the Road', giver: 'vex', minLevel: 22, prereq: 'story_3_2',
     text: "Travellers on the Fox Shrine Path keep coming back with empty pockets and leaves in their purses. Somebody's robbing people on MY island, and it isn't me. Unacceptable. Calm 20 Nekomata and look around.",
     objectives: [{ type: 'visit', map: 'shrine' }, { type: 'kill', mob: 'nekomata', count: 20 }],
     rewards: { exp: 26000, gold: 680, items: [{ id: 'white_potion', qty: 15 }] },
     scenes: { accept: 'ch4_open', done: 'ch4_road' },
   }),
-  story_4_2: s('story_4_2', 4, {
+  story_4_2: s('story_4_2', 6, {
     name: 'A Forgotten Shrine', giver: 'vex', minLevel: 25, prereq: 'story_4_1',
     text: "There's a little shrine on the top terrace up there. Nobody's left an offering in years. Relight its lanterns with 10 Wisp Flames from the Kitsune Miko, and say a prayer while you're there. Make it dramatic. Foxes love a show.",
     objectives: [{ type: 'collect', item: 'wisp_flame', count: 10 }, { type: 'visit', map: 'shrine', above: 530, place: 'the shrine on the top terrace' }],
     rewards: { exp: 25000, gold: 660, items: [] },
     scenes: { done: 'ch4_shrine' },
   }),
-  story_4_3: s('story_4_3', 4, {
+  story_4_3: s('story_4_3', 6, {
     name: 'The Nine-Tailed Empress', giver: 'vex', minLevel: 28, prereq: 'story_4_2',
     text: "The prayer woke her. Tamamo, the Nine-Tailed Empress, waits in her sanctum at the end of the path. Nine tails, nine tricks, no manners. Don't trust what you see. On principle, don't trust me either.",
     objectives: [{ type: 'kill', mob: 'tamamo', count: 1 }],
@@ -118,22 +139,22 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch4_trial', win: 'ch4_win', done: 'ch4_end' },
   }),
 
-  // ---------- Chapter 5: Steam and Roses ----------
-  story_5_1: s('story_5_1', 5, {
+  // ---------- Chapter 8: Steam and Roses (33-39) ----------
+  story_5_1: s('story_5_1', 8, {
     name: 'Cold Springs', giver: 'nim', minLevel: 31, prereq: 'story_4_3',
     text: "T-the hot springs past the Crystal Cave are going cold! Without them my moonberries won't grow. Could you go and see? I'd go, but the Lamia there are in a terrible mood, and also there are... people. Sorry.",
     objectives: [{ type: 'visit', map: 'springs' }, { type: 'kill', mob: 'lamia', count: 20 }],
     rewards: { exp: 50000, gold: 1100, items: [{ id: 'mana_elixir', qty: 10 }] },
     scenes: { accept: 'ch5_open', done: 'ch5_cold' },
   }),
-  story_5_2: s('story_5_2', 5, {
+  story_5_2: s('story_5_2', 8, {
     name: 'Frost on the Mountain', giver: 'nim', minLevel: 34, prereq: 'story_5_1',
     text: "The cold is coming down from Frozen Peak... or going up to it? I made a chart. The arrows go both ways. The Yuki-onna are carrying the warmth away in icy gems. Bring me 12? I want to know where they're taking it.",
     objectives: [{ type: 'visit', map: 'peak' }, { type: 'collect', item: 'snow_gem', count: 12 }],
     rewards: { exp: 79000, gold: 1600, items: [{ id: 'warrior_shoes_35', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch5_gems' },
   }),
-  story_5_3: s('story_5_3', 5, {
+  story_5_3: s('story_5_3', 8, {
     name: 'The Rose Grotto', giver: 'nim', minLevel: 37, prereq: 'story_5_2',
     text: "The gems glow with rose light... it's Lilith! She's taking the springs' warmth down to her grotto behind the waterfall in Serpent Springs. In my books, this is where the hero says something brave. I-I'll just say please. Please bring the warmth home.",
     objectives: [{ type: 'kill', mob: 'lilith', count: 1 }],
@@ -142,22 +163,22 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch5_trial', win: 'ch5_win', done: 'ch5_end' },
   }),
 
-  // ---------- Chapter 6: Moon over Starfall ----------
-  story_6_1: s('story_6_1', 6, {
+  // ---------- Chapter 9: Above the Clouds (40-44) ----------
+  story_6_1: s('story_6_1', 9, {
     name: 'The Sleeping Wind', giver: 'elowen', minLevel: 40, prereq: 'story_5_3',
     text: "Every queen has said the same thing: the wind stopped. Three queens, three tragic speeches, one pattern. The great Tengu, Hayate, sleeps somewhere above the clouds. Climb to the top of the Sky Garden and calm 20 Sky Harpies; they guard the way up, and they're rude about it.",
     objectives: [{ type: 'visit', map: 'sky', above: 570, place: 'the top of the Sky Garden' }, { type: 'kill', mob: 'windbird', count: 20 }],
     rewards: { exp: 91000, gold: 1500, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch6_open', done: 'ch6_sky' },
   }),
-  story_6_2: s('story_6_2', 6, {
+  story_6_2: s('story_6_2', 9, {
     name: 'Where Stars Fall', giver: 'elowen', minLevel: 44, prereq: 'story_6_1',
     text: "Above the garden lies Starfall Heights, where the moon comes close. Gather 10 Stardust there; Selene, the Moon Valkyrie, will only meet someone who carries the stars. She's very formal. Don't call her 'Moony'. I did, once.",
     objectives: [{ type: 'visit', map: 'starfall' }, { type: 'collect', item: 'stardust', count: 10 }],
     rewards: { exp: 130000, gold: 2000, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
     scenes: { done: 'ch6_stars' },
   }),
-  story_6_3: s('story_6_3', 6, {
+  story_6_3: s('story_6_3', 10, {
     name: 'The Moon Valkyrie', giver: 'elowen', minLevel: 48, prereq: 'story_6_2',
     text: "Selene guards Hayate's sleep on the Moon Terrace at the far end of Starfall Heights. She will test you, she won't hold back, and she won't give a tragic speech either. She thinks those are tacky. Show her the island is worth waking for.",
     objectives: [{ type: 'kill', mob: 'selene', count: 1 }],
@@ -166,15 +187,15 @@ export const STORY_QUESTS = {
     scenes: { accept: 'ch6_trial', win: 'ch6_win', done: 'ch6_end' },
   }),
 
-  // ---------- Chapter 7: The Crystal King ----------
-  story_7_1: s('story_7_1', 7, {
+  // ---------- Chapter 10: The Crystal King (45-50) ----------
+  story_7_1: s('story_7_1', 10, {
     name: 'Home Again', giver: 'mira', minLevel: 45, prereq: 'story_6_3',
     text: "You're back! Oh, look at you. Sit. Tea. Tell me everything... and then, I'm afraid, there's one more thing. Captain Rook says the Crystal Cave has gone completely dark. Caves are usually dark, dear. This is extra.",
     objectives: [{ type: 'talk', npc: 'rook', say: "The throne room's dark as a pocket. Prismaris has been drinking every bit of light on the island. I lit a candle down there and it got nervous and left. Go easy on him, kid... but go." }],
     rewards: { exp: 100000, gold: 1700, items: [{ id: 'elixir', qty: 10 }] },
     scenes: { accept: 'ch7_open', done: 'ch7_rook' },
   }),
-  story_7_2: s('story_7_2', 7, {
+  story_7_2: s('story_7_2', 10, {
     name: 'Heart of Crystal', giver: 'mira', minLevel: 45, prereq: 'story_7_1',
     text: "Prismaris, the Crystal King, sits on his throne deep in the Crystal Cave. Bring the light home. I'll have a pot of tea waiting. And biscuits. Don't tell Elowen whose recipe.",
     objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
@@ -243,10 +264,27 @@ export const SCENES = {
     { together: [{ emote: 'mira', kind: 'note', dur: 1.4 }, { jump: 'mira', height: 8 }] },
     { who: 'mira', text: "You're the one who showed up, dear. Around here that counts for a lot.", mood: 'happy' },
   ],
+  ch2_sour_open: [
+    { card: 'Chapter 2', sub: 'Sour Hills' },
+    { who: 'mira', text: "Petal Meadow was only the start. Clover Hills is grumpy too, and the goblins up there have started stealing laundry. Only socks. Only LEFT socks.", mood: 'sad' },
+  ],
   ch1_sour: [
     { who: 'mira', text: 'Sour all right. These caps are grumpier than a rainy Monday. One of them hissed at me.', mood: 'sad' },
     { who: 'mira', text: "I think Hayate is asleep. Deeply. I can't climb mountains any more, but you..." },
     { who: 'mira', text: 'You could find her! But first you need a path of your own. And better trousers.', mood: 'happy' },
+  ],
+  ch2_festival: [
+    { who: null, text: 'Mira untangles the bunting from the antlers, one star-shaped flag at a time, and lays it out on the grass.' },
+    { together: [{ fx: 'confetti', at: 'mira', n: 14 }, { emote: 'mira', kind: 'note', dur: 1.4 }] },
+    { who: 'mira', text: "The Falling Star Festival. The whole village came this year, for the first time in ages. I made three hundred commemorative mugs.", mood: 'happy' },
+    { together: [{ emote: 'mira', kind: 'sweat', dur: 1.4 }, { wait: 0.4 }] },
+    { who: 'mira', text: 'Nobody bought one. They are all still in my cupboard. They say BEST ONE YET.', mood: 'sad' },
+    { who: 'player', text: 'What happened that night?' },
+    { together: [{ emote: 'mira', kind: '?', dur: 1.6 }, { wait: 0.8 }] },
+    { who: 'mira', text: "Well... the stars didn't fall. Not one. We waited up till midnight and they just... hung there. Everyone went home grumpy.", mood: 'sad' },
+    { together: [{ emote: 'mira', kind: '!', dur: 1.4 }, { jump: 'mira', height: 10 }] },
+    { who: 'mira', text: "Oh. Oh my. That was the night the wind stopped. The tortoises, the goblins, the windmill... it all went sour that very night!", mood: 'surprised' },
+    { who: 'mira', text: "I'll write it down. In the margin of a mug. Now go and find a path of your own, dear; this is a job for someone with a job.", mood: 'happy' },
   ],
   // (Staged: Mira steps close to give you her earring; it catches a wind that isn't there.)
   ch1_end: [
@@ -266,7 +304,7 @@ export const SCENES = {
   ],
   // ----- Chapter 2 -----
   ch2_open: [
-    { card: 'Chapter 2', sub: 'Roots Run Deep' },
+    { card: 'Chapter 3', sub: 'Roots Run Deep' },
     { together: [{ emote: 'rook', kind: 'anger', dur: 1.4 }, { shake: 1.4, dur: 0.4 }] },
     { who: 'rook', text: 'Every night, BOOM. Every night! My tea jumps right out of the cup. Last night it did a backflip and landed in my hat.', mood: 'angry' },
     { who: 'rook', text: "It's coming from under Windy Canyon. Bramble at the Hollow Gate will know more. Nod at his rules. There are a lot of them." },
@@ -283,11 +321,25 @@ export const SCENES = {
     { who: 'bramble', text: "Poor old root. He wasn't angry. He just couldn't sleep without her song.", mood: 'sad' },
     { together: [{ emote: 'bramble', kind: 'sweat', dur: 1.4 }, { wait: 0.4 }] },
     { who: 'bramble', text: 'I sang him one myself, once. He woke up and asked me to stop. Tell nobody.', mood: 'sad' },
-    { who: 'bramble', text: "Elowen in Moonleaf Grove reads the spirits. She'll want to hear about this. Bring a healer. Out of habit." },
+    { who: 'bramble', text: "And now he's started talking in his sleep. Catch your breath, then come and listen with me. Bring a healer. Out of habit." },
+  ],
+  ch3_root_open: [
+    { who: 'bramble', text: 'He talks in his sleep now. Every night. Listen.', mood: 'sad' },
+    { together: [{ shake: 1.2, dur: 1.2 }, { fx: 'dust', at: 'bramble', n: 10 }, { face: 'bramble', to: 1 }, { emote: 'player', kind: '?', dur: 1.2 }] },
+    { who: null, text: 'From deep under the Hollow door, a voice like a creaking branch rumbles up through the roots.' },
+    { who: 'gnarlroot', text: '...the stars... stood still... so still... and then the song... never came...' },
+    { together: [{ emote: 'bramble', kind: 'idea', dur: 1.4 }, { fx: 'pages', at: 'bramble', n: 10 }] },
+    { who: 'bramble', text: 'I wrote it down. Rule 41: listen to roots. Rule 42: write down what roots say. Rule 43: do not let roots catch you writing.', mood: 'happy' },
+  ],
+  ch3_root_done: [
+    { who: 'player', text: "Elowen says the stars standing still wasn't a dream. Something went wrong in the sky that night. She'll look into it. Dramatically." },
+    { together: [{ emote: 'bramble', kind: '!', dur: 1.4 }, { wait: 0.4 }] },
+    { who: 'bramble', text: "The same night as Mira's festival. The same night the lullaby stopped. That's not bad luck, that's a pattern.", mood: 'surprised' },
+    { who: 'bramble', text: 'Rule 44: when the sky does something strange, go and see Elowen. She will have made it about her by now, but she will be right.', mood: 'happy' },
   ],
   // ----- Chapter 3 -----
   ch3_open: [
-    { card: 'Chapter 3', sub: 'Whispers in the Glade' },
+    { card: 'Chapter 5', sub: 'Whispers in the Glade' },
     { who: 'elowen', text: 'Gnarlroot missed his lullaby, and now someone in the woods is weeping. Can you hear it? Loud, isn\'t it. Very... theatrical.' },
     { who: 'elowen', text: 'The wind wall around the Whispering Glade has thinned. Go quickly, and go gently. Perhaps bring a hanky.' },
   ],
@@ -311,7 +363,7 @@ export const SCENES = {
   ],
   // ----- Chapter 4 -----
   ch4_open: [
-    { card: 'Chapter 4', sub: 'Foxfire at Dusk' },
+    { card: 'Chapter 6', sub: 'Foxfire at Dusk' },
     { who: 'vex', text: "Somebody's picking pockets on my roads, and it isn't me. That's personal. That's PROFESSIONAL.", mood: 'angry' },
     { who: 'vex', text: 'Leaves in purses, footprints going in circles. Foxes. Amateur work. Check the Fox Shrine Path.' },
   ],
@@ -345,7 +397,7 @@ export const SCENES = {
   ],
   // ----- Chapter 5 -----
   ch5_open: [
-    { card: 'Chapter 5', sub: 'Steam and Roses' },
+    { card: 'Chapter 8', sub: 'Steam and Roses' },
     { who: 'nim', text: 'The springs are going c-cold! My moonberries need the steam, and the Lamia are so grumpy, and I had to tell the postman about it. Out loud.', mood: 'sad' },
   ],
   ch5_cold: [
@@ -375,7 +427,7 @@ export const SCENES = {
   ],
   // ----- Chapter 6 -----
   ch6_open: [
-    { card: 'Chapter 6', sub: 'Moon over Starfall' },
+    { card: 'Chapter 9', sub: 'Above the Clouds' },
     { who: 'elowen', text: 'Three queens, three hearts calmed, three very long sad speeches. And every one of them says the same thing: find Hayate.' },
     { who: 'elowen', text: 'She sleeps above the clouds, past the Sky Garden. Selene, the Moon Valkyrie, guards the way. Selene does not do speeches. Be ready.' },
   ],
@@ -408,7 +460,7 @@ export const SCENES = {
   ],
   // ----- Chapter 7 -----
   ch7_open: [
-    { card: 'Chapter 7', sub: 'The Crystal King' },
+    { card: 'Chapter 10', sub: 'The Crystal King' },
     { who: 'mira', text: "Look at you! Taller somehow. Or maybe I'm just proud again. Have you been eating? Sit. Tea.", mood: 'happy' },
     { who: 'mira', text: 'The cave has gone completely dark, dear. Talk to Rook. And then... bring the light home.' },
   ],

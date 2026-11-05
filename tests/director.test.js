@@ -323,3 +323,21 @@ test('the new main-story scenes play through where their givers stand', () => {
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test('the new chapter 2 and 3 scenes play through where Mira and Bramble stand', () => {
+  for (const [id, mapId, who] of [['ch2_sour_open', 'sprout', 'mira'], ['ch2_festival', 'sprout', 'mira'], ['ch3_root_open', 'hollow_gate', 'bramble'], ['ch3_root_done', 'hollow_gate', 'bramble']]) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, mapId, 'start');
+    const giver = w.map.npcs.find((n) => n.id === who);
+    w.body.x = giver.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

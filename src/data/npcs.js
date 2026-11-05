@@ -20,7 +20,7 @@ export const NPCS = {
     building: 'kiosk', sign: 'Info',
     look: { hairStyle: 'candy', hairColor: '#ff9ec0', skinTone: '#fff0e6', eyeColor: '#5aa8ff', outfitColor: '#bff0dc', eyeStyle: 'sparkle' },
     greeting: 'Welcome to Sprout Village! Press I for your bag, K for skills, C for stats, and M for the world map.',
-    quests: ['story_1_1', 'story_1_2', 'story_1_3', 'story_1_4', 'story_7_1', 'story_7_2', 'first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
+    quests: ['story_1_1', 'story_1_2', 'story_1_3', 'story_festival', 'story_1_4', 'story_7_1', 'story_7_2', 'first_steps', 'fluffy', 'sprout_sweep', 'mira_letter', 'daily_meadow'],
   },
   // Kuro, a young tengu who keeps Dawnlight Isle, the tutorial island: he shows new adventurers
   // the ropes and sees them onto the boat to Sprout Village.
@@ -109,7 +109,7 @@ export const NPCS = {
     look: { hairStyle: 'wolf', hairColor: '#8fbf7a', skinTone: '#e7b48f', eyeColor: '#7a4a2b', outfitColor: '#b08860', eyeStyle: 'round', face: 'grin' },
     greeting: "Rootwood Hollow is no place to wander alone. Bring a warrior to tank, a mage to heal, and two fighters, or I'll find you some.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
-    quests: ['story_2_2', 'bramble_check', 'hollow_heart', 'bramble_wipe', 'bramble_charge'],
+    quests: ['story_2_2', 'story_root', 'bramble_check', 'hollow_heart', 'bramble_wipe', 'bramble_charge'],
   },
   pumpkins: {
     id: 'pumpkins', name: 'Mr. Pumpkins', title: 'Manor Groundskeeper', role: 'dungeon', dungeon: 'manor',
