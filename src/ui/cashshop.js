@@ -11,6 +11,7 @@ import { drawHero } from '../render/hero.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, tabs, text, box, button, hover, clicked, tooltip, well, icon, sparkle } from './kit.js';
 import { itemTooltip } from './tooltips.js';
+import { loadWorld } from '../core/save.js';
 
 // The slots the shop sells for (none of its lines makes earrings).
 const LABEL = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', gloves: 'Gloves', cape: 'Cape', earring: 'Earrings', weapon: 'Weapon' };
@@ -37,6 +38,9 @@ export function cashShopWindow(ui, state, world) {
   }
   const { ctx } = ui;
   const char = world.char;
+  // The world's wardrobe: every look any hero in this save file has owned.
+  const wardrobe = loadWorld(char.file ?? 0)?.wardrobe ?? null;
+  const closet = new Set(wardrobe ?? []);
   const th = ui.theme;
   win.tryOn ??= {};
   win.cat ??= 0;
@@ -87,14 +91,19 @@ export function cashShopWindow(ui, state, world) {
     const on = trying?.id === id;
     const hot = hover(ui, x, y, cw - 3, ch - 3);
     const owned = char.outfit?.[slot]?.id === id || char.inventory.cash.some((e) => e.id === id);
+    const kept = !owned && closet.has(id);
     box(ctx, x, y, cw - 3, ch - 3, { fill: on ? '#fff0f7' : hot ? '#ffffff' : '#fffaf6', edge: on ? '#ff6fae' : '#f3d6e6', r: 7, width: on ? 2 : 1 });
     drawItemIcon(ctx, id, x + cw / 2 - 13.5, y + 3, 1.5, on ? trying.variant : null);
-    text(ctx, `${cashPrice(def, on ? trying.variant : null).toLocaleString()}`, x + cw / 2 - 1.5, y + ch - 7, { size: 6.5, bold: true, align: 'center', color: PINK });
+    text(ctx, kept ? 'Free' : `${cashPrice(def, on ? trying.variant : null).toLocaleString()}`, x + cw / 2 - 1.5, y + ch - 7, { size: 6.5, bold: true, align: 'center', color: kept ? '#7a5ad8' : PINK });
+    if (kept) {
+      box(ctx, x + 2, y + 2, 13, 8, { fill: '#b9a2f0', edge: null, r: 4 });
+      icon(ctx, 'hanger', x + 8.5, y + 6, 6, '#ffffff');
+    }
     if (owned) {
       box(ctx, x + 2, y + 2, 13, 8, { fill: '#7ee0a8', edge: null, r: 4 });
       text(ctx, '✓', x + 8.5, y + 8.5, { size: 6, bold: true, align: 'center', color: '#ffffff' });
     }
-    if (hot) tooltip(ui, [...itemTooltip(char, id, on && trying.variant ? { id, variant: trying.variant } : null), { text: on ? 'Trying it on' : 'Click to try on', size: 7, color: COLORS.muted }]);
+    if (hot) tooltip(ui, [...itemTooltip(char, id, on && trying.variant ? { id, variant: trying.variant } : null), ...(kept ? [{ text: "In your world's wardrobe: free for this hero", size: 7, bold: true, color: '#7a5ad8' }] : []), { text: on ? 'Trying it on' : 'Click to try on', size: 7, color: COLORS.muted }]);
     if (clicked(ui, x, y, cw - 3, ch - 3)) win.tryOn = { ...win.tryOn, [slot]: on ? undefined : { id, variant: null } };
   });
   if (win.tryOn[slot] === undefined) delete win.tryOn[slot];
@@ -130,18 +139,21 @@ export function cashShopWindow(ui, state, world) {
       if (clicked(ui, cx - 5.5, cy - 5.5, 11, 11)) win.tryOn = { ...win.tryOn, [slot]: { id: pick.id, variant: k } };
     });
   } else text(ctx, 'One look only.', rx + 8, by + 29, { size: 7, color: COLORS.muted });
-  const cost = cashPrice(def, pick.variant);
+  // A look another hero in this world already owns is in the world's wardrobe: free to take.
+  const kept = closet.has(pick.id);
+  const cost = kept ? 0 : cashPrice(def, pick.variant);
   const afford = (char.cash ?? 0) >= cost;
-  icon(ctx, 'star', rx + COLS * cw - 98, by + 13, 8, '#ff6fae');
-  text(ctx, `${cost.toLocaleString()} Cash`, rx + COLS * cw - 91, by + 16, { size: 8, bold: true, color: afford ? PINK : COLORS.bad });
-  if (button(ui, rx + COLS * cw - 100, by + 22, 92, 16, 'Buy & Wear', { primary: true, enabled: afford, size: 8 })) {
+  icon(ctx, kept ? 'hanger' : 'star', rx + COLS * cw - 98, by + 13, 8, kept ? '#7a5ad8' : '#ff6fae');
+  text(ctx, kept ? 'In your wardrobe' : `${cost.toLocaleString()} Cash`, rx + COLS * cw - 91, by + 16, { size: 8, bold: true, color: kept ? '#7a5ad8' : afford ? PINK : COLORS.bad });
+  if (button(ui, rx + COLS * cw - 100, by + 22, 92, 16, kept ? 'Take & Wear' : 'Buy & Wear', { primary: true, enabled: afford, size: 8 })) {
     const inst = makeCash(pick.id, pick.variant);
     if (!addItem(char.inventory, inst)) world.log('Your Cash tab is full.', '#ffb3c6');
     else {
       char.cash -= cost;
       wearOutfit(char, char.inventory.cash.indexOf(inst));
       delete win.tryOn[slot];
-      world.log(`Bought ${itemName(inst)}! You're wearing it now.`, '#ff8fc1');
+      if (wardrobe && !kept) wardrobe.push(pick.id);
+      world.log(kept ? `Took ${itemName(inst)} from the wardrobe. You're wearing it now.` : `Bought ${itemName(inst)}! You're wearing it now.`, '#ff8fc1');
       world.fx.push({ kind: 'buff', x: world.body.x, y: world.body.y, t: 0, dur: 0.8, color: '#ff8fc1' });
       sparkle(ctx, lx + 56, ly + 70, 8, '#ff8fc1');
     }

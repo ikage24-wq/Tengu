@@ -16,7 +16,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { startGathering, tickGathering } from '../src/world/gathering.js';
 import { startFishing } from '../src/world/fishing.js';
 import { cook, dishTier } from '../src/ui/cooking.js';
-import { saveGame, loadGame } from '../src/core/save.js';
+import { saveGame, loadGame, charKey } from '../src/core/save.js';
 import {
   LIFE_SKILLS, LIFE_MAX, TIER_LEVEL, KILL_SECS, lifeLevel, lifeExp, lifeExpToNext, addLifeExp, charExpFor, lifeExpFor, tierOf,
   perksAt, lifePerks, toolFor, needFor, lifeAction, withExtra,
@@ -244,10 +244,10 @@ test('life levels save and load; a save from before life skills starts every ski
     assert.equal(lifeExp(back, 'fishing'), 42);
     assert.deepEqual(back.lifeTools, { fishing: 'fishing_rod' });
     // An old save: no `life` at all.
-    const old = JSON.parse(store.get('twzt-save-v1-3'));
+    const old = JSON.parse(store.get(charKey(0, 3)));
     delete old.life;
     delete old.lifeTools;
-    store.set('twzt-save-v1-3', JSON.stringify(old));
+    store.set(charKey(0, 3), JSON.stringify(old));
     const oldBack = loadGame(3);
     for (const s of LIFE_SKILLS) assert.equal(lifeLevel(oldBack, s), 1);
     assert.deepEqual(oldBack.life, {});

@@ -1,6 +1,11 @@
-// Saving and loading characters in localStorage, one key per character slot. Buffs and timers aren't saved.
+// Saving and loading in localStorage. There are three save files (FILES), and each is a world of
+// its own with up to PER_FILE characters (the player's call, 2026-11-05). A world keeps what its
+// characters share: the home island (each keeps their own way back from it), the Monster Book, the
+// wardrobe of every cash look any of them has owned, and the storage chest. Everything else (level,
+// job, gear, gold, the story) is each character's own. Buffs and timers aren't saved.
 
 import { setNextUid, makeEquip } from './items.js';
+import { createInventory } from './inventory.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
@@ -8,26 +13,163 @@ import { SKILLS } from '../data/skills.js';
 import { settleSkills, ECON } from './character.js';
 import { MAX_LEVEL } from './exp.js';
 
-// Slot 0 keeps the original key so saves from before character slots still load.
-export const SLOTS = 8;
-const keyFor = (slot = 0) => (slot ? `twzt-save-v1-${slot}` : 'twzt-save-v1');
+export const FILES = 3;
+export const PER_FILE = 4;
+export const charKey = (file, slot) => `twzt-w${file}-c${slot}`;
+const worldKey = (file) => `twzt-w${file}`;
+// Before save files: eight loose character slots.
+const OLD_SLOTS = 8;
+export const oldKey = (slot = 0) => (slot ? `twzt-save-v1-${slot}` : 'twzt-save-v1');
+const MIGRATED = 'twzt-files-v1';
 
-export function saveGame(char) {
+const read = (k) => {
   try {
-    const data = { ...char, buffs: {}, savedAt: Date.now() };
-    localStorage.setItem(keyFor(char.slot), JSON.stringify(data));
+    const raw = localStorage.getItem(k);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+const write = (k, v) => {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
     return true;
   } catch {
     return false;
   }
+};
+const remove = (k) => {
+  try {
+    localStorage.removeItem(k);
+  } catch {
+    // Storage may be unavailable (private mode); nothing to remove.
+  }
+};
+
+// The worlds in play, so every character loaded from one file shares the very same island, book
+// and chest (kept per storage, so a fresh storage starts fresh).
+let openFor = null;
+let open = new Map();
+function opened() {
+  const store = globalThis.localStorage ?? null;
+  if (openFor !== store) {
+    openFor = store;
+    open = new Map();
+  }
+  return open;
 }
 
-export function loadGame(slot = 0) {
+export function newWorld(name) {
+  return { name, createdAt: Date.now(), lastPlayed: 0, playSeconds: 0, home: null, book: {}, wardrobe: [], storage: createInventory() };
+}
+
+// The world in save file `file` (null when the file is empty).
+export function loadWorld(file) {
+  migrateOldSaves();
+  const worlds = opened();
+  if (worlds.has(file)) return worlds.get(file);
+  const w = read(worldKey(file));
+  if (!w) return null;
+  w.book ??= {};
+  w.wardrobe ??= [];
+  w.storage ??= createInventory();
+  for (const tab of Object.keys(createInventory())) w.storage[tab] ??= [];
+  w.playSeconds ??= 0;
+  worlds.set(file, w);
+  return w;
+}
+
+export function createWorldFile(file, name) {
+  const w = newWorld(name);
+  opened().set(file, w);
+  saveWorld(file);
+  return w;
+}
+
+// Writes the world (its island without anyone's way back: that's each character's own).
+export function saveWorld(file) {
+  const w = opened().get(file);
+  if (!w) return false;
+  return write(worldKey(file), { ...w, home: w.home ? { ...w.home, back: null } : null });
+}
+
+export function deleteWorld(file) {
+  for (let s = 0; s < PER_FILE; s++) remove(charKey(file, s));
+  remove(worldKey(file));
+  opened().delete(file);
+}
+
+// Copies a whole save file (its world and characters) into an empty one.
+export function copyWorld(from, to) {
+  if (!loadWorld(from) || read(worldKey(to))) return false;
+  saveWorld(from);
+  const w = read(worldKey(from));
+  w.name = `${w.name} (copy)`;
+  write(worldKey(to), w);
+  for (let s = 0; s < PER_FILE; s++) {
+    const c = read(charKey(from, s));
+    if (c) write(charKey(to, s), { ...c, file: to });
+  }
+  opened().delete(to);
+  return true;
+}
+
+// Time played in a world, kept as it's played.
+export function addPlayTime(file, secs) {
+  const w = opened().get(file);
+  if (w) w.playSeconds += secs;
+}
+
+// Every character in a file, by slot (null where a slot is free). (Loading them doesn't change
+// whose way back from the island is current: the hero being played keeps theirs.)
+export function worldChars(file) {
+  const home = loadWorld(file)?.home;
+  const back = home?.back;
+  const list = Array.from({ length: PER_FILE }, (_, s) => (hasSave(s, file) ? loadGame(s, file) : null));
+  if (home) home.back = back ?? null;
+  return list;
+}
+
+// The cash looks a character has (in the Cash tab or worn), for the world's wardrobe.
+const looksOf = (char) => [...(char.inventory?.cash ?? []), ...Object.values(char.outfit ?? {})].filter(Boolean).map((e) => e.id);
+const addLooks = (w, ids) => {
+  for (const id of ids) if (!w.wardrobe.includes(id)) w.wardrobe.push(id);
+};
+// Two books in one: each monster's count is the higher of the two.
+const mergeBook = (into, from) => {
+  for (const [id, n] of Object.entries(from ?? {})) into[id] = Math.max(into[id] ?? 0, n);
+  return into;
+};
+
+export function saveGame(char) {
+  const file = char.file ?? 0;
+  const w = loadWorld(file) ?? createWorldFile(file, `World ${file + 1}`);
+  // What's shared lives in the world; the character keeps only their own way back from the island.
+  if (char.home) w.home = char.home;
+  if (char.book && char.book !== w.book) w.book = mergeBook(w.book, char.book);
+  char.book = w.book;
+  addLooks(w, looksOf(char));
+  w.lastPlayed = Date.now();
+  const data = { ...char, buffs: {}, savedAt: Date.now(), home: undefined, book: undefined, homeBack: char.home?.back ?? null, file };
+  return write(charKey(file, char.slot ?? 0), data) && saveWorld(file);
+}
+
+export function loadGame(slot = 0, file = 0) {
   try {
-    const raw = localStorage.getItem(keyFor(slot));
-    if (!raw) return null;
-    const char = JSON.parse(raw);
+    loadWorld(file);
+    const char = read(charKey(file, slot));
+    if (!char) return null;
     char.slot = slot;
+    char.file = file;
+    // The world's shared parts: its island (with this character's own way back), its book.
+    const w = loadWorld(file) ?? createWorldFile(file, `World ${file + 1}`);
+    if (char.home && !w.home) w.home = { ...char.home, back: null };
+    if (w.home) {
+      w.home.back = char.homeBack ?? char.home?.back ?? null;
+      char.home = w.home;
+    }
+    if (char.book && char.book !== w.book) mergeBook(w.book, char.book);
+    char.book = w.book;
     // Saves from before outfits get the starting Cash and empty outfit slots.
     char.outfit ??= {};
     char.cash ??= STARTING_CASH;
@@ -104,18 +246,45 @@ export function giveStartingOutfit(char) {
   return char;
 }
 
-export function hasSave(slot = 0) {
-  try {
-    return Boolean(localStorage.getItem(keyFor(slot)));
-  } catch {
-    return false;
-  }
+export function hasSave(slot = 0, file = 0) {
+  migrateOldSaves();
+  return Boolean(read(charKey(file, slot)));
 }
 
-export function deleteSave(slot = 0) {
-  try {
-    localStorage.removeItem(keyFor(slot));
-  } catch {
-    // Storage may be unavailable (private mode); nothing to delete.
+export function deleteSave(slot = 0, file = 0) {
+  remove(charKey(file, slot));
+}
+
+// Saves from before save files (eight loose character slots) move into the files, four to a
+// file in slot order, once. Each file's characters then share: the most built-up island among
+// them, their Monster Books (the higher count of each), and every cash look any of them had.
+// (The old saves are left where they were, untouched, as a backup.)
+export function migrateOldSaves() {
+  if (read(MIGRATED)) return;
+  if (!write(MIGRATED, 1)) return;
+  const old = [];
+  for (let s = 0; s < OLD_SLOTS; s++) {
+    const c = read(oldKey(s));
+    if (c) old.push(c);
+  }
+  for (let file = 0; file * PER_FILE < old.length && file < FILES; file++) {
+    const group = old.slice(file * PER_FILE, (file + 1) * PER_FILE);
+    const w = newWorld(`World ${file + 1}`);
+    const times = group.map((c) => c.savedAt ?? Date.now());
+    w.createdAt = Math.min(...times);
+    w.lastPlayed = Math.max(...times);
+    const homes = group.filter((c) => c.home).sort((p, q) => (q.home.stage ?? 1) - (p.home.stage ?? 1) || (q.home.placed?.length ?? 0) - (p.home.placed?.length ?? 0));
+    if (homes.length) w.home = { ...homes[0].home, back: null };
+    group.forEach((c, slot) => {
+      mergeBook(w.book, c.book);
+      addLooks(w, looksOf(c));
+      c.homeBack = c.home?.back ?? null;
+      delete c.home;
+      delete c.book;
+      c.slot = slot;
+      c.file = file;
+      write(charKey(file, slot), c);
+    });
+    write(worldKey(file), w);
   }
 }

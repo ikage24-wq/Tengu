@@ -29,6 +29,7 @@ import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover
 import { itemTooltip } from './tooltips.js';
 import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
+import { storageWindow } from './storage.js';
 import { polishWindow } from './polish.js';
 import { teamOf } from '../world/teamwork.js';
 import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
@@ -207,6 +208,8 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode === 'shop') return shopWindow(ui, state, world);
   if (dlg.mode === 'style') return styleWindow(ui, state, world);
   if (dlg.mode === 'polish') return polishWindow(ui, state, world);
+  if (dlg.mode !== 'storage') dlg.placedStore = false;
+  if (dlg.mode === 'storage') return storageWindow(ui, state, world);
   const npc = NPCS[dlg.id];
   const win = state.windows.npc;
   const char = world.char;
@@ -236,6 +239,7 @@ export function npcWindow(ui, state, world) {
   }
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
+  if (npc.storage) choices.push({ label: 'Storage', sub: npc.storage, icon: 'bag', run: () => (dlg.mode = 'storage') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
   // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).
   if (npc.role === 'sweetheart') choices.push(...sweetheartChoices(world, state, npc));

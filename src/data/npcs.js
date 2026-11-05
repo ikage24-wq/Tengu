@@ -32,6 +32,8 @@ export const NPCS = {
   },
   pip: {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',
+    // Pip delivers: anything left here reaches every hero in your world. (ui/storage.js)
+    storage: "Leave it with me. I'll get it to any of your heroes!",
     building: 'goods', sign: "Pip's Goods",
     look: { hairStyle: 'pixie', hairColor: '#f5c95c', skinTone: '#fbd9bf', eyeColor: '#7a4a2b', outfitColor: '#ffd66b', eyeStyle: 'round', face: 'grin' },
     greeting: 'Tonics, starter gear, and homeward scrolls. Take a look!',
@@ -224,6 +226,7 @@ export const NPCS = {
   },
   marlo: {
     id: 'marlo', name: 'Marlo', title: 'Merchant', role: 'shop',
+    storage: 'Storage is free. I KNOW. Shocking. Your other heroes can take it out too.',
     building: 'cart', sign: "Marlo's Wares",
     look: { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbd9bf', eyeColor: '#1f7a6b', outfitColor: '#ffd66b', eyeStyle: 'sparkle', face: 'sassy' },
     greeting: 'Finest goods on the coast. Bows, blades, armor, and tonics!',

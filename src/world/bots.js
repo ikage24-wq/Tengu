@@ -254,7 +254,8 @@ export function makeBotCharacter(rng = Math.random, { pro = rng() < PRO_RATE, na
 // ---------- Population ----------
 
 // `clock`: the real time by default (tests pin it).
-export function createBots(world, rng = Math.random, { clock = () => new Date(), daily = false } = {}) {
+// `alts`: the other heroes in your save file, who walk the towns as themselves (see addAlts).
+export function createBots(world, rng = Math.random, { clock = () => new Date(), daily = false, alts = [] } = {}) {
   const bots = { daily, list: [], names: new Set(), memory: new Set(), spawnIn: 6, waveIn: between(70, 140, rng), newsIn: between(40, 90, rng), replies: [], rng, clock };
   // Your friends' names are theirs: nobody else turns up with them.
   for (const b of buddiesOf(world.char)) bots.names.add(b.name.toLowerCase());
@@ -269,7 +270,25 @@ export function createBots(world, rng = Math.random, { clock = () => new Date(),
   // Everyone's already around when you log in.
   const total = onlineNow(bots);
   for (let i = 0; i < total; i++) spawn(bots, world, { quiet: true });
+  addAlts(bots, world, alts);
   return bots;
+}
+
+// Your other heroes in this world are out and about too, as they were when you last played them:
+// their own look, gear, job and level, in the town they were last in (or one that suits their
+// level), with "Your hero" under their name. They stay all session. (A copy of each, without the
+// world's shared island and book, so nothing they do touches yours.)
+export function addAlts(bots, world, alts) {
+  for (const a of alts) {
+    if (!a || bots.names.has(a.name.toLowerCase())) continue;
+    const char = structuredClone({ ...a, home: null, book: null });
+    const at = MAPS[a.mapId]?.isTown && BOT_TOWNS.includes(a.mapId) ? { map: a.mapId } : null;
+    const bot = spawn(bots, world, { quiet: true, who: { name: a.name, char, guild: null, style: makeStyle(bots.rng) }, at });
+    if (!bot) continue;
+    bot.alt = true;
+    bot.title = 'Your hero';
+    bot.session = Infinity;
+  }
 }
 
 // A town for a player of this level: usually one whose band fits them (the emptier, the likelier),

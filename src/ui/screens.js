@@ -99,12 +99,14 @@ export function titleScreen(ui, time) {
   return go;
 }
 
-// --- Character select: a big tree with two rings of character slots, like a classic MMO lobby.
+// --- Character select: a big tree with a ring of four spots, one per hero in this world.
 
 const SLOT_X = [88, 172, 288, 372];
-const TIER_Y = [168, 300];
-const slotPos = (i) => [SLOT_X[i % 4], TIER_Y[Math.floor(i / 4)]];
+const RING_Y = 236;
+const slotPos = (i) => [SLOT_X[i % 4], RING_Y];
 // Each job family's colour, for the card's accents and the glow under a hero's spot.
+// Each save file's colour (the same as its playbill's band).
+const FILE_COLORS = ['#d83a5a', '#4a8ad8', '#3aa878'];
 const FAMILY_COLOR = { beginner: '#6fb8ff', warrior: '#ff8a5c', archer: '#5fd3a0', thief: '#9b7bd8', mage: '#ff8fc1', gm: '#ffc94f' };
 const familyColor = (c) => FAMILY_COLOR[JOBS[c?.job]?.family] ?? '#b48cff';
 
@@ -199,7 +201,7 @@ function tree(ctx, time) {
     ctx.stroke();
   }
   // Treehouse windows in the trunk, lit warm, and a little round door at the foot.
-  for (const [wx, wy] of [[228, 112], [216, 236]]) {
+  for (const [wx, wy] of [[228, 132], [218, 290]]) {
     box(ctx, wx - 9, wy - 11, 18, 22, { fill: '#ffe6a8', edge: '#8a5a3a', r: 9, width: 2 });
     ctx.fillStyle = '#8a5a3a';
     ctx.fillRect(wx - 0.75, wy - 10, 1.5, 20);
@@ -244,8 +246,7 @@ function tree(ctx, time) {
     ctx.fill();
   }
   ctx.restore();
-  ring(ctx, TIER_Y[0], time, 0);
-  ring(ctx, TIER_Y[1], time, 1);
+  ring(ctx, RING_Y, time, 0);
 }
 
 // Leaves drifting down past the tree.
@@ -444,17 +445,15 @@ export function selectScreen(ui, time, chars, state) {
   if (live) {
     if (keys.has('ArrowLeft')) state.slot = (state.slot + chars.length - 1) % chars.length;
     if (keys.has('ArrowRight')) state.slot = (state.slot + 1) % chars.length;
-    if (keys.has('ArrowUp') || keys.has('ArrowDown')) state.slot = (state.slot + 4) % chars.length;
     if (keys.has('Enter')) pick = c ? 'start' : 'create';
     if (keys.has('Escape')) pick = 'back';
     if (keys.has('Delete') && c) state.confirm = true;
   }
 
-  if (button(ui, 8, 8, 56, 18, '< Title', { size: 8, enabled: live })) pick = 'back';
+  if (button(ui, 8, 8, 64, 18, '< Save files', { size: 8, enabled: live })) pick = 'back';
 
-  // World badge: a pill with ribbon tails, the world's gem, the channel and a server light.
+  // The world's badge: a pill with ribbon tails, the save file's colour, its name and its cast.
   const px = 446, pw = 182;
-  const wd = WORLDS[world];
   ctx.fillStyle = '#e0659f';
   for (const sd of [-1, 1]) {
     const ex = sd < 0 ? px + 6 : px + pw - 6;
@@ -468,17 +467,16 @@ export function selectScreen(ui, time, chars, state) {
   }
   box(ctx, px - 2, 8, pw + 4, 44, { fill: null, edge: '#ffe0ef', r: 22, width: 3 });
   box(ctx, px, 10, pw, 40, { fill: 'rgba(255,247,252,0.97)', edge: '#f4bcd8', r: 20, width: 2 });
-  ctx.fillStyle = wd.color;
+  ctx.fillStyle = FILE_COLORS[state.file ?? 0];
   ctx.beginPath();
   ctx.arc(px + 22, 30, 12, 0, Math.PI * 2);
   ctx.fill();
   sparkle(ctx, px + 22, 30, 6 + Math.sin(time * 3), '#ffffff');
-  text(ctx, wd.name, px + 42, 29, { size: 14, bold: true });
-  ctx.fillStyle = COLORS.good;
-  ctx.beginPath();
-  ctx.arc(px + 45, 39, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  text(ctx, 'Channel 1 · online', px + 51, 42, { size: 7, bold: true, color: COLORS.muted });
+  ctx.font = font(12, true);
+  let wn = state.worldName ?? '';
+  while (wn.length > 4 && ctx.measureText(wn).width > pw - 80) wn = wn.slice(0, -1);
+  text(ctx, wn === state.worldName ? wn : `${wn}…`, px + 42, 29, { size: 12, bold: true });
+  text(ctx, `File ${(state.file ?? 0) + 1}`, px + 42, 42, { size: 7, bold: true, color: COLORS.muted });
   text(ctx, `${chars.filter(Boolean).length} / ${chars.length}`, px + pw - 14, 34, { size: 9, bold: true, align: 'right', color: COLORS.muted });
   const card = infoCard(ui, c, px, 60, pw, live, time);
   if (card === 'delete?') state.confirm = true;

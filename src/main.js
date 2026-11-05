@@ -6,7 +6,8 @@ import { titleScreen, selectScreen, creatorScreen, randomLook } from './ui/scree
 import { createUiState, routeInput, drawUi } from './ui/manager.js';
 import { createCharacter } from './core/character.js';
 import { addItem } from './core/inventory.js';
-import { saveGame, loadGame, hasSave, deleteSave, SLOTS } from './core/save.js';
+import { saveGame, loadGame, deleteSave, worldChars, loadWorld, createWorldFile, deleteWorld, copyWorld, addPlayTime, FILES } from './core/save.js';
+import { filesScreen } from './ui/files.js';
 import { createWorld, updateWorld } from './world/world.js';
 import { groundAt } from './world/physics.js';
 import { createCamera, updateCamera, drawWorld } from './render/scene.js';
@@ -53,7 +54,9 @@ const AUTOSAVE_EVERY = 20;
 
 let screen = 'title';
 let chars = [];
-const lobby = { slot: 0, confirm: false };
+const lobby = { slot: 0, file: 0, confirm: false };
+// The save files screen: which file is picked, each file's world and heroes.
+const files = { file: 0, worlds: [], chars: [], confirm: false, naming: false, name: '' };
 let draft = null;
 let world = null;
 let uiState = null;
@@ -67,7 +70,9 @@ function startGame(char) {
   world = createWorld(char);
   world.settings = settings;
   // (The crowd follows the game's day: world/botsoul.js populationAt.)
-  world.bots = createBots(world, Math.random, { daily: true });
+  // (Your other heroes in this save file are in town too.)
+  const alts = worldChars(char.file ?? 0).filter((c) => c && c.slot !== char.slot);
+  world.bots = createBots(world, Math.random, { daily: true, alts });
   world.onKill = (m) => shareKill(world.bots, world, m);
   uiState = createUiState();
   camera = createCamera();
@@ -77,13 +82,29 @@ function startGame(char) {
   else if (!char.quests.first_steps && (!char.tutorial || char.tutorial.step === ISLAND_LESSONS)) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
 
-function loadChars() {
-  chars = Array.from({ length: SLOTS }, (_, i) => (hasSave(i) ? loadGame(i) : null));
+function loadFiles() {
+  files.worlds = Array.from({ length: FILES }, (_, f) => loadWorld(f));
+  files.chars = files.worlds.map((w, f) => (w ? worldChars(f) : []));
 }
 
-function newCharacter(name, look, slot = 0, tutorial = true) {
+function loadChars() {
+  chars = worldChars(lobby.file);
+  lobby.worldName = loadWorld(lobby.file)?.name ?? '';
+}
+
+// Opens a save file's world at its character select.
+function openFile(f) {
+  lobby.file = f;
+  loadChars();
+  lobby.slot = Math.max(0, chars.findIndex(Boolean));
+  lobby.confirm = false;
+  screen = 'select';
+}
+
+function newCharacter(name, look, slot = 0, tutorial = true, file = 0) {
   const char = createCharacter(name, look);
   char.slot = slot;
+  char.file = file;
   // On the tutorial island (Dawnlight Isle) unless they chose to skip it.
   if (tutorial) {
     char.mapId = 'dawnbeach';
@@ -169,17 +190,37 @@ function step(now) {
   }
   if (screen === 'title') {
     if (titleScreen(ui, time)) {
-      loadChars();
-      lobby.slot = Math.max(0, chars.findIndex(Boolean));
-      lobby.confirm = false;
-      screen = 'select';
+      loadFiles();
+      // (The last file played is picked to start with.)
+      const recent = files.worlds.map((w, f) => [w?.lastPlayed ?? -1, f]).sort((p, q) => q[0] - p[0])[0];
+      files.file = recent && recent[0] >= 0 ? recent[1] : 0;
+      screen = 'files';
+    }
+  } else if (screen === 'files') {
+    const pick = filesScreen(ui, time, files);
+    if (pick === 'back') screen = 'title';
+    if (pick === 'open') openFile(files.file);
+    if (pick === 'create') {
+      createWorldFile(files.file, files.name.trim());
+      openFile(files.file);
+    }
+    if (pick === 'copy') {
+      copyWorld(files.file, files.worlds.findIndex((w) => !w));
+      loadFiles();
+    }
+    if (pick === 'delete') {
+      deleteWorld(files.file);
+      loadFiles();
     }
   } else if (screen === 'select') {
     const pick = selectScreen(ui, time, chars, lobby);
-    if (pick === 'back') screen = 'title';
-    if (pick === 'start') startGame(loadGame(lobby.slot));
+    if (pick === 'back') {
+      loadFiles();
+      screen = 'files';
+    }
+    if (pick === 'start') startGame(loadGame(lobby.slot, lobby.file));
     if (pick === 'delete') {
-      deleteSave(lobby.slot);
+      deleteSave(lobby.slot, lobby.file);
       loadChars();
     }
     if (pick === 'create') {
@@ -190,9 +231,10 @@ function step(now) {
     const pick = creatorScreen(ui, time, draft);
     if (pick === 'back') screen = 'select';
     if (pick === 'start') {
-      const char = newCharacter(draft.name.trim(), draft.look, lobby.slot, draft.tutorial !== false);
+      const char = newCharacter(draft.name.trim(), draft.look, lobby.slot, draft.tutorial !== false, lobby.file);
       saveGame(char);
-      startGame(char);
+      // (Loaded back, so the new hero moves into the world's shared island, book and chest.)
+      startGame(loadGame(lobby.slot, lobby.file) ?? char);
     }
   } else {
     const locked = routeInput(uiState, world, input, dt);
@@ -228,6 +270,7 @@ function step(now) {
     // Online: tell friends what you're doing, and show what they're doing.
     tickNet(world, dt);
     if (world.events.some((e) => e.type === 'map')) saveGame(world.char);
+    addPlayTime(world.char.file ?? 0, dt);
     autosave -= dt;
     if (autosave <= 0) {
       saveGame(world.char);
@@ -250,6 +293,7 @@ function step(now) {
       saveGame(world.char);
       leaveRoom(world);
       lobby.slot = world.char.slot ?? 0;
+      lobby.file = world.char.file ?? 0;
       world = null;
       uiState = null;
       canvas.style.cursor = '';

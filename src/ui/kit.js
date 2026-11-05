@@ -839,6 +839,39 @@ const ICONS = {
     ctx.fillRect(-s * 0.1, -s * 0.06, s * 0.05, s * 0.36);
     ctx.fillRect(s * 0.06, -s * 0.06, s * 0.05, s * 0.36);
   },
+  copy(ctx, s) {
+    // Two sheets, one behind the other.
+    ctx.globalAlpha *= 0.55;
+    roundRect(ctx, -s * 0.36, -s * 0.4, s * 0.5, s * 0.6, s * 0.08);
+    ctx.fill();
+    ctx.globalAlpha /= 0.55;
+    roundRect(ctx, -s * 0.14, -s * 0.2, s * 0.5, s * 0.6, s * 0.08);
+    ctx.fill();
+  },
+  hanger(ctx, s) {
+    // A clothes hanger: a hook and a triangle.
+    ctx.lineWidth = s * 0.14;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.arc(0, -s * 0.28, s * 0.12, Math.PI, Math.PI * 2.4);
+    ctx.moveTo(0, -s * 0.14);
+    ctx.lineTo(-s * 0.44, s * 0.28);
+    ctx.lineTo(s * 0.44, s * 0.28);
+    ctx.closePath();
+    ctx.stroke();
+  },
+  dice(ctx, s) {
+    // A die showing five: a rounded cube face with pips.
+    roundRect(ctx, -s * 0.4, -s * 0.4, s * 0.8, s * 0.8, s * 0.16);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    for (const [px, py] of [[-0.2, -0.2], [0.2, -0.2], [0, 0], [-0.2, 0.2], [0.2, 0.2]]) {
+      ctx.beginPath();
+      ctx.arc(px * s, py * s, s * 0.07, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  },
   ground(ctx, s) {
     // An arrow down onto the ground line: drop it here.
     ctx.lineWidth = s * 0.16;
