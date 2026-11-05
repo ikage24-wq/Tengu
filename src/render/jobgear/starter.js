@@ -449,6 +449,78 @@ const OUTFITS = {
     shoe: (p, k, c) => [k.sole(c(SHOE_DARK)), k.poly([[-2.6, -0.6], [2.6, -0.6], [2.6, 0.2], [-2.6, 0.2]], c(SHOE_DARK)), k.dot(1.4, -0.2, 0.45, c(GOLD)), k.dot(-1, 0.8, 0.45, c(WHITE))],
   },
 
+  // Malvina Grimsworth, would-be villainess (one character's own, not offered in the creator): a
+  // black velvet bodice with a violet laced corset, a white ruffled jabot pinned with a heart
+  // ruby that has little bat wings; an enormous cape with a stand-up collar framing her head, a
+  // crimson lining and a hem cut in bat scallops that drags on the floor; a tiered ruffle skirt
+  // printed with gold crescent moons; black stockings; pointed boots with curled toes and gold
+  // buckles; and a tall witch hat whose tip flops over, with a magenta band and a bat bow. One
+  // motif repeated small: the bat, the moon. Black and violet with one vivid accent (magenta).
+  villainess: {
+    hat: () => {
+      const V = '#4e3460';
+      const VL = '#6a4a80';
+      return [E(15.5, 8.2, 13.6, 2.4, V), F(E(15.5, 8.6, 11.6, 1.2, '#3a2648')),
+        // The cone, its tip flopping over toward the back.
+        T([[8.4, 7.8], [22.6, 7.8], [20.4, 0.6], [18.6, -5.4], [17.2, -8.6], [20, -10.6], [24.2, -10.2], [25.8, -8.2], [23.4, -8.8], [20.6, -8.4], [21.4, -4.8], [24, 1.6]], V),
+        F(T([[10.6, 7.6], [13.6, 7.6], [16.6, -4.6], [17.6, -8]], VL)),
+        // The band and the bat bow.
+        T([[8.6, 6.2], [22.4, 6.2], [22.6, 8], [8.4, 8]], '#e0408a'), F(R(8.6, 6.4, 13.8, 0.5, '#ff7ab4')),
+        T([[15.5, 7], [12, 4.6], [12.6, 6.2], [11.2, 6.6], [12.6, 7.4], [12, 9]], '#4e3460'), T([[15.5, 7], [19, 4.6], [18.4, 6.2], [19.8, 6.6], [18.4, 7.4], [19, 9]], '#4e3460'),
+        F(E(15.5, 7, 0.9, 0.9, GOLD)),
+        // A little gold crescent dangling from the tip.
+        F(E(25.4, -6.8, 1.2, 1.2, GOLD)), F(E(25.9, -7.2, 0.95, 0.95, V))];
+    },
+    top: () => {
+      const VEL = '#6a4a80';
+      const VEL_LT = '#8a6aa0';
+      const VIO = '#b07ad0';
+      return [T(TORSO, VEL),
+        // The corset panel and its criss-cross lacing.
+        T([[MID - 3.2, 28.6], [MID + 3.2, 28.6], [MID + 3.6, 34.4], [MID - 3.6, 34.4]], VIO),
+        ...[0, 1, 2].map((i) => F(limb(MID - 2.2, 29.6 + i * 1.6, MID + 2.2, 30.6 + i * 1.6, 0.3, 0.3, CREAM))),
+        ...[0, 1, 2].map((i) => F(limb(MID + 2.2, 29.6 + i * 1.6, MID - 2.2, 30.6 + i * 1.6, 0.3, 0.3, CREAM))),
+        F(limb(12.4, 28.4, 13.6, 33.4, 0.5, 0.35, VEL_LT)),
+        // The jabot: white ruffles spilling from the throat, and the bat-winged heart ruby.
+        frill(MID - 2.4, MID + 2.4, 25.2, MID - 3, MID + 3, 28.8, 4, 0.7, WHITE), F(E(MID, 26, 2.4, 1, '#f1e8f6')),
+        T([[MID - 1.2, 26.4], [MID - 3.6, 25.2], [MID - 3, 26.4], [MID - 3.8, 27.2], [MID - 1.2, 27.2]], '#4e3460'),
+        T([[MID + 1.2, 26.4], [MID + 3.6, 25.2], [MID + 3, 26.4], [MID + 3.8, 27.2], [MID + 1.2, 27.2]], '#4e3460'),
+        heart(MID, 27, 1.5, '#e0284a'), F(E(MID - 0.4, 26.5, 0.4, 0.3, '#ffb0c0')),
+        band(TORSO, 34, 35, '#4e3460'), F(R(MID - 0.4, 34, 0.8, 1, GOLD))];
+    },
+    sleeve: () => '#6a4a80',
+    long: true,
+    shoulder: () => [E(0, 0.6, 3.1, 2.8, '#6a4a80'), F(E(-0.8, -0.3, 1.3, 0.9, '#8a6aa0')), F(limb(-2.2, 1.2, 2.2, 1.2, 0.4, 0.4, '#d8a8ec')), frill(-2.8, 2.8, 2.6, -3.3, 3.3, 4.2, 3, 0.6, WHITE)],
+    // The cape: a tall stand-up collar framing the head (crimson inside), the cape falling from the
+    // shoulders wider than she is to a hem of bat scallops on the floor.
+    back: () => {
+      const CAPE = '#4e3460';
+      const LINE = '#d8305a';
+      const hem = [];
+      for (let i = 0; i <= 8; i++) {
+        const x = -3 + i * 4.625;
+        hem.push([x, 54.4], [x + 2.31, 52.2]);
+      }
+      return [
+        T([[8.6, 26.4], [3.4, 13.6], [6, 15.8], [8.4, 14.2], [10.6, 22.4]], LINE), T([[22.4, 26.4], [27.6, 13.6], [25, 15.8], [22.6, 14.2], [20.4, 22.4]], LINE),
+        T([[9.4, 26.6], [4.6, 15.2], [6.4, 17.4], [8.2, 16.2], [10.6, 24]], CAPE), T([[21.6, 26.6], [26.4, 15.2], [24.6, 17.4], [22.8, 16.2], [20.4, 24]], CAPE),
+        T([[9.2, 24.8], [21.8, 24.8], [33.4, 52.2], ...hem.reverse(), [-2.4, 52.2]], CAPE),
+        T([[9.2, 24.8], [11, 24.8], [-0.8, 52.2], [-2.4, 52.2]], LINE), T([[21.8, 24.8], [20, 24.8], [31.8, 52.2], [33.4, 52.2]], LINE),
+        F(limb(6, 34, 3, 50, 0.6, 0.3, '#5e4472')), F(limb(25, 34, 28, 50, 0.6, 0.3, '#5e4472')), F(limb(15.5, 30, 15.5, 51, 0.5, 0.3, '#5e4472')),
+      ];
+    },
+    legs: () => ({ top: '#4a3458', low: '#4a3458', pad: null, cuff: '#d8a8ec' }),
+    skirt: () => {
+      const pts = skirtPts(43.4, 3.4);
+      const moon = (x, y) => [F(E(x, y, 0.75, 0.75, GOLD)), F(E(x + 0.35, y - 0.25, 0.6, 0.6, '#6a4a80'))];
+      return [tier(10, 21.2, 34.2, 5.6, 25.4, 45, 9, '#c8a0e0'), T(pts, '#6a4a80'), ...pleats(43.4, 3.4, '#4e3460', [11.8, 15.5, 19.2]),
+        frill(10 - 3.4, 21.2 + 3.4, 42.2, 10 - 3.8, 21.2 + 3.8, 44, 8, 0.6, WHITE),
+        ...moon(12.4, 38.6), ...moon(18.8, 40.4), ...moon(15.6, 36.4)];
+    },
+    shoe: (p, k, c) => [k.shaft(3, c('#4e3460'), 3.2), k.sole(c('#4e3460')),
+      k.poly([[1.8, -0.4], [3.6, 0.2], [4.6, -0.8], [4.2, 0.8], [2.6, 1.6]], c('#4e3460')), k.dot(-0.4, -0.6, 0.65, c(GOLD)), k.dot(-0.4, -0.6, 0.3, c('#4e3460'))],
+  },
+
   // A quilted puffer jacket whose padded rows bulge past the body, a fur-lined hood and high
   // collar, and a zip; jeans and snow boots with fur cuffs.
   puffer: {
@@ -495,7 +567,11 @@ const BASICS = {
   shoe: (p, k, c) => [k.sole(c('#f4eefa')), k.poly([[-3, 2], [3, 2], [2.8, 3], [-2.8, 3]], c('#c9bde0')), k.dot(0.8, -0.2, 0.55, c(BASIC_TRIM))],
 };
 
-export const STARTER_OUTFITS = Object.keys(OUTFITS);
+// (Outfits only one character wears aren't offered in the creator or the salon.)
+// (Malvina's without the hat, so her bat-wing hair shows: `villainessbare`.)
+OUTFITS.villainessbare = { ...OUTFITS.villainess, hat: undefined };
+export const OWN_OUTFITS = ['villainess', 'villainessbare'];
+export const STARTER_OUTFITS = Object.keys(OUTFITS).filter((k) => !OWN_OUTFITS.includes(k));
 const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? PET_OUTFITS[t] ?? OUTFITS.casual);
 
 export default {

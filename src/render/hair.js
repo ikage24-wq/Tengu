@@ -30,9 +30,11 @@ const RETIRED = {
   twintails: 'candy', bob: 'fluffybob', curtain: 'halfup', short: 'pixie', sweep: 'swoop', eyecover: 'swoop', undercut: 'swoop', quiff: 'wolfsleek', hero: 'wolfsleek',
   mohawk: 'wolfsleek', spiky: 'wolfsleek', bun: 'odango', topknot: 'odango', long: 'wavylong', wavy: 'wavylong', fluffy: 'wavylong', curly: 'cloud', ahoge: 'pixie', braid: 'braids',
 };
+// Styles only one character wears (not offered in the creator or the salon).
+const OWN_HAIR = ['villainess'];
 export const hairStyleOf = (look) => {
   const s = RETIRED[look.hairStyle] ?? look.hairStyle;
-  return HAIR_STYLES.includes(s) ? s : HAIR_STYLES[0];
+  return HAIR_STYLES.includes(s) || OWN_HAIR.includes(s) ? s : HAIR_STYLES[0];
 };
 // Styles whose long fringe hides the near eye and brow.
 export const coversEye = (style, bangs = 'auto') => bangs === 'peek' || ((!bangs || bangs === 'auto') && style === 'swoop');
@@ -873,6 +875,35 @@ Object.assign(STYLES, {
       hang: [napeShadow(r), ...sheet({ len: 44, flare: 12.4, ends: 'level', n: 3, w0: 11.4 }, r, m, 0.8)],
       front: bangs('widow', r, m, [lock([[25.2, 12], [26.4, 18], [26.2, 25], [26.8, 31]], 3, r.base, m, 1.1, 0.3), lock([[5.8, 12], [4.6, 18], [4.8, 25], [4.2, 31]], 3, r.sh1, m, 1.1, 0.3)]),
       tips: [33, 38],
+    };
+  },
+  // Malvina Grimsworth's (the would-be villainess): two colossal drills down to her knees, tied
+  // up high under a pair of bat wings shaped out of her own hair (scalloped, each scallop with
+  // its own shine), a long sheet behind, and a sharp widow's-peak fringe. Plum-black, the drills
+  // fading to a vivid tip colour.
+  villainess(r, m) {
+    // Each wing spreads out sideways from the knot like a bat's: a leading edge up to a little
+    // claw, then three scalloped fingers along the trailing edge, a bone running to each.
+    const wing = (dir) => {
+      const p = [[9, 7.6], [6.8, 4.8], [4.2, 2.4], [1.4, 0.8], P(-1.6, 0.2), [-0.6, 2.2], [-0.4, 3.8], P(-1.2, 5.6), [0.6, 4.8], [2.2, 5.2], P(2, 7.2), [3.6, 6], [5.2, 6.6], P(5.6, 8.4), [6.8, 7.6], [8.2, 8.4]];
+      const s = dir > 0 ? (q) => q : (q) => [31 - q[0], q[1]];
+      const pts = dir > 0 ? p : fx(p);
+      return [poly(smooth(pts), r.base),
+        streak(...s([8.6, 7.4]), ...s([-0.8, 0.8]), 0.55, 0.3 * dir, r.sh1), streak(...s([8.6, 7.6]), ...s([-0.6, 5]), 0.45, 0.2 * dir, r.sh1),
+        streak(...s([8.6, 7.8]), ...s([2.2, 6.6]), 0.4, 0.1 * dir, r.sh1), streak(...s([8.6, 7.9]), ...s([5.4, 7.8]), 0.35, 0, r.sh1),
+        streak(...s([7, 5]), ...s([2, 1.6]), 0.7, -0.15 * dir, r.hi),
+        F(T([s([-1.6, 0.2]), s([-2.6, -0.8]), s([-1, -0.2])], r.sh2)),
+        F(E(...s([9.2, 7.8]), 1.5, 1.6, r.sh2))];
+    };
+    const wings = [...wing(1), ...wing(-1)];
+    return {
+      head: [crown(r, 0.6), ...wings],
+      hang: [napeShadow(r, 21), ...sheet({ len: 26, flare: 10, wave: 0.6, ends: 'points', n: 4 }, r, m),
+        lock([[6.2, 7.8], [3.6, 10.2], [2, 13]], 5.2, r.sh1, m), lock([[24.8, 7.8], [27.4, 10.2], [29, 13]], 5.2, r.sh1, m),
+        ...drill(1.6, 15, 7, 3.4, 1, r, m, 1.1), ...drill(29.4, 15, 7, 3.4, -1, r, m, 1.1)],
+      front: bangs('mshape', r, m, sideLocks(r, m, [[25.2, 11], [26.2, 16.4], [25.8, 21.4]], undefined, 3.2)),
+      top: wings,
+      tips: [26, 42],
     };
   },
   // Demon buns: two buns twisted up into smooth curved horns, long hair down the back.

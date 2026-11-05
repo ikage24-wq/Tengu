@@ -16,7 +16,7 @@ import { outfitFx, drawOutfitFx } from './gacha.js';
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
-import { STARTER_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
+import { STARTER_OUTFITS, OWN_OUTFITS, starterHasBack, starterHasHat, starterHasHands } from './jobgear/starter.js';
 import { PET_OUTFIT_KEYS } from './jobgear/pets.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
@@ -190,7 +190,7 @@ const PATH_TRIMS = {
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
-  const style = OUTFIT_STYLES.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) ? look.outfit : 'casual';
+  const style = OUTFIT_STYLES.includes(look.outfit) || PET_OUTFIT_KEYS.includes(look.outfit) || OWN_OUTFITS.includes(look.outfit) ? look.outfit : 'casual';
   // Where nothing is equipped, the outfit picked in the creator.
   const starter = { family: 'starter', design: style, tier: style, color: outfit, pal: starterPalette(outfit, look.skinTone ?? '#fff0e6') };
   // A real hero's gear (not a preview or a townsperson, who pass none): where the top, bottoms or
@@ -316,6 +316,10 @@ const EYE_LOOK = {
   // The redrawn hero's jewel eyes: big, the iris painted like a cut gem (heroine.js drawEye `jewel`).
   jewel: { rx: 2.4, ry: 2.95, tilt: 0.12, wing: 1.1, flicks: 2, iris: 1.36, jewel: true, sparkle: true },
   doll: { rx: 2.35, ry: 2.75, tilt: 0, wing: 0.15, flicks: 0, iris: 1.55, pupil: 'ring', sparkle: true },
+  // A would-be villainess's glare (Malvina Grimsworth): sharply upswept, a heavy winged lash with
+  // three flicks, a slightly smaller iris for that scheming look. Still big and bright: she can't
+  // quite manage menacing.
+  villain: { rx: 2.15, ry: 2.4, tilt: 0.52, wing: 2, flicks: 3, iris: 1.18, open: 0.92, sparkle: true },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -552,6 +556,11 @@ function mouthShapes(kind, sk) {
     // corner hitched high into a crease in the cheek.
     case 'smugcat': return [arc(x - 0.7, MY + 0.35, 0.72, 0.68, 10, 170, 0.58, LIP), arc(x + 0.85, MY + 0.1, 0.9, 0.85, 10, 170, 0.6, LIP), stroke([[x + 1.65, MY + 0.3], [x + 2.15, MY - 0.35]], 0.5, LIP)];
     case 'smirkwide': return [stroke([[x - 1.6, MY + 0.6], [x + 0.2, MY + 0.6], [x + 1.8, MY - 0.3], [x + 2.3, MY - 0.9]], 0.6, LIP), stroke([[x + 2.75, MY - 1.2], [x + 2.95, MY - 0.2]], 0.32, sk.lip)];
+    // The evil grin: a wide toothy curl up to one side with a fang poking down, a dark mouth
+    // behind the teeth (Malvina's scheming face).
+    case 'evilgrin': return [F(T([[x - 2.1, MY - 0.4], [x + 2.4, MY - 1], [x + 2, MY + 0.4], [x + 0.6, MY + 1.6], [x - 1.2, MY + 1.2]], MOUTH)),
+      F(T([[x - 1.9, MY - 0.35], [x + 2.2, MY - 0.92], [x + 2.1, MY - 0.4], [x - 1.7, MY + 0.15]], '#ffffff')),
+      F(T([[x + 0.9, MY - 0.4], [x + 1.6, MY - 0.55], [x + 1.25, MY + 0.55]], '#ffffff')), F(E(x + 0.2, MY + 1, 0.6, 0.25, '#ff9fb8'))];
     case 'ohoho': return [F(T([[x - 1.6, MY - 0.2], [x + 1.9, MY - 0.7], [x + 0.9, MY + 1.4], [x - 0.6, MY + 1.3]], MOUTH)), F(T([[x - 1.4, MY - 0.15], [x + 1.7, MY - 0.6], [x + 1.6, MY - 0.15], [x - 1.3, MY + 0.25]], '#ffffff')), F(E(x + 0.2, MY + 1, 0.7, 0.3, '#ff9fb8'))];
     default: return [arc(x, MY, 1.3, 1.1, 25, 155, 0.62, LIP)];
   }
@@ -929,6 +938,31 @@ export function faceFrame(kind, time) {
       if (win(p, 0.5, 0.56)) return { closed: ['blink', false], lid: 0.1, glance: 1, mouth: 'o', brows: [[1.3, -0.4], [1.4, -0.4]], blush: 1 };
       if (win(p, 0.56, 0.8)) return { closed: ['blink', 'blink'], mouth: 'pout', brows: [[1.5, -0.5], [1.5, -0.5]], blush: 1.4 };
       return { closed: ['blink', 'blink'], mouth: 'pursed', brows: [[1.3, -0.4], [1.3, -0.4]], blush: 1, extra: ['sighpuff'] };
+    }
+    // Malvina Grimsworth's faces. Scheming: narrowed glare, the evil grin, a brow cocked, rubbing
+    // her hands in her head; every few seconds the grin widens with a little sparkle of glee.
+    case 'scheme': {
+      const p = at(3.8);
+      const f = { lids: [0.38, 0.3], mouth: 'evilgrin', brows: [[-0.3, 0.7], [0.4, 0.2]], glance: 0.4 };
+      if (win(p, 0.55, 0.8)) Object.assign(f, { lids: [0.2, 0.15], brows: [[0.2, 0.5], [1.2, -0.2]], extra: ['spark0'] });
+      if (win(p, 0.8, 0.9)) Object.assign(f, { closed: ['blink', 'blink'] });
+      return f;
+    }
+    // Flustered: thanked for a good deed she swears was evil. A hot blush, a wobbling mouth, eyes
+    // darting away, sweat sliding, and now and then a shocked "!" at what she just heard.
+    case 'fluster': {
+      const p = at(2.6);
+      const f = { mouth: Math.floor(t * 6) % 2 ? 'wavy' : 'pout', blush: 2, glance: win(p, 0.3, 0.6) ? 1 : -1, brows: [[0.8, -0.6], [0.8, -0.6]], extra: [`sweat${Math.round(Math.min(1, p * 1.5) * 4)}`] };
+      if (win(p, 0.75, 0.95)) Object.assign(f, { wide: true, mouth: 'gasp', extra: [...f.extra, `bang${Math.min(3, Math.floor((p - 0.75) * 20))}`] });
+      return f;
+    }
+    // Tantrum: a scheme backfired again. Cheeks puffed, brows down hard, eyes welling, an anger
+    // vein throbbing; between puffs a wail.
+    case 'tantrum': {
+      const p = at(1.4);
+      const f = { cross: 0.9, puff: true, mouth: 'tiny', brows: [[-0.3, 1], [-0.3, 1]], teary: 1, blush: 1.4, extra: [win(p, 0, 0.5) ? 'veinbig' : 'vein'] };
+      if (win(p, 0.6, 0.95)) Object.assign(f, { puff: false, mouth: 'yell', teary: 2, closed: [true, true] });
+      return f;
     }
     case 'judging': {
       // Looking you up and down through a narrowed eye, scanning; the eyes narrow; a doubtful
