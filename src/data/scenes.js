@@ -281,11 +281,13 @@ export const SIDE_SCENES = {
     { together: [{ emote: 'rook', kind: 'sweat', dur: 1.4 }, { face: 'rook', to: 1 }] },
     { who: 'rook', text: 'There is no kitchen dance. Ignore the dancer.', mood: 'angry' },
     { together: [{ face: 'rook', to: 'player' }, { cam: ['rook', 'player'], dur: 0.9 }] },
-    { who: 'rook', text: "Forty years I've sent crews off to see the world, kid. Cave, ruins, canyon, the King's own throne. You went everywhere I sent you, and you came back every time. Proudest captain on the coast.", mood: 'happy' },
+    { who: 'rook', text: "Forty years I've sent crews off to see the world, kid. Cave, ruins, canyon, the King's own throne.", mood: 'sad' },
+    { who: 'rook', text: "You went everywhere I sent you, and you came back every time. Proudest captain on the coast.", mood: 'happy' },
     { who: 'rook', text: '...This calls for a song. And this time I will sing it. One verse.', mood: 'happy' },
     { together: [{ emote: 'rook', kind: 'note', dur: 2 }, { fx: 'notes', at: 'rook', n: 14 }, { fx: 'feathers', at: 'rook', n: 8 }] },
     { who: null, text: 'Captain Rook sings one verse of a sea shanty. It is about a crab. It is unexpectedly sad. The whole harbor claps, mostly out of relief when it ends.' },
-    { who: 'rook', text: "The Harpies came down from the Sky Garden. Above that is Starfall Heights, and above that, they say, the wind sleeps. Go on up. And if you see a falling star, my crew swears you can catch one.", mood: 'happy' },
+    { who: 'rook', text: "The Harpies came down from the Sky Garden. Above that is Starfall Heights, and above that, they say, the wind sleeps.", mood: 'happy' },
+    { who: 'rook', text: "Go on up. And if you see a falling star, my crew swears you can catch one.", mood: 'happy' },
   ],
   // ----- Granny Kelp and Old Lumen -----
   kelp_done: [
@@ -447,8 +449,8 @@ export const SIDE_SCENES = {
   ],
   // ----- The instructors' trials -----
   trial_brann: [
-    { who: 'brann', text: 'The Crystal Golems are slow, heavy, and they never back down. Neither should you.' },
-    { who: 'brann', text: 'Twenty of them. Stand your ground the whole time. Then we talk about your future.' },
+    { who: 'brann', text: "The Crystal Golems are slow, heavy, and they never back down. Neither should you. Neither do I. It's my whole personality." },
+    { who: 'brann', text: "Twenty of them. Stand your ground the whole time. Then we talk about your future. I've prepared a speech. It's short." },
   ],
   // ----- Brann's shield -----
   brann_stand_done: [
@@ -484,8 +486,8 @@ export const SIDE_SCENES = {
     { who: 'brann', text: "That's what a warrior is for, {name}. Standing in front. Come find me at level 30. Your trial is waiting, and it has more getting hit in it.", mood: 'happy' },
   ],
   trial_brann_done: [
-    { who: 'brann', text: "Look at that. Not a step back. You've got a warrior's heart, {name}.", mood: 'happy' },
-    { who: 'brann', text: 'Two paths now. The Paladin, who shields everyone. Or the Berserker, who ends fights fast. Choose with your heart.' },
+    { who: 'brann', text: "Look at that. Not a step back. You've got a warrior's heart, {name}. ...That was the speech. I practised it.", mood: 'happy' },
+    { who: 'brann', text: "Two paths now. The Paladin, who shields everyone. Or the Berserker, who ends fights fast. Choose with your heart. Not your stomach. That's how I ended up with this haircut." },
   ],
   // ----- Kestrel's arrow -----
   kestrel_targets_done: [
@@ -519,12 +521,13 @@ export const SIDE_SCENES = {
     { who: 'kestrel', text: "Keep your aim true and the wind will bring it home, {name}. Come see me at level 30. Your trial's waiting.", mood: 'happy' },
   ],
   trial_kestrel: [
-    { who: 'kestrel', text: 'Wraiths drift. They dodge. They vanish. A real archer hits them anyway.' },
+    { who: 'kestrel', text: "Wraiths drift. They dodge. They vanish. A real archer hits them anyway. And any arrow that goes straight up and doesn't come down, we never speak of." },
     { who: 'kestrel', text: 'Fifteen. In the Crystal Cave. Breathe out before every shot.' },
   ],
   trial_kestrel_done: [
-    { who: 'kestrel', text: '...Hm. Clean shots. Not bad at all.', mood: 'happy' },
-    { who: 'kestrel', text: 'The Phantom Trickster makes her arrows vanish and her own copies shoot beside her. The Arbalist Engineer builds her own crossbow and blows things up with it. Which are you?' },
+    { who: 'kestrel', text: "...Hm. Clean shots. Not bad at all. And every arrow came back down. I checked.", mood: 'happy' },
+    { who: 'kestrel', text: "The Phantom Trickster makes her arrows vanish and her own copies shoot beside her. The Arbalist Engineer builds her own crossbow and blows things up with it. Which are you?" },
+    { who: 'kestrel', text: "Choose fast. Clover is already writing a song for each.", mood: 'happy' },
   ],
   // ----- Elowen's teapot -----
   elowen_dance_done: [
@@ -561,11 +564,11 @@ export const SIDE_SCENES = {
     { who: 'elowen', text: "Every spring. I'll bring better ones. Now, {name}, come back at level 30. A Star Witch's trial waits, and you've earned your tea.", mood: 'happy' },
   ],
   trial_elowen: [
-    { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home." },
-    { who: 'elowen', text: 'Twenty of them. Be kind, but be firm. They are lost, not wicked.' },
+    { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home. Gracefully. With feeling. I will be judging." },
+    { who: 'elowen', text: "Twenty of them. Be kind, but be firm. They are lost, not wicked. Mostly." },
   ],
   trial_elowen_done: [
-    { who: 'elowen', text: 'I felt every one of them go home. Peacefully. You have a gift, {name}.', mood: 'happy' },
+    { who: 'elowen', text: "I felt every one of them go home. Peacefully. You have a gift, {name}. Don't tell Mira I said so. She'll be insufferable.", mood: 'happy' },
     { who: 'elowen', text: 'The Starlight Idol sings, and her songs heal everyone who hears them. The Astronomer calls planets and moons down out of the sky. Both are yours to choose.' },
   ],
   // ----- Vex and Tora's hammer -----
@@ -606,10 +609,11 @@ export const SIDE_SCENES = {
   ],
   trial_vex: [
     { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. All that armour turns slow: spin round them and they'll never land a blow." },
-    { who: 'vex', text: "Never stand still. That's the only rule of the dance." },
+    { who: 'vex', text: "They can't see you anyway. No heads. Rude to mention it.", mood: 'happy' },
+    { who: 'vex', text: "Never stand still. That's the only rule of the dance. Also, don't steal their helmets. They need those. For... where their heads were." },
   ],
   trial_vex_done: [
-    { who: 'vex', text: "Twenty, and not a scratch on you. I'd almost think you were me.", mood: 'happy' },
+    { who: 'vex', text: "Twenty, and not a scratch on you. I'd almost think you were me. Almost. You'd need better hair.", mood: 'happy' },
     { who: 'vex', text: 'The Blade Dancer throws her rings and catches them on a turn. The Sky Dancer rides the wind and never touches the ground. Pick your stage.' },
   ],
 };
@@ -1371,27 +1375,27 @@ export const WHALE_RADIO = {
 export const JOB_SCENES = {
   warrior: [
     { card: 'A New Path', sub: 'Warrior' },
-    { who: 'brann', text: 'Welcome to Ember Crag, {name}. From today, you stand in front so others can shine behind you.', mood: 'happy' },
-    { who: 'brann', text: 'Heavy blows, steady feet, and a big heart. Now go hit something that deserves it!' },
+    { who: 'brann', text: "Welcome to Ember Crag, {name}. From today, you stand in front so others can shine behind you. You'll get hit a lot. You'll love it.", mood: 'happy' },
+    { who: 'brann', text: "Heavy blows, steady feet, and a big heart. Now go hit something that deserves it! Not me." },
   ],
   archer: [
     { card: 'A New Path', sub: 'Acrobat Archer' },
     { who: 'kestrel', text: 'From today you are an Acrobat Archer, {name}. Flip, tumble, and keep your aim true the whole way round.' },
-    { who: 'kestrel', text: '...And keep your bowstring dry. That part nobody tells you.', mood: 'happy' },
+    { who: 'kestrel', text: "...And keep your bowstring dry. Nobody tells you that part. Also, arrows come back down. Usually.", mood: 'happy' },
   ],
   thief: [
     { card: 'A New Path', sub: 'Wind Dancer' },
-    { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Light feet, big finish.", mood: 'happy' },
+    { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Second star. After me. Light feet, big finish.", mood: 'happy' },
     { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
   spiritmage: [
     { card: 'A New Path', sub: 'Star Witch' },
-    { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily.", mood: 'happy' },
-    { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. You've earned it." },
+    { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily. It's annoying. In a good way.", mood: 'happy' },
+    { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. Show off a lot. It's half the job." },
   ],
   path: [
     { card: 'A New Path', sub: '{job}' },
-    { who: null, text: 'Something settles inside you, like a key turning in a lock you never knew you had.' },
+    { who: null, text: "Something settles inside you, like a key turning in a lock you never knew you had. Also, your numbers went up." },
     { who: 'player', text: 'I am a {job} now.', mood: 'happy' },
   ],
 };

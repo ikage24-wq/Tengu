@@ -155,7 +155,7 @@ export const QUESTS = {
   // it to warriors).
   warrior_trial: {
     id: 'warrior_trial', name: "The Warrior's Trial", giver: 'brann', minLevel: 30, family: 'warrior',
-    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. Come back and I'll show you the Paladin's way and the Berserker's way.",
+    text: "You've grown strong, but the next path asks more than strength. Go to the Crystal Cave and break 20 Crystal Golems. Stand your ground the whole time. If you step back, I'll know. I'll feel it in my shield arm. Then come back and I'll show you the Paladin's way and the Berserker's way.",
     objectives: [{ type: 'kill', mob: 'rockgolem', count: 20 }],
     rewards: { exp: 48000, gold: 1100, items: [{ id: 'elixir', qty: 5 }] },
   },
@@ -163,21 +163,21 @@ export const QUESTS = {
   // Arbalist Engineer).
   archer_trial: {
     id: 'archer_trial', name: "The Acrobat Archer's Trial", giver: 'kestrel', minLevel: 30, family: 'archer',
-    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths, then come back and I'll show you the Phantom Trickster's way and the Arbalist Engineer's way.",
+    text: "Anyone can hit a slime. A real archer hits what flies. Go to the Crystal Cave and shoot down 15 Wraiths. They drift, they dodge, they vanish, they're very annoying. Then come back and I'll show you the Phantom Trickster's way and the Arbalist Engineer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 41000, gold: 880, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Elowen's trial for a Star Witch before either level 30 path (the Starlight Idol, the Astronomer).
   spiritmage_trial: {
     id: 'spiritmage_trial', name: "The Star Witch's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home. Lay 20 of them to rest, then come back and I'll show you the Starlight Idol's way and the Astronomer's way.",
+    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home, beautifully, while everyone watches. Lay 20 of them to rest, then come back and I'll show you the Starlight Idol's way and the Astronomer's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
     rewards: { exp: 55000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
   },
   // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
   thief_trial: {
     id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',
-    text: "Pretty steps are nothing if you can't keep them up under pressure. The Dullahans in the Twilight Ruins ride at night, all armour and slow turns. Dance rings round 20 of them and bring them down, then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
+    text: "Pretty steps are nothing if you can't keep them up under pressure. The Dullahans in the Twilight Ruins ride at night, all armour and slow turns. Dance rings round 20 of them and bring them down. If you trip, trip with style. Then come back and I'll show you the Blade Dancer's way and the Sky Dancer's way.",
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 29000, gold: 750, items: [{ id: 'elixir', qty: 5 }] },
   },

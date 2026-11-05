@@ -304,3 +304,22 @@ test('the endings for Rook, Mira, Lulu and Granny Kelp play through where each o
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test('the new main-story scenes play through where their givers stand', () => {
+  for (const [id, mapId, who] of [['ch2_found', 'harbor', 'rook'], ['ch4_road', 'harbor', 'vex'], ['ch6_sky', 'grove', 'elowen'], ['ch6_stars', 'grove', 'elowen'], ['ch7_rook', 'sprout', 'mira']]) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, mapId, 'start');
+    const giver = w.map.npcs.find((n) => n.id === who);
+    assert.ok(giver, `${who} stands on ${mapId}`);
+    w.body.x = giver.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});
