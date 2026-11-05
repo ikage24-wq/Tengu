@@ -187,6 +187,7 @@ test('the tracker follows every quest until you pin your own, and new quests joi
   const char = createCharacter('Pinner', {});
   char.level = 20;
   char.quests.first_steps = { state: 'done' };
+  char.quests.marlo_scales = { state: 'done' };
   for (const id of ['fluffy', 'snail_trouble', 'mush_menace']) acceptQuest(char, id);
   assert.deepEqual(trackedQuests(char), ['fluffy', 'snail_trouble', 'mush_menace']);
   assert.equal(toggleTracked(char, 'snail_trouble'), false);

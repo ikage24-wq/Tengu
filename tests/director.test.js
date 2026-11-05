@@ -170,3 +170,21 @@ test("Vex's hammer story plays through on Pastel Harbor, and Tora comes to the s
     assert.ok(!w.map.npcs.some((n) => n.id === 'tora'), `${id}: Tora goes home to her forge`);
   }
 });
+
+test("Marlo's dream-jar story plays through on Pastel Harbor", () => {
+  for (const id of ['marlo_scales_done', 'marlo_tusk_done', 'marlo_key_done', 'spa_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'harbor', 'west');
+    const marlo = w.map.npcs.find((n) => n.id === 'marlo');
+    w.body.x = marlo.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

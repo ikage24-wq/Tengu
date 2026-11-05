@@ -87,8 +87,8 @@ export const QUESTS = {
     rewards: { exp: 10000, gold: 330, items: [{ id: 'warrior_gloves_15', qty: 1, forJob: true }] },
   },
   tusk_trader: {
-    id: 'tusk_trader', name: 'Fang Trader', giver: 'marlo', minLevel: 15,
-    text: "Warg fangs sell like hotcakes. Bring me 15 and I'll share the profits.",
+    id: 'tusk_trader', name: 'Fang Trader', giver: 'marlo', minLevel: 15, prereq: 'marlo_scales',
+    text: "Warg fangs sell like hotcakes. Bring me 15 and I'll share the profits. The jar's getting heavy, partner. Not that you've seen any jar.",
     objectives: [{ type: 'collect', item: 'tusk', count: 15 }],
     rewards: { exp: 16000, gold: 480, items: [] },
   },
@@ -247,6 +247,9 @@ export const QUESTS = {
     objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point' }],
     rewards: { exp: 1500, gold: 680, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },
   },
+  // Marlo's story: every coin goes in a jar marked THE DREAM, and the dream is the bathhouse at
+  // Serpent Springs that was Marlo's grandmother's, lost to the Lamia long ago. The spa at the end
+  // is that bathhouse, open again.
   marlo_scales: {
     id: 'marlo_scales', name: 'Shiny Scales', giver: 'marlo', minLevel: 9,
     text: "Basilisk scales! Ladies in the capital sew them on their gloves. Bring me 15 and I'll make it worth your while.",
@@ -424,9 +427,15 @@ export const QUESTS = {
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
     rewards: { exp: 34000, gold: 900, items: [{ id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  marlo_key: {
+    id: 'marlo_key', name: 'The Brass Key', giver: 'marlo', minLevel: 23, prereq: 'tusk_trader',
+    text: "Grandma's bathhouse key went missing on the Fox Shrine Path the night we fled. Nekomata hoard anything that jingles, so it's in one of their bell piles, I'd bet my cart on it. Bring me 8 Nekomata Bells and let's see.",
+    objectives: [{ type: 'collect', item: 'nekomata_bell', count: 8 }],
+    rewards: { exp: 18000, gold: 480, items: [{ id: 'warrior_bottom_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
   marlo_spa: {
-    id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31,
-    text: "Serpent Springs, off the Crystal Cave! Hot pools, steam, the works. I'm opening a spa... once someone clears the Lamia out. Bring me 9 of their scales as proof, they'll make lovely tiles.",
+    id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31, prereq: 'marlo_key',
+    text: "Serpent Springs, off the Crystal Cave. Hot pools, steam, Grandma's tiles. The Lamia still lounge in it like they own the place. Clear them out and bring me 9 of their scales for new tiles. Then we open.",
     objectives: [{ type: 'collect', item: 'lamia_scale', count: 9 }, { type: 'kill', mob: 'lamia', count: 10 }],
     rewards: { exp: 57000, gold: 1200, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
   },

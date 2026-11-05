@@ -233,7 +233,7 @@ export const NPCS = {
       'hoodie', 'kitty_ears', 'sailor_top',
     ],
     stockLevels: [15, 40],
-    quests: ['marlo_scales', 'tusk_trader', 'marlo_spa'],
+    quests: ['marlo_scales', 'tusk_trader', 'marlo_key', 'marlo_spa'],
   },
 };
 
