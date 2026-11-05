@@ -96,3 +96,22 @@ test('the real story scenes play through on their own staging and presses', () =
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+// The instructors' story chains play at their camp, where the people in them stand.
+test("Brann's shield story plays through at Ember Crag", () => {
+  for (const id of ['brann_stand_done', 'brann_ruins_done', 'brann_forge_done', 'brann_howl_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'crag', 'west');
+    const brann = w.map.npcs.find((n) => n.id === 'brann');
+    w.body.x = brann.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

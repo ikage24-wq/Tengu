@@ -52,7 +52,7 @@ export const NPCS = {
   brann: {
     id: 'brann', name: 'Brann', title: 'Warrior Instructor', role: 'instructor', family: 'warrior',
     building: 'warrior', sign: 'Warrior Hall', gear: { weapon: { id: 'sword_50', variant: 'crimson' }, ...outfit('warrior', 50) },
-    quests: ['brann_stand', 'brann_howl', 'warrior_trial', 'daily_crag'], showJob: 'paladin',
+    quests: ['brann_stand', 'brann_ruins', 'brann_howl', 'warrior_trial', 'daily_crag'], showJob: 'paladin',
     look: { hairStyle: 'cloud', hairColor: '#7a5238', skinTone: '#e7b48f', eyeColor: '#3b3650', outfitColor: '#ff9b7a', eyeStyle: 'round', face: 'cool' },
     greeting: 'Welcome to Ember Crag! Strong arms, steady heart. Warriors stand in front so others can shine.',
   },
@@ -79,7 +79,7 @@ export const NPCS = {
   },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
-    quests: ['tora_handles', 'tora_cores'],
+    quests: ['tora_handles', 'brann_forge', 'tora_cores'],
     // She polishes gear at her forge (ui/polish.js).
     polish: true,
     building: 'forge', sign: "Tora's Forge", gear: { weapon: { id: 'axe_25' }, gloves: { id: 'warrior_gloves_25' } },

@@ -309,10 +309,12 @@ export const QUESTS = {
     rewards: { exp: 110000, gold: 1600, cash: 1000, items: [{ id: 'elixir', qty: 10 }] },
   },
 
-  // The instructors: one task each, between your first job and the trial at 30.
+  // The instructors: a short story each, between your first job and the trial at 30.
+  // Brann's: the shield he lost holding a doorway in the Twilight Ruins, the scared recruit he
+  // held it for (Tora, his blacksmith now), and the night it comes back to him.
   brann_stand: {
     id: 'brann_stand', name: 'Stand Your Ground', giver: 'brann', minLevel: 15, family: 'warrior',
-    text: "A warrior holds the line. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back.",
+    text: "A warrior holds the line. The Wargs in Mossy Woods hunt in packs: face 25 of them and don't take a step back. Let's see what you're made of.",
     objectives: [{ type: 'kill', mob: 'boarlet', count: 25 }],
     rewards: { exp: 12000, gold: 350, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
@@ -357,9 +359,21 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'kitsunemiko', count: 25 }],
     rewards: { exp: 31000, gold: 830, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  brann_ruins: {
+    id: 'brann_ruins', name: 'Where the Line Broke', giver: 'brann', minLevel: 22, prereq: 'brann_stand', family: 'warrior',
+    text: "Twenty years ago I held the old gatehouse at the top of the Twilight Ruins, alone, all night. By morning my shield was gone and I couldn't tell you where. Climb up there for me. The Dullahans still walk that wall: put 15 of them to rest on the way.",
+    objectives: [{ type: 'visit', map: 'ruins', above: 310, place: 'the old gatehouse at the top of the ruins' }, { type: 'kill', mob: 'boneknight', count: 15 }],
+    rewards: { exp: 17000, gold: 450, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  brann_forge: {
+    id: 'brann_forge', name: "The Smith's Secret", giver: 'tora', minLevel: 24, prereq: 'brann_ruins', family: 'warrior',
+    text: "Shh! Don't tell him. That shield? I've got it. I was the scared recruit he held that gatehouse for. I went back for it years later, and it's been in pieces under my bench ever since. Bring me 10 Bone Shards from the Dullahans for rivets, and I'll make it whole.",
+    objectives: [{ type: 'collect', item: 'bone_shard', count: 10 }],
+    rewards: { exp: 23000, gold: 600, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
   brann_howl: {
-    id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28,
-    text: "Up past my camp, Moonlit Ridge. Lupina's pack howls all night and nobody sleeps! Climb the howling rock at the top so they know who's boss, and calm 25 of them.",
+    id: 'brann_howl', name: 'Howl at the Moon', giver: 'brann', minLevel: 28, prereq: 'brann_forge', family: 'warrior',
+    text: "Tora told me. I can't hold it yet. Not after that night. You carry it. Climb the howling rock on Moonlit Ridge with it raised, and calm 25 of Lupina's pack under it. If it still holds, maybe I can too.",
     objectives: [{ type: 'visit', map: 'ridge', above: 510, place: 'the top of the howling rock' }, { type: 'kill', mob: 'lupina', count: 25 }],
     rewards: { exp: 34000, gold: 900, items: [{ id: 'warrior_bottom_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
