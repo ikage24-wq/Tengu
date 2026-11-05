@@ -1,6 +1,7 @@
 // Window state and routing: hotkeys for windows, binding skills/items to hotkeys, and world events.
 
 import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorate.js';
+import { drawQuestFx } from './questfx.js';
 import { button } from './kit.js';
 import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
@@ -278,6 +279,8 @@ export function drawUi(ui, state, world) {
   drawHud(ui, state, world);
   // The guide arrow and pill, while a route is set.
   drawGuide(ui, state, world);
+  // Quest moments: taking one, an objective filling, a quest ready, the reward card.
+  drawQuestFx(ui, state, world);
   drawPartyPanel(ui, state, world);
   drawPartyQuestCard(ui, state, world);
   drawChatBar(ui, state.chat, world);

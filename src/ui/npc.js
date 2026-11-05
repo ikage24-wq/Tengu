@@ -27,6 +27,7 @@ import { withZoom } from '../render/pixel.js';
 import { lookRows, sameLook, fullLook, LOOK_TABS } from './looks.js';
 import { COLORS, THEMES, softShadow, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot } from './kit.js';
 import { itemTooltip } from './tooltips.js';
+import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
 import { polishWindow } from './polish.js';
 import { teamOf } from '../world/teamwork.js';
@@ -223,6 +224,16 @@ export function npcWindow(ui, state, world) {
     const sub = st === 'ready' ? 'Ready to hand in!' : st === 'available' ? `New quest · ${QUESTS[id].rewards.exp.toLocaleString()} EXP` : `In progress · ${Math.round(progress * 100)}%`;
     choices.push({ label: QUESTS[id].name, sub, badge: st, progress, primary: st !== 'active', run: () => (dlg.quest = id) });
   }
+  // Two or more new quests here: take them all in one go (a story step, with its own scene, is
+  // still taken on its own).
+  const fresh = questIds.filter((id) => questState(char, id) === 'available' && !QUESTS[id].scenes?.accept);
+  if (fresh.length > 1) {
+    choices.unshift({ label: `Take all ${fresh.length} quests`, sub: fresh.map((id) => QUESTS[id].name).join(' · '), icon: 'scroll', primary: true, run: () => {
+      const took = fresh.filter((id) => acceptQuest(char, id));
+      for (const id of took) world.log(`Quest accepted: ${QUESTS[id].name}`, '#bff0dc');
+      if (took.length) questAccepted(world, took);
+    } });
+  }
   if (npc.polish) choices.push({ label: 'Polish gear', sub: 'Make a favourite piece stronger, up to +10', icon: 'star', primary: true, run: () => (dlg.mode = 'polish') });
   if (npc.shop) choices.push({ label: 'Browse the shop', sub: `${(npc.shop?.length ?? 0) > 0 ? 'Buy and sell' : 'Sell'} · you have ${char.gold.toLocaleString()} gold`, icon: 'shop', run: () => (dlg.mode = 'shop') });
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
@@ -409,7 +420,7 @@ function questPage(ui, state, world, npc, area, key) {
   const { x: tx, w: tw, theme: th } = area;
   const q = QUESTS[dlg.quest];
   const st = questState(char, dlg.quest);
-  const words = st === 'ready' ? 'You did it! Thank you so much. Here is your reward.' : q.text;
+  const words = st === 'ready' ? `${thanksFor(dlg.quest)} Here is your reward.` : q.text;
   const chars = typed(ui, dlg, `q:${dlg.quest}:${st}`, world, area, words);
   text(ctx, q.name, tx, area.y, { size: 9.5, bold: true, color: th.ink });
   ctx.font = font(9.5, true);
@@ -460,6 +471,7 @@ function questPage(ui, state, world, npc, area, key) {
   if (st === 'available' && (button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true }) || enter)) {
     acceptQuest(char, dlg.quest);
     world.log(`${q.story ? 'Story' : 'Quest'} accepted: ${q.name}`, '#bff0dc');
+    questAccepted(world, [dlg.quest]);
     // A story quest opens with its scene.
     if (q.scenes?.accept) {
       playScene(world, q.scenes.accept);
@@ -480,8 +492,11 @@ function questPage(ui, state, world, npc, area, key) {
         world.events.push({ type: 'mount', id: r.mount });
       }
       if (r.levels) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
+      questCompleted(world, dlg.quest, r);
       if (q.scenes?.done) playScene(world, q.scenes.done);
-      dlg.quest = null;
+      // The next step of their chain, offered straight away (unless a scene is playing first).
+      const next = q.scenes?.done ? null : (npc.quests ?? []).find((id) => QUESTS[id].prereq === dlg.quest && questState(char, id) === 'available');
+      dlg.quest = next ?? null;
     } else {
       world.log('Make room in your bag first.', '#ffb3c6');
     }
