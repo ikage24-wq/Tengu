@@ -15,7 +15,8 @@ const PAGES = {
     ['weaponEffects', 'Weapon effects', 'Live effects on weapons and elemental footsteps.'],
   ],
   Interface: [
-    ['minimap', 'Minimap', 'The map in the top-left corner.'],
+    ['minimap', 'Minimap', 'Drag it by its name; fold it or resize it with its stickers.'],
+    ['minimapSize', 'Minimap size', 'How big the minimap is.', ['small', 'normal', 'big']],
     ['questTracker', 'Quest tracker', 'Your pinned quests on a card you can drag anywhere.'],
     ['messageLog', 'Message log', 'Loot, quest, and system messages.'],
     ['mapBanner', 'Map name banner', 'The ribbon that drops in when you enter a map.'],
@@ -46,7 +47,7 @@ const CONTROLS = [
   ['← →', 'Move'], ['↑ ↓', 'Climb, talk, enter portals'], ['Space', 'Jump'], ['Z', 'Attack'], ['X', 'Pick up loot'],
   ['Q W E R A S D F 1-4', 'Hotkeys (skills and items)'], ['I', 'Bag'], ['C', 'Stats'], ['K', 'Skills'], ['L', 'Quests'], ['M', 'World map'], ['N', 'Play with friends'], ['B', 'Collection (monsters, fish, mounts)'],
   ['G', 'Life Skills'], ['O', 'Cash Shop'], ['P', 'Mochi pets'], ['Y', 'Decorate your island'], ['T', 'Emote wheel'], ['V', 'Ping for your party'], ['H', 'Ride your mount (on and off)'],
-  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['Drag', 'Move items, wear gear, set hotkeys'],
+  ['Enter', 'Chat (Tab: party or all)'], ['Esc', 'Close windows / Options'], ['`', 'Hide the interface'], ['Double-click a title', 'Fold a window away'], ['Drag', 'Move items, wear gear, set hotkeys'],
 ];
 
 const TAB_NAMES = [...Object.keys(PAGES), 'Controls', 'Character'];
@@ -97,13 +98,24 @@ export function optionsWindow(ui, state, world) {
       }
       y += rowH;
     }
+    // Everything you've moved, folded or resized back where it started.
+    if (page === 'Interface' && button(ui, x, y + 1, W - 20, 18, 'Reset layout (windows, minimap, quest card)', { size: 7.5, iconName: 'map' })) {
+      Object.assign(settings, { windowPos: {}, minimapPos: null, minimapMin: false, minimapSize: 'normal', trackerPos: null });
+      saveSettings();
+      for (const w of Object.values(state.windows)) {
+        if (!w.key) continue;
+        w.min = false;
+        w.moved = false;
+        if (w.home) Object.assign(w, { x: w.home.x, y: w.home.y });
+      }
+    }
     // The phone's screen in small, with the controls where they'll be.
     if (page === 'Phone') drawTouchPreview(ctx, x + (W - 16) / 2 - 64, y + 2, 128, 72, th);
   } else if (page === 'Controls') {
     CONTROLS.forEach(([keys, what], i) => {
       const cx = x + (i % 2) * 142;
       // (Rows packed to fit every key above the Resume button.)
-      const cy = y + Math.floor(i / 2) * 18;
+      const cy = y + Math.floor(i / 2) * 16.5;
       ctx.font = font(7, true);
       const kw = Math.min(70, ctx.measureText(keys).width + 10);
       box(ctx, cx, cy, kw, 13, { fill: th.light, edge: th.main, r: 4, width: 1 });

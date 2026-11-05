@@ -6,12 +6,11 @@ import { PQ_KINDS, TOKEN_SHOP } from '../data/coop.js';
 import { ITEMS } from '../data/items.js';
 import { getMap } from '../data/maps.js';
 import { countItem } from '../core/inventory.js';
-import { settings } from '../core/settings.js';
 import { partyMembers } from '../world/party.js';
 import { partyFriends } from '../net/together.js';
 import { boardOffers, takePartyQuest, dropPartyQuest, pqGoal, buyWithTokens, boardTurnsIn } from '../world/partyquest.js';
 import { COLORS, THEMES, text, box, button, wrap, fit, bar, icon, hover, tooltip } from './kit.js';
-import { minimapBottom } from './hud.js';
+import { minimapBottom, minimapRight } from './hud.js';
 
 const KIND_COLOR = { hunt: '#ff8f9f', gather: '#7fd1a0', defend: '#8fb8ff' };
 const KIND_ICON = { hunt: 'star', gather: 'leaf', defend: 'shield' };
@@ -81,7 +80,7 @@ export function drawPartyQuestCard(ui, state, world) {
   const touch = Boolean(ui.input?.touch);
   const colY = state.leftColumnY ?? minimapBottom(world);
   const side = colY + 30 > (touch ? 214 : 300);
-  const x = side ? (settings.minimap ? 166 : 6) : 6;
+  const x = side ? minimapRight() : 6;
   const y = side ? 4 : colY;
   const w = 120;
   const col = KIND_COLOR[q.kind];

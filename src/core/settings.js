@@ -19,6 +19,10 @@ export const DEFAULT_SETTINGS = {
   minimap: true,
   questTracker: true,
   trackerPos: null, // where the quest tracker was dragged to ({ x, y }), or null for the top right
+  windowPos: {}, // where each window was left, and whether it was folded: { bag: { x, y, min } }
+  minimapSize: 'normal', // 'small' | 'normal' | 'big'
+  minimapPos: null, // where the minimap was dragged to ({ x, y }), or null for the top left
+  minimapMin: false, // folded down to its name
   mapBanner: true,
   showFps: false,
   messageLog: true,

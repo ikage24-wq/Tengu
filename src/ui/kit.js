@@ -6,6 +6,7 @@
 // with a lip that presses down; bars are glossy capsules with a shine that sweeps across.
 
 import { sfx } from '../audio/sfx.js';
+import { settings, saveSettings } from '../core/settings.js';
 import { RARITIES } from '../data/items.js';
 import { drawItemIcon } from '../render/icons.js';
 
@@ -1098,6 +1099,85 @@ const HEADER = 17;
 
 // A window with a title ribbon you can drag. `win` keeps { x, y, open }. Returns false if closed.
 // Options: `theme` (a key of THEMES) and `icon` (a key of the icon set) for the badge.
+// Remembers where a window was left (and whether it's folded), across sessions.
+function remember(win) {
+  if (!win.key) return;
+  settings.windowPos = { ...(settings.windowPos ?? {}), [win.key]: { x: win.x, y: win.y, min: Boolean(win.min) } };
+  saveSettings();
+}
+function fold(win, on) {
+  win.min = on;
+  win.moved = true;
+  remember(win);
+}
+// The minimize sticker: a dash (or, folded, a little window to unfold). Returns true when clicked.
+function minimizeSticker(ui, win, bx, by, theme, folded) {
+  const { ctx } = ui;
+  const hot = hover(ui, bx, by, 13, 13);
+  sticker(ctx, bx + 6.5, by + 6.5, 5.6, hot ? '#ffffff' : theme.light, { edge: theme.dark });
+  ctx.strokeStyle = theme.ink;
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  if (folded) {
+    ctx.rect(bx + 3.8, by + 3.8, 5.4, 5);
+  } else {
+    ctx.moveTo(bx + 3.8, by + 7.5);
+    ctx.lineTo(bx + 9.2, by + 7.5);
+  }
+  ctx.stroke();
+  if (hot) tooltip(ui, [{ text: folded ? 'Unfold' : 'Fold away', bold: true }, { text: 'Or double-click the title', size: 7, color: COLORS.muted }]);
+  if (clicked(ui, bx, by, 13, 13)) {
+    fold(win, !folded);
+    return true;
+  }
+  return false;
+}
+// A folded window: just its title on washi tape, with its icon, unfold and close stickers. It can
+// still be dragged by the tape. Returns false (nothing inside to draw).
+function folded(ui, win, w, title, theme, iconName, t) {
+  const { ctx } = ui;
+  const m = ui.mouse;
+  ctx.font = font(10, true);
+  const fw = Math.min(w, ctx.measureText(title).width + 84);
+  win.w = fw;
+  win.h = 19;
+  const { x, y } = win;
+  tape(ctx, x + fw / 2, y + 9, fw, 17, -0.01, theme.main, { pattern: 'stripes', alpha: 0.95 });
+  sticker(ctx, x + 11, y + 9, 7.5, '#ffffff', { edge: theme.dark });
+  icon(ctx, iconName, x + 11, y + 9.5, 10, theme.dark);
+  text(ctx, title, x + 23, y + 13, { size: 9.5, bold: true, color: '#ffffff', outline: theme.ink });
+  doodle(ctx, 'spark', x + fw - 40, y + 4, 2.5, '#ffffff', t);
+  if (minimizeSticker(ui, win, x + fw - 31, y + 2.5, theme, true)) return false;
+  const cx = x + fw - 16;
+  const hot = hover(ui, cx, y + 2.5, 13, 13);
+  sticker(ctx, cx + 6.5, y + 9, 5.6, hot ? '#ff6b8a' : theme.light, { edge: hot ? '#e04a6c' : theme.dark });
+  ctx.strokeStyle = hot ? '#ffffff' : theme.ink;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(cx + 4.2, y + 6.7);
+  ctx.lineTo(cx + 8.8, y + 11.3);
+  ctx.moveTo(cx + 8.8, y + 6.7);
+  ctx.lineTo(cx + 4.2, y + 11.3);
+  ctx.stroke();
+  if (clicked(ui, cx, y + 2.5, 13, 13)) {
+    win.open = false;
+    return false;
+  }
+  if (m.double && hover(ui, x, y, fw - 36, 19)) {
+    fold(win, false);
+    m.double = false;
+    m.clicked = false;
+    return false;
+  }
+  if (m.clicked && hover(ui, x, y, fw - 36, 19)) {
+    win.drag = { dx: m.x - x, dy: m.y - y, x0: win.x, y0: win.y };
+    ui.used = true;
+    m.clicked = false;
+  }
+  return false;
+}
+
 export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme ?? 'pink', icon: iconName = win.icon ?? 'star' } = {}) {
   const { ctx } = ui;
   const m = ui.mouse;
@@ -1112,10 +1192,13 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
       if (win.x !== win.drag.x0 || win.y !== win.drag.y0) win.moved = true;
     } else {
       win.drag = null;
+      remember(win);
     }
   }
   const { x, y } = win;
   const t = now();
+  // Folded down to its title strip (the minimize sticker, or a double-click on the title).
+  if (win.min && win.key) return folded(ui, win, w, title, theme, iconName, t);
 
   // A scrapbook page: lifted cream paper with a hand-drawn rim in the theme's ink, faint ruled
   // lines (a margin line down the left), the title on a strip of washi tape across the top, a
@@ -1178,6 +1261,14 @@ export function windowFrame(ui, win, w, h, title, { theme: themeKey = win.theme 
   ctx.restore();
   if (clicked(ui, cx, cy, 13, 13)) {
     win.open = false;
+    return false;
+  }
+  // Minimize: a sticker with a dash beside the close one (not on talk boxes and shops).
+  if (win.key && minimizeSticker(ui, win, x + w - 33, y + 2, theme, false)) return false;
+  if (win.key && m.double && hover(ui, x, y, w - 36, HEADER)) {
+    fold(win, true);
+    m.double = false;
+    m.clicked = false;
     return false;
   }
   if (m.clicked && hover(ui, x, y, w - 20, HEADER)) {

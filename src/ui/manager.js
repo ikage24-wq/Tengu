@@ -2,7 +2,8 @@
 
 import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorate.js';
 import { drawQuestFx } from './questfx.js';
-import { button } from './kit.js';
+import { button, text } from './kit.js';
+import { settings } from '../core/settings.js';
 import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
@@ -53,7 +54,7 @@ function noteVisits(world) {
 }
 
 export function createUiState() {
-  return {
+  const state = {
     windows: {
       bag: { x: 300, y: 56, open: false, tab: 0, sel: -1, theme: 'peach', icon: 'bag' },
       stats: { x: 8, y: 66, open: false, theme: 'pink', icon: 'star' },
@@ -89,6 +90,15 @@ export function createUiState() {
     lastClick: null,
     banner: 0,
   };
+  // Windows remember where you left them, and whether they were folded (kit.js windowFrame); not
+  // the talk box and shop, or a trade, which come and go with what's happening.
+  for (const [key, win] of Object.entries(state.windows)) {
+    if (key === 'npc' || key === 'trade') continue;
+    win.key = key;
+    const p = settings.windowPos?.[key];
+    if (p) Object.assign(win, { x: Math.max(0, Math.min(600, p.x)), y: Math.max(8, Math.min(330, p.y)), moved: true, min: Boolean(p.min) });
+  }
+  return state;
 }
 
 const TOGGLES = { KeyI: 'bag', KeyC: 'stats', KeyK: 'skills', KeyL: 'quests', KeyM: 'worldmap', KeyO: 'cashshop', KeyP: 'pet', KeyN: 'online', KeyB: 'collection', KeyG: 'life' };
@@ -149,6 +159,11 @@ export function routeInput(state, world, input, dt) {
   if (!isGm(world.char)) state.windows.admin.open = false;
   // T: the emote wheel. V: a ping for your party.
   if (input.pressed.has('KeyT')) state.emotes = !state.emotes;
+  // `: hide the whole interface (for screenshots and just looking), and back.
+  if (input.pressed.has('Backquote')) {
+    state.hideUi = !state.hideUi;
+    state.hideAt = performance.now() / 1000;
+  }
   if (input.pressed.has('KeyV') && !world.scene) smartPing(world);
   for (const [code, key] of Object.entries(TOGGLES)) {
     if (input.pressed.has(code)) state.windows[key].open = !state.windows[key].open;
@@ -274,6 +289,16 @@ export function drawUi(ui, state, world) {
     drawScene(ui, world, state.cam);
     return;
   }
+  // Interface hidden (the ` key): only a moment's note of how to bring it back.
+  if (state.hideUi) {
+    const a = 1 - Math.max(0, performance.now() / 1000 - (state.hideAt ?? 0) - 2) / 0.6;
+    if (a > 0) {
+      ui.ctx.globalAlpha = Math.min(1, a);
+      text(ui.ctx, 'Interface hidden. Press ` to bring it back.', 320, 350, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
+      ui.ctx.globalAlpha = 1;
+    }
+    return;
+  }
   dimWorld(ui.ctx, state);
   drawPings(ui, state, world);
   drawHud(ui, state, world);
@@ -296,6 +321,8 @@ export function drawUi(ui, state, world) {
   for (const key of state.order) {
     const win = state.windows[key];
     if (win.open && !win.wasOpen) {
+      // (Opened on purpose: it unfolds if it was folded away.)
+      if (win.min) win.min = false;
       state.order = [...state.order.filter((k) => k !== key), key];
       if (!win.moved) placeWindow(state, key);
     }

@@ -10,7 +10,7 @@ import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, ic
 import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
 import { heartbeat } from '../render/aura.js';
-import { settings } from '../core/settings.js';
+import { settings, saveSettings } from '../core/settings.js';
 import { partyMembers, PLAYSTYLES } from '../world/party.js';
 import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
@@ -750,25 +750,111 @@ function luma(hex) {
 }
 
 // The minimap's size: 150 wide, its height framed on the band of the map where things are.
+// The minimap's three sizes (Options, or the size sticker on it), and where it sits.
+const MINI_W = { small: 110, normal: 150, big: 210 };
+const miniAt = () => settings.minimapPos ?? { x: 8, y: 20 };
+// Whether it's in its usual corner (the left column of buffs and party cards stacks under it there).
+const miniHome = () => {
+  const p = miniAt();
+  return p.x < 40 && p.y < 40;
+};
 function minimapBox(map) {
-  const w = 150;
+  const w = MINI_W[settings.minimapSize] ?? 150;
   const scale = w / map.width;
   const tops = [...(map.terrain ?? [[0, map.groundY]]).map(([, ty]) => ty), ...map.platforms.map((p) => p.y), ...map.ropes.map((r) => r.top)];
   const top = Math.max(0, Math.min(...tops) - 70);
   const span = map.height - top;
-  const h = Math.max(44, Math.min(96, Math.round(span * scale * 1.6)));
+  const k = w / 150;
+  const h = Math.max(44 * k, Math.min(96 * k, Math.round(span * scale * 1.6)));
   return { w, scale, top, span, h };
 }
 
 // Where the left HUD column starts (under the minimap's frame, or the top when it's off): the
 // buffs, then the party panel and the party quest card stack from here.
 export function minimapBottom(world) {
-  return settings.minimap && world.map ? 20 + minimapBox(world.map).h + 4 + 6 : 8;
+  if (!settings.minimap || !world.map || !miniHome()) return 8;
+  const p = miniAt();
+  return settings.minimapMin ? p.y + 8 : p.y + minimapBox(world.map).h + 4 + 6;
 }
 
 // The y under the buff row (the party panel starts here).
 export function buffsBottom(world) {
   return minimapBottom(world) + (Object.keys(world.char.buffs).length ? 30 : 0);
+}
+
+const miniDrag = { on: false, dx: 0, dy: 0 };
+// Where something beside the minimap can start (its right edge when it's in its corner).
+export function minimapRight() {
+  if (!settings.minimap || !miniHome()) return 6;
+  return miniAt().x + (settings.minimapMin ? 120 : MINI_W[settings.minimapSize] ?? 150) + 8;
+}
+
+// The minimap's own controls: drag it by its name tape, fold it down to the tape, and step through
+// its sizes. Folded, only the tape shows (returns true: nothing else to draw).
+function minimapControls(ui, map, x, y, w, h) {
+  const { ctx } = ui;
+  const m = ui.mouse;
+  const drag = miniDrag;
+  if (drag.on) {
+    if (m.down) {
+      const nx = Math.round(Math.max(4, Math.min(640 - w - 8, m.x - drag.dx)));
+      const ny = Math.round(Math.max(16, Math.min(330, m.y - drag.dy)));
+      settings.minimapPos = { x: nx, y: ny };
+    } else {
+      drag.on = false;
+      saveSettings();
+    }
+  }
+  ctx.font = font(7.5, true);
+  const nw = Math.min(w, ctx.measureText(map.name).width + 26);
+  if (m.clicked && hover(ui, x - 2, y - 14, nw, 13)) {
+    drag.on = true;
+    drag.dx = m.x - x;
+    drag.dy = m.y - y;
+    ui.used = true;
+    m.clicked = false;
+  }
+  if (!settings.minimapMin) return false;
+  tape(ctx, x - 1 + nw / 2, y - 7.5, nw, 11, -0.015, SKY.main, { pattern: 'stripes', alpha: 0.92 });
+  icon(ctx, 'map', x + 6, y - 7.5, 8, '#ffffff');
+  text(ctx, map.name, x + 13, y - 4.5, { size: 7.5, bold: true, color: '#ffffff', outline: SKY.ink });
+  minimapStickers(ui, x, y, w, nw);
+  return true;
+}
+
+// The stickers at the end of the minimap's tape: fold (or unfold), and its size (S, M or L).
+function minimapStickers(ui, x, y, w, nw) {
+  const { ctx } = ui;
+  const folded = settings.minimapMin;
+  const bx = x + (folded ? nw + 4 : w - 22);
+  const by = y - 13;
+  const hotF = hover(ui, bx, by, 11, 11);
+  sticker(ctx, bx + 5.5, by + 5.5, 4.6, hotF ? '#ffffff' : SKY.light, { edge: SKY.dark });
+  ctx.strokeStyle = SKY.ink;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  if (folded) ctx.rect(bx + 3.2, by + 3.2, 4.6, 4.4);
+  else {
+    ctx.moveTo(bx + 3.2, by + 6);
+    ctx.lineTo(bx + 7.8, by + 6);
+  }
+  ctx.stroke();
+  if (hotF) tooltip(ui, [{ text: folded ? 'Unfold the map' : 'Fold the map away', bold: true }, { text: 'Drag it by its name to move it', size: 7, color: COLORS.muted }]);
+  if (clicked(ui, bx, by, 11, 11)) {
+    settings.minimapMin = !folded;
+    saveSettings();
+  }
+  if (folded) return;
+  const sx = bx + 13;
+  const size = settings.minimapSize ?? 'normal';
+  const hotS = hover(ui, sx, by, 11, 11);
+  sticker(ctx, sx + 5.5, by + 5.5, 4.6, hotS ? '#ffffff' : SKY.light, { edge: SKY.dark });
+  text(ctx, { small: 'S', normal: 'M', big: 'L' }[size], sx + 5.5, by + 8.2, { size: 6.5, bold: true, align: 'center', color: SKY.ink });
+  if (hotS) tooltip(ui, [{ text: 'Map size', bold: true }, { text: 'Small, medium or large', size: 7, color: COLORS.muted }]);
+  if (clicked(ui, sx, by, 11, 11)) {
+    settings.minimapSize = { small: 'normal', normal: 'big', big: 'small' }[size];
+    saveSettings();
+  }
 }
 
 function drawMinimap(ui, world) {
@@ -779,8 +865,8 @@ function drawMinimap(ui, world) {
   const { w, scale, top, span, h } = minimapBox(map);
   const sy = h / span;
 
-  const x = 8;
-  const y = 20;
+  const { x, y } = miniAt();
+  if (minimapControls(ui, map, x, y, w, h)) return;
   const X = (v) => x + v * scale;
   const Y = (v) => y + (v - top) * sy;
   // (Scrapbook: the map is a snapshot pasted onto paper, its name on a strip of tape.)
@@ -791,6 +877,7 @@ function drawMinimap(ui, world) {
   tape(ctx, x + w + 1, y + h + 1, 16, 7, -0.7, '#ffd6ea', { pattern: 'dots', alpha: 0.85 });
   icon(ctx, 'map', x + 6, y - 7.5, 8, '#ffffff');
   text(ctx, map.name, x + 13, y - 4.5, { size: 7.5, bold: true, color: '#ffffff', outline: SKY.ink });
+  minimapStickers(ui, x, y, w, nw);
   ctx.save();
   roundRect(ctx, x, y, w, h, 6);
   ctx.clip();
