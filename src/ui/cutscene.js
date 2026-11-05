@@ -6,6 +6,7 @@
 // fades, flashes and shakes. Lines and bubbles type out; Z, Space, Enter, a click or a tap finishes
 // one or moves on; holding Z (or the mouse) plays the staging faster; Esc skips the rest.
 
+import { drawHayate } from '../render/hayate.js';
 import { NPCS } from '../data/npcs.js';
 import { MOBS } from '../data/mobs.js';
 import { SCENES } from '../data/story.js';
@@ -596,7 +597,7 @@ const shadeInk = (c) => {
 };
 
 // Whoever speaks, acting their line: heroes and NPCs at twice their size with the line's face and a
-// little bounce on each new line; queens as themselves; Hayate, still asleep, as a swirl of wind.
+// little bounce on each new line; queens as themselves; Hayate as the great Tengu, sleepy or awake.
 function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
   const who = step.who;
   const pop = t < 0.25 ? Math.sin((t / 0.25) * Math.PI) * 3 : 0;
@@ -624,18 +625,10 @@ function drawSpeaker(ctx, world, step, x, y, t, room = 130) {
     ctx.scale(k, k);
     drawMonster(ctx, m, 0, 0, world.now + t, world.now + t);
   } else if (who === 'hayate') {
-    // The sleeping Tengu's voice: a feather turning in a ring of wind.
-    for (let k = 0; k < 10; k++) {
-      const a = t * 2 + (k / 10) * Math.PI * 2;
-      sparkle(ctx, x + Math.cos(a) * 34, y - 46 + Math.sin(a) * 18, 2 + (k % 3), k % 2 ? '#bff0ff' : '#ffffff');
-    }
-    ctx.fillStyle = '#e6f6ff';
-    ctx.beginPath();
-    ctx.ellipse(x, y - 46, 8, 24, Math.sin(t) * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#7ab8d8';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+    // The great Tengu herself (render/hayate.js): asleep and nodding, or (her happy lines) awake.
+    // (Scaled to the room it has: her cloud of hair and tokin stand taller than anyone, so in a box
+    // at the top she shrinks to fit, cap and all.)
+    drawHayate(ctx, x, y - pop, world.now + t, { s: Math.min(2, room / 50), awake: step.mood === 'happy', talking });
   }
   ctx.restore();
 }

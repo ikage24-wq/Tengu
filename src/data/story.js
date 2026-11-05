@@ -809,7 +809,7 @@ export const SCENES = {
     { together: [{ wind: true }, { fx: 'wind', at: 'player' }, { fx: 'wind', at: 'mira' }, { fx: 'wind', at: 'elowen' }, { fx: 'clouds', at: { x: 1800, y: 200 }, n: 14 }, { shake: 2, dur: 0.8 }] },
     { who: null, text: 'Somewhere very high above, a great wind stretches, yawns, and comes home. The windmill catches it, creaks once, and begins to turn.' },
     { who: 'hayate', text: '...mmh. Good morning, little island. ...Is it morning? It feels like morning.' },
-    { who: 'hayate', text: 'I dreamt someone kept showing up. In the glade, at the shrine, at a party, under the sea, in the dark beneath the cave. Every single time. Was that you?' },
+    { who: 'hayate', text: 'I dreamt someone kept showing up. In the glade, at the shrine, at a party, under the sea, in the dark beneath the cave. Every single time. Was that you?', mood: 'happy' },
     { together: [{ emote: 'player', kind: 'heart', dur: 1.8 }, { fx: 'hearts', at: 'player', n: 10 }] },
     { together: [{ jump: 'pip', height: 14 }, { emote: 'pip', kind: 'heart', dur: 1.4 }], when: 'pip_lunch' },
     { who: 'pip', text: "I left the shop! On PURPOSE! Also: tenth stamp! Your something is...", mood: 'happy', when: 'pip_lunch' },
