@@ -72,10 +72,9 @@ export function stepAnim(a, body, dt) {
     a.dist += speed * dt;
     a.phase += (speed * dt) / strideAt(a.gait);
     if (speed > 8 && Math.floor(a.phase * 2) !== before) a.events.push('step');
-    if (speed <= 8) {
-      a.dist = 0;
-      a.phase = 0;
-    }
+    // (The stride is kept where it was when they stop, never snapped back to the start: a walker
+    // easing in or out at a slow pace still steps with the ground it covers instead of gliding.)
+    if (speed <= 8) a.dist = 0;
   }
   if (body.rope) a.climb = body.y;
 

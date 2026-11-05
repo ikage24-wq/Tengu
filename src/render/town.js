@@ -1693,7 +1693,7 @@ function drawTomb(ctx, x, y, since) {
   }
 }
 
-function animFor(key, x, facing, time, body = null) {
+export function animFor(key, x, facing, time, body = null) {
   let a = anims.get(key);
   if (!a) {
     a = { anim: createAnim(), x, t: time };

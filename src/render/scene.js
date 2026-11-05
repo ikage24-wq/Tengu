@@ -29,7 +29,7 @@ import { drawWaterBack, drawWaterFront } from './water.js';
 import { drawFurniture } from './furniture.js';
 import { rideMotion } from '../world/mount.js';
 import { copiesOf, copyAt } from '../world/phantom.js';
-import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen } from './town.js';
+import { drawStreet, drawTownsfolk, npcRoutine, drawParty, drawFallen, animFor } from './town.js';
 import { botsIn, bodiedIn } from '../world/bots.js';
 import { partyMembers } from '../world/party.js';
 import { drawGhosts } from './ghosts.js';
@@ -166,7 +166,9 @@ function drawNpcs(ctx, world, cam, time) {
       ctx.save();
       ctx.globalAlpha = c.alpha ?? 1;
       footShadow(ctx, x, y, 12 - Math.min(6, (c.lift ?? 0) * 0.3));
-      drawHero(ctx, npc.look, npc.gear ?? null, x, y - (c.lift ?? 0), { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle', time, seed: n.x % 97, facing, job: npc.showJob });
+      // (Their legs step with the ground they cover, like yours: render/animator.js.)
+      const anim = animFor(`npc|${world.map.id}|${n.id}`, n.x, facing, time);
+      drawHero(ctx, npc.look, npc.gear ?? null, x, y - (c.lift ?? 0), { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle', time, seed: n.x % 97, facing, job: npc.showJob }, anim);
       ctx.restore();
       continue;
     }
@@ -843,5 +845,7 @@ function drawDateBuddy(ctx, world, cam, time) {
     return;
   }
   const moving = Math.abs(bd.vx) > 10;
-  drawHero(ctx, d.kind === 'stars' || d.kind === 'dance' ? { ...npc.look, face: d.kind === 'dance' ? 'excited' : 'love' } : npc.look, npc.gear ?? null, x, y, { pose: d.kind === 'dance' ? 'emdance' : moving ? 'walk' : 'idle', progress: (time * 0.5) % 1, dur: 2, time, seed: 7, facing: bd.facing });
+  // (Walking at your side, their legs step with the ground they cover.)
+  const anim = animFor(`date|${d.id}`, bd.x, bd.facing, time);
+  drawHero(ctx, d.kind === 'stars' || d.kind === 'dance' ? { ...npc.look, face: d.kind === 'dance' ? 'excited' : 'love' } : npc.look, npc.gear ?? null, x, y, { pose: d.kind === 'dance' ? 'emdance' : moving ? 'walk' : 'idle', progress: (time * 0.5) % 1, dur: 2, time, seed: 7, facing: bd.facing }, anim);
 }
