@@ -38,13 +38,21 @@ function poof(world, on) {
   world.fx.push({ kind: 'mountpoof', on, mount: world.riding?.id ?? world.char.mount, x: b.x, y: b.y, t: 0, dur: 0.45 });
 }
 
+// Puts you in the saddle as it is, with no hop and no poof (a cutscene stages those itself:
+// world/director.js `ride`).
+export function seat(world, id) {
+  if (!ownsMount(world.char, id)) return false;
+  world.riding = { id, since: world.now, hoverLeft: 1, hovering: false, steam: 1, dashUntil: 0, dashDir: 1, landAt: -9, stowed: false, tapAt: {} };
+  world.char.mount = id;
+  return true;
+}
+
 // Gets on your chosen mount (or the one given).
 export function mountUp(world, id = world.char.mount) {
   if (rideBlocker(world) || !ownsMount(world.char, id)) return false;
   const b = world.body;
   if (b.rope && id !== 'gecko') return false;
-  world.riding = { id, since: world.now, hoverLeft: 1, hovering: false, steam: 1, dashUntil: 0, dashDir: 1, landAt: -9, stowed: false, tapAt: {} };
-  world.char.mount = id;
+  seat(world, id);
   // A little hop up into the seat.
   if (b.onGround && !b.rope) {
     b.vy = -220;

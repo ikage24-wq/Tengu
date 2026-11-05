@@ -36,6 +36,8 @@
 //                                 easing in and out)
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
+//   { ride: mount }               you climb onto a mount you own (in a puff of clouds), and stay
+//                                 on it after the scene; { ride: null } gets you off
 //   { together: [steps] }         run several at once; done when all are
 //   any step with async: true     starts and lets the scene carry on at once
 //
@@ -47,6 +49,7 @@
 
 import { SCENES } from '../data/story.js';
 import { groundAt } from './physics.js';
+import { seat } from './mount.js';
 
 const WALK = 72;
 const easeInOut = (u) => (u < 0.5 ? 4 * u * u * u : 1 - (-2 * u + 2) ** 3 / 2);
@@ -190,6 +193,15 @@ function runner(world, step) {
       dir = other ? Math.sign(other.x - actorAt(world, who).x) || 1 : null;
     }
     if (dir) setFacing(world, who, dir);
+    return () => true;
+  }
+  if (step.ride !== undefined) {
+    const b = world.body;
+    const a = actorAt(world, 'player');
+    if (step.ride ? !b.rope && seat(world, step.ride) : world.riding) {
+      if (!step.ride) world.riding = null;
+      burst(c, 'clouds', a.x, a.y - 20, 10);
+    }
     return () => true;
   }
   if (step.jump) {

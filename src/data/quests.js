@@ -50,12 +50,36 @@ export const QUESTS = {
     rewards: { exp: 300, gold: 55, items: [{ id: 'home_shell', qty: 1 }], island: true },
   },
   // The first mount (data/mounts.js): Clover's runaway Puff Buns.
+  // Clover's story: the Puff Bun keeper who can't count her buns and writes a song about
+  // everything. The whole island camps for a legendary one-in-ten-thousand Golden Bun, which is
+  // just Muffin after falling in the honey; when the crowds go home, she throws him a parade.
+  clover_count: {
+    id: 'clover_count', name: 'Count the Buns', giver: 'clover', minLevel: 8,
+    text: "Can you help me count my buns? I've got either twelve or a hundred. Every time I start, the Jackalopes in Clover Hills hop in and pretend to be buns, and I lose count. Calm 12 of them. They have HORNS. Buns don't have horns. I keep forgetting.",
+    objectives: [{ type: 'kill', mob: 'piglet', count: 12 }],
+    rewards: { exp: 1350, gold: 100, items: [{ id: 'red_potion', qty: 10 }] },
+  },
   bun_buddy: {
-    id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 15,
-    text: "The Mandrakes in Clover Hills screamed so loud my Puff Buns bolted! Quiet 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. It's yours to ride!",
+    id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 15, prereq: 'clover_count',
+    text: "The Mandrakes in Clover Hills screamed so loud my Puff Buns bolted! Quiet 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. Its name is Fluffy. They're all called Fluffy. It's easier.",
     objectives: [{ type: 'kill', mob: 'sproutling', count: 15 }, { type: 'collect', item: 'clover', count: 8 }],
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
+  },  clover_golden: {
+    id: 'clover_golden', name: 'The Golden Bun', giver: 'clover', minLevel: 16, prereq: 'bun_buddy',
+    text: "The whole island's gone bun-crazy! Someone saw the legendary Golden Bun in Mossy Woods. One in ten thousand! Adventurers have been camping there for days, shouting 'GOLDEN BUN SPAWN?' in every chat. The Wargs keep chasing it. Calm 20 of them so I can get a look. I'm writing a song. It's mostly the word 'golden'.",
+    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    rewards: { exp: 9600, gold: 280, items: [{ id: 'orange_potion', qty: 10 }] },
   },
+  clover_parade: {
+    id: 'clover_parade', name: 'One-Bun Parade', giver: 'clover', minLevel: 21, prereq: 'clover_golden',
+    text: "Muffin's been moping since everyone stopped camping him. So I'm throwing him a parade! Bring me 8 Sylph Feathers from the Whispering Glade for his plume, and ask Kestrel to carry the banner. She'll say no. Ask anyway. Ask twice.",
+    objectives: [
+      { type: 'collect', item: 'sylph_feather', count: 8 },
+      { type: 'talk', npc: 'kestrel', say: "A parade? For a sticky bun? ...Fine. I'll carry the banner. NOT the drum. I have a reputation. And don't tell Clover I said yes the first time." },
+    ],
+    rewards: { exp: 16000, gold: 430, items: [{ id: 'ear_20', qty: 1, variant: 'roll' }] },
+  },
+
   // Pip's story: the shopkeeper who has never once left her counter, because shopkeepers
   // "can't". She orders a compass for herself, collects the world as souvenirs, and when Mira
   // says nobody ever told her she couldn't, she closes for lunch and goes as far as the gate.

@@ -7,6 +7,7 @@ import { QUESTS } from '../src/data/quests.js';
 import { NPCS } from '../src/data/npcs.js';
 import { MOBS } from '../src/data/mobs.js';
 import { MAPS } from '../src/data/maps.js';
+import { MOUNTS } from '../src/data/mounts.js';
 import { SCENES, STORY_LOCKS, TRIALS, STORY_QUESTS } from '../src/data/story.js';
 import { createCharacter, gainExp } from '../src/core/character.js';
 import { acceptQuest, questState, completeQuest } from '../src/core/quests.js';
@@ -35,7 +36,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
   // Every step is a card, a line, or staging (world/director.js) that names real people and known
   // emotes and bursts.
-  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'together'];
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
@@ -54,6 +55,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     if (st.emote) assert.ok(EMOTES.includes(st.kind ?? '!'), `a known emote: ${st.kind}`);
     if (st.fx) assert.ok(BURSTS.includes(st.fx), `a known burst: ${st.fx}`);
     if (st.say !== undefined) assert.equal(typeof st.text, 'string', 'a bubble has words');
+    if (st.ride) assert.ok(MOUNTS[st.ride], `rides a real mount: ${st.ride}`);
   };
   for (const sc of Object.values(SCENES)) for (const st of sc) check(st);
 });

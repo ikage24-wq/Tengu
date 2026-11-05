@@ -227,6 +227,7 @@ test('each mount is earned in play', () => {
   assert.ok(MAPS.sprout.npcs.some((n) => n.id === q.giver));
   const char = createCharacter('Q', { hairStyle: 'bob' });
   char.level = 15;
+  char.quests.clover_count = { state: 'done' };
   acceptQuest(char, 'bun_buddy');
   for (const o of q.objectives) {
     if (o.type === 'kill') char.quests.bun_buddy.kills = { [o.mob]: o.count };

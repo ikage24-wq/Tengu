@@ -245,3 +245,24 @@ test("Pip's never-left-the-shop story plays through in Sprout Village", () => {
     assert.equal(w.map.npcs.find((n) => n.id === 'pip').x, pip.x, `${id}: Pip is back behind her counter`);
   }
 });
+
+test("Clover's Golden Bun story plays through in Sprout Village, and you ride off on your bun", () => {
+  for (const id of ['clover_count_done', 'clover_bun_done', 'clover_golden_done', 'clover_parade_done']) {
+    const char = createCharacter('Hana', {});
+    char.mounts = ['bun'];
+    const w = createWorld(char);
+    loadMap(w, 'sprout', 'start');
+    const clover = w.map.npcs.find((n) => n.id === 'clover');
+    w.body.x = clover.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.equal(Boolean(w.riding), id === 'clover_bun_done', `${id}: only the round-up scene puts you on your bun`);
+  }
+});

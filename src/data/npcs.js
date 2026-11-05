@@ -161,7 +161,7 @@ export const NPCS = {
     id: 'clover', name: 'Clover', title: 'Puff Bun Keeper', role: 'stable',
     look: { hairStyle: 'fluffybob', hairColor: '#fff0f6', hairTip: '#ffb3cf', skinTone: '#fff0e6', eyeColor: '#d0608a', outfitColor: '#ffe3ef', eyeStyle: 'big', earStyle: 'bunny', face: 'smile' },
     greeting: "Oh! Hello! Have you seen a fluffy white bun go by? ...Never mind, there are always more. Do you like riding things?",
-    quests: ['bun_buddy'],
+    quests: ['clover_count', 'bun_buddy', 'clover_golden', 'clover_parade'],
   },
   // Shelly, a hermit crab carpenter who came with your island (world/home.js): she builds it up a
   // stage at a time from what you bring her. Cheerful, proud of her work, shy when it's quiet; she
