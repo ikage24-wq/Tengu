@@ -6,7 +6,7 @@ import { expToNext } from '../core/exp.js';
 import { countItem } from '../core/inventory.js';
 import { HOTKEYS } from '../core/character.js';
 import { drawItemIcon, drawSkillIcon } from '../render/icons.js';
-import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker, photoCorners, roughRect } from './kit.js';
+import { COLORS, THEMES, softShadow, text, box, bar, hover, clicked, tooltip, icon, sparkle, font, roundRect, lighten, darken, paper, tape, sticker, photoCorners, roughRect, doodle } from './kit.js';
 import { calmOf, soothes, CALM, SOUR } from '../world/calm.js';
 import { drawHero } from '../render/hero.js';
 import { heartbeat } from '../render/aura.js';
@@ -559,20 +559,38 @@ function drawGauge(ui, world, kind, value, x = 566) {
     const h = heartbeat(world.now);
     edgeTint(ctx, 'rgba(110,4,28,', 0.3 + 0.28 * (1 - h) * (h < 1 ? 1 : 0));
   } else if (full) edgeTint(ctx, G.edge ?? 'rgba(255,214,90,', 0.22 + 0.12 * beat);
-  box(ctx, x, y, 70, 16, { fill: 'rgba(255,250,248,0.94)', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#f4bcd8', r: 8, width: full ? 1.8 : 1.5 });
-  badge(ctx, x + 8, y + 8, G.icon, G.color, 1 + beat * 0.15);
-  bar(ctx, x + 16, y + 5, 40, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
+  // (Scrapbook: a strip of paper taped down at its end, the gauge's sticker on it, the bar marked
+  // off like a ruler; full, pencil sparks fizz at both ends.)
+  paper(ctx, x, y, 70, 16, { fill: '#fffbf2', edge: full ? (beat > 0.5 ? G.color : G.hot) : '#8a6a9a', r: 4, seed: 13, width: full ? 1.8 : 1.4 });
+  tape(ctx, x + 68, y + 3, 14, 6, 0.6, G.hot, { pattern: 'stripes', alpha: 0.85 });
+  const big = 1 + beat * 0.15;
+  sticker(ctx, x + 8, y + 8, 6.2 * big, G.color, { edge: darken(G.color, 0.3), lift: 1 });
+  icon(ctx, G.icon, x + 8, y + 8.5, 8 * big, '#ffffff');
+  bar(ctx, x + 17, y + 5, 35, 6, k, gained ? '#ffffff' : (full && beat > 0.5) || (!full && k >= 0.8) ? G.hot : G.color, '', { pulse: full ? 0.3 * beat : 0 });
+  ctx.strokeStyle = 'rgba(138,106,154,0.55)';
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  for (let q = 0; q <= 10; q++) {
+    const tx = Math.round(x + 17 + 3.5 * q) + 0.5;
+    ctx.moveTo(tx, y + 11.5);
+    ctx.lineTo(tx, y + (q % 5 ? 13 : 14.2));
+  }
+  ctx.stroke();
+  if (full) {
+    doodle(ctx, 'spark', x - 2, y + 2, 3.2 + beat, G.hot, world.now);
+    doodle(ctx, 'spark', x + 72, y + 14, 3.2 + beat, G.hot, world.now + 1);
+  }
   const notch = G.notch();
   if (notch) {
     ctx.fillStyle = value >= notch ? '#ffffff' : 'rgba(74,53,96,0.55)';
-    ctx.fillRect(Math.round(x + 16 + 40 * (notch / 100)), y + 4, 1, 8);
+    ctx.fillRect(Math.round(x + 17 + 35 * (notch / 100)), y + 4, 1, 8);
   }
   // A gauge counted in steps (the Kitsune's nine tails) shows each step on the bar.
   if (G.ticks) {
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    for (let k = 1; k < G.ticks; k++) ctx.fillRect(Math.round(x + 16 + (40 * k) / G.ticks), y + 5, 1, 6);
+    for (let k = 1; k < G.ticks; k++) ctx.fillRect(Math.round(x + 17 + (35 * k) / G.ticks), y + 5, 1, 6);
   }
-  text(ctx, G.label ? G.label(value) : `${Math.floor(value)}`, x + 66, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
+  text(ctx, G.label ? G.label(value) : `${Math.floor(value)}`, x + 67, y + 11, { size: 7, bold: true, align: 'right', color: full ? G.color : COLORS.ink });
   if (full) {
     text(ctx, G.full, over(G.full, 8), y - 3, { size: 8, bold: true, align: 'center', color: beat > 0.5 ? '#ffffff' : G.hot, outline: G.ink ?? (kind === 'rage' ? '#7a1030' : '#a8661a') });
     // A full gauge is what a finisher spends: say so when you know one.
