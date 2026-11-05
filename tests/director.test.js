@@ -434,3 +434,21 @@ test("chapter 8's new scenes play through on the Sugar Trail where Chef Praline 
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
   }
 });
+
+test("chapter 9's new scenes play through on Theatre Row where Madame Encore stands", () => {
+  for (const id of ['encore_open', 'encore_done', 'playwright_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'theatre_row', 'start');
+    const encore = w.map.npcs.find((n) => n.id === 'encore');
+    w.body.x = encore.x - 70;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});

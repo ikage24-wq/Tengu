@@ -142,7 +142,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   encore: {
-    id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', dungeon: 'theatre',
+    id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', quests: ['story_encore', 'story_playwright'], dungeon: 'theatre',
     look: { hairStyle: 'wolf', hairColor: '#f2f0f6', skinTone: '#f6d2b8', eyeColor: '#b03050', outfitColor: '#9a2040', eyeStyle: 'sparkle', face: 'smile' },
     greeting: "Forty years I played that stage, darling, and now it plays the audience. I still have my backstage pass. Bring a tank, a healer and two fighters, and never miss your cue.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],

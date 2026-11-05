@@ -236,7 +236,8 @@ How to get there without making it a grind (the game's own rule against chores):
    chapter now starts at 33).
 7. [x] Chapter 8: Candy Volcano and Lilith (2026-11-05: Chef Praline gives Dessert Emergency and
    Just Desserts on the Sugar Trail; Bonbon saw the warmth flow to the grotto; Lilith now at 38).
-8. [ ] Chapter 9: the Dream Theatre.
+8. [x] Chapter 9: the Dream Theatre (2026-11-05: Madame Encore gives Opening Night and A Better
+   Ending on Theatre Row; she performs the Playwright's script, the story so far).
 9. [ ] Chapter 10: the Sky Whale, Selene, Prismaris.
 10. [ ] The Wind Returns: the level-50 finale and its rewards.
 
