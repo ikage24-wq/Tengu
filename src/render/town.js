@@ -271,8 +271,8 @@ function kioskArt(pose) {
 
 // Malvina Grimsworth's tower (data/npcs.js `villaintower`): a would-be villain's lair in the middle
 // of the prettiest village on the island. Purple stone, a steep witch's-hat roof with a bat for a
-// weathervane, a round window glowing violet, two lanterns burning lilac, an arched door under the
-// KEEP OUT sign (the sign is the NPC's) and, in front of it, a pink welcome mat with a heart; a box
+// weathervane, a round window glowing violet, two lanterns burning lilac, an arched door, the
+// KEEP OUT sign on an iron bracket out of its side (the sign is the NPC's), a pink welcome mat with a heart; a box
 // of flowers on the sill, because she can't help herself.
 function towerArt(pose) {
   return art(`villaintower|${pose}`, 74, 112, () => {
@@ -293,7 +293,7 @@ function towerArt(pose) {
     out.push(E(37, 86, 10, 7, '#3a2648'), R(27, 86, 20, 26, '#3a2648'), F(E(37, 87, 8.6, 6, '#6a2a48')), F(R(28.4, 87, 17.2, 25, '#6a2a48')), F(R(36.6, 82, 0.8, 30, '#4a1e34')));
     out.push(F(E(41.4, 99, 1.4, 1.4, '#ffd66b')), F(E(41.4, 99, 0.6, 0.6, '#6a2a48')));
     for (const lx of [21, 53]) out.push(F(R(lx - 0.5, 82, 1, 4, '#3a2648')), E(lx, 89, 2.6, 3.4, '#3a2648'), F(E(lx, 89, 1.8, 2.6, '#e6c8ff')), F(E(lx - 0.5, 88, 0.8, 1.2, '#ffffff')));
-    // The welcome mat (pink, a heart in the middle), right under the KEEP OUT sign.
+    // The welcome mat (pink, a heart in the middle), right outside the door.
     out.push(F(R(25, 109.4, 24, 2.6, '#ff9ec8')), F(R(25, 109.4, 24, 0.6, '#ffc2dc')), F(E(37, 110.6, 1.4, 1, '#ff4f86')));
     return out;
   }, false);
@@ -752,8 +752,42 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     const gy = ground(hx);
     place(ctx, s, x, gy);
     if (npc.building === 'forge') forgeGlow(ctx, x, gy, time);
-    if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, hx);
+    if (npc.building === 'villaintower' && npc.sign) {
+      // Malvina's sign hangs off an iron bracket out of the tower's side, under the eaves.
+      towerBracket(ctx, x, gy);
+      hangingSign(ctx, x + 38, gy - 54, npc.sign, time, hx + 38);
+    } else if (npc.sign) hangingSign(ctx, x, gy - s.h - 10, npc.sign, time, hx);
   }
+}
+
+// The wrought-iron bracket on Malvina's tower: a wall plate under the eaves, an arm reaching out
+// past the wall with a curl at its tip, and a tie rod up to the wall holding it level.
+function towerBracket(ctx, x, gy) {
+  const y = gy - 62;
+  const x0 = x + 12;
+  const x1 = x + 64;
+  ctx.save();
+  ctx.strokeStyle = '#2e1e3e';
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + 21, gy - 69);
+  ctx.lineTo(x1 - 4, y);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x1 - 1.5, y - 1.5, 1.8, Math.PI * 0.5, Math.PI * 2.2);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = '#2e1e3e';
+  ctx.fillRect(x0, y, x1 - x0 - 1, 1.6);
+  ctx.fillStyle = '#5a4270';
+  ctx.fillRect(x0, y, x1 - x0 - 1, 0.6);
+  // The plate, bolted to the wall.
+  ctx.fillStyle = '#2e1e3e';
+  ctx.fillRect(x + 18, y - 3, 4, 7);
+  ctx.fillStyle = '#c8a0ff';
+  ctx.fillRect(x + 19.4, y - 2, 1, 1);
+  ctx.fillRect(x + 19.4, y + 2, 1, 1);
 }
 
 // A soft round glow (lit windows, lanterns).
