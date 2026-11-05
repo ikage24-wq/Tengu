@@ -109,7 +109,7 @@ export const NPCS = {
     look: { hairStyle: 'wolf', hairColor: '#8fbf7a', skinTone: '#e7b48f', eyeColor: '#7a4a2b', outfitColor: '#b08860', eyeStyle: 'round', face: 'grin' },
     greeting: "Rootwood Hollow is no place to wander alone. Bring a warrior to tank, a mage to heal, and two fighters, or I'll find you some.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
-    quests: ['story_2_2', 'hollow_heart'],
+    quests: ['story_2_2', 'bramble_check', 'hollow_heart', 'bramble_wipe', 'bramble_charge'],
   },
   pumpkins: {
     id: 'pumpkins', name: 'Mr. Pumpkins', title: 'Manor Groundskeeper', role: 'dungeon', dungeon: 'manor',

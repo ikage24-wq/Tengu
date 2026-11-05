@@ -36,7 +36,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
   // Every step is a card, a line, or staging (world/director.js) that names real people and known
   // emotes and bursts.
-  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'together'];
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'trip', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
@@ -47,7 +47,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
     if (kind === 'together') return st.together.forEach(check);
     for (const k of ['act', 'mood']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
-    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
+    for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
     for (const k of ['spawn', 'leave']) if (st[k] !== undefined) assert.ok(st[k] === 'player' || NPCS[st[k]], `${k} names a real person: ${st[k]}`);
     if (st.spot) assert.ok(actor(st.spot), `spot follows a real actor: ${st.spot}`);
     if (Array.isArray(st.cam)) for (const w of st.cam) assert.ok(actor(w), `cam frames a real actor: ${w}`);

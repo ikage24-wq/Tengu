@@ -96,12 +96,37 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'sproutling', count: 10 }],
     rewards: { exp: 440, gold: 40, items: [{ id: 'shoes_0', qty: 1 }, { id: 'top_0', qty: 1 }] },
   },
+  // Bramble's story: the Hollow Warden who checks everyone's gear, roles and "aggro" before he
+  // lets them in, because ten years ago he was the young warden who charged Gnarlroot alone
+  // yelling his own name and woke the whole canyon. At the end he charges once more, for fun.
+  bramble_check: {
+    id: 'bramble_check', name: 'Gear Check', giver: 'bramble', minLevel: 10,
+    text: "Nobody goes into the Hollow without a gear check. Nobody. Show me you can hold a fight together: calm 15 Basilisk Hatchlings in Windy Canyon, and never pull more than three at once. I'll know. I have a feeling for these things.",
+    objectives: [{ type: 'kill', mob: 'pebblet', count: 15 }],
+    rewards: { exp: 2200, gold: 140, items: [{ id: 'red_potion', qty: 15 }] },
+  },
   hollow_heart: {
-    id: 'hollow_heart', name: 'Heart of the Hollow', giver: 'bramble', minLevel: 10,
-    text: "Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group down and calm him. Talk to me again when you're ready to go in.",
+    id: 'hollow_heart', name: 'Heart of the Hollow', giver: 'bramble', minLevel: 10, prereq: 'bramble_check',
+    text: "Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group of four down and calm him. One tank, one healer, two fighters. Not three fighters. Not 'two fighters and a bard'. Talk to me again when you're ready.",
     objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
     rewards: { exp: 9000, gold: 600, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
   },
+  bramble_wipe: {
+    id: 'bramble_wipe', name: 'The Great Wipe', giver: 'bramble', minLevel: 12, prereq: 'hollow_heart',
+    text: "Why all the rules? Because of the Great Wipe, that's why. Ten years ago some fool ran into the Hollow alone and woke the whole canyon. Don't ask who. Clear 15 Manticore Cubs off the canyon road, and whatever you do, don't ask Brann in Ember Crag. He wasn't even there. Probably.",
+    objectives: [
+      { type: 'kill', mob: 'scorpip', count: 15 },
+      { type: 'talk', npc: 'brann', say: "The Great Wipe? I was the tank that day. A young warden ran right past me into the Hollow, yelling his own name. 'BRAAAAMBLE!' The canyon shook for a month. Tell him I still hear it at night." },
+    ],
+    rewards: { exp: 6000, gold: 200, items: [{ id: 'warrior_shoes_15', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  bramble_charge: {
+    id: 'bramble_charge', name: 'One Last Charge', giver: 'bramble', minLevel: 14, prereq: 'bramble_wipe',
+    text: "Fine. It was me. I've been thinking. Ten years of rules and I can't remember the last time a fight was fun. Go to Mossy Woods and charge into the Warg packs, 20 of them. Loud. Then come back, and bring a healer. Out of habit.",
+    objectives: [{ type: 'kill', mob: 'boarlet', count: 20 }],
+    rewards: { exp: 9600, gold: 280, items: [{ id: 'warrior_hat_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
+  },
+
   mush_menace: {
     id: 'mush_menace', name: 'Toadstool Trouble', giver: 'rook', minLevel: 8,
     text: 'Toadstool Goblins have been sneaking onto the docks. Clear out 20 of them in Clover Hills.',

@@ -266,3 +266,22 @@ test("Clover's Golden Bun story plays through in Sprout Village, and you ride of
     assert.equal(Boolean(w.riding), id === 'clover_bun_done', `${id}: only the round-up scene puts you on your bun`);
   }
 });
+
+test("Bramble's Great Wipe story plays through at the Hollow Gate", () => {
+  for (const id of ['bramble_check_done', 'hollow_open', 'bramble_hollow_done', 'bramble_wipe_done', 'bramble_charge_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'hollow_gate', 'start');
+    const bramble = w.map.npcs.find((n) => n.id === 'bramble');
+    w.body.x = bramble.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+    assert.equal(w.map.npcs.find((n) => n.id === 'bramble').x, bramble.x, `${id}: Bramble is back at his post`);
+  }
+});

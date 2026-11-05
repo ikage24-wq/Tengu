@@ -166,6 +166,12 @@ function drawNpcs(ctx, world, cam, time) {
       ctx.save();
       ctx.globalAlpha = c.alpha ?? 1;
       footShadow(ctx, x, y, 12 - Math.min(6, (c.lift ?? 0) * 0.3));
+      // (Tripping, they tilt about their feet, drawn at their own size: world/director.js `trip`.)
+      if (c.tilt) {
+        ctx.translate(x, y);
+        ctx.rotate(c.tilt * facing);
+        ctx.translate(-x, -y);
+      }
       // (Their legs step with the ground they cover, like yours: render/animator.js.)
       const anim = animFor(`npc|${world.map.id}|${n.id}`, n.x, facing, time);
       drawHero(ctx, npc.look, npc.gear ?? null, x, y - (c.lift ?? 0), { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle', time, seed: n.x % 97, facing, job: npc.showJob }, anim);

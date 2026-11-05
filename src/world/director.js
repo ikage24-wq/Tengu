@@ -36,6 +36,9 @@
 //                                 easing in and out)
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
+//   { trip: npc, dur }            they stumble, pitch forward flat on their face (sliding a little),
+//                                 lie there a beat, and pop back up (the figure only tilts, at its
+//                                 own size)
 //   { ride: mount }               you climb onto a mount you own (in a puff of clouds), and stay
 //                                 on it after the scene; { ride: null } gets you off
 //   { together: [steps] }         run several at once; done when all are
@@ -194,6 +197,33 @@ function runner(world, step) {
     }
     if (dir) setFacing(world, who, dir);
     return () => true;
+  }
+  if (step.trip) {
+    const n = npcOf(world, step.trip);
+    if (!n) return () => true;
+    const dir = n.cine.facing ?? (world.body.x < n.x ? -1 : 1);
+    const x0 = n.x;
+    const dur = Math.max(1.6, step.dur ?? 2.2);
+    const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+    let t = 0;
+    return (dt, skip) => {
+      t = skip ? dur : t + dt;
+      // A stumble (a skip and a lean back, catching themselves), the fall forward with a slide,
+      // flat for a beat with a little wiggle, then up again with a hop.
+      const fall = ease((t - 0.22) / 0.3);
+      const up = ease((t - (dur - 0.55)) / 0.4);
+      const stumble = t < 0.22 ? Math.sin((t / 0.22) * Math.PI) : 0;
+      const wiggle = t > 0.6 && t < dur - 0.55 ? Math.sin(t * 22) * 0.04 * Math.max(0, 1 - (t - 0.6) * 1.5) : 0;
+      n.cine.tilt = -0.18 * stumble + 1.42 * fall * (1 - up) + wiggle;
+      n.cine.lift = 6 * stumble + Math.sin(Math.min(1, Math.max(0, (t - (dur - 0.55)) / 0.4)) * Math.PI) * 8;
+      n.x = x0 + dir * 18 * ease((t - 0.3) / 0.35);
+      n.cine.walk = false;
+      if (t >= dur) {
+        n.cine.tilt = 0;
+        n.cine.lift = 0;
+      }
+      return t >= dur;
+    };
   }
   if (step.ride !== undefined) {
     const b = world.body;
