@@ -203,7 +203,7 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   const school = f.school ?? SKILLS[f.skill]?.school ?? 'steel';
   // (The mage line's buffs and the Cleric's healing reactions bring their own pictures, round the
   // body and clear of the face, so no pillar of light goes up over them.)
-  if (school === 'arcane' || school === 'idol' || school === 'astral' || /^md(soothe|frost|spark)$/.test(f.skill ?? '')) {
+  if (school === 'arcane' || school === 'idol' || school === 'astral' || f.skill === 'cloudnine' || f.skill === 'showstopper' || /^md(soothe|frost|spark)$/.test(f.skill ?? '')) {
     ctx.restore();
     return;
   }

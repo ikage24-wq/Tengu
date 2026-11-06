@@ -5120,9 +5120,9 @@
         if (i <= 8) {
           const w = [56, 96, 112, 112, 112, 106, 90, 64, 34][i];
           ctx.save();
-          ctx.globalAlpha = 0.85;
+          // (A soft beam now, the all-class pass: the bright white cone hid her inside it.)
+          ctx.globalAlpha = 0.3;
           fill(ctx, [[c - w * 0.35, 0], [c + w * 0.35, 0], [c + w, gy], [c - w, gy]], CREAM[1]);
-          fill(ctx, [[c - w * 0.15, 0], [c + w * 0.15, 0], [c + w * 0.45, gy], [c - w * 0.45, gy]], CREAM[0]);
           ctx.restore();
         }
         // The rose: ribbons whirling out round her on a wide flat orbit, crescent cuts riding its
@@ -5163,8 +5163,7 @@
             celRing(ctx, CORAL, 0, 0, 160 + b * 440, 26 * (1 - b * 0.6), { broken: i >= 9 ? 0.5 : 0, seed: 106 });
             ctx.restore();
           }
-          if (i <= 9) celRing(ctx, CORAL, c, gy - 170, 60 + b * 150, 16 * (1 - b * 0.6), { broken: i >= 8 ? 0.5 : 0, seed: 101 });
-          if (i <= 8) celRing(ctx, CREAM, c, gy - 170, 30 + b * 100, 10, { seed: 102 });
+          // (No rings popping round her chest any more, the all-class pass: they crossed her body.)
           const R = rng(103);
           for (let j = 0; j < 22; j++) {
             const x = c + (R() - 0.5) * 1120;
@@ -5172,7 +5171,7 @@
             sparkle(ctx, j % 2 ? CORAL : CREAM, x, y, 15 * (1.2 - b * 0.5), j);
           }
         }
-        if (i === 6 || i === 7) starburst(ctx, CORAL, c, gy - 170, 100 - (i - 6) * 20, 10, 104, { inner: 0.3 });
+        if (i === 6 || i === 7) for (const sd of [-1, 1]) starburst(ctx, CORAL, c + sd * 200, gy - 150, 60 - (i - 6) * 16, 8, 104, { inner: 0.3 });
       },
     };
   })();
@@ -5430,9 +5429,46 @@
     };
   })();
 
-  // Updraft's rising whirl (and her up command's): the same whirlwind drawn 2.5x, about 80 game px
-  // across at scale 1, the width of what it throws up.
-  E.skywhirlbig = grown(E.skywhirl, 2.5);
+  // Updraft's rising whirl (and her up command's, and the cloudburst's): drawn at its own size
+  // (about 80 game px across at scale 1) with slim wind ribbons, not the small whirl blown up (the
+  // player found the blown-up one fat and blurry): five thin ribbons turning, tighter at the foot,
+  // a white edge on each, feathers riding round, a few sparkles. Light and airy.
+  E.skywhirlbig = (() => {
+    const c = 300;
+    const base = 420;
+    return {
+      w: 600, h: 460, n: 8, fps: 18, px: c, py: base,
+      draw(ctx, i) {
+        for (let k = 0; k < 5; k++) {
+          const u = k / 4;
+          const y = base - 20 - u * 330;
+          const r = 60 + u * 170;
+          const a0 = (i / 8) * TAU + k * 1.1;
+          // A slim ribbon: an arc of the ellipse stroked in three widths (ink, colour, white edge).
+          const cx2 = c + Math.sin(u * 2.4 + (i / 8) * TAU) * 12 * u;
+          const pal = k % 2 ? CLOUDS : SKYB;
+          const arc = (w, col) => {
+            ctx.beginPath();
+            ctx.ellipse(cx2, y, r, r * 0.26, 0, a0, a0 + 3.2 - u * 0.6);
+            ctx.lineCap = 'round';
+            ctx.lineWidth = w;
+            ctx.strokeStyle = col;
+            ctx.stroke();
+          };
+          arc(9, pal[4]);
+          arc(6, pal[2]);
+          arc(2.5, pal[0]);
+        }
+        for (let j = 0; j < 4; j++) {
+          const a = (i / 8) * TAU + (j / 4) * TAU;
+          const u = 0.25 + (j % 2) * 0.45;
+          feather(ctx, j % 2 ? SUNLIT : SKYB, c + Math.cos(a) * (70 + u * 150), base - 40 - u * 300 + Math.sin(a) * 14, 26, a + 1.2);
+        }
+        const R = rng(2010 + i);
+        for (let j = 0; j < 4; j++) sparkle(ctx, j % 2 ? SUNLIT : SKYB, c + (R() - 0.5) * 420, base - 60 - R() * 320, 9, j);
+      },
+    };
+  })();
 
   // Her badge: a white wing over a little cloud, with a sun sparkle.
 
@@ -7557,7 +7593,8 @@
       w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
       draw(ctx, i) {
         if (i <= 2) starburst(ctx, TEALE, c, c, [30, 46, 36][i], 8, 311, { inner: 0.32, rot: i * 0.25 });
-        if (i >= 2) puff(ctx, STEAM, c - 6, c + 10 - i * 4, 18 + i * 3, 312, { holes: i >= 5 ? 0.5 : 0, lobes: 4 });
+        // (A slim teal ring popping out where the white smoke ball was, the all-class pass.)
+        if (i >= 2 && i <= 5) celRing(ctx, TEALE, c, c, 20 + i * 9, 7 - i, { broken: i >= 4 ? 0.5 : 0, seed: 312 });
         if (i >= 1) {
           const k = (i - 1) / 5;
           for (const [a, r, n] of [[-2.2, 14, 7], [-0.6, 11, 6], [0.9, 9, 5]]) cogArt(ctx, c + Math.cos(a) * (30 + k * 60), c + Math.sin(a) * (30 + k * 60) + k * k * 30, r * (1 - k * 0.4), n, i * 0.8);
@@ -7579,13 +7616,14 @@
           ctx.save();
           ctx.translate(c, c + 40);
           ctx.scale(1, 0.32);
-          celRing(ctx, STEAM, 0, 0, 50 + k * 70, 18 * (1 - k * 0.6), { broken: k > 0.5 ? 0.5 : 0, seed: 323 });
+          celRing(ctx, STEAM, 0, 0, 50 + k * 70, 9 * (1 - k * 0.5), { broken: k > 0.5 ? 0.5 : 0, seed: 323 });
           ctx.restore();
           for (let j = 0; j < 5; j++) {
             const a = -Math.PI / 2 + (j - 2) * 0.6;
             cogArt(ctx, c + Math.cos(a) * (40 + k * 70), c + Math.sin(a) * (40 + k * 70) + k * k * 60, 10 * (1 - k * 0.5), 6, i + j);
           }
-          if (i >= 4) puff(ctx, STEAM, c, c - 10 - k * 30, 30 + k * 10, 324, { holes: k * 0.8, lobes: 6 });
+          // (No fat white smoke ball any more, the all-class pass: just brass glints drifting up.)
+          if (i >= 4) for (let j = 0; j < 4; j++) sparkle(ctx, j % 2 ? BRASS : TEALE, c + (j - 1.5) * 34, c - 20 - k * 50 - (j % 2) * 14, 9 * (1 - k * 0.5), j);
         }
       },
     };
@@ -9191,14 +9229,16 @@
       w: 320, h: 320, n: 9, fps: 14, px: c, py: c,
       draw(ctx, i) {
         const k = Math.min(1, (i + 1) / 4);
-        if (i <= 6) celRing(ctx, SHOWG, c, c, 30 + k * 90, 16 * (1 - i / 9), { broken: i >= 5 ? 0.4 : 0, seed: 641 });
-        if (i <= 6) celRing(ctx, MINT, c, c, 20 + k * 60, 9 * (1 - i / 9), { seed: 642 });
+        // (The rings open out clear of her and slimmer, and no gold star bursts over her any more,
+        // the all-class pass: they sat right across her face.)
+        if (i <= 6) celRing(ctx, SHOWG, c, c, 70 + k * 70, 8 * (1 - i / 9), { broken: i >= 4 ? 0.45 : 0.1, seed: 641 });
+        if (i <= 5) celRing(ctx, MINT, c, c, 58 + k * 40, 4.5 * (1 - i / 9), { broken: 0.3, seed: 642 });
         if (i >= 1 && i <= 6) for (let j = 0; j < 10; j++) {
           const a = Math.PI * 0.05 + (j / 9) * Math.PI * 0.9;
           goldArrow(ctx, c + Math.cos(a) * (40 + k * 100), c + Math.sin(a) * (40 + k * 100), 34, a, 0.7);
         }
-        if (i <= 2) goldStar(ctx, c, c, 30 + i * 8, i * 0.4);
-        if (i >= 3) confetti(ctx, c, c + (i - 3) * 10, 100 + (i - 3) * 16, 18, 643, 7);
+        if (i <= 2) for (const sd of [-1, 1]) goldStar(ctx, c + sd * (80 + i * 14), c - 30, 14 + i * 4, i * 0.4);
+        if (i >= 3) confetti(ctx, c, c + 40 + (i - 3) * 12, 110 + (i - 3) * 16, 18, 643, 7);
       },
     };
   })(), 2.4);
@@ -9321,7 +9361,7 @@
       w: 200, h: 200, n: 7, fps: 30, px: c, py: c,
       draw(ctx, i) {
         if (i <= 2) starburst(ctx, PSILV, c, c, [22, 34, 26][i], 8, 721, { inner: 0.4 });
-        if (i >= 1 && i <= 5) for (let j = 0; j < 3; j++) puff(ctx, SMOKE, c + (j - 1) * 18, c + 6 - (i - 1) * 3, 14 + i * 2 - j * 2, 722 + j, { lobes: 5, holes: i >= 4 ? 0.5 : 0 });
+        if (i >= 1 && i <= 4) celRing(ctx, SMOKE, c, c, 16 + i * 10, 7 - i, { broken: i >= 3 ? 0.5 : 0, seed: 722 });
         if (i >= 1 && i <= 5) for (let j = 0; j < 3; j++) {
           const a = -Math.PI / 2 + (j - 1) * 0.7;
           const d = 18 + i * 12;
@@ -9375,9 +9415,19 @@
       w: 360, h: 240, n: 10, fps: 12, px: c, py: gy,
       draw(ctx, i) {
         const k = Math.min(1, (i + 1) / 4);
-        if (i <= 7) for (let j = 0; j < 10; j++) {
-          const a = (j / 10) * TAU;
-          puff(ctx, SMOKE, c + Math.cos(a) * 150 * k, gy - 70 + Math.sin(a) * 50 * k, 26 * (1 - (i > 5 ? (i - 5) * 0.25 : 0)), 741 + j, { lobes: 5, holes: i >= 6 ? 0.5 : 0 });
+        // (A slim ring of plum smoke opening on the stage, the all-class pass; it was ten fat cloud
+        // balls that filled the screen.)
+        if (i <= 7) {
+          ctx.save();
+          ctx.translate(c, gy - 20);
+          ctx.scale(1, 0.3);
+          celRing(ctx, SMOKE, 0, 0, 150 * k, 9 * (1 - (i > 5 ? (i - 5) * 0.3 : 0)), { broken: i >= 5 ? 0.45 : 0.15, seed: 741 });
+          celRing(ctx, PLUM, 0, 0, 120 * k, 4, { broken: 0.5, seed: 744 });
+          ctx.restore();
+          if (i <= 5) for (let j = 0; j < 6; j++) {
+            const a = (j / 6) * TAU + 0.4;
+            puff(ctx, SMOKE, c + Math.cos(a) * 150 * k, gy - 20 + Math.sin(a) * 45 * k, 10 - i, 741 + j, { lobes: 4, holes: i >= 4 ? 0.4 : 0 });
+          }
         }
         if (i <= 2) starburst(ctx, PSILV, c, gy - 70, 40 + i * 20, 10, 742, { inner: 0.3 });
         if (i >= 2) for (let j = 0; j < 8; j++) cardArt(ctx, c + (j - 3.5) * 40, gy - 190 + (i - 2) * 22 + (j % 2) * 20, 22, j * 0.5 + i * 0.3, Math.cos(i * 0.8 + j), j % 4);
@@ -11973,6 +12023,349 @@
         }
         // Gold sparkles crackling off her sides (the jitter).
         if (i >= 2 && i <= 6) for (const s of [-1, 1]) sparkle(ctx, GOLDP, c + s * (88 + (i % 2) * 8), gy - 70 - (i % 3) * 22, 9 - Math.abs(i - 4), i);
+      },
+    };
+  })();
+
+  // ---------- The Sky Dancer's new skills (the all-class pass, 2026-11-07) ----------
+  // Downburst (on the floor where she dives): a ring of wind slaps down and bursts out both ways in
+  // crescents, clouds rolling out along the floor, feathers and sunlight scattering. Slim, crisp.
+  E.sddownburst = (() => {
+    const c = 330;
+    const gy = 240;
+    return {
+      w: 660, h: 280, n: 9, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const b = Math.min(1, i / 5);
+        const fade = i >= 6 ? 1 - (i - 5) * 0.28 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        // The ring slapping down onto the floor.
+        ctx.save();
+        ctx.translate(c, gy - 6);
+        ctx.scale(1, 0.28);
+        celRing(ctx, SKYB, 0, 0, 40 + b * 170, 12 * (1 - b * 0.5), { broken: i >= 6 ? 0.5 : 0, seed: 2020 });
+        ctx.restore();
+        // Crescents of wind racing out both ways.
+        for (const s of [-1, 1]) for (let k = 0; k < 2; k++) {
+          const x = c + s * (50 + b * (140 + k * 40));
+          ctx.save();
+          ctx.translate(x, gy - 30 - k * 22);
+          ctx.scale(s, 1);
+          celCrescent(ctx, k ? CLOUDS : SKYB, 0, 0, 34 - k * 6, -1.2, 1.2, 9, { seed: 2021 + k, inkW: 2.5 });
+          ctx.restore();
+          if (i <= 5) puff(ctx, CLOUDS, x - s * 26, gy - 10, 14 - k * 3, 2025 + k, { lobes: 4, holes: i >= 4 ? 0.3 : 0 });
+        }
+        if (i <= 1) starburst(ctx, SUNLIT, c, gy - 30, 40 + i * 20, 10, 2028, { inner: 0.35 });
+        const R = rng(2030 + i);
+        for (let j = 0; j < 6; j++) {
+          const a = R() * Math.PI + Math.PI;
+          const d = 60 + b * 160;
+          if (j % 2) feather(ctx, SKYB, c + Math.cos(a) * d, gy - 20 + Math.sin(a) * d * 0.4, 20, a);
+          else sparkle(ctx, SUNLIT, c + Math.cos(a) * d, gy - 30 + Math.sin(a) * d * 0.4, 8, j);
+        }
+        ctx.restore();
+      },
+    };
+  })();
+  // Gale Step: a slim streak of wind left behind her where she rode the gust, feathers peeling off.
+  E.sdgalefx = (() => {
+    const c = 40;
+    const cy = 60;
+    return {
+      w: 420, h: 120, n: 8, fps: 20, px: c, py: cy,
+      draw(ctx, i) {
+        const fade = i >= 4 ? 1 - (i - 3) * 0.2 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        for (let k = 0; k < 3; k++) speedLine(ctx, k === 1 ? CLOUDS : SKYB, c + 360 - i * 10, cy - 18 + k * 18, c + 20 + i * 30, cy - 18 + k * 18, 5 - k);
+        const R = rng(2040);
+        for (let j = 0; j < 6; j++) {
+          const u = R();
+          feather(ctx, j % 2 ? SUNLIT : SKYB, c + 40 + u * 300, cy + (R() - 0.5) * 60 + i * 4 * (j % 2 ? 1 : -1), 18, u * 6 + i * 0.4);
+        }
+        ctx.restore();
+      },
+    };
+  })();
+  // Cloud Nine (round her, low): little clouds swirling up round her sides into a ring, a pair of
+  // wings of light opening behind her shoulders, sparkles; then they drift apart.
+  E.sdcloudnine = (() => {
+    const c = 160;
+    const gy = 280;
+    return {
+      w: 320, h: 300, n: 10, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const u = Math.min(1, i / 5);
+        const fade = i >= 8 ? 1 - (i - 7) * 0.35 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.save();
+        ctx.translate(c, gy - 6);
+        ctx.scale(1, 0.3);
+        celRing(ctx, SKYB, 0, 0, 60 + 30 * u, 7, { seed: 2050, broken: i >= 8 ? 0.4 : 0 });
+        ctx.restore();
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * TAU + i * 0.5;
+          const side = Math.cos(a) >= 0 ? 1 : -1;
+          puff(ctx, CLOUDS, c + side * (64 + 10 * Math.abs(Math.sin(a))), gy - 20 - u * 120 * ((k % 3) / 3 + 0.3), 12, 2051 + k, { lobes: 4 });
+        }
+        if (i >= 2) for (const s of [-1, 1]) for (let k = 0; k < 4; k++) feather(ctx, k % 2 ? CLOUDS : SKYB, c + s * (40 + k * 10), gy - 150 - k * 10, 34 - k * 4, s > 0 ? -0.6 - k * 0.3 : Math.PI + 0.6 + k * 0.3);
+        const R = rng(2060 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, SUNLIT, c + (R() < 0.5 ? -1 : 1) * (70 + R() * 40), gy - 40 - R() * 160, 7, j);
+        ctx.restore();
+      },
+    };
+  })();
+
+  // ---------- The Blade Dancer's new skills (the all-class pass, 2026-11-07) ----------
+  // Hoopla (on the monster, anchored at its feet): her big ring drops out of the air over it like a
+  // fairground ring toss, spinning flat, tightens round its waist, a gold DING flash, then the ring
+  // snaps into beads.
+  E.bdhoopla = (() => {
+    const c = 130;
+    const gy = 280;
+    return {
+      w: 260, h: 320, n: 10, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const drop = Math.min(1, i / 4);
+        const y = gy - 280 + drop * 180;
+        const r = 80 - drop * 22 - (i >= 5 ? (i - 4) * 6 : 0);
+        if (i <= 7) chakram(ctx, c, y, r, i * 0.7, 0.3, i >= 5 ? GOLDRING : ROSEGOLD);
+        if (i <= 3) for (const s of [-1, 1]) speedLine(ctx, GOLDRING, c + s * r * 0.9, y - 40, c + s * r * 0.9, y - 4, 3);
+        if (i >= 4 && i <= 6) starburst(ctx, GOLDRING, c, gy - 100, [40, 60, 44][i - 4], 8, 2101, { inner: 0.32, rot: i * 0.2 });
+        if (i >= 5) {
+          const k = (i - 5) / 4;
+          const R = rng(2102);
+          for (let j = 0; j < 10; j++) {
+            const a = (j / 10) * TAU + R() * 0.3;
+            const d = 50 + k * 60;
+            if (i < 8) shard(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + Math.cos(a) * d, gy - 100 + Math.sin(a) * d * 0.35, a + Math.PI / 2, 10, 3);
+            else sparkle(ctx, j % 2 ? GOLDRING : ROSEGOLD, c + Math.cos(a) * d, gy - 100 + Math.sin(a) * d * 0.35, 7, a);
+          }
+        }
+      },
+    };
+  })();
+  // Juggling Act (over her head, anchored at her feet): three rings wheeling round in a cascade
+  // high above her head, gold glints where her hands toss them.
+  E.bdjuggle = (() => {
+    const c = 150;
+    const gy = 440;
+    const top = gy - 290;
+    return {
+      w: 300, h: 460, n: 12, fps: 24, px: c, py: gy,
+      draw(ctx, i) {
+        for (let k = 0; k < 3; k++) {
+          const a = ((i / 12) + k / 3) * TAU;
+          // A figure-eight cascade: wide and low at the sides, crossing at the top.
+          const x = c + Math.sin(a) * 80;
+          const y = top + 30 - Math.abs(Math.cos(a * 0.5)) * 60;
+          chakram(ctx, x, y, 30, a * 2, 0.8, k === 1 ? GOLDRING : ROSEGOLD);
+          if ((i + k * 4) % 12 < 2) sparkle(ctx, GOLDRING, x, y + 26, 9, a);
+        }
+      },
+    };
+  })();
+  // Showstopper (round her, anchored at her feet): a gold ring opening on the floor, two fountains
+  // of rose-gold confetti bursting up at her sides and raining out, stars popping at her shoulders.
+  E.bdshow = (() => {
+    const c = 180;
+    const gy = 300;
+    return {
+      w: 360, h: 320, n: 10, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const open = Math.min(1, (i + 1) / 4);
+        const fade = i >= 8 ? 1 - (i - 7) * 0.35 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.save();
+        ctx.translate(c, gy - 4);
+        ctx.scale(1, 0.3);
+        celRing(ctx, GOLDRING, 0, 0, 50 + 50 * open, 9, { broken: i >= 7 ? 0.4 : 0, seed: 2110 });
+        ctx.restore();
+        const R = rng(2111);
+        for (let j = 0; j < 18; j++) {
+          const s = j % 2 ? 1 : -1;
+          const vx = 30 + R() * 70;
+          const vy = 220 + R() * 90;
+          const u = Math.max(0, i / 9 - R() * 0.15);
+          const x = c + s * (70 + vx * u);
+          const y = gy - 20 - vy * u * 1.5 + 190 * u * u;
+          const pal = j % 3 === 0 ? GOLDRING : ROSEGOLD;
+          if (j % 4 === 0) sparkle(ctx, pal, x, y, 11, j);
+          else shard(ctx, pal, x, y, j + i * 0.6, 15, 6);
+        }
+        if (i >= 2 && i <= 6) for (const s of [-1, 1]) starburst(ctx, GOLDRING, c + s * 96, gy - 170 + (i % 2) * 6, [22, 34, 28, 22, 16][i - 2], 5, 2112, { inner: 0.42, rot: s * 0.3 });
+        ctx.restore();
+      },
+    };
+  })();
+
+  // ---------- The Arbalist's steam, redrawn (the all-class pass, 2026-11-07) ----------
+  // The old steam was fat white blobs that buried her. Now: slim curling wisps of steam, inked
+  // strokes that rise and curl over at the tips, a couple of small puffs at their roots, a brass
+  // glint; they thin and break apart as they go. Same frame size as before, so every use keeps
+  // its scale.
+  E.aesteam = (() => {
+    const c = 225;
+    const gy = 330;
+    const wisp = (ctx, x0, y0, len, lean, curl, w, k) => {
+      const pts = [];
+      for (let j = 0; j <= 14; j++) {
+        const u = j / 14;
+        pts.push([x0 + lean * u * len + Math.sin(u * 5 + k * 3) * 10 * u, y0 - u * len]);
+      }
+      // The curl at the tip.
+      const [ex, ey] = pts.at(-1);
+      for (let j = 1; j <= 8; j++) {
+        const a = -Math.PI / 2 + curl * (j / 8) * Math.PI * 1.4;
+        const r = 18 * (1 - j / 12);
+        pts.push([ex + curl * 18 + Math.cos(a) * r * curl, ey + 18 + Math.sin(a) * r]);
+      }
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (const [col, lw] of [[STEAM[4], w + 4], [STEAM[3], w + 1.5], [STEAM[1], w * 0.55]]) {
+        ctx.beginPath();
+        pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.strokeStyle = col;
+        ctx.lineWidth = lw;
+        ctx.globalAlpha = col === STEAM[4] ? 0.35 : 1;
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+    return {
+      w: 450, h: 450, n: 7, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 6;
+        const fade = i >= 4 ? 1 - (i - 3) * 0.25 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        const len = 60 + k * 120;
+        for (const [dx, lean, curl, w] of [[-34, -0.5, -1, 7], [0, 0.05, 1, 9], [34, 0.5, 1, 7], [-64, -0.9, -1, 5], [64, 0.9, 1, 5]]) {
+          if (i >= 5 && Math.abs(dx) > 40) continue;
+          wisp(ctx, c + dx * (1 + k * 0.6), gy - 10 - k * 30, len * (Math.abs(dx) > 40 ? 0.6 : 1), lean, curl, w * (1 - k * 0.4), dx);
+        }
+        if (i <= 3) for (const sd of [-1, 1]) puff(ctx, STEAM, c + sd * (22 + k * 30), gy - 6, 12 - k * 4, 340 + sd, { lobes: 4 });
+        if (i <= 2) sparkle(ctx, BRASS, c, gy - 30 - k * 40, 10, 0.2);
+        ctx.restore();
+      },
+    };
+  })();
+
+  // Wind-Up Bomb, waddling along (looped): a round brass bomb on two little feet, a teal lens for an
+  // eye, a riveted band, and a wind-up key turning on top; it rocks side to side as it toddles.
+  E.aewindup = {
+    w: 120, h: 130, n: 4, fps: 10, px: 60, py: 76, loop: true,
+    draw(ctx, i) {
+      const rock = [0.12, 0, -0.12, 0][i];
+      ctx.save();
+      ctx.translate(60, 76);
+      ctx.rotate(rock);
+      // Feet, one up as the other plants.
+      for (const [sd, up] of [[-1, i === 0 ? 6 : 0], [1, i === 2 ? 6 : 0]]) inked(ctx, [[sd * 16 - 9, 26 - up], [sd * 16 + 9, 26 - up], [sd * 16 + 11, 34 - up], [sd * 16 - 11, 34 - up]], BRASS[3], BRASS[4], 3);
+      ctx.beginPath();
+      ctx.arc(0, 0, 30, 0, TAU);
+      ctx.fillStyle = BRASS[2];
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = BRASS[4];
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(-9, -10, 11, 0, TAU);
+      ctx.fillStyle = BRASS[1];
+      ctx.fill();
+      fill(ctx, [[-30, 4], [30, 4], [29, 11], [-29, 11]], BRASS[3]);
+      for (const x of [-20, -7, 7, 20]) {
+        ctx.beginPath();
+        ctx.arc(x, 7.5, 2.4, 0, TAU);
+        ctx.fillStyle = BRASS[1];
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(14, -6, 8, 0, TAU);
+      ctx.fillStyle = TEALE[2];
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = TEALE[4];
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(16, -8, 3, 0, TAU);
+      ctx.fillStyle = TEALE[0];
+      ctx.fill();
+      // The key, turning (its bow seen edge-on, then flat).
+      inked(ctx, [[-3, -30], [3, -30], [3, -42], [-3, -42]], BRASS[3], BRASS[4], 3);
+      const wv = [1, 0.5, 0.15, 0.5][i];
+      for (const sd of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(sd * 11 * wv, -46, 10 * wv + 2, 7, 0, 0, TAU);
+        ctx.fillStyle = BRASS[2];
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = BRASS[4];
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+  };
+
+  // ---------- The Phantom's stage smoke, redrawn (the all-class pass, 2026-11-07) ----------
+  // The old smoke was a wall of fat plum cloud balls that swallowed her (and filled the screen in
+  // Grand Illusion). Now: a silver flash and a ring of slim inked plum curls that whip out and curl
+  // over like a magician's smoke, a couple of small puffs low at the base, a card turning in it,
+  // sparkles as it thins. Same frame size as before, so every use keeps its scale.
+  E.ptsmoke = (() => {
+    const c = 270;
+    const gy = 450;
+    const cy = gy - 150;
+    const curl = (ctx, a, d, len, w, sd) => {
+      const pts = [];
+      for (let j = 0; j <= 12; j++) {
+        const u = j / 12;
+        const r = d + u * len;
+        const aa = a + sd * u * 0.9;
+        pts.push([c + Math.cos(aa) * r, cy + Math.sin(aa) * r * 0.85]);
+      }
+      const [ex, ey] = pts.at(-1);
+      const aEnd = a + sd * 0.9;
+      for (let j = 1; j <= 8; j++) {
+        const t = aEnd + sd * (Math.PI / 2 + (j / 8) * Math.PI * 1.3);
+        const rr = 22 * (1 - j / 11);
+        pts.push([ex + Math.cos(aEnd + sd * Math.PI / 2) * 22 + Math.cos(t) * rr, ey + Math.sin(aEnd + sd * Math.PI / 2) * 22 + Math.sin(t) * rr]);
+      }
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (const [col, lw, al] of [[SMOKE[4], w + 5, 0.4], [SMOKE[3], w + 2, 1], [SMOKE[1], w * 0.5, 1]]) {
+        ctx.beginPath();
+        pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+        ctx.strokeStyle = col;
+        ctx.lineWidth = lw;
+        ctx.globalAlpha *= al;
+        ctx.stroke();
+        ctx.globalAlpha /= al;
+      }
+      ctx.restore();
+    };
+    return {
+      w: 540, h: 510, n: 7, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        const fade = i >= 4 ? 1 - (i - 3) * 0.28 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        if (i <= 1) starburst(ctx, PSILV, c, cy, 40 + i * 24, 8, 731, { inner: 0.4 });
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU + 0.3;
+          // (Out round her in a ring, never across her: the middle stays clear.)
+          curl(ctx, a, 110 + k * 40, 24 + k * 30, 13 * (1 - (i >= 4 ? (i - 3) * 0.2 : 0)), j % 2 ? 1 : -1);
+        }
+        if (i <= 4) for (const sd of [-1, 1]) puff(ctx, SMOKE, c + sd * (40 + k * 40), gy - 20, 22 - i * 3, 733 + sd, { lobes: 4, holes: i >= 3 ? 0.4 : 0 });
+        if (i >= 1 && i <= 5) cardArt(ctx, c + 60 + i * 10, cy - 60 - i * 14, 40, 0.4 + i * 0.3, Math.cos(i * 1.1), 1);
+        if (i >= 3) for (let j = 0; j < 6; j++) sparkle(ctx, PSILV, c + Math.cos(j * 1.05) * (90 + i * 14), cy + Math.sin(j * 1.05) * (70 + i * 10), 12 - (i - 3) * 2, j);
+        ctx.restore();
       },
     };
   })();

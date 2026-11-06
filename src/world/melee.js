@@ -1455,8 +1455,9 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // The Sky Dancer: every blow lifts her.
   if (hasTails(world.char)) skyLift(world, dur);
   if (step.dive) {
-    body.vy = step.dive;
-    world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, until: now + 1.2 };
+    // (`diveAt`: she rises first and only turns over into the dive that far through the move.)
+    if (!step.diveAt) body.vy = step.dive;
+    world.dive = { strike: { ...step.strikes.find((st) => st.onLand), n: 0, of: 1, dir: body.facing, scale, key, school, finisher: step.finisher, move: step.move, dur, at: 1 }, from: step.diveAt ? now + step.diveAt * dur : 0, speed: step.dive, until: now + (step.diveAt ?? 0) * dur + 1.2 };
   }
   // Phantom (full Shadow): a shadow copy of the thief repeats every blow and throw a beat later,
   // lighter (finishers are hers alone).
@@ -1513,7 +1514,14 @@ export function tickMelee(world, dt) {
   // Air cuts hold you up; landing ends the air combo, and a dive lands its blow on touchdown.
   if (!b.onGround && world.now < (world.hangUntil ?? 0)) b.vy = Math.min(b.vy, HANG_FALL);
   if (b.onGround || b.rope) world.airCombo = 0;
-  if (world.dive) {
+  if (world.dive && world.now < world.dive.from) {
+    // (Still rising into it.)
+  } else if (world.dive) {
+    if (world.dive.from && !world.dive.fired) {
+      world.dive.fired = true;
+      b.vy = world.dive.speed;
+      world.hangUntil = 0;
+    }
     if (b.onGround) {
       const strike = world.dive.strike;
       world.dive = null;

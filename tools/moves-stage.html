@@ -19,6 +19,7 @@ import { makeEquip } from '../src/core/items.js';
 import { bindFreeHotkey } from '../src/core/character.js';
 import { SKILLS } from '../src/data/skills.js';
 import { gaugeOf } from '../src/world/melee.js';
+import { cast } from '../src/world/combat.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -102,7 +103,7 @@ window.ready = true;
 // into <pre id="out"> for a headless browser's --dump-dom (tools/make-gif.py). The plan is steps
 // split by ';': KEY:secs records while holding a key (_ for none, a press on its first frame),
 // !KEY:secs plays without recording, place:x moves the hero, cap:text sets the caption, gauge:n
-// fills the job's gauge.
+// fills the job's gauge, cast:id casts a skill by its id (no hotkey needed).
 if (q.get('record')) {
   const keep = setInterval(() => {}, 10);
   // (The effect strips load first, so nothing pops in blank.)
@@ -117,7 +118,8 @@ if (q.get('record')) {
   for (const part of q.get('record').split(';')) {
     const [head, arg] = [part.slice(0, part.indexOf(':')), part.slice(part.indexOf(':') + 1)];
     if (head === 'place') { window.place(Number(arg)); continue; }
-    if (head === 'cap') { words = arg; continue; }
+    if (head === 'cap') { words = decodeURIComponent(arg); continue; }
+    if (head === 'cast') { cast(w, arg); continue; }
     // gauge:100 fills the job's gauge (for a finisher).
     if (head === 'gauge') { const g = gaugeOf(w.char); w[g] = Number(arg); w[`${g}At`] = w.now; continue; }
     const quiet = head.startsWith('!');

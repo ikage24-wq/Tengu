@@ -361,7 +361,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // A puff of her stage smoke (vanishing, appearing, a copy popping, Smoke Bomb).
       // (Smoke Bomb's is as wide as it reaches, `bomb`; a Blast Arrow's on a monster, `big`, a cloud
       // round it about its height, never a wall up the screen; a trick's puff, `small`, still reads.)
-      return fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: f.bomb ? 1 : f.big ? 0.5 : f.small ? 0.3 : 0.45 }) || true;
+      return fxSprite(ctx, 'celptsmoke', x, y + 4, { p, scale: f.bomb ? 0.75 : f.big ? 0.5 : f.small ? 0.3 : 0.45 }) || true;
     case 'ptillusion':
       // Grand Illusion: the great ring of stage smoke, cards fluttering down through it.
       return fxSprite(ctx, 'celptillusion', x, y + 4, { p, scale: 1.1 }) || true;

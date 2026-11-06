@@ -36,7 +36,7 @@ def find_browser():
 
 
 def main(out, query='job=thief', page='move-frames'):
-    url = f'http://localhost:8000/tools/{page}.html?{query}'
+    url = f'http://localhost:{os.environ.get("PORT", "8000")}/tools/{page}.html?{query}'
     dom = subprocess.run([find_browser(), '--headless=new', '--disable-gpu', '--virtual-time-budget=600000', '--dump-dom', url], capture_output=True, text=True, encoding='utf-8', check=True).stdout
     # (The last one: a page's own notes may mention the box too.)
     found = re.findall(r"<pre id=\"out\">(\[.*?)</pre>", dom, re.S)

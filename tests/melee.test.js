@@ -1867,7 +1867,8 @@ test('no job can mash out its attacks: every skill plays its motion and a beat, 
       for (let i = 0; i < 6 * 60; i++) {
         w.char.mp = 1e7;
         updateWorld(w, DT, press('KeyA'));
-        if (w.pose && w.pose.since !== last) {
+        // (A dive's touchdown pose is the same cast landing, not another one.)
+        if (w.pose && w.pose.since !== last && w.pose.kind !== 'landslam') {
           casts++;
           last = w.pose.since;
         }

@@ -141,7 +141,7 @@ export function drawJobAura(ctx, job, layer, x, y, time, scale, k) {
 // Rage, in Tengu's own effect art (fx-sprites.js), demonic and meant to frighten, in three stages:
 // as it builds, black smoke curls up round his feet and embers climb; from halfway, a flame
 // aura burns up round his whole body, behind him and see-through so he shows inside it (the way a
-// Dragon Ball fighter powers up), with only a faint lick of it over him; full (Berserk), the
+// Dragon Ball fighter powers up), never over him; full (Berserk), the
 // ground splits open in cracks of ember light round him, and a jagged shockwave rips out with every heartbeat
 // (the screen's edges thump in time; ui/hud.js).
 function rageAura(ctx, x, y, t, s, k, layer) {
@@ -157,7 +157,8 @@ function rageAura(ctx, x, y, t, s, k, layer) {
     if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.62 * flicker });
     return;
   }
-  if (k > 0.5) fxSprite(ctx, 'celragefire', x, y + 4 * s, { t: t + 0.3, scale: s * (0.8 + 0.55 * k), alpha: fire * 0.16 * flicker });
+  // (No lick of flame over him any more, the all-class pass: even faint, it burned across his
+  // face. The fire burns behind him only.)
 }
 
 // Where a heart's beat is (0-1 through each thump), lub-dub about 70 beats a minute: two quick

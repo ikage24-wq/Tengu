@@ -448,7 +448,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
         // A gold arrow's landing is the Archer's own hit burst (drawn with the hit).
-        if (f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
+        if (f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'mdbomb' || f.variant === 'mdmist' || f.variant === 'mdzap' || f.variant === 'mdpill' || f.variant === 'mdpack' || f.variant === 'mdpulse' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
         const k = (p - hit) / (1 - hit);
         ctx.globalAlpha = 1 - k;
         glow(ctx, x, cy, 28 * (1 - k) + 6, c.light, 1 - k);

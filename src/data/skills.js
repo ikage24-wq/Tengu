@@ -58,9 +58,9 @@ export const SKILLS = {
   //
   // A Warrior fights with his basic attacks; his skills are procs (`proc`, see world/melee.js and
   // world/combat.js) that set off on their own from what he does: Blade Rush and Whirlwind from
-  // his blows, War Cry when his gauge fills, Iron Guard when a hard hit lands. His only buttons
-  // besides attack are Shoulder Charge (getting about) and Titan Breaker (the big one, on a full
-  // gauge). Proc skills are passives with an empty `passive` (they add no stats of their own).
+  // his blows, War Cry when his gauge fills, Iron Guard when a hard hit lands. His buttons
+  // besides attack are Shoulder Charge (getting about), Cross Slash (a heavy two-cut X) and Titan
+  // Breaker (the big one, on a full gauge). Proc skills are passives with an empty `passive` (they add no stats of their own).
   bladerush: skill({
     id: 'bladerush', name: 'Blade Rush', job: 'warrior', type: 'passive', fx: null, school: 'steel',
     desc: 'Your swings sometimes rush on into an extra cross-cut of steel that slashes everything in front of you twice, whether they hit or not.',
@@ -98,6 +98,25 @@ export const SKILLS = {
             ...[0.25, 0.45].map((at) => ({ at, pct: k(45, 80), reach: 46, h: 64, around: true, targets: 5, knock: 70, launch: 140, bleed: { pct: 0.15, secs: 3 }, stop: 0.02 })),
             { at: 0.8, pct: k(140, 230), reach: 90, h: 90, around: true, targets: 5, knock: 260, launch: 300, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.1, shake: 5 },
           ] }],
+        },
+      };
+    },
+  }),
+  crossslash: skill({
+    id: 'crossslash', name: 'Cross Slash', job: 'warrior', type: 'attack', fx: null, icon: 'crossslash', school: 'steel', maxLevel: 10,
+    desc: 'Step in and cut an X through the monsters in front of you: a heavy chop down and a rising backhand straight after it, leaving a cross of steel light burning on them. A Paladin cuts it as a knight, a Berserker as a beast.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const cut = (at, up) => ({ at, pct: k(110, 190), reach: 70, h: 70, targets: 3, knock: up ? 140 : 30, launch: up ? 180 : 0, big: up, stop: up ? 0.08 : 0.04, shake: up ? 3 : 1, gauge: 4 });
+      return {
+        mp: k(8, 14), pct: k(110, 190), hits: 2, targets: 3,
+        combo: [{ move: 'crossslash', dur: 0.62, step: 16, strikes: [cut(0.3, false), { ...cut(0.52, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
+        // Each warrior path cuts it its own way (same numbers): the Paladin's two clean knightly
+        // cuts, finished with the blade planted point-down before her, a cross of gold light; the
+        // Berserker's wild leaping hack and a whirling backhand with the axe, a cross of rose fire.
+        paths: {
+          paladin: [{ move: 'plcross', dur: 0.66, step: 14, strikes: [cut(0.3, false), { ...cut(0.5, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
+          berserker: [{ move: 'bkcross', dur: 0.62, step: 22, strikes: [cut(0.34, false), { ...cut(0.54, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
         },
       };
     },
@@ -806,7 +825,8 @@ export const SKILLS = {
   // inventor whose crossbow is her own machine. Every bolt that lands builds Pressure (internally
   // Charge, world/melee.js); full (Overdrive), every shot fires a second bolt. Her gadgets go off by
   // themselves (world/engineer.js): Sticky Bolt from any bolt, Cluster Bolt from the string's last,
-  // Steam Vent when a hit lands on her. Her buttons are Deploy Turret, Overclock and Big Bertha.
+  // Steam Vent when a hit lands on her. Her buttons are Deploy Turret, Wind-Up Bomb, Overclock and
+  // Big Bertha.
   // (Internally the path keeps the Stormcaller's id, so saves and quests carry over.)
   engmastery: skill({
     id: 'engmastery', name: 'Engineer Mastery', job: 'stormcaller', type: 'passive', grows: true, fx: null, icon: 'engmastery',
@@ -840,6 +860,20 @@ export const SKILLS = {
       return {
         mp: k(20, 30), pct: k(60, 110), hits: 0, targets: 1,
         combo: [{ move: 'aedeploy', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, turret: { duration: k(15, 30), pct: k(60, 110), every: lerpf(0.7, 0.45, lv, m), range: 260 } }] }],
+      };
+    },
+  }),
+  windupbomb: skill({
+    id: 'windupbomb', name: 'Wind-Up Bomb', job: 'stormcaller', type: 'attack', fx: null, icon: 'windupbomb', school: 'brass', maxLevel: 10,
+    desc: 'Crouch, crank the key on a little clockwork bomb and let it go: it toddles off at the monsters on its tiny feet and goes off with a bang of gears and steam, catching everything round it. You cover your ears. Needs a crossbow.',
+    weapons: ['crossbow'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 24), pct: k(200, 340), hits: 1, targets: 8,
+        combo: [{ move: 'aewindup', dur: 0.85, step: 0, strikes: [
+          { at: 0.46, shot: 'aewindup', free: true, pct: k(200, 340), range: 300, h: 70, oy: 16, targets: 8, blast: 110, blastFx: 'aeboom', burst: 'aeboom', speed: 230, knock: 180, launch: 160, big: true, stop: 0.08, shake: 4, gauge: 6 },
+        ] }],
       };
     },
   }),
@@ -969,7 +1003,8 @@ export const SKILLS = {
   // monster to monster and fly home to her hand (world/melee.js ringThrow). Rings landing and
   // bouncing build Ricochet (internally Ki, the Shinobi's it replaced); full (Carousel), two rings
   // orbit her and cut what comes close. Like the Wind Dancer, her book is mostly skills that go off
-  // by themselves (Rebound, Twin Rings); her button is Golden Carousel, the finisher.
+  // by themselves (Rebound, Twin Rings); her buttons are Hoopla, Juggling Act, Curtain Call (a
+  // party buff) and Golden Carousel, the finisher.
   // (Internally the path keeps the Shinobi's id, so saves and quests carry over.)
   ringmastery: skill({
     id: 'ringmastery', name: 'Ring Mastery', job: 'shinobi', type: 'passive', grows: true, fx: null, icon: 'ringmastery',
@@ -987,6 +1022,52 @@ export const SKILLS = {
     desc: 'A second ring sometimes flies a beat after your throw, at the next monster along, and bounces just the same.',
     weapons: ['dagger'],
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.12, 0.35, lv, m), pct: lerp(50, 80, lv, m) } }),
+  }),
+  // Her new buttons (the all-class pass, 2026-11-07): a ring toss, a juggling act, and a bow.
+  hoopla: skill({
+    id: 'hoopla', name: 'Hoopla', job: 'shinobi', type: 'attack', fx: null, icon: 'hoopla', school: 'rosegold', maxLevel: 10,
+    desc: 'Toss your big ring underhand in a high arc, like a fairground ring toss: it drops right over the monster, spins down tight round it with a gold DING, and leaves it dizzy for a moment. Needs chakrams.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(12, 20), pct: k(300, 500), hits: 1, targets: 1,
+        combo: [{ move: 'bdhoopla', dur: 0.62, step: 6, strikes: [
+          { at: 0.42, shot: 'ringbig', lob: 70, bounce: 0, pct: k(300, 500), range: 300, h: 80, knock: 0, stun: kf(1.2, 2), speed: 700, burst: 'bdhoopla', big: true, stop: 0.1, shake: 3, gauge: 6 },
+        ] }],
+      };
+    },
+  }),
+  jugglingact: skill({
+    id: 'jugglingact', name: 'Juggling Act', job: 'shinobi', type: 'attack', fx: null, icon: 'jugglingact', school: 'rosegold', maxLevel: 10,
+    desc: 'Juggle three rings in a cascade high over your head, then sweep your arm round and send all three flying at once, each ricocheting on through the crowd. Needs chakrams.',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const ring = (i) => ({ at: 0.66, lag: i * 0.04, shot: 'ring', pick: i, bounce: 2, pct: k(100, 170), range: 320, h: 80, knock: 60, speed: 900, oy: (i - 1) * 6, gauge: 3, big: !i, stop: i ? 0 : 0.05, shake: i ? 0 : 2 });
+      return {
+        mp: k(16, 26), pct: k(100, 170), hits: 3, targets: 3,
+        combo: [{ move: 'bdjuggle', dur: 0.95, step: 0, strikes: [
+          { at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'bdjuggle', burstAt: 0, burstDur: 0.6, follow: true, gauge: 0 },
+          ...[0, 1, 2].map(ring),
+        ] }],
+      };
+    },
+  }),
+  showstopper: skill({
+    id: 'showstopper', name: 'Curtain Call', job: 'shinobi', type: 'buff', fx: null, icon: 'showstopper', school: 'rosegold', party: true, maxLevel: 10,
+    desc: 'Twirl your ring up, catch it, and sink into a deep bow as confetti bursts round you: for a minute everyone near you lands critical hits more often, and harder. The crowd needs a while to calm down (a two-minute cooldown).',
+    weapons: ['dagger'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 640, h: 200, around: true };
+      return {
+        mp: k(30, 50), pct: 0, hits: 0, targets: 0, range, cooldown: 120,
+        combo: [{ move: 'bdbow', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'bdshow', burstAt: 0, burstDur: 0.85, follow: true, grant: { id: 'showstopper', duration: 60, buff: { critRate: kf(0.06, 0.15), critDamage: kf(0.12, 0.3) }, range } }] }],
+      };
+    },
   }),
   goldencarousel: skill({
     id: 'goldencarousel', name: 'Golden Carousel', job: 'shinobi', type: 'attack', fx: null, icon: 'goldencarousel', school: 'rosegold', maxLevel: 10, fullGauge: true,
@@ -1013,7 +1094,8 @@ export const SKILLS = {
   // wind down at them (world/melee.js skyLift). Her hits build Tailwind (internally Tails, the
   // Kitsune's it replaced), faster in the air; full, she flies freely and her gusts are twice as
   // big. Like the Wind Dancer, her book is mostly skills that go off by themselves (Updraft,
-  // Zephyr); her button is Sky Waltz, the finisher.
+  // Zephyr); her buttons are Downburst (a dive), Gale Step (a dash), Cloud Nine (a party buff)
+  // and Sky Waltz, the finisher.
   // (Internally the path keeps the Kitsune's id, so saves and quests carry over.)
   skymastery: skill({
     id: 'skymastery', name: 'Sky Mastery', job: 'kitsune', type: 'passive', grows: true, fx: null, icon: 'skymastery',
@@ -1031,6 +1113,48 @@ export const SKILLS = {
     desc: 'While you dance in the air, a second gust sometimes follows the first a beat later.',
     weapons: ['gauntlet'],
     at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.4, lv, m), pct: lerp(50, 80, lv, m) } }),
+  }),
+  // Her new buttons (the all-class pass, 2026-11-07): a dive, a dash, and a buff for the party.
+  downburst: skill({
+    id: 'downburst', name: 'Downburst', job: 'kitsune', type: 'attack', fx: null, icon: 'downburst', school: 'aerial', maxLevel: 10,
+    desc: 'Ride the wind up, roll over at the top and dive palm-first into the ground: a blast of wind bursts out both ways where you land, knocking monsters flying. Needs gloves.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 22), pct: k(190, 330), hits: 1, targets: 6,
+        combo: [{ move: 'sddive', dur: 0.6, step: 30, carry: 0.35, dive: 1100, diveAt: 0.36, strikes: [
+          { onLand: true, pct: k(190, 330), reach: 120, h: 80, around: true, targets: 6, knock: 160, launch: 180, fx: 'skyhit', burst: 'sddownburst', burstAt: 0, burstDur: 0.55, big: true, stop: 0.08, shake: 4, gauge: 3 },
+        ] }],
+      };
+    },
+  }),
+  galestep: skill({
+    id: 'galestep', name: 'Gale Step', job: 'kitsune', type: 'attack', fx: null, icon: 'galestep', school: 'aerial', maxLevel: 10, movement: true,
+    desc: 'Lie out flat on a gust and shoot forward through the air on a trail of feathers, cutting everything you pass. Nothing touches you on the way. Needs gloves.',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const hit = (at) => ({ at, pct: k(80, 140), reach: 70, h: 70, around: true, targets: 6, knock: 60, fx: 'skyhit', gauge: 2 });
+      return {
+        mp: k(10, 16), pct: k(80, 140), hits: 2, targets: 6,
+        combo: [{ move: 'sdgale', dur: 0.42, step: k(150, 210), carry: 0.55, guard: 0.5, strikes: [{ ...hit(0.3), burst: 'sdgalefx', burstAt: 0, burstDur: 0.45 }, hit(0.55)] }],
+      };
+    },
+  }),
+  cloudnine: skill({
+    id: 'cloudnine', name: 'Cloud Nine', job: 'kitsune', type: 'buff', fx: null, icon: 'cloudnine', school: 'aerial', party: true, maxLevel: 10,
+    desc: 'Spread your arms and call up a ring of little clouds: for a minute everyone near you attacks faster, dodges more, and runs and jumps lighter. The clouds need a while to gather again (a two-minute cooldown).',
+    weapons: ['gauntlet'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 640, h: 200, around: true };
+      return {
+        mp: k(30, 50), pct: 0, hits: 0, targets: 0, range, cooldown: 120,
+        combo: [{ move: 'sdcloud', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sdcloudnine', burstAt: 0, burstDur: 0.9, follow: true, grant: { id: 'cloudnine', duration: 60, buff: { attackSpeed: kf(0.06, 0.12), eva: k(10, 30), speed: k(8, 20), jump: k(4, 10) }, range } }] }],
+      };
+    },
   }),
   skywaltz: skill({
     id: 'skywaltz', name: 'Sky Waltz', job: 'kitsune', type: 'attack', fx: null, icon: 'skywaltz', school: 'aerial', maxLevel: 10, fullGauge: true,
@@ -1074,15 +1198,15 @@ export const SKILLS = {
 const MOVES_BY_SKILL = {
   pebble: 'pebbleflick', quickstep: 'qstep',
   vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'ptbomb',
-  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', overclock: 'aeoverclock', bigbertha: 'aebertha',
-  bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
+  stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', windupbomb: 'aewindup', overclock: 'aeoverclock', bigbertha: 'aebertha',
+  bladerush: 'overhead', crossslash: 'crossslash', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'pmbig', spiritstep: 'pmblink', spiritwave: 'pmwire', frostnova: 'pmflop', blessing: 'pmcamp', spiritward: 'pmscroll', heavenslantern: 'pmkaboom',
   grandblessing: 'mdtriage', idolcheer: 'mdpep', espresso: 'mdespresso', purification: 'mdcloud', resurrection: 'mdrevive', thousandtorii: 'mdhospital',
   ofudabarrage: 'qnsnap', seimanseal: 'qnvortex', yokairally: 'qnpact', troupecombo: 'qnfinale',
-  goldencarousel: 'bdcarousel',
-  skywaltz: 'sdwaltz',
+  goldencarousel: 'bdcarousel', hoopla: 'bdhoopla', jugglingact: 'bdjuggle', showstopper: 'bdbow',
+  skywaltz: 'sdwaltz', downburst: 'sddive', galestep: 'sdgale', cloudnine: 'sdcloud',
   gmsmite: 'castup', gmhaste: 'cheer',
 };
 for (const [id, move] of Object.entries(MOVES_BY_SKILL)) SKILLS[id].anim = move;

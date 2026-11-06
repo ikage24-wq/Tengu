@@ -353,6 +353,14 @@ function whirlwind() {
   return out;
 }
 
+// Cross Slash: two steel cuts crossing in an X, a glint where they meet.
+function crossslash() {
+  const out = [...tile('steel', 'active'), ...aura(8, 8, 6.6, '#e4f2ff', 1.1)];
+  out.push(streak([2.6, 2.6], [13.4, 13.4], 1.6, '#eef7ff'), streak([13.4, 2.6], [2.6, 13.4], 1.6, '#cfe6ff'));
+  out.push(...sword([12.6, 3.4], [4.4, 11.6], { w: 2.4, gw: 4, glen: 2, gem: '#7fd8ff' }));
+  out.push(...spark(8, 8, 1.8, '#fff6c0'));
+  return out;
+}
 function titanbreak() {
   const rock = '#9a9ac8';
   const out = [...tile('steel', 'active'), ...aura(8, 12, 6, '#e4f2ff', 1.2)];
@@ -995,6 +1003,16 @@ function deployturret() {
   out.push(S(oval(7, 8, 1.1, 1.1, 0, 10), TEALC), ...spark(13.6, 3, 1.1, TEALC));
   return out;
 }
+// Wind-Up Bomb: a round brass bomb on little feet with a key on top.
+function windupbomb() {
+  const out = [...tile('brassbg', 'active'), ...aura(8, 9, 6.4, '#fff0c8')];
+  out.push(...solid(oval(8, 9.6, 4.4, 4.4, 0, 20), BRASSC, { d: 0.35, ink: BRASSINK }));
+  out.push(S(rect(3.8, 10, 8.4, 1.1), '#b8782a'), S(oval(10, 8.6, 1.3, 1.3, 0, 10), TEALC));
+  out.push(...solid(rect(7.4, 3.4, 1.2, 2), '#b8782a', { d: 0.3, ink: BRASSINK }), ...solid(oval(6.2, 2.8, 1.4, 1, 0, 10), BRASSC, { d: 0.3, ink: BRASSINK }), ...solid(oval(9.8, 2.8, 1.4, 1, 0, 10), BRASSC, { d: 0.3, ink: BRASSINK }));
+  out.push(S(rect(4.8, 13.8, 2, 1), '#b8782a'), S(rect(9.2, 13.8, 2, 1), '#b8782a'));
+  out.push(...spark(13.4, 4, 1.1, TEALC));
+  return out;
+}
 // Overclock: a cog with a teal gauge needle pinned in the red.
 function overclock() {
   const out = [...tile('brassbg', 'buff'), ...aura(8, 8, 6, '#c8fff4')];
@@ -1129,6 +1147,31 @@ function goldencarousel() {
   return out;
 }
 
+// Hoopla: a big ring dropping flat over a little monster, a gold glint on it.
+function hoopla() {
+  const out = [...tile('rosegold', 'active'), ...aura(8, 9, 6.6, RIMGOLD)];
+  out.push(...solid(oval(8, 12, 3, 2.6, 0, 16), '#b0a0c8', { d: 0.3, ink: '#4a3a6a' }));
+  out.push(...edge(tube(arcPts(8, 10.6, 5.4, 1.8, 0, 360, 28), 0.9), '#8e5228', 0.4), S(tube(arcPts(8, 10.6, 5.4, 1.8, 0, 360, 28), 0.9), RIMGOLD));
+  for (const x of [3.6, 12.4]) out.push(streak([x, 3], [x, 7.6], 0.6, W));
+  out.push(...spark(8, 4, 1.6, RIMGOLD));
+  return out;
+}
+// Juggling Act: three rings wheeling in an arc.
+function jugglingact() {
+  const out = [...tile('rosegold', 'active'), ...aura(8, 8, 6.6, RIMGOLD)];
+  out.push(...edge(tube(arcPts(8, 10, 5.6, 6, 200, 340, 18), 0.4), '#8e5228', 0.2));
+  for (const [x, y, r] of [[3.2, 9, 1.9], [8, 4.4, 2.1], [12.8, 9, 1.9]]) out.push(...ringBlade(x, y, r, x * 30));
+  out.push(...spark(8, 13, 1.2, RIMGOLD));
+  return out;
+}
+// Curtain Call: a gold star bursting, confetti flying.
+function showstopper() {
+  const out = [...tile('rosegold', 'buff'), ...aura(8, 8, 7, RIMGOLD, 1.2, 5)];
+  out.push(...spark(8, 8, 4, RIMGOLD));
+  for (const [x, y, c] of [[2.6, 3.4, '#f6ad94'], [13.2, 4, RIMGOLD], [3.4, 13, RIMGOLD], [12.6, 12.4, '#f6ad94'], [8, 2, W]]) out.push(S(rect(x - 0.6, y - 0.6, 1.2, 1.2), c));
+  return out;
+}
+
 // ---------- Sky Dancer (sky blue, white clouds, a little sunlight) ----------
 const SKYBLUE = '#8fd0ff';
 const SKYINK = '#2a4f9e';
@@ -1173,6 +1216,33 @@ function skywaltz() {
   for (const [y, r] of [[13, 1.6], [11, 2.6], [8.8, 3.6], [6.4, 4.6], [3.8, 5.6]]) out.push(...swoosh(8, y, r, r * 0.38, -210, 40, 1, y < 8 ? W : SKYBLUE, { ink: SKYINK }));
   out.push(...featherIcon(11.6, 6.2, 14.2, 2.4, 1));
   out.push(...spark(3, 3, 1.2, SUNGOLD), ...spark(13.4, 12.6, 0.9));
+  return out;
+}
+
+// Downburst: a glove diving straight down onto a burst of wind.
+function downburst() {
+  const out = [...tile('skydance', 'active'), ...aura(8, 9, 6.6, '#e8f8ff')];
+  out.push(...swoosh(8, 13, 6, 1.8, 180, 360, 1, SKYBLUE, { ink: SKYINK }));
+  out.push(...gust(3.4, 12, 3, 150, 240, 1.2), ...gust(12.6, 12, 3, -60, 30, 1.2));
+  for (const x of [6.4, 9.6]) out.push(streak([x, 2], [x, 8], 0.6, W));
+  out.push(...featherIcon(8, 3.4, 8, 10, 1.2));
+  out.push(...spark(8, 12.2, 1.4, SUNGOLD));
+  return out;
+}
+// Gale Step: three streaks of wind racing right with feathers peeling off.
+function galestep() {
+  const out = [...tile('skydance', 'active'), ...aura(8, 8, 6.4, '#e8f8ff')];
+  for (const [y, c] of [[5.4, SKYBLUE], [8, W], [10.6, SKYBLUE]]) out.push(streak([1.6, y], [13.6, y], 0.8, c));
+  out.push(...featherIcon(4, 3.6, 7, 3, 1), ...featherIcon(9, 12.4, 12, 13.6, 1));
+  out.push(...spark(13.6, 8, 1.2, SUNGOLD));
+  return out;
+}
+// Cloud Nine: two little clouds under a pair of wings of light.
+function cloudnine() {
+  const out = [...tile('skydance', 'buff'), ...aura(8, 8, 6.6, SUNGOLD, 1, 4)];
+  out.push(...featherIcon(7, 7, 2.6, 3.6, 1.2), ...featherIcon(9, 7, 13.4, 3.6, 1.2));
+  for (const [x, y, r] of [[5.6, 11.6, 2.6], [10.6, 11, 3]]) out.push(...solid(oval(x, y, r, r * 0.7, 0, 14), W, { d: 0.3, ink: SKYINK }));
+  out.push(...spark(8, 4, 1.2, SUNGOLD), ...spark(2.6, 7.6, 0.8), ...spark(13.4, 8.6, 0.8));
   return out;
 }
 
@@ -1682,7 +1752,7 @@ const ART = {
   engmastery, stickybolt, clusterbolt, steamvent, deployturret, overclock, bigbertha,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
-  skymastery, updraft, zephyr, skywaltz,
+  skymastery, updraft, zephyr, skywaltz, downburst, galestep, cloudnine, hoopla, jugglingact, showstopper, windupbomb, crossslash,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
   spiritbolt, spiritstep, spiritwave, frostnova, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, espresso, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,

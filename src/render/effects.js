@@ -92,9 +92,13 @@ function drawShot(ctx, f, cam) {
       // Bertha's enormous one.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
-      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 2.2, alpha: f.split ? 0.85 : 1 });
+      fxSprite(ctx, f.shot === 'aebolt' ? 'celaebolt' : 'celaebig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: f.shot === 'aebolt' ? 0.7 : f.shot === 'aebig' ? 0.75 : 1.3, alpha: f.split ? 0.85 : 1 });
       break;
     }
+    case 'aewindup':
+      // Wind-Up Bomb toddling along to them, rocking on its little feet.
+      fxSprite(ctx, 'celaewindup', x, y + 6 - 2 * Math.abs(Math.sin(f.t * 20)), { t: f.t, flip: f.tx < f.x, scale: 0.75 });
+      break;
     case 'asplanet': case 'asbig': case 'asmoon': {
       // The Astronomer's: a little ringed planet rolling with an orbit trailing it, a great ringed
       // world, and one of her moons flying off at a monster.
@@ -1091,7 +1095,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+const GROUND_FX = new Set(['mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

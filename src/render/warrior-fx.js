@@ -176,7 +176,9 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   // (The Paladin's star is drawn smaller than the others' marks: its rays reach far, and full size
   // on a monster beside her it swallowed her.)
   if (school === 'holy') fxSprite(ctx, 'celholyhit', x, y, { p, scale: k * 0.6 });
-  else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k, flip: dir < 0 });
+  // (The Berserker's claw marks a size smaller and each torn at its own angle, the all-class pass:
+  // the same big red X on every blow read as spam.)
+  else if (school === 'rage') fxSprite(ctx, 'celclaw', x, y, { p, scale: k * 0.62, rot: (seed - 0.5) * 0.9, flip: dir < 0 });
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
@@ -232,8 +234,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'siwave':
       return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.6 : 0.4) }) || true;
     case 'shock':
-      // A finisher's shockwave racing out to the edge of its reach (world/melee.js).
-      return fxSprite(ctx, f.name, x, y + 2, { p, scale: f.r / 99 }) || true;
+      // A finisher's shockwave racing out to the edge of its reach (world/melee.js), capped so it
+      // never draws a thin line right across the screen (the player found those ugly).
+      return fxSprite(ctx, f.name, x, y + 2, { p, scale: Math.min(f.r, 150) / 99 }) || true;
     case 'sishock': {
       // A blast of Grand Concert's music rolling out along the ground to the edge of its reach: the
       // monsters it passes are hit as it reaches them (world/idol.js).
@@ -302,7 +305,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.32, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
     }
     case 'aeballista':
-      return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;
+      // (Behind her, a size smaller, so she shows at the crank instead of vanishing into the frame.)
+      return fxSprite(ctx, 'celaeballista', x - dir * 16, y + 4, { p, scale: 0.6, flip }) || true;
     // The Mage's element reactions (world/reactions.js): Steam Blast rolling out along the floor as
     // far as it scalds, Shatter bursting from the monster's middle, Kaboom and the small blasts it
     // jumps on with, and the zap that carries it from one monster to the next.
@@ -534,10 +538,25 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       }
       return fxSprite(ctx, 'celskyhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.7 : 0.5 }) || true;
     case 'skyupdraft':
-      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: p * 0.9, scale: (f.r ?? 80) / 130, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
+      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: p * 0.9, scale: (f.r ?? 80) / 127, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       return fxSprite(ctx, 'celskyhit', x, y - 40, { p, scale: 0.8 }) || true;
+    case 'sddownburst':
+      // Downburst: the ring slapping down where she lands and the wind bursting out both ways.
+      return fxSprite(ctx, 'celsddownburst', x, y + 4, { p, scale: 0.62 }) || true;
+    case 'sdgalefx':
+      // Gale Step: the streak of wind she rode, from where she set off, pointing the way she went.
+      return fxSprite(ctx, 'celsdgalefx', x, y - 30, { p, scale: 0.6, flip: f.dir < 0 }) || true;
+    case 'sdcloudnine':
+      return fxSprite(ctx, 'celsdcloudnine', x, y + 6, { p, scale: 0.75 }) || true;
     case 'skytornado':
-      return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 1.15 }) || true;
+      return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 0.8 }) || true;
+    case 'bdhoopla':
+      // Hoopla: the ring dropping over the monster and spinning down tight round it.
+      return fxSprite(ctx, 'celbdhoopla', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'bdjuggle':
+      return fxSprite(ctx, 'celbdjuggle', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'bdshow':
+      return fxSprite(ctx, 'celbdshow', x, y + 4, { p, scale: 0.65 }) || true;
     case 'bdhit':
       return fxSprite(ctx, 'celbdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.75 : 0.55, rot: (seed - 0.5) * 0.6 }) || true;
     case 'bdbounce':
@@ -607,7 +626,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const R = 190;
       const burst = Math.max(0, (p - 0.58) / 0.42);
       const fade = Math.min(1, p * 5, (1 - p) * 4);
-      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: f.t * 0.8, scale: 1.25, alpha: fade * (1 - burst) });
+      fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: f.t * 0.8, scale: 0.78, alpha: 0.9 * fade * (1 - burst) });
       for (let i = 0; i < 8; i++) {
         const a = p * p * 6 * Math.PI * dir + (i * Math.PI) / 4;
         const rx = R * (0.55 + 0.3 * Math.min(1, p * 2)) * (1 + 0.35 * burst);
@@ -784,10 +803,12 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // at its edges and diamonds of light rising.
       const r = f.r ?? 110;
       const a = (p < 0.1 ? p / 0.1 : 1) * (p > 0.75 ? (1 - p) / 0.25 : 1);
-      fxSprite(ctx, 'celcirclebig', x, y, { frame: 0, scale: r / 105, sy: 0.3, alpha: a });
-      groundRing(ctx, 'celringholy', x, y, p, r);
-      for (const sd of [-1, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * 0.55, y, Math.min(1, p * 1.2), 90);
-      fxSprite(ctx, 'celmotes', x, y, { t: time, scale: r / 60, alpha: a });
+      // (Softer and behind her, the all-class pass: the full-strength circle, ring and pillars
+      // washed her out in gold.)
+      fxSprite(ctx, 'celcirclebig', x, y, { frame: 0, scale: r / 105, sy: 0.3, alpha: a * 0.55 });
+      groundRing(ctx, 'celringholy', x, y, p, Math.min(r, 130), { alpha: 0.7 * (1 - p * 0.5) });
+      for (const sd of [-1, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * 0.7, y, Math.min(1, p * 1.2), 70);
+      fxSprite(ctx, 'celmotes', x, y, { t: time, scale: r / 70, alpha: a * 0.8 });
       return true;
     }
     case 'verdict': {
@@ -796,20 +817,21 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // pillars of light in a wide ring and a ring racing out.
       const r = f.r ?? 170;
       const a = (p < 0.08 ? p / 0.08 : 1) * (p > 0.75 ? (1 - p) / 0.25 : 1);
-      fxSprite(ctx, 'celcirclebig', x, y, { frame: 0, scale: r / 105, sy: 0.3, alpha: a });
-      groundRing(ctx, 'celringholy', x, y, p, r * 1.1);
-      for (const sd of [-1, -0.5, 0.5, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * 0.6, y, Math.min(1, p * 1.1 + Math.abs(sd) * 0.08), 110);
+      // (Behind her, softer, two pillars instead of four, the all-class pass: she vanished in it.)
+      fxSprite(ctx, 'celcirclebig', x, y, { frame: 0, scale: r / 105, sy: 0.3, alpha: a * 0.55 });
+      groundRing(ctx, 'celringholy', x, y, p, Math.min(r, 150), { alpha: 0.7 * (1 - p * 0.5) });
+      for (const sd of [-1, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * 0.75, y, Math.min(1, p * 1.1), 100);
       const fall = Math.min(1, p / 0.12);
       fxSprite(ctx, 'celsword', x, y + 4 - 160 * (1 - fall * fall), { p: p < 0.3 ? 0 : (p - 0.3) / 0.7, scale: 1.1 });
-      if (p > 0.1) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.1) / 0.9, scale: 1.1 });
+      if (p > 0.1) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.1) / 0.9, scale: 0.8 });
       return true;
     }
     case 'titanrise': {
       // Titan Breaker's leap: steel light bursting up from the ground he leaps from, and a giant
       // sword of steel flying together out of shards high over him, held there until he crashes
       // down (the crash, 'titanbreak', drives it into the ground).
-      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.6), 70);
-      if (p < 0.5) lightPillar(ctx, pillarSprite(f.school), x, y, p * 2, 120);
+      // (No pillar of light up through him any more, the all-class pass: it hid him as he leapt.)
+      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.6), 60, { alpha: 0.8 });
       const form = Math.min(1, p / 0.35);
       if (p < 0.66) fxSprite(ctx, pathTint(f.school, 'celswordform', 'celswordformgold', 'celswordformred'), x, y - 92, { frame: Math.min(4, Math.floor(form * 4.99)), scale: 1, alpha: p > 0.6 ? (0.66 - p) / 0.06 : 1 });
       return true;
@@ -827,18 +849,21 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       fxSprite(ctx, fissure, x, y, { p, scale: r / 230 });
       for (const sd of [-1, 1]) if (p > 0.05) fxSprite(ctx, fissure, x + sd * r * 0.5, y, { p: (p - 0.05) / 0.95, scale: (r / 230) * 0.8, flip: sd < 0 });
       debris(ctx, x, y, p, r * 0.8, f.school);
-      if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 1.1 });
-      groundRing(ctx, ringOf(f.school), x, y, p, r * 1.1);
+      if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 0.85 });
+      // (The aftershock's one ring races out after this; no second huge ring here, the all-class
+      // pass: three blurry rings stacked over him buried the crash.)
       return true;
     }
+    case 'xcross':
+      // Cross Slash: the X of steel light burning where the two cuts crossed, on the monsters.
+      return fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 34, { p, scale: 0.55, flip }) || true;
     case 'titanwave': {
       // The aftershock: rings of steel racing out along the ground, dust thrown both ways.
       const r = f.r ?? 180;
-      groundRing(ctx, ringOf(f.school), x, y, p, r);
-      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.5), r * 0.6);
+      groundRing(ctx, ringOf(f.school), x, y, p, Math.min(r, 150), { alpha: 0.75 * (1 - p * 0.5) });
       for (const sd of [-1, 1]) {
         if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x + sd * r * 0.35, y + 6, { p, flip: sd < 0, scale: 0.55 });
-        else fxSprite(ctx, 'celdust', x + sd * r * 0.35, y + 2, { p, flip: sd < 0, scale: 1 });
+        else fxSprite(ctx, 'celdust', x + sd * r * 0.55, y + 2, { p, flip: sd < 0, scale: 0.6 });
       }
       return true;
     }
@@ -897,7 +922,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       debris(ctx, x, y, p, r * 0.95, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1.05, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       fxSprite(ctx, 'celembers', x, y, { t: p, scale: r / 80, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundWave(ctx, 'rage', x, y, p, r);
+      groundRing(ctx, 'celshockred', x, y, p, r * 0.85, { alpha: 0.75 * (1 - p * 0.5) });
       return true;
     }
     case 'gswheel': {
@@ -939,10 +964,11 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const r = f.r ?? 175;
       const fall = Math.min(1, p / 0.1);
       fxSprite(ctx, 'celrageaxe', x, y + 6 - 110 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1, flip });
-      fxSprite(ctx, 'celclawbig', x, y - 44, { p, scale: 1.25, flip });
+      // (The claw gashes torn out ahead of him, not across him; and no shockwave ring of its own:
+      // the aftershock's one follows, the all-class pass: two huge red rings stacked buried him.)
+      fxSprite(ctx, 'celclawbig', x + dir * 60, y - 40, { p, scale: 0.9, flip });
       debris(ctx, x, y, p, r * 0.9, 'rage');
-      fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundWave(ctx, 'rage', x, y, p, r);
+      fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 0.8, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       return true;
     }
     case 'gather': {
@@ -957,7 +983,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A Berserker's blow: a fiery cut across the target, sparks flying on the heavy ones.
       const cy = y - (f.h ?? 24) / 2;
       hitMark(ctx, 'rage', x, cy, p, { big: f.big, seed, dir });
-      if (f.big) fxSprite(ctx, 'celblood', x + dir * 6, cy, { p, scale: 0.8, flip });
+      if (f.big) fxSprite(ctx, 'celblood', x + dir * 6, cy, { p, scale: 0.55, flip });
       return true;
     }
     case 'holyhit': {
@@ -979,7 +1005,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       debris(ctx, x, y, p, r * 0.9, 'rage');
       fxSprite(ctx, 'celragefire', x, y, { t: time, scale: r / 90, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       fxSprite(ctx, 'celembers', x, y, { t: p, scale: r / 80, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundWave(ctx, 'rage', x, y, p, r);
+      groundRing(ctx, 'celshockred', x, y, p, r * 0.85, { alpha: 0.75 * (1 - p * 0.5) });
       return true;
     }
     case 'quake': {
