@@ -59,4 +59,19 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
   `mgfireball`, `mgice`, `mgspike` (spikes bursting out of the ground along the line), `mgbolt`,
   `mgsky`, and a hit mark per element (`mghitfire`, `mghitice`, `mghitbolt`), each opened by her
   crimson rune ring.
-- Next: Element Weave (replacing the Constellation), her shouted spell names, skills and Meteor.
+- Element Weave (world/melee.js `addSpirit` for the Mage, `WEAVE_NEW`, `WEAVE_SAME`): a hit of a new
+  element (fire, ice, lightning, or a heal as light) builds it fast, the same one barely; full,
+  Overload sends the other two elements along with every spell (`OVERLOAD_PCT`). On the HUD as
+  Element Weave; her aura is three element orbs circling her (`celmgorb`), over her crimson rune
+  ring at Overload (`celmgrune`).
+- She shouts the name of her finishers and skills (`MAGE_SHOUTS`, never the same line twice running).
+- Skills (ids kept, data/skills.js): Fireball (`spiritbolt`), Teleport (`spiritstep`), Chain
+  Lightning (`spiritwave`), Frost Nova (new, `frostnova`: freezes all round her), Heal (`blessing`),
+  Magic Guard (`spiritward`), Mana Mastery, Meteor (`heavenslantern`, the finisher). Their moves
+  (`mgfireball`, `mgteleport`, `mgchain`, `mgnova`, `mgheal`, `mgguard`, `mgmeteor`), effects
+  (`mgswirl`, `mgheal`, `mgguard`, `mgnova`, `mgcircle`, `mgrock`, `mgimpact`, her own reach ring
+  `shockcrimson`) and icons (render/icons/skills.js, crimson tiles). Recorded in the game:
+  docs/design/samples/mage-skills.gif.
+- Her glove sits on her casting hand (the free hand can't reach in front of her body to show it).
+- Still to do: sounds of her own, bots and party lines, the gear ladder's top tiers for her wand and
+  staff, the README; then the Sorcerer and the Cleric.
