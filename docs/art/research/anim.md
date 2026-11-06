@@ -375,3 +375,16 @@ What reads in shipped games, and how Tengu's life moves use it (render/life-move
   raised in front past the shoulder covers it. Life moves keep the weapon arm at or below the
   shoulder in front (arm angle 135 or less) and draw it behind the head when raised
   (`armBack`); tests/anim.test.js checks it.
+
+## Kitchen Witch references (2026-11-06, the mage line rework)
+
+- Battle Chef Brigade (Trinket Studios) is the one 2D action game built round a fighting chef.
+  Reviews single out its combat animation as the weak spot: "stilted and a bit stiff, seeming to
+  lack the necessary frames" (GameCritics,
+  https://gamecritics.com/joshua-tolentino/battle-chef-brigade-review/), and players note low frame
+  counts make moves look choppy. Lesson for us: a cooking fighter lives or dies on the motion, so
+  every kitchen move needs full anticipation, follow-through and in-betweens.
+- No MapleStory class is a chef (only joke cash weapons like the Yellow Spatula), so her moves come
+  from real kitchen motion instead: the wok toss (a scoop, a hop of the pan, the food arcing up and
+  caught), the pan flip, a knife-chop flurry, whisking, the rolling pin, a ladle pour, a tasting
+  sip with a thoughtful pause, and the showy high salt sprinkle off the elbow.

@@ -735,7 +735,64 @@ function idolMic(m, t) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
+// The Kitchen Witch's wand is a ladle and her staff a frying pan (the 'chef' finish, render/hero.js;
+// concept samples for the mage line rework, docs/design/kitchen-witch.md). The ladle is held at the
+// end of its long handle, its deep bowl up and out so it scoops and flicks away from her face; the
+// pan is held by its handle, the pan itself a heavy round of cast iron seen a little from above.
+function ladle(m, t) {
+  const s = [];
+  const a = {};
+  const H = 9 + t * 0.3;
+  const r = 3.4 + t * 0.06;
+  s.push(T([[-0.9, 2.4], [0.9, 2.4], [0.6, -H], [-0.6, -H]], m.handle), F(T([[0.2, 2.4], [0.9, 2.4], [0.6, -H], [0.2, -H]], m.handleDark)));
+  s.push(T([[-0.7, -H + 2], [0.7, -H + 2], [0.6, -H - 0.4], [-0.6, -H - 0.4]], '#c4cad8'));
+  s.push(E(0, 2.8, 1.4, 1.1, '#c4cad8'), F(E(0, 2.8, 0.6, 0.5, '#5a5468')), F(R(-1, -0.2, 2, 0.8, m.trimDark)));
+  // The bowl: a deep scoop tipped toward the front, a rim catching the light, broth in it.
+  const cy = -H - r + 1;
+  const steel = '#dfe4f0';
+  const steelDk = '#9aa2b8';
+  s.push(T([...arcPts(0.6, cy, r, r * 0.95, -20, 200, 14)], steelDk), F(T([...arcPts(0.4, cy, r - 0.6, r * 0.8, -10, 170, 12)], steel)));
+  s.push(E(0.6, cy, r + 0.3, 1.2, steelDk), E(0.6, cy - 0.1, r - 0.3, 0.8, '#ff8a4a'), F(E(0, cy - 0.3, 1.2, 0.35, '#ffd08a')));
+  s.push(F(E(-0.9, cy + 1.6, 0.6, 0.9, WHITE)));
+  a.head = [0.6, cy];
+  a.tip = [0.6, cy - 1];
+  a.gem = [0.6, cy];
+  a.blade = [cy - 1.2, -H];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
+function fryingPan(m, t) {
+  const s = [];
+  const a = {};
+  const H = 9 + t * 0.4;
+  const r = 7 + t * 0.12;
+  // The handle, wood-wrapped where she grips it, iron where it meets the pan.
+  s.push(T([[-1.2, 3], [1.2, 3], [0.9, -H], [-0.9, -H]], m.handle), F(T([[0.3, 3], [1.2, 3], [0.9, -H], [0.3, -H]], m.handleDark)));
+  for (let y = -2; y < 3; y += 1.4) s.push(F(R(-1.2, y, 2.4, 0.4, m.handleDark)));
+  s.push(E(0, 3.4, 1.4, 1.1, m.trim), R(-1, -H - 1, 2, 2.4, m.bladeDark));
+  // The pan: a heavy disc, its rim lit, the inside a darker well with a shine.
+  const cy = -H - r + 0.6;
+  s.push(E(0, cy, r + 0.8, r + 0.6, m.bladeDark), E(0, cy - 0.3, r, r - 0.2, m.blade), E(0, cy + 0.4, r - 1.6, r - 1.9, m.bladeDark));
+  s.push(F(T([...arcPts(0, cy + 0.4, r - 2.4, r - 2.7, 200, 250, 6), ...arcPts(0, cy + 0.4, r - 3.6, r - 3.9, 250, 200, 6)], m.edge)));
+  // A fried egg in it, for the show (and the yolk is her gem).
+  s.push(T(ring12(1.6, cy + 1.2, 3.2, 2.4), WHITE), E(1.8, cy + 0.8, 1.3, 1.2, m.gem), F(E(1.4, cy + 0.4, 0.4, 0.35, WHITE)));
+  a.head = [0, cy];
+  a.tip = [0, cy - r];
+  a.gem = [1.8, cy + 0.8];
+  a.blade = [cy - r, -H];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+// A lumpy egg-white outline round (x, y).
+function ring12(x, y, rx, ry) {
+  return Array.from({ length: 12 }, (_, i) => {
+    const th = (i / 12) * Math.PI * 2;
+    const k = i % 3 === 0 ? 1.1 : i % 3 === 1 ? 0.88 : 1;
+    return [x + Math.cos(th) * rx * k, y + Math.sin(th) * ry * k];
+  });
+}
+
 function wand(m, t, f = 0) {
+  if (m.variant === 'chef') return ladle(m, t);
   if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
   const a = {};
@@ -865,6 +922,7 @@ function orrery(m, t) {
 
 function staff(m, t, f = 0) {
   if (m.variant === 'astro') return orrery(m, t);
+  if (m.variant === 'chef') return fryingPan(m, t);
   const s = [];
   const a = {};
   const S = 26 + t * 0.8;

@@ -74,6 +74,8 @@ const VARIANT_LOOKS = {
   astro: { blade: '#8a6ae0', bladeDark: '#4a3a9a', edge: '#f2eeff', trim: '#d8dcec', trimDark: '#7a7e9a' },
   // The Starlight Idol's on her wand, drawn as her microphone (weapon-designs.js): pink and gold.
   idol: { blade: '#ff8fc0', bladeDark: '#e0609e', edge: '#fff0f6', trim: '#ffd36a', trimDark: '#d89a36' },
+  // The Kitchen Witch's ladle and frying pan (weapon-designs.js): steel, cast iron, warm wood, a gold yolk.
+  chef: { blade: '#5a5468', bladeDark: '#36303f', edge: '#e6e8f2', trim: '#ffd36a', trimDark: '#c8902e', gem: '#ffc23b', handle: '#d09a5e', handleDark: '#9a6a3e' },
   rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },
 };
 // Types whose shaft or wood (not a blade) carries most of the color.
@@ -102,10 +104,10 @@ export function lookFor(type, tier, theme, variant = null) {
   const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), step: t ? (t - 1) % 4 : 0, theme: null, variant: null };
   if (look.rune) look.runeDim = mix(base.bladeDark, base.rune, 0.3);
   if (base.name === 'genesis') look.prism = PRISM;
-  const v = (t > 0 || variant === 'idol' || variant === 'astro' || variant === 'acro' || variant === 'phantom') && VARIANT_LOOKS[variant];
+  const v = (t > 0 || variant === 'idol' || variant === 'astro' || variant === 'acro' || variant === 'phantom' || variant === 'chef') && VARIANT_LOOKS[variant];
   if (!v) return look;
   Object.assign(look, v, { variant });
-  if (WOODEN.has(type)) Object.assign(look, { handle: v.blade, handleDark: v.bladeDark });
+  if (WOODEN.has(type) && !v.handle) Object.assign(look, { handle: v.blade, handleDark: v.bladeDark });
   if (look.runeDim) look.runeDim = mix(look.bladeDark, look.rune, 0.3);
   return look;
 }
