@@ -7,7 +7,50 @@ who casts and heals a little; at 30 she becomes the **Sorcerer** (damage) or the
 `spiritmage` (the Mage), `onmyoji` (the Sorcerer), `shrinemaiden` (the Cleric). Held to the Wind
 Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-job.md).
 
-## The Mage
+## The Mage (remade from scratch, 2026-11-06)
+
+The player found the first build (the edgelord, Element Weave) not as fun as the other jobs and
+asked for the Mage to be remade from scratch: new look, moves, effects, everything (ids kept). Picks:
+
+- **Elements:** still fire, ice and lightning.
+- **Personality: a pyro gremlin.** A gleeful, slightly unhinged magic-school dropout who loves
+  blowing things up: she cackles, overcharges spells, and her hat keeps getting singed.
+- **Look: a battle mage, in crimson** (render/jobgear/battlemage.js over the mage ladder): a short
+  open coat over her robe, a belt of three spell vials (fire, ice, lightning), a scroll satchel on a
+  strap across her chest, a flame-orange scarf with a burnt end, buckled boots, the mage hat with
+  brass goggles strapped round it and its tip scorched black with an ember, and a rune gauntlet on
+  her casting hand (render/gear.js `glove.edge`). Samples: tools/mage-looks.html.
+- **Core hook: element reactions** (world/reactions.js). Every spell that lands leaves its element
+  on the monster for MARK_TIME (a sigil over its head, `rmfire`/`rmice`/`rmbolt`). A different
+  element reacts and uses the mark up: fire + ice **Steam Blast** (a scalding cloud hits all round,
+  `rxsteam`), ice + lightning **Shatter** (a big stunning crit, `rxshatter`), lightning + fire
+  **Kaboom** (a blast that jumps to the monsters near, `rxkaboom`, `rxjump`). Her gauge, **Mayhem**
+  (internally Spirit), barely builds from plain hits and fills from reactions; full (**MELTDOWN**),
+  every spell she lands reacts, and her finisher is ready.
+- **Basic attacks: a ranged caster** (bolts, shards and strikes from range, wand or staff).
+- Built so far: the look, the reactions, marks and Mayhem (tests in tests/melee.test.js), and her
+  attacks (render/moves.js `pm*` wand and `ps*` staff, faces `PM_FACE`; a raised staff or wand goes
+  behind her head, `raisedBehind`). Wand string pmflick (hip flick, `pmspark`), pmpitch (snowball
+  pitch, `pmshard`), pmjab (cattle prod, two little `pmzap`s and a big one); pool pmnolook, pmtwirl
+  (gunslinger twirl), pmjam (jammed wand); commands pmup, pmair, pmdash (fire-rocket skid). Staff
+  string psgolf (golf swing, the grinning bouncing fireball `pmbomb`), pspogo (pogo slam, `pmspike`),
+  psrod (lightning rod, `pmstrike` from the sky); pool psbat (home run), psskate, psconduct; commands
+  psup (vault), psair, psdash (broomstick ride). Hit marks `pmhitfire`/`pmhitice`/`pmhitbolt`. Her old
+  edgelord shouts are gone, and reactions show no words.
+- Her skills (ids kept; data/skills.js, moves `pm*`): Overcooked Fireball (`spiritbolt`, pmbig: a
+  fireball that keeps growing, heaved and shoved, `pmhuge`), Blink Bang (`spiritstep`, pmblink: a
+  firecracker pop, `pmpop`), Live Wire (`spiritwave`, pmwire: she grabs the wand like a live cable,
+  `pmwire`), Frost Flop (`frostnova`, pmflop: a belly flop, ice bursting up both ways, `pmnovafx`),
+  Campfire Break (`blessing`, pmcamp: the heal, a campfire with a marshmallow, `pmcamp`), Scroll
+  Shield (`spiritward`, pmscroll: scrolls whirling round the party, `pmscrolls`), and the finisher
+  Big Bad Kaboom (`heavenslantern`, pmkaboom: she drinks her three vials, rains grinning fireballs,
+  snowballs and zap balls, then one blast, `pmboom`, sets off every reaction at once: `rxAll`).
+  Finisher hits (gauge 0) never refill Mayhem.
+- Still to do: her skill icons (the old crimson tiles), sounds of her own, bot and party lines,
+  the README. The old build's notes
+  follow for reference until each piece is replaced.
+
+## The Mage (first build, being replaced)
 
 - **Fantasy:** the classic elemental sorcerer: fire, ice and lightning from a wand or a staff.
 - **Personality (the player's pick): a dramatic edgelord.** She names every spell like a chosen

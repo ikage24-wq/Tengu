@@ -303,6 +303,57 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     }
     case 'aeballista':
       return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;
+    // The Mage's element reactions (world/reactions.js): Steam Blast rolling out along the floor as
+    // far as it scalds, Shatter bursting from the monster's middle, Kaboom and the small blasts it
+    // jumps on with, and the zap that carries it from one monster to the next.
+    case 'rxsteam':
+      return fxSprite(ctx, 'celrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 88 }) || true;
+    case 'rxshatter':
+      return fxSprite(ctx, 'celrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.75 }) || true;
+    case 'rxkaboom':
+      return f.t < 0 || fxSprite(ctx, 'celrxkaboom', x, y + 4, { p, scale: f.small ? 0.55 : 0.85 }) || true;
+    case 'rxjump': {
+      if (f.t < 0) return true;
+      const tx = f.tx - cam.x;
+      const ty = f.ty - cam.y;
+      const n = 6;
+      const fade = Math.min(1, (1 - p) * 3);
+      ctx.save();
+      ctx.globalAlpha = fade;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const u = i / n;
+        const j = i && i < n ? Math.sin(i * 12.9 + Math.floor(f.t * 30)) * 7 : 0;
+        const px = x + (tx - x) * u;
+        const py = y + (ty - y) * u - Math.sin(u * Math.PI) * 18 + j;
+        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+      }
+      ctx.strokeStyle = '#7a4a2a';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      ctx.strokeStyle = '#ffe04a';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
+    // The Mage's skills (the remake): Blink Bang's pop and smoke, Frost Flop's ice bursting up both
+    // ways along the floor, Campfire Break's campfire (in front of her, on the floor), Scroll
+    // Shield's whirling scrolls (round her middle, under her face), Big Bad Kaboom's blast.
+    case 'pmpop':
+      return fxSprite(ctx, 'celpmpop', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'pmnovafx':
+      return fxSprite(ctx, 'celpmnovafx', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'pmcamp':
+      return fxSprite(ctx, 'celpmcamp', x + dir * 22, y + 4, { p, scale: 0.55 }) || true;
+    case 'pmscrolls':
+      return fxSprite(ctx, 'celpmscrolls', x, y + 14, { p, scale: 0.6 }) || true;
+    case 'pmboom':
+      return f.t < 0 || fxSprite(ctx, 'celpmboom', x + dir * 60, y + 4, { p, scale: 0.75 }) || true;
     // The Mage's skills: Teleport's rune swirl, Heal's column of light, Magic Guard's dome, Frost
     // Nova's ring of spikes along the floor, Meteor's crimson rune sky (spread over the stretch its
     // meteors fall on) and its impact.
@@ -367,6 +418,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'sohit':
       // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
       return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
+    case 'pmhitfire': case 'pmhitice': case 'pmhitbolt':
+      // The Mage's hits (the remake): a pop of her element with sparkles flying off.
+      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.5 }) || true;
     case 'mghitfire': case 'mghitice': case 'mghitbolt':
       // The Mage's marks: her crimson rune ring flashing round a burst of her element.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;

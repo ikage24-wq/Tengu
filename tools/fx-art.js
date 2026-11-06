@@ -5922,6 +5922,502 @@
   E.mghitice = mgHit('ice');
   E.mghitbolt = mgHit('bolt');
 
+  // ---------- The Mage's element reactions (the remake: world/reactions.js) ----------
+  // Two of her elements meeting on a monster: a scalding cloud of steam (fire + ice), ice cracking
+  // apart (ice + lightning), a cartoon kaboom (lightning + fire). Each is its own picture, as big as
+  // what it hits, and breaks into beads and sparkles. Her marks are little sigils of each element.
+  const STEAMP = ['#ffffff', '#f6fbff', '#dce9f8', '#aebedd', '#5e6a9e'];
+  const SMOKEP = ['#fff4e8', '#d8c8cc', '#a8949e', '#76627a', '#3e2e48'];
+
+  // Steam Blast: a white-hot pop, then billowing clouds rolling out both ways along the floor
+  // (STEAM_R reach: art radius ~270), droplets and hot glints, breaking up as it thins.
+  E.rxsteam = (() => {
+    const c = 320;
+    const gy = 300;
+    return {
+      w: 640, h: 360, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const R = rng(700 + i);
+        if (i <= 1) starburst(ctx, STEAMP, c, gy - 60, 70 + i * 30, 10, 701, { inner: 0.35 });
+        if (i <= 2) blob(ctx, MFIRE, c, gy - 60, 26 - i * 8, 0.12, i);
+        const k = Math.min(1, (i + 1) / 5);
+        const holes = i >= 5 ? (i - 4) * 0.25 : 0;
+        for (const s of [-1, 1]) for (let j = 0; j < 4; j++) {
+          const d = (40 + j * 60) * k;
+          puff(ctx, STEAMP, c + s * d, gy - 40 - j * 10 - (i * 6), (56 - j * 8) * (0.5 + k * 0.5) * (1 - holes * 0.4), 710 + j + (s > 0 ? 5 : 0), { holes, lobes: 6 });
+        }
+        if (i >= 1 && i <= 5) puff(ctx, STEAMP, c, gy - 110 - i * 10, 50 + i * 4, 720, { holes, lobes: 6 });
+        for (let j = 0; j < 8; j++) {
+          const a = R() * TAU;
+          const d = 80 + R() * 200 * k;
+          const x = c + Math.cos(a) * d;
+          const y = gy - 80 + Math.sin(a) * d * 0.4 - i * 8;
+          if (j % 3 === 0) sparkle(ctx, MFIRE, x, y, 7 - i * 0.6, j);
+          else shard(ctx, MICE, x, y, a, 12 - i, 4 - i * 0.3);
+        }
+      },
+    };
+  })();
+
+  // Shatter: the ice round it cracks (a jagged white crack), then bursts into shards flying out
+  // all round with a flash, the shards spinning and glinting away.
+  E.rxshatter = (() => {
+    const c = 190;
+    return {
+      w: 380, h: 380, n: 7, fps: 22, px: c, py: c,
+      draw(ctx, i) {
+        const R = rng(740);
+        if (i === 0) {
+          for (let j = 0; j < 7; j++) iceShard(ctx, c + Math.cos((j / 7) * TAU) * 14, c + Math.sin((j / 7) * TAU) * 14, (j / 7) * TAU, 60, 16);
+          zap(ctx, MICE, c - 50, c - 40, c + 46, c + 44, 5, 741, 2);
+          return;
+        }
+        if (i <= 2) starburst(ctx, MICE, c, c, 60 + i * 26, 12, 742, { inner: 0.3 });
+        const d = 30 + i * 30;
+        for (let j = 0; j < 9; j++) {
+          const a = (j / 9) * TAU + R() * 0.4;
+          const len = (44 - i * 4) * (0.7 + R() * 0.5);
+          if (len > 8) iceShard(ctx, c + Math.cos(a) * d * (0.8 + R() * 0.4), c + Math.sin(a) * d * (0.8 + R() * 0.4), a + i * 0.6 * (j % 2 ? 1 : -1), len, len * 0.28);
+        }
+        const S = rng(750 + i);
+        for (let j = 0; j < 7; j++) sparkle(ctx, MICE, c + (S() - 0.5) * d * 2.6, c + (S() - 0.5) * d * 2.6, 9 - i, j);
+      },
+    };
+  })();
+
+  // Kaboom: lightning and fire meeting: a jagged white-yellow flash with zaps crackling out, a
+  // fireball that swells into a round blast cloud, then rolls up into sooty puffs with embers.
+  E.rxkaboom = (() => {
+    const c = 220;
+    const gy = 340;
+    return {
+      w: 440, h: 400, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 90 - i * 6;
+        if (i <= 2) {
+          starburst(ctx, MBOLT, c, cy, 80 + i * 40, 14, 760, { inner: 0.28, rot: i * 0.2 });
+          for (let j = 0; j < 5; j++) {
+            const a = (j / 5) * TAU + i;
+            zap(ctx, MBOLT, c, cy, c + Math.cos(a) * (110 + i * 30), cy + Math.sin(a) * (90 + i * 26), 6, 761 + j, 1);
+          }
+        }
+        if (i >= 1 && i <= 4) {
+          const r = 50 + i * 16;
+          blob(ctx, MFIRE, c, cy, r, 0.1, i);
+          for (let j = 0; j < 6; j++) blob(ctx, MFIRE, c + Math.cos((j / 6) * TAU + i) * r * 0.9, cy + Math.sin((j / 6) * TAU + i) * r * 0.7, r * 0.42, 0.14, j + i);
+        }
+        if (i >= 3) {
+          const holes = i >= 6 ? (i - 5) * 0.35 : 0;
+          for (let j = 0; j < 6; j++) puff(ctx, SMOKEP, c + Math.cos((j / 6) * TAU) * (80 + (i - 3) * 16), cy - 20 + Math.sin((j / 6) * TAU) * (50 + (i - 3) * 10), 40 - (i - 3) * 4, 770 + j, { holes, lobes: 5 });
+        }
+        const R = rng(780 + i);
+        for (let j = 0; j < 9; j++) {
+          const a = R() * TAU;
+          const d = 60 + i * 22 + R() * 40;
+          sparkle(ctx, j % 2 ? MBOLT : MFIRE, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, 10 - i, j);
+        }
+      },
+    };
+  })();
+
+  // Her marks, floating over a monster she's hit (loop): a little flame, an ice crystal, a bolt,
+  // each in a thin ring of its own colour, pulsing.
+  function markOf(kind) {
+    const c = 50;
+    return {
+      w: 100, h: 100, n: 4, fps: 8, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const pal = kind === 'fire' ? MFIRE : kind === 'ice' ? MICE : MBOLT;
+        const pulse = 1 + 0.06 * Math.sin((i / 4) * TAU);
+        celRing(ctx, pal, c, c, 30 * pulse, 6, { seed: 790 });
+        if (kind === 'fire') {
+          tongue(ctx, MFIRE, c, c + 14, 11, 34 * pulse, 4 * Math.sin((i / 4) * TAU));
+        } else if (kind === 'ice') {
+          for (let j = 0; j < 3; j++) iceShard(ctx, c, c, (j / 3) * Math.PI + Math.PI / 2, 34 * pulse, 6);
+        } else {
+          inked(ctx, [[c + 4, c - 24], [c - 12, c + 2], [c - 1, c + 2], [c - 6, c + 24], [c + 13, c - 4], [c + 2, c - 4]], MBOLT[2], MBOLT[4], 3);
+          fill(ctx, [[c + 2, c - 18], [c - 7, c], [c + 1, c]], MBOLT[0]);
+        }
+      },
+    };
+  }
+  E.rmfire = markOf('fire');
+  E.rmice = markOf('ice');
+  E.rmbolt = markOf('bolt');
+
+  // ---------- The Mage's shots (the remake: a pyro gremlin's fire, ice and lightning) ----------
+  // Her shapes: things that pop, fizz and grin. A firecracker spark spitting sparks, a packed
+  // snowball bristling with ice, a crackling ball of lightning, a chubby fireball with a grin on it
+  // that bounces along the floor, ice spikes punching up out of the ground in a row, a forked strike
+  // straight down from the sky. Her hits are a pop of the element with sparkles (no rune: she never
+  // studied runes properly).
+
+  // Firecracker spark (wand fire, loops toward +x): a hot round ember with a fizzing star at its
+  // nose, sparks spraying off behind.
+  E.pmspark = grown((() => {
+    const cx = 110;
+    const cy = 50;
+    return {
+      w: 150, h: 100, n: 6, fps: 28, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 3; k++) {
+          ctx.save();
+          ctx.translate(cx - 8, cy + (k - 1) * 6);
+          ctx.rotate(-Math.PI / 2 - 0.25 * (k - 1));
+          tongue(ctx, MFIRE, 0, 0, 7, 30 + 6 * Math.sin(ph + k * 2), 4 * Math.sin(ph * 2 + k));
+          ctx.restore();
+        }
+        blob(ctx, MFIRE, cx, cy, 12, 0.06, ph);
+        starburst(ctx, MFIRE, cx + 12, cy - 2, 9 + (i % 2) * 3, 8, 800 + i, { inner: 0.35, rot: i * 0.4 });
+        const R = rng(801 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, k % 2 ? MBOLT : MFIRE, cx - 30 - R() * 60, cy + (R() - 0.5) * 40, 3 + R() * 3, k);
+      },
+    };
+  })(), 2.2);
+
+  // Snowball (wand ice, loops toward +x): a packed white snowball spiked with ice shards, spinning,
+  // frost flakes falling off behind it.
+  E.pmshard = grown((() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 140, h: 100, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const rot = (i / 6) * TAU * 0.5;
+        for (let k = 0; k < 5; k++) iceShard(ctx, cx + Math.cos(rot + (k / 5) * TAU) * 8, cy + Math.sin(rot + (k / 5) * TAU) * 8, rot + (k / 5) * TAU, 26, 6);
+        puff(ctx, STEAMP, cx, cy, 13, 810, { lobes: 4 });
+        const R = rng(811 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MICE, cx - 30 - R() * 55, cy + (R() - 0.5) * 34, 3 + R() * 3, k + i);
+      },
+    };
+  })(), 2.2);
+
+  // Zap ball (wand lightning, loops toward +x): a crackling ball of lightning with little bolts
+  // jumping round it and a fizzing trail.
+  E.pmzap = grown((() => {
+    const cx = 150;
+    const cy = 60;
+    return {
+      w: 200, h: 120, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 120, cy + ((i % 3) - 1) * 6, cx - 10, cy, 6, 820 + i, 1);
+        for (let k = 0; k < 3; k++) {
+          const a = (i / 6) * TAU + (k / 3) * TAU;
+          zap(ctx, MBOLT, cx, cy, cx + Math.cos(a) * 30, cy + Math.sin(a) * 26, 3.5, 830 + i * 3 + k, 0);
+        }
+        blob(ctx, MBOLT, cx, cy, 15, 0.12, (i / 6) * TAU);
+        starburst(ctx, MBOLT, cx, cy, 11, 8, 840 + i, { inner: 0.4, rot: i });
+      },
+    };
+  })(), 2);
+
+  // Grinning fireball (staff fire, loops toward +x; it bounces along the floor in the game): a
+  // chubby fireball with two happy eyes and a wide grin, flames streaming back off its head.
+  E.pmbomb = grown((() => {
+    const cx = 150;
+    const cy = 75;
+    return {
+      w: 220, h: 150, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        fireball(ctx, cx, cy, 26, ph);
+        // Its face: two arched happy eyes and a big grin, in the fire's deepest shade.
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = MFIRE[4];
+        ctx.lineWidth = 4;
+        for (const ex of [cx - 2, cx + 13]) {
+          ctx.beginPath();
+          ctx.arc(ex, cy - 4, 4.5, Math.PI * 1.1, Math.PI * 1.9);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(cx - 6, cy + 6);
+        ctx.quadraticCurveTo(cx + 6, cy + 18, cx + 18, cy + 5);
+        ctx.closePath();
+        ctx.fillStyle = MFIRE[4];
+        ctx.fill();
+        fill(ctx, [[cx + 2, cy + 10], [cx + 9, cy + 11], [cx + 6, cy + 14]], MFIRE[2]);
+        const R = rng(850 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, MFIRE, cx - 60 - R() * 80, cy + (R() - 0.5) * 60, 5 + R() * 4, k);
+      },
+    };
+  })(), 2);
+
+  // Ice spikes (staff ice, loops; races along the ground toward +x): fat ice spikes punching up out
+  // of the floor one after another, the newest tallest, the old ones crumbling.
+  E.pmspike = grown((() => {
+    const cx = 170;
+    const gy = 130;
+    return {
+      w: 210, h: 150, n: 6, fps: 24, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        for (let k = 3; k >= 0; k--) {
+          const age = ((i / 6) + k * 0.25) % 1;
+          const h = 96 * Math.sin(Math.PI * Math.min(1, age * 1.2 + 0.1));
+          if (h < 8) continue;
+          const x = cx - k * 40;
+          for (const [dx, a, s] of [[0, 0, 1], [-11, -0.35, 0.6], [11, 0.3, 0.55]]) iceShard(ctx, x + dx, gy - h * s * 0.45, -Math.PI / 2 + a, h * s, 11 + h * 0.06);
+        }
+        const R = rng(860 + i);
+        for (let k = 0; k < 6; k++) puff(ctx, STEAMP, cx + 20 - R() * 170, gy - 4, 6 + R() * 5, 861 + k, { lobes: 3 });
+      },
+    };
+  })(), 2);
+
+  // Sky strike (staff lightning straight down; drawn toward +x, the game turns it down): a fat
+  // forked bolt with a fizzing star at its tip.
+  E.pmstrike = grown((() => {
+    const cx = 270;
+    const cy = 60;
+    return {
+      w: 300, h: 120, n: 4, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 260, cy, cx, cy, 18, 870 + i, 3);
+        starburst(ctx, MBOLT, cx, cy, 26, 10, 871 + i, { inner: 0.35, rot: i * 0.5 });
+        sparkle(ctx, MBOLT, cx - 30, cy - 20, 8, i);
+      },
+    };
+  })(), 2);
+
+  // Her hit mark per element: a pop of the element, a soft burst and sparkles flying off.
+  const pmHit = (kind) => grown((() => {
+    const c = 100;
+    const pal = kind === 'fire' ? MFIRE : kind === 'ice' ? MICE : MBOLT;
+    return {
+      w: 200, h: 200, n: 6, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, pal, c, c, 26 + i * 14, kind === 'ice' ? 6 : 10, 880, { inner: 0.4, rot: i * 0.3 });
+        if (kind === 'fire' && i >= 1 && i <= 3) for (let j = 0; j < 5; j++) blob(ctx, MFIRE, c + Math.cos((j / 5) * TAU) * (20 + i * 12), c + Math.sin((j / 5) * TAU) * (20 + i * 12), 9 - i * 2, 0.1, j);
+        if (kind === 'ice' && i >= 1) for (let j = 0; j < 6; j++) { const a = (j / 6) * TAU + 0.3; const d = 14 + i * 12; iceShard(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 24 - i * 3, 6 - i * 0.6); }
+        if (kind === 'bolt' && i <= 3) for (let j = 0; j < 4; j++) { const a = (j / 4) * TAU + i; zap(ctx, MBOLT, c, c, c + Math.cos(a) * (40 + i * 10), c + Math.sin(a) * (40 + i * 10), 4, 890 + j + i * 4, 0); }
+        const R = rng(895 + i);
+        for (let j = 0; j < 5; j++) { const a = R() * TAU; const d = 30 + i * 12; sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 7 - i, j); }
+      },
+    };
+  })(), 1.4);
+  E.pmhitfire = pmHit('fire');
+  E.pmhitice = pmHit('ice');
+  E.pmhitbolt = pmHit('bolt');
+
+  // ---------- The Mage's skills (the remake) ----------
+  // Overcooked Fireball's grinning fireball, far too big; Live Wire's crackling twin bolt; Blink
+  // Bang's firecracker pop; Frost Flop's ring of ice bursting up both ways along the floor;
+  // Campfire Break's little campfire with a marshmallow toasting; Scroll Shield's whirl of her
+  // scrolls; and Big Bad Kaboom's blast, all three elements at once.
+  E.pmhuge = grown(E.pmbomb, 1.9);
+
+  // Live Wire (loops toward +x): two crackling strands of lightning twisting round each other down
+  // the line, sparks jumping off, a fizzing ball at the head.
+  E.pmwire = grown((() => {
+    const cx = 330;
+    const cy = 60;
+    return {
+      w: 360, h: 120, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 320, cy - 8, cx, cy, 9, 900 + i, 2);
+        zap(ctx, MBOLT, cx - 320, cy + 8, cx, cy, 7, 910 + i, 2);
+        blob(ctx, MBOLT, cx, cy, 18, 0.14, (i / 6) * TAU);
+        starburst(ctx, MBOLT, cx, cy, 14, 8, 920 + i, { inner: 0.4, rot: i });
+        const R = rng(930 + i);
+        for (let k = 0; k < 6; k++) sparkle(ctx, MBOLT, cx - R() * 300, cy + (R() - 0.5) * 50, 4 + R() * 4, k);
+      },
+    };
+  })(), 1.6);
+
+  // Blink Bang: a firecracker pops (a jagged flash), a ball of smoke swallows her, and confetti
+  // sparks fly as it thins.
+  E.pmpop = (() => {
+    const c = 160;
+    const gy = 250;
+    return {
+      w: 320, h: 290, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 80;
+        if (i <= 2) starburst(ctx, MFIRE, c, cy, 50 + i * 26, 12, 940, { inner: 0.3, rot: i * 0.3 });
+        if (i >= 1) {
+          const holes = i >= 5 ? (i - 4) * 0.25 : 0;
+          for (let j = 0; j < 5; j++) puff(ctx, SMOKEP, c + Math.cos((j / 5) * TAU) * (30 + i * 6), cy + Math.sin((j / 5) * TAU) * (26 + i * 5) - i * 4, 36 - i * 2, 941 + j, { holes, lobes: 5 });
+        }
+        const R = rng(950 + i);
+        for (let j = 0; j < 10; j++) {
+          const a = R() * TAU;
+          const d = 40 + i * 16;
+          const pal = [MFIRE, MICE, MBOLT][j % 3];
+          sparkle(ctx, pal, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.8, 8 - i * 0.6, j);
+        }
+      },
+    };
+  })();
+
+  // Frost Flop (on the floor): ice spikes punch up out of the ground in a ring racing out both ways
+  // from where she lands, with snow puffs, then crumble into glints.
+  E.pmnovafx = (() => {
+    const c = 330;
+    const gy = 220;
+    return {
+      w: 660, h: 260, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const reach = 60 + Math.min(i, 4) * 60;
+        for (const s of [-1, 1]) for (let k = 0; k < 6; k++) {
+          const x = c + s * (40 + k * (reach / 6));
+          const age = i - k * 0.5;
+          if (age < 0) continue;
+          const h = 90 * Math.sin(Math.PI * Math.min(1, age / 5 + 0.15)) * (1 - k * 0.08);
+          if (h < 8) continue;
+          for (const [dx, a, sc] of [[0, s * 0.12, 1], [-9 * s, -s * 0.35, 0.6]]) iceShard(ctx, x + dx, gy - h * sc * 0.45, -Math.PI / 2 + a, h * sc, 10 + h * 0.06);
+        }
+        if (i <= 3) for (let j = 0; j < 4; j++) puff(ctx, STEAMP, c + (j - 1.5) * 50, gy - 14, 24 - i * 3, 960 + j, { lobes: 4 });
+        const R = rng(970 + i);
+        for (let j = 0; j < 8; j++) sparkle(ctx, MICE, c + (R() - 0.5) * reach * 2.2, gy - 30 - R() * 110, 8 - i * 0.7, j);
+      },
+    };
+  })();
+
+  // Campfire Break (on the floor): a little campfire on crossed logs, a marshmallow toasting on a
+  // stick stuck in the ground, warm embers and little hearts of warmth drifting up.
+  E.pmcamp = (() => {
+    const c = 150;
+    const gy = 280;
+    const LOG = ['#fff0d8', '#c89a6a', '#9a6a44', '#6a4430', '#3e2a28'];
+    const HEART = ['#ffffff', '#ffd6dc', '#ff8aa0', '#e0506a', '#7a2a44'];
+    const heart = (x, y, r) => {
+      const P = [];
+      for (let k = 0; k <= 24; k++) {
+        const t = (k / 24) * TAU;
+        P.push([x + r * 0.06 * 16 * Math.sin(t) ** 3, y - r * 0.06 * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]);
+      }
+      inked(ctx, P, HEART[2], HEART[4], 2.5);
+      fill(ctx, P.map(([px, py]) => [x + (px - x) * 0.5 - r * 0.2, y + (py - y) * 0.5 - r * 0.2]), HEART[1]);
+    };
+    let ctx;
+    return {
+      w: 300, h: 320, n: 10, fps: 12, px: c, py: gy,
+      draw(cx, i) {
+        ctx = cx;
+        const fade = i < 1 ? 0.6 : i > 8 ? 0.6 : 1;
+        // Logs crossed under the fire.
+        for (const s of [-1, 1]) {
+          ctx.save();
+          ctx.translate(c, gy - 10);
+          ctx.rotate(s * 0.35);
+          inked(ctx, [[-44, -7], [44, -7], [44, 7], [-44, 7]], LOG[2], LOG[4], 3);
+          fill(ctx, [[-40, -5], [40, -5], [40, -1], [-40, -1]], LOG[1]);
+          ctx.restore();
+        }
+        for (let k = 0; k < 5; k++) {
+          ctx.save();
+          ctx.translate(c + (k - 2) * 12, gy - 16);
+          tongue(ctx, MFIRE, 0, 0, 13 - Math.abs(k - 2) * 2, (64 - Math.abs(k - 2) * 14) * fade * (0.9 + 0.12 * Math.sin(i * 1.7 + k)), 6 * Math.sin(i * 1.3 + k * 2));
+          ctx.restore();
+        }
+        // The stick and the marshmallow over the fire, toasting browner as it goes.
+        inked(ctx, [[c + 70, gy], [c + 74, gy], [c + 8, gy - 96], [c + 4, gy - 94]], LOG[2], LOG[4], 2);
+        const toast = Math.min(1, i / 8);
+        ctx.beginPath();
+        ctx.ellipse(c + 6, gy - 100, 12, 9, -0.6, 0, TAU);
+        ctx.fillStyle = LOG[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(c + 6, gy - 100, 10, 7, -0.6, 0, TAU);
+        ctx.fillStyle = toast > 0.5 ? '#e8b878' : '#fffaf2';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(c + 3, gy - 103, 4, 2.5, -0.6, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        // Warmth: embers and little hearts drifting up.
+        const R = rng(980);
+        for (let j = 0; j < 7; j++) {
+          const u = ((i / 10) + R()) % 1;
+          const x = c + (R() - 0.5) * 120 + Math.sin(u * 6 + j) * 10;
+          const y = gy - 80 - u * 190;
+          if (j % 3 === 0) heart(x, y, 9 * (1 - u * 0.5));
+          else sparkle(ctx, MFIRE, x, y, 6 * (1 - u * 0.6), j);
+        }
+      },
+    };
+  })();
+
+  // Scroll Shield: her scrolls fly out of the satchel and unroll into a whirling ring round her,
+  // paper and red ribbon, glinting, then roll back up and scatter.
+  E.pmscrolls = (() => {
+    const c = 220;
+    const gy = 300;
+    const PAPER = ['#ffffff', '#fffaf0', '#f4e6cc', '#d8c3a0', '#8a6a5a'];
+    return {
+      w: 440, h: 340, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 110;
+        const open = Math.min(1, i / 3) * (i >= 7 ? 1 - (i - 6) * 0.3 : 1);
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * TAU + i * 0.32;
+          const x = c + Math.cos(a) * 120;
+          const y = cy + Math.sin(a) * 70;
+          const len = 14 + 34 * open;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(a + Math.PI / 2);
+          inked(ctx, [[-len, -10], [len, -10], [len, 10], [-len, 10]], PAPER[2], PAPER[4], 2.5);
+          fill(ctx, [[-len + 3, -8], [len - 3, -8], [len - 3, -3], [-len + 3, -3]], PAPER[1]);
+          for (const e of [-len, len]) {
+            ctx.beginPath();
+            ctx.ellipse(e, 0, 5, 11, 0, 0, TAU);
+            ctx.fillStyle = PAPER[3];
+            ctx.fill();
+            ctx.strokeStyle = PAPER[4];
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+          fill(ctx, [[-4, -10], [4, -10], [4, 10], [-4, 10]], '#c8324a');
+          // A scribbled rune on the paper.
+          ctx.strokeStyle = '#ff8a3a';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-len * 0.6, 2);
+          ctx.lineTo(-len * 0.3, -4);
+          ctx.lineTo(-len * 0.1, 4);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (i >= 2 && i <= 6) celRing(ctx, MFIRE, c, cy, 132, 5, { broken: i >= 5 ? 0.5 : 0, seed: 990 });
+        const R = rng(995 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, MFIRE, c + (R() - 0.5) * 300, cy + (R() - 0.5) * 180, 7, j);
+      },
+    };
+  })();
+
+  // Big Bad Kaboom's last blast: fire, ice and lightning going off at once over a huge stretch of
+  // floor: a tri-colour flash, a fireball dome, steam rolling out both ways, ice shards and zaps
+  // flying, then smoke and sparkles.
+  E.pmboom = (() => {
+    const c = 450;
+    const gy = 420;
+    return {
+      w: 900, h: 480, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 130;
+        if (i <= 2) {
+          starburst(ctx, MBOLT, c, cy, 140 + i * 60, 16, 1000, { inner: 0.28, rot: i * 0.2 });
+          for (let j = 0; j < 7; j++) { const a = (j / 7) * TAU + i; zap(ctx, MBOLT, c, cy, c + Math.cos(a) * (220 + i * 40), cy + Math.sin(a) * (150 + i * 30), 8, 1001 + j, 1); }
+        }
+        if (i >= 1 && i <= 5) {
+          const r = 90 + i * 26;
+          blob(ctx, MFIRE, c, cy, r, 0.1, i);
+          for (let j = 0; j < 8; j++) blob(ctx, MFIRE, c + Math.cos((j / 8) * TAU + i) * r, cy + Math.sin((j / 8) * TAU + i) * r * 0.7, r * 0.36, 0.14, j + i);
+        }
+        if (i >= 2) {
+          const holes = i >= 6 ? (i - 5) * 0.25 : 0;
+          for (const s of [-1, 1]) for (let j = 0; j < 4; j++) puff(ctx, STEAMP, c + s * (120 + j * 70 + i * 14), gy - 40 - j * 8, 50 - j * 6, 1010 + j + (s > 0 ? 4 : 0), { holes, lobes: 6 });
+          for (let j = 0; j < 10; j++) { const a = (j / 10) * TAU + 0.2; const d = 80 + i * 34; if (40 - i * 3 > 8) iceShard(ctx, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, a + i * 0.4, 40 - i * 3, 10 - i * 0.6); }
+        }
+        if (i >= 5) for (let j = 0; j < 6; j++) puff(ctx, SMOKEP, c + Math.cos((j / 6) * TAU) * 140, cy - 40 + Math.sin((j / 6) * TAU) * 70, 50 - (i - 5) * 6, 1020 + j, { holes: (i - 5) * 0.25, lobes: 5 });
+        const R = rng(1030 + i);
+        for (let j = 0; j < 14; j++) { const a = R() * TAU; const d = 100 + i * 30 + R() * 60; sparkle(ctx, [MFIRE, MICE, MBOLT][j % 3], c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, 12 - i, j); }
+      },
+    };
+  })();
+
   // ---------- The Kitchen Witch (tomato broth, cream steam, flambé fire, sizzling eggs) ----------
   // docs/design/kitchen-witch.md. Her shapes: wobbling globs of tomato broth with bits of veg in
   // them, splash crowns of droplets, curls of cream steam, a fried egg with a gold yolk, licks of

@@ -10,7 +10,7 @@ import { setHd } from '../src/render/pixel.js';
 import { ITEMS } from '../src/data/items.js';
 
 const q = new URLSearchParams(location.search);
-const SCHEMES = (q.get('schemes') ?? 'Royal violet:#6a4ab8,Crimson:#b8324a,Midnight teal:#2f7a8a').split(',').map((s) => s.split(':'));
+const SCHEMES = (q.get('schemes') ?? 'Crimson:#b8324a,Charcoal:#4a4256,Ember:#c8562a').split(',').map((s) => s.split(':'));
 const LEVELS = (q.get('levels') ?? '10,30,50').split(',').map(Number);
 const COLS = LEVELS.flatMap((lv) => [['wand', lv], ['staff', lv]]);
 for (const [, color] of SCHEMES) for (const lv of LEVELS) for (const slot of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) {

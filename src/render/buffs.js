@@ -93,14 +93,19 @@ function sheen(ctx, x, y, t, color, a, period = 2.2) {
   ctx.fill();
   ctx.restore();
 }
+// The Mage's Scroll Shield while it holds: the whirl of scrolls (its held drawings, looping) shrunk
+// to a belt round her hips.
+export function scrollBelt(ctx, x, y, t, a) {
+  fxSprite(ctx, 'celpmscrolls', x, y - 4, { frame: 3 + (Math.floor(t * 8) % 3), scale: 0.26, sy: 0.42, alpha: 0.85 * a });
+}
 // Each buff: its color, how it bursts when cast, and what it draws while active.
 // back/front(ctx, x, y, t, dir, a) — (x, y) the hero's feet on screen, a the strength (0-1).
 export const BUFF_LOOKS = {
-  // Star Veil (internally Spirit Ward): a dome of linked stars round her, see-through so she shows
-  // inside it, twinkling while it holds.
+  // Scroll Shield (internally Spirit Ward; the Mage): her unrolled scrolls circling round her hips
+  // like a belt while it holds, low, clear of her face.
   spiritward: {
-    color: '#ffd36a',
-    front: (ctx, x, y, t, dir, a) => fxSprite(ctx, 'celstveil', x, y + 4, { frame: 2 + (Math.floor(t * 3) % 4), scale: 0.55, alpha: 0.55 * a }),
+    color: '#ff8a3a',
+    front: (ctx, x, y, t, dir, a) => scrollBelt(ctx, x, y, t, a),
   },
   quickstep: {
     color: '#9fe8c8', cast: 'gust',

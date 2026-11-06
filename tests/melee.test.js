@@ -2290,73 +2290,97 @@ test('her staff calls lightning straight down from the sky onto them', () => {
   w.comboUntil = w.now + 9;
   w.comboPlan = [0, 0, 0];
   updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose.kind, 'msbolt');
+  assert.equal(w.pose.kind, 'psrod');
   let fromSky = false;
   for (let i = 0; i < 60; i++) {
     updateWorld(w, DT, idle);
-    fromSky ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'mgsky' && f.y < w.body.y - 120 && Math.abs(f.x - f.tx) < 1);
+    fromSky ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'pmstrike' && f.y < w.body.y - 120 && Math.abs(f.x - f.tx) < 1);
   }
   assert.ok(fromSky, 'it falls straight down from high above');
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and lands');
 });
 
-test('her Element Weave builds fast from mixing elements, slowly from repeating one', async () => {
-  const { addSpirit } = await import('../src/world/melee.js');
-  const weave = (els) => {
+// The Mage's element reactions (world/reactions.js): a monster keeps her last element; a different
+// one sets off a reaction (and uses the mark up), and reactions are what fill Mayhem.
+test('her spells mark what they hit, and a different element sets off its reaction', async () => {
+  const { elementHit, markOf } = await import('../src/world/reactions.js');
+  const pairs = [['fire', 'ice', 'steam'], ['ice', 'fire', 'steam'], ['ice', 'bolt', 'shatter'], ['bolt', 'ice', 'shatter'], ['bolt', 'fire', 'kaboom'], ['fire', 'bolt', 'kaboom']];
+  for (const [a, b, kind] of pairs) {
     const w = starWitch();
     w.spirit = 0;
-    for (const el of els) addSpirit(w, 4, 'harm', el);
-    return w.spirit;
-  };
-  const mixed = weave(['fire', 'ice', 'bolt', 'fire', 'ice', 'bolt']);
-  const same = weave(['fire', 'fire', 'fire', 'fire', 'fire', 'fire']);
-  assert.ok(mixed > same * 2.5, `mixing (${mixed}) builds far faster than repeating (${same})`);
-  // Her heals count as an element of their own.
-  const w = starWitch();
-  w.spirit = 0;
-  addSpirit(w, 4, 'harm', 'fire');
-  const before = w.spirit;
-  addSpirit(w, 4, 'mend');
-  assert.ok(w.spirit - before > 4, 'a heal after a fire spell weaves on');
+    const m = w.mobs[0];
+    assert.equal(elementHit(w, m, { el: a, damage: 100 }), null, `${a} alone only marks`);
+    assert.equal(markOf(m, w.now), a);
+    assert.equal(elementHit(w, m, { el: a, damage: 100 }), null, 'the same element again only marks');
+    assert.equal(elementHit(w, m, { el: b, damage: 100 }), kind, `${a} then ${b} is ${kind}`);
+    assert.equal(elementHit(w, m, { el: a, damage: 100 }), null, 'right after a reaction a hit only marks (no pile-up)');
+    w.now += 1;
+    assert.equal(elementHit(w, m, { el: b, damage: 100 }), kind, 'and a beat later it can react again');
+    assert.ok(w.pending.some((h) => h.reaction && h.mob === m && !h.el), 'its hits carry no element (no chain of reactions)');
+  }
 });
 
-test('on full Overload each of her spells carries the other two elements with it', () => {
-  const shots = (spirit) => {
+test('each reaction does its own thing: Steam hits all round, Shatter crits and stuns, Kaboom jumps', async () => {
+  const { react } = await import('../src/world/reactions.js');
+  const setup = () => {
     const w = starWitch();
-    w.spirit = spirit;
-    w.spiritAt = 1e9;
-    updateWorld(w, DT, press('KeyZ'));
-    const seen = new Set();
-    for (let i = 0; i < 30; i++) {
-      updateWorld(w, DT, idle);
-      for (const f of w.fx) if (f.kind === 'projectile') seen.add(f.shot);
-    }
-    return [...seen].sort();
+    w.mobs.forEach((m, i) => { m.x = w.body.x + 120 + i * 40; });
+    w.pending = [];
+    return w;
   };
-  assert.deepEqual(shots(0), ['mgfire']);
-  assert.deepEqual(shots(100), ['mgbolt', 'mgfire', 'mgice']);
+  let w = setup();
+  react(w, w.mobs[0], 'steam', { damage: 100 });
+  assert.ok(new Set(w.pending.map((h) => h.mob)).size >= 2, 'Steam scalds the monsters near it too');
+  w = setup();
+  react(w, w.mobs[0], 'shatter', { damage: 100 });
+  assert.ok(w.pending.length === 1 && w.pending[0].crit && w.pending[0].stun && w.pending[0].damage > 100, 'Shatter is one big stunning crit');
+  w = setup();
+  react(w, w.mobs[0], 'kaboom', { damage: 100 });
+  const order = w.pending.slice().sort((a, b) => a.at - b.at).map((h) => h.mob);
+  assert.ok(new Set(order).size >= 3, 'Kaboom jumps from one monster to the next');
+  assert.ok(w.pending.at(-1).at > w.pending[0].at, 'a beat apart');
 });
 
-test('Frost Nova bursts out both ways and freezes what it catches', () => {
+test('reactions fill Mayhem far faster than plain hits, and on Meltdown every spell reacts', async () => {
+  const { elementHit } = await import('../src/world/reactions.js');
+  const { addSpirit } = await import('../src/world/melee.js');
+  const plain = starWitch();
+  plain.spirit = 0;
+  for (let i = 0; i < 6; i++) addSpirit(plain, 4, 'harm', 'fire');
+  const mixed = starWitch();
+  mixed.spirit = 0;
+  const m = mixed.mobs[0];
+  for (const el of ['fire', 'ice', 'bolt', 'fire', 'ice', 'bolt']) {
+    mixed.now += 1;
+    elementHit(mixed, m, { el, damage: 50 });
+  }
+  assert.ok(mixed.spirit > plain.spirit * 2.5, `mixing (${mixed.spirit}) far outbuilds repeating (${plain.spirit})`);
+  const full = starWitch();
+  full.spirit = 100;
+  full.spiritAt = 1e9;
+  assert.ok(elementHit(full, full.mobs[1], { el: 'fire', damage: 50 }), 'on Meltdown even an unmarked monster reacts');
+});
+
+test('Frost Flop bursts out both ways and freezes what it catches', () => {
   const w = starWitch();
   w.char.skills.frostnova = 10;
   for (const [i, m] of w.mobs.entries()) m.x = w.body.x + (i % 2 ? 1 : -1) * (40 + i * 20);
   assert.ok(cast(w, 'frostnova').ok);
-  assert.equal(w.pose.kind, 'mgnova');
+  assert.equal(w.pose.kind, 'pmflop');
   run(w, 1);
   assert.ok(w.mobs.some((m) => m.x < w.body.x && m.hp < 1e9) && w.mobs.some((m) => m.x > w.body.x && m.hp < 1e9), 'on both sides');
   assert.ok(w.mobs.some((m) => m.hold === 'ice'), 'and freezes them');
 });
 
-test('Chain Lightning leaps down the whole line', () => {
+test('Live Wire crackles down the whole line', () => {
   const w = starWitch();
   assert.ok(cast(w, 'spiritwave').ok);
-  assert.equal(w.pose.kind, 'mgchain');
+  assert.equal(w.pose.kind, 'pmwire');
   run(w, 1);
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster in the line');
 });
 
-test('Heal mends her when the light falls, then keeps healing, and weaves her gauge', () => {
+test('Campfire Break mends her when the fire is lit, then keeps healing, and builds Mayhem', () => {
   const w = starWitch();
   w.god = false;
   // (The dummies out of reach, so nothing knocks her HP about while it's measured.)
@@ -2384,22 +2408,26 @@ test('Star Veil puts a barrier on her that soaks up damage', () => {
   assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
 });
 
-test('Meteor needs a full Element Weave, spends it, rains meteors on everything ahead, and never refills it', () => {
+test('Big Bad Kaboom needs Meltdown, spends it, rains all three elements, sets off every reaction, and never refills it', () => {
   const w = starWitch();
   w.spirit = 60;
-  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for Overload');
+  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for Meltdown');
   w.spirit = 100;
   w.spiritAt = w.now;
   assert.ok(cast(w, 'heavenslantern').ok);
   assert.equal(w.spirit, 0, 'spends all of it');
-  let rain = false;
+  const rain = new Set();
+  const kinds = new Set();
+  w.reactions = 0;
   dice(0.5, () => {
     for (let i = 0; i < 60 * 3; i++) {
       updateWorld(w, DT, idle);
-      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'mgrock');
+      for (const f of w.fx) if (f.kind === 'rain') rain.add(f.variant);
+      for (const k of Object.keys(w.reactedKinds ?? {})) kinds.add(k);
     }
   });
-  assert.ok(rain, 'meteors fall');
+  assert.deepEqual([...rain].sort(), ['pmbomb', 'pmshard', 'pmzap'], 'fireballs, snowballs and zap balls fall');
+  assert.deepEqual([...kinds].sort(), ['kaboom', 'shatter', 'steam'], 'and every reaction goes off');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'on every monster ahead');
   assert.ok(w.spirit < 10, `and it never refills (${w.spirit})`);
 });

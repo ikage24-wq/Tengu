@@ -248,24 +248,23 @@ function shadowAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Element Weave (the Mage; internally Spirit, docs/design/mage-line.md): three little orbs of her
-// elements circle her, fading in one by one and brightening as it builds, faster the fuller it is
-// (a clean circle on her own time, never squashed); at Overload they whirl round her over her
-// crimson rune ring.
+// Mayhem (the Mage; internally Spirit, docs/design/mage-line.md): sparks of her three elements
+// fizz up off her as it builds, more and faster the fuller it is (kept out to her sides, off her
+// face); full (Meltdown), her three element sigils whirl round her feet and the sparks pour up.
+const MAYHEM_SPARKS = ['#ffb43c', '#9ae2ff', '#ffe04a'];
 function spiritAura(ctx, x, y, t, s, k, layer) {
   if (k < 0.05) return;
   const full = k >= 1;
-  if (full && layer === 'back') fxSprite(ctx, 'celmgrune', x, y - 2 * s, { t, scale: s * 0.32, alpha: 0.8, sy: 0.3 });
-  const spin = t * (1.4 + 2.6 * k) * (full ? 1.6 : 1);
-  for (let i = 0; i < 3; i++) {
-    const show = Math.min(1, Math.max(0, k * 3 - i));
-    if (show <= 0) continue;
-    const a = spin + (i * Math.PI * 2) / 3;
-    // Behind her on the far side of the circle, in front on the near side.
-    const front = Math.sin(a) > 0;
-    if ((layer === 'back') === front) continue;
-    fxSprite(ctx, 'celmgorb', x + Math.cos(a) * 22 * s, y - 30 * s + Math.sin(a) * 6 * s, { frame: i, scale: s * (0.55 + 0.12 * show), alpha: 0.55 + 0.45 * show });
+  if (full) {
+    for (let i = 0; i < 3; i++) {
+      const a = t * 3 + (i * Math.PI * 2) / 3;
+      const front = Math.sin(a) > 0;
+      if ((layer === 'back') === front) continue;
+      fxSprite(ctx, `celrm${['fire', 'ice', 'bolt'][i]}`, x + Math.cos(a) * 16 * s, y - 3 * s + Math.sin(a) * 4 * s, { t: t + i, scale: s * 0.3, alpha: 0.9 });
+    }
   }
+  if (layer === 'back') return;
+  motes(ctx, x, y, t, s, 0.45 + 0.55 * k, { n: 1 + Math.round(5 * k), spread: 16, inner: 9, height: 22 + 16 * k, speed: 0.5 + 0.8 * k, size: 1 + 0.5 * k, draw: (c, mx, my, r, i) => { c.fillStyle = MAYHEM_SPARKS[i % 3]; c.fillRect(mx - r / 2, my - r / 2, r, r); } });
 }
 
 // Applause (the Starlight Idol; internally Grace): a pink ring at her feet that fills in as the

@@ -20,7 +20,7 @@ import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura, landing } from './particles.js';
 import { ITEMS } from '../data/items.js';
 import { drawBubble, flushBubbles } from '../ui/chat.js';
-import { drawBuffEffects } from './buffs.js';
+import { drawBuffEffects, scrollBelt } from './buffs.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
@@ -805,8 +805,8 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     if (b.shield > 0) barrier = { ...b, id };
     if (b.values?.regenPct) renew = true;
   }
-  // A Spirit Mage's ward: the sphere of light and sacred rope, as on her.
-  if (barrier?.id === 'spiritward') fxSprite(ctx, 'celstveil', x, y + 4, { frame: 2 + (Math.floor(time * 3) % 4), scale: 0.55, alpha: 0.55 * Math.min(1, (now - barrier.since) * 3) });
+  // The Mage's Scroll Shield: her scrolls circling their hips, as on her.
+  if (barrier?.id === 'spiritward') scrollBelt(ctx, x, y, time, Math.min(1, (now - barrier.since) * 3));
   else if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
     ctx.save();

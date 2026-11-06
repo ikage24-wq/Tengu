@@ -494,6 +494,8 @@ function capeFront(t, p) {
   return out;
 }
 
+export { hatSpine, onCone, coneBand, cone, coneShape };
+
 export default {
   hat, hatBack, hatTucks: () => false, hatHidesBangs: () => false,
   top, sleeve, longSleeves, shoulder, legs, skirt, shoe, hand, cape, capeFront,

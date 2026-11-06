@@ -200,15 +200,16 @@ export const PATH_COMBOS = {
     { move: 'sdspin', dur: 0.45, step: 8, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
     { move: 'sdcrescent', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 870, big: true, stop: 0.07, shake: 2 }] },
   ],
-  // The Mage (docs/design/mage-line.md): a dramatic edgelord of fire, ice and lightning; every step
-  // of her strings is a different element, so attacking weaves her gauge (the shot's `el`). (Keys
-  // starwand and starstaff kept.) Wand: an ember flick (a fire bolt), a backhand frost lash (a fan
-  // of ice shards), a thunder point (a lightning bolt through the line). Staff: a fireball thrust,
-  // a spike plant (ice spikes racing along the ground), heavens' wrath (lightning from the sky).
+  // The Mage (docs/design/mage-line.md, the remake): a pyro gremlin of fire, ice and lightning;
+  // every step of her strings is a different element, so attacking sets off her reactions (the
+  // shot's `el`; world/reactions.js). (Keys starwand and starstaff kept.) Wand: a hip flick (a
+  // firecracker spark), a snowball pitch, a cattle prod (two little zaps and a big one). Staff: a
+  // golf swing (a grinning fireball bouncing along the floor), a pogo slam (ice spikes punching up
+  // along the ground), a lightning rod (a strike from the sky).
   starwand: [
-    { move: 'mgember', dur: 0.32, step: 10, strikes: [{ at: 0.3, shot: 'mgfire', magic: true, el: 'fire', pct: 80, range: 300, h: 60, knock: 30, speed: 900 }] },
-    { move: 'mgfrost', dur: 0.42, step: 14, strikes: [{ at: 0.38, shot: 'mgice', magic: true, el: 'ice', pct: 40, range: 290, h: 110, knock: 25, speed: 860, fan: 3 }] },
-    { move: 'mgthunder', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.5, shot: 'mgbolt', magic: true, el: 'bolt', pct: 170, range: 330, h: 70, targets: 3, pierce: true, knock: 200, speed: 1400, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'pmflick', dur: 0.32, step: 8, strikes: [{ at: 0.3, shot: 'pmspark', magic: true, el: 'fire', pct: 80, range: 300, h: 60, knock: 25, speed: 900 }] },
+    { move: 'pmpitch', dur: 0.44, step: 12, strikes: [{ at: 0.4, shot: 'pmshard', magic: true, el: 'ice', pct: 88, range: 300, h: 70, knock: 30, speed: 820 }] },
+    { move: 'pmjab', dur: 0.62, step: 14, finisher: true, strikes: [{ at: 0.22, shot: 'pmzap', magic: true, el: 'bolt', pct: 36, range: 300, h: 60, knock: 10, speed: 1100 }, { at: 0.36, shot: 'pmzap', magic: true, el: 'bolt', pct: 36, range: 300, h: 60, knock: 10, speed: 1100 }, { at: 0.5, shot: 'pmzap', magic: true, el: 'bolt', pct: 130, range: 330, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Cleric of light (the healer path, id kept; docs/design/mage-line.md): a smite (a sunbolt
   // off her scepter), a twin blessing (two orbs of light), and Judgment (a pillar of light slams down
@@ -234,9 +235,9 @@ export const PATH_COMBOS = {
     { move: 'sowgrip', dur: 0.6, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'sograsp', magic: true, pct: 170, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] },
   ],
   starstaff: [
-    { move: 'msfire', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'mgfireball', magic: true, el: 'fire', pct: 96, range: 310, h: 70, knock: 120, speed: 720 }] },
-    { move: 'msspike', dur: 0.46, step: 8, strikes: [{ at: 0.4, shot: 'mgspike', magic: true, el: 'ice', pct: 104, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 160, speed: 760 }] },
-    { move: 'msbolt', dur: 0.6, step: 14, finisher: true, strikes: [{ at: 0.52, shot: 'mgsky', sky: true, magic: true, el: 'bolt', pct: 180, range: 300, h: 90, targets: 4, knock: 120, launch: 120, speed: 1600, big: true, stop: 0.07, shake: 3 }] },
+    { move: 'psgolf', dur: 0.46, step: 10, strikes: [{ at: 0.4, shot: 'pmbomb', magic: true, el: 'fire', pct: 98, range: 310, h: 70, knock: 80, speed: 620 }] },
+    { move: 'pspogo', dur: 0.5, step: 8, strikes: [{ at: 0.44, shot: 'pmspike', magic: true, el: 'ice', pct: 104, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 120, speed: 760 }] },
+    { move: 'psrod', dur: 0.62, step: 10, finisher: true, strikes: [{ at: 0.54, shot: 'pmstrike', sky: true, magic: true, el: 'bolt', pct: 180, range: 300, h: 90, targets: 4, knock: 90, launch: 100, speed: 1600, big: true, stop: 0.07, shake: 3 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.38, step: 10, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -468,13 +469,13 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.shinobi[3],
       { move: 'bdspinhurl', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] }],
   ],
-  // The Mage. Wand: the ember flick or a villain laugh; the frost lash or a cape twirl; the thunder
-  // point or a dark flourish. Staff: the fireball thrust or a flame slam; the spike plant or an orb
-  // spin; heavens' wrath or a two-handed thunder slam.
+  // The Mage. Wand: the hip flick or a no-look shot; the snowball pitch or a baton twirl; the cattle
+  // prod or a jammed wand that goes off all at once. Staff: the golf swing or a home run; the pogo
+  // slam or an ice skate; the lightning rod or conducting the storm.
   starwand: [
-    [PATH_COMBOS.starwand[0], { move: 'mglaugh', dur: 0.36, step: 8, strikes: [{ at: 0.32, shot: 'mgfire', magic: true, el: 'fire', pct: 84, range: 300, h: 60, knock: 30, speed: 900 }] }],
-    [PATH_COMBOS.starwand[1], { move: 'mgtwirl', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'mgice', magic: true, el: 'ice', pct: 52, range: 290, h: 90, knock: 25, speed: 860, fan: 2 }] }],
-    [PATH_COMBOS.starwand[2], { move: 'mgcape', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'mgbolt', magic: true, el: 'bolt', pct: 172, range: 330, h: 70, targets: 3, pierce: true, knock: 220, launch: 120, speed: 1400, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.starwand[0], { move: 'pmnolook', dur: 0.36, step: 8, strikes: [{ at: 0.32, shot: 'pmspark', magic: true, el: 'fire', pct: 84, range: 300, h: 60, knock: 25, speed: 900 }] }],
+    [PATH_COMBOS.starwand[1], { move: 'pmtwirl', dur: 0.48, step: 10, strikes: [{ at: 0.42, shot: 'pmshard', magic: true, el: 'ice', pct: 50, range: 290, h: 90, knock: 25, speed: 820, fan: 2 }] }],
+    [PATH_COMBOS.starwand[2], { move: 'pmjam', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.54, shot: 'pmzap', magic: true, el: 'bolt', pct: 175, range: 330, h: 70, targets: 3, pierce: true, knock: 140, launch: 80, speed: 1300, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Cleric. Openers: the smite or a prayer bolt; second: the twin blessing or a halo twirl;
   // finisher: Judgment or a stained-glass burst of rays.
@@ -500,9 +501,9 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.astrowand[2], { move: 'sowdoom', dur: 0.62, step: 10, finisher: true, strikes: [{ at: 0.52, shot: 'sograsp', magic: true, pct: 172, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'msslam', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'mgfireball', magic: true, el: 'fire', pct: 100, range: 300, h: 70, knock: 140, speed: 700 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'msspin', dur: 0.52, step: 10, strikes: [{ at: 0.48, shot: 'mgice', magic: true, el: 'ice', pct: 106, range: 310, h: 70, targets: 2, pierce: true, knock: 80, speed: 860 }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'msthunder', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.54, shot: 'mgsky', sky: true, magic: true, el: 'bolt', pct: 182, range: 300, h: 90, targets: 4, knock: 140, launch: 140, speed: 1600, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.starstaff[0], { move: 'psbat', dur: 0.48, step: 10, strikes: [{ at: 0.42, shot: 'pmbomb', magic: true, el: 'fire', pct: 102, range: 310, h: 70, knock: 90, speed: 660 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'psskate', dur: 0.52, step: 22, carry: 0.5, strikes: [{ at: 0.46, shot: 'pmspike', magic: true, el: 'ice', pct: 104, range: 300, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 120, speed: 780 }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'psconduct', dur: 0.62, step: 8, finisher: true, strikes: [{ at: 0.54, shot: 'pmstrike', sky: true, magic: true, el: 'bolt', pct: 182, range: 300, h: 90, targets: 4, knock: 90, launch: 100, speed: 1600, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -559,15 +560,15 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
-  // The Mage with the wand: sparks up at whatever flies, ice rained down from a hang in the air
-  // (the second time a big flurry), and a cape-swirl slide out of a run flinging fire.
+  // The Mage with the wand: a zap ball flung straight up like a sparkler, a snowball dropped from a
+  // tuck in the air (the second time a spray of three), and a fire-rocket skid out of a run.
   starwand: {
-    up: { move: 'mgup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'mgbolt', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1200, big: true, stop: 0.04 }] },
+    up: { move: 'pmup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'pmzap', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1200, big: true, stop: 0.04 }] },
     air: [
-      { move: 'mgair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'mgice', magic: true, el: 'ice', pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 860 }] },
-      { move: 'mgair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mgice', magic: true, el: 'ice', fan: 3, pct: 60, range: 260, h: 190, drop: 70, knock: 120, speed: 860, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'pmair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'pmshard', magic: true, el: 'ice', pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 820 }] },
+      { move: 'pmair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'pmshard', magic: true, el: 'ice', fan: 3, pct: 60, range: 260, h: 190, drop: 70, knock: 80, speed: 820, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'mgdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.36, shot: 'mgfire', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 920 }] },
+    dash: { move: 'pmdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.36, shot: 'pmspark', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 920 }] },
   },
   // The Cleric: a ray shot up at whatever flies, light cast down from the air (the second time a
   // pillar of it), and a glide on a beam of light out of a run.
@@ -599,15 +600,16 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'sowdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.34, shot: 'sohand', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 860 }] },
   },
-  // With the staff: lightning up off the orb at whatever flies, ice pointed down from the air, and a
-  // vault round the staff out of a run that ends in a fireball.
+  // With the staff: a vault off the planted staff zapping straight up, a fireball batted down from
+  // the air (the second time a spray of snowballs), and a broomstick ride out of a run that ends in
+  // a fireball.
   starstaff: {
-    up: { move: 'msup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'mgbolt', magic: true, el: 'bolt', pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1200, big: true, stop: 0.04 }] },
+    up: { move: 'psup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'pmzap', magic: true, el: 'bolt', pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1200, big: true, stop: 0.04 }] },
     air: [
-      { move: 'msair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'mgice', magic: true, el: 'ice', pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 860 }] },
-      { move: 'msair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mgfireball', magic: true, el: 'fire', pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 140, speed: 720, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'psair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'pmbomb', magic: true, el: 'fire', pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 700 }] },
+      { move: 'psair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'pmshard', magic: true, el: 'ice', fan: 3, pct: 60, range: 260, h: 190, drop: 70, knock: 80, speed: 820, big: true, stop: 0.05, shake: 2 }] },
     ],
-    dash: { move: 'msdash', dur: 0.5, step: 60, carry: 0.5, strikes: [{ at: 0.4, shot: 'mgfireball', magic: true, el: 'fire', pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 110, speed: 760 }] },
+    dash: { move: 'psdash', dur: 0.5, step: 60, carry: 0.5, strikes: [{ at: 0.42, shot: 'pmbomb', magic: true, el: 'fire', pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 90, speed: 700 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
@@ -1097,27 +1099,21 @@ export const SPIRIT_MAX = 100;
 const SPIRIT_HOLD = 5;
 const SPIRIT_DRAIN = 10;
 export const STAR_SPLIT = 0.5;
-// Element Weave: what a hit of a new element builds, and one of the same element again.
-export const WEAVE_NEW = 2.2;
-export const WEAVE_SAME = 0.5;
-// Overload (full Element Weave): each of her spells carries the other two elements with it, this
-// strong each.
-export const OVERLOAD_PCT = 0.45;
+// Mayhem (the Mage's gauge; world/reactions.js): what a plain spell hit builds (a share of its
+// gauge), what a heal builds; her element reactions build it fastest (REACT_GAIN).
+export const MAYHEM_HIT = 0.35;
+export const MAYHEM_MEND = 0.5;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
 export function addSpirit(world, n, kind = 'harm', el = null) {
   if (!hasSpirit(world.char) || n <= 0) return;
   // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
   if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
   if (hasBinding(world.char)) return addBinding(world, n * 0.7);
-  // The Mage's Element Weave (docs/design/mage-line.md): a spell of a different element from her
-  // last one weaves the gauge on fast; the same element again barely moves it. Her heals count as
-  // an element of their own (light).
+  // The Mage's Mayhem (docs/design/mage-line.md): plain hits barely build it; her element
+  // reactions (world/reactions.js) fill it.
   if (world.char.job === 'spiritmage') {
-    const now = kind === 'mend' ? 'light' : el ?? world.weaveEl ?? 'fire';
-    const fresh = now !== world.weaveEl || world.now - (world.spiritAt ?? -9) >= SPIRIT_HOLD;
-    world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (fresh ? WEAVE_NEW : WEAVE_SAME));
+    world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (kind === 'react' ? 1 : kind === 'mend' ? MAYHEM_MEND : MAYHEM_HIT));
     world.spiritAt = world.now;
-    world.weaveEl = now;
     world.spiritKind = kind;
     return;
   }
@@ -1351,8 +1347,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // weapon's own timing bends around that moment without moving it (render/moves.js `feel`).
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
-  // The Mage names her big spells out loud, like the chosen one (MAGE_SHOUTS).
-  if (world.char.job === 'spiritmage' || world.char.job === 'shrinemaiden' || world.char.job === 'onmyoji') mageShout(world, step.move);
+  // The Cleric and the Sorcerer name their big spells out loud (MAGE_SHOUTS).
+  if (world.char.job === 'shrinemaiden' || world.char.job === 'onmyoji') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -1593,7 +1589,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge, el: s.el,
+      stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge, el: s.el, rxAll: miss ? undefined : s.rxAll,
     });
     if (roll?.crit) crits++;
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, dir: s.dir, t: -i * 0.03, dur: 0.6, seed: Math.random() });
@@ -1880,7 +1876,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `mghit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -2000,14 +1996,6 @@ function fire(world, strike) {
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   // The Star Witch: full Constellation splits her bolts and comets into three.
-  // The Mage: on full Overload each spell carries the other two elements with it.
-  if (MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
-    const others = ['fire', 'ice', 'bolt'].filter((e) => e !== (s.el ?? 'fire'));
-    others.forEach((e, i) => {
-      const oy = i ? 9 : -9;
-      fire(world, { ...s, split: true, sky: false, el: e, shot: ELEMENT_SHOT[e], oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04 + i * 0.03, pct: s.pct * OVERLOAD_PCT, big: false, stop: 0, shake: 0, gauge: 1 });
-    });
-  }
   // The Sorcerer: on full Spellstorm every spell casts twice, its echo a beat behind.
   if (SO_SHOTS.has(s.shot) && !s.echo && !s.split && spellstorm(world)) fire(world, { ...s, echo: true, split: true, lag: (s.lag ?? 0) + 0.14, oy: (s.oy ?? 0) + (s.shot === 'sograsp' ? 0 : -6), pct: s.pct * STORM_ECHO, big: false, stop: 0, shake: 0, gauge: 1 });
   if (STAR_SHOTS_WITCH.has(s.shot) && !MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
@@ -2018,7 +2006,7 @@ function fire(world, strike) {
     for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
       const my = m.y - (m.air ?? 0) - m.def.h / 2;
       // (Her lightning comes straight down; a meteor slants in.)
-      const straight = s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
+      const straight = s.shot === 'pmstrike' || s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
       const sx = straight ? m.x : m.x - s.dir * 70;
       const sy = my - (straight ? 200 : 170);
       const travel = Math.hypot(m.x - sx, my - sy) / speed;
@@ -2136,24 +2124,13 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.
-export const MG_SHOTS = new Set(['mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
+export const MG_SHOTS = new Set(['pmspark', 'pmshard', 'pmzap', 'pmbomb', 'pmspike', 'pmstrike', 'pmhuge', 'pmwire', 'mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
 // The Sorcerer's shots (her own art); their hits leave her claw marks.
 export const SO_SHOTS = new Set(['sohand', 'soflame', 'sofire', 'sograsp', 'soslam']);
 // The Mage shouts the name of every big spell as she casts it, like a chosen one in a story (her
 // finishers and skills; never her quick casts). A move has a few names and never says the same one
 // twice in a row; the line floats up over her head.
 export const MAGE_SHOUTS = {
-  mgthunder: ['JUDGMENT OF THE STORM!', 'BOW BEFORE THE BOLT!', 'THUNDER OF THE FALLEN!'],
-  mgcape: ['EMBRACE THE DARKNESS!', 'TREMBLE, MORTALS!', 'MY POWER... AWAKENS!'],
-  msbolt: ['HEAVENS, OBEY ME!', 'I COMMAND THEE, SKY!', 'WRATH OF THE TEMPEST!'],
-  msthunder: ['CRIMSON THUNDERCLAP!', 'THE STORM ANSWERS ME!', 'FEEL MY TRUE POWER!'],
-  mgfireball: ['INFERNO OF THE ABYSS!', 'BEHOLD MY FLAME!', 'BURN IN CRIMSON FIRE!'],
-  mgchain: ['CHAINS OF THE STORM!', 'DANCE, LIGHTNING!', 'TASTE MY THUNDER!'],
-  mgnova: ['ETERNAL WINTER!', 'FREEZE, MORTALS!', 'COLD... AS MY HEART!'],
-  mgteleport: ['Hmph. Too slow.', 'Behind you.', 'I was never there.'],
-  mgheal: ['...fine. Heal.', 'Ugh. So BRIGHT.', "Don't get used to this."],
-  mgguard: ['BARRIER OF THE DAMNED!', 'NONE SHALL PASS!', 'MY WARD IS ETERNAL!'],
-  mgmeteor: ['CATACLYSM... OF THE CRIMSON STAR!'],
   // The Cleric names her heals the same way (it's the same girl).
   cljudge: ['JUDGMENT OF THE DAWN!', 'BEHOLD THE LIGHT!', 'REPENT!'],
   clglass: ['SAINTLY RADIANCE!', 'BASK IN MY GLORY!', 'SANCTUS!'],
@@ -2197,8 +2174,6 @@ function mageShout(world, move) {
 }
 // The Cleric's shots (her own art); their hits leave her mark of light.
 export const CL_SHOTS = new Set(['clbolt', 'clorb', 'clpillar']);
-// The shot each of her elements flies as when Overload sends it along with another spell.
-const ELEMENT_SHOT = { fire: 'mgfire', ice: 'mgice', bolt: 'mgbolt' };
 // The Kitchen Witch's shots (shelved: data/kitchen-witch.js); their hits leave her splash.
 const KW_SHOTS = new Set(['kwglob', 'kwwave', 'kpegg', 'kpflame', 'kwspice']);
 function skyProcs(world, s) {

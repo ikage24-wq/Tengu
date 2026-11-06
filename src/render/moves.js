@@ -131,6 +131,25 @@ const MG_FACE = {
   squint: { closed: [true, true], mouth: 'frown', brows: [[-0.2, 0.7], [-0.2, 0.7]], extra: ['sweat0'] },
 };
 
+// A staff or wand raised high goes behind her head (never across her face): the Mage's up poses.
+function raisedBehind(o) {
+  if (o.weapon < 50) o.back = true;
+  return o;
+}
+
+// The Mage's faces (the remake): a pyro gremlin. A squint down the wand as she lines it up, a
+// whoop on the cast, glee and a cackle after; nose in the air for a show-off; a sheepish wince
+// when it backfires; wild-eyed when the big one goes off.
+const PM_FACE = {
+  aim: { lid: 0.35, mouth: 'smirk', brows: [[0.2, 0.5], [0.7, -0.3]] },
+  whoop: { mouth: 'yell', brows: [[0.8, -0.3], [0.8, -0.3]], shine: true },
+  glee: { mouth: 'grin', brows: [[0.7, -0.2], [0.7, -0.2]], blush: 1.2, shine: true },
+  cackle: { closed: [true, true], mouth: 'grin', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.1 },
+  snooty: { closed: [true, true], mouth: 'cat', brows: [[0.8, -0.3], [0.8, -0.3]] },
+  oops: { mouth: 'grit', brows: [[0.6, 0.3], [0.6, 0.3]], extra: ['sweat0'] },
+  wild: { cross: 0.3, mouth: 'yell', brows: [[-0.2, 0.9], [-0.2, 0.9]], shine: true },
+};
+
 // The Sorcerer's faces: cold and menacing while she casts, a snarl on the blow, an eerie smile
 // after; and the beat after a big cast, when it dawns on her what she just did (panic).
 const SO_FACE = {
@@ -3608,6 +3627,503 @@ export const MOVES = {
       face: p < 0.3 ? CL_FACE.pray : p < 0.86 ? CL_FACE.proclaim : CL_FACE.serene,
       rig: (r) => { r.backArm = [q(lerp(-6 * raise, -7, sweep) + 3 * bow), q(-6 * raise * (1 - bow))]; r.hairLift = raise > 0.5 && sweep < 0.3 ? -1 : sweep > 0.3 && bow < 0.3 ? 1 : 0; r.cape -= q(4 * sweep * (1 - bow)); danceLegs(r, [raise * (1 - sweep), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [sweep * (1 - bow), [3.8, 0, 8], [-3.6, -0.6, -18]], [bow, [2, 0, 6], [-2.4, 0, -10]]); },
     };
+  },
+
+  // ---------- The Mage's attacks (the remake: a pyro gremlin; docs/design/mage-line.md) ----------
+  // A magic-school dropout who loves blowing things up. She never casts like the textbook: she
+  // flicks fire from the hip, pitches snowballs, jabs the wand like a cattle prod, swings the staff
+  // like a golf club or a bat, pogos on it, and holds it up like a lightning rod. She acts every beat
+  // (PM_FACE): a squint as she lines it up, a whoop on the cast, a cackle (or a sheepish wince when
+  // it backfires) after. The wand stays out in front or low; the staff swings round her and goes
+  // over her shoulder behind her head, never across her face.
+
+  // Hip flick (wand opener, a firecracker spark at ~0.3): the wand down at her hip, a little
+  // shimmy of the shoulders, then a snap of the wrist that flicks the spark out; she bounces on her
+  // toes, pleased.
+  pmflick(p) {
+    const load = soft(seg(p, 0, 0.2));
+    const flick = ease(seg(p, 0.2, 0.3));
+    const settle = soft(seg(p, 0.42, 0.8));
+    const shimmy = Math.sin(seg(p, 0, 0.2) * Math.PI * 4) * load;
+    return {
+      weapon: lerp(lerp(120, 165, load), 70, flick) + 14 * settle, arm: lerp(lerp(40, 22, load), 92, flick) - 20 * settle,
+      lunge: -1 * load * (1 - flick) + 5 * flick * (1 - settle * 0.4), tilt: 0.03 * shimmy + 0.08 * flick * (1 - settle),
+      lift: 1.2 * Math.abs(shimmy) + 2.5 * bump(p, 0.24, 0.44) + swBob(p, 0.74),
+      face: p < 0.2 ? PM_FACE.aim : p < 0.42 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = [q(lerp(1, 3, flick) - 2 * settle), q(lerp(-1, -5, flick) + 4 * settle)];
+        r.hairLift = flick > 0.3 && settle < 0.4 ? 1 : 0;
+        danceLegs(r, [load * (1 - flick), [1.2, 0, 4], [-2.2, 0, -8]], [flick * (1 - settle), [3.4, -0.6, 10], [-3, -0.8, -16]], [settle, [1.8, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Snowball pitch (second, a snowball of ice at ~0.4): a baseball wind-up, the wand drawn right
+  // back behind her and her front knee kicked high, then she steps into the pitch and hurls it
+  // overhand; the follow-through bends her nearly double.
+  pmpitch(p) {
+    const wind = soft(seg(p, 0, 0.28));
+    const hurl = ease(seg(p, 0.28, 0.4));
+    const after = soft(seg(p, 0.46, 0.82));
+    return {
+      weapon: lerp(lerp(90, 240, wind), 74, hurl) + 40 * after * (1 - hurl * 0.2), arm: lerp(lerp(50, -20, wind), 102, hurl) - 56 * after,
+      back: (wind > 0.4 && hurl < 0.3) || undefined,
+      lunge: -3 * wind * (1 - hurl) + 8 * hurl * (1 - after * 0.3), tilt: -0.14 * wind * (1 - hurl) + 0.2 * hurl * (1 - after * 0.5),
+      lift: 1.5 * wind * (1 - hurl) + swBob(p, 0.82), trail: hurl > 0 && hurl < 1,
+      face: p < 0.28 ? PM_FACE.aim : p < 0.46 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(1.2 * hurl * (1 - after));
+        r.backArm = [q(lerp(lerp(0, 6, wind), -6, hurl)), q(lerp(lerp(0, -4, wind), -2, hurl))];
+        r.hairLift = hurl > 0.3 && after < 0.5 ? 1 : 0;
+        danceLegs(r, [wind * (1 - hurl), [1.6, -4.2, 40], [-1.6, 0, -6]], [hurl * (1 - after), [5, 0, 10], [-4.6, -1, -26]], [after, [3, 0, 6], [-3, -0.4, -14]]);
+      },
+    };
+  },
+  // Cattle prod (wand finisher: two little zaps at ~0.22 and ~0.36, then a big zap ball at ~0.5):
+  // she jabs the wand at them, jab, jab, then a big lunging JAB, and the kick of it jolts her (her
+  // hair stands up); she cackles with her hand over her mouth.
+  pmjab(p) {
+    const jab = (a, b) => bump(p, a, b);
+    const j1 = jab(0.12, 0.28);
+    const j2 = jab(0.28, 0.42);
+    const wind = soft(seg(p, 0.4, 0.46)) * (1 - ease(seg(p, 0.46, 0.52)));
+    const big = ease(seg(p, 0.46, 0.52));
+    const jolt = bump(p, 0.52, 0.66);
+    const after = soft(seg(p, 0.66, 0.92));
+    return {
+      weapon: 92 - 6 * (j1 + j2) + 20 * wind - 4 * big + 30 * after, arm: 80 + 10 * (j1 + j2) - 30 * wind + 16 * big - 40 * after,
+      lunge: 4 * (j1 + j2) - 3 * wind + 9 * big * (1 - after * 0.5) - 3 * jolt, tilt: 0.05 * (j1 + j2) + 0.12 * big * (1 - after) - 0.1 * jolt,
+      lift: 2 * jolt + 1.4 * Math.abs(Math.sin(seg(p, 0.66, 0.95) * Math.PI * 5)) * after + swBob(p, 0.9) * 0.4, trail: big > 0 && big < 1,
+      face: p < 0.46 ? PM_FACE.aim : p < 0.66 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.6 * wind + 1 * big * (1 - after));
+        r.backArm = after > 0.2 ? [q(lerp(2, 5, after)), q(lerp(-3, -8, after))] : [q(-3 + 2 * (j1 + j2)), q(-2)];
+        r.hairLift = jolt > 0.2 ? -1 : big > 0.3 ? 1 : 0;
+        danceLegs(r, [Math.max(j1, j2) * (1 - big), [3, 0, 8], [-2.8, -0.4, -12]], [wind, [2, 0, 6], [-3.2, 0, -12]], [big * (1 - after), [5, 0, 10], [-4.6, -0.8, -24]], [after, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // No-look shot (an opener in her pool, ~0.32): she turns her head away with her eyes shut, nose
+  // in the air, and flicks the spark out at them without looking. Show-off.
+  pmnolook(p) {
+    const turn = soft(seg(p, 0, 0.2));
+    const flick = ease(seg(p, 0.22, 0.32));
+    const end = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: lerp(lerp(120, 150, turn), 84, flick) + 10 * end, arm: lerp(lerp(40, 30, turn), 90, flick) - 14 * end,
+      tilt: -0.12 * turn * (1 - end * 0.8) + 0.04 * flick, lunge: 3 * flick * (1 - end * 0.5), lift: swBob(p, 0.6),
+      face: p < 0.55 ? PM_FACE.snooty : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = [q(1 - 2 * turn), q(-1 + 2 * turn)];
+        danceLegs(r, [turn, [1.4, 0, 4], [-1.8, 0, -6]], [flick, [2.4, 0, 6], [-2.6, -0.4, -12]]);
+      },
+    };
+  },
+  // Gunslinger twirl (second in her pool, ~0.42): she twirls the wand round at her hip like a
+  // gunslinger's six-shooter, catches it and flicks two snowballs out.
+  pmtwirl(p) {
+    const tw = seg(p, 0.02, 0.34);
+    const flick = ease(seg(p, 0.34, 0.42));
+    const end = soft(seg(p, 0.52, 0.86));
+    const w = lerp(30 + 540 * soft(tw), 80 + 540, flick) + 10 * end;
+    return {
+      weapon: w, back: (tw > 0 && tw < 1 && wandUp(w)) || undefined, arm: lerp(lerp(50, 34, soft(seg(p, 0, 0.12))), 92, flick) - 14 * end,
+      tilt: -0.05 * Math.sin(tw * Math.PI * 3) * (1 - flick) + 0.06 * flick * (1 - end), lunge: 4 * flick * (1 - end * 0.5),
+      lift: 1.4 * bump(p, 0.02, 0.34) + 2 * bump(p, 0.34, 0.56) + swBob(p, 0.86) * 0.6,
+      face: p < 0.34 ? PM_FACE.glee : p < 0.52 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = [q(3 * Math.sin(tw * Math.PI * 2)), q(-4 - 2 * flick)];
+        r.hairLift = flick > 0.4 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [1 - flick, [1.2, -0.6 * Math.abs(Math.sin(tw * Math.PI * 3)), 6], [-1.4, 0, -6]], [flick, [3, 0, 8], [-2.8, -0.6, -14]]);
+      },
+    };
+  },
+  // It's jammed (finisher in her pool, a big zap ball at ~0.54): she points, nothing happens, she
+  // shakes the wand hard and smacks it with her other hand, and it goes off all at once: the kick
+  // throws her back a step with her hair on end. A sheepish wince, then a cackle.
+  pmjam(p) {
+    const point = soft(seg(p, 0, 0.12));
+    const shake = p > 0.14 && p < 0.38 ? Math.sin(p * 110) * (1 - seg(p, 0.14, 0.38) * 0.4) : 0;
+    const smack = bump(p, 0.38, 0.5);
+    const blast = ease(seg(p, 0.5, 0.56));
+    const kick = bump(p, 0.54, 0.74);
+    const after = soft(seg(p, 0.74, 0.95));
+    return {
+      weapon: 90 + 12 * shake - 10 * smack - 6 * blast + 30 * after, arm: lerp(50, 88, point) + 8 * shake + 6 * kick - 36 * after,
+      lunge: 2 * point - 6 * kick * (1 - after * 0.5), tilt: 0.03 * shake - 0.14 * kick + 0.04 * after,
+      lift: 0.8 * Math.abs(shake) + 2.4 * kick + swBob(p, 0.86) * 0.5, trail: blast > 0 && blast < 1,
+      face: p < 0.14 ? PM_FACE.aim : p < 0.5 ? PM_FACE.oops : p < 0.74 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = smack > 0.1 ? [q(lerp(-2, 9, smack)), q(lerp(-2, -5, smack))] : after > 0.2 ? [q(4), q(-7 * after)] : [q(-2), q(-1)];
+        r.hairLift = kick > 0.2 ? -1 : 0;
+        danceLegs(r, [point * (1 - kick), [2.6, 0, 6], [-2.6, 0, -10]], [kick, [-0.4, -1.4, -10], [-4.6, 0, -20]], [after, [2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Up + attack with the wand: she hops and flings a zap ball straight up like a sparkler.
+  pmup(p) {
+    const hop = bump(p, 0.12, 0.62);
+    return raisedBehind({
+      weapon: starKeys(p, [[0, 130], [0.12, 160], [0.3, 14], [0.62, 22], [1, 70]]), arm: starKeys(p, [[0, 40], [0.12, 30], [0.3, 108], [0.62, 104], [1, 70]]),
+      tilt: -0.08 * soft(seg(p, 0.12, 0.3)) * (1 - soft(seg(p, 0.62, 0.9))), lift: 9 * hop - 1.5 * bump(p, 0, 0.12) + swBob(p, 0.72) * 0.6,
+      face: p < 0.12 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.air = hop > 0.3;
+        r.squat = q(1.8 * bump(p, 0, 0.14));
+        r.backArm = [q(-3 * hop), q(3 * hop)];
+        r.hairLift = hop > 0.5 ? -1 : 0;
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [hop, [1.8, -3.6, 30], [-1.8, -2.4, -36]]);
+      },
+    });
+  },
+  // In the air with the wand: she tucks her knees, points the wand straight down and drops a
+  // snowball on them.
+  pmair(p) {
+    const aim = soft(seg(p, 0, 0.2));
+    const drop = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: lerp(lerp(90, 60, aim), 170, drop), arm: lerp(lerp(70, 100, aim), 40, drop), tilt: 0.1 * drop,
+      face: p < 0.2 ? PM_FACE.aim : PM_FACE.whoop,
+      rig: (r) => { r.air = true; r.backArm = [q(-4 + 2 * drop), q(-5)]; r.cape -= 2; danceLegs(r, [1, [2.4, -4 * (0.6 + 0.4 * aim), 40], [-2, -3, -40]]); },
+    };
+  },
+  // Out of a run with the wand: she points the wand back behind her and a burst of fire rockets her
+  // forward in a low skid, then she whips it round and flicks a spark out of the skid.
+  pmdash(p) {
+    const rocket = soft(seg(p, 0, 0.2)) * (1 - ease(seg(p, 0.26, 0.36)));
+    const skid = soft(seg(p, 0.1, 0.3)) * (1 - soft(seg(p, 0.66, 1)));
+    const flick = ease(seg(p, 0.26, 0.36));
+    return {
+      weapon: lerp(lerp(120, 250, soft(seg(p, 0, 0.16))), 84, flick) - 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(lerp(40, -30, soft(seg(p, 0, 0.16))), 96, flick) - 14 * soft(seg(p, 0.6, 0.9)),
+      back: rocket > 0.4 || undefined,
+      tilt: 0.14 * rocket - 0.1 * skid * (1 - rocket), lunge: 6 * skid, trail: flick > 0 && flick < 1,
+      face: p < 0.26 ? PM_FACE.wild : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => { r.squat = q(2.4 * skid); r.backArm = [q(5 * rocket - 4 * skid * (1 - rocket)), q(-5 * skid)]; r.hairLift = skid > 0.4 ? 1 : 0; r.cape -= q(5 * skid); danceLegs(r, [skid, [5, 0, 24], [-3.6, -0.8, -16]]); },
+    };
+  },
+
+  // Golf swing (staff opener, a grinning fireball bouncing along the floor at ~0.4): she addresses
+  // an imaginary ball with the staff's head on the ground, waggles, takes the backswing up over her
+  // shoulder behind her head, and swings through; the follow-through ends high, and she shades her
+  // eyes to watch it go.
+  psgolf(p) {
+    const address = soft(seg(p, 0, 0.12));
+    const waggle = Math.sin(seg(p, 0.04, 0.16) * Math.PI * 4) * (p < 0.16 ? 1 : 0);
+    const back = soft(seg(p, 0.14, 0.3));
+    const swing = ease(seg(p, 0.3, 0.42));
+    const watch = soft(seg(p, 0.5, 0.82));
+    return raisedBehind({
+      weapon: lerp(lerp(lerp(80, 170, address) + 6 * waggle, -40, back), 30, swing) + 10 * watch, arm: lerp(lerp(lerp(55, 20, address), 130, back), 140, swing) - 20 * watch,
+      back: (back > 0.4 && swing < 0.55) || undefined,
+      lunge: -1 * back * (1 - swing) + 4 * swing, tilt: 0.12 * address * (1 - back) - 0.06 * back * (1 - swing) - 0.1 * swing * (1 - watch * 0.5),
+      lift: swBob(p, 0.82) * 0.6, trail: swing > 0 && swing < 1,
+      face: p < 0.3 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(1.6 * address * (1 - swing));
+        r.backArm = watch > 0.2 ? [q(lerp(2, 4, watch)), q(lerp(-3, -13, watch))] : [q(lerp(0, 3, back) - 2 * swing), q(lerp(0, -4, back))];
+        r.hairLift = swing > 0.4 && watch < 0.3 ? 1 : 0;
+        danceLegs(r, [address * (1 - swing), [2.8, 0, 6], [-2.8, 0, -6]], [swing, [3, 0, 6], [-1.6, -1.6, -40]]);
+      },
+    });
+  },
+  // Pogo slam (second, ice spikes punching up out of the floor ahead at ~0.44): she plants the
+  // staff, hops up onto it like a pogo stick (boing, boing) and comes down hard, driving it into the
+  // ground.
+  pspogo(p) {
+    const plant = soft(seg(p, 0, 0.12));
+    const b1 = bump(p, 0.1, 0.24);
+    const b2 = bump(p, 0.22, 0.4);
+    const slam = ease(seg(p, 0.38, 0.44));
+    const after = soft(seg(p, 0.52, 0.86));
+    return {
+      weapon: lerp(lerp(90, 172, plant), 160, slam) - 70 * after, arm: lerp(lerp(55, 60, plant), 50, slam) + 20 * after,
+      lunge: 2 * plant + 3 * slam * (1 - after * 0.5), tilt: 0.04 * (b1 - b2) + 0.08 * slam * (1 - after),
+      lift: 6 * b1 + 10 * b2 - 1.5 * slam * (1 - after) + swBob(p, 0.86) * 0.5,
+      face: p < 0.38 ? PM_FACE.glee : p < 0.56 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.air = b1 > 0.3 || b2 > 0.3;
+        r.squat = q(2.4 * slam * (1 - after * 0.7));
+        r.backArm = [q(-4 * (b1 + b2) + 3 * slam), q(-6 * (b1 + b2) - 2 * slam)];
+        r.hairLift = b2 > 0.5 ? -1 : slam > 0.3 && after < 0.4 ? 1 : 0;
+        danceLegs(r, [Math.max(b1, b2), [0.8, -2.4, 16], [-0.8, -2.4, -16]], [slam * (1 - after), [3.2, 0, 8], [-3, 0, -12]], [after, [2.2, 0, 4], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Lightning rod (staff finisher, a strike from the sky onto them at ~0.54): she plants her feet
+  // and holds the staff straight up as high as she can; lightning hits it (she jolts, hair on end,
+  // grinning through it), then she swings it down to point at them and the strike falls there.
+  psrod(p) {
+    const raise = soft(seg(p, 0.02, 0.24));
+    const jolt = p > 0.26 && p < 0.44 ? Math.sin(p * 120) * (1 - seg(p, 0.26, 0.44) * 0.5) : 0;
+    const down = ease(seg(p, 0.46, 0.54));
+    const hold = soft(seg(p, 0.62, 0.9));
+    return raisedBehind({
+      weapon: lerp(lerp(80, 4, raise) + 4 * jolt, 86, down) - 8 * hold, arm: lerp(lerp(55, 170, raise) + 4 * jolt, 92, down) - 14 * hold,
+      lunge: 6 * down * (1 - hold * 0.4), tilt: 0.02 * jolt + 0.14 * down * (1 - hold * 0.6),
+      lift: 2.5 * raise * (1 - down) + 1.2 * Math.abs(jolt) + swBob(p, 0.9) * 0.6, trail: down > 0 && down < 1,
+      face: p < 0.26 ? PM_FACE.glee : p < 0.46 ? PM_FACE.wild : p < 0.62 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.2 * raise * (1 - down) + 1.6 * down * (1 - hold));
+        r.backArm = down > 0.3 ? [q(lerp(0, -6, down)), q(-5)] : [q(4 * raise), q(-12 * raise + 1.5 * jolt)];
+        r.hairLift = p > 0.26 && p < 0.5 ? -1 : down > 0.3 && hold < 0.4 ? 1 : 0;
+        r.cape -= q(4 * down * (1 - hold * 0.6));
+        danceLegs(r, [raise * (1 - down), [2.6, 0, 6], [-2.6, 0, -6]], [down, [4.4, 0, 8], [-4, -0.6, -20]], [hold, [2.6, 0, 6], [-2.6, 0, -10]]);
+      },
+    });
+  },
+  // Home run (an opener in her pool, a grinning fireball at ~0.42): a batter's stance with the staff
+  // cocked over her back shoulder, a wiggle, then a full level swing that wraps round her; she drops
+  // the "bat" and does a little victory skip.
+  psbat(p) {
+    const stance = soft(seg(p, 0, 0.18));
+    const wiggle = Math.sin(seg(p, 0.08, 0.3) * Math.PI * 4) * (p < 0.3 ? stance : 0);
+    const swing = ease(seg(p, 0.3, 0.42));
+    const skip = bump(p, 0.56, 0.78);
+    return {
+      weapon: lerp(lerp(80, -30, stance) + 8 * wiggle, 100, swing) + 30 * soft(seg(p, 0.5, 0.8)), arm: lerp(lerp(55, 120, stance), 70, swing) - 20 * soft(seg(p, 0.5, 0.8)),
+      back: (stance > 0.4 && swing < 0.45) || undefined,
+      lunge: -2 * stance * (1 - swing) + 7 * swing * (1 - soft(seg(p, 0.6, 1)) * 0.4), tilt: -0.08 * stance * (1 - swing) + 0.14 * swing * (1 - soft(seg(p, 0.5, 0.8))),
+      lift: 3 * skip + swBob(p, 0.82) * 0.4, trail: swing > 0 && swing < 1,
+      face: p < 0.3 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.air = skip > 0.5;
+        r.squat = q(1.8 * stance * (1 - swing));
+        r.backArm = [q(lerp(lerp(0, 4, stance), -5, swing) + 4 * skip), q(lerp(lerp(0, -3, stance), -1, swing) - 6 * skip)];
+        r.hairLift = swing > 0.3 && p < 0.52 ? 1 : 0;
+        danceLegs(r, [stance * (1 - swing), [3, 0, 6], [-3, 0, -6]], [swing * (1 - skip), [4.6, 0, 8], [-3.8, -0.8, -24]], [skip, [1.4, -2.6, 24], [-1.6, -1.6, -24]]);
+      },
+    };
+  },
+  // Ice skate (second in her pool, ice spikes along the floor at ~0.46): she pushes off and glides
+  // forward on one foot with the staff's tip dragging along the floor, ice forming behind it, then
+  // flicks it up and the spikes burst ahead.
+  psskate(p) {
+    const push = soft(seg(p, 0, 0.16));
+    const glide = soft(seg(p, 0.12, 0.3)) * (1 - soft(seg(p, 0.6, 0.95)));
+    const flick = ease(seg(p, 0.38, 0.46));
+    return {
+      weapon: lerp(lerp(80, 150, push), 70, flick) + 10 * soft(seg(p, 0.6, 0.9)), arm: lerp(lerp(55, 40, push), 100, flick) - 30 * soft(seg(p, 0.6, 0.9)),
+      lunge: 8 * glide, tilt: 0.12 * glide * (1 - flick) - 0.06 * flick * glide,
+      lift: swBob(p, 0.86) * 0.4, trail: flick > 0 && flick < 1,
+      face: p < 0.38 ? PM_FACE.glee : p < 0.56 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(1.4 * glide);
+        r.backArm = [q(-7 * glide), q(-6 * glide)];
+        r.hairLift = glide > 0.4 ? 1 : 0;
+        r.cape -= q(4 * glide);
+        danceLegs(r, [push * (1 - glide), [1.4, 0, 4], [-3, 0, -10]], [glide, [3.4, 0, 6], [-5.4, -3, -60]]);
+      },
+    };
+  },
+  // Conductor (finisher in her pool, strikes from the sky on several at ~0.54): she conducts the
+  // storm with the staff as a baton: a one-two, one-two beat with her free hand keeping time, then a
+  // huge downbeat and the strikes come down; she bows to the audience.
+  psconduct(p) {
+    const beat = p < 0.4 ? Math.sin(seg(p, 0, 0.4) * Math.PI * 4) : 0;
+    const up = soft(seg(p, 0.36, 0.46));
+    const down = ease(seg(p, 0.46, 0.54));
+    const bow = bump(p, 0.66, 1);
+    return raisedBehind({
+      weapon: lerp(lerp(60 + 22 * beat, 0, up), 120, down) + 30 * bow, arm: lerp(lerp(110 - 16 * beat, 170, up), 60, down) - 10 * bow,
+      lunge: 3 * down, tilt: 0.03 * beat - 0.08 * up * (1 - down) + 0.14 * down * (1 - bow) + 0.3 * bow,
+      lift: 0.8 * Math.abs(beat) + 3 * up * (1 - down) + swBob(p, 0.96) * 0.3,
+      face: p < 0.36 ? PM_FACE.snooty : p < 0.66 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.6 * down * (1 - bow));
+        r.backArm = bow > 0.2 ? [q(-3), q(-2)] : [q(3 - 3 * beat), q(-6 - 3 * beat - 4 * up)];
+        r.hairLift = up > 0.5 && down < 0.3 ? -1 : down > 0.3 && bow < 0.3 ? 1 : 0;
+        danceLegs(r, [1 - down, [1.6, 0, 4], [-1.6, 0, -4]], [down * (1 - bow), [3.8, 0, 8], [-3.6, -0.6, -18]], [bow, [2, 0, 6], [-2.4, 0, -10]]);
+      },
+    });
+  },
+  // Up + attack with the staff: she vaults up off the planted staff and zaps straight up from the
+  // top of the vault.
+  psup(p) {
+    const vault = bump(p, 0.1, 0.66);
+    return raisedBehind({
+      weapon: starKeys(p, [[0, 90], [0.1, 170], [0.3, 10], [0.66, 20], [1, 80]]), arm: starKeys(p, [[0, 55], [0.1, 60], [0.3, 160], [0.66, 150], [1, 60]]),
+      tilt: -0.06 * soft(seg(p, 0.1, 0.3)), lift: 11 * vault - 1.5 * bump(p, 0, 0.1) + swBob(p, 0.74) * 0.6,
+      face: p < 0.1 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.air = vault > 0.3;
+        r.squat = q(1.8 * bump(p, 0, 0.12));
+        r.backArm = [q(-4 * vault), q(2 * vault)];
+        r.hairLift = vault > 0.5 ? -1 : 0;
+        danceLegs(r, [bump(p, 0, 0.14), [2.4, 0, 6], [-2.4, 0, -6]], [vault, [1.4, -4.4, 50], [-1.4, -3.6, -30]]);
+      },
+    });
+  },
+  // In the air with the staff: she swings it down under her like a bat and knocks a grinning
+  // fireball down at them.
+  psair(p) {
+    const cock = soft(seg(p, 0, 0.2));
+    const hit = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: lerp(lerp(90, 20, cock), 160, hit), arm: lerp(lerp(70, 140, cock), 50, hit), back: (cock > 0.5 && hit < 0.4) || undefined, tilt: 0.12 * hit,
+      face: p < 0.2 ? PM_FACE.aim : PM_FACE.whoop, trail: hit > 0 && hit < 1,
+      rig: (r) => { r.air = true; r.backArm = [q(-5 + 3 * hit), q(-6)]; r.cape -= 3; danceLegs(r, [1, [2.6, -4, 46], [-2, -3, -40]]); },
+    };
+  },
+  // Out of a run with the staff: she hops on the staff like a witch's broom and skims along low with
+  // fire spitting out of the tail, then hops off and bats a fireball ahead.
+  psdash(p) {
+    const ride = soft(seg(p, 0, 0.14)) * (1 - soft(seg(p, 0.3, 0.42)));
+    const bat = ease(seg(p, 0.34, 0.42));
+    const end = soft(seg(p, 0.6, 0.95));
+    return {
+      weapon: lerp(lerp(90, 196, soft(seg(p, 0, 0.12))), 90, bat) + 10 * end, arm: lerp(lerp(55, 30, soft(seg(p, 0, 0.12))), 96, bat) - 30 * end,
+      lunge: 6 * ride + 5 * bat * (1 - end), tilt: 0.08 * ride + 0.1 * bat * (1 - end),
+      lift: 4 * ride + swBob(p, 0.9) * 0.4, trail: bat > 0 && bat < 1,
+      face: p < 0.34 ? PM_FACE.whoop : p < 0.56 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => { r.air = ride > 0.5; r.squat = q(2.6 * ride); r.backArm = [q(4 * ride - 3 * bat), q(-2 * ride - 3 * bat)]; r.hairLift = ride > 0.4 ? 1 : 0; r.cape -= q(5 * ride); danceLegs(r, [ride, [2.6, -3, 30], [-2.6, -3.2, -30]], [bat * (1 - end), [4, 0, 8], [-3.6, -0.6, -18]]); },
+    };
+  },
+
+  // ---------- The Mage's skills (the remake) ----------
+  // Overcooked Fireball (~0.58): she cups a fireball in both hands and it keeps growing (she
+  // glances at it, then at the camera, worried), heaves it up over her head, wobbling under the
+  // weight, and shoves it out; she staggers after it and blows on her singed fingers.
+  pmbig(p) {
+    const cup = soft(seg(p, 0, 0.18));
+    const grow = seg(p, 0.18, 0.44);
+    const wobble = p > 0.3 && p < 0.52 ? Math.sin(p * 60) * 0.06 : 0;
+    const heave = soft(seg(p, 0.34, 0.5));
+    const shove = ease(seg(p, 0.5, 0.58));
+    const after = soft(seg(p, 0.66, 0.95));
+    return raisedBehind({
+      weapon: lerp(lerp(130, 150, cup), 80, shove) + 20 * after, arm: lerp(lerp(lerp(40, 60, cup), 100, heave), 96, shove) - 50 * after,
+      lunge: -1.5 * heave * (1 - shove) + 7 * shove * (1 - after * 0.4) + 2 * bump(p, 0.58, 0.72), tilt: wobble - 0.06 * heave * (1 - shove) + 0.14 * shove * (1 - after),
+      lift: 1.5 * heave * (1 - shove) + swBob(p, 0.92) * 0.4, trail: shove > 0 && shove < 1,
+      face: p < 0.18 ? PM_FACE.glee : p < 0.5 ? PM_FACE.oops : p < 0.66 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.2 * heave * (1 - shove) + 1.4 * grow * (1 - heave));
+        r.backArm = after > 0.3 ? [q(3), q(-9 * after)] : [q(lerp(lerp(0, 4, cup), 2, heave) + 4 * shove), q(lerp(lerp(0, -3, cup), -10, heave) * (1 - shove))];
+        r.hairLift = shove > 0.3 && after < 0.4 ? 1 : 0;
+        danceLegs(r, [cup * (1 - heave), [2, 0, 4], [-2, 0, -4]], [heave * (1 - shove), [2.8, 0, 6], [-2.8, 0, -8]], [shove * (1 - after), [5, 0, 10], [-4.4, -0.8, -24]], [after, [2.6, 0, 6], [-2.4, 0, -10]]);
+      },
+    });
+  },
+  // Blink Bang (~0.3): she pulls a firecracker out of the satchel, grins, and it pops in her hand:
+  // she's gone in the smoke and lands far ahead, coughing, then strikes a pose as if she meant it.
+  pmblink(p) {
+    const pull = soft(seg(p, 0, 0.2));
+    const gone = p > 0.3 && p < 0.62;
+    const land = soft(seg(p, 0.62, 0.8));
+    const cough = p > 0.7 && p < 0.86 ? Math.sin(p * 80) * 0.04 : 0;
+    return {
+      weapon: lerp(120, 100, land), arm: lerp(lerp(40, 30, pull), 70, land),
+      tilt: cough + 0.08 * land * (1 - soft(seg(p, 0.86, 1))), lift: gone ? 2 : swBob(p, 0.86) * 0.5,
+      face: p < 0.3 ? PM_FACE.glee : p < 0.86 ? PM_FACE.oops : PM_FACE.snooty,
+      rig: (r) => {
+        r.backArm = p < 0.3 ? [q(lerp(0, 5, pull)), q(lerp(0, -4, pull))] : [q(4 * (1 - land) - 2), q(-4 + 2 * land)];
+        r.hairLift = land > 0.2 && land < 0.8 ? -1 : 0;
+        danceLegs(r, [pull, [1.6, 0, 4], [-1.6, 0, -4]], [land, [2.4, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Live Wire (~0.5): she grabs the end of her wand or staff like a live cable, her hair stands
+  // straight up and she buzzes all over, then she points it down the line and the lightning
+  // crackles out through all of them; she's left smoking, hair frizzed, grinning.
+  pmwire(p) {
+    const grab = soft(seg(p, 0, 0.14));
+    const buzz = p > 0.14 && p < 0.46 ? Math.sin(p * 140) : 0;
+    const aim = ease(seg(p, 0.42, 0.5));
+    const after = soft(seg(p, 0.62, 0.95));
+    return {
+      weapon: lerp(lerp(100, 120, grab), 88, aim) + 4 * buzz - 10 * after, arm: lerp(lerp(55, 70, grab), 92, aim) + 3 * buzz - 30 * after,
+      lunge: 6 * aim * (1 - after * 0.5), tilt: 0.03 * buzz + 0.1 * aim * (1 - after),
+      lift: 0.8 * Math.abs(buzz) + swBob(p, 0.9) * 0.4, trail: aim > 0 && aim < 1,
+      face: p < 0.14 ? PM_FACE.glee : p < 0.5 ? PM_FACE.wild : p < 0.62 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(1.2 * grab * (1 - aim) + 1 * aim * (1 - after));
+        r.backArm = [q(lerp(0, 7, grab) + 1.4 * buzz - 3 * after), q(lerp(0, -2, grab))];
+        r.hairLift = p > 0.14 && p < 0.7 ? -1 : 0;
+        danceLegs(r, [grab * (1 - aim), [2.6, -0.6 * Math.abs(buzz), 6], [-2.6, 0, -8]], [aim * (1 - after), [4.6, 0, 8], [-4, -0.6, -20]], [after, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Frost Flop (~0.5): she runs two steps, leaps, and belly-flops onto the floor; ice bursts up all
+  // round her both ways from the impact. She gets up brushing frost off her coat, pleased.
+  pmflop(p) {
+    const run = soft(seg(p, 0, 0.14));
+    const leap = bump(p, 0.12, 0.48);
+    const flop = soft(seg(p, 0.42, 0.5)) * (1 - soft(seg(p, 0.62, 0.86)));
+    const up = soft(seg(p, 0.62, 0.86));
+    return {
+      weapon: lerp(120, 160, flop) - 40 * up, arm: lerp(lerp(40, 90, leap), 130, flop) - 80 * up,
+      lunge: 4 * run * (1 - up) , tilt: 0.25 * leap + 0.9 * flop * (1 - up), lift: 9 * leap - 6 * flop + swBob(p, 0.9) * 0.4,
+      face: p < 0.12 ? PM_FACE.glee : p < 0.42 ? PM_FACE.whoop : p < 0.62 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => {
+        r.air = leap > 0.3;
+        r.squat = q(2.4 * flop);
+        r.backArm = [q(-6 * leap + 5 * flop), q(-6 * leap + 3 * flop + 2 * Math.sin(p * 40) * up * (1 - soft(seg(p, 0.86, 1))))];
+        r.hairLift = leap > 0.4 ? 1 : 0;
+        danceLegs(r, [run * (1 - leap), [3, -1, 10], [-3, 0, -14]], [leap * (1 - flop), [-1.4, -3.6, -30], [-4, -3, -50]], [flop, [-3.6, -2.6, -70], [-5.4, -2, -70]], [up, [2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Campfire Break (heal, ~0.55): she squats down, drops a little campfire in front of her with a
+  // flick of the wand, sticks a marshmallow over it, and rocks happily on her heels as the warmth
+  // mends everyone round it.
+  pmcamp(p) {
+    const squat = soft(seg(p, 0, 0.2));
+    const flick = bump(p, 0.36, 0.56);
+    const rock = p > 0.56 ? Math.sin((p - 0.56) * 22) * (1 - soft(seg(p, 0.85, 1))) : 0;
+    const rise = soft(seg(p, 0.85, 1));
+    return {
+      weapon: lerp(120, 150, squat) - 40 * flick, arm: lerp(lerp(40, 50, squat), 70, flick) - 20 * rise,
+      tilt: 0.06 * rock + 0.06 * squat * (1 - rise), lift: -1 * squat * (1 - rise) + 0.6 * Math.abs(rock),
+      face: p < 0.36 ? PM_FACE.glee : p < 0.56 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(3.2 * squat * (1 - rise));
+        r.backArm = [q(lerp(0, 4, squat)), q(lerp(0, 1, squat))];
+        danceLegs(r, [squat * (1 - rise), [2.4, 0, 10], [-2.4, 0, -10]], [rise, [1.6, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Scroll Shield (~0.55): she rummages in the satchel (tongue out), yanks out a fistful of scrolls
+  // and flings them up; they unroll into a whirling ring round her and the party. Hands on hips.
+  pmscroll(p) {
+    const dig = p < 0.3 ? Math.sin(seg(p, 0.04, 0.3) * Math.PI * 4) : 0;
+    const fling = ease(seg(p, 0.36, 0.5));
+    const hips = soft(seg(p, 0.62, 0.86));
+    return raisedBehind({
+      weapon: lerp(120, 60, fling) + 40 * hips, arm: lerp(40, 80, fling) - 30 * hips,
+      tilt: 0.1 * (p < 0.3 ? 1 : 1 - fling) * (1 - hips) - 0.04 * hips, lift: 3 * bump(p, 0.36, 0.6) + swBob(p, 0.86) * 0.4,
+      face: p < 0.36 ? PM_FACE.aim : p < 0.62 ? PM_FACE.whoop : PM_FACE.snooty,
+      rig: (r) => {
+        r.backArm = hips > 0.2 ? [q(lerp(0, 2, hips)), q(lerp(-10, 1, hips))] : p < 0.36 ? [q(2 + 1.4 * dig), q(4 + 1.4 * dig)] : [q(lerp(2, 3, fling)), q(lerp(4, -12, fling))];
+        r.hairLift = fling > 0.3 && hips < 0.5 ? -1 : 0;
+        danceLegs(r, [1 - fling, [1.6, 0, 4], [-1.6, 0, -4]], [fling * (1 - hips), [2.2, -1.2, 14], [-2.2, -0.6, -12]], [hips, [2.4, 0, 6], [-2.4, 0, -6]]);
+      },
+    });
+  },
+  // Big Bad Kaboom (finisher): she unhooks all three vials off her belt, knocks them back one after
+  // another (fire, ice, lightning: a hiccup of each), shudders as it all hits her, then throws both
+  // arms up and the sky rains her fire, ice and lightning; she brings the wand or staff down for one
+  // huge blast that sets off every reaction at once, and is left standing in the smoke, frizzed,
+  // cackling.
+  pmkaboom(p) {
+    const drink = (a) => bump(p, a, a + 0.09);
+    const d1 = drink(0.06);
+    const d2 = drink(0.16);
+    const d3 = drink(0.26);
+    const shudder = p > 0.36 && p < 0.46 ? Math.sin(p * 150) : 0;
+    const raise = soft(seg(p, 0.46, 0.56));
+    const slam = ease(seg(p, 0.8, 0.88));
+    const after = soft(seg(p, 0.92, 1));
+    return raisedBehind({
+      weapon: lerp(lerp(120, 24, raise), 150, slam), arm: lerp(lerp(40 + 50 * Math.max(d1, d2, d3), 96, raise), 60, slam) - 10 * after,
+      tilt: -0.12 * Math.max(d1, d2, d3) + 0.04 * shudder - 0.06 * raise * (1 - slam) + 0.16 * slam * (1 - after * 0.5),
+      lift: 0.8 * Math.abs(shudder) + 3 * raise * (1 - slam) + 1.2 * Math.sin(p * 30) * raise * (1 - slam) * 0.5, lunge: 5 * slam,
+      face: p < 0.36 ? (Math.max(d1, d2, d3) > 0.3 ? PM_FACE.snooty : PM_FACE.glee) : p < 0.46 ? PM_FACE.oops : p < 0.8 ? PM_FACE.wild : p < 0.92 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(2.2 * slam * (1 - after * 0.5));
+        r.backArm = p < 0.36 ? [q(2 + 3 * Math.max(d1, d2, d3)), q(2 - 12 * Math.max(d1, d2, d3))] : [q(lerp(0, -5, raise) - 4 * slam), q(lerp(0, -9, raise) * (1 - slam) - 4 * slam)];
+        r.hairLift = p > 0.36 && p < 0.8 ? -1 : slam > 0.3 ? 1 : 0;
+        r.cape -= q(4 * slam);
+        danceLegs(r, [1 - raise, [1.6, 0, 4], [-1.6, 0, -4]], [raise * (1 - slam), [2.6, 0, 6], [-2.6, 0, -6]], [slam, [4.6, 0, 10], [-4.2, -0.6, -22]]);
+      },
+    });
   },
 
   // ---------- The Mage's moves (her own; docs/design/mage-line.md) ----------

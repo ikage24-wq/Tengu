@@ -182,6 +182,10 @@ function popOf(c) {
   return '#ffd36e';
 }
 
+// The Mage's scarf (and the accent of her battle gear): flame orange.
+const MAGE_SCARF = '#ff8a3a';
+// Her battle gear's colour (the player's pick, 2026-11-06): crimson.
+const MAGE_CRIMSON = '#b8324a';
 // A dancer path's trim on the dancers' gear (see drawHero).
 const PATH_TRIMS = {
   shinobi: { trim: '#f4b49a', trimDark: '#c8746a', trimLight: '#ffe0cf', accent: '#ffd36a' },
@@ -2982,9 +2986,12 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The Acrobat Archer's bow is her short mint and gold trick recurve.
   if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
   // The Mage (docs/design/mage-line.md): her wand and staff are the wizard's crystal wand and element
-  // orb staff, and she wears one dramatic glove on her free hand.
+  // orb staff, and her casting hand wears the rune gauntlet.
   if (state.job === 'spiritmage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'arcane' };
   if (state.job === 'spiritmage') g.edgeGlove = true;
+  // She wears the mage pieces as her battle gear (render/jobgear/battlemage.js): coat, belt of spell
+  // vials, scroll satchel, singed scarf, goggled hat; plain pieces only, in crimson.
+  if (state.job === 'spiritmage') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'battlemage', pal: gearPalette('mage', g[s].tier, MAGE_CRIMSON, MAGE_SCARF) };
   // The Sorcerer's staff and wand: black wood and iron round a violet flame.
   if (state.job === 'onmyoji' && (g.weapon?.type === 'staff' || g.weapon?.type === 'wand') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'sorcery' };
   // The Cleric's wand is her gold sun scepter.

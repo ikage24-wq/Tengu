@@ -297,23 +297,24 @@ export const SKILLS = {
     },
   }),
 
-  // ---------- The Mage (crimson and gold: fire, ice, lightning and her crimson runes) ----------
-  // docs/design/mage-line.md (the Star Witch remade, 2026-11-06; ids kept, so saves, the dungeon
-  // healer and her paths carry over): a dramatic edgelord of the elements who names every big spell
-  // like the chosen one. Mixing elements weaves her Element Weave (world/melee.js); full
-  // (Overload), every spell carries all three, and Meteor is ready. Each spell's shots carry their
-  // element (`el`). She keeps a heal and a shield for the healer's seat in the early dungeons.
+  // ---------- The Mage (crimson battle gear: fire, ice and lightning) ----------
+  // docs/design/mage-line.md (remade from scratch 2026-11-06; ids kept, so saves, the dungeon
+  // healer and her paths carry over): a pyro gremlin of a magic-school dropout. Her spells mark what
+  // they hit with their element and a different element reacts (Steam, Shatter, Kaboom;
+  // world/reactions.js), filling Mayhem; full (Meltdown), Big Bad Kaboom is ready. Each spell's
+  // shots carry their element (`el`). She keeps a heal and a shield for the healer's seat in the
+  // early dungeons.
   spiritbolt: skill({
-    id: 'spiritbolt', name: 'Fireball', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
+    id: 'spiritbolt', name: 'Overcooked Fireball', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
     pathNames: { onmyoji: 'Hellfire' },
-    desc: 'Gather a flame in your gloved palm, stare at it meaningfully, and hurl it overhand: a great fireball tears through the line and bursts on everything it hits.',
+    desc: 'Cup a little fireball in your hands. Keep cupping. It keeps growing. Heave the enormous grinning thing over your head and shove it down the line: it rolls through everything in its way. Blow on your fingers.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const bolt = (at, pct, oy = 0) => ({ at, shot: 'stbolt', magic: true, pct, range: 300, h: 60, knock: 30, speed: 880, oy });
       return {
         mp: k(8, 16), pct: k(300, 520), hits: 1, targets: k(2, 4),
-        combo: [{ move: 'mgfireball', dur: 0.7, step: 12, strikes: [{ at: 0.5, shot: 'mgfireball', magic: true, el: 'fire', pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 640, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+        combo: [{ move: 'pmbig', dur: 0.74, step: 10, strikes: [{ at: 0.58, shot: 'pmhuge', magic: true, el: 'fire', pct: k(300, 520), range: 340, h: 90, targets: k(2, 4), pierce: true, speed: 520, knock: 120, big: true, stop: 0.06, shake: 2 }] }],
         // Each path sings or turns it her own way (same numbers; see "Per-path skill versions" in
         // world/combat.js). The Starlight Idol: a call into the crowd (a note), a twirl and an echo
         // (two notes), then a crescendo belted down the line (her big burst of sound). The
@@ -330,14 +331,14 @@ export const SKILLS = {
   }),
 
   spiritstep: skill({
-    id: 'spiritstep', name: 'Teleport', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
+    id: 'spiritstep', name: 'Blink Bang', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
     pathNames: { onmyoji: 'Shadow Step' },
-    desc: 'Fling your cape round yourself and vanish in a swirl of crimson runes, then appear a long way ahead, arms folded, as if you had always been there. Nothing touches you on the way.',
+    desc: 'Light a firecracker in your hand. BANG: you are gone in the smoke, and land a long way ahead, coughing, then pose as if you meant it. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'mgteleport', dur: 0.5, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'mgswirl', burstAt: 0, burstDur: 0.5 }] }],
+        combo: [{ move: 'pmblink', dur: 0.5, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'pmpop', burstAt: 0, burstDur: 0.5 }] }],
         // The Starlight Idol slides across the stage on her knees like a rock star, mic up, hearts
         // flying; the Astronomer fades into a silver crescent, drifts ahead like moonlight and
         // waxes back into herself.
@@ -351,15 +352,15 @@ export const SKILLS = {
   }),
 
   spiritwave: skill({
-    id: 'spiritwave', name: 'Chain Lightning', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
+    id: 'spiritwave', name: 'Live Wire', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
     pathNames: { onmyoji: 'Clutching Horde' },
-    desc: 'Throw both hands out, let the lightning build until your arms shake, then shove: it leaps from monster to monster down the whole line, knocking them back.',
+    desc: 'Grab the end of your wand like a live cable. Buzz. Your hair stands straight up. Point it down the line and the lightning crackles through every monster in it, knocking them back. Smoke a little.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'mgchain', dur: 0.6, step: 8, strikes: [{ at: 0.48, shot: 'mgbolt', magic: true, el: 'bolt', pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1300, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        combo: [{ move: 'pmwire', dur: 0.62, step: 6, strikes: [{ at: 0.5, shot: 'pmwire', magic: true, el: 'bolt', pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1400, knock: 100, launch: 60, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
         // The Starlight Idol plants her feet and belts one power note that tears down the line; the
         // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
         paths: {
@@ -372,17 +373,17 @@ export const SKILLS = {
   }),
 
   frostnova: skill({
-    id: 'frostnova', name: 'Frost Nova', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
+    id: 'frostnova', name: 'Frost Flop', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
     pathNames: { onmyoji: 'Dread Circle' },
-    desc: 'Leap, spin, and land stamping with your fist punched into the floor: ice spikes burst out of the ground all round you both ways, freezing every monster they catch in place for a moment.',
+    desc: 'Take a run up, leap, and belly-flop onto the floor: ice spikes burst out of the ground all round you both ways, freezing every monster they catch in place for a moment. Brush the frost off.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
-      const nova = (burst) => ({ at: 0.46, magic: true, el: 'ice', pct: k(140, 240), reach: 170, h: 80, around: true, targets: k(6, 10), knock: 40, launch: 60, freeze: kf(0.8, 1.6), burst, burstAt: 0, burstDur: 0.7, big: true, stop: 0.06, shake: 3, gauge: 6 });
+      const nova = (burst) => ({ at: 0.5, magic: true, el: 'ice', pct: k(140, 240), reach: 170, h: 80, around: true, targets: k(6, 10), knock: 40, launch: 60, freeze: kf(0.8, 1.6), burst, burstAt: 0, burstDur: 0.7, big: true, stop: 0.06, shake: 3, gauge: 6 });
       return {
         mp: k(14, 26), pct: k(140, 240), hits: 1, targets: k(6, 10),
-        combo: [{ move: 'mgnova', dur: 0.6, step: 0, strikes: [nova('mgnova')] }],
+        combo: [{ move: 'pmflop', dur: 0.64, step: 8, strikes: [nova('pmnovafx')] }],
         // (Until her paths are remade: the Starlight Idol belts a power note and the Astronomer heaves
         // her orrery, each with her own burst, the same freezing ring round her.)
         paths: {
@@ -397,9 +398,9 @@ export const SKILLS = {
   // Wishing Star and Star Veil land on the party round her in a dungeon (`grant`: a buff given when
   // the strike lands, see world/melee.js).
   blessing: skill({
-    id: 'blessing', name: 'Heal', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
+    id: 'blessing', name: 'Campfire Break', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
     pathNames: { onmyoji: 'Ember Mend' },
-    desc: 'Raise your hand and look away (it is SO bright): warm light pours down on you and the party around you, healing at once, then a little more every second for a while, and lifting everyone\'s attack and magic while it lasts. You would rather be setting things on fire.',
+    desc: 'Squat down and flick a little campfire into being. Toast a marshmallow. Its warmth heals you and the party around you at once, then a little more every second for a while, and lifts everyone\'s attack and magic while it lasts. Technically still setting things on fire.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
@@ -407,7 +408,7 @@ export const SKILLS = {
       const wish = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst, burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } });
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'mgheal', dur: 0.85, step: 0, strikes: [wish('mgheal')] }],
+        combo: [{ move: 'pmcamp', dur: 0.9, step: 0, strikes: [wish('pmcamp')] }],
         // The Starlight Idol hugs the mic and sings a ballad, hearts drifting down over everyone; the
         // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
         paths: {
@@ -420,9 +421,9 @@ export const SKILLS = {
   }),
 
   spiritward: skill({
-    id: 'spiritward', name: 'Magic Guard', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
+    id: 'spiritward', name: 'Scroll Shield', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
     pathNames: { onmyoji: 'Shadow Ward' },
-    desc: 'Cross your arms, crouch, and throw them open: a dome of crimson and gold hexagons snaps up over you and the party nearby, soaking up damage until it breaks.',
+    desc: 'Rummage in your satchel, yank out a fistful of scrolls and fling them up: they unroll into a whirling ring round you and the party nearby, soaking up damage until it breaks. You never read any of them.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
@@ -430,7 +431,7 @@ export const SKILLS = {
       const veil = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst, burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } });
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'mgguard', dur: 0.72, step: 0, strikes: [veil('mgguard')] }],
+        combo: [{ move: 'pmscroll', dur: 0.72, step: 0, strikes: [veil('pmscrolls')] }],
         // The Starlight Idol sweeps the mic out over the crowd and holds a harmony, rings of sound
         // settling over everyone; the Astronomer draws an orbit round herself with the staff and
         // silver moons take it up round the party.
@@ -588,18 +589,19 @@ export const SKILLS = {
   }),
 
   heavenslantern: skill({
-    id: 'heavenslantern', name: 'Meteor', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
+    id: 'heavenslantern', name: 'Big Bad Kaboom', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
     pathNames: { onmyoji: 'Abyssal Rain' },
-    desc: 'Finisher: needs a full Element Weave, and spends it. Flex the glove. Announce "CATACLYSM... OF THE CRIMSON STAR!" Raise both arms as the sky turns crimson round a great rune circle, and sweep them down: flaming meteors rain on every monster ahead, ending in one great impact. Then cackle.',
+    desc: 'Finisher: needs a full Mayhem (Meltdown), and spends it. Unhook all three vials off your belt and knock them back: fire, ice, lightning (hic). Throw your arms up and the sky rains all three on every monster ahead, then bring it down for one huge blast that sets off Steam, Shatter and Kaboom on everything at once. Stand in the smoke, cackling.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: k(500, 860), hits: 14, targets: 12,
-        combo: [{ move: 'mgmeteor', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.34, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mgcircle', burstAt: 0, burstDur: 1 },
-          { at: 0.68, rain: k(10, 14), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'mgrock', school: 'arcane', gauge: 0 },
-          { at: 0.88, magic: true, el: 'fire', pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'mgimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        combo: [{ move: 'pmkaboom', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.56, rain: k(4, 5), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmbomb', school: 'arcane', gauge: 0 },
+          { at: 0.62, rain: k(3, 5), magic: true, el: 'ice', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmshard', school: 'arcane', gauge: 0 },
+          { at: 0.68, rain: k(3, 4), magic: true, el: 'bolt', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmzap', school: 'arcane', gauge: 0 },
+          { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, burst: 'pmboom', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
         // The Starlight Idol's: she throws the mic up to the sky ("everybody!"), notes pour down on
         // them, and she leaps and belts the last note down into one great blast of sound. The
@@ -1060,7 +1062,7 @@ const MOVES_BY_SKILL = {
   bladerush: 'overhead', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
-  spiritbolt: 'mgfireball', spiritstep: 'mgteleport', spiritwave: 'mgchain', frostnova: 'mgnova', blessing: 'mgheal', spiritward: 'mgguard', heavenslantern: 'mgmeteor',
+  spiritbolt: 'pmbig', spiritstep: 'pmblink', spiritwave: 'pmwire', frostnova: 'pmflop', blessing: 'pmcamp', spiritward: 'pmscroll', heavenslantern: 'pmkaboom',
   grandblessing: 'clguide', idolcheer: 'clvalor', purification: 'clsanct', resurrection: 'clraise', thousandtorii: 'clmiracle',
   ofudabarrage: 'sograspd', seimanseal: 'somawcast', yokairally: 'sopact', troupecombo: 'soabyss',
   goldencarousel: 'bdcarousel',

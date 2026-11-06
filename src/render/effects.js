@@ -142,6 +142,22 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot: ground ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.85 : 1), alpha: (f.split ? 0.8 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'pmspark': case 'pmshard': case 'pmzap': case 'pmbomb': case 'pmspike': case 'pmstrike': case 'pmhuge': case 'pmwire': {
+      // The Mage's (the remake): a firecracker spark, a spiky snowball, a crackling zap ball, a
+      // grinning fireball that bounces along and rocks as it flies, ice spikes punching up along the
+      // floor, and a strike straight down from the sky (born small at the wand or staff, grown to
+      // full in its first moment).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const ground = f.shot === 'pmspike';
+      const bomb = f.shot === 'pmbomb' || f.shot === 'pmhuge';
+      const born = f.shot === 'pmstrike' ? 1 : bornAt(f);
+      const hop = f.shot === 'pmbomb' && f.dur > 0 ? -Math.abs(Math.sin(Math.max(0, f.t / f.dur) * Math.PI * 3)) * 14 * born : 0;
+      const size = { pmspark: 0.6, pmshard: 0.6, pmzap: 0.62, pmbomb: 0.7, pmspike: 0.62, pmstrike: 0.8, pmhuge: 0.7, pmwire: 0.7 }[f.shot];
+      const rot = ground ? 0 : bomb ? 0.15 * Math.sin(f.t * 20) : left ? a + Math.PI : a;
+      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y + hop, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'mgfire': case 'mgfireball': case 'mgice': case 'mgspike': case 'mgbolt': case 'mgsky': {
       // The Mage's: a fire bolt or a fireball streaming flame, a frost shard, ice spikes bursting up
       // out of the ground as the line races along it, a lightning bolt through the line, lightning
@@ -1047,7 +1063,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+const GROUND_FX = new Set(['pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {
