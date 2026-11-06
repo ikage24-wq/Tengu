@@ -431,7 +431,7 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
         // Extra falling pieces across the whole screen, not just on targets.
         for (let i = 0; i < 26; i++) {
           const u = (p * 1.6 + rand(i)) % 1;
-          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -1 : 0.3);
+          const px = rand(i * 3.7) * 640 + 120 * (1 - u) * (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'acarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -1 : 0.3);
           const py = -20 + u * 340;
           ctx.globalAlpha = a * 0.8;
           rainPiece(ctx, f.variant, px, py, 0.7, time + i, c);
@@ -443,12 +443,12 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
       const cy = y - (f.h ?? 24) / 2;
       if (p < hit) {
         const k = p / hit;
-        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -80 : 30) * (1 - k);
+        const px = x + (f.variant === 'arrow' || f.variant === 'windarrow' || f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet' ? -80 : 30) * (1 - k);
         const py = cy - 220 * (1 - k * k);
         rainPiece(ctx, f.variant, px, py, 1.4, time, c);
       } else {
         // A gold arrow's landing is the Archer's own hit burst (drawn with the hit).
-        if (f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
+        if (f.variant === 'hawkarrow' || f.variant === 'ptarrow' || f.variant === 'aebolt' || f.variant === 'moonstar' || f.variant === 'stmeteor' || f.variant === 'mgrock' || f.variant === 'pmbomb' || f.variant === 'pmshard' || f.variant === 'pmzap' || f.variant === 'qnorb' || f.variant === 'qncrown' || f.variant === 'qndecree' || f.variant === 'soslam' || f.variant === 'clspear' || f.variant === 'sinote' || f.variant === 'asplanet') return true;
         const k = (p - hit) / (1 - hit);
         ctx.globalAlpha = 1 - k;
         glow(ctx, x, cy, 28 * (1 - k) + 6, c.light, 1 - k);
@@ -777,7 +777,7 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
       // Abyssal Rain's: giant shadow hands reaching down out of her rift.
       fxSprite(ctx, 'celsoslam', x, y, { t: time, rot: 1.2, scale: 0.42 * s });
       break;
-    case 'pmbomb': case 'pmshard': case 'pmzap':
+    case 'pmbomb': case 'pmshard': case 'pmzap': case 'qnorb': case 'qncrown': case 'qndecree':
       // Big Bad Kaboom's: her grinning fireballs, snowballs and zap balls raining down.
       fxSprite(ctx, `cel${variant}`, x, y, { t: time, rot: 1.2, scale: 0.42 * s });
       break;

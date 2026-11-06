@@ -2606,14 +2606,47 @@ function astronomer(skills = false, weapon = 'staff_20') {
   return w;
 }
 
-for (const [key, weapon, first] of [['astro', 'staff_20', 'sofire'], ['astrowand', 'wand_20', 'sohand']]) {
-  test(`the Sorcerer casts her own shadow hands and flames with ${weapon.split('_')[0] === 'staff' ? 'the staff' : 'the wand'}, her own pool of moves, and they build Spellstorm (not Spirit)`, () => {
+// The Sorcerer's chain reactions (world/reactions.js): her reactions spread to the monsters beside
+// them, setting off the ones already marked with another element, like dominoes.
+test("the Sorcerer's reactions spread down a marked crowd like dominoes, and the chain fills Chaos", async () => {
+  const { elementHit, markOf, CHAIN_MAX } = await import('../src/world/reactions.js');
+  const w = astronomer();
+  w.mobs.forEach((m, i) => { m.x = w.body.x + 100 + i * 60; });
+  // Every monster carries ice; fire on the first sets it off, and it runs on down the line.
+  for (const m of w.mobs) elementHit(w, m, { el: 'ice', damage: 50 });
+  w.binding = 0;
+  w.now += 1;
+  assert.equal(elementHit(w, w.mobs[0], { el: 'fire', damage: 100 }), 'steam');
+  run(w, 2);
+  assert.equal(w.reactedKinds?.steam ?? 0, w.mobs.length, `the steam ran on through the whole crowd (${w.reactedKinds?.steam})`);
+  assert.ok(w.longestChain >= 2 && w.longestChain <= CHAIN_MAX, `a chain several links long (${w.longestChain})`);
+  assert.ok(w.binding > 20, `and the chain filled Chaos (${w.binding})`);
+  // An unmarked neighbour is only marked by the chain: it's primed for the next one.
+  const v = astronomer();
+  v.mobs.forEach((m, i) => { m.x = v.body.x + 100 + i * 60; });
+  elementHit(v, v.mobs[0], { el: 'ice', damage: 50 });
+  v.now += 1;
+  elementHit(v, v.mobs[0], { el: 'fire', damage: 100 });
+  run(v, 0.5);
+  assert.equal(markOf(v.mobs[1], v.now), 'fire', 'the monster beside it now carries fire');
+  // The Mage's own reactions never spread.
+  const m = starWitch();
+  m.mobs.forEach((o, i) => { o.x = m.body.x + 100 + i * 60; });
+  for (const o of m.mobs) elementHit(m, o, { el: 'ice', damage: 50 });
+  m.now += 1;
+  elementHit(m, m.mobs[0], { el: 'fire', damage: 100 });
+  run(m, 1);
+  assert.ok(!m.longestChain, "the Mage's reactions stay where they are");
+});
+
+for (const [key, weapon, first] of [['astro', 'staff_20', 'qngeyser'], ['astrowand', 'wand_20', 'qnorb']]) {
+  test(`the Sorcerer casts her own royal spells with ${weapon.split('_')[0] === 'staff' ? 'the staff' : 'the wand'}, her own pool of moves, and they build Chaos (not Mayhem)`, () => {
     const pool = PATH_VARIANTS[key];
     assert.equal(pool.length, PATH_COMBOS[key].length, 'one choice per combo step');
     pool.forEach((step, i) => {
       assert.equal(step[0], PATH_COMBOS[key][i], `step ${i + 1} opens with her own`);
       assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
-      for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('so'), `${v.move} is her own move`);
+      for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('qn'), `${v.move} is her own move`);
     });
     assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
     const w = astronomer(false, weapon);
@@ -2627,13 +2660,14 @@ for (const [key, weapon, first] of [['astro', 'staff_20', 'sofire'], ['astrowand
     }
     assert.deepEqual(seen.slice(0, 3), PATH_COMBOS[key].map((s) => s.move), 'her combo');
     assert.equal(shot, first, 'her own shot');
-    assert.ok(w.binding > 0, `her spells build Spellstorm (${w.binding})`);
-    assert.equal(w.spirit ?? 0, 0, 'and no Element Weave');
+    assert.ok(w.binding > 0, `her spells build Chaos (${w.binding})`);
+    assert.equal(w.spirit ?? 0, 0, 'and no Mayhem');
   });
 }
 
-test('Spellstorm builds faster while she keeps casting, a hit knocks part of it away, and full her spells cast twice', async () => {
+test('Chaos builds faster while she keeps casting, a hit knocks part of it away, and on Pandemonium her chains run longer', async () => {
   const { addBinding, STORM_HURT } = await import('../src/world/melee.js');
+  const { elementHit } = await import('../src/world/reactions.js');
   const quick = astronomer();
   quick.binding = 0;
   addBinding(quick, 10);
@@ -2650,44 +2684,43 @@ test('Spellstorm builds faster while she keeps casting, a hit knocks part of it 
   hit.invuln = 0;
   hurtPlayer(hit, 1, hit.body.x + 20);
   assert.ok(Math.abs(hit.binding - 80 * (1 - STORM_HURT)) < 1e-6, `a hit knocks part of it away (${hit.binding})`);
-  // Full: every spell comes twice, its echo a beat behind and weaker.
-  const count = (full) => {
+  // A long line of marked monsters: the chain stops at CHAIN_MAX, and runs further on Pandemonium.
+  const chain = (full) => {
     const w = astronomer();
+    const base = w.mobs[0];
+    w.mobs = Array.from({ length: 10 }, (_, i) => ({ ...base, uid: 900 + i, x: w.body.x + 80 + i * 70, hp: 1e9, elMark: null }));
+    for (const m of w.mobs) elementHit(w, m, { el: 'ice', damage: 50 });
+    w.now += 1;
     w.binding = full ? 100 : 0;
-    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-    let n = 0;
-    for (let i = 0; i < 30; i++) {
-      if (full) w.bindingAt = w.now;
-      if (full) w.binding = 100;
-      updateWorld(w, DT, hold);
-      for (const f of w.fx) if (f.kind === 'projectile' && !f.counted) {
-        f.counted = true;
-        n++;
-      }
+    elementHit(w, w.mobs[0], { el: 'fire', damage: 100 });
+    for (let i = 0; i < 60 * 3; i++) {
+      // (Held full, or held empty so the chain's own Chaos doesn't tip it over.)
+      w.binding = full ? 100 : 0;
+      w.bindingAt = w.now;
+      updateWorld(w, DT, idle);
     }
-    return n;
+    return w.longestChain ?? 0;
   };
-  const one = count(false);
-  const two = count(true);
-  assert.ok(one >= 1, `a spell (${one})`);
-  assert.equal(two, one * 2, `full Spellstorm casts it twice (${two} against ${one})`);
+  const calm = chain(false);
+  const wild = chain(true);
+  assert.ok(wild > calm, `Pandemonium chains run further (${wild} against ${calm})`);
 });
 
-test('Grasping Dark: shadow hands claw up out of the ground through every monster in the line', () => {
+test('Red Carpet: fire geysers burst up along the floor through every monster in the line', () => {
   const w = astronomer(true);
   w.mobs.forEach((m, i) => (m.x = w.body.x + 120 + i * 60));
   assert.ok(cast(w, 'ofudabarrage').ok);
-  assert.equal(w.pose.kind, 'sograspd');
+  assert.equal(w.pose.kind, 'qnsnap');
   let big = false;
   for (let i = 0; i < 120; i++) {
     updateWorld(w, DT, idle);
-    big ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'sograsp');
+    big ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'qngeyser');
   }
-  assert.ok(big, 'the hands race along the ground');
+  assert.ok(big, 'the geysers race along the ground');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'through the whole line');
 });
 
-test('Abyssal Maw drags the monsters round it in and claws them again and again, and is gone after a map change', async () => {
+test('Chaos Vortex drags the monsters round it in and hits them with each element in turn, and is gone after a map change', async () => {
   const { loadMap } = await import('../src/world/world.js');
   const w = astronomer(true);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [60, 220, 600][i] }));
@@ -2701,7 +2734,8 @@ test('Abyssal Maw drags the monsters round it in and claws them again and again,
     w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
   }
   assert.ok(w.well, 'the pit stays open');
-  assert.ok(w.fx.some((f) => f.kind === 'somaw'), 'her pit of hands');
+  assert.ok(w.fx.some((f) => f.kind === 'somaw' && f.well?.chaos), 'her whirl of the elements');
+  assert.ok(Object.keys(w.reactedKinds ?? {}).length >= 2, `what it holds keeps reacting (${JSON.stringify(w.reactedKinds)})`);
   assert.ok(Math.abs(w.mobs[1].x - w.well.x) < Math.abs(x0[1] - w.well.x), 'a monster at its edge is drawn in');
   assert.ok(hits[0] >= 3 && hits[1] >= 3, `crushed again and again (${hits})`);
   assert.equal(hits[2], 0, 'not one far off');
@@ -2710,40 +2744,42 @@ test('Abyssal Maw drags the monsters round it in and claws them again and again,
   assert.equal(w.well, null, 'gone with the map');
 });
 
-test('Hand of the Abyss needs a full Spellstorm, spends it, and crushes everything ahead (not behind)', () => {
+test('Grand Finale of Chaos needs Pandemonium, spends it, and sets off every reaction on everything ahead (not behind)', () => {
   const w = astronomer(true);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-140, 140, 380][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a full Spellstorm');
+  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a full Chaos');
   w.binding = 100;
   w.bindingAt = w.now;
   assert.ok(cast(w, 'troupecombo').ok);
   assert.equal(w.binding, 0, 'spends it');
-  assert.equal(w.pose.kind, 'soabyss');
+  assert.equal(w.pose.kind, 'qnfinale');
   let rift = false;
+  w.reactedKinds = {};
   for (let i = 0; i < 60 * 2.4; i++) {
     updateWorld(w, DT, idle);
-    rift ||= w.fx.some((f) => f.kind === 'sosummon');
+    rift ||= w.fx.some((f) => f.kind === 'qnthrone');
   }
-  assert.ok(rift, 'the rift tears open');
-  assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'the hand crushes everything ahead');
+  assert.ok(rift, 'her throne shimmers up');
+  assert.deepEqual(Object.keys(w.reactedKinds).sort(), ['kaboom', 'shatter', 'steam'], 'every reaction goes off');
+  assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'everything ahead goes up');
   assert.equal(w.mobs[0].hp, hp0[0], 'and not behind her');
 });
 
-test('Dark Pact: her magic hits harder and her Spellstorm builds faster while it lasts', async () => {
+test('Royal Decree: her magic hits harder and her Chaos fills faster while it lasts', async () => {
   const { addBinding } = await import('../src/world/melee.js');
   const plain = astronomer(true);
   plain.binding = 0;
   addBinding(plain, 10);
   const w = astronomer(true);
   assert.ok(cast(w, 'yokairally').ok);
-  assert.equal(w.pose.kind, 'sopact');
+  assert.equal(w.pose.kind, 'qnpact');
   run(w, 1.1);
-  assert.ok(w.char.buffs.yokairally, 'the pact is on her');
+  assert.ok(w.char.buffs.yokairally, 'the decree is in force');
   w.binding = 0;
   w.bindingAt = -9;
   addBinding(w, 10);
-  assert.ok(w.binding > plain.binding, `Spellstorm builds faster (${w.binding} against ${plain.binding})`);
+  assert.ok(w.binding > plain.binding, `Chaos fills faster (${w.binding} against ${plain.binding})`);
 });
 
 test('the Sorcerer plays every Mage skill her own way, under her own names', async () => {
@@ -2751,7 +2787,7 @@ test('the Sorcerer plays every Mage skill her own way, under her own names', asy
   const { SKILLS } = await import('../src/data/skills.js');
   for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
     const moves = pathMoves(SKILLS[id], 1, 'onmyoji');
-    assert.ok(moves.every((m) => m.startsWith('so') && MOVES[m]), `${id}: her own move (${moves})`);
+    assert.ok(moves.every((m) => m.startsWith('qn') && MOVES[m]), `${id}: her own move (${moves})`);
     assert.notEqual(pathName(SKILLS[id], 'onmyoji'), SKILLS[id].name, `${id}: her own name`);
   }
 });

@@ -8,8 +8,13 @@
 // Reactions build her gauge, Mayhem, far faster than plain hits do. Full (MELTDOWN), every spell
 // she lands reacts whatever mark it finds, and her finisher is ready. A reaction's own hits carry
 // no element, so they never set off another one.
+//
+// The Sorcerer (the chaos queen, her path) reacts the same way, and her reactions spread: each one
+// passes its element on to the monsters next to it (CHAIN_FAN of them, a beat apart), so a marked
+// crowd goes off like dominoes. Her gauge, Chaos (internally Binding), fills by how long the chains
+// run; full (PANDEMONIUM), they run longer and spread wider, and her finisher is ready.
 
-import { addSpirit, SPIRIT_MAX } from './melee.js';
+import { addSpirit, SPIRIT_MAX, addBinding, BINDING_MAX } from './melee.js';
 
 export const MARK_TIME = 4;
 // A monster that just reacted can't react again for this long (its next spell only marks it), so
@@ -27,14 +32,29 @@ export const SHATTER_STUN = 0.9;
 export const KABOOM_PCT = 0.8;
 export const KABOOM_JUMPS = 3;
 export const KABOOM_R = 170;
+// The Sorcerer's chains: how far a reaction reaches to pass its element on, to how many, how strong
+// (a share of the hit that set it off), a beat apart, and how long a chain can run (longer and wider
+// on Pandemonium). Each link builds Chaos more than the last.
+export const CHAIN_R = 150;
+export const CHAIN_FAN = 2;
+export const CHAIN_FAN_FULL = 3;
+export const CHAIN_PCT = 0.6;
+export const CHAIN_BEAT = 0.16;
+export const CHAIN_MAX = 4;
+export const CHAIN_MAX_FULL = 8;
+export const CHAOS_GAIN = 5;
+export const CHAOS_LINK = 0.6;
 
 const PAIRS = { 'fire+ice': 'steam', 'bolt+ice': 'shatter', 'bolt+fire': 'kaboom' };
 export const reactionOf = (a, b) => (a && b && a !== b ? PAIRS[[a, b].sort().join('+')] : null);
 // On MELTDOWN a spell with no other mark to meet reacts as if it found the element after its own.
 const NEXT = { fire: 'ice', ice: 'bolt', bolt: 'fire' };
 
-export const isMage = (world) => world.char.job === 'spiritmage';
-export const meltdown = (world) => isMage(world) && (world.spirit ?? 0) >= SPIRIT_MAX;
+export const isQueen = (world) => world.char.job === 'onmyoji';
+// Whose spells react: the Mage's and the Sorcerer's.
+export const isMage = (world) => world.char.job === 'spiritmage' || isQueen(world);
+export const meltdown = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
+export const pandemonium = (world) => isQueen(world) && (world.binding ?? 0) >= BINDING_MAX;
 export const markOf = (m, now) => (m.elMark && now - m.elMark.at < MARK_TIME ? m.elMark.el : null);
 
 // A hit of hers landing on monster m (world.js calls this as each queued hit lands).
@@ -106,5 +126,29 @@ export function react(world, m, kind, h) {
     world.juice.push({ type: 'shake', mag: 2.5, dur: 0.22 });
   }
   // (A finisher's hits, gauge 0, never refill it.)
-  if (h.gauge !== 0) addSpirit(world, REACT_GAIN, 'react');
+  if (isQueen(world)) {
+    if (h.gauge !== 0) addBinding(world, CHAOS_GAIN * (1 + CHAIN_LINK_GAIN(h.chain ?? 0)));
+    spread(world, m, h);
+  } else if (h.gauge !== 0) addSpirit(world, REACT_GAIN, 'react');
+}
+
+const CHAIN_LINK_GAIN = (depth) => depth * CHAOS_LINK;
+
+// The Sorcerer's reaction passes its element on to the monsters beside it, a beat later: one that
+// carries another mark reacts in turn (and passes it on again); one that carries none is marked.
+function spread(world, m, h) {
+  const depth = (h.chain ?? 0) + 1;
+  const full = pandemonium(world);
+  if (depth > (full ? CHAIN_MAX_FULL : CHAIN_MAX)) return;
+  const seen = h.seen ?? new Set();
+  seen.add(m);
+  const el = h.el ?? 'fire';
+  const next = nearby(world, m, CHAIN_R, seen).slice(0, full ? CHAIN_FAN_FULL : CHAIN_FAN);
+  for (const [i, o] of next.entries()) {
+    seen.add(o);
+    const at = world.now + CHAIN_BEAT * (1 + i * 0.4);
+    world.fx.push({ kind: 'rxchain', el, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, tx: o.x, ty: o.y - (o.air ?? 0) - o.def.h / 2, t: -(at - world.now) + 0.1, dur: 0.3 });
+    (world.later ??= []).push({ at, run: () => { if (o.hp > 0) elementHit(world, o, { el, damage: Math.max(1, Math.round(h.damage * CHAIN_PCT)), chain: depth, seen, gauge: h.gauge }); } });
+  }
+  world.longestChain = Math.max(world.longestChain ?? 0, depth);
 }

@@ -312,6 +312,36 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.75 }) || true;
     case 'rxkaboom':
       return f.t < 0 || fxSprite(ctx, 'celrxkaboom', x, y + 4, { p, scale: f.small ? 0.55 : 0.85 }) || true;
+    case 'rxchain': {
+      // The Sorcerer's chain: a crackle of the element leaping from one monster to the next.
+      if (f.t < 0) return true;
+      const col = { fire: ['#9a2a3a', '#ffb43c'], ice: ['#2a4a8a', '#9ae2ff'], bolt: ['#7a4a2a', '#ffe04a'] }[f.el] ?? ['#3a2457', '#ffd36a'];
+      const tx = f.tx - cam.x;
+      const ty = f.ty - cam.y;
+      const n = 7;
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, (1 - p) * 3);
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const u = i / n;
+        const j = i && i < n ? Math.sin(i * 7.3 + Math.floor(f.t * 30)) * 6 : 0;
+        const px = x + (tx - x) * u;
+        const py = y + (ty - y) * u - Math.sin(u * Math.PI) * 26 + j;
+        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+      }
+      ctx.strokeStyle = col[0];
+      ctx.lineWidth = 4.5;
+      ctx.stroke();
+      ctx.strokeStyle = col[1];
+      ctx.lineWidth = 2.6;
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
     case 'rxjump': {
       if (f.t < 0) return true;
       const tx = f.tx - cam.x;
@@ -344,6 +374,25 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // The Mage's skills (the remake): Blink Bang's pop and smoke, Frost Flop's ice bursting up both
     // ways along the floor, Campfire Break's campfire (in front of her, on the floor), Scroll
     // Shield's whirling scrolls (round her middle, under her face), Big Bad Kaboom's blast.
+    // The Sorcerer's skills (the remake): Grand Entrance's confetti, Cold Shoulder's crowns of ice
+    // along the floor, Royal Pardon's gold light, Royal Guard's crown fence, the Royal Decree's
+    // seal, the Grand Finale's throne (behind her) and its blast.
+    case 'qnconfetti':
+      return fxSprite(ctx, 'celqnconfetti', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'qnnovafx':
+      return fxSprite(ctx, 'celqnnovafx', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'qnpardon':
+      return fxSprite(ctx, 'celqnpardon', x, y + 4, { p, scale: 0.7 }) || true;
+    case 'qnguard':
+      return fxSprite(ctx, 'celqnguard', x, y + 4, { p, scale: 0.7 }) || true;
+    case 'qnstamp':
+      return fxSprite(ctx, 'celqnstamp', x + dir * 26, y + 4, { p, scale: 0.5 }) || true;
+    case 'qnthrone': {
+      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 4);
+      return fade <= 0 || fxSprite(ctx, 'celqnthrone', x - dir * 2, y + 4, { t: f.t, scale: 0.5, alpha: fade, flip: dir < 0 }) || true;
+    }
+    case 'qnfinalefx':
+      return f.t < 0 || fxSprite(ctx, 'celqnfinalefx', x + dir * 120, y + 4, { p, scale: 0.75 }) || true;
     case 'pmpop':
       return fxSprite(ctx, 'celpmpop', x, y + 4, { p, scale: 0.6 }) || true;
     case 'pmnovafx':
@@ -413,11 +462,16 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'somaw': {
       const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
       if (fade <= 0) return true;
+      // (The Sorcerer's Chaos Vortex: her whirl of all three elements.)
+      if (f.well?.chaos) return fxSprite(ctx, 'celqnvortex', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 118, alpha: fade }) || true;
       return fxSprite(ctx, 'celsomaw', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 110 * 0.55, alpha: fade }) || true;
     }
     case 'sohit':
       // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
       return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
+    case 'qnhitfire': case 'qnhitice': case 'qnhitbolt':
+      // The Sorcerer's hits (the remake): her element's pop with a gold crown flashing over it.
+      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.46, rot: (seed - 0.5) * 0.4 }) || true;
     case 'pmhitfire': case 'pmhitice': case 'pmhitbolt':
       // The Mage's hits (the remake): a pop of her element with sparkles flying off.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.5 }) || true;

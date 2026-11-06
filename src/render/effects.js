@@ -142,6 +142,20 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot: ground ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.85 : 1), alpha: (f.split ? 0.8 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'qnorb': case 'qncrown': case 'qndecree': case 'qngeyser': case 'qnwall': case 'qnstrike': {
+      // The Sorcerer's (the remake): a royal fire orb rolling slow and huge, a spinning ice crown,
+      // a lightning scepter, fire geysers and a wall of ice racing along the floor, a crown of
+      // lightning straight down from the sky (born small at the wand or staff, grown to full in its
+      // first moment).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const ground = f.shot === 'qngeyser' || f.shot === 'qnwall';
+      const born = f.shot === 'qnstrike' ? 1 : bornAt(f);
+      const size = { qnorb: 0.7, qncrown: 0.62, qndecree: 0.7, qngeyser: 0.62, qnwall: 0.62, qnstrike: 0.85 }[f.shot];
+      const rot = ground || f.shot === 'qnorb' || f.shot === 'qncrown' ? 0 : left ? a + Math.PI : a;
+      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'pmspark': case 'pmshard': case 'pmzap': case 'pmbomb': case 'pmspike': case 'pmstrike': case 'pmhuge': case 'pmwire': {
       // The Mage's (the remake): a firecracker spark, a spiky snowball, a crackling zap ball, a
       // grinning fireball that bounces along and rocks as it flies, ice spikes punching up along the
@@ -1063,7 +1077,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+const GROUND_FX = new Set(['qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

@@ -2688,8 +2688,6 @@ function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) 
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   // Capsule-machine looks carry living effects (render/gacha.js), drawn round the body.
   const worn = outfitFx(gear);
-  // The Sorcerer's spellbook floats behind her whatever she is doing.
-  if (state.job === 'onmyoji') drawSpellbook(ctx, x, y, (state.time ?? 0) + (state.seed ?? 0) * 1.37, state.scale ?? 1, state.facing ?? 1, anim);
   const job = settings.jobAuras && AURA_JOBS.has(state.job) ? state.job : null;
   if (!job) {
     if (worn) drawOutfitFx(ctx, worn, 'back', x, y, state);
@@ -2713,54 +2711,6 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   drawHeroBody(ctx, look, gear, x, y, state, anim);
   if (worn) drawOutfitFx(ctx, worn, 'front', x, y, state);
   drawJobAura(ctx, job, 'front', x, y, t, s, k);
-}
-
-// The Sorcerer's spellbook (docs/design/mage-line.md): it floats open behind her back shoulder,
-// bobbing, a page turning over now and then, ember runes drifting up off it and fading. Drawn
-// behind her, so it never covers her face; it eases across when she turns round.
-function drawSpellbook(ctx, x, y, t, s, dir, anim) {
-  let side = -dir;
-  if (anim) {
-    const dt = Math.max(0, Math.min(0.1, t - (anim.bookT ?? t)));
-    anim.bookT = t;
-    anim.bookSide = (anim.bookSide ?? side) + (side - (anim.bookSide ?? side)) * Math.min(1, dt * 6);
-    side = anim.bookSide;
-  }
-  const bx = x + side * 15 * s;
-  const by = y - 36 * s + Math.sin(t * 1.8) * 1.6 * s;
-  ctx.save();
-  ctx.translate(bx, by);
-  ctx.rotate(Math.sin(t * 1.1) * 0.08);
-  ctx.scale(s, s);
-  const quad = (pts, c) => { ctx.fillStyle = c; ctx.beginPath(); pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py))); ctx.closePath(); ctx.fill(); };
-  // A faint ember glow under it.
-  ctx.fillStyle = 'rgba(255,138,58,0.18)';
-  ctx.beginPath(); ctx.ellipse(0, 1, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
-  // The violet leather cover, opened in a shallow V, and the pages on it.
-  quad([[-8.6, -3.4], [0, -1.4], [8.6, -3.4], [8.6, 3.4], [0, 5.4], [-8.6, 3.4]], '#24153a');
-  for (const sd of [-1, 1]) {
-    quad([[0, -1], [sd * 7.8, -3.4], [sd * 7.8, 2.6], [0, 4.6]], sd < 0 ? '#efe2c8' : '#e2d2b4');
-    ctx.fillStyle = 'rgba(184,80,30,0.55)';
-    for (let i = 0; i < 3; i++) ctx.fillRect(sd < 0 ? -6.6 : 1.4, -1.6 + i * 1.6, 5.2, 0.5);
-  }
-  // Now and then a page lifts and swings across.
-  const turn = (t * 0.25) % 1;
-  if (turn < 0.2) {
-    const w = Math.cos((turn / 0.2) * Math.PI) * 7.8;
-    const lift = (7.8 - Math.abs(w)) * 0.4;
-    quad([[0, -1], [w, -3.4 - lift], [w, 2.6 - lift], [0, 4.6]], '#f6ecd6');
-  }
-  // The ember rune clasp at the spine.
-  quad([[0, 3.6], [1, 5], [0, 6.4], [-1, 5]], '#ff8a3a');
-  // Runes drifting up off the pages and fading.
-  for (let i = 0; i < 3; i++) {
-    const p = (t * 0.45 + i / 3) % 1;
-    const rx = Math.sin(i * 2.3 + t * 0.7) * 4;
-    const ry = -2 - p * 12;
-    ctx.globalAlpha = Math.sin(p * Math.PI) * 0.9;
-    quad([[rx, ry - 1.2], [rx + 0.8, ry], [rx, ry + 1.2], [rx - 0.8, ry]], i % 2 ? '#ffd27a' : '#ff8a3a');
-  }
-  ctx.restore();
 }
 
 // Eases from one move's pose (`a`) into another's (`b`) by `w` (0-1, eased here): angles take the
@@ -3003,9 +2953,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The Cleric (docs/design/mage-line.md) wears the mage robes as white and gold vestments, and a
   // veil, circlet and halo in place of the pointed hat (render/jobgear/cleric.js); plain pieces only.
   if (state.job === 'shrinemaiden') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'cleric', pal: { ...gearPalette('mage', g[s].tier, '#fbf4e4', '#8fd8ff'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
-  // The Sorcerer (docs/design/mage-line.md) wears the mage robes in deep violet with ember trim, and
-  // a deep hood in place of the pointed hat (render/jobgear/sorcerer.js); plain pieces only.
-  if (state.job === 'onmyoji') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'sorcerer', pal: { ...gearPalette('mage', g[s].tier, '#3b2457', '#ff8a3a'), trim: '#ff8a3a', trimDark: '#b8501e', trimLight: '#ffd27a' } };
+  // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen keeps the Mage's battle coat
+  // and gauntlet, with a crooked crown of lightning points and a royal ermine mantle
+  // (render/jobgear/chaosqueen.js); plain pieces only.
+  if (state.job === 'onmyoji') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'chaosqueen', pal: { ...gearPalette('mage', g[s].tier, '#5a2a8a', '#ffd36a'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
+  if (state.job === 'onmyoji') g.edgeGlove = true;
   const trim = PATH_TRIMS[state.job];
   if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
   // The body acts out the mood: the expression, or worn out at low health.

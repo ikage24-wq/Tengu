@@ -6418,6 +6418,443 @@
     };
   })();
 
+  // ---------- The Sorcerer's shots (the remake: the chaos queen) ----------
+  // Her shapes are the Mage's elements made royal and huge: every spell wears her gold, a crown or a
+  // star of gold set in it, and moves slow and heavy. A great fire orb ringed by a gold crown band,
+  // a spinning crown of ice, a lightning scepter (a bolt with a gold star head), a geyser of fire
+  // bursting up out of the floor along the line, a sweeping wall of ice crystals, a crown of
+  // lightning crashing down from the sky. Her hits: the element's pop with a little gold crown.
+  const QGOLD = ['#ffffff', '#fff0b0', '#ffd36a', '#c8902e', '#6a3a2a'];
+  const QVIO = ['#ffffff', '#e8d8ff', '#a87ae0', '#6a3aa8', '#2a1a4a'];
+  // A little gold crown (five points) at (x, y), r across.
+  function crownMark(ctx, x, y, r, rot = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const P = [[-r, r * 0.45], [r, r * 0.45], [r, -r * 0.5], [r * 0.5, 0], [0, -r * 0.8], [-r * 0.5, 0], [-r, -r * 0.5]];
+    inked(ctx, P, QGOLD[2], QGOLD[4], 2.5);
+    fill(ctx, [[-r * 0.8, r * 0.3], [r * 0.8, r * 0.3], [r * 0.8, r * 0.1], [-r * 0.8, r * 0.1]], QGOLD[1]);
+    ctx.beginPath();
+    ctx.arc(0, r * 0.05, r * 0.2, 0, TAU);
+    ctx.fillStyle = QVIO[2];
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Royal fire orb (wand fire, loops toward +x): a big slow swirling fireball, a gold crown band
+  // round its middle, violet-tipped flames streaming behind.
+  E.qnorb = grown((() => {
+    const cx = 170;
+    const cy = 80;
+    return {
+      w: 240, h: 160, n: 6, fps: 18, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 5; k++) {
+          ctx.save();
+          ctx.translate(cx - 18, cy + (k - 2) * 9);
+          ctx.rotate(-Math.PI / 2 - 0.12 * (k - 2));
+          tongue(ctx, k % 2 ? QVIO : MFIRE, 0, 0, 13 - Math.abs(k - 2) * 2, 70 + 10 * Math.sin(ph + k * 1.7), 6 * Math.sin(ph * 2 + k));
+          ctx.restore();
+        }
+        blob(ctx, MFIRE, cx, cy, 32, 0.07, ph);
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, 0.32);
+        celRing(ctx, QGOLD, 0, 0, 40, 9, { seed: 1100 });
+        ctx.restore();
+        crownMark(ctx, cx, cy - 38, 12, 0.1 * Math.sin(ph));
+        const R = rng(1101 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, k % 2 ? QGOLD : MFIRE, cx - 70 - R() * 80, cy + (R() - 0.5) * 70, 5 + R() * 4, k);
+      },
+    };
+  })(), 1.6);
+
+  // Ice crown (wand ice, loops toward +x): a spinning crown of ice shards set on a gold band,
+  // frost glinting off behind.
+  E.qncrown = grown((() => {
+    const cx = 130;
+    const cy = 70;
+    return {
+      w: 200, h: 140, n: 6, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const spin = (i / 6) * TAU;
+        ctx.save();
+        ctx.translate(cx, cy + 14);
+        ctx.scale(1, 0.3);
+        celRing(ctx, QGOLD, 0, 0, 34, 10, { seed: 1110 });
+        ctx.restore();
+        for (let k = 0; k < 6; k++) {
+          const a = spin + (k / 6) * TAU;
+          const front = Math.sin(a);
+          const x = cx + Math.cos(a) * 32;
+          const h = 34 + (k % 2 ? 0 : 14);
+          if (front < 0) iceShard(ctx, x, cy + 12 - h * 0.4, -Math.PI / 2, h, 8);
+        }
+        for (let k = 0; k < 6; k++) {
+          const a = spin + (k / 6) * TAU;
+          const front = Math.sin(a);
+          const x = cx + Math.cos(a) * 32;
+          const h = 34 + (k % 2 ? 0 : 14);
+          if (front >= 0) iceShard(ctx, x, cy + 16 - h * 0.4, -Math.PI / 2, h, 9);
+        }
+        const R = rng(1111 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, MICE, cx - 50 - R() * 60, cy + (R() - 0.5) * 50, 4 + R() * 3, k);
+      },
+    };
+  })(), 1.5);
+
+  // Lightning scepter (wand lightning, loops toward +x): a fat bolt with a gold star head and a
+  // violet crackle wrapped round it.
+  E.qndecree = grown((() => {
+    const cx = 330;
+    const cy = 70;
+    return {
+      w: 360, h: 140, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, QVIO, cx - 310, cy + 6, cx - 10, cy, 5, 1120 + i, 1);
+        zap(ctx, MBOLT, cx - 320, cy, cx, cy, 13, 1130 + i, 2);
+        starburst(ctx, QGOLD, cx, cy, 30, 10, 1140 + i, { inner: 0.4, rot: i * 0.3 });
+        crownMark(ctx, cx, cy, 10);
+      },
+    };
+  })(), 1.5);
+
+  // Fire geyser (staff fire, loops; races along the ground toward +x): fountains of fire bursting
+  // up out of the floor one after another, crowned with gold sparks.
+  E.qngeyser = grown((() => {
+    const cx = 200;
+    const gy = 200;
+    return {
+      w: 240, h: 220, n: 6, fps: 20, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        for (let k = 2; k >= 0; k--) {
+          const age = ((i / 6) + k * 0.34) % 1;
+          const h = 160 * Math.sin(Math.PI * Math.min(1, age * 1.15 + 0.1));
+          if (h < 12) continue;
+          const x = cx - k * 60;
+          for (let j = 0; j < 3; j++) {
+            ctx.save();
+            ctx.translate(x + (j - 1) * 12, gy);
+            tongue(ctx, j === 1 ? MFIRE : QVIO, 0, 0, 16 - Math.abs(j - 1) * 4, h * (1 - Math.abs(j - 1) * 0.3), 8 * Math.sin(i + k + j));
+            ctx.restore();
+          }
+          sparkle(ctx, QGOLD, x, gy - h - 6, 7, k + i);
+        }
+      },
+    };
+  })(), 1.5);
+
+  // Ice wall (staff ice, loops; races along the ground toward +x): a sweeping wall of tall ice
+  // crystals rising in a wave, gold-tipped.
+  E.qnwall = grown((() => {
+    const cx = 210;
+    const gy = 170;
+    return {
+      w: 250, h: 190, n: 6, fps: 22, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        for (let k = 5; k >= 0; k--) {
+          const age = ((i / 6) + k * 0.16) % 1;
+          const h = 130 * Math.sin(Math.PI * Math.min(1, age * 1.1 + 0.05)) * (1 - k * 0.06);
+          if (h < 10) continue;
+          const x = cx - k * 30;
+          iceShard(ctx, x, gy - h * 0.45, -Math.PI / 2 + 0.25, h, 12 + h * 0.05);
+          if (h > 90) sparkle(ctx, QGOLD, x + 12, gy - h * 0.9, 5, k);
+        }
+        const R = rng(1150 + i);
+        for (let k = 0; k < 4; k++) puff(ctx, STEAMP, cx + 10 - R() * 180, gy - 4, 8 + R() * 6, 1151 + k, { lobes: 3 });
+      },
+    };
+  })(), 1.5);
+
+  // Crown of lightning (staff lightning from the sky; drawn toward +x, turned down in the game):
+  // a huge forked strike with a ring of gold crown points round its head.
+  E.qnstrike = grown((() => {
+    const cx = 300;
+    const cy = 80;
+    return {
+      w: 340, h: 160, n: 4, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 290, cy, cx, cy, 22, 1160 + i, 3);
+        zap(ctx, QVIO, cx - 280, cy + 10, cx - 10, cy, 6, 1170 + i, 1);
+        starburst(ctx, QGOLD, cx, cy, 40, 10, 1180 + i, { inner: 0.4, rot: i * 0.4 });
+        for (let k = 0; k < 5; k++) { const a = (k / 5) * TAU + i * 0.3; crownMark(ctx, cx + Math.cos(a) * 46, cy + Math.sin(a) * 46, 8, a + Math.PI / 2); }
+      },
+    };
+  })(), 1.5);
+
+  // Her hit mark: the element's pop, a gold crown flashing over it, gold and violet sparkles.
+  const qnHit = (kind) => grown((() => {
+    const c = 110;
+    const pal = kind === 'fire' ? MFIRE : kind === 'ice' ? MICE : MBOLT;
+    return {
+      w: 220, h: 220, n: 6, fps: 26, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, pal, c, c, 34 + i * 18, kind === 'ice' ? 6 : 10, 1190, { inner: 0.4, rot: i * 0.3 });
+        if (i >= 1 && i <= 4) crownMark(ctx, c, c - 30 - i * 8, 16 - i * 2);
+        const R = rng(1195 + i);
+        for (let j = 0; j < 6; j++) { const a = R() * TAU; const d = 36 + i * 14; sparkle(ctx, j % 2 ? QGOLD : QVIO, c + Math.cos(a) * d, c + Math.sin(a) * d, 8 - i, j); }
+      },
+    };
+  })(), 1.3);
+  E.qnhitfire = qnHit('fire');
+  E.qnhitice = qnHit('ice');
+  E.qnhitbolt = qnHit('bolt');
+
+  // ---------- The Sorcerer's skills (the remake: the chaos queen) ----------
+  // Royal Inferno's crowned fireball, far grander; Grand Entrance's burst of confetti and gold; Cold
+  // Shoulder's crowns of ice bursting up all round her; Royal Pardon's gold light and a seal; Royal
+  // Guard's ring of gold crown points; the Chaos Vortex (a whirl of all three elements on the
+  // floor); the Royal Decree's wax seal stamped down; the Grand Finale's throne and its blast.
+  E.qnhuge = grown(E.qnorb, 1.7);
+
+  // Grand Entrance: a pop of gold, a shower of violet and gold confetti, sparkles.
+  E.qnconfetti = (() => {
+    const c = 160;
+    const gy = 260;
+    const CONF = [QGOLD, QVIO, MFIRE, MICE];
+    return {
+      w: 320, h: 300, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 90;
+        if (i <= 2) starburst(ctx, QGOLD, c, cy, 50 + i * 26, 12, 1200, { inner: 0.32, rot: i * 0.3 });
+        const R = rng(1201);
+        for (let j = 0; j < 22; j++) {
+          const a = R() * TAU;
+          const v = 40 + R() * 80;
+          const x = c + Math.cos(a) * v * (0.3 + i * 0.16);
+          const y = cy + Math.sin(a) * v * (0.3 + i * 0.12) + i * i * 2.2;
+          const pal = CONF[j % 4];
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(R() * TAU + i * (j % 2 ? 0.6 : -0.6));
+          inked(ctx, [[-5, -3], [5, -3], [5, 3], [-5, 3]], pal[2], pal[4], 1.5);
+          ctx.restore();
+        }
+        const S = rng(1210 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, QGOLD, c + (S() - 0.5) * 220, cy + (S() - 0.5) * 160, 8 - i * 0.6, j);
+      },
+    };
+  })();
+
+  // Cold Shoulder (on the floor): ice crowns bursting up out of the floor in a ring racing out both
+  // ways from her, gold bands at their feet, frost puffs.
+  E.qnnovafx = (() => {
+    const c = 330;
+    const gy = 220;
+    return {
+      w: 660, h: 260, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const reach = 60 + Math.min(i, 4) * 60;
+        for (const s of [-1, 1]) for (let k = 0; k < 4; k++) {
+          const x = c + s * (50 + k * (reach / 4));
+          const age = i - k * 0.6;
+          if (age < 0) continue;
+          const h = 80 * Math.sin(Math.PI * Math.min(1, age / 5 + 0.15));
+          if (h < 8) continue;
+          ctx.save();
+          ctx.translate(x, gy - 4);
+          ctx.scale(1, 0.3);
+          celRing(ctx, QGOLD, 0, 0, 22, 7, { seed: 1220 + k });
+          ctx.restore();
+          for (const dx of [-14, 0, 14]) iceShard(ctx, x + dx, gy - h * (dx ? 0.36 : 0.45), -Math.PI / 2, h * (dx ? 0.75 : 1), 8);
+        }
+        if (i <= 3) for (let j = 0; j < 4; j++) puff(ctx, STEAMP, c + (j - 1.5) * 50, gy - 14, 22 - i * 3, 1230 + j, { lobes: 4 });
+        const R = rng(1240 + i);
+        for (let j = 0; j < 8; j++) sparkle(ctx, j % 2 ? QGOLD : MICE, c + (R() - 0.5) * reach * 2.2, gy - 30 - R() * 110, 8 - i * 0.7, j);
+      },
+    };
+  })();
+
+  // Royal Pardon: a column of warm gold light pouring down, a gold wax seal stamped in it, little
+  // crowns and sparkles drifting.
+  E.qnpardon = (() => {
+    const c = 150;
+    const gy = 300;
+    return {
+      w: 300, h: 330, n: 10, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3) * (i >= 8 ? 1 - (i - 7) * 0.3 : 1);
+        ctx.save();
+        ctx.globalAlpha = 0.85 * k;
+        inked(ctx, [[c - 40 * k, gy], [c + 40 * k, gy], [c + 26 * k, 20], [c - 26 * k, 20]], QGOLD[1], QGOLD[3], 3);
+        fill(ctx, [[c - 18 * k, gy], [c + 18 * k, gy], [c + 10 * k, 20], [c - 10 * k, 20]], QGOLD[0]);
+        ctx.restore();
+        if (i >= 2 && i <= 7) {
+          const y = gy - 120;
+          blob(ctx, ['#ffffff', '#ff9aa8', '#e0506a', '#a82a44', '#5a1a2a'], c, y, 24, 0.08, i);
+          crownMark(ctx, c, y, 12);
+        }
+        const R = rng(1250);
+        for (let j = 0; j < 8; j++) {
+          const u = ((i / 10) + R()) % 1;
+          const x = c + (R() - 0.5) * 160;
+          const y = gy - 40 - u * 230;
+          if (j % 3 === 0) crownMark(ctx, x, y, 7 * (1 - u * 0.5));
+          else sparkle(ctx, QGOLD, x, y, 7 * (1 - u * 0.5), j);
+        }
+      },
+    };
+  })();
+
+  // Royal Guard: a ring of tall gold crown points rising round her like a fence, a violet sheen
+  // between them, gleaming, then sinking back.
+  E.qnguard = (() => {
+    const c = 220;
+    const gy = 280;
+    return {
+      w: 440, h: 300, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = Math.min(1, (i + 1) / 3) * (i >= 7 ? 1 - (i - 6) * 0.3 : 1);
+        ctx.save();
+        ctx.translate(c, gy - 10);
+        ctx.scale(1, 0.32);
+        celRing(ctx, QGOLD, 0, 0, 140, 12, { seed: 1260, broken: i >= 7 ? 0.5 : 0 });
+        ctx.restore();
+        for (let k = 0; k < 10; k++) {
+          const a = (k / 10) * TAU;
+          const front = Math.sin(a) > 0;
+          if (front) continue;
+          const x = c + Math.cos(a) * 140;
+          const y = gy - 10 + Math.sin(a) * 45;
+          const h = (k % 2 ? 60 : 90) * rise;
+          inked(ctx, [[x - 9, y], [x + 9, y], [x, y - h]], QGOLD[2], QGOLD[4], 2.5);
+          fill(ctx, [[x - 3, y - 2], [x + 2, y - 2], [x, y - h * 0.8]], QGOLD[1]);
+        }
+        for (let k = 0; k < 10; k++) {
+          const a = (k / 10) * TAU;
+          if (Math.sin(a) <= 0) continue;
+          const x = c + Math.cos(a) * 140;
+          const y = gy - 10 + Math.sin(a) * 45;
+          const h = (k % 2 ? 40 : 60) * rise;
+          inked(ctx, [[x - 9, y], [x + 9, y], [x, y - h]], QGOLD[2], QGOLD[4], 2.5);
+          fill(ctx, [[x - 3, y - 2], [x + 2, y - 2], [x, y - h * 0.8]], QGOLD[1]);
+        }
+        const R = rng(1270 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, j % 2 ? QGOLD : QVIO, c + (R() - 0.5) * 300, gy - 40 - R() * 120, 7, j);
+      },
+    };
+  })();
+
+  // Chaos Vortex (loops, on the floor): a whirlpool of all three of her elements turning on the
+  // floor, fire, ice and lightning chasing each other round a violet heart, a gold crown ring at its
+  // rim.
+  E.qnvortex = (() => {
+    const c = 200;
+    const gy = 120;
+    return {
+      w: 400, h: 200, n: 8, fps: 14, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 8) * TAU;
+        ctx.save();
+        ctx.translate(c, gy);
+        ctx.scale(1, 0.34);
+        celRing(ctx, QGOLD, 0, 0, 170, 12, { seed: 1280 });
+        celRing(ctx, QVIO, 0, 0, 130, 40, { seed: 1281 });
+        for (let k = 0; k < 9; k++) {
+          const a = ph + (k / 9) * TAU;
+          const r = 60 + (k % 3) * 30;
+          const pal = [MFIRE, MICE, MBOLT][k % 3];
+          blob(ctx, pal, Math.cos(a) * r, Math.sin(a) * r, 16, 0.14, ph + k);
+        }
+        blob(ctx, QVIO, 0, 0, 40, 0.1, ph);
+        ctx.restore();
+        const R = rng(1290 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, [MFIRE, MICE, MBOLT][j % 3], c + (R() - 0.5) * 320, gy - 10 - R() * 70, 7, j);
+      },
+    };
+  })();
+
+  // The Royal Decree: a scroll unrolls and a big gold wax seal stamps down on it with a crown.
+  E.qnstamp = (() => {
+    const c = 160;
+    const gy = 280;
+    const PAPER = ['#ffffff', '#fffaf0', '#f4e6cc', '#d8c3a0', '#8a6a5a'];
+    return {
+      w: 320, h: 300, n: 9, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 130;
+        const open = Math.min(1, (i + 1) / 3) * (i >= 7 ? 1 - (i - 6) * 0.35 : 1);
+        const hh = 70 * open;
+        inked(ctx, [[c - 60, cy - hh], [c + 60, cy - hh], [c + 60, cy + hh], [c - 60, cy + hh]], PAPER[2], PAPER[4], 3);
+        for (let k = 0; k < 4; k++) fill(ctx, [[c - 44, cy - hh * 0.7 + k * hh * 0.32], [c + 44, cy - hh * 0.7 + k * hh * 0.32], [c + 44, cy - hh * 0.62 + k * hh * 0.32], [c - 44, cy - hh * 0.62 + k * hh * 0.32]], PAPER[3]);
+        for (const y of [cy - hh, cy + hh]) {
+          ctx.beginPath();
+          ctx.ellipse(c, y, 66, 9, 0, 0, TAU);
+          ctx.fillStyle = PAPER[3];
+          ctx.fill();
+          ctx.strokeStyle = PAPER[4];
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+        }
+        if (i >= 3 && i <= 7) {
+          const drop = i === 3 ? -30 : 0;
+          blob(ctx, QVIO, c, cy + 20 + drop, 26, 0.1, i);
+          crownMark(ctx, c, cy + 18 + drop, 14);
+          if (i === 4) starburst(ctx, QGOLD, c, cy + 20, 60, 10, 1300, { inner: 0.4 });
+        }
+        const R = rng(1305 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, QGOLD, c + (R() - 0.5) * 220, cy + (R() - 0.5) * 180, 7, j);
+      },
+    };
+  })();
+
+  // The Grand Finale's throne: a floating gold throne with violet cushions, her crown on its back,
+  // shimmering into being (held while she sits, then fading).
+  E.qnthrone = (() => {
+    const c = 120;
+    const gy = 250;
+    return {
+      w: 240, h: 280, n: 6, fps: 10, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const bob = Math.sin((i / 6) * TAU) * 3;
+        const y = gy - 40 + bob;
+        inked(ctx, [[c - 40, y - 150], [c + 40, y - 150], [c + 48, y - 20], [c - 48, y - 20]], QGOLD[2], QGOLD[4], 3);
+        fill(ctx, [[c - 30, y - 140], [c + 30, y - 140], [c + 36, y - 30], [c - 36, y - 30]], QVIO[3]);
+        fill(ctx, [[c - 26, y - 134], [c + 4, y - 134], [c + 8, y - 40], [c - 30, y - 40]], QVIO[2]);
+        crownMark(ctx, c, y - 162, 22);
+        inked(ctx, [[c - 60, y - 30], [c + 60, y - 30], [c + 54, y], [c - 54, y]], QGOLD[2], QGOLD[4], 3);
+        fill(ctx, [[c - 52, y - 28], [c + 52, y - 28], [c + 48, y - 18], [c - 48, y - 18]], QVIO[1]);
+        for (const s of [-1, 1]) inked(ctx, [[c + s * 50, y], [c + s * 56, y], [c + s * 60, y + 30], [c + s * 46, y + 30]], QGOLD[3], QGOLD[4], 2);
+        const R = rng(1310 + i);
+        for (let j = 0; j < 4; j++) sparkle(ctx, QGOLD, c + (R() - 0.5) * 180, y - 60 - R() * 120, 6, j);
+      },
+    };
+  })();
+
+  // The Grand Finale's blast: the whole stretch ahead going up in all three of her elements at once,
+  // with gold crowns flying: a dome of fire, crowns of ice, scepters of lightning, then gold smoke.
+  E.qnfinalefx = (() => {
+    const c = 500;
+    const gy = 440;
+    return {
+      w: 1000, h: 500, n: 10, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 140;
+        if (i <= 2) {
+          starburst(ctx, QGOLD, c, cy, 160 + i * 70, 18, 1320, { inner: 0.28, rot: i * 0.2 });
+          for (let j = 0; j < 8; j++) { const a = (j / 8) * TAU + i; zap(ctx, MBOLT, c, cy, c + Math.cos(a) * (260 + i * 40), cy + Math.sin(a) * (160 + i * 30), 9, 1321 + j, 1); }
+        }
+        if (i >= 1 && i <= 6) {
+          const r = 100 + i * 30;
+          blob(ctx, MFIRE, c, cy, r, 0.1, i);
+          for (let j = 0; j < 10; j++) blob(ctx, j % 2 ? MFIRE : QVIO, c + Math.cos((j / 10) * TAU + i) * r, cy + Math.sin((j / 10) * TAU + i) * r * 0.7, r * 0.32, 0.14, j + i);
+        }
+        if (i >= 2) for (let j = 0; j < 12; j++) {
+          const a = (j / 12) * TAU + 0.2;
+          const d = 100 + i * 40;
+          const sz = 44 - i * 3;
+          if (sz < 10) continue;
+          if (j % 3 === 0) crownMark(ctx, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, sz * 0.4, a);
+          else iceShard(ctx, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, a + i * 0.4, sz, sz * 0.24);
+        }
+        if (i >= 6) for (let j = 0; j < 7; j++) puff(ctx, QGOLD, c + Math.cos((j / 7) * TAU) * 170, cy - 40 + Math.sin((j / 7) * TAU) * 80, 56 - (i - 6) * 8, 1340 + j, { holes: (i - 6) * 0.25, lobes: 5 });
+        const R = rng(1350 + i);
+        for (let j = 0; j < 16; j++) { const a = R() * TAU; const d = 120 + i * 34 + R() * 60; sparkle(ctx, [MFIRE, MICE, MBOLT, QGOLD][j % 4], c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, 12 - i * 0.8, j); }
+      },
+    };
+  })();
+
   // ---------- The Kitchen Witch (tomato broth, cream steam, flambé fire, sizzling eggs) ----------
   // docs/design/kitchen-witch.md. Her shapes: wobbling globs of tomato broth with bits of veg in
   // them, splash crowns of droplets, curls of cream steam, a fried egg with a gold yolk, licks of

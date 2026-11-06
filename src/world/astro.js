@@ -76,12 +76,15 @@ function tickWell(world) {
   }
   if (world.now < Z.next) return;
   Z.next = world.now + Z.every;
+  // (The Sorcerer's Chaos Vortex hits with fire, ice and lightning in turn, so what it holds keeps
+  // reacting.)
+  const el = Z.chaos ? ['fire', 'ice', 'bolt'][(Z.n = (Z.n ?? -1) + 1) % 3] : undefined;
   for (const m of world.mobs) {
     if (!alive(m) || Math.abs(m.x - Z.x) > Z.r + m.def.w / 2 || Math.abs(m.y - Z.y) > 80) continue;
     // Drawn in toward its heart (never past it), and crushed.
     const d = Z.x - m.x;
     if (!m.def.boss) m.x += Math.sign(d) * Math.min(Math.abs(d), Z.pull);
-    dollHit(world, m, { pct: Z.pct, x: Z.x, knock: 0, stop: 0, burst: 'ashit', gauge: 1, key: Z.key });
+    dollHit(world, m, { pct: Z.pct, x: Z.x, knock: 0, stop: 0, burst: el ? `qnhit${el}` : 'ashit', gauge: 1, key: Z.key, el });
   }
 }
 

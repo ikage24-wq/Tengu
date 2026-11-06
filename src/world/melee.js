@@ -219,20 +219,21 @@ export const PATH_COMBOS = {
     { move: 'clbless', dur: 0.46, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 760, oy: -3 }, { at: 0.56, shot: 'clorb', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 760, oy: 3 }] },
     { move: 'cljudge', dur: 0.58, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'clpillar', sky: true, magic: true, pct: 165, range: 300, h: 90, targets: 3, knock: 120, launch: 120, speed: 1500, big: true, stop: 0.06, shake: 2 }] },
   ],
-  // The Sorcerer (docs/design/mage-line.md): the edgelord whose dark power came true, casting shadow
-  // hands wreathed in ember flame. (Keys astro and astrowand kept for her staff and wand.) Staff: a
-  // dark fireball scooped underhand, shadow hands called clawing up out of the ground, and a giant
-  // hand pulled down out of the sky. Wand: a shadow hand flung out, two wisps of flame curled off,
-  // and the hands under them closed with her fist.
+  // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen. Bigger and slower than
+  // the Mage: fewer, grander spells that hit crowds hard, each a different element so her
+  // reactions (and their chains) go off. (Keys astro and astrowand kept for her staff and wand.)
+  // Staff: a throne tap (fire geysers bursting up along the floor), a curtain sweep (a wall of ice
+  // sweeping along it), judgment (a crown of lightning from the sky). Wand: a finger snap (a royal
+  // fire orb), a royal wave (a spinning ice crown), a decree (a lightning scepter through the line).
   astro: [
-    { move: 'sosscoop', dur: 0.44, step: 12, strikes: [{ at: 0.38, shot: 'sofire', magic: true, pct: 96, range: 310, h: 70, knock: 120, speed: 680, lob: 20 }] },
-    { move: 'sosplant', dur: 0.5, step: 8, strikes: [{ at: 0.4, shot: 'sograsp', magic: true, pct: 104, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 160, speed: 760 }] },
-    { move: 'sosclose', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.52, shot: 'soslam', sky: true, magic: true, pct: 182, range: 300, h: 90, targets: 4, knock: 140, launch: 100, speed: 1100, big: true, stop: 0.07, shake: 3 }] },
+    { move: 'qntap', dur: 0.62, step: 6, strikes: [{ at: 0.5, shot: 'qngeyser', magic: true, el: 'fire', pct: 150, range: 300, h: 60, oy: 16, targets: 3, pierce: true, knock: 40, launch: 140, speed: 620, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'qnsweep', dur: 0.66, step: 10, strikes: [{ at: 0.52, shot: 'qnwall', magic: true, el: 'ice', pct: 150, range: 300, h: 60, oy: 16, targets: 4, pierce: true, knock: 60, speed: 680, big: true, stop: 0.05, shake: 2 }] },
+    { move: 'qnjudge', dur: 0.78, step: 6, finisher: true, strikes: [{ at: 0.58, shot: 'qnstrike', sky: true, magic: true, el: 'bolt', pct: 250, range: 300, h: 90, targets: 5, knock: 80, launch: 120, speed: 1500, big: true, stop: 0.09, shake: 4 }] },
   ],
   astrowand: [
-    { move: 'sowbeckon', dur: 0.32, step: 10, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 82, range: 300, h: 60, knock: 40, speed: 820 }] },
-    { move: 'sowcurl', dur: 0.5, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 780, oy: -3 }, { at: 0.56, shot: 'soflame', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 780, oy: 3 }] },
-    { move: 'sowgrip', dur: 0.6, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'sograsp', magic: true, pct: 170, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'qnsnap', dur: 0.6, step: 6, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] },
+    { move: 'qnwave', dur: 0.62, step: 8, strikes: [{ at: 0.5, shot: 'qncrown', magic: true, el: 'ice', pct: 140, range: 320, h: 80, targets: 3, pierce: true, knock: 60, speed: 560, big: true, stop: 0.05 }] },
+    { move: 'qndecree', dur: 0.74, step: 8, finisher: true, strikes: [{ at: 0.56, shot: 'qndecree', magic: true, el: 'bolt', pct: 240, range: 360, h: 80, targets: 5, pierce: true, knock: 140, speed: 1100, big: true, stop: 0.08, shake: 3 }] },
   ],
   starstaff: [
     { move: 'psgolf', dur: 0.46, step: 10, strikes: [{ at: 0.4, shot: 'pmbomb', magic: true, el: 'fire', pct: 98, range: 310, h: 70, knock: 80, speed: 620 }] },
@@ -487,18 +488,18 @@ export const PATH_VARIANTS = {
   // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
   // night sky in both arms.
-  // The Sorcerer. Staff: the scoop or an overhand hurl; the summon or two knocks on the floor; the
-  // close or her arms spread wide as she floats. Wand: the beckon or a backhand sneer; the curl or a
-  // sigil slashed in the air; the grip or a hand pressed to the floor.
+  // The Sorcerer. Staff: the throne tap or a majorette's twirl; the curtain sweep or a bow; judgment
+  // or an encore. Wand: the finger snap or fanning herself; the royal wave or a curtsy; the decree or
+  // a bored yawn.
   astro: [
-    [PATH_COMBOS.astro[0], { move: 'sosswing', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'sofire', magic: true, pct: 100, range: 300, h: 70, knock: 140, speed: 660 }] }],
-    [PATH_COMBOS.astro[1], { move: 'sosknock', dur: 0.54, step: 6, strikes: [{ at: 0.48, shot: 'sograsp', magic: true, pct: 106, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 160, speed: 760 }] }],
-    [PATH_COMBOS.astro[2], { move: 'sosrage', dur: 0.64, step: 12, finisher: true, strikes: [{ at: 0.54, shot: 'soslam', sky: true, magic: true, pct: 184, range: 300, h: 90, targets: 4, knock: 140, launch: 100, speed: 1100, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.astro[0], { move: 'qnmajor', dur: 0.62, step: 8, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] }],
+    [PATH_COMBOS.astro[1], { move: 'qnbow', dur: 0.66, step: 4, strikes: [{ at: 0.52, shot: 'qnwall', magic: true, el: 'ice', pct: 150, range: 300, h: 60, oy: 16, targets: 4, pierce: true, knock: 60, speed: 680, big: true, stop: 0.05, shake: 2 }] }],
+    [PATH_COMBOS.astro[2], { move: 'qnencore', dur: 0.78, step: 6, finisher: true, strikes: [{ at: 0.58, shot: 'qnstrike', sky: true, magic: true, el: 'bolt', pct: 250, range: 300, h: 90, targets: 5, knock: 80, launch: 120, speed: 1500, big: true, stop: 0.09, shake: 4 }] }],
   ],
   astrowand: [
-    [PATH_COMBOS.astrowand[0], { move: 'sowsneer', dur: 0.36, step: 8, strikes: [{ at: 0.32, shot: 'sohand', magic: true, pct: 84, range: 300, h: 60, knock: 40, speed: 820 }] }],
-    [PATH_COMBOS.astrowand[1], { move: 'sowtrace', dur: 0.56, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 780, oy: -3 }, { at: 0.52, shot: 'soflame', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 780, oy: 3 }] }],
-    [PATH_COMBOS.astrowand[2], { move: 'sowdoom', dur: 0.62, step: 10, finisher: true, strikes: [{ at: 0.52, shot: 'sograsp', magic: true, pct: 172, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.astrowand[0], { move: 'qnfan', dur: 0.6, step: 6, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] }],
+    [PATH_COMBOS.astrowand[1], { move: 'qncurtsy', dur: 0.64, step: 6, strikes: [{ at: 0.52, shot: 'qncrown', magic: true, el: 'ice', pct: 140, range: 320, h: 80, targets: 3, pierce: true, knock: 60, speed: 560, big: true, stop: 0.05 }] }],
+    [PATH_COMBOS.astrowand[2], { move: 'qnyawn', dur: 0.74, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'qndecree', magic: true, el: 'bolt', pct: 240, range: 360, h: 80, targets: 5, pierce: true, knock: 140, speed: 1100, big: true, stop: 0.08, shake: 3 }] }],
   ],
   starstaff: [
     [PATH_COMBOS.starstaff[0], { move: 'psbat', dur: 0.48, step: 10, strikes: [{ at: 0.42, shot: 'pmbomb', magic: true, el: 'fire', pct: 102, range: 310, h: 70, knock: 90, speed: 660 }] }],
@@ -580,25 +581,25 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'clglide', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'clbolt', magic: true, pct: 115, range: 300, h: 64, knock: 100, speed: 900, targets: 2, pierce: true }] },
   },
-  // The Sorcerer with the staff: a shadow hand flung up at whatever flies, dark fireballs swung down
-  // from a hang in the air (the second through two), and a skim out of a run ending in a fireball.
+  // The Sorcerer with the staff: a banner raised (lightning up), a throne in the air (fire orb
+  // down; the second time a crown of ice), a throne ride out of a run that ends in a tap of geysers.
   astro: {
-    up: { move: 'sosup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 820, big: true, stop: 0.04 }] },
+    up: { move: 'qnsup', dur: 0.46, step: 4, strikes: [{ at: 0.3, shot: 'qndecree', magic: true, el: 'bolt', pct: 130, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1000, big: true, stop: 0.05 }] },
     air: [
-      { move: 'sosair', dur: 0.4, hang: true, strikes: [{ at: 0.3, shot: 'sofire', magic: true, pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 680 }] },
-      { move: 'sosair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sofire', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 140, speed: 680, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'qnsair', dur: 0.42, hang: true, strikes: [{ at: 0.3, shot: 'qnorb', magic: true, el: 'fire', pct: 110, range: 260, h: 170, drop: 60, knock: 40, speed: 520 }] },
+      { move: 'qnsair', dur: 0.48, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'qncrown', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 80, speed: 560, big: true, stop: 0.05, shake: 2 }] },
     ],
-    dash: { move: 'sosdash', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.4, shot: 'sofire', magic: true, pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 110, speed: 700 }] },
+    dash: { move: 'qnsdash', dur: 0.56, step: 60, carry: 0.5, strikes: [{ at: 0.46, shot: 'qngeyser', magic: true, el: 'fire', pct: 140, range: 300, h: 60, oy: 16, targets: 3, pierce: true, knock: 40, launch: 120, speed: 620 }] },
   },
-  // With the wand: a shadow hand flung up, wisps of flame let fall from the air (the second a spray
-  // of three), and a skim out of a run flinging a hand through two of them.
+  // With the wand: a royal salute (lightning up), floating cross-legged on air pointing down, and a
+  // regal glide out of a run.
   astrowand: {
-    up: { move: 'sowup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 820, big: true, stop: 0.04 }] },
+    up: { move: 'qnup', dur: 0.46, step: 4, strikes: [{ at: 0.3, shot: 'qndecree', magic: true, el: 'bolt', pct: 130, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1000, big: true, stop: 0.05 }] },
     air: [
-      { move: 'sowair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 780 }] },
-      { move: 'sowair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'soflame', magic: true, fan: 3, pct: 60, range: 260, h: 190, drop: 70, knock: 120, speed: 780, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'qnair', dur: 0.42, hang: true, strikes: [{ at: 0.3, shot: 'qncrown', magic: true, el: 'ice', pct: 110, range: 260, h: 170, drop: 60, knock: 30, speed: 560 }] },
+      { move: 'qnair', dur: 0.48, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'qnorb', magic: true, el: 'fire', pct: 130, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 80, speed: 520, big: true, stop: 0.05, shake: 2 }] },
     ],
-    dash: { move: 'sowdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.34, shot: 'sohand', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 860 }] },
+    dash: { move: 'qndash', dur: 0.56, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'qnorb', magic: true, el: 'fire', pct: 140, range: 300, h: 80, targets: 2, pierce: true, knock: 90, speed: 520 }] },
   },
   // With the staff: a vault off the planted staff zapping straight up, a fireball batted down from
   // the air (the second time a spray of snowballs), and a broomstick ride out of a run that ends in
@@ -1108,7 +1109,8 @@ export function addSpirit(world, n, kind = 'harm', el = null) {
   if (!hasSpirit(world.char) || n <= 0) return;
   // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
   if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
-  if (hasBinding(world.char)) return addBinding(world, n * 0.7);
+  // (The Sorcerer's Chaos fills from her chains, world/reactions.js; plain hits barely move it.)
+  if (hasBinding(world.char)) return addBinding(world, n * 0.25);
   // The Mage's Mayhem (docs/design/mage-line.md): plain hits barely build it; her element
   // reactions (world/reactions.js) fill it.
   if (world.char.job === 'spiritmage') {
@@ -1876,7 +1878,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1910,7 +1912,7 @@ function grantSpell(world, g) {
 // moons and planets): a spell of her own magic attack, landing `at` seconds from now, knocking
 // monsters away from `x`; it builds her gauge a little.
 export function dollHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2 }, m, at);
+  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2, el: f.el }, m, at);
 }
 
 // Where the wand's tip is (from her feet, facing right) at the moment a shot leaves it; null where
@@ -2006,7 +2008,7 @@ function fire(world, strike) {
     for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
       const my = m.y - (m.air ?? 0) - m.def.h / 2;
       // (Her lightning comes straight down; a meteor slants in.)
-      const straight = s.shot === 'pmstrike' || s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
+      const straight = s.shot === 'pmstrike' || s.shot === 'qnstrike' || s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
       const sx = straight ? m.x : m.x - s.dir * 70;
       const sy = my - (straight ? 200 : 170);
       const travel = Math.hypot(m.x - sx, my - sy) / speed;
@@ -2124,6 +2126,8 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.
+// The Sorcerer's shots (the remake); their hits leave her crowned mark.
+export const QN_SHOTS = new Set(['qnorb', 'qncrown', 'qndecree', 'qngeyser', 'qnwall', 'qnstrike']);
 export const MG_SHOTS = new Set(['pmspark', 'pmshard', 'pmzap', 'pmbomb', 'pmspike', 'pmstrike', 'pmhuge', 'pmwire', 'mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
 // The Sorcerer's shots (her own art); their hits leave her claw marks.
 export const SO_SHOTS = new Set(['sohand', 'soflame', 'sofire', 'sograsp', 'soslam']);

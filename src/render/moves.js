@@ -137,6 +137,17 @@ function raisedBehind(o) {
   return o;
 }
 
+// The Sorcerer's faces (the remake): the chaos queen. Eyes shut and chin up for the wind-up
+// (regal), a commanding shout on the cast, delight and a cackle after; bored, and a yawn.
+const QN_FACE = {
+  regal: { closed: [true, true], mouth: 'cat', brows: [[0.8, -0.3], [0.8, -0.3]] },
+  command: { mouth: 'yell', brows: [[-0.2, 0.9], [-0.2, 0.9]], shine: true },
+  cackle: { closed: [true, true], mouth: 'grin', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.1 },
+  delight: { mouth: 'grin', brows: [[0.7, -0.2], [0.7, -0.2]], blush: 1.2, shine: true },
+  bored: { lid: 0.5, mouth: 'flat', brows: [[0.2, 0.2], [0.2, 0.2]] },
+  yawn: { closed: [true, true], mouth: 'yell', brows: [[0.5, 0], [0.5, 0]] },
+};
+
 // The Mage's faces (the remake): a pyro gremlin. A squint down the wand as she lines it up, a
 // whoop on the cast, glee and a cackle after; nose in the air for a show-off; a sheepish wince
 // when it backfires; wild-eyed when the big one goes off.
@@ -3626,6 +3637,467 @@ export const MOVES = {
       lift: 5 * raise * (1 - sweep) + 1.2 * breathe(p) * raise * (1 - sweep), tilt: -0.08 * raise * (1 - sweep) + 0.1 * sweep * (1 - bow) + 0.26 * bow, lunge: 3 * sweep,
       face: p < 0.3 ? CL_FACE.pray : p < 0.86 ? CL_FACE.proclaim : CL_FACE.serene,
       rig: (r) => { r.backArm = [q(lerp(-6 * raise, -7, sweep) + 3 * bow), q(-6 * raise * (1 - bow))]; r.hairLift = raise > 0.5 && sweep < 0.3 ? -1 : sweep > 0.3 && bow < 0.3 ? 1 : 0; r.cape -= q(4 * sweep * (1 - bow)); danceLegs(r, [raise * (1 - sweep), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [sweep * (1 - bow), [3.8, 0, 8], [-3.6, -0.6, -18]], [bow, [2, 0, 6], [-2.4, 0, -10]]); },
+    };
+  },
+
+  // ---------- The Sorcerer's skills (the remake: the chaos queen) ----------
+  // Royal Inferno (~0.56): she holds out an open palm, "bring me fire", and a crowned fireball
+  // swells over it; she admires it, then tosses it down the line with a flick of the fingers.
+  qnhell(p) {
+    const offer = soft(seg(p, 0, 0.24));
+    const admire = p > 0.24 && p < 0.48 ? Math.sin(p * 30) * 0.03 : 0;
+    const toss = ease(seg(p, 0.48, 0.56));
+    const end = soft(seg(p, 0.68, 0.95));
+    return {
+      weapon: lerp(130, 120, toss) - 20 * end, arm: lerp(40, 50, toss),
+      tilt: admire - 0.06 * offer * (1 - toss) + 0.08 * toss * (1 - end), lunge: 4 * toss * (1 - end * 0.5), lift: swBob(p, 0.95) * 0.4,
+      face: p < 0.48 ? QN_FACE.delight : p < 0.68 ? QN_FACE.command : QN_FACE.regal,
+      rig: (r) => {
+        r.backArm = toss > 0.1 ? [q(lerp(6, 9, toss) - 5 * end), q(lerp(-3, -5, toss) + 4 * end)] : [q(6 * offer), q(-3 * offer)];
+        danceLegs(r, [1 - toss, [1.4, 0, 4], [-1.6, 0, -4]], [toss, [2.6, 0, 6], [-2.6, -0.4, -10]]);
+      },
+    };
+  },
+  // Grand Entrance (~0.3): she throws her arms wide, a burst of confetti and gold, and she's gone;
+  // she lands far ahead mid-curtsy, as if the crowd had been waiting.
+  qnstep(p) {
+    const wide = soft(seg(p, 0, 0.24));
+    const land = soft(seg(p, 0.6, 0.78));
+    const curtsy = bump(p, 0.7, 1);
+    return {
+      weapon: lerp(lerp(120, 100, wide), 140, land), arm: lerp(lerp(40, 92, wide), 30, land),
+      tilt: 0.12 * curtsy - 0.04 * wide * (1 - land), lift: p > 0.3 && p < 0.6 ? 2 : -2 * curtsy,
+      face: p < 0.3 ? QN_FACE.command : p < 0.78 ? QN_FACE.delight : QN_FACE.regal,
+      rig: (r) => {
+        r.squat = q(2 * curtsy);
+        r.backArm = land > 0.2 ? [q(-5 * curtsy), q(4 * curtsy)] : [q(-6 * wide), q(-4 * wide)];
+        danceLegs(r, [wide * (1 - land), [2.4, 0, 6], [-2.4, 0, -6]], [curtsy, [1.4, 0, 6], [-3.6, -0.6, -20]]);
+      },
+    };
+  },
+  // Domino Decree (~0.5): she unrolls an invisible proclamation, reads it aloud with the wand as a
+  // pointer, and at the last word thrusts it out: lightning tears down the whole line.
+  qnchain(p) {
+    const read = p < 0.42 ? Math.sin(seg(p, 0.06, 0.42) * Math.PI * 3) : 0;
+    const up = soft(seg(p, 0, 0.1));
+    const thrust = ease(seg(p, 0.42, 0.5));
+    const end = soft(seg(p, 0.64, 0.94));
+    return {
+      weapon: lerp(lerp(90, 70 + 8 * read, up), 90, thrust) + 20 * end, arm: lerp(lerp(55, 80, up), 96, thrust) - 30 * end,
+      lunge: 8 * thrust * (1 - end * 0.4), tilt: 0.02 * read + 0.14 * thrust * (1 - end), lift: swBob(p, 0.94) * 0.4, trail: thrust > 0 && thrust < 1,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.64 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.2 * thrust * (1 - end));
+        r.backArm = thrust > 0.2 ? [q(-7 * thrust), q(-4)] : [q(5), q(-5 + 1.2 * read)];
+        r.hairLift = thrust > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [1 - thrust, [1.6, 0, 4], [-1.6, 0, -4]], [thrust * (1 - end), [5, 0, 10], [-4.6, -0.8, -24]], [end, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Cold Shoulder (~0.5): she turns her nose up at them, flips her hair over her shoulder, and
+  // crowns of ice burst up all round her both ways.
+  qnnova(p) {
+    const flip = bump(p, 0.36, 0.56);
+    return {
+      weapon: 130 - 20 * flip, arm: 40 + 20 * flip,
+      tilt: -0.1 * flip, lift: 1.2 * flip + swBob(p, 0.92) * 0.4,
+      face: p < 0.18 ? QN_FACE.regal : p < 0.7 ? QN_FACE.bored : QN_FACE.delight,
+      rig: (r) => {
+        r.backArm = [q(3 + 4 * flip), q(-6 - 6 * flip)];
+        r.hairLift = flip > 0.3 ? 1 : 0;
+        danceLegs(r, [1, [1.4, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Royal Pardon (heal, ~0.55): she raises the wand over her subjects in a slow, gracious sweep,
+  // and gold light pours down; she presses a hand to her heart, magnanimous.
+  qnmend(p) {
+    const raise = soft(seg(p, 0, 0.36));
+    const sweep = soft(seg(p, 0.36, 0.6));
+    const heart = soft(seg(p, 0.6, 0.85));
+    return {
+      weapon: lerp(lerp(120, 60, raise), 100, sweep), arm: lerp(lerp(40, 86, raise), 70, sweep) - 20 * heart,
+      tilt: -0.04 * raise + 0.04 * sweep, lift: 1.2 * raise * (1 - sweep) + swBob(p, 0.92) * 0.3,
+      face: p < 0.36 ? QN_FACE.regal : p < 0.6 ? QN_FACE.delight : QN_FACE.regal,
+      rig: (r) => {
+        r.backArm = heart > 0.2 ? [q(3), q(-6 * heart)] : [q(-3 * raise), q(-2)];
+        danceLegs(r, [1, [1.4, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Royal Guard (~0.55): she claps twice (the guards!) and spreads her arms; gold crown points rise
+  // round the party like a palace fence.
+  qnguard(p) {
+    const clap = (a) => bump(p, a, a + 0.1);
+    const c = Math.max(clap(0.1), clap(0.26));
+    const spread = soft(seg(p, 0.44, 0.6));
+    return {
+      weapon: lerp(110, 120, spread), arm: lerp(50 + 20 * c, 70, spread),
+      lift: 1.4 * spread * (1 - soft(seg(p, 0.8, 1))) + swBob(p, 0.9) * 0.3,
+      face: p < 0.44 ? QN_FACE.regal : p < 0.7 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => {
+        r.backArm = spread > 0.1 ? [q(-7 * spread), q(-4 * spread)] : [q(5 + 2 * c), q(-2)];
+        danceLegs(r, [1 - spread, [1.4, 0, 4], [-1.4, 0, -4]], [spread, [2.4, 0, 6], [-2.4, 0, -6]]);
+      },
+    };
+  },
+  // Chaos Vortex (Abyssal Maw, ~0.6): she twirls a finger in the air, round and round, then points
+  // at the floor ahead; a whirlpool of all three of her elements opens there.
+  qnvortex(p) {
+    const twirl = p < 0.5 ? Math.sin(seg(p, 0.04, 0.5) * Math.PI * 6) : 0;
+    const point = ease(seg(p, 0.52, 0.6));
+    const end = soft(seg(p, 0.72, 0.96));
+    return {
+      weapon: lerp(120, 140, point) - 20 * end, arm: lerp(40, 70, point) - 20 * end,
+      tilt: 0.02 * twirl + 0.1 * point * (1 - end), lunge: 4 * point * (1 - end * 0.5), lift: swBob(p, 0.96) * 0.3,
+      face: p < 0.52 ? QN_FACE.delight : p < 0.72 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.backArm = point > 0.1 ? [q(lerp(4, 9, point) - 5 * end), q(lerp(-8, 2, point))] : [q(4 + 2 * twirl), q(-8 + 1.5 * Math.cos(p * 40))];
+        danceLegs(r, [1 - point, [1.4, 0, 4], [-1.4, 0, -4]], [point, [2.8, 0, 6], [-2.8, -0.4, -12]]);
+      },
+    };
+  },
+  // Royal Decree (Dark Pact, ~0.5): she unrolls a scroll with a flourish, signs it with the wand
+  // with a great swoop, and stamps it with her fist; gold climbs round her.
+  qnpact(p) {
+    const sign = p > 0.18 && p < 0.42 ? Math.sin(seg(p, 0.18, 0.42) * Math.PI * 4) : 0;
+    const stamp = bump(p, 0.42, 0.58);
+    const end = soft(seg(p, 0.66, 0.92));
+    return {
+      weapon: 120 + 14 * sign - 10 * end, arm: 50 + 10 * sign,
+      tilt: 0.02 * sign + 0.08 * stamp, lift: -1 * stamp + swBob(p, 0.92) * 0.3,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.66 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => {
+        r.squat = q(1.4 * stamp);
+        r.backArm = [q(5 + 2 * stamp), q(-4 + 7 * stamp)];
+        danceLegs(r, [1, [1.6, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Fireworks Gala (her own Big Bad Kaboom): she conducts the sky like a fireworks show, one, two,
+  // three, and the rockets rain fire, ice and lightning; then a sweep of both arms for the finale.
+  qnrain(p) {
+    const beat = p > 0.2 && p < 0.7 ? Math.sin(seg(p, 0.2, 0.7) * Math.PI * 6) : 0;
+    const up = soft(seg(p, 0, 0.2));
+    const sweep = ease(seg(p, 0.8, 0.88));
+    const end = soft(seg(p, 0.92, 1));
+    return {
+      weapon: lerp(lerp(100, 60 + 12 * beat, up), 130, sweep), arm: lerp(lerp(55, 88 + 4 * beat, up), 50, sweep),
+      tilt: 0.02 * beat + 0.12 * sweep * (1 - end), lift: 1.2 * Math.abs(beat) + swBob(p, 0.96) * 0.3, lunge: 4 * sweep,
+      face: p < 0.2 ? QN_FACE.regal : p < 0.8 ? QN_FACE.delight : p < 0.92 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.backArm = sweep > 0.1 ? [q(-7 * sweep), q(-4)] : [q(-2 + 2 * beat), q(-8 * up - 2 * beat)];
+        danceLegs(r, [1 - sweep, [1.6, 0, 4], [-1.6, 0, -4]], [sweep, [4, 0, 8], [-3.6, -0.6, -18]]);
+      },
+    };
+  },
+  // Grand Finale of Chaos (Hand of the Abyss, the finisher): her throne shimmers up behind her and
+  // she sits down on it, crosses her legs, takes her time... and snaps her fingers. Everything ahead
+  // goes up in all three elements at once, and every reaction chains. She doesn't even get up.
+  qnfinale(p) {
+    const sit = soft(seg(p, 0.08, 0.3));
+    const wait = p > 0.3 && p < 0.56 ? Math.sin(p * 20) * 0.02 : 0;
+    const snap = bump(p, 0.56, 0.68);
+    const stand = soft(seg(p, 0.88, 1));
+    return {
+      weapon: 130 - 10 * snap, arm: 40 + 10 * snap,
+      tilt: -0.06 * sit * (1 - stand) + wait, lift: 6 * sit * (1 - stand),
+      face: p < 0.3 ? QN_FACE.regal : p < 0.56 ? QN_FACE.bored : p < 0.68 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.air = sit > 0.5 && stand < 0.5;
+        r.squat = q(1.4 * sit * (1 - stand));
+        r.backArm = [q(4 + 3 * snap), q(-6 - 4 * snap)];
+        danceLegs(r, [1 - sit + stand, [1.6, 0, 4], [-1.6, 0, -4]], [sit * (1 - stand), [2.8, -3.6, 70], [0.6, -3.2, 60]]);
+      },
+    };
+  },
+
+  // ---------- The Sorcerer's attacks (the remake: the chaos queen; docs/design/mage-line.md) ----------
+  // The gremlin crowned herself queen of chaos. Every cast is theatre: big, slow and grand, a
+  // royal gesture with a long wind-up and a held pose after, as if the crowd should applaud. She
+  // snaps her fingers, waves like royalty, decrees; taps her throne staff on the floor, sweeps it
+  // like a curtain, raises it for judgment. She acts every beat (QN_FACE): regal and smug on the
+  // wind-up, commanding on the cast, a delighted cackle after. The staff goes behind her head when
+  // raised (raisedBehind), never across her face.
+
+  // Finger snap (wand opener, a royal fire orb at ~0.5): wand held lazily at her shoulder, she
+  // raises her free hand, holds it there a beat, SNAPS, and the wand drops to point; the orb rolls
+  // out slow and huge. She examines her nails.
+  qnsnap(p) {
+    const lift = soft(seg(p, 0, 0.3));
+    const snap = ease(seg(p, 0.42, 0.5));
+    const nails = soft(seg(p, 0.62, 0.92));
+    return raisedBehind({
+      weapon: lerp(lerp(60, 50, lift), 90, snap) + 30 * nails, arm: lerp(lerp(80, 90, lift), 92, snap) - 40 * nails,
+      lunge: 3 * snap * (1 - nails * 0.5), tilt: -0.06 * lift * (1 - snap) + 0.06 * snap * (1 - nails) - 0.04 * nails,
+      lift: swBob(p, 0.92) * 0.4,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.62 ? QN_FACE.command : QN_FACE.bored,
+      rig: (r) => {
+        r.backArm = nails > 0.2 ? [q(3), q(-3 - 3 * nails)] : [q(lerp(0, 3, lift) + 2 * snap), q(lerp(0, -11, lift) + 4 * snap)];
+        danceLegs(r, [1 - snap, [1.6, 0, 4], [-1.6, 0, -4]], [snap * (1 - nails), [2.6, 0, 6], [-2.6, -0.4, -10]], [nails, [1.8, 0, 4], [-2, 0, -6]]);
+      },
+    });
+  },
+  // Royal wave (second, an ice crown at ~0.5): the queen's wave to her subjects, the wand swaying
+  // side to side, twice, slowly, then a flick and the spinning ice crown flies out.
+  qnwave(p) {
+    const wave = p < 0.42 ? Math.sin(seg(p, 0.04, 0.42) * Math.PI * 4) : 0;
+    const up = soft(seg(p, 0, 0.12));
+    const flick = ease(seg(p, 0.42, 0.5));
+    const after = soft(seg(p, 0.62, 0.92));
+    return raisedBehind({
+      weapon: lerp(lerp(90, 40 + 18 * wave, up), 84, flick) + 16 * after, arm: lerp(lerp(55, 86 + 6 * wave, up), 92, flick) - 30 * after,
+      tilt: 0.03 * wave + 0.08 * flick * (1 - after), lunge: 4 * flick * (1 - after * 0.5), lift: 0.6 * Math.abs(wave) + swBob(p, 0.92) * 0.4,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.62 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => {
+        r.backArm = [q(-2), q(-1 + 1 * after)];
+        danceLegs(r, [1 - flick, [1.4, 0, 4], [-1.4, 0, -4]], [flick, [2.8, 0, 6], [-2.6, -0.4, -12]]);
+      },
+    });
+  },
+  // Decree (wand finisher, a lightning scepter at ~0.56): she draws herself up, wand raised high in
+  // proclamation, holds it, then thrusts it at them with her free arm flung out behind her: "OFF
+  // WITH THEIR HEADS!" (it's lightning). A long, delighted cackle.
+  qndecree(p) {
+    const rise = soft(seg(p, 0, 0.36));
+    const hold = p > 0.36 && p < 0.48 ? Math.sin(p * 80) * 0.6 : 0;
+    const thrust = ease(seg(p, 0.48, 0.56));
+    const after = soft(seg(p, 0.7, 0.96));
+    return raisedBehind({
+      weapon: lerp(lerp(90, 20, rise) + hold * 3, 90, thrust) + 20 * after, arm: lerp(lerp(55, 92, rise), 96, thrust) - 30 * after,
+      lunge: -1 * rise * (1 - thrust) + 8 * thrust * (1 - after * 0.4), tilt: -0.08 * rise * (1 - thrust) + 0.14 * thrust * (1 - after),
+      lift: 2.5 * rise * (1 - thrust) + 1.2 * Math.abs(Math.sin(seg(p, 0.7, 0.96) * Math.PI * 5)) * after, trail: thrust > 0 && thrust < 1,
+      face: p < 0.48 ? QN_FACE.regal : p < 0.7 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.4 * thrust * (1 - after));
+        r.backArm = thrust > 0.2 ? [q(lerp(0, -8, thrust)), q(lerp(0, -5, thrust))] : [q(2 * rise), q(-2 * rise)];
+        r.hairLift = thrust > 0.3 && after < 0.4 ? 1 : 0;
+        r.cape -= q(5 * thrust * (1 - after * 0.6));
+        danceLegs(r, [rise * (1 - thrust), [1.2, -1.2, 12], [-1.2, -0.6, -8]], [thrust * (1 - after), [5, 0, 10], [-4.6, -0.8, -24]], [after, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    });
+  },
+  // Fan herself (opener in her pool, a fire orb at ~0.5): she fans her face with her free hand
+  // (so warm in here), sighs, and flicks the wand without looking.
+  qnfan(p) {
+    const fan = p < 0.42 ? Math.sin(seg(p, 0.04, 0.42) * Math.PI * 6) : 0;
+    const flick = ease(seg(p, 0.42, 0.5));
+    const end = soft(seg(p, 0.62, 0.92));
+    return {
+      weapon: lerp(130, 88, flick) + 20 * end, arm: lerp(40, 90, flick) - 40 * end,
+      tilt: -0.06 * (1 - flick) + 0.04 * flick, lunge: 3 * flick * (1 - end * 0.5), lift: swBob(p, 0.9) * 0.4,
+      face: p < 0.42 ? QN_FACE.bored : p < 0.62 ? QN_FACE.command : QN_FACE.regal,
+      rig: (r) => {
+        r.backArm = p < 0.42 ? [q(4 + 1.4 * fan), q(-6)] : [q(lerp(4, 1, end)), q(lerp(-6, 0, end))];
+        danceLegs(r, [1 - flick, [1.6, 0, 4], [-1.6, 0, -4]], [flick, [2.4, 0, 6], [-2.4, -0.4, -10]]);
+      },
+    };
+  },
+  // Curtsy (second in her pool, an ice crown at ~0.52): a deep curtsy, skirt held out with her
+  // free hand, and as she rises the wand flicks the crown out.
+  qncurtsy(p) {
+    const dip = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.36, 0.52)));
+    const flick = ease(seg(p, 0.44, 0.52));
+    const end = soft(seg(p, 0.64, 0.92));
+    return {
+      weapon: lerp(140, 84, flick) + 16 * end, arm: lerp(30, 92, flick) - 34 * end,
+      tilt: 0.12 * dip + 0.06 * flick * (1 - end), lunge: 4 * flick * (1 - end * 0.5), lift: -2 * dip + swBob(p, 0.92) * 0.4,
+      face: p < 0.36 ? QN_FACE.regal : p < 0.64 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => {
+        r.squat = q(2.6 * dip);
+        r.backArm = [q(-5 * dip), q(4 * dip)];
+        danceLegs(r, [dip, [1.4, 0, 6], [-3.6, -0.6, -20]], [flick, [2.6, 0, 6], [-2.6, -0.4, -10]]);
+      },
+    };
+  },
+  // Bored lightning (finisher in her pool, a lightning scepter at ~0.56): she yawns, stretches,
+  // pats her mouth, and points the wand at them mid-yawn; the bolt goes off and she doesn't even
+  // watch.
+  qnyawn(p) {
+    const stretch = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.3, 0.46)));
+    const point = ease(seg(p, 0.48, 0.56));
+    const end = soft(seg(p, 0.7, 0.96));
+    return raisedBehind({
+      weapon: lerp(lerp(100, 30, stretch), 90, point) + 20 * end, arm: lerp(lerp(50, 92, stretch), 92, point) - 30 * end,
+      tilt: -0.1 * stretch + 0.04 * point, lunge: 3 * point * (1 - end * 0.5), lift: 1.5 * stretch + swBob(p, 0.92) * 0.4, trail: point > 0 && point < 1,
+      face: p < 0.48 ? QN_FACE.yawn : p < 0.7 ? QN_FACE.bored : QN_FACE.regal,
+      rig: (r) => {
+        r.backArm = stretch > 0.2 ? [q(-2), q(-12 * stretch)] : p < 0.56 ? [q(3), q(-8)] : [q(lerp(3, 1, end)), q(lerp(-8, 0, end))];
+        r.hairLift = stretch > 0.5 ? -1 : 0;
+        danceLegs(r, [stretch, [1, -1, 10], [-1, -1, -10]], [point, [2.4, 0, 6], [-2.4, -0.4, -10]]);
+      },
+    });
+  },
+  // Up + attack with the wand: she flings the wand up in a royal salute and the bolt goes up.
+  qnup(p) {
+    const fling = ease(seg(p, 0.16, 0.32));
+    return raisedBehind({
+      weapon: lerp(110, 10, fling) + 40 * soft(seg(p, 0.6, 0.95)), arm: lerp(50, 94, fling) - 50 * soft(seg(p, 0.6, 0.95)),
+      tilt: -0.08 * fling * (1 - soft(seg(p, 0.6, 0.95))), lift: 4 * bump(p, 0.16, 0.6) + swBob(p, 0.8) * 0.4,
+      face: p < 0.16 ? QN_FACE.regal : p < 0.6 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => { r.backArm = [q(-3 * fling), q(1)]; r.hairLift = fling > 0.5 && p < 0.6 ? -1 : 0; danceLegs(r, [fling, [1.4, -1, 10], [-1.4, -0.6, -8]]); },
+    });
+  },
+  // In the air with the wand: she floats, legs crossed like on a throne, and points down.
+  qnair(p) {
+    const point = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: lerp(100, 160, point), arm: lerp(80, 50, point), tilt: 0.06 * point,
+      face: p < 0.2 ? QN_FACE.regal : QN_FACE.command,
+      rig: (r) => { r.air = true; r.backArm = [q(-4), q(-2)]; danceLegs(r, [1, [2.6, -3.6, 60], [0.4, -3, 50]]); },
+    };
+  },
+  // Out of a run with the wand: a regal glide, one hand raised, the wand flicked forward.
+  qndash(p) {
+    const glide = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 1)));
+    const flick = ease(seg(p, 0.3, 0.4));
+    return {
+      weapon: lerp(130, 86, flick) + 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(40, 94, flick) - 30 * soft(seg(p, 0.6, 0.9)),
+      lunge: 5 * glide, tilt: -0.04 * glide, trail: flick > 0 && flick < 1,
+      face: p < 0.3 ? QN_FACE.regal : p < 0.56 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => { r.backArm = [q(2), q(-10 * glide)]; r.cape -= q(5 * glide); danceLegs(r, [glide, [2.6, -0.4, 10], [-2.6, -0.6, -14]]); },
+    };
+  },
+
+  // Throne tap (staff opener, fire geysers along the floor at ~0.5): she lifts the staff and brings
+  // its foot down on the floor with a slow, ringing TAP, like a queen calling the court to order;
+  // fire bursts up out of the floor along the line. Chin up.
+  qntap(p) {
+    const lift = soft(seg(p, 0, 0.34));
+    const tap = ease(seg(p, 0.42, 0.5));
+    const ring = Math.sin(seg(p, 0.5, 0.8) * Math.PI * 4) * (1 - seg(p, 0.5, 0.8)) * (p > 0.5 ? 1 : 0);
+    const end = soft(seg(p, 0.76, 1));
+    // The staff stands upright beside her (behind her head), lifted, then thumped down.
+    return raisedBehind({
+      weapon: lerp(90, 6, soft(seg(p, 0, 0.16))) + 1.5 * ring + 84 * end, arm: lerp(lerp(55, 74, lift), 52, tap) + 3 * ring + 4 * end,
+      lift: 1.5 * lift * (1 - tap) + swBob(p, 0.94) * 0.3, tilt: -0.05 * lift * (1 - tap) - 0.04 * (1 - end) * tap,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.7 ? QN_FACE.command : QN_FACE.regal,
+      rig: (r) => {
+        r.squat = q(0.8 * tap * (1 - end));
+        r.backArm = [q(4), q(1)];
+        danceLegs(r, [1 - tap, [1.6, 0, 4], [-1.6, 0, -4]], [tap * (1 - end), [2, 0, 4], [-2, 0, -4]]);
+      },
+    });
+  },
+
+  // Curtain sweep (second, a wall of ice sweeping along the floor at ~0.52): she draws the staff
+  // back low, then sweeps it out across in a great flourish like drawing a curtain open.
+  qnsweep(p) {
+    const draw = soft(seg(p, 0, 0.36));
+    const sweep = ease(seg(p, 0.42, 0.54));
+    const end = soft(seg(p, 0.66, 0.94));
+    return {
+      weapon: lerp(lerp(90, 230, draw), 110, sweep) - 20 * end, arm: lerp(lerp(55, 10, draw), 96, sweep) - 30 * end,
+      back: (draw > 0.5 && sweep < 0.4) || undefined,
+      lunge: -2 * draw * (1 - sweep) + 7 * sweep * (1 - end * 0.4), tilt: -0.08 * draw * (1 - sweep) + 0.12 * sweep * (1 - end),
+      lift: swBob(p, 0.94) * 0.4, trail: sweep > 0 && sweep < 1,
+      face: p < 0.42 ? QN_FACE.regal : p < 0.66 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => {
+        r.squat = q(1.4 * draw * (1 - sweep));
+        r.backArm = [q(lerp(lerp(0, 5, draw), -8, sweep)), q(lerp(0, -4, sweep))];
+        r.cape -= q(6 * sweep * (1 - end * 0.5));
+        danceLegs(r, [draw * (1 - sweep), [1.6, 0, 6], [-3, 0, -12]], [sweep * (1 - end), [4.6, 0, 8], [-4, -0.8, -22]], [end, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Judgment (staff finisher, a crown of lightning from the sky at ~0.58): she raises the staff high
+  // in both hands, looks down her nose at them, holds it as the sky darkens, then brings it down and
+  // the crown of lightning crashes on them. She sits on air, legs crossed, delighted.
+  qnjudge(p) {
+    const raise = soft(seg(p, 0.04, 0.36));
+    const hold = p > 0.36 && p < 0.5 ? Math.sin(p * 70) : 0;
+    const down = ease(seg(p, 0.5, 0.58));
+    const sit = soft(seg(p, 0.72, 0.95));
+    return raisedBehind({
+      weapon: lerp(lerp(90, 6, raise) + 2 * hold, 100, down) + 50 * sit, arm: lerp(lerp(55, 94, raise), 92, down) - 30 * sit,
+      lunge: 6 * down * (1 - sit * 0.6), tilt: -0.06 * raise * (1 - down) + 0.14 * down * (1 - sit) - 0.06 * sit,
+      lift: 3 * raise * (1 - down) + 0.6 * Math.abs(hold) + 2 * sit, trail: down > 0 && down < 1,
+      face: p < 0.5 ? QN_FACE.regal : p < 0.72 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.6 * down * (1 - sit));
+        r.backArm = down > 0.3 ? [q(lerp(0, -6, down) + 4 * sit), q(-4)] : [q(4 * raise), q(-6 * raise)];
+        r.hairLift = raise > 0.5 && down < 0.3 ? -1 : down > 0.3 && sit < 0.3 ? 1 : 0;
+        r.cape -= q(5 * down * (1 - sit));
+        danceLegs(r, [raise * (1 - down), [1.6, -0.8, 8], [-1.6, -0.4, -8]], [down * (1 - sit), [4.4, 0, 8], [-4, -0.6, -20]], [sit, [2.6, -3, 60], [0.4, -2.6, 50]]);
+      },
+    });
+  },
+  // Majorette (opener in her pool, a fire orb at ~0.5): she twirls the heavy staff round once in
+  // front of her like a drum major leading a parade, and thrusts it out.
+  qnmajor(p) {
+    const tw = seg(p, 0.04, 0.4);
+    const thrust = ease(seg(p, 0.42, 0.5));
+    const end = soft(seg(p, 0.62, 0.92));
+    const w = lerp(90 + 360 * soft(tw), 90 + 360, thrust) - 10 * end;
+    return {
+      weapon: w, back: (tw > 0 && tw < 1 && wandUp(w)) || undefined, arm: lerp(lerp(60, 70, soft(tw)), 92, thrust) - 30 * end,
+      lunge: 6 * thrust * (1 - end * 0.5), tilt: 0.04 * Math.sin(tw * Math.PI * 2) + 0.08 * thrust * (1 - end),
+      lift: 1.2 * bump(p, 0.04, 0.4) + swBob(p, 0.92) * 0.4, trail: thrust > 0 && thrust < 1,
+      face: p < 0.42 ? QN_FACE.delight : p < 0.62 ? QN_FACE.command : QN_FACE.regal,
+      rig: (r) => { r.backArm = [q(2), q(-8)]; danceLegs(r, [1 - thrust, [1.4, -0.8 * Math.abs(Math.sin(tw * Math.PI * 4)), 8], [-1.4, 0, -4]], [thrust, [3.6, 0, 8], [-3.2, -0.6, -16]]); },
+    };
+  },
+  // Bow (second in her pool, a wall of ice at ~0.52): she bows low to her audience, staff held out
+  // to the side, and the ice sweeps out along the floor as she bows.
+  qnbow(p) {
+    const bow = soft(seg(p, 0.1, 0.5)) * (1 - soft(seg(p, 0.66, 0.95)));
+    return {
+      weapon: lerp(90, 130, bow), arm: lerp(55, 80, bow),
+      tilt: 0.4 * bow, lunge: 2 * bow, lift: -1 * bow + swBob(p, 0.95) * 0.3,
+      face: p < 0.5 ? QN_FACE.regal : QN_FACE.delight,
+      rig: (r) => { r.squat = q(1 * bow); r.backArm = [q(-6 * bow), q(2 * bow)]; danceLegs(r, [bow, [2, 0, 6], [-3.4, -1.2, -26]]); },
+    };
+  },
+  // Encore (finisher in her pool, crowns of lightning at ~0.58): she bows, the "crowd" cheers, she
+  // waves it off... then whips round and gives them an encore, staff thrust to the sky and down.
+  qnencore(p) {
+    const bow = bump(p, 0, 0.3);
+    const up = soft(seg(p, 0.3, 0.48));
+    const down = ease(seg(p, 0.5, 0.58));
+    const end = soft(seg(p, 0.72, 0.96));
+    return raisedBehind({
+      weapon: lerp(lerp(110, 10, up), 96, down) + 20 * end, arm: lerp(lerp(50, 94, up), 92, down) - 30 * end,
+      tilt: 0.3 * bow - 0.06 * up * (1 - down) + 0.14 * down * (1 - end), lunge: 6 * down * (1 - end * 0.5),
+      lift: 3 * up * (1 - down) + swBob(p, 0.94) * 0.4, trail: down > 0 && down < 1,
+      face: p < 0.3 ? QN_FACE.regal : p < 0.72 ? QN_FACE.command : QN_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1 * bow + 1.4 * down * (1 - end));
+        r.backArm = [q(-5 * bow + 3 * up - 7 * down), q(-8 * up * (1 - down))];
+        r.hairLift = up > 0.5 && down < 0.3 ? -1 : down > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [bow, [2, 0, 6], [-3, -1, -22]], [up * (1 - down), [1.4, -1, 10], [-1.4, -0.6, -8]], [down, [4.4, 0, 8], [-4, -0.6, -20]]);
+      },
+    });
+  },
+  // Up + attack with the staff: she thrusts the staff up like raising a banner.
+  qnsup(p) {
+    const thrust = ease(seg(p, 0.16, 0.3));
+    return raisedBehind({
+      weapon: lerp(90, 4, thrust) + 70 * soft(seg(p, 0.62, 0.95)), arm: lerp(55, 94, thrust) - 60 * soft(seg(p, 0.62, 0.95)),
+      lift: 4 * bump(p, 0.16, 0.62) + swBob(p, 0.8) * 0.4, tilt: -0.06 * thrust * (1 - soft(seg(p, 0.62, 0.95))),
+      face: p < 0.16 ? QN_FACE.regal : p < 0.62 ? QN_FACE.command : QN_FACE.delight,
+      rig: (r) => { r.squat = q(1.4 * bump(p, 0, 0.16)); r.backArm = [q(4), q(-3)]; r.hairLift = thrust > 0.5 && p < 0.62 ? -1 : 0; danceLegs(r, [thrust, [1.6, -1, 12], [-1.6, -0.6, -8]]); },
+    });
+  },
+  // In the air with the staff: she sits on the staff in the air like a throne and points down.
+  qnsair(p) {
+    const point = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: lerp(90, 150, point), arm: lerp(40, 60, point), tilt: 0.04 * point,
+      face: p < 0.2 ? QN_FACE.regal : QN_FACE.command,
+      rig: (r) => { r.air = true; r.squat = 1; r.backArm = [q(-4 + 8 * point), q(-6 * point)]; danceLegs(r, [1, [2.8, -3.6, 70], [0.6, -3.2, 60]]); },
+    };
+  },
+  // Out of a run with the staff: she rides the staff sideways like a throne carried by nobody, then
+  // hops off and taps it down for the fire.
+  qnsdash(p) {
+    const ride = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.32, 0.44)));
+    const tap = ease(seg(p, 0.38, 0.46));
+    const end = soft(seg(p, 0.6, 0.95));
+    return {
+      weapon: lerp(lerp(90, 100, ride), 146, tap) - 50 * end, arm: lerp(lerp(55, 40, ride), 60, tap) + 10 * end,
+      lunge: 6 * ride, tilt: -0.04 * ride, lift: 4 * ride + swBob(p, 0.94) * 0.3,
+      face: p < 0.38 ? QN_FACE.delight : p < 0.6 ? QN_FACE.command : QN_FACE.regal,
+      rig: (r) => { r.air = ride > 0.5; r.squat = q(1.2 * ride); r.backArm = [q(3), q(-6 * ride)]; r.cape -= q(4 * ride); danceLegs(r, [ride, [2.8, -3.4, 66], [0.6, -3, 56]], [tap * (1 - end), [2, 0, 4], [-2, 0, -4]]); },
     };
   },
 

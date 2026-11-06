@@ -306,7 +306,7 @@ export const SKILLS = {
   // early dungeons.
   spiritbolt: skill({
     id: 'spiritbolt', name: 'Overcooked Fireball', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
-    pathNames: { onmyoji: 'Hellfire' },
+    pathNames: { onmyoji: 'Royal Inferno' },
     desc: 'Cup a little fireball in your hands. Keep cupping. It keeps growing. Heave the enormous grinning thing over your head and shove it down the line: it rolls through everything in its way. Blow on your fingers.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -324,7 +324,7 @@ export const SKILLS = {
           // The Cleric's Holy Bolt: light gathered in the scepter's sun and hurled.
           shrinemaiden: [{ move: 'clholy', dur: 0.7, step: 10, strikes: [{ at: 0.5, shot: 'clorb', magic: true, pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 700, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
           // The Sorcerer's Hellfire: a dark flame gathered over her palm and flicked off, far bigger than she meant.
-          onmyoji: [{ move: 'sohell', dur: 0.7, step: 6, strikes: [{ at: 0.5, shot: 'sofire', magic: true, pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 620, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+          onmyoji: [{ move: 'qnhell', dur: 0.74, step: 4, strikes: [{ at: 0.56, shot: 'qnhuge', magic: true, el: 'fire', pct: k(330, 570), range: 340, h: 100, targets: k(3, 5), pierce: true, speed: 420, knock: 120, big: true, stop: 0.07, shake: 3 }] }],
         },
       };
     },
@@ -332,7 +332,7 @@ export const SKILLS = {
 
   spiritstep: skill({
     id: 'spiritstep', name: 'Blink Bang', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
-    pathNames: { onmyoji: 'Shadow Step' },
+    pathNames: { onmyoji: 'Grand Entrance' },
     desc: 'Light a firecracker in your hand. BANG: you are gone in the smoke, and land a long way ahead, coughing, then pose as if you meant it. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -345,7 +345,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'clascend', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'clfeathers', burstAt: 0, burstDur: 0.5 }] }],
           // The Sorcerer sinks into her own shadow and rises out of it far ahead.
-          onmyoji: [{ move: 'sostep', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sosink', burstAt: 0, burstDur: 0.5 }] }],
+          onmyoji: [{ move: 'qnstep', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'qnconfetti', burstAt: 0, burstDur: 0.5 }] }],
         },
       };
     },
@@ -353,7 +353,7 @@ export const SKILLS = {
 
   spiritwave: skill({
     id: 'spiritwave', name: 'Live Wire', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
-    pathNames: { onmyoji: 'Clutching Horde' },
+    pathNames: { onmyoji: 'Domino Decree' },
     desc: 'Grab the end of your wand like a live cable. Buzz. Your hair stands straight up. Point it down the line and the lightning crackles through every monster in it, knocking them back. Smoke a little.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -366,7 +366,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'cljudgment', dur: 0.6, step: 6, strikes: [{ at: 0.46, shot: 'clbolt', magic: true, pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1300, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
           // The Sorcerer sweeps her arms in and a horde of hands pours down the line.
-          onmyoji: [{ move: 'sohorde', dur: 0.6, step: 8, strikes: [{ at: 0.48, shot: 'sohand', magic: true, pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1000, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+          onmyoji: [{ move: 'qnchain', dur: 0.66, step: 6, strikes: [{ at: 0.5, shot: 'qndecree', magic: true, el: 'bolt', pct: k(240, 400), range: 400, h: 90, targets: k(6, 10), pierce: true, speed: 1200, knock: 100, launch: 60, big: true, stop: 0.07, shake: 3, gauge: 6 }] }],
         },
       };
     },
@@ -374,7 +374,7 @@ export const SKILLS = {
 
   frostnova: skill({
     id: 'frostnova', name: 'Frost Flop', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
-    pathNames: { onmyoji: 'Dread Circle' },
+    pathNames: { onmyoji: 'Cold Shoulder' },
     desc: 'Take a run up, leap, and belly-flop onto the floor: ice spikes burst out of the ground all round you both ways, freezing every monster they catch in place for a moment. Brush the frost off.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -389,7 +389,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'clnova', dur: 0.6, step: 0, strikes: [{ ...nova('clnovafx'), el: undefined, freeze: undefined, stun: kf(0.6, 1.2) }] }],
           // The Sorcerer presses her hand to the floor and hands burst up all round, holding them fast.
-          onmyoji: [{ move: 'sonova', dur: 0.6, step: 0, strikes: [{ ...nova('sonovafx'), el: undefined, fx: 'sohit' }] }],
+          onmyoji: [{ move: 'qnnova', dur: 0.64, step: 0, strikes: [{ ...nova('qnnovafx'), fx: undefined }] }],
         },
       };
     },
@@ -399,7 +399,7 @@ export const SKILLS = {
   // the strike lands, see world/melee.js).
   blessing: skill({
     id: 'blessing', name: 'Campfire Break', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
-    pathNames: { onmyoji: 'Ember Mend' },
+    pathNames: { onmyoji: 'Royal Pardon' },
     desc: 'Squat down and flick a little campfire into being. Toast a marshmallow. Its warmth heals you and the party around you at once, then a little more every second for a while, and lifts everyone\'s attack and magic while it lasts. Technically still setting things on fire.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -414,7 +414,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'clheal', dur: 0.8, step: 0, strikes: [wish('clglow')] }],
           // The Sorcerer holds her hand out without looking and warm ember flame mends everyone.
-          onmyoji: [{ move: 'somend', dur: 0.85, step: 0, strikes: [wish('soglow')] }],
+          onmyoji: [{ move: 'qnmend', dur: 0.85, step: 0, strikes: [wish('qnpardon')] }],
         },
       };
     },
@@ -422,7 +422,7 @@ export const SKILLS = {
 
   spiritward: skill({
     id: 'spiritward', name: 'Scroll Shield', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
-    pathNames: { onmyoji: 'Shadow Ward' },
+    pathNames: { onmyoji: 'Royal Guard' },
     desc: 'Rummage in your satchel, yank out a fistful of scrolls and fling them up: they unroll into a whirling ring round you and the party nearby, soaking up damage until it breaks. You never read any of them.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -438,7 +438,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'clshield', dur: 0.72, step: 0, strikes: [veil('clshieldfx')] }],
           // The Sorcerer cups great shadow hands over the party.
-          onmyoji: [{ move: 'soward', dur: 0.72, step: 0, strikes: [veil('soguard')] }],
+          onmyoji: [{ move: 'qnguard', dur: 0.72, step: 0, strikes: [veil('qnguard')] }],
         },
       };
     },
@@ -534,55 +534,53 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
   ofudabarrage: skill({
-    id: 'ofudabarrage', name: 'Grasping Dark', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'astral',
-    desc: 'Crouch and drag your hand along the floor, then rake it up at them: shadow hands claw up out of the ground in a line that races through every monster ahead, flinging them into the air.',
+    id: 'ofudabarrage', name: 'Red Carpet', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'astral',
+    desc: 'Snap your fingers: a royal red carpet of fire rolls out along the floor through every monster ahead, geysers of flame bursting up along it and flinging them into the air. Walk on it like you own the place.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(22, 40), pct: k(240, 400), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'sograspd', dur: 0.95, step: 0, strikes: [{ at: 0.54, shot: 'sograsp', magic: true, pct: k(240, 400), range: 380, h: 60, oy: 16, targets: k(5, 8), pierce: true, speed: 700, knock: 60, launch: 220, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
+        combo: [{ move: 'qnsnap', dur: 0.8, step: 0, strikes: [{ at: 0.5, shot: 'qngeyser', magic: true, el: 'fire', pct: k(240, 400), range: 380, h: 60, oy: 16, targets: k(5, 8), pierce: true, speed: 700, knock: 60, launch: 220, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
       };
     },
   }),
   seimanseal: skill({
-    id: 'seimanseal', name: 'Abyssal Maw', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'astral',
-    desc: 'Point at the floor ahead and slowly turn your hand, then twist: a pit of shadow opens there for a while, hands reaching up out of it to drag the monsters round it in and claw at them again and again.',
+    id: 'seimanseal', name: 'Chaos Vortex', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'astral',
+    desc: 'Twirl a finger in the air, round and round, and point at the floor ahead: a whirlpool of fire, ice and lightning opens there for a while, dragging the monsters round it in and hitting them with each element in turn, so they keep reacting (and chaining).',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(35, 60), pct: k(55, 100), hits: 1, targets: 0,
-        combo: [{ move: 'somawcast', dur: 0.95, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
+        combo: [{ move: 'qnvortex', dur: 0.9, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16, chaos: true } }] }],
       };
     },
   }),
   yokairally: skill({
-    id: 'yokairally', name: 'Dark Pact', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'astral', maxLevel: 15,
-    desc: 'Let your book fall open, draw the wand across your palm, and press your hand to the page: flame climbs round you. For a while your magic hits harder and your Spellstorm builds faster. (You try not to think about what you signed.)',
+    id: 'yokairally', name: 'Royal Decree', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'astral', maxLevel: 15,
+    desc: 'Unroll a royal decree, sign it with a great swoop, and stamp it with your seal: by order of the queen, for a while your magic hits harder and your Chaos fills faster. (It says "MORE EXPLOSIONS". That is the whole decree.)',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'sopact', dur: 0.85, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sopact', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { matk: k(10, 30), stormGain: kf(0.3, 0.8) } } }] }],
+        combo: [{ move: 'qnpact', dur: 0.85, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'qnstamp', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { matk: k(10, 30), stormGain: kf(0.3, 0.8) } } }] }],
       };
     },
   }),
   troupecombo: skill({
-    id: 'troupecombo', dmg: 2, name: 'Hand of the Abyss', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'astral', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs a full Spellstorm, and spends it. Float up as a rift tears open in the sky, raise your hand to it, spread your fingers... and close them. A colossal hand reaches down and crushes everything ahead of you. Then a long silence. "...I didn\'t mean to summon THAT."',
+    id: 'troupecombo', dmg: 2, name: 'Grand Finale of Chaos', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'astral', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Chaos (Pandemonium), and spends it. Your throne shimmers up behind you. Sit. Cross your legs. Take your time. Snap your fingers: everything ahead of you goes up in fire, ice and lightning at once, every reaction going off and chaining through them. You do not get up.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
-        combo: [{ move: 'soabyss', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
-          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1.3 },
-          // (The colossal hand reaching down out of the rift onto the stretch ahead.)
-          { at: 0.6, pct: 0, reach: 520, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sobighand', burstAt: 0.3, burstDur: 0.7 },
-          { at: 0.7, magic: true, pct: k(300, 520) * 2, reach: 520, h: 200, targets: 12, pierce: true, knock: 260, launch: 300, fx: 'sohit', burst: 'soimpact', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        combo: [{ move: 'qnfinale', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'qnthrone', burstAt: 0, burstDur: 1.9 },
+          { at: 0.62, magic: true, pct: k(300, 520) * 2, reach: 520, h: 200, targets: 12, pierce: true, knock: 200, launch: 240, rxAll: true, burst: 'qnfinalefx', burstAt: 0.3, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
       };
     },
@@ -590,7 +588,7 @@ export const SKILLS = {
 
   heavenslantern: skill({
     id: 'heavenslantern', name: 'Big Bad Kaboom', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
-    pathNames: { onmyoji: 'Abyssal Rain' },
+    pathNames: { onmyoji: 'Fireworks Gala' },
     desc: 'Finisher: needs a full Mayhem (Meltdown), and spends it. Unhook all three vials off your belt and knock them back: fire, ice, lightning (hic). Throw your arms up and the sky rains all three on every monster ahead, then bring it down for one huge blast that sets off Steam, Shatter and Kaboom on everything at once. Stand in the smoke, cackling.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -613,12 +611,13 @@ export const SKILLS = {
             { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'clspear', school: 'idol', gauge: 0 },
             { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'clgateimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
-          // The Sorcerer's Abyssal Rain: she tears the sky open, hands pour down on them, and she
-          // drives her fist down for the last and biggest one.
-          onmyoji: [{ move: 'sorain', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
-            { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1 },
-            { at: 0.68, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'soslam', school: 'astral', gauge: 0 },
-            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, fx: 'sohit', burst: 'soimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          // The Sorcerer's Fireworks Gala: she conducts the sky like a fireworks show, fire, ice and
+          // lightning raining down, and sweeps her arms for one blast that sets off every reaction.
+          onmyoji: [{ move: 'qnrain', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+            { at: 0.3, rain: k(4, 5), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'qnorb', school: 'astral', gauge: 0 },
+            { at: 0.44, rain: k(3, 5), magic: true, el: 'ice', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'qncrown', school: 'astral', gauge: 0 },
+            { at: 0.58, rain: k(3, 4), magic: true, el: 'bolt', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'qndecree', school: 'astral', gauge: 0 },
+            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, burst: 'qnfinalefx', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
         },
       };
@@ -1064,7 +1063,7 @@ const MOVES_BY_SKILL = {
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'pmbig', spiritstep: 'pmblink', spiritwave: 'pmwire', frostnova: 'pmflop', blessing: 'pmcamp', spiritward: 'pmscroll', heavenslantern: 'pmkaboom',
   grandblessing: 'clguide', idolcheer: 'clvalor', purification: 'clsanct', resurrection: 'clraise', thousandtorii: 'clmiracle',
-  ofudabarrage: 'sograspd', seimanseal: 'somawcast', yokairally: 'sopact', troupecombo: 'soabyss',
+  ofudabarrage: 'qnsnap', seimanseal: 'qnvortex', yokairally: 'qnpact', troupecombo: 'qnfinale',
   goldencarousel: 'bdcarousel',
   skywaltz: 'sdwaltz',
   gmsmite: 'castup', gmhaste: 'cheer',
