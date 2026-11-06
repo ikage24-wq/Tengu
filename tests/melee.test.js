@@ -2422,7 +2422,7 @@ function idolFull() {
 }
 const settleCast = (w, s = 3) => run(w, s);
 
-test('the Starlight Idol sings her own notes and her own pool of moves, and they build Applause (not Spirit)', () => {
+test('the Cleric smites with her own sunbolts and her own pool of moves, and they build Devotion (not the Weave)', () => {
   const pool = PATH_VARIANTS.idol;
   assert.equal(pool.length, PATH_COMBOS.idol.length, 'one choice per combo step');
   pool.forEach((step, i) => {
@@ -2442,16 +2442,16 @@ test('the Starlight Idol sings her own notes and her own pool of moves, and they
     shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
   }
   assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.idol.map((s) => s.move), 'her combo');
-  assert.equal(shot, 'sinote', 'sparkle notes');
-  assert.ok(w.grace > 0, `her notes build Applause (${w.grace})`);
+  assert.equal(shot, 'clbolt', 'sunbolts');
+  assert.ok(w.grace > 0, `her smites build Devotion (${w.grace})`);
   assert.equal(w.spirit ?? 0, 0, 'and no stars');
 });
 
-test('Center Stage heals at once, then its spotlight follows her and keeps mending; Live Show mends half again as much', () => {
+test('Guiding Light heals at once, then its beam follows her and keeps mending; Live Show mends half again as much', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   assert.ok(cast(w, 'grandblessing').ok);
-  assert.equal(w.pose.kind, 'sispot');
+  assert.equal(w.pose.kind, 'clguide');
   run(w, 0.7);
   const after = w.char.hp;
   assert.ok(after > w.stats.maxHp * 0.42, 'it heals her at once');
@@ -2473,12 +2473,12 @@ test('Center Stage heals at once, then its spotlight follows her and keeps mendi
   assert.equal(w.fx.filter((o) => o.kind === 'sispot').length, 1, 'one spotlight at a time');
 });
 
-test('Hype Wave rolls out both ways: she hits harder, and the monsters it passes are popped up', () => {
+test('Blessing of Valor rolls out both ways: she hits harder, and the monsters it passes are popped up', () => {
   const w = idolFull();
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 150, 900][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'idolcheer').ok);
-  assert.equal(w.pose.kind, 'sihype');
+  assert.equal(w.pose.kind, 'clvalor');
   let rolled = false;
   for (let i = 0; i < 60 * 1.6; i++) {
     updateWorld(w, DT, idle);
@@ -2532,7 +2532,7 @@ test("Curtain Call's Encore keeps her standing through a blow that would knock h
   const w = idolFull();
   w.god = false;
   assert.ok(cast(w, 'resurrection').ok);
-  assert.equal(w.pose.kind, 'sibow');
+  assert.equal(w.pose.kind, 'clraise');
   settleCast(w, 3);
   assert.ok(w.char.buffs.resurrection, 'Encore is on her');
   w.invuln = 0;
@@ -2542,7 +2542,7 @@ test("Curtain Call's Encore keeps her standing through a blow that would knock h
   assert.ok(!w.char.buffs.resurrection, 'and it is spent');
 });
 
-test('Grand Concert needs full Applause, spends it, heals in full, and three beats of music blast the monsters', () => {
+test('Miracle needs full Devotion, spends it, heals in full, and three beats of music blast the monsters', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.2);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 90, 250][i] }));
@@ -2552,7 +2552,7 @@ test('Grand Concert needs full Applause, spends it, heals in full, and three bea
   w.graceAt = w.now;
   assert.ok(cast(w, 'thousandtorii').ok);
   assert.equal(w.grace, 0, 'spends it');
-  assert.equal(w.pose.kind, 'siconcert');
+  assert.equal(w.pose.kind, 'clmiracle');
   let stage = false;
   let beats = 0;
   for (let i = 0; i < 60 * 3; i++) {

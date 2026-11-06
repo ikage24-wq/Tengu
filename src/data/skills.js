@@ -319,11 +319,8 @@ export const SKILLS = {
         // Astronomer: a tap of the orrery that sends a silver moon, a turn of it that sends two, then
         // the orrery spun like a wheel that rolls a great ringed world through the line.
         paths: {
-          shrinemaiden: [
-            { move: 'sicall', dur: 0.36, step: 10, strikes: [{ ...bolt(0.3, k(150, 260)), shot: 'sinote' }] },
-            { move: 'siecho', dur: 0.46, step: 12, carry: 0.6, strikes: [{ ...bolt(0.3, k(95, 165), -4), shot: 'sinote' }, { ...bolt(0.5, k(95, 165), 4), shot: 'sinote' }] },
-            { move: 'sicrescendo', dur: 0.56, step: 14, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: k(240, 400), range: 320, h: 80, targets: k(2, 4), pierce: true, speed: 820, knock: 180, big: true, stop: 0.06, shake: 2 }] },
-          ],
+          // The Cleric's Holy Bolt: light gathered in the scepter's sun and hurled.
+          shrinemaiden: [{ move: 'clholy', dur: 0.7, step: 10, strikes: [{ at: 0.5, shot: 'clorb', magic: true, pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 700, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
           onmyoji: [
             { move: 'astap', dur: 0.36, step: 8, strikes: [{ ...bolt(0.3, k(150, 260)), shot: 'asmoon', speed: 760 }] },
             { move: 'astwin', dur: 0.46, step: 10, carry: 0.6, strikes: [{ ...bolt(0.3, k(95, 165), -4), shot: 'asmoon', speed: 760 }, { ...bolt(0.5, k(95, 165), 4), shot: 'asmoon', speed: 760 }] },
@@ -346,7 +343,7 @@ export const SKILLS = {
         // flying; the Astronomer fades into a silver crescent, drifts ahead like moonlight and
         // waxes back into herself.
         paths: {
-          shrinemaiden: [{ move: 'sislide', dur: 0.5, step: k(120, 180), carry: 0.6, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sihearts', burstAt: 0, burstDur: 0.5 }] }],
+          shrinemaiden: [{ move: 'clascend', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'clfeathers', burstAt: 0, burstDur: 0.5 }] }],
           onmyoji: [{ move: 'asphase', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'asphase', burstAt: 0, burstDur: 0.5 }] }],
         },
       };
@@ -365,7 +362,7 @@ export const SKILLS = {
         // The Starlight Idol plants her feet and belts one power note that tears down the line; the
         // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
         paths: {
-          shrinemaiden: [{ move: 'sipower', dur: 0.54, step: 8, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: k(220, 380), range: 360, h: 90, targets: k(5, 8), pierce: true, speed: 860, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+          shrinemaiden: [{ move: 'cljudgment', dur: 0.6, step: 6, strikes: [{ at: 0.46, shot: 'clbolt', magic: true, pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1300, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
           onmyoji: [{ move: 'asheave', dur: 0.54, step: 10, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: k(220, 380), range: 360, h: 90, targets: k(5, 8), pierce: true, speed: 620, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
         },
       };
@@ -386,7 +383,7 @@ export const SKILLS = {
         // (Until her paths are remade: the Starlight Idol belts a power note and the Astronomer heaves
         // her orrery, each with her own burst, the same freezing ring round her.)
         paths: {
-          shrinemaiden: [{ move: 'sipower', dur: 0.6, step: 0, strikes: [nova('siharmony')] }],
+          shrinemaiden: [{ move: 'clnova', dur: 0.6, step: 0, strikes: [{ ...nova('clnovafx'), el: undefined, freeze: undefined, stun: kf(0.6, 1.2) }] }],
           onmyoji: [{ move: 'asheave', dur: 0.6, step: 0, strikes: [nova('asveil')] }],
         },
       };
@@ -409,7 +406,7 @@ export const SKILLS = {
         // The Starlight Idol hugs the mic and sings a ballad, hearts drifting down over everyone; the
         // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
         paths: {
-          shrinemaiden: [{ move: 'siballad', dur: 0.8, step: 0, strikes: [wish('siballad')] }],
+          shrinemaiden: [{ move: 'clheal', dur: 0.8, step: 0, strikes: [wish('clglow')] }],
           onmyoji: [{ move: 'asmoonrise', dur: 0.8, step: 0, strikes: [wish('asmoonfall')] }],
         },
       };
@@ -431,7 +428,7 @@ export const SKILLS = {
         // settling over everyone; the Astronomer draws an orbit round herself with the staff and
         // silver moons take it up round the party.
         paths: {
-          shrinemaiden: [{ move: 'siharmony', dur: 0.72, step: 0, strikes: [veil('siharmony')] }],
+          shrinemaiden: [{ move: 'clshield', dur: 0.72, step: 0, strikes: [veil('clshieldfx')] }],
           onmyoji: [{ move: 'ashalo', dur: 0.72, step: 0, strikes: [veil('asveil')] }],
         },
       };
@@ -450,71 +447,71 @@ export const SKILLS = {
   // Stage's spotlight follows who it mends, Hype Wave rolls out, Lullaby drifts; world/idol.js), she builds Applause (world/melee.js), and her finisher is Grand
   // Concert. The Astronomer (damage, below) is the other path.
   shrinemastery: skill({
-    id: 'shrinemastery', name: 'Stage Presence', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
-    desc: 'The crowd is with you: more magic attack, a deeper well of MP, and every heal you give mends more.',
+    id: 'shrinemastery', name: 'Devotion', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
+    desc: 'The light is with you (and you will tell everyone): more magic attack, a deeper well of MP, and every heal you give mends more.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(5, 35, lv, m), maxMpPct: lerpf(0.05, 0.25, lv, m), healPower: lerpf(0.05, 0.3, lv, m) } }),
   }),
   grandblessing: skill({
-    id: 'grandblessing', name: 'Center Stage', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
-    desc: 'Point the mic at whoever is hurt worst, you or a friend near you, and call them up: a spotlight drops on them and mends them at once, then follows them wherever they go for a while, mending them every second.',
+    id: 'grandblessing', name: 'Guiding Light', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
+    desc: 'Shade your eyes, find whoever is hurt worst (you or a friend near you), and point: "YOU! BE HEALED!" A beam of light drops on them and mends them at once, then follows them wherever they go for a while, mending them every second.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(40, 70), pct: 0, hits: 0, targets: 0, range: { w: 760, h: 200, around: true },
-        combo: [{ move: 'sispot', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, spot: { r: 380, heal: kf(0.16, 0.28), tick: kf(0.04, 0.07), every: 1, dur: k(6, 10) } }] }],
+        combo: [{ move: 'clguide', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, spot: { r: 380, heal: kf(0.16, 0.28), tick: kf(0.04, 0.07), every: 1, dur: k(6, 10) } }] }],
       };
     },
   }),
   idolcheer: skill({
-    id: 'idolcheer', name: 'Hype Wave', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
-    desc: 'Get the whole crowd going: a wave of light rolls out both ways along the ground. Every friend it passes hits harder for a while, and every monster it passes is popped up off its feet.',
+    id: 'idolcheer', name: 'Blessing of Valor', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
+    desc: 'Sweep the scepter round and plant it: a wave of gold light rolls out both ways along the ground. Every friend it passes hits harder for a while, and every monster it passes is knocked off its feet.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: k(60, 110), hits: 1, targets: 0, range: { w: 720, h: 180, around: true },
-        combo: [{ move: 'sihype', dur: 0.85, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, hype: { r: k(260, 360), speed: 560, dur: k(12, 20), watk: k(8, 22), matk: k(8, 22), pct: k(60, 110), launch: 220 } }] }],
+        combo: [{ move: 'clvalor', dur: 0.85, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, hype: { r: k(260, 360), speed: 560, dur: k(12, 20), watk: k(8, 22), matk: k(8, 22), pct: k(60, 110), launch: 220 } }] }],
       };
     },
   }),
   purification: skill({
-    id: 'purification', name: 'Lullaby', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'purification', school: 'idol',
-    desc: 'Hum softly into the mic and blow: a little cloud of lilac notes drifts off toward the nearest monster. Whatever it touches nods off for a moment, then slows to a sleepy drift while its notes chip at it again and again.',
+    id: 'purification', name: 'Penance', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'purification', school: 'idol',
+    desc: 'Draw a circle of light on the floor and raise the scepter: an orb of judging light drifts off toward the nearest monster. Whatever it touches is dazzled still for a moment, then slows to a crawl while the light singes it again and again, until it thinks about what it has done.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 55), pct: k(50, 95), hits: 1, targets: 0,
-        combo: [{ move: 'silullaby', dur: 0.9, step: 0, strikes: [{ at: 0.52, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, lull: { r: k(60, 80), dur: k(6, 9), every: 0.6, pct: k(50, 95), speed: 70, sleep: kf(0.8, 1.4), seek: 360 } }] }],
+        combo: [{ move: 'clsanct', dur: 0.9, step: 0, strikes: [{ at: 0.52, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, lull: { r: k(60, 80), dur: k(6, 9), every: 0.6, pct: k(50, 95), speed: 70, sleep: kf(0.8, 1.4), seek: 360 } }] }],
       };
     },
   }),
   resurrection: skill({
-    id: 'resurrection', name: 'Curtain Call', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'resurrection', school: 'idol', party: true, maxLevel: 10,
-    desc: 'Sink into a curtsy as the curtains sweep shut, then fling your arms wide as they part again: every fallen ally nearby gets back up. And for a while the crowd won\'t let you leave the stage: a blow that would knock you out leaves you standing instead (Encore), once.',
+    id: 'resurrection', name: 'Resurrection', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'resurrection', school: 'idol', party: true, maxLevel: 10,
+    desc: 'Kneel, bow your head, then rise lifting the scepter high: "RISE, MY FRIENDS!" Every fallen ally nearby gets back up. And for a while the light won\'t let you fall: a blow that would knock you out leaves you standing instead, once.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(60, 100), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'sibow', dur: 1.15, step: 0, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sicurtain', burstAt: 0, burstDur: 1.15 }, { at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
+        combo: [{ move: 'clraise', dur: 1.15, step: 0, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'clrays', burstAt: 0, burstDur: 1.15 }, { at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
       };
     },
   }),
   thousandtorii: skill({
-    id: 'thousandtorii', name: 'Grand Concert', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
-    desc: 'Finisher: needs full Applause, and spends it. A stage of light rises under you and the spotlights find you: everyone near is healed in full and wrapped in a ward, and you sing it out, three big beats, pyro shooting up on each one and the music blasting the monsters back.',
+    id: 'thousandtorii', name: 'Miracle', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
+    desc: 'Finisher: needs full Devotion, and spends it. Spread your arms and float up as stained-glass light floods the field: everyone near is healed in full and wrapped in a ward, and three great proclamations of light blast the monsters back. Then a deep, very satisfied bow.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(240, 400), hits: 3, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'siconcert', dur: 2.1, step: 0, strikes: [{ at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, concert: { r: 320, pct: k(240, 400), beats: [0.62, 0.95, 1.33], ward: kf(0.2, 0.4), wardDur: k(10, 16) } }] }],
+        combo: [{ move: 'clmiracle', dur: 2.1, step: 0, strikes: [{ at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, concert: { r: 320, pct: k(240, 400), beats: [0.62, 0.95, 1.33], ward: kf(0.2, 0.4), wardDur: k(10, 16) } }] }],
       };
     },
   }),
@@ -594,10 +591,10 @@ export const SKILLS = {
         // Astronomer's: she lifts the orrery and stops the sky; little planets fall ahead of her,
         // and she brings the staff down for one great ringed world to land.
         paths: {
-          shrinemaiden: [{ move: 'siencore', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
-            { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'siharmony', burstAt: 0, burstDur: 0.9 },
-            { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'sinote', school: 'idol', gauge: 0 },
-            { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'sifinale', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          shrinemaiden: [{ move: 'clgate', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
+            { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'clgatefx', burstAt: 0, burstDur: 0.9 },
+            { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'clspear', school: 'idol', gauge: 0 },
+            { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'clgateimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
           onmyoji: [{ move: 'asmeteor', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
             { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'asveil', burstAt: 0, burstDur: 0.9 },
@@ -1047,7 +1044,7 @@ const MOVES_BY_SKILL = {
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'mgfireball', spiritstep: 'mgteleport', spiritwave: 'mgchain', frostnova: 'mgnova', blessing: 'mgheal', spiritward: 'mgguard', heavenslantern: 'mgmeteor',
-  grandblessing: 'sispot', idolcheer: 'sihype', purification: 'silullaby', resurrection: 'sibow', thousandtorii: 'siconcert',
+  grandblessing: 'clguide', idolcheer: 'clvalor', purification: 'clsanct', resurrection: 'clraise', thousandtorii: 'clmiracle',
   ofudabarrage: 'asglobe', seimanseal: 'aswell', yokairally: 'astide', troupecombo: 'asalign',
   goldencarousel: 'bdcarousel',
   skywaltz: 'sdwaltz',

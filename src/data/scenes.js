@@ -660,7 +660,7 @@ export const SIDE_SCENES = {
   ],
   trial_elowen_done: [
     { who: 'elowen', text: "I felt every one of them go home. Peacefully. You have a gift, {name}. Don't tell Mira I said so. She'll be insufferable.", mood: 'happy' },
-    { who: 'elowen', text: 'The Starlight Idol sings, and her songs heal everyone who hears them. The Astronomer calls planets and moons down out of the sky. Both are yours to choose.' },
+    { who: 'elowen', text: 'The Cleric heals everyone near her, and makes sure they know it. The Astronomer calls planets and moons down out of the sky. Both are yours to choose.' },
   ],
   // ----- Vex and Tora's hammer -----
   vex_shadows_done: [

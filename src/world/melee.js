@@ -210,14 +210,13 @@ export const PATH_COMBOS = {
     { move: 'mgfrost', dur: 0.42, step: 14, strikes: [{ at: 0.38, shot: 'mgice', magic: true, el: 'ice', pct: 40, range: 290, h: 110, knock: 25, speed: 860, fan: 3 }] },
     { move: 'mgthunder', dur: 0.56, step: 18, finisher: true, strikes: [{ at: 0.5, shot: 'mgbolt', magic: true, el: 'bolt', pct: 170, range: 330, h: 70, targets: 3, pierce: true, knock: 200, speed: 1400, big: true, stop: 0.06, shake: 2 }] },
   ],
-  // The Starlight Idol (the Shrine Maiden remade; docs/design/starlight-idol.md), singing into her
-  // mic: a line sung with a dip on the beat and the mic swung out (a note flies), a step and touch
-  // (a note on each beat), and the high note: she belts, then throws the mic out as a burst of sound
-  // blasts through the line.
+  // The Cleric of light (the healer path, id kept; docs/design/mage-line.md): a smite (a sunbolt
+  // off her scepter), a twin blessing (two orbs of light), and Judgment (a pillar of light slams down
+  // on them from the sky, `sky`).
   idol: [
-    { move: 'sibeat', dur: 0.36, step: 10, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 880 }] },
-    { move: 'sistep', dur: 0.46, step: 14, carry: 0.6, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 880, oy: -3 }, { at: 0.6, shot: 'sinote', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 880, oy: 3 }] },
-    { move: 'sihigh', dur: 0.58, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'sibig', magic: true, pct: 165, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'clsmite', dur: 0.34, step: 10, strikes: [{ at: 0.32, shot: 'clbolt', magic: true, pct: 80, range: 300, h: 64, knock: 25, speed: 900 }] },
+    { move: 'clbless', dur: 0.46, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 760, oy: -3 }, { at: 0.56, shot: 'clorb', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 760, oy: 3 }] },
+    { move: 'cljudge', dur: 0.58, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'clpillar', sky: true, magic: true, pct: 165, range: 300, h: 90, targets: 3, knock: 120, launch: 120, speed: 1500, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Astronomer (the Onmyoji remade; docs/design/astronomer.md), conducting the planets with her
   // orrery: a long arc flinging a planet, a slow conducted circle sending two, and a ringed world
@@ -470,22 +469,12 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.starwand[1], { move: 'mgtwirl', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'mgice', magic: true, el: 'ice', pct: 52, range: 290, h: 90, knock: 25, speed: 860, fan: 2 }] }],
     [PATH_COMBOS.starwand[2], { move: 'mgcape', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'mgbolt', magic: true, el: 'bolt', pct: 172, range: 330, h: 70, targets: 3, pierce: true, knock: 220, launch: 120, speed: 1400, big: true, stop: 0.06, shake: 2 }] }],
   ],
-  // The Starlight Idol. Openers: a line on the beat, a blown kiss, or the mic lassoed round overhead.
-  // Second: the step and touch, singing over her shoulder, or a hair flip. Finisher: the high note,
-  // her idol pose, or a heart drawn in the air; now and then an idol jump
-  // in place of the second, singing down at them from the top of it.
+  // The Cleric. Openers: the smite or a prayer bolt; second: the twin blessing or a halo twirl;
+  // finisher: Judgment or a stained-glass burst of rays.
   idol: [
-    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.36, step: 10, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 880, knock: 30 }] },
-      // The mic whirled round at her side by its cord like a lasso, let go at them as a note flies.
-      { move: 'sitwirl', dur: 0.42, step: 12, strikes: [{ at: 0.36, shot: 'sinote', magic: true, pct: 86, range: 310, h: 70, knock: 40, speed: 900 }] }],
-    [PATH_COMBOS.idol[1],
-      { move: 'sishoulder', dur: 0.5, step: 8, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 44, range: 300, h: 64, knock: 20, speed: 880, oy: -2 }, { at: 0.6, shot: 'sinote', magic: true, pct: 52, range: 300, h: 64, knock: 20, speed: 880, oy: 2 }] },
-      { move: 'sijump', dur: 0.52, step: 22, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 880, h: 150, drop: 40, targets: 2, pierce: true }] },
-      // A hair flip on the beat: a fan of three little notes thrown off it.
-      { move: 'sihair', dur: 0.46, step: 10, strikes: [{ at: 0.34, shot: 'sinote', magic: true, pct: 34, range: 280, h: 64, knock: 20, speed: 860, oy: -8 }, { at: 0.36, shot: 'sinote', magic: true, pct: 34, range: 290, h: 64, knock: 20, speed: 880 }, { at: 0.38, shot: 'sinote', magic: true, pct: 34, range: 300, h: 64, knock: 20, speed: 900, oy: 8 }] }],
-    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.56, step: 12, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] },
-      // A heart drawn in the air with the mic, then pushed off her palm: it sails through the line.
-      { move: 'siheart', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.54, shot: 'siheart', magic: true, pct: 172, range: 330, h: 84, targets: 3, pierce: true, speed: 700, knock: 180, launch: 60, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.idol[0], { move: 'clpray', dur: 0.38, step: 8, strikes: [{ at: 0.34, shot: 'clbolt', magic: true, pct: 84, range: 300, h: 64, knock: 30, speed: 900 }] }],
+    [PATH_COMBOS.idol[1], { move: 'cltwirl', dur: 0.46, step: 12, strikes: [{ at: 0.44, shot: 'clorb', magic: true, pct: 96, range: 310, h: 70, knock: 40, speed: 780, targets: 2, pierce: true }] }],
+    [PATH_COMBOS.idol[2], { move: 'clglass', dur: 0.58, step: 6, finisher: true, strikes: [{ at: 0.5, shot: 'clbolt', magic: true, pct: 60, range: 320, h: 120, knock: 160, speed: 900, fan: 3, targets: 2, pierce: true, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
@@ -567,15 +556,15 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'mgdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.36, shot: 'mgfire', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 920 }] },
   },
-  // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
-  // hang in the air (the second a big one); a rock-star knee slide out of a run.
+  // The Cleric: a ray shot up at whatever flies, light cast down from the air (the second time a
+  // pillar of it), and a glide on a beam of light out of a run.
   idol: {
-    up: { move: 'siup', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 110, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    up: { move: 'clup', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'clbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 900, big: true, stop: 0.04 }] },
     air: [
-      { move: 'siair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 80, range: 300, h: 64, knock: 20, speed: 880, range: 260, h: 170, drop: 60, knock: 30 }] },
-      { move: 'siair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sibig', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 820, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'clair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
+      { move: 'clair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'clbolt', magic: true, fan: 2, pct: 70, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 900, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'sidash', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'sinote', magic: true, pct: 115, range: 300, h: 64, knock: 20, speed: 880, targets: 2, pierce: true, knock: 100 }] },
+    dash: { move: 'clglide', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'clbolt', magic: true, pct: 115, range: 300, h: 64, knock: 100, speed: 900, targets: 2, pierce: true }] },
   },
   // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
   // (the second a ringed world), and a glide out of a run.
@@ -1323,7 +1312,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
   // The Mage names her big spells out loud, like the chosen one (MAGE_SHOUTS).
-  if (world.char.job === 'spiritmage') mageShout(world, step.move);
+  if (world.char.job === 'spiritmage' || world.char.job === 'shrinemaiden') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -1851,7 +1840,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = MG_SHOTS.has(s.shot) ? `mghit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `mghit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1987,8 +1976,9 @@ function fire(world, strike) {
     for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
       const my = m.y - (m.air ?? 0) - m.def.h / 2;
       // (Her lightning comes straight down; a meteor slants in.)
-      const sx = s.shot === 'mgsky' ? m.x : m.x - s.dir * 70;
-      const sy = my - (s.shot === 'mgsky' ? 200 : 170);
+      const straight = s.shot === 'mgsky' || s.shot === 'clpillar';
+      const sx = straight ? m.x : m.x - s.dir * 70;
+      const sy = my - (straight ? 200 : 170);
       const travel = Math.hypot(m.x - sx, my - sy) / speed;
       world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: 0, dur: travel });
       shotHit(world, s, m, travel, 0, element);
@@ -2120,6 +2110,20 @@ export const MAGE_SHOUTS = {
   mgheal: ['...fine. Heal.', 'Ugh. So BRIGHT.', "Don't get used to this."],
   mgguard: ['BARRIER OF THE DAMNED!', 'NONE SHALL PASS!', 'MY WARD IS ETERNAL!'],
   mgmeteor: ['CATACLYSM... OF THE CRIMSON STAR!'],
+  // The Cleric names her heals the same way (it's the same girl).
+  cljudge: ['JUDGMENT OF THE DAWN!', 'BEHOLD THE LIGHT!', 'REPENT!'],
+  clglass: ['SAINTLY RADIANCE!', 'BASK IN MY GLORY!', 'SANCTUS!'],
+  clguide: ['YOU! BE HEALED!', 'RADIANT SALVATION!', 'THE LIGHT CHOOSES YOU!'],
+  clvalor: ['BLESSING OF VALOR!', 'FIGHT ON, MY FLOCK!', 'BE BRAVE, MORTALS!'],
+  clsanct: ['THINK ABOUT WHAT YOU DID!', 'PENANCE!', 'REPENT, FIEND!'],
+  clraise: ['RISE, MY FRIENDS!', 'NOT TODAY, DEATH!', 'ARISE!'],
+  clmiracle: ['BEHOLD... A MIRACLE!'],
+  clholy: ['HOLY BOLT!', 'SMITE OF THE SUN!', 'BE PURIFIED!'],
+  cljudgment: ['JUDGMENT RAY!', 'THE LIGHT SEES ALL!', 'BE JUDGED!'],
+  clnova: ['HOLY NOVA!', 'RADIANT BURST!', 'BEGONE!'],
+  clheal: ['RADIANT SALVATION!', 'BE WELL, MY CHILD!', 'HEAL!'],
+  clshield: ['DIVINE SHIELD!', 'THE LIGHT PROTECTS!', 'SHIELDED BY GRACE!'],
+  clgate: ["HEAVEN'S GATE... OPEN!"],
 };
 function mageShout(world, move) {
   const lines = MAGE_SHOUTS[move];
@@ -2130,6 +2134,8 @@ function mageShout(world, move) {
   world.mageShout = { ...world.mageShout, [move]: line };
   world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: '#ff6a7a', t: 0, shout: true });
 }
+// The Cleric's shots (her own art); their hits leave her mark of light.
+export const CL_SHOTS = new Set(['clbolt', 'clorb', 'clpillar']);
 // The shot each of her elements flies as when Overload sends it along with another spell.
 const ELEMENT_SHOT = { fire: 'mgfire', ice: 'mgice', bolt: 'mgbolt' };
 // The Kitchen Witch's shots (shelved: data/kitchen-witch.js); their hits leave her splash.

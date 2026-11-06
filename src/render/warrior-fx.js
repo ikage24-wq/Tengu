@@ -318,6 +318,23 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celmgcircle', x + dir * 130, y - 120, { t: f.t, scale: 0.6, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
     case 'mgimpact':
       return fxSprite(ctx, 'celmgimpact', x, y + 4, { p, scale: 0.9 }) || true;
+    // The Cleric's bursts: Ascension's feathers, Holy Nova's ring of light, her bright heal, Divine
+    // Shield's wings, Heaven's Gate in the sky (spread over the stretch its spears fall on) and its
+    // light crashing down, and Resurrection's rays.
+    case 'clfeathers':
+      return fxSprite(ctx, 'celclfeathers', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'clnovafx':
+      return fxSprite(ctx, 'celclnovafx', x, y + 2, { p, scale: 0.62 }) || true;
+    case 'clglow':
+      return fxSprite(ctx, 'celclglow', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'clshieldfx':
+      return fxSprite(ctx, 'celclshieldfx', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'clgatefx':
+      return fxSprite(ctx, 'celclgatefx', x + dir * 130, y - 120, { p, scale: 0.6, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
+    case 'clgateimpact':
+      return fxSprite(ctx, 'celclgateimpact', x, y + 4, { p, scale: 0.9 }) || true;
+    case 'clrays':
+      return f.t < 0 || fxSprite(ctx, 'celclrays', x, y + 4, { p, scale: 0.75 }) || true;
     case 'mghitfire': case 'mghitice': case 'mghitbolt':
       // The Mage's marks: her crimson rune ring flashing round a burst of her element.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;

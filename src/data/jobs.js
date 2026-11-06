@@ -53,13 +53,14 @@ export const JOBS = {
     blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
   },
 
-  // The Star Witch's paths (ids kept). Both ask for Elowen's trial first.
-  // The Starlight Idol (her songs, Applause and Grand Concert; docs/design/starlight-idol.md) and the
-  // Astronomer (her moons, Orbit and Planetary Alignment; docs/design/astronomer.md).
+  // The Mage's paths (ids kept). Both ask for Elowen's trial first. The Cleric of light (the healer,
+  // on the Starlight Idol's engine: Devotion and Miracle; docs/design/mage-line.md) and the
+  // Astronomer (her moons, Orbit and Planetary Alignment; docs/design/astronomer.md; to be remade as
+  // the Sorcerer).
   shrinemaiden: {
-    id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Starlight Idol', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Cleric', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand'],
-    blurb: 'A pop idol whose wand is her microphone: the heart of any party. Her songs hang in the air where she sings them, mending everyone, cheering them on or lulling the monsters; her heals and hits build Applause, and full, her songs reach half again as far. Curtain Call raises the fallen, and Grand Concert heals everyone in full. The healer of any dungeon group.',
+    blurb: 'A Mage who saw the light, and wants everyone to know: she names every heal like an epic spell and poses like a saint in a stained-glass window. Guiding Light follows whoever is hurt and keeps mending them; Blessing of Valor and Penance turn a fight; Resurrection raises the fallen; and Miracle, with her Devotion full, heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
     id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Astronomer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',

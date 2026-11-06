@@ -16,6 +16,8 @@ const BG = {
   sakura: ['#ffc4dc', '#d94f8c'],
   // The Mage's: deep crimson, so her orange fire, pale ice and yellow lightning all stand out.
   magecrimson: ['#ff9aae', '#5e1634'],
+  // The Cleric's: warm white to gold.
+  clericgold: ['#fffbe8', '#d8902e'],
   crimson: ['#ffa07e', '#a8304a'],
   ember: ['#ffd27a', '#c8452e'],
   steel: ['#b4ccf4', '#3f55a0'],
@@ -1453,62 +1455,65 @@ function micIcon(x, y, h, lean = 0) {
   const r = h * 0.3;
   return [S(tube([[x, y], [top[0], top[1] + r * 0.6]], h * 0.11, h * 0.08), '#e8a83a'), ...solid(oval(top[0], top[1], r, r, 0, 18), IPINK, { d: 0.35, ink: IPINKINK }), S(rect(top[0] - r, top[1] + r * 0.05, r * 2, r * 0.32), '#ffd36a')];
 }
-// Stage Presence (the Starlight Idol): her mic on a stand in a spotlight's glow.
+// St// ---------- The Cleric of light (white and gold tiles: suns, halos, feathers, stained glass) ----------
+const CLGOLD = '#ffd36a';
+const CLINK = '#8e5228';
+// A little sun: gold rays round a white-hot disc.
+const clSun = (x, y, r) => [...solid(starPts(x, y, r * 1.5, r * 0.95, 10, -90), CLGOLD, { d: 0.35, ink: CLINK }), S(oval(x, y, r * 0.8, r * 0.8, 0, 14), '#fff6c8'), S(oval(x - r * 0.15, y - r * 0.15, r * 0.4, r * 0.4, 0, 10), W)];
+// A halo seen at a slant.
+const clHalo = (x, y, rx) => [S(tube(arcPts(x, y, rx, rx * 0.3, 0, 360, 24), 0.7), CLINK), S(tube(arcPts(x, y, rx, rx * 0.3, 0, 360, 24), 0.4), CLGOLD)];
+// A white feather from its quill (x, y) toward angle `a` (degrees).
+function clFeather(x, y, a, len) {
+  const c = Math.cos(a * D2R);
+  const sn = Math.sin(a * D2R);
+  const at = (u, k) => [x + c * len * u - sn * k, y + sn * len * u + c * k];
+  return [...solid([at(0, 0), at(0.35, -len * 0.25), at(1, -len * 0.05), at(0.9, len * 0.1), at(0.35, len * 0.22)], W, { d: 0.3, ink: '#8a7a8a' })];
+}
+// Devotion: her halo over a glowing sun.
 function shrinemastery() {
-  const out = [...tile('idolbg', 'passive'), ...aura(8, 7, 6.6, '#fff0f6', 1.2)];
-  out.push(S([[7, 0.8], [9, 0.8], [11.6, 15], [4.4, 15]], '#fff2f8'));
-  out.push(S(tube([[8, 14.4], [8, 7.6]], 0.4, 0.4), '#8a5a2a'), S(oval(8, 14.6, 3, 0.8, 0, 14), '#8a5a2a'));
-  out.push(...micIcon(8, 8.4, 5.6));
-  out.push(...spark(3.2, 4, 1, '#ffd36a'), ...spark(13, 3.4, 0.9));
+  const out = [...tile('clericgold', 'passive'), ...aura(8, 9, 6.6, '#fff6c8')];
+  out.push(...clHalo(8, 3.6, 4.6), ...clSun(8, 9.6, 3.2));
+  out.push(...spark(2.6, 12.8, 0.9, W), ...spark(13.4, 12.4, 0.8, CLGOLD));
   return out;
 }
-// Center Stage: a spotlight from a little gold lamp dropping on a heart, its pool of light below.
+// Guiding Light: a beam from a halo onto a little figure's pool of light.
 function grandblessing() {
-  const out = [...tile('idolbg', 'active'), ...aura(8, 11, 6, '#fff0f6', 1.1)];
-  out.push(S([[6.6, 2.6], [9.4, 2.6], [13.6, 14], [2.4, 14]], '#fff2f8'));
-  out.push(S([[7.4, 2.6], [8.6, 2.6], [10.6, 14], [5.4, 14]], '#ffffff'));
-  out.push(...solid([[6, 0.8], [10, 0.8], [10.8, 3], [5.2, 3]], '#ffd36a', { d: 0.35, ink: '#8e5228' }));
-  out.push(...solid(oval(8, 14, 5.6, 1.4, 0, 18), '#ffd0e4', { d: 0.3, ink: IPINKINK }));
-  out.push(...heartIcon(8, 10, 3.2));
-  out.push(...spark(3.4, 6, 0.9, '#ffd36a'), ...spark(12.8, 7.4, 0.8));
+  const out = [...tile('clericgold', 'buff')];
+  out.push(S([[6.4, 3], [9.6, 3], [12.6, 14], [3.4, 14]], '#fff6c8'), S([[7.4, 3], [8.6, 3], [9.8, 14], [6.2, 14]], W));
+  out.push(...clHalo(8, 2.6, 3.4), S(oval(8, 13.8, 4.6, 1.2, 0, 16), CLGOLD));
+  out.push(...clFeather(4, 8, 60, 3.4), ...clFeather(12.4, 10, 120, 3));
   return out;
 }
-// Hype Wave: a pink wave curling over, glow sticks waving up out of it.
+// Blessing of Valor: a crest of gold light with rays shooting up from it.
 function idolcheer() {
-  const out = [...tile('idolbg', 'buff'), ...aura(8, 9, 6.4, '#fff4c8', 1.3, 5)];
-  out.push(S(tube([[3.4, 11], [2.2, 6.4]], 0.7, 0.6), '#ffd36a'), S(tube([[6.4, 9.6], [6, 4.6]], 0.7, 0.6), IPINK), S(tube([[9.4, 8.6], [10.2, 3.6]], 0.7, 0.6), '#ffd36a'));
-  out.push(...solid([[0.8, 15], [3, 13], [6, 10.4], [9.4, 8.4], [12.6, 8.2], [14.6, 9.8], [14.4, 12], [12.6, 11], [11.4, 12.6], [12.6, 15]], IPINK, { d: 0.35, ink: IPINKINK }));
-  out.push(S([[5, 11.6], [9.4, 9.2], [12.6, 9.2], [14, 10.2], [12.8, 9.8], [9.6, 10]], '#fff4c8'));
-  out.push(...heartIcon(13, 4.4, 1.4, '#ffd36a'), ...spark(4.2, 2.6, 0.9));
+  const out = [...tile('clericgold', 'buff'), ...aura(8, 9, 6.4, '#fff1c0')];
+  for (const [x, h] of [[4.4, 6], [7, 8.6], [9.6, 7.4], [12.2, 5.4]]) out.push(streak([x, 13], [x + 0.6, 13 - h], 0.9, CLINK), streak([x, 13], [x + 0.6, 13 - h], 0.6, W));
+  out.push(...solid([[1.4, 14.6], [5, 11.4], [10, 10.4], [14.6, 12.2], [14.6, 14.6]], CLGOLD, { d: 0.3, ink: CLINK }));
+  out.push(...spark(13.4, 3, 1, W));
   return out;
 }
-// Lullaby: a sleepy lilac cloud, eyes shut, with a note and a 'z' drifting off it.
+// Penance: an orb of judging light under a halo.
 function purification() {
-  const out = [...tile('lullbg', 'active'), ...aura(7, 9, 6, '#f4e4ff', 1.1)];
-  for (const [x, y, r] of [[4.4, 10.4, 2.8], [7.4, 8.4, 3.6], [10.8, 10, 3], [7.6, 11.6, 3]]) out.push(...solid(oval(x, y, r, r * 0.86, 0, 16), '#e6d2ff', { d: 0.35, ink: '#5a3a9a' }));
-  out.push(S(rect(5.4, 10, 1.4, 0.4), '#5a3a9a'), S(rect(8.6, 10, 1.4, 0.4), '#5a3a9a'), S(oval(7.6, 12, 0.5, 0.6, 0, 10), '#5a3a9a'));
-  out.push(...noteIcon(2.6, 5.4, 1.2, '#d4b0ff'));
-  out.push(S([[10.4, 1.6], [13.6, 1.6], [13.6, 2.4], [11.6, 4.6], [13.6, 4.6], [13.6, 5.4], [10.4, 5.4], [10.4, 4.6], [12.4, 2.4], [10.4, 2.4]], '#fff0f6'));
-  out.push(...spark(14, 13.6, 0.9, '#ffd36a'));
+  const out = [...tile('clericgold', 'active'), ...aura(8, 9, 6.4, '#fff6c8')];
+  out.push(...clHalo(8, 3.4, 3.6), ...clSun(8, 9.4, 3.4));
+  out.push(S(oval(8, 14.2, 5, 1, 0, 14), '#ffe9a8'));
+  out.push(...spark(2.6, 7, 0.8, W), ...spark(13.4, 6, 0.8, W));
   return out;
 }
-// Curtain Call: pink stage curtains drawn back, a burst of light where she bows.
+// Resurrection: rays fanning up out of a halo on the ground, feathers rising.
 function resurrection() {
-  const out = [...tile('idolbg', 'active'), ...aura(8, 9, 5.6, '#fff4c8', 1.3)];
-  out.push(S(rect(1, 1, 14, 1.8), '#ffd36a'));
-  out.push(...solid([[1, 2.6], [5.6, 2.6], [4, 7], [2.8, 15], [1, 15]], '#e0609e', { d: 0.35, ink: IPINKINK }));
-  out.push(...solid([[15, 2.6], [10.4, 2.6], [12, 7], [13.2, 15], [15, 15]], '#e0609e', { d: 0.35, ink: IPINKINK }));
-  out.push(...goldStar(8, 9.4, 3, 0), ...heartIcon(8, 14, 1.2, '#fff0f6'));
-  out.push(...spark(8, 3.6, 1));
+  const out = [...tile('clericgold', 'buff')];
+  for (let j = 0; j < 5; j++) { const a = -90 + (j - 2) * 18; out.push(streak([8, 13.6], [8 + Math.cos(a * D2R) * 11, 13.6 + Math.sin(a * D2R) * 11], 0.7, j % 2 ? '#fff6c8' : W)); }
+  out.push(...clHalo(8, 13.4, 5), ...clFeather(4, 6, -60, 3.2), ...clFeather(12, 5, -120, 3.2));
   return out;
 }
-// Grand Concert (her finisher): the stage of light, two spotlights crossing on her mic, notes over it.
+// Miracle: a stained-glass window with a sun in its rose, light pouring from it.
 function thousandtorii() {
-  const out = [...tile('idolbg', 'active'), ...aura(8, 9, 7, '#fff4c8', 1.3, 5)];
-  out.push(S([[0.6, 0.6], [2, 0.6], [9.4, 12], [7.4, 12]], '#fff4c8'), S([[15.4, 0.6], [14, 0.6], [6.6, 12], [8.6, 12]], '#ffeaf4'));
-  out.push(...solid(rect(1.4, 12.4, 13.2, 2.6), IPINK, { d: 0.35, ink: IPINKINK }), S(rect(1.4, 12, 13.2, 0.9), '#ffd36a'));
-  out.push(...micIcon(8, 12, 6.4));
-  out.push(...noteIcon(3.2, 7, 1.2, '#ffd36a'), ...noteIcon(12.2, 6, 1.2, '#fff0f6'));
+  const out = [...tile('clericgold', 'active'), ...aura(8, 8, 7, '#fff6c8', 1.2, 5)];
+  const arch = [[3.4, 15], [3.4, 6], ...arcPts(8, 6, 4.6, 4.6, 180, 360, 10), [12.6, 6], [12.6, 15]];
+  out.push(...solid(arch, CLGOLD, { d: 0.3, ink: CLINK }));
+  [['#ff8a9a', 4.4, 8], ['#8fd8ff', 8.2, 8], ['#a8e8a0', 4.4, 11.4], ['#c8a8ff', 8.2, 11.4]].forEach(([c, x, y]) => out.push(S(rect(x, y, 3.4, 3), c)));
+  out.push(...clSun(8, 4.6, 1.6));
   return out;
 }
 // ---------- The Astronomer (deep violet and silver: ringed planets, moons, orbits) ----------

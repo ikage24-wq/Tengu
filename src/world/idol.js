@@ -35,7 +35,7 @@ function medley(world, kind) {
   if (world.lastSong && world.lastSong !== kind) {
     addGrace(world, MEDLEY);
     const b = world.body;
-    world.numbers.push({ x: b.x, y: b.y - b.h - 18, text: 'MEDLEY!', color: '#ffc0dc', t: 0, small: true });
+    world.numbers.push({ x: b.x, y: b.y - b.h - 18, text: 'DEVOTION!', color: '#ffe08a', t: 0, small: true });
   }
   world.lastSong = kind;
 }

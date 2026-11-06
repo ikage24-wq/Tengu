@@ -54,6 +54,26 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
   with a sun gem and a floating halo in place of the hat (render/jobgear/cleric.js). Her wand is a
   gold sun scepter (the 'cleric' finish). Samples: docs/design/samples/cleric-looks.png.
 
+- **Built (2026-11-06).** On the Idol's engine (world/idol.js: the spotlight that follows who it
+  mends, the wave, the drifting cloud, raising the fallen, the full-party finisher), with all-new
+  moves, art and names:
+  - Moves (render/moves.js `cl*`, faces `CL_FACE`): the string clsmite, clbless, cljudge (a pillar
+    of light from the sky, `clpillar`) and its pool clpray, cltwirl, clglass; commands clup, clair,
+    clglide; her skills clguide (Guiding Light), clvalor (Blessing of Valor), clsanct (Penance: an
+    orb of judging light that drifts after the monsters, dazzles and slows them; the engine's
+    drifting cloud, so not the floor circle first drafted), clraise (Resurrection), clmiracle
+    (Miracle); and her Mage skills her way: clholy (Holy Bolt), clascend (Ascension), cljudgment
+    (Judgment Ray), clnova (Holy Nova: stuns instead of freezing), clheal, clshield (Divine
+    Shield), clgate (Heaven's Gate).
+  - Effects (tools/fx-art.js, the Cleric section; palettes HOLY, HGEM, FEATHER, GLASS): her shots
+    `clbolt`, `clorb`, `clpillar`; bursts `clfeathers`, `clnovafx`, `clglow`, `clshieldfx`,
+    `clgatefx`, `clgateimpact`, `clrays`, the rain `clspear`; and the Idol's show effects redrawn in
+    her light under their old names (`sihit`, `siwave`, `sispot`, `sihype`, `silull`, `sistage` as a
+    stained-glass window, `sipyro`, `sibig`, `siaura`, `embidol`).
+  - Devotion on the HUD (the old Applause slot), her shouted heal names (`MAGE_SHOUTS`), icons
+    (crimson-free white and gold tiles), job name and blurb. Recorded in the game:
+    docs/design/samples/cleric-skills.gif.
+
 ## Status
 
 - 2026-11-06: picks recorded; look samples (`tools/mage-looks.html`, docs/design/samples/mage-looks.png).

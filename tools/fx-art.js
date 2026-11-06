@@ -7223,6 +7223,421 @@
     };
   })();
 
+  // ---------- The Cleric of light (white and gold: suns, halos, feathers, stained glass) ----------
+  // docs/design/mage-line.md. She replaces the Starlight Idol on the same engine (world/idol.js), so
+  // the Idol's show effects are redrawn here in her light under the same names (sispot, sihype,
+  // silull, sistage, sipyro, sihit, siwave, sibig), and her own shots and bursts are new (cl*).
+  const HOLY = ['#ffffff', '#fff6c8', '#ffd36a', '#e09a36', '#8e5228'];
+  const HGEM = ['#ffffff', '#e6f8ff', '#8fd8ff', '#4a9ad8', '#2a4a8a'];
+  const FEATHER = ['#ffffff', '#ffffff', '#f4efe6', '#d8ccc0', '#8a7a8a'];
+  const GLASS = ['#ff8a9a', '#8fd8ff', '#ffd36a', '#a8e8a0', '#c8a8ff'];
+
+  // A white feather, quill at (x, y), pointing along `a`, `len` long.
+  function featherArt(ctx, x, y, a, len) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const w = len * 0.26;
+    inked(ctx, [[0, 0], [len * 0.3, -w], [len, -w * 0.2], [len * 0.85, w * 0.3], [len * 0.3, w * 0.8]], FEATHER[2], FEATHER[4], 2.5);
+    fill(ctx, [[len * 0.1, -w * 0.1], [len * 0.32, -w * 0.8], [len * 0.9, -w * 0.15], [len * 0.4, w * 0.05]], FEATHER[0]);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(len * 0.95, -w * 0.05);
+    ctx.strokeStyle = FEATHER[3];
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+  // A little sun: gold rays round a white-hot disc.
+  function sunArt(ctx, x, y, r, rot = 0) {
+    starburst(ctx, HOLY, x, y, r * 1.6, 12, 600, { inner: 0.62, rot });
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.9, 0, TAU);
+    ctx.fillStyle = HOLY[2];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - r * 0.1, y - r * 0.1, r * 0.62, 0, TAU);
+    ctx.fillStyle = HOLY[0];
+    ctx.fill();
+  }
+  // A halo: a gold ring seen at a slant, `rx` wide.
+  function haloArt(ctx, x, y, rx, broken = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(1, 0.3);
+    celRing(ctx, HOLY, 0, 0, rx, 10, { broken, seed: 601 });
+    ctx.restore();
+  }
+  // A stained-glass window: an arched frame of gold leading filled with coloured panes.
+  function glassArt(ctx, x, y, w, h, k = 1) {
+    const top = y - h;
+    const arch = (sx) => {
+      const pts = [];
+      for (let i = 0; i <= 12; i++) { const a = Math.PI + (i / 12) * Math.PI; pts.push([x + Math.cos(a) * w * sx * 0.5, top + w * 0.5 + Math.sin(a) * w * 0.5]); }
+      return [[x - w * sx * 0.5, y], ...pts, [x + w * sx * 0.5, y]];
+    };
+    inked(ctx, arch(1), HOLY[3], HOLY[4], 5);
+    const rows = 4;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < 3; c++) {
+      const x0 = x - w * 0.42 + (c * w * 0.84) / 3;
+      const y0 = top + w * 0.45 + (r * (h - w * 0.5)) / rows;
+      ctx.save();
+      ctx.globalAlpha = 0.85 * k;
+      fill(ctx, [[x0 + 3, y0 + 3], [x0 + w * 0.28 - 3, y0 + 3], [x0 + w * 0.28 - 3, y0 + (h - w * 0.5) / rows - 3], [x0 + 3, y0 + (h - w * 0.5) / rows - 3]], GLASS[(r * 3 + c) % GLASS.length]);
+      ctx.restore();
+    }
+    // The rose at the top of the arch, a sun.
+    sunArt(ctx, x, top + w * 0.42, w * 0.16);
+  }
+
+  // Her sunbolt in flight (loops, toward +x): a little sun spinning, a fan of gold rays trailing.
+  E.clbolt = grown((() => {
+    const cx = 100;
+    const cy = 45;
+    return {
+      w: 130, h: 90, n: 6, fps: 28, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        for (let k = 0; k < 3; k++) speedLine(ctx, HOLY, cx - 80 + k * 6, cy + (k - 1) * 10, cx - 10, cy + (k - 1) * 3, 6 - k);
+        sunArt(ctx, cx, cy, 13, (i / 6) * (TAU / 12));
+      },
+    };
+  })(), 2.2);
+  // An orb of light (loops): a white-hot heart in a gold ring, two feathers circling it.
+  E.clorb = grown((() => {
+    const cx = 80;
+    const cy = 60;
+    return {
+      w: 140, h: 120, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        celRing(ctx, HOLY, cx, cy, 24, 6, { seed: 602 });
+        blob(ctx, HGEM, cx, cy, 16, 0.04, ph);
+        for (let k = 0; k < 2; k++) { const a = ph + k * Math.PI; featherArt(ctx, cx + Math.cos(a) * 34, cy + Math.sin(a) * 14, a + Math.PI / 2, 22); }
+        sparkle(ctx, HOLY, cx - 40, cy - 20, 7, i);
+      },
+    };
+  })(), 2);
+  // Judgment's pillar of light (drawn toward +x; the game turns it to fall straight down).
+  E.clpillar = grown((() => {
+    const cx = 250;
+    const cy = 60;
+    return {
+      w: 280, h: 120, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        fill(ctx, [[10, cy - 26], [cx, cy - 40], [cx, cy + 40], [10, cy + 26]], HOLY[1]);
+        ctx.globalAlpha = 0.85;
+        fill(ctx, [[10, cy - 12], [cx, cy - 20], [cx, cy + 20], [10, cy + 12]], HOLY[0]);
+        ctx.restore();
+        for (let k = 0; k < 3; k++) sparkle(ctx, HOLY, 40 + ((i * 30 + k * 70) % 200), cy + (k - 1) * 26, 7, k);
+        sunArt(ctx, cx, cy, 20, i * 0.2);
+      },
+    };
+  })(), 2);
+
+  // Her mark (the Idol's old name, redrawn): a sun flash, a halo opening round it, feathers flung out.
+  E.sihit = grown((() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) {
+          ctx.beginPath(); ctx.arc(c, c, 24, 0, TAU); ctx.fillStyle = HOLY[4]; ctx.fill();
+          ctx.beginPath(); ctx.arc(c, c, 14, 0, TAU); ctx.fillStyle = '#ffffff'; ctx.fill();
+          return;
+        }
+        if (i <= 3) sunArt(ctx, c, c, 26 - i * 4, i * 0.3);
+        if (i <= 5) haloArt(ctx, c, c + 20, 40 + i * 14, i >= 4 ? 0.5 : 0);
+        if (i >= 2 && i <= 6) for (let j = 0; j < 5; j++) { const a = (j / 5) * TAU + 0.4; const d = 30 + (i - 2) * 16; featherArt(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d * 0.8 + (i - 2) * 5, a, 24 - (i - 2) * 3); }
+        if (i >= 4) for (let j = 0; j < 4; j++) sparkle(ctx, j % 2 ? HGEM : HOLY, c + [-60, 50, -30, 70][j], c + [-20, 10, 50, -50][j] - (i - 4) * 8, 9 - (i - 4) * 2, j);
+      },
+    };
+  })(), 2);
+  // Rays bursting out of her (a blessing landing on the party; the Idol's old name).
+  E.siwave = grown((() => {
+    const c = 240;
+    return {
+      w: 480, h: 300, n: 7, fps: 24, px: c, py: 150,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        if (i <= 4) starburst(ctx, HOLY, c, 150, 70 + i * 26, 16, 610 + i, { inner: 0.75, rot: i * 0.08 });
+        if (i <= 5) haloArt(ctx, c, 190, 90 * k + i * 10, i >= 4 ? 0.5 : 0);
+        if (i >= 3) for (let j = 0; j < 6; j++) featherArt(ctx, c + (j - 2.5) * 50, 120 - (i - 3) * 14 + (j % 2) * 20, -Math.PI / 2 + (j - 2.5) * 0.2, 22);
+      },
+    };
+  })(), 1.5);
+  // Guiding Light (the Idol's spotlight, redrawn): a beam of gold light dropping from a halo onto
+  // whoever she is mending, a bright pool at their feet, feathers drifting down through it (loops).
+  E.sispot = (() => {
+    const c = 120;
+    const gy = 640;
+    const N = 8;
+    return {
+      w: 240, h: 680, n: N, fps: 10, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const sw = Math.sin((i / N) * TAU) * 6;
+        haloArt(ctx, c + sw * 0.2, 40, 40);
+        ctx.save();
+        ctx.globalAlpha = 0.32;
+        fill(ctx, [[c - 36, 44], [c + 36, 44], [c + 100 + sw, gy - 6], [c - 100 + sw, gy - 6]], HOLY[1]);
+        ctx.globalAlpha = 0.45;
+        fill(ctx, [[c - 22, 44], [c + 22, 44], [c + 70 + sw, gy - 6], [c - 70 + sw, gy - 6]], HOLY[0]);
+        ctx.globalAlpha = 0.5;
+        fill(ctx, [[c - 8, 44], [c + 8, 44], [c + 32 + sw, gy - 6], [c - 32 + sw, gy - 6]], '#ffffff');
+        ctx.restore();
+        const pulse = 1 + 0.05 * Math.sin((i / N) * TAU * 2);
+        for (const [rx, col, a] of [[100, HOLY[2], 0.5], [84, HOLY[1], 0.6], [54, '#ffffff', 0.7]]) {
+          ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.ellipse(c + sw, gy - 10, rx * pulse, rx * 0.24 * pulse, 0, 0, TAU); ctx.fillStyle = col; ctx.fill(); ctx.restore();
+        }
+        for (let j = 0; j < 5; j++) {
+          const u = ((i / N) + j / 5) % 1;
+          const y = 80 + u * 480;
+          const x = c + sw * u + Math.sin(u * TAU + j) * (40 + u * 20);
+          const s = (1 - Math.abs(u - 0.5) * 1.6) * 22;
+          if (s <= 3) continue;
+          if (j % 2) featherArt(ctx, x, y, Math.PI * 0.3 + Math.sin(u * 8) * 0.6, s);
+          else sparkle(ctx, HOLY, x, y, s * 0.5, u * 3);
+        }
+      },
+    };
+  })();
+  // Blessing of Valor (the Idol's hype wave, redrawn): a crest of gold light rolling along the ground
+  // toward +x, rays shooting up out of it and a wash of light trailing behind (loops).
+  E.sihype = (() => {
+    const fx0 = 200;
+    const gy = 210;
+    const N = 6;
+    return {
+      w: 260, h: 230, n: N, fps: 16, px: fx0, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / N) * TAU;
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        fill(ctx, [[10, gy], [fx0 - 40, gy - 40], [fx0, gy - 90], [fx0 + 20, gy]], HOLY[1]);
+        ctx.restore();
+        celCrescent(ctx, HOLY, fx0 - 30, gy, 80 + 4 * Math.sin(ph), Math.PI * 1.1, Math.PI * 1.9, 30, { seed: 620 });
+        for (let k = 0; k < 4; k++) speedLine(ctx, HOLY, fx0 - 40 + k * 20, gy - 20, fx0 - 30 + k * 24, gy - 120 - 20 * Math.sin(ph + k), 5);
+        sparkle(ctx, HOLY, fx0 + 10, gy - 130, 9, i);
+        featherArt(ctx, fx0 - 60, gy - 110 - 10 * Math.sin(ph), -0.4, 22);
+      },
+    };
+  })();
+  // Penance (the Idol's lullaby cloud, redrawn): an orb of judging light, a sun with a halo above it
+  // and a watchful glint, drifting after the monsters (loops).
+  E.silull = (() => {
+    const c = 190;
+    const gy = 250;
+    const N = 8;
+    return {
+      w: 380, h: 280, n: N, fps: 6, px: c, py: gy,
+      loop: true,
+      draw(ctx, i) {
+        const ph = (i / N) * TAU;
+        ctx.save(); ctx.globalAlpha = 0.35; ctx.beginPath(); ctx.ellipse(c, gy - 10, 150, 24, 0, 0, TAU); ctx.fillStyle = HOLY[1]; ctx.fill(); ctx.restore();
+        haloArt(ctx, c, gy - 180, 46);
+        sunArt(ctx, c, gy - 120 + 6 * Math.sin(ph), 34, ph * 0.1);
+        for (let k = 0; k < 6; k++) { const a = ph + (k / 6) * TAU; sparkle(ctx, k % 2 ? HGEM : HOLY, c + Math.cos(a) * 110, gy - 110 + Math.sin(a) * 40, 8, k); }
+      },
+    };
+  })();
+  // Miracle's window (the Idol's stage, redrawn): a great stained-glass window rising behind her as
+  // light floods out of it, then fading.
+  E.sistage = grown((() => {
+    const c = 240;
+    const gy = 380;
+    return {
+      w: 480, h: 400, n: 14, fps: 6, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = ease3(Math.min(1, i / 3)) * (i >= 12 ? 1 - (i - 11) / 3 : 1);
+        if (rise <= 0.02) return;
+        ctx.save();
+        ctx.globalAlpha = 0.35 * rise;
+        fill(ctx, [[c - 90, gy - 330], [c + 90, gy - 330], [c + 230, gy], [c - 230, gy]], HOLY[1]);
+        ctx.restore();
+        glassArt(ctx, c, gy - 40, 180 * (0.8 + 0.2 * rise), 300 * rise, rise);
+        ctx.save(); ctx.globalAlpha = 0.6 * rise; ctx.beginPath(); ctx.ellipse(c, gy - 8, 200, 34, 0, 0, TAU); ctx.fillStyle = HOLY[1]; ctx.fill(); ctx.restore();
+        if (i >= 3 && i <= 11) for (let j = 0; j < 6; j++) featherArt(ctx, c - 200 + j * 80, gy - 60 - ((i * 30 + j * 50) % 220), Math.PI * 0.4 + j, 24);
+      },
+    };
+  })(), 1);
+  // A proclamation of light off Miracle on a beat (the Idol's pyro): a pillar bursting up.
+  E.sipyro = (() => {
+    const c = 130;
+    const gy = 420;
+    return {
+      w: 260, h: 430, n: 8, fps: 12, px: c, py: gy,
+      draw(ctx, i) {
+        const up = Math.min(1, (i + 1) / 3);
+        const fade = i >= 5 ? 1 - (i - 4) / 4 : 1;
+        ctx.save(); ctx.globalAlpha = 0.7 * fade;
+        fill(ctx, [[c - 30, gy], [c + 30, gy], [c + 14, gy - 380 * up], [c - 14, gy - 380 * up]], HOLY[1]);
+        fill(ctx, [[c - 12, gy], [c + 12, gy], [c + 5, gy - 380 * up], [c - 5, gy - 380 * up]], '#ffffff');
+        ctx.restore();
+        if (i <= 5) sunArt(ctx, c, gy - 380 * up, 22, i * 0.3);
+        if (i >= 3) for (let j = 0; j < 4; j++) featherArt(ctx, c + (j - 1.5) * 40, gy - 200 - (i - 3) * 30, -Math.PI / 2 + (j - 1.5) * 0.5, 20);
+      },
+    };
+  })();
+  // A wave of light rolling out along the ground (Miracle's blasts; the Idol's music blast).
+  E.sibig = grown((() => {
+    const cx = 100;
+    const gy = 250;
+    return {
+      w: 200, h: 270, n: 6, fps: 24, px: cx, py: 136, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        celCrescent(ctx, HOLY, cx - 40, gy - 110, 100 + 6 * Math.sin(ph), -Math.PI * 0.4, Math.PI * 0.4, 36, { seed: 630 });
+        sunArt(ctx, cx + 50, gy - 110, 14, ph * 0.2);
+        featherArt(ctx, cx, gy - 200, 0.6 + Math.sin(ph) * 0.3, 24);
+      },
+    };
+  })(), 1);
+
+  // Her bursts: Ascension's feathers, Holy Nova's ring of light, her bright heal, Divine Shield's
+  // wings, Heaven's Gate opening in the sky and its light crashing down, Resurrection's rays, and a
+  // spear of light falling (Heaven's Gate's rain).
+  E.clfeathers = grown((() => {
+    const c = 110;
+    return {
+      w: 220, h: 240, n: 7, fps: 20, px: c, py: 200,
+      draw(ctx, i) {
+        if (i <= 3) haloArt(ctx, c, 200, 40 + i * 10);
+        for (let j = 0; j < 7; j++) { const a = (j / 7) * TAU; featherArt(ctx, c + Math.cos(a) * (20 + i * 12), 150 - i * 14 + Math.sin(a) * 20, a + i * 0.3, 24 - i * 2); }
+        if (i >= 4) for (let j = 0; j < 4; j++) sparkle(ctx, HOLY, c + (j - 1.5) * 40, 80 - (i - 4) * 10, 9 - (i - 4) * 2, j);
+      },
+    };
+  })(), 1.4);
+  E.clnovafx = grown((() => {
+    const c = 200;
+    const gy = 150;
+    return {
+      w: 400, h: 170, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 4);
+        if (i <= 5) { ctx.save(); ctx.translate(c, gy - 6); ctx.scale(1, 0.3); celRing(ctx, HOLY, 0, 0, 60 + 120 * k, 14, { broken: i >= 4 ? 0.5 : 0, seed: 640 }); ctx.restore(); }
+        if (i <= 4) for (const sd of [-1, 1]) for (let j = 0; j < 3; j++) { const x = c + sd * (40 + j * 50) * k; ctx.save(); ctx.globalAlpha = 0.7; fill(ctx, [[x - 8, gy], [x + 8, gy], [x + 3, gy - 90 * (1 - j * 0.2)], [x - 3, gy - 90 * (1 - j * 0.2)]], HOLY[1]); ctx.restore(); }
+        if (i >= 4) { const R = rng(641 + i); for (let j = 0; j < 8; j++) sparkle(ctx, HOLY, c + (R() - 0.5) * 360, gy - 20 - R() * 80, 8 - (i - 4) * 1.5, j); }
+      },
+    };
+  })(), 1.5);
+  E.clglow = (() => {
+    const c = 110;
+    const gy = 300;
+    return {
+      w: 220, h: 320, n: 9, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 6) haloArt(ctx, c, 40, 40 + Math.min(i, 3) * 6, i >= 5 ? 0.5 : 0);
+        if (i >= 1 && i <= 6) {
+          const w = [26, 50, 58, 56, 46, 30][i - 1];
+          ctx.save(); ctx.globalAlpha = 0.75;
+          fill(ctx, [[c - w * 0.5, 44], [c + w * 0.5, 44], [c + w, gy], [c - w, gy]], HOLY[1]);
+          fill(ctx, [[c - w * 0.2, 44], [c + w * 0.2, 44], [c + w * 0.4, gy], [c - w * 0.4, gy]], HOLY[0]);
+          ctx.restore();
+        }
+        if (i >= 3) { const R = rng(650); for (let j = 0; j < 7; j++) { const x = c + (R() - 0.5) * 160; const y = gy - 30 - R() * 200 - (i - 3) * 14; if (j % 2) featherArt(ctx, x, y, R() * TAU, 18); else sparkle(ctx, HOLY, x, y, 8 - Math.max(0, i - 6) * 2, j); } }
+      },
+    };
+  })();
+  E.clshieldfx = (() => {
+    const c = 110;
+    const gy = 200;
+    return {
+      w: 220, h: 220, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        const fade = i >= 5 ? 1 - (i - 5) / 3 : 1;
+        ctx.save(); ctx.globalAlpha = fade;
+        for (const sd of [-1, 1]) for (let j = 0; j < 6; j++) {
+          const a = -Math.PI / 2 + sd * (0.2 + j * 0.28) * k;
+          featherArt(ctx, c + sd * 6, gy - 40, a, (70 - j * 6) * k);
+        }
+        ctx.restore();
+        if (i <= 2) sunArt(ctx, c, gy - 60, 14 + i * 4, i * 0.3);
+      },
+    };
+  })();
+  E.clgatefx = grown({
+    w: 300, h: 160, n: 6, fps: 10, px: 150, py: 80,
+    draw(ctx, i) {
+      const open = Math.min(1, (i + 1) / 4);
+      ctx.save(); ctx.globalAlpha = 0.5; fill(ctx, [[150 - 70 * open, 20], [150 + 70 * open, 20], [150 + 140 * open, 150], [150 - 140 * open, 150]], HOLY[1]); ctx.restore();
+      for (const sd of [-1, 1]) {
+        const x = 150 + sd * (30 + 40 * open);
+        inked(ctx, [[x - 26, 140], [x + 26, 140], [x + 26, 40], [x, 20], [x - 26, 40]], HOLY[2], HOLY[4], 4);
+        for (let k = 0; k < 4; k++) fill(ctx, [[x - 18 + k * 9, 132], [x - 14 + k * 9, 132], [x - 14 + k * 9, 46], [x - 18 + k * 9, 46]], HOLY[3]);
+      }
+      sunArt(ctx, 150, 40, 18, i * 0.1);
+    },
+  }, 2.6);
+  E.clgateimpact = grown((() => {
+    const c = 200;
+    const gy = 200;
+    return {
+      w: 400, h: 240, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 5) haloArt(ctx, c, gy - 8, 70 + i * 22, i >= 4 ? 0.5 : 0);
+        if (i <= 3) { ctx.save(); ctx.globalAlpha = 0.8; fill(ctx, [[c - 40, 0], [c + 40, 0], [c + 60, gy], [c - 60, gy]], HOLY[1]); fill(ctx, [[c - 16, 0], [c + 16, 0], [c + 24, gy], [c - 24, gy]], '#ffffff'); ctx.restore(); sunArt(ctx, c, gy - 40, 40 - i * 6, i * 0.3); }
+        if (i >= 3) for (let j = 0; j < 8; j++) featherArt(ctx, c + (j - 3.5) * 46, gy - 40 - (i - 3) * 18 - (j % 2) * 20, -Math.PI / 2 + (j - 3.5) * 0.3, 26 - (i - 3) * 3);
+        if (i >= 4) { const R = rng(660 + i); for (let j = 0; j < 8; j++) sparkle(ctx, HOLY, c + (R() - 0.5) * 360, gy - 40 - R() * 150, 10 - (i - 4) * 2, j); }
+      },
+    };
+  })(), 1.5);
+  E.clrays = (() => {
+    const c = 260;
+    const gy = 440;
+    return {
+      w: 520, h: 450, n: 12, fps: 9, px: c, py: gy,
+      draw(ctx, i) {
+        const up = Math.min(1, i / 5);
+        const fade = i >= 9 ? 1 - (i - 8) / 4 : 1;
+        ctx.save(); ctx.globalAlpha = 0.6 * fade;
+        for (let j = 0; j < 7; j++) { const a = -Math.PI / 2 + (j - 3) * 0.22; const L = 380 * up; fill(ctx, [[c - 8, gy], [c + 8, gy], [c + Math.cos(a) * L + 14, gy + Math.sin(a) * L], [c + Math.cos(a) * L - 14, gy + Math.sin(a) * L]], j % 2 ? HOLY[1] : '#ffffff'); }
+        ctx.restore();
+        haloArt(ctx, c, gy - 8, 120 * up, i >= 9 ? 0.5 : 0);
+        if (i >= 4) for (let j = 0; j < 6; j++) featherArt(ctx, c + (j - 2.5) * 70, gy - 100 - ((i * 25 + j * 40) % 240), -Math.PI / 2 + Math.sin(i + j) * 0.5, 24);
+      },
+    };
+  })();
+  E.clspear = grown((() => {
+    const cx = 120;
+    const cy = 120;
+    return {
+      w: 160, h: 160, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ctx.save(); ctx.translate(cx, cy); ctx.rotate(Math.PI / 4);
+        ctx.globalAlpha = 0.8;
+        fill(ctx, [[-90, -6], [0, -9], [0, 9], [-90, 6]], HOLY[1]);
+        fill(ctx, [[-90, -2], [0, -3], [0, 3], [-90, 2]], '#ffffff');
+        ctx.globalAlpha = 1;
+        inked(ctx, [[0, -10], [26, 0], [0, 10]], HOLY[2], HOLY[4], 3);
+        ctx.restore();
+        sunArt(ctx, cx, cy, 8, i * 0.4);
+      },
+    };
+  })(), 2);
+  // Her badge (on her buff pillar): a sun inside a halo.
+  E.embidol = emblem(HOLY, (ctx, pal) => {
+    sunArt(ctx, 0, 6, 20);
+    haloArt(ctx, 0, -26, 30);
+  });
+  // Her Devotion aura: feathers and little suns drifting round her (loops).
+  E.siaura = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 8, fps: 10, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        for (let j = 0; j < 5; j++) {
+          const a = (j / 5) * TAU + (i / 8) * TAU * 0.2;
+          const x = c + Math.cos(a) * 60;
+          const y = c + Math.sin(a) * 22 - 10 * Math.sin(((i + j * 2) / 8) * TAU);
+          if (j % 2) featherArt(ctx, x, y, a + Math.PI / 2, 18);
+          else sunArt(ctx, x, y, 6, i * 0.2);
+        }
+      },
+    };
+  })();
+
   // ---------- The Astronomer (deep violet and silver: ringed planets, moons, orbits) ----------
   // docs/design/astronomer.md. Her shapes: violet planets banded and ringed in silver, little silver
   // moons, thin silver orbit lines, and the calm curves of things going round.

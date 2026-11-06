@@ -119,6 +119,16 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (f.shot === 'sinote' ? 1 : 1.05) * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'clbolt': case 'clorb': case 'clpillar': {
+      // The Cleric's: a little sun with gold rays trailing, an orb of light with feathers circling,
+      // and Judgment's pillar of light falling straight down.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const born = f.shot === 'clpillar' ? 1 : bornAt(f);
+      const size = { clbolt: 0.6, clorb: 0.62, clpillar: 0.85 }[f.shot];
+      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: f.shot === 'clorb' ? 0 : left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'mgfire': case 'mgfireball': case 'mgice': case 'mgspike': case 'mgbolt': case 'mgsky': {
       // The Mage's: a fire bolt or a fireball streaming flame, a frost shard, ice spikes bursting up
       // out of the ground as the line races along it, a lightning bolt through the line, lightning

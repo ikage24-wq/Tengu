@@ -109,6 +109,17 @@ function starKeys(p, keys) {
   return keys[keys.length - 1][1];
 }
 
+// The Cleric's faces: the edgelord turned saint.
+const CL_FACE = {
+  focus: { lid: 0.25, mouth: 'flat', brows: [[-0.1, 0.6], [-0.1, 0.6]] },
+  pray: { closed: [true, true], mouth: 'tiny', brows: [[0.5, -0.2], [0.5, -0.2]], blush: 1.1 },
+  proclaim: { mouth: 'yell', brows: [[0.9, -0.2], [0.9, -0.2]], shine: true },
+  radiant: { mouth: 'grin', brows: [[0.8, -0.2], [0.8, -0.2]], shine: true, blush: 1.2 },
+  serene: { closed: [true, true], mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.2 },
+  smug: { lid: 0.4, mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]], blush: 1.2 },
+  wink: { closed: [false, true], mouth: 'cat', brows: [[0.7, -0.3], [0, 0.2]] },
+};
+
 // The Mage's faces: a dramatic edgelord acting every beat of a cast.
 const MG_FACE = {
   intense: { lid: 0.25, cross: 0.6, mouth: 'grit', brows: [[-0.3, 1], [-0.3, 1]] },
@@ -3239,6 +3250,353 @@ export const MOVES = {
         else if (poke > 0.4) r.eyes = 'happy';
         else if (winding) r.mouth = 'grin';
       },
+    };
+  },
+
+  // ---------- The Cleric of light's moves (her own; docs/design/mage-line.md) ----------
+  // The Mage's dramatic flair turned holy: she poses like a saint in a stained-glass window and
+  // proclaims every heal like an epic spell. Her sun scepter is held at its end, out in front or
+  // low (prayers hold it pointed down); raised skyward it goes up out in front, never over her face.
+  // She acts every beat (CL_FACE): eyes shut in prayer, radiant on the cast, smug once she's saved
+  // the day.
+
+  // Smite (scepter opener, a sunbolt at ~0.32): the scepter drawn back to her shoulder, then thrust
+  // out at them like a sword, her free hand flung back; she holds it, chin up.
+  clsmite(p) {
+    const draw = soft(seg(p, 0, 0.22));
+    const thrust = ease(seg(p, 0.22, 0.32));
+    const hold = soft(seg(p, 0.42, 0.8));
+    return {
+      weapon: lerp(lerp(95, 56, draw), 86, thrust) + 8 * hold, arm: lerp(lerp(55, 70, draw), 98, thrust) - 8 * hold,
+      lunge: -1 * draw * (1 - thrust) + 7 * thrust * (1 - hold * 0.3), tilt: -0.04 * draw * (1 - thrust) + 0.1 * thrust * (1 - hold * 0.6) - 0.04 * hold,
+      lift: swBob(p, 0.7),
+      face: p < 0.22 ? CL_FACE.focus : p < 0.42 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => {
+        r.backArm = thrust > 0.3 ? [q(lerp(0, -6, thrust)), q(lerp(0, -6, thrust))] : [q(2 * draw), q(-2 * draw)];
+        r.hairLift = thrust > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [draw * (1 - thrust), [1, 0, 4], [-2.4, 0, -10]], [thrust, [4.2, 0, 8], [-3.8, -0.6, -18]], [hold, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Twin blessing (second, two orbs of light at ~0.3 and ~0.56): the scepter swept low across in an
+  // arc that lets one orb go, then back up the other way for the second, stepping in on each.
+  clbless(p) {
+    const a1 = ease(seg(p, 0.12, 0.3));
+    const a2 = ease(seg(p, 0.4, 0.56));
+    const hold = soft(seg(p, 0.62, 0.85));
+    return {
+      weapon: lerp(lerp(lerp(110, 140, soft(seg(p, 0, 0.12))), 70, a1), 104, a2) - 10 * hold, arm: lerp(lerp(lerp(55, 40, soft(seg(p, 0, 0.12))), 96, a1), 82, a2) - 6 * hold,
+      lunge: 4 * a1 * (1 - a2) + 5 * a2 * (1 - hold * 0.3), tilt: 0.08 * a1 * (1 - a2) + 0.06 * a2 * (1 - hold), trail: (a1 > 0 && a1 < 1) || (a2 > 0 && a2 < 1),
+      lift: 3 * bump(p, 0.36, 0.6) + swBob(p, 0.78),
+      face: p < 0.12 ? CL_FACE.focus : p < 0.62 ? CL_FACE.radiant : CL_FACE.serene,
+      rig: (r) => {
+        r.air = bump(p, 0.36, 0.6) > 0.5;
+        r.backArm = [q(-4 * a1 + 3 * a2), q(-4 * a1 - 2 * a2)];
+        r.hairLift = a2 > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [a1 * (1 - a2), [3.4, 0, 8], [-3, 0, -14]], [a2, [2.2, -1, 12], [-2.6, 0, -10]], [hold, [2, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Judgment (scepter finisher, a pillar of light slams down on them at ~0.5): she kneels, scepter
+  // planted low, head bowed; then springs up thrusting it high out in front of her ("BEHOLD!"), and
+  // the light comes down; she holds a stained-glass pose, free arm out, eyes shut, glowing.
+  cljudge(p) {
+    const kneel = soft(seg(p, 0, 0.2));
+    const rise = ease(seg(p, 0.26, 0.42));
+    const glow = soft(seg(p, 0.52, 0.8));
+    return {
+      weapon: lerp(lerp(95, 150, kneel), 42, rise) + 20 * glow, arm: lerp(lerp(55, 40, kneel), 94, rise) - 6 * glow,
+      lift: -1.6 * kneel * (1 - rise) + 7 * bump(p, 0.26, 0.6) + 1.2 * breathe(p) * glow + swBob(p, 0.9) * 0.5, tilt: 0.12 * kneel * (1 - rise) - 0.08 * rise * (1 - glow),
+      lunge: 3 * rise * (1 - glow * 0.4),
+      face: p < 0.26 ? CL_FACE.pray : p < 0.52 ? CL_FACE.proclaim : CL_FACE.serene,
+      rig: (r) => {
+        r.air = bump(p, 0.26, 0.6) > 0.5;
+        r.squat = q(3 * kneel * (1 - rise));
+        r.backArm = rise > 0.3 ? [q(lerp(-2, -7, glow)), q(lerp(-6, -5, glow))] : [q(3 * kneel), q(-2 * kneel)];
+        r.hairLift = rise > 0.4 && glow < 0.4 ? -1 : 0;
+        r.cape -= q(4 * rise * (1 - glow));
+        danceLegs(r, [kneel * (1 - rise), [3.6, 0, 20], [-2.6, 2, -60]], [rise * (1 - glow), [1.4, -2.4, 18], [-1.6, -2.6, -30]], [glow, [1.6, 0, 4], [-1.6, 0, -6]]);
+      },
+    };
+  },
+  // Prayer bolt (an opener in her pool, ~0.34): hands together at her chest, the scepter pointed
+  // down, eyes shut ("forgive them"), then she opens her eyes and flicks a bolt at them anyway.
+  clpray(p) {
+    const pray = soft(seg(p, 0, 0.22));
+    const flick = ease(seg(p, 0.24, 0.34));
+    return {
+      weapon: lerp(lerp(100, 160, pray), 80, flick) + 10 * soft(seg(p, 0.5, 0.9)), arm: lerp(lerp(55, 46, pray), 94, flick) - 10 * soft(seg(p, 0.5, 0.9)),
+      lunge: 5 * flick * (1 - soft(seg(p, 0.5, 0.9)) * 0.4), tilt: 0.06 * pray * (1 - flick) + 0.06 * flick,
+      lift: 1.2 * breathe(p) * pray * (1 - flick) + swBob(p, 0.64),
+      face: p < 0.24 ? CL_FACE.pray : p < 0.42 ? CL_FACE.proclaim : CL_FACE.wink,
+      rig: (r) => {
+        r.backArm = flick > 0.3 ? [q(lerp(6, -4, flick)), q(lerp(-3, -4, flick))] : [q(6 * pray), q(-3 * pray)];
+        danceLegs(r, [pray * (1 - flick), [1.2, 0, 2], [-1.2, 0, -2]], [flick, [3.4, 0, 8], [-3, -0.4, -14]]);
+      },
+    };
+  },
+  // Halo twirl (second in her pool, ~0.44): the scepter spun once round over her head behind her
+  // (a ring of light), then brought down to point, a bolt flying off the end.
+  cltwirl(p) {
+    const tw = seg(p, 0.06, 0.36);
+    const spinning = p > 0.06 && p < 0.36;
+    const point = ease(seg(p, 0.36, 0.44));
+    const w = spinning ? 90 - 360 * soft(tw) : lerp(-270, -272, point);
+    return {
+      weapon: spinning ? w : lerp(90, 88, point) - 8 * soft(seg(p, 0.55, 0.9)), back: (spinning && wandUp(w)) || undefined, arm: spinning ? 70 : lerp(70, 98, point) - 10 * soft(seg(p, 0.55, 0.9)),
+      trail: spinning, lift: 4 * bump(p, 0.06, 0.4) + swBob(p, 0.76), lunge: 5 * point * (1 - soft(seg(p, 0.55, 1)) * 0.4),
+      face: spinning ? CL_FACE.radiant : p < 0.55 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => {
+        r.air = bump(p, 0.06, 0.4) > 0.5;
+        r.backArm = spinning ? [-4, -4] : [q(lerp(-4, 2, soft(seg(p, 0.5, 0.8)))), q(lerp(-5, 1, soft(seg(p, 0.5, 0.8))))];
+        r.hairLift = spinning ? -1 : 0;
+        danceLegs(r, [spinning ? 1 : 0, [1.4, -2, 16], [-1.4, -1.8, -20]], [point, [3.6, 0, 8], [-3.2, -0.6, -16]]);
+      },
+    };
+  },
+  // Stained glass (a finish in her pool, ~0.52): she rises onto her toes, arms spread wide, head
+  // tilted, eyes shut, scepter held out to the side like a saint in a window; rays burst out of her
+  // and fly at them; she holds it, glowing, then drops back with a satisfied nod.
+  clglass(p) {
+    const spread = soft(seg(p, 0.04, 0.4));
+    const burst = bump(p, 0.44, 0.6);
+    const back = soft(seg(p, 0.78, 0.95));
+    return {
+      weapon: lerp(lerp(95, 60, spread), 100, back), arm: lerp(lerp(55, 100, spread), 60, back),
+      lift: 4 * spread * (1 - back) + 2 * burst + 1.2 * breathe(p) * spread * (1 - back), tilt: -0.06 * spread * (1 - back),
+      face: p < 0.44 ? CL_FACE.pray : p < 0.78 ? CL_FACE.radiant : CL_FACE.smug,
+      rig: (r) => {
+        r.backArm = [q(lerp(-7, 1, back) * spread), q(lerp(-6, 0, back) * spread)];
+        r.cape -= q(4 * burst);
+        r.hairLift = burst > 0.4 ? 1 : 0;
+        danceLegs(r, [spread * (1 - back), [1, -1.8, 10], [-1, -1.6, -10]], [back, [1.4, 0, 2], [-1.4, 0, -4]]);
+      },
+    };
+  },
+  // Up + attack: the scepter raised up and out at whatever flies, a ray shooting up off it.
+  clup(p) {
+    const jump = bump(p, 0.14, 0.6);
+    return {
+      weapon: starKeys(p, [[0, 95], [0.12, 120], [0.3, 50], [0.6, 46], [1, 64]]), arm: starKeys(p, [[0, 55], [0.12, 45], [0.3, 92], [0.6, 88], [1, 76]]),
+      tilt: -0.1 * soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.6, 0.9))), lift: 8 * jump - 1.5 * bump(p, 0, 0.14) + swBob(p, 0.7) * 0.6,
+      face: p < 0.14 ? CL_FACE.focus : p < 0.45 ? CL_FACE.proclaim : CL_FACE.radiant,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.6 * bump(p, 0, 0.14));
+        r.backArm = [q(-5 * jump), q(-5 * jump)];
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [jump, [1.6, -3, 26], [-2.2, -3.8, -50]]);
+      },
+    };
+  },
+  // In the air: floating with her arms spread, she points the scepter down and light falls on them.
+  clair(p) {
+    return {
+      weapon: starKeys(p, [[0, 90], [0.18, 60], [0.3, 150], [0.7, 130]]), arm: starKeys(p, [[0, 80], [0.18, 96], [0.3, 70], [0.7, 76]]), tilt: 0.06 * soft(seg(p, 0.18, 0.3)),
+      face: p < 0.2 ? CL_FACE.pray : CL_FACE.proclaim,
+      rig: (r) => { r.air = true; r.backArm = [-6, -5]; r.cape -= 3; danceLegs(r, [1, [1.2, -2.4, 14], [-1.4, -2.4, -14]]); },
+    };
+  },
+  // Out of a run: she glides along on a beam of light, feet together, arms spread, then points the
+  // scepter and a bolt shoots off it as she settles.
+  clglide(p) {
+    const glide = soft(seg(p, 0, 0.24)) * (1 - soft(seg(p, 0.7, 1)));
+    const point = ease(seg(p, 0.4, 0.48));
+    return {
+      weapon: lerp(lerp(95, 70, glide), 86, point) - 8 * soft(seg(p, 0.6, 0.9)), arm: lerp(lerp(55, 90, glide), 98, point) - 12 * soft(seg(p, 0.6, 0.9)),
+      lift: 4 * glide + 1.2 * breathe(p) * glide, tilt: -0.06 * glide, lunge: 4 * glide,
+      face: p < 0.4 ? CL_FACE.serene : p < 0.6 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => { r.air = glide > 0.4; r.backArm = [q(-6 * glide), q(-5 * glide)]; r.cape -= q(4 * glide); r.hairLift = glide > 0.4 ? 1 : 0; danceLegs(r, [glide, [0.6, -1.4, 6], [-0.6, -1.4, -6]]); },
+    };
+  },
+
+  // Guiding Light (her spotlight heal, at ~0.5): she shades her eyes with her free hand, looking for
+  // who's hurt, finds them, and points the scepter: "YOU! BE HEALED!" A beam locks on them.
+  clguide(p) {
+    const look = soft(seg(p, 0, 0.3));
+    const point = ease(seg(p, 0.4, 0.5));
+    const hold = soft(seg(p, 0.6, 0.9));
+    return {
+      weapon: lerp(lerp(100, 120, look), 70, point) + 10 * hold, arm: lerp(lerp(55, 45, look), 104, point) - 12 * hold,
+      lunge: 5 * point * (1 - hold * 0.5), tilt: 0.06 * look * (1 - point) + 0.08 * point * (1 - hold),
+      lift: 2 * bump(p, 0.4, 0.62) + swBob(p, 0.92) * 0.6,
+      face: p < 0.4 ? CL_FACE.focus : p < 0.62 ? CL_FACE.proclaim : CL_FACE.radiant,
+      rig: (r) => {
+        r.backArm = point > 0.3 ? [q(lerp(2, -6, point)), q(lerp(-8, -5, point))] : [q(2 * look), q(-8 * look)];
+        danceLegs(r, [look * (1 - point), [1.4, -0.6, 8], [-1.6, 0, -6]], [point, [4, 0, 8], [-3.6, -0.6, -18]], [hold, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Blessing of Valor (the wave at ~0.5): the scepter swept round low in a full circle as she turns,
+  // then planted with a stamp; gold light rolls out both ways.
+  clvalor(p) {
+    const a = ease(seg(p, 0.08, 0.42));
+    const turning = p > 0.08 && p < 0.42;
+    const plant = ease(seg(p, 0.42, 0.52));
+    const hold = soft(seg(p, 0.6, 0.9));
+    return {
+      weapon: turning ? 130 : lerp(130, 160, plant) - 60 * hold, arm: turning ? 50 : lerp(50, 34, plant) + 30 * hold,
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1, trail: turning, lift: 3 * bump(p, 0.08, 0.44) + swBob(p, 0.9) * 0.6,
+      face: turning ? CL_FACE.radiant : p < 0.6 ? CL_FACE.proclaim : CL_FACE.wink,
+      rig: (r) => {
+        r.squat = q(2 * plant * (1 - hold));
+        r.backArm = turning ? [-5, -4] : [q(lerp(-6, 2, hold)), q(lerp(-6, 1, hold))];
+        r.hairLift = turning ? -1 : plant > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [1.4, -1.6, 14], [-1.2, -1.2, -14]], [plant, [3, 0, 6], [-3, 0, -6]], [hold, [1.8, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Sanctuary (the circle of light lands at ~0.5): she draws a circle on the floor with the scepter's
+  // end, going round in a crouch, then raises it as the circle lights.
+  clsanct(p) {
+    const draw = seg(p, 0.06, 0.44);
+    const drawing = p > 0.06 && p < 0.44;
+    const raise = ease(seg(p, 0.46, 0.56));
+    const hold = soft(seg(p, 0.62, 0.9));
+    return {
+      weapon: drawing ? 150 + 14 * Math.sin(draw * Math.PI * 4) : lerp(150, 50, raise) + 34 * hold, arm: drawing ? 40 + 10 * Math.cos(draw * Math.PI * 4) : lerp(40, 90, raise) - 24 * hold,
+      lift: -1.4 * (drawing ? 1 : 1 - raise) * (p > 0.06 ? 1 : 0) + 2 * bump(p, 0.46, 0.7) + swBob(p, 0.9) * 0.5, tilt: drawing ? 0.12 : 0.12 * (1 - raise),
+      face: drawing ? CL_FACE.focus : p < 0.66 ? CL_FACE.proclaim : CL_FACE.serene,
+      rig: (r) => {
+        r.squat = q(drawing ? 2.4 : 2.4 * (1 - raise));
+        r.backArm = [q(-4 * raise * (1 - hold)), q(-5 * raise * (1 - hold))];
+        danceLegs(r, [drawing ? 1 : 1 - raise, [3, 0, 8], [-3, 0, -10]], [raise * (1 - hold), [1.4, -1.4, 12], [-1.6, -0.8, -10]], [hold, [1.6, 0, 4], [-1.6, 0, -6]]);
+      },
+    };
+  },
+  // Resurrection (1.15 s): she kneels, head bowed, the scepter laid across her knees, then rises
+  // slowly lifting it high out in front ("RISE, MY FRIENDS!"), and the fallen get up; a held glow.
+  clraise(p) {
+    const kneel = soft(seg(p, 0, 0.24));
+    const rise = soft(seg(p, 0.3, 0.6));
+    const glow = soft(seg(p, 0.62, 0.9));
+    return {
+      weapon: lerp(lerp(95, 100, kneel), 50, rise) + 24 * glow, arm: lerp(lerp(55, 30, kneel), 90, rise) - 14 * glow,
+      lift: -2 * kneel * (1 - rise) + 5 * rise * (1 - glow * 0.6) + 1.2 * breathe(p) * glow, tilt: 0.14 * kneel * (1 - rise) - 0.1 * rise * (1 - glow),
+      face: p < 0.3 ? CL_FACE.pray : p < 0.66 ? CL_FACE.proclaim : CL_FACE.radiant,
+      rig: (r) => {
+        r.squat = q(3.4 * kneel * (1 - rise));
+        r.backArm = [q(lerp(3 * kneel, -6, rise)), q(lerp(-2 * kneel, -6, rise))];
+        r.hairLift = rise > 0.5 && glow < 0.5 ? -1 : 0;
+        r.cape -= q(3 * rise * (1 - glow));
+        danceLegs(r, [kneel * (1 - rise), [3.6, 0, 20], [-2.6, 2, -60]], [rise * (1 - glow), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [glow, [1.6, 0, 4], [-1.6, 0, -6]]);
+      },
+    };
+  },
+  // Miracle (her finisher, 2.1 s): she spreads her arms and floats up as stained-glass light floods
+  // the field, three great proclamations (a point, a sweep, the scepter thrust high), and floats
+  // down into a deep, satisfied bow.
+  clmiracle(p) {
+    const float = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.82, 0.92)));
+    const b1 = bump(p, 0.24, 0.4);
+    const b2 = bump(p, 0.42, 0.58);
+    const b3 = soft(seg(p, 0.6, 0.7)) * (1 - soft(seg(p, 0.76, 0.84)));
+    const bow = bump(p, 0.88, 1);
+    return {
+      weapon: 95 - 25 * b1 + 40 * b2 - 45 * b3 + 50 * bow, arm: 55 + 37 * b1 + 30 * b2 + 35 * b3 - 25 * bow,
+      lift: 8 * float + 1.5 * breathe(p) * float, tilt: 0.06 * b1 - 0.08 * b3 + 0.3 * bow, lunge: 3 * b1 + 2 * b2,
+      face: p < 0.2 ? CL_FACE.pray : p < 0.86 ? CL_FACE.proclaim : CL_FACE.serene,
+      rig: (r) => {
+        r.air = float > 0.4;
+        r.backArm = [q(-7 * float + 3 * bow), q(-6 * float)];
+        r.cape -= q(4 * float);
+        r.hairLift = float > 0.5 ? -1 : 0;
+        danceLegs(r, [float, [0.8, -1.8, 10], [-0.8, -1.8, -10]], [bow, [2, 0, 6], [-2.4, 0, -10]]);
+      },
+    };
+  },
+
+  // Her Mage skills done her way (the same skill, key and numbers; her own move).
+  // Holy Bolt (Fireball): light gathered in the scepter's sun, held up beside her, then hurled.
+  clholy(p) {
+    const gather = soft(seg(p, 0, 0.34));
+    const hurl = ease(seg(p, 0.42, 0.52));
+    const after = soft(seg(p, 0.6, 0.9));
+    return {
+      weapon: lerp(lerp(95, 60, gather), 84, hurl) + 10 * after, arm: lerp(lerp(55, 86, gather), 100, hurl) - 14 * after,
+      lunge: -2 * gather * (1 - hurl) + 7 * hurl * (1 - after * 0.5), tilt: -0.06 * gather * (1 - hurl) + 0.14 * hurl * (1 - after * 0.6),
+      lift: 1.2 * breathe(p) * gather * (1 - hurl) + swBob(p, 0.88),
+      face: p < 0.42 ? CL_FACE.focus : p < 0.6 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, 3, gather), -6, hurl)), q(lerp(lerp(0, -3, gather), -6, hurl))];
+        r.hairLift = hurl > 0.3 && after < 0.5 ? 1 : 0;
+        danceLegs(r, [gather * (1 - hurl), [1.4, 0, 4], [-2.4, 0, -8]], [hurl, [4.4, 0, 8], [-4, -0.6, -20]], [after, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Ascension (Teleport): she rises on her toes, arms spread, dissolves into feathers of light and
+  // reappears ahead, settling softly down.
+  clascend(p) {
+    const up = soft(seg(p, 0, 0.36));
+    const land = bump(p, 0.5, 0.85);
+    return {
+      weapon: 70 + 20 * land, arm: lerp(55, 96, up) * (1 - soft(seg(p, 0.5, 0.8))) + 60 * soft(seg(p, 0.5, 0.8)), trail: p < 0.4,
+      lift: 8 * up * (1 - soft(seg(p, 0.4, 0.5))) + 4 * land, tilt: -0.06 * up * (1 - soft(seg(p, 0.4, 0.5))),
+      face: p < 0.4 ? CL_FACE.serene : CL_FACE.wink,
+      rig: (r) => { r.air = up > 0.5 && p < 0.5; r.backArm = [q(-6 * up * (1 - soft(seg(p, 0.5, 0.8)))), q(-6 * up * (1 - soft(seg(p, 0.5, 0.8))))]; r.hairLift = up > 0.4 && p < 0.5 ? -1 : 0; danceLegs(r, [up * (1 - soft(seg(p, 0.5, 0.8))), [0.6, -2, 8], [-0.6, -2, -8]]); },
+    };
+  },
+  // Judgment beam (Chain Lightning): the scepter held out in both hands, a beam of light poured from
+  // its sun down the whole line, her robes streaming back in its glow.
+  cljudgment(p) {
+    const aim = soft(seg(p, 0, 0.36));
+    const fire = p > 0.44 && p < 0.7 ? 1 : 0;
+    const recoil = bump(p, 0.44, 0.56);
+    return {
+      weapon: lerp(95, 88, aim) - 4 * recoil, arm: lerp(55, 94, aim) - 14 * soft(seg(p, 0.72, 0.95)),
+      lunge: 4 * aim * (1 - soft(seg(p, 0.72, 1))) - 3 * recoil, tilt: 0.08 * aim * (1 - soft(seg(p, 0.72, 1))) - 0.06 * recoil,
+      lift: swBob(p, 0.9) * 0.6,
+      face: p < 0.44 ? CL_FACE.focus : p < 0.72 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => { r.backArm = [q(6 * aim * (1 - soft(seg(p, 0.72, 1)))), q(-3 * aim)]; r.hairLift = fire ? 1 : 0; r.cape -= q(4 * fire); danceLegs(r, [aim, [3.6, 0, 8], [-3.4, 0, -14]]); },
+    };
+  },
+  // Holy Nova (Frost Nova): the scepter raised and brought down to strike the floor; a ring of light
+  // bursts out both ways.
+  clnova(p) {
+    const raise = soft(seg(p, 0, 0.32));
+    const strike = ease(seg(p, 0.38, 0.46));
+    const hold = soft(seg(p, 0.56, 0.88));
+    return {
+      weapon: lerp(lerp(95, 52, raise), 160, strike) - 60 * hold, arm: lerp(lerp(55, 88, raise), 40, strike) + 20 * hold,
+      lift: 3 * raise * (1 - strike) + swBob(p, 0.9), tilt: -0.06 * raise * (1 - strike) + 0.14 * strike * (1 - hold),
+      face: p < 0.38 ? CL_FACE.focus : p < 0.6 ? CL_FACE.proclaim : CL_FACE.serene,
+      rig: (r) => { r.squat = q(2.6 * strike * (1 - hold)); r.backArm = [q(-6 * strike * (1 - hold)), q(-5 * strike * (1 - hold))]; r.hairLift = strike > 0.3 && hold < 0.5 ? 1 : 0; danceLegs(r, [raise * (1 - strike), [1.2, -1, 8], [-1.4, 0, -6]], [strike, [3.4, 0, 6], [-3.4, 0, -6]], [hold, [1.8, 0, 4], [-1.8, 0, -6]]); },
+    };
+  },
+  // Heal (her bright, happy one): the scepter raised up out in front, beaming, a little bounce.
+  clheal(p) {
+    const up = soft(seg(p, 0.04, 0.4));
+    const down = soft(seg(p, 0.74, 0.92));
+    return {
+      weapon: lerp(95, 50, up) * (1 - down) + 95 * down, arm: lerp(55, 90, up) * (1 - down) + 55 * down,
+      lift: 3 * bump(p, 0.36, 0.7) + 1.2 * breathe(p) * up * (1 - down), tilt: -0.06 * up * (1 - down),
+      face: p < 0.36 ? CL_FACE.serene : p < 0.74 ? CL_FACE.radiant : CL_FACE.wink,
+      rig: (r) => { r.backArm = [q(-5 * up * (1 - down)), q(-5 * up * (1 - down))]; danceLegs(r, [up * (1 - down), [1.2, -1.2, 10], [-1.4, -0.4, -8]]); },
+    };
+  },
+  // Divine Shield (Magic Guard): the scepter held upright before her, close but out in front, both
+  // hands on it, then swept out wide as the shield blooms.
+  clshield(p) {
+    const hold = soft(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.42, 0.52));
+    const end = soft(seg(p, 0.62, 0.9));
+    return {
+      weapon: lerp(lerp(95, 50, hold), 110, sweep) - 10 * end, arm: lerp(lerp(55, 80, hold), 96, sweep) - 36 * end,
+      lift: -1 * hold * (1 - sweep) + 2.5 * bump(p, 0.44, 0.72) + swBob(p, 0.9) * 0.5, tilt: 0.04 * hold * (1 - sweep),
+      face: p < 0.42 ? CL_FACE.pray : p < 0.64 ? CL_FACE.proclaim : CL_FACE.smug,
+      rig: (r) => { r.squat = q(1.4 * hold * (1 - sweep)); r.backArm = [q(lerp(5 * hold, -7, sweep) * (1 - end) + 2 * end), q(lerp(-3 * hold, -5, sweep) * (1 - end))]; r.cape -= q(4 * sweep * (1 - end)); danceLegs(r, [hold * (1 - sweep), [1.6, 0, 4], [-1.6, 0, -4]], [sweep * (1 - end), [2.6, 0, 6], [-2.6, 0, -6]], [end, [1.4, 0, 2], [-1.4, 0, -4]]); },
+    };
+  },
+  // Heaven's Gate (Meteor): she lifts the scepter high and the gates of heaven open above the field;
+  // spears of light rain down as she sweeps it across, ending in one great beam and a bow.
+  clgate(p) {
+    const raise = soft(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.6, 0.72));
+    const bow = bump(p, 0.86, 1);
+    return {
+      weapon: lerp(lerp(95, 48, raise), 120, sweep) + 30 * bow, arm: lerp(lerp(55, 90, raise), 50, sweep) - 10 * bow,
+      lift: 5 * raise * (1 - sweep) + 1.2 * breathe(p) * raise * (1 - sweep), tilt: -0.08 * raise * (1 - sweep) + 0.1 * sweep * (1 - bow) + 0.26 * bow, lunge: 3 * sweep,
+      face: p < 0.3 ? CL_FACE.pray : p < 0.86 ? CL_FACE.proclaim : CL_FACE.serene,
+      rig: (r) => { r.backArm = [q(lerp(-6 * raise, -7, sweep) + 3 * bow), q(-6 * raise * (1 - bow))]; r.hairLift = raise > 0.5 && sweep < 0.3 ? -1 : sweep > 0.3 && bow < 0.3 ? 1 : 0; r.cape -= q(4 * sweep * (1 - bow)); danceLegs(r, [raise * (1 - sweep), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [sweep * (1 - bow), [3.8, 0, 8], [-3.6, -0.6, -18]], [bow, [2, 0, 6], [-2.4, 0, -10]]); },
     };
   },
 
