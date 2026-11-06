@@ -248,14 +248,24 @@ function shadowAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Constellation (the Star Witch; internally Spirit): its stars light one by one over her head as it
-// builds, seven in all, joined by threads of gold; full, it glows and her badge, a witch's hat with a
-// gold star, shines in the middle of it.
+// Element Weave (the Mage; internally Spirit, docs/design/mage-line.md): three little orbs of her
+// elements circle her, fading in one by one and brightening as it builds, faster the fuller it is
+// (a clean circle on her own time, never squashed); at Overload they whirl round her over her
+// crimson rune ring.
 function spiritAura(ctx, x, y, t, s, k, layer) {
-  if (layer === 'back' || k < 0.05) return;
-  const lit = Math.min(7, Math.floor(k * 7 + 1e-9));
-  fxSprite(ctx, 'celstconst', x, y - 62 * s + Math.sin(t * 1.6) * 1.5 * s, { frame: lit, scale: s * 0.46, alpha: 0.9 });
-  if (k >= 1) fxSprite(ctx, 'celembwitch', x, y - 78 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (k < 0.05) return;
+  const full = k >= 1;
+  if (full && layer === 'back') fxSprite(ctx, 'celmgrune', x, y - 2 * s, { t, scale: s * 0.32, alpha: 0.8, sy: 0.3 });
+  const spin = t * (1.4 + 2.6 * k) * (full ? 1.6 : 1);
+  for (let i = 0; i < 3; i++) {
+    const show = Math.min(1, Math.max(0, k * 3 - i));
+    if (show <= 0) continue;
+    const a = spin + (i * Math.PI * 2) / 3;
+    // Behind her on the far side of the circle, in front on the near side.
+    const front = Math.sin(a) > 0;
+    if ((layer === 'back') === front) continue;
+    fxSprite(ctx, 'celmgorb', x + Math.cos(a) * 22 * s, y - 30 * s + Math.sin(a) * 6 * s, { frame: i, scale: s * (0.55 + 0.12 * show), alpha: 0.55 + 0.45 * show });
+  }
 }
 
 // Applause (the Starlight Idol; internally Grace): a pink ring at her feet that fills in as the

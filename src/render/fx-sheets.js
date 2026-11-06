@@ -233,6 +233,8 @@ export const FX_SHEETS = {
   celmghitfire: { w: 353, h: 361, n: 7, fps: 30, px: 185, py: 183, d: 3, loop: false },
   celmghitice: { w: 353, h: 361, n: 7, fps: 30, px: 185, py: 183, d: 3, loop: false },
   celmghitbolt: { w: 353, h: 360, n: 7, fps: 30, px: 185, py: 182, d: 3, loop: false },
+  celmgorb: { w: 61, h: 61, n: 3, fps: 1, px: 30, py: 31, d: 3, loop: false },
+  celmgrune: { w: 255, h: 257, n: 6, fps: 10, px: 127, py: 128, d: 3, loop: true },
   celkwglob: { w: 241, h: 204, n: 6, fps: 26, px: 176, py: 139, d: 3, loop: true },
   celkwwave: { w: 446, h: 325, n: 6, fps: 22, px: 263, py: 197, d: 3, loop: true },
   celkpegg: { w: 196, h: 179, n: 6, fps: 26, px: 98, py: 106, d: 3, loop: true },

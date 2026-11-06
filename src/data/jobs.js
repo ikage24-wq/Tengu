@@ -35,12 +35,12 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
-  // The Spirit Mage: a young shrine mage whose spirits strike and heal (remade from scratch; the
-  // old Mage is retired). Damage and support at once, with the Spirit Doll at her side.
+  // The Mage (docs/design/mage-line.md; the Star Witch and the old Spirit Mage before her, id kept):
+  // a dramatic edgelord of fire, ice and lightning, who heals a little.
   spiritmage: {
-    id: 'spiritmage', power: 0.52, spread: 0.83, name: 'Star Witch', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'spiritmage', power: 0.52, spread: 0.83, name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
-    blurb: 'A bright young witch who casts like she\'s showing off, with INT: quick star bolts from a wand, or heavy comets and meteors from a staff, every spell out in a flash. Her spells and heals light the stars of her Constellation; all seven lit, her bolts split into three. Two star heals let her keep a party going.',
+    blurb: 'A mage of fire, ice and lightning with INT, who names every spell like the chosen one: quick bolts and shards from a wand, or fireballs, ice spikes and lightning from the sky with a staff. Mixing elements weaves her Element Weave; full (Overload), every spell carries all three, and Meteor is ready. A little healing keeps a party going.',
   },
   archer: {
     id: 'archer', power: 1.45, spread: 0.72, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,

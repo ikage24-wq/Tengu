@@ -1084,12 +1084,30 @@ export const SPIRIT_MAX = 100;
 const SPIRIT_HOLD = 5;
 const SPIRIT_DRAIN = 10;
 export const STAR_SPLIT = 0.5;
+// Element Weave: what a hit of a new element builds, and one of the same element again.
+export const WEAVE_NEW = 2.2;
+export const WEAVE_SAME = 0.5;
+// Overload (full Element Weave): each of her spells carries the other two elements with it, this
+// strong each.
+export const OVERLOAD_PCT = 0.45;
 export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
-export function addSpirit(world, n, kind = 'harm') {
+export function addSpirit(world, n, kind = 'harm', el = null) {
   if (!hasSpirit(world.char) || n <= 0) return;
   // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
   if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
   if (hasBinding(world.char)) return addBinding(world, n * 0.7);
+  // The Mage's Element Weave (docs/design/mage-line.md): a spell of a different element from her
+  // last one weaves the gauge on fast; the same element again barely moves it. Her heals count as
+  // an element of their own (light).
+  if (world.char.job === 'spiritmage') {
+    const now = kind === 'mend' ? 'light' : el ?? world.weaveEl ?? 'fire';
+    const fresh = now !== world.weaveEl || world.now - (world.spiritAt ?? -9) >= SPIRIT_HOLD;
+    world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (fresh ? WEAVE_NEW : WEAVE_SAME));
+    world.spiritAt = world.now;
+    world.weaveEl = now;
+    world.spiritKind = kind;
+    return;
+  }
   const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
   world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
   world.spiritAt = world.now;
@@ -1156,8 +1174,8 @@ export function gaugeFull(world) {
 }
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
-export function addAim(world, n, mob = null) {
-  addSpirit(world, n);
+export function addAim(world, n, mob = null, el = null) {
+  addSpirit(world, n, 'harm', el);
   addTails(world, n);
   addMomentum(world, n);
   addShadow(world, n);
@@ -1304,6 +1322,8 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // weapon's own timing bends around that moment without moving it (render/moves.js `feel`).
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
+  // The Mage names her big spells out loud, like the chosen one (MAGE_SHOUTS).
+  if (world.char.job === 'spiritmage') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -1573,7 +1593,7 @@ function land(world, s) {
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
   if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220);
-  if (s.magic && targets.length && !s.phantom) addSpirit(world, s.gauge ?? 4);
+  if (s.magic && targets.length && !s.phantom) addSpirit(world, s.gauge ?? 4, 'harm', s.el);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
@@ -1835,7 +1855,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
-    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank,
+    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
@@ -1951,7 +1971,15 @@ function fire(world, strike) {
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
   // The Star Witch: full Constellation splits her bolts and comets into three.
-  if (STAR_SHOTS_WITCH.has(s.shot) && !s.split && constellation(world)) {
+  // The Mage: on full Overload each spell carries the other two elements with it.
+  if (MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
+    const others = ['fire', 'ice', 'bolt'].filter((e) => e !== (s.el ?? 'fire'));
+    others.forEach((e, i) => {
+      const oy = i ? 9 : -9;
+      fire(world, { ...s, split: true, sky: false, el: e, shot: ELEMENT_SHOT[e], oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04 + i * 0.03, pct: s.pct * OVERLOAD_PCT, big: false, stop: 0, shake: 0, gauge: 1 });
+    });
+  }
+  if (STAR_SHOTS_WITCH.has(s.shot) && !MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
     for (const oy of [-9, 9]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04, pct: s.pct * STAR_SPLIT, big: false, stop: 0, shake: 0, gauge: 1 });
   }
   // A meteor called down from the sky (her staff plant): it falls on each monster from high above.
@@ -2074,10 +2102,29 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 }
 
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
-// (The Mage's shots split too until her Element Weave replaces the Constellation.)
-const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet', 'mgfire', 'mgfireball', 'mgice', 'mgbolt']);
+const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.
 export const MG_SHOTS = new Set(['mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
+// The Mage shouts the name of every big spell as she casts it, like a chosen one in a story (her
+// finishers and skills; never her quick casts). A move has a few names and never says the same one
+// twice in a row; the line floats up over her head.
+export const MAGE_SHOUTS = {
+  mgthunder: ['JUDGMENT OF THE STORM!', 'BOW BEFORE THE BOLT!', 'THUNDER OF THE FALLEN!'],
+  mgcape: ['EMBRACE THE DARKNESS!', 'TREMBLE, MORTALS!', 'MY POWER... AWAKENS!'],
+  msbolt: ['HEAVENS, OBEY ME!', 'I COMMAND THEE, SKY!', 'WRATH OF THE TEMPEST!'],
+  msthunder: ['CRIMSON THUNDERCLAP!', 'THE STORM ANSWERS ME!', 'FEEL MY TRUE POWER!'],
+};
+function mageShout(world, move) {
+  const lines = MAGE_SHOUTS[move];
+  if (!lines) return;
+  const last = world.mageShout?.[move];
+  const pick = lines.filter((l) => l !== last);
+  const line = pick[Math.floor(Math.random() * pick.length)];
+  world.mageShout = { ...world.mageShout, [move]: line };
+  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: '#ff6a7a', t: 0, shout: true });
+}
+// The shot each of her elements flies as when Overload sends it along with another spell.
+const ELEMENT_SHOT = { fire: 'mgfire', ice: 'mgice', bolt: 'mgbolt' };
 // The Kitchen Witch's shots (shelved: data/kitchen-witch.js); their hits leave her splash.
 const KW_SHOTS = new Set(['kwglob', 'kwwave', 'kpegg', 'kpflame', 'kwspice']);
 function skyProcs(world, s) {

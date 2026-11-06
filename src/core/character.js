@@ -19,7 +19,7 @@ const START_STAT = 4;
 export const ECON = 2;
 
 // Each family by its first job, for "for ... only" (the families' ids are older than the jobs' names).
-const FAMILY_PLURAL = { warrior: 'Warriors', mage: 'Star Witches', archer: 'Acrobat Archers', thief: 'Wind Dancers' };
+const FAMILY_PLURAL = { warrior: 'Warriors', mage: 'Mages', archer: 'Acrobat Archers', thief: 'Wind Dancers' };
 export function createCharacter(name, appearance) {
   return {
     name,

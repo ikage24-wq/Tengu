@@ -652,7 +652,7 @@ export const SIDE_SCENES = {
     { who: null, text: 'The lid settles onto the pot with a soft click. Starlight pours from the spout, and the old teapot begins to sing.' },
     { together: [{ fx: 'notes', at: 'elowen', n: 14 }, { fx: 'sparkle', at: 'mira', n: 14 }, { emote: 'mira', kind: 'heart', dur: 1.8 }, { emote: 'elowen', kind: 'heart', dur: 1.8 }] },
     { who: 'mira', text: "Same time next spring? And every spring after. I'm still bringing the biscuits.", mood: 'happy' },
-    { who: 'elowen', text: "Every spring. I'll bring better ones. Now, {name}, come back at level 30. A Star Witch's trial waits, and you've earned your tea.", mood: 'happy' },
+    { who: 'elowen', text: "Every spring. I'll bring better ones. Now, {name}, come back at level 30. A Mage's trial waits, and you've earned your tea.", mood: 'happy' },
   ],
   trial_elowen: [
     { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home. Gracefully. With feeling. I will be judging." },
@@ -1480,7 +1480,7 @@ export const JOB_SCENES = {
     { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
   spiritmage: [
-    { card: 'A New Path', sub: 'Star Witch' },
+    { card: 'A New Path', sub: 'Mage' },
     { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily. It's annoying. In a good way.", mood: 'happy' },
     { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. Show off a lot. It's half the job." },
   ],

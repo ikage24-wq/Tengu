@@ -2300,21 +2300,41 @@ test('her staff calls lightning straight down from the sky onto them', () => {
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and lands');
 });
 
-test('a full Constellation splits her star bolts into three', () => {
-  const bolts = (spirit) => {
+test('her Element Weave builds fast from mixing elements, slowly from repeating one', async () => {
+  const { addSpirit } = await import('../src/world/melee.js');
+  const weave = (els) => {
+    const w = starWitch();
+    w.spirit = 0;
+    for (const el of els) addSpirit(w, 4, 'harm', el);
+    return w.spirit;
+  };
+  const mixed = weave(['fire', 'ice', 'bolt', 'fire', 'ice', 'bolt']);
+  const same = weave(['fire', 'fire', 'fire', 'fire', 'fire', 'fire']);
+  assert.ok(mixed > same * 2.5, `mixing (${mixed}) builds far faster than repeating (${same})`);
+  // Her heals count as an element of their own.
+  const w = starWitch();
+  w.spirit = 0;
+  addSpirit(w, 4, 'harm', 'fire');
+  const before = w.spirit;
+  addSpirit(w, 4, 'mend');
+  assert.ok(w.spirit - before > 4, 'a heal after a fire spell weaves on');
+});
+
+test('on full Overload each of her spells carries the other two elements with it', () => {
+  const shots = (spirit) => {
     const w = starWitch();
     w.spirit = spirit;
     w.spiritAt = 1e9;
     updateWorld(w, DT, press('KeyZ'));
-    let n = 0;
+    const seen = new Set();
     for (let i = 0; i < 30; i++) {
       updateWorld(w, DT, idle);
-      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'mgfire').length);
+      for (const f of w.fx) if (f.kind === 'projectile') seen.add(f.shot);
     }
-    return n;
+    return [...seen].sort();
   };
-  assert.equal(bolts(0), 1);
-  assert.equal(bolts(100), 3);
+  assert.deepEqual(shots(0), ['mgfire']);
+  assert.deepEqual(shots(100), ['mgbolt', 'mgfire', 'mgice']);
 });
 
 test('Comet tears through the line', () => {

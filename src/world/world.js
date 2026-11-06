@@ -836,7 +836,7 @@ export function updateWorld(world, dt, input) {
     if (!h.party) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
-      if (h.gauge) addAim(world, h.gauge, m);
+      if (h.gauge) addAim(world, h.gauge, m, h.el);
       drinkBlood(world, h.damage);
     }
     if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });

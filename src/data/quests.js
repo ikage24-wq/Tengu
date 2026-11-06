@@ -169,8 +169,8 @@ export const QUESTS = {
   },
   // Elowen's trial for a Star Witch before either level 30 path (the Starlight Idol, the Astronomer).
   spiritmage_trial: {
-    id: 'spiritmage_trial', name: "The Star Witch's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Star Witch doesn't fight them: she lights their way home, beautifully, while everyone watches. Lay 20 of them to rest, then come back and I'll show you the Starlight Idol's way and the Astronomer's way.",
+    id: 'spiritmage_trial', name: "The Mage's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
+    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Mage doesn't just fight them: she lights their way home, with a speech, while everyone watches. Lay 20 of them to rest, then come back and I'll show you the Sorcerer's way and the Cleric's way.",
     objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
     rewards: { exp: 55000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
   },

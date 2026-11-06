@@ -50,7 +50,7 @@ test('jobs lean their own way: warriors tank, mages bring magic, archers and thi
 test('only the right job wears a set, and a Novice can wear the starter sets', () => {
   const warrior = hero('warrior', 30);
   assert.equal(equipBlocker(warrior, { id: 'warrior_top_30' }), null);
-  assert.match(equipBlocker(warrior, { id: 'mage_top_30' }), /Star Witches only/);
+  assert.match(equipBlocker(warrior, { id: 'mage_top_30' }), /Mages only/);
   assert.match(equipBlocker(warrior, { id: 'warrior_top_35' }), /level 35/);
   const novice = hero('novice', 6);
   assert.equal(equipBlocker(novice, { id: 'mage_hat_5' }), null);

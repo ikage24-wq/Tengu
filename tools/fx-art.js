@@ -5721,6 +5721,20 @@
       },
     };
   })(), 2);
+  // Her Element Weave aura: one little glowing orb per element (frame 0 fire, 1 ice, 2 lightning),
+  // circled round her by the game; and her crimson rune ring, laid under her feet at Overload.
+  E.mgorb = {
+    w: 60, h: 60, n: 3, fps: 1, px: 30, py: 30,
+    draw(ctx, i) {
+      const pal = [MFIRE, MICE, MBOLT][i];
+      blob(ctx, pal, 30, 30, 13, 0.05, i);
+      sparkle(ctx, pal, 42, 18, 6, i);
+    },
+  };
+  E.mgrune = grown({
+    w: 220, h: 220, n: 6, fps: 10, px: 110, py: 110, loop: true,
+    draw(ctx, i) { runeRing(ctx, 110, 110, 74, (i / 6) * (TAU / 6), 0); },
+  }, 1.4);
   E.mghitfire = mgHit('fire');
   E.mghitice = mgHit('ice');
   E.mghitbolt = mgHit('bolt');
