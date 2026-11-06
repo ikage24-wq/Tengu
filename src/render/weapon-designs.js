@@ -794,8 +794,83 @@ function ring12(x, y, rx, ry) {
   });
 }
 
+// The Mage's wand and staff (the 'arcane' finish, render/hero.js; docs/design/mage-line.md): the
+// classic wizard's. The staff is a gnarled wooden staff whose top splits into claws holding a
+// glowing orb swirling with her three elements (fire, ice, lightning); the wand a short dark rod
+// tipped with a crystal shard. Both grow grander up the tiers: a metal cage round the orb, rings
+// and floating shards.
+const ELEMENTS = ['#ff7a3c', '#6fd8ff', '#ffe04a'];
+// The orb: a glowing ball split into three swirling lobes of fire, ice and lightning round a white
+// core, turned by `f` (the animation frame) so it slowly churns.
+function elementOrb(s, x, y, r, f) {
+  s.push(E(x, y, r + 0.7, r + 0.7, '#3a2a5a'));
+  for (let k = 0; k < 3; k++) {
+    const a0 = ((k / 3) + f / 12) * Math.PI * 2;
+    const pts = [[x, y]];
+    for (let j = 0; j <= 6; j++) {
+      const a = a0 + (j / 6) * (Math.PI * 2 / 3);
+      const rr = r * (0.85 + 0.15 * Math.sin(j * 1.3));
+      pts.push([x + Math.cos(a) * rr + Math.cos(a + 1.2) * r * 0.2, y + Math.sin(a) * rr + Math.sin(a + 1.2) * r * 0.2]);
+    }
+    s.push(T(pts, ELEMENTS[k]));
+  }
+  s.push(F(E(x, y, r * 0.42, r * 0.42, '#ffffff')), F(E(x - r * 0.4, y - r * 0.45, r * 0.22, r * 0.16, '#ffffff')));
+}
+function arcaneStaff(m, t, f) {
+  const s = [];
+  const a = {};
+  const S = 24 + t * 0.7;
+  const wood = '#8a5a3a';
+  const woodDk = '#5a3a28';
+  // A gnarled shaft: a slight wiggle, knots, a metal foot cap.
+  const sh = [];
+  for (let k = 0; k <= 8; k++) { const y = 4 - (k / 8) * (S + 4); sh.push([1.3 + 0.5 * Math.sin(k * 1.7), y]); }
+  s.push(T([...sh, ...sh.slice().reverse().map(([x, y], k) => [-1.3 + 0.5 * Math.sin((8 - k) * 1.7 + 0.8), y])], wood), F(T(sh.map(([x, y]) => [x - 0.6, y]).concat([[0.2, -S], [0.2, 4]]), woodDk)));
+  for (const y of [-S * 0.3, -S * 0.62]) s.push(F(E(0.9, y, 0.7, 0.9, woodDk)));
+  s.push(R(-1.6, 3, 3.2, 1.6, m.trim), T([[-1.6, 4.6], [0, 6.4], [1.6, 4.6]], m.trimDark));
+  // The claws: three wooden prongs curling up round the orb.
+  const r = 4 + Math.min(t, 10) * 0.12;
+  const cy = -S - r - 0.5;
+  for (const sd of [-1, 0, 1]) s.push(T([[sd * 0.8, -S + 1.5], [sd * (r + 1.2), cy + 0.6], [sd * (r + 0.4) + (sd ? 0 : 0.4), cy - r * (sd ? 0.6 : 1.2)], [sd * (r - 0.6), cy + 0.6], [sd * 0.2, -S - 0.4]], sd ? woodDk : wood));
+  // From Bronze a metal band at the neck, from Steel a ring round the orb, from Mithril floating shards.
+  if (t >= 2) s.push(R(-1.8, -S + 0.4, 3.6, 1.4, m.trim));
+  elementOrb(s, 0, cy, r, f);
+  // The claw tips curl in over the orb's sides, holding it.
+  for (const sd of [-1, 1]) s.push(T([[sd * (r + 1.2), cy + 1.2], [sd * (r + 0.9), cy - r * 0.7], [sd * (r - 1.4), cy - r * 0.95], [sd * (r - 0.6), cy - r * 0.4], [sd * (r - 0.2), cy + 0.8]], woodDk), F(T([[sd * (r + 0.7), cy - r * 0.5], [sd * (r - 1.2), cy - r * 0.85], [sd * (r - 0.4), cy - r * 0.5]], wood)));
+  if (t >= 4) s.push(T([...arcPts(0, cy, r + 2.4, (r + 2.4) * 0.35, 200, 340, 10), ...arcPts(0, cy, r + 1.6, (r + 1.6) * 0.25, 340, 200, 10)], m.trim));
+  if (t >= 6) for (const [x, y, k] of [[-r - 3, cy - 2, 0], [r + 3, cy - 3, 1], [0, cy - r - 3.4, 2]]) s.push(T([[x, y - 1.8], [x + 0.9, y], [x, y + 1.8], [x - 0.9, y]], ELEMENTS[(k + f) % 3]));
+  if (t >= 9) s.push(...gem(0, -S * 0.45, 0.9, m.gem));
+  a.head = [0, cy];
+  a.gem = [0, cy];
+  a.tip = [0, cy - r];
+  a.blade = [cy - r, -S];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+function arcaneWand(m, t, f) {
+  const s = [];
+  const a = {};
+  const H = 7 + t * 0.3;
+  // A dark rod, a metal grip at the end and a ferrule under the crystal.
+  s.push(T([[-1, 2.4], [1, 2.4], [0.7, -H], [-0.7, -H]], '#3a2a4a'), F(T([[0.2, 2.4], [1, 2.4], [0.7, -H], [0.2, -H]], '#251a32')));
+  s.push(E(0, 2.8, 1.3, 1.1, m.trim), F(R(-1.1, -0.6, 2.2, 0.8, m.trim)), R(-1.2, -H - 0.6, 2.4, 1.4, m.trim));
+  // The crystal shard, faceted, in her violet with a white glint, and a glow of the element she
+  // last cast in its heart (here turning through all three).
+  const L = 5.4 + t * 0.12;
+  const top = -H - 0.6 - L;
+  s.push(T([[0, top], [1.9, top + L * 0.45], [0, -H - 0.4], [-1.9, top + L * 0.45]], '#8a5ae0'), F(T([[0, top], [1.9, top + L * 0.45], [0, top + L * 0.55]], '#c8a8ff')), F(T([[0, top + L * 0.55], [1.9, top + L * 0.45], [0, -H - 0.4]], '#5a3aa8')));
+  s.push(F(E(0, top + L * 0.5, 0.8, 1.1, ELEMENTS[Math.floor(f / 2) % 3])), F(E(-0.7, top + L * 0.28, 0.3, 0.6, '#ffffff')));
+  if (t >= 4) for (const sd of [-1, 1]) s.push(T([[0, -H + 0.4], [sd * 2.8, -H - 1.2], [sd * 1.2, -H + 0.8]], m.trim));
+  if (t >= 7) s.push(F(E(2.8 * Math.cos(f), top + 1 + Math.sin(f) * 1.2, 0.5, 0.5, ELEMENTS[f % 3])));
+  a.head = [0, top + L * 0.5];
+  a.gem = [0, top + L * 0.5];
+  a.tip = [0, top];
+  a.blade = [top, -H];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
 function wand(m, t, f = 0) {
   if (m.variant === 'chef') return ladle(m, t);
+  if (m.variant === 'arcane') return arcaneWand(m, t, f);
   if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
   const a = {};
@@ -926,6 +1001,7 @@ function orrery(m, t) {
 function staff(m, t, f = 0) {
   if (m.variant === 'astro') return orrery(m, t);
   if (m.variant === 'chef') return fryingPan(m, t);
+  if (m.variant === 'arcane') return arcaneStaff(m, t, f);
   const s = [];
   const a = {};
   const S = 26 + t * 0.8;
