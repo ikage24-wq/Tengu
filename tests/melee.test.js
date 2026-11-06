@@ -2450,13 +2450,13 @@ function idolFull() {
 }
 const settleCast = (w, s = 3) => run(w, s);
 
-test('the Cleric smites with her own sunbolts and her own pool of moves, and they build Devotion (not the Weave)', () => {
+test('the Cleric works with her own medical gear and her own pool of moves, and they build Devotion (not Mayhem)', () => {
   const pool = PATH_VARIANTS.idol;
   assert.equal(pool.length, PATH_COMBOS.idol.length, 'one choice per combo step');
   pool.forEach((step, i) => {
     assert.equal(step[0], PATH_COMBOS.idol[i], `step ${i + 1} opens with her own`);
     assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
-    for (const v of step) assert.ok(MOVES[v.move], `${v.move} is a move`);
+    for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('md'), `${v.move} is her own move`);
   });
   assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
   const w = idol();
@@ -2470,16 +2470,46 @@ test('the Cleric smites with her own sunbolts and her own pool of moves, and the
     shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
   }
   assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.idol.map((s) => s.move), 'her combo');
-  assert.equal(shot, 'clbolt', 'sunbolts');
-  assert.ok(w.grace > 0, `her smites build Devotion (${w.grace})`);
-  assert.equal(w.spirit ?? 0, 0, 'and no stars');
+  assert.equal(shot, 'mdpill', 'a hot-pack pill');
+  // And with the staff, her own string too (not a generic one).
+  const st = PATH_VARIANTS.medstaff;
+  assert.equal(st.length, PATH_COMBOS.medstaff.length);
+  for (const step of st) for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('md'), `${v.move} is her own staff move`);
+  assert.ok(w.grace > 0, `her bombs build Devotion (${w.grace})`);
+  assert.equal(w.spirit ?? 0, 0, 'and no Mayhem');
+});
+
+// The Cleric's healing reactions (world/reactions.js): her heals carry their element onto her party,
+// and a different one reacts as a heal of its own.
+test("the Cleric's heals mark her party, and a different element reacts: Soothing Steam, Frost Shield, Spark Rush", async () => {
+  const { allyElement, allyMarkOf } = await import('../src/world/reactions.js');
+  for (const [a, b, kind, check] of [
+    ['fire', 'ice', 'soothe', (w) => w.char.buffs.mdsoothe?.values.regenPct > 0],
+    ['ice', 'bolt', 'frost', (w) => w.char.buffs.mdfrost?.shield > 0],
+    ['bolt', 'fire', 'spark', (w) => w.char.buffs.mdspark?.values.speed > 0],
+  ]) {
+    const w = idol();
+    w.grace = 0;
+    assert.equal(allyElement(w, a), null, `${a} only marks her`);
+    assert.equal(allyMarkOf(w), a);
+    assert.equal(allyElement(w, b), kind, `${a} then ${b} is ${kind}`);
+    assert.equal(allyMarkOf(w), null, 'the reaction uses the mark up');
+    assert.ok(check(w), `${kind} does its own thing`);
+    assert.ok(w.grace > 0, 'and builds Devotion');
+  }
+  // Her heal bombs carry their element: holding attack sets the reactions off on her.
+  const w = idol();
+  w.mobs.forEach((m, i) => { m.x = w.body.x + 120 + i * 40; });
+  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+  for (let i = 0; i < 60 * 4; i++) updateWorld(w, DT, hold);
+  assert.ok(Object.keys(w.allyReactions ?? {}).length >= 1, `attacking heals her party with reactions (${JSON.stringify(w.allyReactions)})`);
 });
 
 test('Guiding Light heals at once, then its beam follows her and keeps mending; Live Show mends half again as much', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   assert.ok(cast(w, 'grandblessing').ok);
-  assert.equal(w.pose.kind, 'clguide');
+  assert.equal(w.pose.kind, 'mdtriage');
   run(w, 0.7);
   const after = w.char.hp;
   assert.ok(after > w.stats.maxHp * 0.42, 'it heals her at once');
@@ -2506,7 +2536,7 @@ test('Blessing of Valor rolls out both ways: she hits harder, and the monsters i
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 150, 900][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'idolcheer').ok);
-  assert.equal(w.pose.kind, 'clvalor');
+  assert.equal(w.pose.kind, 'mdpep');
   let rolled = false;
   for (let i = 0; i < 60 * 1.6; i++) {
     updateWorld(w, DT, idle);
@@ -2560,7 +2590,7 @@ test("Curtain Call's Encore keeps her standing through a blow that would knock h
   const w = idolFull();
   w.god = false;
   assert.ok(cast(w, 'resurrection').ok);
-  assert.equal(w.pose.kind, 'clraise');
+  assert.equal(w.pose.kind, 'mdrevive');
   settleCast(w, 3);
   assert.ok(w.char.buffs.resurrection, 'Encore is on her');
   w.invuln = 0;
@@ -2580,7 +2610,7 @@ test('Miracle needs full Devotion, spends it, heals in full, and three beats of 
   w.graceAt = w.now;
   assert.ok(cast(w, 'thousandtorii').ok);
   assert.equal(w.grace, 0, 'spends it');
-  assert.equal(w.pose.kind, 'clmiracle');
+  assert.equal(w.pose.kind, 'mdhospital');
   let stage = false;
   let beats = 0;
   for (let i = 0; i < 60 * 3; i++) {
@@ -2780,6 +2810,46 @@ test('Royal Decree: her magic hits harder and her Chaos fills faster while it la
   w.bindingAt = -9;
   addBinding(w, 10);
   assert.ok(w.binding > plain.binding, `Chaos fills faster (${w.binding} against ${plain.binding})`);
+});
+
+test('Espresso Round: two minutes of harder hits and faster attacks for her (and her party)', () => {
+  const w = idol();
+  w.char.skills.espresso = 10;
+  const before = w.stats.attackSpeed ?? 0;
+  assert.ok(cast(w, 'espresso').ok);
+  assert.equal(w.pose.kind, 'mdespresso');
+  run(w, 1.2);
+  const b = w.char.buffs.espresso;
+  assert.ok(b, 'the round is on her');
+  assert.ok(b.until - w.now > 115, `for two minutes (${(b.until - w.now).toFixed(0)} s left)`);
+  assert.ok(b.values.watk > 0 && b.values.matk > 0 && b.values.attackSpeed > 0, 'attack, magic and attack speed');
+  assert.ok((w.stats.attackSpeed ?? 0) > before, 'and she really attacks faster');
+});
+
+test('cooldowns: Espresso Round cannot be cast again for three minutes, then can', async () => {
+  const { cooldownLeft } = await import('../src/world/combat.js');
+  const { describeSkill } = await import('../src/ui/tooltips.js');
+  const w = idol();
+  w.char.skills.espresso = 10;
+  assert.ok(cast(w, 'espresso').ok);
+  run(w, 2.5);
+  assert.equal(cast(w, 'espresso').reason, 'cooldown', 'not again straight away');
+  assert.ok(Math.abs(cooldownLeft(w, 'espresso') - (180 - 2.5)) < 0.2, `three minutes from the cast (${cooldownLeft(w, 'espresso').toFixed(1)} s left)`);
+  w.now += 180;
+  run(w, 1);
+  assert.equal(cooldownLeft(w, 'espresso'), 0);
+  assert.ok(cast(w, 'espresso').ok, 'ready again once it runs out');
+  assert.match(describeSkill('espresso', 10), /3 min cooldown/, 'the tooltip says so');
+});
+
+test('the Cleric plays every Mage skill her own way, under her own names', async () => {
+  const { pathMoves, pathName } = await import('../src/data/path-skills.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
+    const moves = pathMoves(SKILLS[id], 1, 'shrinemaiden');
+    assert.ok(moves.every((m) => m.startsWith('md') && MOVES[m]), `${id}: her own move (${moves})`);
+    assert.notEqual(pathName(SKILLS[id], 'shrinemaiden'), SKILLS[id].name, `${id}: her own name`);
+  }
 });
 
 test('the Sorcerer plays every Mage skill her own way, under her own names', async () => {

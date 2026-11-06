@@ -23,7 +23,7 @@ new is learned.
 
 ## 2. Combat
 
-Follow the combat rules in `CLAUDE.md` (no cooldowns, skills play out their whole motion, basic
+Follow the combat rules in `CLAUDE.md` (cooldowns allowed where they fit, skills play out their whole motion, basic
 attacks and skills weave, hits land on the animation, presses are buffered, weight matches the
 blow).
 

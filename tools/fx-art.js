@@ -6855,6 +6855,199 @@
     };
   })();
 
+  // ---------- The Cleric's healing reactions (the remake: the combat medic) ----------
+  // Her elements meeting on her party as heals: a warm cloud of soothing steam with hearts and
+  // plus-crosses rising, a shield of ice crystals rising at her sides (never over her face), a rush
+  // of sparks and speed streaks at her feet. All kept round her body, the face clear.
+  const MDRED = ['#ffffff', '#ffd6da', '#ff6a74', '#e0404a', '#7a1a2a'];
+  const MDGREEN = ['#ffffff', '#d8ffe8', '#6ae0a0', '#2fae74', '#1a5a44'];
+  function plusMark(ctx, pal, x, y, r) {
+    const w = r * 0.38;
+    inked(ctx, [[x - w, y - r], [x + w, y - r], [x + w, y - w], [x + r, y - w], [x + r, y + w], [x + w, y + w], [x + w, y + r], [x - w, y + r], [x - w, y + w], [x - r, y + w], [x - r, y - w], [x - w, y - w]], pal[2], pal[4], 2.5);
+    fill(ctx, [[x - w * 0.5, y - r * 0.8], [x + w * 0.3, y - r * 0.8], [x + w * 0.3, y - w * 0.3], [x - w * 0.5, y - w * 0.3]], pal[1]);
+  }
+  function heartMark(ctx, pal, x, y, r) {
+    const P = [];
+    for (let k = 0; k <= 24; k++) {
+      const t = (k / 24) * TAU;
+      P.push([x + r * 0.06 * 16 * Math.sin(t) ** 3, y - r * 0.06 * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))]);
+    }
+    inked(ctx, P, pal[2], pal[4], 2.5);
+    fill(ctx, P.map(([px, py]) => [x + (px - x) * 0.5 - r * 0.2, y + (py - y) * 0.5 - r * 0.2]), pal[1]);
+  }
+
+  // Soothing Steam: warm steam curling up round her from the floor, hearts and plus-crosses rising.
+  E.rxsoothe = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 320, n: 9, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        const holes = i >= 6 ? (i - 5) * 0.22 : 0;
+        for (const s of [-1, 1]) for (let j = 0; j < 3; j++) puff(ctx, STEAMP, c + s * (60 + j * 16), gy - 20 - j * 50 * k - i * 4, (30 - j * 4) * k, 1400 + j + (s > 0 ? 3 : 0), { holes, lobes: 5 });
+        const R = rng(1410);
+        for (let j = 0; j < 8; j++) {
+          const u = ((i / 9) + R()) % 1;
+          const x = c + (R() < 0.5 ? -1 : 1) * (50 + R() * 60);
+          const y = gy - 30 - u * 220;
+          if (j % 2) heartMark(ctx, MDRED, x, y, 11 * (1 - u * 0.4));
+          else plusMark(ctx, MDGREEN, x, y, 10 * (1 - u * 0.4));
+        }
+      },
+    };
+  })();
+
+  // Frost Shield: ice crystals punching up round her feet and rising at her sides into a ring of
+  // shards, a gleam running round it, then settling.
+  E.rxfrost = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 300, n: 8, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = Math.min(1, (i + 1) / 3);
+        ctx.save();
+        ctx.translate(c, gy - 6);
+        ctx.scale(1, 0.3);
+        celRing(ctx, MICE, 0, 0, 90, 10, { seed: 1420, broken: i >= 6 ? 0.4 : 0 });
+        ctx.restore();
+        for (const s of [-1, 1]) for (let j = 0; j < 3; j++) {
+          const h = (110 - j * 26) * rise;
+          iceShard(ctx, c + s * (72 + j * 12), gy - 10 - h * 0.45, -Math.PI / 2 + s * (0.12 + j * 0.1), h, 12 - j * 2);
+        }
+        if (i >= 2 && i <= 5) sparkle(ctx, MICE, c + (i % 2 ? -78 : 78), gy - 60 - i * 14, 12, i);
+        const R = rng(1430 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, MICE, c + (R() < 0.5 ? -1 : 1) * (60 + R() * 50), gy - 20 - R() * 160, 6, j);
+      },
+    };
+  })();
+
+  // Spark Rush: lightning crackling round her feet, speed streaks streaming behind, sparks flying up
+  // her sides.
+  E.rxspark = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 300, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.translate(c, gy - 6);
+        ctx.scale(1, 0.3);
+        celRing(ctx, MBOLT, 0, 0, 80 + i * 6, 8, { seed: 1440, broken: 0.3 + i * 0.05 });
+        ctx.restore();
+        for (let j = 0; j < 3; j++) {
+          const a = (j / 3) * TAU + i * 0.9;
+          zap(ctx, MBOLT, c + Math.cos(a) * 80, gy - 8 + Math.sin(a) * 20, c + Math.cos(a + 0.8) * 70, gy - 60 - (j % 2) * 40, 4, 1441 + j + i * 3, 0);
+        }
+        for (let j = 0; j < 4; j++) speedLine(ctx, MBOLT, c - 70 - j * 10, gy - 30 - j * 30, c - 140 - j * 20, gy - 30 - j * 30, 4);
+        const R = rng(1450 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, MBOLT, c + (R() < 0.5 ? -1 : 1) * (55 + R() * 50), gy - 20 - R() * 170, 7, j);
+      },
+    };
+  })();
+
+  // ---------- The Cleric's shots (the remake: the combat medic) ----------
+  // Heal bombs: a round glass flask with a red cross and a fizzing fire fuse, tumbling; a puff of
+  // healing mist from her spray bottle, frosty blue with a plus in it; a defibrillator zap with a
+  // red cross at its head. Her hits: the element's pop with plus-crosses flying off.
+  E.mdbomb = grown((() => {
+    const cx = 100;
+    const cy = 60;
+    return {
+      w: 150, h: 110, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const rot = (i / 6) * TAU;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        ctx.arc(0, 4, 15, 0, TAU);
+        ctx.fillStyle = MDRED[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 4, 13, 0, TAU);
+        ctx.fillStyle = '#eaf6ff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 8, 10, 0, Math.PI);
+        ctx.fillStyle = MDRED[2];
+        ctx.fill();
+        fill(ctx, [[-4, -14], [4, -14], [4, -9], [-4, -9]], '#b7bfd0');
+        plusMark(ctx, MDRED, 0, 2, 6);
+        ctx.beginPath();
+        ctx.ellipse(-5, -2, 3, 2, -0.5, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.restore();
+        const fx = cx + Math.sin(rot) * 16;
+        const fy = cy - Math.cos(rot) * 16;
+        starburst(ctx, MFIRE, fx, fy, 7 + (i % 2) * 2, 8, 1460 + i, { inner: 0.35 });
+        const R = rng(1465 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MFIRE, cx - 30 - R() * 50, cy + (R() - 0.5) * 40, 3 + R() * 3, k);
+      },
+    };
+  })(), 2);
+
+  E.mdmist = grown((() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 150, h: 100, n: 6, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        puff(ctx, STEAMP, cx - 20, cy + 2, 13, 1470 + (i % 3), { lobes: 4 });
+        puff(ctx, ['#ffffff', '#e8fbff', '#9ae2ff', '#4a9ae0', '#2a4a8a'], cx, cy, 16 + Math.sin(ph) * 1.5, 1473, { lobes: 5 });
+        plusMark(ctx, MDGREEN, cx + 2, cy - 1, 7);
+        const R = rng(1475 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MICE, cx - 30 - R() * 50, cy + (R() - 0.5) * 34, 3 + R() * 3, k);
+      },
+    };
+  })(), 2);
+
+  E.mdzap = grown((() => {
+    const cx = 200;
+    const cy = 50;
+    return {
+      w: 240, h: 100, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 180, cy, cx - 8, cy, 10, 1480 + i, 2);
+        ctx.beginPath();
+        ctx.arc(cx, cy, 15, 0, TAU);
+        ctx.fillStyle = MDRED[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, 13, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        plusMark(ctx, MDRED, cx, cy, 9);
+        starburst(ctx, MBOLT, cx + 10, cy, 9 + (i % 2) * 3, 8, 1485 + i, { inner: 0.4 });
+      },
+    };
+  })(), 2);
+
+  const mdHit = (kind) => grown((() => {
+    const c = 100;
+    const pal = kind === 'fire' ? MFIRE : kind === 'ice' ? MICE : MBOLT;
+    return {
+      w: 200, h: 200, n: 6, fps: 26, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) starburst(ctx, pal, c, c, 28 + i * 14, kind === 'ice' ? 6 : 10, 1490, { inner: 0.4, rot: i * 0.3 });
+        const R = rng(1495);
+        for (let j = 0; j < 5; j++) {
+          const a = (j / 5) * TAU + 0.4;
+          const d = 18 + i * 14;
+          if (i >= 1) plusMark(ctx, j % 2 ? MDRED : MDGREEN, c + Math.cos(a) * d, c + Math.sin(a) * d - i * 3, 8 - i);
+        }
+        const S = rng(1497 + i);
+        for (let j = 0; j < 4; j++) { const a = S() * TAU; sparkle(ctx, pal, c + Math.cos(a) * (30 + i * 12), c + Math.sin(a) * (30 + i * 12), 7 - i, j); }
+      },
+    };
+  })(), 1.4);
+  E.mdhitfire = mdHit('fire');
+  E.mdhitice = mdHit('ice');
+  E.mdhitbolt = mdHit('bolt');
+
   // ---------- The Kitchen Witch (tomato broth, cream steam, flambé fire, sizzling eggs) ----------
   // docs/design/kitchen-witch.md. Her shapes: wobbling globs of tomato broth with bits of veg in
   // them, splash crowns of droplets, curls of cream steam, a fried egg with a gold yolk, licks of
@@ -10959,6 +11152,827 @@
         for (let k = 0; k < 3; k++) shadowHand(ctx, c + (k - 1) * 80, 92 + 6 * Math.sin(ph + k), 0.9, Math.PI / 2 + (k - 1) * 0.3, 0.2 + 0.2 * Math.sin(ph + k * 2), ph + k);
         const R = rng(1431 + i);
         for (let k = 0; k < 5; k++) sparkle(ctx, SEMB, c + (R() - 0.5) * 300, 100 + (R() - 0.5) * 120, 3 + R() * 3, k);
+      },
+    };
+  })();
+
+  // ---------- The Cleric's skills (the remake: the combat medic) ----------
+  // Her heal engine's pictures (world/idol.js keeps their old names) redrawn as the medic's: a hit
+  // with plus-crosses, rings of plus-marks for a heal sung once, Triage's hovering first-aid drone
+  // shining its beam on whoever it mends, Pep Talk's wave of hearts and crosses rolling along the
+  // floor, the Antiseptic Cloud, the Field Hospital's tent, its bursts and its rolling blast. And her
+  // versions of the Mage's skills: the Mega Heal Bomb, the siren of the Ambulance Run, the Defib
+  // Chain, the Cold Compress, First Aid's flying bandages, Bubble Wrap, and the Airdrop's blast.
+  E.sihit = mdHit('fire');
+  E.mdhuge = grown(E.mdbomb, 1.9);
+  E.mdzapbig = grown(E.mdzap, 1.5);
+
+  // A heal sung once (the party's healer bots): a ring of plus-marks opening out.
+  E.siwave = (() => {
+    const c = 150;
+    return {
+      w: 300, h: 300, n: 7, fps: 18, px: c, py: c,
+      draw(ctx, i) {
+        const r = 30 + i * 16;
+        ctx.save();
+        ctx.translate(c, c);
+        ctx.scale(1, 0.4);
+        celRing(ctx, MDRED, 0, 0, r, 6, { broken: i >= 4 ? 0.5 : 0, seed: 1500 });
+        ctx.restore();
+        for (let k = 0; k < 6; k++) { const a = (k / 6) * TAU + i * 0.2; plusMark(ctx, k % 2 ? MDRED : MDGREEN, c + Math.cos(a) * r, c + Math.sin(a) * r * 0.4 - i * 3, 9 - i); }
+      },
+    };
+  })();
+
+  // Triage's drone (loops): a little first-aid kit with propeller-wings hovering, shining a soft
+  // cross-shaped beam down onto whoever it's mending.
+  E.sispot = (() => {
+    const c = 90;
+    const gy = 250;
+    return {
+      w: 180, h: 260, n: 6, fps: 12, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        const top = 40 + Math.sin(ph) * 4;
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        inked(ctx, [[c - 16, top + 26], [c + 16, top + 26], [c + 52, gy], [c - 52, gy]], MDRED[1], MDRED[2], 2);
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        fill(ctx, [[c - 6, top + 26], [c + 6, top + 26], [c + 18, gy], [c - 18, gy]], '#ffffff');
+        ctx.restore();
+        ctx.save();
+        ctx.translate(c, gy - 6);
+        ctx.scale(1, 0.3);
+        celRing(ctx, MDRED, 0, 0, 52, 7, { seed: 1510 });
+        ctx.restore();
+        inked(ctx, [[c - 20, top], [c + 20, top], [c + 20, top + 26], [c - 20, top + 26]], '#ffffff', MDRED[4], 3);
+        plusMark(ctx, MDRED, c, top + 13, 9);
+        for (const s of [-1, 1]) {
+          const flap = Math.cos(ph * 2) * 4;
+          inked(ctx, [[c + s * 20, top + 6], [c + s * 40, top - 4 + flap], [c + s * 38, top + 6], [c + s * 20, top + 14]], '#eaf6ff', '#5a6a9a', 2);
+        }
+        sparkle(ctx, MDRED, c + 26 * Math.cos(ph), gy - 40 - 60 * ((i / 6) % 1), 6, i);
+      },
+    };
+  })();
+
+  // Pep Talk's wave (loops; rolls along the floor): a crest of hearts and plus-crosses, red and white.
+  E.sihype = (() => {
+    const c = 100;
+    const gy = 140;
+    return {
+      w: 200, h: 160, n: 6, fps: 16, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        inked(ctx, [[c - 60, gy], [c - 30, gy - 60 - 6 * Math.sin(ph)], [c + 10, gy - 90 - 8 * Math.sin(ph + 1)], [c + 40, gy - 50], [c + 60, gy]], MDRED[1], MDRED[3], 3);
+        fill(ctx, [[c - 40, gy], [c - 18, gy - 40], [c + 8, gy - 64 - 6 * Math.sin(ph + 1)], [c + 26, gy - 36], [c + 40, gy]], '#ffffff');
+        for (let k = 0; k < 4; k++) {
+          const u = ((i / 6) + k * 0.25) % 1;
+          const x = c - 30 + k * 18;
+          const y = gy - 30 - u * 80;
+          if (k % 2) heartMark(ctx, MDRED, x, y, 9 * (1 - u * 0.4));
+          else plusMark(ctx, MDGREEN, x, y, 8 * (1 - u * 0.4));
+        }
+      },
+    };
+  })();
+
+  // The Antiseptic Cloud (loops): a puffy green-and-white cloud of disinfectant drifting, plus-marks
+  // and sparkles fizzing in it.
+  E.silull = (() => {
+    const c = 110;
+    const cy = 80;
+    const DISINF = ['#ffffff', '#eafff4', '#b8f0d4', '#6ac8a0', '#2a6a5a'];
+    return {
+      w: 220, h: 160, n: 6, fps: 10, px: c, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 4; k++) puff(ctx, DISINF, c + (k - 1.5) * 30 + Math.sin(ph + k) * 3, cy + Math.cos(ph + k) * 3, 30 - Math.abs(k - 1.5) * 5, 1520 + k, { lobes: 5 });
+        plusMark(ctx, MDGREEN, c - 20, cy - 10 + Math.sin(ph) * 3, 9);
+        plusMark(ctx, MDGREEN, c + 26, cy + 4 + Math.cos(ph) * 3, 7);
+        const R = rng(1530 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, DISINF, c + (R() - 0.5) * 160, cy + 30 + R() * 30, 5, k);
+      },
+    };
+  })();
+
+  // The Field Hospital: a white medical tent with a big red cross springs up behind her.
+  E.sistage = (() => {
+    const c = 120;
+    const gy = 220;
+    return {
+      w: 240, h: 230, n: 8, fps: 12, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3) * (i >= 7 ? 0.7 : 1);
+        const h = 150 * k;
+        inked(ctx, [[c - 100, gy], [c, gy - h], [c + 100, gy]], '#fbfbfb', '#7a8296', 3);
+        fill(ctx, [[c - 100, gy], [c - 30, gy - h * 0.7], [c - 20, gy]], '#e8ecf4');
+        inked(ctx, [[c - 20, gy], [c, gy - h * 0.45], [c + 20, gy]], MDRED[4], MDRED[4], 2);
+        if (k > 0.6) plusMark(ctx, MDRED, c, gy - h * 0.66, 18 * k);
+        fill(ctx, [[c - 2, gy - h - 26], [c + 2, gy - h - 26], [c + 2, gy - h], [c - 2, gy - h]], '#7a8296');
+        fill(ctx, [[c + 2, gy - h - 26], [c + 26, gy - h - 20], [c + 2, gy - h - 14]], MDRED[2]);
+      },
+    };
+  })();
+
+  // A burst off the Field Hospital on a beat: a firework of plus-marks and hearts.
+  E.sipyro = (() => {
+    const c = 120;
+    return {
+      w: 240, h: 240, n: 7, fps: 18, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 1) starburst(ctx, MDRED, c, c, 40 + i * 20, 10, 1540, { inner: 0.35 });
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * TAU;
+          const d = 20 + i * 16;
+          if (k % 2) heartMark(ctx, MDRED, c + Math.cos(a) * d, c + Math.sin(a) * d + i * i, 10 - i);
+          else plusMark(ctx, MDGREEN, c + Math.cos(a) * d, c + Math.sin(a) * d + i * i, 10 - i);
+        }
+      },
+    };
+  })();
+
+  // The Field Hospital's blast rolling along the floor (loops): a crest of healing light, red and
+  // white with crosses.
+  E.sibig = (() => {
+    const c = 150;
+    const gy = 170;
+    return {
+      w: 300, h: 190, n: 6, fps: 18, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        inked(ctx, [[c - 110, gy], [c - 60, gy - 90 - 8 * Math.sin(ph)], [c, gy - 140 - 10 * Math.sin(ph + 1)], [c + 60, gy - 80], [c + 110, gy]], MDRED[2], MDRED[4], 3);
+        fill(ctx, [[c - 80, gy], [c - 40, gy - 70], [c, gy - 110 - 8 * Math.sin(ph + 1)], [c + 40, gy - 60], [c + 80, gy]], MDRED[1]);
+        fill(ctx, [[c - 40, gy], [c - 16, gy - 40], [c, gy - 66], [c + 16, gy - 36], [c + 40, gy]], '#ffffff');
+        plusMark(ctx, MDRED, c, gy - 90, 14);
+        const R = rng(1550 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, MDRED, c + (R() - 0.5) * 220, gy - 20 - R() * 120, 7, k);
+      },
+    };
+  })();
+
+  // The Ambulance Run: a red-and-white siren flash spinning where she was, light streaks.
+  E.mdsiren = (() => {
+    const c = 150;
+    const gy = 250;
+    return {
+      w: 300, h: 280, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 80;
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * TAU + i * 0.7;
+          const pal = k % 2 ? MDRED : STEAMP;
+          inked(ctx, [[c, cy], [c + Math.cos(a - 0.2) * (90 - i * 6), cy + Math.sin(a - 0.2) * (60 - i * 4)], [c + Math.cos(a + 0.2) * (90 - i * 6), cy + Math.sin(a + 0.2) * (60 - i * 4)]], pal[2], pal[4], 2);
+        }
+        if (i <= 3) blob(ctx, MDRED, c, cy, 20 - i * 3, 0.1, i);
+        const R = rng(1560 + i);
+        for (let k = 0; k < 4; k++) speedLine(ctx, MDRED, c - 30 - R() * 40, cy - 40 + k * 26, c - 120 - R() * 40, cy - 40 + k * 26, 4);
+      },
+    };
+  })();
+
+  // The Cold Compress (on the floor): an ice pack slapped down, cold bursting out both ways in ice and
+  // frost, plus-marks fizzing up.
+  E.mdnovafx = (() => {
+    const c = 330;
+    const gy = 220;
+    return {
+      w: 660, h: 260, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const reach = 60 + Math.min(i, 4) * 60;
+        if (i <= 3) inked(ctx, [[c - 30, gy - 2], [c + 30, gy - 2], [c + 26, gy - 18], [c - 26, gy - 18]], '#d8f0ff', '#4a9ae0', 3);
+        if (i <= 3) plusMark(ctx, MDRED, c, gy - 10, 7);
+        for (const s of [-1, 1]) for (let k = 0; k < 5; k++) {
+          const x = c + s * (50 + k * (reach / 5));
+          const age = i - k * 0.5;
+          if (age < 0) continue;
+          const h = 70 * Math.sin(Math.PI * Math.min(1, age / 5 + 0.15));
+          if (h < 8) continue;
+          iceShard(ctx, x, gy - h * 0.45, -Math.PI / 2 + s * 0.1, h, 9);
+        }
+        if (i <= 4) for (let j = 0; j < 4; j++) puff(ctx, STEAMP, c + (j - 1.5) * 60, gy - 14, 22 - i * 3, 1570 + j, { lobes: 4 });
+        const R = rng(1580 + i);
+        for (let j = 0; j < 6; j++) plusMark(ctx, MDGREEN, c + (R() - 0.5) * reach * 2, gy - 40 - R() * 100, 8 - i * 0.6);
+      },
+    };
+  })();
+
+  // First Aid: bandages flying out and wrapping round in loops, plus-crosses and hearts popping.
+  E.mdaid = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 320, n: 10, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 110;
+        for (let k = 0; k < 4; k++) {
+          const a0 = k * 1.6 + i * 0.5;
+          const pts = [];
+          for (let j = 0; j <= 10; j++) {
+            const a = a0 + (j / 10) * 2.2;
+            const r = 70 + 20 * Math.sin(j * 0.6 + k);
+            pts.push([c + Math.cos(a) * r, cy + Math.sin(a) * r * 0.5]);
+          }
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          pts.forEach(([x, y], j) => (j ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+          ctx.strokeStyle = '#a8a0b8';
+          ctx.lineWidth = 12;
+          ctx.stroke();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 8;
+          ctx.stroke();
+        }
+        const R = rng(1590);
+        for (let j = 0; j < 8; j++) {
+          const u = ((i / 10) + R()) % 1;
+          const x = c + (R() - 0.5) * 220;
+          const y = gy - 40 - u * 230;
+          if (j % 2) heartMark(ctx, MDRED, x, y, 10 * (1 - u * 0.4));
+          else plusMark(ctx, MDRED, x, y, 9 * (1 - u * 0.4));
+        }
+      },
+    };
+  })();
+
+  // Bubble Wrap: a ring of bubble-wrap bubbles rising round the party at hip height, shining, then
+  // popping one by one.
+  E.mdbubble = (() => {
+    const c = 220;
+    const gy = 280;
+    return {
+      w: 440, h: 300, n: 9, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = Math.min(1, (i + 1) / 3);
+        for (let k = 0; k < 16; k++) {
+          const a = (k / 16) * TAU;
+          const popped = i >= 6 && (k % 3) < i - 5;
+          if (popped) continue;
+          const x = c + Math.cos(a) * 140;
+          const y = gy - 20 - 30 * rise + Math.sin(a) * 40 - (k % 2) * 16;
+          ctx.beginPath();
+          ctx.arc(x, y, 13, 0, TAU);
+          ctx.fillStyle = '#5a6a9a';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x, y, 11, 0, TAU);
+          ctx.fillStyle = '#eaf6ff';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(x - 4, y - 4, 4, 3, -0.5, 0, TAU);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        }
+        const R = rng(1600 + i);
+        for (let j = 0; j < 5; j++) sparkle(ctx, MICE, c + (R() - 0.5) * 300, gy - 40 - R() * 100, 6, j);
+      },
+    };
+  })();
+
+  // The Airdrop's blast: one huge burst of healing over the stretch ahead: a red-white dome, all
+  // three elements going off in it, crosses and hearts flying, then a puff of clean steam.
+  E.mdboom = (() => {
+    const c = 450;
+    const gy = 420;
+    return {
+      w: 900, h: 480, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 130;
+        if (i <= 2) starburst(ctx, MDRED, c, cy, 140 + i * 60, 16, 1610, { inner: 0.3, rot: i * 0.2 });
+        if (i >= 1 && i <= 5) {
+          const r = 90 + i * 26;
+          blob(ctx, MFIRE, c, cy, r * 0.6, 0.1, i);
+          for (let j = 0; j < 8; j++) blob(ctx, j % 2 ? MDRED : MICE, c + Math.cos((j / 8) * TAU + i) * r, cy + Math.sin((j / 8) * TAU + i) * r * 0.7, r * 0.3, 0.14, j + i);
+          for (let j = 0; j < 5; j++) { const a = (j / 5) * TAU + i; zap(ctx, MBOLT, c, cy, c + Math.cos(a) * (r + 60), cy + Math.sin(a) * (r * 0.7 + 40), 6, 1611 + j, 0); }
+        }
+        if (i >= 2) for (let j = 0; j < 12; j++) {
+          const a = (j / 12) * TAU;
+          const d = 110 + i * 34;
+          if (j % 2) heartMark(ctx, MDRED, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, 18 - i);
+          else plusMark(ctx, MDGREEN, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.7, 16 - i);
+        }
+        if (i >= 5) for (let j = 0; j < 6; j++) puff(ctx, STEAMP, c + Math.cos((j / 6) * TAU) * 160, cy - 30 + Math.sin((j / 6) * TAU) * 70, 50 - (i - 5) * 8, 1620 + j, { holes: (i - 5) * 0.25, lobes: 5 });
+      },
+    };
+  })();
+
+  // Revive Paddles: a jolt hits the floor; a big heart of lightning and light rises out of it.
+  E.mdrevive = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 320, n: 10, fps: 12, px: c, py: gy,
+      draw(ctx, i) {
+        if (i >= 4 && i <= 6) for (let j = 0; j < 5; j++) { const a = Math.PI + (j / 4) * Math.PI; zap(ctx, MBOLT, c, gy - 6, c + Math.cos(a) * 120, gy - 6 + Math.sin(a) * 50, 5, 1630 + j + i, 0); }
+        if (i >= 5) {
+          const u = Math.min(1, (i - 4) / 4);
+          heartMark(ctx, MDRED, c, gy - 80 - u * 70, 26 + u * 8);
+          plusMark(ctx, ['#ffffff', '#ffffff', '#ffffff', '#ffe8ea', '#ffb0b8'], c, gy - 82 - u * 70, 8);
+        }
+        const R = rng(1640 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, j % 2 ? MBOLT : MDRED, c + (R() - 0.5) * 240, gy - 20 - R() * 200, 7, j);
+      },
+    };
+  })();
+
+  // The Cleric's "getting healed" mark on whoever she mends: a ring with a red cross pops at their
+  // feet, green plus-crosses and little hearts float up their sides (never over the face), a soft
+  // sparkle, and it's gone.
+  E.mdhealed = (() => {
+    const c = 150;
+    const gy = 250;
+    return {
+      w: 300, h: 270, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const pop = Math.min(1, (i + 1) / 2);
+        ctx.save();
+        ctx.translate(c, gy - 4);
+        ctx.scale(1, 0.32);
+        celRing(ctx, MDGREEN, 0, 0, 40 + 24 * pop + i * 2, 7, { broken: i >= 5 ? (i - 4) * 0.2 : 0, seed: 1700 });
+        ctx.restore();
+        if (i <= 3) plusMark(ctx, MDRED, c, gy - 6, 9 * pop * (1 - i * 0.15));
+        const R = rng(1701);
+        for (let k = 0; k < 6; k++) {
+          const side = k % 2 ? 1 : -1;
+          const delay = R() * 0.3;
+          const u = Math.max(0, i / 8 - delay);
+          if (u <= 0 || u >= 1) continue;
+          const x = c + side * (74 + R() * 20) + Math.sin(u * 6 + k) * 4;
+          const y = gy - 20 - u * 190;
+          const r = 10 * (1 - u * 0.5);
+          if (k % 3 === 0) heartMark(ctx, MDRED, x, y, r);
+          else plusMark(ctx, MDGREEN, x, y, r);
+        }
+        if (i >= 1 && i <= 6) sparkle(ctx, MDGREEN, c + (i % 2 ? -84 : 84), gy - 60 - i * 18, 7 - i * 0.6, i);
+      },
+    };
+  })();
+
+  // ---------- The Cleric's medical kit (the remake, second pass: nothing that looks like a spell) ----------
+  // The combat medic's elements are medical gear, never magic: fire is a hot pack (a red capsule or a
+  // hot-water bottle, steaming), ice is a cold pack (a blue gel ice pack, a cold spray), lightning is
+  // a heart-monitor pulse (a green ECG line with a heart at its head). Her hits slap a band-aid on.
+  // Shapes: capsules, gel packs, rubber bottles, gauze, plasters, ECG lines, plus-crosses, hearts.
+  const ECG = ['#ffffff', '#d8ffe8', '#5ae08a', '#2a9a5a', '#14482e'];
+  const GEL = ['#ffffff', '#e0f4ff', '#8ad0ff', '#3a8ad8', '#1a3a7a'];
+  const HOT = ['#ffffff', '#ffe0d0', '#ff7a5a', '#d83a3a', '#6a1a24'];
+  const GAUZE = ['#ffffff', '#ffffff', '#f2efe8', '#d8d0c4', '#8a7a7a'];
+  const TAN = ['#ffffff', '#ffe8cc', '#f0c08a', '#c88a5a', '#6a4430'];
+
+  // A pill capsule centred at (x, y), `len` long, turned by `rot`: one half `a`, one half white.
+  function capsule(ctx, x, y, len, r, rot, a) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const half = (sx, pal) => {
+      ctx.beginPath();
+      ctx.moveTo(0, -r);
+      ctx.lineTo(sx * (len / 2 - r), -r);
+      ctx.arc(sx * (len / 2 - r), 0, r, -Math.PI / 2, Math.PI / 2, sx < 0);
+      ctx.lineTo(0, r);
+      ctx.closePath();
+      ctx.fillStyle = pal[2];
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = pal[4];
+      ctx.stroke();
+    };
+    half(-1, GAUZE);
+    half(1, a);
+    fill(ctx, [[-len / 2 + r * 0.6, -r * 0.55], [len / 2 - r * 0.6, -r * 0.55], [len / 2 - r * 0.6, -r * 0.2], [-len / 2 + r * 0.6, -r * 0.2]], '#ffffff');
+    ctx.restore();
+  }
+  // A gel ice pack: a soft blue rounded square with a crimped edge and a snowflake-cross.
+  function icePack(ctx, x, y, w, h, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const P = [];
+    for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * TAU;
+      const rx = w / 2 * (k % 2 ? 0.92 : 1);
+      const ry = h / 2 * (k % 2 ? 0.92 : 1);
+      P.push([Math.cos(a) * rx * Math.min(1, 1.2 * Math.abs(Math.cos(a)) + 0.4), Math.sin(a) * ry * Math.min(1, 1.2 * Math.abs(Math.sin(a)) + 0.4)]);
+    }
+    inked(ctx, P, GEL[2], GEL[4], 3);
+    fill(ctx, P.map(([px, py]) => [px * 0.7 - w * 0.06, py * 0.7 - h * 0.08]), GEL[1]);
+    plusMark(ctx, ['#ffffff', '#ffffff', '#ffffff', GEL[3], GEL[4]], 0, 0, Math.min(w, h) * 0.2);
+    ctx.restore();
+  }
+  // A heart-monitor line from (x0, y) running `len` along +x: flat, a sharp beat spike, flat; the
+  // beat at `at` (0-1 along it); a heart at its head.
+  function ecgLine(ctx, x0, y, len, amp, at = 0.6, width = 6) {
+    const bx = x0 + len * at;
+    const P = [[x0, y], [bx - 24, y], [bx - 16, y - amp * 0.25], [bx - 10, y], [bx - 4, y + amp * 0.4], [bx + 4, y - amp], [bx + 12, y + amp * 0.55], [bx + 18, y], [bx + 26, y - amp * 0.18], [bx + 32, y], [x0 + len, y]];
+    const line = (wd, c) => {
+      ctx.beginPath();
+      P.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = wd;
+      ctx.strokeStyle = c;
+      ctx.stroke();
+    };
+    line(width + 4, ECG[4]);
+    line(width, ECG[2]);
+    line(width * 0.4, ECG[0]);
+    heartMark(ctx, MDRED, x0 + len, y, width * 2.2);
+  }
+  // A band-aid at (x, y), `len` long, turned by `rot`: tan strip, rounded ends, a pad with dots,
+  // a stripe of the element's colour along the pad.
+  function bandAid(ctx, x, y, len, wid, rot, stripe) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const r = wid / 2;
+    ctx.beginPath();
+    ctx.moveTo(-len / 2 + r, -r);
+    ctx.lineTo(len / 2 - r, -r);
+    ctx.arc(len / 2 - r, 0, r, -Math.PI / 2, Math.PI / 2);
+    ctx.lineTo(-len / 2 + r, r);
+    ctx.arc(-len / 2 + r, 0, r, Math.PI / 2, Math.PI * 1.5);
+    ctx.closePath();
+    ctx.fillStyle = TAN[2];
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = TAN[4];
+    ctx.stroke();
+    fill(ctx, [[-len * 0.18, -r * 0.7], [len * 0.18, -r * 0.7], [len * 0.18, r * 0.7], [-len * 0.18, r * 0.7]], '#fff4ea');
+    fill(ctx, [[-len * 0.18, -r * 0.18], [len * 0.18, -r * 0.18], [len * 0.18, r * 0.18], [-len * 0.18, r * 0.18]], stripe);
+    for (const dx of [-0.32, -0.26, 0.26, 0.32]) { ctx.beginPath(); ctx.arc(len * dx, 0, 1.4, 0, TAU); ctx.fillStyle = TAN[3]; ctx.fill(); }
+    ctx.restore();
+  }
+  // A hot-water bottle: a red rubber bottle with a stopper and ribbed face, steaming.
+  function hotBottle(ctx, x, y, s, rot, ph) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const P = [[-14 * s, -12 * s], [-8 * s, -20 * s], [8 * s, -20 * s], [14 * s, -12 * s], [16 * s, 16 * s], [-16 * s, 16 * s]];
+    inked(ctx, P, HOT[3], HOT[4], 3);
+    fill(ctx, P.map(([px, py]) => [px * 0.72 - 2 * s, py * 0.75 - 1 * s]), HOT[2]);
+    for (let k = 0; k < 3; k++) fill(ctx, [[-10 * s, (-4 + k * 7) * s], [10 * s, (-4 + k * 7) * s], [10 * s, (-2 + k * 7) * s], [-10 * s, (-2 + k * 7) * s]], HOT[3]);
+    inked(ctx, [[-4 * s, -20 * s], [4 * s, -20 * s], [4 * s, -27 * s], [-4 * s, -27 * s]], '#f0ece4', '#6a6a7a', 2);
+    ctx.restore();
+    for (let k = 0; k < 2; k++) puff(ctx, STEAMP, x - 10 * s + k * 14 * s, y - 34 * s - ((ph + k) % 3) * 4 * s, 6 * s, 1800 + k, { lobes: 3 });
+  }
+
+  // ---- Her wand's shots ----
+  E.mdpill = grown((() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 150, h: 100, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        capsule(ctx, cx, cy, 34, 9, (i / 6) * TAU, HOT);
+        for (let k = 0; k < 3; k++) puff(ctx, STEAMP, cx - 24 - k * 14, cy - 4 + (k % 2) * 6, 6 - k, 1810 + ((i + k) % 3), { lobes: 3 });
+      },
+    };
+  })(), 2);
+  E.mdpack = grown((() => {
+    const cx = 100;
+    const cy = 50;
+    return {
+      w: 150, h: 100, n: 6, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        icePack(ctx, cx, cy, 30, 24, Math.sin((i / 6) * TAU) * 0.5);
+        const R = rng(1820 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, GEL, cx - 26 - R() * 50, cy + (R() - 0.5) * 30, 3 + R() * 3, k);
+        puff(ctx, STEAMP, cx - 30, cy + 2, 8, 1825 + (i % 3), { lobes: 3 });
+      },
+    };
+  })(), 2);
+  E.mdpulse = grown((() => {
+    const cx = 220;
+    const cy = 50;
+    return {
+      w: 250, h: 100, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ecgLine(ctx, cx - 200, cy, 200, 30, 0.35 + (i / 6) * 0.4, 6);
+      },
+    };
+  })(), 2);
+  // ---- Her staff's shots: heavier gear ----
+  E.mdbottle = grown((() => {
+    const cx = 110;
+    const cy = 70;
+    return {
+      w: 170, h: 140, n: 6, fps: 18, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        hotBottle(ctx, cx, cy + 10, 1.2, (i / 6) * TAU * 0.5, i);
+      },
+    };
+  })(), 2);
+  E.mdspray = grown((() => {
+    const cx = 160;
+    const cy = 60;
+    return {
+      w: 200, h: 120, n: 6, fps: 18, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        for (let k = 0; k < 5; k++) puff(ctx, k % 2 ? STEAMP : ['#ffffff', '#eef8ff', '#bfe6ff', '#6aa8e0', '#2a4a8a'], cx - k * 22, cy + Math.sin(i + k) * 6, 22 - k * 3, 1830 + ((i + k) % 4), { lobes: 4 });
+        icePack(ctx, cx + 4, cy - 2, 22, 18, 0.3 * Math.sin(i));
+        const R = rng(1835 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, GEL, cx - R() * 130, cy + (R() - 0.5) * 60, 4, k);
+      },
+    };
+  })(), 2);
+  E.mdecg = grown((() => {
+    const cx = 320;
+    const cy = 70;
+    return {
+      w: 340, h: 140, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ecgLine(ctx, cx - 300, cy, 300, 50, 0.3 + (i / 6) * 0.5, 9);
+      },
+    };
+  })(), 1.6);
+
+  // Her hit: a band-aid X slapped on, its stripe in the element's colour, a little puff and a cross.
+  const mdPlaster = (stripe) => grown((() => {
+    const c = 90;
+    return {
+      w: 180, h: 180, n: 6, fps: 22, px: c, py: c,
+      draw(ctx, i) {
+        const k = i === 0 ? 1.4 : i === 1 ? 1.1 : 1;
+        const fade = i >= 4 ? 1 - (i - 3) * 0.3 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        bandAid(ctx, c, c, 70 * k, 22 * k, 0.6, stripe);
+        bandAid(ctx, c, c, 70 * k, 22 * k, -0.6, stripe);
+        ctx.restore();
+        if (i >= 1 && i <= 4) for (let j = 0; j < 3; j++) { const a = -Math.PI / 2 + (j - 1) * 0.9; plusMark(ctx, MDGREEN, c + Math.cos(a) * (40 + i * 10), c + Math.sin(a) * (40 + i * 10), 8 - i); }
+      },
+    };
+  })(), 1.3);
+  E.mdhitfire = mdPlaster(HOT[2]);
+  E.mdhitice = mdPlaster(GEL[2]);
+  E.mdhitbolt = mdPlaster(ECG[2]);
+  E.sihit = mdPlaster(MDRED[2]);
+
+  // ---- Her reactions on monsters, as medical moments ----
+  // Fever Break (steam): a hot cloud with a thermometer popping out of it, sweat drops flying.
+  E.mdrxsteam = (() => {
+    const c = 220;
+    const gy = 250;
+    return {
+      w: 440, h: 300, n: 8, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        const holes = i >= 5 ? (i - 4) * 0.25 : 0;
+        for (let j = 0; j < 5; j++) puff(ctx, STEAMP, c + (j - 2) * 50 * k, gy - 50 - Math.abs(j - 2) * 6 - i * 4, (40 - Math.abs(j - 2) * 6) * k, 1840 + j, { holes, lobes: 5 });
+        if (i >= 1 && i <= 6) {
+          ctx.save();
+          ctx.translate(c + 10, gy - 110 - i * 6);
+          ctx.rotate(0.4);
+          inked(ctx, [[-5, -40], [5, -40], [5, 20], [-5, 20]], '#ffffff', '#7a8296', 2.5);
+          fill(ctx, [[-2, -10 - i * 4], [2, -10 - i * 4], [2, 20], [-2, 20]], HOT[3]);
+          ctx.beginPath();
+          ctx.arc(0, 24, 8, 0, TAU);
+          ctx.fillStyle = HOT[3];
+          ctx.fill();
+          ctx.restore();
+        }
+        const R = rng(1850 + i);
+        for (let j = 0; j < 6; j++) drop(ctx, GEL, c + (R() - 0.5) * 300, gy - 80 - R() * 120, Math.PI / 2, 6);
+      },
+    };
+  })();
+  // Cold Shock (shatter): an ice pack bursting, gauze strips and frost flying out, a band-aid X.
+  E.mdrxshatter = (() => {
+    const c = 170;
+    return {
+      w: 340, h: 340, n: 7, fps: 20, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 1) icePack(ctx, c, c, 60 + i * 20, 50 + i * 16, 0.2);
+        if (i >= 1) for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU + 0.3;
+          const d = 30 + i * 26;
+          if (j % 2) icePack(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, 18 - i, 14 - i, a + i);
+          else bandAid(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, 30 - i * 2, 10, a + i * 0.6, GEL[2]);
+        }
+        if (i >= 2 && i <= 5) { bandAid(ctx, c, c, 80, 24, 0.6, GEL[2]); bandAid(ctx, c, c, 80, 24, -0.6, GEL[2]); }
+      },
+    };
+  })();
+  // Shock Therapy (kaboom): a huge heart-monitor spike shooting up, a heart bursting into hearts and
+  // pulses jumping off it.
+  E.mdrxkaboom = (() => {
+    const c = 220;
+    const gy = 320;
+    return {
+      w: 440, h: 360, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 110;
+        if (i <= 4) ecgLine(ctx, c - 180, cy + 30, 360, 120 * (1 - Math.abs(i - 1.5) * 0.2), 0.5, 10);
+        if (i >= 1 && i <= 5) heartMark(ctx, MDRED, c, cy - 20, 40 - Math.abs(i - 2) * 8);
+        if (i >= 2) for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU;
+          const d = 50 + i * 22;
+          heartMark(ctx, MDRED, c + Math.cos(a) * d, cy - 20 + Math.sin(a) * d * 0.7, 12 - i);
+        }
+      },
+    };
+  })();
+
+  // ---- Her healing reactions on the party, redrawn to match ----
+  // Frost Shield: rolls of blue-striped gauze wrapping round their legs and middle, a cold pack
+  // glinting at each side.
+  E.rxfrost = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 300, n: 8, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        for (let j = 0; j < 3; j++) {
+          ctx.save();
+          ctx.translate(c, gy - 30 - j * 34);
+          ctx.scale(1, 0.32);
+          celRing(ctx, GAUZE, 0, 0, 80 * k, 12, { seed: 1860 + j, broken: i >= 6 ? 0.4 : 0 });
+          ctx.restore();
+        }
+        for (const s of [-1, 1]) icePack(ctx, c + s * 86, gy - 70 - (i % 2) * 3, 26 * k, 20 * k, s * 0.3);
+        const R = rng(1870 + i);
+        for (let j = 0; j < 4; j++) sparkle(ctx, GEL, c + (R() < 0.5 ? -1 : 1) * (70 + R() * 30), gy - 30 - R() * 120, 6, j);
+      },
+    };
+  })();
+  // Spark Rush: green heart-monitor lines racing up their sides, a heart beating fast at each side.
+  E.rxspark = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 300, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        for (const s of [-1, 1]) {
+          ctx.save();
+          ctx.translate(c + s * 80, gy - 10);
+          ctx.rotate(-Math.PI / 2);
+          ecgLine(ctx, 0, 0, 150, 18, ((i / 8) + (s > 0 ? 0.5 : 0)) % 1 * 0.6 + 0.2, 4);
+          ctx.restore();
+        }
+        for (let j = 0; j < 4; j++) speedLine(ctx, ECG, c - 60 - j * 10, gy - 30 - j * 30, c - 130 - j * 20, gy - 30 - j * 30, 4);
+      },
+    };
+  })();
+
+  // ---- Her skills, redrawn as medical gear ----
+  // Mega Heal Bomb: a giant pill capsule, far too big, steaming.
+  E.mdhuge = grown(E.mdpill, 2);
+  // Defib Chain: a long, strong heart-monitor line.
+  E.mdzapbig = grown(E.mdecg, 1.2);
+  // Cold Compress (on the floor): ice packs slapping down along the floor both ways, cold spray mist
+  // and band-aids peeling up.
+  E.mdnovafx = (() => {
+    const c = 330;
+    const gy = 220;
+    return {
+      w: 660, h: 260, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const reach = 60 + Math.min(i, 4) * 60;
+        for (const s of [-1, 1]) for (let k = 0; k < 5; k++) {
+          const x = c + s * (40 + k * (reach / 5));
+          const age = i - k * 0.5;
+          if (age < 0) continue;
+          const drop = Math.min(1, age / 1.5);
+          icePack(ctx, x, gy - 14 - (1 - drop) * 40, 30, 22, s * 0.2 * (1 - drop));
+          if (age >= 1 && age <= 4) puff(ctx, STEAMP, x, gy - 30 - age * 8, 16, 1880 + k, { lobes: 4, holes: age > 3 ? 0.4 : 0 });
+        }
+        const R = rng(1890 + i);
+        for (let j = 0; j < 6; j++) sparkle(ctx, GEL, c + (R() - 0.5) * reach * 2, gy - 40 - R() * 100, 7 - i * 0.6, j);
+      },
+    };
+  })();
+  // The Airdrop's blast: a great red-cross shockwave over the stretch ahead, pills, ice packs,
+  // band-aids and heart-monitor pulses flying out of it, then clean steam.
+  E.mdboom = (() => {
+    const c = 450;
+    const gy = 420;
+    return {
+      w: 900, h: 480, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const cy = gy - 130;
+        const k = Math.min(1, (i + 1) / 3);
+        if (i <= 5) plusMark(ctx, MDRED, c, cy, 90 * k * (1 - Math.max(0, i - 3) * 0.2));
+        ctx.save();
+        ctx.translate(c, gy - 10);
+        ctx.scale(1, 0.3);
+        celRing(ctx, MDRED, 0, 0, 120 + i * 40, 14, { broken: i >= 5 ? 0.5 : 0, seed: 1900 });
+        ctx.restore();
+        if (i >= 1) for (let j = 0; j < 12; j++) {
+          const a = (j / 12) * TAU + 0.2;
+          const d = 100 + i * 36;
+          const x = c + Math.cos(a) * d;
+          const y = cy + Math.sin(a) * d * 0.6;
+          const kind = j % 4;
+          if (kind === 0) capsule(ctx, x, y, 34, 9, a + i, HOT);
+          else if (kind === 1) icePack(ctx, x, y, 26, 20, a + i);
+          else if (kind === 2) bandAid(ctx, x, y, 40, 13, a + i * 0.5, ECG[2]);
+          else heartMark(ctx, MDRED, x, y, 14 - i * 0.6);
+        }
+        if (i >= 2 && i <= 6) ecgLine(ctx, c - 300, cy + 50, 600, 80, 0.5, 9);
+        if (i >= 5) for (let j = 0; j < 6; j++) puff(ctx, STEAMP, c + Math.cos((j / 6) * TAU) * 180, cy - 20 + Math.sin((j / 6) * TAU) * 70, 50 - (i - 5) * 8, 1910 + j, { holes: (i - 5) * 0.25, lobes: 5 });
+      },
+    };
+  })();
+
+  // ---------- Round the Cleric, tidied (the player found them odd) ----------
+  // Spark Rush, smaller and low: a heart-monitor blip racing along the floor under them, little
+  // speed streaks off their heels, a heart pulsing at each shoulder.
+  E.rxspark = (() => {
+    const c = 160;
+    const gy = 290;
+    return {
+      w: 320, h: 260, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const fade = i >= 6 ? 1 - (i - 5) * 0.3 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ecgLine(ctx, c - 110, gy - 6, 200, 18, 0.2 + (i / 8) * 0.6, 4);
+        for (let j = 0; j < 3; j++) speedLine(ctx, ECG, c - 50 - j * 8, gy - 20 - j * 18, c - 110 - j * 14, gy - 20 - j * 18, 3);
+        const beat = 1 + 0.25 * Math.max(0, Math.sin((i / 8) * TAU * 2));
+        for (const s of [-1, 1]) heartMark(ctx, MDRED, c + s * 80, gy - 150 - (i % 2) * 2, 9 * beat);
+        ctx.restore();
+      },
+    };
+  })();
+  // Frost Shield while it holds (loops): a cold pack hovering at each side of them, bobbing, a faint
+  // blue ring at their feet. Nothing round their body.
+  E.mdfrosthold = (() => {
+    const c = 160;
+    const gy = 250;
+    return {
+      w: 320, h: 260, n: 6, fps: 8, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        ctx.translate(c, gy - 4);
+        ctx.scale(1, 0.3);
+        celRing(ctx, GEL, 0, 0, 70, 6, { seed: 1950 });
+        ctx.restore();
+        for (const s of [-1, 1]) icePack(ctx, c + s * 84, gy - 90 + Math.sin(ph + (s > 0 ? 1.5 : 0)) * 5, 24, 18, s * 0.25 + Math.sin(ph) * 0.08);
+        if (i % 3 === 0) sparkle(ctx, GEL, c + (i ? -94 : 94), gy - 110, 5, i);
+      },
+    };
+  })();
+
+  // Espresso Round, redrawn (the player found the floating cups horrible): a rich swirl at their
+  // feet, a coffee-brown ring opening, roasted beans spiralling up round their sides (never across
+  // the face), gold jitter sparks crackling off them, then the beans pop into sparkles. Quick, low.
+  E.mdcoffee = (() => {
+    const c = 160;
+    const gy = 270;
+    const BREW = ['#fff4e0', '#e8c49a', '#a86a3e', '#6a3a24', '#2e1a14'];
+    const GOLDP = ['#ffffff', '#fff3b0', '#ffd36a', '#c8902e', '#6a3a2a'];
+    const bean = (ctx, x, y, r, rot) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r, r * 0.7, 0, 0, TAU);
+      ctx.fillStyle = BREW[3];
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = BREW[4];
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.7, -r * 0.1);
+      ctx.quadraticCurveTo(0, r * 0.35, r * 0.7, -r * 0.1);
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = BREW[4];
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(-r * 0.35, -r * 0.3, r * 0.3, r * 0.16, -0.4, 0, TAU);
+      ctx.fillStyle = BREW[2];
+      ctx.fill();
+      ctx.restore();
+    };
+    return {
+      w: 320, h: 280, n: 9, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const open = Math.min(1, (i + 1) / 3);
+        ctx.save();
+        ctx.translate(c, gy - 4);
+        ctx.scale(1, 0.3);
+        celRing(ctx, BREW, 0, 0, 40 + 50 * open, 10, { broken: i >= 6 ? (i - 5) * 0.25 : 0, seed: 1980 });
+        ctx.restore();
+        // Beans spiralling up round their sides, spread all round the turn, out past the shoulders.
+        for (let k = 0; k < 10; k++) {
+          const u = i / 8 - (k % 3) * 0.05;
+          if (u <= 0 || u >= 1) continue;
+          const a = u * TAU * 0.9 + (k / 10) * TAU;
+          // (Always out at her sides, never across her middle where her face is.)
+          const side = k % 2 ? 1 : -1;
+          const x = c + side * (64 + 18 * Math.abs(Math.cos(a)) + 6 * (k % 3));
+          const y = gy - 24 - u * 150 - (k % 4) * 8 + Math.sin(a) * 10;
+          if (i >= 7 && k % 2) sparkle(ctx, GOLDP, x, y, 8, k);
+          else bean(ctx, x, y, 7.5 * (1 - u * 0.3), a);
+        }
+        // Gold sparkles crackling off her sides (the jitter).
+        if (i >= 2 && i <= 6) for (const s of [-1, 1]) sparkle(ctx, GOLDP, c + s * (88 + (i % 2) * 8), gy - 70 - (i % 3) * 22, 9 - Math.abs(i - 4), i);
       },
     };
   })();

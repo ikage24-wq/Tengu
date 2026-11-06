@@ -142,6 +142,20 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot: ground ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.85 : 1), alpha: (f.split ? 0.8 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'mdpill': case 'mdpack': case 'mdpulse': case 'mdbottle': case 'mdspray': case 'mdecg': case 'mdhuge': case 'mdzapbig':
+    case 'mdbomb': case 'mdmist': case 'mdzap': {
+      // The Cleric's medical gear (the remake): a hot-pack capsule tumbling, a gel ice pack sliding
+      // along low, a heart-monitor pulse racing down the line, a hot-water bottle lobbed, a cloud of
+      // cold spray rolling along the floor, a great heartbeat wave; the giant capsule and the long
+      // pulse of her skills (born small at the wand or staff, grown to full in its first moment).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const born = bornAt(f);
+      const line = f.shot === 'mdpulse' || f.shot === 'mdecg' || f.shot === 'mdzapbig' || f.shot === 'mdzap';
+      const size = { mdpill: 0.55, mdpack: 0.55, mdpulse: 0.62, mdbottle: 0.6, mdspray: 0.6, mdecg: 0.65, mdhuge: 0.6, mdzapbig: 0.65, mdbomb: 0.55, mdmist: 0.55, mdzap: 0.62 }[f.shot];
+      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: line ? (left ? a + Math.PI : a) : 0, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'qnorb': case 'qncrown': case 'qndecree': case 'qngeyser': case 'qnwall': case 'qnstrike': {
       // The Sorcerer's (the remake): a royal fire orb rolling slow and huge, a spinning ice crown,
       // a lightning scepter, fire geysers and a wall of ice racing along the floor, a crown of
@@ -1077,7 +1091,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+const GROUND_FX = new Set(['mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

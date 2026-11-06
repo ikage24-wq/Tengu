@@ -22,7 +22,8 @@ import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
-import { elementHit } from './reactions.js';
+import { elementHit, allyElement } from './reactions.js';
+import { healAround } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -840,6 +841,8 @@ export function updateWorld(world, dt, input) {
       if (h.gauge) addAim(world, h.gauge, m, h.el);
       // The Mage's spells mark what they hit with their element, and set off reactions.
       elementHit(world, m, h);
+      // The Cleric's heal bombs mend the party round where they burst, carrying their element.
+      if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);
     }
     if (!h.ownSpark) world.fx.push({ kind: 'spark', via: h.via, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });

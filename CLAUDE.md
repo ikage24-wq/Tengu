@@ -8,7 +8,9 @@ game itself and the source layout.
 
 These hold for all jobs, current and future. Keep them when adding or reworking any skill.
 
-- **No cooldowns.** Skills are limited by MP and by their own animation, never by a cooldown timer.
+- **Cooldowns are allowed (the player's change, 2026-11-07).** Skills were once limited only by MP and
+  their own animation; the game has moved on, and a skill may now have a cooldown where it fits (long
+  buffs, big heals, strong utility). Everyday attack skills still lean on MP and their animation.
 - **A skill plays out its whole motion before another skill can start.** `world.skillReadyAt` gates
   skill-after-skill (set in `world/combat.js` for normal skills and `world/melee.js` for combo
   steps). Walking or jumping may cut a move's follow-through short (`world.recoverAt`), but must

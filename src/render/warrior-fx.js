@@ -306,12 +306,22 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // The Mage's element reactions (world/reactions.js): Steam Blast rolling out along the floor as
     // far as it scalds, Shatter bursting from the monster's middle, Kaboom and the small blasts it
     // jumps on with, and the zap that carries it from one monster to the next.
+    // The Cleric's own reactions on monsters: Fever Break, Cold Shock, Shock Therapy.
+    case 'mdrxsteam':
+      return fxSprite(ctx, 'celmdrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 100 }) || true;
+    case 'mdrxshatter':
+      return fxSprite(ctx, 'celmdrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.6 }) || true;
+    case 'mdrxkaboom':
+      return f.t < 0 || fxSprite(ctx, 'celmdrxkaboom', x, y + 4, { p, scale: f.small ? 0.45 : 0.7 }) || true;
     case 'rxsteam':
       return fxSprite(ctx, 'celrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 88 }) || true;
     case 'rxshatter':
       return fxSprite(ctx, 'celrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.75 }) || true;
     case 'rxkaboom':
       return f.t < 0 || fxSprite(ctx, 'celrxkaboom', x, y + 4, { p, scale: f.small ? 0.55 : 0.85 }) || true;
+    // The Cleric's healing reactions, round her (her face clear).
+    case 'rxsoothe': case 'rxfrost': case 'rxspark':
+      return fxSprite(ctx, `cel${f.kind}`, x, y + 4, { p, scale: 0.5 }) || true;
     case 'rxchain': {
       // The Sorcerer's chain: a crackle of the element leaping from one monster to the next.
       if (f.t < 0) return true;
@@ -377,6 +387,24 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // The Sorcerer's skills (the remake): Grand Entrance's confetti, Cold Shoulder's crowns of ice
     // along the floor, Royal Pardon's gold light, Royal Guard's crown fence, the Royal Decree's
     // seal, the Grand Finale's throne (behind her) and its blast.
+    // The Cleric's skills (the remake): the Ambulance Run's siren, the Cold Compress along the floor,
+    // First Aid's bandages, Bubble Wrap, the Airdrop's blast, Revive Paddles' jolt.
+    case 'mdcoffee':
+      // Espresso Round: cups flying out to everyone, steam and jitter lines (round her, low).
+      return fxSprite(ctx, 'celmdcoffee', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'mdsiren':
+      return fxSprite(ctx, 'celmdsiren', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'mdnovafx':
+      return fxSprite(ctx, 'celmdnovafx', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'mdaid':
+      // (Low, round her middle: the loops never cross her face.)
+      return fxSprite(ctx, 'celmdaid', x, y + 22, { p, scale: 0.5, sy: 0.7 }) || true;
+    case 'mdbubble':
+      return fxSprite(ctx, 'celmdbubble', x, y + 4, { p, scale: 0.7 }) || true;
+    case 'mdboom':
+      return f.t < 0 || fxSprite(ctx, 'celmdboom', x + dir * 60, y + 4, { p, scale: 0.75 }) || true;
+    case 'mdrevive':
+      return fxSprite(ctx, 'celmdrevive', x, y + 4, { p, scale: 0.6 }) || true;
     case 'qnconfetti':
       return fxSprite(ctx, 'celqnconfetti', x, y + 4, { p, scale: 0.6 }) || true;
     case 'qnnovafx':
@@ -469,6 +497,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'sohit':
       // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
       return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
+    case 'mdhitfire': case 'mdhitice': case 'mdhitbolt':
+      // The Cleric's hits (the remake): her element's pop with plus-crosses flying off.
+      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.58 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
     case 'qnhitfire': case 'qnhitice': case 'qnhitbolt':
       // The Sorcerer's hits (the remake): her element's pop with a gold crown flashing over it.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.46, rot: (seed - 0.5) * 0.4 }) || true;

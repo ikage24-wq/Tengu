@@ -83,6 +83,17 @@ asked for the Mage to be remade from scratch: new look, moves, effects, everythi
     bright"), Magic Guard, Mana Mastery, and **Meteor**, the finisher (full Overload): she flexes the
     glove, announces "CATACLYSM OF THE CRIMSON STAR", and a meteor crashes down on everything ahead.
 
+## The Sorcerer, remade (2026-11-07)
+
+The chaos queen: the gremlin crowned herself (render/jobgear/chaosqueen.js: a crooked crown of
+lightning points with her three element gems and a royal ermine mantle, royal violet). Her
+reactions chain to the monsters beside them like dominoes (world/reactions.js `spread`), filling
+Chaos (internally Binding); Pandemonium makes the chains longer and wider. Big, slow royal attacks
+(render/moves.js `qn*`, shots and hits `qn*` in tools/fx-art.js) and skills: Royal Inferno, Grand
+Entrance, Domino Decree, Cold Shoulder, Royal Pardon, Royal Guard, Fireworks Gala, Red Carpet,
+Chaos Vortex (all three elements in turn), Royal Decree and the Grand Finale of Chaos. The notes
+below are her first build, kept for reference.
+
 ## The Sorcerer (the damage path; `onmyoji`, replacing the Astronomer)
 
 - **Personality (the player's pick, 2026-11-06): the edgelord gone real.** Her dark-power act
@@ -126,6 +137,21 @@ asked for the Mage to be remade from scratch: new look, moves, effects, everythi
   the `sorcery` tile), shouted lines with a wobble (`MAGE_SHOUTS`, in ember), the job name and blurb,
   Elowen's line, and the bots (world/party.js).
 - Still to do: sounds of her own, the README, her look's top-tier weapons.
+
+## The Cleric, remade (2026-11-07)
+
+The combat medic (render/jobgear/medic.js: the battle coat in field white with a cross in medic
+red, a nurse's cap with goggles, a stethoscope, a bandaged hand). She works rather than casts: her
+elements are medical gear (fire a hot pack, ice a cold pack, lightning a heart-monitor pulse; hits
+slap a band-aid on) and every spell mends the party where it lands, carrying its element onto them:
+healing reactions (Soothing Steam, Frost Shield, Spark Rush; world/reactions.js `allyElement`).
+Her own reactions on monsters are Fever Break, Cold Shock and Shock Therapy. Wand string `idol` and
+a staff string `medstaff` (render/moves.js `md*`, smoothed by `smoothMove`); skills: Mega Heal Bomb,
+Ambulance Run, Defib Chain, Cold Compress, First Aid, Bubble Wrap, Emergency Airdrop, Triage, Pep
+Talk, Antiseptic Cloud, Revive Paddles, Espresso Round (a 2-minute party buff of attack, magic and
+attack speed, on a 3-minute cooldown: world/combat.js cooldowns) and the Field Hospital finisher.
+Her heal engine's effects (the old `si*` names) are redrawn as hers. The notes below are her first
+build, kept for reference.
 
 ## The Cleric of light (the healer path; `shrinemaiden`, replacing the Starlight Idol)
 

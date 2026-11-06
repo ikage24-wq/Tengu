@@ -805,8 +805,13 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     if (b.shield > 0) barrier = { ...b, id };
     if (b.values?.regenPct) renew = true;
   }
+  // The Cleric's element on her party (world/reactions.js), a little sigil bobbing over their heads.
+  const mark = buffs.mdmark;
+  if (mark && mark.until > now) fxSprite(ctx, `celrm${mark.el}`, x, y - 62 + Math.sin(time * 3) * 1.5, { t: time, scale: 0.36, alpha: Math.min(1, (now - mark.since) * 6, (mark.until - now) * 2) });
   // The Mage's Scroll Shield: her scrolls circling their hips, as on her.
   if (barrier?.id === 'spiritward') scrollBelt(ctx, x, y, time, Math.min(1, (now - barrier.since) * 3));
+  // The Cleric's Frost Shield: a cold pack hovering at each side of them while it holds.
+  else if (barrier?.id === 'mdfrost') fxSprite(ctx, 'celmdfrosthold', x, y + 3, { t: time, scale: 0.42, alpha: Math.min(1, (now - barrier.since) * 3) });
   else if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
     ctx.save();

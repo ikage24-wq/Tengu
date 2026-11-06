@@ -201,6 +201,12 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   // ground with the job's emblem rising inside (Tengu's own effect art). War Cry is a battle cry
   // bursting out instead; Iron Guard snaps plates of steel round the body behind a steel shield.
   const school = f.school ?? SKILLS[f.skill]?.school ?? 'steel';
+  // (The mage line's buffs and the Cleric's healing reactions bring their own pictures, round the
+  // body and clear of the face, so no pillar of light goes up over them.)
+  if (school === 'arcane' || school === 'idol' || school === 'astral' || /^md(soothe|frost|spark)$/.test(f.skill ?? '')) {
+    ctx.restore();
+    return;
+  }
   if (f.skill === 'warcry') {
     fxSprite(ctx, pathTint(school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 1.1 });
     groundWave(ctx, school, x, y, Math.min(1, p * 1.3), 90);

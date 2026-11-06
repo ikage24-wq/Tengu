@@ -76,6 +76,15 @@ export function recovering(world) {
 }
 
 // Why a skill can't be used right now, or null if it can.
+// Cooldowns (the player's change, 2026-11-07: cooldowns are allowed now). A skill whose level
+// gives it a `cooldown` (seconds, from its at() in data/skills.js) can't be cast again until that
+// long after the last cast. The timers live on the world, by skill id.
+export const cooldownOf = (char, skillId) => {
+  const lv = char.skills?.[skillId] ?? 0;
+  return lv > 0 && SKILLS[skillId] ? skillAt(skillId, lv).cooldown ?? 0 : 0;
+};
+export const cooldownLeft = (world, skillId) => Math.max(0, (world.cooldowns?.[skillId] ?? 0) - world.now);
+
 export function castBlocker(world, skillId) {
   const { char, stats } = world;
   if (world.attackTimer > 0 || world.lockTimer > 0) {
@@ -92,6 +101,7 @@ export function castBlocker(world, skillId) {
   if (char.mp < skillAt(skillId, lv).mp) return 'mp';
   if (s.rageCost && (world.rage ?? 0) < s.rageCost) return 'rage';
   if (s.fullGauge && !gaugeFull(world)) return `gauge:${gaugeOf(char) ?? 'none'}`;
+  if (cooldownLeft(world, skillId) > 0) return 'cooldown';
   if (s.type === 'revive' && !reviveTarget(world, hitBox(world.body, skillAt(skillId, lv).range))) return 'noone';
   return null;
 }
@@ -270,6 +280,8 @@ export function cast(world, skillId, rng = Math.random) {
   const type = s ? s.type : 'attack';
 
   char.mp -= params.mp ?? 0;
+  // (Its cooldown starts the moment it's cast.)
+  if (s && params.cooldown) (world.cooldowns ??= {})[skillId] = now + params.cooldown;
 
   // Melee basic attacks and combo skills play out as timed strikes (see melee.js).
   if (!s && (hasCombo(stats.weaponType) || hasPathCombo(world))) {

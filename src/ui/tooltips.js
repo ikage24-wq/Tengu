@@ -162,6 +162,7 @@ function describeParts(params, tune = 1) {
     }
   }
   if (params.mp) parts.push(`${params.mp} MP`);
+  if (params.cooldown) parts.push(`${params.cooldown >= 60 && params.cooldown % 60 === 0 ? `${params.cooldown / 60} min` : `${params.cooldown} s`} cooldown`);
   return parts;
 }
 

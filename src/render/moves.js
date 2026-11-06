@@ -148,6 +148,17 @@ const QN_FACE = {
   yawn: { closed: [true, true], mouth: 'yell', brows: [[0.5, 0], [0.5, 0]] },
 };
 
+// The Cleric's faces (the remake): the combat medic. A focused squint lining up the throw, a bright
+// shout on it, a cheerful grin after; frantic and sweating when it's close.
+const MD_FACE = {
+  focus: { lid: 0.3, mouth: 'flat', brows: [[-0.1, 0.6], [-0.1, 0.6]] },
+  shout: { mouth: 'yell', brows: [[0.8, -0.3], [0.8, -0.3]], shine: true },
+  cheer: { mouth: 'grin', brows: [[0.7, -0.2], [0.7, -0.2]], blush: 1.2, shine: true },
+  frantic: { mouth: 'grit', brows: [[0.5, 0.4], [0.5, 0.4]], extra: ['sweat0'] },
+  wink: { closed: [false, true], mouth: 'cat', brows: [[0.6, -0.2], [0.2, 0.3]] },
+  count: { lid: 0.2, mouth: 'tiny', brows: [[0.6, -0.1], [0.6, -0.1]] },
+};
+
 // The Mage's faces (the remake): a pyro gremlin. A squint down the wand as she lines it up, a
 // whoop on the cast, glee and a cackle after; nose in the air for a show-off; a sheepish wince
 // when it backfires; wild-eyed when the big one goes off.
@@ -4098,6 +4109,643 @@ export const MOVES = {
       lunge: 6 * ride, tilt: -0.04 * ride, lift: 4 * ride + swBob(p, 0.94) * 0.3,
       face: p < 0.38 ? QN_FACE.delight : p < 0.6 ? QN_FACE.command : QN_FACE.regal,
       rig: (r) => { r.air = ride > 0.5; r.squat = q(1.2 * ride); r.backArm = [q(3), q(-6 * ride)]; r.cape -= q(4 * ride); danceLegs(r, [ride, [2.8, -3.4, 66], [0.6, -3, 56]], [tap * (1 - end), [2, 0, 4], [-2, 0, -4]]); },
+    };
+  },
+
+  // ---------- The Cleric's attacks, second pass: a medic's hands-on moves (not spells) ----------
+  // She doesn't cast: she works. She flicks pills off her thumb, slap-shots ice packs along the
+  // floor with the wand like a hockey stick, takes her own pulse and conducts the heartbeat out, lobs
+  // a hot-water bottle off the staff like a catapult, mops cold spray along the floor, plants the
+  // staff like an IV pole and slaps the monitor. She acts every beat (MD_FACE).
+  // Pill flick (wand opener, a hot-pack capsule at ~0.3): she balances a capsule on her thumb (wand
+  // tucked under her arm), aims along it with one eye shut, and flicks it like a coin.
+  mdflickp(p) {
+    const aim = soft(seg(p, 0, 0.22));
+    const flick = ease(seg(p, 0.24, 0.3));
+    const end = soft(seg(p, 0.46, 0.85));
+    return {
+      weapon: 150 - 10 * end, arm: 30,
+      tilt: -0.04 * aim * (1 - flick) + 0.05 * flick * (1 - end), lunge: 2 * flick * (1 - end), lift: 1.6 * bump(p, 0.26, 0.5) + swBob(p, 0.85) * 0.4,
+      face: p < 0.24 ? MD_FACE.wink : p < 0.46 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = flick > 0.05 ? [q(lerp(6, 10, flick) - 4 * end), q(lerp(-4, -8, flick) + 6 * end)] : [q(6 * aim), q(-4 * aim)];
+        danceLegs(r, [aim * (1 - flick), [1.4, 0, 4], [-1.6, 0, -6]], [flick * (1 - end), [2, -0.6, 8], [-2, 0, -8]], [end, [1.4, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Slap-shot (second, an ice pack sliding at ~0.44): she drops an ice pack on the floor, winds the
+  // wand back like a hockey stick, and slaps it along the ground at them.
+  mdslap(p) {
+    const drop = soft(seg(p, 0, 0.14));
+    const wind = soft(seg(p, 0.14, 0.36));
+    const slap = ease(seg(p, 0.36, 0.44));
+    const end = soft(seg(p, 0.56, 0.9));
+    return {
+      weapon: lerp(lerp(150, 240, wind), 120, slap) - 20 * end, arm: lerp(lerp(30, -10, wind), 60, slap) - 10 * end,
+      back: (wind > 0.4 && slap < 0.4) || undefined,
+      tilt: 0.12 * (wind + drop) * (1 - slap) * 0.6 + 0.16 * slap * (1 - end), lunge: -2 * wind * (1 - slap) + 6 * slap * (1 - end * 0.5), lift: swBob(p, 0.9) * 0.4, trail: slap > 0 && slap < 1,
+      face: p < 0.36 ? MD_FACE.focus : p < 0.56 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.6 * (wind + slap) * (1 - end) * 0.6);
+        r.backArm = [q(lerp(lerp(2, 4, wind), -4, slap)), q(lerp(lerp(4, 2, wind), 0, slap))];
+        r.hairLift = slap > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [wind * (1 - slap), [2.4, 0, 8], [-3, 0, -14]], [slap * (1 - end), [4.4, 0, 10], [-4, -0.6, -22]], [end, [1.8, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Pulse check (wand finisher, a heart-monitor pulse through the line at ~0.54): two fingers on her
+  // wrist, counting (eyes up, lips moving), a firm nod... then she sweeps the wand out like a
+  // conductor and the heartbeat races down the line. A double thumbs-up.
+  mdpulsechk(p) {
+    const count = p < 0.42 ? Math.sin(seg(p, 0.04, 0.42) * Math.PI * 6) : 0;
+    const nod = bump(p, 0.36, 0.46);
+    const sweep = ease(seg(p, 0.46, 0.54));
+    const thumbs = soft(seg(p, 0.7, 0.95));
+    return {
+      weapon: lerp(140, 90, sweep) + 30 * thumbs, arm: lerp(40, 92, sweep) - 40 * thumbs,
+      tilt: 0.04 * nod + 0.12 * sweep * (1 - thumbs), lunge: 6 * sweep * (1 - thumbs * 0.5), lift: 0.3 * Math.abs(count) + swBob(p, 0.92) * 0.4, trail: sweep > 0 && sweep < 1,
+      face: p < 0.46 ? MD_FACE.count : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = thumbs > 0.2 ? [q(4), q(-9 * thumbs)] : sweep > 0.2 ? [q(-6 * sweep), q(-3)] : [q(6), q(-3)];
+        danceLegs(r, [1 - sweep, [1.6, 0, 4], [-1.6, 0, -4]], [sweep * (1 - thumbs), [4.2, 0, 8], [-3.8, -0.6, -20]], [thumbs, [2, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Pill toss (opener in her pool, a capsule at ~0.36): she shakes a pill bottle (rattle), pops one
+  // out and tosses it over her shoulder without looking; it lands on them anyway.
+  mdbottlep(p) {
+    const shake = p < 0.26 ? Math.sin(p * 120) : 0;
+    const toss = ease(seg(p, 0.28, 0.36));
+    const end = soft(seg(p, 0.5, 0.88));
+    return {
+      weapon: 150, arm: 30,
+      tilt: -0.08 * toss * (1 - end), lift: 0.4 * Math.abs(shake) + swBob(p, 0.88) * 0.4,
+      face: p < 0.28 ? MD_FACE.focus : p < 0.5 ? MD_FACE.wink : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = toss > 0.1 ? [q(lerp(4, -4, toss) + 4 * end), q(lerp(-2, -10, toss) + 10 * end)] : [q(4 + 0.8 * shake), q(-2)];
+        danceLegs(r, [1, [1.6, 0, 4], [-1.6, 0, -6]]);
+      },
+    };
+  },
+  // Knee-up (second in her pool, two ice packs at ~0.44): she bounces an ice pack on her knee twice
+  // (keepy-uppy) and volleys it at them, then a second off the wand.
+  mdkeepy(p) {
+    const k1 = bump(p, 0.04, 0.18);
+    const k2 = bump(p, 0.18, 0.32);
+    const volley = bump(p, 0.32, 0.5);
+    const end = soft(seg(p, 0.6, 0.92));
+    return {
+      weapon: 140 - 40 * soft(seg(p, 0.44, 0.52)) + 30 * end, arm: 40 + 40 * soft(seg(p, 0.44, 0.52)) - 30 * end,
+      tilt: -0.04 * (k1 + k2) + 0.08 * volley, lift: 1.2 * (k1 + k2) + 1.6 * volley + swBob(p, 0.92) * 0.3,
+      face: p < 0.32 ? MD_FACE.focus : p < 0.6 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(-3), q(-3)];
+        danceLegs(r, [Math.max(k1, k2), [1.8, -3.6, 50], [-1.6, 0, -4]], [volley, [4, -3.4, 60], [-1.8, 0, -8]], [1 - Math.max(k1, k2, volley), [1.6, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Stethoscope (finisher in her pool, a pulse at ~0.56): she holds out the stethoscope toward
+  // them, listens (hmm... hmm...), winces at what she hears, and zaps them with the wand.
+  mdsteth(p) {
+    const listen = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.44, 0.5)));
+    const hmm = p > 0.2 && p < 0.44 ? Math.sin(seg(p, 0.2, 0.44) * Math.PI * 2) : 0;
+    const zap = ease(seg(p, 0.48, 0.56));
+    const end = soft(seg(p, 0.7, 0.95));
+    return {
+      weapon: lerp(150, 88, zap) + 30 * end, arm: lerp(30, 94, zap) - 40 * end,
+      tilt: 0.1 * listen + 0.03 * hmm + 0.12 * zap * (1 - end), lunge: 2 * listen + 6 * zap * (1 - end * 0.5), lift: swBob(p, 0.94) * 0.3, trail: zap > 0 && zap < 1,
+      face: p < 0.44 ? MD_FACE.count : p < 0.5 ? MD_FACE.frantic : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = listen > 0.1 ? [q(8 * listen), q(-2)] : [q(-5 * zap * (1 - end)), q(-3)];
+        danceLegs(r, [listen, [2.4, 0, 6], [-2, 0, -8]], [zap * (1 - end), [4.2, 0, 8], [-3.8, -0.6, -20]], [end, [1.6, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Up + attack with the wand: she pops a pill straight up off her thumb.
+  mdupp(p) {
+    const flick = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: 150, arm: 30, lift: 4 * bump(p, 0.2, 0.6) + swBob(p, 0.75) * 0.5, tilt: -0.08 * flick * (1 - soft(seg(p, 0.6, 0.9))),
+      face: p < 0.2 ? MD_FACE.wink : p < 0.6 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = [q(lerp(5, 3, flick)), q(lerp(-3, -13, flick))]; danceLegs(r, [flick, [1.4, -1, 10], [-1.4, -0.6, -8]]); },
+    };
+  },
+
+  // ---- The staff: an IV pole, a mop, a catapult ----
+  // Catapult (staff opener, a hot-water bottle lobbed at ~0.44): she plants the staff's foot, hangs a
+  // hot-water bottle on its head, hauls it back like a catapult arm and lets go.
+  mdcata(p) {
+    const load = soft(seg(p, 0, 0.18));
+    const haul = soft(seg(p, 0.18, 0.36));
+    const fling = ease(seg(p, 0.36, 0.44));
+    const end = soft(seg(p, 0.56, 0.9));
+    return raisedBehind({
+      weapon: lerp(lerp(lerp(90, 60, load), 210, haul), 30, fling) + 60 * end, arm: lerp(lerp(55, 70, load), 30, haul) * (1 - fling) + 100 * fling - 40 * end,
+      back: (haul > 0.4 && fling < 0.4) || undefined,
+      tilt: -0.1 * haul * (1 - fling) + 0.1 * fling * (1 - end), lunge: -2 * haul * (1 - fling) + 4 * fling, lift: swBob(p, 0.9) * 0.4, trail: fling > 0 && fling < 1,
+      face: p < 0.36 ? MD_FACE.focus : p < 0.56 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.6 * haul * (1 - fling));
+        r.backArm = [q(lerp(2, -4, haul) + 6 * fling), q(-2)];
+        r.hairLift = fling > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [haul * (1 - fling), [2, 0, 6], [-3.2, 0, -16]], [fling * (1 - end), [3.6, 0, 8], [-3, -0.6, -16]], [end, [1.8, 0, 4], [-2, 0, -6]]);
+      },
+    });
+  },
+  // Mop (second, cold spray along the floor at ~0.5): she mops the floor ahead with the staff, two
+  // big swishes left and right, and the cold spray rolls out of the mop.
+  mdmop(p) {
+    // (The staff can't reach down to the floor, so she sweeps it in big arcs in front of her
+    // instead, low and wide, hips swinging with it.)
+    const swish = p > 0.04 && p < 0.46 ? Math.sin(seg(p, 0.04, 0.46) * Math.PI * 4) : 0;
+    const push = ease(seg(p, 0.44, 0.52));
+    const end = soft(seg(p, 0.62, 0.95));
+    return raisedBehind({
+      weapon: 80 + 36 * swish + 10 * push - 20 * end, arm: 60 + 20 * swish + 26 * push * (1 - end),
+      tilt: 0.06 + 0.08 * swish, lunge: 3 * swish + 6 * push * (1 - end * 0.5), lift: 0.8 * Math.abs(swish) + swBob(p, 0.94) * 0.3, trail: Math.abs(swish) > 0.5 || (push > 0 && push < 1),
+      face: p < 0.44 ? MD_FACE.focus : p < 0.62 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.2 * (1 - end));
+        r.tx = q(1.5 * swish);
+        r.backArm = [q(4 - 3 * swish), q(-2 - 2 * Math.abs(swish))];
+        r.hairLift = Math.abs(swish) > 0.6 ? 1 : 0;
+        danceLegs(r, [1 - push, [2.4 + 0.8 * swish, 0, 8 + 6 * swish], [-2.6 + 0.6 * swish, 0, -12]], [push, [3.8, 0, 8], [-3.4, -0.4, -16]]);
+      },
+    });
+  },
+
+  // Code Blue (staff finisher, a great heart-monitor wave down the line at ~0.56): she plants the
+  // staff upright like an IV pole, slaps an imaginary monitor on it twice, yells CODE BLUE! and the
+  // heartbeat wave sweeps out along the floor. Salute.
+  mdcode(p) {
+    const plant = soft(seg(p, 0, 0.14));
+    const slapA = bump(p, 0.18, 0.3);
+    const slapB = bump(p, 0.32, 0.44);
+    const yell = ease(seg(p, 0.48, 0.56));
+    const salute = soft(seg(p, 0.72, 0.95));
+    return raisedBehind({
+      weapon: lerp(90, 6, plant) + 3 * (slapA + slapB), arm: lerp(55, 60, plant),
+      tilt: 0.04 * (slapA + slapB) + 0.08 * yell * (1 - salute), lift: 1.4 * yell * (1 - salute) + swBob(p, 0.95) * 0.3,
+      face: p < 0.48 ? MD_FACE.frantic : p < 0.72 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = salute > 0.2 ? [q(3), q(-11 * salute)] : [q(6 + 3 * Math.max(slapA, slapB)), q(-5 - 3 * Math.max(slapA, slapB))];
+        r.hairLift = yell > 0.4 && salute < 0.3 ? 1 : 0;
+        danceLegs(r, [1 - yell, [1.6, 0, 4], [-1.6, 0, -4]], [yell, [2.6, 0, 6], [-2.6, -0.4, -10]]);
+      },
+    });
+  },
+  // Gurney push (opener in her pool, a hot-water bottle at ~0.46): she leans on the staff like a
+  // gurney's push bar and runs it forward, then stops dead and the bottle flies off the end.
+  mdgurney(p) {
+    const lean = soft(seg(p, 0, 0.14));
+    const run = p > 0.12 && p < 0.42 ? Math.sin(p * 60) : 0;
+    const stop = ease(seg(p, 0.42, 0.48));
+    const end = soft(seg(p, 0.6, 0.92));
+    return {
+      weapon: 92 - 4 * stop + 20 * end, arm: 70 + 10 * stop - 20 * end,
+      tilt: 0.18 * lean * (1 - stop) - 0.06 * stop * (1 - end), lunge: 4 * lean * (1 - end), lift: 0.8 * Math.abs(run),
+      face: p < 0.42 ? MD_FACE.shout : p < 0.6 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(6), q(-2)];
+        r.hairLift = p > 0.12 && p < 0.5 ? 1 : 0;
+        danceLegs(r, [Math.max(0, run), [3, -1, 20], [-2.6, -1, -30]], [Math.max(0, -run), [-1, -1, -20], [2.6, -1, 30]], [stop, [3.6, 0, 16], [-3, -0.6, -12]]);
+      },
+    };
+  },
+  // Floor buffer (second in her pool, cold spray at ~0.5): she spins the staff flat on the floor like
+  // a floor polisher, riding it round with a wobble, and the cold spray whirls out.
+  mdbuff(p) {
+    // Propeller: she twirls the staff round in front of her like a propeller, faster and faster,
+    // leaning into it on her toes, and the cold spray whirls off it.
+    const tw = soft(seg(p, 0.04, 0.5));
+    const w = 90 + 720 * tw;
+    const end = soft(seg(p, 0.6, 0.95));
+    return {
+      weapon: w + 0 * end, back: (p < 0.52 && wandUp(w)) || undefined, arm: lerp(60, 84, soft(seg(p, 0, 0.14))) - 24 * end,
+      tilt: 0.05 * Math.sin(tw * Math.PI * 4) + 0.06 * (1 - end), lunge: 3 * tw * (1 - end), lift: 1.2 * Math.abs(Math.sin(tw * Math.PI * 4)) + swBob(p, 0.94) * 0.3, trail: p > 0.1 && p < 0.52,
+      face: p < 0.5 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(5 - 2 * Math.sin(tw * Math.PI * 8)), q(-3)];
+        r.hairLift = p > 0.2 && p < 0.55 ? 1 : 0;
+        danceLegs(r, [1, [1.8, -0.8 * Math.abs(Math.sin(tw * Math.PI * 4)), 10], [-1.8, 0, -8]]);
+      },
+    };
+  },
+
+  // Heart drum (finisher in her pool, a great pulse at ~0.56): she thumps the staff's foot on the
+  // floor in a heartbeat, ba-dum, ba-dum, ba-DUM, and the last beat sends the wave out.
+  mddrum(p) {
+    const beat = (a) => bump(p, a, a + 0.07);
+    const b = Math.max(beat(0.08), beat(0.17), beat(0.28), beat(0.37), beat(0.48));
+    const big = ease(seg(p, 0.48, 0.56));
+    const end = soft(seg(p, 0.7, 0.95));
+    return raisedBehind({
+      weapon: 8 + 2 * b + 80 * end, arm: 60 + 8 * b,
+      tilt: 0.04 * b + 0.08 * big * (1 - end), lift: 1.6 * b + 2 * big * (1 - end),
+      face: p < 0.48 ? MD_FACE.focus : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(0.8 * b + 1.4 * big * (1 - end)); r.backArm = [q(4), q(-2 - 4 * b)]; danceLegs(r, [1, [1.6, -0.6 * b, 4], [-1.6, 0, -4]]); },
+    });
+  },
+  // Up + attack with the staff: she pole-vaults a hot-water bottle up off the staff's head.
+  mdsup(p) {
+    const vault = ease(seg(p, 0.14, 0.3));
+    return raisedBehind({
+      weapon: lerp(90, 8, vault) + 70 * soft(seg(p, 0.62, 0.95)), arm: lerp(55, 94, vault) - 40 * soft(seg(p, 0.62, 0.95)),
+      lift: 5 * bump(p, 0.14, 0.62) + swBob(p, 0.8) * 0.4,
+      face: p < 0.14 ? MD_FACE.focus : p < 0.62 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(1.4 * bump(p, 0, 0.14)); r.backArm = [q(4), q(-3)]; r.hairLift = vault > 0.5 && p < 0.62 ? -1 : 0; danceLegs(r, [vault, [1.6, -1, 12], [-1.6, -0.6, -8]]); },
+    });
+  },
+  // In the air with the staff: she swings it under her like a bat and knocks an ice pack down.
+  mdsair(p) {
+    const swing = ease(seg(p, 0.2, 0.3));
+    return {
+      weapon: lerp(70, 160, swing), arm: lerp(100, 50, swing), tilt: 0.1 * swing, trail: swing > 0 && swing < 1,
+      face: p < 0.2 ? MD_FACE.focus : MD_FACE.shout,
+      rig: (r) => { r.air = true; r.backArm = [q(-4 + 4 * swing), q(-4)]; danceLegs(r, [1, [2.4, -4, 44], [-2, -3, -40]]); },
+    };
+  },
+  // Out of a run with the staff: she rides it like a scooter (one foot on the bar), skidding, and
+  // flips a hot-water bottle off it.
+  mdsdash(p) {
+    const ride = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.36, 0.48)));
+    const flip = ease(seg(p, 0.38, 0.46));
+    const end = soft(seg(p, 0.6, 0.95));
+    return {
+      weapon: lerp(140, 90, flip) + 20 * end, arm: lerp(50, 92, flip) - 30 * end,
+      lunge: 6 * ride + 4 * flip * (1 - end), tilt: 0.12 * ride, lift: 2 * ride + swBob(p, 0.92) * 0.3, trail: flip > 0 && flip < 1,
+      face: p < 0.38 ? MD_FACE.shout : p < 0.6 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(1.4 * ride); r.backArm = [q(-4 * ride), q(-6 * ride)]; r.hairLift = ride > 0.4 ? 1 : 0; r.cape -= q(4 * ride); danceLegs(r, [ride, [2.2, -1.6, 14], [-3.6, -3, -50]], [flip * (1 - end), [3.6, 0, 8], [-3.2, -0.6, -16]]); },
+    };
+  },
+
+  // ---------- The Cleric's skills (the remake: the combat medic) ----------
+  // Mega Heal Bomb (~0.56): she hauls an enormous flask off her back with both arms, staggers under
+  // it, and bowls it down the line underhand.
+  mdbig(p) {
+    const haul = soft(seg(p, 0, 0.3));
+    const wobble = p > 0.2 && p < 0.46 ? Math.sin(p * 50) * 0.05 : 0;
+    const bowl = ease(seg(p, 0.46, 0.56));
+    const end = soft(seg(p, 0.68, 0.95));
+    return {
+      weapon: lerp(130, 150, haul) - 20 * end, arm: lerp(40, 30, haul) + 20 * bowl - 10 * end,
+      tilt: wobble + 0.08 * haul * (1 - bowl) + 0.14 * bowl * (1 - end), lunge: -2 * haul * (1 - bowl) + 7 * bowl * (1 - end * 0.5), lift: swBob(p, 0.95) * 0.4,
+      face: p < 0.46 ? MD_FACE.frantic : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.8 * haul * (1 - bowl) + 1.2 * bowl * (1 - end));
+        r.backArm = bowl > 0.1 ? [q(lerp(-4, 9, bowl) - 5 * end), q(lerp(2, -2, bowl))] : [q(-4 * haul), q(2 * haul)];
+        danceLegs(r, [haul * (1 - bowl), [2.6, 0, 6], [-2.6, 0, -8]], [bowl * (1 - end), [5, 0, 10], [-4.4, -0.8, -24]], [end, [2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Ambulance Run (~0.3): she puts her head down and sprints like an ambulance ("WEE-OO!"), a siren
+  // flash where she was, skidding to a stop far ahead.
+  mdrun(p) {
+    const lean = soft(seg(p, 0, 0.2));
+    const run = p > 0.2 && p < 0.7 ? Math.sin(p * 50) : 0;
+    const skid = soft(seg(p, 0.66, 0.86));
+    return {
+      weapon: 140 - 10 * run, arm: 40 + 6 * run,
+      tilt: 0.16 * lean * (1 - skid) - 0.08 * skid * (1 - soft(seg(p, 0.86, 1))), lunge: 4 * lean * (1 - skid), lift: 1.2 * Math.abs(run),
+      face: p < 0.2 ? MD_FACE.focus : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(-4 * run), q(-2)];
+        r.hairLift = p > 0.2 && p < 0.8 ? 1 : 0;
+        danceLegs(r, [Math.max(0, run), [3, -1, 20], [-2.6, -1, -30]], [Math.max(0, -run), [-1, -1, -20], [2.6, -1, 30]], [skid, [4.4, 0, 20], [-3.6, -0.8, -16]]);
+      },
+    };
+  },
+  // Defib Chain (~0.5): both paddles out (wand and gauntlet), she charges them up with three rubs,
+  // slams them together and the lightning arcs off them through the whole line.
+  mdchain(p) {
+    const rub = p > 0.06 && p < 0.4 ? Math.sin(seg(p, 0.06, 0.4) * Math.PI * 6) : 0;
+    const slam = ease(seg(p, 0.42, 0.5));
+    const end = soft(seg(p, 0.64, 0.95));
+    return {
+      weapon: lerp(100 + 8 * rub, 88, slam) + 30 * end, arm: lerp(70 + 4 * rub, 96, slam) - 40 * end,
+      lunge: 7 * slam * (1 - end * 0.5), tilt: 0.02 * rub + 0.12 * slam * (1 - end), lift: swBob(p, 0.92) * 0.4, trail: slam > 0 && slam < 1,
+      face: p < 0.42 ? MD_FACE.frantic : p < 0.64 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.2 * slam * (1 - end));
+        r.backArm = slam > 0.1 ? [q(lerp(5, 8, slam) - 4 * end), q(-3)] : [q(5 + 2 * rub), q(-3)];
+        r.hairLift = p > 0.2 && p < 0.7 ? -1 : 0;
+        danceLegs(r, [1 - slam, [2, 0, 6], [-2.2, 0, -8]], [slam * (1 - end), [4.6, 0, 10], [-4.2, -0.6, -22]], [end, [2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Cold Compress (~0.5): she whips an ice pack out of the satchel, spins round once on her heel and
+  // slaps it on the floor; cold bursts out both ways.
+  mdnova(p) {
+    const out = soft(seg(p, 0, 0.2));
+    const slap = ease(seg(p, 0.4, 0.5));
+    const end = soft(seg(p, 0.62, 0.95));
+    return {
+      weapon: 130, arm: 40,
+      tilt: 0.3 * slap * (1 - end), lift: 2 * bump(p, 0.16, 0.4) - 1 * slap * (1 - end) + swBob(p, 0.95) * 0.3,
+      face: p < 0.4 ? MD_FACE.focus : p < 0.62 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(2.8 * slap * (1 - end));
+        r.backArm = [q(lerp(2, 7, slap) * (1 - end)), q(lerp(-6 * out, 10, slap) * (1 - end))];
+        danceLegs(r, [1 - slap, [1.6, -1.2 * bump(p, 0.16, 0.4), 6], [-1.6, 0, -6]], [slap * (1 - end), [2.6, 0, 10], [-3.6, -0.6, -20]], [end, [1.6, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // First Aid (heal, ~0.55): she slaps bandages on everyone at top speed, a blur of arms, then
+  // dusts off her hands.
+  mdfirst(p) {
+    const blur = p > 0.1 && p < 0.55 ? Math.sin(p * 90) : 0;
+    const dust = p > 0.62 && p < 0.85 ? Math.sin(p * 60) : 0;
+    return {
+      weapon: 120 + 10 * blur, arm: 50 + 14 * blur,
+      tilt: 0.04 * blur, lift: 0.6 * Math.abs(blur) + swBob(p, 0.9) * 0.3,
+      face: p < 0.1 ? MD_FACE.focus : p < 0.6 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = p < 0.6 ? [q(4 + 3 * blur), q(-2 - 4 * Math.abs(blur))] : [q(3 + dust), q(-1)];
+        danceLegs(r, [1, [1.6, -0.6 * Math.abs(blur), 6], [-1.6, 0, -6]]);
+      },
+    };
+  },
+  // Bubble Wrap (~0.55): she yanks a sheet of bubble wrap out of the bag, flings it out round
+  // everyone and pops one bubble, very satisfied.
+  mdwrap(p) {
+    const yank = soft(seg(p, 0, 0.3));
+    const fling = ease(seg(p, 0.36, 0.5));
+    const pop = bump(p, 0.68, 0.8);
+    return {
+      weapon: lerp(130, 100, fling), arm: lerp(40, 80, fling) - 30 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.06 * yank * (1 - fling) + 0.06 * fling, lift: 1.4 * fling * (1 - soft(seg(p, 0.6, 0.9))) + swBob(p, 0.92) * 0.3,
+      face: p < 0.36 ? MD_FACE.focus : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = fling > 0.1 ? [q(-7 * fling + 6 * pop), q(-4 * fling)] : [q(5 * yank), q(2 * yank)];
+        danceLegs(r, [1 - fling, [1.6, 0, 4], [-1.6, 0, -4]], [fling, [2.4, 0, 6], [-2.4, 0, -6]]);
+      },
+    };
+  },
+  // Emergency Airdrop (her Big Bad Kaboom): she radios it in (hand to her ear), waves the planes in
+  // with both arms, and crates of heal bombs rain down; then a big thumbs-down, KABOOM, and the whole
+  // stretch goes up in healing.
+  mddrop(p) {
+    const radio = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.26, 0.32)));
+    const wave = p > 0.32 && p < 0.76 ? Math.sin(seg(p, 0.32, 0.76) * Math.PI * 6) : 0;
+    const down = ease(seg(p, 0.8, 0.88));
+    const end = soft(seg(p, 0.92, 1));
+    return {
+      weapon: lerp(120, 70 + 20 * wave, soft(seg(p, 0.3, 0.36))) * (1 - down) + 140 * down, arm: lerp(40, 90 + 8 * wave, soft(seg(p, 0.3, 0.36))) * (1 - down) + 50 * down,
+      tilt: 0.03 * wave + 0.12 * down * (1 - end), lift: 0.8 * Math.abs(wave) + swBob(p, 0.96) * 0.3, lunge: 3 * down,
+      face: p < 0.32 ? MD_FACE.focus : p < 0.8 ? MD_FACE.shout : p < 0.92 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = radio > 0.2 ? [q(3), q(-9 * radio)] : down > 0.1 ? [q(-6 * down), q(4 * down)] : [q(-3 + 3 * wave), q(-8 - 2 * wave)];
+        danceLegs(r, [1 - down, [1.6, 0, 4], [-1.6, 0, -4]], [down, [4, 0, 8], [-3.6, -0.6, -18]]);
+      },
+    };
+  },
+  // Triage (Guiding Light, ~0.5): she shades her eyes and scans, spots who's hurt worst, and points
+  // with the whole arm: "YOU! STAT!" Her first-aid drone zips off to them.
+  mdtriage(p) {
+    const scan = p < 0.4 ? Math.sin(seg(p, 0.04, 0.4) * Math.PI * 2) : 0;
+    const point = ease(seg(p, 0.42, 0.5));
+    const end = soft(seg(p, 0.7, 0.96));
+    return {
+      weapon: lerp(130, 90, point) + 30 * end, arm: lerp(40, 92, point) - 40 * end,
+      tilt: 0.04 * scan + 0.1 * point * (1 - end), lunge: 4 * point * (1 - end * 0.5), lift: swBob(p, 0.94) * 0.3,
+      face: p < 0.42 ? MD_FACE.focus : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = p < 0.42 ? [q(3), q(-10)] : [q(lerp(3, 0, point)), q(lerp(-10, 0, point))];
+        danceLegs(r, [1 - point, [1.6, 0, 4], [-1.6, 0, -4]], [point, [3, 0, 6], [-2.8, -0.4, -12]]);
+      },
+    };
+  },
+  // Pep Talk (Blessing of Valor, ~0.55): a rolled-up chart as a megaphone, a deep breath, and a
+  // huge shout of encouragement that rolls out both ways; fist pump.
+  mdpep(p) {
+    const breath = soft(seg(p, 0, 0.36));
+    const shout = ease(seg(p, 0.44, 0.55));
+    const pump = bump(p, 0.66, 0.86);
+    return {
+      weapon: 130, arm: 40,
+      tilt: -0.08 * breath * (1 - shout) + 0.08 * shout * (1 - soft(seg(p, 0.66, 0.9))), lift: 1.2 * breath * (1 - shout) + 2 * pump,
+      face: p < 0.44 ? MD_FACE.focus : p < 0.66 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = pump > 0.1 ? [q(2), q(-12 * pump)] : [q(lerp(3, 5, shout)), q(lerp(-4, -6, shout))];
+        r.hairLift = shout > 0.4 && pump < 0.3 ? 1 : 0;
+        danceLegs(r, [1 - shout, [1.6, 0, 4], [-1.6, 0, -4]], [shout, [2.6, 0, 6], [-2.6, -0.4, -10]]);
+      },
+    };
+  },
+  // Antiseptic Cloud (Penance, ~0.52): she shakes a spray can hard (rattle rattle) and blasts a cloud
+  // of disinfectant at them; it drifts after the monsters.
+  mdcloud(p) {
+    const shake = p > 0.04 && p < 0.4 ? Math.sin(p * 100) : 0;
+    const spray = ease(seg(p, 0.42, 0.52));
+    const end = soft(seg(p, 0.7, 0.95));
+    return {
+      weapon: lerp(110 + 12 * shake, 88, spray) + 30 * end, arm: lerp(60 + 6 * shake, 92, spray) - 40 * end,
+      tilt: 0.02 * shake + 0.08 * spray * (1 - end), lunge: 3 * spray * (1 - end * 0.5), lift: 0.4 * Math.abs(shake) + swBob(p, 0.94) * 0.3,
+      face: p < 0.42 ? MD_FACE.frantic : p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(-3), q(2 + shake * 0.6)];
+        danceLegs(r, [1 - spray, [1.6, 0, 4], [-1.6, 0, -4]], [spray, [2.8, 0, 6], [-2.6, -0.4, -10]]);
+      },
+    };
+  },
+  // Revive Paddles (Resurrection, ~0.66): she drops to her knees, rubs the paddles together (wand
+  // and gauntlet), shouts CLEAR! and slams them on the floor; the jolt lifts the fallen back up. She
+  // wipes her brow.
+  mdrevive(p) {
+    const kneel = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.78, 0.95)));
+    const rub = p > 0.24 && p < 0.56 ? Math.sin(seg(p, 0.24, 0.56) * Math.PI * 8) : 0;
+    const slam = ease(seg(p, 0.58, 0.66));
+    const wipe = bump(p, 0.8, 1);
+    return {
+      weapon: lerp(110 + 8 * rub, 160, slam) - 40 * soft(seg(p, 0.78, 0.95)), arm: lerp(60 + 4 * rub, 40, slam),
+      tilt: 0.1 * kneel + 0.14 * slam * kneel, lift: -2.4 * kneel,
+      face: p < 0.58 ? MD_FACE.frantic : p < 0.78 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(3 * kneel);
+        r.backArm = wipe > 0.1 ? [q(2), q(-12 * wipe)] : [q(5 + 2 * rub - 2 * slam), q(-2 + 6 * slam)];
+        r.hairLift = slam > 0.3 && p < 0.78 ? -1 : 0;
+        danceLegs(r, [kneel, [2.4, 0, 20], [-4, -1.4, -70]], [1 - kneel, [1.6, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Espresso Round (~0.62): she whips a tray of espresso cups out from behind her back, flicks one
+  // to each friend round her, knocks her own back in one gulp, and JITTERS, buzzing on her toes.
+  mdespresso(p) {
+    const tray = soft(seg(p, 0, 0.2));
+    const hand = p > 0.2 && p < 0.46 ? Math.sin(seg(p, 0.2, 0.46) * Math.PI * 4) : 0;
+    const gulp = bump(p, 0.48, 0.64);
+    const jit = p > 0.64 ? Math.sin(p * 140) * (1 - seg(p, 0.64, 1)) : 0;
+    return {
+      weapon: 140, arm: 40,
+      tilt: -0.16 * gulp + 0.03 * jit, lift: 0.8 * Math.abs(hand) + 1.4 * Math.abs(jit) + swBob(p, 0.96) * 0.2,
+      face: p < 0.46 ? MD_FACE.cheer : p < 0.64 ? MD_FACE.wink : MD_FACE.frantic,
+      rig: (r) => {
+        r.backArm = gulp > 0.05 ? [q(3), q(-10 * gulp)] : [q(4 + 3 * hand * tray), q(-4 * tray)];
+        r.hairLift = p > 0.64 && p < 0.9 ? -1 : 0;
+        danceLegs(r, [1, [1.6, -0.8 * Math.abs(jit), 4], [-1.6, -0.8 * Math.abs(jit), -4]]);
+      },
+    };
+  },
+  // Field Hospital (Miracle, the finisher): she plants a flag ("THIS IS A HOSPITAL NOW"), the tent
+  // springs up behind her, she runs round patching everyone up in a blur (three bursts of healing on
+  // the beats), and ends with a salute.
+  mdhospital(p) {
+    const plant = soft(seg(p, 0, 0.2));
+    const blur = p > 0.28 && p < 0.72 ? Math.sin(p * 70) : 0;
+    const salute = soft(seg(p, 0.8, 0.95));
+    return {
+      weapon: lerp(130, 170, plant) * (1 - salute) + 120 * salute + 10 * blur, arm: lerp(40, 60, plant) * (1 - salute) + 40 * salute + 10 * blur,
+      tilt: 0.04 * blur, lift: 0.8 * Math.abs(blur) + swBob(p, 0.97) * 0.3,
+      face: p < 0.28 ? MD_FACE.shout : p < 0.8 ? MD_FACE.frantic : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.2 * plant * (1 - soft(seg(p, 0.2, 0.3))));
+        r.backArm = salute > 0.1 ? [q(3), q(-11 * salute)] : [q(4 + 3 * blur), q(-3 - 3 * Math.abs(blur))];
+        danceLegs(r, [1 - Math.abs(blur), [1.6, 0, 4], [-1.6, 0, -4]], [Math.max(0, blur), [3, -1, 20], [-2.6, -1, -30]], [Math.max(0, -blur), [-1, -1, -20], [2.6, -1, 30]]);
+      },
+    };
+  },
+
+  // ---------- The Cleric's attacks (the remake: the combat medic; docs/design/mage-line.md) ----------
+  // The pyro gremlin went to nursing school, and still loves explosions: now they heal. She's a
+  // frantic, cheerful battlefield nurse, all speed and bounce: she lobs heal bombs underhand, spritzes
+  // a spray bottle, rubs the wand and gauntlet together like defibrillator paddles ("CLEAR!"), juggles
+  // vials, whips a bandage roll, checks a clipboard. She acts every beat (MD_FACE): a focused squint,
+  // a bright shout, a cheerful grin after; frantic and sweating when it's close.
+  // Heal bomb (wand opener, ~0.32): she pulls a flask off her belt and lobs it underhand with a little
+  // hop; it tumbles, bursts on them, and mends the party round it.
+  mdtoss(p) {
+    const pull = soft(seg(p, 0, 0.18));
+    const lob = ease(seg(p, 0.2, 0.32));
+    const after = soft(seg(p, 0.42, 0.8));
+    return {
+      weapon: lerp(120, 140, pull) - 20 * after, arm: lerp(40, 50, pull) + 10 * after,
+      tilt: 0.08 * lob * (1 - after), lunge: 3 * lob * (1 - after * 0.5), lift: 2.5 * bump(p, 0.2, 0.46) + swBob(p, 0.8) * 0.5,
+      face: p < 0.2 ? MD_FACE.focus : p < 0.42 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = lob > 0.05 ? [q(lerp(-2, 8, lob) - 4 * after), q(lerp(4, -6, lob) + 6 * after)] : [q(-2 * pull), q(4 * pull)];
+        r.hairLift = lob > 0.3 && after < 0.4 ? 1 : 0;
+        danceLegs(r, [pull * (1 - lob), [1.4, 0, 4], [-1.8, 0, -6]], [lob * (1 - after), [2.8, -1.4, 14], [-2.4, -0.8, -12]], [after, [1.6, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Spritz (second, ~0.4): she whips the wand round like a spray bottle and gives them three quick
+  // spritzes of healing mist, nodding with each one.
+  mdspray(p) {
+    const up = soft(seg(p, 0, 0.16));
+    const pump = p > 0.2 && p < 0.5 ? Math.sin(seg(p, 0.2, 0.5) * Math.PI * 6) : 0;
+    const end = soft(seg(p, 0.56, 0.9));
+    return {
+      weapon: lerp(120, 86, up) + 5 * pump + 24 * end, arm: lerp(40, 90, up) + 3 * pump - 30 * end,
+      tilt: 0.03 * pump, lunge: 2 * up * (1 - end), lift: 0.5 * Math.abs(pump) + swBob(p, 0.9) * 0.4,
+      face: p < 0.2 ? MD_FACE.focus : p < 0.56 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(4 - 2 * end), q(-4 + 1.4 * pump)];
+        danceLegs(r, [1, [1.6, -0.4 * Math.abs(pump), 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // CLEAR! (wand finisher, a defibrillator zap at ~0.52): she rubs the wand against her gauntlet,
+  // faster and faster as it charges (her hair rising), shouts CLEAR!, and jabs it at them; the zap
+  // goes through the line and the kick knocks her back a step. Thumbs up.
+  mddefib(p) {
+    const rub = p > 0.06 && p < 0.42 ? Math.sin(p * (40 + p * 120)) : 0;
+    const charge = soft(seg(p, 0.06, 0.42));
+    const jab = ease(seg(p, 0.44, 0.52));
+    const kick = bump(p, 0.52, 0.68);
+    const thumb = soft(seg(p, 0.72, 0.95));
+    return {
+      weapon: lerp(110, 90, jab) + 6 * rub * (1 - jab) + 30 * thumb, arm: lerp(60, 94, jab) + 4 * rub * (1 - jab) - 40 * thumb,
+      lunge: 8 * jab * (1 - thumb * 0.6) - 4 * kick, tilt: 0.02 * rub + 0.12 * jab * (1 - thumb) - 0.1 * kick,
+      lift: 1.6 * kick + swBob(p, 0.92) * 0.4, trail: jab > 0 && jab < 1,
+      face: p < 0.44 ? MD_FACE.frantic : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.squat = q(1.2 * charge * (1 - jab) + 1 * jab * (1 - thumb));
+        r.backArm = thumb > 0.2 ? [q(5), q(-7 * thumb)] : jab > 0.2 ? [q(-6 * jab), q(-3)] : [q(5 + 1.6 * rub), q(-2)];
+        r.hairLift = charge > 0.5 && jab < 0.5 ? -1 : jab > 0.3 && thumb < 0.4 ? 1 : 0;
+        danceLegs(r, [charge * (1 - jab), [2.4, 0, 6], [-2.4, 0, -8]], [jab * (1 - kick), [4.6, 0, 10], [-4.2, -0.6, -22]], [kick, [0.4, -1, -8], [-4.4, 0, -18]], [thumb, [2, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Juggle (opener in her pool, a heal bomb at ~0.36): she juggles three flasks (one, two, three),
+  // catches two and boots the third at them.
+  mdjuggle(p) {
+    const jug = p < 0.3 ? Math.sin(seg(p, 0, 0.3) * Math.PI * 6) : 0;
+    const kick = bump(p, 0.28, 0.5);
+    return {
+      weapon: 130 - 10 * jug, arm: 50 + 8 * jug,
+      tilt: -0.06 * kick, lift: 0.6 * Math.abs(jug) + 1.5 * kick + swBob(p, 0.8) * 0.4,
+      face: p < 0.3 ? MD_FACE.focus : p < 0.5 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(3 - 2 * jug), q(-6 + 3 * Math.abs(jug))];
+        danceLegs(r, [1 - kick, [1.4, 0, 4], [-1.6, 0, -4]], [kick, [3.4, -3.6, 50], [-1.4, 0, -6]]);
+      },
+    };
+  },
+  // Bandage whip (second in her pool, two mists at ~0.44): she yanks a bandage roll out of the bag and
+  // flicks it out like a ribbon; it unrolls in a cold mist.
+  mdbandage(p) {
+    const yank = soft(seg(p, 0, 0.24));
+    const whip = ease(seg(p, 0.34, 0.44));
+    const end = soft(seg(p, 0.56, 0.92));
+    return {
+      weapon: lerp(lerp(120, 200, yank), 80, whip) + 20 * end, arm: lerp(lerp(40, 10, yank), 96, whip) - 30 * end,
+      back: (yank > 0.5 && whip < 0.4) || undefined,
+      tilt: -0.08 * yank * (1 - whip) + 0.1 * whip * (1 - end), lunge: 5 * whip * (1 - end * 0.5), lift: swBob(p, 0.92) * 0.4, trail: whip > 0 && whip < 1,
+      face: p < 0.34 ? MD_FACE.focus : p < 0.56 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 4, yank) - 6 * whip), q(lerp(2, -2, yank))];
+        r.hairLift = whip > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [yank * (1 - whip), [1.6, 0, 4], [-2.6, 0, -10]], [whip, [4, 0, 8], [-3.6, -0.6, -18]]);
+      },
+    };
+  },
+  // Chart check (finisher in her pool, a big zap at ~0.54): she pulls a clipboard out, checks it,
+  // taps her pen on it (yep, needs a jolt), tosses it over her shoulder and zaps them.
+  mdclip(p) {
+    const read = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.4, 0.46)));
+    const tap = p > 0.16 && p < 0.4 ? Math.sin(seg(p, 0.16, 0.4) * Math.PI * 6) : 0;
+    const zapIt = ease(seg(p, 0.46, 0.54));
+    const end = soft(seg(p, 0.68, 0.95));
+    return {
+      weapon: lerp(120 + 4 * tap, 88, zapIt) + 30 * end, arm: lerp(50, 94, zapIt) - 40 * end,
+      tilt: 0.06 * read + 0.12 * zapIt * (1 - end), lunge: 7 * zapIt * (1 - end * 0.5), lift: swBob(p, 0.92) * 0.4, trail: zapIt > 0 && zapIt < 1,
+      face: p < 0.46 ? MD_FACE.focus : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => {
+        r.backArm = read > 0.2 ? [q(5), q(-2)] : zapIt > 0.1 ? [q(lerp(5, -5, zapIt)), q(lerp(-2, -8, zapIt) + 6 * end)] : [q(5), q(-2)];
+        r.hairLift = zapIt > 0.3 && end < 0.4 ? 1 : 0;
+        danceLegs(r, [1 - zapIt, [1.6, 0, 4], [-1.6, 0, -4]], [zapIt * (1 - end), [4.4, 0, 8], [-4, -0.6, -20]], [end, [2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Up + attack: she bounces on her toes and lobs a bomb straight up.
+  mdup(p) {
+    const hop = bump(p, 0.12, 0.6);
+    const lob = ease(seg(p, 0.18, 0.3));
+    return {
+      weapon: lerp(120, 90, lob), arm: lerp(40, 88, lob) - 40 * soft(seg(p, 0.6, 0.95)),
+      lift: 7 * hop + swBob(p, 0.72) * 0.6, tilt: -0.06 * lob * (1 - soft(seg(p, 0.6, 0.9))),
+      face: p < 0.18 ? MD_FACE.focus : p < 0.5 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.air = hop > 0.3; r.backArm = [q(4 * lob), q(-8 * lob)]; r.hairLift = hop > 0.5 ? -1 : 0; danceLegs(r, [hop, [1.6, -3.4, 30], [-1.8, -2.4, -36]]); },
+    };
+  },
+  // In the air: she tucks and drops a flask on them.
+  mdair(p) {
+    const drop = ease(seg(p, 0.18, 0.3));
+    return {
+      weapon: lerp(110, 160, drop), arm: lerp(70, 50, drop), tilt: 0.08 * drop,
+      face: p < 0.18 ? MD_FACE.focus : MD_FACE.shout,
+      rig: (r) => { r.air = true; r.backArm = [q(2 + 4 * drop), q(-4 + 8 * drop)]; danceLegs(r, [1, [2.4, -4, 40], [-2, -3, -40]]); },
+    };
+  },
+  // Out of a run: a paramedic's knee slide in, skidding, flinging a flask out of the slide.
+  mddash(p) {
+    const slide = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.66, 1)));
+    const fling = ease(seg(p, 0.28, 0.38));
+    return {
+      weapon: lerp(130, 90, fling) + 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(40, 92, fling) - 30 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.1 * slide, lunge: 6 * slide, trail: fling > 0 && fling < 1,
+      face: p < 0.28 ? MD_FACE.frantic : p < 0.55 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(2.6 * slide); r.backArm = [q(-6 * slide), q(-4 * slide)]; r.hairLift = slide > 0.4 ? 1 : 0; r.cape -= q(5 * slide); danceLegs(r, [slide, [5.4, 0, 30], [-3.4, -1, -14]]); },
     };
   },
 
@@ -9013,6 +9661,58 @@ export const MOVES = {
     };
   },
 };
+
+// The Cleric's moves, smoothed (the player found them clunky): each of her poses is the blend of
+// the moments either side of it (a soft triangle over SMOOTH_W of the move), so a pose never jumps
+// from one key to the next, the free arm and the body ease through every change, and the wind-ups
+// and follow-throughs flow. Booleans (the air, the weapon behind her) come from the moment itself.
+const SMOOTH_W = 0.09;
+const SMOOTH_N = 7;
+const LEG = /Leg$/;
+function smoothMove(fn, w = SMOOTH_W, n = SMOOTH_N) {
+  const at = [];
+  let total = 0;
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1) - 0.5;
+    const k = 1 - Math.abs(u) * 1.6;
+    at.push([u * 2 * w, k]);
+    total += k;
+  }
+  const mean = (vals) => vals.reduce((sum, [v, k]) => sum + v * k, 0) / total;
+  return (p, ...rest) => {
+    const base = fn(p, ...rest);
+    const samples = at.map(([d, k]) => [fn(clamp01(p + d), ...rest), k]);
+    const out = { ...base };
+    for (const key of ['weapon', 'arm', 'lift', 'tilt', 'lunge']) {
+      if (typeof base[key] !== 'number' || samples.some(([m]) => typeof m[key] !== 'number')) continue;
+      out[key] = mean(samples.map(([m, k]) => [m[key], k]));
+    }
+    out.rig = (r) => {
+      const copies = samples.map(([m, k]) => {
+        const c = { ...r };
+        for (const [kk, v] of Object.entries(r)) if (Array.isArray(v)) c[kk] = [...v];
+        m.rig?.(c);
+        return [c, k];
+      });
+      base.rig?.(r);
+      for (const key of Object.keys(r)) {
+        const vals = copies.map(([c, k]) => [c[key], k]);
+        if (typeof r[key] === 'number' && vals.every(([v]) => typeof v === 'number')) {
+          const v = mean(vals);
+          r[key] = key === 'hairLift' ? Math.round(v) : q(v);
+        } else if (Array.isArray(r[key]) && vals.every(([v]) => Array.isArray(v) && v.length === r[key].length && v.every((x) => typeof x === 'number'))) {
+          r[key] = r[key].map((_, i) => {
+            const v = mean(vals.map(([vv, k]) => [vv[i], k]));
+            return LEG.test(key) && i === 2 ? Math.round(v / 2) * 2 : q(v);
+          });
+        }
+      }
+    };
+    return out;
+  };
+}
+for (const name of Object.keys(MOVES)) if (/^md/.test(name)) MOVES[name] = smoothMove(MOVES[name]);
+
 
 // Long-feeling moves need a little more time than a quick swing to read properly.
 export const MOVE_MIN = {

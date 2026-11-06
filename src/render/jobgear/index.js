@@ -32,6 +32,7 @@ import cleric from './cleric.js';
 import sorcerer from './sorcerer.js';
 import battlemage from './battlemage.js';
 import chaosqueen from './chaosqueen.js';
+import medic from './medic.js';
 import thief from './dancer.js';
 import casual from './casual.js';
 import fun from './fun.js';
@@ -43,7 +44,7 @@ import starter from './starter.js';
 // The four job families, plus the Cash Shop's casual, funny, full-outfit and accessory lines and the creator's
 // starter outfits (where `t` picks a
 // design from data/outfits-*.js instead of a tier).
-export const JOB_GEAR = { warrior, archer, mage, cleric, sorcerer, battlemage, chaosqueen, thief, casual, fun, gacha, costume, acc, starter };
+export const JOB_GEAR = { warrior, archer, mage, cleric, sorcerer, battlemage, chaosqueen, medic, thief, casual, fun, gacha, costume, acc, starter };
 // Looks, not job gear: no job auras, white trim, no glow. `starter` is the creator's outfits.
 export const LOOK_FAMILIES = new Set(['casual', 'fun', 'gacha', 'costume', 'acc', 'starter']);
 

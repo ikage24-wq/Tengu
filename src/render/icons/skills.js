@@ -1509,6 +1509,18 @@ function resurrection() {
   out.push(...clHalo(8, 13.4, 5), ...clFeather(4, 6, -60, 3.2), ...clFeather(12, 5, -120, 3.2));
   return out;
 }
+// Espresso Round: a little white espresso cup on its saucer, steam curling up, jitter lines.
+function espresso() {
+  const out = [...tile('clericgold', 'buff'), ...aura(8, 9, 6.4, '#ffe0c8')];
+  out.push(...solid(oval(8, 13.4, 5.4, 1.2, 0, 16), '#ffffff', { d: 0.3, ink: CLINK }));
+  out.push(...solid([[4.2, 7.6], [11.8, 7.6], [11, 12.6], [5, 12.6]], '#ffffff', { d: 0.35, ink: CLINK }));
+  out.push(S(oval(8, 7.8, 3.6, 0.8, 0, 14), '#6a3a24'));
+  out.push(...solid(oval(12.6, 9.6, 1.4, 1.6, 0, 12), '#ffffff', { d: 0.3, ink: CLINK }));
+  out.push(S(rect(6.6, 9.4, 2.8, 0.8), '#e0404a'), S(rect(7.6, 8.6, 0.8, 2.4), '#e0404a'));
+  for (const x of [6.4, 9.2]) out.push(streak([x, 6.4], [x + 0.8, 2.6], 0.7, W));
+  out.push(streak([1.6, 5], [3.2, 4.2], 0.5, '#ffd36a'), streak([14.4, 5], [12.8, 4.2], 0.5, '#ffd36a'));
+  return out;
+}
 // Miracle: a stained-glass window with a sun in its rose, light pouring from it.
 function thousandtorii() {
   const out = [...tile('clericgold', 'active'), ...aura(8, 8, 7, '#fff6c8', 1.2, 5)];
@@ -1672,7 +1684,7 @@ const ART = {
   ringmastery, rebound, twinrings, goldencarousel,
   skymastery, updraft, zephyr, skywaltz,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
-  spiritbolt, spiritstep, spiritwave, frostnova, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
+  spiritbolt, spiritstep, spiritwave, frostnova, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, espresso, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
 

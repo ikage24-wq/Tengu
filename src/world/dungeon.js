@@ -755,6 +755,11 @@ export function healMembers(world, pct, box) {
     const b = g.body;
     if (b.x < box.x || b.x > box.x + box.w || b.y - b.h > box.y + box.h || b.y < box.y) continue;
     healMember(world, g, maxHpOf(world, g) * pct, 'you');
+    // (The Cleric's heals show her mark on each one she mends.)
+    if (world.char.job === 'shrinemaiden' && world.now - (g.healedFxAt ?? -9) >= 0.5) {
+      g.healedFxAt = world.now;
+      world.fx.push({ kind: 'mdhealed', x: b.x, y: b.y, t: 0, dur: 0.6 });
+    }
   }
 }
 

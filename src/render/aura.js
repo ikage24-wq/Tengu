@@ -267,18 +267,21 @@ function spiritAura(ctx, x, y, t, s, k, layer) {
   motes(ctx, x, y, t, s, 0.45 + 0.55 * k, { n: 1 + Math.round(5 * k), spread: 16, inner: 9, height: 22 + 16 * k, speed: 0.5 + 0.8 * k, size: 1 + 0.5 * k, draw: (c, mx, my, r, i) => { c.fillStyle = MAYHEM_SPARKS[i % 3]; c.fillRect(mx - r / 2, my - r / 2, r, r); } });
 }
 
-// Applause (the Starlight Idol; internally Grace): a pink ring at her feet that fills in as the
-// crowd's cheer builds, turning faster the fuller it is; full (Live Show), hearts and notes circle
-// her and her badge, a heart with a note on it, shines over her head.
+// Devotion (the Cleric; internally Grace, docs/design/mage-line.md): little red and green plus-
+// crosses drifting up beside her as it builds, more of them the fuller it is (out at her sides, off
+// her face); full, a soft red glow at her feet and the crosses pour up.
 function graceAura(ctx, x, y, t, s, k, layer) {
+  if (k < 0.05) return;
   if (layer === 'back') {
-    if (k > 0.15) songRing(ctx, 'heal', x, y + 2, s * (16 + 8 * k), 1 + t * (0.6 + 0.8 * k), Math.min(0.85, (k - 0.15) * 2));
+    if (k >= 1) footGlow(ctx, x, y, s * 1.2, '#ff6a74', 0.45 + 0.15 * Math.sin(t * 4));
     return;
   }
-  if (k >= 1) {
-    fxSprite(ctx, 'celsiaura', x, y - 26 * s, { t, scale: s * 0.5, alpha: 0.9 });
-    fxSprite(ctx, 'celembidol', x, y - 66 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
-  }
+  motes(ctx, x, y, t, s, 0.5 + 0.5 * k, { n: 1 + Math.round(4 * k), spread: 17, inner: 11, height: 26 + 14 * k, speed: 0.35 + 0.4 * k, size: 1.4 + 0.4 * k, draw: (c, mx, my, r, i) => {
+    c.fillStyle = i % 2 ? '#ff6a74' : '#5ae08a';
+    const w = Math.max(1, r * 0.45);
+    c.fillRect(mx - r / 2, my - w / 2, r, w);
+    c.fillRect(mx - w / 2, my - r / 2, w, r);
+  } });
 }
 
 // Spellstorm (the Sorcerer; internally Binding): a violet shadow pooling round her feet, darker the

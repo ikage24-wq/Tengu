@@ -16,6 +16,7 @@ import { price } from '../world/chatter.js';
 import { itemTooltip, skillTooltip } from './tooltips.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { gaugeOf } from '../world/melee.js';
+import { cooldownLeft, cooldownOf } from '../world/combat.js';
 import { HITS_WINDOW } from '../world/world.js';
 import { taskProgress, clock } from '../world/dungeon.js';
 import { groundAt } from '../world/physics.js';
@@ -284,11 +285,15 @@ export function drawHud(ui, state, world) {
     const k = (keys[code] ??= { at: -9, ok: true, readyAt: -9, short: false });
     const lv = b?.skill ? char.skills[b.skill] ?? 0 : 0;
     const noMp = Boolean(lv && SKILLS[b.skill].type !== 'passive' && char.mp < skillAt(b.skill, lv).mp);
-    if (b?.skill && !noMp && !k.ok) k.readyAt = t;
-    k.ok = !noMp;
+    // (A skill on cooldown: how long is left, and its whole cooldown, for the sweep over its icon.)
+    const cdLeft = lv ? cooldownLeft(world, b.skill) : 0;
+    const cdAll = cdLeft > 0 ? cooldownOf(char, b.skill) : 0;
+    const blocked = noMp || cdLeft > 0;
+    if (b?.skill && !blocked && !k.ok) k.readyAt = t;
+    k.ok = !blocked;
     if (!typing && ui.input.pressed?.has(code)) {
       k.at = t;
-      k.short = noMp;
+      k.short = blocked;
     }
     const age = t - k.at;
     const sink = age < 0.09 ? 1.5 : 0;
@@ -348,11 +353,40 @@ export function drawHud(ui, state, world) {
         ctx.fillStyle = 'rgba(70,110,190,0.42)';
         ctx.fill();
       }
+      if (cdLeft > 0 && cdAll > 0) {
+        // On cooldown: the icon greyed under a dark veil that sweeps away clockwise as it comes back.
+        const u = Math.min(1, cdLeft / cdAll);
+        ctx.beginPath();
+        ctx.rect(-c0, -c0, D, D);
+        ctx.globalCompositeOperation = 'saturation';
+        ctx.fillStyle = '#808080';
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, D, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * u);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(40,24,60,0.6)';
+        ctx.fill();
+      }
       if (!k.short && age < 0.12) {
         ctx.fillStyle = `rgba(255,255,255,${0.7 * (1 - age / 0.12)})`;
         ctx.fillRect(-c0, -c0, D, D);
       }
       ctx.restore();
+      // The time left on a cooldown, over the icon (minutes and seconds past a minute).
+      if (cdLeft > 0) {
+        const secs = Math.ceil(cdLeft);
+        const label = secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : `${secs}`;
+        ctx.font = 'bold 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 2.4;
+        ctx.strokeStyle = '#2a1a3a';
+        ctx.strokeText(label, x + c0, y + c0 + 2.5 + sink);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(label, x + c0, y + c0 + 2.5 + sink);
+        ctx.textAlign = 'left';
+      }
       // A cast sends a square ripple out from the print.
       if (!k.short && age < 0.3) {
         const u = age / 0.3;

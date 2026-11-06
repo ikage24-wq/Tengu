@@ -41,6 +41,7 @@ import { launchWisp } from './foxwheel.js';
 import { GRAVITY } from './physics.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
+import { allyElement } from './reactions.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -211,13 +212,22 @@ export const PATH_COMBOS = {
     { move: 'pmpitch', dur: 0.44, step: 12, strikes: [{ at: 0.4, shot: 'pmshard', magic: true, el: 'ice', pct: 88, range: 300, h: 70, knock: 30, speed: 820 }] },
     { move: 'pmjab', dur: 0.62, step: 14, finisher: true, strikes: [{ at: 0.22, shot: 'pmzap', magic: true, el: 'bolt', pct: 36, range: 300, h: 60, knock: 10, speed: 1100 }, { at: 0.36, shot: 'pmzap', magic: true, el: 'bolt', pct: 36, range: 300, h: 60, knock: 10, speed: 1100 }, { at: 0.5, shot: 'pmzap', magic: true, el: 'bolt', pct: 130, range: 330, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.06, shake: 2 }] },
   ],
-  // The Cleric of light (the healer path, id kept; docs/design/mage-line.md): a smite (a sunbolt
-  // off her scepter), a twin blessing (two orbs of light), and Judgment (a pillar of light slams down
-  // on them from the sky, `sky`).
+  // The Cleric (the healer path, id kept; docs/design/mage-line.md, the remake): the combat medic,
+  // who works rather than casts: each spell is medical gear that hurts what it hits and mends the
+  // party round where it lands (`mend`), carrying its element onto them (world/reactions.js). Fire
+  // is a hot pack, ice a cold pack, lightning a heart-monitor pulse. Wand (key `idol` kept): a pill
+  // flicked off her thumb, an ice pack slap-shot along the floor, a pulse check that sends the
+  // heartbeat down the line. Staff (`medstaff`): a hot-water bottle catapulted, a mop of cold spray,
+  // Code Blue (a heartbeat wave down the line).
   idol: [
-    { move: 'clsmite', dur: 0.34, step: 10, strikes: [{ at: 0.32, shot: 'clbolt', magic: true, pct: 80, range: 300, h: 64, knock: 25, speed: 900 }] },
-    { move: 'clbless', dur: 0.46, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 760, oy: -3 }, { at: 0.56, shot: 'clorb', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 760, oy: 3 }] },
-    { move: 'cljudge', dur: 0.58, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'clpillar', sky: true, magic: true, pct: 165, range: 300, h: 90, targets: 3, knock: 120, launch: 120, speed: 1500, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'mdflickp', dur: 0.36, step: 6, strikes: [{ at: 0.3, shot: 'mdpill', magic: true, el: 'fire', pct: 78, range: 300, h: 70, knock: 30, speed: 820, mend: 0.02 }] },
+    { move: 'mdslap', dur: 0.5, step: 10, strikes: [{ at: 0.44, shot: 'mdpack', magic: true, el: 'ice', pct: 92, range: 320, h: 60, oy: 12, targets: 2, pierce: true, knock: 40, speed: 760, mend: 0.02 }] },
+    { move: 'mdpulsechk', dur: 0.62, step: 8, finisher: true, strikes: [{ at: 0.54, shot: 'mdpulse', magic: true, el: 'bolt', pct: 160, range: 340, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.07, shake: 2, mend: 0.03 }] },
+  ],
+  medstaff: [
+    { move: 'mdcata', dur: 0.5, step: 6, strikes: [{ at: 0.44, shot: 'mdbottle', magic: true, el: 'fire', pct: 105, range: 310, h: 80, knock: 90, speed: 620, lob: 30, mend: 0.025 }] },
+    { move: 'mdmop', dur: 0.6, step: 10, strikes: [{ at: 0.5, shot: 'mdspray', magic: true, el: 'ice', pct: 110, range: 300, h: 70, oy: 8, targets: 3, pierce: true, knock: 40, speed: 640, mend: 0.025 }] },
+    { move: 'mdcode', dur: 0.66, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'mdecg', magic: true, el: 'bolt', pct: 175, range: 360, h: 70, oy: 6, targets: 4, pierce: true, knock: 120, speed: 1200, big: true, stop: 0.07, shake: 3, mend: 0.035 }] },
   ],
   // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen. Bigger and slower than
   // the Mage: fewer, grander spells that hit crowds hard, each a different element so her
@@ -478,16 +488,19 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.starwand[1], { move: 'pmtwirl', dur: 0.48, step: 10, strikes: [{ at: 0.42, shot: 'pmshard', magic: true, el: 'ice', pct: 50, range: 290, h: 90, knock: 25, speed: 820, fan: 2 }] }],
     [PATH_COMBOS.starwand[2], { move: 'pmjam', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.54, shot: 'pmzap', magic: true, el: 'bolt', pct: 175, range: 330, h: 70, targets: 3, pierce: true, knock: 140, launch: 80, speed: 1300, big: true, stop: 0.07, shake: 3 }] }],
   ],
-  // The Cleric. Openers: the smite or a prayer bolt; second: the twin blessing or a halo twirl;
-  // finisher: Judgment or a stained-glass burst of rays.
+  // The Cleric. Wand: the pill flick or a pill tossed over her shoulder; the slap-shot or keepy-uppy
+  // with an ice pack; the pulse check or a listen with the stethoscope. Staff: the catapult or a
+  // gurney push; the mop or a floor buffer; Code Blue or a heartbeat drummed on the floor.
   idol: [
-    [PATH_COMBOS.idol[0], { move: 'clpray', dur: 0.38, step: 8, strikes: [{ at: 0.34, shot: 'clbolt', magic: true, pct: 84, range: 300, h: 64, knock: 30, speed: 900 }] }],
-    [PATH_COMBOS.idol[1], { move: 'cltwirl', dur: 0.46, step: 12, strikes: [{ at: 0.44, shot: 'clorb', magic: true, pct: 96, range: 310, h: 70, knock: 40, speed: 780, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.idol[2], { move: 'clglass', dur: 0.58, step: 6, finisher: true, strikes: [{ at: 0.5, shot: 'clbolt', magic: true, pct: 60, range: 320, h: 120, knock: 160, speed: 900, fan: 3, targets: 2, pierce: true, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.idol[0], { move: 'mdbottlep', dur: 0.42, step: 6, strikes: [{ at: 0.36, shot: 'mdpill', magic: true, el: 'fire', pct: 82, range: 300, h: 70, knock: 30, speed: 800, lob: 20, mend: 0.02 }] }],
+    [PATH_COMBOS.idol[1], { move: 'mdkeepy', dur: 0.52, step: 6, strikes: [{ at: 0.4, shot: 'mdpack', magic: true, el: 'ice', pct: 50, range: 300, h: 80, knock: 25, speed: 760, mend: 0.012 }, { at: 0.5, shot: 'mdpack', magic: true, el: 'ice', pct: 50, range: 300, h: 80, knock: 25, speed: 760, oy: 6, mend: 0.012 }] }],
+    [PATH_COMBOS.idol[2], { move: 'mdsteth', dur: 0.64, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'mdpulse', magic: true, el: 'bolt', pct: 165, range: 340, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.07, shake: 2, mend: 0.03 }] }],
   ],
-  // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
-  // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
-  // night sky in both arms.
+  medstaff: [
+    [PATH_COMBOS.medstaff[0], { move: 'mdgurney', dur: 0.54, step: 30, carry: 0.5, strikes: [{ at: 0.46, shot: 'mdbottle', magic: true, el: 'fire', pct: 108, range: 310, h: 80, knock: 100, speed: 680, mend: 0.025 }] }],
+    [PATH_COMBOS.medstaff[1], { move: 'mdbuff', dur: 0.6, step: 4, strikes: [{ at: 0.5, shot: 'mdspray', magic: true, el: 'ice', pct: 110, range: 300, h: 70, oy: 8, targets: 3, pierce: true, knock: 40, speed: 640, mend: 0.025 }] }],
+    [PATH_COMBOS.medstaff[2], { move: 'mddrum', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.56, shot: 'mdecg', magic: true, el: 'bolt', pct: 178, range: 360, h: 70, oy: 6, targets: 4, pierce: true, knock: 120, speed: 1200, big: true, stop: 0.07, shake: 3, mend: 0.035 }] }],
+  ],
   // The Sorcerer. Staff: the throne tap or a majorette's twirl; the curtain sweep or a bow; judgment
   // or an encore. Wand: the finger snap or fanning herself; the royal wave or a curtsy; the decree or
   // a bored yawn.
@@ -571,15 +584,25 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'pmdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.36, shot: 'pmspark', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 920 }] },
   },
-  // The Cleric: a ray shot up at whatever flies, light cast down from the air (the second time a
-  // pillar of it), and a glide on a beam of light out of a run.
+  // The Cleric with the wand: a pill popped straight up off her thumb, an ice pack dropped from a
+  // tuck in the air (the second time a spray of three), and a paramedic's knee slide flicking a pill.
   idol: {
-    up: { move: 'clup', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'clbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 900, big: true, stop: 0.04 }] },
+    up: { move: 'mdupp', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'mdpill', magic: true, el: 'fire', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 340, speed: 860, big: true, stop: 0.04, mend: 0.02 }] },
     air: [
-      { move: 'clair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760 }] },
-      { move: 'clair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'clbolt', magic: true, fan: 2, pct: 70, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 900, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'mdair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760, mend: 0.015 }] },
+      { move: 'mdair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', fan: 3, pct: 50, range: 260, h: 190, drop: 70, knock: 80, speed: 760, big: true, stop: 0.04, shake: 1, mend: 0.01 }] },
     ],
-    dash: { move: 'clglide', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'clbolt', magic: true, pct: 115, range: 300, h: 64, knock: 100, speed: 900, targets: 2, pierce: true }] },
+    dash: { move: 'mddash', dur: 0.52, step: 60, carry: 0.55, strikes: [{ at: 0.36, shot: 'mdpill', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 860, mend: 0.02 }] },
+  },
+  // With the staff: a hot-water bottle pole-vaulted up, an ice pack batted down from the air, and a
+  // scooter ride on the staff out of a run.
+  medstaff: {
+    up: { move: 'mdsup', dur: 0.44, step: 4, strikes: [{ at: 0.3, shot: 'mdbottle', magic: true, el: 'fire', pct: 115, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.05, mend: 0.02 }] },
+    air: [
+      { move: 'mdsair', dur: 0.4, hang: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', pct: 90, range: 260, h: 170, drop: 60, knock: 40, speed: 760, mend: 0.015 }] },
+      { move: 'mdsair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mdbottle', magic: true, el: 'fire', pct: 120, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 100, speed: 700, big: true, stop: 0.05, shake: 2, mend: 0.02 }] },
+    ],
+    dash: { move: 'mdsdash', dur: 0.54, step: 60, carry: 0.5, strikes: [{ at: 0.46, shot: 'mdbottle', magic: true, el: 'fire', pct: 120, range: 300, h: 80, targets: 2, pierce: true, knock: 90, speed: 720, mend: 0.02 }] },
   },
   // The Sorcerer with the staff: a banner raised (lightning up), a throne in the air (fire orb
   // down; the second time a crown of ice), a throne ride out of a run that ends in a tap of geysers.
@@ -1173,7 +1196,7 @@ export function stormHurt(world) {
 const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
 // Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
-export function healAround(world, x, y, pct, r, gauge = true) {
+export function healAround(world, x, y, pct, r, gauge = true, el = null) {
   const { char, body, stats } = world;
   // A Starlight Idol's Stage Presence makes every heal she gives mend more.
   const lv = grownLevel(char, SKILLS.shrinemastery);
@@ -1182,10 +1205,19 @@ export function healAround(world, x, y, pct, r, gauge = true) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
-    world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
+    // (The Cleric's heals land as her own mark: a red-cross ring and plus-crosses rising.)
+    // (At most one every half second: her heal bombs mend on nearly every hit, and a stack of
+    // them reads as a column of crosses.)
+    if (char.job !== 'shrinemaiden') world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
+    else if (world.now - (world.healedFxAt ?? -9) >= 0.5) {
+      world.healedFxAt = world.now;
+      world.fx.push({ kind: 'mdhealed', x: body.x, y: body.y, t: 0, dur: 0.6 });
+    }
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
   if (gauge) addSpirit(world, 40 * pct * (1 + 0.5 * alliesNear(world, x, r)), 'mend');
+  // (The Cleric's heals carry their element onto her party: world/reactions.js.)
+  if (el) allyElement(world, el);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar']);
@@ -1216,6 +1248,7 @@ export function pathOf(world) {
   const w = world.stats.weaponType;
   if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
   if (w === 'wand' && hasGrace(char)) return 'idol';
+  if (w === 'staff' && hasGrace(char)) return 'medstaff';
   if ((w === 'wand' || w === 'staff') && hasBinding(char)) return w === 'wand' ? 'astrowand' : 'astro';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
@@ -1619,7 +1652,7 @@ function land(world, s) {
   if (targets.length) addRage(world, s.rage ?? (s.key.startsWith('basic') ? 3 : 5));
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
-  if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220);
+  if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220, true, s.el);
   if (s.magic && targets.length && !s.phantom) addSpirit(world, s.gauge ?? 4, 'harm', s.el);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
@@ -1878,11 +1911,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
-    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el,
+    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
@@ -1990,7 +2023,8 @@ function fire(world, strike) {
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
-  else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  // (The Cleric throws her gear rather than casting it: no flash off the wand.)
+  else if (!hasBond(world.char) && world.char.job !== 'shrinemaiden') world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
@@ -2127,6 +2161,8 @@ const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.
 // The Sorcerer's shots (the remake); their hits leave her crowned mark.
+// The Cleric's shots (the remake); their hits leave her pop of plus-crosses.
+export const MD_SHOTS = new Set(['mdpill', 'mdpack', 'mdpulse', 'mdbottle', 'mdspray', 'mdecg', 'mdhuge', 'mdzapbig', 'mdbomb', 'mdmist', 'mdzap']);
 export const QN_SHOTS = new Set(['qnorb', 'qncrown', 'qndecree', 'qngeyser', 'qnwall', 'qnstrike']);
 export const MG_SHOTS = new Set(['pmspark', 'pmshard', 'pmzap', 'pmbomb', 'pmspike', 'pmstrike', 'pmhuge', 'pmwire', 'mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
 // The Sorcerer's shots (her own art); their hits leave her claw marks.
