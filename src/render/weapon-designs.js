@@ -868,8 +868,38 @@ function arcaneWand(m, t, f) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
+// The Cleric's wand is a sun scepter (the 'cleric' finish, render/hero.js; docs/design/mage-line.md):
+// a white and gold rod held at its end, its head a gold sunburst round a glowing gem, little wings
+// spreading from it up the tiers. Short, so it points out from her hand, never over her face.
+function sunScepter(m, t, f) {
+  const s = [];
+  const a = {};
+  const H = 5 + t * 0.22;
+  s.push(T([[-1, 2.4], [1, 2.4], [0.7, -H], [-0.7, -H]], '#fbf6ec'), F(T([[0.2, 2.4], [1, 2.4], [0.7, -H], [0.2, -H]], '#e0d4bc')));
+  for (let y = -H + 1.4; y < 1.6; y += 2.2) s.push(F(R(-1, y, 2, 0.6, '#ffd36a')));
+  s.push(E(0, 2.8, 1.4, 1.1, '#ffd36a'), R(-1.3, -H - 0.6, 2.6, 1.2, '#d89a36'));
+  const r = 3 + t * 0.06;
+  const cy = -H - 1 - r;
+  if (t >= 4) for (const sd of [-1, 1]) s.push(T([[sd * 1.6, cy + 1.6], [sd * (r + 4.4), cy - 2.6], [sd * (r + 3.6), cy - 0.4], [sd * (r + 4.2), cy + 1.4], [sd * (r + 2), cy + 2.6]], '#ffffff'), F(T([[sd * 2, cy + 1.8], [sd * (r + 3.4), cy - 1.2], [sd * (r + 2.6), cy + 1.4]], '#e6ecff')));
+  // The sunburst: twelve gold rays turning a little with the frames, round a gold disc and a gem.
+  const pts = [];
+  for (let i = 0; i < 24; i++) {
+    const ang = (i / 24) * Math.PI * 2 + (f % 6) * 0.04;
+    const rr = i % 2 ? r * 0.98 : r * 1.55;
+    pts.push([Math.cos(ang) * rr, cy + Math.sin(ang) * rr]);
+  }
+  s.push(T(pts, '#ffd36a'), E(0, cy, r * 0.95, r * 0.95, '#d89a36'), E(0, cy, r * 0.75, r * 0.75, '#ffe9a8'));
+  s.push(...gem(0, cy, r * 0.42, '#8fd8ff', f));
+  a.head = [0, cy];
+  a.gem = [0, cy];
+  a.tip = [0, cy - r * 1.55];
+  a.blade = [cy - r * 1.55, -H];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
 function wand(m, t, f = 0) {
   if (m.variant === 'chef') return ladle(m, t);
+  if (m.variant === 'cleric') return sunScepter(m, t, f);
   if (m.variant === 'arcane') return arcaneWand(m, t, f);
   if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
