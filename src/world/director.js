@@ -61,9 +61,12 @@
 // actor who isn't there is passed over, so a scene never gets stuck. When the scene ends the
 // camera eases back to you, NPCs who walked go back to their places and the ones who came for the
 // scene leave. Skipping (Esc) plays the rest out at once, so everyone ends where the scene puts them.
+//
+// Nobody is hidden behind you: if a scene begins with you standing on top of someone in it (you
+// walked right up to talk), you first step aside to stand beside them, facing them.
 
 import { SCENES } from '../data/story.js';
-import { groundAt } from './physics.js';
+import { groundAt, surfacesOf, waterAt } from './physics.js';
 import { seat } from './mount.js';
 import { indoors } from './daytime.js';
 import { MOVE_MIN } from '../render/moves.js';
@@ -77,6 +80,98 @@ export const isStaging = (step) => Boolean(step) && !step.card && (step.text ===
 
 export function startCine(world) {
   world.cine = { step: -1, run: null, bg: [], cam: null, view: null, fade: { a: 0 }, flash: null, shake: null, emotes: [], bursts: [], say: null, go: false, fast: false, moved: new Map(), spawned: [] };
+  makeRoom(world);
+}
+
+// ---------- Making room ----------
+
+// Closer than this, you and a person in the scene hide each other; you step to BESIDE from them
+// (or a little further out, if someone else is standing there).
+export const ROOM = 30;
+const BESIDE = [38, 50, 64, 80];
+// The steps that name someone, by the key that names them.
+const NAMING = ['who', 'walk', 'to', 'away', 'face', 'jump', 'emote', 'say', 'at', 'leave', 'spot', 'perform', 'expr', 'trip', 'place'];
+
+// Everyone a scene's steps name (not you, and not the ones who only come in for it).
+export function castOf(steps, out = new Set()) {
+  for (const st of steps ?? []) {
+    if (st.together) castOf(st.together, out);
+    for (const v of [...NAMING.map((k) => st[k]), ...[st.cam].flat()]) if (typeof v === 'string') out.add(v);
+  }
+  out.delete('player');
+  return out;
+}
+
+// The people standing on this map who are drawn there (one out on a date with you, or living with
+// you on your island, isn't).
+const shownNpcs = (world) => world.map.npcs.filter((n) => world.date?.id !== n.id && (world.map.home || world.char?.livingWith !== n.id));
+
+// The floor you stand on: a ledge, or the stretch of ground between two walls.
+function floorOf(world) {
+  const b = world.body;
+  if (b.surface && !b.surface.water && !b.surface.drift) return b.surface;
+  return surfacesOf(world.map).find((s) => !s.drift && b.x >= s.x1 && b.x <= s.x2 && Math.abs(s.yAt(b.x) - b.y) < 3) ?? null;
+}
+
+// Whether you can step over to x and stand there: on the same floor all the way (no wall, no
+// edge to fall off), out of the water, off a bounce flower, and clear of everyone else.
+function freeSpot(world, floor, x, npcs) {
+  const map = world.map;
+  const b = world.body;
+  if (x < floor.x1 + 10 || x > floor.x2 - 10 || x < 20 || x > map.width - 20) return false;
+  if (Math.abs(floor.yAt(x) - b.y) > 24) return false;
+  const steps = Math.ceil(Math.abs(x - b.x) / 4);
+  for (let k = 0; k <= steps; k++) {
+    const sx = b.x + ((x - b.x) * k) / (steps || 1);
+    const wy = waterAt(map, sx);
+    if (wy != null && floor.yAt(sx) > wy) return false;
+  }
+  const y = floor.yAt(x);
+  if (map.springs?.some((sp) => Math.abs(sp.x - x) <= 18 && Math.abs(sp.y - y) < 4)) return false;
+  return npcs.every((n) => Math.abs(n.x - x) >= ROOM || Math.abs(groundAt(map, n.x) - y) > 40);
+}
+
+// Where you'd step to so the scene's people aren't hidden behind you: beside the one you're standing
+// on, on the side you came from if there's room there (else the other side, else a little further
+// out), or null when you're not in anyone's way (or there's nowhere to go).
+export function roomSpot(world, steps) {
+  const b = world.body;
+  if (!b || !b.onGround || b.rope || b.swimming) return null;
+  const cast = castOf(steps);
+  const npcs = shownNpcs(world);
+  const over = npcs.filter((n) => cast.has(n.id) && Math.abs(n.x - b.x) < ROOM && Math.abs(groundAt(world.map, n.x) - b.y) <= 40).sort((p, q) => Math.abs(p.x - b.x) - Math.abs(q.x - b.x));
+  if (!over.length) return null;
+  const floor = floorOf(world);
+  if (!floor) return null;
+  const n = over[0];
+  // (Standing right on them, you came from behind you: the way you face is the way you walked in.)
+  const came = Math.sign(b.x - n.x) || -(b.facing || 1);
+  for (const gap of BESIDE) {
+    for (const side of [came, -came]) {
+      const x = n.x + side * gap;
+      if (freeSpot(world, floor, x, npcs)) return { x, face: n };
+    }
+  }
+  return null;
+}
+
+// Steps you aside as the scene opens (while its first words show), then turns you to face them.
+// If the scene moves you itself, it takes over from here.
+function makeRoom(world) {
+  const sc = world.scene;
+  const spot = sc && roomSpot(world, SCENES[sc.id]);
+  if (!spot) return;
+  const c = world.cine;
+  const walk = runner(world, { walk: 'player', to: spot.x, speed: 80 });
+  const token = {};
+  c.aside = token;
+  c.bg.push((dt, skip) => {
+    if (c.aside !== token) return true;
+    if (!walk(dt, skip)) return false;
+    world.body.facing = token.face ?? (Math.sign(spot.face.x - world.body.x) || world.body.facing);
+    c.aside = null;
+    return true;
+  });
 }
 
 // A monster on the map taking part in a scene, by its id (the first one still standing).
@@ -176,6 +271,8 @@ function runner(world, step) {
     const speed = step.speed ?? WALK;
     const n = who === 'player' ? null : npcOf(world, who);
     const m = who === 'player' || n ? null : mobActor(world, who);
+    // (The scene walking you itself takes over from stepping aside.)
+    if (who === 'player') c.aside = null;
     return (dt, skip) => {
       const x = who === 'player' ? world.body.x : n ? n.x : m.x;
       const dir = Math.sign(target - x);
@@ -184,9 +281,12 @@ function runner(world, step) {
       if (who === 'player') {
         const b = world.body;
         b.x = nx;
-        // On the floor they follow its rise and fall (never stepping off a ledge onto it).
+        // On the floor they follow its rise and fall (never stepping off a ledge onto it, nor down
+        // off a footbridge into the pond under it while it's still underfoot).
         const g = groundAt(world.map, nx);
-        if (b.onGround && !b.rope && Math.abs(g - b.y) < 24) b.y = g;
+        const s = b.surface;
+        const ledge = s && !s.ground && nx >= s.x1 && nx <= s.x2;
+        if (b.onGround && !b.rope && !ledge && Math.abs(g - b.y) < 24) b.y = g;
         b.vx = done ? 0 : dir * speed;
         if (dir) b.facing = dir;
       } else if (m) {
@@ -212,11 +312,14 @@ function runner(world, step) {
       dir = other ? Math.sign(other.x - actorAt(world, who).x) || 1 : null;
     }
     if (dir) setFacing(world, who, dir);
+    // (Turned while still stepping aside: that's the way you end up facing.)
+    if (dir && who === 'player' && c.aside) c.aside.face = dir;
     return () => true;
   }
   if (step.place) {
     const x = step.x;
     if (step.place === 'player') {
+      c.aside = null;
       const b = world.body;
       b.x = x;
       b.y = groundAt(world.map, x);

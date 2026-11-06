@@ -8,6 +8,8 @@ import { SCENES } from '../src/data/story.js';
 import { createCharacter } from '../src/core/character.js';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { playScene, advanceScene } from '../src/world/story.js';
+import { ROOM } from '../src/world/director.js';
+import { waterAt } from '../src/world/physics.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set() };
@@ -526,4 +528,140 @@ test("Malvina's villain story plays through at her tower, and the party guests g
     assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
     for (const n of w.map.npcs) assert.equal(n.x, home[n.id], `${id}: ${n.id} is back where they stand`);
   }
+});
+
+// ---------- Nobody hidden behind you ----------
+
+// A stage for the rules about where you can step: the ground steps up at a wall at x 400, a low
+// step of a ledge (30 px up) at 150-215, a puddle on the upper ground at 900-1000.
+const STAGE = {
+  id: '__stage', name: 'Stage', width: 1200, height: 480, groundY: 440,
+  terrain: [[0, 440], [400, 440], [400, 360], [1200, 360]],
+  platforms: [{ x: 150, y: 410, w: 65 }],
+  water: [{ x1: 900, x2: 1000, y: 352 }],
+  ropes: [], portals: [{ id: 'start', x: 100, y: 440, hidden: true }], spawns: [],
+  npcs: [{ id: 'kestrel', x: 420 }, { id: 'pip', x: 880 }, { id: 'mira', x: 180 }, { id: 'lulu', x: 600 }, { id: 'posy', x: 664 }],
+};
+function onStage(x, y, facing) {
+  const w = inSprout();
+  w.map = STAGE;
+  Object.assign(w.body, { x, y, facing, onGround: true, surface: null, vx: 0, vy: 0 });
+  return w;
+}
+
+test('a scene never opens with you standing on top of someone in it: you step aside and face them', () => {
+  SCENES.__aside = [{ who: 'kestrel', text: 'Hm. Good posture. You will do.' }, { emote: 'kestrel', kind: '!' }];
+  // Walked in from the right and stopped right on Kestrel: you step back out to the right.
+  for (const [dx, facing, side] of [[6, -1, 1], [-8, 1, -1], [0, 1, -1], [0, -1, 1]]) {
+    const w = inSprout();
+    const k = w.map.npcs.find((n) => n.id === 'kestrel');
+    w.body.x = k.x + dx;
+    w.body.facing = facing;
+    const y = w.body.y;
+    playScene(w, '__aside');
+    run(w, 1.5);
+    const gap = (w.body.x - k.x) * side;
+    assert.ok(gap >= ROOM && gap < 60, `from ${dx} facing ${facing}: beside her on the side you came from (${w.body.x - k.x})`);
+    assert.equal(w.body.facing, -side, 'turned to face her');
+    assert.equal(w.body.y, y, 'on the same floor');
+    assert.equal(w.body.vx, 0, 'standing still again');
+    assert.equal(w.cine.say, null);
+    assert.ok(w.scene, 'while her first line is still up');
+  }
+  // Not in her way, or standing on someone the scene doesn't use: you stay where you are.
+  for (const [who, dx] of [['kestrel', 60], ['posy', 0]]) {
+    const w = inSprout();
+    w.body.x = w.map.npcs.find((n) => n.id === who).x + dx;
+    const x = w.body.x;
+    playScene(w, '__aside');
+    run(w, 1);
+    assert.equal(w.body.x, x, `${who} ${dx}: no need to move`);
+  }
+  delete SCENES.__aside;
+});
+
+test('stepping aside never goes into the pond, through a wall, off a ledge or onto someone else', () => {
+  SCENES.__aside = [{ who: 'posy', text: 'Everything must go!' }, { who: 'kestrel', text: '...' }, { who: 'mira', text: 'Hello!' }, { who: 'lulu', text: 'Darling!' }, { emote: 'pip', kind: 'sweat' }];
+  // Posy's stall stands at the edge of Sprout's duck pond: from the pond side you step away from it.
+  const w = inSprout();
+  const posy = w.map.npcs.find((n) => n.id === 'posy');
+  w.body.x = posy.x + 6;
+  w.body.facing = -1;
+  playScene(w, '__aside');
+  run(w, 1.5);
+  assert.ok(posy.x - w.body.x >= ROOM, `away from the pond (${w.body.x - posy.x})`);
+  assert.equal(waterAt(w.map, w.body.x), null);
+  assert.equal(w.body.facing, 1, 'facing her');
+  // Kestrel stands just past a wall: you never step back through it, you go round her side.
+  let s = onStage(415, 360, 1);
+  playScene(s, '__aside');
+  run(s, 1.5);
+  assert.ok(s.body.x - 420 >= ROOM && s.body.y === 360, `the far side of her, up on her floor (${s.body.x})`);
+  // Someone else standing on the side you came from: the other side.
+  s = onStage(606, 360, -1);
+  playScene(s, '__aside');
+  run(s, 1.5);
+  assert.ok(600 - s.body.x >= ROOM && Math.abs(s.body.x - 664) >= ROOM, `round the other side, clear of Posy (${s.body.x})`);
+  // On a little ledge over Mira with nowhere on it to go: you stay up there rather than fall off.
+  s = onStage(185, 410, 1);
+  playScene(s, '__aside');
+  run(s, 1.5);
+  assert.equal(s.body.x, 185, 'stays on the ledge');
+  assert.equal(s.body.y, 410);
+  // Pip stands by a puddle: never into it.
+  s = onStage(882, 360, -1);
+  playScene(s, '__aside');
+  run(s, 1.5);
+  assert.ok(880 - s.body.x >= ROOM, `away from the puddle (${s.body.x})`);
+  delete SCENES.__aside;
+});
+
+test('a scene that moves you itself takes over from stepping aside, and skipping lands you beside them', () => {
+  SCENES.__aside = [{ walk: 'player', to: 'kestrel', gap: 60 }, { who: 'kestrel', text: 'Over here.' }];
+  let w = inSprout();
+  const k = w.map.npcs.find((n) => n.id === 'kestrel');
+  w.body.x = k.x - 4;
+  w.body.facing = 1;
+  playScene(w, '__aside');
+  run(w, 2);
+  assert.ok(Math.abs(w.body.x - (k.x - 60)) < 1, `where the scene walked you (${w.body.x - k.x})`);
+  SCENES.__aside2 = [{ who: 'kestrel', text: 'Hm.' }];
+  w = inSprout();
+  w.body.x = k.x + 3;
+  playScene(w, '__aside2');
+  advanceScene(w, true);
+  assert.equal(w.scene, null);
+  assert.ok(w.body.x - k.x >= ROOM, 'skipped: you end up beside her all the same');
+  delete SCENES.__aside;
+  delete SCENES.__aside2;
+});
+
+test("the real scenes open with the giver in sight: Kestrel's new path and Mira's welcome", () => {
+  for (const [id, who] of [['job_archer', 'kestrel'], ['ch1_hello', 'mira'], ['kestrel_targets_done', 'kestrel']]) {
+    const w = inSprout();
+    const n = w.map.npcs.find((q) => q.id === who);
+    w.body.x = n.x + 2;
+    w.body.facing = -1;
+    playScene(w, id, { job: 'Acrobat Archer' });
+    run(w, 1.2);
+    assert.ok(Math.abs(w.body.x - n.x) >= ROOM, `${id}: you stand beside ${who}, not on her`);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+  }
+});
+
+test("standing on someone, your name tag drops under theirs instead of covering it", async () => {
+  const { tagDrop } = await import('../src/render/scene.js');
+  // Kestrel's tag under her feet at x 320; yours (narrower) right on top of it.
+  const kestrel = [{ x: 296, y: 302, w: 48, h: 11 }];
+  const drop = tagDrop(322, 300, 26, kestrel);
+  assert.equal(drop, 12, 'a row lower');
+  assert.ok(300 + drop + 2 >= 302 + 11, 'clear of hers');
+  assert.equal(tagDrop(380, 300, 26, kestrel), 0, 'beside her, it stays under your feet');
+  assert.equal(tagDrop(322, 300, 26, []), 0, 'nobody there');
 });

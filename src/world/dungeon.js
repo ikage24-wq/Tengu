@@ -44,6 +44,7 @@ import { playScene } from './story.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { today } from '../core/quests.js';
 import { HARD_PARTY, CLEAR_TOKENS } from '../data/coop.js';
+import { celebrateLevels } from './levelup.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 const pick = (list, rng = Math.random) => list[Math.floor(rng() * list.length)];
@@ -555,10 +556,8 @@ function clearRewards(world) {
   if (rec.clears === 1) world.log(`Hard mode for ${def.name} is open! Ask ${def.warden[0].toUpperCase()}${def.warden.slice(1)} at the gate.`, '#ffe36b');
   world.juice.push({ type: 'loot', x: o.x, y: o.y - 20, color: '#ffd66b' }, { type: 'shake', mag: 2, dur: 0.3 });
   world.fx.push({ kind: 'levelup', x: o.x, y: o.y, t: 0, dur: 1.6 });
-  if (levels > 0) {
-    world.events.push({ type: 'levelup', level: char.level });
-    world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
-  }
+  // (Celebrated like any level up, with the note naming your instructors when a job opens.)
+  celebrateLevels(world, levels);
   // The run's result card.
   const notes = [run.hard ? 'Hard' : 'Normal', `${run.wipes} wipe${run.wipes === 1 ? '' : 's'}`, `${run.downs} down${run.downs === 1 ? '' : 's'}`, daily ? 'daily bonus!' : null].filter(Boolean).join(' · ');
   playScene(world, `${run.id}_results`, { grade, time: clock(secs), notes, bonus: `${Math.round((GRADE_BONUS[grade] - 1) * 100)}%` });

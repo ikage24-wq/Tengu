@@ -181,12 +181,6 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'boneknight', count: 20 }],
     rewards: { exp: 29000, gold: 750, items: [{ id: 'elixir', qty: 5 }] },
   },
-  crystal_heart: {
-    id: 'crystal_heart', name: 'Heart of Crystal', giver: 'rook', minLevel: 35, prereq: 'restless_ruins',
-    text: 'Deep in the Crystal Cave sits Prismaris, the Crystal King. Defeat it and bring peace to the coast.',
-    objectives: [{ type: 'kill', mob: 'crystalking', count: 1 }],
-    rewards: { exp: 120000, gold: 1800, items: [{ id: 'warrior_cape_40', qty: 1, forJob: true, variant: 'gilded' }, { id: 'elixir', qty: 10 }] },
-  },
 
   // ---------- Side quests: every town's people, every field ----------
 
@@ -311,7 +305,10 @@ export const QUESTS = {
   // ----- Lantern Lagoon: Granny Kelp and the light on the point -----
   // The lighthouse has been flickering since the wind went quiet, and the fish are acting strange:
   // Old Lumen, the great lantern fish who has lived under the point since Granny was a girl, is
-  // restless. Any level can do it: it asks for fishing, not fighting (world/lumen.js).
+  // restless. A hero of any level can take it on: it asks for fishing, not fighting
+  // (world/lumen.js). It does ask for Fishing, and Granny says how much: the anglers bite only off
+  // the boardwalk's deep east half (Fishing 12), the tuna and Old Lumen only off the point
+  // (Fishing 24) (data/fishing.js lagoon spots, TIER_LV in data/gathering.js).
   kelp_1: {
     id: 'kelp_1', name: 'The Dim Light', giver: 'kelp', minLevel: 1,
     text: "See my light? Flickering like a guttering candle, it is, and it's never done that. The fish know why, dearie. Bring me three Lantern Gobies from the cove's rock pools: their little glow tells me the mood of the tide.",
@@ -330,7 +327,7 @@ export const QUESTS = {
   },
   kelp_3: {
     id: 'kelp_3', name: 'Oil for the Lamp', giver: 'kelp', minLevel: 1, prereq: 'kelp_2',
-    text: "Big glowing scales... it's Old Lumen, then. He's lived under the point since I was a girl, and he's never been restless. First, my light: it burns angler oil. Catch me two Lantern Anglers off the boardwalk, then climb up to the gallery and see how dark the sea's gone.",
+    text: "Big glowing scales... it's Old Lumen, then. He's lived under the point since I was a girl, and he's never been restless. First, my light: it burns angler oil. Catch me two Lantern Anglers off the deep east end of the boardwalk. They snub any line under Fishing 12, the snobs. Then climb up to the gallery and see how dark the sea's gone.",
     objectives: [
       { type: 'collect', item: 'fish_angler', count: 2 },
       { type: 'visit', map: 'lagoon', above: 300, place: 'the lighthouse gallery' },
@@ -339,14 +336,14 @@ export const QUESTS = {
   },
   kelp_4: {
     id: 'kelp_4', name: 'The Deep Water', giver: 'kelp', minLevel: 1, prereq: 'kelp_3',
-    text: "The light's back, and look: the deep water's all churned up off the point. Lumen's down there, and he won't come to just anybody's line. Show him you can handle the deep: catch a Sailfin Tuna from the point.",
-    objectives: [{ type: 'catch', fish: 'fish_tuna', count: 1, map: 'lagoon', place: 'Lighthouse Point' }],
+    text: "The light's back, and look: the deep water's all churned up off the point. Lumen's down there, and he won't come to just anybody's line. Show him you can handle the deep: catch a Sailfin Tuna from the point. The point wants Fishing 24, mind. Any less and the tuna just laugh at your bobber. I've heard them.",
+    objectives: [{ type: 'catch', fish: 'fish_tuna', count: 1, map: 'lagoon', place: 'Lighthouse Point (Fishing 24)' }],
     rewards: { exp: 800, gold: 300, items: [{ id: 'lantern_bait', qty: 5 }] },
   },
   kelp_5: {
     id: 'kelp_5', name: 'Old Lumen', giver: 'kelp', minLevel: 1, prereq: 'kelp_4',
-    text: "He's frightened, dearie. With no wind the currents have gone still, and the old fellow thinks the sea is dying. Cast off the point and he'll come. Reel him in, gently, let him see the light up close, and let him go. He'll understand. Mind: he's the biggest thing you'll ever hook.",
-    objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point' }],
+    text: "He's frightened, dearie. With no wind the currents have gone still, and the old fellow thinks the sea is dying. Cast off the point (Fishing 24, same as the tuna) and he'll come. Reel him in, gently, let him see the light up close, and let him go. He'll understand. Mind: he's the biggest thing you'll ever hook.",
+    objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point (Fishing 24)' }],
     rewards: { exp: 1500, gold: 680, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },
   },
   // Marlo's story: every coin goes in a jar marked THE DREAM, and the dream is the bathhouse at
@@ -368,7 +365,7 @@ export const QUESTS = {
     rewards: { exp: 4000, gold: 350, items: [] },
   },
   rook_harpies: {
-    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'crystal_heart',
+    id: 'rook_harpies', name: 'Harpy Havoc', giver: 'rook', minLevel: 40, prereq: 'restless_ruins',
     text: "The Sky Harpies have started raiding our gulls' nests, all the way from the Sky Garden! Ground 30 of them.",
     objectives: [{ type: 'kill', mob: 'windbird', count: 30 }],
     rewards: { exp: 120000, gold: 1800, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },

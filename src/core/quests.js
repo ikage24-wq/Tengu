@@ -11,6 +11,8 @@ import { JOBS } from '../data/jobs.js';
 import { CASH_PER_QUEST } from '../data/cash.js';
 import { NPCS } from '../data/npcs.js';
 import { SPOTS } from '../data/fishing.js';
+import { NODES } from '../data/gathering.js';
+import { distancesFrom } from '../world/routes.js';
 import { addItem, countItem, removeItem, tabFor } from './inventory.js';
 import { makeEquip, makeCash } from './items.js';
 import { gainExp } from './character.js';
@@ -37,14 +39,17 @@ export function questState(char, id) {
   return 'available';
 }
 
+// Each objective with how far along it is (`have` of `count`), and `near`: the map the hero is on,
+// so its hint (objectiveHint) names the nearest place for it.
 export function objectiveProgress(char, id) {
   const q = QUESTS[id];
   const rec = char.quests[id] ?? { kills: {} };
+  const near = char.mapId ?? null;
   return q.objectives.map((o, i) => {
-    if (MARKED.has(o.type)) return { ...o, count: 1, have: rec.marks?.[i] ? 1 : 0 };
-    if (o.type === 'job') return { ...o, count: 1, have: (JOBS[char.job]?.tier ?? 0) >= o.tier ? 1 : 0 };
+    if (MARKED.has(o.type)) return { ...o, near, count: 1, have: rec.marks?.[i] ? 1 : 0 };
+    if (o.type === 'job') return { ...o, near, count: 1, have: (JOBS[char.job]?.tier ?? 0) >= o.tier ? 1 : 0 };
     const have = o.type === 'kill' ? rec.kills?.[o.mob] ?? 0 : o.type === 'catch' ? rec.catches?.[o.fish] ?? 0 : countItem(char.inventory, o.item);
-    return { ...o, have: Math.min(have, o.count) };
+    return { ...o, near, have: Math.min(have, o.count) };
   });
 }
 
@@ -289,46 +294,128 @@ export function toggleTracked(char, id) {
 }
 
 // ---------- Where to go ----------
-// Hints for the quest log and tracker: where a quest's giver stands, where its monsters live,
-// and who drops the items it wants.
+// Hints for the quest log and tracker, and the guide's quest targets (world/routes.js): where a
+// quest's giver stands, where its monsters live, and where the things it wants come from. Each
+// takes `from`, the map you're on, when it's known: someone (or something) found in several places
+// is then the one where you are, or else the nearest by road.
 
-export function npcMap(npcId) {
-  return Object.values(MAPS).find((m) => m.npcs?.some((n) => n.id === npcId))?.id ?? null;
+// Of some maps (best first), the one to send you to: the one you're on when it's among them, else
+// the nearest by road; the first when there's no `from` or no road to any.
+export function nearestMap(ids, from = null) {
+  if (!ids.length) return null;
+  if (!from || ids.length === 1) return ids[0];
+  if (ids.includes(from)) return from;
+  const dist = distancesFrom(from);
+  let best = ids[0];
+  for (const id of ids) if ((dist.get(id) ?? Infinity) < (dist.get(best) ?? Infinity)) best = id;
+  return best;
 }
 
-// Places a monster spawns, by name: a dungeon's rooms count as the dungeon.
-export function mobPlaces(mobId) {
-  const names = [];
+// Every map someone stands on.
+export function npcMaps(npcId) {
+  return Object.values(MAPS).filter((m) => m.npcs?.some((n) => n.id === npcId)).map((m) => m.id);
+}
+
+// Where to find someone (Kuro waits for you all along the tutorial isle: the one on your map).
+export function npcMap(npcId, from = null) {
+  return nearestMap(npcMaps(npcId), from);
+}
+
+// The maps a monster is out on, best first: open fields where it always roams, then places it
+// only comes out later in the story (`after`), then dungeon rooms. A sleeping area boss (a nest)
+// is in no spawn list, so it has none.
+function mobRanked(mobId) {
+  const ranked = [];
   for (const m of Object.values(MAPS)) {
-    if (!m.spawns?.some((s) => s.mob === mobId)) continue;
+    const here = (m.spawns ?? []).filter((s) => s.mob === mobId);
+    if (here.length) ranked.push({ id: m.id, rank: m.dungeon ? 2 : here.some((s) => !s.after) ? 0 : 1 });
+  }
+  return ranked.sort((a, b) => a.rank - b.rank);
+}
+export const mobMaps = (mobId) => mobRanked(mobId).map((r) => r.id);
+
+// The map to hunt a monster on: the nearest of its best kind of place.
+export function mobMap(mobId, from = null) {
+  const ranked = mobRanked(mobId);
+  return nearestMap(ranked.filter((r) => r.rank === ranked[0]?.rank).map((r) => r.id), from);
+}
+
+// Places a monster spawns, by name: a dungeon's rooms count as the dungeon. The nearest first when
+// `from` is known.
+export function mobPlaces(mobId, from = null) {
+  let maps = mobMaps(mobId);
+  if (from) {
+    const dist = distancesFrom(from);
+    maps = [...maps].sort((a, b) => (dist.get(a) ?? Infinity) - (dist.get(b) ?? Infinity));
+  }
+  const names = [];
+  for (const id of maps) {
+    const m = MAPS[id];
     const name = m.dungeon ? DUNGEONS[m.dungeon]?.name ?? m.name : m.name;
     if (!names.includes(name)) names.push(name);
   }
   return names;
 }
 
-// Monsters that drop an item.
+// Monsters that drop an item, the best to hunt for it first: everyday monsters out on an open
+// map before dungeon ones, then bosses, and last ones found nowhere (a sleeping area boss).
 export function itemSources(itemId) {
-  return Object.values(MOBS).filter((m) => m.drops?.some((d) => d.id === itemId)).map((m) => m.id);
+  const score = (m) => {
+    const maps = mobMaps(m.id);
+    if (!maps.length) return 6;
+    return (m.boss ? 2 : 0) + (MAPS[maps[0]].dungeon ? 1 : 0);
+  };
+  return Object.values(MOBS).filter((m) => m.drops?.some((d) => d.id === itemId)).sort((a, b) => score(a) - score(b)).map((m) => m.id);
+}
+
+// The maps whose gathering spots (herbs, fruit, ore, wood...) give an item, and what the work is
+// called there ('Gathering' or 'Mining'). Best first: where the monsters drop it too (Lucky Clover
+// in Clover Hills), then the most spots open by day.
+export function gatherPlaces(itemId) {
+  const hunted = new Set(itemSources(itemId).filter((id) => !MOBS[id].boss).flatMap(mobMaps));
+  const out = [];
+  for (const m of Object.values(MAPS)) {
+    const spots = (NODES[m.id] ?? m.nodes ?? []).filter((n) => n.pool?.[itemId]);
+    if (!spots.length) continue;
+    const day = spots.filter((n) => !n.night).length;
+    out.push({ id: m.id, both: hunted.has(m.id) ? 1 : 0, day, n: spots.length, work: spots[0].kind === 'ore' ? 'Mining' : 'Gathering' });
+  }
+  return out.sort((a, b) => b.both - a.both || b.day - a.day || b.n - a.n);
+}
+
+// Where to go for an item a quest wants: { map, label } ("Fishing, Lantern Lagoon", "Gathering,
+// Clover Hills", "Toadstool Goblin, Clover Hills"), or null when nothing gives it. Fish are caught
+// and finds gathered (the sure way, though a monster might drop one too: the best of those places,
+// the nearest of them if several are as good, never a lone flower bed just because it's close);
+// the rest are hunted from the best monster that drops them.
+export function itemPlace(itemId, from = null) {
+  if (ITEMS[itemId]?.fish) {
+    const maps = Object.entries(SPOTS).filter(([id, spots]) => MAPS[id] && spots.some((s) => s.pool[itemId])).map(([id]) => id);
+    const map = nearestMap(maps, from);
+    return map ? { map, label: `Fishing, ${MAPS[map].name}` } : null;
+  }
+  const spots = gatherPlaces(itemId);
+  if (spots.length) {
+    const best = spots.filter((g) => g.both === spots[0].both && g.day === spots[0].day);
+    const map = nearestMap(best.map((g) => g.id), from);
+    return { map, label: `${spots.find((g) => g.id === map).work}, ${MAPS[map].name}` };
+  }
+  const mob = itemSources(itemId)[0];
+  if (!mob) return null;
+  const map = mobMap(mob, from);
+  return { map, label: map ? `${MOBS[mob].name}, ${MAPS[map].dungeon ? DUNGEONS[MAPS[map].dungeon]?.name ?? MAPS[map].name : MAPS[map].name}` : MOBS[mob].name };
 }
 
 // One line saying where to work on an objective: "Petal Meadow", or for an item "Kitsune Kit,
-// Petal Meadow".
-export function objectiveHint(o) {
-  if (o.type === 'kill') return mobPlaces(o.mob).slice(0, 2).join(', ');
-  if (o.type === 'talk' || o.type === 'deliver') return MAPS[npcMap(o.npc)]?.name ?? '';
+// Petal Meadow". The nearest place first, from `from` (or the map an objectiveProgress entry was
+// read on).
+export function objectiveHint(o, from = o.near ?? null) {
+  if (o.type === 'kill') return mobPlaces(o.mob, from).slice(0, 2).join(', ');
+  if (o.type === 'talk' || o.type === 'deliver') return MAPS[npcMap(o.npc, from)]?.name ?? '';
   if (o.type === 'visit') return o.above != null ? `${MAPS[o.map].name}, up high` : MAPS[o.map].name;
   if (o.type === 'catch') return o.place ?? '';
-  // A fish is caught, not dropped: where it bites.
-  if (ITEMS[o.item]?.fish) {
-    const at = Object.entries(SPOTS).find(([, spots]) => spots.some((s) => s.pool[o.item]));
-    return at ? `Fishing, ${MAPS[at[0]].name}` : '';
-  }
   if (o.type === 'job') return 'Your instructor (world map, M)';
-  const from = itemSources(o.item)[0];
-  if (!from) return '';
-  const where = mobPlaces(from)[0];
-  return where ? `${MOBS[from].name}, ${where}` : MOBS[from].name;
+  return itemPlace(o.item, from)?.label ?? '';
 }
 
 // Quests in progress that want an item: [{ id, name, have, count }].

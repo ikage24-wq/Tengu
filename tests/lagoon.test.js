@@ -148,3 +148,28 @@ test('the boardwalk is fishable end to end, off whichever side you face, but not
   put(MAPS.lagoon.stove, 1);
   assert.equal(spotHere(w), null, 'the stove is for cooking');
 });
+
+test("Granny Kelp says which Fishing level each of her steps needs", async () => {
+  const { QUESTS } = await import('../src/data/quests.js');
+  const { TIER_LV } = await import('../src/data/gathering.js');
+  // The Fishing level a fish of the lagoon needs: the easiest of its spots there (Old Lumen bites
+  // only at the point's deep water).
+  const need = (fish) => {
+    const tiers = SPOTS.lagoon.filter((s) => (fish === 'fish_lumen' ? s.deep : s.pool[fish])).map((s) => s.tier);
+    return TIER_LV[Math.min(...tiers)];
+  };
+  let asked = 0;
+  for (const id of ['kelp_1', 'kelp_2', 'kelp_3', 'kelp_4', 'kelp_5']) {
+    const q = QUESTS[id];
+    for (const o of q.objectives) {
+      const fish = o.type === 'catch' ? o.fish : o.type === 'collect' && FISH_BY_ID[o.item] ? o.item : null;
+      if (!fish) continue;
+      const lv = need(fish);
+      if (lv <= 1) continue;
+      asked++;
+      assert.ok(q.text.includes(`Fishing ${lv}`), `${id} says it wants Fishing ${lv} for ${fish}`);
+      if (o.place) assert.ok(o.place.includes(`Fishing ${lv}`), `${id}'s hint in the quest log says so too`);
+    }
+  }
+  assert.equal(asked, 3, 'the anglers, the tuna and Old Lumen');
+});

@@ -165,3 +165,35 @@ test('your other heroes walk the towns as themselves, with "Your hero" under the
   assert.equal(b.session, Infinity);
   assert.notEqual(b.char, alt, 'a copy: nothing they do touches the save');
 });
+
+test('reloading while fainted is no way out: the hero comes back as "Return to town" would bring them', async () => {
+  const { createWorld } = await import('../src/world/world.js');
+  const { gainExp } = await import('../src/core/character.js');
+  withStore(() => {
+    const h = hero('Pip', 0, 0);
+    gainExp(h, 500);
+    Object.assign(h, { exp: 50, hp: 0, mapId: 'cave', portal: 'sprout' });
+    saveGame(h);
+    const back = loadGame(0, 0);
+    assert.equal(back.hp, 0, 'the save keeps the faint');
+    const w = createWorld(back);
+    assert.equal(w.dead, false);
+    assert.equal(w.map.id, 'sprout', 'awake in the town by the cave');
+    assert.ok(back.exp < 50, 'with the EXP lost');
+    saveGame(back);
+    assert.ok(loadGame(0, 0).hp > 0, 'and that is what is saved next');
+  });
+});
+
+test("a save holding Captain Rook's retired 'Heart of Crystal' loads cleanly, and his harpies follow the ruins", async () => {
+  const { dropRetiredQuests } = await import('../src/core/save.js');
+  const { QUESTS } = await import('../src/data/quests.js');
+  const { NPCS } = await import('../src/data/npcs.js');
+  assert.equal(QUESTS.crystal_heart, undefined, 'the copy of the finale is gone');
+  assert.equal(QUESTS.rook_harpies.prereq, 'restless_ruins');
+  assert.ok(!NPCS.rook.quests.includes('crystal_heart'));
+  const char = { quests: { crystal_heart: { state: 'active', kills: {}, marks: {} }, restless_ruins: { state: 'done' } }, tracked: ['crystal_heart', 'restless_ruins'] };
+  dropRetiredQuests(char);
+  assert.deepEqual(Object.keys(char.quests), ['restless_ruins']);
+  assert.deepEqual(char.tracked, ['restless_ruins']);
+});

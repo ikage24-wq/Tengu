@@ -12,7 +12,7 @@ import { pathName } from '../data/path-skills.js';
 import { JOBS, jobChain, FIRST_JOB_LEVEL } from '../data/jobs.js';
 import { learnSkill, canLearn, maxSkill, replaced } from '../core/character.js';
 import { drawSkillIcon, skillTone } from '../render/icons.js';
-import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, well, skillPlate, lighten, fit, icon, textFont } from './kit.js';
+import { COLORS, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, wrapCount, well, skillPlate, lighten, fit, icon, textFont, paper, roughRect, tape } from './kit.js';
 import { describeSkill } from './tooltips.js';
 import { hotkeyAt } from './hud.js';
 
@@ -35,9 +35,33 @@ const hotkeyOf = (char, id) => {
 function learnBlocker(char, s) {
   const lv = char.skills[s.id] ?? 0;
   if (lv >= s.maxLevel) return 'Mastered';
-  if (!jobChain(char.job).includes(s.job)) return `Learned as a ${JOBS[s.job].name}`;
+  if (!jobChain(char.job).includes(s.job)) return `Learned as ${/^[aeiou]/i.test(JOBS[s.job].name) ? 'an' : 'a'} ${JOBS[s.job].name}`;
   if (char.sp <= 0) return 'No SP: level up for more';
   return null;
+}
+
+// A hint pinned beside the thing it's about instead of at the mouse, so it never lands on the
+// words it explains: a row's + pins its note above the row, over the list, and the big icon pins
+// its note above the details. The same sticky note as a tooltip (ui/kit.js), drawn last.
+// `side` is 'right' to line its right edge up with `ax`, or 'left' for its left edge.
+function pinnedTip(ui, label, ax, bottom, side) {
+  const { ctx } = ui;
+  ctx.font = textFont(9, true);
+  const w = ctx.measureText(label).width + 18;
+  const h = 22;
+  const x = Math.max(4, Math.min(636 - w, side === 'right' ? ax - w : ax));
+  const y = Math.max(4, bottom - h);
+  const seed = Math.round(w + h) % 31;
+  paper(ctx, x, y, w, h, { fill: '#fffbe2', edge: '#c8b070', r: 4, seed, width: 1.2 });
+  ctx.save();
+  roughRect(ctx, x, y, w, h, 4, seed, 0.6);
+  ctx.clip();
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = COLORS.accent;
+  ctx.fillRect(x, y, 4, h);
+  ctx.restore();
+  tape(ctx, x + w / 2, y + 1, Math.min(34, w * 0.4), 7, 0.04, '#ffd6ea', { pattern: 'dots', alpha: 0.8 });
+  text(ctx, label, x + 10, y + h - 8, { size: 9, bold: true, color: COLORS.ink });
 }
 
 // The skill's icon on a plate in its own hue, shaped by its kind: round for passives, cut corners
@@ -79,6 +103,7 @@ export function skillsWindow(ui, state, world) {
   win.tab = tabs(ui, win.x + 8, win.y + 26, chain.map((j) => JOBS[j].short ?? JOBS[j].name), win.tab, { w: tabW, h: 14 });
   if (win.tab !== was) win.pick = null;
   const job = chain[win.tab];
+  win.pin = null;
   box(ctx, win.x + W - 54, win.y + 24, 46, 17, { fill: char.sp ? th.main : COLORS.cell, edge: char.sp ? th.dark : null, r: 8.5 });
   text(ctx, `${char.sp} SP`, win.x + W - 31, win.y + 36, { size: 8.5, bold: true, align: 'center', color: char.sp ? '#ffffff' : COLORS.muted, outline: char.sp ? th.ink : null });
   if (hover(ui, win.x + W - 54, win.y + 24, 46, 17)) tooltip(ui, [{ text: 'Skill Points', bold: true }, { text: 'Each level up gives you more. Spend them with the + buttons.', size: 8, color: COLORS.muted }]);
@@ -111,6 +136,9 @@ export function skillsWindow(ui, state, world) {
     box(ctx, lx, win.y + H - 22, LIST_W, 15, { fill: '#fff0f7', edge: COLORS.accent, r: 7.5 });
     text(ctx, `Lv ${FIRST_JOB_LEVEL}: pick a job! (M for the map)`, lx + LIST_W / 2, win.y + H - 11.5, { size: 7, bold: true, align: 'center', color: COLORS.accent });
   }
+
+  // A hovered control's hint, pinned where it covers nothing it explains (drawn over the rows).
+  if (win.pin?.label && !win.carry?.live) pinnedTip(ui, win.pin.label, win.pin.ax, win.pin.bottom, win.pin.side);
 
   // ---- Dragging a skill onto the hotkey bar ----
   if (win.carry) {
@@ -177,7 +205,8 @@ function listRow(ui, state, world, s, x, y, w, win) {
     learnSkill(char, s.id);
     win.pick = s.id;
   }
-  if (hover(ui, x + w - 19, y + 4, 16, 16)) tooltip(ui, [{ text: open ? `Learn ${s.name}` : learnBlocker(char, s) ?? '', bold: true }]);
+  // (Pinned above the row, over the list, so it never covers the skill's details beside it.)
+  if (hover(ui, x + w - 19, y + 4, 16, 16)) win.pin = { label: open ? `Learn ${pathName(s, char.job)}` : learnBlocker(char, s) ?? '', ax: x + w, bottom: y - 1, side: 'right' };
   if (clicked(ui, x, y, w - 20, ROW - 3)) {
     win.pick = s.id;
     // A learned skill you cast is picked up: drag it to a hotkey, or press one now.
@@ -202,7 +231,8 @@ function details(ui, state, world, s, x, y, w, h, win) {
   const tw = w - 54;
   const hot = hover(ui, x + 6, y + 6, 36, 36);
   const tone = skillBadge(ctx, s, x + 24, y + 24, 18, 2, lv, open, hot);
-  if (hot && lv && s.type !== 'passive') tooltip(ui, [{ text: 'Drag onto a hotkey to bind', bold: true }]);
+  // (Pinned above the icon, clear of the name and words beside and under it.)
+  if (hot && lv && s.type !== 'passive') win.pin = { label: 'Drag to a hotkey', ax: x + 6, bottom: y + 3, side: 'left' };
   if (lv && s.type !== 'passive' && clicked(ui, x + 6, y + 6, 36, 36)) win.carry = { id: s.id, x0: ui.mouse.x, y0: ui.mouse.y, live: false };
   text(ctx, fit(ctx, pathName(s, char.job), tw, 9.5), tx, y + 15, { size: 9.5, bold: true, color: lv ? th.ink : COLORS.muted });
   text(ctx, `${KIND_NAMES[kind]} · ${JOBS[s.job].name}`, tx, y + 25, { size: 7, color: COLORS.muted });
@@ -211,12 +241,21 @@ function details(ui, state, world, s, x, y, w, h, win) {
   if (lv) box(ctx, tx, y + 30, Math.max(5, ((tw - 30) * lv) / s.maxLevel), 5, { fill: tone, edge: null, r: 2.5 });
   text(ctx, `${lv}/${s.maxLevel}`, tx + tw, y + 35.5, { size: 7.5, bold: true, align: 'right', color: lv ? COLORS.ink : COLORS.muted });
 
-  // What it does, then now and next.
-  let ly = wrap(ctx, s.desc ?? '', x + 8, y + 53, w - 16, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;
+  // What it does, then now and next. A big finisher can say more than fits above the footer:
+  // then its words scroll (mouse wheel) inside the pane, never running under the hint or buttons.
+  const fy = y + h - 21;
+  const top = y + 43;
+  const bottom = fy - 13;
+  if (win.detailFor !== s.id) Object.assign(win, { detailFor: s.id, detailScroll: 0, detailMax: 0 });
+  if (hover(ui, x, top, w, bottom - top) && ui.mouse.wheel) win.detailScroll += ui.mouse.wheel * 18;
+  win.detailScroll = Math.max(0, Math.min(win.detailMax, win.detailScroll));
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x + 2, top, w - 4, bottom - top);
+  ctx.clip();
+  let ly = wrap(ctx, s.desc ?? '', x + 8, y + 53 - win.detailScroll, w - 16, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 2;
   const block = (label, body, color, fill) => {
-    ctx.font = textFont(7);
-    const lines = Math.max(1, Math.ceil(ctx.measureText(body).width / (w - 40)));
-    const bh = 6 + lines * 9;
+    const bh = 6 + Math.max(1, wrapCount(ctx, body, w - 42, { size: 7 })) * 9;
     box(ctx, x + 6, ly - 7, w - 12, bh, { fill, edge: null, r: 8 });
     text(ctx, label, x + 10, ly, { size: 6.5, bold: true, color });
     ly = wrap(ctx, body, x + 34, ly, w - 42, { size: 7, color: COLORS.ink, lineHeight: 9 }) + 5;
@@ -225,9 +264,18 @@ function details(ui, state, world, s, x, y, w, h, win) {
   if (lv < s.maxLevel) block(lv ? 'Next' : 'Lv 1', describeSkill(s.id, lv + 1), COLORS.accent, '#fff0f6');
   const notes = [s.weapons && `Needs ${s.weapons.join(' or ')}`, s.lock && `Roots you ${s.lock}s`].filter(Boolean).join(' · ');
   if (notes) text(ctx, fit(ctx, notes, w - 16, 6.5, false), x + 8, ly + 2, { size: 6.5, color: COLORS.muted });
+  ctx.restore();
+  // Where the words end (unscrolled), so the next frame knows how far they scroll.
+  const end = (notes ? ly + 4 : ly - 4) + win.detailScroll;
+  win.detailMax = Math.max(0, end + 2 - bottom);
+  if (win.detailMax > 0) {
+    const track = bottom - top - 4;
+    const view = bottom - top;
+    box(ctx, x + w - 6, top + 2, 3, track, { fill: th.light, edge: null, r: 1.5 });
+    box(ctx, x + w - 6, top + 2 + (track * win.detailScroll) / (view + win.detailMax), 3, (track * view) / (view + win.detailMax), { fill: th.main, edge: null, r: 1.5 });
+  }
 
   // Footer: the hotkey, and Learn.
-  const fy = y + h - 21;
   const key = hotkeyOf(char, s.id);
   let hint;
   // A proc sets itself off in a fight; other passives are simply always on.
@@ -237,11 +285,15 @@ function details(ui, state, world, s, x, y, w, h, win) {
   else if (state.selectedSkill === s.id) hint = 'Press a hotkey to bind it';
   else if (key) hint = `On hotkey ${key}`;
   else hint = 'Drag it onto a hotkey';
+  // The hint has a line of its own just above the buttons (beside them it was cut to "Learn it
+  // to use...").
+  const hy = fy - 4;
+  const room = w - 16;
   if (key && s.type !== 'passive') {
-    box(ctx, x + 8, fy + 2, 11, 11, { fill: '#cf8ad8', edge: '#ffffff', r: 5.5, width: 1 });
-    text(ctx, key, x + 13.5, fy + 10.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    box(ctx, x + 8, hy - 8.5, 11, 11, { fill: '#cf8ad8', edge: '#ffffff', r: 5.5, width: 1 });
+    text(ctx, key, x + 13.5, hy, { size: 7, bold: true, align: 'center', color: '#ffffff' });
   }
-  text(ctx, fit(ctx, hint, w - (lv >= s.maxLevel ? 76 : 110) - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), fy + 10.5, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });
+  text(ctx, fit(ctx, hint, room - (key ? 14 : 0), 7), x + 8 + (key ? 14 : 0), hy, { size: 7, bold: true, color: state.selectedSkill === s.id ? COLORS.accent : COLORS.muted });
   const why = learnBlocker(char, s);
   // Mastered: a gold pill instead of a dead button.
   if (lv >= s.maxLevel) {

@@ -33,16 +33,22 @@ const SAYS = {
   outfitColor: ['That colour pops on stage!', 'Matches nothing. Perfect.'],
   random: ['Let fate do your hair. I respect it.', 'Chaos! My favourite style.', 'A surprise makeover! Free. This once.'],
   undo: ['Changed your mind? Classic.', 'Back it goes. No refunds. Kidding!'],
-  name: ['A star needs a name on the door!', 'Ooh, that name looks great in lights.'],
+  // A name on the door: she reacts to the one you typed ({name}), once you stop typing it.
+  name: ['Ooh, that name looks great in lights.', '{name}! I can see it on the posters already.', '{name}? Rolls right off the marquee.', 'Sign here, {name}. Autographs are extra.'],
+  // Typing one after she asked: she hangs on every letter.
+  naming: ['Ooh, go on, go on...', 'Spell it nicely. The sign painter charges by the letter.'],
+  // No name yet (or you rubbed it out): a nudge toward the name field.
+  noName: ['A star needs a name on the door!', "No name, no posters. No posters, no fans. Type one!", "The door plate's blank, darling. Engraving's free. This once."],
   idle: ['Take your time. Not too much time.', "The curtain's waiting, darling.", 'Hold still, you have menu on your face.'],
 };
 const said = {};
-function line(kind) {
+// One of Lulu's lines for `kind` (never the same one twice in a row), with the hero's name in it.
+function line(kind, name = '') {
   const pool = SAYS[kind] ?? SAYS.idle;
   const options = pool.length > 1 ? pool.filter((l) => l !== said[kind]) : pool;
   const l = options[Math.floor(Math.random() * options.length)];
   said[kind] = l;
-  return l;
+  return l.replaceAll('{name}', name);
 }
 
 // Lulu's speech bubble, the words typed out.
@@ -209,11 +215,14 @@ export function creatorScreen(ui, time, draft) {
   draft.pose ??= 0;
   draft.facing ??= 1;
   draft.history ??= [];
-  draft.lulu ??= { line: "Welcome to costumes! Let's make you a star.", at: time, last: time };
+  draft.lulu ??= { line: "Welcome to costumes! Let's make you a star.", at: time, last: time, kind: 'hello' };
   const lulu = draft.lulu;
-  const react = (kind) => {
-    if (time - lulu.at < 1.2 && kind !== 'random' && kind !== 'undo') return;
-    Object.assign(lulu, { line: line(kind), at: time, last: time });
+  // She says something about what just changed (not more than once every 1.2 s, unless `now`).
+  // Returns whether she did.
+  const react = (kind, now = false) => {
+    if (time - lulu.at < 1.2 && !now && kind !== 'random' && kind !== 'undo') return false;
+    Object.assign(lulu, { line: line(kind, draft.name.trim()), at: time, last: time, kind });
+    return true;
   };
   const remember = (look, kind) => {
     if (look === draft.look) return;
@@ -243,7 +252,8 @@ export function creatorScreen(ui, time, draft) {
   const state = pose === 'Walk' ? { pose: 'walk' } : pose === 'Back' ? { pose: 'climb' } : cheer <= 1 ? { pose: 'cheer', progress: cheer, dur: POSE_DUR } : { pose: 'idle' };
   withZoom(3, () => drawHero(ctx, draft.look, null, CX, FLOOR, { ...state, time, facing: draft.facing, scale: 3, seed: 1 }));
   // Lulu by the turntable, with her opinion.
-  if (time - lulu.last > 9) Object.assign(lulu, { line: line('idle'), at: time, last: time });
+  // (Left alone with no name on the door, every other idle line nudges you to type one.)
+  if (time - lulu.last > 9) react(!draft.name.trim() && lulu.kind !== 'noName' ? 'noName' : 'idle', true);
   const talking = (time - lulu.at) * 30 < lulu.line.length;
   withZoom(2, () => drawHero(ctx, NPCS.lulu.look, castGear('lulu'), 40, FLOOR + 12, { pose: 'idle', time, seed: 4, scale: 1.7, facing: 1, talking }));
   bubble(ctx, 16, 216, lulu.line, Math.floor((time - lulu.at) * 30));
@@ -280,7 +290,15 @@ export function creatorScreen(ui, time, draft) {
     if (ch === '\b') draft.name = draft.name.slice(0, -1);
     else if (/^[\w '-]$/.test(ch) && draft.name.length < 12 && !(ch === ' ' && !draft.name)) draft.name += ch;
   }
-  if (!had && draft.name) react('name');
+  // Lulu reacts to the name itself, once you stop typing it. A nudge for a name gives way the
+  // moment you start one, and praise for a name you rub out turns back into a nudge, so a name on
+  // the door never gets "a star needs a name".
+  const named = draft.name.trim();
+  if (draft.name !== had) draft.nameAt = time;
+  if (!named) draft.nameSaid = '';
+  if (named && lulu.kind === 'noName') react('naming', true);
+  else if (named && named !== draft.nameSaid && time - (draft.nameAt ?? 0) > 0.6 && react('name')) draft.nameSaid = named;
+  else if (!named && had.trim() && ['name', 'naming'].includes(lulu.kind)) react('noName', true);
   text(ctx, 'Name', IX + 12, NY + 11, { size: 9, bold: true });
   box(ctx, IX + 46, NY, IW - 58, 17, { fill: '#ffffff', edge: COLORS.accent, r: 8.5 });
   const caret = Math.floor(time * 2) % 2 ? '|' : '';
@@ -301,6 +319,9 @@ export function creatorScreen(ui, time, draft) {
   if (hover(ui, IX + 146, BY, 72, 22)) tooltip(ui, [{ text: draft.tutorial ? 'Start on Dawnlight Isle' : 'Skip the tutorial', bold: true }, { text: draft.tutorial ? 'A short island that shows you the ropes, then a boat to Sprout Village.' : 'Start right in Sprout Village.', size: 8, color: COLORS.muted }]);
   if (button(ui, 8, 8, 100, 18, '< Dressing rooms', { size: 8 }) || ui.input.pressed.has('Escape')) return 'back';
   const ok = draft.name.trim().length > 0;
-  if (!ok && hover(ui, IX + IW - 86, BY, 76, 22)) tooltip(ui, [{ text: 'Every star needs a name first', bold: true }]);
+  if (!ok && hover(ui, IX + IW - 86, BY, 76, 22)) {
+    tooltip(ui, [{ text: 'Every star needs a name first', bold: true }]);
+    if (lulu.kind !== 'noName') react('noName');
+  }
   return button(ui, IX + IW - 86, BY, 76, 22, 'Curtain up!', { primary: true, enabled: ok, size: 9.5 }) || (ok && ui.input.pressed.has('Enter')) ? 'start' : null;
 }

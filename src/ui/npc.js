@@ -35,6 +35,7 @@ import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
 import { teamOf } from '../world/teamwork.js';
 import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
 import { derbyClock, standings, PRIZES } from '../world/derby.js';
+import { celebrateLevels } from '../world/levelup.js';
 
 export function questMarker(char, npcId) {
   const ids = NPCS[npcId].quests ?? [];
@@ -51,6 +52,16 @@ export function questMarker(char, npcId) {
 
 // Each NPC role gets its own color.
 const ROLE_THEME = { guide: 'mint', shop: 'peach', stylist: 'pink', instructor: 'lavender', dungeon: 'mint', board: 'pink' };
+
+// "a Warrior", "an Acrobat Archer".
+const aOrAn = (name) => (/^[aeiou]/i.test(name) ? 'an' : 'a');
+
+// A job card on the instructor's page: the job's name, what it fights with and the stat it grows,
+// then its blurb wrapped beside the Choose button. Its height fits every line of the blurb (a long
+// one makes a taller card, never spills over the next line or card). `chars: 0` measures without
+// drawing.
+const JOB_CARD_TEXT = 312 - 70;
+const jobCardH = (ctx, j) => Math.max(42, wrap(ctx, j.blurb, 0, 27, JOB_CARD_TEXT, { size: 7, lineHeight: 8.5, chars: 0 }));
 
 // A visual-novel style dialog box along the bottom of the screen: the NPC stands large at the
 // left, their name on a ribbon, and their words type out. Returns the text area, or null if the
@@ -82,18 +93,22 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   ctx.restore();
 
   // The speaker's photo: a white print taped at a tilt, the NPC drawn big, peeking over the top.
+  // (A print's own size, stuck at the bottom corner: a tall page, like a job choice with long
+  // cards, never leaves an empty photo above the speaker's head.)
   const px = x + 52;
+  const ph = Math.min(H - 14, 112);
+  const top = y + H - 6 - ph;
   ctx.save();
-  ctx.translate(px, y + H / 2 + 4);
+  ctx.translate(px, top + ph / 2);
   ctx.rotate(-0.04);
   ctx.fillStyle = 'rgba(70,40,90,0.2)';
-  ctx.fillRect(-40, -H / 2 + 6, 82, H - 14);
+  ctx.fillRect(-40, -ph / 2 + 2, 82, ph);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(-42, -H / 2 + 4, 82, H - 14);
+  ctx.fillRect(-42, -ph / 2, 82, ph);
   ctx.fillStyle = th.light;
-  ctx.fillRect(-37, -H / 2 + 9, 72, H - 30);
+  ctx.fillRect(-37, -ph / 2 + 5, 72, ph - 16);
   ctx.restore();
-  tape(ctx, px - 34, y + 10, 22, 8, -0.6, th.main, { pattern: 'dots', alpha: 0.85 });
+  tape(ctx, px - 34, top + 2, 22, 8, -0.6, th.main, { pattern: 'dots', alpha: 0.85 });
   ctx.save();
   roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
   ctx.clip();
@@ -130,16 +145,27 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   return { x: x + 108, y: y + 22, w: W - 128, bottom: y + H - 10, theme: th };
 }
 
+// The keys that show the rest of a page still typing out: Space, Enter (and the keypad's), and
+// the attack key, the same keys that move a cutscene on.
+const SKIP_KEYS = ['Space', 'Enter', 'NumpadEnter', 'KeyZ'];
+
 // Typewriter text: how many characters of the current page show. Clicking the text finishes it.
-// `text` is the page, so the NPC talks (mouth moving) only while words are still coming;
-// Space finishes the page at once, like clicking it.
+// `text` is the page, so the NPC talks (mouth moving) only while words are still coming.
+// A skip key finishes the page at once, like clicking it, and that press is used up: Enter shows
+// the words first and takes the page's main action (Accept, Complete) only on the next press.
 function typed(ui, dlg, page, world, area, text = '') {
   const len = text.length;
   if (dlg.page !== page) {
     dlg.page = page;
     dlg.typedAt = world.now;
   }
-  if (clicked(ui, area.x, area.y - 10, area.w, 30) || ui.input.pressed?.has('Space')) dlg.typedAt = -1e9;
+  const pressed = ui.input.pressed;
+  const skip = SKIP_KEYS.filter((k) => pressed?.has(k));
+  if (clicked(ui, area.x, area.y - 10, area.w, 30)) dlg.typedAt = -1e9;
+  else if (skip.length && (world.now - dlg.typedAt) * 70 < len) {
+    dlg.typedAt = -1e9;
+    for (const k of skip) pressed.delete(k);
+  }
   const n = (world.now - dlg.typedAt) * 70;
   dlg.talking = n < len;
   // Their voice: a blip every other letter as the words type out (none on spaces), at their own
@@ -338,7 +364,7 @@ export function npcWindow(ui, state, world) {
   // (A Sweetheart says something for how close you are, or what they just said to your chat.)
   dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
   const greetH = 40 + wrapCount(ui.ctx, dlg.words ?? npc.greeting, 312, { size: 8.5 }) * 11.5 + rows * 24;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24, Math.ceil(greetH));
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, jobOptions.reduce((h, j) => h + jobCardH(ctx, j) + 4, 46)) : Math.max(100, 50 + rows * 24, Math.ceil(greetH));
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -401,28 +427,31 @@ export function npcWindow(ui, state, world) {
       const words = npc.family && char.job !== 'novice' && fam !== npc.family ? 'You walk a different path. Seek your own instructor.' : msg;
       wrap(ctx, words, tx, y + 8, tw, { size: 8.5, chars: typed(ui, dlg, `job:${words}`, world, area, words) });
     } else dlg.talking = false;
-    // One card per path: its name, what it's about, what it fights with and the stat it grows,
-    // and a Choose button (or its number key).
+    // One card per path: its name, what it fights with and the stat it grows, what it's about,
+    // and a Choose button (or its number key). Each card is as tall as its blurb needs.
     options.forEach((j, i) => {
-      box(ctx, tx - 2, y - 4, tw + 4, 42, { fill: '#ffffff', edge: th.light, r: 8, width: 1.5 });
-      text(ctx, j.name, tx + 4, y + 7, { size: 9.5, bold: true, color: th.dark });
-      wrap(ctx, j.blurb, tx + 4, y + 17, tw - 70, { size: 7, lineHeight: 8.5 });
+      const ch = jobCardH(ctx, j);
+      box(ctx, tx - 2, y - 4, tw + 4, ch, { fill: '#ffffff', edge: th.light, r: 8, width: 1.5 });
+      text(ctx, fit(ctx, j.name, JOB_CARD_TEXT, 9.5), tx + 4, y + 7, { size: 9.5, bold: true, color: th.dark });
       const stat = (FAMILY_STATS[j.family] ?? FAMILY_STATS.beginner).primary.toUpperCase();
       const uses = (j.weapons ?? []).filter((w) => w !== 'none').map((w) => w[0].toUpperCase() + w.slice(1)).join(', ');
-      text(ctx, fit(ctx, `${uses} · grows ${stat}`, tw - 70, 6.5, false), tx + 4, y + 34, { size: 6.5, color: COLORS.muted });
+      text(ctx, fit(ctx, `${uses} · grows ${stat}`, JOB_CARD_TEXT, 6.5, false), tx + 4, y + 16, { size: 6.5, color: COLORS.muted });
+      wrap(ctx, j.blurb, tx + 4, y + 26, JOB_CARD_TEXT, { size: 7, lineHeight: 8.5 });
       const picked = button(ui, tx + tw - 60, y + 9, 58, 18, `${i + 1}  Choose`, { primary: true, size: 8 }) || key === i + 1;
-      y += 46;
+      y += ch + 4;
       if (picked) {
         advanceJob(char, j.id);
-        world.log(`You are now a ${j.name}! Spend your new SP in the Skills window (K).`, '#ffe36b');
-        // Your first weapon of your new kind, straight into your hands.
+        world.log(`You are now ${aOrAn(j.name)} ${j.name}! Spend your new SP in the Skills window (K).`, '#ffe36b');
+        // Your first weapon of your new kind, straight into your hands. (No "a": some come in
+        // pairs, like the Copper Gloves.)
         const weapon = giveStarterWeapon(char, j.id);
-        if (weapon) world.log(`${npc.name} hands you a ${ITEMS[weapon].name}. It's in your hands already.`, ITEMS[weapon].color ?? '#ffe36b');
+        if (weapon) world.log(`${npc.name} hands you your very own ${ITEMS[weapon].name}. It's in your hands already.`, ITEMS[weapon].color ?? '#ffe36b');
         if (char.refunded) world.log(`Your ${char.refunded} stat points are back: put them into ${(FAMILY_STATS[j.family] ?? FAMILY_STATS.beginner).primary.toUpperCase()} in Stats (C), or press Auto.`, '#ffe36b');
         char.refunded = 0;
         world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
-        // The instructor sends you off with a scene of your own.
-        playScene(world, SCENES[`job_${j.id}`] ? `job_${j.id}` : 'job_path', { job: j.name });
+        // The instructor sends you off with a scene of your own. ({aJob} is the name with its
+        // "a" or "an", for a line like "I am {aJob} now.")
+        playScene(world, SCENES[`job_${j.id}`] ? `job_${j.id}` : 'job_path', { job: j.name, aJob: `${aOrAn(j.name)} ${j.name}` });
         state.npc = null;
         win.open = false;
       }
@@ -503,7 +532,8 @@ function questPage(ui, state, world, npc, area, key) {
   icon(ctx, 'coin', ix + 6, ry + 15, 7, COLORS.gold);
   text(ctx, `${q.rewards.gold.toLocaleString()} gold`, ix + 12, ry + 17.5, { size: 7, bold: true, color: COLORS.ink });
 
-  const enter = ui.input.pressed?.has('Enter') && chars >= words.length;
+  // (A press that finished the typing was used up by `typed`, so this one is a fresh press.)
+  const enter = (ui.input.pressed?.has('Enter') || ui.input.pressed?.has('NumpadEnter')) && chars >= words.length;
   if (st === 'available' && (button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true }) || enter)) {
     const full = acceptBlocker(char, dlg.quest);
     if (full || !acceptQuest(char, dlg.quest)) {
@@ -531,7 +561,9 @@ function questPage(ui, state, world, npc, area, key) {
         world.log('Press H to ride (pick mounts in the Collection, B).', '#bff0dc');
         world.events.push({ type: 'mount', id: r.mount });
       }
-      if (r.levels) world.fx.push({ kind: 'levelup', x: world.body.x, y: world.body.y, t: 0, dur: 1.6 });
+      // (A level from a quest is celebrated like one from hunting: the burst, the log line, and the
+      // note naming your instructors when a job opens: world/levelup.js.)
+      celebrateLevels(world, r.levels);
       questCompleted(world, dlg.quest, r);
       if (q.scenes?.done) playScene(world, q.scenes.done);
       // The next step of their chain, offered straight away (unless a scene is playing first).

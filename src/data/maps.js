@@ -6,7 +6,8 @@
 //   portals    {id, x, y, to, toPortal}; press Up to use. `hidden` portals are spawn points only.
 //   npcs       {id, x}; they stand on the ground
 //   spawns     {mob, x, y}; y is the surface the monster patrols (flyers hover above it)
-//   town       the town you respawn in after dying here
+//   town       the town you respawn in after dying here (and its homestone's): the nearest one
+//              along the portal roads, so you never wake up across the island from a town next door
 //   world      where the map sits on the world map (in its 400x240 frame)
 //   job        towns that are a job's home, where its instructor lives
 //   plaza      in towns, where the fountain stands
@@ -419,7 +420,7 @@ export const MAPS = {
   // crystal dust floats you up to the ledge with the way to the Sky Garden, and the tunnel to
   // Serpent Springs leaves from the east rim.
   cave: {
-    id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'grove', world: { x: 336, y: 148 },
+    id: 'cave', name: 'Crystal Cave', theme: 'cave', town: 'sprout', world: { x: 336, y: 148 },
     look: { ceiling: true },
     ...lay({
       width: 2600, ground: 1000, by: 'x',
@@ -481,7 +482,7 @@ export const MAPS = {
   // Terrace in the east, the Star Seraphs' high islands, reached by a drifting cloud, with the way
   // up to Starfall Heights on the highest of them. Frozen Peak is down on the cloud sea's far end.
   sky: {
-    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'grove', world: { x: 348, y: 36 },
+    id: 'sky', name: 'Sky Garden', theme: 'sky', town: 'sprout', world: { x: 348, y: 36 },
     ...lay({
       width: 3000, ground: 1040, by: 'x', quiet: [[40, 1040, 160], [2940, 1040, 160], [2880, 320, 200], [2620, 1040, 260]],
       // In the quiet east corner the cloud parts on the open sky below: a gap to fish.
@@ -538,7 +539,7 @@ export const MAPS = {
 
 
   bossroom: {
-    id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'grove', world: { x: 360, y: 186 },
+    id: 'bossroom', name: 'Crystal Throne', theme: 'cave', town: 'sprout', world: { x: 360, y: 186 },
     width: 1200, height: 420, groundY: 380,
     look: { sky: ['#1f1a4a', '#3a2f7a', '#5a47a6'], far: '#3f3480', mid: '#4f4296', material: 'throne', ceiling: true, light: 'throne', islands: 'stone', skyline: 'columns', aerial: 1.8 },
     platforms: [
@@ -1850,7 +1851,7 @@ Object.assign(MAPS, {
   // The Sugar Trail: past the steam of Serpent Springs, a path of candy stones up to the foot of a
   // mountain that smells of caramel. Chef Praline finds groups here.
   sugar_trail: {
-    id: 'sugar_trail', name: 'Sugar Trail', theme: 'candy', town: 'grove', world: { x: 270, y: 30 }, music: 'volcano',
+    id: 'sugar_trail', name: 'Sugar Trail', theme: 'candy', town: 'sprout', world: { x: 270, y: 30 }, music: 'volcano',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#ff9ab8', '#ffc8a0', '#fff0c8'], far: '#e08aa8', mid: '#f0a8c0', midTrim: '#ffd36b', ...SUGAR },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
@@ -1868,7 +1869,7 @@ Object.assign(MAPS, {
   // The Gumdrop Valley: down from the ridge into a valley of gumdrop hills and up the far side.
   // Sticky taffy pools in the low ground; three sugar crystals to gather.
   volcano1: {
-    id: 'volcano1', name: 'The Gumdrop Valley', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano1', name: 'The Gumdrop Valley', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     ...lay({
       width: 2600, ground: 680,
       terrain: [[0, 520], [400, 520], [400, 600], [680, 600], [680, 680], [1900, 680], [1900, 600], [2200, 600], [2200, 520], [2600, 520]],
@@ -1901,7 +1902,7 @@ Object.assign(MAPS, {
   // The Licorice Mine: tunnels under the valley, licorice beams overhead, and a long pit of hot
   // caramel in the middle of the floor. Minecarts ride the rails across it; ledges run above.
   volcano2: {
-    id: 'volcano2', name: 'The Licorice Mine', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano2', name: 'The Licorice Mine', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     width: 2600, height: 420, groundY: G,
     platforms: [
       { x: 140, y: 300, w: 300 }, { x: 820, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 7 } }, { x: 1440, y: 300, w: 100, style: 'planks', drift: { dx: 420, period: 8 } },
@@ -1927,7 +1928,7 @@ Object.assign(MAPS, {
   // The Candy Kitchen: a great kitchen on two floors around a bubbling cauldron. Four dispensers of
   // candy; add exactly what the recipe asks, and the oven door opens.
   volcano3: {
-    id: 'volcano3', name: 'The Candy Kitchen', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano3', name: 'The Candy Kitchen', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 200, y: 300, w: 300 }, { x: 1100, y: 300, w: 300 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
@@ -1949,7 +1950,7 @@ Object.assign(MAPS, {
   // The Caramel Forge: a forge hall over cooling caramel, the anvil in the middle, bellows at the
   // back. Toffee is hammering.
   volcano4: {
-    id: 'volcano4', name: 'The Caramel Forge', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano4', name: 'The Caramel Forge', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
@@ -1966,7 +1967,7 @@ Object.assign(MAPS, {
   // The Gingerbread Ramparts: a long gingerbread wall-walk between candy towers, the volcano's cone
   // rising behind. Gretel holds the wall.
   volcano5: {
-    id: 'volcano5', name: 'The Gingerbread Ramparts', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano5', name: 'The Gingerbread Ramparts', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     width: 2000, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 160 }, { x: 900, y: 300, w: 200 }, { x: 1680, y: 300, w: 160 }, { x: 950, y: 220, w: 100 }],
     ropes: [{ x: 1000, top: 220, bottom: G }],
@@ -1982,7 +1983,7 @@ Object.assign(MAPS, {
 
   // The Crater: islands of rock candy in a lake of caramel, the sky glowing. Queen Bonbon stirs it.
   volcano6: {
-    id: 'volcano6', name: 'The Crater', theme: 'candy', town: 'grove', dungeon: 'volcano',
+    id: 'volcano6', name: 'The Crater', theme: 'candy', town: 'sprout', dungeon: 'volcano',
     width: 1700, height: 420, groundY: G,
     platforms: [
       { x: 160, y: 300, w: 160 }, { x: 520, y: 300, w: 140 }, { x: 1040, y: 300, w: 140 }, { x: 1380, y: 300, w: 160 },
@@ -2018,7 +2019,7 @@ Object.assign(MAPS, {
   // Theatre Row: a street of lamp posts and poster pillars on the clouds, the playhouse floating
   // beyond. Madame Encore finds groups here.
   theatre_row: {
-    id: 'theatre_row', name: 'Theatre Row', theme: 'theatre', town: 'grove', world: { x: 362, y: 28 }, music: 'theatre',
+    id: 'theatre_row', name: 'Theatre Row', theme: 'theatre', town: 'sprout', world: { x: 362, y: 28 }, music: 'theatre',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#4a2a6a', '#a05a9a', '#ffb0a0'], far: '#6a3a7a', mid: '#8a4a7a', midTrim: '#ffd36b', skyline: 'theatre', material: 'stage', critters: [], drift: 'sparkle', face: 'moon', stars: true },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
@@ -2036,7 +2037,7 @@ Object.assign(MAPS, {
   // The Grand Lobby: a long lobby of carpeted floor, balconies above on gilt stairs, spotlights
   // sweeping from the chandeliers. Three lost tickets to find.
   theatre1: {
-    id: 'theatre1', name: 'The Grand Lobby', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre1', name: 'The Grand Lobby', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 2400, height: 420, groundY: G,
     platforms: [
       { x: 260, y: 300, w: 320 }, { x: 900, y: 300, w: 320 }, { x: 1540, y: 300, w: 320 },
@@ -2066,7 +2067,7 @@ Object.assign(MAPS, {
   // Act I: The Pirate Ship. A ship set on a rocking stage: masts and yards to climb, a crow's nest,
   // painted waves rolling in front. Cannons fire at marked spots.
   theatre2: {
-    id: 'theatre2', name: 'Act I: The Pirate Ship', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre2', name: 'Act I: The Pirate Ship', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 2200, height: 420, groundY: G,
     platforms: [
       { x: 200, y: 300, w: 260 }, { x: 760, y: 300, w: 240, mast: true }, { x: 1320, y: 300, w: 240, mast: true },
@@ -2095,7 +2096,7 @@ Object.assign(MAPS, {
   // Act II: The Fairy Forest. Cardboard trees under a paper moon; four coloured cue lamps at the
   // edge of the stage. Watch the sequence they flash, then play it back.
   theatre3: {
-    id: 'theatre3', name: 'Act II: The Fairy Forest', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre3', name: 'Act II: The Fairy Forest', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 200, y: 300, w: 280 }, { x: 1120, y: 300, w: 280 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
@@ -2115,7 +2116,7 @@ Object.assign(MAPS, {
 
   // Act III: The Masked Ball. A ballroom set of mirrors and chandeliers; Persona dances alone.
   theatre4: {
-    id: 'theatre4', name: 'Act III: The Masked Ball', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre4', name: 'Act III: The Masked Ball', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 180, y: 300, w: 200 }, { x: 1220, y: 300, w: 200 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
@@ -2131,7 +2132,7 @@ Object.assign(MAPS, {
 
   // Backstage: ropes, sandbags and stacked flats. Madame Directrice runs the show from here.
   theatre5: {
-    id: 'theatre5', name: 'Backstage', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre5', name: 'Backstage', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 1800, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100 }],
     ropes: [{ x: 900, top: 220, bottom: G }, { x: 250, top: 300, bottom: G }, { x: 1550, top: 300, bottom: G }],
@@ -2148,7 +2149,7 @@ Object.assign(MAPS, {
   // The Final Curtain: the great stage under a star cloth, velvet curtains drawn back. The Phantom
   // Playwright waits at his desk.
   theatre6: {
-    id: 'theatre6', name: 'The Final Curtain', theme: 'theatre', town: 'grove', dungeon: 'theatre',
+    id: 'theatre6', name: 'The Final Curtain', theme: 'theatre', town: 'sprout', dungeon: 'theatre',
     width: 1800, height: 420, groundY: G,
     platforms: [
       { x: 160, y: 300, w: 160 }, { x: 560, y: 300, w: 140 }, { x: 1100, y: 300, w: 140 }, { x: 1480, y: 300, w: 160 },
@@ -2181,7 +2182,7 @@ Object.assign(MAPS, {
   // Cloudcatch Pier: a wooden pier off the east rim of Starfall Heights, the whale swimming close
   // beyond the clouds. Skipper Nimbus finds groups here.
   cloudcatch_pier: {
-    id: 'cloudcatch_pier', name: 'Cloudcatch Pier', theme: 'skywhale', town: 'grove', world: { x: 400, y: 30 }, music: 'skywhale',
+    id: 'cloudcatch_pier', name: 'Cloudcatch Pier', theme: 'skywhale', town: 'sprout', world: { x: 400, y: 30 }, music: 'skywhale',
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#5a9ae0', '#9fd0ff', '#fff0d8'], far: '#8ab8e8', mid: '#b8d8f6', midTrim: '#ffffff', skyline: 'whale', material: 'dockwood', critters: ['gull'], drift: 'sparkle', face: 'sun' },
     platforms: [{ x: 420, y: G - 80, w: 140 }],
@@ -2198,7 +2199,7 @@ Object.assign(MAPS, {
 
   // The Tail Docks: long docks built along the whale's tail, crates and moorings. The tail flips.
   skywhale1: {
-    id: 'skywhale1', name: 'The Tail Docks', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale1', name: 'The Tail Docks', theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 2400, height: 420, groundY: G,
     platforms: [
       { x: 240, y: 300, w: 300 }, { x: 900, y: 300, w: 320 }, { x: 1600, y: 300, w: 300 },
@@ -2227,7 +2228,7 @@ Object.assign(MAPS, {
 
   // The Spine Market: tents and stalls along the whale's spine, blowholes in the street, gusts.
   skywhale2: {
-    id: 'skywhale2', name: 'The Spine Market', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale2', name: 'The Spine Market', theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 2600, height: 420, groundY: G,
     platforms: [
       { x: 200, y: 300, w: 280 }, { x: 760, y: 300, w: 220 }, { x: 1240, y: 300, w: 240 }, { x: 1760, y: 300, w: 220 }, { x: 2200, y: 300, w: 260 },
@@ -2256,7 +2257,7 @@ Object.assign(MAPS, {
   // The Lung Gardens: a greenhouse of glowing ribs inside the whale, which breathes. Three air-blooms
   // open only on the breath out.
   skywhale3: {
-    id: 'skywhale3', name: 'The Lung Gardens', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale3', name: 'The Lung Gardens', theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 200, y: 300, w: 280 }, { x: 1120, y: 300, w: 280 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
@@ -2274,7 +2275,7 @@ Object.assign(MAPS, {
 
   // The Blowhole Deck: a pirate airship moored over the great blowhole. Captain Gale's ship.
   skywhale4: {
-    id: 'skywhale4', name: 'The Blowhole Deck', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale4', name: 'The Blowhole Deck', theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 1700, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 200 }, { x: 1340, y: 300, w: 200 }, { x: 620, y: 230, w: 120 }, { x: 960, y: 230, w: 120 }],
     ropes: [{ x: 260, top: 300, bottom: G }, { x: 1440, top: 300, bottom: G }, { x: 650, top: 230, bottom: G }, { x: 1050, top: 230, bottom: G }],
@@ -2291,7 +2292,7 @@ Object.assign(MAPS, {
 
   // The Barnacle Fortress: walls of shell and coral grown over the whale's back.
   skywhale5: {
-    id: 'skywhale5', name: 'The Barnacle Fortress', theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale5', name: 'The Barnacle Fortress', theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 1800, height: 420, groundY: G,
     platforms: [{ x: 160, y: 300, w: 180 }, { x: 800, y: 300, w: 200 }, { x: 1460, y: 300, w: 180 }, { x: 850, y: 220, w: 100 }],
     ropes: [{ x: 900, top: 220, bottom: G }, { x: 250, top: 300, bottom: G }, { x: 1550, top: 300, bottom: G }],
@@ -2307,7 +2308,7 @@ Object.assign(MAPS, {
 
   // The Whale's Brow: the top of its head, open to the wind above the clouds.
   skywhale6: {
-    id: 'skywhale6', name: "The Whale's Brow", theme: 'skywhale', town: 'grove', dungeon: 'skywhale',
+    id: 'skywhale6', name: "The Whale's Brow", theme: 'skywhale', town: 'sprout', dungeon: 'skywhale',
     width: 1800, height: 420, groundY: G,
     platforms: [
       { x: 160, y: 300, w: 160 }, { x: 560, y: 300, w: 140 }, { x: 1100, y: 300, w: 140 }, { x: 1480, y: 300, w: 160 },
@@ -2487,7 +2488,7 @@ Object.assign(MAPS, {
   // to the lookout and the road on to Frozen Peak. The hot-spring fishing spot is in the quiet east
   // corner with a dock of its own.
   springs: {
-    id: 'springs', name: 'Serpent Springs', theme: 'springs', town: 'grove', world: { x: 256, y: 40 },
+    id: 'springs', name: 'Serpent Springs', theme: 'springs', town: 'sprout', world: { x: 256, y: 40 },
     ...climb({
       width: 2400, ground: 880, quiet: [[40, 880, 160], [2200, 880, 320], [2200, 800, 260], [2200, 720, 260], [1560, 560, 200]],
       zones: [
@@ -2523,7 +2524,7 @@ Object.assign(MAPS, {
   // snowfield, with an ice-fishing dock in its quiet corner and the way out to the Sky Garden's sea
   // of cloud.
   peak: {
-    id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'grove', world: { x: 312, y: 18 },
+    id: 'peak', name: 'Frozen Peak', theme: 'snow', town: 'sprout', world: { x: 312, y: 18 },
     ...lay({
       width: 2200, ground: 1120, by: 'y', quiet: [[40, 280, 200], [2140, 1120, 160], [1950, 1120, 320], [1990, 1136, 160], [1950, 1040, 260], [2000, 960, 260]],
       // The frozen lake lies sunk in the snowfield in the quiet east corner, behind snowy lips.
@@ -2574,7 +2575,7 @@ Object.assign(MAPS, {
   // East Rim to the high island where the way to the Moon Terrace opens. A star-cloud ferry glides
   // the whole width of the valley, rim to rim.
   starfall: {
-    id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'grove', world: { x: 390, y: 34 },
+    id: 'starfall', name: 'Starfall Heights', theme: 'sky', music: 'starfall', town: 'sprout', world: { x: 390, y: 34 },
     look: { sky: ['#1d1b48', '#4a3f8c', '#a68ad6'], sun: '#e6dcff', far: '#5a4f9e', mid: '#6a5fa8', midTrim: '#8a7cc8', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star', 'flower', 'cloudpuff'], drift: 'sparkle', ground: '#e6e0fa', groundDeep: '#c4b8ec', ledge: '#ece6ff', ledgeShade: '#c4b8ec' },
     ...lay({
       width: 2600, ground: 1040, by: 'x',
@@ -2657,11 +2658,11 @@ Object.assign(MAPS, {
     { sky: ['#6a4a9a', '#e88ab0', '#ffd0a8'], light: 'dusk' },
     [['torii', 700], ['foxstatue', 560, 0], ['foxstatue', 840, 1], ['sakura', 200, 0], ['sakura', 1200, 1]], ['shrine', 'sanctum']),
   // Lilith's grotto behind the waterfall: a night garden of warm roses.
-  grotto: arena('grotto', 'Rose Grotto', 'springs', 'grove', { x: 244, y: 30 },
+  grotto: arena('grotto', 'Rose Grotto', 'springs', 'sprout', { x: 244, y: 30 },
     { sky: ['#3a2450', '#7a3f74', '#d87aa0'], far: '#5a3a6a', mid: '#7a4a7e', midTrim: '#a86a9a', stars: true, face: 'moon', light: 'dusk', drift: 'petal', props: ['flower', 'tulip', 'reed', 'flower'] },
     [['hotspring', 700], ['giantflower', 260, 0], ['giantflower', 1140, 0]], ['springs', 'grotto']),
   // Selene's moon terrace: the moon close overhead, stars falling slowly.
-  terrace: arena('terrace', 'Moon Terrace', 'sky', 'grove', { x: 396, y: 22 },
+  terrace: arena('terrace', 'Moon Terrace', 'sky', 'sprout', { x: 396, y: 22 },
     { sky: ['#14123a', '#3a3184', '#8a74c8'], sun: '#e6dcff', far: '#4a3f8e', mid: '#5a4f9e', midTrim: '#7a6cc0', face: 'moon', stars: true, shooting: true, rainbow: 0, light: 'starfall', material: 'starcloud', props: ['cloudpuff', 'star'], drift: 'sparkle' },
     [['moonstone', 700], ['cloudpillar', 260], ['cloudpillar', 1140]], ['starfall', 'terrace']),
 });

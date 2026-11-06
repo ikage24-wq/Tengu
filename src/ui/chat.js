@@ -184,35 +184,41 @@ export function updateChat(chat, world, dt) {
 // The All and Party tabs sit on its right end: the Party tab shows the party's lines only, and
 // what you type goes to them alone.
 const PARTY_INK = '#2f9a68';
+// The chat bar sits just under the message log (ui/hud.js LOG_BASE) and above your card, clear of
+// the lane down the screen's left edge where the guide's arrow points (ui/guide.js).
+const CHAT_X = 40;
+const CHAT_Y = 302;
+
 export function drawChatBar(ui, chat, world) {
   if (chat.typing === null || chat.sendTo) return;
   const { ctx } = ui;
-  const y = 311;
+  const x = CHAT_X;
+  const y = CHAT_Y;
   const party = chat.channel === 'party';
   const ink = party ? PARTY_INK : COLORS.accent;
   // (Scrapbook: a strip of lined paper you write on, taped down at its end, your name in ink.)
-  paper(ctx, 4, y, 300, 15, { fill: party ? '#f0fff6' : '#fffbf2', edge: ink, r: 4, seed: 7, width: 1.4 });
+  paper(ctx, x, y, 300, 15, { fill: party ? '#f0fff6' : '#fffbf2', edge: ink, r: 4, seed: 7, width: 1.4 });
   ctx.strokeStyle = party ? 'rgba(80,170,120,0.35)' : 'rgba(255,143,193,0.35)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.moveTo(8, y + 12.5);
-  ctx.lineTo(300, y + 12.5);
+  ctx.moveTo(x + 4, y + 12.5);
+  ctx.lineTo(x + 296, y + 12.5);
   ctx.stroke();
-  tape(ctx, 302, y + 3, 16, 7, 0.6, party ? '#b8f0cc' : '#ffd6ea', { pattern: 'dots', alpha: 0.9 });
+  tape(ctx, x + 298, y + 3, 16, 7, 0.6, party ? '#b8f0cc' : '#ffd6ea', { pattern: 'dots', alpha: 0.9 });
   const who = party ? `[Party] ${world.char.name}:` : `${world.char.name}:`;
-  text(ctx, who, 10, y + 11, { size: 8, bold: true, color: ink });
+  text(ctx, who, x + 6, y + 11, { size: 8, bold: true, color: ink });
   ctx.font = font(8, true);
   const nameW = ctx.measureText(who).width;
   const caret = Math.floor(world.now * 2) % 2 ? '|' : '';
-  text(ctx, chat.typing + caret, 14 + nameW, y + 11, { size: 8, color: COLORS.ink });
-  if (!chat.typing) text(ctx, party ? (hasParty(world) ? 'To your party... (Tab: everyone)' : 'No party yet (Tab: everyone)') : 'Say something... (Tab: party, /help)', 14 + nameW, y + 11, { size: 8, color: COLORS.muted });
+  text(ctx, chat.typing + caret, x + 10 + nameW, y + 11, { size: 8, color: COLORS.ink });
+  if (!chat.typing) text(ctx, party ? (hasParty(world) ? 'To your party... (Tab: everyone)' : 'No party yet (Tab: everyone)') : 'Say something... (Tab: party, /help)', x + 10 + nameW, y + 11, { size: 8, color: COLORS.muted });
   // The tabs, eased in: the picked one lifts a little.
   chat.tabEase = (chat.tabEase ?? 0) + ((party ? 1 : 0) - (chat.tabEase ?? 0)) * 0.25;
   const tabs = [['all', 'All', COLORS.accent], ['party', 'Party', PARTY_INK]];
   tabs.forEach(([id, label, c], i) => {
     const on = chat.channel === id || (id === 'all' && !party);
     const lift = (id === 'party' ? chat.tabEase : 1 - chat.tabEase) * 2;
-    const tx = 308 + i * 38;
+    const tx = x + 304 + i * 38;
     // Index tabs on the strip's end: paper tabs, the picked one standing a little taller.
     const top = y + 1 - lift;
     ctx.beginPath();

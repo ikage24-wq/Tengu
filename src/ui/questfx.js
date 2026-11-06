@@ -5,7 +5,9 @@
 //   - handing one in: a reward card. The giver thanks you, a "Complete!" stamp lands, and the
 //     EXP, gold and items pop out one by one and fly into your EXP pill, purse and bag.
 // The big moments queue up and play one at a time; the cheers stack on their own. Everything is
-// eased (no snapping): cards drop with a little overshoot and fly out on a curve.
+// eased (no snapping): cards drop with a little overshoot and fly out on a curve. They play in
+// the top middle of the screen, but never over the tutorial's lesson card, wherever it is, and
+// they step out from under open windows (see "Where the moments go").
 
 import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
@@ -13,9 +15,10 @@ import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questState, objectiveProgress, objectiveText } from '../core/quests.js';
 import { questTarget, setRoute } from '../world/routes.js';
+import { currentLesson } from '../world/tutorial.js';
 import { settings } from '../core/settings.js';
 import { sfx } from '../audio/sfx.js';
-import { COLORS, THEMES, text, box, icon, itemSlot, fit, font, sparkle, softShadow, wrap, clicked } from './kit.js';
+import { COLORS, THEMES, text, box, icon, itemSlot, fit, font, sparkle, softShadow, wrap, clicked, roundRect } from './kit.js';
 
 const W = 640;
 // How long each big moment stays.
@@ -64,6 +67,8 @@ export function questAccepted(world, ids) {
 export function questCompleted(world, id, r) {
   const fx = fxOf(world);
   world.questSeen?.delete(id);
+  // The guide was leading you to hand this one in: that's done now.
+  if (world.route?.quest === id) world.route = null;
   // A finished quest's "ready" banner, still waiting its turn, has nothing left to say.
   fx.queue = fx.queue.filter((m) => !(m.kind === 'ready' && m.id === id));
   fx.queue.push({ kind: 'complete', id, r });
@@ -99,11 +104,22 @@ function watch(world) {
     }
     if (st === 'ready' && !prev.ready) {
       fx.queue.push({ kind: 'ready', id });
-      // The guide sets off for whoever gave it, unless it's already leading you somewhere.
-      const to = questTarget(char, id);
-      if (to && to !== world.map.id && !world.route) setRoute(world, to);
+      // The guide sets off for whoever gave it (the nearest of them when they stand in more than
+      // one place), unless it's already leading you somewhere.
+      const to = questTarget(char, id, world.map.id);
+      if (to && to !== world.map.id && !world.route) setRoute(world, to, { quest: id });
     }
   }
+  settleRoute(world);
+}
+
+// A route the guide set for a quest ends when that quest is handed in (or dropped), or once the
+// one you need to see is right here.
+function settleRoute(world) {
+  const id = world.route?.quest;
+  if (!id) return;
+  const st = QUESTS[id] ? questState(world.char, id) : 'done';
+  if ((st !== 'active' && st !== 'ready') || questTarget(world.char, id, world.map.id) === world.map.id) world.route = null;
 }
 
 // ---------- Drawing ----------
@@ -124,29 +140,165 @@ export function drawQuestFx(ui, state, world) {
     fx.cur = m;
   }
   const m = fx.cur;
-  if (m?.kind === 'accept') drawAccept(ctx, world, m, t - m.at);
-  else if (m?.kind === 'ready') drawReady(ctx, world, m, t - m.at);
-  else if (m?.kind === 'complete') drawComplete(ui, state, world, m, t - m.at);
-  drawCheers(ctx, fx, t);
+  // Where they go this frame: clear of the lesson card, and out from under the windows.
+  const dt = Math.min(0.1, Math.max(0, t - (fx.placedAt ?? t)));
+  fx.placedAt = t;
+  const card = lessonCard(state, world);
+  const keepOff = card ? [{ x: card.x - GAP, y: card.y - GAP, w: card.w + GAP * 2, h: card.h + GAP * 2 }] : [];
+  const wins = openWindows(state);
+  if (!m || fx.spotOf !== m) fx.spot = null;
+  fx.spotOf = m;
+  fx.rect = null;
+  if (m) {
+    const r = ownRect(ctx, world, m);
+    const at = glide(fx, 'spot', spotFor(r, keepOff, wins, fx.spot), dt);
+    fx.rect = { x: r.x + at.dx, y: r.y + at.dy, w: r.w, h: r.h };
+  }
+  fx.cheers = fx.cheers.filter((c) => t - c.at < CHEER);
+  if (!fx.cheers.length) fx.cheerSpot = null;
+  fx.cheerRect = null;
+  if (fx.cheers.length) {
+    // The cheers keep clear of the big moment as well.
+    const r = cheersRect(ctx, fx);
+    const at = glide(fx, 'cheerSpot', spotFor(r, fx.rect ? [...keepOff, fx.rect] : keepOff, wins, fx.cheerSpot), dt);
+    fx.cheerRect = { x: r.x + at.dx, y: r.y + at.dy, w: r.w, h: r.h };
+  }
+  const zero = { dx: 0, dy: 0 };
+  // Whatever crosses the card while it glides goes under it.
+  ctx.save();
+  if (card) clipOut(ctx, card);
+  if (m?.kind === 'accept') drawAccept(ctx, world, m, t - m.at, fx.spot ?? zero);
+  else if (m?.kind === 'ready') drawReady(ctx, world, m, t - m.at, fx.spot ?? zero);
+  else if (m?.kind === 'complete') drawComplete(ui, state, world, m, t - m.at, fx.spot ?? zero);
+  drawCheers(ctx, fx, t, fx.cheerSpot ?? zero);
   drawFlyers(ctx, state, fx, t);
+  ctx.restore();
 }
 
-// A card drops in under the top of the screen, holds, then shrinks off toward the tracker.
-function drawAccept(ctx, world, m, age) {
+// ---------- Where the moments go ----------
+// The moments play in the top middle of the screen, but two things are often there: the
+// tutorial's lesson card (ui/hud.js drawTutorial, drawn just before them), which steps aside from
+// open windows, wrapped onto a few lines, anywhere in the top of the screen; and the windows
+// themselves, drawn over them. So each big moment, and the cheers, are placed from where the card
+// and the windows really are this frame: their own spot when it's clear, else the nearest spot
+// below or above the card, or beside a window, that keeps off the card and is least hidden. They
+// glide there (and stay put while that spot stays good), and whatever crosses the card on the way
+// (a sparkle burst, the stamp landing big, a card tucking into the tracker) slips under it.
+
+// How long a cheer stays (s).
+const CHEER = 1.8;
+// The lowest a moment reaches (the guide's pill and the HUD tray sit below).
+const LOW = 296;
+// The room kept round the lesson card, and beside a window.
+const GAP = 5;
+
+const overArea = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+
+// The lesson card as it's drawn this frame, { x, y, w, h, pop }, or null while there's none.
+export function lessonCard(state, world) {
+  const card = state?.tutCard;
+  if (!card || !currentLesson(world.char)) return null;
+  // Its width and how many lines it wraps onto ride in its signature ("hint|width|lines").
+  const sig = String(card.sig ?? '').split('|');
+  const w = card.w ?? Number(sig.at(-2));
+  const lines = Number(sig.at(-1)) || 1;
+  const h = card.h ?? (lines > 1 ? 26 + (lines - 1) * 14 : 24);
+  if (![card.x, card.y, w].every(Number.isFinite)) return null;
+  // Its pop as a lesson starts or the card moves: up to 12% bigger, about its middle.
+  const popOf = (age) => (age >= 0 && age < 0.25 ? 0.12 * Math.sin((age / 0.25) * Math.PI) : 0);
+  const pop = Math.max(popOf(world.now - (world.char.tutorial?.at ?? -9)), popOf(performance.now() / 1000 - (card.popAt ?? -9)) * 0.6);
+  return { x: card.x, y: card.y, w, h, pop };
+}
+
+// The windows (and the talk box) drawn over the moments.
+function openWindows(state) {
+  return Object.entries(state?.windows ?? {})
+    .filter(([k, v]) => v.open && v.w && v.h && (k !== 'npc' || state.npc))
+    .map(([, v]) => ({ x: v.x, y: v.y, w: v.w, h: v.h }));
+}
+
+// The room a big moment takes at its own spot, settled (its sparkles and shadow included).
+function ownRect(ctx, world, m) {
+  if (m.kind === 'accept') return { x: W / 2 - 109, y: 45, w: 218, h: acceptHeight(world, m) + 14 };
+  if (m.kind === 'ready') {
+    ctx.font = font(8, true);
+    const hw = Math.max(72, Math.min(300, ctx.measureText(readyLine(world, m)).width) / 2 + 3);
+    return { x: W / 2 - hw, y: 60, w: hw * 2, h: 34 };
+  }
+  return { x: W / 2 - 127, y: 44, w: 254, h: 90 };
+}
+
+// The room the cheers take, all their rows over their whole rise.
+function cheersRect(ctx, fx) {
+  ctx.font = font(7.5, true);
+  const w = Math.max(...fx.cheers.map((c) => ctx.measureText(c.label).width + 26));
+  return { x: W / 2 - w / 2 - 2, y: 101, w: w + 4, h: 35 + (fx.cheers.length - 1) * 16 };
+}
+
+// Where something whose own spot is `r` goes, { dx, dy } from there: kept off everything in
+// `keepOff`, as little under the windows as can be, then the shortest way from its own spot (and
+// from `cur`, where it is now, so it doesn't hop between two spots about as good).
+function spotFor(r, keepOff, wins, cur) {
+  const xs = [0];
+  for (const b of wins) xs.push(b.x - GAP - (r.x + r.w), b.x + b.w + GAP - r.x);
+  const ys = [0];
+  for (const k of keepOff) ys.push(k.y + k.h - r.y, k.y - (r.y + r.h));
+  let best = null;
+  for (const dx of xs) {
+    for (const dy of ys) {
+      const s = { x: r.x + dx, y: r.y + dy, w: r.w, h: r.h };
+      if (s.x < 2 || s.x + s.w > W - 2 || s.y < 2 || s.y + s.h > LOW) continue;
+      const on = keepOff.some((k) => overArea(s, k) > 0);
+      const hidden = Math.min(1, wins.reduce((a, b) => a + overArea(s, b), 0) / (s.w * s.h));
+      const moved = 0.6 * Math.abs(dx) + Math.abs(dy) + (cur ? 0.4 * (Math.abs(dx - cur.dx) + Math.abs(dy - cur.dy)) : 0);
+      const cost = (on ? 1e4 : 0) + 400 * hidden + moved;
+      if (!best || cost < best.cost) best = { dx, dy, cost };
+    }
+  }
+  // Nowhere fits on screen: just below the first thing in the way.
+  return best ?? { dx: 0, dy: keepOff.length ? keepOff[0].y + keepOff[0].h - r.y : 0 };
+}
+
+// Eases what's in fx[key] toward `want` (starting there when it's new).
+function glide(fx, key, want, dt) {
+  const cur = fx[key];
+  if (!cur) return (fx[key] = { dx: want.dx, dy: want.dy });
+  const k = 1 - Math.exp(-dt * 14);
+  cur.dx += (want.dx - cur.dx) * k;
+  cur.dy += (want.dy - cur.dy) * k;
+  return cur;
+}
+
+// Leaves the lesson card (with its pop, its rim and its shadow) out of what's drawn next.
+function clipOut(ctx, c) {
+  const s = 1 + c.pop;
+  const w = c.w * s;
+  const h = c.h * s;
+  const x = c.x + c.w / 2 - w / 2;
+  const y = c.y + c.h / 2 - h / 2;
+  roundRect(ctx, x - 3, y - 3, w + 6, h + 9, 12 * s + 3);
+  ctx.rect(0, 0, W, 360);
+  ctx.clip('evenodd');
+}
+
+// A card drops in under the top of the screen, holds, then shrinks off toward the tracker. Under
+// the lesson card it drops a shorter way and slips off sideways toward the tracker's side,
+// never back up across the lesson.
+function drawAccept(ctx, world, m, age, at) {
   const story = m.ids.some((id) => QUESTS[id].story);
   const th = story ? THEMES.gold ?? THEMES.peach : THEMES.mint;
   const cw = 210;
-  const lines = m.ids.length === 1 ? goalLines(world, m.ids[0]) : m.ids.slice(0, 3).map((id) => QUESTS[id].name);
-  if (m.ids.length > 3) lines[2] = `${QUESTS[m.ids[2]].name} and ${m.ids.length - 3} more`;
-  const ch = m.ids.length === 1 ? 34 + lines.length * 10 : 16 + lines.length * 12;
+  const lines = acceptLines(world, m);
+  const ch = acceptHeight(world, m);
   const inK = easeBack(clamp(age / 0.35));
   const outK = clamp((age - (m.life - 0.5)) / 0.5);
-  // On the way out it curves up into the tracker's corner.
+  // On the way out it curves up into the tracker's corner (under the lesson card, if that's in
+  // the way).
   const trackerX = settings.trackerPos ? settings.trackerPos.x + 69 : W - 75;
   const trackerY = settings.trackerPos ? settings.trackerPos.y + 8 : 14;
   const e = outK * outK;
-  const cx = (1 - e) * W / 2 + e * trackerX;
-  const cy = (1 - e) * (54 + (1 - inK) * -26) + e * trackerY;
+  const cx = (1 - e) * (W / 2 + at.dx) + e * trackerX;
+  const cy = (1 - e) * (54 + at.dy + (1 - inK) * -26) + e * trackerY;
   const s = (0.9 + 0.1 * inK) * (1 - 0.82 * e);
   ctx.save();
   ctx.globalAlpha = clamp(age / 0.18) * (1 - outK * outK);
@@ -180,6 +332,15 @@ function drawAccept(ctx, world, m, age) {
   ctx.restore();
 }
 
+// The card's lines: what the quest asks, or the names when it's several at once.
+function acceptLines(world, m) {
+  if (m.ids.length === 1) return goalLines(world, m.ids[0]);
+  const lines = m.ids.slice(0, 3).map((id) => QUESTS[id].name);
+  if (m.ids.length > 3) lines[2] = `${QUESTS[m.ids[2]].name} and ${m.ids.length - 3} more`;
+  return lines;
+}
+const acceptHeight = (world, m) => (m.ids.length === 1 ? 34 + goalLines(world, m.ids[0]).length * 10 : 16 + Math.min(3, m.ids.length) * 12);
+
 // What a quest asks, a line each ("Defeat 15 Mandrake").
 function goalLines(world, id) {
   const objs = objectiveProgress(world.char, id);
@@ -190,17 +351,21 @@ function goalLines(world, id) {
   });
 }
 
-// Green and bright: the quest is done, here's who to tell.
-function drawReady(ctx, world, m, age) {
+// The ready banner's second line: who to tell, and where when it's another map.
+function readyLine(world, m) {
   const q = QUESTS[m.id];
-  const giver = NPCS[q.giver];
-  const to = questTarget(world.char, m.id);
+  const to = questTarget(world.char, m.id, world.map.id);
   const where = to && to !== world.map.id ? ` in ${MAPS[to]?.name ?? ''}` : '';
+  return `${q.name}: report to ${NPCS[q.giver]?.name ?? 'them'}${where}`;
+}
+
+// Green and bright: the quest is done, here's who to tell (and where, when it's another map).
+function drawReady(ctx, world, m, age, at) {
   const pop = age < 0.3 ? 1.35 - 0.35 * easeOut(age / 0.3) : 1;
   const a = clamp(age / 0.15) * clamp((m.life - age) / 0.5);
   ctx.save();
   ctx.globalAlpha = a;
-  ctx.translate(W / 2, 74);
+  ctx.translate(W / 2 + at.dx, 74 + at.dy);
   ctx.scale(pop, pop);
   // A burst of sparkles as it lands.
   const b = clamp(age / 0.9);
@@ -213,12 +378,12 @@ function drawReady(ctx, world, m, age) {
   }
   icon(ctx, 'check', -64, -5, 12, COLORS.good);
   text(ctx, 'Quest ready!', 6, 0, { size: 15, bold: true, align: 'center', color: '#ffffff', outline: '#2f8f52' });
-  text(ctx, fit(ctx, `${q.name}: report to ${giver?.name ?? 'them'}${where}`, 300, 8), 0, 15, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(40,90,60,0.85)' });
+  text(ctx, fit(ctx, readyLine(world, m), 300, 8), 0, 15, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: 'rgba(40,90,60,0.85)' });
   ctx.restore();
 }
 
 // The reward card: thanks, the stamp, and the rewards popping out one by one.
-function drawComplete(ui, state, world, m, age) {
+function drawComplete(ui, state, world, m, age, at) {
   const { ctx } = ui;
   const q = QUESTS[m.id];
   const r = m.r;
@@ -230,16 +395,16 @@ function drawComplete(ui, state, world, m, age) {
   ];
   const cw = 250;
   const ch = 82;
-  const x0 = W / 2 - cw / 2;
-  const y0 = 46;
+  const x0 = W / 2 - cw / 2 + at.dx;
+  const y0 = 46 + at.dy;
   const inK = easeBack(clamp(age / 0.3));
   const outK = clamp((age - (m.life - 0.5)) / 0.5);
   ctx.save();
   ctx.globalAlpha = clamp(age / 0.2) * (1 - outK);
-  ctx.translate(W / 2, y0 + ch / 2 - outK * 10);
+  ctx.translate(x0 + cw / 2, y0 + ch / 2 - outK * 10);
   const s = 0.85 + 0.15 * inK;
   ctx.scale(s, s);
-  ctx.translate(-W / 2, -(y0 + ch / 2));
+  ctx.translate(-(x0 + cw / 2), -(y0 + ch / 2));
   softShadow(ctx, x0, y0, cw, ch, 12, 5);
   box(ctx, x0, y0, cw, ch, { fill: '#fffaf6', edge: th.main, r: 12, width: 2 });
   box(ctx, x0 + 4, y0 + 4, cw - 8, 15, { fill: th.light, edge: null, r: 8 });
@@ -348,20 +513,19 @@ function drawFlyers(ctx, state, fx, t) {
 }
 
 // The cheers: a small pill each, rising and fading in the middle of the screen.
-function drawCheers(ctx, fx, t) {
-  fx.cheers = fx.cheers.filter((c) => t - c.at < 1.8);
+function drawCheers(ctx, fx, t, at) {
   fx.cheers.forEach((c, i) => {
     const age = t - c.at;
-    const k = age / 1.8;
+    const k = age / CHEER;
     const rise = easeOut(clamp(age / 0.4)) * 10 + k * 8;
     const a = clamp(age / 0.15) * (k < 0.7 ? 1 : (1 - k) / 0.3);
-    const y = 128 + i * 16 - rise;
+    const y = 128 + at.dy + i * 16 - rise;
     ctx.save();
     ctx.globalAlpha = a;
     ctx.font = font(7.5, true);
     const w = ctx.measureText(c.label).width + 26;
     const pop = age < 0.2 ? 1.25 - 0.25 * (age / 0.2) : 1;
-    ctx.translate(W / 2, y);
+    ctx.translate(W / 2 + at.dx, y);
     ctx.scale(pop, pop);
     box(ctx, -w / 2, -8, w, 15, { fill: 'rgba(239,252,243,0.95)', edge: COLORS.good, r: 7.5, width: 1.2 });
     icon(ctx, 'check', -w / 2 + 9, -0.5, 7, COLORS.good);

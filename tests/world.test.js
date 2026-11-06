@@ -10,6 +10,7 @@ import { addItem, countItem } from '../src/core/inventory.js';
 import { makeEquip } from '../src/core/items.js';
 import { TOWNS } from '../src/data/maps.js';
 import { spawnMob } from '../src/world/mobs.js';
+import { DUNGEONS } from '../src/data/dungeons.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set() };
@@ -494,4 +495,77 @@ test('the stat-only skills grow by themselves and give their SP back; a replaced
   assert.equal(grownLevel(c, SKILLS.manamastery), 20, 'a first-job mastery is full by 30');
   assert.equal(grownLevel(c, SKILLS.shrinemastery), 6, 'a second-job mastery grows from 30');
   assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.shrinemastery), 20, 'and is full by 50');
+});
+
+test('you wake up in the town nearest along the roads: from Crystal Cave, Sprout Village next door', () => {
+  // Steps along the portal roads from a map to everywhere (a homestone is one way, not a road).
+  const stepsFrom = (from) => {
+    const d = { [from]: 0 };
+    const q = [from];
+    while (q.length) {
+      const id = q.shift();
+      for (const p of MAPS[id].portals) {
+        if (p.hidden || p.homestone || !MAPS[p.to] || d[p.to] !== undefined) continue;
+        d[p.to] = d[id] + 1;
+        q.push(p.to);
+      }
+    }
+    return d;
+  };
+  const towns = Object.values(MAPS).filter((m) => m.isTown && !m.private).map((m) => m.id);
+  for (const m of Object.values(MAPS)) {
+    if (m.isTown || m.private || m.voyage || m.dungeon) continue;
+    const d = stepsFrom(m.id);
+    const near = Math.min(...towns.map((t) => d[t] ?? Infinity));
+    if (near === Infinity) continue;
+    assert.equal(d[m.town], near, `${m.id} wakes you in ${m.town}, but ${towns.filter((t) => d[t] === near).join('/')} is nearer`);
+  }
+  // A dungeon's rooms wake you where its gate does.
+  for (const m of Object.values(MAPS)) if (m.dungeon) assert.equal(m.town, MAPS[DUNGEONS[m.dungeon].gate].town, m.id);
+  for (const [id, town] of [['cave', 'sprout'], ['bossroom', 'sprout'], ['sky', 'sprout'], ['ruins', 'grove']]) {
+    const w = newWorld();
+    loadMap(w, id, 'west');
+    w.char.hp = 0;
+    w.dead = true;
+    respawn(w);
+    assert.equal(w.map.id, town, `fainting in ${id}`);
+    assert.equal(w.map.portals.find((p) => p.id === w.char.portal)?.id, 'start');
+  }
+  // (Sprout's arrival spot is a few steps from the cave's door.)
+  const sprout = MAPS.sprout.portals;
+  assert.ok(Math.abs(sprout.find((p) => p.id === 'start').x - sprout.find((p) => p.to === 'cave').x) < 200);
+});
+
+test('a game saved while fainted comes back as "Return to town" would: in town, with the EXP lost', () => {
+  const fainted = (mapId, portal) => {
+    const c = createCharacter('Hana', {});
+    gainExp(c, 500);
+    Object.assign(c, { exp: 50, hp: 0, mapId, portal });
+    return c;
+  };
+  // Fainted in Crystal Cave, then the game closed (or reloaded): up in Sprout Village, EXP lost.
+  let c = fainted('cave', 'sprout');
+  let w = createWorld(c);
+  assert.equal(w.dead, false);
+  assert.equal(w.map.id, 'sprout');
+  assert.equal(c.portal, 'start');
+  assert.ok(c.exp < 50, 'the EXP is lost, as from Return to town');
+  assert.ok(c.hp >= w.stats.maxHp * 0.5 - 1, 'back on your feet');
+  assert.ok(w.messages.some((m) => m.text.includes('Lost')));
+  // A second reload doesn't take it again.
+  const exp = c.exp;
+  w = createWorld(c);
+  assert.equal(c.exp, exp);
+  // Fainted in a dungeon: out at its gate as Leave puts you, without losing EXP.
+  c = fainted('hollow3', 'west');
+  w = createWorld(c);
+  assert.equal(w.map.id, 'hollow_gate');
+  assert.equal(c.exp, 50);
+  assert.ok(c.hp > 0 && !w.dead);
+  // Up and about when saved: right where you were.
+  c = fainted('cave', 'sprout');
+  c.hp = 5;
+  w = createWorld(c);
+  assert.equal(w.map.id, 'cave');
+  assert.equal(c.exp, 50);
 });

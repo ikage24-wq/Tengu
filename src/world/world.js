@@ -108,8 +108,25 @@ export function createWorld(char) {
       }
     },
   };
-  loadMap(world, char.mapId, char.portal ?? 'start');
+  // Saved while fainted (the game closed or reloaded mid-faint): you come round just as "Return to
+  // town" would have brought you round, EXP loss and all, so a reload is never a free way out.
+  if (char.hp <= 0) wakeFromFaint(world);
+  else loadMap(world, char.mapId, char.portal ?? 'start');
   return world;
+}
+
+// A faint carried over from a save. In a dungeon nobody is left to get you up, so you're out at
+// its gate as "Leave" would put you; anywhere else you wake up in that map's town.
+function wakeFromFaint(world) {
+  const map = getMap(world.char.mapId);
+  if (map.dungeon && DUNGEONS[map.dungeon]) {
+    world.char.hp = Math.max(1, Math.round(world.stats.maxHp * 0.5));
+    world.invuln = 2;
+    loadMap(world, DUNGEONS[map.dungeon].gate, 'start');
+    world.log('You come round outside. Your group carried you out, with only a little grumbling.', '#ffb3c6');
+    return;
+  }
+  respawn(world, map);
 }
 
 function findPortal(map, id) {
@@ -161,12 +178,12 @@ export function loadMap(world, mapId, portalId) {
   onStoryMap(world);
 }
 
-function townOf(world) {
-  return world.map.town ?? 'sprout';
+function townOf(world, map = world.map) {
+  return map?.town ?? 'sprout';
 }
 
-export function returnToTown(world) {
-  loadMap(world, townOf(world), 'start');
+export function returnToTown(world, from = world.map) {
+  loadMap(world, townOf(world, from), 'start');
 }
 
 // ---------- Fast travel between towns ----------
@@ -345,11 +362,12 @@ export function useItem(world, id) {
   return true;
 }
 
-export function respawn(world) {
+// Waking up in the town of the map you fainted on (`from`: by default the one you're on).
+export function respawn(world, from = world.map) {
   const loss = applyDeath(world.char);
   world.dead = false;
   world.invuln = 3;
-  returnToTown(world);
+  returnToTown(world, from);
   world.log(loss > 0 ? `You wake up in town. Lost ${loss} EXP.` : 'You wake up in town.', '#ffb3c6');
 }
 

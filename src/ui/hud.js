@@ -22,6 +22,7 @@ import { groundAt } from '../world/physics.js';
 import { MATERIALS } from '../render/terrain.js';
 import { questMarker } from './npc.js';
 import { drawQuestTracker, trackerBox } from './quests.js';
+import { trackedQuests } from '../core/quests.js';
 import { beginPiece, endPiece, piece, intoPiece, layoutOf } from './layout.js';
 import { keyName, physOf } from '../core/keys.js';
 import { THEMES as SCENE_THEMES } from '../render/scenery.js';
@@ -42,6 +43,12 @@ const LAV = THEMES.lavender;
 const TRAY_Y = 322;
 const TRAY_H = 34;
 const MENU_X = 221;
+// The message log: its slips start clear of the lane down the screen's left edge where the guide's
+// arrow points the way (ui/guide.js), and its newest line sits above the guide's pill and the top
+// of your card (the chat bar, ui/chat.js CHAT_Y, goes just under it while you type).
+const LOG_X = 40;
+const LOG_BASE = TRAY_Y - 28;
+const LOG_BOX = { x: LOG_X - 4, y: LOG_BASE - 82, w: 266, h: 86 };
 const MENU_STEP = 13.2;
 // The menu buttons' radius (eleven of them fit between the other two trays).
 const MENU_R = 6.4;
@@ -411,9 +418,9 @@ export function drawHud(ui, state, world) {
     drawCallout(ctx, world);
   } else if (world.map.id === 'lagoon' && world.derby && !world.derby.done && derbyClock(world).on) drawDerbyBoard(ui, world);
   else if (settings.questTracker) piece(ui, 'tracker', trackerBox ?? { x: 496, y: 6, w: 138, h: 15 }, () => drawQuestTracker(ui, state, world));
-  if (settings.messageLog || state.chat?.typing != null) piece(ui, 'log', { x: 4, y: TRAY_Y - 82, w: 262, h: 78 }, () => drawLog(ui, world, state));
+  if (settings.messageLog || state.chat?.typing != null) piece(ui, 'log', LOG_BOX, () => drawLog(ui, world, state));
   drawBanner(ctx, world, state);
-  drawTutorial(ui, world);
+  drawTutorial(ui, state, world);
   if (settings.showFps) drawFps(ctx, state);
   if (ui.input?.touch && state.menuGrid) drawMenuGrid(ui, state, world);
 }
@@ -1114,22 +1121,22 @@ function drawBuffs(ui, world) {
 // The message log: each line on its own soft pill so it reads over any background.
 function drawLog(ui, world, state) {
   const { ctx } = ui;
-  // While chatting the log sits above the chat bar and shows in full (on the Party tab, the
-  // party's lines only).
+  // While chatting the log shows in full (on the Party tab, the party's lines only), over the
+  // chat bar.
   const typing = state.chat?.typing != null;
   const msgs = typing && state.chat.channel === 'party' && !state.chat.sendTo ? world.partyLog ?? [] : world.messages;
   ctx.font = font(8, true);
   msgs.forEach((m, i) => {
-    const y = TRAY_Y - (typing ? 24 : 6) - (msgs.length - 1 - i) * 12;
+    const y = LOG_BASE - (msgs.length - 1 - i) * 12;
     const a = typing ? 1 : Math.min(1, m.t);
     if (a <= 0) return;
     ctx.globalAlpha = a;
     const w = ctx.measureText(m.text).width;
     // (Scrapbook: each line on its own slip of dark paper, torn a little unevenly.)
     ctx.fillStyle = 'rgba(58,40,82,0.62)';
-    roughRect(ctx, 4, y - 8.5, w + 10, 11, 3, Math.round(w) % 23, 0.35);
+    roughRect(ctx, LOG_X, y - 8.5, w + 10, 11, 3, Math.round(w) % 23, 0.35);
     ctx.fill();
-    text(ctx, m.text, 9, y, { size: 8, bold: true, color: m.color });
+    text(ctx, m.text, LOG_X + 5, y, { size: 8, bold: true, color: m.color });
   });
   ctx.globalAlpha = 1;
 }
@@ -1242,44 +1249,209 @@ function drawCallout(ctx, world) {
 
 // The tutorial's hint (world/tutorial.js): a pastel card at the top of the screen with the
 // lesson's number and what to do, keys drawn as little keycaps; it pops in fresh for each lesson.
-function drawTutorial(ui, world) {
+// Windows draw over the HUD, so while one covers the card's spot (the bag in the bag lesson, the
+// Skills window in the skill lessons, Stats, a dialog) the card steps out from under it, gliding
+// over and popping again so the eye follows it: along the very top of the screen above the
+// window, or down the screen's side beside it, wrapped onto a few lines where the room is narrow.
+// It never goes into the middle of the screen under its usual band: while a lesson shows, that's
+// where the quest moments play (ui/questfx.js: the NEW QUEST card, "Quest ready!", the reward
+// card and the cheers), and they'd cover it.
+const CARD_Y = 54;
+// (How far down a card moved aside may start, and end.)
+const CARD_LOW = 120;
+const CARD_FLOOR = 210;
+const CARD_LINE = 14;
+// The middle of the screen under the card's band, where the quest moments play while a lesson
+// shows (ui/questfx.js: the reward card, 250 across, "Quest ready!" with its line up to 300, the
+// NEW QUEST card, the cheers), with a little room around them.
+export const LESSON_BANNERS = { x: 168, y: 80, w: 304, h: 140 };
+// The widths a card moved aside may try, widest first.
+const CARD_ROOMS = [600, 540, 480, 430, 390, 350, 320, 300, 280, 260, 240, 220, 200, 184, 168, 152];
+
+// The card's shape for `room` px across: one pill when it all fits on a line, else the words
+// wrapped (the first line beside the lesson's number and Skip, the rest under them).
+function cardShape(tokens, room) {
+  const width = (line) => line.reduce((a, t) => a + t.w, 0) - (line.at(-1)?.space ?? 0);
+  const all = width(tokens);
+  if (all + 92 <= room) return { w: all + 92, h: 24, lines: [tokens], pill: true };
+  if (room < 130) return null;
+  const lines = [[]];
+  for (const t of tokens) {
+    const line = lines.at(-1);
+    const max = lines.length === 1 ? room - 82 : room - 24;
+    if (line.length && width([...line, t]) > max) lines.push([t]);
+    else line.push(t);
+  }
+  if (lines.length > 5) return null;
+  const w = Math.min(room, Math.max(width(lines[0]) + 82, ...lines.slice(1).map((l) => width(l) + 24)));
+  return { w, h: 24 + (lines.length - 1) * CARD_LINE + 2, lines, pill: false };
+}
+
+const overlap = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+const grow = (r, p) => ({ x: r.x - p, y: r.y - p, w: r.w + 2 * p, h: r.h + 2 * p });
+
+// Whether the quest tracker is on screen now (as drawHud and ui/quests.js decide it).
+function trackerShown(state, world) {
+  if (!settings.questTracker || world.dungeon || state.windows.quests?.open) return false;
+  if (world.map?.id === 'lagoon' && world.derby && !world.derby.done && derbyClock(world).on) return false;
+  return trackedQuests(world.char).length > 0;
+}
+
+// What the card should keep clear of, where it's drawn now. `soft`: HUD pieces drawn under it
+// (the minimap, the quest tracker, the buff row, the message log, a map's name as you arrive),
+// best kept clear, and the lane down the screen's sides where the guide's arrow points, drawn
+// over it (`weight` 3). `firm`: what would hide it, never to be sat on: the party panel, drawn
+// over it.
+function underCard(ctx, state, world) {
+  const soft = [];
+  const firm = [];
+  const add = (list, name, r, weight = 1) => {
+    const o = name ? layoutOf(name) : { dx: 0, dy: 0, s: 1 };
+    if (!o.hide) list.push({ x: r.x + o.dx, y: r.y + o.dy, w: r.w * o.s, h: r.h * o.s, weight });
+  };
+  if (settings.minimap && world.map) {
+    const p = miniAt();
+    const mb = minimapBox(world.map);
+    add(soft, 'minimap', { x: p.x - 4, y: p.y - 16, w: mb.w + 8, h: settings.minimapMin ? 14 : mb.h + 20 });
+  }
+  if (trackerShown(state, world)) add(soft, 'tracker', trackerBox ?? { x: 496, y: 6, w: 138, h: 15 });
+  const buffs = Object.keys(world.char.buffs).length;
+  if (buffs) add(soft, 'buffs', { x: 8, y: minimapBottom(world), w: buffs * 22, h: 28 });
+  if (world.messages.length) add(soft, 'log', LOG_BOX);
+  if (state.banner > 0 && world.map) {
+    // (The map's name, where it settles: drawBanner.)
+    const f = ctx.font;
+    ctx.font = font(15, true);
+    const w = ctx.measureText(world.map.name).width + 40;
+    ctx.font = f;
+    add(soft, null, { x: Math.round(320 - w / 2 - 16), y: 28, w: Math.round(w + 32), h: 26 });
+  }
+  if (world.route) for (const x of [8, 604]) add(soft, null, { x, y: 56, w: 28, h: 258 }, 3);
+  const top = buffsBottom(world);
+  if ((state.leftColumnY ?? top) > top + 2) add(firm, null, { x: 4, y: top, w: 124, h: state.leftColumnY - top });
+  return { soft, firm };
+}
+
+// Where the card goes, given its words (`tokens`, each with its width), the open windows over the
+// HUD (`wins`) and what's under and over it (`underCard`): its usual spot in the top middle, unless
+// a window covers that; then the clear spot that sits on the fewest HUD pieces and strays least,
+// a single line if it can. A spot it may take touches no window and none of the quest moments'
+// middle (LESSON_BANNERS), stays on screen and in the top part of it. `was`, where it sits now,
+// is kept while it's still clear and nearly as good, so the card doesn't hop about.
+export function placeLessonCard(tokens, wins, { soft = [], firm = [] } = {}, was = null) {
+  const home = cardShape(tokens, 600) ?? { w: 600, h: 24, lines: [tokens], pill: true };
+  const usual = { ...home, x: 320 - home.w / 2, y: CARD_Y };
+  if (!wins.some((r) => overlap(grow(usual, 2), r))) return usual;
+  const hard = [...wins, LESSON_BANNERS, ...firm];
+  // (Up into the top of the screen is a shorter stray than down toward its middle.)
+  const costOf = (c) => soft.reduce((a, r) => a + overlap(c, r) * r.weight, 0) + (c.y < CARD_Y ? CARD_Y - c.y : (c.y - CARD_Y) * 2) + Math.abs(c.x + c.w / 2 - 320) * 0.6 + (c.pill ? 0 : 150 + c.lines.length * 50);
+  const clear = (c) => c.x >= 4 && c.x + c.w <= 636 && c.y >= 4 && c.y <= CARD_LOW && c.y + c.h <= CARD_FLOOR && !hard.some((r) => overlap(grow(c, 3), r));
+  const shapes = new Map();
+  for (const room of CARD_ROOMS) {
+    const s = cardShape(tokens, room);
+    if (s && !shapes.has(`${s.w}|${s.lines.length}`)) shapes.set(`${s.w}|${s.lines.length}`, s);
+  }
+  // The spots worth trying lie along the edges of what's in the way (or the usual line).
+  const edges = [...hard, ...soft];
+  let best = null;
+  for (const s of shapes.values()) {
+    const xs = [4, 636 - s.w, 320 - s.w / 2];
+    const ys = [4, CARD_Y];
+    for (const r of edges) {
+      xs.push(r.x - 4 - s.w, r.x + r.w + 4);
+      ys.push(r.y, r.y - 4 - s.h, r.y + r.h + 4);
+    }
+    for (const x of xs) {
+      for (const y of ys) {
+        const c = { ...s, x, y };
+        if (!clear(c)) continue;
+        const cost = costOf(c);
+        if (!best || cost < best.cost) best = { ...c, cost };
+      }
+    }
+  }
+  if (best && was && clear(was) && costOf(was) <= best.cost + 60) return was;
+  return best ?? usual;
+}
+
+// (The last spot worked out, kept while nothing it depends on has changed.)
+let cardMemo = { key: '', words: '', spot: null };
+function cardSpot(ctx, tokens, state, world) {
+  const wins = Object.entries(state.windows)
+    .filter(([k, v]) => v.open && v.w && v.h && (k !== 'npc' || state.npc))
+    .map(([, v]) => ({ x: v.x - 3, y: v.y - 3, w: v.w + 6, h: v.h + 6 }));
+  const around = wins.length ? underCard(ctx, state, world) : { soft: [], firm: [] };
+  const words = JSON.stringify(tokens.map((t) => [t.key ?? t.text, t.w]));
+  const key = JSON.stringify([wins, around]);
+  if (cardMemo.key !== key || cardMemo.words !== words) {
+    const was = cardMemo.words === words ? cardMemo.spot : null;
+    cardMemo = { key, words, spot: placeLessonCard(tokens, wins, around, was) };
+  }
+  return cardMemo.spot;
+}
+
+function drawTutorial(ui, state, world) {
   const lesson = currentLesson(world.char);
-  if (!lesson) return;
+  if (!lesson) {
+    state.tutCard = null;
+    return;
+  }
   const { ctx } = ui;
   // On a phone, the hint for the touch controls.
   const hint = ui.input?.touch && lesson.phone ? lesson.phone : lesson.hint;
-  const parts = hint.split(/(\[[^\]]+\])/).filter(Boolean);
+  // Its words and keycaps, each with its width (a word carries the space after it).
   const size = 8.5;
   ctx.font = font(size, true);
-  const widths = parts.map((p) => (p.startsWith('[') ? ctx.measureText(p.slice(1, -1)).width + 10 : ctx.measureText(p).width));
-  const w = Math.min(600, widths.reduce((a, b) => a + b, 0) + 92);
-  const h = 24;
-  const x = 320 - w / 2;
-  const age = world.now - (world.char.tutorial.at ?? -9);
-  const pop = age < 0.25 ? 1 + 0.12 * Math.sin((age / 0.25) * Math.PI) : 1;
-  const y = 54;
+  const tokens = [];
+  for (const p of hint.split(/(\[[^\]]+\])/).filter(Boolean)) {
+    if (p.startsWith('[')) tokens.push({ key: p.slice(1, -1), w: ctx.measureText(p.slice(1, -1)).width + 10, space: 0 });
+    else for (const word of p.split(/(?<= )/)) tokens.push({ text: word, w: ctx.measureText(word).width, space: word.endsWith(' ') ? ctx.measureText(' ').width : 0 });
+  }
+  const spot = cardSpot(ctx, tokens, state, world);
+  // It glides to a new spot (and pops there), rather than jumping.
+  const now = performance.now() / 1000;
+  const sig = `${hint}|${spot.w}|${spot.lines.length}`;
+  const card = (state.tutCard ??= { x: spot.x, y: spot.y, t: now, sig, popAt: -9 });
+  const dt = Math.min(0.1, Math.max(0, now - card.t));
+  card.t = now;
+  if (card.sig !== sig) {
+    card.sig = sig;
+    card.popAt = now;
+  }
+  const ease = 1 - Math.exp(-dt * 12);
+  card.x += (spot.x - card.x) * ease;
+  card.y += (spot.y - card.y) * ease;
+  card.w = spot.w;
+  card.h = spot.h;
+  const { w, h, lines, pill } = spot;
+  const x = Math.round(card.x * 2) / 2;
+  const y = Math.round(card.y * 2) / 2;
+  const popOf = (age) => (age >= 0 && age < 0.25 ? 0.12 * Math.sin((age / 0.25) * Math.PI) : 0);
+  const pop = 1 + Math.max(popOf(world.now - (world.char.tutorial.at ?? -9)), popOf(now - card.popAt) * 0.6);
   ctx.save();
-  ctx.translate(320, y + h / 2);
+  ctx.translate(x + w / 2, y + h / 2);
   ctx.scale(pop, pop);
-  ctx.translate(-320, -(y + h / 2));
-  softShadow(ctx, x, y, w, h, h / 2, 3);
-  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#f4bcd8', r: h / 2, width: 2 });
+  ctx.translate(-(x + w / 2), -(y + h / 2));
+  softShadow(ctx, x, y, w, h, pill ? h / 2 : 12, 3);
+  box(ctx, x, y, w, h, { fill: 'rgba(255,250,248,0.97)', edge: '#f4bcd8', r: pill ? h / 2 : 12, width: 2 });
   // The lesson's number, in a pink bubble.
   ctx.fillStyle = COLORS.accent;
   ctx.beginPath();
-  ctx.arc(x + 14, y + h / 2, 9, 0, Math.PI * 2);
+  ctx.arc(x + 14, y + 12, 9, 0, Math.PI * 2);
   ctx.fill();
-  text(ctx, `${lesson.step + 1}`, x + 14, y + h / 2 + 3, { size: 8, bold: true, align: 'center', color: '#ffffff' });
-  text(ctx, `/${lesson.of}`, x + 26, y + h / 2 + 3, { size: 6.5, bold: true, color: COLORS.muted });
-  let cx = x + 44;
-  parts.forEach((p, i) => {
-    if (p.startsWith('[')) {
-      const k = p.slice(1, -1);
-      box(ctx, cx, y + 5, widths[i] - 2, 14, { fill: '#ffffff', edge: COLORS.panelEdge, r: 4, width: 1.2 });
-      box(ctx, cx, y + 16, widths[i] - 2, 3, { fill: 'rgba(180,140,255,0.25)', edge: null, r: 1.5 });
-      text(ctx, k, cx + (widths[i] - 2) / 2, y + 15, { size: 7.5, bold: true, align: 'center', color: COLORS.ink });
-    } else text(ctx, p, cx, y + 15.5, { size, bold: true, color: COLORS.ink });
-    cx += widths[i];
+  text(ctx, `${lesson.n}`, x + 14, y + 15, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+  text(ctx, `/${lesson.of}`, x + 26, y + 15, { size: 6.5, bold: true, color: COLORS.muted });
+  lines.forEach((line, i) => {
+    let cx = i === 0 ? x + 44 : x + 12;
+    const by = y + 15.5 + i * CARD_LINE + (i ? 2 : 0);
+    for (const tk of line) {
+      if (tk.key) {
+        box(ctx, cx, by - 10.5, tk.w - 2, 14, { fill: '#ffffff', edge: COLORS.panelEdge, r: 4, width: 1.2 });
+        box(ctx, cx, by + 0.5, tk.w - 2, 3, { fill: 'rgba(180,140,255,0.25)', edge: null, r: 1.5 });
+        text(ctx, tk.key, cx + (tk.w - 2) / 2, by - 0.5, { size: 7.5, bold: true, align: 'center', color: COLORS.ink });
+      } else text(ctx, tk.text, cx, by, { size, bold: true, color: COLORS.ink });
+      cx += tk.w;
+    }
   });
   // Skip this lesson.
   const sx = x + w - 34;

@@ -133,9 +133,12 @@ test('important side quests and every job advancement have scenes, naming real s
   }
   // {name} and {job} fill in.
   const w = createWorld(createCharacter('Hana', {}));
-  playScene(w, 'job_path', { job: 'Paladin' });
+  playScene(w, 'job_path', { job: 'Paladin', aJob: 'a Paladin' });
   const { fillScene } = await import('../src/world/story.js');
   assert.equal(fillScene(w, SCENES.job_path[2].text), 'I am a Paladin now.');
+  // (The job's name comes with its own article, as the instructor's window passes it.)
+  playScene(w, 'job_path', { job: 'Astronomer', aJob: 'an Astronomer' });
+  assert.equal(fillScene(w, SCENES.job_path[2].text), 'I am an Astronomer now.');
 });
 
 test('The Wind Returns: at level 50, a title, Hayate\'s Feather, and the wind back for good', () => {

@@ -7,6 +7,7 @@
 import { setNextUid, makeEquip } from './items.js';
 import { createInventory, settleBag } from './inventory.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
+import { QUESTS } from '../data/quests.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
@@ -186,6 +187,7 @@ export function loadGame(slot = 0, file = 0) {
       char.econ = ECON;
     }
     dropRetiredItems(char);
+    dropRetiredQuests(char);
     updateRetiredJobs(char);
     // Keep new item ids from colliding with saved ones.
     const all = [...Object.values(char.equipment).filter(Boolean), ...Object.values(char.outfit).filter(Boolean), ...char.inventory.equip, ...char.inventory.cash];
@@ -200,6 +202,14 @@ export function loadGame(slot = 0, file = 0) {
 
 // Items removed from the game since the save was made (like the old weapon lines) are dropped,
 // so an old save never refers to something that no longer exists.
+// Quests taken out of the game since the save was made (Captain Rook's old copy of the story's
+// finale, 'Heart of Crystal') are forgotten, so nothing ever looks one up and finds nothing.
+export function dropRetiredQuests(char) {
+  for (const id of Object.keys(char.quests ?? {})) if (!QUESTS[id]) delete char.quests[id];
+  if (char.tracked) char.tracked = char.tracked.filter((id) => QUESTS[id]);
+  return char;
+}
+
 export function dropRetiredItems(char) {
   // Renamed items (the old weapon tiers) become their replacements first.
   const rename = (e) => e && RENAMED_ITEMS[e.id] && (e.id = RENAMED_ITEMS[e.id]);

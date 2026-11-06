@@ -23,6 +23,7 @@ import { partyMembers } from './party.js';
 import { spawnMob } from './mobs.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { botChat } from './chatlog.js';
+import { celebrateLevels } from './levelup.js';
 
 const between = (a, b, rng = Math.random) => a + rng() * (b - a);
 
@@ -184,10 +185,8 @@ function complete(world) {
   world.log(`Party quest complete! +${r.exp} EXP, +${r.gold} gold, +${r.tokens} Party Tokens for everyone.`, '#ffe36b');
   world.callout = { title: 'Party quest complete!', sub: pqGoal(q), color: '#ffb0d8', at: world.now };
   world.juice.push({ type: 'confetti', x: world.body.x, y: world.body.y - 60, w: 120, count: 30 });
-  if (levels > 0) {
-    world.events.push({ type: 'levelup', level: char.level });
-    world.log(`Level up! You are now level ${char.level}.`, '#ffe36b');
-  }
+  // (Celebrated like any level up, with the note naming your instructors when a job opens.)
+  celebrateLevels(world, levels);
   // Every party member gets their share too.
   for (const bot of partyMembers(world.bots)) {
     const before = bot.char.level;

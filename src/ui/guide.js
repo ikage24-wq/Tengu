@@ -29,7 +29,8 @@ export function drawGuide(ui, state, world) {
   } else {
     // At the edge of the screen, toward it.
     const ex = Math.max(22, Math.min(618, x));
-    const ey = Math.max(70, Math.min(300, y - 40));
+    // (Kept above y 270 along the bottom, so it never crosses the chat log's newest lines.)
+    const ey = Math.max(70, Math.min(270, y - 40));
     const a = Math.atan2(y - 40 - ey + (ex === 22 || ex === 618 ? 0 : 1), x - ex || (x < 320 ? -1 : 1));
     const push = Math.sin(t * 5) * 3;
     arrow(ctx, ex + Math.cos(a) * push, ey + Math.sin(a) * push, a, 1);

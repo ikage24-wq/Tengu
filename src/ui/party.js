@@ -95,6 +95,8 @@ export function drawMenu(ui, state, world) {
   const h = 18 + items.length * 17;
   const x = Math.min(m.x, 640 - w - 4);
   const y = Math.min(m.y, 326 - h);
+  // (Kept for the manager, so what's under the menu doesn't take its clicks: ui/manager.js.)
+  m.box = { x, y, w, h };
   box(ctx, x, y + 3, w, h, { fill: 'rgba(90,50,120,0.18)', edge: null, r: 8 });
   box(ctx, x, y, w, h, { fill: '#fffaf6', edge: th.dark, r: 8, width: 1.5 });
   const title = bot ? `${bot.name} · Lv ${bot.level}` : world.char.name;

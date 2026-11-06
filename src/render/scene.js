@@ -148,8 +148,24 @@ export function playerPose(world) {
   return { pose: 'idle' };
 }
 
+// The name tags the townsfolk wore this frame (on screen), so yours never lands on top of one.
+let npcTags = [];
+
+// Where your own name tag goes: under your feet, or a row lower when you stand on someone and
+// your tag would cover theirs (so "Kestrel" never reads "Pip strel"). Returns how far it drops.
+export function tagDrop(x, y, w, tags = npcTags) {
+  let top = y + 2;
+  for (let k = 0; k < 3; k++) {
+    const hit = tags.find((t) => x + w / 2 > t.x && x - w / 2 < t.x + t.w && top + 10 > t.y && top < t.y + t.h);
+    if (!hit) break;
+    top = hit.y + hit.h + 1;
+  }
+  return top - (y + 2);
+}
+
 function drawNpcs(ctx, world, cam, time) {
   const near = nearbyNpc(world);
+  npcTags = [];
   for (const n of world.map.npcs) {
     // (Out on a date with you, they're at your side instead.)
     if (world.date?.id === n.id) continue;
@@ -200,6 +216,7 @@ function drawNpcs(ctx, world, cam, time) {
     const hovered = world.hoverNpc === n.id;
     box(ctx, x - w / 2, y + 2, w, 11, { fill: hovered ? COLORS.accent : 'rgba(90,63,122,0.75)', edge: hovered ? '#ffffff' : null, r: 5 });
     text(ctx, label, x, y + 10, { size: 8, bold: true, align: 'center', color: '#ffffff' });
+    npcTags.push({ x: x - w / 2, y: y + 2, w, h: 11 });
     if (hovered && near?.id !== n.id) {
       box(ctx, x - 28, y - 70, 56, 12, { fill: '#ffffff', edge: COLORS.accent, r: 6 });
       text(ctx, 'Click to talk', x, y - 61, { size: 7.5, bold: true, align: 'center', color: COLORS.accent });
@@ -484,12 +501,17 @@ export function drawWorld(ctx, world, viewCam, time) {
     const label = world.char.name;
     const w = ctx.measureText(label).width + 10;
     const hot = world.hoverSelf;
+    // (Standing on someone, yours sits under their tag instead of over it, easing down and back.)
+    const drop = tagDrop(hx, hy, w);
+    feel.tagDrop = (feel.tagDrop ?? 0) + (drop - (feel.tagDrop ?? 0)) * Math.min(1, dt * 14);
+    if (Math.abs(feel.tagDrop - drop) < 0.3) feel.tagDrop = drop;
+    const ty = hy + Math.round(feel.tagDrop);
     ctx.save();
     ctx.globalAlpha *= tagFade(hx, hy);
-    box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
-    text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    box(ctx, hx - w / 2, ty + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
+    text(ctx, label, hx, ty + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
     // Your title under it, if you wear one (earned in the story: core/quests.js).
-    if (world.char.title) text(ctx, world.char.title, hx, hy + 19, { size: 6, bold: true, align: 'center', color: '#ffe9a8', shadow: true });
+    if (world.char.title) text(ctx, world.char.title, hx, ty + 19, { size: 6, bold: true, align: 'center', color: '#ffe9a8', shadow: true });
     ctx.restore();
     // Your guild, like everyone else's, under that.
   }

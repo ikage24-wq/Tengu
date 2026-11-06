@@ -232,6 +232,35 @@ function inside(win, m) {
   return win.open && win.w && m.x >= win.x && m.x < win.x + win.w && m.y >= win.y && m.y < win.y + win.h;
 }
 
+// The fainted card (ui/npc.js deathWindow: 230 x 112 at y 100, its cracked heart bobbing above).
+const DEATH_CARD = { x: 205, y: 82, w: 230, h: 130 };
+
+// Whether the mouse is over a window or dialog, which are drawn on top of the HUD, the guide and
+// the quest cards: a click there is theirs, never what's under them.
+export function overWindow(state, m) {
+  // (The emote wheel dims and covers the whole screen; the right-click menu covers its box.)
+  if (state.emotes) return true;
+  const mb = state.menu?.box;
+  if (mb && m.x >= mb.x && m.x < mb.x + mb.w && m.y >= mb.y && m.y < mb.y + mb.h) return true;
+  if (state.order.some((k) => inside(state.windows[k], m))) return true;
+  if (state.npc && inside(state.windows.npc, m)) return true;
+  return Boolean(state.death) && m.x >= DEATH_CARD.x && m.x < DEATH_CARD.x + DEATH_CARD.w && m.y >= DEATH_CARD.y && m.y < DEATH_CARD.y + DEATH_CARD.h;
+}
+
+// Draws something that sits under the windows: with `covered` it never sees the click, right
+// click, double click or wheel (they're left for the window on top).
+export function underWindows(ui, covered, draw) {
+  if (!covered) return draw();
+  const m = ui.mouse;
+  const saved = { clicked: m.clicked, right: m.right, double: m.double, wheel: m.wheel };
+  Object.assign(m, { clicked: false, right: false, double: false, wheel: 0 });
+  try {
+    return draw();
+  } finally {
+    Object.assign(m, saved);
+  }
+}
+
 // How much the world dims behind what's open: most for dialogs that take over the controls,
 // a little for the big menus, a touch for the everyday windows you keep open while playing.
 const DIM = { npc: 0.2, death: 0.22, options: 0.14, cashshop: 0.14, pet: 0.1, online: 0.1, collection: 0.12, worldmap: 0.12, profile: 0.1, bag: 0.08, skills: 0.08, stats: 0.06, quests: 0.06, life: 0.06 };
@@ -306,26 +335,34 @@ export function drawUi(ui, state, world) {
     return;
   }
   dimWorld(ui.ctx, state);
-  drawPings(ui, state, world);
-  drawHud(ui, state, world);
-  // The guide arrow and pill, while a route is set.
-  drawGuide(ui, state, world);
-  // Quest moments: taking one, an objective filling, a quest ready, the reward card.
-  drawQuestFx(ui, state, world);
-  drawPartyPanel(ui, state, world);
-  drawPartyQuestCard(ui, state, world);
-  drawChatBar(ui, state.chat, world);
+  const m = ui.mouse;
+  // Everything up to the windows is drawn under them, so it only gets a click the windows and
+  // dialogs on top leave alone (a reward card never eats a double-click meant for the bag).
+  // While the layout editor is open there are no windows: the HUD has the mouse.
+  const covered = !editingLayout() && overWindow(state, m);
+  underWindows(ui, covered, () => {
+    drawPings(ui, state, world);
+    drawHud(ui, state, world);
+    // The guide arrow and pill, while a route is set.
+    drawGuide(ui, state, world);
+    // Quest moments: taking one, an objective filling, a quest ready, the reward card.
+    drawQuestFx(ui, state, world);
+    drawPartyPanel(ui, state, world);
+    drawPartyQuestCard(ui, state, world);
+    drawChatBar(ui, state.chat, world);
+  });
   // Editing the layout: the HUD under the editor, no windows.
   if (editingLayout()) {
     drawLayoutEditor(ui);
     return;
   }
-  // A date in progress (ui/dates.js): its card and its moments.
-  drawDateHud(ui, world);
-  // Decorating your island, under the windows; and its button while you're at home.
-  drawDecorate(ui, state, world);
-  if (canDecorate(world) && !decorating(state) && !state.npc && button(ui, VW - 84, 50, 76, 17, 'Decorate (Y)', { size: 7, primary: true, iconName: 'hammer' })) toggleDecorate(state, world);
-  const m = ui.mouse;
+  underWindows(ui, covered, () => {
+    // A date in progress (ui/dates.js): its card and its moments.
+    drawDateHud(ui, world);
+    // Decorating your island, under the windows; and its button while you're at home.
+    drawDecorate(ui, state, world);
+    if (canDecorate(world) && !decorating(state) && !state.npc && button(ui, VW - 84, 50, 76, 17, 'Decorate (Y)', { size: 7, primary: true, iconName: 'hammer' })) toggleDecorate(state, world);
+  });
   const t = performance.now() / 1000;
   // A window that just opened (by hotkey, menu button, or anything else) comes to the front, so
   // it's never stuck behind one you used earlier.

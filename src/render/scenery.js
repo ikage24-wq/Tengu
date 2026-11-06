@@ -4590,9 +4590,26 @@ function drawHomestone(ctx, x, y, time, seed) {
   ctx.restore();
 }
 
+// Where a portal's sign sits along the view: `w` wide, over a gate at `x` on screen, in a view
+// `width` wide. It's centred over its gate, but by a gate near the edge of the view it slides in to
+// stay whole on screen (SIGN_MARGIN clear of the edge) and grows a little tail at `tip`, pointing
+// down at the gate (`lean` grows the tail in as it slides, so nothing pops). It never hangs cut
+// off at the edge: as the gate itself goes out of view, the sign fades out (`alpha`) in place.
+const SIGN_MARGIN = 4;
+const SIGN_TAIL = 10;
+const GATE_HALF = 30;
+export function signSpot(x, w, width = Infinity) {
+  const centred = Math.round(x - w / 2);
+  const bx = Math.round(Math.min(Math.max(x - w / 2, SIGN_MARGIN), width - SIGN_MARGIN - w));
+  const lean = Math.min(1, Math.abs(bx - centred) / 8);
+  const tip = Math.min(Math.max(x, bx + SIGN_TAIL), bx + w - SIGN_TAIL);
+  const shown = Math.min(1, Math.max(0, Math.min(x + GATE_HALF, width + GATE_HALF - x) / GATE_HALF));
+  return { bx, lean, tip, alpha: shown * shown * (3 - 2 * shown) };
+}
+
 // Each portal's sign: where it goes, that place's level range (or that it's a town), and an
 // arrow pointing the way out. The portal on your guided route glows pink with a star.
-function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
+function drawPortals(ctx, map, cam, time, nearId, routeId = null, width = Infinity) {
   for (const p of map.portals) {
     if (p.hidden) continue;
     const x = p.x - cam.x;
@@ -4605,7 +4622,7 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
     const top = p.homestone ? 62 : p.door ? 78 : 94;
     const dest = MAPS[p.to];
     const name = p.label ?? dest?.name;
-    if (name) {
+    if (name && x > -GATE_HALF && x < width + GATE_HALF) {
       const onRoute = p.id === routeId;
       const lv = dest && !dest.dungeon && !p.door && !dest.home ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
       const out = p.x < 200 ? -1 : p.x > map.width - 200 ? 1 : 0;
@@ -4614,14 +4631,30 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       const lw = lv ? ctx.measureText(lv).width + 5 : 0;
       const w = nw + lw + 10 + (out ? 7 : 0) + (onRoute ? 8 : 0);
-      const bx = Math.round(x - w / 2);
+      const { bx, lean, tip, alpha } = signSpot(x, w, width);
       const by = Math.round(y - top - (onRoute ? Math.abs(Math.sin(time * 4)) * 2 : 0));
+      ctx.save();
+      ctx.globalAlpha *= alpha;
       ctx.fillStyle = onRoute ? '#ff6b9a' : 'rgba(255,255,255,0.92)';
       roundRect(ctx, bx, by, w, 12, 6);
       ctx.fill();
       ctx.strokeStyle = onRoute ? '#ffffff' : '#b9a7ff';
       ctx.lineWidth = 1;
       ctx.stroke();
+      // Slid in from the edge: a little tail under it, pointing down at its gate.
+      if (lean > 0) {
+        const k = lean * lean * (3 - 2 * lean);
+        ctx.beginPath();
+        ctx.moveTo(tip - 3.5 * k, by + 11.5);
+        ctx.lineTo(tip, by + 12 + 4.5 * k);
+        ctx.lineTo(tip + 3.5 * k, by + 11.5);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(tip - 3.5 * k, by + 12);
+        ctx.lineTo(tip, by + 12 + 4.5 * k);
+        ctx.lineTo(tip + 3.5 * k, by + 12);
+        ctx.stroke();
+      }
       let tx = bx + 5;
       // The arrow toward the edge it leads off.
       if (out < 0) {
@@ -4654,6 +4687,7 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
         ctx.lineTo(ax, by + 9);
         ctx.fill();
       }
+      ctx.restore();
     }
     if (p.id === nearId) {
       const bob = Math.sin(time * 6) * 2;
@@ -5196,7 +5230,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawProps(ctx, t, map, cam, width, time);
   drawRopes(ctx, map, cam);
   drawMovers(ctx, map, cam, width, height, time);
-  drawPortals(ctx, map, cam, time, nearPortalId, routePortalId);
+  drawPortals(ctx, map, cam, time, nearPortalId, routePortalId, width);
   drawCritters(ctx, t, map, cam, width, height, time);
   drawDrift(ctx, t, cam, width, height, time);
 }

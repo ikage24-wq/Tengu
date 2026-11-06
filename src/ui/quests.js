@@ -32,7 +32,8 @@ const objName = (o) => {
   return errand(o) ? `${verb} ${name}` : name;
 };
 const giverName = (q) => NPCS[q.giver]?.name ?? '';
-const giverPlace = (q) => MAPS[npcMap(q.giver)]?.name ?? '';
+// (Someone on several maps, like Kuro along the tutorial isle: the one nearest where you are.)
+const giverPlace = (q, char = null) => MAPS[npcMap(q.giver, char?.mapId ?? null)]?.name ?? '';
 
 // How far along a quest is (0..1), across all its objectives.
 function progressOf(char, id) {
@@ -175,7 +176,7 @@ function listRow(ui, char, id, x, y, w, on, th) {
   else if (st === 'active') {
     const o = objectiveProgress(char, id).find((x) => x.have < x.count);
     sub = o ? (errand(o) ? objName(o) : `${objName(o)} ${o.have}/${o.count}`) : `${Math.round(progressOf(char, id) * 100)}%`;
-  } else if (st === 'available') sub = q.story ? `Chapter ${q.chapter} · ${giverName(q)}` : `${giverName(q)}, ${giverPlace(q)}`;
+  } else if (st === 'available') sub = q.story ? `Chapter ${q.chapter} · ${giverName(q)}` : `${giverName(q)}, ${giverPlace(q, char)}`;
   else if (st === 'locked') sub = `Opens at Lv ${q.minLevel}`;
   else sub = giverName(q);
   text(ctx, fit(ctx, sub, w - 26, 6.5, false), x + 21, y + 19, { size: 6.5, color: ready ? COLORS.good : COLORS.muted, bold: ready });
@@ -220,7 +221,7 @@ function details(ui, char, id, x0, y0, w0, h0, th, world = null) {
   text(ctx, `Lv ${q.minLevel}`, x + w - 14, y + 0.5, { size: 6.5, bold: true, align: 'center', color: lvOk ? th.ink : COLORS.bad });
   y += 11;
   icon(ctx, 'user', x + 3, y - 2.5, 7, COLORS.muted);
-  text(ctx, fit(ctx, `${giverName(q)}, ${giverPlace(q)}`, w - 10, 6.5, false), x + 9, y, { role: 'minor' });
+  text(ctx, fit(ctx, `${giverName(q)}, ${giverPlace(q, char)}`, w - 10, 6.5, false), x + 9, y, { role: 'minor' });
 
   // The story, as the giver told it.
   y = wrap(ctx, q.text, x, y + 11, w, { size: 6.8, color: '#7a6296', lineHeight: 8.6 }) + 2;
@@ -275,10 +276,10 @@ function details(ui, char, id, x0, y0, w0, h0, th, world = null) {
   let note;
   let color = COLORS.muted;
   if (st === 'ready') {
-    note = `Report to ${giverName(q)} in ${giverPlace(q)}!`;
+    note = `Report to ${giverName(q)} in ${giverPlace(q, char)}!`;
     color = GREEN;
   } else if (st === 'active') note = `${Math.round(progressOf(char, id) * 100)}% done`;
-  else if (st === 'available') note = `Talk to ${giverName(q)} in ${giverPlace(q)} to start.`;
+  else if (st === 'available') note = `Talk to ${giverName(q)} in ${giverPlace(q, char)} to start.`;
   else if (st === 'locked') note = `Reach Lv ${q.minLevel} to start.`;
   else {
     note = 'Completed!';

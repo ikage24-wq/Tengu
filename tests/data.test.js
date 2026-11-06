@@ -176,6 +176,21 @@ test('NPCs wear real gear, and shops list their job-gear levels apart from it', 
   }
 });
 
+test('every job can buy a new weapon of each of its kinds every 5 levels, with no gap, up to the top of the shops', async () => {
+  const { shopStock } = await import('../src/data/npcs.js');
+  for (const job of Object.values(JOBS).filter((j) => j.tier === 1 || j.tier === 2)) {
+    const char = createCharacter('Shopper', {});
+    char.job = job.id;
+    const sold = Object.values(NPCS).filter((n) => n.shop).flatMap((n) => shopStock(n, char));
+    for (const kind of job.weapons) {
+      const levels = new Set(sold.filter((id) => ITEMS[id].slot === 'weapon' && ITEMS[id].weaponType === kind).map((id) => ITEMS[id].reqLevel));
+      const top = Math.max(...levels);
+      assert.ok(top >= 30, `${job.name}: ${kind}s are sold past level 30`);
+      for (let lv = 0; lv <= top; lv += 5) assert.ok(levels.has(lv), `${job.name}: a level ${lv} ${kind} is sold somewhere (sold: ${[...levels].sort((a, b) => a - b).join(', ')})`);
+    }
+  }
+});
+
 test('every quest giver stands somewhere and every objective says where to go', () => {
   for (const q of Object.values(QUESTS)) {
     assert.ok(npcMap(q.giver), `${q.id}: giver ${q.giver} is on no map`);
