@@ -28,6 +28,16 @@ Everything works the same with online friends (net/together.js, online.js) and w
 members (world/party.js), so a solo player gets the full co-op game with bots. Bot chat follows the
 chat gate (CLAUDE.md). Bots never take life spots from the player.
 
+Online parties (net/together.js): the leader invites (or a friend asks to join and the leader lets
+them in); everyone keeps the leader's list. If the leader leaves the room, the next member in the
+list leads and the party carries on. A monster's EXP and quest credit go to whoever fought it and to
+the killer's party on the map (a party share; party friends there also count toward the party
+bonus, like bot members); a stranger's kill in the same room is only theirs. A friend who joins
+picks up the party quest the party is on. Invites and requests nobody answers lapse after 45 s and
+clear at once if the asker leaves; a trade with someone who leaves is called off. Party chat
+reaches you in dungeons too. A friend's run whose leader leaves (or a room that closes mid-run)
+sends you back to the gate. `tests/party-online.test.js` checks the party's word between games.
+
 Built in two waves: (1) team moves, easy grouping, co-op life skills; (2) co-op content, smarter
 bots and bots filling co-op, bot personalities and real-player feel. Each part is shown to the
 player before it is merged.

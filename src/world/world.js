@@ -552,7 +552,9 @@ export function killMob(world, m, byParty = false) {
   // (A GM's Double EXP counts too: world/events.js.)
   // (A calm map pays a little more: world/calm.js.)
   const calm = soothes(world.map) && isCalm(world, world.map.id) ? CALM_EXP : 0;
-  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food + calm) * (world.expEvent ?? 1));
+  // (Party friends online on the map count toward the party bonus, like party members do.)
+  const party = (world.partySize ?? 0) + (world.net?.teamFriends?.(world)?.length ?? 0);
+  const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * Math.min(5, party)) * (1 + food + calm) * (world.expEvent ?? 1));
   const levels = gainExp(char, exp);
   world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);

@@ -587,6 +587,8 @@ function engage(world, m, by = null) {
       if (!run.met[m.def.mech]) {
         run.met[m.def.mech] = true;
         playScene(world, `${run.id}_${m.def.mech}`);
+        // Leading a run with friends: they watch it with you.
+        if (leading(world)) world.net.runAll(world, { op: 'scene', scene: `${run.id}_${m.def.mech}`, mech: m.def.mech });
       }
     }
   }

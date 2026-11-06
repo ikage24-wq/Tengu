@@ -15,6 +15,9 @@ import { createAnim } from '../render/animator.js';
 import { setRunHandler } from './together.js';
 import { followerHurt, runHeal, followerRevive, followerWiped, leaderAct, joinRun } from '../world/dungeon.js';
 import { coopShared, applyCoopShared } from '../world/coopboss.js';
+import { playScene } from '../world/story.js';
+import { skipScene } from '../world/director.js';
+import { leaderOf } from './together.js';
 
 const ROOM_EVERY = 0.25;
 const BOTS_EVERY = 1 / 15;
@@ -23,11 +26,13 @@ export const inShared = (world) => Boolean(world?.dungeon?.shared);
 export const leads = (world) => inShared(world) && world.dungeon.shared.leader === online.id;
 const follows = (world) => inShared(world) && !leads(world);
 
-// Friends who'd come along: at the same gate, with a job (role) of their own (in a party, only
-// your party's friends).
+// Friends who'd come along: at the same gate, with a job (role) of their own, and free to (not
+// watching a scene). In a party, only your party's friends; out of one, only friends who aren't in
+// a party of their own.
 export function friendsAtGate(world) {
   if (online.status !== 'on') return [];
-  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.job && roleOf(g.job, JOBS[g.job]?.family) && (!online.party || online.party.members.includes(g.id)));
+  const ours = (g) => (online.party ? online.party.members.includes(g.id) : leaderOf(g.id) === g.id);
+  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.job && roleOf(g.job, JOBS[g.job]?.family) && !g.scene && !g.dead && ours(g));
 }
 
 // Tells the friends in the group the run has started (the leader's startRun calls it).
@@ -116,7 +121,8 @@ function onRun(world, msg, g) {
     case 'start':
       return joinShared(world, msg);
     case 'hurt':
-      if (follows(world)) followerHurt(world, msg);
+      // (Watching the run's scene, nothing reaches you.)
+      if (follows(world) && !world.scene) followerHurt(world, msg);
       return;
     case 'heal':
       if (inShared(world)) runHeal(world, msg);
@@ -134,7 +140,7 @@ function onRun(world, msg, g) {
       if (follows(world) && msg.map === world.map.id && run?.room) applyRoom(world, msg);
       return;
     case 'zone':
-      if (follows(world) && msg.map === world.map.id) {
+      if (follows(world) && msg.map === world.map.id && !world.scene) {
         const from = msg.z.from ? world.mobs.find((m) => m.net === msg.z.from) ?? null : null;
         run.zones.push({ ...msg.z, from, t: 0, hit: false, after: 0 });
       }
@@ -144,6 +150,14 @@ function onRun(world, msg, g) {
       return;
     case 'coop':
       if (follows(world) && msg.map === world.map.id) applyCoopShared(world, msg);
+      return;
+    // The leader's game plays one of the run's scenes (a boss making its entrance): the whole
+    // group watches it together.
+    case 'scene':
+      if (follows(world) && msg.map === world.map.id && !world.scene && msg.scene) {
+        (run.met ??= {})[msg.mech] = true;
+        playScene(world, msg.scene);
+      }
       return;
     // From a friend, to the leader: their taunts, hooks, heals, buffs and room tasks.
     case 'provoke':
@@ -159,10 +173,13 @@ function onRun(world, msg, g) {
 // A friend started the run with you in it: you go in with them.
 function joinShared(world, msg) {
   if (world.dungeon || MAPS[world.map.id].dungeon) return;
+  // (A scene still playing finishes at once: the group is going in.)
+  if (world.scene) skipScene(world);
   // The leader's roles, seen from here: the leader by their id, you as 'you'.
   const roles = {};
   for (const [k, v] of Object.entries(msg.roles)) roles[k === 'you' ? msg.leader : k === online.id ? 'you' : k] = v;
   joinRun(world, { ...msg, roles });
+  if (world.dungeon?.shared) world.dungeon.shared.leaderName = msg.name;
   world.log(`${msg.name} formed a group for ${DUNGEONS[msg.dungeon].name}: you're the ${ROLES[roles.you]?.label ?? 'DPS'}!`, '#ffe36b');
 }
 

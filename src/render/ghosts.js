@@ -26,6 +26,8 @@ export function drawGhosts(ctx, world, cam, width, time) {
   // Friends here, and in a friend's dungeon run, the bots of their group.
   const dt = time - (drawGhosts.at ?? time);
   drawGhosts.at = time;
+  // Your own scene is yours alone: the friends around you step out of it while it plays.
+  if (world.scene) return;
   for (const g of [...othersHere(world), ...botsHere(world, dt)]) {
     if (!g.look) continue;
     const b = g.body;
@@ -64,8 +66,28 @@ export function drawGhosts(ctx, world, cam, width, time) {
       if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time, tip);
     }
     nameTag(ctx, g, x, y, time);
-    if (g.bubble && settings.chatBubbles) drawBubble(ctx, x, y - 62, g.bubble.text, Math.min(1, g.bubble.t * 2));
+    // A friend watching a scene of their own: a little note says why they've gone still.
+    g.sceneA = Math.max(0, Math.min(1, (g.sceneA ?? 0) + (g.scene ? dt : -dt) * 4));
+    if (g.sceneA > 0 && !g.dead) sceneNote(ctx, x, y - 64 - (g.ride ? 14 : 0), time, g.sceneA);
+    else if (g.bubble && settings.chatBubbles) drawBubble(ctx, x, y - 62, g.bubble.text, Math.min(1, g.bubble.t * 2));
   }
+}
+
+// "Watching a scene", in a soft lilac pill over their head, its dots running like a reel, bobbing
+// gently; it fades in and out with the scene (eased).
+function sceneNote(ctx, x, y, time, a) {
+  const u = a * a * (3 - 2 * a);
+  ctx.save();
+  ctx.globalAlpha *= u;
+  const by = y + Math.sin(time * 2.4) * 1.2 + (1 - u) * 4;
+  box(ctx, x - 34, by - 7, 68, 12, { fill: 'rgba(120,96,170,0.88)', edge: '#e8dcff', r: 6, width: 1 });
+  text(ctx, 'in a scene', x - 6, by + 2, { size: 6.5, bold: true, align: 'center', color: '#ffffff' });
+  for (let k = 0; k < 3; k++) {
+    const on = 0.5 + 0.5 * Math.sin(time * 5 - k * 0.9);
+    ctx.globalAlpha = u * (0.35 + 0.65 * on);
+    sparkle(ctx, x + 18 + k * 5, by - 1, 1.2 + on * 0.6, '#ffffff');
+  }
+  ctx.restore();
 }
 
 // A sky-blue tag with a twinkling star: a real friend, not one of the townsfolk.

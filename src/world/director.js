@@ -528,6 +528,12 @@ export function tickCine(world, dt, { skip = false } = {}) {
   }
   // The scene's own clock, for its monsters' moves (the world's is paused).
   c.clock = (c.clock ?? 0) + dt;
+  // Damage numbers and effects already on screen when the scene began play out and fade as usual,
+  // instead of hanging frozen over it.
+  for (const n of world.numbers ?? []) n.t += dt;
+  if (world.numbers) world.numbers = world.numbers.filter((n) => n.t < 1.1);
+  for (const f of world.fx ?? []) if (f.t >= 0) f.t += dt;
+  if (world.fx) world.fx = world.fx.filter((f) => f.t < f.dur);
   // A monster that had only just appeared when the scene froze the world finishes appearing.
   for (const m of world.mobs ?? []) if (m.age < 0.3) m.age = Math.min(0.3, m.age + dt);
   for (const e of c.emotes) e.t += dt;

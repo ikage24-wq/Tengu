@@ -18,6 +18,7 @@ import { handleTogether, togetherApi, tickParty } from './together.js';
 import { runApi, friendsAtGate, startShared } from './dungeonrun.js';
 import { noteHit } from '../world/dungeon.js';
 import { coopHit, coopShared } from '../world/coopboss.js';
+import { leaveDungeon } from '../world/dungeon.js';
 
 export const ROOM_MAX = 4;
 const SEND_EVERY = 1 / 20;
@@ -25,6 +26,8 @@ const MOBS_EVERY = 1 / 10;
 const COOP_EVERY = 1 / 5;
 const PROFILE_EVERY = 1.5;
 const GONE_AFTER = 10;
+// A shared run whose leader has gone quiet this long is over for the friends following it.
+const LEADER_LOST = 6;
 
 // The one session for this tab (a player is in at most one room).
 export const online = {
@@ -55,6 +58,15 @@ const inMyRun = (world, g) => !world.dungeon?.shared || Boolean(world.dungeon.ro
 
 function reset() {
   const w = online.world;
+  // Out of the room mid-way through a friend's dungeon run: that run is gone, so back to its gate.
+  // Leading one, it carries on as your own.
+  const run = w?.dungeon?.shared;
+  if (run && run.leader !== online.id) {
+    w.mirror = null;
+    w.net = null;
+    leaveDungeon(w);
+    w.log("Your group's run ended when the room closed. Back at the gate.", '#d4cbe8');
+  } else if (run) delete w.dungeon.shared;
   // Back on your own: the monsters you were shown become yours.
   if (w?.mirror?.endsWith(`@${w.map.id}`)) adopt(w);
   if (w) w.mirror = null;
@@ -72,6 +84,10 @@ function reset() {
   online.joinAsk = online.joinAsked = null;
   online.rosters = null;
   online.trade = null;
+  online.tradeAsk = online.tradeAsked = null;
+  online.sailWait = null;
+  online.left = new Set();
+  online.botGhosts = null;
   if (online.world) online.world.net = null;
 }
 
@@ -127,6 +143,7 @@ function handlers(first) {
       if (!online.host || joined) return;
       // A guest dropped out.
       const g = online.ghosts.get(id);
+      (online.left ??= new Set()).add(id);
       online.order = online.order.filter((o) => o !== id);
       online.ghosts.delete(id);
       if (g) w().log(`${g.name} left the room.`, '#d4cbe8');
@@ -161,7 +178,8 @@ const api = {
     let best = world.body;
     let d = Math.abs(world.body.x - m.x) + (world.dead ? 1e6 : 0);
     for (const g of othersHere(world)) {
-      if (g.dead) continue;
+      // (A friend watching a scene stands outside the fight for it.)
+      if (g.dead || g.scene) continue;
       const e = Math.abs(g.body.x - m.x) + Math.abs(g.body.y - m.y) * 0.5;
       if (e < d) {
         d = e;
@@ -250,7 +268,8 @@ export function tickNet(world, dt) {
     sendMe(world);
   }
   fullApi().runTick(world, dt);
-  tickParty(world);
+  tickParty(world, dt);
+  tickLeaderLost(world, dt);
   if (online.mobsIn <= 0 && online.claim === world.map.id && othersHere(world).length) {
     online.mobsIn = MOBS_EVERY;
     sendMobs(world);
@@ -294,19 +313,26 @@ function updateClaim(world) {
     online.claim = null;
     return;
   }
+  // Watching a scene, your game's clock stands still, so the map's monsters would freeze for
+  // everyone: a friend here who isn't watching one takes them over until you're back. (The
+  // monsters on your own screen stay as they are, so the scene's stage doesn't change under it.)
+  if (world.scene) {
+    if (online.claim === map && othersHere(world).some((g) => !g.scene)) online.claim = null;
+    return;
+  }
   const rank = (id) => {
     const i = online.order.indexOf(id);
     return i < 0 ? 99 : i;
   };
-  const rival = othersHere(world).find((g) => g.claim === map);
+  const rival = othersHere(world).find((g) => g.claim === map && !g.scene);
   const owner = online.claim === map;
   if (rival && (!owner || rank(rival.id) < rank(online.id))) {
     const key = rival.id + here;
     if (world.mirror !== key) {
-      // Someone else runs these monsters: drop the ones this game was running (keeping those
-      // already shown from a player who ran them before).
-      const keep = world.mirror?.endsWith(here);
-      world.mobs = keep ? world.mobs.filter((m) => m.net && !m.net.startsWith(`${online.id}:`)) : [];
+      // Someone else runs these monsters: keep the ones they've been told about (theirs now, if
+      // they took this game's over while you watched a scene), and the next word from them sorts
+      // out the rest; drop the ones no one else knows.
+      world.mobs = world.mobs.filter((m) => m.net);
       world.mirror = key;
     }
     online.claim = null;
@@ -317,6 +343,19 @@ function updateClaim(world) {
     world.mirror = null;
     online.claim = map;
   }
+}
+
+// Following a friend's run whose leader has gone (dropped out, or quiet a long while): the run is
+// over, back to the gate.
+function tickLeaderLost(world, dt) {
+  const run = world.dungeon?.shared;
+  if (!run || run.leader === online.id) return;
+  run.lost = online.ghosts.has(run.leader) ? 0 : (run.lost ?? 0) + dt;
+  if (run.lost < LEADER_LOST || world.scene) return;
+  const name = run.leaderName ?? 'Your leader';
+  world.mirror = null;
+  leaveDungeon(world);
+  world.log(`${name} left the room, so the group's run is over. Back at the gate.`, '#d4cbe8');
 }
 
 // Taking over a map's monsters from a player who left it: the monsters on screen become this
@@ -356,6 +395,8 @@ function sendMe(world) {
     hp: c.hp, mhp: world.stats.maxHp,
     gauge, gk: gauge ? (inForm(world) ? 1 : (world[gauge] ?? 0) / 100) : 0, form: inForm(world),
     buffs, emote: world.emote?.face ?? null,
+    // Watching a scene: friends see you're busy, and the monsters leave you be.
+    sc: Boolean(world.scene),
     // Riding (world/mount.js): which mount, and its trick right now, so friends see it move.
     // Whose island you're on (net/visit.js), so only the others on that same island see you.
     home: world.map.home ? world.visiting?.ownerId ?? online.id : null,
@@ -428,6 +469,8 @@ function ghostOf(id) {
 
 function receive(world, msg) {
   if (!msg?.id || msg.id === online.id) return;
+  // (A last word from someone already gone, passed on late, doesn't bring them back.)
+  if (online.left?.has(msg.id) && msg.t !== 'hi') return;
   switch (msg.t) {
     case 'hi': {
       if (!online.host) return;
@@ -451,6 +494,7 @@ function receive(world, msg) {
       const before = new Set(online.order);
       online.order = msg.order;
       if (msg.gone) {
+        (online.left ??= new Set()).add(msg.gone);
         const g = online.ghosts.get(msg.gone);
         if (g) world.log(`${g.name} left the room.`, '#d4cbe8');
         online.ghosts.delete(msg.gone);
@@ -459,6 +503,7 @@ function receive(world, msg) {
       return;
     }
     case 'bye': {
+      (online.left ??= new Set()).add(msg.id);
       const g = online.ghosts.get(msg.id);
       online.ghosts.delete(msg.id);
       online.order = online.order.filter((o) => o !== msg.id);
@@ -516,12 +561,16 @@ function onMe(world, msg) {
   g.gk = msg.gk;
   g.form = msg.form;
   g.emote = msg.emote;
+  g.scene = Boolean(msg.sc);
   g.fish = msg.fish ?? null;
   g.ride = msg.ride ?? null;
   g.home = msg.home ?? null;
   g.buffs = {};
   for (const [id, b] of Object.entries(msg.buffs ?? {})) g.buffs[id] = { ...b, until: world.now + b.until };
   if (msg.map !== world.map.id || solo(world)) return;
+  // Watching a scene of your own, the stage is yours alone: friends' blows and numbers don't land
+  // in it (they'd hang there, frozen with the world).
+  if (world.scene) return;
   for (const f of msg.fx ?? []) {
     reviveFx(world, f);
     f._remote = true;
@@ -552,11 +601,13 @@ function slamHere(world, f) {
   const b = world.body;
   const m = world.mobs.find((o) => Math.abs(o.x - f.x) < 4 && o.def.special);
   const onFloor = b.onGround && b.surface?.ground;
-  if (m && onFloor && Math.abs(b.x - f.x) < (f.range ?? 0) && !world.dead) hurtPlayer(world, m.def.special.damage, f.x);
+  if (m && onFloor && Math.abs(b.x - f.x) < (f.range ?? 0) && !world.dead && !world.scene) hurtPlayer(world, m.def.special.damage, f.x);
 }
 
 function onMobs(world, msg) {
   if (msg.map !== world.map.id || solo(world) || online.claim === world.map.id) return;
+  // (In a scene the monsters on stage stay put; they catch up the moment it ends.)
+  if (world.scene) return;
   if (world.mirror !== `${msg.id}@${world.map.id}`) return;
   const mine = new Map(world.mobs.filter((m) => m.net).map((m) => [m.net, m]));
   const now = world.now;
@@ -593,8 +644,12 @@ function onMobs(world, msg) {
       const fell = m.hp > 0 && hp <= 0;
       m.hp = hp;
       if (hp <= 0) m.dying = Math.max(m.dying, dying);
-      // It fell to a blow from someone else: if you hit it too, it's your kill as well.
-      if (fell && m.mine && !m.credited) killMob(world, m);
+      // It fell to a blow from someone else: if you hit it too, it's your kill as well. (Their game
+      // counts it for a shared party quest, so this one doesn't count it twice.)
+      if (fell && m.mine && !m.credited) {
+        m.byNet = true;
+        killMob(world, m);
+      }
     }
     next.push(m);
   }
@@ -605,6 +660,9 @@ function onMobs(world, msg) {
 
 function onHit(world, msg) {
   if (msg.map !== world.map.id || online.claim !== world.map.id) return;
+  // Leading a run and watching its scene (a boss making its entrance): no one lands a blow on the
+  // stage while it plays.
+  if (world.scene && world.dungeon?.shared) return;
   const m = world.mobs.find((o) => netId(o) === msg.mob);
   if (!m || m.hp <= 0) return;
   // The same hit the player saw land in their own game: knockback, launch, holds and burns. In a
@@ -630,13 +688,20 @@ function onDead(world, msg) {
   if (msg.map !== world.map.id || solo(world)) return;
   let m = world.mobs.find((o) => netId(o) === msg.mob || o.net === msg.mob);
   if (m?.credited) return;
+  // Its EXP and quest credit go to those who fought it, and to the killer's party on the map (in a
+  // shared dungeon run, the whole group): a stranger's kill is only a stranger's.
+  const party = Boolean(online.party?.members.includes(msg.id) || world.dungeon?.shared);
   if (!m) {
     // Already gone here: still share in it.
-    if (!MOBS[msg.def]) return;
+    if (!MOBS[msg.def] || !party) return;
     m = { def: MOBS[msg.def], x: msg.x, y: msg.y, hp: 0, dying: 0.5 };
   }
   m.hp = 0;
   m.byNet = true;
+  if (!m.mine && !party) {
+    m.credited = true;
+    return;
+  }
   // (A party friend's kill shows as theirs on your quest tracker.)
   if (online.party?.members.includes(msg.id)) m.killedByName = online.ghosts.get(msg.id)?.name ?? null;
   killMob(world, m, !m.mine);

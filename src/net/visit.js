@@ -49,7 +49,7 @@ export function onVisit(world, msg, g) {
     return;
   }
   if (msg.op === 'data' && msg.island) {
-    if (world.dungeon || world.trial || world.map.voyage) return;
+    if (world.dungeon || world.trial || world.map.voyage || world.scene) return;
     const back = world.map.home ? world.char.home?.back : { map: world.map.id, x: Math.round(world.body.x) };
     world.visiting = { ownerId: msg.id, ...msg.island };
     if (world.char.home && back) world.char.home.back = back;

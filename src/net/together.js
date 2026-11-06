@@ -21,6 +21,9 @@ import { setSail, setSailHandler, ROUTES } from '../world/voyage.js';
 // warping to them costs half.
 
 export const ONLINE_PARTY_MAX = 4;
+// An invite or a request nobody answers lapses after this long (s), so it never sits waiting.
+const ASK_LAPSES = 45;
+const clockNow = () => performance.now() / 1000;
 
 export const inParty = (id) => Boolean(online.party?.members.includes(id));
 export const partyFriends = () => (online.party ? online.party.members.filter((id) => id !== online.id).map((id) => online.ghosts.get(id)).filter(Boolean) : []);
@@ -32,6 +35,7 @@ export function partyBlocker(g) {
   if (online.party && online.party.leader !== online.id) return 'Only the leader invites';
   if ((online.party?.members.length ?? 1) >= ONLINE_PARTY_MAX) return 'Your party is full';
   if (online.partyAsked === g.id) return 'Waiting for an answer';
+  if (leaderOf(g.id) !== g.id) return 'Already in another party';
   return null;
 }
 
@@ -40,6 +44,7 @@ export function askParty(world, id) {
   const why = partyBlocker(g);
   if (why) return why;
   online.partyAsked = id;
+  online.partyAskedAt = clockNow();
   send({ t: 'party', to: id, op: 'ask', name: world.char.name });
   world.log(`You invited ${g.name} to your party.`, '#bff0dc');
   return null;
@@ -49,12 +54,24 @@ export function answerParty(world, yes) {
   const from = online.partyAsk;
   online.partyAsk = null;
   if (!from) return;
+  // (Already in a party by now: that one comes first.)
+  if (yes && online.party) {
+    send({ t: 'party', to: from, op: 'decline', busy: true });
+    world.log("You're already in a party: leave it first to join another.", '#ffb3c6');
+    return;
+  }
   send({ t: 'party', to: from, op: yes ? 'accept' : 'decline' });
 }
 
 function shareParty() {
   const p = online.party;
   send({ t: 'party', op: 'roster', leader: p.leader, members: p.members });
+}
+
+// A friend just came into your party: the party quest you're on comes with them.
+function welcome(world, id) {
+  const q = world.char.partyQuest;
+  if (q && !q.done) send({ t: 'pq', to: id, op: 'take', q });
 }
 
 // You leave (the leader's place passes to the next friend in it).
@@ -79,16 +96,49 @@ export function kickFromParty(world, id) {
   world.log(`${name} was removed from the party.`, '#d4cbe8');
 }
 
-// The leader drops friends who left the room.
+// Every frame online: asks no one answered lapse, a trade with someone who left is called off, and
+// the party drops friends who left the room. If the leader is the one who left, the next member
+// in the party's order leads it (every member works out the same one, so the party carries on).
 export function tickParty(world) {
+  const now = clockNow();
+  const gone = (id) => id && !online.ghosts.has(id);
+  if (online.partyAsked && (gone(online.partyAsked) || now - (online.partyAskedAt ?? now) > ASK_LAPSES)) online.partyAsked = null;
+  if (online.joinAsked && (gone(online.joinAsked) || now - (online.joinAskedAt ?? now) > ASK_LAPSES)) online.joinAsked = null;
+  if (gone(online.partyAsk)) online.partyAsk = null;
+  if (gone(online.joinAsk)) online.joinAsk = null;
+  if (gone(online.tradeAsk)) online.tradeAsk = null;
+  if (gone(online.tradeAsked)) online.tradeAsked = null;
+  if (online.trade && gone(online.trade.with)) {
+    online.trade = null;
+    world.log('Your trading partner left the room, so the trade was called off.', '#d4cbe8');
+  }
+  // A friend's boat that waited while you watched a scene.
+  const sail = online.sailWait;
+  if (sail && !world.scene) {
+    online.sailWait = null;
+    const g = online.ghosts.get(sail.msg.id);
+    if (g && now - sail.at < 60) onSail(world, sail.msg, g);
+  }
   const p = online.party;
-  if (!p || p.leader !== online.id) return;
+  if (!p) return;
   const here = p.members.filter((id) => id === online.id || online.ghosts.has(id));
   if (here.length === p.members.length) return;
+  const leaderLeft = !here.includes(p.leader);
+  if (p.leader !== online.id && !leaderLeft) return;
+  const was = p.leader;
   p.members = here;
-  if (here.length < 2) online.party = null;
-  else shareParty();
-  if (!online.party) send({ t: 'party', op: 'roster', leader: null, members: [], was: online.id });
+  if (leaderLeft) p.leader = here[0];
+  if (here.length < 2) {
+    online.party = null;
+    if (leaderLeft) world.log('Your party leader left the room, so the party broke up.', '#d4cbe8');
+    send({ t: 'party', op: 'roster', leader: null, members: [], was: online.id });
+    return;
+  }
+  if (leaderLeft) {
+    noteRoster({ was, leader: p.leader, members: p.members });
+    world.log(p.leader === online.id ? "Your party leader left the room: you're the leader now." : `Your party leader left the room: ${online.ghosts.get(p.leader)?.name ?? 'someone'} leads now.`, '#ffe36b');
+  }
+  if (p.leader === online.id) send({ t: 'party', op: 'roster', leader: p.leader, members: p.members, was });
 }
 
 // Every party in the room, by its leader (from the rosters everyone shares), so a friend's party
@@ -114,6 +164,7 @@ export function joinPartyBlocker(g) {
   if (inParty(g.id)) return 'Already in your party';
   if (online.party) return 'Leave your party first';
   if (online.joinAsked) return 'Waiting for an answer';
+  if (online.partyAsk === leaderOf(g.id)) return 'They invited you: answer it';
   if (partySizeOf(leaderOf(g.id)) >= ONLINE_PARTY_MAX) return 'Their party is full';
   return null;
 }
@@ -125,6 +176,7 @@ export function askJoinParty(world, id) {
   if (why) return why;
   const lead = leaderOf(id);
   online.joinAsked = lead;
+  online.joinAskedAt = clockNow();
   send({ t: 'party', to: lead, op: 'join', name: world.char.name });
   world.log(`You asked to join ${online.ghosts.get(lead)?.name ?? g.name}'s party.`, '#bff0dc');
   return null;
@@ -143,6 +195,7 @@ export function answerJoinParty(world, yes) {
   online.party ??= { leader: online.id, members: [online.id] };
   if (!inParty(from)) online.party.members.push(from);
   shareParty();
+  welcome(world, from);
   world.log(`${g.name} joined your party!`, '#bff0dc');
 }
 
@@ -152,7 +205,8 @@ function onParty(world, msg, g) {
   const p = online.party;
   switch (msg.op) {
     case 'join':
-      if ((p && p.leader !== online.id) || (p?.members.length ?? 1) >= ONLINE_PARTY_MAX) send({ t: 'party', to: msg.id, op: 'nojoin', full: true });
+      if (p && p.leader !== online.id) send({ t: 'party', to: msg.id, op: 'nojoin', lead: p.leader });
+      else if ((p?.members.length ?? 1) >= ONLINE_PARTY_MAX) send({ t: 'party', to: msg.id, op: 'nojoin', full: true });
       else {
         online.joinAsk = msg.id;
         world.log(`${msg.name} asks to join your party! Open Play with Friends (N) to answer.`, '#ffe36b');
@@ -161,7 +215,8 @@ function onParty(world, msg, g) {
     case 'nojoin':
       if (online.joinAsked !== msg.id) return;
       online.joinAsked = null;
-      world.log(msg.full ? `${g.name}'s party is full.` : `${g.name} said no to your join request.`, '#ffb3c6');
+      if (msg.lead && online.ghosts.has(msg.lead)) world.log(`${g.name} isn't leading the party any more: ask ${online.ghosts.get(msg.lead).name}.`, '#ffb3c6');
+      else world.log(msg.full ? `${g.name}'s party is full.` : `${g.name} said no to your join request.`, '#ffb3c6');
       return;
     case 'ask':
       if (p && p.leader !== msg.id) send({ t: 'party', to: msg.id, op: 'decline', busy: true });
@@ -170,16 +225,28 @@ function onParty(world, msg, g) {
         world.log(`${msg.name} invited you to their party! Open Play with Friends (N) to answer.`, '#ffe36b');
       }
       return;
-    case 'accept':
+    case 'accept': {
       if (online.partyAsked !== msg.id) return;
       online.partyAsked = null;
-      if (partyBlocker(g) && !inParty(msg.id)) return;
+      // (Things changed while they thought it over: tell them, so they aren't left waiting.)
+      const why = inParty(msg.id) ? null : partyBlocker(g);
+      if (why) {
+        send({ t: 'party', to: msg.id, op: 'gone', why });
+        world.log(`${g.name} said yes, but ${why.toLowerCase()}.`, '#ffb3c6');
+        return;
+      }
       online.party ??= { leader: online.id, members: [online.id] };
       if (!inParty(msg.id)) online.party.members.push(msg.id);
       shareParty();
+      welcome(world, msg.id);
       world.log(`${g.name} joined your party!`, '#bff0dc');
       return;
+    }
+    case 'gone':
+      if (!online.party) world.log(`${g.name}'s invite is no longer open (${String(msg.why ?? 'it lapsed').toLowerCase()}).`, '#ffb3c6');
+      return;
     case 'decline':
+      if (online.partyAsked !== msg.id) return;
       online.partyAsked = null;
       world.log(msg.busy ? `${g.name} is already in a party.` : `${g.name} declined your party invite.`, '#ffb3c6');
       return;
@@ -467,7 +534,8 @@ function onGift(world, msg, g) {
 // Sent to the room; only your party acts on them.
 
 function onPartyNote(world, msg, g) {
-  if (!inParty(msg.id) || world.dungeon) return;
+  // (Party chat and emotes reach you anywhere; pings and finds only out in the field.)
+  if (!inParty(msg.id) || (world.dungeon && (msg.t === 'ping' || msg.t === 'gath'))) return;
   const hooks = setGroupHandler.fn;
   switch (msg.t) {
     case 'ping': {
@@ -624,7 +692,12 @@ setSailHandler((world, { from, quick }) => {
 
 function onSail(world, msg, g) {
   if (msg.to !== online.id || !inParty(msg.id) || !ROUTES[msg.from]) return;
-  // Only if you're on that quay and free to go (not in a scene, a dungeon, or knocked out).
+  // Watching a scene on the quay: the boat waits for you to finish it.
+  if (world.scene && world.map.id === msg.from) {
+    online.sailWait = { msg, at: clockNow() };
+    return;
+  }
+  // Only if you're on that quay and free to go (not in a dungeon, or knocked out).
   if (world.map.id !== msg.from || world.dungeon || world.scene || world.dead) return;
   world.log(`${g.name} brings you aboard the Sea Biscuit!`, '#9fe8ff');
   setSail(world, { quick: msg.quick, brought: true });

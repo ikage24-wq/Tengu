@@ -35,6 +35,13 @@ async function play(pairs, seconds) {
   }
 }
 
+// The host and the guest in one party (each game's own record of it).
+function partyUp(A, B) {
+  const members = [A.online.id, B.online.id];
+  A.online.party = { leader: A.online.id, members: [...members] };
+  B.online.party = { leader: A.online.id, members: [...members] };
+}
+
 async function room() {
   const A = await import('../src/net/online.js?player=a' + Math.random());
   const B = await import('../src/net/online.js?player=b' + Math.random());
@@ -85,7 +92,30 @@ test('a guest\'s blows land on the host\'s monster, and its fall is shared', asy
   assert.ok(owned.hp <= 0, 'the host\'s monster fell to the guest');
   await play(pairs, 0.3);
   assert.ok(b.char.exp > expB, 'the guest gets the EXP');
-  assert.ok(a.char.exp > expA, 'the host on the same map gets a party share');
+  assert.equal(a.char.exp, expA, 'out of a party, a friend\'s kill is only theirs');
+  A.leaveRoom(a);
+  B.leaveRoom(b);
+});
+
+test('in a party, a friend\'s kill gives a party share to the rest on the map', async () => {
+  const { A, B, a, b, pairs } = await room();
+  partyUp(A, B);
+  const m = b.mobs.find((o) => o.hp > 0 && Math.abs(o.y - b.body.y) < 4 && !o.def.boss);
+  const owned = a.mobs.find((o) => o.net === m.net || `${A.online.id}:${o.uid}` === m.net);
+  owned.hp = 30;
+  await play(pairs, 0.3);
+  const expA = a.char.exp;
+  const expB = b.char.exp;
+  for (let i = 0; i < 40 && owned.hp > 0; i++) {
+    b.body.x = m.x - 28;
+    b.body.facing = 1;
+    updateWorld(b, DT, { held: new Set(['KeyZ']), pressed: new Set(['KeyZ']) });
+    await play(pairs, 0.15);
+  }
+  assert.ok(owned.hp <= 0);
+  await play(pairs, 0.3);
+  assert.ok(b.char.exp > expB, 'the guest gets the EXP');
+  assert.ok(a.char.exp > expA, 'the party friend on the same map gets a party share');
   assert.ok(b.char.exp - expB > a.char.exp - expA, 'the one who fought it gets more');
   A.leaveRoom(a);
   B.leaveRoom(b);
@@ -174,5 +204,57 @@ test('in a shared dungeon run friends see each other and the leader\'s monsters;
   delete a.dungeon.shared;
   assert.equal(A.othersHere(a).length, 0, 'a solo run shows no one');
   A.leaveRoom(a);
+  B.leaveRoom(b);
+});
+
+test('a friend watching a scene: the map\'s monsters go on for everyone, and the scene stays theirs alone', async () => {
+  const { playScene } = await import('../src/world/story.js');
+  const { endScene } = await import('../src/world/director.js');
+  const { A, B, a, b, pairs } = await room();
+  assert.equal(A.online.claim, 'woods');
+  const stage = new Set(a.mobs);
+  playScene(a, 'hollow_sleep');
+  assert.ok(a.scene, 'the host is watching a scene');
+  await play(pairs, 0.8);
+  // The host's clock stands still in the scene, so the guest's game runs the woods meanwhile.
+  assert.equal(B.online.ghosts.get(A.online.id)?.scene, true, 'the guest sees the host is in a scene');
+  assert.equal(A.online.claim, null, 'the host lets go of the monsters while it watches');
+  assert.equal(B.online.claim, 'woods', 'the guest runs them meanwhile');
+  assert.ok(b.mobs.some((m) => m.hp > 0), 'and they are still there');
+  // The guest's blows and numbers don't land in the host's scene, and its stage stays as it was.
+  b.fx.push({ kind: 'slash', x: b.body.x, y: b.body.y, t: 0, dur: 0.3 });
+  b.numbers.push({ x: b.body.x, y: b.body.y, text: '123', t: 0 });
+  await play(pairs, 0.4);
+  assert.ok(!a.fx.some((f) => f._remote), 'no friend\'s effects in the scene');
+  assert.ok(!a.numbers.some((n) => n._remote), 'no friend\'s numbers in the scene');
+  assert.ok([...a.mobs].every((m) => stage.has(m)), 'the monsters on the scene\'s stage stay the same ones');
+  // The scene over, the host is shown the monsters the guest has been running.
+  endScene(a);
+  await play(pairs, 0.8);
+  assert.equal(B.online.ghosts.get(A.online.id)?.scene, false);
+  assert.equal(A.online.claim, null);
+  assert.equal(B.online.claim, 'woods');
+  assert.ok(a.mobs.length > 0 && a.mobs.every((m) => m.net), 'the host shows the guest\'s monsters');
+  A.leaveRoom(a);
+  B.leaveRoom(b);
+});
+
+test('a boss\'s entrance in a shared run plays for the whole group, and the run ends for friends when the room closes', async () => {
+  const { A, B, a, b, pairs } = await room();
+  const { joinRun } = await import('../src/world/dungeon.js');
+  joinRun(a, { dungeon: 'hollow', roles: { you: 'tank', [B.online.id]: 'dps' }, leader: A.online.id, hard: false });
+  joinRun(b, { dungeon: 'hollow', roles: { [A.online.id]: 'tank', you: 'dps' }, leader: A.online.id, hard: false });
+  await play(pairs, 0.6);
+  // (What the leader's game sends as the boss makes its entrance: world/dungeon.js.)
+  A.send({ t: 'run', map: a.map.id, op: 'scene', scene: 'hollow_capper', mech: 'capper' });
+  await play(pairs, 0.3);
+  assert.ok(b.scene?.id.startsWith('hollow_capper'), 'the friend watches the boss come in too');
+  assert.equal(b.dungeon.met?.capper, true, 'and it won\'t play twice for them');
+  // The leader's game closes the room: the friend's run is over, back at the gate.
+  A.leaveRoom(a);
+  await play([[B, b]], 0.3);
+  assert.equal(B.online.status, 'off');
+  assert.equal(b.dungeon, null, 'the friend is out of the run');
+  assert.ok(!b.map.dungeon, 'back outside the dungeon');
   B.leaveRoom(b);
 });

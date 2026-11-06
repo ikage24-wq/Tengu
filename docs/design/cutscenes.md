@@ -38,6 +38,20 @@ played in order. The director is `src/world/director.js`; the cutscene window is
 - Esc plays the rest out at once (everyone ends where the scene would have put them). Holding Z,
   Space or the mouse plays the staging three times as fast.
 
+## Scenes online
+
+- A scene is the watcher's own. While it plays, friends in the room step out of it (they, their
+  effects and their numbers aren't drawn on your stage), nothing a friend does can hurt you, and the
+  monsters on stage hold still for you. Effects and numbers already on screen when it began fade out
+  as usual instead of hanging there.
+- Friends see a little "in a scene" note over you, and the monsters leave you be until you're back.
+- If your game was running the map's monsters, a friend on the map who isn't watching one takes
+  them over until you're back, so nobody else's hunt freezes.
+- In a shared dungeon run, a boss's entrance plays for the whole group at once; the leader's game
+  takes no blows on the boss while its own copy plays.
+- A friend's boat waits for you to finish a scene on the quay; a friend's run that starts while
+  you watch one finishes the scene and takes you in.
+
 ## Writing a good one
 
 - Open on a place, then come to the people: a cut or a slow pan over the landmark, then the camera
