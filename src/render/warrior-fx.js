@@ -303,6 +303,21 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     }
     case 'aeballista':
       return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;
+    // The Mage's skills: Teleport's rune swirl, Heal's column of light, Magic Guard's dome, Frost
+    // Nova's ring of spikes along the floor, Meteor's crimson rune sky (spread over the stretch its
+    // meteors fall on) and its impact.
+    case 'mgswirl':
+      return fxSprite(ctx, 'celmgswirl', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'mgheal':
+      return fxSprite(ctx, 'celmgheal', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'mgguard':
+      return fxSprite(ctx, 'celmgguard', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'mgnova':
+      return fxSprite(ctx, 'celmgnova', x, y + 2, { p, scale: 0.62 }) || true;
+    case 'mgcircle':
+      return fxSprite(ctx, 'celmgcircle', x + dir * 130, y - 120, { t: f.t, scale: 0.6, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
+    case 'mgimpact':
+      return fxSprite(ctx, 'celmgimpact', x, y + 4, { p, scale: 0.9 }) || true;
     case 'mghitfire': case 'mghitice': case 'mghitbolt':
       // The Mage's marks: her crimson rune ring flashing round a burst of her element.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;

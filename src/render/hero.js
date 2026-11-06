@@ -1259,8 +1259,8 @@ const HAND_Y = 37.6;
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
-  // The Mage's one dramatic glove goes on her free (back) hand.
-  if (g.edgeGlove && sx < HEAD_X) g = { ...g, gloves: { edge: true } };
+  // The Mage's one dramatic glove goes on her casting (front) hand.
+  if (g.edgeGlove && sx >= HEAD_X) g = { ...g, gloves: { edge: true } };
   return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, gloved(g), skin, side);
 }
 
@@ -1276,7 +1276,7 @@ function aimedArm(angle, sleeve, long, g, skin) {
   const rad = (angle * Math.PI) / 180;
   const hx = FRONT_SHOULDER + Math.sin(rad) * 8.6;
   const hy = SHOULDER_Y + Math.cos(rad) * 8.6;
-  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, gloved(g), skin), hand: [hx, hy] };
+  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, gloved(g.edgeGlove ? { ...g, gloves: { edge: true } } : g), skin), hand: [hx, hy] };
 }
 
 // ---------- Body parts per rig ----------

@@ -1521,10 +1521,10 @@ function land(world, s) {
   // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
   // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
   const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
-  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
+  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockcrimson' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
   // The Star Witch's party spells (Wishing Star, Star Veil) ring out over everyone they reach.
-  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
+  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockcrimson', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
@@ -1564,7 +1564,7 @@ function land(world, s) {
     const knock = s.pull ? -Math.sign(m.x - body.x) * s.pull : s.knock * weight;
     world.pending.push({
       at: now, mob: m, miss, damage: roll?.damage ?? 0, crit: roll?.crit ?? false, fromX: body.x, stack: s.n % 3, knock, launch: s.launch, big: s.big, small: s.around && !s.big,
-      stun: miss ? undefined : s.stun, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge,
+      stun: miss ? undefined : s.stun, freeze: miss ? undefined : s.freeze, bleed: miss ? undefined : s.bleed, burn: miss ? undefined : s.burn, school: s.school, via: s.via ?? 'blade', weapon: stats.weaponType, gauge: s.gauge, el: s.el,
     });
     if (roll?.crit) crits++;
     if (s.fx) world.fx.push({ kind: s.fx, school: s.school, x: m.x, y: m.y, h: m.def.h, dir: s.dir, t: -i * 0.03, dur: 0.6, seed: Math.random() });
@@ -2113,12 +2113,19 @@ export const MAGE_SHOUTS = {
   mgcape: ['EMBRACE THE DARKNESS!', 'TREMBLE, MORTALS!', 'MY POWER... AWAKENS!'],
   msbolt: ['HEAVENS, OBEY ME!', 'I COMMAND THEE, SKY!', 'WRATH OF THE TEMPEST!'],
   msthunder: ['CRIMSON THUNDERCLAP!', 'THE STORM ANSWERS ME!', 'FEEL MY TRUE POWER!'],
+  mgfireball: ['INFERNO OF THE ABYSS!', 'BEHOLD MY FLAME!', 'BURN IN CRIMSON FIRE!'],
+  mgchain: ['CHAINS OF THE STORM!', 'DANCE, LIGHTNING!', 'TASTE MY THUNDER!'],
+  mgnova: ['ETERNAL WINTER!', 'FREEZE, MORTALS!', 'COLD... AS MY HEART!'],
+  mgteleport: ['Hmph. Too slow.', 'Behind you.', 'I was never there.'],
+  mgheal: ['...fine. Heal.', 'Ugh. So BRIGHT.', "Don't get used to this."],
+  mgguard: ['BARRIER OF THE DAMNED!', 'NONE SHALL PASS!', 'MY WARD IS ETERNAL!'],
+  mgmeteor: ['CATACLYSM... OF THE CRIMSON STAR!'],
 };
 function mageShout(world, move) {
   const lines = MAGE_SHOUTS[move];
   if (!lines) return;
   const last = world.mageShout?.[move];
-  const pick = lines.filter((l) => l !== last);
+  const pick = lines.length > 1 ? lines.filter((l) => l !== last) : lines;
   const line = pick[Math.floor(Math.random() * pick.length)];
   world.mageShout = { ...world.mageShout, [move]: line };
   world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: '#ff6a7a', t: 0, shout: true });

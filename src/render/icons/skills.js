@@ -14,6 +14,8 @@ import { SKILLS } from '../../data/skills.js';
 // Background bands, top to bottom: [light, deep].
 const BG = {
   sakura: ['#ffc4dc', '#d94f8c'],
+  // The Mage's: deep crimson, so her orange fire, pale ice and yellow lightning all stand out.
+  magecrimson: ['#ff9aae', '#5e1634'],
   crimson: ['#ffa07e', '#a8304a'],
   ember: ['#ffd27a', '#c8452e'],
   steel: ['#b4ccf4', '#3f55a0'],
@@ -1321,71 +1323,108 @@ function wisp(x, y, r, ang = 0) {
   const tail = [[x - c * r * 2.6, y - sn * r * 2.6], [x - c * r * 1.2, y - sn * r * 1.2], [x, y]];
   return [S(tube(tail, 0.2, r * 1.4), '#e6dcff'), S(tube(tail.slice(1), 0.2, r * 0.9), W), ...solid(oval(x, y, r, r, 0, 16), W, { d: 0.35, ink: '#7a6cb8' }), S(oval(x - r * 0.3, y - r * 0.3, r * 0.4, r * 0.4, 0, 10), '#fff3c4')];
 }
-// ---------- Star Witch (midnight blue and gold: stars, comets, constellations) ----------
+// A gold five-point star (the Starlight Idol's icons use it).
 const STARG = '#ffd36a';
 const STARINK = '#8e5228';
-// A five-point star's points round (cx, cy), r out to its tips.
 const star5Pts = (cx, cy, r, rot = 0) => Array.from({ length: 10 }, (_, i) => {
   const a = rot - Math.PI / 2 + (i * Math.PI) / 5;
   const rr = i % 2 ? r * 0.45 : r;
   return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
 });
 const goldStar = (cx, cy, r, rot = 0) => solid(star5Pts(cx, cy, r, rot), STARG, { d: 0.35, ink: STARINK });
-// A comet's tail: a midnight-to-white streak from (x0, y0) to its head at (x1, y1).
-const cometTrail = (x0, y0, x1, y1, w) => [S(tube([[x0, y0], [x1, y1]], 0.2, w), '#3a48b8'), S(tube([[x0 + (x1 - x0) * 0.4, y0 + (y1 - y0) * 0.4], [x1, y1]], 0.15, w * 0.55), '#c8d0ff')];
+// ---------- The Mage (crimson tiles: fire, ice, lightning and her crimson runes) ----------
+const MFIRE = '#ffb43c';
+const MFIRE_DK = '#9a2a3a';
+const MICE = '#9ae2ff';
+const MICE_DK = '#2a4a8a';
+const MBOLT = '#ffe04a';
+const MBOLT_DK = '#7a4a2a';
+const MRUNE = '#ff5a6a';
+// A fireball heading up-right: a round blazing head and flame tongues streaming back.
+function fireIcon(x, y, r) {
+  const out = [];
+  for (const [dx, dy, w] of [[-1.6, 1.6, 0.9], [-0.6, 2.2, 0.7], [-2.2, 0.6, 0.7]]) out.push(...solid([[x + dx * r * 0.4, y - r * 0.5 + dy * 0.2], [x - r * 2 + dx, y + r * 2 + dy * 0.3], [x + r * 0.4 + dy * 0.2, y + r * 0.6]], '#ff6a2a', { d: 0.3 * w, ink: MFIRE_DK }));
+  out.push(...solid(oval(x, y, r, r, 0, 16), MFIRE, { d: 0.35, ink: MFIRE_DK }), S(oval(x - r * 0.25, y - r * 0.25, r * 0.5, r * 0.5, 0, 12), '#fff2a0'));
+  return out;
+}
+// A lightning stroke through the points, inked, yellow, with a white core.
+function zapIcon(pts, w) {
+  const seg = (c, ww) => pts.slice(1).map((p, i) => streak(pts[i], p, ww, c));
+  return [...seg(MBOLT_DK, w + 0.55), ...seg(MBOLT, w), ...seg(W, w * 0.4)];
+}
+// An ice shard from its base (x, y) to its tip, `w` wide.
+function shardIcon(x, y, tx, ty, w) {
+  const nx = -(ty - y);
+  const ny = tx - x;
+  const l = Math.hypot(nx, ny) || 1;
+  const [ox, oy] = [(nx / l) * w, (ny / l) * w];
+  return solid([[x + ox, y + oy], [tx, ty], [x - ox, y - oy]], MICE, { d: 0.35, ink: MICE_DK });
+}
+// Her crimson rune ring, seen from above at a slant.
+const runeRingIcon = (x, y, rx, ry) => [S(tube(arcPts(x, y, rx, ry, 0, 360, 28), 0.55), '#5a1a3a'), S(tube(arcPts(x, y, rx, ry, 0, 360, 28), 0.3), MRUNE), ...[0, 90, 180, 270].map((a) => S(oval(x + Math.cos(a * D2R) * rx, y + Math.sin(a * D2R) * ry, 0.6, 0.6, 0, 8), MRUNE))];
+// Fireball: a great fireball hurled up and away.
 function spiritbolt() {
-  const out = [...tile('midnight', 'active')];
-  out.push(...cometTrail(1.6, 13, 9.6, 6, 2.6), ...goldStar(10.4, 5.4, 3.6, 0.2));
-  out.push(...spark(3, 3.4, 1, STARG), ...spark(13.6, 12.4, 0.8));
+  const out = [...tile('magecrimson', 'active'), ...aura(10, 6, 5.4, '#ffe0a0')];
+  out.push(...fireIcon(10, 6, 3.6));
+  out.push(...spark(3, 3.4, 1, MFIRE), ...spark(13.6, 13, 0.8));
   return out;
 }
-// Star Step: a burst of sparkles where she was, and a star where she pops out.
+// Teleport: her rune ring with crimson smoke swirling up out of it.
 function spiritstep() {
-  const out = [...tile('midnight', 'active')];
-  for (const [x, y, r] of [[3, 10, 1.2], [4.6, 6.6, 0.9], [2.2, 4.4, 0.7], [5.6, 12.4, 0.8]]) out.push(...spark(x, y, r, STARG));
-  out.push(streak([5, 9], [10, 8.4], 0.6, '#9aa6f0'), ...goldStar(11.4, 8, 3.2));
+  const out = [...tile('magecrimson', 'active')];
+  out.push(...runeRingIcon(8, 12.6, 5.4, 1.8));
+  for (const [x, y, r] of [[7, 10, 1.9], [9, 7.6, 1.6], [7.4, 5, 1.3], [9.4, 2.8, 1]]) out.push(...solid(oval(x, y, r, r, 0, 14), '#ffb0bc', { d: 0.35, ink: '#5a1a3a' }));
+  out.push(...spark(13.4, 4, 1, W), ...spark(2.6, 6, 0.8, MRUNE));
   return out;
 }
-// Comet: a great comet with a ring round its head.
+// Chain Lightning: a forked bolt leaping across the tile.
 function spiritwave() {
-  const out = [...tile('midnight', 'active'), ...aura(10, 6, 5.6, '#fff4c8')];
-  out.push(...cometTrail(0.8, 15, 8.6, 7.4, 4));
-  out.push(...edge(tube(arcPts(10.2, 5.8, 4, 4, 0, 360, 24), 0.9), STARINK, 0.35), S(tube(arcPts(10.2, 5.8, 4, 4, 0, 360, 24), 0.9), STARG));
-  out.push(...goldStar(10.2, 5.8, 2.8, 0.3));
+  const out = [...tile('magecrimson', 'active'), ...aura(8, 8, 6.4, '#fff7c0')];
+  out.push(...zapIcon([[1.2, 4], [5, 7.4], [3.8, 9.2], [8.6, 10.4], [7.4, 12.6], [14.4, 13.4]], 1.1));
+  out.push(...zapIcon([[8.6, 10.4], [11.6, 6.4], [14.2, 5]], 0.45));
+  out.push(...spark(12.8, 2.6, 1, W), ...spark(2.6, 13, 0.8, MBOLT));
   return out;
 }
-// Wishing Star: a star falling into a column of soft gold light.
+// Frost Nova: a fan of ice spikes bursting up out of a frozen ring.
+function frostnova() {
+  const out = [...tile('magecrimson', 'active'), ...aura(8, 9, 6.4, '#e0f8ff')];
+  out.push(S(tube(arcPts(8, 13.4, 6.2, 1.7, 0, 360, 28), 0.5), MICE));
+  for (const [x, tx, ty, w] of [[3, 1.6, 7.6, 1.1], [5.4, 4.8, 4, 1.3], [8, 8, 1.6, 1.6], [10.6, 11.2, 4, 1.3], [13, 14.4, 7.6, 1.1]]) out.push(...shardIcon(x, 13.2, tx, ty, w));
+  out.push(...spark(2.4, 2.6, 0.9, W), ...spark(13.6, 2.4, 1, W));
+  return out;
+}
+// Heal: a column of warm light pouring down into her rune ring.
 function blessing() {
-  const out = [...tile('midnight', 'buff')];
-  out.push(S([[6, 6], [10, 6], [12.6, 15], [3.4, 15]], '#fff4c8'), S([[7.2, 6], [8.8, 6], [9.8, 15], [6.2, 15]], W));
-  out.push(...cometTrail(8, 0.4, 8, 3.6, 1.6), ...goldStar(8, 5, 2.8));
-  out.push(...spark(3.4, 9, 0.9, STARG), ...spark(12.6, 10.4, 0.9, STARG));
+  const out = [...tile('magecrimson', 'buff')];
+  out.push(S([[6, 0.8], [10, 0.8], [12.4, 13], [3.6, 13]], '#fff6c8'), S([[7.2, 0.8], [8.8, 0.8], [9.6, 13], [6.4, 13]], W));
+  out.push(...runeRingIcon(8, 13, 5.4, 1.6));
+  out.push(...spark(3.4, 7.4, 0.9, MBOLT), ...spark(12.6, 5.6, 0.9, MBOLT));
   return out;
 }
-// Star Veil: a dome of linked stars.
+// Magic Guard: a dome of crimson and gold hexagons.
 function spiritward() {
-  const out = [...tile('midnight', 'buff')];
-  out.push(S(arcPts(8, 13.4, 6, 9, 180, 360, 20), '#6a78d8'));
-  const pts = arcPts(8, 13.4, 6, 9, 180, 360, 6);
-  for (let i = 0; i < pts.length - 1; i++) out.push(streak(pts[i], pts[i + 1], 0.35, STARG));
-  pts.forEach(([x, y], i) => out.push(...(i % 2 ? spark(x, y, 1, W) : goldStar(x, y, 1.4))));
+  const out = [...tile('magecrimson', 'buff')];
+  const hex = (x, y, r, c) => solid(Array.from({ length: 6 }, (_, q) => [x + Math.cos((q / 6) * Math.PI * 2) * r, y + Math.sin((q / 6) * Math.PI * 2) * r]), c, { d: 0.3, ink: '#5a1a3a' });
+  arcPts(8, 13.6, 6, 8.6, 180, 360, 6).forEach(([x, y], i) => out.push(...hex(x, y, 1.5, i % 2 ? MRUNE : MBOLT)));
+  arcPts(8, 13.6, 3, 4.6, 200, 340, 3).forEach(([x, y], i) => out.push(...hex(x, y, 1.2, i % 2 ? MBOLT : MRUNE)));
+  out.push(...spark(13.6, 3, 0.9, W));
   return out;
 }
-// Mana Mastery: a star wand crossed by a crescent moon.
+// Mana Mastery: her element orb, three swirls of fire, ice and lightning round a white heart.
 function manamastery() {
-  const out = [...tile('midnight', 'passive'), ...aura(8, 8, 6.6, '#c8d0ff')];
-  out.push(...solid([[3.4, 14], [4.6, 14.6], [10.4, 7.6], [9.2, 7]], '#2a2230', { d: 0.3 }));
-  out.push(...goldStar(10.6, 5.6, 3.2, 0.2));
-  out.push(...solid([...arcPts(5, 5, 3, 3, 60, 300, 10), ...arcPts(6.4, 4.8, 2.4, 2.5, 300, 60, 10)], '#c8d0ff', { d: 0.3, ink: '#222a7e' }));
+  const out = [...tile('magecrimson', 'passive'), ...aura(8, 8, 6.6, '#ffd0d6')];
+  out.push(...solid(oval(8, 8, 5, 5, 0, 24), '#3a2a5a', { d: 0.2, ink: '#1a1030' }));
+  [MFIRE, MICE, MBOLT].forEach((c, i) => out.push(S([[8, 8], ...arcPts(8, 8, 4.2, 4.2, i * 120 - 10, i * 120 + 110, 8)], c)));
+  out.push(S(oval(8, 8, 1, 1, 0, 12), W), ...glint(6, 5.6, 0.5));
   return out;
 }
-// Starfall: the constellation joined in gold, meteors falling from it.
+// Meteor: a flaming meteor falling out of a crimson rune circle in the sky.
 function heavenslantern() {
-  const out = [...tile('midnight', 'active'), ...aura(8, 8, 7, STARG, 1.2, 5)];
-  const c = [[2.4, 4], [5.4, 2.4], [8.6, 3.6], [11.4, 1.8], [13.6, 3.8]];
-  for (let i = 0; i < c.length - 1; i++) out.push(streak(c[i], c[i + 1], 0.35, STARG));
-  c.forEach(([x, y]) => out.push(...spark(x, y, 1, W)));
-  for (const [x, y] of [[4.6, 12.4], [9.6, 10.8], [13, 14]]) out.push(...cometTrail(x - 3, y - 4, x, y, 1.6), ...goldStar(x, y, 1.8));
+  const out = [...tile('magecrimson', 'active'), ...aura(8, 8, 7, '#ffb0bc', 1.2, 5)];
+  out.push(...runeRingIcon(8, 3.6, 6, 2));
+  out.push(...fireIcon(10.6, 11.2, 2.8));
+  out.push(...solid(oval(11, 10.8, 0.9, 0.85, 0, 10), '#6a3a4a', { d: 0.3, ink: '#2a1a2a' }));
+  out.push(...spark(2.8, 10, 1, MFIRE), ...spark(13.8, 14, 0.8, W));
   return out;
 }
 // ---------- The Starlight Idol (pink and gold: notes, hearts, her mic, the stage) ----------
@@ -1586,7 +1625,7 @@ const ART = {
   ringmastery, rebound, twinrings, goldencarousel,
   skymastery, updraft, zephyr, skywaltz,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
-  spiritbolt, spiritstep, spiritwave, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
+  spiritbolt, spiritstep, spiritwave, frostnova, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
   gmsmite, gmhaste, gmblessing,
 };
 

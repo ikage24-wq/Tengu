@@ -5735,6 +5735,189 @@
     w: 220, h: 220, n: 6, fps: 10, px: 110, py: 110, loop: true,
     draw(ctx, i) { runeRing(ctx, 110, 110, 74, (i / 6) * (TAU / 6), 0); },
   }, 1.4);
+  // Her skills' pictures.
+  // Frost Nova: a ring of ice spikes bursting up out of the floor all round her, both ways, then
+  // shattering into shards and frost sparkles (anchored at the ground under her).
+  E.mgnova = grown((() => {
+    const c = 200;
+    const gy = 150;
+    return {
+      w: 400, h: 170, n: 8, fps: 20, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, i / 3);
+        for (const sd of [-1, 1]) {
+          for (let j = 0; j < 5; j++) {
+            const x = c + sd * (30 + j * 34) * (0.4 + 0.6 * k);
+            const grow = i <= 4 ? Math.min(1, (i + 1 - j * 0.5) / 2) : Math.max(0, 1 - (i - 4) / 3);
+            if (grow <= 0.05) continue;
+            const h = (70 - j * 8) * grow;
+            iceShard(ctx, x, gy - h * 0.45, -Math.PI / 2 + sd * (0.2 + j * 0.06), h, 8 + h * 0.08);
+          }
+        }
+        if (i <= 2) {
+          ctx.save();
+          ctx.translate(c, gy - 6);
+          ctx.scale(1, 0.3);
+          celRing(ctx, MICE, 0, 0, 60 + i * 60, 12, { seed: 491 });
+          ctx.restore();
+        }
+        if (i >= 5) {
+          const R = rng(492 + i);
+          for (let j = 0; j < 10; j++) sparkle(ctx, j % 3 ? MICE : MRUNE, c + (R() - 0.5) * 360, gy - 20 - R() * 80 - (i - 5) * 10, 8 - (i - 5) * 2, j);
+        }
+      },
+    };
+  })(), 1.5);
+
+  // Teleport: her crimson rune ring spins up round her and crimson smoke bursts out of it, then
+  // breaks into sparkles (played where she leaves and where she appears).
+  E.mgswirl = grown((() => {
+    const c = 110;
+    return {
+      w: 220, h: 240, n: 7, fps: 20, px: c, py: 180,
+      draw(ctx, i) {
+        const k = i / 6;
+        if (i <= 4) {
+          ctx.save();
+          ctx.translate(c, 180);
+          ctx.scale(1, 0.32);
+          runeRing(ctx, 0, 0, 50 + i * 8, i * 0.6, i >= 3 ? 0.5 : 0);
+          ctx.restore();
+        }
+        if (i >= 1 && i <= 5) for (let j = 0; j < 4; j++) puff(ctx, MRUNE, c + Math.cos(j * 1.6 + i) * 34 * k, 150 - j * 26 - i * 6, 22 - i * 2.5, 495 + j + i, { holes: i >= 4 ? 0.5 : 0, lobes: 4 });
+        if (i >= 4) for (let j = 0; j < 5; j++) sparkle(ctx, MRUNE, c + [-50, 40, -20, 60, 0][j], 120 - j * 20 - (i - 4) * 10, 9 - (i - 4) * 2, j);
+      },
+    };
+  })(), 1.4);
+
+  // Heal: her rune ring lights under the party and a column of warm light pours down into it, gold
+  // motes rising off it (she finds it all far too bright).
+  E.mgheal = (() => {
+    const c = 110;
+    const gy = 300;
+    return {
+      w: 220, h: 320, n: 9, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 7) {
+          ctx.save();
+          ctx.translate(c, gy - 6);
+          ctx.scale(1, 0.3);
+          runeRing(ctx, 0, 0, 60 + Math.min(i, 3) * 12, i * 0.3, i >= 6 ? 0.5 : 0);
+          ctx.restore();
+        }
+        if (i >= 1 && i <= 6) {
+          const w = [26, 50, 58, 56, 46, 30][i - 1];
+          ctx.save();
+          ctx.globalAlpha = 0.75;
+          fill(ctx, [[c - w * 0.5, 20], [c + w * 0.5, 20], [c + w, gy], [c - w, gy]], MBOLT[1]);
+          fill(ctx, [[c - w * 0.2, 20], [c + w * 0.2, 20], [c + w * 0.4, gy], [c - w * 0.4, gy]], MBOLT[0]);
+          ctx.restore();
+        }
+        if (i >= 3) {
+          const R = rng(500);
+          for (let j = 0; j < 8; j++) sparkle(ctx, j % 3 ? MBOLT : MRUNE, c + (R() - 0.5) * 160, gy - 30 - R() * 200 - (i - 3) * 14, 8 - Math.max(0, i - 6) * 2, j);
+        }
+      },
+    };
+  })();
+
+  // Magic Guard: a dome of crimson and gold hexagons snaps up round the party, flickers, then settles
+  // into a faint shell and fades.
+  E.mgguard = (() => {
+    const c = 110;
+    const gy = 200;
+    return {
+      w: 220, h: 220, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const k = Math.min(1, (i + 1) / 3);
+        const fade = i >= 5 ? 1 - (i - 5) / 3 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        // Hexagons laid along three nested arches make the dome's shell.
+        [[88, 11], [66, 8], [44, 5]].forEach(([R0, n], row) => {
+          for (let j = 0; j <= n; j++) {
+            const a = Math.PI + (j / n) * Math.PI;
+            const xx = c + Math.cos(a) * R0 * k;
+            const yy = gy - 4 + Math.sin(a) * R0 * k * 0.95;
+            const hx = (sz) => Array.from({ length: 6 }, (_, q) => [xx + Math.cos((q / 6) * TAU) * sz, yy + Math.sin((q / 6) * TAU) * sz]);
+            inked(ctx, hx(10 * k), (row + j) % 2 ? MRUNE[2] : MBOLT[2], MRUNE[4], 2.5);
+            fill(ctx, hx(5.5 * k), (row + j) % 2 ? MRUNE[1] : MBOLT[1]);
+          }
+        });
+        ctx.restore();
+        if (i <= 2) starburst(ctx, MBOLT, c, gy - 60, 30 + i * 10, 8, 510 + i, { inner: 0.35 });
+      },
+    };
+  })();
+
+  // Meteor: the sky over the battlefield turns crimson round a great rune circle (drawn across the
+  // whole stretch the meteors fall on), each meteor a flaming rock, and the impact.
+  E.mgcircle = grown({
+    w: 300, h: 140, n: 6, fps: 12, px: 150, py: 70, loop: true,
+    draw(ctx, i) {
+      ctx.save();
+      ctx.translate(150, 70);
+      ctx.scale(1, 0.42);
+      runeRing(ctx, 0, 0, 120, (i / 6) * (TAU / 6));
+      runeRing(ctx, 0, 0, 80, -(i / 6) * (TAU / 6));
+      ctx.restore();
+      starburst(ctx, MRUNE, 150, 70, 26 + (i % 2) * 4, 6, 520 + i, { inner: 0.4 });
+    },
+  }, 2.6);
+  E.mgrock = grown((() => {
+    const cx = 120;
+    const cy = 120;
+    return {
+      w: 160, h: 160, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(Math.PI / 4);
+        fireball(ctx, 0, 0, 22, (i / 4) * TAU);
+        ctx.restore();
+        const rock = Array.from({ length: 9 }, (_, q) => {
+          const a = (q / 9) * TAU + i * 0.3;
+          const r = 14 * (0.85 + 0.25 * Math.sin(q * 2.3));
+          return [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+        });
+        inked(ctx, rock, '#5a3a4a', '#2a1a2a', 3);
+        fill(ctx, rock.map(([x, y]) => [x - 3 + (cx - x) * 0.3, y - 3 + (cy - y) * 0.3]), '#8a5a5a');
+      },
+    };
+  })(), 2);
+  E.mgimpact = grown((() => {
+    const c = 200;
+    const gy = 200;
+    return {
+      w: 400, h: 240, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        if (i <= 5) {
+          ctx.save();
+          ctx.translate(c, gy - 8);
+          ctx.scale(1, 0.3);
+          runeRing(ctx, 0, 0, 70 + i * 22, i * 0.4, i >= 4 ? 0.5 : 0);
+          ctx.restore();
+        }
+        if (i <= 3) {
+          for (let j = 0; j < 7; j++) {
+            const a = -Math.PI / 2 + (j - 3) * 0.32;
+            ctx.save();
+            ctx.translate(c + Math.cos(a) * 20, gy - 10 + Math.sin(a) * 10);
+            ctx.rotate(a + Math.PI / 2);
+            tongue(ctx, MFIRE, 0, 0, 20 - Math.abs(j - 3) * 3, (110 - Math.abs(j - 3) * 18) * (0.6 + i * 0.2), 6 * Math.sin(j + i));
+            ctx.restore();
+          }
+          blob(ctx, MFIRE, c, gy - 40, 50 - i * 6, 0.12, i);
+        }
+        if (i >= 3) for (let j = 0; j < 4; j++) puff(ctx, MRUNE, c + (j - 1.5) * 60, gy - 40 - (i - 3) * 18, 30 - (i - 3) * 4, 530 + j + i, { holes: i >= 6 ? 0.5 : 0, lobes: 5 });
+        if (i >= 4) {
+          const R = rng(540 + i);
+          for (let j = 0; j < 10; j++) sparkle(ctx, j % 2 ? MFIRE : MRUNE, c + (R() - 0.5) * 360, gy - 40 - R() * 150, 10 - (i - 4) * 2, j);
+        }
+      },
+    };
+  })(), 1.5);
+
   E.mghitfire = mgHit('fire');
   E.mghitice = mgHit('ice');
   E.mghitbolt = mgHit('bolt');
@@ -8785,6 +8968,8 @@
   E.shockplum = shockRing(PLUM, PSILV, (ctx, pal, x, y, z, a, j) => (j % 3 === 2 ? sparkle(ctx, PSILV, x, y, z, j) : j % 3 === 1 ? puff(ctx, SMOKE, x, y, z * 0.8, 941 + j, { lobes: 4 }) : cardArt(ctx, x, y, z * 1.4, a + Math.PI / 2, Math.cos(a * 3), j % 4)), 941);
   // The Acrobat Archer's (Grand Somersault's landing): a gold ring racing out with mint ribbon
   // loops and gold stars riding it.
+  // The Mage's: her crimson ring with flames and ice shards riding it.
+  E.shockcrimson = shockRing(MRUNE, MFIRE, (ctx, pal, x, y, z, a, j) => (j % 3 === 0 ? iceShard(ctx, x, y, a, z * 2.2, z * 0.5) : j % 3 === 1 ? blob(ctx, MFIRE, x, y, z * 0.7, 0.1, j) : sparkle(ctx, MRUNE, x, y, z, j)), 961);
   E.shockmint = shockRing(SHOWG, MINT, (ctx, pal, x, y, z, a, j) => (j % 2 ? goldStar(ctx, x, y, z * 0.8, a) : sparkle(ctx, MINT, x, y, z, j)), 951);
 
 

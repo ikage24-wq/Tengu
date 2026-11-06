@@ -2337,15 +2337,26 @@ test('on full Overload each of her spells carries the other two elements with it
   assert.deepEqual(shots(100), ['mgbolt', 'mgfire', 'mgice']);
 });
 
-test('Comet tears through the line', () => {
+test('Frost Nova bursts out both ways and freezes what it catches', () => {
+  const w = starWitch();
+  w.char.skills.frostnova = 10;
+  for (const [i, m] of w.mobs.entries()) m.x = w.body.x + (i % 2 ? 1 : -1) * (40 + i * 20);
+  assert.ok(cast(w, 'frostnova').ok);
+  assert.equal(w.pose.kind, 'mgnova');
+  run(w, 1);
+  assert.ok(w.mobs.some((m) => m.x < w.body.x && m.hp < 1e9) && w.mobs.some((m) => m.x > w.body.x && m.hp < 1e9), 'on both sides');
+  assert.ok(w.mobs.some((m) => m.hold === 'ice'), 'and freezes them');
+});
+
+test('Chain Lightning leaps down the whole line', () => {
   const w = starWitch();
   assert.ok(cast(w, 'spiritwave').ok);
-  assert.equal(w.pose.kind, 'swshowoff');
+  assert.equal(w.pose.kind, 'mgchain');
   run(w, 1);
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster in the line');
 });
 
-test('Wishing Star heals her when the star falls, then keeps healing, and builds her Constellation', () => {
+test('Heal mends her when the light falls, then keeps healing, and weaves her gauge', () => {
   const w = starWitch();
   w.god = false;
   // (The dummies out of reach, so nothing knocks her HP about while it's measured.)
@@ -2373,10 +2384,10 @@ test('Star Veil puts a barrier on her that soaks up damage', () => {
   assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
 });
 
-test('Starfall needs a full Constellation, spends it, rains meteors on everything ahead, and never refills it', () => {
+test('Meteor needs a full Element Weave, spends it, rains meteors on everything ahead, and never refills it', () => {
   const w = starWitch();
   w.spirit = 60;
-  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for all seven stars');
+  assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for Overload');
   w.spirit = 100;
   w.spiritAt = w.now;
   assert.ok(cast(w, 'heavenslantern').ok);
@@ -2385,7 +2396,7 @@ test('Starfall needs a full Constellation, spends it, rains meteors on everythin
   dice(0.5, () => {
     for (let i = 0; i < 60 * 3; i++) {
       updateWorld(w, DT, idle);
-      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'stmeteor');
+      rain ||= w.fx.some((f) => f.kind === 'rain' && f.variant === 'mgrock');
     }
   });
   assert.ok(rain, 'meteors fall');

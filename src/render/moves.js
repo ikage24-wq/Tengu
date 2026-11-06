@@ -117,6 +117,7 @@ const MG_FACE = {
   sly: { lid: 0.35, mouth: 'smirk', brows: [[0.3, 0.4], [0.7, -0.3]] },
   smug: { lid: 0.4, mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]] },
   cackle: { closed: [true, true], mouth: 'grin', brows: [[-0.1, 0.8], [-0.1, 0.8]] },
+  squint: { closed: [true, true], mouth: 'frown', brows: [[-0.2, 0.7], [-0.2, 0.7]], extra: ['sweat0'] },
 };
 
 // The Kitchen Witch's faces (render/hero.js face fields): she acts every beat of a move.
@@ -3569,6 +3570,157 @@ export const MOVES = {
         r.hairLift = vault > 0.4 ? -1 : thrust > 0.3 ? 1 : 0;
         r.cape -= q(6 * vault);
         danceLegs(r, [vault, [2, -3.6, 34], [-2.4, -3.6, -46]], [thrust, [4.2, 0, 8], [-3.8, -0.6, -18]]);
+      },
+    };
+  },
+
+  // ---------- The Mage's skills (her own casts; docs/design/mage-line.md) ----------
+  // Weapon-free figures (the wand or staff rides along in her casting hand): the gloved hand does
+  // the spell, and every big one is a villain moment.
+
+  // Fireball (the ball flies at ~0.5): she holds her gloved hand out low and a flame gathers in her
+  // palm (she stares at it, intense), then she winds right back and hurls it overhand like a
+  // pitcher, following through low; then a smug flick of her hair.
+  mgfireball(p) {
+    const gather = soft(seg(p, 0, 0.32));
+    const wind = soft(seg(p, 0.32, 0.44));
+    const hurl = ease(seg(p, 0.44, 0.52));
+    const after = soft(seg(p, 0.6, 0.85));
+    return {
+      weapon: lerp(lerp(lerp(110, 96, gather), 200, wind), 78, hurl) + 20 * after, arm: lerp(lerp(lerp(40, 72, gather), 8, wind), 102, hurl) - 16 * after,
+      lunge: -2.5 * wind * (1 - hurl) + 7 * hurl * (1 - after * 0.5), tilt: 0.06 * gather * (1 - wind) - 0.1 * wind * (1 - hurl) + 0.18 * hurl * (1 - after * 0.6),
+      lift: 1.5 * breathe(p) * gather * (1 - wind) + swBob(p, 0.86),
+      face: p < 0.32 ? MG_FACE.intense : p < 0.6 ? MG_FACE.roar : MG_FACE.smug,
+      rig: (r) => {
+        // The free hand cups under the gathering flame, then flies back for balance as she hurls.
+        r.backArm = [q(lerp(lerp(lerp(0, 6, gather), 5, wind), -6, hurl) * (1 - after) + 2 * after), q(lerp(lerp(lerp(0, -2, gather), -4, wind), -6, hurl) * (1 - after) + 1 * after)];
+        r.hairLift = hurl > 0.3 && after < 0.5 ? 1 : 0;
+        r.cape -= q(4 * hurl * (1 - after));
+        danceLegs(r, [gather * (1 - wind), [1.6, 0, 4], [-2, 0, -6]], [wind * (1 - hurl), [1, -0.6, 4], [-3, 0, -14]], [hurl, [4.6, 0, 10], [-4, -1.4, -30]], [after, [2.4, 0, 6], [-2.4, 0, -10]]);
+      },
+    };
+  },
+  // Chain Lightning (the bolt at ~0.48): both hands thrown together out in front, fingers spread,
+  // arms trembling as the lightning builds, then a shove that lets it go leaping down the line.
+  mgchain(p) {
+    const build = soft(seg(p, 0, 0.4));
+    const shake = p > 0.12 && p < 0.44 ? Math.sin(p * 120) : 0;
+    const shove = ease(seg(p, 0.42, 0.5));
+    const after = soft(seg(p, 0.6, 0.85));
+    return {
+      weapon: 86 + 2 * shake, arm: lerp(60, 84, build) + 10 * shove - 18 * after + 1.5 * shake,
+      lunge: -1 * build * (1 - shove) + 7 * shove * (1 - after * 0.5), tilt: -0.06 * build * (1 - shove) + 0.14 * shove * (1 - after * 0.6),
+      lift: swBob(p, 0.86),
+      face: p < 0.42 ? MG_FACE.intense : p < 0.62 ? MG_FACE.roar : MG_FACE.cackle,
+      rig: (r) => {
+        r.backArm = after > 0.3 ? [q(lerp(9, 2, after)), q(lerp(-4, 1, after))] : [q(lerp(0, 8, build) + 2 * shove + 0.5 * shake), q(lerp(0, -4, build))];
+        r.hairLift = shove > 0.3 && after < 0.5 ? 1 : 0;
+        danceLegs(r, [build * (1 - shove), [2.4, 0, 4], [-2.6, 0, -8]], [shove, [4.4, 0, 8], [-4, -0.6, -20]], [after, [2.4, 0, 6], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Frost Nova (the ring of ice bursts out at ~0.46): she leaps up, spins once in the air with her
+  // cape flaring, and lands stamping both feet, her gloved fist punched down at the floor; the ice
+  // bursts out round her both ways.
+  mgnova(p) {
+    const a = ease(seg(p, 0.06, 0.38));
+    const turning = p > 0.06 && p < 0.38;
+    const hop = Math.sin(Math.PI * seg(p, 0.04, 0.42));
+    const land = ease(seg(p, 0.4, 0.46));
+    const hold = soft(seg(p, 0.56, 0.86));
+    return {
+      weapon: lerp(120, 170, land) - 50 * hold, arm: lerp(lerp(50, 70, soft(seg(p, 0, 0.3))), 14, land) + 26 * hold,
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1, trail: turning,
+      lift: 12 * hop + swBob(p, 0.88), tilt: 0.14 * land * (1 - hold),
+      face: p < 0.4 ? MG_FACE.intense : p < 0.6 ? MG_FACE.roar : MG_FACE.sly,
+      rig: (r) => {
+        r.air = hop > 0.2;
+        r.squat = q(3 * land * (1 - hold * 0.7));
+        r.backArm = turning ? [-5, -4] : [q(lerp(lerp(0, 6, land), 2, hold)), q(lerp(lerp(-6, 3, land), 1, hold))];
+        r.hairLift = hop > 0.4 ? -1 : land > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(turning ? 6 : 3 * land * (1 - hold));
+        danceLegs(r, [hop, [2, -3.6, 30], [-2.4, -3.4, -40]], [land * (1 - hop), [3.4, 0, 6], [-3.4, 0, -6]], [hold, [2, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Teleport: she flings her cape round herself with the gloved hand and is gone (a swirl of crimson
+  // runes), then appears far ahead with the cape settling, arms folded, as if she'd always been there.
+  mgteleport(p) {
+    const a = ease(seg(p, 0, 0.36));
+    const turning = p < 0.36;
+    const fold = soft(seg(p, 0.5, 0.8));
+    return {
+      weapon: lerp(90, 130, fold), arm: lerp(50, 24, fold), trail: turning, lift: 4 * bump(p, 0, 0.4) + 1.5 * bump(p, 0.5, 0.8),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1,
+      face: turning ? MG_FACE.sly : MG_FACE.smug,
+      rig: (r) => {
+        r.backArm = turning ? [q(lerp(-5, 8, a)), q(-5)] : [q(lerp(4, 7, fold)), q(lerp(-3, -4, fold))];
+        r.hairLift = turning ? -1 : 0;
+        r.cape -= q(turning ? 6 : 2 * (1 - fold));
+        danceLegs(r, [turning ? 1 : 0, [1.4, -1.6, 16], [-1.2, -1.2, -16]], [fold, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Heal (the light falls at ~0.55): grumbling, she raises her gloved hand and looks away from it,
+  // squinting, as warm light pours down on the party ("ugh, so BRIGHT"), then shakes the hand out.
+  mgheal(p) {
+    const up = soft(seg(p, 0.06, 0.4));
+    const hold = p > 0.4 && p < 0.72 ? 1 : 0;
+    const shakeOut = p > 0.74 ? Math.sin(seg(p, 0.74, 0.95) * Math.PI * 6) * (1 - seg(p, 0.74, 0.95)) : 0;
+    const down = soft(seg(p, 0.72, 0.9));
+    return {
+      weapon: lerp(110, 26, up) * (1 - down) + 110 * down, arm: lerp(40, 104, up) * (1 - down) + 40 * down + 2 * shakeOut,
+      tilt: -0.08 * up * (1 - down), lift: 1.5 * up * (1 - down) + breathe(p) * hold + swBob(p, 0.9) * 0.6,
+      face: p < 0.4 ? MG_FACE.sly : p < 0.74 ? MG_FACE.squint : MG_FACE.smug,
+      rig: (r) => {
+        r.backArm = [q(-4 * up * (1 - down) + 2 * down), q(-3 * up * (1 - down) + 1 * down)];
+        danceLegs(r, [up * (1 - down), [1.2, -0.6, 6], [-1.6, 0, -6]], [down, [1.6, 0, 4], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Magic Guard (the shield at ~0.5): arms crossed in an X before her chest, a crouch, and she throws
+  // them open wide; the shield snaps up round everyone and she ends standing tall, arms folded.
+  mgguard(p) {
+    const cross = soft(seg(p, 0, 0.3));
+    const open = ease(seg(p, 0.42, 0.52));
+    const fold = soft(seg(p, 0.62, 0.9));
+    return {
+      weapon: lerp(lerp(110, 150, cross), 60, open) * (1 - fold) + 130 * fold, arm: lerp(lerp(40, 80, cross), 110, open) * (1 - fold) + 26 * fold,
+      lift: -1.4 * cross * (1 - open) + 2.5 * bump(p, 0.44, 0.7) + swBob(p, 0.9) * 0.6, tilt: 0.06 * cross * (1 - open) - 0.06 * open * (1 - fold),
+      face: p < 0.42 ? MG_FACE.intense : p < 0.62 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.squat = q(2 * cross * (1 - open));
+        r.backArm = fold > 0.3 ? [q(lerp(-6, 7, fold)), q(lerp(-6, -4, fold))] : [q(lerp(lerp(0, 8, cross), -6, open)), q(lerp(lerp(0, -5, cross), -6, open))];
+        r.hairLift = open > 0.3 && fold < 0.4 ? 1 : 0;
+        r.cape -= q(4 * open * (1 - fold));
+        danceLegs(r, [cross * (1 - open), [2.6, 0, 6], [-2.6, 0, -6]], [open * (1 - fold), [2.6, 0, 4], [-2.8, 0, -6]], [fold, [1.4, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Meteor (her finisher, 1.5 s): she flexes the glove before her face's side (well out to the
+  // side, never over it), throws her head back for the name ("CATACLYSM... OF THE CRIMSON STAR!"),
+  // raises both arms to the sky as the meteor is called down and the sky turns crimson, and as it
+  // falls she drops her arms in a sweep and strikes her darkest villain pose; at the impact she
+  // cackles, cape whipping in the blast.
+  mgmeteor(p) {
+    const flex = soft(seg(p, 0, 0.18));
+    const shout = soft(seg(p, 0.18, 0.34));
+    const raise = soft(seg(p, 0.34, 0.5));
+    const callShake = p > 0.5 && p < 0.66 ? Math.sin(p * 110) : 0;
+    const sweep = ease(seg(p, 0.66, 0.74));
+    const blast = bump(p, 0.84, 1);
+    return {
+      weapon: lerp(lerp(lerp(110, 70, flex), 30, raise), 130, sweep), arm: lerp(lerp(lerp(40, 88, flex), 104, raise), 30, sweep) + 1.5 * callShake,
+      lift: 2 * shout * (1 - raise) + 4 * raise * (1 - sweep) + 1 * Math.abs(callShake) + swBob(p, 0.92) * 0.5,
+      tilt: -0.12 * shout * (1 - raise) - 0.06 * raise * (1 - sweep) + 0.1 * sweep - 0.08 * blast, lunge: 3 * sweep - 2 * blast,
+      face: p < 0.18 ? MG_FACE.sly : p < 0.66 ? MG_FACE.roar : p < 0.84 ? MG_FACE.intense : MG_FACE.cackle,
+      rig: (r) => {
+        const gx = lerp(lerp(lerp(0, 7, flex), 6, shout), 4, raise);
+        const gy = lerp(lerp(lerp(0, -7, flex), -8, shout), -8, raise);
+        r.backArm = sweep > 0 ? [q(lerp(gx, -7, sweep)), q(lerp(gy, -2, sweep))] : [q(gx + 0.6 * callShake), q(gy)];
+        r.hairLift = blast > 0.2 ? 1 : raise > 0.5 ? -1 : 0;
+        r.cape -= q(5 * blast + 3 * sweep * (1 - blast));
+        danceLegs(r, [shout * (1 - sweep), [1.8, 0, 6], [-2.2, 0, -8]], [raise * (1 - sweep), [1.4, -1.4, 14], [-1.4, -0.8, -8]], [sweep, [4, 0, 8], [-3.8, -0.6, -18]]);
       },
     };
   },
