@@ -1259,6 +1259,8 @@ const HAND_Y = 37.6;
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
+  // The Mage's one dramatic glove goes on her free (back) hand.
+  if (g.edgeGlove && sx < HEAD_X) g = { ...g, gloves: { edge: true } };
   return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, gloved(g), skin, side);
 }
 
@@ -2929,6 +2931,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'beastmaster' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'phantom' };
   // The Acrobat Archer's bow is her short mint and gold trick recurve.
   if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
+  // The Mage (docs/design/mage-line.md): her wand and staff are the wizard's crystal wand and element
+  // orb staff, and she wears one dramatic glove on her free hand.
+  if (state.job === 'spiritmage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'arcane' };
+  if (state.job === 'spiritmage') g.edgeGlove = true;
   // The Astronomer's staff is her violet and silver orrery.
   if (state.job === 'onmyoji' && g.weapon?.type === 'staff' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'astro' };
   // The Starlight Idol's wand is her pink and gold microphone.

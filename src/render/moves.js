@@ -109,6 +109,16 @@ function starKeys(p, keys) {
   return keys[keys.length - 1][1];
 }
 
+// The Mage's faces: a dramatic edgelord acting every beat of a cast.
+const MG_FACE = {
+  intense: { lid: 0.25, cross: 0.6, mouth: 'grit', brows: [[-0.3, 1], [-0.3, 1]] },
+  shout: { cross: 0.5, mouth: 'yell', brows: [[-0.2, 0.9], [-0.2, 0.9]] },
+  roar: { cross: 0.8, mouth: 'yell', brows: [[-0.3, 1], [-0.3, 1]], extra: ['vein'] },
+  sly: { lid: 0.35, mouth: 'smirk', brows: [[0.3, 0.4], [0.7, -0.3]] },
+  smug: { lid: 0.4, mouth: 'cat', brows: [[0.6, -0.2], [0.6, -0.2]] },
+  cackle: { closed: [true, true], mouth: 'grin', brows: [[-0.1, 0.8], [-0.1, 0.8]] },
+};
+
 // The Kitchen Witch's faces (render/hero.js face fields): she acts every beat of a move.
 const KW_FACE = {
   focus: { lid: 0.3, cross: 0.4, mouth: 'flat', brows: [[-0.2, 0.6], [-0.2, 0.6]] },
@@ -3227,6 +3237,338 @@ export const MOVES = {
         if (point > 0.4) [r.eyes, r.mouth] = ['wink', 'grin'];
         else if (poke > 0.4) r.eyes = 'happy';
         else if (winding) r.mouth = 'grin';
+      },
+    };
+  },
+
+  // ---------- The Mage's moves (her own; docs/design/mage-line.md) ----------
+  // An elemental mage who is a dramatic edgelord: every cast is a villain pose. Her gloved free
+  // hand flexes, claws and points; the wand flicks, lashes and points; the staff thrusts, plants
+  // and is raised to the heavens. She acts every beat (MG_FACE): intense on the wind-up, shouting
+  // the spell's name on the cast, a sly or cackling face after. The wand stays out in front or low;
+  // the staff swings round her and goes over her shoulder behind her head, never across her face.
+
+  // Ember flick (wand opener, the fire bolt at ~0.3): side on, the wand low and her gloved hand
+  // raised by her shoulder, flexing; then a flick of the wrist that snaps a fire bolt out, a little
+  // lunge, and she holds the wand out while the glove drops to her hip. Smug.
+  mgember(p) {
+    const flex = soft(seg(p, 0, 0.2));
+    const flick = ease(seg(p, 0.2, 0.3));
+    const settle = soft(seg(p, 0.4, 0.75));
+    return {
+      weapon: lerp(lerp(120, 160, flex), 86, flick) + 8 * settle, arm: lerp(lerp(40, 28, flex), 96, flick) - 6 * settle,
+      lunge: -1 * flex * (1 - flick) + 6 * flick * (1 - settle * 0.3), tilt: -0.05 * flex * (1 - flick) + 0.1 * flick * (1 - settle * 0.5),
+      lift: 2 * bump(p, 0.24, 0.42) + swBob(p, 0.68),
+      face: p < 0.2 ? MG_FACE.intense : p < 0.42 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.backArm = flick < 0.3 ? [q(lerp(0, 4, flex)), q(lerp(0, -7, flex))] : [q(lerp(4, 2, settle)), q(lerp(-7, 1, settle))];
+        r.hairLift = flick > 0.3 && settle < 0.5 ? 1 : 0;
+        danceLegs(r, [flex * (1 - flick), [1, 0, 4], [-2.4, 0, -10]], [flick, [4, 0, 8], [-3.6, -0.6, -18]], [settle, [2.4, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Frost lash (second, ice shards fanning out at ~0.38): the wand drawn right across her body and
+  // back behind her, low, then lashed round in front, a fan of ice shards flying off it; her cape
+  // swings and her gloved hand is flung back. She ends side on, chin up.
+  mgfrost(p) {
+    const wind = soft(seg(p, 0, 0.26));
+    const lash = ease(seg(p, 0.26, 0.38));
+    const after = soft(seg(p, 0.44, 0.72));
+    return {
+      weapon: lerp(lerp(lerp(95, 250, wind), 72, lash), 60, after), arm: lerp(lerp(lerp(55, -15, wind), 102, lash), 90, after),
+      tilt: -0.1 * wind * (1 - lash) + 0.12 * lash * (1 - after * 0.6) - 0.06 * after, lunge: -2 * wind * (1 - lash) + 7 * lash * (1 - after * 0.3),
+      lift: 4 * bump(p, 0.28, 0.56) + swBob(p, 0.74), trail: p > 0.26 && p < 0.42,
+      face: p < 0.26 ? MG_FACE.intense : p < 0.46 ? MG_FACE.shout : MG_FACE.sly,
+      rig: (r) => {
+        r.air = bump(p, 0.28, 0.56) > 0.45;
+        r.backArm = [q(lerp(lerp(0, 6, wind), -6, lash)), q(lerp(lerp(0, -2, wind), -6, lash))];
+        r.hairLift = lash > 0.3 ? 1 : 0;
+        r.cape -= q(5 * lash * (1 - after * 0.5));
+        danceLegs(r, [wind * (1 - lash), [1, 0, 4], [-2.8, 0, -12]], [lash, [3.6, 0, 8], [-3.4, -1, -24]], [after, [2.2, 0, 4], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Thunder point (wand finisher, the lightning bolt at ~0.5): a crouch with the wand crossed low,
+  // then she rises onto her toes thrusting the wand high out in front ("the heavens obey me!"), and
+  // snaps it down to point at them, her gloved hand pointing with it, as lightning tears through the
+  // line. She holds the villain pose and cackles.
+  mgthunder(p) {
+    const crouch = soft(seg(p, 0, 0.16));
+    const rise = soft(seg(p, 0.16, 0.38));
+    const point = ease(seg(p, 0.4, 0.5));
+    const cackle = p > 0.6 ? Math.sin(seg(p, 0.6, 0.95) * Math.PI * 6) * (1 - seg(p, 0.6, 0.95)) : 0;
+    return {
+      weapon: lerp(lerp(lerp(95, 150, crouch), 40, rise), 90, point), arm: lerp(lerp(lerp(55, 30, crouch), 104, rise), 96, point),
+      lunge: 2 * rise * (1 - point) + 7 * point, tilt: 0.1 * crouch * (1 - rise) - 0.1 * rise * (1 - point) + 0.12 * point - 0.1 * soft(seg(p, 0.6, 0.8)),
+      lift: -1.5 * crouch * (1 - rise) + 5 * rise * (1 - point) + 1.2 * Math.abs(cackle) + swBob(p, 0.86), trail: point > 0 && point < 1,
+      face: p < 0.16 ? MG_FACE.intense : p < 0.58 ? MG_FACE.roar : MG_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(2 * crouch * (1 - rise) + 1.2 * point * (1 - soft(seg(p, 0.6, 0.9))));
+        r.backArm = point > 0.2 ? [q(lerp(2, 9, point)), q(lerp(-6, -4, point))] : [q(lerp(0, 2, rise)), q(lerp(0, -6, rise))];
+        r.hairLift = point > 0.3 && p < 0.7 ? 1 : rise > 0.5 ? -1 : 0;
+        r.cape -= q(5 * point * (1 - soft(seg(p, 0.7, 1))));
+        danceLegs(r, [crouch * (1 - rise), [2.6, 0, 6], [-2.6, 0, -6]], [rise * (1 - point), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [point, [4.6, 0, 10], [-4.2, -0.6, -22]]);
+      },
+    };
+  },
+  // Villain laugh (an opener in her pool, ~0.32): head thrown back laughing, gloved hand on her hip,
+  // the wand twirled once at her side, then flicked at them without even looking.
+  mglaugh(p) {
+    const laugh = soft(seg(p, 0, 0.2));
+    const flick = ease(seg(p, 0.22, 0.32));
+    const tw = seg(p, 0.02, 0.2);
+    const w = lerp(120 + 360 * soft(tw), 90 + 360, flick);
+    return {
+      weapon: w, back: (tw > 0 && tw < 1 && wandUp(w)) || undefined, arm: lerp(lerp(40, 36, laugh), 92, flick),
+      tilt: -0.14 * laugh * (1 - flick * 0.5) + 0.06 * flick, lunge: 4 * flick * (1 - soft(seg(p, 0.5, 0.9)) * 0.4),
+      lift: 1.4 * Math.abs(Math.sin(seg(p, 0, 0.22) * Math.PI * 4)) + swBob(p, 0.6),
+      face: p < 0.22 ? MG_FACE.cackle : p < 0.4 ? MG_FACE.shout : MG_FACE.sly,
+      rig: (r) => {
+        r.backArm = [2, 1];
+        danceLegs(r, [laugh, [1.6, 0, 4], [-1.8, 0, -6]], [flick, [3, 0, 6], [-2.8, -0.4, -12]]);
+      },
+    };
+  },
+  // Cape twirl (second in her pool, two ice shards at ~0.42): a turn on the spot, the cape flaring
+  // out round her, the wand flung out of the turn; she stops side on, gloved hand up by her chest
+  // in a claw.
+  mgtwirl(p) {
+    const a = ease(seg(p, 0.04, 0.36));
+    const turning = p > 0.04 && p < 0.36;
+    const fling = ease(seg(p, 0.36, 0.44));
+    const hold = soft(seg(p, 0.5, 0.75));
+    return {
+      weapon: lerp(lerp(110, 140, soft(seg(p, 0, 0.1))), 80, fling) - 10 * hold, arm: lerp(lerp(50, 30, soft(seg(p, 0, 0.1))), 100, fling) - 8 * hold,
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1, trail: turning || (fling > 0 && fling < 1),
+      lift: 5 * bump(p, 0.04, 0.4) + swBob(p, 0.76), lunge: 5 * fling * (1 - hold * 0.4), tilt: 0.08 * fling * (1 - hold),
+      face: turning ? MG_FACE.sly : p < 0.5 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.air = bump(p, 0.04, 0.4) > 0.45;
+        r.backArm = turning ? [-6, -3] : [q(lerp(-5, 5, hold)), q(lerp(-5, -5, hold))];
+        r.hairLift = turning ? -1 : 0;
+        r.cape -= q(turning ? 6 : 4 * (1 - hold));
+        danceLegs(r, [turning ? 1 : 0, [1.4, -2.6, 22], [-1.2, -2.2, -26]], [fling, [3.4, 0, 8], [-3, -0.6, -16]], [hold, [2.2, 0, 4], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Dark flourish (a finish in her pool, ~0.5): she sweeps her gloved hand wide across in front of
+  // her chest as if drawing a curtain of darkness, drops low into a crouch with the wand behind her,
+  // then springs up and stabs it out at them; she lands posed, glove clenched in a fist.
+  mgcape(p) {
+    const sweep = soft(seg(p, 0, 0.26));
+    const low = soft(seg(p, 0.22, 0.38));
+    const stab = ease(seg(p, 0.4, 0.5));
+    const hold = soft(seg(p, 0.56, 0.8));
+    return {
+      weapon: lerp(lerp(95, 230, low), 84, stab), arm: lerp(lerp(55, -20, low), 100, stab) - 8 * hold,
+      lunge: -1.5 * low * (1 - stab) + 8 * stab * (1 - hold * 0.3), tilt: 0.06 * sweep * (1 - low) + 0.14 * low * (1 - stab) + 0.1 * stab * (1 - hold),
+      lift: 6 * bump(p, 0.38, 0.6) + swBob(p, 0.82), trail: p > 0.4 && p < 0.54,
+      face: p < 0.38 ? MG_FACE.intense : p < 0.6 ? MG_FACE.roar : MG_FACE.cackle,
+      rig: (r) => {
+        r.air = bump(p, 0.38, 0.6) > 0.5;
+        r.squat = q(2.8 * low * (1 - stab));
+        r.backArm = sweep < 1 && low < 0.3 ? [q(lerp(-4, 9, sweep)), q(-5)] : stab < 0.5 ? [9, -4] : [q(lerp(9, 4, hold)), q(lerp(-4, -2, hold))];
+        r.hairLift = stab > 0.3 && hold < 0.6 ? 1 : 0;
+        r.cape -= q(5 * stab * (1 - hold * 0.5));
+        danceLegs(r, [low * (1 - stab), [3.4, 0, 10], [-3.4, 0, -10]], [stab, [4.4, 0, 10], [-4, -0.6, -22]], [hold, [2.6, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Up + attack with the wand: the wand swept up overhead-forward, sparks flying up at whatever
+  // flies, her gloved hand following it up.
+  mgup(p) {
+    const jump = bump(p, 0.14, 0.6);
+    return {
+      weapon: starKeys(p, [[0, 120], [0.12, 150], [0.3, 44], [0.6, 40], [1, 60]]), arm: starKeys(p, [[0, 50], [0.12, 40], [0.3, 96], [0.6, 92], [1, 82]]),
+      tilt: -0.1 * soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.6, 0.9))), lift: 8 * jump - 1.5 * bump(p, 0, 0.14) + swBob(p, 0.7) * 0.6,
+      face: p < 0.14 ? MG_FACE.intense : p < 0.45 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.6 * bump(p, 0, 0.14));
+        r.backArm = [q(4 * jump), q(-6 * jump)];
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [jump, [1.6, -3, 26], [-2.2, -3.8, -50]]);
+      },
+    };
+  },
+  // In the air with the wand: hanging in the air she points the wand down at them and rains ice.
+  mgair(p) {
+    return {
+      weapon: starKeys(p, [[0, 80], [0.18, 56], [0.3, 150], [0.7, 130]]), arm: starKeys(p, [[0, 80], [0.18, 94], [0.3, 70], [0.7, 76]]), tilt: 0.08 * soft(seg(p, 0.18, 0.3)),
+      face: p < 0.2 ? MG_FACE.intense : MG_FACE.shout,
+      rig: (r) => { r.air = true; r.backArm = [-5, -6]; r.cape -= 3; danceLegs(r, [1, [2, -3, 30], [-2.4, -2, -30]]); },
+    };
+  },
+  // Out of a run with the wand: she swirls into a slide on one knee, cape streaming, flicks the wand
+  // out of the slide (a trail of fire behind her), and rises with it held up by her shoulder.
+  mgdash(p) {
+    const slide = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.72, 1)));
+    const flick = ease(seg(p, 0.3, 0.38));
+    return {
+      weapon: lerp(lerp(120, 200, soft(seg(p, 0, 0.26))), 86, flick) - 30 * soft(seg(p, 0.6, 0.9)), arm: lerp(lerp(40, -5, soft(seg(p, 0, 0.26))), 98, flick) - 10 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.12 * slide, lunge: 6 * slide, trail: p > 0.3 && p < 0.44,
+      face: p < 0.3 ? MG_FACE.sly : p < 0.55 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => { r.squat = q(2.6 * slide); r.backArm = [q(-6 * slide), q(-4 * slide)]; r.hairLift = slide > 0.4 ? 1 : 0; r.cape -= q(5 * slide); danceLegs(r, [slide, [5.4, 0, 30], [-3.4, -1, -14]]); },
+    };
+  },
+
+  // Fireball thrust (staff opener, ~0.38): the staff drawn back low in both hands, then driven
+  // straight out at them, a fireball off the orb; she holds the thrust, glove gripping the shaft.
+  msfire(p) {
+    const draw = soft(seg(p, 0, 0.26));
+    const drive = ease(seg(p, 0.26, 0.38));
+    const hold = soft(seg(p, 0.46, 0.76));
+    return {
+      weapon: lerp(lerp(80, 104, draw), 90, drive) - 6 * hold, arm: lerp(lerp(55, 32, draw), 90, drive) - 10 * hold,
+      lunge: -2.5 * draw * (1 - drive) + 9 * drive * (1 - hold * 0.4), tilt: -0.05 * draw * (1 - drive) + 0.12 * drive * (1 - hold * 0.6),
+      lift: swBob(p, 0.76),
+      face: p < 0.26 ? MG_FACE.intense : p < 0.46 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.squat = q(1.6 * draw * (1 - drive));
+        r.backArm = [q(lerp(lerp(2, 0, draw), 8, drive) - 4 * hold), q(lerp(-1, -2, drive))];
+        danceLegs(r, [draw * (1 - drive), [1.4, 0, 4], [-2.6, 0, -10]], [drive, [4.4, 0, 8], [-4, -0.6, -20]], [hold, [2.6, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Spike plant (second, ice spikes burst out of the ground under them at ~0.4): the staff lifted
+  // up and then planted hard in front of her; she crouches into the plant, gloved hand thrown out
+  // in a claw as the spikes erupt.
+  msspike(p) {
+    const lift = soft(seg(p, 0, 0.28));
+    const plant = ease(seg(p, 0.28, 0.4));
+    const hold = soft(seg(p, 0.5, 0.8));
+    return {
+      weapon: lerp(lerp(80, 58, lift), 140, plant) - 20 * hold, arm: lerp(lerp(55, 90, lift), 52, plant) + 10 * hold,
+      lunge: 5 * plant * (1 - hold * 0.4), tilt: -0.05 * lift * (1 - plant) + 0.14 * plant * (1 - hold * 0.5),
+      lift: 4 * bump(p, 0.04, 0.34) + swBob(p, 0.8),
+      face: p < 0.28 ? MG_FACE.intense : p < 0.52 ? MG_FACE.roar : MG_FACE.sly,
+      rig: (r) => {
+        r.squat = q(2.4 * plant * (1 - hold * 0.6));
+        r.backArm = plant > 0.3 ? [q(lerp(0, -7, plant)), q(lerp(0, -6, plant))] : [q(3 * lift), q(-4 * lift)];
+        r.hairLift = plant > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [lift * (1 - plant), [1.2, -0.8, 6], [-1.6, -0.4, -8]], [plant, [3.8, 0, 10], [-3.6, 0, -14]], [hold, [2.4, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Heavens' wrath (staff finisher, lightning from the sky at ~0.52): she raises the staff straight
+  // up out in front of her on her toes ("I COMMAND THEE!"), holding it trembling at the top, then
+  // brings it down to point at them as lightning strikes; a long villain pose after.
+  msbolt(p) {
+    const raise = soft(seg(p, 0.04, 0.3));
+    const tremble = p > 0.3 && p < 0.44 ? Math.sin(p * 90) * 2.5 : 0;
+    const down = ease(seg(p, 0.44, 0.52));
+    const hold = soft(seg(p, 0.6, 0.85));
+    return {
+      weapon: lerp(lerp(80, 30, raise), 88, down) + tremble - 6 * hold, arm: lerp(lerp(55, 100, raise), 92, down) - 10 * hold,
+      lunge: 1.5 * raise * (1 - down) + 7 * down * (1 - hold * 0.4), tilt: 0.14 * down * (1 - hold * 0.5) - 0.06 * hold,
+      lift: 3.5 * raise * (1 - down) + swBob(p, 0.86),
+      face: p < 0.3 ? MG_FACE.intense : p < 0.6 ? MG_FACE.roar : MG_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(1.8 * down * (1 - hold));
+        r.backArm = down > 0.3 ? [q(lerp(-2, -6, down)), q(-6)] : [q(lerp(0, 5, raise)), q(lerp(0, -7, raise))];
+        r.hairLift = raise > 0.5 && down < 0.3 ? -1 : down > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(5 * down * (1 - hold * 0.6));
+        danceLegs(r, [raise * (1 - down), [1.4, -1.6, 14], [-1.4, -0.8, -8]], [down, [4.4, 0, 8], [-4, -0.6, -20]], [hold, [2.6, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Flame slam (an opener in her pool, ~0.42): the staff heaved up over her shoulder behind her head,
+  // then slammed down in front in a burst of fire.
+  msslam(p) {
+    const wind = soft(seg(p, 0, 0.3));
+    const slam = ease(seg(p, 0.3, 0.42));
+    const quiver = Math.sin(seg(p, 0.42, 0.7) * Math.PI * 5) * (1 - seg(p, 0.42, 0.7)) * (p > 0.42 ? 1 : 0);
+    return {
+      weapon: lerp(lerp(80, -50, wind), 120, slam) + 5 * quiver, arm: lerp(lerp(55, 104, wind), 70, slam), back: (wind > 0.25 && slam < 0.3) || undefined,
+      lunge: -1 * wind * (1 - slam) + 7 * slam * (1 - 0.3 * soft(seg(p, 0.6, 1))), tilt: -0.06 * wind * (1 - slam) + 0.16 * slam * (1 - 0.5 * soft(seg(p, 0.6, 1))),
+      lift: 2.5 * wind * (1 - slam) + swBob(p, 0.7), trail: slam > 0 && slam < 1,
+      face: p < 0.3 ? MG_FACE.intense : p < 0.52 ? MG_FACE.roar : MG_FACE.smug,
+      rig: (r) => {
+        r.squat = q(1.8 * slam * (1 - soft(seg(p, 0.5, 0.8))));
+        r.backArm = [q(lerp(lerp(0, 4, wind), -5, slam)), q(lerp(lerp(0, -5, wind), -3, slam))];
+        r.hairLift = slam > 0.3 && p < 0.5 ? 1 : wind > 0.5 ? -1 : 0;
+        danceLegs(r, [wind * (1 - slam), [1, -0.6, 4], [-1.4, -0.4, -8]], [slam, [4.4, 0, 8], [-4, -0.6, -20]]);
+      },
+    };
+  },
+  // Orb spin (second in her pool, ~0.48): her hand slides up to the staff's middle and she spins it
+  // twice round in front of her, the orb leaving a ring of light, then thrusts it out.
+  msspin(p) {
+    const slide = soft(seg(p, 0, 0.1));
+    const spin = seg(p, 0.1, 0.42);
+    const twirling = p > 0.1 && p < 0.42;
+    const shoot = ease(seg(p, 0.42, 0.5));
+    const s2 = spin * spin * (3 - 2 * spin);
+    return {
+      weapon: twirling ? 90 + 720 * s2 : lerp(lerp(80, 90, slide), 88, shoot) + (p >= 0.42 ? 720 : 0), arm: lerp(lerp(55, 60, slide), 96, shoot) - 10 * soft(seg(p, 0.6, 0.9)),
+      grip: 14 * slide * (1 - shoot), orbit: true, trail: twirling,
+      lift: 5 * bump(p, 0.08, 0.46) + swBob(p, 0.8), lunge: 7 * shoot * (1 - soft(seg(p, 0.6, 1)) * 0.5), tilt: 0.1 * shoot * (1 - soft(seg(p, 0.6, 1))),
+      face: twirling ? MG_FACE.sly : p < 0.58 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.air = bump(p, 0.08, 0.46) > 0.45;
+        r.backArm = twirling ? [q(5 + 2 * Math.sin(spin * Math.PI * 4)), q(-5 + 2 * Math.cos(spin * Math.PI * 4))] : [q(lerp(5, 2, soft(seg(p, 0.5, 0.8)))), q(lerp(-4, 1, soft(seg(p, 0.5, 0.8))))];
+        r.hairLift = twirling ? -1 : 0;
+        danceLegs(r, [twirling ? 1 : 0, [1.4, -2.8, 24], [-1.4, -2.6, -30]], [shoot, [4, 0, 8], [-3.6, -0.6, -18]]);
+      },
+    };
+  },
+  // Thunder slam (a finish in her pool, ~0.54): both hands on the staff, heaved up behind her head,
+  // a beat held at the top, then slammed down in front as thunder breaks; she ends crouched over it.
+  msthunder(p) {
+    const wind = soft(seg(p, 0, 0.32));
+    const slam = ease(seg(p, 0.44, 0.54));
+    const hold = soft(seg(p, 0.62, 0.85));
+    return {
+      weapon: lerp(lerp(80, -60, wind), 128, slam) - 20 * hold, arm: lerp(lerp(55, 100, wind), 66, slam) + 6 * hold, back: (wind > 0.25 && slam < 0.3) || undefined,
+      lunge: -1.5 * wind * (1 - slam) + 8 * slam * (1 - hold * 0.4), tilt: -0.08 * wind * (1 - slam) + 0.2 * slam * (1 - hold * 0.6),
+      lift: 4 * wind * (1 - slam) + swBob(p, 0.86), trail: slam > 0 && slam < 1,
+      face: p < 0.44 ? MG_FACE.intense : p < 0.64 ? MG_FACE.roar : MG_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(2.6 * slam * (1 - hold * 0.5));
+        r.backArm = [q(lerp(lerp(0, 3, wind), 7, slam)), q(lerp(lerp(0, -6, wind), -1, slam))];
+        r.hairLift = slam > 0.3 && hold < 0.5 ? 1 : wind > 0.5 ? -1 : 0;
+        r.cape -= q(5 * slam * (1 - hold));
+        danceLegs(r, [wind * (1 - slam), [1.2, -1, 8], [-1.6, -0.4, -8]], [slam, [4.6, 0, 10], [-4.2, -0.6, -22]]);
+      },
+    };
+  },
+  // Up + attack with the staff: the staff swung up out in front, lightning sparking up off the orb.
+  msup(p) {
+    const jump = bump(p, 0.14, 0.6);
+    return {
+      weapon: starKeys(p, [[0, 85], [0.12, 100], [0.3, 54], [0.6, 58], [1, 74]]), arm: starKeys(p, [[0, 55], [0.12, 45], [0.3, 88], [0.6, 84], [1, 70]]),
+      tilt: -0.08 * soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.6, 0.9))), lift: 7 * jump - 1.5 * bump(p, 0, 0.14) + swBob(p, 0.7) * 0.6,
+      face: p < 0.14 ? MG_FACE.intense : p < 0.45 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.6 * bump(p, 0, 0.14));
+        r.backArm = [q(3 * jump), q(-5 * jump)];
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [jump, [1.6, -3, 26], [-2.2, -3.8, -50]]);
+      },
+    };
+  },
+  // In the air with the staff: swung up behind her, then brought round to point down at them.
+  msair(p) {
+    return {
+      weapon: starKeys(p, [[0, -30], [0.16, -50], [0.3, 140], [0.7, 124]]), arm: starKeys(p, [[0, 80], [0.16, 96], [0.3, 62], [0.7, 62]]), back: p < 0.22 || undefined, tilt: 0.12 * soft(seg(p, 0.16, 0.3)),
+      face: p < 0.18 ? MG_FACE.intense : MG_FACE.roar,
+      rig: (r) => { r.air = true; r.backArm = [-5, -6]; r.cape -= 3; danceLegs(r, [1, [2.4, -3.4, 34], [-2, -2.4, -26]]); },
+    };
+  },
+  // Out of a run with the staff: she plants the staff and vaults round it in a swirl of cape, then
+  // thrusts it out as she lands.
+  msdash(p) {
+    const vault = bump(p, 0.04, 0.36);
+    const thrust = ease(seg(p, 0.34, 0.42));
+    return {
+      weapon: lerp(lerp(80, 150, soft(seg(p, 0, 0.12))), 88, thrust) - 10 * soft(seg(p, 0.6, 0.9)), arm: lerp(lerp(55, 40, soft(seg(p, 0, 0.12))), 96, thrust) - 12 * soft(seg(p, 0.6, 0.9)),
+      lift: 9 * vault + swBob(p, 0.74), lunge: 4 * soft(seg(p, 0, 0.3)) + 6 * thrust * (1 - soft(seg(p, 0.6, 1)) * 0.5), tilt: -0.1 * vault + 0.12 * thrust * (1 - soft(seg(p, 0.6, 1))),
+      face: p < 0.34 ? MG_FACE.sly : p < 0.55 ? MG_FACE.shout : MG_FACE.smug,
+      rig: (r) => {
+        r.air = vault > 0.3;
+        r.backArm = [q(lerp(4, -5, thrust)), q(lerp(-6, -4, thrust))];
+        r.hairLift = vault > 0.4 ? -1 : thrust > 0.3 ? 1 : 0;
+        r.cape -= q(6 * vault);
+        danceLegs(r, [vault, [2, -3.6, 34], [-2.4, -3.6, -46]], [thrust, [4.2, 0, 8], [-3.8, -0.6, -18]]);
       },
     };
   },

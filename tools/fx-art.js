@@ -5492,6 +5492,239 @@
     };
   })(), 2);
 
+  // ---------- The Mage (fire, ice and lightning, with her crimson runes) ----------
+  // docs/design/mage-line.md. Her shapes: round fireballs trailing flame tongues (orange-gold, never
+  // her crimson robes' red), faceted ice shards and spikes (pale blue), jagged lightning (yellow),
+  // and her own signature on every hit: a crimson rune ring that flashes and breaks.
+  const MFIRE = ['#ffffff', '#fff2a0', '#ffb43c', '#ff6a2a', '#9a2a3a'];
+  const MICE = ['#ffffff', '#e8fbff', '#9ae2ff', '#4a9ae0', '#2a4a8a'];
+  const MBOLT = ['#ffffff', '#fffbd0', '#ffe04a', '#e0a020', '#7a4a2a'];
+  const MRUNE = ['#ffffff', '#ffd0d6', '#ff5a6a', '#c8324a', '#5a1a3a'];
+
+  // A jagged lightning stroke from (x0, y0) to (x1, y1): zigzag points, inked, its colour and a
+  // white-hot core, with forks splitting off it.
+  function zap(ctx, pal, x0, y0, x1, y1, w, seed, forks = 2) {
+    const R = rng(seed);
+    const n = 7;
+    const len = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const nx = -(y1 - y0) / len;
+    const ny = (x1 - x0) / len;
+    const pts = [[x0, y0]];
+    for (let i = 1; i < n; i++) {
+      const u = i / n;
+      const j = (R() - 0.5) * len * 0.22;
+      pts.push([lerp(x0, x1, u) + nx * j, lerp(y0, y1, u) + ny * j]);
+    }
+    pts.push([x1, y1]);
+    const line = (P, width, colour) => {
+      ctx.beginPath();
+      P.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.lineJoin = 'miter';
+      ctx.lineCap = 'round';
+      ctx.lineWidth = width;
+      ctx.strokeStyle = colour;
+      ctx.stroke();
+    };
+    const all = [pts];
+    for (let f = 0; f < forks; f++) {
+      const k = 1 + Math.floor(R() * (n - 2));
+      const [fx, fy] = pts[k];
+      const a = Math.atan2(y1 - y0, x1 - x0) + (R() < 0.5 ? -1 : 1) * (0.5 + R() * 0.5);
+      const fl = len * (0.18 + R() * 0.16);
+      all.push([[fx, fy], [fx + Math.cos(a) * fl * 0.5 + nx * 4, fy + Math.sin(a) * fl * 0.5 + ny * 4], [fx + Math.cos(a) * fl, fy + Math.sin(a) * fl]]);
+    }
+    all.forEach((P, i) => line(P, (i ? w * 0.55 : w) + 4, pal[4]));
+    all.forEach((P, i) => line(P, i ? w * 0.55 : w, pal[2]));
+    all.forEach((P, i) => line(P, (i ? w * 0.55 : w) * 0.45, pal[0]));
+  }
+  // A faceted ice shard pointing along `a`, `len` long and `wid` wide.
+  function iceShard(ctx, x, y, a, len, wid) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    const P = [[len * 0.6, 0], [len * 0.05, -wid], [-len * 0.4, -wid * 0.55], [-len * 0.45, wid * 0.5], [len * 0.05, wid]];
+    inked(ctx, P, MICE[3], MICE[4], 3.5);
+    fill(ctx, [[len * 0.6, 0], [len * 0.05, -wid], [-len * 0.4, -wid * 0.55], [len * 0.02, 0]], MICE[2]);
+    fill(ctx, [[len * 0.55, -wid * 0.05], [len * 0.05, -wid * 0.8], [len * 0.0, -wid * 0.2]], MICE[1]);
+    fill(ctx, [[len * 0.4, -wid * 0.12], [len * 0.12, -wid * 0.5], [len * 0.1, -wid * 0.2]], MICE[0]);
+    ctx.restore();
+  }
+  // A fireball heading +x: a round blazing head with flame tongues streaming back behind it.
+  function fireball(ctx, x, y, r, ph) {
+    for (let k = 0; k < 4; k++) {
+      ctx.save();
+      ctx.translate(x - r * 0.2, y + (k - 1.5) * r * 0.35);
+      ctx.rotate(-Math.PI / 2 - 0.12 * (k - 1.5));
+      tongue(ctx, MFIRE, 0, 0, r * (0.62 - Math.abs(k - 1.5) * 0.1), r * (2.4 + 0.5 * Math.sin(ph + k * 1.9)), r * 0.4 * Math.sin(ph * 2 + k));
+      ctx.restore();
+    }
+    blob(ctx, MFIRE, x, y, r, 0.07, ph);
+  }
+  // Her crimson rune ring: a thin ring with rune ticks round it, turned by `rot`, broken up as it
+  // fades (`broken`).
+  function runeRing(ctx, x, y, r, rot, broken = 0) {
+    celRing(ctx, MRUNE, x, y, r, 5, { broken, seed: 401 });
+    for (let k = 0; k < 6; k++) {
+      if (broken && k % 2) continue;
+      const a = rot + (k / 6) * TAU;
+      const px = x + Math.cos(a) * (r + 8);
+      const py = y + Math.sin(a) * (r + 8);
+      inked(ctx, [[px, py - 5], [px + 3.5, py], [px, py + 5], [px - 3.5, py]], MRUNE[2], MRUNE[4], 2);
+    }
+  }
+
+  // A fire bolt off her wand (loops, toward +x).
+  E.mgfire = grown((() => {
+    const cx = 110;
+    const cy = 50;
+    return {
+      w: 150, h: 100, n: 6, fps: 28, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        fireball(ctx, cx, cy, 15, ph);
+        const R = rng(410 + i);
+        for (let k = 0; k < 3; k++) sparkle(ctx, MFIRE, cx - 40 - R() * 50, cy + (R() - 0.5) * 34, 4 + R() * 3, k);
+      },
+    };
+  })(), 2.2);
+
+  // The staff's fireball (loops, toward +x): bigger, churning, embers shed behind.
+  E.mgfireball = grown((() => {
+    const cx = 160;
+    const cy = 75;
+    return {
+      w: 220, h: 150, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        fireball(ctx, cx, cy, 26, ph);
+        blob(ctx, MFIRE, cx + 2, cy - 2, 14, 0.1, -ph);
+        const R = rng(420 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, MFIRE, cx - 60 - R() * 80, cy + (R() - 0.5) * 60, 5 + R() * 4, k);
+      },
+    };
+  })(), 2);
+
+  // A frost shard (loops, toward +x): a spinning-in-place faceted shard with frost glints trailing.
+  E.mgice = grown((() => {
+    const cx = 100;
+    const cy = 45;
+    return {
+      w: 140, h: 90, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        iceShard(ctx, cx, cy, 0, 56, 11 + (i % 2));
+        const R = rng(430 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MICE, cx - 36 - R() * 50, cy + (R() - 0.5) * 30, 3 + R() * 4, k + i);
+      },
+    };
+  })(), 2.2);
+
+  // Ice spikes bursting up out of the ground as the line races along (loops, toward +x; the strip's
+  // anchor is the ground under the front spike).
+  E.mgspike = grown((() => {
+    const cx = 160;
+    const gy = 120;
+    return {
+      w: 200, h: 140, n: 6, fps: 24, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        // Spikes stand in a row behind the front one, each further back already sinking.
+        for (let k = 3; k >= 0; k--) {
+          const age = ((i / 6) + k * 0.25) % 1;
+          const h = 84 * Math.sin(Math.PI * Math.min(1, age * 1.3 + 0.08));
+          if (h < 6) continue;
+          const x = cx - k * 36 - (i % 2) * 3;
+          iceShard(ctx, x, gy - h * 0.45, -Math.PI / 2 + (k % 2 ? 0.18 : -0.12), h, 9 + h * 0.08);
+        }
+        const R = rng(440 + i);
+        for (let k = 0; k < 4; k++) shard(ctx, MICE, cx + 10 - R() * 150, gy - 6 - R() * 20, -Math.PI / 2 + (R() - 0.5), 8, 2);
+      },
+    };
+  })(), 2);
+
+  // A lightning bolt flung through the line (loops, toward +x): a long jagged stroke with forks and
+  // a blazing head.
+  E.mgbolt = grown((() => {
+    const cx = 200;
+    const cy = 50;
+    return {
+      w: 240, h: 100, n: 6, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 180, cy, cx, cy, 11, 450 + i, 2);
+        starburst(ctx, MBOLT, cx, cy, 16 + (i % 2) * 4, 8, 451 + i, { inner: 0.4 });
+      },
+    };
+  })(), 2);
+
+  // Lightning from the sky (heading +x as drawn; the game turns it along its fall, straight down):
+  // a long fat bolt with forks and a blazing tip.
+  E.mgsky = grown((() => {
+    const cx = 260;
+    const cy = 60;
+    return {
+      w: 290, h: 120, n: 4, fps: 30, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        zap(ctx, MBOLT, cx - 250, cy, cx, cy, 16, 460 + i, 3);
+        starburst(ctx, MBOLT, cx, cy, 22, 9, 461 + i, { inner: 0.4 });
+      },
+    };
+  })(), 2);
+
+  // Her marks on a monster, one for each element, each opened by a dark core and her crimson rune
+  // ring that flashes and breaks up.
+  const mgHit = (kind) => grown((() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) {
+          ctx.beginPath();
+          ctx.arc(c, c, 24, 0, TAU);
+          ctx.fillStyle = MRUNE[4];
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(c, c, 14, 0, TAU);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          return;
+        }
+        if (i <= 4) runeRing(ctx, c, c, 40 + i * 10, i * 0.3, i >= 3 ? 0.5 : 0);
+        const k = (i - 1) / 5;
+        if (kind === 'fire') {
+          for (let j = 0; j < 7; j++) {
+            if (i > 4) break;
+            const a = (j / 7) * TAU + 0.4;
+            ctx.save();
+            ctx.translate(c + Math.cos(a) * 18 * (1 + k * 2), c + Math.sin(a) * 18 * (1 + k * 2));
+            ctx.rotate(a + Math.PI / 2);
+            tongue(ctx, MFIRE, 0, 0, 9 * (1 - k * 0.5), 30 * (1 - k * 0.4), 4);
+            ctx.restore();
+          }
+          if (i <= 2) blob(ctx, MFIRE, c, c, 26 - i * 4, 0.12, i);
+        } else if (kind === 'ice') {
+          for (let j = 0; j < 6; j++) {
+            if (i > 4) break;
+            const a = (j / 6) * TAU + 0.2;
+            iceShard(ctx, c + Math.cos(a) * 26 * (1 + k * 1.6), c + Math.sin(a) * 26 * (1 + k * 1.6), a, 34 * (1 - k * 0.4), 8);
+          }
+          if (i <= 2) starburst(ctx, MICE, c, c, 30, 6, 470 + i, { inner: 0.35 });
+        } else {
+          for (let j = 0; j < 4; j++) {
+            if (i > 4) break;
+            const a = (j / 4) * TAU + i * 0.6;
+            zap(ctx, MBOLT, c, c, c + Math.cos(a) * 70 * (0.6 + k), c + Math.sin(a) * 70 * (0.6 + k), 8, 480 + i * 4 + j, 1);
+          }
+          if (i <= 3) starburst(ctx, MBOLT, c, c, 30 - i * 4, 10, 485 + i, { inner: 0.35 });
+        }
+        if (i >= 4) {
+          const pal = kind === 'fire' ? MFIRE : kind === 'ice' ? MICE : MBOLT;
+          for (let j = 0; j < 5; j++) sparkle(ctx, j % 2 ? MRUNE : pal, c + [-60, 50, -30, 70, 0][j], c + [-20, 10, 50, -50, -70][j] - (i - 4) * 8, 9 - (i - 4) * 2, j);
+        }
+      },
+    };
+  })(), 2);
+  E.mghitfire = mgHit('fire');
+  E.mghitice = mgHit('ice');
+  E.mghitbolt = mgHit('bolt');
+
   // ---------- The Kitchen Witch (tomato broth, cream steam, flambé fire, sizzling eggs) ----------
   // docs/design/kitchen-witch.md. Her shapes: wobbling globs of tomato broth with bits of veg in
   // them, splash crowns of droplets, curls of cream steam, a fried egg with a gold yolk, licks of

@@ -849,13 +849,13 @@ function arcaneStaff(m, t, f) {
 function arcaneWand(m, t, f) {
   const s = [];
   const a = {};
-  const H = 7 + t * 0.3;
+  const H = 4.6 + t * 0.22;
   // A dark rod, a metal grip at the end and a ferrule under the crystal.
   s.push(T([[-1, 2.4], [1, 2.4], [0.7, -H], [-0.7, -H]], '#3a2a4a'), F(T([[0.2, 2.4], [1, 2.4], [0.7, -H], [0.2, -H]], '#251a32')));
   s.push(E(0, 2.8, 1.3, 1.1, m.trim), F(R(-1.1, -0.6, 2.2, 0.8, m.trim)), R(-1.2, -H - 0.6, 2.4, 1.4, m.trim));
   // The crystal shard, faceted, in her violet with a white glint, and a glow of the element she
   // last cast in its heart (here turning through all three).
-  const L = 5.4 + t * 0.12;
+  const L = 4.4 + t * 0.1;
   const top = -H - 0.6 - L;
   s.push(T([[0, top], [1.9, top + L * 0.45], [0, -H - 0.4], [-1.9, top + L * 0.45]], '#8a5ae0'), F(T([[0, top], [1.9, top + L * 0.45], [0, top + L * 0.55]], '#c8a8ff')), F(T([[0, top + L * 0.55], [1.9, top + L * 0.45], [0, -H - 0.4]], '#5a3aa8')));
   s.push(F(E(0, top + L * 0.5, 0.8, 1.1, ELEMENTS[Math.floor(f / 2) % 3])), F(E(-0.7, top + L * 0.28, 0.3, 0.6, '#ffffff')));

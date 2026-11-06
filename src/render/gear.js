@@ -437,6 +437,23 @@ export function handShapes(hx, hy, glove, skin, ex = hx, ey = hy - 4) {
   if (!glove) return [E(hx, hy, 2, 2, skin)];
   // A gauntlet weapon: a small glove on the weapon hand (render/weapon-designs.js).
   if (glove.gauntlet) return gloveShapes(glove.gauntlet, hx, hy, ex, ey);
+  // The Mage's one dramatic glove (docs/design/mage-line.md): black and fingerless, a cuff with a
+  // strap, a crimson rune on the back of the hand, her fingertips bare.
+  if (glove.edge) {
+    const l = Math.hypot(hx - ex, hy - ey) || 1;
+    const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+    const [nx, ny] = [-uy, ux];
+    const wx = hx - ux * 2.2;
+    const wy = hy - uy * 2.2;
+    return [
+      T([[wx + nx * 2.1, wy + ny * 2.1], [wx - nx * 2.1, wy - ny * 2.1], [wx - ux * 2 - nx * 2.4, wy - uy * 2 - ny * 2.4], [wx - ux * 2 + nx * 2.4, wy - uy * 2 + ny * 2.4]], '#2a2234'),
+      F(T([[wx - ux * 0.6 + nx * 2.2, wy - uy * 0.6 + ny * 2.2], [wx - ux * 0.6 - nx * 2.2, wy - uy * 0.6 - ny * 2.2], [wx - ux * 1.2 - nx * 2.3, wy - uy * 1.2 - ny * 2.3], [wx - ux * 1.2 + nx * 2.3, wy - uy * 1.2 + ny * 2.3]], '#c8324a')),
+      E(hx + ux * 0.9, hy + uy * 0.9, 1.6, 1.6, skin),
+      E(hx, hy, 2.1, 2, '#2a2234'),
+      F(E(hx - ux * 0.3, hy - uy * 0.3, 0.8, 0.8, '#ff5a6a')),
+      F(E(hx - ux * 0.5 + nx * 1, hy - uy * 0.5 + ny * 1, 0.45, 0.35, '#8a7a9a')),
+    ];
+  }
   if (glove.family) return done(gearOf(glove).hand(glove.tier, glove.pal, hx, hy, ex, ey), glove);
   const c = glove.color;
   switch (glove.design) {

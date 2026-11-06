@@ -119,6 +119,18 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (f.shot === 'sinote' ? 1 : 1.05) * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'mgfire': case 'mgfireball': case 'mgice': case 'mgspike': case 'mgbolt': case 'mgsky': {
+      // The Mage's: a fire bolt or a fireball streaming flame, a frost shard, ice spikes bursting up
+      // out of the ground as the line races along it, a lightning bolt through the line, lightning
+      // straight down from the sky (born small at the wand or orb, grown to full in its first moment).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const spike = f.shot === 'mgspike';
+      const born = f.shot === 'mgsky' ? 1 : bornAt(f);
+      const size = { mgfire: 0.6, mgfireball: 0.7, mgice: 0.6, mgspike: 0.62, mgbolt: 0.7, mgsky: 0.8 }[f.shot];
+      fxSprite(ctx, `cel${f.shot}`, x, spike ? y + 18 : y, { t: f.t, flip: left, rot: spike ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.8 : 1), alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
+      break;
+    }
     case 'kwglob': case 'kwwave': case 'kpegg': case 'kpflame': case 'kwspice': {
       // The Kitchen Witch's: a glob of hot broth, a curling wave of soup, a spinning fried egg, a gush
       // of flambé fire, a cloud of salt and pepper, each turned along its flight (born small at the

@@ -23,6 +23,40 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
 - **Weapons:** a wand (quick: bolts of fire, shards of ice, sparks) and a staff (heavy: fireballs,
   ice spikes from the ground, lightning strikes).
 
+- **Colour (the player's pick): crimson** and gold robes. Her fire leans orange-gold with white-hot
+  cores and dark outlines so it never melts into the robes; ice is pale blue, lightning yellow.
+- **Her edgy touch (the player's pick): one dramatic glove**, black and fingerless with a little
+  rune on the back, on her casting hand; she flexes it before big spells.
+- **Kit (the player's pick: "more dramatic"):** every spell gets a villain pose and a shouted name,
+  and the big ones a short wind-up speech, never slower to cast.
+  - Wand: an ember flick (fire bolt), a backhand frost lash (a fan of ice shards), a dramatic
+    gloved point (a lightning bolt through the line). Pool: a villain-laugh cast, a twirling cast,
+    a cape-swirl cast.
+  - Staff: a fireball thrust, a planted strike (ice spikes burst from the ground under them), the
+    staff raised for a lightning strike from the sky. Pool: an overhead fire slam, a spinning cast,
+    a two-handed thunder slam.
+  - Commands: sparks up at fliers, ice rained down from the air, a cape-swirl slide with a fire trail.
+  - Skills (ids kept): Fireball, Chain Lightning, Frost Nova, Teleport, Heal (she grumbles it's "too
+    bright"), Magic Guard, Mana Mastery, and **Meteor**, the finisher (full Overload): she flexes the
+    glove, announces "CATACLYSM OF THE CRIMSON STAR", and a meteor crashes down on everything ahead.
+
 ## Status
 
-- 2026-11-06: picks recorded; look samples next.
+- 2026-11-06: picks recorded; look samples (`tools/mage-looks.html`, docs/design/samples/mage-looks.png).
+- Her wand and staff (render/weapon-designs.js `arcaneWand`, `arcaneStaff`, the 'arcane' finish,
+  given to her plain wands and staves in render/hero.js): a short dark rod with a violet crystal
+  shard, and a gnarled staff whose wooden claws hold an orb swirling with fire, ice and lightning.
+  (Tiers above 10 still use the old top-tier forms; to redo with the ladder.)
+- Her glove (render/gear.js `glove.edge`, `edgeGlove` in render/hero.js): black, fingerless, a
+  crimson rune, on her free hand.
+- Her moves (render/moves.js `mg*` wand, `ms*` staff, faces `MG_FACE`): mgember, mgfrost,
+  mgthunder and the pool mglaugh, mgtwirl, mgcape; msfire, msspike, msbolt and the pool msslam,
+  msspin, msthunder; commands mgup, mgair, mgdash, msup, msair, msdash. Every pose checked clear of
+  her face in strips.
+- Her strings (world/melee.js, keys `starwand`, `starstaff`): every shot carries its element (`el`)
+  for the Element Weave; the staff's lightning falls straight down from the sky (`mgsky`).
+- Her effects (tools/fx-art.js, the Mage section; palettes MFIRE, MICE, MBOLT, MRUNE): `mgfire`,
+  `mgfireball`, `mgice`, `mgspike` (spikes bursting out of the ground along the line), `mgbolt`,
+  `mgsky`, and a hit mark per element (`mghitfire`, `mghitice`, `mghitbolt`), each opened by her
+  crimson rune ring.
+- Next: Element Weave (replacing the Constellation), her shouted spell names, skills and Meteor.
