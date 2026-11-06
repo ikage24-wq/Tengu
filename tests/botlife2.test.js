@@ -151,29 +151,37 @@ test('moods shift with what happens and show in how they talk', () => {
 });
 
 test('in town some go AFK: sat down with an AFK tag, quiet, and back after a while', () => {
-  const world = createWorld(createCharacter('Me', {}));
-  const lines = quiet(world);
-  const bots = createBots(world, seeded(51), { clock: EVENING });
-  world.bots = bots;
-  for (const b of bots.list) Object.assign(b, { session: 1e9, stay: 1e9 });
-  let afk = null;
-  for (let t = 0; t < 1200 && !afk; t += 0.1) {
-    world.now += 0.1;
-    updateBots(bots, world, 0.1);
-    afk = botsIn(bots, world.map.id).find((b) => b.afk);
+  // (Some of the bots' small choices roll Math.random rather than their own dice: pinned here, so
+  // the run is the same every time.)
+  const random = Math.random;
+  Math.random = seeded(7);
+  try {
+    const world = createWorld(createCharacter('Me', {}));
+    const lines = quiet(world);
+    const bots = createBots(world, seeded(51), { clock: EVENING });
+    world.bots = bots;
+    for (const b of bots.list) Object.assign(b, { session: 1e9, stay: 1e9 });
+    let afk = null;
+    for (let t = 0; t < 1200 && !afk; t += 0.1) {
+      world.now += 0.1;
+      updateBots(bots, world, 0.1);
+      afk = botsIn(bots, world.map.id).find((b) => b.afk);
+    }
+    assert.ok(afk, 'someone went AFK');
+    assert.equal(afk.state, 'afk');
+    const x = afk.x;
+    const away = afk.afk;
+    const saidBefore = lines.filter((l) => l.startsWith(`${afk.name}:`)).length;
+    run(world, bots, 30);
+    if (afk.afk) {
+      assert.equal(afk.x, x, 'they stay put');
+      assert.equal(lines.filter((l) => l.startsWith(`${afk.name}:`)).length, saidBefore, 'and quiet');
+    }
+    run(world, bots, 220);
+    assert.ok(afk.afk !== away, 'back after a while');
+  } finally {
+    Math.random = random;
   }
-  assert.ok(afk, 'someone went AFK');
-  assert.equal(afk.state, 'afk');
-  const x = afk.x;
-  const away = afk.afk;
-  const saidBefore = lines.filter((l) => l.startsWith(`${afk.name}:`)).length;
-  run(world, bots, 30);
-  if (afk.afk) {
-    assert.equal(afk.x, x, 'they stay put');
-    assert.equal(lines.filter((l) => l.startsWith(`${afk.name}:`)).length, saidBefore, 'and quiet');
-  }
-  run(world, bots, 220);
-  assert.ok(afk.afk !== away, 'back after a while');
 });
 
 test('players log in and out over the game day: busiest in the evening', () => {

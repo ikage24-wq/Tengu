@@ -301,7 +301,8 @@ export function arriveTogether(bots, members) {
 export const teamUp = (bots, members, rng = soulRng(bots)) => formCrew(bots, members, rng);
 
 function formCrew(bots, members, rng) {
-  const crew = { id: `crew${(bots.crewN = (bots.crewN ?? 0) + 1)}`, color: pick(CREW_COLORS, rng), lead: members[0], members, talkIn: between(20, 50, rng), asked: false };
+  // (A crew hangs out a few minutes, then they go their own ways, like real players do.)
+  const crew = { id: `crew${(bots.crewN = (bots.crewN ?? 0) + 1)}`, color: pick(CREW_COLORS, rng), lead: members[0], members, talkIn: between(20, 50, rng), asked: false, life: between(180, 480, rng) };
   for (const m of members) m.crew = crew;
   for (let i = 0; i < members.length; i++) for (let j = i + 1; j < members.length; j++) befriend(bots, members[i], members[j]);
   return crew;
@@ -396,6 +397,15 @@ function crews(bots, world, rng) {
       });
       // The leader idles a little longer so the others catch up.
       if (lead.state === 'walk' && crew.members.some((m) => Math.abs(m.x - lead.x) > 120)) Object.assign(lead, { state: 'idle', timer: 1.5 });
+    }
+    // Time to split up (town friends only: a field crew hunts on until someone leaves): a goodbye,
+    // and they go their own ways.
+    crew.life = (crew.life ?? 300) - 2;
+    if (crew.life <= 0 && !lead.hunter && !lead.body) {
+      const by = pick(crew.members, rng);
+      botChat(world, by, moodVoice(by, pick(['ok gonna go do my own thing, cya', 'cya guys!', 'brb gonna go shop', 'that was fun, see u around'], rng), rng));
+      for (const m of [...crew.members]) m.crew = null;
+      continue;
     }
     crew.talkIn -= 2;
     if (crew.talkIn <= 0) {
@@ -499,15 +509,19 @@ function townMoments(bot, bots, world, map, dt, rng) {
     return;
   }
   if (bot.state === 'walk' && rng() < 0.12 && s.mood === 'cheerful') bot.hop = { t: 0, dur: 0.55 };
-  if (bot.state !== 'idle' || bot.emote || bot.crew) return;
+  if (bot.state !== 'idle' || bot.emote) return;
   const r = rng();
-  // Going AFK (much likelier when tired), with a word first now and then.
-  if (r < (s.mood === 'tired' ? 0.14 : 0.03) && world.now > (bot.afkAgain ?? 0) && Math.abs(bot.x - world.body.x) > 40) {
+  // Going AFK (much likelier when tired), with a word first now and then. (A tired one steps out of
+  // their crew to do it; otherwise friends hanging out stay with their crew.)
+  if ((!bot.crew || s.mood === 'tired') && r < (s.mood === 'tired' ? 0.14 : 0.03) && world.now > (bot.afkAgain ?? 0) && Math.abs(bot.x - world.body.x) > 40) {
     if (rng() < 0.5) botChat(world, bot, pick(['brb', 'afk a sec', 'afk food', 'brb dinner', 'afk'], rng));
+    dropCrew(bot);
     bot.state = 'afk';
     bot.afk = { since: world.now, until: world.now + between(50, 200, rng) };
     return;
   }
+  // (The rest of these moments are for those out on their own.)
+  if (bot.crew) return;
   // A new outfit (a real one from the Cash Shop), with a twirl.
   if (r < 0.05) {
     const def = ITEMS[pick(CASH_ITEMS, rng)];
