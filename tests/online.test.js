@@ -156,3 +156,23 @@ test('a boss\'s two-person mechanics reach friends on the map: the ring, who\'s 
   A.leaveRoom(a);
   B.leaveRoom(b);
 });
+
+test('in a shared dungeon run friends see each other and the leader\'s monsters; a run of your own stays solo', async () => {
+  const { A, B, a, b, pairs } = await room();
+  // Both in the first room of Rootwood Hollow, in one shared run that the host leads.
+  const { joinRun } = await import('../src/world/dungeon.js');
+  joinRun(a, { dungeon: 'hollow', roles: { you: 'tank', [B.online.id]: 'dps' }, leader: A.online.id, hard: false });
+  joinRun(b, { dungeon: 'hollow', roles: { [A.online.id]: 'tank', you: 'dps' }, leader: A.online.id, hard: false });
+  await play(pairs, 1);
+  assert.equal(A.othersHere(a)[0]?.name, 'Kai', 'the leader sees the friend in the run');
+  assert.equal(B.othersHere(b)[0]?.name, 'Hana', 'the friend sees the leader');
+  assert.ok(b.mobs.length > 0 && b.mobs.every((m) => m.net?.startsWith(`${A.online.id}:`)), 'the friend is shown the leader\'s monsters');
+  // Someone on the same map who isn't in your run stays out of sight.
+  b.dungeon.roles = { you: 'dps' };
+  assert.equal(B.othersHere(b).length, 0, 'another group\'s run is a world of its own');
+  // A run of your own (no friends in it) is solo.
+  delete a.dungeon.shared;
+  assert.equal(A.othersHere(a).length, 0, 'a solo run shows no one');
+  A.leaveRoom(a);
+  B.leaveRoom(b);
+});

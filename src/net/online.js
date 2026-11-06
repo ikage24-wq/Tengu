@@ -46,7 +46,12 @@ export const online = {
 
 export const isOnline = () => online.status === 'on';
 // Dungeon runs and the queens' trial arenas are each player's own.
-const solo = (world) => Boolean(world.dungeon || world.map?.trial);
+// Playing on your own even with friends in the room: a story trial, or a dungeon run of your own
+// (a shared run with friends isn't: net/dungeonrun.js).
+const solo = (world) => Boolean((world.dungeon && !world.dungeon.shared) || world.map?.trial);
+// In a shared dungeon run, only the friends in that run are with you (another group's run in the
+// same dungeon is a world of its own).
+const inMyRun = (world, g) => !world.dungeon?.shared || Boolean(world.dungeon.roles?.[g.id]);
 
 function reset() {
   const w = online.world;
@@ -216,7 +221,7 @@ export function othersHere(world) {
   if (!isOnline() || !world || solo(world)) return [];
   // (On an island, only those on the same one: yours, or the friend's you're visiting.)
   const island = world.map.home ? world.visiting?.ownerId ?? online.id : null;
-  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.body && (!island || g.home === island));
+  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.body && (!island || g.home === island) && inMyRun(world, g));
 }
 
 function netId(m) {
