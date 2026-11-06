@@ -57,11 +57,13 @@ const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smok
 const MOUNT_JUMP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'jump', gecko: 'jump' };
 const MOUNT_STEP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'turtleStep', gecko: 'geckoPatter' };
 const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, gecko: 16 };
+// The Starlight Idol's Center Stage, Hype Wave, Lullaby cloud, curtains and pyro.
+const IDOL_SOUND = { sispot: 'idolsong', silullcloud: 'sisong', sicurtain: 'sisong', sipyro: 'siwave' };
 const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Spirit Mage and her doll.
   'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
   // The Starlight Idol.
-  'idolsong', 'sisong', 'siwave', 'sistage', 'sihit',
+  'siwave', 'sistage', 'sihit',
   // The Phantom Trickster.
   'pthit', 'ptsmoke', 'ptillusion',
   // The Acrobat Archer.
@@ -109,6 +111,8 @@ export function hearWorld(world, cam) {
         // (A bolt's small muzzle sparks ride on the shot's own sound.)
         if (f.small && f.kind === 'boltshock') break;
         if (NAMED.has(f.kind)) say(f.kind, { pan: p });
+        // The Starlight Idol's reworked songs play her existing song sounds.
+        else if (IDOL_SOUND[f.kind] && !f.short) say(IDOL_SOUND[f.kind], { pan: p });
         else if (SPELLS.has(f.kind) || f.kind === 'fire' || f.kind === 'holy') say('spell', { kind: f.kind, pan: p });
     }
   }

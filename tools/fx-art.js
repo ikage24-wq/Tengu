@@ -6227,6 +6227,339 @@
     noteArt(ctx, SHOWGOLD, -6, 20, 20, 0.1, true);
   });
 
+  // ---------- The Starlight Idol's reworked show (2026-11-06) ----------
+  // Center Stage: a spotlight dropped on whoever she is mending, following them (loops). A soft cone
+  // of pink-white light from a little gold lamp up top, a bright pool on the ground at their feet,
+  // and hearts and gold sparkles rising slowly up through the beam.
+  E.sispot = (() => {
+    const c = 120;
+    const gy = 640;
+    const N = 8;
+    return {
+      w: 240, h: 680, n: N, fps: 10, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const sw = Math.sin((i / N) * TAU) * 6;
+        // The lamp.
+        inked(ctx, [[c - 22 + sw * 0.2, 16], [c + 22 + sw * 0.2, 16], [c + 30 + sw * 0.2, 44], [c - 30 + sw * 0.2, 44]], SHOWGOLD[2], SHOWGOLD[4], 4);
+        fill(ctx, [[c - 24 + sw * 0.2, 40], [c + 24 + sw * 0.2, 40], [c + 20 + sw * 0.2, 46], [c - 20 + sw * 0.2, 46]], SHOWGOLD[0]);
+        // The beam: three layers, soft outside, white in the core.
+        ctx.save();
+        ctx.globalAlpha = 0.32;
+        fill(ctx, [[c - 30, 44], [c + 30, 44], [c + 112 + sw, gy - 6], [c - 112 + sw, gy - 6]], IDOLPINK[1]);
+        ctx.globalAlpha = 0.4;
+        fill(ctx, [[c - 22, 44], [c + 22, 44], [c + 82 + sw, gy - 6], [c - 82 + sw, gy - 6]], IDOLPINK[0]);
+        ctx.globalAlpha = 0.45;
+        fill(ctx, [[c - 10, 44], [c + 10, 44], [c + 40 + sw, gy - 6], [c - 40 + sw, gy - 6]], '#ffffff');
+        ctx.restore();
+        // The pool of light on the ground, its rim pulsing on the beat.
+        const pulse = 1 + 0.05 * Math.sin((i / N) * TAU * 2);
+        for (const [rx, col, a] of [[112, IDOLPINK[2], 0.55], [96, IDOLPINK[1], 0.6], [64, '#ffffff', 0.7]]) {
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.beginPath();
+          ctx.ellipse(c + sw, gy - 10, rx * pulse, rx * 0.24 * pulse, 0, 0, TAU);
+          ctx.fillStyle = col;
+          ctx.fill();
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.ellipse(c + sw, gy - 10, 112 * pulse, 27 * pulse, 0, 0, TAU);
+        ctx.strokeStyle = IDOLPINK[3];
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        // Hearts and sparkles rising up the beam.
+        for (let j = 0; j < 5; j++) {
+          const u = ((i / N) + j / 5) % 1;
+          const y = gy - 60 - u * 480;
+          const x = c + sw * (1 - u) + Math.sin(u * TAU * 1.5 + j) * (60 - u * 30);
+          const s = (1 - Math.abs(u - 0.5) * 1.6) * 16;
+          if (s <= 2) continue;
+          if (j % 2) heartArt(ctx, j === 3 ? SHOWGOLD : IDOLPINK, x, y, s, Math.sin(u * 6) * 0.3);
+          else sparkle(ctx, SHOWGOLD, x, y, s * 0.8, u * 3);
+        }
+      },
+    };
+  })();
+
+  // Hype Wave: the crest of a crowd-wave of light rolling along the ground (toward +x; loops while it
+  // rolls). A pink swell curling over at its front with a gold rim, a row of glow sticks waving up
+  // out of it, hearts and stars tossed off the crest, and a fading wash trailing behind.
+  E.sihype = (() => {
+    const fx0 = 200;
+    const gy = 210;
+    const N = 6;
+    return {
+      w: 260, h: 230, n: N, fps: 16, px: fx0, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / N) * TAU;
+        const H = 120 + 8 * Math.sin(ph);
+        // The trailing wash, lower and lower behind the crest.
+        ctx.save();
+        ctx.globalAlpha = 0.45;
+        fill(ctx, [[10, gy], [fx0 - 40, gy - 34], [fx0, gy - 46], [fx0, gy]], IDOLPINK[1]);
+        ctx.restore();
+        // The swell: a smooth rise to the crest, curling over into a lip, a hollow under the curl.
+        const swell = (k, dx, dy, colour, ink) => {
+          ctx.beginPath();
+          ctx.moveTo(fx0 - 170, gy);
+          ctx.bezierCurveTo(fx0 - 110, gy - 4, fx0 - 70, gy - H * k * 0.9 + dy, fx0 - 6 + dx, gy - H * k + dy);
+          ctx.bezierCurveTo(fx0 + 30 + dx, gy - H * k * 1.02 + dy, fx0 + 56 + dx, gy - H * k * 0.8 + dy, fx0 + 46 + dx, gy - H * k * 0.56 + dy);
+          ctx.bezierCurveTo(fx0 + 30, gy - H * k * 0.66, fx0 + 8, gy - H * k * 0.62, fx0 + 14, gy - H * k * 0.42);
+          ctx.bezierCurveTo(fx0 + 20, gy - H * k * 0.2, fx0 + 46, gy - 10, fx0 + 58, gy);
+          ctx.closePath();
+          if (ink) {
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = ink;
+            ctx.lineWidth = 5;
+            ctx.stroke();
+          }
+          ctx.fillStyle = colour;
+          ctx.fill();
+        };
+        swell(1, 0, 0, IDOLPINK[2], IDOLPINK[4]);
+        swell(0.86, -10, 4, IDOLPINK[1], null);
+        // The lit lip of the curl.
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = SHOWGOLD[1];
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(fx0 - 50, gy - H * 0.86);
+        ctx.bezierCurveTo(fx0 - 20, gy - H * 0.98, fx0 + 26, gy - H, fx0 + 44, gy - H * 0.7);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        // Glow sticks waving up out of it, each swaying on its own beat.
+        for (let k = 0; k < 4; k++) {
+          const bx = fx0 - 120 + k * 36;
+          const by = gy - H * (0.2 + k * 0.17);
+          const a = -0.4 + 0.35 * Math.sin(ph + k * 1.4);
+          const tx = bx + Math.sin(a) * 46;
+          const ty = by - Math.cos(a) * 46;
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = (k % 2 ? SHOWGOLD : IDOLPINK)[4];
+          ctx.lineWidth = 13;
+          ctx.beginPath();
+          ctx.moveTo(bx, by);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+          ctx.strokeStyle = (k % 2 ? SHOWGOLD : IDOLPINK)[2];
+          ctx.lineWidth = 8;
+          ctx.stroke();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(lerp(bx, tx, 0.3), lerp(by, ty, 0.3));
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+        }
+        // Hearts and stars tossed off the crest.
+        const R = rng(481);
+        for (let j = 0; j < 4; j++) {
+          const u = ((i / N) + j / 4) % 1;
+          const x = fx0 - 10 + R() * 40 - u * 60;
+          const y = gy - H - 4 - u * 70 + R() * 10;
+          const s = 13 * (1 - u * 0.7);
+          if (j % 2) heartArt(ctx, j === 1 ? IDOLPINK : SHOWGOLD, x, y, s, u);
+          else sparkle(ctx, SHOWGOLD, x, y, s, u * 2);
+        }
+      },
+    };
+  })();
+
+  // Lullaby: a little cloud of lilac notes drifting along (loops). A soft puffed cloud with a sleepy
+  // face, little moons, notes and z's circling it slowly and rising off its top.
+  E.silull = (() => {
+    const c = 230;
+    const cy = 150;
+    const N = 8;
+    return {
+      w: 460, h: 300, n: N, fps: 6, px: c, py: cy + 90, loop: true,
+      draw(ctx, i) {
+        const ph = (i / N) * TAU;
+        const bob = Math.sin(ph) * 6;
+        puff(ctx, LULLABY, c, cy + bob, 96, 491, { lobes: 6 });
+        // Its sleepy face: closed eyes as two little arcs and a soft O of a mouth.
+        ctx.strokeStyle = LULLABY[4];
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        for (const sd of [-1, 1]) {
+          ctx.beginPath();
+          ctx.arc(c + sd * 28, cy + bob + 2, 12, 0.2 * Math.PI, 0.8 * Math.PI);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.ellipse(c, cy + bob + 30, 7, 8 + 2 * Math.sin(ph), 0, 0, TAU);
+        ctx.fillStyle = LULLABY[4];
+        ctx.fill();
+        for (const sd of [-1, 1]) {
+          ctx.save();
+          ctx.globalAlpha = 0.6;
+          ctx.beginPath();
+          ctx.ellipse(c + sd * 50, cy + bob + 22, 14, 8, 0, 0, TAU);
+          ctx.fillStyle = IDOLPINK[2];
+          ctx.fill();
+          ctx.restore();
+        }
+        // Moons and notes going slowly round it.
+        for (let j = 0; j < 4; j++) {
+          const a = ph * 0.25 + (j / 4) * TAU;
+          const x = c + Math.cos(a) * 170;
+          const y = cy + bob + Math.sin(a) * 50;
+          if (j % 2) noteArt(ctx, LULLABY, x - 4, y + 10, 14, Math.sin(a) * 0.3);
+          else moonArt2(LULLABY)(ctx, x, y);
+        }
+        // Z's rising off its top.
+        for (let k = 0; k < 2; k++) {
+          const u = ((i / N) + k * 0.5) % 1;
+          ctx.save();
+          ctx.globalAlpha = Math.min(1, (1 - u) * 2.5, u * 5);
+          ctx.translate(c + 60 + u * 50, cy - 90 - u * 50 + bob);
+          ctx.scale(0.7 + u * 0.6, 0.7 + u * 0.6);
+          zArt(LULLABY)(ctx, 0, 0);
+          ctx.restore();
+        }
+      },
+    };
+  })();
+
+  // Curtain Call: a pair of rose velvet stage curtains behind her, under a gold-fringed valance;
+  // they sweep shut as she curtsies, hang a beat, then part wide as she rises, and break into
+  // sparkles. (A backdrop: it is drawn under her.)
+  E.sicurtain = (() => {
+    const c = 260;
+    const gy = 480;
+    const top = 30;
+    const N = 12;
+    const ROSE = ['#ffffff', '#ffd0e2', '#e8669e', '#b03a72', '#5e1a3e'];
+    return {
+      w: 520, h: 500, n: N, fps: 9, px: c, py: gy,
+      draw(ctx, i) {
+        // How far shut they are: in, hold, then out wide.
+        const shut = i <= 4 ? ease3(i / 4) : i <= 6 ? 1 : 1 - ease3((i - 6) / 4);
+        const fade = i >= 10 ? 1 - (i - 10) / 2 : Math.min(1, (i + 1) / 2);
+        if (fade <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        for (const sd of [-1, 1]) {
+          // Each drape, gathered at its outer edge and swept in toward the middle.
+          const inner = c + sd * lerp(220, 8, shut);
+          const outer = c + sd * 250;
+          const sway = (1 - shut) * 30 * sd;
+          const pts = [[outer, top + 30], [inner, top + 30], [inner + sway * 0.4, gy - 140], [inner + sway, gy - 4], [outer, gy - 4]];
+          inked(ctx, pts, ROSE[2], ROSE[4], 5);
+          // Its folds.
+          for (let k = 1; k <= 3; k++) {
+            const u = k / 4;
+            ctx.strokeStyle = ROSE[3];
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(lerp(outer, inner, u), top + 34);
+            ctx.quadraticCurveTo(lerp(outer, inner, u) + sway * 0.3, gy - 160, lerp(outer, inner + sway, u), gy - 8);
+            ctx.stroke();
+          }
+          fill(ctx, [[inner, top + 30], [inner - sd * 14, top + 30], [inner - sd * 14 + sway * 0.4, gy - 140], [inner + sway * 0.4, gy - 140]], ROSE[1]);
+          // A gold tie-back once they're open.
+          if (shut < 0.5) {
+            const tx = lerp(outer, inner, 0.5) + sway * 0.4;
+            inked(ctx, [[tx - 30, gy - 170], [tx + 30, gy - 176], [tx + 32, gy - 160], [tx - 28, gy - 154]], SHOWGOLD[2], SHOWGOLD[4], 3);
+            sparkle(ctx, SHOWGOLD, tx, gy - 140, 10, i);
+          }
+        }
+        // The valance with its gold fringe.
+        inked(ctx, [[c - 256, top], [c + 256, top], [c + 256, top + 40], [c - 256, top + 40]], ROSE[3], ROSE[4], 5);
+        for (let k = 0; k < 16; k++) {
+          const x = c - 240 + k * 32;
+          inked(ctx, [[x - 12, top + 36], [x + 12, top + 36], [x, top + 62]], SHOWGOLD[2], SHOWGOLD[4], 3);
+        }
+        fill(ctx, [[c - 250, top + 6], [c + 250, top + 6], [c + 250, top + 14], [c - 250, top + 14]], SHOWGOLD[1]);
+        ctx.restore();
+        // Sparkles as they part.
+        if (i >= 7) {
+          const R = rng(501);
+          for (let j = 0; j < 10; j++) sparkle(ctx, j % 2 ? IDOLPINK : SHOWGOLD, c + (R() - 0.5) * 460, gy - 60 - R() * 340 - (i - 7) * 16, 12 - (i - 7) * 1.6, j);
+        }
+      },
+    };
+  })();
+
+  // Grand Concert's pyro: a gold spark fountain bursting up off the stage's edge on a beat, its
+  // sparks arcing over and falling, with pink and gold confetti thrown out at the top.
+  E.sipyro = (() => {
+    const c = 120;
+    const gy = 440;
+    const N = 9;
+    return {
+      w: 240, h: 460, n: N, fps: 12, px: c, py: gy,
+      draw(ctx, i) {
+        const up = ease3(Math.min(1, i / 3));
+        const die = i >= 5 ? (i - 4) / 4 : 0;
+        const H = 380 * up;
+        // The jet: a plume of fire flaring out as it climbs, flickering; dying, it lifts off the
+        // stage and burns out from the bottom up.
+        if (die < 1 && i >= 1) {
+          const bot = gy - H * die;
+          // Rounded puffs of gold fire stacked up the jet, smaller toward the top, each wobbling.
+          for (let k = 7; k >= 0; k--) {
+            const u = k / 7;
+            const y = lerp(bot, gy - H, u);
+            if (y > gy) continue;
+            const r = lerp(30, 14, u) * (1 - die * 0.5);
+            puff(ctx, SHOWGOLD, c + 6 * Math.sin(i * 2.1 + k * 1.3), y, r, 531 + k + i * 8, { lobes: 4 });
+          }
+        }
+        // Its sparks.
+        const R = rng(511);
+        for (let j = 0; j < 14; j++) {
+          const a = -Math.PI / 2 + (R() - 0.5) * 1.6;
+          const v = 0.5 + R() * 0.5;
+          const u = Math.max(0, (i - 1 - R() * 2) / 7);
+          if (u <= 0 || u >= 1) continue;
+          const x = c + Math.cos(a) * 200 * v * u;
+          const y = gy - H * 0.9 + Math.sin(a) * 120 * v * u + 260 * u * u;
+          sparkle(ctx, j % 3 ? SHOWGOLD : IDOLPINK, x, y, 10 * (1 - u * 0.7), j + i);
+        }
+        // Confetti flung out at the top.
+        if (i >= 2) {
+          const R2 = rng(512);
+          for (let j = 0; j < 10; j++) {
+            const u = (i - 2) / 7;
+            const x = c + (R2() - 0.5) * 220 * (0.4 + u);
+            const y = gy - 380 + R2() * 80 + u * 200;
+            const rot = R2() * TAU + i * 0.8;
+            const col = [IDOLPINK[2], SHOWGOLD[2], LULLABY[2], '#ffffff'][j % 4];
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, (1 - u) * 2.5);
+            ctx.translate(x, y);
+            ctx.rotate(rot);
+            fill(ctx, [[-8, -4], [8, -4], [8, 4], [-8, 4]], col);
+            ctx.restore();
+          }
+        }
+      },
+    };
+  })();
+
+  // Her heart shot (loops, toward +x): a big pink heart drawn in the air, its gold outline still
+  // being traced at the edge, a short gold trail and sparkles behind it.
+  E.siheart = (() => {
+    const cx = 150;
+    const cy = 80;
+    const N = 6;
+    return {
+      w: 220, h: 160, n: N, fps: 18, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / N) * TAU;
+        speedLine(ctx, SHOWGOLD, cx - 140, cy + Math.sin(ph) * 5, cx - 30, cy + Math.sin(ph + 1) * 3, 7);
+        const R = rng(521 + i);
+        for (let j = 0; j < 4; j++) sparkle(ctx, j % 2 ? IDOLPINK : SHOWGOLD, cx - 50 - j * 24 - R() * 8, cy + (R() - 0.5) * 50, 9 - j * 1.5, j + i);
+        heartArt(ctx, SHOWGOLD, cx, cy - 2, 52 + 2 * Math.sin(ph * 2), 0);
+        heartArt(ctx, IDOLPINK, cx, cy - 2, 44 + 2 * Math.sin(ph * 2), 0);
+        sparkle(ctx, SHOWGOLD, cx + 30 * Math.cos(ph), cy - 30 + 22 * Math.sin(ph), 10, ph);
+      },
+    };
+  })();
+
   // ---------- The Astronomer (deep violet and silver: ringed planets, moons, orbits) ----------
   // docs/design/astronomer.md. Her shapes: violet planets banded and ringed in silver, little silver
   // moons, thin silver orbit lines, and the calm curves of things going round.

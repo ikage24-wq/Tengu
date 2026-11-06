@@ -149,7 +149,9 @@ export function loadMap(world, mapId, portalId) {
   // Spells laid on the last map stay there (Heaven's Lantern, the Starlight Idol's songs and stage,
   // the Astronomer's Gravity Well).
   world.lantern = null;
-  world.songs = [];
+  world.spot = null;
+  world.hype = null;
+  world.lull = null;
   world.concert = null;
   world.well = null;
   world.events.push({ type: 'map', mapId: map.id });

@@ -588,7 +588,7 @@ test("a Star Witch in the healer's seat veils the tank and wishes stars on the h
   assert.ok(world.fx.some((f) => f.kind === 'stwish'), 'with her wishing star');
 });
 
-test("a Starlight Idol in the healer's seat sings Healing Song and raises the fallen with Curtain Call", async () => {
+test("a Starlight Idol in the healer's seat calls them up with Center Stage and raises the fallen with Curtain Call", async () => {
   assert.equal(roleOf('shrinemaiden', 'mage'), 'healer');
   assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Astronomer deals damage');
   const { computeStats } = await import('../src/core/stats.js');
@@ -604,15 +604,15 @@ test("a Starlight Idol in the healer's seat sings Healing Song and raises the fa
     updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
     updateBots(world.bots, world, 1 / 60);
   }
-  // Several hurt: Healing Song.
+  // Several hurt: Center Stage.
   world.dungeon.combat = true;
   for (const g of groupOf(world)) {
     if (g.bot) g.bot.hp = Math.round(g.bot.stats.maxHp * 0.4);
     else world.char.hp = Math.round(world.stats.maxHp * 0.4);
   }
   healerTurn(healer, world, rng);
-  assert.equal(healer.attack.pose, 'sisong', 'she sings into her mic');
-  assert.ok(world.fx.some((f) => f.kind === 'sisong'), 'and the ring of her song rises');
+  assert.equal(healer.attack.pose, 'sispot', 'she calls them up to center stage');
+  assert.ok(world.fx.some((f) => f.kind === 'sispot'), 'and the spotlight drops');
   // A fallen member, out of the fight: Curtain Call.
   world.dungeon.combat = false;
   // (Everyone else whole again, so raising the fallen is what's left to do.)

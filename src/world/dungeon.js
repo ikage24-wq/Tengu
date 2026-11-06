@@ -1690,18 +1690,18 @@ export function healerTurn(bot, world, rng) {
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
   // A Star Witch heals with her own spells: Wishing Star and Star Veil. A Starlight Idol with her
-  // songs: Healing Song for the group and its long regen, and Curtain Call for the fallen.
+  // songs: Center Stage for the group and its long regen, and Curtain Call for the fallen.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const maiden = bot.char.job === 'shrinemaiden';
   // (The Star Witch wishes stars down; the Idol sings; the Astronomer's moons tide round them.)
   const witch = bot.char.job === 'spiritmage';
   const star = witch || maiden;
-  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sisong' : witch ? 'stwish' : 'astide', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'sispot' : witch ? 'stwish' : 'astide', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: maiden ? 'sisong' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: maiden ? 'sispot' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
   const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'astide', dur: star ? 0.8 : 1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sisong', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'sispot', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
@@ -1710,7 +1710,7 @@ export function healerTurn(bot, world, rng) {
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
     if (maiden) {
-      world.fx.push({ kind: 'sisong', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
+      world.fx.push({ kind: 'sispot', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
       world.fx.push({ kind: 'siwave', x: bot.body.x, y: bot.body.y - 26, t: 0, dur: 0.6 });
     }
     cast();
@@ -1741,7 +1741,7 @@ export function healerTurn(bot, world, rng) {
       bless(g);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    if (maiden) world.fx.push({ kind: 'sisong', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
+    if (maiden) world.fx.push({ kind: 'sispot', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
     bot.attack = { pose: renew.pose, t: 0, dur: renew.dur };
     return between(1.2, 1.6, rng);
   }
@@ -1752,7 +1752,7 @@ export function healerTurn(bot, world, rng) {
       revive(world, fallen, maiden ? 0.6 : 0.5);
       if (maiden) {
         world.fx.push({ kind: 'sihit', big: true, x: fallen.body.x, y: fallen.body.y - 10, h: 0, t: 0, dur: 0.7 });
-        world.fx.push({ kind: 'sisong', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
+        world.fx.push({ kind: 'sispot', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
       }
       bot.attack = maiden ? { pose: 'sibow', t: 0, dur: 1.15 } : { pose: 'pray', t: 0, dur: 1 };
       return maiden ? 1.5 : 1.2;

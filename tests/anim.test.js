@@ -208,9 +208,9 @@ test("the Paladin and the Berserker swing none of the Warrior's swings", async (
 
 test('the Starlight Idol sings into her mic, belts with her head back, and ends each figure on its own pose (her Star Witch skills too)', async () => {
   const { moveAt } = await import('../src/render/moves.js');
-  const DUR = { sibeat: 0.36, sistep: 0.46, sihigh: 0.58, sikiss: 0.36, sishoulder: 0.5, sijump: 0.52, sipose: 0.56, siup: 0.44, siair: 0.38, sidash: 0.52, sisong: 0.95, sicheer: 0.8, silullaby: 0.95, sibow: 1.15, siconcert: 2.1, sicall: 0.36, siecho: 0.46, sicrescendo: 0.56, sislide: 0.5, sipower: 0.54, siballad: 0.8, siharmony: 0.72, siencore: 1.45 };
-  const SINGS = ['sibeat', 'sistep', 'sihigh', 'sishoulder', 'sijump', 'sipose', 'siup', 'sidash', 'sisong', 'silullaby', 'siconcert', 'sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower'];
-  const BELTS = ['sihigh', 'siup', 'sidash', 'sisong', 'sibow', 'siconcert', 'sicrescendo', 'sislide', 'siencore'];
+  const DUR = { sibeat: 0.36, sistep: 0.46, sihigh: 0.58, sikiss: 0.36, sishoulder: 0.5, sijump: 0.52, sipose: 0.56, sitwirl: 0.42, sihair: 0.46, siheart: 0.6, siup: 0.44, siair: 0.38, sidash: 0.52, sispot: 0.9, sihype: 0.85, silullaby: 0.9, sibow: 1.15, siconcert: 2.1, sicall: 0.36, siecho: 0.46, sicrescendo: 0.56, sislide: 0.5, sipower: 0.54, siballad: 0.8, siharmony: 0.72, siencore: 1.45 };
+  const SINGS = ['sibeat', 'sistep', 'sihigh', 'sishoulder', 'sijump', 'sipose', 'siup', 'sidash', 'sispot', 'silullaby', 'siconcert', 'sitwirl', 'sihair', 'siheart', 'sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower'];
+  const BELTS = ['sihigh', 'siup', 'sidash', 'sihype', 'sibow', 'siconcert', 'sicrescendo', 'sislide', 'siencore'];
   const base = () => ({ tx: 0, by: 0, hx: 0, hy: 0, frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0, hairLift: 0, cape: 0, eyes: 'open', mouth: null, tilt: 0 });
   const at = (kind, p) => {
     const mv = moveAt(kind, p, DUR[kind], { weapon: 'wand' });
@@ -237,7 +237,7 @@ test('the Starlight Idol sings into her mic, belts with her head back, and ends 
     const { mv, r } = at(kind, 1);
     return `${Math.round(mv.weapon / 20)},${Math.round(mv.arm / 20)},${r.eyes},${r.armSide},${r.backArm[1] < -12}`;
   };
-  for (const set of [['sibeat', 'sistep', 'sihigh', 'sikiss', 'sishoulder', 'sijump', 'sipose'], ['siup', 'siair', 'sidash'], ['sisong', 'sicheer', 'silullaby', 'sibow', 'siconcert'], ['sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower', 'siballad', 'siharmony', 'siencore']]) {
+  for (const set of [['sibeat', 'sistep', 'sihigh', 'sikiss', 'sishoulder', 'sijump', 'sipose', 'sitwirl', 'sihair', 'siheart'], ['siup', 'siair', 'sidash'], ['sispot', 'sihype', 'silullaby', 'sibow', 'siconcert'], ['sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower', 'siballad', 'siharmony', 'siencore']]) {
     const seen = new Map();
     for (const kind of set) {
       const s = sig(kind);

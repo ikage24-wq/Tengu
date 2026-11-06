@@ -329,4 +329,10 @@ export const FX_SHEETS = {
   celpttrap: { w: 306, h: 242, n: 8, fps: 10, px: 153, py: 225, d: 3, loop: false },
   celaeshell: { w: 356, h: 351, n: 9, fps: 16, px: 181, py: 174, d: 3, loop: false },
   celaemine: { w: 271, h: 187, n: 8, fps: 10, px: 136, py: 161, d: 3, loop: false },
+  celsispot: { w: 263, h: 641, n: 8, fps: 10, px: 132, py: 604, d: 3, loop: true },
+  celsihype: { w: 256, h: 220, n: 6, fps: 16, px: 186, py: 201, d: 3, loop: true },
+  celsilull: { w: 379, h: 283, n: 8, fps: 6, px: 185, py: 244, d: 3, loop: true },
+  celsicurtain: { w: 526, h: 453, n: 12, fps: 9, px: 263, py: 439, d: 3, loop: false },
+  celsipyro: { w: 263, h: 427, n: 8, fps: 12, px: 132, py: 388, d: 3, loop: false },
+  celsiheart: { w: 213, h: 137, n: 6, fps: 18, px: 144, py: 68, d: 3, loop: true },
 };

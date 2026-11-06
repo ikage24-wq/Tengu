@@ -226,9 +226,9 @@ function helpers(bots, world) {
     const witch = bot.char.job === 'spiritmage';
     const amount = Math.round(max * (shrine ? 0.45 : 0.3));
     world.char.hp = Math.min(max, world.char.hp + amount);
-    world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
+    world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
     world.numbers.push({ x: b.x, y: b.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-    if (shrine) bot.attack = { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 };
+    if (shrine) bot.attack = { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 };
     // (Through the chat gate: two helpers never toss the same line, and a line said lately isn't
     // said again; one of the others is, or the potion just flies.)
     const lines = shrine ? ['blessed u!', 'heal!', 'there :)'] : ['here have a pot!', 'catch!! *throws pot*', 'drink this'];

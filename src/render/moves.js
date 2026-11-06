@@ -3924,6 +3924,77 @@ export const MOVES = {
       },
     };
   },
+  // Lasso (an opener in her pool, the note at ~0.36): she lets the mic drop on its cord and whirls
+  // it round at her side like a lasso, faster and faster, up on her toes with her free hand on her
+  // hip; lets it fly out at them as the note goes, and catches it back to her chin with a grin.
+  sitwirl(p) {
+    const whirl = soft(seg(p, 0, 0.1)) * (1 - ease(seg(p, 0.3, 0.36)));
+    const turns = seg(p, 0.02, 0.32) ** 1.4 * 2;
+    const a = turns * Math.PI * 2;
+    const out = ease(seg(p, 0.3, 0.38)) * (1 - soft(seg(p, 0.58, 0.74)));
+    const back = soft(seg(p, 0.62, 0.8));
+    const [weapon, arm] = siPose(SI.guard, [whirl, [100 + 50 * Math.cos(a), 40 + 26 * Math.sin(a)]], [out, [86, 96]], [back, SI.sing]);
+    return {
+      weapon, arm, lift: 1.5 * whirl + 3 * bump(p, 0.3, 0.5) + siBounce(p, 0.74), lunge: 6 * out * (1 - back * 0.6), tilt: 0.04 * Math.sin(a) * whirl + 0.1 * out * (1 - back),
+      rig: (r) => {
+        siHead(r, 0.15 * whirl + 0.25 * out - 0.2 * back);
+        r.backArm = siFree([whirl, SI.hip], [out, [-11, -8]], [back, [-6, -4]]);
+        if (whirl > 0.5) r.armSide = -1;
+        r.hairLift = out > 0.4 && back < 0.5 ? 1 : 0;
+        danceLegs(r, [whirl, [1.4, -0.6, 6], [-1.4, -1, -12]], [out, [3.2, 0, 6], [-2.2, -2.2, -36]], [back, [2, 0, 4], [-1.6, 0, -8]]);
+        if (whirl > 0.5) [r.eyes, r.mouth] = ['happy', 'grin'];
+        if (out > 0.4) r.mouth = 'open';
+        if (back > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
+      },
+    };
+  },
+  // Hair flip (a second in her pool, three notes at ~0.34-0.38): head ducked down over the mic on
+  // the off-beat, then whipped up and back so her hair flies, the mic flicked out at them and a fan
+  // of three notes thrown off it; she ends running her free hand back through her hair.
+  sihair(p) {
+    const duck = soft(seg(p, 0.02, 0.22)) * (1 - ease(seg(p, 0.26, 0.34)));
+    const whip = ease(seg(p, 0.26, 0.36));
+    const flick = ease(seg(p, 0.3, 0.38)) * (1 - soft(seg(p, 0.56, 0.7)));
+    const comb = soft(seg(p, 0.5, 0.66)) * (1 - soft(seg(p, 0.86, 1)));
+    const [weapon, arm] = siPose(SI.guard, [duck, SI.chest], [flick, [84, 92]], [comb, SI.sing]);
+    return {
+      weapon, arm, lift: -1.5 * duck + 3 * bump(p, 0.28, 0.5) + siBounce(p, 0.7), lunge: -1.5 * duck + 4 * flick, tilt: 0.16 * duck - 0.1 * whip * (1 - comb) + 0.06 * flick,
+      rig: (r) => {
+        r.squat = q(1.5 * duck);
+        siHead(r, -1 * duck + 0.9 * whip * (1 - comb * 0.6));
+        r.backArm = siFree([duck, [-3, 0]], [whip, [-11, -10]], [comb, [-1, -13]]);
+        r.hairLift = duck > 0.5 ? 1 : whip > 0.3 && comb < 0.6 ? -1 : 0;
+        danceLegs(r, [duck, [2, 0, 6], [-2, 0, -6]], [whip, [2.8, 0, 6], [-1.8, -1.8, -26]], [comb, [1.8, 0, 4], [0.2, -1.2, -16]]);
+        if (duck > 0.5) [r.eyes, r.mouth] = ['happy', 'o'];
+        else if (whip > 0.4 && comb < 0.5) [r.eyes, r.mouth] = ['happy', 'open'];
+        if (comb > 0.5) [r.eyes, r.mouth] = ['half', 'cat'];
+      },
+    };
+  },
+  // Heart (a finish in her pool, the heart flies at ~0.54): she traces a big heart in the air with
+  // the mic, her eyes following it, up one lobe, round the other and down to its point; then pushes
+  // it off her open palm at them with a little hop, and ends with the mic back at her chin and a wink.
+  siheart(p) {
+    const tr = seg(p, 0.06, 0.44);
+    const tracing = soft(seg(p, 0, 0.08)) * (1 - ease(seg(p, 0.44, 0.5)));
+    const ht = tr * Math.PI * 2;
+    const push = ease(seg(p, 0.46, 0.54)) * (1 - soft(seg(p, 0.66, 0.8)));
+    const hold = soft(seg(p, 0.7, 0.9));
+    const hop = bump(p, 0.44, 0.66);
+    const [weapon, arm] = siPose(SI.guard, [tracing, [80 + 34 * Math.sin(ht), 76 + 34 * Math.sin(ht / 2) ** 2 - 20 * Math.cos(ht)]], [push, [60, 40]], [hold, SI.sing]);
+    return {
+      weapon, arm, lift: 4 * hop + siBounce(p, 0.74), lunge: 1.5 * Math.sin(ht) * tracing + 5 * push * (1 - hold * 0.6), tilt: -0.04 * tracing + 0.1 * push * (1 - hold),
+      rig: (r) => {
+        r.air = hop > 0.45;
+        siHead(r, 0.25 * tracing * Math.sin(ht / 2) + 0.1 * push - 0.2 * hold);
+        r.backArm = siFree([tracing, [-6, -4]], [push, [5, -9]], [hold, [-7 + Math.sin(p * Math.PI * 10) * hold, -15]]);
+        danceLegs(r, [tracing, [1.6, 0, 6], [-1, -1.2, -14]], [push, [3.2, 0, 6], [-2.4, -2.6, -44]], [hold, [2.4, 0, 4], [-1.4, -1.2, -20]]);
+        if (tracing > 0.5) [r.eyes, r.mouth] = ['happy', 'o'];
+        if (push > 0.4) r.mouth = 'open';
+        if (hold > 0.5) [r.eyes, r.mouth] = ['happy', 'grin'];
+      },
+    };
+  },
   // Up + attack: up on her toes, head thrown back, she sings straight up at whatever flies, the mic
   // raised high in front and the free arm up behind.
   siup(p) {
@@ -3991,177 +4062,170 @@ export const MOVES = {
       },
     };
   },
-  // Healing Song (1.2 s, the song rises at ~0.45): the mic under her chin, eyes closed, she sings
-  // swaying side to side with her head rocking to the tune; on the long note she rises on her toes,
-  // head back, and opens her free arm out to everyone; then sways on, arm out, and ends with a soft
-  // nod into the mic.
-  sisong(p) {
-    const into = soft(seg(p, 0, 0.16));
-    const note = soft(seg(p, 0.32, 0.45)) * (1 - soft(seg(p, 0.62, 0.74)));
-    const open = soft(seg(p, 0.34, 0.48));
-    const out = soft(seg(p, 0.86, 1));
-    const sway = Math.sin(seg(p, 0.08, 0.92) * Math.PI * 3) * into;
-    const [weapon, arm] = siPose(SI.guard, [into, SI.sing], [note, SI.belt], [out, [60, 30]]);
+  // Center Stage (0.9 s, the spotlight drops at ~0.5): she shades her eyes with her free hand and
+  // looks out over the crowd, rocking on her heels; spots who needs her, and snaps the mic out at
+  // them with a lean and her back heel kicked up ("you!"); then draws the mic back under her chin
+  // and sings to them, swaying, her free hand held open toward them, and ends with a soft nod.
+  sispot(p) {
+    const look = soft(seg(p, 0, 0.14)) * (1 - ease(seg(p, 0.34, 0.42)));
+    const scan = Math.sin(seg(p, 0.06, 0.34) * Math.PI * 2);
+    const point = ease(seg(p, 0.38, 0.48)) * (1 - soft(seg(p, 0.62, 0.74)));
+    const sing = soft(seg(p, 0.66, 0.8));
+    const sway = Math.sin(seg(p, 0.7, 1) * Math.PI * 2) * sing;
+    const nod = bump(p, 0.9, 1);
+    const [weapon, arm] = siPose(SI.guard, [look, SI.chest], [point, [96, 98]], [sing, SI.sing]);
     return {
-      weapon, arm, tilt: 0.06 * sway * (1 - note) - 0.08 * note, lunge: 1.6 * sway * (1 - note), lift: 2.5 * note + breathe(p * 2) * 0.6 * into,
+      weapon, arm, lunge: 1.2 * scan * look + 6 * point + 1.2 * sway, tilt: -0.05 * look + 0.12 * point + 0.05 * sway, lift: 1.4 * Math.abs(scan) * look + 2 * point + siBounce(p, 0.8) - nod,
       rig: (r) => {
-        siHead(r, 0.25 + 0.75 * note + 0.2 * sway * (1 - note) - 0.6 * out);
-        r.backArm = siFree([into, [-4, -2]], [open * (1 - out), [-11, -11 + 3 * Math.sin(p * Math.PI * 6) * (1 - note)]], [out, [-7, -3]]);
-        r.hairLift = Math.abs(sway) > 0.7 ? Math.sign(sway) : 0;
-        danceLegs(r, [Math.max(0, sway), [2.6, 0, 6], [-0.2, -0.8, -8]], [Math.max(0, -sway), [0.2, -0.8, 8], [-2.6, 0, -6]], [note, [1, -1.4, 6], [-1, -1.6, -12]]);
-        if (into > 0.5) {
+        siHead(r, 0.15 * look + 0.15 * scan * look + 0.2 * point + 0.2 * sway - 0.5 * nod);
+        r.backArm = siFree([look, [0, -12]], [point, [-11, -8]], [sing, [-9, -6 + Math.sin(p * Math.PI * 6)]]);
+        r.hairLift = point > 0.5 ? 1 : 0;
+        danceLegs(r, [look, [1.6, 0, 6], [-1.6, -0.4 * Math.max(0, scan), -6]], [point, [3.4, 0, 6], [-2, -2.6, -40]], [Math.max(0, sway), [2.4, 0, 6], [-0.4, -0.8, -8]], [Math.max(0, -sway), [0.4, -0.8, 8], [-2.4, 0, -6]]);
+        if (look > 0.5) [r.eyes, r.mouth] = ['half', 'cat'];
+        if (point > 0.4) [r.eyes, r.mouth] = ['happy', 'yell'];
+        if (sing > 0.5) {
           r.eyes = 'happy';
-          r.mouth = note > 0.5 ? 'open' : siSyllable(p, 4);
+          r.mouth = nod > 0.4 ? 'cat' : siSyllable(p, 4);
         }
-        if (out > 0.5) r.mouth = 'cat';
+        if (p > 0.95) [r.eyes, r.mouth] = ['wink', 'cat'];
       },
     };
   },
-  // Cheer (0.9 s, the cheer bursts at ~0.62): "hey, hey, HEY!": three pumps of the mic up high on
-  // the beat, dipping between them, each bigger than the last; on the third she jumps with her heels
-  // kicked up and both arms high, and lands wide, mic up, hand on her hip, with a wink.
-  sicheer(p) {
-    const pump = (a, b) => ease(seg(p, a, a + 0.06)) * (1 - soft(seg(p, a + 0.08, b)));
-    const p1 = pump(0.06, 0.24);
-    const p2 = pump(0.26, 0.46);
-    const p3 = ease(seg(p, 0.52, 0.6));
-    const dip = bump(p, 0.18, 0.3) + bump(p, 0.4, 0.54) * 1.4;
-    const hop = Math.sin(Math.PI * seg(p, 0.52, 0.82));
-    const land = bump(p, 0.8, 0.92);
-    const hold = soft(seg(p, 0.86, 1));
-    const k = Math.max(p1 * 0.85, p2, p3);
-    const [weapon, arm] = siPose(SI.guard, [soft(seg(p, 0, 0.06)), SI.chest], [k, SI.up], [hold, [40, 126]]);
+  // Hype Wave (0.85 s, the wave rolls out at ~0.55): she sinks low with the mic and her free arm
+  // swept down behind her, then brings them up and over in one big arc as she rises onto her toes,
+  // a stadium wave in one body; at the top she springs up, both arms high, and lands with the mic
+  // punched out at them and her free fist up.
+  sihype(p) {
+    const low = soft(seg(p, 0, 0.22)) * (1 - ease(seg(p, 0.24, 0.46)));
+    const arc = ease(seg(p, 0.24, 0.5));
+    const hop = Math.sin(Math.PI * seg(p, 0.48, 0.72));
+    const punch = ease(seg(p, 0.7, 0.8));
+    const hold = soft(seg(p, 0.82, 1));
+    const [weapon, arm] = siPose(SI.guard, [low, [130, 20]], [arc, [70, 70]], [soft(seg(p, 0.4, 0.5)), SI.up], [punch, [86, 104]]);
     return {
-      weapon, arm, lift: 12 * hop, tilt: -0.05 * k * (1 - hop) + 0.04 * dip,
+      weapon, arm, lift: 10 * hop - 2.5 * low + siBounce(p, 0.82), lunge: -3 * low + 2 * arc * (1 - punch) + 5 * punch * (1 - hold * 0.4), tilt: 0.18 * low - 0.1 * arc * (1 - punch) + 0.1 * punch * (1 - hold),
       rig: (r) => {
         r.air = hop > 0.2;
-        r.squat = q(1.5 * Math.min(1, dip) + 1.5 * land);
-        siHead(r, 0.7 * k - 0.3 * dip);
-        r.backArm = siFree([Math.max(p1, p2), [-7, -12]], [p3 * (1 - hold), [-8, -16]], [hold, SI.hip]);
-        if (hold > 0.5) r.armSide = -1;
-        r.hairLift = hop > 0.3 ? -1 : 0;
-        danceLegs(r, [Math.min(1, dip), [1.8, 0, 4], [-1.8, 0, -6]], [hop, [1.6, -3.4, 30], [-2.4, -4, -40]], [land + hold, [3, 0, 4], [-3, 0, -6]]);
-        if (k > 0.5) r.mouth = 'yell';
-        if (hop > 0.4) r.eyes = 'happy';
-        if (hold > 0.5) {
-          r.eyes = 'wink';
-          r.mouth = 'grin';
-        }
+        r.squat = q(2.5 * low + 1.5 * bump(p, 0.72, 0.86));
+        siHead(r, -0.5 * low + 0.8 * arc * (1 - punch) + 0.2 * punch);
+        r.backArm = siFree([low, [-6, 2]], [arc, [-8, -16]], [punch, [-6, -15]]);
+        r.hairLift = low > 0.5 ? 1 : hop > 0.3 ? -1 : 0;
+        danceLegs(r, [low, [2.6, 0, 6], [-2.6, 0, -8]], [arc, [1.2, -1, 8], [-1.4, -1.4, -14]], [hop, [1.6, -3.6, 30], [-2.6, -4.2, -44]], [punch, [3.2, 0, 4], [-2.6, 0, -8]]);
+        if (low > 0.5) [r.eyes, r.mouth] = ['happy', 'o'];
+        if (arc > 0.3) r.mouth = 'yell';
+        if (hold > 0.5) [r.eyes, r.mouth] = ['wink', 'grin'];
       },
     };
   },
-  // Lullaby (1.2 s, the lullaby drifts out at ~0.5): she sinks a little, cradles the mic low under
-  // her chin and rests her head to one side, eyes heavy, rocking slowly as if lulling a baby, the
-  // free hand drifting out in a slow wave; she leans in and breathes the lullaby out, and ends
-  // with her head resting on her shoulder, eyes closed.
+  // Lullaby (0.9 s, the cloud drifts out at ~0.52): she cradles the mic low and hums, eyes heavy,
+  // rocking slowly; then lifts her free hand palm-up under her lips, leans in and blows softly
+  // across it, as if sending off a dandelion seed; she ends with her head drooping onto her
+  // shoulder and a sleepy little sway.
   silullaby(p) {
-    const into = soft(seg(p, 0, 0.22));
-    const rock = Math.sin(seg(p, 0.08, 1) * Math.PI * 2) * into;
-    const breath = soft(seg(p, 0.38, 0.5)) * (1 - soft(seg(p, 0.6, 0.76)));
-    const rest = soft(seg(p, 0.72, 0.95));
-    const wave = soft(seg(p, 0.2, 0.4));
-    const [weapon, arm] = siPose(SI.guard, [into, [50, -6]], [breath, [62, 30]], [rest, [48, -4]]);
+    const into = soft(seg(p, 0, 0.2));
+    const rock = Math.sin(seg(p, 0.04, 0.42) * Math.PI * 2) * into * (1 - soft(seg(p, 0.36, 0.44)));
+    const palm = soft(seg(p, 0.34, 0.46)) * (1 - soft(seg(p, 0.66, 0.8)));
+    const blow = soft(seg(p, 0.46, 0.56)) * (1 - soft(seg(p, 0.62, 0.74)));
+    const rest = soft(seg(p, 0.72, 0.92));
+    const drift = Math.sin(seg(p, 0.72, 1) * Math.PI * 2) * rest;
+    const [weapon, arm] = siPose(SI.guard, [into, [48, -6]], [palm, [52, -10]], [rest, [46, -4]]);
     return {
-      weapon, arm, tilt: 0.05 * rock + 0.07 * breath, lunge: 1.4 * rock + 1.5 * breath, lift: breathe(p) * 0.5 * into,
+      weapon, arm, tilt: 0.05 * rock + 0.1 * blow - 0.03 * rest, lunge: 1.4 * rock + 3 * blow + 0.8 * drift, lift: breathe(p) * 0.5 * into - 0.6 * rest,
       rig: (r) => {
-        r.squat = q(into * (1 + 0.5 * breath));
-        siHead(r, -0.7 * into + 0.4 * breath - 0.3 * rest - 0.2 * rock);
-        r.backArm = siFree([wave, [lerp(-7, -12, 0.5 + 0.5 * Math.sin(p * Math.PI * 3)), lerp(-2, -6, 0.5 + 0.5 * Math.cos(p * Math.PI * 3))]], [rest, [-5, -1]]);
-        danceLegs(r, [Math.max(0, rock), [2, 0, 4], [-0.6, -0.4, -4]], [Math.max(0, -rock), [0.6, -0.4, 4], [-2, 0, -4]]);
-        if (into > 0.5) r.eyes = rest > 0.5 ? 'happy' : 'half';
-        r.mouth = breath > 0.4 ? 'o' : into > 0.5 ? 'cat' : null;
+        r.squat = q(into * (1 + 0.4 * rest));
+        siHead(r, -0.6 * into + 0.4 * palm + 0.2 * blow - 0.5 * rest - 0.2 * rock);
+        r.backArm = siFree([into, [-4, -2]], [palm, [2, -10]], [blow, [4, -10]], [rest, [-5, -1]]);
+        danceLegs(r, [Math.max(0, rock + drift), [2, 0, 4], [-0.6, -0.4, -4]], [Math.max(0, -rock - drift), [0.6, -0.4, 4], [-2, 0, -4]], [blow, [2.2, 0, 4], [-1.4, -1.4, -18]]);
+        r.eyes = into > 0.5 ? (rest > 0.5 ? 'happy' : 'half') : null;
+        r.mouth = blow > 0.4 ? 'kiss' : palm > 0.4 ? 'o' : into > 0.5 ? 'cat' : null;
       },
     };
   },
-  // Curtain Call (1.4 s, they rise at ~0.7): a deep bow, mic swept out low to the side, then she
-  // rises with the mic raised high and the free arm flung up to the crowd, head back, beaming, and
-  // the fallen get up with her.
+  // Curtain Call (1.15 s, the fallen rise at ~0.66): a deep curtsy as the curtains sweep shut
+  // behind her: the back foot crossed far behind, knees bent, head bowed, the mic held to her chest
+  // and her free hand holding her skirt out; she holds it a beat, then rises onto her toes and
+  // flings both arms out wide as the curtains part, head back, beaming; and blows the crowd a kiss
+  // off her fingertips, with a wink.
   sibow(p) {
-    const bow = soft(seg(p, 0.05, 0.35)) * (1 - soft(seg(p, 0.5, 0.66)));
-    const rise = ease(seg(p, 0.6, 0.74));
-    const hold = soft(seg(p, 0.86, 1));
-    const [weapon, arm] = siPose(SI.guard, [bow, [150, 50]], [rise, [30, 132]], [hold, [36, 126]]);
+    const dip = soft(seg(p, 0.04, 0.3)) * (1 - ease(seg(p, 0.52, 0.64)));
+    const open = ease(seg(p, 0.54, 0.66)) * (1 - soft(seg(p, 0.78, 0.88)));
+    const kiss = soft(seg(p, 0.78, 0.86)) * (1 - ease(seg(p, 0.88, 0.94)));
+    const fling = soft(seg(p, 0.88, 1));
+    const [weapon, arm] = siPose(SI.guard, [dip, SI.chest], [open, [44, 140]], [kiss, SI.sing], [fling, [60, 30]]);
     return {
-      weapon, arm, tilt: 0.3 * bow - 0.08 * rise * (1 - hold * 0.5), lift: 3 * rise * (1 - hold),
+      weapon, arm, tilt: 0.16 * dip - 0.08 * open, lift: -2 * dip + 4 * open + siBounce(p, 0.9), lunge: -1.5 * dip + 1.5 * kiss,
       rig: (r) => {
-        siHead(r, -0.5 * bow + 0.8 * rise * (1 - hold * 0.4));
-        r.backArm = siFree([bow, [-8, -2]], [rise, [-8, -16]], [hold, [-9, -13]]);
-        r.hairLift = bow > 0.5 ? 1 : rise > 0.3 && hold < 0.5 ? -1 : 0;
-        danceLegs(r, [bow, [2.6, 0, 4], [-2.2, -0.6, -12]], [rise, [1, -1.4, 10], [-1.6, -1.6, -20]], [hold, [2.2, 0, 4], [-2.2, 0, -6]]);
-        if (bow > 0.5) r.eyes = 'happy';
-        else if (rise > 0.3) {
-          r.eyes = 'happy';
-          r.mouth = 'grin';
-        }
+        r.squat = q(3 * dip);
+        siHead(r, -0.7 * dip + 0.9 * open + 0.1 * kiss);
+        r.backArm = siFree([dip, [-6, 1]], [open, [-11, -15]], [kiss, [1, -10]], [fling, [-10, -11]]);
+        r.hairLift = dip > 0.5 ? 1 : open > 0.4 ? -1 : 0;
+        danceLegs(r, [dip, [2.4, 0, 6], [-3.2, -0.6, -6]], [open, [1.4, -1.4, 10], [-1.8, -1.8, -22]], [kiss + fling, [2.2, 0, 4], [-1.6, -1.4, -24]]);
+        if (dip > 0.5) r.eyes = 'happy';
+        if (open > 0.4) [r.eyes, r.mouth] = ['happy', 'grin'];
+        if (kiss > 0.4) [r.eyes, r.mouth] = ['happy', 'kiss'];
+        if (fling > 0.5) [r.eyes, r.mouth] = ['wink', 'cat'];
       },
     };
   },
-  // Grand Concert (her finisher, 2.4 s; the stage rises at ~0.12 and the music blasts at ~0.42,
-  // ~0.58 and ~0.76): curled low with the mic at her chest, she springs up as the stage lifts her,
-  // arms flung up wide; sings the intro swaying under the spotlights; points the mic out on the
-  // first beat; a pirouette, and the mic thrust out high with a hop on the second; leans back and
-  // belts the big note, head thrown back; leaps on the third, mic and free arm high, heels kicked
-  // up; and lands in her finale: feet wide, mic raised up high, free arm flung up, head back, a wink,
-  // held as the confetti falls.
+  // Grand Concert (her finisher, 2.1 s; the stage rises at ~0.12 and the music blasts at ~0.41,
+  // ~0.57 and ~0.75): she waits with her back to the crowd, hip popped, mic at her chin; looks back
+  // over her shoulder with a wink as the stage lifts her; spins round into a wide "ta-da"; sings the
+  // intro swaying; punches the mic out on the first beat; whips her hair down and up on the second,
+  // the mic driven down at the stage in a deep lunge; throws her head back and belts the big note;
+  // leaps into a star jump on the third, arms and legs flung wide; and lands holding the mic out to
+  // the crowd for them to sing, her free hand cupped at her ear, and a wink.
   siconcert(p) {
-    const curl = soft(seg(p, 0, 0.08)) * (1 - ease(seg(p, 0.1, 0.16)));
-    const burst = ease(seg(p, 0.1, 0.16)) * (1 - soft(seg(p, 0.2, 0.28)));
-    const intro = soft(seg(p, 0.2, 0.28)) * (1 - ease(seg(p, 0.36, 0.42)));
-    const sway = Math.sin(seg(p, 0.22, 0.36) * Math.PI * 2);
-    const beat = (a, len = 0.06) => ease(seg(p, a - len, a)) * (1 - soft(seg(p, a + 0.02, a + 0.08)));
-    const b1 = beat(0.42);
-    const spin = seg(p, 0.46, 0.53);
+    const back = 1 - ease(seg(p, 0.24, 0.27));
+    const peek = soft(seg(p, 0.12, 0.2)) * back;
+    const spin = seg(p, 0.24, 0.31);
     const turning = spin > 0 && spin < 1;
-    const tuck = soft(seg(p, 0.43, 0.47)) * (1 - soft(seg(p, 0.52, 0.55)));
-    const b2 = beat(0.58, 0.05);
-    const belt = soft(seg(p, 0.62, 0.68)) * (1 - ease(seg(p, 0.7, 0.74)));
-    const leap = Math.sin(Math.PI * seg(p, 0.7, 0.86));
-    const up3 = ease(seg(p, 0.7, 0.76));
-    const fin = soft(seg(p, 0.84, 0.92));
-    const end = soft(seg(p, 0.97, 1));
-    const [weapon, arm] = siPose([60, 30], [curl, [62, 14]], [burst, SI.up], [intro, SI.sing], [b1, SI.out], [tuck, SI.spin], [b2, [56, 122]], [belt, SI.belt], [up3, [24, 140]], [fin, [60, 128]]);
-    const stage = soft(seg(p, 0.1, 0.18)) * (1 - end);
+    const tada = soft(seg(p, 0.29, 0.33)) * (1 - soft(seg(p, 0.34, 0.38)));
+    const intro = soft(seg(p, 0.34, 0.37)) * (1 - ease(seg(p, 0.37, 0.41)));
+    const sway = Math.sin(seg(p, 0.33, 0.4) * Math.PI * 2);
+    const beat = (a, len = 0.04) => ease(seg(p, a - len, a)) * (1 - soft(seg(p, a + 0.03, a + 0.08)));
+    const b1 = beat(0.41);
+    const whip = bump(p, 0.5, 0.57);
+    const b2 = beat(0.57, 0.03);
+    const belt = soft(seg(p, 0.61, 0.67)) * (1 - ease(seg(p, 0.69, 0.72)));
+    const star = Math.sin(Math.PI * seg(p, 0.71, 0.84));
+    const spread = ease(seg(p, 0.72, 0.76)) * (1 - soft(seg(p, 0.8, 0.86)));
+    const fin = soft(seg(p, 0.85, 0.92));
+    const [weapon, arm] = turning
+      ? siPose(SI.spin)
+      : siPose([60, 30], [back, SI.sing], [tada, [50, 128]], [intro, SI.sing], [b1, SI.out], [whip, [100, 56]], [b2, [104, 70]], [belt, [58, 20]], [spread, [40, 150]], [fin, [92, 100]]);
     return {
-      weapon, arm, turn: turning ? Math.sign(Math.cos(spin * Math.PI * 2)) || 1 : 1, trail: turning,
-      lift: 4 * stage + 3 * burst + 3 * bump(p, 0.53, 0.62) + 12 * leap - 1.5 * curl + breathe(p * 2) * 0.6 * fin,
-      tilt: 0.06 * curl - 0.06 * burst + 0.05 * sway * intro + 0.1 * b1 + 0.06 * b2 - 0.14 * belt - 0.05 * fin,
-      lunge: 4 * b1 + 3 * b2 - 2 * belt,
+      weapon, arm, turn: back > 0.5 ? -1 : turning ? Math.sign(Math.cos(spin * Math.PI * 2)) || 1 : 1, trail: turning,
+      lift: 4 * soft(seg(p, 0.1, 0.18)) + 2 * tada + 14 * star - 2.5 * b2 + breathe(p * 2) * 0.6 * fin,
+      tilt: (back > 0.5 ? -0.04 : 0) + 0.05 * sway * intro + 0.12 * b1 + 0.22 * b2 - 0.15 * belt - 0.04 * fin,
+      lunge: 5 * b1 + 6 * b2 - 2 * belt + 2 * fin,
       rig: (r) => {
-        r.air = leap > 0.2;
-        r.squat = q(2 * curl + 1.5 * bump(p, 0.84, 0.92));
-        siHead(r, -0.4 * curl + 0.8 * burst + 0.25 * intro + 0.2 * sway * intro + 0.2 * b2 + belt + 0.6 * up3 * (1 - fin) + 0.5 * fin);
-        r.backArm = turning ? [-3, -4] : siFree([curl, [2, -3]], [burst, [-8, -16]], [intro, [-5, -2]], [b1, [-12, -7]], [b2, [-11, -10]], [belt, [-8, -16]], [up3, [-7, -17]], [fin, [-9, -15]]);
+        r.air = star > 0.2;
+        r.squat = q(2.5 * b2 + 1.5 * bump(p, 0.84, 0.92));
+        siHead(r, back > 0.5 ? 0.3 * peek - 0.2 : 0.6 * tada + 0.2 * sway * intro + 0.3 * b1 - 0.8 * whip * (1 - b2) + 0.4 * b2 + belt + 0.6 * spread - 0.2 * fin);
+        r.backArm = turning ? [-3, -4] : back > 0.5 ? SI.hip : siFree([tada, [-11, -15]], [intro, [-5, -2]], [b1, [-12, -7]], [whip, [-6, 0]], [b2, [-11, -12]], [belt, [-8, -16]], [spread, [-12, -16]], [fin, [-2, -11]]);
+        if (back > 0.5) r.armSide = -1;
         r.cape -= q(4 * Math.max(b1, b2));
-        r.hairLift = b1 > 0.3 || b2 > 0.3 ? 1 : burst > 0.3 || belt > 0.5 || leap > 0.3 ? -1 : 0;
+        r.hairLift = whip > 0.4 || b2 > 0.3 ? 1 : tada > 0.4 || belt > 0.5 || star > 0.3 ? -1 : 0;
         danceLegs(r,
-          [curl, [1.4, 0, 6], [-1.4, 0, -6]],
+          [back, [1.2, 0, 4], [0.4, -1.4, -20]],
+          [turning ? 1 : 0, [0.4, -0.6, 4], [0.2, -3, -40]],
+          [tada, [3.4, 0, 4], [-3.4, 0, -6]],
           [intro, [sway > 0 ? 2.6 : 0.4, 0, 6], [sway > 0 ? -0.4 : -2.6, -0.6, -6]],
           [b1, [3.6, 0, 6], [-3, -0.6, -14]],
-          [turning ? 1 : 0, [0.4, -0.6, 4], [0.2, -3, -40]],
-          [b2, [2.4, -1, 8], [-2.6, -1.6, -24]],
+          [b2, [4, 0, 8], [-3.4, -0.4, -10]],
           [belt, [1.2, -1.2, 6], [-1.4, -1.4, -10]],
-          [leap, [-1.4, -4.6, -40], [-3.6, -5.4, -60]],
-          [fin, [3.2, 0, 4], [-3.2, 0, -6]]);
-        if (curl > 0.5) r.eyes = 'happy';
-        if (burst > 0.3 || leap > 0.3) {
-          r.eyes = 'happy';
-          r.mouth = 'open';
-        }
+          [star, [3, -2.4, 40], [-3.2, -2.4, -40]],
+          [fin, [3, 0, 4], [-2.4, -0.6, -10]]);
+        if (back > 0.5) [r.eyes, r.mouth] = peek > 0.5 ? ['wink', 'cat'] : ['half', 'cat'];
+        if (turning || tada > 0.4) [r.eyes, r.mouth] = ['happy', 'open'];
         if (intro > 0.5) r.mouth = siSyllable(p, 5);
-        if (b1 > 0.3 || b2 > 0.3) r.mouth = 'open';
-        if (turning) r.eyes = 'happy';
-        if (belt > 0.4) {
-          r.eyes = 'happy';
-          r.mouth = 'yell';
-        }
-        if (fin > 0.4) {
-          r.eyes = 'wink';
-          r.mouth = 'grin';
-        }
+        if (b1 > 0.3 || b2 > 0.3) r.mouth = 'yell';
+        if (belt > 0.4) [r.eyes, r.mouth] = ['happy', 'yell'];
+        if (star > 0.3) [r.eyes, r.mouth] = ['happy', 'open'];
+        if (fin > 0.4) [r.eyes, r.mouth] = p > 0.95 ? ['wink', 'grin'] : ['happy', 'grin'];
       },
     };
   },
-
 
   // The Star Witch's skills, her way (data/skills.js `paths`):
   // Call out (her Shooting Star's first, the note at ~0.3): "I can't hear you!": she cups her free

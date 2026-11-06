@@ -778,7 +778,7 @@ const SPECIALS = {
     },
   },
   blessing: { move: 'swwish', dur: 0.8, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
-  grandblessing: { move: 'sisong', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  grandblessing: { move: 'sispot', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
   // monsters round her back.
   thousandtorii: {
@@ -969,9 +969,9 @@ function heal(bot, world, bots) {
   // tide round you.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const witch = bot.char.job === 'spiritmage';
-  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sisong' : 'astide', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(world, bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

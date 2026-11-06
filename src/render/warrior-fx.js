@@ -242,17 +242,35 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const fade = Math.min(1, (1 - u) * 4);
       return fxSprite(ctx, 'celsibig', x + f.dir * f.r * go, y, { t: f.t, flip: f.dir < 0, scale: (f.big ? 1 : 0.8) * (0.8 + 0.4 * go), alpha: fade }) || true;
     }
-    case 'idolsong': {
-      const S = f.song;
+    case 'sispot': {
+      // Center Stage: the spotlight on whoever she is mending, following them (world/idol.js moves
+      // it with them); it fades in from above and out again.
+      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 2.5);
+      if (fade <= 0) return true;
+      const drop = 1 - (1 - Math.min(1, f.t / 0.25)) ** 3;
+      return fxSprite(ctx, 'celsispot', x, y + 4, { t: f.t, scale: (f.live ? 1.12 : 1) * (0.85 + 0.15 * drop), alpha: fade * 0.95 }) || true;
+    }
+    case 'sihype': {
+      // Hype Wave's crest rolling out along the ground to the edge of its reach.
+      const roll = Math.max(0, f.dur - 0.35);
+      const u = Math.min(1, f.t / roll);
+      const fade = Math.min(1, f.t * 8, f.t < roll ? 1 : Math.max(0, (f.dur - f.t) / 0.35));
+      if (fade <= 0) return true;
+      return fxSprite(ctx, 'celsihype', x + f.dir * f.r * u, y + 2, { t: f.t, flip: f.dir < 0, scale: (f.live ? 0.95 : 0.8) * (0.85 + 0.15 * Math.min(1, u * 3)), alpha: fade }) || true;
+    }
+    case 'silullcloud': {
+      // Lullaby's little cloud drifting after the monsters (world/idol.js moves it), bobbing.
       const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
       if (fade <= 0) return true;
-      return songRing(ctx, S.kind, x, y, S.r, f.t, fade) || true;
+      const grow = 1 - (1 - Math.min(1, f.t / 0.3)) ** 3;
+      return fxSprite(ctx, 'celsilull', x, y - 46 + 3 * Math.sin(f.t * 2.2), { t: f.t, flip: (f.vx ?? 1) < 0, scale: (f.r / 70) * 0.5 * grow, alpha: fade * 0.95 }) || true;
     }
-    case 'sisong': case 'sicheer': case 'silullaby': {
-      // A song's ring sung once (the party's healer bots, a raise): smaller, and gone again.
-      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 3);
-      return songRing(ctx, f.kind === 'sicheer' ? 'cheer' : f.kind === 'silullaby' ? 'lull' : 'heal', x, y, f.big ? 110 : 60, f.t, fade) || true;
-    }
+    case 'sicurtain':
+      // Curtain Call's stage curtains behind her, sweeping shut and parting again.
+      return f.t < 0 || fxSprite(ctx, 'celsicurtain', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'sipyro':
+      // Grand Concert's pyro off the stage's edge on a beat.
+      return fxSprite(ctx, 'celsipyro', x, y, { p, scale: f.big ? 0.9 : 0.75 }) || true;
     case 'sistage':
       return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 1.2 }) || true;
     // The Astronomer's (violet and silver): her hit (a crescent passing and a ring opening), Gravity

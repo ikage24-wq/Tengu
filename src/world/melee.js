@@ -35,7 +35,7 @@ import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
 import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from './phantom.js';
-import { tickIdol, sing, curtainCall, grandConcert } from './idol.js';
+import { tickIdol, spotlight as idolSpotlight, hypeWave, lullaby, curtainCall, grandConcert } from './idol.js';
 import { tickAstro, gravityWell, planetaryAlignment } from './astro.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY } from './physics.js';
@@ -474,15 +474,22 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.starwand[2], { move: 'swhop', dur: 0.44, step: 20, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 88, range: 300, h: 60, knock: 25, speed: 860, h: 150, drop: 40, targets: 2, pierce: true }] }],
     [PATH_COMBOS.starwand[3], { move: 'swshowoff', dur: 0.5, step: 12, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 155, range: 320, h: 70, knock: 120, speed: 780, targets: 3, pierce: true, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
-  // The Starlight Idol. Openers: a line on the beat or a blown kiss. Second: the step and touch or
-  // singing over her shoulder. Finisher: the high note or her idol pose; now and then an idol jump
+  // The Starlight Idol. Openers: a line on the beat, a blown kiss, or the mic lassoed round overhead.
+  // Second: the step and touch, singing over her shoulder, or a hair flip. Finisher: the high note,
+  // her idol pose, or a heart drawn in the air; now and then an idol jump
   // in place of the second, singing down at them from the top of it.
   idol: [
-    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.36, step: 10, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 880, knock: 30 }] }],
+    [PATH_COMBOS.idol[0], { move: 'sikiss', dur: 0.36, step: 10, strikes: [{ at: 0.3, shot: 'sinote', magic: true, pct: 84, range: 300, h: 64, knock: 20, speed: 880, knock: 30 }] },
+      // The mic whirled round at her side by its cord like a lasso, let go at them as a note flies.
+      { move: 'sitwirl', dur: 0.42, step: 12, strikes: [{ at: 0.36, shot: 'sinote', magic: true, pct: 86, range: 310, h: 70, knock: 40, speed: 900 }] }],
     [PATH_COMBOS.idol[1],
       { move: 'sishoulder', dur: 0.5, step: 8, strikes: [{ at: 0.32, shot: 'sinote', magic: true, pct: 44, range: 300, h: 64, knock: 20, speed: 880, oy: -2 }, { at: 0.6, shot: 'sinote', magic: true, pct: 52, range: 300, h: 64, knock: 20, speed: 880, oy: 2 }] },
-      { move: 'sijump', dur: 0.52, step: 22, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 880, h: 150, drop: 40, targets: 2, pierce: true }] }],
-    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.56, step: 12, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+      { move: 'sijump', dur: 0.52, step: 22, strikes: [{ at: 0.44, shot: 'sinote', magic: true, pct: 92, range: 300, h: 64, knock: 20, speed: 880, h: 150, drop: 40, targets: 2, pierce: true }] },
+      // A hair flip on the beat: a fan of three little notes thrown off it.
+      { move: 'sihair', dur: 0.46, step: 10, strikes: [{ at: 0.34, shot: 'sinote', magic: true, pct: 34, range: 280, h: 64, knock: 20, speed: 860, oy: -8 }, { at: 0.36, shot: 'sinote', magic: true, pct: 34, range: 290, h: 64, knock: 20, speed: 880 }, { at: 0.38, shot: 'sinote', magic: true, pct: 34, range: 300, h: 64, knock: 20, speed: 900, oy: 8 }] }],
+    [PATH_COMBOS.idol[2], { move: 'sipose', dur: 0.56, step: 12, finisher: true, strikes: [{ at: 0.48, shot: 'sibig', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, speed: 820, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+      // A heart drawn in the air with the mic, then pushed off her palm: it sails through the line.
+      { move: 'siheart', dur: 0.6, step: 8, finisher: true, strikes: [{ at: 0.54, shot: 'siheart', magic: true, pct: 172, range: 330, h: 84, targets: 3, pierce: true, speed: 700, knock: 180, launch: 60, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
@@ -1520,7 +1527,9 @@ function land(world, s) {
   // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
   if (s.turret) deployTurret(world, s.turret);
   // The Starlight Idol's songs and show (world/idol.js).
-  if (s.song) sing(world, s);
+  if (s.spot) idolSpotlight(world, s);
+  if (s.hype) hypeWave(world, s);
+  if (s.lull) lullaby(world, s);
   if (s.revive) curtainCall(world, s);
   if (s.concert) grandConcert(world, s);
   // The Astronomer's (world/astro.js).
@@ -1825,7 +1834,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,

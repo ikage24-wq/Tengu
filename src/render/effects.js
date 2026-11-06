@@ -104,6 +104,12 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'asmoon' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'asplanet' ? 0.75 : f.shot === 'asbig' ? 0.8 : 0.8, alpha: f.split ? 0.85 : 1 });
       break;
     }
+    case 'siheart': {
+      // Her heart drawn in the air: it sails on level, rocking gently, with a trail of sparkles.
+      const born = bornAt(f);
+      fxSprite(ctx, 'celsiheart', x, y, { t: f.t, flip: f.tx < f.x, rot: 0.12 * Math.sin(f.t * 9), scale: born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'sinote': case 'sibig': {
       // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
@@ -993,7 +999,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['idolsong', 'sistage', 'sisong', 'sicheer', 'silullaby', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
+const GROUND_FX = new Set(['sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

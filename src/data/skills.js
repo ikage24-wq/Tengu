@@ -430,8 +430,8 @@ export const SKILLS = {
 
   // ---------- The Star Witch's paths ----------
   // The Starlight Idol (the Shrine Maiden remade, id kept; docs/design/starlight-idol.md): the
-  // party's healer, singing into her wand as a microphone. Her songs hang in the air where she sang
-  // them (`song`, world/idol.js), she builds Applause (world/melee.js), and her finisher is Grand
+  // party's healer, singing into her wand as a microphone. Her songs move with the show (Center
+  // Stage's spotlight follows who it mends, Hype Wave rolls out, Lullaby drifts; world/idol.js), she builds Applause (world/melee.js), and her finisher is Grand
   // Concert. The Astronomer (damage, below) is the other path.
   shrinemastery: skill({
     id: 'shrinemastery', name: 'Stage Presence', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
@@ -439,58 +439,59 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(5, 35, lv, m), maxMpPct: lerpf(0.05, 0.25, lv, m), healPower: lerpf(0.05, 0.3, lv, m) } }),
   }),
   grandblessing: skill({
-    id: 'grandblessing', name: 'Healing Song', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
-    desc: 'Lay a hand on your heart and sing: you and the party around you are healed at once, and the song hangs in the air where you sang it for a while, a ring of pink notes that mends everyone standing in it every second.',
+    id: 'grandblessing', name: 'Center Stage', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
+    desc: 'Point the mic at whoever is hurt worst, you or a friend near you, and call them up: a spotlight drops on them and mends them at once, then follows them wherever they go for a while, mending them every second.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
-        mp: k(40, 70), pct: 0, hits: 0, targets: 0, range: { w: 400, h: 180, around: true },
-        combo: [{ move: 'sisong', dur: 0.95, step: 0, strikes: [{ at: 0.42, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.22, 0.38), healR: 220, song: { kind: 'heal', r: k(110, 140), dur: k(8, 14), every: 1, heal: kf(0.03, 0.055) } }] }],
+        mp: k(40, 70), pct: 0, hits: 0, targets: 0, range: { w: 760, h: 200, around: true },
+        combo: [{ move: 'sispot', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, spot: { r: 380, heal: kf(0.16, 0.28), tick: kf(0.04, 0.07), every: 1, dur: k(6, 10) } }] }],
       };
     },
   }),
   idolcheer: skill({
-    id: 'idolcheer', name: 'Cheer', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
-    desc: 'Three pumps of the mic, "hey, hey, HEY!": a cheer hangs in the air where you sang it for a while, a ring of gold stars, and everyone standing in it hits harder.',
+    id: 'idolcheer', name: 'Hype Wave', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
+    desc: 'Get the whole crowd going: a wave of light rolls out both ways along the ground. Every friend it passes hits harder for a while, and every monster it passes is popped up off its feet.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
-        mp: k(30, 50), pct: 0, hits: 0, targets: 0, range: { w: 400, h: 180, around: true },
-        combo: [{ move: 'sicheer', dur: 0.8, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'cheer', r: k(115, 150), dur: k(10, 18), every: 1, watk: k(8, 22), matk: k(8, 22) } }] }],
+        mp: k(30, 50), pct: k(60, 110), hits: 1, targets: 0, range: { w: 720, h: 180, around: true },
+        combo: [{ move: 'sihype', dur: 0.85, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, hype: { r: k(260, 360), speed: 560, dur: k(12, 20), watk: k(8, 22), matk: k(8, 22), pct: k(60, 110), launch: 220 } }] }],
       };
     },
   }),
   purification: skill({
     id: 'purification', name: 'Lullaby', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'purification', school: 'idol',
-    desc: 'Rock slowly and sing them to sleep: a lullaby hangs in the air where you sang it for a while, a ring of soft lilac moons. Monsters in it slow to a sleepy drift, and your notes chip at them again and again.',
+    desc: 'Hum softly into the mic and blow: a little cloud of lilac notes drifts off toward the nearest monster. Whatever it touches nods off for a moment, then slows to a sleepy drift while its notes chip at it again and again.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 55), pct: k(50, 95), hits: 1, targets: 0,
-        combo: [{ move: 'silullaby', dur: 0.95, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, song: { kind: 'lull', r: k(110, 140), dur: k(6, 10), every: 0.6, pct: k(50, 95) } }] }],
+        combo: [{ move: 'silullaby', dur: 0.9, step: 0, strikes: [{ at: 0.52, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, lull: { r: k(60, 80), dur: k(6, 9), every: 0.6, pct: k(50, 95), speed: 70, sleep: kf(0.8, 1.4), seek: 360 } }] }],
       };
     },
   }),
   resurrection: skill({
     id: 'resurrection', name: 'Curtain Call', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'resurrection', school: 'idol', party: true, maxLevel: 10,
-    desc: 'Take a deep bow, then rise with your arms flung up to the crowd: every fallen ally nearby gets back up. And for a while the crowd won\'t let you leave the stage: a blow that would knock you out leaves you standing instead (Encore), once.',
+    desc: 'Sink into a curtsy as the curtains sweep shut, then fling your arms wide as they part again: every fallen ally nearby gets back up. And for a while the crowd won\'t let you leave the stage: a blow that would knock you out leaves you standing instead (Encore), once.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(60, 100), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'sibow', dur: 1.15, step: 0, strikes: [{ at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
+        combo: [{ move: 'sibow', dur: 1.15, step: 0, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sicurtain', burstAt: 0, burstDur: 1.15 }, { at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
       };
     },
   }),
   thousandtorii: skill({
     id: 'thousandtorii', name: 'Grand Concert', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
-    desc: 'Finisher: needs full Applause, and spends it. A stage of light rises under you and the spotlights find you: everyone near is healed in full and wrapped in a ward, and you sing it out, three big beats, each one blasting the monsters back with the music.',
+    desc: 'Finisher: needs full Applause, and spends it. A stage of light rises under you and the spotlights find you: everyone near is healed in full and wrapped in a ward, and you sing it out, three big beats, pyro shooting up on each one and the music blasting the monsters back.',
     weapons: ['wand'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -1030,7 +1031,7 @@ const MOVES_BY_SKILL = {
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'swflick', spiritstep: 'swblink', spiritwave: 'swshowoff', blessing: 'swwish', spiritward: 'swveil', heavenslantern: 'swstarfall',
-  grandblessing: 'sisong', idolcheer: 'sicheer', purification: 'silullaby', resurrection: 'sibow', thousandtorii: 'siconcert',
+  grandblessing: 'sispot', idolcheer: 'sihype', purification: 'silullaby', resurrection: 'sibow', thousandtorii: 'siconcert',
   ofudabarrage: 'asglobe', seimanseal: 'aswell', yokairally: 'astide', troupecombo: 'asalign',
   goldencarousel: 'bdcarousel',
   skywaltz: 'sdwaltz',

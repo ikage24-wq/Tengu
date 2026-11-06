@@ -1423,29 +1423,34 @@ function shrinemastery() {
   out.push(...spark(3.2, 4, 1, '#ffd36a'), ...spark(13, 3.4, 0.9));
   return out;
 }
-// Healing Song: a heart with notes rising off it.
+// Center Stage: a spotlight from a little gold lamp dropping on a heart, its pool of light below.
 function grandblessing() {
-  const out = [...tile('idolbg', 'active'), ...aura(7, 10, 6.4, '#fff0f6', 1.1)];
-  out.push(...heartIcon(6.6, 10.4, 4.6));
-  out.push(...noteIcon(11.6, 7, 1.6, '#ffd36a'), ...noteIcon(12.6, 13.4, 1.2));
-  out.push(...spark(3, 3.4, 1), ...spark(9.4, 2.4, 0.9, '#ffd36a'));
+  const out = [...tile('idolbg', 'active'), ...aura(8, 11, 6, '#fff0f6', 1.1)];
+  out.push(S([[6.6, 2.6], [9.4, 2.6], [13.6, 14], [2.4, 14]], '#fff2f8'));
+  out.push(S([[7.4, 2.6], [8.6, 2.6], [10.6, 14], [5.4, 14]], '#ffffff'));
+  out.push(...solid([[6, 0.8], [10, 0.8], [10.8, 3], [5.2, 3]], '#ffd36a', { d: 0.35, ink: '#8e5228' }));
+  out.push(...solid(oval(8, 14, 5.6, 1.4, 0, 18), '#ffd0e4', { d: 0.3, ink: IPINKINK }));
+  out.push(...heartIcon(8, 10, 3.2));
+  out.push(...spark(3.4, 6, 0.9, '#ffd36a'), ...spark(12.8, 7.4, 0.8));
   return out;
 }
-// Cheer: the mic thrust up in a burst of gold stars.
+// Hype Wave: a pink wave curling over, glow sticks waving up out of it.
 function idolcheer() {
-  const out = [...tile('idolbg', 'buff'), ...aura(9, 6, 6.4, '#fff4c8', 1.3, 5)];
-  out.push(...goldStar(10.4, 5, 3.6, 0.1), ...goldStar(3.6, 3.6, 1.6, 0.4), ...goldStar(13.4, 11.6, 1.4, 0.2));
-  out.push(...micIcon(5.6, 15, 9.4, 20));
-  out.push(...spark(13.2, 1.8, 1));
+  const out = [...tile('idolbg', 'buff'), ...aura(8, 9, 6.4, '#fff4c8', 1.3, 5)];
+  out.push(S(tube([[3.4, 11], [2.2, 6.4]], 0.7, 0.6), '#ffd36a'), S(tube([[6.4, 9.6], [6, 4.6]], 0.7, 0.6), IPINK), S(tube([[9.4, 8.6], [10.2, 3.6]], 0.7, 0.6), '#ffd36a'));
+  out.push(...solid([[0.8, 15], [3, 13], [6, 10.4], [9.4, 8.4], [12.6, 8.2], [14.6, 9.8], [14.4, 12], [12.6, 11], [11.4, 12.6], [12.6, 15]], IPINK, { d: 0.35, ink: IPINKINK }));
+  out.push(S([[5, 11.6], [9.4, 9.2], [12.6, 9.2], [14, 10.2], [12.8, 9.8], [9.6, 10]], '#fff4c8'));
+  out.push(...heartIcon(13, 4.4, 1.4, '#ffd36a'), ...spark(4.2, 2.6, 0.9));
   return out;
 }
-// Lullaby: a sleepy crescent moon with a soft lilac note and a "z".
+// Lullaby: a sleepy lilac cloud, eyes shut, with a note and a 'z' drifting off it.
 function purification() {
-  const out = [...tile('lullbg', 'active'), ...aura(7, 8, 6, '#f4e4ff', 1.1)];
-  out.push(...solid([...arcPts(7, 8.4, 5.2, 5.2, 70, 290, 14), ...arcPts(9.4, 7.6, 4.2, 4.2, 280, 80, 14)], '#e6d2ff', { d: 0.35, ink: '#5a3a9a' }));
-  out.push(...noteIcon(12, 13, 1.4, '#d4b0ff'));
-  out.push(S([[10.4, 2], [13.6, 2], [13.6, 2.8], [11.6, 5], [13.6, 5], [13.6, 5.8], [10.4, 5.8], [10.4, 5], [12.4, 2.8], [10.4, 2.8]], '#fff0f6'));
-  out.push(...spark(3, 13.4, 0.9, '#ffd36a'));
+  const out = [...tile('lullbg', 'active'), ...aura(7, 9, 6, '#f4e4ff', 1.1)];
+  for (const [x, y, r] of [[4.4, 10.4, 2.8], [7.4, 8.4, 3.6], [10.8, 10, 3], [7.6, 11.6, 3]]) out.push(...solid(oval(x, y, r, r * 0.86, 0, 16), '#e6d2ff', { d: 0.35, ink: '#5a3a9a' }));
+  out.push(S(rect(5.4, 10, 1.4, 0.4), '#5a3a9a'), S(rect(8.6, 10, 1.4, 0.4), '#5a3a9a'), S(oval(7.6, 12, 0.5, 0.6, 0, 10), '#5a3a9a'));
+  out.push(...noteIcon(2.6, 5.4, 1.2, '#d4b0ff'));
+  out.push(S([[10.4, 1.6], [13.6, 1.6], [13.6, 2.4], [11.6, 4.6], [13.6, 4.6], [13.6, 5.4], [10.4, 5.4], [10.4, 4.6], [12.4, 2.4], [10.4, 2.4]], '#fff0f6'));
+  out.push(...spark(14, 13.6, 0.9, '#ffd36a'));
   return out;
 }
 // Curtain Call: pink stage curtains drawn back, a burst of light where she bows.

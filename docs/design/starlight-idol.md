@@ -142,3 +142,40 @@ big as she is, soft and blurry, over a flat pink wash. Now:
   same small, crisp size at any reach (render/warrior-fx.js `songRing`). Her Applause aura uses
   the same ring, small, at her feet.
 - Grand Concert's rolling blasts and the cast bursts are smaller too.
+
+## Kit rework (2026-11-06, the player: "rework idol job" — skill kit, animations and effects, the full pass)
+
+Her songs no longer sit still on the ground as rings; each one moves with the show
+(world/idol.js). Skill ids are kept, so saves, trials and bots carry over.
+
+- **Center Stage** (grandblessing; was Healing Song; renamed because the Wind Dancer already has a
+  Spotlight): she shades her eyes, finds whoever is hurt worst (her or a party member within 380),
+  snaps the mic out at them, and a spotlight drops on them: an instant heal, then a heal every
+  second for 6-10 s while the light follows them wherever they go. One spotlight at a time. Move
+  `sispot`, effect `sispot` (lamp, beam, pool, rising hearts).
+- **Hype Wave** (idolcheer; was Cheer): a stadium wave in one body (sink low, arms up and over,
+  spring, mic punched out). A crest rolls out both ways along the ground (560 px/s, reach
+  260-360); every ally it passes gets the attack lift for 12-20 s, every monster it passes is hit
+  and popped up. Move `sihype`, effect `sihype` (curling pink wave with glow sticks).
+- **Lullaby** (purification): she hums, then blows softly across her palm; a little sleepy cloud
+  drifts to the nearest monster (seeks 360, 70 px/s). Whatever it touches nods off (a short sleep,
+  then 4 s before it can again), slows to a drift and is chipped every 0.6 s. Move
+  `silullaby` (rewritten), effect `silull`.
+- **Medley:** singing a different song from the last one gives +10 Applause.
+- **Live Show** now: Center Stage mends half again as much, Hype Wave rolls half again as far, the
+  Lullaby cloud is half again as wide.
+- **Curtain Call:** same effect; new curtsy (back foot crossed behind, skirt held out, head bowed),
+  arms flung wide as the curtains part, a blown kiss and a wink. Effect `sicurtain` (velvet
+  curtains behind her, drawn under her).
+- **Grand Concert:** same effect; new run: back to the crowd, a wink over the shoulder as the stage
+  lifts, a spin into a ta-da, the intro swayed, the mic punched out (beat 1), a hair-whip with the mic
+  driven down at the stage (beat 2), the big note belted, a star jump (beat 3), and the mic held out
+  to the crowd with her hand cupped at her ear. Pyro (`sipyro`) shoots up at the stage's edges on
+  each beat, with confetti.
+- **Basic attack pool, three more:** a mic lassoed round at her side on its cord (`sitwirl`), a
+  hair flip throwing a fan of three notes (`sihair`), and a heart traced in the air and pushed off
+  her palm as a big piercing heart shot (`siheart`, effect `siheart`).
+- The old song rings (`songRing`, the staff and bead strips) are kept only for her Star Witch skill
+  paths (her ballad) and her Applause aura.
+- Effects were rendered with Electron (Playwright isn't installed on this machine), only the six
+  new strips, so every other strip stayed byte-for-byte as it was.

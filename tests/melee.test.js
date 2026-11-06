@@ -2416,55 +2416,85 @@ test('the Starlight Idol sings her own notes and her own pool of moves, and they
   assert.equal(w.spirit ?? 0, 0, 'and no stars');
 });
 
-test('Healing Song heals at once, then hangs in the air mending whoever stands in it; Live Show reaches half again as far', () => {
+test('Center Stage heals at once, then its spotlight follows her and keeps mending; Live Show mends half again as much', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   assert.ok(cast(w, 'grandblessing').ok);
+  assert.equal(w.pose.kind, 'sispot');
   run(w, 0.7);
   const after = w.char.hp;
-  assert.ok(after > w.stats.maxHp * 0.45, 'it heals her at once');
-  const song = w.songs.find((s) => s.kind === 'heal');
-  assert.ok(song, 'the song hangs where she sang it');
+  assert.ok(after > w.stats.maxHp * 0.42, 'it heals her at once');
+  assert.equal(w.spot?.id, 'you', 'the spotlight is on her');
+  // She walks off; the light goes with her and keeps mending.
+  w.body.x += 400;
   run(w, 3);
-  assert.ok(w.char.hp > after, 'and keeps mending her while she stands in it');
+  const f = w.fx.find((o) => o.kind === 'sispot');
+  assert.ok(f && Math.abs(f.x - w.body.x) < 1, 'the light follows her');
+  assert.ok(w.char.hp > after, 'and keeps mending her');
   assert.ok(w.grace > 5, `healing builds Applause (${w.grace})`);
-  // Live Show: sung again on full Applause, it reaches half again as far.
+  const tick = w.spot.tick;
   w.grace = 100;
   w.graceAt = 1e9;
   settleCast(w, 1);
   assert.ok(cast(w, 'grandblessing').ok);
   run(w, 0.7);
-  const live = w.songs.find((s) => s.kind === 'heal');
-  assert.ok(live.live && live.r >= song.r * 1.5 - 1, `Live Show: ${live.r} against ${song.r}`);
-  assert.equal(w.songs.filter((s) => s.kind === 'heal').length, 1, 'one healing song at a time');
+  assert.ok(w.spot.live && w.spot.tick >= tick * 1.5 - 1e-9, 'Live Show: it mends half again as much');
+  assert.equal(w.fx.filter((o) => o.kind === 'sispot').length, 1, 'one spotlight at a time');
 });
 
-test('Cheer: everyone standing in it hits harder, and stepping out of it lets it go', () => {
+test('Hype Wave rolls out both ways: she hits harder, and the monsters it passes are popped up', () => {
   const w = idolFull();
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 150, 900][i] }));
+  const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'idolcheer').ok);
-  run(w, 1.6);
-  assert.ok(w.char.buffs.idolcheer?.values.watk > 0, 'standing in it lifts her attack');
-  w.body.x += 900;
-  run(w, 2.5);
-  assert.ok(!(w.char.buffs.idolcheer?.until > w.now), 'out of it, the lift wears off');
+  assert.equal(w.pose.kind, 'sihype');
+  let rolled = false;
+  for (let i = 0; i < 60 * 1.6; i++) {
+    updateWorld(w, DT, idle);
+    rolled ||= w.fx.filter((f) => f.kind === 'sihype').length === 2;
+  }
+  assert.ok(rolled, 'a crest rolls out each way');
+  assert.ok(w.char.buffs.idolcheer?.values.watk > 0, 'it lifts her attack');
+  assert.ok(w.mobs[0].hp < hp0[0] && w.mobs[1].hp < hp0[1], 'it reaches the monsters on both sides');
+  assert.equal(w.mobs[2].hp, hp0[2], 'and not the one past its reach');
 });
 
-test('Lullaby: the monsters in it slow to a drift and her notes chip at them again and again', () => {
+test('Lullaby: a cloud drifts to the nearest monster, puts it to sleep a moment, slows it and chips at it again and again', () => {
   const w = idolFull();
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [40, 80, 500][i] }));
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [200, 230, 1400][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'purification').ok);
   const hits = w.mobs.map(() => 0);
   let last = hp0.slice();
   let lulled = false;
-  for (let i = 0; i < 60 * 4; i++) {
+  let slept = false;
+  let x0 = null;
+  for (let i = 0; i < 60 * 5; i++) {
     updateWorld(w, DT, idle);
+    x0 ??= w.lull?.x;
     lulled ||= w.mobs[0].lulled > 0;
+    slept ||= w.mobs[0].sleptAt > 0;
     w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
   }
-  assert.ok(lulled, 'they are lulled');
-  assert.ok(hits[0] >= 4 && hits[1] >= 4, `chipped at again and again (${hits})`);
-  assert.equal(hits[2], 0, 'and not the one outside it');
+  assert.ok(lulled && slept, 'it nods off and slows');
+  assert.ok(hits[0] >= 3, `chipped at again and again (${hits})`);
+  assert.equal(hits[2], 0, 'and not the one far away');
+});
+
+test('Medley: changing songs cheers up extra Applause; the same song twice does not', () => {
+  const w = idolFull();
+  w.char.mp = 1e6;
+  assert.ok(cast(w, 'idolcheer').ok);
+  settleCast(w, 1.2);
+  const a = w.grace ?? 0;
+  assert.ok(cast(w, 'idolcheer').ok);
+  settleCast(w, 1.2);
+  const b = w.grace ?? 0;
+  assert.ok(cast(w, 'grandblessing').ok);
+  settleCast(w, 1.2);
+  const c = w.grace ?? 0;
+  assert.ok(c - b >= 10, `a new song: +${c - b}`);
+  assert.ok(b - a < 10, `the same song again: +${b - a}`);
 });
 
 test("Curtain Call's Encore keeps her standing through a blow that would knock her out, once", () => {
