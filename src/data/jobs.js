@@ -63,9 +63,9 @@ export const JOBS = {
     blurb: 'A Mage who saw the light, and wants everyone to know: she names every heal like an epic spell and poses like a saint in a stained-glass window. Guiding Light follows whoever is hurt and keeps mending them; Blessing of Valor and Penance turn a fight; Resurrection raises the fallen; and Miracle, with her Devotion full, heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
-    id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Astronomer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
-    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['staff'],
-    blurb: 'A calm, dreamy stargazer who conducts the planets with an orrery staff. Moons gather round her as she fights, building her Orbit, and fly off at the monsters on their own; with all five, they fly twice as often. Ringed Planet, Gravity Well, Lunar Tide, and Planetary Alignment: five planets in a row firing one beam through everything. Deals damage in a group.',
+    id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Sorcerer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
+    blurb: 'A Mage whose dark-power act turned out to be real. Shadow hands and ember flame answer her, and she is very calm about it until afterwards. Casting without letup builds her Spellstorm; full, every spell casts twice. Grasping Dark, Abyssal Maw, Dark Pact, and Hand of the Abyss: a colossal hand that crushes everything ahead. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).

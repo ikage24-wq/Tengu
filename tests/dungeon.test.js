@@ -628,7 +628,7 @@ test("a Starlight Idol in the healer's seat calls them up with Center Stage and 
   assert.equal(healer.attack.pose, 'sibow', 'her deep bow');
 });
 
-test('an Astronomer in the group flings her planets, and her big one is the ringed world', async () => {
+test('a Sorcerer in the group flings her shadow hands, and her big one closes her fist on them', async () => {
   const { makeAI } = await import('../src/world/party.js');
   const rng = seeded(4);
   const char = makeBotCharacter(rng, { name: 'Vega', pro: false, level: 34, jobs: ['spiritmage', 'onmyoji'] });
@@ -637,8 +637,8 @@ test('an Astronomer in the group flings her planets, and her big one is the ring
   const { computeStats } = await import('../src/core/stats.js');
   bot.stats = computeStats(char);
   const ai = makeAI(bot, rng, 'sniper');
-  assert.equal(ai.weapon.special, 'asring', 'her big one is the ringed world');
-  assert.ok(ai.weapon.shot === 'asplanet' && ai.weapon.magic, 'planets, and spells');
+  assert.equal(ai.weapon.special, 'sowgrip', 'her big one closes her fist on them');
+  assert.ok(ai.weapon.shot === 'sohand' && ai.weapon.magic, 'shadow hands, and spells');
 });
 
 test('the group finder brings only real jobs, and helpers use only their own real skills', async () => {

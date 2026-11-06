@@ -577,7 +577,7 @@ test('a party combo: your finisher brings the members fighting by you in with th
   assert.ok(fin, 'and their own finisher goes off');
 });
 
-test("the Star Witch's paths fight with their whole kit: the concert stage, the planets in a row, and songs", async () => {
+test("the Star Witch's paths fight with their whole kit: the concert stage, the hand from the abyss, and songs", async () => {
   const { botSkills, tickHunter } = await import('../src/world/party.js');
   const { spawnMob } = await import('../src/world/mobs.js');
   const { createBody } = await import('../src/world/physics.js');
@@ -585,8 +585,8 @@ test("the Star Witch's paths fight with their whole kit: the concert stage, the 
   const onmyo = makeBotCharacter(seeded(4), { name: 'Vega', level: 50, jobs: ['spiritmage', 'onmyoji'] });
   const ids = (c) => botSkills(c).map((s) => s.id);
   for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Starlight Idol: ${id}`);
-  for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Astronomer: ${id}`);
-  for (const [char, fx] of [[shrine, 'sistage'], [onmyo, 'asalign']]) {
+  for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Sorcerer: ${id}`);
+  for (const [char, fx] of [[shrine, 'sistage'], [onmyo, 'sosummon']]) {
     const world = createWorld(createCharacter('Me', {}));
     quiet(world);
     world.god = true;

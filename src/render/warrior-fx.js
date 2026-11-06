@@ -335,6 +335,28 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celclgateimpact', x, y + 4, { p, scale: 0.9 }) || true;
     case 'clrays':
       return f.t < 0 || fxSprite(ctx, 'celclrays', x, y + 4, { p, scale: 0.75 }) || true;
+    // The Sorcerer's skills: Shadow Step's pool, Dread Circle's hands all round, Ember Mend's flame,
+    // Shadow Ward's cupped hands, Dark Pact's sigil, the rift in the sky (spread over the stretch
+    // below it) and a giant hand's impact; Abyssal Maw's pit of hands.
+    case 'sosink':
+      return fxSprite(ctx, 'celsosink', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'sonovafx':
+      return fxSprite(ctx, 'celsonovafx', x, y + 2, { p, scale: 0.62 }) || true;
+    case 'soglow':
+      return fxSprite(ctx, 'celsoglow', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'soguard':
+      return fxSprite(ctx, 'celsoguard', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'sopact':
+      return fxSprite(ctx, 'celsopact', x, y + 4, { p, scale: 0.6 }) || true;
+    case 'sosummon':
+      return fxSprite(ctx, 'celsosummon', x + dir * 140, y - 130, { t: f.t, scale: 0.7, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
+    case 'soimpact':
+      return fxSprite(ctx, 'celsoimpact', x, y + 4, { p, scale: 0.9 }) || true;
+    case 'somaw': {
+      const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
+      if (fade <= 0) return true;
+      return fxSprite(ctx, 'celsomaw', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 110 * 0.55, alpha: fade }) || true;
+    }
     case 'sohit':
       // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
       return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;

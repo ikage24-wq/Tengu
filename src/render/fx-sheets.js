@@ -377,4 +377,12 @@ export const FX_SHEETS = {
   celsograsp: { w: 317, h: 223, n: 6, fps: 22, px: 265, py: 175, d: 3, loop: true },
   celsoslam: { w: 403, h: 171, n: 4, fps: 20, px: 303, py: 87, d: 3, loop: true },
   celsohit: { w: 209, h: 210, n: 7, fps: 30, px: 100, py: 119, d: 3, loop: false },
+  celsomaw: { w: 239, h: 181, n: 6, fps: 12, px: 120, py: 139, d: 3, loop: true },
+  celsopact: { w: 221, h: 237, n: 8, fps: 16, px: 110, py: 190, d: 3, loop: false },
+  celsosink: { w: 202, h: 134, n: 7, fps: 16, px: 101, py: 95, d: 3, loop: false },
+  celsonovafx: { w: 407, h: 146, n: 7, fps: 18, px: 199, py: 99, d: 3, loop: false },
+  celsoglow: { w: 150, h: 214, n: 8, fps: 14, px: 85, py: 188, d: 3, loop: false },
+  celsoguard: { w: 223, h: 228, n: 8, fps: 14, px: 112, py: 191, d: 3, loop: false },
+  celsoimpact: { w: 413, h: 280, n: 7, fps: 18, px: 206, py: 204, d: 3, loop: false },
+  celsosummon: { w: 333, h: 136, n: 6, fps: 12, px: 166, py: 66, d: 3, loop: true },
 };

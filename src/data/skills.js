@@ -305,6 +305,7 @@ export const SKILLS = {
   // element (`el`). She keeps a heal and a shield for the healer's seat in the early dungeons.
   spiritbolt: skill({
     id: 'spiritbolt', name: 'Fireball', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
+    pathNames: { onmyoji: 'Hellfire' },
     desc: 'Gather a flame in your gloved palm, stare at it meaningfully, and hurl it overhand: a great fireball tears through the line and bursts on everything it hits.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -321,11 +322,8 @@ export const SKILLS = {
         paths: {
           // The Cleric's Holy Bolt: light gathered in the scepter's sun and hurled.
           shrinemaiden: [{ move: 'clholy', dur: 0.7, step: 10, strikes: [{ at: 0.5, shot: 'clorb', magic: true, pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 700, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
-          onmyoji: [
-            { move: 'astap', dur: 0.36, step: 8, strikes: [{ ...bolt(0.3, k(150, 260)), shot: 'asmoon', speed: 760 }] },
-            { move: 'astwin', dur: 0.46, step: 10, carry: 0.6, strikes: [{ ...bolt(0.3, k(95, 165), -4), shot: 'asmoon', speed: 760 }, { ...bolt(0.5, k(95, 165), 4), shot: 'asmoon', speed: 760 }] },
-            { move: 'aswheel', dur: 0.56, step: 12, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: k(240, 400), range: 320, h: 80, targets: k(2, 4), pierce: true, speed: 600, knock: 180, big: true, stop: 0.06, shake: 2 }] },
-          ],
+          // The Sorcerer's Hellfire: a dark flame gathered over her palm and flicked off, far bigger than she meant.
+          onmyoji: [{ move: 'sohell', dur: 0.7, step: 6, strikes: [{ at: 0.5, shot: 'sofire', magic: true, pct: k(300, 520), range: 340, h: 80, targets: k(2, 4), pierce: true, speed: 620, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
         },
       };
     },
@@ -333,6 +331,7 @@ export const SKILLS = {
 
   spiritstep: skill({
     id: 'spiritstep', name: 'Teleport', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
+    pathNames: { onmyoji: 'Shadow Step' },
     desc: 'Fling your cape round yourself and vanish in a swirl of crimson runes, then appear a long way ahead, arms folded, as if you had always been there. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -344,7 +343,8 @@ export const SKILLS = {
         // waxes back into herself.
         paths: {
           shrinemaiden: [{ move: 'clascend', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'clfeathers', burstAt: 0, burstDur: 0.5 }] }],
-          onmyoji: [{ move: 'asphase', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'asphase', burstAt: 0, burstDur: 0.5 }] }],
+          // The Sorcerer sinks into her own shadow and rises out of it far ahead.
+          onmyoji: [{ move: 'sostep', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sosink', burstAt: 0, burstDur: 0.5 }] }],
         },
       };
     },
@@ -352,6 +352,7 @@ export const SKILLS = {
 
   spiritwave: skill({
     id: 'spiritwave', name: 'Chain Lightning', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
+    pathNames: { onmyoji: 'Clutching Horde' },
     desc: 'Throw both hands out, let the lightning build until your arms shake, then shove: it leaps from monster to monster down the whole line, knocking them back.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -363,7 +364,8 @@ export const SKILLS = {
         // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
         paths: {
           shrinemaiden: [{ move: 'cljudgment', dur: 0.6, step: 6, strikes: [{ at: 0.46, shot: 'clbolt', magic: true, pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1300, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
-          onmyoji: [{ move: 'asheave', dur: 0.54, step: 10, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: k(220, 380), range: 360, h: 90, targets: k(5, 8), pierce: true, speed: 620, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+          // The Sorcerer sweeps her arms in and a horde of hands pours down the line.
+          onmyoji: [{ move: 'sohorde', dur: 0.6, step: 8, strikes: [{ at: 0.48, shot: 'sohand', magic: true, pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1000, knock: 200, launch: 120, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
         },
       };
     },
@@ -371,6 +373,7 @@ export const SKILLS = {
 
   frostnova: skill({
     id: 'frostnova', name: 'Frost Nova', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
+    pathNames: { onmyoji: 'Dread Circle' },
     desc: 'Leap, spin, and land stamping with your fist punched into the floor: ice spikes burst out of the ground all round you both ways, freezing every monster they catch in place for a moment.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -384,7 +387,8 @@ export const SKILLS = {
         // her orrery, each with her own burst, the same freezing ring round her.)
         paths: {
           shrinemaiden: [{ move: 'clnova', dur: 0.6, step: 0, strikes: [{ ...nova('clnovafx'), el: undefined, freeze: undefined, stun: kf(0.6, 1.2) }] }],
-          onmyoji: [{ move: 'asheave', dur: 0.6, step: 0, strikes: [nova('asveil')] }],
+          // The Sorcerer presses her hand to the floor and hands burst up all round, holding them fast.
+          onmyoji: [{ move: 'sonova', dur: 0.6, step: 0, strikes: [{ ...nova('sonovafx'), el: undefined }] }],
         },
       };
     },
@@ -394,6 +398,7 @@ export const SKILLS = {
   // the strike lands, see world/melee.js).
   blessing: skill({
     id: 'blessing', name: 'Heal', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
+    pathNames: { onmyoji: 'Ember Mend' },
     desc: 'Raise your hand and look away (it is SO bright): warm light pours down on you and the party around you, healing at once, then a little more every second for a while, and lifting everyone\'s attack and magic while it lasts. You would rather be setting things on fire.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -407,7 +412,8 @@ export const SKILLS = {
         // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
         paths: {
           shrinemaiden: [{ move: 'clheal', dur: 0.8, step: 0, strikes: [wish('clglow')] }],
-          onmyoji: [{ move: 'asmoonrise', dur: 0.8, step: 0, strikes: [wish('asmoonfall')] }],
+          // The Sorcerer holds her hand out without looking and warm ember flame mends everyone.
+          onmyoji: [{ move: 'somend', dur: 0.85, step: 0, strikes: [wish('soglow')] }],
         },
       };
     },
@@ -415,6 +421,7 @@ export const SKILLS = {
 
   spiritward: skill({
     id: 'spiritward', name: 'Magic Guard', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
+    pathNames: { onmyoji: 'Shadow Ward' },
     desc: 'Cross your arms, crouch, and throw them open: a dome of crimson and gold hexagons snaps up over you and the party nearby, soaking up damage until it breaks.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -429,7 +436,8 @@ export const SKILLS = {
         // silver moons take it up round the party.
         paths: {
           shrinemaiden: [{ move: 'clshield', dur: 0.72, step: 0, strikes: [veil('clshieldfx')] }],
-          onmyoji: [{ move: 'ashalo', dur: 0.72, step: 0, strikes: [veil('asveil')] }],
+          // The Sorcerer cups great shadow hands over the party.
+          onmyoji: [{ move: 'soward', dur: 0.72, step: 0, strikes: [veil('soguard')] }],
         },
       };
     },
@@ -515,66 +523,71 @@ export const SKILLS = {
       };
     },
   }),
-  // The Astronomer (the Onmyoji remade, id kept; docs/design/astronomer.md): a calm stargazer who
-  // conducts the planets with an orrery staff. Her gauge, Orbit, is the moons round her (world/
-  // melee.js); her spells live in world/astro.js.
+  // The Sorcerer (the Astronomer remade, ids kept; docs/design/mage-line.md): the edgelord whose dark
+  // power came true, casting shadow hands and ember flame. Her gauge, Spellstorm, builds while she
+  // keeps casting (world/melee.js); full, every spell casts twice and Hand of the Abyss is ready.
+  // Abyssal Maw lives in world/astro.js (the old Gravity Well's engine).
   onmyodo: skill({
-    id: 'onmyodo', name: 'Celestial Lore', job: 'onmyoji', type: 'passive', grows: true, fx: null, icon: 'onmyodo',
-    desc: 'Years under the night sky: steadier spells, much more magic attack, and sharper aim.',
+    id: 'onmyodo', name: 'Forbidden Lore', job: 'onmyoji', type: 'passive', grows: true, fx: null, icon: 'onmyodo',
+    desc: 'The book whispers to you at night, and you have stopped telling it to be quiet: steadier spells, much more magic attack, and sharper aim.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(8, 45, lv, m), acc: lerp(5, 30, lv, m) } }),
   }),
   ofudabarrage: skill({
-    id: 'ofudabarrage', name: 'Ringed Planet', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'astral',
-    desc: 'Plant your staff and turn your free hand slowly, as if spinning a globe, then push: a great ringed planet rolls away through every monster in the line, knocking them back.',
-    weapons: ['staff'],
+    id: 'ofudabarrage', name: 'Grasping Dark', job: 'onmyoji', type: 'attack', fx: null, icon: 'ofudabarrage', school: 'astral',
+    desc: 'Crouch and drag your hand along the floor, then rake it up at them: shadow hands claw up out of the ground in a line that races through every monster ahead, flinging them into the air.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(22, 40), pct: k(240, 400), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'asglobe', dur: 0.95, step: 0, strikes: [{ at: 0.56, shot: 'asbig', magic: true, pct: k(240, 400), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 540, knock: 220, launch: 100, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
+        combo: [{ move: 'sograspd', dur: 0.95, step: 0, strikes: [{ at: 0.54, shot: 'sograsp', magic: true, pct: k(240, 400), range: 380, h: 60, oy: 16, targets: k(5, 8), pierce: true, speed: 700, knock: 60, launch: 220, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
       };
     },
   }),
   seimanseal: skill({
-    id: 'seimanseal', name: 'Gravity Well', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'astral',
-    desc: 'Hold the staff out and draw it slowly in, as if pulling on something heavy, then point it down: a small world hangs there for a while, pulling the monsters round it in toward it and crushing them again and again.',
-    weapons: ['staff'],
+    id: 'seimanseal', name: 'Abyssal Maw', job: 'onmyoji', type: 'attack', fx: null, icon: 'seimanseal', school: 'astral',
+    desc: 'Point at the floor ahead and slowly turn your hand, then twist: a pit of shadow opens there for a while, hands reaching up out of it to drag the monsters round it in and claw at them again and again.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(35, 60), pct: k(55, 100), hits: 1, targets: 0,
-        combo: [{ move: 'aswell', dur: 0.95, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
+        combo: [{ move: 'somawcast', dur: 0.95, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, well: { r: k(110, 150), ahead: 120, dur: k(5, 8), every: 0.5, pct: k(55, 100), pull: 16 } }] }],
       };
     },
   }),
   yokairally: skill({
-    id: 'yokairally', name: 'Lunar Tide', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'astral', maxLevel: 15,
-    desc: 'Lift your staff to the sky and close your eyes: the tide of the moons rises round you. For a while your moons circle faster, fly out more often and strike harder.',
-    weapons: ['staff'],
+    id: 'yokairally', name: 'Dark Pact', job: 'onmyoji', type: 'buff', fx: null, icon: 'yokairally', school: 'astral', maxLevel: 15,
+    desc: 'Let your book fall open, draw the wand across your palm, and press your hand to the page: flame climbs round you. For a while your magic hits harder and your Spellstorm builds faster. (You try not to think about what you signed.)',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'astide', dur: 0.85, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'astide', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { moonPower: kf(0.4, 0.9), moonHaste: 0.6 } } }] }],
+        combo: [{ move: 'sopact', dur: 0.85, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sopact', burstAt: 0, burstDur: 0.9, grant: { id: 'yokairally', duration: k(16, 30), buff: { matk: k(10, 30), stormGain: kf(0.3, 0.8) } } }] }],
       };
     },
   }),
   troupecombo: skill({
-    id: 'troupecombo', dmg: 2, name: 'Planetary Alignment', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'astral', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs a Full Orbit, and spends it. Rise off the ground and draw a line across the sky with your staff: five planets fall into a row ahead of you, and when you sweep the staff forward they fire as one beam through every monster in the row.',
-    weapons: ['staff'],
+    id: 'troupecombo', dmg: 2, name: 'Hand of the Abyss', job: 'onmyoji', type: 'attack', fx: null, icon: 'troupecombo', school: 'astral', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Spellstorm, and spends it. Float up as a rift tears open in the sky, raise your hand to it, spread your fingers... and close them. A colossal hand reaches down and crushes everything ahead of you. Then a long silence. "...I didn\'t mean to summon THAT."',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
-        combo: [{ move: 'asalign', dur: 2, step: 0, strikes: [{ at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, align: { span: 520, at: 1.04, pct: k(300, 520) } }] }],
+        combo: [{ move: 'soabyss', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1.3 },
+          { at: 0.7, magic: true, pct: k(300, 520) * 2, reach: 520, h: 200, targets: 12, pierce: true, knock: 260, launch: 300, burst: 'soimpact', burstAt: 0.4, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        ] }],
       };
     },
   }),
 
   heavenslantern: skill({
     id: 'heavenslantern', name: 'Meteor', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
+    pathNames: { onmyoji: 'Abyssal Rain' },
     desc: 'Finisher: needs a full Element Weave, and spends it. Flex the glove. Announce "CATACLYSM... OF THE CRIMSON STAR!" Raise both arms as the sky turns crimson round a great rune circle, and sweep them down: flaming meteors rain on every monster ahead, ending in one great impact. Then cackle.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -596,10 +609,12 @@ export const SKILLS = {
             { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'clspear', school: 'idol', gauge: 0 },
             { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'clgateimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
-          onmyoji: [{ move: 'asmeteor', dur: 1.45, step: 0, finisher: true, guard: 1.35, strikes: [
-            { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'asveil', burstAt: 0, burstDur: 0.9 },
-            { at: 0.66, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'asplanet', school: 'astral', gauge: 0 },
-            { at: 0.86, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'asimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          // The Sorcerer's Abyssal Rain: she tears the sky open, hands pour down on them, and she
+          // drives her fist down for the last and biggest one.
+          onmyoji: [{ move: 'sorain', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+            { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1 },
+            { at: 0.68, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'soslam', school: 'astral', gauge: 0 },
+            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'soimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
         },
       };
@@ -1045,7 +1060,7 @@ const MOVES_BY_SKILL = {
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   spiritbolt: 'mgfireball', spiritstep: 'mgteleport', spiritwave: 'mgchain', frostnova: 'mgnova', blessing: 'mgheal', spiritward: 'mgguard', heavenslantern: 'mgmeteor',
   grandblessing: 'clguide', idolcheer: 'clvalor', purification: 'clsanct', resurrection: 'clraise', thousandtorii: 'clmiracle',
-  ofudabarrage: 'asglobe', seimanseal: 'aswell', yokairally: 'astide', troupecombo: 'asalign',
+  ofudabarrage: 'sograspd', seimanseal: 'somawcast', yokairally: 'sopact', troupecombo: 'soabyss',
   goldencarousel: 'bdcarousel',
   skywaltz: 'sdwaltz',
   gmsmite: 'castup', gmhaste: 'cheer',

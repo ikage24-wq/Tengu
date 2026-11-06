@@ -1158,7 +1158,10 @@ export const hasBinding = (char) => jobChain(char.job).includes('onmyoji');
 export function addBinding(world, n) {
   if (!hasBinding(world.char) || n <= 0) return;
   const quick = world.now - (world.bindingAt ?? -9) < STORM_QUICK;
-  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n * (quick ? STORM_FAST : STORM_SLOW));
+  // (Dark Pact makes it build faster while it lasts.)
+  const pact = world.char.buffs?.yokairally;
+  const gain = pact && pact.until > world.now ? 1 + (pact.values?.stormGain ?? 0) : 1;
+  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n * (quick ? STORM_FAST : STORM_SLOW) * gain);
   world.bindingAt = world.now;
 }
 export const fullOrbit = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
@@ -1349,7 +1352,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
   // The Mage names her big spells out loud, like the chosen one (MAGE_SHOUTS).
-  if (world.char.job === 'spiritmage' || world.char.job === 'shrinemaiden') mageShout(world, step.move);
+  if (world.char.job === 'spiritmage' || world.char.job === 'shrinemaiden' || world.char.job === 'onmyoji') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -2159,6 +2162,23 @@ export const MAGE_SHOUTS = {
   clsanct: ['THINK ABOUT WHAT YOU DID!', 'PENANCE!', 'REPENT, FIEND!'],
   clraise: ['RISE, MY FRIENDS!', 'NOT TODAY, DEATH!', 'ARISE!'],
   clmiracle: ['BEHOLD... A MIRACLE!'],
+  // The Sorcerer: it's the same girl, but now it actually works, so every villain line comes with
+  // its own little wobble.
+  sowgrip: ['KNEEL.', 'THE DARK HOLDS YOU.', 'BE STILL... please?'],
+  sowdoom: ['RISE, MY SERVANTS!', 'THE GROUND HUNGERS.', "THEY'RE... THEY'RE MINE?"],
+  sosclose: ['I TAKE YOU.', 'FROM ABOVE... I CLAIM YOU!', 'CRUSH... oh no.'],
+  sosrage: ['WITNESS ME!', 'THE ABYSS ANSWERS!', 'MY POWER IS... REAL?!'],
+  sohell: ['HELLFIRE.', 'BURN.', "That was meant to be smaller."],
+  sohorde: ['GO, MY HORDE!', 'TAKE THEM ALL!', 'SO MANY HANDS...'],
+  sonova: ['NONE ESCAPE.', 'HOLD THEM FAST!', 'THE FLOOR IS MINE.'],
+  sostep: ['...', 'Behind you. Sorry.', 'I was in the shadows.'],
+  somend: ["Don't look at me.", "It's just warm. Shush.", 'Ember Mend. Whatever.'],
+  soward: ['NOTHING TOUCHES MY OWN.', 'BEHIND MY HANDS!', 'SHADOW WARD!'],
+  sorain: ['THE SKY IS TORN!', 'ABYSSAL RAIN!'],
+  sograspd: ['GRASPING DARK!', 'THE DEEP REACHES UP!', 'DOWN YOU GO.'],
+  somawcast: ['ABYSSAL MAW.', 'THE FLOOR OPENS.', 'FEED, LITTLE PIT.'],
+  sopact: ['I ACCEPT.', 'SEALED IN EMBER.', '...what did I just sign?'],
+  soabyss: ["HAND... OF THE ABYSS!", "...I didn't mean to summon THAT."],
   clholy: ['HOLY BOLT!', 'SMITE OF THE SUN!', 'BE PURIFIED!'],
   cljudgment: ['JUDGMENT RAY!', 'THE LIGHT SEES ALL!', 'BE JUDGED!'],
   clnova: ['HOLY NOVA!', 'RADIANT BURST!', 'BEGONE!'],
@@ -2173,7 +2193,7 @@ function mageShout(world, move) {
   const pick = lines.length > 1 ? lines.filter((l) => l !== last) : lines;
   const line = pick[Math.floor(Math.random() * pick.length)];
   world.mageShout = { ...world.mageShout, [move]: line };
-  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: '#ff6a7a', t: 0, shout: true });
+  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: world.char.job === 'onmyoji' ? '#ffa04a' : '#ff6a7a', t: 0, shout: true });
 }
 // The Cleric's shots (her own art); their hits leave her mark of light.
 export const CL_SHOTS = new Set(['clbolt', 'clorb', 'clpillar']);

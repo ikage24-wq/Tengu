@@ -9808,6 +9808,228 @@
     };
   })();
 
+  // A flat pool of shadow on the floor at (x, y), rx wide, its rim burning ember.
+  function shadowPool(ctx, x, y, rx, k = 1) {
+    const ry = rx * 0.24;
+    const ring = (sx, sy) => Array.from({ length: 28 }, (_, i) => [x + Math.cos((i / 28) * TAU) * sx, y + Math.sin((i / 28) * TAU) * sy]);
+    inked(ctx, ring(rx, ry), SEMB[3], SEMB[4], 3);
+    fill(ctx, ring(rx * 0.92, ry * 0.8), SVIO[4]);
+    fill(ctx, ring(rx * 0.6 * k, ry * 0.5 * k), '#160a26');
+  }
+
+  // Abyssal Maw (Gravity Well remade): a pit of shadow on the floor, hands reaching up out of it and
+  // clawing at the air, flame licking round its rim (loops; anchored on the floor at its middle).
+  E.somaw = (() => {
+    const cx = 130;
+    const gy = 150;
+    return {
+      w: 260, h: 190, n: 6, fps: 12, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        shadowPool(ctx, cx, gy, 110);
+        for (let k = 0; k < 5; k++) {
+          const x = cx + (k - 2) * 40;
+          const up = 0.55 + 0.45 * Math.sin(ph + k * 1.7);
+          const wy = gy - 6 - up * 50;
+          inked(ctx, [[x - 8, gy - 2], [x + 8, gy - 2], [x + 5, wy + 6], [x - 5, wy + 6]], SVIO[3], SVIO[4], 3);
+          shadowHand(ctx, x, wy, 0.8, -Math.PI / 2 + (k - 2) * 0.22, 0.25 + 0.5 * (0.5 + 0.5 * Math.sin(ph * 2 + k)), ph + k);
+        }
+        for (let k = 0; k < 4; k++) tongue(ctx, SEMB, cx - 96 + k * 64, gy + (k % 2 ? 6 : -4), 7, 16 + 6 * Math.sin(ph + k * 2), 3 * Math.sin(ph * 2 + k));
+        const R = rng(1371 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, SEMB, cx + (R() - 0.5) * 200, gy - 70 - R() * 60, 3 + R() * 3, k);
+      },
+    };
+  })();
+
+  // Dark Pact: an ember sigil flares round her feet, its runes rising, and a column of flame climbs
+  // up through it and breaks into embers.
+  E.sopact = (() => {
+    const c = 120;
+    const gy = 190;
+    return {
+      w: 240, h: 230, n: 8, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 7;
+        if (i <= 6) {
+          ctx.save();
+          ctx.translate(c, gy);
+          ctx.scale(1, 0.3);
+          celRing(ctx, SEMB, 0, 0, 40 + 60 * Math.min(1, k * 2), 7 * (1 - k * 0.6), { broken: i >= 5 ? 0.5 : 0, seed: 1381 });
+          ctx.restore();
+        }
+        for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + i * 0.2;
+          const x = c + Math.cos(a) * 80;
+          const y = gy + Math.sin(a) * 24 - k * 60;
+          if (i >= 1 && i <= 6) inked(ctx, [[x, y - 7], [x + 5, y], [x, y + 7], [x - 5, y]], SEMB[2], SEMB[4], 2);
+        }
+        if (i >= 1 && i <= 5) {
+          const h = [60, 130, 160, 140, 90][i - 1];
+          for (let j = -2; j <= 2; j++) tongue(ctx, j % 2 ? SVIO : SEMB, c + j * 22, gy, 20 - Math.abs(j) * 4, h * (1 - Math.abs(j) * 0.25), 8 * Math.sin(i * 1.3 + j));
+        }
+        const R = rng(1382);
+        if (i >= 3) for (let j = 0; j < 8; j++) sparkle(ctx, j % 2 ? SVIO : SEMB, c + (R() - 0.5) * 140, gy - 60 - R() * 120 - (i - 3) * 8, (6 - (i - 3) * 0.9) * (0.6 + R() * 0.5), j);
+      },
+    };
+  })();
+
+  // Shadow Step (Teleport remade): her shadow spreads into a pool at her feet, hands reach up out of
+  // it and pull down, and violet smoke tongues rise and thin away.
+  E.sosink = (() => {
+    const c = 110;
+    const gy = 170;
+    return {
+      w: 220, h: 200, n: 7, fps: 16, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 6;
+        shadowPool(ctx, c, gy, 30 + 60 * Math.min(1, k * 2.2) * (i >= 5 ? 1 - (i - 4) * 0.3 : 1));
+        if (i >= 1 && i <= 4) for (const sd of [-1, 1]) {
+          const up = Math.sin((i / 4) * Math.PI);
+          shadowHand(ctx, c + sd * 30, gy - 4 - up * 46, 0.9, -Math.PI / 2 - sd * 0.35, 0.3 + (i / 4) * 0.6, i);
+        }
+        for (let j = 0; j < 4; j++) if (i >= 1) tongue(ctx, SVIO, c + (j - 1.5) * 26, gy - 4, 10 - i, (30 + 30 * Math.sin(j + i)) * (1 - k * 0.6), 6 * Math.sin(i * 2 + j));
+      },
+    };
+  })();
+
+  // Dread Circle (Frost Nova remade): shadow hands burst up out of the floor all round her both
+  // ways, grasp, and sink, flame licking at the cracks (anchored on the floor at her feet).
+  E.sonovafx = (() => {
+    const c = 220;
+    const gy = 150;
+    return {
+      w: 440, h: 180, n: 8, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 7;
+        for (let j = 0; j < 8; j++) {
+          const sd = j % 2 ? 1 : -1;
+          const d = 40 + Math.floor(j / 2) * 46;
+          const age = i / 7 - Math.floor(j / 2) * 0.06;
+          const up = Math.sin(Math.PI * Math.max(0, Math.min(1, age * 1.3)));
+          if (up < 0.1) continue;
+          const x = c + sd * d;
+          const wy = gy - 4 - up * 52;
+          inked(ctx, [[x - 8, gy + 2], [x + 8, gy + 2], [x + 5, wy + 6], [x - 5, wy + 6]], SVIO[3], SVIO[4], 3);
+          shadowHand(ctx, x, wy, 0.85, -Math.PI / 2 + sd * 0.25, Math.min(1, age * 1.6), i + j);
+          tongue(ctx, SEMB, x, gy + 2, 7, 14 * up, 3 * Math.sin(i + j));
+        }
+        if (i <= 4) {
+          ctx.save();
+          ctx.translate(c, gy);
+          ctx.scale(1, 0.25);
+          celRing(ctx, SEMB, 0, 0, 30 + 180 * k, 8 * (1 - k), { broken: i >= 3 ? 0.4 : 0, seed: 1391 });
+          ctx.restore();
+        }
+      },
+    };
+  })();
+
+  // Ember Mend (Heal remade): warm ember flame rises round her in a soft column, and mending sparks
+  // drift up and out.
+  E.soglow = (() => {
+    const c = 110;
+    const gy = 200;
+    return {
+      w: 220, h: 230, n: 8, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 7;
+        const fade = i >= 6 ? 1 - (i - 5) * 0.35 : 1;
+        for (let j = 0; j < 5; j++) {
+          const x = c + (j - 2) * 22;
+          const h = (70 + 50 * Math.sin(j * 1.3 + i * 0.8)) * Math.min(1, k * 2.5) * fade;
+          if (h > 6) tongue(ctx, SEMB, x, gy, 9 - Math.abs(j - 2) * 1.5, h, 6 * Math.sin(i + j));
+        }
+        const R = rng(1401);
+        for (let j = 0; j < 9; j++) {
+          const u = (k + R()) % 1;
+          sparkle(ctx, j % 3 ? SEMB : SVIO, c + (R() - 0.5) * 150, gy - 30 - u * 170, (3 + R() * 4) * Math.sin(u * Math.PI), j);
+        }
+      },
+    };
+  })();
+
+  // Shadow Ward (Magic Guard remade): two great shadow hands rise either side of her and cup
+  // together over her head, ember light glowing between their fingers, then fade.
+  E.soguard = (() => {
+    const c = 130;
+    const gy = 220;
+    return {
+      w: 260, h: 250, n: 8, fps: 14, px: c, py: gy,
+      draw(ctx, i) {
+        const rise = Math.min(1, i / 3);
+        const close = Math.max(0, Math.min(1, (i - 2) / 3));
+        const fade = i >= 6 ? 1 - (i - 5) * 0.4 : 1;
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.beginPath();
+        ctx.ellipse(c, gy - 90, 70 * rise, 90 * rise, 0, 0, TAU);
+        ctx.fillStyle = 'rgba(255,214,140,0.22)';
+        ctx.fill();
+        for (const sd of [-1, 1]) {
+          const wx = c + sd * (70 - 20 * close);
+          const wy = gy - 30 - 90 * rise;
+          inked(ctx, [[c + sd * 92 - 12, gy], [c + sd * 92 + 12, gy], [wx + 9, wy + 8], [wx - 9, wy + 8]], SVIO[3], SVIO[4], 3);
+          fill(ctx, [[c + sd * 92 - 8, gy], [c + sd * 92 - 2, gy], [wx - 3, wy + 10], [wx - 6, wy + 10]], SVIO[2]);
+          shadowHand(ctx, wx, wy, 1.6, -Math.PI / 2 - sd * (0.3 + 0.9 * close), 0.2 + 0.5 * close, i + sd);
+        }
+        const R = rng(1411);
+        if (i >= 3) for (let j = 0; j < 5; j++) sparkle(ctx, SEMB, c + (R() - 0.5) * 120, gy - 40 - R() * 140, 4 + R() * 3, j);
+        ctx.restore();
+      },
+    };
+  })();
+
+  // A giant hand's impact (Abyssal Rain's last blow, Hand of the Abyss): a crater of shadow, a
+  // shockwave ring, flame bursting up and shards of shadow flung out.
+  E.soimpact = (() => {
+    const c = 200;
+    const gy = 220;
+    return {
+      w: 400, h: 280, n: 7, fps: 18, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / 6;
+        shadowPool(ctx, c, gy, 60 + 120 * Math.min(1, k * 2), 1);
+        ctx.save();
+        ctx.translate(c, gy);
+        ctx.scale(1, 0.3);
+        if (i <= 5) celRing(ctx, SEMB, 0, 0, 60 + 260 * k, 14 * (1 - k * 0.7), { broken: i >= 3 ? 0.5 : 0, seed: 1421 });
+        ctx.restore();
+        if (i <= 4) for (let j = -2; j <= 2; j++) tongue(ctx, j % 2 ? SVIO : SEMB, c + j * 34, gy, 20 - Math.abs(j) * 3, (150 - Math.abs(j) * 30) * Math.sin(((i + 1) / 6) * Math.PI), 8 * Math.sin(i + j));
+        const R = rng(1422);
+        for (let j = 0; j < 9; j++) {
+          const a = -Math.PI * (0.1 + 0.8 * R());
+          const d = 40 + 170 * k;
+          shard(ctx, SVIO, c + Math.cos(a) * d, gy + Math.sin(a) * d * 0.6 + k * k * 40, a, 14 * (1 - k * 0.5), 4);
+        }
+        if (i >= 2) for (let j = 0; j < 6; j++) sparkle(ctx, SEMB, c + (R() - 0.5) * 300, gy - 40 - R() * 160, 6 - i * 0.6, j);
+      },
+    };
+  })();
+
+  // The rift she tears in the sky (Abyssal Rain, Hand of the Abyss): a violet tear ringed with
+  // ember, churning, shadow hands reaching out of it (loops).
+  E.sosummon = (() => {
+    const c = 170;
+    return {
+      w: 340, h: 200, n: 6, fps: 12, px: c, py: 100, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        const rift = (k, col) => Array.from({ length: 30 }, (_, j) => {
+          const a = (j / 30) * TAU;
+          const wob = 1 + 0.08 * Math.sin(a * 5 + ph);
+          return [c + Math.cos(a) * 150 * k * wob, 100 + Math.sin(a) * 48 * k * wob];
+        });
+        inked(ctx, rift(1, null), SEMB[3], SEMB[4], 4);
+        fill(ctx, rift(0.92), SVIO[3]);
+        fill(ctx, rift(0.72), SVIO[4]);
+        fill(ctx, rift(0.45), '#160a26');
+        for (let k = 0; k < 3; k++) shadowHand(ctx, c + (k - 1) * 80, 92 + 6 * Math.sin(ph + k), 0.9, Math.PI / 2 + (k - 1) * 0.3, 0.2 + 0.2 * Math.sin(ph + k * 2), ph + k);
+        const R = rng(1431 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, SEMB, c + (R() - 0.5) * 300, 100 + (R() - 0.5) * 120, 3 + R() * 3, k);
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

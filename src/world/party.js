@@ -173,7 +173,8 @@ function weaponStyle(bot) {
   // The Starlight Idol sings her notes at them, and her big one is the high note; the Astronomer
   // flings her planets, and her big one is a ringed world swept out low.
   if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['sibeat', 'sistep', 'sikiss', 'sishoulder'], shot: 'sinote', ranged: true, magic: true, dur: 0.5, special: 'sihigh' };
-  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['asfling', 'asconduct', 'asgaze', 'astrace'], shot: 'asplanet', ranged: true, magic: true, dur: 0.54, special: 'asring' };
+  // The Sorcerer flings her shadow hands, and her big one closes her fist on them.
+  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['sowbeckon', 'sowcurl', 'sowsneer', 'sowtrace'], shot: 'sohand', ranged: true, magic: true, dur: 0.5, special: 'sowgrip' };
   // The Sky Dancer throws her gusts of wind.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -764,17 +765,18 @@ const SPECIALS = {
         .forEach((o, i) => land(bot, world, o, G.at + 0.2 + i * 0.03, range, { stack: i, knock: 200, launch: 160, stun: 0.3, big: !i, burst: 'pthit', via: 'shot' }, rng));
     },
   },
-  // Planetary Alignment: five planets in a row ahead of her, one beam through every monster in it.
+  // Hand of the Abyss: a rift tears open and a colossal hand crushes every monster ahead of her.
   troupecombo: {
-    move: 'asalign', dur: 2,
-    play: (bot, world, m, rng, P, tune) => {
-      const A = P.combo[0].strikes[0].align;
+    move: 'soabyss', dur: 2,
+    play: (bot, world, m, rng, P) => {
+      const S = P.combo[0].strikes[1];
       const b = bot.body;
       const dir = b.facing;
-      world.fx.push({ kind: 'asalign', span: A.span, x: b.x + dir * 50, y: b.y - 40, dir, t: -0.2, dur: A.at + 0.9 });
-      const range = magicRange(bot.stats, A.pct * tune * 1.3);
-      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < A.span && Math.abs(o.y - b.y) < 120)
-        .forEach((o, i) => land(bot, world, o, A.at + 0.2, range, { stack: i, knock: 260, launch: 200, stun: 0.4, big: !i, burst: 'ashit', via: 'spell' }, rng));
+      world.fx.push({ kind: 'sosummon', x: b.x, y: b.y, dir, t: -0.1, dur: 1.3 });
+      world.fx.push({ kind: 'soimpact', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -1.4, dur: 0.8 });
+      const range = magicRange(bot.stats, S.pct * 1.1);
+      world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < S.reach && Math.abs(o.y - b.y) < S.h)
+        .forEach((o, i) => land(bot, world, o, 1.4, range, { stack: i, knock: 260, launch: 260, stun: 0.4, big: !i, burst: 'sohit', via: 'spell' }, rng));
     },
   },
   blessing: { move: 'swwish', dur: 0.8, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
@@ -969,9 +971,9 @@ function heal(bot, world, bots) {
   // tide round you.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const witch = bot.char.job === 'spiritmage';
-  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'soglow', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'astide', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'somend', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(world, bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

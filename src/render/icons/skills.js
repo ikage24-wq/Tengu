@@ -16,6 +16,8 @@ const BG = {
   sakura: ['#ffc4dc', '#d94f8c'],
   // The Mage's: deep crimson, so her orange fire, pale ice and yellow lightning all stand out.
   magecrimson: ['#ff9aae', '#5e1634'],
+  // The Sorcerer's: violet to the deep dark, so her ember flame and claws burn on it.
+  sorcery: ['#b48aff', '#24123a'],
   // The Cleric's: warm white to gold.
   clericgold: ['#fffbe8', '#d8902e'],
   crimson: ['#ffa07e', '#a8304a'],
@@ -1527,43 +1529,83 @@ function planetIcon(cx, cy, r, deg = -20) {
 }
 // A little silver moon.
 const moonIcon = (x, y, r) => solid(oval(x, y, r, r, 0, 14), ASILV, { d: 0.3, ink: '#4a4e74' });
-// Celestial Lore (the Astronomer): her orrery staff's head, a world in its rings, under the stars.
+// ---------- The Sorcerer (violet shadow hands and ember flame) ----------
+const SOV = '#8a5ae0';
+const SOINK = '#24123a';
+const SOEMB = '#ff8a3a';
+const SOHOT = '#ffd27a';
+// A clawed shadow hand reaching along `deg` (0 = up) from its wrist at (x, y), `s` big; `curl`
+// closes the fingers.
+function shadowHandIcon(x, y, s, deg = 0, curl = 0) {
+  const out = [];
+  const fingers = [-0.42, -0.14, 0.14, 0.42];
+  for (const f of fingers) {
+    const bx = x + f * 2.4 * s;
+    const by = y - 2.2 * s;
+    const tx = bx + f * 1.4 * s + curl * 1.2 * s * Math.sign(-f || 1);
+    const ty = by - (2.8 - Math.abs(f) * 1.2 - curl * 1.4) * s;
+    out.push(...solid(turn(tube([[bx, by], [tx, ty]], 0.55 * s, 0.4 * s), deg, x, y), SOV, { shadow: false, d: 0.3, ink: SOINK, flat: true }));
+    out.push(S(turn(oval(tx, ty - 0.35 * s, 0.32 * s, 0.5 * s, 0, 8), deg, x, y), SOEMB));
+  }
+  out.push(...solid(turn(oval(x, y - 1.2 * s, 1.6 * s, 1.5 * s, 0, 16), deg, x, y), SOV, { d: 0.35, ink: SOINK }));
+  out.push(S(turn(oval(x, y - 1.2 * s, 0.4 * s, 0.4 * s, 0, 8), deg, x, y), SOEMB));
+  return out;
+}
+// A violet flame with an ember core.
+function darkFlameIcon(x, y, r) {
+  const out = [];
+  out.push(...solid([[x - r, y], [x - r * 0.7, y - r * 1.2], [x - r * 0.2, y - r * 0.8], [x, y - r * 2.2], [x + r * 0.4, y - r * 0.9], [x + r * 0.8, y - r * 1.4], [x + r, y], [x, y + r * 0.7]], SOV, { d: 0.35, ink: SOINK }));
+  out.push(S([[x - r * 0.5, y], [x, y - r * 1.2], [x + r * 0.5, y], [x, y + r * 0.4]], SOEMB), S(oval(x, y - r * 0.1, r * 0.25, r * 0.35, 0, 10), SOHOT));
+  return out;
+}
+// Forbidden Lore: her open spellbook, an ember rune on its pages and a dark flame rising off it.
 function onmyodo() {
-  const out = [...tile('astral', 'passive'), ...aura(8, 8, 6.4, '#e8dcff')];
-  out.push(S(tube([[8, 15], [8, 10]], 0.5, 0.5), '#d8dcec'));
-  out.push(...planetIcon(8, 7, 3.4, -20), ...moonIcon(13, 5.6, 1));
-  out.push(...spark(3, 3, 0.9), ...spark(12.6, 12.4, 0.8, '#d4b0ff'));
+  const out = [...tile('sorcery', 'passive'), ...aura(8, 7, 6.4, '#e6d2ff')];
+  out.push(...solid([[1.8, 10.6], [8, 12], [14.2, 10.6], [14.2, 14], [8, 15.2], [1.8, 14]], '#3a2457', { d: 0.4, ink: SOINK }));
+  out.push(...solid([[2.6, 10.4], [7.8, 11.6], [7.8, 14.4], [2.6, 13.2]], '#f0e2c8', { shadow: false, d: 0.3, ink: '#8a6a4a' }), ...solid([[8.2, 11.6], [13.4, 10.4], [13.4, 13.2], [8.2, 14.4]], '#e2d0b0', { shadow: false, d: 0.3, ink: '#8a6a4a' }));
+  out.push(S([[5.2, 11.4], [6, 12.4], [5.2, 13.4], [4.4, 12.4]], SOEMB));
+  out.push(...darkFlameIcon(8, 8.6, 2.2));
+  out.push(...spark(2.6, 3, 0.9, SOHOT), ...spark(13.4, 4, 0.8));
   return out;
 }
-// Ringed Planet: a great ringed world rolling out, an orbit trailing behind it.
+// Grasping Dark: a shadow hand clawing up out of a crack in the ground, flame at its wrist.
 function ofudabarrage() {
-  const out = [...tile('astral', 'active'), ...aura(10, 8, 6, '#e8dcff', 1.1)];
-  out.push(S(tube(arcPts(16, 18, 14, 9, 200, 250, 10), 0.3, 0.7), ASILV));
-  out.push(...planetIcon(10, 8, 4, -20));
-  out.push(...spark(2.6, 13, 0.9), ...spark(4.4, 9.8, 0.7));
+  const out = [...tile('sorcery', 'active'), ...aura(8, 8, 6, '#e6d2ff', 1.1)];
+  out.push(S(tube([[0.6, 14], [15.4, 14]], 0.6, 0.6), '#24123a'), S(tube([[4, 14], [12, 14]], 0.4, 0.4), SOEMB));
+  out.push(...solid(tube([[8, 14.2], [8, 10.4]], 1.4, 1.1), SOV, { d: 0.35, ink: SOINK }));
+  out.push(...shadowHandIcon(8, 10.4, 1.7, 0, 0.4));
+  out.push(...spark(2.6, 4, 0.9, SOHOT), ...spark(13.4, 9, 0.7));
   return out;
 }
-// Gravity Well: a small dark world, silver rings spiralling in on it.
+// Abyssal Maw: a pit of shadow on the floor with hands reaching up out of it.
 function seimanseal() {
-  const out = [...tile('astral', 'active')];
-  for (const [rx, ry, c] of [[6.6, 2.6, '#9a9ec4'], [4.6, 1.8, '#d4d8ee'], [2.8, 1.1, ASILV]]) out.push(S(tube(arcPts(8, 10, rx, ry, 0, 360, 24), 0.3, 0.3), c));
-  out.push(...solid(oval(8, 7.4, 2.8, 2.8, 0, 18), '#5a3ab0', { d: 0.35, ink: AVIOINK }));
-  out.push(...spark(2.6, 4, 0.8), ...spark(13.4, 5.6, 0.8, '#d4b0ff'));
+  const out = [...tile('sorcery', 'active')];
+  out.push(...solid(oval(8, 12.4, 6.4, 2.2, 0, 24), SOEMB, { d: 0.35, ink: '#7a2a3a' }), S(oval(8, 12.4, 5.4, 1.6, 0, 24), '#160a26'));
+  out.push(...shadowHandIcon(5.4, 12, 1.15, -12, 0.3), ...shadowHandIcon(10.6, 12, 1.15, 14, 0.6), ...shadowHandIcon(8, 11.6, 1.35, 0, 0.1));
+  out.push(...spark(2.6, 3.4, 0.8, SOHOT), ...spark(13.4, 4, 0.9));
   return out;
 }
-// Lunar Tide: crescent moons on a rising silver wave.
+// Dark Pact: her open palm with an ember line across it, inside a ring of ember runes.
 function yokairally() {
-  const out = [...tile('astral', 'buff'), ...aura(8, 8, 6.4, '#f2eeff', 1.2)];
-  out.push(...solid([...arcPts(8, 15.6, 7, 5, 180, 360, 16), ...arcPts(8, 15.6, 5, 3, 360, 180, 16)], '#d4d8ee', { d: 0.35, ink: '#4a4e74' }));
-  out.push(...solid([...arcPts(8, 5.4, 3, 3, 60, 300, 12), ...arcPts(9.4, 5.2, 2.4, 2.5, 300, 60, 10)], ASILV, { d: 0.3, ink: '#4a4e74' }));
-  out.push(...moonIcon(3.6, 9.6, 1.1), ...moonIcon(12.6, 9.2, 1.1));
+  const out = [...tile('sorcery', 'buff'), ...aura(8, 8, 6.4, '#ffe0b0', 1.2)];
+  out.push(S(tube(arcPts(8, 8.4, 6, 6, 0, 360, 28), 0.35, 0.35), SOEMB));
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    const x = 8 + Math.cos(a) * 6;
+    const y = 8.4 + Math.sin(a) * 6;
+    out.push(S([[x, y - 0.8], [x + 0.6, y], [x, y + 0.8], [x - 0.6, y]], SOHOT));
+  }
+  out.push(...shadowHandIcon(8, 12.4, 1.5, 0, 0));
+  out.push(S(tube([[6.4, 10.2], [9.6, 11.8]], 0.3, 0.3), SOHOT));
   return out;
 }
-// Planetary Alignment (her finisher): planets in a row, a beam of light through them.
+// Hand of the Abyss (her finisher): a colossal clawed hand reaching down out of a torn rift.
 function troupecombo() {
-  const out = [...tile('astral', 'active'), ...aura(8, 8, 7, '#f2eeff', 1.3, 5)];
-  out.push(S(tube([[0.8, 11], [15.2, 5]], 0.9, 0.9), '#e8dcff'), S(tube([[0.8, 11], [15.2, 5]], 0.35, 0.35), W));
-  out.push(...planetIcon(3.6, 9.8, 1.6, -22), ...planetIcon(8, 8, 2.2, -22), ...planetIcon(12.4, 6.2, 1.6, -22));
+  const out = [...tile('sorcery', 'active'), ...aura(8, 8, 7, '#e6d2ff', 1.3, 5)];
+  out.push(...solid(oval(8, 2.6, 6.6, 2, 0, 24), SOEMB, { shadow: false, d: 0.35, ink: '#7a2a3a' }), S(oval(8, 2.6, 5.6, 1.4, 0, 24), '#160a26'));
+  out.push(...solid(tube([[8, 2.4], [8, 6]], 1.6, 1.4), SOV, { d: 0.35, ink: SOINK }));
+  out.push(...shadowHandIcon(8, 6, 2.2, 180, 0.2));
+  out.push(...spark(2.4, 13, 1, SOHOT), ...spark(13.6, 12, 0.8));
   return out;
 }
 

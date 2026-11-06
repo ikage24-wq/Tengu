@@ -2645,21 +2645,21 @@ test('Spellstorm builds faster while she keeps casting, a hit knocks part of it 
   assert.equal(two, one * 2, `full Spellstorm casts it twice (${two} against ${one})`);
 });
 
-test('Ringed Planet rolls a great ringed world through every monster in the line', () => {
+test('Grasping Dark: shadow hands claw up out of the ground through every monster in the line', () => {
   const w = astronomer(true);
   w.mobs.forEach((m, i) => (m.x = w.body.x + 120 + i * 60));
   assert.ok(cast(w, 'ofudabarrage').ok);
-  assert.equal(w.pose.kind, 'asglobe');
+  assert.equal(w.pose.kind, 'sograspd');
   let big = false;
   for (let i = 0; i < 120; i++) {
     updateWorld(w, DT, idle);
-    big ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'asbig');
+    big ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'sograsp');
   }
-  assert.ok(big, 'the ringed world rolls out');
+  assert.ok(big, 'the hands race along the ground');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'through the whole line');
 });
 
-test('Gravity Well pulls the monsters round it in and crushes them again and again, and is gone after a map change', async () => {
+test('Abyssal Maw drags the monsters round it in and claws them again and again, and is gone after a map change', async () => {
   const { loadMap } = await import('../src/world/world.js');
   const w = astronomer(true);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [60, 220, 600][i] }));
@@ -2672,7 +2672,8 @@ test('Gravity Well pulls the monsters round it in and crushes them again and aga
     updateWorld(w, DT, idle);
     w.mobs.forEach((m, j) => { if (m.hp < last[j]) hits[j]++; last[j] = m.hp; });
   }
-  assert.ok(w.well, 'the well hangs there');
+  assert.ok(w.well, 'the pit stays open');
+  assert.ok(w.fx.some((f) => f.kind === 'somaw'), 'her pit of hands');
   assert.ok(Math.abs(w.mobs[1].x - w.well.x) < Math.abs(x0[1] - w.well.x), 'a monster at its edge is drawn in');
   assert.ok(hits[0] >= 3 && hits[1] >= 3, `crushed again and again (${hits})`);
   assert.equal(hits[2], 0, 'not one far off');
@@ -2681,26 +2682,50 @@ test('Gravity Well pulls the monsters round it in and crushes them again and aga
   assert.equal(w.well, null, 'gone with the map');
 });
 
-test('Planetary Alignment needs a Full Orbit, spends it, and its beam goes through every monster ahead', () => {
+test('Hand of the Abyss needs a full Spellstorm, spends it, and crushes everything ahead (not behind)', () => {
   const w = astronomer(true);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-140, 140, 380][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a Full Orbit');
+  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a full Spellstorm');
   w.binding = 100;
   w.bindingAt = w.now;
   assert.ok(cast(w, 'troupecombo').ok);
   assert.equal(w.binding, 0, 'spends it');
-  assert.equal(w.pose.kind, 'asalign');
-  let row = false;
-  dice(0.5, () => {
-    for (let i = 0; i < 60 * 2.4; i++) {
-      updateWorld(w, DT, idle);
-      row ||= w.fx.some((f) => f.kind === 'asalign');
-    }
-  });
-  assert.ok(row, 'the planets line up');
-  assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'the beam goes through everything ahead');
+  assert.equal(w.pose.kind, 'soabyss');
+  let rift = false;
+  for (let i = 0; i < 60 * 2.4; i++) {
+    updateWorld(w, DT, idle);
+    rift ||= w.fx.some((f) => f.kind === 'sosummon');
+  }
+  assert.ok(rift, 'the rift tears open');
+  assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'the hand crushes everything ahead');
   assert.equal(w.mobs[0].hp, hp0[0], 'and not behind her');
+});
+
+test('Dark Pact: her magic hits harder and her Spellstorm builds faster while it lasts', async () => {
+  const { addBinding } = await import('../src/world/melee.js');
+  const plain = astronomer(true);
+  plain.binding = 0;
+  addBinding(plain, 10);
+  const w = astronomer(true);
+  assert.ok(cast(w, 'yokairally').ok);
+  assert.equal(w.pose.kind, 'sopact');
+  run(w, 1.1);
+  assert.ok(w.char.buffs.yokairally, 'the pact is on her');
+  w.binding = 0;
+  w.bindingAt = -9;
+  addBinding(w, 10);
+  assert.ok(w.binding > plain.binding, `Spellstorm builds faster (${w.binding} against ${plain.binding})`);
+});
+
+test('the Sorcerer plays every Mage skill her own way, under her own names', async () => {
+  const { pathMoves, pathName } = await import('../src/data/path-skills.js');
+  const { SKILLS } = await import('../src/data/skills.js');
+  for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
+    const moves = pathMoves(SKILLS[id], 1, 'onmyoji');
+    assert.ok(moves.every((m) => m.startsWith('so') && MOVES[m]), `${id}: her own move (${moves})`);
+    assert.notEqual(pathName(SKILLS[id], 'onmyoji'), SKILLS[id].name, `${id}: her own name`);
+  }
 });
 
 // ---------- Getting about: the Thief's flash jump and shadow dash, the Archer's air leap ----------

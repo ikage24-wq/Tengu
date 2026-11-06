@@ -72,8 +72,17 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
   `sohit`. Spellstorm (world/melee.js `addBinding`, `stormHurt`, `spellstorm`; STORM_* numbers) on
   the HUD in the old Orbit slot, with its aura (render/aura.js `bindingAura`): a violet pool and
   rising embers, an ember ring at full. The Astronomer's moons are gone (world/astro.js `moonsOf`).
-- Still to do: her skills (the Astronomer's are still in place, and Lunar Tide does nothing now the
-  moons are gone), her finisher and icons, shouted lines, sounds, the README.
+- **Built (2026-11-06): her skills.** Her own Mage skills (data/skills.js `paths.onmyoji`, names in
+  `pathNames`): Hellfire (`sohell`), Shadow Step (`sostep`, burst `sosink`), Clutching Horde
+  (`sohorde`), Dread Circle (`sonova`, `sonovafx`), Ember Mend (`somend`, `soglow`), Shadow Ward
+  (`soward`, `soguard`), Abyssal Rain (`sorain`: the rift `sosummon`, falling hands `soslam`, impact
+  `soimpact`). Her own skills (ids kept): Forbidden Lore (passive), Grasping Dark (`sograspd`),
+  Abyssal Maw (`somawcast`; the old Gravity Well engine in world/astro.js drawn as `somaw`), Dark
+  Pact (`sopact`: magic attack up and Spellstorm builds faster, `stormGain`), and her finisher Hand of
+  the Abyss (`soabyss`: a colossal hand crushes everything ahead). Icons (render/icons/skills.js,
+  the `sorcery` tile), shouted lines with a wobble (`MAGE_SHOUTS`, in ember), the job name and blurb,
+  Elowen's line, and the bots (world/party.js).
+- Still to do: sounds of her own, the README, her look's top-tier weapons.
 
 ## The Cleric of light (the healer path; `shrinemaiden`, replacing the Starlight Idol)
 

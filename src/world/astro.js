@@ -65,7 +65,7 @@ export function gravityWell(world, s) {
   const b = world.body;
   const W = s.well;
   world.well = { ...W, key: s.key, map: world.map.id, x: b.x + b.facing * W.ahead, y: b.y, until: world.now + W.dur, next: world.now + 0.15 };
-  world.fx.push({ kind: 'aswell', well: world.well, x: world.well.x, y: world.well.y, t: 0, dur: W.dur });
+  world.fx.push({ kind: 'somaw', well: world.well, x: world.well.x, y: world.well.y, t: 0, dur: W.dur });
 }
 function tickWell(world) {
   const Z = world.well;

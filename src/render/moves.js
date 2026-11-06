@@ -134,10 +134,10 @@ const MG_FACE = {
 // The Sorcerer's faces: cold and menacing while she casts, a snarl on the blow, an eerie smile
 // after; and the beat after a big cast, when it dawns on her what she just did (panic).
 const SO_FACE = {
-  cold: { lid: 0.25, mouth: 'frown', brows: [[-0.2, 0.8], [-0.2, 0.8]] },
+  cold: { mouth: 'frown', brows: [[-0.2, 0.8], [-0.2, 0.8]] },
   dread: { lid: 0.2, cross: 0.4, mouth: 'grit', brows: [[-0.3, 1], [-0.3, 1]] },
   snarl: { cross: 0.6, mouth: 'yell', brows: [[-0.3, 1], [-0.3, 1]] },
-  eerie: { lid: 0.4, mouth: 'smirk', brows: [[0.2, 0.6], [0.2, 0.6]] },
+  eerie: { lid: 0.15, mouth: 'smirk', brows: [[0.2, 0.6], [0.2, 0.6]] },
   panic: { mouth: 'gasp', brows: [[0.9, 0.3], [0.9, 0.3]], extra: ['sweat0'] },
 };
 
@@ -4247,6 +4247,218 @@ export const MOVES = {
       tilt: 0.14 * skim, lunge: 5 * skim + 4 * thrust * (1 - soft(seg(p, 0.6, 1)) * 0.5), lift: 2 * skim, trail: p > 0.34 && p < 0.46,
       face: p < 0.34 ? SO_FACE.cold : p < 0.55 ? SO_FACE.snarl : SO_FACE.eerie,
       rig: (r) => { r.backArm = [q(lerp(-6, 4, thrust) * skim), q(-3 * skim)]; r.hairLift = skim > 0.4 ? 1 : 0; r.cape -= q(6 * skim); danceLegs(r, [skim, [2.6, -1, 10], [-3.6, -1.4, -26]], [thrust * (1 - skim), [4, 0, 8], [-3.6, -0.6, -18]]); },
+    };
+  },
+
+  // ---------- The Sorcerer's skills (her own casts; docs/design/mage-line.md) ----------
+  // Her free hand does the spell (beckons, rakes, closes into a fist); the wand or staff rides in her
+  // casting hand. The big ones end on her panic beat.
+
+  // Hellfire (Fireball, the ball flies at ~0.5): she holds her free hand out low and a dark flame
+  // gathers above it, which she watches with a slow, chilling smile; then she flicks it off her
+  // fingertips at them, almost lazily, and it is far bigger than she meant.
+  sohell(p) {
+    const gather = soft(seg(p, 0.04, 0.36));
+    const flick = ease(seg(p, 0.42, 0.5));
+    const oops = soft(seg(p, 0.66, 0.86));
+    return {
+      weapon: lerp(110, 130, gather) - 20 * flick, arm: lerp(45, 30, gather) + 20 * flick,
+      lunge: 4 * flick * (1 - oops * 0.5) - 2 * oops, tilt: 0.04 * gather * (1 - flick) + 0.08 * flick * (1 - oops) - 0.08 * oops,
+      lift: breathe(p) * gather * (1 - flick) + swBob(p, 0.88) * 0.6, trail: flick > 0 && flick < 1,
+      face: p < 0.42 ? SO_FACE.eerie : p < 0.66 ? SO_FACE.snarl : SO_FACE.panic,
+      rig: (r) => {
+        r.backArm = flick < 0.3 ? [q(lerp(2, 7, gather)), q(lerp(0, 1, gather))] : [q(lerp(lerp(7, 10, flick), 3, oops)), q(lerp(lerp(1, -3, flick), -5, oops))];
+        r.hairLift = flick > 0.3 && oops < 0.4 ? 1 : 0;
+        danceLegs(r, [gather * (1 - flick), [1.4, 0, 4], [-2, 0, -8]], [flick, [3.6, 0, 8], [-3.2, -0.4, -14]], [oops, [1.4, 0, 2], [-2.2, 0, -8]]);
+      },
+    };
+  },
+  // Shadow Step (Teleport): she drops into a crouch and sinks into her own shadow (hands pull her
+  // down), then rises out of it far ahead, standing tall and very still, cape settling.
+  sostep(p) {
+    const sink = soft(seg(p, 0, 0.3));
+    const rise = soft(seg(p, 0.42, 0.72));
+    return {
+      weapon: lerp(100, 140, sink) - 40 * rise, arm: lerp(50, 30, sink) + 10 * rise, trail: p < 0.4,
+      lift: -3 * sink * (1 - rise) + 1.2 * bump(p, 0.5, 0.8), tilt: 0.1 * sink * (1 - rise),
+      face: p < 0.42 ? SO_FACE.cold : SO_FACE.eerie,
+      rig: (r) => {
+        r.squat = q(3.6 * sink * (1 - rise));
+        r.backArm = [q(lerp(lerp(0, 4, sink), 2, rise)), q(lerp(lerp(0, 5, sink), 1, rise))];
+        r.hairLift = sink > 0.4 && rise < 0.3 ? -1 : 0;
+        r.cape -= q(4 * rise * (1 - soft(seg(p, 0.72, 1))));
+        danceLegs(r, [sink * (1 - rise), [3, 0, 10], [-3, -0.6, -24]], [rise, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Clutching Horde (Chain Lightning, the hands fly at ~0.48): she flings both arms out wide behind
+  // her, her book flaring, then sweeps them forward: a horde of hands pours down the line.
+  sohorde(p) {
+    const spread = soft(seg(p, 0.04, 0.36));
+    const sweep = ease(seg(p, 0.4, 0.5));
+    const hold = soft(seg(p, 0.58, 0.86));
+    return {
+      weapon: lerp(lerp(95, 200, spread), 84, sweep) + 8 * hold, arm: lerp(lerp(55, -10, spread), 98, sweep) - 10 * hold,
+      lunge: -2 * spread * (1 - sweep) + 8 * sweep * (1 - hold * 0.4), tilt: -0.1 * spread * (1 - sweep) + 0.14 * sweep * (1 - hold * 0.5),
+      lift: 3 * spread * (1 - sweep) + swBob(p, 0.86), trail: sweep > 0 && sweep < 1,
+      face: p < 0.4 ? SO_FACE.dread : p < 0.6 ? SO_FACE.snarl : SO_FACE.eerie,
+      rig: (r) => {
+        r.backArm = sweep < 0.3 ? [q(lerp(0, -9, spread)), q(lerp(0, -4, spread))] : [q(lerp(-9, 9, sweep) - 4 * hold), q(lerp(-4, -3, sweep))];
+        r.hairLift = spread > 0.5 && sweep < 0.3 ? -1 : sweep > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(5 * sweep * (1 - hold));
+        danceLegs(r, [spread * (1 - sweep), [1.6, -1.4, 12], [-1.8, -0.8, -10]], [sweep, [4.4, 0, 10], [-4, -0.6, -20]], [hold, [2.6, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Dread Circle (Frost Nova, the hands burst out at ~0.46): she lifts her free hand high, fingers
+  // spread, and brings it down flat to the floor in a slow, heavy kneel; the floor erupts all round.
+  sonova(p) {
+    const lift = soft(seg(p, 0.04, 0.32));
+    const press = ease(seg(p, 0.38, 0.46));
+    const hold = soft(seg(p, 0.6, 0.86));
+    return {
+      weapon: lerp(110, 150, press) - 30 * hold, arm: lerp(lerp(50, 60, lift), 26, press) + 20 * hold,
+      lift: 2 * lift * (1 - press) + swBob(p, 0.88), tilt: 0.18 * press * (1 - hold * 0.7),
+      face: p < 0.38 ? SO_FACE.dread : p < 0.6 ? SO_FACE.snarl : SO_FACE.cold,
+      rig: (r) => {
+        r.squat = q(3.6 * press * (1 - hold * 0.7));
+        r.backArm = press < 0.2 ? [q(lerp(0, 3, lift)), q(lerp(0, -9, lift))] : [q(lerp(3, 5, press)), q(lerp(-9, 7, press) - 6 * hold)];
+        r.hairLift = press > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [lift * (1 - press), [1.2, -0.6, 6], [-1.6, 0, -6]], [press, [3.6, 0, 12], [-3.4, -0.8, -30]], [hold, [2, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Ember Mend (Heal, the warm flame rises at ~0.55): she turns half away, embarrassed, and holds
+  // her free hand out to the side without looking at it; warm ember flame rises round everyone. She
+  // mutters, and folds her arms the moment it is done.
+  somend(p) {
+    const out = soft(seg(p, 0.06, 0.36));
+    const fold = soft(seg(p, 0.7, 0.9));
+    return {
+      weapon: lerp(110, 130, fold), arm: lerp(45, 26, fold), tilt: -0.08 * out * (1 - fold), lift: breathe(p) * out * (1 - fold) * 0.8 + swBob(p, 0.92) * 0.4,
+      face: p < 0.36 ? SO_FACE.cold : p < 0.7 ? SO_FACE.panic : SO_FACE.cold,
+      rig: (r) => {
+        r.backArm = fold > 0.3 ? [q(lerp(-7, 6, fold)), q(lerp(-2, -3, fold))] : [q(-7 * out), q(-2 * out)];
+        danceLegs(r, [out * (1 - fold), [1.2, 0, 2], [-2.2, 0, -8]], [fold, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Shadow Ward (Magic Guard, the hands cup over the party at ~0.5): both arms raised wide, then
+  // brought in over her head as if cupping something, and she stands guarded under them.
+  soward(p) {
+    const raise = soft(seg(p, 0.04, 0.34));
+    const cup = ease(seg(p, 0.4, 0.52));
+    const hold = soft(seg(p, 0.6, 0.86));
+    return {
+      weapon: lerp(lerp(100, 40, raise), 20, cup) + 90 * hold, arm: lerp(lerp(50, 96, raise), 106, cup) - 60 * hold,
+      lift: 2 * raise * (1 - hold) + breathe(p) * cup * (1 - hold) + swBob(p, 0.9) * 0.4, tilt: -0.06 * raise * (1 - hold),
+      face: p < 0.4 ? SO_FACE.dread : p < 0.62 ? SO_FACE.snarl : SO_FACE.eerie,
+      rig: (r) => {
+        r.backArm = [q(lerp(lerp(0, -8, raise), -3, cup) + 5 * hold), q(lerp(lerp(0, -6, raise), -9, cup) + 8 * hold)];
+        r.hairLift = raise > 0.5 && hold < 0.5 ? -1 : 0;
+        danceLegs(r, [raise, [1.6, 0, 4], [-1.8, 0, -6]], [hold, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Abyssal Rain (Meteor, her own way; hands rain from ~0.68 and the last lands at ~0.88): she
+  // floats up and tears the sky open with a rake of her free hand (the rift), holds her arms up
+  // under it as hands pour down, then drives her fist down for the last and biggest one. A long
+  // villain stillness, and her face drops.
+  sorain(p) {
+    const rise = soft(seg(p, 0.02, 0.3));
+    const rake = ease(seg(p, 0.26, 0.36));
+    const fist = ease(seg(p, 0.82, 0.88));
+    const oops = soft(seg(p, 0.92, 1));
+    return {
+      weapon: lerp(lerp(100, 40, rise), 120, fist) - 10 * oops, arm: lerp(lerp(50, 100, rise), 70, fist) + 8 * oops,
+      lift: 6 * rise * (1 - fist) + breathe(p) * rise * (1 - fist) + swBob(p, 0.94) * 0.3, lunge: 4 * fist,
+      tilt: -0.08 * rise * (1 - fist) + 0.18 * fist * (1 - oops * 0.6) - 0.06 * oops, trail: (rake > 0 && rake < 1) || (fist > 0 && fist < 1),
+      face: p < 0.36 ? SO_FACE.dread : p < 0.82 ? SO_FACE.eerie : p < 0.92 ? SO_FACE.snarl : SO_FACE.panic,
+      rig: (r) => {
+        r.air = rise * (1 - fist) > 0.5;
+        r.squat = q(2 * fist * (1 - oops));
+        r.backArm = fist > 0.2 ? [q(lerp(lerp(-2, 8, fist), 3, oops)), q(lerp(lerp(-9, 2, fist), -5, oops))] : rake > 0 ? [q(lerp(6, -2, rake)), q(lerp(-9, -9, rake))] : [q(6 * rise), q(-9 * rise)];
+        r.hairLift = rise > 0.5 && fist < 0.3 ? -1 : fist > 0.3 && oops < 0.5 ? 1 : 0;
+        r.cape -= q(4 * rise * (1 - fist) + 5 * fist * (1 - oops));
+        danceLegs(r, [rise * (1 - fist), [1.2, -2.6, 16], [-1.6, -2.2, -20]], [fist, [4.2, 0, 10], [-4, -0.6, -20]], [oops, [1.6, 0, 2], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Grasping Dark (the hands race along the ground at ~0.54): she crouches and drags her free hand
+  // along the floor beside her, then rakes it up and out at them.
+  sograspd(p) {
+    const drag = soft(seg(p, 0.04, 0.4));
+    const rake = ease(seg(p, 0.46, 0.54));
+    const hold = soft(seg(p, 0.62, 0.88));
+    return {
+      weapon: lerp(lerp(100, 150, drag), 70, rake) + 20 * hold, arm: lerp(lerp(50, 30, drag), 100, rake) - 14 * hold,
+      lunge: 2 * drag * (1 - rake) + 6 * rake * (1 - hold * 0.4), tilt: 0.16 * drag * (1 - rake) - 0.04 * rake * (1 - hold),
+      lift: 2.5 * bump(p, 0.46, 0.7) + swBob(p, 0.9), trail: rake > 0 && rake < 1,
+      face: p < 0.46 ? SO_FACE.dread : p < 0.64 ? SO_FACE.snarl : SO_FACE.eerie,
+      rig: (r) => {
+        r.squat = q(3 * drag * (1 - rake));
+        r.backArm = rake < 0.3 ? [q(lerp(0, 6, drag)), q(lerp(0, 7, drag))] : [q(lerp(6, 9, rake) - 4 * hold), q(lerp(7, -6, rake) + 3 * hold)];
+        r.hairLift = rake > 0.3 && hold < 0.5 ? 1 : 0;
+        danceLegs(r, [drag * (1 - rake), [3.4, 0, 10], [-3.4, -0.6, -24]], [rake, [3.6, 0, 8], [-3.4, -0.6, -16]], [hold, [2.4, 0, 6], [-2.6, 0, -10]]);
+      },
+    };
+  },
+  // Abyssal Maw (the pit opens at ~0.6): she points her free hand down at a spot ahead and slowly
+  // turns it, as if unscrewing the floor; then a sharp twist, and the pit opens.
+  somawcast(p) {
+    const point = soft(seg(p, 0.04, 0.3));
+    const turnK = seg(p, 0.3, 0.56);
+    const twist = ease(seg(p, 0.56, 0.62));
+    const hold = soft(seg(p, 0.7, 0.92));
+    return {
+      weapon: lerp(110, 130, point), arm: lerp(45, 34, point),
+      lunge: 2 * point * (1 - hold), tilt: 0.1 * point * (1 - hold) + 0.04 * twist * (1 - hold), lift: breathe(p) * 0.6 * (p > 0.3 && p < 0.56 ? 1 : 0) + swBob(p, 0.92) * 0.4,
+      face: p < 0.3 ? SO_FACE.cold : p < 0.62 ? SO_FACE.dread : SO_FACE.eerie,
+      rig: (r) => {
+        r.backArm = [q(lerp(0, 9, point) - 3 * hold), q(lerp(0, 4, point) + Math.sin(turnK * Math.PI * 3) * (1 - twist) - 4 * hold)];
+        danceLegs(r, [point, [2.6, 0, 6], [-2.4, 0, -8]], [hold, [1.6, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Dark Pact (the sigil flares at ~0.5): her book drops open before her (her free hand flat on it),
+  // she draws a line across her palm with the wand tip, and presses the hand to the page; flame
+  // climbs round her. She looks at her hand afterward, uneasy.
+  sopact(p) {
+    const read = soft(seg(p, 0.04, 0.3));
+    const cut = ease(seg(p, 0.3, 0.42));
+    const press = ease(seg(p, 0.44, 0.52));
+    const look = soft(seg(p, 0.7, 0.9));
+    return {
+      weapon: lerp(lerp(110, 150, read), 100, cut) + 20 * press, arm: lerp(lerp(45, 70, read), 60, cut) - 20 * press,
+      tilt: 0.1 * read * (1 - look) - 0.04 * look, lift: 1.4 * press * (1 - look) + breathe(p) * look * 0.6,
+      face: p < 0.44 ? SO_FACE.cold : p < 0.7 ? SO_FACE.snarl : SO_FACE.panic,
+      rig: (r) => {
+        r.backArm = look > 0.2 ? [q(lerp(5, 3, look)), q(lerp(1, -5, look))] : [q(lerp(0, 5, read)), q(lerp(0, 1, read) + 2 * press)];
+        danceLegs(r, [read, [1.6, 0, 4], [-2, 0, -8]], [press, [2.4, 0, 6], [-2.6, 0, -10]], [look, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Hand of the Abyss (her finisher; the rift opens at ~0.1, the hand closes on them at ~0.7): she
+  // floats up with her book blazing open beside her, slowly raises her free hand to the rift, spreads
+  // her fingers wide; and closes them. A colossal hand closes on everything ahead and slams down.
+  // Then a long silence, and the most horrified panic face of all.
+  soabyss(p) {
+    const rise = soft(seg(p, 0.02, 0.3));
+    const reach = soft(seg(p, 0.3, 0.6));
+    const close = ease(seg(p, 0.64, 0.7));
+    const oops = soft(seg(p, 0.84, 0.98));
+    return {
+      weapon: lerp(lerp(100, 140, rise), 120, close) - 10 * oops, arm: lerp(lerp(50, 40, rise), 60, close) + 8 * oops,
+      lift: 7 * rise * (1 - oops) + breathe(p) * rise * (1 - oops) - 2 * close * (1 - oops), tilt: -0.1 * reach * (1 - close) + 0.12 * close * (1 - oops) - 0.06 * oops,
+      lunge: 3 * close - 2 * oops, trail: close > 0 && close < 1,
+      face: p < 0.3 ? SO_FACE.cold : p < 0.64 ? SO_FACE.dread : p < 0.84 ? SO_FACE.snarl : SO_FACE.panic,
+      rig: (r) => {
+        r.air = rise * (1 - oops) > 0.5;
+        r.backArm = close > 0.2 ? [q(lerp(lerp(4, 7, close), 3, oops)), q(lerp(lerp(-10, -1, close), -5, oops))] : [q(lerp(0, 4, reach)), q(lerp(0, -10, reach))];
+        r.hairLift = reach > 0.5 && close < 0.3 ? -1 : close > 0.3 && oops < 0.5 ? 1 : 0;
+        r.cape -= q(4 * rise * (1 - close) + 6 * close * (1 - oops));
+        danceLegs(r, [rise * (1 - oops), [1.2, -2.6, 16], [-1.6, -2.2, -20]], [oops, [1.6, 0, 2], [-2, 0, -6]]);
+      },
     };
   },
 
