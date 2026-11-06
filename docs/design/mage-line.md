@@ -40,6 +40,20 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
     bright"), Magic Guard, Mana Mastery, and **Meteor**, the finisher (full Overload): she flexes the
     glove, announces "CATACLYSM OF THE CRIMSON STAR", and a meteor crashes down on everything ahead.
 
+## The Cleric of light (the healer path; `shrinemaiden`, replacing the Starlight Idol)
+
+- **Personality (the player's pick): the reformed edgelord.** The Mage's dramatic flair turned holy:
+  she names her heals like epic spells ("RADIANT SALVATION!" for a bandage), poses like a saint in a
+  stained-glass window, and is secretly delighted to be the party's hero.
+- **Healing (the player's pick): light that follows them.** Her heals land on whoever needs it most
+  and keep mending them for a while; blessings, a shield, raising the fallen. Her gauge, Devotion
+  (Faith is the Paladin's), builds as she heals and smites; full, her heals splash to the whole
+  party, and her finisher heals everyone in full. (Built on the Idol's engine, world/idol.js.)
+- **Look (the player's picks): white and gold, a halo and a veil.** She wears the mage robes as
+  white and gold vestments (render/hero.js repaints her plain mage pieces), and a veil, gold circlet
+  with a sun gem and a floating halo in place of the hat (render/jobgear/cleric.js). Her wand is a
+  gold sun scepter (the 'cleric' finish). Samples: docs/design/samples/cleric-looks.png.
+
 ## Status
 
 - 2026-11-06: picks recorded; look samples (`tools/mage-looks.html`, docs/design/samples/mage-looks.png).

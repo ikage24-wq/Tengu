@@ -2937,12 +2937,15 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'spiritmage') g.edgeGlove = true;
   // The Astronomer's staff is her violet and silver orrery.
   if (state.job === 'onmyoji' && g.weapon?.type === 'staff' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'astro' };
-  // The Starlight Idol's wand is her pink and gold microphone.
-  if (state.job === 'shrinemaiden' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'idol' };
+  // The Cleric's wand is her gold sun scepter.
+  if (state.job === 'shrinemaiden' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'cleric' };
   // The Sky Dancer's gloves take her sky blue the same way.
   if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
   // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
   // gear sets or recoloured variants): the Blade Dancer's in rose gold with gold gems.
+  // The Cleric (docs/design/mage-line.md) wears the mage robes as white and gold vestments, and a
+  // veil, circlet and halo in place of the pointed hat (render/jobgear/cleric.js); plain pieces only.
+  if (state.job === 'shrinemaiden') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'cleric', pal: { ...gearPalette('mage', g[s].tier, '#fbf4e4', '#8fd8ff'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
   const trim = PATH_TRIMS[state.job];
   if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
   // The body acts out the mood: the expression, or worn out at low health.
