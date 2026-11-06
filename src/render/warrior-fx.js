@@ -349,7 +349,14 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'sopact':
       return fxSprite(ctx, 'celsopact', x, y + 4, { p, scale: 0.6 }) || true;
     case 'sosummon':
-      return fxSprite(ctx, 'celsosummon', x + dir * 140, y - 130, { t: f.t, scale: 0.7, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
+      return fxSprite(ctx, 'celsosummon', x + dir * 156, y - 150, { t: f.t, scale: 0.7, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
+    case 'sobighand': {
+      // Hand of the Abyss: a colossal shadow hand plunging down out of the rift (the first third),
+      // pressed flat on them as it lands, then sinking away.
+      const fall = Math.min(1, p / 0.3);
+      const k = fall * fall;
+      return fxSprite(ctx, 'celsoslam', x, y - 40 - 230 * (1 - k), { t: f.t, rot: Math.PI / 2, scale: 1.5, alpha: Math.min(1, p * 8, (1 - p) * 3) }) || true;
+    }
     case 'soimpact':
       return fxSprite(ctx, 'celsoimpact', x, y + 4, { p, scale: 0.9 }) || true;
     case 'somaw': {

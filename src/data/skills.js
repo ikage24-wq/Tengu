@@ -388,7 +388,7 @@ export const SKILLS = {
         paths: {
           shrinemaiden: [{ move: 'clnova', dur: 0.6, step: 0, strikes: [{ ...nova('clnovafx'), el: undefined, freeze: undefined, stun: kf(0.6, 1.2) }] }],
           // The Sorcerer presses her hand to the floor and hands burst up all round, holding them fast.
-          onmyoji: [{ move: 'sonova', dur: 0.6, step: 0, strikes: [{ ...nova('sonovafx'), el: undefined }] }],
+          onmyoji: [{ move: 'sonova', dur: 0.6, step: 0, strikes: [{ ...nova('sonovafx'), el: undefined, fx: 'sohit' }] }],
         },
       };
     },
@@ -579,7 +579,9 @@ export const SKILLS = {
         mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
         combo: [{ move: 'soabyss', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
           { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1.3 },
-          { at: 0.7, magic: true, pct: k(300, 520) * 2, reach: 520, h: 200, targets: 12, pierce: true, knock: 260, launch: 300, burst: 'soimpact', burstAt: 0.4, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          // (The colossal hand reaching down out of the rift onto the stretch ahead.)
+          { at: 0.6, pct: 0, reach: 520, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sobighand', burstAt: 0.3, burstDur: 0.7 },
+          { at: 0.7, magic: true, pct: k(300, 520) * 2, reach: 520, h: 200, targets: 12, pierce: true, knock: 260, launch: 300, fx: 'sohit', burst: 'soimpact', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
       };
     },
@@ -614,7 +616,7 @@ export const SKILLS = {
           onmyoji: [{ move: 'sorain', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
             { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sosummon', burstAt: 0, burstDur: 1 },
             { at: 0.68, rain: k(10, 14), magic: true, pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.45, knock: 40, variant: 'soslam', school: 'astral', gauge: 0 },
-            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, burst: 'soimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
+            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 260, launch: 260, fx: 'sohit', burst: 'soimpact', burstAt: 0.5, burstDur: 0.7, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
         },
       };

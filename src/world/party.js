@@ -773,6 +773,7 @@ const SPECIALS = {
       const b = bot.body;
       const dir = b.facing;
       world.fx.push({ kind: 'sosummon', x: b.x, y: b.y, dir, t: -0.1, dur: 1.3 });
+      world.fx.push({ kind: 'sobighand', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -1.2, dur: 0.7 });
       world.fx.push({ kind: 'soimpact', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -1.4, dur: 0.8 });
       const range = magicRange(bot.stats, S.pct * 1.1);
       world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < S.reach && Math.abs(o.y - b.y) < S.h)
