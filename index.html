@@ -23,6 +23,25 @@
 <body>
   <canvas id="game" tabindex="0"></canvas>
   <div id="turn"><div class="phone"></div>Turn your phone sideways to play</div>
-  <script src="src/main.js" type="module"></script>
+  <script type="module">
+    // On the web, a service worker (sw.js) checks every file with the server on each load, so an
+    // update never leaves a browser with a mix of old and new modules. If the game still fails to
+    // start (a browser from before the worker, holding old files), it reloads once through the
+    // worker; a second failure says so instead of leaving a blank screen.
+    const web = location.protocol.startsWith('http') && 'serviceWorker' in navigator;
+    if (web) navigator.serviceWorker.register('sw.js').catch(() => {});
+    import('./src/main.js').then(() => sessionStorage.removeItem('tengu-retried')).catch(async (err) => {
+      console.error(err);
+      if (web && !sessionStorage.getItem('tengu-retried')) {
+        sessionStorage.setItem('tengu-retried', '1');
+        await Promise.race([navigator.serviceWorker.ready, new Promise((r) => setTimeout(r, 3000))]).catch(() => {});
+        location.reload();
+        return;
+      }
+      const note = document.getElementById('turn');
+      note.textContent = 'Tengu could not start. Please reload the page.';
+      note.style.display = 'flex';
+    });
+  </script>
 </body>
 </html>
