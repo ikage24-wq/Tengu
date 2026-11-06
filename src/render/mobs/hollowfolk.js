@@ -17,7 +17,7 @@
 // Every design faces right, its lowest point on the bottom edge.
 
 import { E, T, F, R, mix, ramp, crescent, shine, smear, chain, wave, breath, sway, TAU, D2R, O, arcPts, limb, spin, move, strand, star, cuteFace, blob } from './critter.js';
-import { part, put, spring, kick, blend, attackPhase, lerp, smooth, clamp, makeRig, stateBlend, inPart } from './rig.js';
+import { part, put, spring, kick, blend, attackPhase, lerp, smooth, clamp, makeRig, stateBlend, inPart, figure } from './rig.js';
 
 const TEAL = '#5ff0d6';
 const PURP = '#b86cff';
@@ -485,61 +485,70 @@ function drawQueen(ctx, m, a) {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  // The free arm, behind her (body-local, so it turns with her).
-  const body = (fn) => {
-    ctx.save();
-    ctx.translate(0, y);
-    ctx.rotate(tilt);
-    fn();
-    ctx.restore();
-  };
-  body(() => put(ctx, qParts.arm(true), [4, 5], Q.shoulderB[0], Q.shoulderB[1], armB, look));
-  // Root feet on the floor.
-  put(ctx, qParts.foot(), [10, 9.4], -10 + footB, -P.liftB, 0, look);
-  put(ctx, qParts.foot(), [10, 9.4], 10 + footF, -P.liftF, 0, look);
-  body(() => {
-    // The staff in her hand goes behind her (so it never crosses her face in the slam); the arm
-    // holding it is drawn over everything.
-    const hx = Q.shoulderF[0] + Math.cos(armF) * Q.arm;
-    const hy = Q.shoulderF[1] + Math.sin(armF) * Q.arm;
-    put(ctx, qParts.staff(), [7, 31], hx, hy, staff, look);
-    // The crystal's glow, drawn live so it can pulse (and flare in the slam).
-    ctx.save();
-    ctx.translate(hx, hy);
-    ctx.rotate(staff);
-    const glow = ctx.createRadialGradient(0, -25, 1, 0, -25, 10 + a.ph.strike * 6);
-    glow.addColorStop(0, `rgba(160,255,236,${(0.45 + 0.15 * Math.sin(a.t * 3) + a.ph.antic * 0.3) * a.alpha})`);
-    glow.addColorStop(1, 'rgba(95,240,214,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(-18, -43, 36, 36);
-    ctx.restore();
-    put(ctx, qParts.body(), [24, 50], 0, 0, 0, look);
-    put(ctx, qParts.skirt(), [22, 5], Q.skirt[0], Q.skirt[1], skirt, look);
-    put(ctx, qParts.face(mood, atk), [17, 11], Q.face[0], Q.face[1], 0, look);
-    // The cap and its crown.
-    ctx.save();
-    ctx.translate(Q.capAt[0], Q.capAt[1]);
-    ctx.rotate(cap);
-    put(ctx, qParts.cap(), [44, 33], 0, 0, 0, look);
-    put(ctx, qParts.crown(), [13, 15], 0, -28, crown, look);
-    ctx.restore();
-    put(ctx, qParts.arm(false), [4, 5], Q.shoulderF[0], Q.shoulderF[1], armF, look);
-    // A sweep of light behind the staff head as it comes down.
-    if (a.ph.since >= 0 && a.ph.since < 0.14) {
-      // (A short arc along the crystal's path, thinning out behind it.)
-      const u = a.ph.since / 0.14;
-      ctx.strokeStyle = '#e6fff8';
-      ctx.lineCap = 'round';
-      for (let k = 0; k < 3; k++) {
-        ctx.globalAlpha = a.alpha * (1 - u) * (0.55 - k * 0.15);
-        ctx.lineWidth = 4 - k;
-        ctx.beginPath();
-        ctx.arc(Q.shoulderF[0], Q.shoulderF[1], Q.arm + 22, -1.3 + k * 0.15, 0.55);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
+  // Her figure, assembled from its parts and outlined as one (render/mobs/rig.js `figure`); the
+  // live glows go over it after.
+  const look1 = { ...look, alpha: 1 };
+  const hx = Q.shoulderF[0] + Math.cos(armF) * Q.arm;
+  const hy = Q.shoulderF[1] + Math.sin(armF) * Q.arm;
+  figure(ctx, [-90, -150, 90, 25], look.alpha, (fc) => {
+    const body = (fn) => {
+      fc.save();
+      fc.translate(0, y);
+      fc.rotate(tilt);
+      fn();
+      fc.restore();
+    };
+    // The free arm, behind her (body-local, so it turns with her).
+    body(() => put(fc, qParts.arm(true), [4, 5], Q.shoulderB[0], Q.shoulderB[1], armB, look1));
+    // Root feet on the floor.
+    put(fc, qParts.foot(), [10, 9.4], -10 + footB, -P.liftB, 0, look1);
+    put(fc, qParts.foot(), [10, 9.4], 10 + footF, -P.liftF, 0, look1);
+    body(() => {
+      // The staff in her hand goes behind her (so it never crosses her face in the slam); the arm
+      // holding it is drawn over everything.
+      put(fc, qParts.staff(), [7, 31], hx, hy, staff, look1);
+      put(fc, qParts.body(), [24, 50], 0, 0, 0, look1);
+      put(fc, qParts.skirt(), [22, 5], Q.skirt[0], Q.skirt[1], skirt, look1);
+      put(fc, qParts.face(mood, atk), [17, 11], Q.face[0], Q.face[1], 0, look1);
+      // The cap and its crown.
+      fc.save();
+      fc.translate(Q.capAt[0], Q.capAt[1]);
+      fc.rotate(cap);
+      put(fc, qParts.cap(), [44, 33], 0, 0, 0, look1);
+      put(fc, qParts.crown(), [13, 15], 0, -28, crown, look1);
+      fc.restore();
+      put(fc, qParts.arm(false), [4, 5], Q.shoulderF[0], Q.shoulderF[1], armF, look1);
+    });
   });
+  ctx.save();
+  ctx.translate(0, y);
+  ctx.rotate(tilt);
+  // The staff crystal's glow, drawn live so it can pulse (and flare in the slam).
+  ctx.save();
+  ctx.translate(hx, hy);
+  ctx.rotate(staff);
+  const glow = ctx.createRadialGradient(0, -25, 1, 0, -25, 10 + a.ph.strike * 6);
+  glow.addColorStop(0, `rgba(160,255,236,${(0.45 + 0.15 * Math.sin(a.t * 3) + a.ph.antic * 0.3) * a.alpha})`);
+  glow.addColorStop(1, 'rgba(95,240,214,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(-18, -43, 36, 36);
+  ctx.restore();
+  // A sweep of light behind the staff head as it comes down.
+  if (a.ph.since >= 0 && a.ph.since < 0.14) {
+    // (A short arc along the crystal's path, thinning out behind it.)
+    const u = a.ph.since / 0.14;
+    ctx.strokeStyle = '#e6fff8';
+    ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) {
+      ctx.globalAlpha = a.alpha * (1 - u) * (0.55 - k * 0.15);
+      ctx.lineWidth = 4 - k;
+      ctx.beginPath();
+      ctx.arc(Q.shoulderF[0], Q.shoulderF[1], Q.arm + 22, -1.3 + k * 0.15, 0.55);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
   // The ring of spores where the staff struck the floor.
   if (a.ph.since >= 0 && a.ph.since < 0.6) {
     const u = a.ph.since / 0.6;
@@ -771,7 +780,8 @@ function gnTrunk() {
 // The face plate in a 50 x 34 box, centred at (25, 16).
 function gnFace(mood, atk) {
   const B = GN.bark;
-  const out = [O(25, 17, 21, 15, 0, B.deep, 22), O(25, 16, 19.4, 13.6, 0, mix(B.base, '#ffffff', 0.16), 22)];
+  // (A thin rim of shaded bark round the plate, not a heavy dark ring.)
+  const out = [O(25, 16.5, 20.2, 14.3, 0, B.sh, 22), O(25, 16, 19.4, 13.6, 0, mix(B.base, '#ffffff', 0.16), 22)];
   out.push(F(crescent(25, 16, 19.4, 13.6, B.base, { k: 0.3, a0: 40, a1: 200 })), F(strand([[10, 22], [8, 26]], 0.8, B.deep)), F(strand([[41, 21], [44, 25]], 0.8, B.deep)));
   out.push(...cuteFace(25, 16, 2.6, mood === 'idle' && !atk ? 'blink' : mood, { iris: TEAL, inkC: '#2a1a1a', gap: 6, atk, skin: B.base, mouthDy: 3.6, blushOn: true }));
   // The mossy brow, heavy and grumpy, with a leaf sprouting from it.

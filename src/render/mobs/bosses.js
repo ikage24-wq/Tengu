@@ -80,7 +80,8 @@ function pkBody() {
   const B = PK.belly;
   const out = [];
   // Crystal spines down the back, behind the body (largest at the shoulders).
-  [[-16, -46, -2.3, 11, 3.2, PK.ice], [-22, -36, -2.6, 12, 3.4, PK.rose], [-25, -24, -2.85, 11, 3.2, PK.ice], [-25, -12, -3.05, 9, 2.8, PK.lilac]].forEach(([x, y, a, l, w, K]) => out.push(...prism(x, y, a, l, w, K)));
+  // (Their roots sit a few pixels inside his outline, behind it, so they grow out of him.)
+  [[-6, -44, -2.3, 14, 3.2, PK.ice], [-14, -37, -2.6, 15, 3.4, PK.rose], [-19, -25, -2.85, 14, 3.2, PK.ice], [-21, -12, -3.05, 12, 2.8, PK.lilac]].forEach(([x, y, a, l, w, K]) => out.push(...prism(x, y, a, l, w, K)));
   // The pear: a round belly-heavy bottom and narrower shoulders.
   out.push(O(0, -30, 19, 18, 0, S.base, 22), O(0, -16, 25, 19, 0, S.base, 24));
   out.push(crescent(0, -16, 25, 19, S.sh, { k: 0.28, a0: 40, a1: 215 }), crescent(0, -31, 19, 18, S.sh, { k: 0.3, a0: 120, a1: 215 }));
@@ -304,7 +305,9 @@ const pkPart = (name, face, atk) => {
   const piece = name === 'bodyS' ? 'body' : name;
   const [w, h, ox, oy] = boxOf(piece);
   const key = piece === 'face' ? `face|${face}|${atk}` : piece;
-  return part(`pking|${key}`, w, h, () => move(shapesOf(piece, { face, atk }), ox, oy), 6, 2);
+  // (The tail's pieces flow into each other: no line of their own at all.)
+  const flows = piece === 'tailTip' || /^t\d$/.test(piece);
+  return part(`pking|${key}`, w, h, () => move(shapesOf(piece, { face, atk }), ox, oy), 6, 2, !flows);
 };
 
 const crystalRig = makeRig({

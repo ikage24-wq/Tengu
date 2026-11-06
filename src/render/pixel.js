@@ -122,7 +122,7 @@ function outlineFor(c, crisp, side = 0) {
 const EMPTY = -1;
 const NONE = -2;
 
-function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null) {
+function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = false, selout = false, pad = PAD, light = false, edge = null, noline = false) {
   const gw = (w + pad * 2) * res;
   const gh = (h + pad + PAD) * res;
   const colors = [];
@@ -318,9 +318,15 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     }
   }
 
+  // (A rigged boss's parts come with no outline (`noline: true`) or only a faint one in a slightly
+  // darker shade of their own colour (`noline: 'soft'`, enough to part an arm from the body behind
+  // it): the rig outlines the assembled figure as a whole, render/mobs/rig.js, so no dark line
+  // runs across a joint.)
+  if (noline === true) return { gw, gh, cells: out, colors };
+  const faint = noline === 'soft';
   // Outline: every empty cell within `reach` cells of the silhouette (a disc, so it's round),
   // grown outward from the filled cells and colored after the nearest one.
-  const reach = res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
+  const reach = faint ? Math.max(1, Math.round(res * 0.5)) : res === 1 ? 1 : crisp ? res : Math.max(1, Math.round(res * 0.67));
   const ring = [];
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -381,7 +387,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     let v = inkFor.get(key);
     if (v === undefined) {
       const own = lineOf.get(from[t]);
-      const line = own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
+      const line = faint ? shade(colors[from[t]], side < 0 ? -14 : -24) : own ? (side < 0 ? mix(own, colors[from[t]], 0.35) : own) : outlineFor(colors[from[t]], crisp, side);
       v = idOf(corner ? `${line}80` : line);
       inkFor.set(key, v);
     }
@@ -451,9 +457,9 @@ const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 // of, right of and above the w x h box that parts may reach into (wings, tails, smears): the
 // sprite keeps its feet and centre where w x h puts them.
 export function rasterOf(b, scale = gfx.scale) {
-  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null } = b;
+  let { w, h, shapes, palette = {}, res = 1, soft = false, crisp = false, selout = false, pad = PAD, light = false, edge = null, noline = false } = b;
   if (res > 1) res = Math.max(res, Math.round(scale));
-  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge) };
+  return { w, h, res, crisp, pad, raster: rasterize(w, h, shapes, res, soft, palette, crisp, selout, pad, light, edge, noline) };
 }
 
 // A raster's colours, pixel by pixel (RGBA), so it can be handed from a worker to the page.

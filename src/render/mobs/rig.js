@@ -27,8 +27,81 @@ export const easeIn = (u) => clamp(u, 0, 1) ** 3;
 // One part's sprite: `shapes()` drawn in a w x h box (with `pad` room round it for anything that
 // pokes out), cached like any sprite.
 // (The box is rounded up to whole pixels: the rasterizer needs them.)
-export function part(key, w, h, shapes, pad = 6, res = 2) {
-  return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad }));
+// (The assembled figure is outlined as a whole by `figure`, so no dark line runs across a joint and
+// the pieces read as one body. A part keeps only a faint line of its own, a shade darker than its
+// colour, enough to part an arm from the body behind it; `line: false` drops even that, for
+// pieces that flow into each other: tail and neck segments.)
+export function part(key, w, h, shapes, pad = 6, res = 2, line = true) {
+  return sprite(`rig|${key}`, () => ({ w: Math.ceil(w), h: Math.ceil(h), shapes: shapes(), res, soft: 'cel', crisp: true, selout: true, pad, noline: line ? 'soft' : true }));
+}
+
+// ---------- One outline round the whole figure ----------
+// The parts are drawn into a canvas of their own (with the same transform as `ctx`), then laid
+// down with a single thin outline round the assembled silhouette, in a darkened shade of whatever
+// colour lies at each edge: lighter along the top where the light falls, darker below and behind
+// (the selective outline the rest of the monsters have). `box` is the figure's reach in the
+// drawing's own units, [x0, y0, x1, y1]; `alpha` fades the whole figure at once, so overlapping
+// parts don't show through each other as it fades.
+const FIG = { comp: null, dark: null, lite: null };
+const canvasOf = (k, w, h) => {
+  let c = FIG[k];
+  if (!c) c = FIG[k] = document.createElement('canvas');
+  if (c.width < w || c.height < h) {
+    c.width = Math.max(c.width, w);
+    c.height = Math.max(c.height, h);
+  }
+  return c;
+};
+// Outline width in art pixels.
+const LINE = 0.55;
+export function figure(ctx, box, alpha, draw) {
+  if (typeof document === 'undefined' || !ctx.getTransform) return draw(ctx);
+  const M = ctx.getTransform();
+  // The box's corners on the device, and the region they cover (plus room for the outline).
+  const pts = [[box[0], box[1]], [box[2], box[1]], [box[0], box[3]], [box[2], box[3]]].map(([x, y]) => [M.a * x + M.c * y + M.e, M.b * x + M.d * y + M.f]);
+  const scale = Math.hypot(M.a, M.b);
+  const o = Math.max(1, Math.round(LINE * scale));
+  const x0 = Math.floor(Math.min(...pts.map((p) => p[0]))) - o - 2;
+  const y0 = Math.floor(Math.min(...pts.map((p) => p[1]))) - o - 2;
+  const w = Math.ceil(Math.max(...pts.map((p) => p[0]))) + o + 2 - x0;
+  const h = Math.ceil(Math.max(...pts.map((p) => p[1]))) + o + 2 - y0;
+  if (w <= 0 || h <= 0 || w > 4096 || h > 4096) return draw(ctx);
+  const comp = canvasOf('comp', w, h);
+  const g = comp.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, w + 1, h + 1);
+  g.globalAlpha = 1;
+  g.setTransform(M.a, M.b, M.c, M.d, M.e - x0, M.f - y0);
+  draw(g);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  // The figure darkened two ways (its own colours, mixed toward the deep ink).
+  const tint = (k, a) => {
+    const c = canvasOf(k, w, h);
+    const t = c.getContext('2d');
+    t.setTransform(1, 0, 0, 1, 0, 0);
+    t.globalCompositeOperation = 'copy';
+    t.globalAlpha = 1;
+    t.drawImage(comp, 0, 0, w, h, 0, 0, w, h);
+    t.globalCompositeOperation = 'source-atop';
+    t.fillStyle = `rgba(36,24,52,${a})`;
+    t.fillRect(0, 0, w, h);
+    t.globalCompositeOperation = 'source-over';
+    return c;
+  };
+  const dark = tint('dark', 0.72);
+  const lite = tint('lite', 0.5);
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = alpha;
+  ctx.imageSmoothingEnabled = false;
+  // Copies nudged out round the silhouette: the lit top first, then the shaded sides and bottom
+  // over it; then the figure itself on top, so only the rim of the copies shows.
+  const ring = [];
+  for (let dy = -o; dy <= o; dy++) for (let dx = -o; dx <= o; dx++) if ((dx || dy) && dx * dx + dy * dy <= o * o + 0.5) ring.push([dx, dy]);
+  for (const [dx, dy] of ring) if (dy < 0) ctx.drawImage(lite, 0, 0, w, h, x0 + dx, y0 + dy, w, h);
+  for (const [dx, dy] of ring) if (dy >= 0) ctx.drawImage(dark, 0, 0, w, h, x0 + dx, y0 + dy, w, h);
+  ctx.drawImage(comp, 0, 0, w, h, x0, y0, w, h);
+  ctx.restore();
 }
 
 // Draws a part with its pivot (in its box) at (x, y), turned by `ang` radians.
@@ -149,27 +222,32 @@ export function makeRig(spec) {
         spec.under(ctx, m, a, S, matOf);
         ctx.restore();
       }
+      // The parts, assembled and outlined as one figure (faded as a whole).
+      const box = [-spec.w * 1.3, -spec.h * 1.45, spec.w * 1.3, spec.h * 0.25];
+      const partLook = { ...look, alpha: 1 };
+      figure(ctx, box, look.alpha, (fc) => {
       for (const p of spec.parts) {
         // (A part with no picture is just a joint for others to hang from.)
         if (!p.s || (p.when && !p.when(a, S))) continue;
         // (A part may fade in and out (`alpha`), and may show only a window of itself (`clip`, a
         // rect around its pivot): one drawing cut in two at a seam a sash or a belt hides.)
-        const lk = p.alpha ? { ...look, alpha: look.alpha * clamp(p.alpha(a, S), 0, 1) } : look;
+        const lk = p.alpha ? { ...partLook, alpha: clamp(p.alpha(a, S), 0, 1) } : partLook;
         if (lk.alpha <= 0.01) continue;
         const M = matOf(p);
         const s = p.s(a, S);
         const pv = typeof p.pivot === 'function' ? p.pivot(a, S) : p.pivot;
-        ctx.save();
-        ctx.transform(...M);
+        fc.save();
+        fc.transform(...M);
         if (p.clip) {
           const [cx, cy, cw, ch] = p.clip(a, S);
-          ctx.beginPath();
-          ctx.rect(cx, cy, cw, ch);
-          ctx.clip();
+          fc.beginPath();
+          fc.rect(cx, cy, cw, ch);
+          fc.clip();
         }
-        blit(ctx, s, -pv[0], -pv[1], lk);
-        ctx.restore();
+        blit(fc, s, -pv[0], -pv[1], lk);
+        fc.restore();
       }
+      });
       if (spec.fx) {
         ctx.save();
         spec.fx(ctx, m, a, S, matOf);
@@ -207,7 +285,7 @@ export function chainParts(name, { parent, at, segs, key, color, shape, rot, whe
   return segs.map(([len, w0, w1], i) => {
     const h = Math.ceil(Math.max(w0, w1) + 4);
     const x0 = w0 / 2 + 2;
-    const s = () => part(`${key}|seg${i}`, Math.ceil(len + w0 / 2 + w1 / 2 + 4), h, () => (shape ? shape(i, len, w0, w1, x0, h / 2) : limb([x0, h / 2], [x0 + len, h / 2], w0, w1, color)));
+    const s = () => part(`${key}|seg${i}`, Math.ceil(len + w0 / 2 + w1 / 2 + 4), h, () => (shape ? shape(i, len, w0, w1, x0, h / 2) : limb([x0, h / 2], [x0 + len, h / 2], w0, w1, color)), 6, 2, false);
     return { name: `${name}${i}`, parent: i ? `${name}${i - 1}` : parent, pivot: [x0, h / 2], at: i ? () => [segs[i - 1][0], 0] : at, rot: (S, a) => rot(S, a, i), s, when };
   });
 }

@@ -153,6 +153,17 @@ carry an improvement across every part of the game it applies to.
   into the blow, dust where the hands land: Gnarlroot). Feet or roots that walk must plant: one
   half held still against the floor (drifting back under the body exactly as far as it moves)
   while the other lifts and swings forward (`gnStep`, `footAt`).
+- **Rigged bosses are outlined once, round the whole figure (the player's call, 2026-11-06: "too
+  much outline, parts not connected").** Parts are drawn together first and the assembled
+  silhouette gets one thin outline (about half an art pixel) in a darkened shade of its own
+  colours, lighter on top (`figure` in `mobs/rig.js`). Each part keeps only a faint line a shade
+  darker than its own colour, so an arm still parts from the body behind it, and chained pieces
+  (tail and neck segments) have none, so they flow into each other. A dark ring drawn into the
+  art (Gnarlroot's face plate) counts as outline too: keep such rims thin and shaded, not near
+  black.
+- **Creature faces draw both eyes the same size** (the player found a smaller far eye lopsided;
+  `cuteFace` in `mobs/critter.js`, the bee queen). The 70% far eye stays only on the 3/4 anime
+  faces of human characters.
 - One skeleton for both rig and still frames: draw each piece round its own pivot, list the bones
   once, and place them by sprite for the rig and by shape (move + spin) for the frames (Prismaris).
 - Face-kit shapes (`mobs/faces.js`) come out in plain coordinates: carry them through your part

@@ -93,12 +93,13 @@ function beeFace(out, hx, hy, k, mood, attacking, { queen = false } = {}) {
   const ink = queen ? '#2e1630' : '#2a1a2e';
   const ey = hy + 0.4 * k;
   const far = [hx - 0.4 * k, ey];
-  const near = [hx + 3.4 * k, ey - 0.2 * k];
+  const near = [hx + 3.4 * k, ey];
   const em = angry ? 'angry' : hurt ? 'hurt' : happy ? 'happy' : mood === 'blink' ? 'blink' : 'idle';
   // A Bumble's eyes are round and warm honey; the queen's narrower, violet, lashed with a wing.
   const eo = queen ? { iris: '#a04ad0', ink, lash: 1.25, wing: 1 } : { iris: '#c98a2e', ink, lash: 1 };
-  const [fw, fh, nw, nh] = queen ? [1.4, 1.8, 1.8, 2.1] : [1.5, 1.9, 1.9, 2.3];
-  if (dead) out.push(...deadEye(far[0], far[1], 1.4 * k, { type: 'swirl', s: -1, c: ink }), ...deadEye(near[0], near[1], 1.7 * k, { type: 'swirl', c: ink }));
+  // (Both eyes the same size, as on every creature face.)
+  const [fw, fh, nw, nh] = queen ? [1.6, 1.95, 1.6, 1.95] : [1.7, 2.1, 1.7, 2.1];
+  if (dead) out.push(...deadEye(far[0], far[1], 1.55 * k, { type: 'swirl', s: -1, c: ink }), ...deadEye(near[0], near[1], 1.55 * k, { type: 'swirl', c: ink }));
   else out.push(...simpleEye(far[0], far[1], { ...eo, s: -1, w: fw * k, h: fh * k, mood: em }), ...simpleEye(near[0], near[1], { ...eo, s: 1, w: nw * k, h: nh * k, mood: em }));
   if (!dead) out.push(...cheek(hx - 2.4 * k, ey + 2.4 * k, 1 * k, { lines: happy ? 2 : 0 }), ...cheek(hx + 5.4 * k, ey + 2.6 * k, 1.1 * k, { lines: happy || hurt ? 3 : 0 }));
   // The mouth on the centre line, between the eyes and nearer the far one.
