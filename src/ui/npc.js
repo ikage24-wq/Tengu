@@ -9,7 +9,7 @@ import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
-import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
+import { questState, acceptQuest, acceptBlocker, completeQuest, completeBlocker, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
 import { advanceJob, wornGear, giveStarterWeapon } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn, loadMap } from '../world/world.js';
@@ -245,6 +245,8 @@ export function npcWindow(ui, state, world) {
     choices.unshift({ label: `Take all ${fresh.length} quests`, sub: fresh.map((id) => QUESTS[id].name).join(' · '), icon: 'scroll', primary: true, run: () => {
       const took = fresh.filter((id) => acceptQuest(char, id));
       for (const id of took) world.log(`Quest accepted: ${QUESTS[id].name}`, '#bff0dc');
+      // (One that gives you something to carry waits if the bag has no room for it.)
+      for (const id of fresh.filter((q) => !took.includes(q))) world.log(`${QUESTS[id].name}: ${acceptBlocker(char, id) ?? "can't be taken right now."}`, '#ffb3c6');
       if (took.length) questAccepted(world, took);
     } });
   }
@@ -500,7 +502,11 @@ function questPage(ui, state, world, npc, area, key) {
 
   const enter = ui.input.pressed?.has('Enter') && chars >= words.length;
   if (st === 'available' && (button(ui, tx + tw - 154, by, 74, 17, 'Accept', { primary: true }) || enter)) {
-    acceptQuest(char, dlg.quest);
+    const full = acceptBlocker(char, dlg.quest);
+    if (full || !acceptQuest(char, dlg.quest)) {
+      world.log(full ?? "That quest can't be taken right now.", '#ffb3c6');
+      return;
+    }
     world.log(`${q.story ? 'Story' : 'Quest'} accepted: ${q.name}`, '#bff0dc');
     questAccepted(world, [dlg.quest]);
     // A story quest opens with its scene.
@@ -529,7 +535,7 @@ function questPage(ui, state, world, npc, area, key) {
       const next = q.scenes?.done ? null : (npc.quests ?? []).find((id) => QUESTS[id].prereq === dlg.quest && questState(char, id) === 'available');
       dlg.quest = next ?? null;
     } else {
-      world.log('Make room in your bag first.', '#ffb3c6');
+      world.log(completeBlocker(char, dlg.quest) ?? 'Make room in your bag first.', '#ffb3c6');
     }
     return;
   }

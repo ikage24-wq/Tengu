@@ -66,8 +66,37 @@ export function objectiveText(o) {
   return { verb: 'Go to', name: o.place ?? MAPS[o.map].name };
 }
 
+// Whether the bag can take some things after giving up others, worked out on a copy of it (so
+// stacks, freed cells and every tab count exactly). `adds` are item ids with qty, or whole items.
+function bagFits(inv, removes, adds) {
+  const sim = structuredClone(inv);
+  for (const [id, qty] of removes) removeItem(sim, id, qty);
+  return adds.every(([item, qty]) => addItem(sim, item, qty));
+}
+// The tab (as players see it) a quest's things need room in, or null when they fit.
+const TAB_NAMES = { equip: 'Equip', use: 'Use', etc: 'Etc', cash: 'Cash' };
+function fullTab(inv, removes, adds) {
+  if (bagFits(inv, removes, adds)) return null;
+  for (const [item] of adds) {
+    const id = typeof item === 'object' ? item.id : item;
+    if (!bagFits(inv, removes, [[item, 1]])) return TAB_NAMES[ITEMS[id].type] ?? 'your';
+  }
+  return TAB_NAMES[ITEMS[(typeof adds[0][0] === 'object' ? adds[0][0].id : adds[0][0])].type] ?? 'your';
+}
+
+// Why a quest can't be taken right now for lack of room (the things it hands you to carry), or
+// null.
+export function acceptBlocker(char, id) {
+  const gives = (QUESTS[id]?.gives ?? []).map((g) => [g.id, g.qty ?? 1]);
+  if (!gives.length) return null;
+  const tab = fullTab(char.inventory, [], gives);
+  return tab ? `Make room in your ${tab} tab first: this quest gives you something to carry.` : null;
+}
+
+// Returns true when taken; false when it isn't available or the bag has no room for what it gives
+// you to carry (see acceptBlocker), so a delivery is never taken empty-handed.
 export function acceptQuest(char, id) {
-  if (questState(char, id) !== 'available') return false;
+  if (questState(char, id) !== 'available' || acceptBlocker(char, id)) return false;
   char.quests[id] = { state: 'active', kills: {}, marks: {} };
   // Things to carry for the quest (a letter to deliver).
   for (const g of QUESTS[id].gives ?? []) addItem(char.inventory, g.id, g.qty ?? 1);
@@ -160,14 +189,44 @@ export function waitingToTalk(char, npcId) {
   });
 }
 
+// What a quest still has you carrying of the things it gave you (a parcel not yet delivered), so
+// only that is taken back when it ends, never another quest's copy of the same item.
+function stillCarried(char, id) {
+  const q = QUESTS[id];
+  const rec = char.quests[id];
+  return (q.gives ?? []).map((g) => {
+    const delivered = q.objectives.filter((o, i) => o.type === 'deliver' && o.item === g.id && rec?.marks?.[i]).length;
+    return [g.id, Math.min(countItem(char.inventory, g.id), Math.max(0, (g.qty ?? 1) - delivered))];
+  }).filter(([, n]) => n > 0);
+}
+
+// The quest's hand-in and leftovers to take, and the reward items to give.
+function rewardMoves(char, id) {
+  const q = QUESTS[id];
+  const removes = [...q.objectives.filter((o) => o.type === 'collect').map((o) => [o.item, o.count]), ...stillCarried(char, id)];
+  const adds = q.rewards.items.map((r) => {
+    const rid = rewardId(char, r);
+    return ITEMS[rid].type === 'cash' ? [{ id: rid }, 1] : [rid, r.qty];
+  });
+  return { removes, adds };
+}
+
+// Why a ready quest can't be handed in for lack of room in the bag (any tab), or null.
+export function completeBlocker(char, id) {
+  if (!QUESTS[id]) return null;
+  const { removes, adds } = rewardMoves(char, id);
+  if (!adds.length) return null;
+  const tab = fullTab(char.inventory, removes, adds);
+  return tab ? `Make room in your ${tab} tab first.` : null;
+}
+
 // Hands in collected items and pays out rewards. Returns the rewards, or null if not ready.
-// Fails without changing anything if the bag can't hold the reward items.
+// Fails without changing anything if the bag can't hold every reward item (in any tab).
 export function completeQuest(char, id) {
   if (questState(char, id) !== 'ready') return null;
   const q = QUESTS[id];
-  const spareEquip = TAB_SIZE - char.inventory.equip.length;
-  const equipRewards = q.rewards.items.filter((r) => ITEMS[r.id].type === 'equip').reduce((n, r) => n + r.qty, 0);
-  if (equipRewards > spareEquip) return null;
+  if (completeBlocker(char, id)) return null;
+  const carried = stillCarried(char, id);
 
   for (const o of q.objectives) if (o.type === 'collect') removeItem(char.inventory, o.item, o.count);
   const items = q.rewards.items.map((r) => ({ ...r, id: rewardId(char, r) }));
@@ -197,8 +256,9 @@ export function completeQuest(char, id) {
   const levels = gainExp(char, q.rewards.exp);
   char.quests[id] = q.daily ? { state: 'done', day: today() } : { state: 'done' };
   if (q.daily) char.dailiesDone = (char.dailiesDone ?? 0) + 1;
-  // Anything left over from carrying it (a quest item never delivered) goes.
-  for (const g of q.gives ?? []) removeItem(char.inventory, g.id, countItem(char.inventory, g.id));
+  // What this quest still had you carrying goes (a parcel never delivered); another quest's copy
+  // of the same item stays.
+  for (const [gid, n] of carried) removeItem(char.inventory, gid, n);
   return { ...q.rewards, items, levels, mount };
 }
 
