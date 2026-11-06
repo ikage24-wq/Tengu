@@ -827,10 +827,11 @@ function gnArm(back) {
 }
 
 // Roots in a 132 x 26 box, the trunk's foot at (66, 22) on the floor: they spread and grip it.
-function gnRoots() {
+// (`side` draws one half only, -1 behind or 1 in front, so the rig can step them in turn.)
+function gnRoots(side = 0) {
   const B = GN.bark;
   const out = [];
-  for (const s of [-1, 1]) for (let i = 0; i < 3; i++) {
+  for (const s of side ? [side] : [-1, 1]) for (let i = 0; i < 3; i++) {
     const pts = [[66 + s * (8 + i * 6), 12 + i * 2], [66 + s * (20 + i * 9), 12.6 + i * 1.6], [66 + s * (32 + i * 12), 18.4], [66 + s * (44 + i * 14), 20.8]];
     out.push(strand(pts, (t) => (8 - i) * (1 - t * 0.75), i === 1 ? B.base : B.sh), F(strand(pts.map(([x, y]) => [x, y - 1.4]), (t) => 1.4 * (1 - t), B.hi)));
     if (i === 1) out.push(...limb(pts[1], [pts[1][0] + s * 5, 21], 2, 1.2, B.sh));
@@ -958,33 +959,56 @@ const tuskarRig = makeRig({
 // shuffles his roots to walk; for the slam he rears back with both arms high, then brings them
 // crashing down in front.
 const gnParts = {
-  roots: () => part('gnarl|roots', 132, 26, gnRoots),
+  roots: (side) => part(`gnarl|roots|${side}`, 132, 26, () => gnRoots(side)),
   trunk: () => part('gnarl|trunk', 72, 90, gnTrunk, 8),
   face: (mood, atk) => part(`gnarl|face|${mood}|${atk}`, 50, 34, () => gnFace(mood, atk)),
   crown: () => part('gnarl|crown', 96, 44, gnCrown, 10),
   arm: (back) => part(`gnarl|arm|${back ? 'b' : 'f'}`, 22, 42, () => gnArm(back)),
 };
 
+// Where a root half sits as he walks: planted for half the step cycle, then lifted and carried
+// forward a stride's worth (the body covers `stride` a cycle, so a planted half drifts back by half
+// that against the body).
+const GN_STRIDE = 44;
+function gnStep(a, off) {
+  const u = ((a.wp / TAU + off) % 1 + 1) % 1;
+  const w = a.walkW;
+  if (u < 0.5) return [(0.25 - u) * GN_STRIDE * w, 0];
+  const v = (u - 0.5) * 2;
+  const e = v * v * (3 - 2 * v);
+  return [(-0.25 + e * 0.5) * GN_STRIDE * w, -Math.sin(v * Math.PI) * 3.4 * w];
+}
+
 const gnarlRig = makeRig({
   w: 100,
   h: 136,
-  stride: 44,
+  stride: GN_STRIDE,
   fast: ['armF', 'armB', 'tilt', 'y'],
   kick: { tilt: -1.2, crown: 3 },
-  springs: { crown: [70, 5], roots: [200, 18] },
+  springs: { crown: [70, 5] },
   pose(m, a) {
     const t = a.t;
     const b = Math.sin(t * 1.8);
     const s = Math.sin(a.wp);
-    const idle = { tilt: Math.sin(t * 0.9) * 0.03, y: -b * 1.4, armF: -0.4 + Math.sin(t * 1.1) * 0.06, armB: 0.4 + Math.sin(t * 1.3) * 0.06, roots: 0 };
-    const walk = { tilt: s * 0.05, y: -Math.abs(s) * 2, armF: -0.4 - s * 0.25, armB: 0.4 + s * 0.25, roots: s * 3 };
-    const antic = { tilt: -0.12, y: -4, armF: -2.7, armB: 2.7, roots: 0 };
-    const strike = { tilt: 0.14, y: 3, armF: -0.9, armB: -0.5, roots: 0 };
+    const idle = { tilt: Math.sin(t * 0.9) * 0.03, y: -b * 1.4, armF: -0.4 + Math.sin(t * 1.1) * 0.06, armB: 0.4 + Math.sin(t * 1.3) * 0.06 };
+    // Walking, he rocks onto the root half that's planted and his arms swing against it.
+    const walk = { tilt: -s * 0.045, y: -Math.abs(Math.cos(a.wp)) * 2.2, armF: -0.4 + s * 0.22, armB: 0.4 + s * 0.22 };
+    // The wind-up: drawn up tall and leaning back, both arms high over his crown, trembling as he
+    // gathers himself (more and more as the slam comes).
+    const shiver = Math.sin(t * 38) * 0.05 * a.ph.antic * a.ph.antic;
+    const antic = { tilt: -0.1 + shiver * 0.3, y: -7, armF: -2.85 + shiver, armB: 2.85 - shiver };
+    // The slam: both arms crash down wide at his sides, palms flat on the floor, his whole top
+    // sinking into the blow.
+    const strike = { tilt: 0.03, y: 12, armF: -0.82, armB: 0.82 };
     return stateBlend(a, idle, walk, antic, strike);
   },
-  follow: (S) => ({ crown: -S.tilt * 0.8 }),
+  // (The crown trails his lean, and whips down after his arms as they come crashing in.)
+  follow: (S) => ({ crown: -S.tilt * 0.8 + Math.max(0, S.y) * 0.025 }),
   parts: [
-    { name: 'roots', pivot: [66, 22], at: (S) => [S.roots * 0.3, 0], s: () => gnParts.roots() },
+    // The roots step in turn: one half grips the floor (sliding back under him exactly as far as
+    // he moves, so it stays put) while the other lifts and reaches forward.
+    { name: 'rootB', pivot: [66, 22], at: (S, a) => gnStep(a, 0), s: () => gnParts.roots(-1) },
+    { name: 'rootF', pivot: [66, 22], at: (S, a) => gnStep(a, 0.5), s: () => gnParts.roots(1) },
     { name: 'armB', parent: 'trunk', pivot: [11, 4], at: (S) => [-28, -42 + S.y], rot: (S) => S.armB, s: () => gnParts.arm(true) },
     // (Lifted as he rocks, so the flared foot's corners never dig into the floor.)
     { name: 'trunk', pivot: [36, 86], at: (S) => [0, Math.min(0, S.y * 0.3) - 34 * (Math.hypot(S.tilt, 0.02) - 0.02)], rot: (S) => S.tilt, s: () => gnParts.trunk() },
@@ -1002,7 +1026,19 @@ const gnarlRig = makeRig({
       ctx.fillStyle = g;
       ctx.fillRect(-22, -48, 48, 48);
     });
-    // The slam: a shock of leaves and purple spores out along the floor.
+    // The slam: dust bursting out from under both palms, then a shock of leaves and purple spores
+    // out along the floor.
+    if (a.ph.since >= 0.04 && a.ph.since < 0.6) {
+      const u = (a.ph.since - 0.04) / 0.56;
+      const e = 1 - (1 - u) * (1 - u);
+      for (const side of [-1, 1]) for (let k = 0; k < 4; k++) {
+        ctx.globalAlpha = a.alpha * (1 - u) * 0.75;
+        ctx.fillStyle = k % 2 ? '#e8dccc' : '#d8c8b4';
+        ctx.beginPath();
+        ctx.arc(side * (54 + e * (8 + k * 7)), -3 - e * (3 + k * 2.5), 2.6 + e * (3 + k), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     if (a.ph.since >= 0 && a.ph.since < 0.5) {
       const u = a.ph.since / 0.5;
       ctx.globalAlpha = a.alpha * (1 - u);

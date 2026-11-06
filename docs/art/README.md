@@ -141,6 +141,15 @@ carry an improvement across every part of the game it applies to.
   bone takes the beat a little later than the one before it, and the body rises a beat after the
   push (the retired summons did this; they are in git history). Companions that shoot on a timer
   wind up while the next shot is due, strike on the shot, hold about 0.2 s, then settle.
+- Chibi monsters have the hero's problem with big heads: a raised near arm crosses the face. Keep
+  the paw low (behind the collar) and swing the held thing round it, and hold a staff high up its
+  shaft so the top rides just above the paw (Prismaris, `mobs/bosses.js`). A slam that ends near the
+  rest pose reads as nothing: give the impact its own silhouette (arms planted wide, the top sinking
+  into the blow, dust where the hands land: Gnarlroot). Feet or roots that walk must plant: one
+  half held still against the floor (drifting back under the body exactly as far as it moves)
+  while the other lifts and swings forward (`gnStep`, `footAt`).
+- One skeleton for both rig and still frames: draw each piece round its own pivot, list the bones
+  once, and place them by sprite for the rig and by shape (move + spin) for the frames (Prismaris).
 - Face-kit shapes (`mobs/faces.js`) come out in plain coordinates: carry them through your part
   transform, or the face stays put while the head moves.
 - Big weapons on the chibi (the Warrior line's greatsword, axe and spear, the player's pick: big

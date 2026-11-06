@@ -1,547 +1,381 @@
-// Monster art: the Crystal Dragon King (crystalking, Prismaris): a crowned crystal dragon with a
-// prism scepter, its frames built on the hollow module's joint transforms, chains, ramps and shape
-// helpers, and its cutout rig. (The Hollow bosses that once lived here are in hollowfolk.js.) Faces
-// right, feet at the bottom.
+// Monster art: Prismaris, the Crystal King (crystalking). Redesigned 2026-11-06 in the chibi
+// creature style of the dungeon bosses (Gnarlroot, Tuskar, the Myconid Queen): the old angular,
+// plated dragon read as a machine beside them and his face was lost at game size.
+//
+// Now a round, pear-shaped little dragon king standing on stubby feet: lilac scales over a cream
+// scaled belly, a big round head with a soft snout and a big face (ice-blue eyes) that holds the
+// strongest contrast, small crystal horns and fins, a gold crown a size too big for him, a plum
+// royal cape with an ermine collar, little rounded crystal wings, crystal spines down his back and
+// tail, and the prism scepter. He's pompous and secretly scared of the dark (he's been drinking
+// the island's light): his idle is a royal sway with the scepter held just so.
+//
+// One build serves both the live rig and the still frames: each piece is drawn round its own
+// pivot, and the skeleton (`BONES`) places them, by sprite for the rig and by shape for the frames.
+// The slam: he rises onto his toes with the scepter wound high behind his crown (the floor glows
+// where it'll land), swings it over in one arc and smashes it into the floor in front of him, and
+// crystals burst up there. Faces right, feet on the floor.
 
-import { F, C, mix } from './kit.js';
-import { brow, deadEye, eye } from './faces.js';
-import * as H from './hollow.js';
-import { part, makeRig, stateBlend, chainParts } from './rig.js';
+import { E, T, F, R, mix, ramp, crescent, shine, TAU, O, arcPts, limb, spin, move, strand, star, cuteFace, blob } from './critter.js';
+import { part, makeRig, stateBlend } from './rig.js';
 
-const { ID, joint, at, place, squash, ik, chainPts, footStep, timing, limb, limbR, fp, fov, pg, star, ramp, actOf } = H;
-const rball = H.ball;
-const rtaper = H.taper;
-const rswoosh = H.swoosh;
+// ---------- Colours ----------
 
-const TAU = Math.PI * 2;
-
-// ---------- Small math helpers ----------
-
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const lerp = (a, b, t) => a + (b - a) * t;
-// Picks the attack frame's value from a list (or the fallback outside an attack).
-const key = (att, list, other) => (att >= 0 ? list[Math.min(att, list.length - 1)] : other);
-
-// A flat ring on the floor (an ellipse band) for telegraphs.
-function ringPts(x, y, rx, ry, w) {
-  const o = [];
-  const i = [];
-  for (let k = 0; k <= 20; k++) {
-    const a = (k / 20) * TAU;
-    o.push([x + Math.cos(a) * rx, y + Math.sin(a) * ry]);
-    i.push([x + Math.cos(a) * (rx - w), y + Math.sin(a) * Math.max(0.3, ry - w * 0.3)]);
-  }
-  return [...o, ...i.reverse()];
-}
-
-// ---------- Prismaris, the Crystal King ----------
-// A crowned crystal dragon standing upright. Signature: faceted crystal wings and crystal spines
-// over a lilac body, a gold crown, and the prism scepter. Crystal is drawn as a transparent gem:
-// the facet facing the light is the darkest and the far facet glows, with a glint on the lit
-// edge. Rig: hips > torso (pitch) > neck chain > head > jaw and crown; torso > wing roots (arm,
-// forearm, four finger spars whose tips trail), the scepter arm (IK to the hand, the scepter
-// rides the hand), and the tail chain; two digitigrade IK legs with planted feet. The walk is a
-// heavy royal stomp. The attack lifts the scepter overhead and back (held: the prism charges and
-// the floor glows where it will land), swings it down into the floor in one arc, and holds the
-// crystal burst before settling.
-
-const DK = {
-  scale: ramp('#ad9cf0', true),
-  far: ramp('#8f7fdc', true),
-  belly: ramp('#f1e9ff', true),
-  gold: ramp('#ffd36b'),
-  ermine: ramp('#fffaf4', true),
-  mouth: '#3d2a6b',
+const PK = {
+  scale: ramp('#b2a0f0', { step: 10, turn: 12, sat: -4 }),
+  far: ramp('#9686dc', { step: 10, turn: 12, sat: -4 }),
+  belly: ramp('#f6eeff', { step: 7, turn: 10, sat: -6 }),
+  gold: ramp('#ffd36b', { step: 11, turn: 10 }),
+  cape: ramp('#8a58c0', { step: 10, turn: 10 }),
+  ermine: '#fffaf4',
   // Crystal tones: [the face toward the light (darkest), body, the far face (glowing), glint].
   ice: ['#5aa6dc', '#9fe3f8', '#dffaff', '#ffffff'],
   rose: ['#c25ba6', '#f2a0d4', '#ffe0f2', '#ffffff'],
   lilac: ['#7d6bd6', '#b9a8ff', '#ece6ff', '#ffffff'],
-  mint: ['#3fae8a', '#8cecc6', '#dcfff0', '#ffffff'],
 };
+const IRIS = '#3fb8e8';
 const LIGHT = [0.6, -0.8];
-const dimK = (K) => K.map((c, i) => (i === 3 ? mix(c, '#c9c0ff', 0.4) : mix(c, '#6a5ab8', 0.28)));
 
-// A crystal shard from (x, y) toward angle a: the facet facing the light darkest, the far facet
-// glowing, a glint on the lit edge near the tip.
+// ---------- Crystal ----------
+
+// A crystal shard from (x, y) toward angle a (radians): the facet facing the light darkest, the far
+// facet glowing, a glint on the lit edge near the tip; outlined in a deep shade of its own colour.
 function prism(x, y, a, len, w, K, glint = true) {
   const c = Math.cos(a);
   const s = Math.sin(a);
   const q = (u, v) => [x + c * u - s * v, y + s * u + c * v];
   const lit = -s * LIGHT[0] + c * LIGHT[1] > 0 ? 1 : -1;
-  const out = [fp([q(-0.5, -w - 0.5), q(len * 0.62, -w - 0.5), q(len + 0.8, 0), q(len * 0.62, w + 0.5), q(-0.5, w + 0.5)], mix(K[0], '#2a2035', 0.45))];
-  out.push(fp([q(0, -w), q(len * 0.62, -w), q(len, 0), q(len * 0.62, w), q(0, w)], K[1]));
-  out.push(fp([q(0, lit * w), q(len * 0.62, lit * w), q(len, 0), q(0, lit * w * 0.12)], K[0]));
-  out.push(fp([q(len * 0.12, -lit * w * 0.8), q(len * 0.58, -lit * w * 0.8), q(len * 0.86, -lit * w * 0.14), q(len * 0.12, -lit * w * 0.22)], K[2]));
-  if (glint) out.push(fp([q(len * 0.5, lit * w * 0.85), q(len * 0.74, lit * w * 0.4), q(len * 0.56, lit * w * 0.38)], K[3]));
+  const out = [T([q(0, -w), q(len * 0.62, -w), q(len, 0), q(len * 0.62, w), q(0, w)], K[1])];
+  out.push(F(T([q(0, lit * w), q(len * 0.62, lit * w), q(len, 0), q(0, lit * w * 0.12)], K[0])));
+  out.push(F(T([q(len * 0.12, -lit * w * 0.8), q(len * 0.58, -lit * w * 0.8), q(len * 0.86, -lit * w * 0.14), q(len * 0.12, -lit * w * 0.22)], K[2])));
+  if (glint) out.push(F(T([q(len * 0.5, lit * w * 0.85), q(len * 0.74, lit * w * 0.4), q(len * 0.56, lit * w * 0.38)], K[3])));
   return out;
 }
-// A round gem: dark toward the light, glowing on the far side, a glint.
-const gemDot = (x, y, r, K) => [fov(x, y, r + 0.4, r + 0.4, mix(K[0], '#2a2035', 0.4), 0, 12), fov(x, y, r, r, K[1], 0, 12), fov(x + r * 0.28, y - r * 0.28, r * 0.6, r * 0.55, K[0], 0, 10), fov(x - r * 0.35, y + r * 0.38, r * 0.42, r * 0.34, K[2], 0, 8), fov(x + r * 0.3, y - r * 0.45, Math.max(0.4, r * 0.22), Math.max(0.4, r * 0.22), K[3], 0, 6)];
-// A wing pane between spars (A the wrist, B the leading spar tip, C the trailing one).
-function pane(A, B, C, K) {
-  // A clean cut gem pane: split from the root to the outer edge into two flat facets (the one
-  // toward the light darker, the far one glowing), a glowing band inside the outer edge, and one
-  // straight glint along the leading edge.
+// A round gem set in gold work: dark toward the light, glowing on the far side, a glint.
+const gem = (x, y, r, K) => [O(x, y, r, r, 0, K[1], 12), F(O(x + r * 0.28, y - r * 0.3, r * 0.6, r * 0.5, 0, K[0], 10)), F(O(x - r * 0.3, y + r * 0.35, r * 0.45, r * 0.35, 0, K[2], 8)), F(E(x + r * 0.32, y - r * 0.42, Math.max(0.45, r * 0.24), Math.max(0.45, r * 0.24), K[3]))];
+// A gem pane of a wing from the wrist A out between finger tips B and C, its trailing edge
+// scalloped in between (`bulge` < 0) like a dragon's wing.
+function petal(A, B, C, K, bulge = -0.14) {
+  const M = [(B[0] + C[0]) / 2, (B[1] + C[1]) / 2];
+  const out0 = [M[0] + (M[0] - A[0]) * bulge, M[1] + (M[1] - A[1]) * bulge];
+  const edge = [B, [B[0] * 0.5 + out0[0] * 0.5, B[1] * 0.5 + out0[1] * 0.5], out0, [C[0] * 0.5 + out0[0] * 0.5, C[1] * 0.5 + out0[1] * 0.5], C];
   const m = (U, V, t) => [U[0] + (V[0] - U[0]) * t, U[1] + (V[1] - U[1]) * t];
-  const M = m(B, C, 0.45);
   return [
-    pg([A, B, C], K[1]),
-    fp([A, B, M], mix(K[0], K[1], 0.35)),
-    fp([m(A, M, 0.62), M, C, m(A, C, 0.7)], K[2]),
-    fp([m(A, B, 0.5), m(A, B, 0.86), m(m(A, B, 0.86), M, 0.12), m(m(A, B, 0.5), M, 0.1)], K[3]),
+    T([A, ...edge], K[1]),
+    // (The half toward the light is the darker facet, the far half glows, a band of glow inside
+    // the rim, one straight glint along the leading edge.)
+    F(T([A, B, edge[1], out0], mix(K[0], K[1], 0.4))),
+    F(T([m(A, out0, 0.6), out0, edge[3], C, m(A, C, 0.66)], K[2])),
+    F(T([m(A, B, 0.45), m(A, B, 0.85), m(m(A, B, 0.85), out0, 0.14), m(m(A, B, 0.45), out0, 0.1)], K[3])),
   ];
 }
 
-function dragon(pose, f, mood) {
-  const { walk, att, p, it, br, hurt, dead, angry, happy } = timing(pose, f, mood);
-  const P = DK;
-  const floor = 147;
-  let by = 0;
-  let pitch = 0.14;
-  let headA = 0;
-  let neckA = 0;
-  let jaw = 0.04;
-  let flap = 0;
-  if (walk) {
-    by = 2.2 * Math.cos(2 * p - 0.5);
-    pitch = 0.16 + 0.025 * Math.sin(2 * p - 1);
-    headA = -0.04 * Math.sin(2 * p - 1.8);
-    flap = 0.08 * Math.sin(2 * p - 1.6);
-  } else if (att >= 0) {
-    by = [-1.5, -2.5, 4, 3.4, 1][att];
-    pitch = [0.02, -0.04, 0.34, 0.3, 0.18][att];
-    headA = [-0.2, -0.28, 0.2, 0.16, 0.02][att];
-    neckA = [-0.1, -0.14, 0.12, 0.1, 0][att];
-    jaw = [0.3, 0.42, 0.5, 0.35, 0.1][att];
-    flap = [-0.3, -0.42, 0.25, 0.18, 0.05][att];
-  } else {
-    by = -0.9 * br;
-    pitch = 0.14 + 0.012 * Math.sin(it - 0.6);
-    headA = 0.04 * Math.sin(it - 1.4) + (f === 3 ? 0.03 : 0);
-    flap = 0.06 * Math.sin(it - 1.9);
-  }
-  if (angry && att < 0) {
-    flap -= 0.3;
-    headA += 0.1;
-    jaw = 0.4;
-    pitch += 0.04;
-  }
-  if (hurt) {
-    pitch -= 0.12;
-    headA -= 0.3;
-    jaw = 0.25;
-    flap += 0.15;
-  }
-  if (happy && att < 0) headA -= 0.08;
-  if (dead) {
-    // Collapsed: slumped forward onto its belly, the neck laid along the floor, the wings
-    // folded and draped down to the floor behind it, their panes gone dull.
-    by = 22;
-    pitch = 0.92;
-    neckA = 0.3;
-    headA = 0.35;
-    jaw = 0.3;
-  }
-  const MB = joint(ID, 62, 110 + by, pitch);
+// ---------- The pieces, each round its own pivot ----------
+// Coordinates in each builder are relative to the pivot (the joint it turns on); `BOX` gives each
+// piece's sprite box and where the pivot sits in it.
+
+// The body: hips at (0, 0), a pear of lilac scales rising to the shoulders at about y -44, the cream
+// belly with soft scale bands, the far paw resting on the belly, crystal spines down the back.
+function pkBody() {
+  const S = PK.scale;
+  const B = PK.belly;
   const out = [];
-  const lagW = (k) => (dead ? 0 : walk ? 0.07 * Math.sin(2 * p - 1.6 - k * 0.8) : att >= 0 ? [0.1, 0.12, -0.15, -0.1, 0][att] * (k + 1) * 0.4 : 0.05 * Math.sin(it - 1.9 - k * 0.8));
-
-  // Wings: arm and forearm from the root, four finger spars fanning back from the wrist, crystal
-  // panes between them; the far wing sits higher and darker.
-  const wing = (root, far) => {
-    const a1 = dead ? -2.15 + (far ? 0.3 : 0) : -1.95 + flap + (far ? 0.3 : 0) + pitch * 0.5;
-    const E = [root[0] + Math.cos(a1) * 18, root[1] + Math.sin(a1) * 18];
-    const a2 = dead ? a1 - 1.25 : a1 + 0.5 + lagW(0) * 0.6 + flap * 0.3;
-    const W = [E[0] + Math.cos(a2) * 18, E[1] + Math.sin(a2) * 18];
-    const tips = (dead ? [-0.15, -0.55, -0.95, -1.35] : [-0.95, -1.5, -2.1, -2.6]).map((d, k) => {
-      const a = a2 + d + lagW(k + 1);
-      const l = [26, 30, 30, 26][k];
-      return [clamp(W[0] + Math.cos(a) * l, 3, 147), clamp(W[1] + Math.sin(a) * l, 3, floor - 2)];
-    });
-    const dull = (K) => (dead ? K.map((c) => mix(c, '#a99fc6', 0.45)) : K);
-    const KS = (far ? [dimK(P.lilac), dimK(P.ice), dimK(P.rose)] : [P.lilac, P.ice, P.rose]).map(dull);
-    const R = far ? P.far : P.scale;
-    const res = [];
-    res.push(...pane(W, tips[0], tips[1], KS[0]), ...pane(W, tips[1], tips[2], KS[1]), ...pane(W, tips[2], tips[3], KS[2]), ...pane(W, tips[3], root, KS[0]));
-    tips.forEach((t) => res.push(...limb([W, t], 2.4, 0.8, R.sh)));
-    res.push(...limbR([root, E, W], 5, 3.4, R), ...rball(W[0], W[1], 2.6, 2.6, P.gold), ...rball(E[0], E[1], 2.2, 2.2, P.gold));
-    return res;
-  };
-  out.push(...wing(at(MB, 2, -35), true));
-  out.push(...wing(at(MB, -4, -32), false));
-
-  // The tail: a chain that sweeps down to the floor and curls up, crystal spines along its top,
-  // a shard cluster at the tip.
-  {
-    const t0 = at(MB, -10, 6);
-    const tw = (k) => (dead ? 0 : walk ? 0.07 * Math.sin(2 * p - 2 - k * 0.7) : att >= 0 ? [-0.05, -0.08, 0.1, 0.06, 0][att] : 0.06 * Math.sin(it - 2.2 - k * 0.7));
-    const { pts, a } = chainPts(t0[0], t0[1], Math.PI - 0.9 - pitch * 0.4, 6, (k) => [9, 8, 7, 6, 5.5, 5][k], (k) => (k ? 0.13 : 0) + tw(k));
-    pts.forEach((q, i) => {
-      q[1] = Math.min(q[1], floor - 1.5 - (13 - (10 * i) / 6) / 2);
-      q[0] = Math.max(q[0], 8);
-    });
-    const sp = [];
-    [1, 2, 3, 4].forEach((i, k) => {
-      const [x0, y0] = pts[i];
-      const [x1, y1] = pts[i + 1];
-      const sa = Math.atan2(y1 - y0, x1 - x0);
-      const up = Math.sin(sa + Math.PI / 2) < 0 ? sa + Math.PI / 2 : sa - Math.PI / 2;
-      const hw = [5.4, 4.6, 3.8, 3][k];
-      sp.push(...prism(x0 + Math.cos(up) * hw * 0.7, y0 + Math.sin(up) * hw * 0.7, up + (sa > Math.PI / 2 || sa < -Math.PI / 2 ? -0.45 : 0.45), [8, 7, 6, 5][k], [2.4, 2.2, 1.9, 1.6][k], k % 2 ? P.ice : P.rose, k < 2));
-    });
-    out.push(...sp, ...limbR(pts, 13, 3, P.scale));
-    [[-0.55, 8, P.ice], [0.5, 7, P.rose], [-0.02, 10, P.lilac]].forEach(([d, l, K]) => out.push(...prism(pts[6][0], pts[6][1], clamp(a + d - 0.3, Math.PI * 0.75, Math.PI * 1.5), l, 2.3, K)));
-  }
-
-  // Legs: digitigrade, the knee forward and the hock back; the feet plant (walk: a heavy stomp).
-  const leg = (sx, sy, home, q, R) => {
-    const Hp = at(MB, sx, sy);
-    const [ox, lift] = walk && !dead ? footStep(p + q, 7, 7) : [0, 0];
-    const ft = [home + ox, floor - lift];
-    const [K, A] = ik(Hp, [ft[0] - 6, ft[1] - 8], 17, 15, 1);
-    const res = [...rball(Hp[0], Hp[1], 9, 11, R), ...limbR([Hp, K], 11, 8, R), ...limbR([K, A], 7, 5, R)];
-    res.push(pg([[A[0] - 3.4, A[1] - 2], [A[0] + 3, A[1] - 3], [ft[0] + 5, ft[1] - 3.6], [ft[0] + 6.6, ft[1]], [A[0] - 4, ft[1]]], R.base), fp([[A[0] - 4, ft[1] - 1.4], [ft[0] + 6.6, ft[1] - 1.4], [ft[0] + 6.6, ft[1]], [A[0] - 4, ft[1]]], R.sh2));
-    res.push(...prism(ft[0] + 5.6, ft[1] - 1.8, 0.35, 4.4, 1.3, P.ice, false), ...prism(ft[0] + 1.6, ft[1] - 1.6, 0.45, 3.6, 1.1, P.ice, false));
-    return res;
-  };
-  out.push(...leg(-4, 2, 56, Math.PI, P.far));
-
-  // Crystal spines down the back (behind the torso's edge), and the far arm tucked at the chest.
-  const NB = at(MB, 10, -38);
-  const nk = chainPts(NB[0], NB[1], -Math.PI / 2 + 0.55 + pitch + neckA, 3, 8, (i) => (dead ? 0.3 : -0.15) + (walk ? -0.03 * Math.sin(2 * p - 1.2 - i) : 0));
-  {
-    const back = -Math.PI / 2 - 0.75 + pitch;
-    out.push(...prism(...at(MB, -12, -20), back - 0.15, 9, 2.6, P.ice), ...prism(...at(MB, -7, -30), back, 9, 2.6, P.rose));
-    [1, 2].forEach((i) => out.push(...prism(nk.pts[i][0] - 2.4, nk.pts[i][1] - 1.4, back + 0.35 + i * 0.15 + (dead ? 0.5 : 0), 7 - i, 2.1, i % 2 ? P.ice : P.lilac, false)));
-    const Sf = at(MB, 4, -30);
-    const hf = [Sf[0] + 16, Sf[1] + 8];
-    out.push(...limbR([Sf, [Sf[0] + 7, Sf[1] + 9], hf], 5, 3.6, P.far), ...rball(hf[0], hf[1], 2.6, 2.4, P.far));
-  }
-
-  // The torso: base, the back and underside in shadow, the belly plate with its scute lines, a
-  // lit chest edge, and a gold pendant with a heart gem.
-  out.push(
-    ...place(MB, [
-      C(pg([[-15, 8], [-17, -6], [-13, -22], [-5, -34], [7, -41], [15, -36], [18, -22], [17, -6], [11, 8], [-2, 13]], P.scale.base)),
-      fp([[-15, 8], [-17, -6], [-13, -22], [-5, -34], [-1, -33], [-8, -21], [-11, -6], [-7, 10]], P.scale.sh),
-      fp([[-7, 10], [-2, 13], [11, 8], [8, 5], [-2, 8]], P.scale.sh),
-      pg([[7, -36], [14, -32], [16, -20], [14, -4], [8, 8], [2, 8], [7, -6], [9, -20], [4, -33]], P.belly.base),
-      fp([[2, 8], [7, -6], [9, -20], [4, -33], [6, -34], [11, -20], [10, -6], [6, 8]], P.belly.sh),
-      ...[[-18, 9.6, 15], [-10, 9.4, 15.4], [-2, 8.4, 14.4]].map(([y, x0, x1]) => F(rtaper([[x0, y], [x1, y + 1]], 0.7, 0.7, P.belly.sh))),
-      fp([[7, -39], [13, -36], [12, -33], [6, -35]], P.scale.hi),
-      pg([[7, -31], [15, -31], [15, -26], [11, -22], [7, -26]], P.gold.base),
-      fp([[7, -27.5], [11, -24.5], [11, -22], [7, -26]], P.gold.sh),
-      ...gemDot(11, -27.4, 2.3, P.rose),
-    ]),
-  );
-  out.push(...leg(4, 4, 72, 0, P.scale));
-
-  // The ermine collar around the neck's base: fluffy puffs with dark tail tips.
-  out.push(
-    ...place(MB, [
-      ...[[-2, -34], [2, -37.5], [7, -39.5], [12, -39], [16.5, -36.5]].flatMap(([x, y]) => [fov(x - 0.5, y + 0.6, 3.4, 3, P.ermine.sh, 0, 12), fov(x + 0.3, y - 0.3, 2.9, 2.5, P.ermine.base, 0, 12)]),
-      fov(4.6, -36, 0.9, 1.4, P.mouth, 0, 8),
-      fov(14.4, -35.6, 0.9, 1.4, P.mouth, 0, 8),
-    ]),
-  );
-
-  // Neck and head.
-  {
-    out.push(...limbR(nk.pts, 11, 8.4, P.scale), F(rtaper(nk.pts.map(([x, y]) => [x + 2.6, y + 0.6]), 4, 3, P.belly.base)));
-    const top = nk.pts[3];
-    const MH = joint(ID, top[0], top[1], headA + pitch * 0.3);
-    const MJ = joint(MH, 2, 3, jaw);
-    const h = [];
-    h.push(...prism(-1, -8, -Math.PI + 0.55, 13, 2.3, dimK(P.ice)));
-    h.push(...prism(-4, 2.4, Math.PI - 0.15, 8, 2, P.rose, false), ...prism(-4, 4, Math.PI + 0.35 - jaw, 6.5, 1.8, P.rose, false));
-    out.push(...place(MH, h));
-    out.push(fp([at(MH, 1, 3), at(MH, 22, 4), at(MJ, 20, 0), at(MJ, 0, 0)], P.mouth));
-    out.push(...place(MJ, [pg([[-3, -1], [20, 0], [23, 2], [12, 6], [-2, 5]], P.scale.sh), fp([[0, 2], [18, 1.6], [12, 4.6], [0, 4]], P.belly.sh), fp([[15, -0.2], [17, -0.2], [16.2, -2.6]], '#fffaf2')]));
-    const s = [];
-    s.push(C(pg([[-7, -2], [-3, -9], [6, -12], [16, -9], [24, -5], [29, -2], [29, 2], [22, 4.5], [8, 5], [-3, 6]], P.scale.base)));
-    s.push(fp([[-7, -2], [-3, -9], [0, -9.6], [-3, 4], [-3, 6]], P.scale.sh), fp([[-3, 6], [8, 5], [22, 4.5], [29, 2], [27, 3.2], [21, 3], [8, 3.4], [-3, 3.6]], P.scale.sh));
-    s.push(fp([[14, -9.4], [24, -5.2], [22.4, -4.2], [14, -7.8]], P.scale.hi), fov(26.4, -2.4, 0.9, 0.6, P.scale.sh2, 0, 8));
-    s.push(fp([[19, 4.3], [21, 4.3], [20.2, 6.6 + jaw * 4]], '#fffaf2'), fp([[13, 4.8], [14.6, 4.8], [13.8, 6.4 + jaw * 3]], '#fffaf2'));
-    // The eye: a slit-pupilled dragon eye under a scaled brow ridge.
-    if (dead) s.push(...deadEye(12, -4, 2.2, { c: '#7a6aa8', th: 0.8 }));
-    else {
-      const act = actOf(mood, { idle: { lid: 0.28 }, angry: { lid: 0.1, slant: 0.9, raise: 0.3 }, happy: { closed: 'happy' } });
-      s.push(...eye(12, -4, { shape: 'sharp', custom: { animal: true }, s: 1, w: 3.4, h: 2.5, iris: ['#2c6fb8', '#46ddff', '#d4fbff'], pupil: 'slit', pupilK: att >= 0 || angry ? 0.7 : 1, look: [0.6, 0.1], lashC: '#3a2a6b', ...act, ...(att >= 0 ? { lid: 0.06, slant: 0.7, raise: 0.2, closed: undefined } : {}) }));
-    }
-    s.push(...brow(11.6, -7.6, { s: 1, len: 4, angle: angry || att >= 0 ? 24 : hurt ? -22 : happy ? -6 : 6, th: 1.2, c: P.scale.sh2, shape: 'flat', arch: 0.1 }));
-    s.push(...prism(1, -8, -Math.PI + 0.78 + (hurt ? 0.12 : 0), 15, 2.8, P.ice));
-    out.push(...place(MH, s));
-    // The crown rides the head (knocked askew when hurt; fallen to the floor when defeated).
-    const crown = [pg([[-6, 1.2], [6, 1.2], [6.4, 3.8], [-6.4, 3.8]], P.gold.base), fp([[-6.4, 2.8], [6.4, 2.8], [6.4, 3.8], [-6.4, 3.8]], P.gold.sh)];
-    [[-5, 5], [0, 7], [5, 5]].forEach(([x, hgt]) => crown.push(pg([[x - 2, 1.4], [x, 1.4 - hgt], [x + 2, 1.4]], P.gold.base), fp([[x, 1.4 - hgt], [x + 2, 1.4], [x + 0.6, 1.4]], P.gold.sh)));
-    crown.push(fp([[-1.4, 0.4 - 6], [0.2, -7], [0.4, 1]], P.gold.hi));
-    crown.push(...gemDot(-5, -3.4, 1.1, P.ice), ...gemDot(5, -3.4, 1.1, P.mint), ...gemDot(0, 2.4, 1.3, P.rose));
-    const MC = dead ? joint(ID, 124, floor - 4, 0.5) : joint(MH, 5, -11.6, hurt ? -0.35 : -0.08);
-    out.push(...place(MC, crown));
-  }
-
-  // The scepter arm: the hand is placed by IK; the scepter rides the hand. Resting it stands
-  // tall; the slam winds it overhead and back, then swings it down into the floor.
-  {
-    const S = at(MB, 12, -29);
-    let tgt = [S[0] + 13, S[1] + 13 + (walk ? Math.sin(2 * p - 1) : 0)];
-    let ang = -Math.PI / 2 + 0.12 + (walk ? 0.04 * Math.sin(2 * p - 1.4) : 0.02 * Math.sin(it - 1));
-    if (dead) {
-      tgt = [S[0] + 8, S[1] + 22];
-      ang = 0;
-    } else if (att >= 0) {
-      tgt = [[S[0] - 2, S[1] - 24], [S[0] - 9, S[1] - 25], [S[0] + 26, S[1] + 24], [S[0] + 25, S[1] + 23], [S[0] + 18, S[1] + 14]][att];
-      ang = [-Math.PI / 2 - 0.45, -Math.PI / 2 - 0.95, 1.2, 1.18, -Math.PI / 2 + 0.5][att];
-    } else if (angry) ang += 0.3;
-    if (hurt && att < 0) ang -= 0.3;
-    const [El, Hd] = ik(S, tgt, 14, 14, -1);
-    const sc = [];
-    const d = [Math.cos(ang), Math.sin(ang)];
-    const base = dead ? [96, floor - 2] : Hd;
-    const dd = dead ? [1, 0] : d;
-    const topP = [base[0] + dd[0] * 30, base[1] + dd[1] * 30];
-    const pom = [base[0] - dd[0] * 10, base[1] - dd[1] * 10];
-    if (att === 2) sc.push(...rswoosh(S[0], S[1], 52, -120, 52, 7, P.ice[1], '#ffffff'));
-    sc.push(...limb([pom, topP], 2.4, 2.2, P.gold.base, P.gold.sh2), F(rtaper([[pom[0] + 0.6, pom[1] - 0.6], [topP[0] + 0.6, topP[1] - 0.6]], 0.7, 0.7, P.gold.hi)));
-    sc.push(...rball(pom[0], pom[1], 2.4, 2.4, P.gold));
-    const nx = -dd[1];
-    const ny = dd[0];
-    [-1, 1].forEach((k) => sc.push(F(rtaper([[topP[0] - dd[0] * 3, topP[1] - dd[1] * 3], [topP[0] + nx * k * 3.4, topP[1] + ny * k * 3.4], [topP[0] + dd[0] * 4 + nx * k * 3, topP[1] + dd[1] * 4 + ny * k * 3]], 1.4, 0.6, P.gold.sh))));
-    const charge = att === 0 || att === 1;
-    if (charge) sc.push(star(topP[0] + dd[0] * 6, topP[1] + dd[1] * 6, 7 + att * 4, mix(P.ice[2], '#ffffff', 0.3)));
-    sc.push(...prism(topP[0] - dd[0], topP[1] - dd[1], Math.atan2(dd[1], dd[0]), 12, 4, P.ice));
-    if (!dead) {
-      out.push(...limbR([S, El], 6, 5, P.scale), ...limbR([El, Hd], 5, 4, P.scale));
-      out.push(...sc);
-      out.push(...rball(Hd[0], Hd[1], 3.4, 3.2, P.scale), F(rtaper([[Hd[0] - 1.4, Hd[1] - 2], [Hd[0] + 2.4, Hd[1] + 0.4]], 0.8, 0.6, P.scale.sh2)));
-    } else {
-      out.push(...sc, ...limbR([S, El], 6, 5, P.scale), ...limbR([El, Hd], 5, 4, P.scale), ...rball(Hd[0], Hd[1], 3.4, 3.2, P.scale));
-    }
-  }
-
-  // The slam: a floor glow under the charging prism, then the crystal burst where it strikes,
-  // shards erupting from the floor and shrinking back as the flash fades.
-  const impX = 118;
-  if (!dead && att >= 0) {
-    if (att < 2) out.push(fp(ringPts(impX, floor - 1.6, 9 + att * 5, 1.8 + att * 0.6, 1.4), mix(P.ice[1], '#ffffff', 0.25 + att * 0.25)));
-    else {
-      const k = [0, 0, 0.2, 0.6, 1][att];
-      const g = [0, 0, 1, 0.85, 0.4][att];
-      const rx = Math.min(8 + k * 22, 28);
-      out.push(fp(ringPts(Math.min(impX, 148 - rx), floor - 1.6 - k * 1.4, rx, 2 + k * 2.6, 2), mix(P.ice[1], '#ffffff', 0.45 - k * 0.2)));
-      [[-20, -0.5, 12, P.ice], [-11, -0.25, 18, P.lilac], [-3, 0, 22, P.ice], [8, 0.2, 16, P.rose], [16, 0.45, 10, P.ice]].forEach(([ox, a, l, K]) => {
-        if (l * g < 2) return;
-        out.push(...prism(impX + ox, floor + 0.5, -Math.PI / 2 + a, l * g, 2.4 + l * 0.08, K));
-      });
-      if (att === 2) out.push(star(impX, floor - 8, 14, P.ice[2]), star(impX, floor - 8, 6.4, '#ffffff'));
-      for (let i = 0; i < 3; i++) out.push(star(impX - 16 + i * 14, floor - 14 - k * 16 - (i % 2) * 6, 1.6 + (1 - k) * 1.2, i % 2 ? '#ffffff' : P.ice[2]));
-    }
-  }
-  // A glint drifting off the wings at rest.
-  if (!dead && att < 0) {
-    const u = (f % (walk ? 8 : 6)) / (walk ? 8 : 6);
-    out.push(star(30 + u * 20, 40 - u * 12, 1.4 + Math.sin(u * Math.PI) * 1.4, '#ffffff'));
-  }
-  const sq = key(att, [0.012, -0.004, -0.03, -0.015, 0], walk ? -Math.max(0, Math.cos(2 * p - 0.5)) * 0.015 : 0.006 * br);
-  return { w: 150, h: 150, res: 3, shapes: squash(out, 70, floor, 1 - sq * 0.5, 1 + sq) };
+  // Crystal spines down the back, behind the body (largest at the shoulders).
+  [[-16, -46, -2.3, 11, 3.2, PK.ice], [-22, -36, -2.6, 12, 3.4, PK.rose], [-25, -24, -2.85, 11, 3.2, PK.ice], [-25, -12, -3.05, 9, 2.8, PK.lilac]].forEach(([x, y, a, l, w, K]) => out.push(...prism(x, y, a, l, w, K)));
+  // The pear: a round belly-heavy bottom and narrower shoulders.
+  out.push(O(0, -30, 19, 18, 0, S.base, 22), O(0, -16, 25, 19, 0, S.base, 24));
+  out.push(crescent(0, -16, 25, 19, S.sh, { k: 0.28, a0: 40, a1: 215 }), crescent(0, -31, 19, 18, S.sh, { k: 0.3, a0: 120, a1: 215 }));
+  out.push(shine(2, -30, 19, 18, S.hi, 0, 1));
+  // The belly: cream, with three soft scale bands curving across it.
+  out.push(F(O(8, -20, 15, 20, -6, B.base, 22)), F(crescent(8, -20, 15, 20, B.sh, { k: 0.3, a0: 50, a1: 190, rot: -6 })));
+  for (const [y, w] of [[-30, 10], [-21, 13], [-12, 12]]) out.push(F(strand(arcPts(9, y - 4, w, 4, 30, 150, 8), 0.7, B.sh)));
+  out.push(F(O(12, -27, 4, 6, -10, mix(B.base, '#ffffff', 0.6), 12)));
+  // The far paw, resting on his belly (a very royal pose): a little round paw with crystal claws.
+  out.push(...limb([-10, -30], [-2, -25], 5.4, 5, PK.far.base), O(0, -24.6, 4.6, 4, 0, PK.far.base, 14), F(crescent(0, -24.6, 4.6, 4, PK.far.sh, { k: 0.3, a0: 40, a1: 180 })));
+  for (const [dx, dy] of [[3.6, -26.4], [4.4, -23.6]]) out.push(...prism(dx, dy, 0.25, 3, 1, PK.ice, false));
+  return out;
 }
 
-// ---------- Prismaris, the Crystal King, rigged ----------
-// (2026-11-03, the boss reanimation.) A live skeleton (render/mobs/rig.js) on the same bones as his
-// frames: crystal wings that beat and fold back on springs, a six-segment tail with crystal spines
-// that sways a beat behind, digitigrade legs whose feet stay planted (two-bone reach, live), a
-// three-segment neck carrying his head, a jaw that drops open, a crown that wobbles, and his
-// scepter arm, also reaching live, winding the scepter overhead and smashing it down so crystals
-// erupt from the floor. Rig space: the floor at (0, 0), his hips' joint above it.
-const DKP = (key, w, h, ox, oy, shapes) => part(`crystal|${key}`, w, h, () => place(joint(ID, ox, oy), shapes()));
-const dragonWing = (far) => {
-  const P = DK;
-  const a1 = -1.95 + (far ? 0.3 : 0);
-  const E = [Math.cos(a1) * 18, Math.sin(a1) * 18];
-  const a2 = a1 + 0.5;
-  const W = [E[0] + Math.cos(a2) * 18, E[1] + Math.sin(a2) * 18];
-  const tips = [-0.95, -1.5, -2.1, -2.6].map((d, k) => {
-    const a = a2 + d;
-    const l = [26, 30, 30, 26][k];
-    return [W[0] + Math.cos(a) * l, W[1] + Math.sin(a) * l];
-  });
-  const KS = far ? [dimK(P.lilac), dimK(P.ice), dimK(P.rose)] : [P.lilac, P.ice, P.rose];
-  const R = far ? P.far : P.scale;
-  const root = [0, 0];
-  const res = [...pane(W, tips[0], tips[1], KS[0]), ...pane(W, tips[1], tips[2], KS[1]), ...pane(W, tips[2], tips[3], KS[2]), ...pane(W, tips[3], root, KS[0])];
-  tips.forEach((t) => res.push(...limb([W, t], 2.4, 0.8, R.sh)));
-  res.push(...limbR([root, E, W], 5, 3.4, R), ...rball(W[0], W[1], 2.6, 2.6, P.gold), ...rball(E[0], E[1], 2.2, 2.2, P.gold));
-  return res;
+// The cape behind him: hung from the back of his neck (0, 0), flaring down his back.
+function pkCape() {
+  const C = PK.cape;
+  const out = [T([[2, -2], [-8, 0], [-18, 14], [-26, 32], [-24, 40], [-16, 37], [-8, 41], [0, 36], [6, 30]], C.base)];
+  out.push(F(T([[-8, 0], [-18, 14], [-26, 32], [-24, 40], [-16, 37], [-14, 20]], C.sh)), F(T([[-24, 40], [-16, 37], [-8, 41], [-12, 28]], C.deep)));
+  out.push(F(strand([[-4, 4], [-10, 18], [-14, 34]], 0.9, C.deep)), F(strand([[0, 6], [-2, 18], [-4, 32]], 1, C.hi)));
+  return out;
+}
+
+// The ermine collar round his neck (0, 0): a white roll with little black tail spots, a gold clasp.
+function pkCollar() {
+  const out = [O(-2, 0, 15, 5.4, -8, PK.ermine, 18), F(crescent(-2, 0, 15, 5.4, '#e4dcec', { k: 0.3, a0: 30, a1: 200, rot: -8 }))];
+  for (const [x, y] of [[-10, 0.6], [-3, 1.6], [4, 0.4], [10, -1.4]]) out.push(F(T([[x, y - 1.2], [x + 1, y + 0.6], [x - 1, y + 0.6]], '#3a2d4f')));
+  out.push(...gem(8, 2.4, 1.8, PK.rose), F(strand(arcPts(8, 2.4, 2.4, 2.4, 0, 360, 10), 0.6, PK.gold.base)));
+  return out;
+}
+
+// The head: the neck at (0, 0), the skull's middle at (4, -21); the face drawn as its own piece.
+function pkHead() {
+  const S = PK.scale;
+  const out = [];
+  // Crystal fins at the back of his head, and two little crystal horns sweeping back.
+  out.push(...prism(-14, -26, -2.7, 10, 3, PK.lilac), ...prism(-12, -18, -2.95, 9, 2.6, PK.rose));
+  out.push(...prism(-6, -36, -2.05, 10, 2.6, PK.ice), ...prism(4, -38, -1.85, 9, 2.4, PK.ice));
+  // The skull, round and big; the soft muzzle in front.
+  out.push(O(2, -21, 21, 19, 0, S.base, 24), crescent(2, -21, 21, 19, S.sh, { k: 0.28, a0: 40, a1: 205 }));
+  out.push(O(17, -14, 10, 8, 0, S.base, 18), F(crescent(17, -14, 10, 8, S.sh, { k: 0.3, a0: 30, a1: 160 })));
+  out.push(shine(2, -21, 21, 19, S.hi, 0, 1), F(O(19, -18, 4, 2, -10, S.hi, 10)));
+  // A cream chin, a nostril, a few scales at the brow.
+  out.push(F(O(12, -7.6, 9, 3.2, -4, PK.belly.base, 14)), F(E(24.4, -15.2, 0.9, 0.7, S.deep)));
+  for (const [x, y] of [[-6, -34], [-1, -36.4], [-10, -30]]) out.push(F(strand(arcPts(x, y, 2.6, 1.6, 200, 340, 5), 0.6, S.sh)));
+  return out;
+}
+const pkFace = (mood, atk) => cuteFace(8, -21, 3.1, mood, { iris: IRIS, gap: 6.4, atk, skin: PK.scale.base, mouthDy: 3.4, lash: 1.1 });
+
+// The crown: its base's middle at (0, 0), a size too big for him, three points with gems.
+function pkCrown() {
+  const G = PK.gold;
+  const out = [T([[-9, 0], [-10, -8], [-6, -4], [-3, -11], [0, -5], [3.4, -12], [6, -4], [10, -9], [9.4, 0]], G.base)];
+  out.push(F(T([[-9, 0], [-10, -8], [-6, -4], [-5, 0]], G.sh)), F(R(-9, -1.6, 18.4, 1.6, G.sh)), F(strand([[-7, -2.6], [7, -2.6]], 0.7, G.hi)));
+  out.push(...gem(-3, -8.6, 1.3, PK.ice), ...gem(3.4, -9.4, 1.5, PK.rose), ...gem(0.2, -2.4, 1.2, PK.ice));
+  return out;
+}
+
+// The near arm from the shoulder (0, 0), hanging down along +y: a chubby limb and a round paw.
+function pkArm() {
+  const S = PK.scale;
+  return [...limb([0, 0], [0, 13], 8, 6.4, S.base), F(strand([[-2.6, 1], [-2.4, 11]], 1, S.sh)), O(0, 15, 4.6, 4.2, 0, S.base, 14), F(crescent(0, 15, 4.6, 4.2, S.sh, { k: 0.3, a0: 40, a1: 180 }))];
+}
+// The far arm's hand is on his belly (drawn with the body), so there's no far arm piece.
+
+// The scepter from the grip (0, 0), pointing up (-y): held high up its gold staff, so the prism
+// rides just above his paw (clear of his face) and the staff hangs below with a pom at its end.
+function pkScepter() {
+  const G = PK.gold;
+  const out = [...limb([0, 24], [0, -13], 2.6, 2.4, G.base), F(strand([[0.8, 23], [0.8, -12]], 0.7, G.hi)), O(0, 25, 2.8, 2.8, 0, G.base, 10), F(E(-0.8, 24.2, 1, 1, G.hi))];
+  out.push(T([[-4, -13], [0, -16], [4, -13], [2.6, -11], [-2.6, -11]], G.sh));
+  out.push(...prism(0, -14, -Math.PI / 2, 15, 4.6, PK.ice));
+  return out;
+}
+
+// A wing from its root on his upper back (0, 0): the arm rises to a high wrist with a little gold
+// claw, three finger spars sweep back and down from it, and gem panes hang between them with a
+// scalloped trailing edge, the last one meeting his back. `far` dims it (it sits deeper behind).
+function pkWing(far) {
+  const dim = (K) => (far ? K.map((c, i) => (i === 3 ? mix(c, '#d8d0ff', 0.4) : mix(c, '#7a6ac8', 0.3))) : K);
+  const Sc = far ? PK.far : PK.scale;
+  const El = [-5, -18];
+  const W = [-12, -36];
+  const tips = [[-34, -42], [-44, -26], [-38, -9], [-10, -2]];
+  const out = [];
+  out.push(...petal(W, tips[0], tips[1], dim(PK.ice)), ...petal(W, tips[1], tips[2], dim(PK.rose)), ...petal(W, tips[2], tips[3], dim(PK.lilac), -0.1));
+  for (const tip of tips.slice(0, 3)) out.push(...limb(W, tip, 2.6, 1.2, Sc.sh));
+  out.push(...limb([0, 0], El, 4.6, 3.8, Sc.base), ...limb(El, W, 3.8, 3, Sc.base));
+  out.push(T([[W[0] - 1.4, W[1] - 1], [W[0] + 1.6, W[1] - 6], [W[0] + 1.8, W[1] - 0.4]], PK.gold.base), O(W[0], W[1], 2.2, 2.2, 0, PK.gold.base, 10));
+  return out;
+}
+
+// A foot planted on the floor, the sole's middle at (0, 0): a round thigh above, the foot with three
+// toes and little crystal claws.
+function pkLeg(far) {
+  const S = far ? PK.far : PK.scale;
+  return [
+    O(-1, -9, 8.4, 8, 0, S.base, 16), F(crescent(-1, -9, 8.4, 8, S.sh, { k: 0.3, a0: 40, a1: 210 })),
+    O(2.4, -3.4, 9, 3.8, 0, S.base, 16), F(R(-6, -1, 17, 1, S.sh)),
+    ...[5.6, 8.6, 10.6].flatMap((x, i) => [O(x, -2.4 + i * 0.3, 2.2, 2.2, 0, S.base, 10), ...prism(x + 1.4, -1.4 + i * 0.3, 0.2, 3, 1, PK.ice, false)]),
+  ];
+}
+
+// A tail segment along +x from its joint (0, 0), tapering w0 to w1, with a crystal spine on top.
+function pkTailSeg(i, len, w0, w1) {
+  const S = PK.scale;
+  const out = [];
+  if (i < 2) out.push(...prism(len * 0.4, -w0 * 0.42, -Math.PI / 2 - 0.5, [8, 6.4][i], [2.4, 2][i], i ? PK.rose : PK.ice, true));
+  out.push(...limb([0, 0], [len, 0], w0, w1, S.base), F(strand([[1, w0 * 0.3], [len, w1 * 0.3]], Math.max(1, w1 * 0.5), S.sh)));
+  return out;
+}
+// The tail's tip: a little crystal cluster.
+const pkTailTip = () => [...prism(0, 0, -0.5, 9, 2.6, PK.rose), ...prism(0, 0, 0.35, 8, 2.4, PK.lilac), ...prism(0, 0, -0.05, 11, 3, PK.ice)];
+
+// Sprite boxes: [w, h, pivot x, pivot y] (the pivot is the builder's (0, 0)).
+const BOX = {
+  body: [70, 78, 34, 66],
+  cape: [40, 50, 30, 6],
+  collar: [36, 14, 18, 7],
+  head: [74, 64, 30, 48],
+  face: [40, 30, 12, 36],
+  crown: [26, 18, 12, 15],
+  arm: [14, 24, 7, 4],
+  scepter: [20, 60, 10, 32],
+  wing: [56, 52, 48, 48],
+  leg: [32, 22, 12, 19],
+  tail: [26, 22, 4, 12],
+  tailTip: [18, 18, 3, 10],
 };
-const CK = {
-  wing: (far) => DKP(`wing|${far}`, 72, 84, 58, 74, () => dragonWing(far)),
-  tailSeg: (i, len, w0, w1) => DKP(`tail|${i}`, len + w0 + 14, w0 + 22, w0 / 2 + 2, w0 / 2 + 14, () => {
-    const out = [];
-    if (i >= 1 && i <= 4) out.push(...prism(len * 0.2, 4 + w0 * 0.35, Math.PI / 2 - 0.45, [8, 7, 6, 5][i - 1], [2.4, 2.2, 1.9, 1.6][i - 1], i % 2 ? DK.rose : DK.ice, i < 3));
-    out.push(...limbR([[0, 0], [len, 0]], w0, w1, DK.scale));
-    return out;
-  }),
-  tailTip: () => DKP('tailtip', 30, 30, 4, 15, () => [[-0.55, 8, DK.ice], [0.5, 7, DK.rose], [-0.02, 10, DK.lilac]].flatMap(([d, l, K]) => prism(0, 0, d, l, 2.3, K))),
-  thigh: (far) => DKP(`thigh|${far}`, 34, 26, 11, 13, () => {
-    const R = far ? DK.far : DK.scale;
-    return [...rball(0, 0, 9, 11, R), ...limbR([[0, 0], [17, 0]], 11, 8, R)];
-  }),
-  shin: (far) => DKP(`shin|${far}`, 26, 14, 5, 7, () => [...limbR([[0, 0], [15, 0]], 7, 5, far ? DK.far : DK.scale)]),
-  // The foot, level, from the ankle at its origin; the toe on the floor 8 px below.
-  foot: (far) => DKP(`foot|${far}`, 24, 16, 6, 4, () => {
-    const R = far ? DK.far : DK.scale;
-    return [pg([[-3.4, -2], [3, -3], [11, 4.4], [12.6, 8], [-4, 8]], R.base), fp([[-4, 6.6], [12.6, 6.6], [12.6, 8], [-4, 8]], R.sh2), ...prism(11.6, 6.2, 0.35, 4.4, 1.3, DK.ice, false), ...prism(7.6, 6.4, 0.45, 3.6, 1.1, DK.ice, false)];
-  }),
-  // The far arm tucked at his chest and the crystal spines down his back (behind the torso).
-  back: () => DKP('back', 50, 50, 24, 44, () => {
-    const backA = -Math.PI / 2 - 0.75;
-    const Sf = [4, -30];
-    const hf = [Sf[0] + 16, Sf[1] + 8];
-    return [...prism(-12, -20, backA - 0.15, 9, 2.6, DK.ice), ...prism(-7, -30, backA, 9, 2.6, DK.rose), ...limbR([Sf, [Sf[0] + 7, Sf[1] + 9], hf], 5, 3.6, DK.far), ...rball(hf[0], hf[1], 2.6, 2.4, DK.far)];
-  }),
-  torso: () => DKP('torso', 44, 62, 21, 46, () => [
-    C(pg([[-15, 8], [-17, -6], [-13, -22], [-5, -34], [7, -41], [15, -36], [18, -22], [17, -6], [11, 8], [-2, 13]], DK.scale.base)),
-    fp([[-15, 8], [-17, -6], [-13, -22], [-5, -34], [-1, -33], [-8, -21], [-11, -6], [-7, 10]], DK.scale.sh),
-    fp([[-7, 10], [-2, 13], [11, 8], [8, 5], [-2, 8]], DK.scale.sh),
-    pg([[7, -36], [14, -32], [16, -20], [14, -4], [8, 8], [2, 8], [7, -6], [9, -20], [4, -33]], DK.belly.base),
-    fp([[2, 8], [7, -6], [9, -20], [4, -33], [6, -34], [11, -20], [10, -6], [6, 8]], DK.belly.sh),
-    ...[[-18, 9.6, 15], [-10, 9.4, 15.4], [-2, 8.4, 14.4]].map(([y, x0, x1]) => F(rtaper([[x0, y], [x1, y + 1]], 0.7, 0.7, DK.belly.sh))),
-    fp([[7, -39], [13, -36], [12, -33], [6, -35]], DK.scale.hi),
-    pg([[7, -31], [15, -31], [15, -26], [11, -22], [7, -26]], DK.gold.base),
-    fp([[7, -27.5], [11, -24.5], [11, -22], [7, -26]], DK.gold.sh),
-    ...gemDot(11, -27.4, 2.3, DK.rose),
-    ...[[-2, -34], [2, -37.5], [7, -39.5], [12, -39], [16.5, -36.5]].flatMap(([x, y]) => [fov(x - 0.5, y + 0.6, 3.4, 3, DK.ermine.sh, 0, 12), fov(x + 0.3, y - 0.3, 2.9, 2.5, DK.ermine.base, 0, 12)]),
-    fov(4.6, -36, 0.9, 1.4, DK.mouth, 0, 8),
-    fov(14.4, -35.6, 0.9, 1.4, DK.mouth, 0, 8),
-  ]),
-  neckSeg: (i, len, w0, w1) => DKP(`neck|${i}`, len + w0 + 4, w0 + 4, w0 / 2 + 2, w0 / 2 + 2, () => [...limbR([[0, 0], [len, 0]], w0, w1, DK.scale), F(rtaper([[0, w0 * 0.24], [len, w1 * 0.24]], 4, 3, DK.belly.base))]),
-  headBack: () => DKP('headback', 34, 30, 26, 18, () => [...prism(-1, -8, -Math.PI + 0.55, 13, 2.3, dimK(DK.ice)), ...prism(-4, 2.4, Math.PI - 0.15, 8, 2, DK.rose, false), ...prism(-4, 4, Math.PI + 0.35, 6.5, 1.8, DK.rose, false)]),
-  // The jaw from its hinge, with the mouth's dark inside above it (shown as it drops open).
-  jaw: () => DKP('jaw', 30, 16, 5, 8, () => [fp([[0, -5], [21, -4], [20, 0], [0, 0]], DK.mouth), pg([[-3, -1], [20, 0], [23, 2], [12, 6], [-2, 5]], DK.scale.sh), fp([[0, 2], [18, 1.6], [12, 4.6], [0, 4]], DK.belly.sh), fp([[15, -0.2], [17, -0.2], [16.2, -2.6]], '#fffaf2')]),
-  head: (mood, atk) => DKP(`head|${mood}|${atk}`, 50, 38, 14, 26, () => {
-    const out = [];
-    const angry = mood === 'angry' || atk;
-    out.push(C(pg([[-7, -2], [-3, -9], [6, -12], [16, -9], [24, -5], [29, -2], [29, 2], [22, 4.5], [8, 5], [-3, 6]], DK.scale.base)));
-    out.push(fp([[-7, -2], [-3, -9], [0, -9.6], [-3, 4], [-3, 6]], DK.scale.sh), fp([[-3, 6], [8, 5], [22, 4.5], [29, 2], [27, 3.2], [21, 3], [8, 3.4], [-3, 3.6]], DK.scale.sh));
-    out.push(fp([[14, -9.4], [24, -5.2], [22.4, -4.2], [14, -7.8]], DK.scale.hi), fov(26.4, -2.4, 0.9, 0.6, DK.scale.sh2, 0, 8));
-    out.push(fp([[19, 4.3], [21, 4.3], [20.2, 6.8]], '#fffaf2'), fp([[13, 4.8], [14.6, 4.8], [13.8, 6.6]], '#fffaf2'));
-    if (mood === 'dead') out.push(...deadEye(12, -4, 2.2, { c: '#7a6aa8', th: 0.8 }));
-    else {
-      const act = actOf(mood, { idle: { lid: 0.28 }, angry: { lid: 0.1, slant: 0.9, raise: 0.3 }, happy: { closed: 'happy' } });
-      out.push(...eye(12, -4, { shape: 'sharp', custom: { animal: true }, s: 1, w: 3.4, h: 2.5, iris: ['#2c6fb8', '#46ddff', '#d4fbff'], pupil: 'slit', pupilK: angry ? 0.7 : 1, look: [0.6, 0.1], lashC: '#3a2a6b', ...act, ...(atk ? { lid: 0.06, slant: 0.7, raise: 0.2, closed: undefined } : {}) }));
-    }
-    out.push(...brow(11.6, -7.6, { s: 1, len: 4, angle: angry ? 24 : mood === 'hurt' ? -22 : mood === 'happy' ? -6 : 6, th: 1.2, c: DK.scale.sh2, shape: 'flat', arch: 0.1 }));
-    out.push(...prism(1, -8, -Math.PI + 0.78, 15, 2.8, DK.ice));
-    return out;
-  }),
-  crown: () => DKP('crown', 18, 16, 8, 10, () => {
-    const crown = [pg([[-6, 1.2], [6, 1.2], [6.4, 3.8], [-6.4, 3.8]], DK.gold.base), fp([[-6.4, 2.8], [6.4, 2.8], [6.4, 3.8], [-6.4, 3.8]], DK.gold.sh)];
-    [[-5, 5], [0, 7], [5, 5]].forEach(([x, hgt]) => crown.push(pg([[x - 2, 1.4], [x, 1.4 - hgt], [x + 2, 1.4]], DK.gold.base), fp([[x, 1.4 - hgt], [x + 2, 1.4], [x + 0.6, 1.4]], DK.gold.sh)));
-    crown.push(...gemDot(-5, -3.4, 1.1, DK.ice), ...gemDot(5, -3.4, 1.1, DK.mint), ...gemDot(0, 2.4, 1.3, DK.rose));
-    return crown;
-  }),
-  upper: () => DKP('upper', 22, 12, 4, 6, () => [...limbR([[0, 0], [14, 0]], 6, 5, DK.scale)]),
-  fore: () => DKP('fore', 22, 12, 4, 6, () => [...limbR([[0, 0], [14, 0]], 5, 4, DK.scale), ...rball(14, 0, 3.4, 3.2, DK.scale)]),
-  // The scepter along +x from the grip: the gold pom behind, the crystal-topped head ahead.
-  scepter: () => DKP('scepter', 64, 18, 14, 9, () => {
-    const out = [...limb([[-10, 0], [30, 0]], 2.4, 2.2, DK.gold.base, DK.gold.sh2), ...rball(-10, 0, 2.4, 2.4, DK.gold)];
-    [-1, 1].forEach((k) => out.push(F(rtaper([[27, 0], [30, k * 3.4], [34, k * 3]], 1.4, 0.6, DK.gold.sh))));
-    out.push(...prism(29, 0, 0, 12, 4, DK.ice));
-    return out;
-  }),
+const TAIL = [[11, 11, 8], [10, 8, 5.4], [8, 5.4, 3.4]];
+
+// Shapes for a piece (with the pose's face).
+function shapesOf(name, a = {}) {
+  if (name === 'body') return pkBody();
+  if (name === 'cape') return pkCape();
+  if (name === 'collar') return pkCollar();
+  if (name === 'head') return pkHead();
+  if (name === 'face') return pkFace(a.face ?? 'idle', a.atk ?? 0);
+  if (name === 'crown') return pkCrown();
+  if (name === 'arm') return pkArm();
+  if (name === 'scepter') return pkScepter();
+  if (name === 'wingF') return pkWing(true);
+  if (name === 'wingN') return pkWing(false);
+  if (name === 'legF') return pkLeg(true);
+  if (name === 'legN') return pkLeg(false);
+  if (name.startsWith('t') && name.length === 2) {
+    const i = Number(name[1]);
+    return pkTailSeg(i, ...TAIL[i]);
+  }
+  if (name === 'tailTip') return pkTailTip();
+  return [];
+}
+const boxOf = (name) => BOX[name] ?? BOX[{ wingF: 'wing', wingN: 'wing', legF: 'leg', legN: 'leg', t0: 'tail', t1: 'tail', t2: 'tail' }[name]];
+
+// ---------- The skeleton ----------
+// Pose channels: by (body up/down), pitch (body lean, + forward), headA, arm (the near arm, 0
+// hanging, - forward), sw (the scepter's angle in the world, 0 upright, + its top forward), flap
+// (wings, - up), cape, crown, t0..t2 (tail), and the feet: fFx, fFy, fNx, fNy (foot offsets).
+// Rig space: the floor at y 0 under his middle.
+
+const HIP_Y = -12;
+const BONES = [
+  { name: 'legF', at: (S) => [-7 + S.fFx, S.fFy] },
+  { name: 'body', at: (S) => [0, HIP_Y + S.by], rot: (S) => S.pitch },
+  { name: 't0', parent: 'body', at: () => [-20, -6], rot: (S) => S.t0 },
+  { name: 't1', parent: 't0', at: () => [TAIL[0][0], 0], rot: (S) => S.t1 },
+  { name: 't2', parent: 't1', at: () => [TAIL[1][0], 0], rot: (S) => S.t2 },
+  { name: 'tailTip', parent: 't2', at: () => [TAIL[2][0], 0], rot: () => 0.2 },
+  { name: 'wingF', parent: 'body', at: () => [-6, -42], rot: (S) => -0.18 + S.flap * 0.8 },
+  { name: 'cape', parent: 'body', at: () => [-4, -44], rot: (S) => S.cape },
+  { name: 'wingN', parent: 'body', at: () => [-12, -40], rot: (S) => S.flap },
+  { name: 'bodyS', parent: 'body', piece: 'body' },
+  { name: 'legN', at: (S) => [7 + S.fNx, S.fNy] },
+  { name: 'collar', parent: 'body', at: () => [4, -44] },
+  { name: 'head', parent: 'body', at: () => [5, -45], rot: (S) => S.headA - S.pitch * 0.6 },
+  { name: 'face', parent: 'head' },
+  { name: 'crown', parent: 'head', at: () => [1, -39], rot: (S) => -0.12 + S.crown },
+  { name: 'arm', parent: 'body', at: () => [12, -36], rot: (S) => S.arm },
+  // (The scepter rides the paw, its angle held in the world, so it stays upright as he sways.)
+  { name: 'scepter', parent: 'arm', at: () => [0, 15], rot: (S) => S.sw - S.arm - S.pitch },
+];
+
+// The slam's floor point (rig space), where the scepter's crystal lands.
+const SLAM_X = 52;
+
+// Every channel's pose, from the boss's moves.
+function posePK(a) {
+  const t = a.t;
+  const b = Math.sin(t * 2);
+  // A royal sway at rest: breathing in slowly, the scepter held just so, a glance about now and then.
+  const idle = { by: -0.8 * b, pitch: 0.02 * Math.sin(t * 1.1), headA: 0.05 * Math.sin(t * 0.7 - 1) + 0.04 * Math.max(0, Math.sin(t * 0.31)) ** 8, arm: -1.0 + 0.04 * Math.sin(t * 1.1 - 0.5), sw: 0.3, flap: 0.05 * Math.sin(t * 1.2 - 1.6) };
+  // The walk: a waddle on stubby feet, rocking side to side, wings fluttering.
+  const s = Math.sin(a.wp);
+  const walk = { by: -Math.abs(Math.cos(a.wp)) * 2.2, pitch: 0.04 + s * 0.04, headA: -s * 0.05, arm: -1.0 + s * 0.1, sw: 0.3 + s * 0.06, flap: 0.12 * Math.sin(a.wp * 2) };
+  // The wind-up: up on his toes, leaning back, the scepter wound back with its crystal tipped over
+  // his shoulder (his paw stays low behind his collar: raised, it would cross his big face), wings
+  // flared, trembling with it as the slam comes.
+  const sh = Math.sin(t * 40) * 0.03 * a.ph.antic * a.ph.antic;
+  const antic = { by: -5, pitch: -0.16 + sh, headA: -0.18, arm: 1.3, sw: -0.95 + sh * 2, flap: -0.5 };
+  // The slam: lunging over into it, the scepter brought down in one arc, its crystal smashed into
+  // the floor in front of him, wings snapping forward.
+  const strike = { by: 7, pitch: 0.42, headA: 0.1, arm: -1.05, sw: 2.55, flap: 0.3 };
+  return stateBlend(a, idle, walk, antic, strike);
+}
+
+// Where a foot sits as he walks: planted for half the step cycle (sliding back under him exactly
+// as far as he moves, so it stays put on the floor), then lifted and carried forward.
+const STRIDE = 30;
+function footAt(a, off) {
+  const u = ((a.wp / TAU + off) % 1 + 1) % 1;
+  const w = a.walkW;
+  if (u < 0.5) return [(0.25 - u) * STRIDE * w, 0];
+  const v = (u - 0.5) * 2;
+  const e = v * v * (3 - 2 * v);
+  return [(-0.25 + e * 0.5) * STRIDE * w, -Math.sin(v * Math.PI) * 4 * w];
+}
+
+// ---------- The rig ----------
+
+const pkPart = (name, face, atk) => {
+  const piece = name === 'bodyS' ? 'body' : name;
+  const [w, h, ox, oy] = boxOf(piece);
+  const key = piece === 'face' ? `face|${face}|${atk}` : piece;
+  return part(`pking|${key}`, w, h, () => move(shapesOf(piece, { face, atk }), ox, oy), 6, 2);
 };
-const CK_SHOULDER = [12, -29];
-const CK_HIPS = [[-4, 2, -6], [4, 4, 10]];
+
 const crystalRig = makeRig({
   w: 100,
   h: 130,
-  stride: 1e9,
-  fast: ['by', 'pitch', 'headA', 'neckA', 'jaw', 'sc', 'up', 'fo'],
-  kick: { pitch: -1.4, crown: 4, flapF: 3 },
-  springs: { crown: [80, 5], flapF: [70, 5], flapN: [80, 6], t0: [120, 9], t1: [100, 8], t2: [85, 7], t3: [70, 6], t4: [60, 5], t5: [50, 4.5] },
+  stride: STRIDE,
+  fast: ['by', 'pitch', 'headA', 'arm', 'sw', 'flap'],
+  kick: { pitch: -1.6, crown: 5, flap: -2.4, headA: -1.2 },
+  springs: { arm: [260, 22], sw: [240, 21], crown: [90, 5], cape: [60, 5], t0: [90, 8], t1: [70, 6], t2: [55, 5] },
   pose(m, a) {
-    const t = a.t;
-    const wp = t * 4.2;
-    const idle = { by: -0.9 * Math.sin(t * 2), pitch: 0.14 + 0.012 * Math.sin(t * 1.2 - 0.6), headA: 0.04 * Math.sin(t * 1.2 - 1.4), neckA: 0, jaw: 0.04, flap: 0.06 * Math.sin(t * 1.2 - 1.9), arm: 0, stepA: 0 };
-    const walk = { by: 2.2 * Math.cos(2 * wp - 0.5), pitch: 0.16 + 0.025 * Math.sin(2 * wp - 1), headA: -0.04 * Math.sin(2 * wp - 1.8), neckA: 0, jaw: 0.04, flap: 0.08 * Math.sin(2 * wp - 1.6), arm: 0, stepA: 1 };
-    const antic = { by: -2.5, pitch: -0.04, headA: -0.28, neckA: -0.14, jaw: 0.42, flap: -0.42, arm: -1, stepA: 0 };
-    const strike = { by: 4, pitch: 0.34, headA: 0.2, neckA: 0.12, jaw: 0.5, flap: 0.25, arm: 1, stepA: 0 };
-    const P = stateBlend(a, idle, walk, antic, strike);
-    // The legs and the scepter arm reach live (two-bone), for where the body is now.
-    const c = Math.cos(P.pitch);
-    const sn = Math.sin(P.pitch);
-    const bodyY = -37 + P.by;
-    const toWorld = ([x, y]) => [x * c - y * sn, bodyY + x * sn + y * c];
-    const toBody = ([x, y]) => {
-      const dy = y - bodyY;
-      return [x * c + dy * sn, -x * sn + dy * c];
-    };
-    CK_HIPS.forEach(([hx, hy, home], k) => {
-      const ph = wp + (k ? 0 : Math.PI);
-      const ox = P.stepA * Math.sin(ph) * 7;
-      const lift = P.stepA * Math.max(0, Math.cos(ph)) * 7;
-      const hip = toWorld([hx, hy]);
-      const [kn, an] = ik(hip, [home + ox - 6, -8 - lift], 17, 15, 1);
-      const th = Math.atan2(kn[1] - hip[1], kn[0] - hip[0]);
-      const sh = Math.atan2(an[1] - kn[1], an[0] - kn[0]);
-      P[`th${k}`] = th - P.pitch;
-      P[`sh${k}`] = sh - th;
-      P[`ft${k}`] = -sh;
-    });
-    // The scepter hand's target from the shoulder, and the scepter's own angle, by the arm's state.
-    const k = P.arm;
-    const tgt = k < 0 ? [lerp(13, -9, -k), lerp(13, -25, -k)] : [lerp(13, 26, k), lerp(13, 24, k)];
-    const S = CK_SHOULDER;
-    const [El, Hd] = ik(S, [S[0] + tgt[0], S[1] + tgt[1]], 14, 14, -1);
-    P.up = Math.atan2(El[1] - S[1], El[0] - S[0]);
-    P.fo = Math.atan2(Hd[1] - El[1], Hd[0] - El[0]) - P.up;
-    P.sc = k < 0 ? lerp(-Math.PI / 2 + 0.12, -Math.PI / 2 - 0.95, -k) : lerp(-Math.PI / 2 + 0.12, 1.2, k);
-    P.sc -= P.up + P.fo;
-    return P;
+    const P = posePK(a);
+    const [fx0, fy0] = footAt(a, 0);
+    const [fx1, fy1] = footAt(a, 0.5);
+    return { ...P, fFx: fx0, fFy: fy0, fNx: fx1, fNy: fy1 };
   },
   follow: (S, a) => {
-    const tw = (k) => 0.06 * Math.sin(a.t * 1.2 - 2.2 - k * 0.7) - S.pitch * 0.2;
-    return { flapF: S.flap + 0.06 * Math.sin(a.t * 1.2 - 2.4), flapN: S.flap, crown: -0.08 - S.headA * 0.6, t0: Math.PI - 0.9 - S.pitch * 1.4, t1: 0.13 + tw(1), t2: 0.13 + tw(2), t3: 0.13 + tw(3), t4: 0.13 + tw(4), t5: 0.13 + tw(5) };
+    const w = (k) => 0.08 * Math.sin(a.t * 1.6 - k * 0.8);
+    return {
+      // The crown lags his head (and hops when he's hit); the cape trails his lean; the tail swishes
+      // a beat behind.
+      crown: -S.headA * 0.5 - S.pitch * 0.3,
+      cape: -S.pitch * 0.7 + Math.max(0, -S.by) * 0.01,
+      t0: 2.75 - S.pitch * 0.9 + w(0),
+      t1: -0.35 + w(1),
+      t2: -0.4 + w(2),
+    };
   },
-  parts: [
-    { name: 'body', at: (S) => [0, -37 + S.by], rot: (S) => S.pitch },
-    { name: 'wingF', parent: 'body', pivot: [58, 74], at: () => [2, -35], rot: (S) => S.flapF, s: () => CK.wing(true) },
-    ...chainParts('t', { parent: 'body', at: () => [-10, 6], key: 'crystal|tail', segs: [9, 8, 7, 6, 5.5, 5].map((l, i) => [l, 13 - (10 * i) / 6, 13 - (10 * (i + 1)) / 6]), rot: (S, a, i) => S[`t${i}`] }).map((p, i) => {
-      const len = [9, 8, 7, 6, 5.5, 5][i];
-      const w0 = 13 - (10 * i) / 6;
-      const w1 = 13 - (10 * (i + 1)) / 6;
-      return { ...p, pivot: [w0 / 2 + 2, w0 / 2 + 14], s: () => CK.tailSeg(i, len, w0, w1) };
-    }),
-    { name: 'tailTip', parent: 't5', pivot: [4, 15], at: () => [5, 0], s: () => CK.tailTip() },
-    { name: 'th0', parent: 'body', pivot: [11, 13], at: () => [-4, 2], rot: (S) => S.th0, s: () => CK.thigh(true) },
-    { name: 'sh0', parent: 'th0', pivot: [5, 7], at: () => [17, 0], rot: (S) => S.sh0, s: () => CK.shin(true) },
-    { name: 'ft0', parent: 'sh0', pivot: [6, 4], at: () => [15, 0], rot: (S) => S.ft0, s: () => CK.foot(true) },
-    { name: 'back', parent: 'body', pivot: [24, 44], at: () => [0, 0], s: () => CK.back() },
-    { name: 'torso', parent: 'body', pivot: [21, 46], at: () => [0, 0], s: () => CK.torso() },
-    { name: 'th1', parent: 'body', pivot: [11, 13], at: () => [4, 4], rot: (S) => S.th1, s: () => CK.thigh(false) },
-    { name: 'sh1', parent: 'th1', pivot: [5, 7], at: () => [17, 0], rot: (S) => S.sh1, s: () => CK.shin(false) },
-    { name: 'ft1', parent: 'sh1', pivot: [6, 4], at: () => [15, 0], rot: (S) => S.ft1, s: () => CK.foot(false) },
-    { name: 'wingN', parent: 'body', pivot: [58, 74], at: () => [-4, -32], rot: (S) => S.flapN, s: () => CK.wing(false) },
-    ...[0, 1, 2].map((i) => ({ name: `n${i}`, parent: i ? `n${i - 1}` : 'body', pivot: [[11, 10.1, 9.2][i] / 2 + 2, [11, 10.1, 9.2][i] / 2 + 2], at: i ? () => [8, 0] : () => [10, -38], rot: (S) => (i ? -0.15 : -Math.PI / 2 + 0.55 + S.neckA), s: () => CK.neckSeg(i, 8, [11, 10.1, 9.2][i], [10.1, 9.2, 8.4][i]) })),
-    { name: 'headJ', parent: 'n2', at: () => [8, 0], rot: (S) => S.headA - 0.7 * S.pitch - (-Math.PI / 2 + 0.55 + S.neckA - 0.3) },
-    { name: 'headBack', parent: 'headJ', pivot: [26, 18], at: () => [0, 0], s: () => CK.headBack() },
-    { name: 'jaw', parent: 'headJ', pivot: [5, 8], at: () => [2, 3], rot: (S) => S.jaw, s: () => CK.jaw() },
-    { name: 'head', parent: 'headJ', pivot: [14, 26], at: () => [0, 0], s: (a) => CK.head(a.face, a.atk) },
-    { name: 'crown', parent: 'headJ', pivot: [8, 10], at: () => [5, -11.6], rot: (S) => S.crown, s: () => CK.crown() },
-    { name: 'up', parent: 'body', pivot: [4, 6], at: () => CK_SHOULDER, rot: (S) => S.up, s: () => CK.upper() },
-    { name: 'fo', parent: 'up', pivot: [4, 6], at: () => [14, 0], rot: (S) => S.fo, s: () => CK.fore() },
-    { name: 'scepter', parent: 'fo', pivot: [14, 9], at: () => [14, 0], rot: (S) => S.sc, s: () => CK.scepter() },
-  ],
-  fx(ctx, m, a) {
-    // The slam: a glowing ring on the floor and crystals erupting where the scepter strikes.
-    const x0 = 52;
+  parts: BONES.map((B) => ({
+    name: B.name,
+    parent: B.parent,
+    pivot: boxOf(B.piece ?? B.name).slice(2),
+    at: B.at,
+    rot: B.rot,
+    // (The body bone is a bare joint: its sprite is drawn later, as bodyS, over the wings and cape.)
+    s: B.name === 'body' ? undefined : (a) => pkPart(B.name, a.face, a.atk),
+  })),
+  fx(ctx, m, a, S, mat) {
+    // The prism charging as he winds up: a sparkle swelling on its tip.
+    if (a.ph.antic > 0.15 && m.hp > 0) {
+      const k = a.ph.antic;
+      const r = 2 + k * 5 + Math.sin(a.t * 18) * 0.8 * k;
+      ctx.save();
+      ctx.transform(...mat('scepter'));
+      ctx.translate(0, -29);
+      ctx.rotate(a.t * 2);
+      ctx.globalAlpha = a.alpha * Math.min(1, k * 1.4);
+      for (const [rr, c] of [[r + 1.2, '#5aa6dc'], [r, '#ffffff']]) {
+        const w = rr * 0.28;
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.moveTo(0, -rr);
+        ctx.lineTo(w, -w);
+        ctx.lineTo(rr, 0);
+        ctx.lineTo(w, w);
+        ctx.lineTo(0, rr);
+        ctx.lineTo(-w, w);
+        ctx.lineTo(-rr, 0);
+        ctx.lineTo(-w, -w);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    // The floor glowing where the slam will land.
     if (a.ph.antic > 0.2) {
       ctx.globalAlpha = a.alpha * a.ph.antic * 0.6;
       ctx.fillStyle = '#dffaff';
       ctx.beginPath();
-      ctx.ellipse(x0, -1, 9 + a.ph.antic * 6, 2 + a.ph.antic, 0, 0, TAU);
+      ctx.ellipse(SLAM_X, -1, 9 + a.ph.antic * 7, 2 + a.ph.antic, 0, 0, TAU);
       ctx.fill();
     }
+    // Crystals bursting up from the floor where the scepter strikes.
     if (a.ph.since >= 0 && a.ph.since < 0.7) {
       const u = a.ph.since / 0.7;
       const g = u < 0.2 ? u / 0.2 : 1 - (u - 0.2) / 0.8;
@@ -550,21 +384,68 @@ const crystalRig = makeRig({
         if (len < 2) continue;
         const d = -Math.PI / 2 + ang;
         ctx.globalAlpha = a.alpha;
+        ctx.fillStyle = '#5a6ac8';
+        ctx.beginPath();
+        ctx.moveTo(SLAM_X + ox - 3, 0.5);
+        ctx.lineTo(SLAM_X + ox + Math.cos(d) * (len + 1), Math.sin(d) * (len + 1));
+        ctx.lineTo(SLAM_X + ox + 3, 0.5);
+        ctx.fill();
         ctx.fillStyle = c;
         ctx.beginPath();
-        ctx.moveTo(x0 + ox - 2.4, 0);
-        ctx.lineTo(x0 + ox + Math.cos(d) * len, Math.sin(d) * len);
-        ctx.lineTo(x0 + ox + 2.4, 0);
+        ctx.moveTo(SLAM_X + ox - 2.2, 0);
+        ctx.lineTo(SLAM_X + ox + Math.cos(d) * len, Math.sin(d) * len);
+        ctx.lineTo(SLAM_X + ox + 2.2, 0);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(x0 + ox + Math.cos(d) * len * 0.6 - 0.5, Math.sin(d) * len * 0.6, 1, 2);
+        ctx.fillRect(SLAM_X + ox + Math.cos(d) * len * 0.6 - 0.5, Math.sin(d) * len * 0.6, 1, 2);
       }
     }
   },
 });
 
+// ---------- The still frames (the same skeleton, posed per frame) ----------
+
+const FRAME_ATK = [
+  { antic: 0.5, strike: 0, since: -1 },
+  { antic: 1, strike: 0, since: -1 },
+  { antic: 0, strike: 1, since: 0.05 },
+  { antic: 0, strike: 1, since: 0.2 },
+  { antic: 0, strike: 0.35, since: 0.5 },
+];
+
+function dragon(pose, f, mood) {
+  const n = pose === 'walk' ? 8 : pose === 'attack' ? 5 : 6;
+  const q = f / n;
+  const att = pose === 'attack' ? FRAME_ATK[Math.min(4, Math.floor(f))] : null;
+  const walk = pose === 'walk';
+  const dead = mood === 'dead';
+  const a = { t: q * TAU / 2, wp: walk ? q * TAU : 0, walkW: walk ? 1 : 0, ph: att ?? { antic: 0, strike: 0, since: -1 }, face: dead ? 'dead' : att && f >= 1 && f < 4 ? 'angry' : mood, atk: att && f >= 1 && f < 4 ? 1 : 0 };
+  const P = posePK(a);
+  const [fx0, fy0] = footAt(a, 0);
+  const [fx1, fy1] = footAt(a, 0.5);
+  const S = { ...P, fFx: fx0, fFy: fy0, fNx: fx1, fNy: fy1, crown: -P.headA * 0.5, cape: -P.pitch * 0.7, t0: 2.75 - P.pitch * 0.9, t1: -0.35 + 0.08 * Math.sin(q * TAU), t2: -0.4 + 0.08 * Math.sin(q * TAU - 0.8) };
+  if (dead) Object.assign(S, { pitch: -0.25, headA: 0.3, arm: -0.2, sw: 1.2, flap: 0.4, by: 2 });
+  // Each bone's place: its parent's, moved and turned (the shapes follow by position and angle).
+  const mats = {};
+  const out = [];
+  const W = 150;
+  const FLOOR = 146;
+  for (const B of BONES) {
+    const base = B.parent ? mats[B.parent] : { x: W / 2, y: FLOOR, r: 0 };
+    const [x, y] = B.at ? B.at(S) : [0, 0];
+    const c = Math.cos(base.r);
+    const s = Math.sin(base.r);
+    const m = { x: base.x + x * c - y * s, y: base.y + x * s + y * c, r: base.r + (B.rot ? B.rot(S) : 0) };
+    mats[B.name] = m;
+    if (B.name === 'body') continue;
+    out.push(...move(spin(shapesOf(B.piece ?? B.name, a), 0, 0, (m.r * 180) / Math.PI), m.x, m.y));
+  }
+  if (att?.since >= 0 && att.since < 0.3) out.push(...star(W / 2 + SLAM_X, FLOOR - 4, 8, '#dffaff'));
+  return { w: W, h: 150, res: 3, shapes: out };
+}
+
 export const ART = {
-  crystalking: { walk: 8, idle: 6, attack: 5, stride: 30, atkMs: [80, 150, 450, 240], draw: dragon, rig: crystalRig },
+  crystalking: { pad: 12, walk: 8, idle: 6, attack: 5, stride: STRIDE, atkMs: [80, 150, 450, 240], draw: dragon, rig: crystalRig },
 };
 
 // New display names, and the hitbox each design wants: { key: { name, w, h } }.

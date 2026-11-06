@@ -92,8 +92,18 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
 - Thunder Hawk (the archer's old summon) was removed when the first-job Archer was remade; her
   falcon now lives in Falcon Dive, her finisher.
 
+- Bosses finished (2026-11-06), three critique rounds each, before/after GIFs and 1x checks in
+  their maps: Gnarlroot's roots now step in turn (each half planted while the other lifts, no
+  sliding), his wind-up rises tall and trembles with both arms over his crown, and his slam crashes
+  both arms down wide with palms on the floor, his top sinking into it, and dust under each palm.
+  Prismaris was redesigned in the dungeon bosses' chibi creature style (he read as a machine beside
+  them): a round pear-shaped little dragon king on stubby feet, big face, crown a size too big,
+  ermine collar and plum cape, dragon wings of gem panes with a scalloped trailing edge, crystal
+  spines and tail tip; his scepter is held high up its staff and wound back over his shoulder so
+  nothing ever crosses his face, a sparkle charges on the prism, and it smashes into the floor where
+  the crystals burst. Rig and still frames share one skeleton.
+
 ## Still to do
-- Boss rough spots: Gnarlroot and Prismaris had one critique round only (no GIFs).
 - Gear: accent-colour audit per piece.
 - Hero: critique rounds on attack/jump/climb motion.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
