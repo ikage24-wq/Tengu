@@ -80,6 +80,8 @@ const VARIANT_LOOKS = {
   arcane: { blade: '#8a5a3a', bladeDark: '#5a3a28', edge: '#f2eeff', handle: '#8a5a3a', handleDark: '#5a3a28' },
   // The Cleric's sun scepter (weapon-designs.js): white and gold.
   cleric: { blade: '#fbf6ec', bladeDark: '#e0d4bc', edge: '#ffffff', trim: '#ffd36a', trimDark: '#d89a36', handle: '#fbf6ec', handleDark: '#e0d4bc' },
+  // The Sorcerer's staff and wand (weapon-designs.js): black wood, iron, a violet flame.
+  sorcery: { blade: '#2a1c30', bladeDark: '#140c18', edge: '#ffd27a', trim: '#ff8a3a', trimDark: '#b8501e', gem: '#ff8a3a', handle: '#2a1c30', handleDark: '#140c18', fx: 'embers', glow: null, prism: null },
   rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },
 };
 // Types whose shaft or wood (not a blade) carries most of the color.
@@ -108,7 +110,7 @@ export function lookFor(type, tier, theme, variant = null) {
   const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), step: t ? (t - 1) % 4 : 0, theme: null, variant: null };
   if (look.rune) look.runeDim = mix(base.bladeDark, base.rune, 0.3);
   if (base.name === 'genesis') look.prism = PRISM;
-  const v = (t > 0 || variant === 'idol' || variant === 'astro' || variant === 'acro' || variant === 'phantom' || variant === 'chef' || variant === 'arcane' || variant === 'cleric') && VARIANT_LOOKS[variant];
+  const v = (t > 0 || variant === 'idol' || variant === 'astro' || variant === 'acro' || variant === 'phantom' || variant === 'chef' || variant === 'arcane' || variant === 'cleric' || variant === 'sorcery') && VARIANT_LOOKS[variant];
   if (!v) return look;
   Object.assign(look, v, { variant });
   if (WOODEN.has(type) && !v.handle) Object.assign(look, { handle: v.blade, handleDark: v.bladeDark });

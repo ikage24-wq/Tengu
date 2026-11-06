@@ -900,6 +900,7 @@ function sunScepter(m, t, f) {
 function wand(m, t, f = 0) {
   if (m.variant === 'chef') return ladle(m, t);
   if (m.variant === 'cleric') return sunScepter(m, t, f);
+  if (m.variant === 'sorcery') return sorceryWand(m, t, f);
   if (m.variant === 'arcane') return arcaneWand(m, t, f);
   if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
@@ -1028,8 +1029,61 @@ function orrery(m, t) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
+// The Sorcerer's staff (the 'sorcery' finish, render/hero.js; docs/design/mage-line.md): a staff of
+// black wood, short enough never to read as a lance, held near its foot, its head a crooked iron claw cradling a violet flame with an ember
+// core; the claw grows thorns and a floating rune shard up the tiers. Never over her face.
+function sorceryStaff(m, t, f) {
+  const s = [];
+  const a = {};
+  const S = 14 + t * 0.4;
+  s.push(T([[-1.2, 4], [1.2, 4], [1, -S], [-1, -S]], '#2a1c30'), F(T([[0.2, 4], [1.2, 4], [1, -S], [0.2, -S]], '#140c18')));
+  for (let y = -S + 5; y < 2; y += 7) s.push(F(R(-1.3, y, 2.6, 0.6, '#ff8a3a')));
+  s.push(T([[-1.5, 4], [1.5, 4], [0, 7]], '#4a3a58'));
+  const r = 3.2 + t * 0.07;
+  const cy = -S - r - 1.6;
+  // The flame: violet outer tongues flickering with the frames, an ember core, a white-hot heart.
+  const fl = (f % 4) * 0.35;
+  s.push(F(T([[-r, cy + r * 0.6], [-r * 1.05, cy - r * 0.4], [-r * 0.4, cy - r * 1.1], [-r * 0.2 + fl * 0.4, cy - r * 2.1 - fl], [r * 0.3, cy - r * 1.2], [r * 0.7 - fl * 0.3, cy - r * 1.7], [r * 1.05, cy - r * 0.3], [r, cy + r * 0.6], [0, cy + r]], '#8a4ae0')));
+  s.push(F(T([[-r * 0.6, cy + r * 0.5], [-r * 0.5, cy - r * 0.5], [0, cy - r * 1.3 - fl * 0.6], [r * 0.5, cy - r * 0.5], [r * 0.6, cy + r * 0.5], [0, cy + r * 0.8]], '#ff8a3a')));
+  s.push(F(E(0, cy, r * 0.32, r * 0.42, '#ffd27a')), F(E(0, cy + 0.2, r * 0.14, r * 0.2, '#ffffff')));
+  // The claw: iron talons curling up round the flame from a collar.
+  s.push(F(R(-1.8, -S - 1.2, 3.6, 1.6, '#3a2c46')));
+  for (const sd of [-1, 1]) s.push(F(T([[sd * 1.2, -S - 0.6], [sd * (r + 1.4), cy + r * 0.4], [sd * (r + 0.8), cy - r * 0.8], [sd * (r + 0.2), cy - r * 0.4], [sd * (r * 0.6), cy + r * 0.7], [sd * 0.4, -S - 1]], '#3a2c46')), F(T([[sd * (r + 1.1), cy + r * 0.2], [sd * (r + 0.8), cy - r * 0.8], [sd * (r + 0.5), cy]], '#7a6a8a')));
+  if (t >= 4) for (const sd of [-1, 1]) s.push(F(T([[sd * (r + 1.2), cy + r * 0.1], [sd * (r + 3.2), cy - r * 0.3], [sd * (r + 1.3), cy + r * 0.5]], '#3a2c46')));
+  if (t >= 8) {
+    const ry = cy - r * 2.6 - (f % 6) * 0.15;
+    s.push(F(E(0, ry, 1.8, 1.8, 'rgba(255,138,58,0.35)')), T([[0, ry - 1.6], [1.1, ry], [0, ry + 1.6], [-1.1, ry]], '#ff8a3a'), F(R(-0.15, ry - 0.9, 0.3, 1.8, '#ffd27a')));
+  }
+  a.head = [0, cy];
+  a.gem = [0, cy];
+  a.tip = [0, cy - r * 1.6];
+  a.blade = [cy - r * 1.6, -S];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
+// The Sorcerer's wand: a short rod of black wood bound in iron, hooked at the end like a crooked
+// finger, a violet flame with an ember core burning in the hook.
+function sorceryWand(m, t, f) {
+  const s = [];
+  const a = {};
+  const H = 6 + t * 0.2;
+  s.push(T([[-0.9, 2.6], [0.9, 2.6], [0.6, -H], [-0.6, -H]], '#2a1c30'), F(T([[0.1, 2.6], [0.9, 2.6], [0.6, -H], [0.1, -H]], '#140c18')));
+  s.push(R(-1.1, -0.6, 2.2, 1, '#4a3a58'), R(-1, -H * 0.55, 2, 0.8, '#ff8a3a'), E(0, 2.8, 1.2, 1, '#4a3a58'));
+  s.push(T([[-0.6, -H], [0.6, -H], [2.6, -H - 2.2], [2.2, -H - 4.4], [1.2, -H - 3], [1.4, -H - 2.2]], '#2a1c30'));
+  const cy = -H - 3.2;
+  const fl = (f % 4) * 0.3;
+  s.push(T([[-1.6, cy + 1.2], [-1.4, cy - 0.8], [-0.4 + fl * 0.3, cy - 3 - fl], [0.6, cy - 1.2], [1.4, cy + 1.2]], '#8a4ae0'));
+  s.push(T([[-0.9, cy + 1], [-0.3, cy - 1.6 - fl * 0.5], [0.7, cy + 1]], '#ff8a3a'), F(E(-0.1, cy + 0.4, 0.45, 0.6, '#ffd27a')));
+  a.head = [0, cy];
+  a.gem = [0, cy];
+  a.tip = [0, cy - 3];
+  a.blade = [cy - 3, -H];
+  return { shapes: s, blade: a.blade, reach: [], a };
+}
+
 function staff(m, t, f = 0) {
   if (m.variant === 'astro') return orrery(m, t);
+  if (m.variant === 'sorcery') return sorceryStaff(m, t, f);
   if (m.variant === 'chef') return fryingPan(m, t);
   if (m.variant === 'arcane') return arcaneStaff(m, t, f);
   const s = [];
