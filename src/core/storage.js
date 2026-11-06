@@ -1,12 +1,12 @@
 // The storage chest every hero in a world shares (the world's `storage`, core/save.js): an
-// inventory of its own (Equip, Use and Etc, TAB_SIZE cells each). A move takes the whole cell
+// inventory of its own (Equip, Use, Etc and Materials, TAB_SIZE cells each). A move takes the whole cell
 // (one piece of gear, or a whole stack) from one side to the other, and only when all of it fits,
 // so nothing is ever split, lost or doubled.
 
 import { ITEMS } from '../data/items.js';
 import { TAB_SIZE, STACK_MAX } from './inventory.js';
 
-export const STORAGE_TABS = ['equip', 'use', 'etc'];
+export const STORAGE_TABS = ['equip', 'use', 'etc', 'mats'];
 
 // Whether `qty` of a stackable `id` fits in a tab (topping up stacks first, then new cells).
 function fits(list, entry) {

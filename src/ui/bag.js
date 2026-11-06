@@ -31,8 +31,12 @@ const W = 332;
 const H = 264;
 const CELL = 24;
 const SLOT = 22;
-const TAB_KEYS = ['equip', 'use', 'etc', 'cash'];
-const TAB_NAMES = ['Equip', 'Use', 'Etc', 'Cash'];
+const TAB_KEYS = ['equip', 'use', 'etc', 'mats', 'cash'];
+const TAB_NAMES = ['Equip', 'Use', 'Etc', 'Mats', 'Cash'];
+const TAB_W = 31;
+// The grid shows four rows at a time and scrolls (wheel, or the bar beside it) through the rest.
+const VIS_ROWS = 4;
+const ROWS = TAB_SIZE / 8;
 const SLOT_NAMES = { hat: 'Hat', face: 'Face', top: 'Top', bottom: 'Bottom', shoes: 'Shoes', weapon: 'Weapon', gloves: 'Gloves', cape: 'Cape', earring: 'Earring', ring: 'Ring', charm: 'Charm' };
 const GREEN = '#2f9f58';
 const MINT = THEMES.mint;
@@ -114,16 +118,21 @@ export function bagWindow(ui, state, world) {
   const doll = { x: lx, y: oy + 45, w: lw, h: 126 };
   const fy = oy + H - 23;
   const bin = { x: ox + W - 31, y: fy - 1, w: 22, h: 18 };
-  const cellAt = (x, y) => {
-    const c = Math.floor((x - gx) / CELL);
-    const r = Math.floor((y - gy) / CELL);
-    return c >= 0 && c < 8 && r >= 0 && r < TAB_SIZE / 8 ? r * 8 + c : -1;
-  };
-
   // ---- What the mouse is on, read first so the doll can preview it ----
   const tabWas = win.tab ?? 0;
   const tab = TAB_KEYS[tabWas];
   const list = char.inventory[tab] ?? [];
+  // The rows scrolled past, per tab (the wheel over the grid, or the bar).
+  win.scroll ??= {};
+  const maxScroll = ROWS - VIS_ROWS;
+  if (hover(ui, gx, gy, 8 * CELL + 6, VIS_ROWS * CELL)) win.scroll[tab] = (win.scroll[tab] ?? 0) + ui.mouse.wheel;
+  win.scroll[tab] = Math.max(0, Math.min(maxScroll, win.scroll[tab] ?? 0));
+  const top = win.scroll[tab];
+  const cellAt = (x, y) => {
+    const c = Math.floor((x - gx) / CELL);
+    const r = Math.floor((y - gy) / CELL);
+    return c >= 0 && c < 8 && r >= 0 && r < VIS_ROWS ? (r + top) * 8 + c : -1;
+  };
   const drag = win.carry?.live ? win.carry : null;
   const hotIndex = drag ? -1 : cellAt(m.x, m.y);
   const dragged = drag?.from === 'bag' ? list[drag.index] : null;
@@ -180,8 +189,9 @@ export function bagWindow(ui, state, world) {
   // ---- Items: tabs, sort, grid, capacity ----
   // Tabs holding something new sparkle.
   const fresh = TAB_KEYS.map((k) => (char.inventory[k] ?? []).some((e) => !win.seen.has(seenKey(k, e))));
-  win.tab = tabs(ui, rx + 2, oy + 26, TAB_NAMES, tabWas, { w: 37, h: 13 });
-  fresh.forEach((f, i) => f && i !== win.tab && sparkle(ctx, rx + 2 + i * 39 + 34, oy + 26, 2.6, '#ff6fae'));
+  win.tab = tabs(ui, rx + 2, oy + 26, TAB_NAMES, tabWas, { w: TAB_W, h: 13 });
+  fresh.forEach((f, i) => f && i !== win.tab && sparkle(ctx, rx + 2 + i * (TAB_W + 2) + TAB_W - 3, oy + 26, 2.6, '#ff6fae'));
+  if (hover(ui, rx + 2 + 3 * (TAB_W + 2), oy + 26, TAB_W, 13)) tooltip(ui, [{ text: 'Materials', bold: true }, { text: 'Fish, gathered finds and crafting materials, kept apart from monster drops.', size: 8, color: COLORS.muted }]);
   if (win.tab !== tabWas) Object.assign(win, { sel: -1, carry: null, confirm: null, dropAsk: null });
   const sortX = rx + rw - 34;
   if (button(ui, sortX, oy + 24, 34, 16, 'Sort', { size: 7.5 })) {
@@ -194,9 +204,20 @@ export function bagWindow(ui, state, world) {
   const dropCell = drag ? cellAt(m.x, m.y) : -1;
   // Dropping past the last item lands it at the end, so that's the cell that lights.
   const dropAt = dropCell < 0 ? -1 : Math.min(dropCell, Math.max(0, list.length - (drag?.from === 'bag' ? 1 : 0)));
-  for (let i = 0; i < TAB_SIZE; i++) {
-    gridCell(ui, state, world, tab, list, i, gx + (i % 8) * CELL, gy + Math.floor(i / 8) * CELL, win, i === dropAt);
+  for (let k = 0; k < VIS_ROWS * 8; k++) {
+    const i = top * 8 + k;
+    gridCell(ui, state, world, tab, list, i, gx + (k % 8) * CELL, gy + Math.floor(k / 8) * CELL, win, i === dropAt);
   }
+  // The scroll bar beside the grid: its thumb shows which rows are in view; a click above or below
+  // it pages there. A pink dot marks new things out of view.
+  const bx = gx + 8 * CELL + 1;
+  const bh = VIS_ROWS * CELL - 2;
+  box(ctx, bx, gy, 4, bh, { fill: 'rgba(160,130,190,0.18)', edge: null, r: 2 });
+  const th0 = gy + (top / ROWS) * bh;
+  box(ctx, bx, th0, 4, (VIS_ROWS / ROWS) * bh, { fill: hover(ui, bx - 2, gy, 8, bh) ? th.dark : th.main, edge: null, r: 2 });
+  if (clicked(ui, bx - 2, gy, 8, bh)) win.scroll[tab] = Math.max(0, Math.min(maxScroll, top + (ui.mouse.y < th0 ? -VIS_ROWS : VIS_ROWS)));
+  const hiddenNew = list.some((e, i) => (i < top * 8 || i >= (top + VIS_ROWS) * 8) && !win.seen.has(seenKey(tab, e)));
+  if (hiddenNew) sparkle(ctx, bx + 2, list.findIndex((e) => !win.seen.has(seenKey(tab, e))) < top * 8 ? gy - 1 : gy + bh + 1, 2.2, '#ff6fae');
 
   // How full the tab is.
   const cy = gy + 4 * CELL + 2;
@@ -393,7 +414,7 @@ function gridCell(ui, state, world, tab, list, i, x, y, win, dropHere) {
   if (!win.seen.has(seenKey(tab, entry))) {
     chip(ctx, x, y, 'NEW', '#ff6fae');
     if (hot) win.seen.add(seenKey(tab, entry));
-  } else if (tab === 'etc' && questsWanting(char, entry.id).length) chip(ctx, x, y, '!', MINT.dark);
+  } else if ((tab === 'etc' || tab === 'mats') && questsWanting(char, entry.id).length) chip(ctx, x, y, '!', MINT.dark);
   else if (key) chip(ctx, x, y, key, LAV.main);
   // No tooltip here: the detail strip under the grid shows the hovered item.
   const right = ui.mouse.right && hot;

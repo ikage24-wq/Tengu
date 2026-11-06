@@ -1,18 +1,39 @@
-// Inventory with three tabs. Equipment is one item per cell; Use and Etc items stack (up to
-// STACK_MAX, or the item's own `stack`).
+// Inventory with five tabs: Equip, Use, Etc, Materials and Cash. Equipment and Cash pieces are one
+// item per cell; Use, Etc and Materials items stack (up to STACK_MAX, or the item's own `stack`).
+// Materials are the life skills' haul (fish, gathered finds, crafted materials): they are Etc
+// items by type, kept in a pocket of their own so they never crowd out monster drops and quest
+// things (the player's call, 2026-11-06, with the tabs doubled to 64).
 
 import { ITEMS } from '../data/items.js';
 import { makeEquip } from './items.js';
 
-export const TAB_SIZE = 32;
+export const TAB_SIZE = 64;
 export const STACK_MAX = 200;
 
 export function createInventory() {
-  return { equip: [], use: [], etc: [], cash: [] };
+  return { equip: [], use: [], etc: [], mats: [], cash: [] };
 }
 
+// A life-skill material: a fish, a gathered find, or something crafted to craft with (not a tool).
+export const isMaterial = (def) => Boolean(def && def.type === 'etc' && (def.fish || def.gathered || (def.crafted && !def.tool)));
+
+// The bag tab an item goes in: 'equip' | 'use' | 'etc' | 'mats' | 'cash'.
 export function tabFor(id) {
-  return ITEMS[id].type; // 'equip' | 'use' | 'etc' | 'cash'
+  const def = ITEMS[id];
+  return isMaterial(def) ? 'mats' : def.type;
+}
+
+// An old bag (or chest) from before the Materials pocket: give it the pocket and move its
+// materials over from Etc.
+export function settleBag(inv) {
+  if (!inv) return inv;
+  for (const tab of Object.keys(createInventory())) inv[tab] ??= [];
+  const moving = inv.etc.filter((e) => isMaterial(ITEMS[e.id]));
+  if (moving.length) {
+    inv.etc = inv.etc.filter((e) => !moving.includes(e));
+    inv.mats.push(...moving);
+  }
+  return inv;
 }
 
 // Adds an item. `item` is either an equip instance or an item id. Returns true if it fit.
@@ -29,7 +50,7 @@ export function addItem(inv, item, qty = 1) {
     for (let i = 0; i < qty; i++) if (!addItem(inv, makeEquip(item))) return false;
     return true;
   }
-  const list = inv[tab];
+  const list = (inv[tab] ??= []);
   const max = ITEMS[item].stack ?? STACK_MAX;
   let left = qty;
   for (const stack of list) {
@@ -51,12 +72,12 @@ export function addItem(inv, item, qty = 1) {
 export function countItem(inv, id) {
   const tab = tabFor(id);
   if (tab === 'equip') return inv.equip.filter((e) => e.id === id).length;
-  return inv[tab].filter((s) => s.id === id).reduce((n, s) => n + s.qty, 0);
+  return (inv[tab] ?? []).filter((s) => s.id === id).reduce((n, s) => n + s.qty, 0);
 }
 
 // Removes up to `qty` of a stackable item. Returns how many were removed.
 export function removeItem(inv, id, qty = 1) {
-  const list = inv[tabFor(id)];
+  const list = inv[tabFor(id)] ?? [];
   let left = qty;
   for (let i = list.length - 1; i >= 0 && left > 0; i--) {
     if (list[i].id !== id) continue;
@@ -76,7 +97,7 @@ export function sortTab(inv, tab) {
   const list = inv[tab];
   if (!list) return;
   catalogue ??= new Map(Object.keys(ITEMS).map((id, i) => [id, i]));
-  if (tab === 'use' || tab === 'etc') {
+  if (tab === 'use' || tab === 'etc' || tab === 'mats') {
     const merged = [];
     for (const e of list) {
       const def = ITEMS[e.id];

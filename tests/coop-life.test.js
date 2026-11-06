@@ -56,11 +56,13 @@ function atHerb(world) {
 }
 
 // Picks the herb to the end with a fixed roll; returns how many finds came out.
+// (Finds go in the Materials pocket, odd ones in Etc: both count.)
+const finds = (inv) => [...(inv.etc ?? []), ...(inv.mats ?? [])].reduce((k, e) => k + e.qty, 0);
 function pickHerb(world, rng) {
-  const before = Object.values(world.char.inventory.etc ?? []).reduce((k, e) => k + e.qty, 0);
+  const before = finds(world.char.inventory);
   assert.equal(startGathering(world), null);
   tickGathering(world, KINDS.herb.secs * 2, new Set(), new Set(), rng);
-  return Object.values(world.char.inventory.etc ?? []).reduce((k, e) => k + e.qty, 0) - before;
+  return finds(world.char.inventory) - before;
 }
 
 test('the together bonus only comes when two or more work the same spot', () => {

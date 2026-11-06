@@ -110,7 +110,7 @@ export function giftPage(ui, state, world, npc, area) {
   const id = npc.id;
   const h = heartsOf(char, id);
   const { x: tx, w: tw } = area;
-  const list = [...(char.inventory.etc ?? []), ...(char.inventory.use ?? [])].filter((e) => ITEMS[e.id] && !ITEMS[e.id].keep && !ITEMS[e.id].furniture);
+  const list = [...(char.inventory.etc ?? []), ...(char.inventory.mats ?? []), ...(char.inventory.use ?? [])].filter((e) => ITEMS[e.id] && !ITEMS[e.id].keep && !ITEMS[e.id].furniture);
   // The two special gifts first.
   list.sort((a, b) => ([BOUQUET, RING].includes(b.id) ? 1 : 0) - ([BOUQUET, RING].includes(a.id) ? 1 : 0));
   text(ctx, `A gift for ${npc.name}`, tx, area.y, { size: 9, bold: true });

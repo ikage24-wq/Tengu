@@ -14,7 +14,7 @@ import { wornGear } from '../core/character.js';
 const W = 420;
 const H = 280;
 const STAGE = 70;
-const TABS = ['Equip', 'Use', 'Etc'];
+const TABS = ['Equip', 'Use', 'Etc', 'Mats'];
 
 export function tradeWindow(ui, state, world) {
   const tr = online.trade;
@@ -32,8 +32,8 @@ export function tradeWindow(ui, state, world) {
   const x = win.x + 8;
   const y = win.y + 24;
   // Your bag.
-  win.tab = tabs(ui, x, y, TABS, win.tab ?? 0, { w: 42, h: 14 });
-  const key = ['equip', 'use', 'etc'][win.tab];
+  win.tab = tabs(ui, x, y, TABS, win.tab ?? 0, { w: 36, h: 14 });
+  const key = ['equip', 'use', 'etc', 'mats'][win.tab];
   const list = char.inventory[key].filter((e) => e && ITEMS[e.id] && !ITEMS[e.id].quest && ITEMS[e.id].type !== 'cash');
   list.slice(0, 24).forEach((e, i) => {
     const sx = x + (i % 6) * 22;

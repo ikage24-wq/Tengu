@@ -5,7 +5,7 @@
 // job, gear, gold, the story) is each character's own. Buffs and timers aren't saved.
 
 import { setNextUid, makeEquip } from './items.js';
-import { createInventory } from './inventory.js';
+import { createInventory, settleBag } from './inventory.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
@@ -74,6 +74,7 @@ export function loadWorld(file) {
   w.wardrobe ??= [];
   w.storage ??= createInventory();
   for (const tab of Object.keys(createInventory())) w.storage[tab] ??= [];
+  settleBag(w.storage);
   w.playSeconds ??= 0;
   worlds.set(file, w);
   return w;
@@ -217,6 +218,8 @@ export function dropRetiredItems(char) {
     else char.outfit[to] = inst;
   }
   for (const tab of Object.keys(char.inventory)) char.inventory[tab] = char.inventory[tab].filter((e) => ITEMS[e.id]);
+  // (From before the Materials pocket: materials move out of Etc into it.)
+  settleBag(char.inventory);
   for (const [code, b] of Object.entries(char.hotkeys ?? {})) if (b?.item && !ITEMS[b.item]) char.hotkeys[code] = null;
   return char;
 }

@@ -6,7 +6,7 @@
 import { ITEMS } from '../data/items.js';
 import { RECIPES, QUALITIES, familyMain, TOOL_SLOTS } from '../data/crafting.js';
 import { JOBS } from '../data/jobs.js';
-import { countItem, removeItem, addItem, TAB_SIZE } from './inventory.js';
+import { countItem, removeItem, addItem, TAB_SIZE, tabFor } from './inventory.js';
 import { makeEquip } from './items.js';
 import { addLifeExp, lifeLevel, charExpFor } from './life.js';
 
@@ -26,7 +26,7 @@ export function craftBlocker(char, r) {
   if (lifeLevel(char, 'crafting') < r.level) return 'level';
   if (!hasMaterials(char, r)) return 'materials';
   const def = ITEMS[r.makes];
-  const tab = def.type;
+  const tab = tabFor(r.makes);
   const list = char.inventory[tab] ?? [];
   const stacks = tab !== 'equip' && list.some((e) => e.id === r.makes && e.qty + r.qty <= (def.stack ?? 200));
   if (!stacks && list.length >= TAB_SIZE) return 'bag';

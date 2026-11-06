@@ -11,7 +11,7 @@ import { JOBS } from '../data/jobs.js';
 import { CASH_PER_QUEST } from '../data/cash.js';
 import { NPCS } from '../data/npcs.js';
 import { SPOTS } from '../data/fishing.js';
-import { addItem, countItem, removeItem, TAB_SIZE } from './inventory.js';
+import { addItem, countItem, removeItem, tabFor } from './inventory.js';
 import { makeEquip, makeCash } from './items.js';
 import { gainExp } from './character.js';
 
@@ -74,14 +74,14 @@ function bagFits(inv, removes, adds) {
   return adds.every(([item, qty]) => addItem(sim, item, qty));
 }
 // The tab (as players see it) a quest's things need room in, or null when they fit.
-const TAB_NAMES = { equip: 'Equip', use: 'Use', etc: 'Etc', cash: 'Cash' };
+const TAB_NAMES = { equip: 'Equip', use: 'Use', etc: 'Etc', mats: 'Materials', cash: 'Cash' };
 function fullTab(inv, removes, adds) {
   if (bagFits(inv, removes, adds)) return null;
   for (const [item] of adds) {
     const id = typeof item === 'object' ? item.id : item;
-    if (!bagFits(inv, removes, [[item, 1]])) return TAB_NAMES[ITEMS[id].type] ?? 'your';
+    if (!bagFits(inv, removes, [[item, 1]])) return TAB_NAMES[tabFor(id)] ?? 'your';
   }
-  return TAB_NAMES[ITEMS[(typeof adds[0][0] === 'object' ? adds[0][0].id : adds[0][0])].type] ?? 'your';
+  return TAB_NAMES[tabFor(typeof adds[0][0] === 'object' ? adds[0][0].id : adds[0][0])] ?? 'your';
 }
 
 // Why a quest can't be taken right now for lack of room (the things it hands you to carry), or

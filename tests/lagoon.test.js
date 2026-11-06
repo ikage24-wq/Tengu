@@ -128,7 +128,7 @@ test("Granny Kelp's story ends with Old Lumen at the point: reeled in, counted, 
   w.fishing.reel.next = 9;
   step(w, 0.1, null, ['KeyZ']);
   assert.ok(objectivesMet(char, 'kelp_5'));
-  assert.ok(!char.inventory.etc.some((e) => e.id === 'fish_lumen'), 'let go');
+  assert.ok(![...char.inventory.etc, ...char.inventory.mats].some((e) => e.id === 'fish_lumen'), 'let go');
   assert.equal(bossFish(w, deep), null, 'once');
 });
 

@@ -149,7 +149,7 @@ test('a quest runs from accept to rewards', () => {
   assert.equal(questState(c, 'fluffy'), 'ready');
   completeQuest(c, 'fluffy');
   assert.equal(questState(c, 'fluffy'), 'done');
-  assert.equal(c.inventory.etc.length, 0, 'collected items are handed in');
+  assert.equal(c.inventory.etc.length + c.inventory.mats.length, 0, 'collected items are handed in');
   gainExp(c, 1000);
   acceptQuest(c, 'snail_trouble');
   for (let i = 0; i < 12; i++) recordKill(c, 'snailbun');

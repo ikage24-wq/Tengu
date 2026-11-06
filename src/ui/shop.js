@@ -9,7 +9,7 @@
 
 import { NPCS, shopStock } from '../data/npcs.js';
 import { ITEMS, RARITIES } from '../data/items.js';
-import { addItem, removeItem, countItem, TAB_SIZE, STACK_MAX } from '../core/inventory.js';
+import { addItem, removeItem, countItem, TAB_SIZE, STACK_MAX, tabFor } from '../core/inventory.js';
 import { makeEquip, itemName, itemColors } from '../core/items.js';
 import { equipBlocker, wornGear } from '../core/character.js';
 import { shade } from '../render/pixel.js';
@@ -61,7 +61,7 @@ function entriesOf(npc, char, dlg) {
     const kind = (id) => (ITEMS[id].type !== 'equip' ? 3 : ITEMS[id].slot === 'weapon' ? 2 : 1);
     return shopStock(npc, char).filter((id) => !dlg.buyTab || kind(id) === dlg.buyTab).map((id) => ({ id, key: `b:${id}` }));
   }
-  const tab = ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
+  const tab = ['equip', 'use', 'etc', 'mats'][dlg.sellTab ?? 0];
   const out = [];
   char.inventory[tab].forEach((e, index) => {
     // Quest items stay with you.
@@ -98,7 +98,7 @@ export function shopWindow(ui, state, world) {
   const was = `${dlg.tab}|${dlg.sellTab}|${dlg.buyTab}`;
   dlg.tab = tabs(ui, win.x + 9, win.y + 26, ['Buy', 'Sell'], dlg.tab ?? 0, { w: 40, h: 14 });
   if (dlg.tab === 0) dlg.buyTab = tabs(ui, win.x + 99, win.y + 26, ['All', 'Gear', 'Arms', 'Other'], dlg.buyTab ?? 0, { w: 30, h: 14 });
-  else dlg.sellTab = tabs(ui, win.x + 99, win.y + 26, ['Equip', 'Use', 'Etc'], dlg.sellTab ?? 0, { w: 40, h: 14 });
+  else dlg.sellTab = tabs(ui, win.x + 99, win.y + 26, ['Equip', 'Use', 'Etc', 'Mats'], dlg.sellTab ?? 0, { w: 34, h: 14 });
   const entries = entriesOf(npc, char, dlg);
   // A new list starts at the top, with its first row picked.
   if (was !== `${dlg.tab}|${dlg.sellTab}|${dlg.buyTab}`) Object.assign(dlg, { scroll: 0, sel: null, qty: 1 });
@@ -153,9 +153,9 @@ export function shopWindow(ui, state, world) {
     text(ctx, f.text, lx + gw - 6, fy - 2 - k * 12, { size: 8, bold: true, align: 'right', color: f.color, outline: '#ffffff' });
     ctx.globalAlpha = 1;
   }
-  const bagTab = picked ? ITEMS[picked.id].type : ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
+  const bagTab = picked ? tabFor(picked.id) : ['equip', 'use', 'etc', 'mats'][dlg.sellTab ?? 0];
   const used = char.inventory[bagTab]?.length ?? 0;
-  text(ctx, `Bag (${bagTab[0].toUpperCase() + bagTab.slice(1)}) ${used}/${TAB_SIZE}`, lx + gw + 8, fy + 11.5, { size: 7, bold: true, color: used >= TAB_SIZE ? COLORS.bad : COLORS.muted });
+  text(ctx, `Bag (${bagTab === 'mats' ? 'Materials' : bagTab[0].toUpperCase() + bagTab.slice(1)}) ${used}/${TAB_SIZE}`, lx + gw + 8, fy + 11.5, { size: 7, bold: true, color: used >= TAB_SIZE ? COLORS.bad : COLORS.muted });
   // Selling: everything that's only worth gold, in one go.
   if (dlg.tab === 1) {
     const junk = junkOf(char);
