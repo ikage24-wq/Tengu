@@ -206,9 +206,9 @@ export const PATH_COMBOS = {
   // three droplets, and the big pour, a wave of soup through the line. Frying pan: an overhead bonk,
   // a flip that arcs a sizzling egg onto them, and the flambé, a whoosh of fire through the line.
   starwand: [
-    { move: 'kwstir', dur: 0.34, step: 10, strikes: [{ at: 0.32, shot: 'stbolt', magic: true, pct: 82, range: 300, h: 60, knock: 25, speed: 820 }] },
-    { move: 'kwsplash', dur: 0.42, step: 14, strikes: [{ at: 0.4, shot: 'stbolt', magic: true, pct: 40, range: 280, h: 110, knock: 30, speed: 820, fan: 3 }] },
-    { move: 'kwpour', dur: 0.56, step: 20, finisher: true, strikes: [{ at: 0.5, shot: 'stcomet', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, knock: 200, speed: 760, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'kwstir', dur: 0.34, step: 10, strikes: [{ at: 0.32, shot: 'kwglob', magic: true, pct: 82, range: 300, h: 60, knock: 25, speed: 820 }] },
+    { move: 'kwsplash', dur: 0.42, step: 14, strikes: [{ at: 0.4, shot: 'kwglob', magic: true, pct: 40, range: 280, h: 110, knock: 30, speed: 820, fan: 3 }] },
+    { move: 'kwpour', dur: 0.56, step: 20, finisher: true, strikes: [{ at: 0.5, shot: 'kwwave', magic: true, pct: 170, range: 320, h: 80, targets: 3, pierce: true, knock: 200, speed: 760, big: true, stop: 0.06, shake: 2 }] },
   ],
   // The Starlight Idol (the Shrine Maiden remade; docs/design/starlight-idol.md), singing into her
   // mic: a line sung with a dip on the beat and the mic swung out (a note flies), a step and touch
@@ -228,9 +228,9 @@ export const PATH_COMBOS = {
     { move: 'asring', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: 175, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] },
   ],
   starstaff: [
-    { move: 'kpbonk', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'stcomet', magic: true, pct: 96, range: 300, h: 70, knock: 120, speed: 760 }] },
-    { move: 'kpflip', dur: 0.46, step: 8, strikes: [{ at: 0.34, shot: 'stcomet', magic: true, pct: 104, range: 300, h: 110, knock: 60, launch: 140, speed: 700, lob: 40 }] },
-    { move: 'kpflambe', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.52, shot: 'stcomet', magic: true, pct: 180, range: 320, h: 80, targets: 4, pierce: true, knock: 220, speed: 760, big: true, stop: 0.07, shake: 3 }] },
+    { move: 'kpbonk', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'kpegg', magic: true, pct: 96, range: 300, h: 70, knock: 120, speed: 760 }] },
+    { move: 'kpflip', dur: 0.46, step: 8, strikes: [{ at: 0.34, shot: 'kpegg', magic: true, pct: 104, range: 300, h: 110, knock: 60, launch: 140, speed: 700, lob: 40 }] },
+    { move: 'kpflambe', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.52, shot: 'kpflame', magic: true, pct: 180, range: 320, h: 80, targets: 4, pierce: true, knock: 220, speed: 760, big: true, stop: 0.07, shake: 3 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.38, step: 10, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -466,9 +466,9 @@ export const PATH_VARIANTS = {
   // jab); the backhand splash or the showman's salt sprinkle; the big pour or a twirling scoop.
   // Frying pan: the bonk or a wok toss; the flip or a discus spin; the flambé or a backhand smash.
   starwand: [
-    [PATH_COMBOS.starwand[0], { move: 'kwtaste', dur: 0.32, step: 12, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 80, range: 300, h: 60, knock: 30, speed: 860 }] }],
-    [PATH_COMBOS.starwand[1], { move: 'kwsalt', dur: 0.46, step: 6, strikes: [{ at: 0.42, shot: 'stbolt', magic: true, pct: 38, range: 280, h: 130, knock: 20, speed: 760, fan: 3, drop: 30 }] }],
-    [PATH_COMBOS.starwand[2], { move: 'kwscoop', dur: 0.52, step: 14, finisher: true, strikes: [{ at: 0.46, shot: 'stcomet', magic: true, pct: 165, range: 320, h: 90, targets: 3, pierce: true, knock: 180, launch: 160, speed: 740, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.starwand[0], { move: 'kwtaste', dur: 0.32, step: 12, strikes: [{ at: 0.3, shot: 'kwglob', magic: true, pct: 80, range: 300, h: 60, knock: 30, speed: 860 }] }],
+    [PATH_COMBOS.starwand[1], { move: 'kwsalt', dur: 0.46, step: 6, strikes: [{ at: 0.42, shot: 'kwspice', magic: true, pct: 38, range: 280, h: 130, knock: 20, speed: 760, fan: 3, drop: 30 }] }],
+    [PATH_COMBOS.starwand[2], { move: 'kwscoop', dur: 0.52, step: 14, finisher: true, strikes: [{ at: 0.46, shot: 'kwwave', magic: true, pct: 165, range: 320, h: 90, targets: 3, pierce: true, knock: 180, launch: 160, speed: 740, big: true, stop: 0.06, shake: 2 }] }],
   ],
   // The Starlight Idol. Openers: a line on the beat, a blown kiss, or the mic lassoed round overhead.
   // Second: the step and touch, singing over her shoulder, or a hair flip. Finisher: the high note,
@@ -498,9 +498,9 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.6, step: 12, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'kpwok', dur: 0.44, step: 10, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 94, range: 300, h: 110, knock: 60, speed: 700, lob: 36 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'kpspin', dur: 0.5, step: 12, strikes: [{ at: 0.46, shot: 'stcomet', magic: true, pct: 106, range: 310, h: 70, targets: 2, pierce: true, knock: 120, speed: 780 }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'kpsmash', dur: 0.58, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'stcomet', magic: true, pct: 178, range: 320, h: 80, targets: 4, pierce: true, knock: 240, launch: 120, speed: 820, big: true, stop: 0.07, shake: 3 }] }],
+    [PATH_COMBOS.starstaff[0], { move: 'kpwok', dur: 0.44, step: 10, strikes: [{ at: 0.3, shot: 'kpegg', magic: true, pct: 94, range: 300, h: 110, knock: 60, speed: 700, lob: 36 }] }],
+    [PATH_COMBOS.starstaff[1], { move: 'kpspin', dur: 0.5, step: 12, strikes: [{ at: 0.46, shot: 'kpegg', magic: true, pct: 106, range: 310, h: 70, targets: 2, pierce: true, knock: 120, speed: 780 }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'kpsmash', dur: 0.58, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'kpflame', magic: true, pct: 178, range: 320, h: 80, targets: 4, pierce: true, knock: 240, launch: 120, speed: 820, big: true, stop: 0.07, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -560,12 +560,12 @@ const ARCHER_COMMANDS = {
   // The Kitchen Witch with the ladle: broth scooped up at whatever flies, poured down from a hang
   // in the air (the second time a big splash), and a heel slide out of a run flinging broth.
   starwand: {
-    up: { move: 'kwup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 820, big: true, stop: 0.04 }] },
+    up: { move: 'kwup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'kwglob', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 820, big: true, stop: 0.04 }] },
     air: [
-      { move: 'kwair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 820 }] },
-      { move: 'kwair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stbolt', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 820, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'kwair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'kwglob', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 820 }] },
+      { move: 'kwair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'kwglob', magic: true, fan: 2, pct: 80, range: 260, h: 190, drop: 70, knock: 120, speed: 820, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'kwdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.38, shot: 'stbolt', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 880 }] },
+    dash: { move: 'kwdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.38, shot: 'kwglob', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 880 }] },
   },
   // The Starlight Idol: up on her toes, a note sung up at whatever flies; notes sung down from a
   // hang in the air (the second a big one); a rock-star knee slide out of a run.
@@ -590,12 +590,12 @@ const ARCHER_COMMANDS = {
   // With the pan: food flipped straight up at whatever flies, a pan dropped on them from a hang in
   // the air, and a knee skid behind the pan out of a run that tosses what's in it.
   starstaff: {
-    up: { move: 'kpup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 800, big: true, stop: 0.04 }] },
+    up: { move: 'kpup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'kpegg', magic: true, pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 800, big: true, stop: 0.04 }] },
     air: [
-      { move: 'kpair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 800 }] },
-      { move: 'kpair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'stcomet', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 140, speed: 800, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'kpair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'kpegg', magic: true, pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 800 }] },
+      { move: 'kpair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'kpegg', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 140, speed: 800, big: true, stop: 0.05, shake: 2 }] },
     ],
-    dash: { move: 'kpsled', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.4, shot: 'stcomet', magic: true, pct: 118, range: 300, h: 90, targets: 2, pierce: true, knock: 110, launch: 120, speed: 780, lob: 20 }] },
+    dash: { move: 'kpsled', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.4, shot: 'kpegg', magic: true, pct: 118, range: 300, h: 90, targets: 2, pierce: true, knock: 110, launch: 120, speed: 780, lob: 20 }] },
   },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
@@ -1831,7 +1831,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = char.job === 'spiritmage' && KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -2073,7 +2073,9 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 }
 
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
-const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
+const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet', 'kwglob', 'kwwave', 'kpegg', 'kpflame', 'kwspice']);
+// The Kitchen Witch's shots (her own art; their hits leave her splash).
+const KW_SHOTS = new Set(['kwglob', 'kwwave', 'kpegg', 'kpflame', 'kwspice']);
 function skyProcs(world, s) {
   const { char } = world;
   if (skyFlight(world) && !s.tailwind) s = { ...s, tailwind: true, shot: 'skygustbig', pct: s.pct * 1.5, targets: Math.max(s.targets ?? 1, 3), pierce: true, big: true };

@@ -5492,6 +5492,239 @@
     };
   })(), 2);
 
+  // ---------- The Kitchen Witch (tomato broth, cream steam, flambé fire, sizzling eggs) ----------
+  // docs/design/kitchen-witch.md. Her shapes: wobbling globs of tomato broth with bits of veg in
+  // them, splash crowns of droplets, curls of cream steam, a fried egg with a gold yolk, licks of
+  // flambé fire, and flakes of salt and red pepper.
+  const BROTH = ['#ffffff', '#ffe0b0', '#ff9a52', '#e4553c', '#8a2a44'];
+  const KSTEAM = ['#ffffff', '#fffaf2', '#f4e6dc', '#dcc2cc', '#9a7a9a'];
+  const FLAMBE = ['#ffffff', '#fff3a6', '#ffb83e', '#ff6838', '#a42c4c'];
+  const EGGW = ['#ffffff', '#ffffff', '#fff4e6', '#ead6d0', '#a88a9a'];
+  const YOLK = ['#ffffff', '#fff0a0', '#ffc23b', '#f08a2a', '#9a4a30'];
+  const HERB = ['#ffffff', '#d8f5b0', '#7fcf6a', '#3e9a5a', '#2a5a4a'];
+
+  // A wobbling blob of liquid: a round body whose rim ripples (`wob`, phase `ph`), in four tones
+  // stacked toward its lit top left and a white shine.
+  function blob(ctx, pal, x, y, r, wob, ph, sx = 1) {
+    const [core, light, mid, deep, ink] = pal;
+    const pts = (k, dx = 0, dy = 0) => Array.from({ length: 24 }, (_, i) => {
+      const t = (i / 24) * TAU;
+      const rr = r * k * (1 + wob * Math.sin(t * 3 + ph) + wob * 0.5 * Math.sin(t * 5 - ph * 1.3));
+      return [x + dx + Math.cos(t) * rr * sx, y + dy + Math.sin(t) * rr];
+    });
+    inked(ctx, pts(1), deep, ink, 4);
+    fill(ctx, pts(0.84, -r * 0.08, -r * 0.1), mid);
+    fill(ctx, pts(0.56, -r * 0.2, -r * 0.24), light);
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.36, y - r * 0.4, r * 0.22, r * 0.14, -0.5, 0, TAU);
+    ctx.fillStyle = core;
+    ctx.fill();
+  }
+  // A bit of veg riding in the soup: a little carrot cube or a pea.
+  function veg(ctx, x, y, r, kind, rot = 0) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    if (kind) {
+      inked(ctx, [[-r, -r], [r, -r], [r, r], [-r, r]], '#ff8a3a', '#9a3a2a', 2.5);
+      fill(ctx, [[-r * 0.7, -r * 0.7], [r * 0.2, -r * 0.7], [-r * 0.7, r * 0.2]], '#ffc08a');
+    } else {
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, TAU);
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = HERB[4];
+      ctx.stroke();
+      ctx.fillStyle = HERB[2];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(-r * 0.3, -r * 0.3, r * 0.4, 0, TAU);
+      ctx.fillStyle = HERB[1];
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  // A curl of steam rising from (x, y): a soft S of cream that thins to nothing, `h` tall.
+  function steamCurl(ctx, x, y, h, w, ph) {
+    ribbon(ctx, KSTEAM, (u) => [x + Math.sin(u * 5 + ph) * w * (0.4 + u), y - u * h], (u) => Math.max(0.2, w * 0.5 * (1 - u) * Math.min(1, u * 5 + 0.3)), { n: 24 });
+  }
+  // A fried egg: a lumpy white with a domed gold yolk, turned by `rot`.
+  function friedEgg(ctx, x, y, r, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    const white = (k) => Array.from({ length: 14 }, (_, i) => {
+      const t = (i / 14) * TAU;
+      const lump = 1 + 0.12 * Math.sin(t * 3 + 0.8) + 0.08 * Math.sin(t * 5);
+      return [Math.cos(t) * r * k * lump, Math.sin(t) * r * k * lump * 0.86];
+    });
+    inked(ctx, white(1), EGGW[3], EGGW[4], 3.5);
+    fill(ctx, white(0.86).map(([px, py]) => [px - r * 0.04, py - r * 0.05]), EGGW[2]);
+    fill(ctx, white(0.62).map(([px, py]) => [px - r * 0.12, py - r * 0.12]), EGGW[0]);
+    blob(ctx, YOLK, r * 0.12, r * 0.04, r * 0.42, 0.02, 0);
+    ctx.restore();
+  }
+  // A flake of red pepper (a little torn diamond) or a grain of salt (a white sparkle).
+  function flake(ctx, x, y, r, rot) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rot);
+    inked(ctx, [[0, -r], [r * 0.7, -r * 0.1], [r * 0.2, r], [-r * 0.6, r * 0.2]], '#e8443a', '#8a2a44', 2);
+    fill(ctx, [[0, -r * 0.6], [r * 0.3, -r * 0.1], [-r * 0.2, r * 0.1]], '#ff9a7a');
+    ctx.restore();
+  }
+
+  // Her glob of hot broth in flight (loops, toward +x): a wobbling ball of tomato soup with a carrot
+  // and a pea in it, drops shed behind it, and a curl of steam lifting off.
+  E.kwglob = grown((() => {
+    const cx = 104;
+    const cy = 64;
+    return {
+      w: 150, h: 110, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        steamCurl(ctx, cx - 18, cy - 14, 44, 8, ph);
+        drop(ctx, BROTH, cx - 50 - (i % 3) * 4, cy + 4 + Math.sin(ph) * 3, 0, 5);
+        drop(ctx, BROTH, cx - 34, cy - 8 - Math.sin(ph + 1) * 3, 0, 7);
+        drop(ctx, BROTH, cx - 64 - (i % 2) * 5, cy - 4, 0, 3.5);
+        blob(ctx, BROTH, cx, cy, 21, 0.06, ph);
+        veg(ctx, cx + 4, cy + 6, 4.5, 1, ph * 0.5);
+        veg(ctx, cx - 7, cy + 2, 3.5, 0);
+      },
+    };
+  })(), 2.2);
+
+  // The big pour (and the ladle's big casts): a curling wave of soup rolling forward (+x), a cream
+  // foam lip along its crest, drops flung off its curl, veg tumbling in it and steam above.
+  E.kwwave = grown((() => {
+    const cx = 150;
+    const gy = 150;
+    return {
+      w: 250, h: 170, n: 6, fps: 22, px: cx, py: gy - 55, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        const sw = Math.sin(ph) * 0.06;
+        // The swell behind: a low hump of soup trailing back along the ground.
+        const swell = [];
+        for (let k = 0; k <= 16; k++) {
+          const u = k / 16;
+          swell.push([20 + u * 150, gy - 8 - 52 * Math.sin(u * Math.PI * 0.5) ** 2 - 3 * Math.sin(u * 8 + ph)]);
+        }
+        swell.push([178, gy - 30], [182, gy]);
+        swell.push([20, gy]);
+        inked(ctx, swell, BROTH[3], BROTH[4], 4);
+        fill(ctx, swell.slice(0, 17).map(([x, y]) => [x, y + 9]).concat([[176, gy - 6], [24, gy - 4]]), BROTH[2]);
+        // The crest: a great curl rolling over the top and down in front, a hollow under it.
+        celCrescent(ctx, BROTH, 150, gy - 64, 50, Math.PI * (0.95 + sw), Math.PI * (2.3 + sw), 38, { seed: 301 });
+        // Foam along the lip of the curl, a cream cap where it breaks.
+        for (let k = 0; k < 5; k++) {
+          const a = Math.PI * (1.5 + k * 0.17 + sw);
+          puff(ctx, KSTEAM, 150 + Math.cos(a) * 50, gy - 64 + Math.sin(a) * 50, 7 + k * 1.4, 302 + k + i, { lobes: 3 });
+        }
+        // Drops flung off the breaking tip, veg tumbling in the soup, steam lifting off the back.
+        const R = rng(320 + i);
+        for (let k = 0; k < 5; k++) drop(ctx, BROTH, 196 + R() * 36, gy - 70 + R() * 60, 0.6 + R() * 0.8, 4 + R() * 4);
+        veg(ctx, 110, gy - 30, 6, 1, ph);
+        veg(ctx, 120, gy - 92, 5, 0);
+        veg(ctx, 70, gy - 18, 5, 1, -ph);
+        steamCurl(ctx, 60, gy - 22, 60, 10, ph);
+        steamCurl(ctx, 110, gy - 110, 44, 8, ph + 2);
+      },
+    };
+  })(), 2);
+
+  // The pan's fried egg in flight (loops, spinning, toward +x): a sizzling egg with grease popping
+  // off it in little gold sparks and a wisp of steam trailing.
+  E.kpegg = grown((() => {
+    const cx = 90;
+    const cy = 60;
+    return {
+      w: 140, h: 110, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        steamCurl(ctx, cx - 30, cy + 6, 40, 7, ph);
+        friedEgg(ctx, cx, cy, 26, ph / 2);
+        const R = rng(330 + i);
+        for (let k = 0; k < 3; k++) sparkle(ctx, YOLK, cx + (R() - 0.5) * 80, cy - 26 - R() * 18, 5 + R() * 3, k);
+      },
+    };
+  })(), 2);
+
+  // The flambé (the pan's big casts): a gush of fire rolling forward (+x), tongues of flame licking
+  // ahead and curling up, embers spat out the front.
+  E.kpflame = grown((() => {
+    const cx = 150;
+    const cy = 150;
+    return {
+      w: 290, h: 220, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        const licks = [[-110, 0, 22, 70, 0.1], [-60, -12, 30, 100, -0.25], [-20, 10, 30, 110, 0.25], [20, -6, 36, 120, -0.1], [60, 4, 28, 90, 0.3]];
+        licks.forEach(([dx, dy, w, h, tilt], k) => {
+          ctx.save();
+          ctx.translate(cx + dx, cy + dy + Math.sin(ph + k) * 4);
+          ctx.rotate(Math.PI / 2 + tilt * 0.6 - 0.75);
+          tongue(ctx, FLAMBE, 0, 0, w * 0.7 * (0.9 + 0.12 * Math.sin(ph * 2 + k)), h * 1.1 * (0.85 + 0.15 * Math.sin(ph + k * 1.7)), 18 * Math.sin(ph + k));
+          ctx.restore();
+        });
+        const R = rng(340 + i);
+        for (let k = 0; k < 6; k++) sparkle(ctx, FLAMBE, cx + 70 + R() * 60, cy - 40 + R() * 70, 4 + R() * 5, k);
+      },
+    };
+  })(), 1.6);
+
+  // The salt sprinkle's spice cloud (loops, drifting down toward +x): salt sparkles and red pepper
+  // flakes in a loose cloud.
+  E.kwspice = grown((() => {
+    const cx = 80;
+    const cy = 70;
+    return {
+      w: 160, h: 140, n: 4, fps: 16, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const R = rng(350);
+        for (let k = 0; k < 16; k++) {
+          const x = cx + (R() - 0.5) * 110;
+          const y = cy + (R() - 0.5) * 80 + ((i * 6 + k * 3) % 18);
+          if (k % 3) sparkle(ctx, k % 2 ? KSTEAM : YOLK, x, y, 4 + R() * 4, k + i);
+          else flake(ctx, x, y, 5 + R() * 3, k + i * 0.6);
+        }
+      },
+    };
+  })(), 2);
+
+  // Her mark on a monster: a dark core, a white splat, then a crown of broth flung out round it, a
+  // puff of steam rising from the hit and a few flakes of pepper; it breaks into drops and sparkles.
+  E.kwhit = grown((() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) {
+          ctx.beginPath();
+          ctx.arc(c, c, 26, 0, TAU);
+          ctx.fillStyle = BROTH[4];
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(c, c, 16, 0, TAU);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          return;
+        }
+        if (i <= 2) blob(ctx, BROTH, c, c, [34, 30][i - 1], 0.16, i * 1.3);
+        if (i >= 1 && i <= 5) {
+          const k = (i - 1) / 4;
+          for (let j = 0; j < 9; j++) {
+            const a = (j / 9) * TAU + 0.3;
+            const d = 30 + 60 * Math.sqrt(k);
+            drop(ctx, BROTH, c + Math.cos(a) * d, c + Math.sin(a) * d * 0.8 + 20 * k * k, a + Math.PI, 7 * (1 - k * 0.6));
+          }
+        }
+        if (i >= 3) puff(ctx, KSTEAM, c - 6, c - 20 - (i - 3) * 14, 22 - (i - 3) * 3, 360 + i, { holes: i >= 5 ? 0.5 : 0, lobes: 5 });
+        if (i >= 2 && i <= 5) for (let j = 0; j < 3; j++) flake(ctx, c - 40 + j * 40, c - 30 - (i - 2) * 6 + j * 8, 6, i + j);
+        if (i >= 5) for (let j = 0; j < 4; j++) sparkle(ctx, j % 2 ? BROTH : KSTEAM, c + [-60, 50, -30, 70][j], c + [-20, 10, 50, -50][j] - (i - 5) * 8, 9 - (i - 5) * 3, j);
+      },
+    };
+  })(), 2);
+
   // ---------- The Star Witch (midnight blue and gold: stars, comets, constellations) ----------
   // docs/design/star-witch.md. Her shapes: five-point gold stars with white cores, midnight-blue
   // comet tails, and constellations (stars joined by thin gold lines).

@@ -119,6 +119,19 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (f.shot === 'sinote' ? 1 : 1.05) * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
       break;
     }
+    case 'kwglob': case 'kwwave': case 'kpegg': case 'kpflame': case 'kwspice': {
+      // The Kitchen Witch's: a glob of hot broth, a curling wave of soup, a spinning fried egg, a gush
+      // of flambé fire, a cloud of salt and pepper, each turned along its flight (born small at the
+      // ladle or pan and grown to full in its first moment, so it never sits on her face).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const born = bornAt(f);
+      const size = { kwglob: 0.62, kwwave: 0.8, kpegg: 0.62, kpflame: 0.95, kwspice: 0.6 }[f.shot];
+      // (The wave and the fire roll along level; the egg wobbles as it spins; the spice just drifts.)
+      const spin = f.shot === 'kwspice' || f.shot === 'kwwave' || f.shot === 'kpflame' ? 0 : f.shot === 'kpegg' ? 0.25 * Math.sin(f.t * 12) : left ? a + Math.PI : a;
+      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: spin, scale: size * born * (f.split ? 0.8 : 1), alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
+      break;
+    }
     case 'stbolt': case 'stcomet': case 'stmeteor': {
       // The Star Witch's: a spinning gold star with a midnight comet tail, turned along its flight; a
       // comet with a great tail and ring; a meteor falling from the sky.

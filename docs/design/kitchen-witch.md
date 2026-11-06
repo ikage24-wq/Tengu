@@ -58,5 +58,14 @@ the "it's RAW" outrage), never a copy of a real show.
   clear of the face (strips) and recorded in her outfit (`tools/kitchen-moves.html`, GIFs in
   docs/design/samples/kitchen-witch-ladle.gif and -pan.gif). Her plain wands and staves are drawn
   as the ladle and pan (the 'chef' finish).
+- 2026-11-06: her own effects (tools/fx-art.js, the Kitchen Witch section; palettes BROTH, KSTEAM,
+  FLAMBE, EGGW, YOLK, HERB): `kwglob` (a wobbling glob of tomato broth with a carrot and a pea, drops
+  shed behind, a curl of steam), `kwwave` (a curling wave of soup with a foam lip, breaking in
+  front), `kpegg` (a spinning fried egg, grease sparks, steam), `kpflame` (a gush of flambé flame
+  tongues and embers), `kwspice` (salt sparkles and red pepper flakes), `kwhit` (her mark: a dark
+  core, a splat, a crown of broth drops, a steam puff and pepper). Her basic attacks fire them and
+  every hit leaves her splash (world/melee.js `KW_SHOTS`). Recorded in the game:
+  docs/design/samples/kitchen-witch-effects.gif. Still to draw: her buff pillar emblem, the pot
+  gauge aura and the pictures for her skills and the finisher.
 - Ids to keep (so saves, Elowen's trial, the dungeon healer and the paths carry over):
   `spiritmage` (first job), `shrinemaiden` (the healer path), `onmyoji` (the damage path).

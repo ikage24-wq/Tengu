@@ -303,6 +303,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     }
     case 'aeballista':
       return fxSprite(ctx, 'celaeballista', x - dir * 20, y + 4, { p, scale: 0.75, flip }) || true;
+    case 'kwhit':
+      // The Kitchen Witch's mark: a splat, a crown of broth flung out, steam and pepper.
+      return fxSprite(ctx, 'celkwhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;
     case 'sthit':
       return fxSprite(ctx, 'celsthit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5, rot: (seed - 0.5) * 0.6 }) || true;
     case 'stwish':

@@ -2309,7 +2309,7 @@ test('a full Constellation splits her star bolts into three', () => {
     let n = 0;
     for (let i = 0; i < 30; i++) {
       updateWorld(w, DT, idle);
-      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'stbolt').length);
+      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'kwglob').length);
     }
     return n;
   };
