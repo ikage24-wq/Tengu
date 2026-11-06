@@ -14,9 +14,11 @@ let want = null;
 let cur = null;
 const resume = new Map();
 
-// Where in a song (seconds into its buffer) a playing loop is at audio time `t`.
+// Where in a song (seconds into its buffer) a playing loop is at audio time `t`. (Never before its
+// start: a song is scheduled a beat ahead, and one left before it began is still at its start;
+// a negative place made the next start of that song throw and left the area silent.)
 export function songPos(v, t) {
-  const e = t - v.startedAt + v.offset;
+  const e = Math.max(0, t - v.startedAt + v.offset);
   if (e < v.loopEnd) return e;
   return v.loopStart + ((e - v.loopStart) % (v.loopEnd - v.loopStart));
 }
@@ -85,7 +87,7 @@ function start(key, hard) {
   if (!song) return;
   const t = now();
   const back = resume.get(key);
-  const offset = back && t - back.at < 90 ? back.pos : 0;
+  const offset = back && t - back.at < 90 ? Math.max(0, back.pos) : 0;
   const v = loop(song.buffer, { at: t + (hard ? 0 : 0.35), offset, loopStart: song.loopStart, loopEnd: song.loopEnd, fade: hard ? 0 : offset ? 1.2 : 0.4 });
   cur = { key, v };
   startFight(cur);

@@ -127,3 +127,11 @@ test('each fight layer loops in step with its area song, and every ambience soun
   const { MATERIAL } = await import('../src/audio/materials.js');
   for (const name of ['birdChirp', 'cricket', 'waveWash', 'gull', 'drip', 'chatter', 'heartbeat', 'skillUp', 'buy', 'dollGiggle', ...new Set(Object.values(MATERIAL))]) assert.ok(RECIPES[name], `${name} exists`);
 });
+
+test("a song left before it began resumes from its start, never from before it", async () => {
+  const { songPos } = await import('../src/audio/music.js');
+  // Scheduled to begin at 10.35 (a beat after the change), left at 10.0.
+  const v = { startedAt: 10.35, offset: 0, loopStart: 1, loopEnd: 20 };
+  assert.equal(songPos(v, 10), 0);
+  assert.ok(Math.abs(songPos(v, 12.35) - 2) < 1e-9, 'and plays on as usual once begun');
+});

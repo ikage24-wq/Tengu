@@ -25,7 +25,7 @@ import { boardOffers } from '../world/partyquest.js';
 import { drawHero } from '../render/hero.js';
 import { withZoom } from '../render/pixel.js';
 import { lookRows, sameLook, fullLook, LOOK_TABS } from './looks.js';
-import { COLORS, THEMES, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, icon, sparkle, roundRect, font, fit, itemSlot, paper, tape, doodle, sticker, roughRect } from './kit.js';
+import { COLORS, THEMES, windowFrame, button, tabs, text, box, hover, clicked, tooltip, wrap, wrapCount, icon, sparkle, roundRect, font, fit, itemSlot, paper, tape, doodle, sticker, roughRect } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
@@ -333,7 +333,12 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  // The greeting page is as tall as its words and its rows of choices need (a long greeting never
+  // runs under the buttons): the words start 24 below the top, the buttons sit above the bottom.
+  // (A Sweetheart says something for how close you are, or what they just said to your chat.)
+  dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
+  const greetH = 40 + wrapCount(ui.ctx, dlg.words ?? npc.greeting, 312, { size: 8.5 }) * 11.5 + rows * 24;
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24, Math.ceil(greetH));
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -429,8 +434,6 @@ export function npcWindow(ui, state, world) {
 
   // The greeting, typed out, with a bouncing sparkle when it's done; then the choices in two
   // columns, each with its number key.
-  // (A Sweetheart says something for how close you are, or what they just said to your chat.)
-  dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
   const hello = dlg.words ?? npc.greeting;
   const chars = typed(ui, dlg, `hi:${dlg.id}:${hello.length}`, world, area, hello);
   const end = wrap(ctx, hello, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });

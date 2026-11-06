@@ -141,6 +141,22 @@ export function fit(ctx, s, w, size, bold = true) {
   return `${s}…`;
 }
 
+// How many lines `wrap` would break text into at `width` (to size a box to its words).
+export function wrapCount(ctx, str, width, opts = {}) {
+  const size = Math.max(opts.size ?? 9, minText);
+  ctx.font = font(size, opts.bold ?? false);
+  let line = '';
+  let n = 0;
+  for (const word of String(str ?? '').split(' ')) {
+    const test = line ? `${line} ${word}` : word;
+    if (ctx.measureText(test).width > width && line) {
+      n++;
+      line = word;
+    } else line = test;
+  }
+  return n + (line ? 1 : 0);
+}
+
 // Wraps text to `width`; returns the y after the last line. `chars` limits how many characters
 // show, for typewriter text.
 export function wrap(ctx, str, x, y, width, opts = {}) {
