@@ -371,4 +371,10 @@ export const FX_SHEETS = {
   celsicurtain: { w: 526, h: 453, n: 12, fps: 9, px: 263, py: 439, d: 3, loop: false },
   celsipyro: { w: 171, h: 421, n: 8, fps: 12, px: 86, py: 403, d: 3, loop: false },
   celsiheart: { w: 213, h: 137, n: 6, fps: 18, px: 144, py: 68, d: 3, loop: true },
+  celsohand: { w: 225, h: 112, n: 4, fps: 20, px: 148, py: 54, d: 3, loop: true },
+  celsoflame: { w: 210, h: 101, n: 6, fps: 26, px: 168, py: 53, d: 3, loop: true },
+  celsofire: { w: 353, h: 166, n: 6, fps: 24, px: 285, py: 84, d: 3, loop: true },
+  celsograsp: { w: 317, h: 223, n: 6, fps: 22, px: 265, py: 175, d: 3, loop: true },
+  celsoslam: { w: 403, h: 171, n: 4, fps: 20, px: 303, py: 87, d: 3, loop: true },
+  celsohit: { w: 209, h: 210, n: 7, fps: 30, px: 100, py: 119, d: 3, loop: false },
 };

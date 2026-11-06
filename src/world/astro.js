@@ -23,7 +23,9 @@ const MOON_REACH = 240;
 const MOON_PCT = 70;
 
 // How many moons ride her orbit right now.
-export const moonsOf = (world) => (hasBinding(world.char) ? Math.min(ORBIT_MOONS, Math.floor(((world.binding ?? 0) + 1e-9) / (100 / ORBIT_MOONS))) : 0);
+// (The Sorcerer's Spellstorm replaced the Astronomer's Orbit, so no moons ride round her now;
+// docs/design/mage-line.md. Her skills here are next to be remade.)
+export const moonsOf = () => 0;
 // Lunar Tide's lift on her moons (0 when it's not on her).
 const tideOf = (world) => {
   const b = world.char.buffs?.yokairally;

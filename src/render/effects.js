@@ -129,6 +129,19 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: f.shot === 'clorb' ? 0 : left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
+    case 'sohand': case 'soflame': case 'sofire': case 'sograsp': case 'soslam': {
+      // The Sorcerer's: a shadow hand flung reaching, a wisp or ball of violet flame round an ember
+      // heart, shadow hands clawing up out of the ground as the line races along it, a giant hand
+      // reaching down out of the sky (born small at the wand or staff, grown to full in its first
+      // moment). An echo cast by Spellstorm comes a little smaller and fainter.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const ground = f.shot === 'sograsp';
+      const born = f.shot === 'soslam' ? 1 : bornAt(f);
+      const size = { sohand: 0.55, soflame: 0.6, sofire: 0.7, sograsp: 0.62, soslam: 0.75 }[f.shot];
+      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot: ground ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.85 : 1), alpha: (f.split ? 0.8 : 1) * Math.min(1, born * 1.4) });
+      break;
+    }
     case 'mgfire': case 'mgfireball': case 'mgice': case 'mgspike': case 'mgbolt': case 'mgsky': {
       // The Mage's: a fire bolt or a fireball streaming flame, a frost shard, ice spikes bursting up
       // out of the ground as the line races along it, a lightning bolt through the line, lightning

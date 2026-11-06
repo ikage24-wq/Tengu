@@ -282,28 +282,19 @@ function graceAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
-// Orbit (the Astronomer; internally Binding): her moons, one for every fifth of it, riding a flat
-// orbit round her middle (the same one world/astro.js sends them out from), the ones behind her
-// drawn behind, a faint silver orbit line under them; full (Full Orbit), her badge, a ringed planet
-// with a moon, shines over her head.
+// Spellstorm (the Sorcerer; internally Binding): a violet shadow pooling round her feet, darker the
+// fuller it is, with embers rising off it, more and faster as it builds; full (Spellstorm), an ember
+// ring turns at her feet and the embers stream up round her (kept out to her sides, off her face).
 function bindingAura(ctx, x, y, t, s, k, layer) {
-  const n = Math.min(5, Math.floor(k * 5 + 1e-9));
-  if (layer === 'back' && k > 0.05) {
-    ctx.save();
-    ctx.globalAlpha = 0.35 + 0.3 * k;
-    ctx.strokeStyle = '#d4d8ee';
-    ctx.lineWidth = 0.8 * s;
-    ctx.beginPath();
-    ctx.ellipse(x, y - 22 * s, 26 * s, 7 * s, 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
+  if (k < 0.05) return;
+  const full = k >= 1;
+  if (layer === 'back') {
+    footGlow(ctx, x, y, s * (1 + 0.4 * k), '#7a4ad8', 0.35 + 0.45 * k);
+    if (full) runeRing(ctx, x, y, t * 2, s * 1.2, '#ff8a3a', 0.85, false);
+    return;
   }
-  for (let i = 0; i < n; i++) {
-    const a = t * 0.9 + (i / n) * Math.PI * 2;
-    if ((Math.sin(a) > 0) !== (layer !== 'back')) continue;
-    fxSprite(ctx, 'celasmoon', x + Math.cos(a) * 26 * s, y - 22 * s + Math.sin(a) * 7 * s, { t: t + i, scale: s * (0.42 + 0.06 * Math.sin(a)) });
-  }
-  if (layer !== 'back' && k >= 1) fxSprite(ctx, 'celembastro', x, y - 66 * s, { frame: 1, scale: s * 0.28, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
+  if (full) runeRing(ctx, x, y, t * 2, s * 1.2, '#ff8a3a', 0.85, true);
+  motes(ctx, x, y, t, s, 0.5 + 0.5 * k, { n: 2 + Math.round(4 * k), spread: 16, inner: 9, height: 30 + 14 * k, speed: 0.4 + 0.5 * k, size: 1.1 + 0.4 * k, draw: (c, mx, my, r, i) => { c.fillStyle = i % 2 ? '#ffd27a' : '#ff8a3a'; c.fillRect(mx - r / 2, my - r / 2, r, r); } });
 }
 
 // Ricochet (the Blade Dancer; internally Ki): a small ring skims round her feet as it builds,

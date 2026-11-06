@@ -40,6 +40,41 @@ Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-jo
     bright"), Magic Guard, Mana Mastery, and **Meteor**, the finisher (full Overload): she flexes the
     glove, announces "CATACLYSM OF THE CRIMSON STAR", and a meteor crashes down on everything ahead.
 
+## The Sorcerer (the damage path; `onmyoji`, replacing the Astronomer)
+
+- **Personality (the player's pick, 2026-11-06): the edgelord gone real.** Her dark-power act
+  finally came true: she is a genuinely terrifying dark sorceress, and secretly panics about it
+  (villain lines, then a muttered "...wait, was that me?").
+- **Look (the player's pick): the dark hooded sorceress.** A deep hood and long dark robes, a
+  spellbook floating open beside her with runes drifting off the pages.
+- **Colour (the player's pick): violet and ember.** Deep violet robes; her spells have ember-orange
+  cores.
+- **Gauge (the player's pick): Spellstorm.** Builds from casting fast without getting hit (a hit
+  knocks it back); full, her spells cast twice. Her finisher needs it full and spends it all.
+- Look so far: the mage robes repainted violet with ember trim (render/hero.js) and the hood
+  (render/jobgear/sorcerer.js: ember-stitched rim, temple runes, a brow rune and longer tail from
+  the Archon, embers off the tip from Sunspire). Samples: `tools/sorcerer-looks.html`. Her staff and
+  wand (render/weapon-designs.js `sorceryStaff`, `sorceryWand`, the 'sorcery' finish): black wood
+  and iron, a crooked claw (a hook on the wand) round a violet flame with an ember core; her own at
+  every tier, though the top tiers still pick up silver frills to clean up with the gear ladder.
+  Her spellbook (render/hero.js `drawSpellbook`): open behind her back shoulder, bobbing, a page
+  turning now and then, ember runes drifting off it; it eases across when she turns.
+- **Spell style (the player's pick): shadow hands and flame.** Violet shadow hands with ember-tipped
+  claws, and violet flame round ember cores.
+- **Built (2026-11-06): her basic attacks and Spellstorm.** Strings (world/melee.js, keys `astro`
+  for the staff and `astrowand` for the wand, kept from the Astronomer): staff sosscoop (a dark
+  fireball, `sofire`), sosplant (hands clawing up out of the ground, `sograsp`), sosclose (a giant
+  hand down out of the sky, `soslam`), pool sosswing, sosknock, sosrage; wand sowbeckon (a flung
+  hand, `sohand`), sowcurl (two flame wisps, `soflame`), sowgrip (ground hands), pool sowsneer,
+  sowtrace, sowdoom; commands sosup/sosair/sosdash and sowup/sowair/sowdash (render/moves.js `so*`,
+  faces `SO_FACE`, every big cast ending on her panic beat). Effects (tools/fx-art.js, the Sorcerer
+  section; palettes SVIO, SEMB): `sohand`, `soflame`, `sofire`, `sograsp`, `soslam`, and her mark
+  `sohit`. Spellstorm (world/melee.js `addBinding`, `stormHurt`, `spellstorm`; STORM_* numbers) on
+  the HUD in the old Orbit slot, with its aura (render/aura.js `bindingAura`): a violet pool and
+  rising embers, an ember ring at full. The Astronomer's moons are gone (world/astro.js `moonsOf`).
+- Still to do: her skills (the Astronomer's are still in place, and Lunar Tide does nothing now the
+  moons are gone), her finisher and icons, shouted lines, sounds, the README.
+
 ## The Cleric of light (the healer path; `shrinemaiden`, replacing the Starlight Idol)
 
 - **Personality (the player's pick): the reformed edgelord.** The Mage's dramatic flair turned holy:

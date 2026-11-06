@@ -9620,6 +9620,194 @@
     };
   })(), 2);
 
+  // ---------- The Sorcerer (shadow hands wreathed in ember flame) ----------
+  // docs/design/mage-line.md. Her shapes: clawed hands of violet shadow with ember-tipped talons that
+  // fly, burst up out of the ground and reach down from the sky, flames of violet with ember cores,
+  // and her mark on every hit: three claw rakes and an ember ring breaking apart.
+  const SVIO = ['#ffffff', '#e6d2ff', '#9a6ae0', '#5a3a9a', '#24123a'];
+  const SEMB = ['#ffffff', '#fff0b0', '#ffb04a', '#ff6a2a', '#7a2a3a'];
+
+  // A clawed hand of shadow, its wrist at (x, y), reaching along `a`, `s` times its size. `curl`
+  // (0-1) closes the fingers into a grasp; `ph` flickers the ember flames trailing off its wrist.
+  function shadowHand(ctx, x, y, s, a, curl, ph) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.scale(s, s);
+    for (let k = 0; k < 3; k++) {
+      ctx.save();
+      ctx.translate(-8, (k - 1) * 6);
+      ctx.rotate(-Math.PI / 2);
+      tongue(ctx, k === 1 ? SEMB : SVIO, 0, 0, 5.5 - Math.abs(k - 1), 22 + 5 * Math.sin(ph + k * 2.1), 4 * Math.sin(ph * 2 + k));
+      ctx.restore();
+    }
+    inked(ctx, [[-10, -6], [6, -8.5], [6, 8.5], [-10, 6]], SVIO[3], SVIO[4], 3);
+    // The fingers: two joints each, closing toward the palm with `curl`, an ember claw on the tip.
+    const LEN = [19, 23, 21, 15];
+    for (let j = 0; j < 4; j++) {
+      const bx = 16;
+      const by = -9 + j * 6;
+      const a1 = (j - 1.5) * 0.14 + curl * 0.7;
+      const a2 = a1 + curl * 1.2 + 0.15;
+      const l1 = LEN[j] * 0.55;
+      const l2 = LEN[j] * 0.5;
+      const mx = bx + Math.cos(a1) * l1;
+      const my = by + Math.sin(a1) * l1;
+      const tx = mx + Math.cos(a2) * l2;
+      const ty = my + Math.sin(a2) * l2;
+      const seg = (x0, y0, x1, y1, w0, w1) => {
+        const an = Math.atan2(y1 - y0, x1 - x0) + Math.PI / 2;
+        const c = Math.cos(an);
+        const d = Math.sin(an);
+        inked(ctx, [[x0 + c * w0, y0 + d * w0], [x1 + c * w1, y1 + d * w1], [x1 - c * w1, y1 - d * w1], [x0 - c * w0, y0 - d * w0]], SVIO[2], SVIO[4], 3);
+      };
+      seg(bx, by, mx, my, 3.8, 3.2);
+      seg(mx, my, tx, ty, 3.2, 2.2);
+      const ca = a2;
+      inked(ctx, [[tx + Math.cos(ca - 1.2) * 1.8, ty + Math.sin(ca - 1.2) * 1.8], [tx + Math.cos(ca) * 8, ty + Math.sin(ca) * 8], [tx + Math.cos(ca + 1.2) * 1.8, ty + Math.sin(ca + 1.2) * 1.8]], SEMB[2], SEMB[4], 2);
+      fill(ctx, [[tx, ty], [tx + Math.cos(ca) * 5, ty + Math.sin(ca) * 5], [tx + Math.cos(ca + 0.9) * 1.2, ty + Math.sin(ca + 0.9) * 1.2]], SEMB[1]);
+    }
+    // The thumb, on the top side.
+    const ta = -1 + curl * 0.9;
+    const t1x = 8 + Math.cos(ta) * 10;
+    const t1y = -9 + Math.sin(ta) * 10;
+    inked(ctx, [[5, -7], [10, -10], [t1x + 2, t1y], [t1x - 1, t1y - 1.5]], SVIO[2], SVIO[4], 3);
+    inked(ctx, [[t1x - 1, t1y - 1.5], [t1x + 2, t1y], [t1x + Math.cos(ta + 0.6) * 6, t1y + Math.sin(ta + 0.6) * 6]], SEMB[2], SEMB[4], 2);
+    // The palm, with a glowing ember rune in it.
+    const palm = Array.from({ length: 16 }, (_, i) => [12 + Math.cos((i / 16) * TAU) * 10.5, Math.sin((i / 16) * TAU) * 12.5]);
+    inked(ctx, palm, SVIO[3], SVIO[4], 3.5);
+    fill(ctx, palm.map(([px, py]) => [px * 0.85 + 1, py * 0.75 - 2]), SVIO[2]);
+    inked(ctx, [[12, -3], [14, 0], [12, 3], [10, 0]], SEMB[2], SEMB[3], 1.5);
+    ctx.restore();
+  }
+  // A violet flame with an ember core heading +x, its tongues streaming back.
+  function darkFlame(ctx, x, y, r, ph) {
+    for (let k = 0; k < 4; k++) {
+      ctx.save();
+      ctx.translate(x - r * 0.2, y + (k - 1.5) * r * 0.35);
+      ctx.rotate(-Math.PI / 2 - 0.14 * (k - 1.5));
+      tongue(ctx, SVIO, 0, 0, r * (0.62 - Math.abs(k - 1.5) * 0.1), r * (2.3 + 0.5 * Math.sin(ph + k * 1.9)), r * 0.4 * Math.sin(ph * 2 + k));
+      ctx.restore();
+    }
+    blob(ctx, SVIO, x, y, r, 0.08, ph);
+    blob(ctx, SEMB, x + r * 0.08, y + r * 0.05, r * 0.55, 0.1, -ph);
+  }
+
+  // A shadow hand flung off her wand (loops, toward +x): it flies reaching, fingers flexing.
+  E.sohand = grown((() => {
+    const cx = 70;
+    const cy = 50;
+    return {
+      w: 140, h: 100, n: 4, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 4) * TAU;
+        shadowHand(ctx, cx - 14, cy, 1, 0, 0.12 + 0.12 * Math.sin(ph), ph);
+        const R = rng(1310 + i);
+        for (let k = 0; k < 3; k++) sparkle(ctx, SEMB, cx - 50 - R() * 20, cy + (R() - 0.5) * 34, 3 + R() * 3, k);
+      },
+    };
+  })(), 2);
+
+  // A wisp of violet flame off her wand (loops, toward +x).
+  E.soflame = grown((() => {
+    const cx = 100;
+    const cy = 45;
+    return {
+      w: 140, h: 90, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        darkFlame(ctx, cx, cy, 12, ph);
+        const R = rng(1320 + i);
+        for (let k = 0; k < 3; k++) sparkle(ctx, SEMB, cx - 36 - R() * 46, cy + (R() - 0.5) * 30, 3 + R() * 3, k + i);
+      },
+    };
+  })(), 2.2);
+
+  // The staff's dark fireball (loops, toward +x): a churning ball of violet flame round an ember
+  // heart, embers shed behind.
+  E.sofire = grown((() => {
+    const cx = 160;
+    const cy = 75;
+    return {
+      w: 220, h: 150, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        darkFlame(ctx, cx, cy, 26, ph);
+        const R = rng(1330 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, SEMB, cx - 60 - R() * 80, cy + (R() - 0.5) * 60, 5 + R() * 4, k);
+      },
+    };
+  })(), 2);
+
+  // Shadow hands clawing up out of the ground as the line races along (loops, toward +x; the strip's
+  // anchor is the ground under the front hand): each bursts up grasping, closes, and sinks.
+  E.sograsp = grown((() => {
+    const cx = 160;
+    const gy = 120;
+    return {
+      w: 200, h: 140, n: 6, fps: 22, px: cx, py: gy, loop: true,
+      draw(ctx, i) {
+        for (let k = 3; k >= 0; k--) {
+          const age = ((i / 6) + k * 0.25) % 1;
+          const up = Math.sin(Math.PI * Math.min(1, age * 1.25 + 0.06));
+          if (up < 0.12) continue;
+          const x = cx - k * 38;
+          // A smoky forearm of shadow rising out of the crack to the wrist.
+          const wy = gy - 4 - up * 46;
+          inked(ctx, [[x - 9, gy + 2], [x + 9, gy + 2], [x + 6 + (k % 2 ? 3 : -3), wy + 6], [x - 6 + (k % 2 ? 3 : -3), wy + 6]], SVIO[3], SVIO[4], 3);
+          fill(ctx, [[x - 6, gy], [x - 1, gy], [x - 2 + (k % 2 ? 3 : -3), wy + 8], [x - 4 + (k % 2 ? 3 : -3), wy + 8]], SVIO[2]);
+          shadowHand(ctx, x + (k % 2 ? 3 : -3), gy - 4 - up * 46, 0.9, -Math.PI / 2 + (k % 2 ? 0.2 : -0.15), Math.min(1, age * 1.6), (i / 6) * TAU + k);
+        }
+        // Ember flame licking round the cracks they burst from.
+        for (let k = 0; k < 3; k++) tongue(ctx, SEMB, cx - k * 38, gy, 7, 14 + 6 * Math.sin(i + k * 2), 3 * Math.sin(i * 2 + k));
+        const R = rng(1340 + i);
+        for (let k = 0; k < 4; k++) shard(ctx, SVIO, cx + 10 - R() * 150, gy - 6 - R() * 20, -Math.PI / 2 + (R() - 0.5), 8, 2);
+      },
+    };
+  })(), 2);
+
+  // A giant shadow hand reaching down out of the sky (loops; drawn toward +x, turned to fall), open
+  // and grasping, a long ember flame streaming off it.
+  E.soslam = grown((() => {
+    const cx = 170;
+    const cy = 70;
+    return {
+      w: 230, h: 140, n: 4, fps: 20, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 4) * TAU;
+        shadowHand(ctx, cx - 40, cy, 1.8, 0, 0.05 + 0.08 * Math.sin(ph), ph);
+        const R = rng(1350 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, SEMB, cx - 110 - R() * 50, cy + (R() - 0.5) * 70, 4 + R() * 4, k);
+      },
+    };
+  })(), 2);
+
+  // Her mark on a hit: three claw rakes of shadow tear across, an ember ring flashes and breaks,
+  // and embers scatter.
+  E.sohit = (() => {
+    const c = 110;
+    return {
+      w: 220, h: 220, n: 7, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / 6;
+        if (i >= 1 && i <= 5) celRing(ctx, SEMB, c, c, 26 + 56 * k, 8 * (1 - k * 0.7), { broken: i >= 3 ? 0.5 : 0, seed: 1361 });
+        if (i <= 4) {
+          const grow = Math.min(1, (i + 1) / 2.5);
+          const fade = i >= 3 ? 1 - (i - 2) * 0.3 : 1;
+          for (let j = 0; j < 3; j++) shard(ctx, SVIO, c + (j - 1) * 16, c + (j - 1) * 4, -0.9, 76 * grow * fade, 4.5 * fade);
+        }
+        if (i >= 1) {
+          const R = rng(1362);
+          for (let j = 0; j < 7; j++) {
+            const a = R() * TAU;
+            const d = 30 + 70 * k + R() * 16;
+            sparkle(ctx, j % 2 ? SVIO : SEMB, c + Math.cos(a) * d, c + Math.sin(a) * d, (7 - i * 0.8) * (0.7 + R() * 0.5), j);
+          }
+        }
+      },
+    };
+  })();
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();

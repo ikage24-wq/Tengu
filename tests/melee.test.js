@@ -2568,8 +2568,8 @@ test('Miracle needs full Devotion, spends it, heals in full, and three beats of 
 });
 
 // An Astronomer (past Elowen's trial), with her orrery staff.
-function astronomer(skills = false) {
-  const w = starWitch('staff_20');
+function astronomer(skills = false, weapon = 'staff_20') {
+  const w = starWitch(weapon);
   w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
   w.char.job = 'onmyoji';
   if (skills) Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
@@ -2577,61 +2577,72 @@ function astronomer(skills = false) {
   run(w, 0.2);
   return w;
 }
-// How many moons fly off at the monsters in `secs` seconds.
-const moonShots = (w, secs) => {
-  let n = 0;
-  for (let i = 0; i < secs * 60; i++) {
-    w.bindingAt = w.now;
-    updateWorld(w, DT, idle);
-    for (const f of w.fx) if (f.kind === 'projectile' && f.shot === 'asmoon' && !f.counted) {
-      f.counted = true;
-      n++;
+
+for (const [key, weapon, first] of [['astro', 'staff_20', 'sofire'], ['astrowand', 'wand_20', 'sohand']]) {
+  test(`the Sorcerer casts her own shadow hands and flames with ${weapon.split('_')[0] === 'staff' ? 'the staff' : 'the wand'}, her own pool of moves, and they build Spellstorm (not Spirit)`, () => {
+    const pool = PATH_VARIANTS[key];
+    assert.equal(pool.length, PATH_COMBOS[key].length, 'one choice per combo step');
+    pool.forEach((step, i) => {
+      assert.equal(step[0], PATH_COMBOS[key][i], `step ${i + 1} opens with her own`);
+      assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
+      for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('so'), `${v.move} is her own move`);
+    });
+    assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+    const w = astronomer(false, weapon);
+    const seen = [];
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    let shot = null;
+    for (let i = 0; i < 140; i++) {
+      updateWorld(w, DT, hold);
+      if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+      shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
     }
-  }
-  return n;
-};
-
-test('the Astronomer flings her own planets and her own pool of moves, and they build Orbit (not Spirit)', () => {
-  const pool = PATH_VARIANTS.astro;
-  assert.equal(pool.length, PATH_COMBOS.astro.length, 'one choice per combo step');
-  pool.forEach((step, i) => {
-    assert.equal(step[0], PATH_COMBOS.astro[i], `step ${i + 1} opens with her own`);
-    assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
-    for (const v of step) assert.ok(MOVES[v.move], `${v.move} is a move`);
+    assert.deepEqual(seen.slice(0, 3), PATH_COMBOS[key].map((s) => s.move), 'her combo');
+    assert.equal(shot, first, 'her own shot');
+    assert.ok(w.binding > 0, `her spells build Spellstorm (${w.binding})`);
+    assert.equal(w.spirit ?? 0, 0, 'and no Element Weave');
   });
-  assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
-  const w = astronomer();
-  const seen = [];
-  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  let shot = null;
-  for (let i = 0; i < 140; i++) {
-    updateWorld(w, DT, hold);
-    if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
-    shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
-  }
-  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.astro.map((s) => s.move), 'her combo');
-  assert.equal(shot, 'asplanet', 'planets');
-  assert.ok(w.binding > 0, `her planets build Orbit (${w.binding})`);
-  assert.equal(w.spirit ?? 0, 0, 'and no stars');
-});
+}
 
-test('her moons: one for every fifth of Orbit, flying off at the monsters on their own; on Full Orbit twice as often', async () => {
-  const { moonsOf } = await import('../src/world/astro.js');
-  const w = astronomer();
-  w.binding = 0;
-  assert.equal(moonsOf(w), 0, 'no moons yet');
-  w.binding = 41;
-  assert.equal(moonsOf(w), 2, 'two moons at two fifths');
-  w.binding = 20;
-  const hp0 = w.mobs.map((m) => m.hp);
-  const one = moonShots(w, 4);
-  assert.ok(one >= 2, `one moon flies out on its own (${one})`);
-  assert.ok(w.mobs.some((m, i) => m.hp < hp0[i]), 'and strikes');
-  const full = astronomer();
-  full.binding = 100;
-  const five = moonShots(full, 4);
-  assert.ok(five >= one * 4, `Full Orbit: five moons, twice as quick (${five} against ${one})`);
-  assert.equal(moonsOf(astronomer()), 0, 'and none for a Star Witch\'s stars');
+test('Spellstorm builds faster while she keeps casting, a hit knocks part of it away, and full her spells cast twice', async () => {
+  const { addBinding, STORM_HURT } = await import('../src/world/melee.js');
+  const quick = astronomer();
+  quick.binding = 0;
+  addBinding(quick, 10);
+  addBinding(quick, 10);
+  const slow = astronomer();
+  slow.binding = 0;
+  addBinding(slow, 10);
+  slow.now += 3;
+  addBinding(slow, 10);
+  assert.ok(quick.binding > slow.binding, `casting fast builds more (${quick.binding} against ${slow.binding})`);
+  const hit = astronomer();
+  hit.binding = 80;
+  hit.god = false;
+  hit.invuln = 0;
+  hurtPlayer(hit, 1, hit.body.x + 20);
+  assert.ok(Math.abs(hit.binding - 80 * (1 - STORM_HURT)) < 1e-6, `a hit knocks part of it away (${hit.binding})`);
+  // Full: every spell comes twice, its echo a beat behind and weaker.
+  const count = (full) => {
+    const w = astronomer();
+    w.binding = full ? 100 : 0;
+    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
+    let n = 0;
+    for (let i = 0; i < 30; i++) {
+      if (full) w.bindingAt = w.now;
+      if (full) w.binding = 100;
+      updateWorld(w, DT, hold);
+      for (const f of w.fx) if (f.kind === 'projectile' && !f.counted) {
+        f.counted = true;
+        n++;
+      }
+    }
+    return n;
+  };
+  const one = count(false);
+  const two = count(true);
+  assert.ok(one >= 1, `a spell (${one})`);
+  assert.equal(two, one * 2, `full Spellstorm casts it twice (${two} against ${one})`);
 });
 
 test('Ringed Planet rolls a great ringed world through every monster in the line', () => {
@@ -2668,20 +2679,6 @@ test('Gravity Well pulls the monsters round it in and crushes them again and aga
   loadMap(w, w.map.id, w.char.portal);
   run(w, 0.2);
   assert.equal(w.well, null, 'gone with the map');
-});
-
-test('Lunar Tide: her moons fly out more often while it lasts', () => {
-  const plain = astronomer(true);
-  plain.binding = 60;
-  const before = moonShots(plain, 4);
-  const w = astronomer(true);
-  w.binding = 60;
-  assert.ok(cast(w, 'yokairally').ok);
-  assert.equal(w.pose.kind, 'astide');
-  run(w, 1.1);
-  assert.ok(w.char.buffs.yokairally, 'the tide is on her');
-  const after = moonShots(w, 4);
-  assert.ok(after > before, `more moons fly (${after} against ${before})`);
 });
 
 test('Planetary Alignment needs a Full Orbit, spends it, and its beam goes through every monster ahead', () => {

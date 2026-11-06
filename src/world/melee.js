@@ -218,13 +218,20 @@ export const PATH_COMBOS = {
     { move: 'clbless', dur: 0.46, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'clorb', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 760, oy: -3 }, { at: 0.56, shot: 'clorb', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 760, oy: 3 }] },
     { move: 'cljudge', dur: 0.58, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'clpillar', sky: true, magic: true, pct: 165, range: 300, h: 90, targets: 3, knock: 120, launch: 120, speed: 1500, big: true, stop: 0.06, shake: 2 }] },
   ],
-  // The Astronomer (the Onmyoji remade; docs/design/astronomer.md), conducting the planets with her
-  // orrery: a long arc flinging a planet, a slow conducted circle sending two, and a ringed world
-  // swept out low that rolls through the line. Her planets are heavy and unhurried.
+  // The Sorcerer (docs/design/mage-line.md): the edgelord whose dark power came true, casting shadow
+  // hands wreathed in ember flame. (Keys astro and astrowand kept for her staff and wand.) Staff: a
+  // dark fireball scooped underhand, shadow hands called clawing up out of the ground, and a giant
+  // hand pulled down out of the sky. Wand: a shadow hand flung out, two wisps of flame curled off,
+  // and the hands under them closed with her fist.
   astro: [
-    { move: 'asfling', dur: 0.45, step: 12, strikes: [{ at: 0.42, shot: 'asplanet', magic: true, pct: 90, range: 300, h: 64, knock: 40, speed: 600 }] },
-    { move: 'asconduct', dur: 0.54, step: 10, carry: 0.6, strikes: [{ at: 0.35, shot: 'asplanet', magic: true, pct: 52, range: 300, h: 64, knock: 40, speed: 600, oy: -3 }, { at: 0.65, shot: 'asplanet', magic: true, pct: 56, range: 300, h: 64, knock: 40, speed: 600, oy: 3 }] },
-    { move: 'asring', dur: 0.6, step: 16, finisher: true, strikes: [{ at: 0.5, shot: 'asbig', magic: true, pct: 175, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'sosscoop', dur: 0.44, step: 12, strikes: [{ at: 0.38, shot: 'sofire', magic: true, pct: 96, range: 310, h: 70, knock: 120, speed: 680, lob: 20 }] },
+    { move: 'sosplant', dur: 0.5, step: 8, strikes: [{ at: 0.4, shot: 'sograsp', magic: true, pct: 104, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 160, speed: 760 }] },
+    { move: 'sosclose', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.52, shot: 'soslam', sky: true, magic: true, pct: 182, range: 300, h: 90, targets: 4, knock: 140, launch: 100, speed: 1100, big: true, stop: 0.07, shake: 3 }] },
+  ],
+  astrowand: [
+    { move: 'sowbeckon', dur: 0.32, step: 10, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 82, range: 300, h: 60, knock: 40, speed: 820 }] },
+    { move: 'sowcurl', dur: 0.5, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 780, oy: -3 }, { at: 0.56, shot: 'soflame', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 780, oy: 3 }] },
+    { move: 'sowgrip', dur: 0.6, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'sograsp', magic: true, pct: 170, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] },
   ],
   starstaff: [
     { move: 'msfire', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'mgfireball', magic: true, el: 'fire', pct: 96, range: 310, h: 70, knock: 120, speed: 720 }] },
@@ -479,12 +486,18 @@ export const PATH_VARIANTS = {
   // The Astronomer. Openers: the long arc or a stargaze that drops a planet out of the sky. Second:
   // conducting, a slow pirouette, or tracing an orbit. Finisher: the ringed world or gathering the
   // night sky in both arms.
+  // The Sorcerer. Staff: the scoop or an overhand hurl; the summon or two knocks on the floor; the
+  // close or her arms spread wide as she floats. Wand: the beckon or a backhand sneer; the curl or a
+  // sigil slashed in the air; the grip or a hand pressed to the floor.
   astro: [
-    [PATH_COMBOS.astro[0], { move: 'asgaze', dur: 0.5, step: 8, strikes: [{ at: 0.48, shot: 'asplanet', sky: true, magic: true, pct: 96, range: 280, h: 90, targets: 2, knock: 50, launch: 100, speed: 600 }] }],
-    [PATH_COMBOS.astro[1],
-      { move: 'aspirouette', dur: 0.54, step: 14, strikes: [{ at: 0.55, shot: 'asplanet', magic: true, pct: 108, range: 300, h: 64, knock: 40, speed: 600, targets: 2, pierce: true }] },
-      { move: 'astrace', dur: 0.56, step: 10, carry: 0.6, strikes: [{ at: 0.58, shot: 'asplanet', magic: true, pct: 110, range: 300, h: 64, knock: 40, speed: 600, lob: 30, h: 110 }] }],
-    [PATH_COMBOS.astro[2], { move: 'asgather', dur: 0.6, step: 12, finisher: true, strikes: [{ at: 0.55, shot: 'asbig', magic: true, pct: 180, range: 330, h: 80, targets: 3, pierce: true, speed: 540, knock: 200, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.astro[0], { move: 'sosswing', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'sofire', magic: true, pct: 100, range: 300, h: 70, knock: 140, speed: 660 }] }],
+    [PATH_COMBOS.astro[1], { move: 'sosknock', dur: 0.54, step: 6, strikes: [{ at: 0.48, shot: 'sograsp', magic: true, pct: 106, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 160, speed: 760 }] }],
+    [PATH_COMBOS.astro[2], { move: 'sosrage', dur: 0.64, step: 12, finisher: true, strikes: [{ at: 0.54, shot: 'soslam', sky: true, magic: true, pct: 184, range: 300, h: 90, targets: 4, knock: 140, launch: 100, speed: 1100, big: true, stop: 0.07, shake: 3 }] }],
+  ],
+  astrowand: [
+    [PATH_COMBOS.astrowand[0], { move: 'sowsneer', dur: 0.36, step: 8, strikes: [{ at: 0.32, shot: 'sohand', magic: true, pct: 84, range: 300, h: 60, knock: 40, speed: 820 }] }],
+    [PATH_COMBOS.astrowand[1], { move: 'sowtrace', dur: 0.56, step: 12, carry: 0.6, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 46, range: 300, h: 64, knock: 20, speed: 780, oy: -3 }, { at: 0.52, shot: 'soflame', magic: true, pct: 50, range: 300, h: 64, knock: 20, speed: 780, oy: 3 }] }],
+    [PATH_COMBOS.astrowand[2], { move: 'sowdoom', dur: 0.62, step: 10, finisher: true, strikes: [{ at: 0.52, shot: 'sograsp', magic: true, pct: 172, range: 290, h: 50, oy: 16, targets: 3, pierce: true, knock: 30, launch: 180, speed: 760, big: true, stop: 0.06, shake: 2 }] }],
   ],
   starstaff: [
     [PATH_COMBOS.starstaff[0], { move: 'msslam', dur: 0.46, step: 12, strikes: [{ at: 0.42, shot: 'mgfireball', magic: true, el: 'fire', pct: 100, range: 300, h: 70, knock: 140, speed: 700 }] }],
@@ -566,15 +579,25 @@ const ARCHER_COMMANDS = {
     ],
     dash: { move: 'clglide', dur: 0.52, step: 64, carry: 0.55, strikes: [{ at: 0.48, shot: 'clbolt', magic: true, pct: 115, range: 300, h: 64, knock: 100, speed: 900, targets: 2, pierce: true }] },
   },
-  // The Astronomer: a moon sent up at whatever flies, planets lowered at them from a float in the air
-  // (the second a ringed world), and a glide out of a run.
+  // The Sorcerer with the staff: a shadow hand flung up at whatever flies, dark fireballs swung down
+  // from a hang in the air (the second through two), and a skim out of a run ending in a fireball.
   astro: {
-    up: { move: 'asup', dur: 0.46, step: 6, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 112, range: 300, h: 64, knock: 40, speed: 600, range: 260, h: 190, lift: 60, launch: 360, big: true, stop: 0.04 }] },
+    up: { move: 'sosup', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 112, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 820, big: true, stop: 0.04 }] },
     air: [
-      { move: 'asair', dur: 0.44, hang: true, strikes: [{ at: 0.34, shot: 'asplanet', magic: true, pct: 84, range: 300, h: 64, knock: 40, speed: 600, range: 260, h: 170, drop: 60 }] },
-      { move: 'asair', dur: 0.5, hang: true, finisher: true, strikes: [{ at: 0.34, shot: 'asbig', magic: true, pct: 112, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 120, speed: 540, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'sosair', dur: 0.4, hang: true, strikes: [{ at: 0.3, shot: 'sofire', magic: true, pct: 84, range: 260, h: 170, drop: 60, knock: 40, speed: 680 }] },
+      { move: 'sosair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'sofire', magic: true, pct: 110, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 140, speed: 680, big: true, stop: 0.05, shake: 2 }] },
     ],
-    dash: { move: 'asglide', dur: 0.56, step: 62, carry: 0.55, strikes: [{ at: 0.44, shot: 'asplanet', magic: true, pct: 118, range: 300, h: 64, knock: 40, speed: 600, targets: 2, pierce: true, knock: 100 }] },
+    dash: { move: 'sosdash', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.4, shot: 'sofire', magic: true, pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 110, speed: 700 }] },
+  },
+  // With the wand: a shadow hand flung up, wisps of flame let fall from the air (the second a spray
+  // of three), and a skim out of a run flinging a hand through two of them.
+  astrowand: {
+    up: { move: 'sowup', dur: 0.4, step: 6, strikes: [{ at: 0.3, shot: 'sohand', magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 820, big: true, stop: 0.04 }] },
+    air: [
+      { move: 'sowair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'soflame', magic: true, pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 780 }] },
+      { move: 'sowair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'soflame', magic: true, fan: 3, pct: 60, range: 260, h: 190, drop: 70, knock: 120, speed: 780, big: true, stop: 0.04, shake: 1 }] },
+    ],
+    dash: { move: 'sowdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.34, shot: 'sohand', magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 100, speed: 860 }] },
   },
   // With the staff: lightning up off the orb at whatever flies, ice pointed down from the air, and a
   // vault round the staff out of a run that ends in a fireball.
@@ -768,6 +791,7 @@ export function addFaith(world, n) {
 }
 // The share Faith takes off a hit; a hit taken also builds it.
 export function faithGuard(world) {
+  stormHurt(world);
   if (!hasFaith(world.char)) return 0;
   const cut = (FAITH_CUT * (world.faith ?? 0)) / FAITH_MAX;
   addFaith(world, FAITH_ON_HURT);
@@ -1117,20 +1141,33 @@ export function addGrace(world, n) {
   world.graceAt = world.now;
 }
 export const liveShow = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
-// Orbit (internally Binding): the Astronomer's gauge, in place of Spirit: the moons round her, one
-// for every fifth of it (world/astro.js). Her spells that land build it (her moons' own blows
-// don't); it fades once the fighting stops. Full (FULL ORBIT, all five moons), her moons fly out
-// twice as often and her finisher, Planetary Alignment, is ready.
+// Spellstorm (internally Binding): the Sorcerer's gauge (docs/design/mage-line.md). Her spells that
+// land build it, quickly while she keeps casting (a hit within STORM_QUICK of the last), slowly when
+// she lets up; a hit taken knocks a share of it away (STORM_HURT); it fades once the fighting stops.
+// Full (SPELLSTORM), every spell she casts casts twice: an echo of it follows a beat behind
+// (STORM_ECHO as strong), and her finisher is ready.
 export const BINDING_MAX = 100;
 const BINDING_HOLD = 6;
 const BINDING_DRAIN = 9;
+export const STORM_QUICK = 1.2;
+export const STORM_FAST = 1.5;
+export const STORM_SLOW = 0.6;
+export const STORM_HURT = 0.35;
+export const STORM_ECHO = 0.6;
 export const hasBinding = (char) => jobChain(char.job).includes('onmyoji');
 export function addBinding(world, n) {
   if (!hasBinding(world.char) || n <= 0) return;
-  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n);
+  const quick = world.now - (world.bindingAt ?? -9) < STORM_QUICK;
+  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n * (quick ? STORM_FAST : STORM_SLOW));
   world.bindingAt = world.now;
 }
 export const fullOrbit = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
+export const spellstorm = fullOrbit;
+// A hit taken knocks part of her Spellstorm away.
+export function stormHurt(world) {
+  if (!hasBinding(world.char) || !(world.binding > 0)) return;
+  world.binding = Math.max(0, world.binding * (1 - STORM_HURT));
+}
 // How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Applause.
 const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
@@ -1178,7 +1215,7 @@ export function pathOf(world) {
   const w = world.stats.weaponType;
   if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
   if (w === 'wand' && hasGrace(char)) return 'idol';
-  if (w === 'staff' && hasBinding(char)) return 'astro';
+  if ((w === 'wand' || w === 'staff') && hasBinding(char)) return w === 'wand' ? 'astrowand' : 'astro';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -1840,7 +1877,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `mghit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `mghit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'spiritmage' && (s.shot === 'stbolt' || s.shot === 'stcomet' || s.shot === 'stmeteor' || s.rain) ? 'sthit' : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -1968,6 +2005,8 @@ function fire(world, strike) {
       fire(world, { ...s, split: true, sky: false, el: e, shot: ELEMENT_SHOT[e], oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04 + i * 0.03, pct: s.pct * OVERLOAD_PCT, big: false, stop: 0, shake: 0, gauge: 1 });
     });
   }
+  // The Sorcerer: on full Spellstorm every spell casts twice, its echo a beat behind.
+  if (SO_SHOTS.has(s.shot) && !s.echo && !s.split && spellstorm(world)) fire(world, { ...s, echo: true, split: true, lag: (s.lag ?? 0) + 0.14, oy: (s.oy ?? 0) + (s.shot === 'sograsp' ? 0 : -6), pct: s.pct * STORM_ECHO, big: false, stop: 0, shake: 0, gauge: 1 });
   if (STAR_SHOTS_WITCH.has(s.shot) && !MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
     for (const oy of [-9, 9]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04, pct: s.pct * STAR_SPLIT, big: false, stop: 0, shake: 0, gauge: 1 });
   }
@@ -1976,12 +2015,12 @@ function fire(world, strike) {
     for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
       const my = m.y - (m.air ?? 0) - m.def.h / 2;
       // (Her lightning comes straight down; a meteor slants in.)
-      const straight = s.shot === 'mgsky' || s.shot === 'clpillar';
+      const straight = s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
       const sx = straight ? m.x : m.x - s.dir * 70;
       const sy = my - (straight ? 200 : 170);
       const travel = Math.hypot(m.x - sx, my - sy) / speed;
-      world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: 0, dur: travel });
-      shotHit(world, s, m, travel, 0, element);
+      world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: -lag, dur: travel });
+      shotHit(world, s, m, travel + lag, 0, element);
     }
     return;
   }
@@ -2095,6 +2134,8 @@ const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.
 export const MG_SHOTS = new Set(['mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
+// The Sorcerer's shots (her own art); their hits leave her claw marks.
+export const SO_SHOTS = new Set(['sohand', 'soflame', 'sofire', 'sograsp', 'soslam']);
 // The Mage shouts the name of every big spell as she casts it, like a chosen one in a story (her
 // finishers and skills; never her quick casts). A move has a few names and never says the same one
 // twice in a row; the line floats up over her head.

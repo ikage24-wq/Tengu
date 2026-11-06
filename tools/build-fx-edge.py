@@ -33,7 +33,7 @@ def browser():
 
 
 def render(names):
-    url = f'http://localhost:8000/tools/draw-fx-page.html?names={",".join(names)}'
+    url = f'http://localhost:{os.environ.get("PORT", "8000")}/tools/draw-fx-page.html?names={",".join(names)}'
     out = subprocess.run([browser(), '--headless=new', '--disable-gpu', '--virtual-time-budget=60000', '--dump-dom', url], capture_output=True, text=True, encoding='utf-8', check=True).stdout
     m = re.search(r'<pre id="out">(.*?)</pre>', out, re.S)
     return json.loads(m.group(1).replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"'))

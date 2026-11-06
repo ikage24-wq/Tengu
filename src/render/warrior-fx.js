@@ -335,6 +335,9 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celclgateimpact', x, y + 4, { p, scale: 0.9 }) || true;
     case 'clrays':
       return f.t < 0 || fxSprite(ctx, 'celclrays', x, y + 4, { p, scale: 0.75 }) || true;
+    case 'sohit':
+      // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
+      return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
     case 'mghitfire': case 'mghitice': case 'mghitbolt':
       // The Mage's marks: her crimson rune ring flashing round a burst of her element.
       return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;
