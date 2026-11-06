@@ -340,9 +340,13 @@ carry an improvement across every part of the game it applies to.
   - The Starlight Idol (2026-11-02; she replaced the Shrine Maiden) is pink and gold, HD soft glow:
     her note in flight is a pink music note bobbing with gold sparkles behind it; her big note a
     burst of pink sound waves round a pair of gold notes; her hit a pink pop that bursts into notes
-    and hearts; her songs are rings of staff lines on the ground with beads running round them and
-    shapes rising off them (pink hearts and notes for Healing Song, gold stars for Cheer, lilac moons
-    and z's for Lullaby); Grand Concert is a pink stage with a gold rim and footlights, two
+    and hearts; her heart shot a big pink heart with a gold rim and a gold trail. Her songs move
+    (reworked 2026-11-06): Center Stage is a spotlight from a little gold lamp with a pink pool of
+    light and hearts rising up it, following who it mends; Hype Wave a pink wave curling over with a
+    gold lip and glow sticks waving out of it, rolling along the ground; Lullaby a sleepy lilac
+    cloud with a face, moons and notes circling it and z's rising; Curtain Call rose velvet curtains
+    with a gold-fringed valance sweeping shut behind her and parting; Grand Concert's pyro gold puffs
+    of fire shooting up with confetti. Grand Concert is a pink stage with a gold rim and footlights, two
     spotlights and a shower of hearts and notes; her badge a heart with a gold note. Her wand is
     drawn as a pink and gold microphone.
   - The Star Witch (2026-11-02; she replaced the Spirit Mage) is midnight blue and warm gold with
