@@ -151,7 +151,10 @@ function pilot(world) {
     const hi = danger.kind === 'circle' ? danger.x + danger.w / 2 + 20 : danger.x + danger.w + 20;
     go(Math.abs(b.x - lo) < Math.abs(b.x - hi) && lo > 30 ? lo : hi);
   } else if (fights.length) {
-    const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
+    // Anything feeding the boss its life (Gnarlroot's saplings) is cut down first, as the call-out
+    // says and as the group's damage dealers do; then the nearest fight.
+    const menders = fights.filter((m) => m.def.fight?.mender);
+    const t = (menders.length ? menders : fights).reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
     const spot = t.x + (Math.sign(b.x - t.x) || -1) * 150;
     if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
     else if (Math.abs(b.x - spot) > 20) go(spot);
