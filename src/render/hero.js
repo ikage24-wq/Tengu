@@ -2929,8 +2929,6 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'beastmaster' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'phantom' };
   // The Acrobat Archer's bow is her short mint and gold trick recurve.
   if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
-  // The Kitchen Witch's wand is her ladle and her staff her frying pan (docs/design/kitchen-witch.md).
-  if (state.job === 'spiritmage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'chef' };
   // The Astronomer's staff is her violet and silver orrery.
   if (state.job === 'onmyoji' && g.weapon?.type === 'staff' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'astro' };
   // The Starlight Idol's wand is her pink and gold microphone.

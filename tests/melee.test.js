@@ -2244,7 +2244,7 @@ test("the warrior paths charge their own way, and run into their own attack", ()
   }
 });
 
-test("the Kitchen Witch cooks snappy: a ladle and a pan string of her own, every spell out in about a third of a second", async () => {
+test("the Star Witch casts snappy: a wand string of her own, every cast out in about a fifth of a second", async () => {
   const { PATH_COMBOS, PATH_VARIANTS } = await import('../src/world/melee.js');
   for (const path of ['starwand', 'starstaff']) {
     assert.equal(PATH_VARIANTS[path].length, PATH_COMBOS[path].length, `${path}: a choice for every step`);
@@ -2265,7 +2265,7 @@ test("the Kitchen Witch cooks snappy: a ladle and a pan string of her own, every
     updateWorld(w, DT, hold);
     if (w.pose && seen.at(-1)?.step !== w.combo) seen.push({ step: w.combo, move: w.pose.kind });
   }
-  assert.deepEqual(seen.slice(0, PATH_COMBOS.starwand.length).map((x) => x.move), PATH_COMBOS.starwand.map((x) => x.move), 'her own ladle string first');
+  assert.deepEqual(seen.slice(0, 4).map((x) => x.move), PATH_COMBOS.starwand.map((x) => x.move), 'her own wand string first');
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'her stars land');
   assert.ok(w.spirit > 0, 'and light her Constellation');
 });
@@ -2284,19 +2284,19 @@ function starWitch(weapon = 'wand_20') {
 // (Her paths' tests start from her too.)
 const shrineMage = starWitch;
 
-test('her pan flips a sizzling egg up in an arc onto them', () => {
+test('her staff calls a meteor down from the sky onto them', () => {
   const w = starWitch('staff_20');
-  w.combo = 0;
+  w.combo = 1;
   w.comboUntil = w.now + 9;
-  w.comboPlan = [0, 0, 0];
+  w.comboPlan = [0, 0, 0, 0];
   updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose.kind, 'kpflip');
-  let arced = false;
+  assert.equal(w.pose.kind, 'ssplant');
+  let fromSky = false;
   for (let i = 0; i < 50; i++) {
     updateWorld(w, DT, idle);
-    arced ||= w.fx.some((f) => f.kind === 'projectile' && Math.abs(f.bend ?? 0) >= 30);
+    fromSky ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'stmeteor' && f.y < w.body.y - 120);
   }
-  assert.ok(arced, 'it goes up in an arc');
+  assert.ok(fromSky, 'it falls from high above');
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and lands');
 });
 
@@ -2309,7 +2309,7 @@ test('a full Constellation splits her star bolts into three', () => {
     let n = 0;
     for (let i = 0; i < 30; i++) {
       updateWorld(w, DT, idle);
-      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'kwglob').length);
+      n = Math.max(n, w.fx.filter((f) => f.kind === 'projectile' && f.shot === 'stbolt').length);
     }
     return n;
   };

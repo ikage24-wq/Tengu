@@ -1,4 +1,14 @@
-# The Kitchen Witch (the mage line rework; replaces the Star Witch, Starlight Idol and Astronomer)
+# The Kitchen Witch (shelved for later)
+
+**Shelved (2026-11-06).** The player: "not bad, but we can save it for later; right now we need an
+actual mage and healer." The mage line is being rebuilt as an elemental Mage with a Sorcerer and a
+Cleric path instead (docs/design/mage-line.md). Everything of hers is kept, out of play: her basic
+strings, pools and commands in src/data/kitchen-witch.js, her moves in render/moves.js (`kw*`,
+`kp*`, `KW_FACE`), her ladle and pan (the 'chef' weapon finish), her gear concept
+(render/jobgear/kitchen.js) and her effects (`kw*`, `kp*` in tools/fx-art.js, wired in
+render/effects.js, render/warrior-fx.js and world/melee.js `KW_SHOTS`). She could come back as her
+own job or as a path.
+
 
 The player's picks (2026-11-06): a whole new fantasy for the mage line, because the star mages'
 moves read generic and stiff, their effects didn't impress, the combat feel was off and the
