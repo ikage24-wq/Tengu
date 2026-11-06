@@ -1440,8 +1440,8 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   const body = [];
   const out = [];
   // Each knee draws up as the hand on its side pulls down (a smooth cycle, `rig.climb` -2.5..2.5).
-  body.push(...legShapes(12, legs, g.shoes, true, [0, -Math.max(0, a) * 1.4, 0]));
-  body.push(...legShapes(15.6, legs, g.shoes, false, [0, Math.min(0, a) * 1.4, 0]));
+  body.push(...legShapes(12, legs, g.shoes, true, [0, -Math.max(0, a) * 2.1, 0]));
+  body.push(...legShapes(15.6, legs, g.shoes, false, [0, Math.min(0, a) * 2.1, 0]));
   body.push(...hipShapes(legs));
   body.push(...topShapes('tee', g.top.color));
   // From behind, job capes show their own shape (scarves, banners, wings); others a plain drape.
@@ -1462,10 +1462,10 @@ function backShapes(look, g, rig, skin, sleeve, legs) {
   out.push(...(nape.length ? [...nape, ...(hatTucks(g.hat) ? [] : hairOf(look, null).top)] : [F(E(HEAD_X, 14.6, 10.2, 10, skinRamp(skin).sh1)), F(E(HEAD_X, 14.2, 9.6, 9.6, skin))]));
   if (g.hat) out.push(...hatBackShapes(g.hat.design, g.hat.color, g.hat), ...hatShapes(g.hat.design, g.hat.color, g.hat));
   // Arms reach up past the head to grip the rope, hand over hand.
-  // (Each hand in turn reaches high over the head and pulls down to the chin, the other passing it.)
-  // (A straight arm reaches about 18 on the figure; pulled down, the hand comes to the shoulders
-  // with the elbow out.)
-  const arms = [...arm(11.3, 27.6, 13.4 - 0.5 * a, 22 + 1.7 * a, sleeve, long, g, skin), ...arm(19.2, 27.6, 17.6 + 0.5 * a, 22 - 1.7 * a, sleeve, long, g, skin)];
+  // (Each hand in turn reaches high over the head, the arm straight, and pulls down to the
+  // shoulder with the elbow out, the other passing it on the way up; the reaching hand's glove
+  // shows above the hair, so the climb reads from behind.)
+  const arms = [...arm(11.3, 27.6, 13.6 - 0.4 * a, 17 + 2.7 * a, sleeve, long, g, skin), ...arm(19.2, 27.6, 17.4 + 0.4 * a, 17 - 2.7 * a, sleeve, long, g, skin)];
   if (g.cape?.design === 'fairy' || g.cape?.design === 'angel') {
     const wing = capeShapes(g.cape.design, g.cape.color, 0, rig.flap);
     arms.push(...wing);
@@ -2069,29 +2069,23 @@ function solveRig(state, anim, mv = null) {
     r.tx = q(1 + 0.5 * gait);
     if (state.mood) walkActing(r, state.mood, p, gait, state.armed);
   } else if (pose === 'jump') {
+    // In the air the pose follows the arc continuously (never snapping between three): rising, the
+    // front knee drives up with the back leg trailing and the arms swept down and back; over the
+    // top, a compact tuck; falling, the legs reach for the floor and the arms go out at the sides
+    // for balance (at chest height, never up over the face), the hair lifting.
     const vy = state.vy ?? -1;
     r.air = true;
-    if (anim?.rise > 0 || vy < -250) {
-      // Rising: legs tucked, arms swept back.
-      r.by = -1;
-      r.frontLeg = [2.6, -5, 10];
-      r.backLeg = [-1.6, -2.6, -10];
-      r.frontArm = [-2, -2];
-      r.backArm = [-2, -3];
-    } else if (vy < 120) {
-      // Apex: a little ball.
-      r.frontLeg = [3, -6, 10];
-      r.backLeg = [-1, -4, -6];
-      r.frontArm = [1, -3];
-      r.backArm = [-1, -3];
-    } else {
-      // Falling: legs reach for the ground, arms out for balance, hair floats up.
-      r.frontLeg = [2, -2, 6];
-      r.backLeg = [-2.6, -1, -6];
-      r.frontArm = [2, -4];
-      r.backArm = [-3, -4];
-      r.hairLift = -1;
-    }
+    const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
+    const up = Math.max(anim?.rise > 0 ? 1 : 0, ease((-vy - 40) / 260));
+    const down = ease((vy - 40) / 280);
+    const top = Math.max(0, 1 - up - down);
+    const mixP = (R, A, F) => R.map((v, i) => q(v * up + A[i] * top + F[i] * down));
+    r.by = q(-1 * up);
+    r.frontLeg = mixP([2.8, -6, 14], [3, -7, 12], [1.6, -1, 4]);
+    r.backLeg = mixP([-1.4, 0, -4], [-0.6, -5.5, -5], [-2.2, 0, -5]);
+    r.frontArm = mixP([-2.6, -1], [1.4, -2.6], [3.6, -5.2]);
+    r.backArm = mixP([-3, -1.6], [-0.6, -2.8], [-3.8, -5.4]);
+    r.hairLift = q(-2 * down);
   } else if (state.ready && (state.wtype === 'dagger' || state.wtype === 'gauntlet')) {
     // The Thief's stance: light on her feet, low and loose, a quick small bounce on the balls of her
     // feet with the back heel up, weight forward, the free hand up and ready.
@@ -2139,14 +2133,20 @@ function solveRig(state, anim, mv = null) {
   }
 
   // Landing: the knees give, the hips drop, and the feet spread (a pose; the figure keeps its shape).
+  // (Its depth comes from how hard she landed and eases out as she rises, with the head and arms
+  // dipping a beat into it.)
   if (anim?.land > 0 && pose !== 'jump') {
-    const k = anim.land > 0.06 ? 2 : 1;
-    r.by = 0;
-    r.squat = k;
-    r.frontLeg = [r.frontLeg[0] + k * 0.6, 0, 0];
-    r.backLeg = [r.backLeg[0] - k * 0.6, 0, 0];
-    r.frontArm = [k, 1];
-    r.backArm = [-k, 1];
+    const u = Math.min(1, anim.land / 0.12);
+    const k = q(2.2 * u * u * (3 - 2 * u));
+    if (k > 0) {
+      r.by = 0;
+      r.squat = k;
+      r.hy = q(0.8 * k);
+      r.frontLeg = [q(r.frontLeg[0] + k * 0.6), 0, 0];
+      r.backLeg = [q(r.backLeg[0] - k * 0.6), 0, 0];
+      r.frontArm = [q(k), q(k * 0.7)];
+      r.backArm = [q(-k), q(k * 0.7)];
+    }
   }
 
   // Hurt: the first beat is held at the deepest crouch, leaning hard away from the blow, then the
@@ -3020,7 +3020,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
   const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: -76, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62 : null;
-  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * (HEFTED.has(g.weapon?.type) ? 1 : 4) + (pose === 'jump' ? -15 : 0);
+  // (In the air a light weapon dips with her arms; a shouldered greatsword, axe or spear tips back
+  // instead, steady on the shoulder, since dipping it laid the blade across her face.)
+  const hefted = HEFTED.has(g.weapon?.type);
+  const airTip = pose === 'jump' ? (hefted ? 14 : -15) : 0;
+  let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + (hefted && pose === 'jump' ? 0 : rig.frontArm[0] * (hefted ? 1 : 4)) + airTip;
   // Between moves the held weapon eases to where it should be (guard, shoulder, a fidget) instead
   // of jumping there; a greatsword goes the long way, down and round behind her, rather than up
   // across her face.

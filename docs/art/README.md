@@ -141,6 +141,11 @@ carry an improvement across every part of the game it applies to.
   bone takes the beat a little later than the one before it, and the body rises a beat after the
   push (the retired summons did this; they are in git history). Companions that shoot on a timer
   wind up while the next shot is due, strike on the shot, hold about 0.2 s, then settle.
+- A pose picked from a speed (the hero's jump by vertical speed) blends between its key poses with
+  eased weights instead of switching at thresholds, and the keys must differ enough to read at
+  game size: rising one knee up and one leg straight, a tuck over the top, falling legs down and
+  arms out at chest height (never up: on a chibi they'd cross the face). Anything the hero carries
+  needs the same face check in every such pose (`tools/air-sheet.html`).
 - Chibi monsters have the hero's problem with big heads: a raised near arm crosses the face. Keep
   the paw low (behind the collar) and swing the held thing round it, and hold a staff high up its
   shaft so the top rides just above the paw (Prismaris, `mobs/bosses.js`). A slam that ends near the

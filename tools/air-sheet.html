@@ -1,0 +1,40 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Air sheet</title>
+<style>body { margin: 0; background: #f6f0ff; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the hero in the air at a row of vertical speeds (rising, over the top, falling) and
+// landing at a row of depths, big, to judge the jump's poses and check nothing covers the face.
+// ?job=warrior&weapon=sword_30
+await import('/src/data/cash.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { createAnim } = await import('/src/render/animator.js');
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const q = new URLSearchParams(location.search);
+const job = q.get('job') ?? 'novice'; const weapon = q.get('weapon');
+const vys = [-525, -400, -300, -200, -100, -25, 50, 150, 250, 350, 500];
+const lands = [0.16, 0.12, 0.08, 0.05, 0.02];
+const K = 3, D = 1.5, CW = 100, N = vys.length;
+const c = document.getElementById('c');
+c.width = (N * CW + 20) * D; c.height = 2 * 190 * D;
+const ctx = c.getContext('2d'); ctx.setTransform(D, 0, 0, D, 0, 0);
+ctx.fillStyle = '#f6f0ff'; ctx.fillRect(0, 0, c.width, c.height);
+const g = weapon ? { weapon: { id: weapon } } : {};
+vys.forEach((vy, i) => {
+  const x = 20 + i * CW + CW / 2, y = 165;
+  ctx.save(); ctx.translate(x, y); ctx.scale(K, K); setHd(true, K * D); nextFrame();
+  const anim = createAnim(); anim.rise = 0;
+  drawHero(ctx, LOOK, g, 0, 0, { pose: 'jump', vy, time: 1, facing: 1, job }, anim);
+  ctx.restore(); ctx.fillStyle = '#8f7cc4'; ctx.font = '11px sans-serif'; ctx.fillText(`vy ${vy}`, x - 20, y + 16);
+});
+lands.forEach((l, i) => {
+  const x = 20 + i * CW + CW / 2, y = 355;
+  ctx.save(); ctx.translate(x, y); ctx.scale(K, K); setHd(true, K * D); nextFrame();
+  const anim = createAnim(); anim.land = l;
+  drawHero(ctx, LOOK, g, 0, 0, { pose: 'idle', time: 1, facing: 1, job }, anim);
+  ctx.restore(); ctx.fillStyle = '#8f7cc4'; ctx.font = '11px sans-serif'; ctx.fillText(`land ${l}`, x - 20, y + 16);
+});
+document.title = 'ready';
+</script>

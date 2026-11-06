@@ -103,8 +103,17 @@ The redo pass (see `redo-pass.md`) was stopped early because of a usage limit. D
   nothing ever crosses his face, a sparkle charges on the prism, and it smashes into the floor where
   the crystals burst. Rig and still frames share one skeleton.
 
+- Hero motion (2026-11-06), three critique rounds, filmed in game and checked big on
+  `tools/air-sheet.html`: the jump no longer snaps between three near-identical poses but follows
+  the arc continuously (rising: one knee up, the other leg straight, arms swept back; over the top a
+  tuck; falling: legs reaching for the floor, arms out at chest height for balance, hair lifting);
+  the landing crouch eases out with how hard she landed and dips the head; a shouldered greatsword,
+  axe, spear or staff tips back behind her head in the air instead of dipping across her face (it
+  covered her eyes while rising); the rope climb's hands reach a full straight arm up and pull down
+  to the shoulder in turn, knees drawing up more. The basic attack combo was already expressive and
+  every job's own moves have since been reworked, so attacks were left as they are.
+
 ## Still to do
 - Gear: accent-colour audit per piece.
-- Hero: critique rounds on attack/jump/climb motion.
 - Not done for any team: a full three critique rounds, after-GIFs, and 1x checks in real maps.
 - Props: shared prop kit is `src/render/propkit.js`.
