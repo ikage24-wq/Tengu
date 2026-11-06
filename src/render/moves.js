@@ -109,6 +109,22 @@ function starKeys(p, keys) {
   return keys[keys.length - 1][1];
 }
 
+// The Kitchen Witch's faces (render/hero.js face fields): she acts every beat of a move.
+const KW_FACE = {
+  focus: { lid: 0.3, cross: 0.4, mouth: 'flat', brows: [[-0.2, 0.6], [-0.2, 0.6]] },
+  yell: { cross: 0.6, mouth: 'yell', brows: [[-0.2, 0.9], [-0.2, 0.9]] },
+  roar: { cross: 0.8, mouth: 'yell', brows: [[-0.2, 1], [-0.2, 1]], extra: ['vein'] },
+  proud: { lid: 0.35, mouth: 'cat', brows: [[0.7, -0.3], [0.7, -0.3]], blush: 1.2 },
+  savour: { closed: [true, true], mouth: 'cat', brows: [[0.8, -0.3], [0.8, -0.3]], blush: 1.3 },
+  showman: { lid: 0.45, mouth: 'smirk', brows: [[0.8, -0.4], [0.1, 0.3]] },
+  blow: { lid: 0.3, mouth: 'o', puff: true, brows: [[0.3, 0.2], [0.3, 0.2]] },
+  grin: { mouth: 'grin', brows: [[0.6, -0.2], [0.6, -0.2]] },
+  wink: { closed: [false, true], mouth: 'cat', brows: [[0.7, -0.3], [0, 0.2]] },
+  cheeky: { mouth: 'tongue', brows: [[0.6, -0.2], [0.6, -0.2]] },
+  wow: { mouth: 'o', brows: [[0.9, -0.2], [0.9, -0.2]], shine: true },
+  singed: { mouth: 'gasp', brows: [[0.9, 0.3], [0.9, 0.3]], extra: ['sweat0'] },
+};
+
 // The Spirit Mage's dance figures (render/scene.js gives them a longer, softer blend in and out).
 export const DANCE_MOVES = new Set(['kagura', 'kaguraturn', 'kagurafin', 'bellshake', 'sleevefan', 'bowrise', 'twirlstep', 'kaguraup', 'floatcast', 'floatcast2', 'glidecast', 'spiritstep', 'kaguraslam', 'kagurabless', 'kaguraward', 'kaguralantern']);
 
@@ -3212,6 +3228,327 @@ export const MOVES = {
         else if (poke > 0.4) r.eyes = 'happy';
         else if (winding) r.mouth = 'grin';
       },
+    };
+  },
+
+  // ---------- The Kitchen Witch's moves (her own; docs/design/kitchen-witch.md) ----------
+  // A bossy little head chef who cooks her spells. Every move is a real kitchen motion pushed to a
+  // show: the ladle stirs, flicks, sprinkles and pours; the pan bonks, flips, tosses and flambés.
+  // She acts every beat with her face (KW_FACE): narrowed and focused on the wind-up, yelling on
+  // the blow ("YES, CHEF!"), smug once it's served. The ladle is held at the end of its long
+  // handle, out in front or low; the pan swings round her, never across her face.
+
+  // Stir and flick (ladle opener, the broth leaves at ~0.32): bent over an invisible pot, two quick
+  // stirs low in front of her, then a scoop and a flick of the wrist that flings a glob of hot broth
+  // at them; she straightens into a little fencer's lunge and holds it, smug.
+  kwstir(p) {
+    const flick = ease(seg(p, 0.22, 0.32));
+    return {
+      weapon: starKeys(p, [[0, 152], [0.07, 176], [0.14, 150], [0.22, 176], [0.32, 60], [0.44, 38], [0.8, 56]]),
+      arm: starKeys(p, [[0, 74], [0.07, 62], [0.14, 76], [0.22, 62], [0.32, 96], [0.44, 104], [0.8, 90]]),
+      lunge: starKeys(p, [[0, 0], [0.22, -1.5], [0.32, 6], [0.44, 7], [0.8, 4]]), tilt: starKeys(p, [[0, 0.1], [0.22, 0.14], [0.32, -0.04], [0.5, 0.02]]),
+      lift: 2.5 * bump(p, 0.26, 0.46) + swBob(p, 0.7), trail: p > 0.22 && p < 0.36,
+      face: p < 0.24 ? KW_FACE.focus : p < 0.42 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => {
+        r.squat = q(1.4 * (1 - flick));
+        r.backArm = flick > 0.3 ? [q(lerp(2, -5, flick)), q(lerp(1, -6, flick))] : [2, 1];
+        r.hairLift = flick > 0.3 && p < 0.5 ? 1 : 0;
+        danceLegs(r, [1 - flick, [2.4, 0, 4], [-2.4, 0, -6]], [flick, [4, 0, 8], [-3.6, -0.6, -18]]);
+      },
+    };
+  },
+  // Backhand splash (second, three droplets fanning out at ~0.4): the ladle swung back across and
+  // behind her, low, then whipped underhand round in front in a wide fan that sprays broth; the
+  // throw hops her forward onto her front foot, the free arm flung out behind for balance.
+  kwsplash(p) {
+    const wind = soft(seg(p, 0, 0.26));
+    const sweep = ease(seg(p, 0.26, 0.4));
+    return {
+      weapon: starKeys(p, [[0, 95], [0.26, 235], [0.4, 70], [0.52, 46], [0.85, 62]]),
+      arm: starKeys(p, [[0, 60], [0.26, -20], [0.4, 100], [0.52, 112], [0.85, 92]]),
+      tilt: starKeys(p, [[0, 0], [0.26, -0.1], [0.4, 0.12], [0.6, 0.06]]), lunge: starKeys(p, [[0, 0], [0.26, -2.5], [0.4, 7], [0.85, 5]]),
+      lift: 5 * bump(p, 0.3, 0.6) + swBob(p, 0.72), trail: p > 0.26 && p < 0.44,
+      face: p < 0.26 ? KW_FACE.focus : p < 0.5 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => {
+        r.air = bump(p, 0.3, 0.6) > 0.4;
+        r.backArm = [q(lerp(lerp(0, 6, wind), -6, sweep)), q(lerp(lerp(0, -2, wind), -5, sweep))];
+        r.hairLift = sweep > 0.3 ? 1 : 0;
+        r.cape -= q(3 * sweep);
+        danceLegs(r, [wind * (1 - sweep), [1, 0, 4], [-2.8, 0, -12]], [sweep, [3.6, 0, 8], [-3.4, -1, -24]], [bump(p, 0.3, 0.6), [1.8, -2.6, 20], [-2.6, -3.4, -40]]);
+      },
+    };
+  },
+  // The big pour (ladle finisher, the soup wave leaves at ~0.5): a crouch, then a hop with the ladle
+  // hoisted high out in front (the free hand under it like a pot's weight), and she tips it right
+  // over as she lands in a deep lunge, pouring a wave of soup at them; she shakes out the last drops.
+  kwpour(p) {
+    const up = soft(seg(p, 0.06, 0.3));
+    const pour = ease(seg(p, 0.32, 0.5));
+    const hold = soft(seg(p, 0.52, 0.7));
+    const jump = bump(p, 0.1, 0.5);
+    const shake = Math.sin(seg(p, 0.54, 0.86) * Math.PI * 6) * (1 - seg(p, 0.54, 0.86)) * (p > 0.54 ? 1 : 0);
+    return {
+      weapon: starKeys(p, [[0, 95], [0.3, 12], [0.5, 150], [1, 140]]) + 9 * shake,
+      arm: starKeys(p, [[0, 50], [0.3, 112], [0.5, 92], [1, 84]]),
+      lunge: starKeys(p, [[0, 0], [0.3, 1], [0.5, 8], [1, 6]]), tilt: starKeys(p, [[0, 0.04], [0.3, -0.08], [0.5, 0.18], [0.7, 0.14], [1, 0.08]]),
+      lift: 11 * jump - 1.5 * bump(p, 0, 0.12) + swBob(p, 0.8), trail: pour > 0 && pour < 1,
+      face: p < 0.12 ? KW_FACE.focus : p < 0.62 ? KW_FACE.roar : p < 0.82 ? KW_FACE.proud : KW_FACE.savour,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.8 * bump(p, 0, 0.14) + 2.2 * pour * (1 - hold * 0.6));
+        r.backArm = pour < 0.3 ? [q(lerp(2, 5, up)), q(lerp(1, -7, up))] : hold < 0.5 ? [-6, -6] : [2, 1];
+        r.hairLift = jump > 0.4 ? -1 : pour > 0.3 && hold < 0.5 ? 1 : 0;
+        r.cape -= q(4 * pour * (1 - hold));
+        danceLegs(r, [bump(p, 0, 0.14), [2.6, 0, 6], [-2.6, 0, -6]], [jump * (1 - pour), [1.8, -3.2, 26], [-2.2, -3.4, -40]], [pour, [4.6, 0, 10], [-4.4, -0.6, -24]]);
+      },
+    };
+  },
+  // Taste test (an opener in her pool, ~0.3): she holds the ladle up in front of her chest and
+  // blows on it, cheeks puffed (too hot!), then jabs it straight at them like a fencer: you try it.
+  kwtaste(p) {
+    const jab = ease(seg(p, 0.18, 0.3));
+    const quiver = Math.sin(seg(p, 0.3, 0.6) * Math.PI * 4) * (1 - seg(p, 0.3, 0.6)) * (p > 0.3 ? 1 : 0);
+    return {
+      weapon: lerp(lerp(90, 74, soft(seg(p, 0, 0.12))), 92, jab) + 5 * quiver, arm: lerp(lerp(50, 62, soft(seg(p, 0, 0.12))), 96, jab) - 4 * soft(seg(p, 0.4, 0.8)),
+      lunge: 9 * jab * (1 - 0.3 * soft(seg(p, 0.5, 0.9))), tilt: -0.05 * (1 - jab) + 0.1 * jab, lift: 2 * bump(p, 0.02, 0.16) + swBob(p, 0.62),
+      face: p < 0.18 ? KW_FACE.blow : p < 0.4 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => {
+        r.backArm = jab > 0.3 ? [q(lerp(2, -6, jab)), q(lerp(1, -7, jab))] : [2, 1];
+        r.hairLift = jab > 0.3 && p < 0.45 ? 1 : 0;
+        danceLegs(r, [1 - jab, [1.6, -0.6, 6], [-1.2, 0, -4]], [jab, [5, 0, 10], [-4.4, -0.6, -22]]);
+      },
+    };
+  },
+  // The salt sprinkle (second in her pool, a spice cloud at ~0.42): nose up, ladle raised high out
+  // in front with the wrist crooked like a showman, one brow up; three little taps, then a flick
+  // off the wrist that rains spice on them, and she closes her eyes, very pleased with herself.
+  kwsalt(p) {
+    const raise = soft(seg(p, 0, 0.3));
+    const taps = bump(p, 0.3, 0.32) + bump(p, 0.32, 0.34) + bump(p, 0.34, 0.36);
+    const flick = ease(seg(p, 0.36, 0.42));
+    const after = soft(seg(p, 0.48, 0.75));
+    return {
+      weapon: lerp(lerp(90, 36, raise), 112, flick) + 14 * taps - 10 * after, arm: lerp(lerp(50, 118, raise), 104, flick) - 10 * after,
+      tilt: -0.08 * raise * (1 - after * 0.5), lunge: 1.5 * raise + 2 * flick, lift: 1.5 * raise * (1 - after) + swBob(p, 0.7) * 0.7,
+      face: p < 0.44 ? KW_FACE.showman : KW_FACE.savour,
+      rig: (r) => {
+        r.backArm = [2, 1];
+        danceLegs(r, [raise, [1.4, -1.2, 14], [-1, 0, -4]], [after, [2, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Twirling scoop (a finish in her pool, ~0.46): a turn on the spot with the ladle trailing low,
+  // then a huge underhand scoop up past them that slings a big glob; she ends with the ladle high
+  // and the free fist on her hip.
+  kwscoop(p) {
+    const a = ease(seg(p, 0.04, 0.34));
+    const turning = p > 0.04 && p < 0.34;
+    const scoop = ease(seg(p, 0.34, 0.46));
+    const hold = soft(seg(p, 0.5, 0.75));
+    const hop = bump(p, 0.06, 0.4);
+    return {
+      weapon: lerp(lerp(lerp(95, 150, soft(seg(p, 0, 0.1))), 15, scoop), 25, hold), arm: lerp(lerp(lerp(55, 30, soft(seg(p, 0, 0.1))), 118, scoop), 108, hold),
+      turn: turning ? Math.sign(Math.cos(a * Math.PI * 2) || 1) : 1, trail: turning || (scoop > 0 && scoop < 1),
+      lift: 6 * hop + 3 * bump(p, 0.36, 0.56) + swBob(p, 0.76), lunge: 5 * scoop * (1 - hold * 0.4), tilt: -0.1 * scoop * (1 - hold) - 0.04 * hold,
+      face: turning ? KW_FACE.grin : p < 0.5 ? KW_FACE.roar : KW_FACE.wink,
+      rig: (r) => {
+        r.air = hop > 0.4 || bump(p, 0.36, 0.56) > 0.5;
+        r.backArm = turning ? [-4, -3] : [q(lerp(-5, 2, hold)), q(lerp(-6, 1, hold))];
+        r.hairLift = turning ? -1 : scoop > 0.3 && hold < 0.5 ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [1.4, -2.6, 22], [-1.2, -2.2, -26]], [scoop, [2.6, -1, 10], [-2.4, 0, -10]], [hold, [1.6, -1.4, 16], [-1.2, 0, -4]]);
+      },
+    };
+  },
+  // Up + attack with the ladle: a crouch and an underhand scoop straight up that flings broth at
+  // whatever flies, her eyes following it up.
+  kwup(p) {
+    const jump = bump(p, 0.14, 0.6);
+    return {
+      weapon: starKeys(p, [[0, 130], [0.12, 162], [0.3, 28], [0.6, 22], [1, 40]]), arm: starKeys(p, [[0, 60], [0.12, 52], [0.3, 104], [0.6, 100], [1, 90]]),
+      tilt: -0.1 * soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.6, 0.9))), lift: 8 * jump - 1.5 * bump(p, 0, 0.14) + swBob(p, 0.7) * 0.6,
+      face: p < 0.14 ? KW_FACE.focus : p < 0.45 ? KW_FACE.yell : KW_FACE.grin,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.6 * bump(p, 0, 0.14));
+        r.backArm = [2, 1];
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [jump, [1.6, -3, 26], [-2.2, -3.8, -50]]);
+      },
+    };
+  },
+  // In the air with the ladle: hoisted up, then tipped straight down over them as she drops.
+  kwair(p) {
+    return {
+      weapon: starKeys(p, [[0, 70], [0.18, 20], [0.3, 165], [0.7, 120]]), arm: starKeys(p, [[0, 80], [0.18, 115], [0.3, 70], [0.7, 80]]), tilt: 0.08 * soft(seg(p, 0.18, 0.3)),
+      face: p < 0.2 ? KW_FACE.focus : KW_FACE.yell,
+      rig: (r) => { r.air = true; r.backArm = [-5, -6]; danceLegs(r, [1, [2, -3, 30], [-2.4, -2, -30]]); },
+    };
+  },
+  // Out of a run with the ladle: a heel slide leaning back, the ladle trailing low behind her, then
+  // whipped round in front to fling broth, and a twirl of the ladle as she stops.
+  kwdash(p) {
+    const slide = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.75, 1)));
+    const twirl = soft(seg(p, 0.5, 0.8));
+    const w = starKeys(p, [[0, 120], [0.26, 210], [0.38, 70], [0.5, 90]]);
+    return {
+      weapon: w + 360 * twirl, back: (twirl > 0 && twirl < 1 && wandUp(w + 360 * twirl)) || undefined, arm: starKeys(p, [[0, 40], [0.26, -10], [0.38, 98], [0.5, 88], [0.8, 40]]),
+      tilt: -0.14 * slide, lunge: 5 * slide, trail: p > 0.26 && p < 0.42,
+      face: p < 0.3 ? KW_FACE.grin : p < 0.5 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => { r.backArm = [q(-6 * slide * (1 - twirl) + 2 * twirl), q(-4 * slide + 1 * twirl)]; r.hairLift = slide > 0.4 ? 1 : 0; danceLegs(r, [slide, [5, 0, 20], [-3, 0, -8]]); },
+    };
+  },
+
+  // Pan bonk (pan opener, ~0.4): up on her toes with the pan heaved up over her head and back, then
+  // brought down hard on them; she lands in a lunge, the pan quivering with the BONG.
+  kpbonk(p) {
+    const wind = soft(seg(p, 0, 0.28));
+    const chop = ease(seg(p, 0.28, 0.38));
+    const quiver = Math.sin(seg(p, 0.38, 0.7) * Math.PI * 5) * (1 - seg(p, 0.38, 0.7)) * (p > 0.38 ? 1 : 0);
+    return {
+      weapon: lerp(lerp(80, -50, wind), 125, chop) + 6 * quiver, arm: lerp(lerp(55, 104, wind), 70, chop), back: (wind > 0.25 && chop < 0.3) || undefined,
+      lunge: -1 * wind * (1 - chop) + 7 * chop * (1 - 0.3 * soft(seg(p, 0.6, 1))), tilt: -0.06 * wind * (1 - chop) + 0.16 * chop * (1 - 0.5 * soft(seg(p, 0.6, 1))),
+      lift: 2.5 * wind * (1 - chop) + swBob(p, 0.68), trail: chop > 0 && chop < 1,
+      face: p < 0.28 ? KW_FACE.focus : p < 0.5 ? KW_FACE.roar : KW_FACE.proud,
+      rig: (r) => {
+        r.squat = q(1.6 * chop * (1 - soft(seg(p, 0.5, 0.8))));
+        r.backArm = [q(lerp(lerp(0, 4, wind), -5, chop)), q(lerp(lerp(0, -5, wind), -3, chop))];
+        r.hairLift = chop > 0.3 && p < 0.5 ? 1 : wind > 0.5 ? -1 : 0;
+        danceLegs(r, [wind * (1 - chop), [1, -0.6, 4], [-1.4, -0.4, -8]], [chop, [4.4, 0, 8], [-4, -0.6, -20]]);
+      },
+    };
+  },
+  // Pan flip (second, a sizzling egg arcs out at ~0.34): the pan held low and level, a dip at the
+  // knees, then a flick up that flips the egg high at them; she dips again to catch the rhythm.
+  kpflip(p) {
+    const flip = ease(seg(p, 0.24, 0.34));
+    const catchIt = soft(seg(p, 0.5, 0.8));
+    return {
+      weapon: lerp(starKeys(p, [[0, 90], [0.12, 100], [0.24, 108]]), 62, flip) * (1 - catchIt) + 98 * catchIt,
+      arm: lerp(starKeys(p, [[0, 58], [0.24, 48]]), 80, flip) * (1 - catchIt) + 64 * catchIt,
+      lunge: 3 * flip * (1 - catchIt) + 1 * catchIt, tilt: 0.06 * (1 - flip) - 0.06 * flip * (1 - catchIt),
+      lift: 6 * bump(p, 0.26, 0.54) + swBob(p, 0.82) * 0.6,
+      face: p < 0.24 ? KW_FACE.focus : p < 0.5 ? KW_FACE.grin : KW_FACE.cheeky,
+      rig: (r) => {
+        r.air = bump(p, 0.26, 0.54) > 0.4;
+        r.squat = q(1.8 * bump(p, 0, 0.24) + 1.4 * bump(p, 0.62, 0.86));
+        r.backArm = [2, 1];
+        r.hairLift = bump(p, 0.26, 0.54) > 0.4 ? -1 : 0;
+        danceLegs(r, [bump(p, 0, 0.26), [2.6, 0, 6], [-2.6, 0, -6]], [bump(p, 0.26, 0.54), [1.8, -2.6, 20], [-2.2, -3, -34]], [catchIt, [2.2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Flambé (pan finisher, the fire whooshes out at ~0.52): the pan held out and shaken back and
+  // forth like a chef on the line, then heaved up and forward as it goes up in a whoosh of flame;
+  // she flinches back from her own fire, eyebrows singed, then strikes a proud pose anyway.
+  kpflambe(p) {
+    const sh = seg(p, 0, 0.36);
+    const shake = Math.sin(sh * Math.PI * 4) * (p < 0.36 ? 1 : 0);
+    const heave = ease(seg(p, 0.38, 0.5));
+    const flinch = bump(p, 0.5, 0.78);
+    const proud = soft(seg(p, 0.72, 0.9));
+    return {
+      weapon: lerp(95 + 8 * shake, 60, heave) + 10 * flinch, arm: lerp(70, 108, heave) - 8 * flinch - 12 * proud,
+      lunge: 3 * shake * (1 - heave) + 8 * heave - 5 * flinch, tilt: 0.04 * shake + 0.14 * heave - 0.26 * flinch,
+      lift: 2 * bump(p, 0.38, 0.52) + swBob(p, 0.86), trail: heave > 0 && heave < 1,
+      face: p < 0.38 ? KW_FACE.focus : p < 0.52 ? KW_FACE.roar : p < 0.74 ? KW_FACE.singed : KW_FACE.proud,
+      rig: (r) => {
+        r.backArm = flinch > 0.3 ? [q(3 * flinch), q(-8 * flinch)] : [2, 1];
+        r.hairLift = flinch > 0.3 ? 1 : 0;
+        danceLegs(r, [1 - heave, [2.6, 0, 4], [-2.6, 0, -6]], [heave, [4.2, 0, 8], [-3.8, -0.6, -20]], [flinch, [3.4, -1.6, 24], [-2, 0, -14]], [proud, [2.2, 0, 6], [-2, 0, -8]]);
+      },
+    };
+  },
+  // Wok toss (an opener in her pool, the food arcs out at ~0.3): the pan slid out low, then yanked
+  // back and up so whatever's in it leaps out in an arc at them; she watches it go, delighted.
+  kpwok(p) {
+    const push = soft(seg(p, 0, 0.18));
+    const toss = ease(seg(p, 0.18, 0.3));
+    return {
+      weapon: lerp(lerp(95, 112, push), 70, toss) + 24 * soft(seg(p, 0.5, 0.8)), arm: lerp(lerp(58, 72, push), 76, toss) - 14 * soft(seg(p, 0.5, 0.8)),
+      lunge: 4 * push * (1 - toss) - 3 * toss * (1 - soft(seg(p, 0.5, 0.8))), tilt: 0.08 * push * (1 - toss) - 0.08 * toss * (1 - soft(seg(p, 0.5, 0.8))),
+      lift: 3 * bump(p, 0.2, 0.42) + swBob(p, 0.72) * 0.7,
+      face: p < 0.18 ? KW_FACE.focus : p < 0.5 ? KW_FACE.wow : KW_FACE.grin,
+      rig: (r) => {
+        r.backArm = [2, 1];
+        r.squat = q(1.2 * push * (1 - toss));
+        danceLegs(r, [push * (1 - toss), [3.4, 0, 8], [-3, 0, -14]], [toss, [1.6, 0, 4], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Pan spin (second in her pool, ~0.46): two turns on the spot with the pan held out flat at arm's
+  // length like a discus thrower, then she stops facing them and drives it straight out.
+  kpspin(p) {
+    const a = seg(p, 0.06, 0.4);
+    const turning = p > 0.06 && p < 0.4;
+    const drive = ease(seg(p, 0.4, 0.46));
+    return {
+      weapon: lerp(95, 92, drive), arm: lerp(lerp(55, 82, soft(seg(p, 0, 0.08))), 96, drive) - 10 * soft(seg(p, 0.6, 0.9)),
+      turn: turning ? Math.sign(Math.cos(a * a * (3 - 2 * a) * Math.PI * 4) || 1) : 1, trail: turning,
+      lift: 5 * bump(p, 0.06, 0.4) + swBob(p, 0.7), lunge: 7 * drive * (1 - 0.4 * soft(seg(p, 0.6, 1))), tilt: 0.12 * drive * (1 - soft(seg(p, 0.6, 1))),
+      face: turning ? KW_FACE.grin : p < 0.56 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => {
+        r.air = bump(p, 0.06, 0.4) > 0.4;
+        r.backArm = turning ? [-5, -3] : [q(lerp(-5, 2, soft(seg(p, 0.5, 0.8)))), q(lerp(-4, 1, soft(seg(p, 0.5, 0.8))))];
+        r.hairLift = turning ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [1.4, -2.6, 22], [-1.2, -2.2, -26]], [drive, [4.2, 0, 8], [-3.8, -0.6, -18]]);
+      },
+    };
+  },
+  // Backhand smash (a finish in her pool, ~0.5): side on, the pan drawn way back low behind her and
+  // the free hand pointed at them like a tennis player's, then a huge swing round and up through
+  // them that follows right through over her shoulder; she holds the follow-through on her toes.
+  kpsmash(p) {
+    const wind = soft(seg(p, 0, 0.34));
+    const swing = ease(seg(p, 0.34, 0.48));
+    const follow = soft(seg(p, 0.48, 0.66));
+    return {
+      weapon: lerp(lerp(lerp(90, 235, wind), 60, swing), -48, follow), arm: lerp(lerp(lerp(55, -25, wind), 108, swing), 92, follow), back: follow > 0.35 || undefined,
+      lunge: -2 * wind * (1 - swing) + 8 * swing * (1 - follow * 0.4), tilt: -0.1 * wind * (1 - swing) + 0.16 * swing * (1 - follow * 0.4),
+      lift: 4 * bump(p, 0.36, 0.6) + swBob(p, 0.8), trail: p > 0.34 && p < 0.62,
+      face: p < 0.34 ? KW_FACE.focus : p < 0.6 ? KW_FACE.roar : KW_FACE.wink,
+      rig: (r) => {
+        r.air = bump(p, 0.36, 0.6) > 0.5;
+        r.backArm = [q(lerp(lerp(0, 6, wind), -6, swing)), q(lerp(lerp(0, -3, wind), -5, swing))];
+        r.hairLift = swing > 0.3 && follow < 0.6 ? 1 : 0;
+        r.cape -= q(4 * swing);
+        danceLegs(r, [wind * (1 - swing), [1.6, 0, 4], [-3.4, 0, -12]], [swing, [3.6, 0, 8], [-3, -0.6, -18]], [follow, [3.2, -1, 12], [-1.8, -2.6, -30]]);
+      },
+    };
+  },
+  // Up + attack with the pan: the pan held low and level, then flipped straight up, tossing food at
+  // whatever flies.
+  kpup(p) {
+    const jump = bump(p, 0.14, 0.6);
+    return {
+      weapon: starKeys(p, [[0, 95], [0.12, 106], [0.3, 56], [0.6, 62], [1, 78]]), arm: starKeys(p, [[0, 55], [0.12, 45], [0.3, 90], [0.6, 86], [1, 72]]),
+      tilt: -0.08 * soft(seg(p, 0.14, 0.3)) * (1 - soft(seg(p, 0.6, 0.9))), lift: 7 * jump - 1.5 * bump(p, 0, 0.14) + swBob(p, 0.7) * 0.6,
+      face: p < 0.14 ? KW_FACE.focus : p < 0.45 ? KW_FACE.yell : KW_FACE.wow,
+      rig: (r) => {
+        r.air = jump > 0.3;
+        r.squat = q(1.6 * bump(p, 0, 0.14));
+        r.backArm = [2, 1];
+        danceLegs(r, [bump(p, 0, 0.16), [2.4, 0, 6], [-2.4, 0, -6]], [jump, [1.6, -3, 26], [-2.2, -3.8, -50]]);
+      },
+    };
+  },
+  // In the air with the pan: swung up behind her, then brought round and down under her like a
+  // shield as she drops on them.
+  kpair(p) {
+    return {
+      weapon: starKeys(p, [[0, -30], [0.16, -50], [0.3, 150], [0.7, 130]]), arm: starKeys(p, [[0, 80], [0.16, 96], [0.3, 60], [0.7, 60]]), back: p < 0.22 || undefined, tilt: 0.12 * soft(seg(p, 0.16, 0.3)),
+      face: p < 0.18 ? KW_FACE.focus : KW_FACE.roar,
+      rig: (r) => { r.air = true; r.backArm = [-5, -6]; danceLegs(r, [1, [2.4, -3.4, 34], [-2, -2.4, -26]]); },
+    };
+  },
+  // Out of a run with the pan: down on one knee she skids along behind the pan held out like a
+  // shield, then flicks it up to toss what's in it at them as she stops.
+  kpsled(p) {
+    const slide = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.7, 1)));
+    const toss = ease(seg(p, 0.32, 0.42));
+    return {
+      weapon: lerp(85, 58, toss) + 24 * soft(seg(p, 0.6, 0.9)), arm: lerp(72, 88, toss) - 18 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.12 * slide, lunge: 6 * slide,
+      face: p < 0.32 ? KW_FACE.grin : p < 0.55 ? KW_FACE.yell : KW_FACE.proud,
+      rig: (r) => { r.squat = q(3 * slide); r.backArm = [q(-5 * slide), q(-3 * slide)]; r.hairLift = slide > 0.4 ? 1 : 0; danceLegs(r, [slide, [5.4, 0, 30], [-3.4, -1, -14]]); },
     };
   },
 

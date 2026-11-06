@@ -742,30 +742,33 @@ function idolMic(m, t) {
 function ladle(m, t) {
   const s = [];
   const a = {};
-  const H = 9 + t * 0.3;
-  const r = 3.4 + t * 0.06;
-  s.push(T([[-0.9, 2.4], [0.9, 2.4], [0.6, -H], [-0.6, -H]], m.handle), F(T([[0.2, 2.4], [0.9, 2.4], [0.6, -H], [0.2, -H]], m.handleDark)));
-  s.push(T([[-0.7, -H + 2], [0.7, -H + 2], [0.6, -H - 0.4], [-0.6, -H - 0.4]], '#c4cad8'));
-  s.push(E(0, 2.8, 1.4, 1.1, '#c4cad8'), F(E(0, 2.8, 0.6, 0.5, '#5a5468')), F(R(-1, -0.2, 2, 0.8, m.trimDark)));
-  // The bowl: a deep scoop tipped toward the front, a rim catching the light, broth in it.
-  const cy = -H - r + 1;
-  const steel = '#dfe4f0';
+  const H = 6.4 + t * 0.25;
+  const r = 2.9 + t * 0.05;
+  const steel = '#e6eaf4';
   const steelDk = '#9aa2b8';
-  s.push(T([...arcPts(0.6, cy, r, r * 0.95, -20, 200, 14)], steelDk), F(T([...arcPts(0.4, cy, r - 0.6, r * 0.8, -10, 170, 12)], steel)));
-  s.push(E(0.6, cy, r + 0.3, 1.2, steelDk), E(0.6, cy - 0.1, r - 0.3, 0.8, '#ff8a4a'), F(E(0, cy - 0.3, 1.2, 0.35, '#ffd08a')));
-  s.push(F(E(-0.9, cy + 1.6, 0.6, 0.9, WHITE)));
-  a.head = [0.6, cy];
-  a.tip = [0.6, cy - 1];
-  a.gem = [0.6, cy];
-  a.blade = [cy - 1.2, -H];
+  // The handle: wood from the pommel up, a steel neck that hooks forward into the bowl.
+  s.push(T([[-0.9, 2.4], [0.9, 2.4], [0.6, -H + 1.4], [-0.6, -H + 1.4]], m.handle), F(T([[0.2, 2.4], [0.9, 2.4], [0.6, -H + 1.4], [0.2, -H + 1.4]], m.handleDark)));
+  s.push(E(0, 2.8, 1.3, 1.1, '#c4cad8'), F(E(0, 2.8, 0.5, 0.45, '#5a5468')), F(R(-1, -0.2, 2, 0.8, m.trimDark)));
+  s.push(T([[-0.6, -H + 1.6], [0.6, -H + 1.6], [1.2, -H - 0.6], [0.2, -H - 1.2]], steelDk));
+  // The bowl hangs off the neck to the side (local +x), its round bottom out and its mouth facing
+  // back along the neck: held out in front, the mouth faces up, full of hot broth.
+  const cx = 0.9;
+  const cy = -H - 1 - r * 0.6;
+  s.push(T(arcPts(cx, cy, r * 1.05, r, -90, 90, 12), steelDk), F(T(arcPts(cx, cy, r * 0.82, r * 0.78, -80, 80, 10), steel)));
+  s.push(E(cx, cy, 1, r, steelDk), E(cx - 0.1, cy, 0.6, r - 0.6, '#ff8a4a'), F(E(cx - 0.2, cy - r * 0.35, 0.3, 0.8, '#ffd08a')));
+  s.push(F(E(cx + r * 0.6, cy + r * 0.35, 0.5, 0.7, WHITE)));
+  a.head = [cx, cy];
+  a.tip = [cx, cy - r];
+  a.gem = [cx, cy];
+  a.blade = [cy - r, -H];
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
 function fryingPan(m, t) {
   const s = [];
   const a = {};
-  const H = 9 + t * 0.4;
-  const r = 7 + t * 0.12;
+  const H = 8 + t * 0.35;
+  const r = 5.8 + t * 0.1;
   // The handle, wood-wrapped where she grips it, iron where it meets the pan.
   s.push(T([[-1.2, 3], [1.2, 3], [0.9, -H], [-0.9, -H]], m.handle), F(T([[0.3, 3], [1.2, 3], [0.9, -H], [0.3, -H]], m.handleDark)));
   for (let y = -2; y < 3; y += 1.4) s.push(F(R(-1.2, y, 2.4, 0.4, m.handleDark)));
