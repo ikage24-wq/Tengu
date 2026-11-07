@@ -31,6 +31,7 @@ import { botLifePose, holdFind } from './life.js';
 import { drawFriendFishing } from './fishing.js';
 import { drawQuayBack, drawQuayFront } from './quay.js';
 import { drawLagoonGround, drawLagoonPiece, drawLagoonOverhead, drawVoyage, drawVoyageDeck } from './lagoon.js';
+import { drawCoinPiece } from './coinbridge.js';
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
@@ -598,6 +599,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // Coinbridge's canals, bridges and buildings (render/coinbridge.js).
+    if (drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your island's own pieces (render/island.js).
     if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // A Sweetheart's house, and their room inside (render/sweethouses.js).
@@ -1153,6 +1156,78 @@ function prop(ctx, kind, x, y, k = 1, time = 0) {
     ctx.beginPath();
     ctx.arc(Math.sin(time * 3) * 1, 1 - ((time * 6) % 6), 0.9, 0, TAU);
     ctx.fill();
+  } else if (kind === 'gavel') {
+    // An auctioneer's gavel: a wooden head on a handle; `time` tips it up (0) to striking (1).
+    ctx.rotate(-0.6 + time * 1.2);
+    ctx.fillStyle = '#8a5a3a';
+    ctx.fillRect(-0.5, -7, 1.2, 8);
+    ctx.fillStyle = '#a8704a';
+    ctx.fillRect(-3, -10, 6, 3.4);
+    ctx.fillStyle = '#ffd36b';
+    ctx.fillRect(-3, -9, 0.8, 1.4);
+    ctx.fillRect(2.2, -9, 0.8, 1.4);
+  } else if (kind === 'coin') {
+    // A gold coin, turning as it flies.
+    const w = Math.abs(Math.cos(time * 9)) * 1.8 + 0.4;
+    ctx.fillStyle = '#ffd36b';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, w, 2, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#fff0a8';
+    ctx.fillRect(-0.3, -1.2, 0.6, 2.4);
+  } else if (kind === 'stamp') {
+    // A rubber stamp: a round knob, a stem, the inked foot.
+    ctx.fillStyle = '#a8704a';
+    ctx.beginPath();
+    ctx.arc(0, -6, 2, 0, TAU);
+    ctx.fill();
+    ctx.fillRect(-0.8, -5, 1.6, 4);
+    ctx.fillStyle = '#e85a6a';
+    ctx.fillRect(-2.6, -1.2, 5.2, 2);
+  } else if (kind === 'mug') {
+    // A big cocoa mug with a wisp of steam.
+    ctx.fillStyle = '#fff4e8';
+    ctx.fillRect(-2.4, -2, 4.8, 5);
+    ctx.fillStyle = '#e8d8c8';
+    ctx.fillRect(1.8, -2, 0.6, 5);
+    ctx.strokeStyle = '#fff4e8';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(3, 0.6, 1.4, -1.4, 1.4);
+    ctx.stroke();
+    ctx.fillStyle = '#8a5a3a';
+    ctx.fillRect(-2, -2, 4, 0.8);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(Math.sin(time * 3) * 0.8, -4 - ((time * 4) % 4), 0.8, 0, TAU);
+    ctx.fill();
+  } else if (kind === 'kettle') {
+    // The copper kettle, tipped to pour, a thin stream from its spout.
+    ctx.rotate(0.5);
+    ctx.fillStyle = '#d8885a';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 4, 3.2, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#f8b080';
+    ctx.fillRect(-2, -2, 2, 1);
+    ctx.fillStyle = '#b8683a';
+    ctx.fillRect(3, -1.4, 3, 1.2);
+    ctx.fillRect(-1, -4.4, 2, 1.4);
+    ctx.fillStyle = 'rgba(190,120,80,0.8)';
+    ctx.fillRect(5.6, -0.4, 0.6, 4 + Math.sin(time * 6) * 0.6);
+  } else if (kind === 'cards') {
+    // Playing cards: a little deck (`time` 0), or fanned out in her hand (1).
+    const n = time > 0.5 ? 4 : 1;
+    for (let i = 0; i < n; i++) {
+      ctx.save();
+      ctx.rotate(n > 1 ? (i - 1.5) * 0.3 : 0);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-1.6, -5, 3.2, 4.6);
+      ctx.fillStyle = i % 2 ? '#e85a6a' : '#3a3050';
+      ctx.fillRect(-0.6, -3.6, 1.2, 1.2);
+      ctx.restore();
+    }
   } else if (kind === 'rod') {
     // A fishing rod held out over the water, its line hanging to a bobbing float.
     ctx.strokeStyle = '#8a5a2a';
@@ -1189,6 +1264,81 @@ function zzz(ctx, x, y, time) {
 }
 
 const ROUTINES = {
+  // ----- Coinbridge (2026-11-07) -----
+  // Madame Ledger: tapping her gavel into her palm, fanning herself, an auctioneer's grand
+  // "Sold!" with the gavel high.
+  ledger(t) {
+    const b = bitAt(t, [['tap', 2.6], ['fan', 2.4], ['sold', 1.6]], 2.2);
+    if (!b) return { face: 'smug', hands: (ctx, f) => prop(ctx, 'gavel', f[0], f[1], 1, 0) };
+    const k = inOut(b.u);
+    if (b.kind === 'tap') {
+      const tap = Math.abs(Math.sin(b.s * 6));
+      return { face: 'smug', rig: { frontArm: arm(3 * k, (-3 - tap * 3) * k), backArm: arm(3 * k, -1 * k), tilt: 1.5 * k }, hands: (ctx, f) => prop(ctx, 'gavel', f[0], f[1], 1, tap) };
+    }
+    if (b.kind === 'fan') return { face: 'ohoho', rig: { backArm: arm(2.6 * k, -9 * k), tilt: -2 * k }, hands: (ctx, f, bk) => { prop(ctx, 'gavel', f[0], f[1], 1, 0); prop(ctx, 'fan', bk[0], bk[1], k, b.s); } };
+    return { face: 'excited', rig: { frontArm: arm(1 * k, -15 * k), hy: h(-1 * k), tilt: -3 * k }, lift: 1 * k, hands: (ctx, f) => prop(ctx, 'gavel', f[0], f[1], 1, 0.6 * k) };
+  },
+  // Guildmaster Halvard: telling a war story with his arms wide, rubbing his bad knee, a slow
+  // salute with two fingers to his brow.
+  halvard(t) {
+    const b = bitAt(t, [['story', 3.4], ['knee', 2], ['salute', 1.4]], 2.6);
+    if (!b) return { face: 'heh' };
+    const k = inOut(b.u);
+    if (b.kind === 'story') {
+      const wave = Math.sin(b.s * 3);
+      return { face: wave > 0 ? 'excited' : 'heh', rig: { frontArm: arm((4 + wave * 2) * k, (-6 - wave * 3) * k), backArm: arm((3 - wave * 2) * k, (-5 + wave * 3) * k), tilt: wave * 2 * k } };
+    }
+    if (b.kind === 'knee') return { face: 'nervous', rig: { frontArm: arm(2 * k, 6 * k), tilt: 7 * k, hy: h(1.4 * k), squat: Math.round(2 * k) } };
+    return { face: 'proud', rig: { frontArm: arm(1.4 * k, -13 * k), tilt: -1 * k } };
+  },
+  // Penny, the clerk: writing in her ledger, counting coins hand to hand, stamping a form.
+  penny(t) {
+    const b = bitAt(t, [['write', 3], ['count', 2.4], ['stamp', 1.6]], 2.2);
+    if (!b) return { face: 'mmhm' };
+    const k = inOut(b.u);
+    if (b.kind === 'write') return { face: 'lookdown', rig: { frontArm: arm(2.4 * k, -2.6 * k), backArm: arm(2.6 * k, -2.4 * k), hy: h(0.8 * k), tilt: 3 * k }, hands: (ctx, f, bk) => prop(ctx, 'notebook', (f[0] + bk[0]) / 2, (f[1] + bk[1]) / 2 - 1, k, b.s) };
+    if (b.kind === 'count') {
+      const hop = (b.s * 2.5) % 1;
+      return { face: 'mmhm', rig: { frontArm: arm(3 * k, -3 * k), backArm: arm(3 * k, -3 * k), hy: h(0.6 * k), tilt: 2 * k }, hands: (ctx, f, bk) => prop(ctx, 'coin', f[0] + (bk[0] - f[0]) * hop, Math.min(f[1], bk[1]) - Math.sin(hop * Math.PI) * 6, k, b.s) };
+    }
+    const down = Math.max(0, Math.sin(b.u * Math.PI * 2));
+    return { face: 'determined', rig: { frontArm: arm(3 * k, (-8 + down * 8) * k), tilt: 2 * k }, hands: (ctx, f) => prop(ctx, 'stamp', f[0], f[1], k) };
+  },
+  // Juniper, the innkeeper: polishing a mug with her cloth, pouring from the kettle, a warm wave.
+  juniper(t) {
+    const b = bitAt(t, [['polish', 3], ['pour', 2.4], ['wave', 1.4]], 2.4);
+    if (!b) return { face: 'smile' };
+    const k = inOut(b.u);
+    if (b.kind === 'polish') {
+      const rub = Math.sin(b.s * 9);
+      return { face: 'smile', rig: { frontArm: arm((3 + rub) * k, -4 * k), backArm: arm(3 * k, -3 * k), tilt: 2 * k }, hands: (ctx, f, bk) => { prop(ctx, 'mug', bk[0], bk[1], k); prop(ctx, 'cloth', f[0], f[1], k); } };
+    }
+    if (b.kind === 'pour') return { face: 'mmhm', rig: { frontArm: arm(4 * k, -6 * k), backArm: arm(3 * k, -2 * k), tilt: 4 * k }, hands: (ctx, f, bk) => { prop(ctx, 'kettle', f[0], f[1], k, b.s); prop(ctx, 'mug', bk[0], bk[1] + 2, k); } };
+    const wave = Math.sin(b.s * 10);
+    return { face: 'excited', rig: { frontArm: arm((1 + wave * 1.2) * k, -14 * k), tilt: -1 * k } };
+  },
+  // Old Wendell: a long sip of cocoa, leaning in to whisper behind his hand, nodding off.
+  wendell(t) {
+    const b = bitAt(t, [['sip', 2.4], ['whisper', 2.8], ['doze', 2.6]], 2.4);
+    if (!b) return { face: 'toldyou', hands: (ctx, f) => prop(ctx, 'mug', f[0], f[1], 1) };
+    const k = inOut(b.u);
+    if (b.kind === 'sip') return { face: 'sleepy', rig: { frontArm: arm(2 * k, -11 * k), tilt: -3 * k, hy: h(-0.6 * k) }, hands: (ctx, f) => prop(ctx, 'mug', f[0], f[1], 1) };
+    if (b.kind === 'whisper') return { face: 'smug', rig: { backArm: arm(3 * k, -11 * k), tilt: 8 * k, hx: h(1 * k) }, hands: (ctx, f) => prop(ctx, 'mug', f[0], f[1], 1) };
+    const nod = Math.max(0, Math.sin(b.s * 1.6));
+    return { face: 'sleepy', rig: { hy: h(1.2 * nod * k), tilt: 4 * nod * k }, hands: (ctx, f) => prop(ctx, 'mug', f[0], f[1], 1), extra: (ctx, x, y, time) => zzz(ctx, x + 6, y - 50, time) };
+  },
+  // Tilly: shuffling a deck hand to hand, fanning her cards with a sly grin, a peek over the top.
+  tilly(t) {
+    const b = bitAt(t, [['shuffle', 2.6], ['fan', 2.2], ['peek', 1.6]], 2);
+    if (!b) return { face: 'playful' };
+    const k = inOut(b.u);
+    if (b.kind === 'shuffle') {
+      const flick = (b.s * 3) % 1;
+      return { face: 'grin', rig: { frontArm: arm(3 * k, -4 * k), backArm: arm(3 * k, -4 * k), hy: h(0.4 * k) }, hands: (ctx, f, bk) => prop(ctx, 'cards', f[0] + (bk[0] - f[0]) * flick, Math.min(f[1], bk[1]) - Math.sin(flick * Math.PI) * 5, k, 0) };
+    }
+    if (b.kind === 'fan') return { face: 'smugcat', rig: { frontArm: arm(3 * k, -7 * k), tilt: -2 * k }, hands: (ctx, f) => prop(ctx, 'cards', f[0], f[1], k, 1) };
+    return { face: 'bleh', rig: { frontArm: arm(2 * k, -10 * k), backArm: arm(2 * k, -10 * k), hy: h(1 * k) }, hands: (ctx, f) => prop(ctx, 'cards', f[0], f[1] - 2, k, 1) };
+  },
   // ----- The ones who used to stand still (2026-11-07) -----
   // Kuro, the island keeper: sweeping the sand, shading her eyes to look out to sea, a big yawn.
   kuro(t) {

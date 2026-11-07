@@ -162,3 +162,25 @@ test('the tackle shops post three fish requests a day for the waters you reach, 
   assert.equal(handInRequest(world, 1), null);
   assert.ok(list[0].gold >= 100 && list[2].gold < 5000, 'paid on the money scale');
 });
+
+test('a night at the Gilded Kettle wakes you well rested, a little: double EXP until a small pool runs out', async () => {
+  const { checkIn, wakeAtInn, restedBonus, ROOM_GOLD } = await import('../src/world/inn.js');
+  const { expToNext } = await import('../src/core/exp.js');
+  const world = createWorld(createCharacter('Sleepy', {}));
+  const char = world.char;
+  char.gold = ROOM_GOLD;
+  assert.equal(checkIn(world), null);
+  assert.equal(char.gold, 0, 'a room costs its gold');
+  // Logged off somewhere else: no rest.
+  char.savedAt = Date.now() - 10 * 3600000;
+  char.mapId = 'harbor';
+  assert.equal(wakeAtInn(char), 0);
+  char.inn = { checkedIn: true };
+  char.mapId = 'coin_inn';
+  const add = wakeAtInn(char);
+  assert.ok(add > 0 && add <= expToNext(char.level) * 0.3, 'a long night is capped at under a third of a level');
+  assert.equal(restedBonus(world, 5), 5, 'kills count double while it lasts');
+  char.rested = 2;
+  assert.equal(restedBonus(world, 5), 2, 'until it runs out');
+  assert.equal(restedBonus(world, 5), 0);
+});

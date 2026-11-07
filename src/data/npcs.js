@@ -297,6 +297,65 @@ const costume = (key) => {
   const covers = ['top', ...(COSTUME_LOOKS.find((c) => c.key === key)?.covers ?? [])];
   return Object.fromEntries(covers.map((slot) => [slot, piece(`look_costume_${key}_${slot}`)]));
 };
+// ---------- Coinbridge, the canal trading town (2026-11-07) ----------
+// Each with a hairstyle nobody else wears, their own face, and clothes that say who they are.
+const cbPiece = (id) => ({ id, variant: null });
+const cbCostume = (key) => {
+  const covers = ['top', ...(COSTUME_LOOKS.find((c) => c.key === key)?.covers ?? [])];
+  return Object.fromEntries(covers.map((slot) => [slot, cbPiece(`look_costume_${key}_${slot}`)]));
+};
+Object.assign(NPCS, {
+  ledger: {
+    id: 'ledger', name: 'Madame Ledger', title: 'Auctioneer', role: 'guide',
+    look: { hairStyle: 'drills', hairColor: '#8a4a8a', skinTone: '#fbd9bf', eyeColor: '#c84a8a', outfitColor: '#5a3a6a', eyeStyle: 'cat', face: 'smug', browStyle: 'arched' },
+    gear: { ...cbCostume('gothic'), face: cbPiece('look_acc_cateye_face'), cape: cbPiece('look_acc_royalcape_cape') },
+    greeting: "Going once, going twice... oh! A new face. The Auction House opens its doors very soon, darling. Do bring something shiny.",
+    chatter: ['Going once! Going twice!', 'Everything has a price, darling.', 'Sold! To the lady in pink!'],
+  },
+  halvard: {
+    id: 'halvard', name: 'Guildmaster Halvard', title: "Adventurers' Guild", role: 'guide',
+    look: { hairStyle: 'wolfsleek', hairColor: '#c8ccd8', skinTone: '#e8b890', eyeColor: '#4a6aa8', outfitColor: '#7a5a44', eyeStyle: 'droopy', face: 'heh', browStyle: 'thick' },
+    gear: { ...cbCostume('detective'), face: cbPiece('look_acc_eyepatch_face') },
+    greeting: "Forty years of adventuring, one good leg, and a head full of stories. The bounty board goes up soon. Then we'll see what you're made of.",
+    chatter: ['Did I ever tell you about the Hollow King? No? Sit down.', 'Copper, Silver, Gold, Mithril. Everyone starts at Copper.', "This leg? A mimic. Don't ask."],
+  },
+  penny: {
+    id: 'penny', name: 'Penny', title: 'Trade Hall Clerk', role: 'guide',
+    look: { hairStyle: 'bowhair', hairColor: '#ffb86a', skinTone: '#fbe0c8', eyeColor: '#3f8a6a', outfitColor: '#ff9ec0', eyeStyle: 'round', face: 'mmhm', browStyle: 'round' },
+    gear: { top: cbPiece('look_casual_cardigan_top'), bottom: cbPiece('look_casual_plaid_bottom'), shoes: cbPiece('look_casual_loafers_shoes'), face: cbPiece('look_acc_biground_face') },
+    greeting: 'Welcome to the Trade Hall! Name, town of origin, and... oh, never mind, the forms are still at the printer. Come back soon!',
+    chatter: ['Stamp, stamp, stamp.', 'Every coin counted twice.', 'Form 27-B, in triplicate.'],
+  },
+  juniper: {
+    id: 'juniper', name: 'Juniper', title: 'Innkeeper', role: 'inn',
+    look: { hairStyle: 'catbun', hairColor: '#c8603a', skinTone: '#f6cfae', eyeColor: '#7a4a2b', outfitColor: '#ffd98a', eyeStyle: 'big', face: 'smile', browStyle: 'soft' },
+    gear: { top: cbPiece('look_casual_pinafore_top'), bottom: cbPiece('look_casual_flowerskirt_bottom'), shoes: cbPiece('look_casual_loafers_shoes'), cape: cbPiece('look_casual_scarf_cape') },
+    greeting: "Come in, come in, out of the wind! There's soup on and a fire going. And if you're tired, love, I've a room with your name on it.",
+    chatter: ['Soup, anyone?', "Mind the stair, it creaks.", "Wendell, that's your third cocoa."],
+  },
+  wendell: {
+    id: 'wendell', name: 'Old Wendell', title: 'Regular', role: 'rumor',
+    look: { hairStyle: 'buzzcut', hairColor: '#eeeef4', skinTone: '#e0a882', eyeColor: '#5a6a8a', outfitColor: '#8a9a6a', eyeStyle: 'droopy', face: 'toldyou', browStyle: 'thick' },
+    gear: { top: cbPiece('look_casual_sweatervest_top'), bottom: cbPiece('look_casual_cargo_bottom'), shoes: cbPiece('look_casual_rainboots_shoes'), hat: cbPiece('look_casual_cap_hat'), face: cbPiece('look_casual_glasses_face') },
+    greeting: "Psst. Sit down, sit down. You look like someone who likes a good rumour. I hear everything in here. Everything.",
+    chatter: ['I heard a thing...', "Don't tell anyone I told you.", 'Back in my day...'],
+  },
+  tilly: {
+    id: 'tilly', name: 'Tilly', title: 'Card Shark', role: 'guide',
+    look: { hairStyle: 'starbuns', hairColor: '#8fd0ff', skinTone: '#ffe0cc', eyeColor: '#ff6b9a', outfitColor: '#ffe36b', eyeStyle: 'sparkle', face: 'playful', browStyle: 'dots' },
+    gear: { top: cbPiece('look_casual_stripes_top'), bottom: cbPiece('look_casual_jorts_bottom'), shoes: cbPiece('look_casual_hightops_shoes'), hat: cbPiece('look_casual_catears_hat'), face: cbPiece('look_acc_heartstickers_face') },
+    greeting: "Wanna play cards? I'm REALLY good. I'm not cheating. That card was always in my sleeve. Come back soon, I'm making a new deck!",
+    chatter: ['Pick a card! Not that one.', "I'm not cheating!", 'Royal flush! ...Is that a thing?'],
+  },
+  moth: {
+    id: 'moth', name: 'The Masked Moth', title: 'Night Trader', role: 'guide',
+    look: { hairStyle: 'hexlong', hairColor: '#4a3a6a', skinTone: '#f0d8e0', eyeColor: '#b88aff', outfitColor: '#3a2a4a', eyeStyle: 'star', face: 'cool', browStyle: 'none' },
+    gear: { ...cbCostume('ballet'), face: cbPiece('look_acc_masquerade_face'), cape: cbPiece('look_acc_butterfly_cape') },
+    greeting: 'Only when the lamps are lit, little flame. Only when the lamps are lit.',
+    chatter: ['Something rare tonight.', 'Only once. Only now.', 'Hush. The lamps are listening.'],
+  },
+});
+
 const OWN_LOOKS = {
   // Sprout Village.
   mira: { look: { eyeStyle: 'jewel', face: 'excited', browStyle: 'round' }, gear: { top: piece('look_casual_stripes_top'), bottom: piece('look_casual_flowerskirt_bottom'), shoes: piece('look_casual_sandals_shoes'), hat: piece('look_casual_sunhat_hat') } },

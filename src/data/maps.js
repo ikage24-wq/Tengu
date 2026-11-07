@@ -791,6 +791,87 @@ MAPS.harbor.npcs.push({ id: 'bobbin', x: 2768 });
 MAPS.harbor.portals.push({ id: 'ferry', x: 2768, y: 480, hidden: true, to: 'lagoon', toPortal: 'pier', ferry: true });
 MAPS.harbor.townPieces.push(['ferryjetty', 2815]);
 
+// ---------- Coinbridge, the canal trading town (render/coinbridge.js) ----------
+// Down the road from Sprout Village's Gate Lane, a merchant port climbing a hillside in four
+// terraces joined by grand stairs, a canal with an arched bridge on the docks and the market.
+// Bottom to top: the Canal Docks (the town gate, the crane, crates, a moored gondola), the Market
+// Canals (the domed Auction House and Madame Ledger, the stalls where players set up shop), the
+// Lantern Terraces (the Gilded Kettle inn, the stove and the bench), and Guild Heights (the
+// Adventurers' Guild with Guildmaster Halvard, Penny's Trade Hall office, the bell tower). No
+// monsters anywhere.
+Object.assign(MAPS, {
+  coinbridge: {
+    id: 'coinbridge', plaza: 2450, fountain: false, name: 'Coinbridge', theme: 'harbor', isTown: true, town: 'coinbridge', world: { x: 40, y: 194 }, amb: 'port',
+    stove: 2860,
+    bench: 2950,
+    width: 3960, height: 1200, groundY: 1120,
+    // (No props scattered on its streets: every lamp and crate stands where it would, by hand.)
+    look: { sky: ['#ffcfa0', '#ffe4c4', '#fff6e8'], far: '#f0c8a8', mid: '#f8dcc0', midTrim: '#e8b898', islands: 'planks', material: 'quay', propKeep: 1 },
+    // The docks, the grand stairs, the market, the stairs, the terraces, the stairs, the heights;
+    // the two canals sunk into the street.
+    terrain: [[0, 1120], [516, 1120], [526, 1150], [634, 1150], [644, 1120], [820, 1120], [1210, 860],
+      [1646, 860], [1656, 890], [1764, 890], [1774, 860], [2050, 860], [2440, 600], [3100, 600], [3490, 340], [3960, 340]],
+    walkSpan: [1250, 2040],
+    cottages: [],
+    townPieces: [
+      // The docks: the gate, crates waiting on the quay, the crane at the canal's edge with its load
+      // swinging out over the water, a gondola moored under the bridge.
+      ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 380], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1 }], ['cb_crates', 720, 2], ['cb_lamp', 790],
+      // The market: a lamp between the Auction House and the canal, and one past the stalls.
+      ['cb_palazzo', 1262, 3], ['cb_auction', 1472], ['cb_lamp', 1633], ['cb_canal', 1710, { w: 118, depth: 30 }], ['cb_bridge', 1710, { w: 140 }], ['cb_gondola', 1710, { w: 118 }], ['cb_lamp', 2030],
+      ['cb_stall', 1830, 1], ['cb_stall', 1900, 2], ['cb_stall', 1970, 3],
+      // The terrace: a lamp between the inn and the stove, lighting the way to the bench.
+      ['cb_palazzo', 2494, 5], ['cb_inn', 2662], ['cb_lamp', 2800], ['cb_palazzo', 3040, 8],
+      // The heights: a lamp where the stair comes up, the guild, the office beside it, the tower.
+      ['cb_lamp', 3506], ['cb_guild', 3650], ['cb_office', 3840], ['cb_tower', 3926],
+      // The grand stairs between the terraces.
+      ['cb_stairs', 820, { to: 1210 }], ['cb_stairs', 2050, { to: 2440 }], ['cb_stairs', 3100, { to: 3490 }],
+      // Each terrace's retaining wall.
+      ['cb_wall', 1210, { w: 436 }], ['cb_wall', 1638, { w: 144, drop: 78 }], ['cb_wall', 1774, { w: 276 }], ['cb_wall', 2440, { w: 660 }], ['cb_wall', 3490, { w: 470 }],
+    ],
+    platforms: [
+      // The bridges over the canals (drawn with them).
+      { x: 510, y: 1120, w: 140, bare: true, walkOn: true },
+      { x: 1640, y: 860, w: 140, bare: true, walkOn: true },
+    ],
+    ropes: [],
+    portals: [
+      { id: 'start', x: 240, y: 1120, hidden: true },
+      // The road back up to Sprout Village.
+      { id: 'west', x: 40, y: 1120, to: 'sprout', toPortal: 'coin', label: 'Sprout Village' },
+      { id: 'inn', x: 2662, y: 600, to: 'coin_inn', toPortal: 'door', label: 'The Gilded Kettle', door: true },
+    ],
+    npcs: [{ id: 'ledger', x: 1552 }, { id: 'halvard', x: 3570 }, { id: 'penny', x: 3808 }],
+    zonesBy: 'x',
+    zones: [
+      { name: 'Canal Docks', from: 0, color: '#5fc4c4' },
+      { name: 'Market Canals', from: 1100, color: '#e0a040', look: { sky: ['#ffc8a0', '#ffe0c0', '#fff4e6'] } },
+      { name: 'Lantern Terraces', from: 2300, color: '#ff8fb0', look: { sky: ['#ffb8b0', '#ffd8c8', '#fff0e6'] } },
+      { name: 'Guild Heights', from: 3350, color: '#8fa8ff', look: { sky: ['#b8c8ff', '#d8e0ff', '#f4f4ff'] } },
+    ],
+    // The night lights sit on the lanterns: the street lamps, the gate's, the bridges'.
+    lamps: [{ x: 120, y: 1072 }, { x: 220, y: 1072 }, { x: 380, y: 1074 }, { x: 515, y: 1087 }, { x: 645, y: 1087 }, { x: 790, y: 1074 }, { x: 1633, y: 814 }, { x: 1645, y: 827 }, { x: 1775, y: 827 }, { x: 2030, y: 814 }, { x: 2662, y: 540, c: '#ffc870' }, { x: 2800, y: 554 }, { x: 3506, y: 294 }],
+    deco: [],
+    spawns: [],
+  },
+  // Inside the Gilded Kettle: the bar, the fire and its kettle, the card table, the stair up to
+  // the rooms (render/coinbridge.js). Juniper keeps it; Old Wendell has a stool; Tilly deals cards.
+  coin_inn: {
+    id: 'coin_inn', name: 'The Gilded Kettle', theme: 'harbor', isTown: true, indoor: true, town: 'coinbridge', amb: 'port',
+    width: 640, height: 372, groundY: 344,
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8cc', '#fff0dc', '#fff8f0'], material: 'parquet', propKeep: 1 },
+    cottages: [],
+    terrain: [[0, 344], [640, 344]],
+    platforms: [], ropes: [],
+    townPieces: [['cb_innroom', 320]],
+    portals: [{ id: 'door', x: 60, y: 344, to: 'coinbridge', toPortal: 'inn', label: 'Outside', door: true }, { id: 'start', x: 60, y: 344, hidden: true }],
+    npcs: [{ id: 'juniper', x: 492 }, { id: 'wendell', x: 412 }, { id: 'tilly', x: 200 }],
+    spawns: [], deco: [], lamps: [{ x: 300, y: 210, c: '#ffd27a' }, { x: 500, y: 120, c: '#ffd27a' }],
+  },
+});
+// The road down to Coinbridge leaves Sprout Village's Gate Lane, past the farmhouse.
+MAPS.sprout.portals.push({ id: 'coin', x: 470, y: 480, to: 'coinbridge', toPortal: 'west', label: 'Coinbridge' });
+
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 

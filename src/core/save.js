@@ -4,6 +4,7 @@
 // wardrobe of every cash look any of them has owned, and the storage chest. Everything else (level,
 // job, gear, gold, the story) is each character's own. Buffs and timers aren't saved.
 
+import { wakeAtInn } from '../world/inn.js';
 import { setNextUid, makeEquip } from './items.js';
 import { createInventory } from './inventory.js';
 import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
@@ -161,6 +162,8 @@ export function loadGame(slot = 0, file = 0) {
     if (!char) return null;
     char.slot = slot;
     char.file = file;
+    // A night at the Gilded Kettle turns into rest (world/inn.js).
+    wakeAtInn(char);
     // The world's shared parts: its island (with this character's own way back), its book.
     const w = loadWorld(file) ?? createWorldFile(file, `World ${file + 1}`);
     if (char.home && !w.home) w.home = { ...char.home, back: null };

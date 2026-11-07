@@ -61,11 +61,13 @@ const PER_TOWN = 8; // most in one town at once
 // Where players of each level hang out, following the hunting grounds around each town: Sprout
 // Village for beginners, Ember Crag and Pastel Harbor in the middle, Moonleaf Grove for the
 // high-level maps and the Crystal King.
-const TOWN_LEVELS = { sprout: [1, 12], crag: [10, 25], harbor: [15, 35], grove: [30, 99], lagoon: [15, 99] };
+// (Coinbridge, the trading town, draws traders of every level to its market.)
+const TOWN_LEVELS = { sprout: [1, 12], coinbridge: [8, 99], crag: [10, 25], harbor: [15, 35], grove: [30, 99], lagoon: [15, 99] };
 // The towns players hang out in: the four, and Lantern Lagoon across the sea, where anglers go
-// (a smaller crowd, mostly there to fish its nooks and the derby). `PULL` weighs how often a town
+// (a smaller crowd, mostly there to fish its nooks and the derby), and Coinbridge, the trading town
+// (traders of every level in its market). `PULL` weighs how often a town
 // is picked against the others.
-const BOT_TOWNS = [...TOWNS, 'lagoon'];
+const BOT_TOWNS = [...TOWNS, 'lagoon', 'coinbridge'];
 const CROWD = { lagoon: 5 };
 const PULL = { lagoon: 0.5 };
 const capOf = (t) => CROWD[t] ?? PER_TOWN;

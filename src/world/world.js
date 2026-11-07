@@ -11,6 +11,7 @@ import { QUESTS } from '../data/quests.js';
 import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, usePotion, applyDeath, autoAssignAp } from '../core/character.js';
+import { restedBonus } from './inn.js';
 import { settings } from '../core/settings.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
@@ -556,8 +557,10 @@ export function killMob(world, m, byParty = false) {
   // (A calm map pays a little more: world/calm.js.)
   const calm = soothes(world.map) && isCalm(world, world.map.id) ? CALM_EXP : 0;
   const exp = Math.round(m.def.exp * (byParty ? 0.6 : 1 + 0.1 * (world.partySize ?? 0)) * (1 + food + calm) * (world.expEvent ?? 1));
-  const levels = gainExp(char, exp);
-  world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp} EXP${byParty ? ' (party)' : ''}`, color: '#ffe36b', t: 0, small: true });
+  // (Well rested from a night at the inn: double, while it lasts: world/inn.js.)
+  const rest = restedBonus(world, exp);
+  const levels = gainExp(char, exp + rest);
+  world.numbers.push({ x: m.x, y: m.y - m.def.h - 18, text: `+${exp + rest} EXP${byParty ? ' (party)' : rest ? ' (rested)' : ''}`, color: '#ffe36b', t: 0, small: true });
   world.onKill?.(m);
   calmKill(world);
   nestKill(world, m);

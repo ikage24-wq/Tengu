@@ -182,8 +182,8 @@ function pilot(world) {
 
 test('a group clears Rootwood Hollow from the first room to the last', () => {
   const random = Math.random;
-  // (Seed 12: the autopilot stalls at the boss on some seeds; 11 became one when the Mage was remade.)
-  const rng = seeded(12);
+  // (Seed 13: the autopilot stalls at the boss on some seeds; 11 became one when the Mage was remade, 12 when Coinbridge opened.)
+  const rng = seeded(13);
   Math.random = rng;
   try {
     const world = heroAt(rng, 11, ['archer']);

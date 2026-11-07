@@ -19,6 +19,7 @@ import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
 import { boardPage } from './partyboard.js';
 import { fishRequestPage } from './fishreq.js';
+import { checkIn, rumor, ROOM_GOLD } from '../world/inn.js';
 import { fishRequests, requestProgress } from '../world/fishrequests.js';
 import { say } from './chat.js';
 import { sweetheartChoices, drawSweetheartHeader, giftPage, breakupPage, greetingFor } from './sweetheart.js';
@@ -282,6 +283,22 @@ export function npcWindow(ui, state, world) {
       Object.assign(state.windows.collection, { open: true, tab: 2, scroll: 0 });
       state.npc = null;
       state.windows.npc.open = false;
+    } });
+  }
+  // Juniper's rooms at the Gilded Kettle: a night's sleep turns into rested EXP (world/inn.js).
+  if (npc.role === 'inn') {
+    const rested = Math.round(char.rested ?? 0);
+    choices.push({ label: char.inn?.checkedIn ? 'Your room is ready' : `Rent a room · ${ROOM_GOLD} g`, sub: rested ? `Rested: ${rested.toLocaleString()} bonus EXP left` : 'Log off here, wake up well rested', icon: 'heart', primary: !char.inn?.checkedIn, run: () => {
+      dlg.bye = true;
+      const why = checkIn(world);
+      (world.bubbles ??= {})[npc.id] = { text: why ?? 'Room at the top of the stair. Sweet dreams, love!', t: 5 };
+    } });
+  }
+  // Old Wendell's rumours: true hints at hidden things.
+  if (npc.role === 'rumor') {
+    choices.push({ label: 'Heard any rumours?', sub: 'He hears everything', icon: 'star', primary: true, run: () => {
+      dlg.bye = true;
+      (world.bubbles ??= {})[npc.id] = { text: rumor(world), t: 8 };
     } });
   }
   // The tackle shops post the day's fish requests (world/fishrequests.js).

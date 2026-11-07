@@ -46,7 +46,7 @@ const SPOT = {
   bossroom: cell(0, 'north'), cave: cell(1, 'north'), ruins: cell(4, 'north'), shrine: cell(5, 'north'), carnival_gate: cell(6, 'north'),
   sprout: cell(0, 'middle'), hollow_gate: cell(1, 'middle'), canyon: cell(2, 'middle'), crag: cell(3, 'middle'), ridge: cell(4, 'middle'),
   observatory_steps: cell(5, 'middle'), grove: cell(6, 'middle'),
-  meadow1: cell(1, 'south'), meadow2: cell(2, 'south'), harbor: cell(3, 'south'), glade: cell(4, 'south'), woods: cell(5, 'south'),
+  coinbridge: cell(0, 'south'), meadow1: cell(1, 'south'), meadow2: cell(2, 'south'), harbor: cell(3, 'south'), glade: cell(4, 'south'), woods: cell(5, 'south'),
   tidepool_pier: cell(2, 'coast'), lagoon: cell(3, 'coast'), manor_gate: cell(4, 'coast'),
   // Off the coast: Dawnlight Isle, where you wash up, on its own islet in the north-west sea.
   dawnbeach: cell(0, 'sky'), trainfield: cell(1, 'sky'), dock: cell(2, 'sky'),
@@ -66,6 +66,7 @@ const REGION = {
   meadow: { fill: '#dcf2b4', ids: ['sprout', 'hollow_gate', 'meadow1', 'meadow2'] },
   highland: { fill: '#f9e0b8', ids: ['canyon', 'crag', 'ridge'] },
   harbor: { fill: '#ffe6cc', ids: ['harbor', 'tidepool_pier'] },
+  trade: { fill: '#ffe2b0', ids: ['coinbridge'] },
   lagoon: { fill: '#c9eef0', ids: ['lagoon'] },
   forest: { fill: '#c2e6b4', ids: ['glade', 'woods', 'manor_gate'] },
   crystal: { fill: '#ddd2f6', ids: ['bossroom', 'cave'] },
@@ -102,7 +103,7 @@ const onMap = (m) => (m.world || BY_SEA.has(m.id)) && !m.trial;
 // Each job town's colour.
 const JOB_COLORS = { archer: '#6fcf8a', thief: '#9b7cd6', warrior: '#ff8a5c', mage: '#7fa8ff' };
 // A town with no job of its own: Lantern Lagoon in its lagoon teal.
-const TOWN_COLORS = { lagoon: '#4fbfcf' };
+const TOWN_COLORS = { lagoon: '#4fbfcf', coinbridge: '#e0a040' };
 
 const hash = (n) => {
   const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
