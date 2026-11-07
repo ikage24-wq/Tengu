@@ -6,6 +6,8 @@
 //   Blade Dancer (rosegold) her hoop; gold coins spinning out; two hoops snapping across; a pop of
 //                          gold stars
 //   Sky Dancer (aerial)    her wind star; a spiral gust; a puff of cloud; feathers scattering
+//   Acrobat Archer (acro)  her gold star in mint ribbon; a mint ribbon looping off; a burst of
+//                          confetti; a pop of gold stars
 
 import { fxSprite } from './fx-sprites.js';
 
@@ -15,11 +17,12 @@ const rand = (n) => {
   const v = Math.sin(n * 73.1 + 5.3) * 43758.5453;
   return v - Math.floor(v);
 };
-const SPRITE = { coral: 'celwdhit', rosegold: 'celbdhit', aerial: 'celskyhit' };
+const SPRITE = { coral: 'celwdhit', rosegold: 'celbdhit', aerial: 'celskyhit', acro: 'celachit' };
 const COL = {
   coral: { a: '#ff7a6b', b: '#ffd9c2', c: '#fff6ea' },
   rosegold: { a: '#f2b45a', b: '#ffe2a8', c: '#fff8e6' },
   aerial: { a: '#8ad8ff', b: '#d8f4ff', c: '#ffffff' },
+  acro: { a: '#5fe0b4', b: '#ffd35a', c: '#fffbe8' },
 };
 
 function star(ctx, x, y, r, color) {
@@ -72,7 +75,8 @@ export function dancerHit(ctx, school, x, y, p, { big = false, seed = 0.5, dir =
   }
   ctx.globalAlpha = Math.max(0, 1 - Math.max(0, p - 0.5) / 0.5);
   ctx.lineCap = 'round';
-  if (school === 'coral') {
+  const kind = school === 'acro' ? (pick === 3 ? 'stars' : 'coral') : school;
+  if (kind === 'coral') {
     if (pick === 1) {
       // A coral ribbon looping off the hit.
       ctx.strokeStyle = C.a;
@@ -100,9 +104,12 @@ export function dancerHit(ctx, school, x, y, p, { big = false, seed = 0.5, dir =
         ctx.translate(x + Math.cos(a) * d, y + Math.sin(a) * d * 0.8 + 10 * p * p);
         ctx.rotate(p * 6 + k);
         ctx.fillStyle = k % 2 ? C.a : C.b;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, 3 * s, 1.6 * s, 0, 0, TAU);
-        ctx.fill();
+        if (school === 'acro') ctx.fillRect(-2 * s, -1 * s, 4 * s, 2 * s);
+        else {
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 3 * s, 1.6 * s, 0, 0, TAU);
+          ctx.fill();
+        }
         ctx.restore();
       }
     } else {
@@ -116,8 +123,8 @@ export function dancerHit(ctx, school, x, y, p, { big = false, seed = 0.5, dir =
       }
       feather(ctx, x + dir * 24 * e, y - 10 * e, s, p * 5, C);
     }
-  } else if (school === 'rosegold') {
-    if (pick === 1) {
+  } else if (kind === 'rosegold' || kind === 'stars') {
+    if (pick === 1 && kind !== 'stars') {
       // Gold coins spinning out and falling.
       for (let k = 0; k < 6; k++) {
         const a = -Math.PI / 2 + (k - 2.5) * 0.5;
@@ -131,7 +138,7 @@ export function dancerHit(ctx, school, x, y, p, { big = false, seed = 0.5, dir =
         ctx.fill();
         ctx.stroke();
       }
-    } else if (pick === 2) {
+    } else if (pick === 2 && kind !== 'stars') {
       // Two hoops snapping across each other.
       ctx.strokeStyle = C.a;
       ctx.lineWidth = 2 * s;

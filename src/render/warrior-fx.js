@@ -188,7 +188,7 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
   else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.4, rot: (seed - 0.5) * 0.4 });
   else if (school === 'phantom') fxSprite(ctx, 'celpthit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.4 });
-  else if (school === 'acro') fxSprite(ctx, 'celachit', x, y, { p, scale: k * 0.5, rot: (seed - 0.5) * 0.4 });
+  else if (school === 'acro') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.5 });
   else if (school === 'astral') fxSprite(ctx, 'celashit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.6 });
   else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
   else if (school === 'aerial') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.6 });

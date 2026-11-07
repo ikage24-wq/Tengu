@@ -13,6 +13,7 @@
 import { SCHOOL_COLORS } from './spells.js';
 import { shock, wash, easeOut, deep, inked } from './fxkit.js';
 import { drawPhantomFx, drawPhantomArrow } from './phantom-fx.js';
+import { dancerHit } from './dancer-fx.js';
 import { fxSprite } from './fx-sprites.js';
 import { groundRing, lightPillar, debris } from './warrior-fx.js';
 
@@ -375,7 +376,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     case 'achit': {
       // The Acrobat Archer's arrow landing: a gold star popping in a loop of mint ribbon, then
       // confetti; heavy shots are bigger.
-      return fxSprite(ctx, 'celachit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.5 : 0.4 }) || true;
+      return dancerHit(ctx, 'acro', x, y - (f.h ?? 24) / 2, p, { big: f.big || f.crit, seed: f.seed ?? 0.5, dir: f.dir || 1, scale: 0.45 });
     }
     case 'acfirework':
       // Firework Arrow going off.
@@ -460,7 +461,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // (The Acrobat Archer's springboard, bobbing on its spring.)
       if (f.look === 'spring') {
         const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
-        return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.6, alpha: a2 }) || true;
+        return fxSprite(ctx, 'celacspring', x, y + 2, { frame: Math.floor(time * 8) % 4, scale: 0.9, alpha: a2 }) || true;
       }
       // (The Phantom Trickster's top hat, rocking brim-up; the Arbalist Engineer's spring mine, its
       // key turning and its light blinking.)
@@ -474,7 +475,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       return true;
     }
     case 'trapsnap': {
-      if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
+      if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.9 }) || true;
       if (f.look === 'hat' || f.look === 'mine') return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: f.look === 'mine' ? 0.8 : 0.6 }) || true;
       // The trap snapping shut on a monster, sparks and dust flying.
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
