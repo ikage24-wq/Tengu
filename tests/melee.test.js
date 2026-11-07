@@ -2537,33 +2537,51 @@ function idolFull() {
 }
 const settleCast = (w, s = 3) => run(w, s);
 
-test('the Cleric works with her own medical gear and her own pool of moves, and they build Devotion (not Mayhem)', () => {
-  const pool = PATH_VARIANTS.idol;
-  assert.equal(pool.length, PATH_COMBOS.idol.length, 'one choice per combo step');
-  pool.forEach((step, i) => {
-    assert.equal(step[0], PATH_COMBOS.idol[i], `step ${i + 1} opens with her own`);
-    assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
-    for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('md'), `${v.move} is her own move`);
-  });
-  assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+test('the Bubble Healer blows bubbles: they drift, pop on monsters for damage (big ones trap them), mend her, and build Devotion', () => {
+  for (const key of ['idol', 'medstaff']) {
+    const pool = PATH_VARIANTS[key];
+    assert.equal(pool.length, PATH_COMBOS[key].length, 'one choice per combo step');
+    pool.forEach((step, i) => {
+      assert.equal(step[0], PATH_COMBOS[key][i], `step ${i + 1} opens with her own`);
+      assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
+      for (const v of step) {
+        assert.ok(MOVES[v.move] && v.move.startsWith('bb'), `${v.move} is her own move`);
+        assert.ok(v.strikes.every((st) => st.bubble), `${v.move} blows bubbles`);
+      }
+    });
+    assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+  }
   const w = idol();
   w.spirit = 0;
+  w.grace = 0;
+  w.char.hp = Math.round(w.stats.maxHp * 0.5);
+  const hp0 = w.char.hp;
+  w.mobs.forEach((m, i) => { m.x = w.body.x + 70 + i * 30; });
+  const mobHp = w.mobs.reduce((t, m) => t + m.hp, 0);
   const seen = [];
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  let shot = null;
-  for (let i = 0; i < 120; i++) {
+  let most = 0;
+  let trapped = false;
+  for (let i = 0; i < 60 * 4; i++) {
     updateWorld(w, DT, hold);
     if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
-    shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
+    most = Math.max(most, w.soap?.length ?? 0);
+    trapped ||= w.fx.some((f) => f.kind === 'bbtrap');
   }
-  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.idol.map((s) => s.move), 'her combo');
-  assert.equal(shot, 'mdpill', 'a hot-pack pill');
-  // And with the staff, her own string too (not a generic one).
-  const st = PATH_VARIANTS.medstaff;
-  assert.equal(st.length, PATH_COMBOS.medstaff.length);
-  for (const step of st) for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('md'), `${v.move} is her own staff move`);
-  assert.ok(w.grace > 0, `her bombs build Devotion (${w.grace})`);
+  assert.deepEqual(seen.slice(0, 3), PATH_COMBOS.idol.map((s) => s.move), 'her string');
+  assert.ok(most >= 3, `bubbles float out (${most} at once)`);
+  assert.ok(w.mobs.reduce((t, m) => t + Math.max(0, m.hp), 0) < mobHp, 'popping on monsters hurts them');
+  assert.ok(trapped, 'a big one traps a monster');
+  assert.ok(w.char.hp > hp0, 'every pop mends her a little');
+  assert.ok(w.grace > 0, `pops build Devotion (${w.grace})`);
   assert.equal(w.spirit ?? 0, 0, 'and no Mayhem');
+  // A full gauge splits every bubble in three; a map change clears them.
+  const f = idol();
+  f.grace = 100;
+  f.graceAt = 1e9;
+  f.mobs.forEach((m) => { m.x = f.body.x + 600; });
+  for (let i = 0; i < 50; i++) updateWorld(f, DT, hold);
+  assert.ok((f.soap?.length ?? 0) >= 9, `full Devotion triples them (${f.soap?.length})`);
 });
 
 // The Cleric's healing reactions (world/reactions.js): her heals carry their element onto her party,
@@ -2584,19 +2602,13 @@ test("the Cleric's heals mark her party, and a different element reacts: Soothin
     assert.ok(check(w), `${kind} does its own thing`);
     assert.ok(w.grace > 0, 'and builds Devotion');
   }
-  // Her heal bombs carry their element: holding attack sets the reactions off on her.
-  const w = idol();
-  w.mobs.forEach((m, i) => { m.x = w.body.x + 120 + i * 40; });
-  const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-  for (let i = 0; i < 60 * 4; i++) updateWorld(w, DT, hold);
-  assert.ok(Object.keys(w.allyReactions ?? {}).length >= 1, `attacking heals her party with reactions (${JSON.stringify(w.allyReactions)})`);
 });
 
 test('Guiding Light heals at once, then its beam follows her and keeps mending; Live Show mends half again as much', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.3);
   assert.ok(cast(w, 'grandblessing').ok);
-  assert.equal(w.pose.kind, 'mdtriage');
+  assert.equal(w.pose.kind, 'bbguard');
   run(w, 0.7);
   const after = w.char.hp;
   assert.ok(after > w.stats.maxHp * 0.42, 'it heals her at once');
@@ -2604,7 +2616,7 @@ test('Guiding Light heals at once, then its beam follows her and keeps mending; 
   // She walks off; the light goes with her and keeps mending.
   w.body.x += 400;
   run(w, 3);
-  const f = w.fx.find((o) => o.kind === 'sispot');
+  const f = w.fx.find((o) => o.kind === 'bbspot');
   assert.ok(f && Math.abs(f.x - w.body.x) < 1, 'the light follows her');
   assert.ok(w.char.hp > after, 'and keeps mending her');
   assert.ok(w.grace > 5, `healing builds Applause (${w.grace})`);
@@ -2615,7 +2627,7 @@ test('Guiding Light heals at once, then its beam follows her and keeps mending; 
   assert.ok(cast(w, 'grandblessing').ok);
   run(w, 0.7);
   assert.ok(w.spot.live && w.spot.tick >= tick * 1.5 - 1e-9, 'Live Show: it mends half again as much');
-  assert.equal(w.fx.filter((o) => o.kind === 'sispot').length, 1, 'one spotlight at a time');
+  assert.equal(w.fx.filter((o) => o.kind === 'bbspot').length, 1, 'one spotlight at a time');
 });
 
 test('Blessing of Valor rolls out both ways: she hits harder, and the monsters it passes are popped up', () => {
@@ -2623,11 +2635,11 @@ test('Blessing of Valor rolls out both ways: she hits harder, and the monsters i
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 150, 900][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
   assert.ok(cast(w, 'idolcheer').ok);
-  assert.equal(w.pose.kind, 'mdpep');
+  assert.equal(w.pose.kind, 'bbsurf');
   let rolled = false;
   for (let i = 0; i < 60 * 1.6; i++) {
     updateWorld(w, DT, idle);
-    rolled ||= w.fx.filter((f) => f.kind === 'sihype').length === 2;
+    rolled ||= w.fx.filter((f) => f.kind === 'bbhype').length === 2;
   }
   assert.ok(rolled, 'a crest rolls out each way');
   assert.ok(w.char.buffs.idolcheer?.values.watk > 0, 'it lifts her attack');
@@ -2677,7 +2689,7 @@ test("Curtain Call's Encore keeps her standing through a blow that would knock h
   const w = idolFull();
   w.god = false;
   assert.ok(cast(w, 'resurrection').ok);
-  assert.equal(w.pose.kind, 'mdrevive');
+  assert.equal(w.pose.kind, 'bbrebirth');
   settleCast(w, 3);
   assert.ok(w.char.buffs.resurrection, 'Encore is on her');
   w.invuln = 0;
@@ -2697,12 +2709,12 @@ test('Miracle needs full Devotion, spends it, heals in full, and three beats of 
   w.graceAt = w.now;
   assert.ok(cast(w, 'thousandtorii').ok);
   assert.equal(w.grace, 0, 'spends it');
-  assert.equal(w.pose.kind, 'mdhospital');
+  assert.equal(w.pose.kind, 'bbparty');
   let stage = false;
   let beats = 0;
   for (let i = 0; i < 60 * 3; i++) {
     updateWorld(w, DT, idle);
-    stage ||= w.fx.some((f) => f.kind === 'sistage');
+    stage ||= w.fx.some((f) => f.kind === 'bbdome');
     beats = Math.max(beats, w.concert?.done ?? 0);
   }
   assert.ok(stage, 'the stage rises');
@@ -2956,7 +2968,7 @@ test('the Cleric plays every Mage skill her own way, under her own names', async
   const { SKILLS } = await import('../src/data/skills.js');
   for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
     const moves = pathMoves(SKILLS[id], 1, 'shrinemaiden');
-    assert.ok(moves.every((m) => m.startsWith('md') && MOVES[m]), `${id}: her own move (${moves})`);
+    assert.ok(moves.every((m) => m.startsWith('bb') && MOVES[m]), `${id}: her own move (${moves})`);
     assert.notEqual(pathName(SKILLS[id], 'shrinemaiden'), SKILLS[id].name, `${id}: her own name`);
   }
 });

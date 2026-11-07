@@ -182,6 +182,25 @@ below are her first build, kept for reference.
   Elowen's line, and the bots (world/party.js).
 - Still to do: sounds of her own, the README, her look's top-tier weapons.
 
+## The Cleric rebuilt: the Bubble Healer (2026-11-07)
+
+The player called the medic Cleric a reskin of the Mage. She is rebuilt around her wand and staff as
+bubble wands (world/melee.js `blowBubbles`/`tickBubbles`, drawn by hand in render/bubbles.js).
+
+- **Attacks** blow bubbles (`bubble` strikes: small, big, or a skill's giant one) that drift and bob.
+  On a monster they pop for damage (a big one traps it for a moment, bosses excepted); on a party
+  member they pop into a heal; every pop splashes a little healing round it and mends her a little.
+  Wand: flick, twirl, big blow (pool: skip, figure-eight, spin). Staff: wave, low sweep, overhead
+  swing (pool: loop, hula hoop, pogo). Her own up, air and run moves with each.
+- **Gauge** (Devotion, the old Grace) fills from pops; full, every bubble splits in three.
+- **Skills**: Giant Bubble (rolls through the line, pops into a big heal), Bubble Ride (she rides a
+  bubble forward), Bubble Stream, Foam Burst (traps everything round her), Bubble Bath (party heal),
+  Bubble Wrap (barrier), Bubble Storm (finisher: bubbles drift down over everything, then all pop);
+  her own: Guardian Bubble (follows the hurt ally, mending), Bubble Wave (foam rolls both ways, buffs
+  allies, tumbles monsters), Lather Cloud (drifts after monsters, sticks and stings), Rebirth Bubble
+  (revives), Bubble Party (finisher: a dome over everyone, three bounces). Espresso Round is kept.
+- Her helper bots in parties and dungeons use the same moves and a bubble shot.
+
 ## The Cleric, remade (2026-11-07)
 
 The combat medic (render/jobgear/medic.js: the battle coat in field white with a cross in medic

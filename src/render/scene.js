@@ -6,6 +6,7 @@ import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { drawOrbs } from './juggler.js';
+import { drawSoapBubbles } from './bubbles.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
@@ -472,6 +473,7 @@ export function drawWorld(ctx, world, viewCam, time) {
     drawNodesFront(ctx, world, cam, time);
     drawFoxWheel(ctx, world, hx, hy, time, 'front');
     drawOrbs(ctx, world, hx, ay, time, 'front');
+    drawSoapBubbles(ctx, world, cam, time);
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     // The rod and line while you fish (and the Fish / Cook hints).
     drawFishing(ctx, world, cam, time, hx, hy);

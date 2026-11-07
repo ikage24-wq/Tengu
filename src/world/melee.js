@@ -221,14 +221,14 @@ export const PATH_COMBOS = {
   // heartbeat down the line. Staff (`medstaff`): a hot-water bottle catapulted, a mop of cold spray,
   // Code Blue (a heartbeat wave down the line).
   idol: [
-    { move: 'mdflickp', dur: 0.36, step: 6, strikes: [{ at: 0.3, shot: 'mdpill', magic: true, el: 'fire', pct: 78, range: 300, h: 70, knock: 30, speed: 820, mend: 0.02 }] },
-    { move: 'mdslap', dur: 0.5, step: 10, strikes: [{ at: 0.44, shot: 'mdpack', magic: true, el: 'ice', pct: 92, range: 320, h: 60, oy: 12, targets: 2, pierce: true, knock: 40, speed: 760, mend: 0.02 }] },
-    { move: 'mdpulsechk', dur: 0.62, step: 8, finisher: true, strikes: [{ at: 0.54, shot: 'mdpulse', magic: true, el: 'bolt', pct: 160, range: 340, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.07, shake: 2, mend: 0.03 }] },
+    { move: 'bbflick', dur: 0.34, step: 6, strikes: [{ at: 0.34, bubble: 'small', count: 3, spread: 24, magic: true, pct: 40 }] },
+    { move: 'bbtwirl', dur: 0.46, step: 6, strikes: [{ at: 0.44, bubble: 'big', count: 1, spread: 0, magic: true, pct: 90 }] },
+    { move: 'bbblow', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.42, bubble: 'small', count: 3, spread: 30, magic: true, pct: 36 }, { at: 0.52, bubble: 'small', count: 3, spread: 30, magic: true, pct: 36 }, { at: 0.62, bubble: 'big', count: 1, spread: 0, magic: true, pct: 120, big: true }] },
   ],
   medstaff: [
-    { move: 'mdcata', dur: 0.5, step: 6, strikes: [{ at: 0.44, shot: 'mdbottle', magic: true, el: 'fire', pct: 105, range: 310, h: 80, knock: 90, speed: 620, lob: 30, mend: 0.025 }] },
-    { move: 'mdmop', dur: 0.6, step: 10, strikes: [{ at: 0.5, shot: 'mdspray', magic: true, el: 'ice', pct: 110, range: 300, h: 70, oy: 8, targets: 3, pierce: true, knock: 40, speed: 640, mend: 0.025 }] },
-    { move: 'mdcode', dur: 0.66, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'mdecg', magic: true, el: 'bolt', pct: 175, range: 360, h: 70, oy: 6, targets: 4, pierce: true, knock: 120, speed: 1200, big: true, stop: 0.07, shake: 3, mend: 0.035 }] },
+    { move: 'bbwave', dur: 0.48, step: 8, strikes: [{ at: 0.4, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70 }] },
+    { move: 'bbsweep', dur: 0.56, step: 8, strikes: [{ at: 0.46, bubble: 'small', count: 5, spread: 40, magic: true, pct: 34, oy: 18 }, { at: 0.5, bubble: 'big', count: 1, spread: 0, magic: true, pct: 70, oy: 10 }] },
+    { move: 'bbswing', dur: 0.66, step: 6, finisher: true, strikes: [{ at: 0.52, bubble: 'big', count: 3, spread: 50, magic: true, pct: 90, big: true }] },
   ],
   // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen. Bigger and slower than
   // the Mage: fewer, grander spells that hit crowds hard, each a different element so her
@@ -493,14 +493,14 @@ export const PATH_VARIANTS = {
   // with an ice pack; the pulse check or a listen with the stethoscope. Staff: the catapult or a
   // gurney push; the mop or a floor buffer; Code Blue or a heartbeat drummed on the floor.
   idol: [
-    [PATH_COMBOS.idol[0], { move: 'mdbottlep', dur: 0.42, step: 6, strikes: [{ at: 0.36, shot: 'mdpill', magic: true, el: 'fire', pct: 82, range: 300, h: 70, knock: 30, speed: 800, lob: 20, mend: 0.02 }] }],
-    [PATH_COMBOS.idol[1], { move: 'mdkeepy', dur: 0.52, step: 6, strikes: [{ at: 0.4, shot: 'mdpack', magic: true, el: 'ice', pct: 50, range: 300, h: 80, knock: 25, speed: 760, mend: 0.012 }, { at: 0.5, shot: 'mdpack', magic: true, el: 'ice', pct: 50, range: 300, h: 80, knock: 25, speed: 760, oy: 6, mend: 0.012 }] }],
-    [PATH_COMBOS.idol[2], { move: 'mdsteth', dur: 0.64, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'mdpulse', magic: true, el: 'bolt', pct: 165, range: 340, h: 70, targets: 3, pierce: true, knock: 120, speed: 1300, big: true, stop: 0.07, shake: 2, mend: 0.03 }] }],
+    [PATH_COMBOS.idol[0], { move: 'bbskip', dur: 0.4, step: 14, strikes: [{ at: 0.36, bubble: 'small', count: 3, spread: 20, magic: true, pct: 40 }] }],
+    [PATH_COMBOS.idol[1], { move: 'bbeight', dur: 0.62, step: 4, strikes: [{ at: 0.3, bubble: 'big', count: 1, spread: 0, magic: true, pct: 50 }, { at: 0.56, bubble: 'big', count: 1, spread: 0, magic: true, pct: 50 }] }],
+    [PATH_COMBOS.idol[2], { move: 'bbspin', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.4, bubble: 'small', count: 6, spread: 160, magic: true, pct: 30 }, { at: 0.6, bubble: 'big', count: 1, spread: 0, magic: true, pct: 120, big: true }] }],
   ],
   medstaff: [
-    [PATH_COMBOS.medstaff[0], { move: 'mdgurney', dur: 0.54, step: 30, carry: 0.5, strikes: [{ at: 0.46, shot: 'mdbottle', magic: true, el: 'fire', pct: 108, range: 310, h: 80, knock: 100, speed: 680, mend: 0.025 }] }],
-    [PATH_COMBOS.medstaff[1], { move: 'mdbuff', dur: 0.6, step: 4, strikes: [{ at: 0.5, shot: 'mdspray', magic: true, el: 'ice', pct: 110, range: 300, h: 70, oy: 8, targets: 3, pierce: true, knock: 40, speed: 640, mend: 0.025 }] }],
-    [PATH_COMBOS.medstaff[2], { move: 'mddrum', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.56, shot: 'mdecg', magic: true, el: 'bolt', pct: 178, range: 360, h: 70, oy: 6, targets: 4, pierce: true, knock: 120, speed: 1200, big: true, stop: 0.07, shake: 3, mend: 0.035 }] }],
+    [PATH_COMBOS.medstaff[0], { move: 'bbloop', dur: 0.54, step: 6, strikes: [{ at: 0.4, bubble: 'small', count: 4, spread: 90, magic: true, pct: 40 }] }],
+    [PATH_COMBOS.medstaff[1], { move: 'bbhula', dur: 0.62, step: 2, strikes: [{ at: 0.5, bubble: 'big', count: 2, spread: 60, magic: true, pct: 70 }] }],
+    [PATH_COMBOS.medstaff[2], { move: 'bbpogo', dur: 0.7, step: 10, finisher: true, strikes: [{ at: 0.4, bubble: 'big', count: 1, spread: 0, magic: true, pct: 80 }, { at: 0.62, bubble: 'big', count: 2, spread: 40, magic: true, pct: 80, big: true }] }],
   ],
   // The Sorcerer. Staff: the throne tap or a majorette's twirl; the curtain sweep or a bow; judgment
   // or an encore. Wand: the finger snap or fanning herself; the royal wave or a curtsy; the decree or
@@ -588,22 +588,22 @@ const ARCHER_COMMANDS = {
   // The Cleric with the wand: a pill popped straight up off her thumb, an ice pack dropped from a
   // tuck in the air (the second time a spray of three), and a paramedic's knee slide flicking a pill.
   idol: {
-    up: { move: 'mdupp', dur: 0.42, step: 6, strikes: [{ at: 0.3, shot: 'mdpill', magic: true, el: 'fire', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 340, speed: 860, big: true, stop: 0.04, mend: 0.02 }] },
+    up: { move: 'bbup', dur: 0.4, step: 4, strikes: [{ at: 0.3, bubble: 'small', count: 4, spread: 30, magic: true, pct: 50, up: 1.3 }] },
     air: [
-      { move: 'mdair', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', pct: 80, range: 260, h: 170, drop: 60, knock: 30, speed: 760, mend: 0.015 }] },
-      { move: 'mdair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', fan: 3, pct: 50, range: 260, h: 190, drop: 70, knock: 80, speed: 760, big: true, stop: 0.04, shake: 1, mend: 0.01 }] },
+      { move: 'bbair', dur: 0.36, hang: true, strikes: [{ at: 0.3, bubble: 'small', count: 3, spread: 30, magic: true, pct: 40, up: -0.6 }] },
+      { move: 'bbair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, bubble: 'big', count: 1, spread: 0, magic: true, pct: 90, up: -0.5 }] },
     ],
-    dash: { move: 'mddash', dur: 0.52, step: 60, carry: 0.55, strikes: [{ at: 0.36, shot: 'mdpill', magic: true, el: 'fire', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 860, mend: 0.02 }] },
+    dash: { move: 'bbdash', dur: 0.52, step: 60, carry: 0.55, strikes: [{ at: 0.3, bubble: 'small', count: 5, spread: 20, magic: true, pct: 40, speedK: 1.4 }] },
   },
   // With the staff: a hot-water bottle pole-vaulted up, an ice pack batted down from the air, and a
   // scooter ride on the staff out of a run.
   medstaff: {
-    up: { move: 'mdsup', dur: 0.44, step: 4, strikes: [{ at: 0.3, shot: 'mdbottle', magic: true, el: 'fire', pct: 115, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 760, big: true, stop: 0.05, mend: 0.02 }] },
+    up: { move: 'bbsup', dur: 0.44, step: 4, strikes: [{ at: 0.32, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70, up: 1.2 }] },
     air: [
-      { move: 'mdsair', dur: 0.4, hang: true, strikes: [{ at: 0.3, shot: 'mdpack', magic: true, el: 'ice', pct: 90, range: 260, h: 170, drop: 60, knock: 40, speed: 760, mend: 0.015 }] },
-      { move: 'mdsair', dur: 0.46, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mdbottle', magic: true, el: 'fire', pct: 120, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 100, speed: 700, big: true, stop: 0.05, shake: 2, mend: 0.02 }] },
+      { move: 'bbsair', dur: 0.38, hang: true, strikes: [{ at: 0.32, bubble: 'big', count: 1, spread: 0, magic: true, pct: 80, up: -0.6 }] },
+      { move: 'bbsair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.32, bubble: 'big', count: 2, spread: 40, magic: true, pct: 80, up: -0.5 }] },
     ],
-    dash: { move: 'mdsdash', dur: 0.54, step: 60, carry: 0.5, strikes: [{ at: 0.46, shot: 'mdbottle', magic: true, el: 'fire', pct: 120, range: 300, h: 80, targets: 2, pierce: true, knock: 90, speed: 720, mend: 0.02 }] },
+    dash: { move: 'bbsdash', dur: 0.54, step: 60, carry: 0.5, strikes: [{ at: 0.44, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70 }] },
   },
   // The Sorcerer with the staff: a banner raised (lightning up), a throne in the air (fire orb
   // down; the second time a crown of ice), a throne ride out of a run that ends in a tap of geysers.
@@ -1206,13 +1206,13 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
-    // (The Cleric's heals land as her own mark: a red-cross ring and plus-crosses rising.)
+    // (The Cleric's heals land as her own mark: soap bubbles and sparkles rising round them.)
     // (At most one every half second: her heal bombs mend on nearly every hit, and a stack of
     // them reads as a column of crosses.)
     if (char.job !== 'shrinemaiden') world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
     else if (world.now - (world.healedFxAt ?? -9) >= 0.5) {
       world.healedFxAt = world.now;
-      world.fx.push({ kind: 'mdhealed', x: body.x, y: body.y, t: 0, dur: 0.6 });
+      world.fx.push({ kind: 'bbhealed', x: body.x, y: body.y, t: 0, dur: 0.8 });
     }
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
@@ -1436,6 +1436,93 @@ function tickCaller(world) {
   playStep(world, step, 100, `basic${tier}`);
 }
 
+// ---------- The Bubble Healer (the Cleric, remade 2026-11-07; docs/design/mage-line.md) ----------
+// Her wand and staff are bubble wands. Her attacks blow bubbles (`bubble` strikes: 'small', 'big'
+// or a skill's 'giant', `count` of them fanned over `spread` degrees) that drift slowly forward, bobbing and rising a
+// little. A bubble that touches a monster pops on it for damage (a big one traps it for a moment);
+// one that touches an ally in her party pops into a heal; every pop splashes a little heal round it
+// (and on her, at half); one that finds nothing fades at the end of its life with a soft heal where
+// it ends. Pops fill her gauge (Grace); full, every bubble she blows splits into three.
+export const isBubbler = (char) => char.job === 'shrinemaiden';
+export const BUBBLE = {
+  small: { r: 7, speed: 150, life: 1.5, heal: 0.012, gain: 2 },
+  big: { r: 15, speed: 95, life: 2.2, heal: 0.035, gain: 5, trap: 0.9 },
+  // (A skill's giant bubble rolls on through every monster in its way, hitting each once, and pops
+  // at the end of its life in a great splash of healing.)
+  giant: { r: 30, speed: 80, life: 2.6, heal: 0.08, gain: 8, pierce: true },
+};
+const BUBBLE_SPLASH = 120;
+function blowBubbles(world, s) {
+  const { body } = world;
+  const k = BUBBLE[s.bubble];
+  const triple = liveShow(world);
+  const lift = moveAt(s.move, s.at, s.dur)?.lift ?? 0;
+  const ox = body.x + s.dir * 14;
+  const oy = body.y - HAND_Y - lift + (s.oy ?? 0);
+  const n = s.count ?? 1;
+  const spread = ((s.spread ?? 0) * Math.PI) / 180;
+  for (let i = 0; i < n; i++) {
+    const a = n > 1 ? -spread / 2 + (spread * i) / (n - 1) : 0;
+    for (const split of triple ? [-0.22, 0, 0.22] : [0]) {
+      const aa = a + split - (s.up ?? 0);
+      const sp = k.speed * (s.speedK ?? 1) * (0.85 + 0.3 * Math.random());
+      // (`sky`: a skill's bubbles drift down from high overhead along the ground ahead, `sky` wide.)
+      const sky = s.sky ? { x: body.x + s.dir * ((s.skyFrom ?? 30) + (s.sky * (i + 0.5 + split * 1.5)) / n), y: body.y - 150 - Math.random() * 40 } : null;
+      (world.soap ??= []).push({
+        x: sky ? sky.x : ox, y: sky ? sky.y : oy, vx: sky ? (Math.random() - 0.5) * 20 : Math.cos(aa) * sp * s.dir, vy: sky ? 50 + Math.random() * 30 : Math.sin(aa) * sp - 18, pierce: k.pierce, hits: k.pierce ? new Set() : undefined, sink: Boolean(sky), r: k.r * (triple ? 0.8 : 1), big: s.bubble === 'big', born: world.now + i * (s.sky ? 0.09 : 0.04),
+        life: k.life * (0.9 + 0.2 * Math.random()), pct: s.pct * (triple ? 0.45 : 1), heal: k.heal * (triple ? 0.5 : 1), gain: k.gain, trap: k.trap, key: s.key, dir: s.dir, wob: Math.random() * 6, map: world.map.id,
+      });
+    }
+  }
+  if (!s.sky) world.fx.push({ kind: 'bbpuff', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.35 });
+}
+function popBubble(world, b, kind) {
+  b.popped = true;
+  world.fx.push({ kind: b.pierce ? 'bbpopgiant' : b.big ? 'bbpopbig' : 'bbpop', x: b.x, y: b.y, t: 0, dur: b.pierce ? 0.6 : 0.4 });
+  const soft = kind === 'fade' && !b.pierce ? 0.5 : 1;
+  healAround(world, b.x, b.y, b.heal * soft, b.pierce ? BUBBLE_SPLASH * 2 : BUBBLE_SPLASH, false);
+  // (She is mended a little by every pop, wherever she is.)
+  if (Math.abs(world.body.x - b.x) > BUBBLE_SPLASH && !world.dead) {
+    const amount = Math.max(1, Math.round(world.stats.maxHp * b.heal * 0.5 * soft));
+    world.char.hp = Math.min(world.stats.maxHp, world.char.hp + amount);
+  }
+  addGrace(world, b.gain * (kind === 'fade' && !b.pierce ? 0.3 : 1));
+}
+function tickBubbles(world, dt) {
+  if (!world.soap?.length) return;
+  world.soap = world.soap.filter((b) => b.map === world.map.id);
+  const allies = world.dungeon ? groupOf(world).filter((g) => g.bot && g.body) : [];
+  for (const b of world.soap) {
+    if (b.popped || world.now < b.born) continue;
+    const age = world.now - b.born;
+    b.vx *= 1 - (b.pierce ? 0.2 : 0.9) * dt;
+    // (Falling ones drift down and settle; the rest rise a little.)
+    b.vy = b.vy * (1 - 1.2 * dt) - (b.sink ? 0 : b.pierce ? 4 : 10) * dt;
+    b.x += b.vx * dt;
+    b.y += b.vy * dt + Math.sin(age * 5 + b.wob) * 12 * dt;
+    if (age >= b.life) {
+      popBubble(world, b, 'fade');
+      continue;
+    }
+    const m = world.mobs.find((o) => o.hp > 0 && !b.hits?.has(o) && Math.abs(o.x - b.x) < o.def.w / 2 + b.r && Math.abs(o.y - (o.air ?? 0) - o.def.h / 2 - b.y) < o.def.h / 2 + b.r);
+    if (m && b.pierce) {
+      b.hits.add(m);
+      dollHit(world, m, { pct: b.pct, x: b.x, knock: 80, launch: 60, burst: 'bbhitbig', gauge: 0, key: b.key, big: true, stop: 0.03 });
+      addGrace(world, 1);
+      continue;
+    }
+    if (m) {
+      popBubble(world, b, 'mob');
+      dollHit(world, m, { pct: b.pct, x: b.x, knock: b.big ? 50 : 20, launch: b.big ? 40 : 0, burst: b.big ? 'bbhitbig' : 'bbhit', stun: b.big && !m.def.boss ? b.trap : undefined, gauge: 0, key: b.key, big: b.big, stop: b.big ? 0.04 : 0 });
+      if (b.big && !m.def.boss) world.fx.push({ kind: 'bbtrap', mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: b.trap });
+      continue;
+    }
+    const ally = allies.find((g) => Math.abs(g.body.x - b.x) < 14 + b.r && Math.abs(g.body.y - 20 - b.y) < 26 + b.r);
+    if (ally && !b.pierce) popBubble(world, b, 'ally');
+  }
+  world.soap = world.soap.filter((b) => !b.popped && b.map === world.map.id && world.now - b.born < b.life + 0.1);
+}
+
 function playStep(world, step, scale, key, school = null, after = 0) {
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
@@ -1562,6 +1649,7 @@ export function tickMelee(world, dt) {
   tickSky(world);
   tickJuggle(world, dt);
   tickCaller(world);
+  tickBubbles(world, dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && FLIPS.has(world.pose?.kind)) world.flipAt = world.now;
@@ -1637,6 +1725,8 @@ function land(world, s) {
     const n = spendOrbs(world);
     s = { ...s, pct: s.pct * (1 + 0.15 * n), rain: s.rain + Math.floor(n / 2) };
   }
+  // (The Bubble Healer blows bubbles: blowBubbles.)
+  if (s.bubble) return blowBubbles(world, s);
   if (s.orb) s = orbStrike(world, s);
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
@@ -1998,7 +2088,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'onmyoji' && s.rain ? 'mchit' : (char.job === 'spiritmage' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'onmyoji' && s.rain ? 'mchit' : char.job === 'shrinemaiden' ? 'bbhit' : char.job === 'spiritmage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,

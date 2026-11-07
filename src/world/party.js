@@ -172,7 +172,7 @@ function weaponStyle(bot) {
   if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.41, special: 'swsnap' };
   // The Starlight Idol sings her notes at them, and her big one is the high note; the Astronomer
   // flings her planets, and her big one is a ringed world swept out low.
-  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['sibeat', 'sistep', 'sikiss', 'sishoulder'], shot: 'sinote', ranged: true, magic: true, dur: 0.5, special: 'sihigh' };
+  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['bbflick', 'bbtwirl', 'bbskip', 'bbeight'], shot: 'bbshot', ranged: true, magic: true, dur: 0.5, special: 'bbblow' };
   // The Sorcerer flings her shadow hands, and her big one closes her fist on them.
   if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['sowbeckon', 'sowcurl', 'sowsneer', 'sowtrace'], shot: 'sohand', ranged: true, magic: true, dur: 0.5, special: 'sowgrip' };
   // The Sky Dancer throws her gusts of wind.
@@ -781,24 +781,24 @@ const SPECIALS = {
     },
   },
   blessing: { move: 'swwish', dur: 0.8, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
-  grandblessing: { move: 'sispot', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
+  grandblessing: { move: 'bbguard', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
   // monsters round her back.
   thousandtorii: {
-    move: 'siconcert', dur: 2.1,
+    move: 'bbparty', dur: 2.1,
     play: (bot, world, m, rng, P, tune) => {
       const C = P.combo[0].strikes[0].concert;
       const b = bot.body;
-      world.fx.push({ kind: 'sistage', x: b.x, y: b.y, t: 0, dur: C.beats.at(-1) + 0.9 });
+      world.fx.push({ kind: 'bbdome', x: b.x, y: b.y, t: 0, dur: C.beats.at(-1) + 0.9 });
       bless(bot, world, rng, 0.5, C.r, true);
       const range = magicRange(bot.stats, C.pct * tune * 1.3);
       C.beats.forEach((at, k) => {
         const last = k === C.beats.length - 1;
-        world.fx.push({ kind: 'siwave', big: true, x: b.x, y: b.y - 30, t: -at, dur: 0.6 });
-        for (const dir of [-1, 1]) world.fx.push({ kind: 'sishock', big: last, dir, r: C.r, x: b.x, y: b.y - 26, t: -at, dur: 0.32 });
+        world.fx.push({ kind: 'bbring', big: true, x: b.x, y: b.y - 30, t: -at, dur: 0.6 });
+        for (const dir of [-1, 1]) world.fx.push({ kind: 'bbsurge', big: last, dir, r: C.r, x: b.x, y: b.y - 26, t: -at, dur: 0.32 });
         // (Each monster is hit as the rolling blast reaches it.)
         world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < C.r + o.def.w / 2 && Math.abs(o.y - b.y) < 120)
-          .forEach((o, i) => land(bot, world, o, at + 0.32 * (1 - Math.sqrt(1 - Math.min(1, Math.max(0, Math.abs(o.x - b.x) - o.def.w / 2) / C.r))), range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'sihit', via: 'spell' }, rng));
+          .forEach((o, i) => land(bot, world, o, at + 0.32 * (1 - Math.sqrt(1 - Math.min(1, Math.max(0, Math.abs(o.x - b.x) - o.def.w / 2) / C.r))), range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'bbhitbig', via: 'spell' }, rng));
       });
     },
   },
@@ -972,9 +972,9 @@ function heal(bot, world, bots) {
   // tide round you.
   const shrine = jobChain(bot.char.job).includes('spiritmage');
   const witch = bot.char.job === 'spiritmage';
-  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'soglow', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'bbspot' : 'soglow', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'sispot' : 'somend', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'bbguard' : 'somend', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(world, bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

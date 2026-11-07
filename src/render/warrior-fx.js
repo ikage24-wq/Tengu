@@ -8,6 +8,7 @@
 // the hero's feet otherwise. Returns false for kinds it doesn't draw.
 
 import { fxSprite } from './fx-sprites.js';
+import { drawBubbleFx } from './bubbles.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
@@ -198,6 +199,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const flip = dir < 0;
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
+  if (f.kind.startsWith('bb') && drawBubbleFx(ctx, f, x, y, p, cam, time)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.

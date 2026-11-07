@@ -612,8 +612,8 @@ test("a Starlight Idol in the healer's seat calls them up with Center Stage and 
     else world.char.hp = Math.round(world.stats.maxHp * 0.4);
   }
   healerTurn(healer, world, rng);
-  assert.equal(healer.attack.pose, 'sispot', 'she calls them up to center stage');
-  assert.ok(world.fx.some((f) => f.kind === 'sispot'), 'and the spotlight drops');
+  assert.equal(healer.attack.pose, 'bbguard', 'she calls them up to center stage');
+  assert.ok(world.fx.some((f) => f.kind === 'bbspot'), 'and the spotlight drops');
   // A fallen member, out of the fight: Curtain Call.
   world.dungeon.combat = false;
   // (Everyone else whole again, so raising the fallen is what's left to do.)
@@ -626,7 +626,7 @@ test("a Starlight Idol in the healer's seat calls them up with Center Stage and 
   down.bot.hp = 0;
   healerTurn(healer, world, rng);
   assert.ok(isUp(world, down), 'they get up');
-  assert.equal(healer.attack.pose, 'sibow', 'her deep bow');
+  assert.equal(healer.attack.pose, 'bbrebirth', 'her deep bow');
 });
 
 test('a Sorcerer in the group flings her shadow hands, and her big one closes her fist on them', async () => {

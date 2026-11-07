@@ -15,6 +15,7 @@ import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, 
 import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 import { strikePose } from './hero.js';
+import { drawFilm } from './bubbles.js';
 import { wornGear } from '../core/character.js';
 
 
@@ -114,6 +115,10 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, 'celsiheart', x, y, { t: f.t, flip: f.tx < f.x, rot: 0.12 * Math.sin(f.t * 9), scale: born, alpha: Math.min(1, born * 1.4) });
       break;
     }
+    case 'bbshot':
+      // A party Bubble Healer's bubble: it bobs as it floats on, swelling out of the wand first.
+      drawFilm(ctx, x, y + 3 * Math.sin(f.t * 8), 7 * bornAt(f), f.t * 3, 0, 1);
+      break;
     case 'sinote': case 'sibig': {
       // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
@@ -1123,7 +1128,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['mcwellfx', 'mcmoons', 'mccrater', 'jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['bbhype', 'bbfoam', 'mcwellfx', 'mcmoons', 'mccrater', 'jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

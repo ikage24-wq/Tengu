@@ -325,7 +325,7 @@ export const SKILLS = {
   // early dungeons.
   spiritbolt: skill({
     id: 'spiritbolt', name: 'Fountain', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
-    pathNames: { onmyoji: 'Meteor Shower', shrinemaiden: 'Mega Heal Bomb' },
+    pathNames: { onmyoji: 'Meteor Shower', shrinemaiden: 'Giant Bubble' },
     desc: 'Toss every orb you\'re juggling high into the air, one after another, faster and faster, then throw your arms wide: they come raining down on everything ahead as a cascade of fire, ice and sparks. The more orbs you had up, the harder they fall.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -345,7 +345,7 @@ export const SKILLS = {
         // the orrery spun like a wheel that rolls a great ringed world through the line.
         paths: {
           // The Cleric's Holy Bolt: light gathered in the scepter's sun and hurled.
-          shrinemaiden: [{ move: 'mdbig', dur: 0.74, step: 6, strikes: [{ at: 0.56, shot: 'mdhuge', magic: true, el: 'fire', pct: k(300, 520), range: 340, h: 90, targets: k(2, 4), pierce: true, speed: 520, knock: 120, big: true, stop: 0.06, shake: 2, mend: 0.07 }] }],
+          shrinemaiden: [{ move: 'bbgiant', dur: 0.8, step: 4, strikes: [{ at: 0.58, bubble: 'giant', count: 1, spread: 0, magic: true, pct: k(300, 520), big: true }] }],
           // The Sorcerer's Hellfire: a dark flame gathered over her palm and flicked off, far bigger than she meant.
           onmyoji: [{ move: 'mcshower', dur: 0.9, step: 0, strikes: [
             { at: 0.5, rain: k(3, 4), magic: true, el: 'ice', pct: k(110, 190), rainFrom: 30, rainW: 380, span: 0.3, knock: 40, variant: 'mccomet', school: 'astral' },
@@ -358,7 +358,7 @@ export const SKILLS = {
 
   spiritstep: skill({
     id: 'spiritstep', name: 'Cartwheel Toss', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
-    pathNames: { onmyoji: 'Shooting Star', shrinemaiden: 'Ambulance Run' },
+    pathNames: { onmyoji: 'Shooting Star', shrinemaiden: 'Bubble Ride' },
     desc: 'Cartwheel a long way forward, flinging an orb ahead as you go over and another one back behind you as you come up. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -372,7 +372,7 @@ export const SKILLS = {
         // flying; the Astronomer fades into a silver crescent, drifts ahead like moonlight and
         // waxes back into herself.
         paths: {
-          shrinemaiden: [{ move: 'mdrun', dur: 0.5, step: k(120, 180), carry: 0.4, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'mdsiren', burstAt: 0, burstDur: 0.5 }] }],
+          shrinemaiden: [{ move: 'bbride', dur: 0.55, step: k(120, 180), carry: 0.45, guard: 0.5, trail: true, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'bbride', burstAt: 0, burstDur: 0.5, follow: true }, { at: 0.82, bubble: 'small', count: 5, spread: 140, up: 0.4, magic: true, pct: k(40, 70) }] }],
           // The Sorcerer sinks into her own shadow and rises out of it far ahead.
           onmyoji: [{ move: 'mcstar', dur: 0.5, step: k(130, 190), carry: 0.6, guard: 0.5, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'mcstreak', burstAt: 0, burstDur: 0.5 }] }],
         },
@@ -382,7 +382,7 @@ export const SKILLS = {
 
   spiritwave: skill({
     id: 'spiritwave', name: 'Ricochet', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
-    pathNames: { onmyoji: 'Comet Lance', shrinemaiden: 'Defib Chain' },
+    pathNames: { onmyoji: 'Comet Lance', shrinemaiden: 'Bubble Stream' },
     desc: 'Windmill your arm twice round and fling one big orb: it bounces from monster to monster down the line, hitting each one it reaches.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -393,7 +393,7 @@ export const SKILLS = {
         // The Starlight Idol plants her feet and belts one power note that tears down the line; the
         // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
         paths: {
-          shrinemaiden: [{ move: 'mdchain', dur: 0.62, step: 6, strikes: [{ at: 0.5, shot: 'mdzapbig', magic: true, el: 'bolt', pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1300, knock: 100, launch: 60, big: true, stop: 0.06, shake: 3, gauge: 6, mend: 0.04 }] }],
+          shrinemaiden: [{ move: 'bbstream', dur: 0.76, step: 2, strikes: [...[0.3, 0.38, 0.46, 0.54].map((at) => ({ at, bubble: 'small', count: 3, spread: 12, speedK: 2.6, magic: true, pct: k(60, 100) })), { at: 0.64, bubble: 'big', count: 1, spread: 0, speedK: 2, magic: true, pct: k(160, 260), big: true }] }],
           // The Sorcerer sweeps her arms in and a horde of hands pours down the line.
           onmyoji: [{ move: 'mclance', dur: 0.64, step: 4, strikes: [{ at: 0.5, shot: 'mccomet', magic: true, el: 'ice', pct: k(240, 400), range: 420, h: 90, targets: k(6, 10), pierce: true, speed: 1300, knock: 100, launch: 60, big: true, stop: 0.07, shake: 3, gauge: 6 }] }],
         },
@@ -403,7 +403,7 @@ export const SKILLS = {
 
   frostnova: skill({
     id: 'frostnova', name: 'Hot Potato', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
-    pathNames: { onmyoji: 'Gravity Well', shrinemaiden: 'Cold Compress' },
+    pathNames: { onmyoji: 'Gravity Well', shrinemaiden: 'Foam Burst' },
     desc: 'Conjure one enormous orb so hot you juggle it hand to hand ("ow, ow, ow") before bowling it underarm along the floor: it bounces through everything in its way, scorching them. Shake your fingers out.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -416,7 +416,7 @@ export const SKILLS = {
         // (Until her paths are remade: the Starlight Idol belts a power note and the Astronomer heaves
         // her orrery, each with her own burst, the same freezing ring round her.)
         paths: {
-          shrinemaiden: [{ move: 'mdnova', dur: 0.64, step: 0, strikes: [{ ...nova('mdnovafx'), heal: kf(0.05, 0.09), healR: 240 }] }],
+          shrinemaiden: [{ move: 'bbfoam', dur: 0.66, step: 0, strikes: [{ ...nova('bbfoam'), freeze: undefined, stun: kf(0.8, 1.6), heal: kf(0.05, 0.09), healR: 240 }] }],
           // The Sorcerer presses her hand to the floor and hands burst up all round, holding them fast.
           onmyoji: [{ move: 'mcwell', dur: 0.64, step: 0, strikes: [{ ...nova('mcwellfx'), el: 'bolt', freeze: undefined, stun: kf(0.8, 1.4), fx: undefined }] }],
         },
@@ -428,7 +428,7 @@ export const SKILLS = {
   // the strike lands, see world/melee.js).
   blessing: skill({
     id: 'blessing', name: 'Encore', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
-    pathNames: { onmyoji: 'Starlight', shrinemaiden: 'First Aid' },
+    pathNames: { onmyoji: 'Starlight', shrinemaiden: 'Bubble Bath' },
     desc: 'Fling your arms wide and call your orbs home: you catch them out of the air one after another and take a bow. The catch heals you and the party around you, a little more every second for a while, lifts everyone\'s attack and magic, and fills your hands with orbs again.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -441,7 +441,7 @@ export const SKILLS = {
         // The Starlight Idol hugs the mic and sings a ballad, hearts drifting down over everyone; the
         // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
         paths: {
-          shrinemaiden: [{ move: 'mdfirst', dur: 0.85, step: 0, strikes: [{ ...wish('mdaid'), el: 'fire' }] }],
+          shrinemaiden: [{ move: 'bbbath', dur: 0.9, step: 0, strikes: [wish('bbbath')] }],
           // The Sorcerer holds her hand out without looking and warm ember flame mends everyone.
           onmyoji: [{ move: 'mclight', dur: 0.85, step: 0, strikes: [wish('mclight')] }],
         },
@@ -465,7 +465,7 @@ export const SKILLS = {
         // settling over everyone; the Astronomer draws an orbit round herself with the staff and
         // silver moons take it up round the party.
         paths: {
-          shrinemaiden: [{ move: 'mdwrap', dur: 0.72, step: 0, strikes: [veil('mdbubble')] }],
+          shrinemaiden: [{ move: 'bbwrapmove', dur: 0.76, step: 0, strikes: [veil('bbwrap')] }],
           // The Sorcerer cups great shadow hands over the party.
           onmyoji: [{ move: 'mcorbit', dur: 0.72, step: 0, strikes: [veil('mcmoons')] }],
         },
@@ -486,57 +486,57 @@ export const SKILLS = {
   // Concert. The Astronomer (damage, below) is the other path.
   shrinemastery: skill({
     id: 'shrinemastery', name: 'Devotion', job: 'shrinemaiden', type: 'passive', grows: true, fx: null, icon: 'shrinemastery',
-    desc: 'The light is with you (and you will tell everyone): more magic attack, a deeper well of MP, and every heal you give mends more.',
+    desc: 'A lifetime of blowing bubbles: more magic attack, a deeper well of MP, and every heal you give mends more.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.4, 0.65, lv, m), matk: lerp(5, 35, lv, m), maxMpPct: lerpf(0.05, 0.25, lv, m), healPower: lerpf(0.05, 0.3, lv, m) } }),
   }),
   grandblessing: skill({
-    id: 'grandblessing', name: 'Triage', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
-    desc: 'Shade your eyes, find whoever is hurt worst (you or a friend near you), and point: "YOU! STAT!" Your first-aid drone zips over and mends them at once, then follows them wherever they go for a while, mending them every second.',
-    weapons: ['wand'],
+    id: 'grandblessing', name: 'Guardian Bubble', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'grandblessing', school: 'idol', party: true, replaces: 'blessing',
+    desc: 'Find whoever is hurt worst (you or a friend near you) and blow them a bubble with a big swirl of the wand: it closes round them, mends them at once, then floats along with them wherever they go for a while, mending them every second.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(40, 70), pct: 0, hits: 0, targets: 0, range: { w: 760, h: 200, around: true },
-        combo: [{ move: 'mdtriage', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, spot: { r: 380, heal: kf(0.16, 0.28), tick: kf(0.04, 0.07), every: 1, dur: k(6, 10) } }] }],
+        combo: [{ move: 'bbguard', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, spot: { r: 380, heal: kf(0.16, 0.28), tick: kf(0.04, 0.07), every: 1, dur: k(6, 10) } }] }],
       };
     },
   }),
   idolcheer: skill({
-    id: 'idolcheer', name: 'Pep Talk', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
-    desc: 'Roll up your chart into a megaphone, take a deep breath, and YELL encouragement: a wave of it rolls out both ways along the ground. Every friend it passes hits harder for a while, and every monster it passes is knocked off its feet.',
-    weapons: ['wand'],
+    id: 'idolcheer', name: 'Bubble Wave', job: 'shrinemaiden', type: 'buff', fx: null, icon: 'idolcheer', school: 'idol', party: true,
+    desc: 'Swing your wand down to the floor and scoop up a wave of foam: it rolls out both ways along the ground. Every friend it washes over hits harder for a while, and every monster it passes is tumbled off its feet.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: k(60, 110), hits: 1, targets: 0, range: { w: 720, h: 180, around: true },
-        combo: [{ move: 'mdpep', dur: 0.85, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, hype: { r: k(260, 360), speed: 560, dur: k(12, 20), watk: k(8, 22), matk: k(8, 22), pct: k(60, 110), launch: 220 } }] }],
+        combo: [{ move: 'bbsurf', dur: 0.85, step: 0, strikes: [{ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, hype: { r: k(260, 360), speed: 560, dur: k(12, 20), watk: k(8, 22), matk: k(8, 22), pct: k(60, 110), launch: 220 } }] }],
       };
     },
   }),
   purification: skill({
-    id: 'purification', name: 'Antiseptic Cloud', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'purification', school: 'idol',
-    desc: 'Shake a spray can hard (rattle rattle) and blast a cloud of disinfectant: it drifts off after the nearest monster. Whatever it touches is stunned still for a moment, then slows to a crawl while it stings it again and again. Kills 99.9% of monsters.',
-    weapons: ['wand'],
+    id: 'purification', name: 'Lather Cloud', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'purification', school: 'idol',
+    desc: 'Whisk your wand round and round like a whisk in a bowl and blow: a fluffy cloud of lather drifts off after the nearest monster. Whatever it touches is stuck still for a moment, then slows to a slippery crawl while the suds sting it again and again.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(30, 55), pct: k(50, 95), hits: 1, targets: 0,
-        combo: [{ move: 'mdcloud', dur: 0.9, step: 0, strikes: [{ at: 0.52, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, lull: { r: k(60, 80), dur: k(6, 9), every: 0.6, pct: k(50, 95), speed: 70, sleep: kf(0.8, 1.4), seek: 360 } }] }],
+        combo: [{ move: 'bblather', dur: 0.9, step: 0, strikes: [{ at: 0.52, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, lull: { r: k(60, 80), dur: k(6, 9), every: 0.6, pct: k(50, 95), speed: 70, sleep: kf(0.8, 1.4), seek: 360 } }] }],
       };
     },
   }),
   resurrection: skill({
-    id: 'resurrection', name: 'Revive Paddles', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'resurrection', school: 'idol', party: true, maxLevel: 10,
-    desc: 'Drop to your knees, rub the paddles together, shout "CLEAR!" and slam them on the floor: every fallen ally nearby jolts back up. And for a while you won\'t fall either: a blow that would knock you out leaves you standing instead, once.',
-    weapons: ['wand'],
+    id: 'resurrection', name: 'Rebirth Bubble', job: 'shrinemaiden', type: 'heal', fx: null, icon: 'resurrection', school: 'idol', party: true, maxLevel: 10,
+    desc: 'Hold your wand high and blow the biggest, slowest, most careful bubble you can: it drifts over every fallen ally nearby and lifts them back to their feet. And for a while you will not fall either: a blow that would knock you out leaves you standing instead, once.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(60, 100), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'mdrevive', dur: 1.15, step: 0, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mdrevive', burstAt: 0, burstDur: 1.15 }, { at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
+        combo: [{ move: 'bbrebirth', dur: 1.15, step: 0, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'bbrevive', burstAt: 0, burstDur: 1.15 }, { at: 0.66, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, revive: { r: 320, pct: kf(0.4, 0.7), rite: k(20, 40) } }] }],
       };
     },
   }),
@@ -557,15 +557,15 @@ export const SKILLS = {
     },
   }),
   thousandtorii: skill({
-    id: 'thousandtorii', name: 'Field Hospital', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
-    desc: 'Finisher: needs full Devotion, and spends it. Plant your flag: "THIS IS A HOSPITAL NOW." A tent springs up behind you and you run round patching up everyone in a blur: everyone near is healed in full and wrapped in a ward, and three great blasts of healing knock the monsters back. Salute.',
-    weapons: ['wand'],
+    id: 'thousandtorii', name: 'Bubble Party', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
+    desc: 'Finisher: needs full Devotion, and spends it. Spin on the spot, wand overhead, and blow a bubble so huge it closes over everyone near you: everyone inside is healed in full and wrapped in a ward, and on three great bounces the dome throws the monsters back. Then it pops into a shower of foam.',
+    weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
       return {
         mp: k(40, 60), pct: k(240, 400), hits: 3, targets: 0, range: { w: 640, h: 180, around: true },
-        combo: [{ move: 'mdhospital', dur: 2.1, step: 0, strikes: [{ at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, concert: { r: 320, pct: k(240, 400), beats: [0.62, 0.95, 1.33], ward: kf(0.2, 0.4), wardDur: k(10, 16) } }] }],
+        combo: [{ move: 'bbparty', dur: 2.1, step: 0, strikes: [{ at: 0.12, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, concert: { r: 320, pct: k(240, 400), beats: [0.62, 0.95, 1.33], ward: kf(0.2, 0.4), wardDur: k(10, 16) } }] }],
       };
     },
   }),
@@ -638,7 +638,7 @@ export const SKILLS = {
 
   heavenslantern: skill({
     id: 'heavenslantern', name: 'Grand Finale', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
-    pathNames: { onmyoji: 'Meteor Storm', shrinemaiden: 'Emergency Airdrop' },
+    pathNames: { onmyoji: 'Meteor Storm', shrinemaiden: 'Bubble Storm' },
     desc: 'Finisher: needs a full Mayhem, and spends it. Juggle every orb you have faster and faster until they blur into a blazing ring over your head, then hurl the whole ring: a storm of great orbs rains on everything ahead, and the last one bursts into a firework that sets off Steam, Shatter and Kaboom on everything at once. Take a bow.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -656,11 +656,10 @@ export const SKILLS = {
         // Astronomer's: she lifts the orrery and stops the sky; little planets fall ahead of her,
         // and she brings the staff down for one great ringed world to land.
         paths: {
-          shrinemaiden: [{ move: 'mddrop', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
-            { at: 0.4, rain: k(4, 5), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'mdpill', school: 'idol', gauge: 0, mend: 0.02 },
-            { at: 0.52, rain: k(3, 5), magic: true, el: 'ice', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'mdpack', school: 'idol', gauge: 0, mend: 0.02 },
-            { at: 0.64, rain: k(3, 4), magic: true, el: 'bolt', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'mdpulse', school: 'idol', gauge: 0, mend: 0.02 },
-            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, heal: 0.25, healR: 320, burst: 'mdboom', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          shrinemaiden: [{ move: 'bbstorm', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+            { at: 0.36, bubble: 'big', count: k(5, 6), sky: 380, skyFrom: 10, magic: true, pct: k(110, 180), gauge: 0 },
+            { at: 0.54, bubble: 'big', count: k(5, 6), sky: 380, skyFrom: 30, magic: true, pct: k(110, 180), gauge: 0 },
+            { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, heal: 0.25, healR: 320, burst: 'bbsplash', burstAt: 0.3, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
           ] }],
           // The Sorcerer's Fireworks Gala: she conducts the sky like a fireworks show, fire, ice and
           // lightning raining down, and sweeps her arms for one blast that sets off every reaction.

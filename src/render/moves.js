@@ -5656,6 +5656,381 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Bubble Healer (the Cleric, remade 2026-11-07; docs/design/mage-line.md) ----------
+  // Her wand and staff are bubble wands: she flicks, twirls and waves them so the bubbles stream out
+  // of the tip, blows through the wand's tip held near her chin (never over her mouth), skips, and
+  // sweeps the staff in wide figure-eights. Light and bouncy: every move ends on a little hop.
+
+  // Flick (wand opener, at ~0.34): a quick flick from the wrist, a stream of small bubbles.
+  bbflick(p) {
+    const go = ease(seg(p, 0.18, 0.34));
+    const after = soft(seg(p, 0.42, 0.85));
+    return {
+      weapon: lerp(130, 70, go) + 30 * after, arm: lerp(40, 88, go) - 30 * after, lunge: 3 * go * (1 - after), tilt: 0.05 * go * (1 - after), lift: swBob(p, 0.55) * 0.8,
+      face: p < 0.18 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(3), q(-2)]); danceLegs(r, [go * (1 - after), [2.6, 0, 6], [-2.4, 0, -10]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Twirl (second, at ~0.44): the wand twirled round in a circle at her side, one big bubble
+  // swelling off the tip and let go.
+  bbtwirl(p) {
+    const t = seg(p, 0.06, 0.44);
+    const a = t * Math.PI * 2;
+    const twirling = p > 0.06 && p < 0.44;
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: twirling ? 90 + 50 * Math.sin(a) : lerp(90, 120, after), arm: twirling ? 70 + 20 * Math.cos(a) : lerp(80, 50, after), lunge: 2 * bump(p, 0.3, 0.6), lift: swBob(p, 0.6) * 0.6,
+      face: p < 0.44 ? MD_FACE.count : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(-4), q(-3)]); danceLegs(r, [bump(p, 0.06, 0.5), [2, 0, 4], [-2.2, 0, -8]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // The big blow (wand finisher, at ~0.5): the wand's tip lifted near her chin, a deep breath
+  // (shoulders up), then she blows a long stream of bubbles out past it and one big one at the end.
+  bbblow(p) {
+    const breath = soft(seg(p, 0, 0.32));
+    const blow = soft(seg(p, 0.36, 0.5)) * (1 - soft(seg(p, 0.66, 0.8)));
+    const after = soft(seg(p, 0.72, 0.96));
+    return {
+      weapon: lerp(120, 96, breath) + 20 * after, arm: lerp(40, 70, breath) - 20 * after, lift: 1.4 * breath * (1 - blow) + swBob(p, 0.76) * 0.6, tilt: -0.06 * breath * (1 - blow) + 0.08 * blow,
+      face: p < 0.36 ? MD_FACE.focus : p < 0.72 ? MD_FACE.count : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(2 + 2 * breath), q(-2 - 2 * breath)]); r.squat = q(0.6 * blow); danceLegs(r, [breath, [1.6, 0, 4], [-1.6, 0, -4]], [blow, [2.6, 0, 6], [-2.6, 0, -8]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Skip and flick (pool, at ~0.36): a skip forward on one foot, the wand flicked out at the top.
+  bbskip(p) {
+    const skip = Math.sin(Math.PI * seg(p, 0.06, 0.46));
+    const go = ease(seg(p, 0.24, 0.36));
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: lerp(130, 70, go) + 30 * after, arm: lerp(40, 92, go) - 30 * after, lift: 7 * skip, lunge: 4 * skip,
+      face: p < 0.24 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.air = skip > 0.3; r.backArm = dancerHand([q(-6 * skip), q(-4 * skip)]); r.hairLift = skip > 0.4 ? -1 : 0; danceLegs(r, [skip, [2.4, -4, 40], [-1.8, -2, -30]], [after, [1.4, 0, 4], [-1.6, 0, -4]]); },
+    };
+  },
+  // Figure-eight (pool, at ~0.3 and ~0.56): the wand drawn in a figure-eight in front of her, a big
+  // bubble left at each loop.
+  bbeight(p) {
+    const t = seg(p, 0.06, 0.6);
+    const a = t * Math.PI * 2;
+    const drawing = p > 0.06 && p < 0.6;
+    const after = soft(seg(p, 0.64, 0.95));
+    return {
+      weapon: drawing ? 95 + 35 * Math.sin(a) : lerp(95, 120, after), arm: drawing ? 74 + 18 * Math.sin(a * 2) : lerp(74, 50, after), lunge: 2 * bump(p, 0.06, 0.6), tilt: 0.04 * Math.sin(a),
+      face: p < 0.6 ? MD_FACE.count : MD_FACE.wink,
+      rig: (r) => { r.backArm = dancerHand([q(-3), q(-2)]); danceLegs(r, [bump(p, 0.06, 0.6), [2, 0, 4], [-2.2, 0, -8]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Spin (pool finisher, at ~0.4 and ~0.6): a twirl on her toes, wand held out, a ring of bubbles
+  // flung round, and a big one at the end of the turn.
+  bbspin(p) {
+    const t = seg(p, 0.08, 0.56);
+    const turning = p > 0.08 && p < 0.56;
+    const after = soft(seg(p, 0.6, 0.95));
+    return {
+      weapon: turning ? 80 : lerp(80, 120, after), arm: turning ? 90 : lerp(90, 50, after), turn: turning ? spinFlip(t) : 1, lift: 3 * bump(p, 0.08, 0.56),
+      face: p < 0.56 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand(turning ? [-8, -5] : [q(-3), q(-2)]); r.hairLift = turning ? -1 : 0; danceLegs(r, [turning ? 1 : 0, [0.4, 0, 0], dancerLeg(-50, 14.6, -20)], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Up + attack: bubbles blown straight up, wand raised beside her.
+  bbup(p) {
+    const go = ease(seg(p, 0.14, 0.3));
+    const after = soft(seg(p, 0.4, 0.9));
+    return {
+      weapon: lerp(120, 100, go) + 10 * after, arm: lerp(40, 104, go) - 50 * after, lift: 3 * bump(p, 0.14, 0.5),
+      face: p < 0.14 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(3), q(-3)]); danceLegs(r, [go * (1 - after), [1.4, -1.6, 10], [-1.2, -1.2, -8]]); },
+    };
+  },
+  // In the air: a flick of bubbles down at them from a tuck.
+  bbair(p) {
+    const go = ease(seg(p, 0.14, 0.3));
+    return {
+      weapon: lerp(110, 150, go), arm: lerp(70, 40, go), tilt: 0.1 * go,
+      face: p < 0.14 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.air = true; r.backArm = dancerHand([q(-4), q(-4)]); danceLegs(r, [1, [2.2, -4, 34], [-1.6, -3, -34]]); },
+    };
+  },
+  // Out of a run: a long skate along the floor, a trail of bubbles streaming off the wand.
+  bbdash(p) {
+    const skate = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 1)));
+    const go = ease(seg(p, 0.2, 0.36));
+    return {
+      weapon: lerp(140, 80, go) + 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(30, 86, go) - 30 * soft(seg(p, 0.6, 0.9)), tilt: -0.08 * skate, lunge: 5 * skate,
+      face: p < 0.2 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(-6 * skate), q(-4 * skate)]); r.hairLift = skate > 0.4 ? 1 : 0; danceLegs(r, [skate, [4, -1, 20], [-3.6, -1.6, -40]]); },
+    };
+  },
+  // The Bubble Healer's skills. Every one is blown, waved or twirled out of the wand or the staff's
+  // hoop; she stays light on her feet, and the big ones take a visible deep breath first.
+  // Giant Bubble (at ~0.58): the wand held up to her lips, three slow puffs swelling one bubble
+  // bigger and bigger (shoulders rising with each breath), then a push of the wand sends it rolling.
+  bbgiant(p) {
+    const puff = Math.max(bump(p, 0.04, 0.2), bump(p, 0.2, 0.36), bump(p, 0.36, 0.52));
+    const fill = soft(seg(p, 0, 0.52));
+    const push = ease(seg(p, 0.52, 0.62));
+    const after = soft(seg(p, 0.68, 0.96));
+    return {
+      weapon: lerp(100, 60, push) + 40 * after, arm: lerp(68 + 4 * fill, 90, push) - 40 * after, lunge: 5 * push * (1 - after * 0.6), lift: 0.8 * puff + swBob(p, 0.78) * 0.6, tilt: -0.04 * fill * (1 - push) + 0.08 * push * (1 - after),
+      face: p < 0.52 ? MD_FACE.count : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(2 + 2 * fill), q(-2 - 3 * fill)]); danceLegs(r, [fill * (1 - push), [1.4, 0, 4], [-1.6, 0, -6]], [push * (1 - after), [4.4, 0, 10], [-4, -0.6, -18]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Bubble Ride: she hops up into a bubble and it carries her forward bobbing, knees tucked; at the
+  // end it pops and she drops lightly to her feet with a spray of small bubbles.
+  bbride(p) {
+    const hop = soft(seg(p, 0, 0.14));
+    const ride = p < 0.8 ? 1 : 1 - soft(seg(p, 0.8, 0.92));
+    const land = bump(p, 0.86, 1);
+    return {
+      weapon: lerp(120, 150, hop) - 20 * (1 - ride), arm: lerp(50, 30, hop) + 50 * (1 - ride), lift: 10 * hop * ride + 2 * Math.sin(p * 14) * ride, tilt: 0.04 * Math.sin(p * 9) * ride,
+      face: p < 0.8 ? MD_FACE.cheer : MD_FACE.wink,
+      rig: (r) => { r.air = ride > 0.5; r.backArm = dancerHand([q(-3 * ride), q(-5 * ride)]); r.squat = q(1.2 * land); danceLegs(r, [hop * ride, [1.4, -5, 50], [-1.4, -5, -40]], [land, [1.6, 0, 6], [-1.6, 0, -6]]); },
+    };
+  },
+  // Bubble Stream (at ~0.3-0.64): the wand held out level like a hose, wrist pumping, a jet of
+  // bubbles streaming out; she leans into it and braces on the last big one.
+  bbstream(p) {
+    const aim = soft(seg(p, 0, 0.24));
+    const pump = p > 0.28 && p < 0.66 ? Math.sin((p - 0.28) * 70) : 0;
+    const last = bump(p, 0.6, 0.74);
+    const after = soft(seg(p, 0.74, 0.98));
+    return {
+      weapon: lerp(130, 82, aim) + 6 * pump + 30 * after, arm: lerp(40, 88, aim) + 3 * pump - 40 * after, lunge: 3 * aim * (1 - after) - 2 * last, tilt: 0.05 * aim * (1 - after) - 0.05 * last,
+      face: p < 0.28 ? MD_FACE.focus : p < 0.74 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(3 * aim), q(-2)]); danceLegs(r, [aim * (1 - after), [3.4, 0, 8], [-3, 0, -14]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Foam Burst (at ~0.5): she crouches, stirring the wand fast round her feet, then springs up and
+  // flings both arms wide; a ring of foam bursts out round her.
+  bbfoam(p) {
+    const stir = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.42, 0.5)));
+    const ang = p * 40;
+    const fling = ease(seg(p, 0.44, 0.56));
+    const after = soft(seg(p, 0.66, 0.96));
+    return {
+      weapon: stir > 0.1 ? 30 + 30 * Math.sin(ang) : lerp(30, 160, fling) - 40 * after, arm: stir > 0.1 ? 20 + 10 * Math.cos(ang) : lerp(20, 110, fling) - 60 * after, lift: 5 * bump(p, 0.44, 0.7),
+      face: p < 0.44 ? MD_FACE.focus : p < 0.66 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(2.4 * stir); r.backArm = dancerHand(fling > 0.2 && after < 0.6 ? [-8, -8] : [q(-3), q(-2)]); r.hairLift = fling > 0.4 && after < 0.5 ? -1 : 0; danceLegs(r, [stir, [3.2, 0, 8], [-3.2, 0, -8]], [fling * (1 - after), [2.6, -1.4, 14], [-2.6, -1.4, -14]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Bubble Bath (at ~0.55): the wand raised and swirled in slow circles over her head; a cloud of
+  // bubbles gathers above and drifts down over everyone; she hugs herself, eyes shut, happy.
+  bbbath(p) {
+    const up = soft(seg(p, 0, 0.2));
+    const swirl = p > 0.16 && p < 0.6 ? Math.sin((p - 0.16) * 30) : 0;
+    const hug = soft(seg(p, 0.6, 0.76)) * (1 - soft(seg(p, 0.88, 1)));
+    return {
+      weapon: lerp(120, 170, up) + 14 * swirl - 60 * hug, arm: lerp(40, 110, up) + 8 * swirl - 70 * hug, lift: 1.2 * hug + swBob(p, 0.7) * 0.6,
+      face: p < 0.6 ? MD_FACE.count : MD_FACE.wink,
+      rig: (r) => { r.backArm = dancerHand(hug > 0.4 ? [q(4), q(1)] : [q(-3), q(-3)]); danceLegs(r, [up * (1 - hug), [1.2, -0.6, 6], [-1.4, 0, -4]], [hug, [0.8, -1, 10], [-0.8, -1, -10]]); },
+    };
+  },
+  // Bubble Wrap (at ~0.55): she draws a big circle round herself with the wand, step by step on
+  // her toes, and the bubble closes over her and the party with a little bounce.
+  bbwrapmove(p) {
+    const t = seg(p, 0.06, 0.52);
+    const a = t * Math.PI * 2;
+    const drawing = p > 0.06 && p < 0.52;
+    const close = bump(p, 0.5, 0.7);
+    const after = soft(seg(p, 0.7, 0.96));
+    return {
+      weapon: drawing ? (90 + (a * 180) / Math.PI) % 360 : lerp(90, 120, after), arm: drawing ? 96 : lerp(96, 50, after), back: (drawing && Math.sin(a) > 0.4) || undefined, lift: 2 * close + swBob(p, 0.8) * 0.5,
+      face: p < 0.52 ? MD_FACE.count : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(-4), q(-3)]); r.squat = q(0.8 * close); danceLegs(r, [drawing ? 1 : 0, [1.2 + Math.sin(a), -0.8, 6], [-1.2 + Math.sin(a), -0.8, -6]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Bubble Storm (finisher; big bubbles at ~0.36 and ~0.54, the splash at ~0.88): the staff's hoop
+  // swung round overhead faster and faster, a storm of bubbles whirling up and drifting down over
+  // everything ahead; then she plants the staff with both hands and everything pops at once.
+  bbstorm(p) {
+    const lift0 = soft(seg(p, 0, 0.14));
+    const spin = p > 0.12 && p < 0.76;
+    const w = spin ? 90 + ((seg(p, 0.12, 0.76) ** 1.4) * 360 * 4) % 360 : 0;
+    const plant = ease(seg(p, 0.8, 0.88));
+    const after = soft(seg(p, 0.92, 1));
+    return {
+      weapon: spin ? w : lerp(lerp(120, 150, lift0), 100, plant), arm: spin ? 104 : lerp(lerp(50, 104, lift0), 40, plant) + 10 * after, back: (spin && w > 200 && w < 340) || undefined,
+      lift: 3 * bump(p, 0.12, 0.8), lunge: 3 * plant * (1 - after), tilt: spin ? 0.04 * Math.sin(p * 30) : 0.1 * plant * (1 - after),
+      face: p < 0.8 ? MD_FACE.shout : p < 0.92 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand(spin ? [q(-6), q(-6)] : plant > 0.3 ? [q(5), q(-1)] : [q(-3), q(-2)]); r.hairLift = spin ? 1 : 0; r.squat = q(1.6 * plant * (1 - after)); danceLegs(r, [spin ? 1 : 0, [2.2, 0, 4], [-2.2, 0, -4]], [plant * (1 - after), [3.6, 0, 10], [-3.6, 0, -10]]); },
+    };
+  },
+  // Guardian Bubble (at ~0.5): a hand over her eyes as she looks for who is hurt, then a big swirl
+  // of the wand and a gentle blow; she points after the bubble as it floats to them.
+  bbguard(p) {
+    const look = soft(seg(p, 0, 0.18)) * (1 - soft(seg(p, 0.28, 0.36)));
+    const swirl = p > 0.3 && p < 0.5 ? Math.sin((p - 0.3) * 30) : 0;
+    const send = ease(seg(p, 0.46, 0.56));
+    const after = soft(seg(p, 0.72, 0.98));
+    return {
+      weapon: lerp(120, 90, soft(seg(p, 0.28, 0.4))) + 30 * swirl - 20 * send + 30 * after, arm: lerp(40, 80, soft(seg(p, 0.28, 0.4))) + 14 * swirl + 10 * send - 40 * after, lunge: 3 * send * (1 - after),
+      face: p < 0.3 ? MD_FACE.focus : p < 0.72 ? MD_FACE.count : MD_FACE.wink,
+      rig: (r) => { r.backArm = dancerHand(look > 0.3 ? [q(-1), q(-14)] : [q(-3), q(-2)]); danceLegs(r, [look, [1.2, -0.4, 4], [-1.4, 0, -4]], [send * (1 - after), [2.6, 0, 6], [-2.6, 0, -10]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Bubble Wave (at ~0.55): she scoops the wand down to the floor and up in a big swing both ways,
+  // foam rolling off along the ground, and finishes with a jump and a cheer.
+  bbsurf(p) {
+    const dip = soft(seg(p, 0, 0.3));
+    const scoop = ease(seg(p, 0.4, 0.56));
+    const jump = Math.sin(Math.PI * seg(p, 0.56, 0.86));
+    const after = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(120, 20, dip), 170, scoop) - 50 * after, arm: lerp(lerp(40, 10, dip), 104, scoop) - 50 * after, lift: 8 * jump, tilt: 0.14 * dip * (1 - scoop),
+      face: p < 0.4 ? MD_FACE.focus : p < 0.86 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(2.6 * dip * (1 - scoop)); r.air = jump > 0.3; r.backArm = dancerHand(scoop > 0.4 && after < 0.6 ? [-7, -9] : [q(-4), q(-2)]); r.hairLift = jump > 0.4 ? -1 : 0; danceLegs(r, [dip * (1 - scoop), [3.4, 0, 10], [-3.4, 0, -10]], [jump, [1.4, -4, 30], [-1.4, -4, -30]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Lather Cloud (at ~0.52): the wand whisked round and round fast in front of her like a whisk in
+  // a bowl (the other hand holding the "bowl"), then a big puff sends the lather off.
+  bblather(p) {
+    const whisk = p > 0.06 && p < 0.46;
+    const ang = p * 70;
+    const blow = ease(seg(p, 0.46, 0.56));
+    const after = soft(seg(p, 0.68, 0.96));
+    return {
+      weapon: whisk ? 60 + 22 * Math.sin(ang) : lerp(60, 90, blow) + 30 * after, arm: whisk ? 60 + 8 * Math.cos(ang) : lerp(60, 86, blow) - 30 * after, lunge: 3 * blow * (1 - after), tilt: whisk ? 0.03 * Math.sin(ang) : 0.05 * blow * (1 - after),
+      face: p < 0.46 ? MD_FACE.focus : p < 0.68 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand(whisk ? [q(4), q(4)] : [q(-3), q(-2)]); danceLegs(r, [whisk ? 1 : 0, [1.8 + 0.4 * Math.sin(ang), 0, 4], [-1.8, 0, -6]], [blow * (1 - after), [2.6, 0, 6], [-2.6, 0, -10]], [after, [1.4, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Rebirth Bubble (at ~0.66): she kneels, cups the wand in both hands, rises slowly lifting it
+  // high and blows the biggest, most careful bubble; then stands on her toes to watch it go.
+  bbrebirth(p) {
+    const kneel = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.3, 0.56)));
+    const rise = soft(seg(p, 0.3, 0.56));
+    const blow = bump(p, 0.56, 0.76);
+    const toes = soft(seg(p, 0.7, 0.86)) * (1 - soft(seg(p, 0.92, 1)));
+    return {
+      weapon: lerp(lerp(120, 60, kneel), 150, rise) - 40 * toes, arm: lerp(lerp(40, 40, kneel), 108, rise) - 30 * toes, lift: 2.2 * toes, tilt: 0.06 * kneel - 0.05 * blow,
+      face: p < 0.56 ? MD_FACE.count : p < 0.76 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(4 * kneel); r.backArm = dancerHand(rise > 0.3 && toes < 0.5 ? [q(2), q(-10)] : [q(3), q(1)]); danceLegs(r, [kneel, [3, 0, 30], [-3, 0, -40]], [toes, [0.8, -1.6, 6], [-0.8, -1.6, -6]]); },
+    };
+  },
+  // Bubble Party (finisher; three bounces at ~0.41, 0.57 and 0.75): she spins on the spot with the
+  // wand overhead, blowing one enormous dome over everyone, then bounces with it three times, each
+  // bounce bigger, and strikes a pose as it pops.
+  bbparty(p) {
+    const spin = p > 0.04 && p < 0.3;
+    const t = seg(p, 0.04, 0.3);
+    const b = Math.max(bump(p, 0.34, 0.46), bump(p, 0.5, 0.62) * 1.2, bump(p, 0.67, 0.82) * 1.5);
+    const pose = soft(seg(p, 0.84, 0.94));
+    return {
+      weapon: spin ? 160 : lerp(150, 60, pose) + 20 * b, arm: spin ? 112 : lerp(100, 110, pose) - 10 * b, turn: spin ? spinFlip(t) : 1, lift: 7 * b + 2 * bump(p, 0.04, 0.3),
+      face: p < 0.84 ? MD_FACE.shout : MD_FACE.wink,
+      rig: (r) => { r.air = b > 0.4; r.backArm = dancerHand(pose > 0.4 ? [q(-6), q(-10)] : [q(-5), q(-6)]); r.hairLift = b > 0.4 || spin ? -1 : 0; danceLegs(r, [spin ? 1 : 0, [0.4, 0, 0], dancerLeg(-40, 14.6, -16)], [b, [1.4, -4, 30], [-1.4, -4, -30]], [pose, [2.4, 0, 6], [-1.4, -1, -20]]); },
+    };
+  },
+  // With the staff: a big bubble hoop.
+  // Wave (staff opener, at ~0.4): the staff swept across in a wide wave, big bubbles left behind.
+  bbwave(p) {
+    const wind = soft(seg(p, 0, 0.22));
+    const go = ease(seg(p, 0.22, 0.42));
+    const after = soft(seg(p, 0.48, 0.88));
+    return {
+      weapon: lerp(lerp(110, 200, wind), 60, go) + 30 * after, arm: lerp(lerp(60, 30, wind), 90, go) - 30 * after,
+      back: (wind > 0.5 && go < 0.3) || undefined, lunge: 6 * go * (1 - after * 0.5), tilt: 0.1 * go * (1 - after), lift: swBob(p, 0.66) * 0.6, trail: go > 0 && go < 1,
+      face: p < 0.22 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(lerp(2, -3, go)), q(-3)]); danceLegs(r, [wind * (1 - go), [1.6, 0, 4], [-2.4, 0, -8]], [go * (1 - after), [4.6, 0, 10], [-4.2, -0.6, -20]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Low sweep (second, at ~0.46): the staff's hoop skimmed along the floor, a trail of small
+  // bubbles rolling up off it and one big one.
+  bbsweep(p) {
+    const dip = soft(seg(p, 0, 0.26));
+    const go = ease(seg(p, 0.26, 0.46));
+    const after = soft(seg(p, 0.52, 0.9));
+    return {
+      weapon: lerp(lerp(110, 40, dip), 20, go) + 80 * after, arm: lerp(lerp(60, 20, dip), 40, go) + 20 * after, lunge: 7 * go * (1 - after * 0.5), tilt: 0.14 * dip * (1 - after),
+      face: p < 0.26 ? MD_FACE.focus : p < 0.52 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.squat = q(2.2 * dip * (1 - after)); r.backArm = dancerHand([q(-4), q(-2)]); danceLegs(r, [dip * (1 - after), [3.6, 0, 10], [-3.6, 0, -12]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Overhead swing (staff finisher, at ~0.52): the hoop swung up and over in a great arc, a string of
+  // big bubbles floating off it, and she lands on a little hop.
+  bbswing(p) {
+    const rise = soft(seg(p, 0, 0.34));
+    const go = ease(seg(p, 0.34, 0.52));
+    const after = soft(seg(p, 0.6, 0.94));
+    return {
+      weapon: lerp(lerp(110, 230, rise), 70, go) + 30 * after, arm: lerp(lerp(60, 104, rise), 70, go) - 20 * after,
+      back: (rise > 0.4 && go < 0.4) || undefined, lift: 4 * bump(p, 0.2, 0.6) + swBob(p, 0.72) * 0.8, lunge: 5 * go * (1 - after * 0.5), tilt: -0.1 * rise * (1 - go) + 0.12 * go * (1 - after),
+      trail: go > 0 && go < 1,
+      face: p < 0.34 ? MD_FACE.focus : p < 0.6 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(lerp(-4, 3, go)), q(lerp(-6, -2, go))]); r.hairLift = go > 0.3 && after < 0.4 ? 1 : 0; danceLegs(r, [rise * (1 - go), [1.4, -1.6, 14], [-2, 0, -6]], [go * (1 - after), [4.6, 0, 10], [-4.2, -0.6, -20]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Loop-the-loop (pool, at ~0.4): the hoop spun in a full loop out in front, small bubbles flung
+  // off it all the way round.
+  bbloop(p) {
+    const t = seg(p, 0.06, 0.5);
+    const a = t * Math.PI * 2;
+    const looping = p > 0.06 && p < 0.5;
+    const after = soft(seg(p, 0.54, 0.92));
+    const w = looping ? (90 + (a * 180) / Math.PI) % 360 : lerp(90, 120, after);
+    return {
+      weapon: w, arm: 80 - 20 * after, back: (w > 170 && w < 330) || undefined, lunge: 3 * bump(p, 0.06, 0.5), trail: looping,
+      face: p < 0.5 ? MD_FACE.count : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(-4), q(-3)]); danceLegs(r, [bump(p, 0.06, 0.5), [2, 0, 4], [-2.4, 0, -10]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Hula hoop (pool, at ~0.5): the hoop swung round her hips like a hula hoop, two big bubbles
+  // spinning off it.
+  bbhula(p) {
+    const t = seg(p, 0.06, 0.56);
+    const sway = Math.sin(t * Math.PI * 6);
+    const spinning = p > 0.06 && p < 0.56;
+    const after = soft(seg(p, 0.6, 0.94));
+    return {
+      weapon: spinning ? 100 + 30 * sway : lerp(100, 120, after), arm: spinning ? 50 + 10 * sway : lerp(50, 60, after), tilt: 0.05 * sway * (spinning ? 1 : 0), lunge: 1.5 * sway,
+      face: p < 0.56 ? MD_FACE.cheer : MD_FACE.wink,
+      rig: (r) => { r.backArm = dancerHand([q(-5 + 2 * sway), q(-4)]); danceLegs(r, [spinning ? 1 : 0, [2 + 0.8 * sway, 0, 4], [-2 + 0.8 * sway, 0, -4]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Bounce (pool finisher, at ~0.4 and ~0.6): she bounces on the staff like a pogo stick, big
+  // bubbles puffing off the hoop at each landing.
+  bbpogo(p) {
+    const b1 = bump(p, 0.08, 0.4);
+    const b2 = bump(p, 0.4, 0.66);
+    const after = soft(seg(p, 0.7, 0.96));
+    return {
+      weapon: 170, arm: 30 + 10 * (b1 + b2) - 10 * after, back: true, lift: 9 * b1 + 7 * b2, lunge: 2 * (b1 + b2),
+      face: p < 0.7 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.air = b1 > 0.3 || b2 > 0.3; r.backArm = dancerHand([q(-6), q(-5)]); r.hairLift = b1 + b2 > 0.4 ? -1 : 0; danceLegs(r, [b1 + b2, [1.2, -4, 30], [-1.2, -4, -30]], [after, [1.6, -0.6, 8], [-1.6, 0, -4]]); },
+    };
+  },
+  // Staff up + attack: the hoop raised over her shoulder and shaken, bubbles streaming up.
+  bbsup(p) {
+    const go = ease(seg(p, 0.14, 0.3));
+    const after = soft(seg(p, 0.42, 0.9));
+    return {
+      weapon: lerp(120, 170, go) - 30 * after, arm: lerp(40, 100, go) - 50 * after, back: (go > 0.5 && after < 0.6) || undefined, lift: 3 * bump(p, 0.14, 0.5),
+      face: p < 0.14 ? MD_FACE.focus : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(3), q(-3)]); danceLegs(r, [go * (1 - after), [1.4, -1.6, 10], [-1.2, -1.2, -8]]); },
+    };
+  },
+  // Staff in the air: the hoop swung down under her, big bubbles dropped on them.
+  bbsair(p) {
+    const go = ease(seg(p, 0.14, 0.32));
+    return {
+      weapon: lerp(120, 30, go), arm: lerp(70, 30, go), tilt: 0.12 * go,
+      face: p < 0.14 ? MD_FACE.focus : MD_FACE.shout,
+      rig: (r) => { r.air = true; r.backArm = dancerHand([q(-5), q(-4)]); danceLegs(r, [1, [2.4, -5, 40], [-1.6, -4, -40]]); },
+    };
+  },
+  // Staff out of a run: she rides the staff's hoop along the floor like a unicycle wheel, bubbles
+  // trailing.
+  bbsdash(p) {
+    const ride = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 1)));
+    const go = ease(seg(p, 0.3, 0.44));
+    return {
+      weapon: ride > 0.5 ? 175 : lerp(150, 70, go), arm: ride > 0.5 ? 30 : lerp(30, 86, go), back: (ride > 0.5) || undefined, lift: 4 * ride, lunge: 5 * ride, tilt: -0.06 * ride,
+      face: p < 0.3 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.backArm = dancerHand([q(-6 * ride), q(-4 * ride)]); r.hairLift = ride > 0.4 ? 1 : 0; danceLegs(r, [ride, [1, -5, 20], [-1, -5, -20]]); },
+    };
+  },
+
   // ---------- The Mage's attacks (the remake: a pyro gremlin; docs/design/mage-line.md) ----------
   // A magic-school dropout who loves blowing things up. She never casts like the textbook: she
   // flicks fire from the hip, pitches snowballs, jabs the wand like a cattle prod, swings the staff

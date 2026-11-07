@@ -586,7 +586,7 @@ test("the Star Witch's paths fight with their whole kit: the concert stage, the 
   const ids = (c) => botSkills(c).map((s) => s.id);
   for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Starlight Idol: ${id}`);
   for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Sorcerer: ${id}`);
-  for (const [char, fx] of [[shrine, 'sistage'], [onmyo, 'sosummon']]) {
+  for (const [char, fx] of [[shrine, 'bbdome'], [onmyo, 'sosummon']]) {
     const world = createWorld(createCharacter('Me', {}));
     quiet(world);
     world.god = true;
