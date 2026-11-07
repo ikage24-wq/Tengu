@@ -306,10 +306,10 @@ const cbCostume = (key) => {
 };
 Object.assign(NPCS, {
   ledger: {
-    id: 'ledger', name: 'Madame Ledger', title: 'Auctioneer', role: 'guide',
+    id: 'ledger', name: 'Madame Ledger', title: 'Auctioneer', role: 'auction',
     look: { hairStyle: 'drills', hairColor: '#8a4a8a', skinTone: '#fbd9bf', eyeColor: '#c84a8a', outfitColor: '#5a3a6a', eyeStyle: 'cat', face: 'smug', browStyle: 'arched' },
     gear: { ...cbCostume('gothic'), face: cbPiece('look_acc_cateye_face'), cape: cbPiece('look_acc_royalcape_cape') },
-    greeting: "Going once, going twice... oh! A new face. The Auction House opens its doors very soon, darling. Do bring something shiny.",
+    greeting: "Going once, going twice... oh! A new face. Buy, bid, or sell, darling: every trader in the world comes through my doors. Do bring something shiny.",
     chatter: ['Going once! Going twice!', 'Everything has a price, darling.', 'Sold! To the lady in pink!'],
   },
   halvard: {

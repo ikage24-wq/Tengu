@@ -1,5 +1,6 @@
 // Window state and routing: hotkeys for windows, binding skills/items to hotkeys, and world events.
 
+import { auctionWindow } from './auction.js';
 import { drawDecorate, toggleDecorate, decorating, canDecorate } from './decorate.js';
 import { drawQuestFx } from './questfx.js';
 import { button, text } from './kit.js';
@@ -75,9 +76,10 @@ export function createUiState() {
       craft: { x: 140, y: 44, open: false, theme: 'mint', icon: 'hammer' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
       trade: { x: 110, y: 50, open: false, tab: 0, theme: 'sky', icon: 'friends' },
+      auction: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'craft', 'life', 'gacha', 'trade', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -212,7 +214,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

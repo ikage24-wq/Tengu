@@ -285,6 +285,15 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
   }
+  // Madame Ledger's Auction House (world/auction.js).
+  if (npc.role === 'auction') {
+    const box = char.auction?.box?.length ?? 0;
+    const up = char.auction?.mine?.length ?? 0;
+    choices.push({ label: 'The Auction House', sub: box ? `${box} waiting in your collection box!` : up ? `${up} of yours up for sale` : 'Buy, bid and sell', icon: 'star', primary: true, run: () => {
+      dlg.bye = true;
+      state.windows.auction.open = true;
+    } });
+  }
   // Juniper's rooms at the Gilded Kettle: a night's sleep turns into rested EXP (world/inn.js).
   if (npc.role === 'inn') {
     const rested = Math.round(char.rested ?? 0);

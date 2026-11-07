@@ -184,3 +184,51 @@ test('a night at the Gilded Kettle wakes you well rested, a little: double EXP u
   assert.equal(restedBonus(world, 5), 2, 'until it runs out');
   assert.equal(restedBonus(world, 5), 0);
 });
+
+test('the Auction House: buy outright, bid and win or be outbid, and list your own to sell', async () => {
+  const A = await import('../src/world/auction.js');
+  const world = createWorld(createCharacter('Trader', {}));
+  const char = world.char;
+  let now = Date.UTC(2026, 10, 7, 12, 0, 0);
+  world.dayClock = () => new Date(now);
+  char.level = 30;
+  char.gold = 1e6;
+  const list = A.listings(world);
+  assert.ok(list.length >= 30, 'a market full of listings');
+  assert.deepEqual(A.listings(world).map((l) => l.key), list.map((l) => l.key), 'the same all hour');
+  for (const c of ['weapon', 'armour', 'material', 'fish']) assert.ok(list.some((l) => A.counterOf(l.id) === c), `something at the ${c} counter`);
+  // Buy one outright.
+  const buy = list[0];
+  const gold = char.gold;
+  assert.equal(A.buyNow(world, buy.key), null);
+  assert.equal(char.gold, gold - buy.price);
+  assert.ok(!A.listings(world).some((l) => l.key === buy.key), 'it is gone from the market');
+  // Bid on the rest until it ends: every bid ends won or outbid, and either way the gold or the
+  // goods wait in the collection box.
+  for (const l of A.listings(world).slice(0, 12)) A.placeBid(world, l.key);
+  const held = Object.keys(char.auction.bids).length;
+  assert.ok(held >= 10);
+  now += 3600000;
+  A.tickAuction(world);
+  assert.equal(Object.keys(char.auction.bids).length, 0);
+  assert.equal(char.auction.box.length, held);
+  // List a stack at a bargain: it sells within the hour and the gold comes in, less the fee.
+  addItem(char.inventory, 'fish_carp', 10);
+  const value = A.marketValue(world, 'fish_carp') * 10;
+  assert.equal(A.listItem(world, { id: 'fish_carp', qty: 10 }, value * 0.8), null);
+  assert.equal(countItem(char.inventory, 'fish_carp'), 0);
+  now += 40 * 60000;
+  A.tickAuction(world);
+  const sold = char.auction.box.find((e) => e.why?.startsWith('Sold'));
+  assert.ok(sold && sold.gold < value * 0.8, 'sold, less the fee');
+  // Far too dear: it comes back unsold.
+  addItem(char.inventory, 'fish_carp', 1);
+  A.listItem(world, { id: 'fish_carp', qty: 1 }, A.marketValue(world, 'fish_carp') * 3);
+  now += 50 * 60000;
+  A.tickAuction(world);
+  assert.ok(char.auction.box.some((e) => e.why === 'Unsold' && e.id === 'fish_carp'));
+  const before = char.gold;
+  A.collectAll(world);
+  assert.ok(char.gold > before && char.auction.box.length === 0, 'everything collected');
+  assert.equal(countItem(char.inventory, 'fish_carp'), 1);
+});

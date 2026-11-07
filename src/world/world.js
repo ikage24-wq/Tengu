@@ -12,6 +12,7 @@ import { SKILLS } from '../data/skills.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp, usePotion, applyDeath, autoAssignAp } from '../core/character.js';
 import { restedBonus } from './inn.js';
+import { tickAuction } from './auction.js';
 import { settings } from '../core/settings.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { recordKill } from '../core/quests.js';
@@ -658,6 +659,12 @@ export function updateWorld(world, dt, input) {
   // The map's moving parts run on the world's clock; its light follows the real one.
   world.map.clock = world.now;
   tickDaytime(world, dt);
+  // Auctions end and listings sell while you play (world/auction.js), checked once a second.
+  world.auctionT = (world.auctionT ?? 0) + dt;
+  if (world.auctionT >= 1) {
+    world.auctionT = 0;
+    tickAuction(world);
+  }
   tickGoingHome(world, dt);
   tickCalm(world);
   // On the Sea Biscuit, the trip's clock (world/voyage.js).
