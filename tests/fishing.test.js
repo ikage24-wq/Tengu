@@ -303,3 +303,25 @@ test('Merchant Rep: good turns raise your standing, lower the fee, and a Merchan
   assert.equal(S.unstock(world, char.stall.items[0].key), null);
   assert.equal(countItem(char.inventory, 'fish_carp'), 1);
 });
+
+test('the Night Market: the Masked Moth is only there after dark, with an oddity and three one-offs a night', async () => {
+  const N = await import('../src/world/nightmarket.js');
+  const world = createWorld(createCharacter('Owl', {}));
+  const char = world.char;
+  char.level = 30;
+  char.gold = 1e6;
+  const moth = { id: 'moth', x: 430 };
+  world.night = 0;
+  assert.ok(N.awayNow(world, moth), 'not there by day');
+  assert.ok(!N.awayNow(world, { id: 'ledger', x: 1552 }), 'everyone else is');
+  assert.ok(N.buyNight(world, 'x'), 'and nothing for sale by day');
+  world.night = 1;
+  assert.ok(!N.awayNow(world, moth), 'there at night');
+  const goods = N.tonight(world);
+  assert.equal(goods.length, 4);
+  for (const g of goods) assert.ok(g.price >= 5);
+  const gold = char.gold;
+  assert.equal(N.buyNight(world, goods[1].key), null);
+  assert.equal(char.gold, gold - goods[1].price);
+  assert.ok(N.buyNight(world, goods[1].key), 'once each');
+});

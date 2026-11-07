@@ -348,10 +348,10 @@ Object.assign(NPCS, {
     chatter: ['Pick a card! Not that one.', "I'm not cheating!", 'Royal flush! ...Is that a thing?'],
   },
   moth: {
-    id: 'moth', name: 'The Masked Moth', title: 'Night Trader', role: 'guide',
+    id: 'moth', name: 'The Masked Moth', title: 'Night Trader', role: 'night', night: true,
     look: { hairStyle: 'hexlong', hairColor: '#4a3a6a', skinTone: '#f0d8e0', eyeColor: '#b88aff', outfitColor: '#3a2a4a', eyeStyle: 'star', face: 'cool', browStyle: 'none' },
     gear: { ...cbCostume('ballet'), face: cbPiece('look_acc_masquerade_face'), cape: cbPiece('look_acc_butterfly_cape') },
-    greeting: 'Only when the lamps are lit, little flame. Only when the lamps are lit.',
+    greeting: 'Ah, a little flame, drawn to my lamps. Look, but quickly: when the sun comes up, all of this is gone.',
     chatter: ['Something rare tonight.', 'Only once. Only now.', 'Hush. The lamps are listening.'],
   },
 });

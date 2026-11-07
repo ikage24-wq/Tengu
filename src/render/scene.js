@@ -1,5 +1,6 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
+import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
@@ -160,6 +161,8 @@ function drawNpcs(ctx, world, cam, time) {
     if (world.date?.id === n.id) continue;
     // (Living with you now, they're on your island, not in town.)
     if (!world.map.home && world.char.livingWith === n.id) continue;
+    // (Someone who keeps to the dark isn't there by day: the Masked Moth, world/nightmarket.js.)
+    if (awayNow(world, n)) continue;
     const npc = NPCS[n.id];
     const x = n.x - cam.x;
     const y = groundAt(world.map, n.x) - cam.y;

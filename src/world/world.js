@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { awayNow } from './nightmarket.js';
 import { tickStall } from './stall.js';
 import { tickBounties, eliteSlain } from './bounties.js';
 import { tickCine } from './director.js';
@@ -440,7 +441,7 @@ function interact(world) {
     world.fx.push({ kind: 'mountpoof', on: true, mount: find.mount, x: find.x, y: find.y, t: 0, dur: 0.45 });
     return true;
   }
-  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going);
+  const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going && !awayNow(world, n));
   if (npc) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
@@ -477,7 +478,7 @@ function interact(world) {
 
 export function nearbyNpc(world) {
   const b = world.body;
-  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going) ?? null;
+  return world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going && !awayNow(world, n)) ?? null;
 }
 
 // The hit counter: every hit you land within this many seconds of the last adds one; a pause

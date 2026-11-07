@@ -816,7 +816,10 @@ Object.assign(MAPS, {
     townPieces: [
       // The docks: the gate, crates waiting on the quay, the crane at the canal's edge with its load
       // swinging out over the water, a gondola moored under the bridge.
-      ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 380], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1 }], ['cb_crates', 720, 2], ['cb_lamp', 790],
+      ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 380], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1, lanterns: true }], ['cb_crates', 720, 2], ['cb_lamp', 790],
+      // The Night Market, out after dusk where the cargo stood by day: two traders' stalls, lanterns
+      // strung across the quay, fireflies (render/coinbridge.js; the Masked Moth, world/nightmarket.js).
+      ['cb_nightstall', 300, 1], ['cb_nightstall', 722, 2], ['cb_lanterns', 232, { to: 376, h: 64 }], ['cb_lanterns', 384, { to: 470, h: 64 }], ['cb_lanterns', 654, { to: 786, h: 64 }], ['cb_fireflies', 60, { w: 740 }],
       // The market: a lamp between the Auction House and the canal, and one past the stalls.
       ['cb_palazzo', 1262, 3], ['cb_auction', 1472], ['cb_lamp', 1633], ['cb_canal', 1710, { w: 118, depth: 30 }], ['cb_bridge', 1710, { w: 140 }], ['cb_gondola', 1710, { w: 118 }], ['cb_lamp', 2030],
       ['cb_stall', 1830, 1], ['cb_stall', 1900, 2], ['cb_stall', 1970, 'yours'],
@@ -841,7 +844,7 @@ Object.assign(MAPS, {
       { id: 'west', x: 40, y: 1120, to: 'sprout', toPortal: 'coin', label: 'Sprout Village' },
       { id: 'inn', x: 2662, y: 600, to: 'coin_inn', toPortal: 'door', label: 'The Gilded Kettle', door: true },
     ],
-    npcs: [{ id: 'ledger', x: 1552 }, { id: 'halvard', x: 3570 }, { id: 'penny', x: 3808 }],
+    npcs: [{ id: 'moth', x: 430 }, { id: 'ledger', x: 1552 }, { id: 'halvard', x: 3570 }, { id: 'penny', x: 3808 }],
     zonesBy: 'x',
     zones: [
       { name: 'Canal Docks', from: 0, color: '#5fc4c4' },

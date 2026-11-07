@@ -1,5 +1,6 @@
 // Always-on HUD: status bar, hotkeys, minimap, buffs, quest tracker, message log, map banner.
 
+import { awayNow } from '../world/nightmarket.js';
 import { SKILLS, skillAt } from '../data/skills.js';
 import { JOBS } from '../data/jobs.js';
 import { expToNext } from '../core/exp.js';
@@ -1022,6 +1023,7 @@ function drawMinimap(ui, world) {
   }
   // People: yellow pips, with a "!" or "?" when they have a quest for you.
   for (const n of map.npcs) {
+    if (awayNow(world, n)) continue;
     const nx = x + n.x * scale;
     const ny = Y(groundAt(map, n.x)) - 2.5;
     const mark = questMarker(world.char, n.id);

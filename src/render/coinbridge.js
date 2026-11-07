@@ -474,6 +474,48 @@ function terraceWallArt(w) {
   }, false);
 }
 
+// ---------- The Night Market ----------
+// How far into the night it is, eased (0 by day, 1 in full dark): the market fades in at dusk and
+// out at dawn, never popping.
+const dark = (map) => {
+  const n = Math.max(0, Math.min(1, ((map.night ?? 0) - 0.25) / 0.6));
+  return n * n * (3 - 2 * n);
+};
+// A night trader's stall, 70 wide: a canopy of deep cloth on carved poles, paper lanterns hanging
+// from its edge (drawn glowing, alive), and its counter heaped with night things: crystals,
+// little bottles, masks, moon charms.
+function nightStallArt(seed) {
+  const cloth = pick(['#5a3a8a', '#2f5a7a', '#7a3a5a'], seed);
+  return art(`cb-nightstall|${cloth}`, 70, 70, () => {
+    const wood = ramp('#7a5a4a', 0.8);
+    const c = ramp(cloth, 0.8);
+    const out = [R(4, 12, 3, 58, wood.base), R(63, 12, 3, 58, wood.base), E(5.5, 12, 3, 3, GOLD), E(64.5, 12, 3, 3, GOLD)];
+    out.push(T([[0, 16], [35, 4], [70, 16], [70, 22], [0, 22]], c.base), F(T([[35, 4], [70, 16], [70, 22], [36, 22]], c.sh)));
+    for (let k = 0; k < 7; k++) out.push(T([[k * 10, 22], [k * 10 + 10, 22], [k * 10 + 5, 28]], k % 2 ? c.sh : c.base), F(E(k * 10 + 5, 23, 1, 1, GOLD)));
+    out.push(R(4, 46, 62, 24, wood.base), ...planks(4, 48, 62, 22, wood, 4, seed), R(2, 44, 66, 4, wood.hi));
+    // The goods.
+    for (let k = 0; k < 4; k++) out.push(T([[10 + k * 4, 44], [12 + k * 4, 34 - (k % 2) * 4], [14 + k * 4, 44]], pick(['#c8b0ff', '#8fe8ff', '#ffb0e0'], seed + k)));
+    for (let k = 0; k < 3; k++) out.push(R(30 + k * 6, 37, 4, 7, pick(['#ff8fb0', '#8fffd0', '#ffe36b'], seed + k * 2)), R(31 + k * 6, 35, 2, 2, '#e8e0f0'));
+    out.push(E(56, 39, 6, 4, '#f0f0ff'), F(E(53.5, 38.5, 1.2, 1, '#2a2340')), F(E(58.5, 38.5, 1.2, 1, '#2a2340')), F(T([[52, 36], [56, 33], [60, 36]], '#c9a6ff')));
+    return out;
+  }, false);
+}
+function paperLantern(ctx, x, y, c, time, k, a) {
+  ctx.globalAlpha = a;
+  const sway = Math.sin(time * 1.3 + k) * 1.2;
+  ctx.fillStyle = '#5a4a5a';
+  ctx.fillRect(Math.round(x + sway * 0.3), Math.round(y - 3), 1, 3);
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.ellipse(x + sway, y + 3, 3, 4, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#fff6d0';
+  ctx.fillRect(Math.round(x + sway - 1), Math.round(y + 1), 2, 4);
+  ctx.globalAlpha = 1;
+  glow(ctx, x + sway, y + 3, 14, c, a * (0.45 + 0.15 * Math.sin(time * 3 + k)));
+}
+const LANTERN_C = ['#ffb04a', '#ff6b8a', '#ffe36b', '#c9a6ff', '#8fe8d8'];
+
 // ---------- The canals ----------
 
 // A canal between two stone embankments (`w` wide, its floor `depth` below the street): its walls,
@@ -752,7 +794,14 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
   } else if (kind === 'cb_gondola') {
     // A gondola moored in a canal, bobbing a little at its post, in front of the bridge.
     const street = snap(groundAt(map, wx - (extra?.w ?? 118) / 2 - 20) - cam.y);
-    gondola(ctx, x + Math.sin(time * 0.4 + wx) * 4, street + 18, time, wx, extra?.dir ?? 1);
+    const gx = x + Math.sin(time * 0.4 + wx) * 4;
+    gondola(ctx, gx, street + 18, time, wx, extra?.dir ?? 1);
+    // At night on the docks it's the lantern boat: lanterns on poles fore and aft.
+    if (extra?.lanterns) {
+      const a = dark(map);
+      const bob = Math.sin(time * 1.6 + wx * 0.01) * 1.2;
+      if (a > 0.01) for (const [dx, k] of [[-16, 0], [0, 2], [16, 4]]) paperLantern(ctx, gx + dx, street + 4 + bob - (k === 2 ? 4 : 0), LANTERN_C[k], time, k, a);
+    }
   } else if (kind === 'cb_stall' && extra === 'yours') {
     // Your stall (world/stall.js): your goods on the counter and your name on its board, or a
     // "For rent" board until you have a licence.
@@ -793,7 +842,70 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
     ctx.fillRect(-1, 2, 2, 16);
     ctx.restore();
   } else if (kind === 'cb_crates') {
-    place(ctx, cratesArt(extra ?? wx), snap(x), gy + 2);
+    // The day's cargo: cleared away for the Night Market.
+    const a = 1 - dark(map);
+    if (a > 0.01) {
+      ctx.globalAlpha = a;
+      place(ctx, cratesArt(extra ?? wx), snap(x), gy + 2);
+      ctx.globalAlpha = 1;
+    }
+  } else if (kind === 'cb_nightstall') {
+    const a = dark(map);
+    if (a > 0.01) {
+      ctx.globalAlpha = a;
+      place(ctx, nightStallArt(extra ?? wx), snap(x), gy + 2);
+      ctx.globalAlpha = 1;
+      const top = gy + 2 - 70;
+      for (let k = 0; k < 4; k++) paperLantern(ctx, x - 27 + k * 18, top + 28, LANTERN_C[(k + Math.round(wx)) % 5], time, k + wx, a);
+      // The goods glimmer.
+      for (let k = 0; k < 3; k++) {
+        const u = (time * 0.8 + k / 3 + wx * 0.01) % 1;
+        ctx.globalAlpha = a * Math.sin(u * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(Math.round(x - 22 + k * 22), Math.round(top + 36 - u * 4), 1.4, 1.4);
+      }
+      ctx.globalAlpha = 1;
+      glow(ctx, x, top + 44, 40, '#c9a6ff', a * 0.25);
+    }
+  } else if (kind === 'cb_lanterns') {
+    // Paper lanterns strung across the docks at night, from wx to `extra.to`, sagging.
+    const a = dark(map);
+    if (a > 0.01) {
+      const x1 = (extra?.to ?? wx + 200) - cam.x;
+      const y0 = gy - (extra?.h ?? 70);
+      const y1 = snap(groundAt(map, extra?.to ?? wx + 200) - cam.y) - (extra?.h ?? 70);
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = '#4a3a4a';
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      const n = Math.max(4, Math.round((x1 - x) / 20));
+      for (let i = 0; i <= n; i++) {
+        const u = i / n;
+        const px = x + (x1 - x) * u;
+        const py = y0 + (y1 - y0) * u + Math.sin(Math.PI * u) * 14;
+        if (i) ctx.lineTo(px, py);
+        else ctx.moveTo(px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      for (let i = 1; i < n; i++) {
+        const u = i / n;
+        paperLantern(ctx, x + (x1 - x) * u, y0 + (y1 - y0) * u + Math.sin(Math.PI * u) * 14, LANTERN_C[(i + Math.round(wx)) % 5], time, i * 1.7 + wx, a);
+      }
+    }
+  } else if (kind === 'cb_fireflies') {
+    // Fireflies over the docks at night, drifting, each blinking on its own beat.
+    const a = dark(map);
+    for (let k = 0; a > 0.01 && k < 10; k++) {
+      const fx = x + ((k * 73 + time * 6 * (k % 2 ? 1 : -1)) % (extra?.w ?? 600) + (extra?.w ?? 600)) % (extra?.w ?? 600);
+      const fy = gy - 30 - ((k * 37) % 60) + Math.sin(time * 1.2 + k) * 8;
+      const blink = Math.max(0, Math.sin(time * 2 + k * 1.9));
+      ctx.globalAlpha = a * blink;
+      ctx.fillStyle = '#f4ffb0';
+      ctx.fillRect(Math.round(fx), Math.round(fy), 1.6, 1.6);
+      glow(ctx, fx, fy, 6, '#f4ffb0', a * blink * 0.5);
+    }
+    ctx.globalAlpha = 1;
   } else if (kind === 'cb_gate') {
     place(ctx, townGateArt(), snap(x), gy + 2);
     const top = gy + 2 - 140;

@@ -1,5 +1,6 @@
 // Entry point: canvas scaling, screens (title -> character select -> creator -> game), the fixed-step loop, and autosave.
 
+import { awayNow } from './world/nightmarket.js';
 import { createInput, endFrame, VW, VH } from './input.js';
 import { beginUi, endUi } from './ui/kit.js';
 import { titleScreen, selectScreen, creatorScreen, randomLook } from './ui/screens.js';
@@ -365,7 +366,7 @@ function npcPointer(ui) {
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
-    npc = world.map.npcs.find((n) => Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
+    npc = world.map.npcs.find((n) => !awayNow(world, n) && Math.abs(n.x - wx) < 14 && wy > groundAt(world.map, n.x) - 50 && wy < groundAt(world.map, n.x) + 14) ?? null;
     // Party members and other players hunting, wherever they are on the map.
     if (!npc) bot = bodiedIn(world.bots, world.map.id).find((b) => Math.abs(b.body.x - wx) < 13 && wy > b.body.y - 46 && wy < b.body.y + 13) ?? null;
     if (!npc && !bot && settings.showCrowd && world.map.isTown) {
