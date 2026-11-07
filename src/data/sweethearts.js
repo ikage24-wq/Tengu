@@ -106,6 +106,7 @@ export const SWEETHEARTS = {
   rowan: {
     dateLines: { great: "Best. Day. Ever. I'm going to tell Brann about it until he begs me to stop.", good: "That was grand! You're good company, you know that?", okay: "Ha, we'll get it right next time. I had fun anyway!" },
     id: 'rowan', name: 'Rowan', title: 'Gentle Giant Knight', map: 'crag', x: 2310, color: '#8fb8e8',
+    quests: ['rowan_rope', 'rowan_scout', 'rowan_courage', 'rowan_watch'],
     house: 2410,
     // At home late (world/goinghome.js): a friend, close, sweethearts.
     late: [

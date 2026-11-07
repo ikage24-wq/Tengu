@@ -487,6 +487,40 @@ export const QUESTS = {
     rewards: { exp: 80000, gold: 1000, items: [{ id: 'warrior_cape_35', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
+  // Rowan's story (Ember Crag, by the arena): every Crag knight stands one night's watch on the
+  // Sky Garden's Starlit Terrace, and the biggest knight on the island never has, because he is
+  // terrified of heights. You scout it for him and find the harpies only attack to guard their
+  // chicks, the way he guards everyone; with a little help from Brann and Tora he climbs, and stands
+  // his watch over the nests instead.
+  rowan_rope: {
+    id: 'rowan_rope', name: 'A Very Long Rope', giver: 'rowan', minLevel: 37, prereq: 'yuzu_loved',
+    text: "Could you help me make a rope? A long one. A very long one. Cloud Mane from the Pegasus Foals is the strongest thread there is. 10 should be enough. 12. Let's say 10 and I'll be brave about it. It's for... tying things. To other things. Like me, to the ground.",
+    objectives: [{ type: 'collect', item: 'wool', count: 10 }],
+    rewards: { exp: 85000, gold: 700, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  rowan_scout: {
+    id: 'rowan_scout', name: 'Scout the Roost', giver: 'rowan', minLevel: 38, prereq: 'rowan_rope',
+    text: "The way to the Starlit Terrace goes right through the Harpy Roost in the Sky Garden. Could you go up first? Climb to the high ledges where they nest and drive off 15 Sky Harpies, so it's safe. And tell me how high it is. Honestly. No. Don't tell me. Tell me a bit.",
+    objectives: [{ type: 'visit', map: 'sky', above: 500, place: 'the high ledges of the Harpy Roost' }, { type: 'kill', mob: 'windbird', count: 15 }],
+    rewards: { exp: 90000, gold: 760, items: [] },
+  },
+  rowan_courage: {
+    id: 'rowan_courage', name: 'A Plume for Courage', giver: 'rowan', minLevel: 40, prereq: 'rowan_scout',
+    text: "I can't do it alone. Would you ask Brann and Tora how they got brave? Then bring me 8 Harpy Feathers. A knight wears a plume when he's being brave, and I'd like to look brave. Even if I'm only pretending. Mum said pretending counts if you keep doing it.",
+    objectives: [
+      { type: 'talk', npc: 'brann', say: "Brave? I've never been brave a day in my life, lad. You just pick the thing you love more than the thing you're scared of, and walk toward it. Tell him that. Then tell him I said nothing soppy." },
+      { type: 'talk', npc: 'tora', say: "Tell Rowan to look at what's in front of him, not what's under him. That's how I climb the forge chimney. Also: don't look down. Also: if he looks down, don't scream. I screamed. Once." },
+      { type: 'collect', item: 'feather', count: 8 },
+    ],
+    rewards: { exp: 100000, gold: 840, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  rowan_watch: {
+    id: 'rowan_watch', name: "The Knight's Watch", giver: 'rowan', minLevel: 41, prereq: 'rowan_courage',
+    text: "Plume on. Rope on. Daisies in the helmet, for luck. I'm ready. I'm not ready. Will you stand the watch with me? Climb all the way to the Starlit Terrace, the very top of the Sky Garden, and I'll be right behind you. Right behind. Holding your cape. Is that all right?",
+    objectives: [{ type: 'visit', map: 'sky', above: 360, place: 'the Starlit Terrace at the top of the Sky Garden, with Rowan' }],
+    rewards: { exp: 115000, gold: 1100, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
