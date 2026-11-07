@@ -32,4 +32,12 @@ export const COSTUME_LOOKS = [
   { key: 'retroswim', name: 'Retro Polka Swimsuit', slot: 'top', style: 'swim', cash: 2200, color: '#e5485f', covers: body },
   { key: 'surf', name: 'Surf Shorty Wetsuit', slot: 'top', style: 'swim', cash: 2400, color: '#2fb8c8', covers: [...body, 'cape'] },
   { key: 'ducky', name: 'Ducky Float Set', slot: 'top', style: 'swim', cash: 2000, color: '#7ac8ff', covers: [...body, 'cape'] },
+  // Coinbridge's people's own (data/npcs.js): never sold, theirs alone.
+  { key: 'cbledger', name: "Madame Ledger's Velvet Frock", slot: 'top', style: 'costume', cash: 0, color: '#6a2a5a', covers: [...body, 'gloves', 'cape'], unsold: true },
+  { key: 'cbhalvard', name: "Halvard's Old Gambeson", slot: 'top', style: 'costume', cash: 0, color: '#8a6a44', covers: [...body, 'gloves', 'cape'], unsold: true },
+  { key: 'cbpenny', name: "Penny's Clerk Waistcoat", slot: 'top', style: 'costume', cash: 0, color: '#7fcfb0', covers: body, unsold: true },
+  { key: 'cbjuniper', name: "Juniper's Kettle Apron", slot: 'top', style: 'costume', cash: 0, color: '#c8603a', covers: [...body, 'cape'], unsold: true },
+  { key: 'cbwendell', name: "Wendell's Comfy Cardigan", slot: 'top', style: 'costume', cash: 0, color: '#8a9a6a', covers: body, unsold: true },
+  { key: 'cbtilly', name: "Tilly's Card Shark Vest", slot: 'top', style: 'costume', cash: 0, color: '#3f8a5a', covers: body, unsold: true },
+  { key: 'cbmoth', name: "The Moth's Wing Shawl", slot: 'top', style: 'costume', cash: 0, color: '#3a2a4a', covers: [...body, 'cape'], unsold: true },
 ];

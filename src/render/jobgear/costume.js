@@ -91,6 +91,36 @@ const tail = (x, y, len, w, c, sw = 0, lean = 0) => T([[x - w / 2, y], [x + w / 
 // ---------- Tops ----------
 
 const TOPS = {
+  // ----- Coinbridge's own (data/npcs.js): never sold -----
+  // Madame Ledger: a plum velvet frock coat, darker lapels, a white ruffled jabot cascading down
+  // the front, two rows of gold buttons and a watch chain looped to a pocket.
+  cbledger: (p) => [T(TORSO, p.main), ...round(p), T([[MID - 3.4, 25.8], [MID - 0.4, 25.8], [MID - 1.6, 31.4]], darker(p.main, 0.2)), T([[MID + 3.4, 25.8], [MID + 0.4, 25.8], [MID + 1.6, 31.4]], darker(p.main, 0.2)),
+    ...scallops(MID - 1.6, MID + 1.6, 27, 3, 0.9, WHITE), ...scallops(MID - 1.4, MID + 1.4, 28.6, 3, 0.8, LACE), ...scallops(MID - 1.1, MID + 1.1, 30.2, 2, 0.7, WHITE),
+    ...[31.8, 33.6].flatMap((y) => [button(MID - 2.6, y, GOLD), button(MID + 2.6, y, GOLD)]), F(limb(MID + 3, 32.6, MID + 5.4, 33.8, 0.25, 0.25, GOLD)), E(MID + 5.6, 33.8, 0.8, 0.8, GOLD), F(R(9.8, 35, 11.8, 0.8, GOLD))],
+  // Guildmaster Halvard: a worn brown gambeson quilted in diamonds, a leather strap across the chest
+  // and a broad belt with a brass buckle and a pouch.
+  cbhalvard: (p) => [T(TORSO, p.main), ...round(p), ...[0, 1, 2, 3].flatMap((i) => [F(limb(10 + i * 3.4, 26.4, 13.4 + i * 3.4, 35, 0.3, 0.3, darker(p.main, 0.14))), F(limb(13.4 + i * 3.4, 26.4, 10 + i * 3.4, 35, 0.3, 0.3, darker(p.main, 0.14)))]),
+    F(limb(11, 26.8, 20.4, 34, 1.1, 1.1, '#5a3e2a')), F(limb(11, 26.8, 20.4, 34, 0.4, 0.4, '#7a5a3a')), F(R(9.8, 33.4, 11.8, 1.6, '#4a3424')), F(R(MID - 1, 33.2, 2, 2, GOLD)), F(R(MID - 0.4, 33.7, 0.8, 1, '#4a3424')), F(R(18.4, 34.6, 2.6, 2.2, '#6a4a30'))],
+  // Penny: a crisp white blouse under a mint waistcoat buttoned to a V, a big red bow at the
+  // collar, and a pen in the waistcoat's pocket.
+  cbpenny: (p) => [T(TORSO, '#fffaf2'), side(TORSO, 12, -1, '#f0e8dc'), T([[9.8, 27], [MID - 0.6, 30.6], [MID - 0.6, 36], [9.8, 36]], p.main), T([[21.4, 27], [MID + 0.6, 30.6], [MID + 0.6, 36], [21.4, 36]], p.main),
+    ...[31.6, 33.4, 35].map((y) => button(MID + 1.2, y, '#fffaf2')), F(R(17.6, 30.4, 2.6, 0.6, darker(p.main, 0.2))), F(limb(18.6, 28.6, 18.6, 30.6, 0.5, 0.5, '#4a6ad0')), F(E(18.6, 28.4, 0.4, 0.4, GOLD)), ...tieBow(MID, 26.6, '#e85a6a')],
+  // Juniper: her rust work dress, and over it a cream bib apron with a little gold kettle stitched
+  // on it, its straps over her shoulders.
+  cbjuniper: (p) => [T(TORSO, p.main), ...round(p), T([[MID - 3.8, 28.2], [MID + 3.8, 28.2], [MID + 4.2, 36], [MID - 4.2, 36]], '#fff0d8'), F(limb(MID - 3.6, 28.4, 11.4, 25.8, 0.6, 0.6, '#fff0d8')), F(limb(MID + 3.6, 28.4, 19.8, 25.8, 0.6, 0.6, '#fff0d8')),
+    E(MID, 31.6, 1.6, 1.3, GOLD), F(R(MID - 0.6, 29.6, 1.2, 0.8, GOLD)), T([[MID + 1.4, 31.2], [MID + 2.6, 30.4], [MID + 2.4, 31.4]], GOLD), ...scallops(MID - 3.6, MID + 3.6, 28.4, 5, 0.4, '#f8dcc0')],
+  // Old Wendell: a checked flannel shirt under an open olive cardigan with big wooden buttons.
+  cbwendell: (p) => [T(TORSO, '#e8d4b0'), ...[27.8, 30.4, 33].map((y) => band(TORSO, y, y + 0.6, '#c87a5a')), ...[12.6, MID, 18.6].map((x) => F(R(x - 0.3, 26, 0.6, 10, '#c87a5a'))),
+    T([[9.8, 26.2], [12.8, 26.2], [MID - 1.4, 36], [9.8, 36]], p.main), T([[21.4, 26.2], [18.4, 26.2], [MID + 1.4, 36], [21.4, 36]], p.main), side(TORSO, 12, -1, darker(p.main, 0.12)),
+    ...[29.6, 32.6].map((y) => E(MID - 1.6, y, 0.7, 0.7, '#a87a4a')), ...[10.6, 20.6].map((x) => F(R(x - 0.3, 26.6, 0.6, 9, lighter(p.main, 0.12))))],
+  // Tilly: a pink-striped shirt under a card-table green waistcoat with a suit on each button, and
+  // a red bow tie.
+  cbtilly: (p) => [T(TORSO, WHITE), ...[27.4, 29.6, 31.8, 34].map((y) => band(TORSO, y, y + 0.9, '#ffb0c8')), T([[9.8, 27.4], [MID - 0.6, 30.4], [MID - 0.6, 35.6], [9.8, 35.6]], p.main), T([[21.4, 27.4], [MID + 0.6, 30.4], [MID + 0.6, 35.6], [21.4, 35.6]], p.main),
+    F(T([[MID + 1.4, 30.6], [MID + 2, 31.2], [MID + 1.4, 31.8], [MID + 0.8, 31.2]], '#e85a6a')), F(E(MID + 1.4, 32.8, 0.5, 0.5, INK)), F(E(MID + 1.4, 34.4, 0.5, 0.5, '#e85a6a')), ...tieBow(MID, 26.6, '#e85a6a'), F(R(17.6, 29.6, 2.4, 0.5, darker(p.main, 0.2)))],
+  // The Masked Moth: a dusk-coloured robe crossed by a lavender sash, a scalloped collar like a
+  // moth's wing edge, and a string of little lantern charms at her waist.
+  cbmoth: (p) => [T(TORSO, p.main), ...round(p), F(limb(10.4, 27, 20.6, 34.6, 1.6, 1.6, '#c9b8e8')), F(limb(10.4, 27, 20.6, 34.6, 0.5, 0.5, '#e8dcf4')),
+    ...scallops(MID - 4, MID + 4, 26.6, 5, 0.9, '#5a4a7a'), ...[11.6, 13.6, 15.6, 17.6, 19.6].map((x, i) => E(x, 35.4 + (i % 2) * 0.4, 0.7, 0.9, i % 2 ? GOLD : '#c9a6ff'))],
   // ----- The Sweethearts' own (data/sweethearts.js) -----
   // Poppy: a cream blouse under a strawberry-print bib apron, a heart pocket, frilled edges.
   swbaker: (p) => [T(TORSO, '#fff6ec'), side(TORSO, 12, -1, '#f2e4d6'), T([[MID - 4.4, 27], [MID + 4.4, 27], [MID + 4.8, 35.8], [MID - 4.8, 35.8]], p.main),
@@ -177,11 +207,21 @@ const TOPS = {
 };
 
 // Upper-arm colours (the default is p.main) and which sleeves run to the wrist.
-const SLEEVES = { swbaker: () => '#fff6ec', swknight: () => '#dfe6f2', swfox: () => WHITE, swsailor: (p) => p.main, ballgown: (p) => p.light, cheer: () => WHITE, mermaid: () => '#e6f8ff', snow: () => WHITE };
-const LONG = new Set(['swpoet', 'swknight', 'swfox', 'swstar', 'swsailor', 'yukata', 'gothic', 'pajamas', 'astronaut', 'detective', 'tuxedo', 'pirate', 'aviator', 'snow']);
+const SLEEVES = { cbpenny: () => '#fffaf2', cbtilly: () => WHITE, swbaker: () => '#fff6ec', swknight: () => '#dfe6f2', swfox: () => WHITE, swsailor: (p) => p.main, ballgown: (p) => p.light, cheer: () => WHITE, mermaid: () => '#e6f8ff', snow: () => WHITE };
+const LONG = new Set(['cbledger', 'cbhalvard', 'cbpenny', 'cbwendell', 'cbmoth', 'swpoet', 'swknight', 'swfox', 'swstar', 'swsailor', 'yukata', 'gothic', 'pajamas', 'astronaut', 'detective', 'tuxedo', 'pirate', 'aviator', 'snow']);
 
 // Over each shoulder.
 const SHOULDERS = {
+  // Ledger's velvet shoulders with gold fringe; Halvard's leather pauldrons, riveted; Penny's
+  // puffed blouse with a red sleeve garter; Juniper's rolled-up sleeves; Wendell's chunky knit;
+  // Tilly's striped short sleeves; the Moth's fuzzy-edged bell sleeves.
+  cbledger: (p) => [E(0, 0.6, 3.4, 2.8, p.main), F(E(-0.6, -0.2, 1.4, 0.9, lighter(p.main, 0.14))), F(R(-3.2, 2.2, 6.4, 0.7, GOLD)), ...ring(5, (i) => F(R(-2.8 + i * 1.3, 2.9, 0.4, 1.2, GOLD)))],
+  cbhalvard: () => [E(0, 0.4, 3.9, 3.1, '#6a4a30'), F(R(-3.6, 1.4, 7.2, 0.8, '#4a3424')), F(R(-3.2, 3, 6.4, 0.7, '#4a3424')), ...[-2.4, 0, 2.4].map((x) => F(E(x, 0.4, 0.35, 0.35, GOLD)))],
+  cbpenny: () => [E(0, 0.6, 3.1, 2.7, '#fffaf2'), F(E(-0.6, -0.2, 1.4, 0.9, WHITE)), F(R(-3, 3.2, 6, 0.9, '#e85a6a'))],
+  cbjuniper: (p) => [E(0, 0.6, 3, 2.6, p.main), F(R(-3, 2.4, 6, 1.4, '#fff0d8')), F(R(-3, 3.6, 6, 0.4, '#e8d0b8'))],
+  cbwendell: (p) => [E(0, 0.8, 3.3, 2.9, p.main), ...[-1.6, 0, 1.6].map((x) => F(limb(x, -0.8, x, 2.8, 0.4, 0.4, darker(p.main, 0.12))))],
+  cbtilly: () => [E(0, 0.6, 3, 2.5, WHITE), F(R(-2.8, 0.4, 5.6, 0.8, '#ffb0c8')), F(R(-2.8, 2.2, 5.6, 0.8, '#ffb0c8'))],
+  cbmoth: (p) => [T([[-2.8, -0.6], [2.8, -0.6], [4, 5.8], [-4, 5.8]], p.main), ...scallops(-3.8, 3.8, 5.8, 5, 0.6, '#c9b8e8')],
   // Poppy's puffed sleeves; Lark's chunky knit; Rowan's round pauldrons; Yuzu's wide hanging
   // haori sleeves; Celeste's bell sleeves with stars; Marlowe's jacket shoulders with gold.
   swbaker: () => [E(0, 0.6, 3, 2.6, '#fff6ec'), F(E(-0.6, -0.2, 1.4, 0.9, WHITE)), ...scallops(-2.6, 2.6, 2.8, 4, 0.4, '#ffd2e0')],
@@ -213,6 +253,13 @@ const SHOULDERS = {
 // ---------- Legs ----------
 
 const LEGS = {
+  cbledger: () => ({ top: '#2a2233', low: '#2a2233', pad: null }),
+  cbhalvard: () => ({ top: '#5a5a4a', low: '#5a5a4a', pad: '#6a4a30' }),
+  cbpenny: () => ({ top: '#fff6ec', low: '#fff6ec', pad: null, cuff: '#7fcfb0' }),
+  cbjuniper: () => ({ top: '#fff0d8', low: '#fff0d8', pad: null }),
+  cbwendell: () => ({ top: '#8a6a4a', low: '#8a6a4a', pad: null }),
+  cbtilly: (p, s) => ({ top: s, low: '#ffb0c8', pad: null, cuff: WHITE }),
+  cbmoth: () => ({ top: '#2a2036', low: '#2a2036', pad: null }),
   swbaker: () => ({ top: WHITE, low: WHITE, pad: null, cuff: '#ffd2e0' }),
   swpoet: () => ({ top: '#3a4a7a', low: '#3a4a7a', pad: null }),
   swknight: () => ({ top: '#6a5a7a', low: '#dfe6f2', pad: '#b8c4d8' }),
@@ -236,6 +283,19 @@ const LEGS = {
 // ---------- Skirts, coats and tails over the legs ----------
 
 const SKIRTS = {
+  // Ledger's frock coat skirts, split up the front over a lilac lining, a gold band at the hem.
+  cbledger: (p) => [skirt(44, 5, p.main), T([[MID - 1, 34.6], [MID + 1, 34.6], [MID + 2.6, 44], [MID - 2.6, 44]], '#c8a0d8'), skirtBand(44, 5, 34.2, 42.8, 44, GOLD)],
+  // Halvard's quilted coat skirt to mid-thigh, quilting running on down it.
+  cbhalvard: (p) => [skirt(40, 2.4, p.main), ...[12, MID, 19].map((x) => F(R(x - 0.2, 35.4, 0.4, 4.4, darker(p.main, 0.14)))), skirtBand(40, 2.4, 34.2, 39, 40, darker(p.main, 0.2))],
+  // Penny's pleated navy skirt.
+  cbpenny: () => [skirt(42, 3, '#3a4a7a'), ...[11.4, 13.6, MID + 0.4, 17.8, 20].map((x) => F(R(x - 0.2, 35, 0.4, 6.6, '#2a3a6a'))), skirtBand(42, 3, 34.2, 41.2, 42, '#5a6a9a')],
+  // Juniper's long rust skirt with the cream apron down the front, a scalloped apron hem.
+  cbjuniper: (p) => [skirt(46, 4.4, p.main), T([[MID - 4.2, 35], [MID + 4.2, 35], [MID + 5.2, 44], [MID - 5.2, 44]], '#fff0d8'), ...scallops(MID - 5, MID + 5, 44, 6, 0.6, '#fff0d8'), F(R(MID + 1.6, 38, 2.4, 2, '#f0dcc0'))],
+  // Tilly's navy shorts, just peeking under her waistcoat.
+  cbtilly: () => [skirt(38.6, 1.2, '#3a4a7a'), F(R(MID - 0.2, 35.6, 0.4, 3, '#2a3a6a'))],
+  // The Moth's long robe, and over it a shorter lavender layer with a ragged wing-edge hem and two
+  // eyespots, like folded moth wings.
+  cbmoth: (p) => [skirt(48, 6, p.main), skirt(43, 4.6, '#5a4a7a'), ...scallops(MID - 5.8, MID + 5.8, 43, 6, 0.8, '#5a4a7a'), ...[[MID - 3.2, 39.6], [MID + 3.2, 39.6]].flatMap(([x, y]) => [E(x, y, 1.3, 1.2, '#c9b8e8'), F(E(x, y, 0.6, 0.55, '#2a2036'))])],
   // Poppy: a pink skirt to the knee with a white apron panel and a scalloped hem.
   swbaker: (p) => [skirt(45, 4, p.main), T([[MID - 3.6, 35], [MID + 3.6, 35], [MID + 4.6, 44], [MID - 4.6, 44]], '#fff6ec'), ...scallops(MID - 4.6, MID + 4.6, 44, 5, 0.6, WHITE),
     ...[[13.2, 38.4], [17.6, 39.8], [15, 42]].flatMap(([x, y]) => [E(x, y, 0.9, 1, RED), F(E(x, y - 0.9, 0.7, 0.35, '#5fbf7a'))]), ...scallops(6.6, 24.4, 45, 9, 0.5, darker(p.main, 0.12))],
@@ -298,6 +358,16 @@ const SKIRTS = {
 // ---------- Shoes (in the foot's frame: x toward the toe, y down to the sole) ----------
 
 const SHOES = {
+  // Ledger's heeled boots with a gold buckle; Halvard's tall worn boots folded at the cuff; Penny's
+  // penny loafers (a gold coin in each); Juniper's wooden clogs; Wendell's plaid slippers; Tilly's
+  // high-tops; the Moth's soft pom-pom slippers.
+  cbledger: (p, k, c) => [k.shaft(4.2, c('#2a2233'), 3.2), k.sole(c('#1a1422')), k.poly([[-2.6, 2.2], [-1.6, 2.2], [-1.8, 3.8], [-2.6, 3.8]], c('#1a1422')), k.dot(1, -0.6, 0.45, c(GOLD))],
+  cbhalvard: (p, k, c) => [k.shaft(6.4, c('#4a3424'), 3.4), k.sole(c('#2a1e14')), k.shaft(1.4, c('#6a4a30'), 3.8), k.dot(0.6, -2.8, 0.35, c(GOLD))],
+  cbpenny: (p, k, c) => [k.sole(c('#5a3a2a')), k.poly([[-2.6, -0.6], [2.6, -0.6], [2.8, 1.6], [-2.8, 1.6]], c('#6a4430')), k.dot(0.8, -0.2, 0.55, c(GOLD))],
+  cbjuniper: (p, k, c) => [k.poly([[-3, -0.4], [3, -0.4], [3.4, 2.4], [-3.2, 2.4]], c('#b8844a')), k.poly([[-3.2, 2.4], [3.4, 2.4], [3.2, 3.4], [-3, 3.4]], c('#8a5a2a')), k.poly([[-2, -0.6], [2, -0.6], [2, 0.4], [-2, 0.4]], c(p.main))],
+  cbwendell: (p, k, c) => [k.poly([[-3, -0.4], [3, -0.4], [3.6, 2], [3, 3], [-3, 3], [-3.4, 2]], c('#a84a4a')), k.poly([[-2.6, 0.6], [2.6, 0.6], [2.6, 1.2], [-2.6, 1.2]], c('#e8c87a')), k.dot(2.4, 0, 0.5, c('#f4e8d8'))],
+  cbtilly: (p, k, c) => [k.shaft(2.4, c(WHITE), 3), k.sole(c('#e85a6a')), k.poly([[1.4, 0.4], [3.2, 0.4], [3.2, 2.2], [1.4, 2.2]], c(WHITE)), k.dot(0, -0.8, 0.35, c('#e85a6a'))],
+  cbmoth: (p, k, c) => [k.sole(c('#2a2036')), k.poly([[-2.8, -0.6], [2.8, -0.6], [3, 1.6], [-3, 1.6]], c('#4a3a5a')), k.dot(2.4, -0.6, 0.8, c('#c9b8e8'))],
   // Red Mary Janes; navy ankle boots; steel sabatons; geta; moon slippers; deck boots.
   swbaker: (p, k, c) => [k.shaft(1.4, c(WHITE), 3), k.sole(c(RED)), k.poly([[-2.4, -0.6], [2.4, -0.6], [2.4, 0], [-2.4, 0]], c(RED)), k.dot(1.4, 0.6, 0.5, c(WHITE))],
   swpoet: (p, k, c) => [k.shaft(3, c('#2a3a6a'), 3.2), k.sole(c('#2a3a6a')), k.poly([[-3, 2.2], [3, 2.2], [2.8, 3.2], [-2.8, 3.2]], c('#1a2440'))],
@@ -331,6 +401,34 @@ const SHOES = {
 // ---------- Headpieces ----------
 
 const HATS = {
+  // Ledger: a little top hat worn tipped over one side, a plum band, and a curling feather.
+  cbledger: (p) => [T([[16, 2.4], [24.6, 1], [24.4, -5.4], [17, -4.6]], '#2a2233'), F(T([[16.4, 0.4], [24.6, -1], [24.6, 0.6], [16.4, 2]], p.main)), E(20.4, 2.4, 6.6, 1.4, '#2a2233'), F(E(19, 2, 3, 0.5, '#4a3a55')),
+    F(limb(23.6, 0, 26.8, -6, 0.9, 0.2, '#c9a6ff')), F(limb(24.4, -1.4, 27.6, -4.4, 0.5, 0.15, '#e8dcf4')), sparkle(17.6, -3.6, 0.5, WHITE)],
+  // Penny: a green accountant's visor, its clear brim tinted mint over her brow.
+  cbpenny: () => [F(R(5.4, 6.4, 20.2, 1.6, '#3a8a6a')), T([[16, 7.4], [27.6, 7.6], [28.6, 10], [17, 9.2]], '#9fe0c0'), F(T([[18, 8], [27, 8.2], [27.4, 8.8], [18.4, 8.6]], '#d8fff0')), F(limb(16, 7.6, 27.6, 7.8, 0.4, 0.4, '#5fb88a'))],
+  // Juniper: a polka-dot kerchief tied as a band round her bun, its knot and two tips at the side.
+  cbjuniper: () => [T([[5.6, 6], [25.4, 6], [25, 3.4], [6, 3.4]], '#e8504a'), ...[8, 11.6, 15.2, 18.8, 22.4].map((x) => F(E(x, 4.8, 0.55, 0.55, WHITE))), E(25.8, 4.8, 1.4, 1.2, '#e8504a'), T([[26.4, 4.8], [29.6, 3.2], [29, 6]], '#e8504a'), T([[26.4, 5.2], [28.6, 7.8], [26.4, 8]], '#c8403a')],
+  // Old Wendell: a tweed flat cap, its peak pulled down at the front.
+  cbwendell: () => [dome(15.5, 8.4, 11.4, 6.6, '#7a6a5a'), T([[18.6, 7.6], [29.6, 8], [29.2, 10], [18.6, 9.6]], '#6a5a4a'), ...[9, 12.6, 16.2, 19.8].map((x) => F(limb(x, 3.4, x + 2, 7.4, 0.25, 0.25, '#5a4a3a'))), F(E(15.5, 1.8, 0.8, 0.6, '#5a4a3a'))],
+  // Tilly: a puffy newsboy cap with a button on top and a playing card tucked in its band.
+  cbtilly: (p) => [dome(15.5, 8.2, 11.6, 7, p.main), F(R(4.6, 7, 21.8, 1.4, darker(p.main, 0.2))), T([[19, 7.8], [28.8, 8.2], [28, 9.8], [19, 9.4]], darker(p.main, 0.12)), F(E(15.5, 1.4, 1, 0.8, darker(p.main, 0.2))),
+    T([[7.6, 7.4], [10.6, 6.4], [11.8, 10.6], [8.8, 11.6]], WHITE), F(T([[9.8, 8.4], [10.4, 9], [9.8, 9.6], [9.2, 9]], '#e85a6a'))],
+  // The Masked Moth: a thin gold circlet with a crescent moon at the brow and beads hanging from it,
+  // and her own mask, a moth across her eyes: a forewing sweeping up from each eye to the temple
+  // and a smaller hindwing below it, fuzzy pale edges, an eyespot on each forewing, gold rims round
+  // the eye holes (her eyes show through), and the moth's fuzzy little body on the bridge of her nose.
+  cbmoth: () => {
+    const mask = [[11.2, 18.2, -1], [19.8, 18.2, 1]].flatMap(([x, y, o]) => [
+      T([[x + 1.2 * o, y - 2.4], [x + 3.6 * o, y - 6.6], [x + 7.4 * o, y - 8.4], [x + 8 * o, y - 4.6], [x + 6 * o, y - 0.6], [x + 3 * o, y + 0.4]], '#efe6fa'),
+      F(T([[x + 2.2 * o, y - 3], [x + 4.4 * o, y - 6.4], [x + 6.8 * o, y - 7.4], [x + 6.6 * o, y - 4.4], [x + 4.6 * o, y - 2]], '#ffffff')), F(limb(x + 2 * o, y - 2.6, x + 7 * o, y - 7.6, 0.25, 0.25, '#b8a0e0')), F(limb(x + 3 * o, y - 1.2, x + 7.6 * o, y - 4.4, 0.25, 0.25, '#b8a0e0')),
+      T([[x + 2.6 * o, y + 1], [x + 5.8 * o, y + 0.2], [x + 6.6 * o, y + 3.2], [x + 4 * o, y + 4.2], [x + 2 * o, y + 2.6]], '#d8c8f0'),
+      ...scallops(x + 4 * o, x + 7.6 * o, y - 8, 3, 0.55, '#ffffff'), ...scallops(x + 4 * o, x + 6.4 * o, y + 3.8, 2, 0.45, '#ffffff'),
+      E(x + 5.4 * o, y - 4.6, 1.4, 1.3, '#7a5ac8'), F(E(x + 5.4 * o, y - 4.6, 0.9, 0.85, GOLD)), F(E(x + 5.4 * o, y - 4.6, 0.45, 0.42, '#2a2036')), F(E(x + 5.1 * o, y - 4.9, 0.25, 0.25, WHITE)),
+      hoop(x, y + 0.1, 3, 2.6, 2.2, 1.8, '#efe6fa', 0, 360, 16), F(hoop(x, y + 0.1, 2.4, 2, 2.2, 1.8, '#b8a0e0', 0, 360, 14)),
+    ]);
+    const body = [E(15.5, 17.4, 1.2, 2.2, '#efe6fa'), ...ring(4, (i) => F(R(14.5, 15.8 + i * 0.9, 2, 0.35, '#b8a0e0'))), F(E(15.5, 15, 0.8, 0.7, WHITE))];
+    return [F(limb(5.6, 8.4, 25.4, 8.4, 0.5, 0.5, GOLD)), E(15.5, 7.2, 1.8, 1.8, GOLD), F(E(16.3, 6.8, 1.5, 1.5, '#3a2a4a')), ...[11.6, 13.4, 17.6, 19.4].map((x, i) => F(E(x, 9.6 + (i % 2) * 0.6, 0.45, 0.45, i % 2 ? '#c9a6ff' : GOLD))), ...mask, ...body];
+  },
   // Poppy: a big cream kerchief bow on top of her buns, a strawberry clip, a dusting of flour.
   swbaker: () => [T([[15.5, 1.6], [9.4, -2.4], [8.4, 1.8], [9.8, 4.4], [15.5, 2.8]], '#fff6ec'), T([[15.5, 1.6], [21.6, -2.4], [22.6, 1.8], [21.2, 4.4], [15.5, 2.8]], '#fff6ec'),
     F(T([[15.5, 1.8], [10.4, -0.8], [10, 1.6], [15.5, 2.4]], WHITE)), E(15.5, 2.2, 1.6, 1.4, '#ffd2e0'), E(22.6, 7.4, 1.6, 1.8, RED), F(E(22.6, 6, 1.2, 0.6, '#5fbf7a')), sparkle(8.2, 4.6, 0.7, WHITE), sparkle(24, 2.6, 0.6, WHITE)],
@@ -450,6 +548,9 @@ const HAT_BACKS = {
 function hand(t, p, hx, hy, ex, ey) {
   const at = (u) => [hx + (ex - hx) * u, hy + (ey - hy) * u];
   switch (keyOf(t)) {
+    // Ledger's lace gloves; Halvard's worn leather gauntlets.
+    case 'cbledger': return [limb(...at(0), ...at(0.4), 3, 3.2, '#f6f0fa'), E(hx, hy, 1.9, 1.9, '#f6f0fa'), F(E(...at(0.42), 1.8, 0.7, WHITE)), F(E(hx - 0.5, hy - 0.6, 0.6, 0.5, WHITE))];
+    case 'cbhalvard': return [limb(...at(0.1), ...at(0.45), 4.2, 4, '#4a3424'), E(hx, hy, 2.1, 2, '#5a3e2a'), F(R(hx - 1.6, hy - 1.4, 3.2, 0.6, '#6a4a30'))];
     // Rowan's soft steel gauntlets.
     case 'swknight': return [limb(...at(0.1), ...at(0.45), 4.4, 4.2, '#dfe6f2'), E(hx, hy, 2.3, 2.2, '#dfe6f2'), F(E(hx - 0.6, hy - 0.7, 0.9, 0.6, WHITE))];
     // A sleepy star pillow hugged in the front hand.
@@ -475,6 +576,19 @@ function hand(t, p, hx, hy, ex, ey) {
 function capeBack(t, p, m) {
   const sw = m?.sway ?? 0;
   switch (keyOf(t)) {
+    // Ledger's frock coat tails behind; Halvard's short travel cloak off one shoulder; Juniper's
+    // apron strings in a bow; the Moth's great moth-wing shawl with its eyespots, swaying.
+    case 'cbledger': return [tail(12.6, 33.6, 13, 3.2, darker(p.main, 0.1), sw, -0.8), tail(18.4, 33.6, 13, 3.2, darker(p.main, 0.1), sw, 0.8)];
+    case 'cbhalvard': return [T([[9, 25.6], [17, 25.6], [18 + sw, 40], [7 + sw, 41]], '#4a5a3a'), F(R(7 + sw, 39.6, 11, 0.8, '#3a4a2a'))];
+    case 'cbjuniper': return [T([[11, 33], [6.4, 30.6], [6, 35], [11, 34.6]], '#fff0d8'), T([[20.2, 33], [24.8, 30.6], [25.2, 35], [20.2, 34.6]], '#fff0d8'), tail(13.4, 34, 7, 1.6, '#fff0d8', sw, -1), tail(17.8, 34, 7, 1.6, '#fff0d8', sw, 1)];
+    case 'cbmoth': {
+      const wing = (dir) => {
+        const X = (x) => MID + dir * x;
+        return [T([[X(3), 25.8], [X(14), 22 + sw * 0.3], [X(16.4 + sw * 0.4), 30], [X(12), 40 + sw], [X(6), 42], [X(3), 34]], '#5a4a7a'), T([[X(4), 27], [X(12.6), 24.4], [X(14.4), 30], [X(11), 37], [X(5), 38]], '#7a6aa0'),
+          E(X(10), 30.4, 2.4, 2.2, '#e8dcf4'), F(E(X(10), 30.4, 1.4, 1.3, GOLD)), F(E(X(10), 30.4, 0.7, 0.65, '#2a2036')), ...scallops(X(5), X(12), 41 + sw * 0.6, 4, 0.7, '#c9b8e8')];
+      };
+      return [...wing(-1), ...wing(1)];
+    }
     // Poppy's apron strings tied in a bow at the back.
     case 'swbaker': return [T([[11, 33], [6, 30.4], [5.6, 35], [11, 34.6]], WHITE), T([[20.2, 33], [25.2, 30.4], [25.6, 35], [20.2, 34.6]], WHITE), tail(13, 34, 8, 1.8, WHITE, sw, -1), tail(18.2, 34, 7, 1.8, WHITE, sw, 1)];
     // Lark's long striped scarf, streaming out behind.
@@ -547,6 +661,11 @@ function capeBack(t, p, m) {
 }
 function capeFront(t, p) {
   switch (keyOf(t)) {
+    // Halvard's red scarf knotted at the throat; Juniper's striped tea towel over her shoulder; the
+    // Moth's fuzzy collar.
+    case 'cbhalvard': return [E(MID, 26.2, 5, 1.6, '#a84a3a'), T([[MID + 2, 26.6], [MID + 3.6, 26.6], [MID + 4.2, 31], [MID + 2.8, 30.8]], '#a84a3a'), F(R(MID + 2.4, 29.4, 1.6, 0.4, '#c86a5a'))];
+    case 'cbjuniper': return [T([[18.4, 25.4], [21.6, 25.2], [22.2, 33], [19.2, 33.2]], WHITE), ...[27.4, 29.8, 32].map((y) => F(R(18.8, y, 3.2, 0.7, '#e85a6a')))];
+    case 'cbmoth': return [E(MID, 25.8, 6.6, 1.9, '#e8dcf4'), ...scallops(MID - 6, MID + 6, 26.8, 8, 0.7, '#e8dcf4')];
     // Lark's scarf wrapped round the neck, one end down the front.
     case 'swpoet': return [E(MID, 26.2, 5.4, 1.8, '#ffd34d'), ...[MID - 3, MID, MID + 3].map((x) => F(R(x - 0.4, 25, 0.8, 2.4, '#ff8a6a'))), T([[MID + 2.2, 26.6], [MID + 4.2, 26.6], [MID + 4.8, 33], [MID + 3, 32.8]], '#ffd34d'), F(R(MID + 3.2, 29, 1.6, 0.8, '#ff8a6a'))];
     case 'astronaut': return [limb(11.6, 26.2, 11.4, 33, 1.6, 1.6, '#8a92a8'), limb(19.6, 26.2, 19.8, 33, 1.6, 1.6, '#8a92a8')];

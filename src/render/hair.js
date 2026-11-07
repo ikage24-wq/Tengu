@@ -1226,6 +1226,109 @@ Object.assign(STYLES, {
   },
 });
 
+// ---------- Coinbridge's own (2026-11-07): one style each, worn by nobody else ----------
+// Not offered in the creator or the salon (OWN_HAIR): each belongs to one of the town's people.
+Object.assign(STYLES, {
+  // Madame Ledger: a glossy finger-wave bob, deep S-waves pressed across the crown, the ends turned
+  // under in curls at the jaw, and one big kiss curl looping on her near cheek.
+  ledgerwaves(r, m) {
+    const waves = [streak(7.6, 8.2, 13.4, 3.4, 1.4, 0.8, r.hi), streak(13.4, 3.4, 19.6, 4.6, 1.2, -0.8, r.hi), streak(19.6, 4.6, 25, 9.6, 1.2, 0.8, r.hi),
+      streak(8.6, 11, 14, 6.6, 0.8, 0.8, r.sh2), streak(14, 6.6, 20.4, 7.6, 0.7, -0.8, r.sh2)];
+    const curl = lock([[24.6, 12.6], [27.4, 16.4], [26.6, 20.4], [24.2, 20.6], [23.8, 18.4], [25.4, 17.6]], 3.6, r.base, m, 1.1, 0.5);
+    return {
+      head: [crown(r)],
+      hang: [napeShadow(r, 19), ...sheet({ len: 23, flare: 13, ends: 'curls', n: 4, w0: 12 }, r, m, 0.7)],
+      front: bangs('swept', r, m, [curl, lock([[6.8, 12], [5.2, 16.6], [5.8, 20.6]], 3.4, r.base, m, 0.9), ...waves]),
+      top: waves,
+      tips: [20, 23],
+    };
+  },
+  // Guildmaster Halvard: an old adventurer's grey mane combed straight back and tied in a thick tail
+  // worn forward over his shoulder, with a couple of loose strands fallen over his brow.
+  veterantail(r, m) {
+    // (The tail is brought forward over his near shoulder, the way he wears it.)
+    const tail = [[21.4, 17.4], [25, 22], [26, 28], [25.2, 33.6]];
+    const strands = [lock([[21.6, 6.8], [24.4, 11.6], [25, 16.4]], 1.7, r.base, m, 1.3, 0.3), lock([[19.6, 7.2], [22.6, 12.2], [23, 15.2]], 1.3, r.hi, m, 1.4, 0.3)];
+    return {
+      head: [shortBack(r, m, 21), F(E(6.4, 16, 2.2, 3.6, r.sh1)), F(E(24.6, 16, 2.2, 3.6, r.sh1))],
+      hang: [],
+      front: bangs('bare', r, m, [...strands, lock(tail, 5, r.base, m, 1, 0.35), streak(23.4, 20, 25.4, 29, 0.8, -0.4, r.hi, m), F(E(22.6, 19, 2.2, 1.4, '#6a4a3a')), F(E(22.2, 18.6, 0.9, 0.5, '#8a6a5a'))]),
+      tips: [26, 32],
+    };
+  },
+  // Penny: tidy blunt bangs, and two plaits looped up into rings over her ears and pinned, the way a
+  // clerk keeps her hair out of the ink.
+  clerkloops(r, m) {
+    const loop = [[25, 12.4], [27.4, 16.6], [27.6, 21.4], [25.6, 23.8], [23.8, 21.8], [24.2, 17]];
+    return {
+      head: [crown(r)],
+      hang: [...sheet({ len: 21, flare: 12, n: 3 }, r, m, 0.6), ...plait(loop, 3.2, r, m, 0.6, r.sh1), ...plait(fx(loop), 3.2, r, m, 0.6, r.sh1)],
+      front: bangs('blunt', r, m, [...plait(loop, 3.2, r, m, 0.6), F(E(24.4, 13, 1, 1, r.hi))]),
+      tips: [19, 22],
+    };
+  },
+  // Juniper: everything piled into one big soft bun high on the back of her head, and curly
+  // tendrils by her ears from a long day at the stove.
+  kettlebun(r, m) {
+    const knot = bun(15.5, 0.2, 6.6, 5.4, r);
+    const tendril = [[24.8, 11.4], [26.6, 15.4], [25.4, 18.4], [26.8, 21.4], [25.8, 23.6]];
+    return {
+      head: [crown(r), ...knot],
+      hang: [napeShadow(r, 18)],
+      front: bangs('wispy', r, m, [lock(tendril, 2.2, r.base, m, 1.3, 0.3), lock(fx(tendril), 2.2, r.base, m, 1.3, 0.3)]),
+      top: knot,
+      tips: [16, 22],
+    };
+  },
+  // Old Wendell: thin on top and combed over, with two fluffy white tufts puffing out over his ears.
+  oldtufts(r, m) {
+    const tuft = (x, dir) => [mass([[x, 11], [x + dir * 3.6, 12.6], [x + dir * 4.6, 16.4], [x + dir * 3.6, 20.4], [x + dir * 0.6, 21.6], [x - dir * 0.6, 17]], r.base, m, 0.5), streak(x + dir * 1.4, 13, x + dir * 3.2, 18.6, 0.8, -0.4 * dir, r.hi), streak(x + dir * 0.8, 15, x + dir * 2.2, 20, 0.5, -0.3 * dir, r.sh1)];
+    return {
+      head: [cropBack(r, m, 19)],
+      hang: [],
+      front: bangs('buzz', r, m, [...tuft(23.6, 1), ...tuft(7.4, -1), streak(10.4, 6.4, 21.4, 5.4, 0.7, -0.6, r.hi)]),
+      tips: [99, 99],
+    };
+  },
+  // Tilly: a choppy little bob, one round topknot bun sitting on her crown like a pompom, and a
+  // skinny rat-tail plait down her back (she says it's lucky).
+  tillytuft(r, m) {
+    const top = [...bun(15.5, -1.6, 4.4, 4, r), lock([[15.5, -5.2], [16.6, -7], [18.2, -6.4]], 1.8, r.base, m, 0.4, 0.4)];
+    return {
+      head: [crown(r), ...top],
+      hang: [...sheet({ len: 22, flare: 12.8, n: 4 }, r, m), ...plait([[15.5, 21], [16.2, 26], [15.4, 31], [16.4, 37]], 2.4, r, m, 1.3, r.sh1)],
+      front: bangs('soft', r, m, sideLocks(r, m, [[25, 11.6], [26.4, 16.4], [25.8, 20.6]], undefined, 3.2)),
+      top,
+      tips: [19, 22],
+    };
+  },
+  // The Masked Moth: long straight dusk-coloured hair to the waist, swept out at the temples into
+  // two broad wing-shaped panels like a moth's forewings, and two fine antennae of hair curling up
+  // from the crown, each ending in a little feathered tip.
+  mothwing(r, m) {
+    const wing = (dir) => {
+      const X = (x) => HX + dir * x;
+      // A forewing: from the temple up and out to a point, its trailing edge curving back in, a
+      // light leading edge and an eyespot ringed in the hair's own shine.
+      return [mass([[X(9), 9], P(X(13.6), 1.6), P(X(19.4), -2.2), [X(18.8), 3.6], [X(16.4), 9.4], [X(12.4), 13.6]], r.sh1, m, 0.3),
+        streak(X(10), 8, X(18.6), -1.6, 0.9, 0.4 * dir, r.hi), F(E(X(15.4), 5.2, 1.8, 1.5, r.hi)), F(E(X(15.4), 5.2, 1, 0.85, r.sh2)), streak(X(12), 11.6, X(17), 5.6, 0.5, -0.3 * dir, r.base)];
+    };
+    const antenna = (dir) => {
+      const sp = [[HX + dir * 2.4, 2.8], [HX + dir * 4, -1.6], [HX + dir * 6.8, -4.4], [HX + dir * 8.8, -3.8]];
+      return [lock(sp, 1.1, r.sh1, m, 0.5, 0.6), F(E(HX + dir * 9.2, -3.6, 1.4, 0.9, r.base)), F(E(HX + dir * 9.4, -3.9, 0.6, 0.4, r.hi))];
+    };
+    const ants = [...antenna(1), ...antenna(-1)];
+    return {
+      head: [crown(r, 0.4), ...wing(1), ...wing(-1)],
+      hang: [napeShadow(r), ...sheet({ len: 46, flare: 13.4, ends: 'level', n: 5, w0: 12 }, r, m)],
+      front: bangs('hime', r, m, [...sideLocks(r, m, [[24.8, 12], [25.6, 20], [25.2, 28], [25.8, 34]], undefined, 3.4), ...ants]),
+      top: ants,
+      tips: [36, 42],
+    };
+  },
+});
+OWN_HAIR.push('ledgerwaves', 'veterantail', 'clerkloops', 'kettlebun', 'oldtufts', 'tillytuft', 'mothwing');
+
 // ---------- More fringes ----------
 // Long, sharp and centre-parted fringes the court and wild styles above draw with.
 Object.assign(FRINGES, {

@@ -1303,14 +1303,14 @@ const ROUTINES = {
   moth(t) {
     const b = bitAt(t, [['raise', 3], ['beckon', 2.4], ['curtsy', 1.8]], 2.6);
     const lantern = (k, lift = 0) => (ctx, f) => prop(ctx, 'lantern', f[0], f[1] - lift, 1, t * k);
-    if (!b) return { face: 'cool', hands: lantern(1) };
+    if (!b) return { face: 'smugcat', hands: lantern(1) };
     const k = inOut(b.u);
-    if (b.kind === 'raise') return { face: 'smug', rig: { frontArm: arm(3 * k, -12 * k), tilt: -2 * k, hy: h(-0.6 * k) }, hands: lantern(1) };
+    if (b.kind === 'raise') return { face: 'smugcat', rig: { frontArm: arm(3 * k, -12 * k), tilt: -2 * k, hy: h(-0.6 * k) }, hands: lantern(1) };
     if (b.kind === 'beckon') {
       const curl = Math.max(0, Math.sin(b.s * 5));
-      return { face: 'cool', rig: { backArm: arm((4 - curl * 2) * k, (-5 - curl) * k), tilt: 2 * k }, hands: lantern(1) };
+      return { face: 'smugcat', rig: { backArm: arm((4 - curl * 2) * k, (-5 - curl) * k), tilt: 2 * k }, hands: lantern(1) };
     }
-    return { face: 'smug', rig: { frontArm: arm(2 * k, 3 * k), backArm: arm(3 * k, 3 * k), squat: Math.round(2 * k), tilt: 9 * k, hy: h(1.2 * k) }, hands: lantern(1) };
+    return { face: 'smugcat', rig: { frontArm: arm(2 * k, 3 * k), backArm: arm(3 * k, 3 * k), squat: Math.round(2 * k), tilt: 9 * k, hy: h(1.2 * k) }, hands: lantern(1) };
   },
   // Madame Ledger: tapping her gavel into her palm, fanning herself, an auctioneer's grand
   // "Sold!" with the gavel high.
