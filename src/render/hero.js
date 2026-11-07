@@ -58,6 +58,9 @@ const OY = 22;
 const W = 30 + OX * 2;
 const H = Math.ceil(NECK + (LEG_TOP - NECK) * KY + (56 - LEG_TOP) * KY * KL) + OY;
 const INK = '#3a2d4f';
+// Room under a figure's feet for what hangs below them (the longest hair, tails, capes): the
+// sprite is placed by its top, so this only adds canvas underneath.
+const BODY_BELOW = 10;
 // Detail cells per art pixel for character sprites (drawn crisp, like pixel art), and rounding of
 // rig offsets to that grid.
 const RES = 2;
@@ -2552,7 +2555,7 @@ function weaponIdle(type, t, job) {
 export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
   const rig = { ...baseRig(), ...pose, armIn: true };
   const g = resolveGear(look, null);
-  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
+  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
   const top = y - H * scale - (rig.lift ?? 0) * scale;
@@ -2972,7 +2975,8 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
   // the frame's drawing budget is spent (see spriteBudgeted).
   const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
-  const buildBody = () => ({ w: W, h: H, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
+  // (Taller than the figure: floor-length hair hangs past its feet, and was sliced off flat.)
+  const buildBody = () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
   const body = state.urgent ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
 
   const flip = facing < 0;

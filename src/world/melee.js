@@ -1256,6 +1256,16 @@ export function pathOf(world) {
 
 // Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
 const RAGE_POWER = 0.25;
+function mageHeft(s) {
+  const big = s.big || s.finisher;
+  return {
+    ...s,
+    knock: Math.max(s.knock ?? 0, big ? 200 : 60),
+    launch: big ? Math.max(s.launch ?? 0, 110) : s.launch,
+    stop: Math.max(s.stop ?? 0, big ? 0.08 : 0.02),
+    shake: Math.max(s.shake ?? 0, big ? 3 : 0),
+  };
+}
 // The Mage line's gauges work like Rage (the player's ask, 2026-11-07): the fuller Mayhem,
 // Starfall or Devotion is, the harder every one of her spells hits, up to MAGE_POWER more when full.
 const MAGE_POWER = 0.25;
@@ -1727,6 +1737,10 @@ function land(world, s) {
     const n = spendOrbs(world);
     s = { ...s, pct: s.pct * (1 + 0.15 * n), rain: s.rain + Math.floor(n / 2) };
   }
+  // The Mage line's skills land with a warrior's weight (the player's ask, 2026-11-07): every
+  // spell that does damage shoves what it hits, and its big hits stop the moment, shake the screen
+  // and throw monsters back hard.
+  if (JOBS[char.job]?.family === 'mage' && !s.key.startsWith('basic') && (s.pct ?? 0) > 0) s = mageHeft(s);
   // (The Bubble Healer blows bubbles: blowBubbles.)
   if (s.bubble) return blowBubbles(world, s);
   if (s.orb) s = orbStrike(world, s);
