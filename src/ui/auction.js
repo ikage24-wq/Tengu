@@ -3,6 +3,8 @@
 // how long it has left, the bid to beat, and its buyout, sorted by price or by ending soonest;
 // and Yours: what you have up, your bids, your collection box, and your bag to list from.
 
+import { auctionFee, auctionSlots, stallSize } from '../world/rep.js';
+import { stockStall, unstock, collectTill } from '../world/stall.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { itemName } from '../core/items.js';
 import { drawItemIcon } from '../render/icons.js';
@@ -31,10 +33,13 @@ export function auctionWindow(ui, state, world) {
   const char = world.char;
   const x = win.x + 8;
   const was = win.tab ?? 0;
-  win.tab = tabs(ui, x, win.y + 25, LABELS, was, { w: 58, h: 14 });
+  // (Your stall's tab, once you have a licence: world/rep.js.)
+  const labels = stallSize(char) ? [...LABELS, 'Stall'] : LABELS;
+  win.tab = Math.min(tabs(ui, x, win.y + 25, labels, was, { w: stallSize(char) ? 50 : 58, h: 14 }), labels.length - 1);
   if (win.tab !== was) win.scroll = 0;
   text(ctx, `Gold: ${char.gold.toLocaleString()}`, win.x + W - 10, win.y + 34, { size: 7, bold: true, align: 'right', color: COLORS.gold });
   if (win.tab === 4) return yoursTab(ui, win, world, x, win.y + 46);
+  if (win.tab === 5) return stallTab(ui, win, world, x, win.y + 46);
   marketTab(ui, win, world, x, win.y + 46, COUNTERS[win.tab]);
 }
 
@@ -89,7 +94,7 @@ function yoursTab(ui, win, world, x, y) {
   const now = clockOf(world);
   const colW = 170;
   // Left: what you have up, your bids, your collection box.
-  text(ctx, `Up for sale (${a.mine.length}/${MAX_MINE})`, x + 2, y + 6, { size: 7, bold: true, color: th.dark });
+  text(ctx, `Up for sale (${a.mine.length}/${auctionSlots(char)})`, x + 2, y + 6, { size: 7, bold: true, color: th.dark });
   let ly = y + 12;
   if (!a.mine.length) text(ctx, 'Nothing yet. Pick something from your bag.', x + 4, ly + 8, { size: 6.2, color: COLORS.muted });
   for (const m of a.mine) {
@@ -113,8 +118,18 @@ function yoursTab(ui, win, world, x, y) {
   items.slice(0, 8).forEach((e, i) => drawItemIcon(ctx, e.id, x + 4 + i * 19, ly + 22));
   if (button(ui, x + colW - 64, ly, 62, 13, 'Collect all', { size: 6.5, primary: true, enabled: a.box.length > 0 })) collectAll(world);
   // Right: your bag, to list from, and the price.
-  const rx = x + colW + 10;
-  const rw = W - 16 - colW - 10;
+  sellPicker(ui, win, world, x + colW + 10, y, W - 16 - colW - 10, {
+    fee: auctionFee(char), can: a.mine.length < auctionSlots(char), label: 'List it',
+    list: (item, price) => listItem(world, item, price),
+  });
+}
+
+// Your bag (what the market takes), the thing you picked, and its price with how fast it should
+// go at it: for the Auction House and for your stall. `opts`: { fee, can, label, list(item, price) }.
+function sellPicker(ui, win, world, rx, y, rw, opts) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const char = world.char;
   text(ctx, 'Sell from your bag', rx, y + 6, { size: 7, bold: true, color: th.dark });
   const bag = [...char.inventory.equip.filter((e) => canTrade(e.id)), ...char.inventory.etc.filter((s) => canTrade(s.id))];
   const cols = 9;
@@ -152,17 +167,50 @@ function yoursTab(ui, win, world, x, y) {
   text(ctx, `Your price: ${g(win.price)}`, rx + 6, py + 34, { size: 8, bold: true, color: COLORS.gold });
   const ratio = win.price / Math.max(1, market);
   const pace = ratio > 1.6 ? 'Too dear: it won\'t sell' : ratio > 1.15 ? 'Dear: it may take a while' : ratio < 0.85 ? 'A bargain: it will go fast' : 'A fair price: it should sell soon';
-  text(ctx, `${pace} · you get ${g(win.price * (1 - FEE))} after the ${Math.round(FEE * 100)}% fee`, rx + 6, py + 44, { size: 5.6, color: ratio > 1.6 ? COLORS.bad : COLORS.muted });
+  text(ctx, opts.fee ? `${pace} · you get ${g(win.price * (1 - opts.fee))} after the ${Math.round(opts.fee * 100)}% fee` : `${pace} · no fee at your own stall`, rx + 6, py + 44, { size: 5.6, color: ratio > 1.6 ? COLORS.bad : COLORS.muted });
   const step = (k) => (win.price = Math.max(5, Math.round((win.price * k) / 5) * 5));
   if (button(ui, rx + 6, py + 52, 30, 13, '-10%', { size: 6 })) step(0.9);
   if (button(ui, rx + 39, py + 52, 30, 13, '+10%', { size: 6 })) step(1.1);
   if (button(ui, rx + 72, py + 52, 36, 13, 'Market', { size: 6 })) win.price = market;
-  if (button(ui, rx + rw - 52, py + 52, 46, 13, 'List it', { size: 6.5, primary: true, enabled: a.mine.length < MAX_MINE })) {
-    const why = listItem(world, it.uid != null ? it : { id: it.id, qty }, win.price);
+  if (button(ui, rx + rw - 52, py + 52, 46, 13, opts.label, { size: 6.5, primary: true, enabled: opts.can })) {
+    const why = opts.list(it.uid != null ? it : { id: it.id, qty }, win.price);
     if (why) world.log(why, '#ffb3c6');
     else {
       win.pick = null;
       win.price = null;
     }
   }
+}
+
+// Your stall (a Merchant Friend's licence: world/stall.js): what's on its counter, the till, and
+// your bag to stock it from.
+function stallTab(ui, win, world, x, y) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const char = world.char;
+  const size = stallSize(char);
+  const s = (char.stall ??= { items: [], till: 0 });
+  const colW = 170;
+  text(ctx, `Your stall (${s.items.length}/${size})`, x + 2, y + 6, { size: 7, bold: true, color: th.dark });
+  text(ctx, "On the market canal. It sells while you're away.", x + 2, y + 15, { size: 5.8, color: COLORS.muted });
+  let ly = y + 20;
+  for (const it of s.items) {
+    box(ctx, x, ly, colW, 20, { fill: '#ffffff', edge: th.light, r: 6, width: 1 });
+    drawItemIcon(ctx, it.id, x + 3, ly + 2);
+    text(ctx, fit(ctx, `${itemName(it.inst ?? it.id)}${it.qty > 1 ? ` ×${it.qty}` : ''}`, 92, 6.2, true), x + 22, ly + 8, { size: 6.2, bold: true });
+    text(ctx, `${g(it.price)}${it.sellAt == null ? ' · too dear to sell' : ''}`, x + 22, ly + 15.5, { size: 5.6, color: it.sellAt == null ? COLORS.bad : COLORS.muted });
+    if (button(ui, x + colW - 40, ly + 4, 36, 12, 'Take back', { size: 5.2 })) {
+      const why = unstock(world, it.key);
+      if (why) world.log(why, '#ffb3c6');
+    }
+    ly += 22;
+  }
+  if (!s.items.length) text(ctx, 'Empty. Pick something from your bag!', x + 4, ly + 8, { size: 6.2, color: COLORS.muted });
+  const ty = y + 168;
+  text(ctx, `Till: ${g(s.till ?? 0)}`, x + 2, ty + 6, { size: 8, bold: true, color: COLORS.gold });
+  if (button(ui, x + colW - 64, ty - 2, 62, 13, 'Take the till', { size: 6.2, primary: true, enabled: (s.till ?? 0) > 0 })) collectTill(world);
+  sellPicker(ui, win, world, x + colW + 10, y, W - 16 - colW - 10, {
+    fee: 0, can: s.items.length < size, label: 'Put on stall',
+    list: (item, price) => stockStall(world, item, price),
+  });
 }

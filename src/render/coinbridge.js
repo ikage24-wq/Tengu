@@ -12,6 +12,7 @@
 // taps, the fireplace with the great kettle, tables, the card table under its lamp, and the stair
 // up to the rooms.
 
+import { drawItemIcon } from './icons.js';
 import { R, E, T, F, mix, snap } from './pixel.js';
 import { ramp, planks, stones, windowPane, wallShade, beam, hash } from './propkit.js';
 import { art, place } from './scenery.js';
@@ -328,6 +329,18 @@ export function campanileArt() {
 
 // A market stall, 64 wide: a striped awning on two poles over a counter of its goods (fruit,
 // cloth bolts, pots, or lanterns), a little price board.
+// The stall that can be yours: the same awning and counter in gold and cream, bare, for your goods.
+function bareStallArt() {
+  return art('cb-stall-yours', 64, 62, () => {
+    const wood = ramp('#b8845a', 0.8);
+    const out = [R(4, 14, 3, 48, wood.base), R(57, 14, 3, 48, wood.base)];
+    for (let k = 0; k < 8; k++) out.push(T([[k * 8, 8], [k * 8 + 8, 8], [k * 8 + 8, 18], [k * 8 + 4, 21], [k * 8, 18]], k % 2 ? '#fff6dc' : GOLD));
+    out.push(R(0, 6, 64, 3, '#c8902a'));
+    out.push(R(4, 40, 56, 22, wood.base), ...planks(4, 42, 56, 20, wood, 4, 7), R(2, 38, 60, 4, wood.hi));
+    return out;
+  }, false);
+}
+
 export function stallArt(seed) {
   const aw = pick(['#ff8fb0', '#8fb8ff', '#7fd1a8', '#ffb36b', '#c9a6ff'], seed);
   const goods = Math.floor(hash(seed * 4.3) * 4);
@@ -740,6 +753,20 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
     // A gondola moored in a canal, bobbing a little at its post, in front of the bridge.
     const street = snap(groundAt(map, wx - (extra?.w ?? 118) / 2 - 20) - cam.y);
     gondola(ctx, x + Math.sin(time * 0.4 + wx) * 4, street + 18, time, wx, extra?.dir ?? 1);
+  } else if (kind === 'cb_stall' && extra === 'yours') {
+    // Your stall (world/stall.js): your goods on the counter and your name on its board, or a
+    // "For rent" board until you have a licence.
+    place(ctx, bareStallArt(), snap(x), gy + 2);
+    const mine = map.myStall;
+    const top = gy + 2 - 62;
+    (mine?.ids ?? []).slice(0, 6).forEach((id, i) => drawItemIcon(ctx, id, snap(x - 30 + (i % 3) * 18 + (i >= 3 ? 9 : 0)), snap(top + 22 - (i >= 3 ? 10 : 0)), 1));
+    ctx.fillStyle = '#4a5a4a';
+    ctx.fillRect(snap(x + 12), top + 44, 18, 10);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '800 3.6px Nunito, "Trebuchet MS", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mine?.licensed ? (mine.name ?? '').slice(0, 9) : 'FOR RENT', x + 21, top + 50.6);
+    ctx.textAlign = 'left';
   } else if (kind === 'cb_stall') {
     place(ctx, stallArt(extra ?? wx), snap(x), gy + 2);
   } else if (kind === 'cb_crane') {

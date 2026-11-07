@@ -320,10 +320,10 @@ Object.assign(NPCS, {
     chatter: ['Did I ever tell you about the Hollow King? No? Sit down.', 'Copper, Silver, Gold, Mithril. Everyone starts at Copper.', "This leg? A mimic. Don't ask."],
   },
   penny: {
-    id: 'penny', name: 'Penny', title: 'Trade Hall Clerk', role: 'guide',
+    id: 'penny', name: 'Penny', title: 'Trade Hall Clerk', role: 'trade',
     look: { hairStyle: 'bowhair', hairColor: '#ffb86a', skinTone: '#fbe0c8', eyeColor: '#3f8a6a', outfitColor: '#ff9ec0', eyeStyle: 'round', face: 'mmhm', browStyle: 'round' },
     gear: { top: cbPiece('look_casual_cardigan_top'), bottom: cbPiece('look_casual_plaid_bottom'), shoes: cbPiece('look_casual_loafers_shoes'), face: cbPiece('look_acc_biground_face') },
-    greeting: 'Welcome to the Trade Hall! Name, town of origin, and... oh, never mind, the forms are still at the printer. Come back soon!',
+    greeting: 'Welcome to the Trade Hall! Every sale, every bounty, every good turn: it all goes in my book. Do enough and Coinbridge will give you a stall of your own!',
     chatter: ['Stamp, stamp, stamp.', 'Every coin counted twice.', 'Form 27-B, in triplicate.'],
   },
   juniper: {

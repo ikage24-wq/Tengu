@@ -20,6 +20,8 @@ import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/
 import { boardPage } from './partyboard.js';
 import { fishRequestPage } from './fishreq.js';
 import { bountyPage } from './bounty.js';
+import { repPage } from './rep.js';
+import { repTier, stallSize } from '../world/rep.js';
 import { bountyBoard } from '../world/bounties.js';
 import { checkIn, rumor, ROOM_GOLD } from '../world/inn.js';
 import { fishRequests, requestProgress } from '../world/fishrequests.js';
@@ -287,6 +289,11 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
   }
+  // Penny's book: your Merchant Rep and your stall (world/rep.js).
+  if (npc.role === 'trade') {
+    const till = char.stall?.till ?? 0;
+    choices.push({ label: 'Merchant Rep', sub: till ? `${till.toLocaleString()} gold in your stall's till!` : `${repTier(char).name}${stallSize(char) ? ' · your stall' : ''}`, icon: 'star', primary: true, run: () => (dlg.rep = true) });
+  }
   // Guildmaster Halvard's bounty board (world/bounties.js).
   if (npc.role === 'guild') {
     const board = char.guild?.joined ? bountyBoard(world) : [];
@@ -374,7 +381,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.rep ? 214 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -402,6 +409,11 @@ export function npcWindow(ui, state, world) {
     return;
   }
 
+  if (dlg.rep) {
+    dlg.talking = false;
+    if (repPage(ui, state, world, area)) dlg.rep = false;
+    return;
+  }
   if (dlg.bounty) {
     dlg.talking = false;
     if (bountyPage(ui, state, world, area)) dlg.bounty = false;

@@ -12,6 +12,7 @@
 // better-paid bounties).
 // char.guild = { done, rank, board: { day, list: [...] } }.
 
+import { addRep, REP_FOR } from './rep.js';
 import { MAPS } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { RANKS, GUILD_CAPES, EPITHETS } from '../data/bounties.js';
@@ -207,6 +208,7 @@ export function turnIn(world, id) {
   const exp = Math.round(expToNext(char.level) * 0.12);
   gainExp(char, exp);
   g.done = (g.done ?? 0) + 1;
+  addRep(world, char, REP_FOR.bounty(b.rank));
   world.log(`Bounty done: ${bountyName(b)}. ${b.gold.toLocaleString()} gold and ${exp.toLocaleString()} EXP.`, '#ffe36b');
   // A new rank?
   const next = RANKS[(g.rank ?? 0) + 1];

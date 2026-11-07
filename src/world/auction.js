@@ -19,6 +19,7 @@
 // roll; drops, finds and fish for a little over what a shop pays.
 // char.auction = { mine: [...], box: [...], bids: { key: {...} }, bought: { key: hour } }.
 
+import { auctionFee, auctionSlots, addRep, REP_FOR } from './rep.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { FISH_BY_ID } from '../data/fishing.js';
@@ -26,6 +27,7 @@ import { FIND_TIER, TIER_LV } from '../data/gathering.js';
 import { makeEquip, itemName } from '../core/items.js';
 import { addItem, removeItem, countItem } from '../core/inventory.js';
 
+// (The fee and how many you can have up go by your Merchant Rep: world/rep.js.)
 export const FEE = 0.05;
 export const MAX_MINE = 5;
 const HOUR = 3600000;
@@ -185,7 +187,7 @@ export function placeBid(world, key) {
 export function listItem(world, item, price) {
   const char = world.char;
   const a = state(char);
-  if (a.mine.length >= MAX_MINE) return `You can have ${MAX_MINE} things up at once.`;
+  if (a.mine.length >= auctionSlots(char)) return `You can have ${auctionSlots(char)} things up at once.`;
   if (!canTrade(item.id)) return "Madame Ledger won't take that.";
   price = tens(price);
   if (price < 5) return 'Set a price first.';
@@ -232,8 +234,9 @@ export function tickAuction(world) {
   const now = clockOf(world);
   for (const m of [...a.mine]) {
     if (m.sellAt != null && m.sellAt <= now) {
-      const gold = Math.max(1, Math.round(m.price * (1 - FEE)));
+      const gold = Math.max(1, Math.round(m.price * (1 - auctionFee(char))));
       a.box.push({ kind: 'gold', gold, why: `Sold ${itemName(m.inst ?? m.id)}` });
+      addRep(world, char, REP_FOR.sale(m.price));
       a.mine.splice(a.mine.indexOf(m), 1);
       world.log?.(`Your ${itemName(m.inst ?? m.id)} sold for ${m.price.toLocaleString()} gold! Collect it at the Auction House.`, '#ffe36b');
     } else if (m.ends <= now) {

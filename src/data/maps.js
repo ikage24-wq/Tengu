@@ -819,7 +819,7 @@ Object.assign(MAPS, {
       ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 380], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1 }], ['cb_crates', 720, 2], ['cb_lamp', 790],
       // The market: a lamp between the Auction House and the canal, and one past the stalls.
       ['cb_palazzo', 1262, 3], ['cb_auction', 1472], ['cb_lamp', 1633], ['cb_canal', 1710, { w: 118, depth: 30 }], ['cb_bridge', 1710, { w: 140 }], ['cb_gondola', 1710, { w: 118 }], ['cb_lamp', 2030],
-      ['cb_stall', 1830, 1], ['cb_stall', 1900, 2], ['cb_stall', 1970, 3],
+      ['cb_stall', 1830, 1], ['cb_stall', 1900, 2], ['cb_stall', 1970, 'yours'],
       // The terrace: a lamp between the inn and the stove, lighting the way to the bench.
       ['cb_palazzo', 2494, 5], ['cb_inn', 2662], ['cb_lamp', 2800], ['cb_palazzo', 3040, 8],
       // The heights: a lamp where the stair comes up, the guild, the office beside it, the tower.

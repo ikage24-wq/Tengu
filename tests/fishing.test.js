@@ -267,3 +267,39 @@ test('guild bounties: join, take one, its elite turns up on its map, bring it do
 });
 const MOBS_HP = (id) => MOBS_REF[id].hp;
 const { MOBS: MOBS_REF } = await import('../src/data/mobs.js');
+
+test('Merchant Rep: good turns raise your standing, lower the fee, and a Merchant Friend gets a stall that sells while away', async () => {
+  const R = await import('../src/world/rep.js');
+  const S = await import('../src/world/stall.js');
+  const A = await import('../src/world/auction.js');
+  const world = createWorld(createCharacter('Merchant', {}));
+  const char = world.char;
+  let now = Date.UTC(2026, 10, 7, 12, 0, 0);
+  world.dayClock = () => new Date(now);
+  assert.equal(R.repTier(char).name, 'Stranger');
+  assert.equal(R.auctionFee(char), 0.05);
+  assert.ok(S.stockStall(world, { id: 'fish_carp', qty: 1 }, 50), 'no stall before a licence');
+  R.addRep(world, char, R.REP[3].need);
+  assert.equal(R.repTier(char).name, 'Merchant Friend');
+  assert.ok(R.auctionFee(char) < 0.05 && R.auctionSlots(char) > 5, 'a lower fee, more slots');
+  // Stock the stall at a fair price, log off, come back: it sold, gold in the till, a little rep.
+  addItem(char.inventory, 'fish_carp', 10);
+  const price = Math.round(A.marketValue(world, 'fish_carp') * 10);
+  assert.equal(S.stockStall(world, { id: 'fish_carp', qty: 10 }, price), null);
+  assert.equal(countItem(char.inventory, 'fish_carp'), 0);
+  const rep = R.repPoints(char);
+  S.settleStall(char, now + 8 * 3600000);
+  assert.equal(char.stall.items.length, 0, 'sold while you were away');
+  assert.equal(char.stall.till, Math.round(price / 5) * 5);
+  assert.ok(R.repPoints(char) > rep);
+  const gold = char.gold;
+  S.collectTill(world);
+  assert.ok(char.gold > gold && char.stall.till === 0);
+  // Far too dear never sells, and comes back when you take it off.
+  addItem(char.inventory, 'fish_carp', 1);
+  S.stockStall(world, { id: 'fish_carp', qty: 1 }, A.marketValue(world, 'fish_carp') * 4);
+  S.settleStall(char, now + 99 * 3600000);
+  assert.equal(char.stall.items.length, 1);
+  assert.equal(S.unstock(world, char.stall.items[0].key), null);
+  assert.equal(countItem(char.inventory, 'fish_carp'), 1);
+});

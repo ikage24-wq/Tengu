@@ -7,6 +7,7 @@
 // the same all day (worked out from the day and your name) and new tomorrow.
 // char.fishReq = { day, list: [{ kind, fish, count, size?, giver, why, gold, got?, done? }] }.
 
+import { addRep, REP_FOR } from './rep.js';
 import { FISH_BY_ID, SPOTS, sizeRange } from '../data/fishing.js';
 import { countItem, removeItem } from '../core/inventory.js';
 import { lifeLevel, lifeAction, needFor, TIER_LEVEL } from '../core/life.js';
@@ -150,6 +151,7 @@ export function handInRequest(world, i) {
   r.done = true;
   char.gold += r.gold;
   char.fishReqDone = (char.fishReqDone ?? 0) + 1;
+  addRep(world, char, REP_FOR.fishRequest());
   const f = FISH_BY_ID[r.fish];
   // Fishing EXP (and your own), worth a few good catches.
   lifeAction(world, 'fishing', { tier: f.tier ?? 1, kind: 'fish', scale: r.kind === 'bring' ? 3 : 4 });

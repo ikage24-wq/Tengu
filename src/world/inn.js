@@ -6,6 +6,7 @@
 // a long night's rest is about a third of a level, so the pace to 50 holds (the player's pick).
 // char.inn = { checkedIn: true } while you sleep there; char.rested = EXP left in the pool.
 
+import { addRep, REP_FOR } from './rep.js';
 import { expToNext } from '../core/exp.js';
 import { FISH } from '../data/fishing.js';
 
@@ -20,6 +21,7 @@ export function checkIn(world) {
   if (char.gold < ROOM_GOLD) return `A room is ${ROOM_GOLD} gold a night, love.`;
   char.gold -= ROOM_GOLD;
   char.inn = { checkedIn: true };
+  addRep(world, char, REP_FOR.innRoom());
   world.log(`You took a room at the Gilded Kettle. Log off here tonight and you'll wake up well rested (double EXP for a while).`, '#ffe9a6');
   return null;
 }

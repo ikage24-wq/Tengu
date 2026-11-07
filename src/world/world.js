@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { tickStall } from './stall.js';
 import { tickBounties, eliteSlain } from './bounties.js';
 import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
@@ -667,6 +668,7 @@ export function updateWorld(world, dt, input) {
   if (world.auctionT >= 1) {
     world.auctionT = 0;
     tickAuction(world);
+    tickStall(world);
   }
   tickGoingHome(world, dt);
   tickCalm(world);
