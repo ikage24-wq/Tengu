@@ -1315,7 +1315,11 @@ function bodyShapes(look, g, rig) {
     hang = squash(offset(hang, ux + rig.hx, uy + rig.hy + NECK_LIFT), false);
   }
   if (g.cape) shapes.push(...offset(capeShapes(g.cape.design, g.cape.color, rig.cape, rig.flap, g.cape, m), ux, uy));
-  const tail = look.tail === 'wolf' ? wolfTail(look, rig, ux, drop + rig.by * 0.5) : look.tail === 'fox' ? foxTail(look, rig, ux, drop + rig.by * 0.5) : [];
+  // (A fox with `tails: 2` has a second plume fanned out behind the first, a shade darker, swishing
+  // a beat behind it: Yuzu's, once her story is done.)
+  const tail = look.tail === 'wolf' ? wolfTail(look, rig, ux, drop + rig.by * 0.5)
+    : look.tail === 'fox' ? [...((look.tails ?? 1) >= 2 ? foxTail({ ...look, hairColor: shade(look.hairColor ?? '#e9ebfa', -14), tailTip: shade(look.tailTip ?? '#ff7a62', -10) }, { ...rig, tail: (rig.tail ?? 0) + 18, tailCurl: (rig.tailCurl ?? 0) - 10 }, ux, drop + rig.by * 0.5) : []), ...foxTail(look, rig, ux, drop + rig.by * 0.5)]
+    : [];
   // Walking, the pelvis turns toward the way it's going: the hips draw together on screen (they
   // part in depth instead), so the legs scissor past each other rather than splaying from wide
   // hips into splits and an X, and the far leg falls into shadow.

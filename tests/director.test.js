@@ -189,6 +189,34 @@ test("Marlo's dream-jar story plays through on Pastel Harbor", () => {
   }
 });
 
+test("Yuzu's second tail plays through in Moonleaf Grove", () => {
+  for (const id of ['yuzu_maps_done', 'yuzu_peak_done', 'yuzu_tail_done', 'yuzu_loved_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'start');
+    const yuzu = w.map.npcs.find((n) => n.id === 'yuzu');
+    w.body.x = yuzu.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});
+
+test('Yuzu has one tail until her story is done, and two after', async () => {
+  const { lookOf } = await import('../src/render/scene.js');
+  const { NPCS } = await import('../src/data/npcs.js');
+  const w = createWorld(createCharacter('Hana', {}));
+  assert.equal(lookOf(w, NPCS.yuzu).tails ?? 1, 1, 'one tail at first');
+  w.char.quests.yuzu_loved = { state: 'done' };
+  assert.equal(lookOf(w, NPCS.yuzu).tails, 2, 'two once she is loved');
+  assert.equal(lookOf(w, NPCS.nim), NPCS.nim.look, 'nobody else changes');
+});
+
 test("Professor Lumen's fallen star plays through on the Observatory Steps", () => {
   for (const id of ['lumen_lens_done', 'lumen_fallen_done', 'lumen_chips_done', 'lumen_home_done']) {
     const w = createWorld(createCharacter('Hana', {}));

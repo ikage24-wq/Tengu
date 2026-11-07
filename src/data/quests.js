@@ -453,6 +453,40 @@ export const QUESTS = {
     rewards: { exp: 62000, gold: 900, items: [{ id: 'warrior_shoes_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
+  // Yuzu's story (Moonleaf Grove, by the Moon Tree): she borrows Professor Lumen's star maps because
+  // a fox who reaches the Tail Star at the top of the world grows her second tail, or so the elder
+  // spirits told her. At the summit of Frozen Peak there is no star, only its reflection in the
+  // ice: they made it up to keep her busy. So she makes a tail of her own to show them, and the
+  // Grove's kind words turn it real, because foxes grow tails when they're loved.
+  yuzu_maps: {
+    id: 'yuzu_maps', name: 'The Rude Constellations', giver: 'yuzu', minLevel: 33, prereq: 'lumen_home',
+    text: "Lumen sent you? Pfft. I BORROWED his maps. And the constellations aren't rude, they're a ROUTE. ...Okay, one of them is a bit rude. I need a lantern to read them by: Lamia Scales from Serpent Springs shine like the moon. Bring me 10 and I'll show you a secret. A fox secret!",
+    objectives: [{ type: 'collect', item: 'lamia_scale', count: 10 }],
+    rewards: { exp: 55000, gold: 600, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  yuzu_peak: {
+    id: 'yuzu_peak', name: 'The Tail Star', giver: 'yuzu', minLevel: 34, prereq: 'yuzu_maps',
+    text: "The route ends at the very top of Frozen Peak, at the Tail Star. A fox who touches it grows her second tail. The elders said so! But the snow women up there freeze anything with fur. Climb to the summit, chase off 15 Yuki-onna, and tell me what you see. I'd go myself. My paws get cold. That's the only reason.",
+    objectives: [{ type: 'visit', map: 'peak', above: 360, place: 'the summit of Frozen Peak' }, { type: 'kill', mob: 'yukionna', count: 15 }],
+    rewards: { exp: 60000, gold: 680, items: [] },
+  },
+  yuzu_tail: {
+    id: 'yuzu_tail', name: 'A Tail of Her Own', giver: 'yuzu', minLevel: 36, prereq: 'yuzu_peak',
+    text: "Fine. FINE. If there's no star, I'll make my own tail and wave it under their noses. It has to be the softest thing on the island: 8 Cloud Manes from the Pegasus Foals, and 6 Snow Gems to make it sparkle, from the Yuki-onna. Don't look at me like that. It's a GOOD plan.",
+    objectives: [{ type: 'collect', item: 'wool', count: 8 }, { type: 'collect', item: 'snow_gem', count: 6 }],
+    rewards: { exp: 70000, gold: 760, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  yuzu_loved: {
+    id: 'yuzu_loved', name: 'Foxes Grow Tails', giver: 'yuzu', minLevel: 37, prereq: 'yuzu_tail',
+    text: "The tail's done. It's perfect. It's also fake, and the elders will know. ...Hey. Before I show them. Would you go round the Grove and ask people what they think of me? Nim, Elowen, Celeste. Just so I know. Don't tell them I asked! Tell them you're doing a survey.",
+    objectives: [
+      { type: 'talk', npc: 'nim', say: "Yuzu? She returns my things before I've noticed they're gone. With a flower on top. I-I've started leaving things out for her to borrow." },
+      { type: 'talk', npc: 'elowen', say: "She took my teacups and gave them back washed. Twice. Tell her the kettle's always on. Don't tell her I said so. She'll get smug." },
+      { type: 'talk', npc: 'celeste', say: "Mm... Yuzu? She tucks a blanket on me when I fall asleep under the stars. I pretend I'm still asleep. ...I'm always awake. Tell her thank you." },
+    ],
+    rewards: { exp: 80000, gold: 1000, items: [{ id: 'warrior_cape_35', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',

@@ -283,5 +283,6 @@ for (const h of Object.values(SWEETHEARTS)) {
     id: h.id, name: h.name, title: h.title, role: 'sweetheart', look: h.look,
     gear: Object.fromEntries(covers.map((slot) => [slot, { id: `look_costume_${h.outfit}_${slot}`, variant: null }])),
     greeting: h.talk[0][0],
+    ...(h.quests ? { quests: h.quests } : {}),
   };
 }

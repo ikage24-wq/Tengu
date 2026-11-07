@@ -150,6 +150,9 @@ export function playerPose(world) {
   return { pose: 'idle' };
 }
 
+// How someone looks now: Yuzu has grown her second tail once her story is done (data/quests.js
+// yuzu_loved).
+export const lookOf = (world, npc) => (npc.id === 'yuzu' && world.char?.quests?.yuzu_loved?.state === 'done' ? { ...npc.look, tails: 2 } : npc.look);
 function drawNpcs(ctx, world, cam, time) {
   const near = nearbyNpc(world);
   for (const n of world.map.npcs) {
@@ -177,7 +180,7 @@ function drawNpcs(ctx, world, cam, time) {
       // (Their legs step with the ground they cover, like yours: render/animator.js.)
       const anim = animFor(`npc|${world.map.id}|${n.id}`, n.x, facing, time);
       // (A move the scene gave them, `perform`, and a face it holds on them, `look`.)
-      const look = c.face ? { ...npc.look, face: c.face } : npc.look;
+      const look = c.face ? { ...lookOf(world, npc), face: c.face } : lookOf(world, npc);
       const pose = c.move && !c.walk ? { pose: c.move.kind, progress: c.move.p, dur: c.move.dur } : { pose: c.walk ? 'walk' : c.lift ? 'jump' : 'idle' };
       drawHero(ctx, look, npc.gear ?? null, x, y - (c.lift ?? 0), { ...pose, time, seed: n.x % 97, facing, job: npc.showJob }, c.move ? null : anim);
       ctx.restore();
@@ -188,7 +191,7 @@ function drawNpcs(ctx, world, cam, time) {
     const close = near?.id === n.id && !world.scene;
     const facing = r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1;
     const busy = r.pose && !close;
-    const look = r.face ? { ...npc.look, face: r.face } : npc.look;
+    const look = r.face ? { ...lookOf(world, npc), face: r.face } : lookOf(world, npc);
     footShadow(ctx, x, y, 12);
     // (Something they carry behind them: Shelly's shell.)
     r.back?.(ctx, x, y - (r.lift ?? 0), time, facing);

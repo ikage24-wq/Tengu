@@ -146,6 +146,7 @@ export const SWEETHEARTS = {
   yuzu: {
     dateLines: { great: "Okay that was SO fun. You're not allowed to be this fun. It's my job!", good: 'Hee, not bad, human. Not bad at all. Again soon?', okay: "Pfft, you were hopeless. ...I had fun though. Don't tell anyone." },
     id: 'yuzu', name: 'Yuzu', title: 'Playful Fox Spirit', map: 'grove', x: 440, color: '#ff7a4a',
+    quests: ['yuzu_maps', 'yuzu_peak', 'yuzu_tail', 'yuzu_loved'],
     house: 335,
     // At home late (world/goinghome.js): a friend, close, sweethearts.
     late: [
