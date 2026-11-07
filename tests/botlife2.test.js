@@ -111,7 +111,7 @@ test('a goal moves along as they play, completes, and they move on to the next (
   const bot = bots.list.find((b) => b.level >= 22 && b.char.job !== 'novice' && !b.shop);
   Object.assign(bot, { map: world.map.id, x: world.body.x + 120, state: 'idle', timer: 99, session: 1e9, stay: 1e9 });
   const s = soulOf(bot);
-  s.goal = { kind: 'set', set: 'sylvana', slot: 'hat', item: `set_sylvana_${bot.char.job === 'spiritmage' ? 'mage' : 'warrior'}_hat`, setName: 'Dryad Bloom', from: 'Sylvana', need: 2, got: 0 };
+  s.goal = { kind: 'set', set: 'sylvana', slot: 'hat', item: `set_sylvana_${bot.char.job === 'mage' ? 'mage' : 'warrior'}_hat`, setName: 'Dryad Bloom', from: 'Sylvana', need: 2, got: 0 };
   if (!ITEMS[s.goal.item]) s.goal.item = Object.keys(ITEMS).find((id) => id.startsWith('set_sylvana_') && id.endsWith('_hat'));
   const first = s.goal;
   for (let t = 0; t < 900 && s.goal === first; t += 0.5) {

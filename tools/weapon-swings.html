@@ -7,7 +7,7 @@
 // Dev tool: a strip of moments for each weapon in use (its job holding attack at training dummies
 // on the move stage), for checking swings without a video recorder. ?list=warrior:sword_50,...
 const q = new URLSearchParams(location.search);
-const LIST = (q.get('list') ?? 'warrior:sword_25,warrior:sword_50,warrior:axe_50,warrior:spear_50,thief:dagger_50,thief:gauntlet_45,spiritmage:wand_50,spiritmage:staff_50,archer:bow_50,archer:crossbow_50').split(',');
+const LIST = (q.get('list') ?? 'warrior:sword_25,warrior:sword_50,warrior:axe_50,warrior:spear_50,thief:dagger_50,thief:gauntlet_45,mage:wand_50,mage:staff_50,archer:bow_50,archer:crossbow_50').split(',');
 const MOMENTS = [0.15, 0.3, 0.45, 0.6, 0.8, 1.0];
 // Each moment: the middle of the stage, cropped round the hero.
 const CW = 300;

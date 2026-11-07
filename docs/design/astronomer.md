@@ -43,7 +43,7 @@ out to guide the planets.
 
 ## Status (2026-11-02)
 
-Built, replacing the Onmyoji in place (the path keeps the `onmyoji` id and its skill ids, so saves
+Built, replacing the Onmyoji in place (the path keeps the `sorcerer` id and its skill ids, so saves
 and Elowen's trial carry over). She keeps to the staff.
 
 - Moves: asfling, asconduct, asring and the pool's asgaze, aspirouette, astrace, asgather; asup,

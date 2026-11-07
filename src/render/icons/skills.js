@@ -1659,6 +1659,16 @@ function ofudabarrage() {
   out.push(...spark(2.6, 4, 0.9, SOHOT), ...spark(13.4, 9, 0.7));
   return out;
 }
+// Meteor: one great burning rock diving down from the top corner, its flame trail streaming
+// behind it, a white-hot leading edge.
+function meteorcall() {
+  const out = [...tile('sorcery', 'active'), ...aura(9, 9, 6, '#ffd8a8', 1)];
+  out.push(S(tube([[2, 2], [9, 9]], 2.6, 0.6), '#ff8a3a'), S(tube([[3.4, 3.4], [9, 9]], 1.4, 0.4), '#ffd27a'));
+  out.push(...solid(oval(10, 10, 3.6, 3.4, 0, 20), '#7a5048', { d: 0.35, ink: '#2a1a1e' }));
+  out.push(S(oval(11.4, 11.4, 1.6, 1.5, 0, 16), '#fff3d0'));
+  out.push(...spark(13.6, 4, 0.8, '#ffe36b'), ...spark(4, 13, 0.7));
+  return out;
+}
 // Abyssal Maw: a pit of shadow on the floor with hands reaching up out of it.
 function seimanseal() {
   const out = [...tile('sorcery', 'active')];
@@ -1755,6 +1765,7 @@ const ART = {
   skymastery, updraft, zephyr, skywaltz, downburst, galestep, cloudnine, hoopla, jugglingact, showstopper, windupbomb, crossslash,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
   spiritbolt, spiritstep, spiritwave, frostnova, blessing, spiritward, manamastery, heavenslantern, shrinemastery, grandblessing, idolcheer, purification, resurrection, espresso, thousandtorii, onmyodo, ofudabarrage, seimanseal, yokairally, troupecombo,
+  meteorcall,
   gmsmite, gmhaste, gmblessing,
 };
 

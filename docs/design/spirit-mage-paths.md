@@ -116,7 +116,7 @@ lit, the spirits settle, and the two paths are offered at the shrine gate.
   line), Seal (she pins a monster with a star seal for them to pile on), a mastery; the finisher
   **Hyakki Yagyo**, the Night Parade of a Hundred Demons: a procession of yokai lanterns and
   spirits floods across the screen behind her troupe, trampling everything.
-- **Built (2026-10-29, world/onmyoji.js, data/skills.js):** Ofuda Barrage (a fan of talismans that
+- **Built (2026-10-29, world/sorcerer.js, data/skills.js):** Ofuda Barrage (a fan of talismans that
   stick and burst in red star seals), Seiman Seal (she traces the five-pointed star; the seal on
   the ground binds and burns what stands in it), Yokai Rally (two claps and a raised talisman:
   the troupe fights faster and harder a while, and the tengu marks a monster at once), Onmyodo

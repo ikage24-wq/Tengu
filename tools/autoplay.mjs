@@ -36,7 +36,7 @@ const { GEAR_LEVELS } = await import(S + 'data/items.js');
 
 const JOB1 = process.argv[2] ?? 'archer';
 const JOB2 = process.argv[3] ?? 'beastmaster';
-const WEAPON = { warrior: 'sword', archer: 'bow', thief: 'dagger', spiritmage: 'wand' };
+const WEAPON = { warrior: 'sword', archer: 'bow', thief: 'dagger', mage: 'wand' };
 let seed = 11;
 Math.random = () => ((seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296);
 const DT = 1 / 60;

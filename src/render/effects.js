@@ -16,6 +16,7 @@ import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 import { strikePose } from './hero.js';
 import { drawFilm } from './bubbles.js';
+import { drawMeteor, drawComet } from './meteor-fx.js';
 import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 
@@ -188,7 +189,10 @@ function drawShot(ctx, f, cam) {
       const born = f.shot === 'mcspark' ? bornAt(f) : Math.min(1, 0.4 + f.t * 3);
       // (Extinction's colossal star is the meteor drawn far larger.)
       const size = { mcspark: 0.5, mccomet: 0.62, mcmeteor: 0.8, mcgiant: 2 }[f.shot];
-      fxSprite(ctx, f.shot === 'mcgiant' ? 'celmcmeteor' : `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      // (The comet and the meteors are drawn by hand: render/meteor-fx.js.)
+      if (f.shot === 'mccomet') drawComet(ctx, x, y, a, 5.5 * born, (f.t ?? 0) + (f.seed ?? 0) * 3, Math.min(1, born * 1.4));
+      else if (f.shot === 'mcmeteor' || f.shot === 'mcgiant') drawMeteor(ctx, x, y, a, (f.shot === 'mcgiant' ? 34 : 11) * born, (f.t ?? 0) + (f.seed ?? 0) * 3, f.shot === 'mcgiant' ? 7 : 3, Math.min(1, born * 1.4));
+      else fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
     case 'jgpotato': {

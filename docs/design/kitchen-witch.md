@@ -78,4 +78,4 @@ the "it's RAW" outrage), never a copy of a real show.
   docs/design/samples/kitchen-witch-effects.gif. Still to draw: her buff pillar emblem, the pot
   gauge aura and the pictures for her skills and the finisher.
 - Ids to keep (so saves, Elowen's trial, the dungeon healer and the paths carry over):
-  `spiritmage` (first job), `shrinemaiden` (the healer path), `onmyoji` (the damage path).
+  `mage` (first job), `cleric` (the healer path), `sorcerer` (the damage path).

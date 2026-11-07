@@ -58,11 +58,11 @@ export const reactionOf = (a, b) => (a && b && a !== b ? PAIRS[[a, b].sort().joi
 // On MELTDOWN a spell with no other mark to meet reacts as if it found the element after its own.
 const NEXT = { fire: 'ice', ice: 'bolt', bolt: 'fire' };
 
-export const isQueen = (world) => world.char.job === 'onmyoji';
-export const isMedic = (world) => world.char.job === 'shrinemaiden';
+export const isQueen = (world) => world.char.job === 'sorcerer';
+export const isMedic = (world) => world.char.job === 'cleric';
 // Whose spells react: the Mage's, the Sorcerer's and the Cleric's.
-export const isMage = (world) => world.char.job === 'spiritmage' || isQueen(world) || isMedic(world);
-export const meltdown = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
+export const isMage = (world) => world.char.job === 'mage' || isQueen(world) || isMedic(world);
+export const meltdown = (world) => world.char.job === 'mage' && (world.spirit ?? 0) >= SPIRIT_MAX;
 export const pandemonium = (world) => isQueen(world) && (world.binding ?? 0) >= BINDING_MAX;
 export const markOf = (m, now) => (m.elMark && now - m.elMark.at < MARK_TIME ? m.elMark.el : null);
 
@@ -104,7 +104,7 @@ function queue(world, m, damage, at, extra = {}) {
 export function react(world, m, kind, h) {
   const now = world.now;
   // (The Spell Juggler's reactions are her orbs colliding: render/warrior-fx.js `jgrx*`.)
-  const own = isMedic(world) ? 'md' : world.char.job === 'spiritmage' ? 'jg' : world.char.job === 'onmyoji' ? 'mc' : '';
+  const own = isMedic(world) ? 'md' : world.char.job === 'mage' ? 'jg' : world.char.job === 'sorcerer' ? 'mc' : '';
   const fx = (f) => { if (world.fx.filter((o) => o.kind.startsWith('rx')).length < MAX_RX_FX) world.fx.push(f); };
   const base = h.damage;
   const y = m.y - (m.air ?? 0);

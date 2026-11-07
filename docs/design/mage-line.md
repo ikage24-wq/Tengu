@@ -4,7 +4,7 @@ The player's picks (2026-11-06): "right now we need an actual mage and healer" (
 is shelved for later, docs/design/kitchen-witch.md). A classic elemental Mage as the first job,
 who casts and heals a little; at 30 she becomes the **Sorcerer** (damage) or the **Cleric of light**
 (the healer). Ids kept so saves, Elowen's trial, the dungeon healer and the paths carry over:
-`spiritmage` (the Mage), `onmyoji` (the Sorcerer), `shrinemaiden` (the Cleric). Held to the Wind
+`mage` (the Mage), `sorcerer` (the Sorcerer), `cleric` (the Cleric). Held to the Wind
 Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-job.md).
 
 ## The Mage: the Spell Juggler (remade again, 2026-11-07)
@@ -35,7 +35,7 @@ the **Spell Juggler**.
 
 ## The Sorcerer: the Meteor Caller (remade again, 2026-11-07)
 
-Rebuilt on the same rejection of reskins (id `onmyoji` kept). Her basic spell is charged
+Rebuilt on the same rejection of reskins (id `sorcerer` kept). Her basic spell is charged
 (world/melee.js `callerBasic`, `tickCaller`, CALL_* numbers): a tap flicks a star-spark; held, she
 gathers (render/moves.js `mcgather`, walking at CALL_WALK) and letting go calls a comet down from
 high above (CALL_TIERS[1]) or a burning meteor that leaves a crater and a ring of shock
@@ -43,7 +43,7 @@ high above (CALL_TIERS[1]) or a burning meteor that leaves a crater and a ring o
 Binding); full (STARSTORM), every tap calls a meteor at once. Her reactions are her own small star
 and ember bursts (`mcrx*`) and her chains are violet starlight.
 
-- Her Mage skills her way (`paths.onmyoji`): Meteor Shower, Shooting Star (her blink), Comet Lance,
+- Her Mage skills her way (`paths.sorcerer`): Meteor Shower, Shooting Star (her blink), Comet Lance,
   Gravity Well (stuns), Starlight (the heal), Orbit Shield (the barrier), Meteor Storm.
 - Her own: Stargazer's Lore (passive), Starfall Barrage, Black Hole (the gravity well engine,
   world/astro.js, drawn as `mchole`), Stargazer (magic up, charges gather faster: `quickCall`,
@@ -138,7 +138,7 @@ Entrance, Domino Decree, Cold Shoulder, Royal Pardon, Royal Guard, Fireworks Gal
 Chaos Vortex (all three elements in turn), Royal Decree and the Grand Finale of Chaos. The notes
 below are her first build, kept for reference.
 
-## The Sorcerer (the damage path; `onmyoji`, replacing the Astronomer)
+## The Sorcerer (the damage path; `sorcerer`, replacing the Astronomer)
 
 - **Personality (the player's pick, 2026-11-06): the edgelord gone real.** Her dark-power act
   finally came true: she is a genuinely terrifying dark sorceress, and secretly panics about it
@@ -170,7 +170,7 @@ below are her first build, kept for reference.
   `sohit`. Spellstorm (world/melee.js `addBinding`, `stormHurt`, `spellstorm`; STORM_* numbers) on
   the HUD in the old Orbit slot, with its aura (render/aura.js `bindingAura`): a violet pool and
   rising embers, an ember ring at full. The Astronomer's moons are gone (world/astro.js `moonsOf`).
-- **Built (2026-11-06): her skills.** Her own Mage skills (data/skills.js `paths.onmyoji`, names in
+- **Built (2026-11-06): her skills.** Her own Mage skills (data/skills.js `paths.sorcerer`, names in
   `pathNames`): Hellfire (`sohell`), Shadow Step (`sostep`, burst `sosink`), Clutching Horde
   (`sohorde`), Dread Circle (`sonova`, `sonovafx`), Ember Mend (`somend`, `soglow`), Shadow Ward
   (`soward`, `soguard`), Abyssal Rain (`sorain`: the rift `sosummon`, falling hands `soslam`, impact
@@ -216,7 +216,7 @@ attack speed, on a 3-minute cooldown: world/combat.js cooldowns) and the Field H
 Her heal engine's effects (the old `si*` names) are redrawn as hers. The notes below are her first
 build, kept for reference.
 
-## The Cleric of light (the healer path; `shrinemaiden`, replacing the Starlight Idol)
+## The Cleric of light (the healer path; `cleric`, replacing the Starlight Idol)
 
 - **Personality (the player's pick): the reformed edgelord.** The Mage's dramatic flair turned holy:
   she names her heals like epic spells ("RADIANT SALVATION!" for a bandage), poses like a saint in a

@@ -31,7 +31,7 @@ window.draw = (kind, progress, dur, weapon, caption, time) => {
   ctx.fillRect(0, 124, W, H - 124);
   ctx.fillStyle = 'rgba(160,100,80,0.16)';
   ctx.beginPath(); ctx.ellipse(80, 124, 16, 3, 0, 0, Math.PI * 2); ctx.fill();
-  const state = kind ? { pose: kind, progress, dur, time, facing: 1, job: 'spiritmage', seed: 1, ready: true } : { pose: 'idle', ready: true, time, facing: 1, job: 'spiritmage', seed: 1 };
+  const state = kind ? { pose: kind, progress, dur, time, facing: 1, job: 'mage', seed: 1, ready: true } : { pose: 'idle', ready: true, time, facing: 1, job: 'mage', seed: 1 };
   drawHero(ctx, look, gear, 80, 124, { ...state, scale: 1.6 });
   ctx.fillStyle = '#5a3f3a';
   ctx.font = 'bold 9px sans-serif';

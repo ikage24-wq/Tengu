@@ -8,14 +8,14 @@
 export const ORB_MAX = 5;
 // Seconds between new orbs while she fights, and how long after the last monster nearby they keep
 // coming (so a short lull doesn't empty her hands).
-export const ORB_EVERY = 0.7;
+export const ORB_EVERY = 0.3;
 export const ORB_FIGHT = 3;
 // How near a monster has to be for her to start juggling.
 const NEAR_X = 420;
 const NEAR_Y = 200;
 export const ORB_ELS = ['fire', 'ice', 'bolt'];
 
-export const isJuggler = (char) => char.job === 'spiritmage';
+export const isJuggler = (char) => char.job === 'mage';
 
 export function juggleOf(world) {
   world.juggle ??= { orbs: [], spin: 0, next: 0, turn: 0, back: [], fightAt: -99, caught: [] };

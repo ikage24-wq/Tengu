@@ -32,7 +32,7 @@ function heroAt(rng, level, jobs, gate = 'hollow_gate') {
 test('warriors tank, Spirit Mages heal, everyone else deals damage', () => {
   assert.equal(roleOf('warrior', 'warrior'), 'tank');
   for (const [job, fam] of [['archer', 'archer'], ['thief', 'thief']]) assert.equal(roleOf(job, fam), 'dps');
-  assert.equal(roleOf('spiritmage', 'mage'), 'healer', 'the Star Witch heals');
+  assert.equal(roleOf('mage', 'mage'), 'healer', 'the Star Witch heals');
   assert.equal(roleOf('novice', 'beginner'), null);
 });
 
@@ -51,7 +51,7 @@ test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () =
   const healer = members.find((b) => world.dungeon.roles[b.id] === 'healer');
   assert.equal(tank.char.job, 'warrior');
   // The Spirit Mage takes the healer's seat.
-  assert.equal(healer.char.job, 'spiritmage');
+  assert.equal(healer.char.job, 'mage');
   assert.equal(world.map.id, DUNGEONS.hollow.rooms[0]);
   for (const b of members) assert.equal(b.hp, b.stats.maxHp);
 });
@@ -71,7 +71,7 @@ test('friends online at the gate always come along, even sharing your role', () 
   const rng = seeded(9);
   for (const [mine, theirs, want] of [
     ['warrior', ['warrior'], ['tank', 'tank', 'healer', 'dps']],
-    ['spiritmage', ['spiritmage'], ['tank', 'healer', 'healer', 'dps']],
+    ['mage', ['mage'], ['tank', 'healer', 'healer', 'dps']],
     ['archer', ['thief'], ['tank', 'healer', 'dps', 'dps']],
     ['warrior', ['warrior', 'warrior', 'warrior', 'archer'], ['tank', 'tank', 'tank', 'tank']],
   ]) {
@@ -571,7 +571,7 @@ test("a Star Witch in the healer's seat veils the tank and wishes stars on the h
   const world = heroAt(rng, 12, ['archer']);
   assert.equal(startRun(world), null);
   const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
-  assert.equal(healer.char.job, 'spiritmage');
+  assert.equal(healer.char.job, 'mage');
   for (let i = 0; i < 30; i++) {
     updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
     updateBots(world.bots, world, 1 / 60);
@@ -581,27 +581,27 @@ test("a Star Witch in the healer's seat veils the tank and wishes stars on the h
   healerTurn(healer, world, rng);
   const tank = groupOf(world).find((g) => g.role === 'tank');
   assert.ok(tank.bot.buffs.spiritward?.shield > 0, 'a Star Veil on the tank');
-  assert.equal(healer.attack.pose, 'swveil', 'drawn with her wand');
+  assert.equal(healer.attack.pose, 'jgplates', 'her spinning plates');
   world.char.hp = Math.round(world.stats.maxHp * 0.3);
   const before = world.char.hp;
   healerTurn(healer, world, rng);
   assert.ok(world.char.hp > before, 'and she heals you when you are hurt');
-  assert.equal(healer.attack.pose, 'swwish');
-  assert.ok(world.fx.some((f) => f.kind === 'stwish'), 'with her wishing star');
+  assert.equal(healer.attack.pose, 'jgencore');
+  assert.ok(world.fx.some((f) => f.kind === 'jgencore'), 'with her encore');
 });
 
 test("a Starlight Idol in the healer's seat calls them up with Center Stage and raises the fallen with Curtain Call", async () => {
-  assert.equal(roleOf('shrinemaiden', 'mage'), 'healer');
-  assert.equal(roleOf('onmyoji', 'mage'), 'dps', 'an Astronomer deals damage');
+  assert.equal(roleOf('cleric', 'mage'), 'healer');
+  assert.equal(roleOf('sorcerer', 'mage'), 'dps', 'an Astronomer deals damage');
   const { computeStats } = await import('../src/core/stats.js');
   const rng = seeded(11);
   const world = heroAt(rng, 12, ['archer']);
   assert.equal(startRun(world), null);
   const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
   // (The Hollow's healers are Spirit Mages; one past level 30 has taken her path.)
-  healer.char = makeBotCharacter(rng, { name: healer.name, pro: false, level: 34, jobs: ['spiritmage', 'shrinemaiden'] });
+  healer.char = makeBotCharacter(rng, { name: healer.name, pro: false, level: 34, jobs: ['mage', 'cleric'] });
   healer.stats = computeStats(healer.char);
-  assert.equal(healer.char.job, 'shrinemaiden');
+  assert.equal(healer.char.job, 'cleric');
   for (let i = 0; i < 30; i++) {
     updateWorld(world, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
     updateBots(world.bots, world, 1 / 60);
@@ -630,17 +630,17 @@ test("a Starlight Idol in the healer's seat calls them up with Center Stage and 
   assert.equal(healer.attack.pose, 'bbrebirth', 'her deep bow');
 });
 
-test('a Sorcerer in the group flings her shadow hands, and her big one closes her fist on them', async () => {
+test('a Sorcerer in the group calls down star-sparks, and her big one is a barrage', async () => {
   const { makeAI } = await import('../src/world/party.js');
   const rng = seeded(4);
-  const char = makeBotCharacter(rng, { name: 'Vega', pro: false, level: 34, jobs: ['spiritmage', 'onmyoji'] });
-  assert.equal(char.job, 'onmyoji');
+  const char = makeBotCharacter(rng, { name: 'Vega', pro: false, level: 34, jobs: ['mage', 'sorcerer'] });
+  assert.equal(char.job, 'sorcerer');
   const bot = { char, stats: null, level: 34, pro: false, body: { x: 0, y: 0, facing: 1 } };
   const { computeStats } = await import('../src/core/stats.js');
   bot.stats = computeStats(char);
   const ai = makeAI(bot, rng, 'sniper');
-  assert.equal(ai.weapon.special, 'sowgrip', 'her big one closes her fist on them');
-  assert.ok(ai.weapon.shot === 'sohand' && ai.weapon.magic, 'shadow hands, and spells');
+  assert.equal(ai.weapon.special, 'mcbarrage', 'her big one is a Starfall Barrage');
+  assert.ok(ai.weapon.shot === 'mcspark' && ai.weapon.magic, 'star-sparks, and spells');
 });
 
 test('the group finder brings only real jobs, and helpers use only their own real skills', async () => {
@@ -648,11 +648,11 @@ test('the group finder brings only real jobs, and helpers use only their own rea
   const { SKILLS } = await import('../src/data/skills.js');
   const { botSkills } = await import('../src/world/party.js');
   // The spells the healer and the tank's War Cry are built on.
-  for (const [id, job] of [['spiritward', 'spiritmage'], ['blessing', 'spiritmage'], ['grandblessing', 'shrinemaiden'], ['warcry', 'warrior']]) {
+  for (const [id, job] of [['spiritward', 'mage'], ['blessing', 'mage'], ['grandblessing', 'cleric'], ['warcry', 'warrior']]) {
     assert.ok(SKILLS[id], `${id} is a real skill`);
     assert.equal(SKILLS[id].job, job);
   }
-  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [21, 35, ['spiritmage', 'onmyoji']], [34, 40, ['warrior', 'paladin']]]) {
+  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [21, 35, ['mage', 'sorcerer']], [34, 40, ['warrior', 'paladin']]]) {
     const rng = seeded(seed);
     const world = heroAt(rng, level, jobs);
     assert.equal(startRun(world), null);

@@ -139,11 +139,11 @@ function rollLevel(pro, rng) {
 // level 30 path (the Mage was removed; a new magic class is being built).
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
-  const first = pick(['warrior', 'archer', 'thief', 'spiritmage'], rng);
+  const first = pick(['warrior', 'archer', 'thief', 'mage'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
-  if (first === 'spiritmage' && level >= 30) return [first, pick(['shrinemaiden', 'onmyoji'], rng)];
+  if (first === 'mage' && level >= 30) return [first, pick(['cleric', 'sorcerer'], rng)];
   return [first];
 }
 

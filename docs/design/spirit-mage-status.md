@@ -32,7 +32,7 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
   kagura (`DANCE_STYLES.grounded` in render/moves.js): feet slide flat in long gliding steps, a tall
   stance with soft knees, big bold staff and fan sweeps, bells that ring all through, a fan that
   folds and snaps open with each cast, and a rise onto her toes on the finishers and the up cast.
-  The float and ribbon samples stay on the dev page (tools/spiritmage.html ?style=).
+  The float and ribbon samples stay on the dev page (tools/mage.html ?style=).
 - Stage 2: Spirit Wave, Blessing, Spirit Ward, Mana Mastery and Heaven's Lantern, each a dance
   figure of her own (kaguraslam, kagurabless, kaguraward, kaguralantern), with icons, effects and
   tests. Blessing and Ward land as `grant` strikes (world/melee.js); the lantern lives in
@@ -41,7 +41,7 @@ each with its own body and rig; never reuse Snow Wolf). Everything is new art an
   Akanbe, Rodeo, Spitball Volley), chosen by range. Reanimated: every part of her pose rides a
   slightly under-damped spring (`follow` in render/spiritdoll.js), she steers in curves, banks
   into her flight, and her head and hair trail her body. She cheers at a Blessing or a Ward.
-- The dev page plays any skill: tools/spiritmage.html ?skill=<id> (and ?behind for a dummy behind).
+- The dev page plays any skill: tools/mage.html ?skill=<id> (and ?behind for a dummy behind).
 
 - Polish and wiring: ward spheres on party members and a burst when a ward breaks; Heaven's
   Lantern hangs lower and smaller; sounds for her dance, skills and every doll trick (suzu bells,

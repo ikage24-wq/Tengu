@@ -62,7 +62,7 @@ export const NPCS = {
     id: 'elowen', name: 'Elowen', title: 'Mage Instructor', role: 'instructor', family: 'mage',
     building: 'mage', sign: 'Mage Tower', gear: { weapon: { id: 'staff_50' }, ...outfit('mage', 50) },
     look: { hairStyle: 'hime', hairColor: '#e9ebfa', skinTone: '#fff0e6', eyeColor: '#9b6cff', outfitColor: '#b8a6ff', eyeStyle: 'sleepy', face: 'smug' },
-    quests: ['story_invite', 'story_waltz', 'story_3_1', 'story_3_2', 'story_6_1', 'story_6_2', 'story_6_3', 'elowen_dance', 'elowen_wisps', 'elowen_foxfire', 'elowen_lid', 'spiritmage_trial'], showJob: 'spiritmage',
+    quests: ['story_invite', 'story_waltz', 'story_3_1', 'story_3_2', 'story_6_1', 'story_6_2', 'story_6_3', 'elowen_dance', 'elowen_wisps', 'elowen_foxfire', 'elowen_lid', 'mage_trial'], showJob: 'mage',
     greeting: 'Moonleaf Grove welcomes you. Magic here is written in the stars: they fall for you and they mend for you. Shall we begin?',
   },
   kestrel: {

@@ -274,7 +274,7 @@ export const AT_HOME = {
   lark: { x: 300, piece: 'sea_net', job: 'archer', dish: ['dish_moontea', 'dish_minttea', 'dish_kelpsoup'] },
   rowan: { x: 640, piece: 'star_lamp', job: 'warrior', dish: ['dish_onigiri', 'dish_stew', 'dish_grilled'] },
   yuzu: { x: 860, piece: 'bake_stool', job: 'thief', dish: ['dish_koimochi', 'dish_foxfiretea', 'dish_onigiri'] },
-  celeste: { x: 1010, piece: 'star_globe', job: 'spiritmage', dish: ['dish_moontea', 'dish_nebula', 'dish_clovertea'] },
+  celeste: { x: 1010, piece: 'star_globe', job: 'mage', dish: ['dish_moontea', 'dish_nebula', 'dish_clovertea'] },
   marlowe: { x: 250, piece: 'trophy_plaque', job: 'archer', dish: ['dish_lanternskewer', 'dish_tunasteak', 'dish_twinnoodles'] },
 };
 

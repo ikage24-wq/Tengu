@@ -193,7 +193,7 @@ export function skillTooltip(char, skillId) {
     const pct = biggestPct(params) * tune;
     if (pct > 0) {
       const st = computeStats(char);
-      const magic = (params.proc ?? params).power != null || s.job === 'spiritmage' || JOBS[s.job]?.family === 'mage';
+      const magic = (params.proc ?? params).power != null || s.job === 'mage' || JOBS[s.job]?.family === 'mage';
       const r = magic ? magicRange(st, pct) : physicalRange(st, st.weaponType, pct);
       lines.push({ text: `Your biggest blow: ${Math.round(r.min).toLocaleString()} – ${Math.round(r.max).toLocaleString()}`, color: '#a8467a', size: 8 });
     }

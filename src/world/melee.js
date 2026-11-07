@@ -211,7 +211,7 @@ export const PATH_COMBOS = {
   starwand: [
     { move: 'jgtoss', dur: 0.32, step: 8, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 86, range: 300, h: 70, knock: 30, speed: 820 }] },
     { move: 'jgwhip', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'jgfire', orb: true, magic: true, pct: 94, range: 310, h: 70, knock: 35, speed: 900, bend: -16 }] },
-    { move: 'jgspin', dur: 0.62, step: 14, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 70, range: 300, h: 80, knock: 30, speed: 860 }, { at: 0.52, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 165, range: 330, h: 80, hops: 2, knock: 130, speed: 780, big: true, stop: 0.06, shake: 2 }] },
+    { move: 'jgspin', dur: 0.62, step: 14, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 70, range: 300, h: 80, knock: 30, speed: 860 }, { at: 0.52, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 165, range: 330, h: 80, hops: 2, knock: 220, launch: 130, speed: 780, big: true, stop: 0.09, shake: 3 }] },
   ],
   // The Cleric (the healer path, id kept; docs/design/mage-line.md, the remake): the combat medic,
   // who works rather than casts: each spell is medical gear that hurts what it hits and mends the
@@ -237,19 +237,19 @@ export const PATH_COMBOS = {
   // sweeping along it), judgment (a crown of lightning from the sky). Wand: a finger snap (a royal
   // fire orb), a royal wave (a spinning ice crown), a decree (a lightning scepter through the line).
   astro: [
-    { move: 'qntap', dur: 0.62, step: 6, strikes: [{ at: 0.5, shot: 'qngeyser', magic: true, el: 'fire', pct: 150, range: 300, h: 60, oy: 16, targets: 3, pierce: true, knock: 40, launch: 140, speed: 620, big: true, stop: 0.05, shake: 2 }] },
-    { move: 'qnsweep', dur: 0.66, step: 10, strikes: [{ at: 0.52, shot: 'qnwall', magic: true, el: 'ice', pct: 150, range: 300, h: 60, oy: 16, targets: 4, pierce: true, knock: 60, speed: 680, big: true, stop: 0.05, shake: 2 }] },
-    { move: 'qnjudge', dur: 0.78, step: 6, finisher: true, strikes: [{ at: 0.58, shot: 'qnstrike', sky: true, magic: true, el: 'bolt', pct: 250, range: 300, h: 90, targets: 5, knock: 80, launch: 120, speed: 1500, big: true, stop: 0.09, shake: 4 }] },
+    { move: 'mcflick', dur: 0.4, step: 4, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'ice', pct: 105, range: 320, h: 70, knock: 50, speed: 1150 }] },
+    { move: 'mcspark', dur: 0.34, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 95, range: 320, h: 70, knock: 45, speed: 1150 }] },
+    { move: 'mccomet', dur: 0.5, step: 6, finisher: true, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'fire', pct: 200, range: 340, h: 100, targets: 3, blast: 70, knock: 220, launch: 130, speed: 760, big: true, stop: 0.09, shake: 3 }] },
   ],
   astrowand: [
-    { move: 'qnsnap', dur: 0.6, step: 6, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] },
-    { move: 'qnwave', dur: 0.62, step: 8, strikes: [{ at: 0.5, shot: 'qncrown', magic: true, el: 'ice', pct: 140, range: 320, h: 80, targets: 3, pierce: true, knock: 60, speed: 560, big: true, stop: 0.05 }] },
-    { move: 'qndecree', dur: 0.74, step: 8, finisher: true, strikes: [{ at: 0.56, shot: 'qndecree', magic: true, el: 'bolt', pct: 240, range: 360, h: 80, targets: 5, pierce: true, knock: 140, speed: 1100, big: true, stop: 0.08, shake: 3 }] },
+    { move: 'mcspark', dur: 0.34, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 95, range: 320, h: 70, knock: 25, speed: 1150 }] },
+    { move: 'mcflick', dur: 0.4, step: 4, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'ice', pct: 105, range: 320, h: 70, knock: 30, speed: 1150 }] },
+    { move: 'mccomet', dur: 0.5, step: 6, finisher: true, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'fire', pct: 200, range: 340, h: 100, targets: 3, blast: 60, knock: 80, launch: 60, speed: 760, big: true, stop: 0.05, shake: 2 }] },
   ],
   starstaff: [
     { move: 'jgbat', dur: 0.46, step: 10, strikes: [{ at: 0.4, shot: 'jgfire', orb: true, magic: true, pct: 104, range: 320, h: 70, knock: 90, speed: 760 }] },
     { move: 'jgpong', dur: 0.58, step: 8, strikes: [{ at: 0.52, shot: 'jgfire', orb: true, magic: true, pct: 112, range: 320, h: 70, knock: 60, speed: 820, hops: 1 }] },
-    { move: 'jgslam', dur: 0.64, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 185, range: 280, h: 90, hops: 3, knock: 90, launch: 120, speed: 900, big: true, stop: 0.07, shake: 3 }] },
+    { move: 'jgslam', dur: 0.64, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 185, range: 280, h: 90, hops: 3, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.38, step: 10, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -487,7 +487,7 @@ export const PATH_VARIANTS = {
   starwand: [
     [PATH_COMBOS.starwand[0], { move: 'jgback', dur: 0.36, step: 6, strikes: [{ at: 0.34, shot: 'jgfire', orb: true, magic: true, pct: 88, range: 300, h: 70, knock: 30, speed: 840, bend: 20 }] }],
     [PATH_COMBOS.starwand[1], { move: 'jgkick', dur: 0.44, step: 10, strikes: [{ at: 0.36, shot: 'jgfire', orb: true, magic: true, pct: 96, range: 310, h: 60, oy: 10, knock: 50, speed: 880 }] }],
-    [PATH_COMBOS.starwand[2], { move: 'jgflurry', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 70, knock: 30, speed: 900 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 150, range: 320, h: 80, hops: 2, knock: 120, speed: 860, big: true, stop: 0.05, shake: 2 }] }],
+    [PATH_COMBOS.starwand[2], { move: 'jgflurry', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 70, knock: 30, speed: 900 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 150, range: 320, h: 80, hops: 2, knock: 220, launch: 130, speed: 860, big: true, stop: 0.09, shake: 3 }] }],
   ],
   // The Cleric. Wand: the pill flick or a pill tossed over her shoulder; the slap-shot or keepy-uppy
   // with an ice pack; the pulse check or a listen with the stethoscope. Staff: the catapult or a
@@ -505,20 +505,12 @@ export const PATH_VARIANTS = {
   // The Sorcerer. Staff: the throne tap or a majorette's twirl; the curtain sweep or a bow; judgment
   // or an encore. Wand: the finger snap or fanning herself; the royal wave or a curtsy; the decree or
   // a bored yawn.
-  astro: [
-    [PATH_COMBOS.astro[0], { move: 'qnmajor', dur: 0.62, step: 8, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] }],
-    [PATH_COMBOS.astro[1], { move: 'qnbow', dur: 0.66, step: 4, strikes: [{ at: 0.52, shot: 'qnwall', magic: true, el: 'ice', pct: 150, range: 300, h: 60, oy: 16, targets: 4, pierce: true, knock: 60, speed: 680, big: true, stop: 0.05, shake: 2 }] }],
-    [PATH_COMBOS.astro[2], { move: 'qnencore', dur: 0.78, step: 6, finisher: true, strikes: [{ at: 0.58, shot: 'qnstrike', sky: true, magic: true, el: 'bolt', pct: 250, range: 300, h: 90, targets: 5, knock: 80, launch: 120, speed: 1500, big: true, stop: 0.09, shake: 4 }] }],
-  ],
-  astrowand: [
-    [PATH_COMBOS.astrowand[0], { move: 'qnfan', dur: 0.6, step: 6, strikes: [{ at: 0.5, shot: 'qnorb', magic: true, el: 'fire', pct: 150, range: 320, h: 80, targets: 2, pierce: true, knock: 100, speed: 480, big: true, stop: 0.05, shake: 1 }] }],
-    [PATH_COMBOS.astrowand[1], { move: 'qncurtsy', dur: 0.64, step: 6, strikes: [{ at: 0.52, shot: 'qncrown', magic: true, el: 'ice', pct: 140, range: 320, h: 80, targets: 3, pierce: true, knock: 60, speed: 560, big: true, stop: 0.05 }] }],
-    [PATH_COMBOS.astrowand[2], { move: 'qnyawn', dur: 0.74, step: 6, finisher: true, strikes: [{ at: 0.56, shot: 'qndecree', magic: true, el: 'bolt', pct: 240, range: 360, h: 80, targets: 5, pierce: true, knock: 140, speed: 1100, big: true, stop: 0.08, shake: 3 }] }],
-  ],
+  astro: [[PATH_COMBOS.astro[0], PATH_COMBOS.astrowand[0]], [PATH_COMBOS.astro[1], PATH_COMBOS.astrowand[1]], [PATH_COMBOS.astro[2]]],
+  astrowand: [[PATH_COMBOS.astrowand[0], PATH_COMBOS.astro[0]], [PATH_COMBOS.astrowand[1], PATH_COMBOS.astro[1]], [PATH_COMBOS.astrowand[2]]],
   starstaff: [
     [PATH_COMBOS.starstaff[0], { move: 'jgcue', dur: 0.5, step: 14, strikes: [{ at: 0.44, shot: 'jgfire', orb: true, magic: true, pct: 106, range: 340, h: 60, knock: 70, speed: 980, pierce: true, targets: 2 }] }],
     [PATH_COMBOS.starstaff[1], { move: 'jgserve', dur: 0.56, step: 8, strikes: [{ at: 0.5, shot: 'jgfire', orb: true, magic: true, pct: 112, range: 320, h: 80, knock: 60, speed: 880, bend: -22 }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'jgbaton', dur: 0.64, step: 6, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 80, knock: 40, speed: 860 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 160, range: 320, h: 80, hops: 2, knock: 110, speed: 820, big: true, stop: 0.06, shake: 2 }] }],
+    [PATH_COMBOS.starstaff[2], { move: 'jgbaton', dur: 0.64, step: 6, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 80, knock: 40, speed: 860 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 160, range: 320, h: 80, hops: 2, knock: 220, launch: 130, speed: 820, big: true, stop: 0.09, shake: 3 }] }],
   ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
@@ -581,7 +573,7 @@ const ARCHER_COMMANDS = {
     up: { move: 'jgup', dur: 0.4, step: 4, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 900, big: true, stop: 0.04 }] },
     air: [
       { move: 'jgair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 82, range: 260, h: 170, drop: 60, knock: 30, speed: 900 }] },
-      { move: 'jgair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 120, range: 260, h: 190, drop: 70, hops: 1, knock: 80, speed: 900, big: true, stop: 0.04, shake: 1 }] },
+      { move: 'jgair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 120, range: 260, h: 190, drop: 70, hops: 1, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
     ],
     dash: { move: 'jgslide', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.34, shot: 'jgfire', orb: true, magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 960 }] },
   },
@@ -632,7 +624,7 @@ const ARCHER_COMMANDS = {
     up: { move: 'jgvault', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'jgfire', orb: true, magic: true, pct: 114, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 900, big: true, stop: 0.04 }] },
     air: [
       { move: 'jgdunk', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 88, range: 260, h: 170, drop: 60, knock: 40, speed: 900 }] },
-      { move: 'jgdunk', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 125, range: 260, h: 190, drop: 70, hops: 2, knock: 90, speed: 900, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'jgdunk', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 125, range: 260, h: 190, drop: 70, hops: 2, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
     ],
     dash: { move: 'jgscoot', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.42, shot: 'jgfire', orb: true, magic: true, pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 90, speed: 900 }] },
   },
@@ -1128,7 +1120,7 @@ export const STAR_SPLIT = 0.5;
 // gauge), what a heal builds; her element reactions build it fastest (REACT_GAIN).
 export const MAYHEM_HIT = 0.35;
 export const MAYHEM_MEND = 0.5;
-export const hasSpirit = (char) => jobChain(char.job).includes('spiritmage');
+export const hasSpirit = (char) => jobChain(char.job).includes('mage');
 export function addSpirit(world, n, kind = 'harm', el = null) {
   if (!hasSpirit(world.char) || n <= 0) return;
   // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
@@ -1137,7 +1129,7 @@ export function addSpirit(world, n, kind = 'harm', el = null) {
   if (hasBinding(world.char)) return addBinding(world, n * 0.25);
   // The Mage's Mayhem (docs/design/mage-line.md): plain hits barely build it; her element
   // reactions (world/reactions.js) fill it.
-  if (world.char.job === 'spiritmage') {
+  if (world.char.job === 'mage') {
     world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (kind === 'react' ? 1 : kind === 'mend' ? MAYHEM_MEND : MAYHEM_HIT));
     world.spiritAt = world.now;
     world.spiritKind = kind;
@@ -1148,7 +1140,7 @@ export function addSpirit(world, n, kind = 'harm', el = null) {
   world.spiritAt = world.now;
   world.spiritKind = kind;
 }
-export const constellation = (world) => world.char.job === 'spiritmage' && (world.spirit ?? 0) >= SPIRIT_MAX;
+export const constellation = (world) => world.char.job === 'mage' && (world.spirit ?? 0) >= SPIRIT_MAX;
 // Applause (internally Grace): the Starlight Idol's gauge, in place of Spirit. The crowd cheers for
 // her heals (most, more the more allies they reach), her songs laid on the party, and her notes
 // that land; it fades once the fighting stops. Full (LIVE SHOW), her songs reach half again as far and
@@ -1156,7 +1148,7 @@ export const constellation = (world) => world.char.job === 'spiritmage' && (worl
 export const GRACE_MAX = 100;
 const GRACE_HOLD = 6;
 const GRACE_DRAIN = 8;
-export const hasGrace = (char) => jobChain(char.job).includes('shrinemaiden');
+export const hasGrace = (char) => jobChain(char.job).includes('cleric');
 export function addGrace(world, n) {
   if (!hasGrace(world.char) || n <= 0) return;
   world.grace = Math.min(GRACE_MAX, (world.grace ?? 0) + n);
@@ -1176,7 +1168,7 @@ export const STORM_FAST = 1.5;
 export const STORM_SLOW = 0.6;
 export const STORM_HURT = 0.35;
 export const STORM_ECHO = 0.6;
-export const hasBinding = (char) => jobChain(char.job).includes('onmyoji');
+export const hasBinding = (char) => jobChain(char.job).includes('sorcerer');
 export function addBinding(world, n) {
   if (!hasBinding(world.char) || n <= 0) return;
   const quick = world.now - (world.bindingAt ?? -9) < STORM_QUICK;
@@ -1209,7 +1201,7 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
     // (The Cleric's heals land as her own mark: soap bubbles and sparkles rising round them.)
     // (At most one every half second: her heal bombs mend on nearly every hit, and a stack of
     // them reads as a column of crosses.)
-    if (char.job !== 'shrinemaiden') world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
+    if (char.job !== 'cleric') world.fx.push({ kind: 'healglow', x: body.x, y: body.y, t: 0, dur: 0.7 });
     else if (world.now - (world.healedFxAt ?? -9) >= 0.5) {
       world.healedFxAt = world.now;
       world.fx.push({ kind: 'bbhealed', x: body.x, y: body.y, t: 0, dur: 0.8 });
@@ -1247,7 +1239,7 @@ export function addAim(world, n, mob = null, el = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
-  if ((w === 'wand' || w === 'staff') && char.job === 'spiritmage') return w === 'wand' ? 'starwand' : 'starstaff';
+  if ((w === 'wand' || w === 'staff') && char.job === 'mage') return w === 'wand' ? 'starwand' : 'starstaff';
   if (w === 'wand' && hasGrace(char)) return 'idol';
   if (w === 'staff' && hasGrace(char)) return 'medstaff';
   if ((w === 'wand' || w === 'staff') && hasBinding(char)) return w === 'wand' ? 'astrowand' : 'astro';
@@ -1264,6 +1256,16 @@ export function pathOf(world) {
 
 // Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
 const RAGE_POWER = 0.25;
+// The Mage line's gauges work like Rage (the player's ask, 2026-11-07): the fuller Mayhem,
+// Starfall or Devotion is, the harder every one of her spells hits, up to MAGE_POWER more when full.
+const MAGE_POWER = 0.25;
+export function gaugePower(world) {
+  const char = world.char;
+  if (hasRage(char)) return 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX;
+  if (JOBS[char.job]?.family !== 'mage') return 1;
+  const g = gaugeOf(char);
+  return g ? 1 + MAGE_POWER * Math.min(1, (world[g] ?? 0) / 100) : 1;
+}
 // How much heavier each path's blows land: longer hit-stop, harder knockback.
 const WEIGHT = { berserker: 1.4, paladin: 1.2, unbroken: 1.35 };
 // Unbroken (full Valor) lands a Warrior's blows heavier too.
@@ -1347,8 +1349,8 @@ export function basicCombo(world) {
       return;
     }
   }
-  // The Meteor Caller charges her basic spell while attack is held (callerBasic).
-  if (isCaller(world.char)) return callerBasic(world);
+  // (The Meteor Caller's basic spell is a plain string now: no holding to charge, the player's call
+  // 2026-11-07; the meteor is a skill, Meteor Shower.)
   if (stream) return barrageThrow(world, stream);
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   const flowing = world.now <= (world.comboUntil ?? -9);
@@ -1378,7 +1380,7 @@ export function skillCombo(world, skillId, params, scale = 100) {
 // reached: a comet at CALL_TIERS[1] seconds, a meteor at CALL_TIERS[2]; held to CALL_MAX it goes
 // off by itself. Charged hits fill her gauge (Starfall, internally Binding); full (STARSTORM), every
 // tap calls down a meteor at once, each spending CALL_STORM of it.
-export const isCaller = (char) => char.job === 'onmyoji';
+export const isCaller = (char) => char.job === 'sorcerer';
 export const CALL_TIERS = [0, 0.45, 1.1];
 export const CALL_MAX = 1.6;
 export const CALL_WALK = 0.4;
@@ -1443,10 +1445,10 @@ function tickCaller(world) {
 // one that touches an ally in her party pops into a heal; every pop splashes a little heal round it
 // (and on her, at half); one that finds nothing fades at the end of its life with a soft heal where
 // it ends. Pops fill her gauge (Grace); full, every bubble she blows splits into three.
-export const isBubbler = (char) => char.job === 'shrinemaiden';
+export const isBubbler = (char) => char.job === 'cleric';
 export const BUBBLE = {
-  small: { r: 7, speed: 150, life: 1.5, heal: 0.012, gain: 2 },
-  big: { r: 15, speed: 95, life: 2.2, heal: 0.035, gain: 5, trap: 0.9 },
+  small: { r: 7, speed: 230, life: 1.3, heal: 0.012, gain: 2 },
+  big: { r: 15, speed: 150, life: 1.9, heal: 0.035, gain: 5, trap: 0.9 },
   // (A skill's giant bubble rolls on through every monster in its way, hitting each once, and pops
   // at the end of its life in a great splash of healing.)
   giant: { r: 30, speed: 80, life: 2.6, heal: 0.08, gain: 8, pierce: true },
@@ -1470,7 +1472,7 @@ function blowBubbles(world, s) {
       const sky = s.sky ? { x: body.x + s.dir * ((s.skyFrom ?? 30) + (s.sky * (i + 0.5 + split * 1.5)) / n), y: body.y - 150 - Math.random() * 40 } : null;
       (world.soap ??= []).push({
         x: sky ? sky.x : ox, y: sky ? sky.y : oy, vx: sky ? (Math.random() - 0.5) * 20 : Math.cos(aa) * sp * s.dir, vy: sky ? 50 + Math.random() * 30 : Math.sin(aa) * sp - 18, pierce: k.pierce, hits: k.pierce ? new Set() : undefined, sink: Boolean(sky), r: k.r * (triple ? 0.8 : 1), big: s.bubble === 'big', born: world.now + i * (s.sky ? 0.09 : 0.04),
-        life: k.life * (0.9 + 0.2 * Math.random()), pct: s.pct * (triple ? 0.45 : 1), heal: k.heal * (triple ? 0.5 : 1), gain: k.gain, trap: k.trap, key: s.key, dir: s.dir, wob: Math.random() * 6, map: world.map.id,
+        life: k.life * (0.9 + 0.2 * Math.random()), pct: s.pct * (triple ? 0.45 : 1), heal: k.heal * (triple ? 0.5 : 1), gain: k.gain, trap: k.trap, key: s.key, dir: s.dir, fin: Boolean(s.big), wob: Math.random() * 6, map: world.map.id,
       });
     }
   }
@@ -1513,7 +1515,7 @@ function tickBubbles(world, dt) {
     }
     if (m) {
       popBubble(world, b, 'mob');
-      dollHit(world, m, { pct: b.pct, x: b.x, knock: b.big ? 50 : 20, launch: b.big ? 40 : 0, burst: b.big ? 'bbhitbig' : 'bbhit', stun: b.big && !m.def.boss ? b.trap : undefined, gauge: 0, key: b.key, big: b.big, stop: b.big ? 0.04 : 0 });
+      dollHit(world, m, { pct: b.pct, x: b.x, knock: b.fin ? 220 : b.big ? 120 : 45, launch: b.fin ? 130 : b.big ? 70 : 0, burst: b.big ? 'bbhitbig' : 'bbhit', stun: b.big && !m.def.boss ? b.trap : undefined, gauge: 0, key: b.key, big: b.big || b.fin, stop: b.fin ? 0.09 : b.big ? 0.06 : 0.03, shake: b.fin ? 3 : b.big ? 1 : 0 });
       if (b.big && !m.def.boss) world.fx.push({ kind: 'bbtrap', mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: b.trap });
       continue;
     }
@@ -1537,7 +1539,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
   // The Cleric and the Sorcerer name their big spells out loud (MAGE_SHOUTS).
-  if (world.char.job === 'shrinemaiden' || world.char.job === 'onmyoji') mageShout(world, step.move);
+  if (world.char.job === 'cleric' || world.char.job === 'sorcerer') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -1735,7 +1737,7 @@ function land(world, s) {
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
-  const power = hasRage(char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1;
+  const power = gaugePower(world);
   const weight = weightOf(world);
   // A finisher hits harder the fewer it catches: double on one, half again on two (its whole
   // gauge goes into them), so it pays on a lone boss as well as a crowd.
@@ -1758,10 +1760,10 @@ function land(world, s) {
   // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
   // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
   const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
-  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
+  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'mage' ? 'celshockstar' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
   // The Star Witch's party spells (Wishing Star, Star Veil) ring out over everyone they reach.
-  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
+  if (s.grant?.range?.around && char.job === 'mage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
@@ -2084,11 +2086,12 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const sure = s.crit;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : 0;
-  const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
+  const gp = JOBS[char.job]?.family === 'mage' ? gaugePower(world) : 1;
+  const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key) * gp) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'onmyoji' && s.rain ? 'mchit' : char.job === 'shrinemaiden' ? 'bbhit' : char.job === 'spiritmage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'sorcerer' && s.rain ? 'mchit' : char.job === 'cleric' ? 'bbhit' : char.job === 'mage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -2201,7 +2204,7 @@ function fire(world, strike) {
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
   // (The Cleric throws her gear rather than casting it: no flash off the wand.)
-  else if (!hasBond(world.char) && world.char.job !== 'shrinemaiden') world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  else if (!hasBond(world.char) && world.char.job !== 'cleric') world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
@@ -2317,7 +2320,7 @@ const ringMid = (m) => m.y - (m.air ?? 0) - m.def.h / 2;
 const PALM = { shot: 'jgpalm', el: null, orbEl: null, range: 170, targets: 1, pierce: false, big: false, stop: 0, shake: 0, fan: 1 };
 function orbStrike(world, s) {
   const o = takeOrb(world) ?? (s.orbFree && isJuggler(world.char) ? { el: conjure(world) } : null);
-  if (!o) return { ...s, ...PALM, pct: s.pct * 0.45, knock: Math.min(s.knock ?? 20, 30) };
+  if (!o) return { ...s, ...PALM, pct: s.pct * 0.8, knock: Math.min(s.knock ?? 20, 60) };
   return { ...s, shot: `${s.orbShot ?? 'jg'}${o.el}`, el: o.el, orbEl: o.el };
 }
 // An orb in flight: it curves on to the first monster in reach (homing as it flies) and bursts on
@@ -2458,7 +2461,7 @@ function mageShout(world, move) {
   const pick = lines.length > 1 ? lines.filter((l) => l !== last) : lines;
   const line = pick[Math.floor(Math.random() * pick.length)];
   world.mageShout = { ...world.mageShout, [move]: line };
-  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: world.char.job === 'onmyoji' ? '#ffa04a' : '#ff6a7a', t: 0, shout: true });
+  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: world.char.job === 'sorcerer' ? '#ffa04a' : '#ff6a7a', t: 0, shout: true });
 }
 // The Cleric's shots (her own art); their hits leave her mark of light.
 export const CL_SHOTS = new Set(['clbolt', 'clorb', 'clpillar']);

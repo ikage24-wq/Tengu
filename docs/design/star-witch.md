@@ -42,7 +42,7 @@ Astronomer (damage, with a staff: planets and orbiting moons, docs/design/astron
 
 ## Status (2026-11-02)
 
-Built, replacing the Spirit Mage in place (the job keeps the `spiritmage` id and her skill ids, so
+Built, replacing the Spirit Mage in place (the job keeps the `mage` id and her skill ids, so
 saves, Elowen's trial, the dungeon healer and her paths carry over; the name is Star Witch).
 
 - Moves (render/moves.js `sw*`, `ss*`): the wand string swflick, swtwirl, swspin, swsnap and its

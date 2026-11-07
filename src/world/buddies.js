@@ -8,7 +8,7 @@
 // monsters around you, and heals you or tosses you a potion. Say thanks and they might add you.
 
 import { computeStats } from '../core/stats.js';
-import { jobChain } from '../data/jobs.js';
+import { JOBS, jobChain, RETIRED_JOBS } from '../data/jobs.js';
 import { MAPS } from '../data/maps.js';
 import { createBody } from './physics.js';
 import { joinParty, partyMembers, LEVEL_GAP, PARTY_MAX, mayAskAlong, askAlong, askDeclined } from './party.js';
@@ -39,7 +39,9 @@ export function snapshot(bot) {
 
 // A remembered player back as a character, at the level they're at now.
 export function remake(snap, makeChar, rng) {
-  const char = makeChar(rng, { name: snap.name, level: snap.level, jobs: snap.jobs, pro: false });
+  // (A friend saved under a job's old id comes back under its new one.)
+  const jobs = (snap.jobs ?? []).map((j) => (JOBS[j] ? j : RETIRED_JOBS[j] ?? j)).filter((j) => JOBS[j]);
+  const char = makeChar(rng, { name: snap.name, level: snap.level, jobs, pro: false });
   char.appearance = snap.look;
   char.equipment = snap.equipment;
   char.outfit = snap.outfit ?? {};
@@ -222,13 +224,13 @@ function helpers(bots, world) {
     bot.gave = true;
     bot.helped = true;
     const max = world.stats.maxHp;
-    const shrine = jobChain(bot.char.job).includes('spiritmage');
-    const witch = bot.char.job === 'spiritmage';
+    const shrine = jobChain(bot.char.job).includes('mage');
+    const witch = bot.char.job === 'mage';
     const amount = Math.round(max * (shrine ? 0.45 : 0.3));
     world.char.hp = Math.min(max, world.char.hp + amount);
-    world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'bbspot' : 'astide', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
+    world.fx.push(shrine ? { kind: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbspot' : 'mclight', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
     world.numbers.push({ x: b.x, y: b.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-    if (shrine) bot.attack = { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'bbguard' : 'astide', t: 0, dur: witch ? 0.9 : 1.1 };
+    if (shrine) bot.attack = { pose: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbguard' : 'mclight', t: 0, dur: witch ? 0.9 : 1.1 };
     // (Through the chat gate: two helpers never toss the same line, and a line said lately isn't
     // said again; one of the others is, or the potion just flies.)
     const lines = shrine ? ['blessed u!', 'heal!', 'there :)'] : ['here have a pot!', 'catch!! *throws pot*', 'drink this'];

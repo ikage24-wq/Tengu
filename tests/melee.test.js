@@ -9,7 +9,7 @@ import { createCharacter, gainExp, advanceJob } from '../src/core/character.js';
 import { makeEquip } from '../src/core/items.js';
 import { spawnMob } from '../src/world/mobs.js';
 import { PATH_COMBOS, PATH_VARIANTS, planCombo, MAX_STOP, addShadow } from '../src/world/melee.js';
-import { MOVES } from '../src/render/moves.js';
+import { MOVES, moveAt } from '../src/render/moves.js';
 import { cast } from '../src/world/combat.js';
 import { addItem } from '../src/core/inventory.js';
 
@@ -1848,8 +1848,8 @@ function mage() {
 
 test('no job can mash out its attacks: every skill plays its motion and a beat, basics keep a rhythm', async () => {
   const { SKILLS } = await import('../src/data/skills.js');
-  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], spiritmage: ['spiritmage'], shrinemaiden: ['spiritmage', 'shrinemaiden'], onmyoji: ['spiritmage', 'onmyoji'] };
-  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', spiritmage: 'wand_20', shrinemaiden: 'wand_20', onmyoji: 'staff_20' };
+  const families = { warrior: ['warrior'], paladin: ['warrior', 'paladin'], berserker: ['warrior', 'berserker'], archer: ['archer'], beastmaster: ['archer', 'beastmaster'], stormcaller: ['archer', 'stormcaller'], thief: ['thief'], thiefstar: ['thief'], shinobi: ['thief', 'shinobi'], kitsune: ['thief', 'kitsune'], mage: ['mage'], cleric: ['mage', 'cleric'], sorcerer: ['mage', 'sorcerer'] };
+  const weapons = { warrior: 'sword_20', paladin: 'sword_20', berserker: 'axe_20', archer: 'bow_20', beastmaster: 'bow_20', stormcaller: 'crossbow_20', thief: 'dagger_20', thiefstar: 'gauntlet_20', shinobi: 'dagger_20', kitsune: 'gauntlet_20', mage: 'wand_20', cleric: 'wand_20', sorcerer: 'staff_20' };
   for (const [label, fam] of Object.entries(families)) {
     // (A Thief fights with either weapon: `thiefstar` is her with a gauntlet.)
     const job = label === 'thiefstar' ? 'thief' : label;
@@ -2259,7 +2259,7 @@ test("the Mage casts snappy: a wand and a staff string of her own, every spell o
     });
   }
   const w = arena('wand_20');
-  w.char.job = 'spiritmage';
+  w.char.job = 'mage';
   const seen = [];
   const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
   for (let i = 0; i < 120; i++) {
@@ -2274,7 +2274,7 @@ test("the Mage casts snappy: a wand and a staff string of her own, every spell o
 // A Star Witch with a wand, every skill of hers learned, and MP to spare.
 function starWitch(weapon = 'wand_20') {
   const w = arena(weapon);
-  w.char.job = 'spiritmage';
+  w.char.job = 'mage';
   Object.assign(w.char.skills, { spiritbolt: 20, spiritwave: 20, blessing: 20, spiritward: 15, manamastery: 20, heavenslantern: 10 });
   w.char.baseMp = 1e6;
   w.char.mp = 1e6;
@@ -2522,8 +2522,8 @@ test('the Grand Finale needs a full Mayhem, spends it, rains great orbs of all t
 // A Starlight Idol (past Elowen's trial).
 function idol() {
   const w = shrineMage();
-  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
-  w.char.job = 'shrinemaiden';
+  w.char.quests.mage_trial = { state: 'done', kills: {} };
+  w.char.job = 'cleric';
   run(w, 0.2);
   return w;
 }
@@ -2699,36 +2699,41 @@ test("Curtain Call's Encore keeps her standing through a blow that would knock h
   assert.ok(!w.char.buffs.resurrection, 'and it is spent');
 });
 
-test('Miracle needs full Devotion, spends it, heals in full, and three beats of music blast the monsters', () => {
+test('Bubble Party needs full Devotion, spends it, rises up over a circle, and three blasts hurt every monster in it and heal everyone', () => {
   const w = idolFull();
   w.char.hp = Math.round(w.stats.maxHp * 0.2);
-  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 90, 250][i] }));
+  w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-120, 90, 220][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'thousandtorii').reason, 'gauge:grace', 'needs full Applause');
+  assert.equal(cast(w, 'thousandtorii').reason, 'gauge:grace', 'needs full Devotion');
   w.grace = 100;
   w.graceAt = w.now;
+  const before = w.char.hp;
   assert.ok(cast(w, 'thousandtorii').ok);
   assert.equal(w.grace, 0, 'spends it');
-  assert.equal(w.pose.kind, 'bbparty');
-  let stage = false;
-  let beats = 0;
-  for (let i = 0; i < 60 * 3; i++) {
+  assert.equal(w.pose.kind, 'bbrise');
+  let circle = false;
+  let pulses = 0;
+  let rose = 0;
+  const seen = new Set();
+  for (let i = 0; i < 60 * 2.4; i++) {
     updateWorld(w, DT, idle);
-    stage ||= w.fx.some((f) => f.kind === 'bbdome');
-    beats = Math.max(beats, w.concert?.done ?? 0);
+    circle ||= w.fx.some((f) => f.kind === 'bbcircle');
+    for (const f of w.fx) if (f.kind === 'bbpulse') seen.add(f);
   }
-  assert.ok(stage, 'the stage rises');
-  assert.equal(w.char.hp, w.stats.maxHp, 'she is healed in full');
-  assert.ok(beats >= 3 || !w.concert, `three beats (${beats})`);
-  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'the music reaches every monster round her');
-  assert.ok(w.char.buffs.thousandtorii?.shield > 0, 'and the party is warded');
+  pulses = seen.size;
+  rose = moveAt('bbrise', 0.55, 2.1)?.lift ?? 0;
+  assert.ok(circle, 'a circle of bubbles opens round her');
+  assert.ok(rose > 30, `she rises up into the air (${Math.round(rose)})`);
+  assert.equal(pulses, 3, 'three blasts');
+  assert.ok(w.char.hp > before + w.stats.maxHp * 0.3, 'and they heal her');
+  assert.ok(w.mobs.every((m, i) => m.hp < hp0[i]), 'and hurt every monster round her');
 });
 
 // An Astronomer (past Elowen's trial), with her orrery staff.
 function astronomer(skills = false, weapon = 'staff_20') {
   const w = starWitch(weapon);
-  w.char.quests.spiritmage_trial = { state: 'done', kills: {} };
-  w.char.job = 'onmyoji';
+  w.char.quests.mage_trial = { state: 'done', kills: {} };
+  w.char.job = 'sorcerer';
   if (skills) Object.assign(w.char.skills, { onmyodo: 10, ofudabarrage: 15, seimanseal: 15, yokairally: 10, troupecombo: 8 });
   w.spirit = 0;
   run(w, 0.2);
@@ -2768,52 +2773,31 @@ test("the Sorcerer's reactions spread down a marked crowd like dominoes, and the
   assert.ok(!m.longestChain, "the Mage's reactions stay where they are");
 });
 
-// The Meteor Caller (the Sorcerer remade): a tap flicks a star-spark, a hold calls a comet, a long
-// hold a meteor; charged hits fill Starfall, and full, a tap calls a meteor at once.
+// The Meteor Caller (the Sorcerer remade): her basic spell is a plain string, no holding to charge
+// (the player's call, 2026-11-07): star-sparks, then a comet at the end; her hits fill Starfall.
 for (const weapon of ['staff_20', 'wand_20']) {
-  test(`the Meteor Caller charges with ${weapon.startsWith('staff') ? 'the staff' : 'the wand'}: tap a spark, hold a comet, hold long a meteor`, () => {
+  test(`the Meteor Caller's ${weapon.startsWith('staff') ? 'staff' : 'wand'} string: sparks, then a comet, and holding attack never locks her`, () => {
     const w = astronomer(false, weapon);
-    const fire = (secs) => {
-      const shots = new Set();
-      for (let i = 0; i < Math.round(secs * 60); i++) {
-        updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(i ? [] : ['KeyZ']), locked: false });
-        if (i > 2) assert.ok(w.pose?.kind === 'mcgather' || i > Math.round(1.6 * 60), 'she gathers while it is held');
-      }
-      for (let i = 0; i < 70; i++) {
-        updateWorld(w, DT, idle);
-        for (const f of w.fx) if (f.kind === 'projectile') shots.add(f.shot);
-      }
-      return [...shots];
-    };
-    assert.deepEqual(fire(0.05), ['mcspark'], 'a tap: a star-spark');
-    assert.deepEqual(fire(0.7), ['mccomet'], 'held: a comet');
-    assert.deepEqual(fire(1.3), ['mcmeteor'], 'held long: a meteor');
-    assert.ok(w.binding > 0, `charged hits fill Starfall (${Math.round(w.binding)})`);
+    w.mobs.forEach((m, i) => { m.x = w.body.x + 120 + i * 30; });
+    const seen = [];
+    const shots = new Set();
+    for (let i = 0; i < 60 * 2.5; i++) {
+      updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(i ? [] : ['KeyZ']), locked: false });
+      if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
+      for (const f of w.fx) if (f.kind === 'projectile') shots.add(f.shot);
+      assert.notEqual(w.pose?.kind, 'mcgather', 'no gathering: she never stands charging');
+    }
+    const key = weapon.startsWith('staff') ? 'astro' : 'astrowand';
+    assert.deepEqual(seen.slice(0, 3), PATH_COMBOS[key].map((s) => s.move), 'her string');
+    assert.ok(shots.has('mcspark') && shots.has('mccomet'), `sparks and a comet (${[...shots]})`);
+    assert.ok(w.binding > 0, `her hits fill Starfall (${Math.round(w.binding)})`);
     assert.equal(w.spirit ?? 0, 0, 'and no Mayhem');
+    // Between blows she can walk off at full pace.
+    const x0 = w.body.x;
+    for (let i = 0; i < 40; i++) updateWorld(w, DT, { held: new Set(['ArrowLeft']), pressed: new Set(), locked: false });
+    assert.ok(x0 - w.body.x > w.stats.speed * (40 / 60) * 0.5, 'and she walks away freely');
   });
 }
-
-test('while she gathers she can walk, slowly', async () => {
-  const { CALL_WALK } = await import('../src/world/melee.js');
-  const w = astronomer(false, 'wand_20');
-  w.mobs = [];
-  const x0 = w.body.x;
-  for (let i = 0; i < 40; i++) updateWorld(w, DT, { held: new Set(['KeyZ', 'ArrowRight']), pressed: new Set(i ? [] : ['KeyZ']), locked: false });
-  assert.equal(w.pose?.kind, 'mcgather');
-  const moved = w.body.x - x0;
-  assert.ok(moved > 5, `she walks (${moved.toFixed(1)})`);
-  assert.ok(moved < w.stats.speed * (40 / 60) * CALL_WALK * 1.3, 'slowly');
-});
-
-test('on a full Starfall a tap calls a meteor down at once', async () => {
-  const { BINDING_MAX } = await import('../src/world/melee.js');
-  const w = astronomer(false, 'wand_20');
-  w.binding = BINDING_MAX;
-  w.bindingAt = w.now;
-  updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose?.kind, 'mcmeteor');
-  assert.ok(w.binding < BINDING_MAX, 'it spends some');
-});
 
 test('Chaos builds faster while she keeps casting, a hit knocks part of it away, and on Pandemonium her chains run longer', async () => {
   const { addBinding, STORM_HURT } = await import('../src/world/melee.js');
@@ -2894,23 +2878,31 @@ test('Black Hole drags the monsters round it in and hits them with each element 
   assert.equal(w.well, null, 'gone with the map');
 });
 
-test('Extinction needs a full Starfall, spends it, and sets off every reaction on everything ahead (not behind)', () => {
+test('Extinction needs a full Starfall, spends it, rains a meteor shower ahead, then drops a huge one that sets off every reaction (not behind)', () => {
   const w = astronomer(true);
   w.mobs.forEach((m, i) => Object.assign(m, { x: w.body.x + [-140, 140, 380][i] }));
   const hp0 = w.mobs.map((m) => m.hp);
-  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a full Chaos');
+  assert.equal(cast(w, 'troupecombo').reason, 'gauge:binding', 'needs a full Starfall');
   w.binding = 100;
   w.bindingAt = w.now;
   assert.ok(cast(w, 'troupecombo').ok);
   assert.equal(w.binding, 0, 'spends it');
-  assert.equal(w.pose.kind, 'mcextinct');
+  assert.equal(w.pose.kind, 'mcrain');
   let rift = false;
+  let shower = 0;
+  let giant = false;
   w.reactedKinds = {};
-  for (let i = 0; i < 60 * 2.4; i++) {
+  const falling = new Set();
+  for (let i = 0; i < 60 * 3.4; i++) {
     updateWorld(w, DT, idle);
     rift ||= w.fx.some((f) => f.kind === 'mcsky');
+    for (const f of w.fx) if (f.kind === 'rain' || f.variant === 'mcmeteor' || f.variant === 'mccomet') falling.add(f);
+    giant ||= w.fx.some((f) => f.shot === 'mcgiant');
   }
+  shower = falling.size;
   assert.ok(rift, 'the sky opens');
+  assert.ok(shower >= 4, `a meteor shower rains down (${shower})`);
+  assert.ok(giant, 'then the huge one falls');
   assert.deepEqual(Object.keys(w.reactedKinds).sort(), ['kaboom', 'shatter', 'steam'], 'every reaction goes off');
   assert.ok(w.mobs[1].hp < hp0[1] && w.mobs[2].hp < hp0[2], 'everything ahead goes up');
   assert.equal(w.mobs[0].hp, hp0[0], 'and not behind her');
@@ -2967,9 +2959,9 @@ test('the Cleric plays every Mage skill her own way, under her own names', async
   const { pathMoves, pathName } = await import('../src/data/path-skills.js');
   const { SKILLS } = await import('../src/data/skills.js');
   for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
-    const moves = pathMoves(SKILLS[id], 1, 'shrinemaiden');
+    const moves = pathMoves(SKILLS[id], 1, 'cleric');
     assert.ok(moves.every((m) => m.startsWith('bb') && MOVES[m]), `${id}: her own move (${moves})`);
-    assert.notEqual(pathName(SKILLS[id], 'shrinemaiden'), SKILLS[id].name, `${id}: her own name`);
+    assert.notEqual(pathName(SKILLS[id], 'cleric'), SKILLS[id].name, `${id}: her own name`);
   }
 });
 
@@ -2977,9 +2969,9 @@ test('the Sorcerer plays every Mage skill her own way, under her own names', asy
   const { pathMoves, pathName } = await import('../src/data/path-skills.js');
   const { SKILLS } = await import('../src/data/skills.js');
   for (const id of ['spiritbolt', 'spiritstep', 'spiritwave', 'frostnova', 'blessing', 'spiritward', 'heavenslantern']) {
-    const moves = pathMoves(SKILLS[id], 1, 'onmyoji');
+    const moves = pathMoves(SKILLS[id], 1, 'sorcerer');
     assert.ok(moves.every((m) => m.startsWith('mc') && MOVES[m]), `${id}: her own move (${moves})`);
-    assert.notEqual(pathName(SKILLS[id], 'onmyoji'), SKILLS[id].name, `${id}: her own name`);
+    assert.notEqual(pathName(SKILLS[id], 'sorcerer'), SKILLS[id].name, `${id}: her own name`);
   }
 });
 

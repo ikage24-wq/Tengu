@@ -5399,6 +5399,19 @@ export const MOVES = {
       rig: (r) => { r.backArm = dancerHand([q(3), q(-1)]); danceLegs(r, [go * (1 - after), [3, 0, 6], [-2.4, 0, -10]], [after, [1.6, 0, 4], [-1.8, 0, -6]]); },
     };
   },
+  // Backhand spark (her string's second, at ~0.4): the wand brought across her body and flicked
+  // back out with the back of the hand, a quick turn of the shoulders into it.
+  mcflick(p) {
+    const wind = soft(seg(p, 0, 0.2));
+    const go = ease(seg(p, 0.2, 0.4));
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: lerp(lerp(110, 200, wind), 70, go) + 30 * after, arm: lerp(lerp(40, 60, wind), 86, go) - 30 * after,
+      back: (wind > 0.5 && go < 0.4) || undefined, lunge: 3 * go * (1 - after * 0.5) - 1.5 * wind * (1 - go), tilt: -0.05 * wind * (1 - go) + 0.07 * go * (1 - after), lift: swBob(p, 0.62) * 0.4, trail: go > 0 && go < 1,
+      face: p < 0.2 ? PM_FACE.aim : PM_FACE.snooty,
+      rig: (r) => { r.backArm = dancerHand([q(lerp(-3, 3, go)), q(-1)]); danceLegs(r, [wind * (1 - go), [1.4, 0, 4], [-2, 0, -6]], [go * (1 - after), [3.2, 0, 8], [-2.6, 0, -12]], [after, [1.6, 0, 4], [-1.8, 0, -6]]); },
+    };
+  },
   // Comet (released from the first tier, at ~0.42): the arm swept back over the shoulder and
   // hurled forward and up, the comet answering from the sky; she leans after it.
   mccomet(p) {
@@ -5652,6 +5665,33 @@ export const MOVES = {
         r.hairLift = call > 0.5 && slam < 0.3 ? -1 : slam > 0.5 && crouch > 0.4 ? 1 : 0;
         r.cape -= q(5 * call * (1 - slam));
         danceLegs(r, [call * (1 - slam), [3.6, 0, 10], [-3.6, 0, -10]], [crouch, [6, 0, 14], [-5.6, -0.6, -28]]);
+      },
+    };
+  },
+
+  // Extinction, rebuilt (her finisher; the sky opens at ~0.06, the shower rains from ~0.18 to
+  // ~0.62, the huge one is dragged down at ~0.7 and lands at ~0.8): she lifts the staff high over her
+  // head and holds it there, rising onto her toes, and keeps casting, the staff pulsing up with
+  // each wave of meteors, faster and faster; then she drags it down with both hands and the huge one
+  // follows it, and she braces against the shock.
+  mcrain(p) {
+    const lift = soft(seg(p, 0, 0.14));
+    const casting = p > 0.14 && p < 0.66;
+    const beat = seg(p, 0.16, 0.64);
+    const pulse = casting ? Math.max(0, Math.sin(beat * beat * Math.PI * 9)) : 0;
+    const drag = ease(seg(p, 0.64, 0.74));
+    const brace = soft(seg(p, 0.74, 0.82)) * (1 - soft(seg(p, 0.9, 1)));
+    const rest = soft(seg(p, 0.9, 1));
+    return {
+      weapon: lerp(lerp(120, 12, lift) + 10 * pulse, 140, drag) - 20 * rest, arm: lerp(lerp(40, 116, lift) + 4 * pulse, 50, drag) - 10 * rest,
+      lift: 3 * lift * (1 - drag) + 1.2 * pulse, tilt: -0.07 * lift * (1 - drag) + 0.2 * brace, lunge: 4 * drag * (1 - rest),
+      face: p < 0.14 ? PM_FACE.aim : p < 0.64 ? PM_FACE.wild : p < 0.9 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(-8, 3, drag)), q(lerp(-9 - 1.5 * pulse, 1, drag))]);
+        r.squat = q(2.6 * brace);
+        r.hairLift = lift > 0.5 && drag < 0.3 ? -1 : brace > 0.4 ? 1 : 0;
+        r.cape -= q(5 * lift * (1 - drag));
+        danceLegs(r, [lift * (1 - drag), [2.6, -1.2, 10], [-2.6, -1.2, -10]], [brace, [6, 0, 14], [-5.6, -0.6, -28]], [rest, [1.6, 0, 4], [-1.8, 0, -6]]);
       },
     };
   },
@@ -5920,6 +5960,23 @@ export const MOVES = {
       weapon: spin ? 160 : lerp(150, 60, pose) + 20 * b, arm: spin ? 112 : lerp(100, 110, pose) - 10 * b, turn: spin ? spinFlip(t) : 1, lift: 7 * b + 2 * bump(p, 0.04, 0.3),
       face: p < 0.84 ? MD_FACE.shout : MD_FACE.wink,
       rig: (r) => { r.air = b > 0.4; r.backArm = dancerHand(pose > 0.4 ? [q(-6), q(-10)] : [q(-5), q(-6)]); r.hairLift = b > 0.4 || spin ? -1 : 0; danceLegs(r, [spin ? 1 : 0, [0.4, 0, 0], dancerLeg(-40, 14.6, -16)], [b, [1.4, -4, 30], [-1.4, -4, -30]], [pose, [2.4, 0, 6], [-1.4, -1, -20]]); },
+    };
+  },
+  // Bubble Party, rebuilt (finisher; the circle opens at ~0.12, blasts at ~0.35, 0.55 and 0.75): she
+  // rises up off the floor on a column of bubbles, arms open, and hangs there over her circle; on
+  // each blast she thrusts the wand down at it (each harder), then floats back down and lands.
+  bbrise(p) {
+    const up = soft(seg(p, 0.02, 0.26));
+    const down = soft(seg(p, 0.84, 0.98));
+    const hang = up * (1 - down);
+    const beat = (c, k) => bump(p, c - 0.06, c + 0.08) * k;
+    const thrust = Math.max(beat(0.35, 0.8), beat(0.55, 1), beat(0.75, 1.3));
+    const land = bump(p, 0.92, 1);
+    return {
+      weapon: lerp(lerp(120, 170, up), 260, thrust) - 40 * down, arm: lerp(lerp(40, 110, up), 60, thrust) - 30 * down,
+      lift: 44 * hang + 2 * Math.sin(p * 18) * hang - 4 * thrust * hang, tilt: 0.06 * thrust,
+      face: p < 0.84 ? MD_FACE.shout : MD_FACE.cheer,
+      rig: (r) => { r.air = hang > 0.2; r.squat = q(1.4 * land); r.backArm = dancerHand(thrust > 0.3 ? [q(-7), q(-9)] : [q(-6 * hang), q(-8 * hang)]); r.hairLift = hang > 0.3 ? -1 : 0; danceLegs(r, [hang, [1.2, -3.4, 24], [-1.4, -2.6, -18]], [land, [1.6, 0, 6], [-1.6, 0, -6]]); },
     };
   },
   // With the staff: a big bubble hoop.
@@ -11526,7 +11583,7 @@ const settle = (p, a) => 1.8 * bump(p, a, a + (1 - a) * 0.45) + 0.7 * bump(p, a 
 // Styles for the Spirit Mage's dance. Each reworks the base figures above: `mv` is the figure's
 // pose, `at(p)` its raw pose at another moment (for parts that trail behind), `p` and `dur` where it
 // is, `kind` which figure. The player picked grounded kagura; the float and ribbon samples are kept
-// for the dev page (tools/spiritmage.html ?style=), and 'flow' is the base figures as drawn.
+// for the dev page (tools/mage.html ?style=), and 'flow' is the base figures as drawn.
 let danceStyle = 'grounded';
 export const setDanceStyle = (name) => { danceStyle = name; };
 const wrapRig = (mv, fn) => ({ ...mv, rig: (r) => { mv.rig?.(r); fn(r); } });

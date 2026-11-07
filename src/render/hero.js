@@ -2911,15 +2911,15 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
   // The Mage (docs/design/mage-line.md): her wand and staff are the wizard's crystal wand and element
   // orb staff, and her casting hand wears the rune gauntlet.
-  if (state.job === 'spiritmage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'arcane' };
-  if (state.job === 'spiritmage') g.edgeGlove = true;
+  if (state.job === 'mage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'arcane' };
+  if (state.job === 'mage') g.edgeGlove = true;
   // She wears the mage pieces as her battle gear (render/jobgear/battlemage.js): coat, belt of spell
   // vials, scroll satchel, singed scarf, goggled hat; plain pieces only, in crimson.
-  if (state.job === 'spiritmage') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'battlemage', pal: gearPalette('mage', g[s].tier, MAGE_CRIMSON, MAGE_SCARF) };
+  if (state.job === 'mage') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'battlemage', pal: gearPalette('mage', g[s].tier, MAGE_CRIMSON, MAGE_SCARF) };
   // The Sorcerer's staff and wand: black wood and iron round a violet flame.
-  if (state.job === 'onmyoji' && (g.weapon?.type === 'staff' || g.weapon?.type === 'wand') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'sorcery' };
+  if (state.job === 'sorcerer' && (g.weapon?.type === 'staff' || g.weapon?.type === 'wand') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'sorcery' };
   // The Cleric's wand is her gold sun scepter.
-  if (state.job === 'shrinemaiden' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'cleric' };
+  if (state.job === 'cleric' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'cleric' };
   // The Sky Dancer's gloves take her sky blue the same way.
   if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
   // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
@@ -2927,13 +2927,13 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // The Cleric (docs/design/mage-line.md, the remake): the combat medic keeps the Mage's battle coat in
   // field white with a cross, a nurse's cap with goggles and a stethoscope (render/jobgear/medic.js);
   // the cross in medic red (the player's pick); plain pieces only.
-  if (state.job === 'shrinemaiden') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'medic', pal: { ...gearPalette('mage', g[s].tier, '#f1eee9', '#e0404a'), accent: '#e0404a' } };
-  if (state.job === 'shrinemaiden') g.edgeGlove = true;
+  if (state.job === 'cleric') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'medic', pal: { ...gearPalette('mage', g[s].tier, '#f1eee9', '#e0404a'), accent: '#e0404a' } };
+  if (state.job === 'cleric') g.edgeGlove = true;
   // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen keeps the Mage's battle coat
   // and gauntlet, with a crooked crown of lightning points and a royal ermine mantle
   // (render/jobgear/chaosqueen.js); plain pieces only.
-  if (state.job === 'onmyoji') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'chaosqueen', pal: { ...gearPalette('mage', g[s].tier, '#5a2a8a', '#ffd36a'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
-  if (state.job === 'onmyoji') g.edgeGlove = true;
+  if (state.job === 'sorcerer') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'chaosqueen', pal: { ...gearPalette('mage', g[s].tier, '#5a2a8a', '#ffd36a'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
+  if (state.job === 'sorcerer') g.edgeGlove = true;
   const trim = PATH_TRIMS[state.job];
   if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
   // The body acts out the mood: the expression, or worn out at low health.

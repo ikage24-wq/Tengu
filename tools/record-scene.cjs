@@ -17,7 +17,7 @@ const tmp = fs.mkdtempSync(path.join(path.dirname(path.resolve(outFile)), 'frame
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   page.on('pageerror', (e) => console.log('ERR', e.message));
-  await page.goto(`http://localhost:${process.env.PORT || 8000}/tools/dungeon-stage.html?job=${job ?? 'spiritmage'}&level=${process.env.LEVEL ?? 50}&seed=7`);
+  await page.goto(`http://localhost:${process.env.PORT || 8000}/tools/dungeon-stage.html?job=${job ?? 'mage'}&level=${process.env.LEVEL ?? 50}&seed=7`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const at = await page.evaluate((r) => window.room(r), roomId);
   if (at !== roomId) {

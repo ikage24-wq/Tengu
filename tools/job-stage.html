@@ -34,7 +34,7 @@ preloadFxSprites();
 const job = q.get('job') ?? 'warrior';
 const chain = [];
 for (let j = JOBS[job]; j; j = JOBS[j.parent]) chain.unshift(j.id);
-const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet', spiritmage: 'wand', shrinemaiden: 'wand', onmyoji: 'staff', novice: 'sword' };
+const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet', mage: 'wand', cleric: 'wand', sorcerer: 'staff', novice: 'sword' };
 const c = createCharacter('Tester', lookFor(Number(q.get('look') ?? 7)));
 const up = () => gainExp(c, expToNext(c.level) - c.exp);
 for (const id of chain.slice(1)) {

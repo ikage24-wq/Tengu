@@ -340,6 +340,41 @@ export function drawBubbleFx(ctx, f, x, y, p, cam, time) {
       film(ctx, x, y - 40 - 40 * rise, r, time, 0, 0.9);
       return true;
     }
+    // Bubble Party's circle on the floor round her, out to the blasts' reach: a ring of bubbles
+    // with foam along it, bubbles rising off it the whole time it lasts.
+    case 'bbcircle': {
+      const fade = fadeIO(f, 5, 3);
+      if (fade <= 0) return true;
+      const r = (f.r ?? 260) * grow3(f.t / 0.35);
+      ctx.save();
+      ctx.globalAlpha = fade;
+      foamBand(ctx, x, y, r, 9, 0, 0.3);
+      ctx.restore();
+      for (let k = 0; k < 14; k++) {
+        const a = (k / 14) * TAU + f.t * 0.6;
+        const rise = (f.t * 0.7 + k / 14) % 1;
+        film(ctx, x + Math.cos(a) * r, y + Math.sin(a) * r * 0.22 - rise * 90, 3 + (k % 3), time + k, rise, fade * (1 - rise));
+      }
+      return true;
+    }
+    // One of its blasts: a wave of foam and bubbles racing out to the circle's edge, and green-gold
+    // sparkles of healing rising off everyone it washes over.
+    case 'bbpulse': {
+      const r = (f.r ?? 260) * grow3(p * 1.5);
+      foamBand(ctx, x, y, r, f.big ? 14 : 11, Math.max(0, p - 0.3) / 0.7, p * 3);
+      if (p < 0.4) pop(ctx, x, y - 40, p / 0.4, 50, 16);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - p);
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * TAU;
+        const sx = x + Math.cos(a) * r * 0.8;
+        const sy = y - 10 - p * 40 + Math.sin(a) * r * 0.18;
+        ctx.fillStyle = k % 2 ? '#c8ff9a' : '#fff1a0';
+        ctx.fillRect(sx - 1.2, sy - 1.2, 2.4, 2.4);
+      }
+      ctx.restore();
+      return true;
+    }
     case 'bbpop':
       pop(ctx, x, y, p, 7, 6);
       return true;

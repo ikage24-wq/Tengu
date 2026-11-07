@@ -7,6 +7,7 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
+import { drawMeteor, drawComet } from './meteor-fx.js';
 import { drawArcheryShot, drawArchery, windRainPiece, hawkRainPiece } from './archery.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
@@ -734,6 +735,14 @@ function scratch(main) {
 // One falling piece of a rain ultimate.
 function rainPiece(ctx, variant, x, y, s, time, c) {
   switch (variant) {
+    // The Meteor Caller's showers: her hand-drawn meteors and comets (render/meteor-fx.js), falling
+    // the way the rain falls (steeply, drifting a little back).
+    case 'mcmeteor':
+      drawMeteor(ctx, x, y, 1.69, 7 * s, time, Math.floor(time * 10) % 7 + 1);
+      break;
+    case 'mccomet':
+      drawComet(ctx, x, y, 1.69, 3.6 * s, time);
+      break;
     case 'sword':
       sword(ctx, x, y, 34 * s, c);
       glow(ctx, x, y, 10 * s, c.light, 0.6);

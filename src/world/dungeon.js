@@ -148,8 +148,8 @@ function recruit(world, def, role) {
   // Past level 30 the Spirit Mages have taken a path: a healer comes as a Shrine Maiden, and now and
   // then a damage dealer is an Onmyoji.
   const sage = level >= 30;
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (sage ? ['spiritmage', 'shrinemaiden'] : ['spiritmage'])
-    : sage && rng() < 0.3 ? ['spiritmage', 'onmyoji'] : [pick(['archer', 'thief'], rng)];
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (sage ? ['mage', 'cleric'] : ['mage'])
+    : sage && rng() < 0.3 ? ['mage', 'sorcerer'] : [pick(['archer', 'thief'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -756,7 +756,7 @@ export function healMembers(world, pct, box) {
     if (b.x < box.x || b.x > box.x + box.w || b.y - b.h > box.y + box.h || b.y < box.y) continue;
     healMember(world, g, maxHpOf(world, g) * pct, 'you');
     // (The Cleric's heals show her mark on each one she mends.)
-    if (world.char.job === 'shrinemaiden' && world.now - (g.healedFxAt ?? -9) >= 0.5) {
+    if (world.char.job === 'cleric' && world.now - (g.healedFxAt ?? -9) >= 0.5) {
       g.healedFxAt = world.now;
       world.fx.push({ kind: 'bbhealed', x: b.x, y: b.y, t: 0, dur: 0.8 });
     }
@@ -1696,17 +1696,17 @@ export function healerTurn(bot, world, rng) {
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
   // A Star Witch heals with her own spells: Wishing Star and Star Veil. A Starlight Idol with her
   // songs: Center Stage for the group and its long regen, and Curtain Call for the fallen.
-  const shrine = jobChain(bot.char.job).includes('spiritmage');
-  const maiden = bot.char.job === 'shrinemaiden';
+  const shrine = jobChain(bot.char.job).includes('mage');
+  const maiden = bot.char.job === 'cleric';
   // (The Star Witch wishes stars down; the Idol sings; the Astronomer's moons tide round them.)
-  const witch = bot.char.job === 'spiritmage';
+  const witch = bot.char.job === 'mage';
   const star = witch || maiden;
-  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'bbspot' : witch ? 'stwish' : 'astide', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'bbspot' : witch ? 'jgencore' : 'mclight', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
   const cast = () => {
-    bot.attack = shrine ? { pose: maiden ? 'bbguard' : witch ? 'swwish' : 'astide', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = shrine ? { pose: maiden ? 'bbguard' : witch ? 'jgencore' : 'mclight', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'swveil' : 'astide', dur: star ? 0.8 : 1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'bbguard', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'swwish' : 'astide', dur: witch ? 0.9 : 1 };
+  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'jgplates' : 'mcorbit', dur: star ? 0.8 : 1 };
+  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'bbguard', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'jgencore' : 'mclight', dur: witch ? 0.9 : 1 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;

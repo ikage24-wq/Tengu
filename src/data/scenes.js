@@ -53,7 +53,7 @@ export const QUEST_SCENES = {
   kestrel_canyon: { done: 'kestrel_canyon_done' },
   kestrel_glade: { done: 'kestrel_glade_done' },
   kestrel_wings: { done: 'kestrel_wings_done' },
-  spiritmage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
+  mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   elowen_dance: { done: 'elowen_dance_done' },
   elowen_wisps: { done: 'elowen_wisps_done' },
   elowen_foxfire: { done: 'elowen_foxfire_done' },
@@ -1479,7 +1479,7 @@ export const JOB_SCENES = {
     { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Second star. After me. Light feet, big finish.", mood: 'happy' },
     { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
-  spiritmage: [
+  mage: [
     { card: 'A New Path', sub: 'Mage' },
     { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily. It's annoying. In a good way.", mood: 'happy' },
     { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. Show off a lot. It's half the job." },

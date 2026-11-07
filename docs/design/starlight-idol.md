@@ -73,7 +73,7 @@ barely moved her. She is now re-rigged as a pop idol on stage (render/moves.js `
 
 ## Status (2026-11-02)
 
-Built, replacing the Shrine Maiden in place (the path keeps the `shrinemaiden` id and its skill
+Built, replacing the Shrine Maiden in place (the path keeps the `cleric` id and its skill
 ids, so saves, Elowen's trial and the dungeon healer seat carry over). She keeps to the wand.
 
 - Moves (render/moves.js): sibeat, sistep, sihigh and the pool's sikiss, sishoulder, sijump,

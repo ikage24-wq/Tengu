@@ -45,7 +45,7 @@ function frame(now) {
       const y = 24 + r * CH + CH - 10;
       ctx.fillStyle = 'rgba(120,90,160,0.14)';
       ctx.beginPath(); ctx.ellipse(x, y, 15, 3, 0, 0, Math.PI * 2); ctx.fill();
-      drawHero(ctx, look, gear, x, y, { pose: 'idle', ready: true, time: time + 0.2, scale: 1.35, facing: 1, job: 'onmyoji', seed: 1 });
+      drawHero(ctx, look, gear, x, y, { pose: 'idle', ready: true, time: time + 0.2, scale: 1.35, facing: 1, job: 'sorcerer', seed: 1 });
     });
   });
   if (!q.get('time')) requestAnimationFrame(frame);

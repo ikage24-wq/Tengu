@@ -169,12 +169,12 @@ function weaponStyle(bot) {
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
   // The Star Witch flicks out her star bolts, quick, and her big one is a comet off the snap.
-  if (bot.char.job === 'spiritmage') return { reach: 210, lift: 100, poses: ['swflick', 'swtwirl', 'swwink', 'swsweep'], shot: 'stbolt', ranged: true, magic: true, dur: 0.41, special: 'swsnap' };
+  if (bot.char.job === 'mage') return { reach: 210, lift: 100, poses: ['jgtoss', 'jgwhip', 'jgspin', 'jgback'], shot: 'jgfire', ranged: true, magic: true, dur: 0.41, special: 'jgflurry' };
   // The Starlight Idol sings her notes at them, and her big one is the high note; the Astronomer
   // flings her planets, and her big one is a ringed world swept out low.
-  if (bot.char.job === 'shrinemaiden') return { reach: 210, lift: 100, poses: ['bbflick', 'bbtwirl', 'bbskip', 'bbeight'], shot: 'bbshot', ranged: true, magic: true, dur: 0.5, special: 'bbblow' };
+  if (bot.char.job === 'cleric') return { reach: 210, lift: 100, poses: ['bbflick', 'bbtwirl', 'bbskip', 'bbeight'], shot: 'bbshot', ranged: true, magic: true, dur: 0.5, special: 'bbblow' };
   // The Sorcerer flings her shadow hands, and her big one closes her fist on them.
-  if (bot.char.job === 'onmyoji') return { reach: 220, lift: 100, poses: ['sowbeckon', 'sowcurl', 'sowsneer', 'sowtrace'], shot: 'sohand', ranged: true, magic: true, dur: 0.5, special: 'sowgrip' };
+  if (bot.char.job === 'sorcerer') return { reach: 220, lift: 100, poses: ['mcspark', 'mcspark', 'mccomet', 'mcspark'], shot: 'mcspark', ranged: true, magic: true, dur: 0.5, special: 'mcbarrage' };
   // The Sky Dancer throws her gusts of wind.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };
@@ -765,40 +765,41 @@ const SPECIALS = {
         .forEach((o, i) => land(bot, world, o, G.at + 0.2 + i * 0.03, range, { stack: i, knock: 200, launch: 160, stun: 0.3, big: !i, burst: 'pthit', via: 'shot' }, rng));
     },
   },
-  // Hand of the Abyss: a rift tears open and a colossal hand crushes every monster ahead of her.
+  // Extinction: the sky tears open, a star the size of a hill grows overhead and comes down on
+  // every monster ahead of her.
   troupecombo: {
-    move: 'soabyss', dur: 2,
+    move: 'mcrain', dur: 3,
     play: (bot, world, m, rng, P) => {
-      const S = P.combo[0].strikes[1];
+      const S = P.combo[0].strikes.at(-1);
       const b = bot.body;
       const dir = b.facing;
-      world.fx.push({ kind: 'sosummon', x: b.x, y: b.y, dir, t: -0.1, dur: 1.3 });
-      world.fx.push({ kind: 'sobighand', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -1.2, dur: 0.7 });
-      world.fx.push({ kind: 'soimpact', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -1.4, dur: 0.8 });
+      world.fx.push({ kind: 'mcsky', x: b.x + dir * 120, y: b.y, dir, t: -0.18, dur: 2.6 });
+      world.fx.push({ kind: 'mcextinctfx', x: b.x + dir * S.reach * S.burstAt, y: b.y, t: -S.at * 3, dur: 1.2 });
       const range = magicRange(bot.stats, S.pct * 1.1);
       world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && (o.x - b.x) * dir > -20 && Math.abs(o.x - b.x) < S.reach && Math.abs(o.y - b.y) < S.h)
-        .forEach((o, i) => land(bot, world, o, 1.4, range, { stack: i, knock: 260, launch: 260, stun: 0.4, big: !i, burst: 'sohit', via: 'spell' }, rng));
+        .forEach((o, i) => land(bot, world, o, S.at * 3, range, { stack: i, knock: 260, launch: 260, stun: 0.4, big: !i, burst: 'mchit', via: 'spell' }, rng));
     },
   },
-  blessing: { move: 'swwish', dur: 0.8, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
+  blessing: { move: 'jgencore', dur: 0.8, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, false); } },
   grandblessing: { move: 'bbguard', dur: 0.95, heal: true, play: (bot, world, m, rng, P) => { const s = P.combo[0].strikes[0]; bless(bot, world, rng, s.heal, s.healR, true); } },
   // Grand Concert: her stage rises, everyone near is healed, and three beats of music blast the
   // monsters round her back.
   thousandtorii: {
-    move: 'bbparty', dur: 2.1,
+    move: 'bbrise', dur: 2.1,
     play: (bot, world, m, rng, P, tune) => {
-      const C = P.combo[0].strikes[0].concert;
+      const [circle, ...blasts] = P.combo[0].strikes;
       const b = bot.body;
-      world.fx.push({ kind: 'bbdome', x: b.x, y: b.y, t: 0, dur: C.beats.at(-1) + 0.9 });
-      bless(bot, world, rng, 0.5, C.r, true);
-      const range = magicRange(bot.stats, C.pct * tune * 1.3);
-      C.beats.forEach((at, k) => {
-        const last = k === C.beats.length - 1;
-        world.fx.push({ kind: 'bbring', big: true, x: b.x, y: b.y - 30, t: -at, dur: 0.6 });
-        for (const dir of [-1, 1]) world.fx.push({ kind: 'bbsurge', big: last, dir, r: C.r, x: b.x, y: b.y - 26, t: -at, dur: 0.32 });
-        // (Each monster is hit as the rolling blast reaches it.)
-        world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < C.r + o.def.w / 2 && Math.abs(o.y - b.y) < 120)
-          .forEach((o, i) => land(bot, world, o, at + 0.32 * (1 - Math.sqrt(1 - Math.min(1, Math.max(0, Math.abs(o.x - b.x) - o.def.w / 2) / C.r))), range, { stack: i, knock: last ? 260 : 120, launch: last ? 260 : 80, stun: 0.3, big: last && !i, burst: 'bbhitbig', via: 'spell' }, rng));
+      const R = blasts[0].reach;
+      world.fx.push({ kind: 'bbcircle', r: circle.r ?? R, x: b.x, y: b.y, t: -circle.at * 2.1, dur: circle.burstDur });
+      blasts.forEach((S, k) => {
+        const at = S.at * 2.1;
+        const last = k === blasts.length - 1;
+        world.fx.push({ kind: 'bbpulse', big: last, r: R, x: b.x, y: b.y, t: -at, dur: 0.6 });
+        // (Each blast heals everyone in the circle, as it goes off.)
+        (world.later ??= []).push({ at: world.now + at, run: () => bless(bot, world, rng, S.heal, S.healR, last) });
+        const range = magicRange(bot.stats, S.pct * tune);
+        world.mobs.filter((o) => o.hp > 0 && fair(bot, world, o) && Math.abs(o.x - b.x) < R + o.def.w / 2 && Math.abs(o.y - b.y) < S.h)
+          .forEach((o, i) => land(bot, world, o, at, range, { stack: i, knock: S.knock, launch: S.launch, big: last && !i, burst: 'bbhitbig', via: 'spell' }, rng));
       });
     },
   },
@@ -970,11 +971,11 @@ function heal(bot, world, bots) {
   char.hp = Math.min(max, char.hp + amount);
   // A Star Witch wishes a star down on you; a Starlight Idol sings to you; an Astronomer's moons
   // tide round you.
-  const shrine = jobChain(bot.char.job).includes('spiritmage');
-  const witch = bot.char.job === 'spiritmage';
-  world.fx.push(shrine ? { kind: witch ? 'stwish' : bot.char.job === 'shrinemaiden' ? 'bbspot' : 'soglow', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
+  const shrine = jobChain(bot.char.job).includes('mage');
+  const witch = bot.char.job === 'mage';
+  world.fx.push(shrine ? { kind: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbspot' : 'mclight', x: world.body.x, y: world.body.y, t: 0, dur: 1 } : { kind: 'heal', x: world.body.x, y: world.body.y, t: 0, dur: 0.8 });
   world.numbers.push({ x: world.body.x, y: world.body.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-  bot.attack = shrine ? { pose: witch ? 'swwish' : bot.char.job === 'shrinemaiden' ? 'bbguard' : 'somend', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
+  bot.attack = shrine ? { pose: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbguard' : 'mclight', t: 0, dur: witch ? 0.8 : 1.1 } : { pose: 'pray', t: 0, dur: 0.7 };
   if (char.hp >= max * 0.5 && bots.rng() < 0.3) say(world, bot, pick2(['heal!', 'healed u', 'careful!', 'got u {emote}'.replace('{emote}', ':)'), 'hp up!']));
   return true;
 }

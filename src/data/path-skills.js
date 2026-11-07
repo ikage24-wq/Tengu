@@ -4,7 +4,7 @@
 // per path": the Paladin's Titan Breaker is not the Warrior's). Shoulder Charge was the first.
 //
 // The data lives with each skill: its `at()` may return `paths`, keyed by job id (paladin,
-// berserker, beastmaster, stormcaller, shinobi, kitsune, shrinemaiden, onmyoji, ...):
+// berserker, beastmaster, stormcaller, shinobi, kitsune, cleric, sorcerer, ...):
 //   paths: { paladin: [ ...combo steps ] }           an array is the path's own combo (moves,
 //                                                     timing, effects), in place of `combo`;
 //   paths: { beastmaster: { anim: 'pthattrap', look: 'hat' } }   an object is laid over the

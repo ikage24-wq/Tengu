@@ -186,7 +186,7 @@ export function hearWorld(world, cam) {
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     if ((world.bond ?? 0) >= 100 && !(m.bond >= 100)) sfx('galeFull');
     if ((world.charge ?? 0) >= 100 && !(m.charge >= 100)) sfx('overdrive');
-    if (world.char.job === 'spiritmage' && (world.spirit ?? 0) >= 100 && !(m.spirit >= 100)) sfx('allstars');
+    if (world.char.job === 'mage' && (world.spirit ?? 0) >= 100 && !(m.spirit >= 100)) sfx('allstars');
     // Jumps, landings, steps, and climbing.
     // Riding, the mount's own sounds stand in for your feet (world/mount.js).
     const ride = world.riding && !world.riding.stowed ? world.riding.id : null;

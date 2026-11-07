@@ -10,7 +10,7 @@ const { execFileSync } = require('child_process');
 const [outFile, listArg] = process.argv.slice(2);
 const LIST = (listArg ?? [
   'warrior:sword_5', 'warrior:sword_25', 'warrior:sword_50', 'warrior:axe_30', 'warrior:axe_50', 'warrior:spear_35', 'warrior:spear_50',
-  'thief:dagger_20', 'thief:dagger_50', 'thief:gauntlet_45', 'spiritmage:wand_25', 'spiritmage:wand_50', 'spiritmage:staff_30', 'spiritmage:staff_50',
+  'thief:dagger_20', 'thief:dagger_50', 'thief:gauntlet_45', 'mage:wand_25', 'mage:wand_50', 'mage:staff_30', 'mage:staff_50',
   'archer:bow_25', 'archer:bow_50', 'archer:crossbow_40', 'archer:crossbow_50',
 ].join(',')).split(',');
 const FPS = 30;

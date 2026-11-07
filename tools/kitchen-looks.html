@@ -50,7 +50,7 @@ function frame(now) {
       const y = 24 + r * CH + CH - 10;
       ctx.fillStyle = 'rgba(160,100,80,0.14)';
       ctx.beginPath(); ctx.ellipse(x, y, 15, 3, 0, 0, Math.PI * 2); ctx.fill();
-      drawHero(ctx, look, gear, x, y, { pose: 'idle', ready: q.get('ready') !== '0', time: time + 0.2, scale: 1.4, facing: 1, job: 'spiritmage', seed: 1 });
+      drawHero(ctx, look, gear, x, y, { pose: 'idle', ready: q.get('ready') !== '0', time: time + 0.2, scale: 1.4, facing: 1, job: 'mage', seed: 1 });
     }));
   });
   if (!q.get('time')) requestAnimationFrame(frame);
