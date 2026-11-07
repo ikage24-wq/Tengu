@@ -70,6 +70,9 @@ function createWindow() {
 
 // Updates: downloaded quietly in the background; once one is ready the player is asked whether to
 // restart now (otherwise it installs the next time they quit).
+// (The versions were renumbered down to 0.1 after 1.0.1, so an update may carry a lower number
+// than the copy installed: take it anyway, it's the newest release.)
+autoUpdater.allowDowngrade = true;
 function checkForUpdates() {
   if (!app.isPackaged) return;
   autoUpdater.checkForUpdates().catch(() => {});
