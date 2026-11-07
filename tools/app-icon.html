@@ -2,17 +2,15 @@
 <html><body style="margin:0;background:transparent">
 <canvas id="c" width="256" height="256"></canvas>
 <script type="module">
-// Dev tool: the desktop app's icon (electron/icon.png, made by `npm run icon`): the hero close up,
-// in her archer's outfit (the leaf circlet and the purple coat), winking with her tongue out, on a
-// sky-blue rounded square with sparkles.
+// Dev tool: the desktop app's icon (electron/icon.png, made by `npm run icon`): Hayate close up,
+// the sleepy wind princess (render/hayate.js) wide awake and excited for once, her cloud of white
+// hair, crystal crown and princess gown, on a pink rounded square with sparkles.
 import { drawHero } from '../src/render/hero.js';
 import { setHd, nextFrame } from '../src/render/pixel.js';
-import { balanceChar } from './balance.mjs';
+import { HAYATE_LOOK, hayateGear } from '../src/render/hayate.js';
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const hero = balanceChar('archer', 30);
-const gear = { ...hero.equipment, weapon: null };
 // A rounded square with a soft top-to-bottom gradient and a light rim.
 const r = 52;
 const box = () => {
@@ -25,8 +23,8 @@ const box = () => {
   ctx.closePath();
 };
 const g = ctx.createLinearGradient(0, 12, 0, 244);
-g.addColorStop(0, '#dff4ff');
-g.addColorStop(1, '#9fd0ff');
+g.addColorStop(0, '#ffe0ec');
+g.addColorStop(1, '#ffa8c8');
 box();
 ctx.fillStyle = g;
 ctx.fill();
@@ -54,7 +52,7 @@ const S = 6.6;
 setHd(true, S);
 ctx.translate(128, 300);
 ctx.scale(S, S);
-drawHero(ctx, { ...hero.appearance, face: 'bleh' }, gear, 0, 0, { pose: 'idle', time: 0.6, facing: 1, job: hero.job });
+drawHero(ctx, { ...HAYATE_LOOK, eyeStyle: 'sparkle', face: 'excited' }, hayateGear(), 0, 0, { pose: 'idle', time: 0.6, seed: 7, facing: 1 });
 ctx.restore();
 window.done = true;
 </script></body></html>
