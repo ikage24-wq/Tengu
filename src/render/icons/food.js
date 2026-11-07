@@ -3,29 +3,9 @@
 // drop icons (icons/items.js); added to ITEM_ART so icons.js draws them like any other.
 
 import { FISH } from '../../data/fishing.js';
+import { fishArt } from './fish.js';
 import { DISHES, FEASTS } from '../../data/cooking.js';
 import { ITEM_ART, hi, lt, sh, S, oval, bez3, rect, ball, tube, glint, twinkle, framed, W } from './items.js';
-
-// A fish swimming right: a plump body, a forked tail, fins, an eye, and its pattern.
-function fishArt(f) {
-  return () => {
-    const c = f.color;
-    const fin = f.fin;
-    const out = [];
-    // Tail and fins behind the body.
-    out.push(S([[3.4, 8], [0.4, 3.6], [1.6, 8], [0.4, 12.4]], fin), S([[3.4, 8], [1.2, 5.6], [2, 8], [1.2, 10.4]], sh(fin)));
-    out.push(S([[7, 4.6], [9.4, 1.6], [11, 4.6]], fin), S([[7.6, 11.6], [9, 14], [10.2, 11.4]], sh(fin)));
-    const body = [...bez3([3, 8], [4, 3.6], [11, 2.6], [15.4, 7.6], 10), ...bez3([15.4, 7.6], [12, 13.4], [4.4, 12.6], [3, 8], 10).slice(1)];
-    out.push(...ball(body, c, { glow: 0.9 }));
-    if (f.pattern === 'stripes') for (const x of [7, 9.6, 12]) out.push(S(tube([[x, 4.2], [x - 0.6, 11.4]], 0.7), sh(fin)));
-    if (f.pattern === 'spots') for (const [x, y, r] of [[7, 6, 1.1], [9.8, 9.4, 0.9], [11.6, 5.8, 0.8]]) out.push(S(oval(x, y, r, r, 0, 10), fin));
-    if (f.pattern === 'star') out.push(twinkle(9, 8, 2, fin));
-    // Belly light, the eye with its shine, a smile.
-    out.push(S(oval(9.6, 10.2, 3.4, 1.2, -6, 12), lt(c)), S(oval(12.8, 6.6, 1.2, 1.2, 0, 10), '#3a2d4f'), S(oval(12.5, 6.2, 0.45, 0.45, 0, 8), W));
-    out.push(S(tube([[13.6, 9], [14.6, 8.8]], 0.4), '#3a2d4f'), ...glint(6, 5, 0.5));
-    return out;
-  };
-}
 
 // A wooden rod with a cork grip, a reel, and the line curling to a red-and-white bobber.
 function rodArt() {

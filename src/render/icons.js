@@ -183,7 +183,7 @@ export function itemIcon(id, variant = null) {
   const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
   const fine = look.design === 'job' || look.design === 'jewel' || wornIcon(look);
   const art = def.type !== 'cash' ? ITEM_ART[id] : def.skin && ITEM_ART[def.skin];
-  const detail = art ? { res: 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
+  const detail = art ? { res: id.startsWith('fish_') ? 4 : 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
   const gear = look.type === 'equip';
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));
 }

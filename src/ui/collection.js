@@ -6,7 +6,7 @@ import { MOBS } from '../data/mobs.js';
 import { masteryAt } from '../core/collection.js';
 import { drawMonster } from '../render/monsters.js';
 import { drawItemIcon } from '../render/icons.js';
-import { FISH, RARITY_NAMES, RARITY_COLORS } from '../data/fishing.js';
+import { FISH, RARITY_NAMES, RARITY_COLORS, SPOTS, WHEN_NAMES } from '../data/fishing.js';
 import { COLORS, windowFrame, tabs, text, box, hover, tooltip, sparkle, fit, wrap, button } from './kit.js';
 import { MOUNTS, MOUNT_IDS } from '../data/mounts.js';
 import { drawMount } from '../render/mounts.js';
@@ -89,6 +89,12 @@ function book(ui, win, char, world, x, y, th) {
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 10, { size: 6.5, align: 'right', color: COLORS.muted });
 }
 
+// Where a caught fish bites, and when (the Fish page's tooltip).
+function fishWhere(f) {
+  const maps = [...new Set(Object.entries(SPOTS).filter(([, list]) => list.some((sp) => sp.pool[f.id])).map(([id]) => getMap(id).name))];
+  return [...(maps.length ? [{ text: `Found at ${maps.join(', ')}`, size: 8, color: COLORS.muted }] : []), ...(f.when ? [{ text: `Only bites ${WHEN_NAMES[f.when]}`, size: 8, color: '#7a6ab0' }] : []), ...(f.legend ? [{ text: `Title: ${f.legend.title}`, size: 8, color: '#b07a2a' }] : [])];
+}
+
 // The fish you've caught: each one's card with how many (a dark shape until then),
 // in its rarity's colour, three rows at a time, scrolled by the wheel.
 function fishPage(ui, win, char, x, y, th) {
@@ -111,7 +117,7 @@ function fishPage(ui, win, char, x, y, th) {
     ctx.restore();
     text(ctx, rec ? fit(ctx, f.name, cw - 8, 6, true) : '???', cx + (cw - 4) / 2, cy + 35, { size: 6, bold: true, align: 'center', color: rec ? COLORS.ink : COLORS.muted });
     if (rec) text(ctx, rec.best ? `x${rec.n} · ${rec.best} cm` : `x${rec.n}`, cx + (cw - 4) / 2, cy + 42, { size: 5.5, align: 'center', color: COLORS.muted });
-    if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n}`, size: 8 }, ...(rec.best ? [{ text: `Biggest: ${rec.best} cm`, size: 8 }] : [])] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }]);
+    if (hover(ui, cx, cy, cw - 4, ch - 4)) tooltip(ui, rec ? [{ text: f.name, bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, { text: `Caught ${rec.n}`, size: 8 }, ...(rec.best ? [{ text: `Biggest: ${rec.best} cm`, size: 8 }] : []), ...fishWhere(f)] : [{ text: 'Not caught yet', bold: true }, { text: RARITY_NAMES[f.rarity], size: 8, color: RARITY_COLORS[f.rarity] }, ...(f.when ? [{ text: `Only bites ${WHEN_NAMES[f.when]}`, size: 8, color: '#7a6ab0' }] : []), ...(f.legend ? [{ text: f.legend.rumor, size: 8, color: '#b07a2a' }] : [])]);
   });
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
   text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip, Marlo or Mister Brine, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });

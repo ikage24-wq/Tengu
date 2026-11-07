@@ -16,7 +16,8 @@
 // biggest, and the Fishing Derby goes by it (world/derby.js). Lantern bait halves the wait.
 
 import { giveMount } from './mount.js';
-import { FISH_BY_ID, SPOTS, SPOT_REACH, BITE_WAIT, rollSize } from '../data/fishing.js';
+import { FISH_BY_ID, SPOTS, SPOT_REACH, BITE_WAIT, rollSize, bitingPool } from '../data/fishing.js';
+import { gameHour } from './daytime.js';
 import { addItem, countItem } from '../core/inventory.js';
 import { DISHES } from '../data/cooking.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra, LIFE_NAMES } from '../core/life.js';
@@ -79,9 +80,12 @@ const TURTLE_CHANCE = 1 / 60;
 const workersHere = (world, key) => workersAt(world, key).count;
 const fishKey = (world, spot) => spotKey(world, 'fish', (SPOTS[world.map.id] ?? []).indexOf(spot.base ?? spot));
 
+// The hour, the dark and the weather, for the fish that only come out at some times.
+export const fishNow = (world) => ({ night: world.night ?? 0, hour: gameHour((world.dayClock ?? (() => new Date()))()), weather: world.weather ?? null });
+
 // Rarer fish bite more often with a better rare chance (the skill's level and rod).
-function rollFish(spot, rng, rare = 1) {
-  const entries = Object.entries(spot.pool).map(([id, w]) => [id, w * (1 + (rare - 1) * ((FISH_BY_ID[id]?.rarity ?? 1) - 1))]);
+function rollFish(spot, rng, rare = 1, now = {}) {
+  const entries = bitingPool(spot.pool, now).map(([id, w]) => [id, w * (1 + (rare - 1) * ((FISH_BY_ID[id]?.rarity ?? 1) - 1))]);
   let r = rng() * entries.reduce((n, [, w]) => n + w, 0);
   for (const [id, w] of entries) if ((r -= w) < 0) return FISH_BY_ID[id];
   return FISH_BY_ID[entries[0][0]];
@@ -116,7 +120,7 @@ export function tickFishing(world, dt, held, pressed, rng = Math.random) {
     // Fishing side by side with the party: rarer fish bite more (world/coop-life.js).
     const near = f.key ? workersHere(world, f.key) : 1;
     // (Old Lumen, when Granny Kelp's story has you waiting for him: world/lumen.js.)
-    f.fish = bossFish(world, f.spot) ?? rollFish(f.spot, rng, perks.rare * (near > 1 ? 1 + 0.5 * Math.min(2, near - 1) : 1));
+    f.fish = bossFish(world, f.spot) ?? rollFish(f.spot, rng, perks.rare * (near > 1 ? 1 + 0.5 * Math.min(2, near - 1) : 1), fishNow(world));
     f.wait = (BITE_WAIT[0] + rng() * (BITE_WAIT[1] - BITE_WAIT[0]) + (f.fish.rarity - 1) * 1.2) * perks.time * (f.bait ? 0.5 : 1);
     f.react = f.fish.react * perks.react;
     f.nibbles = [0.3, 0.6].map((u) => f.wait * u + rng() * 0.4);
@@ -234,6 +238,13 @@ function catchFish(world, f, rng) {
   // (The players around you notice a good one: world/bots.js.)
   world.lastCatch = { fish, at: world.now };
   const tag = first ? ' (new!)' : best ? ' (a new best!)' : '';
+  // A rumoured giant, landed at last: its title is yours (worn at once).
+  if (first && fish.legend) {
+    if (!(char.titles ??= []).includes(fish.legend.title)) char.titles.push(fish.legend.title);
+    char.title = fish.legend.title;
+    world.log(`You landed the ${fish.name}, the fish they only tell stories about! New title: ${fish.legend.title}.`, '#ffe36b');
+    world.juice.push({ type: 'levelup', x: world.body.x, y: world.body.y - 30 });
+  }
   world.log(n > 1 ? `You caught ${n > 2 ? n : 'two'} ${fish.name}s at once! The biggest is ${f.size} cm.${tag}` : `You caught a ${fish.name}, ${f.size} cm!${tag}`, fish.rarity >= 3 ? '#ffe36b' : '#bff0dc');
   world.numbers.push({ x: world.body.x, y: world.body.y - 60, text: `${fish.name} ${f.size} cm`, color: '#9fe8ff', t: 0, small: true });
   world.juice.push({ type: 'loot', x: f.spot.bx, y: f.spot.by - 10, color: fish.color });

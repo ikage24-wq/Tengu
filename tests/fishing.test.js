@@ -114,3 +114,17 @@ test("a reworked map's fishing spots are quiet nooks no monster reaches", async 
     }
   }
 });
+
+test('some fish only bite at their hour or in their weather, and every region has a rumoured legend', async () => {
+  const { FISH, SPOTS, bitingPool, bitesNow } = await import('../src/data/fishing.js');
+  const noon = { night: 0, hour: 12, weather: null };
+  const midnight = { night: 1, hour: 1, weather: null };
+  const ids = (now) => bitingPool(SPOTS.meadow1[0].pool, now).map(([id]) => id);
+  assert.ok(!ids(noon).includes('fish_firefly') && ids(midnight).includes('fish_firefly'), 'the Firefly Minnow only comes out at night');
+  assert.ok(bitesNow(FISH.find((f) => f.id === 'fish_rainbow'), { ...noon, weather: 'rain' }) && !bitesNow(FISH.find((f) => f.id === 'fish_rainbow'), noon), 'the Rainbow Trout bites in the rain');
+  assert.ok(bitesNow(FISH.find((f) => f.id === 'fish_darter'), { ...noon, hour: 5 }) && !bitesNow(FISH.find((f) => f.id === 'fish_darter'), noon), 'the Daybreak Darter bites at dawn');
+  assert.ok(FISH.length >= 100, 'a hundred fish to find');
+  const legends = FISH.filter((f) => f.legend);
+  assert.equal(legends.length, 5);
+  for (const f of legends) assert.ok(f.legend.title && f.legend.rumor && Object.values(SPOTS).flat().some((s) => s.pool[f.id]), `${f.name} has a title, a rumour and a home`);
+});

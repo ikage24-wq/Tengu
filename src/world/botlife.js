@@ -28,7 +28,8 @@
 
 import { nodesOf, nodeOpen, nodeReady } from './gathering.js';
 import { KINDS, NODE_REACH, NODES, TIER_FINDS } from '../data/gathering.js';
-import { SPOTS, SPOT_REACH, FISH_BY_ID, BITE_WAIT } from '../data/fishing.js';
+import { SPOTS, SPOT_REACH, FISH_BY_ID, BITE_WAIT, bitingPool } from '../data/fishing.js';
+import { fishNow } from './fishing.js';
 import { RECIPES, QUALITIES, TOOL_KINDS, toolId } from '../data/crafting.js';
 import { DISHES } from '../data/cooking.js';
 import { ITEMS } from '../data/items.js';
@@ -331,8 +332,8 @@ function startFish(bot, c, rng) {
   return { kind: 'fish', si: c.si, spot: c.spot, skill: 'fishing', phase: 'walk', t: 0, perks, sit, walked: 0, casts: 0 };
 }
 
-function rollFish(spot, rng, rare) {
-  const entries = Object.entries(spot.pool).map(([id, w]) => [id, w * (1 + (rare - 1) * ((FISH_BY_ID[id]?.rarity ?? 1) - 1))]);
+function rollFish(spot, rng, rare, now = {}) {
+  const entries = bitingPool(spot.pool, now).map(([id, w]) => [id, w * (1 + (rare - 1) * ((FISH_BY_ID[id]?.rarity ?? 1) - 1))]);
   let r = rng() * entries.reduce((s, [, w]) => s + w, 0);
   for (const [id, w] of entries) if ((r -= w) < 0) return FISH_BY_ID[id];
   return FISH_BY_ID[entries[0][0]];
@@ -346,7 +347,7 @@ function tickFish(bot, world, L, dt, rng) {
   if (L.phase === 'cast' && L.t >= 0.5) {
     L.phase = 'wait';
     L.t = 0;
-    L.fish = rollFish(L.spot, rng, L.perks.rare);
+    L.fish = rollFish(L.spot, rng, L.perks.rare, { ...fishNow(world), weather: bot.map === world.map.id ? world.weather ?? null : null });
     L.wait = (BITE_WAIT[0] + rng() * (BITE_WAIT[1] - BITE_WAIT[0]) + (L.fish.rarity - 1) * 1.2) * L.perks.time * between(1, 2.2, rng);
     L.nibbles = [0.3, 0.6].map((u) => L.wait * u + rng() * 0.4);
   } else if (L.phase === 'wait' && L.t >= L.wait) {
