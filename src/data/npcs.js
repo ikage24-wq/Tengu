@@ -132,7 +132,7 @@ export const NPCS = {
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   lumen: {
-    id: 'lumen', name: 'Professor Lumen', title: 'Old Stargazer', role: 'dungeon', dungeon: 'observatory',
+    id: 'lumen', name: 'Professor Lumen', title: 'Old Stargazer', role: 'dungeon', dungeon: 'observatory', quests: ['lumen_lens', 'lumen_fallen', 'lumen_chips', 'lumen_home'],
     look: { hairStyle: 'wolf', hairColor: '#e9ebfa', skinTone: '#e7b48f', eyeColor: '#5a6ad8', outfitColor: '#3a3a7a', eyeStyle: 'round', face: 'smile' },
     greeting: "The stars have stopped turning, have you noticed? Astraea's doing. I have the key to her tower. Bring a tank, a healer and two fighters, and look up.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],

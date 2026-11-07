@@ -422,6 +422,37 @@ export const QUESTS = {
     rewards: { exp: 23000, gold: 600, items: [{ id: 'white_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
   },
 
+  // Observatory Steps.
+  // Professor Lumen's story: the night the sky stood still, one star fell anyway, onto Moonlit
+  // Ridge. Where it landed the rocks got up and walked: the Meteor Golems aren't guarding the star,
+  // they ARE it, in pieces, trying to stand up and go home. He builds a telescope that works
+  // backwards, and from the top of Howling Rock you send the star home (and he points you on to a
+  // fox in the Grove who keeps borrowing his maps).
+  lumen_lens: {
+    id: 'lumen_lens', name: 'A Lens for the Old Eye', giver: 'lumen', minLevel: 29,
+    text: "The wolves on Moonlit Ridge howl at the stars all night. Now that the stars have stopped, they howl louder, as if to start them again. Lovely sentiment. Terrible acoustics. They cracked my telescope's lens. A Moonhowl Fang ground fine makes the clearest glass there is. 12 should do. The wolves won't mind. Well. They'll mind a bit.",
+    objectives: [{ type: 'collect', item: 'moon_fang', count: 12 }],
+    rewards: { exp: 38000, gold: 520, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  lumen_fallen: {
+    id: 'lumen_fallen', name: 'Where It Landed', giver: 'lumen', minLevel: 30, prereq: 'lumen_lens',
+    text: "A star fell while the sky stood still. That shouldn't be possible. I adore it. It came down on Howling Rock, high on the ridge, and since then the rocks up there have been getting up and walking about. Climb up and have a look, and settle 15 of those Meteor Golems. Gently, if you can. I have a theory, and it's a sad one.",
+    objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock' }, { type: 'kill', mob: 'meteorgolem', count: 15 }],
+    rewards: { exp: 44000, gold: 600, items: [] },
+  },
+  lumen_chips: {
+    id: 'lumen_chips', name: 'Pieces of a Star', giver: 'lumen', minLevel: 32, prereq: 'lumen_fallen',
+    text: "A telescope brings the sky down to you. Turned around, it should send something back up. In theory. I've never tried. I'm building one anyway. Bring me 10 Meteorite Chips and 2 Astral Shards from the golems: the warm ones, the ones that still hum. That's the star in them.",
+    objectives: [{ type: 'collect', item: 'meteorite', count: 10 }, { type: 'collect', item: 'astral_shard', count: 2 }],
+    rewards: { exp: 52000, gold: 680, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  lumen_home: {
+    id: 'lumen_home', name: 'Send It Home', giver: 'lumen', minLevel: 33, prereq: 'lumen_chips',
+    text: "The Star Sling is done. Possibly. It hums, which is either very good or very bad. Carry it up to the top of Howling Rock, where it fell, point it at the gap in the sky, and let go. Then come back and tell me everything. Everything. I'll be up here pretending I'm not worried.",
+    objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock, with the Star Sling' }],
+    rewards: { exp: 62000, gold: 900, items: [{ id: 'warrior_shoes_30', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
