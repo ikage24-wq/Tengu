@@ -18,6 +18,8 @@ import { SCENES } from '../data/story.js';
 import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
 import { boardPage } from './partyboard.js';
+import { fishRequestPage } from './fishreq.js';
+import { fishRequests, requestProgress } from '../world/fishrequests.js';
 import { say } from './chat.js';
 import { sweetheartChoices, drawSweetheartHeader, giftPage, breakupPage, greetingFor } from './sweetheart.js';
 import { datePage } from './dates.js';
@@ -282,6 +284,13 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
   }
+  // The tackle shops post the day's fish requests (world/fishrequests.js).
+  if (npc.shop?.includes('fishing_rod')) {
+    const reqs = fishRequests(world);
+    const ready = reqs.filter((r) => !r.done && requestProgress(char, r).ready).length;
+    const left = reqs.filter((r) => !r.done).length;
+    choices.push({ label: 'Fish requests', sub: ready ? `${ready} ready to hand in!` : left ? `${left} today · gold and Fishing EXP` : 'All done today!', icon: 'star', primary: ready > 0, run: () => (dlg.fishreq = true) });
+  }
   if (npc.role === 'board') {
     const pq = char.partyQuest;
     choices.push({ label: 'Party quests', sub: pq ? `On one: ${pq.have}/${pq.need}` : `${boardOffers(world).length} on the board · shared rewards`, icon: 'friends', primary: true, run: () => (dlg.board = true) });
@@ -331,7 +340,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -356,6 +365,12 @@ export function npcWindow(ui, state, world) {
   if (dlg.board) {
     dlg.talking = false;
     if (boardPage(ui, state, world, area)) dlg.board = false;
+    return;
+  }
+
+  if (dlg.fishreq) {
+    dlg.talking = false;
+    if (fishRequestPage(ui, state, world, area)) dlg.fishreq = false;
     return;
   }
 

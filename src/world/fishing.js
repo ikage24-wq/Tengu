@@ -26,6 +26,7 @@ import { spotKey, startedWork, keepWorking, togetherBonus, workersAt } from './c
 import { recordCatch } from '../core/quests.js';
 import { bossFish, lumenCaught, lumenLost } from './lumen.js';
 import { weighIn } from './derby.js';
+import { noteRequestCatch } from './fishrequests.js';
 
 export const ROD = 'fishing_rod';
 // The shop's rod, or a bench-made one (data/crafting.js).
@@ -252,6 +253,7 @@ function catchFish(world, f, rng) {
   // Quests that want it caught count it; the Fishing Derby weighs it in (world/derby.js).
   recordCatch(char, fish.id);
   weighIn(world, fish, f.size);
+  noteRequestCatch(world, fish, f.size);
   // A rarer fish is worth more to the skill.
   lifeAction(world, 'fishing', { tier: f.spot.tier ?? 1, kind: 'fish', scale: (1 + (fish.rarity - 1) * 0.25) * (team?.life ?? 1) });
   // Friends in your online room hear about it.

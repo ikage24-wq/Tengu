@@ -128,3 +128,37 @@ test('some fish only bite at their hour or in their weather, and every region ha
   assert.equal(legends.length, 5);
   for (const f of legends) assert.ok(f.legend.title && f.legend.rumor && Object.values(SPOTS).flat().some((s) => s.pool[f.id]), `${f.name} has a title, a rumour and a home`);
 });
+
+test('the tackle shops post three fish requests a day for the waters you reach, paid on handing in', async () => {
+  const { fishRequests, handInRequest, noteRequestCatch, requestProgress } = await import('../src/world/fishrequests.js');
+  const { FISH_BY_ID } = await import('../src/data/fishing.js');
+  const world = createWorld(createCharacter('Reqs', {}));
+  const char = world.char;
+  const list = fishRequests(world);
+  assert.equal(list.length, 3);
+  assert.deepEqual(list.map((r) => r.kind), ['bring', 'size', 'rare']);
+  // A beginner is only asked for the waters a beginner can fish.
+  for (const r of list) assert.ok(FISH_BY_ID[r.fish].tier === 1, `${r.fish} is a beginner's fish`);
+  char.life = { fishing: { level: 45, exp: 0 } };
+  char.fishReq = null;
+  assert.ok(fishRequests(world).some((r) => FISH_BY_ID[r.fish].tier >= 3), 'a master is asked for the far waters');
+  char.life = {};
+  char.fishReq = null;
+  assert.deepEqual(fishRequests(world), list, 'the same all day');
+  const bring = list[0];
+  assert.ok(handInRequest(world, 0), 'nothing to hand in yet');
+  addItem(char.inventory, bring.fish, bring.count);
+  const gold = char.gold;
+  assert.equal(handInRequest(world, 0), null);
+  assert.equal(char.gold, gold + bring.gold);
+  assert.equal(countItem(char.inventory, bring.fish), 0, 'the fish are handed over');
+  // A size request counts only a catch at its size.
+  const size = list[1];
+  addItem(char.inventory, size.fish, 1);
+  assert.ok(!requestProgress(char, size).ready, 'a fish from the bag does not count');
+  noteRequestCatch(world, FISH_BY_ID[size.fish], size.size - 1);
+  assert.ok(!size.got, 'too small');
+  noteRequestCatch(world, FISH_BY_ID[size.fish], size.size);
+  assert.equal(handInRequest(world, 1), null);
+  assert.ok(list[0].gold >= 100 && list[2].gold < 5000, 'paid on the money scale');
+});
