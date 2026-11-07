@@ -1,15 +1,17 @@
 // One hero plays the real game (world/world.js) from level 1 to the ending: every story and side
 // quest open to her, in level order, story first; real hunting for kill and collect objectives
 // (real monsters, real drops, picked up with auto-loot), going to every map she has to visit or
-// talk on, a group run with the dungeon autopilot for every dungeon boss, job advancement at 5.
+// talk on, a group run with the dungeon autopilot for every dungeon boss, both job advancements.
 // It logs whatever goes wrong: ERROR (the game threw), BUG (a quest that can't be taken or handed
 // in, a monster that spawns nowhere, falling out of a map) and STALL (a hunt or a dungeon that did
 // not finish in its time: often the autopilot, worth a look).
 // What it does not play: fishing (catches are counted), grinding between quests (when nothing is
 // open it is granted the EXP to the next quest's level), shopping (it wears its job's gear for its
-// level, sells junk and old gear), the second job (that happens at the trainer), menus and dialogue.
+// level, sells junk and old gear), menus and dialogue. Its second job comes at the trainer as soon
+// as its level-30 trial is done.
 //
 // Usage: node tools/autoplay.mjs [first job] [second job]     e.g. node tools/autoplay.mjs thief kitsune
+//        DUNGEON=manor node tools/autoplay.mjs archer         one dungeon only, with a trace
 const S = new URL('../src/', import.meta.url).href;
 const { createWorld, updateWorld, loadMap } = await import(S + 'world/world.js');
 const { createCharacter, gainExp, advanceJob, autoAssignAp } = await import(S + 'core/character.js');
@@ -95,7 +97,7 @@ function go(mapId, portal) {
 function step(held = new Set(), pressed = new Set()) {
   if (w.scene) w.scene = null;
   try { updateWorld(w, DT, { held, pressed, locked: false }); } catch (e) { err(`playing ${w.map?.id}`, e); }
-  try { if (w.bots?.length) updateBots(w.bots, w, DT); } catch (e) { err(`bots on ${w.map?.id}`, e); }
+  try { if (w.bots) updateBots(w.bots, w, DT); } catch (e) { err(`bots on ${w.map?.id}`, e); }
   simSecs += DT;
   if (w.dead || c.hp <= 0) { deaths++; w.dead = false; heal(); }
   const st = computeStats(c);
@@ -189,8 +191,10 @@ function pilot() {
   } else if (fights.length) {
     const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
     const spot = t.x + (Math.sign(b.x - t.x) || -1) * 150;
+    // (On its floor and within a shot or a swing, she just fights; she only backs off to her
+    // range when it is far, so a crowd on top of her never keeps her stepping to and fro.)
     if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
-    else if (Math.abs(b.x - spot) > 20) goX(spot);
+    else if (Math.abs(t.x - b.x) > 220) goX(spot);
     else { b.facing = Math.sign(t.x - b.x) || 1; held.add('KeyZ'); }
   } else if (room.cleared) {
     const door = w.map.portals.find((p) => p.sealed);
@@ -225,6 +229,12 @@ function runDungeon(id) {
     try { input = pilot(); } catch (e) { err(`dungeon autopilot in ${w.map.id}`, e); input = { held: new Set(), pressed: new Set() }; }
     step(input.held, input.pressed);
     t += DT;
+    if (globalThis.TRACE && Math.round(t * 60) % (60 * 20) === 0) {
+      const b = w.body;
+      const g = groupOf(w).map((x) => `${x.role}${isUp(w, x) ? '' : '(down)'}@${Math.round(x.body?.x ?? -1)},${Math.round(x.body?.y ?? -1)}`).join(' ');
+      const ms = w.mobs.filter((m) => m.hp > 0).map((m) => `${m.def.id}${m.engaged ? '!' : ''}@${Math.round(m.x)},${Math.round(m.y)}`).slice(0, 6).join(' ');
+      console.log(`${Math.round(t)}s ${w.map.id} me@${Math.round(b.x)},${Math.round(b.y)} hp ${c.hp} held[${[...input.held].join(',')}] group ${g} | mobs ${ms}`);
+    }
   }
   if (w.dungeon) {
     const r = w.dungeon.room;
@@ -265,7 +275,7 @@ function doObjective(q, o) {
     if (!field) { note('BUG', `${q.id}: ${o.mob} spawns nowhere`); return; }
     go(field);
     const have = () => (c.quests[q.id]?.kills?.[o.mob] ?? 0) >= o.count;
-    let ok = huntHere((m) => m.def.id === o.mob, have, Math.min(1200, 120 + o.count * 25));
+    let ok = huntHere((m) => m.def.id === o.mob, have, MOBS[o.mob].boss ? 600 : Math.min(1200, 120 + o.count * 25));
     if (!ok) {
       const alive = w.mobs.filter((m) => m.def.id === o.mob).length;
       note('STALL', `${q.id}: killed ${c.quests[q.id]?.kills?.[o.mob] ?? 0}/${o.count} ${MOBS[o.mob].name} on ${MAPS[field].name} in the time (${alive} on the map now)`);
@@ -275,10 +285,10 @@ function doObjective(q, o) {
     const from = dropsFrom(o.item).filter((m) => where[m.id] && [...where[m.id]].some((id) => !dungeonOf(id)));
     const need = () => countItem(c.inventory, o.item) >= o.count;
     if (!from.length) { addItem(c.inventory, o.item, o.count - countItem(c.inventory, o.item)); note('skip', `${q.id}: ${o.item} comes from gathering, crafting or a shop (given)`); return; }
-    const best = from.sort((a, b) => Math.abs(a.level - c.level) - Math.abs(b.level - c.level))[0];
+    const best = from.sort((a, b) => (a.boss ? 1 : 0) - (b.boss ? 1 : 0) || Math.abs(a.level - c.level) - Math.abs(b.level - c.level))[0];
     const field = [...where[best.id]].find((id) => !dungeonOf(id));
     go(field);
-    const ids = new Set(from.map((m) => m.id));
+    const ids = new Set(from.filter((m) => !m.boss || m.id === best.id).map((m) => m.id));
     if (!huntHere((m) => ids.has(m.def.id), need, Math.min(1500, 200 + o.count * 40))) {
       note('STALL', `${q.id}: (bag: ${bagNote()}) only ${countItem(c.inventory, o.item)}/${o.count} ${o.item} from ${best.name} on ${MAPS[field].name} in ${Math.min(1500, 200 + o.count * 40)}s of hunting`);
       addItem(c.inventory, o.item, o.count - countItem(c.inventory, o.item));
@@ -311,11 +321,26 @@ function doQuest(id) {
   tidy();
   let r = null;
   try { r = Q.completeQuest(c, id); } catch (e) { err(`handing in ${id}`, e); }
+  if (r && id.endsWith('_trial') && JOBS[c.job].tier === 1 && c.level >= (JOBS[JOB2]?.level ?? 99)) {
+    if (advanceJob(c, JOB2)) { note('ok', `became ${JOBS[JOB2].name} at the trainer`); kit(); heal(); }
+    else note('BUG', `${id}: trial done, but could not advance to ${JOB2} at level ${c.level}`);
+  }
   if (!r) note('BUG', `${id} (${q.name}): could not hand in: ${JSON.stringify(Q.objectiveProgress(c, id).filter((x) => x.have < x.count).map((x) => `${x.type} ${x.mob ?? x.item ?? x.npc ?? x.map ?? ''} ${x.have}/${x.count}`))} (bag: ${bagNote()})`);
   kit();
 }
 
-// ---------- The run ----------
+// ---------- One dungeon only (DUNGEON=hollow node tools/autoplay.mjs), with a trace ----------
+if (process.env.DUNGEON) {
+  const d = DUNGEONS[process.env.DUNGEON];
+  if (JOBS[JOB1].level) { while (c.level < JOBS[JOB1].level) gainExp(c, expToNext(c.level) - c.exp); advanceJob(c, JOB1); }
+  while (c.level < d.minLevel + 2) gainExp(c, expToNext(c.level) - c.exp);
+  kit();
+  heal();
+  globalThis.TRACE = true;
+  runDungeon(d.id);
+  process.exit(0);
+}
+
 go(c.mapId ?? 'meadow1');
 kit();
 heal();
