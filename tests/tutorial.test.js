@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createWorld, updateWorld, loadMap, useItem } from '../src/world/world.js';
 import { createCharacter, autoAssignAp, learnSkill, equipFromBag } from '../src/core/character.js';
-import { acceptQuest, completeQuest } from '../src/core/quests.js';
+import { acceptQuest, completeQuest, noteVisit } from '../src/core/quests.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { LESSONS, currentLesson, ISLAND_LESSONS, skipLesson } from '../src/world/tutorial.js';
 import { MAPS } from '../src/data/maps.js';
@@ -36,7 +36,7 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   assert.ok(step(w) >= 2, `onto the ledge (at ${Math.round(w.body.x)}, ${Math.round(w.body.y)})`);
   // Climb the rope.
   w.body.x = MAPS.dawnbeach.ropes[0].x;
-  w.body.y = w.map.groundY;
+  w.body.y = MAPS.dawnbeach.ropes[0].bottom;
   run(w, keys('ArrowUp'), 0.5);
   assert.ok(step(w) >= 3, 'climbing done');
   w.body.rope = null;
@@ -51,15 +51,32 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
   assert.ok(c.base.str > c.base.int, 'Auto grows the stat of the weapon in hand');
   run(w, idle, 0.1);
   assert.ok(step(w) >= 6, 'equipped and spent stats');
-  // On to the practice field.
+  // Kuro's second: climb to the lookout on the rocks.
+  acceptQuest(c, 'tut_lookout');
+  run(w, idle, 0.1);
+  assert.equal(step(w), 7, 'took the lookout quest');
+  const top = MAPS.dawnbeach.ropes[0];
+  w.body.x = top.x;
+  w.body.y = top.bottom;
+  run(w, keys('ArrowUp'), 2.5);
+  run(w, keys('ArrowRight'), 0.3);
+  run(w, idle, 0.4);
+  // (The game marks a visit from its screen loop, ui/manager.js.)
+  noteVisit(c, w.map.id, w.body);
+  run(w, idle, 0.1);
+  assert.equal(step(w), 8, `up at the lookout (at ${Math.round(w.body.x)}, ${Math.round(w.body.y)})`);
+  // On to the practice field, and tell Kuro.
   loadMap(w, 'trainfield', 'west');
   run(w, idle, 0.1);
-  assert.equal(step(w), 7);
+  assert.equal(step(w), 9);
+  assert.ok(completeQuest(c, 'tut_lookout'));
+  run(w, idle, 0.1);
+  assert.equal(step(w), 10, 'told Kuro');
   acceptQuest(c, 'tut_practice');
   run(w, idle, 0.1);
-  assert.equal(step(w), 8, 'took the practice quest');
+  assert.equal(step(w), 11, 'took the practice quest');
   // Fight the Kitsune Kits and pick up their fluff.
-  for (let n = 0; n < 40 && step(w) < 10; n++) {
+  for (let n = 0; n < 40 && step(w) < 13; n++) {
     const m = w.mobs.find((o) => o.hp > 0);
     if (m) w.body.x = m.x - 20 * (w.body.facing || 1);
     run(w, keys('KeyZ', 'KeyX'), 0.5);
@@ -67,27 +84,27 @@ test('a new character can play the tutorial island from the beach to Sprout Vill
     run(w, keys('KeyX'), 0.3);
   }
   // (Fluff drops by chance; top it up if the dice were stingy.)
-  if (step(w) < 10) {
+  if (step(w) < 13) {
     addItem(c.inventory, 'fluff', 3);
     run(w, idle, 0.1);
   }
-  assert.ok(step(w) >= 10, `fought and looted (lesson ${step(w)})`);
+  assert.ok(step(w) >= 13, `fought and looted (lesson ${step(w)})`);
   const before = { step: step(w), n: countItem(c.inventory, 'red_potion'), ready: w.itemReadyAt, now: w.now, scratch: JSON.stringify(c.tutorial.scratch) };
   const drank = useItem(w, 'red_potion');
   run(w, idle, 0.1);
-  assert.ok(step(w) >= 11, `drank a potion (${JSON.stringify({ ...before, drank, after: countItem(c.inventory, 'red_potion'), stepAfter: step(w) })})`);
+  assert.ok(step(w) >= 14, `drank a potion (${JSON.stringify({ ...before, drank, after: countItem(c.inventory, 'red_potion'), stepAfter: step(w) })})`);
   completeQuest(c, 'tut_practice');
   run(w, idle, 0.1);
   assert.ok(c.level >= 2 && c.sp > 0, `levelled up with a skill point (Lv ${c.level}, ${c.sp} SP)`);
   learnSkill(c, 'quickstep');
   c.hotkeys.KeyQ = { skill: 'quickstep' };
   run(w, idle, 0.1);
-  assert.equal(step(w), 14, 'learned and bound a skill');
+  assert.equal(step(w), 17, 'learned and bound a skill');
   loadMap(w, 'dock', 'west');
   acceptQuest(c, 'tut_farewell');
   completeQuest(c, 'tut_farewell');
   run(w, idle, 0.1);
-  assert.equal(step(w), 15, 'said goodbye');
+  assert.equal(step(w), 18, 'said goodbye');
   // The boat.
   const boat = MAPS.dock.portals.find((p) => p.to === 'sprout');
   w.body.x = boat.x;

@@ -32,7 +32,7 @@ export const MAPS = {
   // fountain; Pond Garden, with the Party Board by the duck pond; and the Archers' Range, Kestrel,
   // the watchtower and the targets, out to the meadow road.
   sprout: {
-    id: 'sprout', plaza: 1800, fountain: 2050, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 },
+    id: 'sprout', plaza: 1800, fountain: 2050, name: 'Sprout Village', theme: 'town', isTown: true, town: 'sprout', job: 'archer', world: { x: 66, y: 182 }, amb: 'village',
     // The town stove (data/cooking.js), the craft bench (data/crafting.js) in its workshop, and the
     // capsule machine (data/outfits-gacha.js), all round the square.
     stove: 1950,
@@ -40,7 +40,8 @@ export const MAPS = {
     workshed: true,
     gacha: 1655,
     width: 3200, height: 520, groundY: 480,
-    look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
+    // (A farm village stands on grass and tilled earth, not on a wall of flagstones.)
+    look: { edges: 'flowers', islands: 'planks', propKeep: 0.86, material: 'farm' },
     // The square is a gentle step up in the middle of the street.
     // (The duck pond in Pond Garden is sunk into the lawn under a little footbridge.)
     terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [2168, 480], [2196, 516], [2276, 516], [2304, 480], [3200, 480]],
@@ -96,12 +97,14 @@ export const MAPS = {
   meadow1: {
     id: 'meadow1', name: 'Petal Meadow', theme: 'meadow', town: 'sprout', world: { x: 118, y: 160 },
     width: 2400, height: 1080, groundY: 1000,
-    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
+    // (The hillside's ledges are terraces cut into the hill, 2026-11-07; the cherry tree's are its
+    // boughs, and up in the sky the clouds float.)
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', islands: 'terrace', props: ['flower', 'tulip', 'flower', 'bush', 'tulip', 'tuft'] },
     zones: [
       { name: 'Petal Fields', from: Infinity, color: '#e889b4' },
       { name: 'Beehive Banks', from: 800, color: '#e0a040', look: { sky: ['#ffd9a6', '#ffecc8', '#fff8e4'], far: '#f6dcb8', mid: '#d6e6a0', midTrim: '#b2d07e', edges: 'clover', props: ['tulip', 'flower', 'tuft', 'bush'] } },
-      { name: 'Blossom Boughs', from: 560, color: '#e06fa6', look: { sky: ['#ffb0d0', '#ffd2e6', '#fff0f6'], far: '#f6c2da', mid: '#f0b6d2', midTrim: '#e08cba', islands: 'planks', props: ['flower', 'tuft'] } },
-      { name: 'Petal Clouds', from: 320, color: '#8fa8f0', look: { sky: ['#b8dcff', '#e0f0ff', '#fff6fc'], far: '#e8e6ff', mid: '#f4eaff', midTrim: '#d8ccf6', material: 'sky', edges: null, props: ['flower'] } },
+      { name: 'Blossom Boughs', from: 560, color: '#e06fa6', look: { sky: ['#ffb0d0', '#ffd2e6', '#fff0f6'], far: '#f6c2da', mid: '#f0b6d2', midTrim: '#e08cba', islands: 'branch', props: ['flower', 'tuft'] } },
+      { name: 'Petal Clouds', from: 320, color: '#8fa8f0', look: { sky: ['#b8dcff', '#e0f0ff', '#fff6fc'], far: '#e8e6ff', mid: '#f4eaff', midTrim: '#d8ccf6', material: 'sky', islands: 'earth', edges: null, props: ['flower'] } },
     ],
     // (In the east corner the lily pond is sunk into the meadow between two low stone lips.)
     terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2140, 1000], [2140, 992], [2172, 992], [2200, 1036], [2280, 1036], [2308, 992], [2340, 992], [2340, 1000], [2400, 1000]],
@@ -167,7 +170,8 @@ export const MAPS = {
     deco: [
       ['flowerarch', 260], ['giantflower', 820, 0], ['picnic', 1650], ['signpost', 2060],
       ['beehive', 1200, 0, 680], ['giantflower', 300, 1, 760],
-      ['sakura', 1200, 0, 440],
+      // The great cherry trees whose boughs are the Blossom Boughs' ledges.
+      ['greatcherry', 1200, 0, 680], ['sidecherry', 520, 0, 600], ['sidecherry', 1880, 0, 600],
       ['cloudpillar', 880, 0, 280],
     ],
     spawns: [
@@ -199,17 +203,20 @@ export const MAPS = {
   // and a ledge drifts along the ridge.
   meadow2: {
     id: 'meadow2', name: 'Clover Hills', theme: 'meadow', town: 'harbor', world: { x: 162, y: 196 },
-    look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'farm', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
+    // (The map's own ground is the cellar's floor, bare earth; the fields above keep the farm's grass.)
+    look: { sky: ['#5ec8ff', '#aee8ff', '#e8fff2'], far: '#9fdf9f', mid: '#6fcf7a', midTrim: '#4fae5f', rainbow: 0, material: 'cellar', edges: 'clover', light: 'noon', drift: null, props: ['tuft', 'bush', 'rock', 'tuft', 'flower'] },
     ...lay({
       width: 2400, ground: 1000, by: 'y', quiet: [[40, 700, 160], [2340, 700, 160], [90, 1000, 320], [90, 1036, 320], [90, 920, 280], [90, 840, 280]],
       // The cellar's spring, sunk into its floor against the west wall behind a stone lip.
       terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [2400, 1000]],
       zones: [
         { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
-          look: underground({ sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58' }) },
-        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')] },
+          // (Its shelves hang from the fields' underside by chains: no grassy islands underground.)
+          look: underground({ sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58', islands: 'gallery', trim: '#c8a06a' }) },
+        // (The fields are the ground over the cellar: a thick slab of earth, the cellar's ceiling.)
+        { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')], look: { islands: 'crust', material: 'farm' } },
         { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
-          look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
+          look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', islands: 'terrace', props: ['flower', 'tuft', 'tulip'] } },
       ],
       ledges: [
         // The Farm Fields, with two holes into the cellar.
@@ -221,9 +228,11 @@ export const MAPS = {
         // The Hayloft Ridge, and the old tree's hilltop.
         { x: 250, y: 620, w: 300 }, { x: 1800, y: 620, w: 300 },
         { x: 550, y: 540, w: 300 }, { x: 1500, y: 540, w: 300 },
-        { x: 900, y: 460, w: 600 }, { x: 1100, y: 380, w: 300, thick: 44 },
-        // The ledge drifting along the ridge.
-        { x: 860, y: 540, w: 120, drift: { dx: 500, period: 11 } },
+        // (The old tree's hilltop stays an island in the sky, so the barn below and the leaf's way
+        // across under it stay open.)
+        { x: 900, y: 460, w: 600, style: 'earth' }, { x: 1100, y: 380, w: 300, thick: 44, style: 'earth' },
+        // The ledge drifting along the ridge: a giant leaf riding the wind.
+        { x: 860, y: 540, w: 120, drift: { dx: 500, period: 11 }, style: 'leaf' },
       ],
     }),
     // A moving part per zone: chaff rising from the cellar through a hole (Up to ride it), a hay
@@ -256,13 +265,13 @@ export const MAPS = {
   // the Docks: a boardwalk pier with rowboats (fishing off its end) and the galleon, whose stern
   // deck, main deck and crow's nest you can climb, up its gangway ladder.
   harbor: {
-    id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 },
+    id: 'harbor', plaza: 900, name: 'Pastel Harbor', theme: 'harbor', isTown: true, town: 'harbor', job: 'thief', world: { x: 222, y: 206 }, amb: 'port',
     // The town stove (data/cooking.js) and the craft bench (data/crafting.js) in its workshop.
     stove: 700,
     bench: 1180,
     workshed: true,
     width: 2900, height: 520, groundY: 480,
-    look: { islands: 'planks', propKeep: 0.8 },
+    look: { islands: 'planks', propKeep: 0.8, material: 'quay' },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],
     homeStyle: 'canal',
     // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
@@ -314,13 +323,15 @@ export const MAPS = {
   // springs you up into the trees.
   woods: {
     id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
-    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'branch', edges: 'glowcaps' },
+    // (Reworked 2026-11-07: the floor is the ground over the tunnels, the tunnels' shelves are old
+    // roots on a bare floor, and the treetops' boughs grow from three great oaks.)
+    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'branch', edges: 'glowcaps', material: 'cellar' },
     ...lay({
       width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
         { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [SPOT.ore(2), SPOT.ore(2)],
-          look: underground({ sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a' }) },
-        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)] },
+          look: underground({ sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a', islands: 'root' }) },
+        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)], look: { islands: 'crust', material: 'forest' } },
         { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.night(2)],
           look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
       ],
@@ -352,7 +363,7 @@ export const MAPS = {
     npcs: [],
     // A landmark per zone: the mushroom ring in the tunnels, the great trees and the hollow log on
     // the floor, the stump house on the highest bough.
-    deco: [['mushring', 1100], ['bigtree', 380, 0, 680], ['hollowlog', 1000, 0, 680], ['giantshroom', 1900, 1, 680], ['stumphouse', 1050, 0, 440]],
+    deco: [['mushring', 1100], ['sideoak', 350, 0, 680], ['greatoak', 1100, 0, 680], ['sideoak', 1850, 0, 680], ['hollowlog', 1000, 0, 680], ['giantshroom', 1900, 1, 680], ['stumphouse', 1050, 0, 440]],
     lamps: [{ x: 1100, y: 970 }, { x: 1050, y: 400 }, { x: 650, y: 980 }],
     spirit: { x: 1500, y: 400 },
     finds: [{ x: 1488, y: 432, mount: 'gecko', say: 'It scurried up your arm and settled on your shoulder.' }],
@@ -564,6 +575,9 @@ Object.assign(MAPS, {
   // and the road on to Ember Crag beside it.
   canyon: {
     id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
+    // (Reworked 2026-11-07: its ledges are rock pillars and stacked rocks standing in the gorge
+    // and on the mesas, like a canyon's hoodoos, instead of floating.)
+    look: { islands: 'terrace', material: 'canyon' },
     ...lay({
       width: 2400, ground: 1000, by: 'x',
       terrain: [[0, 600], [700, 600], [700, 1000], [1700, 1000], [1700, 560], [2400, 560]],
@@ -799,42 +813,66 @@ export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
 // Village. Kuro, a young tengu, waits on each to show you the next thing. None of it is on the
 // world map: the island is off the coast.
 Object.assign(MAPS, {
+  // Dawnlight Beach (reworked 2026-11-07): where you wash ashore. Left to right: the sea and the
+  // old jetty; the wreck of your little boat, beached on its side (its deck is the first ledge you
+  // hop onto); palms and tide pools along the sand; then the shore climbs a dune to a rock bluff,
+  // and up its rope the lookout, with a spyglass on the sea (Kuro's second quest). Nothing floats.
   dawnbeach: {
-    id: 'dawnbeach', name: 'Dawnlight Beach', theme: 'harbor', town: 'sprout',
-    width: 1500, height: 560, groundY: 480,
-    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', islands: 'planks', material: 'sand' },
-    // The sand runs down into the sea at the west end, where a little jetty reaches out.
-    terrain: [[0, 556], [150, 556], [270, 480], [1500, 480]],
-    water: [{ x1: 0, x2: 272, y: 492, kind: 'sea', sunk: false, open: [0, 272] }],
-    platforms: [{ x: 520, y: 432, w: 140 }, { x: 760, y: 360, w: 220 }, { x: 96, y: 474, w: 176, style: 'planks', walkOn: true }],
-    ropes: [{ x: 800, top: 360, bottom: 480 }],
-    portals: [
-      { id: 'start', x: 330, y: 480, hidden: true },
-      { id: 'east', x: 1440, y: 480, to: 'trainfield', toPortal: 'west', label: 'Practice Field' },
+    id: 'dawnbeach', name: 'Dawnlight Beach', theme: 'harbor', town: 'sprout', amb: 'beach',
+    width: 1800, height: 700, groundY: 620,
+    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', material: 'sand', props: ['pebble', 'rock', 'tuft', 'buoy', 'pebble', 'reed'] },
+    // The sand runs down into the sea at the west end, where the jetty reaches out; at the east
+    // it climbs a dune onto the high ground under the bluff.
+    terrain: [[0, 696], [150, 696], [290, 620], [1180, 620], [1330, 540], [1800, 540]],
+    water: [{ x1: 0, x2: 292, y: 632, kind: 'sea', sunk: false, open: [0, 292] }],
+    platforms: [
+      // The wreck's deck (drawn by the wreck itself): the first ledge you hop onto.
+      { x: 446, y: 568, w: 144, bare: true },
+      { x: 96, y: 614, w: 176, style: 'planks', walkOn: true },
+      // The rock bluff, standing on the high ground: the lookout's on top.
+      { x: 1480, y: 430, w: 180, bare: true },
     ],
-    npcs: [{ id: 'kuro', x: 1120 }],
-    deco: [['crates', 420], ['barrels', 470], ['signpost', 1360]],
+    ropes: [{ x: 1500, top: 430, bottom: 540 }],
+    portals: [
+      { id: 'start', x: 380, y: 620, hidden: true },
+      { id: 'east', x: 1760, y: 540, to: 'trainfield', toPortal: 'west', label: 'Practice Field' },
+    ],
+    npcs: [{ id: 'kuro', x: 660 }],
+    deco: [['palm', 330, 1], ['wreck', 520], ['palm', 790], ['tidepool', 930], ['barrels', 1060], ['palm', 1120, 1], ['crates', 1380], ['bluff', 1570], ['lookout', 1590, 0, 430], ['palm', 1700], ['signpost', 1730]],
     spawns: [],
   },
+  // The Practice Field (reworked 2026-11-07): Kuro's training yard. Left to right: his tent and
+  // weapon racks; the fenced practice ring, straw dummies and targets round its edges, where the
+  // Kitsune Kits play chase; then the ground climbs gently past a hay cart to the
+  // flower arch on the road to the dock.
   trainfield: {
     id: 'trainfield', name: 'Practice Field', theme: 'meadow', town: 'sprout',
-    width: 1600, height: 560, groundY: 480,
-    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'tuft'] },
-    terrain: [[0, 480], [1600, 480]],
+    width: 1800, height: 560, groundY: 480,
+    look: { sky: ['#ffc6dd', '#ffe3d8', '#fff6e6'], far: '#f3d3e8', mid: '#bfe8b8', midTrim: '#8fd39a', light: 'morning', edges: 'flowers', props: ['flower', 'tulip', 'tuft', 'flower', 'rock'] },
+    terrain: [[0, 480], [1420, 480], [1560, 430], [1800, 430]],
     platforms: [],
     ropes: [],
     portals: [
       { id: 'west', x: 40, y: 480, to: 'dawnbeach', toPortal: 'east' },
-      { id: 'east', x: 1540, y: 480, to: 'dock', toPortal: 'west', label: 'Sunny Dock' },
+      { id: 'east', x: 1750, y: 430, to: 'dock', toPortal: 'west', label: 'Sunny Dock' },
     ],
-    npcs: [{ id: 'kuro', x: 260 }],
-    deco: [['scarecrow', 520], ['fence', 1100], ['signpost', 1500]],
-    spawns: [{ mob: 'puffle', x: 640, y: 480 }, { mob: 'puffle', x: 860, y: 480 }, { mob: 'puffle', x: 1060, y: 480 }, { mob: 'puffle', x: 1280, y: 480 }],
+    npcs: [{ id: 'kuro', x: 250 }],
+    deco: [
+      ['tent', 130], ['weaponrack', 330], ['bowrack', 400],
+      ['fence', 480], ['dummy', 550], ['archtarget', 620, 1],
+      ['scarecrow', 960],
+      ['archtarget', 1240, 2], ['dummy', 1310, 1], ['fence', 1380, 1],
+      ['haystack', 1500], ['cart', 1640], ['signpost', 1700],
+    ],
+    spawns: [{ mob: 'puffle', x: 700, y: 480 }, { mob: 'puffle', x: 860, y: 480 }, { mob: 'puffle', x: 1060, y: 480 }, { mob: 'puffle', x: 1180, y: 480 }],
   },
+  // Sunny Dock (reworked 2026-11-07): where the island's road meets the sea, in morning sun (it
+  // was drawn in the harbor town's moonlight). A sandy shore with palms, the island's crates and
+  // nets, then the boardwalk quay where the boat to Sprout Village rides, and the lighthouse.
   dock: {
-    id: 'dock', name: 'Sunny Dock', theme: 'harbor', town: 'sprout',
+    id: 'dock', name: 'Sunny Dock', theme: 'harbor', town: 'sprout', amb: 'dock',
     width: 1300, height: 560, groundY: 480,
-    look: { islands: 'planks' },
+    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], sun: '#fff1c9', far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', material: 'sand', face: 'sun', stars: false, critters: ['gull'], props: ['pebble', 'buoy', 'tuft', 'rock', 'reed'] },
     terrain: [[0, 480], [1300, 480]],
     platforms: [],
     ropes: [],
@@ -843,9 +881,10 @@ Object.assign(MAPS, {
       { id: 'boat', x: 1180, y: 480, to: 'sprout', toPortal: 'start', label: 'Boat to Sprout Village' },
     ],
     npcs: [{ id: 'kuro', x: 760 }],
-    deco: [['crates', 220], ['barrels', 420], ['lighthouse', 1240]],
+    deco: [['palm', 90, 1], ['crates', 220], ['tidepool', 330], ['barrels', 430], ['palm', 480], ['lighthouse', 1240]],
     // The boat to Sprout Village rides at the quay (render/quay.js).
-    quay: { x1: 560, x2: 1300, sea: 26, kerb: 'wood', piles: [640, 1130], boats: [{ kind: 'ship', x: 960 }] },
+    // (The sea runs the whole length behind the shore, so it never starts in mid air.)
+    quay: { x1: 0, x2: 1300, sea: 26, kerb: 'wood', piles: [640, 1130], boats: [{ kind: 'ship', x: 960 }] },
     spawns: [],
   },
 });
@@ -881,8 +920,9 @@ Object.assign(MAPS, {
     id: 'hollow_gate', name: 'Hollow Gate', theme: 'forest', town: 'crag', world: { x: 168, y: 132 },
     width: 1200, height: 420, groundY: G,
     look: { sky: ['#ff9f7a', '#d48ab8', '#6a4f9a'], far: '#9a6a9a', mid: '#7a5a8a', midTrim: '#9a7aa8', skyline: 'roots', shrooms: ['#7fe6d6', '#ffb0d0', '#ffd68a'], material: 'hollow', light: 'dusk', drift: 'spore', critters: ['firefly'], face: null, edges: 'glowcaps' },
-    terrain: [[0, G], [300, G], [380, G - 40], [560, G - 40], [640, G], [1200, G]],
-    platforms: [{ x: 400, y: G - 120, w: 160 }],
+    // (The ground itself rises into a knoll, two steps up, instead of a block sitting on the slope.)
+    terrain: [[0, G], [300, G], [350, G - 40], [400, G - 40], [400, G - 120], [560, G - 120], [560, G - 40], [610, G - 40], [660, G], [1200, G]],
+    platforms: [],
     ropes: [],
     deco: [['bigtree', 262, 0], ['mushring', 520], ['giantshroom', 700, 2], ['signpost', 120], ['rootgate', 1080]],
     portals: [
@@ -946,7 +986,8 @@ Object.assign(MAPS, {
     }),
     look: { sky: ['#4a2a5a', '#8a4a80', '#d890b8'], far: '#5a3460', mid: '#8a5480', midTrim: '#c890b8', ...ROOTS, light: 'grove', drift: 'spore', shrooms: ['#ff9ec8', '#ffd0e8', '#c9a6ff'] },
     bouncers: [{ x: 440 }, { x: 960 }],
-    deco: [['mushring', 610], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320]],
+    // (A real garden of giant mushrooms, 2026-11-07: caps of every size on the floor and the tiers.)
+    deco: [['mushring', 610], ['giantshroom', 200, 2, 300], ['giantshroom', 1120, 0, 300], ['glowpool', 700, 0, 320], ['giantshroom', 120, 1], ['giantshroom', 380, 0], ['giantshroom', 880, 2], ['giantshroom', 1290, 1]],
     portals: [
       { id: 'west', x: 40, y: 540, to: 'hollow1', toPortal: 'east' },
       { id: 'east', x: 1360, y: 540, to: 'hollow3', toPortal: 'west', sealed: true },
@@ -997,7 +1038,7 @@ Object.assign(MAPS, {
     }),
     look: { sky: ['#3a2420', '#6a4232', '#a8704e'], far: '#4a2e26', mid: '#6a4636', midTrim: '#9a6a4e', ...ROOTS, light: 'dusk', drift: 'spore' },
     pillars: [{ x: 420 }, { x: 1250 }],
-    deco: [['bones', 300], ['pond', 980], ['bones', 1180, 1], ['hollowlog', 560]],
+    deco: [['bones', 300], ['pond', 980], ['bones', 1180, 1], ['hollowlog', 560], ['bones', 1380, 2], ['giantshroom', 120, 1]],
     portals: [
       { id: 'west', x: 40, y: 460, to: 'hollow3', toPortal: 'east' },
       { id: 'east', x: 1460, y: 460, to: 'hollow5', toPortal: 'west', sealed: true },
@@ -1055,7 +1096,7 @@ Object.assign(MAPS, {
     ],
     ropes: [],
     look: { sky: ['#14242e', '#1e4a4a', '#5ac0a8'], far: '#1e3a3a', mid: '#2e5a52', midTrim: '#5aa088', ...ROOTS, light: 'hollow', drift: 'spore', shrooms: ['#7fe6d6', '#c4f6ee', '#9fffb0'] },
-    deco: [['glowpool', 380], ['giantshroom', 1250, 1], ['glowpool', 1120], ['mushring', 760]],
+    deco: [['glowpool', 380], ['giantshroom', 1250, 1], ['glowpool', 1120], ['mushring', 760], ['giantshroom', 160, 2], ['giantshroom', 1400, 0]],
     portals: [
       { id: 'west', x: 40, y: G, to: 'hollow5', toPortal: 'east' },
       { id: 'out', x: 1450, y: G, to: 'hollow_gate', toPortal: 'start', label: 'Exit', sealed: true },

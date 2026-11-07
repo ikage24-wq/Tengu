@@ -6,7 +6,7 @@
 // scrolls with the world.
 
 import { shade, mix, gfx } from './pixel.js';
-import { surfacesOf } from '../world/physics.js';
+import { surfacesOf, groundAt } from '../world/physics.js';
 
 const INK = '#3a2d4f';
 const edge = (c) => mix(shade(c, -38), INK, 0.35);
@@ -30,7 +30,15 @@ export const MATERIALS = {
   grove: { lip: '#9fe0b0', body: '#8a76c4', deep: '#5e4c9e', stone: '#a897de', style: 'loam', blades: true, drip: 'vine', glow: '#bfe6ff' },
   ruins: { lip: '#d9f0c8', body: '#bfb0e6', deep: '#9182c8', stone: '#ddd3f8', style: 'brick', blades: true, drip: 'vine' },
   cave: { lip: '#a8e8ff', body: '#7563b6', deep: '#4f3f8e', stone: '#9482d6', style: 'rock', blades: false, drip: 'crystal', glow: '#a8e8ff' },
-  hollow: { lip: '#a6dca2', body: '#b48a74', deep: '#8a6656', stone: '#cda48c', style: 'loam', blades: true, drip: 'root' },
+  // (Moss, not grass blades: its floors are underground, 2026-11-07.)
+  hollow: { lip: '#9fcf98', body: '#b48a74', deep: '#8a6656', stone: '#cda48c', style: 'loam', blades: false, drip: 'root' },
+  // Canyon rock (Windy Canyon): sandstone in layered bands, for its walls and its rock pillars.
+  canyon: { lip: '#ffe0ad', body: '#e8ae74', deep: '#b97a46', stone: '#f6cf9a', style: 'strata', blades: false, drip: null },
+  // A harbour quay (Pastel Harbor): warm rounded cobbles in sandstone pastels under a pale stone
+  // kerb, instead of a slab of flat purple brick.
+  quay: { lip: '#f6e6d2', body: '#d6c2c6', deep: '#a8909c', stone: '#f0dcd6', style: 'cobble', blades: false, drip: 'weed' },
+  // A root cellar's floor: packed earth with no grass, roots trailing over its edges.
+  cellar: { lip: '#c8a07e', body: '#a87e64', deep: '#7e5a46', stone: '#cda48c', style: 'loam', blades: false, drip: 'root' },
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
   // The far regions: a petal-strewn stone path, blue night rock, warm spring stone, packed snow.
   shrine: { lip: '#ffc6de', body: '#d8c4b6', deep: '#b49a8e', stone: '#efe2d8', style: 'slab', blades: true, drip: 'vine' },
@@ -1746,6 +1754,14 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     else drawCatwalk(ctx, m, x, y, w, look?.metal ?? '#8a7aa8', pi);
     return;
   }
+  if (style === 'terrace') {
+    drawTerrace(ctx, theme, m, x, y, w, map ? surfaceBelow(map, p) - cam.y : y + 120, cam, time, pi, look?.edges);
+    return;
+  }
+  if (style === 'crust') {
+    drawCrust(ctx, theme, m, x, y, w, p.thick ?? 60, cam, time, pi, look?.edges);
+    return;
+  }
   if (style !== 'earth') {
     if (style === 'planks') {
       // A dock or footbridge over water stands on pilings driven down into it (the water's skin
@@ -1814,6 +1830,176 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     ctx.fill();
     ctx.stroke();
   }
+}
+
+// The first surface under a ledge's middle: the top of a ledge below it, or the ground. (A terrace
+// stands on what's under it, not always on the floor of the map.)
+function surfaceBelow(map, p) {
+  const cx = p.x + p.w / 2;
+  let best = groundAt(map, cx);
+  for (const q of map.platforms ?? []) {
+    if (q === p || q.drift || q.y <= p.y + 10 || cx < q.x || cx > q.x + q.w) continue;
+    best = Math.min(best, q.y);
+  }
+  return best;
+}
+
+// The surface over a cellar (Clover Hills' fields over the Root Cellar): a thick slab of the land,
+// the field's grass on top, its cut ends showing soil and stones where the holes drop through, and
+// its underside the cellar's ceiling: a ragged edge of earth with roots hanging down.
+function drawCrust(ctx, theme, m, x, y, w, d, cam, time, pi, deco) {
+  const shape = () => {
+    ctx.beginPath();
+    ctx.moveTo(x, y + 2);
+    ctx.lineTo(x + w, y + 2);
+    ctx.lineTo(x + w - 2, y + d * 0.6);
+    for (let bx = x + w - 2; bx > x + 2; bx -= 14) ctx.lineTo(bx, y + d - 6 + hash(pi * 3.3 + bx * 0.07) * 10);
+    ctx.lineTo(x + 2, y + d * 0.6);
+    ctx.closePath();
+  };
+  ctx.save();
+  shape();
+  fillLand(ctx, theme, m, cam);
+  ctx.clip();
+  const g = ctx.createLinearGradient(0, y + 8, 0, y + d + 6);
+  g.addColorStop(0, hexA(m.deep, 0.05));
+  g.addColorStop(1, hexA(m.deep, 0.7));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 2, y, w + 4, d + 8);
+  ctx.strokeStyle = hexA(m.deep, 0.45);
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for (let bx = x; bx <= x + w; bx += 16) ctx.lineTo(bx, y + d * 0.5 + Math.sin(bx * 0.05 + pi) * 2);
+  ctx.stroke();
+  for (let k = 0; k < Math.round(w / 90); k++) {
+    const sx = x + 10 + hash(pi * 3.1 + k * 2.3) * (w - 20);
+    const sy = y + 18 + hash(pi * 5.7 + k * 1.9) * (d - 30);
+    const r = 2.5 + hash(pi + k) * 3;
+    ctx.fillStyle = mix(m.stone, m.deep, 0.15);
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, r * 1.4, r, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  shape();
+  ctx.strokeStyle = edge(m.body);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Roots hanging from the cellar's ceiling.
+  for (let dx = 12; dx < w - 10; dx += 22) {
+    if (hash(pi * 11.7 + dx) < 0.4) continue;
+    drip(ctx, { ...m, drip: 'root' }, x + dx, y + d - 4, 26, time, pi * 7 + dx);
+  }
+  lip(ctx, m, [[x + 2, y], [x + w - 2, y]], time, pi + 50, Infinity, 6, deco);
+}
+
+// A terrace cut into the hillside (the field maps' look, 2026-11-07: the player wanted real
+// hills, not floating shelves): the ledge's grassy lip on top and, under it, a face of the same
+// land running all the way down to the ground, its sides stepping out a little as they go down
+// like a retaining bank. Bands of soil cross it, stones sit in it, roots and moss hang from the
+// lip, and it darkens with depth. The map's higher terraces are drawn first, so the lower ones
+// stand in front of them and the whole stack reads as one terraced hill.
+function drawTerrace(ctx, theme, m, x, y, w, bottom, cam, time, pi, deco) {
+  const h = Math.max(24, bottom - y + 30);
+  const lean = Math.min(26, h * 0.08);
+  // The face's outline: the top, then each side stepping out down to the bottom in bumps.
+  const side = (sx, dir) => {
+    const pts = [];
+    const n = Math.max(3, Math.round(h / 34));
+    for (let k = 0; k <= n; k++) {
+      const u = k / n;
+      const bump = (hash(pi * 7.3 + k * 1.7 + dir) - 0.5) * 6;
+      pts.push([sx + dir * (u * lean + (k && k < n ? bump : 0)), y + 4 + u * h]);
+    }
+    return pts;
+  };
+  const left = side(x + 4, -1);
+  const right = side(x + w - 4, 1);
+  const shape = () => {
+    ctx.beginPath();
+    ctx.moveTo(x + 4, y + 2);
+    for (const [px, py] of left) ctx.lineTo(px, py);
+    for (const [px, py] of [...right].reverse()) ctx.lineTo(px, py);
+    ctx.lineTo(x + w - 4, y + 2);
+    ctx.closePath();
+  };
+  ctx.save();
+  shape();
+  fillLand(ctx, theme, m, cam);
+  ctx.clip();
+  // Depth: darker toward the foot, and a soft shade right under the lip.
+  const g = ctx.createLinearGradient(0, y + 6, 0, y + h);
+  g.addColorStop(0, hexA(m.deep, 0.05));
+  g.addColorStop(1, hexA(m.deep, 0.5));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - lean - 4, y, w + lean * 2 + 8, h + 4);
+  // Grass spilling over the top of the face in a scalloped band, the hill's own green.
+  ctx.fillStyle = m.lip;
+  ctx.beginPath();
+  ctx.moveTo(x - lean, y);
+  for (let gx = x - lean; gx <= x + w + lean; gx += 12) {
+    const d = 12 + hash(pi * 2.7 + gx * 0.13) * 10;
+    ctx.quadraticCurveTo(gx + 6, y + d + 6, gx + 12, y + d * 0.7);
+  }
+  ctx.lineTo(x + w + lean, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = hexA(m.deep, 0.22);
+  ctx.fillRect(x - lean, y + 26, w + lean * 2, 4);
+  // Tufts and little flowers growing out of the face here and there.
+  for (let k = 0; k < Math.round((w * h) / 7000); k++) {
+    const fx = x + hash(pi * 4.3 + k * 3.1) * w;
+    const fy = y + 34 + hash(pi * 6.1 + k * 2.7) * (h - 50);
+    ctx.fillStyle = m.lip;
+    ctx.beginPath();
+    ctx.ellipse(fx, fy, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (k % 3 === 0) {
+      ctx.fillStyle = ['#ffffff', '#ffd0e6', '#fff0a0'][k % 9 === 0 ? 2 : k % 2];
+      ctx.beginPath();
+      ctx.arc(fx + 2, fy - 2, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  // Bands of soil across the face.
+  ctx.strokeStyle = hexA(m.deep, 0.5);
+  ctx.lineWidth = 1.4;
+  for (let by = y + 30; by < y + h - 10; by += 34) {
+    ctx.beginPath();
+    for (let bx = x - lean; bx <= x + w + lean; bx += 16) {
+      const wy = by + Math.sin(bx * 0.05 + pi) * 2.2;
+      if (bx === x - lean) ctx.moveTo(bx, wy);
+      else ctx.lineTo(bx, wy);
+    }
+    ctx.stroke();
+  }
+  // Stones set in the face.
+  for (let k = 0; k < Math.round((w * h) / 20000); k++) {
+    const sx = x + hash(pi * 3.1 + k * 2.3) * w;
+    const sy = y + 40 + hash(pi * 5.7 + k * 1.9) * (h - 54);
+    const r = 2.5 + hash(pi + k) * 3;
+    ctx.fillStyle = mix(m.stone, m.deep, 0.15);
+    ctx.strokeStyle = edge(m.stone);
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, r * 1.4, r, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = hexA('#ffffff', 0.35);
+    ctx.beginPath();
+    ctx.ellipse(sx - r * 0.4, sy - r * 0.35, r * 0.5, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  shape();
+  ctx.strokeStyle = edge(m.body);
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  // Roots and moss hanging from the lip over the top of the face.
+  for (let dx = 14; dx < w - 12; dx += 26) {
+    if (hash(pi * 13.1 + dx) < 0.5) continue;
+    drip(ctx, m, x + dx, y + 8, 16, time, pi * 5 + dx);
+  }
+  lip(ctx, m, [[x + 2, y], [x + w - 2, y]], time, pi + 50, Infinity, 6, deco);
 }
 
 // The island's outline: a flat top, then the underside curving from the right end down to a
@@ -2120,7 +2306,7 @@ function hangTop(map, p, wx) {
   let top = -40;
   for (const q of map?.platforms ?? []) {
     if (q === p || q.y >= p.y || wx < q.x || wx > q.x + q.w) continue;
-    top = Math.max(top, q.y + 16);
+    top = Math.max(top, q.y + (q.style === 'crust' || q.crust ? q.thick ?? 60 : 16));
   }
   return top;
 }

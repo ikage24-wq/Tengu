@@ -82,7 +82,7 @@ export const BITE_WAIT = [2.5, 6];
 
 export const SPOTS = {
   // Tier 1: the beach, the meadows' ponds, and the towns' water.
-  dawnbeach: [{ x: 150, y: 474, face: -1, bx: 70, by: 494, tier: 1, pool: { fish_minnow: 6, fish_sardine: 4, fish_puffer: 1 } }],
+  dawnbeach: [{ x: 150, y: 614, face: -1, bx: 70, by: 634, tier: 1, pool: { fish_minnow: 6, fish_sardine: 4, fish_puffer: 1 } }],
   meadow1: [{ x: 2212, y: 992, face: 1, bx: 2262, by: 1011, tier: 1, pool: { fish_minnow: 6, fish_carp: 4, fish_perch: 1.5 } }],
   meadow2: [{ x: 150, y: 992, face: -1, bx: 70, by: 1011, tier: 1, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2, fish_perch: 1 } }],
   // Sprout Village's duck pond in the Garden Corner.

@@ -28,7 +28,7 @@ export const NPCS = {
     id: 'kuro', name: 'Kuro', title: 'Island Keeper', role: 'guide',
     look: { hairStyle: 'wolfsleek', hairColor: '#2a2440', skinTone: '#fbd9bf', eyeColor: '#d8343a', eyeStyle: 'round', outfitColor: '#3a3550', face: 'grin' },
     greeting: "Morning! You washed up on Dawnlight Isle. Don't worry, I'll show you the ropes, then the boat will take you to Sprout Village.",
-    quests: ['tut_hello', 'tut_practice', 'tut_farewell'],
+    quests: ['tut_hello', 'tut_lookout', 'tut_practice', 'tut_farewell'],
   },
   pip: {
     id: 'pip', name: 'Pip', title: 'General Store', role: 'shop',

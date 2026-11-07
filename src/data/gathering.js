@@ -124,23 +124,23 @@ export const NODES = {
     // Up in the clouds, a moonpetal opens at night.
     { ...SPOT.night(1), x: 550, y: 280 },
   ],
-  // The tutorial isle: kelp on the beach ledges, an oak above, copper in the rocks by the shore;
+  // The tutorial isle: kelp by the tide pool, driftwood on the sand, copper at the foot of the bluff;
   // cotton and clover at the practice field's edges, an oak by its far gate.
   dawnbeach: [
-    { ...SPOT.herb(1, 'sea_kelp'), x: 600, y: 432 },
-    { ...SPOT.wood(1), x: 920, y: 360 },
-    { ...SPOT.ore(1), x: 1260, y: 480 },
+    { ...SPOT.herb(1, 'sea_kelp'), x: 990, y: 620 },
+    { ...SPOT.wood(1), x: 860, y: 620 },
+    { ...SPOT.ore(1), x: 1440, y: 540 },
   ],
   trainfield: [
     { ...SPOT.herb(1, 'clover'), x: 170, y: 480 },
-    { ...SPOT.fiber(1), x: 420, y: 480 },
-    { ...SPOT.wood(1), x: 1410, y: 480 },
+    { ...SPOT.fiber(1), x: 460, y: 480 },
+    { ...SPOT.wood(1), x: 1600, y: 430 },
   ],
-  // The Hollow Gate: a maple by the great tree, silk moss on the mound, chanterelles and (at
-  // night) duskcaps on the ledge above.
+  // The Hollow Gate: a maple by the great tree, silk moss on the knoll's lower step, chanterelles
+  // and (at night) duskcaps on its top.
   hollow_gate: [
     { ...SPOT.wood(2), x: 200, y: 380 },
-    { ...SPOT.fiber(2), x: 430, y: 340 },
+    { ...SPOT.fiber(2), x: 585, y: 340 },
     { ...SPOT.herb(2, 'chanterelle'), x: 430, y: 260 },
     { ...SPOT.night(2), x: 530, y: 260 },
   ],

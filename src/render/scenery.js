@@ -4407,13 +4407,22 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
 
 
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
-  for (const [pi, p] of map.platforms.entries()) {
+  // (Terraces go highest first, so each lower one stands in front of the hill above it.)
+  const all = [...map.platforms.entries()];
+  const order = [...all.filter(([, p]) => terraced(map, p)).sort(([, a], [, b]) => a.y - b.y), ...all.filter(([, p]) => !terraced(map, p))];
+  for (const [pi, p] of order) {
     const x = Math.round(p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x);
     const y = Math.round(p.y - cam.y);
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
-    if (theme === 'hollow') rootLedge(ctx, t, x, y, p.w, pi, time);
+    // (A thick old root: the Hollow's ledges, and any ledge whose style or zone says 'root'.)
+    if (theme === 'hollow' || (p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands) === 'root') {
+      // (The roots it grows from climb up into the earth above, so it hangs from something.)
+      const above = map.platforms.filter((q) => q !== p && q.y < p.y - 20 && q.x < p.x + p.w && q.x + q.w > p.x).reduce((m, q) => Math.max(m, q.y + 10), -60);
+      rootClimb(ctx, t, x, y, p.w, above - cam.y, pi, time);
+      rootLedge(ctx, t, x, y, p.w, pi, time);
+    }
     // A drifting ledge glides on the same clock as the physics. It's drawn at its own spot with the
     // camera shifted the other way, so its texture and edge flowers ride along with it instead of
     // sliding over it.
@@ -4421,8 +4430,47 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   }
 }
 
+// Whether a ledge is drawn as a terrace of the hillside (its own style, or its zone's).
+const terraced = (map, p) => (p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands ?? map.look?.islands) === 'terrace';
+
 // A thick old root for a ledge: grainy bark, curled tips at both ends, a mossy top that drapes
 // over the front, and moss strands dangling below.
+// The roots a root ledge grows out of: one thick root (two on a long ledge) twisting up from the
+// ledge into the earth or the ledge above, with a lit edge and a few rootlets.
+function rootClimb(ctx, t, x, y, w, top, pi, time) {
+  const line = edge(t.ledge);
+  const ends = w > 260 ? [0.18, 0.82] : [hash(pi * 3.7) > 0.5 ? 0.2 : 0.8];
+  for (const u of ends) {
+    const bx = x + w * u;
+    const h = y - top;
+    if (h < 20) continue;
+    const sway = (hash(pi * 5.1 + u) - 0.5) * 30;
+    const pts = [];
+    for (let k = 0; k <= 10; k++) {
+      const v = k / 10;
+      pts.push([bx + sway * Math.sin(v * Math.PI) + Math.sin(v * 9 + pi) * 3, y + 4 - v * (h + 10)]);
+    }
+    const wide = (v) => 6.5 - v * 2.5;
+    ctx.fillStyle = t.ledgeShade;
+    ctx.strokeStyle = line;
+    fillPts(ctx, bandPts(pts, wide));
+    ctx.stroke();
+    ctx.fillStyle = t.ledge;
+    fillPts(ctx, bandPts(pts.map(([px, py]) => [px - 2, py]), (v) => wide(v) * 0.45));
+    for (let k = 2; k < 9; k += 3) {
+      const [px, py] = pts[k];
+      const s = k % 2 ? 1 : -1;
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.quadraticCurveTo(px + s * 8, py + 2, px + s * 12, py + 10);
+      ctx.stroke();
+    }
+    ctx.lineWidth = 1;
+  }
+}
+
 function rootLedge(ctx, t, x, y, w, pi, time) {
   const line = edge(t.ledge);
   ctx.lineWidth = 1;
@@ -5188,9 +5236,15 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   drawDrift(ctx, t, cam, width, height, time, 'back');
   drawDeco(ctx, map, cam, width, time, 'behind', air);
   drawTerrain(ctx, theme, map, cam, width, height, time);
-  drawDeco(ctx, map, cam, width, time, 'ground');
-  // Town buildings stand on the street, behind ledges and props.
-  street?.();
+  // Town buildings stand on the street, behind ledges and props. On a quay away from town (Sunny
+  // Dock) the things on the shore stand in front of its sea instead of sinking into it.
+  if (map.quay && !map.isTown) {
+    street?.();
+    drawDeco(ctx, map, cam, width, time, 'ground');
+  } else {
+    drawDeco(ctx, map, cam, width, time, 'ground');
+    street?.();
+  }
   drawLedges(ctx, t, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, 'ledges');
   drawProps(ctx, t, map, cam, width, time);

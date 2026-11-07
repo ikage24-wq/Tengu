@@ -14,12 +14,18 @@ export const QUESTS = {
   // Dawnlight Isle, the tutorial (Kuro; world/tutorial.js).
   tut_hello: {
     id: 'tut_hello', name: 'Washed Ashore', giver: 'kuro', minLevel: 1,
-    text: "Here, some tonics and a practice sword. You'll get your job's own weapon when you pick a job at level 5.",
+    text: "You're awake! Your boat came in on the tide last night, what's left of it. Here, some tonics and a practice sword. You'll get your job's own weapon when you pick a job at level 5.",
     objectives: [],
     rewards: { exp: 5, gold: 9, items: [{ id: 'sword_0', qty: 1 }, { id: 'red_potion', qty: 5 }] },
   },
+  tut_lookout: {
+    id: 'tut_lookout', name: 'A Better View', giver: 'kuro', minLevel: 1, prereq: 'tut_hello',
+    text: "See the rocks at the end of the beach? There's a lookout on top with my old spyglass. Climb up and look out to sea, and you'll spot the dock where the boat to the mainland ties up. Tell me what you see. I'll be at the Practice Field, just past the rocks.",
+    objectives: [{ type: 'visit', map: 'dawnbeach', above: 450, place: 'the lookout on the rocks' }],
+    rewards: { exp: 40, gold: 15, items: [{ id: 'red_potion', qty: 3 }] },
+  },
   tut_practice: {
-    id: 'tut_practice', name: 'Practice Makes Perfect', giver: 'kuro', minLevel: 1, prereq: 'tut_hello',
+    id: 'tut_practice', name: 'Practice Makes Perfect', giver: 'kuro', minLevel: 1, prereq: 'tut_lookout',
     text: 'Those Kitsune Kits are harmless, they just love a game of chase. Defeat 3 with Z and pick up 3 Fox Fluff with X.',
     objectives: [{ type: 'kill', mob: 'puffle', count: 3 }, { type: 'collect', item: 'fluff', count: 3 }],
     rewards: { exp: 130, gold: 24, items: [{ id: 'blue_potion', qty: 5 }] },
