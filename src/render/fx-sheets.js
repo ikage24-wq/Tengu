@@ -478,4 +478,8 @@ export const FX_SHEETS = {
   celjgrxshatter: { w: 194, h: 194, n: 6, fps: 22, px: 97, py: 97, d: 3, loop: false },
   celjgrxkaboom: { w: 186, h: 187, n: 7, fps: 18, px: 92, py: 116, d: 3, loop: false },
   celjgcatch: { w: 79, h: 77, n: 5, fps: 18, px: 40, py: 36, d: 3, loop: false },
+  celjgpotato: { w: 283, h: 236, n: 6, fps: 22, px: 188, py: 150, d: 3, loop: true },
+  celjgencore: { w: 519, h: 344, n: 10, fps: 14, px: 238, py: 284, d: 3, loop: false },
+  celjgplates: { w: 1316, h: 401, n: 9, fps: 14, px: 661, py: 262, d: 3, loop: false },
+  celjgfinalefx: { w: 431, h: 296, n: 9, fps: 14, px: 215, py: 239, d: 3, loop: false },
 };

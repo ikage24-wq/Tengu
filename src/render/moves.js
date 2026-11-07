@@ -5336,6 +5336,31 @@ export const MOVES = {
     };
   },
 
+  // Grand Finale (her finisher, rain from ~0.6, the burst at ~0.88): she juggles faster and faster,
+  // hands blurring, rising onto her toes; both arms go up as the orbs fuse into a blazing ring over
+  // her head; a step and a two-handed heave hurls it ahead; then a deep bow while it all goes off.
+  jgfinale(p) {
+    const jug = seg(p, 0.02, 0.44);
+    const rate = 3 + 9 * jug;
+    const juggling = p > 0.02 && p < 0.44;
+    const ph = Math.sin(jug * jug * Math.PI * rate);
+    const raise = soft(seg(p, 0.42, 0.54)) * (1 - ease(seg(p, 0.56, 0.64)));
+    const heave = ease(seg(p, 0.56, 0.64));
+    const bow = soft(seg(p, 0.72, 0.84)) * (1 - soft(seg(p, 0.94, 1)));
+    return {
+      weapon: juggling ? 100 + 20 * ph : lerp(lerp(110, 120, raise), 40, heave) + 50 * bow, arm: juggling ? 70 + 22 * ph : lerp(lerp(60, 104, raise), 30, heave) + 10 * bow,
+      lift: 2 * jug + 3 * raise + 1.6 * Math.abs(ph) * jug, lunge: 8 * heave * (1 - bow), tilt: -0.06 * raise + 0.2 * heave * (1 - bow) + 0.3 * bow,
+      trail: heave > 0 && heave < 1,
+      face: p < 0.42 ? PM_FACE.wild : p < 0.7 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = dancerHand(juggling ? [q(2 - 4 * ph), q(-3 + 3 * ph)] : [q(lerp(lerp(2, -6, raise), 4, heave) - 6 * bow), q(lerp(lerp(-2, -8, raise), -2, heave) + 2 * bow)]);
+        r.hairLift = raise > 0.4 ? -1 : heave > 0.4 && bow < 0.3 ? 1 : 0;
+        r.squat = q(1.6 * heave * (1 - bow) + 1.2 * bow);
+        danceLegs(r, [jug, [1.2, -1.4, 10], [-1.2, -1.4, -10]], [heave * (1 - bow), [5.4, 0, 12], [-4.8, -0.6, -24]], [bow, [1.6, 0, 4], [-3.4, -1.2, -24]]);
+      },
+    };
+  },
+
   // ---------- The Mage's attacks (the remake: a pyro gremlin; docs/design/mage-line.md) ----------
   // A magic-school dropout who loves blowing things up. She never casts like the textbook: she
   // flicks fire from the hip, pitches snowballs, jabs the wand like a cattle prod, swings the staff

@@ -44,16 +44,43 @@ export function tickJuggle(world, dt) {
   }
   j.back = j.back.filter((r) => !r.done);
   j.caught = j.caught.filter((c) => world.now - c.at < 0.5);
-  if (fighting && j.orbs.length + j.back.length < ORB_MAX && world.now >= j.next) {
-    j.orbs.push({ el: ORB_ELS[j.turn % ORB_ELS.length], born: world.now });
-    j.turn++;
-    j.next = world.now + ORB_EVERY;
+  if (fighting && j.orbs.length + j.back.length < orbMax(world) && world.now >= j.next) {
+    j.orbs.push({ el: conjure(world), born: world.now });
+    j.next = world.now + orbEvery(world);
   }
   // Out of the fight they wink out one by one.
   if (!fighting && j.orbs.length && world.now >= j.next) {
     j.orbs.shift();
     j.next = world.now + 0.5;
   }
+}
+
+// Sleight of Hand (her passive, id manamastery): orbs come faster, and at its higher levels she
+// keeps a sixth and a seventh in the air.
+const sleight = (world) => world.char.skills?.manamastery ?? 0;
+export const orbMax = (world) => ORB_MAX + (sleight(world) >= 10 ? 1 : 0) + (sleight(world) >= 20 ? 1 : 0);
+export const orbEvery = (world) => ORB_EVERY * (1 - 0.35 * Math.min(1, sleight(world) / 20));
+// The next element in her turn (fire, ice, spark).
+export function conjure(world) {
+  const j = juggleOf(world);
+  return ORB_ELS[j.turn++ % ORB_ELS.length];
+}
+// Encore: every orb she can hold, conjured at once (and those on their way home caught early).
+export function refillOrbs(world) {
+  if (!isJuggler(world.char)) return;
+  const j = juggleOf(world);
+  for (const r of j.back) r.at = world.now;
+  while (j.orbs.length + j.back.length < orbMax(world)) j.orbs.push({ el: conjure(world), born: world.now + j.orbs.length * 0.06 });
+  j.fightAt = world.now;
+}
+
+// Every orb she holds, thrown up at once (Fountain, the Grand Finale): how many there were.
+export function spendOrbs(world) {
+  const j = juggleOf(world);
+  const n = j.orbs.length;
+  j.orbs = [];
+  j.next = world.now + 0.6;
+  return n;
 }
 
 // The oldest orb, taken off the orbit to be flung (null when her hands are empty).

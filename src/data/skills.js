@@ -324,16 +324,20 @@ export const SKILLS = {
   // shots carry their element (`el`). She keeps a heal and a shield for the healer's seat in the
   // early dungeons.
   spiritbolt: skill({
-    id: 'spiritbolt', name: 'Overcooked Fireball', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
+    id: 'spiritbolt', name: 'Fountain', job: 'spiritmage', type: 'attack', fx: 'bolt', icon: 'spiritbolt', school: 'arcane',
     pathNames: { onmyoji: 'Royal Inferno', shrinemaiden: 'Mega Heal Bomb' },
-    desc: 'Cup a little fireball in your hands. Keep cupping. It keeps growing. Heave the enormous grinning thing over your head and shove it down the line: it rolls through everything in its way. Blow on your fingers.',
+    desc: 'Toss every orb you\'re juggling high into the air, one after another, faster and faster, then throw your arms wide: they come raining down on everything ahead as a cascade of fire, ice and sparks. The more orbs you had up, the harder they fall.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const bolt = (at, pct, oy = 0) => ({ at, shot: 'stbolt', magic: true, pct, range: 300, h: 60, knock: 30, speed: 880, oy });
       return {
         mp: k(8, 16), pct: k(300, 520), hits: 1, targets: k(2, 4),
-        combo: [{ move: 'pmbig', dur: 0.74, step: 10, strikes: [{ at: 0.58, shot: 'pmhuge', magic: true, el: 'fire', pct: k(300, 520), range: 340, h: 90, targets: k(2, 4), pierce: true, speed: 520, knock: 120, big: true, stop: 0.06, shake: 2 }] }],
+        combo: [{ move: 'jgfountain', dur: 0.9, step: 0, strikes: [
+          { at: 0.58, rain: k(2, 3), magic: true, el: 'fire', pct: k(110, 190), rainFrom: 30, rainW: 360, span: 0.22, knock: 40, variant: 'jgfire', school: 'arcane', spendOrbs: true },
+          { at: 0.66, rain: k(2, 3), magic: true, el: 'ice', pct: k(110, 190), rainFrom: 30, rainW: 360, span: 0.22, knock: 40, variant: 'jgice', school: 'arcane' },
+          { at: 0.74, rain: k(2, 3), magic: true, el: 'bolt', pct: k(110, 190), rainFrom: 30, rainW: 360, span: 0.22, knock: 40, variant: 'jgbolt', school: 'arcane', big: true, stop: 0.04, shake: 2 },
+        ] }],
         // Each path sings or turns it her own way (same numbers; see "Per-path skill versions" in
         // world/combat.js). The Starlight Idol: a call into the crowd (a note), a twirl and an echo
         // (two notes), then a crescendo belted down the line (her big burst of sound). The
@@ -350,14 +354,17 @@ export const SKILLS = {
   }),
 
   spiritstep: skill({
-    id: 'spiritstep', name: 'Blink Bang', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
+    id: 'spiritstep', name: 'Cartwheel Toss', job: 'spiritmage', type: 'attack', fx: 'blink', icon: 'spiritstep', maxLevel: 10, school: 'arcane', movement: true,
     pathNames: { onmyoji: 'Grand Entrance', shrinemaiden: 'Ambulance Run' },
-    desc: 'Light a firecracker in your hand. BANG: you are gone in the smoke, and land a long way ahead, coughing, then pose as if you meant it. Nothing touches you on the way.',
+    desc: 'Cartwheel a long way forward, flinging an orb ahead as you go over and another one back behind you as you come up. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: 0, hits: 0, targets: 0,
-        combo: [{ move: 'pmblink', dur: 0.5, step: k(120, 180), carry: 0.35, guard: 0.45, trail: true, strikes: [{ at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'pmpop', burstAt: 0, burstDur: 0.5 }] }],
+        combo: [{ move: 'jgcartwheel', dur: 0.6, step: k(110, 160), carry: 0.4, guard: 0.45, trail: true, strikes: [
+          { at: 0.3, shot: 'jgfire', orb: true, orbFree: true, magic: true, pct: 90, range: 300, h: 80, knock: 60, speed: 900 },
+          { at: 0.46, shot: 'jgfire', orb: true, orbFree: true, magic: true, turn: true, pct: 90, range: 300, h: 80, knock: 60, speed: 900 },
+        ] }],
         // The Starlight Idol slides across the stage on her knees like a rock star, mic up, hearts
         // flying; the Astronomer fades into a silver crescent, drifts ahead like moonlight and
         // waxes back into herself.
@@ -371,15 +378,15 @@ export const SKILLS = {
   }),
 
   spiritwave: skill({
-    id: 'spiritwave', name: 'Live Wire', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
+    id: 'spiritwave', name: 'Ricochet', job: 'spiritmage', type: 'attack', fx: null, icon: 'spiritwave', school: 'arcane',
     pathNames: { onmyoji: 'Domino Decree', shrinemaiden: 'Defib Chain' },
-    desc: 'Grab the end of your wand like a live cable. Buzz. Your hair stands straight up. Point it down the line and the lightning crackles through every monster in it, knocking them back. Smoke a little.',
+    desc: 'Windmill your arm twice round and fling one big orb: it bounces from monster to monster down the line, hitting each one it reaches.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(12, 22), pct: k(220, 380), hits: 1, targets: k(5, 8),
-        combo: [{ move: 'pmwire', dur: 0.62, step: 6, strikes: [{ at: 0.5, shot: 'pmwire', magic: true, el: 'bolt', pct: k(220, 380), range: 380, h: 90, targets: k(5, 8), pierce: true, speed: 1400, knock: 100, launch: 60, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
+        combo: [{ move: 'jgricochet', dur: 0.7, step: 6, strikes: [{ at: 0.52, shot: 'jgfire', orb: true, orbFree: true, orbShot: 'jgbig', magic: true, pct: k(220, 380), range: 360, h: 90, hops: k(3, 5), knock: 80, speed: 1000, big: true, stop: 0.06, shake: 2, gauge: 6 }] }],
         // The Starlight Idol plants her feet and belts one power note that tears down the line; the
         // Astronomer heaves her orrery up from low with both hands and flings a great ringed world.
         paths: {
@@ -392,9 +399,9 @@ export const SKILLS = {
   }),
 
   frostnova: skill({
-    id: 'frostnova', name: 'Frost Flop', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
+    id: 'frostnova', name: 'Hot Potato', job: 'spiritmage', type: 'attack', fx: null, icon: 'frostnova', school: 'arcane', maxLevel: 15,
     pathNames: { onmyoji: 'Cold Shoulder', shrinemaiden: 'Cold Compress' },
-    desc: 'Take a run up, leap, and belly-flop onto the floor: ice spikes burst out of the ground all round you both ways, freezing every monster they catch in place for a moment. Brush the frost off.',
+    desc: 'Conjure one enormous orb so hot you juggle it hand to hand ("ow, ow, ow") before bowling it underarm along the floor: it bounces through everything in its way, scorching them. Shake your fingers out.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
@@ -402,7 +409,7 @@ export const SKILLS = {
       const nova = (burst) => ({ at: 0.5, magic: true, el: 'ice', pct: k(140, 240), reach: 170, h: 80, around: true, targets: k(6, 10), knock: 40, launch: 60, freeze: kf(0.8, 1.6), burst, burstAt: 0, burstDur: 0.7, big: true, stop: 0.06, shake: 3, gauge: 6 });
       return {
         mp: k(14, 26), pct: k(140, 240), hits: 1, targets: k(6, 10),
-        combo: [{ move: 'pmflop', dur: 0.64, step: 8, strikes: [nova('pmnovafx')] }],
+        combo: [{ move: 'jgpotato', dur: 0.72, step: 6, strikes: [{ at: 0.52, shot: 'jgpotato', magic: true, el: 'fire', pct: k(140, 240), range: 340, h: 70, oy: 14, targets: k(6, 10), pierce: true, speed: 440, knock: 60, launch: 80, big: true, stop: 0.06, shake: 3, gauge: 6 }] }],
         // (Until her paths are remade: the Starlight Idol belts a power note and the Astronomer heaves
         // her orrery, each with her own burst, the same freezing ring round her.)
         paths: {
@@ -417,9 +424,9 @@ export const SKILLS = {
   // Wishing Star and Star Veil land on the party round her in a dungeon (`grant`: a buff given when
   // the strike lands, see world/melee.js).
   blessing: skill({
-    id: 'blessing', name: 'Campfire Break', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
+    id: 'blessing', name: 'Encore', job: 'spiritmage', type: 'heal', fx: null, icon: 'blessing', school: 'arcane', party: true,
     pathNames: { onmyoji: 'Royal Pardon', shrinemaiden: 'First Aid' },
-    desc: 'Squat down and flick a little campfire into being. Toast a marshmallow. Its warmth heals you and the party around you at once, then a little more every second for a while, and lifts everyone\'s attack and magic while it lasts. Technically still setting things on fire.',
+    desc: 'Fling your arms wide and call your orbs home: you catch them out of the air one after another and take a bow. The catch heals you and the party around you, a little more every second for a while, lifts everyone\'s attack and magic, and fills your hands with orbs again.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
@@ -427,7 +434,7 @@ export const SKILLS = {
       const wish = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, heal: kf(0.18, 0.4), healR: 220, burst, burstAt: 0, burstDur: 1, grant: { id: 'blessing', duration: k(8, 14), buff: { regenPct: kf(0.015, 0.035), watk: k(3, 10), matk: k(3, 10) }, range } });
       return {
         mp: k(20, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'pmcamp', dur: 0.9, step: 0, strikes: [wish('pmcamp')] }],
+        combo: [{ move: 'jgencore', dur: 0.9, step: 0, strikes: [{ ...wish('jgencore'), refillOrbs: true }] }],
         // The Starlight Idol hugs the mic and sings a ballad, hearts drifting down over everyone; the
         // Astronomer lifts her orrery to the sky and a silver moon sinks down onto the party.
         paths: {
@@ -440,9 +447,9 @@ export const SKILLS = {
   }),
 
   spiritward: skill({
-    id: 'spiritward', name: 'Scroll Shield', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
+    id: 'spiritward', name: 'Spinning Plates', job: 'spiritmage', type: 'buff', fx: null, icon: 'spiritward', school: 'arcane', party: true, maxLevel: 15,
     pathNames: { onmyoji: 'Royal Guard', shrinemaiden: 'Bubble Wrap' },
-    desc: 'Rummage in your satchel, yank out a fistful of scrolls and fling them up: they unroll into a whirling ring round you and the party nearby, soaking up damage until it breaks. You never read any of them.',
+    desc: 'Pirouette on one foot with your arms out: your orbs widen into a ring of spinning plates round you and the party nearby that soaks up damage until it breaks.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const kf = (a, b) => lerpf(a, b, lv, m);
@@ -450,7 +457,7 @@ export const SKILLS = {
       const veil = (burst) => ({ at: 0.55, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst, burstAt: 0, burstDur: 0.9, grant: { id: 'spiritward', duration: k(20, 40), buff: { barrier: kf(0.2, 0.45) }, range } });
       return {
         mp: k(24, 40), pct: 0, hits: 0, targets: 0, range,
-        combo: [{ move: 'pmscroll', dur: 0.72, step: 0, strikes: [veil('pmscrolls')] }],
+        combo: [{ move: 'jgplates', dur: 0.75, step: 0, strikes: [veil('jgplates')] }],
         // The Starlight Idol sweeps the mic out over the crowd and holds a harmony, rings of sound
         // settling over everyone; the Astronomer draws an orbit round herself with the staff and
         // silver moons take it up round the party.
@@ -464,8 +471,8 @@ export const SKILLS = {
   }),
 
   manamastery: skill({
-    id: 'manamastery', name: 'Mana Mastery', job: 'spiritmage', type: 'passive', grows: true, fx: null, icon: 'manamastery',
-    desc: 'Steadier spells, more magic attack, and a deeper well of MP.',
+    id: 'manamastery', name: 'Sleight of Hand', job: 'spiritmage', type: 'passive', grows: true, fx: null, icon: 'manamastery',
+    desc: 'Quicker hands: your orbs come faster, a sixth stays in the air from level 10 and a seventh from level 20. Steadier spells, more magic attack and a deeper well of MP.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.55, lv, m), matk: lerp(2, 25, lv, m), maxMpPct: lerpf(0.04, 0.2, lv, m) } }),
   }),
 
@@ -622,19 +629,19 @@ export const SKILLS = {
   }),
 
   heavenslantern: skill({
-    id: 'heavenslantern', name: 'Big Bad Kaboom', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
+    id: 'heavenslantern', name: 'Grand Finale', job: 'spiritmage', type: 'attack', fx: null, icon: 'heavenslantern', school: 'arcane', maxLevel: 10, fullGauge: true,
     pathNames: { onmyoji: 'Fireworks Gala', shrinemaiden: 'Emergency Airdrop' },
-    desc: 'Finisher: needs a full Mayhem (Meltdown), and spends it. Unhook all three vials off your belt and knock them back: fire, ice, lightning (hic). Throw your arms up and the sky rains all three on every monster ahead, then bring it down for one huge blast that sets off Steam, Shatter and Kaboom on everything at once. Stand in the smoke, cackling.',
+    desc: 'Finisher: needs a full Mayhem, and spends it. Juggle every orb you have faster and faster until they blur into a blazing ring over your head, then hurl the whole ring: a storm of great orbs rains on everything ahead, and the last one bursts into a firework that sets off Steam, Shatter and Kaboom on everything at once. Take a bow.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(30, 50), pct: k(500, 860), hits: 14, targets: 12,
-        combo: [{ move: 'pmkaboom', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
-          { at: 0.56, rain: k(4, 5), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmbomb', school: 'arcane', gauge: 0 },
-          { at: 0.62, rain: k(3, 5), magic: true, el: 'ice', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmshard', school: 'arcane', gauge: 0 },
-          { at: 0.68, rain: k(3, 4), magic: true, el: 'bolt', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.3, knock: 30, variant: 'pmzap', school: 'arcane', gauge: 0 },
-          { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, burst: 'pmboom', burstAt: 0.3, burstDur: 0.8, big: true, stop: 0.16, shake: 8, gauge: 0 },
+        combo: [{ move: 'jgfinale', dur: 1.5, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.6, rain: k(3, 4), magic: true, el: 'fire', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.25, knock: 30, variant: 'jgbigfire', school: 'arcane', gauge: 0, spendOrbs: true },
+          { at: 0.66, rain: k(3, 4), magic: true, el: 'ice', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.25, knock: 30, variant: 'jgbigice', school: 'arcane', gauge: 0 },
+          { at: 0.72, rain: k(3, 4), magic: true, el: 'bolt', pct: k(110, 180), rainFrom: 20, rainW: 380, span: 0.25, knock: 30, variant: 'jgbigbolt', school: 'arcane', gauge: 0 },
+          { at: 0.88, magic: true, pct: k(500, 860), reach: 210, h: 160, around: true, targets: 12, knock: 200, launch: 200, rxAll: true, burst: 'jgfinalefx', burstAt: 0.3, burstDur: 0.9, big: true, stop: 0.16, shake: 8, gauge: 0 },
         ] }],
         // The Starlight Idol's: she throws the mic up to the sky ("everybody!"), notes pour down on
         // them, and she leaps and belts the last note down into one great blast of sound. The

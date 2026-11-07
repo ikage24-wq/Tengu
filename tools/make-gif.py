@@ -37,7 +37,11 @@ def find_browser():
 
 def main(out, query='job=thief', page='move-frames'):
     url = f'http://localhost:{os.environ.get("PORT", "8000")}/tools/{page}.html?{query}'
-    dom = subprocess.run([find_browser(), '--headless=new', '--disable-gpu', '--virtual-time-budget=600000', '--dump-dom', url], capture_output=True, text=True, encoding='utf-8', check=True).stdout
+    # (A fresh browser profile each run, so a rebuilt effect list or script is never served from cache.)
+    import tempfile
+    profile = tempfile.mkdtemp()
+    dom = subprocess.run([find_browser(), '--headless=new', '--disable-gpu', f'--user-data-dir={profile}', '--disk-cache-size=1', '--virtual-time-budget=600000', '--dump-dom', url], capture_output=True, text=True, encoding='utf-8', check=True).stdout
+    shutil.rmtree(profile, ignore_errors=True)
     # (The last one: a page's own notes may mention the box too.)
     found = re.findall(r"<pre id=\"out\">(\[.*?)</pre>", dom, re.S)
     frames = [Image.open(io.BytesIO(base64.b64decode(d.split(',')[1]))).convert('RGB') for d in json.loads(html.unescape(found[-1]))]

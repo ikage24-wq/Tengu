@@ -42,7 +42,7 @@ import { GRAVITY } from './physics.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 import { allyElement } from './reactions.js';
-import { tickJuggle, takeOrb, orbHome } from './juggle.js';
+import { tickJuggle, takeOrb, orbHome, conjure, refillOrbs, spendOrbs, isJuggler } from './juggle.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -1563,6 +1563,13 @@ function land(world, s) {
   if ((s.rain || s.shot) && s.key.startsWith('basic') && !s.phantom) s = shotProcs(world, s);
   // The Spell Juggler flings the oldest orb circling her (world/juggle.js), or with empty hands
   // snaps a little palm spark.
+  // (Encore: every orb she can hold back in the air at once.)
+  if (s.refillOrbs) refillOrbs(world);
+  // (Fountain and the Grand Finale throw up every orb she holds: each one makes the rain heavier.)
+  if (s.spendOrbs && isJuggler(world.char)) {
+    const n = spendOrbs(world);
+    s = { ...s, pct: s.pct * (1 + 0.15 * n), rain: s.rain + Math.floor(n / 2) };
+  }
   if (s.orb) s = orbStrike(world, s);
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
@@ -1594,10 +1601,10 @@ function land(world, s) {
   // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
   // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
   const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
-  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockcrimson' : null);
+  const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'spiritmage' ? 'celshockstar' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
   // The Star Witch's party spells (Wishing Star, Star Veil) ring out over everyone they reach.
-  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockcrimson', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
+  if (s.grant?.range?.around && char.job === 'spiritmage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
@@ -2135,7 +2142,7 @@ const ringMid = (m) => m.y - (m.air ?? 0) - m.def.h / 2;
 // snaps a short palm spark instead, much weaker.
 const PALM = { shot: 'jgpalm', el: null, orbEl: null, range: 170, targets: 1, pierce: false, big: false, stop: 0, shake: 0, fan: 1 };
 function orbStrike(world, s) {
-  const o = takeOrb(world);
+  const o = takeOrb(world) ?? (s.orbFree && isJuggler(world.char) ? { el: conjure(world) } : null);
   if (!o) return { ...s, ...PALM, pct: s.pct * 0.45, knock: Math.min(s.knock ?? 20, 30) };
   return { ...s, shot: `${s.orbShot ?? 'jg'}${o.el}`, el: o.el, orbEl: o.el };
 }
@@ -2219,7 +2226,7 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 }
 
 // The Spell Juggler's orbs, her palm spark and her finisher orbs (world/juggle.js).
-const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
+const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgpotato', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
 // The Mage's shots (her own art); their hits leave her element's mark.

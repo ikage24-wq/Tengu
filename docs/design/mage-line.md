@@ -7,6 +7,32 @@ who casts and heals a little; at 30 she becomes the **Sorcerer** (damage) or the
 `spiritmage` (the Mage), `onmyoji` (the Sorcerer), `shrinemaiden` (the Cleric). Held to the Wind
 Dancer standard (CLAUDE.md) and built by the job recipe (docs/design/making-a-job.md).
 
+## The Mage: the Spell Juggler (remade again, 2026-11-07)
+
+The player rejected the whole line as reskins ("reskinned with 0 effort") and judged jobs only on
+moves, effects and play ("I DO NOT CARE ABOUT THE OUTFITS AND WEAPONS"). Their pick for the Mage:
+the **Spell Juggler**.
+
+- **Orbs** (world/juggle.js): in a fight fire, ice and spark orbs pop into being one after another
+  and circle her waist (render/juggler.js), up to five (seven with Sleight of Hand). Every attack
+  flings the oldest one as that element (world/melee.js `orbStrike`, `orbThrow`); a miss flies out
+  and curves back into her hands; with empty hands she snaps a weak palm spark. The orbs' elements
+  set off her reactions, drawn as her orbs colliding (`jgrx*`: a mist spout, a crystal star, a
+  firework).
+- **Attacks** (render/moves.js `jg*`): wand toss, sidearm whip, hop-and-spin release (pool:
+  behind-the-back flick, heel kick, flurry; commands: juggler's pop, volleyball spike, knee slide);
+  staff bat, keepy-uppy volley, overhead smash (pool: cue shot, tennis serve, baton twirl;
+  commands: pole vault, dunk, staff scooter).
+- **Skills** (ids kept): Fountain (`spiritbolt`: every orb thrown up, raining down ahead), Ricochet
+  (`spiritwave`), Cartwheel Toss (`spiritstep`: orbs flung ahead and behind), Hot Potato
+  (`frostnova`: a huge orb bowled bouncing along the floor), Encore (`blessing`: the heal; catches
+  her orbs home and refills her orbit), Spinning Plates (`spiritward`: the barrier), Sleight of Hand
+  (`manamastery`: faster orbs, more of them), and the finisher Grand Finale (`heavenslantern`: the
+  orbs juggled into a ring overhead and hurled, great orbs raining, one firework setting off every
+  reaction).
+- Effects: tools/fx-art.js, the Spell Juggler section (`jg*`). Her paths (the Sorcerer, the
+  Cleric) are to be rebuilt the same way, each with its own moves and effect language.
+
 ## The Mage (remade from scratch, 2026-11-06)
 
 The player found the first build (the edgelord, Element Weave) not as fun as the other jobs and

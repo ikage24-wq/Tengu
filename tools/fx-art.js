@@ -6472,6 +6472,130 @@
       },
     };
   })();
+
+  // Her skills' pictures.
+  // Hot Potato (loops toward +x): one enormous molten orb, steaming, wobbling, a ring of heat haze
+  // round it and embers spitting off.
+  E.jgpotato = grown((() => {
+    const cx = 110;
+    const cy = 70;
+    return {
+      w: 170, h: 140, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 3; k++) {
+          ctx.globalAlpha = 0.7 - k * 0.2;
+          puff(ctx, ['#ffffff', '#fff4ec', '#ffe0d0', '#e8b8a8', '#8a5a5a'], cx - 10 + Math.sin(ph + k) * 4, cy - 36 - k * 16, 10 + k * 4, 1100 + k + i, { lobes: 4 });
+        }
+        ctx.globalAlpha = 1;
+        celRing(ctx, MFIRE, cx, cy, 34 + 2 * Math.sin(ph), 4, { broken: 0.5, seed: 1110 + i });
+        jgOrb(ctx, 'fire', cx, cy, 27 + 1.5 * Math.sin(ph * 2), i, 6);
+        const R = rng(1120 + i);
+        for (let k = 0; k < 5; k++) sparkle(ctx, MFIRE, cx - 30 - R() * 60, cy + (R() - 0.5) * 50, 3 + R() * 3, k);
+      },
+    };
+  })(), 2);
+  // Encore: her orbs spiral in from all round to her hands and burst into a shower of gold
+  // sparkles and little stars as she catches them (drawn round her, the hands at its middle).
+  E.jgencore = grown((() => {
+    const c = 120;
+    const GOLDS = ['#ffffff', '#fff6d0', '#ffd36b', '#e0a03a', '#7a4a2a'];
+    return {
+      w: 240, h: 240, n: 10, fps: 14, px: c, py: c + 50,
+      draw(ctx, i) {
+        const u = i / 9;
+        const kinds = ['fire', 'ice', 'bolt', 'fire', 'ice'];
+        if (u < 0.6) {
+          kinds.forEach((kind, k) => {
+            const a = (k / 5) * TAU + u * 5;
+            const d = 100 * (1 - u / 0.6);
+            jgOrb(ctx, kind, c + Math.cos(a) * d, c + Math.sin(a) * d * 0.6, 11, i, 10);
+          });
+        } else {
+          const v = (u - 0.6) / 0.4;
+          for (let k = 0; k < 10; k++) {
+            const a = (k / 10) * TAU;
+            sparkle(ctx, GOLDS, c + Math.cos(a) * (14 + v * 60), c + Math.sin(a) * (10 + v * 40) - v * 20, 7 - v * 4, k);
+          }
+          starburst(ctx, GOLDS, c, c, 14 + v * 20, 8, 1130, { inner: 0.45, rot: v });
+        }
+      },
+    };
+  })(), 2.4);
+  // Spinning Plates: five orbs flattened into spinning plates, circling wide round the party on a
+  // shimmering ring (a ground ring, under everyone).
+  E.jgplates = grown((() => {
+    const cx = 220;
+    const cy = 120;
+    return {
+      w: 440, h: 200, n: 10, fps: 14, px: cx, py: cy + 40,
+      draw(ctx, i) {
+        const u = i / 9;
+        const r = 60 + 140 * (1 - (1 - Math.min(1, u * 1.6)) ** 3);
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, u - 0.7) / 0.3);
+        // (The ring lies flat on the floor round them: drawn squashed into its ellipse.)
+        ctx.save();
+        ctx.translate(cx, cy + 40);
+        ctx.scale(1, 0.24);
+        celRing(ctx, MICE, 0, 0, r, 6, { broken: 0.3, seed: 1140 + i });
+        ctx.restore();
+        const kinds = ['fire', 'ice', 'bolt', 'fire', 'ice'];
+        kinds.forEach((kind, k) => {
+          const a = (k / 5) * TAU + u * 4;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + 40 + Math.sin(a) * r * 0.22 - 30;
+          const pal = JGPAL[kind];
+          ctx.beginPath();
+          ctx.ellipse(x, y, 16, 5, 0, 0, TAU);
+          ctx.fillStyle = pal[4];
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(x, y - 1, 14, 3.8, 0, 0, TAU);
+          ctx.fillStyle = pal[2];
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(x - 4, y - 2, 5, 1.4, 0, 0, TAU);
+          ctx.fillStyle = pal[0];
+          ctx.fill();
+          sparkle(ctx, pal, x + 12, y - 6, 3.4, k + i);
+        });
+        ctx.globalAlpha = 1;
+      },
+    };
+  })(), 3.2);
+  // Grand Finale's last burst: a great three-colour firework over everything in reach, a ring of
+  // shock along the floor under it, and stars falling.
+  E.jgfinalefx = (() => {
+    const c = 220;
+    const GOLDF = ['#ffffff', '#fff6c8', '#ffcf4a', '#ff7a2a', '#8a2a3a'];
+    return {
+      w: 440, h: 380, n: 9, fps: 14, px: c, py: c + 120,
+      draw(ctx, i) {
+        const u = i / 8;
+        if (i <= 1) { jgOrb(ctx, 'fire', c - 14, c, 22, i, 9); jgOrb(ctx, 'ice', c + 14, c - 8, 22, i, 9); jgOrb(ctx, 'bolt', c, c + 14, 22, i, 9); return; }
+        const pals = [MFIRE, MICE, MBOLT, GOLDF];
+        for (let k = 0; k < 24; k++) {
+          const a = (k / 24) * TAU;
+          const d = 30 + u * 170;
+          const pal = pals[k % 4];
+          const x = c + Math.cos(a) * d;
+          const y = c + Math.sin(a) * d * 0.8 + u * u * 40;
+          ctx.globalAlpha = Math.max(0, 1.15 - u);
+          ctx.strokeStyle = pal[2];
+          ctx.lineWidth = 5 - u * 3;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(c + Math.cos(a) * d * 0.6, c + Math.sin(a) * d * 0.48 + u * u * 20);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          sparkle(ctx, pal, x, y, 9 - u * 4, k);
+          ctx.globalAlpha = 1;
+        }
+        if (i <= 4) starburst(ctx, GOLDF, c, c, 30 + i * 14, 12, 1150, { inner: 0.4, rot: i * 0.3 });
+        celRing(ctx, GOLDF, c, c + 120, 40 + u * 170, 6 - u * 4, { broken: u * 0.6, seed: 1160 + i });
+      },
+    };
+  })();
   // The catch: a twinkle as an orb drops back into her orbit.
   E.jgcatch = (() => {
     const c = 40;

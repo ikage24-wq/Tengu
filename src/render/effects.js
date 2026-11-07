@@ -174,6 +174,13 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
+    case 'jgpotato': {
+      // Hot Potato: the enormous orb bowled along the floor, bouncing three times as it goes.
+      const born = bornAt(f);
+      const hop = f.dur > 0 ? -Math.abs(Math.sin(Math.max(0, f.t / f.dur) * Math.PI * 3)) * 16 * born : 0;
+      fxSprite(ctx, 'celjgpotato', x, y + 10 + hop, { t: f.t, flip: f.tx < f.x, scale: 0.6 * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'jgfire': case 'jgice': case 'jgbolt': case 'jgbigfire': case 'jgbigice': case 'jgbigbolt': case 'jgpalm': {
       // The Spell Juggler's flung orbs (their comet tails streaming behind; born small at her hand,
       // grown to full in a moment), and her little palm spark. On the way home an orb is smaller.
@@ -1105,7 +1112,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

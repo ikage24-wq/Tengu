@@ -2288,10 +2288,15 @@ const shrineMage = starWitch;
 // The Spell Juggler (world/juggle.js): orbs gather round her in a fight, her attacks fling the
 // oldest, a miss comes home into her hands, and with none left she snaps a palm spark.
 test('in a fight her orbs gather (fire, ice, spark in turn) up to five', async () => {
-  const { ORB_MAX } = await import('../src/world/juggle.js');
+  const { ORB_MAX, orbMax } = await import('../src/world/juggle.js');
   const w = starWitch();
+  w.char.skills.manamastery = 0;
   run(w, 5);
   assert.equal(w.juggle.orbs.length, ORB_MAX);
+  w.char.skills.manamastery = 20;
+  run(w, 3);
+  assert.equal(w.juggle.orbs.length, orbMax(w), 'Sleight of Hand keeps more in the air');
+  assert.equal(orbMax(w), ORB_MAX + 2);
   assert.deepEqual(w.juggle.orbs.slice(0, 3).map((o) => o.el).sort(), ['bolt', 'fire', 'ice']);
 });
 test('her attack flings the oldest orb as its own element', () => {
@@ -2398,23 +2403,68 @@ test('reactions fill Mayhem far faster than plain hits, and on Meltdown every sp
   assert.ok(elementHit(full, full.mobs[1], { el: 'fire', damage: 50 }), 'on Meltdown even an unmarked monster reacts');
 });
 
-test('Frost Flop bursts out both ways and freezes what it catches', () => {
+test('Hot Potato bowls one huge orb along the floor through everything in its way', () => {
   const w = starWitch();
   w.char.skills.frostnova = 10;
-  for (const [i, m] of w.mobs.entries()) m.x = w.body.x + (i % 2 ? 1 : -1) * (40 + i * 20);
   assert.ok(cast(w, 'frostnova').ok);
-  assert.equal(w.pose.kind, 'pmflop');
-  run(w, 1);
-  assert.ok(w.mobs.some((m) => m.x < w.body.x && m.hp < 1e9) && w.mobs.some((m) => m.x > w.body.x && m.hp < 1e9), 'on both sides');
-  assert.ok(w.mobs.some((m) => m.hold === 'ice'), 'and freezes them');
+  assert.equal(w.pose.kind, 'jgpotato');
+  let rolled = false;
+  for (let i = 0; i < 60; i++) {
+    updateWorld(w, DT, idle);
+    rolled ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'jgpotato');
+  }
+  assert.ok(rolled, 'the hot potato rolls');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'through every monster in the line');
 });
 
-test('Live Wire crackles down the whole line', () => {
+test('Ricochet bounces one big orb from monster to monster', () => {
   const w = starWitch();
   assert.ok(cast(w, 'spiritwave').ok);
-  assert.equal(w.pose.kind, 'pmwire');
+  assert.equal(w.pose.kind, 'jgricochet');
+  run(w, 1.5);
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster it can reach');
+});
+
+test('Fountain throws up every orb she holds and rains them on everything ahead', () => {
+  const w = starWitch();
+  run(w, 4);
+  assert.ok(w.juggle.orbs.length >= 3, 'orbs in the air first');
+  assert.ok(cast(w, 'spiritbolt').ok);
+  assert.equal(w.pose.kind, 'jgfountain');
+  const rain = new Set();
+  for (let i = 0; i < 90; i++) {
+    updateWorld(w, DT, idle);
+    for (const f of w.fx) if (f.kind === 'rain') rain.add(f.variant);
+  }
+  assert.ok(w.juggle.orbs.length < 3, 'she spent them');
+  assert.deepEqual([...rain].sort(), ['jgbolt', 'jgfire', 'jgice'], 'fire, ice and spark orbs fall');
+  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'on every monster ahead');
+});
+
+test('Cartwheel Toss carries her forward and flings orbs both ways', () => {
+  const w = starWitch();
+  w.char.skills.spiritstep = 5;
+  const x0 = w.body.x;
+  assert.ok(cast(w, 'spiritstep').ok);
+  assert.equal(w.pose.kind, 'jgcartwheel');
+  const dirs = new Set();
+  for (let i = 0; i < 60; i++) {
+    updateWorld(w, DT, idle);
+    for (const f of w.fx) if (f.kind === 'projectile' && f.shot?.startsWith('jg') && !f.home) dirs.add(Math.sign(f.tx - f.x));
+  }
+  assert.ok(w.body.x > x0 + 60, 'a long way forward');
+  assert.deepEqual([...dirs].sort(), [-1, 1], 'ahead and behind');
+});
+
+test('Encore fills her hands with orbs again', () => {
+  const w = starWitch();
+  run(w, 0.2);
+  w.juggle.orbs = [];
+  w.juggle.next = 1e9;
+  assert.ok(cast(w, 'blessing').ok);
+  assert.equal(w.pose.kind, 'jgencore');
   run(w, 1);
-  assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'every monster in the line');
+  assert.ok(w.juggle.orbs.length >= 5, `a full orbit (${w.juggle.orbs.length})`);
 });
 
 test('Campfire Break mends her when the fire is lit, then keeps healing, and builds Mayhem', () => {
@@ -2445,7 +2495,7 @@ test('Star Veil puts a barrier on her that soaks up damage', () => {
   assert.ok(Math.abs(b.shield - Math.round(w.stats.maxHp * b.values.barrier)) <= 1, 'as strong as its share of her max HP');
 });
 
-test('Big Bad Kaboom needs Meltdown, spends it, rains all three elements, sets off every reaction, and never refills it', () => {
+test('the Grand Finale needs a full Mayhem, spends it, rains great orbs of all three elements, sets off every reaction, and never refills it', () => {
   const w = starWitch();
   w.spirit = 60;
   assert.equal(cast(w, 'heavenslantern').reason, 'gauge:spirit', 'waits for Meltdown');
@@ -2463,7 +2513,7 @@ test('Big Bad Kaboom needs Meltdown, spends it, rains all three elements, sets o
       for (const k of Object.keys(w.reactedKinds ?? {})) kinds.add(k);
     }
   });
-  assert.deepEqual([...rain].sort(), ['pmbomb', 'pmshard', 'pmzap'], 'fireballs, snowballs and zap balls fall');
+  assert.deepEqual([...rain].sort(), ['jgbigbolt', 'jgbigfire', 'jgbigice'], 'great fire, ice and spark orbs fall');
   assert.deepEqual([...kinds].sort(), ['kaboom', 'shatter', 'steam'], 'and every reaction goes off');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 3, 'on every monster ahead');
   assert.ok(w.spirit < 10, `and it never refills (${w.spirit})`);

@@ -319,6 +319,14 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return f.t < 0 || fxSprite(ctx, 'celmdrxkaboom', x, y + 4, { p, scale: f.small ? 0.45 : 0.7 }) || true;
     // The Spell Juggler's: a spout of mist, a star of crystal shards, a firework burst (each sized to
     // the monster, clear of her).
+    // Her skills: Encore's orbs spiralling home to her hands, Spinning Plates round the party (on
+    // the floor, under everyone), the Grand Finale's firework over the crowd ahead.
+    case 'jgencore':
+      return fxSprite(ctx, 'celjgencore', x + dir * 16, y + 18, { p, scale: 0.75 }) || true;
+    case 'jgplates':
+      return fxSprite(ctx, 'celjgplates', x, y + 6, { p, scale: Math.min(1, (f.r || 220) / 210) }) || true;
+    case 'jgfinalefx':
+      return f.t < 0 || fxSprite(ctx, 'celjgfinalefx', x + dir * 70, y + 4, { p, scale: 0.8 }) || true;
     case 'jgrxsteam':
       return fxSprite(ctx, 'celjgrxsteam', x, y + 4, { p, scale: 0.62 }) || true;
     case 'jgrxshatter':
