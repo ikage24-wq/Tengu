@@ -22,6 +22,8 @@ import { fishRequestPage } from './fishreq.js';
 import { bountyPage } from './bounty.js';
 import { repPage } from './rep.js';
 import { nightPage } from './nightmarket.js';
+import { cardsPage } from './cards.js';
+import { roundsLeft } from '../world/cards.js';
 import { repTier, stallSize } from '../world/rep.js';
 import { bountyBoard } from '../world/bounties.js';
 import { checkIn, rumor, ROOM_GOLD } from '../world/inn.js';
@@ -290,6 +292,8 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
   }
+  // Tilly's card table (world/cards.js).
+  if (npc.role === 'cards') choices.push({ label: 'Play Higher or Lower', sub: roundsLeft(world) > 0 ? `${roundsLeft(world)} rounds left today · small stakes` : 'No more rounds today', icon: 'star', primary: true, run: () => (dlg.cards = true) });
   // The Masked Moth's wares at the Night Market (world/nightmarket.js).
   if (npc.role === 'night') choices.push({ label: "Tonight's wares", sub: 'An oddity and three one-offs', icon: 'star', primary: true, run: () => (dlg.night = true) });
   // Penny's book: your Merchant Rep and your stall (world/rep.js).
@@ -384,7 +388,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.rep ? 214 : dlg.night ? 196 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.rep ? 214 : dlg.night ? 196 : dlg.cards ? 214 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -412,6 +416,11 @@ export function npcWindow(ui, state, world) {
     return;
   }
 
+  if (dlg.cards) {
+    dlg.talking = false;
+    if (cardsPage(ui, state, world, area)) dlg.cards = false;
+    return;
+  }
   if (dlg.night) {
     dlg.talking = false;
     if (nightPage(ui, state, world, area)) dlg.night = false;

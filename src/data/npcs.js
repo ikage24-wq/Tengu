@@ -341,10 +341,10 @@ Object.assign(NPCS, {
     chatter: ['I heard a thing...', "Don't tell anyone I told you.", 'Back in my day...'],
   },
   tilly: {
-    id: 'tilly', name: 'Tilly', title: 'Card Shark', role: 'guide',
+    id: 'tilly', name: 'Tilly', title: 'Card Shark', role: 'cards',
     look: { hairStyle: 'starbuns', hairColor: '#8fd0ff', skinTone: '#ffe0cc', eyeColor: '#ff6b9a', outfitColor: '#ffe36b', eyeStyle: 'sparkle', face: 'playful', browStyle: 'dots' },
     gear: { top: cbPiece('look_casual_stripes_top'), bottom: cbPiece('look_casual_jorts_bottom'), shoes: cbPiece('look_casual_hightops_shoes'), hat: cbPiece('look_casual_catears_hat'), face: cbPiece('look_acc_heartstickers_face') },
-    greeting: "Wanna play cards? I'm REALLY good. I'm not cheating. That card was always in my sleeve. Come back soon, I'm making a new deck!",
+    greeting: "Wanna play cards? I'm REALLY good. I'm not cheating. That card was always in my sleeve.",
     chatter: ['Pick a card! Not that one.', "I'm not cheating!", 'Royal flush! ...Is that a thing?'],
   },
   moth: {

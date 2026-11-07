@@ -325,3 +325,31 @@ test('the Night Market: the Masked Moth is only there after dark, with an oddity
   assert.equal(char.gold, gold - goods[1].price);
   assert.ok(N.buyNight(world, goods[1].key), 'once each');
 });
+
+test("Tilly's Higher or Lower: a small stake, a ladder to climb, a house edge, and only so many rounds a day", async () => {
+  const C = await import('../src/world/cards.js');
+  const world = createWorld(createCharacter('Gambler', {}));
+  const char = world.char;
+  char.gold = 1e6;
+  // At best play (with every peek), you still lose a little over time: fun, never a farm.
+  let back = 0;
+  for (let i = 0; i < 4000; i++) {
+    const w = { char: { gold: 1e6, name: 'p' }, log() {}, dayClock: () => new Date(i * 864e5) };
+    C.deal(w, 100);
+    const g = w.cardGame;
+    while (g.live) {
+      if (g.steps >= 2) { C.cashOut(w); break; }
+      const pk = g.peek;
+      C.guess(w, pk && pk.rank !== g.card.rank ? (pk.rank > g.card.rank ? 'higher' : 'lower') : g.card.rank < 7 ? 'higher' : 'lower');
+    }
+    back += w.char.gold - 1e6 + 100;
+  }
+  assert.ok(back / 4000 < 100, `the house keeps an edge (${(back / 40).toFixed(1)}% back)`);
+  // Rounds run out for the day.
+  for (let i = 0; i < C.ROUNDS; i++) {
+    assert.equal(C.deal(world, 50), null);
+    world.cardGame.live = false;
+  }
+  assert.ok(C.deal(world, 50), 'no more rounds today');
+  assert.ok(C.deal({ ...world, cardGame: null, char: { ...char, gold: 10, cards: null } }, 50), 'and none without the stake');
+});
