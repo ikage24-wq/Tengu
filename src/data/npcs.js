@@ -286,3 +286,55 @@ for (const h of Object.values(SWEETHEARTS)) {
     ...(h.quests ? { quests: h.quests } : {}),
   };
 }
+
+// ---------- Everyone their own look (2026-11-07, the player's ask) ----------
+// Every named NPC has a hairstyle no other named NPC wears, their own eyes, face and brows, and an
+// outfit that says who they are (the sweethearts and the instructors already dress as themselves).
+// Pieces are the drawn looks of everyday clothes and accessories (look_casual_*, look_acc_*: what
+// the Cash shop's items wear as); `costume` puts them in a whole costume (data/outfits-costume.js).
+const piece = (id) => ({ id, variant: null });
+const costume = (key) => {
+  const covers = ['top', ...(COSTUME_LOOKS.find((c) => c.key === key)?.covers ?? [])];
+  return Object.fromEntries(covers.map((slot) => [slot, piece(`look_costume_${key}_${slot}`)]));
+};
+const OWN_LOOKS = {
+  // Sprout Village.
+  mira: { look: { eyeStyle: 'jewel', face: 'excited', browStyle: 'round' }, gear: { top: piece('look_casual_stripes_top'), bottom: piece('look_casual_flowerskirt_bottom'), shoes: piece('look_casual_sandals_shoes'), hat: piece('look_casual_sunhat_hat') } },
+  pip: { look: { eyeStyle: 'round', face: 'grin', browStyle: 'stubby' }, gear: { top: piece('look_casual_pinafore_top'), bottom: piece('look_casual_pinafore_bottom'), shoes: piece('look_casual_loafers_shoes'), hat: piece('look_casual_bow_hat'), cape: piece('look_casual_tote_cape') } },
+  lulu: { look: { eyeStyle: 'sparkle', face: 'sassy', browStyle: 'arched' }, gear: { bottom: piece('look_casual_idol_bottom'), top: piece('look_casual_idol_top'), shoes: piece('look_casual_platforms_shoes'), face: piece('look_casual_sunglasses_face'), cape: piece('look_acc_bigbow_cape') } },
+  clover: { look: { eyeStyle: 'big', face: 'giggle', browStyle: 'dots' }, gear: { bottom: piece('look_casual_onepiece_bottom'), top: piece('look_casual_onepiece_top'), shoes: piece('look_casual_rainboots_shoes'), hat: piece('look_acc_flowercrown_hat') } },
+  shelly: { look: { hairStyle: 'braids', eyeStyle: 'droopy', face: 'dimple', browStyle: 'soft' }, gear: { top: piece('look_casual_tee_top'), bottom: piece('look_casual_jorts_bottom'), shoes: piece('look_casual_hightops_shoes'), hat: piece('look_casual_cap_hat') } },
+  posy: { look: { eyeStyle: 'star', face: 'excited', browStyle: 'thin' }, gear: { top: piece('look_casual_cardigan_top'), bottom: piece('look_casual_tennis_bottom'), shoes: piece('look_casual_sandals_shoes'), cape: piece('look_acc_heartwings_cape') } },
+  // The beach and the docks.
+  kuro: { look: { hairStyle: 'longtied', eyeStyle: 'droopy', face: 'heh', browStyle: 'thick' }, gear: costume('yukata') },
+  // Harbor Town.
+  rook: { look: { hairStyle: 'pompadour', eyeStyle: 'jewel', face: 'proud', browStyle: 'sharp' }, gear: costume('pirate') },
+  marina: { look: { hairStyle: 'wavylong', eyeStyle: 'jewel', face: 'giggle', browStyle: 'soft' }, gear: { top: piece('look_casual_rashguard_top'), bottom: piece('look_casual_boardshorts_bottom'), shoes: piece('look_casual_flipflops_shoes'), face: piece('look_casual_goggles_face'), cape: piece('look_casual_swimring_cape') } },
+  bobbin: { look: { hairStyle: 'crewcut', eyeStyle: 'droopy', face: 'sleepy', browStyle: 'thick' }, gear: { top: piece('look_casual_sailor_top'), bottom: piece('look_casual_sailor_bottom'), shoes: piece('look_casual_rainboots_shoes'), cape: piece('look_casual_scarf_cape') } },
+  marlo: { look: { hairStyle: 'shoulderbraid', eyeStyle: 'jewel', face: 'sassy', browStyle: 'arched' }, gear: { ...costume('tuxedo'), face: piece('look_acc_monocle_face') } },
+  // Ember Crag.
+  tora: { look: { hairStyle: 'tomboy', eyeStyle: 'cat', face: 'determined', browStyle: 'thick' }, gear: { top: piece('look_casual_flannel_top'), bottom: piece('look_casual_cargo_bottom'), shoes: piece('look_casual_hightops_shoes'), face: piece('look_casual_goggles_face') } },
+  // Moonleaf Grove.
+  nim: { look: { hairStyle: 'kokeshi', eyeStyle: 'star', face: 'shy', browStyle: 'round' }, gear: { top: piece('look_casual_cardigan_top'), bottom: piece('look_casual_flowerskirt_bottom'), shoes: piece('look_casual_loafers_shoes'), face: piece('look_casual_glasses_face'), hat: piece('look_acc_starclips_hat') } },
+  // The dungeon gates.
+  bramble: { look: { hairStyle: 'curlycrop', eyeStyle: 'big', face: 'excited', browStyle: 'stubby' }, gear: { top: piece('look_casual_track_top'), bottom: piece('look_casual_cargo_bottom'), shoes: piece('look_casual_rainboots_shoes'), hat: piece('look_acc_leafcrown_hat'), cape: piece('look_casual_backpack_cape') } },
+  pumpkins: { look: { hairStyle: 'stubtail', eyeStyle: 'droopy', face: 'nervous', browStyle: 'thin' }, gear: { top: piece('look_casual_sweatervest_top'), bottom: piece('look_casual_plaid_bottom'), shoes: piece('look_casual_loafers_shoes'), hat: piece('look_casual_bucket_hat') } },
+  tock: { look: { hairStyle: 'bowlcut', eyeStyle: 'round', face: 'determined', browStyle: 'dots' }, gear: { top: piece('look_casual_varsity_top'), bottom: piece('look_casual_trackpants_bottom'), shoes: piece('look_casual_hightops_shoes') } },
+  lumen: { look: { hairStyle: 'slickback', eyeStyle: 'round', face: 'mmhm', browStyle: 'thick' }, gear: { top: piece('look_casual_cardigan_top'), bottom: piece('look_casual_plaid_bottom'), shoes: piece('look_casual_loafers_shoes'), face: piece('look_acc_monocle_face'), cape: piece('look_acc_starcape_cape') } },
+  praline: { look: { hairStyle: 'halfup', eyeStyle: 'sparkle', face: 'excited', browStyle: 'round' }, gear: { top: piece('look_casual_chef_top'), bottom: piece('look_casual_tennis_bottom'), shoes: piece('look_casual_loafers_shoes'), hat: piece('look_casual_chefhat_hat') } },
+  encore: { look: { hairStyle: 'princess', eyeStyle: 'jewel', face: 'ohoho', browStyle: 'arched' }, gear: costume('ballgown') },
+  nimbus: { look: { hairStyle: 'sidecrop', eyeStyle: 'round', face: 'grin', browStyle: 'sharp' }, gear: costume('aviator') },
+  // Lantern Lagoon.
+  brine: { look: { hairStyle: 'shavedside', eyeStyle: 'cat', face: 'hmph', browStyle: 'sharp' }, gear: { top: piece('look_casual_parka_top'), bottom: piece('look_casual_cargo_bottom'), shoes: piece('look_casual_rainboots_shoes'), hat: piece('look_casual_visor_hat') } },
+  nori: { look: { hairStyle: 'sidetail', eyeStyle: 'sparkle', face: 'proud', browStyle: 'arched' }, gear: costume('cheer') },
+  coral: { look: { hairStyle: 'lowtails', eyeStyle: 'big', face: 'giggle', browStyle: 'round' }, gear: { top: piece('look_casual_stripes_top'), bottom: piece('look_casual_jorts_bottom'), shoes: piece('look_casual_sandals_shoes'), hat: piece('look_casual_headphones_hat') } },
+  kelp: { look: { hairStyle: 'crownbraid', eyeStyle: 'droopy', face: 'smug', browStyle: 'thin' }, gear: { top: piece('look_casual_raincoat_top'), bottom: piece('look_casual_plaid_bottom'), shoes: piece('look_casual_rainboots_shoes'), face: piece('look_casual_glasses_face'), hat: piece('look_casual_pompom_hat') } },
+  // The instructors keep their job's gear; two take new hair so nobody shares.
+  vex: { look: { hairStyle: 'sharpbob', eyeStyle: 'cat' } },
+};
+for (const [id, own] of Object.entries(OWN_LOOKS)) {
+  const npc = NPCS[id];
+  if (!npc) continue;
+  npc.look = { ...npc.look, ...own.look };
+  if (own.gear) npc.gear = { ...(npc.gear ?? {}), ...own.gear };
+}

@@ -1061,6 +1061,117 @@ function prop(ctx, kind, x, y, k = 1, time = 0) {
     ctx.beginPath();
     ctx.arc(0, 0, 2.2, 0, TAU * 0.85 + Math.sin(time * 4) * 0.4);
     ctx.stroke();
+  } else if (kind === 'broom') {
+    // A straw broom, its head swishing.
+    ctx.strokeStyle = '#8a5a2a';
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(0, 7);
+    ctx.stroke();
+    ctx.fillStyle = '#e8c870';
+    ctx.beginPath();
+    ctx.moveTo(-2.4 + Math.sin(time * 9) * 0.6, 12);
+    ctx.lineTo(-1, 7);
+    ctx.lineTo(1, 7);
+    ctx.lineTo(2.4 + Math.sin(time * 9) * 0.6, 12);
+    ctx.closePath();
+    ctx.fill();
+  } else if (kind === 'whisk') {
+    // A mixing bowl in the crook of the arm, the whisk going round in it.
+    ctx.fillStyle = '#e8eef8';
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 3.6, 2, 0, 0, Math.PI);
+    ctx.fill();
+    ctx.fillStyle = '#fff6e0';
+    ctx.fillRect(-3.2, 0.4, 6.4, 0.8);
+    const a = time * 10;
+    ctx.strokeStyle = '#b8c0cc';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * 1.4, 0);
+    ctx.lineTo(Math.cos(a) * 0.6, -4);
+    ctx.stroke();
+  } else if (kind === 'fan') {
+    // A folding fan, opened, fluttering.
+    ctx.rotate(Math.sin(time * 8) * 0.3);
+    ctx.fillStyle = '#9a2040';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, 4.4, -Math.PI * 0.95, -Math.PI * 0.05);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#ffd36b';
+    ctx.lineWidth = 0.4;
+    for (let i = 1; i < 5; i++) {
+      const t = -Math.PI * (0.95 - i * 0.18);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(t) * 4.4, Math.sin(t) * 4.4);
+      ctx.stroke();
+    }
+  } else if (kind === 'fish') {
+    // A fat silver fish held up by the tail, flapping.
+    ctx.rotate(Math.PI / 2 + Math.sin(time * 12) * 0.25);
+    ctx.fillStyle = '#b8d0e0';
+    ctx.beginPath();
+    ctx.ellipse(4, 0, 4, 1.8, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#8aa8c0';
+    ctx.beginPath();
+    ctx.moveTo(0.4, 0);
+    ctx.lineTo(-1.4, -1.6);
+    ctx.lineTo(-1.4, 1.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#2a2a3a';
+    ctx.fillRect(6.6, -0.6, 0.7, 0.7);
+  } else if (kind === 'pompom') {
+    // A cheer pompom, shaking.
+    const r = 2.2 + Math.abs(Math.sin(time * 14)) * 0.5;
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * TAU + time * 3;
+      ctx.fillStyle = i % 2 ? '#ff7aa8' : '#ffffff';
+      ctx.beginPath();
+      ctx.arc(Math.cos(a) * r * 0.6, Math.sin(a) * r * 0.6, 1.2, 0, TAU);
+      ctx.fill();
+    }
+  } else if (kind === 'ladle') {
+    // A noodle ladle with a little steam off it.
+    ctx.strokeStyle = '#a87a4a';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, -4);
+    ctx.lineTo(0, 3);
+    ctx.stroke();
+    ctx.fillStyle = '#c8b090';
+    ctx.beginPath();
+    ctx.ellipse(0, 3.6, 1.8, 1, 0, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(Math.sin(time * 3) * 1, 1 - ((time * 6) % 6), 0.9, 0, TAU);
+    ctx.fill();
+  } else if (kind === 'rod') {
+    // A fishing rod held out over the water, its line hanging to a bobbing float.
+    ctx.strokeStyle = '#8a5a2a';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(10, -7);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 0.3;
+    const bob = Math.sin(time * 2.4) * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(10, -7);
+    ctx.lineTo(12, 10 + bob);
+    ctx.stroke();
+    ctx.fillStyle = '#ff5a4a';
+    ctx.beginPath();
+    ctx.arc(12, 10 + bob, 0.9, 0, TAU);
+    ctx.fill();
   }
   ctx.restore();
 }
@@ -1078,6 +1189,162 @@ function zzz(ctx, x, y, time) {
 }
 
 const ROUTINES = {
+  // ----- The ones who used to stand still (2026-11-07) -----
+  // Kuro, the island keeper: sweeping the sand, shading her eyes to look out to sea, a big yawn.
+  kuro(t) {
+    const b = bitAt(t, [['sweep', 3.2], ['look', 2.4], ['yawn', 1.6]], 2.4);
+    if (!b) return { face: 'heh' };
+    const k = inOut(b.u);
+    if (b.kind === 'sweep') {
+      const swish = Math.sin(b.s * 5);
+      return { face: 'smile', rig: { frontArm: arm((2 + swish * 2) * k, 2 * k), backArm: arm((1.4 + swish * 2) * k, 1 * k), tilt: (3 + swish * 2) * k }, hands: (ctx, f) => prop(ctx, 'broom', f[0], f[1], k, b.s) };
+    }
+    if (b.kind === 'look') return { facing: 1, face: 'mmhm', rig: { frontArm: arm(1 * k, -11 * k), hy: h(-0.4 * k), tilt: -2 * k } };
+    return { face: 'sleepy', rig: { frontArm: arm(-1 * k, -13 * k), backArm: arm(1 * k, -13 * k), hy: h(-1 * k), tilt: -3 * k } };
+  },
+  // Marina, the harbor diver: wringing the sea out of her hair, a diver's stretch up on her toes.
+  marina(t) {
+    const b = bitAt(t, [['wring', 2.8], ['stretch', 2.2]], 2.6);
+    if (!b) return { face: 'giggle' };
+    const k = inOut(b.u);
+    if (b.kind === 'wring') {
+      const twist = Math.sin(b.s * 7);
+      return { face: 'giggle', rig: { frontArm: arm(3 * k, (-6 + twist) * k), backArm: arm(3.4 * k, (-5 - twist) * k), tilt: 8 * k, hx: h(0.6 * k) } };
+    }
+    return { face: 'determined', rig: { frontArm: arm(0, -14 * k), backArm: arm(0, -14 * k), hy: h(-1.4 * k) }, lift: 1.2 * k };
+  },
+  // Tock, the runaway tin soldier: reaching back to wind his own key (it turns), marching on the
+  // spot, a stiff little salute.
+  tock(t) {
+    const b = bitAt(t, [['wind', 2.6], ['march', 2.4], ['salute', 1.4]], 2.2);
+    const key = (turn) => (ctx, x, y, time, dir) => {
+      ctx.save();
+      ctx.translate(x - dir * 10, y - 12);
+      ctx.rotate(dir * Math.PI / 2);
+      ctx.scale(1.2, 1.2);
+      ctx.rotate(turn);
+      ctx.fillStyle = '#d8a84a';
+      ctx.fillRect(-0.7, -1, 1.4, 4);
+      ctx.beginPath();
+      ctx.ellipse(-2.4, -1.4, 2, 1.4, 0, 0, TAU);
+      ctx.ellipse(2.4, -1.4, 2, 1.4, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+    };
+    if (!b) return { face: 'determined', extra: key(Math.sin(t * 0.5) * 0.2) };
+    const k = inOut(b.u);
+    if (b.kind === 'wind') return { face: 'determined', extra: key(b.s * 6), rig: { backArm: arm(-4 * k, -4 * k), tilt: -3 * k } };
+    if (b.kind === 'march') {
+      const step = Math.sin(b.s * 8);
+      return { pose: 'walk', progress: (b.s * 1.5) % 1, face: 'determined', extra: key(b.s * 2), rig: { frontArm: arm(step * 2 * k, 1), backArm: arm(-step * 2 * k, 1) } };
+    }
+    return { face: 'proud', extra: key(0), rig: { frontArm: arm(1.6 * k, -12 * k), tilt: -2 * k } };
+  },
+  // Professor Lumen: his spyglass to his eye, scribbling in his notebook, polishing his monocle.
+  lumen(t) {
+    const b = bitAt(t, [['spy', 3.6], ['note', 3], ['polish', 1.8]], 2.4);
+    if (!b) return { face: 'mmhm' };
+    const k = inOut(b.u);
+    if (b.kind === 'spy') return { facing: 1, face: 'mmhm', rig: { backArm: arm(4 * k, -12 * k), hy: h(-0.8 * k), tilt: -4 * k }, hands: (ctx, f, bk) => { ctx.save(); ctx.translate(bk[0], bk[1]); ctx.rotate(-0.5 * k); prop(ctx, 'spyglass', 0, 0, k); ctx.restore(); } };
+    if (b.kind === 'note') return { face: 'lookdown', rig: { frontArm: arm(2.4 * k, -2.6 * k), backArm: arm(2.6 * k, -2.4 * k), hy: h(0.8 * k), tilt: 3 * k }, hands: (ctx, f, bk) => prop(ctx, 'notebook', (f[0] + bk[0]) / 2, (f[1] + bk[1]) / 2 - 1, k, b.s) };
+    const rub = Math.sin(b.s * 10);
+    return { face: 'smile', rig: { frontArm: arm((2 + rub) * k, -9 * k) }, hands: (ctx, f) => prop(ctx, 'cloth', f[0], f[1], k) };
+  },
+  // Chef Praline: whisking a bowl hard, sneaking a taste off the whisk, a happy little twirl.
+  praline(t) {
+    const b = bitAt(t, [['whisk', 3.4], ['taste', 1.8], ['twirl', 1.4]], 2.2);
+    if (!b) return { face: 'excited' };
+    const k = inOut(b.u);
+    if (b.kind === 'whisk') {
+      const beat = Math.sin(b.s * 16);
+      return { face: 'determined', rig: { frontArm: arm((3 + beat * 0.8) * k, (-1 + beat * 0.6) * k), backArm: arm(3.4 * k, 0.6 * k), tilt: 3 * k }, hands: (ctx, f, bk) => prop(ctx, 'whisk', bk[0] + 1, bk[1], k, b.s) };
+    }
+    if (b.kind === 'taste') return { face: bump(b.u, 0.4, 0.7) > 0.3 ? 'love' : 'excited', rig: { frontArm: arm(1.4 * k, -7 * k), hy: h(-0.4 * k) } };
+    return { pose: 'cheer', progress: b.u, face: 'excited' };
+  },
+  // Madame Encore, the retired leading lady: fanning herself, a deep curtsy to an audience of no
+  // one, one arm flung up in her old final pose.
+  encore(t) {
+    const b = bitAt(t, [['fan', 3.4], ['curtsy', 2], ['pose', 1.8]], 2.6);
+    if (!b) return { face: 'ohoho' };
+    const k = inOut(b.u);
+    if (b.kind === 'fan') return { face: 'smug', rig: { frontArm: arm(1.4 * k, -7 * k), hy: h(-0.2 * k) }, hands: (ctx, f) => prop(ctx, 'fan', f[0], f[1] - 1, k, b.s) };
+    if (b.kind === 'curtsy') return { face: 'ohoho', rig: { frontArm: arm(3 * k, 3 * k), backArm: arm(3 * k, 3 * k), squat: Math.round(2 * k), tilt: 8 * k, hy: h(1.2 * k) } };
+    return { face: 'ohoho', rig: { frontArm: arm(2 * k, -14 * k), backArm: arm(-3 * k, 2 * k), tilt: -5 * k, hy: h(-0.6 * k) } };
+  },
+  // Skipper Nimbus: coiling a rope over his elbow, shading his eyes up at the sky, waving up at the
+  // whale.
+  nimbus(t) {
+    const b = bitAt(t, [['coil', 3.2], ['sky', 2.2], ['wave', 1.8]], 2.4);
+    if (!b) return { face: 'grin' };
+    const k = inOut(b.u);
+    if (b.kind === 'coil') {
+      const loop = Math.sin(b.s * 6);
+      return { face: 'smile', rig: { frontArm: arm((2 + loop * 2) * k, (-2 + loop) * k), backArm: arm(2.6 * k, -1 * k), tilt: 2 * k }, hands: (ctx, f, bk) => prop(ctx, 'rope', bk[0], bk[1], k, b.s) };
+    }
+    if (b.kind === 'sky') return { facing: -1, face: 'grin', rig: { frontArm: arm(1 * k, -11 * k), hy: h(-1 * k), tilt: -5 * k } };
+    const wave = Math.sin(b.s * 12);
+    return { facing: -1, face: 'grin', rig: { frontArm: arm((1 + wave * 2) * k, -14 * k), tilt: -3 * k } };
+  },
+  // Captain Bobbin of the Sea Biscuit: dozing on his feet (z's drifting up, head nodding), waking
+  // with a start, a long stretch.
+  bobbin(t) {
+    const b = bitAt(t, [['doze', 4.4], ['start', 0.8], ['stretch', 1.8]], 1.6);
+    if (!b) return { face: 'sleepy' };
+    const k = inOut(b.u);
+    if (b.kind === 'doze') {
+      const nod = Math.max(0, Math.sin(b.s * 1.6));
+      return { face: 'sleepy', rig: { hy: h(1.2 * nod * k), tilt: 4 * nod * k }, extra: (ctx, x, y, time) => zzz(ctx, x, y, time) };
+    }
+    if (b.kind === 'start') return { face: 'shock', lift: 3 * bump(b.u, 0, 0.6), rig: { frontArm: arm(-2, -6 * k), backArm: arm(-2, -6 * k) } };
+    return { face: 'sleepy', rig: { frontArm: arm(-1 * k, -13 * k), backArm: arm(1 * k, -13 * k), hy: h(-1 * k) } };
+  },
+  // Brine of the fish market: holding up a fat fish by the tail for you to admire, arms folded
+  // with a sniff.
+  brine(t) {
+    const b = bitAt(t, [['show', 3], ['fold', 2.6]], 2.4);
+    if (!b) return { face: 'hmph' };
+    const k = inOut(b.u);
+    if (b.kind === 'show') return { face: 'proud', rig: { frontArm: arm(2.4 * k, -10 * k), hy: h(-0.4 * k) }, hands: (ctx, f) => prop(ctx, 'fish', f[0], f[1], k, b.s) };
+    return { face: 'hmph', rig: { frontArm: arm(3.2 * k, -1 * k), backArm: arm(3.6 * k, -1.4 * k), tilt: -3 * k } };
+  },
+  // Nori of the Fishing Derby: shaking her pompoms, a jumping cheer, pointing out to the derby
+  // water.
+  nori(t) {
+    const b = bitAt(t, [['shake', 2.6], ['cheer', 1.4], ['point', 1.8]], 2);
+    if (!b) return { face: 'proud' };
+    const k = inOut(b.u);
+    const poms = (ctx, f, bk) => { prop(ctx, 'pompom', f[0], f[1], k, b ? b.s : t); prop(ctx, 'pompom', bk[0], bk[1], k, (b ? b.s : t) + 0.3); };
+    if (b.kind === 'shake') {
+      const s = Math.sin(b.s * 14);
+      return { face: 'excited', rig: { frontArm: arm(2 * k, (-8 + s * 2) * k), backArm: arm(2 * k, (-8 - s * 2) * k) }, hands: poms };
+    }
+    if (b.kind === 'cheer') return { pose: 'cheer', progress: b.u, face: 'excited', hands: poms };
+    return { facing: 1, face: 'proud', rig: { frontArm: arm(6 * k, -6 * k), tilt: -3 * k }, hands: poms };
+  },
+  // Coral of Twin Noodles: stirring the pot with her ladle, a slurp to taste, wiping her brow.
+  coral(t) {
+    const b = bitAt(t, [['stir', 3.4], ['taste', 1.6], ['wipe', 1.4]], 2.2);
+    if (!b) return { face: 'giggle' };
+    const k = inOut(b.u);
+    if (b.kind === 'stir') {
+      const a = b.s * 6;
+      return { face: 'determined', rig: { frontArm: arm((3 + Math.cos(a) * 1.2) * k, (1 + Math.sin(a) * 0.8) * k), tilt: 4 * k }, hands: (ctx, f) => prop(ctx, 'ladle', f[0], f[1], k, b.s) };
+    }
+    if (b.kind === 'taste') return { face: bump(b.u, 0.4, 0.7) > 0.3 ? 'love' : 'giggle', rig: { frontArm: arm(1.4 * k, -7 * k) }, hands: (ctx, f) => prop(ctx, 'ladle', f[0], f[1] - 2, k, b.s) };
+    return { face: 'smile', rig: { frontArm: arm(1 * k, -12 * k), hy: h(-0.3 * k) } };
+  },
+  // Granny Kelp, the lighthouse keeper: her rod out over the water, the float bobbing, a little
+  // tug and reel when something nibbles.
+  kelp(t) {
+    const b = bitAt(t, [['fish', 5], ['reel', 1.6]], 1.6);
+    const rod = (k, s) => (ctx, f) => prop(ctx, 'rod', f[0], f[1], k, s);
+    if (!b) return { face: 'smug', facing: 1, rig: { frontArm: arm(3, -3) }, hands: rod(1, t) };
+    if (b.kind === 'fish') return { facing: 1, face: 'smug', rig: { frontArm: arm(3, -3), hy: h(0.3 * Math.sin(b.s)) }, hands: rod(1, b.s) };
+    const tug = Math.sin(b.s * 14) * (1 - b.u);
+    return { facing: 1, face: 'excited', rig: { frontArm: arm(3 + tug, -5 - tug * 2), backArm: arm(3, -3), tilt: -3 * inOut(b.u) }, hands: rod(1, b.s * 4) };
+  },
+
   // Malvina Grimsworth: scheming over a plan, a burst of "ohohoho!", pointing at nobody in
   // particular, a swirl of her cape for no audience at all (render/villain-moves.js).
   malvina(t) {
