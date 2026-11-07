@@ -317,6 +317,14 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celmdrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.6 }) || true;
     case 'mdrxkaboom':
       return f.t < 0 || fxSprite(ctx, 'celmdrxkaboom', x, y + 4, { p, scale: f.small ? 0.45 : 0.7 }) || true;
+    // The Spell Juggler's: a spout of mist, a star of crystal shards, a firework burst (each sized to
+    // the monster, clear of her).
+    case 'jgrxsteam':
+      return fxSprite(ctx, 'celjgrxsteam', x, y + 4, { p, scale: 0.62 }) || true;
+    case 'jgrxshatter':
+      return fxSprite(ctx, 'celjgrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.55 }) || true;
+    case 'jgrxkaboom':
+      return f.t < 0 || fxSprite(ctx, 'celjgrxkaboom', x, y - (f.h ?? 40) * 0.6, { p, scale: f.small ? 0.42 : 0.6 }) || true;
     case 'rxsteam':
       return fxSprite(ctx, 'celrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 88 }) || true;
     case 'rxshatter':

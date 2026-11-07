@@ -5,6 +5,7 @@ import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
 import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
+import { drawOrbs } from './juggler.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
@@ -450,6 +451,7 @@ export function drawWorld(ctx, world, viewCam, time) {
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
+    drawOrbs(ctx, world, hx, ay, time, 'back');
     // On a date: your sweetheart beside you, walking (or on a Puff Bun on a ride) (world/dates.js).
     if (world.date) drawDateBuddy(ctx, world, cam, time);
     // Riding: the mount with the hero in its seat (render/mounts.js). On a rope the gecko clings
@@ -469,6 +471,7 @@ export function drawWorld(ctx, world, viewCam, time) {
     // A low plant she's kneeling at, in front of her hands.
     drawNodesFront(ctx, world, cam, time);
     drawFoxWheel(ctx, world, hx, hy, time, 'front');
+    drawOrbs(ctx, world, hx, ay, time, 'front');
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     // The rod and line while you fish (and the Fish / Cook hints).
     drawFishing(ctx, world, cam, time, hx, hy);

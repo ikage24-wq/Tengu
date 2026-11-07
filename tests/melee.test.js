@@ -2285,20 +2285,56 @@ function starWitch(weapon = 'wand_20') {
 // (Her paths' tests start from her too.)
 const shrineMage = starWitch;
 
-test('her staff calls lightning straight down from the sky onto them', () => {
-  const w = starWitch('staff_20');
-  w.combo = 1;
-  w.comboUntil = w.now + 9;
-  w.comboPlan = [0, 0, 0];
+// The Spell Juggler (world/juggle.js): orbs gather round her in a fight, her attacks fling the
+// oldest, a miss comes home into her hands, and with none left she snaps a palm spark.
+test('in a fight her orbs gather (fire, ice, spark in turn) up to five', async () => {
+  const { ORB_MAX } = await import('../src/world/juggle.js');
+  const w = starWitch();
+  run(w, 5);
+  assert.equal(w.juggle.orbs.length, ORB_MAX);
+  assert.deepEqual(w.juggle.orbs.slice(0, 3).map((o) => o.el).sort(), ['bolt', 'fire', 'ice']);
+});
+test('her attack flings the oldest orb as its own element', () => {
+  const w = starWitch();
+  run(w, 3);
+  const first = w.juggle.orbs[0].el;
+  const n = w.juggle.orbs.length;
   updateWorld(w, DT, press('KeyZ'));
-  assert.equal(w.pose.kind, 'psrod');
-  let fromSky = false;
-  for (let i = 0; i < 60; i++) {
+  let flew = false;
+  for (let i = 0; i < 24; i++) {
     updateWorld(w, DT, idle);
-    fromSky ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'pmstrike' && f.y < w.body.y - 120 && Math.abs(f.x - f.tx) < 1);
+    flew ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === `jg${first}`);
   }
-  assert.ok(fromSky, 'it falls straight down from high above');
+  assert.ok(flew, `a ${first} orb flies`);
+  assert.ok(w.juggle.orbs.length <= n, 'it left her orbit');
+  run(w, 0.4);
   assert.ok(w.mobs.some((m) => m.hp < 1e9), 'and lands');
+});
+test('an orb that finds nothing flies out and back, and she catches it', () => {
+  const w = starWitch();
+  run(w, 3);
+  w.mobs = [];
+  w.juggle.orbs = [{ el: 'ice', born: 0 }];
+  w.juggle.next = 1e9;
+  updateWorld(w, DT, press('KeyZ'));
+  run(w, 0.25);
+  assert.equal(w.juggle.orbs.length, 0, 'out of her hands');
+  assert.equal(w.juggle.back.length, 1, 'on its way back');
+  run(w, 1.2);
+  assert.deepEqual(w.juggle.orbs.map((o) => o.el), ['ice'], 'caught');
+});
+test('with no orbs in hand she snaps a weak palm spark', () => {
+  const w = starWitch();
+  run(w, 0.1);
+  w.juggle.orbs = [];
+  w.juggle.next = 1e9;
+  updateWorld(w, DT, press('KeyZ'));
+  let palm = false;
+  for (let i = 0; i < 24; i++) {
+    updateWorld(w, DT, idle);
+    palm ||= w.fx.some((f) => f.kind === 'projectile' && f.shot === 'jgpalm');
+  }
+  assert.ok(palm);
 });
 
 // The Mage's element reactions (world/reactions.js): a monster keeps her last element; a different

@@ -103,7 +103,8 @@ function queue(world, m, damage, at, extra = {}) {
 
 export function react(world, m, kind, h) {
   const now = world.now;
-  const own = isMedic(world) ? 'md' : '';
+  // (The Spell Juggler's reactions are her orbs colliding: render/warrior-fx.js `jgrx*`.)
+  const own = isMedic(world) ? 'md' : world.char.job === 'spiritmage' ? 'jg' : '';
   const fx = (f) => { if (world.fx.filter((o) => o.kind.startsWith('rx')).length < MAX_RX_FX) world.fx.push(f); };
   const base = h.damage;
   const y = m.y - (m.air ?? 0);

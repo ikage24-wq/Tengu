@@ -6236,6 +6236,258 @@
   E.pmhitice = pmHit('ice');
   E.pmhitbolt = pmHit('bolt');
 
+  // ---------- The Spell Juggler (the base Mage, remade 2026-11-07; docs/design/mage-line.md) ----------
+  // Her shapes: glossy spell orbs, each wearing a little ring that spins round it like a toy planet,
+  // juggled round her and flung with long comet tails that curl. Fire is a molten marble with a
+  // flame crown, ice a faceted crystal ball in a frost ring, spark a crackling glass ball with a
+  // filament inside. Her hits burst the orb like a bubble: a ring of its colour, orb shards and
+  // sparkles. Her palm spark (empty hands) is a little pink star pop.
+  const JGPAL = { fire: MFIRE, ice: MICE, bolt: MBOLT };
+  // One orb at (x, y) of radius r, frame i of n: the ball itself and its tilted spinning ring.
+  function jgOrb(ctx, kind, x, y, r, i, n) {
+    const pal = JGPAL[kind];
+    const ph = (i / n) * TAU;
+    const ring = (front) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(-0.45);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 1.55, r * 0.42, 0, front ? 0 : Math.PI, front ? Math.PI : TAU);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = pal[4];
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.strokeStyle = pal[2];
+      ctx.lineWidth = 2.6;
+      ctx.stroke();
+      // A bead running round the ring.
+      const a = ph + (front ? 0 : Math.PI);
+      const bx = Math.cos(a) * r * 1.55;
+      const by = Math.sin(a) * r * 0.42;
+      if ((Math.sin(a) > 0) === front) {
+        ctx.beginPath();
+        ctx.arc(bx, by, 3.2, 0, TAU);
+        ctx.fillStyle = pal[1];
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+    ring(false);
+    if (kind === 'fire') {
+      // A molten marble with a little flame crown licking off the top.
+      for (let k = 0; k < 3; k++) {
+        ctx.save();
+        ctx.translate(x + (k - 1) * r * 0.4, y - r * 0.6);
+        tongue(ctx, MFIRE, 0, 0, r * 0.42, r * (0.9 + 0.3 * Math.sin(ph + k * 2)), r * 0.2 * Math.sin(ph * 2 + k));
+        ctx.restore();
+      }
+      blob(ctx, MFIRE, x, y, r, 0.04, ph);
+      ctx.beginPath();
+      ctx.arc(x + r * 0.1, y + r * 0.15, r * 0.32, 0, TAU);
+      ctx.fillStyle = 'rgba(255,255,230,0.7)';
+      ctx.fill();
+    } else if (kind === 'ice') {
+      // A faceted crystal ball: six facets in three tones, and a sharp highlight.
+      const pts = Array.from({ length: 8 }, (_, k) => [x + Math.cos((k / 8) * TAU + ph * 0.2) * r, y + Math.sin((k / 8) * TAU + ph * 0.2) * r]);
+      inked(ctx, pts, MICE[3], MICE[4], 4);
+      for (let k = 0; k < 8; k += 2) fill(ctx, [[x, y], pts[k], pts[(k + 1) % 8]], k % 4 ? MICE[2] : MICE[1]);
+      fill(ctx, [[x - r * 0.1, y - r * 0.1], pts[5], pts[6]], MICE[0]);
+      sparkle(ctx, MICE, x - r * 0.35, y - r * 0.4, r * 0.35, ph);
+    } else {
+      // A glass ball with lightning crawling inside it.
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, TAU);
+      ctx.fillStyle = MBOLT[4];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, r - 2.2, 0, TAU);
+      ctx.fillStyle = '#5a3a6a';
+      ctx.fill();
+      for (let k = 0; k < 3; k++) {
+        const a = ph + (k / 3) * TAU;
+        zap(ctx, MBOLT, x, y, x + Math.cos(a) * r * 0.85, y + Math.sin(a) * r * 0.85, 3, 950 + i * 3 + k, 0);
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, r * 0.28, 0, TAU);
+      ctx.fillStyle = MBOLT[1];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(x - r * 0.38, y - r * 0.42, r * 0.26, r * 0.14, -0.6, 0, TAU);
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fill();
+    }
+    ring(true);
+  }
+  // The orbit orbs (small, looping): what circles her.
+  const jgOrbit = (kind) => {
+    const c = 40;
+    return {
+      w: 80, h: 80, n: 6, fps: 10, px: c, py: c, loop: true,
+      draw(ctx, i) { jgOrb(ctx, kind, c, c, 15, i, 6); },
+    };
+  };
+  E.jgorbfire = jgOrbit('fire');
+  E.jgorbice = jgOrbit('ice');
+  E.jgorbbolt = jgOrbit('bolt');
+  // A flung orb (loops toward +x): the orb out front and a comet tail curling behind it in its own
+  // colour, beads shed off the tail.
+  const jgFlung = (kind, big) => grown((() => {
+    const cx = 150;
+    const cy = 60;
+    const r = big ? 21 : 16;
+    const pal = JGPAL[kind];
+    return {
+      w: 190, h: 120, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        const len = big ? 140 : 110;
+        // The tail: a ribbon tapering from the orb back, waving gently; a second thinner one twined.
+        ribbon(ctx, pal, (u) => [cx - u * len, cy + Math.sin(u * 5 - ph) * 7 * u], (u) => r * 0.9 * (1 - u) ** 1.3, { n: 30 });
+        if (big) ribbon(ctx, pal, (u) => [cx - u * len * 0.8, cy + Math.sin(u * 5 - ph + 2.4) * 12 * u], (u) => r * 0.45 * (1 - u) ** 1.2, { n: 24 });
+        const R = rng(960 + i);
+        for (let k = 0; k < (big ? 6 : 4); k++) sparkle(ctx, pal, cx - 30 - R() * (len - 30), cy + (R() - 0.5) * 34, 3 + R() * 3, k + i);
+        jgOrb(ctx, kind, cx, cy, r, i, 6);
+      },
+    };
+  })(), big ? 2.6 : 2);
+  E.jgfire = jgFlung('fire', false);
+  E.jgice = jgFlung('ice', false);
+  E.jgbolt = jgFlung('bolt', false);
+  E.jgbigfire = jgFlung('fire', true);
+  E.jgbigice = jgFlung('ice', true);
+  E.jgbigbolt = jgFlung('bolt', true);
+  // Her palm spark (no orb in hand; loops toward +x): a little pink star with a short spray.
+  E.jgpalm = grown((() => {
+    const cx = 70;
+    const cy = 40;
+    const PINK = ['#ffffff', '#ffe0f0', '#ff9ac8', '#e05a9a', '#7a2a5a'];
+    return {
+      w: 100, h: 80, n: 4, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        starburst(ctx, PINK, cx, cy, 11 + (i % 2) * 2, 5, 970 + i, { inner: 0.45, rot: i * 0.5 });
+        const R = rng(971 + i);
+        for (let k = 0; k < 3; k++) sparkle(ctx, PINK, cx - 16 - R() * 34, cy + (R() - 0.5) * 22, 2.4 + R() * 2, k);
+      },
+    };
+  })(), 1.8);
+  // Her hit: the orb bursts like a bubble: a ring of its colour flies out, the orb's shards scatter
+  // (flame licks, ice facets, little bolts) and sparkles follow.
+  const jgHit = (kind) => grown((() => {
+    const c = 100;
+    const pal = JGPAL[kind];
+    return {
+      w: 200, h: 200, n: 6, fps: 30, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 1) jgOrb(ctx, kind, c, c, 16 + i * 6, i, 6);
+        if (i >= 1) celRing(ctx, pal, c, c, 18 + i * 13, Math.max(2, 9 - i * 1.4), { broken: i / 6, seed: 975 + i });
+        for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + 0.4;
+          const d = 12 + i * 13;
+          const x = c + Math.cos(a) * d;
+          const y = c + Math.sin(a) * d;
+          if (i < 1 || i > 4) continue;
+          if (kind === 'fire') blob(ctx, MFIRE, x, y, 7 - i, 0.1, j);
+          else if (kind === 'ice') iceShard(ctx, x, y, a, 18 - i * 2, 5 - i * 0.6);
+          else zap(ctx, MBOLT, x - Math.cos(a) * 8, y - Math.sin(a) * 8, x + Math.cos(a) * 8, y + Math.sin(a) * 8, 3, 980 + j + i * 6, 0);
+        }
+        const R = rng(990 + i);
+        for (let j = 0; j < 5; j++) { const a = R() * TAU; const d = 26 + i * 12; sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 7 - i, j); }
+      },
+    };
+  })(), 1.4);
+  E.jghitfire = jgHit('fire');
+  E.jghitice = jgHit('ice');
+  E.jghitbolt = jgHit('bolt');
+
+  // The Spell Juggler's reactions (world/reactions.js): two of her orbs colliding on a monster.
+  // Steam: the fire and ice orbs smash and a spout of hot mist shoots up in rings (tall and narrow,
+  // off to the monster, never a blanket over the floor). Shatter: the ice orb cracks into a star of
+  // crystal shards, lightning crawling the cracks. Kaboom: a juggler's finale, a firework that
+  // bursts into a chrysanthemum of sparks.
+  E.jgrxsteam = (() => {
+    const cx = 80;
+    const cy = 200;
+    const MIST = ['#ffffff', '#f4fbff', '#d8eef8', '#9ac4dc', '#4a6a8a'];
+    return {
+      w: 160, h: 220, n: 8, fps: 18, px: cx, py: cy,
+      draw(ctx, i) {
+        const u = i / 7;
+        if (i <= 1) { jgOrb(ctx, 'fire', cx - 14 + i * 8, cy - 40, 12, i, 6); jgOrb(ctx, 'ice', cx + 14 - i * 8, cy - 40, 12, i, 6); }
+        for (let k = 0; k < 4; k++) {
+          const ry = cy - 30 - (k * 30 + u * 70);
+          const rr = 14 + k * 7 + u * 8;
+          if (k > i) continue;
+          ctx.globalAlpha = Math.max(0, 1 - u * 0.9 - k * 0.12);
+          puff(ctx, MIST, cx + Math.sin(k * 2 + u * 3) * 6, ry, rr, 1000 + k, { lobes: 5 });
+          ctx.globalAlpha = 1;
+        }
+        if (i >= 1 && i <= 4) celRing(ctx, MFIRE, cx, cy - 30, 16 + i * 10, 5 - i, { broken: 0.4, seed: 1010 + i });
+        const R = rng(1020 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MICE, cx + (R() - 0.5) * 70, cy - 40 - R() * 120 * u, 4 + R() * 3, k);
+      },
+    };
+  })();
+  E.jgrxshatter = (() => {
+    const c = 100;
+    return {
+      w: 200, h: 200, n: 6, fps: 22, px: c, py: c,
+      draw(ctx, i) {
+        if (i === 0) jgOrb(ctx, 'ice', c, c, 20, 0, 6);
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * TAU + 0.2;
+          const d = i ? 10 + i * 14 : 0;
+          if (i) iceShard(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, a, 30 - i * 3, 9 - i);
+        }
+        if (i >= 1 && i <= 3) for (let k = 0; k < 4; k++) { const a = (k / 4) * TAU + i; zap(ctx, MBOLT, c, c, c + Math.cos(a) * (30 + i * 12), c + Math.sin(a) * (30 + i * 12), 3, 1030 + k + i * 4, 0); }
+        if (i <= 2) starburst(ctx, MICE, c, c, 24 + i * 12, 8, 1040, { inner: 0.3, rot: i * 0.2 });
+      },
+    };
+  })();
+  E.jgrxkaboom = (() => {
+    const c = 110;
+    const GOLDF = ['#ffffff', '#fff6c8', '#ffcf4a', '#ff7a2a', '#8a2a3a'];
+    return {
+      w: 220, h: 220, n: 7, fps: 18, px: c, py: c + 40,
+      draw(ctx, i) {
+        const u = i / 6;
+        if (i === 0) { jgOrb(ctx, 'fire', c - 8, c + 6, 13, 0, 6); jgOrb(ctx, 'bolt', c + 8, c - 6, 13, 0, 6); return; }
+        // A chrysanthemum: rays of sparks with a star at each tip, drooping as they fade.
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * TAU;
+          const d = 20 + u * 70;
+          const x = c + Math.cos(a) * d;
+          const y = c + Math.sin(a) * d + u * u * 16;
+          ctx.globalAlpha = Math.max(0, 1.1 - u);
+          ctx.strokeStyle = k % 2 ? GOLDF[2] : MBOLT[2];
+          ctx.lineWidth = 3.4 - u * 2;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(c + Math.cos(a) * d * 0.55, c + Math.sin(a) * d * 0.55 + u * u * 8);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          sparkle(ctx, k % 2 ? GOLDF : MBOLT, x, y, 6 - u * 3, k);
+          ctx.globalAlpha = 1;
+        }
+        if (i <= 2) starburst(ctx, GOLDF, c, c, 22 + i * 12, 10, 1050, { inner: 0.4, rot: i * 0.3 });
+      },
+    };
+  })();
+  // The catch: a twinkle as an orb drops back into her orbit.
+  E.jgcatch = (() => {
+    const c = 40;
+    const GOLDS = ['#ffffff', '#fff6d0', '#ffd36b', '#e0a03a', '#7a4a2a'];
+    return {
+      w: 80, h: 80, n: 5, fps: 18, px: c, py: c,
+      draw(ctx, i) {
+        for (let k = 0; k < 5; k++) {
+          const a = (k / 5) * TAU + i * 0.4;
+          const d = 8 + i * 5;
+          sparkle(ctx, GOLDS, c + Math.cos(a) * d, c + Math.sin(a) * d, 5 - i * 0.7, k);
+        }
+      },
+    };
+  })();
+
   // ---------- The Mage's skills (the remake) ----------
   // Overcooked Fireball's grinning fireball, far too big; Live Wire's crackling twin bolt; Blink
   // Bang's firecracker pop; Frost Flop's ring of ice bursting up both ways along the floor;

@@ -174,6 +174,16 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
+    case 'jgfire': case 'jgice': case 'jgbolt': case 'jgbigfire': case 'jgbigice': case 'jgbigbolt': case 'jgpalm': {
+      // The Spell Juggler's flung orbs (their comet tails streaming behind; born small at her hand,
+      // grown to full in a moment), and her little palm spark. On the way home an orb is smaller.
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const born = bornAt(f);
+      const size = (f.shot === 'jgpalm' ? 0.5 : f.shot.startsWith('jgbig') ? 0.62 : 0.55) * (f.home ? 0.8 : 1);
+      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'pmspark': case 'pmshard': case 'pmzap': case 'pmbomb': case 'pmspike': case 'pmstrike': case 'pmhuge': case 'pmwire': {
       // The Mage's (the remake): a firecracker spark, a spiky snowball, a crackling zap ball, a
       // grinning fireball that bounces along and rocks as it flies, ice spikes punching up along the

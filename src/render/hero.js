@@ -2586,17 +2586,13 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   if (pk < 0.2 && Math.abs(tilt) > 0.01) {
     const cut = pivot + WAIST_OVERLAP * scale;
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(x - span, cut - 2 * WAIST_OVERLAP * scale, span * 2, H * scale);
-    ctx.clip();
+    legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, false);
     whole(ctx, 0);
     blit(ctx, body, left, top, { flip, scale });
     ctx.restore();
     ctx.save();
+    legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, true);
     whole(ctx, tilt);
-    ctx.beginPath();
-    ctx.rect(x - span, pivot - H * scale * 2, span * 2, H * scale * 2 + WAIST_OVERLAP * scale);
-    ctx.clip();
     blit(ctx, body, left, top, { flip, scale });
     ctx.restore();
   } else {
@@ -2840,6 +2836,19 @@ export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 
 const GROUND_PIVOT = 0.135;
 // How far (game pixels) the leaning upper body and the upright legs overlap at the waist.
 const WAIST_OVERLAP = 1.5;
+// The planted figure leaning (drawMoved): only the lower legs stand upright, inside a narrow band
+// round the feet below the knee (`LEG_BAND` game pixels either side); everything else (the hair,
+// the cape, a weapon held low) is drawn whole from the leaning figure, so long hair or a staff
+// reaching below the knee is never cut across. The band is set in screen space, before the lean.
+const LEG_BAND = 9;
+function legBand(ctx, x, cut, y, scale, outside) {
+  const hw = LEG_BAND * scale;
+  const big = W * scale * 3;
+  ctx.beginPath();
+  if (outside) ctx.rect(x - big, y - big * 3, big * 2, big * 4);
+  ctx.rect(x - hw, cut - 2 * WAIST_OVERLAP * scale, hw * 2, y - cut + 4 * scale + 2 * WAIST_OVERLAP * scale);
+  ctx.clip(outside ? 'evenodd' : 'nonzero');
+}
 function leanOf(mv) {
   const air = Math.min(1, Math.abs(mv.lift) / 6);
   const tilt = Math.max(-0.5, Math.min(0.5, mv.tilt)) * (1 - air) + mv.tilt * air;
@@ -2869,20 +2878,15 @@ function drawMoved(ctx, look, gear, x, y, state, anim, mv, moved) {
   // waist so no gap opens. In the air the whole figure turns as one.
   if (pk < 0.2 && Math.abs(tilt) > 0.01 && Math.abs(tilt) < 0.6 && mv.turn > 0) {
     const cut = pivot + WAIST_OVERLAP * scale;
-    const span = W * scale * 2;
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(x - span, cut - 2 * WAIST_OVERLAP * scale, span * 2, H * scale);
-    ctx.clip();
+    legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, false);
     whole(ctx, 0);
     paintHero(ctx, look, gear, x, y, state, anim, moved);
     ctx.restore();
     ctx.save();
+    // Everything else, the leaning figure: whole hair, cape and weapon, never sliced at the knee.
+    legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, true);
     whole(ctx, tilt);
-    // The upper part, clipped in the leaning frame just under the hips.
-    ctx.beginPath();
-    ctx.rect(x - span, pivot - H * scale * 2, span * 2, H * scale * 2 + WAIST_OVERLAP * scale);
-    ctx.clip();
     paintHero(ctx, look, gear, x, y, state, anim, moved);
     ctx.restore();
     return;
@@ -3047,8 +3051,14 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // it on the floor's surface (a lift in the air raises the floor's line with her).
   if (wpn && !toolKind && g.weapon && rig.view !== 'back') weaponAngle = aboveFloor(weaponAngle, [squashX(hand[0]), squashY(hand[1])], wpn, HILT[g.weapon.type] ?? 0, mv);
   const upright = Math.abs(((((weaponAngle % 360) + 540) % 360) - 180)) < 40;
-  const bowUp = !toolKind && g.weapon?.type === 'bow' && mv && mv.front == null && (drawn || mv.snap > 0) && upright;
-  const behind = bowUp || weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind);
+  // (Canted forward at arm's length, its top limb leans away from her face, so it stays in front.)
+  // (Aimed up, tipped well back, its top limb reaches back over her hair, not her face: in front too.)
+  const bowA = (((weaponAngle % 360) + 540) % 360) - 180;
+  const canted = bowA > -4 || bowA < -30;
+  const bowUp = !toolKind && g.weapon?.type === 'bow' && mv && mv.front == null && (drawn || mv.snap > 0) && upright && !canted;
+  // (A bow being drawn or ringing stays where bowUp puts it: in front unless held straight upright.)
+  const bowLive = !toolKind && g.weapon?.type === 'bow' && mv && mv.front == null && ((mv.pull ?? 0) > 0.05 || mv.nock || (mv.snap ?? 0) > 0 || (mv.twang ?? 0) > 0);
+  const behind = bowUp || (!bowLive && weaponBehind(g.weapon?.type, weaponAngle, mv, toolKind));
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
@@ -3215,7 +3225,20 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (mv && !mv.fanBack) drawFan();
     return handsAt();
   }
-  if (!behind) drawWeapon();
+  if (!behind && bowLive) {
+    // A drawn bow is in front of her, all but where it would cross her face: there it passes
+    // behind her head (a clip that leaves out the oval of her face), so the whole bow reads and
+    // her eyes and mouth never hide behind a limb.
+    const fx = sx(15.5 + squashX(15.5 + rig.tx) - 15.5 + rig.hx + 1.5);
+    const fy = sy(17 + bodyY * KY + rig.hy);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(fx - W * scale * 3, fy - H * scale * 3, W * scale * 6, H * scale * 6);
+    ctx.ellipse(fx, fy, 8.5 * scale, 7 * scale, 0, 0, Math.PI * 2);
+    ctx.clip('evenodd');
+    drawWeapon();
+    ctx.restore();
+  } else if (!behind) drawWeapon();
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
   drawArm();

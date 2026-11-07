@@ -81,6 +81,8 @@ const SAUTE = [[1.6, -2.6, 14], [-2.6, -4.6, -58]];
 const KICKLINE = [[3.2, -7, 46], [-1.2, -1.4, -12]];
 const CABRIOLE = [[1.4, -7, 30], [-0.4, -7.4, 30]];
 // The dancers' turns (Wind, Blade and Sky Dancer): a clean mirror flip at each half turn.
+// A spin as a mirror flip (never a squash): she faces away for the back half of each turn.
+const spinFlip = (u) => (Math.cos(u * Math.PI * 2) >= 0 ? 1 : -1);
 const dancerTurn = (a) => Math.sign(Math.cos(a * Math.PI * 2) || 1) * Math.max(0.35, Math.abs(Math.cos(a * Math.PI * 2)));
 // A dancer's working leg held long at `deg` from straight down at the hip (90 straight forward, 180
 // straight up, negative behind her), as a foot offset for danceLegs; `len` is hip to ankle.
@@ -4919,6 +4921,421 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Spell Juggler (the base Mage, remade 2026-11-07; docs/design/mage-line.md) ----------
+  // Her spells are orbs circling her (world/juggle.js); every attack flings one, so her moves are a
+  // juggler's and a street performer's: quick tosses, sidearm whips, behind-the-back flicks, a heel
+  // kick, a hop-and-spin release; with the staff she bats, volleys and smashes them like a ball.
+  // Spins turn her with mirror flips only (spinFlip), and her free hand stays below her jaw.
+
+  // Overhand toss (wand opener, at ~0.3): a little hop back as the arm cocks behind her, then she
+  // steps in and tosses it overhand; the hand follows through low and she bounces on her toes.
+  jgtoss(p) {
+    const cock = soft(seg(p, 0, 0.2));
+    const go = ease(seg(p, 0.2, 0.3));
+    const after = soft(seg(p, 0.36, 0.8));
+    return {
+      weapon: lerp(lerp(110, 220, cock), 70, go) + 30 * after, arm: lerp(lerp(60, -10, cock), 98, go) - 50 * after,
+      back: (cock > 0.5 && go < 0.3) || undefined,
+      lunge: -2 * cock * (1 - go) + 6 * go * (1 - after * 0.5), tilt: -0.08 * cock * (1 - go) + 0.12 * go * (1 - after),
+      lift: 2 * cock * (1 - go) + swBob(p, 0.6), trail: go > 0 && go < 1,
+      face: p < 0.2 ? PM_FACE.aim : p < 0.4 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(4, -4, go) + 2 * after), q(lerp(-4, -2, go))]);
+        r.hairLift = go > 0.4 && after < 0.4 ? 1 : 0;
+        danceLegs(r, [cock * (1 - go), [0.6, 0, 2], [-2.4, 0, -8]], [go * (1 - after), [4, 0, 8], [-3.6, -0.6, -18]], [after, [1.6, 0, 4], [-1.8, 0, -6]]);
+      },
+    };
+  },
+  // Sidearm whip (second, at ~0.38): she drops low and winds the arm round behind her hip, then
+  // whips it flat across in front like skipping a stone, stepping right into it.
+  jgwhip(p) {
+    const wind = soft(seg(p, 0, 0.26));
+    const go = ease(seg(p, 0.26, 0.38));
+    const after = soft(seg(p, 0.44, 0.86));
+    return {
+      weapon: lerp(lerp(100, 200, wind), 60, go) + 20 * after, arm: lerp(lerp(50, 20, wind), 84, go) - 30 * after,
+      lunge: -3 * wind * (1 - go) + 9 * go * (1 - after * 0.4), tilt: 0.16 * wind * (1 - go) + 0.1 * go * (1 - after),
+      lift: swBob(p, 0.66) * 0.7, trail: go > 0 && go < 1,
+      face: p < 0.26 ? PM_FACE.aim : p < 0.5 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(2.4 * wind * (1 - go) + 1.2 * go * (1 - after));
+        r.backArm = dancerHand([q(lerp(-6, 6, go) - 2 * after), q(lerp(2, -3, go))]);
+        r.cape -= q(4 * go * (1 - after));
+        danceLegs(r, [wind * (1 - go), [3, 0, 6], [-3.4, 0, -10]], [go * (1 - after), [5.4, 0, 10], [-4.6, -0.4, -22]], [after, [2, 0, 4], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Hop-and-spin release (wand finisher, orbs at ~0.3 and ~0.52): a hop into a full spin, the first
+  // orb slung out as she comes round, landing into a deep lunge for the second, heaved hard.
+  jgspin(p) {
+    const spin = seg(p, 0.06, 0.34);
+    const air = bump(p, 0.04, 0.4);
+    const heave = ease(seg(p, 0.42, 0.52));
+    const after = soft(seg(p, 0.58, 0.95));
+    const turning = p > 0.06 && p < 0.34;
+    return {
+      weapon: turning ? 90 : lerp(220, 64, heave) + 26 * after, arm: turning ? 92 : lerp(-6, 100, heave) - 44 * after,
+      back: (!turning && heave < 0.3 && p > 0.34) || undefined,
+      turn: turning ? spinFlip(spin) : 1,
+      lift: 9 * air + 1.5 * heave * (1 - after) + ballon(p, 0.62), lunge: 3 * air + 10 * heave * (1 - after * 0.5), tilt: 0.1 * heave * (1 - after) - 0.06 * air,
+      trail: turning || (heave > 0 && heave < 1),
+      face: p < 0.34 ? PM_FACE.whoop : p < 0.6 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.air = air > 0.4;
+        r.hairLift = turning ? -1 : heave > 0.3 && after < 0.4 ? 1 : 0;
+        r.cape -= q(5 * air);
+        r.backArm = dancerHand(turning ? [-9, -6] : [q(lerp(-6, 5, heave) - 3 * after), q(lerp(-6, -2, heave))]);
+        r.squat = q(2 * heave * (1 - after));
+        danceLegs(r, [turning ? 1 : 0, [1.4, -6, 30], [-1, -3, -30]], [heave * (1 - after), [5.6, 0, 12], [-5, -0.6, -26]], [after, [2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Behind-the-back flick (pool, at ~0.34): a smug look away as the arm swings round behind her and
+  // flicks it out past her hip without looking.
+  jgback(p) {
+    const swing = soft(seg(p, 0, 0.26));
+    const flick = ease(seg(p, 0.26, 0.34));
+    const after = soft(seg(p, 0.42, 0.85));
+    return {
+      weapon: lerp(lerp(120, 250, swing), 300, flick) - 60 * after, arm: lerp(lerp(50, -30, swing), -50, flick) + 70 * after,
+      back: (swing > 0.3 && after < 0.6) || undefined,
+      lunge: -2 * swing * (1 - after), tilt: -0.1 * swing * (1 - after), lift: swBob(p, 0.6) * 0.6,
+      face: p < 0.42 ? PM_FACE.snooty : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(6 - 2 * after), q(-3)]);
+        r.hairLift = flick > 0.3 && after < 0.4 ? -1 : 0;
+        danceLegs(r, [swing * (1 - after), [2, 0, 4], [-1.2, -1.6, -16]], [after, [1.4, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Heel kick (pool, at ~0.36): she drops the orb, hops, and kicks it on with her heel like a
+  // footballer's back-heel trick, arms flung out for balance.
+  jgkick(p) {
+    const hop = bump(p, 0.1, 0.5);
+    const kick = ease(seg(p, 0.26, 0.36));
+    const after = soft(seg(p, 0.46, 0.88));
+    return {
+      weapon: lerp(110, 140, hop) - 20 * after, arm: lerp(40, 70, hop) - 20 * after,
+      lift: 5 * hop + swBob(p, 0.7) * 0.5, lunge: 2 * kick * (1 - after), tilt: -0.12 * kick * (1 - after),
+      face: p < 0.26 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.air = hop > 0.45;
+        r.backArm = dancerHand([q(-8 * hop), q(-6 * hop)]);
+        r.hairLift = hop > 0.5 ? -1 : 0;
+        danceLegs(r, [hop * (1 - kick), [1.6, -3, 20], [-1.4, -2, -20]], [kick * (1 - after), dancerLeg(70, 14.6, 30), [-1.2, -1, -8]], [after, [1.2, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Flurry (pool, orbs at ~0.3 and ~0.5): two fast throws, one from each hand in turn, her shoulders
+  // rocking with each.
+  jgflurry(p) {
+    const t1 = bump(p, 0.16, 0.38);
+    const t2 = bump(p, 0.38, 0.6);
+    const after = soft(seg(p, 0.62, 0.92));
+    return {
+      weapon: 100 - 30 * t1 + 40 * t2 + 10 * after, arm: 70 + 26 * t1 - 30 * t2 - 20 * after,
+      lunge: 4 * t1 + 5 * t2, tilt: 0.08 * t1 - 0.04 * t2, lift: swBob(p, 0.66) * 0.6, trail: t1 > 0.5 || t2 > 0.5,
+      face: p < 0.62 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = dancerHand([q(-4 + 10 * t2 - 4 * t1), q(-3 - 2 * t2)]);
+        danceLegs(r, [t1, [3, 0, 6], [-2.6, 0, -10]], [t2, [2, 0, 4], [-3.6, -0.4, -16]], [after, [1.4, 0, 2], [-1.6, 0, -4]]);
+      },
+    };
+  },
+  // Up + attack: she pops an orb straight up like a juggler starting a cascade, up on her toes.
+  jgup(p) {
+    const go = ease(seg(p, 0.16, 0.3));
+    const after = soft(seg(p, 0.4, 0.9));
+    return {
+      weapon: lerp(120, 96, go) + 20 * after, arm: lerp(40, 104, go) - 50 * after,
+      lift: 4 * bump(p, 0.14, 0.5) + swBob(p, 0.6) * 0.4, tilt: -0.08 * go * (1 - after),
+      face: p < 0.16 ? PM_FACE.aim : PM_FACE.whoop,
+      rig: (r) => { r.backArm = dancerHand([q(4 * go), q(-6 * go)]); danceLegs(r, [go * (1 - after), [1.2, -2.4, 14], [-1.2, -2, -14]]); },
+    };
+  },
+  // In the air: knees tucked, she spikes an orb down at whatever is below like a volleyball.
+  jgair(p) {
+    const cock = soft(seg(p, 0, 0.18));
+    const go = ease(seg(p, 0.18, 0.3));
+    return {
+      weapon: lerp(lerp(110, 200, cock), 140, go), arm: lerp(lerp(60, 100, cock), 30, go), tilt: 0.12 * go - 0.08 * cock,
+      back: (cock > 0.5 && go < 0.4) || undefined,
+      face: p < 0.18 ? PM_FACE.aim : PM_FACE.wild,
+      rig: (r) => { r.air = true; r.backArm = dancerHand([q(-6 + 8 * go), q(-6 + 4 * go)]); danceLegs(r, [1, [2.4, -5, 40], [-1.6, -4, -40]]); },
+    };
+  },
+  // Out of a run: a long skid on one knee, an orb whipped sidearm out of the slide.
+  jgslide(p) {
+    const slide = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 1)));
+    const go = ease(seg(p, 0.26, 0.36));
+    return {
+      weapon: lerp(190, 60, go) + 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(10, 86, go) - 30 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.12 * slide, lunge: 6 * slide, trail: go > 0 && go < 1,
+      face: p < 0.26 ? PM_FACE.whoop : p < 0.6 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => { r.squat = q(2.8 * slide); r.backArm = dancerHand([q(-7 * slide), q(-3 * slide)]); r.hairLift = slide > 0.4 ? 1 : 0; r.cape -= q(5 * slide); danceLegs(r, [slide, [5.6, 0, 30], [-3.4, -1, -14]]); },
+    };
+  },
+
+  // With the staff she plays the orbs like a ball.
+  // Batting swing (staff opener, at ~0.4): the staff cocked back over her shoulder, a stride, and a
+  // level swing that cracks the orb away; the follow-through wraps round her.
+  jgbat(p) {
+    const cock = soft(seg(p, 0, 0.28));
+    const go = ease(seg(p, 0.28, 0.4));
+    const after = soft(seg(p, 0.46, 0.86));
+    return {
+      weapon: lerp(lerp(120, 250, cock), 80, go) - 50 * after, arm: lerp(lerp(60, 20, cock), 86, go) - 30 * after,
+      back: (cock > 0.4 && go < 0.3) || after > 0.5 || undefined,
+      lunge: -2 * cock * (1 - go) + 8 * go * (1 - after * 0.5), tilt: -0.1 * cock * (1 - go) + 0.14 * go * (1 - after),
+      lift: swBob(p, 0.74) * 0.6, trail: go > 0 && go < 1,
+      face: p < 0.28 ? PM_FACE.aim : p < 0.46 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.squat = q(1.4 * go * (1 - after));
+        r.backArm = dancerHand([q(lerp(3, -3, go)), q(lerp(-4, -2, go))]);
+        danceLegs(r, [cock * (1 - go), [1.4, -2.4, 24], [-2, 0, -6]], [go * (1 - after), [5, 0, 10], [-4.4, -0.6, -22]], [after, [2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Keepy-uppy volley (second, at ~0.52): two little taps bouncing the orb on the staff's end, then
+  // she lets it drop and volleys it away with a full swing.
+  jgpong(p) {
+    const tap1 = bump(p, 0.06, 0.2);
+    const tap2 = bump(p, 0.2, 0.34);
+    const cock = soft(seg(p, 0.34, 0.42));
+    const go = ease(seg(p, 0.42, 0.52));
+    const after = soft(seg(p, 0.58, 0.9));
+    return {
+      weapon: 96 - 14 * (tap1 + tap2) + 120 * cock * (1 - go) - 40 * go - 30 * after, arm: 70 + 10 * (tap1 + tap2) - 30 * cock * (1 - go) + 20 * go - 30 * after,
+      back: (p > 0.36 && go < 0.3) || undefined,
+      lunge: 7 * go * (1 - after * 0.5), lift: 1.5 * (tap1 + tap2) + swBob(p, 0.7) * 0.5, tilt: 0.12 * go * (1 - after), trail: go > 0 && go < 1,
+      face: p < 0.42 ? PM_FACE.aim : p < 0.6 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(2 + 2 * (tap1 + tap2)), q(-4)]);
+        danceLegs(r, [tap1 + tap2, [1.4, -1.4, 10], [-1.4, 0, -4]], [go * (1 - after), [4.6, 0, 10], [-4.4, -0.6, -20]], [after, [1.8, 0, 4], [-2, 0, -6]]);
+      },
+    };
+  },
+  // Overhead smash (staff finisher, at ~0.5): she leaps with the staff raised behind her head and
+  // smashes the orb down into the ground, which bursts it on into the crowd.
+  jgslam(p) {
+    const rise = soft(seg(p, 0, 0.34));
+    const air = bump(p, 0.08, 0.5);
+    const go = ease(seg(p, 0.4, 0.5));
+    const after = soft(seg(p, 0.58, 0.94));
+    return {
+      weapon: lerp(lerp(120, 250, rise), 20, go) + 60 * after, arm: lerp(lerp(60, 108, rise), 30, go) + 40 * after,
+      back: (rise > 0.3 && go < 0.4) || undefined,
+      lift: 10 * air + ballon(p, 0.62), lunge: 3 * air + 8 * go * (1 - after * 0.5), tilt: -0.12 * rise * (1 - go) + 0.22 * go * (1 - after),
+      trail: go > 0 && go < 1,
+      face: p < 0.4 ? PM_FACE.whoop : p < 0.6 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.air = air > 0.4;
+        r.squat = q(2.6 * go * (1 - after));
+        r.hairLift = air > 0.4 && go < 0.3 ? -1 : go > 0.3 && after < 0.4 ? 1 : 0;
+        r.backArm = dancerHand([q(lerp(-4, 4, go)), q(lerp(-7, -2, go))]);
+        danceLegs(r, [air * (1 - go), [2, -5, 34], [-1.2, -3.6, -30]], [go * (1 - after), [5.6, 0, 12], [-5, -0.6, -28]], [after, [2, 0, 4], [-2.4, 0, -8]]);
+      },
+    };
+  },
+  // Cue shot (pool, at ~0.44): bent low over the staff like a billiard cue, two practice strokes,
+  // then the shot, and she straightens up to watch it go.
+  jgcue(p) {
+    const lean = soft(seg(p, 0, 0.16)) * (1 - soft(seg(p, 0.5, 0.86)));
+    const stroke = 0.5 * bump(p, 0.12, 0.24) + 0.5 * bump(p, 0.24, 0.34);
+    const go = ease(seg(p, 0.36, 0.44));
+    const up = soft(seg(p, 0.5, 0.86));
+    return {
+      weapon: 92 - 6 * lean, arm: 80 - 16 * stroke + 20 * go - 10 * up,
+      lunge: -2 * stroke + 9 * go * (1 - up * 0.5), tilt: 0.24 * lean, trail: go > 0 && go < 1,
+      face: p < 0.36 ? PM_FACE.aim : p < 0.6 ? PM_FACE.whoop : PM_FACE.snooty,
+      rig: (r) => { r.squat = q(1.6 * lean); r.backArm = dancerHand([q(6 * lean), q(-1 * lean)]); danceLegs(r, [lean, [3, 0, 4], [-3.6, 0, -10]]); },
+    };
+  },
+  // Tennis serve (pool, at ~0.5): the orb tossed up with her free hand, the staff swung up and
+  // over to serve it down the court.
+  jgserve(p) {
+    const toss = soft(seg(p, 0, 0.24));
+    const cock = soft(seg(p, 0.16, 0.38));
+    const go = ease(seg(p, 0.4, 0.5));
+    const after = soft(seg(p, 0.56, 0.9));
+    return {
+      weapon: lerp(lerp(110, 250, cock), 40, go) + 40 * after, arm: lerp(lerp(50, 100, cock), 40, go) + 20 * after,
+      back: (cock > 0.4 && go < 0.4) || undefined,
+      lift: 3 * bump(p, 0.3, 0.6) + swBob(p, 0.74) * 0.5, lunge: 8 * go * (1 - after * 0.5), tilt: -0.12 * cock * (1 - go) + 0.18 * go * (1 - after), trail: go > 0 && go < 1,
+      face: p < 0.4 ? PM_FACE.aim : p < 0.56 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(2, 5, toss) - 6 * go), q(lerp(-2, -8, toss) + 6 * go)]);
+        danceLegs(r, [cock * (1 - go), [1.4, -1.6, 14], [-2, 0, -6]], [go * (1 - after), [5, 0, 10], [-4.4, -0.6, -22]], [after, [2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Staff twirl (pool, orbs at ~0.3 and ~0.5): the staff spun twice in her fingers like a baton,
+  // each turn knocking an orb away.
+  jgbaton(p) {
+    const spin = seg(p, 0.1, 0.6);
+    const a = spin * Math.PI * 4;
+    const after = soft(seg(p, 0.62, 0.94));
+    const twirling = p > 0.1 && p < 0.6;
+    const w = twirling ? (90 + (a * 180) / Math.PI) % 360 : lerp(100, 120, after);
+    return {
+      weapon: w, arm: 80 - 20 * after, back: (w > 160 && w < 340) || undefined,
+      lunge: 3 * bump(p, 0.1, 0.6), lift: swBob(p, 0.66) * 0.5, trail: twirling,
+      face: p < 0.62 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => { r.backArm = dancerHand([q(-5), q(-3)]); danceLegs(r, [bump(p, 0.1, 0.6), [2, 0, 4], [-2.6, 0, -10]], [after, [1.4, 0, 2], [-1.6, 0, -4]]); },
+    };
+  },
+  // Staff up + attack: a pole-vault hop off the planted staff, batting an orb straight up at the top.
+  jgvault(p) {
+    const plant = soft(seg(p, 0, 0.16));
+    const hop = bump(p, 0.12, 0.56);
+    const go = ease(seg(p, 0.26, 0.34));
+    return {
+      weapon: lerp(lerp(120, 170, plant), 100, go), arm: lerp(lerp(50, 30, plant), 104, go) - 40 * soft(seg(p, 0.5, 0.9)),
+      back: (plant > 0.5 && go < 0.3) || undefined,
+      lift: 12 * hop, lunge: 3 * hop, tilt: -0.1 * hop,
+      face: p < 0.26 ? PM_FACE.aim : PM_FACE.whoop,
+      rig: (r) => { r.air = hop > 0.3; r.backArm = dancerHand([q(-6 * hop), q(-5 * hop)]); danceLegs(r, [hop, [2.4, -6, 40], [-1.6, -4, -30]]); },
+    };
+  },
+  // Staff in the air: a dunk, the staff brought down two-handed on an orb under her.
+  jgdunk(p) {
+    const cock = soft(seg(p, 0, 0.18));
+    const go = ease(seg(p, 0.18, 0.3));
+    return {
+      weapon: lerp(lerp(120, 240, cock), 150, go), arm: lerp(lerp(60, 104, cock), 30, go),
+      back: (cock > 0.4 && go < 0.4) || undefined, tilt: 0.16 * go - 0.08 * cock,
+      face: p < 0.18 ? PM_FACE.aim : PM_FACE.wild,
+      rig: (r) => { r.air = true; r.backArm = dancerHand([q(-4 + 8 * go), q(-7 + 5 * go)]); danceLegs(r, [1, [2.6, -5, 44], [-1.6, -4, -40]]); },
+    };
+  },
+  // Staff out of a run: she skates along on the staff's end like a scooter, then swings off it to
+  // golf an orb away.
+  jgscoot(p) {
+    const ride = soft(seg(p, 0, 0.18)) * (1 - soft(seg(p, 0.3, 0.42)));
+    const go = ease(seg(p, 0.34, 0.44));
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: ride > 0.5 ? 150 : lerp(200, 70, go) - 30 * after, arm: ride > 0.5 ? 40 : lerp(20, 86, go) - 30 * after,
+      back: (ride < 0.5 && go < 0.3 && p > 0.2) || undefined,
+      lift: 3 * ride, lunge: 6 * ride + 6 * go * (1 - after), tilt: -0.08 * ride + 0.12 * go * (1 - after), trail: go > 0 && go < 1,
+      face: p < 0.34 ? PM_FACE.whoop : p < 0.5 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => { r.backArm = dancerHand([q(-6 * ride), q(-4 * ride)]); r.hairLift = ride > 0.5 ? 1 : 0; danceLegs(r, [ride, [1, -4, 10], [-3.6, -1, -30]], [go * (1 - after), [4.6, 0, 10], [-4.4, -0.6, -20]]); },
+    };
+  },
+
+  // Her skills.
+  // Fountain (spiritbolt, orbs rain from ~0.6): four quick tosses straight up, one hand then the
+  // other, looking up after them; then arms flung wide, "ta-da", as the cascade comes down ahead.
+  jgfountain(p) {
+    const tosses = [0.1, 0.2, 0.3, 0.4].map((a) => bump(p, a - 0.06, a + 0.06));
+    const up = Math.max(...tosses);
+    const which = tosses.findIndex((t) => t === up);
+    const tada = soft(seg(p, 0.5, 0.62)) * (1 - soft(seg(p, 0.88, 1)));
+    return {
+      weapon: lerp(110 - 20 * (which % 2 ? 0 : up), 60, tada), arm: lerp(40 + 60 * (which % 2 ? 0 : up), 30, tada),
+      lift: 1.6 * up + 3 * bump(p, 0.5, 0.7), tilt: -0.08 * up - 0.06 * tada,
+      face: p < 0.5 ? PM_FACE.aim : p < 0.7 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand(tada > 0.2 ? [q(-10 * tada), q(-7 * tada)] : [q(2 + 3 * (which % 2 ? up : 0)), q(-2 - 6 * (which % 2 ? up : 0))]);
+        r.hairLift = tada > 0.4 ? -1 : 0;
+        danceLegs(r, [up * (1 - tada), [1.4, -1.6, 10], [-1.2, -1.4, -10]], [tada, [2.6, 0, 6], [-2.6, 0, -6]]);
+      },
+    };
+  },
+  // Ricochet (spiritwave, at ~0.52): a big windmill of the throwing arm, twice round, a skip, and
+  // the fling; she leans after it to watch it bounce.
+  jgricochet(p) {
+    const mill = seg(p, 0.04, 0.42);
+    const ang = mill * Math.PI * 4;
+    const go = ease(seg(p, 0.42, 0.52));
+    const after = soft(seg(p, 0.58, 0.95));
+    const milling = p > 0.04 && p < 0.42;
+    const w = milling ? (60 + (ang * 180) / Math.PI) % 360 : lerp(220, 64, go) + 30 * after;
+    return {
+      weapon: w, arm: milling ? 70 + 30 * Math.sin(ang) : lerp(-10, 100, go) - 50 * after, back: (w > 170 && w < 330) || undefined,
+      lunge: -2 * mill + 10 * go * (1 - after * 0.5), lift: 3 * bump(p, 0.34, 0.5) + swBob(p, 0.7) * 0.5, tilt: 0.14 * go * (1 - after) + 0.08 * after, trail: milling || (go > 0 && go < 1),
+      face: p < 0.42 ? PM_FACE.aim : p < 0.6 ? PM_FACE.wild : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(-3 + 6 * go), q(-3)]);
+        danceLegs(r, [mill * (1 - go), [2, 0, 4], [-2.4, 0, -8]], [go * (1 - after), [5.4, 0, 12], [-4.6, -0.6, -24]], [after, [3, 0, 6], [-1, -1.6, -20]]);
+      },
+    };
+  },
+  // Cartwheel Toss (spiritstep, orbs at ~0.3 ahead and ~0.46 behind): a cartwheel forward, hands
+  // to the floor and legs over, flinging an orb ahead as she goes over and one back behind her as
+  // she comes up.
+  jgcartwheel(p) {
+    const t = seg(p, 0.08, 0.6);
+    const roll = ease(t);
+    const over = Math.sin(t * Math.PI);
+    const land = soft(seg(p, 0.6, 0.72)) * (1 - soft(seg(p, 0.82, 1)));
+    return {
+      weapon: lerp(90, 120, land), arm: lerp(100, 40, land),
+      lift: 14 * over + ballon(p, 0.66) * 0.6, tilt: -roll * Math.PI * 2, lunge: 4 * over,
+      face: p < 0.08 ? PM_FACE.aim : p < 0.6 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand(over > 0.2 ? [q(-8), q(-7)] : [q(2), q(-2)]);
+        r.hairLift = over > 0.3 ? -1 : 0;
+        danceLegs(r, [over, dancerLeg(150, 14.6, 40), dancerLeg(-150, 14.6, -40)], [land, [2.6, 0, 6], [-2.6, 0, -6]]);
+      },
+    };
+  },
+  // Hot Potato (frostnova, at ~0.52): a huge hot orb juggled hand to hand ("ow, ow"), then she
+  // bowls it underarm along the floor and shakes her fingers out.
+  jgpotato(p) {
+    const ow = [0.08, 0.18, 0.28, 0.36].map((a) => bump(p, a - 0.05, a + 0.05));
+    const hop = Math.max(...ow);
+    const bowl = ease(seg(p, 0.42, 0.52));
+    const after = soft(seg(p, 0.56, 0.95));
+    const shake = Math.sin(seg(p, 0.6, 0.95) * Math.PI * 8) * after;
+    return {
+      weapon: lerp(100 - 16 * ow[0] - 16 * ow[2], 30, bowl) + 50 * after, arm: lerp(70 + 16 * (ow[0] + ow[2]), 20, bowl) + 30 * after + 4 * shake,
+      lunge: 9 * bowl * (1 - after * 0.6), tilt: 0.2 * bowl * (1 - after), lift: 2.4 * hop + swBob(p, 0.62) * 0.5,
+      face: p < 0.42 ? PM_FACE.oops : p < 0.6 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.squat = q(2.4 * bowl * (1 - after));
+        r.backArm = dancerHand([q(3 + 5 * (ow[1] + ow[3]) - 4 * bowl), q(-4 - 4 * (ow[1] + ow[3]) + 3 * shake)]);
+        r.hairLift = hop > 0.6 ? -1 : 0;
+        danceLegs(r, [hop * (1 - bowl), [1.4, -2, 14], [-1.4, -1.6, -14]], [bowl * (1 - after), [5.8, 0, 14], [-5.2, -0.6, -28]], [after, [2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Encore (blessing, at ~0.55): arms flung wide to call the orbs home, quick catches left and
+  // right as they fly in, then a deep showgirl bow.
+  jgencore(p) {
+    const wide = soft(seg(p, 0, 0.18)) * (1 - soft(seg(p, 0.5, 0.6)));
+    const grabs = [0.24, 0.32, 0.4, 0.48].map((a) => bump(p, a - 0.04, a + 0.04));
+    const bow = soft(seg(p, 0.6, 0.74)) * (1 - soft(seg(p, 0.9, 1)));
+    return {
+      weapon: lerp(110, 60, wide) - 10 * (grabs[0] + grabs[2]) + 40 * bow, arm: lerp(40, 20, wide) + 40 * (grabs[0] + grabs[2]) - 10 * bow,
+      lift: 2 * wide + 1.2 * Math.max(...grabs), tilt: 0.3 * bow, lunge: -2 * bow,
+      face: p < 0.6 ? PM_FACE.whoop : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = dancerHand([q(-10 * wide + 6 * (grabs[1] + grabs[3]) - 6 * bow), q(-6 * wide - 4 * (grabs[1] + grabs[3]) + 2 * bow)]);
+        r.squat = q(1.4 * bow);
+        danceLegs(r, [wide, [2.6, 0, 6], [-2.6, 0, -6]], [bow, [1.6, 0, 4], [-3.4, -1.2, -24]]);
+      },
+    };
+  },
+  // Spinning Plates (spiritward, at ~0.55): a pirouette on one foot with both arms out, the orbs
+  // widening round her and the party like spun plates; she stops on a pose.
+  jgplates(p) {
+    const t = seg(p, 0.06, 0.6);
+    const turning = p > 0.06 && p < 0.6;
+    const pose = soft(seg(p, 0.6, 0.72)) * (1 - soft(seg(p, 0.9, 1)));
+    return {
+      weapon: turning ? 80 : lerp(110, 150, pose), arm: turning ? 80 : lerp(40, 90, pose),
+      turn: turning ? spinFlip(t * 2) : 1,
+      lift: 2 * bump(p, 0.06, 0.6), tilt: 0,
+      face: p < 0.6 ? PM_FACE.whoop : PM_FACE.snooty,
+      rig: (r) => {
+        r.backArm = dancerHand(turning ? [-9, -5] : [q(-6 * pose), q(-6 * pose)]);
+        r.hairLift = turning ? -1 : 0;
+        danceLegs(r, [turning ? 1 : 0, [0.4, 0, 0], dancerLeg(-60, 14.6, -30)], [pose, [1.6, 0, 4], dancerLeg(-40, 14.6, -20)]);
+      },
+    };
+  },
+
   // ---------- The Mage's attacks (the remake: a pyro gremlin; docs/design/mage-line.md) ----------
   // A magic-school dropout who loves blowing things up. She never casts like the textbook: she
   // flicks fire from the hip, pitches snowballs, jabs the wand like a cattle prod, swings the staff
@@ -8573,12 +8990,13 @@ export const MOVES = {
     const bend = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.78, 1)));
     const s = bowShot(p, 0.22, 0.5);
     return {
-      weapon: lerp(BOW_REST, -58, bend) + 8 * s.kick, arm: lerp(BOW_LOW, 128, bend), tilt: -0.28 * bend, lunge: -2 * s.kick, lift: 5 * bump(p, 0.44, 0.7) + acBounce(p, 0.72) * 0.6, pull: s.pull, nock: s.nock, twang: s.twang,
+      // (Aimed up and out ahead, the bow hand thrust up in front, so the tipped bow stands ahead of her face.)
+      weapon: lerp(BOW_REST, -34, bend) + 8 * s.kick, arm: lerp(BOW_LOW, 100, bend), tilt: -0.42 * bend, lunge: -2 * s.kick, lift: 5 * bump(p, 0.44, 0.7) + acBounce(p, 0.72) * 0.6, pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         r.air = bump(p, 0.44, 0.7) > 0.4;
         r.backArm = s.snap > 0 ? [q(-5 + 4 * (1 - bend)), q(-4)] : [q(lerp(1, -1, s.pull)), q(lerp(1, -1, s.pull))];
-        r.hx = q(-2 * bend);
-        r.tilt = Math.round(-3 * bend) * 2;
+        r.hx = q(-3.5 * bend);
+        r.tilt = Math.round(-4 * bend) * 2;
         r.squat = q(1.5 * bend);
         danceLegs(r, [bend, [3, 0, 10], [-2.6, 0, -6]]);
         r.hairLift = bend > 0.4 ? 1 : 0;
@@ -8879,11 +9297,11 @@ export const MOVES = {
     const up = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.8, 1)));
     const s = bowShot(p, 0.18, 0.46);
     return {
-      weapon: lerp(BOW_REST, -56, up) + 8 * s.kick, arm: lerp(40, 124, up), tilt: -0.1 * up, lunge: -1.5 * s.kick, lift: 3 * up + 4 * bump(p, 0.42, 0.66) + ptFloat(p, 0.7), pull: s.pull, nock: s.nock, twang: s.twang,
+      weapon: lerp(BOW_REST, -32, up) + 8 * s.kick, arm: lerp(40, 98, up), tilt: -0.36 * up, lunge: -1.5 * s.kick, lift: 3 * up + 4 * bump(p, 0.42, 0.66) + ptFloat(p, 0.7), pull: s.pull, nock: s.nock, twang: s.twang,
       rig: (r) => {
         r.backArm = s.snap > 0 ? [q(-3), q(lerp(-3, 3, soft(s.snap)))] : s.pull > 0.05 ? [q(lerp(1, -1, s.pull)), q(lerp(1, -1, s.pull))] : [-3, 3];
-        r.hx = q(-1.5 * up);
-        r.tilt = Math.round(-2 * up) * 2;
+        r.hx = q(-3.5 * up);
+        r.tilt = Math.round(-4 * up) * 2;
         danceLegs(r, [up, [2.2, 0, 4], [-1, -0.8, -16]]);
         if (s.kick > 0.3) strikeFace(r);
         else r.eyes = 'half';
@@ -10560,15 +10978,15 @@ const siSyllable = (p, seed) => ['o', 'ah', 'e', 'ah', 'o', 'open'][(Math.floor(
 // ---------- The archers' shared draw (the Acrobat Archer and the Phantom Trickster) ----------
 // The bow arm long and a little low, and the bow tipped back a touch, so the arrow's line runs
 // under her jaw, never through her lips or eyes; the bow's top limb stays off her face.
-const BOW_ARM = 56;
-const BOW_AIM = -10;
-const PT_ARM = 46;
+const BOW_ARM = 74;
+const BOW_AIM = 2;
+const PT_ARM = 70;
 // Between shots (wind-ups and held ends) the bow is slung low behind her, tipped well back, the
 // way she carries it standing (render/hero.js), off her face and her outfit; it comes up behind
 // her head into the aim.
 const BOW_REST = -92;
 const BOW_LOW = 46;
-const PT_AIM = 16;
+const PT_AIM = 5;
 // After the loose the bow rolls forward in her hand (a real archer's follow-through: the top limb
 // tips away from her, never back into her face) and the kick throws it on a little further.
 const rollOn = (aim, s) => aim + 20 * soft(s.snap ?? 0);
