@@ -552,6 +552,36 @@ export const QUESTS = {
     rewards: { exp: 145000, gold: 1200, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
+  // Skipper Nimbus's story (Cloudcatch Pier): the Sky Whale is awake and flying again, and her old
+  // sailor patches her sail, clears the storms that keep her low, and makes her a star lantern so
+  // she can find her own way in the dark, because he thinks she doesn't need a skipper any more.
+  // When it's lit she sings back: she was never going to leave him behind. He stays her skipper,
+  // and offers to fly the hero up to the Moon Terrace whenever they're ready (chapter 10).
+  nimbus_sail: {
+    id: 'nimbus_sail', name: 'A New Sail', giver: 'nimbus', minLevel: 46, prereq: 'story_whale',
+    text: "She's awake! Flying! Singing in her sleep, except she's not asleep! ...And her sail got torn to ribbons on the way up. Sky Silk off the Cloud Shepherds on Starfall Heights makes the best sail there is. 10 bolts of it, and she'll fly like she's twenty again. She's four hundred. Don't tell her I said.",
+    objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
+    rewards: { exp: 150000, gold: 900, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  nimbus_storm: {
+    id: 'nimbus_storm', name: 'Clear Skies', giver: 'nimbus', minLevel: 47, prereq: 'nimbus_sail',
+    text: "New sail, and she still can't climb past the heights. The Storm Harpists up on Starfall Heights keep plucking thunder out of the clouds, and she won't fly through thunder. Never would. Quiet 15 of them for me, and the sky's ours again.",
+    objectives: [{ type: 'kill', mob: 'harpist', count: 15 }],
+    rewards: { exp: 165000, gold: 980, items: [] },
+  },
+  nimbus_lantern: {
+    id: 'nimbus_lantern', name: 'A Lantern for the Dark', giver: 'nimbus', minLevel: 48, prereq: 'nimbus_storm',
+    text: "One more thing for her, and then I'll stop fussing. When it's dark she can't see her way home, so she always waited for me to whistle. A star lantern on her brow would light the way for her. 8 Stardust from the Star Seraphs should make it. She'll be able to go wherever she likes. Without me.",
+    objectives: [{ type: 'collect', item: 'stardust', count: 8 }],
+    rewards: { exp: 180000, gold: 1060, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  nimbus_voyage: {
+    id: 'nimbus_voyage', name: 'The Last Voyage', giver: 'nimbus', minLevel: 49, prereq: 'nimbus_lantern',
+    text: "The lantern's ready. Take it up to the very top of Starfall Heights, where she passes closest, and hold it up so she sees it. Then come back and tell me she took it. I'll be here. Packing. Probably. Hat on the hook, and all that.",
+    objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, holding up the star lantern' }],
+    rewards: { exp: 200000, gold: 1500, items: [{ id: 'warrior_bottom_45', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',

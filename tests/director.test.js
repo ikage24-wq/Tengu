@@ -253,6 +253,24 @@ test("Celeste's dreamer plays through in Moonleaf Grove", () => {
   }
 });
 
+test("Skipper Nimbus's last voyage plays through on Cloudcatch Pier", () => {
+  for (const id of ['nimbus_sail_done', 'nimbus_storm_done', 'nimbus_lantern_done', 'nimbus_voyage_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'cloudcatch_pier', 'start');
+    const nimbus = w.map.npcs.find((n) => n.id === 'nimbus');
+    w.body.x = nimbus.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});
+
 test("Professor Lumen's fallen star plays through on the Observatory Steps", () => {
   for (const id of ['lumen_lens_done', 'lumen_fallen_done', 'lumen_chips_done', 'lumen_home_done']) {
     const w = createWorld(createCharacter('Hana', {}));
