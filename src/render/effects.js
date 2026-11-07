@@ -1,6 +1,8 @@
 // Skill effects, projectiles, hit sparks, damage numbers, and loot on the ground.
 // Everything is drawn in screen space from world positions minus the camera.
 
+import { usingSkin } from '../data/cosmetics.js';
+import { numberDeco } from './cosmetics.js';
 import { drawItemIcon } from './icons.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
@@ -1349,6 +1351,7 @@ function stackNumbers(numbers) {
 }
 
 export function drawNumbers(ctx, world, cam) {
+  const dmgSkin = usingSkin(world.char, 'dmg');
   ctx.save();
   ctx.textAlign = 'center';
   ctx.lineJoin = 'round';
@@ -1376,12 +1379,15 @@ export function drawNumbers(ctx, world, cam) {
     if (n.crit && age < 0.14) starFlash(ctx, x, y - size * 0.35, (size + 6) * (1 - age / 0.14) + 4, 8, age * 4, '#ffb347', '#fff3c4', 4);
     ctx.font = font(size, true);
     ctx.lineWidth = 4;
-    ctx.strokeStyle = n.crit ? '#8a3a1f' : '#3a2d4f';
+    // (Your own hits wear your capsule damage skin, if you've one on: data/cosmetics.js.)
+    const skin = dmgSkin && isDamage(n) && !n.party ? dmgSkin : null;
+    ctx.strokeStyle = skin ? skin.edge : n.crit ? '#8a3a1f' : '#3a2d4f';
     ctx.strokeText(n.text, x, y);
     // A crit's first two drawings are white-hot before they take their color.
-    ctx.fillStyle = n.crit && age < 2 / 60 ? '#ffffff' : n.color;
+    ctx.fillStyle = n.crit && age < 2 / 60 ? '#ffffff' : skin ? (n.crit ? skin.crit : skin.fill) : n.color;
     ctx.fillText(n.text, x, y);
     if (n.crit) sparkle(ctx, x - ctx.measureText(n.text).width / 2 - 6, y - size / 2, 4, '#ffe36b');
+    if (skin?.deco) numberDeco(ctx, skin.deco, x, y, size, age);
     if (isDamage(n)) {
       const key = Math.round(n.x / 14);
       const g = totals.get(key) ?? { sum: 0, count: 0, top: Infinity, x: n.x, oldest: 0, youngest: 9 };

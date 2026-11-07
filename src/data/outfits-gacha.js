@@ -20,5 +20,17 @@ export const GACHA_LOOKS = [
   { key: 'dewwings', name: 'Dewdrop Wings', slot: 'cape', machine: 'sprout', rarity: 'star', color: '#c8f6e0', colors: false, fx: 'fireflies' },
 ];
 
+// The rest of each machine's capsules (the fodder): cosmetic skins (data/cosmetics.js), each once,
+// and a bundle of the region's materials, which can come up any number of times, so a ticket always
+// brings something, even once the set is complete. `rarity` as above.
+export const GACHA_PRIZES = {
+  sprout: [
+    { kind: 'bubble', key: 'blossom', rarity: 'common' },
+    { kind: 'tag', key: 'sproutvine', rarity: 'common' },
+    { kind: 'dmg', key: 'petalpop', rarity: 'rare' },
+    { kind: 'bundle', key: 'springbundle', name: 'Spring Bundle', rarity: 'common', items: [['clover', 3], ['sprout_leaf', 4], ['honeycomb', 2], ['moonpetal', 1]] },
+  ],
+};
+
 // Wearing every piece of a machine's set.
 export const GACHA_SETS = { sprout: { name: 'Spring Spirit', fx: 'springglow' } };

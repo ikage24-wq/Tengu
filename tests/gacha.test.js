@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { ITEMS } from '../src/data/items.js';
 import { CASH_ITEMS } from '../src/data/cash.js';
-import { GACHA_LOOKS, GACHA_MACHINES } from '../src/data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES } from '../src/data/outfits-gacha.js';
 import { MAPS } from '../src/data/maps.js';
 import { MOBS } from '../src/data/mobs.js';
 import { QUESTS } from '../src/data/quests.js';
@@ -33,22 +33,32 @@ test('every machine stands in its town', () => {
   }
 });
 
-test('a pull spends a ticket, gives something new each time, and stops when the set is done', () => {
+test('a pull spends a ticket and always gives something: a piece or a skin never twice, else the bundle', () => {
   const char = fresh();
-  assert.equal(pull(char, 'sprout').why, 'You need a Capsule Ticket.');
-  const n = machineLooks('sprout').length;
-  addItem(char.inventory, 'gacha_ticket', n + 2);
+  const n = machineLooks('sprout').length + (GACHA_PRIZES.sprout ?? []).filter((z) => z.kind !== 'bundle').length;
+  addItem(char.inventory, 'gacha_ticket', 60);
   const got = new Set();
-  for (let i = 0; i < n; i++) {
+  let bundles = 0;
+  for (let i = 0; i < 60; i++) {
     const r = pull(char, 'sprout');
-    assert.ok(r.look, r.why);
-    assert.ok(!got.has(r.look.key), 'never a repeat');
-    got.add(r.look.key);
+    assert.ok(r.look || r.prize, r.why);
+    if (r.prize?.kind === 'bundle') {
+      bundles++;
+      continue;
+    }
+    const key = r.look ? `look:${r.look.key}` : `${r.prize.kind}:${r.prize.key}`;
+    assert.ok(!got.has(key), `never a repeat (${key})`);
+    got.add(key);
   }
-  assert.equal(countItem(char.inventory, 'gacha_ticket'), 2);
-  assert.equal(pull(char, 'sprout').why, 'You have the whole set!');
-  assert.equal(countItem(char.inventory, 'gacha_ticket'), 2, 'no ticket spent on a complete set');
-  assert.equal(pickLook(char, 'sprout'), null);
+  assert.equal(got.size, n, 'every piece and skin comes out in the end');
+  assert.ok(bundles > 0);
+  assert.equal(countItem(char.inventory, 'gacha_ticket'), 0, 'each pull spends a ticket');
+  assert.equal(pickLook(char, 'sprout'), null, 'the set is complete');
+  // A complete machine still takes tickets: it gives the bundle.
+  addItem(char.inventory, 'gacha_ticket', 1);
+  assert.equal(pull(char, 'sprout').prize?.kind, 'bundle');
+  assert.ok(countItem(char.inventory, 'clover') > 0, 'the bundle lands in the bag');
+  assert.ok(char.cosmetics.owned.includes('bubble:blossom') && char.cosmetics.using.dmg === 'petalpop', 'skins are yours, and on');
 });
 
 test('rarer pieces come up less often', () => {
@@ -66,8 +76,8 @@ test('rarer pieces come up less often', () => {
 
 test('wearing a piece carries its effect; the whole set adds its bonus', () => {
   const char = fresh();
-  addItem(char.inventory, 'gacha_ticket', 6);
-  for (let i = 0; i < 6; i++) pull(char, 'sprout');
+  addItem(char.inventory, 'gacha_ticket', 80);
+  for (let i = 0; i < 80 && pickLook(char, 'sprout'); i++) pull(char, 'sprout');
   while (char.inventory.cash.some((i) => ITEMS[i.id].gacha)) wearOutfit(char, char.inventory.cash.findIndex((i) => ITEMS[i.id].gacha));
   for (const e of machineLooks('sprout')) assert.ok(ownsLook(char, e), `${e.key} still counts as had when worn`);
   const worn = outfitFx(wornGear(char));

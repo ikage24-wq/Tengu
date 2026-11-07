@@ -177,14 +177,14 @@ function drawGlobeLife(ctx, cx, cy, gr, theme, time, shake) {
   // The glass over them: a big curved shine on the upper left, a thin one on the right, and a
   // glint that slides along the shine now and then.
   ctx.save();
-  ctx.globalAlpha = 0.75;
+  ctx.globalAlpha = A0 * (0.75);
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
   ctx.arc(cx, cy, gr - 3.2, Math.PI * 1.05, Math.PI * 1.42);
   ctx.arc(cx, cy, gr - 7.2, Math.PI * 1.38, Math.PI * 1.08, true);
   ctx.closePath();
   ctx.fill();
-  ctx.globalAlpha = 0.45;
+  ctx.globalAlpha = A0 * (0.45);
   ctx.beginPath();
   ctx.arc(cx, cy, gr - 3, Math.PI * 1.85, Math.PI * 0.05 + Math.PI * 2);
   ctx.arc(cx, cy, gr - 5, Math.PI * 0.05 + Math.PI * 2, Math.PI * 1.85, true);
@@ -196,7 +196,7 @@ function drawGlobeLife(ctx, cx, cy, gr, theme, time, shake) {
     const gx = cx + Math.cos(a) * (gr - 5.2);
     const gy = cy + Math.sin(a) * (gr - 5.2);
     const k = Math.sin((g / 0.35) * Math.PI);
-    ctx.globalAlpha = k;
+    ctx.globalAlpha = A0 * (k);
     ctx.beginPath();
     for (let j = 0; j < 8; j++) {
       const b = (j * Math.PI) / 4;
@@ -212,21 +212,24 @@ function drawGlobeLife(ctx, cx, cy, gr, theme, time, shake) {
 // The machine standing with its feet at (x, y). `crank` 0-3 turns the wheel; `shake` jostles the
 // capsules (while a pull is going). Alive on top of the art: a ring of marquee lights chasing round
 // the globe, a soft glow breathing inside it, and the star gem on the crown twinkling.
+// (The fade the machine is drawn under, so its own see-through bits fade with it.)
+let A0 = 1;
 export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROUT, time = performance.now() / 1000 } = {}) {
+  A0 = ctx.globalAlpha;
   const s = machineArt(theme, crank % 4);
   const left = snap(x - s.w / 2);
   const top = snap(y - s.h);
   const [gx, gy, gr] = MACHINE.globe;
   // The glow inside the glass, behind everything.
   ctx.save();
-  ctx.globalAlpha = 0.22 + 0.12 * Math.sin(time * 1.8);
+  ctx.globalAlpha = A0 * (0.22 + 0.12 * Math.sin(time * 1.8));
   const g = ctx.createRadialGradient(left + gx, top + gy, 0, left + gx, top + gy, gr * 1.5);
   g.addColorStop(0, '#fff6c4');
   g.addColorStop(1, 'rgba(255,246,196,0)');
   ctx.fillStyle = g;
   ctx.fillRect(left + gx - gr * 1.5, top + gy - gr * 1.5, gr * 3, gr * 3);
   ctx.restore();
-  blit(ctx, s, left, top);
+  blit(ctx, s, left, top, { alpha: A0 });
   drawGlobeLife(ctx, left + gx, top + gy, gr, theme, time, shake);
   // The marquee: bulbs round the globe, every third lit, the pattern chasing round (faster while
   // you crank).
@@ -254,7 +257,7 @@ export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROU
     ctx.fill();
     if (on) {
       ctx.save();
-      ctx.globalAlpha = 0.45;
+      ctx.globalAlpha = A0 * (0.45);
       const h = ctx.createRadialGradient(bx, by, 0, bx, by, 6);
       h.addColorStop(0, '#fff6c4');
       h.addColorStop(1, 'rgba(255,246,196,0)');
@@ -285,7 +288,7 @@ export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROU
   ctx.fill();
   ctx.restore();
   ctx.save();
-  ctx.globalAlpha = 0.35 * tw;
+  ctx.globalAlpha = A0 * (0.35 * tw);
   const st = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);
   st.addColorStop(0, '#fff6c4');
   st.addColorStop(1, 'rgba(255,246,196,0)');

@@ -17,11 +17,12 @@ import { drawHearts } from './sweetheart.js';
 import { drawHero } from '../render/hero.js';
 import { NPCS } from '../data/npcs.js';
 import { getMap } from '../data/maps.js';
+import { SKIN_KINDS, SKIN_LABEL, ownsSkin, useSkin } from '../data/cosmetics.js';
 import { ITEMS } from '../data/items.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish', 'Mounts', 'Sweethearts'];
+const TABS = ['Monster Book', 'Fish', 'Mounts', 'Sweethearts', 'Style'];
 
 // Monsters by level, the bosses after.
 const ORDER = Object.keys(MOBS).sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -33,6 +34,10 @@ export function collectionWindow(ui, state, world) {
   const th = ui.theme;
   const char = world.char;
   const tab = tabs(ui, win.x + 10, win.y + 26, TABS, win.tab ?? 0, { w: 62, h: 15 });
+  if (tab === 4) {
+    if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
+    return stylePage(ui, win, world, win.x + 10, win.y + 48, th);
+  }
   if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
   const x = win.x + 10;
   const y = win.y + 48;
@@ -122,6 +127,34 @@ function fishPage(ui, win, char, x, y, th) {
   const got = FISH.filter((f) => char.fishBook?.[f.id]).length;
   text(ctx, `${got} / ${FISH.length} fish  ·  Get a rod from Pip, Marlo or Mister Brine, and look for the fish signs by the water.`, x, y + rows * ch + 8, { size: 7, bold: true, color: th.dark });
   if (lines > rows) text(ctx, 'Scroll for more', x + cols * cw - 6, y + rows * ch + 18, { size: 6.5, align: 'right', color: COLORS.muted });
+}
+
+// Your style: which capsule skins (data/cosmetics.js) you use for your chat bubble, your name tag
+// and your damage numbers. Plain, or any you've won (the rest show where they come from).
+function stylePage(ui, win, world, x, y, th) {
+  const { ctx } = ui;
+  const char = world.char;
+  const machines = { sprout: 'Sprout Village' };
+  let ry = y;
+  for (const kind of ['bubble', 'tag', 'dmg']) {
+    text(ctx, SKIN_LABEL[kind], x, ry + 7, { size: 8, bold: true, color: th.dark });
+    const using = char.cosmetics?.using?.[kind] ?? null;
+    const options = [[null, 'Plain'], ...Object.entries(SKIN_KINDS[kind]).map(([k, v]) => [k, v.name])];
+    options.forEach(([key, name], i) => {
+      const bx = x + (i % 3) * 106;
+      const by = ry + 12 + Math.floor(i / 3) * 18;
+      const own = key === null || ownsSkin(char, kind, key);
+      const on = using === key;
+      if (own) {
+        if (button(ui, bx, by, 100, 15, `${on ? '✓ ' : ''}${name}`, { primary: on, size: 6.5 })) useSkin(char, kind, key);
+      } else {
+        box(ctx, bx, by, 100, 15, { fill: '#f2ecf8', edge: '#e2d8ee', r: 6, width: 1 });
+        text(ctx, fit(ctx, `${name} · ${machines[SKIN_KINDS[kind][key].machine] ?? ''} capsules`, 94, 5.6, false), bx + 50, by + 10, { size: 5.6, align: 'center', color: COLORS.muted });
+      }
+    });
+    ry += 12 + Math.ceil(options.length / 3) * 18 + 8;
+  }
+  text(ctx, 'Skins come out of the capsule machines. They only change how things look.', x, ry + 6, { size: 6.5, color: COLORS.muted });
 }
 
 // Your mounts: a card each, the mount moving on it (trotting along if it's the one you ride),

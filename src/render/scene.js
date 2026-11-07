@@ -1,5 +1,7 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
+import { usingSkin } from '../data/cosmetics.js';
+import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
@@ -562,8 +564,13 @@ export function drawWorld(ctx, world, viewCam, time) {
     const hot = world.hoverSelf;
     ctx.save();
     ctx.globalAlpha *= tagFade(hx, hy);
-    box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
-    text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    // (A capsule name-tag skin dresses it: data/cosmetics.js.)
+    const tagSkin = usingSkin(world.char, 'tag');
+    if (tagSkin) drawSkinTag(ctx, tagSkin, hx, hy + 2, label, time, hot);
+    else {
+      box(ctx, hx - w / 2, hy + 2, w, 10, { fill: hot ? COLORS.accent : 'rgba(255,143,193,0.85)', edge: '#ffffff', r: 5, width: 1 });
+      text(ctx, label, hx, hy + 9.5, { size: 7, bold: true, align: 'center', color: '#ffffff' });
+    }
     // Your title under it, if you wear one (earned in the story: core/quests.js).
     if (world.char.title) text(ctx, world.char.title, hx, hy + 19, { size: 6, bold: true, align: 'center', color: '#ffe9a8', shadow: true });
     ctx.restore();
@@ -773,7 +780,7 @@ function drawBubbles(ctx, world, cam) {
     if (who !== 'player' && !npc) continue;
     const x = who === 'player' ? world.body.x : npc.x;
     const y = who === 'player' ? world.body.y : groundAt(world.map, npc.x);
-    drawBubble(ctx, snap(x - cam.x), snap(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2));
+    drawBubble(ctx, snap(x - cam.x), snap(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2), who === 'player' ? usingSkin(world.char, 'bubble') : null);
   }
 }
 

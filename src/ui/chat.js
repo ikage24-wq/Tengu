@@ -2,6 +2,7 @@
 // as a speech bubble over your head. Emoticons make your face act them out for a few seconds, NPCs
 // chat now and then, and NPCs nearby say hi back.
 
+import { bubbleDeco } from '../render/cosmetics.js';
 import { NPCS } from '../data/npcs.js';
 import { FACE_STYLES } from '../render/hero.js';
 import { COLORS, text, font, clicked, paper, tape, roughRect } from './kit.js';
@@ -240,8 +241,9 @@ export function drawChatBar(ui, chat, world) {
 const queued = [];
 
 // Queues a rounded speech bubble with a little tail, centered over (x, y).
-export function drawBubble(ctx, x, y, words, alpha = 1) {
-  queued.push({ x, y, words, alpha });
+// `skin`: a capsule chat-bubble skin (data/cosmetics.js), for your own bubbles.
+export function drawBubble(ctx, x, y, words, alpha = 1, skin = null) {
+  queued.push({ x, y, words, alpha, skin });
 }
 
 export function flushBubbles(ctx, hide = false) {
@@ -293,7 +295,7 @@ export function flushBubbles(ctx, hide = false) {
 }
 
 // (Scrapbook: a speech bubble cut from paper by hand, pencilled round, lying a little lifted.)
-function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha }) {
+function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha, skin }) {
   ctx.globalAlpha = alpha;
   const seed = Math.round(w + h) % 29;
   // The tail reaches down to the speaker; a bubble that moved up gets a longer, slimmer one.
@@ -302,8 +304,8 @@ function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha }) {
   ctx.fillStyle = 'rgba(70,40,90,0.18)';
   roughRect(ctx, bx + 1.5, by + 2, w, h, 5, seed + 2, 0.45);
   ctx.fill();
-  ctx.fillStyle = '#fffdf6';
-  ctx.strokeStyle = '#8a6a9a';
+  ctx.fillStyle = skin?.fill ?? '#fffdf6';
+  ctx.strokeStyle = skin?.edge ?? '#8a6a9a';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(x - half, by + h - 1);
@@ -317,8 +319,9 @@ function paintBubble(ctx, { x, y, lines, w, h, bx, by, alpha }) {
   ctx.stroke();
   // Cover the tail's seam with the bubble's own paper.
   ctx.fillRect(x - half + 1, by + h - 1.5, half * 2 - 2, 2.5);
-  ctx.fillStyle = COLORS.ink;
+  ctx.fillStyle = skin?.text ?? COLORS.ink;
   ctx.textAlign = 'center';
   lines.forEach((l, i) => ctx.fillText(l, bx + w / 2, by + 11 + i * 10));
   ctx.textAlign = 'left';
+  if (skin?.deco) bubbleDeco(ctx, skin.deco, bx, by, w, h, performance.now() / 1000);
 }

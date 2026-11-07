@@ -5,7 +5,9 @@
 // to show you wearing what was inside, ready to put on. The machine never gives you a piece you
 // already have, so every ticket brings something new until the set is complete.
 
-import { GACHA_LOOKS, GACHA_MACHINES } from '../data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES } from '../data/outfits-gacha.js';
+import { SKIN_KINDS, SKIN_LABEL, ownsSkin, giveSkin } from '../data/cosmetics.js';
+import { drawSkinTag, bubbleDeco, numberDeco } from '../render/cosmetics.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
 import { makeCash } from '../core/items.js';
 import { wornGear, wearOutfit } from '../core/character.js';
@@ -31,8 +33,21 @@ const cashId = (e) => `cash_gacha_${e.key}`;
 export const machineLooks = (machine) => GACHA_LOOKS.filter((e) => e.machine === machine);
 export const ownsLook = (char, e) => char.inventory.cash.some((i) => i.id === cashId(e)) || Object.values(char.outfit ?? {}).some((i) => i?.id === cashId(e));
 
-// Picks a piece for a pull from the ones `char` doesn't have, weighted by rarity, or null when
-// the set is complete.
+// What a pull can bring: the outfit pieces you don't have yet, the machine's skins you don't have,
+// and its bundle of materials (always there, so a ticket never comes up empty). Each weighted by
+// its rarity. Returns { look } or { prize }.
+const BUNDLE_WEIGHT = 5;
+export const prizeName = (z) => z.name ?? SKIN_KINDS[z.kind]?.[z.key]?.name ?? z.key;
+export function pickPrize(char, machine, rng = Math.random) {
+  const pool = [
+    ...machineLooks(machine).filter((e) => !ownsLook(char, e)).map((e) => ({ look: e, w: WEIGHT[e.rarity] })),
+    ...(GACHA_PRIZES[machine] ?? []).filter((z) => z.kind === 'bundle' || !ownsSkin(char, z.kind, z.key)).map((z) => ({ prize: z, w: z.kind === 'bundle' ? BUNDLE_WEIGHT : WEIGHT[z.rarity] })),
+  ];
+  let r = rng() * pool.reduce((n, e) => n + e.w, 0);
+  for (const e of pool) if ((r -= e.w) < 0) return e;
+  return pool.at(-1) ?? null;
+}
+// (Kept for the outfit pieces alone.)
 export function pickLook(char, machine, rng = Math.random) {
   const left = machineLooks(machine).filter((e) => !ownsLook(char, e));
   const total = left.reduce((n, e) => n + WEIGHT[e.rarity], 0);
@@ -41,14 +56,57 @@ export function pickLook(char, machine, rng = Math.random) {
   return left.at(-1) ?? null;
 }
 
-// A pull: spends a ticket and puts the piece in the Cash tab. Returns the entry, or a reason.
+// A pull: spends a ticket and gives what came out (the piece to the Cash tab, a skin to your
+// style, a bundle to your bag). Returns { look } or { prize }, or a reason.
 export function pull(char, machine, rng = Math.random) {
-  const e = pickLook(char, machine, rng);
-  if (!e) return { why: 'You have the whole set!' };
+  const got = pickPrize(char, machine, rng);
+  if (!got) return { why: 'The machine is empty.' };
   if (countItem(char.inventory, 'gacha_ticket') < 1) return { why: 'You need a Capsule Ticket.' };
-  if (!addItem(char.inventory, makeCash(cashId(e)))) return { why: 'Your Cash tab is full.' };
+  if (got.look) {
+    if (!addItem(char.inventory, makeCash(cashId(got.look)))) return { why: 'Your Cash tab is full.' };
+  } else if (got.prize.kind === 'bundle') {
+    const z = got.prize;
+    if (!z.items.every(([id, n]) => addItem(char.inventory, id, n))) return { why: 'Your bag is full.' };
+  } else giveSkin(char, got.prize.kind, got.prize.key);
   removeItem(char.inventory, 'gacha_ticket', 1);
-  return { look: e };
+  return got.look ? { look: got.look } : { prize: got.prize };
+}
+
+// A prize shown in the reveal at (x, y): a sample of the skin, or the bundle's finds fanned out.
+function drawPrize(ctx, z, x, y, time, char) {
+  if (z.kind === 'bundle') {
+    z.items.forEach(([id], i) => drawItemIcon(ctx, id, x - 34 + i * 18, y - 10 - Math.abs(Math.sin(time * 3 + i)) * 2, 1));
+    return;
+  }
+  const skin = SKIN_KINDS[z.kind][z.key];
+  ctx.save();
+  ctx.font = '800 7px Nunito, "Trebuchet MS", system-ui, sans-serif';
+  if (z.kind === 'tag') drawSkinTag(ctx, skin, x, y - 6, char.name, time);
+  else if (z.kind === 'bubble') {
+    const w = 58;
+    ctx.fillStyle = skin.fill;
+    ctx.strokeStyle = skin.edge;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(x - w / 2, y - 24, w, 16, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = skin.text;
+    ctx.textAlign = 'center';
+    ctx.fillText('Hello!', x, y - 13.4);
+    bubbleDeco(ctx, skin.deco, x - w / 2, y - 24, w, 16, time);
+  } else {
+    const age = (time % 1.2) * 0.6;
+    ctx.font = '900 16px Nunito, "Trebuchet MS", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = skin.edge;
+    ctx.strokeText('1,234', x, y - 8);
+    ctx.fillStyle = skin.fill;
+    ctx.fillText('1,234', x, y - 8);
+    numberDeco(ctx, skin.deco, x, y - 8, 16, age);
+  }
+  ctx.restore();
 }
 
 const ease = (u) => u * u * (3 - 2 * u);
@@ -87,7 +145,8 @@ export function gachaWindow(ui, state, world) {
   ctx.restore();
   const p = win.pull;
   const t = p ? now - p.at : 0;
-  const wob = p ? WOBBLE[p.look.rarity] : 0;
+  const item = p ? p.look ?? p.prize : null;
+  const wob = p ? WOBBLE[item.rarity] : 0;
   const cranking = p && t < CRANK;
   // (Once the capsule pops, the machine fades back so the piece stands out in front of it.)
   const back = p && t >= wob ? 1 - 0.75 * ease(Math.min(1, (t - wob) / 0.4)) : 1;
@@ -102,7 +161,7 @@ export function gachaWindow(ui, state, world) {
   const gl = (now / 3.4) % 1;
   if (!p && gl < 0.3) sparkle(ctx, fx - 22 + gl * 60, fy - 80 + gl * 10, 2.6 * Math.sin((Math.PI * gl) / 0.3), '#ffffff');
   if (p) {
-    const r = p.look.rarity;
+    const r = item.rarity;
     if (t >= CRANK && t < wob) {
       // Out of the chute and rolling right, then a wobble that grows more eager the rarer it is.
       const u = ease(Math.min(1, (t - CRANK) / (ROLL - CRANK)));
@@ -122,13 +181,14 @@ export function gachaWindow(ui, state, world) {
       const rise = ease(Math.min(1, v / 0.5));
       ctx.save();
       ctx.globalAlpha = rise;
-      drawHero(ctx, char.appearance, wornGear(char, { [p.look.slot]: { id: cashId(p.look) } }), fx, fy - (1 - rise) * 10, { pose: 'idle', time: now, scale: 2, facing: 1, job: char.job });
+      if (p.look) drawHero(ctx, char.appearance, wornGear(char, { [p.look.slot]: { id: cashId(p.look) } }), fx, fy - (1 - rise) * 10, { pose: 'idle', time: now, scale: 2, facing: 1, job: char.job });
+      else drawPrize(ctx, p.prize, fx, fy - 40 - (1 - rise) * 10, now, char);
       ctx.restore();
       if (!p.heard) {
         p.heard = true;
         sfx('poof');
         sfx(r === 'common' ? 'tier' : 'rareDrop');
-        world.log(`Out of the capsule: ${p.look.name} (${rarityOf(r).label})!`, LABEL_COLOR[r]);
+        world.log(`Out of the capsule: ${p.look ? p.look.name : prizeName(p.prize)} (${rarityOf(r).label})!`, LABEL_COLOR[r]);
       }
     }
   }
@@ -143,7 +203,7 @@ export function gachaWindow(ui, state, world) {
     const x = rx + (i % 3) * cw;
     const y = win.y + 40 + Math.floor(i / 3) * ch;
     const have = ownsLook(char, e);
-    const lit = p && t >= wob && p.look.key === e.key;
+    const lit = p && t >= wob && p.look?.key === e.key;
     box(ctx, x, y, cw - 4, ch - 4, { fill: lit ? '#fffbe6' : have ? '#f4fff2' : '#fffaf6', edge: lit ? '#ffd23f' : e.rarity === 'star' ? '#f2d27a' : '#e6dcef', r: 7, width: lit || e.rarity === 'star' ? 2 : 1 });
     ctx.save();
     if (!have) ctx.globalAlpha = 0.45;
@@ -158,7 +218,11 @@ export function gachaWindow(ui, state, world) {
     if (hover(ui, x, y, cw - 4, ch - 4)) tooltip(ui, [...itemTooltip(char, cashId(e)), { text: have ? 'You have this one.' : 'Still in the machine.', size: 7, color: COLORS.muted }]);
   });
   const all = looks.every((e) => ownsLook(char, e));
-  text(ctx, all ? 'Whole set: a spring bloom, a butterfly, and light at your feet.' : 'Wear all six for the set bonus. Never a repeat.', rx, win.y + 148, { size: 6.5, color: COLORS.muted });
+  text(ctx, all ? 'Whole set: a spring bloom, a butterfly, and light at your feet.' : 'Wear all six for the set bonus. Never a repeat.', rx, win.y + 146, { size: 6.5, color: COLORS.muted });
+  // The rest of what's inside: the skins (ticked once you have them) and the bundle.
+  const prizes = GACHA_PRIZES[machine] ?? [];
+  const also = prizes.map((z) => `${z.kind === 'bundle' ? prizeName(z) : `${prizeName(z)}${ownsSkin(char, z.kind, z.key) ? ' ✓' : ''}`}`).join(' · ');
+  if (also) text(ctx, fit(ctx, `Also inside: ${also}`, 3 * cw - 4, 6, false), rx, win.y + 156, { size: 6, color: '#8a6ab8' });
 
   // Tickets and the crank, or the piece just won.
   const by = win.y + H - 40;
@@ -174,21 +238,27 @@ export function gachaWindow(ui, state, world) {
     return;
   }
   if (p && !p.worn) {
-    const r = p.look.rarity;
-    text(ctx, fit(ctx, p.look.name, 120, 8, true), lx + 60, ly + 14, { size: 8, bold: true, align: 'center', color: LABEL_COLOR[r] });
-    text(ctx, rarityOf(r).label, lx + 60, ly + 24, { size: 6.5, bold: true, align: 'center', color: LABEL_COLOR[r] });
+    const r = item.rarity;
+    text(ctx, fit(ctx, p.look ? p.look.name : prizeName(p.prize), 120, 8, true), lx + 60, ly + 14, { size: 8, bold: true, align: 'center', color: LABEL_COLOR[r] });
+    text(ctx, p.look ? rarityOf(r).label : p.prize.kind === 'bundle' ? 'Into your bag' : `${SKIN_LABEL[p.prize.kind]} · on now`, lx + 60, ly + 24, { size: 6.5, bold: true, align: 'center', color: LABEL_COLOR[r] });
+    if (!p.look) {
+      // (A skin goes on at once; a bundle is in the bag.)
+      if (button(ui, bx, by + 6, 74, 20, tickets > 0 ? 'Again' : 'Done', { primary: true, size: 7.5 })) {
+        win.pull = null;
+        if (tickets > 0) startPull(win, world);
+      }
+      return;
+    }
     if (button(ui, bx, by + 2, 74, 13, 'Wear it', { primary: true, size: 7 })) {
       const i = char.inventory.cash.findIndex((e) => e.id === cashId(p.look));
       if (i >= 0) wearOutfit(char, i);
       p.worn = true;
       world.log(`You're wearing the ${p.look.name}!`, '#ff8fc1');
     }
-    if (button(ui, bx, by + 17, 74, 13, all ? 'Done' : 'Again', { size: 7, enabled: all || tickets > 0 })) win.pull = null;
-    if (win.pull === null && !all) startPull(win, world);
-    return;
-  }
-  if (all) {
-    text(ctx, 'Set complete!', bx + 38, by + 19, { size: 8, bold: true, align: 'center', color: '#d4a020' });
+    if (button(ui, bx, by + 17, 74, 13, tickets > 0 ? 'Again' : 'Done', { size: 7 })) {
+      win.pull = null;
+      if (tickets > 0) startPull(win, world);
+    }
     return;
   }
   if (button(ui, bx, by + 6, 74, 20, 'Turn the crank', { primary: true, enabled: tickets > 0, size: 7.5 })) startPull(win, world);
@@ -201,7 +271,7 @@ function startPull(win, world) {
     world.log(got.why, '#ffb3c6');
     return;
   }
-  win.pull = { look: got.look, at: world.now };
+  win.pull = { look: got.look ?? null, prize: got.prize ?? null, at: world.now };
   // The machine in the plaza turns its crank too, for anyone watching.
   world.map.gachaTurn = performance.now() / 1000;
   sfx('coin');
