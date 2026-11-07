@@ -489,4 +489,11 @@ export const FX_SHEETS = {
   celmcgather: { w: 89, h: 139, n: 8, fps: 14, px: 45, py: 120, d: 3, loop: true },
   celmctier: { w: 186, h: 180, n: 6, fps: 18, px: 93, py: 119, d: 3, loop: false },
   celmchit: { w: 221, h: 230, n: 6, fps: 28, px: 108, py: 117, d: 3, loop: false },
+  celmcstreak: { w: 478, h: 87, n: 7, fps: 16, px: 20, py: 93, d: 3, loop: false },
+  celmcwellfx: { w: 506, h: 164, n: 9, fps: 14, px: 254, py: 87, d: 3, loop: false },
+  celmclight: { w: 274, h: 389, n: 10, fps: 12, px: 137, py: 341, d: 3, loop: false },
+  celmcmoons: { w: 600, h: 231, n: 9, fps: 14, px: 301, py: 148, d: 3, loop: false },
+  celmchole: { w: 246, h: 208, n: 8, fps: 14, px: 123, py: 164, d: 3, loop: true },
+  celmcsky: { w: 892, h: 388, n: 10, fps: 8, px: 446, py: 774, d: 3, loop: false },
+  celmcextinctfx: { w: 758, h: 428, n: 10, fps: 10, px: 379, py: 334, d: 3, loop: false },
 };

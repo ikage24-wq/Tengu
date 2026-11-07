@@ -1415,7 +1415,10 @@ function tickCaller(world) {
     world.fx = world.fx.filter((f) => f.kind !== 'mcgather');
     return;
   }
-  const held = world.now - c.since;
+  // (Stargazer gathers a charge faster while it lasts.)
+  const sg = world.char.buffs?.yokairally;
+  const quick = sg && sg.until > world.now ? 1 - (sg.values?.quickCall ?? 0) : 1;
+  const held = (world.now - c.since) / quick;
   const tier = held >= CALL_TIERS[2] ? 2 : held >= CALL_TIERS[1] ? 1 : 0;
   if (tier > c.tier) {
     c.tier = tier;
@@ -1995,7 +1998,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'onmyoji' && s.rain ? 'mchit' : (char.job === 'spiritmage' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,

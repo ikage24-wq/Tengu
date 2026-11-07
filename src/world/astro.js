@@ -65,7 +65,7 @@ export function gravityWell(world, s) {
   const b = world.body;
   const W = s.well;
   world.well = { ...W, key: s.key, map: world.map.id, x: b.x + b.facing * W.ahead, y: b.y, until: world.now + W.dur, next: world.now + 0.15 };
-  world.fx.push({ kind: 'somaw', well: world.well, x: world.well.x, y: world.well.y, t: 0, dur: W.dur });
+  world.fx.push({ kind: W.fx ?? 'somaw', well: world.well, x: world.well.x, y: world.well.y, t: 0, dur: W.dur });
 }
 function tickWell(world) {
   const Z = world.well;
@@ -84,7 +84,7 @@ function tickWell(world) {
     // Drawn in toward its heart (never past it), and crushed.
     const d = Z.x - m.x;
     if (!m.def.boss) m.x += Math.sign(d) * Math.min(Math.abs(d), Z.pull);
-    dollHit(world, m, { pct: Z.pct, x: Z.x, knock: 0, stop: 0, burst: el ? `qnhit${el}` : 'ashit', gauge: 1, key: Z.key, el });
+    dollHit(world, m, { pct: Z.pct, x: Z.x, knock: 0, stop: 0, burst: Z.hit ?? (el ? `qnhit${el}` : 'ashit'), gauge: 1, key: Z.key, el });
   }
 }
 

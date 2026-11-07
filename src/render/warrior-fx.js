@@ -337,6 +337,23 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.7 }) || true;
     case 'mcrxkaboom':
       return f.t < 0 || fxSprite(ctx, 'celmccrater', x, y + 6, { p, scale: f.small ? 0.35 : 0.5 }) || true;
+    // Her skills: Shooting Star's streak (laid along her dive), the Gravity Well on the floor, the
+    // column of Starlight, the moons of the Orbit Shield round the party (both on the floor, under
+    // everyone), the Black Hole where it opens, Extinction's sky and its impact far ahead.
+    case 'mcstreak':
+      return fxSprite(ctx, 'celmcstreak', x - dir * 20, y + 4, { p, flip, scale: 0.8 }) || true;
+    case 'mcwellfx':
+      return fxSprite(ctx, 'celmcwellfx', x, y + 6, { p, scale: 0.9 }) || true;
+    case 'mclight':
+      return fxSprite(ctx, 'celmclight', x, y + 6, { p, scale: 0.8 }) || true;
+    case 'mcmoons':
+      return fxSprite(ctx, 'celmcmoons', x, y + 6, { p, scale: 1 }) || true;
+    case 'mchole':
+      return fxSprite(ctx, 'celmchole', x, y + 4, { t: f.t, scale: 0.8, alpha: Math.min(1, f.t * 4, (f.dur - f.t) * 3) }) || true;
+    case 'mcsky':
+      return fxSprite(ctx, 'celmcsky', x + dir * 170, y + 4, { p, scale: 0.9 }) || true;
+    case 'mcextinctfx':
+      return f.t < 0 || fxSprite(ctx, 'celmcextinctfx', x + dir * 20, y + 6, { p, scale: 1.1 }) || true;
     case 'mchit':
       return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 24) / 2, { p, scale: f.big || f.crit ? 0.6 : 0.45 }) || true;
     case 'jgencore':
@@ -363,7 +380,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'rxchain': {
       // The Sorcerer's chain: a crackle of the element leaping from one monster to the next.
       if (f.t < 0) return true;
-      const col = { fire: ['#9a2a3a', '#ffb43c'], ice: ['#2a4a8a', '#9ae2ff'], bolt: ['#7a4a2a', '#ffe04a'] }[f.el] ?? ['#3a2457', '#ffd36a'];
+      // (The Meteor Caller's chains are starlight: violet with a white-hot core, whatever the element.)
+      const col = ['#2e1e5a', '#efe4ff'];
       const tx = f.tx - cam.x;
       const ty = f.ty - cam.y;
       const n = 7;

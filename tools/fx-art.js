@@ -6791,6 +6791,220 @@
       },
     };
   })(), 1.3);
+
+  // The Meteor Caller's skills.
+  // Shooting Star: the streak of starlight she leaves as she dives (drawn along +x from where she
+  // took off): a long tapering band of violet light, a star at its head, sparkles shed behind.
+  E.mcstreak = grown((() => {
+    const cx = 40;
+    const cy = 50;
+    return {
+      w: 300, h: 100, n: 8, fps: 16, px: cx, py: cy + 30,
+      draw(ctx, i) {
+        const u = i / 7;
+        const len = 60 + 200 * Math.min(1, u * 2);
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, u - 0.5) * 2);
+        ribbon(ctx, MCNIGHT, (v) => [cx + v * len, cy + Math.sin(v * 3 + u * 4) * 3], (v) => 10 * Math.sin(Math.PI * v) * (0.4 + v * 0.6), { n: 30 });
+        if (u < 0.6) fourStar(ctx, MCNIGHT, cx + len, cy, 12, u * 3);
+        const R = rng(1300 + i);
+        for (let k = 0; k < 6; k++) sparkle(ctx, k % 2 ? MCEMBER : MCNIGHT, cx + R() * len, cy + (R() - 0.5) * 30, 4, k);
+        ctx.globalAlpha = 1;
+      },
+    };
+  })(), 1.8);
+  // Gravity Well (on the floor round her, under everyone): a dark ring with violet light spiralling
+  // inward, motes dragged toward its middle.
+  E.mcwellfx = grown((() => {
+    const cx = 200;
+    const cy = 60;
+    return {
+      w: 400, h: 120, n: 9, fps: 14, px: cx, py: cy + 10,
+      draw(ctx, i) {
+        const u = i / 8;
+        ctx.save();
+        ctx.translate(cx, cy + 10);
+        ctx.scale(1, 0.25);
+        for (let k = 0; k < 3; k++) celRing(ctx, MCNIGHT, 0, 0, (180 - u * 120 - k * 30), 5 - k, { broken: 0.5, seed: 1310 + i + k });
+        ctx.beginPath();
+        ctx.arc(0, 0, 30 + 10 * Math.sin(u * TAU), 0, TAU);
+        ctx.fillStyle = '#1a1030';
+        ctx.globalAlpha = 0.8;
+        ctx.fill();
+        ctx.restore();
+        ctx.globalAlpha = 1;
+        const R = rng(1320);
+        for (let k = 0; k < 12; k++) {
+          const a = R() * TAU;
+          const d = (1 - ((u + k / 12) % 1)) * 170;
+          sparkle(ctx, MCNIGHT, cx + Math.cos(a) * d, cy + 10 + Math.sin(a) * d * 0.25 - 10, 4, k);
+        }
+      },
+    };
+  })(), 1.4);
+  // Starlight (the heal): a soft column of starlight falling over her and the party, stars drifting
+  // down inside it.
+  E.mclight = grown((() => {
+    const cx = 100;
+    const cy = 220;
+    return {
+      w: 200, h: 240, n: 10, fps: 12, px: cx, py: cy,
+      draw(ctx, i) {
+        const u = i / 9;
+        const a = Math.sin(Math.PI * Math.min(1, u * 1.2));
+        const g = ctx.createLinearGradient(0, 0, 0, cy);
+        g.addColorStop(0, 'rgba(239,228,255,0)');
+        g.addColorStop(0.4, `rgba(239,228,255,${0.55 * a})`);
+        g.addColorStop(1, `rgba(255,240,184,${0.7 * a})`);
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(cx - 40, 0);
+        ctx.lineTo(cx + 40, 0);
+        ctx.lineTo(cx + 70, cy);
+        ctx.lineTo(cx - 70, cy);
+        ctx.closePath();
+        ctx.fill();
+        for (let k = 0; k < 8; k++) {
+          const y = ((u + k / 8) % 1) * cy;
+          ctx.globalAlpha = a;
+          fourStar(ctx, k % 2 ? MCEMBER : MCNIGHT, cx + Math.sin(k * 2.3) * 40 * (y / cy + 0.4), y, 5 + (k % 3), k);
+        }
+        ctx.globalAlpha = 1;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, 0.25);
+        celRing(ctx, MCEMBER, 0, 0, 60 + 20 * u, 4, { broken: 0.3, seed: 1330 + i });
+        ctx.restore();
+      },
+    };
+  })(), 1.6);
+  // Orbit Shield (round the party, on the floor and above it): little moons on a tilted orbit,
+  // each with a faint ring of its own, a soft ring of light marking the course.
+  E.mcmoons = grown((() => {
+    const cx = 200;
+    const cy = 90;
+    return {
+      w: 400, h: 180, n: 10, fps: 14, px: cx, py: cy + 30,
+      draw(ctx, i) {
+        const u = i / 9;
+        const r = 60 + 120 * (1 - (1 - Math.min(1, u * 1.5)) ** 3);
+        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, u - 0.75) * 4);
+        ctx.save();
+        ctx.translate(cx, cy + 30);
+        ctx.scale(1, 0.24);
+        celRing(ctx, MCNIGHT, 0, 0, r, 4, { broken: 0.2, seed: 1340 + i });
+        ctx.restore();
+        for (let k = 0; k < 4; k++) {
+          const a = (k / 4) * TAU + u * 3;
+          const x = cx + Math.cos(a) * r;
+          const y = cy + 30 + Math.sin(a) * r * 0.24 - 34;
+          ctx.beginPath();
+          ctx.arc(x, y, 9, 0, TAU);
+          ctx.fillStyle = '#d8d0f0';
+          ctx.fill();
+          ctx.strokeStyle = MCNIGHT[4];
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(x + 3, y - 1, 7, 0, TAU);
+          ctx.fillStyle = '#a89ad0';
+          ctx.fill();
+          sparkle(ctx, MCNIGHT, x - 10, y - 10, 3.4, k + i);
+        }
+        ctx.globalAlpha = 1;
+      },
+    };
+  })(), 1.6);
+  // Black Hole (where it opens, for as long as it lasts; loops): a small black star rimmed in violet
+  // fire, light bending round it in a swirl, motes falling in.
+  E.mchole = grown((() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 8, fps: 14, px: c, py: c + 40, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 8) * TAU;
+        for (let k = 0; k < 3; k++) {
+          ctx.save();
+          ctx.translate(c, c);
+          ctx.rotate(ph + k * 2.1);
+          ribbon(ctx, MCNIGHT, (u) => [Math.cos(u * 4) * (60 - u * 40), Math.sin(u * 4) * (60 - u * 40) * 0.5], (u) => 6 * Math.sin(Math.PI * u), { n: 24 });
+          ctx.restore();
+        }
+        ctx.beginPath();
+        ctx.arc(c, c, 22, 0, TAU);
+        ctx.fillStyle = MCNIGHT[3];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(c, c, 17, 0, TAU);
+        ctx.fillStyle = '#0e0818';
+        ctx.fill();
+        celRing(ctx, MCEMBER, c, c, 24, 3, { broken: 0.4, seed: 1350 + i });
+        const R = rng(1360);
+        for (let k = 0; k < 8; k++) {
+          const a = R() * TAU;
+          const d = (1 - ((i / 8 + k / 8) % 1)) * 70;
+          sparkle(ctx, MCNIGHT, c + Math.cos(a) * d, c + Math.sin(a) * d * 0.6, 3.4, k);
+        }
+      },
+    };
+  })(), 1.6);
+  // Extinction's sky: the heavens tearing open over everything ahead, a ring of light widening, and
+  // the colossal star glowing ever brighter in its middle.
+  E.mcsky = grown((() => {
+    const cx = 200;
+    const cy = 80;
+    return {
+      w: 400, h: 160, n: 10, fps: 8, px: cx, py: cy + 260,
+      draw(ctx, i) {
+        const u = i / 9;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(1, 0.4);
+        celRing(ctx, MCNIGHT, 0, 0, 40 + u * 150, 6, { broken: 0.3, seed: 1370 + i });
+        ctx.restore();
+        for (let k = 0; k < 6; k++) {
+          const a = (k / 6) * Math.PI + Math.PI;
+          zap(ctx, MCNIGHT, cx, cy, cx + Math.cos(a) * (60 + u * 120), cy + Math.sin(a) * (20 + u * 40) + 20, 3, 1380 + k + i, 0);
+        }
+        const R = 18 + u * 50;
+        const g = ctx.createRadialGradient(cx, cy + 20, 2, cx, cy + 20, R);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.5, MCEMBER[1]);
+        g.addColorStop(1, 'rgba(232,96,42,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(cx, cy + 20, R, 0, TAU);
+        ctx.fill();
+      },
+    };
+  })(), 2.4);
+  // Extinction's impact: a colossal flash, a crater and a wall of shock rolling out across the
+  // floor far ahead, rock and embers thrown high.
+  E.mcextinctfx = grown((() => {
+    const cx = 240;
+    const cy = 150;
+    return {
+      w: 480, h: 260, n: 10, fps: 10, px: cx, py: cy + 60,
+      draw(ctx, i) {
+        const u = i / 9;
+        if (i <= 3) starburst(ctx, MCEMBER, cx, cy, 60 + i * 50, 14, 1390, { inner: 0.3, rot: i * 0.2 });
+        ctx.save();
+        ctx.translate(cx, cy + 60);
+        ctx.scale(1, 0.22);
+        celRing(ctx, MCEMBER, 0, 0, 60 + u * 230, Math.max(3, 14 - u * 10), { broken: u * 0.6, seed: 1395 + i });
+        celRing(ctx, MCNIGHT, 0, 0, 30 + u * 180, Math.max(2, 8 - u * 6), { broken: u * 0.7, seed: 1396 + i });
+        ctx.restore();
+        const R = rng(1400);
+        for (let k = 0; k < 14; k++) {
+          const a = Math.PI + R() * Math.PI;
+          const d = u * (80 + R() * 160);
+          const x = cx + Math.cos(a) * d;
+          const y = cy + 40 + Math.sin(a) * d * 0.8 + u * u * 120;
+          if (k % 2) inked(ctx, [[x - 5, y], [x, y - 6], [x + 6, y - 1], [x + 2, y + 5]], '#7a5048', '#2a1a1e', 2);
+          else sparkle(ctx, MCEMBER, x, y, 6 - u * 3, k);
+        }
+      },
+    };
+  })(), 1.6);
   // The catch: a twinkle as an orb drops back into her orbit.
   E.jgcatch = (() => {
     const c = 40;

@@ -33,6 +33,24 @@ the **Spell Juggler**.
 - Effects: tools/fx-art.js, the Spell Juggler section (`jg*`). Her paths (the Sorcerer, the
   Cleric) are to be rebuilt the same way, each with its own moves and effect language.
 
+## The Sorcerer: the Meteor Caller (remade again, 2026-11-07)
+
+Rebuilt on the same rejection of reskins (id `onmyoji` kept). Her basic spell is charged
+(world/melee.js `callerBasic`, `tickCaller`, CALL_* numbers): a tap flicks a star-spark; held, she
+gathers (render/moves.js `mcgather`, walking at CALL_WALK) and letting go calls a comet down from
+high above (CALL_TIERS[1]) or a burning meteor that leaves a crater and a ring of shock
+(CALL_TIERS[2]); held to CALL_MAX it goes off by itself. Charged hits fill Starfall (internally
+Binding); full (STARSTORM), every tap calls a meteor at once. Her reactions are her own small star
+and ember bursts (`mcrx*`) and her chains are violet starlight.
+
+- Her Mage skills her way (`paths.onmyoji`): Meteor Shower, Shooting Star (her blink), Comet Lance,
+  Gravity Well (stuns), Starlight (the heal), Orbit Shield (the barrier), Meteor Storm.
+- Her own: Stargazer's Lore (passive), Starfall Barrage, Black Hole (the gravity well engine,
+  world/astro.js, drawn as `mchole`), Stargazer (magic up, charges gather faster: `quickCall`,
+  Starfall fills faster), and the finisher Extinction (the sky opening, `mcsky`, then a colossal
+  impact, `mcextinctfx`).
+- Moves `mc*` (render/moves.js), effects `mc*` (tools/fx-art.js, the Meteor Caller section).
+
 ## The Mage (remade from scratch, 2026-11-06)
 
 The player found the first build (the edgelord, Element Weave) not as fun as the other jobs and
