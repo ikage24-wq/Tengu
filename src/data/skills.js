@@ -557,7 +557,7 @@ export const SKILLS = {
     },
   }),
   thousandtorii: skill({
-    id: 'thousandtorii', name: 'Bubble Party', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
+    id: 'thousandtorii', dmg: 2.5, name: 'Bubble Party', job: 'shrinemaiden', type: 'attack', fx: null, icon: 'thousandtorii', school: 'idol', maxLevel: 10, fullGauge: true, party: true,
     desc: 'Finisher: needs full Devotion, and spends it. Spin on the spot, wand overhead, and blow a bubble so huge it closes over everyone near you: everyone inside is healed in full and wrapped in a ward, and on three great bounces the dome throws the monsters back. Then it pops into a shower of foam.',
     weapons: ['wand', 'staff'],
     at: (lv, m) => {
@@ -737,7 +737,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { speed: lerp(3, 18, lv, m), eva: lerp(3, 25, lv, m) } }),
   }),
   cometarrow: skill({
-    id: 'cometarrow', name: 'Grand Somersault', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
+    id: 'cometarrow', dmg: 1.44, name: 'Grand Somersault', job: 'archer', type: 'attack', fx: null, school: 'hawk', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs a full Combo, and spends it. Crouch deep and launch yourself into a huge triple somersault high above the screen; at the top a ring of gold bursts round you and you rain golden arrows down on everything below, then land with a wink. A Phantom Trickster levitates and tips a giant top hat over them (Levitation); an Arbalist Engineer fires a mortar shell that bursts into a hail of bolts (Bolt Mortar).',
     pathNames: { beastmaster: 'Levitation', stormcaller: 'Bolt Mortar' },
     weapons: ['bow', 'crossbow'],
@@ -818,7 +818,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: {}, proc: { pct: lerp(1, 1, lv, m) } }),
   }),
   stampede: skill({
-    id: 'stampede', name: 'Grand Illusion', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10, fullGauge: true,
+    id: 'stampede', dmg: 3, name: 'Grand Illusion', job: 'beastmaster', type: 'attack', fx: null, school: 'phantom', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Illusion, and spends it. Sweep your cape up, snap your fingers and vanish in smoke: a ring of copies of you appears all round the screen, and they all loose at once at the monsters nearest them. Then you reappear and take a bow.',
     weapons: ['bow'],
     at: (lv, m) => {
@@ -896,7 +896,7 @@ export const SKILLS = {
     at: (lv, m) => ({ mp: lerp(20, 30, lv, m), duration: 20, buff: { shots: lerp(3, 6, lv, m), power: lerpf(1.6, 2.2, lv, m) } }),
   }),
   bigbertha: skill({
-    id: 'bigbertha', name: 'Big Bertha', job: 'stormcaller', type: 'attack', fx: null, icon: 'bigbertha', school: 'brass', maxLevel: 10, fullGauge: true,
+    id: 'bigbertha', dmg: 3, name: 'Big Bertha', job: 'stormcaller', type: 'attack', fx: null, icon: 'bigbertha', school: 'brass', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Pressure, and spends it. Flip your goggles down and unfold your crossbow into a giant ballista; crank it, and fire one enormous bolt that blasts through everything in front of you. Then push your goggles up, sooty, and grin.',
     weapons: ['crossbow'],
     at: (lv, m) => {
@@ -978,7 +978,7 @@ export const SKILLS = {
     at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), acc: lerp(3, 25, lv, m) } }),
   }),
   grandfinale: skill({
-    id: 'grandfinale', name: 'Grand Finale', job: 'thief', type: 'attack', fx: null, icon: 'grandfinale', school: 'coral', maxLevel: 10, fullGauge: true,
+    id: 'grandfinale', dmg: 1.2, name: 'Grand Finale', job: 'thief', type: 'attack', fx: null, icon: 'grandfinale', school: 'coral', maxLevel: 10, fullGauge: true,
     desc: 'Finisher: needs full Encore, and spends it. A spotlight drops on you; you spin up a great rose of ribbons that cuts everything around you again and again, then it bursts open and throws them all into the air.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);

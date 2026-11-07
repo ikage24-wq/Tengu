@@ -31,24 +31,24 @@ export const JOBS = {
   },
 
   warrior: {
-    id: 'warrior', guard: 0.85, power: 0.68, spread: 0.53, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'warrior', guard: 0.85, power: 0.73, spread: 0.98, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
   // The Mage (docs/design/mage-line.md; the Star Witch and the old Spirit Mage before her, id kept):
   // a dramatic edgelord of fire, ice and lightning, who heals a little.
   spiritmage: {
-    id: 'spiritmage', power: 0.52, spread: 0.83, name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'spiritmage', power: 0.28, spread: 0.75, name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
     blurb: 'A mage of fire, ice and lightning with INT, who names every spell like the chosen one: quick bolts and shards from a wand, or fireballs, ice spikes and lightning from the sky with a staff. Mixing elements weaves her Element Weave; full (Overload), every spell carries all three, and Meteor is ready. A little healing keeps a party going.',
   },
   archer: {
-    id: 'archer', power: 1.45, spread: 0.72, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'archer', power: 1.56, spread: 0.98, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
     blurb: 'A show-off who shoots mid-trick with DEX: skips, flips, splits and rolls, a short trick bow loosed from the top of each. Her hits in a row build Combo, and her flips keep it going; full (Showtime), every shot splits into three. Handspring, Springboard, and Grand Somersault: a huge leap raining golden arrows down.',
   },
   thief: {
-    id: 'thief', power: 0.75, spread: 1.45, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'thief', power: 0.7, spread: 1.2, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
     blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
   },
@@ -58,36 +58,36 @@ export const JOBS = {
   // Astronomer (her moons, Orbit and Planetary Alignment; docs/design/astronomer.md; to be remade as
   // the Sorcerer).
   shrinemaiden: {
-    id: 'shrinemaiden', power: 1.85, spread: 0.86, name: 'Cleric', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    id: 'shrinemaiden', power: 0.81, spread: 1.15, name: 'Cleric', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 18, mp: 26, advanceHp: 260, advanceMp: 480, weapons: ['wand'],
     blurb: 'A Mage who saw the light, and wants everyone to know: she names every heal like an epic spell and poses like a saint in a stained-glass window. Guiding Light follows whoever is hurt and keeps mending them; Blessing of Valor and Penance turn a fight; Resurrection raises the fallen; and Miracle, with her Devotion full, heals everyone in full. The healer of any dungeon group.',
   },
   onmyoji: {
-    id: 'onmyoji', power: 1.07, spread: 1.51, name: 'Sorcerer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
+    id: 'onmyoji', power: 0.38, spread: 1.07, name: 'Sorcerer', family: 'mage', tier: 2, parent: 'spiritmage', level: 30, trial: 'spiritmage_trial',
     hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
     blurb: 'A Mage whose dark-power act turned out to be real. Shadow hands and ember flame answer her, and she is very calm about it until afterwards. Casting without letup builds her Spellstorm; full, every spell casts twice. Grasping Dark, Abyssal Maw, Dark Pact, and Hand of the Abyss: a colossal hand that crushes everything ahead. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   paladin: {
-    id: 'paladin', guard: 0.8, power: 1.35, spread: 0.79, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'paladin', guard: 0.8, power: 1.53, spread: 2, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 32, mp: 14, advanceHp: 600, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The shield of the party. Holy light stuns and taunts, and blessings guard everyone near. The tank of any dungeon group.',
   },
   berserker: {
-    id: 'berserker', power: 0.46, spread: 0.72, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'berserker', power: 0.59, spread: 2, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 30, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
   },
 
   // Archer branches. Both ask for Kestrel's trial first.
   beastmaster: {
-    id: 'beastmaster', power: 2.57, spread: 0.92, name: 'Phantom Trickster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'beastmaster', power: 2.5, spread: 1.62, name: 'Phantom Trickster', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 26, mp: 17, advanceHp: 340, advanceMp: 260, weapons: ['bow'],
     blurb: 'A stage magician with a bow: every shot dressed up as a trick. Her hits build Illusion, and see-through copies of her appear behind her and shoot beside her. Arrows that vanish and strike again, doves, cards, a smoke bomb, and Grand Illusion: a ring of copies all loosing at once.',
   },
   stormcaller: {
-    id: 'stormcaller', power: 1.57, spread: 0.56, name: 'Arbalist Engineer', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
+    id: 'stormcaller', power: 2.84, spread: 1.09, name: 'Arbalist Engineer', family: 'archer', tier: 2, parent: 'archer', level: 30, trial: 'archer_trial',
     hp: 24, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['crossbow'],
     blurb: 'An inventor with a crossbow of her own making. Her bolts build steam Pressure; full, every shot fires two. Sticky and cluster bolts, a steam vent, a little turret that fires on its own, and Big Bertha: a giant ballista bolt through everything.',
   },
@@ -95,12 +95,12 @@ export const JOBS = {
   // The dancer's paths (the Thief's branches, ids kept). Both ask for Vex's trial first; each keeps
   // to one of her two weapons: the Blade Dancer to chakrams, the Sky Dancer to gloves.
   shinobi: {
-    id: 'shinobi', power: 1.6, spread: 1.07, name: 'Blade Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'shinobi', power: 2.44, spread: 1.7, name: 'Blade Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 24, mp: 17, advanceHp: 320, advanceMp: 260, weapons: ['dagger'],
     blurb: 'A ring-throwing showgirl with chakrams. Her rings ricochet from monster to monster and fly home to her hand, building Ricochet; full, two rose-gold rings orbit her and cut whatever comes close. Rebound, Twin Rings, and Golden Carousel: a carousel of rings flung out through everything.',
   },
   kitsune: {
-    id: 'kitsune', power: 1.41, spread: 1.37, name: 'Sky Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
+    id: 'kitsune', power: 3.01, spread: 1.81, name: 'Sky Dancer', family: 'thief', tier: 2, parent: 'thief', level: 30, trial: 'thief_trial',
     hp: 23, mp: 18, advanceHp: 300, advanceMp: 280, weapons: ['gauntlet'],
     blurb: 'A dancer who never lands, with gloves of wind. Every blow lifts her higher over the monsters and throws a crescent of wind down at them; her hits in the air build Tailwind, and full, she flies freely and her gusts are twice as big. Updraft, Zephyr, and Sky Waltz: a giant tornado that lifts them all and slams them down.',
   },

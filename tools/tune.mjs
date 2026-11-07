@@ -1,7 +1,7 @@
 // Finds each job's damage tuning (data/jobs.js): `power` (everything it hits) from one-target
 // damage, and `spread` (its hits on the monsters past the first) from five-target damage, so the
 // roles land where they should at the job's own stage (first jobs at levels 20 and 28, paths at 40, 50 and
-// 60), each against the damage jobs' average:
+// 50), each against the damage jobs' average:
 //   melee damage jobs   108% (first jobs 106%)    ranged damage jobs  96% (first jobs 94%)
 //   support (tanks and healers)  88%, a bit under the ranged ones
 // each damage job keeping its own lean (one target or crowds) up to +-5%, on one target and on a
@@ -18,7 +18,7 @@ const TARGET = { tank: 0.88, healer: 0.88 };
 const MELEE = new Set(['thief', 'berserker', 'kitsune']);
 const DPS = { 1: { melee: 1.06, ranged: 0.94 }, 2: { melee: 1.08, ranged: 0.96 } };
 const LEAN = 0.05;
-const STAGES = { 1: [20, 28], 2: [40, 50, 60] };
+const STAGES = { 1: [20, 28], 2: [40, 45, 50] };
 const rounds = Number(process.argv[2] ?? 4);
 const role = (j) => roleOf(j, JOBS[j].family);
 
