@@ -37,6 +37,10 @@ export const MATERIALS = {
   // A harbour quay (Pastel Harbor): warm rounded cobbles in sandstone pastels under a pale stone
   // kerb, instead of a slab of flat purple brick.
   quay: { lip: '#f6e6d2', body: '#d6c2c6', deep: '#a8909c', stone: '#f0dcd6', style: 'cobble', blades: false, drip: 'weed' },
+  // The manor's slate roof (the Moonlit Rooftop): blue-violet shingles under a pale lead ridge.
+  roof: { lip: '#e6dcfa', body: '#6a5aa8', deep: '#3e3270', stone: '#8a7ac8', style: 'shingle', blades: false, drip: null },
+  // Clipped garden hedges (the Moonlit Garden's terraces): dense dark leaves, a lit top.
+  hedge: { lip: '#8fd89a', body: '#4f9a6a', deep: '#2f6a4e', stone: '#6fc080', style: 'mossloam', blades: false, drip: 'vine' },
   // A root cellar's floor: packed earth with no grass, roots trailing over its edges.
   cellar: { lip: '#c8a07e', body: '#a87e64', deep: '#7e5a46', stone: '#cda48c', style: 'loam', blades: false, drip: 'root' },
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
@@ -119,7 +123,37 @@ function paintTile(g, m, theme) {
   };
   const seed = theme.length * 7.3;
   const line = edge(m.body);
-  if (m.style === 'cobble') {
+  if (m.style === 'shingle') {
+    // Slate roof shingles: staggered rows of round-bottomed tiles, each overlapping the row below,
+    // a lit top edge and a shadow under its curve.
+    for (let row = 0; row < TH / 12 + 1; row++) {
+      for (let col = -1; col < TW / 14 + 1; col++) {
+        const k = seed + row * 31 + col;
+        const x = col * 14 + (row % 2) * 7;
+        const y = row * 12;
+        wrap((dx, dy) => {
+          g.fillStyle = m.deep;
+          g.beginPath();
+          g.moveTo(x + dx, y + dy);
+          g.lineTo(x + dx + 14, y + dy);
+          g.lineTo(x + dx + 14, y + dy + 9);
+          g.quadraticCurveTo(x + dx + 7, y + dy + 16, x + dx, y + dy + 9);
+          g.closePath();
+          g.fill();
+          g.fillStyle = hash(k) > 0.7 ? m.stone : hash(k) > 0.35 ? m.body : mix(m.body, m.deep, 0.3);
+          g.beginPath();
+          g.moveTo(x + dx + 0.6, y + dy);
+          g.lineTo(x + dx + 13.4, y + dy);
+          g.lineTo(x + dx + 13.4, y + dy + 8);
+          g.quadraticCurveTo(x + dx + 7, y + dy + 14, x + dx + 0.6, y + dy + 8);
+          g.closePath();
+          g.fill();
+          g.fillStyle = 'rgba(255,255,255,0.22)';
+          g.fillRect(x + dx + 1.4, y + dy + 1, 11, 1.2);
+        });
+      }
+    }
+  } else if (m.style === 'cobble') {
     // Rounded stones in staggered rows, each lit on top and shaded below.
     for (let row = 0; row < TH / 16; row++) {
       for (let col = 0; col < TW / 16; col++) {
@@ -1755,7 +1789,17 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
     return;
   }
   if (style === 'terrace') {
+    // (A map can build its terraces of something other than its ground: the manor's hedges.)
+    const tm = look?.terraceMaterial;
+    if (tm && MATERIALS[tm]) {
+      drawTerrace(ctx, tm, MATERIALS[tm], x, y, w, map ? surfaceBelow(map, p) - cam.y : y + 120, cam, time, pi, look?.edges);
+      return;
+    }
     drawTerrace(ctx, theme, m, x, y, w, map ? surfaceBelow(map, p) - cam.y : y + 120, cam, time, pi, look?.edges);
+    return;
+  }
+  if (style === 'pergola') {
+    drawPergola(ctx, m, x, y, w, map ? surfaceBelow(map, p) - cam.y : y + 120, time, pi, look?.edges);
     return;
   }
   if (style === 'crust') {
@@ -1842,6 +1886,62 @@ function surfaceBelow(map, p) {
     best = Math.min(best, q.y);
   }
   return best;
+}
+
+// A garden pergola walkway (the Moonlit Garden, 2026-11-07): a plank deck on white-painted posts
+// that run down to the ground below, braced under the deck, climbing roses wound round each post
+// with blooms here and there, and the deck's edge trailing vines. Light and open: the garden and
+// the manor show through it.
+function drawPergola(ctx, m, x, y, w, bottom, time, pi, deco) {
+  const n = Math.max(2, Math.round(w / 110) + 1);
+  const post = '#f2ecf8';
+  const line = edge(post);
+  for (let k = 0; k < n; k++) {
+    const px = Math.round(x + 10 + (k * (w - 20)) / (n - 1));
+    ctx.fillStyle = post;
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 1;
+    ctx.fillRect(px - 3, y + 6, 6, bottom - y - 4);
+    ctx.strokeRect(px - 3 + 0.5, y + 6.5, 5, bottom - y - 5);
+    ctx.fillStyle = '#d8cce8';
+    ctx.fillRect(px + 1, y + 8, 2, bottom - y - 8);
+    // Its brace up to the deck.
+    for (const s of k === 0 ? [1] : k === n - 1 ? [-1] : [-1, 1]) {
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(px, y + 34);
+      ctx.lineTo(px + s * 22, y + 10);
+      ctx.stroke();
+      ctx.strokeStyle = post;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+    // The climbing rose wound round the post.
+    ctx.strokeStyle = '#4f9a6a';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let vy = bottom; vy > y + 8; vy -= 4) ctx.lineTo(px + Math.sin(vy * 0.12 + k) * 4, vy);
+    ctx.stroke();
+    for (let vy = bottom - 14; vy > y + 14; vy -= 26) {
+      const bx = px + Math.sin(vy * 0.12 + k) * 4;
+      ctx.fillStyle = '#6fc080';
+      ctx.beginPath();
+      ctx.ellipse(bx - 4, vy + 3, 3.4, 2, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      if (hash(pi * 7 + k * 3.1 + vy) > 0.45) {
+        ctx.fillStyle = hash(vy + k) > 0.5 ? '#ff9ec8' : '#ffd0e6';
+        ctx.beginPath();
+        ctx.arc(bx + 3, vy, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(bx + 2.4, vy - 0.8, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  drawPlanks(ctx, m, x, y, w, time, pi, deco);
 }
 
 // The surface over a cellar (Clover Hills' fields over the Root Cellar): a thick slab of the land,

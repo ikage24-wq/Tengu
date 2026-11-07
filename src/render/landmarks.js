@@ -2675,6 +2675,51 @@ function greatcherryArt(big, oak = false) {
   });
 }
 
+// The Moonlit Rooftop's chimneys (2026-11-07): a brick stack standing on the slate roof, its
+// flashing tucked under the shingles, a stone cap and two clay chimney pots on top (the ledge is
+// the cap: the map's platform there is `bare`). Smoke curls from the pots (drawn live).
+function chimneyArt() {
+  return art('chimney', 86, 96, () => {
+    const out = [];
+    const b = ramp('#8a6ab8', 0.85);
+    out.push(T([[2, 96], [12, 86], [74, 86], [84, 96]], '#4a3c7a'), F(R(10, 86, 66, 3, '#e6dcfa')));
+    out.push(R(12, 14, 62, 74, b.base));
+    for (let row = 0; row < 9; row++) {
+      const y = 16 + row * 8;
+      out.push(F(R(12, y + 6.4, 62, 1.2, b.deep)));
+      for (let col = 0; col < 5; col++) {
+        const x = 12 + col * 14 + (row % 2) * 7;
+        if (x < 74) out.push(F(R(Math.min(73, x), y, 1.2, 6.4, b.deep)));
+      }
+    }
+    out.push(F(R(12, 14, 6, 74, b.hi)), F(R(66, 14, 8, 74, b.sh)));
+    out.push(R(6, 6, 74, 10, '#d8cce8'), F(R(6, 6, 74, 2.4, '#f6f0ff')), F(R(6, 14, 74, 2, '#9a8ab8')));
+    for (const x of [26, 58]) out.push(R(x - 6, -2, 12, 10, '#d87a6a'), F(R(x - 6, -2, 3, 10, '#f0a090')), R(x - 7, -4, 14, 3, '#e88a7a'));
+    return out;
+  });
+}
+// The weathervane on the roof's peak: a tall iron pole with a little railed platform at its foot of
+// the vane (the room's secret: the map's platform there is `bare`), the arrow and a crescent moon
+// turning in the wind on top, and the four points of the compass.
+function weathervaneArt(f) {
+  return art(`weathervane|${f}`, 96, 210, () => {
+    const out = [];
+    const iron = '#4a3c6a';
+    out.push(R(46, 50, 4, 160, iron), F(R(46, 50, 1.4, 160, '#7a6a9a')), T([[30, 210], [48, 196], [66, 210]], iron));
+    // The platform round the pole at the top (its deck is the ledge).
+    out.push(R(8, 50, 80, 6, '#6a5a8a'), F(R(8, 50, 80, 1.6, '#a898c8')), R(8, 40, 3, 10, iron), R(85, 40, 3, 10, iron), R(8, 40, 80, 2.2, iron));
+    for (let x = 18; x < 84; x += 10) out.push(F(R(x, 42, 1.4, 8, iron)));
+    out.push(T([[10, 56], [86, 56], [64, 70], [32, 70]], '#5a4a7a'));
+    // The compass points and the turning arrow with a crescent moon.
+    out.push(R(26, 22, 44, 2.2, iron), R(47, 8, 2.2, 30, iron));
+    for (const [x, y, t] of [[22, 23, 'W'], [72, 23, 'E']]) out.push(E(x, y, 2.4, 2.4, '#ffd36b'));
+    const tilt = [-6, 0, 6][f];
+    out.push(T([[48 + tilt, 4], [70 + tilt, 9], [48 + tilt, 14]], '#ffd36b'), T([[48 - tilt, 4], [30 - tilt, 0], [34 - tilt, 9], [30 - tilt, 18], [48 - tilt, 14]], '#ffd36b'));
+    out.push(E(48, 0, 5, 5, '#ffe9a0'), F(E(50, -1, 4, 4, '#3a3270')));
+    return out;
+  });
+}
+
 // ---------- Dawnlight Beach (the tutorial island, reworked 2026-11-07) ----------
 // Where a sandy shore meets the sea behind a quay: a low bank of sand heaped against a few rounded
 // boulders, tufts of beach grass, a shell and a buoy, so the water begins behind a shoreline
@@ -2842,6 +2887,24 @@ const KINDS = {
   wreck: { w: 200, h: 104, draw: (ctx, x, y, time, seed) => place(ctx, wreckArt(Math.floor(time * 3 + seed * 3) % 3), x, y) },
   palm: { w: 96, h: 150, draw: (ctx, x, y, time, seed, wx) => place(ctx, palmArt(leanFrame(time, wx, 5, 0.2, seed), variant(seed, 2)), x, y) },
   tidepool: { w: 96, h: 26, draw: (ctx, x, y, time, seed) => place(ctx, tidepoolArt(Math.floor(time * 1.5 + seed * 3) % 3), x, y) },
+  chimney: {
+    w: 86, h: 96,
+    draw(ctx, x, y, time, seed) {
+      place(ctx, chimneyArt(), x, y);
+      // Smoke curling up from the pots.
+      ctx.save();
+      for (let k = 0; k < 6; k++) {
+        const u = (time * 0.35 + k / 6 + seed) % 1;
+        ctx.globalAlpha = 0.35 * (1 - u);
+        ctx.fillStyle = '#d8d0ee';
+        ctx.beginPath();
+        ctx.arc(x + (k % 2 ? 15 : -17) + Math.sin(u * 6 + k) * 5 + u * 10, y - 100 - u * 50, 4 + u * 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    },
+  },
+  weathervane: { w: 96, h: 210, draw: (ctx, x, y, time, seed) => place(ctx, weathervaneArt(Math.floor(time * 1.2 + seed) % 3), x, y) },
   greatcherry: { w: 960, h: 440, draw: (ctx, x, y) => place(ctx, greatcherryArt(true), x, y) },
   sidecherry: { w: 600, h: 340, draw: (ctx, x, y) => place(ctx, greatcherryArt(false), x, y) },
   greatoak: { w: 960, h: 440, draw: (ctx, x, y) => place(ctx, greatcherryArt(true, true), x, y) },

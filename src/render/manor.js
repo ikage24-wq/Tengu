@@ -90,14 +90,21 @@ function drawLantern(ctx, x, y, lit, time, id) {
 
 // ---------- Portraits and the crest ----------
 
+// A puzzle portrait (redrawn 2026-11-07 to match the family's paintings): a carved gold frame with
+// corner rosettes, a painted canvas shaded dark at its edges, the crest picture painted large in the
+// middle with a halo of light, and a brass plaque with the slot's number in dots (1 to 4). Set
+// right, the canvas warms to violet and the frame shines.
 function portraitArt(face, done, slot) {
-  return art(`mn-portrait|${face}|${done}|${slot}`, 34, 44, () => {
+  return art(`mn-portrait2|${face}|${done}|${slot}`, 44, 56, () => {
     const kind = CREST[face];
-    const out = [R(0, 0, 34, 44, done ? GOLD : '#c8a870'), F(R(1, 1, 32, 2, '#fff2b0')), F(R(1, 41, 32, 2, GOLD_DK)), R(3, 3, 28, 32, done ? '#7a62c0' : '#4a3a6a')];
-    out.push(...emblem(kind, 17, 18, 2, EMBLEM_C[kind]));
-    // A brass plaque with the slot's number in dots (1 to 4).
-    out.push(R(9, 36, 16, 5, GOLD));
-    for (let k = 0; k <= slot; k++) out.push(F(E(17 - slot * 1.6 + k * 3.2, 38.5, 0.9, 0.9, PLUM)));
+    const bg = done ? '#7a62c0' : '#4a3a6a';
+    const out = [R(0, 0, 44, 50, done ? '#ffe28a' : GOLD), F(R(1, 1, 42, 2.4, '#fff2b0')), F(R(1, 46.6, 42, 2.4, GOLD_DK)), F(R(1, 1, 2.4, 48, '#ffe9a0')), F(R(40.6, 1, 2.4, 48, GOLD_DK))];
+    out.push(F(R(4, 4, 36, 42, GOLD_DK)), F(R(5, 5, 34, 40, '#ffe28a')));
+    for (const [cx, cy] of [[3.4, 3.4], [40.6, 3.4], [3.4, 46.6], [40.6, 46.6]]) out.push(E(cx, cy, 3, 3, GOLD), F(E(cx - 0.6, cy - 0.6, 1.3, 1.3, '#fff6c8')));
+    out.push(R(7, 7, 30, 36, mix(bg, '#000000', 0.25)), F(R(9, 9, 26, 32, bg)), F(E(22, 25, 11, 12, mix(bg, '#ffffff', done ? 0.3 : 0.16))));
+    out.push(...emblem(kind, 22, 25, 2.8, EMBLEM_C[kind]));
+    out.push(R(12, 50, 20, 6, GOLD), F(R(13, 51, 18, 1.4, '#fff2b0')));
+    for (let k = 0; k <= slot; k++) out.push(F(E(22 - slot * 1.8 + k * 3.6, 53.4, 1, 1, PLUM)));
     return out;
   });
 }

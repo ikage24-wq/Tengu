@@ -1118,6 +1118,8 @@ Object.assign(MAPS, {
 //               levers are pulled
 
 // What every manor room's look shares: moonlit violet, its own backdrop, the manor's own stone.
+// (Outdoors its ledges are raised garden beds behind stone walls, and chimney stacks on the
+// rooftop, 2026-11-07: no floating garden islands.)
 const MANOR_OUT = { skyline: 'manor', material: 'manorgarden', critters: ['firefly'], drift: 'mote', face: 'moon', light: 'dusk' };
 const MANOR_IN = { skyline: 'manorhall', material: 'manor', critters: [], drift: 'mote', face: null, light: 'cave', ceiling: 'manor' };
 
@@ -1130,8 +1132,9 @@ Object.assign(MAPS, {
     id: 'manor_gate', name: 'Manor Hill', theme: 'manor', town: 'harbor', world: { x: 262, y: 150 }, music: 'manor',
     width: 1300, height: 420, groundY: G,
     look: { sky: ['#3a3270', '#7a62b0', '#e0a8c8'], far: '#5a4a8a', mid: '#7a6aa8', midTrim: '#c9a6ff', ...MANOR_OUT },
-    terrain: [[0, G], [340, G], [420, G - 30], [1300, G - 30]],
-    platforms: [{ x: 520, y: G - 110, w: 160 }],
+    // (A garden knoll of the hill itself where the ledge used to float, 2026-11-07.)
+    terrain: [[0, G], [340, G], [420, G - 30], [520, G - 30], [520, G - 110], [680, G - 110], [680, G - 30], [1300, G - 30]],
+    platforms: [],
     ropes: [],
     deco: [['signpost', 180]],
     portals: [
@@ -1160,7 +1163,7 @@ Object.assign(MAPS, {
         { name: 'The Front Steps', color: '#c9a6ff', from: 1560, mobs: [] },
       ],
     }),
-    look: { sky: ['#2a2458', '#5a4a96', '#c890c8'], far: '#4a3a7a', mid: '#5a7a6a', midTrim: '#9ad8a0', ...MANOR_OUT },
+    look: { sky: ['#2a2458', '#5a4a96', '#c890c8'], far: '#4a3a7a', mid: '#5a7a6a', midTrim: '#9ad8a0', ...MANOR_OUT, islands: 'pergola' },
     task: { kind: 'light', object: 'lantern', label: 'Light the garden lanterns' },
     fountains: [{ x: 200, y: 760, every: 6 }, { x: 960, y: 640, every: 7 }, { x: 1500, y: 520, every: 6.5 }],
     portals: [
@@ -1207,7 +1210,7 @@ Object.assign(MAPS, {
       { id: 'east', x: 1300, y: 420, to: 'manor3', toPortal: 'west', sealed: true },
     ],
     objects: [
-      { kind: 'portrait', slot: 0, x: 340, y: 900 }, { kind: 'portrait', slot: 1, x: 1160, y: 740 },
+      { kind: 'portrait', slot: 0, x: 470, y: 900 }, { kind: 'portrait', slot: 1, x: 1160, y: 740 },
       { kind: 'portrait', slot: 2, x: 320, y: 580 }, { kind: 'portrait', slot: 3, x: 1060, y: 420 },
     ],
     npcs: [],
@@ -1306,19 +1309,22 @@ Object.assign(MAPS, {
   manor6: {
     id: 'manor6', name: 'The Moonlit Rooftop', theme: 'manor', town: 'harbor', dungeon: 'manor', ownLight: true,
     width: 1600, height: 420, groundY: G,
+    // (Rebuilt 2026-11-07: the ledges are the caps of four chimneys and the weathervane's platform,
+    // drawn as themselves, on a slate roof.)
     platforms: [
-      { x: 230, y: 296, w: 74 }, { x: 560, y: 300, w: 74 }, { x: 966, y: 300, w: 74 }, { x: 1296, y: 296, w: 74 },
-      { x: 760, y: 220, w: 80 },
+      { x: 230, y: 296, w: 74, bare: true }, { x: 560, y: 300, w: 74, bare: true }, { x: 966, y: 300, w: 74, bare: true }, { x: 1296, y: 296, w: 74, bare: true },
+      { x: 760, y: 220, w: 80, bare: true },
     ],
     // The weathervane's pole, up to the little platform at its foot (the room's secret).
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'manor', face: null, bigMoon: true },
+    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'roof', face: null, bigMoon: true, props: [] },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor5', toPortal: 'east' },
       { id: 'out', x: 1560, y: G, to: 'manor_gate', toPortal: 'start', label: 'Exit', sealed: true },
     ],
     objects: [],
     npcs: [],
+    deco: [['chimney', 267, 0, 386], ['chimney', 597, 1, 390], ['chimney', 1003, 2, 390], ['chimney', 1333, 3, 386], ['weathervane', 800, 0, G]],
     spawns: [{ mob: 'marigold', x: 800, y: G }],
   },
 });

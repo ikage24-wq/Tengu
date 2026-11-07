@@ -1570,15 +1570,50 @@ function hallColumnArt() {
     R(13, 76, 4, 4, '#ffd36b'), R(11, 70, 2, 7, '#fff6dc'), R(17, 70, 2, 7, '#fff6dc'), E(12, 68, 1.4, 2.4, '#ffb35a'), E(18, 68, 1.4, 2.4, '#ffb35a'),
   ]);
 }
+// The family's portraits (repainted 2026-11-07: the player found the old ones plain): oil paintings
+// in carved gold frames with corner rosettes, a shaded painted background, a bust in the family's
+// finery, and eyes that slide to follow you. `who`: the Lady (golden curls, pearls), the Lord (dark
+// hair, moustache, cravat), the Daughter (red ringlets, a bow) and the Patriarch (a powdered wig).
 function hallPortraitArt(who, look) {
-  return art(`manor-portrait|${who}|${look}`, 36, 46, () => {
-    const bg = ['#8a6ac8', '#5a8ac8', '#c86a8a', '#6aa88a'][who];
-    const hair = ['#ffd36b', '#4a3a6a', '#ff9a6a', '#e8ecff'][who];
-    return [
-      R(0, 0, 36, 46, '#ffd36b'), F(R(1, 1, 34, 2, '#fff2b0')), R(3, 3, 30, 40, bg),
-      E(18, 46, 12, 10, shade(bg, -16)), E(18, 22, 8, 9, '#fff0e6'), E(18, 15, 9, 6, hair),
-      E(15 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), E(21 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), R(16, 27, 4, 1, '#d86a8a'),
-    ];
+  return art(`manor-portrait2|${who}|${look}`, 50, 64, () => {
+    const GOLD = '#ffd36b';
+    const GOLDDK = '#c8902e';
+    const bg = ['#6a4ea8', '#3e5c8e', '#8a4a6a', '#4a6e5e'][who];
+    const coat = ['#c86a9a', '#2e3a6a', '#ffb0c8', '#6a3a5a'][who];
+    const hair = ['#ffd36b', '#3a2a4a', '#e86a4a', '#f2f2ff'][who];
+    const out = [];
+    // The frame: outer gold, a dark carved groove, an inner bevel, rosettes at the corners.
+    out.push(R(0, 0, 50, 58, GOLD), F(R(1, 1, 48, 2.4, '#fff2b0')), F(R(1, 54.6, 48, 2.4, GOLDDK)), F(R(1, 1, 2.4, 56, '#ffe9a0')), F(R(46.6, 1, 2.4, 56, GOLDDK)));
+    out.push(F(R(4, 4, 42, 50, GOLDDK)), F(R(5, 5, 40, 48, '#ffe28a')));
+    for (const [cx, cy] of [[3.4, 3.4], [46.6, 3.4], [3.4, 54.6], [46.6, 54.6]]) out.push(E(cx, cy, 3.2, 3.2, GOLD), F(E(cx - 0.6, cy - 0.6, 1.4, 1.4, '#fff6c8')));
+    // The canvas: a painted background, darker at its edges, light behind the sitter's head.
+    out.push(R(7, 7, 36, 44, shade(bg, -18)), F(R(9, 9, 32, 40, bg)), F(E(25, 22, 13, 15, mix(bg, '#ffffff', 0.22))));
+    // The bust: shoulders in the family's finery.
+    out.push(F(E(25, 54, 15, 11, coat)), F(E(21, 47, 5, 3, mix(coat, '#ffffff', 0.25))));
+    if (who === 1) out.push(F(T([[22, 41], [28, 41], [25, 49]], '#ffffff')), F(E(25, 43, 2, 1.6, '#e8eaff')));
+    if (who === 0) for (let k = 0; k < 7; k++) out.push(F(E(18 + k * 2.3, 42 + Math.sin(k / 6 * Math.PI) * 2, 1, 1, '#fff6ff')));
+    if (who === 3) out.push(F(E(25, 42, 6, 2.2, '#ffffff')), F(E(25, 44.6, 4, 1.6, '#f2f2ff')));
+    // Neck and face.
+    out.push(F(R(22.6, 34, 4.8, 6, '#f6d8c8')), F(E(25, 27, 7, 8.4, '#fff0e6')), F(E(22, 30, 1.6, 1, '#ffb8c8')), F(E(28, 30, 1.6, 1, '#ffb8c8')));
+    // Hair.
+    if (who === 0) out.push(F(E(25, 20, 8.4, 5.6, hair)), F(E(17.6, 27, 2.6, 5, hair)), F(E(32.4, 27, 2.6, 5, hair)), F(E(25, 15, 5, 3.4, hair)), F(E(22, 18, 2, 1.2, '#fff2b0')));
+    if (who === 1) out.push(F(E(25, 20.6, 7.6, 4.4, hair)), F(R(18, 20, 2.6, 7, hair)), F(R(29.4, 20, 2.6, 7, hair)), F(E(25, 32.6, 3.4, 0.9, hair)));
+    if (who === 2) {
+      out.push(F(E(25, 20.6, 8, 5, hair)));
+      for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) out.push(F(E(25 + sx * 8.6, 25 + k * 3.4, 2, 2, hair)));
+      out.push(F(E(31, 16.6, 3.4, 2, '#ff9ec8')), F(E(28, 16.6, 1.4, 1.4, '#ff9ec8')));
+    }
+    if (who === 3) {
+      out.push(F(E(25, 19.6, 9, 5, hair)));
+      for (const sx of [-1, 1]) for (let k = 0; k < 2; k++) out.push(F(E(25 + sx * 8.6, 24 + k * 4, 2.8, 2.4, hair)));
+      out.push(F(E(25, 31.6, 4.6, 1.4, '#e8e8f6')));
+    }
+    // Eyes that follow you, and a small painted mouth.
+    for (const ex of [22, 28]) out.push(F(E(ex, 27, 1.7, 1.3, '#ffffff')), F(E(ex + look * 0.5, 27.2, 1, 1.1, '#3a2d4f')), F(E(ex + look * 0.5 - 0.3, 26.8, 0.35, 0.35, '#ffffff')));
+    out.push(F(E(25, 31, who === 1 ? 1.2 : 1.6, 0.7, '#d86a8a')));
+    // The nameplate under it.
+    out.push(R(15, 58, 20, 6, GOLD), F(R(16, 59, 18, 1.4, '#fff2b0')), F(R(19, 61, 12, 0.8, GOLDDK)));
+    return out;
   });
 }
 
@@ -4320,7 +4355,8 @@ const BUILDINGS = {
 // through. Where one would, it's set back a plane instead (`behind`): drawn before the ground,
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
 // Waterfalls pour off a ledge, and cloud pillars and the watchtower hold one up, on purpose.
-const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar', 'watchtower']);
+// (Pieces whose tops are ledges you stand on: drawn solid, not set back in the haze.)
+const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar', 'watchtower', 'chimney', 'weathervane', 'wreck', 'bluff', 'lookout']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
