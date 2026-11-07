@@ -17,7 +17,7 @@ export const LESSONS = [
   { hint: 'Open your bag with [I] and double-click your weapon to hold it.', phone: 'Tap the [bag] on the menu bar, then double-tap your weapon to hold it.', done: (w) => Boolean(w.char.equipment.weapon) },
   { hint: 'You have stat points! Open Stats with [C] and press Auto (or the + buttons).', phone: 'You have stat points! Tap [Stats] on the menu bar and press Auto.', done: (w) => w.char.ap === 0 },
   { hint: 'Talk to Kuro again with [↑]: he has a job for you.', phone: 'Tap Kuro again: he has a job for you.', done: (w) => Boolean(w.char.quests.tut_lookout) },
-  { hint: 'Climb up to the lookout on the rocks at the end of the beach and look out to sea.', phone: 'Climb up to the lookout on the rocks at the end of the beach and look out to sea.', done: (w) => Boolean(w.char.quests.tut_lookout?.marks?.[0]) || questState(w.char, 'tut_lookout') === 'done' },
+  { hint: 'Climb the rope up onto the high ledge over the beach and look out to sea.', phone: 'Climb the rope up onto the high ledge over the beach and look out to sea.', done: (w) => Boolean(w.char.quests.tut_lookout?.marks?.[0]) || questState(w.char, 'tut_lookout') === 'done' },
   { hint: 'Head east to the Practice Field: stand in the glowing portal and press [↑].', phone: 'Head east to the Practice Field: stand in the glowing portal and push up.', done: (w) => w.map.id !== 'dawnbeach' },
   { hint: 'Tell Kuro what you saw from the lookout: talk to him with [↑].', phone: 'Tell Kuro what you saw from the lookout: tap him.', done: (w) => questState(w.char, 'tut_lookout') === 'done' },
   { hint: 'Talk to Kuro with [↑] and take his practice quest.', phone: 'Tap Kuro and take his practice quest.', done: (w) => Boolean(w.char.quests.tut_practice) },

@@ -288,8 +288,7 @@ function softClump(ctx, x, y, r, c, seed, sway, blur, alpha, width, height) {
 // Out-of-focus leaves drifting past in front of the player at the top corners and along the
 // bottom, darker and cooler than the play space, swaying.
 export function drawPaintedForestFront(ctx, t, cam, width, height, time) {
-  // (Lighter and softer, 2026-11-07: at full dark it read as a black smudge, not as leaves.)
-  const base = mix(shade(t.mid, -10), '#2a3a4a', 0.12);
+  const base = mix(shade(t.mid, -22), '#2a3a4a', 0.35);
   const c = { base, lit: mix(base, t.sun ?? '#fff6dc', 0.12), glint: mix(base, '#ffffff', 0.12), shadow: shade(base, -8) };
   ctx.save();
   ctx.globalAlpha = 1;
@@ -297,12 +296,12 @@ export function drawPaintedForestFront(ctx, t, cam, width, height, time) {
     const sw = Math.sin(time * 0.7 + i * 1.7) * 3;
     if (hash(i + 61) < 0.55) {
       const y = -8 - cam.y * 0.02;
-      softClump(ctx, x + hash(i + 62) * 200, y, 30 + hash(i + 63) * 14, c, i + 700, sw, 2.2, 0.5, width, height);
-      softClump(ctx, x + hash(i + 62) * 200 + 34, y + 10, 22, c, i + 701, sw, 2.2, 0.5, width, height);
+      softClump(ctx, x + hash(i + 62) * 200, y, 30 + hash(i + 63) * 14, c, i + 700, sw, 2.2, 0.82, width, height);
+      softClump(ctx, x + hash(i + 62) * 200 + 34, y + 10, 22, c, i + 701, sw, 2.2, 0.82, width, height);
     }
     if (hash(i + 64) < 0.45) {
       const by = height + 18;
-      softClump(ctx, x + 260 + hash(i + 65) * 160, by, 26 + hash(i + 66) * 10, c, i + 800, sw * 0.6, 2.2, 0.5, width, height);
+      softClump(ctx, x + 260 + hash(i + 65) * 160, by, 26 + hash(i + 66) * 10, c, i + 800, sw * 0.6, 2.2, 0.82, width, height);
     }
   });
   ctx.restore();

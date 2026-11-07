@@ -20,8 +20,8 @@ export const QUESTS = {
   },
   tut_lookout: {
     id: 'tut_lookout', name: 'A Better View', giver: 'kuro', minLevel: 1, prereq: 'tut_hello',
-    text: "See the rocks at the end of the beach? There's a lookout on top with my old spyglass. Climb up and look out to sea, and you'll spot the dock where the boat to the mainland ties up. Tell me what you see. I'll be at the Practice Field, just past the rocks.",
-    objectives: [{ type: 'visit', map: 'dawnbeach', above: 450, place: 'the lookout on the rocks' }],
+    text: "See the high ledge over the beach? Climb the rope up there and look out to sea, and you'll spot the dock where the boat to the mainland ties up. Tell me what you see. I'll be at the Practice Field, just east of here.",
+    objectives: [{ type: 'visit', map: 'dawnbeach', above: 400, place: 'the high ledge over the beach' }],
     rewards: { exp: 40, gold: 15, items: [{ id: 'red_potion', qty: 3 }] },
   },
   tut_practice: {
