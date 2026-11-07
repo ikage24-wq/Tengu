@@ -2400,7 +2400,7 @@ Object.assign(MAPS, {
   // end of the glade.
   glade: {
     id: 'glade', name: 'Whispering Glade', theme: 'forest', town: 'harbor', world: { x: 278, y: 160 },
-    look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3, islands: 'branch' },
+    look: { sky: ['#8fe0d0', '#d2f4e2', '#fffbe0'], far: '#8fd6b4', mid: '#6cc498', midTrim: '#4fae7f', light: 'morning', edges: 'flowers', props: ['flower', 'chime', 'tuft', 'bush', 'tulip', 'flower'], drift: 'leaf', rainbow: 0.3, islands: 'terrace' },
     ...lay({
       width: 2400, ground: 880, by: 'x',
       // The meadow, the mossy bank (a step up), the pool's bed sunk below it, and the cliff.
@@ -2412,14 +2412,16 @@ Object.assign(MAPS, {
         { name: 'Waterfall Pool', color: '#4fb0d8', from: 800, mobs: ['sylph'], nodes: [SPOT.ore(2)],
           look: { sky: ['#9fe4f0', '#d8f4f6', '#fffbe8'], far: '#9fd8c8', mid: '#7fc8b0' } },
         { name: 'Sylph Grove', color: '#6fae5f', from: 1300, mobs: ['sylph', 'mossgolem'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.fruit(2, 'whisperberry'), SPOT.night(2)],
-          look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8' } },
+          // (Its treetop ledges are the boughs of three great oaks on the plateau, 2026-11-07.)
+          look: { sky: ['#b8ecd8', '#e2f8e8', '#fffbe6'], far: '#b0e4c4', mid: '#90d4a8', islands: 'branch' } },
       ],
       ledges: [
-        // The Flower Meadow: low flower ledges.
+        // The Flower Meadow: low rolling knolls (terraces), 2026-11-07.
         { x: 150, y: 800, w: 260 }, { x: 300, y: 720, w: 240 }, { x: 600, y: 640, w: 200 },
         // The Waterfall Pool: steps up beside the falls, and the fishing dock off the bank.
-        { x: 450, y: 800, w: 240 }, { x: 650, y: 720, w: 240 },
-        { x: 796, y: 840, w: 104, posts: true, walkOn: true },
+        // (The upper knoll ends at the bank, so its face doesn't hang out over the pool.)
+        { x: 450, y: 800, w: 240 }, { x: 610, y: 720, w: 190 },
+        { x: 796, y: 840, w: 104, posts: true, walkOn: true, style: 'planks' },
         // The Sylph Grove: treetop ledges over the plateau.
         { x: 1200, y: 560, w: 300 }, { x: 1600, y: 480, w: 320 }, { x: 2000, y: 560, w: 280 },
         { x: 1400, y: 400, w: 280 }, { x: 1850, y: 320, w: 300 },
@@ -2437,7 +2439,7 @@ Object.assign(MAPS, {
     npcs: [],
     // A landmark per zone: the giant flowers in the meadow, the waterfall and its pool, the great
     // tree in the grove.
-    deco: [['giantflower', 260, 0], ['giantflower', 640, 2], ['waterfall', 958, 240, 894], ['bigtree', 1680, 1, 640], ['giantflower', 2150, 1, 640]],
+    deco: [['giantflower', 260, 0], ['giantflower', 640, 2], ['waterfall', 958, 240, 894], ['sideoak', 1350, 0, 640], ['greatoak', 1700, 0, 640], ['sideoak', 2140, 0, 640], ['giantflower', 2300, 1, 640]],
     lamps: [{ x: 900, y: 810 }, { x: 1700, y: 600 }, { x: 2300, y: 610 }],
     spirit: { x: 2200, y: 400 },
     habitats: { sylph: { play: true, naps: true }, mossgolem: { naps: true, home: { x: 260, y: 880 } } },
