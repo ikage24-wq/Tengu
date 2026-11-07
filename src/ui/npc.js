@@ -19,6 +19,8 @@ import { DUNGEONS, ROLES } from '../data/dungeons.js';
 import { planGroup, startRun, leaveDungeon, clock, hardBlocker } from '../world/dungeon.js';
 import { boardPage } from './partyboard.js';
 import { fishRequestPage } from './fishreq.js';
+import { bountyPage } from './bounty.js';
+import { bountyBoard } from '../world/bounties.js';
 import { checkIn, rumor, ROOM_GOLD } from '../world/inn.js';
 import { fishRequests, requestProgress } from '../world/fishrequests.js';
 import { say } from './chat.js';
@@ -285,6 +287,12 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
   }
+  // Guildmaster Halvard's bounty board (world/bounties.js).
+  if (npc.role === 'guild') {
+    const board = char.guild?.joined ? bountyBoard(world) : [];
+    const slain = board.filter((b) => b.state === 'slain').length;
+    choices.push({ label: char.guild?.joined ? 'The bounty board' : 'Join the guild', sub: slain ? `${slain} to hand in!` : char.guild?.joined ? 'Elites to hunt, ranks to earn' : 'Free, and you get a cape', icon: 'star', primary: true, run: () => (dlg.bounty = true) });
+  }
   // Madame Ledger's Auction House (world/auction.js).
   if (npc.role === 'auction') {
     const box = char.auction?.box?.length ?? 0;
@@ -366,7 +374,7 @@ export function npcWindow(ui, state, world) {
   const rows = Math.ceil(choices.length / 2);
 
   const qStateNow = dlg.quest ? questState(char, dlg.quest) : null;
-  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
+  const H = dlg.quest ? (qStateNow === 'ready' ? 118 : 138) : dlg.dungeon ? 172 : dlg.board ? 172 : dlg.fishreq ? 206 : dlg.bounty ? 212 : dlg.build ? 150 : dlg.gift ? 150 : dlg.breakup ? 110 : dlg.date ? 140 : dlg.job ? Math.max(104, 46 + jobOptions.length * 46) : Math.max(100, 50 + rows * 24);
   const area = dialogFrame(ui, win, npc, H, world, dlg.talking);
   if (!area || dlg.bye) {
     state.npc = null;
@@ -394,6 +402,11 @@ export function npcWindow(ui, state, world) {
     return;
   }
 
+  if (dlg.bounty) {
+    dlg.talking = false;
+    if (bountyPage(ui, state, world, area)) dlg.bounty = false;
+    return;
+  }
   if (dlg.fishreq) {
     dlg.talking = false;
     if (fishRequestPage(ui, state, world, area)) dlg.fishreq = false;

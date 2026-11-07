@@ -313,10 +313,10 @@ Object.assign(NPCS, {
     chatter: ['Going once! Going twice!', 'Everything has a price, darling.', 'Sold! To the lady in pink!'],
   },
   halvard: {
-    id: 'halvard', name: 'Guildmaster Halvard', title: "Adventurers' Guild", role: 'guide',
+    id: 'halvard', name: 'Guildmaster Halvard', title: "Adventurers' Guild", role: 'guild',
     look: { hairStyle: 'wolfsleek', hairColor: '#c8ccd8', skinTone: '#e8b890', eyeColor: '#4a6aa8', outfitColor: '#7a5a44', eyeStyle: 'droopy', face: 'heh', browStyle: 'thick' },
     gear: { ...cbCostume('detective'), face: cbPiece('look_acc_eyepatch_face') },
-    greeting: "Forty years of adventuring, one good leg, and a head full of stories. The bounty board goes up soon. Then we'll see what you're made of.",
+    greeting: "Forty years of adventuring, one good leg, and a head full of stories. The board's full of elites that need putting down. Let's see what you're made of.",
     chatter: ['Did I ever tell you about the Hollow King? No? Sit down.', 'Copper, Silver, Gold, Mithril. Everyone starts at Copper.', "This leg? A mimic. Don't ask."],
   },
   penny: {

@@ -232,3 +232,38 @@ test('the Auction House: buy outright, bid and win or be outbid, and list your o
   assert.ok(char.gold > before && char.auction.box.length === 0, 'everything collected');
   assert.equal(countItem(char.inventory, 'fish_carp'), 1);
 });
+
+test('guild bounties: join, take one, its elite turns up on its map, bring it down, hand it in, rank up', async () => {
+  const B = await import('../src/world/bounties.js');
+  const { RANKS } = await import('../src/data/bounties.js');
+  const { killMob } = await import('../src/world/world.js');
+  const world = createWorld(createCharacter('Hunter', {}));
+  const char = world.char;
+  char.level = 20;
+  assert.ok(B.joinGuild(world), 'joining makes you Copper');
+  assert.equal(char.title, RANKS[0].title);
+  assert.ok(char.inventory.equip.some((e) => e.id === 'cape_guild_copper'), 'with the Copper cape');
+  const board = B.bountyBoard(world);
+  assert.equal(board.length, 3);
+  assert.equal(new Set(board.map((b) => b.map)).size, 3, 'three different fields');
+  for (let n = 0; n < 3; n++) {
+    const b = B.bountyBoard(world).find((x) => x.state === 'open') ?? (() => { char.guild.board = null; return B.bountyBoard(world)[0]; })();
+    assert.equal(B.takeBounty(world, b.id), null);
+    loadMap(world, b.map, 'west');
+    for (let i = 0; i < 300 && !world.mobs.some((m) => m.bounty === b.id); i++) B.tickBounties(world, 0.1);
+    const elite = world.mobs.find((m) => m.bounty === b.id);
+    assert.ok(elite, 'the elite turns up');
+    assert.ok(elite.def.hp >= MOBS_HP(b.mob) * RANKS[0].hp, 'far tougher than its kind');
+    elite.hp = 0;
+    killMob(world, elite);
+    assert.equal(b.state, 'slain');
+    const gold = char.gold;
+    assert.equal(B.turnIn(world, b.id), null);
+    assert.equal(char.gold, gold + b.gold);
+  }
+  assert.equal(char.guild.rank, 1, 'three bounties: Silver');
+  assert.equal(char.title, RANKS[1].title);
+  assert.ok(char.inventory.equip.some((e) => e.id === 'cape_guild_silver'));
+});
+const MOBS_HP = (id) => MOBS_REF[id].hp;
+const { MOBS: MOBS_REF } = await import('../src/data/mobs.js');

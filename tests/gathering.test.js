@@ -142,7 +142,7 @@ test('a map calms as you hunt, pays more EXP when calm, and sours when left alon
   assert.ok(calmOf(w) < SOUR, 'an hour alone sours it');
 });
 
-test('monsters live there: they nap at night (harmless), play chase by day, and run off when hurt', async () => {
+test('monsters live there: they play chase by day, never nap (day or night), and run off when hurt', async () => {
   const { tickHabits, napping } = await import('../src/world/habits.js');
   const { spawnMob, hitMob } = await import('../src/world/mobs.js');
   const w = createWorld(createCharacter('Watcher', {}));
@@ -159,8 +159,11 @@ test('monsters live there: they nap at night (harmless), play chase by day, and 
   assert.equal(kits[1].habit?.kind, 'play');
   w.map.night = 1;
   for (const m of kits) Object.assign(m, { think: 0, habit: null });
-  tickHabits(w, 0.016, () => 0.2);
-  assert.ok(napping(kits[0], w.now), 'and curl up at night');
+  for (let i = 0; i < 20; i++) {
+    for (const m of kits) Object.assign(m, { think: 0, habit: null });
+    tickHabits(w, 0.016, () => 0.02 + i * 0.05);
+    assert.ok(!napping(kits[0], w.now) && !napping(kits[1], w.now), 'nobody dozes off at night');
+  }
   hitMob(kits[0], 1, kits[0].x - 20, w.now);
   assert.equal(kits[0].habit?.kind, 'flee', 'a hit wakes it and it runs off');
   assert.ok(kits[0].habit.x > kits[0].x, 'away from the blow');

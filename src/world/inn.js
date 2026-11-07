@@ -66,7 +66,7 @@ const RUMORS = [
   'A friend of a friend saw a sea turtle swim up to a fisher at sea and follow them home. Fishing at sea, mind.',
   'Fish that only bite at night, or in the rain. Ask anyone at the tackle shops what they want: they pay well.',
   'Some monsters sleep at night. Some only come out after dark. Watch the hours, and you see a different world.',
-  "Up at the guild they're getting a bounty board ready. Old Halvard's been polishing his sword for a week.",
+  "Halvard's bounties are no joke. The elites hit twice as hard, and they charge. Watch for the one that lowers its head.",
 ];
 export function rumor(world) {
   const i = (world.char.rumorAt = ((world.char.rumorAt ?? -1) + 1) % RUMORS.length);

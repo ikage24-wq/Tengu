@@ -73,7 +73,9 @@ export function spawnMob(map, spawn) {
 }
 
 export function mobBox(m) {
-  return { x: m.x - m.def.w / 2, y: m.y - m.def.h, w: m.def.w, h: m.def.h };
+  // (A guild bounty's elite is drawn bigger, and is as big to hit: world/bounties.js.)
+  const k = m.def.scale ?? 1;
+  return { x: m.x - (m.def.w * k) / 2, y: m.y - m.def.h * k, w: m.def.w * k, h: m.def.h * k };
 }
 
 export function createSpawner(map) {

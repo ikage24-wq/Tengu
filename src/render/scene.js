@@ -257,12 +257,24 @@ function drawMobs(ctx, world, cam, time) {
       ctx.rect(x - 200, y - 400, 400, 400);
       ctx.clip();
     }
+    // A guild bounty's elite: an aura on the ground under it (red once enraged), drawn bigger,
+    // a crown over its head, its name (world/bounties.js).
+    const ek = m.def.elite ? m.def.scale ?? 1 : 1;
+    if (m.def.elite && m.hp > 0) eliteAura(ctx, m, x, y, time);
+    if (ek !== 1) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(ek, ek);
+      ctx.translate(-x, -y);
+    }
     drawMonster(ctx, m, x + lean + sign * amp * Math.cos(ang), y + sink + sign * amp * Math.sin(ang) + (1 - under) * 34, time, now);
+    if (ek !== 1) ctx.restore();
+    if (m.def.elite && m.hp > 0) eliteCrown(ctx, m, x, y - m.def.h * ek * 0.86, time);
     if (sink > 0) ctx.restore();
     ctx.globalAlpha = 1;
     if (m.big > world.now && m.hp > 0) text(ctx, '!!', x, y - m.def.h - 14 + Math.sin(time * 30) * 1.5, { size: 16, bold: true, align: 'center', color: '#ff4d6d', outline: '#ffffff' });
-    if (m.def.boss) boss = m;
-    if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss) {
+    if (m.def.boss || (m.def.elite && m.hp > 0)) boss = m;
+    if (settings.monsterHp && m.hp > 0 && m.hp < m.def.hp && !m.def.boss && !m.def.elite) {
       const w = Math.max(24, m.def.w);
       box(ctx, x - w / 2, y - m.def.h - 7, w, 4, { fill: 'rgba(58,45,79,0.5)', edge: null, r: 2 });
       box(ctx, x - w / 2, y - m.def.h - 7, Math.max(2, (w * m.hp) / m.def.hp), 4, { fill: COLORS.hp, edge: null, r: 2 });
@@ -271,8 +283,61 @@ function drawMobs(ctx, world, cam, time) {
   if (boss && boss.hp > 0 && !world.scene) {
     box(ctx, 170, 60, 300, 12, { fill: 'rgba(58,45,79,0.6)', edge: '#ffffff', r: 6 });
     box(ctx, 171, 61, Math.max(4, (298 * boss.hp) / boss.def.hp), 10, { fill: '#c9a6ff', edge: null, r: 5 });
-    text(ctx, `${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#5a3f7a' });
+    text(ctx, `${boss.def.elite ? '★ ' : ''}${boss.def.name}  Lv ${boss.def.level}`, 320, 69, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: boss.def.elite ? (boss.enraged ? '#c83a4a' : '#a8702a') : '#5a3f7a' });
   }
+}
+
+// An elite's aura: a soft ring of light on the ground under it, breathing; red once it's enraged.
+function eliteAura(ctx, m, x, y, time) {
+  const c = m.enraged ? '255,90,90' : '255,210,100';
+  const r = m.def.w * (m.def.scale ?? 1) * 0.7;
+  ctx.save();
+  ctx.globalAlpha = 0.75 + 0.2 * Math.sin(time * 3);
+  const g = ctx.createRadialGradient(x, y - 2, 0, x, y - 2, r);
+  g.addColorStop(0, `rgba(${c},0.8)`);
+  g.addColorStop(0.7, `rgba(${c},0.35)`);
+  g.addColorStop(1, `rgba(${c},0)`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 2, r, r * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // A ring of light spreading out from it, over and over.
+  const u = (time * 0.7) % 1;
+  ctx.globalAlpha = (1 - u) * 0.8;
+  ctx.strokeStyle = `rgb(${c})`;
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.ellipse(x, y - 2, r * (0.5 + u * 0.7), r * 0.28 * (0.5 + u * 0.7), 0, 0, Math.PI * 2);
+  ctx.stroke();
+  // A glow up its body.
+  ctx.globalAlpha = 0.25;
+  const b = ctx.createRadialGradient(x, y - r * 0.5, 0, x, y - r * 0.5, r * 1.1);
+  b.addColorStop(0, `rgba(${c},0.6)`);
+  b.addColorStop(1, `rgba(${c},0)`);
+  ctx.fillStyle = b;
+  ctx.fillRect(x - r * 1.1, y - r * 1.6, r * 2.2, r * 1.7);
+  // Motes rising off it.
+  for (let k = 0; k < 4; k++) {
+    const u = (time * 0.6 + k / 4) % 1;
+    ctx.globalAlpha = (1 - u) * 0.8;
+    ctx.fillStyle = `rgb(${c})`;
+    ctx.fillRect(Math.round(x + Math.sin(k * 2.1 + time) * r * 0.6), Math.round(y - 4 - u * 30), 1.6, 1.6);
+  }
+  ctx.restore();
+}
+// The elite's crown, bobbing a little over its head.
+function eliteCrown(ctx, m, x, y, time) {
+  const b = Math.sin(time * 2.4) * 1.2;
+  ctx.fillStyle = '#ffd36b';
+  ctx.beginPath();
+  ctx.moveTo(x - 7, y + b);
+  for (const [dx, dy] of [[-7, -6], [-3.5, -2.5], [0, -8], [3.5, -2.5], [7, -6], [7, 0]]) ctx.lineTo(x + dx, y + dy + b);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = m.enraged ? '#ff5a5a' : '#ff8ac0';
+  ctx.fillRect(Math.round(x - 1), Math.round(y - 4 + b), 2, 2);
+  ctx.fillStyle = '#fff3c4';
+  ctx.fillRect(Math.round(x - 6), Math.round(y - 1 + b), 12, 1);
 }
 
 // Climbing into a new zone of a tall map shows its name for a moment, softly, near the top.

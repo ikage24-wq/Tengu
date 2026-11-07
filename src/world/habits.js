@@ -1,7 +1,7 @@
 // Monsters live there (the player's map rule): out of a fight, a map's monsters act like it's their
 // home, by the map's `habitats` ({ monster id: { naps, home: { x }, play } }):
-//   nap    curl up and doze a while (much more at night, world/daytime.js); harmless while asleep,
-//          and a hit wakes them
+// (Monsters no longer nap, by day or by night: the player's call, 2026-11-07. A map's old `naps`
+// is ignored.)
 //   home   wander back to their favourite spot ({ x, y }: the pond, the hive) and idle there, if
 //          they live on that floor
 //   play   chase another of their kind along the ledge, then turn and get chased back
@@ -21,17 +21,14 @@ export function tickHabits(world, dt, rng = Math.random) {
   const now = world.now;
   for (const m of world.mobs) {
     const h = habitats[m.def.id];
-    if (!h || m.def.boss) continue;
+    // (Bosses and the guild's elites keep their own minds: always awake, always on the prowl.)
+    if (!h || m.def.boss || m.def.elite) continue;
     m.think = (m.think ?? rng() * THINK[1]) - dt;
     if (m.think > 0 || busy(m, now)) continue;
     m.think = THINK[0] + rng() * (THINK[1] - THINK[0]);
     m.habit = null;
     const r = rng();
-    // (Nobody dozes off with you right there.)
-    const near = Math.abs(world.body.x - m.x) < 90 && Math.abs(world.body.y - m.y) < 60;
-    if (h.naps && !near && r < (night ? 0.45 : 0.05)) {
-      m.habit = { kind: 'nap', until: now + (night ? 10 + rng() * 12 : 5 + rng() * 5) };
-    } else if (h.home && Math.abs(m.y - h.home.y) < 4 && h.home.x >= m.x1 && h.home.x <= m.x2 && r < 0.35) {
+    if (h.home && Math.abs(m.y - h.home.y) < 4 && h.home.x >= m.x1 && h.home.x <= m.x2 && r < 0.35) {
       m.habit = { kind: 'home', x: h.home.x + (rng() - 0.5) * 70, speed: 1, until: now + 8 };
     } else if (h.play && !night && r < 0.4) {
       const mate = world.mobs.find((o) => o !== m && o.def === m.def && o.hp > 0 && o.x1 === m.x1 && Math.abs(o.x - m.x) < 180 && !busy(o, now));

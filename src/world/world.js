@@ -1,6 +1,7 @@
 // The running game: one character in one map. Owns physics, monsters, loot, combat, and events.
 // Rendering and UI read this state; they never change it except through the action functions below.
 
+import { tickBounties, eliteSlain } from './bounties.js';
 import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
 import { tickTutorial } from './tutorial.js';
@@ -549,6 +550,8 @@ function nearestMob(world) {
 
 export function killMob(world, m, byParty = false) {
   const char = world.char;
+  // (A guild bounty's elite: its bounty is ready to bring in.)
+  if (m.bounty) eliteSlain(world, m);
   // Online, everyone else on the map gets their share too (see net/online.js).
   m.credited = true;
   world.net?.killed(world, m);
@@ -935,6 +938,8 @@ export function updateWorld(world, dt, input) {
   // shows them where it says they are. Monsters chase whichever player is nearest.
   const mirrored = Boolean(world.net?.mirrored(world));
   tickHabits(world, dt);
+  // Guild bounties: an elite turns up on its map, and elites use their moves (world/bounties.js).
+  tickBounties(world, dt);
   if (!world.dungeon) for (const m of world.mobs) {
     // (A monster another player hunting here just hit goes after them, not you.)
     const foe = m.foe && world.now < m.foeUntil && !m.def.boss ? m.foe : null;
