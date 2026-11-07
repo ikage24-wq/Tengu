@@ -160,11 +160,55 @@ const ART = {
   trophy_crown(w, h) {
     return [E(w / 2, h - 4, 9, 4, '#a04a7a'), F(E(w / 2, h - 5.4, 7, 2, '#d070a0')), ...[[1, h - 1], [w - 1, h - 1]].map(([x, y]) => E(x, y, 1.6, 2, GOLD))];
   },
+  trophy_tank(w, h) {
+    return tankArt(w, h, false);
+  },
+  trophy_grandtank(w, h) {
+    return tankArt(w, h, true);
+  },
   trophy_ribbon(w, h) {
     return [T([[w / 2 - 6, 12], [w / 2 - 2, 12], [w / 2 - 5, h], [w / 2 - 8, h - 3]], '#5fb8d8'), T([[w / 2 + 2, 12], [w / 2 + 6, 12], [w / 2 + 8, h - 3], [w / 2 + 5, h]], '#5fb8d8'),
       ...Array.from({ length: 12 }, (_, i) => E(w / 2 + Math.cos((i / 12) * TAU) * 7, 9 + Math.sin((i / 12) * TAU) * 7, 3, 3, '#ffe36b')), E(w / 2, 9, 6, 6, '#ffb03a'), E(w / 2, 9, 4.6, 4.6, '#fff3c4')];
   },
 };
+
+// A fish tank: a wooden stand, the water behind its glass (deep at the bottom), a sand bed with
+// pebbles, rocks and weed (a coral garden in the grand one), and a lid. The fish, bubbles and
+// light swim over it (drawPiece).
+const TANK_STAND = 12;
+function tankArt(w, h, grand) {
+  const wd = ramp(grand ? '#a8784a' : WOOD, 0.8);
+  const top = 3;
+  const bot = h - TANK_STAND;
+  const out = [
+    // The stand, its doors and knobs.
+    R(0, bot, w, TANK_STAND, wd.base), F(R(1, bot + 1, w - 2, 2, wd.hi)), R(2, h - 2, w - 4, 2, wd.sh),
+    ...[0.25, 0.75].map((u) => R(w * u - w * 0.2, bot + 4, w * 0.4 - 1, TANK_STAND - 7, wd.sh)),
+    ...[0.25, 0.75].map((u) => F(E(w * u + (u < 0.5 ? w * 0.16 : -w * 0.16), bot + 7.5, 0.9, 0.9, GOLD))),
+    // The water, bands of blue down to the deep.
+    R(2, top + 2, w - 4, bot - top - 2, '#8fd8f0'),
+    F(R(2, top + 2 + (bot - top) * 0.35, w - 4, (bot - top) * 0.65 - 2, '#7ac8e8')),
+    F(R(2, top + 2 + (bot - top) * 0.7, w - 4, (bot - top) * 0.3 - 2, '#68b4dc')),
+    // Sand and pebbles.
+    T([[2, bot - 5], [w * 0.3, bot - 7], [w * 0.65, bot - 5.5], [w - 2, bot - 7], [w - 2, bot], [2, bot]], '#f4dca8'),
+    ...[[0.18, '#c8a8d8'], [0.42, '#ffb8a8'], [0.58, '#a8c8e8'], [0.86, '#f0c890']].map(([u, c]) => F(E(w * u, bot - 2, 1.6, 1.1, c))),
+    // A rock with a hole through it.
+    T([[w * 0.62, bot - 5], [w * 0.66, bot - 13], [w * 0.74, bot - 15], [w * 0.8, bot - 9], [w * 0.8, bot - 5]], '#9a9ab8'),
+    F(E(w * 0.72, bot - 9, 1.6, 1.6, '#5a6a9a')),
+  ];
+  if (grand) {
+    // A coral garden: branching pink coral, a fan, and a sea anemone.
+    const cx = w * 0.22;
+    out.push(R(cx - 1, bot - 18, 2, 12, '#ff8ab0'), T([[cx, bot - 12], [cx - 6, bot - 20], [cx - 4.6, bot - 21], [cx + 0.8, bot - 14]], '#ff8ab0'), T([[cx, bot - 14], [cx + 5, bot - 23], [cx + 6.4, bot - 22], [cx + 1, bot - 12]], '#ff9ec0'));
+    out.push(T([[w * 0.44, bot - 6], [w * 0.38, bot - 20], [w * 0.47, bot - 24], [w * 0.55, bot - 18], [w * 0.5, bot - 6]], '#ffb36b'));
+    // (The sea fan's ribs, branching up from its foot.)
+    for (const [dx, dy] of [[-4.4, -16], [-1.6, -19], [1.6, -18.4], [4, -13]]) out.push(F(T([[w * 0.47 - 0.4, bot - 6], [w * 0.47 + dx - 0.4, bot + dy], [w * 0.47 + dx + 0.4, bot + dy], [w * 0.47 + 0.4, bot - 6]], '#e08a4a')));
+    for (let k = 0; k < 7; k++) out.push(R(w * 0.9 - 4 + k * 1.2, bot - 9 - (k % 2) * 2, 0.9, 4 + (k % 2) * 2, '#c88aff'));
+  }
+  // The lid and the glass frame.
+  out.push(R(0, 0, w, top + 2, '#5a6a8a'), F(R(1, 0.6, w - 2, 1, '#8a9ac0')), R(0, top, 2, bot - top, '#5a6a8a'), R(w - 2, top, 2, bot - top, '#5a6a8a'));
+  return out;
+}
 
 function pieceSprite(def) {
   const pad = 4;
@@ -190,7 +234,92 @@ export function trophyNote(def, char) {
   if (def.show === 'crown') return { on: Object.values(char?.dungeons ?? {}).some((r) => (r.hardClears ?? 0) > 0) };
   if (def.show === 'mount') return { mount: char?.mount ?? null };
   if (def.show === 'derby') return { text: String(char?.derbyWins ?? 0) };
+  // The rarest fish you've caught (the biggest first among equals), at their record sizes. In the
+  // craft list (no owner) a goldfish and a clownfish model it.
+  if (def.show === 'tank') {
+    if (!char) return { fish: [['fish_goldfish', 10], ['fish_clown', 11], ['fish_tang', 22], ['fish_seapony', 12]].slice(0, def.fish) };
+    const caught = Object.entries(char.fishBook ?? {}).filter(([id, r]) => r.n > 0 && FISH_BY_ID[id] && !FISH_BY_ID[id].boss);
+    caught.sort((a, b) => FISH_BY_ID[b[0]].rarity - FISH_BY_ID[a[0]].rarity || (b[1].best ?? 0) - (a[1].best ?? 0));
+    return { fish: caught.slice(0, def.fish).map(([id, r]) => [id, r.best ?? 10]) };
+  }
   return null;
+}
+
+// Inside a tank: weed swaying, light rippling down, bubbles rising from the rock, and the fish
+// gliding end to end, each on its own beat (from its place in the list and the tank's place in
+// the world). A fish slows into each turn, so its turn (a mirror flip) lands when it's nearly
+// still. Bigger catches swim bigger: a minnow is a speck, a marlin fills its lane.
+function drawTankLife(ctx, def, fish, x, y, time, wx, night) {
+  const x0 = x - def.w / 2 + 2;
+  const top = y - def.h + 6;
+  const bot = y - TANK_STAND - 4;
+  const w = def.w - 4;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x0, top, w, bot - top + 4);
+  ctx.clip();
+  // Weed at both ends, swaying.
+  ctx.strokeStyle = '#5fc08a';
+  ctx.lineWidth = 1.3;
+  ctx.lineCap = 'round';
+  for (const [u, hgt, k] of [[0.06, 0.7, 0], [0.1, 0.5, 1], [0.95, 0.6, 2]]) {
+    const bx = x0 + w * u;
+    ctx.beginPath();
+    ctx.moveTo(bx, bot + 2);
+    const sway = Math.sin(time * 1.4 + k * 1.7 + wx * 0.01) * 2.2;
+    ctx.quadraticCurveTo(bx + sway, bot - (bot - top) * hgt * 0.5, bx + sway * 1.6, bot - (bot - top) * hgt);
+    ctx.stroke();
+  }
+  // Light rippling down from the top.
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#ffffff';
+  for (let k = 0; k < 3; k++) {
+    const lx = x0 + ((time * 6 + k * w * 0.37 + wx) % (w + 20)) - 10;
+    ctx.beginPath();
+    ctx.moveTo(lx, top);
+    ctx.lineTo(lx + 5, top);
+    ctx.lineTo(lx - 3, bot);
+    ctx.lineTo(lx - 7, bot);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // The fish, small to big so the big ones swim in front.
+  const order = fish.map((f, i) => ({ id: f[0], cm: f[1], i })).sort((a, b) => a.cm - b.cm);
+  const lanes = Math.max(1, fish.length);
+  for (const f of order) {
+    // (A small tank keeps its fish a little smaller, so four have room.)
+    const k = Math.max(0.4, Math.min(1.15, 0.42 + 0.32 * Math.log10(Math.max(1, f.cm) / 4))) * (def.h < 60 ? 0.82 : 1);
+    const size = 16 * k;
+    const speed = 0.35 + ((f.i * 0.37) % 0.3);
+    const ph = time * speed + f.i * 1.9 + wx * 0.003;
+    const span = Math.max(4, (w - size - 6) / 2);
+    const cx = x0 + w / 2 + Math.sin(ph) * span;
+    const dir = Math.cos(ph) >= 0 ? 1 : -1;
+    const lane = top + 4 + ((bot - top - size - 4) * ((f.i % lanes) + 0.5)) / lanes;
+    const fy = lane + Math.sin(time * 1.3 + f.i * 2.3) * 1.6;
+    ctx.save();
+    ctx.translate(cx, fy + size / 2);
+    ctx.scale(dir, 1);
+    drawItemIcon(ctx, f.id, -size / 2, -size / 2, k);
+    ctx.restore();
+  }
+  // Bubbles from the rock, rising and wobbling.
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  for (let k = 0; k < 4; k++) {
+    const u = (time * 0.4 + k * 0.27 + wx * 0.001) % 1;
+    const bx = x0 + w * 0.72 + Math.sin(u * 12 + k) * 1.4;
+    const by = bot - 10 - u * (bot - top - 12);
+    ctx.beginPath();
+    ctx.arc(bx, by, 0.7 + k * 0.2, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+  // A soft glow at night, like a tank light left on.
+  glow(ctx, x, top + (bot - top) / 2, def.w * 0.6, '#8fd8f0', night * 0.25);
+  // The glass's shine.
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fillRect(x0 + 3, top, 1.5, bot - top);
+  ctx.fillRect(x0 + 6, top, 0.8, bot - top);
 }
 
 const riders = new Map();
@@ -366,6 +495,8 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
       ctx.fillStyle = '#ff6b8a';
       ctx.fillRect(x - 1, top + 9 + bob, 2, 2);
       glow(ctx, x, top + 9, 10, '#fff3a6', 0.3 + 0.15 * Math.sin(time * 2 + wx));
+    } else if (def.show === 'tank') {
+      drawTankLife(ctx, def, n.fish, x, y, time, wx, night);
     } else if (def.show === 'mount' && n.mount) {
       let st = riders.get(p);
       if (!st) riders.set(p, (st = {}));

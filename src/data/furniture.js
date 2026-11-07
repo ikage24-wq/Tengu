@@ -14,7 +14,8 @@
 //   where   'in' (the hut only), 'out' (the island only) or 'any'
 //   level   the Crafting level its recipe needs; `stage` the island stage it opens at
 //   show    what a trophy shows (render/furniture.js reads it from your character): your biggest
-//           catch, a Hard crown, your mount, your best dungeon grade, your derby ribbon
+//           catch, a Hard crown, your mount, your best dungeon grade, your derby ribbon, or (`tank`)
+//           the `fish` rarest fish you've caught, swimming
 
 export const FURN_SETS = {
   sea: { name: 'Seaside Cottage', color: '#5fb8d8' },
@@ -52,6 +53,9 @@ export const FURNITURE = [
   F('trophy_figure', 'Mount Figurine', 'trophy', 'surface', 18, 18, { oak_log: 1, cotton: 1 }, { level: 2, show: 'mount', desc: 'A little carved figure of the mount you ride.' }),
   F('trophy_cup', 'Dungeon Cup', 'trophy', 'surface', 16, 22, { copper_ore: 2, silver_ore: 1 }, { level: 24, stage: 3, show: 'grade', desc: 'Engraved with the best grade you have ever earned in a dungeon.' }),
   F('trophy_crown', 'Crown Cushion', 'trophy', 'surface', 18, 18, { hollow_acorn: 3, cotton: 2 }, { level: 14, stage: 4, show: 'crown', desc: 'A velvet cushion for a crown. A Hard dungeon clear puts one on it.' }),
+  // Your catches, swimming: the rarest fish you've landed, each at a size from your record one.
+  F('trophy_tank', 'Home Aquarium', 'trophy', 'floor', 64, 50, { oak_log: 4, shell: 3, rose_quartz: 2 }, { level: 6, show: 'tank', fish: 4, desc: 'A glass tank on a wooden stand. Four of the rarest fish you have caught swim in it.' }),
+  F('trophy_grandtank', 'Grand Aquarium', 'trophy', 'floor', 112, 66, { maple_log: 6, amethyst: 3, sea_kelp: 4, shell: 4 }, { level: 18, stage: 2, show: 'tank', fish: 8, desc: 'A great tank with a coral garden. Eight of the rarest fish you have caught swim in it.' }),
   F('trophy_ribbon', 'Derby Ribbon', 'trophy', 'wall', 18, 28, { cotton: 2 }, { where: 'in', level: 3, show: 'derby', desc: 'A rosette that shows how many Fishing Derbies you have won.' }),
 ];
 export const FURNITURE_BY_ID = Object.fromEntries(FURNITURE.map((f) => [f.id, f]));
