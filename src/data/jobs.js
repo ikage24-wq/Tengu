@@ -70,12 +70,12 @@ export const JOBS = {
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
   paladin: {
-    id: 'paladin', guard: 0.8, power: 1.53, spread: 2, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'paladin', guard: 0.8, power: 1.53, spread: 2.75, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 32, mp: 14, advanceHp: 600, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
     blurb: 'The shield of the party. Holy light stuns and taunts, and blessings guard everyone near. The tank of any dungeon group.',
   },
   berserker: {
-    id: 'berserker', power: 0.59, spread: 2, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    id: 'berserker', power: 0.59, spread: 2.6, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
     hp: 30, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
   },

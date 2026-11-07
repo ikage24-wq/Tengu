@@ -28,7 +28,8 @@ export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', ar
 export const BALANCE_JOBS = Object.keys(WEAPON);
 const DT = 1 / 60;
 // How hard the monsters in the survival test hit (their attack times this, plus 3 a level).
-export const FIGHT = { k: 25 };
+// (25 once; with today's HP every job fell in a second, so 6: the tanks last minutes, the rest seconds.)
+export const FIGHT = { k: 6 };
 
 // A character of `job` at `level`: its job line, Auto stats, every skill of its line maxed, its
 // own job's gear and weapon at the level.

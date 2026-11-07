@@ -191,3 +191,73 @@ export function dancerHit(ctx, school, x, y, p, { big = false, seed = 0.5, dir =
   ctx.restore();
   return true;
 }
+
+// Cloud Nine: a ring of little puffy clouds gathering round her and circling, rising as they go,
+// then drifting apart.
+export function cloudRing(ctx, x, y, p) {
+  const gather = ease(p * 2.5);
+  const out = Math.max(0, (p - 0.7) / 0.3);
+  for (let k = 0; k < 7; k++) {
+    const a = (k / 7) * TAU + p * 4;
+    const rx = 46 * gather + 30 * out;
+    const cx = x + Math.cos(a) * rx;
+    const cy = y - 18 - 22 * p + Math.sin(a) * rx * 0.25;
+    const front = Math.sin(a) > 0;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 1 - out) * (front ? 0.95 : 0.6);
+    for (let b = 0; b < 3; b++) {
+      const g = ctx.createRadialGradient(cx + (b - 1) * 5 - 2, cy - 3, 1, cx + (b - 1) * 5, cy, 7);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(1, '#cfeaff');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx + (b - 1) * 5, cy - (b === 1 ? 3 : 0), b === 1 ? 7 : 5.5, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// Handspring: a mint ribbon tracing her flip from where she leaves the ground to where she lands
+// (about `d` ahead), with dust kicked up at both ends and gold sparkles shed along it.
+export function springTrail(ctx, x, y, dir, d, p) {
+  const C = COL.acro;
+  const head = ease(p * 1.6);
+  const tail = ease(Math.max(0, p - 0.35) / 0.65);
+  const at = (u) => [x + dir * d * u, y - 20 - 46 * Math.sin(Math.PI * u)];
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = C.a;
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.85;
+  ctx.beginPath();
+  for (let k = 0; k <= 20; k++) {
+    const u = tail + ((head - tail) * k) / 20;
+    const [px, py] = at(u);
+    if (k) ctx.lineTo(px, py + Math.sin(u * 20) * 2);
+    else ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = C.c;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  for (let k = 0; k < 5; k++) {
+    const u = tail + ((head - tail) * (k + 0.5)) / 5;
+    const [px, py] = at(u);
+    ctx.globalAlpha = Math.max(0, 1 - p);
+    star(ctx, px, py + 8, 2.6, C.b);
+  }
+  // Dust where she pushes off, and where she lands.
+  for (const [u, when] of [[0, 0], [1, 0.55]]) {
+    const q = (p - when) / 0.45;
+    if (q <= 0 || q >= 1) continue;
+    ctx.globalAlpha = (1 - q) * 0.7;
+    ctx.fillStyle = '#efe4d2';
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath();
+      ctx.arc(x + dir * d * u + (k - 1) * 9 * ease(q), y - 3 - 4 * q, 4 + 5 * ease(q), 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}

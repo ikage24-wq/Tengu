@@ -56,7 +56,7 @@ for (let i = 0; i < rounds; i++) {
       const want = role(j) === 'dps' ? { single: base - lean[j], pack: base + lean[j] } : { single: TARGET[role(j)], pack: TARGET[role(j)] };
       const p0 = JOBS[j].power ?? 1;
       const p1 = Math.round(p0 * (want.single / v.single) * 100) / 100;
-      const s1 = Math.round(Math.max(0.2, Math.min(2, (JOBS[j].spread ?? 1) * (want.pack / v.pack) / (p1 / p0))) * 100) / 100;
+      const s1 = Math.round(Math.max(0.2, Math.min(3, (JOBS[j].spread ?? 1) * (want.pack / v.pack) / (p1 / p0))) * 100) / 100;
       JOBS[j].power = p1;
       JOBS[j].spread = s1;
       console.log(`round ${i + 1}  ${j.padEnd(13)} single ${v.single.toFixed(2)} pack ${v.pack.toFixed(2)} -> power ${p1} spread ${s1}`);

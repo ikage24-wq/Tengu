@@ -11,7 +11,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawBubbleFx } from './bubbles.js';
 import { drawArbalistFx } from './arbalist-fx.js';
 import { rockBurst } from './blade-fx.js';
-import { dancerHit } from './dancer-fx.js';
+import { dancerHit, cloudRing, springTrail } from './dancer-fx.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
@@ -605,7 +605,15 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // Gale Step: the streak of wind she rode, from where she set off, pointing the way she went.
       return fxSprite(ctx, 'celsdgalefx', x, y - 30, { p, scale: 0.6, flip: f.dir < 0 }) || true;
     case 'sdcloudnine':
-      return fxSprite(ctx, 'celsdcloudnine', x, y + 6, { p, scale: 0.75 }) || true;
+      // (Her sprite on the floor behind her, and a ring of puffy clouds circling her in front.)
+      fxSprite(ctx, 'celsdcloudnine', x, y + 6, { p: Math.min(1, p * 1.6), scale: 0.75 });
+      return true;
+    case 'sdcloudring':
+      cloudRing(ctx, x, y, p);
+      return true;
+    case 'achspring':
+      springTrail(ctx, x, y, dir, f.d ?? 120, p);
+      return true;
     case 'skytornado':
       return fxSprite(ctx, 'celskytornado', x, y + 6, { p, scale: 0.8 }) || true;
     case 'bdhoopla':

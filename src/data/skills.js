@@ -708,7 +708,7 @@ export const SKILLS = {
       const k = (a, b) => lerp(a, b, lv, m);
       return {
         mp: k(10, 6), pct: k(110, 180), hits: 1, targets: 1,
-        combo: [{ move: 'achandspring', dur: 0.66, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
+        combo: [{ move: 'achandspring', dur: 0.66, step: k(100, 140), carry: 0.62, guard: 0.6, strikes: [{ at: 0.02, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'achspring', burstAt: 0, burstDur: 0.75 }, { at: 0.8, turn: true, shot: 'hawkarrow', pct: k(110, 180), range: 300, h: 70, knock: 160, speed: 900, big: true, stop: 0.05, shake: 1 }] }],
         paths: {
           // Vanishing Act: she sweeps her cape across her with a flourish and is gone in a puff of
           // plum smoke; she steps out of another behind it with a twirl and looses back at it.
@@ -1165,7 +1165,7 @@ export const SKILLS = {
       const range = { w: 640, h: 200, around: true };
       return {
         mp: k(30, 50), pct: 0, hits: 0, targets: 0, range, cooldown: 120,
-        combo: [{ move: 'sdcloud', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sdcloudnine', burstAt: 0, burstDur: 0.9, follow: true, grant: { id: 'cloudnine', duration: 60, buff: { attackSpeed: kf(0.06, 0.12), eva: k(10, 30), speed: k(8, 20), jump: k(4, 10) }, range } }] }],
+        combo: [{ move: 'sdcloud', dur: 0.8, step: 0, strikes: [{ at: 0.35, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'sdcloudring', burstAt: 0, burstDur: 1.6, follow: true }, { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, burst: 'sdcloudnine', burstAt: 0, burstDur: 1.4, follow: true, grant: { id: 'cloudnine', duration: 60, buff: { attackSpeed: kf(0.06, 0.12), eva: k(10, 30), speed: k(8, 20), jump: k(4, 10) }, range } }] }],
       };
     },
   }),
