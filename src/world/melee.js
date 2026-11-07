@@ -38,7 +38,7 @@ import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from 
 import { tickIdol, spotlight as idolSpotlight, hypeWave, lullaby, curtainCall, grandConcert } from './idol.js';
 import { tickAstro, gravityWell, planetaryAlignment } from './astro.js';
 import { launchWisp } from './foxwheel.js';
-import { GRAVITY } from './physics.js';
+import { GRAVITY, groundAt } from './physics.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
 import { allyElement } from './reactions.js';
@@ -2083,7 +2083,15 @@ function fire(world, strike) {
     // It flies at the first monster in its line (up or down to it, from the air or onto a slope)
     // and on through, out to its full range; each one it passes is hit as the bolt gets there.
     const first = line[0];
-    const aim = first ? Math.atan2(first.y - (first.air ?? 0) - first.def.h / 2 - oy, first.x - ox) : s.dir > 0 ? 0 : Math.PI;
+    let aim = first ? Math.atan2(first.y - (first.air ?? 0) - first.def.h / 2 - oy, first.x - ox) : s.dir > 0 ? 0 : Math.PI;
+    // A level shot keeps close to level (it may tip to meet a monster a little above or below, never
+    // dive steeply because she loosed it from the top of a jump); a shot aimed up or down keeps its
+    // aim.
+    if (!s.drop && !s.lift) {
+      const level = s.dir > 0 ? 0 : Math.PI;
+      const off = Math.atan2(Math.sin(aim - level), Math.cos(aim - level));
+      aim = level + Math.max(-PIERCE_TIP, Math.min(PIERCE_TIP, off));
+    }
     const ux = Math.cos(aim);
     const uy = Math.sin(aim);
     // A whirling shot keeps cutting what it passes (`ticks` more times, `tickGap` apart).
@@ -2105,7 +2113,9 @@ function fire(world, strike) {
         });
       });
     }
-    const len = Math.max(s.range, first ? Math.hypot(first.x - ox, first.y - oy) + 60 : 0);
+    let len = Math.max(s.range, first ? Math.hypot(first.x - ox, first.y - oy) + 60 : 0);
+    // (Tipped downward it ends at the floor under the line, never flying on into the ground.)
+    if (uy > 0.02) len = Math.min(len, Math.max(40, (groundAt(world.map, ox + ux * len) - 4 - oy) / uy));
     fly(ox + ux * len, oy + uy * len, first, len);
     return;
   }
@@ -2226,6 +2236,8 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 }
 
 // The Spell Juggler's orbs, her palm spark and her finisher orbs (world/juggle.js).
+// How far a level piercing shot may tip toward a monster above or below its line (radians).
+const PIERCE_TIP = 0.28;
 const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgpotato', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);

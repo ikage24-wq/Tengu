@@ -368,12 +368,12 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     case 'achit': {
       // The Acrobat Archer's arrow landing: a gold star popping in a loop of mint ribbon, then
       // confetti; heavy shots are bigger.
-      return fxSprite(ctx, 'celachit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.6 : 0.44 }) || true;
+      return fxSprite(ctx, 'celachit', x, y - (f.h ?? 24) / 2, { p, flip, scale: f.big || f.crit ? 0.5 : 0.4 }) || true;
     }
     case 'acfirework':
       // Firework Arrow going off.
       // (drawn about as wide as the blast it deals, 50-80 px round its target)
-      return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.8 }) || true;
+      return fxSprite(ctx, 'celacfirework', x, y - (f.h ?? 24) / 2, { p, scale: 0.5 }) || true;
     case 'pthat':
       // Levitation: the giant top hat over the stage, flipping over and pouring her arrows, cards and
       // doves down on everything below.

@@ -9459,31 +9459,53 @@
   // Her arrow in flight (loops, toward +x): a gold arrow with a mint ribbon curling behind it and a
   // couple of sparkles.
   E.acarrow = grown((() => {
-    const cx = 120;
+    const cx = 150;
     const cy = 40;
     return {
-      w: 140, h: 80, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      w: 170, h: 80, n: 6, fps: 24, px: cx, py: cy, loop: true,
       draw(ctx, i) {
-        trailRibbon(ctx, cx - 60, cy, 70, 12, (i / 6) * TAU);
-        goldArrow(ctx, cx, cy, 64, 0, 1);
-        for (let j = 0; j < 2; j++) sparkle(ctx, SHOWG, cx - 70 - j * 24, cy + (j ? 10 : -10) * Math.sin((i / 6) * TAU), 6 - j * 1.5, i + j);
+        const ph = (i / 6) * TAU;
+        // A soft speed streak behind it, then a thin mint streamer curling off the nock: the
+        // arrow itself stays clean and slim, a real arrow with a gold shaft, a sharp head and
+        // mint fletching.
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = SHOWG[1];
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx - 84, cy);
+        ctx.lineTo(cx - 150, cy);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        trailRibbon(ctx, cx - 82, cy, 64, 5, ph);
+        goldArrow(ctx, cx, cy, 82, 0, 0.9);
+        sparkle(ctx, SHOWG, cx - 104 - (i % 3) * 10, cy + 8 * Math.sin(ph), 4.5, i);
       },
     };
   })(), 1.8);
 
-  // Her big arrow (finishers, Showtime): a bigger gold arrow wrapped in two mint ribbons spiralling
-  // round it, a star burst at its head.
+  // Her big arrow (finishers, Showtime): a longer, heavier gold arrow, two thin ribbons spiralling
+  // round the streak behind it, and a small star flashing at its head.
   E.acbig = grown((() => {
-    const cx = 190;
+    const cx = 220;
     const cy = 60;
     return {
-      w: 230, h: 120, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      w: 250, h: 120, n: 6, fps: 24, px: cx, py: cy, loop: true,
       draw(ctx, i) {
         const ph = (i / 6) * TAU;
-        trailRibbon(ctx, cx - 70, cy, 130, 22, ph);
-        trailRibbon(ctx, cx - 70, cy, 120, 18, ph + Math.PI, ['#ffffff', '#fff4c8', '#ffd36a', '#e09a36', '#8e5228']);
-        goldArrow(ctx, cx - 6, cy, 110, 0, 1.5);
-        starburst(ctx, SHOWG, cx + 4, cy, 18 + (i % 2) * 4, 8, 601, { inner: 0.4, rot: i * 0.3 });
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = SHOWG[1];
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(cx - 120, cy);
+        ctx.lineTo(cx - 220, cy);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        trailRibbon(ctx, cx - 116, cy, 110, 9, ph);
+        trailRibbon(ctx, cx - 116, cy, 100, 7, ph + Math.PI, SHOWG);
+        goldArrow(ctx, cx, cy, 120, 0, 1.25);
+        starburst(ctx, SHOWG, cx + 2, cy, 10 + (i % 2) * 3, 8, 601, { inner: 0.4, rot: i * 0.3 });
       },
     };
   })(), 1.6);
