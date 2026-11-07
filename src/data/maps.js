@@ -206,7 +206,7 @@ export const MAPS = {
       terrain: [[0, 1036], [160, 1036], [196, 992], [230, 992], [230, 1000], [2400, 1000]],
       zones: [
         { name: 'Root Cellar', color: '#8a6a52', mobs: ['sproutling', 'brownie'], nodes: [SPOT.ore(1), SPOT.ore(1)],
-          look: underground({ sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58' }) },
+          look: underground({ material: 'cellar', edges: null, sky: ['#4a3a34', '#6a5248', '#8a6e5e'], far: '#5a463c', mid: '#6e5648', midTrim: '#8a6e58' }) },
         { name: 'Farm Fields', color: '#5fae5f', from: 780, mobs: ['strawimp', 'mushkin'], nodes: [SPOT.fruit(1, 'wild_strawberry'), SPOT.fiber(1), SPOT.herb(1, 'clover'), SPOT.fruit(1, 'wild_strawberry')] },
         { name: 'Hayloft Ridge', color: '#4f95e0', from: 660, mobs: ['piglet', 'kamaitachi'], nodes: [SPOT.honey(1), SPOT.wood(1), SPOT.night(1)],
           look: { sky: ['#4fb0ff', '#9fdcff', '#e8f8ff'], far: '#c8ecd0', mid: '#a8e0b0', midTrim: '#7fc88f', material: 'meadow', edges: 'flowers', props: ['flower', 'tuft', 'tulip'] } },
@@ -262,7 +262,7 @@ export const MAPS = {
     bench: 1180,
     workshed: true,
     width: 2900, height: 520, groundY: 480,
-    look: { islands: 'planks', propKeep: 0.8 },
+    look: { islands: 'planks', material: 'quay', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],
     homeStyle: 'canal',
     // Canal houses wall to wall, each with its own gable, and the warehouse (render/townhouses.js).
@@ -319,7 +319,7 @@ export const MAPS = {
       width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
       zones: [
         { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [SPOT.ore(2), SPOT.ore(2)],
-          look: underground({ sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a' }) },
+          look: underground({ material: 'tunnel', edges: null, sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a' }) },
         { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)] },
         { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.night(2)],
           look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
@@ -375,7 +375,7 @@ export const MAPS = {
       width: 2600, ground: 1120, by: 'y', quiet: [[40, 300, 160], [2380, 700, 200], [2540, 1120, 160]],
       zones: [
         { name: 'Sunken Crypt', color: '#5d5285', mobs: ['boneknight', 'wisp'], nodes: [SPOT.ore(2), SPOT.ore(2, { gem: 0.14 })],
-          look: underground({ sky: ['#1e1a3a', '#2e2852', '#46406e'], far: '#2c2650', mid: '#3a3462', midTrim: '#5a5288', skyline: 'columns', drift: 'sparkle' }) },
+          look: underground({ material: 'crypt', edges: null, sky: ['#1e1a3a', '#2e2852', '#46406e'], far: '#2c2650', mid: '#3a3462', midTrim: '#5a5288', skyline: 'columns', drift: 'sparkle' }) },
         { name: 'Collapsed Halls', color: '#4f95e0', from: 800, mobs: ['wisp', 'gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.fiber(2), SPOT.wood(2)],
           look: { sky: ['#5a4a98', '#8a76c0', '#c8b8e8'] } },
         { name: 'Temple Roof', color: '#c84f8a', from: 440, mobs: ['gloombat'], nodes: [SPOT.herb(2, 'temple_mint'), SPOT.night(2)] },
@@ -564,6 +564,7 @@ Object.assign(MAPS, {
   // and the road on to Ember Crag beside it.
   canyon: {
     id: 'canyon', name: 'Windy Canyon', theme: 'crag', town: 'crag', world: { x: 138, y: 104 },
+    look: { material: 'canyon' },
     ...lay({
       width: 2400, ground: 1000, by: 'x',
       terrain: [[0, 600], [700, 600], [700, 1000], [1700, 1000], [1700, 560], [2400, 560]],
@@ -802,7 +803,9 @@ Object.assign(MAPS, {
   dawnbeach: {
     id: 'dawnbeach', name: 'Dawnlight Beach', theme: 'harbor', town: 'sprout', amb: 'beach',
     width: 1500, height: 560, groundY: 480,
-    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', islands: 'planks', material: 'sand' },
+    look: { sky: ['#ffc9a8', '#ffe6cc', '#fff6e6'], far: '#ffd9c2', mid: '#ffe8c4', midTrim: '#f2cfa0', light: 'morning', skyline: 'opensea', islands: 'planks', material: 'sand',
+      // A beach's own things on the sand (pebbles, rocks, dune grass), not the harbour's lamps and alley cats.
+      props: ['pebble', 'rock', 'reed', 'pebble', 'rock'] },
     // The sand runs down into the sea at the west end, where a little jetty reaches out.
     terrain: [[0, 556], [150, 556], [270, 480], [1500, 480]],
     water: [{ x1: 0, x2: 272, y: 492, kind: 'sea', sunk: false, open: [0, 272] }],
@@ -834,7 +837,7 @@ Object.assign(MAPS, {
   dock: {
     id: 'dock', name: 'Sunny Dock', theme: 'harbor', town: 'sprout', amb: 'dock',
     width: 1300, height: 560, groundY: 480,
-    look: { islands: 'planks' },
+    look: { islands: 'planks', material: 'dockwood' },
     terrain: [[0, 480], [1300, 480]],
     platforms: [],
     ropes: [],
@@ -871,7 +874,7 @@ export function getMap(id) {
 const G = 380; // every room's floor
 const pack = (id, x, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y: G, pack: id }));
 // What every Hollow room's backdrop shares: root silhouettes, the hollow's own earth, fireflies.
-const ROOTS = { skyline: 'roots', material: 'hollow', critters: ['firefly'] };
+const ROOTS = { skyline: 'roots', material: 'rootden', critters: ['firefly'] };
 const packAt = (id, x, y, ...mobs) => mobs.map((mob, i) => ({ mob, x: x + (i - (mobs.length - 1) / 2) * 34, y, pack: id }));
 
 MAPS.canyon.portals.push({ id: 'hollow', x: 1450, y: 1000, to: 'hollow_gate', toPortal: 'south', label: 'Rootwood Hollow' });
@@ -1271,7 +1274,10 @@ Object.assign(MAPS, {
     ],
     // The weathervane's pole, up to the little platform at its foot (the room's secret).
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'manor', face: null, bigMoon: true },
+    look: { sky: ['#1a1e4e', '#3a3a86', '#a890d8'], far: '#2e2e66', mid: '#4a4a86', midTrim: '#ffd36b', ...MANOR_OUT, material: 'slate', face: null, bigMoon: true,
+      // On the roof: weathered boards laid across the slates to walk on (no floating dishes), cats
+      // and the odd lantern up here instead of the hall's candles.
+      islands: 'planks', props: ['cat', 'pebble', 'lantern', 'pebble'], ledgeProp: null },
     portals: [
       { id: 'west', x: 40, y: G, to: 'manor5', toPortal: 'east' },
       { id: 'out', x: 1560, y: G, to: 'manor_gate', toPortal: 'start', label: 'Exit', sealed: true },
@@ -1558,7 +1564,7 @@ Object.assign(MAPS, {
         { name: 'The Top Floor', color: '#ffd36b', from: 440, mobs: [] },
       ],
     }),
-    look: { sky: ['#3a1e5a', '#7a3a8a', '#e07ab0'], far: '#5a2a6a', mid: '#8a4a8a', midTrim: '#7fd8ff', ...FAIR_IN },
+    look: { sky: ['#3a1e5a', '#7a3a8a', '#e07ab0'], far: '#5a2a6a', mid: '#8a4a8a', midTrim: '#7fd8ff', ...FAIR_IN, skyline: 'funhouse' },
     task: { kind: 'light', object: 'prize', label: 'Pop the prize balloons' },
     springs: [{ x: 640, y: 1000, up: 170, kind: 'spring' }, { x: 380, y: 840, up: 170, kind: 'spring' }, { x: 900, y: 680, up: 170, kind: 'spring' }, { x: 300, y: 520, up: 170, kind: 'spring' }, { x: 110, y: 520, up: 270, kind: 'spring' }],
     portals: [
@@ -1931,7 +1937,7 @@ Object.assign(MAPS, {
     width: 1600, height: 420, groundY: G,
     platforms: [{ x: 200, y: 300, w: 300 }, { x: 1100, y: 300, w: 300 }, { x: 720, y: 220, w: 160 }],
     ropes: [{ x: 800, top: 220, bottom: G }],
-    look: { sky: ['#4a2a3a', '#7a4a5a', '#c88a8a'], far: '#5a3040', mid: '#7a4656', midTrim: '#ffd36b', ...SUGAR_IN },
+    look: { sky: ['#4a2a3a', '#7a4a5a', '#c88a8a'], far: '#5a3040', mid: '#7a4656', midTrim: '#ffd36b', ...SUGAR_IN, skyline: 'kitchen' },
     task: { kind: 'light', object: 'dispenser', label: 'Cook the recipe' },
     cauldron: { x: 800 },
     portals: [
@@ -2790,3 +2796,6 @@ for (const h of Object.values(SWEETHEARTS)) {
     npcs: [], spawns: [], deco: [], lamps: [{ x: 320, y: 120, c: '#ffd27a' }],
   };
 }
+
+// The deep rooms of Rootwood Hollow are under the roots: root-bound earth, no grass.
+for (const id of ['hollow3', 'hollow4', 'hollow5', 'hollow6']) MAPS[id].look = { ...MAPS[id].look, material: 'rootden' };

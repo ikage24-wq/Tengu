@@ -60,15 +60,43 @@ export function drawWhaleBack(ctx, world, cam, time) {
       const x = wx - cam.x * 0.85;
       if (x < -160 || x > 800) continue;
       const cy = map.groundY - cam.y + 10;
-      ctx.strokeStyle = '#c8e8f6';
-      ctx.globalAlpha = 0.55;
-      ctx.lineWidth = 10;
+      const rx = 110 * swell;
+      const ry = 250 * swell;
+      // A rib: a thick band of bone, wider at the foot, with a shadowed outer edge, a lit inner
+      // edge, cartilage joints along it, and a vein of light pulsing up its middle.
+      const band = (o) => {
+        ctx.beginPath();
+        ctx.ellipse(x, cy, rx + o, ry + o, 0, Math.PI, TAU);
+        ctx.ellipse(x, cy, rx - o, ry - o * 0.6, 0, TAU, Math.PI, true);
+        ctx.closePath();
+      };
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#6e8cb8';
+      band(10);
+      ctx.fill();
+      ctx.fillStyle = '#a8c4e2';
+      band(7);
+      ctx.fill();
+      ctx.fillStyle = '#d6eaf6';
       ctx.beginPath();
-      ctx.ellipse(x, cy, 110 * swell, 250 * swell, 0, Math.PI, TAU);
-      ctx.stroke();
+      ctx.ellipse(x, cy, rx - 4, ry - 3, 0, Math.PI * 1.08, Math.PI * 1.6);
+      ctx.ellipse(x, cy, rx - 7, ry - 5, 0, Math.PI * 1.6, Math.PI * 1.08, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#a8c4e0';
+      ctx.lineWidth = 2;
+      for (let j = 1; j < 8; j++) {
+        const a = Math.PI + (j / 8) * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * (rx - 7), cy + Math.sin(a) * (ry - 5));
+        ctx.lineTo(x + Math.cos(a) * (rx + 7), cy + Math.sin(a) * (ry + 7));
+        ctx.stroke();
+      }
       ctx.strokeStyle = '#9fe8ff';
-      ctx.globalAlpha = 0.35 + 0.15 * Math.sin(time * 1.5 + k);
-      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.35 + 0.2 * Math.sin(time * 1.5 + k);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(x, cy, rx, ry, 0, Math.PI, TAU);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }

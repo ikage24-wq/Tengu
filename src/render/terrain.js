@@ -37,6 +37,21 @@ export const MATERIALS = {
   ridge: { lip: '#a8d8c8', body: '#7a80b8', deep: '#545a96', stone: '#9aa0d6', style: 'rock', blades: true, drip: 'root' },
   springs: { lip: '#9fe0c0', body: '#c4a6a0', deep: '#a08486', stone: '#e4cec6', style: 'slab', blades: true, drip: 'weed' },
   snow: { lip: '#ffffff', body: '#dfe8fa', deep: '#b6c4e8', stone: '#f4f8ff', style: 'slab', blades: false, drip: 'crystal', glow: '#e6f4ff' },
+  // Pastel Harbor's quay: big cut harbour stones in sea-washed grey, a pale coping along the top.
+  quay: { lip: '#efe2c8', body: '#b4b2c6', deep: '#86849e', stone: '#dcdae8', style: 'slab', blades: false, drip: 'weed' },
+  // Windy Canyon: wind-carved layers of sandstone (the canyon's walls, not a mason's).
+  canyon: { lip: '#ffe2b4', body: '#dc9e68', deep: '#a8643a', stone: '#fbdcae', style: 'strata', blades: false, drip: null },
+  // The Moonlit Rooftop: blue-grey roof slates in overlapping courses, a lead flashing along the top.
+  slate: { lip: '#b8b4dc', body: '#4e4e80', deep: '#34345e', stone: '#7272a6', style: 'brick', blades: false, drip: null },
+  // Underground zones (a zone look's `material`): no grass where no sun reaches.
+  // Clover Hills' root cellar: trodden earth over dark soil, roots hanging off its ledges.
+  cellar: { lip: '#d8b088', body: '#8a664c', deep: '#5a3e30', stone: '#c8a47e', style: 'meadowsoil', blades: false, drip: 'root' },
+  // Mossy Woods' root tunnels: damp dark loam with roots and buried stones.
+  tunnel: { lip: '#8e7a60', body: '#6a5444', deep: '#46362e', stone: '#a08a70', style: 'mossloam', blades: false, drip: 'root' },
+  // Inside Rootwood Hollow: dark root-bound earth with a thin skin of moss, no grass blades.
+  rootden: { lip: '#8aa07a', body: '#7a5a48', deep: '#523a30', stone: '#a8866e', style: 'mossloam', blades: false, drip: 'root', moss: true },
+  // Twilight Ruins' sunken crypt: worn violet flagstones with dark joints.
+  crypt: { lip: '#b8b0dc', body: '#5e5494', deep: '#3c3670', stone: '#8c82c4', style: 'flagstone', blades: false, drip: null, joint: '#2e2858' },
   // Map-specific materials (a map's `look.material`).
   // Starfall Heights: cloud tinted lavender by the night sky.
   starcloud: { lip: '#f2ecff', body: '#d8d0f6', deep: '#b0a4e0', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
@@ -888,9 +903,13 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   // A room whose picture paints its own floor (your hut, the Sweethearts' rooms) draws no ground
   // strip over it: you walk on the room's floor.
   if (map.look?.floor === 'painted') return;
-  theme = map.look?.material ?? theme;
+  // In a map zoned by height the ground is the lowest zone's floor (a cellar, a crypt), so it
+  // takes that zone's material and edging when the zone has its own.
+  const low = map.zonesBy !== 'x' ? map.zones?.[0]?.look : null;
+  const gl = low?.material ? { ...map.look, ...low } : map.look;
+  theme = gl?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
-  const deco = map.look?.edges ?? null;
+  const deco = gl?.edges ?? null;
   camX = cam.x;
   const runs = groundRuns(map, cam);
   const bottom = height + 40;

@@ -14,6 +14,7 @@ import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
 import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPigeons, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate } from './portals.js';
+import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
 import { pineArt, stoneLampArt, smallToriiArt, pagodaArt, bambooArt, reedArt, snowTuftArt, chimeArt } from './regions.js';
 
@@ -965,15 +966,56 @@ function drawSky(ctx, t, theme, width, height, time) {
   if (t.bigMoon) {
     const mx = width * 0.34;
     const my = height * 0.42;
-    glow(ctx, mx, my, 150, '#cdd6ff', 0.35);
-    ctx.fillStyle = '#f2f0ff';
+    const R0 = 54;
+    glow(ctx, mx, my, 170, '#cdd6ff', 0.3);
+    glow(ctx, mx, my, 80, '#eef0ff', 0.35);
+    // A lit sphere: bright toward the upper left, cooling to lavender at the far limb.
+    const g = ctx.createRadialGradient(mx - R0 * 0.35, my - R0 * 0.35, R0 * 0.1, mx, my, R0);
+    g.addColorStop(0, '#fffdf4');
+    g.addColorStop(0.65, '#ece8ff');
+    g.addColorStop(1, '#c6c0ee');
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(mx, my, 54, 0, Math.PI * 2);
+    ctx.arc(mx, my, R0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(200,196,240,0.5)';
-    for (const [dx, dy, r] of [[-16, -10, 10], [12, 8, 14], [20, -20, 6], [-8, 22, 7]]) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(mx, my, R0, 0, Math.PI * 2);
+    ctx.clip();
+    // The seas: soft irregular dark plains.
+    ctx.fillStyle = 'rgba(168,160,220,0.42)';
+    for (const [dx, dy, rx, ry, a] of [[-14, -12, 20, 13, 0.4], [10, 4, 16, 20, -0.3], [24, -20, 10, 7, 0.2], [-22, 18, 12, 8, 0.8], [6, 30, 14, 6, 0]]) {
+      ctx.beginPath();
+      ctx.ellipse(mx + dx, my + dy, rx, ry, a, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Craters: a shadowed bowl with a lit lower rim.
+    for (const [dx, dy, r] of [[-28, -26, 5], [30, 14, 6], [-4, -34, 3.5], [18, 36, 4], [-36, 6, 3], [36, -8, 2.6]]) {
+      ctx.fillStyle = 'rgba(150,140,206,0.55)';
       ctx.beginPath();
       ctx.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(mx + dx, my + dy, r, 0.2, Math.PI - 0.2);
+      ctx.stroke();
+    }
+    // The limb darkening on the side away from the light.
+    const limb = ctx.createLinearGradient(mx - R0, my - R0, mx + R0, my + R0);
+    limb.addColorStop(0.55, 'rgba(120,110,190,0)');
+    limb.addColorStop(1, 'rgba(120,110,190,0.4)');
+    ctx.fillStyle = limb;
+    ctx.fillRect(mx - R0, my - R0, R0 * 2, R0 * 2);
+    ctx.restore();
+    // Thin strands of cloud drifting across its face.
+    ctx.fillStyle = 'rgba(214,218,255,0.55)';
+    for (let k = 0; k < 2; k++) {
+      const cx = mx - 90 + (((time * 6 + k * 120) % 260));
+      const cy = my + 10 + k * 22;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 46, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + 26, cy - 3, 24, 3, 0, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -1006,7 +1048,8 @@ function drawSky(ctx, t, theme, width, height, time) {
     }
   }
   // The sun (or moon) smiles down and bobs gently.
-  if (t.face) {
+  // (Under the ridge's great moon there is no second, smaller one in the sky.)
+  if (t.face && !t.bigMoon) {
     const sx = width * 0.8;
     const sy = 56 + Math.sin(time * 0.8) * 2;
     glow(ctx, sx, sy, 70, t.sun, 0.9);
@@ -1065,6 +1108,119 @@ function litFill(ctx, t, p, dx = 2, dy = 1.5) {
   ctx.restore();
 }
 
+// A far ruined colonnade (Twilight Ruins' crypt, the Crystal Throne): a faint back row, then fluted
+// columns with capitals and stepped bases, some broken off with a fallen drum at the foot, pairs
+// spanned by round arches of cut voussoirs. Each column is modelled with a lit side, a body and a
+// shadow side in values clear of the sky, so it reads as stone instead of an outline.
+function drawFarColonnade(ctx, t, cam, width, y0, time) {
+  backRidge(ctx, t, cam, width, y0 - 10, 40);
+  const body = mix(shade(t.far, -6), t.sky[0], 0.1);
+  const dark = shade(body, -9);
+  const lit = mix(body, t.farLit, 0.55);
+  const back = mix(body, t.farBack, 0.6);
+  // The back row: plain shafts and arches far off in the gloom.
+  ctx.fillStyle = back;
+  repeat(cam.x, 0.1, 70, width, (i, x) => {
+    const h = 90 + hash(i + 40) * 50;
+    ctx.fillRect(snap(x), snap(y0 - h), 14, h + 200);
+    ctx.fillRect(snap(x - 3), snap(y0 - h), 20, 5);
+    if (hash(i + 41) > 0.5) {
+      ctx.beginPath();
+      ctx.moveTo(x + 14, y0 - h + 5);
+      ctx.arc(x + 42, y0 - h + 5, 28, Math.PI, 0);
+      ctx.lineTo(x + 70, y0 - h + 12);
+      ctx.arc(x + 42, y0 - h + 12, 22, 0, Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+  repeat(cam.x, 0.2, 110, width, (i, x) => {
+    const broken = hash(i + 7) < 0.3;
+    const full = 130 + hash(i) * 40;
+    const h = broken ? full * (0.35 + hash(i + 8) * 0.3) : full;
+    const w = 26;
+    const top = y0 - h;
+    // Stepped base.
+    ctx.fillStyle = dark;
+    ctx.fillRect(snap(x - 6), snap(y0 - 6), w + 12, 200);
+    ctx.fillStyle = body;
+    ctx.fillRect(snap(x - 4), snap(y0 - 12), w + 8, 7);
+    // The shaft: body, lit left band, shadow right band, and flutes.
+    ctx.fillStyle = body;
+    ctx.fillRect(snap(x), snap(top), w, h - 12);
+    ctx.fillStyle = lit;
+    ctx.fillRect(snap(x), snap(top), 6, h - 12);
+    ctx.fillStyle = dark;
+    ctx.fillRect(snap(x + w - 7), snap(top), 7, h - 12);
+    ctx.globalAlpha = 0.45;
+    for (let f = 1; f < 4; f++) ctx.fillRect(snap(x + f * 6.5), snap(top + 4), 1, h - 18);
+    ctx.globalAlpha = 1;
+    if (broken) {
+      // A jagged break, and the fallen drum lying at the foot.
+      ctx.fillStyle = t.sky[1];
+      ctx.beginPath();
+      ctx.moveTo(x - 1, top - 1);
+      ctx.lineTo(x + 7, top + 6);
+      ctx.lineTo(x + 13, top + 1);
+      ctx.lineTo(x + 19, top + 9);
+      ctx.lineTo(x + w + 1, top + 3);
+      ctx.lineTo(x + w + 1, top - 1);
+      ctx.closePath();
+      ctx.fill();
+      const dx = x + w + 8 + hash(i + 9) * 14;
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.ellipse(dx + 14, y0 - 14, 14, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = lit;
+      ctx.beginPath();
+      ctx.ellipse(dx + 4, y0 - 14, 4, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      return;
+    }
+    // Capital: a flared echinus under a square abacus, lit along the top.
+    ctx.fillStyle = body;
+    ctx.beginPath();
+    ctx.moveTo(x - 2, top);
+    ctx.quadraticCurveTo(x - 6, top - 6, x - 7, top - 9);
+    ctx.lineTo(x + w + 7, top - 9);
+    ctx.quadraticCurveTo(x + w + 6, top - 6, x + w + 2, top);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(snap(x - 8), snap(top - 16), w + 16, 7);
+    ctx.fillStyle = lit;
+    ctx.fillRect(snap(x - 8), snap(top - 16), w + 16, 2);
+    ctx.fillStyle = dark;
+    ctx.fillRect(snap(x - 8), snap(top - 10), w + 16, 1.5);
+    // Every other standing pair carries an arch of cut stones across to its neighbour.
+    if (i % 2 === 0 && hash(i + 1 + 7) >= 0.3) {
+      const cx = x + w + (110 - w) / 2;
+      const r = (110 - w) / 2 + 6;
+      const ay = top - 16;
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.arc(cx, ay, r + 10, Math.PI, 0);
+      ctx.arc(cx, ay, r, 0, Math.PI, true);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = 1;
+      for (let v = 1; v < 9; v++) {
+        const a = Math.PI + (v / 9) * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx + Math.cos(a) * r, ay + Math.sin(a) * r);
+        ctx.lineTo(cx + Math.cos(a) * (r + 10), ay + Math.sin(a) * (r + 10));
+        ctx.stroke();
+      }
+      ctx.strokeStyle = lit;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, ay, r + 10, Math.PI * 1.05, Math.PI * 1.45);
+      ctx.stroke();
+    }
+  });
+}
+
 // The furthest plane: one low ridge, simpler than anything in front of it, almost the sky's colour,
 // barely moving. `bumps` rounds it into a line of treetops.
 function backRidge(ctx, t, cam, width, y, amp, bumps = false) {
@@ -1084,6 +1240,7 @@ function backRidge(ctx, t, cam, width, y, amp, bumps = false) {
 // rim toward the light, over a still simpler ridge further back.
 function drawFar(ctx, t, cam, width, y0, time) {
   ctx.fillStyle = t.far;
+  if (drawFarRoom(ctx, t, cam, width, y0, time, t.skyline)) return;
   switch (t.skyline) {
     case 'houses':
       repeat(cam.x, 0.2, 58, width, (i, x) => {
@@ -1128,14 +1285,7 @@ function drawFar(ctx, t, cam, width, y0, time) {
       break;
     }
     case 'columns':
-      backRidge(ctx, t, cam, width, y0 - 10, 40);
-      repeat(cam.x, 0.2, 90, width, (i, x) => {
-        const h = 60 + hash(i) * 70;
-        const p = new Path2D();
-        p.roundRect(x, y0 - h, 22, h + 200, 3);
-        p.rect(snap(x - 5), snap(y0 - h), 32, 7);
-        litFill(ctx, t, p, 1.6, 1.2);
-      });
+      drawFarColonnade(ctx, t, cam, width, y0, time);
       break;
     case 'crystals':
       repeat(cam.x, 0.2, 46, width, (i, x) => {
@@ -1247,6 +1397,30 @@ function drawFar(ctx, t, cam, width, y0, time) {
         p.lineTo(x + w + 20, y0 + 40);
         p.closePath();
         litFill(ctx, t, p, 2.4, 1.6);
+        // The face turned from the light in shadow, split from the lit face along a crooked
+        // ridgeline from the summit, with a spur or two running down it.
+        ctx.fillStyle = shade(t.far, -7);
+        ctx.beginPath();
+        ctx.moveTo(px + 8, y0 - h + 12);
+        ctx.lineTo(x + w + 20, y0 + 40);
+        ctx.lineTo(px + w * 0.08, y0 + 40);
+        ctx.lineTo(px + 10, y0 - h * 0.45);
+        ctx.lineTo(px + 2, y0 - h * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = mix(t.far, t.farLit, 0.35);
+        for (let s = 0; s < 2; s++) {
+          const sy = y0 - h * (0.55 - s * 0.25);
+          const sx = px - (h * (0.55 - s * 0.25)) * 0.35 - 6;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx - 14, sy + 26);
+          ctx.lineTo(sx - 10, sy + 26);
+          ctx.lineTo(sx + 3, sy + 2);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.fillStyle = t.far;
         if (t.snowcaps) {
           ctx.fillStyle = mix('#ffffff', t.far, 0.25);
           ctx.beginPath();
@@ -1314,6 +1488,25 @@ function drawFar(ctx, t, cam, width, y0, time) {
         p.lineTo(x + w, y0 + 40);
         p.closePath();
         litFill(ctx, t, p, 2.4, 2);
+        // Modelling: the cliff's right flank in shadow, a lit shelf or two across its face, and
+        // a cap of greenery along the rim.
+        ctx.save();
+        ctx.clip(p);
+        // The rock's body a step darker than the air, so the cliff reads as a solid mass.
+        ctx.fillStyle = mix(shade(t.far, -4), t.sky[0], 0.15);
+        ctx.fillRect(snap(x + 4), snap(y0 - h + 2), w, h + 80);
+        ctx.fillStyle = shade(t.far, -8);
+        ctx.fillRect(snap(x + w * 0.62), snap(y0 - h - 20), w, h + 80);
+        ctx.fillStyle = mix(t.far, t.farLit, 0.4);
+        for (let s = 1; s < 3; s++) {
+          const sy = y0 - h + h * s * 0.32 + hash(i + s) * 10;
+          ctx.fillRect(snap(x + 4), snap(sy), w * (0.5 + hash(i + s + 4) * 0.3), 2.5);
+          ctx.fillStyle = shade(t.far, -9);
+          ctx.fillRect(snap(x + 4), snap(sy + 2.5), w * (0.5 + hash(i + s + 4) * 0.3), 2);
+          ctx.fillStyle = mix(t.far, t.farLit, 0.4);
+        }
+        ctx.restore();
+        ctx.fillStyle = t.far;
         if (hash(i + 9) > 0.5) {
           const fx = x + w * (0.35 + hash(i + 3) * 0.3);
           ctx.fillStyle = mix('#ffffff', t.far, 0.35);
@@ -1570,15 +1763,74 @@ function hallColumnArt() {
     R(13, 76, 4, 4, '#ffd36b'), R(11, 70, 2, 7, '#fff6dc'), R(17, 70, 2, 7, '#fff6dc'), E(12, 68, 1.4, 2.4, '#ffb35a'), E(18, 68, 1.4, 2.4, '#ffb35a'),
   ]);
 }
+// A family portrait in oils: a carved gilt frame (lit top and left, shadowed bottom and right,
+// rosettes at the corners), a dark varnished ground warming toward the sitter, and a bust of one of
+// four ancestors in their own dress. The eyes slide to follow you (`look`).
 function hallPortraitArt(who, look) {
-  return art(`manor-portrait|${who}|${look}`, 36, 46, () => {
-    const bg = ['#8a6ac8', '#5a8ac8', '#c86a8a', '#6aa88a'][who];
-    const hair = ['#ffd36b', '#4a3a6a', '#ff9a6a', '#e8ecff'][who];
-    return [
-      R(0, 0, 36, 46, '#ffd36b'), F(R(1, 1, 34, 2, '#fff2b0')), R(3, 3, 30, 40, bg),
-      E(18, 46, 12, 10, shade(bg, -16)), E(18, 22, 8, 9, '#fff0e6'), E(18, 15, 9, 6, hair),
-      E(15 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), E(21 + look * 0.6, 23, 1.2, 1.4, '#3a2d4f'), R(16, 27, 4, 1, '#d86a8a'),
+  return art(`manor-portrait|${who}|${look}`, 44, 56, () => {
+    const G = '#e8b84a';
+    const GL = '#fff0a8';
+    const GD = '#a8782a';
+    const ground = ['#4a2a5a', '#2a3a5a', '#5a2a3a', '#2a4a3e'][who];
+    const glowC = ['#8a5aa8', '#4a6a9a', '#a85a6a', '#4a8a6e'][who];
+    const skin = ['#ffe6d6', '#f6d6c0', '#ffe0d0', '#f2dcd0'][who];
+    const skinSh = ['#f2c4b4', '#e0b49a', '#f2bca8', '#dcbcae'][who];
+    const out = [
+      // Frame: outer moulding, bevels, inner lip.
+      R(0, 0, 44, 56, G), F(R(0, 0, 44, 2.4, GL)), F(R(0, 0, 2.4, 56, GL)), F(R(0, 53.6, 44, 2.4, GD)), F(R(41.6, 0, 2.4, 56, GD)),
+      F(R(4, 4, 36, 48, GD)), F(R(5, 5, 34, 46, '#3a2440')),
+      // The painted ground: dark, with a warm haze behind the head.
+      F(R(6, 6, 32, 44, ground)), F(E(22, 22, 13, 14, glowC)), F(E(22, 20, 8, 9, mix(glowC, '#ffffff', 0.15))),
     ];
+    // Corner rosettes.
+    for (const [x, y] of [[2.6, 2.6], [41.4, 2.6], [2.6, 53.4], [41.4, 53.4]]) out.push(F(E(x, y, 2.6, 2.6, GL)), F(E(x + 0.4, y + 0.4, 1.2, 1.2, GD)));
+    const eyes = (y, c = '#3a2d4f') => [F(E(18.6 + look * 0.7, y, 1.3, 1.5, c)), F(E(25.4 + look * 0.7, y, 1.3, 1.5, c)), F(E(18.2 + look * 0.7, y - 0.5, 0.45, 0.45, '#ffffff')), F(E(25 + look * 0.7, y - 0.5, 0.45, 0.45, '#ffffff'))];
+    if (who === 0) {
+      // The lady: golden ringlets piled high, a violet gown, a string of pearls.
+      out.push(F(T([[8, 50], [12, 38], [22, 35], [32, 38], [36, 50]], '#7a4aa8')), F(T([[12, 38], [22, 35], [22, 50], [14, 50]], '#9a6ac8')),
+        F(E(22, 37, 6, 2.4, skin)), F(R(20, 30, 4, 6, skin)),
+        F(E(22, 15, 10, 8, '#ffd36b')), F(E(13.6, 24, 3, 5, '#ffd36b')), F(E(30.4, 24, 3, 5, '#ffd36b')),
+        F(E(22, 23, 7, 8.4, skin)), F(E(25, 25, 3.6, 6, skinSh)), F(E(22, 15.6, 7.6, 4, '#ffd36b')), F(E(19, 13, 3, 2, '#fff2a8')));
+      for (let k = 0; k < 7; k++) out.push(F(E(16.6 + k * 1.8, 37.6 + Math.sin((k / 6) * Math.PI) * 1.6, 0.9, 0.9, '#ffffff')));
+      out.push(...eyes(23), F(E(17, 26.6, 1.6, 0.9, '#ff9ab8')), F(E(27, 26.6, 1.6, 0.9, '#ff9ab8')), F(R(20.6, 28, 2.8, 1, '#d84a7a')));
+    } else if (who === 1) {
+      // The lord: dark swept hair, a high white collar and cravat, a navy coat, a moustache.
+      out.push(F(T([[7, 50], [11, 37], [22, 34], [33, 37], [37, 50]], '#2a3a7a')), F(T([[11, 37], [22, 34], [20, 50], [12, 50]], '#3a4a9a')),
+        F(T([[17, 34], [22, 41], [27, 34], [25, 31], [19, 31]], '#ffffff')), F(T([[20.6, 36], [22, 44], [23.4, 36]], '#e8e8f0')),
+        F(R(19.6, 28, 4.8, 5, skin)), F(E(22, 22, 7, 8.4, skin)), F(E(25, 24, 3.6, 6, skinSh)),
+        F(T([[14.6, 20], [16, 11], [22, 9], [29, 11], [29.6, 20], [27, 14], [18, 15]], '#3a2a3a')), F(T([[18, 11], [24, 9.6], [21, 12.6]], '#5a4a5a')),
+        ...eyes(22), F(T([[18, 27], [22, 25.6], [26, 27], [22, 27.6]], '#3a2a3a')), F(R(20.4, 28.6, 3.2, 0.8, '#b86a6a')));
+    } else if (who === 2) {
+      // The girl: copper curls, a big blue bow, a rose-pink dress with a lace collar.
+      out.push(F(T([[9, 50], [13, 39], [22, 36], [31, 39], [35, 50]], '#ff8ab0')), F(E(22, 38, 8, 2.6, '#fff4f8')),
+        F(R(20, 31, 4, 6, skin)), F(E(22, 19, 10, 9, '#e8703a')), F(E(13.4, 27, 3.4, 6, '#e8703a')), F(E(30.6, 27, 3.4, 6, '#e8703a')),
+        F(E(22, 25, 6.6, 7.6, skin)), F(E(24.6, 27, 3.4, 5.4, skinSh)), F(E(22, 18, 7, 3.6, '#e8703a')),
+        F(T([[22, 11], [14, 7], [14, 15]], '#5a9ae8')), F(T([[22, 11], [30, 7], [30, 15]], '#5a9ae8')), F(E(22, 11, 2, 2, '#3a7ad8')),
+        ...eyes(25), F(E(17.4, 28.6, 1.8, 1, '#ff8a9a')), F(E(26.6, 28.6, 1.8, 1, '#ff8a9a')), F(E(22, 30, 1.4, 0.8, '#d84a6a')));
+    } else {
+      // The grandmother: silver hair in a bun under a lace cap, spectacles, a green shawl, a cameo.
+      out.push(F(T([[7, 50], [10, 38], [22, 35], [34, 38], [37, 50]], '#3a7a5a')), F(T([[10, 38], [22, 35], [14, 50], [9, 50]], '#5a9a7a')),
+        F(E(22, 39, 2.6, 3, GL)), F(E(22, 39, 1.6, 2, '#ffd8e2')),
+        F(R(19.6, 29, 4.8, 6, skin)), F(E(22, 23, 7, 8, skin)), F(E(25, 25, 3.6, 5.6, skinSh)),
+        F(E(22, 15, 8.6, 5, '#e8ecff')), F(E(22, 10, 4, 3.4, '#e8ecff')), F(E(22, 12.6, 9.6, 2.4, '#ffffff')), F(E(15, 18, 2, 3, '#e8ecff')), F(E(29, 18, 2, 3, '#e8ecff')),
+        ...eyes(23.4),
+        ...[18.6, 25.4].map((ex) => {
+          // A round wire spectacle rim.
+          const o = [];
+          const n = [];
+          for (let k = 0; k <= 12; k++) {
+            const a = (k / 12) * Math.PI * 2;
+            o.push([ex + look * 0.7 + Math.cos(a) * 2.7, 23.4 + Math.sin(a) * 2.7]);
+            n.push([ex + look * 0.7 + Math.cos(a) * 2.1, 23.4 + Math.sin(a) * 2.1]);
+          }
+          return F(T([...o, ...n.reverse()], GD));
+        }),
+        F(R(21, 23, 2, 0.6, GD)),
+        F(R(20.6, 27.8, 2.8, 0.8, '#c86a7a')));
+    }
+    // A brass plaque under the picture.
+    out.push(F(R(15, 51.4, 14, 3, GL)), F(R(15, 53.4, 14, 1, GD)));
+    return out;
   });
 }
 
@@ -2593,21 +2845,110 @@ function drawFarReef(ctx, t, cam, width, y0, time) {
   backRidge(ctx, t, cam, width, y0 - 20, 30, true);
   ctx.fillStyle = t.far;
   ctx.fillRect(0, snap(y0 + 20), width, 400);
+  // The palace's stone: a body clear of the water's colour, a lit face toward the surface light,
+  // a shadow side, and the trim colour picked out in bands.
+  const body = mix(shade(t.far, -5), t.sky[0], 0.2);
+  const lit = mix(body, t.farLit, 0.5);
+  const dark = shade(body, -8);
+  const trim = mix(t.midTrim ?? t.farLit, body, 0.55);
   repeat(cam.x, 0.16, 380, width, (i, x) => {
     const bx = x + 40 + hash(i) * 120;
-    const p = new Path2D();
-    // A palace wing: a hall, two onion domes on towers, a spire.
-    p.rect(bx, y0 - 60, 200, 90);
-    for (const [dx, h] of [[20, 120], [150, 104]]) {
-      p.rect(bx + dx, y0 - h, 34, h);
-      p.moveTo(bx + dx - 6, y0 - h);
-      p.quadraticCurveTo(bx + dx + 17, y0 - h - 50, bx + dx + 40, y0 - h);
-      p.closePath();
+    // A palace wing: a long hall with a scalloped parapet and arcade, two onion-domed towers, and a
+    // shell-topped spire in the middle.
+    ctx.fillStyle = body;
+    ctx.fillRect(snap(bx), snap(y0 - 60), 200, 300);
+    ctx.fillStyle = lit;
+    ctx.fillRect(snap(bx), snap(y0 - 60), 200, 3);
+    for (let s = 0; s < 10; s++) {
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.arc(bx + 10 + s * 20, y0 - 60, 10, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = lit;
+      ctx.beginPath();
+      ctx.arc(bx + 10 + s * 20, y0 - 60, 10, Math.PI, Math.PI * 1.4);
+      ctx.lineTo(bx + 10 + s * 20, y0 - 60);
+      ctx.fill();
     }
-    p.moveTo(bx + 92, y0 - 60);
-    p.lineTo(bx + 100, y0 - 150);
-    p.lineTo(bx + 108, y0 - 60);
-    litFill(ctx, t, p, 2, 1.6);
+    // The arcade along the hall: deep round-headed bays.
+    ctx.fillStyle = dark;
+    for (let a = 0; a < 6; a++) {
+      const ax = bx + 62 + a * 13;
+      if (a === 3) continue;
+      ctx.beginPath();
+      ctx.moveTo(ax, y0 + 10);
+      ctx.lineTo(ax, y0 - 4);
+      ctx.arc(ax + 4, y0 - 4, 4, Math.PI, 0);
+      ctx.lineTo(ax + 8, y0 + 10);
+      ctx.fill();
+    }
+    ctx.fillStyle = trim;
+    ctx.fillRect(snap(bx), snap(y0 - 14), 200, 2);
+    for (const [dx, h] of [[20, 120], [150, 104]]) {
+      const tx = bx + dx;
+      ctx.fillStyle = body;
+      ctx.fillRect(snap(tx), snap(y0 - h), 34, h);
+      ctx.fillStyle = lit;
+      ctx.fillRect(snap(tx), snap(y0 - h), 7, h - 60);
+      ctx.fillStyle = dark;
+      ctx.fillRect(snap(tx + 27), snap(y0 - h), 7, h - 60);
+      // The onion dome: body, a lit crescent, a band at its foot and a pearl finial.
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.moveTo(tx - 6, y0 - h);
+      ctx.bezierCurveTo(tx - 10, y0 - h - 28, tx + 12, y0 - h - 34, tx + 17, y0 - h - 52);
+      ctx.bezierCurveTo(tx + 22, y0 - h - 34, tx + 44, y0 - h - 28, tx + 40, y0 - h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = lit;
+      ctx.beginPath();
+      ctx.moveTo(tx - 4, y0 - h);
+      ctx.bezierCurveTo(tx - 8, y0 - h - 26, tx + 10, y0 - h - 32, tx + 17, y0 - h - 50);
+      ctx.bezierCurveTo(tx + 6, y0 - h - 30, tx + 4, y0 - h - 18, tx + 8, y0 - h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = trim;
+      ctx.fillRect(snap(tx - 6), snap(y0 - h - 3), 46, 4);
+      ctx.beginPath();
+      ctx.arc(tx + 17, y0 - h - 55, 3, 0, Math.PI * 2);
+      ctx.fill();
+      // A tall lancet window up the tower, lit from within.
+      ctx.fillStyle = '#bff6ff';
+      ctx.globalAlpha = 0.55 + 0.25 * Math.sin(time * 0.6 + dx + i);
+      ctx.beginPath();
+      ctx.moveTo(tx + 13, y0 - h + 46);
+      ctx.lineTo(tx + 13, y0 - h + 22);
+      ctx.arc(tx + 17, y0 - h + 22, 4, Math.PI, 0);
+      ctx.lineTo(tx + 21, y0 - h + 46);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    // The spire: a ribbed shell cone on a drum.
+    ctx.fillStyle = body;
+    ctx.fillRect(snap(bx + 88), snap(y0 - 78), 24, 20);
+    ctx.beginPath();
+    ctx.moveTo(bx + 86, y0 - 78);
+    ctx.lineTo(bx + 100, y0 - 156);
+    ctx.lineTo(bx + 114, y0 - 78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = lit;
+    ctx.beginPath();
+    ctx.moveTo(bx + 86, y0 - 78);
+    ctx.lineTo(bx + 100, y0 - 156);
+    ctx.lineTo(bx + 95, y0 - 78);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 1.2;
+    for (let r = 1; r < 5; r++) {
+      const ry = y0 - 78 - r * 15;
+      const half = 14 * (1 - (r * 15) / 78);
+      ctx.beginPath();
+      ctx.moveTo(bx + 100 - half, ry);
+      ctx.quadraticCurveTo(bx + 100, ry + 3, bx + 100 + half, ry);
+      ctx.stroke();
+    }
     // Portholes lit from within, breathing.
     for (let c = 0; c < 5; c++) {
       const on = Math.sin(time * 0.5 + c * 1.3 + i * 2) > -0.4;
@@ -2996,15 +3337,63 @@ function drawFarStarHall(ctx, t, cam, width, y0, time, kind) {
     // An armillary sphere on a stand between the windows, its rings turning.
     const sx = x + 150;
     const sy = y0 - 70;
-    ctx.strokeStyle = t.midTrim;
-    ctx.lineWidth = 1.4;
+    const brass = mix(t.midTrim, t.far, 0.25);
+    const brassLit = mix(t.midTrim, '#ffffff', 0.35);
+    const brassDark = mix(t.midTrim, t.far, 0.6);
+    // The stand: a turned column on a three-footed base.
+    ctx.fillStyle = brassDark;
+    ctx.beginPath();
+    ctx.moveTo(sx - 14, y0 - 12);
+    ctx.lineTo(sx - 3, y0 - 22);
+    ctx.lineTo(sx + 3, y0 - 22);
+    ctx.lineTo(sx + 14, y0 - 12);
+    ctx.lineTo(sx + 10, y0 - 10);
+    ctx.lineTo(sx, y0 - 17);
+    ctx.lineTo(sx - 10, y0 - 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = brass;
+    ctx.fillRect(snap(sx - 2), sy + 18, 4, y0 - 22 - sy - 18);
+    ctx.fillStyle = brassLit;
+    ctx.fillRect(snap(sx - 2), sy + 18, 1.4, y0 - 22 - sy - 18);
+    ctx.fillStyle = brass;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy + 32, 5, 2.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // The horizon ring and its meridian, fixed; the inner rings turning round a small globe.
+    ctx.fillStyle = mix('#9fd8ff', t.far, 0.35);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = mix('#ffffff', t.far, 0.3);
+    ctx.beginPath();
+    ctx.arc(sx - 2, sy - 2, 2, 0, Math.PI * 2);
+    ctx.fill();
     for (let r = 0; r < 3; r++) {
+      const ry = 16 * Math.abs(Math.cos(time * 0.5 + r * 1.1 + i));
+      ctx.strokeStyle = brassDark;
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.ellipse(sx, sy, 16, 16 * Math.abs(Math.cos(time * 0.5 + r * 1.1 + i)), r * 0.9, 0, Math.PI * 2);
+      ctx.ellipse(sx, sy, 16, Math.max(1, ry), r * 0.9, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = brassLit;
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
-    ctx.fillStyle = t.midTrim;
-    ctx.fillRect(snap(sx - 1), sy + 16, 2, 40);
+    ctx.strokeStyle = brass;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 20, Math.PI * 0.85, Math.PI * 2.15);
+    ctx.stroke();
+    ctx.strokeStyle = brassLit;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(sx, sy, 20, Math.PI * 1.1, Math.PI * 1.5);
+    ctx.stroke();
+    ctx.fillStyle = brassLit;
+    ctx.beginPath();
+    ctx.arc(sx, sy - 22, 2, 0, Math.PI * 2);
+    ctx.fill();
   });
 }
 
@@ -3035,19 +3424,71 @@ function drawFarCandy(ctx, t, cam, width, y0, time, crater) {
 function drawCandyCone(ctx, t, cam, width, y0, time) {
   // The cone, with a slow plume of pink steam curling from its top.
   const vx = width * 0.65 - cam.x * 0.06;
+  const top = y0 - 170;
+  // A mountain of pink sugar-rock: concave flanks sweeping out at the foot, the lit flank toward
+  // the light, the far flank in shadow, sugar strata across it.
+  const rock = mix('#e890b0', t.far, 0.4);
   const p = new Path2D();
-  p.moveTo(vx - 260, y0 + 30);
-  p.lineTo(vx - 50, y0 - 170);
-  p.lineTo(vx + 50, y0 - 170);
-  p.lineTo(vx + 260, y0 + 30);
+  p.moveTo(vx - 280, y0 + 30);
+  p.quadraticCurveTo(vx - 90, y0 - 10, vx - 52, top);
+  p.lineTo(vx + 52, top);
+  p.quadraticCurveTo(vx + 90, y0 - 10, vx + 280, y0 + 30);
   p.closePath();
-  litFill(ctx, t, p, 2, 1.6);
-  ctx.fillStyle = '#ff8ab0';
+  ctx.fillStyle = rock;
+  ctx.fill(p);
+  ctx.save();
+  ctx.clip(p);
+  ctx.fillStyle = shade(rock, -9);
   ctx.beginPath();
-  ctx.moveTo(vx - 50, y0 - 170);
-  for (let x = -50; x <= 50; x += 10) ctx.lineTo(vx + x, y0 - 160 + Math.abs(Math.sin(x * 0.2)) * 14);
-  ctx.lineTo(vx + 50, y0 - 170);
+  ctx.moveTo(vx + 20, top);
+  ctx.quadraticCurveTo(vx + 30, y0 - 60, vx + 80, y0 + 30);
+  ctx.lineTo(vx + 300, y0 + 30);
+  ctx.lineTo(vx + 60, top);
+  ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = mix(rock, '#ffffff', 0.22);
+  ctx.beginPath();
+  ctx.moveTo(vx - 52, top);
+  ctx.quadraticCurveTo(vx - 90, y0 - 10, vx - 280, y0 + 30);
+  ctx.lineTo(vx - 240, y0 + 30);
+  ctx.quadraticCurveTo(vx - 70, y0 - 20, vx - 36, top);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = shade(rock, -4);
+  for (let s = 0; s < 4; s++) ctx.fillRect(vx - 300, top + 40 + s * 36, 600, 2);
+  // Caramel seams glowing down the flank from the crater.
+  for (const [dx, len] of [[-18, 120], [10, 80], [30, 150]]) {
+    ctx.strokeStyle = '#ffb25a';
+    ctx.globalAlpha = 0.5 + 0.2 * Math.sin(time * 1.5 + dx);
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(vx + dx, top + 6);
+    ctx.quadraticCurveTo(vx + dx * 1.8, top + len * 0.5, vx + dx * 3, top + len);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  // The crater's lip, and white icing poured over the summit in long drips down the flanks.
+  ctx.fillStyle = shade(rock, -16);
+  ctx.beginPath();
+  ctx.ellipse(vx, top, 52, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = mix('#fff8f2', t.far, 0.15);
+  ctx.beginPath();
+  ctx.moveTo(vx - 56, top + 2);
+  const drips = [[-46, 26], [-34, 12], [-22, 40], [-8, 18], [6, 30], [18, 14], [30, 46], [44, 20]];
+  for (const [dx, dl] of drips) {
+    ctx.lineTo(vx + dx - 5, top + 6);
+    ctx.quadraticCurveTo(vx + dx - 5, top + dl, vx + dx, top + dl + 3);
+    ctx.quadraticCurveTo(vx + dx + 5, top + dl, vx + dx + 5, top + 6);
+  }
+  ctx.lineTo(vx + 56, top + 2);
+  ctx.quadraticCurveTo(vx, top - 8, vx - 56, top + 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffb3cf';
+  ctx.globalAlpha = 0.8;
+  for (let k = 0; k < 10; k++) ctx.fillRect(snap(vx - 44 + k * 9), snap(top + 2 + (k % 3) * 2), 3, 1.5);
+  ctx.globalAlpha = 1;
   for (let k = 0; k < 5; k++) {
     const u = (time * 0.08 + k * 0.2) % 1;
     ctx.globalAlpha = 0.4 * (1 - u);
@@ -3669,6 +4110,29 @@ function whaleShape(ctx, x, y, s, time, body, belly) {
   ctx.quadraticCurveTo(x - 40 * s, y + 22 * s, x + 30 * s, y + 20 * s);
   ctx.quadraticCurveTo(x + 86 * s, y + 18 * s, x + 90 * s, y);
   ctx.fill();
+  // Modelling: light along the back from above, the flank turning into shadow underneath, and a
+  // few pale scars and barnacle spots on the hide.
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = mix(body, '#ffffff', 0.22);
+  ctx.beginPath();
+  ctx.moveTo(x + 84 * s, y - 10 * s);
+  ctx.quadraticCurveTo(x + 76 * s, y - 34 * s, x + 10 * s, y - 32 * s);
+  ctx.quadraticCurveTo(x - 60 * s, y - 28 * s, x - 100 * s, y - 6 * s);
+  ctx.quadraticCurveTo(x - 50 * s, y - 20 * s, x + 10 * s, y - 22 * s);
+  ctx.quadraticCurveTo(x + 64 * s, y - 24 * s, x + 84 * s, y - 10 * s);
+  ctx.fill();
+  ctx.fillStyle = shade(body, -8);
+  ctx.beginPath();
+  ctx.ellipse(x - 10 * s, y + 18 * s, 90 * s, 12 * s, 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = mix(body, '#ffffff', 0.4);
+  for (const [dx, dy, r] of [[-30, -18, 2], [-38, -15, 1.4], [20, -24, 1.6], [46, -20, 1.2], [-62, -10, 1.4]]) {
+    ctx.beginPath();
+    ctx.arc(x + dx * s, y + dy * s, r * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
   ctx.fillStyle = belly;
   ctx.beginPath();
   ctx.moveTo(x + 86 * s, y + 6 * s);
@@ -3693,10 +4157,24 @@ function whaleShape(ctx, x, y, s, time, body, belly) {
   ctx.beginPath();
   ctx.ellipse(x + 30 * s, y + 18 * s, 22 * s, 6 * s, 0.5 + Math.sin(time * 0.8 + 1) * 0.3, 0, Math.PI * 2);
   ctx.fill();
+  // The fin's lit leading edge, and a gentle eye: a dark pupil with a catch-light, under a lid line.
+  ctx.fillStyle = mix(body, '#ffffff', 0.25);
+  ctx.beginPath();
+  ctx.ellipse(x + 26 * s, y + 15 * s, 16 * s, 2.4 * s, 0.5 + Math.sin(time * 0.8 + 1) * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = shade(body, -30);
+  ctx.beginPath();
+  ctx.arc(x + 62 * s, y - 3 * s, 3 * s, 0, Math.PI * 2);
+  ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(x + 62 * s, y - 4 * s, 2.4 * s, 0, Math.PI * 2);
+  ctx.arc(x + 61 * s, y - 4 * s, 1.1 * s, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = shade(body, -16);
+  ctx.lineWidth = Math.max(1, s * 0.8);
+  ctx.beginPath();
+  ctx.arc(x + 62 * s, y - 3 * s, 5 * s, Math.PI * 1.15, Math.PI * 1.85);
+  ctx.stroke();
 }
 function drawFarWhale(ctx, t, cam, width, y0, time, kind) {
   if (kind === 'lungs') {
@@ -3768,6 +4246,7 @@ function drawFarWhale(ctx, t, cam, width, y0, time, kind) {
   }
   // On the whale's back: the cloud sea far below.
   cloudSea(ctx, t, cam, width, y0 + 30, time);
+  if (drawFarWhaleRoom(ctx, t, cam, width, y0, time, kind)) return;
   if (kind === 'tail') {
     // The tail's great flukes rising far behind, sweeping slowly up and down.
     const tx = width * 0.7 - cam.x * 0.08;
@@ -4001,6 +4480,11 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
   ctx.save();
   // Woods and towns are busy, so their backdrop sits back a little more.
   ctx.globalAlpha = theme === 'forest' ? 0.72 : theme === 'town' ? 0.88 : 0.92;
+  // Rooms furnished in rooms.js (the Funhouse, the Toy Workshop, the Candy Kitchen...).
+  if (drawMidRoom(ctx, t, cam, width, y0, time, t.skyline)) {
+    ctx.restore();
+    return;
+  }
   switch (t.skyline) {
     case 'houses':
       // A painted town already has its far hillside town; its middle row is only a few trees, so
@@ -5166,7 +5650,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   const backdrop = (g) => {
     drawSky(g, t, theme, width, height, time);
     // (Under a painted forest's canopy, under the sea and indoors there are no clouds to see.)
-    if (t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'manorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
+    if (t.painted !== 'forest' && !t.underground && !t.ceiling && !['reef', 'manorhall', 'bigtop', 'workshop', 'funhouse', 'kitchen', 'starhall', 'archive', 'orrery', 'candycave', 'forge', 'crater', 'stagehall', 'pirate', 'fairy', 'ballroom', 'backstage', 'greatstage', 'lungs', 'manorball', 'library', 'hallway'].includes(t.skyline)) drawClouds(g, theme, cam, width, time, air, Boolean(t.stars) && t.face === 'moon' && theme !== 'harbor' && theme !== 'grove');
     // A painted backdrop (painted.js) in place of the flat silhouettes, where the theme has one.
     if (t.painted === 'forest') drawPaintedForest(g, t, cam, width, height, time, layerY, air);
     else if (t.painted === 'meadow') drawPaintedMeadow(g, t, cam, width, height, time, layerY, air);

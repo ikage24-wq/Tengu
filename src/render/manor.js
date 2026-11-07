@@ -93,8 +93,16 @@ function drawLantern(ctx, x, y, lit, time, id) {
 function portraitArt(face, done, slot) {
   return art(`mn-portrait|${face}|${done}|${slot}`, 34, 44, () => {
     const kind = CREST[face];
-    const out = [R(0, 0, 34, 44, done ? GOLD : '#c8a870'), F(R(1, 1, 32, 2, '#fff2b0')), F(R(1, 41, 32, 2, GOLD_DK)), R(3, 3, 28, 32, done ? '#7a62c0' : '#4a3a6a')];
-    out.push(...emblem(kind, 17, 18, 2, EMBLEM_C[kind]));
+    // A carved frame (lit top and left, shadowed bottom and right, rosettes at the corners) round
+    // a painted panel: a dark ground with a soft halo behind the emblem, which is painted large.
+    const frame = done ? GOLD : '#c8a870';
+    const ground = done ? '#6a52b0' : '#3e2e5e';
+    const out = [
+      R(0, 0, 34, 44, frame), F(R(0, 0, 34, 2, '#fff2b0')), F(R(0, 0, 2, 44, '#fff2b0')), F(R(0, 42, 34, 2, GOLD_DK)), F(R(32, 0, 2, 44, GOLD_DK)),
+      F(R(3, 3, 28, 33, GOLD_DK)), F(R(4, 4, 26, 31, ground)), F(E(17, 18, 11, 11, mix(ground, EMBLEM_C[kind], 0.28))), F(E(17, 17, 7, 7, mix(ground, EMBLEM_C[kind], 0.45))),
+    ];
+    for (const [x, y] of [[2, 2], [32, 2], [2, 42], [32, 42]]) out.push(F(E(x, y, 2, 2, '#fff2b0')), F(E(x + 0.3, y + 0.3, 0.9, 0.9, GOLD_DK)));
+    out.push(...emblem(kind, 17, 18, 2.4, EMBLEM_C[kind]));
     // A brass plaque with the slot's number in dots (1 to 4).
     out.push(R(9, 36, 16, 5, GOLD));
     for (let k = 0; k <= slot; k++) out.push(F(E(17 - slot * 1.6 + k * 3.2, 38.5, 0.9, 0.9, PLUM)));
