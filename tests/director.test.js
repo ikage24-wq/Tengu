@@ -235,6 +235,24 @@ test("Rowan's night watch plays through in Ember Crag", () => {
   }
 });
 
+test("Celeste's dreamer plays through in Moonleaf Grove", () => {
+  for (const id of ['celeste_pillow_done', 'celeste_kite_done', 'celeste_silk_done', 'celeste_dreamer_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'grove', 'start');
+    const celeste = w.map.npcs.find((n) => n.id === 'celeste');
+    w.body.x = celeste.x - 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});
+
 test("Professor Lumen's fallen star plays through on the Observatory Steps", () => {
   for (const id of ['lumen_lens_done', 'lumen_fallen_done', 'lumen_chips_done', 'lumen_home_done']) {
     const w = createWorld(createCharacter('Hana', {}));

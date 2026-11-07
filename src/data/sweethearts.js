@@ -188,6 +188,7 @@ export const SWEETHEARTS = {
   celeste: {
     dateLines: { great: "I didn't fall asleep once. That's how much I liked it.", good: 'Mm... that was nice. The stars seemed closer.', okay: 'That was sweet. Even the sleepy parts. Especially those.' },
     id: 'celeste', name: 'Celeste', title: 'Sleepy Stargazer', map: 'grove', x: 1800, color: '#4a4aa8',
+    quests: ['celeste_pillow', 'celeste_kite', 'celeste_silk', 'celeste_dreamer'],
     house: 1690,
     // At home late (world/goinghome.js): a friend, close, sweethearts.
     late: [

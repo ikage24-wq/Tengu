@@ -521,6 +521,37 @@ export const QUESTS = {
     rewards: { exp: 115000, gold: 1100, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
+  // Celeste's story (Moonleaf Grove, by her house): she keeps dreaming things that then happen. A
+  // feather pillow makes the dreams clearer; the star tangled in a kite on Starfall Heights is real;
+  // and the twist: they aren't her dreams at all. Someone far away is asleep and dreaming the whole
+  // island, and Celeste catches the edges. A net of Sky Silk at the top of the heights lets her see
+  // the dreamer: a girl made of wind, smiling in her sleep at someone who keeps showing up. You.
+  // (It points toward the story's ending, chapter 10, without giving it away.)
+  celeste_pillow: {
+    id: 'celeste_pillow', name: 'A Pillow for Clear Dreams', giver: 'celeste', minLevel: 41, prereq: 'yuzu_loved',
+    text: "Mm... I dreamed the Sky Harpies were carrying bits of sky away. Then they did. That's the third dream this week that came true. A pillow of Harpy Feathers makes dreams clearer. Everybody knows that. I just made it up, but everybody knows it now. 10, please. And a snack, if you see one.",
+    objectives: [{ type: 'collect', item: 'feather', count: 10 }],
+    rewards: { exp: 110000, gold: 800, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  celeste_kite: {
+    id: 'celeste_kite', name: 'A Star in a Kite', giver: 'celeste', minLevel: 42, prereq: 'celeste_pillow',
+    text: "I dreamed a star got tangled in a kite on Starfall Heights, and the Kite Riders wouldn't let it go. If it's true... could you go and see? And free it? 12 of them should be enough to make the rest let go. I'd come, but I'd fall asleep on the way. Twice.",
+    objectives: [{ type: 'visit', map: 'starfall' }, { type: 'kill', mob: 'kiterider', count: 12 }],
+    rewards: { exp: 120000, gold: 860, items: [] },
+  },
+  celeste_silk: {
+    id: 'celeste_silk', name: 'A Net for Dreams', giver: 'celeste', minLevel: 43, prereq: 'celeste_kite',
+    text: "If someone else is dreaming and I'm only catching the edges, I need a better net. Sky Silk, from the Cloud Shepherds on Starfall Heights. It's woven from the morning, so it holds onto dreams after you wake. 10, please. I'll weave it tonight. I'm good at nights.",
+    objectives: [{ type: 'collect', item: 'sky_silk', count: 10 }],
+    rewards: { exp: 130000, gold: 920, items: [{ id: 'elixir', qty: 3 }] },
+  },
+  celeste_dreamer: {
+    id: 'celeste_dreamer', name: 'Whoever Is Dreaming', giver: 'celeste', minLevel: 44, prereq: 'celeste_silk',
+    text: "The net's done. It has to hang somewhere high, where the dreams drift past: the very top of Starfall Heights. Hang it, then come back and sit with me while I sleep. Not in a strange way. In a stargazer way. I'll tell you who's dreaming us. I think I already know.",
+    objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, to hang the dream net' }],
+    rewards: { exp: 145000, gold: 1200, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+
   // Moonleaf Grove.
   nim_candles: {
     id: 'nim_candles', name: 'The Runaway Candles', giver: 'nim', minLevel: 20, prereq: 'nim_chimes',
