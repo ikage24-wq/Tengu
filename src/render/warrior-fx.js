@@ -11,6 +11,7 @@ import { fxSprite } from './fx-sprites.js';
 import { drawBubbleFx } from './bubbles.js';
 import { drawArbalistFx } from './arbalist-fx.js';
 import { rockBurst } from './blade-fx.js';
+import { dancerHit } from './dancer-fx.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
@@ -190,9 +191,9 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'acro') fxSprite(ctx, 'celachit', x, y, { p, scale: k * 0.5, rot: (seed - 0.5) * 0.4 });
   else if (school === 'astral') fxSprite(ctx, 'celashit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.6 });
   else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
-  else if (school === 'aerial') fxSprite(ctx, 'celskyhit', x, y, { p, scale: k * 0.6 });
-  else if (school === 'rosegold') fxSprite(ctx, 'celbdhit', x, y, { p, scale: k * 0.7, rot: (seed - 0.5) * 0.6 });
-  else if (school === 'coral') fxSprite(ctx, 'celwdhit', x, y, { p, scale: k * 0.7, rot: (seed - 0.5) * 0.6 });
+  else if (school === 'aerial') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.6 });
+  else if (school === 'rosegold') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
+  else if (school === 'coral') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
   else fxSprite(ctx, 'celcross', x, y, { p, scale: k, rot: (seed - 0.5) * 0.8 });
 }
 
@@ -207,7 +208,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
     case 'wdhit':
-      return fxSprite(ctx, 'celwdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, rot: (seed - 0.5) * 0.6 }) || true;
+      return dancerHit(ctx, 'coral', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.6 });
     // Her swirl and her gusts are drawn as far as the blow reaches (`f.r`, its reach): the swirl
     // round her out to it (a wide one flattened round her waist), the gust racing down the line to
     // its end.
@@ -593,7 +594,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
         for (const s of [-1, 1]) fxSprite(ctx, 'celskyhit', cx + s * f.r * 0.72, y - 22, { p, scale: 0.75, flip: s < 0 });
         return true;
       }
-      return fxSprite(ctx, 'celskyhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.7 : 0.5 }) || true;
+      return dancerHit(ctx, 'aerial', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.5 });
     case 'skyupdraft':
       fxSprite(ctx, 'celskywhirlbig', x, y + 4, { t: p * 0.9, scale: (f.r ?? 80) / 127, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
       return fxSprite(ctx, 'celskyhit', x, y - 40, { p, scale: 0.8 }) || true;
@@ -615,7 +616,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'bdshow':
       return fxSprite(ctx, 'celbdshow', x, y + 4, { p, scale: 0.65 }) || true;
     case 'bdhit':
-      return fxSprite(ctx, 'celbdhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big ? 0.75 : 0.55, rot: (seed - 0.5) * 0.6 }) || true;
+      return dancerHit(ctx, 'rosegold', x, y - (f.h ?? 40) * 0.55, p, { big: f.big || f.crit, seed, dir, scale: 0.55 });
     case 'bdbounce':
       return fxSprite(ctx, 'celbdbounce', x, y - (f.h ?? 40) * 0.55, { p, scale: 0.6, flip, rot: (seed - 0.5) * 0.5 }) || true;
     case 'bdcarousel':
