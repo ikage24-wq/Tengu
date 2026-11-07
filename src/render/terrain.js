@@ -2089,10 +2089,30 @@ function drawTerrace(ctx, theme, m, x, y, w, bottom, cam, time, pi, deco) {
     ctx.ellipse(sx - r * 0.4, sy - r * 0.35, r * 0.5, r * 0.3, 0, 0, Math.PI * 2);
     ctx.fill();
   }
+  // The ledge you stand on is the top slab, solid and lit, with a shadowed underside; below it the
+  // face falls back into the distance (washed toward the haze), so it reads as the hill or cliff
+  // behind you and you're never seen walking through solid rock (the player's report, 2026-11-07).
+  const slab = 30;
+  if (h > slab + 12) {
+    ctx.fillStyle = hexA(mix(m.lip, '#ffffff', 0.45), 0.62);
+    ctx.fillRect(x - lean - 4, y + slab, w + lean * 2 + 8, h);
+    ctx.fillStyle = hexA(m.deep, 0.55);
+    ctx.fillRect(x - lean - 4, y + slab - 4, w + lean * 2 + 8, 4);
+    ctx.fillStyle = hexA(m.deep, 0.18);
+    ctx.fillRect(x - lean - 4, y + slab, w + lean * 2 + 8, 8);
+  }
   ctx.restore();
   shape();
-  ctx.strokeStyle = edge(m.body);
+  ctx.strokeStyle = hexA(edge(m.body), 0.45);
   ctx.lineWidth = 1;
+  ctx.stroke();
+  // The slab's own outline, solid.
+  ctx.strokeStyle = edge(m.body);
+  ctx.beginPath();
+  ctx.moveTo(x + 4, y + 2);
+  ctx.lineTo(x + 4 - Math.min(lean, 2), y + Math.min(h, slab));
+  ctx.lineTo(x + w - 4 + Math.min(lean, 2), y + Math.min(h, slab));
+  ctx.lineTo(x + w - 4, y + 2);
   ctx.stroke();
   // Roots and moss hanging from the lip over the top of the face.
   for (let dx = 14; dx < w - 12; dx += 26) {

@@ -4449,7 +4449,10 @@ function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of order) {
     const x = Math.round(p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x);
     const y = Math.round(p.y - cam.y);
-    if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
+    // (A terrace's face, a pergola's posts and a crust's underside reach far below their top: those
+    // stay drawn while any of them is on screen, or they'd pop in and out as you climb.)
+    const reach = terraced(map, p) || (p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands) === 'pergola' ? map.height : (p.style ?? zoneLook(map, p.y, p.x + p.w / 2)?.islands) === 'crust' ? (p.thick ?? 60) + 40 : 0;
+    if (x + p.w < -40 || x > width + 40 || y > height + 30 || y + reach < -40) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
     // (A thick old root: the Hollow's ledges, and any ledge whose style or zone says 'root'.)
