@@ -2100,7 +2100,9 @@ function drawBridge(ctx, x, y, w, time, seed) {
 // drifting beneath it.
 function drawStone(ctx, theme, m, x, y, w, d, cam, time, seed, deco) {
   const pts = [[x, y], [x + w, y], [x + w, y + d * 0.55]];
-  for (let px = x + w - 10; px > x + 6; px -= 12) pts.push([px, y + d * (0.6 + hash(seed * 4.1 + px) * 0.4)]);
+  // (The jagged underside is keyed to its place along the ledge, not the screen, so it holds still
+  // while the camera scrolls.)
+  for (let px = x + w - 10; px > x + 6; px -= 12) pts.push([px, y + d * (0.6 + hash(seed * 4.1 + (px - x) * 0.37) * 0.4)]);
   pts.push([x, y + d * 0.55]);
   for (let i = 0; i < 3; i++) {
     const k = hash(seed * 2.2 + i);
