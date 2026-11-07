@@ -2313,7 +2313,7 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 // How far a level piercing shot may tip toward a monster above or below its line (radians).
 const PIERCE_TIP = 0.28;
 // The Meteor Caller's shots.
-const MC_SHOTS = new Set(['mcspark', 'mccomet', 'mcmeteor']);
+const MC_SHOTS = new Set(['mcspark', 'mccomet', 'mcmeteor', 'mcgiant']);
 const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgpotato', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);

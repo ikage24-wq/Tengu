@@ -628,6 +628,8 @@ export const SKILLS = {
         mp: k(40, 60), pct: k(300, 520), hits: 1, targets: 0,
         combo: [{ move: 'mcextinct', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
           { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mcsky', burstAt: 0.5, burstDur: 1.6 },
+          // The colossal star itself, falling out of the opened sky onto the first monster ahead as the impact goes off.
+          { at: 0.5, shot: 'mcgiant', sky: true, skyH: 440, skyX: 260, magic: true, el: 'fire', pct: k(80, 120), range: 520, h: 220, targets: 1, knock: 0, speed: 1300, gauge: 0 },
           { at: 0.72, magic: true, pct: k(300, 520) * 2, reach: 520, h: 220, targets: 12, pierce: true, knock: 200, launch: 240, rxAll: true, burst: 'mcextinctfx', burstAt: 0.3, burstDur: 1.2, big: true, stop: 0.18, shake: 9, gauge: 0 },
         ] }],
       };

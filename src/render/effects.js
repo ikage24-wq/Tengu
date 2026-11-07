@@ -174,14 +174,15 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
-    case 'mcspark': case 'mccomet': case 'mcmeteor': {
+    case 'mcspark': case 'mccomet': case 'mcmeteor': case 'mcgiant': {
       // The Meteor Caller's: a star-spark, and the comet and the meteor falling slanted from the sky
       // (pointed along their fall, grown in from small as they come out of the dark).
       const a = Math.atan2(f.ty - f.y, f.tx - f.x);
       const left = Math.cos(a) < 0;
       const born = f.shot === 'mcspark' ? bornAt(f) : Math.min(1, 0.4 + f.t * 3);
-      const size = { mcspark: 0.5, mccomet: 0.62, mcmeteor: 0.8 }[f.shot];
-      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      // (Extinction's colossal star is the meteor drawn far larger.)
+      const size = { mcspark: 0.5, mccomet: 0.62, mcmeteor: 0.8, mcgiant: 2 }[f.shot];
+      fxSprite(ctx, f.shot === 'mcgiant' ? 'celmcmeteor' : `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
     case 'jgpotato': {

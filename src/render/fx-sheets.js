@@ -484,7 +484,7 @@ export const FX_SHEETS = {
   celjgfinalefx: { w: 431, h: 296, n: 9, fps: 14, px: 215, py: 239, d: 3, loop: false },
   celmcspark: { w: 185, h: 83, n: 6, fps: 26, px: 144, py: 42, d: 3, loop: true },
   celmccomet: { w: 395, h: 113, n: 6, fps: 24, px: 348, py: 58, d: 3, loop: true },
-  celmcmeteor: { w: 576, h: 198, n: 6, fps: 22, px: 478, py: 99, d: 3, loop: true },
+  celmcmeteor: { w: 800, h: 217, n: 6, fps: 22, px: 694, py: 112, d: 3, loop: true },
   celmccrater: { w: 605, h: 237, n: 10, fps: 12, px: 302, py: 145, d: 3, loop: false },
   celmcgather: { w: 89, h: 139, n: 8, fps: 14, px: 45, py: 120, d: 3, loop: true },
   celmctier: { w: 186, h: 180, n: 6, fps: 18, px: 93, py: 119, d: 3, loop: false },

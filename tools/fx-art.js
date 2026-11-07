@@ -6664,39 +6664,65 @@
   // Meteor (falls slanting; loops toward +x): a craggy rock glowing through its cracks, wrapped in
   // fire, a long flame trail and embers spitting off.
   E.mcmeteor = grown((() => {
-    const cx = 230;
-    const cy = 80;
+    const cx = 300;
+    const cy = 90;
+    const SMOKE = ['#ffffff', '#e8e0e8', '#b8a8b8', '#7a6a7a', '#3a2e3a'];
+    const HOT = ['#ffffff', '#fffbe0', '#ffe08a', '#ffb04a', '#a8402a'];
+    const RED = ['#ffd0a0', '#ff9a5a', '#e8602a', '#a83a2a', '#5a1e1e'];
     return {
-      w: 270, h: 160, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      w: 340, h: 180, n: 6, fps: 22, px: cx, py: cy, loop: true,
       draw(ctx, i) {
         const ph = (i / 6) * TAU;
-        for (let k = 0; k < 4; k++) {
-          ctx.save();
-          ctx.translate(cx - 10, cy + (k - 1.5) * 8);
-          ctx.rotate(-Math.PI / 2);
-          tongue(ctx, MCEMBER, 0, 0, 18 - k * 2, 170 - k * 25 + 10 * Math.sin(ph + k), 8 * Math.sin(ph * 2 + k));
-          ctx.restore();
+        // The smoke trail last, far behind: grey puffs swelling and thinning out.
+        for (let k = 0; k < 6; k++) {
+          const u = (k + (i / 6)) / 6;
+          ctx.globalAlpha = 0.75 * (1 - u * 0.8);
+          puff(ctx, SMOKE, cx - 120 - u * 170, cy + Math.sin(u * 5 + ph) * 6, 14 + u * 16, 1500 + k, { lobes: 4 });
         }
-        // The rock: craggy, dark, its cracks glowing.
-        const pts = Array.from({ length: 9 }, (_, k) => {
-          const a = (k / 9) * TAU + 0.3;
-          const rr = 30 * (0.8 + 0.25 * Math.sin(k * 2.7));
+        ctx.globalAlpha = 1;
+        // The fire: flames streaming back off the rock, red at their tips, white-hot at their roots.
+        for (const [pal, len, w, dy] of [[RED, 200, 20, 0], [MCEMBER, 150, 15, -2], [HOT, 100, 10, -2]]) {
+          for (let k = 0; k < 3; k++) {
+            ctx.save();
+            ctx.translate(cx - 30, cy + dy + (k - 1) * w * 0.6);
+            ctx.rotate(-Math.PI / 2);
+            tongue(ctx, pal, 0, 0, w - k * 3, len - k * 22 + 10 * Math.sin(ph + k), 7 * Math.sin(ph * 2 + k * 1.7));
+            ctx.restore();
+          }
+        }
+        // The rock: dark and craggy, its back in shadow.
+        const pts = Array.from({ length: 10 }, (_, k) => {
+          const a = (k / 10) * TAU + 0.4;
+          const rr = 36 * (0.82 + 0.22 * Math.sin(k * 2.9 + 1));
           return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
         });
-        inked(ctx, pts, '#5a3a3a', '#2a1a1e', 4);
-        fill(ctx, pts.map(([px, py]) => [cx + (px - cx) * 0.75 - 4, cy + (py - cy) * 0.75 - 4]), '#7a5048');
-        ctx.strokeStyle = MCEMBER[2];
-        ctx.lineWidth = 3;
+        inked(ctx, pts, '#4a2e2e', '#1e1216', 4);
+        fill(ctx, pts.map(([px, py]) => [cx + (px - cx) * 0.7 - 5, cy + (py - cy) * 0.7 + 3]), '#3a2224');
+        for (const [dx, dy, r] of [[-12, -8, 5], [-4, 12, 4], [-16, 8, 3]]) { ctx.beginPath(); ctx.arc(cx + dx, cy + dy, r, 0, TAU); ctx.fillStyle = '#2a181c'; ctx.fill(); }
+        // Its front burning white-hot where it tears through the air: a glowing cap over the leading
+        // face, and a bright rim along it.
+        ctx.save();
+        ctx.beginPath();
+        pts.forEach(([px, py], k) => (k ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+        ctx.closePath();
+        ctx.clip();
+        const g = ctx.createRadialGradient(cx + 28, cy, 2, cx + 28, cy, 44);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.35, HOT[2]);
+        g.addColorStop(0.7, 'rgba(232,96,42,0.6)');
+        g.addColorStop(1, 'rgba(232,96,42,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(cx - 50, cy - 50, 100, 100);
+        ctx.restore();
+        ctx.strokeStyle = HOT[1];
+        ctx.lineWidth = 4;
         ctx.lineCap = 'round';
-        for (const [a0, a1] of [[0.2, 2.4], [3.1, 4.6], [5.2, 1.0]]) {
-          ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(a0) * 8, cy + Math.sin(a0) * 8);
-          ctx.lineTo(cx + Math.cos(a1) * 22, cy + Math.sin(a1) * 22);
-          ctx.stroke();
-        }
-        celRing(ctx, MCEMBER, cx, cy, 34 + 2 * Math.sin(ph), 4, { broken: 0.5, seed: 1220 + i });
+        ctx.beginPath();
+        ctx.arc(cx, cy, 37, -1.1, 1.1);
+        ctx.stroke();
+        // Embers thrown off behind.
         const R = rng(1230 + i);
-        for (let k = 0; k < 7; k++) sparkle(ctx, MCEMBER, cx - 40 - R() * 170, cy + (R() - 0.5) * 70, 3 + R() * 4, k);
+        for (let k = 0; k < 9; k++) sparkle(ctx, k % 3 ? MCEMBER : HOT, cx - 30 - R() * 230, cy + (R() - 0.5) * 80, 3 + R() * 4, k);
       },
     };
   })(), 2.4);
