@@ -587,12 +587,12 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
       ctx.save();
       ctx.translate(snap(x), gy + 2);
       ctx.scale(0.75, 0.75);
-      drawMachine(ctx, 0, 0, { crank: pulling ? Math.floor(turn * 10) : 0, shake: rattle });
+      drawMachine(ctx, 0, 0, { crank: pulling ? Math.floor(turn * 10) : 0, shake: rattle, time });
       ctx.restore();
       const u = (time / 4.2) % 1;
       if (u < 0.3) {
         const g = Math.sin((Math.PI * u) / 0.3);
-        sparkleAt(ctx, x - 14 + u * 40, gy - 62 + u * 8, 3 * g, '#ffffff', g);
+        sparkleAt(ctx, x - 18 + u * 40, gy - 76 + u * 8, 3 * g, '#ffffff', g);
       }
     }
   }

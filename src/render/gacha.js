@@ -1,5 +1,5 @@
-// The capsule machines (data/outfits-gacha.js) on screen: the machine itself (a glass globe of
-// capsules on a painted base, a crank, a chute) themed per town, and the capsule a pull drops
+// The capsule machines (data/outfits-gacha.js) on screen: the machine itself (a grand fairground
+// machine: a great glass globe of capsules on a gilded cabinet, a crank wheel, a chute) themed per town, and the capsule a pull drops
 // (it rolls out, wobbles, pops open in a burst, and the look inside rises out in its rarity's
 // glow). Sprites are cached per frame; motion comes from where things are drawn, not stretching.
 
@@ -15,65 +15,283 @@ const RARITY = {
 };
 export const rarityOf = (r) => RARITY[r] ?? RARITY.common;
 
-// Sprout Village's machine: a sprout-green base with a painted flower, a gold crank, a glass
-// globe of pastel capsules, and a little sprout growing from its lid.
-const SPROUT = { base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0', capsules: ['#ff9ec0', '#ffe066', '#8fd3ff', '#b8f0a8', '#e2c6ff', '#ffb38a'] };
+// Sprout Village's machine: a grand fairground capsule machine. A stepped pedestal trimmed in gold,
+// a cabinet in the town's green between two fluted gold columns, a framed flower emblem, a gilded
+// ticket slot and a prize chute under a golden arch, a big spoked gold crank wheel, a jewelled
+// collar, a great glass globe heaped with capsules and banded in gold, and a crown with a star gem
+// on top. (Its marquee lights chasing round the globe, the star's twinkle and the glow inside are
+// drawn alive by drawMachine.)
+const SPROUT = { base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0', gem: '#ff6fae', capsules: ['#ff9ec0', '#ffe066', '#8fd3ff', '#b8f0a8', '#e2c6ff', '#ffb38a'] };
+export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
-function machineArt(theme, crank, shake) {
-  return sprite(`gacha|machine|${crank}|${shake}`, () => {
-    const W = 64;
-    const H = 96;
+function machineArt(theme, crank) {
+  return sprite(`gacha|machine3|${crank}`, () => {
+    const { w: W, h: H } = MACHINE;
     const b = theme.base;
+    const gold = theme.trim;
+    const goldSh = shade(gold, -22);
+    const goldHi = mix(gold, '#ffffff', 0.5);
     const out = [];
-    // The base: a rounded block, darker at the bottom, a painted flower and the coin slot.
-    out.push(T([[12, 50], [52, 50], [56, 58], [56, 90], [52, 94], [12, 94], [8, 90], [8, 58]], b));
-    out.push(F(T([[8, 84], [56, 84], [56, 90], [52, 94], [12, 94], [8, 90]], shade(b, -18))));
-    out.push(F(T([[12, 52], [52, 52], [54, 56], [10, 56]], mix(b, '#ffffff', 0.35))));
-    for (let k = 0; k < 5; k++) {
-      const a = (Math.PI / 2) + (k * 2 * Math.PI) / 5;
-      out.push(E(22 + Math.cos(a) * 3.2, 70 - Math.sin(a) * 3.2, 2.6, 2.6, '#ffffff'));
+    // The pedestal: two gold-edged steps.
+    out.push(T([[4, 124], [84, 124], [86, 132], [2, 132]], shade(b, -34)), F(R(4, 124, 80, 1.6, gold)));
+    out.push(T([[10, 116], [78, 116], [80, 124], [8, 124]], shade(b, -22)), F(R(10, 116, 68, 1.6, gold)), F(R(8, 122.4, 72, 1.6, goldSh)));
+    for (let x = 14; x < 76; x += 10) out.push(F(E(x, 120, 1, 1, goldHi)));
+    // The cabinet.
+    out.push(T([[16, 72], [72, 72], [74, 76], [74, 116], [14, 116], [14, 76]], b));
+    out.push(F(T([[56, 72], [72, 72], [74, 76], [74, 116], [58, 116]], shade(b, -14))), F(T([[16, 72], [40, 72], [36, 76], [16, 76]], mix(b, '#ffffff', 0.3))));
+    // The fluted gold columns either side, with their capitals and feet.
+    for (const cx of [16, 72]) {
+      out.push(R(cx - 3.4, 74, 6.8, 42, gold), F(R(cx - 3.4, 74, 1.6, 42, goldHi)), F(R(cx + 1.8, 74, 1.6, 42, goldSh)));
+      for (const dx of [-1, 1]) out.push(F(R(cx + dx * 1.2 - 0.3, 76, 0.6, 38, goldSh)));
+      out.push(R(cx - 4.6, 72, 9.2, 3, gold), F(R(cx - 4.6, 72, 9.2, 1, goldHi)), R(cx - 4.6, 113, 9.2, 3, gold));
     }
-    out.push(F(E(22, 70, 2, 2, theme.trim)));
-    out.push(F(R(36, 62, 10, 3, shade(b, -30))), F(R(37, 62.6, 8, 1, '#2a2238')));
-    // The chute, with its flap.
-    out.push(T([[30, 80], [46, 80], [46, 90], [30, 90]], shade(b, -26)), F(T([[31, 81], [45, 81], [45, 89], [31, 89]], '#2a2238')));
-    out.push(F(T([[31, 81], [45, 81], [45, 83.4], [31, 83.4]], mix(b, '#ffffff', 0.2))));
-    // The crank: a gold disc and handle, turned by `crank` (0-3, quarter turns).
-    const a = (crank * Math.PI) / 2;
-    out.push(E(50, 72, 5.6, 5.6, theme.trim), F(E(50, 72, 3.4, 3.4, shade(theme.trim, -14))));
-    const hx = 50 + Math.cos(a) * 4.6;
-    const hy = 72 - Math.sin(a) * 4.6;
-    out.push(T([[50 - Math.sin(a), 72 - Math.cos(a)], [hx - Math.sin(a), hy - Math.cos(a)], [hx + Math.sin(a), hy + Math.cos(a)], [50 + Math.sin(a), 72 + Math.cos(a)]], shade(theme.trim, -22)));
-    out.push(E(hx, hy, 2, 2, '#ffffff'), F(E(hx - 0.5, hy - 0.5, 0.8, 0.8, theme.trim)));
-    // The collar the globe sits in.
-    out.push(T([[10, 46], [54, 46], [56, 52], [8, 52]], theme.trim), F(T([[8, 50], [56, 50], [56, 52], [8, 52]], shade(theme.trim, -18))));
-    // The globe of capsules (they jostle when cranked), then the glass and its shine.
-    const g = { x: 32, y: 28, r: 21 };
-    out.push(E(g.x, g.y, g.r, g.r, '#e8f6ff'));
-    const pile = [];
-    for (let row = 0; row < 4; row++) {
-      for (let k = 0; k < 6 - row; k++) {
-        const x = g.x - 14 + row * 3 + k * 5.6 + (shake ? ((row + k) % 2 ? 1 : -1) : 0);
-        const y = g.y + 14 - row * 5 - (shake && (row + k) % 3 === 0 ? 1.4 : 0);
-        if (Math.hypot(x - g.x, y - g.y) > g.r - 3) continue;
-        pile.push([x, y, theme.capsules[(row * 3 + k) % theme.capsules.length]]);
-      }
+    // The framed emblem: a big painted flower in a gold oval.
+    out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
+    for (let k = 0; k < 6; k++) {
+      const a = (k * Math.PI) / 3;
+      out.push(E(34 + Math.cos(a) * 3.6, 88 + Math.sin(a) * 3.3, 2.8, 2.6, theme.lid));
     }
-    for (const [x, y, c] of pile) out.push(E(x, y, 2.8, 2.8, c), F(T([[x - 2.8, y], [x + 2.8, y], [x + 2.6, y + 1.2], [x - 2.6, y + 1.2]], '#ffffff')), F(E(x - 1, y - 1.2, 0.8, 0.6, '#ffffff')));
-    out.push(F(T([[g.x - 15, g.y - 6], [g.x - 11, g.y - 14], [g.x - 6, g.y - 17], [g.x - 9, g.y - 12], [g.x - 13, g.y - 3]], '#ffffff')));
-    // The lid and the sprout growing from it.
-    out.push(E(g.x, g.y - g.r + 1, 7, 3, theme.lid), F(E(g.x - 2, g.y - g.r, 3, 1, mix(theme.lid, '#ffffff', 0.5))));
-    out.push(F(R(g.x - 0.6, g.y - g.r - 7, 1.2, 6, '#4fae5f')));
-    out.push(T([[g.x, g.y - g.r - 5], [g.x - 6, g.y - g.r - 9], [g.x - 3, g.y - g.r - 4]], '#7fd17a'), T([[g.x, g.y - g.r - 6], [g.x + 6, g.y - g.r - 10], [g.x + 3, g.y - g.r - 5]], '#7fd17a'));
+    out.push(E(34, 88, 2.4, 2.4, gold), F(E(33.4, 87.4, 0.8, 0.8, '#ffffff')));
+    // The ticket slot on its gilded plate.
+    out.push(R(48, 80, 14, 9, gold), F(R(48, 80, 14, 1.4, goldHi)), F(R(51, 83, 8, 2.4, '#2a2238')), F(R(52, 83.6, 6, 0.8, '#5a4a6a')));
+    // The prize chute under its golden arch.
+    out.push(E(44, 104, 10.6, 9, gold), F(E(44, 104, 9, 7.6, goldSh)), R(33.4, 104, 21.2, 10, gold), T([[35.4, 104], [52.6, 104], [52.6, 114], [35.4, 114]], '#2a2238'), E(44, 104, 8.6, 7, '#2a2238'));
+    out.push(F(T([[35.4, 110], [52.6, 110], [52.6, 112], [35.4, 112]], mix(b, '#ffffff', 0.2))), F(E(44, 96, 1.6, 1.6, theme.gem)));
+    // The crank: a big gold wheel with six spokes, turned by `crank` (quarter turns), and its knob.
+    const [kx, ky] = MACHINE.crank;
+    const a0 = (crank * Math.PI) / 2;
+    out.push(E(kx, ky, 9, 9, goldSh), E(kx, ky, 8, 8, gold), E(kx, ky, 5.6, 5.6, shade(b, -10)));
+    for (let k = 0; k < 6; k++) {
+      const a = a0 + (k * Math.PI) / 3;
+      out.push(T([[kx + Math.cos(a + 0.18) * 1.4, ky - Math.sin(a + 0.18) * 1.4], [kx + Math.cos(a + 0.08) * 7.6, ky - Math.sin(a + 0.08) * 7.6], [kx + Math.cos(a - 0.08) * 7.6, ky - Math.sin(a - 0.08) * 7.6], [kx + Math.cos(a - 0.18) * 1.4, ky - Math.sin(a - 0.18) * 1.4]], gold));
+    }
+    out.push(E(kx, ky, 2.4, 2.4, gold), F(E(kx - 0.6, ky - 0.6, 0.9, 0.9, goldHi)));
+    const hx = kx + Math.cos(a0) * 7.4;
+    const hy = ky - Math.sin(a0) * 7.4;
+    out.push(E(hx, hy, 2.6, 2.6, '#ffffff'), F(E(hx, hy, 1.5, 1.5, theme.gem)), F(E(hx - 0.7, hy - 0.7, 0.6, 0.6, '#ffffff')));
+    // The jewelled collar the globe sits in.
+    out.push(T([[8, 64], [80, 64], [84, 72], [4, 72]], gold), F(T([[4, 70], [84, 70], [84, 72], [4, 72]], goldSh)), F(R(8, 64, 72, 1.4, goldHi)));
+    for (let k = 0; k < 7; k++) {
+      const x = 14 + k * 10;
+      out.push(E(x, 67.6, 1.8, 1.8, k % 2 ? theme.gem : '#8fd3ff'), F(E(x - 0.5, 67, 0.6, 0.6, '#ffffff')));
+    }
+    // The great globe's glass, empty: a rim catching the light round its edge, clear inside, a
+    // shade pooling toward the bottom. (The capsules tumble inside it and the shine lies over
+    // them: drawMachine draws both alive.)
+    const [gx, gy, gr] = MACHINE.globe;
+    out.push(E(gx, gy, gr, gr, '#b8d4ec'), E(gx, gy, gr - 1.4, gr - 1.4, '#eef8ff'), F(E(gx + 3, gy + 10, gr - 6, gr * 0.55, '#dcecfa')));
+    // The crown on top: a gold cap with five points and jewels, the star gem above it.
+    const cy = gy - gr + 2;
+    out.push(E(gx, cy + 1, 12, 4, gold), F(E(gx, cy + 2, 12, 2.4, goldSh)));
+    out.push(T([[gx - 12, cy], [gx - 12, cy - 8], [gx - 7, cy - 4], [gx - 3.4, cy - 11], [gx, cy - 5], [gx + 3.4, cy - 11], [gx + 7, cy - 4], [gx + 12, cy - 8], [gx + 12, cy]], gold));
+    out.push(F(T([[gx - 12, cy - 1.6], [gx + 12, cy - 1.6], [gx + 12, cy], [gx - 12, cy]], goldSh)));
+    for (const [x, y, c] of [[gx - 12, cy - 8.6, theme.gem], [gx - 3.4, cy - 11.6, '#8fd3ff'], [gx + 3.4, cy - 11.6, '#8fd3ff'], [gx + 12, cy - 8.6, theme.gem], [gx, cy - 3, theme.gem]]) out.push(E(x, y, 1.4, 1.4, c), F(E(x - 0.4, y - 0.4, 0.5, 0.5, '#ffffff')));
     return { w: W, h: H, shapes: out, res: 2, soft: 'cel', crisp: true, selout: true };
   });
 }
 
-// The machine standing with its feet at (x, y). `crank` 0-3 turns the handle; `shake` jostles
-// the capsules (while a pull is going).
-export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROUT } = {}) {
-  const s = machineArt(theme, crank % 4, shake);
-  blit(ctx, s, snap(x - s.w / 2), snap(y - s.h));
+// The heap in the globe: capsules packed into the bottom of the bowl, each two-tone at its own
+// angle (worked out once). Alive: at rest they breathe and nudge; every couple of seconds one hops
+// up, spins and drops back with a little bounce; while the crank turns the whole heap churns,
+// swirling round the bowl and tumbling over itself, then settles.
+const HEAP = (() => {
+  const out = [];
+  const r = 3.6;
+  let i = 0;
+  for (let row = 0; row < 8; row++) {
+    const y = 23.5 - row * r * 1.6;
+    const half = Math.sqrt(Math.max(0, 27 * 27 - y * y)) - r;
+    // (The heap mounds up in the middle: the top rows are narrower.)
+    const reach = Math.min(half, row < 5 ? 99 : 26 - (row - 4) * 6);
+    for (let x = -reach + (row % 2) * r; x <= reach; x += r * 2.05) {
+      out.push({ x, y, rot: ((i * 2.399) % (Math.PI * 2)), c: i, seed: i * 0.731 });
+      i++;
+    }
+  }
+  return out;
+})();
+const ease2 = (u) => u * u * (3 - 2 * u);
+function capsuleAt(ctx, x, y, rr, rot, c) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  // Mostly its colour, a white cap below the seam.
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.arc(0, 0, rr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, 0, rr, Math.PI * 0.2, Math.PI * 0.8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(58,45,79,0.3)';
+  ctx.fillRect(-rr * 0.82, rr * 0.55, rr * 1.64, 0.45);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.ellipse(-rr * 0.35, -rr * 0.45, rr * 0.32, rr * 0.2, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(58,45,79,0.55)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, rr, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawGlobeLife(ctx, cx, cy, gr, theme, time, shake) {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, gr - 1.4, 0, Math.PI * 2);
+  ctx.clip();
+  // How hard the heap is churning: up while the crank turns, easing back down after.
+  const churn = shake ? 1 : 0;
+  const hopBeat = 2.3;
+  const hopIdx = Math.floor(time / hopBeat) % HEAP.length;
+  const hopU = (time % hopBeat) / 0.75;
+  const list = HEAP.map((p, i) => {
+    let { x, y, rot } = p;
+    // Breathing: each nudges its neighbours a touch.
+    x += Math.sin(time * 1.7 + p.seed * 9) * 0.35;
+    y += Math.sin(time * 2.1 + p.seed * 7) * 0.3;
+    if (churn) {
+      // Swirling round the bowl: a turn about the middle, each at its own pace, lifted and tumbling.
+      const a = Math.atan2(y, x) + time * (2.6 + (i % 5) * 0.35);
+      const d = Math.max(7, Math.min(gr - 5, Math.hypot(x, y) + Math.sin(time * 5 + p.seed * 11) * 3));
+      x = Math.cos(a) * d;
+      y = Math.sin(a) * d * 0.9 + 3 - Math.abs(Math.sin(time * 7 + p.seed * 13)) * 3;
+      rot += time * (6 + (i % 3) * 2) * (i % 2 ? 1 : -1);
+    } else if (i === hopIdx && hopU < 1) {
+      // The hop: up in an arc, a full spin, and a little bounce on landing.
+      const u = hopU;
+      const up = u < 0.8 ? Math.sin((u / 0.8) * Math.PI) * 9 : Math.sin(((u - 0.8) / 0.2) * Math.PI) * 1.6;
+      y -= up;
+      x += Math.sin(u * Math.PI) * 2 * (p.x > 0 ? -1 : 1);
+      rot += ease2(Math.min(1, u / 0.8)) * Math.PI * 2;
+    }
+    return { x, y, rot, c: theme.capsules[p.c % theme.capsules.length], hop: i === hopIdx && hopU < 1 };
+  });
+  // Back to front: lower ones in front, the hopping one on top of everything.
+  list.sort((a, b) => (a.hop ? 1 : b.hop ? -1 : a.y - b.y));
+  for (const q of list) capsuleAt(ctx, cx + q.x, cy + q.y, 3.6, q.rot, q.c);
+  ctx.restore();
+  // The glass over them: a big curved shine on the upper left, a thin one on the right, and a
+  // glint that slides along the shine now and then.
+  ctx.save();
+  ctx.globalAlpha = 0.75;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, gr - 3.2, Math.PI * 1.05, Math.PI * 1.42);
+  ctx.arc(cx, cy, gr - 7.2, Math.PI * 1.38, Math.PI * 1.08, true);
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 0.45;
+  ctx.beginPath();
+  ctx.arc(cx, cy, gr - 3, Math.PI * 1.85, Math.PI * 0.05 + Math.PI * 2);
+  ctx.arc(cx, cy, gr - 5, Math.PI * 0.05 + Math.PI * 2, Math.PI * 1.85, true);
+  ctx.closePath();
+  ctx.fill();
+  const g = (time / 3.1) % 1;
+  if (g < 0.35) {
+    const a = Math.PI * (1.08 + (g / 0.35) * 0.32);
+    const gx = cx + Math.cos(a) * (gr - 5.2);
+    const gy = cy + Math.sin(a) * (gr - 5.2);
+    const k = Math.sin((g / 0.35) * Math.PI);
+    ctx.globalAlpha = k;
+    ctx.beginPath();
+    for (let j = 0; j < 8; j++) {
+      const b = (j * Math.PI) / 4;
+      const rr = j % 2 ? 0.8 : 3 * k + 0.6;
+      ctx.lineTo(gx + Math.cos(b) * rr, gy + Math.sin(b) * rr);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// The machine standing with its feet at (x, y). `crank` 0-3 turns the wheel; `shake` jostles the
+// capsules (while a pull is going). Alive on top of the art: a ring of marquee lights chasing round
+// the globe, a soft glow breathing inside it, and the star gem on the crown twinkling.
+export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROUT, time = performance.now() / 1000 } = {}) {
+  const s = machineArt(theme, crank % 4);
+  const left = snap(x - s.w / 2);
+  const top = snap(y - s.h);
+  const [gx, gy, gr] = MACHINE.globe;
+  // The glow inside the glass, behind everything.
+  ctx.save();
+  ctx.globalAlpha = 0.22 + 0.12 * Math.sin(time * 1.8);
+  const g = ctx.createRadialGradient(left + gx, top + gy, 0, left + gx, top + gy, gr * 1.5);
+  g.addColorStop(0, '#fff6c4');
+  g.addColorStop(1, 'rgba(255,246,196,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(left + gx - gr * 1.5, top + gy - gr * 1.5, gr * 3, gr * 3);
+  ctx.restore();
+  blit(ctx, s, left, top);
+  drawGlobeLife(ctx, left + gx, top + gy, gr, theme, time, shake);
+  // The marquee: bulbs round the globe, every third lit, the pattern chasing round (faster while
+  // you crank).
+  const n = 18;
+  const step = Math.floor(time * (shake ? 14 : 5));
+  // (The bulbs sit on a gold ring round the globe.)
+  ctx.strokeStyle = '#c8962a';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  ctx.arc(left + gx, top + gy, gr + 3.4, Math.PI * 0.15, Math.PI * 0.85, true);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffe08a';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.arc(left + gx, top + gy, gr + 3, Math.PI * 0.15, Math.PI * 0.85, true);
+  ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * 0.85 - (i / (n - 1)) * Math.PI * 1.7;
+    const bx = left + gx + Math.cos(a) * (gr + 3.4);
+    const by = top + gy - Math.sin(a) * (gr + 3.4);
+    const on = (i + step) % 3 === 0;
+    ctx.fillStyle = on ? '#fff6c4' : '#c8a040';
+    ctx.beginPath();
+    ctx.arc(bx, by, on ? 1.8 : 1.3, 0, Math.PI * 2);
+    ctx.fill();
+    if (on) {
+      ctx.save();
+      ctx.globalAlpha = 0.45;
+      const h = ctx.createRadialGradient(bx, by, 0, bx, by, 6);
+      h.addColorStop(0, '#fff6c4');
+      h.addColorStop(1, 'rgba(255,246,196,0)');
+      ctx.fillStyle = h;
+      ctx.fillRect(bx - 6, by - 6, 12, 12);
+      ctx.restore();
+    }
+  }
+  // The star gem atop the crown, turning slowly and twinkling.
+  const sx = left + gx;
+  const sy = top + gy - gr - 18;
+  const tw = 0.85 + 0.15 * Math.sin(time * 4);
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(Math.sin(time * 0.8) * 0.15);
+  ctx.fillStyle = theme.trim;
+  ctx.beginPath();
+  for (let k = 0; k < 10; k++) {
+    const a = -Math.PI / 2 + (k * Math.PI) / 5;
+    const rr = (k % 2 ? 3.4 : 8) * tw;
+    ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#fffbe0';
+  ctx.beginPath();
+  ctx.arc(-1, -1, 1.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha = 0.35 * tw;
+  const st = ctx.createRadialGradient(sx, sy, 0, sx, sy, 18);
+  st.addColorStop(0, '#fff6c4');
+  st.addColorStop(1, 'rgba(255,246,196,0)');
+  ctx.fillStyle = st;
+  ctx.fillRect(sx - 18, sy - 18, 36, 36);
+  ctx.restore();
 }
 
 // A capsule: two halves (the top in the rarity's colour, the bottom white), `open` 0-1 lifting the

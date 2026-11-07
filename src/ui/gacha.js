@@ -93,7 +93,10 @@ export function gachaWindow(ui, state, world) {
   const back = p && t >= wob ? 1 - 0.75 * ease(Math.min(1, (t - wob) / 0.4)) : 1;
   ctx.save();
   ctx.globalAlpha = back;
-  drawMachine(ctx, fx - 8, fy, { crank: cranking ? Math.floor(t * 10) : 0, shake: cranking && Math.floor(t * 14) % 2 === 0 });
+  // (The grand machine is drawn a little smaller in the window, to fit beside the lineup.)
+  ctx.translate(fx - 8, fy);
+  ctx.scale(0.74, 0.74);
+  drawMachine(ctx, 0, 0, { crank: cranking ? Math.floor(t * 10) : 0, shake: cranking && Math.floor(t * 14) % 2 === 0, time: now });
   ctx.restore();
   // Idle life: a glint sliding over the globe now and then.
   const gl = (now / 3.4) % 1;
