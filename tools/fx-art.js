@@ -6596,6 +6596,201 @@
       },
     };
   })();
+
+  // ---------- The Meteor Caller (the Sorcerer, remade 2026-11-07; docs/design/mage-line.md) ----------
+  // Her shapes: things that fall from the night sky. A four-point star-spark with a short sparkling
+  // tail; a comet, an icy-white head trailing a long blue tail that fans out; a meteor, a craggy
+  // glowing rock wrapped in fire with a long flame trail and embers; and where it lands a crater, a
+  // ring of shock rolling along the floor and embers raining. Her colours: violet night, white-hot
+  // star cores, ember orange.
+  const MCNIGHT = ['#ffffff', '#efe4ff', '#b89aff', '#6a4ab8', '#2e1e5a'];
+  const MCEMBER = ['#ffffff', '#fff0b8', '#ffb04a', '#e8602a', '#7a2a2a'];
+  const MCCOMET = ['#ffffff', '#e8faff', '#8adcff', '#3a8ad8', '#1e3a7a'];
+  function fourStar(ctx, pal, x, y, r, rot = 0) {
+    const pts = Array.from({ length: 8 }, (_, i) => {
+      const a = rot + (i / 8) * TAU;
+      const rr = i % 2 ? r * 0.28 : r;
+      return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+    });
+    inked(ctx, pts, pal[2], pal[4], 3);
+    fill(ctx, pts.map(([px, py]) => [x + (px - x) * 0.6, y + (py - y) * 0.6]), pal[1]);
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.2, 0, TAU);
+    ctx.fillStyle = pal[0];
+    ctx.fill();
+  }
+  // Star-spark (loops toward +x).
+  E.mcspark = grown((() => {
+    const cx = 110;
+    const cy = 40;
+    return {
+      w: 130, h: 80, n: 6, fps: 26, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = MCNIGHT[2];
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - 12, cy);
+        ctx.lineTo(cx - 70, cy + Math.sin(ph) * 3);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        const R = rng(1200 + i);
+        for (let k = 0; k < 4; k++) sparkle(ctx, MCNIGHT, cx - 20 - R() * 60, cy + (R() - 0.5) * 22, 3 + R() * 3, k);
+        fourStar(ctx, MCNIGHT, cx, cy, 16 + 2 * Math.sin(ph * 2), ph * 0.25);
+      },
+    };
+  })(), 1.8);
+  // Comet (falls slanting from the sky; loops toward +x): an icy head and a long tail fanning out.
+  E.mccomet = grown((() => {
+    const cx = 200;
+    const cy = 60;
+    return {
+      w: 230, h: 120, n: 6, fps: 24, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 3; k++) {
+          const off = (k - 1) * 9;
+          ribbon(ctx, MCCOMET, (u) => [cx - u * (170 - k * 20), cy + off * u + Math.sin(u * 6 + ph + k) * 4 * u], (u) => (14 - k * 3) * (1 - u) ** 1.2, { n: 28 });
+        }
+        const R = rng(1210 + i);
+        for (let k = 0; k < 6; k++) sparkle(ctx, MCCOMET, cx - 30 - R() * 150, cy + (R() - 0.5) * 40, 3 + R() * 4, k);
+        blob(ctx, MCCOMET, cx, cy, 15, 0.05, ph);
+        fourStar(ctx, MCCOMET, cx + 2, cy, 12, ph * 0.3);
+      },
+    };
+  })(), 2);
+  // Meteor (falls slanting; loops toward +x): a craggy rock glowing through its cracks, wrapped in
+  // fire, a long flame trail and embers spitting off.
+  E.mcmeteor = grown((() => {
+    const cx = 230;
+    const cy = 80;
+    return {
+      w: 270, h: 160, n: 6, fps: 22, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 6) * TAU;
+        for (let k = 0; k < 4; k++) {
+          ctx.save();
+          ctx.translate(cx - 10, cy + (k - 1.5) * 8);
+          ctx.rotate(-Math.PI / 2);
+          tongue(ctx, MCEMBER, 0, 0, 18 - k * 2, 170 - k * 25 + 10 * Math.sin(ph + k), 8 * Math.sin(ph * 2 + k));
+          ctx.restore();
+        }
+        // The rock: craggy, dark, its cracks glowing.
+        const pts = Array.from({ length: 9 }, (_, k) => {
+          const a = (k / 9) * TAU + 0.3;
+          const rr = 30 * (0.8 + 0.25 * Math.sin(k * 2.7));
+          return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+        });
+        inked(ctx, pts, '#5a3a3a', '#2a1a1e', 4);
+        fill(ctx, pts.map(([px, py]) => [cx + (px - cx) * 0.75 - 4, cy + (py - cy) * 0.75 - 4]), '#7a5048');
+        ctx.strokeStyle = MCEMBER[2];
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        for (const [a0, a1] of [[0.2, 2.4], [3.1, 4.6], [5.2, 1.0]]) {
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a0) * 8, cy + Math.sin(a0) * 8);
+          ctx.lineTo(cx + Math.cos(a1) * 22, cy + Math.sin(a1) * 22);
+          ctx.stroke();
+        }
+        celRing(ctx, MCEMBER, cx, cy, 34 + 2 * Math.sin(ph), 4, { broken: 0.5, seed: 1220 + i });
+        const R = rng(1230 + i);
+        for (let k = 0; k < 7; k++) sparkle(ctx, MCEMBER, cx - 40 - R() * 170, cy + (R() - 0.5) * 70, 3 + R() * 4, k);
+      },
+    };
+  })(), 2.4);
+  // Where a meteor lands (on the floor, under everyone): a flash, a crater ringed with broken rock,
+  // a ring of shock rolling outward along the floor, embers raining down.
+  E.mccrater = grown((() => {
+    const cx = 200;
+    const cy = 100;
+    return {
+      w: 400, h: 180, n: 10, fps: 12, px: cx, py: cy + 30,
+      draw(ctx, i) {
+        const u = i / 9;
+        ctx.save();
+        ctx.translate(cx, cy + 30);
+        ctx.scale(1, 0.26);
+        celRing(ctx, MCEMBER, 0, 0, 30 + u * 160, Math.max(2, 10 - u * 8), { broken: u * 0.7, seed: 1240 + i });
+        ctx.restore();
+        ctx.globalAlpha = Math.max(0, 1 - u * 0.8);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 30, 46, 10, 0, 0, TAU);
+        ctx.fillStyle = '#3a2228';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + 28, 38, 7, 0, 0, TAU);
+        ctx.fillStyle = MCEMBER[3];
+        ctx.fill();
+        for (let k = 0; k < 7; k++) {
+          const a = Math.PI + (k / 6) * Math.PI;
+          inked(ctx, [[cx + Math.cos(a) * 46, cy + 30 + Math.sin(a) * 4], [cx + Math.cos(a) * 54, cy + 22 + Math.sin(a) * 6], [cx + Math.cos(a) * 40, cy + 24]], '#7a5048', '#2a1a1e', 2);
+        }
+        ctx.globalAlpha = 1;
+        if (i <= 2) starburst(ctx, MCEMBER, cx, cy + 10, 30 + i * 20, 10, 1250, { inner: 0.35, rot: i * 0.3 });
+        const R = rng(1260);
+        for (let k = 0; k < 10; k++) {
+          const x = cx + (R() - 0.5) * 300;
+          const y0 = cy - 60 + R() * 40;
+          sparkle(ctx, MCEMBER, x, y0 + u * 90, 5 - u * 3, k);
+        }
+      },
+    };
+  })(), 1.6);
+  // The gather (loops round her while she charges): motes and little stars drawn up past her in an
+  // updraft, two faint violet swirls climbing round her (her face left clear: the motes pass at
+  // her sides).
+  E.mcgather = (() => {
+    const cx = 60;
+    const cy = 120;
+    return {
+      w: 120, h: 140, n: 8, fps: 14, px: cx, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = (i / 8) * TAU;
+        for (let k = 0; k < 10; k++) {
+          const side = k % 2 ? 1 : -1;
+          const u = ((i / 8) + k / 10) % 1;
+          const x = cx + side * (22 + 8 * Math.sin(u * 5 + k));
+          const y = cy - u * 120;
+          ctx.globalAlpha = Math.sin(u * Math.PI);
+          if (k % 3 === 0) fourStar(ctx, MCNIGHT, x, y, 5, ph);
+          else sparkle(ctx, k % 2 ? MCNIGHT : MCEMBER, x, y, 3.4, k);
+        }
+        ctx.globalAlpha = 0.6;
+        ctx.save();
+        ctx.translate(cx, cy - 6);
+        ctx.scale(1, 0.3);
+        celRing(ctx, MCNIGHT, 0, 0, 26 + 3 * Math.sin(ph), 3, { broken: 0.4, seed: 1270 + i });
+        ctx.restore();
+        ctx.globalAlpha = 1;
+      },
+    };
+  })();
+  // A tier reached: a ring of light bursting out round her and a star flashing above her hand.
+  E.mctier = (() => {
+    const c = 80;
+    return {
+      w: 160, h: 160, n: 6, fps: 18, px: c, py: c + 30,
+      draw(ctx, i) {
+        celRing(ctx, MCNIGHT, c, c, 20 + i * 12, Math.max(2, 7 - i), { broken: i / 7, seed: 1280 + i });
+        if (i <= 3) fourStar(ctx, MCEMBER, c + 26, c - 30, 10 + i * 4, i * 0.4);
+      },
+    };
+  })();
+  // Her hit: a star bursting with ember sparks.
+  E.mchit = grown((() => {
+    const c = 100;
+    return {
+      w: 200, h: 200, n: 6, fps: 28, px: c, py: c,
+      draw(ctx, i) {
+        if (i <= 2) fourStar(ctx, MCNIGHT, c, c, 22 + i * 12, i * 0.3);
+        if (i >= 1) celRing(ctx, MCEMBER, c, c, 18 + i * 12, Math.max(2, 8 - i * 1.4), { broken: i / 6, seed: 1290 + i });
+        const R = rng(1295 + i);
+        for (let j = 0; j < 5; j++) { const a = R() * TAU; const d = 24 + i * 12; sparkle(ctx, j % 2 ? MCEMBER : MCNIGHT, c + Math.cos(a) * d, c + Math.sin(a) * d, 7 - i, j); }
+      },
+    };
+  })(), 1.3);
   // The catch: a twinkle as an orb drops back into her orbit.
   E.jgcatch = (() => {
     const c = 40;

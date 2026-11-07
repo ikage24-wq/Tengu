@@ -174,6 +174,16 @@ function drawShot(ctx, f, cam) {
       fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
       break;
     }
+    case 'mcspark': case 'mccomet': case 'mcmeteor': {
+      // The Meteor Caller's: a star-spark, and the comet and the meteor falling slanted from the sky
+      // (pointed along their fall, grown in from small as they come out of the dark).
+      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
+      const left = Math.cos(a) < 0;
+      const born = f.shot === 'mcspark' ? bornAt(f) : Math.min(1, 0.4 + f.t * 3);
+      const size = { mcspark: 0.5, mccomet: 0.62, mcmeteor: 0.8 }[f.shot];
+      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
+      break;
+    }
     case 'jgpotato': {
       // Hot Potato: the enormous orb bowled along the floor, bouncing three times as it goes.
       const born = bornAt(f);
@@ -1112,7 +1122,7 @@ let hero = null;
 // the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['mccrater', 'jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

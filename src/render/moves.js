@@ -5361,6 +5361,114 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Meteor Caller (the Sorcerer, remade 2026-11-07; docs/design/mage-line.md) ----------
+  // She calls the sky down. Held, she gathers: both arms rising and spreading toward the sky, knees
+  // bending deeper under the weight as the charge builds, hair and cape lifted in the updraft, a
+  // tremble at the top. Released, the spark is a quick flick of the fingers, the comet a hurl from
+  // over the shoulder, the meteor both fists brought down from the sky in a slam that drops her into
+  // a crouch. Every pose keeps her arms off her face (the raised arms spread wide of it).
+
+  // The gather (held; `p` runs over the whole hold, CALL_MAX): three stages that settle into each
+  // other, matching the comet and meteor tiers (~0.25 and ~0.6 of the hold).
+  mcgather(p) {
+    const rise = soft(seg(p, 0, 0.25));
+    const deep = soft(seg(p, 0.25, 0.62));
+    const top = soft(seg(p, 0.62, 0.8));
+    const shake = Math.sin(p * 90) * (0.4 * deep + 0.8 * top);
+    return {
+      weapon: lerp(110, 160, rise) + 10 * deep + 2 * shake, arm: lerp(40, 108, rise) + 8 * deep + 4 * top + shake,
+      lift: -0.6 * deep + 0.4 * Math.abs(shake) * top, tilt: -0.06 * rise - 0.04 * deep,
+      face: p < 0.25 ? PM_FACE.aim : p < 0.62 ? PM_FACE.wild : PM_FACE.whoop,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(2, -9, rise) - 2 * deep), q(lerp(-2, -8, rise) - 1 * top)]);
+        r.squat = q(1.2 * rise + 1.6 * deep + 0.6 * top);
+        r.hairLift = rise > 0.5 ? -1 : 0;
+        r.cape -= q(3 * rise + 3 * deep);
+        danceLegs(r, [rise, [3, 0, 8], [-3, 0, -8]], [deep, [4.2, 0, 12], [-4.2, 0, -12]]);
+      },
+    };
+  },
+  // Star-spark (the tap, at ~0.42): a flick of two fingers from the hip, the hand snapping open.
+  mcspark(p) {
+    const go = ease(seg(p, 0.2, 0.42));
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: lerp(130, 80, go) + 20 * after, arm: lerp(36, 90, go) - 30 * after,
+      lunge: 4 * go * (1 - after * 0.5), tilt: 0.06 * go * (1 - after), lift: swBob(p, 0.6) * 0.4, trail: go > 0 && go < 1,
+      face: p < 0.2 ? PM_FACE.aim : PM_FACE.snooty,
+      rig: (r) => { r.backArm = dancerHand([q(3), q(-1)]); danceLegs(r, [go * (1 - after), [3, 0, 6], [-2.4, 0, -10]], [after, [1.6, 0, 4], [-1.8, 0, -6]]); },
+    };
+  },
+  // Comet (released from the first tier, at ~0.42): the arm swept back over the shoulder and
+  // hurled forward and up, the comet answering from the sky; she leans after it.
+  mccomet(p) {
+    const cock = soft(seg(p, 0, 0.22));
+    const go = ease(seg(p, 0.22, 0.42));
+    const after = soft(seg(p, 0.5, 0.9));
+    return {
+      weapon: lerp(lerp(120, 230, cock), 60, go) + 30 * after, arm: lerp(lerp(70, 104, cock), 112, go) - 60 * after,
+      back: (cock > 0.4 && go < 0.3) || undefined,
+      lunge: -2 * cock * (1 - go) + 8 * go * (1 - after * 0.5), tilt: -0.1 * cock * (1 - go) + 0.12 * go * (1 - after),
+      lift: swBob(p, 0.66) * 0.6, trail: go > 0 && go < 1,
+      face: p < 0.22 ? PM_FACE.aim : p < 0.5 ? PM_FACE.whoop : PM_FACE.glee,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(-4, 4, go)), q(lerp(-5, -2, go))]);
+        r.hairLift = go > 0.3 && after < 0.4 ? 1 : 0;
+        danceLegs(r, [cock * (1 - go), [1.4, -1.6, 14], [-2, 0, -6]], [go * (1 - after), [5, 0, 10], [-4.4, -0.6, -22]], [after, [2, 0, 4], [-2.2, 0, -6]]);
+      },
+    };
+  },
+  // Meteor (released from the top tier, impact at ~0.5): both arms high and wide, a breath, then
+  // both fists brought down together; she drops into a deep crouch as it lands and rises slowly.
+  mcmeteor(p) {
+    const hold = soft(seg(p, 0, 0.18));
+    const slam = ease(seg(p, 0.3, 0.46));
+    const crouch = soft(seg(p, 0.42, 0.52)) * (1 - soft(seg(p, 0.7, 1)));
+    return {
+      weapon: lerp(lerp(140, 160, hold), 40, slam) + 40 * soft(seg(p, 0.7, 1)), arm: lerp(lerp(92, 108, hold), 30, slam) + 30 * soft(seg(p, 0.7, 1)),
+      lift: 2 * hold * (1 - slam), tilt: -0.08 * hold * (1 - slam) + 0.18 * crouch, lunge: 4 * slam * (1 - soft(seg(p, 0.7, 1))),
+      trail: slam > 0 && slam < 1,
+      face: p < 0.3 ? PM_FACE.whoop : p < 0.6 ? PM_FACE.wild : PM_FACE.cackle,
+      rig: (r) => {
+        r.backArm = dancerHand([q(lerp(-8, 3, slam)), q(lerp(-7, 1, slam))]);
+        r.squat = q(1 + 2.2 * crouch);
+        r.hairLift = hold > 0.4 && slam < 0.3 ? -1 : slam > 0.5 && crouch > 0.4 ? 1 : 0;
+        r.cape -= q(4 * hold * (1 - slam));
+        danceLegs(r, [hold * (1 - slam), [3.4, 0, 8], [-3.4, 0, -8]], [crouch, [5.6, 0, 14], [-5.2, -0.6, -26]]);
+      },
+    };
+  },
+  // Up + attack: a finger pointed straight at the sky, a spark answering upward.
+  mcup(p) {
+    const go = ease(seg(p, 0.14, 0.3));
+    const after = soft(seg(p, 0.4, 0.9));
+    return {
+      weapon: lerp(120, 100, go) + 10 * after, arm: lerp(40, 112, go) - 60 * after, lift: 2 * bump(p, 0.14, 0.5), tilt: -0.08 * go * (1 - after),
+      face: p < 0.14 ? PM_FACE.aim : PM_FACE.snooty,
+      rig: (r) => { r.backArm = dancerHand([q(2), q(-2)]); danceLegs(r, [go * (1 - after), [1.4, -1.6, 10], [-1.2, -1.2, -8]]); },
+    };
+  },
+  // In the air: hanging a moment, she flicks a spark down at them.
+  mcair(p) {
+    const go = ease(seg(p, 0.14, 0.3));
+    return {
+      weapon: lerp(110, 150, go), arm: lerp(70, 34, go), tilt: 0.12 * go,
+      face: p < 0.14 ? PM_FACE.aim : PM_FACE.snooty,
+      rig: (r) => { r.air = true; r.backArm = dancerHand([q(-5), q(-4)]); danceLegs(r, [1, [2, -4, 30], [-1.4, -3, -30]]); },
+    };
+  },
+  // Out of a run: a long glide on one heel, a spark flicked out of it.
+  mcdash(p) {
+    const glide = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.66, 1)));
+    const go = ease(seg(p, 0.28, 0.4));
+    return {
+      weapon: lerp(140, 80, go) + 20 * soft(seg(p, 0.6, 0.9)), arm: lerp(30, 90, go) - 30 * soft(seg(p, 0.6, 0.9)),
+      tilt: -0.1 * glide, lunge: 5 * glide, trail: go > 0 && go < 1,
+      face: p < 0.28 ? PM_FACE.snooty : PM_FACE.glee,
+      rig: (r) => { r.backArm = dancerHand([q(-6 * glide), q(-4 * glide)]); r.hairLift = glide > 0.4 ? 1 : 0; r.cape -= q(4 * glide); danceLegs(r, [glide, [4.4, 0, 20], [-3.6, -0.8, -18]]); },
+    };
+  },
+
   // ---------- The Mage's attacks (the remake: a pyro gremlin; docs/design/mage-line.md) ----------
   // A magic-school dropout who loves blowing things up. She never casts like the textbook: she
   // flicks fire from the hip, pitches snowballs, jabs the wand like a cattle prod, swings the staff

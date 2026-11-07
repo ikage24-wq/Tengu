@@ -321,6 +321,24 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     // the monster, clear of her).
     // Her skills: Encore's orbs spiralling home to her hands, Spinning Plates round the party (on
     // the floor, under everyone), the Grand Finale's firework over the crowd ahead.
+    // The Meteor Caller's: the updraft round her as she charges, a tier reached, a meteor's crater
+    // and shock ring (sized to its blast), and her hit mark.
+    case 'mcgather':
+      return fxSprite(ctx, 'celmcgather', x, y + 4, { t: f.t, scale: 1.1, alpha: Math.min(1, f.t * 4) }) || true;
+    case 'mctier':
+      return fxSprite(ctx, 'celmctier', x, y + 4, { p, scale: 0.5 + 0.15 * (f.tier ?? 1) }) || true;
+    case 'mccrater':
+      return f.t < 0 || fxSprite(ctx, 'celmccrater', x, y + 6, { p, scale: Math.min(1.1, (f.r ?? 130) / 170) }) || true;
+    // Her reactions: a burst of starlight (steam), a star shattering (shatter), a small crater of
+    // embers (kaboom), each on the monster, never a cloud over everyone.
+    case 'mcrxsteam':
+      return fxSprite(ctx, 'celmctier', x, y - (f.h ?? 40) * 0.4, { p, scale: 0.7 }) || true;
+    case 'mcrxshatter':
+      return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.7 }) || true;
+    case 'mcrxkaboom':
+      return f.t < 0 || fxSprite(ctx, 'celmccrater', x, y + 6, { p, scale: f.small ? 0.35 : 0.5 }) || true;
+    case 'mchit':
+      return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 24) / 2, { p, scale: f.big || f.crit ? 0.6 : 0.45 }) || true;
     case 'jgencore':
       return fxSprite(ctx, 'celjgencore', x + dir * 16, y + 18, { p, scale: 0.75 }) || true;
     case 'jgplates':

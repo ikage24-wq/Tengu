@@ -608,22 +608,22 @@ const ARCHER_COMMANDS = {
   // The Sorcerer with the staff: a banner raised (lightning up), a throne in the air (fire orb
   // down; the second time a crown of ice), a throne ride out of a run that ends in a tap of geysers.
   astro: {
-    up: { move: 'qnsup', dur: 0.46, step: 4, strikes: [{ at: 0.3, shot: 'qndecree', magic: true, el: 'bolt', pct: 130, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1000, big: true, stop: 0.05 }] },
+    up: { move: 'mcup', dur: 0.38, step: 4, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1100, big: true, stop: 0.04 }] },
     air: [
-      { move: 'qnsair', dur: 0.42, hang: true, strikes: [{ at: 0.3, shot: 'qnorb', magic: true, el: 'fire', pct: 110, range: 260, h: 170, drop: 60, knock: 40, speed: 520 }] },
-      { move: 'qnsair', dur: 0.48, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'qncrown', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 80, speed: 560, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'mcair', dur: 0.34, hang: true, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 84, range: 260, h: 170, drop: 60, knock: 30, speed: 1100 }] },
+      { move: 'mcair', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mccomet', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, knock: 80, speed: 950, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'qnsdash', dur: 0.56, step: 60, carry: 0.5, strikes: [{ at: 0.46, shot: 'qngeyser', magic: true, el: 'fire', pct: 140, range: 300, h: 60, oy: 16, targets: 3, pierce: true, knock: 40, launch: 120, speed: 620 }] },
+    dash: { move: 'mcdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'bolt', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 1150 }] },
   },
   // With the wand: a royal salute (lightning up), floating cross-legged on air pointing down, and a
   // regal glide out of a run.
   astrowand: {
-    up: { move: 'qnup', dur: 0.46, step: 4, strikes: [{ at: 0.3, shot: 'qndecree', magic: true, el: 'bolt', pct: 130, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 1000, big: true, stop: 0.05 }] },
+    up: { move: 'mcup', dur: 0.38, step: 4, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1100, big: true, stop: 0.04 }] },
     air: [
-      { move: 'qnair', dur: 0.42, hang: true, strikes: [{ at: 0.3, shot: 'qncrown', magic: true, el: 'ice', pct: 110, range: 260, h: 170, drop: 60, knock: 30, speed: 560 }] },
-      { move: 'qnair', dur: 0.48, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'qnorb', magic: true, el: 'fire', pct: 130, range: 260, h: 190, drop: 70, targets: 2, pierce: true, knock: 80, speed: 520, big: true, stop: 0.05, shake: 2 }] },
+      { move: 'mcair', dur: 0.34, hang: true, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 84, range: 260, h: 170, drop: 60, knock: 30, speed: 1100 }] },
+      { move: 'mcair', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mccomet', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, knock: 80, speed: 950, big: true, stop: 0.04, shake: 1 }] },
     ],
-    dash: { move: 'qndash', dur: 0.56, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'qnorb', magic: true, el: 'fire', pct: 140, range: 300, h: 80, targets: 2, pierce: true, knock: 90, speed: 520 }] },
+    dash: { move: 'mcdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'bolt', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 1150 }] },
   },
   // With the staff: a vault off the planted staff zapping straight up, a fireball batted down from
   // the air (the second time a spray of snowballs), and a broomstick ride out of a run that ends in
@@ -1347,6 +1347,8 @@ export function basicCombo(world) {
       return;
     }
   }
+  // The Meteor Caller charges her basic spell while attack is held (callerBasic).
+  if (isCaller(world.char)) return callerBasic(world);
   if (stream) return barrageThrow(world, stream);
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   const flowing = world.now <= (world.comboUntil ?? -9);
@@ -1368,6 +1370,67 @@ export function skillCombo(world, skillId, params, scale = 100) {
   const last = i === params.combo.length - 1;
   const after = !last ? AFTER.chain : params.fullGauge || step.finisher ? AFTER.finisher : heavyStep(step) ? AFTER.heavy : AFTER.skill;
   playStep(world, step, scale, skillId, params.school, after);
+}
+
+// ---------- The Meteor Caller (the Sorcerer, remade 2026-11-07; docs/design/mage-line.md) ----------
+// Her basic spell is charged: a tap flicks a quick star-spark; held, she gathers power (slowed to a
+// walk, the updraft round her rising) through three tiers, and letting go calls down what she
+// reached: a comet at CALL_TIERS[1] seconds, a meteor at CALL_TIERS[2]; held to CALL_MAX it goes
+// off by itself. Charged hits fill her gauge (Starfall, internally Binding); full (STARSTORM), every
+// tap calls down a meteor at once, each spending CALL_STORM of it.
+export const isCaller = (char) => char.job === 'onmyoji';
+export const CALL_TIERS = [0, 0.45, 1.1];
+export const CALL_MAX = 1.6;
+export const CALL_WALK = 0.4;
+export const CALL_STORM = 25;
+const CALL_GAIN = [0, 9, 22];
+const CALL_GATHER = { move: 'mcgather', dur: CALL_MAX + 0.2, carry: 1, strikes: [] };
+export const CALL_STEPS = [
+  { move: 'mcspark', dur: 0.3, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 82, range: 320, h: 70, knock: 25, speed: 1150 }] },
+  { move: 'mccomet', dur: 0.44, step: 6, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'ice', pct: 230, range: 340, h: 100, targets: 2, blast: 60, knock: 80, launch: 60, speed: 760, big: true, stop: 0.05, shake: 2 }] },
+  { move: 'mcmeteor', dur: 0.58, step: 0, finisher: true, strikes: [{ at: 0.5, shot: 'mcmeteor', sky: true, skyH: 320, skyX: 190, magic: true, el: 'fire', pct: 470, range: 360, h: 140, targets: 1, blast: 130, knock: 170, launch: 150, speed: 560, big: true, stop: 0.09, shake: 5, crater: true }] },
+];
+export const starstorm = (world) => isCaller(world.char) && (world.binding ?? 0) >= BINDING_MAX;
+function callerBasic(world) {
+  if (world.call) return;
+  // On a full Starfall a tap calls the meteor down at once.
+  if (starstorm(world) || (world.binding ?? 0) >= BINDING_MAX * 0.999) {
+    world.binding = Math.max(0, (world.binding ?? 0) - CALL_STORM);
+    world.bindingAt = world.now;
+    world.storming = world.now;
+    playStep(world, CALL_STEPS[2], 100, 'basic2');
+    return;
+  }
+  if (!world.body.onGround) return playStep(world, CALL_STEPS[0], 100, 'basicair0');
+  world.call = { since: world.now, tier: 0 };
+  playStep(world, CALL_GATHER, 100, 'basiccall');
+  world.fx.push({ kind: 'mcgather', follow: true, x: world.body.x, y: world.body.y, dir: world.body.facing, t: 0, dur: CALL_MAX + 0.2 });
+}
+function tickCaller(world) {
+  const c = world.call;
+  if (!c) return;
+  // A skill, a hit or a jump that took over the pose ends the charge unspent.
+  if (world.pose?.kind !== 'mcgather' || world.dead) {
+    world.call = null;
+    world.fx = world.fx.filter((f) => f.kind !== 'mcgather');
+    return;
+  }
+  const held = world.now - c.since;
+  const tier = held >= CALL_TIERS[2] ? 2 : held >= CALL_TIERS[1] ? 1 : 0;
+  if (tier > c.tier) {
+    c.tier = tier;
+    world.fx.push({ kind: 'mctier', tier, x: world.body.x, y: world.body.y, dir: world.body.facing, follow: true, t: 0, dur: 0.4 });
+    world.juice.push({ type: 'shake', mag: tier, dur: 0.12 });
+  }
+  if (world.basicHeld && held < CALL_MAX) return;
+  world.call = null;
+  world.fx = world.fx.filter((f) => f.kind !== 'mcgather');
+  world.attackTimer = 0;
+  world.lockTimer = 0;
+  world.pose = null;
+  const step = CALL_STEPS[tier];
+  if (tier && pickTargets(world.mobs, world.body, { w: step.strikes[0].range, h: step.strikes[0].h }, 1).length) addBinding(world, CALL_GAIN[tier]);
+  playStep(world, step, 100, `basic${tier}`);
 }
 
 function playStep(world, step, scale, key, school = null, after = 0) {
@@ -1495,6 +1558,7 @@ export function tickMelee(world, dt) {
   tickCarousel(world);
   tickSky(world);
   tickJuggle(world, dt);
+  tickCaller(world);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && FLIPS.has(world.pose?.kind)) world.flipAt = world.now;
@@ -1931,7 +1995,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : (char.job === 'spiritmage' || char.job === 'onmyoji' || char.job === 'shrinemaiden') && s.rain ? `${char.job === 'onmyoji' ? 'qnhit' : char.job === 'shrinemaiden' ? 'mdhit' : 'pmhit'}${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -2063,11 +2127,18 @@ function fire(world, strike) {
       const my = m.y - (m.air ?? 0) - m.def.h / 2;
       // (Her lightning comes straight down; a meteor slants in.)
       const straight = s.shot === 'pmstrike' || s.shot === 'qnstrike' || s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
-      const sx = straight ? m.x : m.x - s.dir * 70;
-      const sy = my - (straight ? 200 : 170);
+      // (A shot may fall from higher, `skyH`, and slant in further, `skyX`: the Meteor Caller's stars.)
+      const sx = straight ? m.x : m.x - s.dir * (s.skyX ?? 70);
+      const sy = my - (s.skyH ?? (straight ? 200 : 170));
       const travel = Math.hypot(m.x - sx, my - sy) / speed;
       world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: -lag, dur: travel });
       shotHit(world, s, m, travel + lag, 0, element);
+      // A falling star that blasts where it lands (the Meteor Caller's comet and meteor): those
+      // close round it are caught too, and a meteor leaves a crater and a ring of shock.
+      if (s.blast) {
+        world.mobs.filter((o) => o !== m && o.hp > 0 && Math.abs(o.x - m.x) <= s.blast && Math.abs(o.y - m.y) < 90).slice(0, 8).forEach((o, k) => shotHit(world, { ...s, pct: s.pct * 0.6, fromX: m.x, burst: undefined }, o, travel + lag + 0.04 + Math.abs(o.x - m.x) / 500, (k + 1) % 3, element));
+        if (s.crater) world.fx.push({ kind: 'mccrater', x: m.x, y: m.y, r: s.blast, t: -(travel + lag), dur: 1.1 });
+      }
     }
     return;
   }
@@ -2238,6 +2309,8 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
 // The Spell Juggler's orbs, her palm spark and her finisher orbs (world/juggle.js).
 // How far a level piercing shot may tip toward a monster above or below its line (radians).
 const PIERCE_TIP = 0.28;
+// The Meteor Caller's shots.
+const MC_SHOTS = new Set(['mcspark', 'mccomet', 'mcmeteor']);
 const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgpotato', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
 const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);

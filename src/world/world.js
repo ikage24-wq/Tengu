@@ -21,6 +21,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
+import { CALL_WALK } from './melee.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
 import { elementHit, allyElement } from './reactions.js';
 import { healAround } from './melee.js';
@@ -726,6 +727,8 @@ export function updateWorld(world, dt, input) {
   const repeats = (b) => Boolean(b?.skill) && ['attack', 'magic'].includes(SKILLS[b.skill]?.type);
   const skillHeld = Object.entries(char.hotkeys).some(([code, b]) => repeats(b) && held.has(code)) && !world.body.rope;
   const attackHeld = basicHeld || skillHeld;
+  // (The Meteor Caller's charge reads whether attack is still held: world/melee.js tickCaller.)
+  world.basicHeld = basicHeld;
   const acting = world.attackTimer > 0 || world.lockTimer > 0;
   const walkAway = (intent.left || intent.right) && !attackHeld;
   // An attack about to start faces the way you're holding (planted, you turn on the spot).
@@ -742,7 +745,9 @@ export function updateWorld(world, dt, input) {
   // Endless Fox-Fire's barrage doesn't root her: she walks slowly through it (and can jump into the
   // air barrage). Its finisher roots her as any move does.
   const streaming = basicHeld && Boolean(world.barrage) && world.recoverKind === 'basic' && !world.pose?.fin;
-  const rooted = !streaming && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
+  // The Meteor Caller walks slowly while she gathers a charge (CALL_WALK).
+  const calling = Boolean(world.call);
+  const rooted = !streaming && !calling && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
   // Riding (world/mount.js): H gets on and off; an attack or a skill hops you off and goes off at
   // once; fishing, gathering and crafting put the mount away.
   if (pressed.has('KeyH')) toggleMount(world);
@@ -757,7 +762,7 @@ export function updateWorld(world, dt, input) {
   if (!(pressed.has('ArrowUp') && interact(world))) {
     // (The Sky Dancer on full Tailwind hovers where she is unless Up or Down flies her.)
     const hover = !world.body.onGround && world.body.vy >= 0 && skyFlight(world) && !intent.up && !intent.down;
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : calling ? { speed: world.stats.speed * CALL_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
   }
   rideAfter(world);
   if (!ride) tickAgility(world, dt, blockWalls);

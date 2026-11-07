@@ -2756,31 +2756,52 @@ test("the Sorcerer's reactions spread down a marked crowd like dominoes, and the
   assert.ok(!m.longestChain, "the Mage's reactions stay where they are");
 });
 
-for (const [key, weapon, first] of [['astro', 'staff_20', 'qngeyser'], ['astrowand', 'wand_20', 'qnorb']]) {
-  test(`the Sorcerer casts her own royal spells with ${weapon.split('_')[0] === 'staff' ? 'the staff' : 'the wand'}, her own pool of moves, and they build Chaos (not Mayhem)`, () => {
-    const pool = PATH_VARIANTS[key];
-    assert.equal(pool.length, PATH_COMBOS[key].length, 'one choice per combo step');
-    pool.forEach((step, i) => {
-      assert.equal(step[0], PATH_COMBOS[key][i], `step ${i + 1} opens with her own`);
-      assert.ok(step.length >= 2, `step ${i + 1} has a choice`);
-      for (const v of step) assert.ok(MOVES[v.move] && v.move.startsWith('qn'), `${v.move} is her own move`);
-    });
-    assert.ok(pool.at(-1).every((v) => v.finisher), 'every last move is a finisher');
+// The Meteor Caller (the Sorcerer remade): a tap flicks a star-spark, a hold calls a comet, a long
+// hold a meteor; charged hits fill Starfall, and full, a tap calls a meteor at once.
+for (const weapon of ['staff_20', 'wand_20']) {
+  test(`the Meteor Caller charges with ${weapon.startsWith('staff') ? 'the staff' : 'the wand'}: tap a spark, hold a comet, hold long a meteor`, () => {
     const w = astronomer(false, weapon);
-    const seen = [];
-    const hold = { held: new Set(['KeyZ']), pressed: new Set(), locked: false };
-    let shot = null;
-    for (let i = 0; i < 140; i++) {
-      updateWorld(w, DT, hold);
-      if (w.pose && seen.at(-1) !== w.pose.kind) seen.push(w.pose.kind);
-      shot ??= w.fx.find((f) => f.kind === 'projectile')?.shot;
-    }
-    assert.deepEqual(seen.slice(0, 3), PATH_COMBOS[key].map((s) => s.move), 'her combo');
-    assert.equal(shot, first, 'her own shot');
-    assert.ok(w.binding > 0, `her spells build Chaos (${w.binding})`);
+    const fire = (secs) => {
+      const shots = new Set();
+      for (let i = 0; i < Math.round(secs * 60); i++) {
+        updateWorld(w, DT, { held: new Set(['KeyZ']), pressed: new Set(i ? [] : ['KeyZ']), locked: false });
+        if (i > 2) assert.ok(w.pose?.kind === 'mcgather' || i > Math.round(1.6 * 60), 'she gathers while it is held');
+      }
+      for (let i = 0; i < 70; i++) {
+        updateWorld(w, DT, idle);
+        for (const f of w.fx) if (f.kind === 'projectile') shots.add(f.shot);
+      }
+      return [...shots];
+    };
+    assert.deepEqual(fire(0.05), ['mcspark'], 'a tap: a star-spark');
+    assert.deepEqual(fire(0.7), ['mccomet'], 'held: a comet');
+    assert.deepEqual(fire(1.3), ['mcmeteor'], 'held long: a meteor');
+    assert.ok(w.binding > 0, `charged hits fill Starfall (${Math.round(w.binding)})`);
     assert.equal(w.spirit ?? 0, 0, 'and no Mayhem');
   });
 }
+
+test('while she gathers she can walk, slowly', async () => {
+  const { CALL_WALK } = await import('../src/world/melee.js');
+  const w = astronomer(false, 'wand_20');
+  w.mobs = [];
+  const x0 = w.body.x;
+  for (let i = 0; i < 40; i++) updateWorld(w, DT, { held: new Set(['KeyZ', 'ArrowRight']), pressed: new Set(i ? [] : ['KeyZ']), locked: false });
+  assert.equal(w.pose?.kind, 'mcgather');
+  const moved = w.body.x - x0;
+  assert.ok(moved > 5, `she walks (${moved.toFixed(1)})`);
+  assert.ok(moved < w.stats.speed * (40 / 60) * CALL_WALK * 1.3, 'slowly');
+});
+
+test('on a full Starfall a tap calls a meteor down at once', async () => {
+  const { BINDING_MAX } = await import('../src/world/melee.js');
+  const w = astronomer(false, 'wand_20');
+  w.binding = BINDING_MAX;
+  w.bindingAt = w.now;
+  updateWorld(w, DT, press('KeyZ'));
+  assert.equal(w.pose?.kind, 'mcmeteor');
+  assert.ok(w.binding < BINDING_MAX, 'it spends some');
+});
 
 test('Chaos builds faster while she keeps casting, a hit knocks part of it away, and on Pandemonium her chains run longer', async () => {
   const { addBinding, STORM_HURT } = await import('../src/world/melee.js');
