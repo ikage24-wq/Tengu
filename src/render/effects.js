@@ -98,7 +98,7 @@ function drawShot(ctx, f, cam) {
     }
     case 'aewindup':
       // Wind-Up Bomb toddling along to them, rocking on its little feet.
-      fxSprite(ctx, 'celaewindup', x, y + 6 - 2 * Math.abs(Math.sin(f.t * 20)), { t: f.t, flip: f.tx < f.x, scale: 0.75 });
+      fxSprite(ctx, 'celaewindup', x, y + 6 - 2 * Math.abs(Math.sin(f.t * 20)), { t: f.t, flip: f.tx < f.x, scale: 1.1 });
       break;
     case 'asplanet': case 'asbig': case 'asmoon': {
       // The Astronomer's: a little ringed planet rolling with an orbit trailing it, a great ringed

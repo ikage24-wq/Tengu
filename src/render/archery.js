@@ -12,6 +12,7 @@
 
 import { SCHOOL_COLORS } from './spells.js';
 import { shock, wash, easeOut, deep, inked } from './fxkit.js';
+import { drawPhantomFx, drawPhantomArrow } from './phantom-fx.js';
 import { fxSprite } from './fx-sprites.js';
 import { groundRing, lightPillar, debris } from './warrior-fx.js';
 
@@ -150,7 +151,12 @@ export function drawArcheryShot(ctx, f, x, y, dir, time) {
   const u = f.dur ? Math.min(1, f.t / f.dur) : 0;
   const along = (d) => [x - Math.cos(ang) * d, y - Math.sin(ang) * d];
   switch (f.shot) {
-    case 'ptarrow': case 'ptbig': case 'ptcard': case 'ptdove': {
+    case 'ptarrow': case 'ptbig':
+      // The Phantom Trickster's arrow, drawn by hand (render/phantom-fx.js); her big one carries a
+      // spinning card.
+      drawPhantomArrow(ctx, x, y, Math.atan2(f.ty - f.y, f.tx - f.x), f.shot === 'ptbig', time + (f.seed ?? 0));
+      return true;
+    case 'ptcard': case 'ptdove': {
       // The Phantom Trickster's: a plum arrow trailing smoke, her big one with card suits tumbling
       // behind, a spinning playing card, and a silver dove flapping along (always right way up).
       const nose = Math.atan2(f.ty - f.y, f.tx - f.x);
@@ -353,6 +359,7 @@ export function windRainPiece(ctx, x, y, s, time) {
 
 export function drawArchery(ctx, f, x, y, p, cam, time) {
   const flip = (f.dir || 1) < 0;
+  if ((f.kind === 'pthit' || f.kind === 'ptsmoke' || f.kind === 'ptshowfx') && drawPhantomFx(ctx, f, x, y, p)) return true;
   switch (f.kind) {
     case 'pthit':
       // The Phantom Trickster's arrow landing: a silver flash, a puff of plum smoke, three cards.
@@ -459,7 +466,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
       // key turning and its light blinking.)
       if (f.look === 'hat' || f.look === 'mine') {
         const a2 = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
-        return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: Math.floor(time * 6) % 4, scale: 0.6, alpha: a2 }) || true;
+        return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: Math.floor(time * 6) % 4, scale: f.look === 'mine' ? 0.8 : 0.6, alpha: a2 }) || true;
       }
       // Spring Trap, armed on the ground (it fades in as it's set, and out as it rusts away).
       const a = Math.min(1, f.t / 0.15) * Math.min(1, (f.dur - f.t) / 0.4);
@@ -468,7 +475,7 @@ export function drawArchery(ctx, f, x, y, p, cam, time) {
     }
     case 'trapsnap': {
       if (f.look === 'spring') return fxSprite(ctx, 'celacspring', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
-      if (f.look === 'hat' || f.look === 'mine') return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: 0.6 }) || true;
+      if (f.look === 'hat' || f.look === 'mine') return fxSprite(ctx, f.look === 'hat' ? 'celpttrap' : 'celaemine', x, y + 2, { frame: 4 + Math.min(3, Math.floor(p * 4)), scale: f.look === 'mine' ? 0.8 : 0.6 }) || true;
       // The trap snapping shut on a monster, sparks and dust flying.
       fxSprite(ctx, 'celtrapsnap', x, y, { p, scale: 0.7 });
       return true;

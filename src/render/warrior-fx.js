@@ -9,6 +9,7 @@
 
 import { fxSprite } from './fx-sprites.js';
 import { drawBubbleFx } from './bubbles.js';
+import { drawArbalistFx } from './arbalist-fx.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
@@ -200,6 +201,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   if (f.kind.startsWith('bb') && drawBubbleFx(ctx, f, x, y, p, cam, time)) return true;
+  if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
@@ -307,8 +309,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celaebolt', sx, sy, { frame: 0, scale: 0.32, rot: 0.6, alpha: 0.6 + 0.4 * Math.sin(p * p * 40) }) || true;
     }
     case 'aeballista':
-      // (Behind her, a size smaller, so she shows at the crank instead of vanishing into the frame.)
-      return fxSprite(ctx, 'celaeballista', x - dir * 16, y + 4, { p, scale: 0.6, flip }) || true;
+      // (Behind her and set well back, so the whole machine shows and she stands at its crank.)
+      return fxSprite(ctx, 'celaeballista', x - dir * 34, y + 4, { p, scale: 0.85, flip }) || true;
     // The Mage's element reactions (world/reactions.js): Steam Blast rolling out along the floor as
     // far as it scalds, Shatter bursting from the monster's middle, Kaboom and the small blasts it
     // jumps on with, and the zap that carries it from one monster to the next.

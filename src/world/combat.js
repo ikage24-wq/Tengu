@@ -354,6 +354,10 @@ export function cast(world, skillId, rng = Math.random) {
   const magical = type === 'magic' || type === 'heal' || JOBS[s?.job]?.family === 'mage';
   if (s?.school && magical) world.fx.push({ kind: 'castcircle', school: s.school, x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.2), big: lock >= 1 });
   // (The Wind Dancer's big skills bring their own spotlight and ribbons, never another job's pillar.)
+  // (Showstopper drops a spotlight on her instead of a glow.)
+  else if (s?.id === 'snacktime') world.fx.push({ kind: 'ptshowfx', x: body.x, y: body.y, t: 0, dur: 1.6 });
+  // (Overclock spins a great brass gear up behind her.)
+  else if (s?.id === 'overclock') world.fx.push({ kind: 'aeclockfx', x: body.x, y: body.y, t: 0, dur: 1.4 });
   else if (s?.school && s.school !== 'coral' && (lock || type === 'buff')) world.fx.push({ kind: 'powerup', school: schoolFor(char, s.school), x: body.x, y: body.y, t: 0, dur: Math.max(0.5, lock + 0.15), big: lock >= 1 });
 
   let area = params.range;

@@ -16,6 +16,6 @@ export function drawPets(ctx, world, cam, time, layer) {
     const frame = since < 0.12 ? 4 : since < 0.24 ? 5 : sw;
     const next = since < 0.24 ? undefined : (Math.floor(sw) + 1) % 4;
     const up = Math.min(1, (world.now - tr.since) / 0.25);
-    fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, next, scale: 0.5 * up, flip: tr.dir < 0 });
+    fxSprite(ctx, 'celaeturret', Math.round(tr.x - cam.x), Math.round(tr.y - cam.y) + 2, { frame, next, scale: 0.8 * up, flip: tr.dir < 0 });
   }
 }
