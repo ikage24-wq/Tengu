@@ -16,6 +16,7 @@ import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 import { strikePose } from './hero.js';
 import { drawFilm } from './bubbles.js';
+import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 
 
@@ -1045,6 +1046,7 @@ function drawFx(ctx, f, cam, time) {
       // hits, so the cut itself adds nothing here.)
       if (f.via === 'blade') {
         if (!f.path || f.path === 'steel' || f.path === 'shadow' || f.path === 'ink' || f.path === 'coral' || f.path === 'rosegold') hitMark(ctx, f.path ?? 'steel', x, y, p, { seed: f.seed ?? 0.5, dir: f.dir ?? 1 });
+        weaponHit(ctx, f, x, y, p);
       }
       else fxSprite(ctx, pathTint(f.path, 'celhit', 'celholyhit', 'celhitred'), x, y, { p, scale: 0.65 });
       break;
@@ -1232,6 +1234,12 @@ function bladeCut(ctx, f, cam, p) {
     const a1 = Math.atan2(path.at(-1).tip[1] - hy, path.at(-1).tip[0] - hx);
     mid = Math.atan2(m.tip[1] - hy, m.tip[0] - hx);
     cw = Math.sin(a1 - a0) >= 0;
+    // A spear's thrust barely sweeps: it draws as a straight lance of light, not a crescent.
+    if (f.weapon === 'spear' && Math.abs(Math.atan2(Math.sin(a1 - a0), Math.cos(a1 - a0))) < 0.9) {
+      const tip = path.at(-1).tip;
+      thrustStreak(ctx, f, f.bx + hx - cam.x, f.by + hy - cam.y, f.bx + tip[0] - cam.x, f.by + tip[1] - cam.y, p);
+      return;
+    }
     r = path.reduce((a, q) => a + Math.hypot(q.tip[0] - hx, q.tip[1] - hy), 0) / path.length;
     cx = f.bx + hx - cam.x;
     cy = f.by + hy - cam.y;
@@ -1257,6 +1265,8 @@ function bladeCut(ctx, f, cam, p) {
   const rot = mid - (flip ? Math.PI - sheet.mid : sheet.mid);
   const scale = ((r * 1.15) / (sheet.r / sheet.d)) * (f.big ? 1.15 : 1);
   fxSprite(ctx, name, cx, cy, { p, rot, flip, scale });
+  // (Each warrior weapon adds its own touch: a sword's glint, an axe's embers, a spear's streaks.)
+  weaponTrail(ctx, f, cx, cy, mid, r, cw, p);
 }
 
 function strikeAt(f) {

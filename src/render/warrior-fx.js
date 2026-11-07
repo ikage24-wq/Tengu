@@ -10,6 +10,7 @@
 import { fxSprite } from './fx-sprites.js';
 import { drawBubbleFx } from './bubbles.js';
 import { drawArbalistFx } from './arbalist-fx.js';
+import { rockBurst } from './blade-fx.js';
 
 const SCHOOLS = new Set(['holy', 'rage', 'ice', 'wind', 'shadow', 'hawk', 'storm', 'ink', 'fox', 'spirit']);
 const tint = (school) => (SCHOOLS.has(school) ? school : school === 'gold' ? 'holy' : school === 'focus' ? 'ice' : '');
@@ -903,6 +904,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // sword and a crack racing on from each end of it, a beat behind.
       const fissure = pathTint(f.school, 'celfissurebig', 'celfissuregoldbig', 'celfissureredbig');
       fxSprite(ctx, fissure, x, y, { p, scale: r / 230 });
+      // (Rock torn up out of the split, so the blades of light rise out of broken ground.)
+      rockBurst(ctx, x, y, Math.min(r * 1.4, 260), Math.min(1, p * 1.2), 7);
       for (const sd of [-1, 1]) if (p > 0.05) fxSprite(ctx, fissure, x + sd * r * 0.5, y, { p: (p - 0.05) / 0.95, scale: (r / 230) * 0.8, flip: sd < 0 });
       debris(ctx, x, y, p, r * 0.8, f.school);
       if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 0.85 });
