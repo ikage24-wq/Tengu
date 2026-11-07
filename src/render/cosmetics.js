@@ -74,6 +74,48 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
     ctx.arc(left + w / 2 - w * 0.38, y - 0.6, 1.4, 0, TAU);
     ctx.fill();
   }
+  if (skin.deco === 'seal') {
+    // A shine sweeping across the gold now and then, and a wax seal pressed on its left end,
+    // a sprout stamped in it.
+    const u = (time / 3.2) % 1;
+    if (u < 0.35) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(left, y, w, 10, 5);
+      ctx.clip();
+      const sx = left - 6 + (u / 0.35) * (w + 12);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath();
+      ctx.moveTo(sx, y);
+      ctx.lineTo(sx + 4, y);
+      ctx.lineTo(sx + 1, y + 10);
+      ctx.lineTo(sx - 3, y + 10);
+      ctx.fill();
+      ctx.restore();
+    }
+    const cx = left - 1;
+    const cy = y + 5;
+    ctx.fillStyle = '#c8403a';
+    ctx.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const a = (k * TAU) / 10;
+      const r = k % 2 ? 5 : 5.8;
+      ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#a82c2a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3.6, 0, TAU);
+    ctx.fill();
+    ctx.strokeStyle = '#ffb0a0';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + 2.4);
+    ctx.lineTo(cx, cy - 0.4);
+    ctx.stroke();
+    leaf(ctx, cx, cy - 0.2, 2.6, -2.4 + Math.sin(time * 2) * 0.1, '#ffb0a0');
+    leaf(ctx, cx, cy - 0.2, 2.6, -0.7 - Math.sin(time * 2) * 0.1, '#ffb0a0');
+  }
   ctx.fillStyle = hot ? skin.fill : skin.text;
   ctx.textAlign = 'center';
   ctx.fillText(label, x, y + 7.6);

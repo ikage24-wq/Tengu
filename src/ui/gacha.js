@@ -5,7 +5,7 @@
 // to show you wearing what was inside, ready to put on. The machine never gives you a piece you
 // already have, so every ticket brings something new until the set is complete.
 
-import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES } from '../data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES, GACHA_ALBUM } from '../data/outfits-gacha.js';
 import { SKIN_KINDS, SKIN_LABEL, ownsSkin, giveSkin } from '../data/cosmetics.js';
 import { drawSkinTag, bubbleDeco, numberDeco } from '../render/cosmetics.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
@@ -69,11 +69,33 @@ export function pull(char, machine, rng = Math.random) {
     if (!z.items.every(([id, n]) => addItem(char.inventory, id, n))) return { why: 'Your bag is full.' };
   } else giveSkin(char, got.prize.kind, got.prize.key);
   removeItem(char.inventory, 'gacha_ticket', 1);
+  // Into the album: which pull each one came out on (kept even if the piece is sold later).
+  const a = albumOf(char, machine);
+  a.pulls++;
+  if (got.prize?.kind === 'bundle') a.bundles++;
+  else a.got[slotKey(got)] ??= a.pulls;
   return got.look ? { look: got.look } : { prize: got.prize };
 }
 
+// The capsule album's records for a machine, and its page: every look and skin, in order.
+export const albumOf = (char, machine) => ((char.album ??= {})[machine] ??= { pulls: 0, bundles: 0, got: {} });
+const slotKey = (e) => (e.look ? `look:${e.look.key}` : `${e.prize.kind}:${e.prize.key}`);
+export const albumSlots = (machine) => [...machineLooks(machine).map((look) => ({ look })), ...(GACHA_PRIZES[machine] ?? []).filter((z) => z.kind !== 'bundle').map((prize) => ({ prize }))];
+// (Anything you have counts, for pieces won before the album came.)
+export const albumFound = (char, machine, e) => albumOf(char, machine).got[slotKey(e)] != null || (e.look ? ownsLook(char, e.look) : ownsSkin(char, e.prize.kind, e.prize.key));
+export const albumFull = (char, machine) => albumSlots(machine).every((e) => albumFound(char, machine, e));
+// Seal a full page: its album-only skin.
+export function sealAlbum(char, machine) {
+  const a = albumOf(char, machine);
+  const z = GACHA_ALBUM[machine];
+  if (a.sealed || !z || !albumFull(char, machine)) return false;
+  a.sealed = true;
+  giveSkin(char, z.kind, z.key);
+  return true;
+}
+
 // A prize shown in the reveal at (x, y): a sample of the skin, or the bundle's finds fanned out.
-function drawPrize(ctx, z, x, y, time, char) {
+export function drawPrize(ctx, z, x, y, time, char) {
   if (z.kind === 'bundle') {
     z.items.forEach(([id], i) => drawItemIcon(ctx, id, x - 34 + i * 18, y - 10 - Math.abs(Math.sin(time * 3 + i)) * 2, 1));
     return;

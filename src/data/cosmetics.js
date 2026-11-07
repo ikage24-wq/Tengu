@@ -12,6 +12,8 @@ export const BUBBLES = {
 };
 export const TAGS = {
   sproutvine: { name: 'Sprout Vine Tag', fill: '#7fd17a', edge: '#ffffff', text: '#ffffff', deco: 'vine', machine: 'sprout' },
+  // (Album only: for filling Sprout's page in the capsule album.)
+  springseal: { name: 'Spring Seal Tag', fill: '#ffe9a8', edge: '#c8962a', text: '#7a5212', deco: 'seal', machine: 'sprout', album: true },
 };
 export const DAMAGE = {
   petalpop: { name: 'Petal Pop Numbers', fill: '#ffb8d4', edge: '#a8306a', crit: '#ffe36b', deco: 'petals', machine: 'sprout' },

@@ -32,5 +32,9 @@ export const GACHA_PRIZES = {
   ],
 };
 
+// The capsule album (ui/album.js): a page for each machine, every look and skin in its slot. Fill
+// a page and it's sealed with this, a skin that only the album gives.
+export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' } };
+
 // Wearing every piece of a machine's set.
 export const GACHA_SETS = { sprout: { name: 'Spring Spirit', fx: 'springglow' } };

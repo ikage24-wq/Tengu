@@ -19,10 +19,11 @@ import { NPCS } from '../data/npcs.js';
 import { getMap } from '../data/maps.js';
 import { SKIN_KINDS, SKIN_LABEL, ownsSkin, useSkin } from '../data/cosmetics.js';
 import { ITEMS } from '../data/items.js';
+import { albumPage } from './album.js';
 
 const W = 340;
 const H = 250;
-const TABS = ['Monster Book', 'Fish', 'Mounts', 'Sweethearts', 'Style'];
+const TABS = ['Monster Book', 'Fish', 'Mounts', 'Sweethearts', 'Capsules'];
 
 // Monsters by level, the bosses after.
 const ORDER = Object.keys(MOBS).sort((a, b) => (MOBS[a].boss ? 1 : 0) - (MOBS[b].boss ? 1 : 0) || MOBS[a].level - MOBS[b].level);
@@ -36,7 +37,13 @@ export function collectionWindow(ui, state, world) {
   const tab = tabs(ui, win.x + 10, win.y + 26, TABS, win.tab ?? 0, { w: 62, h: 15 });
   if (tab === 4) {
     if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
-    return stylePage(ui, win, world, win.x + 10, win.y + 48, th);
+    // Capsules: the album, or the skins you've chosen.
+    const sub = win.sub ?? 0;
+    ['Album', 'Style'].forEach((name, i) => {
+      if (button(ui, win.x + W - 94 + i * 42, win.y + 46, 40, 13, name, { primary: sub === i, size: 6.5 })) win.sub = i;
+    });
+    if ((win.sub ?? 0) === 0) return albumPage(ui, win, world, win.x + 11, win.y + 46, th);
+    return stylePage(ui, win, world, win.x + 10, win.y + 64, th);
   }
   if (tab !== win.tab) Object.assign(win, { tab, scroll: 0 });
   const x = win.x + 10;
@@ -134,7 +141,7 @@ function fishPage(ui, win, char, x, y, th) {
 function stylePage(ui, win, world, x, y, th) {
   const { ctx } = ui;
   const char = world.char;
-  const machines = { sprout: 'Sprout Village' };
+  const machines = { sprout: 'Sprout' };
   let ry = y;
   for (const kind of ['bubble', 'tag', 'dmg']) {
     text(ctx, SKIN_LABEL[kind], x, ry + 7, { size: 8, bold: true, color: th.dark });
@@ -149,7 +156,7 @@ function stylePage(ui, win, world, x, y, th) {
         if (button(ui, bx, by, 100, 15, `${on ? '✓ ' : ''}${name}`, { primary: on, size: 6.5 })) useSkin(char, kind, key);
       } else {
         box(ctx, bx, by, 100, 15, { fill: '#f2ecf8', edge: '#e2d8ee', r: 6, width: 1 });
-        text(ctx, fit(ctx, `${name} · ${machines[SKIN_KINDS[kind][key].machine] ?? ''} capsules`, 94, 5.6, false), bx + 50, by + 10, { size: 5.6, align: 'center', color: COLORS.muted });
+        text(ctx, fit(ctx, `${name} · ${machines[SKIN_KINDS[kind][key].machine] ?? ''} ${SKIN_KINDS[kind][key].album ? 'album' : 'capsules'}`, 94, 5.6, false), bx + 50, by + 10, { size: 5.6, align: 'center', color: COLORS.muted });
       }
     });
     ry += 12 + Math.ceil(options.length / 3) * 18 + 8;

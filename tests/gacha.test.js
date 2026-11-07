@@ -1,3 +1,4 @@
+import { ownsSkin } from '../src/data/cosmetics.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -10,7 +11,7 @@ import { QUESTS } from '../src/data/quests.js';
 import { createCharacter, wearOutfit, wornGear } from '../src/core/character.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { rollLoot } from '../src/world/drops.js';
-import { pull, pickLook, machineLooks, ownsLook } from '../src/ui/gacha.js';
+import { pull, pickLook, machineLooks, ownsLook, albumOf, albumSlots, albumFull, sealAlbum } from '../src/ui/gacha.js';
 import { outfitFx } from '../src/render/gacha.js';
 
 const fresh = () => createCharacter('Tester', {});
@@ -91,4 +92,29 @@ test('tickets are earned by playing: dailies and bosses give them', () => {
   assert.ok(dailies.length);
   for (const q of dailies) assert.ok(q.rewards.items.some((r) => r.id === 'gacha_ticket'), q.id);
   for (const def of Object.values(MOBS).filter((m) => m.boss)) assert.ok(rollLoot(def).some((l) => l.id === 'gacha_ticket'), def.id);
+});
+
+test('the album keeps each find with the pull it came on, and a full page seals for its own skin', () => {
+  const char = fresh();
+  assert.equal(sealAlbum(char, 'sprout'), false, 'an empty page cannot be sealed');
+  addItem(char.inventory, 'gacha_ticket', 80);
+  for (let i = 0; i < 80 && !albumFull(char, 'sprout'); i++) {
+    pull(char, 'sprout');
+  }
+  const a = albumOf(char, 'sprout');
+  assert.ok(albumFull(char, 'sprout'));
+  const nums = Object.values(a.got);
+  assert.equal(nums.length, albumSlots('sprout').length, 'a pull number for every slot');
+  assert.equal(new Set(nums).size, nums.length, 'each from its own pull');
+  assert.ok(nums.every((n) => n >= 1 && n <= a.pulls));
+  assert.equal(a.pulls, nums.length + a.bundles);
+  // A piece sold later stays in the album.
+  char.inventory.cash = char.inventory.cash.filter((e) => e.id !== 'cash_gacha_dewwings');
+  assert.ok(albumFull(char, 'sprout'));
+  assert.ok(!ownsSkin(char, 'tag', 'springseal'));
+  assert.equal(sealAlbum(char, 'sprout'), true);
+  assert.ok(ownsSkin(char, 'tag', 'springseal') && char.cosmetics.using.tag === 'springseal');
+  assert.equal(sealAlbum(char, 'sprout'), false, 'only once');
+  // The album's skin never comes out of a machine.
+  assert.ok(!GACHA_PRIZES.sprout.some((z) => z.key === 'springseal'));
 });
