@@ -647,8 +647,24 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
       }
     } else if (kind === 'fishstall') place(ctx, fishStallArt(), snap(x), gy + 2);
     else if (kind === 'gatearch') {
-      place(ctx, gateArchArt(), snap(x), gy + 2);
-      hangingSign(ctx, x, gy - 118, map.name, time, wx);
+      const arch = gateArchArt();
+      place(ctx, arch, snap(x), gy + 2);
+      // The lamps on its pillars light up as it gets dark, flickering a little.
+      const dark = Math.max(0, Math.min(1, ((map.night ?? 0) - 0.2) / 0.6));
+      if (dark > 0.01) for (const lx of [19, 151]) {
+        const px = x - arch.w / 2 + lx;
+        const py = gy + 2 - arch.h + 22;
+        const f = 0.85 + 0.15 * Math.sin(time * 7 + lx);
+        glowSoft(ctx, px, py, 26, '#ffe9a6', dark * 0.55 * f);
+        ctx.globalAlpha = dark;
+        ctx.fillStyle = '#fff6c4';
+        ctx.beginPath();
+        ctx.arc(px, py, 3.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      // The name board hangs on its chains from the underside of the arch's crown.
+      hangingSign(ctx, x, gy - 92, map.name, time, wx);
     } else if (kind === 'windmill') {
       // The great windmill: its sails turn so slowly they barely move (the wind has stopped), a
       // creak of a nudge now and then, as if a breeze had almost come back.

@@ -77,7 +77,7 @@ export const MAPS = {
       { name: "Archers' Range", from: 2420, color: '#4f9e55' },
     ],
     // Street lamps that glow at night (world/daytime.js).
-    lamps: [{ x: 320, y: 440 }, { x: 960, y: 440 }, { x: 1450, y: 440 }, { x: 1600, y: 416 }, { x: 2000, y: 416 }, { x: 2270, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
+    lamps: [{ x: 139, y: 372 }, { x: 271, y: 372 }, { x: 320, y: 440 }, { x: 960, y: 440 }, { x: 1450, y: 440 }, { x: 1600, y: 416 }, { x: 2000, y: 416 }, { x: 2270, y: 440 }, { x: 2620, y: 290 }, { x: 2960, y: 440 }],
     deco: [
       ['archerbanner', 2540], ['watchtower', 2620], ['archerbanner', 2700],
       // The archery range: a rack of practice bows at the shooting line, targets down the lane.
@@ -809,8 +809,9 @@ Object.assign(MAPS, {
     look: { sky: ['#ffcfa0', '#ffe4c4', '#fff6e8'], far: '#f0c8a8', mid: '#f8dcc0', midTrim: '#e8b898', islands: 'planks', material: 'quay', propKeep: 1 },
     // The docks, the grand stairs, the market, the stairs, the terraces, the stairs, the heights;
     // the two canals sunk into the street.
-    terrain: [[0, 1120], [516, 1120], [526, 1150], [634, 1150], [644, 1120], [820, 1120], [1210, 860],
-      [1646, 860], [1656, 890], [1764, 890], [1774, 860], [2050, 860], [2440, 600], [3100, 600], [3490, 340], [3960, 340]],
+    // (The street runs level over the canals, on their bridges: everyone crosses there, no one
+    // wades. The water shows below the deck: render/coinbridge.js.)
+    terrain: [[0, 1120], [820, 1120], [1210, 860], [2050, 860], [2440, 600], [3100, 600], [3490, 340], [3960, 340]],
     walkSpan: [1250, 2040],
     cottages: [],
     townPieces: [
@@ -832,11 +833,7 @@ Object.assign(MAPS, {
       // Each terrace's retaining wall.
       ['cb_wall', 1210, { w: 436 }], ['cb_wall', 1638, { w: 144, drop: 78 }], ['cb_wall', 1774, { w: 276 }], ['cb_wall', 2440, { w: 660 }], ['cb_wall', 3490, { w: 470 }],
     ],
-    platforms: [
-      // The bridges over the canals (drawn with them).
-      { x: 510, y: 1120, w: 140, bare: true, walkOn: true },
-      { x: 1640, y: 860, w: 140, bare: true, walkOn: true },
-    ],
+    platforms: [],
     ropes: [],
     portals: [
       { id: 'start', x: 240, y: 1120, hidden: true },

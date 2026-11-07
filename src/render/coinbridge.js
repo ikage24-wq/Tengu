@@ -723,11 +723,14 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
     ctx.fill();
     ctx.save();
     ctx.clip();
-    // The stone courses.
+    // The stone courses, laid in the world (not the screen), so they stay put as you walk.
     ctx.fillStyle = '#d4bc98';
-    for (let y = Math.floor(Math.min(y0, y1) / 12) * 12; y < bottom; y += 12) {
+    const wTop = Math.min(y0, y1) + cam.y;
+    for (let wy = Math.floor(wTop / 12) * 12; wy - cam.y < bottom; wy += 12) {
+      const y = wy - cam.y;
       ctx.fillRect(x, snap(y), sx1 - x, 1);
-      for (let bx = x + ((y / 12) % 2 ? 0 : 14); bx < sx1; bx += 28) ctx.fillRect(snap(bx), snap(y), 1, 12);
+      const row = Math.round(wy / 12);
+      for (let bwx = wx + (row % 2 ? 0 : 14); bwx < wx + (sx1 - x); bwx += 28) ctx.fillRect(snap(bwx - cam.x), snap(y), 1, 12);
     }
     ctx.restore();
     // The steps: a lit tread and a shaded riser every few pixels up.
