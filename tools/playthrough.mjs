@@ -152,7 +152,7 @@ export function playthrough(kpm, paceName) {
   };
 }
 
-if (typeof process !== 'undefined' && import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && import.meta.url === (await import('node:url')).pathToFileURL(process.argv[1]).href) {
   const kpm = measure(150);
   const out = { killsPerMin: kpm, runs: [playthrough(kpm, 'perfect'), playthrough(kpm, 'player')] };
   if (process.argv.includes('--json')) console.log(JSON.stringify(out, null, 1));

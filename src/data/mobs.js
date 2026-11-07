@@ -589,15 +589,17 @@ export const MOBS = {
   }),
 
   crystalking: mob({
-    id: 'crystalking', name: 'Prismaris, the Crystal King', level: 45, hp: 160000, atk: 260, def: 60, acc: 110, eva: 12, exp: 120000,
-    gold: [700, 1100], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true,
+    // (Level 38, the player's call 2026-11-07: the Crystal Cave's own monsters are 27-35 and the quest
+    // opens at 35, so a level-45 king was a ten-level wall. Sized beside Lilith, the other level-38 queen.)
+    id: 'crystalking', name: 'Prismaris, the Crystal King', level: 38, hp: 125000, atk: 226, def: 50, acc: 96, eva: 12, exp: 95000,
+    gold: [600, 950], speed: 34, w: 100, h: 130, art: 'crystalking', boss: true,
     drops: [
       { id: 'king_crystal', chance: 1 },
       { id: 'seraphim_staff', chance: 0.08 },
       { id: 'elixir', chance: 1, qty: 5 },
     ],
     // Every few seconds the king slams the ground; anyone standing on it takes heavy damage.
-    special: { kind: 'slam', every: 6, warn: 1.2, damage: 420, range: 420 },
+    special: { kind: 'slam', every: 6, warn: 1.2, damage: 370, range: 420 },
   }),
 
   // Queens out of myth: field bosses (Sylvana in Whispering Glade, Tamamo on the Fox Shrine Path,

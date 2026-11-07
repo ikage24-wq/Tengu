@@ -157,7 +157,7 @@ export function mapFor(level) {
   return huntingMaps().filter((m) => level >= m.lo - 2 && level <= m.hi + 2).sort((a, b) => Math.abs(a.mid - level) - Math.abs(b.mid - level))[0]?.id;
 }
 
-if (typeof process !== 'undefined' && import.meta.url === `file://${process.argv[1]}`) {
+if (typeof process !== 'undefined' && import.meta.url === (await import('node:url')).pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const json = args.includes('--json');
   const nums = args.filter((a) => /^\d+$/.test(a)).map(Number);
