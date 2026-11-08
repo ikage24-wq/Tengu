@@ -53,7 +53,7 @@ test('walking alone: once warmed up, your own walk is drawn from frames already 
     drawWorld(ctx, w, cam, time);
     time += 1 / 60;
   }
-  const hero = paintStats.kinds.hero?.n ?? 0;
+  const hero = paintStats.kinds.you?.n ?? 0;
   // (It used to be a new picture every frame: 300 in these 5 seconds.)
   assert.ok(hero <= 40, `your walk painted ${hero} new pictures in 5 s of walking`);
 });

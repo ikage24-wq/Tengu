@@ -586,7 +586,8 @@ export function drawMount(ctx, who, mount, x, y, time, motion, rider = null) {
   const top = Math.round(y - GROUND - lift);
   // The pose is rounded (a quarter pixel, a twentieth of a radian) before it's drawn, so a gait
   // comes round to the same sprites every cycle; lift is applied when blitting, not in the shapes.
-  const qp = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, typeof v !== 'number' ? v : k === 'roll' ? Math.round((v % 1) * 12) / 12 : k === 'g_hop' ? 0 : k === 'g_ph' ? Math.round(v * 24) / 24 : q(v, 4)]));
+  // (Half steps: a mount's many springs each in quarters made new pictures every frame it moved.)
+  const qp = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, typeof v !== 'number' ? v : k === 'roll' ? Math.round((v % 1) * 12) / 12 : k === 'g_hop' ? 0 : k === 'g_ph' ? Math.round(v * 24) / 24 : q(v, 2)]));
   const { back, front, steam, wake } = body.shapes(qp, time);
   const backS = partSprite(mount, 'b', qp, time, back);
   const frontS = partSprite(mount, 'f', qp, time, front);

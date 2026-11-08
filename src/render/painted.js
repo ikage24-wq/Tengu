@@ -32,8 +32,10 @@ function clump(ctx, x, y, r, c, seed, sway = 0) {
   if (typeof document === 'undefined') return clumpLive(ctx, x, y, r, c, seed, sway);
   const m = ctx.getTransform();
   const scale = Math.round(Math.hypot(m.a, m.b) * 100) / 100 || 1;
-  const hw = r * 1.5 + 4;
-  const hh = r * 1.35 + 5;
+  // (Its middle sits on a whole screen pixel of the picture, and the picture is placed on whole
+  // screen pixels at one to one, so it never blurs or shimmers as the camera moves.)
+  const hw = Math.round((r * 1.5 + 4) * scale) / scale;
+  const hh = Math.round((r * 1.35 + 5) * scale) / scale;
   const k = `${seed}|${r.toFixed(2)}|${c.base}|${c.lit}|${c.shadow}|${c.glint}|${scale}`;
   let s = clumpCache.get(k);
   if (s) {
@@ -50,9 +52,9 @@ function clump(ctx, x, y, r, c, seed, sway = 0) {
     if (clumpCache.size > CLUMP_MAX) clumpCache.delete(clumpCache.keys().next().value);
   }
   ctx.save();
-  ctx.translate(x + sway * 0.3, y);
+  ctx.translate(Math.round((x + sway * 0.3) * scale) / scale, Math.round(y * scale) / scale);
   if (sway) ctx.transform(1, 0, -(sway * 0.7) / r, 1, 0, 0);
-  ctx.drawImage(s, -hw, -hh, hw * 2, hh * 2);
+  ctx.drawImage(s, -hw, -hh, s.width / scale, s.height / scale);
   ctx.restore();
 }
 
@@ -1047,101 +1049,6 @@ export function washingLine(ctx, x0, y0, x1, y1, time, seed, windAt) {
     ctx.fillStyle = '#c99a6b';
     ctx.fillRect(-0.6, -1.4, 1.2, 2.6);
     ctx.restore();
-  }
-}
-
-// A pigeon: a plump grey-lavender bird with a shimmering neck, pecking on the ground, or in the
-// air on beating wings.
-function pigeon(ctx, x, y, dir, peck, fly, beat) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(dir * 1.15, 1.15);
-  const body = '#b8b0d0';
-  if (fly > 0.3) {
-    const w = Math.sin(beat * Math.PI * 2);
-    ctx.fillStyle = shade(body, -12);
-    ctx.beginPath();
-    ctx.moveTo(-1, -3);
-    ctx.quadraticCurveTo(-4, -7 - w * 5, -9, -6 - w * 6);
-    ctx.quadraticCurveTo(-4, -3, -1, -2);
-    ctx.fill();
-  }
-  ctx.fillStyle = body;
-  ctx.beginPath();
-  ctx.ellipse(0, -3, 4.2, 2.8, fly > 0.3 ? 0 : 0.1, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-3.4, -3.4);
-  ctx.lineTo(-7, -4.6 + fly * 2);
-  ctx.lineTo(-6.6, -2.2);
-  ctx.fill();
-  // The neck's sheen and the head, dipping to peck.
-  const hx = 3 + peck * 1.2;
-  const hy = -5.6 + peck * 3.4;
-  ctx.fillStyle = '#9fd6c8';
-  ctx.beginPath();
-  ctx.ellipse(2.6, -4.4 + peck * 1.4, 1.6, 1.8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d6a8d8';
-  ctx.beginPath();
-  ctx.ellipse(2.2, -3.6 + peck * 1.4, 1.2, 1, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = shade(body, -6);
-  ctx.beginPath();
-  ctx.arc(hx, hy, 1.7, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffb35a';
-  ctx.beginPath();
-  ctx.moveTo(hx + 1.4, hy - 0.2);
-  ctx.lineTo(hx + 2.8, hy + 0.3);
-  ctx.lineTo(hx + 1.4, hy + 0.6);
-  ctx.fill();
-  ctx.fillStyle = '#3a2d4f';
-  ctx.beginPath();
-  ctx.arc(hx + 0.5, hy - 0.4, 0.45, 0, Math.PI * 2);
-  ctx.fill();
-  if (fly > 0.3) {
-    const w = Math.sin(beat * Math.PI * 2);
-    ctx.fillStyle = shade(body, 6);
-    ctx.beginPath();
-    ctx.moveTo(0, -3.4);
-    ctx.quadraticCurveTo(-3, -6 + w * 5, -8, -5 + w * 6);
-    ctx.quadraticCurveTo(-3, -2.4, 0, -2.6);
-    ctx.fill();
-  } else {
-    ctx.fillStyle = '#ff9f9f';
-    ctx.fillRect(-0.6, -0.6, 0.6, 1);
-    ctx.fillRect(1, -0.6, 0.6, 1);
-  }
-  ctx.restore();
-}
-
-// Pigeons gathered on the street. They peck about, each on its own rhythm; when you walk close
-// they burst up and wheel overhead, and as you move off they glide back down and settle. Their
-// height comes smoothly from how near you are, so they never snap.
-export function drawPigeons(ctx, map, cam, width, height, time, groundAt, heroX) {
-  for (let f = 0; f < Math.ceil(map.width / 700); f++) {
-    const home = 260 + hash(f * 5.9 + 11) * (map.width - 520);
-    if (map.portals.some((p) => Math.abs(p.x - home) < 90) || map.npcs.some((q) => Math.abs(q.x - home) < 60)) continue;
-    const d = Math.abs(heroX - home);
-    const near = Math.max(0, Math.min(1, (110 - d) / 60));
-    const up = near * near * (3 - 2 * near);
-    for (let k = 0; k < 5; k++) {
-      const seed = f * 10 + k;
-      const gx = home + (hash(seed) - 0.5) * 60;
-      const gy = groundAt(map, gx);
-      // In the air they wheel in a loop above the flock's spot.
-      const a = time * (1.6 + hash(seed + 1) * 0.6) + seed;
-      const ax = home + Math.cos(a) * (30 + hash(seed + 2) * 20);
-      const ay = gy - 70 - hash(seed + 3) * 30 + Math.sin(a * 2) * 8;
-      const x = gx + (ax - gx) * up;
-      const y = gy + (ay - gy) * up;
-      const sx = x - cam.x;
-      if (sx < -20 || sx > width + 20) continue;
-      const dir = up > 0.3 ? (Math.sin(a) < 0 ? 1 : -1) : hash(seed + 4) > 0.5 ? 1 : -1;
-      const peck = up > 0.1 ? 0 : Math.max(0, Math.sin(time * (3 + hash(seed + 5) * 2) + seed * 2)) ** 3;
-      pigeon(ctx, sx, y - cam.y, dir, peck, up, (time * 8 + seed) % 1);
-    }
   }
 }
 

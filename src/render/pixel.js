@@ -530,7 +530,8 @@ export function resetPaintStats() {
 // only while the frame's budget lasts; past it, the last one drawn for the same `slot` (that
 // character) stands in until a later frame. On a fast computer everyone still updates every
 // frame; on a slow one the crowd waits a beat instead of the whole game lagging.
-const BUDGET_MS = 4;
+// (2.5 ms: room enough to keep up, and a frame that never spends a whole 60th of a second on the crowd.)
+const BUDGET_MS = 2.5;
 const budget = { frame: 0, at: -1, ms: 0 };
 const lastOf = new Map();
 export function nextFrame() {
@@ -575,7 +576,11 @@ export function spriteSoon(key, job) {
   warmQ.push([key, job]);
   if (warmQ.length > 480) warmQ.shift();
 }
-export function spriteBudgeted(key, build, slot) {
+// `job` (a plain description, as spriteSoon takes): someone seen for the first time once the
+// frame's budget is spent is handed to the sprite worker and left out for a frame or two (null),
+// rather than painted on the spot and stalling the frame (a crowd pouring onto the screen when
+// you move fast).
+export function spriteBudgeted(key, build, slot, job = null) {
   if (budget.at !== budget.frame) {
     budget.at = budget.frame;
     budget.ms = 0;
@@ -584,6 +589,10 @@ export function spriteBudgeted(key, build, slot) {
   const prev = lastOf.get(slot);
   // (gfx.noBudget: the speed check counts every painting that's needed, however fast the computer.)
   if (prev && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget) return prev;
+  if (!prev && job && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget && workerOf()) {
+    spriteSoon(key, job());
+    return null;
+  }
   const t = performance.now();
   const s = sprite(key, build);
   budget.ms += performance.now() - t;

@@ -25,7 +25,7 @@ const { JOBS } = await import('../src/data/jobs.js');
 
 // How many fresh paintings a second, once warmed up, count as a problem.
 export const LIMITS = { characters: 200, other: 20 };
-const CHARACTER = new Set(['hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter']);
+const CHARACTER = new Set(['you', 'hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter']);
 const AHEAD = 'ahead';
 const canvas = fakeCanvas();
 const ctx = canvas.getContext('2d');

@@ -1137,6 +1137,7 @@ function earthDecals(ctx, m, runs, cam, width, height) {
 // of its own and placed each frame (it never changes); its grass and edge decorations stay live.
 const lipCache = new Map();
 const LIP_MAX = 600;
+const onPixel = (v, scale) => Math.round(v * scale) / scale;
 const scaleOf = (ctx) => Math.round(Math.hypot(ctx.getTransform().a, ctx.getTransform().b) * 100) / 100 || 1;
 function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
   const flat = pts.length === 2 && Math.abs(pts[0][1] - pts[1][1]) < 0.01 && typeof document !== 'undefined';
@@ -1162,7 +1163,9 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
       lipCache.set(key, c);
       if (lipCache.size > LIP_MAX) lipCache.delete(lipCache.keys().next().value);
     }
-    ctx.drawImage(c, x0 - PAD, y0 - TOP, c.width / scale, c.height / scale);
+    // (Placed on whole screen pixels, one to one: between them it would be resampled every frame
+    // the camera moves and shimmer against the live grass.)
+    ctx.drawImage(c, onPixel(x0 - PAD, scale), onPixel(y0 - TOP, scale), c.width / scale, c.height / scale);
   } else lipStill(ctx, m, pts, seed, width, depth);
   lipLive(ctx, m, pts, time, seed, width, deco);
 }
@@ -1705,7 +1708,7 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
     dripCache.set(key, c);
     if (dripCache.size > DRIP_MAX) dripCache.delete(dripCache.keys().next().value);
   }
-  ctx.drawImage(c, x + L, y + T, c.width / scale, c.height / scale);
+  ctx.drawImage(c, onPixel(x + L, scale), onPixel(y + T, scale), c.width / scale, c.height / scale);
 }
 function dripLive(ctx, m, x, y, len, k, sway) {
   const top = y - 5;

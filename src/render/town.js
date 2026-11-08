@@ -14,7 +14,7 @@ import { settings } from '../core/settings.js';
 import { R, E, T, F, mix, snap, footShadow, slopeAt } from './pixel.js';
 import { ramp, planks, stones, windowPane, lightUL, leanFrame, swing, pivoted, wallShade, beam, gable } from './propkit.js';
 import { art, place, houseArt, mushHouseArt, treehouseArt, tentArt, hitsLedge } from './scenery.js';
-import { drawHero } from './hero.js';
+import { drawHero, prepareHeroes } from './hero.js';
 import { lookFor, drawTownLife } from './townlife.js';
 import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
@@ -2303,6 +2303,9 @@ function shadow(ctx, x, y, slope = 0) {
 }
 
 // How steep the ground is under someone at world x.
+// How far past the screen's edges people are painted ahead, so they're ready before they come
+// into view (moving fast, a crowd pours on from the side: painted on the spot, it stalled frames).
+const AHEAD = 320;
 const groundSlope = (map, wx) => (standAt(map, wx + 6) - standAt(map, wx - 6)) / 12;
 
 // The wandering merchant's shop: a picnic rug with a few wares, and their shop's name on a board above them.
@@ -2346,18 +2349,27 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
     const at = stroll(p, time);
     const x = snap(at.x - cam.x);
     const gy = snap(standAt(map, at.x) - cam.y);
-    if (x < -40 || x > width + 40) continue;
+    if (x < -40 - AHEAD || x > width + 40 + AHEAD) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
-    shadow(ctx, x, gy, groundSlope(map, at.x));
     const anim = animFor(`v|${map.id}|${p.a}`, at.x, at.facing, time);
-    drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
+    const draw = () => drawHero(ctx, { ...p.look, face }, null, x, gy, { pose: at.walking ? 'walk' : 'idle', time: time + p.seed, seed: p.seed, facing: at.facing }, anim);
+    if (x < -40 || x > width + 40) {
+      prepareHeroes(draw);
+      continue;
+    }
+    shadow(ctx, x, gy, groundSlope(map, at.x));
+    draw();
   }
   const said = [];
   const tags = [];
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
-    if (x < -60 || x > width + 60) continue;
+    if (x < -60 - AHEAD || x > width + 60 + AHEAD) continue;
     const gy = snap(standAt(map, bot.x) - cam.y);
+    if (x < -60 || x > width + 60) {
+      prepareHeroes(() => drawBot(ctx, bot, x, gy, time, false, [], groundSlope(map, bot.x), true, []));
+      continue;
+    }
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;
@@ -2537,7 +2549,11 @@ export function drawParty(ctx, members, cam, width, time, hoverId = null) {
   for (const bot of members) {
     if (!bot.body) continue;
     const x = snap(bot.body.x - cam.x);
-    if (x < -60 || x > width + 60) continue;
+    if (x < -60 - AHEAD || x > width + 60 + AHEAD) continue;
+    if (x < -60 || x > width + 60) {
+      prepareHeroes(() => drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, false, [], 0, true, []));
+      continue;
+    }
     drawBot(ctx, bot, x, snap(bot.body.y - cam.y), time, hoverId === bot.id, said, 0, false, tags);
   }
   if (settings.chatBubbles) for (const [x, y, b] of said) drawBubble(ctx, x, y, b.text, Math.min(1, b.t * 2));

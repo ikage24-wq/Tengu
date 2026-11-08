@@ -12,7 +12,7 @@ import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
-import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPigeons, drawPaintedTownFront } from './painted.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate } from './portals.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -5348,7 +5348,6 @@ function drawCritters(ctx, t, map, cam, width, height, time) {
   if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
   if (t.painted === 'town') {
     drawVillageLife(ctx, map, cam, width, height, time, groundAt);
-    drawPigeons(ctx, map, cam, width, height, time, groundAt, cam.x + width / 2);
   }
   // Birds hop and peck along the ground.
   if (kinds.includes('bird')) {

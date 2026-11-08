@@ -312,7 +312,10 @@ export function drawMovers(ctx, map, cam, width, height, time) {
   for (const s of map.springs ?? []) {
     const x = s.x - cam.x;
     if (x < -30 || x > width + 30) continue;
-    const since = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
+    // (A bounce "in the future", when the map's clock started again after it fired, counts as long
+    // past: worked out backwards it turned the pads inside out, a mushroom's cap to a negative size.)
+    const ago = s.firedAt == null ? 9 : (map.clock ?? 0) - s.firedAt;
+    const since = ago < 0 ? 9 : ago;
     if (s.kind === 'hay') hay(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'gust') vent(ctx, snap(x), snap(s.y - cam.y), time, since);
     else if (s.kind === 'spring') springboard(ctx, snap(x), snap(s.y - cam.y), since);
