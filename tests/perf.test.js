@@ -17,8 +17,9 @@ const { setHd, nextFrame, paintStats, resetPaintStats } = await import('../src/r
 const show = (rows) => rows.filter((r) => r.bad).map((r) => `${r.name}: ${r.error ?? `characters ${r.characters}/s, other ${r.other}/s (${r.top}) ${r.example}`}`).join('\n');
 
 test('towns, fields, dungeons and rooms: scenery is painted once, people come round again', () => {
-  // (A town, the busiest fishing town, a field, a dungeon, a boss fight, an inn, a home.)
-  const rows = checkMaps(['sprout', 'lagoon', 'woods', 'cave', 'bossroom', 'coin_inn', 'swh_poppy'], 600, 180);
+  // (A town, the busiest fishing town, a field, a dungeon, a boss fight, an inn, a home, and two
+  // real dungeon rooms, entered through a run: loaded bare they send you back to the gate.)
+  const rows = checkMaps(['sprout', 'lagoon', 'woods', 'cave', 'bossroom', 'coin_inn', 'swh_poppy', 'manor4', 'observatory2'], 600, 180);
   assert.equal(show(rows), '');
   for (const r of rows) assert.ok(r.other <= LIMITS.other, `${r.name}: scenery painted ${r.other}/s`);
 });

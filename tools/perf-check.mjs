@@ -15,6 +15,8 @@ const { createInput } = await import('../src/input.js');
 const { beginUi, endUi } = await import('../src/ui/kit.js');
 const { createUiState, drawUi } = await import('../src/ui/manager.js');
 const { MAPS } = await import('../src/data/maps.js');
+const { DUNGEONS } = await import('../src/data/dungeons.js');
+const { startRun } = await import('../src/world/dungeon.js');
 const { paintAheadWith } = await import('../src/render/pixel.js');
 const { heroBodySpec } = await import('../src/render/hero.js');
 // (In a browser the sprite worker paints walks ahead; here they're painted in place and counted
@@ -80,14 +82,28 @@ function steady(seed, fn) {
 export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
   const out = [];
   for (const id of ids) steady(11, () => {
-    const w = createWorld(balanceChar('archer', 40));
+    const need = MAPS[id].dungeon ? DUNGEONS[MAPS[id].dungeon].minLevel ?? 1 : 1;
+    const w = createWorld(balanceChar('archer', Math.max(40, need + 2)));
     w.log = () => {};
     w.god = true;
     // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
     w.forceNight = 0;
     try {
-      loadMap(w, id, 'west');
-      w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
+      // A dungeon room is only entered through a run started at its gate (loading it bare sends
+      // you back out to the gate), so it's entered the real way, and the check makes sure it's on
+      // the map it means to check: a check of the wrong map once passed for weeks unseen.
+      const map = MAPS[id];
+      if (map.dungeon) {
+        loadMap(w, DUNGEONS[map.dungeon].gate, 'start');
+        w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
+        const why = startRun(w, map.dungeon);
+        if (why) throw new Error(`couldn't start the run: ${why}`);
+        if (w.map.id !== id) loadMap(w, id, 'start');
+      } else {
+        loadMap(w, id, 'west');
+        w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
+      }
+      if (w.map.id !== id) throw new Error(`asked for ${id}, got ${w.map.id}`);
       const cam = createCamera();
       let time = 0;
       for (let f = 0; f < warm + frames; f++) {

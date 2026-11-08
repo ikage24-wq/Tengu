@@ -1309,9 +1309,12 @@ export function basicCombo(world) {
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
       if (blades) return barrageThrow(world, blades);
-      if ((world.airCombo ?? 0) >= air.length) return;
-      playStep(world, air[world.airCombo], 100, `basicair${world.airCombo}`);
-      world.airCombo += 1;
+      // (The count starts at nothing until you first land: an attack in the air before that read
+      // an empty step and crashed.)
+      const i = world.airCombo ?? 0;
+      if (i >= air.length) return;
+      playStep(world, air[i], 100, `basicair${i}`);
+      world.airCombo = i + 1;
       return;
     }
     if (world.intent?.up) {
@@ -1338,9 +1341,10 @@ export function basicCombo(world) {
   if (cmd) {
     if (!body.onGround && !body.rope && cmd.air.length) {
       if (stream) return barrageThrow(world, stream);
-      if ((world.airCombo ?? 0) >= cmd.air.length) return;
-      playStep(world, cmd.air[world.airCombo], 100, `basicair${world.airCombo}`);
-      world.airCombo += 1;
+      const i = world.airCombo ?? 0;
+      if (i >= cmd.air.length) return;
+      playStep(world, cmd.air[i], 100, `basicair${i}`);
+      world.airCombo = i + 1;
       return;
     }
     if (world.intent?.up) {

@@ -191,6 +191,73 @@ features) or when the player's choice is genuinely needed.
 `docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
 there and update the status file as they get done.
 
+## Speed rules (no lag: the player's standing rule, 2026-11-08)
+
+The player plays on a 144 Hz screen: a frame has **6.9 ms** for all of its work. Every rule below
+is a lag that was really found and fixed; breaking one brings that lag back. `npm test` (the speed
+tests, `tests/perf.test.js`) and `npm run speed` (`tools/perf-check.mjs`: every map, every job's
+skills, every window) count what each frame does and fail when one is broken.
+
+**Pictures (sprites)**
+- **Never build a sprite key from a raw value** (time, a spring, a progress, a speed, a colour
+  that blends): a new key every frame is a new painting every frame (2–6 ms each, plus 1–3 MB of
+  garbage that stalls a frame later when the browser clears it). Round to fixed steps or loop.
+- **Walks run on 24 fixed frames** (`WALK_FRAMES`), the hair and cloth springs held for each cycle
+  (`walkHeld`, moving on only when they've really moved, 2 px), the breeze and flutter in time with
+  the steps (`walkLoop`); the walk is painted ahead in the background (`spriteSoon`). The held gait
+  compares in quarters: an exact gait reset the loop every frame you sped up.
+- **Moves step**: yours 24 steps a move, everyone else's 16; a blend between moves 3 steps, the old
+  move on 8; springs in whole pixels during a swing, breeze and flutter in time with the move.
+- **Standing still loops**: the crowd 6 s at 8 fps (48 pictures each, so a town of thirty fits the
+  cache), you 8 s at 20 fps, previews (shop, bag, creator) ~11 s at 20 fps. Scripted chore poses
+  and `drawPosed` figures on half pixels. Mount springs on half steps; the dog in quarters.
+- **Who paints where**: you are drawn exactly on the spot; everyone else's non-walking poses go to
+  the sprite worker (`spriteAsync`, their last frame standing in for a frame or two); their walks are
+  painted ahead; people up to 320 px off screen are painted ahead (`prepareHeroes`); a newcomer
+  past the 2.5 ms crowd budget waits a frame for the worker rather than stalling it.
+- **The sprite cache** holds 12,000 sprites / 384 MB on a computer (160 MB on a phone without
+  `deviceMemory`): too small and a busy town's loops push each other out and repaint forever.
+
+**Canvases, tints and copies**
+- **No new canvas, tint pass or pixel read every frame.** Cache it, keyed by things that only change
+  in steps, and cap the cache.
+- **A copy of a character is drawn once and stamped**: afterimages are drawn and tinted once when
+  they appear, then only placed and faded (`ghostImage`); copies in your own pose (Stampede, Shadow
+  Partner, Mirage, illusions) are drawn once a frame per tint and stamped at each copy
+  (`copyImage`), into reused canvases. Never redraw the whole hero per copy per frame.
+- **Static backdrop pieces keep their picture**: set-back hazed decos are redrawn 30 times a second
+  at most (`hazedKept`), never every frame.
+- **Colour blends step**: zone blends in eighths (`blendLook`), day and night in sixteenths
+  (`tickDaytime`); per-sprite tint and veil copies keep at most 12 colours.
+- **Swaying things lean a cached picture**: hanging drips are painted once straight and leaned by
+  their sway as they're placed, never repainted for each step of sway. Bushes the same.
+- **The glow pass only runs when something can glow** (effects, sparks, dungeon, boss mechanics,
+  team link, zones on screen).
+
+**Placing things on screen**
+- **The camera sits on whole screen pixels** (`snap` in `drawWorld`): between them every thin line
+  (grass blades, lip spikes, outlines) flickered as you walked.
+- **Never `Math.round` a world position to whole world pixels** for drawing (houses, ledges, ropes,
+  pets): it shakes against everything else, which lines up with the screen's own pixels (`snap`,
+  `place`, `blit`). Cached pictures are drawn one to one, on whole screen pixels.
+- **Nothing drawn may use `Math.random` or the real clock**: drawn twice with nothing moving, a frame
+  must be identical (or it flickers). Animation runs on the `time` it's given.
+
+**Errors are lag too**: an error thrown while drawing stops the frame (the buff icon for a buff that
+isn't a skill; an attack in the air before you've landed reading an empty combo step). Guard
+lookups that can miss.
+
+**Testing it (the player's rule: test like a player, everywhere)**
+- Measure speed **live, with the browser pane showing** (requestAnimationFrame timings); a hidden
+  pane is throttled and lies. Counts of paintings (`paintStats`) are the reliable offline measure.
+- **A check must be on the map it means**: dungeon rooms are entered through a run started at the
+  gate (`startRun`), never loaded bare (that sends you back to the gate), and the check asserts the
+  map. A check of the gate instead of the rooms passed unseen once.
+- **Inputs like a real key**: a press is both `pressed` and `held` (the jump reads held; the flash
+  jump needs a second press in the air).
+- **Every corner**: spots spread over every floor and ledge (`surfacesOf`), not just the arrival.
+- Write the findings to a log for the player.
+
 ## Other standing rules
 
 - **Never check retired jobs (the player's standing rule, 2026-11-04).** Retired jobs (the ones in
