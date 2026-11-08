@@ -5,7 +5,7 @@
 // to show you wearing what was inside, ready to put on. The machine never gives you a piece you
 // already have, so every ticket brings something new until the set is complete.
 
-import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES, GACHA_ALBUM } from '../data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES, GACHA_ALBUM, GACHA_SETS } from '../data/outfits-gacha.js';
 import { SKIN_KINDS, SKIN_LABEL, ownsSkin, giveSkin } from '../data/cosmetics.js';
 import { drawSkinTag, bubbleDeco, numberDeco } from '../render/cosmetics.js';
 import { countItem, removeItem, addItem } from '../core/inventory.js';
@@ -177,7 +177,7 @@ export function gachaWindow(ui, state, world) {
   // (The grand machine is drawn a little smaller in the window, to fit beside the lineup.)
   ctx.translate(fx - 8, fy);
   ctx.scale(0.74, 0.74);
-  drawMachine(ctx, 0, 0, { crank: cranking ? Math.floor(t * 10) : 0, shake: cranking && Math.floor(t * 14) % 2 === 0, time: now });
+  drawMachine(ctx, 0, 0, { crank: cranking ? Math.floor(t * 10) : 0, shake: cranking && Math.floor(t * 14) % 2 === 0, time: now, theme: machine });
   ctx.restore();
   // Idle life: a glint sliding over the globe now and then.
   const gl = (now / 3.4) % 1;
@@ -240,7 +240,7 @@ export function gachaWindow(ui, state, world) {
     if (hover(ui, x, y, cw - 4, ch - 4)) tooltip(ui, [...itemTooltip(char, cashId(e)), { text: have ? 'You have this one.' : 'Still in the machine.', size: 7, color: COLORS.muted }]);
   });
   const all = looks.every((e) => ownsLook(char, e));
-  text(ctx, all ? 'Whole set: a spring bloom, a butterfly, and light at your feet.' : 'Wear all six for the set bonus. Never a repeat.', rx, win.y + 146, { size: 6.5, color: COLORS.muted });
+  text(ctx, all ? `Whole set: ${GACHA_SETS[machine]?.bonus ?? 'its own bonus effect'}.` : 'Wear all six for the set bonus. Never a repeat.', rx, win.y + 146, { size: 6.5, color: COLORS.muted });
   // The rest of what's inside: the skins (ticked once you have them) and the bundle.
   const prizes = GACHA_PRIZES[machine] ?? [];
   const also = prizes.map((z) => `${z.kind === 'bundle' ? prizeName(z) : `${prizeName(z)}${ownsSkin(char, z.kind, z.key) ? ' ✓' : ''}`}`).join(' · ');

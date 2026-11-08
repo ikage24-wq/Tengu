@@ -261,6 +261,8 @@ export const MAPS = {
     stove: 700,
     bench: 1180,
     workshed: true,
+    // The capsule machine stands on the Docks, between the pier's lamps, the sea behind it.
+    gacha: 2056,
     width: 2900, height: 520, groundY: 480,
     look: { islands: 'planks', material: 'quay', propKeep: 0.8 },
     terrain: [[0, 480], [760, 480], [800, 460], [1240, 460], [1280, 480], [2900, 480]],

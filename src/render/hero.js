@@ -12,7 +12,7 @@
 // hurt recoil.
 
 import { lookFor } from './weapon-kit.js';
-import { outfitFx, drawOutfitFx } from './gacha.js';
+import { outfitFx, drawOutfitFx, HEAD_POSE } from './gacha.js';
 import { settings } from '../core/settings.js';
 import { ITEMS, RARITIES, VARIANTS, variantsFor } from '../data/items.js';
 import { pieceOf, JOB_GEAR, gearPalette } from './jobgear/index.js';
@@ -2661,6 +2661,7 @@ function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) 
 export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   // Capsule-machine looks carry living effects (render/gacha.js), drawn round the body.
   const worn = outfitFx(gear);
+  HEAD_POSE.at = null;
   const job = settings.jobAuras && AURA_JOBS.has(state.job) ? state.job : null;
   if (!job) {
     if (worn) drawOutfitFx(ctx, worn, 'back', x, y, state);
@@ -2985,6 +2986,24 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // Mirror a point given in body coordinates when facing left.
   const sx = (px) => (flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale);
   const sy = (py) => top + (py + OY) * scale;
+  // Where the head is this frame, for looks fixed to it (render/gacha.js HEAD_POSE): head
+  // coordinates offset as bodyShapes sets the head on the neck, then rolled about the neck.
+  {
+    const ux = rig.tx;
+    const uy = rig.by + hipDrop(rig);
+    const hdx = squashX(15.5 + ux) - 15.5 + rig.hx;
+    const hdy = uy * KY + rig.hy + NECK_LIFT;
+    const nx = squashX(15.5 + ux) + rig.hx;
+    const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
+    const rr = ((rig.tilt ?? 0) * Math.PI) / 180;
+    const [c, sn] = [Math.cos(rr), Math.sin(rr)];
+    HEAD_POSE.hair = rig.hair ?? 0;
+    HEAD_POSE.at = (lx, ly) => {
+      const hx = lx + hdx - nx;
+      const hy = ly + hdy - ny;
+      return [sx(nx + hx * c - hy * sn), sy(ny + hx * sn + hy * c)];
+    };
+  }
 
   const skin = look.skinTone ?? '#fff0e6';
   const sleeve = sleeveOf(g.top, skin);

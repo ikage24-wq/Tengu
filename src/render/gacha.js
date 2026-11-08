@@ -21,11 +21,14 @@ export const rarityOf = (r) => RARITY[r] ?? RARITY.common;
 // collar, a great glass globe heaped with capsules and banded in gold, and a crown with a star gem
 // on top. (Its marquee lights chasing round the globe, the star's twinkle and the glow inside are
 // drawn alive by drawMachine.)
-const SPROUT = { base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0', gem: '#ff6fae', capsules: ['#ff9ec0', '#ffe066', '#8fd3ff', '#b8f0a8', '#e2c6ff', '#ffb38a'] };
+const SPROUT = { id: 'sprout', base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0', gem: '#ff6fae', capsules: ['#ff9ec0', '#ffe066', '#8fd3ff', '#b8f0a8', '#e2c6ff', '#ffb38a'] };
+// Pastel Harbor's: lighthouse red with gold, white and navy, its capsules the colours of the set.
+const HARBOR = { id: 'harbor', base: '#e86a6a', trim: '#ffd23f', lid: '#ffffff', gem: '#2e4a7a', capsules: ['#e8484a', '#ffffff', '#2e4a7a', '#ffd23f', '#8fd3ff', '#ffb38a'] };
+export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR };
 export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
 function machineArt(theme, crank) {
-  return sprite(`gacha|machine3|${crank}`, () => {
+  return sprite(`gacha|machine3|${theme.id}|${crank}`, () => {
     const { w: W, h: H } = MACHINE;
     const b = theme.base;
     const gold = theme.trim;
@@ -47,11 +50,18 @@ function machineArt(theme, crank) {
     }
     // The framed emblem: a big painted flower in a gold oval.
     out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
-    for (let k = 0; k < 6; k++) {
-      const a = (k * Math.PI) / 3;
-      out.push(E(34 + Math.cos(a) * 3.6, 88 + Math.sin(a) * 3.3, 2.8, 2.6, theme.lid));
+    if (theme.id === 'harbor') {
+      // Pastel Harbor's: a little lighthouse on its rock, its lamp lit.
+      out.push(E(34, 94, 5.4, 1.6, '#8a96a8'));
+      for (const [y0, c] of [[93.4, '#e8484a'], [90.6, '#ffffff'], [87.8, '#e8484a']]) out.push(T([[31.6 + (93.4 - y0) * 0.12, y0], [36.4 - (93.4 - y0) * 0.12, y0], [36.2 - (93.4 - y0 + 2.8) * 0.12, y0 - 2.8], [31.8 + (93.4 - y0 + 2.8) * 0.12, y0 - 2.8]], c));
+      out.push(R(31.4, 84.4, 5.2, 0.8, '#1f3358'), R(32.6, 82.2, 2.8, 2.2, '#ffe36b'), F(E(34, 83.3, 0.8, 0.8, '#ffffff')), T([[32.2, 82.2], [35.8, 82.2], [34, 80.4]], '#e8484a'));
+    } else {
+      for (let k = 0; k < 6; k++) {
+        const a = (k * Math.PI) / 3;
+        out.push(E(34 + Math.cos(a) * 3.6, 88 + Math.sin(a) * 3.3, 2.8, 2.6, theme.lid));
+      }
+      out.push(E(34, 88, 2.4, 2.4, gold), F(E(33.4, 87.4, 0.8, 0.8, '#ffffff')));
     }
-    out.push(E(34, 88, 2.4, 2.4, gold), F(E(33.4, 87.4, 0.8, 0.8, '#ffffff')));
     // The ticket slot on its gilded plate.
     out.push(R(48, 80, 14, 9, gold), F(R(48, 80, 14, 1.4, goldHi)), F(R(51, 83, 8, 2.4, '#2a2238')), F(R(52, 83.6, 6, 0.8, '#5a4a6a')));
     // The prize chute under its golden arch.
@@ -215,6 +225,7 @@ function drawGlobeLife(ctx, cx, cy, gr, theme, time, shake) {
 // (The fade the machine is drawn under, so its own see-through bits fade with it.)
 let A0 = 1;
 export function drawMachine(ctx, x, y, { crank = 0, shake = false, theme = SPROUT, time = performance.now() / 1000 } = {}) {
+  if (typeof theme === 'string') theme = MACHINE_THEMES[theme] ?? SPROUT;
   A0 = ctx.globalAlpha;
   const s = machineArt(theme, crank % 4);
   const left = snap(x - s.w / 2);
@@ -550,6 +561,57 @@ const NECK = 24;
 const TALL = NECK + 14 * 0.56 + 18 * 0.56 * 0.72;
 const artY = (ly) => (ly <= NECK ? TALL - ly : TALL - NECK - (ly - NECK) * 0.56);
 
+// A water drop at (x, y): round below, pointed above, a glint.
+function drop(ctx, x, y, r, a) {
+  if (a <= 0.01) return;
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#a8dcf4';
+  ctx.beginPath();
+  ctx.moveTo(x, y - r * 2);
+  ctx.quadraticCurveTo(x + r, y - r * 0.4, x + r, y);
+  ctx.arc(x, y, r, 0, Math.PI);
+  ctx.quadraticCurveTo(x - r, y - r * 0.4, x, y - r * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x - r * 0.35, y - r * 0.2, r * 0.3, 0, TAU);
+  ctx.fill();
+}
+// A soap bubble: a thin bright rim, a faint rainbow sheen and a highlight.
+function soapBubble(ctx, x, y, r, a) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = a * 0.18;
+  ctx.fillStyle = '#d8f4ff';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = a * 0.85;
+  ctx.lineWidth = Math.max(0.3, r * 0.14);
+  ctx.strokeStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.stroke();
+  ctx.strokeStyle = '#ffb8e0';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.82, 0.3, 1.6);
+  ctx.stroke();
+  ctx.strokeStyle = '#a8e8ff';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.82, 3.4, 4.6);
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.38, y - r * 0.4, r * 0.24, r * 0.15, -0.6, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+// Where the hero's head is this frame, for the looks worn on it (the lighthouse's lamp, the pipe's
+// bubbles) to stay fixed to it as it bobs, tilts and turns: render/hero.js sets `at` (head
+// coordinates to the canvas) and `hair` (the hair spring the hat wobbles on) as it draws each hero.
+export const HEAD_POSE = { at: null, hair: 0 };
+
 // Draws one layer ('back', behind the hero, or 'front') of the worn looks' effects. (x, y) is
 // where the hero stands; `state` gives the time, scale, facing and whether they're on the move.
 export function drawOutfitFx(ctx, worn, layer, x, y, state) {
@@ -561,7 +623,8 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
   const still = pose === 'idle';
   const at = (lx, ly) => [x + f * (lx - 15.5) * s, y - artY(ly) * s];
   const fx = worn.fx;
-  const set = worn.sets.size > 0;
+  const set = worn.sets.has('springglow');
+  const keeper = worn.sets.has('keeperglow');
   const back = layer === 'back';
   ctx.save();
 
@@ -664,6 +727,176 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
         const g = Math.sin(Math.PI * (u / 0.24));
         star4(ctx, gx, gy, 3 * g * s, '#ffffff', 0.95, '#a8e8ff');
       }
+    }
+  }
+
+
+  // ---- The lighthouse's lamp: it turns, sweeping a beam out to one side, round behind the head
+  // (the beam behind, fainter), and flashing as it points out at you. The full set's fog makes the
+  // beam stronger and longer. ----
+  // (Points on the head: fixed to where it really is this frame, the lighthouse leaning with
+  // its wobble just as render/jobgear/gacha.js draws it.)
+  const onHead = (lx, ly) => {
+    const lean = HEAD_POSE.hair * 0.5 * Math.max(0, (4 - ly) / 20);
+    return HEAD_POSE.at ? HEAD_POSE.at(lx + lean, ly) : at(lx + lean, ly);
+  };
+  if (fx.has('beam') && !back) {
+    const th = t * 1.15;
+    const toward = Math.sin(th);
+    const [lx, ly] = onHead(15.5, -12.2);
+    const c = Math.cos(th);
+    // (Pointing away, the beam starts behind the lamp room and is fainter.)
+    const reach = (12 + 78 * Math.abs(c)) * s * (keeper ? 1.35 : 1);
+    const half = (2.4 + 11 * Math.abs(c)) * s;
+    const a = (keeper ? 0.36 : 0.24) * (toward > 0 ? 1 : 0.5) * Math.min(1, Math.abs(c) * 3 + 0.2);
+    const ox = lx + Math.sign(c) * (toward > 0 ? 0 : 2.4 * s);
+    const tx = lx + Math.sign(c) * reach;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createLinearGradient(ox, ly, tx, ly);
+    g.addColorStop(0, `rgba(255,240,170,${a})`);
+    g.addColorStop(0.6, `rgba(255,230,150,${a * 0.45})`);
+    g.addColorStop(1, 'rgba(255,230,150,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(ox, ly - 1.1 * s);
+    ctx.lineTo(tx, ly - half);
+    ctx.quadraticCurveTo(tx + Math.sign(c) * half * 0.3, ly, tx, ly + half);
+    ctx.lineTo(ox, ly + 1.1 * s);
+    ctx.fill();
+    ctx.restore();
+    // The lamp's own glow, and the flash as it faces you.
+    mote(ctx, lx, ly, 1.1 * s, '#fffbe0', '#ffd23f', 0.75 + 0.25 * Math.max(0, toward));
+    const flash = toward > 0 ? Math.max(0, 1 - Math.abs(c) * 4) : 0;
+    if (flash > 0) star4(ctx, lx, ly, (3 + 6 * flash) * s, '#fffbe0', flash, '#ffd23f');
+  }
+
+  // ---- Rain off the oilskin: drops swell on the hem, fall, and ring on the ground. ----
+  if (fx.has('drips') && !back) {
+    [9.4, 15.2, 21.6].forEach((lx, k) => {
+      const u = (t / 1.9 + k * 0.37) % 1;
+      const [hx, hy] = at(lx + (moving ? -f * 1 : 0), 42.6);
+      if (u < 0.45) {
+        const g = u / 0.45;
+        drop(ctx, hx, hy + g * 0.8 * s, (0.4 + g * 0.5) * s, 0.9);
+      } else if (u < 0.68) {
+        const v = (u - 0.45) / 0.23;
+        drop(ctx, hx - (moving ? f * v * 6 * s : 0), hy + (y - hy) * v * v, 0.8 * s, 0.9);
+      } else if (u < 0.9) {
+        const v = (u - 0.68) / 0.22;
+        ctx.globalAlpha = 0.7 * (1 - v);
+        ctx.strokeStyle = '#d8f4ff';
+        ctx.lineWidth = 0.4 * s;
+        ctx.beginPath();
+        ctx.ellipse(hx - (moving ? f * 6 * s : 0), y - 0.3 * s, (0.6 + v * 3) * s, (0.2 + v * 0.8) * s, 0, 0, TAU);
+        ctx.stroke();
+      }
+    });
+  }
+
+  // ---- The wellies: standing, a puddle at your feet that rings as drops land; on the move,
+  // a splash kicked up at every step. ----
+  if (fx.has('puddles') && back) {
+    if (!moving) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#7ec8e8';
+      ctx.beginPath();
+      ctx.ellipse(x, y - 0.2 * s, 13 * s, 2.6 * s, 0, 0, TAU);
+      ctx.fill();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#e8f8ff';
+      ctx.beginPath();
+      ctx.ellipse(x - 5 * s, y - 0.8 * s, 3 * s, 0.5 * s, 0, 0, TAU);
+      ctx.fill();
+      for (let k = 0; k < 2; k++) {
+        const u = (t / 2.3 + k * 0.5) % 1;
+        ctx.globalAlpha = 0.6 * (1 - u);
+        ctx.strokeStyle = '#e8f8ff';
+        ctx.lineWidth = 0.4 * s;
+        ctx.beginPath();
+        ctx.ellipse(x + (k ? 6 : -7) * s, y - 0.3 * s, (0.8 + u * 4.5) * s, (0.25 + u * 1) * s, 0, 0, TAU);
+        ctx.stroke();
+      }
+    } else {
+      const u = (t * 3.2) % 1;
+      const foot = Math.floor(t * 3.2) % 2 ? 3 : -3;
+      for (let k = 0; k < 5; k++) {
+        const ang = Math.PI * (0.15 + k * 0.17);
+        const d = u * 7 * s;
+        drop(ctx, x + foot * s - f * Math.cos(ang) * d * 0.9, y - Math.sin(ang) * d * 1.2 + u * u * 6 * s, 0.55 * s, 0.85 * (1 - u));
+      }
+    }
+  }
+
+  // ---- The bubble pipe: soap bubbles drifting up and away off its bowl, popping. ----
+  if (fx.has('pipe') && !back) {
+    const [bx, by] = onHead(24, 21);
+    for (let k = 0; k < 4; k++) {
+      const u = (t * 0.3 + k / 4) % 1;
+      const drift = f * (u * 12 + Math.sin(t * 1.7 + k) * 2) * s - (moving ? f * u * 22 * s : 0);
+      const px = bx + drift;
+      const py = by - u * 24 * s + Math.sin(u * 7 + k) * 1.2 * s;
+      if (u < 0.9) soapBubble(ctx, px, py, (0.6 + u * 1.8 + (k % 2) * 0.5) * s, Math.min(1, u * 8));
+      else {
+        // Pop: a ring of little droplets.
+        const v = (u - 0.9) / 0.1;
+        for (let j = 0; j < 6; j++) {
+          const ang = (j * TAU) / 6;
+          star4(ctx, px + Math.cos(ang) * (1.6 + v * 2.4) * s, py + Math.sin(ang) * (1.6 + v * 2.4) * s, 0.6 * s, '#ffffff', 1 - v);
+        }
+      }
+    }
+  }
+
+  // ---- The keeper's lantern: a warm flickering glow, and a moth looping round it. ----
+  if (fx.has('lantern')) {
+    const [lx, ly] = at(3.6, 32.2);
+    const flick = 0.82 + 0.18 * Math.sin(t * 13) * Math.sin(t * 7.3);
+    if (back) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, 12 * s);
+      g.addColorStop(0, `rgba(255,200,110,${0.42 * flick})`);
+      g.addColorStop(1, 'rgba(255,170,80,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(lx - 12 * s, ly - 12 * s, 24 * s, 24 * s);
+      ctx.restore();
+    } else {
+      mote(ctx, lx, ly, 0.7 * s, '#fff6c8', '#ffb04a', flick);
+      const ang = t * 2.6;
+      const mx = lx + Math.cos(ang) * 5 * s;
+      const my = ly + Math.sin(ang * 2) * 2.4 * s - 1 * s;
+      const beat = 0.5 + 0.5 * Math.sin(t * 30);
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#f4e8d0';
+      for (const sd of [-1, 1]) {
+        ctx.beginPath();
+        ctx.ellipse(mx + sd * 0.8 * s * beat, my, 0.9 * s * beat + 0.2 * s, 0.7 * s, 0, 0, TAU);
+        ctx.fill();
+      }
+    }
+  }
+
+  // ---- The full set: sea fog rolling past your feet (and the beam above grows stronger). ----
+  if (keeper) {
+    for (let k = 0; k < 5; k++) {
+      if (back !== (k % 2 === 0)) continue;
+      const u = (t * 0.04 + k / 5) % 1;
+      const px = x + (u * 2 - 1) * 50 * s;
+      const py = y - (3 + (k % 3) * 2.4) * s;
+      const rx = (16 + (k % 3) * 6) * s;
+      const fa = Math.sin(Math.PI * u) * (back ? 0.32 : 0.22);
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.translate(px, py);
+      ctx.scale(1, 0.24);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
+      g.addColorStop(0, `rgba(236,244,250,${fa})`);
+      g.addColorStop(0.6, `rgba(236,244,250,${fa * 0.5})`);
+      g.addColorStop(1, 'rgba(236,244,250,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(-rx, -rx, rx * 2, rx * 2);
+      ctx.restore();
     }
   }
 

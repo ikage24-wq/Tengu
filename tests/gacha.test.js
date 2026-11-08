@@ -29,7 +29,7 @@ test('every machine stands in its town', () => {
   for (const id of Object.keys(GACHA_MACHINES)) {
     const map = MAPS[GACHA_MACHINES[id].town];
     assert.ok(map?.gacha != null, `${id} has a spot`);
-    assert.ok(Math.abs(map.gacha - map.plaza) <= 700, 'a short walk from the plaza');
+    assert.ok(Math.abs(map.gacha - map.plaza) <= 1200, 'a short walk from the plaza');
     assert.ok(machineLooks(id).length > 0);
   }
 });

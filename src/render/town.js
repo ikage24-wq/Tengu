@@ -575,27 +575,6 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     if (map.workshed && x > -70 && x < width + 70) place(ctx, workshedArt(), x, ground(map.bench) + 2);
     if (x > -60 && x < width + 60) drawCraftBench(ctx, map.theme, x, ground(map.bench), time, map.bench, map.benchWork ?? null);
   }
-  // The town's capsule machine: its capsules rattle now and then, a glint slides over the globe,
-  // and its crank turns while someone pulls (map.gachaTurn, set by the machine's window).
-  if (map.gacha != null) {
-    const x = map.gacha - cam.x;
-    if (x > -60 && x < width + 60) {
-      const gy = ground(map.gacha);
-      const turn = performance.now() / 1000 - (map.gachaTurn ?? -99);
-      const pulling = turn >= 0 && turn < 0.75;
-      const rattle = pulling ? Math.floor(turn * 14) % 2 === 0 : (time % 6.5) < 0.3 && Math.floor(time * 12) % 2 === 0;
-      ctx.save();
-      ctx.translate(snap(x), gy + 2);
-      ctx.scale(0.75, 0.75);
-      drawMachine(ctx, 0, 0, { crank: pulling ? Math.floor(turn * 10) : 0, shake: rattle, time });
-      ctx.restore();
-      const u = (time / 4.2) % 1;
-      if (u < 0.3) {
-        const g = Math.sin((Math.PI * u) / 0.3);
-        sparkleAt(ctx, x - 18 + u * 40, gy - 76 + u * 8, 3 * g, '#ffffff', g);
-      }
-    }
-  }
   for (const [kind, wx, extra] of map.townPieces ?? []) {
     // Lantern Lagoon's own buildings, and the harbor's quay for the Sea Biscuit (render/lagoon.js).
     if (drawLagoonPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
@@ -721,6 +700,28 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     }
   }
   drawQuayFront(ctx, map, cam, width, time);
+  // The town's capsule machine (after the town's pieces and the quay's water, so it stands in
+  // front of a pier, on the walkway): its
+  // and its crank turns while someone pulls (map.gachaTurn, set by the machine's window).
+  if (map.gacha != null) {
+    const x = map.gacha - cam.x;
+    if (x > -60 && x < width + 60) {
+      const gy = ground(map.gacha);
+      const turn = performance.now() / 1000 - (map.gachaTurn ?? -99);
+      const pulling = turn >= 0 && turn < 0.75;
+      const rattle = pulling ? Math.floor(turn * 14) % 2 === 0 : (time % 6.5) < 0.3 && Math.floor(time * 12) % 2 === 0;
+      ctx.save();
+      ctx.translate(snap(x), gy + 2);
+      ctx.scale(0.75, 0.75);
+      drawMachine(ctx, 0, 0, { crank: pulling ? Math.floor(turn * 10) : 0, shake: rattle, time, theme: map.town ?? map.id });
+      ctx.restore();
+      const u = (time / 4.2) % 1;
+      if (u < 0.3) {
+        const g = Math.sin((Math.PI * u) / 0.3);
+        sparkleAt(ctx, x - 18 + u * 40, gy - 76 + u * 8, 3 * g, '#ffffff', g);
+      }
+    }
+  }
   // The lagoon's lantern strings over the boardwalk.
   drawLagoonOverhead(ctx, map, cam, width, time);
   // Houses fill the gaps between NPCs, portals, and the plaza (in towns not yet laid out with

@@ -9,14 +9,18 @@
 
 export const BUBBLES = {
   blossom: { name: 'Blossom Bubble', fill: '#fff0f6', edge: '#ff8fb8', text: '#8a3a5a', deco: 'petals', machine: 'sprout' },
+  logbook: { name: "Keeper's Logbook Bubble", fill: '#fbf2dc', edge: '#8a5a32', text: '#4a3420', deco: 'rope', machine: 'harbor' },
 };
 export const TAGS = {
   sproutvine: { name: 'Sprout Vine Tag', fill: '#7fd17a', edge: '#ffffff', text: '#ffffff', deco: 'vine', machine: 'sprout' },
   // (Album only: for filling Sprout's page in the capsule album.)
+  anchor: { name: 'Anchor Tag', fill: '#2e4a7a', edge: '#f4ecd8', text: '#ffffff', deco: 'anchor', machine: 'harbor' },
+  beaconseal: { name: 'Beacon Seal Tag', fill: '#1f2f52', edge: '#ffd23f', text: '#fff3c4', deco: 'beacon', machine: 'harbor', album: true },
   springseal: { name: 'Spring Seal Tag', fill: '#ffe9a8', edge: '#c8962a', text: '#7a5212', deco: 'seal', machine: 'sprout', album: true },
 };
 export const DAMAGE = {
   petalpop: { name: 'Petal Pop Numbers', fill: '#ffb8d4', edge: '#a8306a', crit: '#ffe36b', deco: 'petals', machine: 'sprout' },
+  beam: { name: 'Beacon Numbers', fill: '#fff3c4', edge: '#2e4a7a', crit: '#ffd23f', deco: 'beam', machine: 'harbor' },
 };
 export const SKIN_KINDS = { bubble: BUBBLES, tag: TAGS, dmg: DAMAGE };
 export const SKIN_LABEL = { bubble: 'Chat bubble', tag: 'Name tag', dmg: 'Damage numbers' };

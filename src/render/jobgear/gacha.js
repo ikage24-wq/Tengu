@@ -14,6 +14,14 @@ const LEAF_L = '#b8f0a8';
 const DEW = '#a8e8ff';
 const PETAL = ['#ffb7d3', '#ffd6e6', '#ffffff', '#ffe066', '#e2c6ff'];
 
+const NAVY = '#2e4a7a';
+const NAVY_D = '#1f3358';
+const OIL = '#ffd23f';
+const OIL_D = '#e0a820';
+const RED = '#e8484a';
+const BRASS = '#d8a440';
+const CREAM = '#f4ecd8';
+
 const rad = (a) => (a * Math.PI) / 180;
 function arcPts(cx, cy, rx, ry, a0, a1, n = 16) {
   return Array.from({ length: n + 1 }, (_, i) => {
@@ -159,6 +167,141 @@ const D = {
         ...wing(16, 6, 230, '#d2fae6', '#6fd3a4'),
         ...flower(root[0], root[1], 2.2, '#ff9ec0'),
       ];
+    },
+  },
+
+  // ---- Pastel Harbor: the Lighthouse Keeper set ----
+
+  // The star prize: a little red-and-white lighthouse standing on a navy knit beanie, its gallery
+  // rail, its glass lamp room (the lamp turns and sweeps a beam: render/gacha.js) and a red dome.
+  // It wobbles on the head with every step.
+  lighthousecap: {
+    hat: (p, m) => {
+      const lean = m.hair * 0.5;
+      // x at height y, leaning with the step (more at the top).
+      const lx = (x, y) => x + lean * Math.max(0, (4 - y) / 20);
+      const out = [];
+      // The beanie: a ribbed cuff round the head, the crown under the tower.
+      out.push(T([...arcPts(15.5, 7.2, 13, 4.6, 0, 180, 18), ...arcPts(15.5, 9, 13, 3.2, 180, 0, 18)], NAVY));
+      for (let i = 0; i < 9; i++) {
+        const [x, y] = arcPts(15.5, 8.2, 12.2, 3.8, 18 + i * 18, 18 + i * 18, 1)[0];
+        out.push(F(T([[x - 0.3, y - 1], [x + 0.3, y - 1], [x + 0.3, y + 1], [x - 0.3, y + 1]], NAVY_D)));
+      }
+      out.push(T(arcPts(15.5, 3.8, 8.2, 3.2, 0, 180, 14), mix(NAVY, '#ffffff', 0.12)));
+      // The tower: tapering, in red and white bands, a door and a round window.
+      const tower = (y0, y1, c) => {
+        const w0 = 3.6 - (3.8 - y0) * 0.07;
+        const w1 = 3.6 - (3.8 - y1) * 0.07;
+        return T([[lx(15.5 - w0, y0), y0], [lx(15.5 + w0, y0), y0], [lx(15.5 + w1, y1), y1], [lx(15.5 - w1, y1), y1]], c);
+      };
+      const bands = [[3.8, 0.6, RED], [0.6, -2.6, WHITE], [-2.6, -5.8, RED], [-5.8, -9, WHITE]];
+      for (const [y0, y1, c] of bands) out.push(tower(y0, y1, c));
+      out.push(F(T([[lx(14.4, 3.8), 3.8], [lx(16.6, 3.8), 3.8], [lx(16.6, 1.4), 1.4], [lx(15.5, 0.8), 0.8], [lx(14.4, 1.4), 1.4]], NAVY_D)));
+      out.push(F(E(lx(15.5, -4.2), -4.2, 0.8, 0.8, NAVY_D)), F(E(lx(15.3, -4.4), -4.4, 0.35, 0.35, '#fff3c4')));
+      // The gallery: a deck wider than the tower, its rail and posts.
+      out.push(T([[lx(11.2, -9), -9], [lx(19.8, -9), -9], [lx(19.4, -10), -10], [lx(11.6, -10), -10]], NAVY_D));
+      for (const x of [12, 13.9, 15.5, 17.1, 19]) out.push(F(T([[lx(x - 0.2, -10), -10], [lx(x + 0.2, -10), -10], [lx(x + 0.2, -11.6), -11.6], [lx(x - 0.2, -11.6), -11.6]], NAVY_D)));
+      out.push(F(T([[lx(11.6, -11.4), -11.4], [lx(19.4, -11.4), -11.4], [lx(19.4, -11.9), -11.9], [lx(11.6, -11.9), -11.9]], NAVY_D)));
+      // The lamp room: panes of glass, the lamp glowing inside, its frame.
+      out.push(T([[lx(13.2, -10), -10], [lx(17.8, -10), -10], [lx(17.8, -14.4), -14.4], [lx(13.2, -14.4), -14.4]], '#fff6c8'));
+      out.push(F(E(lx(15.5, -12.2), -12.2, 1.5, 1.5, '#ffd23f')), F(E(lx(15.2, -12.5), -12.5, 0.6, 0.6, WHITE)));
+      for (const x of [13.2, 15.5, 17.8]) out.push(F(T([[lx(x - 0.22, -10), -10], [lx(x + 0.22, -10), -10], [lx(x + 0.22, -14.4), -14.4], [lx(x - 0.22, -14.4), -14.4]], NAVY_D)));
+      // The dome, its ball on top, and a weathervane arrow.
+      out.push(T(arcPts(lx(15.5, -14.4), -14.4, 3.2, 2.8, 0, 180, 12), RED), F(T(arcPts(lx(15, -14.6), -14.6, 1.6, 1.6, 100, 170, 5).concat([[lx(14, -14.6), -14.6]]), mix(RED, WHITE, 0.4))));
+      out.push(F(E(lx(15.5, -17.6), -17.6, 0.7, 0.7, BRASS)), F(T([[lx(15.3, -17.6), -17.6], [lx(15.7, -17.6), -17.6], [lx(15.7, -19.4), -19.4], [lx(15.3, -19.4), -19.4]], BRASS)));
+      out.push(F(T([[lx(13.6, -19), -19], [lx(17.4, -19), -19], [lx(17.4, -19.4), -19.4], [lx(13.6, -19.4), -19.4]], BRASS)), F(T([[lx(17.4, -18.6), -18.6], [lx(18.4, -19.2), -19.2], [lx(17.4, -19.8), -19.8]], BRASS)));
+      return out;
+    },
+  },
+
+  // A sou'wester-yellow oilskin raincoat: a high collar lined in navy, the hood bunched at the back
+  // of the neck, three wooden toggles on navy loops, a pocket flap, and a long hem that swings, slit
+  // at the front, over navy sailcloth trousers.
+  oilskin: {
+    top: (p) => {
+      const body = torsoPts();
+      const out = [T(body, OIL)];
+      // The hood, bunched behind the neck.
+      out.push(T([[8.4, 28.4], [8.6, 26.2], [10.4, 25], [13, 25.2], [12.6, 27.6], [10.4, 29]], OIL_D), F(T([[9.4, 27.6], [10.6, 26], [12, 26.2], [11.2, 27.8]], mix(OIL_D, '#a87410', 0.4))));
+      // The collar: two flaps standing up, navy inside.
+      out.push(T([[12.4, 25.8], [MID, 27.8], [MID - 0.4, 29], [12, 27.6]], NAVY), T([[18.8, 25.8], [MID, 27.8], [MID + 0.4, 29], [19.2, 27.6]], NAVY));
+      out.push(T([[12.6, 26.4], [MID - 0.2, 28.2], [MID - 0.6, 29.2], [12.4, 28.2]], OIL_D), T([[18.6, 26.4], [MID + 0.2, 28.2], [MID + 0.6, 29.2], [18.8, 28.2]], OIL_D));
+      // The front seam and the toggles.
+      out.push(F(T([[MID - 0.25, 29], [MID + 0.25, 29], [MID + 0.25, 35.6], [MID - 0.25, 35.6]], OIL_D)));
+      for (const y of [30.2, 32.2, 34.2]) out.push(F(T([[MID - 1.4, y - 0.25], [MID + 1.4, y - 0.25], [MID + 1.4, y + 0.25], [MID - 1.4, y + 0.25]], NAVY)), F(E(MID, y, 1.1, 0.5, '#a86a3a')), F(E(MID - 0.3, y - 0.2, 0.3, 0.2, '#e8b888')));
+      // A pocket flap, a shine on the oilskin.
+      out.push(F(T([[17.4, 32.6], [20.6, 32.6], [20.6, 33.6], [17.4, 33.6]], OIL_D)), F(T([[10.6, 29], [11.6, 28.6], [11, 33.6], [10.2, 33.8]], mix(OIL, WHITE, 0.45))));
+      return out;
+    },
+    skirt: (p, m) => {
+      const s = m.sway * 0.45;
+      const out = [T([[9.5, 35], [21.5, 35], [23.4 + s, 42.6], [7.6 + s, 42.6]], OIL)];
+      // The slit at the front, the hem band, the drip-line shine.
+      out.push(F(T([[MID - 0.2, 38.6], [MID + 0.2, 38.6], [MID + 0.9 + s, 42.6], [MID - 0.9 + s, 42.6]], NAVY)));
+      out.push(F(T([[7.8 + s, 41.4], [23.2 + s, 41.4], [23.4 + s, 42.6], [7.6 + s, 42.6]], OIL_D)));
+      out.push(F(T([[10.2 + s * 0.4, 36], [11 + s * 0.4, 36], [9.6 + s, 41], [8.8 + s, 41]], mix(OIL, WHITE, 0.4))));
+      return out;
+    },
+    legs: () => ({ top: NAVY, low: NAVY, pad: null }),
+  },
+
+  // Navy fisherman's mittens: a cable knit down the back, a ribbed cream cuff.
+  knitmitts: {
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const wx = hx - ux * 2.2;
+      const wy = hy - uy * 2.2;
+      const out = [E(hx, hy, 2.1, 2.1, NAVY)];
+      out.push(F(E(hx + ux * 0.2 - uy * 0.2, hy + uy * 0.2 + ux * 0.2, 0.7, 1.4, mix(NAVY, WHITE, 0.25))));
+      out.push(T([[wx - uy * 2, wy + ux * 2], [wx + uy * 2, wy - ux * 2], [wx + uy * 1.9 + ux * 1.3, wy - ux * 1.9 + uy * 1.3], [wx - uy * 1.9 + ux * 1.3, wy + ux * 1.9 + uy * 1.3]], CREAM));
+      for (const k of [-1, 0, 1]) out.push(F(T([[wx + uy * k * 1.2 - uy * 0.15, wy - ux * k * 1.2 + ux * 0.15], [wx + uy * k * 1.2 + uy * 0.15, wy - ux * k * 1.2 - ux * 0.15], [wx + uy * k * 1.2 + uy * 0.15 + ux * 1.2, wy - ux * k * 1.2 - ux * 0.15 + uy * 1.2], [wx + uy * k * 1.2 - uy * 0.15 + ux * 1.2, wy - ux * k * 1.2 + ux * 0.15 + uy * 1.2]], '#d8ccb0')));
+      return out;
+    },
+  },
+
+  // Tall yellow rubber wellies: a rounded toe, a red band at the top and a dark tread.
+  puddleboots: {
+    shoe: (p, k) => [
+      k.poly([[-3, 3.6], [-3.2, -3.4], [1.6, -3.4], [1.8, 0.2], [4.6, 1], [6.2, 2.4], [6, 3.6]], k.tint(OIL)),
+      k.poly([[-3.3, -3.4], [1.9, -3.4], [1.9, -2.2], [-3.3, -2.2]], k.tint(RED)),
+      k.poly([[-3.2, 3.4], [6.2, 3.4], [6, 4.4], [-3, 4.4]], k.tint('#4a3a2a')),
+      k.poly([[-2.4, -1.6], [-1.6, -1.6], [-1.8, 2.2], [-2.6, 2.2]], k.tint(mix(OIL, WHITE, 0.45))),
+      k.dot(4.2, 1.8, 0.5, k.tint(OIL_D)),
+    ],
+  },
+
+  // A little briar bubble pipe in the corner of the mouth (it blows soap bubbles: render/gacha.js).
+  bubblepipe: {
+    hat: () => [
+      T([[18.6, 23.1], [19, 22.7], [23.2, 23.5], [23, 24.1]], '#6a4a2a'),
+      T([[22.4, 21.4], [25.6, 21.4], [25.2, 24.2], [24, 24.8], [22.8, 24.2]], '#a86a3a'),
+      F(T([[22.2, 21], [25.8, 21], [25.8, 21.6], [22.2, 21.6]], '#c88a50')),
+      F(E(24, 21.3, 1.4, 0.35, '#e8f6ff')),
+      F(T([[23, 22], [23.6, 22], [23.4, 23.8], [23, 23.6]], '#c88a50')),
+    ],
+  },
+
+  // A navy fisherman's capelet with a rope clasp, and on a brass bracket at the back of the
+  // shoulder a storm lantern hangs, swinging as you go: its cap and ring, its caged glass, the flame.
+  stormlantern: {
+    cape: (p, m) => {
+      const out = [];
+      out.push(T([[9, 26.6], [12.6, 26], [12, 33], [9.6, 34.2], [7.4, 33], [7.6, 28]], NAVY), F(T([[7.4, 32.4], [9.6, 33.6], [12, 32.4], [12, 33], [9.6, 34.2], [7.4, 33]], NAVY_D)));
+      // The bracket: out from the shoulder, a hook at its end.
+      out.push(T([[9.4, 27.4], [3.6, 26.4], [3.6, 27.2], [9.4, 28.2]], BRASS), F(E(3.6, 27.2, 0.6, 0.6, BRASS)));
+      const sw = m.sway * 0.5 + (m.flap ? 0.15 : 0);
+      const px = 3.6;
+      const py = 27.6;
+      const at = (dx, dy) => [px + dx * Math.cos(sw) - dy * Math.sin(sw), py + dx * Math.sin(sw) + dy * Math.cos(sw)];
+      const quad = (pts, c) => T(pts.map(([dx, dy]) => at(dx, dy)), c);
+      out.push(quad([[-0.2, 0], [0.2, 0], [0.2, 1.4], [-0.2, 1.4]], '#6a5a4a'));
+      out.push(quad([[-1.2, 1.4], [1.2, 1.4], [1.6, 2.4], [-1.6, 2.4]], BRASS));
+      out.push(quad([[-1.6, 2.4], [1.6, 2.4], [1.8, 7], [-1.8, 7]], '#fff1b8'));
+      out.push(F(quad([[-0.6, 6.4], [0.6, 6.4], [0.3, 4.2], [0, 3.4], [-0.3, 4.2]], '#ff9a3a')), F(quad([[-0.3, 6.2], [0.3, 6.2], [0, 4.6]], '#fff6c8')));
+      for (const dx of [-1.7, 0, 1.7]) out.push(F(quad([[dx - 0.18, 2.4], [dx + 0.18, 2.4], [dx + 0.18, 7], [dx - 0.18, 7]], NAVY_D)));
+      out.push(quad([[-2, 7], [2, 7], [1.6, 8.2], [-1.6, 8.2]], BRASS), F(quad([[-1.2, 1.6], [-0.6, 1.6], [-0.6, 2.2], [-1.2, 2.2]], '#ffe8a0')));
+      return out;
     },
   },
 };

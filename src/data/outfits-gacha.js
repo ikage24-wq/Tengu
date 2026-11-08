@@ -8,6 +8,7 @@
 
 export const GACHA_MACHINES = {
   sprout: { name: 'Sprout Village Capsules', town: 'sprout', set: 'Spring Spirit', theme: 'The spirit of spring: blossoms, dew and fireflies', colors: ['#7fd17a', '#ffd23f', '#ff9ec0'] },
+  harbor: { name: 'Pastel Harbor Capsules', town: 'harbor', set: 'Lighthouse Keeper', theme: 'Keeping the light on a stormy night: a beam, an oilskin, a lantern and a gull', colors: ['#e8484a', '#ffd23f', '#2e4a7a'] },
 };
 
 export const GACHA_LOOKS = [
@@ -18,6 +19,13 @@ export const GACHA_LOOKS = [
   { key: 'rootsandals', name: 'Root Sandals', slot: 'shoes', machine: 'sprout', rarity: 'common', color: '#7fd17a', colors: false, fx: 'blooms' },
   { key: 'dewsparkle', name: 'Dew Sparkle', slot: 'face', machine: 'sprout', rarity: 'common', color: '#a8e8ff', colors: false, fx: 'glints' },
   { key: 'dewwings', name: 'Dewdrop Wings', slot: 'cape', machine: 'sprout', rarity: 'star', color: '#c8f6e0', colors: false, fx: 'fireflies' },
+  // Pastel Harbor: the Lighthouse Keeper set.
+  { key: 'lighthousecap', name: 'Lighthouse Cap', slot: 'hat', machine: 'harbor', rarity: 'star', color: '#e8484a', colors: false, fx: 'beam' },
+  { key: 'oilskin', name: 'Oilskin Raincoat', slot: 'top', machine: 'harbor', rarity: 'rare', color: '#ffd23f', covers: ['bottom'], fx: 'drips' },
+  { key: 'knitmitts', name: 'Fisher Knit Mitts', slot: 'gloves', machine: 'harbor', rarity: 'common', color: '#2e4a7a', colors: false },
+  { key: 'puddleboots', name: 'Puddle Boots', slot: 'shoes', machine: 'harbor', rarity: 'common', color: '#ffd23f', colors: false, fx: 'puddles' },
+  { key: 'bubblepipe', name: 'Bubble Pipe', slot: 'face', machine: 'harbor', rarity: 'common', color: '#a86a3a', colors: false, fx: 'pipe' },
+  { key: 'stormlantern', name: "Keeper's Lantern", slot: 'cape', machine: 'harbor', rarity: 'rare', color: '#2e4a7a', colors: false, fx: 'lantern' },
 ];
 
 // The rest of each machine's capsules (the fodder): cosmetic skins (data/cosmetics.js), each once,
@@ -30,11 +38,20 @@ export const GACHA_PRIZES = {
     { kind: 'dmg', key: 'petalpop', rarity: 'rare' },
     { kind: 'bundle', key: 'springbundle', name: 'Spring Bundle', rarity: 'common', items: [['clover', 3], ['sprout_leaf', 4], ['honeycomb', 2], ['moonpetal', 1]] },
   ],
+  harbor: [
+    { kind: 'bubble', key: 'logbook', rarity: 'common' },
+    { kind: 'tag', key: 'anchor', rarity: 'common' },
+    { kind: 'dmg', key: 'beam', rarity: 'rare' },
+    { kind: 'bundle', key: 'tidebundle', name: 'Tide Bundle', rarity: 'common', items: [['sea_kelp', 4], ['sea_glass', 2], ['barnacle_shell', 1]] },
+  ],
 };
 
 // The capsule album (ui/album.js): a page for each machine, every look and skin in its slot. Fill
 // a page and it's sealed with this, a skin that only the album gives.
-export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' } };
+export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
 
 // Wearing every piece of a machine's set.
-export const GACHA_SETS = { sprout: { name: 'Spring Spirit', fx: 'springglow' } };
+export const GACHA_SETS = {
+  sprout: { name: 'Spring Spirit', fx: 'springglow', bonus: 'a spring bloom, a butterfly, and light at your feet' },
+  harbor: { name: 'Lighthouse Keeper', fx: 'keeperglow', bonus: 'sea fog rolling round your feet and a stronger, longer beam' },
+};
