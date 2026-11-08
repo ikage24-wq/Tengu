@@ -7,7 +7,7 @@
 // The designs themselves live in mobs/, one module per region. Little emote bubbles (!, anger
 // marks, sweat, music notes, z's) float over their heads.
 
-import { sprite, spriteLater, blit, snap, footShadow } from './pixel.js';
+import { sprite, spriteLater, spriteAsync, blit, snap, footShadow } from './pixel.js';
 import { springStep } from './animator.js';
 import { fxSprite } from './fx-sprites.js';
 import { ARTS, mobBuild } from './mobs/index.js';
@@ -332,10 +332,13 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
   // A rigged boss (render/mobs/rig.js) is posed live from its parts; its box stands in for a sprite.
   // Everyone else: in-between poses are drawn in the background; until one is ready, its whole frame
-  // stands in.
+  // stands in. A whole frame not drawn yet (a new face, an attack pose) is drawn in the background
+  // too, the last frame of the same kind of monster standing in for a frame or two.
   // (globalThis.noRig: the old frames, for comparing the two.)
   const rig = globalThis.noRig ? null : ARTS[m.def.art]?.rig;
-  const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(m.def.art, frame, mood, pose), { kind: 'mob', art: m.def.art, pose, frame, mood })) || monsterSprite(m.def.art, Math.floor(frame), mood, pose);
+  const art = m.def.art;
+  const whole = Math.floor(frame);
+  const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(art, frame, mood, pose), { kind: 'mob', art, pose, frame, mood })) || spriteAsync(mobKey(art, whole, mood, pose), () => mobBuild(art, pose, whole, mood), `mob|${art}`, () => ({ kind: 'mob', art, pose, frame: whole, mood }));
 
   // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
   let sqGoal = 0;

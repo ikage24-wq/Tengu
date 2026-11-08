@@ -1133,8 +1133,42 @@ function earthDecals(ctx, m, runs, cam, width, height) {
 }
 
 // The top layer along a line of points: a thick band with a soft scalloped (or bladed) lower edge,
-// a bright top, and an outline.
+// a bright top, and an outline. The still part of a flat ledge's lip is drawn once into a picture
+// of its own and placed each frame (it never changes); its grass and edge decorations stay live.
+const lipCache = new Map();
+const LIP_MAX = 600;
+const scaleOf = (ctx) => Math.round(Math.hypot(ctx.getTransform().a, ctx.getTransform().b) * 100) / 100 || 1;
 function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
+  const flat = pts.length === 2 && Math.abs(pts[0][1] - pts[1][1]) < 0.01 && typeof document !== 'undefined';
+  if (flat) {
+    const [x0, y0] = pts[0];
+    const L = pts[1][0] - x0;
+    const scale = scaleOf(ctx);
+    const PAD = 8;
+    const TOP = 5;
+    const H = depth + 16;
+    const key = `${m.lip}|${m.moss ? 1 : 0}|${m.blades ? 1 : 0}|${L.toFixed(2)}|${seed}|${depth}|${scale}`;
+    let c = lipCache.get(key);
+    if (c) {
+      lipCache.delete(key);
+      lipCache.set(key, c);
+    } else {
+      c = document.createElement('canvas');
+      c.width = Math.ceil((L + PAD * 2) * scale);
+      c.height = Math.ceil((H + TOP) * scale);
+      const g = c.getContext('2d');
+      g.setTransform(scale, 0, 0, scale, PAD * scale, TOP * scale);
+      lipStill(g, m, [[0, 0], [L, 0]], seed, Infinity, depth);
+      lipCache.set(key, c);
+      if (lipCache.size > LIP_MAX) lipCache.delete(lipCache.keys().next().value);
+    }
+    ctx.drawImage(c, x0 - PAD, y0 - TOP, c.width / scale, c.height / scale);
+  } else lipStill(ctx, m, pts, seed, width, depth);
+  lipLive(ctx, m, pts, time, seed, width, deco);
+}
+
+// The lip's still part: the band, its scalloped (or mossy, or bladed) lower edge, the lines.
+function lipStill(ctx, m, pts, seed, width, depth) {
   const line = edge(m.lip);
   const deep = shade(m.lip, -16);
   // The band.
@@ -1199,23 +1233,27 @@ function lip(ctx, m, pts, time, seed, width, depth = 7, deco = null) {
   strokeAlong(ctx, pts, depth - 2.5, deep, 1.4);
   strokeAlong(ctx, pts, 0.6, shade(m.lip, 18), 1.6);
   strokeAlong(ctx, pts, -1.5, line, 1);
-  // Grass blades standing up along the top.
+}
+
+// The lip's live part: grass blades standing up along the top, swaying in the wind (all in one
+// stroke, they're one colour), and the edge's decorations.
+function lipLive(ctx, m, pts, time, seed, width, deco) {
   if (m.blades) {
     ctx.strokeStyle = shade(m.lip, -8);
     ctx.lineWidth = 1.2;
     ctx.lineCap = 'round';
+    ctx.beginPath();
     forAlong(pts, 6, (x, y, k) => {
       if (x < -6 || x > width + 6 || hash(k * 1.7 + seed) < 0.5) return;
       const w = windAt(time, x + camX);
       const sway = Math.sin(time * 2 + (x + camX) * 0.05) * 0.5 * (0.5 + w) + w * 1.1;
       const h = 2.5 + hash(k + 3) * 3;
-      ctx.beginPath();
       ctx.moveTo(x, y - 1);
       ctx.lineTo(x + sway - 1, y - 1 - h);
       ctx.moveTo(x + 1.5, y - 1);
       ctx.lineTo(x + 2 + sway, y - 1 - h * 0.7);
-      ctx.stroke();
     });
+    ctx.stroke();
     ctx.lineCap = 'butt';
   }
   if (deco) edgeDeco(ctx, deco, pts, time, seed, width);
@@ -1638,11 +1676,38 @@ function cliffFace(ctx, m, x, yTop, yBot, side, time, seed) {
 
 // Vines, roots, seaweed, or crystals hanging from an edge at (x, y). Each starts a few pixels
 // above y, so whatever it hangs from (drawn over it) hides where it's rooted.
+// (Each one is drawn once per quarter-pixel of sway into a little picture and placed each frame.)
+const dripCache = new Map();
+const DRIP_MAX = 3000;
 function drip(ctx, m, x, y, maxLen, time, seed) {
   if (!m.drip || maxLen < 6) return;
   const k = hash(seed * 3.3 + (x + camX) * 0.01);
   const len = Math.max(6, maxLen * (0.5 + k * 0.5));
-  const sway = Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.2 + windAt(time, x + camX) * 1.2;
+  const sway = Math.round((Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.2 + windAt(time, x + camX) * 1.2) * 4) / 4;
+  if (typeof document === 'undefined') return dripLive(ctx, m, x, y, len, k, sway);
+  const scale = scaleOf(ctx);
+  const key = `${m.drip}|${m.lip}|${m.deep}|${len.toFixed(1)}|${k.toFixed(3)}|${sway}|${scale}`;
+  let c = dripCache.get(key);
+  const L = Math.min(0, sway * 1.6) - 9;
+  const R = Math.max(0, sway * 1.6) + 9;
+  const T = -8;
+  const B = len + 7;
+  if (c) {
+    dripCache.delete(key);
+    dripCache.set(key, c);
+  } else {
+    c = document.createElement('canvas');
+    c.width = Math.ceil((R - L) * scale);
+    c.height = Math.ceil((B - T) * scale);
+    const g = c.getContext('2d');
+    g.setTransform(scale, 0, 0, scale, -L * scale, -T * scale);
+    dripLive(g, m, 0, 0, len, k, sway);
+    dripCache.set(key, c);
+    if (dripCache.size > DRIP_MAX) dripCache.delete(dripCache.keys().next().value);
+  }
+  ctx.drawImage(c, x + L, y + T, c.width / scale, c.height / scale);
+}
+function dripLive(ctx, m, x, y, len, k, sway) {
   const top = y - 5;
   // A point along the hanging curve, u from 0 (root) to 1 (tip).
   const at = (u) => {

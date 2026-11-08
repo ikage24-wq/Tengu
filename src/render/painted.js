@@ -23,9 +23,42 @@ function repeat(camX, factor, spacing, width, draw) {
   for (let k = 0; k < count; k++) draw(first + k, (first + k) * spacing - off);
 }
 
+// A foliage clump, drawn once into a little picture of its own (at the screen's density) and
+// placed each frame, its sway applied as a lean of the whole clump, top moving most: the same
+// look, one drawing instead of dozens of curves every frame.
+const clumpCache = new Map();
+const CLUMP_MAX = 500;
+function clump(ctx, x, y, r, c, seed, sway = 0) {
+  if (typeof document === 'undefined') return clumpLive(ctx, x, y, r, c, seed, sway);
+  const m = ctx.getTransform();
+  const scale = Math.round(Math.hypot(m.a, m.b) * 100) / 100 || 1;
+  const hw = r * 1.5 + 4;
+  const hh = r * 1.35 + 5;
+  const k = `${seed}|${r.toFixed(2)}|${c.base}|${c.lit}|${c.shadow}|${c.glint}|${scale}`;
+  let s = clumpCache.get(k);
+  if (s) {
+    clumpCache.delete(k);
+    clumpCache.set(k, s);
+  } else {
+    s = document.createElement('canvas');
+    s.width = Math.ceil(hw * 2 * scale);
+    s.height = Math.ceil(hh * 2 * scale);
+    const g = s.getContext('2d');
+    g.setTransform(scale, 0, 0, scale, hw * scale, hh * scale);
+    clumpLive(g, 0, 0, r, c, seed, 0);
+    clumpCache.set(k, s);
+    if (clumpCache.size > CLUMP_MAX) clumpCache.delete(clumpCache.keys().next().value);
+  }
+  ctx.save();
+  ctx.translate(x + sway * 0.3, y);
+  if (sway) ctx.transform(1, 0, -(sway * 0.7) / r, 1, 0, 0);
+  ctx.drawImage(s, -hw, -hh, hw * 2, hh * 2);
+  ctx.restore();
+}
+
 // A foliage clump: overlapping round leaf masses, a darker underside, and lit tops toward the
 // upper left. `sway` leans the top a little.
-function clump(ctx, x, y, r, c, seed, sway = 0) {
+function clumpLive(ctx, x, y, r, c, seed, sway = 0) {
   const n = 5;
   const blobs = [];
   for (let i = 0; i < n; i++) {
@@ -275,7 +308,7 @@ function softClump(ctx, x, y, r, c, seed, sway, blur, alpha, width, height) {
   const hh = r * 1.17 + 10;
   if (x + hw + 4 < 0 || x - hw - 4 > width || y + hh < 0 || y - hh > height) return;
   const q = Math.round(sway / SWAY_STEP) * SWAY_STEP;
-  const s = softSprite(ctx, `clump|${seed}|${r}|${q}|${c.base}|${c.lit}`, hw, hh, blur, alpha, (g) => clump(g, 0, 0, r, c, seed, q));
+  const s = softSprite(ctx, `clump|${seed}|${r}|${q}|${c.base}|${c.lit}`, hw, hh, blur, alpha, (g) => clumpLive(g, 0, 0, r, c, seed, q));
   if (!s) return;
   const rest = sway - q;
   ctx.save();

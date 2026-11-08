@@ -22,7 +22,7 @@ import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { paintFan } from './props.js';
-import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
+import { R, E, T, F, sprite, spriteBudgeted, spriteAsync, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
@@ -2738,6 +2738,12 @@ export const setLight = (on) => { LIGHT = on === true ? '#fff1e0' : on; };
 // The light pass's back line, in body units at the top of the sprite and at the feet: everything
 // behind it (the back of the torso, the far leg) is in soft shadow, widening toward the feet.
 const BACK_EDGE = [11.4, 13.2];
+
+// A hero's body sprite as plain data: what the sprite worker builds off the main thread for the
+// crowd (pixel.js spriteAsync, sprite-worker.js), and what drawHeroBody builds on the spot.
+export function heroBodySpec(look, g, rig, light = LIGHT) {
+  return { w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light, edge: BACK_EDGE };
+}
 // The rim light's colour for a map at an hour: warm white by day (tinted by the place: green under
 // the trees, icy on the snow, gold on the crags, teal in caves), gold at dusk and dawn, a cool
 // moonlit blue at night. A handful of colours, so the figure is only redrawn when the light changes.
@@ -2980,14 +2986,25 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const shouldered = HEFTED.has(g.weapon?.type) && !attack && over == null && !state.ready && !idleW && rig.view !== 'back' && !state.rig;
   if (shouldered) rig.frontArm = [rig.frontArm[0] + 1, rig.frontArm[1] - 5];
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
+  // The hair's and cape's spring settle on half-pixel steps, so the same few poses come round
+  // again and are drawn from the cache instead of being painted afresh each frame (a step that
+  // small doesn't show).
+  {
+    const half = (v) => Math.round(v * 2) / 2;
+    rig.hair = half(rig.hair);
+    rig.hairTip = half(rig.hairTip);
+    rig.hairLift = half(rig.hairLift);
+    rig.hairWave = half(rig.hairWave);
+    rig.cape = half(rig.cape);
+  }
   const lookKey = JSON.stringify(look);
   const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
-  // The player (and a boss) is always drawn as they are now; anyone else may wait a frame when
-  // the frame's drawing budget is spent (see spriteBudgeted).
   const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
   // (Taller than the figure: floor-length hair hangs past its feet, and was sliced off flat.)
-  const buildBody = () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
-  const body = state.urgent ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
+  const buildBody = () => heroBodySpec(look, g, rig);
+  // (A new pose is painted off the main thread by the sprite worker, the last pose standing in
+  // for the frame until it's ready; only someone seen for the first time is drawn on the spot.)
+  const body = spriteAsync(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`, () => ({ kind: 'hero', look, g, rig, light: LIGHT }));
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;

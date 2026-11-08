@@ -523,12 +523,43 @@ export function spriteBudgeted(key, build, slot) {
   return s;
 }
 
+// Sprites for people (heroes, the crowd, the townsfolk, NPCs): a sprite already
+// drawn comes from the cache; a new one is handed to the sprite worker (`job()` describes it as
+// plain data) while the last one drawn for the same `slot` stands in. Only someone seen for the
+// first time is drawn on the spot (within the frame's budget), so no one ever pops in blank.
+export function spriteAsync(key, build, slot, job) {
+  if (gfx.zoom !== 1) return spriteBudgeted(key, build, slot);
+  const s = cache.get(key);
+  if (s) {
+    cache.delete(key);
+    cache.set(key, s);
+    lastOf.delete(slot);
+    lastOf.set(slot, s);
+    return s;
+  }
+  const prev = failed.has(key) ? null : lastOf.get(slot);
+  const w = prev ? workerOf() : null;
+  if (w && prev) {
+    if (!pending.has(key) && pending.size < 24) {
+      try {
+        w.postMessage({ key, job: job(), scale: gfx.scale });
+        pending.set(key, true);
+      } catch {
+        return spriteBudgeted(key, build, slot);
+      }
+    }
+    return prev;
+  }
+  return spriteBudgeted(key, build, slot);
+}
+
 // Sprites drawn in the background: a worker rasterizes them (`sprite-worker.js`, given `job`, a
 // plain description it knows how to build), and until one arrives `spriteLater` returns null so
 // the caller draws something it already has. Used for the many in-between poses that make
 // motion smooth, which would cost a hitch each if drawn on the spot.
 let worker = null;
 const pending = new Map();
+const failed = new Set();
 function workerOf() {
   if (worker === null) {
     worker = false;
@@ -537,6 +568,8 @@ function workerOf() {
         worker = new Worker(new URL('./sprite-worker.js', import.meta.url), { type: 'module' });
         worker.onmessage = ({ data: d }) => {
           pending.delete(d.key);
+          // (One the worker couldn't draw is drawn on the spot next time: spriteAsync.)
+          if (!d.data) failed.add(d.key);
           if (d.scale !== gfx.scale || !d.data) return;
           const canvas = document.createElement('canvas');
           canvas.width = d.gw;
