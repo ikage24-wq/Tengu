@@ -174,8 +174,62 @@ function goldCoin(ctx, x, y, r, spin) {
   ctx.fill();
 }
 
+// A crescent moon at (x, y), `r` big, its glow.
+function crescent(ctx, x, y, r, under) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= 0.4;
+  ctx.fillStyle = '#fff6c0';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 1.9, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#fff6c0';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = under;
+  ctx.beginPath();
+  ctx.arc(x + r * 0.45, y - r * 0.3, r * 0.82, 0, TAU);
+  ctx.fill();
+}
+// A little moth wing pair at (x, y) beating (`b` 0..1), `d` which way.
+function mothPair(ctx, x, y, b, d) {
+  const w = 0.3 + 0.7 * b;
+  ctx.fillStyle = '#3a3e8a';
+  ctx.beginPath();
+  ctx.ellipse(x + d * 2.4 * w, y - 1.4, 2.4 * w + 0.2, 2, d * -0.4, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#2a2c6a';
+  ctx.beginPath();
+  ctx.ellipse(x + d * 1.8 * w, y + 1.2, 1.6 * w + 0.2, 1.4, d * 0.3, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#7ae8ff';
+  ctx.beginPath();
+  ctx.arc(x + d * 2.6 * w, y - 1.4, 0.6, 0, TAU);
+  ctx.fill();
+}
+
 // Round a chat bubble (bx, by, w, h): a blossom tucked on its corner, petals drifting off it.
 export function bubbleDeco(ctx, deco, bx, by, w, h, time) {
+  if (deco === 'moonlit') {
+    // A crescent moon perched on its corner, glowing, and tiny stars twinkling round it.
+    crescent(ctx, bx + w - 1, by + 0.5, 3.6, '#1f2050');
+    for (let k = 0; k < 3; k++) {
+      const u = (time * 0.7 + k / 3) % 1;
+      const g = Math.sin(Math.PI * u) * 1.4;
+      const sx = [bx - 2, bx + w * 0.45, bx + w + 3][k];
+      const sy = [by + 2, by - 2.6, by + h - 1][k];
+      ctx.fillStyle = '#fff6c0';
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - g);
+      ctx.quadraticCurveTo(sx, sy, sx + g, sy);
+      ctx.quadraticCurveTo(sx, sy, sx, sy + g);
+      ctx.quadraticCurveTo(sx, sy, sx - g, sy);
+      ctx.quadraticCurveTo(sx, sy, sx, sy - g);
+      ctx.fill();
+    }
+  }
   if (deco === 'pricetag') {
     // A merchant's price tag: a punched hole with a looped string, a gold coin dangling from it,
     // spinning, and a little red wax "SOLD" stamp in the corner.
@@ -395,6 +449,33 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
       }
     }
   }
+  if (skin.deco === 'mothwing') {
+    // Little moth wings at both ends, beating softly.
+    const beat = 0.55 + 0.45 * Math.sin(time * 5);
+    mothPair(ctx, left - 0.6, y + 5, beat, -1);
+    mothPair(ctx, left + w + 0.6, y + 5, beat, 1);
+  }
+  if (skin.deco === 'fullmoon') {
+    // A full moon rising behind the tag, and now and then a moth crossing its face.
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#fff6dc';
+    ctx.beginPath();
+    ctx.arc(x, y + 1, 8.5, 0, TAU);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.restore();
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha *= 0.35;
+    ctx.fillStyle = '#fff6c0';
+    ctx.beginPath();
+    ctx.arc(x, y + 1, 12, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+    const u = (time / 4) % 1;
+    if (u < 0.5) mothPair(ctx, x - 9 + u * 36, y - 4 + Math.sin(u * 20) * 1, 0.5 + 0.5 * Math.sin(time * 14), 1);
+  }
   if (skin.deco === 'seal') {
     // A shine sweeping across the gold now and then, and a wax seal pressed on its left end,
     // a sprout stamped in it.
@@ -445,6 +526,27 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
 
 // Over one of your damage numbers, skinned: petals bursting off it as it pops.
 export function numberDeco(ctx, deco, x, y, size, age) {
+  if (deco === 'moondust' && age < 0.8) {
+    // Silver moon dust spilling off the number as it rises, twinkling.
+    ctx.save();
+    for (let k = 0; k < 6; k++) {
+      const u = Math.min(1, age / 0.8);
+      const px = x + (k - 2.5) * size * 0.22 + Math.sin(k * 2 + age * 6) * 2;
+      const py = y - size * 0.2 + u * size * (0.6 + (k % 3) * 0.3);
+      const g = (1 - u) * size * 0.14 * (0.6 + 0.4 * Math.sin(age * 20 + k));
+      ctx.globalAlpha = 1 - u;
+      ctx.fillStyle = k % 2 ? '#ffffff' : '#a8f0ff';
+      ctx.beginPath();
+      ctx.moveTo(px, py - g);
+      ctx.quadraticCurveTo(px, py, px + g, py);
+      ctx.quadraticCurveTo(px, py, px, py + g);
+      ctx.quadraticCurveTo(px, py, px - g, py);
+      ctx.quadraticCurveTo(px, py, px, py - g);
+      ctx.fill();
+    }
+    ctx.restore();
+    return;
+  }
   if (deco === 'coins' && age < 0.7) {
     // A burst of gold coins popping out of the number, spinning, falling away.
     const cy = y - size * 0.35;

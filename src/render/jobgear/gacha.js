@@ -50,6 +50,40 @@ const CLOAK_D = '#4a3e28';
 const CLOAK_L = '#8a7a52';
 const TUNIC = '#d8c8a0';
 const SCARF = '#c8502a';
+const MOTH = '#2a2c6a';
+const MOTH_L = '#4a54a8';
+const MOTH_D = '#1a1a48';
+const CYAN = '#7ae8ff';
+const CYAN_L = '#e8fcff';
+const SILVER = '#e0e4f0';
+const SILVER_D = '#a8acc8';
+const FLUFF = '#fffaf2';
+
+// A tiny four-point silver star at (x, y).
+const twinkle4 = (x, y, r, c = '#e8f0ff') => T([[x, y - r], [x + r * 0.3, y - r * 0.3], [x + r, y], [x + r * 0.3, y + r * 0.3], [x, y + r], [x - r * 0.3, y + r * 0.3], [x - r, y], [x - r * 0.3, y - r * 0.3]], c);
+
+// A feathery moth antenna from (x0, y0) curving through (cx, cy) to (x1, y1): a fine stem combed
+// with little barbs on both sides, longest in the middle.
+function frond(x0, y0, cx, cy, x1, y1, c, stem) {
+  const out = [];
+  const at = (u) => [(1 - u) ** 2 * x0 + 2 * (1 - u) * u * cx + u * u * x1, (1 - u) ** 2 * y0 + 2 * (1 - u) * u * cy + u * u * y1];
+  const n = 9;
+  for (let i = 1; i < n; i++) {
+    const u = i / n;
+    const [px, py] = at(u);
+    const [qx, qy] = at(u + 0.02);
+    const l = Math.hypot(qx - px, qy - py) || 1;
+    const [nx, ny] = [-(qy - py) / l, (qx - px) / l];
+    const len = 1.9 * Math.sin(Math.PI * u) + 0.4;
+    for (const sd of [-1, 1]) out.push(T([[px, py], [px + nx * len * sd + (qx - px) * 6, py + ny * len * sd + (qy - py) * 6], [px + (qx - px) * 10, py + (qy - py) * 10]], c));
+  }
+  for (let i = 0; i < n; i++) {
+    const [ax, ay] = at(i / n);
+    const [bx, by] = at((i + 1) / n);
+    out.push(F(T([[ax - 0.18, ay], [ax + 0.18, ay], [bx + 0.18, by], [bx - 0.18, by]], stem)));
+  }
+  return out;
+}
 
 // A crack of lava along `pts` (a glowing seam `w` wide with a bright core).
 function vein(pts, w, c = LAVA, core = HOT_CORE) {
@@ -611,6 +645,128 @@ const D = {
       F(E(11.9, 31, 0.6, 0.6, GOLD2)), F(E(19.5, 31, 0.6, 0.6, GOLD2)),
     ],
   },
+
+  // ---- Moonleaf Grove: the Moon Moth Empress set ----
+
+  // A fine silver tiara across the brow, a crescent moon set at its front among little gems, and
+  // rising from it two great feathery moth antennae, swaying, each tipped with a moon pearl.
+  mothtiara: {
+    hat: (p, m) => {
+      const k = m.hair * 0.8;
+      const out = [];
+      // (They sweep out to the sides and curl, the way a moth's do, not straight up.)
+      out.push(...frond(12.6, 5, 8, -1.6, 1.6 - k, -2.6, SILVER, '#8a94c8'), ...frond(18.4, 5, 23, -1.6, 29.4 - k * 0.6, -2.6, SILVER, '#8a94c8'));
+      for (const [x, y] of [[1.6 - k, -2.6], [29.4 - k * 0.6, -2.6]]) out.push(E(x, y, 1, 1, CYAN), F(E(x - 0.3, y - 0.3, 0.35, 0.35, WHITE)));
+      out.push(T([...arcPts(15.5, 7.2, 12.6, 3.2, 0, 180, 18), ...arcPts(15.5, 8.4, 12.6, 3.2, 180, 0, 18)], SILVER));
+      out.push(F(T([...arcPts(15.5, 7.2, 12.4, 3, 30, 150, 12), ...arcPts(15.5, 7.6, 12.4, 3, 150, 30, 12)], WHITE)));
+      // The crescent at the front, gems either side.
+      out.push(E(15.5, 3.6, 2.6, 2.6, '#e8f0ff'), E(16.6, 3, 2.1, 2.1, '#1f2050'), F(E(14.6, 3.2, 0.5, 0.5, WHITE)));
+      for (const [x, y, c] of [[11.2, 4.8, CYAN], [19.8, 4.8, CYAN], [8, 6, '#4a54a8'], [23, 6, '#4a54a8']]) out.push(E(x, y, 0.8, 0.8, c), F(E(x - 0.25, y - 0.25, 0.25, 0.25, WHITE)));
+      return out;
+    },
+  },
+
+  // A fitted moth-silk tailcoat in midnight blue: a deep ruff of silver moth fluff at the collar
+  // and shoulders, a crescent brooch, silver frogging across the chest and silver stars glittering
+  // in the cloth; short in front over slim trousers striped in silver, and behind, long coattails
+  // of overlapping wing-scales with a moon-eye on each, swinging as you go.
+  mothsilkgown: {
+    top: (p) => {
+      const body = torsoPts();
+      const out = [T(body, MOTH)];
+      out.push(F(T([[10, 28], [11.4, 27.6], [11.8, 35.4], [9.8, 35.4]], MOTH_D)), F(T([[21.2, 28], [19.8, 27.6], [19.4, 35.4], [21.4, 35.4]], MOTH_D)));
+      // The front opening and the frogging across it.
+      out.push(F(T([[MID - 0.3, 28.6], [MID + 0.3, 28.6], [MID + 0.3, 35.6], [MID - 0.3, 35.6]], MOTH_D)));
+      for (const y of [33.4, 34.8]) out.push(F(T([[MID - 2.4, y - 0.3], [MID + 2.4, y - 0.3], [MID + 2.4, y + 0.3], [MID - 2.4, y + 0.3]], SILVER)), F(E(MID - 2.4, y, 0.45, 0.45, SILVER)), F(E(MID + 2.4, y, 0.45, 0.45, SILVER)));
+      for (const [x, y, r] of [[11.4, 32.4, 0.6], [19.8, 33.2, 0.6], [12.2, 34.6, 0.4]]) out.push(F(twinkle4(x, y, r)));
+      out.push(band(body, 34.6, 35.6, SILVER), F(E(MID, 35.1, 0.6, 0.5, CYAN)));
+      return out;
+    },
+    // The moth-fur mane, laid over the arms (gear.js topOverShapes).
+    topOver: (p, m) => {
+      // The moth-fur mane: a thick, soft ruff of fur round the throat and over the shoulders and
+      // arms, layered deep to light, every tuft round (no points). It bounces and sways with each
+      // step (m.hair, m.sway); render/gacha.js breathes and fluffs it up at rest.
+      const out = [];
+      const b = (m?.hair ?? 0) * 0.35;
+      const sw = (m?.sway ?? 0) * 0.25;
+      const tuft = (x, y, r, c, k) => {
+        const dy = b * (0.6 + 0.4 * Math.sin(k * 1.7)) + Math.abs(sw) * 0.2;
+        const dx = sw * (0.5 + 0.5 * Math.cos(k * 1.3));
+        return [E(x + dx, y + dy, r, r * 0.92, c), E(x + dx - r * 0.35, y + dy + r * 0.7, r * 0.55, r * 0.5, c), E(x + dx + r * 0.4, y + dy + r * 0.65, r * 0.5, r * 0.48, c)];
+      };
+      for (let i = 0; i < 11; i++) out.push(...tuft(6.2 + i * 1.88, 29 + Math.sin((i / 10) * Math.PI) * 1.4, 2, '#a8b4e0', i));
+      for (let i = 0; i < 10; i++) out.push(...tuft(7.2 + i * 1.86, 27.9 + Math.sin(((i + 0.5) / 10) * Math.PI) * 1.2, 2, '#d0d8f4', i + 3));
+      for (let i = 0; i < 8; i++) out.push(...tuft(8.8 + i * 1.94, 26.6 + Math.sin(((i + 0.5) / 8) * Math.PI) * 0.7, 1.9, '#eef2ff', i + 7));
+      for (const [x, y] of [[10.4, 26.4], [13.8, 27], [17.4, 27], [20.8, 26.4], [7.6, 28.6], [23.4, 28.6], [12, 29.4], [19.2, 29.6]]) out.push(F(E(x + sw * 0.6, y + b * 0.8, 0.8, 0.45, WHITE)));
+      out.push(E(MID, 29.8 + b, 1.3, 1.3, '#e8f0ff'), E(MID + 0.6, 29.4 + b, 1, 1, MOTH), F(E(MID - 0.4, 29.6 + b, 0.3, 0.3, WHITE)), F(E(MID, 31 + b, 0.45, 0.45, CYAN)));
+      return out;
+    },
+    sleeve: () => MOTH,
+    // (No shoulder pieces: the fur mane runs over the shoulders on its own.)
+    shoulder: () => [],
+    skirt: (p, m) => {
+      const s2 = m.sway * 0.6;
+      const out = [];
+      // The coattails behind: two long tails of wing-scales, a moon-eye on each, a silver edge.
+      for (const [x0, x1, len, k] of [[9.2, 13.4, 46.4, 1], [12.6, 16.4, 44.6, 0.7]]) {
+        const sw = s2 * k;
+        out.push(T([[x0, 35.4], [x1, 35.4], [x1 - 0.6 + sw, len - 3], [x0 + 1.2 + sw, len], [x0 - 1.4 + sw, len - 2.6]], k === 1 ? MOTH : '#22245a'));
+        for (let r = 0; r < 3; r++) for (let j = 0; j < 2; j++) out.push(F(E(x0 + 0.8 + j * 1.8 + sw * (r / 3), 37.6 + r * 2.6, 1.1, 1, r % 2 ? '#383e8a' : '#30347a')));
+        out.push(F(T([[x0 - 1.4 + sw, len - 2.6], [x0 + 1.2 + sw, len], [x0 + 1.2 + sw, len - 0.6], [x0 - 1 + sw, len - 3]], SILVER)));
+        if (k === 1) out.push(E(x0 + 1.4 + sw, 42, 1.2, 1.1, SILVER), E(x0 + 1.4 + sw, 42, 0.8, 0.75, CYAN), F(E(x0 + 1.6 + sw, 42.1, 0.35, 0.35, MOTH_D)));
+      }
+      // The short front, its silver hem, a star.
+      out.push(T([[12.8, 35.4], [21.6, 35.4], [21.8, 37.8], [MID, 38.6], [12.6, 37.8]], MOTH));
+      out.push(F(T([[12.6, 37.2], [MID, 38], [21.8, 37.2], [21.8, 37.8], [MID, 38.6], [12.6, 37.8]], SILVER)), F(twinkle4(19.4, 36.8, 0.5)));
+      return out;
+    },
+    legs: () => ({ top: '#1f2050', low: '#1f2050', pad: null }),
+  },
+
+  // Long midnight silk gloves with a soft cuff of moth fluff.
+  moonsilkgloves: {
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const wx = hx - ux * 2.8;
+      const wy = hy - uy * 2.8;
+      return [
+        E(hx, hy, 2, 2, MOTH), F(E(hx - uy * 0.5 - ux * 0.4, hy + ux * 0.5 - uy * 0.4, 0.8, 1.1, MOTH_L)), F(twinkle4(hx + ux * 0.6, hy + uy * 0.6, 0.6)),
+        E(wx - uy * 1.2, wy + ux * 1.2, 1.3, 1.3, '#e8ecff'), E(wx + uy * 1.2, wy - ux * 1.2, 1.3, 1.3, '#c8d0f0'), E(wx, wy, 1.4, 1.4, '#e8ecff'),
+      ];
+    },
+  },
+
+  // Silver slippers with pointed toes and a pom of moth fluff on each.
+  moonstepslippers: {
+    shoe: (p, k) => [
+      k.poly([[-3, 3.6], [-3.4, 0.4], [-1.6, -0.8], [2, -0.2], [5, 1], [7, 2.6], [6.4, 3.6]], k.tint(SILVER)),
+      k.poly([[-2.8, 0.6], [2, 0.2], [4.6, 1.2], [4.4, 1.8], [-2.8, 1.6]], k.tint(WHITE)),
+      k.poly([[-3, 3.4], [6.6, 3.4], [6.4, 4.4], [-2.8, 4.4]], k.tint(MOTH)),
+      k.dot(4.4, 0.6, 1.6, k.tint('#e8ecff')), k.dot(4.4, 0.6, 0.6, k.tint(CYAN)),
+    ],
+  },
+
+  // A dusting of silver freckles across the cheeks, a soft lavender blush, and a tiny crescent
+  // moon under one eye.
+  moondustblush: {
+    hat: () => {
+      const out = [];
+      for (const [cx, d] of [[8.8, -1], [22.2, 1]]) {
+        out.push(F(E(cx, 21.6, 1.9, 0.9, '#c8c8f4')));
+        for (const [dx, dy] of [[-1, -0.4], [0, 0.2], [1, -0.3], [0.4, -1]]) out.push(F(E(cx + dx, 21.2 + dy, 0.28, 0.28, '#e8f4ff')));
+        if (d > 0) out.push(E(cx + 1.6, 19.8, 0.9, 0.9, CYAN), E(cx + 2, 19.5, 0.75, 0.75, '#c8c8f4'));
+      }
+      return out;
+    },
+  },
+
+  // The star prize: the Moon Moth Wings are drawn live, opening and closing (render/gacha.js);
+  // here only a soft silver clasp where they meet the back.
+  moonmothwings: {
+    capeFront: () => [F(E(10.6, 27.6, 1, 1, SILVER)), F(E(10.6, 27.6, 0.5, 0.5, CYAN))],
+  },
 };
 
 // ---------- The job-module interface ----------
@@ -632,5 +788,6 @@ export default {
   hand: (t, p, hx, hy, ex, ey) => of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 1.9, 1.9, p.main)],
   cape: (t, p, m) => of(t).cape?.(p, m) ?? [],
   capeFront: (t, p, m) => of(t).capeFront?.(p, m) ?? [],
+  topOver: (t, p, m) => of(t).topOver?.(p, m) ?? [],
   cover: () => [],
 };

@@ -523,6 +523,12 @@ function plainCape(design, c, flap) {
 
 // The front of a cape: ties over the shoulders and a clasp (or a fur collar) at the neck,
 // drawn over the top.
+// What a top lays over the arms (a fur mane, a stole): drawn after them. Only pieces that have one.
+export function topOverShapes(piece = null, m = MOTION) {
+  const mod = piece?.family ? gearOf(piece) : null;
+  return mod?.topOver ? done(mod.topOver(piece.tier, piece.pal, m), piece) : [];
+}
+
 export function capeFrontShapes(design, c, piece = null, m = MOTION) {
   if (piece?.family) return done(gearOf(piece).capeFront(piece.tier, piece.pal, m), piece);
   if (design === 'fairy' || design === 'angel') return [];

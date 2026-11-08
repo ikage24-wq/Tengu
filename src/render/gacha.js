@@ -28,7 +28,9 @@ const HARBOR = { id: 'harbor', base: '#e86a6a', trim: '#ffd23f', lid: '#ffffff',
 const CRAG = { id: 'crag', base: '#3a2e44', trim: '#ffcf4a', lid: '#ff7a2a', gem: '#ff5a1a', capsules: ['#ff5a1a', '#ffcf4a', '#2a2232', '#ff9a3a', '#fff0a0', '#c83a2a'] };
 // Coinbridge's: road-worn wood and brass for the wandering peddler, capsules like wares and coins.
 const COINBRIDGE = { id: 'coinbridge', base: '#8a5a3a', trim: '#ffcf4a', lid: '#5a7a5a', gem: '#c8502a', capsules: ['#ffcf4a', '#c8502a', '#5a7a5a', '#e0c070', '#fff0c0', '#8a5a3a'] };
-export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG, coinbridge: COINBRIDGE };
+// Moonleaf Grove's: midnight blue and silver with cyan moonlight, capsules like the night sky.
+const GROVE = { id: 'grove', base: '#2a2c6a', trim: '#e0e4f0', lid: '#7ae8ff', gem: '#7ae8ff', capsules: ['#2a2c6a', '#7ae8ff', '#e8f0ff', '#4a54a8', '#fff6c0', '#a8b4f0'] };
+export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG, coinbridge: COINBRIDGE, grove: GROVE };
 export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
 function machineArt(theme, crank) {
@@ -54,7 +56,12 @@ function machineArt(theme, crank) {
     }
     // The framed emblem: a big painted flower in a gold oval.
     out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
-    if (theme.id === 'coinbridge') {
+    if (theme.id === 'grove') {
+      // Moonleaf Grove's: a moth spreading its wings across a full moon.
+      out.push(E(34, 87, 6, 6, '#fff6c0'), E(32, 85.6, 1.4, 1.4, '#ece2c8'));
+      out.push(T([[34, 87], [27.4, 81.6], [26.8, 86.4], [30.6, 88.4]], '#2a2c6a'), T([[34, 87], [40.6, 81.6], [41.2, 86.4], [37.4, 88.4]], '#2a2c6a'), F(E(29.4, 84.8, 1, 1, '#7ae8ff')), F(E(38.6, 84.8, 1, 1, '#7ae8ff')));
+      out.push(T([[34, 87.6], [29.4, 91.4], [31.8, 92.2]], '#4a54a8'), T([[34, 87.6], [38.6, 91.4], [36.2, 92.2]], '#4a54a8'), R(33.4, 83.4, 1.2, 6, '#1a1a48'));
+    } else if (theme.id === 'coinbridge') {
       // Coinbridge's: a stack of gold coins under a merchant's scales.
       for (let k = 0; k < 4; k++) out.push(E(34, 92.4 - k * 1.6, 3.6, 1.2, k % 2 ? '#c8902e' : '#ffcf4a'));
       out.push(R(33.6, 80.6, 0.8, 8.4, '#ffcf4a'), R(28.4, 81.4, 11.2, 0.7, '#ffcf4a'));
@@ -410,6 +417,7 @@ export function outfitFx(gear) {
     if (!worn.has(e.machine)) worn.set(e.machine, new Set());
     worn.get(e.machine).add(e.key);
     if (e.fx) (fx ??= new Set()).add(e.fx);
+    if (e.fx2) (fx ??= new Set()).add(e.fx2);
   }
   if (!worn.size) return null;
   const sets = new Set();
@@ -922,6 +930,193 @@ function coin(ctx, x, y, r, spin, a = 1) {
   ctx.restore();
 }
 
+// The Moon Moth Wings, drawn live from their root at (x, y) on the back (`f` the way the hero
+// faces; they spread out behind): a great forewing and a hindwing trailing a long luna tail, a far
+// pair behind them a shade deeper. `open` 0..1 spreads them (their width follows it, like a real
+// wing turning to face you), `shine` brightens the moon-eyes.
+// A closed shape through `pts`, smoothed: curves through the midpoints, no sharp corners.
+function smoothPath(ctx, pts) {
+  const n = pts.length;
+  const mid = (i) => [(pts[i % n][0] + pts[(i + 1) % n][0]) / 2, (pts[i % n][1] + pts[(i + 1) % n][1]) / 2];
+  ctx.beginPath();
+  const [m0x, m0y] = mid(n - 1);
+  ctx.moveTo(m0x, m0y);
+  for (let i = 0; i < n; i++) {
+    const [mx, my] = mid(i);
+    ctx.quadraticCurveTo(pts[i][0], pts[i][1], mx, my);
+  }
+  ctx.closePath();
+}
+// A moth wing: a soft rounded edge of fur all round it (little tufts along the outline), the
+// wing within, rounded too.
+function mothWing(ctx, pts, fill, edge, fur = '#c8d4ff', t = 0) {
+  // The fur: tufts sampled along the outline, each a little puff, stirring.
+  const n = pts.length;
+  ctx.fillStyle = fur;
+  for (let i = 0; i < n; i++) {
+    const [ax, ay] = pts[i];
+    const [bx, by] = pts[(i + 1) % n];
+    const steps = Math.max(2, Math.round(Math.hypot(bx - ax, by - ay) / 1.6));
+    for (let k = 0; k < steps; k++) {
+      const u = k / steps;
+      const px = ax + (bx - ax) * u;
+      const py = ay + (by - ay) * u;
+      const r = 1.1 + 0.35 * Math.sin(i * 3.1 + k * 1.7 + t * 3);
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.fillStyle = edge;
+  smoothPath(ctx, pts);
+  ctx.fill();
+  ctx.save();
+  ctx.translate(pts[0][0], pts[0][1]);
+  ctx.scale(0.86, 0.86);
+  ctx.translate(-pts[0][0], -pts[0][1]);
+  ctx.fillStyle = fill;
+  smoothPath(ctx, pts);
+  ctx.fill();
+  ctx.restore();
+}
+function moonEye(ctx, x, y, r, shine, t) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.8);
+  g.addColorStop(0, `rgba(122,232,255,${(0.35 + shine * 0.35) * (0.7 + 0.3 * Math.sin(t * 2))})`);
+  g.addColorStop(1, 'rgba(122,232,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r * 2.8, y - r * 2.8, r * 5.6, r * 5.6);
+  ctx.restore();
+  ctx.fillStyle = '#d8e0ff';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.9, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#7ae8ff';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.78, r * 0.7, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#e8fcff';
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.1, y - r * 0.05, r * 0.45, r * 0.4, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#1a1a48';
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.22, y + r * 0.1, r * 0.26, r * 0.26, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(x - r * 0.3, y - r * 0.28, r * 0.15, 0, TAU);
+  ctx.fill();
+}
+// Stars glittering inside a wing (in its own coordinates), each twinkling in its own time.
+function wingStars(ctx, pts, t, seed) {
+  ctx.save();
+  smoothPath(ctx, pts);
+  ctx.clip();
+  for (let k = 0; k < 14; k++) {
+    const h = Math.sin(k * 12.9898 + seed * 78.233) * 43758.5453;
+    const u = h - Math.floor(h);
+    const v = (Math.sin(k * 7.13 + seed * 3.1) + 1) / 2;
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    const x = Math.min(...xs) + u * (Math.max(...xs) - Math.min(...xs));
+    const y = Math.min(...ys) + v * (Math.max(...ys) - Math.min(...ys));
+    const tw = 0.4 + 0.6 * Math.max(0, Math.sin(t * (1.5 + u * 2) + k * 1.7));
+    const r = (k % 4 === 0 ? 1.3 : 0.6) * tw;
+    ctx.fillStyle = k % 3 ? '#e8f0ff' : '#a8f0ff';
+    ctx.beginPath();
+    ctx.moveTo(x, y - r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.quadraticCurveTo(x, y, x, y + r);
+    ctx.quadraticCurveTo(x, y, x - r, y);
+    ctx.quadraticCurveTo(x, y, x, y - r);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function mothWings(ctx, x, y, f, s, open, shine, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(-f * s, s);
+  // (Shapes point straight back from the root; opening lowers them to a wide fan behind, closing
+  // raises them up together over the back, the way a resting moth's wings lift.)
+  const fore = [[0, 0], [5, -6], [14, -11], [24, -12.6], [31, -10], [33.6, -4], [30, 2], [21, 5], [10, 4]];
+  const hind = [[0, 2], [8, 3.6], [16, 7], [21, 12], [24, 19], [28, 26], [29.6, 31], [26.6, 32], [21.6, 26], [16, 19], [9, 13], [2, 7.6]];
+  const foreA = -(0.22 + (1 - open) * 0.95);
+  const hindA = -(0.18 + (1 - open) * 0.5);
+  const wing = (pts, a, fill, edge, eye, er, band, k = 1, fur = '#c8d4ff') => {
+    ctx.save();
+    ctx.rotate(a);
+    ctx.scale(k, k);
+    mothWing(ctx, pts, fill, edge, fur, t);
+    wingStars(ctx, pts, t, er + pts.length);
+    ctx.strokeStyle = 'rgba(150,170,255,0.35)';
+    ctx.lineWidth = 0.45;
+    ctx.beginPath();
+    for (const [vx, vy] of pts.filter((_, i) => i % 2 === 0 && i > 0)) {
+      ctx.moveTo(1, 0.5);
+      ctx.quadraticCurveTo(vx * 0.5, vy * 0.3, vx * 0.9, vy * 0.9);
+    }
+    ctx.stroke();
+    if (band) {
+      ctx.fillStyle = '#d8e0ff';
+      for (let i = 0; i < 6; i++) {
+        const u = (i + 0.5) / 6;
+        ctx.beginPath();
+        ctx.ellipse(6 + u * 22, -5.4 - u * 4.4, 1.4, 0.9, -0.2, 0, TAU);
+        ctx.fill();
+      }
+    }
+    if (eye) moonEye(ctx, eye[0], eye[1], er, shine, t);
+    ctx.restore();
+  };
+  // The far pair, a shade deeper, set up and behind.
+  ctx.save();
+  ctx.translate(2, -1.6);
+  wing(hind, hindA - 0.25, '#1a1c48', '#7a88d0', null, 0, false, 0.75, '#5a68b0');
+  wing(fore, foreA - 0.3, '#1e2052', '#7a88d0', null, 0, false, 1.2, '#5a68b0');
+  ctx.restore();
+  wing(hind, hindA, '#262a66', '#c8d4ff', [15, 12], 2.6, false, 0.75);
+  wing(fore, foreA, '#30347e', '#d8e2ff', [20, -3], 3.6, true, 1.2);
+  // A fluffy tuft of silver fur at the root, where the wings meet the back.
+  for (const [fx2, fy2, r, c] of [[0.6, -1.2, 3.2, '#c8d0f0'], [2.4, 0.8, 2.8, '#e8ecff'], [-0.8, 1.6, 2.6, '#e8ecff'], [1.6, -3, 2.2, '#ffffff'], [3.2, 2.8, 2, '#c8d0f0']]) {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(fx2 + Math.sin(t * 2 + r) * 0.2, fy2, r, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+// Each hero's wings, eased between their slow open-and-close at rest and folded back in motion.
+const MOTHS = new Map();
+function mothMem(key, t, target) {
+  let m = MOTHS.get(key);
+  if (!m) MOTHS.set(key, (m = { t, open: target }));
+  const dt = t - m.t;
+  m.t = t;
+  if (dt > 0 && dt < 0.25) m.open += (target - m.open) * Math.min(1, dt * 6);
+  return m;
+}
+// A little moth of light: wings beating (`beat` 0..1), glowing.
+function lightMoth(ctx, x, y, s, beat, a) {
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.fillStyle = 'rgba(170,240,255,0.9)';
+  const w = 0.3 + 0.7 * beat;
+  for (const sd of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(x + sd * 1.4 * s * w, y - 0.4 * s, 1.5 * s * w + 0.2, 1.2 * s, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 0.4 * s, 1 * s, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 // A water drop at (x, y): round below, pointed above, a glint.
 function drop(ctx, x, y, r, a) {
   if (a <= 0.01) return;
@@ -1404,6 +1599,154 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
       const hop = Math.abs(Math.sin(u * Math.PI * 2.4)) * (1 - u) * 12 * s;
       coin(ctx, px, y - 1.2 * s - hop, 1.1 * s, u * 20, u > 0.85 ? (1 - u) / 0.15 : 1);
       if (u > 0.82 && u < 0.9) star4(ctx, px, y - 2 * s, 2.4 * s, '#fff6d0', 0.9, '#ffcf4a');
+    }
+  }
+
+
+  // ---- The Moon Moth Empress ----
+  const moonSet = worn.sets.has('mothmoon');
+  // The full set: a full moon rises at your back, its glow wide and soft, little moths of light
+  // circling it.
+  if (moonSet) {
+    const [mx, my] = onHead(1, -13);
+    if (back) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, 40 * s);
+      g.addColorStop(0, 'rgba(255,248,220,0.35)');
+      g.addColorStop(0.45, 'rgba(220,210,255,0.16)');
+      g.addColorStop(1, 'rgba(200,190,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(mx - 40 * s, my - 40 * s, 80 * s, 80 * s);
+      ctx.restore();
+      const g2 = ctx.createRadialGradient(mx - 2 * s, my - 2 * s, 0, mx, my, 11 * s);
+      g2.addColorStop(0, 'rgba(255,250,232,0.8)');
+      g2.addColorStop(0.75, 'rgba(240,234,255,0.55)');
+      g2.addColorStop(1, 'rgba(240,234,255,0)');
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.arc(mx, my, 11 * s, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(220,210,200,0.35)';
+      for (const [dx, dy, r] of [[-3.4, -2, 2], [3, 3, 1.5], [2.4, -4, 1.1]]) {
+        ctx.beginPath();
+        ctx.arc(mx + dx * s, my + dy * s, r * s, 0, TAU);
+        ctx.fill();
+      }
+    }
+    for (let k = 0; k < 4; k++) {
+      const a2 = t * 0.6 + (k * TAU) / 4;
+      if (back !== Math.sin(a2) < 0) continue;
+      lightMoth(ctx, mx + Math.cos(a2) * 16 * s, my + Math.sin(a2) * 6 * s + Math.sin(t * 2 + k) * 2 * s, s, 0.5 + 0.5 * Math.sin(t * 16 + k), 0.9);
+    }
+  }
+  // The wings: slowly opening and closing at rest, folded back and fluttering on the move,
+  // beating hard in the air.
+  if (fx.has('mothwings') && back) {
+    const airborne = pose === 'jump' || pose === 'fall';
+    // (Settled, they rest half open and now and then break into a quick flutter, at moments of
+    // their own; walking, they're held back with a light shiver; in the air they beat hard.)
+    const m = mothMem(HEAD_POSE.key, t, airborne ? 0.55 : moving ? 0.32 : 0.7);
+    const slot = Math.floor(t / 3.4);
+    const h = Math.sin(slot * 12.9898 + (state.seed ?? 0) * 4.1) * 43758.5453;
+    const rnd = h - Math.floor(h);
+    const into = t - slot * 3.4 - rnd * 2.2;
+    const len = 0.3 + rnd * 0.3;
+    const burst = rnd > 0.4 && into > 0 && into < len ? Math.sin(Math.PI * Math.min(1, into / len)) : 0;
+    const flutter = airborne ? 0.42 * Math.sin(t * 30) : moving ? 0.1 * Math.sin(t * 26) : burst * 0.34 * Math.sin(t * 36) + 0.04 * Math.sin(t * 1.4);
+    const openNow = m.open + flutter;
+    const [wx, wy] = onBody(9.6, 26.8);
+    mothWings(ctx, wx, wy, f, s * 1.3, Math.max(0, Math.min(1, openNow)), moonSet ? 1 : 0.4, t);
+    // Moon dust shaken off the wing edges.
+    for (let k = 0; k < 4; k++) {
+      const u = (t * 0.5 + k / 4) % 1;
+      star4(ctx, wx - f * (16 + k * 8) * s - (moving ? f * u * 14 * s : 0), wy - (16 - k * 8) * s + u * 16 * s, (1 + burst * 0.8) * s * Math.sin(Math.PI * u), '#e8fcff', 0.85, '#7ae8ff');
+    }
+  }
+  // The antennae's moon pearls glow.
+  if (fx.has('antennae') && !back) {
+    const k = (hp?.hair ?? 0) * 0.8;
+    for (const [lx, d] of [[1.6 - k, 0], [29.4 - k * 0.6, 1]]) {
+      const [gx, gy] = onHead(lx, -2.6);
+      mote(ctx, gx, gy, 0.8 * s, '#e8fcff', '#7ae8ff', 0.75 + 0.25 * Math.sin(t * 2.6 + d * 2));
+    }
+  }
+  // The fur mane, alive: its tufts breathe softly in and out, every few seconds it fluffs up and
+  // gives a little shake, it ripples as you walk, and wisps of fluff drift off it.
+  if (fx.has('furmane') && !back) {
+    const cyc = (t % 5.2) / 5.2;
+    const fluff = cyc > 0.82 ? Math.sin(Math.PI * (cyc - 0.82) / 0.18) : 0;
+    const cols = ['#a8b4e0', '#d0d8f4', '#eef2ff'];
+    for (let i = 0; i < 11; i++) {
+      const lx = 6.2 + i * 1.88;
+      const ly = 29.6 + Math.sin((i / 10) * Math.PI) * 1.4;
+      const breath = 0.5 + 0.5 * Math.sin(t * 2.2 + i * 0.7);
+      const shake = fluff * Math.sin(t * 40 + i) * 0.5;
+      const ripple = moving ? Math.sin(t * 12 - i * 0.9) * 0.6 : 0;
+      const [px, py] = onBody(lx + shake, ly + ripple * 0.6 + breath * 0.25);
+      const r = (0.95 + breath * 0.18 + fluff * 0.45) * s;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = cols[i % 3];
+      ctx.beginPath();
+      ctx.ellipse(px, py, r * 1.1, r, 0, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.ellipse(px - r * 0.3, py - r * 0.35, r * 0.4, r * 0.25, 0, 0, TAU);
+      ctx.fill();
+    }
+    for (let k = 0; k < (moving ? 4 : 2); k++) {
+      const u = (t * (moving ? 0.9 : 0.35) + k / (moving ? 4 : 2)) % 1;
+      const [px, py] = onBody(8 + k * 5, 28);
+      ctx.globalAlpha = Math.sin(Math.PI * u) * 0.8;
+      ctx.fillStyle = '#eef2ff';
+      ctx.beginPath();
+      ctx.arc(px - f * u * (moving ? 22 : 6) * s + Math.sin(u * 7 + k) * 1.5 * s, py - u * 10 * s, (0.7 - u * 0.3) * s, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // Silver dust drifting down off the coattails.
+  if (fx.has('mothdust') && !back) {
+    for (let k = 0; k < 5; k++) {
+      const u = (t * 0.4 + k / 5) % 1;
+      const [px, py] = onBody(8 + k * 3.8, 44);
+      star4(ctx, px - (moving ? f * u * 18 * s : 0) + Math.sin(u * 6 + k) * 1.5 * s, py + u * 8 * s, 0.9 * s * Math.sin(Math.PI * u), '#e8f0ff', 0.8, '#7ae8ff');
+    }
+  }
+  if (fx.has('moonglow') && !back) {
+    const [hx, hy] = handAt();
+    mote(ctx, hx, hy, 0.6 * s, '#e8fcff', '#7ae8ff', 0.55 + 0.2 * Math.sin(t * 3));
+  }
+  // Moonsteps: a little crescent of light where you tread, fading; standing, a soft moon ripple.
+  if (fx.has('moonsteps') && back) {
+    if (moving) {
+      for (let k = 0; k < 3; k++) {
+        const age = ((t * 3) % 1) / 3 + k / 3;
+        const px = x - f * age * 24 * s + (k % 2 ? 3 : -3) * s;
+        ctx.globalAlpha = 0.7 * (1 - age);
+        ctx.strokeStyle = '#a8f0ff';
+        ctx.lineWidth = 0.7 * s;
+        ctx.beginPath();
+        ctx.ellipse(px, y - 0.2 * s, 2.4 * s, 0.7 * s, 0, 0.3, Math.PI - 0.3);
+        ctx.stroke();
+      }
+    } else {
+      const u = (t / 2.4) % 1;
+      ctx.globalAlpha = 0.4 * (1 - u);
+      ctx.strokeStyle = '#a8f0ff';
+      ctx.lineWidth = 0.5 * s;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 0.2 * s, (4 + u * 16) * s, (0.9 + u * 3) * s, 0, 0, TAU);
+      ctx.stroke();
+    }
+  }
+  if (fx.has('moondust') && !back) {
+    const u = (t / 3.3) % 1;
+    if (u < 0.18) {
+      const [gx, gy] = onHead(24, 19.6);
+      star4(ctx, gx, gy, 2.2 * Math.sin(Math.PI * (u / 0.18)) * s, '#e8fcff', 0.95, '#7ae8ff');
     }
   }
 

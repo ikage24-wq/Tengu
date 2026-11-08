@@ -673,6 +673,8 @@ Object.assign(MAPS, {
     // (Its plaza's centrepiece is the moon dial, a rune stone under a floating moon crystal.)
     id: 'grove', plaza: 1240, fountain: false, name: 'Moonleaf Grove', theme: 'grove', isTown: true, town: 'grove', job: 'mage', world: { x: 290, y: 122 },
     // The town stove, for cooking (data/cooking.js).
+    // The capsule machine stands in the Rune Garden under the Starchime Tower, by the root gate.
+    gacha: 2172,
     stove: 820,
     // The craft bench (data/crafting.js), on the plaza, under the moon tree's boughs.
     bench: 1000,

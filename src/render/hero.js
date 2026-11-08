@@ -24,7 +24,7 @@ import { drawGearFx } from './jobgear/live.js';
 import { paintFan } from './props.js';
 import { R, E, T, F, sprite, spriteBudgeted, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
-  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
+  topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
 import { weaponShapes, weaponFrames } from './weapons.js';
 import { toolShapes } from './tools.js';
@@ -1346,6 +1346,8 @@ function bodyShapes(look, g, rig) {
   shapes.push(...offset(armShapes(BACK_SHOULDER, rig.backArm[0], rig.backArm[1], sleeve, long, g, skin, rig.armSide), ux, uy));
   // Out of combat the weapon arm is part of the body too, so it has no outline across the torso.
   if (rig.armIn) shapes.push(...offset(armShapes(FRONT_SHOULDER, rig.frontArm[0], rig.frontArm[1], sleeve, long, g, skin, rig.armSide), ux, uy));
+  // Anything the top lays over the arms (a fur mane) goes on after them.
+  shapes.push(...offset(topOverShapes(top, m), ux, uy));
   // The head rides the squashed body, so it moves by the squashed bob.
   const head = offset(headShapes(look, g, rig), squashX(15.5 + ux) - 15.5 + rig.hx, uy * KY + rig.hy + NECK_LIFT);
   // The head (and the hair hanging from it) rolls about the neck.
