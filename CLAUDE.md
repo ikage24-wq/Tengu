@@ -260,6 +260,13 @@ lookups that can miss.
 
 ## Other standing rules
 
+- **Sounds come from the player's library (the player's standing rule, 2026-11-08).** Every new or
+  remade sound effect, voice and ambience is cut from the Sonniss bundles at
+  `C:\Users\admin\Desktop\claudeo` (tools/build-fight.py, build-voices.py, build-amb.py read it via
+  `SONNISS_ALL`), layered, pitched and levelled to match the game's other sounds, and credited in
+  assets/audio/SOURCES.md. Only when the library truly has nothing fitting (bows, footsteps) does a
+  sound keep its old recording; tuned musical notes stay as they are.
+
 - **Never check retired jobs (the player's standing rule, 2026-11-04).** Retired jobs (the ones in
   `RETIRED_JOBS` in `src/data/jobs.js`, the Ranger and Sniper, the old Spirit Mage, Shrine Maiden and
   Onmyoji designs, and any move, effect or code left only for them, such as `shotsOf` in
