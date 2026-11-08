@@ -12,6 +12,7 @@ export const BUBBLES = {
   molten: { name: 'Molten Bubble', fill: '#221a26', edge: '#ffcf4a', text: '#ffe6b0', deco: 'molten', machine: 'crag' },
   pricetag: { name: 'Price Tag Bubble', fill: '#fff6e0', edge: '#c8902e', text: '#5a2a3a', deco: 'pricetag', machine: 'coinbridge' },
   moonlit: { name: 'Moonlit Bubble', fill: '#1f2050', edge: '#7ae8ff', text: '#e8f4ff', deco: 'moonlit', machine: 'grove' },
+  koipond: { name: 'Koi Pond Bubble', fill: '#e8fbff', edge: '#4ac8e0', text: '#1f4a6a', deco: 'koipond', machine: 'lagoon' },
   logbook: { name: "Keeper's Logbook Bubble", fill: '#fbf2dc', edge: '#8a5a32', text: '#4a3420', deco: 'rope', machine: 'harbor' },
 };
 export const TAGS = {
@@ -23,6 +24,8 @@ export const TAGS = {
   ledgerseal: { name: 'Golden Ledger Seal', fill: '#5a2a6a', edge: '#ffcf4a', text: '#fff0c0', deco: 'ledger', machine: 'coinbridge', album: true },
   mothwing: { name: 'Moth Wing Tag', fill: '#2a2c6a', edge: '#a8b4f0', text: '#e8f4ff', deco: 'mothwing', machine: 'grove' },
   fullmoonseal: { name: 'Full Moon Seal', fill: '#2a2a5a', edge: '#e8e4ff', text: '#f4f0ff', deco: 'fullmoon', machine: 'grove', album: true },
+  koiswim: { name: 'Swimming Koi Tag', fill: '#1f6a8a', edge: '#ffcf4a', text: '#ffffff', deco: 'koiswim', machine: 'lagoon' },
+  dragonseal: { name: 'Gold Dragon Seal', fill: '#a8282a', edge: '#ffcf4a', text: '#fff6d0', deco: 'dragon', machine: 'lagoon', album: true },
   anchor: { name: 'Anchor Tag', fill: '#2e4a7a', edge: '#f4ecd8', text: '#ffffff', deco: 'anchor', machine: 'harbor' },
   beaconseal: { name: 'Beacon Seal Tag', fill: '#1f2f52', edge: '#ffd23f', text: '#fff3c4', deco: 'beacon', machine: 'harbor', album: true },
   springseal: { name: 'Spring Seal Tag', fill: '#ffe9a8', edge: '#c8962a', text: '#7a5212', deco: 'seal', machine: 'sprout', album: true },
@@ -32,6 +35,7 @@ export const DAMAGE = {
   hammerfall: { name: 'Hammerfall Numbers', fill: '#ffcf4a', edge: '#3a1408', crit: '#fff6d0', deco: 'hammerfall', machine: 'crag' },
   coinburst: { name: 'Coin Burst Numbers', fill: '#ffcf4a', edge: '#5a2a14', crit: '#ffffff', deco: 'coins', machine: 'coinbridge' },
   moondust: { name: 'Moon Dust Numbers', fill: '#e8f4ff', edge: '#1f2050', crit: '#7ae8ff', deco: 'moondust', machine: 'grove' },
+  koisplash: { name: 'Koi Splash Numbers', fill: '#ffffff', edge: '#e8402a', crit: '#ffcf4a', deco: 'koisplash', machine: 'lagoon' },
   beam: { name: 'Beacon Numbers', fill: '#fff3c4', edge: '#2e4a7a', crit: '#ffd23f', deco: 'beam', machine: 'harbor' },
 };
 export const SKIN_KINDS = { bubble: BUBBLES, tag: TAGS, dmg: DAMAGE };

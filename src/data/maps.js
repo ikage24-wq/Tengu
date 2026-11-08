@@ -732,6 +732,8 @@ Object.assign(MAPS, {
   lagoon: {
     id: 'lagoon', plaza: 1200, fountain: false, name: 'Lantern Lagoon', theme: 'harbor', isTown: true, town: 'lagoon', music: 'lagoon',
     // The noodle stall's stove, for cooking your catch (data/cooking.js).
+    // The capsule machine stands out on Lighthouse Point, at the cliff's end, looking out to sea.
+    gacha: 2330,
     stove: 1580,
     width: 2400, height: 760, groundY: 620,
     look: { sky: ['#ffb8a8', '#ffd8c0', '#fff0e0'], far: '#8fd8e0', mid: '#bfe8d8', midTrim: '#8fd0c0', skyline: 'lagoon', islands: 'planks', material: 'beach', propKeep: 0.75 },

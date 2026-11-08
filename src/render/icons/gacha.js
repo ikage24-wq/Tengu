@@ -49,3 +49,11 @@ ITEM_ART.look_gacha_moonmothwings_cape = () => [
   E(4.4, 4.6, 1.5, 1.4, '#d8e0ff'), E(4.4, 4.6, 1, 1, '#7ae8ff'), E(11.6, 4.6, 1.5, 1.4, '#d8e0ff'), E(11.6, 4.6, 1, 1, '#7ae8ff'), F(E(3, 7, 0.4, 0.4, '#e8f0ff')), F(E(13, 7.4, 0.4, 0.4, '#e8f0ff')), F(E(5, 12, 0.4, 0.4, '#e8f0ff')),
   R(7.4, 5, 1.2, 6, '#1a1a48'), E(8, 4.6, 0.9, 0.9, '#1a1a48'),
 ];
+
+// The Koi Stream: a loop of living water and its koi, red-and-white and gold.
+ITEM_ART.look_gacha_koistream_cape = () => [
+  E(8, 8.6, 7.2, 3.8, '#4ac8e0'), E(8, 8.6, 5.6, 2.4, '#bff4ff'), E(8, 8.6, 4.4, 1.4, '#4ac8e0'),
+  E(3.6, 6.6, 2.6, 1.3, '#fff6ee'), F(E(3.8, 6.4, 1, 0.7, '#e8402a')), E(1.2, 6.8, 1, 0.7, '#ffb08a'),
+  E(12.2, 11, 2.6, 1.3, '#ffcf4a'), F(E(12, 10.8, 1, 0.7, '#ffe9a0')), E(14.6, 10.8, 1, 0.7, '#ffe08a'),
+  F(E(10.4, 6, 0.6, 0.6, '#ffffff')), F(E(5.4, 11, 0.5, 0.5, '#ffffff')),
+];

@@ -11,6 +11,7 @@ export const GACHA_MACHINES = {
   crag: { name: 'Ember Crag Capsules', town: 'crag', set: 'Forge God', theme: 'The god of the forge: obsidian and gold, lava in the veins, a hammer that floats', colors: ['#2a2232', '#ffcf4a', '#ff5a1a'] },
   coinbridge: { name: 'Coinbridge Capsules', town: 'coinbridge', set: 'Wandering Peddler', theme: 'The legendary peddler of the far roads: a whole market on your back, and wonders in it', colors: ['#6a5a3a', '#ffcf4a', '#c8502a'] },
   grove: { name: 'Moonleaf Grove Capsules', town: 'grove', set: 'Moon Moth Empress', theme: 'The empress of the night moths: wings of moonlight, silver silk, a full moon at her back', colors: ['#2a2c6a', '#7ae8ff', '#e8f0ff'] },
+  lagoon: { name: 'Lantern Lagoon Capsules', town: 'lagoon', set: 'Koi Dragon Angler', theme: 'The angler who caught a dragon: koi scales, living water, a koi that becomes a dragon', colors: ['#e8402a', '#fff6ee', '#ffcf4a'] },
   harbor: { name: 'Pastel Harbor Capsules', town: 'harbor', set: 'Lighthouse Keeper', theme: 'Keeping the light on a stormy night: a beam, an oilskin, a lantern and a gull', colors: ['#e8484a', '#ffd23f', '#2e4a7a'] },
 };
 
@@ -50,6 +51,13 @@ export const GACHA_LOOKS = [
   { key: 'moonstepslippers', name: 'Moonstep Slippers', slot: 'shoes', machine: 'grove', rarity: 'common', color: '#e8e4f8', colors: false, fx: 'moonsteps' },
   { key: 'moondustblush', name: 'Moon-Dust Blush', slot: 'face', machine: 'grove', rarity: 'common', color: '#e8e4f8', colors: false, fx: 'moondust' },
   { key: 'moonmothwings', name: 'Moon Moth Wings', slot: 'cape', machine: 'grove', rarity: 'star', color: '#2a2c6a', colors: false, fx: 'mothwings' },
+  // Lantern Lagoon: the Koi Dragon Angler set.
+  { key: 'koifinclip', name: 'Koi Fin Clip', slot: 'hat', machine: 'lagoon', rarity: 'rare', color: '#ff8a5a', colors: false, fx: 'fin' },
+  { key: 'koiscalecoat', name: 'Koi Scale Coat', slot: 'top', machine: 'lagoon', rarity: 'rare', color: '#fff6ee', covers: ['bottom'], fx: 'scales' },
+  { key: 'koigauntlets', name: 'Koi Scale Gauntlets', slot: 'gloves', machine: 'lagoon', rarity: 'common', color: '#e8402a', colors: false },
+  { key: 'riverboots', name: 'Riverstone Boots', slot: 'shoes', machine: 'lagoon', rarity: 'common', color: '#1f2a4a', colors: false, fx: 'ripples2' },
+  { key: 'koiwhiskers', name: 'Koi Whisker Paint', slot: 'face', machine: 'lagoon', rarity: 'common', color: '#ffcf4a', colors: false, fx: 'whiskers' },
+  { key: 'koistream', name: 'The Koi Stream', slot: 'cape', machine: 'lagoon', rarity: 'star', color: '#4ac8e0', colors: false, fx: 'koistream' },
 ];
 
 // The rest of each machine's capsules (the fodder): cosmetic skins (data/cosmetics.js), each once,
@@ -80,6 +88,12 @@ export const GACHA_PRIZES = {
     { kind: 'dmg', key: 'moondust', rarity: 'rare' },
     { kind: 'bundle', key: 'moonbundle', name: 'Moonlit Bundle', rarity: 'common', items: [['silver_ore', 3], ['wisp_flame', 2], ['stardust', 1]] },
   ],
+  lagoon: [
+    { kind: 'bubble', key: 'koipond', rarity: 'common' },
+    { kind: 'tag', key: 'koiswim', rarity: 'common' },
+    { kind: 'dmg', key: 'koisplash', rarity: 'rare' },
+    { kind: 'bundle', key: 'koibundle', name: 'Koi Pond Bundle', rarity: 'common', items: [['sea_kelp', 4], ['sea_glass', 2], ['barnacle_shell', 1]] },
+  ],
   harbor: [
     { kind: 'bubble', key: 'logbook', rarity: 'common' },
     { kind: 'tag', key: 'anchor', rarity: 'common' },
@@ -90,7 +104,7 @@ export const GACHA_PRIZES = {
 
 // The capsule album (ui/album.js): a page for each machine, every look and skin in its slot. Fill
 // a page and it's sealed with this, a skin that only the album gives.
-export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, crag: { kind: 'tag', key: 'godseal' }, coinbridge: { kind: 'tag', key: 'ledgerseal' }, grove: { kind: 'tag', key: 'fullmoonseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
+export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, crag: { kind: 'tag', key: 'godseal' }, coinbridge: { kind: 'tag', key: 'ledgerseal' }, grove: { kind: 'tag', key: 'fullmoonseal' }, lagoon: { kind: 'tag', key: 'dragonseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
 
 // Wearing every piece of a machine's set.
 export const GACHA_SETS = {
@@ -98,5 +112,6 @@ export const GACHA_SETS = {
   crag: { name: 'Forge God', fx: 'forgegod', bonus: 'a molten rune circle at your feet, a storm of embers, and the hammer white-hot' },
   coinbridge: { name: 'Wandering Peddler', fx: 'peddlerglow', bonus: 'a coin hops out with every step, and standing still your wares light up and the sign comes out' },
   grove: { name: 'Moon Moth Empress', fx: 'mothmoon', bonus: 'a full moon rising at your back, moths of light circling it, and the wings shining' },
+  lagoon: { name: 'Koi Dragon Angler', fx: 'koidragon', bonus: 'now and then a koi leaps from your stream, becomes a little gold dragon and dives back in' },
   harbor: { name: 'Lighthouse Keeper', fx: 'keeperglow', bonus: 'sea fog rolling round your feet and a stronger, longer beam' },
 };

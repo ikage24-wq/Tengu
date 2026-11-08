@@ -210,8 +210,55 @@ function mothPair(ctx, x, y, b, d) {
   ctx.fill();
 }
 
+// A little koi at (x, y) heading `ang`, its tail waving.
+function tinyKoi(ctx, x, y, ang, s, body, patch, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.scale(s, s);
+  ctx.fillStyle = '#ffb08a';
+  ctx.beginPath();
+  ctx.ellipse(-2.6, Math.sin(t * 9) * 0.5, 1.2, 0.8, Math.sin(t * 9) * 0.4, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 2.2, 1, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = patch;
+  ctx.beginPath();
+  ctx.ellipse(0.3, -0.2, 0.9, 0.6, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#1a1a2a';
+  ctx.beginPath();
+  ctx.arc(1.5, -0.3, 0.2, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 // Round a chat bubble (bx, by, w, h): a blossom tucked on its corner, petals drifting off it.
 export function bubbleDeco(ctx, deco, bx, by, w, h, time) {
+  if (deco === 'koipond') {
+    // Two little koi swimming round the bubble's edge, a ripple and a bubble rising.
+    const per = 2 * (w + h);
+    for (let k = 0; k < 2; k++) {
+      let d = ((time * 18 + k * per * 0.5) % per + per) % per;
+      let x, y, a;
+      if (d < w) { x = bx + d; y = by - 0.5; a = 0; }
+      else if ((d -= w) < h) { x = bx + w + 0.5; y = by + d; a = Math.PI / 2; }
+      else if ((d -= h) < w) { x = bx + w - d; y = by + h + 0.5; a = Math.PI; }
+      else { d -= w; x = bx - 0.5; y = by + h - d; a = -Math.PI / 2; }
+      tinyKoi(ctx, x, y, a, 0.8, k ? '#ffcf4a' : '#fff6ee', '#e8402a', time + k);
+    }
+    const u = (time * 0.7) % 1;
+    ctx.save();
+    ctx.globalAlpha *= 1 - u;
+    ctx.strokeStyle = '#4ac8e0';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(bx + w - 3, by - 2 - u * 8, 0.8 + u, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+  }
   if (deco === 'moonlit') {
     // A crescent moon perched on its corner, glowing, and tiny stars twinkling round it.
     crescent(ctx, bx + w - 1, by + 0.5, 3.6, '#1f2050');
@@ -476,6 +523,42 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
     const u = (time / 4) % 1;
     if (u < 0.5) mothPair(ctx, x - 9 + u * 36, y - 4 + Math.sin(u * 20) * 1, 0.5 + 0.5 * Math.sin(time * 14), 1);
   }
+  if (skin.deco === 'koiswim') {
+    // A koi swims back and forth across the tag, a ripple where it turns.
+    const u = (time / 4) % 1;
+    const dir = u < 0.5 ? 1 : -1;
+    const v = u < 0.5 ? u * 2 : (1 - u) * 2;
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(left - 4, y - 4, w + 8, 18, 6);
+    ctx.clip();
+    tinyKoi(ctx, left - 2 + v * (w + 4), y - 1.4 + Math.sin(time * 3) * 0.6, dir > 0 ? 0 : Math.PI, 0.9, '#fff6ee', '#e8402a', time);
+    ctx.restore();
+  }
+  if (skin.deco === 'dragon') {
+    // A little gold dragon curled over the tag, its beaded body waving, its head bobbing.
+    for (let i = 8; i >= 0; i--) {
+      const bx = x - 8 + i * 2;
+      const by = y - 1.4 + Math.sin(time * 3 + i * 0.8) * 1.2;
+      ctx.fillStyle = i % 2 ? '#ffcf4a' : '#ffe08a';
+      ctx.beginPath();
+      ctx.arc(bx, by, 1.4 - Math.abs(i - 6) * 0.08, 0, TAU);
+      ctx.fill();
+    }
+    const hy = y - 2 + Math.sin(time * 3 + 8 * 0.8) * 1.2;
+    ctx.fillStyle = '#ffcf4a';
+    ctx.beginPath();
+    ctx.ellipse(x + 10, hy, 2, 1.5, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#e8402a';
+    ctx.beginPath();
+    ctx.arc(x + 9, hy - 1.4, 0.8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#1a1a2a';
+    ctx.beginPath();
+    ctx.arc(x + 10.6, hy - 0.3, 0.3, 0, TAU);
+    ctx.fill();
+  }
   if (skin.deco === 'seal') {
     // A shine sweeping across the gold now and then, and a wax seal pressed on its left end,
     // a sprout stamped in it.
@@ -526,6 +609,24 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
 
 // Over one of your damage numbers, skinned: petals bursting off it as it pops.
 export function numberDeco(ctx, deco, x, y, size, age) {
+  if (deco === 'koisplash' && age < 0.7) {
+    // A splash of water bursting off the number, and a little koi leaping over it.
+    const u = age / 0.7;
+    const cy = y - size * 0.35;
+    ctx.save();
+    ctx.globalAlpha *= 1 - u;
+    ctx.fillStyle = '#7ae0f0';
+    for (let k = 0; k < 6; k++) {
+      const a2 = -Math.PI * (0.1 + k * 0.16);
+      const d = size * (0.4 + u * 1.2);
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a2) * d, cy + Math.sin(a2) * d * 0.8 + u * u * size, 1.1, 0, TAU);
+      ctx.fill();
+    }
+    tinyKoi(ctx, x - size * 0.8 + u * size * 1.6, cy - Math.sin(Math.PI * u) * size * 0.9, Math.cos(Math.PI * u) * -0.8, 0.8, '#fff6ee', '#e8402a', age * 10);
+    ctx.restore();
+    return;
+  }
   if (deco === 'moondust' && age < 0.8) {
     // Silver moon dust spilling off the number as it rises, twinkling.
     ctx.save();

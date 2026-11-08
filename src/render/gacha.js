@@ -30,7 +30,9 @@ const CRAG = { id: 'crag', base: '#3a2e44', trim: '#ffcf4a', lid: '#ff7a2a', gem
 const COINBRIDGE = { id: 'coinbridge', base: '#8a5a3a', trim: '#ffcf4a', lid: '#5a7a5a', gem: '#c8502a', capsules: ['#ffcf4a', '#c8502a', '#5a7a5a', '#e0c070', '#fff0c0', '#8a5a3a'] };
 // Moonleaf Grove's: midnight blue and silver with cyan moonlight, capsules like the night sky.
 const GROVE = { id: 'grove', base: '#2a2c6a', trim: '#e0e4f0', lid: '#7ae8ff', gem: '#7ae8ff', capsules: ['#2a2c6a', '#7ae8ff', '#e8f0ff', '#4a54a8', '#fff6c0', '#a8b4f0'] };
-export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG, coinbridge: COINBRIDGE, grove: GROVE };
+// Lantern Lagoon's: deep pond teal with gold, red koi gems, capsules in koi colours.
+const LAGOON = { id: 'lagoon', base: '#1f6a8a', trim: '#ffcf4a', lid: '#e8402a', gem: '#e8402a', capsules: ['#e8402a', '#fff6ee', '#ffcf4a', '#4ac8e0', '#1a1a2a', '#ff9a7a'] };
+export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG, coinbridge: COINBRIDGE, grove: GROVE, lagoon: LAGOON };
 export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
 function machineArt(theme, crank) {
@@ -56,7 +58,12 @@ function machineArt(theme, crank) {
     }
     // The framed emblem: a big painted flower in a gold oval.
     out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
-    if (theme.id === 'grove') {
+    if (theme.id === 'lagoon') {
+      // Lantern Lagoon's: two koi, red and white, circling each other in a pond.
+      out.push(E(34, 87, 6.4, 6.4, '#4ac8e0'), E(34, 87, 5.4, 5.4, '#7ad8ec'));
+      out.push(E(31.6, 85.2, 2.6, 1.4, '#fff6ee'), F(E(31.4, 85, 1, 0.7, '#e8402a')), E(36.4, 88.8, 2.6, 1.4, '#e8402a'), F(E(36.6, 89, 1, 0.7, '#fff6ee')));
+      out.push(E(34.6, 84.4, 0.9, 0.6, '#ffb08a'), E(33.4, 89.6, 0.9, 0.6, '#ffb08a'));
+    } else if (theme.id === 'grove') {
       // Moonleaf Grove's: a moth spreading its wings across a full moon.
       out.push(E(34, 87, 6, 6, '#fff6c0'), E(32, 85.6, 1.4, 1.4, '#ece2c8'));
       out.push(T([[34, 87], [27.4, 81.6], [26.8, 86.4], [30.6, 88.4]], '#2a2c6a'), T([[34, 87], [40.6, 81.6], [41.2, 86.4], [37.4, 88.4]], '#2a2c6a'), F(E(29.4, 84.8, 1, 1, '#7ae8ff')), F(E(38.6, 84.8, 1, 1, '#7ae8ff')));
@@ -1117,6 +1124,198 @@ function lightMoth(ctx, x, y, s, beat, a) {
   ctx.restore();
 }
 
+// A koi at (x, y), heading along `ang`, `s` long-ish, in a pattern: a round body, a flowing tail
+// that waves, side fins, a white or gold belly sheen and its patches.
+const KOI_LOOKS = [
+  { body: '#fff6ee', patches: ['#e8402a', '#e8402a'], fin: '#ff8a6a' },
+  { body: '#ffcf4a', patches: ['#ffe9a0'], fin: '#ffb83a' },
+  { body: '#fff6ee', patches: ['#e8402a', '#1a1a2a'], fin: '#ff9a7a' },
+];
+function koi(ctx, x, y, ang, s, look, t, a = 1) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.scale(s, s);
+  // The spine: nine points from the nose back to the tail, a swimming wave running down it,
+  // stronger toward the tail.
+  const n = 9;
+  const W = [0.95, 1.38, 1.55, 1.5, 1.3, 1.04, 0.74, 0.48, 0.32];
+  const sp = [];
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1);
+    sp.push([3.6 - i * 0.86, Math.sin(t * 7.5 - i * 0.78) * 0.95 * Math.pow(0.12 + u, 1.4)]);
+  }
+  const nrm = (i) => {
+    const [ax, ay] = sp[Math.max(0, i - 1)];
+    const [bx, by] = sp[Math.min(n - 1, i + 1)];
+    const l = Math.hypot(bx - ax, by - ay) || 1;
+    return [(by - ay) / l, -(bx - ax) / l];
+  };
+  const upper = sp.map(([px, py], i) => { const [nx, ny] = nrm(i); return [px - nx * W[i], py - ny * W[i]]; });
+  const lower = sp.map(([px, py], i) => { const [nx, ny] = nrm(i); return [px + nx * W[i] * 0.92, py + ny * W[i] * 0.92]; });
+  const bodyPts = [[sp[0][0] + 1, sp[0][1]], ...lower, ...upper.slice().reverse()];
+  // The tail: two long flowing lobes, lagging behind the wave, with fine rays.
+  const [tx, ty] = sp[n - 1];
+  const [px0, py0] = sp[n - 2];
+  const dl = Math.hypot(tx - px0, ty - py0) || 1;
+  const d = [(tx - px0) / dl, (ty - py0) / dl];
+  const flow = Math.sin(t * 7.5 - n * 0.78 - 0.7) * 0.45;
+  const rot = (v, r) => [v[0] * Math.cos(r) - v[1] * Math.sin(r), v[0] * Math.sin(r) + v[1] * Math.cos(r)];
+  const tipU = rot(d, -0.62 + flow);
+  const tipL = rot(d, 0.62 + flow);
+  const midU = rot(d, -0.3 + flow * 0.6);
+  const midL = rot(d, 0.3 + flow * 0.6);
+  const tail = [[tx - d[1] * 0.3, ty + d[0] * 0.3], [tx + midU[0] * 1.6, ty + midU[1] * 1.6 - 0.2], [tx + tipU[0] * 3.9, ty + tipU[1] * 3.9], [tx + d[0] * 1.8, ty + d[1] * 1.8], [tx + tipL[0] * 3.9, ty + tipL[1] * 3.9], [tx + midL[0] * 1.6, ty + midL[1] * 1.6 + 0.2], [tx + d[1] * 0.3, ty - d[0] * 0.3]];
+  ctx.globalAlpha = a;
+  ctx.fillStyle = look.fin;
+  smoothPath(ctx, tail);
+  ctx.fill();
+  ctx.globalAlpha = a * 0.5;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 0.14;
+  ctx.beginPath();
+  for (const r of [-0.5, -0.2, 0.2, 0.5]) {
+    const v = rot(d, r + flow);
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx + v[0] * 3.4, ty + v[1] * 3.4);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = a;
+  // The side fins, rowing, and the dorsal fin along the back.
+  const fin = (i, sd, r0, len) => {
+    const [fx0, fy0] = sd < 0 ? upper[i] : lower[i];
+    const flap = Math.sin(t * 5 + (sd < 0 ? 0 : 1.4)) * 0.45;
+    ctx.save();
+    ctx.translate(fx0, fy0);
+    ctx.rotate(r0 + flap * sd);
+    ctx.fillStyle = look.fin;
+    ctx.globalAlpha = a * 0.85;
+    ctx.beginPath();
+    ctx.ellipse(-len * 0.5, 0, len * 0.6, len * 0.32, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  };
+  fin(2, 1, 0.7, 1.9);
+  fin(2, -1, -0.7, 1.6);
+  ctx.globalAlpha = a;
+  ctx.fillStyle = look.fin;
+  smoothPath(ctx, [upper[2], [upper[3][0], upper[3][1] - 0.9], [upper[4][0], upper[4][1] - 0.7], upper[5], upper[4], upper[3]]);
+  ctx.fill();
+  // The body.
+  ctx.fillStyle = look.body;
+  smoothPath(ctx, bodyPts);
+  ctx.fill();
+  ctx.save();
+  smoothPath(ctx, bodyPts);
+  ctx.clip();
+  // Its patches, a soft belly sheen, and rows of scales.
+  ctx.fillStyle = look.patches[0];
+  ctx.beginPath();
+  ctx.ellipse(sp[2][0], sp[2][1] - 0.5, 1.7, 1.1, 0.2, 0, TAU);
+  ctx.fill();
+  if (look.patches[1]) {
+    ctx.fillStyle = look.patches[1];
+    ctx.beginPath();
+    ctx.ellipse(sp[5][0], sp[5][1] - 0.4, 1.1, 0.8, -0.2, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = look.patches[0];
+  ctx.beginPath();
+  ctx.ellipse(sp[0][0] + 0.4, sp[0][1] - 0.6, 0.8, 0.5, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.beginPath();
+  for (let i = 1; i < 6; i++) ctx.ellipse(sp[i][0], sp[i][1] + W[i] * 0.55, 0.9, 0.35, 0, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(120,60,40,0.22)';
+  ctx.lineWidth = 0.12;
+  ctx.beginPath();
+  for (let i = 1; i < 7; i++) for (const off of [-0.6, 0, 0.6]) {
+    const [cx2, cy2] = sp[i];
+    ctx.moveTo(cx2 + 0.35, cy2 + off - 0.3);
+    ctx.quadraticCurveTo(cx2 - 0.15, cy2 + off, cx2 + 0.35, cy2 + off + 0.3);
+  }
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.beginPath();
+  ctx.ellipse(sp[1][0] - 0.4, sp[1][1] - 0.85, 1.6, 0.28, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  // The eye, its glint, and the barbels at the mouth.
+  ctx.fillStyle = '#1a1a2a';
+  ctx.beginPath();
+  ctx.arc(sp[0][0] + 0.3, sp[0][1] - 0.4, 0.3, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(sp[0][0] + 0.38, sp[0][1] - 0.5, 0.11, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = look.fin;
+  ctx.lineWidth = 0.16;
+  ctx.beginPath();
+  ctx.moveTo(sp[0][0] + 0.9, sp[0][1] + 0.2);
+  ctx.quadraticCurveTo(sp[0][0] + 1.5, sp[0][1] + 0.6 + Math.sin(t * 4) * 0.2, sp[0][0] + 1.3, sp[0][1] + 1.1);
+  ctx.stroke();
+  ctx.restore();
+}
+// A little gold dragon swimming through the air, its body a chain of round gold beads that waves
+// behind its head (`ang` its heading), a red mane, whiskers and two little horns.
+function goldDragon(ctx, x, y, ang, s, t, a = 1) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.scale(s, s);
+  for (let i = 9; i >= 0; i--) {
+    const bx = -i * 1.3;
+    const by = Math.sin(t * 8 - i * 0.7) * 1.2 * (i / 9);
+    const r = 1.4 - i * 0.08;
+    ctx.fillStyle = i % 2 ? '#ffcf4a' : '#ffe08a';
+    ctx.beginPath();
+    ctx.arc(bx, by, r, 0, TAU);
+    ctx.fill();
+    if (i % 3 === 1) {
+      ctx.fillStyle = '#e8402a';
+      ctx.beginPath();
+      ctx.ellipse(bx, by - r, 0.6, 0.5, 0, 0, TAU);
+      ctx.fill();
+    }
+  }
+  // The head, mane, horns, whiskers, eye.
+  ctx.fillStyle = '#ffcf4a';
+  ctx.beginPath();
+  ctx.ellipse(1.6, 0, 2, 1.5, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#e8402a';
+  for (const [mx, my] of [[0.2, -1.4], [-0.6, -0.8], [0.6, -1.9]]) {
+    ctx.beginPath();
+    ctx.arc(mx, my, 0.7, 0, TAU);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#fff6d0';
+  for (const sd of [-1, 0.4]) {
+    ctx.beginPath();
+    ctx.ellipse(1.2 + sd * 0.3, -1.6, 0.3, 0.9, -0.5, 0, TAU);
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#ffe08a';
+  ctx.lineWidth = 0.3;
+  ctx.beginPath();
+  ctx.moveTo(3.2, 0.2);
+  ctx.quadraticCurveTo(4.4, 0.8 + Math.sin(t * 6) * 0.4, 5, 0.2);
+  ctx.moveTo(3.2, 0.4);
+  ctx.quadraticCurveTo(4, 1.6, 4.6, 1.8 + Math.sin(t * 6 + 1) * 0.4);
+  ctx.stroke();
+  ctx.fillStyle = '#1a1a2a';
+  ctx.beginPath();
+  ctx.arc(2.2, -0.3, 0.3, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 // A water drop at (x, y): round below, pointed above, a glint.
 function drop(ctx, x, y, r, a) {
   if (a <= 0.01) return;
@@ -1747,6 +1946,172 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
     if (u < 0.18) {
       const [gx, gy] = onHead(24, 19.6);
       star4(ctx, gx, gy, 2.2 * Math.sin(Math.PI * (u / 0.18)) * s, '#e8fcff', 0.95, '#7ae8ff');
+    }
+  }
+
+
+  // ---- The Koi Dragon Angler ----
+  const koiSet = worn.sets.has('koidragon');
+  // The Koi Stream: a ribbon of living water looping round you, tilted, its far half behind you
+  // and its near half in front, light running along it, and three koi swimming its course.
+  if (fx.has('koistream')) {
+    const [cx, cy] = onBody(15.5, 31);
+    const rx = 27 * s;
+    const ry = 7 * s;
+    const tilt = -0.16;
+    const pt = (a) => [cx + Math.cos(a) * rx * Math.cos(tilt) - Math.sin(a) * ry * Math.sin(tilt) - (moving ? f * 3 * s : 0), cy + Math.cos(a) * rx * Math.sin(tilt) + Math.sin(a) * ry * Math.cos(tilt)];
+    // The ribbon: its near or far half as one smooth band of water, swelling and thinning as it
+    // flows, a bright highlight along its top, light streaming along it and foam at its edge.
+    const a0 = back ? Math.PI : 0;
+    const N = 36;
+    const mids = [];
+    const outer = [];
+    const inner = [];
+    for (let i = 0; i <= N; i++) {
+      const a = a0 + (i / N) * Math.PI;
+      const [px, py] = pt(a);
+      const [qx, qy] = pt(a + 0.02);
+      const l = Math.hypot(qx - px, qy - py) || 1;
+      const [nx, ny] = [-(qy - py) / l, (qx - px) / l];
+      const w = (2.1 + 0.55 * Math.sin(a * 3 - t * 2.4) + 0.35 * Math.sin(a * 7 + t * 3.1)) * s * (i === 0 || i === N ? 0.9 : 1);
+      mids.push([px, py]);
+      outer.push([px + nx * w, py + ny * w]);
+      inner.push([px - nx * w, py - ny * w]);
+    }
+    const band = [...outer, ...inner.reverse()];
+    ctx.globalAlpha = back ? 0.45 : 0.6;
+    ctx.fillStyle = '#3ab8d8';
+    ctx.beginPath();
+    band.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = back ? 0.35 : 0.5;
+    ctx.fillStyle = '#9ee8f8';
+    ctx.beginPath();
+    mids.forEach(([px, py], i) => (i ? ctx.lineTo(px, py - 0.5 * s) : ctx.moveTo(px, py - 0.5 * s)));
+    inner.forEach(([px, py]) => ctx.lineTo(px, py));
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = 0.55 * s;
+    ctx.lineCap = 'round';
+    ctx.setLineDash([3 * s, 4 * s]);
+    ctx.lineDashOffset = (moving ? -36 : -22) * t * s;
+    ctx.globalAlpha = back ? 0.5 : 0.85;
+    ctx.beginPath();
+    mids.forEach(([px, py], i) => (i ? ctx.lineTo(px, py - 0.9 * s) : ctx.moveTo(px, py - 0.9 * s)));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < N; i += 3) {
+      const k = Math.sin(i * 2.3 + t * 5);
+      if (k < 0.3) continue;
+      const [px, py] = outer[i];
+      ctx.globalAlpha = (k - 0.3) * (back ? 0.6 : 1);
+      ctx.beginPath();
+      ctx.arc(px, py, 0.45 * s, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    // Light running along the water.
+    for (let k = 0; k < 6; k++) {
+      const a = t * 1.4 + (k * TAU) / 6;
+      if (back !== Math.sin(a) < 0) continue;
+      const [px, py] = pt(a);
+      star4(ctx, px, py - 1 * s, 1.3 * s, '#ffffff', 0.85, '#7ae0f0');
+    }
+    // The koi.
+    for (let k = 0; k < 3; k++) {
+      const a = t * 0.9 + (k * TAU) / 3 + Math.sin(t * 0.7 + k * 2) * 0.25;
+      if (back !== Math.sin(a) < 0) continue;
+      // (A koi leaping out for the set bonus is drawn by itself, below.)
+      if (koiSet && k === 0 && ((t / 9) % 1) < 0.34) continue;
+      const [px, py] = pt(a);
+      const [qx, qy] = pt(a + 0.05);
+      koi(ctx, px, py - 0.4 * s, Math.atan2(qy - py, qx - px), s * 1.15, KOI_LOOKS[k], t * (1 + k * 0.12) + k * 1.7, 1);
+    }
+    // Bubbles rising off it now and then.
+    for (let k = 0; k < 3; k++) {
+      const u = (t * 0.6 + k / 3) % 1;
+      const a = k * 2.1 + 0.4;
+      if (back !== Math.sin(a) < 0) continue;
+      const [px, py] = pt(a);
+      ctx.globalAlpha = 0.8 * (1 - u);
+      ctx.strokeStyle = '#e8fbff';
+      ctx.lineWidth = 0.4 * s;
+      ctx.beginPath();
+      ctx.arc(px + Math.sin(u * 6) * s, py - u * 12 * s, (0.6 + u * 0.6) * s, 0, TAU);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // The full set: every nine seconds the first koi leaps from the stream in a great arc over
+    // your head, turns into a little gold dragon at the top, and dives back in with a splash.
+    if (koiSet && !back) {
+      const u = (t / 9) % 1;
+      if (u < 0.34) {
+        const v = u / 0.34;
+        const a0 = t * 0.9;
+        const [sx0, sy0] = pt(a0 - v * 0.6);
+        const [ex, ey] = pt(a0 + Math.PI * 0.95);
+        const hx = sx0 + (ex - sx0) * v;
+        const hy = sy0 + (ey - sy0) * v - Math.sin(Math.PI * v) * 54 * s;
+        const vy = (ey - sy0) - Math.cos(Math.PI * v) * Math.PI * 54 * s;
+        const ang = Math.atan2(vy, ex - sx0);
+        const dragon = Math.min(1, Math.max(0, (v - 0.3) / 0.15)) * Math.min(1, Math.max(0, (0.85 - v) / 0.12));
+        koi(ctx, hx, hy, ang, s * 1.2, KOI_LOOKS[0], t, 1 - dragon);
+        goldDragon(ctx, hx, hy, ang, s * 1.2, t, dragon);
+        if (dragon > 0.1 && dragon < 0.9) for (let j = 0; j < 6; j++) star4(ctx, hx + Math.cos(j) * 6 * s, hy + Math.sin(j * 1.7) * 5 * s, 1.6 * s * Math.sin(Math.PI * dragon), '#fff6d0', 0.9, '#ffcf4a');
+        for (const [ux, uy, w] of [[sx0, sy0, v], [ex, ey, (v - 0.85) / 0.15]]) {
+          if (w <= 0 || w >= 1) continue;
+          ctx.globalAlpha = 1 - w;
+          ctx.strokeStyle = '#e8fbff';
+          ctx.lineWidth = 0.6 * s;
+          ctx.beginPath();
+          ctx.ellipse(ux, uy, (2 + w * 8) * s, (0.8 + w * 2.6) * s, 0, 0, TAU);
+          ctx.stroke();
+          for (let j = 0; j < 5; j++) drop(ctx, ux + (j - 2) * 2 * s, uy - Math.sin(Math.PI * w) * (4 + (j % 2) * 3) * s, 0.6 * s, 1 - w);
+        }
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+  // The fin clip's droplet bead glints.
+  if (fx.has('fin') && !back) {
+    const u = (t / 2.8) % 1;
+    if (u < 0.2) {
+      const [gx, gy] = onHead(24.6 + (hp?.hair ?? 0) * 0.5, 14.4);
+      star4(ctx, gx, gy, 2.2 * Math.sin(Math.PI * (u / 0.2)) * s, '#ffffff', 0.95, '#7ae0f0');
+    }
+  }
+  // The scales shimmer: a soft band of light sliding across the coat.
+  if (fx.has('scales') && !back) {
+    const u = (t / 3.4) % 1;
+    if (u < 0.4) {
+      for (let k = 0; k < 4; k++) {
+        const [px, py] = onBody(10 + (u / 0.4) * 12, 28.6 + k * 1.8);
+        mote(ctx, px, py, 0.6 * s, '#ffffff', '#ffcf4a', Math.sin(Math.PI * (u / 0.4)) * 0.7);
+      }
+    }
+  }
+  // The boots ring the ground with water as you step; standing, a ripple now and then.
+  if (fx.has('ripples2') && back) {
+    const u = moving ? (t * 3) % 1 : (t / 2.6) % 1;
+    const px = moving ? x - f * u * 10 * s : x;
+    ctx.globalAlpha = 0.6 * (1 - u);
+    ctx.strokeStyle = '#7ae0f0';
+    ctx.lineWidth = 0.5 * s;
+    ctx.beginPath();
+    ctx.ellipse(px, y - 0.2 * s, (2 + u * (moving ? 6 : 12)) * s, (0.6 + u * 2) * s, 0, 0, TAU);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  // The whiskers catch the light.
+  if (fx.has('whiskers') && !back) {
+    for (const [k, lx] of [[0, 6.6], [1, 24.4]]) {
+      const u = (t / 3.2 + k * 0.5) % 1;
+      if (u > 0.16) continue;
+      const [gx, gy] = onHead(lx, 22.6);
+      star4(ctx, gx, gy, 2 * Math.sin(Math.PI * (u / 0.16)) * s, '#fff6d0', 0.95, '#ffcf4a');
     }
   }
 

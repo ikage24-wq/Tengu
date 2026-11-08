@@ -55,6 +55,24 @@ const MOTH_L = '#4a54a8';
 const MOTH_D = '#1a1a48';
 const CYAN = '#7ae8ff';
 const CYAN_L = '#e8fcff';
+const KOI_R = '#e8402a';
+const KOI_RD = '#b82a1e';
+const KOI_W = '#fff6ee';
+const KOI_G = '#ffcf4a';
+const KOI_K = '#1a1a2a';
+// A chain of little round beads along a curve from (x0, y0) through (cx, cy) to (x1, y1): a
+// smooth stroke with no corners, thinning to its end.
+function beadCurve(x0, y0, cx, cy, x1, y1, w, c, n = 9) {
+  const out = [];
+  for (let i = 0; i <= n; i++) {
+    const u = i / n;
+    const x = (1 - u) ** 2 * x0 + 2 * (1 - u) * u * cx + u * u * x1;
+    const y = (1 - u) ** 2 * y0 + 2 * (1 - u) * u * cy + u * u * y1;
+    const r = w * (1 - u * 0.55);
+    out.push(E(x, y, r, r, c));
+  }
+  return out;
+}
 const SILVER = '#e0e4f0';
 const SILVER_D = '#a8acc8';
 const FLUFF = '#fffaf2';
@@ -767,6 +785,99 @@ const D = {
   moonmothwings: {
     capeFront: () => [F(E(10.6, 27.6, 1, 1, SILVER)), F(E(10.6, 27.6, 0.5, 0.5, CYAN))],
   },
+
+  // ---- Lantern Lagoon: the Koi Dragon Angler set ----
+
+  // A hair clip of a koi's fin at the temple: rounded rays fanning out, red shading to white at
+  // their tips, a gold pearl at its root and a droplet bead hanging from it; it sways as you go.
+  koifinclip: {
+    hat: (p, m) => {
+      const k = m.hair * 0.6;
+      const out = [];
+      const rays = [[-60, '#ffb08a'], [-25, KOI_R], [10, '#ff7a5a'], [45, KOI_R], [80, '#ffb08a']];
+      for (const [a, c] of rays) {
+        const r = ((a + k * 12) * Math.PI) / 180;
+        const [dx, dy] = [Math.cos(r), -Math.sin(r)];
+        out.push(E(24.4 + dx * 2.6, 9.4 + dy * 2.6 - 1, 2.2, 1.4, c), E(24.4 + dx * 4, 9.4 + dy * 4 - 1, 1.3, 1, KOI_W));
+      }
+      out.push(E(24.4, 9.2, 1.4, 1.4, KOI_G), F(E(24, 8.8, 0.45, 0.45, WHITE)));
+      const bx = 24.6 + k * 0.8;
+      out.push(...beadCurve(24.4, 10.6, 24.6, 12, bx, 13.4, 0.25, '#c8a060', 4), E(bx, 14.6, 0.9, 1.1, '#bff0ff'), F(E(bx - 0.3, 14.2, 0.3, 0.3, WHITE)));
+      return out;
+    },
+  },
+
+  // A coat of koi scales: white, with red patches like a kohaku koi and a gold one, the scales
+  // drawn in soft rows, a red mandarin collar edged in gold, round gold frog buttons and a red
+  // sash; behind, long coattails shaped like a koi's flowing tail fins over black trousers.
+  koiscalecoat: {
+    top: (p) => {
+      const body = torsoPts();
+      const out = [T(body, KOI_W)];
+      // The scales: soft rows of little arcs.
+      for (let r = 0; r < 4; r++) for (let j = 0; j < 5; j++) out.push(F(E(10.6 + j * 2.4 + (r % 2) * 1.2, 29 + r * 1.6, 1.1, 0.7, '#f4e4dc')));
+      // The koi patches.
+      out.push(F(E(11.4, 30.4, 2, 2.4, KOI_R)), F(E(19.8, 32.6, 2, 2.2, KOI_R)), F(E(18.8, 29.4, 1.2, 1, KOI_G)), F(E(12.2, 34, 1.1, 0.9, KOI_R)));
+      // The collar, the frogging, the sash.
+      out.push(E(12.6, 26.8, 2, 1.2, KOI_R), E(18.4, 26.8, 2, 1.2, KOI_R), F(E(12.6, 26.4, 1.8, 0.35, KOI_G)), F(E(18.4, 26.4, 1.8, 0.35, KOI_G)));
+      for (const y of [29.6, 31.4, 33.2]) out.push(F(E(MID - 1.1, y, 0.7, 0.45, KOI_G)), F(E(MID + 1.1, y, 0.7, 0.45, KOI_G)), F(E(MID, y, 0.4, 0.4, KOI_RD)));
+      out.push(band(body, 34.4, 35.8, KOI_R), F(E(MID + 2, 35.1, 0.9, 0.8, KOI_G)));
+      return out;
+    },
+    sleeve: () => KOI_W,
+    skirt: (p, m) => {
+      const s2 = m.sway * 0.6;
+      const out = [];
+      // The tail-fin coattails: two great rounded lobes, red to white, with soft ray lines.
+      for (const [x, len, c, k] of [[9.6, 46.6, KOI_R, 1], [12.4, 45, '#ff7a5a', 0.75]]) {
+        const sw = s2 * k;
+        out.push(E(x + sw * 0.6, 39.4, 2.4, 4.4, c), E(x - 0.8 + sw, len - 2.4, 2.6, 2.8, c), E(x + 1.8 + sw, len - 3.2, 2.2, 2.4, '#ff9a7a'));
+        out.push(F(E(x - 0.8 + sw, len - 1.4, 1.8, 1.4, KOI_W)), F(E(x + 1.8 + sw, len - 2.2, 1.4, 1.1, KOI_W)));
+        for (const dx of [-1, 0, 1]) out.push(F(E(x + dx * 0.9 + sw * 0.7, 41.6, 0.25, 2.4, '#fff0e6')));
+      }
+      // The short front, its gold hem.
+      out.push(E(MID + 1.8, 36.4, 6.6, 2, KOI_W), F(E(MID + 1.8, 37.8, 6.4, 0.6, KOI_G)), F(E(18.6, 36.4, 1.4, 1, KOI_R)));
+      return out;
+    },
+    legs: () => ({ top: KOI_K, low: KOI_K, pad: null }),
+  },
+
+  // Gauntlets of red koi scale, a gold rim and a rounded fin flaring at the wrist.
+  koigauntlets: {
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const wx = hx - ux * 2.4;
+      const wy = hy - uy * 2.4;
+      return [
+        E(wx - uy * 1.9 - ux * 0.6, wy + ux * 1.9 - uy * 0.6, 1.6, 1.1, '#ff9a7a'), F(E(wx - uy * 2.4 - ux * 1, wy + ux * 2.4 - uy * 1, 0.9, 0.6, KOI_W)),
+        E(hx, hy, 2.2, 2.2, KOI_R), F(E(hx - uy * 0.6 - ux * 0.3, hy + ux * 0.6 - uy * 0.3, 0.8, 0.6, '#ff7a5a')), F(E(hx + uy * 0.6, hy - ux * 0.6, 0.7, 0.5, '#ff7a5a')),
+        E(wx, wy, 2, 2, KOI_G), E(wx + ux * 0.4, wy + uy * 0.4, 1.7, 1.7, KOI_R),
+      ];
+    },
+  },
+
+  // Riverstone boots: black, smooth, a red stripe above the sole and a gold koi fin flaring at the ankle.
+  riverboots: {
+    shoe: (p, k) => [
+      k.poly([[-3.2, 3.6], [-3.4, -3.4], [1.6, -3.4], [2, 0.2], [4.8, 0.8], [6.2, 2.2], [6, 3.6]], k.tint(KOI_K)),
+      k.poly([[-3.4, 2.6], [6.1, 2.6], [6, 3.4], [-3.3, 3.4]], k.tint(KOI_R)),
+      k.poly([[-3.3, 3.4], [6, 3.4], [5.8, 4.4], [-3.1, 4.4]], k.tint('#3a3a4a')),
+      k.dot(-3.6, -2, 1.6, k.tint(KOI_G)), k.dot(-4.2, -0.8, 1.1, k.tint('#ffe08a')),
+      k.dot(-1.2, -1.4, 0.5, k.tint('#3a3a5a')),
+    ],
+  },
+
+  // Gold koi whiskers painted on the cheeks: two soft curving strokes each side, all round beads.
+  koiwhiskers: {
+    hat: () => [
+      ...beadCurve(8.6, 21.2, 6.4, 21.8, 5, 23.6, 0.36, KOI_G, 8), ...beadCurve(8.8, 22.2, 7.2, 23.4, 6.6, 25, 0.3, KOI_G, 7),
+      ...beadCurve(22.4, 21.2, 24.6, 21.8, 26, 23.6, 0.36, KOI_G, 8), ...beadCurve(22.2, 22.2, 23.8, 23.4, 24.4, 25, 0.3, KOI_G, 7),
+    ],
+  },
+
+  // The star prize: the Koi Stream is drawn live, looping round you (render/gacha.js).
+  koistream: {},
 };
 
 // ---------- The job-module interface ----------
