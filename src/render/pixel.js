@@ -137,9 +137,8 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     return id;
   };
   const grid = new Int32Array(gw * gh).fill(EMPTY);
-  const flat = new Uint8Array(gw * gh);
-  const cast = new Uint8Array(gw * gh);
-  const lit = new Uint8Array(gw * gh);
+  // Each cell's flags in one byte: 1 flat (F), 2 casts a shadow (C), 4 lit (L).
+  const meta = new Uint8Array(gw * gh);
   const at = (v) => Math.round((v + pad) * res);
   // A shape may name its own outline colour (`line`), for bright marks such as sparkles and
   // glints, whose automatic darkened line would turn grey; it applies to every cell of that colour.
@@ -152,19 +151,16 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
     if (!s) continue;
     const id = s.c === 'none' ? NONE : idOf(s.c.startsWith('#') ? s.c : palette[s.c] ?? '#ff00ff');
     if (s.line && id >= 0) lineOf.set(id, s.line);
-    const f = s.f ? 1 : 0;
-    const cs = s.cast ? 1 : 0;
-    const ls = s.lit ? 1 : 0;
+    const m = (s.f ? 1 : 0) | (s.cast ? 2 : 0) | (s.lit ? 4 : 0);
+    // (A run of cells filled at once.)
     const span = (y, x0, x1) => {
       if (y < 0 || y >= gh) return;
       const a = Math.max(0, x0);
       const b = Math.min(gw - 1, x1);
-      for (let x = a, i = y * gw + a; x <= b; x++, i++) {
-        grid[i] = id;
-        flat[i] = f;
-        cast[i] = cs;
-        lit[i] = ls;
-      }
+      if (b < a) return;
+      const row = y * gw;
+      grid.fill(id, row + a, row + b + 1);
+      meta.fill(m, row + a, row + b + 1);
     };
     if (s.t === 'r') {
       for (let y = at(s.y); y < at(s.y + s.h); y++) span(y, at(s.x), at(s.x + s.w) - 1);
@@ -243,7 +239,7 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
       while (x < gw) {
         const i = y * gw + x;
         const c = grid[i];
-        if (c < 0 || flat[i]) {
+        if (c < 0 || meta[i] & 1) {
           x++;
           continue;
         }
@@ -255,9 +251,9 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         while (end < gw) {
           const k = y * gw + end;
           if (grid[k] === c) end++;
-          else if (flat[k] && grid[k] >= 0) {
+          else if (meta[k] & 1 && grid[k] >= 0) {
             let j = end;
-            while (j < gw && j - end <= gap && flat[y * gw + j] && grid[y * gw + j] >= 0 && grid[y * gw + j] !== c) j++;
+            while (j < gw && j - end <= gap && meta[y * gw + j] & 1 && grid[y * gw + j] >= 0 && grid[y * gw + j] !== c) j++;
             if (j < gw && grid[y * gw + j] === c && j - end <= gap) end = j;
             else if (!light) end = j;
             else break;
@@ -279,22 +275,26 @@ function rasterize(w, h, shapes, res = 1, soft = false, palette = {}, crisp = fa
         x = end;
       }
     }
-    const behind = light && edge ? (x, y) => x < at(edge[0] + (edge[1] - edge[0]) * (y / gh)) : () => false;
+    // (The back line's place on each row, worked out once per row.)
+    const useEdge = light && edge;
     for (let y = 0; y < gh; y++) {
+      const edgeX = useEdge ? at(edge[0] + (edge[1] - edge[0]) * (y / gh)) : -Infinity;
       for (let x = 0; x < gw; x++) {
         const i = y * gw + x;
         const c = grid[i];
-        if (c < 0 || flat[i]) continue;
-        let shadow = !lit[i] && (shaded[i] === 1 || behind(x, y));
-        for (let k = 1; k <= under && !shadow && !lit[i]; k++) shadow = y + k >= gh || grid[i + k * gw] < 0;
-        if (!cast[i]) {
+        const mi = meta[i];
+        if (c < 0 || mi & 1) continue;
+        const isLit = mi & 4;
+        let shadow = !isLit && (shaded[i] === 1 || x < edgeX);
+        for (let k = 1; k <= under && !shadow && !isLit; k++) shadow = y + k >= gh || grid[i + k * gw] < 0;
+        if (!(mi & 2)) {
           for (let k = 1; k <= castBand && !shadow && y - k >= 0; k++) {
             const a = i - k * gw;
-            shadow = cast[a] === 1 && grid[a] !== c;
+            shadow = (meta[a] & 2) !== 0 && grid[a] !== c;
           }
         }
         if (shadow) out[i] = tone(c);
-        else if (!lit[i] && shaded[i] === 2) out[i] = toned(bright, c, lightTone);
+        else if (!isLit && shaded[i] === 2) out[i] = toned(bright, c, lightTone);
       }
     }
     // The rim light (the light pass): a warm edge of light along the top and front of the upper
@@ -505,6 +505,27 @@ const budget = { frame: 0, at: -1, ms: 0 };
 const lastOf = new Map();
 export function nextFrame() {
   budget.frame++;
+  // Sprites asked for ahead of time go to the worker a few at a time.
+  const w = warmQ.length ? workerOf() : null;
+  while (w && warmQ.length && pending.size < 24) {
+    const [key, job] = warmQ.shift();
+    if (cache.has(key) || pending.has(key) || failed.has(key)) continue;
+    try {
+      w.postMessage({ key, job, scale: gfx.scale });
+      pending.set(key, true);
+    } catch {
+      failed.add(key);
+    }
+  }
+}
+
+// A sprite that will be wanted soon (the rest of a passer-by's walk cycle): painted by the worker
+// in the background, so it's ready by the time it's needed. Newest asks first; old ones drop.
+const warmQ = [];
+export function spriteSoon(key, job) {
+  if (gfx.zoom !== 1 || cache.has(key) || pending.has(key)) return;
+  warmQ.push([key, job]);
+  if (warmQ.length > 480) warmQ.shift();
 }
 export function spriteBudgeted(key, build, slot) {
   if (budget.at !== budget.frame) {
@@ -570,7 +591,7 @@ function workerOf() {
           pending.delete(d.key);
           // (One the worker couldn't draw is drawn on the spot next time: spriteAsync.)
           if (!d.data) failed.add(d.key);
-          if (d.scale !== gfx.scale || !d.data) return;
+          if (d.scale !== gfx.scale || !d.data || cache.has(d.key)) return;
           const canvas = document.createElement('canvas');
           canvas.width = d.gw;
           canvas.height = d.gh;

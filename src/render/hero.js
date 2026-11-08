@@ -22,7 +22,7 @@ import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { paintFan } from './props.js';
-import { R, E, T, F, sprite, spriteBudgeted, spriteAsync, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
+import { R, E, T, F, sprite, spriteBudgeted, spriteSoon, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
@@ -1498,6 +1498,8 @@ const CLIMB_CYCLE = 36;
 // steps) and the hips sink when the feet are spread; running, only 24%, so there's a moment with
 // both feet off the ground after every push-off, and the hips compress through each stance.
 const WALK_FRAMES = 24;
+// (Which passers-by's walk cycles have been sent to be painted ahead: paintHero.)
+const warmed = new Set();
 const LEG = THIGH + SHIN;
 const REST_LEG = ANKLE_Y - HIP_Y;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -2960,7 +2962,10 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const trim = PATH_TRIMS[state.job];
   if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
   // The body acts out the mood: the expression, or worn out at low health.
-  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, anim, mv);
+  const mine = state.urgent || state.preview;
+  // (The crowd walks at two speeds, a stroll and a run, so its walk is one set of frames for each.)
+  const crowdAnim = !mine && anim && anim.gait != null ? { ...anim, gait: anim.gait < 0.5 ? 0 : 1 } : anim;
+  const rig = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, crowdAnim, mv);
   // A choreographed pose overrides the rig (boss dances).
   if (state.rig) Object.assign(rig, state.rig);
   // A dance pose can lift the front arm over the head (drawn on top, like an attack arm).
@@ -2986,25 +2991,46 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const shouldered = HEFTED.has(g.weapon?.type) && !attack && over == null && !state.ready && !idleW && rig.view !== 'back' && !state.rig;
   if (shouldered) rig.frontArm = [rig.frontArm[0] + 1, rig.frontArm[1] - 5];
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
-  // The hair's and cape's spring settle on half-pixel steps, so the same few poses come round
-  // again and are drawn from the cache instead of being painted afresh each frame (a step that
-  // small doesn't show).
-  {
-    const half = (v) => Math.round(v * 2) / 2;
-    rig.hair = half(rig.hair);
-    rig.hairTip = half(rig.hairTip);
-    rig.hairLift = half(rig.hairLift);
-    rig.hairWave = half(rig.hairWave);
-    rig.cape = half(rig.cape);
+  // Only for the crowd: you, and the previews (the shop, the bag, the creator), stay exact and
+  // are drawn on the spot.
+  if (!mine) {
+    // (The crowd runs on a fixed set of frames, like a sprite sheet: springs in whole pixels, and
+    // the breeze down the hair keeps time with the walk cycle, so a walk is the same 24 pictures
+    // over and over, painted once and reused.)
+    rig.hair = Math.round(rig.hair);
+    rig.hairTip = Math.round(rig.hairTip);
+    rig.hairLift = Math.round(rig.hairLift);
+    rig.cape = Math.round(rig.cape);
+    if (rig.capeRoot != null) rig.capeRoot = Math.round(rig.capeRoot);
+    if (pose === 'walk' && anim) rig.hairWave = Math.floor((Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / 2) % 12;
   }
   const lookKey = JSON.stringify(look);
   const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
   const bodyKey = `hero|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
   // (Taller than the figure: floor-length hair hangs past its feet, and was sliced off flat.)
   const buildBody = () => heroBodySpec(look, g, rig);
-  // (A new pose is painted off the main thread by the sprite worker, the last pose standing in
-  // for the frame until it's ready; only someone seen for the first time is drawn on the spot.)
-  const body = spriteAsync(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`, () => ({ kind: 'hero', look, g, rig, light: LIGHT }));
+  // (The crowd is drawn within the frame's budget, the last pose standing in only when it's spent;
+  // its walks are painted ahead, below, so its legs never trail behind its steps.)
+  const body = mine ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
+  // Someone in the crowd starting a walk: the rest of the walk cycle, as it will look with their
+  // hair and cape as they are now, is painted in the background so every step is ready in time.
+  if (!mine && pose === 'walk' && crowdAnim && !attack) {
+    const sig = `${lookKey}|${gk}|${crowdAnim.gait}|${rig.hair},${rig.hairTip},${rig.hairLift},${rig.cape},${rig.capeRoot},${rig.eyes},${rig.flap ? 1 : 0},${rig.mouth}|${JSON.stringify(rig.face)}|${JSON.stringify(state.rig ?? null)}`;
+    if (!warmed.has(sig)) {
+      warmed.add(sig);
+      if (warmed.size > 3000) warmed.clear();
+      for (let i = 1; i < WALK_FRAMES; i++) {
+        const f = (Math.round(walkPhase(crowdAnim) * WALK_FRAMES) + i) % WALK_FRAMES;
+        const r = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, { ...crowdAnim, phase: f / WALK_FRAMES }, mv);
+        if (state.rig) Object.assign(r, state.rig);
+        r.armIn = rig.armIn;
+        if (shouldered) r.frontArm = [r.frontArm[0] + 1, r.frontArm[1] - 5];
+        for (const k of ['face', 'hair', 'hairTip', 'hairLift', 'cape', 'capeRoot', 'eyes', 'flap', 'mouth']) r[k] = rig[k];
+        r.hairWave = Math.floor(f / 2) % 12;
+        spriteSoon(`hero|${lookKey}|${gk}|${rigKey(r)}|${LIGHT}`, { kind: 'hero', look, g, rig: r, light: LIGHT });
+      }
+    }
+  }
 
   const flip = facing < 0;
   const left = x - (W / 2) * scale;

@@ -443,9 +443,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   // A mount hiding on the map until it's found (its `finds`): it idles there, a sparkle over it.
   for (const f of world.map.finds ?? []) {
     if (!f.mount || world.char.mounts?.includes(f.mount)) continue;
-    const fx = Math.round(f.x - cam.x);
+    const fx = f.x - cam.x;
     if (fx < -60 || fx > VIEW_W + 60) continue;
-    drawMount(ctx, f, f.mount, fx, Math.round(f.y - cam.y), time, { facing: -1 });
+    drawMount(ctx, f, f.mount, fx, f.y - cam.y, time, { facing: -1 });
     const tw = (Math.sin(time * 3 + f.x) + 1) / 2;
     ctx.save();
     ctx.globalAlpha = 0.5 + tw * 0.5;
@@ -937,8 +937,8 @@ function drawDateBuddy(ctx, world, cam, time) {
   const d = world.date;
   const npc = NPCS[d.id];
   const bd = d.buddy;
-  const x = Math.round(bd.x - cam.x);
-  const y = Math.round(bd.y - cam.y);
+  const x = bd.x - cam.x;
+  const y = bd.y - cam.y;
   footShadow(ctx, x, y, 12);
   if (d.kind === 'ride' && world.riding) {
     drawMount(ctx, bd, 'bun', x, y, world.now, { facing: bd.facing, speed: Math.min(1, Math.abs(bd.vx) / 160) }, { look: npc.look });

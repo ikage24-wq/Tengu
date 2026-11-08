@@ -4892,8 +4892,8 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
 
 function drawLedges(ctx, t, theme, map, cam, width, height, time) {
   for (const [pi, p] of map.platforms.entries()) {
-    const x = Math.round(p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x);
-    const y = Math.round(p.y - cam.y);
+    const x = p.x + (p.drift ? driftOffset(p, map.clock ?? 0) : 0) - cam.x;
+    const y = p.y - cam.y;
     if (x + p.w < -20 || x > width + 20 || y > height + 30 || y < -40) continue;
     // A ledge that's part of something already drawn (a tree's bough) shows nothing of its own.
     if (p.bare) continue;
@@ -5004,7 +5004,7 @@ function drawRopes(ctx, map, cam) {
       drawLadder(ctx, r, cam);
       continue;
     }
-    const x = Math.round(r.x - cam.x);
+    const x = r.x - cam.x;
     const top = r.top - cam.y;
     const bottom = r.bottom - cam.y;
     rect(ctx, x - 3, top, 6, bottom - top, '#8f6d4c');

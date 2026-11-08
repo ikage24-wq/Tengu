@@ -332,13 +332,14 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   const [pose, frame] = poseOf(m, fr, moving, t, now, mo);
   // A rigged boss (render/mobs/rig.js) is posed live from its parts; its box stands in for a sprite.
   // Everyone else: in-between poses are drawn in the background; until one is ready, its whole frame
-  // stands in. A whole frame not drawn yet (a new face, an attack pose) is drawn in the background
-  // too, the last frame of the same kind of monster standing in for a frame or two.
+  // stands in. A calm whole frame not drawn yet (a blink, a happy face) is drawn in the background
+  // too, the last such frame standing in for a frame or two; attacks and hits are drawn on the
+  // spot, their timing is the point.
   // (globalThis.noRig: the old frames, for comparing the two.)
   const rig = globalThis.noRig ? null : ARTS[m.def.art]?.rig;
   const art = m.def.art;
   const whole = Math.floor(frame);
-  const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(art, frame, mood, pose), { kind: 'mob', art, pose, frame, mood })) || spriteAsync(mobKey(art, whole, mood, pose), () => mobBuild(art, pose, whole, mood), `mob|${art}`, () => ({ kind: 'mob', art, pose, frame: whole, mood }));
+  const s = rig ? { w: rig.w, h: rig.h } : (frame % 1 && spriteLater(mobKey(art, frame, mood, pose), { kind: 'mob', art, pose, frame, mood })) || (pose === 'attack' || mood === 'hurt' || mood === 'dead' ? monsterSprite(art, whole, mood, pose) : spriteAsync(mobKey(art, whole, mood, pose), () => mobBuild(art, pose, whole, mood), `mob|${art}|${pose}`, () => ({ kind: 'mob', art, pose, frame: whole, mood })));
 
   // Squash (+ wide and short, - tall and thin) follows its pose on a jelly spring.
   let sqGoal = 0;

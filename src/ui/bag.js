@@ -156,7 +156,7 @@ export function bagWindow(ui, state, world) {
   ctx.beginPath();
   ctx.ellipse(cx, oy + 160, 17, 3.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  drawHero(ctx, char.appearance, gear, cx, oy + 160, { pose: 'idle', time: world.now, scale: 1.2 });
+  drawHero(ctx, char.appearance, gear, cx, oy + 160, { pose: 'idle', time: world.now, scale: 1.2, preview: true });
   if (fits) {
     const label = wearable ? (overDoll ? 'Drop to wear' : 'Drag here to wear') : 'Trying on';
     ctx.font = textFont(6.5, true);

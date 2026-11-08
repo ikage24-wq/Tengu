@@ -241,7 +241,7 @@ export function creatorScreen(ui, time, draft) {
   const pose = POSES[draft.pose];
   const cheer = pose === 'Cheer' ? (time % (POSE_DUR + 0.6)) / POSE_DUR : 2;
   const state = pose === 'Walk' ? { pose: 'walk' } : pose === 'Back' ? { pose: 'climb' } : cheer <= 1 ? { pose: 'cheer', progress: cheer, dur: POSE_DUR } : { pose: 'idle' };
-  withZoom(3, () => drawHero(ctx, draft.look, null, CX, FLOOR, { ...state, time, facing: draft.facing, scale: 3, seed: 1 }));
+  withZoom(3, () => drawHero(ctx, draft.look, null, CX, FLOOR, { ...state, time, facing: draft.facing, scale: 3, seed: 1, preview: true }));
   // Lulu by the turntable, with her opinion.
   if (time - lulu.last > 9) Object.assign(lulu, { line: line('idle'), at: time, last: time });
   const talking = (time - lulu.at) * 30 < lulu.line.length;

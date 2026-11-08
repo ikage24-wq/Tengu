@@ -39,12 +39,19 @@ const input = createInput(canvas);
 const touch = createTouch(canvas, input);
 
 // Render at the display's pixel density so text stays sharp; the game itself is 640x360.
+// (Big screen: Fast draws at most twice the game's size and lets the screen stretch it, smoothly,
+// since every extra pixel is drawn each frame; Sharp draws them all.)
+const FAST_SCALE = 2;
 let pixelScale = 1;
+let fitFor = null;
 function fit() {
+  fitFor = settings.sharpness;
   const fitScale = Math.min(window.innerWidth / VW, window.innerHeight / VH);
   canvas.style.width = `${Math.floor(VW * fitScale)}px`;
   canvas.style.height = `${Math.floor(VH * fitScale)}px`;
-  pixelScale = Math.max(1, Math.round(fitScale * (window.devicePixelRatio || 1)));
+  const full = Math.max(1, Math.round(fitScale * (window.devicePixelRatio || 1)));
+  pixelScale = settings.sharpness === 'sharp' ? full : Math.min(full, FAST_SCALE);
+  canvas.style.imageRendering = pixelScale < full ? 'auto' : '';
   canvas.width = VW * pixelScale;
   canvas.height = VH * pixelScale;
 }
@@ -198,6 +205,7 @@ function step(now) {
   watchSpeed(raw);
   nextFrame();
   const time = now / 1000;
+  if (settings.sharpness !== fitFor) fit();
   ctx.setTransform(pixelScale, 0, 0, pixelScale, 0, 0);
   ctx.imageSmoothingEnabled = false;
   setHd(settings.hdGraphics, pixelScale);

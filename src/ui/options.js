@@ -15,6 +15,7 @@ const PAGES = {
   Display: [
     ['fullscreen', 'Fullscreen', 'Fill the whole screen. Esc or F11 leaves it too.'],
     ['hdGraphics', 'HD graphics', 'Lighting, glow, and a smooth-gliding camera.'],
+    ['sharpness', 'Big screen', 'Fullscreen and big monitors. Fast runs smoothly, a little softer; Sharp is crisper but needs a strong computer.', ['fast', 'sharp']],
     ['effects', 'Effects', 'Particles, job auras and weapon effects. Lower it on slow devices.', ['full', 'reduced', 'off']],
     ['screenShake', 'Screen shake', 'The camera shakes on big hits and boss attacks.', ['full', 'low', 'off']],
     ['fps', 'Frame rate', '30 saves battery on laptops and phones.', ['max', '30']],

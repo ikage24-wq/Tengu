@@ -50,7 +50,7 @@ export function cashShopWindow(ui, state, world) {
   const ly = win.y + 24;
   well(ctx, lx, ly, 112, 150, th);
   const facing = win.turned ? -1 : 1;
-  drawHero(ctx, char.appearance, wornGear(char, win.tryOn), lx + 56, ly + 138, { pose: win.walk ? 'walk' : 'idle', time: world.now, scale: 2.2, facing, job: char.job });
+  drawHero(ctx, char.appearance, wornGear(char, win.tryOn), lx + 56, ly + 138, { pose: win.walk ? 'walk' : 'idle', time: world.now, preview: true, scale: 2.2, facing, job: char.job });
   if (button(ui, lx + 4, ly + 4, 24, 12, '⟲', { size: 8 })) win.turned = !win.turned;
   if (button(ui, lx + 30, ly + 4, 30, 12, win.walk ? 'Stand' : 'Walk', { size: 6.5 })) win.walk = !win.walk;
   if (Object.keys(win.tryOn).length && button(ui, lx + 78, ly + 4, 30, 12, 'Reset', { size: 6.5 })) win.tryOn = {};

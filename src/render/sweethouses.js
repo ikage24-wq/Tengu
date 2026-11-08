@@ -220,14 +220,14 @@ export function drawSweetHouse(ctx, map, kind, wx, extra, cam, width, time) {
   const x = wx - cam.x;
   const night = map.night ?? 0;
   if (kind.startsWith('swroom_')) {
-    place(ctx, ROOM[id](), Math.round(x), Math.round(ROOM_H - cam.y));
+    place(ctx, ROOM[id](), x, ROOM_H - cam.y);
     roomLife(ctx, id, x - 320, 360 - cam.y - 360, time);
     return true;
   }
   if (x < -200 || x > width + 200) return true;
   const gy = groundAt(map, wx) - cam.y;
   const s = EXT[id]();
-  place(ctx, s, Math.round(x), Math.round(gy + 2));
+  place(ctx, s, x, gy + 2);
   const left = x - s.w / 2;
   const top = gy + 2 - s.h;
   switch (id) {

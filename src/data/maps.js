@@ -43,7 +43,7 @@ export const MAPS = {
     look: { edges: 'flowers', islands: 'planks', propKeep: 0.86 },
     // The square is a gentle step up in the middle of the street.
     // (The duck pond in Pond Garden is sunk into the lawn under a little footbridge.)
-    terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [2168, 480], [2196, 516], [2276, 516], [2304, 480], [3200, 480]],
+    terrain: [[0, 480], [1460, 480], [1500, 456], [2100, 456], [2140, 480], [2168, 480], [2196, 504], [2276, 504], [2304, 480], [3200, 480]],
     water: [{ x1: 2168, x2: 2304, y: 490, kind: 'pond' }],
     // Thatched cottages and a farmhouse along Gate Lane (render/townhouses.js).
     cottages: [[600, 'farmhouse']],
@@ -104,7 +104,7 @@ export const MAPS = {
       { name: 'Petal Clouds', from: 320, color: '#8fa8f0', look: { sky: ['#b8dcff', '#e0f0ff', '#fff6fc'], far: '#e8e6ff', mid: '#f4eaff', midTrim: '#d8ccf6', material: 'sky', edges: null, props: ['flower'] } },
     ],
     // (In the east corner the lily pond is sunk into the meadow between two low stone lips.)
-    terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2140, 1000], [2140, 992], [2172, 992], [2200, 1036], [2280, 1036], [2308, 992], [2340, 992], [2340, 1000], [2400, 1000]],
+    terrain: [[0, 1000], [560, 1000], [640, 976], [1180, 976], [1260, 1000], [2140, 1000], [2140, 992], [2172, 992], [2200, 1024], [2280, 1024], [2308, 992], [2340, 992], [2340, 1000], [2400, 1000]],
     water: [{ x1: 2172, x2: 2308, y: 1010, kind: 'pond' }],
     platforms: [
       // Petal Fields.

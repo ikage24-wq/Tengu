@@ -390,7 +390,7 @@ export function drawPiece(ctx, p, x, y, time, { night = 0, char = null, ghost = 
     ctx.scale(-1, 1);
     ctx.translate(-x, 0);
   }
-  place(ctx, s, Math.round(x), Math.round(y));
+  place(ctx, s, x, y);
   ctx.restore();
   const top = y - def.h;
   // ----- Each piece's moving parts -----

@@ -588,7 +588,7 @@ export function drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time) {
   const x = wx - cam.x;
   const night = map.night ?? 0;
   if (kind === 'cb_innroom') {
-    place(ctx, innRoomArt(), Math.round(x), Math.round(480 - cam.y));
+    place(ctx, innRoomArt(), x, 480 - cam.y);
     innRoomLife(ctx, x - 320, -cam.y, time, night);
     return true;
   }

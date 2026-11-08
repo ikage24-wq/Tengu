@@ -6,6 +6,7 @@ const KEY = 'twzt-settings-v1';
 export const DEFAULT_SETTINGS = {
   // Display
   hdGraphics: true,
+  sharpness: 'fast', // 'fast' | 'sharp': on a big screen, draw at the usual size and stretch it, or draw every pixel
   screenShake: 'full', // 'full' | 'low' | 'off'
   hitStop: true,
   damageNumbers: true,
