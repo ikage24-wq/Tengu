@@ -24,7 +24,9 @@ export const rarityOf = (r) => RARITY[r] ?? RARITY.common;
 const SPROUT = { id: 'sprout', base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0', gem: '#ff6fae', capsules: ['#ff9ec0', '#ffe066', '#8fd3ff', '#b8f0a8', '#e2c6ff', '#ffb38a'] };
 // Pastel Harbor's: lighthouse red with gold, white and navy, its capsules the colours of the set.
 const HARBOR = { id: 'harbor', base: '#e86a6a', trim: '#ffd23f', lid: '#ffffff', gem: '#2e4a7a', capsules: ['#e8484a', '#ffffff', '#2e4a7a', '#ffd23f', '#8fd3ff', '#ffb38a'] };
-export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR };
+// Ember Crag's: obsidian with gold, glowing lava gems, capsules in molten colours.
+const CRAG = { id: 'crag', base: '#3a2e44', trim: '#ffcf4a', lid: '#ff7a2a', gem: '#ff5a1a', capsules: ['#ff5a1a', '#ffcf4a', '#2a2232', '#ff9a3a', '#fff0a0', '#c83a2a'] };
+export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG };
 export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
 function machineArt(theme, crank) {
@@ -50,7 +52,12 @@ function machineArt(theme, crank) {
     }
     // The framed emblem: a big painted flower in a gold oval.
     out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
-    if (theme.id === 'harbor') {
+    if (theme.id === 'crag') {
+      // Ember Crag's: a burning hammer crossed over an anvil.
+      out.push(T([[28.6, 92.4], [39.4, 92.4], [38.4, 90.6], [29.6, 90.6]], '#1f1a26'), T([[26.4, 90.6], [41.6, 90.6], [41.6, 88.6], [30, 88.6], [27, 89.4]], '#2a2232'));
+      out.push(T([[30.6, 86.6], [31.4, 85.8], [38.6, 81.6], [39.4, 82.4]], '#c89a6a'), T([[36.2, 79.8], [39.8, 77.8], [41.6, 81], [38, 83]], '#2a2232'), F(T([[39.2, 78.2], [39.8, 77.8], [41.6, 81], [41, 81.4]], '#ff7a2a')));
+      out.push(F(E(34, 85, 1.2, 1.2, '#ff9a3a')), F(E(34, 85, 0.6, 0.6, '#fff0a0')));
+    } else if (theme.id === 'harbor') {
       // Pastel Harbor's: a little lighthouse on its rock, its lamp lit.
       out.push(E(34, 94, 5.4, 1.6, '#8a96a8'));
       for (const [y0, c] of [[93.4, '#e8484a'], [90.6, '#ffffff'], [87.8, '#e8484a']]) out.push(T([[31.6 + (93.4 - y0) * 0.12, y0], [36.4 - (93.4 - y0) * 0.12, y0], [36.2 - (93.4 - y0 + 2.8) * 0.12, y0 - 2.8], [31.8 + (93.4 - y0 + 2.8) * 0.12, y0 - 2.8]], c));
@@ -561,6 +568,97 @@ const NECK = 24;
 const TALL = NECK + 14 * 0.56 + 18 * 0.56 * 0.72;
 const artY = (ly) => (ly <= NECK ? TALL - ly : TALL - NECK - (ly - NECK) * 0.56);
 
+// The Godforge Hammer, drawn live: centred on (x, y), turned by `ang` (0 = head up), `s` big.
+// An obsidian head banded in gold, its runes and its strike faces glowing (`heat` 0..1, brighter
+// with the full set), a gold-wrapped haft and a molten gem in the pommel.
+function godHammer(ctx, x, y, ang, s, heat, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.scale(s, s);
+  // The heat round the head.
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(0, -12, 0, 0, -12, 14);
+  g.addColorStop(0, `rgba(255,150,60,${0.35 + heat * 0.3})`);
+  g.addColorStop(1, 'rgba(255,90,30,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-14, -26, 28, 28);
+  ctx.restore();
+  // The haft: dark, wrapped in gold, a pommel with its gem.
+  ctx.fillStyle = '#3a2a1a';
+  ctx.fillRect(-1.4, -9, 2.8, 21);
+  ctx.fillStyle = '#5a4030';
+  ctx.fillRect(-1.4, -9, 0.9, 21);
+  ctx.fillStyle = '#ffcf4a';
+  ctx.fillRect(-1.7, -8.6, 3.4, 2.2);
+  for (let k = 0; k < 6; k++) ctx.fillRect(-1.6, -4.6 + k * 2.6, 3.2, 1.4);
+  ctx.fillStyle = '#c8902e';
+  for (let k = 0; k < 6; k++) ctx.fillRect(-1.6, -3.6 + k * 2.6, 3.2, 0.4);
+  ctx.beginPath();
+  ctx.arc(0, 13, 1.8, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ff5a1a';
+  ctx.beginPath();
+  ctx.arc(0, 13, 0.9, 0, TAU);
+  ctx.fill();
+  // The head: obsidian, bevelled, banded in gold, its strike faces molten.
+  ctx.fillStyle = '#2a2232';
+  ctx.beginPath();
+  ctx.moveTo(-6.6, -15);
+  ctx.lineTo(6.6, -15);
+  ctx.lineTo(7.2, -14);
+  ctx.lineTo(7.2, -9.6);
+  ctx.lineTo(6.6, -8.6);
+  ctx.lineTo(-6.6, -8.6);
+  ctx.lineTo(-7.2, -9.6);
+  ctx.lineTo(-7.2, -14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#463a56';
+  ctx.fillRect(-6.4, -14.6, 12.8, 1.4);
+  ctx.fillStyle = '#ffcf4a';
+  ctx.fillRect(-4.2, -15.2, 1.2, 6.8);
+  ctx.fillRect(3, -15.2, 1.2, 6.8);
+  ctx.fillRect(-1.4, -16.4, 2.8, 1.6);
+  const glow = 0.6 + 0.4 * Math.sin(t * 3.2);
+  ctx.fillStyle = heat > 0.6 ? '#fff6d0' : '#ff7a2a';
+  ctx.fillRect(-7.8, -13.6, 1.1, 3.6);
+  ctx.fillRect(6.7, -13.6, 1.1, 3.6);
+  // Its rune, burning: a stroke and two dots, glowing in time.
+  ctx.globalAlpha = glow;
+  ctx.fillStyle = heat > 0.6 ? '#fff6d0' : '#ffb04a';
+  ctx.fillRect(-0.4, -13.8, 0.8, 4);
+  ctx.fillRect(-1.6, -12.2, 3.2, 0.7);
+  ctx.beginPath();
+  ctx.arc(-1.8, -10, 0.4, 0, TAU);
+  ctx.arc(1.8, -10, 0.4, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  // A lava crack across the head.
+  ctx.strokeStyle = '#ff5a1a';
+  ctx.lineWidth = 0.45;
+  ctx.beginPath();
+  ctx.moveTo(-6, -9.2);
+  ctx.lineTo(-5, -11);
+  ctx.lineTo(-5.6, -12.6);
+  ctx.moveTo(5.4, -14.4);
+  ctx.lineTo(5, -12.6);
+  ctx.lineTo(5.8, -11.4);
+  ctx.stroke();
+  ctx.restore();
+}
+// Where each hero's hammer is between floating at rest (0) and up striking (1), eased.
+const HAMMERS = new Map();
+function hammerMem(key, t, want) {
+  let h = HAMMERS.get(key);
+  if (!h) HAMMERS.set(key, (h = { t, up: want }));
+  const dt = t - h.t;
+  h.t = t;
+  if (dt > 0 && dt < 0.5) h.up += (want - h.up) * Math.min(1, dt * (want > h.up ? 7 : 2.4));
+  return h;
+}
+
 // A water drop at (x, y): round below, pointed above, a glint.
 function drop(ctx, x, y, r, a) {
   if (a <= 0.01) return;
@@ -610,7 +708,21 @@ function soapBubble(ctx, x, y, r, a) {
 // Where the hero's head is this frame, for the looks worn on it (the lighthouse's lamp, the pipe's
 // bubbles) to stay fixed to it as it bobs, tilts and turns: render/hero.js sets `at` (head
 // coordinates to the canvas) and `hair` (the hair spring the hat wobbles on) as it draws each hero.
-export const HEAD_POSE = { at: null, hair: 0 };
+export const HEAD_POSE = { at: null, hair: 0, body: null, hand: null, conv: null, outer: null, key: 0, ox: 0, oy: 0 };
+// Each hero's pose from its last drawing, kept relative to where it stood: the effects drawn
+// behind the hero (before this frame's pose is known) use it, a frame old, moved to where the
+// hero stands now.
+const LAST_POSE = new Map();
+function poseFor(back, x, y) {
+  if (!back) {
+    if (HEAD_POSE.at) LAST_POSE.set(HEAD_POSE.key, { at: HEAD_POSE.at, body: HEAD_POSE.body, hand: HEAD_POSE.hand, hair: HEAD_POSE.hair, ox: HEAD_POSE.ox, oy: HEAD_POSE.oy });
+    return HEAD_POSE.at ? HEAD_POSE : null;
+  }
+  const l = LAST_POSE.get(HEAD_POSE.key);
+  if (!l) return null;
+  const mv = (f) => (f ? (a, b) => { const [px, py] = f(a, b); return [px - l.ox + x, py - l.oy + y]; } : null);
+  return { at: mv(l.at), body: mv(l.body), hand: l.hand ? [l.hand[0] - l.ox + x, l.hand[1] - l.oy + y] : null, hair: l.hair };
+}
 
 // Draws one layer ('back', behind the hero, or 'front') of the worn looks' effects. (x, y) is
 // where the hero stands; `state` gives the time, scale, facing and whether they're on the move.
@@ -736,10 +848,14 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
   // beam stronger and longer. ----
   // (Points on the head: fixed to where it really is this frame, the lighthouse leaning with
   // its wobble just as render/jobgear/gacha.js draws it.)
+  const hp = poseFor(back, x, y);
   const onHead = (lx, ly) => {
-    const lean = HEAD_POSE.hair * 0.5 * Math.max(0, (4 - ly) / 20);
-    return HEAD_POSE.at ? HEAD_POSE.at(lx + lean, ly) : at(lx + lean, ly);
+    const lean = (hp?.hair ?? 0) * 0.5 * Math.max(0, (4 - ly) / 20);
+    return hp?.at ? hp.at(lx + lean, ly) : at(lx + lean, ly);
   };
+  // (Points on the body, in body coordinates, and the front hand.)
+  const onBody = (lx, ly) => (hp?.body ? hp.body(lx, ly) : at(lx, ly));
+  const handAt = () => hp?.hand ?? at(21, 33);
   if (fx.has('beam') && !back) {
     const th = t * 1.15;
     const toward = Math.sin(th);
@@ -769,6 +885,188 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
     mote(ctx, lx, ly, 1.1 * s, '#fffbe0', '#ffd23f', 0.75 + 0.25 * Math.max(0, toward));
     const flash = toward > 0 ? Math.max(0, 1 - Math.abs(c) * 4) : 0;
     if (flash > 0) star4(ctx, lx, ly, (3 + 6 * flash) * s, '#fffbe0', flash, '#ffd23f');
+  }
+
+
+  // ---- The Forge God ----
+  const swinging = !still && !moving && pose !== 'jump' && pose !== 'fall';
+  const godSet = worn.sets.has('forgegod');
+  // The Godforge Hammer floats at your back, bobbing, tilted back over the shoulder; swing and it
+  // rises over your head and strikes down in front of you, again and again while you fight, then
+  // settles back. Behind you at rest, in front once raised.
+  if (fx.has('hammer')) {
+    if (back) hammerMem(HEAD_POSE.key, t, swinging ? 1 : 0);
+    const h = HAMMERS.get(HEAD_POSE.key) ?? { up: 0 };
+    const e = ease(Math.min(1, Math.max(0, h.up)));
+    if (back === e < 0.5) {
+      const [ax, ay] = onBody(6, 27);
+      const bob = Math.sin(t * 1.7) * 1.6 * s;
+      const rest = [ax - f * 13 * s, ay - 22 * s + bob];
+      const strikeA = Math.sin(t * 9);
+      const high = [x + f * 4 * s, y - (64 - strikeA * 8) * s];
+      const hx = rest[0] + (high[0] - rest[0]) * e;
+      const hy = rest[1] + (high[1] - rest[1]) * e;
+      const ang = f * (-0.55 + e * (0.9 + strikeA * 0.9));
+      godHammer(ctx, hx, hy, ang, s * 1.05, godSet ? 1 : 0.3, t);
+      // As it comes down, sparks burst off its face.
+      if (e > 0.5 && strikeA > 0.75) {
+        const k = (strikeA - 0.75) / 0.25;
+        const [fx0, fy0] = [hx + Math.sin(ang) * 12 * s * 1.05, hy - Math.cos(ang) * 12 * s * 1.05];
+        for (let j = 0; j < 7; j++) {
+          const a2 = ang - Math.PI / 2 + (j - 3) * 0.32;
+          star4(ctx, fx0 + Math.cos(a2) * (4 + k * 10) * s, fy0 + Math.sin(a2) * (4 + k * 10) * s, 1.2 * s * (1 - k * 0.6), '#fff0b0', 1 - k * 0.7, '#ff7a2a');
+        }
+      }
+    }
+  }
+  // The crown: a halo of heat, flames licking from its points, embers lifting off the horn tips.
+  if (fx.has('crown') && !back) {
+    const [cx, cy] = onHead(15.5, -4.4);
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 16 * s);
+    g.addColorStop(0, 'rgba(255,190,80,0.32)');
+    g.addColorStop(1, 'rgba(255,120,40,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - 16 * s, cy - 16 * s, 32 * s, 32 * s);
+    ctx.restore();
+    [[-6.4, 3], [-3.4, 4.4], [0, 6.4], [3.4, 4.4], [6.4, 3]].forEach(([dx, hgt], k) => {
+      const [px, py] = onHead(15.5 + dx, -4.4 + 2.2 * Math.sqrt(1 - (dx / 8.6) ** 2) - 0.4 - hgt);
+      const fl = (1.6 + Math.sin(t * 11 + k * 1.7) * 0.6) * s;
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#ff9a3a';
+      ctx.beginPath();
+      ctx.moveTo(px - 0.8 * s, py + 0.4 * s);
+      ctx.quadraticCurveTo(px - 0.6 * s, py - fl * 0.6, px + Math.sin(t * 7 + k) * 0.5 * s, py - fl * 1.4);
+      ctx.quadraticCurveTo(px + 0.6 * s, py - fl * 0.6, px + 0.8 * s, py + 0.4 * s);
+      ctx.fill();
+      ctx.fillStyle = '#fff0a0';
+      ctx.beginPath();
+      ctx.ellipse(px, py - 0.2 * s, 0.35 * s, fl * 0.45, 0, 0, TAU);
+      ctx.fill();
+    });
+    for (const hx0 of [0.6, 30.4]) {
+      const [tx, ty] = onHead(hx0, -5.8);
+      for (let k = 0; k < 2; k++) {
+        const u = (t * 0.6 + k * 0.5 + hx0 * 0.01) % 1;
+        mote(ctx, tx + Math.sin(u * 6 + k) * 2 * s, ty - u * 14 * s, 0.55 * s, '#fff0a0', '#ff7a2a', Math.sin(Math.PI * u));
+      }
+    }
+  }
+  // The armour's veins pulse with lava, a wave running down from the heart; the heart beats.
+  if (fx.has('veins') && !back) {
+    const veins = [[[12, 28.8], [13.4, 30.2], [12.9, 32.4], [14.2, 34.4]], [[19.4, 29], [18.2, 30.4], [18.8, 32.8], [17.4, 34.6]], [[15.6, 32.6], [15.2, 33.8], [15.8, 34.8]]];
+    for (const v of veins) v.forEach(([lx, ly], i) => {
+      const w = Math.max(0, Math.sin(t * 3 - i * 0.9));
+      const [px, py] = onBody(lx, ly);
+      mote(ctx, px, py, 0.4 * s, '#fff0a0', '#ff5a1a', 0.25 + 0.6 * w);
+    });
+    const beat = (t * 1.2) % 1;
+    const pulse = Math.max(Math.exp(-((beat - 0.08) ** 2) / 0.002), Math.exp(-((beat - 0.24) ** 2) / 0.002) * 0.7);
+    const [hx, hy] = onBody(15.6, 30.2);
+    mote(ctx, hx, hy, (0.8 + pulse * 0.6) * s, '#fff6d0', '#ff7a2a', 0.6 + pulse * 0.4);
+  }
+  // The gauntlets: a glow at the fist, molten drops falling from it; a burst of fire as you swing.
+  if (fx.has('magma') && !back) {
+    const [hx, hy] = handAt();
+    mote(ctx, hx, hy, 0.7 * s, '#fff0a0', '#ff5a1a', 0.7);
+    const u = (t / 1.6) % 1;
+    if (!swinging && u < 0.55) {
+      const v = u / 0.55;
+      drop(ctx, hx, hy + 1.5 * s + v * v * (y - hy), 0.6 * s, 0.85 * (1 - v * 0.6));
+    }
+    if (swinging) {
+      for (let k = 0; k < 6; k++) {
+        const w = (t * 4 + k / 6) % 1;
+        const a2 = (f > 0 ? 0 : Math.PI) + (k - 2.5) * 0.25;
+        mote(ctx, hx + Math.cos(a2) * w * 16 * s, hy + Math.sin(a2) * w * 10 * s - w * 4 * s, (0.9 - w * 0.5) * s, '#fff0a0', '#ff5a1a', 1 - w);
+      }
+    }
+  }
+  // The greaves: cracks of lava glow where you step and cool; standing, heat shimmers off them.
+  if (fx.has('cinders') && back) {
+    if (moving) {
+      for (let k = 0; k < 3; k++) {
+        const u = ((t * 3.2) % 1) / 3 + k / 3;
+        const age = u;
+        const dx = (-f * age * 26 + (k % 2 ? 3 : -3)) * s;
+        ctx.globalAlpha = 0.85 * (1 - age);
+        ctx.strokeStyle = age < 0.4 ? '#ffb04a' : '#c83a1a';
+        ctx.lineWidth = 0.6 * s;
+        ctx.beginPath();
+        ctx.moveTo(x + dx - 3 * s, y);
+        ctx.lineTo(x + dx - 1 * s, y - 0.6 * s);
+        ctx.lineTo(x + dx + 0.6 * s, y + 0.2 * s);
+        ctx.lineTo(x + dx + 3 * s, y - 0.4 * s);
+        ctx.stroke();
+      }
+    } else {
+      for (let k = 0; k < 3; k++) {
+        const u = (t * 0.5 + k / 3) % 1;
+        ctx.globalAlpha = 0.22 * Math.sin(Math.PI * u);
+        ctx.strokeStyle = '#ffb070';
+        ctx.lineWidth = 0.5 * s;
+        ctx.beginPath();
+        const bx = x + (k - 1) * 4 * s;
+        for (let j = 0; j <= 6; j++) ctx.lineTo(bx + Math.sin(j * 1.4 + t * 4 + k) * 1 * s, y - (u * 10 + j * 1.6) * s);
+        ctx.stroke();
+      }
+    }
+  }
+  // The runes on the cheeks flare now and then.
+  if (fx.has('runes') && !back) {
+    for (const [k, lx] of [[0, 8.6], [1, 22.4]]) {
+      const u = (t / 3.1 + k * 0.5) % 1;
+      if (u > 0.2) continue;
+      const [gx, gy] = onHead(lx, 21.6);
+      star4(ctx, gx, gy, 2.4 * Math.sin(Math.PI * (u / 0.2)) * s, '#fff0b0', 0.95, '#ff9a3a');
+    }
+  }
+  // The full set: a molten rune circle turning under your feet, and a storm of embers spiralling
+  // up round you.
+  if (godSet) {
+    const ring = (rx, ry, spin, n, col) => {
+      for (let k = 0; k < n; k++) {
+        const a2 = spin + (k * TAU) / n;
+        if (back !== Math.sin(a2) < 0) continue;
+        const px = x + Math.cos(a2) * rx * s;
+        const py = y + Math.sin(a2) * ry * s;
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = col;
+        ctx.fillRect(px - 0.9 * s, py - 0.35 * s, 1.8 * s, 0.7 * s);
+        if (k % 3 === 0) {
+          ctx.fillRect(px - 0.3 * s, py - 1.1 * s, 0.6 * s, 0.75 * s);
+        }
+      }
+    };
+    if (back) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 0.2 + 0.06 * Math.sin(t * 2);
+      ctx.fillStyle = '#ff6a1a';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 30 * s, 6.6 * s, 0, 0, TAU);
+      ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = '#ffcf4a';
+      ctx.lineWidth = 0.6 * s;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 28 * s, 6 * s, 0, 0, TAU);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(x, y, 21 * s, 4.5 * s, 0, 0, TAU);
+      ctx.stroke();
+    }
+    ring(24.5, 5.25, t * 0.6, 18, '#ffcf4a');
+    ring(17.5, 3.75, -t * 0.9, 12, '#ff9a3a');
+    for (let k = 0; k < 12; k++) {
+      const u = (t * 0.35 + k / 12) % 1;
+      const a2 = u * TAU * 1.6 + k;
+      if (back !== Math.sin(a2) < 0) continue;
+      const r = (24 - u * 12) * s;
+      mote(ctx, x + Math.cos(a2) * r, y - u * 58 * s + Math.sin(a2) * 4 * s, (0.7 - u * 0.3) * s, '#fff0a0', '#ff5a1a', Math.sin(Math.PI * u));
+    }
   }
 
   // ---- Rain off the oilskin: drops swell on the hem, fall, and ring on the ground. ----

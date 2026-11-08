@@ -2662,6 +2662,13 @@ export function drawHero(ctx, look, gear, x, y, state, anim = null) {
   // Capsule-machine looks carry living effects (render/gacha.js), drawn round the body.
   const worn = outfitFx(gear);
   HEAD_POSE.at = null;
+  HEAD_POSE.body = null;
+  HEAD_POSE.hand = null;
+  HEAD_POSE.conv = null;
+  HEAD_POSE.outer = ctx.getTransform();
+  HEAD_POSE.key = anim ?? state.seed ?? 0;
+  HEAD_POSE.ox = x;
+  HEAD_POSE.oy = y;
   const job = settings.jobAuras && AURA_JOBS.has(state.job) ? state.job : null;
   if (!job) {
     if (worn) drawOutfitFx(ctx, worn, 'back', x, y, state);
@@ -2997,11 +3004,22 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
     const rr = ((rig.tilt ?? 0) * Math.PI) / 180;
     const [c, sn] = [Math.cos(rr), Math.sin(rr)];
+    // (Turned into the canvas space drawHero was called in, whatever lean or lunge this
+    // drawing is under.)
+    const M = HEAD_POSE.outer ? HEAD_POSE.outer.inverse().multiply(ctx.getTransform()) : null;
+    const conv = (px, py) => {
+      if (!M) return [px, py];
+      const q = M.transformPoint({ x: px, y: py });
+      return [q.x, q.y];
+    };
+    HEAD_POSE.conv = conv;
     HEAD_POSE.hair = rig.hair ?? 0;
+    HEAD_POSE.hand = null;
+    HEAD_POSE.body = (lx, ly) => conv(sx(squashX(lx + ux)), sy(squashY(ly + uy)));
     HEAD_POSE.at = (lx, ly) => {
       const hx = lx + hdx - nx;
       const hy = ly + hdy - ny;
-      return [sx(nx + hx * c - hy * sn), sy(ny + hx * sn + hy * c)];
+      return conv(sx(nx + hx * c - hy * sn), sy(ny + hx * sn + hy * c));
     };
   }
 
@@ -3089,6 +3107,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   // The hand was placed on the full-size figure; carry it into the squashed body.
   hand = [squashX(hand[0]), squashY(hand[1])];
+  HEAD_POSE.hand = HEAD_POSE.conv ? HEAD_POSE.conv(sx(hand[0]), sy(hand[1])) : [sx(hand[0]), sy(hand[1])];
 
   // Weapon size relative to the hero (they are drawn big on purpose).
   const ws = scale * WEAPON_SCALE;

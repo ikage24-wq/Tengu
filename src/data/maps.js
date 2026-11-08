@@ -620,6 +620,8 @@ Object.assign(MAPS, {
     // (Its plaza's centrepiece is the hearth, a great fire-bowl, not a fountain.)
     id: 'crag', plaza: 1300, fountain: false, name: 'Ember Crag', theme: 'crag', isTown: true, town: 'crag', job: 'warrior', world: { x: 196, y: 50 },
     // The town stove, for cooking (data/cooking.js).
+    // The capsule machine stands on Forge Row, between the smithing bench and the great forge.
+    gacha: 1972,
     stove: 1600,
     // The craft bench (data/crafting.js), on Forge Row, by Tora's forge.
     bench: 1858,

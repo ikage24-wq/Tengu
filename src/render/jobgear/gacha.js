@@ -21,6 +21,35 @@ const OIL_D = '#e0a820';
 const RED = '#e8484a';
 const BRASS = '#d8a440';
 const CREAM = '#f4ecd8';
+const LEATHER = '#8a5a3a';
+const LEATHER_D = '#5e3c26';
+const LEATHER_L = '#b07a52';
+const IRON = '#5a5f6e';
+const IRON_L = '#8a90a0';
+const IRON_D = '#3a3e48';
+const HOT = '#ff7a2a';
+const HOT_CORE = '#ffd23f';
+const OBS = '#2a2232';
+const OBS_L = '#463a56';
+const OBS_D = '#16121c';
+const GOLD2 = '#ffcf4a';
+const GOLD_D = '#c8902e';
+const LAVA = '#ff5a1a';
+const CORE = '#fff0a0';
+
+// A crack of lava along `pts` (a glowing seam `w` wide with a bright core).
+function vein(pts, w, c = LAVA, core = HOT_CORE) {
+  const out = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [x0, y0] = pts[i];
+    const [x1, y1] = pts[i + 1];
+    const l = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const [nx, ny] = [(-(y1 - y0) / l) * w, ((x1 - x0) / l) * w];
+    out.push(F(T([[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]], c)));
+    out.push(F(T([[x0 + nx * 0.35, y0 + ny * 0.35], [x1 + nx * 0.35, y1 + ny * 0.35], [x1 - nx * 0.35, y1 - ny * 0.35], [x0 - nx * 0.35, y0 - ny * 0.35]], core)));
+  }
+  return out;
+}
 
 const rad = (a) => (a * Math.PI) / 180;
 function arcPts(cx, cy, rx, ry, a0, a1, n = 16) {
@@ -301,6 +330,136 @@ const D = {
       out.push(F(quad([[-0.6, 6.4], [0.6, 6.4], [0.3, 4.2], [0, 3.4], [-0.3, 4.2]], '#ff9a3a')), F(quad([[-0.3, 6.2], [0.3, 6.2], [0, 4.6]], '#fff6c8')));
       for (const dx of [-1.7, 0, 1.7]) out.push(F(quad([[dx - 0.18, 2.4], [dx + 0.18, 2.4], [dx + 0.18, 7], [dx - 0.18, 7]], NAVY_D)));
       out.push(quad([[-2, 7], [2, 7], [1.6, 8.2], [-1.6, 8.2]], BRASS), F(quad([[-1.2, 1.6], [-0.6, 1.6], [-0.6, 2.2], [-1.2, 2.2]], '#ffe8a0')));
+      return out;
+    },
+  },
+
+  // ---- Ember Crag: the Forge God set ----
+
+  // Two great obsidian horns curving up from the temples, ringed in gold, their tips molten; and
+  // above the head, floating free, a crown of molten gold: flame-shaped points, a lava gem.
+  moltencrown: {
+    hat: (p, m) => {
+      const out = [];
+      const horn = (sd) => {
+        const X = (x) => (sd > 0 ? x : 31 - x);
+        const pts = [[8.6, 6.6], [5, 8.4], [2.2, 4.6], [0.4, -0.6], [0.6, -5.8], [2, -1.4], [4.4, 2.8], [7.6, 4.4]];
+        out.push(T(pts.map(([x, y]) => [X(x), y]), OBS));
+        out.push(F(T([[X(7.4), 5], [X(5.8), 6.4], [X(3.6), 3.6], [X(5), 3.2]], OBS_L)));
+        out.push(T([[X(1.1), -1.6], [X(2.6), -0.4], [X(2.3), 0.6], [X(0.8), -0.4]], GOLD2), T([[X(3.4), 3.2], [X(5.4), 4.6], [X(4.8), 5.6], [X(3), 4.4]], GOLD2));
+        out.push(T([[X(0.5), -3.4], [X(0.6), -5.8], [X(1.6), -2.6], [X(1.4), -2.2]], LAVA), F(T([[X(0.6), -4.6], [X(0.6), -5.6], [X(1.1), -3.4]], CORE)));
+      };
+      horn(1);
+      horn(-1);
+      // The floating crown: its back half, the flame points, its front half with the gems.
+      const cy = -4.4 - m.hair * 0.35;
+      const cx = 15.5;
+      out.push(T([...arcPts(cx, cy, 8.6, 2.2, 0, 180, 16), ...arcPts(cx, cy + 1.4, 8.6, 2.2, 180, 0, 16)], GOLD_D));
+      [[-6.4, 3], [-3.4, 4.4], [0, 6.4], [3.4, 4.4], [6.4, 3]].forEach(([dx, h]) => {
+        const x = cx + dx;
+        const by = cy + 2.2 * Math.sqrt(Math.max(0, 1 - (dx / 8.6) ** 2)) - 0.4;
+        out.push(T([[x - 1.3, by], [x - 0.5, by - h * 0.6], [x, by - h], [x + 0.5, by - h * 0.6], [x + 1.3, by]], GOLD2));
+        out.push(F(T([[x - 0.6, by], [x, by - h * 0.7], [x + 0.6, by]], LAVA)), F(T([[x - 0.25, by], [x, by - h * 0.4], [x + 0.25, by]], CORE)));
+      });
+      out.push(T([...arcPts(cx, cy, 8.6, 2.2, 180, 360, 16), ...arcPts(cx, cy + 1.7, 8.6, 2.2, 360, 180, 16)], GOLD2));
+      out.push(F(T([...arcPts(cx, cy + 0.5, 8.4, 2.1, 200, 340, 12), ...arcPts(cx, cy + 0.9, 8.4, 2.1, 340, 200, 12)], '#fff0b0')));
+      out.push(E(cx, cy + 2.9, 1.3, 1.1, LAVA), F(E(cx - 0.3, cy + 2.6, 0.5, 0.4, CORE)));
+      for (const dx of [-5, 5]) out.push(F(E(cx + dx, cy + 2.4, 0.6, 0.5, '#ff8a3a')));
+      return out;
+    },
+  },
+
+  // Obsidian plate armour with gold edges: a gold gorget, a breastplate split by lava veins that
+  // run down to the belt, and at its heart a molten forge-heart in a gold setting; great
+  // pauldrons with a molten-tipped spike; tassets over an ember-red cloth that glows at the hem.
+  forgeplate: {
+    top: (p) => {
+      const body = torsoPts();
+      const out = [T(body, OBS)];
+      out.push(T([[11.2, 26.2], [19.8, 26.2], [19, 28], [12, 28]], GOLD2), F(T([[11.6, 27.4], [19.4, 27.4], [19, 28], [12, 28]], GOLD_D)));
+      out.push(T([[10.4, 28.2], [20.8, 28.2], [20.4, 31.6], [MID, 32.8], [10.8, 31.6]], OBS_L));
+      out.push(F(T([[10.8, 31.2], [MID, 32.4], [MID, 32.9], [10.8, 31.7]], GOLD_D)), F(T([[20.4, 31.2], [MID, 32.4], [MID, 32.9], [20.4, 31.7]], GOLD_D)));
+      out.push(F(T([[11, 28.6], [12.2, 28.6], [11.6, 31], [11, 30.8]], '#5e5070')));
+      out.push(...vein([[12, 28.8], [13.4, 30.2], [12.9, 32.4], [14.2, 34.4]], 0.3), ...vein([[19.4, 29], [18.2, 30.4], [18.8, 32.8], [17.4, 34.6]], 0.3), ...vein([[MID, 32.6], [MID - 0.4, 33.8], [MID + 0.2, 34.8]], 0.28));
+      out.push(E(MID, 30.2, 2, 2, GOLD_D), E(MID, 30.2, 1.6, 1.6, GOLD2), E(MID, 30.2, 1.2, 1.2, LAVA), F(E(MID, 30.2, 0.7, 0.7, CORE)), F(E(MID - 0.4, 29.8, 0.25, 0.25, WHITE)));
+      out.push(band(body, 34.6, 35.8, GOLD_D), F(E(MID, 35.2, 1.3, 0.9, GOLD2)), F(E(MID, 35.2, 0.6, 0.45, LAVA)));
+      return out;
+    },
+    sleeve: () => OBS,
+    shoulder: () => [
+      E(0, 0.4, 4.6, 3.4, OBS), F(E(-0.8, -0.6, 2.4, 1.3, OBS_L)),
+      F(T([...arcPts(0, 0.6, 4.4, 3, 190, 350, 10), ...arcPts(0, 1.4, 4.2, 2.8, 350, 190, 10)], GOLD2)),
+      T([[-1.6, -1.8], [-0.4, -7], [1.4, -1.8]], OBS), T([[-0.9, -4.8], [-0.4, -7], [0.1, -4.8]], LAVA), F(T([[-0.6, -5.8], [-0.4, -6.8], [-0.2, -5.8]], CORE)),
+      ...vein([[2.2, -0.2], [2.8, 1], [2.2, 2]], 0.25),
+    ],
+    skirt: (p, m) => {
+      const s2 = m.sway * 0.45;
+      const out = [];
+      out.push(T([[13, 35.4], [18.2, 35.4], [18.8 + s2, 45.6], [MID + s2, 46.8], [12.4 + s2, 45.6]], '#7a1420'));
+      out.push(F(T([[12.6 + s2, 44.4], [18.6 + s2, 44.4], [18.8 + s2, 45.6], [MID + s2, 46.8], [12.4 + s2, 45.6]], LAVA)), F(T([[13.6 + s2, 45.4], [17.6 + s2, 45.4], [MID + s2, 46.2]], HOT_CORE)));
+      out.push(F(E(MID + s2 * 0.6, 39.6, 1.1, 1.1, GOLD2)), F(E(MID + s2 * 0.6, 39.6, 0.5, 0.5, '#7a1420')));
+      for (const sd of [-1, 1]) {
+        const X = (x) => (sd < 0 ? x : 31.2 - x);
+        out.push(T([[X(9.4), 35.4], [X(13.4), 35.4], [X(13) + s2 * 0.6, 42], [X(8.8) + s2 * 0.6, 41]], OBS));
+        out.push(F(T([[X(8.9) + s2 * 0.6, 40.4], [X(13) + s2 * 0.6, 41.4], [X(13) + s2 * 0.6, 42], [X(8.8) + s2 * 0.6, 41]], GOLD2)));
+        out.push(...vein([[X(10.6), 36.4], [X(11.4) + s2 * 0.3, 38.4], [X(10.8) + s2 * 0.5, 40]], 0.25));
+      }
+      return out;
+    },
+    legs: () => ({ top: '#1f1a26', low: '#1f1a26', pad: null }),
+  },
+
+  // Obsidian gauntlets with a gold knuckle plate, lava cracks through them, a flared gold-rimmed cuff.
+  magmagauntlets: {
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const wx = hx - ux * 2.2;
+      const wy = hy - uy * 2.2;
+      const out = [E(hx, hy, 2.4, 2.4, OBS)];
+      out.push(T([[wx - uy * 2.8 - ux * 0.8, wy + ux * 2.8 - uy * 0.8], [wx + uy * 2.8 - ux * 0.8, wy - ux * 2.8 - uy * 0.8], [wx + uy * 2.1 + ux * 1.4, wy - ux * 2.1 + uy * 1.4], [wx - uy * 2.1 + ux * 1.4, wy + ux * 2.1 + uy * 1.4]], OBS_L));
+      out.push(F(T([[wx - uy * 2.8 - ux * 0.8, wy + ux * 2.8 - uy * 0.8], [wx + uy * 2.8 - ux * 0.8, wy - ux * 2.8 - uy * 0.8], [wx + uy * 2.7 - ux * 0.2, wy - ux * 2.7 - uy * 0.2], [wx - uy * 2.7 - ux * 0.2, wy + ux * 2.7 - uy * 0.2]], GOLD2)));
+      out.push(F(E(hx + ux * 1, hy + uy * 1, 1.5, 1.1, GOLD2)));
+      out.push(...vein([[hx - uy * 1.6, hy + ux * 1.6], [hx - ux * 0.4, hy - uy * 0.4], [hx + uy * 1.4 - ux * 1, hy - ux * 1.4 - uy * 1]], 0.25));
+      return out;
+    },
+  },
+
+  // Obsidian greaves: a pointed gold toe cap, a gold ring at the ankle, a seam of lava along the sole.
+  obsidiangreaves: {
+    shoe: (p, k) => [
+      k.poly([[-3.2, 3.6], [-3.6, -3.6], [1.8, -3.6], [2.2, 0], [5, 0.8], [7, 2.6], [6.6, 3.6]], k.tint(OBS)),
+      k.poly([[2.6, 0.2], [5, 0.8], [7, 2.6], [6.6, 3.4], [2.8, 3.4]], k.tint(GOLD2)),
+      k.poly([[3.2, 0.7], [4.8, 1.1], [4.4, 1.6], [3.2, 1.3]], k.tint('#fff0b0')),
+      k.poly([[-3.7, -2.4], [2, -2.4], [2, -1.4], [-3.7, -1.4]], k.tint(GOLD_D)),
+      k.poly([[-3.2, 3.2], [6.8, 3.2], [6.6, 3.8], [-3, 3.8]], k.tint(LAVA)),
+      k.poly([[-3, 3.8], [6.6, 3.8], [6.4, 4.6], [-2.8, 4.6]], k.tint(OBS_D)),
+      k.poly([[-2.6, -1], [-1.6, -1], [-1.9, 2.4], [-2.8, 2.4]], k.tint(OBS_L)),
+    ],
+  },
+
+  // Forge runes painted in molten gold under the eyes: two strokes and a diamond on each cheek.
+  runemarks: {
+    hat: () => {
+      const out = [];
+      for (const [x, d] of [[8.6, -1], [22.4, 1]]) {
+        out.push(T([[x - 1.6, 20.8], [x + 0.6, 21.1], [x + 0.5, 21.6], [x - 1.7, 21.3]], GOLD2), T([[x - 1.2, 22], [x + 0.9, 22.3], [x + 0.8, 22.8], [x - 1.3, 22.5]], GOLD2));
+        out.push(T([[x + 1.6 * d, 21.2], [x + 2.2 * d, 21.8], [x + 1.6 * d, 22.4], [x + 1 * d, 21.8]], LAVA));
+      }
+      return out;
+    },
+  },
+
+  // The star prize's mantle: a tattered crimson half-cape from the back of the shoulders, its
+  // torn hem smouldering molten, held by a gold clasp. (The Godforge Hammer floating above it is
+  // drawn live: render/gacha.js.)
+  godhammer: {
+    capeFront: () => [E(12.4, 27.2, 1.1, 1.1, GOLD2), F(E(12.4, 27.2, 0.5, 0.5, LAVA))],
+    cape: (p, m) => {
+      const s2 = m.sway * 0.6;
+      const out = [T([[12.6, 26.2], [9, 26.8], [6, 32], [3.6 + s2 * 0.5, 39.6], [2.4 + s2, 45.4], [4.8 + s2, 43.4], [6.6 + s2, 46], [8.4 + s2, 43.6], [10.2 + s2, 45.4], [10.8, 36]], '#6a1420')];
+      out.push(F(T([[11.6, 27], [9.6, 27.6], [7.4, 33], [6, 40], [8.6, 38], [10.2, 33]], '#8a1c2a')));
+      for (const [x, y] of [[2.4, 45.4], [6.6, 46], [10.2, 45.4]]) out.push(F(T([[x + s2 - 1, y - 1.6], [x + s2, y], [x + s2 + 1, y - 1.6]], LAVA)), F(T([[x + s2 - 0.4, y - 1], [x + s2, y - 0.2], [x + s2 + 0.4, y - 1]], HOT_CORE)));
       return out;
     },
   },

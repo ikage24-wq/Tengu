@@ -110,8 +110,83 @@ function tinyLighthouse(ctx, x, y, on) {
   }
 }
 
+// A little glowing ember at (x, y).
+function ember(ctx, x, y, r, a) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= a * 0.5;
+  ctx.fillStyle = '#ff7a2a';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 2.4, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.fillStyle = '#fff0a0';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+// A tiny molten crown floating at (x, y), its five points, a lava gem.
+function tinyCrown(ctx, x, y, time) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha *= 0.45;
+  ctx.fillStyle = '#ff9a3a';
+  ctx.beginPath();
+  ctx.arc(x, y - 1.4, 5, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#ffcf4a';
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y);
+  for (const [dx, h] of [[-4, 2.4], [-2, 3.4], [0, 4.6], [2, 3.4], [4, 2.4]]) {
+    ctx.lineTo(x + dx - 0.6, y - 0.6);
+    ctx.lineTo(x + dx, y - h - Math.sin(time * 8 + dx) * 0.3);
+    ctx.lineTo(x + dx + 0.6, y - 0.6);
+  }
+  ctx.lineTo(x + 4, y);
+  ctx.lineTo(x + 4, y + 1.2);
+  ctx.lineTo(x - 4, y + 1.2);
+  ctx.fill();
+  ctx.fillStyle = '#ff5a1a';
+  ctx.beginPath();
+  ctx.arc(x, y + 0.5, 0.8, 0, TAU);
+  ctx.fill();
+}
+
 // Round a chat bubble (bx, by, w, h): a blossom tucked on its corner, petals drifting off it.
 export function bubbleDeco(ctx, deco, bx, by, w, h, time) {
+  if (deco === 'molten') {
+    // Obsidian with a gold edge: lava cracks glowing along its foot, molten drops gathering and
+    // falling off it, embers rising from its top corners.
+    ctx.save();
+    ctx.strokeStyle = '#ff5a1a';
+    ctx.lineWidth = 0.9;
+    ctx.globalAlpha *= 0.6 + 0.4 * Math.sin(time * 3);
+    ctx.beginPath();
+    ctx.moveTo(bx + 3, by + h - 1.6);
+    ctx.lineTo(bx + w * 0.3, by + h - 2.6);
+    ctx.lineTo(bx + w * 0.45, by + h - 1.4);
+    ctx.lineTo(bx + w * 0.7, by + h - 2.4);
+    ctx.lineTo(bx + w - 3, by + h - 1.6);
+    ctx.stroke();
+    ctx.restore();
+    for (let k = 0; k < 2; k++) {
+      const u = (time * 0.7 + k * 0.5) % 1;
+      const dx = bx + w * (0.32 + k * 0.4);
+      ctx.fillStyle = '#ff7a2a';
+      ctx.beginPath();
+      ctx.ellipse(dx, by + h + (u < 0.5 ? u * 2 : 1 + (u - 0.5) * 14), 0.9, u < 0.5 ? 0.8 + u * 1.6 : 1, 0, 0, TAU);
+      ctx.fill();
+    }
+    for (let k = 0; k < 3; k++) {
+      const u = (time * 0.5 + k / 3) % 1;
+      ember(ctx, (k % 2 ? bx + w - 2 : bx + 2) + Math.sin(u * 6 + k) * 1.5, by - u * 10, 0.6, Math.sin(Math.PI * u));
+    }
+  }
   if (deco === 'rope') {
     // The keeper's logbook page: a rope round its edge and a brass ship's bell at the corner,
     // swinging and now and then ringing (a little shake and two sound arcs).
@@ -213,6 +288,28 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
     ctx.restore();
     tinyLighthouse(ctx, left - 1, y + 10.4, u > 0.85 || u < 0.08 ? 1 : 0.25);
   }
+  if (skin.deco === 'runes' || skin.deco === 'godcrown') {
+    // Gold runes burning at both ends of the tag, a seam of lava under the name.
+    const glow = 0.55 + 0.45 * Math.sin(time * 3);
+    ctx.save();
+    ctx.globalAlpha *= glow;
+    ctx.fillStyle = '#ffcf4a';
+    for (const ex of [left + 3, left + w - 3]) {
+      ctx.fillRect(ex - 0.4, y + 2, 0.8, 6);
+      ctx.fillRect(ex - 1.4, y + 4.2, 2.8, 0.7);
+    }
+    ctx.restore();
+    ctx.fillStyle = '#ff5a1a';
+    ctx.fillRect(left + 6, y + 8.6, w - 12, 0.6);
+    if (skin.deco === 'godcrown') {
+      // Over it floats the Forge God's crown, bobbing, its gem burning; embers drift off it.
+      tinyCrown(ctx, x, y - 3 + Math.sin(time * 2) * 0.8, time);
+      for (let k = 0; k < 2; k++) {
+        const u = (time * 0.6 + k * 0.5) % 1;
+        ember(ctx, x + (k ? 3 : -3) + Math.sin(u * 6) * 1, y - 6 - u * 8, 0.5, Math.sin(Math.PI * u));
+      }
+    }
+  }
   if (skin.deco === 'seal') {
     // A shine sweeping across the gold now and then, and a wax seal pressed on its left end,
     // a sprout stamped in it.
@@ -263,6 +360,42 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
 
 // Over one of your damage numbers, skinned: petals bursting off it as it pops.
 export function numberDeco(ctx, deco, x, y, size, age) {
+  if (deco === 'hammerfall' && age < 0.6) {
+    // A hammer of light slams down on the number as it pops: a shock ring and sparks.
+    const cy = y - size * 0.35;
+    ctx.save();
+    if (age < 0.12) {
+      const u = age / 0.12;
+      ctx.globalAlpha *= 0.9;
+      ctx.translate(x + size * 0.3, cy - size * (1.6 - u * 1.2));
+      ctx.rotate(-0.9 + u * 0.9);
+      ctx.fillStyle = '#ffcf4a';
+      ctx.fillRect(-0.6, -1, 1.2, size * 0.9);
+      ctx.fillStyle = '#2a2232';
+      ctx.fillRect(-size * 0.3, -size * 0.22, size * 0.6, size * 0.3);
+      ctx.fillStyle = '#ff7a2a';
+      ctx.fillRect(-size * 0.3, -size * 0.22, size * 0.06, size * 0.3);
+      ctx.fillRect(size * 0.24, -size * 0.22, size * 0.06, size * 0.3);
+    } else {
+      const u = (age - 0.12) / 0.48;
+      ctx.globalAlpha *= 1 - u;
+      ctx.strokeStyle = '#ffb04a';
+      ctx.lineWidth = 1.2 * (1 - u) + 0.3;
+      ctx.beginPath();
+      ctx.ellipse(x, cy, size * (0.6 + u * 1.2), size * (0.25 + u * 0.4), 0, 0, TAU);
+      ctx.stroke();
+      ctx.fillStyle = '#fff0a0';
+      for (let k = 0; k < 6; k++) {
+        const a2 = -Math.PI * (0.1 + k * 0.16);
+        const d = size * (0.5 + u * 1.1);
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a2) * d, cy + Math.sin(a2) * d * 0.8 + u * u * size * 0.6, 1, 0, TAU);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    return;
+  }
   if (deco === 'beam' && age < 0.55) {
     // A lighthouse flash behind the number: rays of light turning out from it as it pops.
     const u = age / 0.55;
