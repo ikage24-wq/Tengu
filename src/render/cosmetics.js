@@ -157,8 +157,57 @@ function tinyCrown(ctx, x, y, time) {
   ctx.fill();
 }
 
+// A gold coin at (x, y), turned by `spin`.
+function goldCoin(ctx, x, y, r, spin) {
+  const w = Math.max(0.15, Math.abs(Math.cos(spin)));
+  ctx.fillStyle = '#c8902e';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * w + 0.2, r, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffcf4a';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * w * 0.78, r * 0.78, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#fff6d0';
+  ctx.beginPath();
+  ctx.ellipse(x - r * w * 0.3, y - r * 0.3, r * w * 0.22, r * 0.2, 0, 0, TAU);
+  ctx.fill();
+}
+
 // Round a chat bubble (bx, by, w, h): a blossom tucked on its corner, petals drifting off it.
 export function bubbleDeco(ctx, deco, bx, by, w, h, time) {
+  if (deco === 'pricetag') {
+    // A merchant's price tag: a punched hole with a looped string, a gold coin dangling from it,
+    // spinning, and a little red wax "SOLD" stamp in the corner.
+    ctx.fillStyle = '#c8902e';
+    ctx.beginPath();
+    ctx.arc(bx + 3.6, by + 3.6, 1.3, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#5a2a3a';
+    ctx.beginPath();
+    ctx.arc(bx + 3.6, by + 3.6, 0.7, 0, TAU);
+    ctx.fill();
+    const sw = Math.sin(time * 2.2) * 2;
+    ctx.strokeStyle = '#a8283a';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(bx + 3.6, by + 3.6);
+    ctx.quadraticCurveTo(bx - 1, by + 2, bx - 3 + sw, by + 7);
+    ctx.stroke();
+    goldCoin(ctx, bx - 3 + sw, by + 9, 2, time * 3);
+    ctx.save();
+    ctx.translate(bx + w - 4.4, by + h - 3.4);
+    ctx.rotate(-0.3);
+    ctx.fillStyle = '#c8384a';
+    ctx.beginPath();
+    ctx.arc(0, 0, 2.6, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffd8d0';
+    ctx.font = '900 2px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SOLD', 0, 0.7);
+    ctx.restore();
+  }
   if (deco === 'molten') {
     // Obsidian with a gold edge: lava cracks glowing along its foot, molten drops gathering and
     // falling off it, embers rising from its top corners.
@@ -310,6 +359,42 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
       }
     }
   }
+  if (skin.deco === 'shopsign' || skin.deco === 'ledger') {
+    // A hanging shop sign: two gold chains up from its corners, swinging; a coin stamped at each end.
+    const sw = Math.sin(time * 1.8) * 0.8;
+    ctx.strokeStyle = '#ffcf4a';
+    ctx.lineWidth = 0.5;
+    ctx.setLineDash([0.8, 0.6]);
+    ctx.beginPath();
+    ctx.moveTo(left + 3, y);
+    ctx.lineTo(left + 5 + sw, y - 4);
+    ctx.moveTo(left + w - 3, y);
+    ctx.lineTo(left + w - 5 + sw, y - 4);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    goldCoin(ctx, left + 2.6, y + 5, 1.6, skin.deco === 'ledger' ? time * 2 : 0);
+    goldCoin(ctx, left + w - 2.6, y + 5, 1.6, skin.deco === 'ledger' ? time * 2 + 1.5 : 0);
+    if (skin.deco === 'ledger') {
+      // The golden ledger: a stack of coins on top, a gem catching the light now and then.
+      for (let k = 0; k < 3; k++) goldCoin(ctx, x, y - 1.2 - k * 1.3, 2.4, 0);
+      const u = (time / 2.4) % 1;
+      ctx.fillStyle = '#a8283a';
+      ctx.beginPath();
+      ctx.arc(x, y - 5.6, 1, 0, TAU);
+      ctx.fill();
+      if (u < 0.2) {
+        const g = Math.sin(Math.PI * (u / 0.2)) * 2.6;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(x, y - 5.6 - g);
+        ctx.quadraticCurveTo(x, y - 5.6, x + g, y - 5.6);
+        ctx.quadraticCurveTo(x, y - 5.6, x, y - 5.6 + g);
+        ctx.quadraticCurveTo(x, y - 5.6, x - g, y - 5.6);
+        ctx.quadraticCurveTo(x, y - 5.6, x, y - 5.6 - g);
+        ctx.fill();
+      }
+    }
+  }
   if (skin.deco === 'seal') {
     // A shine sweeping across the gold now and then, and a wax seal pressed on its left end,
     // a sprout stamped in it.
@@ -360,6 +445,19 @@ export function drawSkinTag(ctx, skin, x, y, label, time, hot = false) {
 
 // Over one of your damage numbers, skinned: petals bursting off it as it pops.
 export function numberDeco(ctx, deco, x, y, size, age) {
+  if (deco === 'coins' && age < 0.7) {
+    // A burst of gold coins popping out of the number, spinning, falling away.
+    const cy = y - size * 0.35;
+    ctx.save();
+    ctx.globalAlpha *= age > 0.45 ? 1 - (age - 0.45) / 0.25 : 1;
+    for (let k = 0; k < 5; k++) {
+      const a2 = -Math.PI * (0.15 + k * 0.175);
+      const d = size * (0.4 + age * 1.6);
+      goldCoin(ctx, x + Math.cos(a2) * d, cy + Math.sin(a2) * d * 0.8 + age * age * size * 2, size * 0.13, age * 14 + k);
+    }
+    ctx.restore();
+    return;
+  }
   if (deco === 'hammerfall' && age < 0.6) {
     // A hammer of light slams down on the number as it pops: a shock ring and sparks.
     const cy = y - size * 0.35;

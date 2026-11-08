@@ -36,6 +36,20 @@ const GOLD2 = '#ffcf4a';
 const GOLD_D = '#c8902e';
 const LAVA = '#ff5a1a';
 const CORE = '#fff0a0';
+const PLUM = '#5a2a6a';
+const PLUM_D = '#3e1a4a';
+const PLUM_L = '#7a4a8a';
+const TEAL_V = '#1f6a6a';
+const TEAL_L = '#3a8a8a';
+const CRIMSON = '#a8283a';
+const STRAW = '#e0c070';
+const STRAW_D = '#b89040';
+const STRAW_L = '#f4dc98';
+const CLOAK = '#6a5a3a';
+const CLOAK_D = '#4a3e28';
+const CLOAK_L = '#8a7a52';
+const TUNIC = '#d8c8a0';
+const SCARF = '#c8502a';
 
 // A crack of lava along `pts` (a glowing seam `w` wide with a bright core).
 function vein(pts, w, c = LAVA, core = HOT_CORE) {
@@ -462,6 +476,140 @@ const D = {
       for (const [x, y] of [[2.4, 45.4], [6.6, 46], [10.2, 45.4]]) out.push(F(T([[x + s2 - 1, y - 1.6], [x + s2, y], [x + s2 + 1, y - 1.6]], LAVA)), F(T([[x + s2 - 0.4, y - 1], [x + s2, y - 0.2], [x + s2 + 0.4, y - 1]], HOT_CORE)));
       return out;
     },
+  },
+
+  // ---- Coinbridge: the Wandering Peddler set ----
+
+  // A wide-brimmed plum felt hat with a gold band and a coin crest, a long teal-and-gold plume,
+  // and trinkets dangling from the brim on threads (a bell, a coin, a little lantern, a star
+  // charm) that swing as you go.
+  trinkethat: {
+    // A brass compass worn as a hair clip at the temple, its needle pointing the way, a quill
+    // tucked behind it, and hanging from it on a cord a little enchanted lantern bead that glows
+    // (render/gacha.js), swinging as you go.
+    hat: (p, m) => {
+      const k = m.hair * 0.6;
+      const out = [];
+      // The quill, tucked in behind the clip and sweeping back.
+      out.push(T([[24.4, 9.6], [26.4, 4.4], [29.2, 0.2], [30.2, 0.4], [28.6, 4], [25.6, 9.8]], '#f4ecd8'));
+      out.push(F(T([[25, 9.4], [27.2, 4.4], [29.6, 0.6], [27.8, 4.6]], '#c8b890')), F(T([[29.2, 0.2], [30.2, 0.4], [29.6, 1.6]], '#5a4a7a')));
+      // The compass: a brass case and ring, its face and needle, a glint.
+      out.push(E(24.6, 10.4, 2.3, 2.3, GOLD_D), E(24.6, 10.4, 1.9, 1.9, GOLD2), E(24.6, 10.4, 1.4, 1.4, '#f4ecd8'));
+      out.push(F(T([[24.6, 9.2], [25, 10.4], [24.2, 10.4]], CRIMSON)), F(T([[24.6, 11.6], [25, 10.4], [24.2, 10.4]], '#3a3e48')), F(E(24.6, 10.4, 0.25, 0.25, GOLD_D)));
+      out.push(E(24.6, 7.9, 0.6, 0.5, GOLD2), F(E(23.8, 9.6, 0.4, 0.3, WHITE)));
+      // The lantern bead on its cord.
+      const lx = 25 + k * 0.8;
+      out.push(F(T([[24.5, 12.6], [24.7, 12.6], [lx + 0.1, 15.4], [lx - 0.1, 15.4]], '#6a4228')));
+      out.push(T([[lx - 0.8, 15.4], [lx + 0.8, 15.4], [lx + 0.8, 15.9], [lx - 0.8, 15.9]], GOLD_D), E(lx, 17, 0.9, 1.2, '#ffcf6a'), F(E(lx, 17, 0.45, 0.6, '#fff6d0')), T([[lx - 0.8, 18.1], [lx + 0.8, 18.1], [lx, 18.8]], GOLD_D));
+      return out;
+    },
+  },
+
+  // A hooded traveller's cloak, road-stained olive brown, its hood down and bunched at the back
+  // of the neck, over a patched linen tunic; a woven scarf of red and gold wrapped at the throat,
+  // its tail flying; a belt hung with pouches and a fat coin purse.
+  merchantcoat: {
+    top: (p) => {
+      const body = torsoPts();
+      const out = [T(body, TUNIC)];
+      // The cloak over the shoulders and down the sides, open at the front.
+      out.push(T([[9.6, 27.4], [11, 26.4], [13, 26.6], [12.4, 35.8], [9.4, 35.8]], CLOAK), T([[21.6, 27.4], [20.2, 26.4], [18.2, 26.6], [18.8, 35.8], [21.6, 35.8]], CLOAK));
+      out.push(F(T([[10, 28], [11, 27.2], [11.4, 35.4], [10, 35.4]], CLOAK_L)), F(T([[12.2, 27.2], [12.8, 27], [12.4, 35.6], [11.8, 35.6]], CLOAK_D)), F(T([[18.4, 27], [19, 27.2], [19.4, 35.6], [18.8, 35.6]], CLOAK_D)));
+      // The hood bunched behind the neck.
+      out.push(T([[8.4, 28.6], [8.4, 26.2], [10.6, 24.8], [13.2, 25.2], [12.6, 27.6], [10.4, 29.2]], CLOAK_D));
+      // Patches on the tunic, stitched.
+      out.push(F(T([[13.6, 31.6], [16, 31.4], [16.2, 33.6], [13.8, 33.8]], '#a8584a')), F(T([[16.6, 28.8], [18.2, 28.8], [18.2, 30.4], [16.6, 30.4]], '#5a7a5a')));
+      for (const [x, y] of [[13.9, 31.9], [15.8, 31.7], [14.1, 33.5], [15.9, 33.4]]) out.push(F(E(x, y, 0.16, 0.16, '#f4ecd8')));
+      // The scarf wrapped round the throat, striped red and gold.
+      out.push(T([[11.6, 25.8], [19.6, 25.8], [19.8, 28], [11.4, 28]], SCARF));
+      for (const x of [12.6, 14.8, 17, 19]) out.push(F(T([[x, 25.8], [x + 0.8, 25.8], [x + 0.8, 28], [x, 28]], GOLD2)));
+      out.push(T([[17.4, 27.6], [19.2, 27.4], [19.8, 31.8], [18.2, 32]], SCARF), F(T([[18, 29.4], [19.5, 29.3], [19.6, 30.1], [18.1, 30.2]], GOLD2)), F(T([[18.2, 31.6], [19.8, 31.6], [19.4, 32.6], [18.6, 32.6]], GOLD2)));
+      // The belt, a pouch on it.
+      out.push(band(body, 34.4, 35.6, '#5a3a24'), F(E(MID, 35, 0.8, 0.6, GOLD_D)));
+      out.push(T([[10.6, 34.6], [12.6, 34.6], [12.6, 37.2], [10.6, 37.2]], '#8a5a3a'), F(T([[10.6, 34.6], [12.6, 34.6], [12.6, 35.4], [10.6, 35.4]], '#6a4228')));
+      return out;
+    },
+    sleeve: () => TUNIC,
+    shoulder: () => [E(0, 0.4, 3.9, 3.1, CLOAK), F(E(-0.6, -0.4, 1.8, 1, CLOAK_L)), F(T([[-3.6, 2], [3.6, 2], [3.2, 2.9], [-3.2, 2.9]], CLOAK_D))],
+    skirt: (p, m) => {
+      const s2 = m.sway * 0.55;
+      const out = [];
+      // The cloak's long hem behind, the tunic's patched hem in front, frayed at its edge.
+      out.push(T([[9.4, 35.2], [12.6, 35.2], [11.6 + s2, 46], [6.6 + s2, 46.4]], CLOAK), T([[21.8, 35.2], [18.6, 35.2], [19.6 + s2, 46], [24.4 + s2, 46.4]], CLOAK));
+      out.push(F(T([[6.6 + s2, 45.4], [11.6 + s2, 45.2], [11.6 + s2, 46], [6.6 + s2, 46.4]], CLOAK_D)), F(T([[19.6 + s2, 45.2], [24.4 + s2, 45.4], [24.4 + s2, 46.4], [19.6 + s2, 46]], CLOAK_D)));
+      out.push(T([[12.4, 35.2], [18.8, 35.2], [19.4 + s2 * 0.6, 41.6], [11.8 + s2 * 0.6, 41.6]], TUNIC));
+      for (let i = 0; i < 5; i++) out.push(F(T([[12 + i * 1.6 + s2 * 0.6, 41.4], [12.8 + i * 1.6 + s2 * 0.6, 41.4], [12.4 + i * 1.6 + s2 * 0.6, 42.4]], TUNIC)));
+      out.push(F(T([[14.6 + s2 * 0.5, 37.4], [16.6 + s2 * 0.5, 37.4], [16.6 + s2 * 0.5, 39.2], [14.6 + s2 * 0.5, 39.2]], '#5a7a5a')));
+      // The coin purse at the hip.
+      const ps = s2 * 1.6;
+      out.push(T([[19.4, 35.8], [19.8, 35.8], [20.2 + ps * 0.4, 37.4], [19.8 + ps * 0.4, 37.4]], '#5a3a24'));
+      out.push(E(20.2 + ps * 0.5, 39.6, 2.4, 2.2, '#8a5a3a'), F(E(19.6 + ps * 0.5, 39, 1, 0.8, '#b07a52')));
+      out.push(F(T([[18.6 + ps * 0.5, 37.8], [21.8 + ps * 0.5, 37.8], [21.4 + ps * 0.5, 38.6], [19 + ps * 0.5, 38.6]], '#c8a060')), F(E(20.8 + ps * 0.5, 37.6, 0.8, 0.5, GOLD2)));
+      return out;
+    },
+    legs: () => ({ top: '#5a4a34', low: '#7a6a4a', pad: null }),
+  },
+
+  // Worn leather road gloves with wraps of linen round the wrists (a coin walks the knuckles:
+  // render/gacha.js).
+  coingloves: {
+    hand: (p, hx, hy, ex, ey) => {
+      const l = Math.hypot(hx - ex, hy - ey) || 1;
+      const [ux, uy] = [(hx - ex) / l, (hy - ey) / l];
+      const wx = hx - ux * 2.2;
+      const wy = hy - uy * 2.2;
+      return [
+        E(hx, hy, 2.1, 2.1, '#8a5a3a'),
+        F(E(hx - uy * 0.5 - ux * 0.4, hy + ux * 0.5 - uy * 0.4, 0.9, 1.2, '#b07a52')),
+        T([[wx - uy * 2, wy + ux * 2], [wx + uy * 2, wy - ux * 2], [wx + uy * 1.9 + ux * 1.4, wy - ux * 1.9 + uy * 1.4], [wx - uy * 1.9 + ux * 1.4, wy + ux * 1.9 + uy * 1.4]], TUNIC),
+        F(T([[wx - uy * 2 + ux * 0.5, wy + ux * 2 + uy * 0.5], [wx + uy * 2 + ux * 0.9, wy - ux * 2 + uy * 0.9], [wx + uy * 2 + ux * 1.2, wy - ux * 2 + uy * 1.2], [wx - uy * 2 + ux * 0.8, wy + ux * 2 + uy * 0.8]], '#b8a880')),
+        F(E(hx + ux * 1.3 + uy * 0.6, hy + uy * 1.3 - ux * 0.6, 0.45, 0.45, GOLD2)),
+      ];
+    },
+  },
+
+  // Road-worn boots, scuffed brown, wound with leg wraps, a patch on the toe and a little bell.
+  wayfarerboots: {
+    shoe: (p, k) => [
+      k.poly([[-3.2, 3.6], [-3.6, -3.8], [1.8, -3.8], [2, 0.2], [4.8, 0.8], [6.4, 2.4], [6.2, 3.6]], k.tint('#6a4a30')),
+      k.poly([[-3.7, -3.8], [1.9, -3.8], [1.9, -3.1], [-3.7, -3.1]], k.tint(TUNIC)),
+      k.poly([[-3.7, -2.4], [1.9, -1.8], [1.9, -1.1], [-3.7, -1.7]], k.tint(TUNIC)),
+      k.poly([[-3.6, -0.6], [1.9, -0.2], [1.9, 0.4], [-3.6, 0.1]], k.tint(TUNIC)),
+      k.poly([[3.4, 0.8], [5, 1.1], [5.4, 2.4], [3.6, 2.4]], k.tint('#5a7a5a')),
+      k.poly([[-3.4, 3.4], [6.4, 3.4], [6.2, 4.6], [-3.2, 4.6]], k.tint('#3a2a1a')),
+      k.dot(-3.4, 0.9, 0.7, k.tint(GOLD2)),
+    ],
+  },
+
+  appraisermonocle: {
+    // Big round gold glasses, cute and oversized: thick rounded rims over both eyes, a curved
+    // bridge, two shines across each lens, and a little gold star at each outer corner.
+    hat: () => {
+      const out = [];
+      const ring = (cx, r) => arcPts(cx, 19, r, r, 0, 360, 24);
+      for (const [cx, d] of [[10.2, -1], [20.8, 1]]) {
+        out.push(T([...ring(cx, 4.5), ...ring(cx, 3.6).reverse()], GOLD_D));
+        out.push(T([...ring(cx, 4.3), ...ring(cx, 3.8).reverse()], GOLD2));
+        out.push(F(T([...arcPts(cx, 19, 4.2, 4.2, 35, 130, 8), ...arcPts(cx, 19, 3.85, 3.85, 130, 35, 8)], '#fff0b0')));
+        // The shines: a broad stroke and a thin one across the lens.
+        out.push(F(T([[cx - 2.6, 17.4], [cx - 1.4, 16.2], [cx + 0.2, 17.6], [cx - 1, 18.8]], '#ffffff')), F(T([[cx + 0.6, 18.4], [cx + 1.1, 17.9], [cx + 1.9, 18.8], [cx + 1.4, 19.3]], '#ffffff')));
+        // A little star at the outer corner.
+        const sx = cx + d * 4.4;
+        out.push(T([[sx, 14.2], [sx + 0.45, 15.3], [sx + 1.5, 15.5], [sx + 0.45, 15.8], [sx, 16.9], [sx - 0.45, 15.8], [sx - 1.5, 15.5], [sx - 0.45, 15.3]], GOLD2));
+      }
+      out.push(T([...arcPts(15.5, 18.6, 1.4, 1, 20, 160, 8), ...arcPts(15.5, 18.6, 1.4, 0.4, 160, 20, 8)], GOLD2));
+      out.push(T([[5.8, 18.4], [3.8, 17.6], [3.8, 18.4], [5.8, 19.2]], GOLD_D), T([[25.2, 18.4], [27.2, 17.6], [27.2, 18.4], [25.2, 19.2]], GOLD_D));
+      return out;
+    },
+  },
+
+  // The star prize's straps over the shoulders (The Wandering Market itself, the towering pack,
+  // is drawn live and wobbles: render/gacha.js).
+  marketpack: {
+    capeFront: () => [
+      T([[11.2, 26.6], [12.4, 26.4], [12.6, 33.4], [11.4, 33.4]], '#6a4228'), T([[19, 26.4], [20.2, 26.6], [20, 33.4], [18.8, 33.4]], '#6a4228'),
+      F(E(11.9, 31, 0.6, 0.6, GOLD2)), F(E(19.5, 31, 0.6, 0.6, GOLD2)),
+    ],
   },
 };
 

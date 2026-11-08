@@ -815,16 +815,18 @@ Object.assign(MAPS, {
     // the two canals sunk into the street.
     // (The street runs level over the canals, on their bridges: everyone crosses there, no one
     // wades. The water shows below the deck: render/coinbridge.js.)
+    // The capsule machine stands at the Night Market on the docks, by the Masked Moth.
+    gacha: 424,
     terrain: [[0, 1120], [820, 1120], [1210, 860], [2050, 860], [2440, 600], [3100, 600], [3490, 340], [3960, 340]],
     walkSpan: [1250, 2040],
     cottages: [],
     townPieces: [
       // The docks: the gate, crates waiting on the quay, the crane at the canal's edge with its load
       // swinging out over the water, a gondola moored under the bridge.
-      ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 380], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1, lanterns: true }], ['cb_crates', 720, 2], ['cb_lamp', 790],
+      ['cb_gate', 170], ['cb_crates', 300, 1], ['cb_lamp', 360], ['cb_crane', 508], ['cb_canal', 580, { w: 118, depth: 30 }], ['cb_bridge', 580, { w: 140 }], ['cb_gondola', 580, { w: 118, dir: -1, lanterns: true }], ['cb_crates', 720, 2], ['cb_lamp', 790],
       // The Night Market, out after dusk where the cargo stood by day: two traders' stalls, lanterns
       // strung across the quay, fireflies (render/coinbridge.js; the Masked Moth, world/nightmarket.js).
-      ['cb_nightstall', 300, 1], ['cb_nightstall', 722, 2], ['cb_lanterns', 232, { to: 376, h: 64 }], ['cb_lanterns', 384, { to: 470, h: 64 }], ['cb_lanterns', 654, { to: 786, h: 64 }], ['cb_fireflies', 60, { w: 740 }],
+      ['cb_nightstall', 300, 1], ['cb_nightstall', 722, 2], ['cb_lanterns', 232, { to: 356, h: 64 }], ['cb_lanterns', 654, { to: 786, h: 64 }], ['cb_fireflies', 60, { w: 740 }],
       // The market: a lamp between the Auction House and the canal, and one past the stalls.
       ['cb_palazzo', 1262, 3], ['cb_auction', 1472], ['cb_lamp', 1633], ['cb_canal', 1710, { w: 118, depth: 30 }], ['cb_bridge', 1710, { w: 140 }], ['cb_gondola', 1710, { w: 118 }], ['cb_lamp', 2030],
       ['cb_stall', 1830, 1], ['cb_stall', 1900, 2], ['cb_stall', 1970, 'yours'],
@@ -845,7 +847,7 @@ Object.assign(MAPS, {
       { id: 'west', x: 40, y: 1120, to: 'sprout', toPortal: 'coin', label: 'Sprout Village' },
       { id: 'inn', x: 2662, y: 600, to: 'coin_inn', toPortal: 'door', label: 'The Gilded Kettle', door: true },
     ],
-    npcs: [{ id: 'moth', x: 430 }, { id: 'ledger', x: 1552 }, { id: 'halvard', x: 3570 }, { id: 'penny', x: 3808 }],
+    npcs: [{ id: 'moth', x: 486 }, { id: 'ledger', x: 1552 }, { id: 'halvard', x: 3570 }, { id: 'penny', x: 3808 }],
     zonesBy: 'x',
     zones: [
       { name: 'Canal Docks', from: 0, color: '#5fc4c4' },
@@ -854,7 +856,7 @@ Object.assign(MAPS, {
       { name: 'Guild Heights', from: 3350, color: '#8fa8ff', look: { sky: ['#b8c8ff', '#d8e0ff', '#f4f4ff'] } },
     ],
     // The night lights sit on the lanterns: the street lamps, the gate's, the bridges'.
-    lamps: [{ x: 120, y: 1072 }, { x: 220, y: 1072 }, { x: 380, y: 1074 }, { x: 515, y: 1087 }, { x: 645, y: 1087 }, { x: 790, y: 1074 }, { x: 1633, y: 814 }, { x: 1645, y: 827 }, { x: 1775, y: 827 }, { x: 2030, y: 814 }, { x: 2662, y: 540, c: '#ffc870' }, { x: 2800, y: 554 }, { x: 3506, y: 294 }],
+    lamps: [{ x: 120, y: 1072 }, { x: 220, y: 1072 }, { x: 360, y: 1074 }, { x: 515, y: 1087 }, { x: 645, y: 1087 }, { x: 790, y: 1074 }, { x: 1633, y: 814 }, { x: 1645, y: 827 }, { x: 1775, y: 827 }, { x: 2030, y: 814 }, { x: 2662, y: 540, c: '#ffc870' }, { x: 2800, y: 554 }, { x: 3506, y: 294 }],
     deco: [],
     spawns: [],
   },

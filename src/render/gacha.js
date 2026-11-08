@@ -26,7 +26,9 @@ const SPROUT = { id: 'sprout', base: '#7fd17a', trim: '#ffd23f', lid: '#ff9ec0',
 const HARBOR = { id: 'harbor', base: '#e86a6a', trim: '#ffd23f', lid: '#ffffff', gem: '#2e4a7a', capsules: ['#e8484a', '#ffffff', '#2e4a7a', '#ffd23f', '#8fd3ff', '#ffb38a'] };
 // Ember Crag's: obsidian with gold, glowing lava gems, capsules in molten colours.
 const CRAG = { id: 'crag', base: '#3a2e44', trim: '#ffcf4a', lid: '#ff7a2a', gem: '#ff5a1a', capsules: ['#ff5a1a', '#ffcf4a', '#2a2232', '#ff9a3a', '#fff0a0', '#c83a2a'] };
-export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG };
+// Coinbridge's: road-worn wood and brass for the wandering peddler, capsules like wares and coins.
+const COINBRIDGE = { id: 'coinbridge', base: '#8a5a3a', trim: '#ffcf4a', lid: '#5a7a5a', gem: '#c8502a', capsules: ['#ffcf4a', '#c8502a', '#5a7a5a', '#e0c070', '#fff0c0', '#8a5a3a'] };
+export const MACHINE_THEMES = { sprout: SPROUT, harbor: HARBOR, crag: CRAG, coinbridge: COINBRIDGE };
 export const MACHINE = { w: 88, h: 132, globe: [44, 42, 29], crank: [76, 90], chute: [44, 108] };
 
 function machineArt(theme, crank) {
@@ -52,7 +54,12 @@ function machineArt(theme, crank) {
     }
     // The framed emblem: a big painted flower in a gold oval.
     out.push(E(34, 88, 9.4, 8.6, gold), E(34, 88, 8, 7.2, mix(b, '#ffffff', 0.55)));
-    if (theme.id === 'crag') {
+    if (theme.id === 'coinbridge') {
+      // Coinbridge's: a stack of gold coins under a merchant's scales.
+      for (let k = 0; k < 4; k++) out.push(E(34, 92.4 - k * 1.6, 3.6, 1.2, k % 2 ? '#c8902e' : '#ffcf4a'));
+      out.push(R(33.6, 80.6, 0.8, 8.4, '#ffcf4a'), R(28.4, 81.4, 11.2, 0.7, '#ffcf4a'));
+      out.push(T([[27.6, 84.6], [31.2, 84.6], [29.4, 82]], '#ffcf4a'), T([[36.8, 84.6], [40.4, 84.6], [38.6, 82]], '#ffcf4a'), F(E(34, 80.4, 0.9, 0.9, '#a8283a')));
+    } else if (theme.id === 'crag') {
       // Ember Crag's: a burning hammer crossed over an anvil.
       out.push(T([[28.6, 92.4], [39.4, 92.4], [38.4, 90.6], [29.6, 90.6]], '#1f1a26'), T([[26.4, 90.6], [41.6, 90.6], [41.6, 88.6], [30, 88.6], [27, 89.4]], '#2a2232'));
       out.push(T([[30.6, 86.6], [31.4, 85.8], [38.6, 81.6], [39.4, 82.4]], '#c89a6a'), T([[36.2, 79.8], [39.8, 77.8], [41.6, 81], [38, 83]], '#2a2232'), F(T([[39.2, 78.2], [39.8, 77.8], [41.6, 81], [41, 81.4]], '#ff7a2a')));
@@ -659,6 +666,262 @@ function hammerMem(key, t, want) {
   return h;
 }
 
+// The Wandering Market: a road peddler's towering pack, drawn live from its foot at (x, y) on
+// the hero's back (`f` the way they face; it stacks out behind them). Each layer of wares sits on
+// the one below and leans a little more by `wob` (a spring: it lags as you walk and wobbles to
+// rest when you stop). `open` 0..1 opens its umbrella; `lit` (the full set) brings out the sign.
+function rect(ctx, x, y, w, h, c) {
+  ctx.fillStyle = c;
+  ctx.fillRect(x, y, w, h);
+}
+function glowAt(ctx, x, y, r, c, a) {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, c.replace('A', String(a)));
+  g.addColorStop(1, c.replace('A', '0'));
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  ctx.restore();
+}
+function marketPack(ctx, x, y, f, s, wob, open, lit, t) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(-f * s, s);
+  const hang = (hx, hy, len, fn, k = 2.2) => {
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(-wob * k + Math.sin(t * 2.3 + hx) * 0.08);
+    ctx.strokeStyle = '#3a2618';
+    ctx.lineWidth = 0.4;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, len);
+    ctx.stroke();
+    ctx.translate(0, len);
+    fn();
+    ctx.restore();
+  };
+  // Layer 0: a big wicker basket on the pack frame, its weave, a leather strap round it.
+  rect(ctx, -3, -11, 18, 11, '#b8905a');
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 9; c++) rect(ctx, -3 + c * 2 + (r % 2), -10.4 + r * 2, 1, 1.6, '#9a7444');
+  rect(ctx, -3.4, -11.6, 18.8, 1.4, '#8a6a3a');
+  rect(ctx, -3, -5.6, 18, 1.2, '#6a4228');
+  rect(ctx, 5.4, -6, 1.6, 2, '#ffcf4a');
+  // A copper pan and a kettle hang off it and swing against the lean, clanking.
+  hang(-3.4, -9, 2.6, () => {
+    ctx.fillStyle = '#c87a4a';
+    ctx.beginPath();
+    ctx.arc(0, 2.2, 2.2, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#a85a3a';
+    ctx.beginPath();
+    ctx.arc(0, 2.2, 1.4, 0, TAU);
+    ctx.fill();
+  });
+  hang(15.6, -10, 1.6, () => {
+    ctx.strokeStyle = '#3a3e48';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(0, 1.6, 1.6, Math.PI, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#5a5f6e';
+    ctx.beginPath();
+    ctx.ellipse(0, 3.4, 2.2, 1.8, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#8a90a0';
+    ctx.beginPath();
+    ctx.ellipse(-0.6, 2.8, 0.9, 0.6, 0, 0, TAU);
+    ctx.fill();
+    rect(ctx, 1.8, 2.6, 2, 0.7, '#5a5f6e');
+    // A curl of steam from the spout.
+    const u = (t * 0.7) % 1;
+    ctx.globalAlpha = 0.5 * (1 - u);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(4 + Math.sin(u * 6) * 0.6, 2.4 - u * 5, 0.5 + u * 0.8, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }, 1.6);
+  // Layer 1: a rough crate, and a rack of three potions glowing.
+  ctx.translate(0, -11);
+  ctx.rotate(wob * 0.6);
+  rect(ctx, -1.6, -6.6, 10, 6.6, '#9a6a44');
+  ctx.strokeStyle = '#6a4228';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(-1.6, -6.6, 10, 6.6);
+  rect(ctx, -1.6, -3.6, 10, 0.6, '#6a4228');
+  [['#ff7ab8', 10.4], ['#5ae0d0', 12.2], ['#ffcf4a', 14]].forEach(([c, px], k) => {
+    rect(ctx, px - 0.6, -5.4, 1.2, 1, '#e8f0ff');
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(px, -2.2, 1.4, 0, TAU);
+    ctx.fill();
+    rect(ctx, px - 0.5, -6.4, 1, 1, '#8a5a3a');
+    glowAt(ctx, px, -2.2, 4, c === '#ff7ab8' ? 'rgba(255,122,184,A)' : c === '#5ae0d0' ? 'rgba(90,224,208,A)' : 'rgba(255,207,74,A)', (lit ? 0.5 : 0.3) + 0.2 * Math.sin(t * 2.4 + k));
+    const u = (t * 0.8 + k * 0.33) % 1;
+    ctx.globalAlpha = 1 - u;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(px + Math.sin(u * 7) * 0.5, -6.8 - u * 5, 0.35 + u * 0.3, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+  rect(ctx, 9, -0.8, 6.4, 0.8, '#6a4228');
+  // Layer 2: the bedroll, a red plaid blanket rolled and roped.
+  ctx.translate(0, -6.6);
+  ctx.rotate(wob * 0.8);
+  rect(ctx, -3, -5, 18, 5, '#a8402a');
+  for (const bx of [-1, 3, 7, 11]) rect(ctx, bx, -5, 0.8, 5, '#7a2a1a');
+  rect(ctx, -3, -3, 18, 0.7, '#7a2a1a');
+  rect(ctx, -3, -5, 18, 0.8, '#c8604a');
+  ctx.fillStyle = '#d8b880';
+  ctx.beginPath();
+  ctx.ellipse(-3, -2.5, 1, 2.5, 0, 0, TAU);
+  ctx.fill();
+  for (const bx of [1, 10]) rect(ctx, bx, -5.4, 1, 5.8, '#c8a060');
+  // Layer 3: a little brass cage with a captured star in it, turning and shining; beside it a
+  // rolled map whose ink glows and drifts off it in tiny runes.
+  ctx.translate(0, -5);
+  ctx.rotate(wob);
+  ctx.strokeStyle = '#d8a440';
+  ctx.lineWidth = 0.45;
+  ctx.beginPath();
+  ctx.moveTo(0.6, 0);
+  ctx.lineTo(0.6, -5);
+  ctx.quadraticCurveTo(4.4, -10, 8.2, -5);
+  ctx.lineTo(8.2, 0);
+  for (const bx of [2.4, 4.4, 6.4]) {
+    ctx.moveTo(bx, 0);
+    ctx.lineTo(bx, -5 - (bx === 4.4 ? 2.4 : 1.2));
+  }
+  ctx.stroke();
+  rect(ctx, 0.2, -0.6, 8.4, 0.8, '#d8a440');
+  const sx2 = 4.4;
+  const sy2 = -4 + Math.sin(t * 1.6) * 0.5;
+  glowAt(ctx, sx2, sy2, lit ? 9 : 6.5, 'rgba(255,230,140,A)', 0.55 + 0.2 * Math.sin(t * 3));
+  ctx.fillStyle = '#fff0a0';
+  ctx.beginPath();
+  for (let k = 0; k < 10; k++) {
+    const a2 = t * 0.8 + (k * Math.PI) / 5;
+    const r = k % 2 ? 0.9 : 2.2;
+    ctx.lineTo(sx2 + Math.cos(a2) * r, sy2 + Math.sin(a2) * r);
+  }
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(sx2, sy2, 0.6, 0, TAU);
+  ctx.fill();
+  rect(ctx, 9.6, -7, 3.2, 7, '#f4e8c8');
+  rect(ctx, 9.4, -7.4, 3.6, 0.8, '#c8b088');
+  rect(ctx, 9.4, -0.4, 3.6, 0.8, '#c8b088');
+  ctx.fillStyle = '#5ab8ff';
+  for (const [rx, ry] of [[10.4, -5.4], [11.6, -4], [10.6, -2.6], [11.8, -1.4]]) ctx.fillRect(rx, ry, 0.8, 0.4);
+  for (let k = 0; k < 3; k++) {
+    const u = (t * 0.5 + k / 3) % 1;
+    ctx.globalAlpha = Math.sin(Math.PI * u) * 0.9;
+    ctx.fillStyle = '#7ad0ff';
+    ctx.fillRect(11 + Math.sin(u * 6 + k) * 1.4, -8 - u * 7, 0.7, 0.7);
+  }
+  ctx.globalAlpha = 1;
+  // Layer 4: a patched travel umbrella, folded while you walk, opened over your wares when you
+  // stop; an enchanted lantern hangs from its handle.
+  ctx.translate(0, -8);
+  ctx.rotate(wob * 1.25);
+  rect(ctx, 5.6, -11, 0.8, 11, '#6a4228');
+  hang(5.2, -2, 1.2, () => {
+    rect(ctx, -1.4, 0, 2.8, 0.8, '#3a2618');
+    rect(ctx, -1.2, 0.8, 2.4, 3.4, '#ffd88a');
+    rect(ctx, -1.4, 4.2, 2.8, 0.8, '#3a2618');
+    glowAt(ctx, 0, 2.5, lit ? 9 : 6, 'rgba(255,190,90,A)', lit ? 0.55 : 0.35);
+  }, -1.6);
+  const w = 2 + open * 11;
+  const hgt = 2 + open * 4;
+  const patch = ['#8a7a52', '#5a7a5a', '#a8584a', '#8a7a52', '#c8a060', '#5a7a5a'];
+  for (let i = 0; i < 6; i++) {
+    const a0 = -w + (i * 2 * w) / 6;
+    const a1 = a0 + (2 * w) / 6;
+    ctx.fillStyle = patch[i];
+    ctx.beginPath();
+    ctx.moveTo(6, -11.4);
+    ctx.lineTo(6 + a0, -11.4 + hgt);
+    ctx.quadraticCurveTo(6 + (a0 + a1) / 2, -11.4 + hgt + 1.2 * open, 6 + a1, -11.4 + hgt);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (open > 0.3) {
+    ctx.strokeStyle = '#f4ecd8';
+    ctx.lineWidth = 0.3;
+    ctx.setLineDash([0.6, 0.6]);
+    ctx.beginPath();
+    ctx.moveTo(6 - w * 0.4, -11.4 + hgt * 0.5);
+    ctx.lineTo(6 - w * 0.1, -11.4 + hgt * 0.9);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.fillStyle = '#d8a440';
+  ctx.beginPath();
+  ctx.arc(6, -11.8, 0.6, 0, TAU);
+  ctx.fill();
+  // With the whole set, stopped: the wooden WARES sign swings out under the umbrella.
+  if (lit && open > 0.6) {
+    const k = (open - 0.6) / 0.4;
+    ctx.globalAlpha = k;
+    ctx.save();
+    ctx.translate(6, -11.4 + hgt + 2.6);
+    ctx.rotate(Math.sin(t * 1.6) * 0.08);
+    rect(ctx, -0.1, -2.6, 0.2, 2.6, '#3a2618');
+    rect(ctx, -4, 0, 8, 3, '#8a5a3a');
+    rect(ctx, -4, 0, 8, 0.5, '#b07a52');
+    ctx.scale(-f, 1);
+    ctx.fillStyle = '#ffe9a0';
+    ctx.font = '900 2.3px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('WARES', 0, 2.3);
+    ctx.restore();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+// Each hero's pack on its spring: { ang, vel }, and how long they've stood still.
+const PACKS = new Map();
+function packMem(key, t, target, still) {
+  let m = PACKS.get(key);
+  if (!m) PACKS.set(key, (m = { t, ang: target, vel: 0, still: 0, open: still ? 1 : 0 }));
+  const dt = t - m.t;
+  m.t = t;
+  if (dt > 0 && dt < 0.25) {
+    for (let k = 0; k < 4; k++) {
+      const d = dt / 4;
+      m.vel += ((target - m.ang) * 55 - m.vel * 5) * d;
+      m.ang += m.vel * d;
+    }
+    m.still = still ? m.still + dt : 0;
+    m.open += ((m.still > 0.7 ? 1 : 0) - m.open) * Math.min(1, dt * (m.still > 0.7 ? 2.6 : 9));
+  }
+  return m;
+}
+// A spinning gold coin at (x, y): its width follows the spin.
+function coin(ctx, x, y, r, spin, a = 1) {
+  if (a <= 0.01) return;
+  const w = Math.max(0.15, Math.abs(Math.cos(spin)));
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#c8902e';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * w + 0.2, r, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = Math.cos(spin) > 0 ? '#ffcf4a' : '#ffe28a';
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * w * 0.8, r * 0.8, 0, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#fff6d0';
+  ctx.beginPath();
+  ctx.ellipse(x - r * w * 0.3, y - r * 0.3, r * w * 0.25, r * 0.2, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
 // A water drop at (x, y): round below, pointed above, a glint.
 function drop(ctx, x, y, r, a) {
   if (a <= 0.01) return;
@@ -1066,6 +1329,81 @@ export function drawOutfitFx(ctx, worn, layer, x, y, state) {
       if (back !== Math.sin(a2) < 0) continue;
       const r = (24 - u * 12) * s;
       mote(ctx, x + Math.cos(a2) * r, y - u * 58 * s + Math.sin(a2) * 4 * s, (0.7 - u * 0.3) * s, '#fff0a0', '#ff5a1a', Math.sin(Math.PI * u));
+    }
+  }
+
+
+  // ---- The Wandering Peddler ----
+  const peddlerSet = worn.sets.has('peddlerglow');
+  if (fx.has('market') && back) {
+    const airborne = pose === 'jump' || pose === 'fall';
+    const target = moving ? 0.09 + Math.sin(t * 11) * 0.05 : airborne ? -0.14 : 0;
+    const m = packMem(HEAD_POSE.key, t, target, still);
+    const [bx, by] = onBody(4, 37);
+    marketPack(ctx, bx - f * 9 * s, by, f, s * 1.35, m.ang, m.open, peddlerSet, t);
+  }
+  // The hat's trinkets glint, and the bell rings now and then.
+  if (fx.has('charms') && !back) {
+    // The compass clip's lantern bead: a warm, flickering glow on its cord.
+    const [gx, gy] = onHead(25 + (hp?.hair ?? 0) * 0.5, 17);
+    mote(ctx, gx, gy, 0.8 * s, '#fff6d0', '#ffb04a', 0.75 + 0.25 * Math.sin(t * 9) * Math.sin(t * 5.3));
+  }
+  // The purse: a coin hops out of it, flipping, and drops back in with a glint.
+  if (fx.has('purse') && !back) {
+    const u = (t / 2.4) % 1;
+    if (u < 0.45) {
+      const v = u / 0.45;
+      const [px, py] = onBody(20.6, 37.6);
+      const cx = px + f * Math.sin(v * Math.PI) * 2 * s;
+      const cy = py - Math.sin(v * Math.PI) * 12 * s;
+      coin(ctx, cx, cy, 1.2 * s, v * 14, 1);
+      if (v > 0.45 && v < 0.6) star4(ctx, cx, cy, 2.4 * s, '#fff6d0', 0.9, '#ffcf4a');
+    }
+  }
+  // The gloves: a coin walks over the knuckles, back and forth, and now and then is flipped up.
+  if (fx.has('coinwalk') && !back) {
+    const [hx, hy] = handAt();
+    const u = (t / 3.2) % 1;
+    if (u < 0.22) {
+      const v = u / 0.22;
+      coin(ctx, hx, hy - 1.6 * s - Math.sin(v * Math.PI) * 10 * s, 1 * s, v * 18, 1);
+    } else {
+      const roll = Math.sin(t * 3.4);
+      coin(ctx, hx + roll * 1.4 * s, hy - 1.8 * s - Math.abs(Math.cos(t * 3.4)) * 0.6 * s, 1 * s, t * 6.8, 1);
+    }
+  }
+  // The boots kick up road dust as you walk, a glint of gold in it now and then.
+  if (fx.has('dust') && back && moving) {
+    for (let k = 0; k < 3; k++) {
+      const u = (t * 2.6 + k / 3) % 1;
+      const px = x - f * (u * 12 + 2) * s + (k - 1) * 2 * s;
+      ctx.globalAlpha = 0.35 * (1 - u);
+      ctx.fillStyle = '#e8d8c0';
+      ctx.beginPath();
+      ctx.arc(px, y - (0.6 + u * 3) * s, (1 + u * 2.4) * s, 0, TAU);
+      ctx.fill();
+    }
+    const g = (t * 1.3) % 1;
+    if (g < 0.15) star4(ctx, x - f * 8 * s, y - 2 * s, 1.8 * Math.sin(Math.PI * (g / 0.15)) * s, '#fff6d0', 0.9, '#ffcf4a');
+  }
+  // The glasses catch the light.
+  if (fx.has('appraise') && !back) {
+    // A glint sweeping across one lens, then the other.
+    for (const [k, lx] of [[0, 8.4], [1, 19]]) {
+      const u = (t / 3.6 + k * 0.08) % 1;
+      if (u >= 0.18) continue;
+      const [gx, gy] = onHead(lx, 17.2);
+      star4(ctx, gx, gy, 2.6 * Math.sin(Math.PI * (u / 0.18)) * s, '#ffffff', 0.95, '#ffcf4a');
+    }
+  }
+  // The full set: a coin hops out behind you with every step, bounces and vanishes in a glint.
+  if (peddlerSet && moving && !back) {
+    for (let k = 0; k < 3; k++) {
+      const u = ((t * 2.2) % 1) / 3 + k / 3;
+      const px = x - f * (6 + u * 26) * s;
+      const hop = Math.abs(Math.sin(u * Math.PI * 2.4)) * (1 - u) * 12 * s;
+      coin(ctx, px, y - 1.2 * s - hop, 1.1 * s, u * 20, u > 0.85 ? (1 - u) / 0.15 : 1);
+      if (u > 0.82 && u < 0.9) star4(ctx, px, y - 2 * s, 2.4 * s, '#fff6d0', 0.9, '#ffcf4a');
     }
   }
 

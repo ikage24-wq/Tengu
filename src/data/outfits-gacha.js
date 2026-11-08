@@ -9,6 +9,7 @@
 export const GACHA_MACHINES = {
   sprout: { name: 'Sprout Village Capsules', town: 'sprout', set: 'Spring Spirit', theme: 'The spirit of spring: blossoms, dew and fireflies', colors: ['#7fd17a', '#ffd23f', '#ff9ec0'] },
   crag: { name: 'Ember Crag Capsules', town: 'crag', set: 'Forge God', theme: 'The god of the forge: obsidian and gold, lava in the veins, a hammer that floats', colors: ['#2a2232', '#ffcf4a', '#ff5a1a'] },
+  coinbridge: { name: 'Coinbridge Capsules', town: 'coinbridge', set: 'Wandering Peddler', theme: 'The legendary peddler of the far roads: a whole market on your back, and wonders in it', colors: ['#6a5a3a', '#ffcf4a', '#c8502a'] },
   harbor: { name: 'Pastel Harbor Capsules', town: 'harbor', set: 'Lighthouse Keeper', theme: 'Keeping the light on a stormy night: a beam, an oilskin, a lantern and a gull', colors: ['#e8484a', '#ffd23f', '#2e4a7a'] },
 };
 
@@ -34,6 +35,13 @@ export const GACHA_LOOKS = [
   { key: 'obsidiangreaves', name: 'Obsidian Greaves', slot: 'shoes', machine: 'crag', rarity: 'common', color: '#2a2232', colors: false, fx: 'cinders' },
   { key: 'runemarks', name: 'Forge Runes', slot: 'face', machine: 'crag', rarity: 'common', color: '#ffcf4a', colors: false, fx: 'runes' },
   { key: 'godhammer', name: 'Godforge Hammer', slot: 'cape', machine: 'crag', rarity: 'star', color: '#6a1420', colors: false, fx: 'hammer' },
+  // Coinbridge: the Wandering Peddler set.
+  { key: 'trinkethat', name: "Wayfarer's Compass Clip", slot: 'hat', machine: 'coinbridge', rarity: 'rare', color: '#d8a440', colors: false, fx: 'charms' },
+  { key: 'merchantcoat', name: "Wanderer's Cloak", slot: 'top', machine: 'coinbridge', rarity: 'rare', color: '#6a5a3a', covers: ['bottom'], fx: 'purse' },
+  { key: 'coingloves', name: 'Road Gloves', slot: 'gloves', machine: 'coinbridge', rarity: 'common', color: '#8a5a3a', colors: false, fx: 'coinwalk' },
+  { key: 'wayfarerboots', name: 'Road-Worn Boots', slot: 'shoes', machine: 'coinbridge', rarity: 'common', color: '#5a3a2a', colors: false, fx: 'dust' },
+  { key: 'appraisermonocle', name: "Appraiser's Round Glasses", slot: 'face', machine: 'coinbridge', rarity: 'common', color: '#ffcf4a', colors: false, fx: 'appraise' },
+  { key: 'marketpack', name: 'The Wandering Market', slot: 'cape', machine: 'coinbridge', rarity: 'star', color: '#8a5a3a', colors: false, fx: 'market' },
 ];
 
 // The rest of each machine's capsules (the fodder): cosmetic skins (data/cosmetics.js), each once,
@@ -52,6 +60,12 @@ export const GACHA_PRIZES = {
     { kind: 'dmg', key: 'hammerfall', rarity: 'rare' },
     { kind: 'bundle', key: 'forgebundle', name: 'Forge Bundle', rarity: 'common', items: [['iron_ore', 4], ['copper_ore', 4], ['meteorite', 1]] },
   ],
+  coinbridge: [
+    { kind: 'bubble', key: 'pricetag', rarity: 'common' },
+    { kind: 'tag', key: 'shopsign', rarity: 'common' },
+    { kind: 'dmg', key: 'coinburst', rarity: 'rare' },
+    { kind: 'bundle', key: 'peddlerbundle', name: "Peddler's Bundle", rarity: 'common', items: [['rose_quartz', 1], ['sea_glass', 2], ['silkmoss', 3], ['honeycomb', 2]] },
+  ],
   harbor: [
     { kind: 'bubble', key: 'logbook', rarity: 'common' },
     { kind: 'tag', key: 'anchor', rarity: 'common' },
@@ -62,11 +76,12 @@ export const GACHA_PRIZES = {
 
 // The capsule album (ui/album.js): a page for each machine, every look and skin in its slot. Fill
 // a page and it's sealed with this, a skin that only the album gives.
-export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, crag: { kind: 'tag', key: 'godseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
+export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, crag: { kind: 'tag', key: 'godseal' }, coinbridge: { kind: 'tag', key: 'ledgerseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
 
 // Wearing every piece of a machine's set.
 export const GACHA_SETS = {
   sprout: { name: 'Spring Spirit', fx: 'springglow', bonus: 'a spring bloom, a butterfly, and light at your feet' },
   crag: { name: 'Forge God', fx: 'forgegod', bonus: 'a molten rune circle at your feet, a storm of embers, and the hammer white-hot' },
+  coinbridge: { name: 'Wandering Peddler', fx: 'peddlerglow', bonus: 'a coin hops out with every step, and standing still your wares light up and the sign comes out' },
   harbor: { name: 'Lighthouse Keeper', fx: 'keeperglow', bonus: 'sea fog rolling round your feet and a stronger, longer beam' },
 };

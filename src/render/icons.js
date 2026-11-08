@@ -11,6 +11,7 @@ import { ITEM_ART } from './icons/items.js';
 import './icons/food.js';
 import './icons/craft.js';
 import './icons/finds.js';
+import './icons/gacha.js';
 import { SKILL_ART, skillTone } from './icons/skills.js';
 
 export { skillTone };
