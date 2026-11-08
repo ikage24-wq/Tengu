@@ -206,6 +206,75 @@ export const RECORDED = {
   emoteSleepy: { trim: -2.8 },
   emoteSad: { trim: 8 },
 };
+// The monsters' voices (tools/build-voices.py, voices.js): two takes of each family's moment,
+// each trimmed (dB) so every family sits at the same loudness (measured from the files).
+const VOICE_TRIM = {
+  mvCritterSpot: -1.8,
+  mvCritterHurt: -1.1,
+  mvCritterDie: 0.4,
+  mvBeastSpot: -1.7,
+  mvBeastHurt: -1.6,
+  mvBeastDie: -1.4,
+  mvBirdSpot: -2.1,
+  mvBirdHurt: -1.2,
+  mvBirdDie: 0.2,
+  mvBuzzSpot: -1.5,
+  mvBuzzHurt: -3.8,
+  mvBuzzDie: -2.2,
+  mvSpriteSpot: 0.7,
+  mvSpriteHurt: -2.6,
+  mvSpriteDie: 1.5,
+  mvGoblinSpot: -3.0,
+  mvGoblinHurt: -0.6,
+  mvGoblinDie: -4.4,
+  mvPlantSpot: -4.1,
+  mvPlantHurt: -0.9,
+  mvPlantDie: 0.6,
+  mvStoneSpot: -1.0,
+  mvStoneHurt: -1.8,
+  mvStoneDie: -0.9,
+  mvGhostSpot: -4.3,
+  mvGhostHurt: -3.1,
+  mvGhostDie: -3.5,
+  mvSeaSpot: 1.6,
+  mvSeaHurt: -1.4,
+  mvSeaDie: -1.8,
+  mvPeopleSpot: -2.6,
+  mvPeopleHurt: -2.1,
+  mvPeopleDie: -1.8,
+};
+for (const [name, trim] of Object.entries(VOICE_TRIM)) RECORDED[name] = { takes: 2, trim };
+
+// The rest of the fight sounds (tools/build-fight.py, 2026-11-08): weapon swings and thrusts,
+// throwing stars, heavy arrow hits and the skills still on the old free packs; trims set each to
+// the level of the recorded sound of its kind (swings to swing, hits to arrowHit, spells to their cast).
+const FIGHT_TRIM = {
+  axeSwing: -0.7, axeSwingHeavy: 1.0, spearSwing: -0.5, spearSwingHeavy: 0.8, daggerSwing: -1.4,
+  fistSwing: 0.6, spearThrust: 1.5, thrust: 1.7, arrowHitHeavy: -4.0, starHit: 0.1, star: -1.0,
+  dot: -6.4, hook: 1.4, fire: -3.4, poison: -7.2, mist: -9.8, bladestorm: 1.6, gather: 0.5,
+};
+for (const [name, trim] of Object.entries(FIGHT_TRIM)) RECORDED[name] = { trim };
+RECORDED.gatherHoly = { trim: -3.5, music: true };
+RECORDED.nightfall = { trim: -0.1, music: true };
+RECORDED.stormburst = { trim: -1.8 };
+
+// Movement (tools/build-fight.py, step 4, 2026-11-08): jumping, landing, climbing, mounts, furniture,
+// the kettle, the cloud, the turtle and the bunny; trims set by ear-matched levels against the old
+// samples (footsteps keep theirs: the bundles have no footsteps).
+Object.assign(RECORDED, {
+  jump: { takes: 3, trim: -7 },
+  land: { takes: 2, trim: 0 },
+  climb: { takes: 2, trim: -7.3 },
+  furnPlace: { trim: -6 },
+  mountOn: { trim: 0 },
+  mountOff: { trim: 0 },
+  craneFlap: { trim: 0 },
+  kettleWhistle: { trim: -3 },
+  kettleRattle: { trim: -6 },
+  nimbusPuff: { trim: -2 },
+  turtleSplash: { trim: 1.2 },
+  bunHop: { trim: -8 },
+});
 
 // The files for a sound: assets/audio/rec/<name>.mp3, or <name>1.mp3, <name>2.mp3... for takes.
 export const recFiles = (name) => {

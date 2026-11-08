@@ -26,7 +26,20 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
 - **Ambience loops** (`amb/`, played by `src/audio/ambience.js`): cut from the same Sonniss GDC
   bundles (royalty free under their licence, inside the game only): Nick McMahan's Cascadia Shore
   Waves (the beach), Rogue Waves' Yacht & Marina (the dock) and Systematic Sound's Rural
-  Countryside 01 (the meadows), Justsoundeffects' Forest Ambiences (the woods). Rebuild with `python tools/build-amb.py`.
+  Countryside 01 (the meadows), Justsoundeffects' Forest Ambiences (the woods); and since 2026-11-08
+  every other kind of place: Jake Fielding's Industrial Harbor (harbours), Neutral Interior Walla
+  (the theatre) and Interior Wind Rain and Storms (the manor), Sonik Sound Library's Spatial
+  Countryside (towns, sky), InMotionAudio's Cave Design (caves), Submerge (the aquarium) and Chimney
+  Wind (the sky whale), Just Sound Effects' Highlands of Norway (the crags), Systematic Sound's
+  Nightscapes 01 (ruins) and Quiet Rooms 01 (indoors), Epic Stock Media's Strange Game Ambient Loops
+  3 (the hollow, the observatory) and Public Spaces crowds (the carnival), and 344 Audio's Haunting
+  Ambiences Vol. 5 (the candy volcano). Rebuild with `python tools/build-amb.py`.
+- **Monster voices** (`rec/mv*.mp3`, listed in `src/audio/voices.js`): cut and pitched from the same
+  Sonniss GDC bundles by `python tools/build-voices.py`: 344 Audio (Dinosaurs, Dog Vocalisations,
+  Anime Fight Voices), Mechanical Wave (Farm Animals, a cat, Lumberjack), Jake Fielding (Red Kite,
+  Squeaky Gates), SoundBits (Vox Bestiae, Vox Hominis), Epic Stock Media (Humanoid Creatures,
+  Anime Game, Synthesized Nature), Cinematic Sound Design (Cartoon Bloopers and Animation), Rogue
+  Waves (Creaking Door), InMotionAudio (Wood) and DavidDumais (Robotic Creatures).
 - **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 2, 3, 4
   and 5 and Epic Boss Battle; Tarush Singhal's Happy Ukulele Island Surfing Theme; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
   Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from
@@ -34,3 +47,11 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
 
 The written songs (`src/audio/songs.js`), with their synths, drums and choir made in code, are kept
 for any area without a recorded track.
+
+## Fight sounds (tools/build-fight.py, 2026-11-08)
+
+Weapon swings and thrusts, throwing stars, heavy arrow hits, poison, fire, mist, hook, bladestorm, power gathering, nightfall and stormburst, layered from the Sonniss GDC 2024/2026 bundles (royalty free, no credit required): David Dumais Audio Melee Weapons 2, Justsoundeffects Melee Weapons, Rescopic Sound Distinct Whooshes, InMotionAudio Arc, Doex Studio 90s Anime SFX, Cinematic Sound Design (Ultra Transitions & Impacts, Cartoon Bloopers), Epic Stock Media (Elemental Mutation Whooshes, HD Game Materials, Fantasy Game 2), BluezoneCorp Steampunk Weapon, 344 Audio (Cinematic Fight Vol. 1, Elemental Palette Designed Vol. 1), Federico Soler Effective Trailer Booms Vol. 2, Alexander Kopeikin Emotion and Magic.
+
+## Movement sounds (tools/build-fight.py, 2026-11-08)
+
+Jumping, landing, climbing, mounting, furniture, the kettle mount's whistle and rattle, the cloud's puff, the turtle's splash and the bunny's hop, from the same bundles: InMotionAudio (Foley T-Shirt, Wood), Pole Position Steam Engine Model, Justsoundeffects (Steampunk Gadgets, Water in Motion), Cinematic Sound Design Cartoon & Animation Vol 2.

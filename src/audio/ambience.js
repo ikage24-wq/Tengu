@@ -6,7 +6,8 @@
 // The beds are built live from nodes (looping noise through filters, its level drifting on a slow
 // wave), so they never repeat; the little sounds are ordinary recipes (recipes.js) played at random
 // times and places across the stereo field. A place with a `rec` bed plays a real recording instead
-// (assets/audio/amb, cut from the Sonniss bundles by tools/build-amb.py), looped seamlessly; until
+// (assets/audio/amb, cut from the Sonniss bundles by tools/build-amb.py), looped seamlessly; since
+// 2026-11-08 every kind of place has one, each `recDb` matching its loudness to the others; until
 // it has loaded, the built bed stands in and the recording cross-fades in over it.
 
 import { context, busNode, now, audioReady, decodeFile } from './engine.js';
@@ -45,7 +46,7 @@ const PLACES = {
     night: [['cricket', 1, 3]],
   },
   harbor: {
-    bed: { lp: 650, hp: 90, db: -31, lfo: 0.13, depth: 0.8 },
+    bed: { lp: 650, hp: 90, db: -31, lfo: 0.13, depth: 0.8 }, rec: 'harborwater', recDb: -31,
     day: [['waveWash', 3, 6], ['gull', 6, 14], ['woodCreak', 8, 16]],
     night: [['waveWash', 3, 6], ['woodCreak', 7, 14], ['cricket', 1, 3]],
   },
@@ -62,81 +63,81 @@ const PLACES = {
     night: [['chatter', 5, 12], ['woodCreak', 6, 14], ['townBell', 40, 80]],
   },
   town: {
-    bed: { lp: 420, hp: 80, db: -40, lfo: 0.05, depth: 0.3 },
+    bed: { lp: 420, hp: 80, db: -40, lfo: 0.05, depth: 0.3 }, rec: 'townday', recDb: -9,
     day: [['chatter', 1.5, 4], ['birdChirp', 5, 12], ['townBell', 30, 60]],
     night: [['chatter', 5, 12], ['cricket', 0.8, 2.4], ['townBell', 40, 80]],
   },
   cave: {
-    bed: { lp: 190, hp: 30, db: -30, lfo: 0.05, depth: 0.3 },
+    bed: { lp: 190, hp: 30, db: -30, lfo: 0.05, depth: 0.3 }, rec: 'cave', recDb: -14,
     day: [['drip', 1.5, 5]],
     night: [['drip', 1.5, 5]],
   },
   crag: {
-    bed: { lp: 950, hp: 220, db: -32, lfo: 0.09, depth: 0.75 },
+    bed: { lp: 950, hp: 220, db: -32, lfo: 0.09, depth: 0.75 }, rec: 'highland', recDb: -14,
     day: [['hawkCry', 10, 22], ['leafRustle', 8, 16]],
     night: [['cricket', 1, 3], ['owl', 18, 34]],
   },
   ruins: {
-    bed: { lp: 600, hp: 160, db: -34, lfo: 0.07, depth: 0.6 },
+    bed: { lp: 600, hp: 160, db: -34, lfo: 0.07, depth: 0.6 }, rec: 'nightwood', recDb: -18,
     day: [['windChime', 8, 16], ['drip', 6, 14], ['birdChirp', 8, 18]],
     night: [['windChime', 10, 20], ['owl', 14, 28], ['drip', 6, 14]],
   },
   sky: {
-    bed: { lp: 2400, hp: 700, db: -38, lfo: 0.1, depth: 0.6 },
+    bed: { lp: 2400, hp: 700, db: -38, lfo: 0.1, depth: 0.6 }, rec: 'softwind', recDb: -12,
     day: [['windChime', 5, 10], ['birdTrill', 6, 14]],
     night: [['windChime', 6, 12]],
   },
   hollow: {
-    bed: { lp: 230, hp: 40, db: -30, lfo: 0.05, depth: 0.4 },
+    bed: { lp: 230, hp: 40, db: -30, lfo: 0.05, depth: 0.4 }, rec: 'mystic', recDb: -46,
     day: [['drip', 2, 6], ['woodCreak', 6, 14]],
     night: [['drip', 2, 6], ['woodCreak', 6, 14]],
   },
   // The Sunken Aquarium Palace: deep water, a low hum, drips of bubbles.
   aquarium: {
-    bed: { lp: 260, hp: 40, db: -29, lfo: 0.08, depth: 0.6 },
+    bed: { lp: 260, hp: 40, db: -29, lfo: 0.08, depth: 0.6 }, rec: 'underwater', recDb: -16.5,
     day: [['drip', 1.5, 4]],
     night: [['drip', 1.5, 4]],
   },
   // The Clockwork Carnival: a far-off fairground at night, chimes and the creak of the rides.
   carnival: {
-    bed: { lp: 420, hp: 60, db: -31, lfo: 0.1, depth: 0.4 },
+    bed: { lp: 420, hp: 60, db: -31, lfo: 0.1, depth: 0.4 }, rec: 'fairground', recDb: -40.5,
     day: [['windChime', 3, 8], ['woodCreak', 6, 12]],
     night: [['windChime', 3, 8], ['woodCreak', 6, 12]],
   },
   // The Star Observatory: a high, still night, wind round the tower, a far chime.
   observatory: {
-    bed: { lp: 500, hp: 80, db: -32, lfo: 0.05, depth: 0.5 },
+    bed: { lp: 500, hp: 80, db: -32, lfo: 0.05, depth: 0.5 }, rec: 'shimmer', recDb: -41,
     day: [['windChime', 4, 10]],
     night: [['windChime', 4, 10]],
   },
   // The Candy Volcano: a warm rumble far below, bubbling, a chime of sugar glass.
   volcano: {
-    bed: { lp: 220, hp: 30, db: -28, lfo: 0.12, depth: 0.5 },
+    bed: { lp: 220, hp: 30, db: -28, lfo: 0.12, depth: 0.5 }, rec: 'cauldron', recDb: -21.5,
     day: [['drip', 2, 5], ['windChime', 6, 12]],
     night: [['drip', 2, 5], ['windChime', 6, 12]],
   },
   // The Sky Whale's Back: open wind high over the clouds, rigging creaking, chimes on the stalls.
   skywhale: {
-    bed: { lp: 900, hp: 120, db: -29, lfo: 0.09, depth: 0.6 },
+    bed: { lp: 900, hp: 120, db: -29, lfo: 0.09, depth: 0.6 }, rec: 'chimney', recDb: -30,
     day: [['windChime', 4, 9], ['woodCreak', 6, 12]],
     night: [['windChime', 4, 9], ['woodCreak', 6, 12]],
   },
   // The Dream Theatre: a big hushed hall, boards creaking in the wings, a far chime from the flies.
   theatre: {
-    bed: { lp: 400, hp: 60, db: -31, lfo: 0.06, depth: 0.5 },
+    bed: { lp: 400, hp: 60, db: -31, lfo: 0.06, depth: 0.5 }, rec: 'hall', recDb: -37.5,
     day: [['woodCreak', 5, 11], ['windChime', 7, 14]],
     night: [['woodCreak', 5, 11], ['windChime', 7, 14]],
   },
   // Inside a house (your hut, the Sweethearts' rooms): hushed, the outdoors shut out (no birdsong,
   // gulls or crickets); a floorboard now and then, a far chime.
   room: {
-    bed: { lp: 260, hp: 50, db: -42, lfo: 0.03, depth: 0.2 },
+    bed: { lp: 260, hp: 50, db: -42, lfo: 0.03, depth: 0.2 }, rec: 'quietroom', recDb: -15,
     day: [['woodCreak', 9, 20], ['windChime', 20, 40]],
     night: [['woodCreak', 10, 22]],
   },
   // Moonlit Manor: a hushed old house, floorboards creaking, a far-off chime somewhere upstairs.
   manor: {
-    bed: { lp: 320, hp: 50, db: -31, lfo: 0.04, depth: 0.5 },
+    bed: { lp: 320, hp: 50, db: -31, lfo: 0.04, depth: 0.5 }, rec: 'rainwindow', recDb: -36,
     day: [['woodCreak', 4, 10], ['windChime', 8, 16]],
     night: [['woodCreak', 4, 10], ['windChime', 8, 16]],
   },

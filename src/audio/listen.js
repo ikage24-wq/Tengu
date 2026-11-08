@@ -73,6 +73,9 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 's
   // Team moves.
   'teamcatch', 'teamrevive', 'teamburst']);
 
+// Which monsters were already angry last frame (for their call as they turn on you).
+const spotted = new WeakMap();
+
 export function hearWorld(world, cam) {
   const m = memo.get(world) ?? memo.set(world, {}).get(world);
   const char = world.char;
@@ -132,7 +135,7 @@ export function hearWorld(world, cam) {
       }
       hits++;
       if (!hit || j.crit || j.big) hit = j;
-    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x), ally: Boolean(j.ally || j.party) && !j.boss });
+    } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x), ally: Boolean(j.ally || j.party) && !j.boss, mob: j.mob });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
@@ -145,6 +148,31 @@ export function hearWorld(world, cam) {
     sfx('hit', { big: hit.big, crit: hit.crit, path, school: hit.school, via: hit.via, weapon: hit.weapon, element: hit.element, many: hits, pan: pan(hit.x), mob: hit.mob, boss: hit.boss });
   }
   if (theirs) sfx('hit', { big: theirs.big, via: theirs.via, weapon: theirs.weapon, school: theirs.school, pan: pan(theirs.x), ally: true });
+
+  // ----- The monsters' voices (voices.js) -----
+  // A monster on screen that turns on you calls out as it does (one call at a time); that call
+  // stands for its cry at the blow that angered it.
+  const now = world.now ?? 0;
+  let calledOut = false;
+  const mid = (cam?.x ?? b.x - 320) + 320;
+  for (const mob of world.mobs ?? []) {
+    const angry = mob.hp > 0 && mob.def.aggro && now < (mob.aggroUntil ?? 0);
+    const was = spotted.get(mob) ?? false;
+    spotted.set(mob, angry);
+    if (angry && !was && Math.abs(mob.x - mid) < 340 && now - (m.spotVoice ?? -9) > 0.7) {
+      m.spotVoice = now;
+      calledOut = true;
+      sfx('mobVoice', { mob: mob.def.id, moment: 'Spot', pan: pan(mob.x) });
+    }
+  }
+  // Hit by you, it cries out now and then: not for every blow of a combo (each kind of monster
+  // waits a beat, and only one cries at a time).
+  m.hurtVoice ??= {};
+  if (hit?.mob && !calledOut && now - (m.anyHurtVoice ?? -9) > 0.3 && now - (m.hurtVoice[hit.mob] ?? -9) > 0.8) {
+    m.anyHurtVoice = now;
+    m.hurtVoice[hit.mob] = now;
+    sfx('mobVoice', { mob: hit.mob, moment: 'Hurt', pan: pan(hit.x) });
+  }
 
   // ----- Floating words -----
   for (const n of world.numbers) {

@@ -26,6 +26,7 @@ import { MATERIAL } from './materials.js';
 import { sfxBuffer, isRecorded } from './bank.js';
 import { RECORDED } from './recorded.js';
 import { RECIPES } from './recipes.js';
+import { voiceOf } from './voices.js';
 
 const UI = new Set(['click', 'cursor', 'cancel', 'open', 'close', 'denied', 'openPaper', 'openBag', 'skillUp', 'buy']);
 const JINGLES = new Set(['levelup', 'questDone', 'questAccept', 'jobUp', 'rareDrop', 'itemGet', 'bossDefeated', 'death']);
@@ -184,14 +185,18 @@ const SOUNDS = {
     if (crit) voice('crit', { pan });
     if (colour) voice(colour, { pan, db: -2 });
   },
+  // A monster's voice (voices.js): it spots you, or it's hurt.
+  mobVoice: ({ mob, moment, pan, db = 0 }) => voice(`mv${voiceOf(mob)}${moment}`, { pan, db }),
   thrust: ({ weapon, lead = 0, pan }) => voice(weapon === 'spear' ? 'spearThrust' : 'thrust', { pan, at: now() + Math.max(0, lead - 0.06) }),
   miss: ({ pan }) => voice('miss', { pan }),
   hurt: ({ pan }) => voice('hurt', { pan }),
   // A monster pops: a soft squish and a little cry (just the squish for the others' kills); a
   // boss booms.
-  poof({ boss, pan, ally }) {
+  poof({ boss, pan, ally, mob }) {
     voice('poof', { pan });
-    if (!ally) voice('enemyHurt', { pan, db: -6 });
+    // (Its own family's cry, voices.js; the others' kills are heard softer.)
+    if (mob) voice(`mv${voiceOf(mob)}Die`, { pan, db: ally ? -8 : 0 });
+    else if (!ally) voice('enemyHurt', { pan, db: -6 });
     if (boss) {
       voice('boom', { pan });
       voice('bossDefeated');

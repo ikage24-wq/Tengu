@@ -10,6 +10,7 @@
 // docs/audio/README.md for the rules (jingles after research-japanese.md, Part 5).
 
 import { RECORDED } from './recorded.js';
+import { VOICE_FAMILIES } from './voices.js';
 
 const N = { C5: 523 };
 // A whoosh: noise swept through a band, rising then falling (`focus` is where it peaks).
@@ -571,6 +572,13 @@ const R = {
   blipPulse: { db: -21, gap: 70, max: 1, layers: [{ wave: 'tri', f0: N.C5, slide: 0.6, env: { a: 2, s: 15, d: 30 }, lpf: [3500] }] },
   blipRasp: { db: -21, gap: 70, max: 1, layers: [{ wave: 'saw', f0: N.C5, env: { a: 2, s: 15, d: 30 }, lpf: [1500] }] },
 };
+
+// The monsters' voices (voices.js): spotting you, hurt, beaten, per family. The recordings play;
+// until they load, the old creature cry stands in, pitched for the moment.
+const VOICE_MOMENTS = { Spot: { db: -21, gap: 350, max: 2, rate: 1.2 }, Hurt: { db: -23, gap: 110, max: 2, rate: 1.45 }, Die: { db: -19, gap: 60, max: 3, rate: 1.1 } };
+for (const fam of VOICE_FAMILIES) {
+  for (const [ev, m] of Object.entries(VOICE_MOMENTS)) R[`mv${fam}${ev}`] = { db: m.db, gap: m.gap, vary: 6, max: m.max, layers: [{ rec: 'creatureHurt', rate: m.rate }] };
+}
 
 export const RECIPES = R;
 // A recorded effect that keeps its recipe's notes (recorded.js `music`) plays them from this
