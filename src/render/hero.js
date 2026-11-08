@@ -1498,6 +1498,25 @@ const CLIMB_CYCLE = 36;
 // steps) and the hips sink when the feet are spread; running, only 24%, so there's a moment with
 // both feet off the ground after every push-off, and the hips compress through each stance.
 const WALK_FRAMES = 24;
+const PREVIEW_LOOP = 100 / 9;
+const halfOf = (v) => (typeof v === 'number' ? Math.round(v * 2) / 2 : Array.isArray(v) ? v.map(halfOf) : v);
+function halfRig(r) {
+  const out = {};
+  for (const [k, v] of Object.entries(r)) out[k] = k === 'face' || k === 'posed' ? v : halfOf(v);
+  return out;
+}
+// A walk frame's hair and cloth (paintHero): the springs' places held for the cycle (`held`), the
+// hair's tips bobbing with each of the two steps, the breeze and the flutter in time with the feet.
+function walkLoop(r, held, f) {
+  const step = Math.sin((f / WALK_FRAMES) * Math.PI * 4);
+  r.hair = held.hair;
+  r.hairTip = held.hairTip + Math.round(step) * 0.5;
+  r.hairLift = held.hairLift;
+  r.cape = held.cape;
+  r.capeRoot = held.capeRoot;
+  r.hairWave = Math.floor(f / 2) % 12;
+  r.flap = Math.floor(f / 6) % 2 === 0;
+}
 // (Which passers-by's walk cycles have been sent to be painted ahead: paintHero.)
 const warmed = new Set();
 const LEG = THIGH + SHIN;
@@ -2557,7 +2576,8 @@ function weaponIdle(type, t, job) {
 // `hold: 'front'` hands the callbacks the front (near) hand instead, the one on the facing side,
 // which can reach out well past the body (a weapon held out at arm's length).
 export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
-  const rig = { ...baseRig(), ...pose, armIn: true };
+  // (Its pose on half pixels: fine enough to read smooth, few enough poses to come round again.)
+  const rig = { ...baseRig(), ...halfRig(pose), armIn: true };
   const g = resolveGear(look, null);
   const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
   const flip = facing < 0;
@@ -2759,6 +2779,21 @@ export function rimLightOf(map, hour) {
 
 // Draws the body, moving the whole figure for the current move: hops, lunges, leans, spins.
 function drawHeroBody(ctx, look, gear, x, y, state, anim = null) {
+  // Anyone but you (and the previews): an attack steps through 16 frames, about one a frame of a
+  // swing, so a crowd's fighting comes round to the same pictures instead of new ones each frame.
+  // A preview (the shop, the bag, the creator) plays its idle (or walk) as a loop of about 11
+  // seconds (ten walk cycles) at 20 frames a second: painted once, then drawn from the cache,
+  // instead of a new picture every frame while the window is open.
+  if (state.preview && state.progress == null) state = { ...state, time: Math.floor(((state.time ?? 0) % PREVIEW_LOOP) * 20) / 20 };
+  // The crowd standing about does the same, slower: a 6-second loop at 8 frames a second (48
+  // pictures each, so a town of thirty fits the sprite cache), so a town full of people breathing
+  // and blinking is painted once, not afresh every frame.
+  else if (!state.urgent && !state.preview && state.progress == null && state.pose !== 'walk') state = { ...state, time: Math.floor(((state.time ?? 0) % 6) * 8) / 8 };
+  // A townsperson's chore pose (render/townlife.js) on half pixels, so it comes round again too.
+  if (!state.urgent && !state.preview && state.rig) state = { ...state, rig: halfRig(state.rig) };
+  if (!state.urgent && !state.preview && state.progress != null) {
+    state = { ...state, progress: Math.round(state.progress * 16) / 16, ...(state.from && state.blend < 1 ? { blend: Math.round(state.blend * 4) / 4, from: { ...state.from, progress: Math.round(state.from.progress * 16) / 16 } } : {}) };
+  }
   const pose = state.pose ?? 'idle';
   // Each weapon swings in its own way (render/moves.js `feel`), bent round the moment the blow lands.
   const feel = { weapon: resolveGear(look, gear).weapon?.type, hit: state.hit, fin: state.fin };
@@ -2993,16 +3028,36 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   if (rig.view !== 'back') rig.face = liveFace(look, state, mv);
   // Only for the crowd: you, and the previews (the shop, the bag, the creator), stay exact and
   // are drawn on the spot.
-  if (!mine) {
-    // (The crowd runs on a fixed set of frames, like a sprite sheet: springs in whole pixels, and
-    // the breeze down the hair keeps time with the walk cycle, so a walk is the same 24 pictures
-    // over and over, painted once and reused.)
+  // A walk runs on a loop of fixed frames, like a sprite sheet: the springs' settled place is read
+  // once a cycle, and the hair's bounce, its breeze and the cloth's flutter keep time with the steps.
+  // So every frame of a walk comes round again and is drawn from the cache: a walk used to need a
+  // new picture every single frame, which is what made walking lag. (Not for the previews.)
+  let held = null;
+  const walking = pose === 'walk' && anim && !attack && !state.preview;
+  if (walking) {
+    const cyc = Math.floor(anim.phase ?? 0);
+    held = anim.walkHeld;
+    if (!held || held.cyc !== cyc || held.gait !== crowdAnim.gait) {
+      // (A place moves on only once the spring has really moved, two pixels or more: a steady walk's
+      // springs sway a pixel either way between cycles, and each would need a whole new set of frames.)
+      const was = held;
+      const keep = (k, v) => {
+        if (v == null) return null;
+        const r = Math.round(v);
+        return was && was[k] != null && Math.abs(r - was[k]) < 2 ? was[k] : r;
+      };
+      held = anim.walkHeld = { cyc, gait: crowdAnim.gait, face: rig.face, hair: keep('hair', rig.hair), hairTip: keep('hairTip', rig.hairTip), hairLift: keep('hairLift', rig.hairLift), cape: keep('cape', rig.cape), capeRoot: keep('capeRoot', rig.capeRoot) };
+    }
+    // (The face changes expression once a cycle too, as the walk comes round; blinks stay live.)
+    if (held.face !== undefined) rig.face = held.face;
+    walkLoop(rig, held, Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES);
+  } else if (!mine) {
+    // (The crowd standing or fighting: springs in whole pixels, so its poses come round again.)
     rig.hair = Math.round(rig.hair);
     rig.hairTip = Math.round(rig.hairTip);
     rig.hairLift = Math.round(rig.hairLift);
     rig.cape = Math.round(rig.cape);
     if (rig.capeRoot != null) rig.capeRoot = Math.round(rig.capeRoot);
-    if (pose === 'walk' && anim) rig.hairWave = Math.floor((Math.round(walkPhase(anim) * WALK_FRAMES) % WALK_FRAMES) / 2) % 12;
   }
   const lookKey = JSON.stringify(look);
   const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
@@ -3012,21 +3067,22 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // (The crowd is drawn within the frame's budget, the last pose standing in only when it's spent;
   // its walks are painted ahead, below, so its legs never trail behind its steps.)
   const body = mine ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`);
-  // Someone in the crowd starting a walk: the rest of the walk cycle, as it will look with their
-  // hair and cape as they are now, is painted in the background so every step is ready in time.
-  if (!mine && pose === 'walk' && crowdAnim && !attack) {
-    const sig = `${lookKey}|${gk}|${crowdAnim.gait}|${rig.hair},${rig.hairTip},${rig.hairLift},${rig.cape},${rig.capeRoot},${rig.eyes},${rig.flap ? 1 : 0},${rig.mouth}|${JSON.stringify(rig.face)}|${JSON.stringify(state.rig ?? null)}`;
+  // Starting a walk (or a new cycle of it): the rest of the cycle is painted in the background, so
+  // every step is ready by the time it's taken.
+  if (walking) {
+    const sig = `${lookKey}|${gk}|${held.gait}|${held.hair},${held.hairTip},${held.hairLift},${held.cape},${held.capeRoot},${rig.eyes},${rig.mouth}|${JSON.stringify(rig.face)}|${JSON.stringify(state.rig ?? null)}|${state.low ? 1 : 0}`;
     if (!warmed.has(sig)) {
       warmed.add(sig);
       if (warmed.size > 3000) warmed.clear();
-      for (let i = 1; i < WALK_FRAMES; i++) {
-        const f = (Math.round(walkPhase(crowdAnim) * WALK_FRAMES) + i) % WALK_FRAMES;
+      // (Pushed furthest step first, so the very next step is painted first.)
+      for (let i = WALK_FRAMES - 1; i >= 1; i--) {
+        const f = (Math.round(walkPhase(anim) * WALK_FRAMES) + i) % WALK_FRAMES;
         const r = solveRig({ ...state, mood: state.low ? 'tired' : look.dance ?? look.face ?? 'smile', armed: Boolean(g.weapon), wtype: g.weapon?.type }, { ...crowdAnim, phase: f / WALK_FRAMES }, mv);
         if (state.rig) Object.assign(r, state.rig);
         r.armIn = rig.armIn;
         if (shouldered) r.frontArm = [r.frontArm[0] + 1, r.frontArm[1] - 5];
-        for (const k of ['face', 'hair', 'hairTip', 'hairLift', 'cape', 'capeRoot', 'eyes', 'flap', 'mouth']) r[k] = rig[k];
-        r.hairWave = Math.floor(f / 2) % 12;
+        for (const k of ['face', 'eyes', 'mouth']) r[k] = rig[k];
+        walkLoop(r, held, f);
         spriteSoon(`hero|${lookKey}|${gk}|${rigKey(r)}|${LIGHT}`, { kind: 'hero', look, g, rig: r, light: LIGHT });
       }
     }

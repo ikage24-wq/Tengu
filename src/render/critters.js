@@ -154,7 +154,8 @@ function dogPose(st, time, mode) {
   const P = follow(st.spring, target, st.dt, 220, 0.6);
   return {
     ph: q(ph, 16), moving: moving ? 1 : 0, bob: q(bob), bow, pant, lick: Math.floor(time * 6) % 2,
-    tail: q(P.tail, 8), tailLag: q(P.tail - target.tail, 8), ear: q(P.ear, 8), head: q(P.head), tilt: q(P.tilt, 8), eyes: blinkAt(time, 5),
+    // (Quarter steps: fine enough to read smooth on a small dog, and few enough poses to come round again.)
+    tail: q(P.tail), tailLag: q(P.tail - target.tail, 2), ear: q(P.ear), head: q(P.head), tilt: q(P.tilt), eyes: blinkAt(time, 5),
   };
 }
 

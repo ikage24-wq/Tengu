@@ -12,7 +12,7 @@ import { art, place } from './scenery.js';
 import { drawDog, drawCat } from './critters.js';
 import { drawBubble } from '../ui/chat.js';
 import { settings } from '../core/settings.js';
-import { groundAt } from '../world/physics.js';
+import { groundAt, standAt } from '../world/physics.js';
 import { TOWNSFOLK } from '../data/townsfolk.js';
 import { gameHour } from '../world/daytime.js';
 
@@ -368,7 +368,7 @@ export function drawTownLife(ctx, map, cam, width, time, player = null) {
     const wx = at.x;
     const x = snap(wx - cam.x);
     if (x < -60 || x > width + 60) continue;
-    const gyWorld = at.y ?? groundAt(map, wx);
+    const gyWorld = at.y ?? standAt(map, wx);
     const gy = snap(gyWorld - cam.y);
     if (p.kind === 'cat' || p.kind === 'dog' || p.kind === 'chick') {
       drawPet(ctx, p, at, x, gy, time);

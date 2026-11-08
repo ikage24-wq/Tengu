@@ -7,7 +7,7 @@ const cache = new Map();
 
 // HD graphics: lighting, glow, and positions snapped to the screen's own pixels (so the camera
 // glides). Sprites stay crisp pixel art either way.
-export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false, glowPass: false, zoom: 1 };
+export const gfx = { hd: true, scale: 1, noGlow: false, noLight: false, glowPass: false, zoom: 1, noBudget: false };
 // Draws with sprites rasterized `z` times finer than the screen (portraits drawn big in dialogs
 // and windows, so a 2x figure stays smooth instead of showing doubled pixels). Kept apart in the
 // cache.
@@ -440,8 +440,15 @@ export function tinted(s, color) {
 
 // Smooth sprites are big and the hero makes many of them, so the cache forgets the least
 // recently used ones past this many, or past this much memory.
-const CACHE_MAX = 4000;
-const CACHE_BYTES = 160e6;
+const CACHE_MAX = 12000;
+// (A busy town's crowd, each person on their loops, needs a few hundred MB: 48 MB for each GB the
+// device has, up to 384 MB; where the browser doesn't say, 384 MB on a computer and 160 MB on a
+// phone or tablet.)
+const CACHE_BYTES = (() => {
+  const nav = typeof navigator !== 'undefined' ? navigator : {};
+  if (nav.deviceMemory) return Math.max(160e6, Math.min(384e6, nav.deviceMemory * 48e6));
+  return nav.maxTouchPoints > 0 ? 160e6 : 384e6;
+})();
 let cacheBytes = 0;
 const bytesOf = (s) => s.canvas.width * s.canvas.height * 4;
 
@@ -492,8 +499,31 @@ export function sprite(key, build) {
     cache.set(key, s);
     return s;
   }
+  const t0 = performance.now();
   const { w, h, res, crisp, pad, raster } = rasterOf(build(), gfx.scale * gfx.zoom);
-  return remember(key, { canvas: bake(raster), w, h, res, crisp, pad, white: null });
+  const made = remember(key, { canvas: bake(raster), w, h, res, crisp, pad, white: null });
+  countPaint(key, performance.now() - t0);
+  return made;
+}
+
+// Every sprite painted (not drawn from the cache), by its kind (the first part of its key): the
+// speed check (tools/perf-check.html) and the speed tests read these to catch anything that's
+// painted afresh over and over instead of once, the thing that makes the game lag.
+export const paintStats = { n: 0, ms: 0, kinds: {} };
+function countPaint(key, ms) {
+  const bar = key.indexOf('|');
+  const kind = bar < 0 ? key : key.slice(0, bar);
+  const k = (paintStats.kinds[kind] ??= { n: 0, ms: 0, ex: '' });
+  k.n++;
+  k.ms += ms;
+  k.ex = key.slice(0, 160);
+  paintStats.n++;
+  paintStats.ms += ms;
+}
+export function resetPaintStats() {
+  paintStats.n = 0;
+  paintStats.ms = 0;
+  paintStats.kinds = {};
 }
 
 // Sprites that can wait a frame (other people, portraits): within one frame, new ones are drawn
@@ -506,9 +536,20 @@ const lastOf = new Map();
 export function nextFrame() {
   budget.frame++;
   // Sprites asked for ahead of time go to the worker a few at a time.
+  // (No worker, as in the speed tests: they're painted here, counted apart as painted ahead.)
+  if (warmQ.length && !workerOf() && globalThis.__paintAheadHere) {
+    while (warmQ.length) {
+      const [key, job] = warmQ.pop();
+      if (cache.has(key) || job.kind !== 'hero') continue;
+      const t0 = performance.now();
+      const { w: sw, h, res, crisp, pad, raster } = rasterOf(heroSpecOf(job), gfx.scale * gfx.zoom);
+      remember(key, { canvas: bake(raster), w: sw, h, res, crisp, pad, white: null });
+      countPaint(`ahead|${key}`, performance.now() - t0);
+    }
+  }
   const w = warmQ.length ? workerOf() : null;
   while (w && warmQ.length && pending.size < 24) {
-    const [key, job] = warmQ.shift();
+    const [key, job] = warmQ.pop();
     if (cache.has(key) || pending.has(key) || failed.has(key)) continue;
     try {
       w.postMessage({ key, job, scale: gfx.scale });
@@ -520,8 +561,15 @@ export function nextFrame() {
 }
 
 // A sprite that will be wanted soon (the rest of a passer-by's walk cycle): painted by the worker
-// in the background, so it's ready by the time it's needed. Newest asks first; old ones drop.
+// in the background, so it's ready by the time it's needed. The newest ask is painted first (the
+// last one pushed), and the oldest drop off when too many wait.
 const warmQ = [];
+// (The speed tests hand in how a hero's job becomes shapes, as the worker does: hero.js can't be
+// imported here.)
+let heroSpecOf = null;
+export function paintAheadWith(fn) {
+  heroSpecOf = fn;
+}
 export function spriteSoon(key, job) {
   if (gfx.zoom !== 1 || cache.has(key) || pending.has(key)) return;
   warmQ.push([key, job]);
@@ -534,7 +582,8 @@ export function spriteBudgeted(key, build, slot) {
   }
   if (gfx.zoom !== 1) return sprite(key, build);
   const prev = lastOf.get(slot);
-  if (prev && !cache.has(key) && budget.ms >= BUDGET_MS) return prev;
+  // (gfx.noBudget: the speed check counts every painting that's needed, however fast the computer.)
+  if (prev && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget) return prev;
   const t = performance.now();
   const s = sprite(key, build);
   budget.ms += performance.now() - t;
@@ -682,3 +731,6 @@ export function footShadow(ctx, x, y, rx, slope = 0, k = 1) {
 
 // The slope of a surface (anything with yAt) at x, for tilting shadows.
 export const slopeAt = (s, x) => (s?.yAt ? (s.yAt(x + 6) - s.yAt(x - 6)) / 12 : 0);
+
+// How full the sprite cache is (the speed check reads it): sprites kept, and their memory.
+export const cacheInfo = () => ({ sprites: cache.size, mb: Math.round(cacheBytes / 1e6), maxSprites: CACHE_MAX, maxMb: CACHE_BYTES / 1e6 });

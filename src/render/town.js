@@ -20,7 +20,7 @@ import { createAnim, stepAnim } from './animator.js';
 import { drawBubble } from '../ui/chat.js';
 import { text, box } from '../ui/kit.js';
 import { NPCS } from '../data/npcs.js';
-import { groundAt } from '../world/physics.js';
+import { groundAt, standAt } from '../world/physics.js';
 import { hopLift } from '../world/botsoul.js';
 import { LANDMARKS } from './landmarks.js';
 import { starchimeTowerArt, chimeArt, moonCrystalArt, TOWER, TOWER_CHIMES, greatForgeArt, FORGE, fishStallArt, thatchCottageArt, gateArchArt, windmillTowerArt, windmillSailArt, WINDMILL, cottageArt, bungalowArt, townhouseArt, innArt, workshedArt, warehouseArt, adobeArcadeArt, mushHomeArt, plazaTreeArt, noticeboardArt, canalHouseArt, pierArt, adobeHouseArt, arenaArt, treeHomeArt, moonTreeArt, MOON_LANTERNS, stoveArt, stoveLidArt, stoveFlameArt } from './townhouses.js';
@@ -2303,7 +2303,7 @@ function shadow(ctx, x, y, slope = 0) {
 }
 
 // How steep the ground is under someone at world x.
-const groundSlope = (map, wx) => (groundAt(map, wx + 6) - groundAt(map, wx - 6)) / 12;
+const groundSlope = (map, wx) => (standAt(map, wx + 6) - standAt(map, wx - 6)) / 12;
 
 // The wandering merchant's shop: a picnic rug with a few wares, and their shop's name on a board above them.
 function shopBooth(ctx, x, gy, bot, time, hovered) {
@@ -2345,7 +2345,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const p of map.private ? [] : villagersOf(map)) {
     const at = stroll(p, time);
     const x = snap(at.x - cam.x);
-    const gy = snap(groundAt(map, at.x) - cam.y);
+    const gy = snap(standAt(map, at.x) - cam.y);
     if (x < -40 || x > width + 40) continue;
     const face = at.pausedFor != null && at.pausedFor < 1 ? 'grin' : p.look.face;
     shadow(ctx, x, gy, groundSlope(map, at.x));
@@ -2357,7 +2357,7 @@ export function drawTownsfolk(ctx, map, cam, width, time, bots = [], hoverId = n
   for (const bot of bots) {
     const x = snap(bot.x - cam.x);
     if (x < -60 || x > width + 60) continue;
-    const gy = snap(groundAt(map, bot.x) - cam.y);
+    const gy = snap(standAt(map, bot.x) - cam.y);
     if (bot.shop) shopBooth(ctx, x, gy, bot, time, hoverId === bot.id);
     // Name tags further than a few steps away fade back, so a busy street stays readable.
     const far = player && Math.abs(bot.x - player.x) > 150;

@@ -125,6 +125,14 @@ export function groundAt(map, x) {
   return groundPieceAt(map, x).yAt(x);
 }
 
+// Where someone who only walks the ground stands at x (townsfolk, residents): the ground, or a
+// footbridge (`walkOn`) over a dip in it, so they cross a pond on its bridge, not through the water.
+export function standAt(map, x) {
+  let y = groundAt(map, x);
+  for (const p of map.platforms ?? []) if (p.walkOn && x >= p.x && x <= p.x + p.w && p.y < y) y = p.y;
+  return y;
+}
+
 // Water (a map's `water`: [{ x1, x2, y }], y the surface): the height of the surface at x, or
 // null. Walking through it is a wade; a swimming mount skims along its top.
 export function waterAt(map, x) {
