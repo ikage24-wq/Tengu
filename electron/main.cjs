@@ -21,6 +21,12 @@ protocol.registerSchemesAsPrivileged([
   { scheme: SCHEME, privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } },
 ]);
 
+// Always draw on the graphics card: Chromium quietly falls back to drawing on the processor for
+// cards on its blocklist, which is far slower, and lets the card rasterize the canvas too. (Vsync
+// stays on, as it is by default: every frame waits for the screen's refresh, so nothing tears.)
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+
 // Only one copy of the game at a time (a second launch brings the first to the front).
 if (!app.requestSingleInstanceLock()) app.quit();
 

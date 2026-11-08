@@ -12,7 +12,7 @@ import { drawOrbs } from './juggler.js';
 import { drawSoapBubbles } from './bubbles.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
-import { drawSceneBack, drawSceneFront, zoneAt } from './scenery.js';
+import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
 import { gameHour } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
@@ -58,6 +58,7 @@ import { drawGlowcap, drawCage, drawSeal, drawRootKey, drawZone, drawZoneHit } f
 import { shock, starFlash, puff } from './fxkit.js';
 import { snap, gfx, footShadow, slopeAt } from './pixel.js';
 import { drawGlowing, drawLighting, drawNight } from './post.js';
+import { coopBosses } from '../world/coopboss.js';
 
 // Render-side state that persists between frames: the player's animation and the particles.
 const feel = { anim: createAnim(), fx: createParticles(), last: null, world: null };
@@ -345,30 +346,6 @@ function eliteCrown(ctx, m, x, y, time) {
   ctx.fillRect(Math.round(x - 6), Math.round(y - 1 + b), 12, 1);
 }
 
-// Climbing into a new zone of a tall map shows its name for a moment, softly, near the top.
-function drawZoneTitle(ctx, world, time) {
-  const b = world.body;
-  const z = world.map.zones?.length ? zoneAt(world.map, b.onGround || b.rope ? b.y : feel.zoneY ?? b.y, b.x) : null;
-  if (b.onGround || b.rope) feel.zoneY = b.y;
-  if (!z) return;
-  if (feel.zone !== z) {
-    // Not on arriving in the map: its own name card covers that.
-    feel.zoneAt = feel.zone && feel.zoneMap === world.map.id ? time : -99;
-    feel.zone = z;
-    feel.zoneMap = world.map.id;
-  }
-  const since = time - feel.zoneAt;
-  if (since > 3) return;
-  const a = Math.min(1, since / 0.4, (3 - since) / 0.6);
-  ctx.save();
-  ctx.globalAlpha = a;
-  const y = 46 - 6 * (1 - Math.min(1, since / 0.4)) ** 2;
-  text(ctx, z.name, VIEW_W / 2, y, { size: 12, bold: true, align: 'center', color: '#ffffff', outline: z.color ?? '#8f6cc4' });
-  ctx.globalAlpha = a * 0.85;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(VIEW_W / 2 - 40 * Math.min(1, since / 0.5), y + 5, 80 * Math.min(1, since / 0.5), 1);
-  ctx.restore();
-}
 
 export function drawWorld(ctx, world, viewCam, time) {
   const b = world.body;
@@ -404,7 +381,10 @@ export function drawWorld(ctx, world, viewCam, time) {
   if (world.bots) botLifeBeats(feel.fx, world, [...botsIn(world.bots, world.map.id), ...bodiedIn(world.bots, world.map.id)].filter((x) => x.life && Math.abs((x.body?.x ?? x.x) - viewCam.x - VIEW_W / 2) < VIEW_W), time);
   updateParticles(feel.fx, dt, world, viewCam, VIEW_W, VIEW_H);
   const [ox, oy] = shakeOffset(feel.fx, time);
-  const cam = { x: viewCam.x + ox, y: viewCam.y + oy };
+  // The camera sits on whole screen pixels: between them, every thin line (grass blades, the
+  // spikes along a lip, outlines) was drawn half in two pixels and flickered as it slid across them
+  // while you walked. On the pixel grid the whole scene steps together, crisp, every frame.
+  const cam = { x: snap(viewCam.x + ox), y: snap(viewCam.y + oy) };
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   // The portal on your guided route, if you're following one.
   const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
@@ -613,11 +593,14 @@ export function drawWorld(ctx, world, viewCam, time) {
     drawZonesFront(g, world, cam, time);
     drawParticles(g, feel.fx, cam, time);
   };
-  if (hd && !gfx.noGlow) drawGlowing(ctx, drawFx);
+  // (The glow pass only when something could glow: with no effects, sparks, dungeon, boss
+  // mechanics, team link or zones on screen it drew nothing, read its pixels back and blurred them
+  // anyway, every frame.)
+  const glowy = world.fx.length || feel.fx.list.length || world.dungeon || world.team || world.zones?.length || coopBosses(world).length;
+  if (hd && !gfx.noGlow && glowy) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   drawCallout(ctx, world);
-  drawZoneTitle(ctx, world, time);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
   // Every bubble queued this frame (yours, NPCs', the crowd's, your party's), laid out together.
   flushBubbles(ctx, Boolean(world.scene));
@@ -659,8 +642,39 @@ function drawAfterimages(ctx, world, look, gear, cam, state, time) {
     const gx = snap(k.x - cam.x - (k.blur ? k.dir * age * (3 + 3 * k.blur) : 0));
     const gy = snap(k.y - cam.y);
     const alpha = k.blur ? 0.18 + 0.17 * Math.min(1, k.blur) : 0.5;
-    drawTinted(ctx, gx, gy, k.tint ?? '#6a4ec8', 0.7, (c) => drawHero(c, look, gear, gx, gy, { ...k.state, job: null, alpha: k.state.alpha * alpha * (1 - age) ** 1.5 }));
+    // (Each one is a frozen pose: drawn and tinted once, into a picture of its own, the first time
+    // it's shown, then only placed and faded. Redrawing every afterimage every frame was most of a
+    // frame through a flash jump's trail.)
+    k.img ??= ghostImage(ctx, look, gear, k.state, k.tint ?? '#6a4ec8');
+    if (!k.img) continue;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, alpha * (1 - age) ** 1.5);
+    ctx.drawImage(k.img.canvas, gx - GHOST_BOX[0], gy - GHOST_BOX[1], k.img.w, k.img.h);
+    ctx.restore();
   }
+}
+
+// An afterimage's picture: the hero in the pose, washed 70% toward its tint, at the screen's scale.
+const GHOST_BOX = [80, 110, 80, 24];
+function ghostImage(ctx, look, gear, state, tint) {
+  if (typeof document === 'undefined') return null;
+  const m = ctx.getTransform();
+  const s = Math.hypot(m.a, m.b) || 1;
+  const w = GHOST_BOX[0] + GHOST_BOX[2];
+  const h = GHOST_BOX[1] + GHOST_BOX[3];
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil(w * s);
+  canvas.height = Math.ceil(h * s);
+  const g = canvas.getContext('2d');
+  g.imageSmoothingEnabled = false;
+  g.setTransform(s, 0, 0, s, 0, 0);
+  drawHero(g, look, gear, GHOST_BOX[0], GHOST_BOX[1], { ...state, job: null, alpha: state.alpha ?? 1 });
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.globalAlpha = 0.7;
+  g.fillStyle = tint;
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  return { canvas, w, h };
 }
 
 // The endless barrages' wheels round her: only the Beastmaster's gale of leaves now (the Kitsune's
@@ -700,6 +714,63 @@ function drawLeafWheel(ctx, world, run, hx, hy, time, layer) {
 const COPY_TINT = '#9a4a9a';
 // (The copies, the phantom, the shadow and the clones all move with you, so they step on your
 // stride, `feel.anim`: on a clock of their own their feet skated whenever you walked.)
+// Copies of you in your own pose this frame (the Beastmaster's copies and illusions, Shadow
+// Partner, Mirage): the tinted pose is drawn once a frame, for each tint and facing, and stamped
+// at every copy's place with its own fade. Drawing the whole hero again for each copy, each one
+// tinted on its own, cost Stampede a whole fast-screen frame.
+const copyMemo = { time: null, byKey: new Map(), canvases: new Map() };
+function copyImage(ctx, look, gear, state, tint, k, time, anim) {
+  if (copyMemo.time !== time) {
+    copyMemo.time = time;
+    copyMemo.byKey.clear();
+  }
+  const key = `${tint}|${k}|${state.facing}|${state.pose}|${state.progress}|${state.job}`;
+  let img = copyMemo.byKey.get(key);
+  if (img === undefined) {
+    // (Each tint and facing draws into the same picture every frame, not a new one.)
+    if (!copyMemo.canvases.has(key) && copyMemo.canvases.size > 24) copyMemo.canvases.clear();
+    img = tintedHero(ctx, look, gear, { ...state, alpha: 1 }, tint, k, anim, copyMemo.canvases.get(key));
+    if (img) copyMemo.canvases.set(key, img.canvas);
+    copyMemo.byKey.set(key, img);
+  }
+  return img;
+}
+function tintedHero(ctx, look, gear, state, tint, k, anim, reuse = null) {
+  if (typeof document === 'undefined') return null;
+  const m = ctx.getTransform();
+  const s = Math.hypot(m.a, m.b) || 1;
+  const w = GHOST_BOX[0] + GHOST_BOX[2];
+  const h = GHOST_BOX[1] + GHOST_BOX[3];
+  const canvas = reuse ?? document.createElement('canvas');
+  const cw = Math.ceil(w * s);
+  const ch = Math.ceil(h * s);
+  if (canvas.width !== cw || canvas.height !== ch) {
+    canvas.width = cw;
+    canvas.height = ch;
+  }
+  const g = canvas.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'source-over';
+  g.globalAlpha = 1;
+  g.clearRect(0, 0, cw, ch);
+  g.imageSmoothingEnabled = false;
+  g.setTransform(s, 0, 0, s, 0, 0);
+  drawHero(g, look, gear, GHOST_BOX[0], GHOST_BOX[1], state, anim);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.globalAlpha = k;
+  g.fillStyle = tint;
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  return { canvas, w, h };
+}
+function stampCopy(ctx, x, y, alpha, img) {
+  if (!img || alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, alpha);
+  ctx.drawImage(img.canvas, x - GHOST_BOX[0], y - GHOST_BOX[1], img.w, img.h);
+  ctx.restore();
+}
+
 function drawCopies(ctx, world, look, gear, cam, state, time) {
   const n = copiesOf(world);
   for (let k = n - 1; k >= 0; k--) {
@@ -708,7 +779,7 @@ function drawCopies(ctx, world, look, gear, cam, state, time) {
     const x = snap(c.x - cam.x);
     const y = snap(c.y - cam.y);
     const flicker = 0.85 + 0.15 * Math.sin(time * 7 + k * 2);
-    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, job: 'beastmaster', alpha: state.alpha * 0.62 * flicker }, feel.anim));
+    stampCopy(ctx, x, y, state.alpha * 0.62 * flicker, copyImage(ctx, look, gear, { ...state, job: 'beastmaster' }, COPY_TINT, 0.4, time, feel.anim));
   }
   const I = world.illusion;
   if (!I) return;
@@ -720,7 +791,7 @@ function drawCopies(ctx, world, look, gear, cam, state, time) {
     const shoot = Math.max(0, world.now - (I.shoot - 0.5));
     const fade = Math.min(1, age * 4) * Math.min(1, Math.max(0, I.until - world.now) * 3);
     const pose = { pose: 'ptflourish', progress: Math.min(1, shoot / 0.52), dur: 0.52, from: null, blend: 1 };
-    drawTinted(ctx, x, y, COPY_TINT, 0.4, (cx) => drawHero(cx, look, gear, x, y, { ...state, ...pose, facing: sp.dir, job: 'beastmaster', alpha: 0.78 * fade }));
+    stampCopy(ctx, x, y, 0.78 * fade, copyImage(ctx, look, gear, { ...state, ...pose, facing: sp.dir, job: 'beastmaster' }, COPY_TINT, 0.4, time, null));
   }
 }
 
@@ -759,7 +830,7 @@ function drawForm(ctx, world, look, gear, x, y, state, time) {
 }
 
 function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
-  const clone = (dx, alpha, tint, k) => drawTinted(ctx, x + dx, y, tint, k, (c) => drawHero(c, look, gear, x + dx, y, { ...state, job: null, alpha: state.alpha * alpha }, feel.anim));
+  const clone = (dx, alpha, tint, k) => stampCopy(ctx, x + dx, y, state.alpha * alpha, copyImage(ctx, look, gear, { ...state, job: null }, tint, k, time, feel.anim));
   if (buffs.shadowpartner) {
     clone(-state.facing * (12 + Math.sin(time * 2) * 2), 0.6, '#1e1650', 0.85);
   }

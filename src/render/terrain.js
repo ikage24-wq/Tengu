@@ -1686,13 +1686,14 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
   if (!m.drip || maxLen < 6) return;
   const k = hash(seed * 3.3 + (x + camX) * 0.01);
   const len = Math.max(6, maxLen * (0.5 + k * 0.5));
-  const sway = Math.round((Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.2 + windAt(time, x + camX) * 1.2) * 4) / 4;
+  const sway = Math.sin(time * 1.4 + seed + (x + camX) * 0.02) * 1.2 + windAt(time, x + camX) * 1.2;
   if (typeof document === 'undefined') return dripLive(ctx, m, x, y, len, k, sway);
+  // (Painted once hanging straight, then leaned by its sway as it's placed: a picture for every
+  // step of sway was a new canvas every frame or so, the wind always finding new ones.)
   const scale = scaleOf(ctx);
-  const key = `${m.drip}|${m.lip}|${m.deep}|${len.toFixed(1)}|${k.toFixed(3)}|${sway}|${scale}`;
+  const key = `${m.drip}|${m.lip}|${m.deep}|${len.toFixed(1)}|${k.toFixed(3)}|${scale}`;
   let c = dripCache.get(key);
-  const L = Math.min(0, sway * 1.6) - 9;
-  const R = Math.max(0, sway * 1.6) + 9;
+  const L = -9;
   const T = -8;
   const B = len + 7;
   if (c) {
@@ -1700,15 +1701,22 @@ function drip(ctx, m, x, y, maxLen, time, seed) {
     dripCache.set(key, c);
   } else {
     c = document.createElement('canvas');
-    c.width = Math.ceil((R - L) * scale);
+    c.width = Math.ceil((-L * 2) * scale);
     c.height = Math.ceil((B - T) * scale);
     const g = c.getContext('2d');
     g.setTransform(scale, 0, 0, scale, -L * scale, -T * scale);
-    dripLive(g, m, 0, 0, len, k, sway);
+    dripLive(g, m, 0, 0, len, k, 0);
     dripCache.set(key, c);
     if (dripCache.size > DRIP_MAX) dripCache.delete(dripCache.keys().next().value);
   }
-  ctx.drawImage(c, onPixel(x + L, scale), onPixel(y + T, scale), c.width / scale, c.height / scale);
+  // Leaned from its root (5 above the lip line), the tip carried sway * 1.6 aside, as it bends.
+  const top = y - 5;
+  ctx.save();
+  ctx.translate(onPixel(x, scale), onPixel(top, scale));
+  ctx.transform(1, 0, (sway * 1.6) / (len + 5), 1, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(c, L, T + 5, c.width / scale, c.height / scale);
+  ctx.restore();
 }
 function dripLive(ctx, m, x, y, len, k, sway) {
   const top = y - 5;

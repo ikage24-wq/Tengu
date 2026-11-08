@@ -212,6 +212,9 @@ function veiled(s, color, k) {
     g.globalAlpha = k;
     g.drawImage(tinted(s, color), 0, 0);
     byKey.set(key, c);
+    // (A few colours kept for each picture: the backdrop's colour only changes in steps now, but
+    // a long day of play shouldn't pile them up.)
+    if (byKey.size > 12) byKey.delete(byKey.keys().next().value);
   }
   return c;
 }
@@ -4833,35 +4836,41 @@ function setBack(map) {
   return set;
 }
 
-// Draws with `draw(g)` into a scratch canvas at the screen's own resolution, washes everything
-// it drew toward `color`, and lays it back down: a whole landmark (glows and all) set back.
-let hazeCanvas = null;
-function hazed(ctx, left, top, w, h, color, k, draw) {
+// A set-back piece's hazed picture, kept and only redrawn 30 times a second (or when its haze or
+// the screen's scale changes), placed where the camera puts it every frame: hazing a big landmark
+// afresh each frame was a fifth of a busy map's frame on a fast screen.
+const HAZE_EVERY = 1 / 30;
+const hazeKept = new WeakMap();
+function hazedKept(ctx, entry, time, left, top, w, h, color, k, draw) {
   const t = ctx.getTransform();
   const sx = Math.hypot(t.a, t.b);
   const sy = Math.hypot(t.c, t.d);
   const cw = Math.ceil(w * sx);
   const ch = Math.ceil(h * sy);
   if (cw <= 0 || ch <= 0) return;
-  hazeCanvas ??= document.createElement('canvas');
-  if (hazeCanvas.width < cw) hazeCanvas.width = cw;
-  if (hazeCanvas.height < ch) hazeCanvas.height = ch;
-  const g = hazeCanvas.getContext('2d');
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.clearRect(0, 0, cw, ch);
-  g.setTransform(sx, 0, 0, sy, -left * sx, -top * sy);
-  g.imageSmoothingEnabled = false;
-  draw(g);
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.globalCompositeOperation = 'source-atop';
-  g.globalAlpha = k;
-  g.fillStyle = color;
-  g.fillRect(0, 0, cw, ch);
-  g.globalAlpha = 1;
-  g.globalCompositeOperation = 'source-over';
+  const key = `${color}|${k}|${sx}|${sy}|${cw}|${ch}`;
+  let kept = hazeKept.get(entry);
+  if (!kept || kept.key !== key || Math.abs(time - kept.at) >= HAZE_EVERY) {
+    const c = kept?.key === key ? kept.canvas : document.createElement('canvas');
+    c.width = cw;
+    c.height = ch;
+    const g = c.getContext('2d');
+    g.setTransform(sx, 0, 0, sy, 0, 0);
+    g.imageSmoothingEnabled = false;
+    draw(g);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.globalCompositeOperation = 'source-atop';
+    g.globalAlpha = k;
+    g.fillStyle = color;
+    g.fillRect(0, 0, cw, ch);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+    kept = { canvas: c, key, at: time };
+    hazeKept.set(entry, kept);
+  }
   ctx.save();
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(hazeCanvas, 0, 0, cw, ch, left, top, cw / sx, ch / sy);
+  ctx.drawImage(kept.canvas, 0, 0, cw, ch, Math.round(left * sx) / sx, Math.round(top * sy) / sy, cw / sx, ch / sy);
   ctx.restore();
 }
 
@@ -4884,7 +4893,11 @@ function drawDeco(ctx, map, cam, width, time, pass, air = '#ffffff') {
     if (pass !== 'behind') draw(ctx);
     else {
       const [w, h] = decoSize(kind, seed);
-      hazed(ctx, x - w / 2 - 60, y - h - 50, w + 120, h + 120, air, 0.3, draw);
+      hazedKept(ctx, entry, time, x - w / 2 - 60, y - h - 50, w + 120, h + 120, air, 0.3, (g) => {
+        // (Drawn where it sits in its own picture, so the picture can be placed anywhere after.)
+        g.translate(-(x - w / 2 - 60), -(y - h - 50));
+        draw(g);
+      });
     }
   }
 }
@@ -5581,7 +5594,10 @@ export function zoneLook(map, y, x = 0) {
 // The backdrop eases from one zone's look into the next over a band either side of the line
 // between them, so climbing changes the sky gradually: colours blend, other choices switch halfway.
 const ZONE_BLEND = 140;
+// (The blend steps in eighths: every new colour restyles every backdrop picture, and a different
+// one every frame across the band rebuilt the whole background each frame you climbed through it.)
 function blendLook(a, b, k) {
+  k = Math.round(k * 8) / 8;
   if (k <= 0) return a;
   if (k >= 1) return b;
   const out = { ...(k < 0.5 ? a : b) };

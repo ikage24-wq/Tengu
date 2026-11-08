@@ -22,7 +22,7 @@ import { addItem } from '../core/inventory.js';
 import { makeEquip, itemName, makeCash } from '../core/items.js';
 import { avoid, mobHitChance, damageTaken } from '../core/formulas.js';
 import { knockBack } from './physics.js';
-import { spawnMob, yank, tickYank, tickAir } from './mobs.js';
+import { spawnMob, yank, tickYank, tickAir, speedOf } from './mobs.js';
 import { navOf, surfaceBelow } from './nav.js';
 import { partyMembers, joinParty, dismiss, makeAI } from './party.js';
 import { giveMount } from './mount.js';
@@ -954,7 +954,7 @@ function fight(world, m, up, dt) {
     const stop = f.range ? f.range * 0.8 : reach * 0.7;
     if (Math.abs(dx) > stop) {
       m.state = 'walk';
-      m.x += m.dir * m.def.speed * 1.3 * (m.speedK ?? 1) * dt;
+      m.x += m.dir * speedOf(m, true) * 1.3 * (m.speedK ?? 1) * dt;
     } else m.state = 'idle';
     m.x = Math.max(m.x1, Math.min(m.x2, m.x));
     // Stopped at the edge with its target on a floor below: hop down after them.
@@ -1404,7 +1404,7 @@ function idle(m, dt, now) {
     m.timer = m.state === 'walk' ? between(1, 2.5) : between(1.5, 3);
     if (m.state === 'walk' && Math.random() < 0.5) m.dir *= -1;
   }
-  if (m.state === 'walk') m.x += m.dir * m.def.speed * 0.6 * dt;
+  if (m.state === 'walk') m.x += m.dir * speedOf(m, false) * 0.6 * dt;
   if (m.x <= m.x1) {
     m.x = m.x1;
     m.dir = 1;

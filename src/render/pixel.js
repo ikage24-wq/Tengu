@@ -434,6 +434,8 @@ export function tinted(s, color) {
     g.fillStyle = color;
     g.fillRect(0, 0, c.width, c.height);
     byColor.set(color, c);
+    // (A few colours kept for each sprite, so a changing tint never piles them up.)
+    if (byColor.size > 12) byColor.delete(byColor.keys().next().value);
   }
   return c;
 }

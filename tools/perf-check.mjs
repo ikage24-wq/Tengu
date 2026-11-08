@@ -2,7 +2,7 @@
 // window, drawing real frames on a stand-in screen, and counts what gets painted afresh once it's
 // warmed up. Anything painted over and over instead of once is what makes the game lag.
 // Usage: node tools/perf-check.mjs [maps|skills|windows ...]   (all three when none is named)
-import { installFakeScreen, fakeCanvas } from '../tests/support/fake-screen.js';
+import { installFakeScreen, fakeCanvas, screenStats } from '../tests/support/fake-screen.js';
 installFakeScreen();
 const { balanceChar } = await import('./balance.mjs');
 const { createWorld, updateWorld, loadMap } = await import('../src/world/world.js');
@@ -24,7 +24,11 @@ paintAheadWith((job) => heroBodySpec(job.look, job.g, job.rig, job.light));
 const { JOBS } = await import('../src/data/jobs.js');
 
 // How many fresh paintings a second, once warmed up, count as a problem.
-export const LIMITS = { characters: 200, other: 20 };
+// (Offscreen work a second: canvases made, pixels read back, tint passes.)
+// (Canvases here are spare ones beyond the sprites painted, which the painting counts already
+// cover; reads allow the glow pass's one a frame; tints allow the hazed backdrop's and new
+// afterimages', far below a tint every frame for everything.)
+export const LIMITS = { characters: 200, other: 20, canvases: 30, reads: 70, tints: 120 };
 const CHARACTER = new Set(['you', 'hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter']);
 const AHEAD = 'ahead';
 const canvas = fakeCanvas();
@@ -45,14 +49,20 @@ function frame(w, cam, time, ui) {
 }
 function report(name, frames) {
   const secs = frames / 60;
+  const painted = Object.values(paintStats.kinds).reduce((a, v) => a + v.n, 0);
+  const off = { canvases: Math.max(0, Math.round((screenStats.canvases - mark.canvases - painted) / secs)), reads: Math.round((screenStats.reads - mark.reads) / secs), tints: Math.round((screenStats.tints - mark.tints) / secs) };
   let ch = 0;
   let other = 0;
   const kinds = Object.entries(paintStats.kinds).sort((a, b) => b[1].n - a[1].n);
   for (const [k, v] of kinds) if (k !== AHEAD) CHARACTER.has(k) ? (ch += v.n) : (other += v.n);
   const row = { name, characters: Math.round(ch / secs), other: Math.round(other / secs), top: kinds.slice(0, 3).map(([k, v]) => `${k} ${Math.round(v.n / secs)}/s`).join(', '), example: kinds.find(([k]) => !CHARACTER.has(k) && k !== AHEAD)?.[1].ex ?? '' };
-  row.bad = row.characters > LIMITS.characters || row.other > LIMITS.other;
+  Object.assign(row, off);
+  row.bad = row.characters > LIMITS.characters || row.other > LIMITS.other || off.canvases > LIMITS.canvases || off.reads > LIMITS.reads || off.tints > LIMITS.tints;
   return row;
 }
+// Where the offscreen counts stood when a check's warm-up ended.
+const mark = { canvases: 0, reads: 0, tints: 0 };
+const markNow = () => Object.assign(mark, screenStats);
 const seeded = (seed) => { let r = seed; return () => ((r = (r * 16807) % 2147483647) / 2147483647); };
 // (Everything random in the world, the crowd's choices and the fights, runs off one seed for each
 // check, so a check gives the same answer every time.)
@@ -73,13 +83,15 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
     const w = createWorld(balanceChar('archer', 40));
     w.log = () => {};
     w.god = true;
+    // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
+    w.forceNight = 0;
     try {
       loadMap(w, id, 'west');
       w.bots = createBots(w, seeded(7), { daily: true, alts: [] });
       const cam = createCamera();
       let time = 0;
       for (let f = 0; f < warm + frames; f++) {
-        if (f === warm) resetPaintStats();
+        if (f === warm) { resetPaintStats(); markNow(); }
         const keys = f % 300 < 150 ? ['ArrowRight'] : ['ArrowLeft'];
         updateWorld(w, 1 / 60, { held: new Set(keys), pressed: new Set(), locked: false });
         updateBots(w.bots, w, 1 / 60);
@@ -107,6 +119,8 @@ export function checkSkills(jobs = Object.keys(JOBS), warm = 600, frames = 600) 
     const w = createWorld(c);
     w.log = () => {};
     w.god = true;
+    // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
+    w.forceNight = 0;
     try {
       loadMap(w, 'woods', 'west');
       const skills = Object.keys(c.skills ?? {});
@@ -114,7 +128,7 @@ export function checkSkills(jobs = Object.keys(JOBS), warm = 600, frames = 600) 
       let time = 0;
       let k = 0;
       for (let f = 0; f < warm + frames; f++) {
-        if (f === warm) resetPaintStats();
+        if (f === warm) { resetPaintStats(); markNow(); }
         c.mp = 1e6;
         if (f % 20 === 0 && skills.length) {
           const id = skills[k++ % skills.length];
@@ -140,6 +154,8 @@ export function checkWindows(warm = 120, frames = 240) {
     const w = createWorld(balanceChar('archer', 40));
     w.log = () => {};
     w.god = true;
+    // (Midday whatever the real clock says: the light and the night creatures follow the hour.)
+    w.forceNight = 0;
     try {
       loadMap(w, 'coinbridge', 'west');
       const ui = createUiState();
@@ -147,7 +163,7 @@ export function checkWindows(warm = 120, frames = 240) {
       const cam = createCamera();
       let time = 0;
       for (let f = 0; f < warm + frames; f++) {
-        if (f === warm) resetPaintStats();
+        if (f === warm) { resetPaintStats(); markNow(); }
         updateWorld(w, 1 / 60, { held: new Set(), pressed: new Set(), locked: false });
         frame(w, cam, time, ui);
         time += 1 / 60;
@@ -165,6 +181,6 @@ if (process.argv[1]?.endsWith('perf-check.mjs')) {
   const want = (p) => !parts.length || parts.includes(p);
   const rows = [...(want('maps') ? checkMaps() : []), ...(want('skills') ? checkSkills() : []), ...(want('windows') ? checkWindows() : [])];
   const bad = rows.filter((r) => r.bad);
-  for (const r of rows.filter((r) => r.bad || r.characters > 60 || r.other > 5)) console.log(`${r.bad ? 'SLOW ' : '     '}${r.name}: ${r.error ? `error: ${r.error}` : `characters ${r.characters}/s, other ${r.other}/s  (${r.top})${r.other > 5 ? `  e.g. ${r.example}` : ''}`}`);
+  for (const r of rows.filter((r) => r.bad || r.characters > 60 || r.other > 5 || r.canvases > 10 || r.tints > 60 || r.reads > 61)) console.log(`${r.bad ? 'SLOW ' : '     '}${r.name}: ${r.error ? `error: ${r.error}` : `characters ${r.characters}/s, other ${r.other}/s, canvases ${r.canvases}/s, reads ${r.reads}/s, tints ${r.tints}/s  (${r.top})${r.other > 5 ? `  e.g. ${r.example}` : ''}`}`);
   console.log(`${rows.length} checked, ${bad.length} over the limits.`);
 }

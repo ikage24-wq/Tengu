@@ -34,7 +34,9 @@ export function tickDaytime(world, dt) {
   world.dayT = (world.dayT ?? 1) + dt;
   if (world.dayT >= 1) {
     world.dayT = 0;
-    world.night = world.forceNight ?? nightOf((world.dayClock ?? (() => new Date()))());
+    // (In sixteenths: each new shade of dusk restyles every backdrop picture, so the light steps
+    // through a few shades rather than a new one every second.)
+    world.night = world.forceNight ?? Math.round(nightOf((world.dayClock ?? (() => new Date()))()) * 16) / 16;
   }
   world.map.night = indoors(world.map) ? 0 : world.night ?? 0;
 }

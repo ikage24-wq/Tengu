@@ -115,8 +115,10 @@ test('monsters respawn near their spawn point after a few seconds', () => {
   assert.equal(w.mobs.filter((m) => m.hp > 0).length, count - 1, 'not back yet');
   for (let i = 0; i < 60 * 6; i++) updateWorld(w, DT, idle);
   assert.equal(w.mobs.filter((m) => m.hp > 0).length, count);
-  const back = w.mobs.find((m) => m.hp > 0 && m.uid > fallen.uid && m.def === fallen.def);
-  assert.ok(back && Math.abs(back.spawn.x - fallen.spawn.x) <= 90 && back.spawn.y === fallen.spawn.y, 'back on the same ledge, near its spot');
+  // (The one that came back: the newest of its kind, not just any newer than the fallen one.)
+  const back = w.mobs.filter((m) => m.hp > 0 && m.def === fallen.def).reduce((a, m) => (!a || m.uid > a.uid ? m : a), null);
+  // (Near its spot on the same ledge: along a slope its height follows the ground.)
+  assert.ok(back && Math.abs(back.spawn.x - fallen.spawn.x) <= 90 && Math.abs(back.spawn.y - fallen.spawn.y) <= 30, 'back on the same ledge, near its spot');
 });
 
 test("a monster doesn't respawn on top of you", () => {

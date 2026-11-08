@@ -1,7 +1,7 @@
 // Monster runtime: spawning, respawning, patrol and chase AI, knockback, and the boss slam.
 
 import { MOBS } from '../data/mobs.js';
-import { surfacesOf, groundPieceAt, groundAt } from './physics.js';
+import { surfacesOf, groundPieceAt, groundAt, waterAt, WALK_SPEED } from './physics.js';
 import { habitGoal } from './habits.js';
 
 // A monster comes back somewhere between these many seconds after it falls (a map's own
@@ -91,7 +91,45 @@ export function createSpawner(map) {
       slots.push({ spawn: { ...s, x, respawn: map.dungeon ? Infinity : s.respawn }, mob: null, respawnAt: 0 });
     }
   }
+  spreadOut(map, slots);
   return { slots };
+}
+
+// Spots a monster shouldn't stand on: by a ladder's or rope's foot (you'd climb straight into it),
+// beside a portal (you'd arrive into it), in water, and at the map's very ends.
+function keepClear(map, x, y) {
+  if (x < 70 || x > map.width - 70) return true;
+  if (waterAt(map, x) != null && Math.abs(groundAt(map, x) - y) < 6) return true;
+  if ((map.portals ?? []).some((p) => !p.hidden && Math.abs(p.x - x) < 110 && Math.abs((p.y ?? y) - y) < 60)) return true;
+  return (map.ropes ?? []).some((r) => Math.abs(r.x - x) < 44 && y <= r.bottom + 6 && y >= r.top - 6);
+}
+// Each ledge's walkers spread evenly along the parts of it that are clear (in the order the map
+// lists them), as far apart as it allows: a map's spawn points were often only a few dozen pixels
+// apart, each holding a pair, so monsters stood in heaps, on ladders and beside portals.
+function spreadOut(map, slots) {
+  const byLedge = new Map();
+  for (const slot of slots) {
+    // (Flyers hover in a band of their own; a boss holds its arena; a dungeon pack stands together.)
+    if (MOBS[slot.spawn.mob].fly || MOBS[slot.spawn.mob].boss || slot.spawn.pack) continue;
+    const q = surfaceFor(map, slot.spawn.x, slot.spawn.y);
+    if (!byLedge.has(q)) byLedge.set(q, []);
+    byLedge.get(q).push(slot);
+  }
+  for (const [q, list] of byLedge) {
+    // The clear stretches of the ledge, a step at a time.
+    const lo = q.x1 + 16;
+    const hi = q.x2 - 16;
+    const open = [];
+    for (let x = lo; x <= hi; x += 4) if (!keepClear(map, x, q.yAt(x))) open.push(x);
+    if (!open.length) continue;
+    list.sort((a, b) => a.spawn.x - b.spawn.x);
+    // Evenly through the clear spots: the i-th of n sits at the middle of its share of them.
+    const n = list.length;
+    list.forEach((slot, i) => {
+      const x = open[Math.min(open.length - 1, Math.floor(((i + 0.5) / n) * open.length))];
+      slot.spawn = { ...slot.spawn, x, y: q.yAt(x) };
+    });
+  }
 }
 
 // Where a respawn appears: a random spot near its own on the same ledge, clear of everyone in
@@ -107,7 +145,7 @@ function respawnSpot(map, spawn, near) {
     for (let i = 0; i < 6; i++) {
       const x = hi > lo ? lo + Math.random() * (hi - lo) : spawn.x;
       const y = s.yAt(x);
-      if (!crowded(x, y)) return { ...spawn, x, y };
+      if (!crowded(x, y) && !keepClear(map, x, y)) return { ...spawn, x, y };
     }
   }
   return null;
@@ -206,6 +244,19 @@ export function tickAir(m, dt) {
     m.stagger = 0.3;
   }
   return true;
+}
+
+// No ordinary monster outpaces you: on average over its gait (a dart's bursts, a bound's leaps, a
+// stalker's run), chasing or not, it moves at most at MOB_TOP, four fifths of your walking speed,
+// so you can always get away. Its own speed is scaled down to fit (the gait's shape is kept: a
+// bounder still leaps, a darter still darts). Bosses keep theirs.
+export const MOB_TOP = WALK_SPEED * 0.8;
+const GAIT_AVG = { bound: 0.83, dart: 1.7, stalk: 1.3 };
+export function speedOf(m, chasing) {
+  const s = m.def.speed ?? 0;
+  if (m.def.boss || !s) return s;
+  const avg = s * (chasing ? 1.35 : 1) * (GAIT_AVG[m.def.gait] ?? 1);
+  return avg > MOB_TOP ? s * (MOB_TOP / avg) : s;
 }
 
 // How fast a monster's gait carries it right now, as a share of its speed (averaging about 1).
@@ -307,7 +358,7 @@ export function updateMob(m, player, dt, now) {
     const dx = player.x - m.x;
     if (Math.abs(dx) > 6) m.dir = Math.sign(dx);
     m.state = 'walk';
-    m.x += m.dir * m.def.speed * 1.35 * pace(m, true, dt) * dt;
+    m.x += m.dir * speedOf(m, true) * 1.35 * pace(m, true, dt) * dt;
     if (m.def.fly) {
       chasing = true;
       const want = player.y - 30 - m.baseY;
@@ -320,7 +371,7 @@ export function updateMob(m, player, dt, now) {
     if (Math.abs(dx) > 6) {
       m.dir = Math.sign(dx);
       m.state = 'walk';
-      m.x += m.dir * m.def.speed * goal.speed * pace(m, false, dt) * dt;
+      m.x += m.dir * speedOf(m, false) * goal.speed * pace(m, false, dt) * dt;
     } else m.state = 'idle';
   } else {
     m.timer -= dt;
@@ -331,7 +382,7 @@ export function updateMob(m, player, dt, now) {
       m.walked = 0;
       if (m.state === 'walk' && Math.random() < 0.5) m.dir *= -1;
     }
-    if (m.state === 'walk') m.x += m.dir * m.def.speed * pace(m, false, dt) * dt;
+    if (m.state === 'walk') m.x += m.dir * speedOf(m, false) * pace(m, false, dt) * dt;
   }
 
   if (m.x <= m.x1) { m.x = m.x1; m.dir = 1; }

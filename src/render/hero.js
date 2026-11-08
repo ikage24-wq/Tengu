@@ -22,7 +22,7 @@ import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
 import { paintFan } from './props.js';
-import { R, E, T, F, sprite, spriteBudgeted, spriteSoon, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
+import { R, E, T, F, sprite, spriteBudgeted, spriteAsync, spriteSoon, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
 } from './gear.js';
@@ -3111,7 +3111,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // its walks are painted ahead, below, so its legs never trail behind its steps.)
   const bodyJob = () => ({ kind: 'hero', look, g, rig, light: LIGHT });
   if (state.ahead) spriteSoon(bodyKey, bodyJob());
-  const body = state.ahead ? null : mine ? sprite(bodyKey, buildBody) : spriteBudgeted(bodyKey, buildBody, `${lookKey}|${gk}|${state.seed ?? 0}`, bodyJob);
+  // (Someone else in a new pose that isn't a step (a swing, a jump, a landing, standing about):
+  // painted by the worker, their last frame showing for a frame or two meanwhile, which never shows
+  // in a quick move; walks are painted ahead and drawn on the spot, so a step never trails.)
+  const slot = `${lookKey}|${gk}|${state.seed ?? 0}`;
+  const body = state.ahead ? null : mine ? sprite(bodyKey, buildBody) : pose !== 'walk' ? spriteAsync(bodyKey, buildBody, slot, bodyJob) : spriteBudgeted(bodyKey, buildBody, slot, bodyJob);
   // Starting a walk (or a new cycle of it): the rest of the cycle is painted in the background, so
   // every step is ready by the time it's taken.
   if (walking) {

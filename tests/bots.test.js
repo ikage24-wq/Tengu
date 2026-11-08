@@ -884,9 +884,10 @@ test('players on a field work its ready life spots, leave them ready for you, an
   const kinds = new Set();
   const phases = new Set();
   let resting = 0;
-  // (Seed 13: across seeds 11-15 several spots get worked; seed 11 sends this run's players off
-  // elsewhere since the early levels got quicker, and 12 since the mages' skills got heavier.)
-  const { world, bots } = lifeField('meadow1', 13, 600, {
+  // (Seed 14: across seeds 11-17 several spots get worked; seed 11 sends this run's players off
+  // elsewhere since the early levels got quicker, and 12 since the mages' skills got heavier;
+  // 14 since the monsters spread evenly along their ledges, which sent 13's players elsewhere.)
+  const { world, bots } = lifeField('meadow1', 14, 600, {
     night: true,
     each: (w, bs) => {
       for (const b of bs.list) {

@@ -2,6 +2,10 @@
 // browser, so a test can count what gets painted (pixel.js `paintStats`). Every drawing call is a
 // no-op; reading pixels back gives blank ones.
 const noop = () => {};
+// What the game asks of its canvases, counted (tools/perf-check.mjs): new canvases made, pixels
+// read back, and tint passes (a wash over pixels already drawn). Each is slow on a real screen when
+// it happens every frame, and none of them shows up as painting.
+export const screenStats = { canvases: 0, reads: 0, tints: 0 };
 // A 2D matrix with the parts of DOMMatrix the game uses.
 class Matrix {
   constructor(m = [1, 0, 0, 1, 0, 0]) {
@@ -38,14 +42,24 @@ function fakeContext(canvas) {
     rotate: (r) => { const cs = Math.cos(r); const sn = Math.sin(r); transform = transform.multiply(new Matrix([cs, sn, -sn, cs, 0, 0])); },
     createLinearGradient: () => gradient, createRadialGradient: () => gradient, createConicGradient: () => gradient, createPattern: () => ({ setTransform: noop }),
     measureText: (t) => ({ width: String(t).length * 5, actualBoundingBoxAscent: 6, actualBoundingBoxDescent: 2 }),
-    getImageData: (x, y, w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(Math.max(1, w * h * 4)) }),
+    getImageData: (x, y, w, h) => {
+      screenStats.reads++;
+      return { width: w, height: h, data: new Uint8ClampedArray(Math.max(1, w * h * 4)) };
+    },
     createImageData: (w, h) => ({ width: w, height: h, data: new Uint8ClampedArray(Math.max(1, w * h * 4)) }),
     isPointInPath: () => false,
     roundRect: noop,
   };
-  return new Proxy(ctx, { get: (t, k) => (k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
+  return new Proxy(ctx, {
+    get: (t, k) => {
+      if (k === 'fillRect' && (t.globalCompositeOperation === 'source-atop' || t.globalCompositeOperation === 'source-in')) screenStats.tints++;
+      return k in t ? t[k] : noop;
+    },
+    set: (t, k, v) => { t[k] = v; return true; },
+  });
 }
 function fakeCanvas() {
+  screenStats.canvases++;
   const c = { width: 300, height: 150, style: {}, addEventListener: noop, getBoundingClientRect: () => ({ left: 0, top: 0, width: c.width, height: c.height }) };
   c.getContext = () => (c._ctx ??= fakeContext(c));
   return c;

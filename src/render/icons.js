@@ -230,8 +230,10 @@ export function drawItemIcon(ctx, id, x, y, scale = 1, variant = null) {
 }
 
 // A plain tile in the skill's school colour, for a skill still waiting on its own icon.
+// (Also for a buff that isn't a skill at all, such as an ally's mark: a plain pink tile, never a
+// crash that stops the whole frame.)
 function skillShapes(s) {
-  const c = (s.type !== 'passive' && SCHOOL_COLORS[s.school]?.main) || '#ffc2d6';
+  const c = (s && s.type !== 'passive' && SCHOOL_COLORS[s.school]?.main) || '#ffc2d6';
   return [R(0, 0, 16, 16, shade(c, -30)), R(1, 1, 14, 14, shade(c, -12)), E(8, 8, 4, 4, '#ffffff'), E(8, 8, 2, 2, c)];
 }
 
