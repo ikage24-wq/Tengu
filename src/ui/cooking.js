@@ -16,6 +16,7 @@ import { groundAt } from '../world/physics.js';
 import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/life.js';
 import { playLifePose } from '../world/lifepose.js';
 import { cookFeast, feastReady, feastSkilled, partyBotsHere } from '../world/coop-life.js';
+import { MOCHI_SWEETS, GARDEN_CROPS } from '../data/mochi-raise.js';
 
 const W = 320;
 const H = 254;
@@ -49,11 +50,13 @@ export function cookingWindow(ui, state, world) {
     win.open = false;
     return;
   }
-  if (!windowFrame(ui, win, W, H, 'Cooking')) return;
+  if (!windowFrame(ui, win, W, H, world.map.garden ? 'Sweet Kitchen' : 'Cooking')) return;
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
   const x = win.x + 8;
+  // Your Mochi Garden's kitchen cooks Mochi sweets.
+  if (world.map.garden) return sweetsList(ui, win, world, x, st);
   const tabWas = win.tab ?? 0;
   win.tab = tabs(ui, x + 2, win.y + 25, ['Dishes', 'Party Feasts'], tabWas, { w: 64, h: 14 });
   if (win.tab !== tabWas) win.scroll = 0;
@@ -90,6 +93,47 @@ export function cookingWindow(ui, state, world) {
   }
   const more = DISHES.length - list.length;
   text(ctx, more ? `${more} more recipe${more === 1 ? '' : 's'} to learn: catch new fish!` : 'You know every recipe!', win.x + 12, win.y + H - 10, { size: 7, color: COLORS.muted });
+}
+
+// The Sweet Kitchen (your Mochi Garden): every Mochi sweet, what it trains, what it needs (the
+// garden's crops, finds, drops and fish), and Cook, which makes SWEET_BATCH of it.
+const SWEET_BATCH = 2;
+const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
+function sweetsList(ui, win, world, x, st) {
+  const { ctx } = ui;
+  const th = ui.theme;
+  const char = world.char;
+  let y = win.y + 28;
+  const rows = Math.floor((H - 50) / ROW);
+  if (hover(ui, x, y, W - 16, rows * ROW)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
+  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, MOCHI_SWEETS.length - rows));
+  for (const sw of MOCHI_SWEETS.slice(win.scroll, win.scroll + rows)) {
+    const ok = hasAll(char, sw);
+    box(ctx, x, y, W - 16, ROW - 3, { fill: ok ? '#fff4f8' : '#ffffff', edge: ok ? '#ff8fb0' : th.light, r: 8, width: 1 });
+    drawItemIcon(ctx, sw.id, x + 6, y + 7);
+    text(ctx, fit(ctx, sw.name, 124, 8, true), x + 28, y + 11, { size: 8, bold: true });
+    const trains = Object.entries(sw.trains).map(([s, n]) => `${STAT_WORD[s]} +${n}`).join(', ');
+    text(ctx, fit(ctx, trains, 124, 6.5, false), x + 28, y + 21, { size: 6.5, color: sw.taste === 'spicy' ? '#d8483a' : '#3f9f5f' });
+    let ix = x + 160;
+    for (const [id, n] of Object.entries(sw.needs)) {
+      const have = countItem(char.inventory, id);
+      drawItemIcon(ctx, id, ix, y + 4);
+      text(ctx, `${Math.min(have, 99)}/${n}`, ix + 8, y + 27, { size: 6, bold: true, align: 'center', color: have >= n ? COLORS.good : COLORS.bad });
+      if (hover(ui, ix, y + 4, 16, 16)) tooltip(ui, itemTooltip(char, id));
+      ix += 22;
+    }
+    if (hover(ui, x + 6, y + 7, 16, 16)) tooltip(ui, itemTooltip(char, sw.id));
+    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
+      for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n);
+      addItem(char.inventory, sw.id, SWEET_BATCH);
+      lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
+      playLifePose(world, 'cook', { at: st, find: sw.id });
+      world.log(`You made ${SWEET_BATCH} ${sw.name}! Up beside a Mochi to feed it.`, '#ffc2d4');
+    }
+    y += ROW;
+  }
+  const crops = Object.values(GARDEN_CROPS).map((c) => c.name).join(', ');
+  text(ctx, fit(ctx, `${crops}: from the crop bed in the orchard.`, W - 24, 6.5, false), win.x + 12, win.y + H - 10, { size: 6.5, color: COLORS.muted });
 }
 
 // A recipe your Cooking level can't make yet: not a button at all but a flat, dashed tag with a

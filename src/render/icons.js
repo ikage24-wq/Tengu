@@ -12,6 +12,8 @@ import './icons/food.js';
 import './icons/craft.js';
 import './icons/finds.js';
 import './icons/gacha.js';
+import './icons/mochi.js';
+import { sweetIcon } from './mochi-sweets.js';
 import { SKILL_ART, skillTone } from './icons/skills.js';
 
 export { skillTone };
@@ -159,6 +161,8 @@ function itemShapes(def, variant = null) {
     }
   }
   if (ITEM_ART[def.id]) return ITEM_ART[def.id]();
+  // A Mochi sweet: the sweet itself, as a Mochi holds it (render/mochi-sweets.js).
+  if (def.mochiSweet) return sweetIcon(def.mochiSweet);
   if (def.effect?.returnTown) return [R(3, 3, 10, 11, '#fff4e0'), R(2, 2, 12, 2, '#e6c9a0'), R(2, 13, 12, 2, '#e6c9a0'), R(6, 6, 4, 5, c), R(5, 6, 6, 1, d)];
   // Throwing stars: a little pile of shuriken in the set's color.
   if (def.star) {
@@ -184,7 +188,7 @@ export function itemIcon(id, variant = null) {
   const look = def.type === 'cash' && def.skin ? ITEMS[def.skin] : def;
   const fine = look.design === 'job' || look.design === 'jewel' || wornIcon(look);
   const art = def.type !== 'cash' ? ITEM_ART[id] : def.skin && ITEM_ART[def.skin];
-  const detail = art ? { res: id.startsWith('fish_') ? 4 : 3, soft: 'cel', crisp: true } : fine ? { res: 2, soft: 'cel' } : {};
+  const detail = art ? { res: id.startsWith('fish_') ? 4 : 3, soft: 'cel', crisp: true } : fine || def.mochiSweet ? { res: def.mochiSweet ? 4 : 2, soft: 'cel' } : {};
   const gear = look.type === 'equip';
   return sprite(`icon|${id}|${variant}`, () => ({ w: 16, h: 16, shapes: gear ? itemShapes(def, variant).map(lifted) : itemShapes(def, variant), ...detail }));
 }

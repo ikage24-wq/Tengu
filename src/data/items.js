@@ -8,6 +8,7 @@ import { DISHES, FEASTS } from './cooking.js';
 import { GATHERED } from './gathering.js';
 import { CRAFT_MATERIALS, craftedItemDefs } from './crafting.js';
 import { FURNITURE, FURN_SETS } from './furniture.js';
+import { GARDEN_CROPS, MOCHI_SWEETS } from './mochi-raise.js';
 
 // (Rings and charms are bench-made accessories, data/crafting.js.)
 export const EQUIP_SLOTS = ['weapon', 'hat', 'top', 'bottom', 'shoes', 'gloves', 'cape', 'earring', 'ring', 'charm'];
@@ -520,6 +521,15 @@ add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ff
 // Mister Brine's lantern bait (Lantern Lagoon): fish bite twice as fast for your next 10 casts.
 // Your island's Home Shell (world/home.js): used anywhere it takes you home; used at home it takes
 // you back where you were. Never used up.
+// The Mochi Garden's crops, and the sweets cooked from them at its kitchen (data/mochi-raise.js):
+// food for your Mochi.
+const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
+for (const [id, c] of Object.entries(GARDEN_CROPS)) add({ id, name: c.name, type: 'etc', price: 6, color: c.color, desc: "Grown in your Mochi Garden's crop bed. The garden's kitchen cooks Mochi sweets with it." });
+for (const sw of MOCHI_SWEETS) {
+  const trains = Object.keys(sw.trains).map((st) => STAT_WORD[st]);
+  const what = trains.length > 2 ? 'a little of everything' : trains.join(' and ');
+  add({ id: sw.id, name: sw.name, type: 'etc', price: 20, color: '#ffd0dc', mochiSweet: sw.kind, desc: `${sw.taste === 'spicy' ? 'A spicy treat' : 'A sweet'} for your Mochi: trains ${what}${sw.taste === 'spicy' ? ', and leans it a little devilish' : ''}. Up beside a Mochi to feed it.` });
+}
 add({ id: 'mochi_bell', name: 'Mochi Bell', type: 'use', price: 0, effect: { garden: true }, keep: true, color: '#ffd0dc', desc: 'A little brass bell on a sakura ribbon. Ring it and your Mochi chirp back: it takes you to your Mochi Garden, and again back to where you were. It never gets used up.' });
 add({ id: 'home_shell', name: 'Home Shell', type: 'use', price: 0, effect: { home: true }, keep: true, color: '#ffc2d4', desc: 'A pink spiral shell. Hold it to your ear and you hear your island\'s waves. Use it to go home, and again to go back where you were. It never gets used up.' });
 // The Sweethearts' two special gifts (data/sweethearts.js).

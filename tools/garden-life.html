@@ -4,8 +4,11 @@
 <script type="module">
 // Dev tool: your Mochi Garden with Mochi living in it (world/garden-life.js), drawn as the game
 // draws it. ?n=8 Mochi (a mix: babies who can't walk or swim yet, grown ones, swimmers), ?x=900 where
-// you stand, ?night=1, ?eggs=2. ?manual steps only through window.step(dt) (for recording);
-// window.frame() gives the canvas.
+// you stand, ?night=1, ?eggs=2. ?manual steps only through window.step(dt) (for recording), on
+// its own clock (Date.now follows the steps, so the garden's clock moves smoothly frame to frame);
+// window.frame() gives the canvas. Raising: ?ui=1 draws the windows; ?care=0 opens Mochi 0's care
+// panel (you beside it); ?kitchen=1 at the Sweet Kitchen with crops in your bag; ?sweets=1 a few
+// sweets in your bag; ?skip=30 runs 30 s on first; ?follow=1&who=0 keeps the camera on Mochi 0.
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -13,7 +16,11 @@ import { setHd, nextFrame } from '../src/render/pixel.js';
 import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { VW, VH } from '../src/input.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
-import { newRecord, giveExp, evolve } from '../src/data/mochi-raise.js';
+import { newRecord, giveExp, evolve, MOCHI_SWEETS } from '../src/data/mochi-raise.js';
+import { createInput } from '../src/input.js';
+import { beginUi, endUi } from '../src/ui/kit.js';
+import { createUiState, drawUi } from '../src/ui/manager.js';
+import { addItem } from '../src/core/inventory.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -23,6 +30,11 @@ canvas.width = VW * SCALE;
 canvas.height = VH * SCALE;
 preloadFxSprites();
 const c = balanceChar('thief', 30);
+// (Manual stepping keeps its own clock.)
+const realNow = Date.now.bind(Date);
+const base = realNow();
+let simT = 0;
+if (q.has('manual')) Date.now = () => base + simT * 1000;
 // A garden with Mochi of every kind.
 const n = Number(q.get('n') ?? 8);
 const mochi = [];
@@ -50,7 +62,10 @@ const idle = { held: new Set(), pressed: new Set(), locked: false };
 const cam = createCamera();
 let t = 0;
 let steps = 0;
-function step(dt) {
+const input = createInput(canvas);
+const state = createUiState();
+function step(dt, draw = true) {
+  simT += dt;
   w.scene = null;
   // (?rock=1: you press Up by the first egg a moment in, to hatch it.)
   if (q.has('rock') && ++steps === 30) idle.pressed.add('ArrowUp');
@@ -58,16 +73,46 @@ function step(dt) {
   idle.pressed.delete('ArrowUp');
   t += dt;
   updateCamera(cam, w, dt);
+  // (?follow=1: the camera follows Mochi `who` instead of you.)
+  const fe = q.has('follow') && w.gardenLife?.mochi[Number(q.get('who') ?? 0)];
+  if (fe && fe.x != null) {
+    const k = cam.fx == null ? 1 : Math.min(1, dt * 4);
+    cam.fx = (cam.fx ?? fe.x) + (fe.x - (cam.fx ?? fe.x)) * k;
+    cam.fy = (cam.fy ?? fe.y) + (fe.y - (cam.fy ?? fe.y)) * k;
+    cam.x = cam.fx - VW / 2;
+    cam.y = cam.fy - VH * 0.62;
+  }
+  if (!draw) return;
   nextFrame();
   ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   ctx.imageSmoothingEnabled = false;
   setHd(true, SCALE);
   drawWorld(ctx, w, cam, t);
+  if (q.has('ui')) {
+    const ui = beginUi(ctx, input);
+    drawUi(ui, state, w);
+    endUi(ui);
+  }
 }
 window.step = step;
 window.frame = () => canvas.toDataURL('image/png');
 window.press = (key) => { idle.pressed.add(key); step(1 / 60); idle.pressed.delete(key); };
 for (let k = 0; k < 120; k++) updateWorld(w, 1 / 60, idle);
+if (q.has('sweets')) for (const sw of MOCHI_SWEETS.slice(0, 6)) addItem(c.inventory, sw.id, 3);
+const life = w.gardenLife;
+for (let k = 0; k < Number(q.get('skip') ?? 0) * 30; k++) step(1 / 30, false);
+if (q.has('care')) {
+  const e = life.mochi[Number(q.get('care'))];
+  Object.assign(w.body, { x: e.x - 14, facing: 1 });
+  life.caring = e;
+  Object.assign(state.windows.mochi, { open: true, openedAt: -99 });
+}
+if (q.has('kitchen')) {
+  for (const [id, n] of Object.entries({ mochi_rice: 6, azuki: 4, kinako: 2, fire_pepper: 1, cherry: 2, honeycomb: 2 })) addItem(c.inventory, id, n);
+  Object.assign(w.body, { x: w.map.stove, facing: 1 });
+  Object.assign(state.windows.cook, { open: true, openedAt: -99 });
+}
+for (let k = 0; k < 60; k++) step(1 / 60, false);
 window.ready = true;
 if (!q.has('manual')) {
   let last = performance.now();

@@ -1,4 +1,4 @@
-// Raising a Mochi (docs/design/mochi.md, step 3): levels, points and grades; sweets and training;
+// Raising a Mochi (docs/design/mochi.md, step 3): levels, points and grades; sweets (what raises its stats);
 // mood and bond; the sweet/spicy lean; evolving and rebirth. Pure rules: the Garden keeps the
 // records and calls these.
 //
@@ -140,7 +140,7 @@ export function tick(rec, secs) {
 
 // ---------- Sweets ----------
 // What it eats: the sixteen wagashi (sweet: they lean it angel a touch) and five spicy treats
-// (they lean it demon), each training one or two stats. Made at the Garden's kitchen from Garden
+// (they lean it demon), each raising one or two stats. Made at the Garden's kitchen from Garden
 // crops, monster drops, gathered finds and fish. `kind` is the prop it holds (render/mochi-sweets.js).
 // Garden crops (step 4 grows them): mochi_rice, azuki (red beans), kinako (roasted soy flour),
 // fire_pepper.
@@ -218,32 +218,6 @@ function feedNow(rec, id, rng) {
     lean: sw.taste === 'spicy' ? -0.06 : 0.03,
   });
   return { action: hated ? 'hated' : 'eat', ups, loved, hated, learned };
-}
-
-// ---------- Training ----------
-// The Garden's training spots (step 4 builds them): each session trains its stat and a little
-// Stamina, and tires it a bit (the sporty and the hyper love it).
-export const TRAINING = {
-  track: { name: 'Running Track', stat: 'run', exp: 18 },
-  cliff: { name: 'Glide Cliff', stat: 'fly', exp: 18 },
-  boulders: { name: 'Climbing Boulders', stat: 'power', exp: 18 },
-  loop: { name: 'Long Loop', stat: 'stamina', exp: 18 },
-  pond: { name: 'Swimming Pond', stat: 'swim', exp: 18 },
-};
-const LOVES_TRAINING = ['sporty', 'hyper', 'brave', 'proud', 'bossy'];
-const HATES_TRAINING = ['lazy', 'sleepy', 'dreamy'];
-export function train(rec, spot, rng = Math.random) {
-  return noting(rec, () => trainNow(rec, spot, rng));
-}
-function trainNow(rec, spot, rng) {
-  const t = TRAINING[spot];
-  if (!t) return null;
-  const mul = moodMul(rec.mood);
-  const ups = { [t.stat]: giveExp(rec, t.stat, Math.round(t.exp * mul), rng) };
-  if (t.stat !== 'stamina') ups.stamina = giveExp(rec, 'stamina', Math.round(4 * mul), rng);
-  const p = rec.personality;
-  feel(rec, { mood: LOVES_TRAINING.includes(p) ? 3 : HATES_TRAINING.includes(p) ? -6 : -2, bond: 1 });
-  return { ups };
 }
 
 // ---------- Care ----------

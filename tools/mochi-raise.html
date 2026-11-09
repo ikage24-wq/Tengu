@@ -33,8 +33,6 @@
     <div id="meta" style="margin-top:8px"></div>
     <div style="margin-top:10px"><b>Sweets</b></div>
     <div class="btns"><select id="sweet"></select><button id="feed">Feed</button><button id="fav"></button><button id="hate"></button></div>
-    <div><b>Training</b></div>
-    <div class="btns" id="train"></div>
     <div><b>Care</b></div>
     <div class="btns" id="care"></div>
     <div class="btns"><button id="hour">An hour passes</button><button id="grow">Grow fast</button><button id="evolve" class="big">Evolve</button><button id="rebirth" class="big">Rebirth</button><button id="new">New egg</button><button id="rescue">Lift it out</button></div>
@@ -91,7 +89,7 @@ function celebrate(out) {
   const news = (out.styleUps ?? []).map((u) => `${u.stat}: ${STYLE_OF[u.stat][u.to].name}!`);
   return `${out.learned ? ` Learned a trick: ${out.learned}!` : ''}${news.length ? ` New way to move: ${news.join(', ')}` : ''}`;
 }
-// Shows off a stat's style for a few seconds (as training does).
+// Shows off a stat's style for a few seconds (after a new way to move).
 function demo(stat) {
   const mode = MODE_OF[stat];
   m.action = null;
@@ -148,19 +146,6 @@ function feedIt(id) {
 $('feed').onclick = () => feedIt($('sweet').value);
 $('fav').onclick = () => feedIt(R.MOCHI_SWEETS.find((s) => s.kind === rec.loves).id);
 $('hate').onclick = () => feedIt(R.MOCHI_SWEETS.find((s) => s.kind === rec.hates).id);
-$('train').innerHTML = Object.entries(R.TRAINING).map(([k, v]) => `<button data-k="${k}">${v.name}</button>`).join('');
-for (const b of $('train').querySelectorAll('button')) {
-  b.onclick = () => {
-    const spot = b.dataset.k;
-    const out = R.train(rec, spot);
-    m.queue = [];
-    m.demos = [];
-    demo(R.TRAINING[spot].stat);
-    const news = celebrate(out);
-    log(`${R.TRAINING[spot].name}: ${Object.entries(out.ups).map(([s, n]) => (n ? `${s} +${n} Lv` : '')).filter(Boolean).join(', ') || 'a good session'}.${news}`);
-    render();
-  };
-}
 $('care').innerHTML = Object.keys(R.CARE).map((k) => `<button data-k="${k}">${k}</button>`).join('');
 for (const b of $('care').querySelectorAll('button')) {
   b.onclick = () => {

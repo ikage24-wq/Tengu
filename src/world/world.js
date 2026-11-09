@@ -44,7 +44,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear } from './garden-life.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
 import { settleSweethearts, tickGoingHome } from './goinghome.js';
@@ -454,7 +454,7 @@ function interact(world) {
     return true;
   }
   // An egg in your garden: Up beside it to rock it, and it hatches (world/garden-life.js).
-  if (world.map.garden && rockEgg(world)) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);
@@ -498,6 +498,13 @@ function interact(world) {
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });
+    return true;
+  }
+  // One of your Mochi beside you in your garden: its care panel (ui/mochi-care.js).
+  const mochi = world.map.garden && !world.gardenVisit ? mochiNear(world) : null;
+  if (mochi) {
+    world.gardenLife.caring = mochi;
+    world.events.push({ type: 'mochi' });
     return true;
   }
   return false;

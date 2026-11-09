@@ -34,10 +34,10 @@ import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
-import { drawHatch } from './mochi-life.js';
+import { drawHatch, drawEvolve } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS } from '../world/garden-life.js';
+import { EGG_SLOTS, cropGrowth } from '../world/garden-life.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c8945a';
@@ -194,6 +194,50 @@ const nurseryArt = () => art('mg-nursery', 184, 152, () => {
     // The doorstep.
     R(70, 140, 44, 4, STONE),
   ];
+  return out;
+});
+
+// ---------- The crop bed ----------
+// A raised bed in the orchard (world/garden-life.js harvestCrops): mochi rice, red beans, soy (for
+// kinako) and fire peppers, from seedlings (stage 0) to ripe (3) between pickings.
+const cropBedArt = () => art('mg-cropbed', 104, 20, () => {
+  const w = ramp('#c89a64');
+  return [E(52, 9, 48, 4.6, '#6e4a30'), ...planks(4, 9, 96, 10, w, 4, 5), F(R(4, 9, 96, 2, w.hi)), F(R(4, 17, 96, 2, w.deep)), F(E(52, 9.4, 45, 2.4, '#8a6040'))];
+});
+const RICE = ['#9fd07a', '#8cc45a', '#c8cf6a', '#ecc65e'];
+function sprouts(cx, base, c) {
+  return [-5, 0, 5].flatMap((dx, i) => [F(limb(cx + dx, base, cx + dx, base - 3 - (i % 2), 0.45, 0.35, c)), F(E(cx + dx - 1.2, base - 3.4 - (i % 2), 1.3, 0.7, c)), F(E(cx + dx + 1.2, base - 3.6 - (i % 2), 1.3, 0.7, c))]);
+}
+const cropsArt = (stage) => art(`mg-crops|${stage}`, 104, 42, () => {
+  const base = 42;
+  const out = [];
+  if (stage === 0) {
+    for (const cx of [16, 40, 64, 88]) out.push(...sprouts(cx, base, cx === 16 ? RICE[0] : '#7fbf62'));
+    return out;
+  }
+  // Mochi rice: a clump of stalks, gold and drooping with grain when ripe.
+  const rh = [0, 13, 21, 24][stage];
+  for (let i = 0; i < 6; i++) {
+    const bx = 9 + i * 2.8;
+    const tip = bx + (i - 2.5) * 0.9 + (stage === 3 ? 2.4 : 0);
+    const top = base - rh + (i % 2) * 2;
+    out.push(F(limb(bx, base, tip, top, 0.55, 0.35, i % 2 ? RICE[stage] : ramp(RICE[stage]).sh)));
+    if (stage >= 2) for (let k = 0; k < 4; k++) out.push(F(E(tip + k * (stage === 3 ? 0.9 : 0.3), top + 1 + k * 1.7, 0.9, 1.2, stage === 3 ? '#f6dc8a' : '#c6d888')));
+  }
+  out.push(F(limb(12, base, 6, base - rh * 0.5, 0.5, 0.3, '#7fb850')), F(limb(22, base, 27, base - rh * 0.45, 0.5, 0.3, '#7fb850')));
+  // Red beans and soy: low leafy bushes; flowers, then pods.
+  for (const [cx, leaf, flower, pod] of [[40, '#6fae4a', '#ffe36b', '#7a2434'], [64, '#8cc45a', '#c8a8f0', '#d9c27a']]) {
+    const h = [0, 9, 13, 14][stage];
+    out.push(...foliage(cx, base - h * 0.55, 8 + stage * 1.6, h * 0.55, ramp(leaf), cx * 0.37 + stage));
+    if (stage === 2) for (const [dx, dy] of [[-5, -8], [3, -10], [7, -4], [-1, -4]]) out.push(F(E(cx + dx, base + dy, 1.1, 1.1, flower)));
+    if (stage === 3) for (const [dx, dy] of [[-7, -6], [-3, -9], [2, -5], [6, -8], [9, -3]]) out.push(F(limb(cx + dx, base + dy, cx + dx + 1, base + dy + 3.4, 0.9, 0.7, pod)));
+  }
+  // Fire peppers: a little bush on a stem, white flowers, then red peppers hanging.
+  const ph = [0, 12, 17, 18][stage];
+  out.push(F(limb(88, base, 88, base - ph * 0.6, 0.7, 0.5, '#5a8a3a')));
+  out.push(...foliage(88, base - ph * 0.7, 6 + stage * 1.2, ph * 0.35, ramp('#5f9e48'), 4.1 + stage));
+  if (stage === 2) for (const [dx, dy] of [[-4, -13], [3, -15], [5, -10]]) out.push(F(E(88 + dx, base + dy, 1.1, 1.1, '#ffffff')));
+  if (stage === 3) for (const [dx, dy] of [[-5, -10], [-1, -8], [3, -11], [6, -7]]) out.push(F(limb(88 + dx, base + dy, 88 + dx - 0.6, base + dy + 5, 1.1, 0.4, '#e8483a')));
   return out;
 });
 
@@ -426,6 +470,14 @@ const bouldersArt = () => art('mg-boulders', 70, 60, () => {
     F(limb(38, 12, 46, 58, 1, 1, '#d8b47a')), ...[24, 36, 48].map((y) => F(E(38 + (y - 12) * 0.17, y, 1.4, 1.4, '#c89a5a'))),
   ];
 });
+// The glide board: planks from the ledge's left end to the lip, a stone weighting the back end.
+const GLIDE_BOARD = { x: 2946, y: 372, w: 70 };
+const glideBoardArt = () => art('mg-glideboard', GLIDE_BOARD.w + 14, 12, () => {
+  const w = ramp('#d8a46a');
+  const L = GLIDE_BOARD.w + 14;
+  return [...planks(0, 0, L, 4, w, 3, 11), F(R(0, 0, L, 1, w.hi)), F(R(0, 3.4, L, 0.6, w.deep)), F(R(1.2, 1.6, 1.4, 1, w.deep)),
+    E(L - 8, 7, 7, 4.6, STONE), F(E(L - 9.4, 5.6, 4, 2, ramp(STONE).hi)), F(R(L - 13, 9, 10, 1.4, ramp(STONE).sh))];
+});
 function windsock(ctx, x, gy, time, wx) {
   ctx.fillStyle = WOOD_DK;
   ctx.fillRect(snap(x - 1), snap(gy - 54), 2, 54);
@@ -540,7 +592,8 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
   }
   for (const e of life.mochi) {
     if (e.hidden || e.x == null) continue;
-    drawMochiAnim(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
+    if (e.scene === 'evolve') drawEvolve(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
+    else drawMochiAnim(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
   }
 }
 
@@ -657,6 +710,15 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       lilies(ctx, x, wy, time, wx, extra ?? 0);
       return true;
     }
+    case 'mg_cropbed': {
+      // (How grown it is comes from when you last picked it: four stages, so it never repaints.)
+      const grow = cropGrowth(map.gardenData, Date.now() / 1000);
+      const stage = grow >= 1 ? 3 : grow >= 0.66 ? 2 : grow >= 0.33 ? 1 : 0;
+      place(ctx, cropBedArt(), snap(x), gy + 2);
+      const a = (lean(time, wx) + 0.4) * 0.03;
+      pivoted(ctx, x, gy - 10, a, () => place(ctx, cropsArt(stage), snap(x), gy - 9));
+      return true;
+    }
     case 'mg_reeds': {
       reeds(ctx, x, (map.water?.[0]?.y ?? gy + cam.y) - cam.y + 2, time, wx, extra ?? 0);
       return true;
@@ -674,9 +736,14 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mg_boulders':
       place(ctx, bouldersArt(), snap(x), gy + 2);
       return true;
-    case 'mg_glide':
+    case 'mg_glide': {
+      // The glide board out over the top of the falls (its ledge is in world/garden.js), held down
+      // on the lip by a stone; and the windsock.
+      const bx = x + (GLIDE_BOARD.x + GLIDE_BOARD.w / 2 + 7 - wx);
+      place(ctx, glideBoardArt(), snap(bx), GLIDE_BOARD.y + 12 - cam.y);
       windsock(ctx, x, gy, time, wx);
       return true;
+    }
     case 'mg_moonmortar': {
       place(ctx, moonmortarArt(), snap(x), gy + 2);
       // Streamers stirring, and at night a soft moonlit glow in the mortar.

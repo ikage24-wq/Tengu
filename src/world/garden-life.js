@@ -9,10 +9,17 @@
 // What you do here (greeting them, hatching an egg) can move one off its path for a moment; it then
 // walks back to where the clock has it.
 //
-//   world.gardenLife = { owner, mochi: [{ rec, m, x }], hatching: { egg, m, x } | null, greeted }
+// Raising them (owner only): Up beside one opens its care panel (ui/mochi-care.js): petting and
+// playing, and feeding it sweets from the kitchen, which is what raises its stats. While you're here
+// the garden's time passes for them (data/mochi-raise.js tick), and one ready to evolve does, there
+// and then. The crop bed in the orchard grows the kitchen's crops: ripe every CROP_GROW seconds.
+//
+//   world.gardenLife = { owner, mochi: [{ rec, m, x, y }], hatching: { egg, m, x } | null, greeted,
+//     caring (the entry whose care panel is open) }
 
-import { rollMochi } from '../data/mochi-genes.js';
-import { newRecord, CANT_POINTS as CANT } from '../data/mochi-raise.js';
+import { rollMochi, STAGES } from '../data/mochi-genes.js';
+import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
+import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
 
@@ -24,8 +31,18 @@ const WATER_Y = 760;
 const NURSERY_DOOR = 760;
 const BEDS = [560, 630, 700, 476, 406, 336, 266, 196];
 const HOUR = 60;
-// Its running styles' speeds (render/mochi-anim.js GAITS), for strolling at half of.
+// Its styles' speeds (render/mochi-anim.js GAITS, SWIMS), by points.
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
+const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
+// The pond's water (world/garden.js).
+const WATER = [2236, 2826];
+// The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
+export const CROP_X = 1962;
+export const CROP_GROW = 15 * 60;
+const CROP_YIELD = { mochi_rice: 3, azuki: 2, kinako: 2, fire_pepper: 1 };
+const inWater = (x) => x > WATER[0] + 4 && x < WATER[1] - 4;
+const tierOf = (rec, stat) => styleOf(rec.stats?.[stat]?.points ?? 0);
+const pts = (rec, stat) => rec.stats?.[stat]?.points ?? 0;
 
 const hash = (n) => {
   const s = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
@@ -99,6 +116,7 @@ export function enterGarden(world, owner) {
     mochi: (g?.mochi ?? []).map((rec) => ({ rec, m: newAnim(rec), x: null })),
     hatching: null,
     greeted: false,
+    caring: null,
   };
 }
 const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, size: rec.stage === 'mochiko' || rec.stage === 'egg' ? 'baby' : 'grown' });
@@ -120,10 +138,33 @@ export function tickGarden(world, dt) {
       if ((e.rec.bond ?? 0) >= 250) e.greet = { until: now + 6 + i * 0.4 };
     });
   }
+  const owner = !world.gardenVisit;
+  if (life.caring && !life.mochi.includes(life.caring)) life.caring = null;
   life.mochi.forEach((e, i) => {
-    const { rec, m } = e;
+    const { rec } = e;
+    // (The garden's time passes for them while you're here.)
+    if (owner) tickRec(rec, dt);
+    // Evolving, there and then: the scene plays, and it's grown.
+    if (e.scene) {
+      if (!e.m.evolved) return;
+      e.m = newAnim(rec);
+      e.m.dir = e.dir ?? 1;
+      e.scene = null;
+      e.m.action = { name: 'evolved', t0: null, hold: 0 };
+    }
+    const m = e.m;
     m.genes = rec;
     m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
+    if (owner && !inside && !night && e.x != null && rec.stage === 'mochiko' && canEvolve(rec)) {
+      const before = { ...rec, stage: 'mochiko', path: null };
+      const out = evolveRec(rec);
+      e.dir = m.dir;
+      e.m = { genes: before, dir: m.dir, speed: 0, dist: 0, size: 'baby', evolve: { t0: null, path: out.path, moon: out.stage === 'tsukimochi' } };
+      e.scene = 'evolve';
+      if (life.caring === e) life.caring = null;
+      world.log(out.stage === 'tsukimochi' ? 'Your Mochiko is glowing... a Tsukimochi! It will live forever.' : `Your Mochiko is glowing... it's evolving into ${STAGES[out.stage] ?? out.stage}!`, '#ffc2d4');
+      return;
+    }
     if (inside) {
       // The nursery: asleep in the beds at night; by day, nobody's in.
       e.hidden = !night;
@@ -140,19 +181,23 @@ export function tickGarden(world, dt) {
     let target = sched.x;
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
     else e.greet = null;
+    // (Being cared for, it stays put, looking up at you.)
+    const busy = now < (e.busyUntil ?? 0);
+    if (busy && e.x != null) target = e.x;
     // (One who can't swim yet stops at the water's edge.)
-    if (swimPts(rec) < CANT.swim && target > LAND[1]) target = LAND[1];
+    if (pts(rec, 'swim') < CANT.swim && target > LAND[1]) target = LAND[1];
     if (e.x == null) e.x = sched.x;
-    const v = strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
+    const wet = inWater(e.x);
+    const v = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
     const dx = target - e.x;
     const step = Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
     e.x += step;
     if (Math.abs(dx) > 0.5) m.dir = Math.sign(dx);
-    else if (e.greet) m.dir = Math.sign(world.body.x - e.x) || 1;
+    else if (e.greet || busy) m.dir = Math.sign(world.body.x - e.x) || 1;
     m.dist += Math.abs(step);
     m.speed = Math.abs(dx) > 0.5 ? v : 0;
     // In the pond it swims; on land it walks (or scoots, if it can't yet).
-    const swimming = e.x > POND[0] - 40 && e.x < POND[1] + 40 && swimPts(rec) >= CANT.swim;
+    const swimming = inWater(e.x);
     m.mode = swimming ? 'swim' : 'run';
     m.inWater = swimming;
     e.y = swimming ? WATER_Y : groundAt(map, e.x);
@@ -162,6 +207,70 @@ export function tickGarden(world, dt) {
       m.action = { name: 'cheer', t0: null, hold: 1.5 };
     }
   });
+}
+
+// ---------- Caring ----------
+// The Mochi beside you, if there's one (and not one in the middle of a scene).
+export function mochiNear(world, reach = 26) {
+  const life = world.gardenLife;
+  if (!life || world.map.indoor) return null;
+  const b = world.body;
+  let best = null;
+  for (const e of life.mochi) {
+    if (e.hidden || e.x == null || e.scene) continue;
+    const d = Math.abs(e.x - b.x);
+    if (d < reach && Math.abs((e.y ?? b.y) - b.y) < 30 && (!best || d < Math.abs(best.x - b.x))) best = e;
+  }
+  return best;
+}
+// Plays what came of caring for it or feeding it: its reaction, then a trick it just learned, a
+// level-up hop, a new way to move.
+function react(e, out, action, extra = {}) {
+  const m = e.m;
+  m.action = { name: action, t0: null, hold: 0, ...extra };
+  const seq = [];
+  if (out?.learned) seq.push({ name: out.learned });
+  if (out?.levels > 0) seq.push({ name: 'levelup' });
+  for (let k = 0; k < (out?.styleUps?.length ?? 0); k++) seq.push({ name: 'newstyle' });
+  m.queue = [...(m.queue ?? []), ...seq];
+  e.busyUntil = Date.now() / 1000 + 3 + seq.length * 1.5;
+  e.greet = null;
+}
+export function careFor(world, e, what) {
+  if (world.gardenVisit || e.scene) return null;
+  const out = careRec(e.rec, what);
+  if (out) react(e, out, out.action, { hold: 1.4 });
+  return out;
+}
+// Feeds it sweet `id` from your bag (it won't when it's too full).
+export function feedMochi(world, e, id) {
+  const sw = SWEET_BY_ID[id];
+  if (world.gardenVisit || !sw || e.scene || countItem(world.char.inventory, id) < 1) return null;
+  const out = feedRec(e.rec, id);
+  if (!out) return null;
+  if (!out.refused) removeItem(world.char.inventory, id, 1);
+  react(e, out, out.action, { sweet: sw.kind });
+  if (out.refused) world.log('It pats its round tummy: too full for now!', '#ffd6a0');
+  else if (out.learned) world.log(`It loved trying ${sw.name}... and learned a new trick!`, '#ffc2d4');
+  return out;
+}
+// ---------- The crop bed ----------
+// How grown the bed is (0 just picked, 1 ripe).
+export const cropGrowth = (g, now = Date.now() / 1000) => Math.max(0, Math.min(1, (now - (g?.cropAt ?? 0)) / CROP_GROW));
+// Up at the bed: when it's ripe, you pick its crops.
+export function harvestCrops(world) {
+  const g = world.gardenLife?.owner?.garden;
+  if (!g || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - CROP_X) > 44) return false;
+  const now = Date.now() / 1000;
+  if (cropGrowth(g, now) < 1) {
+    const mins = Math.ceil((CROP_GROW - (now - g.cropAt)) / 60);
+    world.log(`The crops are still growing. Ripe in about ${mins} minute${mins === 1 ? '' : 's'}.`, '#cfe8ff');
+    return true;
+  }
+  for (const [id, n] of Object.entries(CROP_YIELD)) addItem(world.char.inventory, id, n);
+  g.cropAt = now;
+  world.log('You pick the crop bed: 3 Mochi Rice, 2 Red Beans, 2 Kinako and a Fire Pepper!', '#d6f5b0');
+  return true;
 }
 
 // Up beside an egg rocks it, and it hatches (the egg's genes are rolled from its seed). Returns

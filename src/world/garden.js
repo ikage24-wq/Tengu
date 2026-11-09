@@ -37,7 +37,7 @@ export function gardenMap(g = {}) {
     { x: 2244, y: 748, w: 112, style: 'planks', dock: true },
     // The glide launch: a board jutting out from the cliff top over the pond (the upper rope hangs
     // from it).
-    { x: 2946, y: TOP - 8, w: 70, style: 'planks', bare: true },
+    { x: 2946, y: TOP - 8, w: 70, style: 'planks', bare: true }, // (drawn by mg_glide: render/garden.js)
     // The secret: a nook in behind the waterfall, a hop from the upper rope.
     { x: 2980, y: 470, w: 22, bare: true },
   ];
@@ -49,6 +49,8 @@ export function gardenMap(g = {}) {
   const map = {
     id: 'garden', name: 'Mochi Garden', theme: 'town', isTown: true, private: true, garden: true, town: 'sprout',
     width, height: 900, groundY: PLATEAU,
+    // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
+    stove: 548, gardenData: g,
     look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1 },
     cottages: [],
     terrain, platforms, ropes,
@@ -65,7 +67,7 @@ export function gardenMap(g = {}) {
     townPieces: [
       ['mg_gate', 70], ['mg_lantern', 196, 0], ['mg_eggstall', 330], ['mg_kitchen', 548], ['mg_nursery', 760], ['mg_lantern', 872, 1],
       ['mg_track', 1090, { to: 1450 }], ['mg_fruittree', 1150, 0], ['mg_fruittree', 1380, 1], ['mg_lantern', 1478, 2], ['mg_bigtree', 1605],
-      ['mg_fruittree', 1850, 2], ['mg_fruittree', 2070, 3], ['mg_lantern', 2150, 3],
+      ['mg_fruittree', 1850, 2], ['mg_cropbed', 1962], ['mg_fruittree', 2070, 3], ['mg_lantern', 2150, 3],
       ['mg_reeds', 2228, 0], ['mg_lilies', 2470, 0], ['mg_lilies', 2690, 1], ['mg_reeds', 2816, 1], ['mg_falls', 3002],
       ['mg_cliffface', 2904, { top: LEDGE, bottom: POND, seed: 3, vines: 3 }], ['mg_cliffface', 3020, { top: TOP, bottom: LEDGE, seed: 7, vines: 2 }],
       ['mg_boulders', 2928], ['mg_glide', 3034], ['mg_lantern', 3110, 4], ['mg_moonmortar', 3250], ['mg_lantern', 3390, 5], ['mg_stadium', 3500],

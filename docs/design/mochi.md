@@ -51,7 +51,8 @@ are dress-up.
 
 Five stats: Run, Fly, Power, Stamina, Swim. Like a Chao Garden:
 
-- **Every stat levels from 1 to 99**, by training, sweets and play. Nothing caps the level.
+- **Every stat levels from 1 to 99**, by sweets and play (no training: decided 2026-11-10). Nothing
+  caps the level.
 - **The grade (E to S) decides how much each level adds** to the stat's points: about 10 a level
   for E, 13 for D, 16 for C, 19 for B, 22 for A and 25 for S. At Lv 99 an E stat sits near 990 points
   and an S near 2,475, so the grade is how far that stat can ever grow (its top speed).
@@ -115,20 +116,21 @@ Each step is pushed on its own. Status as of 2026-11-09.
    stance for the Mochiko; the 10 features kept small, and the sprout turning angel or demon.
    Features aren't drawn yet in the climbing (back) view.
 3. **Raising.** Stat points and levels; grades rise on evolution and rebirth; sweets made from
-   monster, fishing and garden ingredients, each training a stat; training spots; mood and bond; the
-   sweet/spicy lean; evolution and rebirth.
+   monster, fishing and garden ingredients, each raising a stat; mood and bond; the sweet/spicy lean;
+   evolution and rebirth. **No training (user, 2026-11-10):** what you give it (food, care) raises
+   its stats; a training system was built and removed.
    **Rules done** (data/mochi-raise.js, tests/mochi-raise.test.js; try it: tools/mochi-raise.html):
    exp per level 20 + 2 x level; each level adds its grade's points (one either way); mood scales
    learning (x0.5 glum to x1.5 happy); 16 wagashi (lean angel) and 5 spicy treats (lean demon) from
    Garden crops (mochi rice, red beans, kinako, fire pepper), monster drops, finds and fish;
-   favourite x1.5, hated x0.5; five training spots; seven kinds of care, each liked or disliked by
+   favourite x1.5, hated x0.5; seven kinds of care (Play and Wrestle give a little Run and Power), each liked or disliked by
    personality; evolving at 3,000 exp, 40 levels, 2 h old and happy (best grade +1, others 1 in 5);
    rebirth at 20 h old and very happy (grades +1 at Lv 50+, 3 in 5; always at 99; a tenth of its
    points kept). A tummy paces it: each sweet fills a quarter, it empties over 30 min, and a full
    Mochi pats its tummy and says no. Every level-up gets a happy hop, every new way of moving a
    ta-da and a quick show of it (`m.queue` lines actions up); mood shows on the sprout (droops
    under 30, perks up over 85) and in which idles it picks. Hooking it into the game (the kitchen,
-   training spots, saving) is the Garden's job.
+   saving) is the Garden's job.
 4. **The Garden.** A tall map in zones: an orchard, a pond, a glide cliff, a nursery (a real indoor
    room), the stadium gate; about 8 Mochi living there.
    **Decided 2026-11-09:** your own place like your island (world/home.js), visitable by friends:
@@ -145,8 +147,15 @@ Each step is pushed on its own. Status as of 2026-11-09.
    anchor spot per hour, strolls near it with idles between, home to the next anchor, so a visitor
    sees the same thing; swimmers take to the pond, and one who can't swim yet stops at the edge. On
    arriving, the ones with bond 250+ come running and cheer. At night they walk in at the nursery
-   door and sleep in its beds. Dev page: tools/garden-life.html. Still to come: raising hooked up
-   (batch 3), visiting and the extras (batch 4).
+   door and sleep in its beds. Dev page: tools/garden-life.html. **Raising hooked up (batch 3):**
+   Up beside your Mochi opens its care panel (ui/mochi-care.js: mood, bond, tummy, the five stats;
+   Pet, Play, Cheer, Tickle, Wrestle, Prank; feed a sweet from your bag). The kitchen is the Sweet
+   Kitchen (the cooking window lists the 21 sweets, 2 per cook); the crop bed in the orchard gives 3
+   rice, 2 red beans, 2 kinako and a fire pepper every 15 minutes. The garden's time passes for them
+   while you're there, and a Mochiko ready to evolve does, on the spot. The glide board over the
+   falls is drawn now (it was an invisible ledge). Training spots with routes were built, then
+   removed at the user's word: food and care raise the stats. Tests: tests/mochi-garden.test.js.
+   Still to come: visiting and the extras (batch 4); rebirth in the garden.
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
    swimming; cups from beginner up; rivals rolled like the fishing derby's; prizes on the money scale
    plus garden decorations and toys. Personality shows in how each one races (see 12).

@@ -1,11 +1,11 @@
-// Raising a Mochi (data/mochi-raise.js): levels and points by grade, sweets, training and care,
+// Raising a Mochi (data/mochi-raise.js): levels and points by grade, sweets and care,
 // the lean, evolving and rebirth.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import {
-  TRICKS, TRICK_OF, CANT_POINTS, canDo, rescue, canAscend, ASCEND, trendOf, HUNGER, TREND, TUMMY, styleOf, STYLE_POINTS, newRecord, giveExp, expToNext, GRADE_POINTS, MAX_LEVEL, feed, train, care, tick, leanOf, canEvolve, evolve, EVOLVE,
+  TRICKS, TRICK_OF, CANT_POINTS, canDo, rescue, canAscend, ASCEND, trendOf, HUNGER, TREND, TUMMY, styleOf, STYLE_POINTS, newRecord, giveExp, expToNext, GRADE_POINTS, MAX_LEVEL, feed, care, tick, leanOf, canEvolve, evolve, EVOLVE,
   canRebirth, rebirth, REBIRTH, MOCHI_SWEETS, SWEET_BY_ID, GARDEN_CROPS, totalLevels, bestStat,
 } from '../src/data/mochi-raise.js';
 import { SWEET_KINDS } from '../src/render/mochi-sweets.js';
@@ -109,14 +109,6 @@ test('care pleases it more if it likes that kind of thing, and sulks it if not',
   assert.ok(clingy.mood > 70 && loner.mood < 60);
   // A prank on a mischief-maker is a laugh.
   assert.equal(care(fresh(4, { personality: 'mischief' }), 'prank').action, 'cheer');
-});
-
-test('training trains its stat and a little stamina; the lazy don\'t enjoy it', () => {
-  const r = fresh(5, { personality: 'lazy' });
-  train(r, 'pond', half);
-  assert.ok(r.stats.swim.exp > 0 || r.stats.swim.level > 1);
-  assert.ok(r.stats.stamina.exp > 0);
-  assert.ok(r.mood < 60);
 });
 
 test('mood drifts back to content over time, and it ages', () => {

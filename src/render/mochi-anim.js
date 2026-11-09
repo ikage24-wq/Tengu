@@ -1644,8 +1644,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   let look = lookOf(g, mood, time * 0.1);
   if (mouth) look = { ...look, mouth };
   const lean = leanNow;
-  // A soft shadow under the feet, smaller the higher it is (none in the water).
-  if (kind !== 'swim' && kind !== 'climb') {
+  // A soft shadow under the feet, smaller the higher it is (none in the water, or gliding high
+  // over it: `m.noShadow`).
+  if (kind !== 'swim' && kind !== 'climb' && !m.noShadow) {
     ctx.fillStyle = 'rgba(70,40,90,0.16)';
     ctx.beginPath();
     ctx.ellipse(x, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), 0, 0, TAU);

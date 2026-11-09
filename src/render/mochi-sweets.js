@@ -92,6 +92,12 @@ function bittenSprite(kind, bites) {
   }
   return bitten.get(key);
 }
+// Sweet `kind` as a 16 x 16 bag icon: the same drawing, set in the middle of the cell.
+export function sweetIcon(kind) {
+  const draw = SHAPES[kind];
+  if (!draw) return [E(8, 9, 5, 4, '#ffd0dc')];
+  return draw().map((sh) => ({ ...sh, x: sh.x + 1, y: sh.y + 2.4 }));
+}
 // Draws sweet `kind` with its bottom middle at (x, y), at a Mochi's size `s`, `bites` taken (0-3).
 export function drawSweet(ctx, kind, x, y, s = 0.6, bites = 0) {
   if (bites > 3) return;
