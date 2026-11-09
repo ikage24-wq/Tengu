@@ -5,6 +5,7 @@
 
 import { drawSweetHouse } from './sweethouses.js';
 import { drawIslandPiece } from './island.js';
+import { drawGardenPiece } from './garden.js';
 import { drawMount } from './mounts.js';
 import { MOUNTS } from '../data/mounts.js';
 import { tagFade } from './coop.js';
@@ -582,6 +583,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     if (drawCoinPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your island's own pieces (render/island.js).
     if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // Your Mochi Garden's own pieces (render/garden.js).
+    if (drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // A Sweetheart's house, and their room inside (render/sweethouses.js).
     if (drawSweetHouse(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;

@@ -520,6 +520,7 @@ add({ id: 'derby_medal', name: 'Derby Medal', type: 'etc', price: 1, color: '#ff
 // Mister Brine's lantern bait (Lantern Lagoon): fish bite twice as fast for your next 10 casts.
 // Your island's Home Shell (world/home.js): used anywhere it takes you home; used at home it takes
 // you back where you were. Never used up.
+add({ id: 'mochi_bell', name: 'Mochi Bell', type: 'use', price: 0, effect: { garden: true }, keep: true, color: '#ffd0dc', desc: 'A little brass bell on a sakura ribbon. Ring it and your Mochi chirp back: it takes you to your Mochi Garden, and again back to where you were. It never gets used up.' });
 add({ id: 'home_shell', name: 'Home Shell', type: 'use', price: 0, effect: { home: true }, keep: true, color: '#ffc2d4', desc: 'A pink spiral shell. Hold it to your ear and you hear your island\'s waves. Use it to go home, and again to go back where you were. It never gets used up.' });
 // The Sweethearts' two special gifts (data/sweethearts.js).
 add({ id: 'promise_bouquet', name: 'Promise Bouquet', type: 'etc', price: 0, color: '#ff8fc4', desc: 'Cherry blossom, moonpetal and clover tied with a ribbon. Give it to someone you\'re close to (6 hearts) to ask them to be your sweetheart.' });

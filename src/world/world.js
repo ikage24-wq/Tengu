@@ -43,6 +43,7 @@ import { tickVoyage, setSail } from './voyage.js';
 import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from './mount.js';
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
+import { refreshGarden, grantGarden } from './garden.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
 import { settleSweethearts, tickGoingHome } from './goinghome.js';
@@ -124,6 +125,15 @@ function findPortal(map, id) {
 export function loadMap(world, mapId, portalId) {
   // Your island is built fresh from how far Shelly has got (world/home.js).
   if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char, world.visiting ?? null);
+  // So is your Mochi Garden (world/garden.js); the first time you walk in, it's yours, with two eggs
+  // waiting and a Mochi Bell to ring you back here from anywhere.
+  if (mapId === 'garden' || mapId === 'garden_in') {
+    if (!world.char.garden && !world.gardenVisit && grantGarden(world.char)) {
+      addItem(world.char.inventory, 'mochi_bell', 1);
+      world.log('This little valley is your Mochi Garden! Two eggs are waiting by the gate. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
+    }
+    refreshGarden(world.char, world.gardenVisit ?? null);
+  }
   // (Leaving a friend's island ends the visit: net/visit.js.)
   else world.visiting = null;
   const map = getMap(mapId);
@@ -294,6 +304,30 @@ export function useItem(world, id) {
       char.home.back = { map: world.map.id, x: Math.round(world.body.x) };
       loadMap(world, 'home', 'dock');
       world.log('You hold the shell to your ear... and you hear your island\'s waves. Home!', '#ffc2d4');
+    }
+    world.fx.push({ kind: 'mountpoof', on: true, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
+    return true;
+  }
+  // The Mochi Bell: to your Mochi Garden, and back where you were (world/garden.js).
+  if (def.effect?.garden) {
+    const char = world.char;
+    if (world.dungeon || world.trial || world.map.voyage || world.scene) {
+      world.log("The bell's chime is too faint here. Try again outside.", '#ffb3c6');
+      return false;
+    }
+    world.fx.push({ kind: 'mountpoof', on: false, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
+    if (world.map.garden && !world.gardenVisit) {
+      const back = char.garden?.back;
+      if (back && MAPS[back.map] && !MAPS[back.map].garden) {
+        loadMap(world, back.map, 'start');
+        Object.assign(world.body, { x: Math.max(20, Math.min(world.map.width - 20, back.x)), y: groundAt(world.map, back.x) });
+      } else loadMap(world, 'sprout', 'garden');
+      world.log(`Back to ${world.map.name}.`, '#cfe8ff');
+    } else {
+      if (char.garden) char.garden.back = { map: world.map.id, x: Math.round(world.body.x) };
+      world.gardenVisit = null;
+      loadMap(world, 'garden', 'start');
+      world.log('You ring the little bell... and hear your Mochi chirping back. To the garden!', '#ffc2d4');
     }
     world.fx.push({ kind: 'mountpoof', on: true, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
     return true;

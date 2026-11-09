@@ -131,6 +131,16 @@ Each step is pushed on its own. Status as of 2026-11-09.
    training spots, saving) is the Garden's job.
 4. **The Garden.** A tall map in zones: an orchard, a pond, a glide cliff, a nursery (a real indoor
    room), the stadium gate; about 8 Mochi living there.
+   **Decided 2026-11-09:** your own place like your island (world/home.js), visitable by friends:
+   built from `char.garden` each arrival (shared by the world file's characters, saved like the
+   island), no bots. **Map built (batch 1, world/garden.js, render/garden.js):** Moonmortar Garden,
+   a valley: Mortar Gate (the gate from Sprout Village's Pond Garden, the egg stall, the sweet
+   kitchen, the nursery dome), The Orchard (four different fruit trees, the running track, the big
+   tree with its swing), Lily Pond (lily pads, reeds, the fishing dock), Moonmortar Cliff (climbing
+   rocks, ropes, the waterfall into a rock basin and a bamboo spout to the pond, the glide board, the
+   Moonmortar, the stadium gate); the nursery room inside. First visit: two eggs and a Mochi Bell
+   (to the garden and back, like the Home Shell). Still to come: Mochi living there (batch 2),
+   raising hooked up (batch 3), visiting and the extras (batch 4).
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
    swimming; cups from beginner up; rivals rolled like the fishing derby's; prizes on the money scale
    plus garden decorations and toys. Personality shows in how each one races (see 12).

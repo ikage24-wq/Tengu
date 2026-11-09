@@ -148,11 +148,13 @@ export function saveGame(char) {
   const w = loadWorld(file) ?? createWorldFile(file, `World ${file + 1}`);
   // What's shared lives in the world; the character keeps only their own way back from the island.
   if (char.home) w.home = char.home;
+  // (So is the Mochi Garden, and its Mochi.)
+  if (char.garden) w.garden = char.garden;
   if (char.book && char.book !== w.book) w.book = mergeBook(w.book, char.book);
   char.book = w.book;
   addLooks(w, looksOf(char));
   w.lastPlayed = Date.now();
-  const data = { ...char, buffs: {}, savedAt: Date.now(), home: undefined, book: undefined, homeBack: char.home?.back ?? null, file };
+  const data = { ...char, buffs: {}, savedAt: Date.now(), home: undefined, garden: undefined, book: undefined, homeBack: char.home?.back ?? null, gardenBack: char.garden?.back ?? null, file };
   return write(charKey(file, char.slot ?? 0), data) && saveWorld(file);
 }
 
@@ -173,6 +175,11 @@ export function loadGame(slot = 0, file = 0) {
     if (w.home) {
       w.home.back = char.homeBack ?? char.home?.back ?? null;
       char.home = w.home;
+    }
+    if (char.garden && !w.garden) w.garden = { ...char.garden, back: null };
+    if (w.garden) {
+      w.garden.back = char.gardenBack ?? char.garden?.back ?? null;
+      char.garden = w.garden;
     }
     if (char.book && char.book !== w.book) mergeBook(w.book, char.book);
     char.book = w.book;
