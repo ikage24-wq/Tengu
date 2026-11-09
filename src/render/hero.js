@@ -2705,14 +2705,23 @@ function weaponIdle(type, t, job) {
 // its middle. Whatever the hand holds goes with the upper body.
 // `hold: 'front'` hands the callbacks the front (near) hand instead, the one on the facing side,
 // which can reach out well past the body (a weapon held out at arm's length).
+// A pose with `armOver` draws the near arm on top of everything (a hand up at the face or waving
+// beside the head, which the big head would otherwise hide).
 export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back', alpha = 1 } = {}) {
   // (Its pose on half pixels: fine enough to read smooth, few enough poses to come round again.)
-  const rig = { ...baseRig(), ...halfRig(pose), armIn: true };
+  const rig = { ...baseRig(), ...halfRig(pose), armIn: !pose.armOver };
   const g = resolveGear(look, null);
   const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
   const top = y - H * scale - (rig.lift ?? 0) * scale;
+  const armOn = rig.armIn ? null : (() => {
+    const skin = look.skinTone ?? '#fff0e6';
+    const [ax, ay] = rig.frontArm;
+    const arm = sprite(`posedarm|${JSON.stringify(look)}|${ax},${ay},${rig.armSide}`, () => ({ w: W, h: H, shapes: move(squash(armShapes(FRONT_SHOULDER, ax, ay, sleeveOf(g.top, skin), longSleeves(g.top.design, g.top), g, skin, rig.armSide)), 0, 0), res: RES, soft: 'cel', crisp: true, selout: true }));
+    const at = [left + (flip ? -rig.tx : rig.tx) * KX * scale, top + (rig.by + hipDrop(rig)) * KY * scale];
+    return () => blit(ctx, arm, at[0], at[1], { flip, scale, alpha });
+  })();
   const sx = (px) => (flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale);
   const sy = (py) => top + (py + OY) * scale;
   // The back hand, as bodyShapes places it: reached for from the shoulder (as far as the arm
@@ -2727,6 +2736,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   if (!lean || (!lean.tilt && !lean.lunge && !lean.lift)) {
     under?.(ctx, hand, flip, other);
     blit(ctx, body, left, top, { flip, scale, alpha });
+    armOn?.();
     over?.(ctx, hand, flip, other);
     return;
   }
@@ -2756,10 +2766,15 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
     whole(ctx, tilt);
     blit(ctx, body, left, top, { flip, scale, alpha });
     ctx.restore();
+    ctx.save();
+    whole(ctx, tilt);
+    armOn?.();
+    ctx.restore();
   } else {
     ctx.save();
     whole(ctx, tilt);
     blit(ctx, body, left, top, { flip, scale, alpha });
+    armOn?.();
     ctx.restore();
   }
   ctx.save();

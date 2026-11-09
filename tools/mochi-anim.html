@@ -6,7 +6,8 @@
 // treadmills (Run talent E, C, A, S); below: four Mochi standing about in their personalities.
 // ?manual steps only through window.step(dt) (for recording); window.frame() gives the canvas.
 import { rollMochi } from '../src/data/mochi-genes.js';
-import { drawMochiAnim, GAITS, RUN_STYLES, SWIMS, FLIES } from '../src/render/mochi-anim.js';
+import { drawMochiAnim, GAITS, RUN_STYLES, SWIMS, FLIES, CLIMBS, STAMINAS, SIGNATURE } from '../src/render/mochi-anim.js';
+import { PERSONALITIES } from '../src/data/mochi-genes.js';
 
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
@@ -87,7 +88,90 @@ function stepKind(dt) {
     label(`${TABLE[i].name} · ${kind === 'swim' ? 'Swim' : 'Fly'} ${m[`${kind}Points`]}`, x, y + (kind === 'swim' ? 90 : 36));
   });
 }
+// ?climb: one Mochi per climbing style (Power points) on a brick wall sliding down past it.
+const climbers = RUN_STYLES.map((need, i) => ({ genes: rollMochi(100 + i, { coat: null }), dir: 1, speed: CLIMBS[i].speed, dist: 0, mode: 'climb', powerPoints: need + 120 }));
+function stepClimb(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  climbers.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 133 + (i % 3) * 267;
+    const y = 230 + Math.floor(i / 3) * 290;
+    ctx.fillStyle = '#c9b49a';
+    ctx.fillRect(x - 70, y - 210, 140, 240);
+    ctx.fillStyle = '#b39c80';
+    const off = ((m.dist * ZB) % 40 + 40) % 40;
+    for (let r = -1; r < 7; r++) {
+      const ry = y - 210 + r * 40 + off;
+      ctx.fillRect(x - 70, ry, 140, 3);
+      for (let k = 0; k < 3; k++) ctx.fillRect(x - 70 + k * 56 + (r % 2 ? 28 : 0), ry, 3, 40);
+    }
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#eef5e6';
+    ctx.fillRect(x - 120, y + 32, 240, 30);
+    label(`${CLIMBS[i].name} · Power ${m.powerPoints}`, x, y + 50);
+  });
+}
+// ?stamina: six sprinters with more and more Stamina, running on: watch who tires.
+const stamRunners = RUN_STYLES.map((need, i) => ({ genes: rollMochi(110 + i, { coat: null }), dir: 1, speed: GAITS[3].speed, dist: 0, runPoints: 1250, staminaPoints: need + 120 }));
+function stepStamina(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  stamRunners.forEach((m, i) => {
+    m.speed = m.resting ? 0 : GAITS[3].speed * (1 - 0.45 * (m.fatigue ?? 0));
+    m.dist += m.speed * dt;
+    const x = 133 + (i % 3) * 267;
+    const y = 230 + Math.floor(i / 3) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 125) / ZB, y / ZB, 250 / ZB, 4);
+    ctx.fillStyle = '#9fd08a';
+    for (let k = -2; k < 6; k++) ctx.fillRect((x - 125) / ZB + ((((-m.dist) % 12) + 12) % 12) + k * 12, y / ZB, 2, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(`${STAMINAS[i].name} · Stamina ${m.staminaPoints}`, x, y + 44);
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = '#9a4ad0';
+    ctx.fillText(m.resting ? 'catching its breath' : `tired ${Math.round((m.fatigue ?? 0) * 100)}%`, x, y + 62);
+  });
+}
+// ?idle=N: eight personalities standing about (page N of 4), the idle moment each is in named under
+// it; add &sig to see only their signatures.
+const page = Number(q.get('idle')) || 0;
+const loafers = PERSONALITIES.slice(page * 8, page * 8 + 8).map((personality, i) => ({ genes: rollMochi(120 + page * 8 + i, { coat: null, personality }), dir: i % 2 ? -1 : 1, speed: 0, dist: 0, idleBits: q.has('sig') ? [SIGNATURE[personality]] : undefined }));
+function stepIdle(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  loafers.forEach((m, i) => {
+    const x = 100 + (i % 4) * 200;
+    const y = 250 + Math.floor(i / 4) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 90) / ZB, y / ZB, 180 / ZB, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(m.genes.personality, x, y + 40);
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#9a4ad0';
+    ctx.fillText(m.idling ? `~ ${m.idling.replace('sig_', '')} ~` : '', x, y + 58);
+  });
+}
 function step(dt) {
+  if (q.has('idle')) return stepIdle(dt);
+  if (q.has('climb')) return stepClimb(dt);
+  if (q.has('stamina')) return stepStamina(dt);
   if (kind) return stepKind(dt);
   if (q.has('acts')) return stepActs(dt);
   t += dt;
