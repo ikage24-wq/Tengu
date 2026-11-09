@@ -92,6 +92,18 @@ export function updateCamera(cam, world, dt) {
     }
     cine.view = { x: cam.x + VIEW_W / 2, y: cam.y + VIEW_H * 0.55 };
   }
+  // A Mochi race (world/mochi-race.js): the camera runs alongside your Mochi.
+  const rc = world.race?.cam;
+  if (rc) {
+    const rx = Math.max(0, Math.min(map.width - VIEW_W, rc.x - VIEW_W * 0.4));
+    const ry = Math.max(0, Math.min(map.height - VIEW_H, rc.y - VIEW_H * 0.66));
+    if (fresh) Object.assign(cam, { x: rx, y: ry, ready: true, mapId: map.id });
+    else {
+      cam.x += (rx - cam.x) * (1 - Math.exp(-dt * 6));
+      cam.y += (ry - cam.y) * (1 - Math.exp(-dt * 4));
+    }
+    return;
+  }
   // The lookahead turns around once you've faced the other way for a moment.
   if (b.facing !== cam.face) {
     cam.turned = (cam.turned ?? 0) + dt;

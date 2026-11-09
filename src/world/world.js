@@ -45,6 +45,8 @@ import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
 import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear } from './garden-life.js';
+import './stadium.js';
+import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
 import { settleSweethearts, tickGoingHome } from './goinghome.js';
@@ -124,6 +126,8 @@ function findPortal(map, id) {
 }
 
 export function loadMap(world, mapId, portalId) {
+  // (A race course is only for a race: back at the stadium otherwise, say from a save.)
+  if (MAPS[mapId]?.mochiRace && MAPS[mapId].race && !world.race) [mapId, portalId] = ['mochi_stadium', 'board'];
   // Your island is built fresh from how far Shelly has got (world/home.js).
   if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char, world.visiting ?? null);
   // (Leaving a friend's island ends the visit: net/visit.js.)
@@ -500,6 +504,11 @@ function interact(world) {
     world.events.push({ type: 'craft' });
     return true;
   }
+  // The Race Stadium's board: race one of your Mochi (ui/mochi-race.js).
+  if (world.map.raceBoard != null && Math.abs(world.map.raceBoard - b.x) < 40) {
+    world.events.push({ type: 'race' });
+    return true;
+  }
   // A town's stove: cook.
   if (world.map.stove != null && Math.abs(world.map.stove - b.x) < 30 && Math.abs(groundAt(world.map, world.map.stove) - b.y) < 6) {
     world.events.push({ type: 'cook' });
@@ -703,6 +712,11 @@ export function updateWorld(world, dt, input) {
   world.now += dt;
   // The map's moving parts run on the world's clock; its light follows the real one.
   world.map.clock = world.now;
+  // A Mochi race holds everything else still while it runs (world/mochi-race.js).
+  if (world.race) {
+    tickRace(world, dt, input);
+    return;
+  }
   tickDaytime(world, dt);
   // Auctions end and listings sell while you play (world/auction.js), checked once a second.
   world.auctionT = (world.auctionT ?? 0) + dt;

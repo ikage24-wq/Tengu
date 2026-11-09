@@ -170,6 +170,40 @@ Each step is pushed on its own. Status as of 2026-11-09.
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
    swimming; cups from beginner up; rivals rolled like the fishing derby's; prizes on the money scale
    plus garden decorations and toys. Personality shows in how each one races (see 12).
+   **Decided 2026-11-10 (user):** you *watch and cheer*: your Mochi races on its own stats against 5
+   rivals; cheering (a key) gives a burst of speed that costs it stamina. *One stage per stat, then
+   a final:* a sprint meadow (Run), a lake swim (Swim), a cliff climb (Power), a glide over clouds
+   (Fly), a long hill run (Stamina), and a Grand course mixing them all. *A Race Stadium* behind the
+   Garden's stadium gate, with a race board; each race on its own course. Proposed: three ranks per
+   stage (Beginner, Challenge, Master); rivals rolled from the stage, rank and hour (everyone sees the
+   same field that hour); prizes gold on the money scale plus a medal per stage and rank (no
+   decorations: there's no decorating system). Batches: 1 the engine, the Stadium, the first stage,
+   cheering and results; 2 the other stages and the Grand course; 3 ranks, rivals, prizes, medals,
+   unlocks; 4 later, racing friends' Mochi.
+   **Batch 1 built (2026-11-10):** the Race Stadium (world/stadium.js: the Garden's stadium gate opens
+   onto it; the stands with a crowd of Mochi, the race board) and Sakura Sprint, the Run stage (a
+   blossom meadow over little hills, start and finish arches, quarter markers, the stands at the
+   line where your hero watches). The race (world/mochi-race.js): your Mochi and five rivals rolled
+   from the stage, rank and hour; speed from Run points (between styles it climbs with the points; a
+   baby who can't walk scoots), tiring from Stamina exactly as the drawing shows it (handed over as
+   `m.tired` / `m.rest`), pace through the race by personality (data/mochi-race.js paceOf); Cheer
+   (Up or the button) is a 1.2 s burst at x1.4 every 2.5 s that costs stamina and gets a resting one
+   up sooner; the race ends 15 s after the first one home (the rest placed by how far they got);
+   Beginner prizes 500 / 250 / 100 gold, 20 for finishing; racing cheers your Mochi up and brings it
+   a little closer. Up leaves the results after 3 s (so cheering as it ends doesn't skip them). The
+   racers' running drawings are painted ahead by the sprite worker during the countdown, and a Mochi
+   keeps its last frame for an instant while a new face is painted (drawPosed `slot`). Tests:
+   tests/mochi-race.test.js; the dev page tools/garden-life.html (?race=sprint&who=1&cheer=1).
+   **Batch 2 built (2026-11-10):** a course is a row of legs (run, swim, climb, glide; world/stadium.js
+   `course`). Lily Lake Swim (Swim: a short dash, a long swim across a lily lake), Mortar Cliff Climb
+   (Power: three climbing walls with short ledge runs), Cloud Glide (Fly: a run-up on a high cliff, a
+   launch, a glide down over cloud fluff that everyone wades at the same slow pace, so a longer glide
+   wins), Long Hill Run (Stamina: big hills slow and tire it going up; on this course the worn-out
+   stop to rest, `tire` 1.5, `restAt` 0.6, `rest` 2.2 s), and the Grand Mochi Course (all of them).
+   Tuned with a simulation so each stage is won by the Mochi strong in its stat (a 1,600-point
+   specialist beats a 1,600-point runner on its stage); an ordinary Beginner race takes 35-85 s.
+   The board has a tab per stage. New pieces: mr_wall, mr_launch, mr_clouds. Racers paint ahead for
+   every way the course moves them.
 6. **Getting eggs.** *(New.)* Proposed: plain eggs from the Garden's egg stall for gold (a few
    thousand: "decent" on the money scale); an egg as the reward for some quests; a rare egg drop from
    monsters; and bred eggs (step 9). No Cash.

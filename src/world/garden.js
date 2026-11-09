@@ -12,7 +12,7 @@
 //   Lily Pond         the lowest point: the swimming pond, lily pads, a little fishing dock, the
 //                     waterfall (and a nook behind it, the garden's secret)
 //   Moonmortar Cliff  up the climbing rocks and the ropes: the glide launch over the pond, the
-//                     Moonmortar (the landmark), the stadium gate (for racing, later)
+//                     Moonmortar (the landmark), the stadium gate (to the Race Stadium)
 
 import { MAPS } from '../data/maps.js';
 import { SPOTS } from '../data/fishing.js';
@@ -77,6 +77,8 @@ export function gardenMap(g = {}) {
       { id: 'gate', x: 70, y: PLATEAU, to: 'sprout', toPortal: 'garden', label: 'Sprout Village' },
       { id: 'start', x: 200, y: PLATEAU, hidden: true },
       { id: 'nursery', x: 760, y: PLATEAU, to: 'garden_in', toPortal: 'door', label: 'Nursery', door: true },
+      // The stadium gate at the top: the Mochi Race Stadium (world/stadium.js).
+      { id: 'stadium', x: 3500, y: TOP, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
       { x: 196, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 872, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1478, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 2150, y: ORCHARD - 44, c: '#ffd6a0' },

@@ -1,0 +1,144 @@
+// Mochi racing (world/mochi-race.js): through the Garden's stadium gate to the Race Stadium, Up at
+// the board, a race run with real key presses (Up cheers), the results and the prize, and back.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createCharacter } from '../src/core/character.js';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { MAPS } from '../src/data/maps.js';
+import { rollMochi, STATS } from '../src/data/mochi-genes.js';
+import { newRecord } from '../src/data/mochi-raise.js';
+import { startRace, rivalsFor, raceHour } from '../src/world/mochi-race.js';
+
+const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
+const mochi = (seed, points, personality = 'stoic') => {
+  const rec = newRecord(rollMochi(seed, { coat: null }));
+  rec.personality = personality;
+  for (const st of STATS) Object.assign(rec.stats[st], { points, level: Math.max(1, Math.round(points / 16)) });
+  return rec;
+};
+function racer(...recs) {
+  const char = createCharacter('Mina', { hairStyle: 'bob' });
+  char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
+  const w = createWorld(char);
+  w.log = () => {};
+  loadMap(w, 'mochi_stadium', 'board');
+  return w;
+}
+// Runs the race to its end (cheering on every frame if asked); returns the race.
+function run(w, cheering = false) {
+  const R = w.race;
+  for (let k = 0; k < 60 * 200 && R.phase !== 'done'; k++) updateWorld(w, 1 / 60, keys(cheering ? ['ArrowUp'] : []));
+  return R;
+}
+
+test('the stadium gate at the top of the garden leads to the Race Stadium; Up at its board opens it', () => {
+  assert.ok(MAPS.garden.portals.some((p) => p.to === 'mochi_stadium'));
+  const w = racer(mochi(1, 300));
+  assert.equal(w.map.id, 'mochi_stadium');
+  Object.assign(w.body, { x: w.map.raceBoard });
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.ok(w.events.some((e) => e.type === 'race'));
+});
+
+test('a race: the countdown, everyone home or out of time, six places, a prize for a top finish', () => {
+  const rec = mochi(2, 2400);
+  const w = racer(rec);
+  const gold = w.char.gold;
+  assert.ok(startRace(w, rec, 'sprint'));
+  assert.equal(w.map.id, 'mrace_sprint');
+  assert.equal(w.race.phase, 'ready');
+  for (let k = 0; k < 60 * 3.1; k++) updateWorld(w, 1 / 60, keys());
+  assert.equal(w.race.phase, 'run');
+  const R = run(w);
+  assert.equal(R.phase, 'done');
+  assert.deepEqual(R.results.map((r) => r.place), [1, 2, 3, 4, 5, 6]);
+  assert.equal(R.racers[0].place, 1, 'a strong Mochi wins a Beginner race');
+  assert.equal(w.char.gold, gold + 500);
+  assert.ok(rec.mood > 60, 'a win cheers it up');
+  // Up takes you back to the stadium.
+  // (Not straight away, though: the results stay up a moment.)
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.ok(w.race);
+  for (let k = 0; k < 60 * 3.1; k++) updateWorld(w, 1 / 60, keys());
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.equal(w.race, null);
+  assert.equal(w.map.id, 'mochi_stadium');
+});
+
+test('a newborn who can only scoot comes last', () => {
+  const rec = mochi(3, 0, 'sleepy');
+  const w = racer(rec);
+  startRace(w, rec, 'sprint');
+  const R = run(w);
+  assert.equal(R.racers[0].place, 6);
+});
+
+test('cheering speeds it up (every couple of seconds, not every frame), and costs it stamina', () => {
+  const times = [];
+  for (const cheering of [false, true]) {
+    const rec = mochi(4, 900);
+    rec.stats.stamina.points = 2400;
+    const w = racer(rec);
+    startRace(w, rec, 'sprint');
+    const R = run(w, cheering);
+    times.push(R.racers[0].done);
+    if (cheering) assert.ok(R.racers[0].cheers > 3 && R.racers[0].cheers < R.racers[0].done / 2, `${R.racers[0].cheers} cheers`);
+  }
+  assert.ok(times[1] < times[0] - 1, `cheered ${times[1].toFixed(1)}s vs ${times[0].toFixed(1)}s`);
+  // A Mochi with little stamina tires sooner when cheered all the way.
+  const rec = mochi(5, 900);
+  rec.stats.stamina.points = 0;
+  const w = racer(rec);
+  startRace(w, rec, 'sprint');
+  for (let k = 0; k < 60 * 6; k++) updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.ok(w.race.racers[0].m.tired > 0.5 || w.race.racers[0].m.rest);
+});
+
+test('the rivals are the same for everyone in the same hour, and new the next', () => {
+  const h = raceHour();
+  const a = rivalsFor('sprint', 'beginner', h).map((r) => r.name + r.rec.seed);
+  const b = rivalsFor('sprint', 'beginner', h).map((r) => r.name + r.rec.seed);
+  const c = rivalsFor('sprint', 'beginner', h + 1).map((r) => r.name + r.rec.seed);
+  assert.deepEqual(a, b);
+  assert.notDeepEqual(a, c);
+});
+
+test('a course without a race (say, from a save) puts you at the stadium', () => {
+  const w = racer(mochi(6, 300));
+  loadMap(w, 'mrace_sprint', 'start');
+  assert.equal(w.map.id, 'mochi_stadium');
+});
+
+test('every stage runs to the end; each one is won by the Mochi strong in what it tests', () => {
+  const STAT = { swim: 'swim', climb: 'power', glide: 'fly', hills: 'stamina' };
+  const time = (rec, stage) => {
+    const w = racer(rec);
+    assert.ok(startRace(w, rec, stage), stage);
+    const R = run(w);
+    assert.deepEqual(R.results.map((r) => r.place), [1, 2, 3, 4, 5, 6], stage);
+    return R.racers[0].done;
+  };
+  for (const [stage, stat] of Object.entries(STAT)) {
+    const spec = mochi(20, 300);
+    spec.stats[stat].points = 1600;
+    const runner = mochi(20, 300);
+    runner.stats.run.points = 1600;
+    const [a, b] = [time(spec, stage), time(runner, stage)];
+    assert.ok(a < b, `${stage}: the ${stat} Mochi ${a.toFixed(0)}s, the runner ${b.toFixed(0)}s`);
+  }
+  assert.ok(time(mochi(21, 900), 'grand') > 0);
+});
+
+test('swimming, climbing and gliding: the racer moves the way the leg does', () => {
+  const rec = mochi(22, 900);
+  const w = racer(rec);
+  startRace(w, rec, 'grand');
+  const seen = new Set();
+  for (let k = 0; k < 60 * 120 && w.race.phase !== 'done'; k++) {
+    updateWorld(w, 1 / 60, keys());
+    seen.add(w.race.racers[0].m.mode);
+    if (w.race.racers[0].m.mode === 'swim') assert.ok(w.race.racers[0].m.inWater);
+  }
+  assert.deepEqual([...seen].sort(), ['climb', 'fly', 'run', 'swim']);
+});

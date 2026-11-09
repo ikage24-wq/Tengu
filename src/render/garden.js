@@ -24,7 +24,7 @@
 //   mg_glide       the windsock on the cliff top by the glide launch, and its sign
 //   mg_moonmortar  the Moonmortar: a great stone mortar with its wooden mallet, a sacred rope and
 //                  paper streamers round it, a crescent carved in its side, softly lit at night
-//   mg_stadium     the stadium gate at the top of the cliff (closed until racing opens), banners
+//   mg_stadium     the stadium gate at the top of the cliff, its doors open onto the Race Stadium
 //   mg_nurseryroom the nursery inside: plaster walls under a timber dome, the hearth, the eggs'
 //                  mortars, basket beds, a round window, a rug, a toy shelf
 
@@ -529,9 +529,14 @@ const stadiumArt = () => art('mg-stadium', 184, 160, () => {
     R(14, 40, 22, 120, '#e8d8c0'), R(148, 40, 22, 120, '#e8d8c0'), F(R(14, 40, 4, 120, '#fff4e4')), F(R(148, 40, 4, 120, '#fff4e4')),
     T([[4, 40], [92, 10], [180, 40], [172, 46], [92, 20], [12, 46]], '#d0705a'), F(T([[92, 10], [180, 40], [172, 46], [92, 20]], ramp('#d0705a').sh)),
     R(30, 46, 124, 10, WOOD), F(R(30, 46, 124, 2, ramp(WOOD).hi)),
-    // The closed lattice doors, and the plaque with a racing mochi on it.
-    R(36, 60, 112, 100, '#a87850'), ...[48, 62, 76, 90, 104, 118, 132].map((x) => F(R(x, 60, 2, 100, '#7a5438'))), ...[80, 104, 128].map((y) => F(R(36, y, 112, 2, '#7a5438'))),
-    F(R(91, 60, 2, 100, '#5a3a28')),
+    // The doorway, open: a glimpse of the sunny stadium (its stands and bunting), the lattice doors
+    // folded back against the posts; and the plaque with a racing mochi on it.
+    R(36, 60, 112, 100, '#cfe6ff'), F(R(36, 118, 112, 42, '#bfe0ac')), F(R(36, 116, 112, 3, '#9fd07a')),
+    F(R(46, 92, 92, 24, '#d8a46a')), ...[0, 1, 2, 3, 4, 5].map((i) => F(R(46 + i * 16, 86, 8, 6, i % 2 ? '#ffffff' : SAKURA))),
+    ...[56, 72, 88, 104, 120].map((x, i) => F(E(x, 98 + (i % 2) * 6, 4, 3.4, ['#fbf6f0', '#ffe8e0', '#fff0f4'][i % 3]))),
+    ...[[64, 72], [84, 76], [104, 72], [124, 76]].map(([x, y], i) => F(T([[x - 4, y], [x + 4, y], [x, y + 7]], i % 2 ? '#8fd3ff' : '#ffd75e'))),
+    T([[36, 60], [46, 66], [46, 154], [36, 160]], '#a87850'), T([[148, 60], [138, 66], [138, 154], [148, 160]], '#a87850'),
+    ...[80, 104, 128].map((y) => F(R(37, y, 9, 2, '#7a5438'))), ...[80, 104, 128].map((y) => F(R(138, y, 9, 2, '#7a5438'))),
     R(66, 22, 52, 18, '#fff6ea'), F(E(84, 31, 5, 4, '#ffffff')), F(R(78, 30, 4, 1, '#9fd0f0')), F(R(76, 33, 5, 1, '#9fd0f0')), F(R(96, 28, 14, 2, SAKURA)), F(R(96, 32, 10, 2, SAKURA)),
   ];
   return out;
@@ -608,7 +613,8 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
 
 // ---------- Drawing ----------
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
-  if (!map.garden || !kind.startsWith('mg_')) return false;
+  // (The race stadium and courses borrow the trees and lanterns: world/stadium.js.)
+  if (!(map.garden || map.mochiRace) || !kind.startsWith('mg_')) return false;
   const x = wx - cam.x;
   if (x < -280 && kind !== 'mg_falls') return true;
   if (x > width + 280 && kind !== 'mg_falls') return true;

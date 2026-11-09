@@ -6,6 +6,7 @@
 import { drawSweetHouse } from './sweethouses.js';
 import { drawIslandPiece } from './island.js';
 import { drawGardenPiece } from './garden.js';
+import { drawRacePiece } from './race.js';
 import { drawMount } from './mounts.js';
 import { MOUNTS } from '../data/mounts.js';
 import { tagFade } from './coop.js';
@@ -585,6 +586,8 @@ export function drawStreet(ctx, map, cam, width, time, hero = {}) {
     if (drawIslandPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // Your Mochi Garden's own pieces (render/garden.js).
     if (drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
+    // The Mochi Race Stadium's and courses' (render/race.js).
+    if (drawRacePiece(ctx, map, kind, wx, extra, cam, width, time)) continue;
     // A Sweetheart's house, and their room inside (render/sweethouses.js).
     if (drawSweetHouse(ctx, map, kind, wx, extra, cam, width, time)) continue;
     const x = wx - cam.x;

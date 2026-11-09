@@ -1502,9 +1502,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     st.restUntil = null;
     st.runFor *= 0.35;
   }
-  let fatigue = kind === 'run' ? Math.min(stam.most, st.runFor * stam.tire) : 0;
-  if (kind === 'run' && moving && fatigue >= 0.98 && !st.restUntil) st.restUntil = time + 2.6;
-  const resting = Boolean(st.restUntil);
+  // (A race works out its runners' tiredness itself, world/mochi-race.js, and hands it over as
+  // `m.tired` and `m.rest`, so the drawing shows exactly what's slowing it down.)
+  let fatigue = m.tired ?? (kind === 'run' ? Math.min(stam.most, st.runFor * stam.tire) : 0);
+  if (m.tired == null && kind === 'run' && moving && fatigue >= 0.98 && !st.restUntil) st.restUntil = time + 2.6;
+  const resting = m.rest ?? Boolean(st.restUntil);
   if (resting) fatigue = 1;
   m.fatigue = fatigue;
   m.resting = resting;
@@ -1673,6 +1675,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (alt) rig.lift = 0;
   // (Lying down for a nap, it's laid on the ground the same way.)
   const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed ? sinkNow * s : 0);
+  // (Painting ahead, `m.ahead`: only its body's drawing is asked for, for the sprite worker.)
+  if (m.ahead) {
+    drawPosed(ctx, look, 0, 0, rig, { ...opts, ahead: true });
+    return;
+  }
   // (A grown Mochi wears its feature; a Mochiko the dough buds of whatever it's growing into.)
   const feat = featureOf(g) ?? budOf(g);
   if (feat && rig.view !== 'back') {
@@ -1689,7 +1696,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (kind === 'run' && moving && tier === 5) {
     for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   }
-  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts);
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, slot: m });
   if (posed && live.flame > 0.05) drawFlame(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time, live.flame);
   if (posed && target.bubble) drawSnooze(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time);
   if (kind === 'swim') drawWater(ctx, x, y, s, cant === 'flail' ? 'flail' : tier, pc, time, dir, m.inWater);

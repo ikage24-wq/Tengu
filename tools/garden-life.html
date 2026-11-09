@@ -11,6 +11,8 @@
 // sweets in your bag; ?skip=30 runs 30 s on first; ?follow=1&who=0 keeps the camera on Mochi 0.
 // ?guest=1: you're visiting Ann's garden (these Mochi are hers); ?reborn=1: Mochi 1 has lived a
 // long, happy life (it goes back to its egg); ?icons=1 draws the garden's item icons up top.
+// Racing: ?map=mochi_stadium&x=330&board=1 the Race Stadium with its board open; ?race=sprint&who=1
+// races Mochi 1 there (?cheer=1: Up every 2 s; ?raceskip=25 starts 25 s in).
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -20,6 +22,7 @@ import { VW, VH } from '../src/input.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
 import { drawItemIcon } from '../src/render/icons.js';
+import { startRace } from '../src/world/mochi-race.js';
 import { createInput } from '../src/input.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
 import { createUiState, drawUi } from '../src/ui/manager.js';
@@ -76,6 +79,7 @@ function step(dt, draw = true) {
   w.scene = null;
   // (?rock=1: you press Up by the first egg a moment in, to hatch it.)
   if (q.has('rock') && ++steps === 30) idle.pressed.add('ArrowUp');
+  if (q.has('cheer') && ++steps % 40 === 0) idle.pressed.add('ArrowUp');
   updateWorld(w, dt, idle);
   idle.pressed.delete('ArrowUp');
   t += dt;
@@ -120,6 +124,10 @@ if (q.has('kitchen')) {
   Object.assign(w.body, { x: w.map.stove, facing: 1 });
   Object.assign(state.windows.cook, { open: true, openedAt: -99 });
 }
+if (q.has('board')) Object.assign(state.windows.race, { open: true, openedAt: -99 });
+if (q.has('race')) startRace(w, c.garden.mochi[Number(q.get('who') ?? 0)], q.get('race'));
+// (?raceskip=25: that far into the race first.)
+for (let k = 0; k < Number(q.get('raceskip') ?? 0) * 30; k++) step(1 / 30, false);
 for (let k = 0; k < 60; k++) step(1 / 60, false);
 window.ready = true;
 if (!q.has('manual')) {

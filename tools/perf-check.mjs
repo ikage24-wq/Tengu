@@ -17,6 +17,10 @@ const { createUiState, drawUi } = await import('../src/ui/manager.js');
 const { MAPS } = await import('../src/data/maps.js');
 const { DUNGEONS } = await import('../src/data/dungeons.js');
 const { startRun } = await import('../src/world/dungeon.js');
+const { startRace } = await import('../src/world/mochi-race.js');
+const { RACE_STAGES } = await import('../src/data/mochi-race.js');
+const { rollMochi } = await import('../src/data/mochi-genes.js');
+const { newRecord } = await import('../src/data/mochi-raise.js');
 const { paintAheadWith } = await import('../src/render/pixel.js');
 const { heroBodySpec } = await import('../src/render/hero.js');
 // (In a browser the sprite worker paints walks ahead; here they're painted in place and counted
@@ -31,7 +35,8 @@ const { JOBS } = await import('../src/data/jobs.js');
 // cover; reads allow the glow pass's one a frame; tints allow the hazed backdrop's and new
 // afterimages', far below a tint every frame for everything.)
 export const LIMITS = { characters: 200, other: 20, canvases: 30, reads: 70, tints: 120 };
-const CHARACTER = new Set(['you', 'hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter']);
+// (`posed`: a figure on the hero's rig in a pose of its own: a Mochi, a summon.)
+const CHARACTER = new Set(['you', 'hero', 'grip', 'arm', 'weapon', 'mob', 'mount', 'rig', 'critter', 'posed']);
 const AHEAD = 'ahead';
 const canvas = fakeCanvas();
 const ctx = canvas.getContext('2d');
@@ -99,6 +104,14 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
         const why = startRun(w, map.dungeon);
         if (why) throw new Error(`couldn't start the run: ${why}`);
         if (w.map.id !== id) loadMap(w, id, 'start');
+      } else if (map.race) {
+        // A Mochi race course is only entered through a race (world/mochi-race.js): one, with a
+        // middling Mochi, so the six racers are running through the frames measured.
+        const rec = newRecord(rollMochi(7));
+        for (const st of Object.values(rec.stats)) st.points = 900;
+        w.char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+        loadMap(w, 'mochi_stadium', 'board');
+        if (!startRace(w, rec, Object.keys(RACE_STAGES).find((k) => RACE_STAGES[k].map === id))) throw new Error("couldn't start the race");
       } else {
         loadMap(w, id, 'west');
         w.bots = createBots(w, seeded(7), { daily: true, alts: [] });

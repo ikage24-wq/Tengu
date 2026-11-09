@@ -2707,11 +2707,22 @@ function weaponIdle(type, t, job) {
 // which can reach out well past the body (a weapon held out at arm's length).
 // A pose with `armOver` draws the near arm on top of everything (a hand up at the face or waving
 // beside the head, which the big head would otherwise hide).
-export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back', alpha = 1 } = {}) {
+// `ahead`: nothing is drawn; the drawing is only asked for, for the sprite worker to paint in the
+// background (a Mochi race's racers, during the countdown: render/race.js). `slot` (whoever this
+// is: a Mochi): a new drawing of them is painted by the sprite worker while their last one stands
+// in for a frame or two, as for the crowd, so a field of Mochi pulling faces never stalls a frame.
+export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back', alpha = 1, ahead = false, slot = null } = {}) {
   // (Its pose on half pixels: fine enough to read smooth, few enough poses to come round again.)
   const rig = { ...baseRig(), ...halfRig(pose), armIn: !pose.armOver };
   const g = resolveGear(look, null);
-  const body = sprite(`posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`, () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE }));
+  const key = `posed|${JSON.stringify(look)}|${rigKey(rig)}|${LIGHT}`;
+  if (ahead) {
+    spriteSoon(key, { kind: 'hero', look, g, rig, light: LIGHT });
+    return;
+  }
+  const build = () => ({ w: W, h: H + BODY_BELOW, shapes: bodyShapes(look, g, rig), res: RES, soft: 'cel', crisp: true, selout: true, light: LIGHT, edge: BACK_EDGE });
+  const body = slot ? spriteBudgeted(key, build, slot, () => ({ kind: 'hero', look, g, rig, light: LIGHT })) : sprite(key, build);
+  if (!body) return;
   const flip = facing < 0;
   const left = x - (W / 2) * scale;
   const top = y - H * scale - (rig.lift ?? 0) * scale;

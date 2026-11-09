@@ -544,6 +544,7 @@ export function nextFrame() {
   if (warmQ.length && !workerOf() && globalThis.__paintAheadHere) {
     while (warmQ.length) {
       const [key, job] = warmQ.pop();
+      queued.delete(key);
       if (cache.has(key) || job.kind !== 'hero') continue;
       const t0 = performance.now();
       const { w: sw, h, res, crisp, pad, raster } = rasterOf(heroSpecOf(job), gfx.scale * gfx.zoom);
@@ -554,6 +555,7 @@ export function nextFrame() {
   const w = warmQ.length ? workerOf() : null;
   while (w && warmQ.length && pending.size < 24) {
     const [key, job] = warmQ.pop();
+    queued.delete(key);
     if (cache.has(key) || pending.has(key) || failed.has(key)) continue;
     try {
       w.postMessage({ key, job, scale: gfx.scale });
@@ -567,7 +569,10 @@ export function nextFrame() {
 // A sprite that will be wanted soon (the rest of a passer-by's walk cycle): painted by the worker
 // in the background, so it's ready by the time it's needed. The newest ask is painted first (the
 // last one pushed), and the oldest drop off when too many wait.
+// (A Mochi race asks for its six racers' whole running cycles at once: room for them all.)
 const warmQ = [];
+const queued = new Set();
+const WARM_MAX = 1200;
 // (The speed tests hand in how a hero's job becomes shapes, as the worker does: hero.js can't be
 // imported here.)
 let heroSpecOf = null;
@@ -576,8 +581,10 @@ export function paintAheadWith(fn) {
 }
 export function spriteSoon(key, job) {
   if (gfx.zoom !== 1 || cache.has(key) || pending.has(key)) return;
+  if (queued.has(key)) return;
   warmQ.push([key, job]);
-  if (warmQ.length > 480) warmQ.shift();
+  queued.add(key);
+  if (warmQ.length > WARM_MAX) queued.delete(warmQ.shift()[0]);
 }
 // `job` (a plain description, as spriteSoon takes): someone seen for the first time once the
 // frame's budget is spent is handed to the sprite worker and left out for a frame or two (null),

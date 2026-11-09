@@ -28,6 +28,7 @@ import { onlineWindow } from './online.js';
 import { collectionWindow } from './collection.js';
 import { cookingWindow } from './cooking.js';
 import { mochiCareWindow } from './mochi-care.js';
+import { raceBoardWindow, raceHud } from './mochi-race.js';
 import { lifeWindow } from './life.js';
 import { craftingWindow } from './crafting.js';
 import { gachaWindow } from './gacha.js';
@@ -74,6 +75,7 @@ export function createUiState() {
       collection: { x: 150, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
       cook: { x: 160, y: 50, open: false, theme: 'peach', icon: 'flame' },
       mochi: { x: 396, y: 34, open: false, theme: 'pink', icon: 'heart' },
+      race: { x: 170, y: 50, open: false, theme: 'pink', icon: 'star' },
       life: { x: 150, y: 48, open: false, theme: 'mint', icon: 'leaf' },
       craft: { x: 140, y: 44, open: false, theme: 'mint', icon: 'hammer' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
@@ -81,7 +83,7 @@ export function createUiState() {
       auction: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -134,6 +136,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.cook.open = true;
     } else if (e.type === 'mochi') {
       state.windows.mochi.open = true;
+    } else if (e.type === 'race') {
+      state.windows.race.open = true;
     } else if (e.type === 'craft') {
       state.windows.craft.open = true;
     } else if (e.type === 'gacha') {
@@ -218,7 +222,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.
@@ -299,6 +303,11 @@ export function drawUi(ui, state, world) {
   // A cutscene clears the screen: no HUD, panels or windows, only the letterbox and the scene.
   if (world.scene) {
     drawScene(ui, world, state.cam);
+    return;
+  }
+  // So does a Mochi race: only its own screen (ui/mochi-race.js).
+  if (world.race) {
+    raceHud(ui, state, world);
     return;
   }
   // Interface hidden (the ` key): only a moment's note of how to bring it back.

@@ -3,6 +3,7 @@
 import { drawMochi } from './mochi.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawGardenLife } from './garden.js';
+import { drawRace } from './race.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   // Your Mochi, behind you.
@@ -10,6 +11,8 @@ export function drawPets(ctx, world, cam, time, layer) {
   // Your garden's Mochi and eggs (world/garden-life.js).
   // (An egg you're hatching sits in front of you, so you see it pop.)
   if (world.gardenLife) drawGardenLife(ctx, world, cam, world.now, layer);
+  // The racers in a Mochi race (world/mochi-race.js).
+  if (world.race && layer === 'back') drawRace(ctx, world, cam, world.now);
   // The Arbalist Engineer's turret: idle, its head swivelling (frames 0-3), or firing (4-5) for a
   // moment after each bolt, turned to face what it shoots at.
   const tr = world.turret;
