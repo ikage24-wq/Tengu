@@ -3,6 +3,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { MAPS } from '../src/data/maps.js';
+// (The maps built in code: your Mochi Garden, and the Race Stadium and its courses.)
+import '../src/world/garden.js';
+import '../src/world/stadium.js';
 import { MOBS } from '../src/data/mobs.js';
 import { ITEMS, JOB_SLOTS } from '../src/data/items.js';
 import { NPCS } from '../src/data/npcs.js';
@@ -37,6 +40,8 @@ test('spawns, NPCs, and towns reference real things', () => {
 
 test('every surface can be reached from the way in, and left again', () => {
   for (const map of Object.values(MAPS)) {
+    // (A Mochi race course is run by the racers, up its climbing walls; you only watch from the end.)
+    if (map.race) continue;
     const surfaces = surfacesOf(map);
     const nav = navOf(map);
     const start = map.portals.find((p) => !p.hidden) ?? map.portals[0];

@@ -3,6 +3,7 @@
 // everyone on her map. Shared dungeon runs are in net/dungeonrun.js.
 
 import { onVisit } from './visit.js';
+import { onMochiRace } from './mochi-race.js';
 import { online, send, othersHere } from './online.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
@@ -592,6 +593,8 @@ export function handleTogether(world, msg, g) {
       return onGift(world, msg, g);
     case 'visit':
       return onVisit(world, msg, g);
+    case 'mrace':
+      return onMochiRace(world, msg, g);
     case 'party':
       return onParty(world, msg, g);
     case 'pq':

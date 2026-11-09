@@ -67,8 +67,11 @@ export function rollLoot(def, rng = Math.random, fits = null) {
     const rarity = def.boss ? Math.max(1, rollRarity(rng)) : rollRarity(rng);
     if (id) loot.push({ kind: 'item', inst: makeEquip(id, { rng, rarity, variant: 'roll' }) });
   }
+  // Very rarely, a Mochi egg (a boss now and then): docs/design/mochi.md step 6.
+  if (rng() < (def.boss ? EGG_DROP.boss : EGG_DROP.mob)) loot.push({ kind: 'item', id: 'mochi_egg', qty: 1 });
   return loot;
 }
+export const EGG_DROP = { mob: 1 / 1500, boss: 1 / 25 };
 
 let nextUid = 1;
 

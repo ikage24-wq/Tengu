@@ -451,7 +451,7 @@ export const QUESTS = {
     id: 'lumen_home', name: 'Send It Home', giver: 'lumen', minLevel: 33, prereq: 'lumen_chips',
     text: "The Star Sling is done. Possibly. It hums, which is either very good or very bad. Carry it up to the top of Howling Rock, where it fell, point it at the gap in the sky, and let go. Then come back and tell me everything. Everything. I'll be up here pretending I'm not worried.",
     objectives: [{ type: 'visit', map: 'ridge', above: 520, place: 'the top of Howling Rock, with the Star Sling' }],
-    rewards: { exp: 62000, gold: 900, items: [{ id: 'warrior_shoes_30', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 62000, gold: 900, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_shoes_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
   // Yuzu's story (Moonleaf Grove, by the Moon Tree): she borrows Professor Lumen's star maps because
@@ -485,7 +485,7 @@ export const QUESTS = {
       { type: 'talk', npc: 'elowen', say: "She took my teacups and gave them back washed. Twice. Tell her the kettle's always on. Don't tell her I said so. She'll get smug." },
       { type: 'talk', npc: 'celeste', say: "Mm... Yuzu? She tucks a blanket on me when I fall asleep under the stars. I pretend I'm still asleep. ...I'm always awake. Tell her thank you." },
     ],
-    rewards: { exp: 80000, gold: 1000, items: [{ id: 'warrior_cape_35', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 80000, gold: 1000, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_cape_35', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
   // Rowan's story (Ember Crag, by the arena): every Crag knight stands one night's watch on the
@@ -519,7 +519,7 @@ export const QUESTS = {
     id: 'rowan_watch', name: "The Knight's Watch", giver: 'rowan', minLevel: 41, prereq: 'rowan_courage',
     text: "Plume on. Rope on. Daisies in the helmet, for luck. I'm ready. I'm not ready. Will you stand the watch with me? Climb all the way to the Starlit Terrace, the very top of the Sky Garden, and I'll be right behind you. Right behind. Holding your cape. Is that all right?",
     objectives: [{ type: 'visit', map: 'sky', above: 360, place: 'the Starlit Terrace at the top of the Sky Garden, with Rowan' }],
-    rewards: { exp: 115000, gold: 1100, items: [{ id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 115000, gold: 1100, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_hat_40', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
   // Celeste's story (Moonleaf Grove, by her house): she keeps dreaming things that then happen. A
@@ -550,7 +550,7 @@ export const QUESTS = {
     id: 'celeste_dreamer', name: 'Whoever Is Dreaming', giver: 'celeste', minLevel: 44, prereq: 'celeste_silk',
     text: "The net's done. It has to hang somewhere high, where the dreams drift past: the very top of Starfall Heights. Hang it, then come back and sit with me while I sleep. Not in a strange way. In a stargazer way. I'll tell you who's dreaming us. I think I already know.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, to hang the dream net' }],
-    rewards: { exp: 145000, gold: 1200, items: [{ id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 145000, gold: 1200, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_gloves_45', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
   // Skipper Nimbus's story (Cloudcatch Pier): the Sky Whale is awake and flying again, and her old
@@ -580,7 +580,7 @@ export const QUESTS = {
     id: 'nimbus_voyage', name: 'The Last Voyage', giver: 'nimbus', minLevel: 49, prereq: 'nimbus_lantern',
     text: "The lantern's ready. Take it up to the very top of Starfall Heights, where she passes closest, and hold it up so she sees it. Then come back and tell me she took it. I'll be here. Packing. Probably. Hat on the hook, and all that.",
     objectives: [{ type: 'visit', map: 'starfall', above: 400, place: 'the top of Starfall Heights, holding up the star lantern' }],
-    rewards: { exp: 200000, gold: 1500, items: [{ id: 'warrior_bottom_45', qty: 1, forJob: true, variant: 'roll' }] },
+    rewards: { exp: 200000, gold: 1500, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'warrior_bottom_45', qty: 1, forJob: true, variant: 'roll' }] },
   },
 
   // Moonleaf Grove.
@@ -733,7 +733,7 @@ export const QUESTS = {
     id: 'marlo_spa', name: 'Spa Day', giver: 'marlo', minLevel: 31, prereq: 'marlo_key',
     text: "Serpent Springs, off the Crystal Cave. Hot pools, steam, Grandma's tiles. The Lamia still lounge in it like they own the place. They don't pay rent. I've asked. Clear them out and bring me 9 of their scales for new tiles. Then we open.",
     objectives: [{ type: 'collect', item: 'lamia_scale', count: 9 }, { type: 'kill', mob: 'lamia', count: 10 }],
-    rewards: { exp: 57000, gold: 1200, cash: 500, items: [{ id: 'cash_casual_towel', qty: 1 }] },
+    rewards: { exp: 57000, gold: 1200, cash: 500, items: [{ id: 'mochi_egg', qty: 1 }, { id: 'cash_casual_towel', qty: 1 }] },
   },
   lulu_winter: {
     id: 'lulu_winter', name: 'Winter Collection', giver: 'lulu', minLevel: 35, prereq: 'lulu_runway',

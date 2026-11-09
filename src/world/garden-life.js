@@ -15,6 +15,10 @@
 // at the end of a long, happy life goes back to its egg and hatches again, a generation on. You can
 // say goodbye to one (it waves, and is off to a new home); the garden has room for GARDEN_MAX. The
 // crop bed in the orchard grows the kitchen's crops: ripe every CROP_GROW seconds.
+// Eggs (docs/design/mochi.md step 6): the egg stall by the gate has three of its own a day for
+// EGG_PRICE gold (read them: the rare ones glint); eggs from monsters, quests and the Race Stadium
+// come in your bag and are set down by the gate when you arrive (a Star Egg's is the rarest of a few
+// rolls). Up to EGG_SLOTS.length wait by the gate.
 // A friend visiting (net/visit.js: world.gardenVisit is whose garden it is) sees the same Mochi in
 // the same places; they can pet, play with and cheer on your Mochi and feed them sweets of their
 // own, and their game sends it to yours (applyGardenGift), where it happens to your real Mochi.
@@ -22,15 +26,18 @@
 //   world.gardenLife = { owner, mochi: [{ rec, m, x, y }], hatching: { egg, m, x } | null, greeted,
 //     caring (the entry whose care panel is open) }
 
-import { rollMochi, STAGES } from '../data/mochi-genes.js';
+import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
 import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
-import { sendGardenGift } from '../net/visit.js';
+import { sendGardenGift, gardenFriends } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
 
 // Where things are in the garden (world/garden.js).
-export const EGG_SLOTS = [404, 430, 456];
+export const EGG_SLOTS = [404, 430, 456, 254, 228];
+// The egg stall: where it stands, what an egg costs.
+export const STALL_X = 330;
+export const EGG_PRICE = 3000;
 const LAND = [236, 2200];
 const POND = [2290, 2770];
 const WATER_Y = 760;
@@ -121,6 +128,7 @@ export function scheduledAt(rec, t) {
 // The garden as it is now, made fresh on arriving: its owner's Mochi and eggs.
 export function enterGarden(world, owner) {
   const g = owner?.garden;
+  if (owner === world.char && g) setEggsDown(world);
   world.gardenLife = {
     owner,
     mochi: (g?.mochi ?? []).map((rec) => ({ rec, m: newAnim(rec), x: null })),
@@ -338,6 +346,77 @@ export function applyGardenGift(world, msg, who) {
   rec.bond = bond;
   if (here && out) react(here, out, out.action, { hold: 1.4 });
   world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} your ${name}!`, '#ffc2d4');
+}
+
+// ---------- Eggs ----------
+const RARITY = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'mutation'];
+// An egg's seed: the rarest of `tries` rolls (a Star Egg's few; a plain one's one).
+function eggSeed(tries, rng = Math.random) {
+  let best = null;
+  for (let k = 0; k < tries; k++) {
+    const seed = Math.floor(rng() * 1e9);
+    const r = RARITY.indexOf(rollMochi(seed).rarity);
+    if (!best || r > best[1]) best = [seed, r];
+  }
+  return best[0];
+}
+// The eggs in your bag, set down by the gate (as many as there's room for).
+const BAG_EGGS = [['mochi_egg_star', 6], ['mochi_egg', 1]];
+function setEggsDown(world) {
+  const g = world.char.garden;
+  const inv = world.char.inventory;
+  g.eggs ??= [];
+  let n = 0;
+  for (const [id, tries] of BAG_EGGS) {
+    while (g.eggs.length < EGG_SLOTS.length && countItem(inv, id) > 0) {
+      removeItem(inv, id, 1);
+      g.eggs.push({ seed: eggSeed(tries) });
+      n++;
+    }
+  }
+  if (n) world.log(`You set ${n === 1 ? 'an egg' : `${n} eggs`} down by the gate. Rock ${n === 1 ? 'it' : 'one'} to hatch it!`, '#ffc2d4');
+}
+// The stall's eggs today: three of its own each real day (the same all day), for each hero.
+const dayOf = (now = Date.now()) => Math.floor(now / 864e5);
+const hashStr = (s) => {
+  let h = 2166136261;
+  for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return h >>> 0;
+};
+export function stallEggs(char, day = dayOf()) {
+  const rng = seededRandom(hashStr(`${char.name}|eggs|${day}`));
+  return [0, 1, 2].map(() => Math.floor(rng() * 1e9));
+}
+export const stallSold = (char, day = dayOf()) => (char.eggStall?.day === day ? char.eggStall.sold : []);
+// Buys stall egg `i`: it goes straight to the gate. Returns why not, or null.
+export function buyStallEgg(world, i) {
+  const char = world.char;
+  const g = char.garden;
+  const day = dayOf();
+  if (world.gardenVisit || !g) return 'Only at your own garden.';
+  const sold = stallSold(char, day);
+  if (sold.includes(i)) return 'Already sold.';
+  if ((g.eggs ?? []).length >= EGG_SLOTS.length) return 'No room by the gate: hatch one first.';
+  if (char.gold < EGG_PRICE) return `It costs ${EGG_PRICE} gold.`;
+  char.gold -= EGG_PRICE;
+  char.eggStall = { day, sold: [...sold, i] };
+  (g.eggs ??= []).push({ seed: stallEggs(char, day)[i] });
+  world.log('You buy the egg and set it down by the gate. Rock it to hatch it!', '#ffc2d4');
+  return null;
+}
+// The way into the Mochi Garden with friends online who have one of their own: which garden, yours
+// or one of theirs (ui/garden-pick.js)? Returns true if it asks.
+export function gardenGateUp(world, portal) {
+  if (portal?.to !== 'garden' || world.map.garden || !gardenFriends().length) return false;
+  world.gardenGate = { x: portal.x, toPortal: portal.toPortal };
+  world.events.push({ type: 'gardenpick' });
+  return true;
+}
+// Up at the egg stall (your own garden): its window (ui/egg-stall.js).
+export function eggStallUp(world) {
+  if (!world.map.garden || world.map.indoor || world.gardenVisit || Math.abs(world.body.x - STALL_X) > 40) return false;
+  world.events.push({ type: 'eggstall' });
+  return true;
 }
 
 // ---------- The crop bed ----------

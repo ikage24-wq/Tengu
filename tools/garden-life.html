@@ -12,7 +12,7 @@
 // ?guest=1: you're visiting Ann's garden (these Mochi are hers); ?reborn=1: Mochi 1 has lived a
 // long, happy life (it goes back to its egg); ?icons=1 draws the garden's item icons up top.
 // Racing: ?map=mochi_stadium&x=330&board=1 the Race Stadium with its board open; ?race=sprint&who=1
-// races Mochi 1 there (?cheer=1: Up every 2 s; ?raceskip=25 starts 25 s in).
+// races Mochi 1 there (?cheer=1: Up every 2 s; ?raceskip=25 starts 25 s in). ?stall=1: the egg stall.
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -23,6 +23,7 @@ import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
 import { drawItemIcon } from '../src/render/icons.js';
 import { startRace } from '../src/world/mochi-race.js';
+import { online } from '../src/net/online.js';
 import { createInput } from '../src/input.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
 import { createUiState, drawUi } from '../src/ui/manager.js';
@@ -125,6 +126,23 @@ if (q.has('kitchen')) {
   Object.assign(state.windows.cook, { open: true, openedAt: -99 });
 }
 if (q.has('board')) Object.assign(state.windows.race, { open: true, openedAt: -99 });
+// (?invite=1: a friend's party-race invite; ?lobby=1: your party race, a friend in.)
+if (q.has('invite')) {
+  online.raceInvite = { from: 'A', name: 'Ann', stageId: 'swim', rank: 'beginner', until: Date.now() / 1000 + 999 };
+  Object.assign(state.windows.raceinvite, { open: true, openedAt: -99 });
+}
+if (q.has('lobby')) {
+  online.ghosts.set('B', { id: 'B', name: 'Bea' });
+  online.ghosts.set('C', { id: 'C', name: 'Cid' });
+  w.raceLobby = { stageId: 'sprint', rank: 'beginner', rec: c.garden.mochi[0], invited: ['B', 'C'], joined: { B: { rec: c.garden.mochi[1], name: 'Bea' } }, declined: [] };
+  Object.assign(state.windows.race, { open: true, openedAt: -99 });
+}
+// (?stall=1: at the egg stall with its window open, and gold to spend.)
+if (q.has('stall')) {
+  c.gold = 20000;
+  Object.assign(w.body, { x: 330, facing: 1 });
+  Object.assign(state.windows.eggs, { open: true, openedAt: -99 });
+}
 // (Racing: every stage and rank open; ?rank=master.)
 c.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].flatMap((s) => ['beginner', 'challenge'].map((r) => [s + '|' + r, true])));
 if (q.has('race')) startRace(w, c.garden.mochi[Number(q.get('who') ?? 0)], q.get('race'), q.get('rank') ?? 'beginner');

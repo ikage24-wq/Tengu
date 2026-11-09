@@ -211,9 +211,28 @@ Each step is pushed on its own. Status as of 2026-11-09.
    three Beginner wins. The board has rank buttons (a lock and what's needed on one not open; the
    picked Mochi's medal on each) and each Mochi's medals for the stage. Checked with a simulation:
    Beginner is won at about 400-800 points in every stat, Challenge 1,200-1,600, Master about 2,000.
+   **Batch 4 built (2026-11-10; the user chose: party members, wherever they are):** "With party"
+   at the board invites everyone in your party who's online (net/mochi-race.js); each picks one of
+   their Mochi in the invite window and joins; Start puts your Mochi in lane 1, theirs next, the
+   hour's rivals in the rest. The host's game runs the race and sends where everyone is ~8 times a
+   second; the friends' games are brought to the course, ease the racers along to those spots, send
+   their cheers to the host, and at the end give their own Mochi their own prize, medal and unlocks,
+   then take them back where they were. A host gone quiet for 6 s ends the race for the friend
+   (no prize). Also: the way into the Mochi Garden asks whose garden (yours, or a friend's online
+   who has one: ui/garden-pick.js). Tests: tests/mochi-party.test.js (two games in one room).
 6. **Getting eggs.** *(New.)* Proposed: plain eggs from the Garden's egg stall for gold (a few
    thousand: "decent" on the money scale); an egg as the reward for some quests; a rare egg drop from
    monsters; and bred eggs (step 9). No Cash.
+   **Built (2026-11-10; the user chose all four, 3,000 gold):** the egg stall by the gate (Up: ui/
+   egg-stall.js) has three eggs of its own a day per hero, drawn as they'll sit by the gate so you
+   can read their tells, 3,000 gold each, set straight down by the gate; items Mochi Egg and Star Egg
+   (world/garden-life.js setEggsDown: bag eggs are set down by the gate when you arrive, up to 5
+   waiting; a Star Egg's seed is the rarest of 6 rolls); monsters drop a Mochi Egg 1 in 1,500 (a
+   boss 1 in 25: world/drops.js EGG_DROP); the end of each story chain open to all (Marlo, Lumen,
+   Yuzu, Rowan, Celeste, Nimbus) gives one; the first Master win on each stage gives a Star Egg.
+   Tests in tests/mochi-garden.test.js and tests/mochi-race.test.js. Fixed on the way (the data
+   test now loads the Garden and stadium maps): the glide board is level with the cliff top, and
+   the nursery's shelf and an empty nook behind the falls are no longer unreachable ledges.
 7. **Names.** *(New.)* You name your Mochi when it hatches; a cute random name is suggested from a
    list of sweet-themed names, and you can roll another.
 8. **The Mochi window.** *(New.)* One page per Mochi: its stage and path, stats and grades,

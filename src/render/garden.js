@@ -471,7 +471,7 @@ const bouldersArt = () => art('mg-boulders', 70, 60, () => {
   ];
 });
 // The glide board: planks from the ledge's left end to the lip, a stone weighting the back end.
-const GLIDE_BOARD = { x: 2946, y: 372, w: 70 };
+const GLIDE_BOARD = { x: 2946, y: 380, w: 70 };
 const glideBoardArt = () => art('mg-glideboard', GLIDE_BOARD.w + 14, 12, () => {
   const w = ramp('#d8a46a');
   const L = GLIDE_BOARD.w + 14;

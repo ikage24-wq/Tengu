@@ -530,6 +530,11 @@ for (const sw of MOCHI_SWEETS) {
   const what = trains.length > 2 ? 'a little of everything' : trains.join(' and ');
   add({ id: sw.id, name: sw.name, type: 'etc', price: 20, color: '#ffd0dc', mochiSweet: sw.kind, desc: `${sw.taste === 'spicy' ? 'A spicy treat' : 'A sweet'} for your Mochi: trains ${what}${sw.taste === 'spicy' ? ', and leans it a little devilish' : ''}. Up beside a Mochi to feed it.` });
 }
+// Mochi eggs (docs/design/mochi.md step 6), from monsters (very rarely), some quests, and the Race
+// Stadium (a Star Egg: better odds of a rare). Taken to your Mochi Garden, they wait by the gate to
+// be rocked and hatched (world/garden-life.js).
+add({ id: 'mochi_egg', name: 'Mochi Egg', type: 'etc', price: 300, color: '#fbf6f0', desc: 'A warm little mochi egg in its wooden mortar. Take it to your Mochi Garden: it waits by the gate for you to rock it and hatch it.' });
+add({ id: 'mochi_egg_star', name: 'Star Egg', type: 'etc', price: 1500, color: '#ffe08a', desc: 'A mochi egg with a gold band and a starry glint, won at the Race Stadium. Better odds of something rare inside. Take it to your Mochi Garden to hatch it.' });
 add({ id: 'mochi_bell', name: 'Mochi Bell', type: 'use', price: 0, effect: { garden: true }, keep: true, color: '#ffd0dc', desc: 'A little brass bell on a sakura ribbon. Ring it and your Mochi chirp back: it takes you to your Mochi Garden, and again back to where you were. It never gets used up.' });
 add({ id: 'home_shell', name: 'Home Shell', type: 'use', price: 0, effect: { home: true }, keep: true, color: '#ffc2d4', desc: 'A pink spiral shell. Hold it to your ear and you hear your island\'s waves. Use it to go home, and again to go back where you were. It never gets used up.' });
 // The Sweethearts' two special gifts (data/sweethearts.js).

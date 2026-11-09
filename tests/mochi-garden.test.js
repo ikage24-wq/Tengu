@@ -210,3 +210,41 @@ test("visiting a friend's garden: same Mochi, same places; pets and sweets reach
     host.done();
   }
 });
+
+test('eggs: from your bag to the gate on arriving; the stall sells three a day; monsters and quests give them', async () => {
+  const { stallEggs, buyStallEgg, EGG_PRICE } = await import('../src/world/garden-life.js');
+  const { rollLoot } = await import('../src/world/drops.js');
+  const { QUESTS } = await import('../src/data/quests.js');
+  const { MOBS } = await import('../src/data/mobs.js');
+  const g = garden();
+  try {
+    // Eggs in the bag are set down by the gate (Star Eggs first), as many as there's room for.
+    g.char.garden.eggs = [];
+    addItem(g.char.inventory, 'mochi_egg', 6);
+    addItem(g.char.inventory, 'mochi_egg_star', 1);
+    loadMap(g.w, 'sprout', 'start');
+    loadMap(g.w, 'garden', 'start');
+    assert.equal(g.char.garden.eggs.length, 5);
+    assert.equal(countItem(g.char.inventory, 'mochi_egg_star'), 0);
+    assert.equal(countItem(g.char.inventory, 'mochi_egg'), 2);
+    // The stall: the same three all day; a buy costs EGG_PRICE and sets that very egg by the gate.
+    g.char.garden.eggs = [];
+    const seeds = stallEggs(g.char);
+    assert.deepEqual(stallEggs(g.char), seeds);
+    g.char.gold = EGG_PRICE + 10;
+    assert.equal(buyStallEgg(g.w, 1), null);
+    assert.equal(g.char.gold, 10);
+    assert.equal(g.char.garden.eggs[0].seed, seeds[1]);
+    assert.ok(buyStallEgg(g.w, 1), 'sold already');
+    assert.ok(buyStallEgg(g.w, 0), 'not enough gold');
+    // Up at the stall opens it.
+    Object.assign(g.w.body, { x: 330, y: g.w.body.y });
+    assert.deepEqual(g.up(), [{ type: 'eggstall' }]);
+    // A monster, very rarely (here, always); and the end of each open story chain.
+    const mob = Object.values(MOBS).find((d) => !d.boss);
+    assert.ok(rollLoot(mob, () => 0).some((l) => l.id === 'mochi_egg'));
+    for (const q of ['marlo_spa', 'lumen_home', 'yuzu_loved', 'rowan_watch', 'celeste_dreamer', 'nimbus_voyage']) assert.ok(QUESTS[q].rewards.items.some((i) => i.id === 'mochi_egg'), q);
+  } finally {
+    g.done();
+  }
+});

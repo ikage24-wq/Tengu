@@ -4,6 +4,17 @@
 
 import { ITEM_ART, lt, S, oval, ball, tube, glint, framed, W } from './items.js';
 
+function egg(star) {
+  const out = [
+    ...ball([[1.8, 10.4], [14.2, 10.4], [12.6, 15], [3.4, 15]], '#b07a4a'),
+    S(tube([[1.8, 10.4], [14.2, 10.4]], 1.2), '#8a5a34'),
+    ...ball(oval(8, 7.4, 5, 5.4, 0, 28), star ? '#fff4d6' : '#fbf6f0'),
+  ];
+  if (star) out.push(S(tube([[3.4, 8.6], [8, 9.4], [12.6, 8.6]], 1.1), '#f2c94c'), S(oval(11.4, 4, 1.4, 0.4, 0, 8), W), S(oval(11.4, 4, 0.4, 1.4, 0, 8), W));
+  out.push(...glint(6, 5.2, 0.8));
+  return out;
+}
+
 const ART = {
   // A little cloth sack of mochi rice, tied at the neck, a few grains on its front.
   mochi_rice: () => [
@@ -28,6 +39,10 @@ const ART = {
     ...ball(oval(11.2, 3.4, 2.3, 1.4, 0, 14), '#5aa040'),
     S(tube([[11.4, 2.4], [12.8, 0.6]], 0.7), '#3f7a2a'),
   ],
+  // A Mochi egg: a soft white mochi ball sitting in a little wooden mortar.
+  mochi_egg: () => egg(false),
+  // A Star Egg: the same, banded in gold, with a star glint.
+  mochi_egg_star: () => egg(true),
   // The Mochi Bell: a little brass bell on a sakura ribbon bow, its clapper peeking out below.
   mochi_bell: () => [
     S(tube([[8, 3.4], [4.2, 1.2], [3.2, 3.6], [8, 3.6]], 1.3), '#ff9ec0'),

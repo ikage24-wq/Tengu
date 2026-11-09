@@ -187,3 +187,19 @@ test('rivals get stronger rank by rank', () => {
   };
   assert.ok(avg('beginner') < avg('challenge') && avg('challenge') < avg('master'));
 });
+
+test('the first Master win on a stage brings a Star Egg (only the first)', async () => {
+  const { countItem } = await import('../src/core/inventory.js');
+  const rec = mochi(40, 2600);
+  const w = racer(rec);
+  w.char.raceWins = { 'sprint|beginner': true, 'sprint|challenge': true };
+  for (const k of [1, 2]) {
+    assert.ok(startRace(w, rec, 'sprint', 'master'));
+    const R = run(w);
+    assert.equal(R.racers[0].place, 1);
+    assert.equal(Boolean(R.starEgg), k === 1);
+    for (let f = 0; f < 60 * 3.2; f++) updateWorld(w, 1 / 60, keys());
+    updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  }
+  assert.equal(countItem(w.char.inventory, 'mochi_egg_star'), 1);
+});

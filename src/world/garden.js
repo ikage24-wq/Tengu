@@ -37,13 +37,13 @@ export function gardenMap(g = {}) {
     { x: 2244, y: 748, w: 112, style: 'planks', dock: true },
     // The glide launch: a board jutting out from the cliff top over the pond (the upper rope hangs
     // from it).
-    { x: 2946, y: TOP - 8, w: 70, style: 'planks', bare: true }, // (drawn by mg_glide: render/garden.js)
-    // The secret: a nook in behind the waterfall, a hop from the upper rope.
-    { x: 2980, y: 470, w: 22, bare: true },
+    // (Level with the cliff top and ending at its edge, so you walk straight on: drawn by mg_glide,
+    // render/garden.js, its back end weighted on the lip.)
+    { x: 2946, y: TOP, w: 56, style: 'planks', bare: true },
   ];
   const ropes = [
     { x: 2894, top: LEDGE, bottom: POND },
-    { x: 2960, top: TOP - 8, bottom: LEDGE },
+    { x: 2960, top: TOP, bottom: LEDGE },
   ];
   const spots = [{ x: 2340, y: 748, face: 1, bx: 2430, by: POND + 2, tier: 1, pool: HOME_POND_POOL }];
   const map = {
@@ -100,7 +100,7 @@ export function gardenInside() {
     look: { ceiling: true, floor: 'painted', sky: ['#ffe8e0', '#fff2ea', '#fff8f2'], material: 'parquet', propKeep: 1 },
     cottages: [],
     terrain: [[0, 360], [760, 360]],
-    platforms: [{ x: 520, y: 262, w: 150, bare: true, shelf: true }],
+    platforms: [],
     ropes: [],
     townPieces: [['mg_nurseryroom', 380]],
     portals: [{ id: 'door', x: 80, y: 360, to: 'garden', toPortal: 'nursery', label: 'Outside', door: true }, { id: 'start', x: 80, y: 360, hidden: true }],

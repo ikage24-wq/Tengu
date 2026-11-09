@@ -33,6 +33,9 @@ function gardenOf(char) {
   return { name: char.name, garden: { mochi: g.mochi, eggs: g.eggs ?? [], cropAt: g.cropAt ?? 0, unlocked: g.unlocked ?? {} } };
 }
 
+// Friends in your room who have a Mochi Garden (the gate asks which garden: ui/garden-pick.js).
+export const gardenFriends = () => (online.status === 'on' ? [...online.ghosts.values()].filter((g) => g.garden && g.name && g.name !== '...') : []);
+
 // Asks a friend for their Mochi Garden.
 export function askGardenVisit(world, id) {
   if (online.status !== 'on' || !online.ghosts.has(id)) return 'Not online.';

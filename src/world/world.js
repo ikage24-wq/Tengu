@@ -44,7 +44,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear, eggStallUp, gardenGateUp } from './garden-life.js';
 import './stadium.js';
 import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
@@ -457,13 +457,15 @@ function interact(world) {
     world.warnTimer = 1;
     return true;
   }
+  // (The way to the Mochi Garden asks whose, with friends online who have one: world/garden-life.js.)
+  if (portal && gardenGateUp(world, portal)) return true;
   if (portal) {
     loadMap(world, portal.to, portal.toPortal);
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
     return true;
   }
   // An egg in your garden: Up beside it to rock it, and it hatches (world/garden-life.js).
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world))) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || eggStallUp(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);

@@ -15,16 +15,23 @@
 // sets its pace through the race (data/mochi-race.js paceOf). The rivals are rolled from the stage,
 // the rank and the hour, so everyone racing that stage that hour meets the same field.
 //
+// Racing with your party (net/mochi-race.js): the host's game runs the race, its friends' Mochi in
+// the lanes after its own, and sends where everyone is a few times a second; each friend's game
+// draws the race from that (easing the racers smoothly along), sends its cheers to the host, and at
+// the end gives its own Mochi its own prize and medal.
+//
 // While a race is on (world.race), the world holds still around it (world/world.js updateWorld).
 //   world.race = { stageId, rank, phase ('ready' | 'run' | 'done'), t (seconds in this phase),
-//     clock (seconds since Go), racers: [{ rec, name, you, lane, leg, x, y, climbed, m, ... }],
-//     first, finished, results, prize, cam }
+//     clock (seconds since Go), racers: [{ rec, name, owner, you, lane, leg, x, y, climbed, m, ... }],
+//     me (which racer is yours), party (the host's: its friends' ids), remote (a friend's: the
+//     host's id), back (a friend's: where it was before), first, finished, results, prize, cam }
 
 import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
 import { groundAt } from './physics.js';
+import { addItem } from '../core/inventory.js';
 import { loadMap } from './world.js';
 
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS, CLIMBS, FLIES); between two styles, its
@@ -105,19 +112,28 @@ export function rivalsFor(stageId, rank, hour) {
 export const progressOf = (course, r) => r.x - course.start + r.climbed;
 
 // Sends `rec` (one of your Mochi) to race stage `stageId` at `rank`. Returns false if it can't.
-export function startRace(world, rec, stageId, rank = 'beginner') {
+// A party race (net/mochi-race.js) hands over its `field` ([{ rec, name, owner }]) and which of it
+// is yours (`me`); the host its friends' ids (`party`), a friend the host's (`remote`) and where to
+// go back to after (`back`).
+export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
   const stage = RACE_STAGES[stageId];
-  if (!stage || !RACE_RANKS[rank] || !rankOpen(world.char, stageId, rank) || world.race || world.dungeon || world.trial || world.scene || !rec || rec.stage === 'egg') return false;
+  // (A friend's party race is open to you whatever you've won: it's raced from their board.)
+  const open = Boolean(opts.remote) || rankOpen(world.char, stageId, rank);
+  if (!stage || !RACE_RANKS[rank] || !open || world.race || world.dungeon || world.trial || world.scene || !rec || rec.stage === 'egg') return false;
   const map = MAPS[stage.map];
   const course = map.race;
   const hour = raceHour();
   const wobble = seededRandom(hashStr(`${stageId}|${rank}|${hour}|pace`));
-  const field = [{ rec, name: null, you: true }, ...rivalsFor(stageId, rank, hour)];
+  const me = opts.me ?? 0;
+  const field = (opts.field ?? [{ rec, name: null }, ...rivalsFor(stageId, rank, hour)]).slice(0, 6);
+  // (Your own lane is your own Mochi: what the race gives it stays with it.)
+  field[me] = { ...field[me], rec, name: null };
   const y0 = groundAt(map, course.start);
   world.race = {
     stageId, rank, phase: 'ready', t: 0, clock: 0, first: null, finished: 0, results: null, prize: 0, cheerAsk: false,
+    me, party: opts.party ?? null, remote: opts.remote ?? null, back: opts.back ?? null, heard: Date.now() / 1000, sendIn: 0,
     racers: field.map((f, lane) => ({
-      ...f, lane, leg: 0, x: course.start, y: y0, climbed: 0, glide: null, seed: wobble() * 100, pace: paceOf(f.rec.personality),
+      ...f, you: lane === me, lane, leg: 0, x: course.start, y: y0, climbed: 0, glide: null, seed: wobble() * 100, pace: paceOf(f.rec.personality),
       runFor: 0, restUntil: 0, resting: false, cheerUntil: -1, cheerReady: 0, cheers: 0, done: null, place: 0, reacted: false,
       m: { genes: f.rec, dir: 1, speed: 0, dist: course.start, size: f.rec.stage === 'mochiko' ? 'baby' : 'grown', mode: 'run', tired: 0, rest: false },
     })),
@@ -260,9 +276,13 @@ function stepRacer(R, r, dt, course, map) {
 export function tickRace(world, dt, input) {
   const R = world.race;
   const course = world.map.race;
-  const you = R.racers[0];
+  const you = R.racers[R.me];
   const up = Boolean(input?.pressed?.has('ArrowUp')) || R.cheerAsk;
   R.cheerAsk = false;
+  if (R.remote) {
+    tickRemote(world, R, dt, up, you);
+    return;
+  }
   R.t += dt;
   if (R.phase === 'ready') {
     if (R.t >= COUNTDOWN) Object.assign(R, { phase: 'run', t: 0 });
@@ -286,7 +306,93 @@ export function tickRace(world, dt, input) {
       return;
     }
   }
+  // (Hosting a party race: where everyone is, to the friends, a few times a second; and a little
+  // while after the end, so they see the racers come to a stop.)
+  R.sendIn -= dt;
+  if (R.party?.length && R.sendIn <= 0 && (R.phase !== 'done' || R.t < 4)) {
+    R.sendIn = SEND_EVERY;
+    raceNet.state?.(world, R);
+  }
   R.cam = { x: you.x, y: you.y };
+}
+
+// ---------- A friend's party race ----------
+// The ways a racer moves, as the host sends them.
+const MODES = ['run', 'swim', 'climb', 'fly'];
+const SEND_EVERY = 0.12;
+// The host gone quiet this long: the race ends where it stands.
+const HOST_QUIET = 6;
+// The network side (net/mochi-race.js) plugs in here: { state, end, cheer }.
+let raceNet = {};
+export const setRaceNet = (fns) => {
+  raceNet = fns;
+};
+// Where everyone is now, as the host sends it: [x, y, mode, speed, tiredness, resting, cheer left,
+// done, place, leg] each.
+export const raceState = (R) => R.racers.map((r) => [Math.round(r.x * 10) / 10, Math.round(r.y * 10) / 10, MODES.indexOf(r.m.mode), Math.round(r.m.speed ?? 0), Math.round((r.m.tired ?? 0) * 100), r.m.rest ? 1 : 0, Math.max(0, Math.round((r.cheerUntil - R.clock) * 10)), r.done, r.place, r.leg]);
+// A friend's game: the host's latest word on where everyone is.
+export function applyRaceState(world, msg) {
+  const R = world.race;
+  if (!R?.remote || R.remote !== msg.id) return;
+  R.heard = Date.now() / 1000;
+  if (R.phase !== 'done' && msg.phase !== 'done' && msg.phase !== R.phase) Object.assign(R, { phase: msg.phase, t: msg.pt ?? 0 });
+  if (R.phase !== 'done') R.clock = msg.clock;
+  msg.rs.forEach(([x, y, mode, speed, tired, rest, cheerLeft, done, place, leg], i) => {
+    const r = R.racers[i];
+    if (!r) return;
+    const mv = MODES[mode] ?? 'run';
+    Object.assign(r, { tx: x, ty: y, leg, cheerUntil: R.clock + cheerLeft / 10 });
+    if (R.phase !== 'done') Object.assign(r, { done, place });
+    Object.assign(r.m, { mode: mv, speed, tired: tired / 100, rest: Boolean(rest), inWater: mv === 'swim', noShadow: mv === 'fly' });
+  });
+}
+// A friend's game, each frame: the racers eased along to where the host last had them; Up cheers
+// (sent to the host); once it's over, Up takes you back.
+function tickRemote(world, R, dt, up, you) {
+  R.t += dt;
+  if (R.phase === 'run') R.clock += dt;
+  if (up && R.phase === 'run' && you.done == null && R.clock >= (you.cheerReady ?? 0)) {
+    you.cheerReady = R.clock + CHEER.every;
+    raceNet.cheer?.(world, R);
+  }
+  const k = 1 - Math.exp(-dt * 12);
+  for (const r of R.racers) {
+    if (r.tx == null) continue;
+    const [px, py] = [r.x, r.y];
+    r.x += (r.tx - r.x) * k;
+    r.y += (r.ty - r.y) * k;
+    r.m.dist += Math.hypot(r.x - px, r.y - py);
+    r.m.dir = 1;
+  }
+  if (R.phase !== 'done' && Date.now() / 1000 - R.heard > HOST_QUIET) {
+    // (Lost touch with the host: it ends here, nobody's prize.)
+    Object.assign(R, { phase: 'done', t: 0, lost: true });
+    for (const r of standings(R, world.map.race)) if (!r.place) r.place = ++R.finished;
+    R.results = standings(R, world.map.race);
+    world.log('Lost touch with the race...', '#ffb3c6');
+  }
+  if (R.phase === 'done' && up && R.t > LEAVE_AFTER) {
+    leaveRace(world);
+    return;
+  }
+  R.cam = { x: you.x, y: you.y };
+}
+// A friend's game: the host's race is over; where everyone came, and your own Mochi's prize.
+export function applyRaceEnd(world, msg) {
+  const R = world.race;
+  if (!R?.remote || R.remote !== msg.id || R.phase === 'done') return;
+  msg.places.forEach(([place, done], i) => {
+    if (R.racers[i]) Object.assign(R.racers[i], { place, done });
+  });
+  Object.assign(R, { phase: 'done', t: 0, finished: R.racers.length });
+  R.results = standings(R, world.map.race);
+  award(world, R);
+}
+// The host's game: a friend cheered their Mochi on.
+export function applyCheer(world, ownerId) {
+  const R = world.race;
+  const r = R && !R.remote ? R.racers.find((x) => x.owner === ownerId) : null;
+  return r ? cheer(R, r) : false;
 }
 
 // Where everyone is now: the ones home in the order they finished, then the rest by how far along.
@@ -296,13 +402,18 @@ export function standings(R, course) {
 }
 
 // The race is over: the ones still out are placed by how far they got; the prize; a medal for your
-// Mochi if it came in the top three (kept if it's its best there); a win opens the next rank; your
-// Mochi is happier for the race (a win most of all) and a little closer to you.
+// Mochi if it came in the top three (kept if it's its best there); a win opens the next rank (and the
+// first Master win on each stage brings a Star Egg); your Mochi is happier for the race (a win most
+// of all) and a little closer to you.
 function endOfRace(world, R) {
   Object.assign(R, { phase: 'done', t: 0 });
   for (const r of standings(R, world.map.race)) if (!r.place) r.place = ++R.finished;
   R.results = standings(R, world.map.race);
-  const you = R.racers[0];
+  award(world, R);
+  if (R.party?.length) raceNet.end?.(world, R);
+}
+function award(world, R) {
+  const you = R.racers[R.me];
   R.prize = you.done != null ? prizeOf(R.stageId, R.rank, you.place) : 0;
   world.char.gold += R.prize;
   const key = medalKey(R.stageId, R.rank);
@@ -318,6 +429,11 @@ function endOfRace(world, R) {
     const char = world.char;
     const before = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk)).map((rk) => medalKey(id, rk)));
     char.raceWins ??= {};
+    if (R.rank === 'master' && !char.raceWins[key]) {
+      addItem(char.inventory, 'mochi_egg_star', 1);
+      R.starEgg = true;
+      world.log('A Star Egg for your first Master win here! Take it to your Garden.', '#ffe08a');
+    }
     char.raceWins[key] = true;
     R.opened = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk) && !before.includes(medalKey(id, rk))).map((rk) => `${RACE_STAGES[id].name} (${RACE_RANKS[rk].name})`));
   }
@@ -327,10 +443,14 @@ function endOfRace(world, R) {
   world.log(you.place === 1 ? `Your Mochi won! +${R.prize} gold.` : you.done != null ? `Your Mochi came ${nth}. +${R.prize} gold.` : 'Your Mochi didn\'t make it home in time... it had fun anyway!', '#ffc2d4');
 }
 
-// Back to the stadium, by the board.
+// Back to the stadium, by the board (a friend who came to your race: back where they were).
 export function leaveRace(world) {
   if (!world.race || world.race.phase !== 'done') return false;
+  const back = world.race.back;
   world.race = null;
-  loadMap(world, 'mochi_stadium', 'board');
+  if (back && MAPS[back.map] && !MAPS[back.map].race) {
+    loadMap(world, back.map, 'start');
+    Object.assign(world.body, { x: Math.max(20, Math.min(world.map.width - 20, back.x)), y: groundAt(world.map, back.x) });
+  } else loadMap(world, 'mochi_stadium', 'board');
   return true;
 }

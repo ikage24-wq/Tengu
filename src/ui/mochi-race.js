@@ -1,11 +1,15 @@
 // Mochi racing's screens (world/mochi-race.js): the race board at the Race Stadium (pick a stage
-// and one of your Mochi, and Race!), and, while a race is on, the race's own screen instead of the
-// usual HUD: everyone's place along the course up top, the countdown, your Mochi's stamina and the
-// Cheer button (or Up), and at the end the results and the prize.
+// and one of your Mochi, and Race! or race with your party: net/mochi-race.js), a friend's invite
+// to their party race (pick one of your Mochi and join), and, while a race is on, the race's own
+// screen instead of the usual HUD: everyone's place along the course up top, the countdown, your
+// Mochi's stamina and the Cheer button (or Up), and at the end the results and the prize.
 
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
 import { startRace, leaveRace, standings, progressOf, COUNTDOWN } from '../world/mochi-race.js';
+import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites } from '../net/mochi-race.js';
+import { partyFriends } from '../net/together.js';
+import { online } from '../net/online.js';
 import { drawMochiAnim } from '../render/mochi-anim.js';
 import { VW, VH } from '../input.js';
 import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, bar, tabs, icon } from './kit.js';
@@ -108,10 +112,83 @@ export function raceBoardWindow(ui, state, world) {
     if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;
   });
   const open = rankOpen(char, win.stage, win.rank);
-  if (!open) text(ctx, rankNeeds(char, win.stage, win.rank), win.x + W / 2, win.y + H - 34, { size: 6.5, align: 'center', color: COLORS.bad });
-  if (button(ui, win.x + W / 2 - 40, win.y + H - 26, 80, 18, 'Race!', { primary: open, enabled: open, size: 9 })) {
+  const L = world.raceLobby;
+  const by = win.y + H - 26;
+  if (L) {
+    // Your party race: who's in (and with which Mochi), who's still deciding; Start or call it off.
+    const names = L.invited.map((id) => {
+      const g = online.ghosts.get(id);
+      const j = L.joined[id];
+      return `${g?.name ?? 'A friend'}${j ? ` (${MOCHI_STAGES[j.rec.stage] ?? 'Mochi'}) is in` : L.declined.includes(id) ? ' said no' : '...'}`;
+    });
+    text(ctx, fit(ctx, `${RACE_STAGES[L.stageId].name}: ${names.join(', ')}`, W - 24, 6.5, false), win.x + W / 2, by - 8, { size: 6.5, align: 'center', color: '#d0507a' });
+    if (button(ui, win.x + W / 2 - 86, by, 84, 18, 'Start!', { primary: true, size: 8.5 })) {
+      if (startPartyRace(world)) win.open = false;
+    }
+    if (button(ui, win.x + W / 2 + 2, by, 84, 18, 'Call it off', { size: 8 })) cancelLobby(world);
+    return;
+  }
+  if (!open) text(ctx, rankNeeds(char, win.stage, win.rank), win.x + W / 2, by - 8, { size: 6.5, align: 'center', color: COLORS.bad });
+  const party = partyFriends().length > 0;
+  const rx = party ? win.x + W / 2 - 86 : win.x + W / 2 - 40;
+  if (button(ui, rx, by, party ? 84 : 80, 18, 'Race!', { primary: open, enabled: open, size: 9 })) {
     if (startRace(world, win.pick, win.stage, win.rank)) win.open = false;
   }
+  // (With your party online: race them, each with one of their own Mochi.)
+  if (party && button(ui, win.x + W / 2 + 2, by, 84, 18, 'With party', { enabled: open, size: 8 })) {
+    const why = inviteParty(world, win.pick, win.stage, win.rank);
+    if (why) world.log(why, '#ffb3c6');
+  }
+  if (party && hover(ui, win.x + W / 2 + 2, by, 84, 18)) tooltip(ui, [{ text: 'Race with your party', bold: true }, { text: 'Everyone in your party online picks one of their Mochi; rivals fill the rest.', color: COLORS.muted }]);
+}
+
+// ---------- A friend's invite ----------
+// A friend invites you to their party race: pick one of your Mochi and join (you're brought to the
+// course when they start, and back here after), or no thanks. Once in, it says so until they start.
+export function raceInviteWindow(ui, state, world) {
+  const win = state.windows.raceinvite;
+  tickRaceInvites();
+  const inv = online.raceInvite;
+  const wait = online.raceWait;
+  if ((!inv && !wait) || world.race) {
+    win.open = false;
+    return;
+  }
+  if (!windowFrame(ui, win, W, wait ? 70 : 196, 'Party Race')) return;
+  const { ctx } = ui;
+  const x = win.x + 10;
+  let y = win.y + 32;
+  if (wait) {
+    text(ctx, `You're in! Waiting for ${wait.name} to start...`, x, y, { size: 8, bold: true });
+    if (button(ui, win.x + W / 2 - 40, y + 10, 80, 16, 'Leave', { size: 7.5 })) leaveWait(world);
+    return;
+  }
+  text(ctx, `${inv.name} invites you to race your Mochi!`, x, y, { size: 8.5, bold: true });
+  text(ctx, `${RACE_STAGES[inv.stageId]?.name ?? 'A race'} (${RACE_RANKS[inv.rank]?.name ?? ''})`, x, y + 12, { size: 7, color: '#d0507a' });
+  y += 20;
+  const list = (world.char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
+  if (!list.length) text(ctx, "You haven't a Mochi to race yet: hatch one in your Garden!", x, y + 14, { size: 7, color: COLORS.muted });
+  if (!list.includes(win.pick)) win.pick = list[0] ?? null;
+  const cw = (W - 24) / 2;
+  list.slice(0, 8).forEach((rec, i) => {
+    const cx = x + (i % 2) * (cw + 4);
+    const cy = y + 4 + Math.floor(i / 2) * 26;
+    const on = win.pick === rec;
+    box(ctx, cx, cy, cw, 23, { fill: on ? '#ffe8f0' : '#ffffff', edge: on ? '#ff8fb0' : '#f0dce4', r: 6, width: on ? 1.5 : 1 });
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(cx + 1, cy + 1, 22, 21);
+    ctx.clip();
+    drawMochiAnim(ctx, portraitOf(rec), cx + 12, cy + 31, world.now);
+    ctx.restore();
+    text(ctx, fit(ctx, `${cap(rec.personality)} ${MOCHI_STAGES[rec.stage]}`, cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
+    const st = RACE_STAGES[inv.stageId]?.stat ?? 'run';
+    text(ctx, `${STAT_WORD[st]} Lv ${rec.stats[st].level}`, cx + 26, cy + 19, { size: 6, color: COLORS.muted });
+    if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;
+  });
+  const by = win.y + 196 - 26;
+  if (button(ui, win.x + W / 2 - 86, by, 84, 18, 'Join!', { primary: Boolean(win.pick), enabled: Boolean(win.pick), size: 8.5 })) answerInvite(world, win.pick);
+  if (button(ui, win.x + W / 2 + 2, by, 84, 18, 'No thanks', { size: 8 })) answerInvite(world, null);
 }
 
 // ---------- The race itself ----------
@@ -119,7 +196,7 @@ export function raceHud(ui, state, world) {
   const R = world.race;
   const { ctx } = ui;
   const course = world.map.race;
-  const you = R.racers[0];
+  const you = R.racers[R.me];
   // Up top: the course as a line, everyone's head along it, yours with a heart; your place.
   const x0 = 150;
   const x1 = VW - 110;
@@ -201,7 +278,8 @@ export function raceHud(ui, state, world) {
   // The prize, the medal, and anything a win has opened.
   const medal = R.medal ? `  ·  ${cap(R.medal.medal)} medal${R.medal.best ? '!' : ' (it has a better one here)'}` : '';
   text(ctx, fit(ctx, `${R.prize ? `+${R.prize} gold!` : 'No prize this time.'}${medal}`, pw - 20, 8.5, true), VW / 2, py + 166, { size: 8.5, bold: true, align: 'center', color: R.prize ? '#c89a20' : COLORS.muted });
-  if (R.opened?.length) text(ctx, fit(ctx, `Now open: ${R.opened.join(', ')}`, pw - 20, 7, true), VW / 2, py + 179, { size: 7, bold: true, align: 'center', color: '#d0507a' });
+  const news = [R.starEgg ? 'A Star Egg!' : null, R.opened?.length ? `Now open: ${R.opened.join(', ')}` : null].filter(Boolean).join('  ·  ');
+  if (news) text(ctx, fit(ctx, news, pw - 20, 7, true), VW / 2, py + 179, { size: 7, bold: true, align: 'center', color: '#d0507a' });
   if (button(ui, VW / 2 - 64, py + ph - 26, 128, 18, 'Back to the Stadium', { primary: true, size: 8 }) && R.t > 0.6) leaveRace(world);
 }
 
