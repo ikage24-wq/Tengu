@@ -235,6 +235,12 @@ Each step is pushed on its own. Status as of 2026-11-09.
    the nursery's shelf and an empty nook behind the falls are no longer unreachable ledges.
 7. **Names.** *(New.)* You name your Mochi when it hatches; a cute random name is suggested from a
    list of sweet-themed names, and you can roll another.
+   **Built (2026-11-10):** data/mochi-names.js (90 sweet names, Japanese and Western, none a race
+   rival's; suggestions skip names your Mochi already have; up to 12 letters, numbers, spaces,
+   apostrophes, hyphens). The naming window (ui/mochi-name.js) opens when an egg hatches and from
+   the care panel's Name it / Rename; it holds the keyboard while open; a reborn Mochi keeps its
+   name. Names show in the care panel's title, the race board and invite lists, race results
+   (yours by its name; a friend's as "Bea's Momo"), and the Garden's messages.
 8. **The Mochi window.** *(New.)* One page per Mochi: its stage and path, stats and grades,
    personality, favourite and hated sweets, voice, rarity and coat, its parents.
 9. **Breeding.** *(New.)* Two grown Mochi that are happy together leave an egg in the Garden. Each

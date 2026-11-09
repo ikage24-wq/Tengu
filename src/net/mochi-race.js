@@ -21,7 +21,7 @@ const INVITE_SECS = 60;
 const WAIT_SECS = 120;
 const now = () => Date.now() / 1000;
 const stageName = (id, rank) => `${RACE_STAGES[id]?.name ?? 'a race'} (${RACE_RANKS[rank]?.name ?? ''})`;
-const mochiName = (who, rec) => `${who}'s ${STAGES[rec.stage] ?? 'Mochi'}`;
+const mochiName = (who, rec) => `${who}'s ${rec.name ?? STAGES[rec.stage] ?? 'Mochi'}`;
 
 // ---------- Hosting ----------
 // Invites your party to race `stageId` at `rank`, your Mochi `rec` in the first lane.

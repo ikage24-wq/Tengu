@@ -30,6 +30,7 @@ import { cookingWindow } from './cooking.js';
 import { mochiCareWindow } from './mochi-care.js';
 import { raceBoardWindow, raceHud, raceInviteWindow } from './mochi-race.js';
 import { gardenPickWindow } from './garden-pick.js';
+import { mochiNameWindow } from './mochi-name.js';
 import { eggStallWindow } from './egg-stall.js';
 import { lifeWindow } from './life.js';
 import { craftingWindow } from './crafting.js';
@@ -81,6 +82,7 @@ export function createUiState() {
       eggs: { x: 190, y: 60, open: false, theme: 'peach', icon: 'gift' },
       raceinvite: { x: 180, y: 60, open: false, theme: 'pink', icon: 'star' },
       gardenpick: { x: 220, y: 80, open: false, theme: 'pink', icon: 'heart' },
+      mochiname: { x: 210, y: 90, open: false, theme: 'pink', icon: 'heart' },
       life: { x: 150, y: 48, open: false, theme: 'mint', icon: 'leaf' },
       craft: { x: 140, y: 44, open: false, theme: 'mint', icon: 'hammer' },
       gacha: { x: 150, y: 44, open: false, theme: 'mint', icon: 'gift' },
@@ -88,7 +90,7 @@ export function createUiState() {
       auction: { x: 130, y: 40, open: false, tab: 0, theme: 'gold', icon: 'crown' },
     },
     // Window stacking, back to front. Clicking a window brings it to the front.
-    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'eggs', 'raceinvite', 'gardenpick', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
+    order: ['stats', 'skills', 'quests', 'bag', 'worldmap', 'cashshop', 'pet', 'online', 'collection', 'cook', 'mochi', 'race', 'eggs', 'raceinvite', 'gardenpick', 'mochiname', 'craft', 'life', 'gacha', 'trade', 'auction', 'admin', 'profile', 'options'],
     // Whose profile is open: { kind: 'self' } or { kind: 'bot', id }.
     profile: null,
     // The right-click menu on a player or yourself: { kind: 'bot' | 'self', id, x, y }.
@@ -149,6 +151,8 @@ export function routeInput(state, world, input, dt) {
       state.windows.raceinvite.open = true;
     } else if (e.type === 'gardenpick') {
       state.windows.gardenpick.open = true;
+    } else if (e.type === 'mochiname') {
+      state.windows.mochiname.open = true;
     } else if (e.type === 'craft') {
       state.windows.craft.open = true;
     } else if (e.type === 'gacha') {
@@ -173,6 +177,8 @@ export function routeInput(state, world, input, dt) {
     state.windows.npc.open = false;
     return true;
   }
+  // Naming a Mochi has the keyboard (ui/mochi-name.js reads what's typed).
+  if (state.windows.mochiname.open && world.naming) return true;
   // The Controls page waiting for a new key has the keyboard (ui/options.js catches the key).
   if (state.windows.options.open && state.windows.options.listen) return true;
   // While the chat bar is open it has the keyboard.
@@ -233,7 +239,7 @@ export function routeInput(state, world, input, dt) {
   return Boolean(state.npc) || state.death;
 }
 
-const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, eggs: eggStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
+const WINDOWS = { stats: statsWindow, skills: skillsWindow, quests: questsWindow, bag: bagWindow, worldmap: worldMapWindow, admin: adminWindow, options: optionsWindow, profile: profileWindow, cashshop: cashShopWindow, pet: petWindow, online: onlineWindow, collection: collectionWindow, cook: cookingWindow, mochi: mochiCareWindow, race: raceBoardWindow, eggs: eggStallWindow, raceinvite: raceInviteWindow, gardenpick: gardenPickWindow, mochiname: mochiNameWindow, craft: craftingWindow, life: lifeWindow, gacha: gachaWindow, trade: tradeWindow, auction: auctionWindow };
 const POP = 0.22;
 
 // Opening windows pop in with a little overshoot.

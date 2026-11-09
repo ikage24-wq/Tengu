@@ -248,3 +248,33 @@ test('eggs: from your bag to the gate on arriving; the stall sells three a day; 
     g.done();
   }
 });
+
+test('names: a hatchling asks for one; suggestions are sweet, never a rival\'s or one your Mochi have; typed names are tidied', async () => {
+  const { suggestName, cleanName, calledOf, MOCHI_NAMES, NAME_MAX } = await import('../src/data/mochi-names.js');
+  const { RIVAL_NAMES } = await import('../src/data/mochi-race.js');
+  assert.ok(MOCHI_NAMES.length >= 60);
+  assert.ok(MOCHI_NAMES.every((n) => !RIVAL_NAMES.includes(n) && n.length <= NAME_MAX));
+  const taken = MOCHI_NAMES.slice(0, -1);
+  assert.equal(suggestName(taken), MOCHI_NAMES.at(-1));
+  assert.equal(cleanName('  Momo   Pie!! '), 'Momo Pie');
+  assert.equal(cleanName('ABCDEFGHIJKLMNOP'), 'ABCDEFGHIJKL');
+  assert.equal(cleanName('  '), null);
+  const g = garden();
+  try {
+    assert.equal(calledOf(g.baby), 'your Mochiko');
+    g.baby.name = 'Kinako';
+    assert.equal(calledOf(g.baby), 'Kinako');
+    // Hatching an egg asks what to call it.
+    g.char.garden.eggs = [{ seed: 4242 }];
+    Object.assign(g.w.body, { x: 404, y: g.w.body.y });
+    g.up();
+    const h = g.w.gardenLife.hatching;
+    assert.ok(h);
+    h.m.hatched = true;
+    g.run(0.1);
+    assert.ok(g.w.naming, 'the new Mochiko waits for a name');
+    assert.ok(g.w.events.some((e) => e.type === 'mochiname'));
+  } finally {
+    g.done();
+  }
+});

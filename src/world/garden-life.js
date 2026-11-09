@@ -30,6 +30,7 @@ import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
 import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
 import { sendGardenGift, gardenFriends } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
+import { calledOf } from '../data/mochi-names.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
 
@@ -187,7 +188,7 @@ export function tickGarden(world, dt) {
         sm.genes = rec;
         sm.noIdle = false;
         e.scene = null;
-        if (owner) world.log(`It hatched again: a little Mochiko, generation ${rec.gen}!`, '#ffc2d4');
+        if (owner) world.log(`${rec.name ?? 'It'} hatched again: a little Mochiko, generation ${rec.gen}!`, '#ffc2d4');
       } else return;
     }
     const m = e.m;
@@ -200,7 +201,8 @@ export function tickGarden(world, dt) {
       e.m = { genes: before, dir: m.dir, speed: 0, dist: 0, size: 'baby', evolve: { t0: null, path: out.path, moon: out.stage === 'tsukimochi' } };
       e.scene = 'evolve';
       if (life.caring === e) life.caring = null;
-      world.log(out.stage === 'tsukimochi' ? 'Your Mochiko is glowing... a Tsukimochi! It will live forever.' : `Your Mochiko is glowing... it's evolving into ${STAGES[out.stage] ?? out.stage}!`, '#ffc2d4');
+      const who = rec.name ?? 'Your Mochiko';
+      world.log(out.stage === 'tsukimochi' ? `${who} is glowing... a Tsukimochi! It will live forever.` : `${who} is glowing... evolving into ${STAGES[out.stage] ?? out.stage}!`, '#ffc2d4');
       return;
     }
     // The end of a long, happy life: back to its egg, to start again (stronger for it).
@@ -212,7 +214,7 @@ export function tickGarden(world, dt) {
       e.m = { genes: rec, dir: m.dir, speed: 0, dist: 0, size: 'grown', rebirth: { t0: null }, egg: out.egg };
       e.scene = 'rebirth';
       if (life.caring === e) life.caring = null;
-      world.log(`Your ${STAGES[rec.stage]} has lived a long, happy life... it waves, and goes back to its egg to start again!${out.raised.length ? ' It will be stronger for it.' : ''}`, '#ffc2d4');
+      world.log(`${rec.name ?? `Your ${STAGES[rec.stage]}`} has lived a long, happy life... it waves, and goes back to its egg to start again!${out.raised.length ? ' It will be stronger for it.' : ''}`, '#ffc2d4');
       return;
     }
     if (inside) {
@@ -320,7 +322,7 @@ export function sayGoodbye(world, e) {
   e.greet = null;
   e.m.queue = [];
   e.m.action = { name: 'farewell', t0: null, hold: 0 };
-  world.log(`Your ${STAGES[e.rec.stage] ?? 'Mochi'} waves goodbye... off to a new home, where it'll be loved too.`, '#ffc2d4');
+  world.log(`${e.rec.name ?? `Your ${STAGES[e.rec.stage] ?? 'Mochi'}`} waves goodbye... off to a new home, where it'll be loved too.`, '#ffc2d4');
   return true;
 }
 // A friend visiting your garden petted or fed one of your Mochi (net/visit.js): it happens to your
@@ -330,7 +332,7 @@ export function applyGardenGift(world, msg, who) {
   const rec = world.char.garden?.mochi.find((r) => r.seed === msg.seed);
   if (!rec || rec.stage === 'egg') return;
   const here = !world.gardenVisit ? world.gardenLife?.mochi.find((e) => e.rec === rec && !e.scene && !e.leaving) : null;
-  const name = STAGES[rec.stage] ?? 'Mochi';
+  const name = calledOf(rec);
   const bond = rec.bond;
   if (msg.what === 'feed') {
     const sw = SWEET_BY_ID[msg.sweet];
@@ -338,14 +340,14 @@ export function applyGardenGift(world, msg, who) {
     const out = feedRec(rec, sw.id);
     rec.bond = bond;
     if (here && out) react(here, out, out.action, { sweet: sw.kind });
-    world.log(out?.refused ? `${who} offered your ${name} a ${sw.name}, but it was too full.` : `${who} fed your ${name} a ${sw.name}!`, '#ffc2d4');
+    world.log(out?.refused ? `${who} offered ${name} a ${sw.name}, but it was too full.` : `${who} fed ${name} a ${sw.name}!`, '#ffc2d4');
     return;
   }
   if (!VISITOR_CARE.includes(msg.what)) return;
   const out = careRec(rec, msg.what);
   rec.bond = bond;
   if (here && out) react(here, out, out.action, { hold: 1.4 });
-  world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} your ${name}!`, '#ffc2d4');
+  world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} ${name}!`, '#ffc2d4');
 }
 
 // ---------- Eggs ----------
@@ -475,5 +477,8 @@ export function finishHatch(world) {
   h.m.noIdle = false;
   life.mochi.push({ rec, m: h.m, x: h.x + h.m.dir * 14 });
   life.hatching = null;
-  world.log(`It hatched! A ${rec.personality} little Mochiko. It loves ${rec.loves}.`, '#ffc2d4');
+  world.log(`It hatched! A ${rec.personality} little Mochiko. It loves ${rec.loves}. What will you call it?`, '#ffc2d4');
+  // (Its name: ui/mochi-name.js.)
+  world.naming = rec;
+  world.events.push({ type: 'mochiname' });
 }

@@ -25,7 +25,9 @@ const portraitOf = (rec) => {
   if (!portraits.has(rec)) portraits.set(rec, { genes: rec, dir: 1, speed: 0, dist: 0, size: rec.stage === 'mochiko' ? 'baby' : 'grown', noIdle: true });
   return portraits.get(rec);
 };
-const nameOf = (r) => r.name ?? `Your ${MOCHI_STAGES[r.rec.stage] ?? 'Mochi'}`;
+const nameOf = (r) => (r.you ? r.rec.name ?? `Your ${MOCHI_STAGES[r.rec.stage] ?? 'Mochi'}` : r.name);
+// A Mochi's line in a list: its name (or, not named yet, who it is).
+const lineOf = (rec) => (rec.name ? `${rec.name} · ${MOCHI_STAGES[rec.stage]}` : `${cap(rec.personality)} ${MOCHI_STAGES[rec.stage]}`);
 
 // A medal: a little coin in its colour, or an empty ring where there isn't one yet.
 function medalDot(ctx, x, y, medal, r = 3.2) {
@@ -103,7 +105,7 @@ export function raceBoardWindow(ui, state, world) {
     ctx.clip();
     drawMochiAnim(ctx, portraitOf(rec), cx + 12, cy + 31, world.now);
     ctx.restore();
-    text(ctx, fit(ctx, `${cap(rec.personality)} ${MOCHI_STAGES[rec.stage]}`, cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
+    text(ctx, fit(ctx, lineOf(rec), cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
     // (What this stage tests, and Stamina; the Grand course, its best two.)
     const shown = stage.stat ? [stage.stat, stage.stat === 'stamina' ? 'run' : 'stamina'] : Object.keys(STAT_WORD).sort((a, b) => rec.stats[b].points - rec.stats[a].points).slice(0, 2);
     text(ctx, shown.map((st) => `${STAT_WORD[st]} Lv ${rec.stats[st].level}`).join(' · '), cx + 26, cy + 19, { size: 6, color: COLORS.muted });
@@ -181,7 +183,7 @@ export function raceInviteWindow(ui, state, world) {
     ctx.clip();
     drawMochiAnim(ctx, portraitOf(rec), cx + 12, cy + 31, world.now);
     ctx.restore();
-    text(ctx, fit(ctx, `${cap(rec.personality)} ${MOCHI_STAGES[rec.stage]}`, cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
+    text(ctx, fit(ctx, lineOf(rec), cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
     const st = RACE_STAGES[inv.stageId]?.stat ?? 'run';
     text(ctx, `${STAT_WORD[st]} Lv ${rec.stats[st].level}`, cx + 26, cy + 19, { size: 6, color: COLORS.muted });
     if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;

@@ -42,7 +42,8 @@ export function mochiCareWindow(ui, state, world) {
   const rec = e.rec;
   // (In a friend's garden: their Mochi, and only gentle care.)
   const guest = world.gardenVisit;
-  if (!windowFrame(ui, win, W, guest ? H - 19 : H, guest ? `${guest.name}'s ${STAGES[rec.stage] ?? 'Mochi'}` : STAGES[rec.stage] ?? 'Mochi')) return;
+  const title = rec.name ?? STAGES[rec.stage] ?? 'Mochi';
+  if (!windowFrame(ui, win, W, guest ? H - 19 : H, guest ? `${guest.name}'s ${title}` : title)) return;
   const { ctx } = ui;
   const x = win.x + 10;
   let y = win.y + 32;
@@ -71,6 +72,11 @@ export function mochiCareWindow(ui, state, world) {
   y += 36;
   // Care.
   text(ctx, 'Care', x, y + 6, { size: 7, bold: true, color: COLORS.muted });
+  // Rename it (your own Mochi): ui/mochi-name.js.
+  if (!guest && button(ui, win.x + W - 134, y - 3, 60, 12, rec.name ? 'Rename' : 'Name it', { size: 6.5 })) {
+    world.naming = rec;
+    world.events.push({ type: 'mochiname' });
+  }
   // Goodbye (your own Mochi): a second click to be sure.
   if (!guest) {
     const sure = win.bye?.e === e && now < win.bye.until;
