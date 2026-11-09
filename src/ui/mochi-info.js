@@ -2,7 +2,7 @@
 // path, form, generation and age, rarity and coat; its five stats (grade, level, points, how far to
 // the next level, and the way it moves now); who it is (personality, the sweet it loves and the one
 // it hates, its voice); how it feels (mood, bond, tummy) and which way it leans; what it's growing
-// into, while a Mochiko; its tricks; its race medals. Opened from its care panel (or, for the one
+// into, while a Mochiko; its tricks; its race medals; its parents, if it was bred. Opened from its care panel (or, for the one
 // picked, the race board): ◀ ▶ go through the rest of your Mochi.
 
 import { STAGES, STATS } from '../data/mochi-genes.js';
@@ -69,6 +69,9 @@ export function mochiInfoWindow(ui, state, world) {
   line(`Generation ${rec.gen ?? 1} · ${ageOf(rec.age)} old`);
   line(cap(rec.rarity ?? 'common'), { bold: true, color: RARITY_COLOR[rec.rarity] ?? COLORS.muted });
   if (coatName(rec)) line(`${coatName(rec)} coat`, { color: RARITY_COLOR[rec.rarity] ?? COLORS.muted });
+  if (rec.parents?.length === 2) line(`Parents: ${rec.parents.map((p) => p.name ?? 'a Mochi').join(' & ')}`);
+  if (rec.bloom > 0) line('In bloom!', { color: '#ff6f9a', bold: true });
+  else if (rec.bredRest > 0) line('Resting after an egg');
   // ---- Right: its stats.
   const rx = x + 102;
   const rw = W - 122;

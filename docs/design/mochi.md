@@ -254,6 +254,14 @@ Each step is pushed on its own. Status as of 2026-11-09.
    part comes from one parent or the other, with a small chance of something new; talents average
    the parents' with a chance to step up; rare coats can be passed on at a reduced chance. The way
    to chase a particular rare.
+   **Built (2026-11-10; the user chose the Heart Sweet and "rarer = harder"):** the Heart Mochi
+   (kitchen: 2 mochi rice, 2 cherries, a honeycomb) makes a grown Mochi bloom for 10 game hours
+   (flowers circling its feet; a Mochiko just enjoys it). Two blooming Mochi pair up (if there's room
+   by the gate), walk to each other, nuzzle and twirl with hearts rising, and leave an egg by the
+   gate holding their baby (data/mochi-breed.js: each of 18 parts from a parent, 8% something new;
+   talents the parents' grades averaged, 25% a step up; a coat passes on at rare 1/3, epic 1/6,
+   legendary 1/12, mythic 1/25, Mutation 1/50, twice that when both parents have it). They then
+   rest an hour of garden time before blooming again. The baby knows its parents (on its page).
 10. **The Mochi album.** *(New.)* A book that fills in every hairstyle, fringe, eye, mouth, brow,
     coat, Mutation and stage-2 kind you've hatched, with counts and your rarest Mochi on the cover.
     Like the capsule album for the gacha.

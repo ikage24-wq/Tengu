@@ -137,6 +137,14 @@ if (q.has('lobby')) {
   w.raceLobby = { stageId: 'sprint', rank: 'beginner', rec: c.garden.mochi[0], invited: ['B', 'C'], joined: { B: { rec: c.garden.mochi[1], name: 'Bea' } }, declined: [] };
   Object.assign(state.windows.race, { open: true, openedAt: -99 });
 }
+// (?bloom=1: Mochi 1 and 3 blooming, 3 just along from 1, so they find each other.)
+if (q.has('bloom')) {
+  const [e1, e3] = [life.mochi[1], life.mochi[3]];
+  e1.rec.bloom = 600;
+  e3.rec.bloom = 600;
+  e3.x = e1.x + 70;
+  Object.assign(w.body, { x: e1.x - 60 });
+}
 // (?info=1: Mochi 1's page.)
 if (q.has('info')) {
   w.mochiInfo = c.garden.mochi[Number(q.get('info'))];

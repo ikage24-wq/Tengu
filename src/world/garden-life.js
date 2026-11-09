@@ -19,6 +19,10 @@
 // EGG_PRICE gold (read them: the rare ones glint); eggs from monsters, quests and the Race Stadium
 // come in your bag and are set down by the gate when you arrive (a Star Egg's is the rarest of a few
 // rolls). Up to EGG_SLOTS.length wait by the gate.
+// Breeding (step 9; data/mochi-breed.js): two blooming Mochi (a Heart Mochi each) go and find each
+// other, nuzzle and dance, and leave an egg by the gate holding the baby they've bred
+// (`{ seed, genes }`; it hatches as exactly that one); then they rest a while before blooming again.
+//   world.gardenLife.pairing = { a, b, met } (the two on their way to each other)
 // A friend visiting (net/visit.js: world.gardenVisit is whose garden it is) sees the same Mochi in
 // the same places; they can pet, play with and cheer on your Mochi and feed them sweets of their
 // own, and their game sends it to yours (applyGardenGift), where it happens to your real Mochi.
@@ -27,10 +31,11 @@
 //     caring (the entry whose care panel is open) }
 
 import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
-import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
+import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf, BLOOM } from '../data/mochi-raise.js';
 import { sendGardenGift, gardenFriends } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { calledOf } from '../data/mochi-names.js';
+import { breedGenes } from '../data/mochi-breed.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
 
@@ -233,6 +238,10 @@ export function tickGarden(world, dt) {
     let target = sched.x;
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
     else e.greet = null;
+    // (Blooming and paired: off to find the other.)
+    const pair = life.pairing;
+    const other = pair && !pair.met ? (pair.a === e ? pair.b : pair.b === e ? pair.a : null) : null;
+    if (other && other.x != null && e.x != null) target = other.x + (e.x < other.x ? -11 : 11);
     // (Being cared for, it stays put, looking up at you.)
     const busy = now < (e.busyUntil ?? 0);
     if (busy && e.x != null) target = e.x;
@@ -240,7 +249,8 @@ export function tickGarden(world, dt) {
     if (pts(rec, 'swim') < CANT.swim && target > LAND[1]) target = LAND[1];
     if (e.x == null) e.x = sched.x;
     const wet = inWater(e.x);
-    const v = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
+    const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
+    const v = other ? Math.max(v0, 40) : v0;
     const dx = target - e.x;
     const step = Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
     e.x += step;
@@ -259,6 +269,7 @@ export function tickGarden(world, dt) {
       m.action = { name: 'cheer', t0: null, hold: 1.5 };
     }
   });
+  if (owner && !inside) tickPairing(world, life, now, night);
   for (const e of gone) {
     life.mochi.splice(life.mochi.indexOf(e), 1);
     const list = life.owner?.garden?.mochi;
@@ -313,6 +324,10 @@ export function feedMochi(world, e, id) {
   react(e, out, out.action, { sweet: sw.kind });
   if (out.refused) world.log('It pats its round tummy: too full for now!', '#ffd6a0');
   else if (out.learned) world.log(`It loved trying ${sw.name}... and learned a new trick!`, '#ffc2d4');
+  if (sw.heart && !out.refused) {
+    const name = calledOf(e.rec, 'Your');
+    world.log(out.bloomed ? `Flowers bloom round ${name}! Another blooming Mochi will come and find it.` : e.rec.stage === 'mochiko' ? `${name}'s too young to bloom, but it loved the treat.` : `${name} had an egg not long ago: it isn't ready to bloom again yet.`, '#ffc2d4');
+  }
   return out;
 }
 // Says goodbye to it (your own garden only): it waves, and is off to a new home.
@@ -348,6 +363,43 @@ export function applyGardenGift(world, msg, who) {
   rec.bond = bond;
   if (here && out) react(here, out, out.action, { hold: 1.4 });
   world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} ${name}!`, '#ffc2d4');
+}
+
+// ---------- Breeding ----------
+// Two blooming Mochi pair up (if there's room by the gate for an egg), find each other, and once
+// they meet nuzzle and dance; then the egg is there by the gate, and they rest a while.
+const DANCE = 3.6;
+function tickPairing(world, life, now, night) {
+  const g = world.char.garden;
+  let pair = life.pairing;
+  const ok = (e) => life.mochi.includes(e) && !e.scene && !e.leaving && !e.hidden && e.x != null && e.rec.bloom > 0;
+  if (pair && (night || !ok(pair.a) || !ok(pair.b))) pair = life.pairing = null;
+  if (!pair && !night) {
+    const blooming = life.mochi.filter(ok);
+    if (blooming.length >= 2 && (g.eggs ?? []).length < EGG_SLOTS.length) pair = life.pairing = { a: blooming[0], b: blooming[1], met: null };
+  }
+  if (!pair) return;
+  const { a, b } = pair;
+  if (!pair.met && Math.abs(a.x - b.x) < 26) {
+    pair.met = now;
+    for (const [e, o] of [[a, b], [b, a]]) {
+      e.m.dir = Math.sign(o.x - e.x) || 1;
+      e.m.action = { name: 'pet', t0: null, hold: 1.2 };
+      e.m.queue = [{ name: 'twirl' }];
+      e.busyUntil = now + DANCE + 0.6;
+      e.greet = null;
+    }
+  } else if (pair.met) {
+    a.m.dir = Math.sign(b.x - a.x) || 1;
+    b.m.dir = Math.sign(a.x - b.x) || 1;
+    if (now - pair.met >= DANCE) {
+      const seed = Math.floor(Math.random() * 1e9);
+      (g.eggs ??= []).push({ seed, genes: breedGenes(a.rec, b.rec, seed) });
+      for (const e of [a, b]) Object.assign(e.rec, { bloom: 0, bredRest: BLOOM.rest });
+      life.pairing = null;
+      world.log(`${calledOf(a.rec, 'Your')} and ${calledOf(b.rec, 'your')} nuzzle and dance... and there's an egg by the gate!`, '#ffc2d4');
+    }
+  }
 }
 
 // ---------- Eggs ----------
@@ -458,7 +510,7 @@ export function rockEgg(world) {
     return true;
   }
   const egg = g.eggs[i];
-  const genes = { ...rollMochi(egg.seed), stage: 'egg' };
+  const genes = { ...(egg.genes ?? rollMochi(egg.seed)), stage: 'egg' };
   life.hatching = { egg, x: EGG_SLOTS[i], m: { genes, dir: world.body.x < EGG_SLOTS[i] ? 1 : -1, speed: 0, dist: 0, size: 'baby', eggScale: 1, hatch: { t0: null } } };
   world.log('You rock the egg gently... it wobbles back!', '#ffc2d4');
   return true;
@@ -470,7 +522,7 @@ export function finishHatch(world) {
   if (!h || !h.m.hatched) return;
   const g = life.owner.garden;
   g.eggs = g.eggs.filter((e) => e !== h.egg);
-  const rec = newRecord(rollMochi(h.egg.seed));
+  const rec = newRecord(h.egg.genes ?? rollMochi(h.egg.seed));
   g.mochi.push(rec);
   // (It carries on from where it landed, with the same animation.)
   h.m.genes = rec;

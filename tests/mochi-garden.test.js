@@ -278,3 +278,56 @@ test('names: a hatchling asks for one; suggestions are sweet, never a rival\'s o
     g.done();
   }
 });
+
+test('breeding: a Heart Mochi makes a grown Mochi bloom; two blooming find each other and leave an egg of their own', async () => {
+  const { breedGenes, INHERITED } = await import('../src/data/mochi-breed.js');
+  const { feed, evolve: evolveRec } = await import('../src/data/mochi-raise.js');
+  const { seededRandom } = await import('../src/data/mochi-genes.js');
+  // The genes: each part from one parent or the other (now and then something new); parents known.
+  const a = newRecord(rollMochi(101, { coat: null }));
+  const b = newRecord(rollMochi(202, { coat: null }));
+  a.name = 'Kinako';
+  b.name = 'Momo';
+  const kid = breedGenes(a, b, 303, seededRandom(9));
+  const fromParents = INHERITED.filter((p) => JSON.stringify(kid[p]) === JSON.stringify(a[p]) || JSON.stringify(kid[p]) === JSON.stringify(b[p])).length;
+  assert.ok(fromParents >= INHERITED.length - 4, `${fromParents} of ${INHERITED.length} parts from the parents`);
+  assert.deepEqual(kid.parents.map((p) => p.name), ['Kinako', 'Momo']);
+  // A rare coat passes on now and then; a mutation hardly ever.
+  const shiny = { ...a, coat: 'shiny' };
+  const rng = seededRandom(5);
+  const n = 600;
+  const passed = Array.from({ length: n }, (_, i) => breedGenes(shiny, b, 1000 + i, rng).coat === 'shiny').filter(Boolean).length;
+  assert.ok(passed > n * 0.2 && passed < n * 0.48, `shiny passed ${passed} of ${n}`);
+  const g = garden();
+  try {
+    // A Mochiko can't bloom; a grown one can.
+    addItem(g.char.inventory, 'msweet_heartmochi', 3);
+    assert.equal(feed(g.baby, 'msweet_heartmochi').bloomed, false);
+    for (const rec of g.char.garden.mochi) {
+      Object.assign(rec, { age: 99999, mood: 90, tummy: 0 });
+      evolveRec(rec);
+      Object.assign(rec, { age: 3600 });
+    }
+    g.char.garden.eggs = [];
+    for (const rec of g.char.garden.mochi) assert.ok(feed(rec, 'msweet_heartmochi').bloomed);
+    assert.ok(g.swimmer.bloom > 0 && g.baby.bloom > 0);
+    // They find each other, dance, and leave an egg holding their baby.
+    for (let k = 0; k < 900 && !g.char.garden.eggs.length; k++) g.run(0.2);
+    assert.equal(g.char.garden.eggs.length, 1);
+    const egg = g.char.garden.eggs[0];
+    assert.ok(egg.genes?.parents?.length === 2);
+    assert.equal(g.swimmer.bloom, 0);
+    assert.ok(g.swimmer.bredRest > 0, 'resting after');
+    assert.ok(!feed(g.swimmer, 'msweet_heartmochi').bloomed, 'not again so soon');
+    // The egg hatches as exactly the baby bred.
+    Object.assign(g.w.body, { x: 404, y: g.w.body.y });
+    g.up();
+    g.w.gardenLife.hatching.m.hatched = true;
+    g.run(0.1);
+    const baby = g.char.garden.mochi.at(-1);
+    assert.equal(baby.hair, egg.genes.hair);
+    assert.deepEqual(baby.parents, egg.genes.parents);
+  } finally {
+    g.done();
+  }
+});

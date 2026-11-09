@@ -592,7 +592,7 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
       if (life.hatching?.egg === egg) return;
       const ex = EGG_SLOTS[i];
       if (ex == null) return;
-      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y, genesOf(egg.seed), time, GARDEN_EGG);
+      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y, egg.genes ?? genesOf(egg.seed), time, GARDEN_EGG);
     });
   }
   for (const e of life.mochi) {
@@ -603,12 +603,60 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(1, e.fade));
     }
+    const bloom = e.rec.bloom > 0 && !e.scene;
+    if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, false);
     if (e.scene === 'evolve') drawEvolve(ctx, e.m, x, y, time);
     else if (e.scene === 'rebirth') drawRebirth(ctx, e.m, x, y, time);
     else if (e.scene === 'hatch') drawHatch(ctx, e.m, x, y, time);
     else drawMochiAnim(ctx, e.m, x, y, time);
+    if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, true);
     if (e.fade != null) ctx.restore();
   }
+  // A pair that's met: hearts rising between them as they dance.
+  const pair = life.pairing;
+  if (pair?.met) {
+    const mx = (pair.a.x + pair.b.x) / 2 - cam.x;
+    const my = Math.min(pair.a.y, pair.b.y) - cam.y - 30;
+    for (let i = 0; i < 3; i++) {
+      const k = (time * 0.7 + i / 3) % 1;
+      ctx.globalAlpha = Math.sin(Math.PI * k);
+      heart(ctx, mx + Math.sin(k * 6 + i * 2) * 6, my - k * 22, 2.6 + i * 0.4, i === 1 ? '#ff6f9a' : '#ffb3c8');
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+// Flowers blooming round a Mochi that's had a Heart Mochi: five little blossoms circling at its feet
+// (the back ones drawn behind it, the front ones in front), each gently opening and closing.
+const BLOOMS = ['#ffb3c8', '#ffffff', '#ffd6e4', '#fff2a8', '#ffc2d4'];
+function bloomFlowers(ctx, x, y, time, seed, front) {
+  for (let i = 0; i < 5; i++) {
+    const a = time * 0.5 + i * ((Math.PI * 2) / 5) + (seed % 7);
+    if ((Math.sin(a) > 0) !== front) continue;
+    const fx = x + Math.cos(a) * 15;
+    const fy = y - 3 + Math.sin(a) * 3.5;
+    const r = 1.8 + 0.5 * Math.sin(time * 2 + i);
+    ctx.fillStyle = BLOOMS[i];
+    for (let p = 0; p < 5; p++) {
+      const pa = p * ((Math.PI * 2) / 5) + time * 0.3;
+      ctx.beginPath();
+      ctx.arc(fx + Math.cos(pa) * r, fy - 3 + Math.sin(pa) * r * 0.8, r * 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#ffd25a';
+    ctx.beginPath();
+    ctx.arc(fx, fy - 3, r * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#7fbf62';
+    ctx.fillRect(fx - 0.4, fy - 1.5, 0.8, 3);
+  }
+}
+function heart(ctx, x, y, s, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y + s * 0.9);
+  ctx.bezierCurveTo(x - s * 1.4, y - s * 0.2, x - s * 0.6, y - s * 1.2, x, y - s * 0.4);
+  ctx.bezierCurveTo(x + s * 0.6, y - s * 1.2, x + s * 1.4, y - s * 0.2, x, y + s * 0.9);
+  ctx.fill();
 }
 
 // ---------- Drawing ----------

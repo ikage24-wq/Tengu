@@ -528,7 +528,8 @@ for (const [id, c] of Object.entries(GARDEN_CROPS)) add({ id, name: c.name, type
 for (const sw of MOCHI_SWEETS) {
   const trains = Object.keys(sw.trains).map((st) => STAT_WORD[st]);
   const what = trains.length > 2 ? 'a little of everything' : trains.join(' and ');
-  add({ id: sw.id, name: sw.name, type: 'etc', price: 20, color: '#ffd0dc', mochiSweet: sw.kind, desc: `${sw.taste === 'spicy' ? 'A spicy treat' : 'A sweet'} for your Mochi: trains ${what}${sw.taste === 'spicy' ? ', and leans it a little devilish' : ''}. Up beside a Mochi to feed it.` });
+  const desc = sw.heart ? 'A heart of pink mochi. Fed to a grown Mochi, it makes flowers bloom round it: two blooming Mochi find each other and leave an egg by the gate.' : `${sw.taste === 'spicy' ? 'A spicy treat' : 'A sweet'} for your Mochi: trains ${what}${sw.taste === 'spicy' ? ', and leans it a little devilish' : ''}. Up beside a Mochi to feed it.`;
+  add({ id: sw.id, name: sw.name, type: 'etc', price: sw.heart ? 60 : 20, color: '#ffd0dc', mochiSweet: sw.kind, desc });
 }
 // Mochi eggs (docs/design/mochi.md step 6), from monsters (very rarely), some quests, and the Race
 // Stadium (a Star Egg: better odds of a rare). Taken to your Mochi Garden, they wait by the gate to

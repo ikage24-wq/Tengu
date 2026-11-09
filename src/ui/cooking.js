@@ -112,7 +112,7 @@ function sweetsList(ui, win, world, x, st) {
     box(ctx, x, y, W - 16, ROW - 3, { fill: ok ? '#fff4f8' : '#ffffff', edge: ok ? '#ff8fb0' : th.light, r: 8, width: 1 });
     drawItemIcon(ctx, sw.id, x + 6, y + 7);
     text(ctx, fit(ctx, sw.name, 124, 8, true), x + 28, y + 11, { size: 8, bold: true });
-    const trains = Object.entries(sw.trains).map(([s, n]) => `${STAT_WORD[s]} +${n}`).join(', ');
+    const trains = sw.heart ? 'A grown Mochi blooms: two make an egg' : Object.entries(sw.trains).map(([s, n]) => `${STAT_WORD[s]} +${n}`).join(', ');
     text(ctx, fit(ctx, trains, 124, 6.5, false), x + 28, y + 21, { size: 6.5, color: sw.taste === 'spicy' ? '#d8483a' : '#3f9f5f' });
     let ix = x + 160;
     for (const [id, n] of Object.entries(sw.needs)) {

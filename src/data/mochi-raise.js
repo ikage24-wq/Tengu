@@ -127,6 +127,8 @@ export const leanOf = (rec) => (rec.lean >= LEAN_SHOWS ? 'angel' : rec.lean <= -
 export function tick(rec, secs) {
   if (rec.stage === 'egg') return;
   rec.age += secs;
+  if (rec.bloom > 0) rec.bloom = Math.max(0, rec.bloom - secs);
+  if (rec.bredRest > 0) rec.bredRest = Math.max(0, rec.bredRest - secs);
   const fade = 0.5 ** (secs / TREND.half);
   for (const s of STATS) if (rec.trend) rec.trend[s] *= fade;
   rec.tummy = Math.max(0, (rec.tummy ?? 0) - (secs * 100) / TUMMY.empty);
@@ -169,6 +171,8 @@ export const MOCHI_SWEETS = [
   sweet('imagawayaki', 'Imagawayaki', { run: 28, power: 16 }, { azuki: 1, brownie_crumb: 1, honeycomb: 1 }),
   sweet('kinako mochi', 'Kinako Mochi', { run: 45 }, { mochi_rice: 2, kinako: 1 }),
   sweet('mitarashi', 'Mitarashi Dango', { run: 25, power: 25 }, { mochi_rice: 2, honeycomb: 1 }),
+  // (No stat: a grown Mochi that eats one blooms, ready to make an egg with another: data/mochi-breed.js.)
+  sweet('heart mochi', 'Heart Mochi', {}, { mochi_rice: 2, cherry: 2, honeycomb: 1 }, { heart: true }),
   spicy('senbei', 'fire senbei', 'Fire Senbei', { power: 34 }, { mochi_rice: 1, fire_pepper: 1 }),
   spicy('shichimi', 'shichimi dango', 'Shichimi Dango', { run: 34 }, { mochi_rice: 2, fire_pepper: 1 }),
   spicy('ember', 'ember arare', 'Ember Arare', { fly: 34 }, { mochi_rice: 1, wisp_flame: 1 }),
@@ -217,7 +221,10 @@ function feedNow(rec, id, rng) {
     bond: loved ? 8 : hated ? 0 : 3,
     lean: sw.taste === 'spicy' ? -0.06 : 0.03,
   });
-  return { action: hated ? 'hated' : 'eat', ups, loved, hated, learned };
+  // (A Heart Mochi: a grown one blooms, unless it had an egg not long ago.)
+  const bloomed = sw.heart ? canBloom(rec) : undefined;
+  if (bloomed) rec.bloom = BLOOM.secs;
+  return { action: hated ? 'hated' : 'eat', ups, loved, hated, learned, bloomed };
 }
 
 // ---------- Care ----------
@@ -259,6 +266,10 @@ function careNow(rec, what, rng) {
 // A Mochiko evolves once it has grown enough (EVOLVE.exp taken in, its levels adding up to
 // EVOLVE.levels) and lived long enough (EVOLVE.age seconds), and only when happy.
 export const EVOLVE = { exp: 3000, levels: 40, age: 2 * 3600, mood: 50 };
+// Blooming (a Heart Mochi): how long a grown Mochi blooms, and how long after having an egg before it
+// can again (garden time, seconds).
+export const BLOOM = { secs: 10 * 60, rest: 60 * 60 };
+export const canBloom = (rec) => ['amamochi', 'karamochi', 'tsukimochi'].includes(rec.stage) && !(rec.bredRest > 0);
 export const canEvolve = (rec) => rec.stage === 'mochiko' && rec.grown >= EVOLVE.exp && totalLevels(rec) >= EVOLVE.levels && rec.age >= EVOLVE.age && rec.mood >= EVOLVE.mood;
 // Which path it takes: the way it leans; dead even, its personality decides.
 const ANGELIC = ['gentle', 'sweet', 'polite', 'shy', 'dreamy', 'clingy', 'timid', 'stoic', 'artsy', 'sleepy', 'bubbly', 'foodie', 'lazy', 'curious', 'chatty', 'proud'];
