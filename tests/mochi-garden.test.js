@@ -366,3 +366,24 @@ test('personality in play: moments that fit who starts them, the same for a visi
     g.done();
   }
 });
+
+test('voices: a Mochi speaks in its own voice when it does something with feeling, a moment apart', () => {
+  const g = garden();
+  try {
+    g.swimmer.voice = { style: 'trill', pitch: 1.2 };
+    const e = g.w.gardenLife.mochi[0];
+    Object.assign(g.w.body, { x: e.x + 8, y: e.y });
+    g.w.juice.length = 0;
+    careFor(g.w, e, 'pet');
+    g.run(0.1);
+    const said = g.w.juice.filter((j) => j.type === 'mochiVoice');
+    assert.equal(said.length, 1);
+    assert.deepEqual([said[0].style, said[0].pitch, said[0].mood], ['trill', 1.2, 'happy']);
+    // (Not chattering: the next straight after isn't heard.)
+    careFor(g.w, e, 'cheer');
+    g.run(0.1);
+    assert.equal(g.w.juice.filter((j) => j.type === 'mochiVoice').length, 1);
+  } finally {
+    g.done();
+  }
+});

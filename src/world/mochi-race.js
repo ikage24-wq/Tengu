@@ -32,6 +32,7 @@ import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '.
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
 import { groundAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
+import { mochiVoice, voiceAction } from './mochi-voice.js';
 import { loadMap } from './world.js';
 
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS, CLIMBS, FLIES); between two styles, its
@@ -288,7 +289,8 @@ export function tickRace(world, dt, input) {
     if (R.t >= COUNTDOWN) Object.assign(R, { phase: 'run', t: 0 });
   } else if (R.phase === 'run') {
     R.clock += dt;
-    if (up) cheer(R, you);
+    // (Cheered on, it squeaks back.)
+    if (up && cheer(R, you)) mochiVoice(world, you.rec, 'happy', world.body.x);
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
     const last = course.legs.length - 1;
     for (const r of R.racers) {
@@ -300,6 +302,8 @@ export function tickRace(world, dt, input) {
     if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + RACE_TAIL) || R.clock >= RACE_MAX) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
+    // (Yours cheers or sulks at the end, and says so: world/mochi-voice.js.)
+    voiceAction(world, you.rec, you.m, world.body.x);
     // (Not straight away: someone still cheering as it ends shouldn't skip the results.)
     if (up && R.t > LEAVE_AFTER) {
       leaveRace(world);

@@ -610,6 +610,12 @@ for (const fam of VOICE_FAMILIES) {
   for (const [ev, m] of Object.entries(VOICE_MOMENTS)) R[`mv${fam}${ev}`] = { db: m.db, gap: m.gap, vary: 6, max: m.max, layers: [{ rec: 'creatureHurt', rate: m.rate }] };
 }
 
+// The Mochi voices (recorded.js MOCHI_VOICE_TRIM, sfx.js `mochiVoice`): until a recording loads, a
+// soft high boop stands in.
+for (const style of ['Chirp', 'Coo', 'Squeak', 'Trill', 'Peep', 'Hum', 'Purr', 'Boop']) {
+  R[`mochi${style}`] = { db: -21, gap: 140, vary: 3, max: 2, layers: [{ wave: 'sine', f0: N.C5 * 2, overtones: [2, 0.2], env: { a: 3, s: 25, d: 60 }, lpf: [4000] }] };
+}
+
 export const RECIPES = R;
 // A recorded effect that keeps its recipe's notes (recorded.js `music`) plays them from this
 // notes-only version alongside the recording, so each job keeps its musical colour.

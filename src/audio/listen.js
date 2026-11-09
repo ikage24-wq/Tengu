@@ -139,6 +139,7 @@ export function hearWorld(world, cam) {
       if (!hit || j.crit || j.big) hit = j;
     } else if (j.type === 'kill') sfx('poof', { boss: j.boss, pan: pan(j.x), ally: Boolean(j.ally || j.party) && !j.boss, mob: j.mob });
     else if (j.type === 'hurt') sfx('hurt', { pan: pan(j.x) });
+    else if (j.type === 'mochiVoice') sfx('mochiVoice', { style: j.style, pitch: j.pitch, mood: j.mood, pan: pan(j.x) });
     else if (j.type === 'stomp') sfx('stomp', { big: j.big, pan: pan(j.x) });
     else if (j.type === 'loot') sfx('drop', { rare: true, pan: pan(j.x) });
     else if (j.type === 'stun') sfx('stun', { pan: pan(j.x) });

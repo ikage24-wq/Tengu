@@ -289,6 +289,15 @@ Each step is pushed on its own. Status as of 2026-11-09.
     ...). When, who and what come from the clock, so a visitor sees the same. Fixed on the way:
     tricks and idle moves now play when cued (a trick just learned, the breeding twirl, these).
 13. **Voices.** *(New.)* Each Mochi's chirp style and pitch, cut from the Sonniss library.
+    **Built (2026-11-10):** tools/build-mochi-voices.py cuts two takes of each of the 8 styles from
+    the library (assets/audio/rec/mochi*.mp3): chirp (chicks), coo (a gosling, lower), squeak (a
+    dry-ice squeak that sounds like a mouse), trill (bird flutes), peep (a hatchling, pitched up),
+    hum (a whistle pitched down), purr (a cat's mew made kitten-small), boop (a squished frog,
+    pitched up); trimmed to one loudness. Played at each Mochi's own pitch (sfx.js `mochiVoice`;
+    happy a touch higher, sad and sleepy lower and softer). Heard (world/mochi-voice.js) whenever a
+    Mochi starts an action with feeling: in the Garden (care, sweets, cheers, sulks, naps, moments,
+    hatching), in a race (cheered on, and its cheer or sulk at the end), and out with you (a level
+    up); not from far off screen, and a moment apart so it never chatters.
 14. **Dress-up.** The hoods (and later more) worn in a dress-up slot.
 15. **Polish.** HD props, effects, speed checks, a full play-through.
 

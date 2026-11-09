@@ -24,3 +24,13 @@ test("every family's voices are recorded: spotting you, hurt and beaten, two tak
     }
   }
 });
+
+test("every Mochi voice style is recorded, two takes each (tools/build-mochi-voices.py)", async () => {
+  const { VOICES } = await import('../src/data/mochi-genes.js');
+  for (const style of VOICES) {
+    const name = `mochi${style[0].toUpperCase()}${style.slice(1)}`;
+    assert.ok(RECIPES[name], `${name} has a recipe`);
+    assert.equal(RECORDED[name]?.takes, 2, `${name} has two takes`);
+    for (const f of recFiles(name)) assert.ok(existsSync(new URL(`../${f}`, import.meta.url)), `${f} exists`);
+  }
+});

@@ -40,6 +40,11 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
   Squeaky Gates), SoundBits (Vox Bestiae, Vox Hominis), Epic Stock Media (Humanoid Creatures,
   Anime Game, Synthesized Nature), Cinematic Sound Design (Cartoon Bloopers and Animation), Rogue
   Waves (Creaking Door), InMotionAudio (Wood) and DavidDumais (Robotic Creatures).
+- **Mochi voices** (`rec/mochi*.mp3`, listed in `src/audio/recorded.js`): cut and pitched from the
+  same Sonniss GDC bundles by `python tools/build-mochi-voices.py`: Mechanical Wave (Farm Animals'
+  chicks and gosling, a cat), Epic Stock Media (HD Game Materials' dry-ice squeak, Synthesized
+  Nature's frog), CB Sounddesign (Applicable Sounds' bird flutes), 344 Audio (Dinosaurs' hatchling)
+  and SoundBits (Vox Hominis' whistle).
 - **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 2, 3, 4
   and 5 and Epic Boss Battle; Tarush Singhal's Happy Ukulele Island Surfing Theme; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
   Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from

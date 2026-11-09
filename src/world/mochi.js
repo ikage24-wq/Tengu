@@ -13,6 +13,7 @@ import { ITEMS } from '../data/items.js';
 import { STATS } from '../data/mochi-genes.js';
 import { styleOf } from '../data/mochi-raise.js';
 import { addItem, countItem } from '../core/inventory.js';
+import { voiceAction } from './mochi-voice.js';
 
 // How it fetches loot: how far from you (across, the faster a runner the further; and up), and how
 // often it can pick something up (s).
@@ -90,6 +91,7 @@ export function tickMochi(world, dt, api) {
   // A level up: it cheers.
   if (char.level > p.level) p.m.action = { name: 'cheer', t0: null, hold: 1.2 };
   p.level = char.level;
+  voiceAction(world, rec, p.m, p.x);
   // Its form's help, while it's out (a buff that lasts as long as it does: ui/hud.js).
   const help = formHelp(rec);
   if (help && helping) char.buffs[BUFF] = { name: `${rec.name ?? 'Your Mochi'} is with you`, about: help.name, since: world.now, until: world.now + 2, values: help.values, icon: 'mochi_bell', keep: true };

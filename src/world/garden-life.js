@@ -42,6 +42,7 @@ import { sendGardenGift, gardenFriends } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { calledOf } from '../data/mochi-names.js';
 import { breedGenes } from '../data/mochi-breed.js';
+import { voiceAction } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
 
@@ -281,6 +282,8 @@ export function tickGarden(world, dt) {
     }
   });
   if (owner && !inside) tickPairing(world, life, now, night);
+  // (Each new thing a Mochi does with feeling, it says: world/mochi-voice.js.)
+  for (const e of life.mochi) if (!e.hidden && e.x != null) voiceAction(world, e.rec, e.m, e.x);
   if (!inside) tickMoment(world, life, now, night);
   for (const e of gone) {
     life.mochi.splice(life.mochi.indexOf(e), 1);

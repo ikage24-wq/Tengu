@@ -47,6 +47,8 @@ const feet = { left: false };
 export const played = [];
 
 const semis = (n) => Math.pow(2, n / 12);
+// How a Mochi's mood colours its voice.
+const MOCHI_MOOD = { happy: { rate: 1.12, db: 0 }, call: { rate: 1, db: -1 }, sad: { rate: 0.82, db: -3 }, sleepy: { rate: 0.75, db: -6 } };
 
 // Plays one recipe. o: { pan, rate, db, at }.
 function voice(name, o = {}) {
@@ -184,6 +186,12 @@ const SOUNDS = {
     }
     if (crit) voice('crit', { pan });
     if (colour) voice(colour, { pan, db: -2 });
+  },
+  // A Mochi's voice (world/mochi-voice.js): its style, at its own pitch; happy a touch higher, sad
+  // and sleepy lower and softer, a call as it is.
+  mochiVoice: ({ style = 'chirp', pitch = 1, mood = 'call', pan, db = 0 }) => {
+    const m = MOCHI_MOOD[mood] ?? MOCHI_MOOD.call;
+    voice(`mochi${style[0].toUpperCase()}${style.slice(1)}`, { pan, rate: pitch * m.rate, db: db + m.db });
   },
   // A monster's voice (voices.js): it spots you, or it's hurt.
   mobVoice: ({ mob, moment, pan, db = 0 }) => voice(`mv${voiceOf(mob)}${moment}`, { pan, db }),

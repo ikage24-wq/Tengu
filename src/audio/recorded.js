@@ -317,6 +317,10 @@ const VOICE_TRIM = {
   mvPeopleDie: -1.8,
 };
 for (const [name, trim] of Object.entries(VOICE_TRIM)) RECORDED[name] = { takes: 2, trim };
+// The Mochi voices (tools/build-mochi-voices.py, sfx.js `mochiVoice`): two takes of each style,
+// trimmed (dB) to sit at the same loudness (measured from the files).
+export const MOCHI_VOICE_TRIM = { mochiChirp: -0.3, mochiCoo: 4, mochiSqueak: 4.5, mochiTrill: -0.7, mochiPeep: 1.3, mochiHum: -6, mochiPurr: -1.3, mochiBoop: 1.2 };
+for (const [name, trim] of Object.entries(MOCHI_VOICE_TRIM)) RECORDED[name] = { takes: 2, trim };
 
 // The rest of the fight sounds (tools/build-fight.py, 2026-11-08): weapon swings and thrusts,
 // throwing stars, heavy arrow hits and the skills still on the old free packs; trims set each to
