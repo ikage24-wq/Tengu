@@ -18,7 +18,7 @@
 // its own rhythm and glancing about now and then.
 
 import { drawPosed, posedMouth, posedFrame } from './hero.js';
-import { featureOf, drawFeature } from './mochi-features.js';
+import { featureOf, budOf, drawFeature } from './mochi-features.js';
 import { drawSweet, drawBall } from './mochi-sweets.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
 
@@ -487,7 +487,10 @@ function drawWater(ctx, x, y, s, style, phase, time, dir = 1) {
       ctx.stroke();
     }
   }
-  if (style === 0) {
+  if (style === 'flail') {
+    // Thrashing: big splashes either side, by turns, and more in between.
+    for (const [at, side, big] of [[0, 1, 1.3], [0.25, -1, 1.2], [0.5, 1, 1.1], [0.75, -1, 1.3]]) splash(x + side * 7 * k, ageAt(at, 0.3), big);
+  } else if (style === 0) {
     for (const at of [0, 0.25, 0.5, 0.75]) splash(x + dir * (5 + (at * 4) % 2) * k, ageAt(at, 0.3), 0.75);
   } else if (style === 1) {
     splash(ahead + dir * 2 * k, ageAt(0.55, 0.35), 0.8);
@@ -557,6 +560,51 @@ function climbPose(style, p) {
   const crouch = p < 0.2 ? Math.sin((p / 0.2) * Math.PI) : 0;
   const leap = p >= 0.2 && p < 0.7 ? Math.sin(((p - 0.2) / 0.5) * Math.PI * 0.5) ** 0.7 : p >= 0.7 ? 1 - ((p - 0.7) / 0.3) * 0.15 : 0;
   return pose({ view: 'back', climb: p < 0.2 ? 2.5 : -2.5 * (1 - leap * 0.6), tx: 0, lift: 9 * leap - 1.4 * crouch, hair: -2.4 * leap + 1 });
+}
+
+// ---------- Can't yet ----------
+// Below the first few points a Mochiko can't do it yet (as a Chao child crawls before it walks,
+// thrashes in water before it swims, and can't take off): under CANT.run Run points it scoots
+// along on its bottom; under CANT.swim Swim points it flails in the water, splashing, eyes
+// squeezed, until someone lifts it out (data/mochi-raise.js rescue); under CANT.fly Fly points
+// it crouches, leaps flapping like mad, hangs a moment, and flops back down on its bottom.
+export const CANT = { run: 50, swim: 100, fly: 100 };
+const CANT_MOVES = { scoot: { stride: 7, speed: 5 }, flail: { stride: 10, speed: 2 }, flop: { stride: 1, speed: 0.42 } };
+const SAT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30], front: [1, 1.5], back: [1.6, 1.5] };
+function cantPose(what, p) {
+  const a = TAU * p;
+  if (what === 'scoot') {
+    // A push with its hands and heels, a little scoot forward, a settle; tongue out, concentrating.
+    const push = p < 0.35 ? Math.sin((p / 0.35) * Math.PI * 0.5) : p < 0.55 ? 1 - ((p - 0.35) / 0.2) : 0;
+    const scoot = p >= 0.35 && p < 0.6 ? Math.sin(((p - 0.35) / 0.25) * Math.PI) : 0;
+    return pose({ ...SAT, lean: 0.1 * push, lift: 0.9 * scoot, tilt: 4 + 6 * push, hy: 1.4,
+      legF: [3.4 - 1.4 * push + 0.6 * scoot, -1.6 + 0.4 * push, 40 - 12 * push], legB: [2.2 - 1 * push + 0.6 * scoot, -1.2 + 0.3 * push, 30 - 10 * push],
+      front: [1.6 + 1.2 * push, 2 + 0.6 * push], back: [2 + 1.2 * push, 2 + 0.6 * push], hair: -0.6 * scoot,
+      mouth: 'mochiblep', sprout: 'curious', blush: 1.5 });
+  }
+  if (what === 'flail') {
+    // Arms thrashing up out of the water by turns, legs kicking, bobbing low, splashing.
+    const b = Math.sin(a * 2);
+    return pose({ sink: 14 + 1.4 * b, tilt: 10 * Math.sin(a * 2 + 0.6), hy: 0.6, hx: 0.4 * b,
+      front: [8 + 2 * Math.sin(a * 2), -12 - 4 * Math.sin(a * 2)], back: [-8 + 2 * Math.sin(a * 2 + Math.PI), -12 - 4 * Math.sin(a * 2 + Math.PI)],
+      legF: [1.6 * Math.sin(a * 3), -1.4, 20], legB: [-1.6 * Math.sin(a * 3), -1.4, -20], hair: 1.2 * b,
+      eyes: 'hurt', mouth: 'yell', extra: ['sweat1', 'drop'], sprout: 'excited', blush: 1.7, armOver: true });
+  }
+  // Flop: crouch, leap flapping, hang a moment (uh oh), fall, bump down on its bottom, get up.
+  const ease = (k) => 0.5 - 0.5 * Math.cos(Math.PI * k);
+  const flap = Math.sin(a * 9);
+  if (p < 0.15) return pose({ squat: 1, front: [5, -5], back: [-5, -5], mouth: 'mochiflat', brows: [[-0.4, 0.8], [-0.4, 0.8]], sprout: 'excited' });
+  if (p < 0.45) {
+    const k = (p - 0.15) / 0.3;
+    return pose({ lift: 7 * (1 - (1 - k) * (1 - k)), front: [10, -10 - 4 * flap], back: [-10, -10 + 4 * flap], tilt: -6, mouth: 'grit', brows: [[-0.4, 0.8], [-0.4, 0.8]], extra: ['sweat1'], sprout: 'excited' });
+  }
+  if (p < 0.58) return pose({ lift: 7, front: [10, -12 - 3 * flap], back: [-10, -12 + 3 * flap], tilt: 8 * Math.sin(a * 6), wide: true, mouth: 'mochio', extra: ['sweat1'], sprout: 'excited' });
+  if (p < 0.72) {
+    const k = (p - 0.58) / 0.14;
+    return pose({ lift: 7 * (1 - k * k), front: [8, -14], back: [-8, -14], wide: true, mouth: 'gasp', extra: ['drop'], sprout: 'excited' });
+  }
+  if (p < 0.9) return pose({ ...SAT, eyes: 'hurt', mouth: 'mochiwave', extra: ['sweat0'], sprout: 'sad' });
+  return pose({ squat: 1, front: [2, -2], back: [2, -2], mouth: 'mochiwave', blush: 1.7, extra: ['sweat0'] });
 }
 
 // ---------- Stamina: getting tired ----------
@@ -694,6 +742,14 @@ export const IDLE_BITS = {
   peek: { dur: 2.6, likes: ['nosy', 'curious', 'sneaky', 'mischief'], keys: [
     KEY(0, {}), KEY(0.3, { squat: 2, hy: 1.2, mouth: 'mochio' }), KEY(0.7, { squat: 2, lean: 0.2, hx: 1.4, tilt: -12, glance: 1, ...BROW, mouth: 'mochio', extra: ['q'] }),
     KEY(1.6, { squat: 2, lean: 0.24, hx: 1.6, tilt: -14, glance: 1, ...BROW, mouth: 'mochiw' }), KEY(2.1, { squat: 1 }), KEY(2.6, {})] },
+
+  // Hungry (its tummy empty a while): rubs its tummy, looks round for something to eat, sighs.
+  hungry: { dur: 3, keys: [
+    KEY(0, {}), KEY(0.2, { front: [-3, -1], back: [4, -1], look: 'down', mouth: 'mochiwave', brows: [[0.5, -0.7], [0.5, -0.7]], sprout: 'sad' }),
+    KEY(0.6, { front: [-2, -2], back: [3, -2], look: 'down', mouth: 'mochiwave', brows: [[0.5, -0.7], [0.5, -0.7]], extra: ['dots3'] }),
+    KEY(1.1, { front: [-3, -1], back: [4, -1], glance: -1, tilt: 6, mouth: 'mochio', extra: ['q'], sprout: 'curious' }),
+    KEY(1.7, { front: [-3, -1], back: [4, -1], glance: 1, tilt: -6, mouth: 'mochio', extra: ['q'] }),
+    KEY(2.3, { front: [-2, -2], back: [3, -2], closed: [true, true], mouth: 'mochiwave', hy: 1.6, tilt: 8, sprout: 'sad' }), KEY(3, {})] },
 
   // ---- Signatures, one for each personality ----
   // Playful: spins round and round after its own sprout, arms out, then wobbles, dizzy.
@@ -840,10 +896,13 @@ export const IDLE_BITS = {
     KEY(1.8, { ...MOUTH, lid: 0.35, mouth: 'slysmile', glance: -1 }), KEY(3, {})] },
 };
 export const SIGNATURE = Object.fromEntries(Object.keys(IDLE_BITS).filter((k) => k.startsWith('sig_')).map((k) => [k.slice(4), k]));
-const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_'));
+const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_') && k !== 'hungry');
 // (What a pose's numbers ease between; everything else changes on its key.)
-const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin'];
+const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin', 'flame'];
 const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
+// Idle moments and actions step through their keys at this many drawings a second (each drawn
+// once, then reused): enough to read smooth.
+export const MOMENT_FPS = 24;
 const smooth01 = (k) => k * k * (3 - 2 * k);
 // The pose `t` seconds into idle moment (or action) `bit`, over the still stance `base`.
 function idlePose(bit, t, base) {
@@ -854,6 +913,7 @@ function idlePose(bit, t, base) {
   const [t1, b] = keys[Math.min(i + 1, keys.length - 1)];
   const k = t1 > t0 ? (EASE[b.ease] ?? smooth01)(Math.min(1, (t - t0) / (t1 - t0))) : 1;
   const at = (o, key) => o[key] ?? base[key] ?? (key === 'ball' ? [0, -3] : 0);
+  // (A flip or a roll goes all the way round: `lean` keeps whatever turn it's reached.)
   const out = { ...base };
   for (const key of EASED) {
     const va = at(a, key);
@@ -890,10 +950,14 @@ function idleAt(st, g, time, only) {
   const roll = hash(g.seed * 17 + st.idles * 29 + 3);
   let name;
   if (only?.length) name = only[(st.idles - 1) % only.length];
+  else if (g.hungry && roll < 0.6) name = 'hungry';
   else if (roll < 0.38 && SIGNATURE[g.personality] && st.lastIdle !== SIGNATURE[g.personality]) name = SIGNATURE[g.personality];
   else {
-    const pool = SHARED.filter((n) => n !== st.lastIdle);
-    const weight = (n) => (IDLE_BITS[n].likes?.includes(g.personality) ? 3 : 1);
+    const known = (n) => !g.tricks || BASIC_IDLES.includes(n) || g.tricks.includes(n);
+    const pool = SHARED.filter((n) => n !== st.lastIdle && known(n));
+    const glum = typeof g.mood === 'number' && g.mood < 30;
+    const glad = typeof g.mood === 'number' && g.mood > 80;
+    const weight = (n) => (IDLE_BITS[n].likes?.includes(g.personality) ? 3 : 1) * (glum ? (n === 'sigh' ? 5 : ['hops', 'clap', 'shuffle', 'twirl'].includes(n) ? 0.2 : 1) : glad ? (['hops', 'clap', 'hum', 'twirl', 'shuffle'].includes(n) ? 2.5 : n === 'sigh' ? 0.1 : 1) : 1);
     let r = hash(g.seed * 7 + st.idles * 11 + 9) * pool.reduce((s0, n) => s0 + weight(n), 0);
     name = pool[0];
     for (const n of pool) {
@@ -1020,6 +1084,34 @@ export const ACTIONS = {
     KEY(0.9, { front: [3, -3], back: [-9, -9], tilt: -10, hx: 0.6, lean: 0.06, legB: [-1.6, -1.6, -20], closed: [true, true], mouth: 'grin', blush: 1.8, extra: ['tear0', 'spark0'], sprout: 'excited' }),
     KEY(1.1, { ...PAT, tilt: 12, hx: -0.8, lean: -0.06, lift: 1, legF: [1.6, -1.6, 20], closed: [true, true], mouth: 'D', blush: 1.8, extra: ['tear0', 'spark0'], sprout: 'excited' }),
     KEY(1.5, { eyes: 'half', mouth: 'mochiwave', blush: 1.9, extra: ['sweat0'] }), KEY(2, {})] },
+  // Farewell, at the end of a long happy life (render/mochi-life.js drawRebirth): it waves you
+  // goodbye, then hugs its hands to its chest, content, hearts rising.
+  farewell: { dur: 2, keys: [
+    KEY(0, {}), KEY(0.2, { closed: [true, true], mouth: 'mochibeam', front: [6, -9], over: true, blush: 1.7 }),
+    KEY(0.45, { front: [10, -15], over: true, tilt: -4, closed: [true, true], mouth: 'D', extra: ['hearts'], sprout: 'happy' }), KEY(0.75, { front: [6, -17], over: true, tilt: -2, closed: [true, true], mouth: 'D', extra: ['hearts'] }),
+    KEY(1.05, { front: [10, -15], over: true, tilt: -4, closed: [true, true], mouth: 'D', extra: ['hearts'] }),
+    KEY(1.4, { ...PAT, closed: [true, true], mouth: 'mochibeam', blush: 1.8, tilt: 6, extra: ['hearts'], sprout: 'happy' }),
+    KEY(2, { ...PAT, closed: [true, true], mouth: 'mochibeam', blush: 1.8, tilt: 6, sprout: 'happy' })] },
+  // Levelled up: a happy little hop, arms out, sparkles.
+  levelup: { dur: 1.3, keys: [
+    KEY(0, {}), KEY(0.12, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', sprout: 'excited' }),
+    KEY(0.38, { ...OUT(-12), lift: 4, closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark0', 'spark1'], ease: 'out' }),
+    KEY(0.66, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', ease: 'in' }),
+    KEY(0.9, { shine: true, mouth: 'mochiw', extra: ['spark0'], sprout: 'happy' }), KEY(1.3, {})] },
+  // A new way of moving: it realises (!), leaps up, lands and strikes a pose, a wink and a V.
+  newstyle: { dur: 2.3, keys: [
+    KEY(0, {}), KEY(0.15, { wide: true, mouth: 'mochio', sprout: 'excited', extra: ['bang1'] }),
+    KEY(0.45, { ...OUT(-13), lift: 6, closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark0', 'spark1'], ease: 'out' }),
+    KEY(0.85, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', ease: 'in' }),
+    KEY(1.1, { front: [2, -15], over: true, back: [-1.6, -1.4], legF: [2, 0, 10], tilt: -8, closed: [false, true], mouth: 'D', sprout: 'excited', extra: ['spark0', 'spark1'] }),
+    KEY(1.9, { front: [2, -15], over: true, back: [-1.6, -1.4], legF: [2, 0, 10], tilt: -8, closed: [false, true], mouth: 'tongue', extra: ['spark1'] }), KEY(2.3, {})] },
+  // Full up: hands on its round tummy, it shakes its head, no thank you, and pats it.
+  full: { dur: 1.9, keys: [
+    KEY(0, {}), KEY(0.15, { front: [-3, -1], back: [4, -1], puff: true, mouth: 'mochiflat', blush: 1.6 }),
+    KEY(0.4, { front: [-3, -1], back: [4, -1], tilt: 10, closed: [true, true], mouth: 'mochiwave' }), KEY(0.55, { front: [-3, -1], back: [4, -1], tilt: -10, closed: [true, true], mouth: 'mochiwave' }),
+    KEY(0.7, { front: [-3, -1], back: [4, -1], tilt: 10, closed: [true, true], mouth: 'mochiwave' }), KEY(0.85, { front: [-3, -1], back: [4, -1], tilt: -8, closed: [true, true], mouth: 'mochiwave' }),
+    KEY(1.1, { front: [-2, -2], back: [3, -2], mouth: 'mochiw', blush: 1.7, extra: ['sweat0'] }), KEY(1.35, { front: [-3, -1], back: [4, -1], mouth: 'mochiw', blush: 1.7 }),
+    KEY(1.9, {})] },
   // Born (render/mochi-life.js): springs up out of the burst egg, lands, blinks round at the world,
   // spots you, and hops for joy.
   born: { dur: 4.2, keys: [
@@ -1046,8 +1138,98 @@ export const ACTIONS = {
     KEY(2.4, { ...OUT(-11), lift: 3, closed: [true, true], mouth: 'D', extra: ['hearts'], sprout: 'happy', ease: 'out' }),
     KEY(2.75, { lift: 0, squat: 1, ease: 'in' }), KEY(3.3, {})] },
 };
+// ---------- Tricks ----------
+// Little things a Mochi learns, each taught by a sweet the first time it eats it
+// (data/mochi-raise.js TRICK_OF), and from then on part of its idle moments. A few it knows from
+// the start (BASIC_IDLES); a Mochi being raised (`g.tricks`) only does those and what it's learned.
+export const BASIC_IDLES = ['stretch', 'lookaround', 'scratch', 'yawn', 'sigh', 'tidy'];
+const TWO = Math.PI * 2;
+const TUCK = { legF: [2.2, -3, 60], legB: [1.6, -2.6, 50], front: [3, -5], back: [2, -5] };
+export const TRICK_BITS = {
+  // A forward roll: tucks up and rolls right over, and comes up with its arms out.
+  roll: { dur: 2.4, keys: [
+    KEY(0, {}), KEY(0.25, { squat: 2, tip: 6, sink: 6, closed: [true, true], mouth: 'mochio', sprout: 'excited' }),
+    KEY(0.5, { ...TUCK, lean: Math.PI / 2, tip: 6, sink: 9, closed: [true, true], mouth: 'mochiw' }),
+    KEY(0.75, { ...TUCK, lean: Math.PI, tip: 6, sink: 8, closed: [true, true], mouth: 'mochiw' }),
+    KEY(1, { ...TUCK, lean: Math.PI * 1.5, tip: 6, sink: 9, closed: [true, true], mouth: 'D' }),
+    KEY(1.25, { lean: TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'out' }),
+    KEY(1.6, { lean: TWO, ...OUT(-12), closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.4, { lean: TWO })] },
+  // Sit-ups: lies back, sits up, lies back, sits up, puffing.
+  situps: { dur: 4, keys: [
+    KEY(0, {}), KEY(0.3, { ...SAT, mouth: 'mochiflat', brows: [[-0.4, 0.8], [-0.4, 0.8]] }),
+    KEY(0.8, { ...SAT, lean: -1.3, tip: 6, sink: 13, front: [-3, -12], back: [-1, -12], closed: [true, true], mouth: 'mochiflat' }),
+    KEY(1.4, { ...SAT, lean: -0.2, tip: 6, sink: 6, front: [-3, -12], back: [-1, -12], mouth: 'grit', extra: ['sweat0'] }),
+    KEY(2, { ...SAT, lean: -1.3, tip: 6, sink: 13, front: [-3, -12], back: [-1, -12], closed: [true, true], mouth: 'mochiflat' }),
+    KEY(2.6, { ...SAT, lean: -0.2, tip: 6, sink: 6, front: [-3, -12], back: [-1, -12], mouth: 'grit', extra: ['sweat1'] }),
+    KEY(3.2, { ...SAT, tip: 0, sink: 0, closed: [true, true], mouth: 'D', extra: ['spark0'] }), KEY(4, {})] },
+  // Paddling on dry land: flat on its tummy, kicking and paddling as if it were swimming.
+  paddle: { dur: 3.4, keys: [
+    KEY(0, {}), KEY(0.4, { ...LIE, closed: null, mouth: 'D', front: [-1, -6], back: [5, -4], legF: [1, -1, 20], legB: [2, -2, 40], sprout: 'happy' }),
+    KEY(0.8, { ...LIE, closed: null, mouth: 'D', front: [4, -6], back: [0, -4], legF: [2, -2, 40], legB: [1, -1, 20] }),
+    KEY(1.2, { ...LIE, closed: null, mouth: 'mochiw', front: [-1, -6], back: [5, -4], legF: [1, -1, 20], legB: [2, -2, 40] }),
+    KEY(1.6, { ...LIE, closed: null, mouth: 'D', front: [4, -6], back: [0, -4], legF: [2, -2, 40], legB: [1, -1, 20], extra: ['note'] }),
+    KEY(2, { ...LIE, closed: null, mouth: 'mochiw', front: [-1, -6], back: [5, -4], legF: [1, -1, 20], legB: [2, -2, 40] }),
+    KEY(2.6, { tip: 6, sink: 6, squat: 1, closed: [true, true], mouth: 'D' }), KEY(3.4, {})] },
+  // Beats its chest, chin up, and lets out a little roar.
+  chestbeat: { dur: 2.4, keys: [
+    KEY(0, {}), KEY(0.2, { tilt: -8, brows: [[-0.4, 0.8], [-0.4, 0.8]], mouth: 'grit' }),
+    KEY(0.4, { front: [-3, -6], back: [3, -4], tilt: -10, mouth: 'yell', extra: ['bang1'] }), KEY(0.6, { front: [-1, -4], back: [5, -6], tilt: -10, mouth: 'yell' }),
+    KEY(0.8, { front: [-3, -6], back: [3, -4], tilt: -10, mouth: 'yell' }), KEY(1, { front: [-1, -4], back: [5, -6], tilt: -10, mouth: 'yell', extra: ['bang1'] }),
+    KEY(1.4, { ...OUT(-12), lift: 1.4, tilt: -12, closed: [true, true], mouth: 'D', extra: ['spark0'] }), KEY(2.4, {})] },
+  // Shadow-boxing: hops on its toes, jab, jab, a big one.
+  boxing: { dur: 2.6, keys: [
+    KEY(0, {}), KEY(0.2, { front: [4, -8], back: [2, -8], brows: [[-0.4, 0.8], [-0.4, 0.8]], mouth: 'grit', squat: 1 }),
+    KEY(0.4, { front: [12, -8], over: true, back: [2, -8], lift: 1, mouth: 'grit', lean: 0.08 }), KEY(0.55, { front: [4, -8], back: [2, -8], lift: 0, squat: 1 }),
+    KEY(0.75, { front: [12, -9], over: true, back: [2, -8], lift: 1, mouth: 'grit', lean: 0.08 }), KEY(0.9, { front: [4, -8], back: [2, -8], lift: 0, squat: 1 }),
+    KEY(1.2, { front: [13, -10], over: true, back: [-4, -4], lift: 2, lean: 0.12, mouth: 'yell', extra: ['bang1', 'spark0'] }),
+    KEY(1.6, { front: [4, -8], back: [2, -8], closed: [true, true], mouth: 'smirk' }), KEY(2.6, {})] },
+  // Flapping practice: arms out, flap flap flap, little hops, then a proud grin.
+  flaps: { dur: 2.6, keys: [
+    KEY(0, {}), KEY(0.2, { ...OUT(-6), squat: 1, mouth: 'mochiflat', brows: [[-0.4, 0.8], [-0.4, 0.8]] }),
+    KEY(0.4, { ...OUT(-13), lift: 2.2, mouth: 'grit' }), KEY(0.6, { ...OUT(-4), lift: 1.4 }), KEY(0.8, { ...OUT(-13), lift: 2.6, mouth: 'grit', extra: ['sweat1'] }),
+    KEY(1, { ...OUT(-4), lift: 1.6 }), KEY(1.2, { ...OUT(-13), lift: 2.4 }), KEY(1.5, { ...OUT(-6), lift: 0, squat: 1, mouth: 'mochio' }),
+    KEY(1.9, { closed: [true, true], mouth: 'D', extra: ['spark0'] }), KEY(2.6, {})] },
+  // Meditating: sits cross-legged, shuts its eyes, and floats up off the ground a little.
+  meditate: { dur: 4.4, keys: [
+    KEY(0, {}), KEY(0.4, { ...SAT, ...PAT, closed: [true, true], mouth: 'mochiflat' }),
+    KEY(1.4, { ...SAT, ...PAT, lift: 4, closed: [true, true], mouth: 'mochiflat', extra: ['spark1'] }),
+    KEY(2.4, { ...SAT, ...PAT, lift: 4.6, closed: [true, true], mouth: 'mochibeam', extra: ['spark0'] }),
+    KEY(3.3, { ...SAT, ...PAT, lift: 0, closed: [true, true], mouth: 'mochibeam', ease: 'in' }), KEY(4.4, {})] },
+  // Brain freeze (it's been at the kakigori): hands to its head, shivers, shakes it off.
+  brr: { dur: 2.6, keys: [
+    KEY(0, {}), KEY(0.15, { wide: true, mouth: 'gasp' }), KEY(0.35, { front: [-2, -18], over: true, eyes: 'hurt', mouth: 'wavy', tilt: 4, hx: 0.4, extra: ['sweat1'] }),
+    KEY(0.5, { front: [-2, -18], over: true, eyes: 'hurt', mouth: 'wavy', tilt: -4, hx: -0.4 }), KEY(0.65, { front: [-2, -18], over: true, eyes: 'hurt', mouth: 'wavy', tilt: 4, hx: 0.4 }),
+    KEY(0.8, { front: [-2, -18], over: true, eyes: 'hurt', mouth: 'wavy', tilt: -4, hx: -0.4 }), KEY(0.95, { front: [-2, -18], over: true, eyes: 'hurt', mouth: 'wavy', tilt: 4, hx: 0.4 }),
+    KEY(1.3, { tilt: 10, closed: [true, true], mouth: 'mochiwave' }), KEY(1.5, { tilt: -10, closed: [true, true], mouth: 'mochiwave' }), KEY(1.8, { closed: [true, true], mouth: 'D' }), KEY(2.6, {})] },
+  // Sumo: a wide stance, hands on its knees, stomp, stomp, a slap of the belly.
+  sumo: { dur: 3, keys: [
+    KEY(0, {}), KEY(0.3, { squat: 2, legF: [2.6, 0, 20], legB: [-2.6, 0, -20], front: [1.6, 2], back: [2.4, 2], brows: [[-0.4, 0.8], [-0.4, 0.8]], mouth: 'mochiflat' }),
+    KEY(0.65, { squat: 1, legF: [3, -3.4, 40], legB: [-2.6, 0, -20], front: [1.6, 2], back: [2.4, 2], tilt: 8, mouth: 'grit' }),
+    KEY(0.85, { squat: 2, bob: 0.8, legF: [2.6, 0, 20], legB: [-2.6, 0, -20], front: [1.6, 2], back: [2.4, 2], mouth: 'yell', extra: ['bang1'] }),
+    KEY(1.25, { squat: 1, legF: [2.6, 0, 20], legB: [-3, -3.4, -40], front: [1.6, 2], back: [2.4, 2], tilt: -8, mouth: 'grit' }),
+    KEY(1.45, { squat: 2, bob: 0.8, legF: [2.6, 0, 20], legB: [-2.6, 0, -20], front: [1.6, 2], back: [2.4, 2], mouth: 'yell', extra: ['bang1'] }),
+    KEY(1.9, { squat: 2, front: [-3, -2], back: [4, -2], closed: [true, true], mouth: 'D', extra: ['spark0'] }), KEY(3, {})] },
+  // A puff of fire (the spicy senbei): a deep breath, cheeks full, a little burst of flame, a
+  // cough of smoke, a sheepish grin.
+  fire: { dur: 3, keys: [
+    KEY(0, {}), KEY(0.3, { tilt: -10, lean: -0.08, puff: true, mouth: 'mochiflat', wide: true }),
+    KEY(0.8, { tilt: -12, lean: -0.1, puff: true, mouth: 'mochiflat', closed: [true, true] }),
+    KEY(1, { tilt: 4, lean: 0.1, mouth: 'yell', closed: [true, true], flame: 1, extra: ['spark0'] }),
+    KEY(1.7, { tilt: 4, lean: 0.08, mouth: 'yell', closed: [true, true], flame: 1 }),
+    KEY(1.9, { mouth: 'o', eyes: 'half', extra: ['dots3'] }), KEY(2.3, { mouth: 'mochiwave', blush: 1.9, extra: ['sweat0'] }), KEY(3, {})] },
+  // A backflip: crouch, spring up and over backward, land with a ta-da.
+  backflip: { dur: 2.6, keys: [
+    KEY(0, {}), KEY(0.25, { squat: 2, tip: 6, sink: 6, mouth: 'grit', brows: [[-0.4, 0.8], [-0.4, 0.8]] }),
+    KEY(0.55, { ...TUCK, lean: -Math.PI * 0.75, tip: 15, sink: 6, closed: [true, true], mouth: 'D', ease: 'out' }),
+    KEY(0.8, { ...TUCK, lean: -Math.PI * 1.4, tip: 14, sink: 6, closed: [true, true], mouth: 'D' }),
+    KEY(1.05, { lean: -TWO, tip: 6, sink: 6, squat: 2, closed: [true, true], mouth: 'D', ease: 'in' }),
+    KEY(1.35, { lean: -TWO, ...OUT(-12), lift: 1, closed: [true, true], mouth: 'D', extra: ['spark0', 'spark1'], sprout: 'excited' }), KEY(2.6, { lean: -TWO })] },
+};
+Object.assign(IDLE_BITS, TRICK_BITS);
+SHARED.push(...Object.keys(TRICK_BITS));
+
 // Where action `a` is (`{ bit, t (seconds into its keys), tq (on its 12 fixed frames) }`), or
-// null once it's done (and `m.action` is cleared).
+// null once it's done (and `m.action` is cleared, or the next in `m.queue` begins).
 function actionAt(m, time) {
   const a = m.action;
   const bit = ACTIONS[a.name];
@@ -1064,8 +1246,12 @@ function actionAt(m, time) {
   };
   const e = time - a.t0;
   const t = map(e);
-  if (t >= bit.dur) return (m.action = null);
-  return { bit, t, tq: map(Math.floor(e * 12) / 12) };
+  if (t >= bit.dur) {
+    // (Next in line, if anything's queued: straight on.)
+    m.action = m.queue?.length ? { ...m.queue.shift(), t0: time } : null;
+    return m.action ? actionAt(m, time) : null;
+  }
+  return { bit, t, tq: map(Math.floor(e * MOMENT_FPS) / MOMENT_FPS) };
 }
 
 // ---------- Following: every number of the pose is carried to the next on a spring ----------
@@ -1287,21 +1473,26 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const kind = m.mode ?? 'run';
   const table = kind === 'swim' ? SWIMS : kind === 'fly' ? FLIES : kind === 'climb' ? CLIMBS : GAITS;
   const stat = kind === 'swim' ? 'swim' : kind === 'fly' ? 'fly' : kind === 'climb' ? 'power' : 'run';
-  const tier = m.tier ?? runStyle(m[`${stat}Points`] ?? g.stats?.[stat]?.points ?? 0);
+  const pts = m[`${stat}Points`] ?? g.stats?.[stat]?.points ?? 0;
+  const tier = m.tier ?? runStyle(pts);
   // (Swimming and flying never stop: holding still, it treads water or hovers.)
   const moving = (m.speed ?? 0) > 1 || kind !== 'run';
+  // (Not able to yet: scooting, flailing, flopping. `m.cant` reports which.)
+  const cant = m.tier != null || !moving ? null : kind === 'run' && pts < CANT.run ? 'scoot' : kind === 'swim' && pts < CANT.swim ? 'flail' : kind === 'fly' && pts < CANT.fly ? 'flop' : null;
+  m.cant = cant;
+  const mvT = cant ? CANT_MOVES[cant] : table[tier];
   // The cycle follows the distance travelled. Arms, legs and face (what's drawn) step through it on
   // fixed frames, more of them the slower the cycle (16 to 32), so every drawing
   // comes round again; how high it is, how far it leans and how deep it sits are worked out fresh
   // every frame (they only move the drawing, never repaint it), so the motion itself is smooth.
-  const travelled = (m.speed ?? 0) > 1 ? (m.dist ?? 0) / (table[tier].stride * s / 0.6) : time * 0.8;
+  const travelled = cant && cant !== 'scoot' ? time * mvT.speed : (m.speed ?? 0) > 1 ? (m.dist ?? 0) / (mvT.stride * s / 0.6) : time * 0.8;
   const pc = ((travelled % 1) + 1) % 1;
-  const cycle = table[tier].stride / table[tier].speed;
+  const cycle = cant && cant !== 'scoot' ? 1 / mvT.speed : mvT.stride / mvT.speed;
   // (While an act's face is on, the limbs step at half the rate: the face is what's being drawn new.)
   const N0 = kind === 'swim' ? 32 : Math.max(16, Math.min(32, Math.round((cycle * 30) / 4) * 4));
   const N = st.act && kind !== 'swim' ? N0 / 2 : N0;
   const phase = moving ? Math.floor(pc * N) / N : 0;
-  const poseAt = (ph) => (kind === 'swim' ? swimPose(tier, ph) : kind === 'fly' ? flyPose(tier, ph) : kind === 'climb' ? climbPose(tier, ph) : gaitPose(tier, ph));
+  const poseAt = (ph) => (cant ? cantPose(cant, ph) : kind === 'swim' ? swimPose(tier, ph) : kind === 'fly' ? flyPose(tier, ph) : kind === 'climb' ? climbPose(tier, ph) : gaitPose(tier, ph));
   // Running wears it out, as much as its Stamina allows (standing, it gets its breath back); the
   // most tired stop to catch their breath. (`m.fatigue` and `m.resting` tell whoever moves it.)
   const stam = STAMINAS[runStyle(m.staminaPoints ?? g.stats?.stamina?.points ?? 0)];
@@ -1336,9 +1527,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const posed = idle || act;
   const baby = (m.size ?? 'grown') === 'baby';
   const still = posed ? pose(baby ? babyOf(STANCE[g.personality] ?? STANCE.gentle) : STANCE[g.personality] ?? STANCE.gentle) : null;
-  let target = resting ? restPose(restT) : moving ? poseAt(phase) : act ? idlePose(act.bit, act.tq, still) : idle ? idlePose(IDLE_BITS[idle.name], Math.floor((time - idle.t0) * 12) / 12, still) : standPose(g, time, baby);
+  let target = resting ? restPose(restT) : moving ? poseAt(phase) : act ? idlePose(act.bit, act.tq, still) : idle ? idlePose(IDLE_BITS[idle.name], Math.floor((time - idle.t0) * MOMENT_FPS) / MOMENT_FPS, still) : standPose(g, time, baby);
   let live = resting ? target : moving ? poseAt(pc) : act ? idlePose(act.bit, act.t, still) : idle ? idlePose(IDLE_BITS[idle.name], time - idle.t0, still) : target;
-  if (!resting && kind === 'run' && moving) {
+  if (!resting && kind === 'run' && moving && !cant) {
     target = tiredPose(target, fq);
     live = tiredPose(live, fatigue);
   }
@@ -1404,7 +1595,13 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // Running, its tier's face, and now and then an act over it.
   let mouth = target.mouth;
   let sprout = posed ? target.sprout : null;
-  if (moving && !resting && kind !== 'climb') {
+  if (cant) {
+    // (Can't yet: the pose's own face.)
+    if (target.eyes) rig.eyes = target.eyes;
+    for (const k of ['wide', 'shine', 'brows', 'blush']) if (target[k] != null) rig.face[k] = target[k];
+    rig.face.extra = target.extra ?? [];
+    sprout = target.sprout ?? null;
+  } else if (moving && !resting && kind !== 'climb') {
     const act = runActAt(st, g, tier, time);
     const beat = act ? beatOf(act, time) : null;
     m.acting = act?.name ?? null;
@@ -1439,7 +1636,10 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     rig.face.closed = [true, true];
     mouth = 'o';
   }
-  const mood = m.mood ?? sprout ?? (moving && tier >= 3 ? 'excited' : null);
+  // (Being raised, how it feels shows on its sprout when nothing else is: drooping when it's glum,
+  // perked up when it's very happy.)
+  const felt = typeof g.mood === 'number' ? (g.mood < 30 ? 'sad' : g.mood > 85 ? 'happy' : null) : null;
+  const mood = m.mood ?? sprout ?? (moving && tier >= 3 ? 'excited' : felt);
   let look = lookOf(g, mood, time * 0.1);
   if (mouth) look = { ...look, mouth };
   const lean = leanNow;
@@ -1460,7 +1660,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
     else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
   } : null;
-  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(lean) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: lean, lift: tip } : null, ...(over ? { over, hold: 'front' } : {}) };
+  const leanW = ((((lean + Math.PI) % TAU) + TAU) % TAU) - Math.PI;
+  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(leanW) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: leanW, lift: tip } : null, ...(over ? { over, hold: 'front' } : {}) };
   // (A ninja dash leaves two fading after-images behind: the same drawing stamped again, nothing
   // painted afresh.)
   // (Swimming, it sits down in the water: its feet below the waterline at `y`.)
@@ -1470,10 +1671,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (alt) rig.lift = 0;
   // (Lying down for a nap, it's laid on the ground the same way.)
   const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed ? sinkNow * s : 0);
-  const feat = featureOf(g);
+  // (A grown Mochi wears its feature; a Mochiko the dough buds of whatever it's growing into.)
+  const feat = featureOf(g) ?? budOf(g);
   if (feat && rig.view !== 'back') {
     const Fr = posedFrame(Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { scale: s, facing: opts.facing });
-    const mvF = { mode: moving ? kind : 'stand', phase, pc, time };
+    const mvF = { mode: moving ? kind : 'stand', phase, pc, time, skin: look.skinTone, path: g.path };
     const prop = opts.over;
     opts.under = (c) => drawFeature(c, feat, 'under', Fr, mvF);
     opts.over = (c, hand, flip, other) => {
@@ -1486,9 +1688,30 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   }
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts);
+  if (posed && live.flame > 0.05) drawFlame(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time, live.flame);
   if (posed && target.bubble) drawSnooze(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time);
-  if (kind === 'swim') drawWater(ctx, x, y, s, tier, pc, time, dir);
+  if (kind === 'swim') drawWater(ctx, x, y, s, cant === 'flail' ? 'flail' : tier, pc, time, dir);
   drawCoat(ctx, g, x, y + dy, s, time);
+}
+
+// A little puff of fire from its mouth (the spicy senbei trick): flickering tongues of flame,
+// yellow at the heart, licking out ahead of it.
+function drawFlame(ctx, x, y, rig, opts, s, time, amount) {
+  const k = (s / 0.6) * amount;
+  const [mx, my] = posedMouth(x, y, rig, { scale: s, facing: opts.facing, lean: opts.lean });
+  const fd = opts.facing < 0 ? -1 : 1;
+  const flick = Math.floor(time * 16) % 3;
+  ctx.save();
+  for (const [len, wide, c, dy0] of [[9, 3, '#ff7a3a', 0], [7, 2.2, '#ffb040', -0.3], [4.4, 1.3, '#fff0a0', -0.2]]) {
+    const l = (len + flick * 0.8) * k;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(mx, my);
+    ctx.quadraticCurveTo(mx + fd * l * 0.5, my - wide * k * 1.4 + dy0 * k, mx + fd * l, my - (1 + flick * 0.4) * k);
+    ctx.quadraticCurveTo(mx + fd * l * 0.55, my + wide * k * 0.8, mx, my + 0.4 * k);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 // Asleep: a bubble at its nose swelling and shrinking with each breath, and little z's drifting up.

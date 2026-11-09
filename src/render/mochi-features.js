@@ -11,7 +11,7 @@
 //
 // Each part is a sprite built in a few frames (never stretched), placed with render/hero.js
 // posedFrame inside drawPosed's under (behind the body) and over (in front) callbacks.
-import { E, T, F, blit } from './pixel.js';
+import { E, T, F, blit, mix } from './pixel.js';
 import { limb } from './figure.js';
 import { art } from './scenery.js';
 import { STATS } from '../data/mochi-genes.js';
@@ -26,11 +26,27 @@ export function bestStat(g) {
   const score = (s) => (g.stats?.[s]?.points ?? 0) * 10 + (GRADE[g.talents?.[s]] ?? 0);
   return STATS.reduce((best, s) => (score(s) > score(best) ? s : best), STATS[0]);
 }
-// The feature a Mochi wears (none before it takes a path).
+// The feature a Mochi wears (none before it takes a path): its form's (data/mochi-raise.js; the
+// plain form wears none), or for a Mochi with no form recorded, its best stat's.
 export function featureOf(g) {
   if (g.feature) return g.feature;
+  if (g.stage === 'tsukimochi') return 'moon';
   if (!g.path || !(g.stage === 'amamochi' || g.stage === 'karamochi')) return null;
-  return FEATURES[g.path]?.[bestStat(g)] ?? null;
+  if (g.form === 'plain') return null;
+  return FEATURES[g.path]?.[g.form ?? bestStat(g)] ?? null;
+}
+// A Mochiko's buds: as one stat leads what it's been raised on lately, its dough starts to bud
+// toward that form (wing nubs, fin nubs, heel tufts, little bumps, a tail nub), in three sizes,
+// tiny, as a Chao child changes shape before it evolves. 'bud_<stat>_<size>' or null.
+export const BUD_AT = [120, 400, 900];
+export function budOf(g) {
+  if (g.stage !== 'mochiko' || !g.trend) return null;
+  const total = STATS.reduce((n, s) => n + (g.trend[s] ?? 0), 0);
+  const lead = STATS.reduce((b, s) => ((g.trend[s] ?? 0) > (g.trend[b] ?? 0) ? s : b), STATS[0]);
+  const amount = g.trend[lead] ?? 0;
+  if (!total || amount / total < 0.34) return null;
+  const size = BUD_AT.reduce((n, need, i) => (amount >= need ? i + 1 : n), 0);
+  return size ? `bud_${lead}_${size}` : null;
 }
 
 const TAU = Math.PI * 2;
@@ -207,6 +223,15 @@ function halo() {
   };
   return [ring(Math.PI, TAU, '#ffe27a'), ring(0, Math.PI, '#f2b844'), F(E(12.2, -3, 1.2, 0.35, '#fffbe0'))];
 }
+// Buds, in the Mochi's own dough (`c`), `k` 0.6 to 1 as they grow.
+function budShapes(stat, k, c) {
+  const z = (shapes) => shapes.map((s) => grow(s, k));
+  if (stat === 'fly') return z([E(3.6, -2.4, 3.4, 2.2, c), E(6.4, -4, 2, 1.4, c), F(E(3, -3, 1.4, 0.6, '#ffffff'))]);
+  if (stat === 'swim') return z([E(2.6, 0.8, 2.8, 1.8, c), E(4.6, 2.2, 1.7, 1.2, c), F(limb(0.6, 0.6, 4.6, 1.8, 0.35, 0.2, '#ffffff'))]);
+  if (stat === 'run') return z([E(-1.6, -0.6, 1.8, 1.2, c), E(-3.2, -1.6, 1.2, 0.9, c), F(E(-1.2, -1, 0.8, 0.4, '#ffffff'))]);
+  if (stat === 'power') return [E(12.4, 5.2, 1.7 * k, 1.5 * k, c), E(18.8, 5.2, 1.7 * k, 1.5 * k, c), F(E(12, 4.6, 0.7 * k, 0.4 * k, '#ffffff')), F(E(18.4, 4.6, 0.7 * k, 0.4 * k, '#ffffff'))];
+  return z([E(-2.6, -1.2, 2.6, 2.2, c), E(-4.6, -2.8, 1.4, 1.2, c), F(E(-2.2, -2, 1, 0.5, '#ffffff'))]);
+}
 const cuff = () => [T([[-1.8, -1], [1.8, -1.4], [2, 1], [-1.6, 1.4]], '#f2c94c'), F(T([[-1.6, -0.9], [1.7, -1.2], [1.7, -0.5], [-1.6, -0.2]], '#fff0b0')), F(E(0, 0.4, 0.5, 0.5, '#e8485e'))];
 
 // Sprites: [box w, box h, anchor x, anchor y, shapes].
@@ -225,6 +250,15 @@ const sizeOf = (name) => {
   const [w, h, ax, ay] = SIZES[name];
   return [Math.ceil(w * k), Math.ceil(h * k), ax * k, ay * k];
 };
+// A bud sprite: its stat, size (1-3) and dough colour, blushed toward the stat's own soft tint so
+// it reads (lavender wings, aqua fins, mint heels, coral bumps, peach tail).
+const BUD_TINT = { fly: '#b8a8ff', swim: '#8ad8ec', run: '#98e0a4', power: '#ff9e8e', stamina: '#ffc878' };
+function budSprite(stat, size, dough, far) {
+  const color = mix(dough, BUD_TINT[stat], far ? 0.55 : 0.45);
+  const box = stat === 'power' ? HEAD_BOX : [20, 16, 8, 10];
+  const k = [0.6, 0.8, 1][size - 1];
+  return [art(`mochi-bud|${stat}|${size}|${color}|${far ? 1 : 0}`, box[0], box[1], () => budShapes(stat, k, color).map((sh) => ({ ...sh, x: (sh.x ?? 0) + box[2], y: (sh.y ?? 0) + box[3] }))), box];
+}
 function partSprite(name, f = 0, far = false) {
   const [w, h, ax, ay] = sizeOf(name);
   return art(`mochi-feat|${name}|${f}|${far ? 1 : 0}`, w, h, () => BUILD[name](f, far).map((sh) => {
@@ -268,6 +302,63 @@ export function drawFeature(ctx, feat, layer, Fr, mv, hand = null) {
   const sway = cyc(mode === 'run' ? 1.5 : mode === 'swim' ? 1 : 0.55, FRAMES.tail);
   const ripple = cyc(mode === 'swim' ? 1.2 : 0.6, FRAMES.fin);
   const at = (p) => Fr.at(p);
+  if (feat === 'moon') {
+    // (Its moon is the tiny one its sprout cradles: render/hair.js.) Three little moon motes
+    // circle it softly, passing in front and behind.
+    const dusk = mv.path === 'demon';
+    const glowC = dusk ? 'rgba(200,180,255,' : 'rgba(255,240,180,';
+    const [cx, cy] = at(Fr.body([15.5, 31]));
+    const k = Fr.scale / 0.6;
+    for (let i = 0; i < 3; i++) {
+      const a = time * 1.1 + (i * TAU) / 3;
+      const front = Math.sin(a) > 0;
+      if (front !== (layer === 'over')) continue;
+      const px = cx + Math.cos(a) * 13 * k;
+      const py = cy + 1 * k + Math.sin(a) * 3.2 * k;
+      const r = (0.6 + 0.2 * Math.sin(a)) * k;
+      const g2 = ctx.createRadialGradient(px, py, 0, px, py, r * 3);
+      g2.addColorStop(0, `${glowC}0.7)`);
+      g2.addColorStop(1, `${glowC}0)`);
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.arc(px, py, r * 3, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = dusk ? '#f0e8ff' : '#fffbea';
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, TAU);
+      ctx.fill();
+    }
+    return;
+  }
+  if (feat.startsWith('bud_')) {
+    // (A Mochiko's buds: swaying a touch with it, sitting where the feature will grow.)
+    const [, stat, sz] = feat.split('_');
+    const size = Number(sz);
+    const put = (p, layer0, opts = {}) => {
+      if (layer !== layer0) return;
+      const [spr, [w, , ax, ay]] = budSprite(stat, size, mv.skin ?? '#fff4ec', opts.far);
+      const flip = Fr.flip !== Boolean(opts.mirror);
+      ctx.save();
+      ctx.translate(p[0], p[1]);
+      if (opts.angle) ctx.rotate(Fr.flip ? -opts.angle : opts.angle);
+      ctx.scale(Fr.scale, Fr.scale);
+      blit(ctx, spr, flip ? -(w - ax) : -ax, -ay, { flip });
+      ctx.restore();
+    };
+    // (Wing and fin buds sit out at its sides in front, where hair can't hide them.)
+    if (stat === 'fly') {
+      put(at(Fr.body([10.6, 31.4])), 'over', { far: true, mirror: true });
+      put(at(Fr.body([20.4, 31.4])), 'over');
+    } else if (stat === 'swim') {
+      put(at(Fr.head([4.4, 17.4])), 'over', { far: true, mirror: true, angle: Fr.tilt });
+      put(at(Fr.head([26.6, 17.4])), 'over', { angle: Fr.tilt });
+    } else if (stat === 'run') {
+      put(at(Fr.ankle('back')), 'over', { far: true });
+      put(at(Fr.ankle('front')), 'over');
+    } else if (stat === 'power') put(at(Fr.head([0, 0])), 'over', { angle: Fr.tilt });
+    else put(at(Fr.body([12.6, 41])), 'under');
+    return;
+  }
   if (feat === 'featherwings' || feat === 'batwings') {
     if (layer !== 'under') return;
     const part = feat === 'featherwings' ? 'featherwing' : 'batwing';

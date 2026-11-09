@@ -8,7 +8,7 @@
 import { rollMochi } from '../src/data/mochi-genes.js';
 import { drawMochiAnim, GAITS, RUN_STYLES, SWIMS, FLIES, CLIMBS, STAMINAS, SIGNATURE } from '../src/render/mochi-anim.js';
 import { PERSONALITIES } from '../src/data/mochi-genes.js';
-import { ACTIONS } from '../src/render/mochi-anim.js';
+import { ACTIONS, TRICK_BITS } from '../src/render/mochi-anim.js';
 import { drawHatch, drawEvolve } from '../src/render/mochi-life.js';
 import { drawSweet, drawBall, SWEET_KINDS } from '../src/render/mochi-sweets.js';
 
@@ -265,7 +265,98 @@ function stepFeat(dt) {
     label(m.genes.feature, x, y + 36);
   });
 }
+// ?buds: Mochiko budding toward each stat's form, medium (top) and full-grown buds (bottom).
+const BUD_STATS = ['fly', 'swim', 'run', 'power', 'stamina'];
+const budders = [2, 3].flatMap((size, row) => BUD_STATS.map((stat, i) => {
+  const genes = { ...rollMochi(500 + row * 5 + i, { coat: null }), stage: 'mochiko', trend: Object.fromEntries(BUD_STATS.map((s0) => [s0, s0 === stat ? [0, 120, 400, 900][size] + 10 : 0])) };
+  return { genes, dir: 1, speed: 0, dist: 0, size: 'baby', label: `${stat} buds ${size}` };
+}));
+function stepBuds(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  budders.forEach((m, i) => {
+    const x = 80 + (i % 5) * 160;
+    const y = 250 + Math.floor(i / 5) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 75) / ZB, y / ZB, 150 / ZB, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(m.label, x, y + 36);
+  });
+}
+// ?cant: Mochiko who can't yet: scooting (no Run), flailing (no Swim), flopping (no Fly).
+const cants = [['run', 5], ['swim', 0], ['fly', 0]].map(([mode, speed], i) => ({ genes: { ...rollMochi(600 + i, { coat: null }), stage: 'mochiko' }, dir: 1, speed, dist: 0, size: 'baby', mode, runPoints: 0, swimPoints: 0, flyPoints: 0 }));
+function stepCant(dt) {
+  t += dt;
+  const ZB = 6;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  cants.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 133 + i * 267;
+    const y = 330;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 120) / ZB, y / ZB, 240 / ZB, 4);
+    ctx.fillStyle = '#9fd08a';
+    for (let k = -2; k < 5; k++) ctx.fillRect((x - 120) / ZB + ((((-m.dist) % 12) + 12) % 12) + k * 12, y / ZB, 2, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(`${m.mode}: ${m.cant ?? '-'}`, x, y + 44);
+  });
+}
+// ?tricks: every learnable trick that's new (one Mochi each, doing it again and again).
+const trickers = Object.keys(TRICK_BITS).map((name, i) => ({ genes: rollMochi(700 + i, { coat: null }), dir: 1, speed: 0, dist: 0, idleBits: [name], label: name }));
+function stepTricks(dt) {
+  t += dt;
+  const ZB = 4;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  trickers.forEach((m, i) => {
+    const x = 70 + (i % 6) * 132;
+    const y = 200 + Math.floor(i / 6) * 260;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 60) / ZB, y / ZB, 120 / ZB, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(m.label, x, y + 34);
+  });
+}
+// ?moon: the Tsukimochi, of dawn and of dusk.
+const moons = ['angel', 'demon'].map((path, i) => ({ genes: { ...rollMochi(800 + i, { coat: null }), stage: 'tsukimochi', path, form: 'moon' }, dir: i ? -1 : 1, speed: 0, dist: 0, label: `Tsukimochi of ${path === 'angel' ? 'Dawn' : 'Dusk'}` }));
+function stepMoon(dt) {
+  t += dt;
+  const ZB = 6;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#2a2a4a';
+  ctx.fillRect(0, 0, c.width, c.height);
+  moons.forEach((m, i) => {
+    const x = 200 + i * 400;
+    const y = 420;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#4a6a5a';
+    ctx.fillRect((x - 150) / ZB, y / ZB, 300 / ZB, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.fillStyle = '#e8e0ff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(m.label, x, y + 44);
+  });
+}
 function step(dt) {
+  if (q.has('tricks')) return stepTricks(dt);
+  if (q.has('moon')) return stepMoon(dt);
+  if (q.has('cant')) return stepCant(dt);
+  if (q.has('buds')) return stepBuds(dt);
   if (q.has('feat')) return stepFeat(dt);
   if (q.has('life')) return stepLife(dt);
   if (q.has('act')) return stepAct(dt);

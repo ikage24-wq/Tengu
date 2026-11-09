@@ -1,0 +1,314 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Mochi raising</title>
+<style>
+  :root { --ink: #4a3a4f; --soft: #8a7a8f; --card: #fffaf4; --line: #ead8e4; --pink: #ff8fb4; --gold: #f2c94c; }
+  body { margin: 0; background: #eef5e6; font: 13px/1.35 system-ui, sans-serif; color: var(--ink); }
+  .wrap { display: flex; flex-wrap: wrap; gap: 12px; padding: 12px; max-width: 980px; }
+  canvas { background: #eaf4ff; border-radius: 12px; image-rendering: pixelated; width: 420px; max-width: 100%; }
+  .panel { flex: 1; min-width: 300px; background: var(--card); border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); }
+  h2 { margin: 2px 0 8px; font-size: 15px; }
+  .row { display: grid; grid-template-columns: 62px 22px 44px 1fr 100px; align-items: center; gap: 6px; margin: 3px 0; }
+  .grade { font-weight: 700; text-align: center; border-radius: 4px; color: #fff; }
+  .bar { height: 8px; background: #f0e4ec; border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--pink); }
+  .style { color: var(--soft); font-size: 11px; }
+  .meta { display: grid; grid-template-columns: 60px 1fr 54px; gap: 6px; align-items: center; margin: 3px 0; }
+  .lean { position: relative; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #8a3a78, #f0e4ec 50%, #ffe08a); }
+  .lean b { position: absolute; top: -3px; width: 4px; height: 14px; background: var(--ink); border-radius: 2px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0 10px; }
+  button, select { font: inherit; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 4px 9px; cursor: pointer; color: var(--ink); }
+  button:hover { background: #fff0f6; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  .big { background: var(--pink); color: #fff; border-color: var(--pink); font-weight: 600; }
+  #log { color: var(--soft); min-height: 36px; font-size: 12px; }
+</style></head><body>
+<div class="wrap">
+  <div>
+    <canvas id="c" width="420" height="300"></canvas>
+    <div id="log"></div>
+  </div>
+  <div class="panel">
+    <h2 id="title"></h2>
+    <div id="stats"></div>
+    <div id="meta" style="margin-top:8px"></div>
+    <div style="margin-top:10px"><b>Sweets</b></div>
+    <div class="btns"><select id="sweet"></select><button id="feed">Feed</button><button id="fav"></button><button id="hate"></button></div>
+    <div><b>Training</b></div>
+    <div class="btns" id="train"></div>
+    <div><b>Care</b></div>
+    <div class="btns" id="care"></div>
+    <div class="btns"><button id="hour">An hour passes</button><button id="grow">Grow fast</button><button id="evolve" class="big">Evolve</button><button id="rebirth" class="big">Rebirth</button><button id="new">New egg</button><button id="rescue">Lift it out</button></div>
+  </div>
+</div>
+<script type="module">
+// Dev tool: raising a Mochi (data/mochi-raise.js) with its animations. Feed it, train it, care
+// for it, and watch its stats, grades, mood, bond and lean move, its running style change with
+// its points, its sprout turn as it leans, and evolving and rebirth play out.
+import { rollMochi, STATS } from '../src/data/mochi-genes.js';
+import * as R from '../src/data/mochi-raise.js';
+import { drawMochiAnim, runStyle, GAITS, FLIES, CLIMBS, STAMINAS, SWIMS } from '../src/render/mochi-anim.js';
+import { drawHatch, drawEvolve, drawRebirth } from '../src/render/mochi-life.js';
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const $ = (id) => document.getElementById(id);
+const STYLE_OF = { run: GAITS, fly: FLIES, power: CLIMBS, stamina: STAMINAS, swim: SWIMS };
+const GRADE_COLOR = { E: '#b8a8b8', D: '#8ab0d8', C: '#6cc08a', B: '#f2a84c', A: '#e8607a', S: '#c86ae0' };
+let rec;
+let m;
+let t = 0;
+let scene = null;
+function start(seed = Math.floor(Math.random() * 1e6)) {
+  rec = R.newRecord(rollMochi(seed, { coat: null }));
+  rec.stage = 'egg';
+  m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'baby', hatch: { t0: null } };
+  scene = 'hatch';
+  log('An egg! It wobbles...');
+  render();
+}
+const log = (s) => { $('log').textContent = s; };
+// What it's growing into, from what it's been raised on lately.
+function growing() {
+  if (rec.stage !== 'mochiko') return rec.form ? `${rec.form} form` : '·';
+  const tr = R.trendOf(rec);
+  if (!tr) return 'nothing yet';
+  return tr.plain ? 'raised evenly: the plain form' : `${tr.stat} (${Math.round(tr.share * 100)}% lately)`;
+}
+const sweetName = (kind) => R.MOCHI_SWEETS.find((s) => s.kind === kind)?.name ?? kind;
+function act(name, hold = 0) {
+  if (scene) return;
+  m.action = { name, t0: t, hold };
+}
+const MODE_OF = { run: 'run', fly: 'fly', power: 'climb', stamina: 'run', swim: 'swim' };
+function celebrate(out) {
+  const seq = [];
+  // (A new trick: it shows it off straight away.)
+  if (out.learned) seq.push({ name: out.learned });
+  if (out.levels > 0) seq.push({ name: 'levelup' });
+  for (const up of out.styleUps ?? []) seq.push({ name: 'newstyle' });
+  m.queue = [...(m.queue ?? []), ...seq];
+  m.demos = [...(m.demos ?? []), ...(out.styleUps ?? []).map((u) => u.stat)];
+  const news = (out.styleUps ?? []).map((u) => `${u.stat}: ${STYLE_OF[u.stat][u.to].name}!`);
+  return `${out.learned ? ` Learned a trick: ${out.learned}!` : ''}${news.length ? ` New way to move: ${news.join(', ')}` : ''}`;
+}
+// Shows off a stat's style for a few seconds (as training does).
+function demo(stat) {
+  const mode = MODE_OF[stat];
+  m.action = null;
+  m.mode = mode;
+  m.staminaPoints = undefined;
+  m.speed = mode === 'run' ? GAITS[runStyle(rec.stats.run.points)].speed : 0;
+  m.trainUntil = t + 3;
+}
+function render() {
+  $('title').textContent = `${rec.personality} ${rec.stage === 'egg' ? 'egg' : rec.stage}${rec.path ? ` (${rec.path})` : ''} · gen ${rec.gen}`;
+  $('stats').innerHTML = STATS.map((s) => {
+    const st = rec.stats[s];
+    const need = R.expToNext(st.level);
+    return `<div class="row"><span>${s}</span><span class="grade" style="background:${GRADE_COLOR[st.grade]}">${st.grade}</span><span>Lv ${st.level}</span>
+      <div><div class="bar"><i style="width:${st.level >= R.MAX_LEVEL ? 100 : (100 * st.exp) / need}%"></i></div><div class="style">${Math.round(st.points)} pts</div></div>
+      <span class="style">${STYLE_OF[s][runStyle(st.points)].name}</span></div>`;
+  }).join('');
+  const lean = R.leanOf(rec);
+  $('meta').innerHTML = `
+    <div class="meta"><span>mood</span><div class="bar"><i style="width:${rec.mood}%;background:#7ac8f0"></i></div><span>${Math.round(rec.mood)}</span></div>
+    <div class="meta"><span>tummy</span><div class="bar"><i style="width:${rec.tummy ?? 0}%;background:#f2a84c"></i></div><span>${(rec.tummy ?? 0) >= 100 ? 'full' : Math.round(rec.tummy ?? 0)}</span></div>
+    <div class="meta"><span>bond</span><div class="bar"><i style="width:${rec.bond / 10}%;background:#f2c94c"></i></div><span>${Math.round(rec.bond)}</span></div>
+    <div class="meta"><span>lean</span><div class="lean"><b style="left:calc(${(rec.lean + 1) * 50}% - 2px)"></b></div><span>${lean ?? '·'}</span></div>
+    <div class="meta"><span>growing</span><span>${growing()}</span><span></span></div>
+    <div class="meta"><span>tricks</span><span>${(rec.tricks ?? []).length}/${R.TRICKS.length}${rec.immortal ? ' · lives forever' : ''}</span><span></span></div>
+    <div class="meta"><span>age</span><span>${(rec.age / 3600).toFixed(1)} h · grown ${Math.round(rec.grown)}/${R.EVOLVE.exp}</span><span></span></div>`;
+  $('fav').textContent = `♥ ${sweetName(rec.loves)}`;
+  $('hate').textContent = `✕ ${sweetName(rec.hates)}`;
+  const busy = Boolean(scene) || rec.stage === 'egg';
+  for (const b of document.querySelectorAll('.btns button')) b.disabled = busy;
+  $('new').disabled = false;
+  $('evolve').disabled = busy || !R.canEvolve(rec);
+  $('rebirth').disabled = busy || !R.canRebirth(rec);
+  $('rescue').disabled = m?.cant !== 'flail';
+}
+// Controls.
+$('sweet').innerHTML = R.MOCHI_SWEETS.map((s) => `<option value="${s.id}">${s.name} (${Object.keys(s.trains).join(', ')}${s.taste === 'spicy' ? ', spicy' : ''})</option>`).join('');
+function feedIt(id) {
+  const out = R.feed(rec, id);
+  const sw = R.SWEET_BY_ID[id];
+  m.action = null;
+  m.queue = [];
+  act(out.action);
+  if (m.action) m.action.sweet = sw.kind;
+  if (out.refused) {
+    log(`${sw.name}: it's full! Its tummy needs a while.`);
+    render();
+    return;
+  }
+  const news = celebrate(out);
+  log(`${sw.name}: ${out.loved ? 'its favourite! ' : out.hated ? 'it hates this one. ' : ''}${Object.entries(out.ups).map(([s, n]) => (n ? `${s} +${n} Lv` : '')).filter(Boolean).join(', ') || 'trained a little'}.${news}`);
+  render();
+}
+$('feed').onclick = () => feedIt($('sweet').value);
+$('fav').onclick = () => feedIt(R.MOCHI_SWEETS.find((s) => s.kind === rec.loves).id);
+$('hate').onclick = () => feedIt(R.MOCHI_SWEETS.find((s) => s.kind === rec.hates).id);
+$('train').innerHTML = Object.entries(R.TRAINING).map(([k, v]) => `<button data-k="${k}">${v.name}</button>`).join('');
+for (const b of $('train').querySelectorAll('button')) {
+  b.onclick = () => {
+    const spot = b.dataset.k;
+    const out = R.train(rec, spot);
+    m.queue = [];
+    m.demos = [];
+    demo(R.TRAINING[spot].stat);
+    const news = celebrate(out);
+    log(`${R.TRAINING[spot].name}: ${Object.entries(out.ups).map(([s, n]) => (n ? `${s} +${n} Lv` : '')).filter(Boolean).join(', ') || 'a good session'}.${news}`);
+    render();
+  };
+}
+$('care').innerHTML = Object.keys(R.CARE).map((k) => `<button data-k="${k}">${k}</button>`).join('');
+for (const b of $('care').querySelectorAll('button')) {
+  b.onclick = () => {
+    const out = R.care(rec, b.dataset.k);
+    m.action = null;
+    m.queue = [];
+    act(out.action, 2.5);
+    const news = celebrate(out);
+    log(`${b.dataset.k}: it ${out.action === 'sulk' ? 'didn\'t like that' : out.action === 'cheer' ? 'thinks that\'s hilarious' : 'loves it'}.${news}`);
+    render();
+  };
+}
+$('hour').onclick = () => { R.tick(rec, 3600); log('An hour in the Garden.'); render(); };
+$('grow').onclick = () => {
+  for (let i = 0; i < 25; i++) {
+    rec.tummy = 0;
+    R.feed(rec, R.MOCHI_SWEETS[Math.floor(Math.random() * R.MOCHI_SWEETS.length)].id);
+  }
+  for (let i = 0; i < 4; i++) R.care(rec, 'pet');
+  R.tick(rec, 3600);
+  rec.mood = Math.max(rec.mood, 75);
+  log('A day of sweets and petting.');
+  render();
+};
+$('evolve').onclick = () => {
+  const before = { ...rec, stage: 'mochiko', path: null };
+  const out = R.evolve(rec);
+  m = { genes: before, dir: 1, speed: 0, dist: 0, size: 'baby', evolve: { t0: null, path: out.path, moon: out.stage === 'tsukimochi' } };
+  scene = 'evolve';
+  log(out.stage === 'tsukimochi' ? `Evolving... a Tsukimochi of ${out.path === 'angel' ? 'Dawn' : 'Dusk'}! It will live forever.` : `Evolving... ${out.path === 'angel' ? 'Amamochi' : 'Karamochi'}, the ${out.form} form! Grades up: ${out.raised.join(', ') || 'none'}`);
+  render();
+};
+$('rebirth').onclick = () => {
+  const out = R.rebirth(rec);
+  m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'grown', rebirth: { t0: null }, egg: out.egg };
+  rec = out.egg;
+  scene = 'rebirth';
+  log(`Back to its mortar, reborn: generation ${rec.gen}. Grades up: ${out.raised.join(', ') || 'none this time'}`);
+  render();
+};
+$('new').onclick = () => start();
+// Lifting a flailing Mochiko out of the water.
+$('rescue').onclick = () => {
+  R.rescue(rec);
+  m.trainUntil = t;
+  m.demos = [];
+  m.queue = [{ name: 'pet', hold: 1.5 }];
+  log('You lift it out of the water. It clings on, so grateful.');
+  render();
+};
+
+function step(dt) {
+  t += dt;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eaf4ff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#bfe3a8';
+  ctx.fillRect(0, 230, c.width, 70);
+  const Z = 6;
+  ctx.setTransform(Z, 0, 0, Z, 0, 0);
+  const [x, y] = [210 / Z, 232 / Z];
+  if (m.trainUntil && t > m.trainUntil) {
+    m.trainUntil = null;
+    m.mode = 'run';
+    m.speed = 0;
+    if (!m.action && m.queue?.length) m.action = { ...m.queue.shift(), t0: t };
+  }
+  // (Garden time runs sixty times fast here: a minute a second.)
+  if (!scene && rec.stage !== 'egg') R.tick(rec, dt * 60);
+  // (Each new style is shown off once the celebrating's done.)
+  if (!scene && !m.action && !m.trainUntil && !m.queue?.length && m.demos?.length) demo(m.demos.shift());
+  if (frame.n = (frame.n ?? 0) + 1, frame.n % 15 === 0 && !scene) render();
+  if (m.mode === 'run' && m.speed) m.dist += m.speed * dt;
+  if (scene === 'hatch') {
+    drawHatch(ctx, m, x, y, t);
+    if (m.hatched) {
+      rec.stage = 'mochiko';
+      m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'baby' };
+      scene = null;
+      log(`It hatched! A ${rec.personality} Mochiko. It loves ${sweetName(rec.loves)} and hates ${sweetName(rec.hates)}.`);
+      render();
+    }
+  } else if (scene === 'rebirth') {
+    drawRebirth(ctx, m, x, y, t);
+    if (m.reborn) {
+      m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'baby', hatch: { t0: t + 0.6 } };
+      scene = 'hatch';
+    }
+  } else if (scene === 'evolve') {
+    drawEvolve(ctx, m, x, y, t);
+    if (m.evolved) {
+      m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'grown' };
+      scene = null;
+      render();
+    }
+  } else {
+    m.genes = rec;
+    m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
+    drawMochiAnim(ctx, m, x, y + (m.mode === 'fly' ? -10 : 0), t);
+  }
+}
+function frame(now) {
+  step(Math.min(0.05, (now - (frame.last ?? now)) / 1000));
+  frame.last = now;
+  requestAnimationFrame(frame);
+}
+// (For checking: window.dev.rec is the record.)
+window.dev = { get rec() { return rec; }, get m() { return m; }, get t() { return t; }, render: () => render() };
+// ?manual steps only through window.step(dt) (for recording); ?celebrate starts hatched with Fly
+// just short of its next style, and feeds it its favourite.
+const q = new URLSearchParams(location.search);
+start(Number(q.get('seed')) || undefined);
+if (q.has('celebrate')) {
+  rec.stage = 'mochiko';
+  m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'baby' };
+  scene = null;
+  Object.assign(rec.stats.fly, { grade: 'B', level: 15, points: 290, exp: 45 });
+  render();
+  setTimeout(() => $('fav').click(), 0);
+}
+if (q.has('moon')) {
+  // (A third-life Mochiko, very happy, every trick learned, raised evenly: about to ascend.)
+  rec.stage = 'mochiko';
+  rec.gen = 3;
+  rec.tricks = [...R.TRICKS];
+  for (const st of STATS) R.giveExp(rec, st, 900);
+  rec.age = R.EVOLVE.age;
+  rec.mood = 95;
+  m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'baby' };
+  scene = null;
+  render();
+  setTimeout(() => $('evolve').click(), 0);
+}
+if (q.has('rebirth')) {
+  // (A grown Mochi at the end of a long, happy life, saying goodbye.)
+  rec.stage = 'mochiko';
+  for (const st of STATS) R.giveExp(rec, st, 4000);
+  rec.age = R.REBIRTH.age;
+  rec.mood = 95;
+  R.evolve(rec);
+  m = { genes: rec, dir: 1, speed: 0, dist: 0, size: 'grown' };
+  scene = null;
+  render();
+  setTimeout(() => $('rebirth').click(), 0);
+}
+window.step = step;
+window.frame = () => c.toDataURL('image/png');
+window.ready = true;
+if (!q.has('manual')) requestAnimationFrame(frame);
+</script></body></html>

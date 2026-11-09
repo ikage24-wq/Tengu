@@ -17,8 +17,10 @@ import { drawHatchEgg, lookOf, MOCHI_SIZE } from './wagashi.js';
 
 const TAU = Math.PI * 2;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const easeIO = (k) => 0.5 - 0.5 * Math.cos(Math.PI * clamp01(k));
+const easeOut = (k) => 1 - (1 - clamp01(k)) ** 2;
 const RARE_SPARK = { common: '#ffffff', uncommon: '#ffffff', rare: '#bfe4ff', epic: '#ffc8e8', legendary: '#ffe27a', mythic: '#ffd9a0', mutation: '#c8b8ff' };
-const GLOW = { angel: ['#fff3c4', '#ffd75a'], demon: ['#f2a8d8', '#b8487e'] };
+const GLOW = { angel: ['#fff3c4', '#ffd75a'], demon: ['#f2a8d8', '#b8487e'], moon: ['#fffbe6', '#b8a4f0'] };
 
 function twinkle(ctx, x, y, r, c) {
   const k = r * 0.3;
@@ -71,16 +73,18 @@ const POP = 2.4;
 export function drawHatch(ctx, m, x, y, time) {
   const h = m.hatch;
   h.t0 ??= time;
-  const e = time - h.t0;
+  const e = Math.max(0, time - h.t0);
   const g = m.genes;
   const k = MOCHI_SIZE.baby / 0.6;
   const dir = m.dir || 1;
   if (e < POP) {
-    // Wobbling (faster and faster), then puffing up in fifths, with steam rising off it.
-    const rate = e < 1 ? 6 : 10 + 6 * (e - 1);
-    const wob = [0, 1, 0, -1][Math.floor(e * rate) % 4] * (e < 1 ? 1 : 0.5);
-    const puff = e < 1 ? 0 : clamp01(Math.floor(((e - 1) / 1.2) * 5) / 5);
-    drawHatchEgg(ctx, x, y, g, puff, wob);
+    // Rocking in its mortar, gently, then faster and harder (eased in, its swing smooth); puffing up
+    // smoothly like mochi toasting; steam rising off it; a glow building just before it pops.
+    const build = clamp01((e - 1) / (POP - 1));
+    const rock = (0.035 + 0.05 * build) * easeIO(e / 0.5) * Math.sin(TAU * (1.3 * e + 1.2 * Math.max(0, e - 1) ** 2 / (POP - 1)));
+    const puff = e < 1 ? 0 : easeIO((e - 1) / 1.2);
+    drawHatchEgg(ctx, x, y, g, puff, 0, false, 1, rock);
+    if (e > POP - 0.35) glow(ctx, x, y - 16 * k, 15 * k, '#ffffff', ((e - (POP - 0.35)) / 0.35) ** 2 * 0.95);
     if (puff > 0) {
       ctx.save();
       for (let i = 0; i < 3; i++) {
@@ -142,8 +146,9 @@ const frontLeaf = () => [
 ];
 const cocoon = (hair) => art(`mochi-cocoon|${hair}`, 30, 54, () => cocoonShapes(hair));
 // The big leaf growing up out of its sprout first, at a size step 1-4.
+const LEAF_SIZES = 12;
 const bigLeaf = (n) => art(`mochi-bigleaf|${n}`, 30, 40, () => {
-  const z = n / 4;
+  const z = n / LEAF_SIZES;
   const p = (pts) => pts.map(([px, py]) => [15 + (px - 15) * z, 40 + (py - 40) * z]);
   return [F(limb(15, 40, 15, 40 - 8 * z, 0.8, 0.7, RIB)), T(p([[15, 34], [8, 26], [6, 14], [11, 4], [15, 0.6], [19, 4], [24, 14], [22, 26]]), LEAF_LT), F(limb(...p([[15, 33]])[0], ...p([[15, 3]])[0], 0.6, 0.35, RIB))];
 });
@@ -166,7 +171,7 @@ export function drawEvolve(ctx, m, x, y, time) {
   const e = time - v.t0;
   const s0 = MOCHI_SIZE.baby;
   const k = s0 / 0.6;
-  const [soft, deep] = GLOW[v.path] ?? GLOW.angel;
+  const [soft, deep] = GLOW[v.moon ? 'moon' : v.path] ?? GLOW.angel;
   if (!m.evolveStarted) {
     m.evolveStarted = true;
     m.noIdle = true;
@@ -175,13 +180,14 @@ export function drawEvolve(ctx, m, x, y, time) {
   }
   if (e < BURST) {
     // Before it's wrapped: it, under the big leaf growing from its sprout and then coming down.
-    const cover = clamp01(Math.floor(((e - GROW) / (WRAP - GROW)) * 8) / 8);
+    // (The leaf comes down over it smoothly, eased.)
+    const cover = easeIO((e - GROW) / (WRAP - GROW));
     const top = y - 54 * s0;
     if (cover < 1) {
       drawMochiAnim(ctx, m, x, y, time);
     }
     if (e >= 1 && e < GROW + 0.25) {
-      const n = Math.min(4, 1 + Math.floor(((e - 1) / (GROW - 1)) * 4));
+      const n = Math.min(LEAF_SIZES, 1 + Math.floor(easeOut((e - 1) / (GROW - 1)) * (LEAF_SIZES - 1)));
       ctx.save();
       ctx.translate(x, y - 24 * k);
       ctx.scale(s0, s0);
@@ -193,25 +199,31 @@ export function drawEvolve(ctx, m, x, y, time) {
       const w = e - WRAP;
       const pulse = 0.5 + 0.5 * Math.sin(w * (4 + 3 * clamp01(w / 1.9)) * TAU * 0.5);
       if (w > 0) glow(ctx, x, y - 13 * k, (16 + 4 * pulse) * k, soft, 0.35 + 0.4 * clamp01(w / 1.9) * pulse);
-      const wob = w > 0 ? [0, 1, 0, -1][Math.floor(w * (5 + 6 * clamp01(w / 1.9))) % 4] * 0.5 * k : 0;
+      const wk = clamp01(w / (BURST - WRAP));
+      const rock = w > 0 ? (0.012 + 0.05 * wk) * easeIO(w / 0.6) * Math.sin(TAU * (1.1 * w + 1.4 * w * wk)) : 0;
       ctx.save();
       ctx.beginPath();
-      ctx.rect(x - 20 * k, top - 4, 40 * k, (y - top + 4) * cover + 4);
+      ctx.rect(x - 22 * k, top - 6, 44 * k, (y - top + 6) * cover + 4);
       ctx.clip();
       ctx.save();
-      ctx.translate(Math.round((x + wob) * 2) / 2, y + 1);
+      ctx.translate(x, y + 1);
+      ctx.rotate(rock);
       ctx.scale(s0, s0);
       place(ctx, cocoon(lookOf(m.genes, null, 0).hairColor), 0, 0);
       ctx.restore();
       ctx.restore();
+      // (Just before it bursts, the light swells to a white flash.)
+      if (e > BURST - 0.4) glow(ctx, x, y - 14 * k, 24 * k, '#ffffff', ((e - (BURST - 0.4)) / 0.4) ** 2);
       if (w > 0) {
         ctx.save();
+        ctx.translate(x, y + 1);
+        ctx.rotate(rock);
         ctx.strokeStyle = deep;
         ctx.globalAlpha = 0.4 + 0.5 * pulse * clamp01(w / 1.2);
         ctx.lineWidth = 0.6 * k;
         ctx.beginPath();
-        ctx.moveTo(x + wob + 0.2 * k, y - 0.6 * k);
-        ctx.quadraticCurveTo(x + wob + 2.4 * k, y - 12 * k, x + wob + 2 * k, y - 21 * k);
+        ctx.moveTo(0.2 * k, -1.6 * k);
+        ctx.quadraticCurveTo(2.4 * k, -13 * k, 2 * k, -22 * k);
         ctx.stroke();
         ctx.restore();
         // Sparkles circling it.
@@ -230,18 +242,20 @@ export function drawEvolve(ctx, m, x, y, time) {
     m.burstStarted = true;
     m.size = 'grown';
     // Grown now, on its path: its feature comes with it.
-    m.genes = { ...m.genes, path: v.path ?? 'angel', stage: v.path === 'demon' ? 'karamochi' : 'amamochi' };
+    m.genes = { ...m.genes, path: v.path ?? 'angel', stage: v.moon ? 'tsukimochi' : v.path === 'demon' ? 'karamochi' : 'amamochi' };
     m.action = { name: 'evolved', t0: v.t0 + BURST };
   }
-  glow(ctx, x, y - 14 * k, 26 * k, soft, clamp01(1 - after / 0.5));
+  glow(ctx, x, y - 14 * k, 26 * k, '#ffffff', (1 - easeOut(after / 0.6)) * 0.95);
+  glow(ctx, x, y - 14 * k, 26 * k, soft, 1 - easeOut(after / 0.9));
   for (const side of [-1, 1]) {
     const u = after;
     if (u > 1.4) continue;
-    const lx = x + side * (5 + 22 * u) * k;
-    const ly = y - 18 * k - 14 * u * k + 30 * u * u * k;
+    const lx = x + side * (5 + 24 * easeOut(u / 1.4)) * k;
+    const ly = y - 18 * k - 16 * u * k + 26 * u * u * k;
     ctx.save();
-    ctx.globalAlpha = clamp01(1 - (u - 0.8) / 0.6);
-    ctx.translate(Math.round(lx * 2) / 2, Math.round(ly * 2) / 2);
+    ctx.globalAlpha = clamp01(1 - (u - 0.7) / 0.7);
+    ctx.translate(lx, ly);
+    ctx.rotate(side * 1.4 * easeOut(u / 1.4));
     ctx.scale(s0, s0);
     place(ctx, halfLeaf(side), 0, 15, { alpha: ctx.globalAlpha });
     ctx.restore();
@@ -252,4 +266,79 @@ export function drawEvolve(ctx, m, x, y, time) {
     m.evolved = true;
     m.noIdle = false;
   }
+}
+
+// ---------- Rebirth ----------
+// At the end of a long, happy life (`m.rebirth = { t0 }`, `m.egg` the egg it becomes): it waves you
+// goodbye and hugs its hands to its chest; its sprout grows the big leaf, which wraps down over it,
+// glowing soft pink, petals drifting up; a gentle flash, and in its place sits an egg in its mortar
+// again. `m.reborn` is set once the egg is there.
+const PINK = ['#ffe0ec', '#ff8fb4'];
+const FAREWELL = 2.2;
+const LEAF_UP = 3.2;
+const WRAPPED = 3.9;
+const EGG_AT = 6;
+export function drawRebirth(ctx, m, x, y, time) {
+  const v = m.rebirth;
+  v.t0 ??= time;
+  const e = time - v.t0;
+  const s = MOCHI_SIZE[m.size ?? 'grown'];
+  const k = s / 0.6;
+  if (!m.rebirthStarted) {
+    m.rebirthStarted = true;
+    m.noIdle = true;
+    m.action = { name: 'farewell', t0: v.t0 };
+    m.queue = [{ name: 'evolving' }];
+  }
+  if (e < EGG_AT) {
+    const cover = easeIO((e - LEAF_UP) / (WRAPPED - LEAF_UP));
+    if (cover < 1) drawMochiAnim(ctx, m, x, y, time);
+    if (e >= FAREWELL && e < LEAF_UP + 0.25) {
+      const n = Math.min(LEAF_SIZES, 1 + Math.floor(easeOut((e - FAREWELL) / (LEAF_UP - FAREWELL)) * (LEAF_SIZES - 1)));
+      ctx.save();
+      ctx.translate(x, y - 27 * k);
+      ctx.scale(s, s);
+      place(ctx, bigLeaf(n), 0, 0);
+      ctx.restore();
+    }
+    if (e >= LEAF_UP) {
+      const w = Math.max(0, e - WRAPPED);
+      const pulse = 0.5 + 0.5 * Math.sin(w * 2.4);
+      if (w > 0) glow(ctx, x, y - 15 * k, (17 + 3 * pulse) * k, PINK[0], 0.45 + 0.25 * pulse + 0.3 * clamp01((e - (EGG_AT - 0.8)) / 0.8));
+      const top = y - 54 * s;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x - 22 * k, top - 4, 44 * k, (y - top + 4) * cover + 4);
+      ctx.clip();
+      ctx.globalAlpha = clamp01((EGG_AT - e) / 0.4);
+      ctx.translate(x, y + 1);
+      ctx.rotate(w > 0 ? 0.02 * easeIO(w / 0.8) * Math.sin(TAU * 0.6 * w) : 0);
+      ctx.scale(s, s);
+      place(ctx, cocoon(lookOf(m.genes, null, 0).hairColor), 0, 0, { alpha: ctx.globalAlpha });
+      ctx.restore();
+      if (e > EGG_AT - 0.45) glow(ctx, x, y - 15 * k, 22 * k, '#ffffff', ((e - (EGG_AT - 0.45)) / 0.45) ** 2);
+      // Petals drifting up from it.
+      if (w > 0) {
+        ctx.save();
+        for (let i = 0; i < 6; i++) {
+          const u = (w * 0.45 + i / 6) % 1;
+          const px = x + Math.sin(i * 2.7 + u * 5) * (6 + 4 * u) * k;
+          const py = y - (8 + u * 26) * k;
+          ctx.globalAlpha = Math.sin(Math.PI * u) * 0.9;
+          ctx.fillStyle = i % 2 ? '#ffc4d6' : '#ffe0ec';
+          ctx.beginPath();
+          ctx.ellipse(px, py, 1.1 * k, 0.6 * k, u * 4 + i, 0, TAU);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+    return;
+  }
+  // The egg, back in its mortar, the flash fading off it.
+  const after = e - EGG_AT;
+  drawHatchEgg(ctx, x, y, m.egg ?? m.genes, 0, 0, false, clamp01(after / 0.3));
+  glow(ctx, x, y - 12 * k, 20 * k, '#ffffff', clamp01(1 - after / 0.6) * 0.9);
+  burst(ctx, x, y - 12 * k, after, k, PINK[0], PINK[1]);
+  if (after > 1.4) m.reborn = true;
 }

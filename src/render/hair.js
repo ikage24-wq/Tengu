@@ -1482,6 +1482,24 @@ function sproutAt(x, y, m) {
   // A bud: small leaves and a fat round bud at the tip, blushing pink.
   if (kind === 'bud') out.push(F(E(tip[0], tip[1] - 0.8, 1.35, 1.6, '#c8e8a8')), F(E(tip[0], tip[1] - 1.5, 0.8, 0.9, '#ffc8d8')), F(E(tip[0] - 0.4, tip[1] - 1.4, 0.3, 0.4, '#ffffff')));
   if (gold) out.push(F(E(tip[0] + 0.9, tip[1] - 2.2, 0.35, 0.35, '#fff6c8')));
+  if (sp.moon) {
+    // A Tsukimochi's sprout cradles a tiny moon between its leaves: full at dawn, a crescent at dusk.
+    const [mx, my] = [tip[0] + Math.sin(deg(a)) * 1.7, tip[1] - Math.cos(deg(a)) * 1.7];
+    if (sp.moon === 'dusk') {
+      const pts = [];
+      for (let i = 0; i <= 10; i++) {
+        const t = deg(40 + (280 * i) / 10);
+        pts.push([mx + Math.cos(t) * 1.75, my + Math.sin(t) * 1.75]);
+      }
+      for (let i = 10; i >= 0; i--) {
+        const t = deg(40 + (280 * i) / 10);
+        pts.push([mx + 0.8 + Math.cos(t) * 1.35, my - 0.1 + Math.sin(t) * 1.35]);
+      }
+      out.push(poly(pts, '#e2d4ff'), F(E(mx - 1, my - 0.5, 0.35, 0.35, '#ffffff')));
+    } else {
+      out.push(F(E(mx, my, 1.75, 1.75, '#fff0b8')), F(E(mx - 0.5, my - 0.4, 0.45, 0.4, '#f2d890')), F(E(mx + 0.6, my + 0.5, 0.35, 0.3, '#f2d890')), F(E(mx - 0.7, my - 0.9, 0.4, 0.25, '#ffffff')));
+    }
+  }
   if (path === 'angel' && sp.ring !== false) {
     // The tiny ring over the tip, in eight short gold links.
     const [rx, ry, rr, rv] = [tip[0], tip[1] - 3.2, 1.7, 0.6];

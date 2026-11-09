@@ -92,7 +92,7 @@ export const COATS = [
 // Amamochi (angel; "ama" is both heaven and sweet) or the Karamochi (demon; "kara" is spicy).
 // Sweet treats and gentle care lean a Mochiko toward the angel path; spicy treats and rough,
 // mischievous play toward the demon one (an even split goes by its personality).
-export const STAGES = { egg: 'Egg', mochiko: 'Mochiko', amamochi: 'Amamochi', karamochi: 'Karamochi' };
+export const STAGES = { egg: 'Egg', mochiko: 'Mochiko', amamochi: 'Amamochi', karamochi: 'Karamochi', tsukimochi: 'Tsukimochi' };
 export const PATHS = { angel: 'amamochi', demon: 'karamochi' };
 
 // A small seeded random (mulberry32).

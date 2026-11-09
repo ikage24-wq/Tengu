@@ -90,10 +90,19 @@ export function lookOf(g, mood = null, phase = 0) {
   if (!moon && (['matcha', 'yomogi', 'mint'].includes(g.hairColor) || g.candy === 'jade')) look.sprout.pale = true;
   // On a path (grown on it, or a Mochiko leaning that way), its sprout shows it; a Mochi already
   // wearing a halo has no tiny ring over its sprout too.
-  const way = g.stage === 'amamochi' || g.stage === 'karamochi' ? g.path : g.lean ?? null;
+  // (`lean` is a number while it's being raised, data/mochi-raise.js: it shows past 0.35 either way.)
+  const lean = typeof g.lean === 'number' ? (g.lean >= 0.35 ? 'angel' : g.lean <= -0.35 ? 'demon' : null) : g.lean ?? null;
+  const way = g.stage === 'amamochi' || g.stage === 'karamochi' || g.stage === 'tsukimochi' ? g.path : lean;
   if (way === 'angel' || way === 'demon') {
     look.sprout.path = way;
     if (featureOf(g) === 'halo') look.sprout.ring = false;
+  }
+  // The Tsukimochi glows softly, like the moon: a pearly sheen on its dough and hair.
+  if (g.stage === 'tsukimochi') {
+    look.skinTone = mix(look.skinTone, g.path === 'demon' ? '#ece2ff' : '#fffaf0', 0.35);
+    look.hairGloss = true;
+    look.sprout.ring = false;
+    look.sprout.moon = g.path === 'demon' ? 'dusk' : 'dawn';
   }
   const mu = MUTANT[coat];
   if (mu) {
@@ -367,16 +376,17 @@ function mortarFront(band) {
     ...(band ? [F(T([[3.2, 17], [22.8, 17], [22.7, 18.8], [3.3, 18.8]], '#f2c94c')), F(R(4, 17.2, 18, 0.5, '#fff0b0'))] : []),
   ];
 }
-// An egg hatching (render/mochi-life.js runs it): the ball puffed up `puff` (in fifths) and shifted
-// `wob`, or the mortar left empty once it's out (`empty`), fading by `alpha`.
+// An egg hatching (render/mochi-life.js runs it): the ball puffed up `puff` (in twentieths) and
+// shifted `wob`, or the mortar left empty once it's out (`empty`), fading by `alpha`, the whole
+// thing rocked `rock` radians about its base.
 const shiftShapes = (shapes, dx, dy) => shapes.map((sh) => ({ ...sh, x: (sh.x ?? 0) + dx, y: (sh.y ?? 0) + dy }));
-export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alpha = 1) {
+export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alpha = 1, rock = 0) {
   const tier = g?.rarity ?? 'common';
   const hair = g ? (MUTANT[coatOf(g)]?.dough ?? lookOf(g, null, 0).hairColor) : DOUGH;
   const ball = g ? mix(DOUGH, hair, EGG_TINT[tier]) : DOUGH;
   const band = tier === 'legendary' || tier === 'mythic' || tier === 'mutation';
   const k = EGG_SCALE;
-  const p = Math.round(puff * 5) / 5;
+  const p = Math.round(puff * 20) / 20;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.fillStyle = 'rgba(70,40,30,0.18)';
@@ -384,6 +394,7 @@ export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alp
   ctx.ellipse(x, y, 11 * k, 2.2 * k, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.translate(x, y);
+  if (rock) ctx.rotate(rock);
   ctx.scale(k, k);
   // (A taller box than the egg's, room for the ball to swell up out of it.)
   const shapes = () => shiftShapes([...mortarBack(), ...(empty ? [] : ballShapes(ball, p, wob)), ...mortarFront(band)], 4, 12);

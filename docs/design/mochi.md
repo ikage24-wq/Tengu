@@ -117,6 +117,18 @@ Each step is pushed on its own. Status as of 2026-11-09.
 3. **Raising.** Stat points and levels; grades rise on evolution and rebirth; sweets made from
    monster, fishing and garden ingredients, each training a stat; training spots; mood and bond; the
    sweet/spicy lean; evolution and rebirth.
+   **Rules done** (data/mochi-raise.js, tests/mochi-raise.test.js; try it: tools/mochi-raise.html):
+   exp per level 20 + 2 x level; each level adds its grade's points (one either way); mood scales
+   learning (x0.5 glum to x1.5 happy); 16 wagashi (lean angel) and 5 spicy treats (lean demon) from
+   Garden crops (mochi rice, red beans, kinako, fire pepper), monster drops, finds and fish;
+   favourite x1.5, hated x0.5; five training spots; seven kinds of care, each liked or disliked by
+   personality; evolving at 3,000 exp, 40 levels, 2 h old and happy (best grade +1, others 1 in 5);
+   rebirth at 20 h old and very happy (grades +1 at Lv 50+, 3 in 5; always at 99; a tenth of its
+   points kept). A tummy paces it: each sweet fills a quarter, it empties over 30 min, and a full
+   Mochi pats its tummy and says no. Every level-up gets a happy hop, every new way of moving a
+   ta-da and a quick show of it (`m.queue` lines actions up); mood shows on the sprout (droops
+   under 30, perks up over 85) and in which idles it picks. Hooking it into the game (the kitchen,
+   training spots, saving) is the Garden's job.
 4. **The Garden.** A tall map in zones: an orchard, a pond, a glide cliff, a nursery (a real indoor
    room), the stadium gate; about 8 Mochi living there.
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
@@ -144,6 +156,51 @@ Each step is pushed on its own. Status as of 2026-11-09.
 13. **Voices.** *(New.)* Each Mochi's chirp style and pitch, cut from the Sonniss library.
 14. **Dress-up.** The hoods (and later more) worn in a dress-up slot.
 15. **Polish.** HD props, effects, speed checks, a full play-through.
+
+## Checked against the Chao Garden (chao-island.com Info Center, read in full 2026-11-09)
+
+Already matched: five stats, grades E-S setting points per level, levels 1-99, a tenth of points kept
+on rebirth, a hero/dark lean from how it's treated, stage-2 forms by path and stat, bites out of food,
+a happy end leading to an egg again, eggs that hint their colour, rare coats (their jewel and shiny
+Chao), personalities, names, breeding, races. Added to raising from it:
+
+- **The form follows what it's been raised on lately** (Chao evolve by their recent animals, not
+  their totals); raised evenly, the **plain form** (no stat feature, just its path's sprout).
+- **A Mochiko buds toward its coming form** (a Chao child changes shape before its cocoon): tiny
+  pastel dough nubs in three sizes.
+- **Hunger** (an empty tummy for 20 min: it rubs its tummy, looks round for food, mood sinks).
+- **A rebirth scene** (the pink cocoon): it waves goodbye, wraps in a pink-glowing leaf, petals rise,
+  an egg in its mortar again.
+
+Still to decide or build, by step:
+
+- **Raising, built 2026-11-09:** *can't-yet* stages (under 50 Run it scoots on its bottom, under 100
+  Swim it flails and splashes until you lift it out, which it's grateful for, under 100 Fly it leaps
+  flapping and flops back down); **learned tricks** (each of the 21 sweets teaches one the first time:
+  forward roll, sit-ups, tummy paddling, chest beat, shadow-boxing, flapping practice, meditating,
+  brain freeze, sumo, a puff of fire, a backflip, and ten of the idle moments; a raised Mochi only
+  idles with the six basics and what it's learned, and tricks start again each life); the
+  **Tsukimochi** (the moon mochi, after the rabbit in the moon): third life or later, mood 85+, every
+  trick learned, raised evenly when it evolves; of Dawn or of Dusk, its sprout cradling a tiny moon
+  (full, or a crescent), pearly, three small moon motes circling (a big moon behind it pulled focus
+  from the Mochi, so it went); it lives forever. Still open: petting a
+  misbehaving one spoils it a little.
+- **Garden:** shake trees for fruit; plant seeds that grow, bear and die (up to 7 trees); **time only
+  passes while you're there** (so nothing is neglected while away); a themed angel / demon area that
+  opens when you raise your first of each, with a bonus egg; digging up hats; 8 at most, and a gentle
+  **goodbye** (sent to a faraway forest to live happily); greeting you and running to you at high
+  bond, squirming when held at low bond; sleeping, and grumpy if woken.
+- **Hatching:** rock the egg to hatch it sooner; the leftover can be worn as a hat.
+- **The Mochi window:** a check-up page with grades, personality, favourite sweet, age, lives lived,
+  and condition.
+- **Classes (extra):** songs and drawing in five levels (it draws on the garden floor), instruments
+  that Mochi play together as a band, dances, exercise.
+- **Breeding:** flowers bloom round a Mochi that's ready; a heart sweet brings it on; a nuzzle and a
+  little dance, and the egg appears; grades from the parents; two-tone colours bred for.
+- **Racing:** race tiers (beginner, jewel, challenge, angel, demon, party with friends); cheering for a
+  burst of speed that costs stamina; luck (tripping, trap lanes) and wits (puzzles) moments; toys and
+  medals as prizes; a sparring contest (an extra) with a will-to-fight bar.
+- **Shop:** coloured eggs (one-colour, two-tone, shiny), hats, special sweets (all-stats, path, heart).
 
 **Extras, only if wanted later:** a class building where Mochi learn little skills (singing, drawing,
 an instrument) that show in the Garden; a friendly sparring contest beside racing; Garden themes that
