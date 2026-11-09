@@ -10,6 +10,7 @@
 import { fxSprite } from './fx-sprites.js';
 import { drawArbalistFx } from './arbalist-fx.js';
 import { drawTideFx } from './tide-fx.js';
+import { drawStormFx } from './storm-fx.js';
 import { rockBurst } from './blade-fx.js';
 import { dancerHit, cloudRing, springTrail } from './dancer-fx.js';
 
@@ -150,6 +151,8 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
   if ((f.kind.startsWith('tm') || f.kind.startsWith('ms') || f.kind.startsWith('tc')) && drawTideFx(ctx, f, x, y, p)) return true;
+  // The Thunderguard's lightning (render/storm-fx.js).
+  if (f.kind.startsWith('tg') && drawStormFx(ctx, f, x, y, p, cam)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.
@@ -451,118 +454,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       const fall = Math.min(1, p / 0.12);
       fxSprite(ctx, 'celsword', x, y + 4 - 160 * (1 - fall * fall), { p: p < 0.3 ? 0 : (p - 0.3) / 0.7, scale: 1.1 });
       if (p > 0.1) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.1) / 0.9, scale: 0.8 });
-      return true;
-    }
-    case 'titanrise': {
-      // Titan Breaker's leap: steel light bursting up from the ground he leaps from, and a giant
-      // sword of steel flying together out of shards high over him, held there until he crashes
-      // down (the crash, 'titanbreak', drives it into the ground).
-      // (No pillar of light up through him any more, the all-class pass: it hid him as he leapt.)
-      groundRing(ctx, ringOf(f.school), x, y, Math.min(1, p * 1.6), 60, { alpha: 0.8 });
-      const form = Math.min(1, p / 0.35);
-      if (p < 0.66) fxSprite(ctx, pathTint(f.school, 'celswordform', 'celswordformgold', 'celswordformred'), x, y - 92, { frame: Math.min(4, Math.floor(form * 4.99)), scale: 1, alpha: p > 0.6 ? (0.66 - p) / 0.06 : 1 });
-      return true;
-    }
-    case 'titanbreak': {
-      // The crash: the steel sword drives down into the ground and shatters, a cross of steel light
-      // bursts where it lands, and the ground splits open wide with blades of light bursting up
-      // out of it, a ring racing out.
-      const r = f.r ?? 170;
-      const fall = Math.min(1, p / 0.1);
-      fxSprite(ctx, pathTint(f.school, 'celsteelsword', 'celsword', 'celragesword'), x, y + 6 - 120 * (1 - fall * fall), { p: p < 0.25 ? 0 : (p - 0.25) / 0.75, scale: 1.25 });
-      // The split runs out both ways to the edge of the blow's reach: the main fissure under the
-      // sword and a crack racing on from each end of it, a beat behind.
-      const fissure = pathTint(f.school, 'celfissurebig', 'celfissuregoldbig', 'celfissureredbig');
-      fxSprite(ctx, fissure, x, y, { p, scale: r / 230 });
-      // (Rock torn up out of the split, so the blades of light rise out of broken ground.)
-      rockBurst(ctx, x, y, Math.min(r * 1.4, 260), Math.min(1, p * 1.2), 7);
-      for (const sd of [-1, 1]) if (p > 0.05) fxSprite(ctx, fissure, x + sd * r * 0.5, y, { p: (p - 0.05) / 0.95, scale: (r / 230) * 0.8, flip: sd < 0 });
-      debris(ctx, x, y, p, r * 0.8, f.school);
-      if (p > 0.06) fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 44, { p: (p - 0.06) / 0.94, scale: 0.85 });
-      // (The aftershock's one ring races out after this; no second huge ring here, the all-class
-      // pass: three blurry rings stacked over him buried the crash.)
-      return true;
-    }
-    case 'xcross':
-      // Cross Slash: the X of steel light burning where the two cuts crossed, on the monsters.
-      return fxSprite(ctx, pathTint(f.school, 'celsteelcross', 'cellightcross', 'celragecross'), x, y - 34, { p, scale: 0.55, flip }) || true;
-    case 'titanwave': {
-      // The aftershock: rings of steel racing out along the ground, dust thrown both ways.
-      const r = f.r ?? 180;
-      groundRing(ctx, ringOf(f.school), x, y, p, Math.min(r, 150), { alpha: 0.75 * (1 - p * 0.5) });
-      for (const sd of [-1, 1]) {
-        if (REAL.has(f.school)) fxSprite(ctx, 'celquake', x + sd * r * 0.35, y + 6, { p, flip: sd < 0, scale: 0.55 });
-        else fxSprite(ctx, 'celdust', x + sd * r * 0.55, y + 2, { p, flip: sd < 0, scale: 0.6 });
-      }
-      return true;
-    }
-    // ---------- The warrior paths' own Titan Breakers (data/path-skills.js) ----------
-    case 'plcrest': {
-      // Heaven's Seal: the great crest of light gathering high over the Paladin as she raises her
-      // blade (frames 0-4), then shining, its rays turning, until she brings it down.
-      const a = Math.min(1, p / 0.08) * (p > 0.9 ? (1 - p) / 0.1 : 1);
-      const frame = p < 0.4 ? Math.min(4, Math.floor((p / 0.4) * 5)) : 5 + (Math.floor(time * 12) % 3);
-      fxSprite(ctx, 'celplcrest', x, y - 104 - 6 * Math.min(1, p * 2) - 2 * Math.sin(time * 3), { frame, scale: 0.72, alpha: a });
-      return true;
-    }
-    case 'plsealfall': {
-      // The crest slams down with her chop: it drops onto the ground ahead and bursts into a cross of
-      // light, gold dust and rock thrown up, a ring of light racing out to the blow's reach.
-      const r = f.r ?? 170;
-      const fall = Math.min(1, p / 0.1);
-      if (p < 0.3) fxSprite(ctx, 'celplcrest', x, y - 30 - 80 * (1 - fall * fall), { frame: 7, scale: 0.72 * (1 + 0.3 * fall), alpha: p < 0.2 ? 1 : (0.3 - p) / 0.1 });
-      if (p > 0.08) fxSprite(ctx, 'cellightcross', x, y - 40, { p: (p - 0.08) / 0.92, scale: 1.15 });
-      debris(ctx, x, y, p, r * 0.8, 'holy');
-      fxSprite(ctx, 'celholyhit', x, y - 20, { p, scale: 1.2 });
-      groundRing(ctx, 'celringholy', x, y, p, r * 1.1);
-      return true;
-    }
-    case 'plsealwave': {
-      // The blade driven in: pillars of light burst up in a ring round her, one after another out to
-      // the blow's reach, with a ring of light running out along the ground.
-      const r = f.r ?? 185;
-      groundRing(ctx, 'celringholy', x, y, p, r);
-      for (let i = 0; i < 4; i++) {
-        const k = (p - i * 0.08) / 0.68;
-        if (k <= 0 || k >= 1) continue;
-        for (const sd of [-1, 1]) lightPillar(ctx, 'celpillarholy', x + sd * r * (0.28 + i * 0.22), y, k, 110 - i * 10);
-      }
-      return true;
-    }
-    case 'bkhowl':
-      // Skyfall Rend's howl: fire flaring up under the crouching Berserker, embers climbing.
-      rageFlare(ctx, x, y, p, 90, time);
-      return true;
-    case 'bkmeteor': {
-      // The meteor of rose fire he falls in (carried with him; drawn under him): it wraps him from the
-      // top of his pounce to the smash, tipping head-first along the fall.
-      const mp = 0.36 + p * (0.36 / 1.38);
-      const u = Math.min(1, Math.max(0, (mp - 0.18) / 0.44));
-      const lift = 66 * Math.sin(Math.PI * u) ** 0.8;
-      const a = Math.min(1, p / 0.15) * (p > 0.85 ? (1 - p) / 0.15 : 1);
-      fxSprite(ctx, 'celbkmeteor', x + dir * 4, y - 26 - lift, { t: time, scale: 0.72, rot: -dir * (0.25 + 0.4 * Math.min(1, p * 1.5)), alpha: a });
-      return true;
-    }
-    case 'bkrend': {
-      // The smash: claw gashes torn huge across the ground, the earth ripped open, fire bursting and
-      // a jagged shockwave out to the blow's reach.
-      const r = f.r ?? 170;
-      fxSprite(ctx, 'celclawbig', x, y - 40, { p, scale: 1.3, flip });
-      debris(ctx, x, y, p, r * 0.95, 'rage');
-      fxSprite(ctx, 'celragefire', x, y, { t: time, scale: 1.05, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      fxSprite(ctx, 'celembers', x, y, { t: p, scale: r / 80, alpha: p < 0.7 ? 1 : (1 - p) / 0.3 });
-      groundRing(ctx, 'celshockred', x, y, p, r * 0.85, { alpha: 0.75 * (1 - p * 0.5) });
-      return true;
-    }
-    case 'gswheel': {
-      // Titan Breaker's somersaults: a wheel of steel round her as she turns over and over in the
-      // leap, rising with her (the move's lift, from its own timeline: this plays from 0.1 to 0.43
-      // of the 1.5 s move).
-      const mp = 0.1 + p * (0.5 / 1.5);
-      const u = Math.min(1, Math.max(0, (mp - 0.1) / 0.32));
-      const lift = 62 * Math.sin((1 - (1 - u) ** 3) * Math.PI / 2);
-      const a = Math.min(1, p / 0.12) * (p > 0.8 ? (1 - p) / 0.2 : 1);
-      fxSprite(ctx, 'celgswheel', x, y - 26 - lift, { t: time, scale: 0.95, flip, alpha: a });
       return true;
     }
     case 'verdicthalo': {

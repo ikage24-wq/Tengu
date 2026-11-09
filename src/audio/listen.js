@@ -52,16 +52,18 @@ export function songFor(map, world = null) {
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove', shrine: 'shrine', ridge: 'ridge', springs: 'springs', snow: 'peak' }[map.theme] ?? 'meadow';
 }
 
-const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
+const SPELLS = new Set(['healbloom', 'feathers', 'moonslash', 'smokepuff', 'smokeburst', 'meteor', 'judgment', 'burst', 'quake', 'vortex', 'beam', 'xslash', 'smoke', 'hammer', 'dragon', 'stampede', 'bladestorm', 'rain', 'blast', 'galeblast', 'thunderblast', 'frostburst', 'stormburst', 'galeburst', 'gust', 'boltshock', 'zapstrike', 'chainarc', 'staticfield', 'skybolt', 'stormsky', 'gigabolt']);
 // Each mount's jump, step (and how far apart its steps are), for world/mount.js riding.
 const MOUNT_JUMP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'jump', gecko: 'jump' };
 const MOUNT_STEP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'turtleStep', gecko: 'geckoPatter' };
 const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, gecko: 16 };
-const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
+const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Phantom Trickster.
   'pthit', 'ptsmoke', 'ptillusion',
   // The Tide Mage.
   'tmlash', 'tmsplash', 'tmsplashbig', 'tmgeyser', 'tmwhirl', 'tmfall', 'tmfallbig', 'tmhit', 'tmshieldfx', 'tmpool',
+  // The Thunderguard.
+  'tghit', 'tgspark', 'tgchain', 'tgdart', 'tgburst', 'tgfloor', 'tgring', 'tgbeam', 'tgcolumn', 'tgflash', 'tgbolt', 'tgclap', 'tgrush', 'tgcyclone', 'tgrodfx', 'tgclapbig', 'tgboltbig', 'tgguardshell', 'tgstormcloud',
   // The Tidecaller.
   'tchit', 'tcbubblepop', 'tcribbon', 'tcdrop', 'tcpillar', 'tcdrops', 'tcdropsbig', 'tcspring', 'tcsplash', 'tcsplashbig', 'tcrevive', 'tcrain', 'tcsurge', 'tcbless', 'tcmoonfall', 'tcmoontide', 'tcglint', 'tcshellfx', 'tcpool', 'tcwhirl',
   // The Maelstrom.
@@ -201,7 +203,7 @@ export function hearWorld(world, cam) {
     const tier = [10, 25, 50, 100].filter((t) => (world.hits ?? 0) >= t).length;
     if (tier > (m.tier ?? 0)) sfx('tier', { n: tier });
     m.tier = tier;
-    if ((world.valor ?? 0) >= 100 && !(m.valor >= 100)) sfx('unbroken');
+    if ((world.volt ?? 0) >= 100 && !(m.volt >= 100)) sfx('tgovercharge');
     if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('showtime');
     if ((world.shadow ?? 0) >= 100 && !(m.shadow >= 100)) sfx('phantom');
     if ((world.ki ?? 0) >= 100 && !(m.ki >= 100)) sfx('carouselfull');
@@ -256,7 +258,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, valor: world.valor, momentum: world.momentum, shadow: world.shadow, ki: world.ki, spirit: world.spirit, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, volt: world.volt, momentum: world.momentum, shadow: world.shadow, ki: world.ki, spirit: world.spirit, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
 
   // ----- The summons' voices: each one speaks up when it sets about something new -----
   hearSummons(world, m, pan);

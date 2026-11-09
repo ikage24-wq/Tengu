@@ -145,24 +145,6 @@ export function procOf(char, skillId) {
   return lv > 0 ? skillAt(skillId, lv).proc ?? null : null;
 }
 
-// War Cry: your gauge just filled, so you shout.
-export function cryOut(world) {
-  const p = procOf(world.char, 'warcry');
-  if (!p || world.dead) return;
-  applyBuff(world, 'warcry', p);
-  world.fx.push({ kind: 'powerup', school: pathSchool(world.char), x: world.body.x, y: world.body.y, t: 0, dur: 0.6, big: true });
-}
-
-// Iron Guard: a hit that took at least `hard` of your max HP may make you brace (not while
-// already braced). `rng` for tests.
-export function braceOnHit(world, dmg, rng = Math.random) {
-  const p = procOf(world.char, 'ironguard');
-  if (!p || world.dead || dmg < world.stats.maxHp * p.hard) return;
-  if ((world.char.buffs.ironguard?.until ?? 0) > world.now || rng() >= p.chance) return;
-  applyBuff(world, 'ironguard', p);
-  const { body } = world;
-  world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: 'IRON GUARD', color: '#cfe3ff', t: 0 });
-}
 
 // Light Feet (Wind Dancer): a hit that lands on her may set her dancing: untouchable for a moment,
 // and harder to hit for a few seconds (not while it's already up). `rng` for tests.
@@ -251,7 +233,6 @@ export function drinkBlood(world, dmg) {
 
 // Everything that answers a hit you take.
 export function hurtProcs(world, dmg) {
-  braceOnHit(world, dmg);
   danceOnHit(world);
   rallyOnHit(world);
 }

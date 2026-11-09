@@ -702,7 +702,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   if (world.god || blockOnHit(world, fromX)) return 0;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - ventGuard(world, fromX))));
+  let dmg = absorb(world, body, char.buffs, Math.round((pierce ? raw : damageTaken(raw, s.wdef)) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX)) * (1 - ventGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -1648,8 +1648,8 @@ function thinkRole(bot, world, rng) {
   br.goal = goalAt(world, Math.max(30, follow.body.x - 34 * k), follow.body.y, 'follow');
 }
 
-// A helper Warrior's War Cry, the same passive the player's Warrior has: Valor builds over the
-// fight (faster with monsters loose on the others), and once it's full the cry goes off as soon as
+// A helper tank's Thunderclap, the same skill the player's Thunderguard has: it charges over the
+// fight (faster with monsters loose on the others), and once it's ready it goes off as soon as
 // something needs grabbing: the monsters around turn on them for its taunt time and the group near
 // them is guarded, by the skill's own numbers at their level. Returns whether it went off.
 function warCry(world, bot, loose) {
@@ -1658,12 +1658,15 @@ function warCry(world, bot, loose) {
   br.valorAt = world.now;
   br.valor = Math.min(100, (br.valor ?? 0) + dt * (12 + 8 * loose.length));
   if (br.valor < 100 || !loose.length) return false;
-  const lv = Math.max(1, Math.min(SKILLS.warcry.maxLevel, Math.round(SKILLS.warcry.maxLevel * Math.min(1, (bot.char.level - 8) / 40))));
-  const p = SKILLS.warcry.at(lv, SKILLS.warcry.maxLevel).proc;
+  const S = SKILLS.thunderclap;
+  const lv = Math.max(1, Math.min(S.maxLevel, Math.round(S.maxLevel * Math.min(1, (bot.char.level - 8) / 40))));
+  const p = S.at(lv, S.maxLevel);
   br.valor = 0;
   provoke(world, bot.id, bot.body, p.range.w / 2, p.taunt, pathSchool(bot.char));
+  world.fx.push({ kind: 'tgclapbig', x: bot.body.x, y: bot.body.y, r: p.range.w / 2, t: 0, dur: 0.7 });
+  bot.attack = { pose: 'tgthunderclap', t: 0, dur: 0.85 };
   for (const g of groupOf(world)) {
-    if (isUp(world, g) && Math.abs(g.body.x - bot.body.x) < p.range.w / 2 && Math.abs(g.body.y - bot.body.y) < p.range.h) giveBuff(world, g, 'warcry', 'War Cry', p.buff, p.duration);
+    if (isUp(world, g) && Math.abs(g.body.x - bot.body.x) < p.range.w / 2 && Math.abs(g.body.y - bot.body.y) < p.range.h) giveBuff(world, g, 'thunderclap', 'Thunderclap', p.buff, p.duration);
   }
   return true;
 }

@@ -134,7 +134,7 @@ test('a spinning blade sweeps smoothly round through every flip', async () => {
 // once crashed here, drawing its helmet before its tile.
 test('every skill icon draws on its own, even as the first one drawn', async () => {
   const { SKILL_ART } = await import(`../src/render/icons/skills.js?fresh=${Date.now()}`);
-  assert.ok(SKILL_ART.shouldercharge().length > 0, 'Shoulder Charge first, on a fresh palette');
+  assert.ok(SKILL_ART.thunderrush().length > 0, 'Thunder Rush first, on a fresh palette');
   const { readFileSync } = await import('node:fs');
   const src = readFileSync(new URL('../src/render/icons/skills.js', import.meta.url), 'utf8');
   for (const [, name, body] of src.matchAll(/^function (\w+)\(\) \{\n([\s\S]*?)^\}/gm)) {
@@ -181,7 +181,7 @@ test('every expression has its own idle loop', async () => {
 test('the Warrior line swings round a fist kept under the chin, and nothing comes to rest before the face', async () => {
   const { moveAt, FIST_CAP } = await import('../src/render/moves.js');
   const { PATH_VARIANTS } = await import('../src/world/melee.js');
-  const commands = ['rising', 'airslash', 'airslash2', 'meteor', 'dashstab', 'plunge', 'dash', 'titanbreak', 'ascend', 'plaircut', 'pldive', 'consecrate', 'bash', 'dragrise', 'bkairchop', 'bkdive', 'bkgore', 'bodyslam', 'shieldrush', 'verdict', 'recklesscharge', 'rampage', 'eclipse', 'plseal', 'plrotor', 'bkpounce', 'bkmaelstrom'];
+  const commands = ['rising', 'airslash', 'airslash2', 'meteor', 'dashstab', 'plunge', 'dash', 'ascend', 'plaircut', 'pldive', 'consecrate', 'bash', 'dragrise', 'bkairchop', 'bkdive', 'bkgore', 'bodyslam', 'shieldrush', 'verdict', 'rampage', 'eclipse', 'tgskyward', 'tgaircut', 'tgaircut2', 'tgplunge', 'tgflash', 'tgslam', 'tgrush', 'tgcleave', 'tgcyclone', 'tgrod', 'tgthunderclap', 'tgguard', 'tgfall'];
   const moves = new Set(commands);
   for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
   for (const weapon of ['sword', 'axe', 'spear']) {
@@ -241,7 +241,7 @@ test('the Warrior line never passes a blade across the face mid-move, and each m
   const { moveAt } = await import('../src/render/moves.js');
   const { weaponBehind, rigid } = await import('../src/render/hero.js');
   const { PATH_VARIANTS } = await import('../src/world/melee.js');
-  const moves = new Set(['gsrise', 'gsspin', 'bkeclipse', 'dragrise', 'gstitan', 'plverdict', 'skysplit', 'leapchop', 'plseal', 'plrotor', 'bkpounce', 'bkmaelstrom']);
+  const moves = new Set(['bkeclipse', 'dragrise', 'plverdict', 'skysplit', 'leapchop', 'tgstrike', 'tgfall', 'tgcyclone', 'tgstorm', 'tgcleave', 'tgskyward']);
   for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
   for (const weapon of ['sword', 'axe']) {
     for (const kind of moves) {
@@ -252,7 +252,7 @@ test('the Warrior line never passes a blade across the face mid-move, and each m
       }
     }
   }
-  const ends = ['gsdrop', 'gsrise', 'gsspin', 'gscleave', 'gstitan', 'leapchop', 'skysplit'];
+  const ends = ['tgcut', 'tgreturn', 'tgspin', 'tgstrike', 'tgclap', 'tgstorm'];
   const seen = new Map();
   for (const kind of ends) {
     const mv = moveAt(kind, 1, 0.8, { weapon: 'sword' });

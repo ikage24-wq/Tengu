@@ -549,8 +549,8 @@ export function hotkeyAt(sx, sy) {
 // Berserker's Rage (a flame), a Paladin's Faith (a star) a Beastmaster's Bond (Snow wolf's Patience, a moon) or a Stormcaller's Charge (a bolt). It fills as blows land, with a notch where Rampage opens up; full, it burns bright, pulses,
 // names the state (BERSERK, SANCTIFIED), and tints the edges of the screen.
 const GAUGES = {
-  valor: { color: '#4f7fe0', hot: '#9fd2ff', icon: 'shield', name: 'Valor', full: 'UNBROKEN', notch: () => null, edge: 'rgba(110,160,255,', ink: '#24307a',
-    tip: 'Your blows build it, faster the more monsters one blow hits; it drains once the fighting stops. Full, your blows land heavier and nothing knocks you back, and Titan Breaker is ready.' },
+  volt: { color: '#3f6cf0', hot: '#fff3b0', icon: 'shield', name: 'Charge', full: 'OVERCHARGE', notch: () => null, edge: 'rgba(255,243,176,', ink: '#1c2a78',
+    tip: 'Your blows build it, faster the more monsters one blow hits, and so do the hits you take; it fades once the fighting stops. The fuller it runs, the harder you hit and the less you take. Full (Overcharge), lightning jumps from every blow to the monsters near it, a static shell shocks whatever hits you, nothing knocks you back, and Thunderfall is ready.' },
   momentum: { color: '#2a9a78', hot: '#ffd36a', icon: 'star5', name: 'Combo', full: 'SHOWTIME', notch: () => null, edge: 'rgba(94,214,168,', ink: '#145a4a',
     tip: 'Your shots build it, more for each one landed in a row; your flips and rolls keep it from fading, and taking a hit knocks half of it away. Full (Showtime), every shot you loose splits into three arrows, and Grand Somersault is ready.' },
   ki: { color: '#d26d6a', hot: '#ffd36a', icon: 'chakram', name: 'Ricochet', full: 'CAROUSEL', notch: () => null, edge: 'rgba(246,173,148,', ink: '#7e3450',

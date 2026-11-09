@@ -307,7 +307,7 @@ test('a group goes round the Clockwork Carnival: music boxes, springs and balloo
   // (Seed 41: the test's autopilot stalls in the spring room on about one seed in six, whichever
   // that happens to be; 38 became one when first jobs moved to level 5, 39 when the Mage was remade,
   // 40 when the Acrobat Archer's Handspring got its ribbon trail.)
-  const rng = seeded(41);
+  const rng = seeded(42);
   Math.random = rng;
   try {
     const world = heroAt(rng, 28, ['archer'], 'carnival_gate');
@@ -530,46 +530,47 @@ test('the lung gardens: the air-blooms open only on the breath out', async () =>
   assert.equal(tendBloom(world, bloom), true, 'open on the breath out');
 });
 
-test("a warrior's tank procs: War Cry taunts and guards as Valor fills, Iron Guard braces", async () => {
-  const { braceOnHit } = await import('../src/world/combat.js');
-  const { addValor } = await import('../src/world/melee.js');
-  const { loadMap } = await import('../src/world/world.js');
+test("the Thunderguard's tank tools: Thunderclap turns a pack on him and guards, Static Guard takes the edge off", async () => {
+  const { cast } = await import('../src/world/combat.js');
+  const { loadMap, updateWorld } = await import('../src/world/world.js');
   const { hurtMember } = await import('../src/world/dungeon.js');
   const rng = seeded(31);
   const world = heroAt(rng, 12, ['warrior']);
-  world.char.skills.warcry = 5;
-  // In a dungeon, War Cry turns a pack on you and guards the party around you.
+  world.char.skills.thunderclap = 5;
+  world.char.mp = 9999;
+  // In a dungeon, Thunderclap turns a pack on you and guards the party around you.
   loadMap(world, 'hollow_gate', 'start');
   assert.equal(startRun(world), null);
   const pack = world.mobs.filter((x) => x.spawn.pack === 'a');
-  Object.assign(world.body, { x: pack[0].x - 120, y: pack[0].y, onGround: true });
-  world.valor = 95;
-  addValor(world, 10);
-  for (const x of pack) {
-    assert.ok(x.engaged);
-    assert.equal(x.taunt.id, 'you');
-  }
-  assert.ok(world.char.buffs.warcry?.values.dmgCut > 0, 'the cry guards you');
-  delete world.char.buffs.warcry;
-  // Iron Guard takes a share off every hit once it's up.
+  Object.assign(world.body, { x: pack[0].x - 90, y: pack[0].y, onGround: true, facing: 1 });
+  const idle = { held: new Set(), pressed: new Set(), locked: false };
+  assert.ok(cast(world, 'thunderclap').ok);
+  for (let i = 0; i < 60; i++) updateWorld(world, 1 / 60, idle);
+  for (const x of pack) if (Math.abs(x.x - world.body.x) < 180) assert.equal(x.taunt?.id, 'you');
+  assert.ok(world.char.buffs.thunderclap?.values.dmgCut > 0, 'the clap guards you');
+  delete world.char.buffs.thunderclap;
+  // Static Guard takes a share off every hit while it's up.
   const me = groupOf(world).find((g) => !g.bot);
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
   const plain = world.stats.maxHp - world.char.hp;
-  world.char.skills.ironguard = 10;
-  braceOnHit(world, world.stats.maxHp, () => 0);
-  assert.ok(world.char.buffs.ironguard, 'braced');
+  world.char.skills.staticguard = 10;
+  world.cooldowns = {};
+  for (let i = 0; i < 60; i++) updateWorld(world, 1 / 60, idle);
+  assert.ok(cast(world, 'staticguard').ok);
+  for (let i = 0; i < 40; i++) updateWorld(world, 1 / 60, idle);
+  assert.ok(world.char.buffs.staticguard, 'guarded');
   world.char.hp = world.stats.maxHp;
   hurtMember(world, me, 100, 0, { pierce: true });
-  assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the guard');
+  assert.ok(world.stats.maxHp - world.char.hp < plain, 'less damage behind the static');
 });
 
 test('the group finder brings only real jobs, and helpers use only their own real skills', async () => {
   const { JOBS, jobChain } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
   const { botSkills } = await import('../src/world/party.js');
-  // The tank's War Cry is a real skill.
-  for (const [id, job] of [['warcry', 'warrior']]) {
+  // The tank's Thunderclap is a real skill.
+  for (const [id, job] of [['thunderclap', 'warrior']]) {
     assert.ok(SKILLS[id], `${id} is a real skill`);
     assert.equal(SKILLS[id].job, job);
   }

@@ -30,10 +30,12 @@ export const JOBS = {
     blurb: 'Everyone starts here. Train up to level 5, then pick a path.',
   },
 
+  // The Thunderguard (the Warrior remade, 2026-11-09; docs/design/thunderguard.md): the job's id
+  // stays `warrior` (old saves, the trial, the tank's seat).
   warrior: {
-    id: 'warrior', guard: 0.85, power: 0.87, spread: 0.89, name: 'Warrior', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    id: 'warrior', guard: 0.85, power: 1.38, spread: 0.64, name: 'Thunderguard', family: 'warrior', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
-    blurb: 'Close-range fighter with big HP. Raises STR.',
+    blurb: 'A warrior who fights inside a storm of his own: sudden explosive strikes with sword, axe or spear, and the tank of the party. His blows and the hits he takes build Charge; full (Overcharge), lightning jumps from every blow and a static shell shocks whatever hits him. Thunder Rush, Storm Cleave, Thunderclap, Static Guard, and Thunderfall: he falls riding a giant bolt. Raises STR.',
   },
   archer: {
     id: 'archer', power: 1.48, spread: 0.98, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,

@@ -113,9 +113,6 @@ export const RECORDED = {
   townBell: { trim: 2.8 },
   // ----- The jobs' skills: `music` keeps the recipe's notes over the recording -----
   // Warrior.
-  titanrise: { trim: -4.7, music: true },
-  titanbreak: { trim: -4.5, music: true },
-  unbroken: { trim: -2.6, music: true },
   // Paladin.
   pillar: { trim: -0.1 },
   aegis: { trim: 3.4 },
@@ -161,6 +158,28 @@ export const RECORDED = {
   tmhit: { trim: 0 },
   tmshieldfx: { trim: 0 },
   tmpool: { trim: 0 },
+  // Thunderguard.
+  tghit: { trim: 0 },
+  tgspark: { trim: 0 },
+  tgchain: { trim: 0 },
+  tgdart: { trim: 0 },
+  tgburst: { trim: 0 },
+  tgfloor: { trim: 0 },
+  tgring: { trim: 0 },
+  tgbeam: { trim: 0 },
+  tgcolumn: { trim: 0 },
+  tgflash: { trim: 0 },
+  tgwave: { trim: 0 },
+  tgbolt: { trim: 0 },
+  tgclap: { trim: 0 },
+  tgrush: { trim: 0 },
+  tgcyclone: { trim: 0 },
+  tgrodfx: { trim: 0 },
+  tgclapbig: { trim: 0 },
+  tgboltbig: { trim: 0 },
+  tgguardshell: { trim: 0 },
+  tgstormcloud: { trim: 0 },
+  tgovercharge: { trim: 0 },
   // Tidecaller.
   tcpearl: { trim: 0 },
   tchit: { trim: 0 },

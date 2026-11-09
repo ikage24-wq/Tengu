@@ -64,6 +64,10 @@ The buff and party buff: Epic Stock Media Fantasy Game 2 (a bright light spell) 
 
 Her whip of water, waves, bubbles, splashes, geyser, whirlpool, waterfall, hits and staff swish, from the same bundles: BluezoneCorp Designed Water, InMotionAudio Submerge, Epic Stock Media Elemental Mutation Whooshes and Impacts, Nick McMahan Cascadia Shore Waves, Rescopic Sound Distinct Whooshes, David Dumais Audio Melee Weapons 2, 344 Audio Elemental Palette Designed Vol. 1, Cinematic Sound Design Cartoon & Animation Vol 2.
 
+## Thunderguard sounds (tools/build-fight.py, 2026-11-09)
+
+His crackling blows, jumping bolts, static bursts and rings, bolt beams and columns, the bolts he calls down, the thunderclaps, Thunder Rush, Cyclone Edge, Lightning Rod, Static Guard, Thunderfall's storm and bolt, and Overcharge: BluezoneCorp High Voltage (arc discharge, sizzling crackle), InMotionAudio Arc (arc design, buzz), Epic Stock Media Elemental Mutation Whooshes and Impacts (electric impact), Epic Stock Media Public Spaces Storms (a real thunderclap) and Jake Fielding Interior Wind Rain and Storms (thunder rumble), layered with the line's booms and whooshes.
+
 ## Tidecaller sounds (tools/build-fight.py, 2026-11-09)
 
 Her pearls, shells, crescents, ribbons, pillars of moonlight, drops, springs, heals, rain, blessing, revive, Moonfall and Moon Tide: the Tide Mage's water bundles, pitched up and lighter, layered with Epic Stock Media Strange Game Ambient Loops 3 (bell shimmer), Cinematic Sound Design User Interface (Button Arp Twinkle), Epic Stock Media Anime Game (bright power-up shimmer), Bolt Backyard Rain & Thunder (calm night rain) and Alexander Kopeikin Emotion and Magic (astral energy flow).

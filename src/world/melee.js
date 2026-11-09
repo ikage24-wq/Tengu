@@ -30,7 +30,7 @@ import { physicalRange, magicRange, rollHit, accuracy, hitChance } from '../core
 import { grownLevel } from '../core/stats.js';
 import { JOBS, jobChain } from '../data/jobs.js';
 import { SKILLS, skillAt } from '../data/skills.js';
-import { pickTargets, weaponElement, procOf, cryOut, frenzyOnCrit, transform, applyBuff } from './combat.js';
+import { pickTargets, weaponElement, procOf, frenzyOnCrit, transform, applyBuff } from './combat.js';
 import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
@@ -68,14 +68,14 @@ const TINTS = { holy: ['#ffe9a0', '#ffd24f'], rage: ['#c0102e', '#ff4a1f'], cora
 // the Berserker's demonic crimson. The Warrior's skills the paths inherit (Blade Rush, Whirlwind,
 // War Cry, Iron Guard, Shoulder Charge) take the path's colour, never the Warrior's blue.
 // (The Wind Dancer's blows default to her coral, never the Warrior's steel.)
-export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : 'steel');
+export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasShadow(char) ? 'coral' : hasVolt(char) ? 'thunder' : 'steel');
 // The Archer's skills the same way: gold and mint for the Acrobat Archer, plum for the Phantom
 // Trickster, brass for the Arbalist Engineer.
 // And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Sky Dancer's sky blue.
 export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'aerial' : hasShadow(char) ? 'coral' : 'shadow');
 export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' || school === 'coral' ? thiefSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
-export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
+export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a', thunder: '#fff3b0' };
 
 export const COMBOS = {
   sword: [
@@ -135,14 +135,15 @@ export const hasPathCombo = (world) => Boolean(PATH_COMBOS[pathOf(world)]);
 // shot, a double shot (two gold arrows a beat apart), then a full draw whose hawk arrow tears
 // through the line.
 export const PATH_COMBOS = {
+  // The Thunderguard (the Warrior remade; docs/design/thunderguard.md): a snapping cut off the
+  // shoulder, the return cut, a full spin in a ring of static, and a leaping overhead that calls a
+  // bolt down where it lands. Every blow crackles (`tghit`); the line's crescent slash runs in his
+  // storm colours.
   warrior: [
-    { move: 'gsdrop', dur: 0.36, step: 11, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 40, arc: [-115, 205] }] },
-    { move: 'gsrise', dur: 0.36, step: 11, strikes: [{ at: 0.45, pct: 95, reach: 68, h: 62, knock: 40, arc: [100, -215] }] },
-    { move: 'gsspin', dur: 0.44, step: 16, strikes: [
-      { at: 0.22, pct: 65, reach: 74, h: 60, targets: 2, knock: 30, arc: [-115, 205], thick: 9 },
-      { at: 0.72, pct: 75, reach: 74, h: 62, targets: 2, knock: 60, arc: [100, -215], thick: 9 },
-    ] },
-    { move: 'gscleave', dur: 0.56, step: 19, finisher: true, strikes: [{ at: 0.5, pct: 200, reach: 94, h: 78, targets: 3, knock: 250, launch: 300, arc: [-170, 330], thick: 13, big: true, stop: 0.09, shake: 3 }] },
+    { move: 'tgcut', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 90, reach: 70, h: 58, knock: 40, arc: [-115, 205], thick: 9, fx: 'tghit' }] },
+    { move: 'tgreturn', dur: 0.36, step: 12, strikes: [{ at: 0.45, pct: 95, reach: 70, h: 62, knock: 40, arc: [100, -215], thick: 9, fx: 'tghit' }] },
+    { move: 'tgspin', dur: 0.48, step: 14, strikes: [{ at: 0.56, pct: 100, reach: 78, h: 64, around: true, targets: 4, knock: 90, launch: 100, arc: [100, -215], thick: 10, fx: 'tghit', burst: 'tgring', burstAt: 0, burstDur: 0.45, stop: 0.05 }] },
+    { move: 'tgstrike', dur: 0.62, step: 24, finisher: true, strikes: [{ at: 0.56, pct: 210, reach: 96, h: 80, targets: 4, knock: 250, arc: [-105, 190], thick: 15, fx: 'tghit', burst: 'tgbolt', burstAt: 0.62, burstDur: 0.6, big: true, stop: 0.1, shake: 5 }] },
   ],
   // The Acrobat Archer (the Archer remade; docs/design/acrobat-archer.md), shooting mid-trick: a
   // skip shot loosed as she lands, a back handspring with an arrow off the top of it and another as
@@ -285,21 +286,13 @@ const AE_SHOTS = {
 // path's own combo above; the others keep its rhythm (an opener, a quick second blow, a medium or
 // heavy third, a heavy finisher) and land with power to match their weight: fast ones hit
 // lightly but quickly, heavy ones hold a longer stop, shake the screen and throw monsters far.
-// The big swings the warrior paths share (each path dresses them its own way below).
+// The swings the Paladin and the Berserker dress their own way below (from the old Warrior's).
 const SWINGS = {
   sweep: { move: 'sweep', dur: 0.38, step: 13, strikes: [{ at: 0.45, pct: 85, reach: 80, h: 48, targets: 3, knock: 90, arc: [-160, 250], thick: 9, stop: 0.04 }] },
-  jabs: { move: 'jabs', dur: 0.4, step: 13, strikes: [
-    { at: 0.2, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
-    { at: 0.45, pct: 40, reach: 86, h: 44, targets: 2, pierce: true, knock: 15 },
-    { at: 0.7, pct: 55, reach: 90, h: 44, targets: 2, pierce: true, knock: 90, stop: 0.04 },
-  ] },
   flashcut: { move: 'flashcut', dur: 0.36, step: 39, carry: 0.42, strikes: [{ at: 0.4, pct: 100, reach: 84, h: 50, targets: 3, knock: 110, arc: [-80, 200], thick: 8, stop: 0.05, shake: 1 }] },
   spinback: { move: 'spinback', dur: 0.42, step: 16, strikes: [{ at: 0.58, pct: 95, reach: 72, h: 62, around: true, targets: 4, knock: 90, launch: 120, arc: [100, -215], thick: 10, stop: 0.05 }] },
-  pommel: { move: 'pommel', dur: 0.36, step: 16, strikes: [{ at: 0.4, pct: 70, reach: 50, h: 56, knock: 70, stun: 0.6, stop: 0.06, shake: 1 }] },
   shove: { move: 'shove', dur: 0.34, step: 22, strikes: [{ at: 0.42, pct: 75, reach: 54, h: 60, targets: 2, knock: 260, stop: 0.06, shake: 2 }] },
   drivestab: { move: 'drivestab', dur: 0.44, step: 25, strikes: [{ at: 0.42, pct: 130, reach: 112, h: 44, targets: 3, pierce: true, knock: 230, big: true, stop: 0.07, shake: 2 }] },
-  risecut: { move: 'risecut', dur: 0.44, step: 22, strikes: [{ at: 0.42, pct: 120, reach: 78, h: 84, targets: 3, knock: 40, launch: 320, arc: [80, -175], thick: 12, big: true, stop: 0.06 }] },
-  hammer: { move: 'hammer', dur: 0.72, step: 16, strikes: [{ at: 0.56, pct: 200, reach: 98, h: 72, targets: 4, knock: 360, launch: 150, arc: [-150, 300], thick: 15, big: true, stop: 0.1, shake: 5 }] },
   leapchop: { move: 'leapchop', dur: 0.6, step: 25, finisher: true, strikes: [{ at: 0.55, pct: 210, reach: 94, h: 76, targets: 3, crack: true, knock: 250, arc: [-105, 190], thick: 15, big: true, crack: true, stop: 0.1, shake: 5 }] },
   skysplit: { move: 'skysplit', dur: 0.86, step: 28, finisher: true, strikes: [{ at: 0.6, pct: 280, reach: 106, h: 92, targets: 5, knock: 270, launch: 340, arc: [-110, 200], thick: 17, big: true, crack: true, stop: 0.14, shake: 7 }] },
 };
@@ -388,6 +381,27 @@ const MOON_POOL = {
   wave: { move: 'tcwave', dur: 0.66, step: -4, finisher: true, strikes: [{ ...MOON_SHOT, at: 0.56, shot: 'tccrescentbig', pct: 180, range: 330, h: 100, targets: 4, pierce: true, knock: 230, launch: 140, speed: 600, big: true, stop: 0.07, shake: 3, heal: 0.03, healR: 260 }] },
 };
 
+// The Thunderguard's pool (docs/design/thunderguard.md). Openers: a double flick, or a darting
+// lunge that leaves a streak of sparks. Second: a shoulder check that bursts with static and
+// dazes, or a low sweep crackling along the floor. Third: a charged thrust that fires a bolt
+// through the line, or a rising cut that lifts them on a column of lightning. Finisher: a
+// two-handed cleave into the floor and a thunderclap, or a spiralling uppercut into a column of
+// lightning.
+const storm = (st) => ({ fx: 'tghit', ...st });
+const STORM_POOL = {
+  flick: { move: 'tgflick', dur: 0.4, step: 10, strikes: [storm({ at: 0.3, pct: 46, reach: 68, h: 56, knock: 20, arc: [-100, 190], thick: 7 }), storm({ at: 0.62, pct: 50, reach: 70, h: 58, knock: 50, arc: [100, -205], thick: 8 })] },
+  lunge: { move: 'tglunge', dur: 0.38, step: 30, carry: 0.4, strikes: [storm({ at: 0.45, pct: 92, reach: 94, h: 46, targets: 2, pierce: true, knock: 70, burst: 'tgdart', burstAt: 0.05, burstDur: 0.32 })] },
+  bash: { move: 'tgbash', dur: 0.38, step: 22, strikes: [storm({ at: 0.42, pct: 80, reach: 56, h: 60, targets: 2, knock: 230, stun: 0.5, burst: 'tgburst', burstAt: 0.9, burstDur: 0.36, stop: 0.06, shake: 1 })] },
+  sweep: { move: 'tgsweep', dur: 0.4, step: 14, strikes: [storm({ at: 0.46, pct: 88, reach: 86, h: 44, targets: 3, knock: 80, arc: [-160, 250], thick: 9, burst: 'tgfloor', burstAt: 0.55, burstDur: 0.45, stop: 0.04 })] },
+  drive: { move: 'tgdrive', dur: 0.48, step: 24, strikes: [storm({ at: 0.46, pct: 130, reach: 124, h: 46, targets: 3, pierce: true, knock: 220, burst: 'tgbeam', burstAt: 0.08, burstDur: 0.36, big: true, stop: 0.07, shake: 2 })] },
+  rise: { move: 'tgrise', dur: 0.46, step: 18, strikes: [storm({ at: 0.42, pct: 120, reach: 78, h: 92, targets: 3, knock: 40, launch: 340, arc: [80, -175], thick: 12, burst: 'tgcolumn', burstAt: 0.6, burstDur: 0.5, big: true, stop: 0.06 })] },
+  clap: { move: 'tgclap', dur: 0.72, step: 14, finisher: true, strikes: [storm({ at: 0.56, pct: 220, reach: 100, h: 76, targets: 5, knock: 320, launch: 140, arc: [-150, 300], thick: 15, burst: 'tgclap', burstAt: 0.4, burstDur: 0.6, big: true, stop: 0.1, shake: 5 })] },
+  rising: { move: 'tgstorm', dur: 0.68, step: 10, finisher: true, strikes: [
+    storm({ at: 0.36, pct: 80, reach: 80, h: 90, targets: 4, knock: 20, launch: 260, arc: [80, -175], thick: 11 }),
+    storm({ at: 0.64, pct: 150, reach: 90, h: 170, targets: 4, knock: 120, launch: 420, burst: 'tgcolumn', burstAt: 0.45, burstDur: 0.6, big: true, stop: 0.08, shake: 3 }),
+  ] },
+};
+
 export const PATH_VARIANTS = {
   tidecaller: [
     [PATH_COMBOS.tidecaller[0], MOON_POOL.shell, MOON_POOL.drops],
@@ -415,10 +429,10 @@ export const PATH_VARIANTS = {
   // a wound-up home-run swing that sends them flying. Finisher: the cleave, a leaping chop, or a
   // sky-splitter that leaps high and splits the ground in slow motion.
   warrior: [
-    [PATH_COMBOS.warrior[0], SWINGS.sweep, SWINGS.jabs, SWINGS.flashcut],
-    [PATH_COMBOS.warrior[1], SWINGS.spinback, SWINGS.shove, SWINGS.drivestab, SWINGS.pommel],
-    [PATH_COMBOS.warrior[2], SWINGS.risecut, SWINGS.hammer],
-    [PATH_COMBOS.warrior[3], SWINGS.leapchop, SWINGS.skysplit],
+    [PATH_COMBOS.warrior[0], STORM_POOL.flick, STORM_POOL.lunge],
+    [PATH_COMBOS.warrior[1], STORM_POOL.bash, STORM_POOL.sweep],
+    [PATH_COMBOS.warrior[2], STORM_POOL.drive, STORM_POOL.rise],
+    [PATH_COMBOS.warrior[3], STORM_POOL.clap, STORM_POOL.rising],
   ],
   // The Paladin, steady and holy, every swing her own (none of the Warrior's). Openers: her
   // measured cut, the Oath Cut (a held salute, then a chop), or the Dawn Step (a gliding step and
@@ -694,6 +708,19 @@ const SLAM = { move: 'plunge', dur: 0.58, step: 29, strikes: [{ at: 0.56, pct: 1
 // (blade-first, planted); down + attack, she drives the blade into the ground in a burst of
 // light. The Berserker: up + attack, his ripping uppercut; in the air, two wild overhead hacks,
 // then a body slam; running, Gore (a shoulder-first plow and a hack); down + attack, the slam.
+// The Thunderguard's own command moves: up + attack, an uppercut that rides a bolt up after them;
+// in the air, two crackling cuts, then a plunge that lands in a lightning strike; out of a run, a
+// flash cut that streaks through the line like lightning; down + attack, a slam and a thunderclap.
+const STORM_COMMANDS = {
+  up: { move: 'tgskyward', dur: 0.48, step: 12, strikes: [storm({ at: 0.4, pct: 120, reach: 72, h: 92, targets: 3, knock: 30, launch: 480, hop: 400, arc: [80, -175], thick: 11, burst: 'tgcolumn', burstAt: 0.4, burstDur: 0.5, big: true, stop: 0.06 })] },
+  air: [
+    { move: 'tgaircut', dur: 0.34, hang: true, strikes: [storm({ at: 0.45, pct: 90, reach: 68, h: 80, targets: 2, knock: 15, launch: 150, arc: [-115, 205] })] },
+    { move: 'tgaircut2', dur: 0.34, hang: true, strikes: [storm({ at: 0.45, pct: 95, reach: 68, h: 84, targets: 2, knock: 15, launch: 170, arc: [100, -215] })] },
+    { move: 'tgplunge', dur: 0.48, dive: 780, finisher: true, strikes: [storm({ onLand: true, pct: 220, reach: 90, h: 72, around: true, targets: 4, knock: 230, burst: 'tgbolt', burstAt: 0, burstDur: 0.55, big: true, stop: 0.09, shake: 4 })] },
+  ],
+  dash: { move: 'tgflash', dur: 0.44, step: 70, carry: 0.6, guard: 0.3, strikes: [storm({ at: 0.42, pct: 140, reach: 88, h: 52, targets: 3, pierce: true, knock: 200, burst: 'tgflash', burstAt: -0.7, burstDur: 0.4, big: true, stop: 0.05, shake: 1 })] },
+  slam: { move: 'tgslam', dur: 0.6, step: 18, strikes: [storm({ at: 0.56, pct: 170, reach: 92, h: 80, around: true, targets: 4, knock: 220, burst: 'tgclap', burstAt: 0, burstDur: 0.55, big: true, stop: 0.09, shake: 4 })] },
+};
 const PALADIN_COMMANDS = {
   up: { ...LAUNCHER, move: 'ascend', strikes: LAUNCHER.strikes.map((st) => ({ ...st, burst: 'aegis' })) },
   air: [{ ...AIR[0], move: 'plaircut' }, { ...AIR[1], move: 'plaircut' }, { ...AIR[2], move: 'pldive' }],
@@ -706,7 +733,7 @@ const BERSERKER_COMMANDS = {
   slam: { ...SLAM, move: 'bodyslam', dur: 0.66, strikes: SLAM.strikes.map((st) => ({ ...st, at: 0.55, bleed: WOUND })) },
 };
 // The warrior paths fight in a blade's reach and put their weight into it.
-const warriorPath = (char) => hasValor(char) || hasRage(char) || hasFaith(char);
+const warriorPath = (char) => hasVolt(char) || hasRage(char) || hasFaith(char);
 // The Thief's own dagger commands: a quick flipping launcher, three fast air stabs then a diving
 // stab, and a dash that slips through the line stabbing as it goes.
 const DAGGER_COMMANDS = {
@@ -770,13 +797,18 @@ export function addFaith(world, n) {
   const before = world.faith ?? 0;
   world.faith = Math.min(FAITH_MAX, before + n);
   world.faithAt = world.now;
-  if (before < FAITH_MAX && world.faith >= FAITH_MAX) {
-    cryOut(world);
-    transform(world);
-  }
+  if (before < FAITH_MAX && world.faith >= FAITH_MAX) transform(world);
 }
 // The share Faith takes off a hit; a hit taken also builds it.
-export function faithGuard(world) {
+export function faithGuard(world, fromX = null) {
+  // (The Thunderguard's Charge takes its share off too, builds on the hit, and at Overcharge, or in
+  // Static Guard, shocks back.)
+  if (hasVolt(world.char)) {
+    const cut = (VOLT_GUARD * (world.volt ?? 0)) / VOLT_MAX;
+    staticShell(world, fromX);
+    addVolt(world, VOLT_ON_HURT);
+    return cut;
+  }
   if (!hasFaith(world.char)) return 0;
   const cut = (FAITH_CUT * (world.faith ?? 0)) / FAITH_MAX;
   addFaith(world, FAITH_ON_HURT);
@@ -911,22 +943,50 @@ function tickTide(world, dt) {
   world.tideMendIn = 1;
   healAround(world, world.body.x, world.body.y, TIDE_MEND, 200, false);
 }
-// Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
-// it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
-// Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
-export const VALOR_MAX = 100;
-const VALOR_HOLD = 5;
-const VALOR_DRAIN = 12;
-export const hasValor = (char) => char.job === 'warrior';
-export function addValor(world, n) {
-  if (!hasValor(world.char) || n <= 0) return;
-  const before = world.valor ?? 0;
-  world.valor = Math.min(VALOR_MAX, before + n);
-  world.valorAt = world.now;
-  // War Cry goes off as a warrior path's gauge fills (Valor here, Faith and Rage on the paths).
-  if (before < VALOR_MAX && world.valor >= VALOR_MAX) cryOut(world);
+// Charge: the Thunderguard's gauge (the Warrior remade; internally Volt; the paths have their own).
+// His blows build it, faster the more monsters one blow catches, and so do the hits he takes; it
+// fades once the fighting stops. The fuller it runs, the harder he hits (up to VOLT_POWER more) and
+// the less he takes (up to VOLT_GUARD). Full (Overcharge): every blow he lands sends lightning
+// jumping to up to two more monsters near what it hit, a static shell shocks whatever hits him,
+// nothing knocks him back, and Thunderfall is ready (and spends it).
+export const VOLT_MAX = 100;
+const VOLT_HOLD = 5;
+const VOLT_DRAIN = 11;
+const VOLT_POWER = 0.2;
+export const VOLT_GUARD = 0.1;
+const VOLT_ON_HURT = 6;
+export const CHAIN_PCT = 0.3; // of the blow, each bolt that jumps on at Overcharge
+export const SHELL_PCT = 60; // the static shell's shock on whatever hits him (% of a basic blow)
+export const hasVolt = (char) => char.job === 'warrior';
+export function addVolt(world, n) {
+  if (!hasVolt(world.char) || n <= 0) return;
+  world.volt = Math.min(VOLT_MAX, (world.volt ?? 0) + n);
+  world.voltAt = world.now;
 }
-export const unbroken = (world) => hasValor(world.char) && (world.valor ?? 0) >= VALOR_MAX;
+export const overcharged = (world) => hasVolt(world.char) && (world.volt ?? 0) >= VOLT_MAX;
+const voltPower = (world) => (hasVolt(world.char) ? 1 + (VOLT_POWER * (world.volt ?? 0)) / VOLT_MAX : 1);
+// Overcharge: lightning jumps from a monster he hit to up to two more near it (each a bolt drawn
+// between them and a crackle on the one it reaches), at most once a quarter second from each.
+function chainBolt(world, m, s) {
+  if (!overcharged(world) || !m || s.phantom || s.key === 'procchain' || (m.chainAt ?? -9) > world.now - 0.25) return;
+  m.chainAt = world.now;
+  const near = world.mobs.filter((o) => o !== m && o.hp > 0 && Math.abs(o.x - m.x) < 150 && Math.abs(o.y - m.y) < 90).sort((a, b) => Math.abs(a.x - m.x) - Math.abs(b.x - m.x)).slice(0, 2);
+  near.forEach((o, i) => {
+    world.fx.push({ kind: 'tgchain', x: m.x, y: m.y - m.def.h * 0.55, tx: o.x, ty: o.y - o.def.h * 0.55, t: -0.04 * i, dur: 0.3, seed: Math.random() });
+    shotHit(world, { pct: Math.max(20, (s.pct ?? 90) * CHAIN_PCT), scale: 100, key: 'procchain', dir: Math.sign(o.x - m.x) || 1, knock: 30, burst: 'tgspark', gauge: 0, quiet: true }, o, 0.04 + 0.04 * i, i);
+  });
+}
+// The static shell (Overcharge): the monster that just hit him (the nearest to where the blow came
+// from) is shocked, dazed a moment.
+function staticShell(world, fromX) {
+  if (!overcharged(world) && !(world.char.buffs.staticguard?.until > world.now)) return;
+  if (fromX == null || world.now - (world.shellAt ?? -9) < 0.3) return;
+  const m = world.mobs.filter((o) => o.hp > 0 && Math.abs(o.x - fromX) < 70 && Math.abs(o.y - world.body.y) < 120).sort((a, b) => Math.abs(a.x - fromX) - Math.abs(b.x - fromX))[0];
+  if (!m) return;
+  world.shellAt = world.now;
+  world.fx.push({ kind: 'tgchain', x: world.body.x, y: world.body.y - world.body.h * 0.55, tx: m.x, ty: m.y - m.def.h * 0.55, t: 0, dur: 0.3, seed: Math.random() });
+  shotHit(world, { pct: SHELL_PCT, scale: 100, key: 'procshell', dir: Math.sign(m.x - world.body.x) || 1, knock: 60, stun: 0.3, burst: 'tgspark', gauge: 0, quiet: true }, m, 0.03, 0);
+}
 // Combo (the Acrobat Archer's gauge; internally Momentum). Shots that land build it, more for each
 // one landed in a row (`streak`, kept while they land within MOMENTUM_ROW seconds of each other);
 // her flips, rolls and handsprings keep it from fading (`flipAt`), taking a hit knocks half of it
@@ -1213,7 +1273,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasVolt(char) ? 'volt' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1240,7 +1300,7 @@ export function pathOf(world) {
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
-  if (MELEE.has(w) && w !== 'none') return hasValor(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
+  if (MELEE.has(w) && w !== 'none') return hasVolt(char) ? 'warrior' : hasRage(char) ? 'berserker' : hasFaith(char) ? 'paladin' : null;
   if ((w === 'bow' || w === 'crossbow') && hasMomentum(char)) return 'archer';
   if (w === 'none') return 'fists';
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
@@ -1255,18 +1315,15 @@ export function pathOf(world) {
 const RAGE_POWER = 0.25;
 const ragePower = (world) => (hasRage(world.char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1);
 // How much heavier each path's blows land: longer hit-stop, harder knockback.
-const WEIGHT = { berserker: 1.4, paladin: 1.2, unbroken: 1.35 };
-// Unbroken (full Valor) lands a Warrior's blows heavier too.
-const weightOf = (world) => (hasRage(world.char) ? WEIGHT.berserker : hasFaith(world.char) ? WEIGHT.paladin : unbroken(world) ? WEIGHT.unbroken : 1);
+const WEIGHT = { berserker: 1.4, paladin: 1.2, overcharge: 1.3 };
+// Overcharge (a full Charge) lands the Thunderguard's blows heavier too.
+const weightOf = (world) => (hasRage(world.char) ? WEIGHT.berserker : hasFaith(world.char) ? WEIGHT.paladin : overcharged(world) ? WEIGHT.overcharge : 1);
 export function addRage(world, n) {
   if (!hasRage(world.char) || n <= 0) return;
   const before = world.rage ?? 0;
   world.rage = Math.min(RAGE_MAX, before + n);
   world.rageAt = world.now;
-  if (before < RAGE_MAX && world.rage >= RAGE_MAX) {
-    cryOut(world);
-    transform(world);
-  }
+  if (before < RAGE_MAX && world.rage >= RAGE_MAX) transform(world);
 }
 // A warrior path's form, while it lasts (see combat.js's transform): Demon Form for a Berserker,
 // Judgment for a Paladin. The gauge stays full, the cuts reach farther and higher, and each swing
@@ -1282,7 +1339,7 @@ export function basicCombo(world) {
   // Blades, axes, spears, daggers and fists have command variants: in the air, an air combo;
   // Up + attack on the ground, a launcher that follows them up; running, a dash attack.
   if (MELEE.has(world.stats.weaponType)) {
-    const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[pathOf(world)] ?? null;
+    const own = { warrior: STORM_COMMANDS, thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[pathOf(world)] ?? null;
     const air = own?.air ?? AIR;
     const blades = barrageOf(world);
     if (!body.onGround && !body.rope) {
@@ -1369,6 +1426,8 @@ export function skillCombo(world, skillId, params, scale = 100) {
 function playStep(world, step, scale, key, school = null, after = 0) {
   // (Depth: the Maelstrom hits harder the deeper it runs.)
   scale *= depthPower(world);
+  // (Charge: the Thunderguard hits harder the fuller it runs.)
+  scale *= voltPower(world);
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
   // Shots need the whole draw and loose, so they hold you a little longer than a cut.
@@ -1425,7 +1484,7 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   if (step.trail) world.fx.push({ kind: 'chargetrail', school: school ?? pathSchool(world.char), x: body.x, y: body.y, tx: body.x + body.facing * step.step, dir: body.facing, t: 0, dur: 0.5 });
   // Warrior paths put their weight into big moves: a stomp that kicks up dust as the move starts,
   // and power gathering at the weapon until the first blow lands.
-  const heavy = hasValor(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char);
+  const heavy = hasVolt(world.char) || hasShadow(world.char) || hasRage(world.char) || hasFaith(world.char);
   if (heavy && body.onGround && (step.finisher || step.strikes.some((st) => st.big))) {
     world.juice.push({ type: 'stomp', school: school ?? pathSchool(world.char), x: body.x, y: body.y, dir: body.facing, big: !key.startsWith('basic') });
     const lead = (step.strikes.find((st) => !st.onLand)?.at ?? 0.4) * dur;
@@ -1496,7 +1555,7 @@ export function tickMelee(world, dt) {
   tickTide(world, dt);
   tickDepth(world, dt);
   tickMoon(world, dt);
-  if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
+  if (world.volt > 0 && world.now - (world.voltAt ?? 0) > VOLT_HOLD) world.volt = Math.max(0, world.volt - VOLT_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
   tickSky(world);
@@ -1587,7 +1646,7 @@ function land(world, s) {
     world.fx.push({ kind: 'pierce', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x, y: body.y, dir: s.dir, box: { x, y: cy - 10, w: s.reach, h: 20 }, t: 0, dur: s.big ? 0.35 : 0.25, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher });
   }
   if (s.arc) {
-    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
+    world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasVolt(char) ? 'thunder' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   // A finisher's big blow all round her races a shockwave out along the ground to the edge of its
   // reach, in her path's colour, so the whole area it hits shows (the dancers').
@@ -1660,7 +1719,9 @@ function land(world, s) {
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
-  if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
+  // (Charge builds faster the more monsters a blow catches: half again for each extra one.)
+  if (targets.length && !s.phantom) addVolt(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
+  if (targets.length && hasVolt(char)) targets.forEach((m) => chainBolt(world, m, s));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
@@ -1703,21 +1764,14 @@ function land(world, s) {
 
 // ---------- Blade procs ----------
 // The warrior paths' skills set themselves off from their basic swings, hit or miss (see
-// data/skills.js). Any swing may rush on into extra blows: Blade Rush's cross-cut of steel, Aegis
-// Smite's pillar of light (Paladin), Ravage's bleeding cleaves (Berserker). A combo's last swing
-// may flow on into the Warrior's Whirlwind. Proc strikes aren't basic swings, so they never set
-// off procs.
+// data/skills.js). Any swing may rush on into extra blows: Aegis Smite's pillar of light (Paladin),
+// Ravage's bleeding cleaves (Berserker). (The Thunderguard's skills are all his to press.) Proc
+// strikes aren't basic swings, so they never set off procs.
 
 // The fields every proc strike shares: aimed the way the swing was, never turning you round.
 const procStrike = (world, s, key, delay, fields) => ({
   at: s.at, due: world.now + delay, n: 0, of: 1, dir: s.dir, scale: 100, key, move: s.move, dur: s.dur, finisher: false, quiet: true, keepFacing: true, ...fields,
 });
-
-// Blade Rush's cross-cut: two cuts of steel a beat after the blow, slashing what's in front.
-function rushStrikes(world, s, p) {
-  const cut = (delay, arc, knock) => procStrike(world, s, 'procbladerush', delay, { pct: p.pct, reach: 76, h: 62, targets: p.targets, knock, arc, thick: 9, school: pathSchool(world.char) });
-  world.strikes.push(cut(0.1, [-115, 205], 30), cut(0.22, [100, -215], 70));
-}
 
 // Aegis Smite's pillar: light crashes down just ahead, on everything under it, and stuns.
 function smiteStrikes(world, s, p) {
@@ -1731,27 +1785,6 @@ function ravageStrikes(world, s, p) {
   const chop = (delay, arc, knock) => procStrike(world, s, 'procravage', delay, { pct: p.pct, reach: 82, h: 66, targets: p.targets, knock, arc, thick: 12, bleed: p.bleed, school: 'rage', rage: 4 });
   world.strikes.push(chop(0.1, [-150, 230], 40), chop(0.24, [110, -240], 90));
 }
-
-// Whirlwind's spin: carried forward, four pulling hits all around, then a fling. Each warrior path
-// whirls its own way (the same hits; data/path-skills.js has the rule): the Paladin's Halo Rotor
-// turns the greatsword flat over her head like a rotor of light, marching round under it, and
-// brings it down in a shield-shove; the Berserker's Maelstrom is dragged round and round by the axe
-// at arm's length, stumbling on, and wrenches it over in a savage heave.
-const WHIRLS = {
-  warrior: { move: 'spin', arcs: (i) => [i % 2 ? 180 : 0, 300] },
-  paladin: { move: 'plrotor', arcs: (i) => (i % 2 ? [70, -140] : [-70, 140]), fling: { arc: [150, -110], burst: 'aegis', burstAt: 0.5, stun: 0.4 } },
-  berserker: { move: 'bkmaelstrom', arcs: (i) => [i % 2 ? 200 : 20, 300], fling: { arc: [-130, 260], thick: 14, burst: 'rageburst', burstAt: 0.15, bleed: { pct: 0.15, secs: 3 } } },
-};
-function whirlStep(p, char) {
-  const chain = char ? jobChain(char.job) : [];
-  const W = WHIRLS[[...chain].reverse().find((j) => WHIRLS[j])] ?? WHIRLS.warrior;
-  const hit = (at, i) => ({ at, pct: p.pct, reach: 80, h: 76, around: true, targets: p.targets, pull: 70, arc: W.arcs(i), thick: 10, stop: 0.02, gauge: 2 });
-  return { move: W.move, dur: 0.9, step: 36, carry: 0.75, finisher: true, strikes: [
-    ...[0.15, 0.3, 0.45, 0.6].map(hit),
-    { ...hit(0.75, 4), pull: 0, knock: 240, launch: 220, big: true, stop: 0.07, shake: 3, gauge: 4, ...W.fling },
-  ] };
-}
-export const whirlMoveOf = (char) => whirlStep({ pct: 0, targets: 0 }, char).move;
 
 // Judgment (Paladin, at full Faith): holy swords rain down ahead, and their light mends you and
 // the party around you.
@@ -1804,7 +1837,7 @@ function bladeProcs(world, s, count, rng = Math.random) {
   const { char } = world;
   const lash = procOf(char, 'ribbonlash');
   if (lash && rng() < lash.chance) lashStrikes(world, s, lash);
-  for (const [id, strikes] of [['bladerush', rushStrikes], ['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
+  for (const [id, strikes] of [['aegissmite', smiteStrikes], ['ravage', ravageStrikes]]) {
     const p = procOf(char, id);
     if (p && rng() < p.chance) strikes(world, s, p);
   }
@@ -1818,10 +1851,6 @@ function bladeProcs(world, s, count, rng = Math.random) {
   }
   const judgment = procOf(char, 'judgment');
   if (judgment && (world.faith ?? 0) >= FAITH_MAX) judgmentRain(world, s, judgment);
-  if (world.queuedStep) return;
-  const queue = (step, key, school) => (world.queuedStep = { at: world.now + 0.12, step, key, school });
-  const whirl = procOf(char, 'whirlwind');
-  if (whirl && (count >= whirl.crowd || rng() < whirl.chance)) queue(whirlStep(whirl, char), 'procwhirlwind', pathSchool(char));
 }
 
 // ---------- Archer procs ----------
@@ -2187,7 +2216,7 @@ export function commandsOf(char, weaponType) {
   const path = pathOf({ char, stats: { weaponType } });
   if (ARCHER_COMMANDS[path]) return ARCHER_COMMANDS[path];
   if (!MELEE.has(weaponType)) return null;
-  const own = { thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[path] ?? null;
+  const own = { warrior: STORM_COMMANDS, thiefdagger: DANCER_COMMANDS, shinobi: BLADE_COMMANDS, paladin: PALADIN_COMMANDS, berserker: BERSERKER_COMMANDS }[path] ?? null;
   const dash = own?.dash ?? PATH_DASH[hasFaith(char) ? 'paladin' : hasRage(char) ? 'berserker' : null] ?? DASH;
   return { up: own?.up ?? LAUNCHER, air: own?.air ?? AIR, dash };
 }

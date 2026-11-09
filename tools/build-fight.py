@@ -60,6 +60,14 @@ S = {
     'brightup': 'Epic Stock Media - Anime Game/DSGNStngr_Power Up Bright Positive Successful Light Saturation Crash Shimmer 05_ESM_AG.wav',
     'rain': 'Bolt - Backyard Rain & Thunder - Suburban Rain Recordings/RAIN_Rain at Night Slow Crescendo Calm Suburban_BOLT_BackyardRain_UsiPro.wav',
     'astral': 'Alexander Kopeikin - Emotion and Magic/magic, energy flow, astral travel-015.wav',
+    # The Thunderguard's storm (2026-11-09): arcs, crackle, buzz, an electric impact, a real thunderclap and roll.
+    'zap': 'BluezoneCorp - High Voltage/Bluezone_BC0299_electricity_surge_discharge_electrical_arc_crackling_002_01.wav',
+    'sizzle': 'BluezoneCorp - High Voltage/Bluezone_BC0299_electricity_texture_sizzling_crackling_006.wav',
+    'arcds': 'InMotionAudio - Arc/ELECArc_ArcDesign15_InMotionAudio_Arc.wav',
+    'buzz': 'InMotionAudio - Arc/ELECBuzz_Buzz27_InMotionAudio_Arc.wav',
+    'elecimpact': 'Epic Stock Media - Elemental Mutation Whooshes and Impacts/ELECMisc_Impact Electric Tonal Deep Movement Motion Hiss Glitch 01_ESM_EMWI.wav',
+    'thunder': 'Epic Stock Media - Public Spaces - Storms Lakes Parks and Rural Nature Exteriors/STORM_Texas Rain Thunder Initial Crash Boom Storm 01 Clap Lightning_ESM_CPS.wav',
+    'rumble': 'Jake Fielding - Interior Wind Rain and Storms/THUN_Interior Thunder Rumble_JF_INT Storm_01.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -78,6 +86,28 @@ B = {
     'tmfall': [('wflow', 3.5, 0.7, 1.05, -2, 0), ('wimpact', 0.05, 0.5, 0.95, -3, 180)],
     'tmfallbig': [('wflow', 3.5, 0.9, 0.9, -1, 0), ('wimpact', 0.05, 0.7, 0.8, -2, 200), ('drown', 0.0, 0.5, 0.9, -6, 240)],
     'tmhit': [('liquid', 0.0, 0.32, 1.2, 0, 0), ('subimpact', 0.1, 0.28, 1.45, -6, 0)],
+    # The Thunderguard (2026-11-09): every blow crackles, the finishers crack thunder.
+    'tghit': [('zap', 1.05, 0.22, 1.3, 0, 0), ('body', 0.0, 0.2, 1.2, -6, 0)],
+    'tgspark': [('zap', 2.15, 0.18, 1.5, -2, 0)],
+    'tgchain': [('arcds', 0.0, 0.3, 1.2, 0, 0), ('zap', 1.05, 0.2, 1.6, -6, 0)],
+    'tgdart': [('zap', 1.05, 0.3, 1.4, -2, 0), ('scifi', 0.0, 0.3, 1.2, -8, 0)],
+    'tgburst': [('elecimpact', 0.0, 0.4, 1.2, 0, 0), ('sizzle', 0.3, 0.3, 1.0, -8, 40)],
+    'tgfloor': [('sizzle', 0.2, 0.6, 1.0, -2, 0), ('zap', 2.15, 0.25, 1.1, -6, 60)],
+    'tgring': [('zap', 1.0, 0.4, 1.0, -2, 0), ('airy', 0.0, 0.4, 1.2, -8, 0)],
+    'tgbeam': [('arcds', 0.0, 0.6, 0.9, 0, 0), ('elecimpact', 0.0, 0.35, 1.1, -4, 30)],
+    'tgcolumn': [('arcup', 0.0, 0.6, 1.2, -2, 0), ('zap', 2.15, 0.3, 1.1, -6, 80)],
+    'tgbolt': [('thunder', 3.15, 1.0, 1.0, 0, 0), ('zap', 1.05, 0.3, 1.0, -4, 0), ('boom', 0.0, 0.6, 1.2, -8, 0)],
+    'tgclap': [('thunder', 3.15, 1.2, 0.9, 0, 0), ('boom', 0.0, 0.8, 1.0, -4, 0), ('sizzle', 0.3, 0.4, 1.0, -10, 100)],
+    'tgflash': [('zap', 1.05, 0.35, 1.3, 0, 0), ('scifi', 0.0, 0.35, 1.0, -6, 0)],
+    'tgrush': [('arcds', 0.0, 0.6, 1.0, 0, 0), ('zap', 2.1, 0.4, 1.2, -4, 60), ('airy', 0.0, 0.5, 1.1, -8, 0)],
+    'tgcyclone': [('buzz', 1.0, 1.2, 1.0, -2, 0), ('sizzle', 0.5, 1.0, 1.0, -6, 0), ('airy', 0.0, 0.8, 0.9, -8, 0)],
+    'tgrodfx': [('arcup', 0.0, 0.8, 1.0, 0, 0), ('buzz', 2.0, 0.6, 1.2, -8, 0)],
+    'tgclapbig': [('thunder', 3.15, 1.6, 0.85, 0, 0), ('boom', 0.0, 1.0, 0.9, -2, 0), ('rumble', 6.2, 1.4, 1.0, -6, 200)],
+    'tgboltbig': [('thunder', 3.15, 1.6, 0.8, 0, 0), ('elecimpact', 0.0, 0.6, 0.8, -2, 0), ('braam', 0.0, 1.6, 1.0, -8, 0), ('rumble', 6.2, 1.8, 0.9, -4, 300)],
+    'tgguardshell': [('sizzle', 0.0, 1.2, 1.0, -2, 0), ('arcup', 0.0, 0.6, 1.2, -6, 0)],
+    'tgstormcloud': [('rumble', 6.0, 1.6, 1.0, 0, 0), ('buzz', 3.0, 1.0, 0.8, -10, 0)],
+    'tgwave': [('arcds', 0.0, 0.8, 0.85, 0, 0), ('airy', 0.0, 0.6, 1.0, -6, 0)],
+    'tgovercharge': [('arcup', 0.0, 0.9, 1.1, 0, 0), ('zap', 1.05, 0.4, 1.0, -4, 300)],
     # The Tidecaller (2026-11-09): the moon's tide, lighter and brighter than the Tide Mage's water:
     # pearls and crescents, bells and twinkles over the splashes, a calm rain, the moon's chime.
     'tcpearl': [('watery', 0.0, 0.3, 1.3, -2, 0), ('twinkle', 0.0, 0.35, 1.4, -10, 0)],

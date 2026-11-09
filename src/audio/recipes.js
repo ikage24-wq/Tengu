@@ -225,15 +225,6 @@ const R = {
       { seq: 'r:400 C7:800', inst: 'glockenspiel', db: -8 },
     ],
   },
-  // The first jobs' gauges topping out: Valor (a steel ring and a brass call, Unbroken) and
-  // Momentum (a hawk's rush of wind and a bright harp run, Hawkeye).
-  unbroken: {
-    db: -10, max: 1, duck: [-5, 900], layers: [
-      { rec: 'unsheathe', rate: 0.9, len: 700 },
-      { rec: 'clangHeavy', rate: 1.1, db: -8 },
-      { seq: 'r:120 C4+G4+C5:800', inst: 'brass_section', db: -6 },
-    ],
-  },
   // Combo full (the Acrobat Archer's Showtime): a circus drum roll into a bright brass hit.
   showtime: {
     db: -10, max: 1, room: true, duck: [-5, 900], layers: [
@@ -260,18 +251,6 @@ const R = {
   teamburst: { db: -7, max: 1, duck: [-8, 1400], layers: [{ rec: 'punchHeavy', rate: 0.8, db: -2 }, thump(55, 600, { slide: -1.4, db: -2 }), { seq: 'C4+G4+C5+E5:1200', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('C7:30 E7:30 G7:30 C8:400', { db: -6 })] },
   trapsnap: { db: -11, vary: 6, max: 2, layers: [{ wave: 'sine', f0: 160, slide: 2.2, env: { a: 5, s: 140, d: 120 }, db: -4 }, { rec: 'wood', rate: 1.4, db: -8 }] },
   acburst: { db: -8, max: 1, room: true, duck: [-6, 1400], layers: [whoosh(600, 200, 3000, { focus: 0.6, db: -6 }), { seq: 'r:200 G4+C5+E5+G5:1000', inst: 'brass_section', attack: 0.02, db: -4 }, sparkle('r:200 C7:0 E7:60 G7:120 C8:180', { db: -8 })] },
-  // The finishers' big moments: Titan Breaker's sword forming and the ground splitting under it,
-  // and Falcon Dive's call (a rising wind and brass) and the falcon's strike.
-  titanrise: { db: -12, max: 1, layers: [{ rec: 'unsheathe', rate: 0.7, len: 900 }, { seq: 'C3+G3:900', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
-  titanbreak: {
-    db: -8, max: 1, duck: [-8, 1300], layers: [
-      { rec: 'clangHeavy', db: -2 },
-      { rec: 'punchHeavy', rate: 0.7, db: -4 },
-      { rec: 'thunder', db: -8 },
-      thump(60, 520, { slide: -1.5 }),
-      { seq: 'C3+G3+C4+E4:1000', inst: 'brass_section', db: -8, at: 60 },
-    ],
-  },
   falconcall: { db: -11, max: 1, room: true, layers: [{ rec: 'windWhoosh', len: 1200 }, { seq: 'D4:200 A4:200 D5:800', inst: 'french_horn', db: -6 }] },
   falconloose: {
     db: -9, max: 1, duck: [-7, 1100], layers: [
@@ -316,6 +295,28 @@ const R = {
   tmfall: { db: -12, vary: 6, max: 2, gap: 90, layers: [whoosh(700, 600, 3000, { focus: 0.3, db: -4 })] },
   tmfallbig: { db: -10, vary: 4, max: 1, layers: [whoosh(900, 500, 2600, { focus: 0.3, db: -3 })] },
   tmhit: { db: -14, vary: 10, max: 3, gap: 40, layers: [whoosh(250, 900, 3600, { focus: 0.1, db: -6 })] },
+  // The Thunderguard: recorded (recorded.js); these set each one's level, spread and cap.
+  tghit: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgspark: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgchain: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgdart: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgburst: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgfloor: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgring: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgbeam: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgcolumn: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgflash: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgwave: { db: -13, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgbolt: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgclap: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgrush: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgcyclone: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgrodfx: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgclapbig: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgboltbig: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgguardshell: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgstormcloud: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
+  tgovercharge: { db: -9, vary: 4, max: 1, gap: 0, layers: [whoosh(900, 600, 3200, { focus: 0.3, db: -4 })] },
   // The Tidecaller: recorded (recorded.js); these set each one's level, spread and cap.
   tcpearl: { db: -14, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },
   tchit: { db: -14, vary: 6, max: 3, gap: 50, layers: [whoosh(400, 600, 3200, { focus: 0.3, db: -4 })] },

@@ -25,11 +25,11 @@ import { lookFor } from '../src/render/townlife.js';
 // Each family's first job, its trial, its own skills (all maxed), its movement skill, its gear and
 // the other weapons it can try.
 const FAMILIES = {
-  warrior: { trial: 'warrior_trial', move: 'shouldercharge', weapons: ['sword', 'spear', 'axe'], skills: { bladerush: 20, whirlwind: 20, warcry: 20, ironguard: 20, swordmastery: 20, toughness: 20, shouldercharge: 10, titanbreak: 10 } },
+  warrior: { trial: 'warrior_trial', move: 'thunderrush', weapons: ['sword', 'spear', 'axe'], skills: { thunderrush: 10, stormcleave: 20, cycloneedge: 20, lightningrod: 20, thunderclap: 10, staticguard: 10, stormsteel: 20, stormbody: 20, thunderfall: 10 } },
   archer: { trial: 'archer_trial', move: 'vault', weapons: ['bow', 'crossbow'], skills: { blastarrow: 20, snarearrow: 20, springtrap: 20, steadyhands: 20, lightfeet: 20, vault: 10, cometarrow: 10 } },
 };
 const PATHS = {
-  warrior: { name: 'TestWarrior', title: 'Warrior', weapon: 'sword', skills: {}, finisher: 'titanbreak' },
+  warrior: { name: 'TestWarrior', title: 'Thunderguard', weapon: 'sword', skills: {}, finisher: 'thunderfall' },
   paladin: { name: 'TestPaladin', title: 'Paladin', weapon: 'sword', skills: { paladinmastery: 20, aegissmite: 20, hallowedground: 20, divineaegis: 20, sacredbulwark: 10, judgment: 10, grandverdict: 10 }, finisher: 'grandverdict' },
   berserker: { name: 'TestBerserker', title: 'Berserker', weapon: 'axe', skills: { berserkermastery: 20, ravage: 20, bloodfrenzy: 20, rampage: 20, bloodlust: 10, demonform: 10, crimsoneclipse: 10 }, finisher: 'crimsoneclipse' },
   archer: { name: 'TestArcher', title: 'Archer', family: 'archer', weapon: 'bow', skills: {}, finisher: 'cometarrow' },

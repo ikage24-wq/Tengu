@@ -20,6 +20,7 @@ import { strikePose } from './hero.js';
 import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 import { drawTideShot } from './tide-fx.js';
+import { drawStormShot } from './storm-fx.js';
 
 
 const SHOT_COLORS = {
@@ -86,7 +87,7 @@ function drawShot(ctx, f, cam) {
   const dir = Math.sign(f.tx - f.x) || 1;
   const c = f.element ? ELEMENTS[f.element].glow : SHOT_COLORS[f.shot] ?? '#ffffff';
   ctx.save();
-  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam))) {
+  if (drawStrikeShot(ctx, f, x, y, dir, f.t) || ((f.shot?.startsWith('tm') || f.shot?.startsWith('ms') || f.shot?.startsWith('tc')) && drawTideShot(ctx, f, x, y, dir, cam)) || (f.shot?.startsWith('tg') && drawStormShot(ctx, f, x, y, dir))) {
     ctx.restore();
     return;
   }
@@ -971,7 +972,7 @@ let hero = null;
 // Effects that lie on the ground under everyone (the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['shock', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['shock', 'tgring', 'tgcyclone', 'tgboltbig', 'tgclap', 'tgclapbig', 'tmwhirl', 'tmpool', 'mspool', 'tcpool', 'tcrain', 'tcmoontide', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {
@@ -1041,7 +1042,7 @@ function bornAt(f) {
 function bladeCut(ctx, f, cam, p) {
   // The skill's school, else the path's own colour (a Berserker's basic blows are red too).
   const school = f.snd ?? f.path;
-  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'coral' ? 'celslashcoral' : school === 'rage' ? 'celslashred' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
+  const name = school === 'ink' ? 'celslashink' : school === 'shadow' ? 'celslashshadow' : school === 'coral' ? 'celslashcoral' : school === 'rage' ? 'celslashred' : school === 'thunder' ? 'celslashstorm' : school === 'holy' || (f.big && school !== 'steel') ? 'celslashgold' : 'celslash';
   if (school === 'rosegold') {
     // The Blade Dancer's cuts come from her ring spinning round her: its ring-cut, seen flat.
     fxSprite(ctx, 'celbdhit', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 36, sy: f.flat ? 0.42 : 0.8, flip: (f.dir || 1) < 0 });
@@ -1060,7 +1061,7 @@ function bladeCut(ctx, f, cam, p) {
   }
   if (f.flat) {
     // A whirl: the spin slash sweeping right round the body, seen flat.
-    fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
+    fxSprite(ctx, school === 'rage' ? 'celspinred' : school === 'holy' ? 'celspingold' : school === 'thunder' ? 'celspinstorm' : 'celspin', f.x - cam.x, f.y - cam.y + 2, { p, scale: (f.r ?? 60) / 40, sy: 0.42, flip: (f.dir || 1) < 0 });
     return;
   }
   const path = bladePath(f);

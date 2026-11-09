@@ -346,19 +346,31 @@ test('the warrior, the archer and the thief branch two ways at 30 (the Tide Mage
   assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['kitsune', 'shinobi'], 'thief has two paths at 30');
 });
 
-test('a shoulder charge dashes forward and hits the monsters it passes through', () => {
+test('Thunder Rush flashes forward and hits the monsters it passes through', () => {
   const w = newWorld();
   gainExp(w.char, 3e5);
   assert.equal(advanceJob(w.char, 'warrior'), true);
-  w.char.skills.shouldercharge = 10;
+  w.char.skills.thunderrush = 10;
   w.char.mp = 999;
   crowd(w, 4, 'cloudsheep');
   w.body.facing = 1;
   const x = w.body.x;
-  assert.equal(cast(w, 'shouldercharge').ok, true);
+  assert.equal(cast(w, 'thunderrush').ok, true);
   for (let i = 0; i < 40; i++) updateWorld(w, DT, idle);
   assert.ok(w.body.x > x + 60, 'moved forward');
   assert.equal(w.mobs.filter((m) => m.hp < 1e9).length, 4, 'hit everything it passed');
+});
+
+test("an old Warrior's save gives back the SP of his wiped skills, frees their keys, and keeps Elowen's trial", async () => {
+  const { updateRetiredJobs } = await import('../src/core/save.js');
+  const c = { job: 'warrior', sp: 0, skills: { bladerush: 20, shouldercharge: 10, crossslash: 5, titanbreak: 10 }, hotkeys: { KeyA: { skill: 'shouldercharge' } }, quests: { mage_trial: { state: 'done', kills: {} } } };
+  updateRetiredJobs(c);
+  assert.equal(c.job, 'warrior', 'still a Warrior (the Thunderguard)');
+  assert.equal(c.sp, 45, 'every wiped skill gives its points back');
+  assert.equal(c.hotkeys.KeyA, null, 'and frees its key');
+  c.quests.mage_trial = { state: 'active', kills: { crystalslime: 4 } };
+  updateRetiredJobs(c);
+  assert.equal(c.quests.mage_trial?.kills.crystalslime, 4, "Elowen's trial survives a reload");
 });
 
 test('old saves move to the renamed jobs and get SP back for removed skills', async () => {
@@ -480,13 +492,13 @@ test('the stat-only skills grow by themselves and give their SP back', async () 
   const { canLearn } = await import('../src/core/character.js');
   const { grownLevel } = await import('../src/core/stats.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  const c = { job: 'paladin', level: 35, sp: 0, skills: { swordmastery: 12, paladinmastery: 4 }, hotkeys: {} };
+  const c = { job: 'paladin', level: 35, sp: 0, skills: { stormsteel: 12, paladinmastery: 4 }, hotkeys: {} };
   updateRetiredJobs(c);
   assert.equal(c.sp, 12 + 4, 'the masteries give their points back');
   assert.deepEqual(c.skills, {});
   c.sp = 5;
-  assert.ok(!canLearn(c, 'swordmastery'), 'a mastery is not learned with SP');
-  assert.equal(grownLevel(c, SKILLS.swordmastery), SKILLS.swordmastery.maxLevel, 'a first-job mastery is full by 30');
+  assert.ok(!canLearn(c, 'stormsteel'), 'a mastery is not learned with SP');
+  assert.equal(grownLevel(c, SKILLS.stormsteel), SKILLS.stormsteel.maxLevel, 'a first-job mastery is full by 30');
   assert.ok(grownLevel(c, SKILLS.paladinmastery) > 0 && grownLevel(c, SKILLS.paladinmastery) < SKILLS.paladinmastery.maxLevel, 'a second-job mastery grows from 30');
   assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.paladinmastery), SKILLS.paladinmastery.maxLevel, 'and is full by 50');
 });

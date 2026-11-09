@@ -1277,7 +1277,6 @@
     };
   }
   E.sword = swordOf(PAL.holy);
-  E.steelsword = swordOf(PAL.steel);
 
   // A cross of light (Grand Verdict's blow): a vertical blade of light and a horizontal one burst
   // out from the point together, banded, then thin and break into diamonds.
@@ -1313,8 +1312,6 @@
     };
   }
   E.lightcross = crossOf(PAL.holy);
-  E.steelcross = crossOf(PAL.steel);
-  E.ragecross = crossOf(PAL.rage);
 
   // Diamonds of light rising, looping (a Paladin's Faith building).
   E.motes = {
@@ -2199,11 +2196,7 @@
   // A giant sword of steel forming (Titan Breaker): the shards of the steel sword flying together
   // into the whole blade (the sword shattering, played backward), then held whole.
   const swordForm = (sw) => ({ ...sw, n: 5, fps: 14, draw: (ctx, i) => sw.draw(ctx, [4, 3, 2, 1, 0][i]) });
-  E.swordform = swordForm(E.steelsword);
   // The same for a Paladin (gold) and a Berserker (blood red) using Titan Breaker.
-  E.ragesword = swordOf(PAL.rage);
-  E.swordformgold = swordForm(E.sword);
-  E.swordformred = swordForm(E.ragesword);
   // The ground splitting open under Titan Breaker: a white-hot seam runs out both ways, tears wide
   // with steel light bursting up out of it in blades, then closes into beads and sparkles.
   function fissureOf(pal) {
@@ -2251,9 +2244,6 @@
       },
     };
   }
-  E.fissure = fissureOf(PAL.steel);
-  E.fissuregold = fissureOf(PAL.holy);
-  E.fissurered = fissureOf(PAL.rage);
   // Valor building, looping: steel chevrons and diamonds rising round the hero, a little cross
   // glinting among them (the Warrior's shape).
   E.valor = {
@@ -3486,10 +3476,6 @@
   E.shout = asLight(E.shout, PAL.steel);
   E.plates = asLight(E.plates, PAL.steel);
   E.shieldsteel = asLight(E.shieldsteel, PAL.steel, { deep: 0.4, mid: 0.62 });
-  E.steelsword = asLight(E.steelsword, PAL.steel);
-  E.steelcross = asLight(E.steelcross, PAL.steel);
-  E.swordform = asLight(E.swordform, PAL.steel);
-  E.fissure = asLight(E.fissure, PAL.steel);
   E.valor = asLight(E.valor, PAL.steel);
 
   // ---------- Real moonlight and smoke (the Thief) ----------
@@ -4354,9 +4340,6 @@
   }
   for (const s of ['ring', 'ringholy', 'ringrage', 'ringwind', 'ringhawk', 'ringshadow', 'ringmint', 'ringstorm']) E[`${s}big`] = big(E[s], 2.6);
   E.crescentbig = big(E.crescent, 1.6);
-  E.fissurebig = big(E.fissure, 1.5);
-  E.fissuregoldbig = big(E.fissuregold, 1.5);
-  E.fissureredbig = big(E.fissurered, 1.5);
   E.circlebig = big(E.circle, 2.4);
   E.spinbig = big(E.spin, 2);
   E.spinredbig = big(E.spinred, 2);
@@ -5711,29 +5694,6 @@
     sparkle(ctx, PSILV, 34, -48, 12, 0.2);
   });
 
-  // ---------- The Warrior line's finishers, remade for the greatsword (2026-11-03) ----------
-  // Titan Breaker's somersaults: a wheel of steel standing up round her as her greatsword turns
-  // over and over in the leap: three crescents chasing each other round, white-hot at their heads,
-  // sparkles flung off. Loops (three-fold, so eight drawings make a smooth turn).
-  E.gswheel = asLight({
-    w: 320, h: 320, n: 8, fps: 16, px: 160, py: 160, loop: true,
-    draw(ctx, i) {
-      const c = 160;
-      const R = 128;
-      const ph = (i / 8) * (TAU / 3);
-      for (let j = 0; j < 3; j++) {
-        const a1 = ph + (j * TAU) / 3;
-        celCrescent(ctx, PAL.steel, c, c, R, a1 - 1.25, a1, 34, { seed: 801 + j });
-        sparkle(ctx, PAL.steel, c + Math.cos(a1) * (R - 8), c + Math.sin(a1) * (R - 8), 10 + (i % 2) * 3, a1);
-      }
-      const r = rng(810 + i);
-      for (let j = 0; j < 5; j++) {
-        const a = r() * TAU;
-        const d = R + 10 + r() * 22;
-        shard(ctx, PAL.steel, c + Math.cos(a) * d, c + Math.sin(a) * d, a + Math.PI / 2, 10, 2.6);
-      }
-    },
-  }, PAL.steel);
 
   // Grand Verdict's halo: a great sun of light opening behind the kneeling Paladin: a ring with
   // long and short rays round it, turning slowly while it holds, then the rays draw in and it
@@ -6811,84 +6771,7 @@
 
   // ---------- The second jobs' own versions of their first job's skills (data/path-skills.js) ----------
 
-  // Heaven's Seal (the Paladin's Titan Breaker): a great kite-shield crest of gold light with her
-  // white cross on it and a gold star at its heart, inside a halo, gathering out of motes (frames
-  // 0-4), then shining (5-7: its rays turn and the motes circle; the game holds and loops these).
-  E.plcrest = (() => {
-    const c = 160;
-    const pal = PAL.holy;
-    const kite = (k) => [[-60, -70], [60, -70], [64, 0], [0, 86], [-64, 0]].map(([x, y]) => [c + x * k, c + y * k]);
-    return {
-      w: 320, h: 330, n: 8, fps: 12, px: c, py: c,
-      draw(ctx, i) {
-        const k = Math.min(1, (i + 1) / 5);
-        const shine = i >= 5 ? (i - 5) / 3 : 0;
-        if (i >= 3) starburst(ctx, pal, c, c, 120 + 10 * Math.sin(shine * TAU), 12, 1201, { inner: 0.62, rot: shine * 0.5 });
-        celRing(ctx, pal, c, c, 30 + 100 * k, 10, { broken: i < 3 ? 0.5 : 0, seed: 1202 });
-        if (i < 4) {
-          // Motes of light rushing in to where the crest forms.
-          const R = rng(1203);
-          for (let j = 0; j < 12; j++) {
-            const a = R() * TAU;
-            const d = 150 * (1 - k) + 40;
-            sparkle(ctx, pal, c + Math.cos(a) * d, c + Math.sin(a) * d, 10 - i * 1.5, j);
-          }
-        }
-        inked(ctx, kite(k), pal[2], pal[4], 6);
-        fill(ctx, kite(k * 0.8).map(([x, y]) => [x, y - 4]), pal[1]);
-        // Her cross, white, on the crest.
-        const s = k;
-        fill(ctx, [[-10, -54], [10, -54], [10, -22], [42, -22], [42, -2], [10, -2], [10, 58], [-10, 58], [-10, -2], [-42, -2], [-42, -22], [-10, -22]].map(([x, y]) => [c + x * s, c + y * s]), pal[0]);
-        if (i >= 2) {
-          // The gold star at its heart.
-          const pts = (r) => Array.from({ length: 10 }, (_, j) => {
-            const a = -Math.PI / 2 + (j * Math.PI) / 5 + shine * 0.3;
-            const rr = j % 2 ? r * 0.45 : r;
-            return [c + Math.cos(a) * rr, c - 12 + Math.sin(a) * rr];
-          });
-          inked(ctx, pts(26 * k), pal[2], pal[4], 4);
-          fill(ctx, pts(16 * k), pal[0]);
-        }
-        if (i >= 5) for (let j = 0; j < 6; j++) {
-          const a = shine * TAU * 0.5 + (j / 6) * TAU;
-          sparkle(ctx, pal, c + Math.cos(a) * 140, c + Math.sin(a) * 140 * 0.9, 9, j);
-        }
-      },
-    };
-  })();
 
-  // Skyfall Rend (the Berserker's Titan Breaker): the meteor of rose fire he falls in, head first:
-  // a blazing teardrop round him with three claw-shaped flames raking back up its tail, embers
-  // flying off (loops; drawn pointing down, the game turns it along his fall).
-  E.bkmeteor = (() => {
-    const c = 110;
-    const gy = 250;
-    const pal = PAL.rage;
-    return {
-      w: 220, h: 300, n: 4, fps: 16, px: c, py: gy - 60, loop: true,
-      draw(ctx, i) {
-        const ph = (i / 4) * TAU;
-        // The tail of fire streaming up behind him (tongues pointing up, swaying).
-        for (let j = 0; j < 3; j++) tongue(ctx, PAL.fire, c + (j - 1) * 34, gy - 50, 26 - Math.abs(j - 1) * 6, 190 - Math.abs(j - 1) * 50, Math.sin(ph + j * 1.7) * 14);
-        // The claws: three long raking streaks up the tail.
-        for (let j = 0; j < 3; j++) {
-          const x = c + (j - 1) * 30;
-          inked(ctx, [[x - 6, gy - 60], [x + 8 + Math.sin(ph + j) * 4, gy - 230 + Math.abs(j - 1) * 30], [x + 8, gy - 60]], pal[2], pal[4], 4);
-          fill(ctx, [[x - 1, gy - 70], [x + 6 + Math.sin(ph + j) * 4, gy - 200 + Math.abs(j - 1) * 30], [x + 5, gy - 70]], pal[0]);
-        }
-        // The blazing head of the meteor (round him), white-hot at the front.
-        tongue(ctx, pal, c, gy - 10, 70, 150, Math.sin(ph) * 8);
-        ctx.beginPath();
-        ctx.arc(c, gy - 30, 38, 0, TAU);
-        ctx.fillStyle = pal[0];
-        ctx.globalAlpha = 0.85;
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        const R = rng(1211 + i);
-        for (let j = 0; j < 6; j++) sparkle(ctx, PAL.fire, c + (R() - 0.5) * 180, gy - 60 - R() * 200, 6 + R() * 4, j);
-      },
-    };
-  })();
 
   // Levitation (the Phantom Trickster's Grand Somersault): a giant top hat over the stage. It pops
   // out of a puff of smoke (0-2), tips over (3-4) and pours plum arrows, cards and doves out of its
@@ -9536,6 +9419,794 @@
   E.tcsilverwave = withGlims(E.tmwavebig, { x: 210, y: 210, w: 300, h: 200, n: 10, r: 5, seed: 1173 });
   E.tcsilvertidebig = withGlims(E.tmgreatbig, { x: 320, y: 300, w: 560, h: 420, n: 16, r: 8, seed: 1174 });
   E.tcsplashbig = moonlit(E.tmsplashbig);
+
+  // ---------- The Thunderguard (the Warrior remade; docs/design/thunderguard.md) ----------
+  // A storm of his own: thick forked anime bolts, inked in storm navy, banded storm blue to gold, a
+  // white-hot core, with a soft blue glow round them; static sparks and crackles, thunderclap rings,
+  // storm clouds. Every drawing is one moment of a smooth motion over many frames (rings grow and
+  // fade, bolts strike and die away); the bolts' channels are re-drawn every couple of frames, as
+  // lightning flickers.
+  const TGB = ['#ffffff', '#fff6c4', '#ffd84a', '#4a78ff', '#18226a'];
+  const TGS = ['#ffffff', '#dceaff', '#8fb8ff', '#4a6ee0', '#1c2a78'];
+  const TGG = ['#ffffff', '#fff6c4', '#ffe27a', '#e8b23c', '#7a4a18'];
+  const TGN = ['#b8c4ea', '#7a88c0', '#4a5894', '#2c356a', '#141a40'];
+  // Shapes that flow: a seed may be fractional, and its random draws are blended between the two
+  // whole seeds either side (`mrng`), so a bolt's kinks drift smoothly from one shape into the next
+  // instead of jumping each frame (the player: smooth and fluid, 2026-11-09). `loopSeed` cycles
+  // through `m` shapes over a loop so the last drawing flows back into the first.
+  const sd = (v) => (typeof v === 'number' ? { s0: Math.floor(v), s1: Math.floor(v) + 1, f: smooth(v - Math.floor(v)) } : v);
+  const sadd = (v, k) => {
+    const q = sd(v);
+    return { s0: q.s0 + k, s1: q.s1 + k, f: q.f };
+  };
+  function mrng(v) {
+    const q = sd(v);
+    const A = rng(q.s0);
+    const B = rng(q.s1);
+    return () => lerp(A(), B(), q.f);
+  }
+  const loopSeed = (base, i, n, m = 6) => {
+    const t = (i / n) * m;
+    const lo = Math.floor(t);
+    return { s0: base + (lo % m), s1: base + ((lo + 1) % m), f: smooth(t - lo) };
+  };
+  // A jagged channel from (x0, y0) to (x1, y1) (zig's, with a flowing seed).
+  function tgZig(x0, y0, x1, y1, n, kink, seed) {
+    const R = mrng(seed);
+    const pts = [[x0, y0]];
+    const nx = -(y1 - y0);
+    const ny = x1 - x0;
+    const l = Math.hypot(nx, ny) || 1;
+    for (let k = 1; k < n; k++) {
+      const u = k / n;
+      const off = (R() - 0.5) * 2 * kink * (k % 2 ? 1 : -0.6);
+      pts.push([lerp(x0, x1, u) + (nx / l) * off, lerp(y0, y1, u) + (ny / l) * off]);
+    }
+    pts.push([x1, y1]);
+    return pts;
+  }
+  // A bolt along `pts`: a soft blue glow round it, then the inked cel bands with the hot core.
+  // (The ink line stays thin against the bolt, so even a fine one reads as bright light, not a
+  // dark scratch: navy, storm blue, gold, pale gold, a white-hot core.)
+  function tgThunder(ctx, pts, w, a = 1) {
+    if (a <= 0.01 || w <= 0.3) return;
+    ctx.save();
+    ctx.globalAlpha *= a;
+    strokePts(ctx, pts, w * 4.2, TGS[3], 0.12);
+    strokePts(ctx, pts, w * 2.4, TGS[2], 0.24);
+    strokePts(ctx, pts, w * 1.6, TGB[2], 0.28);
+    const line = (width, colour, al = 1) => {
+      ctx.save();
+      ctx.globalAlpha *= al;
+      ctx.beginPath();
+      pts.forEach(([x, y], k) => (k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.lineJoin = 'miter';
+      ctx.miterLimit = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = colour;
+      ctx.lineWidth = width;
+      ctx.stroke();
+      ctx.restore();
+    };
+    line(w * 1.35 + 1.6, TGB[4], 0.85);
+    line(w * 1.2 + 0.6, TGB[3]);
+    line(w * 0.95, TGB[2]);
+    line(w * 0.65, TGB[1]);
+    line(Math.max(0.8, w * 0.32), '#ffffff');
+    ctx.restore();
+  }
+  // A bolt's channel from (x0, y0) to (x1, y1): kinks every ~34 px, `kink` how far they swing.
+  const tgPath = (x0, y0, x1, y1, seed, kink = 0.28) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    return tgZig(x0, y0, x1, y1, Math.max(3, Math.round(len / 34)), len * kink * 0.18 + 4, seed);
+  };
+  // A forked bolt: the trunk, and `n` branches splitting off it toward `side` (+1/-1, or 0 either).
+  function tgFork(ctx, x0, y0, x1, y1, w, seed, n = 3, a = 1, kink = 0.28) {
+    const trunk = tgPath(x0, y0, x1, y1, seed, kink);
+    const R = mrng(sadd(seed, 11));
+    for (let b = 0; b < n; b++) {
+      // (Where it splits off slides along the trunk, and the way it leans swings through, smoothly.)
+      const fi = 1 + R() * Math.max(0.001, trunk.length - 2.001);
+      const k0 = Math.floor(fi);
+      const p0 = trunk[k0];
+      const p1 = trunk[Math.min(trunk.length - 1, k0 + 1)];
+      const bx = lerp(p0[0], p1[0], fi - k0);
+      const by = lerp(p0[1], p1[1], fi - k0);
+      const ang = Math.atan2(y1 - y0, x1 - x0) + (R() - 0.5) * 2 * (0.5 + R() * 0.5);
+      const len = Math.hypot(x1 - x0, y1 - y0) * (0.16 + R() * 0.18);
+      tgThunder(ctx, tgPath(bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len, sadd(seed, b * 5 + 1), 0.4), w * 0.42, a);
+    }
+    tgThunder(ctx, trunk, w, a);
+  }
+  // Static: `n` little jagged sparks crackling round (x, y) within r.
+  function tgCrackle(ctx, x, y, r, n, seed, a = 1, w = 2.4) {
+    const R = mrng(seed);
+    for (let j = 0; j < n; j++) {
+      const a0 = R() * TAU;
+      const d0 = r * (0.2 + R() * 0.5);
+      const len = r * (0.3 + R() * 0.4);
+      const a1 = a0 + (R() - 0.5) * 1.2;
+      const x0 = x + Math.cos(a0) * d0;
+      const y0 = y + Math.sin(a0) * d0;
+      tgThunder(ctx, tgZig(x0, y0, x0 + Math.cos(a1) * len, y0 + Math.sin(a1) * len, 3, len * 0.25, sadd(seed, j * 3)), w, a);
+    }
+  }
+  // Sparks thrown from (x, y) at moment u of their flight, falling under gravity: short gold streaks.
+  function tgSparks(ctx, x, y, a, sp, n, d, u, seed, g = 1) {
+    if (u <= 0 || u >= 1) return;
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const aa = a + (R() - 0.5) * sp;
+      const s0 = d * (0.45 + R() * 0.55);
+      const late = R() * 0.15;
+      const v = clamp01((u - late) / (1 - late));
+      if (v <= 0 || v >= 1) continue;
+      const px = x + Math.cos(aa) * s0 * v;
+      const py = y + Math.sin(aa) * s0 * v + g * d * 0.55 * v * v;
+      const vx = Math.cos(aa) * s0;
+      const vy = Math.sin(aa) * s0 + g * d * 1.1 * v;
+      const l = Math.hypot(vx, vy) || 1;
+      const tail = 14 * (1 - v) + 4;
+      ctx.save();
+      ctx.globalAlpha *= 1 - v * 0.7;
+      strokePts(ctx, [[px - (vx / l) * tail, py - (vy / l) * tail], [px, py]], 7, TGS[2], 0.4);
+      strokePts(ctx, [[px - (vx / l) * tail, py - (vy / l) * tail], [px, py]], 3.4, TGB[2], 1);
+      strokePts(ctx, [[px - (vx / l) * tail * 0.5, py - (vy / l) * tail * 0.5], [px, py]], 1.8, '#ffffff', 1);
+      ctx.restore();
+    }
+  }
+  // A flash of light: a soft blue halo round a white-gold heart.
+  function tgFlash(ctx, x, y, r, a = 1) {
+    if (r <= 0.5 || a <= 0) return;
+    ctx.save();
+    for (const [f, col, al] of [[1.9, TGS[3], 0.16], [1.3, TGS[2], 0.3], [0.8, TGB[1], 0.85], [0.42, '#ffffff', 1]]) {
+      ctx.globalAlpha = a * al;
+      ctx.beginPath();
+      ctx.arc(x, y, r * f, 0, TAU);
+      ctx.fillStyle = col;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  // A thunderclap ring flat on the floor (`sy` squashes it into perspective), crackling along it.
+  function tgRing(ctx, x, y, r, th, a, seed, { sy = 0.3, crackle = 6, pal = TGS } = {}) {
+    if (r <= th || a <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.translate(x, y);
+    ctx.scale(1, sy);
+    celRing(ctx, pal, 0, 0, r, th, { broken: 0.15, seed: 7 });
+    ctx.restore();
+    const R = mrng(sadd(seed, 3));
+    for (let j = 0; j < crackle; j++) {
+      const t0 = R() * TAU;
+      const t1 = t0 + 0.25 + R() * 0.3;
+      const pts = [];
+      for (let k = 0; k <= 5; k++) {
+        const t = lerp(t0, t1, k / 5);
+        const off = k % 2 ? (R() - 0.5) * th * 1.4 : 0;
+        pts.push([x + Math.cos(t) * (r + off), y + Math.sin(t) * (r + off) * sy - (k % 2 ? 6 : 0)]);
+      }
+      tgThunder(ctx, pts, 2.2, a);
+    }
+  }
+
+  // Static on an unseen shell round him: arcs of lightning running along a dome (centre cx, cy,
+  // radii rx, ry), jittered off it, re-forming every couple of frames; no bubble is drawn.
+  function tgDome(ctx, cx, cy, rx, ry, n, seed, w, a = 1) {
+    const R = mrng(seed);
+    for (let j = 0; j < n; j++) {
+      const t0 = Math.PI + R() * Math.PI * 1.1 - 0.05;
+      const t1 = t0 + 0.45 + R() * 0.5;
+      const pts = [];
+      for (let q = 0; q <= 7; q++) {
+        const t = lerp(t0, t1, q / 7);
+        const off = q % 2 ? (R() - 0.5) * 16 : (R() - 0.5) * 4;
+        pts.push([cx + Math.cos(t) * (rx + off), cy + Math.sin(t) * (ry + off)]);
+      }
+      tgThunder(ctx, pts, w * (0.7 + 0.3 * R()), a);
+    }
+  }
+  // The line's crescent slash, in his storm colours: the same cut (`E.slash`'s geometry and swing),
+  // a storm-blue blur graded to a white-gold edge, little bolts crackling off its head.
+  const STORML = ['#ffffff', '#fff3b0', '#8fb8ff', '#3f6cf0'];
+  E.slashstorm = {
+    w: 260, h: 200, n: 8, fps: 30, px: 130, py: 150, swing: [-Math.PI / 2, 1, 100],
+    draw(ctx, i) {
+      const cx = 130;
+      const cy = 150;
+      const R = 100;
+      const a0 = (-168 * Math.PI) / 180;
+      const a1 = (-12 * Math.PI) / 180;
+      const head = [0.45, 1, 1, 1, 1, 1, 1, 1][i];
+      const tail = [0.1, 0, 0.05, 0.25, 0.45, 0.65, 0.8, 0.92][i];
+      const a = [0.8, 1, 1, 0.85, 0.65, 0.45, 0.25, 0.1][i];
+      const N = 40;
+      for (let k = 0; k < N; k++) {
+        const u = k / N;
+        if (u < tail || u > head) continue;
+        const v = (u - tail) / Math.max(0.01, head - tail);
+        const th = 4 + 26 * Math.pow(v, 1.5);
+        for (const [rr, w, c, al] of [[R - th * 0.5, th * 1.2, STORML[3], 0.38], [R - th * 0.35, th * 0.7, STORML[2], 0.72], [R - 3, 7, STORML[1], 0.95], [R - 1.5, 3, STORML[0], 1]]) {
+          ctx.save();
+          ctx.globalAlpha *= al * a * (0.45 + 0.55 * v);
+          ctx.strokeStyle = c;
+          ctx.lineWidth = w;
+          ctx.beginPath();
+          ctx.arc(cx, cy, rr, a0 + (a1 - a0) * u, a0 + (a1 - a0) * (u + 1 / N));
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      // Crackles off the edge near its head, and a spark flash at the tip.
+      const hu = head;
+      for (let j = 0; j < 3; j++) {
+        const u = Math.max(tail, hu - 0.12 - j * 0.16);
+        if (u <= tail + 0.02) continue;
+        const ang = a0 + (a1 - a0) * u;
+        const x0 = cx + Math.cos(ang) * R;
+        const y0 = cy + Math.sin(ang) * R;
+        const out = 14 + 10 * ((i + j) % 2);
+        tgThunder(ctx, tgZig(x0, y0, x0 + Math.cos(ang) * out + Math.cos(ang + 1.6) * 6, y0 + Math.sin(ang) * out + Math.sin(ang + 1.6) * 6, 3, 5, 3001 + j * 10 + i * 0.3), 2, a);
+      }
+      if (i >= 1 && i <= 3) tgFlash(ctx, cx + Math.cos(a1) * R, cy + Math.sin(a1) * R, 12 * (1 - (i - 1) * 0.28), 1);
+    },
+  };
+  // The spin (a whirl all round him), in his storm light.
+  E.spinstorm = asLight(spin(TGS), TGS);
+
+  // His mark on a monster: a white-gold flash, short forked bolts lashing out and dying back, a ring
+  // of static opening, and sparks flying off and falling.
+  E.tghit = (() => {
+    const n = 22;
+    const c = 120;
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const ring = smooth(win(k, 0.04, 0.7));
+        if (ring > 0 && ring < 1) celRing(ctx, TGS, c, c, 22 + 70 * ring, 12 * (1 - ring) + 3, { broken: 0.2 + ring * 0.7, seed: 3011 });
+        const lash = swell(k, 0, 0.45);
+        if (lash > 0.02) {
+          const R = mrng(3012 + i * 0.16);
+          for (let j = 0; j < 5; j++) {
+            const ang = (j / 5) * TAU + R() * 0.6;
+            const len = (40 + R() * 40) * lash;
+            tgThunder(ctx, tgPath(c, c, c + Math.cos(ang) * len, c + Math.sin(ang) * len, 3013 + j * 10 + i * 0.16, 0.5), 2.6 * lash + 0.6, 1);
+          }
+        }
+        tgSparks(ctx, c, c, -Math.PI / 2, 4, 10, 100, win(k, 0, 0.95), 3014);
+        if (k < 0.5) tgFlash(ctx, c, c, 22 * swell(k, 0, 0.5), 1);
+      },
+    };
+  })();
+  // The crackle a jumping bolt leaves on the monster it reaches.
+  E.tgspark = (() => {
+    const n = 16;
+    const c = 70;
+    return {
+      w: 140, h: 140, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        tgCrackle(ctx, c, c, 46 * (0.6 + 0.4 * k), 4, 3021 + i * 0.16, 1 - win(k, 0.5, 1), 2.2);
+        if (k < 0.5) tgFlash(ctx, c, c, 14 * swell(k, 0, 0.5), 1);
+        tgSparks(ctx, c, c, -Math.PI / 2, 4, 5, 50, win(k, 0, 0.95), 3022);
+      },
+    };
+  })();
+  // A bolt jumping between two monsters (100 px long, laid along the line between them and stretched
+  // to fit): it strikes across in a few frames, flickers and dies away.
+  E.tgchain = (() => {
+    const n = 12;
+    const L = 300;
+    const cy = 60;
+    return {
+      w: L + 20, h: 120, n, fps: 40, px: 0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const reach = smooth(win(k, 0, 0.2));
+        const fade = 1 - smooth(win(k, 0.45, 1));
+        tgFork(ctx, 6, cy, 6 + (L - 6) * reach, cy, 4 * fade + 1, 3031 + i * 0.16, 2, fade, 0.22);
+        if (reach >= 1) tgFlash(ctx, L, cy, 16 * fade, fade);
+        tgFlash(ctx, 6, cy, 10 * fade, fade);
+      },
+    };
+  })();
+  // A spark streak behind a lunge (from his hands out to the end of its reach, 100 px): a thin bolt
+  // racing out ahead and crackling, leaving sparks to fall.
+  E.tgdart = (() => {
+    const n = 16;
+    const L = 300;
+    const cy = 60;
+    return {
+      w: L + 30, h: 140, n, fps: 48, px: 0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const head = smooth(win(k, 0, 0.35));
+        const tail = smooth(win(k, 0.2, 0.85));
+        if (head - tail > 0.03) {
+          const pts = tgPath(L * tail, cy, L * head, cy, 3041 + i * 0.16, 0.12);
+          tgThunder(ctx, pts, 4 * (1 - tail) + 1, 1);
+          for (let j = 0; j < 3; j++) speedLine(ctx, TGS, L * tail + j * 20, cy - 14 + j * 14, L * head - 30, cy - 12 + j * 12, 2.4 * (1 - tail));
+        }
+        tgSparks(ctx, L * 0.9, cy, 0, 1.6, 8, 70, win(k, 0.2, 1), 3042);
+        if (head < 1) tgFlash(ctx, L * head, cy, 12, 1);
+      },
+    };
+  })();
+  // A static burst (his shoulder check): a crackling ball bursting out from the point of contact.
+  E.tgburst = (() => {
+    const n = 18;
+    const c = 110;
+    return {
+      w: 220, h: 220, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const burst = smooth(win(k, 0, 0.5));
+        tgCrackle(ctx, c, c, 30 + 70 * burst, 7, 3051 + i * 0.16, 1 - win(k, 0.5, 1), 2.8);
+        const ring = smooth(win(k, 0.05, 0.8));
+        if (ring > 0 && ring < 1) celRing(ctx, TGS, c, c, 20 + 76 * ring, 10 * (1 - ring) + 2, { broken: ring * 0.8, seed: 3052 });
+        if (k < 0.45) tgFlash(ctx, c, c, 28 * swell(k, 0, 0.45), 1);
+        tgSparks(ctx, c, c, -Math.PI / 2, 3.6, 8, 80, win(k, 0, 0.95), 3053);
+      },
+    };
+  })();
+  // Lightning crawling along the floor (his low sweep; on the floor at `py`, about 100 px wide):
+  // bolts snaking along the ground, sparks hopping off it, a glow on the floor under them.
+  E.tgfloor = (() => {
+    const n = 22;
+    const c = 160;
+    const gy = 120;
+    return {
+      w: 320, h: 140, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const spread = smooth(win(k, 0, 0.4));
+        const fade = 1 - smooth(win(k, 0.55, 1));
+        ctx.save();
+        ctx.globalAlpha = 0.35 * fade;
+        ctx.beginPath();
+        ctx.ellipse(c, gy, 150 * spread + 10, 14, 0, 0, TAU);
+        ctx.fillStyle = TGS[2];
+        ctx.fill();
+        ctx.restore();
+        for (const s of [-1, 1]) {
+          const x1 = c + s * 150 * spread;
+          const pts = tgPath(c, gy - 4, x1, gy - 6, 3061 + (s > 0 ? 0 : 40) + i * 0.16, 0.3);
+          tgThunder(ctx, pts.map(([x, y]) => [x, Math.min(gy - 2, y)]), 4.2 * fade + 0.8, fade);
+        }
+        const R = rng(3062);
+        for (let j = 0; j < 6; j++) {
+          const x = c + (R() - 0.5) * 280 * spread;
+          const st = R() * 0.4;
+          tgSparks(ctx, x, gy - 4, -Math.PI / 2, 1.2, 2, 40, win(k, st, st + 0.5), 3063 + j);
+        }
+      },
+    };
+  })();
+  // A ring of static racing out round his feet (a spin; on the floor at `py`, out to 80 px):
+  // crackling along it, sparks hopping up off it.
+  E.tgring = (() => {
+    const n = 20;
+    const c = 260;
+    const gy = 100;
+    return {
+      w: 520, h: 200, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const u = smooth(win(k, 0, 0.75));
+        tgRing(ctx, c, gy, 40 + 200 * u, 14 * (1 - u) + 3, 1 - win(k, 0.4, 1), 3071 + i * 0.16, { crackle: 5 });
+        tgSparks(ctx, c, gy - 4, -Math.PI / 2, 2.6, 10, 90, win(k, 0, 0.9), 3072);
+      },
+    };
+  })();
+  // A bolt beam (his charged thrust; level out from his hands to its reach, 120 px): a thick bolt
+  // that strikes out straight in a few frames, a ring of static at its root, crackles round it.
+  E.tgbeam = (() => {
+    const n = 18;
+    const L = 360;
+    const cy = 60;
+    return {
+      w: L + 30, h: 120, n, fps: 40, px: 0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const reach = smooth(win(k, 0, 0.22));
+        const fade = 1 - smooth(win(k, 0.4, 1));
+        tgFork(ctx, 8, cy, 8 + (L - 8) * reach, cy, 5.5 * fade + 1.2, 3081 + i * 0.16, 3, fade, 0.14);
+        const ring = smooth(win(k, 0, 0.6));
+        if (ring < 1) {
+          ctx.save();
+          ctx.globalAlpha = 1 - ring;
+          ctx.translate(16, cy);
+          ctx.scale(0.35, 1);
+          celRing(ctx, TGS, 0, 0, 14 + 30 * ring, 8, { seed: 3082 });
+          ctx.restore();
+        }
+        if (reach >= 1) tgFlash(ctx, L, cy, 18 * fade, fade);
+        tgSparks(ctx, L, cy, 0, 2.4, 7, 60, win(k, 0.2, 1), 3083);
+      },
+    };
+  })();
+  // A column of lightning rising off the floor (his rising cut and skyward uppercut; on the floor
+  // at `py`, about 110 px tall): two bolts twisting up round each other, the ground flashing under
+  // them, sparks flung off.
+  E.tgcolumn = (() => {
+    const n = 22;
+    const c = 110;
+    const gy = 360;
+    const H = 330;
+    return {
+      w: 220, h: 380, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const up = smooth(win(k, 0, 0.3));
+        const fade = 1 - smooth(win(k, 0.45, 1));
+        tgRing(ctx, c, gy, 30 + 70 * smooth(win(k, 0, 0.7)), 8, 1 - win(k, 0.3, 1), 3091, { crackle: 3 });
+        for (let j = 0; j < 2; j++) {
+          const pts = [];
+          for (let q = 0; q <= 12; q++) {
+            const u = q / 12;
+            const ph = u * Math.PI * 2.4 + j * Math.PI + k * 6;
+            pts.push([c + Math.sin(ph) * 22 * (1 - u * 0.5) + 6 * Math.sin(i * 0.45 + q * 2.1 + j * 1.7), gy - 6 - u * H * up]);
+          }
+          tgThunder(ctx, pts, (4.6 - j * 1.6) * fade + 1, fade);
+        }
+        if (up < 1) tgFlash(ctx, c, gy - H * up, 16, 1);
+        tgSparks(ctx, c, gy - H * 0.6, -Math.PI / 2, 2.8, 10, 120, win(k, 0.25, 1), 3092);
+        if (k < 0.3) tgFlash(ctx, c, gy - 6, 26 * swell(k, 0, 0.3), 1);
+      },
+    };
+  })();
+  // A bolt called down out of the sky (a finisher's; on the floor where it strikes, about 200 px
+  // tall): a dim leader flickers down, the main bolt cracks into the floor, forks and flickers, the
+  // ground flashes white, a ring of static races out, sparks fly, and it dies away into an
+  // afterglow.
+  E.tgbolt = (() => {
+    const n = 30;
+    const c = 180;
+    const gy = 620;
+    return {
+      w: 360, h: 640, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const lead = win(k, 0, 0.12);
+        const strike = win(k, 0.1, 0.18);
+        const fade = 1 - smooth(win(k, 0.3, 0.85));
+        if (k < 0.12) {
+          const pts = tgPath(c + 20, 0, c + 20 - 20 * lead, gy * lead, 3101, 0.3);
+          tgThunder(ctx, pts, 2, 0.5);
+        }
+        if (strike > 0 && fade > 0.02) {
+          const flick = (0.92 + 0.08 * Math.sin(i * 1.1)) * fade;
+          tgFork(ctx, c + 20, 0, c, gy - 4, 6.5 * fade + 1.5, 3102 + i * 0.12, 4, flick, 0.3);
+        }
+        const land = win(k, 0.12, 1);
+        if (land > 0) {
+          if (land < 0.3) tgFlash(ctx, c, gy - 10, 40 * swell(land, 0, 0.3), 1);
+          tgRing(ctx, c, gy, 30 + 110 * smooth(win(land, 0, 0.7)), 12 * (1 - land) + 3, 1 - win(land, 0.35, 1), 3103, { crackle: 6 });
+          tgSparks(ctx, c, gy - 10, -Math.PI / 2, 2.8, 12, 130, win(land, 0, 0.9), 3104);
+          tgCrackle(ctx, c, gy - 10, 60, 4, 3105 + i * 0.12, 1 - win(land, 0.2, 0.8), 2.4);
+          ctx.save();
+          ctx.globalAlpha = 0.4 * (1 - win(land, 0.3, 1));
+          ctx.beginPath();
+          ctx.ellipse(c, gy, 90, 16, 0, 0, TAU);
+          ctx.fillStyle = TGB[1];
+          ctx.fill();
+          ctx.restore();
+        }
+      },
+    };
+  })();
+  // The thunderclap (a finisher's cleave into the floor, his slam; on the floor where it lands):
+  // a dome of white light bursts up off the floor, two rings race out across it crackling,
+  // lightning cracks run out along the ground, and sparks rain.
+  E.tgclap = (() => {
+    const n = 30;
+    const c = 320;
+    const gy = 270;
+    return {
+      w: 640, h: 300, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const dome = swell(k, 0, 0.35);
+        if (dome > 0) {
+          ctx.save();
+          for (const [f, col, al] of [[1, TGS[2], 0.25], [0.7, TGB[1], 0.5], [0.4, '#ffffff', 0.85]]) {
+            ctx.globalAlpha = al * dome;
+            ctx.beginPath();
+            ctx.ellipse(c, gy, 150 * f * (0.6 + 0.4 * dome), 110 * f * (0.6 + 0.4 * dome), 0, Math.PI, TAU);
+            ctx.fillStyle = col;
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+        for (let j = 0; j < 2; j++) {
+          const u = smooth(win(k, j * 0.1, 0.75 + j * 0.1));
+          if (u > 0 && u < 1) tgRing(ctx, c, gy, 40 + 260 * u, 16 * (1 - u) + 3, 1 - win(u, 0.4, 1), 3111 + j, { crackle: 5, pal: j ? TGB : TGS });
+        }
+        const crack = smooth(win(k, 0.02, 0.35));
+        const fade = 1 - smooth(win(k, 0.4, 0.9));
+        for (const s of [-1, 1]) {
+          const pts = tgPath(c, gy - 4, c + s * 280 * crack, gy - 8, 3113 + (s > 0 ? 0 : 30) + i * 0.16, 0.12);
+          tgThunder(ctx, pts.map(([x, y]) => [x, Math.min(gy - 2, y)]), 4.5 * fade + 0.6, fade);
+        }
+        tgSparks(ctx, c, gy - 20, -Math.PI / 2, 2.6, 18, 200, win(k, 0, 0.95), 3114);
+      },
+    };
+  })();
+  // The flash cut's streak (out of a run; along the way he came, ending where he is): a long bolt
+  // drawn the length of his dash, an afterimage band of light fading behind it.
+  E.tgflash = (() => {
+    const n = 18;
+    const L = 300;
+    const cy = 70;
+    return {
+      w: L + 40, h: 140, n, fps: 40, px: 10, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fade = 1 - smooth(win(k, 0.1, 1));
+        const tail = smooth(win(k, 0, 0.8));
+        ctx.save();
+        ctx.globalAlpha = 0.45 * fade;
+        fill(ctx, [[10 + L * tail, cy - 10], [10 + L, cy - 20], [10 + L, cy + 20], [10 + L * tail, cy + 10]], TGS[2]);
+        ctx.globalAlpha = 0.7 * fade;
+        fill(ctx, [[10 + L * tail, cy - 3], [10 + L, cy - 7], [10 + L, cy + 7], [10 + L * tail, cy + 3]], TGB[1]);
+        ctx.restore();
+        tgFork(ctx, 10 + L * tail, cy, 10 + L, cy, 3.6 * fade + 1, 3121 + i * 0.16, 3, fade, 0.16);
+        tgSparks(ctx, 10 + L * 0.5, cy, Math.PI, 2, 10, 80, win(k, 0, 0.9), 3122);
+      },
+    };
+  })();
+  // A spark of static (his aura's, crackling up round him as Charge builds; loops).
+  E.tgmote = (() => {
+    const n = 24;
+    return {
+      w: 70, h: 70, n, fps: 24, px: 35, py: 35, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        const on = 0.5 + 0.5 * Math.sin(ph * TAU * 2);
+        tgCrackle(ctx, 35, 35, 22, 2, loopSeed(3131, i, n), 0.6 + 0.4 * on, 1.8);
+        tgFlash(ctx, 35, 35, 6 + 3 * on, 1);
+      },
+    };
+  })();
+  // Overcharge's static shell (loops; round him, from his feet at `py`): no bubble round him (that's
+  // the Tide Mage's), just the storm on his skin: arcs of static crackling up both sides of him and
+  // over his head, jumping and re-forming, a crackling ring on the floor, sparks winking on.
+  E.tgshell = (() => {
+    const n = 24;
+    const c = 140;
+    const gy = 320;
+    return {
+      w: 280, h: 340, n, fps: 24, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        tgRing(ctx, c, gy, 96, 6, 0.75, loopSeed(3141, i, n), { crackle: 3 });
+        tgDome(ctx, c, gy - 10, 82, 230, 4, loopSeed(3142, i, n), 2.6, 0.95);
+        for (let j = 0; j < 3; j++) {
+          const a = ph * TAU * 2 + j * 2.1;
+          tgFlash(ctx, c + Math.cos(a) * 60, gy - 130 + Math.sin(a * 1.3) * 100, 5 + 3 * Math.sin(a * 3), 1);
+        }
+      },
+    };
+  })();
+
+  // ---------- The Thunderguard's skills ----------
+  // Thunder Rush (along his dash, 140 px from where it's put): a long forked bolt torn along his path,
+  // a band of light fading behind him, flashes where he passed through them, sparks falling.
+  E.tgrush = (() => {
+    const n = 22;
+    const L = 420;
+    const cy = 80;
+    return {
+      w: L + 40, h: 160, n, fps: 40, px: 10, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const head = smooth(win(k, 0, 0.3));
+        const tail = smooth(win(k, 0.15, 0.95));
+        const fade = 1 - smooth(win(k, 0.5, 1));
+        if (head - tail > 0.02) {
+          ctx.save();
+          ctx.globalAlpha = 0.4 * fade;
+          fill(ctx, [[10 + L * tail, cy - 8], [10 + L * head, cy - 26], [10 + L * head, cy + 26], [10 + L * tail, cy + 8]], TGS[2]);
+          ctx.globalAlpha = 0.75 * fade;
+          fill(ctx, [[10 + L * tail, cy - 2], [10 + L * head, cy - 8], [10 + L * head, cy + 8], [10 + L * tail, cy + 2]], TGB[1]);
+          ctx.restore();
+          tgFork(ctx, 10 + L * tail, cy, 10 + L * head, cy - 4, 5 * fade + 1.2, 3201 + i * 0.16, 4, fade, 0.2);
+          for (let j = 0; j < 4; j++) speedLine(ctx, TGS, 10 + L * tail + j * 30, cy - 30 + j * 20, 10 + L * head - 40, cy - 28 + j * 18, 3 * fade);
+        }
+        for (let j = 0; j < 3; j++) {
+          const x = 10 + L * (0.3 + j * 0.22);
+          const at = 0.06 + j * 0.07;
+          if (k > at && k < at + 0.4) tgFlash(ctx, x, cy, 22 * swell(k, at, at + 0.4), 1);
+          tgSparks(ctx, x, cy, -Math.PI / 2, 3, 6, 70, win(k, at, at + 0.6), 3202 + j);
+        }
+      },
+    };
+  })();
+  // Storm Cleave's crescent in flight (loops; toward +x at chest height): a great crescent of
+  // lightning standing on its tips, belly forward, its edge white-gold, bolts crackling round it,
+  // sparks streaming off behind.
+  E.tgwave = (() => {
+    const n = 20;
+    const cx = 120;
+    const cy = 140;
+    const R0 = 120;
+    return {
+      w: 300, h: 280, n, fps: 40, px: cx + 60, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        for (let j = 0; j < 4; j++) {
+          const u = (ph * 2 + j / 4) % 1;
+          speedLine(ctx, TGS, cx - 20 - u * 90, cy - 80 + j * 52, cx + 30 - u * 60, cy - 76 + j * 50, 4 * (1 - u));
+        }
+        // The crescent: blur bands graded out to a hot edge, as his slash is.
+        for (let k = 0; k <= 28; k++) {
+          const t = lerp(-1.15, 1.15, k / 28);
+          const t2 = lerp(-1.15, 1.15, (k + 1) / 28);
+          const th = 44 * Math.cos((t / 1.15) * (Math.PI / 2)) + 4;
+          for (const [rr, w, c, al] of [[R0 - th * 0.5, th, STORML[3], 0.42], [R0 - th * 0.3, th * 0.6, STORML[2], 0.75], [R0 - 3, 8, STORML[1], 0.95], [R0 - 1.5, 3.5, STORML[0], 1]]) {
+            ctx.save();
+            ctx.globalAlpha = al;
+            ctx.strokeStyle = c;
+            ctx.lineWidth = w;
+            ctx.beginPath();
+            ctx.arc(cx, cy, rr, t, t2 + 0.01);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+        const R = mrng(loopSeed(3211, i, n));
+        for (let j = 0; j < 4; j++) {
+          const t = lerp(-1, 1, R());
+          const x0 = cx + Math.cos(t) * R0;
+          const y0 = cy + Math.sin(t) * R0;
+          const len = 24 + R() * 26;
+          tgThunder(ctx, tgZig(x0, y0, x0 + Math.cos(t) * len, y0 + Math.sin(t) * len + (R() - 0.5) * 20, 3, 8, sadd(loopSeed(3212, i, n), j * 10)), 2.2, 1);
+        }
+        tgThunder(ctx, tgPath(cx + Math.cos(-1.05) * (R0 - 20), cy + Math.sin(-1.05) * (R0 - 20), cx + Math.cos(1.05) * (R0 - 20), cy + Math.sin(1.05) * (R0 - 20), loopSeed(3213, i, n), 0.3), 2.6, 0.85);
+        tgSparks(ctx, cx - 30, cy, Math.PI, 1.6, 8, 90, (ph * 2) % 1, 3214);
+        tgFlash(ctx, cx + R0, cy, 14 + 4 * Math.sin(ph * TAU * 2), 1);
+      },
+    };
+  })();
+  // Cyclone Edge (round him, on the floor at `py`, played over the whole spin): a storm wheeling
+  // round him, bands of storm light whirling flat round his waist, bolts lashing out from it and up
+  // into the air, a crackling ring on the floor, sparks flung off it.
+  E.tgcyclone = (() => {
+    const n = 40;
+    const c = 300;
+    const gy = 330;
+    return {
+      w: 600, h: 360, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const grow = smooth(win(k, 0, 0.15)) * (1 - smooth(win(k, 0.85, 1)));
+        const spin = k * 7;
+        tgRing(ctx, c, gy, 120 + 60 * grow, 10, grow, 3221 + i * 0.16, { crackle: 5 });
+        for (let j = 0; j < 3; j++) {
+          const yy = gy - 50 - j * 34;
+          const rx = (170 - j * 26) * grow;
+          ctx.save();
+          ctx.translate(c, yy);
+          ctx.scale(1, 0.28);
+          for (let b = 0; b < 2; b++) {
+            const a0 = spin * TAU + j * 1.3 + b * Math.PI;
+            for (const [w, col, al] of [[26, TGS[3], 0.3], [14, TGS[2], 0.6], [6, TGB[1], 0.95], [2.5, '#ffffff', 1]]) {
+              ctx.globalAlpha = al * grow;
+              ctx.strokeStyle = col;
+              ctx.lineWidth = w;
+              ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.arc(0, 0, rx, a0, a0 + 1.9);
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+        const R = mrng(3222 + i * 0.16);
+        for (let j = 0; j < 4; j++) {
+          const a = R() * TAU;
+          const x0 = c + Math.cos(a) * 150 * grow;
+          const y0 = gy - 60 + Math.sin(a) * 40;
+          tgThunder(ctx, tgPath(x0, y0, x0 + Math.cos(a) * 60, y0 - 70 - R() * 80, 3223 + j * 10 + i * 0.16, 0.4), 2.8 * grow, grow);
+        }
+        tgSparks(ctx, c, gy - 80, -Math.PI / 2, 4, 14, 180, (k * 3) % 1, 3224 + Math.floor(k * 3));
+      },
+    };
+  })();
+  // Lightning Rod's call (at the planted blade, on the floor ahead of him): the floor glows round
+  // the point, static climbs the blade, a column of light shoots up off it into the sky.
+  E.tgrodfx = (() => {
+    const n = 28;
+    const c = 120;
+    const gy = 500;
+    return {
+      w: 240, h: 520, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const up = smooth(win(k, 0.1, 0.35));
+        const fade = 1 - smooth(win(k, 0.55, 1));
+        tgRing(ctx, c, gy, 40 + 60 * smooth(win(k, 0, 0.6)), 8, fade, 3231, { crackle: 3 });
+        ctx.save();
+        for (const [w, col, al] of [[60, TGS[2], 0.18], [30, TGB[1], 0.35], [10, '#ffffff', 0.8]]) {
+          ctx.globalAlpha = al * fade;
+          fill(ctx, [[c - w / 2, gy], [c + w / 2, gy], [c + w / 4, gy - 480 * up], [c - w / 4, gy - 480 * up]], col);
+        }
+        ctx.restore();
+        tgCrackle(ctx, c, gy - 40, 50, 4, 3232 + i * 0.16, fade, 2.4);
+        if (up < 1 && up > 0) tgFlash(ctx, c, gy - 480 * up, 18, 1);
+      },
+    };
+  })();
+  // Thunderclap's (and Thunderfall's) bigger clap, and Thunderfall's giant bolt.
+  E.tgclapbig = grown(E.tgclap, 1.45);
+  E.tgboltbig = grown(E.tgbolt, 1.3);
+  // Static Guard's shell (loops while it lasts; round him from his feet): the shell of static at
+  // its fiercest, arcs crackling up both sides and over him, more and brighter than Overcharge's.
+  E.tgguardshell = (() => {
+    const n = 24;
+    const c = 150;
+    const gy = 340;
+    return {
+      w: 300, h: 360, n, fps: 24, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        tgRing(ctx, c, gy, 106, 9, 0.9, loopSeed(3241, i, n), { crackle: 4, pal: TGB });
+        tgDome(ctx, c, gy - 10, 92, 250, 7, loopSeed(3242, i, n), 3.4, 1);
+        tgDome(ctx, c, gy - 10, 80, 236, 3, loopSeed(3290, i, n), 2.2, 0.8);
+        for (let j = 0; j < 4; j++) {
+          const a = ph * TAU * 2 + j * 1.6;
+          tgFlash(ctx, c + Math.cos(a) * 66, gy - 140 + Math.sin(a * 1.3) * 110, 6 + 3 * Math.sin(a * 3), 1);
+        }
+      },
+    };
+  })();
+  // Thunderfall's storm (over him, played as he rises and hangs; from his feet at `py`): dark storm
+  // clouds boiling together high over him, lit from inside by flickers of lightning, bolts jumping
+  // between them.
+  E.tgstormcloud = (() => {
+    const n = 36;
+    const c = 360;
+    const gy = 700;
+    const top = 120;
+    return {
+      w: 720, h: 720, n, fps: 30, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const gather = smooth(win(k, 0, 0.4)) * (1 - smooth(win(k, 0.82, 1)));
+        if (gather <= 0.01) return;
+        const R = rng(3261);
+        for (let j = 0; j < 14; j++) {
+          const ang = R() * TAU;
+          const d0 = 260 + R() * 80;
+          const d = d0 * (1 - 0.75 * gather);
+          const x = c + Math.cos(ang) * d;
+          const y = top + Math.sin(ang) * d * 0.25;
+          const r = (50 + R() * 40) * (0.5 + 0.5 * gather);
+          ctx.save();
+          ctx.globalAlpha = 0.9 * gather;
+          puff(ctx, TGN, x, y, r, 3262 + j, { lobes: 5 });
+          ctx.restore();
+        }
+        const flick = 0.7 + 0.3 * Math.sin(i * 0.9);
+        ctx.save();
+        ctx.globalAlpha = 0.35 * gather * flick;
+        ctx.beginPath();
+        ctx.ellipse(c, top, 160 * gather, 60 * gather, 0, 0, TAU);
+        ctx.fillStyle = TGS[1];
+        ctx.fill();
+        ctx.restore();
+        if (gather > 0.4) {
+          const Q = mrng(3263 + i * 0.16);
+          for (let j = 0; j < 2; j++) {
+            const x0 = c - 120 + Q() * 240;
+            tgThunder(ctx, tgPath(x0, top - 10, x0 + (Q() - 0.5) * 160, top + 20 + Q() * 30, 3264 + j * 10 + i * 0.16, 0.4), 2.4 * gather, gather * flick);
+          }
+        }
+      },
+    };
+  })();
 
   window.FXART = E;
   window.FXHD = { render, RAW };

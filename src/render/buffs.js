@@ -3,7 +3,7 @@
 // skill, with its name popping over your head. Everything is drawn from time alone.
 
 import { SKILLS } from '../data/skills.js';
-import { groundWave, pillarOf, pathTint } from './warrior-fx.js';
+import { pillarOf } from './warrior-fx.js';
 import { fxSprite } from './fx-sprites.js';
 
 const TAU = Math.PI * 2;
@@ -106,37 +106,6 @@ export const BUFF_LOOKS = {
       star(ctx, x - dir * 6, y - 2, 2.5, '#ffffff', a * (0.5 + 0.5 * Math.sin(t * 9)));
     },
   },
-  ironguard: {
-    color: '#9fd2ff', cast: 'converge',
-    back: (ctx, x, y, t, dir, a) => {
-      glow(ctx, x, y - 24, 30, '#cfd8e8', a * 0.6);
-      orbit(ctx, x, y - 26, t, { n: 4, rx: 15, ry: 18, speed: 0.8, draw: (px, py) => {
-        ctx.save();
-        ctx.globalAlpha = a * 0.6;
-        ctx.fillStyle = '#b8c2d6';
-        ctx.fillRect(px - 3.5, py - 4.5, 7, 9);
-        ctx.restore();
-      } }, false);
-    },
-    front: (ctx, x, y, t, dir, a) => {
-      // Steel plates bolted to the air around you, and a metal sheen sweeping down.
-      orbit(ctx, x, y - 26, t, { n: 4, rx: 15, ry: 18, speed: 0.8, draw: (px, py, z) => {
-        ctx.save();
-        ctx.globalAlpha = a * z;
-        ctx.fillStyle = '#eef2f8';
-        ctx.strokeStyle = '#6d7487';
-        ctx.lineWidth = 1;
-        ctx.fillRect(px - 4, py - 5, 8, 10);
-        ctx.strokeRect(px - 4, py - 5, 8, 10);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(px - 3, py - 4, 2, 6);
-        ctx.fillStyle = '#8d96a8';
-        ctx.fillRect(px - 0.5, py - 0.5, 1, 1);
-        ctx.restore();
-      } }, true);
-      sheen(ctx, x, y, t, '#ffffff', a);
-    },
-  },
   quickhaste: {
     color: '#b89cff', cast: 'gust',
     // A faint violet ring at the feet and streaks of shadow peeling off behind (Tengu's own art).
@@ -194,7 +163,8 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   // body and clear of the face, so no pillar of light goes up over them. The Tide Mage's, the
   // Maelstrom's and the Tidecaller's too: her shell, pool, rain and blessing are their own effects.)
   const own = SKILLS[f.skill]?.school;
-  if (['tide', 'deep', 'moon'].includes(school) || ['tide', 'deep', 'moon'].includes(own)) {
+  // (The Thunderguard's too: his clap, his static shell.)
+  if (['tide', 'deep', 'moon', 'thunder'].includes(school) || ['tide', 'deep', 'moon', 'thunder'].includes(own)) {
     ctx.restore();
     return;
   }
@@ -202,14 +172,6 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
     ctx.restore();
     return;
   }
-  if (f.skill === 'warcry') {
-    fxSprite(ctx, pathTint(school, 'celshout', 'celshoutgold', 'celshoutred'), x, y - 26, { p, scale: 1.1 });
-    groundWave(ctx, school, x, y, Math.min(1, p * 1.3), 90);
-    if (p > 0.1) fxSprite(ctx, `celemb${school}`, x, y - 70, { p: (p - 0.1) / 0.9, scale: 0.5 });
-  } else if (f.skill === 'ironguard') {
-    pillarOf(ctx, school, x, y, p);
-    fxSprite(ctx, pathTint(school, 'celplates', 'celplatesgold', 'celplatesred'), x, y - 26, { p: Math.min(1, p * 1.2), scale: 0.6 });
-    fxSprite(ctx, pathTint(school, 'celshieldsteel', 'celshield', 'celshieldred'), x + (f.dir || 1) * 16, y - 26, { p, scale: 0.6, sx: 0.7 });
-  } else pillarOf(ctx, school, x, y, p);
+  pillarOf(ctx, school, x, y, p);
   ctx.restore();
 }

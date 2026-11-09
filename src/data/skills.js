@@ -51,142 +51,135 @@ export const SKILLS = {
     at: (lv) => ({ mp: 8, duration: 60 + lv * 30, buff: { speed: 8 + lv * 4, jump: 3 + lv * 2 } }),
   }),
 
-  // ---------- Warrior (steel blue and white: the blue cross, swords, a shield) ----------
-  // Every blow a Warrior lands builds Valor (0-100, see world/melee.js), faster the more monsters
-  // one blow catches; full (Unbroken), his blows land heavier and nothing knocks him back. Titan
-  // Breaker needs it full and spends it. He is the dungeon tank: War Cry taunts, Iron Guard braces.
-  //
-  // A Warrior fights with his basic attacks; his skills are procs (`proc`, see world/melee.js and
-  // world/combat.js) that set off on their own from what he does: Blade Rush and Whirlwind from
-  // his blows, War Cry when his gauge fills, Iron Guard when a hard hit lands. His buttons
-  // besides attack are Shoulder Charge (getting about), Cross Slash (a heavy two-cut X) and Titan
-  // Breaker (the big one, on a full gauge). Proc skills are passives with an empty `passive` (they add no stats of their own).
-  bladerush: skill({
-    id: 'bladerush', name: 'Blade Rush', job: 'warrior', type: 'passive', fx: null, school: 'steel',
-    desc: 'Your swings sometimes rush on into an extra cross-cut of steel that slashes everything in front of you twice, whether they hit or not.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.08, 0.25, lv, m), pct: lerp(60, 110, lv, m), targets: lerp(2, 4, lv, m) } }),
-  }),
-  whirlwind: skill({
-    id: 'whirlwind', name: 'Whirlwind', job: 'warrior', type: 'passive', fx: null, school: 'steel',
-    desc: 'The last swing of your combo sometimes spins on into a whirlwind that sucks monsters in, hits everything around you five times, then flings them away, hit or miss. Always, if the swing catches three or more. A Paladin turns her blade flat over her head like a rotor of light (Halo Rotor); a Berserker is dragged round and round by his axe (Maelstrom).',
-    pathNames: { paladin: 'Halo Rotor', berserker: 'Maelstrom' },
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.15, 0.6, lv, m), crowd: 3, pct: lerp(40, 72, lv, m), targets: lerp(4, 8, lv, m) } }),
-  }),
-  shouldercharge: skill({
-    id: 'shouldercharge', name: 'Shoulder Charge', job: 'warrior', type: 'attack', fx: 'charge', icon: 'charge', maxLevel: 10, school: 'steel', movement: true,
-    desc: 'Barrel forward shoulder-first, bowling over every monster in your path and tossing them aside. Nothing touches you on the way. A Paladin rushes behind a wall of light instead (Shield Rush), a Berserker charges dragging his axe and crashes down in a cleave (Reckless Charge).',
-    pathNames: { paladin: 'Shield Rush', berserker: 'Reckless Charge' },
+  // ---------- Thunderguard (the Warrior remade: the storm, storm blue and white-gold) ----------
+  // docs/design/thunderguard.md. Both a damage dealer and the dungeon tank. His blows and the hits he
+  // takes build Charge (world/melee.js): the fuller it runs the harder he hits and the less he takes;
+  // full (Overcharge), lightning jumps from every blow, a static shell shocks whatever hits him, and
+  // Thunderfall is ready. Thunderclap and Static Guard are his tank's tools.
+  thunderrush: skill({
+    id: 'thunderrush', name: 'Thunder Rush', job: 'warrior', type: 'attack', fx: null, icon: 'thunderrush', maxLevel: 10, school: 'thunder', movement: true,
+    desc: 'Drop low into a sprint and go off like lightning: you flash forward through every monster in your path, shocking each one as you pass and throwing them aside, and come out of it in a cut. Nothing touches you on the way.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const hit = (at) => ({ at, pct: k(90, 160), reach: 46, h: 64, around: true, targets: 4, knock: 300, launch: 180 });
+      const hit = (at) => ({ at, pct: k(90, 160), reach: 50, h: 64, around: true, targets: 5, knock: 280, launch: 160, fx: 'tghit' });
       return {
-        mp: k(10, 6), pct: k(90, 160), hits: 2, targets: 4,
-        combo: [{ move: 'dash', dur: 0.42, step: k(80, 140), carry: 0.7, guard: 0.45, trail: true, strikes: [hit(0.25), { ...hit(0.6), big: true, stop: 0.06, shake: 2 }] }],
-        // Each warrior path charges its own way (it's the same skill and key, in their style):
-        paths: {
-          // Shield Rush: she raises her blade flat before her and a wall of golden light snaps up;
-          // she marches in behind it in heavy steps, shoving and gathering monsters up ahead of
-          // her, then plants the blade and the wall bursts in pillars of light that stun them.
-          paladin: [{ move: 'shieldrush', dur: 0.84, step: k(90, 140), carry: 0.74, guard: 0.8, wall: true, strikes: [
-            ...[0.22, 0.4, 0.58].map((at) => ({ at, pct: k(35, 60), reach: 50, h: 70, targets: 5, knock: 180, stop: 0.02 })),
-            { at: 0.8, pct: k(110, 190), reach: 70, h: 90, targets: 5, knock: 90, stun: k(1, 1.8), fx: 'pillar', burst: 'shieldslam', burstAt: 0.45, big: true, stop: 0.08, shake: 4 },
-          ] }],
-          // Reckless Charge: he hunches low and sprints, the axe dragging sparks along the ground,
-          // trampling through everything in his way, then leaps and crashes down in a cleave that
-          // tears the ground open.
-          berserker: [{ move: 'recklesscharge', dur: 0.88, step: k(100, 160), carry: 0.66, guard: 0.85, trail: true, strikes: [
-            ...[0.25, 0.45].map((at) => ({ at, pct: k(45, 80), reach: 46, h: 64, around: true, targets: 5, knock: 70, launch: 140, bleed: { pct: 0.15, secs: 3 }, stop: 0.02 })),
-            { at: 0.8, pct: k(140, 230), reach: 90, h: 90, around: true, targets: 5, knock: 260, launch: 300, crack: true, burst: 'rageburst', burstAt: 0.2, big: true, stop: 0.1, shake: 5 },
-          ] }],
-        },
+        mp: k(10, 6), pct: k(90, 160), hits: 2, targets: 5,
+        combo: [{ move: 'tgrush', dur: 0.5, step: k(110, 170), carry: 0.72, guard: 0.5, strikes: [
+          { ...hit(0.28), burst: 'tgrush', burstAt: -1.4, burstDur: 0.5 },
+          { ...hit(0.62), big: true, stop: 0.06, shake: 2, burst: 'tgburst', burstAt: 0.6, burstDur: 0.36 },
+        ] }],
       };
     },
   }),
-  crossslash: skill({
-    id: 'crossslash', name: 'Cross Slash', job: 'warrior', type: 'attack', fx: null, icon: 'crossslash', school: 'steel', maxLevel: 10,
-    desc: 'Step in and cut an X through the monsters in front of you: a heavy chop down and a rising backhand straight after it, leaving a cross of steel light burning on them. A Paladin cuts it as a knight, a Berserker as a beast.',
+  stormcleave: skill({
+    id: 'stormcleave', name: 'Storm Cleave', job: 'warrior', type: 'attack', fx: null, icon: 'stormcleave', school: 'thunder', maxLevel: 20,
+    desc: 'Haul your weapon right back over your shoulder and hold it there as the storm pours into it, then bring it round in one huge two-handed cleave that hurls a giant crescent of lightning down the line, through every monster in it.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
-      const cut = (at, up) => ({ at, pct: k(110, 190), reach: 70, h: 70, targets: 3, knock: up ? 140 : 30, launch: up ? 180 : 0, big: up, stop: up ? 0.08 : 0.04, shake: up ? 3 : 1, gauge: 4 });
       return {
-        mp: k(8, 14), pct: k(110, 190), hits: 2, targets: 3,
-        combo: [{ move: 'crossslash', dur: 0.62, step: 16, strikes: [cut(0.3, false), { ...cut(0.52, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
-        // Each warrior path cuts it its own way (same numbers): the Paladin's two clean knightly
-        // cuts, finished with the blade planted point-down before her, a cross of gold light; the
-        // Berserker's wild leaping hack and a whirling backhand with the axe, a cross of rose fire.
-        paths: {
-          paladin: [{ move: 'plcross', dur: 0.66, step: 14, strikes: [cut(0.3, false), { ...cut(0.5, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
-          berserker: [{ move: 'bkcross', dur: 0.62, step: 22, strikes: [cut(0.34, false), { ...cut(0.54, true), burst: 'xcross', burstAt: 0.55, burstDur: 0.5 }] }],
-        },
+        mp: k(12, 24), pct: k(180, 320), hits: 2, targets: 8,
+        combo: [{ move: 'tgcleave', dur: 0.92, step: 12, strikes: [
+          { at: 0.58, pct: k(90, 160), reach: 96, h: 80, targets: 4, knock: 120, arc: [-150, 300], thick: 16, fx: 'tghit', stop: 0.05, shake: 2 },
+          { at: 0.6, shot: 'tgwave', pct: k(180, 320), range: 420, h: 110, targets: 8, pierce: true, knock: 240, launch: 120, speed: 760, burst: 'tghit', big: true, stop: 0.08, shake: 3 },
+        ] }],
       };
     },
   }),
-  warcry: skill({
-    id: 'warcry', name: 'War Cry', job: 'warrior', type: 'passive', fx: null, icon: 'warcry', school: 'steel', party: true,
-    desc: 'Whenever your gauge fills, you let out a great shout: every monster around you turns on you, and you and the party around you take less damage for a while.',
-    at: (lv, m) => ({ passive: {}, proc: { duration: lerp(20, 45, lv, m), taunt: lerpf(2, 4, lv, m), buff: { dmgCut: lerpf(0.06, 0.18, lv, m) }, range: { w: lerp(320, 480, lv, m), h: 160, around: true } } }),
+  cycloneedge: skill({
+    id: 'cycloneedge', name: 'Cyclone Edge', job: 'warrior', type: 'attack', fx: null, icon: 'cycloneedge', school: 'thunder', maxLevel: 20,
+    desc: 'Spin with your weapon out at arm\'s length, round and round, as a storm whirls up round you, dragging the monsters near you in and cutting everything around you again and again; then stop dead and bring the weapon down in a thunderclap that flings them away. A short wait before the next (6 seconds).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const cut = (at) => ({ at, pct: k(40, 70), reach: 96, h: 80, around: true, targets: 6, knock: 0, pull: 120, fx: 'tghit', gauge: 2 });
+      return {
+        mp: k(16, 28), pct: k(40, 70), hits: 6, targets: 6, cooldown: 6,
+        combo: [{ move: 'tgcyclone', dur: 1.3, step: 0, guard: 0.3, strikes: [
+          { ...cut(0.18), burst: 'tgcyclone', burstAt: 0, burstDur: 1.0, follow: true }, cut(0.32), cut(0.46), cut(0.6), cut(0.72),
+          { at: 0.86, pct: k(150, 260), reach: 110, h: 90, around: true, targets: 6, knock: 300, launch: 220, fx: 'tghit', burst: 'tgclap', burstAt: 0, burstDur: 0.6, big: true, stop: 0.1, shake: 5 },
+        ] }],
+      };
+    },
   }),
-  ironguard: skill({
-    id: 'ironguard', name: 'Iron Guard', job: 'warrior', type: 'passive', fx: null, icon: 'ironguard', school: 'steel',
-    desc: 'A hard hit sometimes makes you plant your feet behind your guard: much less damage from every hit and harder armor for a few seconds.',
-    at: (lv, m) => ({ passive: {}, proc: { chance: lerpf(0.2, 0.6, lv, m), hard: 0.06, duration: lerp(4, 10, lv, m), buff: { dmgCut: lerpf(0.15, 0.4, lv, m), wdef: lerp(10, 50, lv, m) } } }),
+  lightningrod: skill({
+    id: 'lightningrod', name: 'Lightning Rod', job: 'warrior', type: 'attack', fx: null, icon: 'lightningrod', school: 'thunder', maxLevel: 20,
+    desc: 'Drive your weapon point-first into the floor and throw your free hand up to the sky: bolts of lightning crash down on the monsters ahead of you, one after another, each one dazing what it strikes.',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const strike = (at) => ({ at, pct: k(80, 140), reach: 280, h: 140, targets: 2, knock: 60, stun: 0.4, fx: 'tgbolt', stop: 0.04, shake: 2 });
+      return {
+        mp: k(14, 26), pct: k(80, 140), hits: 3, targets: 6, cooldown: 4,
+        combo: [{ move: 'tgrod', dur: 1.05, step: 0, strikes: [
+          { at: 0.34, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tgrodfx', burstAt: 0.2, burstDur: 0.7 },
+          strike(0.5), strike(0.62), { ...strike(0.74), big: true, shake: 3 },
+        ] }],
+      };
+    },
   }),
-  swordmastery: skill({
-    id: 'swordmastery', name: 'Weapon Mastery', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'swordmastery',
-    desc: 'Steadier blows and more attack with every blade.',
+  thunderclap: skill({
+    id: 'thunderclap', name: 'Thunderclap', job: 'warrior', type: 'buff', fx: null, icon: 'thunderclap', school: 'thunder', maxLevel: 10, party: true,
+    desc: 'Raise your weapon flat over your head and slam it down flat on the floor with a shout: a thunderclap booms out, every monster around you turns on you and is dazed, and you and the party around you take less damage for a while. A wait before the next (20 seconds).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: k(360, 520), h: 180, around: true };
+      return {
+        mp: k(12, 20), pct: 0, hits: 1, targets: 10, range, cooldown: 20, taunt: kf(2, 4), duration: k(20, 40), buff: { dmgCut: kf(0.06, 0.18) },
+        combo: [{ move: 'tgthunderclap', dur: 0.85, step: 0, strikes: [
+          { at: 0.52, pct: k(60, 110), reach: range.w / 2, h: 140, around: true, targets: 10, knock: 140, stun: kf(0.5, 1), provoke: kf(2, 4), fx: 'tgspark', burst: 'tgclapbig', burstAt: 0, burstDur: 0.7, big: true, stop: 0.08, shake: 4, gauge: 6,
+            grant: { id: 'thunderclap', duration: k(20, 40), buff: { dmgCut: kf(0.06, 0.18) }, range } },
+        ] }],
+      };
+    },
+  }),
+  staticguard: skill({
+    id: 'staticguard', name: 'Static Guard', job: 'warrior', type: 'buff', fx: null, icon: 'staticguard', school: 'thunder', maxLevel: 10,
+    desc: 'Plant your feet wide behind your weapon and let the storm cover you: a crackling shell of static wraps you, you take much less from every hit, nothing knocks you back, and whatever hits you is shocked and dazed. A wait before the next (30 seconds).',
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(10, 18), pct: 0, hits: 0, targets: 0, cooldown: 30, aimGain: 15,
+        combo: [{ move: 'tgguard', dur: 0.75, step: 0, strikes: [
+          { at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tgguardshell', burstAt: 0, burstDur: k(6, 10), follow: true,
+            grant: { id: 'staticguard', duration: k(6, 10), buff: { dmgCut: kf(0.2, 0.4), wdef: lerp(10, 50, lv, m) }, range: { w: 0, h: 0 } } },
+        ] }],
+      };
+    },
+  }),
+  stormsteel: skill({
+    id: 'stormsteel', name: 'Storm Steel', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'stormsteel',
+    desc: 'The storm runs down your arm into the weapon: steadier, harder blows with every blade, axe and spear.',
     at: (lv, m) => ({ passive: { mastery: lerpf(0.1, 0.4, lv, m), watk: lerp(2, 20, lv, m) } }),
   }),
-  toughness: skill({
-    id: 'toughness', name: 'Toughness', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'toughness',
-    desc: 'Tougher all around: more max HP and weapon defense.',
+  stormbody: skill({
+    id: 'stormbody', name: 'Storm Body', job: 'warrior', type: 'passive', grows: true, fx: null, icon: 'stormbody',
+    desc: 'Toughened by the storm you carry: more max HP and harder armour.',
     at: (lv, m) => ({ passive: { maxHpPct: lerpf(0.03, 0.2, lv, m), wdef: lerp(3, 30, lv, m) } }),
   }),
-  titanbreak: skill({
-    id: 'titanbreak', dmg: 1.2, name: 'Titan Breaker', job: 'warrior', type: 'attack', fx: 'quake', icon: 'titanbreak', school: 'steel', maxLevel: 10, fullGauge: true,
-    desc: 'Finisher: needs full Valor, and spends it. Leap high, somersaulting inside a wheel of steel as your blade turns over and over, while a giant sword of steel forms above you; then crash down with it and split the ground in two, throwing everything around you into the air. A Paladin raises a great crest of light and brings it down with her blade (Heaven\'s Seal); a Berserker pounces like a beast and falls on them as a meteor of fire (Skyfall Rend).',
-    pathNames: { paladin: 'Heaven\'s Seal', berserker: 'Skyfall Rend' },
+  thunderfall: skill({
+    id: 'thunderfall', dmg: 1.2, name: 'Thunderfall', job: 'warrior', type: 'attack', fx: null, icon: 'thunderfall', school: 'thunder', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Charge, and spends it. Leap high up into the storm gathering over you and hang there as the lightning pours into your weapon, then fall riding a giant bolt: the floor splits with lightning where you land, everything around you is thrown into the air, and bolts rain down round you.',
     at: (lv, m) => {
       const k = (a, b) => lerp(a, b, lv, m);
       const targets = k(8, 12);
+      const rain = (at, burstAt) => ({ at, pct: k(60, 100), reach: 200, h: 150, around: true, targets, knock: 60, burst: 'tgbolt', burstAt, burstDur: 0.6, stop: 0.03, shake: 2, gauge: 0 });
       return {
-        mp: k(30, 50), pct: k(420, 720), hits: 3, targets,
-        combo: [{ move: 'gstitan', dur: 1.38, step: 10, finisher: true, guard: 1.2, strikes: [
-          { at: 0.1, pct: 0, reach: 0, h: 0, targets: 0, burst: 'gswheel', burstAt: 0, burstDur: 0.46, quiet: true, gauge: 0 },
-          { at: 0.3, pct: 0, reach: 0, h: 0, targets: 0, burst: 'titanrise', burstAt: 0, quiet: true, gauge: 0 },
-          { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'titanbreak', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
-          { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'titanwave', burstAt: 0, big: true, stop: 0.05, shake: 3, gauge: 0 },
+        mp: k(30, 50), pct: k(420, 720), hits: 5, targets,
+        combo: [{ move: 'tgfall', dur: 1.5, step: 10, finisher: true, guard: 1.3, strikes: [
+          { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tgstormcloud', burstAt: 0, burstDur: 1.2, follow: true },
+          { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, fx: 'tghit', burst: 'tgboltbig', burstAt: 0, burstDur: 0.75, big: true, stop: 0.16, shake: 8, gauge: 0 },
+          { at: 0.7, pct: k(150, 260), reach: 200, h: 150, around: true, targets, knock: 220, burst: 'tgclapbig', burstAt: 0, burstDur: 0.75, big: true, stop: 0.05, shake: 3, gauge: 0 },
+          rain(0.78, 0.7), rain(0.86, -0.7),
         ] }],
-        // Each warrior path's own (the same two blows; data/path-skills.js).
-        paths: {
-          // Heaven's Seal: a knight's salute, the blade raised high while a great golden crest of
-          // light gathers over her; she rises on her toes, then brings the blade down in one planted,
-          // two-handed chop and the crest slams down with it; she turns the blade point-down and
-          // drives it in, and pillars of light burst up in a ring round her.
-          paladin: [{ move: 'plseal', dur: 1.38, step: 10, finisher: true, guard: 1.2, strikes: [
-            { at: 0.06, pct: 0, reach: 0, h: 0, targets: 0, burst: 'plcrest', burstAt: 0, burstDur: 0.78, quiet: true, gauge: 0 },
-            { at: 0.6, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, burst: 'plsealfall', burstAt: 0.25, big: true, stop: 0.16, shake: 8, gauge: 0 },
-            { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, stun: 0.5, burst: 'plsealwave', burstAt: 0, burstDur: 0.8, big: true, stop: 0.05, shake: 3, gauge: 0 },
-          ] }],
-          // Skyfall Rend: he drops into a beast's crouch and howls as fire flares under him, pounces
-          // high with the axe flung back and his free hand clawed, falls on them wrapped in a meteor
-          // of rose fire and smashes down, tearing the ground open in claw gashes; then wrenches the
-          // axe up out of the earth in a burst of fire.
-          berserker: [{ move: 'bkpounce', dur: 1.38, step: 40, carry: 0.6, finisher: true, guard: 1.2, strikes: [
-            { at: 0.04, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bkhowl', burstAt: 0, burstDur: 0.42, quiet: true, gauge: 0 },
-            { at: 0.36, pct: 0, reach: 0, h: 0, targets: 0, burst: 'bkmeteor', burstAt: 0, burstDur: 0.36, follow: true, quiet: true, gauge: 0 },
-            { at: 0.62, pct: k(420, 720), reach: 170, h: 150, around: true, targets, knock: 300, launch: 460, crack: true, bleed: { pct: 0.15, secs: 3 }, burst: 'bkrend', burstAt: 0, big: true, stop: 0.16, shake: 8, gauge: 0 },
-            { at: 0.8, pct: k(150, 260), reach: 185, h: 150, around: true, targets, knock: 220, burst: 'rageburst', burstAt: 0, burstDur: 0.6, big: true, stop: 0.05, shake: 3, gauge: 0 },
-          ] }],
-        },
       };
     },
   }),
 
   // ---------- Paladin (the warrior's tank path: holy light, stuns, taunts, blessings) ----------
-  // Like the Warrior, she fights with her basic attacks and her skills set themselves off (procs,
-  // see the Warrior above): Aegis Smite from her swings, Hallowed Ground from her combo's last
-  // swing, Divine Aegis when a hit leaves her low. Her buttons are Shoulder Charge and Grand
-  // Verdict, the big finisher on full Faith.
+  // She fights with her basic attacks and her skills set themselves off (procs): Aegis Smite from
+  // her swings, Hallowed Ground from her combo's last swing, Divine Aegis when a hit leaves her
+  // low. Grand Verdict is the big finisher on full Faith. (She stands in as the Thunderguard's tank
+  // path until his own is made, and plays his skills as he does.)
   paladinmastery: skill({
     id: 'paladinmastery', name: 'Paladin Mastery', job: 'paladin', type: 'passive', grows: true, fx: null,
     desc: 'Steadier blows, thicker armor, and more max HP.',
@@ -1181,7 +1174,7 @@ const MOVES_BY_SKILL = {
   pebble: 'pebbleflick', quickstep: 'qstep',
   vault: 'achandspring', cometarrow: 'acsomersault', springtrap: 'acspring', packhowl: 'ptbomb',
   stampede: 'ptillusion', snacktime: 'ptshow', deployturret: 'aedeploy', windupbomb: 'aewindup', overclock: 'aeoverclock', bigbertha: 'aebertha',
-  bladerush: 'overhead', crossslash: 'crossslash', whirlwind: 'spin', shouldercharge: 'dash', warcry: 'roar', ironguard: 'guard', titanbreak: 'titanbreak',
+  thunderrush: 'tgrush', stormcleave: 'tgcleave', cycloneedge: 'tgcyclone', lightningrod: 'tgrod', thunderclap: 'tgthunderclap', staticguard: 'tgguard', thunderfall: 'tgfall',
   aegissmite: 'bash', hallowedground: 'consecrate', divineaegis: 'salute', ravage: 'cleave1', bloodfrenzy: 'warroar', rampage: 'rampage', grandverdict: 'verdict', crimsoneclipse: 'eclipse',
   pirouette: 'wdchaine', grandfinale: 'wdencore',
   goldencarousel: 'bdcarousel', hoopla: 'bdhoopla', jugglingact: 'bdjuggle', showstopper: 'bdbow',

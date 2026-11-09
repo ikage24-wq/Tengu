@@ -232,8 +232,13 @@ export function dropRetiredItems(char) {
 export function updateRetiredJobs(char) {
   // A job that exists today is never retired, even if an old job once had its id (the Ranger).
   if (!JOBS[char.job]) char.job = RETIRED_JOBS[char.job] ?? 'novice';
-  // (The Mage line's trial went with it, 2026-11-08.)
-  if (char.quests) { delete char.quests.spiritmage_trial; delete char.quests.mage_trial; }
+  // (The old Mage line's trial went with it, 2026-11-08. Its id is the Tide Mage's paths' trial now,
+  // Elowen's, so it's cleared once per save, never again: progress on the new one stays.)
+  if (char.quests) {
+    delete char.quests.spiritmage_trial;
+    if (!char.oldMageTrialCleared) delete char.quests.mage_trial;
+  }
+  char.oldMageTrialCleared = true;
   for (const [id, lv] of Object.entries(char.skills ?? {})) {
     if (SKILLS[id]) continue;
     char.sp += lv;

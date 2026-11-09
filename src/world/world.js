@@ -26,7 +26,7 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
-import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
+import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasVolt, overcharged, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
 import { healAround, hasTide, hasDepth, hasMoon, springDrop } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
@@ -604,7 +604,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   if (world.god || blockOnHit(world, fromX)) return;
   const char = world.char;
   const s = world.stats;
-  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world)) * (1 - ventGuard(world, fromX))));
+  let dmg = absorb(world, world.body, char.buffs, Math.round(damageTaken(rawAtk, s.wdef) * (s.guard ?? 1) * (1 - cutOf(char.buffs, world.now)) * (1 - faithGuard(world, fromX)) * (1 - ventGuard(world, fromX))));
   if (s.manaShield > 0) {
     const toMp = Math.min(char.mp, Math.floor(dmg * s.manaShield));
     char.mp -= toMp;
@@ -615,8 +615,9 @@ export function hurtPlayer(world, rawAtk, fromX) {
   world.invuln = INVULN;
   world.hurtAt = world.now;
   world.juice.push({ type: 'hurt', x: world.body.x, y: world.body.y - world.body.h / 2 });
-  // Unbroken (full Valor), nothing knocks a Warrior back; a hit breaks an Archer's Momentum.
-  if (!unbroken(world)) knockBack(world.body, fromX);
+  // Overcharge (a full Charge) or Static Guard, nothing knocks the Thunderguard back; a hit breaks
+  // an Archer's Momentum.
+  if (!overcharged(world) && !(char.buffs.staticguard?.until > world.now)) knockBack(world.body, fromX);
   loseMomentum(world);
   if (char.hp <= 0 && !world.dead) {
     world.dead = true;
@@ -850,7 +851,7 @@ export function updateWorld(world, dt, input) {
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);
     }
-    if (!h.ownSpark && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!h.ownSpark && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char) && !hasVolt(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasVolt(world.char) ? 'thunder' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

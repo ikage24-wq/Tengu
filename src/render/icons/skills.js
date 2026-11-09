@@ -23,6 +23,7 @@ const BG = {
   crimson: ['#ffa07e', '#a8304a'],
   ember: ['#ffd27a', '#c8452e'],
   steel: ['#b4ccf4', '#3f55a0'],
+  stormbg: ['#8fb8ff', '#18226a'],
   arcane: ['#d2a8ff', '#5a33a3'],
   mint: ['#c4f5b4', '#2f9468'],
   holy: ['#fff0a0', '#d6802a'],
@@ -333,150 +334,78 @@ function quickstep() {
   ];
 }
 
-// ---------- Warrior ----------
-
-function bladerush() {
-  return [
-    ...tile('steel', 'active'),
-    ...aura(8.5, 7.5, 6.5, '#e4f2ff'),
-    ...swoosh(4.2, 12.6, 10, 10, -78, 2, 2.2, '#d4ecff'),
-    ...sword([5, 11], [13.8, 2.2], { w: 2.4 }),
-    ...swoosh(13.4, 12.4, 9.6, 9.6, -175, -100, 1.8, '#eef7ff'),
-    ...spark(13.6, 2.2, 1.6, '#fff6c0'),
-    ...spark(2.6, 3.6, 1),
-  ];
+// ---------- Thunderguard (the Warrior remade: storm blue, white-gold lightning) ----------
+const TGBLUE = '#4a78ff';
+const TGINK = '#18226a';
+const TGGOLD = '#ffd84a';
+// A forked bolt from p0 to p1 through the tile: inked, banded, a white core.
+function stormBolt(pts, w = 1) {
+  return [S(tube(pts, 1.7 * w, 1.7 * w), TGINK), S(tube(pts, 1.3 * w, 1.3 * w), TGBLUE), S(tube(pts, 0.9 * w, 0.9 * w), TGGOLD), S(tube(pts, 0.4 * w, 0.4 * w), '#ffffff')];
 }
-
-function whirlwind() {
-  const out = [...tile('steel', 'active'), ...aura(8, 8, 6.6, '#e4f2ff')];
-  // A funnel of wind: three flattened rings, wide at the top.
-  for (const [cy, rx, ry, w, a0] of [[4.2, 6.2, 1.9, 1.5, 200], [7.6, 4.8, 1.6, 1.3, 30], [10.6, 3.4, 1.2, 1.1, 210], [13, 2, 0.8, 0.9, 40]]) {
-    out.push(...swoosh(8, cy, rx, ry, a0, a0 + 290, w, '#eef7ff', { ink: '#2a3a8a' }));
-  }
-  out.push(...sword([5.4, 11.6], [12.8, 3.4], { w: 2, glen: 2.2 }));
-  out.push(...spark(2.6, 7.8, 1.1), ...spark(13.6, 11.4, 1.2, '#fff6c0'));
+// Thunder Rush: a bolt tearing level across the tile, speed lines behind.
+function thunderrush() {
+  const out = [...tile('stormbg', 'active'), ...aura(10, 8, 6, TGGOLD)];
+  for (const y of [5.2, 10.6]) out.push(S(tube([[1, y], [7, y]], 0.25, 0.1), '#dceaff'));
+  out.push(...stormBolt([[1.2, 8.6], [5, 7.2], [7.4, 9], [11, 6.8], [14.6, 8]], 1.3), ...spark(14, 8, 1.6, TGGOLD));
   return out;
 }
-
-// Cross Slash: two steel cuts crossing in an X, a glint where they meet.
-function crossslash() {
-  const out = [...tile('steel', 'active'), ...aura(8, 8, 6.6, '#e4f2ff', 1.1)];
-  out.push(streak([2.6, 2.6], [13.4, 13.4], 1.6, '#eef7ff'), streak([13.4, 2.6], [2.6, 13.4], 1.6, '#cfe6ff'));
-  out.push(...sword([12.6, 3.4], [4.4, 11.6], { w: 2.4, gw: 4, glen: 2, gem: '#7fd8ff' }));
-  out.push(...spark(8, 8, 1.8, '#fff6c0'));
+// Storm Cleave: a great crescent of lightning.
+function stormcleave() {
+  const out = [...tile('stormbg', 'active'), ...aura(8, 8, 6.4, TGGOLD)];
+  out.push(...solid([...arcPts(6, 8, 7, 7, -70, 70, 14), ...arcPts(3.6, 8, 6.2, 6.4, 70, -70, 14)], TGBLUE, { ink: TGINK, d: 0.35 }));
+  out.push(S(arcPts(6, 8, 7, 7, -55, 55, 12), TGGOLD), ...stormBolt([[10.6, 4.4], [12.4, 3.2], [13.6, 4]], 0.8), ...stormBolt([[10.8, 11.8], [12.8, 12.6], [14, 11.6]], 0.8));
   return out;
 }
-function titanbreak() {
-  const rock = '#9a9ac8';
-  const out = [...tile('steel', 'active'), ...aura(8, 12, 6, '#e4f2ff', 1.2)];
-  // Shock rays from the impact.
-  for (const a of [-160, -125, -55, -20]) {
-    const u = [Math.cos(a * D2R), Math.sin(a * D2R)];
-    out.push(streak(add([8, 12.4], u, 7), add([8, 12.4], u, 2.6), 1.3, '#eef7ff'));
-  }
-  out.push(...solid([[0.8, 12.6], [5.6, 11.6], [7.6, 12.4], [10.4, 11.4], [15.2, 12.6], [15.2, 15.2], [0.8, 15.2]], rock, { shadow: false }));
-  out.push(line([[8, 12.4], [6.4, 14], [6.8, 15.2]], 0.45, dk(rock)), line([[8.2, 12.4], [10, 13.6], [11.6, 13.4], [12.4, 15]], 0.45, dk(rock)), line([[7.4, 12.6], [4.4, 13.8]], 0.4, dk(rock)));
-  out.push(...facet([[2.4, 9.2], [3.8, 8.4], [4.4, 10], [3, 10.6]], [2.4, 9.2], [4.4, 10], rock, { d: 0.4 }));
-  out.push(...facet([[12, 8.4], [13.6, 8.8], [13.2, 10.4], [11.8, 9.8]], [12, 8.4], [13.2, 10.4], rock, { d: 0.4 }));
-  out.push(...facet([[4.6, 5.8], [5.6, 5.4], [5.8, 6.6]], [4.6, 5.8], [5.8, 6.6], rock, { d: 0.35 }));
-  out.push(...sword([8, 4.2], [8, 12.8], { w: 3.4, gw: 5.4, glen: 2.6, gem: '#7fd8ff' }));
-  out.push(...spark(12.8, 3, 1.3, '#fff6c0'));
+// Cyclone Edge: rings of storm light whirling round, bolts flung off.
+function cycloneedge() {
+  const out = [...tile('stormbg', 'active'), ...aura(8, 9, 6.4, TGGOLD)];
+  for (const [y, r] of [[12, 6], [9.4, 4.8], [7, 3.6]]) out.push(S(arcPts(8, y, r, r * 0.32, 200, 520, 22), TGINK), S(arcPts(8, y, r - 0.2, r * 0.3, 210, 500, 20), mix(TGBLUE, '#ffffff', 0.4)));
+  out.push(...stormBolt([[3, 8], [1.6, 5.4], [2.6, 3.6]], 0.7), ...stormBolt([[13, 7.6], [14.4, 5], [13.4, 3]], 0.7), ...spark(8, 4.2, 1.3, TGGOLD));
   return out;
 }
-
-function shouldercharge() {
-  // The tile first: it sets the palette the helmet's drop shadows are cut from.
-  const plate = tile('steel', 'active');
-  const helm = '#dfe8f8';
-  const dome = [...arcPts(8.6, 9.4, 4.8, 5.2, 180, 360, 18), [13.4, 12.4], [3.8, 12.4]];
-  const head = [
-    ...solid(tube(bez3([5.4, 6.4], [3.6, 4.6], [3.6, 2], [6.2, 1.4], 12), (t) => 1.9 * (1 - t) + 0.15), '#fff3dc'),
-    ...solid(tube(bez3([11.8, 6.4], [13.6, 4.6], [14.2, 2], [11.8, 1.2], 12), (t) => 1.9 * (1 - t) + 0.15), '#fff3dc'),
-    ...solid(dome, helm, { k: 0.9 }),
-    S(clip(dome, rect(0, 9.4, 16, 3)), sh(helm)),
-    ...solid(tube([[5.4, 10], [12.4, 10]], 1.2), '#3a2d4f', { shadow: false, flat: true, ink: '#2a2035' }),
-    S(tube([[6.4, 9.9], [8.2, 9.9]], 0.35), '#6fb4ff'), S(tube([[10, 9.9], [11.8, 9.9]], 0.35), '#6fb4ff'),
-    S(tube([[8.6, 4.6], [8.6, 9.2]], 1), '#4f7fe0'), S(tube([[8.4, 4.8], [8.4, 9]], 0.35), '#b4dcff'),
-    ...glint(6, 6.2, 0.6),
-  ];
-  return [
-    ...plate,
-    ...aura(11, 8.6, 6, '#e4f2ff', 1.1),
-    streak([0.6, 4.4], [5, 5.6], 1.2, '#fff0e4'), streak([0.6, 8.4], [4.6, 8.8], 1.7, '#fff6ee'), streak([0.6, 12.4], [5, 11.8], 1.2, '#fff0e4'),
-    streak([2, 14.6], [5.6, 13.6], 0.8, '#c4dcff'),
-    ...spin(head, 18, 8.6, 9),
-    ...spark(14.2, 13.6, 1.3, '#fff6c0'), ...spark(14.4, 2.4, 0.9),
-  ];
+// Lightning Rod: a blade planted point-down, a bolt striking down beside it.
+function lightningrod() {
+  const out = [...tile('stormbg', 'active'), ...aura(10, 6, 6, TGGOLD)];
+  out.push(...sword([5.4, 14.6], [5.4, 4.6], { w: 1.8, gem: '#7fd8ff' }));
+  out.push(...stormBolt([[12.6, 0.8], [10.4, 5], [12.4, 7], [10.2, 12.8]], 1.2), ...spark(10.2, 13, 1.6, TGGOLD));
+  return out;
 }
-
-function ironguard() {
-  const rimC = '#dfe8f8';
-  const outer = [[2.2, 2.4], [8, 1.4], [13.8, 2.4], [13.6, 8], [11.6, 12], [8, 14.8], [4.4, 12], [2.4, 8]];
-  const inner = [[3.4, 3.4], [8, 2.6], [12.6, 3.4], [12.4, 7.8], [10.7, 11.2], [8, 13.4], [5.3, 11.2], [3.6, 7.8]];
-  return [
-    ...tile('steel', 'buff'),
-    ...aura(8, 8, 6.8, '#e8f0ff'),
-    drop(outer),
-    ...edge(outer, ink(rimC), 0.5),
-    ...bevel(outer, inner, rimC, '#4f7fe0'),
-    S(cut(inner, [8, 0], [8, 16]), '#3a62c8'),
-    S(clip(inner, oval(5.6, 4.6, 3, 2.4)), '#8fbcff'),
-    // A gold cross, and rivets.
-    ...solid(tube([[8, 3.6], [8, 12.6]], 1.4), W, { shadow: false, d: 0.35 }),
-    ...solid(tube([[4.4, 6.8], [11.6, 6.8]], 1.4), W, { shadow: false, d: 0.35 }),
-    ...[[3.2, 3.2], [12.8, 3.2], [8, 2.1], [8, 13.8]].map(([x, y]) => S(oval(x, y, 0.4, 0.4, 0, 8), W)),
-    ...glint(4.8, 4.4, 0.6),
-    ...spark(14, 13, 1.2),
-  ];
+// Thunderclap: a blade slammed flat on the ground, a ring of thunder bursting out.
+function thunderclap() {
+  const out = [...tile('stormbg', 'buff'), ...aura(8, 10, 6.6, TGGOLD, 1.2, 5)];
+  for (const r of [6.6, 4.6]) out.push(S(arcPts(8, 11.6, r, r * 0.34, 0, 360, 26), r > 5 ? mix(TGBLUE, '#ffffff', 0.3) : TGGOLD));
+  out.push(...sword([2.6, 10.8], [13.4, 10.8], { w: 1.6, gem: '#7fd8ff' }));
+  for (const [x0, y0, x1, y1] of [[5, 8.6, 3.4, 4.4], [8, 8, 8.6, 3], [11, 8.6, 12.8, 4.6]]) out.push(...stormBolt([[x0, y0], [(x0 + x1) / 2 + 0.8, (y0 + y1) / 2], [x1, y1]], 0.6));
+  return out;
 }
-
-function warcry() {
-  const flag = '#4f7fe0';
-  const cloth = [[5.4, 2.6], [9, 3.4], [12, 2.4], [14.6, 3.2], [13.6, 5.8], [14.6, 8.6], [12, 9.2], [9, 8.2], [5.4, 9]];
-  return [
-    ...tile('steel', 'buff'),
-    ...aura(9, 6, 6.6, '#e4f2ff'),
-    // The pole.
-    ...solid(tube([[4.6, 1.6], [4.6, 15.4]], 1.1), '#c98a5a'),
-    ...solid(oval(4.6, 1.5, 1, 1, 0, 12), GOLD),
-    ...solid(cloth, flag, { k: 0.9 }),
-    S(clip(cloth, rect(8, 0, 4, 16)), sh(flag)),
-    S(clip(cloth, rect(5, 0, 16, 1.2).map(([x, y]) => [x, y + 7.2])), '#ffffff'),
-    ...solid(starPts(8.6, 5.6, 2.2, 0.95), GOLD, { shadow: false, d: 0.35 }),
-    // Shout waves under the flag.
-    ...swoosh(5.6, 12.6, 4, 2.6, -40, 40, 0.9, '#ffffff', { ink: '#2a3a8a' }),
-    ...swoosh(5.6, 12.6, 6.4, 3.6, -36, 36, 0.9, '#d4ecff', { ink: '#2a3a8a' }),
-    ...glint(6.8, 4, 0.5),
-  ];
+// Static Guard: a shield outline of crackling static round a blade standing upright.
+function staticguard() {
+  const out = [...tile('stormbg', 'buff'), ...aura(8, 8, 6.4, TGGOLD)];
+  out.push(...sword([8, 14.4], [8, 3.4], { w: 1.6, gem: '#7fd8ff' }));
+  out.push(...stormBolt([[3, 13], [2.4, 9], [3.2, 6.4], [5.4, 3], [8, 2.2], [10.6, 3], [12.8, 6.4], [13.6, 9], [13, 13]], 0.7));
+  return out;
 }
-
-function toughness() {
-  const wood = '#b87a50';
-  const disc = oval(8, 8.4, 6.2, 6.2, 0, 36);
-  const boss = oval(8, 8.4, 4, 4, 0, 30);
-  return [
-    ...tile('steel', 'passive'),
-    drop(disc),
-    ...edge(disc, ink('#c8d4ec'), 0.5),
-    ...bevel(disc, oval(8, 8.4, 5, 5, 0, 36), '#c8d4ec', wood),
-    S(clip(oval(8, 8.4, 5, 5, 0, 36), oval(6.6, 6.8, 4.4, 4.2)), lt(wood)),
-    ...[0, 1, 2, 3, 4, 5, 6, 7].map((i) => S(oval(8 + Math.cos(i * 45 * D2R) * 5.6, 8.4 + Math.sin(i * 45 * D2R) * 5.6, 0.38, 0.38, 0, 8), W)),
-    ...edge(boss, ink('#4f7fe0'), 0.4),
-    ...solid(heartPts(8, 8.8, 4.4), '#6f9cf0', { drop: 0.6, d: 0.4 }),
-    ...glint(6.4, 7.2, 0.5),
-    ...glint(3.8, 5, 0.5),
-  ].filter((s) => s);
+// Storm Steel: a blade with lightning running down it.
+function stormsteel() {
+  const out = [...tile('stormbg', 'passive'), ...aura(8, 8, 6, TGGOLD)];
+  out.push(...sword([12.6, 13], [3.2, 3], { w: 2, gem: '#7fd8ff' }));
+  out.push(...stormBolt([[3.6, 6.2], [6.4, 6.6], [7, 9.4], [9.8, 9.8]], 0.7), ...glint(5, 4.6, 0.5));
+  return out;
 }
-
-function swordmastery() {
-  return [
-    ...tile('steel', 'passive'),
-    ...aura(8, 8, 6.6, '#e4f2ff'),
-    ...sword([3.4, 13], [12.8, 3], { w: 2 }),
-    ...sword([12.6, 13], [3.2, 3], { w: 2, gem: '#7fd8ff' }),
-    ...glint(5, 4.6, 0.5),
-    ...spark(13.4, 12.8, 1.2),
-  ];
+// Storm Body: a chest plate crackling with static.
+function stormbody() {
+  const out = [...tile('stormbg', 'passive'), ...aura(8, 8, 6, TGGOLD)];
+  out.push(...solid([[3.6, 4], [12.4, 4], [13.4, 8], [11.6, 13.6], [4.4, 13.6], [2.6, 8]], mix(TGBLUE, '#ffffff', 0.25), { ink: TGINK, d: 0.35 }));
+  out.push(S(tube([[8, 4.6], [8, 13]], 0.25, 0.25), TGINK), ...stormBolt([[4.6, 7], [6.4, 8.6], [5.6, 10.4], [7.4, 12]], 0.6), ...stormBolt([[11.4, 7], [9.6, 8.6], [10.4, 10.4], [8.6, 12]], 0.6));
+  return out;
+}
+// Thunderfall: a storm cloud over a giant bolt crashing down, the ground splitting.
+function thunderfall() {
+  const out = [...tile('stormbg', 'active'), ...aura(8, 9, 7, TGGOLD, 1.2, 5)];
+  for (const [x, y, r] of [[4.4, 3.2, 2.4], [8, 2.4, 2.8], [11.6, 3.2, 2.4]]) out.push(S(oval(x, y, r + 0.4, r * 0.75 + 0.4, 0, 18), TGINK), S(oval(x, y, r, r * 0.75, 0, 18), '#7a88c0'));
+  out.push(...stormBolt([[8.4, 4.4], [6.6, 8], [9, 9.4], [7.4, 14.2]], 1.4));
+  out.push(...stormBolt([[7.4, 14.2], [3.4, 14.8]], 0.6), ...stormBolt([[7.4, 14.2], [12, 14.8]], 0.6), ...spark(7.4, 13.6, 1.8, TGGOLD));
+  return out;
 }
 
 // ---------- Paladin ----------
@@ -1660,7 +1589,7 @@ function gmblessing() {
 
 const ART = {
   pebble, cozyrest, quickstep,
-  bladerush, whirlwind, shouldercharge, warcry, ironguard, swordmastery, toughness, titanbreak,
+  thunderrush, stormcleave, cycloneedge, lightningrod, thunderclap, staticguard, stormsteel, stormbody, thunderfall,
   paladinmastery, aegissmite, hallowedground, divineaegis, sacredbulwark, judgment, grandverdict,
   berserkermastery, ravage, bloodfrenzy, rampage, bloodlust, demonform, crimsoneclipse,
   blastarrow, snarearrow, springtrap, vault, steadyhands, springstep, lightfeet, cometarrow,
@@ -1668,7 +1597,7 @@ const ART = {
   engmastery, stickybolt, clusterbolt, steamvent, deployturret, overclock, bigbertha,
   shadowdash, quickhaste, nimblefeet, twinfang, backstab, daggermastery, moonlitassassin, luckyseven, starfan, gauntletmastery, fullmoonvolley,
   ringmastery, rebound, twinrings, goldencarousel,
-  skymastery, updraft, zephyr, skywaltz, downburst, galestep, cloudnine, hoopla, jugglingact, showstopper, windupbomb, crossslash,
+  skymastery, updraft, zephyr, skywaltz, downburst, galestep, cloudnine, hoopla, jugglingact, showstopper, windupbomb,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,

@@ -340,9 +340,6 @@ F.update({
     'shimmer': 'MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav',
 })
 # Warrior.
-S['titanrise'] = [[('groan', 1.95, 1.0, 0, 0), ('blade', 0.0, 0.36, -6, 0)]]
-S['titanbreak'] = [[('bigboom', 0.0, 1.8, 0, 0), ('stone', 0.0, 0.4, -4, 0), ('woodhit', peak('woodhit', 2.27, 2.9), 0.4, -6, 0)]]
-S['unbroken'] = [[('gong', 0.1, 1.6, 0, 0)]]
 # Paladin.
 S['pillar'] = [[('chord', peak('chord', 0.25, 1.48), 1.1, 0, 0), ('bigboom', 0.0, 1.0, -8, 0), ('handbell', 0.05, 0.9, -8, 0)]]
 S['aegis'] = [[('shield', peak('shield', 0.01, 0.54), 0.5, 0, 0), ('light', 0.0, 1.4, -4, 0), ('handbell', 0.05, 1.0, -10, 0)]]

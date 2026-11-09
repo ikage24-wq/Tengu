@@ -1,5 +1,11 @@
 # The Warrior line: Warrior, Paladin, Berserker
 
+**2026-11-09: the base Warrior was remade as the Thunderguard** (docs/design/thunderguard.md): his
+greatsword swings, Valor, and his skills (Blade Rush, Whirlwind, Shoulder Charge, Cross Slash, War
+Cry, Iron Guard, the masteries, Titan Breaker) were wiped, with the Paladin's and the Berserker's own
+versions of them. What follows is the record of the line before that; the Paladin and the Berserker
+stand in as his paths until his own tank and damage paths are made, and play his skills as he does.
+
 The first job and its two paths. Their moves, combos and skills live in `src/render/moves.js`,
 `src/world/melee.js` (`PATH_COMBOS`, `PATH_VARIANTS`, `SWINGS`, the command moves) and
 `src/data/skills.js`; their effects in `src/render/warrior-fx.js`.
