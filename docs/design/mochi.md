@@ -299,6 +299,13 @@ Each step is pushed on its own. Status as of 2026-11-09.
     hatching), in a race (cheered on, and its cheer or sulk at the end), and out with you (a level
     up); not from far off screen, and a moment apart so it never chatters.
 14. **Dress-up.** The hoods (and later more) worn in a dress-up slot.
+    **Built (2026-11-10; the user chose race wins):** the six sweet costumes from step 1 (hood and
+    clothes: Daifuku Hood, Dango Runner, Warabi Swimmer, Sakura Glider, Kagami Wrestler, Monaka
+    Knight; data/mochi-dress.js) worn as a Mochi's `dress` (render/wagashi.js lookOf swaps the
+    smock for the costume). The Daifuku Hood is yours from the start; each other comes with your
+    first Beginner win on its stage (Sprint, Lily Lake, Cloud Glide, Cliff Climb, Long Hill), said
+    in the results. Chosen on the Mochi page ("Wears ◀ ▶", your own Mochi). Seen by visitors and in
+    party races, as it's part of the Mochi.
 15. **Polish.** HD props, effects, speed checks, a full play-through.
 
 ## Checked against the Chao Garden (chao-island.com Info Center, read in full 2026-11-09)

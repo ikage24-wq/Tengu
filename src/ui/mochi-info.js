@@ -2,12 +2,14 @@
 // path, form, generation and age, rarity and coat; its five stats (grade, level, points, how far to
 // the next level, and the way it moves now); who it is (personality, the sweet it loves and the one
 // it hates, its voice); how it feels (mood, bond, tummy) and which way it leans; what it's growing
-// into, while a Mochiko; its tricks; its race medals; its parents, if it was bred. Opened from its care panel (or, for the one
+// into, while a Mochiko; its tricks; its race medals; its parents, if it was bred; and (yours) the
+// costume it wears (data/mochi-dress.js: ◀ ▶ through the ones you've won). Opened from its care panel (or, for the one
 // picked, the race board): ◀ ▶ go through the rest of your Mochi.
 
 import { STAGES, STATS } from '../data/mochi-genes.js';
 import { MOCHI_SWEETS, TRICKS, trendOf, leanOf, expToNext } from '../data/mochi-raise.js';
 import { RACE_STAGES, RANK_ORDER, MEDAL_COLOR, medalKey } from '../data/mochi-race.js';
+import { DRESS, dressOpen } from '../data/mochi-dress.js';
 import { drawMochiAnim, GAITS, SWIMS, FLIES, CLIMBS, STAMINAS, runStyle } from '../render/mochi-anim.js';
 import { COLORS, windowFrame, text, box, button, bar, hover, tooltip, fit } from './kit.js';
 
@@ -144,6 +146,19 @@ export function mochiInfoWindow(ui, state, world) {
   // ◀ ▶: the rest of your Mochi.
   const list = (world.char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
   const at = list.indexOf(rec);
+  // What it wears (your own Mochi): ◀ ▶ through no costume and the ones you've won.
+  if (at >= 0) {
+    const won = Object.keys(DRESS).filter((id) => dressOpen(world.char, id));
+    const options = [null, ...won];
+    const now = options.indexOf(rec.dress ?? null);
+    const wy = win.y + H - 22;
+    text(ctx, 'Wears', rx, wy + 11, { size: 6.5, bold: true });
+    if (button(ui, rx + 30, wy, 18, 15, '◀', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + options.length - 1) % options.length];
+    text(ctx, fit(ctx, DRESS[rec.dress]?.name ?? 'Nothing', 92, 7, true), rx + 98, wy + 11, { size: 7, bold: true, align: 'center', color: rec.dress ? '#d0507a' : COLORS.muted });
+    if (button(ui, rx + 148, wy, 18, 15, '▶', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + 1) % options.length];
+    text(ctx, `${won.length} of ${Object.keys(DRESS).length}`, rx + rw, wy + 11, { size: 6, align: 'right', color: COLORS.muted });
+    if (hover(ui, rx + rw - 24, wy, 24, 15)) tooltip(ui, [{ text: 'Costumes', bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)`, color: COLORS.muted }))]);
+  }
   if (at >= 0 && list.length > 1) {
     if (button(ui, x, win.y + H - 22, 24, 15, '◀', { size: 8 })) world.mochiInfo = list[(at + list.length - 1) % list.length];
     if (button(ui, x + 68, win.y + H - 22, 24, 15, '▶', { size: 8 })) world.mochiInfo = list[(at + 1) % list.length];

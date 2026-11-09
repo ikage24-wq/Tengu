@@ -33,6 +33,7 @@ import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_T
 import { groundAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
+import { DRESS, dressFor } from '../data/mochi-dress.js';
 import { loadMap } from './world.js';
 
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS, CLIMBS, FLIES); between two styles, its
@@ -433,6 +434,12 @@ function award(world, R) {
     const char = world.char;
     const before = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk)).map((rk) => medalKey(id, rk)));
     char.raceWins ??= {};
+    // (A first Beginner win on a stage: its costume, data/mochi-dress.js.)
+    const dress = dressFor(R.stageId);
+    if (R.rank === 'beginner' && dress && !char.raceWins[key]) {
+      R.dressWon = DRESS[dress].name;
+      world.log(`A costume for your Mochi: the ${R.dressWon}! (Dress them up from their page.)`, '#ffc2d4');
+    }
     if (R.rank === 'master' && !char.raceWins[key]) {
       addItem(char.inventory, 'mochi_egg_star', 1);
       R.starEgg = true;

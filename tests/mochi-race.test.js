@@ -203,3 +203,28 @@ test('the first Master win on a stage brings a Star Egg (only the first)', async
   }
   assert.equal(countItem(w.char.inventory, 'mochi_egg_star'), 1);
 });
+
+test('dress-up: the Daifuku hood from the start; each other costume with a first Beginner win on its stage', async () => {
+  const { DRESS, dressOpen } = await import('../src/data/mochi-dress.js');
+  const { lookOf } = await import('../src/render/wagashi.js');
+  const rec = mochi(60, 2400);
+  const w = racer(rec);
+  w.char.raceWins = {};
+  assert.ok(dressOpen(w.char, 'daifuku'));
+  assert.ok(!dressOpen(w.char, 'dango'));
+  for (const k of [1, 2]) {
+    assert.ok(startRace(w, rec, 'sprint'));
+    const R = run(w);
+    assert.equal(R.racers[0].place, 1);
+    assert.equal(R.dressWon ?? null, k === 1 ? DRESS.dango.name : null, 'only the first win');
+    for (let f = 0; f < 60 * 3.2; f++) updateWorld(w, 1 / 60, keys());
+    updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  }
+  assert.ok(dressOpen(w.char, 'dango'));
+  // Worn, it's the Mochi's outfit.
+  assert.equal(lookOf(rec).outfit, 'mochismock');
+  rec.dress = 'dango';
+  assert.equal(lookOf(rec).outfit, DRESS.dango.outfit);
+  // Every costume is won on a real stage.
+  for (const d of Object.values(DRESS)) assert.ok(d.free || ['sprint', 'swim', 'climb', 'glide', 'hills'].includes(d.stage));
+});

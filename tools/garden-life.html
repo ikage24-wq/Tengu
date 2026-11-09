@@ -156,6 +156,13 @@ if (q.has('moment')) {
   life.moment = { kind: q.get('moment'), a, b, t0: Date.now() / 1000, mx: a.x + 40, side: 1, done: new Set() };
   Object.assign(w.body, { x: a.x - 90 });
 }
+// (?dress=1: the Mochi wear the costumes, one each in turn.)
+if (q.has('dress')) {
+  const ids = ['daifuku', 'dango', 'warabi', 'sakura', 'kagami', 'monaka'];
+  c.garden.mochi.forEach((rec, i) => { rec.dress = ids[i % ids.length]; });
+}
+// (?lineup=1: everyone stands in a row beside you, facing you: for looking at them.)
+if (q.has('lineup')) life.mochi.forEach((e, i) => Object.assign(e, { x: w.body.x + 34 + i * 34, greet: null, busyUntil: Date.now() / 1000 + 9999 }));
 // (?info=1: Mochi 1's page.)
 if (q.has('info')) {
   w.mochiInfo = c.garden.mochi[Number(q.get('info'))];

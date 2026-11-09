@@ -285,7 +285,7 @@ export function raceHud(ui, state, world) {
   // The prize, the medal, and anything a win has opened.
   const medal = R.medal ? `  ·  ${cap(R.medal.medal)} medal${R.medal.best ? '!' : ' (it has a better one here)'}` : '';
   text(ctx, fit(ctx, `${R.prize ? `+${R.prize} gold!` : 'No prize this time.'}${medal}`, pw - 20, 8.5, true), VW / 2, py + 166, { size: 8.5, bold: true, align: 'center', color: R.prize ? '#c89a20' : COLORS.muted });
-  const news = [R.starEgg ? 'A Star Egg!' : null, R.opened?.length ? `Now open: ${R.opened.join(', ')}` : null].filter(Boolean).join('  ·  ');
+  const news = [R.dressWon ? `The ${R.dressWon}!` : null, R.starEgg ? 'A Star Egg!' : null, R.opened?.length ? `Now open: ${R.opened.join(', ')}` : null].filter(Boolean).join('  ·  ');
   if (news) text(ctx, fit(ctx, news, pw - 20, 7, true), VW / 2, py + 179, { size: 7, bold: true, align: 'center', color: '#d0507a' });
   if (button(ui, VW / 2 - 64, py + ph - 26, 128, 18, 'Back to the Stadium', { primary: true, size: 8 }) && R.t > 0.6) leaveRace(world);
 }
