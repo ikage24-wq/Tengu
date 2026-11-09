@@ -149,6 +149,13 @@ if (q.has('bloom')) {
 // (?pet=1: Mochi 1 out with you (?map=meadow1 to see it follow); ?petwin=1 the Mochi window.)
 if (q.has('pet')) takeAlong(c, c.garden.mochi[Number(q.get('pet'))]);
 if (q.has('petwin')) Object.assign(state.windows.pet, { open: true, openedAt: -99 });
+// (?moment=chase: Mochi 0 starts that moment with Mochi 1, brought along beside it.)
+if (q.has('moment')) {
+  const [a, b] = [life.mochi[0], life.mochi[1]];
+  b.x = a.x + 80;
+  life.moment = { kind: q.get('moment'), a, b, t0: Date.now() / 1000, mx: a.x + 40, side: 1, done: new Set() };
+  Object.assign(w.body, { x: a.x - 90 });
+}
 // (?info=1: Mochi 1's page.)
 if (q.has('info')) {
   w.mochiInfo = c.garden.mochi[Number(q.get('info'))];

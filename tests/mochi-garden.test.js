@@ -331,3 +331,38 @@ test('breeding: a Heart Mochi makes a grown Mochi bloom; two blooming find each 
     g.done();
   }
 });
+
+test('personality in play: moments that fit who starts them, the same for a visitor', async () => {
+  const { momentOf } = await import('../src/world/garden-life.js');
+  const { PERSONALITIES } = await import('../src/data/mochi-genes.js');
+  const KINDS = ['chase', 'hide', 'parade', 'nap', 'huff', 'chat'];
+  assert.ok(PERSONALITIES.every((p) => KINDS.includes(momentOf(p))));
+  // Two gardens of the same Mochi on the same clock: the owner's, and a visitor's.
+  const g = garden();
+  try {
+    g.swimmer.personality = 'playful';
+    g.baby.personality = 'sleepy';
+    const visitor = createWorld(createCharacter('Bea', { hairStyle: 'bob' }));
+    visitor.log = () => {};
+    visitor.forceNight = 0;
+    visitor.gardenVisit = { ownerId: 'A', name: 'Mina', garden: JSON.parse(JSON.stringify(g.char.garden)) };
+    loadMap(visitor, 'garden', 'start');
+    const seen = [];
+    const seenV = [];
+    const note = (w, list) => {
+      const mo = w.gardenLife.moment;
+      if (mo && list.at(-1)?.t0 !== mo.t0) list.push({ t0: Math.round(mo.t0), kind: mo.kind, who: mo.a.rec.personality });
+    };
+    for (let k = 0; k < 6000; k++) {
+      g.run(0.2, 0.2);
+      updateWorld(visitor, 0.2, keys());
+      note(g.w, seen);
+      note(visitor, seenV);
+    }
+    assert.ok(seen.length >= 3, `${seen.length} moments`);
+    for (const m of seen) assert.ok(m.kind === momentOf(m.who) || m.kind === 'snub', JSON.stringify(m));
+    assert.deepEqual(seenV.map((m) => [m.t0, m.kind, m.who]), seen.map((m) => [m.t0, m.kind, m.who]), 'the visitor sees the same');
+  } finally {
+    g.done();
+  }
+});

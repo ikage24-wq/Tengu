@@ -1233,7 +1233,8 @@ SHARED.push(...Object.keys(TRICK_BITS));
 // null once it's done (and `m.action` is cleared, or the next in `m.queue` begins).
 function actionAt(m, time) {
   const a = m.action;
-  const bit = ACTIONS[a.name];
+  // (Any idle moment or trick can be played on cue too: a trick just learned, a dance, a wave.)
+  const bit = ACTIONS[a.name] ?? IDLE_BITS[a.name];
   if (!bit) return (m.action = null);
   a.t0 ??= time;
   const map = (e) => {

@@ -279,6 +279,15 @@ Each step is pushed on its own. Status as of 2026-11-09.
 12. **Personality in play.** *(New.)* Beyond idles: how each reacts to sweets, to other Mochi, to
     being petted or tickled, and how it races (a hyper one bolts and tires, a stoic one keeps a
     steady pace).
+    **Built (2026-11-10):** racing pace, care likes and dislikes and favourite sweets were already
+    in; added Mochi meeting each other in the Garden (world/garden-life.js moments): now and then
+    one seeks out a neighbour for a moment that fits it: chase (tag: playful, hyper, cheeky, sporty,
+    mischief, sneaky, brave), hide behind a friend and peek (shy, timid, clingy), a little parade
+    (bossy, proud, showoff, dramatic, cool), a nap side by side (sleepy, lazy, dreamy), a huff and
+    turned back (grumpy, loner, sassy), or a chat with waves and claps (everyone else); a grumpy or
+    loner neighbour may snub it. A bubble over the starter says which (! ? note z scribble heart
+    ...). When, who and what come from the clock, so a visitor sees the same. Fixed on the way:
+    tricks and idle moves now play when cued (a trick just learned, the breeding twirl, these).
 13. **Voices.** *(New.)* Each Mochi's chirp style and pitch, cut from the Sonniss library.
 14. **Dress-up.** The hoods (and later more) worn in a dress-up slot.
 15. **Polish.** HD props, effects, speed checks, a full play-through.

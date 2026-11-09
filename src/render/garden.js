@@ -612,6 +612,15 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, true);
     if (e.fade != null) ctx.restore();
   }
+  // A moment between two Mochi (world/garden-life.js): a little bubble over the one who started it.
+  const mo = life.moment;
+  if (mo && !mo.a.hidden && mo.a.x != null) {
+    const t = world.now - mo.t0;
+    if (t < 1.8) {
+      const fade = Math.min(1, t * 4, (1.8 - t) * 3);
+      momentBubble(ctx, mo.a.x - cam.x, mo.a.y - cam.y - (mo.a.m.size === 'baby' ? 40 : 48) - Math.sin(t * 5) * 1, mo.kind, fade);
+    }
+  }
   // A pair that's met: hearts rising between them as they dance.
   const pair = life.pairing;
   if (pair?.met) {
@@ -649,6 +658,37 @@ function bloomFlowers(ctx, x, y, time, seed, front) {
     ctx.fillStyle = '#7fbf62';
     ctx.fillRect(fx - 0.4, fy - 1.5, 0.8, 3);
   }
+}
+// A little speech bubble with what the moment is: ! a chase, ? hiding, a note a parade, z a nap, a
+// scribble a huff, a heart a chat, ... a snub.
+function momentBubble(ctx, x, y, kind, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeStyle = '#e8c8d8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x, y, 7.5, 6, 0, 0, Math.PI * 2);
+  ctx.moveTo(x - 2, y + 5);
+  ctx.lineTo(x - 1, y + 9);
+  ctx.lineTo(x + 2, y + 5);
+  ctx.fill();
+  ctx.stroke();
+  if (kind === 'chat') heart(ctx, x, y - 0.5, 2.6, '#ff6f9a');
+  else if (kind === 'huff') {
+    ctx.strokeStyle = '#7a5a7a';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y + 1);
+    for (let i = 0; i < 5; i++) ctx.lineTo(x - 3 + i * 2, y + (i % 2 ? -2 : 1.5));
+    ctx.stroke();
+  } else {
+    const mark = { chase: '!', hide: '?', parade: '♪', nap: 'z', snub: '...' }[kind] ?? '!';
+    ctx.fillStyle = kind === 'nap' ? '#8a9ad8' : kind === 'snub' ? '#a88a9e' : '#ff6f9a';
+    ctx.font = 'bold 8px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(mark, x, y + 3);
+  }
+  ctx.restore();
 }
 function heart(ctx, x, y, s, color) {
   ctx.fillStyle = color;

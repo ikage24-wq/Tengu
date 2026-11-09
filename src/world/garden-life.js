@@ -23,6 +23,12 @@
 // other, nuzzle and dance, and leave an egg by the gate holding the baby they've bred
 // (`{ seed, genes }`; it hatches as exactly that one); then they rest a while before blooming again.
 //   world.gardenLife.pairing = { a, b, met } (the two on their way to each other)
+// Personality in play (step 12): now and then a Mochi seeks out a neighbour for a moment that fits
+// who it is (MOMENT_OF): the playful play tag, the shy hide behind a friend and peek out, the bossy
+// lead a little parade, the sleepy nap side by side, the grumpy huff and turn away, and the rest
+// meet up for a chat (a wave, a clap); a grumpy or loner neighbour may snub them instead. When, who
+// and what come from the game's clock (where the clock has them all), so a visitor sees the same.
+//   world.gardenLife.moment = { kind, a (who started it), b, t0, mx (where they meet), done: Set }
 // A friend visiting (net/visit.js: world.gardenVisit is whose garden it is) sees the same Mochi in
 // the same places; they can pet, play with and cheer on your Mochi and feed them sweets of their
 // own, and their game sends it to yours (applyGardenGift), where it happens to your real Mochi.
@@ -242,6 +248,10 @@ export function tickGarden(world, dt) {
     const pair = life.pairing;
     const other = pair && !pair.met ? (pair.a === e ? pair.b : pair.b === e ? pair.a : null) : null;
     if (other && other.x != null && e.x != null) target = other.x + (e.x < other.x ? -11 : 11);
+    // (In a moment with a neighbour: where the moment has it.)
+    const mo = life.moment;
+    const inMoment = mo && !other && (mo.a === e || mo.b === e) && e.x != null;
+    if (inMoment) target = momentTarget(mo, e, now);
     // (Being cared for, it stays put, looking up at you.)
     const busy = now < (e.busyUntil ?? 0);
     if (busy && e.x != null) target = e.x;
@@ -250,11 +260,12 @@ export function tickGarden(world, dt) {
     if (e.x == null) e.x = sched.x;
     const wet = inWater(e.x);
     const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
-    const v = other ? Math.max(v0, 40) : v0;
+    const v = other ? Math.max(v0, 40) : inMoment ? Math.max(v0, mo.kind === 'chase' ? 46 : 26) : v0;
     const dx = target - e.x;
     const step = Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
     e.x += step;
     if (Math.abs(dx) > 0.5) m.dir = Math.sign(dx);
+    else if (inMoment) m.dir = momentFacing(mo, e);
     else if (e.greet || busy) m.dir = Math.sign(world.body.x - e.x) || 1;
     m.dist += Math.abs(step);
     m.speed = Math.abs(dx) > 0.5 ? v : 0;
@@ -270,6 +281,7 @@ export function tickGarden(world, dt) {
     }
   });
   if (owner && !inside) tickPairing(world, life, now, night);
+  if (!inside) tickMoment(world, life, now, night);
   for (const e of gone) {
     life.mochi.splice(life.mochi.indexOf(e), 1);
     const list = life.owner?.garden?.mochi;
@@ -363,6 +375,152 @@ export function applyGardenGift(world, msg, who) {
   rec.bond = bond;
   if (here && out) react(here, out, out.action, { hold: 1.4 });
   world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} ${name}!`, '#ffc2d4');
+}
+
+// ---------- Personality in play ----------
+// The moment each personality starts; how long each lasts.
+const MOMENT_OF = {
+  playful: 'chase', hyper: 'chase', cheeky: 'chase', sporty: 'chase', mischief: 'chase', sneaky: 'chase', brave: 'chase',
+  shy: 'hide', timid: 'hide', clingy: 'hide',
+  bossy: 'parade', proud: 'parade', showoff: 'parade', dramatic: 'parade', cool: 'parade',
+  sleepy: 'nap', lazy: 'nap', dreamy: 'nap',
+  grumpy: 'huff', loner: 'huff', sassy: 'huff',
+};
+export const momentOf = (personality) => MOMENT_OF[personality] ?? 'chat';
+const SNUBS = ['grumpy', 'loner'];
+const MOMENT_SECS = { chase: 6, hide: 5, parade: 7, nap: 9, huff: 4, chat: 5, snub: 4 };
+// A moment can start once each window of the clock (when the clock says so), with two Mochi the
+// clock has near each other.
+const MOMENT_EVERY = 22;
+const MOMENT_NEAR = 220;
+function tickMoment(world, life, now, night) {
+  const mo = life.moment;
+  if (mo) {
+    const gone = (e) => !life.mochi.includes(e) || e.scene || e.leaving || e.hidden;
+    if (night || gone(mo.a) || gone(mo.b) || now - mo.t0 > MOMENT_SECS[mo.kind]) {
+      life.moment = null;
+      return;
+    }
+    momentBeats(mo, now);
+    return;
+  }
+  if (night) return;
+  const k = Math.floor(now / MOMENT_EVERY);
+  const t0 = k * MOMENT_EVERY + 2;
+  if (life.momentWindow === k || now < t0 || now > t0 + 1) return;
+  life.momentWindow = k;
+  if (hash(k * 0.917) > 0.6) return;
+  // Who: a Mochi the clock picks; with whom: its nearest neighbour where the clock has them.
+  const free = life.mochi.filter((e) => e.x != null && !e.hidden && !e.scene && !e.leaving && !e.greet && life.pairing?.a !== e && life.pairing?.b !== e && now >= (e.busyUntil ?? 0));
+  if (free.length < 2) return;
+  const at = (e) => scheduledAt(e.rec, t0 + life.mochi.indexOf(e) * 3.7).x;
+  const a = free[Math.floor(hash(k * 1.37) * free.length) % free.length];
+  const b = free.filter((e) => e !== a).sort((p, q) => Math.abs(at(p) - at(a)) - Math.abs(at(q) - at(a)))[0];
+  if (!b || Math.abs(at(b) - at(a)) > MOMENT_NEAR) return;
+  let kind = momentOf(a.rec.personality);
+  // (A grumpy or loner neighbour isn't in the mood: it snubs them.)
+  if (kind !== 'huff' && kind !== 'nap' && SNUBS.includes(b.rec.personality) && hash(k * 2.11) < 0.6) kind = 'snub';
+  life.moment = { kind, a, b, t0: now, mx: Math.max(LAND[0], Math.min(LAND[1], (at(a) + at(b)) / 2)), side: hash(k * 3.3) < 0.5 ? -1 : 1, done: new Set() };
+}
+// Where each of the two is headed, moment by moment.
+function momentTarget(mo, e, now) {
+  const t = now - mo.t0;
+  const lead = e === mo.a;
+  const { mx, side } = mo;
+  const other = lead ? mo.b : mo.a;
+  switch (mo.kind) {
+    // Tag: one chases, the other runs off; then the other way round.
+    case 'chase': {
+      const it = t < 3 ? mo.a : mo.b;
+      return e === it ? other.x : mx + side * (t < 3 ? 60 : -60);
+    }
+    // Hiding: it tucks in behind its friend.
+    case 'hide':
+      return lead ? other.x - side * 12 : mx;
+    // A parade: the leader marches up and back, the other in step behind.
+    case 'parade': {
+      if (!lead) return other.x - (other.m.dir || 1) * 15;
+      return mx + (Math.floor(t / 2.2) % 2 ? -50 : 50);
+    }
+    // A nap side by side; a chat face to face.
+    case 'nap':
+    case 'chat':
+      return mx + (lead ? -1 : 1) * (mo.kind === 'nap' ? 9 : 13);
+    // A huff: the other comes over; it turns its back.
+    case 'huff':
+      return lead ? e.x : mx;
+    // A snub: it comes over; the other walks off.
+    case 'snub':
+      return lead ? mx : mx + side * 70;
+    default:
+      return e.x;
+  }
+}
+// Which way each faces once there: at each other, mostly; a huffy one away.
+function momentFacing(mo, e) {
+  const other = e === mo.a ? mo.b : mo.a;
+  const toward = Math.sign(other.x - e.x) || 1;
+  if ((mo.kind === 'huff' && e === mo.a) || (mo.kind === 'snub' && e === mo.b)) return -toward;
+  return toward;
+}
+// What each does when: played once each (`done`).
+function momentBeats(mo, now) {
+  const t = now - mo.t0;
+  const near = Math.abs(mo.a.x - mo.b.x) < 34;
+  const once = (key, when, fn) => {
+    if (t >= when && !mo.done.has(key)) {
+      mo.done.add(key);
+      fn();
+    }
+  };
+  const act = (e, name, hold = 0) => {
+    e.m.action = { name, t0: null, hold };
+  };
+  switch (mo.kind) {
+    case 'chase':
+      once('end', MOMENT_SECS.chase - 1.2, () => {
+        act(mo.a, 'cheer', 1);
+        act(mo.b, 'cheer', 1);
+      });
+      break;
+    case 'hide':
+      if (near) once('peek', 1.6, () => act(mo.a, 'peek'));
+      once('end', MOMENT_SECS.hide - 1.2, () => act(mo.a, 'hops'));
+      break;
+    case 'parade':
+      once('end', MOMENT_SECS.parade - 1.4, () => {
+        act(mo.a, 'cheer', 1);
+        act(mo.b, 'clap');
+      });
+      break;
+    case 'nap':
+      if (near) once('nap', 1.2, () => {
+        act(mo.a, 'nap', MOMENT_SECS.nap - 3);
+        act(mo.b, 'nap', MOMENT_SECS.nap - 3);
+      });
+      break;
+    case 'huff':
+      if (near) once('huff', 0.8, () => {
+        act(mo.a, 'sulk', 2);
+        act(mo.b, 'lookaround');
+      });
+      break;
+    case 'chat':
+      if (near) {
+        once('wave', 0.6, () => {
+          act(mo.a, 'wave');
+          act(mo.b, 'wave');
+        });
+        once('clap', 2.6, () => act(mo.b, 'clap'));
+        once('hops', 2.8, () => act(mo.a, 'hops'));
+      }
+      break;
+    case 'snub':
+      once('wave', 0.8, () => act(mo.a, 'wave'));
+      once('sulk', 2.4, () => act(mo.a, 'sigh'));
+      break;
+    default:
+  }
 }
 
 // ---------- Breeding ----------
