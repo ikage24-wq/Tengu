@@ -8,6 +8,9 @@
 import { rollMochi } from '../src/data/mochi-genes.js';
 import { drawMochiAnim, GAITS, RUN_STYLES, SWIMS, FLIES, CLIMBS, STAMINAS, SIGNATURE } from '../src/render/mochi-anim.js';
 import { PERSONALITIES } from '../src/data/mochi-genes.js';
+import { ACTIONS } from '../src/render/mochi-anim.js';
+import { drawHatch, drawEvolve } from '../src/render/mochi-life.js';
+import { drawSweet, drawBall, SWEET_KINDS } from '../src/render/mochi-sweets.js';
 
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
@@ -168,7 +171,105 @@ function stepIdle(dt) {
     ctx.fillText(m.idling ? `~ ${m.idling.replace('sig_', '')} ~` : '', x, y + 58);
   });
 }
+// ?act: one Mochi per action, doing it again and again (the looping ones kept at it a while); ?sweets:
+// the sixteen sweets, whole and bitten, and the ball.
+const doers = Object.keys(ACTIONS).map((name, i) => ({ genes: rollMochi(200 + i, { coat: null }), dir: i % 2 ? -1 : 1, speed: 0, dist: 0, noIdle: true, todo: name }));
+function stepAct(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  doers.forEach((m, i) => {
+    if (!m.action && t >= (m.again ?? 0.3)) m.action = { name: m.todo, t0: t, hold: 4 };
+    const x = 100 + (i % 4) * 200;
+    const y = 250 + Math.floor(i / 4) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 90) / ZB, y / ZB, 180 / ZB, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    if (!m.action && !m.again) m.again = t + 1;
+    if (m.action) m.again = null;
+    label(m.todo, x, y + 40);
+  });
+}
+function stepSweets(dt) {
+  t += dt;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  const Zs = 8;
+  ctx.setTransform(Zs, 0, 0, Zs, 0, 0);
+  SWEET_KINDS.forEach((kind, i) => {
+    const x = 6 + (i % 8) * 12.5;
+    const y = 14 + Math.floor(i / 8) * 34;
+    drawSweet(ctx, kind, x, y, 0.75, 0);
+    drawSweet(ctx, kind, x, y + 14, 0.75, 1 + (i % 3));
+  });
+  drawBall(ctx, 50, 74, 0.6, t * 4);
+}
+// ?life: three eggs hatching (common, legendary, a mutation), and two Mochiko evolving (the angel
+// path, the demon path), over and over.
+const LIFE = [
+  { kind: 'hatch', coat: null, seed: 301 }, { kind: 'hatch', coat: 'moonlit', seed: 302 }, { kind: 'hatch', coat: 'beniume', seed: 303 },
+  { kind: 'evolve', path: 'angel', seed: 304 }, { kind: 'evolve', path: 'demon', seed: 305 },
+];
+let lives = [];
+let lifeAt = -99;
+function stepLife(dt) {
+  t += dt;
+  if (t - lifeAt > 9.5) {
+    lifeAt = t;
+    lives = LIFE.map((L, i) => ({ genes: rollMochi(L.seed, { coat: L.coat }), dir: i % 2 ? -1 : 1, speed: 0, dist: 0, size: 'baby', noIdle: true, ...(L.kind === 'hatch' ? { hatch: { t0: t + 0.3 } } : { evolve: { t0: t + 0.5, path: L.path } }) }));
+  }
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  lives.forEach((m, i) => {
+    const top = i < 3;
+    const x = top ? 133 + i * 267 : 200 + (i - 3) * 400;
+    const y = top ? 250 : 540;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 120) / ZB, y / ZB, 240 / ZB, 4);
+    if (m.hatch) drawHatch(ctx, m, x / ZB, y / ZB, t);
+    else drawEvolve(ctx, m, x / ZB, y / ZB, t);
+    label(m.hatch ? `hatching · ${m.genes.rarity}` : `evolving · ${m.evolve.path}`, x, y + 40);
+  });
+}
+// ?feat: the ten grown features, one Mochi each, standing about (?feat=run, fly or swim: moving).
+const FEATS = ['featherwings', 'batwings', 'anklewings', 'swepthorns', 'veilfins', 'fintail', 'halo', 'curlhorns', 'cloudtail', 'deviltail'];
+const featMode = q.get('feat') || 'stand';
+const grown = FEATS.map((feature, i) => ({ genes: { ...rollMochi(400 + i, { coat: null }), feature, path: i % 2 ? 'demon' : 'angel', stage: i % 2 ? 'karamochi' : 'amamochi' }, dir: 1, speed: featMode === 'run' ? 40 : 0, dist: 0, mode: featMode === 'stand' ? 'run' : featMode, runPoints: 800, flyPoints: 800, swimPoints: 800 }));
+function stepFeat(dt) {
+  t += dt;
+  const ZB = 4;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  grown.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 80 + (i % 5) * 160;
+    const y = (featMode === 'fly' ? 210 : 250) + Math.floor(i / 5) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    if (featMode !== 'fly') {
+      ctx.fillStyle = '#bfe3a8';
+      ctx.fillRect((x - 75) / ZB, y / ZB, 150 / ZB, 4);
+    }
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(m.genes.feature, x, y + 36);
+  });
+}
 function step(dt) {
+  if (q.has('feat')) return stepFeat(dt);
+  if (q.has('life')) return stepLife(dt);
+  if (q.has('act')) return stepAct(dt);
+  if (q.has('sweets')) return stepSweets(dt);
   if (q.has('idle')) return stepIdle(dt);
   if (q.has('climb')) return stepClimb(dt);
   if (q.has('stamina')) return stepStamina(dt);

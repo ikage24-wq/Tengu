@@ -10,6 +10,7 @@ import { R, E, T, F, mix } from './pixel.js';
 import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { HAIR_COLORS, CANDY } from '../data/mochi-genes.js';
+import { featureOf } from './mochi-features.js';
 
 // The sprout's mood for each personality when it's just standing about.
 export const RESTING_MOOD = {
@@ -87,6 +88,13 @@ export function lookOf(g, mood = null, phase = 0) {
   if (g.cheek) look.cheek = g.cheek;
   if (moon || g.pupil) look.pupil = moon ? 'star' : g.pupil;
   if (!moon && (['matcha', 'yomogi', 'mint'].includes(g.hairColor) || g.candy === 'jade')) look.sprout.pale = true;
+  // On a path (grown on it, or a Mochiko leaning that way), its sprout shows it; a Mochi already
+  // wearing a halo has no tiny ring over its sprout too.
+  const way = g.stage === 'amamochi' || g.stage === 'karamochi' ? g.path : g.lean ?? null;
+  if (way === 'angel' || way === 'demon') {
+    look.sprout.path = way;
+    if (featureOf(g) === 'halo') look.sprout.ring = false;
+  }
   const mu = MUTANT[coat];
   if (mu) {
     Object.assign(look, { skinTone: mu.dough, hairColor: mu.hair, eyeColor: mu.eyes, lightMouth: true });
@@ -329,12 +337,26 @@ const EGG_TINT = { common: 0.1, uncommon: 0.18, rare: 0.24, epic: 0.32, legendar
 const EGG_GLINTS = { common: 0, uncommon: 0, rare: 1, epic: 2, legendary: 3, mythic: 3, mutation: 3 };
 // 26 x 24, its foot at the bottom middle.
 function eggShapes(ball, band) {
+  return [...mortarBack(), ...ballShapes(ball), ...mortarFront(band)];
+}
+// The mortar's rim and the hollow inside it, behind the ball.
+const mortarBack = () => [E(13, 13, 10, 2.8, WOOD_LT), E(13, 12.9, 8, 1.9, '#5e3e24')];
+// The ball, its shine and the sprout on top; hatching, it puffs up (`puff` 0-1) like mochi toasting,
+// a blister swelling up on top, and wobbles `wob` from side to side.
+function ballShapes(ball, puff = 0, wob = 0) {
+  const [cx, rx, ry] = [13 + wob, 7.4 + 2.2 * puff, 6.6 + 3.2 * puff];
+  const cy = 9.8 - 2.6 * puff;
+  const d = Math.max(0, (puff - 0.4) / 0.6);
+  const top = cy - ry - 2.4 * d;
+  const sp = (pts) => pts.map(([x, y]) => [x + cx - 13, y + top - 3.2]);
   return [
-    // The mortar's rim and the hollow inside it, behind the ball.
-    E(13, 13, 10, 2.8, WOOD_LT), E(13, 12.9, 8, 1.9, '#5e3e24'),
-    // The ball, its shine and the sprout on top.
-    E(13, 9.8, 7.4, 6.6, ball), F(E(10.4, 6.6, 2.4, 1.3, '#ffffff')),
-    F(limb(13.2, 3.4, 13.6, 1, 0.45, 0.35, '#4f8f45')), T([[13.6, 1.2], [15.4, -0.2], [17, 0.4], [15.4, 1.6]], '#86c96e'), T([[13.4, 1.4], [11.8, 0.2], [10.6, 0.8], [12, 1.8]], '#78b862'),
+    ...(d > 0 ? [E(cx + 1.6, cy - ry + 0.8 - 1.6 * d, 2.2 + 1.6 * d, 1.8 + 1.8 * d, ball), F(E(cx + 2.4, cy - ry + 0.4 - 1.6 * d, 1.2 + 0.4 * d, 0.5, '#f2deb0'))] : []),
+    E(cx, cy, rx, ry, ball), F(E(cx - 2.6 - puff, cy - 3.2 - 1.6 * puff, 2.4 + 0.6 * puff, 1.3, '#ffffff')),
+    F(limb(...sp([[13.2, 3.4]])[0], ...sp([[13.6, 1]])[0], 0.45, 0.35, '#4f8f45')), T(sp([[13.6, 1.2], [15.4, -0.2], [17, 0.4], [15.4, 1.6]]), '#86c96e'), T(sp([[13.4, 1.4], [11.8, 0.2], [10.6, 0.8], [12, 1.8]]), '#78b862'),
+  ];
+}
+function mortarFront(band) {
+  return [
     // The front lip of the rim, over the ball's bottom.
     T([[3, 13], [3.6, 14.6], [8, 15.8], [13, 16.1], [18, 15.8], [22.4, 14.6], [23, 13], [21, 14.2], [13, 14.9], [5, 14.2]], WOOD_LT),
     // The mortar itself, a little barrel, with its grain and a darker foot.
@@ -344,6 +366,29 @@ function eggShapes(ball, band) {
     // (A legendary or mythic egg's mortar: a gold band round its middle.)
     ...(band ? [F(T([[3.2, 17], [22.8, 17], [22.7, 18.8], [3.3, 18.8]], '#f2c94c')), F(R(4, 17.2, 18, 0.5, '#fff0b0'))] : []),
   ];
+}
+// An egg hatching (render/mochi-life.js runs it): the ball puffed up `puff` (in fifths) and shifted
+// `wob`, or the mortar left empty once it's out (`empty`), fading by `alpha`.
+const shiftShapes = (shapes, dx, dy) => shapes.map((sh) => ({ ...sh, x: (sh.x ?? 0) + dx, y: (sh.y ?? 0) + dy }));
+export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alpha = 1) {
+  const tier = g?.rarity ?? 'common';
+  const hair = g ? (MUTANT[coatOf(g)]?.dough ?? lookOf(g, null, 0).hairColor) : DOUGH;
+  const ball = g ? mix(DOUGH, hair, EGG_TINT[tier]) : DOUGH;
+  const band = tier === 'legendary' || tier === 'mythic' || tier === 'mutation';
+  const k = EGG_SCALE;
+  const p = Math.round(puff * 5) / 5;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = 'rgba(70,40,30,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(x, y, 11 * k, 2.2 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.translate(x, y);
+  ctx.scale(k, k);
+  // (A taller box than the egg's, room for the ball to swell up out of it.)
+  const shapes = () => shiftShapes([...mortarBack(), ...(empty ? [] : ballShapes(ball, p, wob)), ...mortarFront(band)], 4, 12);
+  place(ctx, art(`mochi-hatch|${ball}|${band ? 1 : 0}|${empty ? 'e' : `${p},${wob}`}`, 34, 36, shapes), 0, 0, { alpha });
+  ctx.restore();
 }
 // The egg is a little smaller than the baby that hatches from it.
 export const EGG_SCALE = 0.72;

@@ -17,7 +17,9 @@
 // Standing still: its personality's stance (STANCE), breathing, shifting its weight, blinking at
 // its own rhythm and glancing about now and then.
 
-import { drawPosed } from './hero.js';
+import { drawPosed, posedMouth, posedFrame } from './hero.js';
+import { featureOf, drawFeature } from './mochi-features.js';
+import { drawSweet, drawBall } from './mochi-sweets.js';
 import { lookOf, drawCoat, drawCoatBack, MOCHI_SIZE } from './wagashi.js';
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -593,8 +595,11 @@ function restPose(time) {
 // (A loop of 6 s on 12 frames a second, every rhythm in it a whole number of times round, so its
 // 72 drawings come round again and again: speed rules.)
 export const STAND_LOOP = { secs: 6, fps: 12 };
-function standPose(g, time) {
-  const st = STANCE[g.personality] ?? STANCE.gentle;
+// A Mochiko stands like the baby it is (whatever its personality): paws up at its chest, feet
+// together, its head snug down on its shoulders, a rosier blush. Rounder, by pose alone.
+const babyOf = (st) => ({ ...st, front: [1.4, -4.4], back: [2, -4.2], legF: [0.5, 0, 1.5], legB: [-0.5, 0, -1.5], hy: (st.hy ?? 1) + 0.6, blush: 1.6 });
+function standPose(g, time, baby = false) {
+  const st = baby ? babyOf(STANCE[g.personality] ?? STANCE.gentle) : STANCE[g.personality] ?? STANCE.gentle;
   const ph = hash(g.seed) * TAU;
   const t = loopTime(g, time);
   const w = TAU / STAND_LOOP.secs;
@@ -783,8 +788,8 @@ export const IDLE_BITS = {
     KEY(0.84, { lift: 2, front: [10, -11], back: [-3, -3], extra: ['spark0'] }), KEY(0.96, { lift: 0 }), KEY(2.2, {})] },
   // Polite: a neat little bow, hands together in front.
   sig_polite: { dur: 2.8, keys: [
-    KEY(0, {}), KEY(0.2, { closed: [true, true], mouth: 'mochibeam', front: [-3, 0], back: [5, 0] }), KEY(0.6, { lean: 0.32, tip: 0.6, front: [-3, 0], back: [5, 0], closed: [true, true], mouth: 'mochibeam', tilt: 8 }),
-    KEY(1.6, { lean: 0.32, tip: 0.6, front: [-3, 0], back: [5, 0], closed: [true, true], tilt: 8 }), KEY(2.1, { closed: [true, true], mouth: 'mochibeam', extra: ['spark1'] }), KEY(2.8, {})] },
+    KEY(0, {}), KEY(0.2, { closed: [true, true], mouth: 'mochibeam', front: [-3, 0], back: [5, 0] }), KEY(0.6, { lean: 0.32, front: [-3, 0], back: [5, 0], closed: [true, true], mouth: 'mochibeam', tilt: 8 }),
+    KEY(1.6, { lean: 0.32, front: [-3, 0], back: [5, 0], closed: [true, true], tilt: 8 }), KEY(2.1, { closed: [true, true], mouth: 'mochibeam', extra: ['spark1'] }), KEY(2.8, {})] },
   // Mischief: rubs its hands together with a sly little giggle.
   sig_mischief: { dur: 2.8, keys: [
     KEY(0, {}), KEY(0.2, { lid: 0.35, mouth: 'slysmile', glance: -1 }), KEY(0.5, { front: [-3, -7], back: [5, -7], lid: 0.35, mouth: 'slysmile', tilt: 6, glance: -1 }),
@@ -809,8 +814,8 @@ export const IDLE_BITS = {
     KEY(1.25, { ...OUT(-13), lift: 2.4, legF: [2.6, -1, 30], legB: [-2.6, -1, -30], closed: [true, true], mouth: 'D' }), KEY(1.6, { lift: 0 }), KEY(2.6, {})] },
   // Nosy: leans way over, a hand shading its eyes, to peek at something it shouldn't.
   sig_nosy: { dur: 3, keys: [
-    KEY(0, {}), KEY(0.3, { glance: 1, mouth: 'mochio' }), KEY(0.8, { lean: 0.3, tip: 1, hx: 1.8, tilt: -14, glance: 1, ...BROW, mouth: 'mochio', legB: [-1.6, -1.6, -20] }),
-    KEY(1.8, { lean: 0.34, tip: 1, hx: 2, tilt: -16, glance: 1, ...BROW, mouth: 'smirk', legB: [-1.8, -1.8, -24], extra: ['q'] }), KEY(3, {})] },
+    KEY(0, {}), KEY(0.3, { glance: 1, mouth: 'mochio' }), KEY(0.8, { lean: 0.3, hx: 1.8, tilt: -14, glance: 1, ...BROW, mouth: 'mochio', legB: [-1.6, -1.6, -20] }),
+    KEY(1.8, { lean: 0.34, hx: 2, tilt: -16, glance: 1, ...BROW, mouth: 'smirk', legB: [-1.8, -1.8, -24], extra: ['q'] }), KEY(3, {})] },
   // Dramatic: a big swoon, the back of a hand to its forehead, the other arm flung out.
   sig_dramatic: { dur: 3, keys: [
     KEY(0, {}), KEY(0.2, { mouth: 'gasp', brows: [[0.5, -0.7], [0.5, -0.7]] }), KEY(0.5, { front: [-1, -19], over: true, back: [-11, -8], lean: -0.18, tilt: 10, closed: [true, true], mouth: 'o', brows: [[0.5, -0.7], [0.5, -0.7]], legB: [-1.6, -1, -20] }),
@@ -837,17 +842,18 @@ export const IDLE_BITS = {
 export const SIGNATURE = Object.fromEntries(Object.keys(IDLE_BITS).filter((k) => k.startsWith('sig_')).map((k) => [k.slice(4), k]));
 const SHARED = Object.keys(IDLE_BITS).filter((k) => !k.startsWith('sig_'));
 // (What a pose's numbers ease between; everything else changes on its key.)
-const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB'];
+const EASED = ['tilt', 'hx', 'hy', 'lean', 'tip', 'sink', 'lift', 'bob', 'squat', 'hair', 'front', 'back', 'legF', 'legB', 'ball', 'spin'];
+const EASE = { in: (k) => k * k, out: (k) => 1 - (1 - k) * (1 - k) };
 const smooth01 = (k) => k * k * (3 - 2 * k);
-// The pose `t` seconds into idle moment `name`, over the still stance `base`.
-function idlePose(name, t, base) {
-  const keys = IDLE_BITS[name].keys;
+// The pose `t` seconds into idle moment (or action) `bit`, over the still stance `base`.
+function idlePose(bit, t, base) {
+  const keys = bit.keys;
   let i = 0;
   while (i < keys.length - 1 && keys[i + 1][0] <= t) i++;
   const [t0, a] = keys[i];
   const [t1, b] = keys[Math.min(i + 1, keys.length - 1)];
-  const k = t1 > t0 ? smooth01(Math.min(1, (t - t0) / (t1 - t0))) : 1;
-  const at = (o, key) => o[key] ?? base[key];
+  const k = t1 > t0 ? (EASE[b.ease] ?? smooth01)(Math.min(1, (t - t0) / (t1 - t0))) : 1;
+  const at = (o, key) => o[key] ?? base[key] ?? (key === 'ball' ? [0, -3] : 0);
   const out = { ...base };
   for (const key of EASED) {
     const va = at(a, key);
@@ -857,12 +863,15 @@ function idlePose(name, t, base) {
   out.turned = Boolean(a.turned);
   // (A hand on its way to or from the face is drawn over the head the whole way.)
   out.armOver = Boolean(a.over || b.over) || null;
+  out.bubble = Boolean(a.bubble);
+  // A prop in hand, and the bites out of a sweet, stay as the last key that set them.
+  for (let j = 0; j <= i; j++) for (const key of ['hold', 'bites']) if (keys[j][1][key] !== undefined) out[key] = keys[j][1][key];
   // The face changes on its key, a beat (0.12 s) before the body gets there (the face reacts
   // first). Floating hearts and dizzy stars go round on their own little cycle.
   let fi = 0;
   while (fi < keys.length - 1 && keys[fi + 1][0] <= t + 0.12) fi++;
   const f = keys[fi][1];
-  for (const key of ['eyes', 'mouth', 'glance', 'wide', 'shine', 'teary', 'spiral', 'cross', 'lid', 'closed', 'look', 'sprout']) out[key] = f[key] ?? (key === 'eyes' ? base.eyes ?? null : null);
+  for (const key of ['eyes', 'mouth', 'glance', 'wide', 'shine', 'teary', 'spiral', 'cross', 'lid', 'closed', 'look', 'sprout', 'puff']) out[key] = f[key] ?? (key === 'eyes' ? base.eyes ?? null : null);
   for (const key of ['brows', 'blush']) out[key] = f[key] ?? base[key];
   out.extra = (f.extra ?? []).map((e) => (e === 'hearts' ? `hearts${Math.floor(t * 4) % 4}` : e === 'orbit' ? `orbit${Math.floor(t * 8) % 8}` : e));
   return out;
@@ -898,6 +907,165 @@ function idleAt(st, g, time, only) {
   st.lastIdle = name;
   st.idle = { name, t0: time };
   return st.idle;
+}
+
+// ---------- Actions ----------
+// What it does when the garden asks (`m.action = { name, t0, hold, sweet }`): keyframed like the
+// idle moments, with a `loop` (from, to) that goes round for as long as it's kept at it (`hold`
+// seconds) before it finishes; then `m.action` is cleared. A key can hold a prop in the near hand
+// (`hold`: 'sweet' or 'ball', kept until a key changes it), how many `bites` the sweet has had,
+// where the ball is from the hand (`ball`, eased like the body, `spin` turning it) and how a key
+// is eased into (`ease`: 'in' speeds up into it, a fall; 'out' slows into it, a toss).
+const PAT = { front: [-3, -6], back: [5, -6] };
+const BITE = { front: [-5, -4], over: true }; // the sweet up at its mouth
+const CHEW = { front: [-2, 3], over: true }; // ...down by its tummy, chewing
+const SIT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30], front: [1, 1.5], back: [1.6, 1.5] };
+// Lying asleep on its side (turned over as one about its middle, `tip` 6; `sink` lays it down).
+const LIE = { lean: 1.45, tip: 6, sink: 15, squat: 0, bob: 0, legF: [2, -1.4, 40], legB: [1.4, -1, 30], front: [-2, -4], back: [4, -3], closed: [true, true] };
+const chomp = (t, n) => [
+  KEY(t, { ...BITE, mouth: 'mochiopen', closed: [true, true] }),
+  KEY(t + 0.25, { ...CHEW, bites: n, mouth: 'mochiw', closed: [true, true], blush: 1.7, extra: n === 2 ? ['hearts'] : [] }),
+  KEY(t + 0.5, { ...CHEW, mouth: 'cat', closed: [true, true], blush: 1.7, hy: 1.4 }),
+  KEY(t + 0.75, { ...CHEW, mouth: 'mochiw', closed: [true, true], blush: 1.7, hy: 1 }),
+];
+export const ACTIONS = {
+  // A favourite: eyes light up, it holds it up to admire it, three happy bites (chewing, little
+  // hearts), the last one gone, then pats its tummy.
+  eat: { dur: 5.8, keys: [
+    KEY(0, {}), KEY(0.2, { hold: 'sweet', bites: 0, front: [4, -7], shine: true, mouth: 'mochio', sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.8, { front: [5, -8], shine: true, mouth: 'D', lift: 1.2, extra: ['hearts'], sprout: 'excited' }),
+    ...chomp(1.2, 1), ...chomp(2.2, 2), ...chomp(3.2, 3),
+    KEY(4.2, { ...BITE, mouth: 'mochiopen', closed: [true, true] }), KEY(4.45, { ...CHEW, bites: 4, mouth: 'mochicrumb', closed: [true, true], blush: 1.8 }),
+    KEY(4.7, { front: [-3, -1], back: [4, -1], closed: [true, true], mouth: 'D', lift: 1.6, extra: ['hearts'], sprout: 'happy' }),
+    KEY(5, { front: [-2, -2], back: [3, -2], closed: [true, true], mouth: 'mochiw', lift: 0 }), KEY(5.25, { front: [-3, -1], back: [4, -1], closed: [true, true], mouth: 'mochiw' }),
+    KEY(5.8, {})] },
+  // One it hates: a bite, a frozen moment, a shudder, then it holds it out at arm's length, tongue
+  // out, and puts it down.
+  hated: { dur: 4.6, keys: [
+    KEY(0, {}), KEY(0.2, { hold: 'sweet', bites: 0, front: [4, -7], mouth: 'mochio' }),
+    KEY(0.7, { ...BITE, mouth: 'mochiopen' }), KEY(0.95, { ...CHEW, bites: 1, mouth: 'mochiflat' }),
+    KEY(1.3, { ...CHEW, wide: true, mouth: 'mochiflat', extra: ['drop'] }),
+    KEY(1.7, { ...CHEW, eyes: 'hurt', mouth: 'wavy', tilt: 10, hx: -0.4, extra: ['gloom'], sprout: 'sad' }), KEY(1.85, { ...CHEW, eyes: 'hurt', mouth: 'wavy', tilt: -8, hx: 0.4 }),
+    KEY(2, { ...CHEW, eyes: 'hurt', mouth: 'wavy', tilt: 10, hx: -0.4 }), KEY(2.15, { ...CHEW, eyes: 'hurt', mouth: 'wavy', tilt: -8, hx: 0.4 }),
+    KEY(2.5, { front: [12, -8], glance: -1, tilt: -12, lean: -0.08, mouth: 'bleh', brows: [[0.5, -0.7], [0.5, -0.7]], extra: ['sweat1'], sprout: 'sad' }),
+    KEY(3.5, { front: [12, -8], glance: -1, tilt: -12, lean: -0.08, mouth: 'bleh', brows: [[0.5, -0.7], [0.5, -0.7]] }),
+    KEY(3.9, { hold: null, front: [5, -2], mouth: 'mochiwave', extra: ['sweat0'] }), KEY(4.6, {})] },
+  // Nap: a yawn, it flops down to sit, nods off and topples over onto its side, breathing slow
+  // with a bubble at its nose; at the end it wakes, sits up rubbing an eye, and stretches.
+  nap: { dur: 8.6, loop: [3.6, 5.6], keys: [
+    KEY(0, {}), KEY(0.3, { ...MOUTH, eyes: 'half', mouth: 'yawn', tilt: -6 }), KEY(1.1, { eyes: 'half', mouth: 'mochiw' }),
+    KEY(1.5, { ...SIT, eyes: 'half', mouth: 'mochiw', sprout: 'sleepy' }),
+    KEY(2.3, { ...SIT, tip: 6, sink: 6, hy: 2.2, tilt: 14, closed: [true, true], extra: ['zzz0'], sprout: 'sleepy' }),
+    KEY(3.1, { ...LIE, ease: 'in', mouth: 'o', sprout: 'sleepy' }),
+    KEY(3.6, { ...LIE, mouth: 'o', sprout: 'sleepy', bubble: true }), KEY(4.6, { ...LIE, sink: 15.4, mouth: 'mochiw', sprout: 'sleepy', bubble: true }),
+    KEY(5.6, { ...LIE, mouth: 'o', sprout: 'sleepy', bubble: true }),
+    KEY(6.2, { ...LIE, closed: null, eyes: 'half', mouth: 'mochio', sprout: 'sleepy' }),
+    KEY(6.8, { ...SIT, tip: 6, sink: 6, front: [-2, -16], over: true, eyes: 'half', mouth: 'mochiwave' }),
+    KEY(7.4, { ...OUT(-13), tip: 0, sink: 0, closed: [true, true], mouth: 'yawn', tilt: -8, lift: 1.4 }),
+    KEY(8, { closed: [true, true], mouth: 'D', sprout: 'happy', extra: ['spark0'] }), KEY(8.6, {})] },
+  // Play: tosses its ball up and catches it, then a bigger toss that comes down bonk on its head,
+  // sees stars, giggles, and lets it roll away.
+  play: { dur: 6.4, keys: [
+    KEY(0, {}), KEY(0.25, { hold: 'ball', ball: [0, -3], front: [4, -3], mouth: 'mochio', shine: true }),
+    KEY(0.5, { ball: [0, -3], front: [4, -1], squat: 1, mouth: 'mochiw' }),
+    KEY(0.75, { ball: [1, -6], front: [6, -9], mouth: 'D', look: 'up', spin: 2 }),
+    KEY(1.25, { ball: [2, -30], front: [4, -3], look: 'up', mouth: 'mochio', spin: 6, ease: 'out' }),
+    KEY(1.75, { ball: [0, -3], front: [4, -3], look: 'up', mouth: 'mochio', spin: 10, ease: 'in' }),
+    KEY(1.95, { ball: [0, -3], front: [4, -2], squat: 1, closed: [true, true], mouth: 'D', spin: 10, extra: ['spark0'] }),
+    KEY(2.3, { ball: [0, -3], front: [4, -1], squat: 1, mouth: 'grin', spin: 10 }),
+    KEY(2.55, { ball: [1, -7], front: [7, -10], mouth: 'D', look: 'up', spin: 12 }),
+    KEY(3.15, { ball: [1, -36], front: [2, -9], look: 'up', wide: true, mouth: 'mochio', spin: 17, ease: 'out' }),
+    KEY(3.6, { ball: [-5, -23], front: [2, -9], eyes: 'hurt', mouth: 'gasp', squat: 1, hy: 1.6, spin: 20, ease: 'in', extra: ['bang1'] }),
+    KEY(3.85, { ball: [7, -20], front: [2, -9], spiral: 1, mouth: 'wavy', squat: 1, hy: 1.4, spin: 23, ease: 'out', extra: ['orbit'] }),
+    KEY(4.3, { ball: [0, -3], front: [4, -3], spiral: 2, mouth: 'wavy', tilt: 8, spin: 27, ease: 'in', extra: ['orbit'] }),
+    KEY(4.6, { ball: [0, -3], front: [-3, -5], closed: [true, true], mouth: 'D', tilt: -8, spin: 27, extra: ['tear0', 'spark1'] }),
+    KEY(5, { ball: [0, -3], front: [-3, -5], closed: [true, true], mouth: 'grin', tilt: 8, spin: 27, extra: ['tear0'] }),
+    KEY(5.4, { ball: [3, -3], front: [5, -4], mouth: 'mochiw', spin: 27 }),
+    KEY(6.4, { ball: [26, 4], front: [2, -2], mouth: 'mochiw', glance: 1, spin: 40, ease: 'out' })] },
+  // Cheer: hops for joy, arms flung out, then a fist pump, round and round.
+  cheer: { dur: 1.7, loop: [0.15, 1.15], keys: [
+    KEY(0, {}), KEY(0.15, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', sprout: 'excited' }),
+    KEY(0.45, { ...OUT(-13), lift: 4.5, closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark0'], ease: 'out' }),
+    KEY(0.65, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', sprout: 'excited', ease: 'in' }),
+    KEY(0.95, { front: [7, -19], over: true, back: [-10, -12], lift: 4.5, closed: [true, true], mouth: 'yell', sprout: 'excited', extra: ['spark1', 'bang1'], ease: 'out' }),
+    KEY(1.15, { squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', sprout: 'excited', ease: 'in' }),
+    KEY(1.7, { closed: [true, true], mouth: 'mochiw' })] },
+  // Sulk: puffs its cheeks, turns its head away, plops down hugging its knees under a little
+  // gloom, looking off to the side; now and then it peeks at you, then turns its head away again,
+  // hmph. At the end it gets up, a bit embarrassed.
+  sulk: { dur: 5, loop: [1.6, 3.6], keys: [
+    KEY(0, {}), KEY(0.2, { ...CROSSED, puff: true, brows: [[-0.4, 0.8], [-0.4, 0.8]], mouth: 'mochipout', extra: ['vein'] }),
+    KEY(0.6, { ...CROSSED, turned: true, puff: true, tilt: -8, closed: [true, true], mouth: 'mochipout', extra: ['steam0'] }),
+    KEY(1.1, { glance: 1, ...SIT, legF: [2.4, -3, 60], legB: [1.8, -2.6, 50], front: [3, -2], back: [4, -2], tilt: 10, hy: 1.8, eyes: 'half', puff: true, mouth: 'mochipout', extra: ['gloom'], sprout: 'sad' }),
+    KEY(1.6, { glance: 1, ...SIT, legF: [2.4, -3, 60], legB: [1.8, -2.6, 50], front: [3, -2], back: [4, -2], tilt: 10, hy: 1.8, eyes: 'half', puff: true, mouth: 'mochipout', extra: ['gloom'], sprout: 'sad' }),
+    KEY(2.6, { ...SIT, legF: [2.4, -3, 60], legB: [1.8, -2.6, 50], front: [3, -2], back: [4, -2], tilt: 4, hy: 1.6, glance: 0, mouth: 'mochiflat', sprout: 'sad' }),
+    KEY(3.1, { turned: true, ...SIT, legF: [2.4, -3, 60], legB: [1.8, -2.6, 50], front: [3, -2], back: [4, -2], tilt: -8, hy: 1.4, closed: [true, true], puff: true, mouth: 'mochipout', extra: ['gloom', 'steam0'], sprout: 'sad' }),
+    KEY(3.6, { glance: 1, ...SIT, legF: [2.4, -3, 60], legB: [1.8, -2.6, 50], front: [3, -2], back: [4, -2], tilt: 10, hy: 1.8, eyes: 'half', puff: true, mouth: 'mochipout', extra: ['gloom'], sprout: 'sad' }),
+    KEY(4.1, { glance: 1, eyes: 'half', mouth: 'mochiflat' }), KEY(4.5, { glance: 0, mouth: 'mochiwave', blush: 1.9, ...PAT }), KEY(5, {})] },
+  // Petted: eyes shut, it leans up into each pat with a happy wriggle, hearts floating up.
+  pet: { dur: 2.4, loop: [0.3, 1.5], keys: [
+    KEY(0, {}), KEY(0.2, { closed: [true, true], mouth: 'mochiw', blush: 1.7, tilt: 6, sprout: 'happy' }),
+    KEY(0.3, { ...PAT, hy: 2, squat: 1, tilt: 8, closed: [true, true], mouth: 'mochiw', blush: 1.8, extra: ['hearts'], sprout: 'happy' }),
+    KEY(0.6, { ...PAT, hy: 0.6, tilt: 4, closed: [true, true], mouth: 'cat', blush: 1.8, extra: ['hearts'], sprout: 'happy' }),
+    KEY(0.9, { ...PAT, hy: 2, squat: 1, tilt: -6, closed: [true, true], mouth: 'mochiw', blush: 1.8, extra: ['hearts'], sprout: 'happy' }),
+    KEY(1.2, { ...PAT, hy: 0.6, tilt: -2, closed: [true, true], mouth: 'D', blush: 1.8, extra: ['hearts'], sprout: 'happy' }),
+    KEY(1.5, { ...PAT, hy: 2, squat: 1, tilt: 8, closed: [true, true], mouth: 'mochiw', blush: 1.8, extra: ['hearts'], sprout: 'happy' }),
+    KEY(1.9, { shine: true, mouth: 'D', lift: 1.6, extra: ['hearts'], sprout: 'excited' }), KEY(2.4, {})] },
+  // Tickled: a gasp, then it squirms and giggles helplessly, kicking, tears of laughter.
+  tickle: { dur: 2, loop: [0.3, 1.1], keys: [
+    KEY(0, {}), KEY(0.15, { wide: true, mouth: 'gasp', blush: 1.6 }),
+    KEY(0.3, { ...PAT, tilt: 12, hx: -0.8, lean: -0.06, lift: 1, legF: [1.6, -1.6, 20], closed: [true, true], mouth: 'D', blush: 1.8, extra: ['tear0', 'spark0'], sprout: 'excited' }),
+    KEY(0.5, { front: [9, -9], back: [-3, -3], tilt: -12, hx: 0.8, lean: 0.06, legB: [-1.6, -1.6, -20], closed: [true, true], mouth: 'grin', blush: 1.8, extra: ['tear0', 'spark1'], sprout: 'excited' }),
+    KEY(0.7, { ...PAT, tilt: 10, hx: -0.6, lean: -0.05, lift: 1.2, legF: [1.6, -1.6, 20], closed: [true, true], mouth: 'D', blush: 1.8, extra: ['tear0', 'note'], sprout: 'excited' }),
+    KEY(0.9, { front: [3, -3], back: [-9, -9], tilt: -10, hx: 0.6, lean: 0.06, legB: [-1.6, -1.6, -20], closed: [true, true], mouth: 'grin', blush: 1.8, extra: ['tear0', 'spark0'], sprout: 'excited' }),
+    KEY(1.1, { ...PAT, tilt: 12, hx: -0.8, lean: -0.06, lift: 1, legF: [1.6, -1.6, 20], closed: [true, true], mouth: 'D', blush: 1.8, extra: ['tear0', 'spark0'], sprout: 'excited' }),
+    KEY(1.5, { eyes: 'half', mouth: 'mochiwave', blush: 1.9, extra: ['sweat0'] }), KEY(2, {})] },
+  // Born (render/mochi-life.js): springs up out of the burst egg, lands, blinks round at the world,
+  // spots you, and hops for joy.
+  born: { dur: 4.2, keys: [
+    KEY(0, { lift: 20, ...OUT(-12), closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.35, { lift: 30, ...OUT(-13), closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark1'], ease: 'out' }),
+    KEY(0.8, { lift: 0, squat: 1, front: [5, -5], back: [-5, -5], wide: true, mouth: 'mochio', ease: 'in' }),
+    KEY(1.1, { wide: true, glance: -1, mouth: 'mochio', extra: ['q'] }), KEY(1.6, { wide: true, glance: 1, mouth: 'mochio', tilt: -6 }),
+    KEY(2.1, { closed: ['blink', 'blink'], mouth: 'mochiw' }), KEY(2.3, { shine: true, mouth: 'mochiopen', sprout: 'curious' }),
+    KEY(2.7, { ...OUT(-10), lift: 2.4, closed: [true, true], mouth: 'D', extra: ['hearts'], sprout: 'happy', ease: 'out' }),
+    KEY(3, { lift: 0, squat: 1, closed: [true, true], mouth: 'D', extra: ['hearts'], ease: 'in' }),
+    KEY(3.3, { ...OUT(-10), lift: 2, closed: [true, true], mouth: 'D', extra: ['hearts'], ease: 'out' }), KEY(3.55, { lift: 0, ease: 'in' }), KEY(4.2, {})] },
+  // Evolving: its sprout starts to glow; it looks up, then puts its hands together and shuts its
+  // eyes as the leaf comes down over it.
+  evolving: { dur: 3, keys: [
+    KEY(0, {}), KEY(0.2, { look: 'up', wide: true, mouth: 'mochio', sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.6, { look: 'up', shine: true, mouth: 'mochiopen', ...OUT(-9), lift: 1.4, sprout: 'excited', extra: ['spark1'] }),
+    KEY(1, { look: 'up', closed: [true, true], mouth: 'mochiw', ...PAT, sprout: 'excited' }), KEY(3, { closed: [true, true], mouth: 'mochiw', ...PAT, sprout: 'excited' })] },
+  // Evolved: bursts out of the leaf grown, lands, ta-da, looks itself over, and hops for joy.
+  evolved: { dur: 3.3, keys: [
+    KEY(0, { lift: 10, ...OUT(-13), closed: [true, true], mouth: 'D', sprout: 'excited', extra: ['spark0', 'spark1'] }),
+    KEY(0.45, { lift: 0, squat: 1, front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', ease: 'in' }),
+    KEY(0.8, { ...OUT(-12), lift: 1, tilt: -6, closed: [true, true], mouth: 'D', extra: ['spark0'], sprout: 'excited' }),
+    KEY(1.5, { look: 'down', wide: true, mouth: 'mochio', front: [3, -3], back: [-1, -2] }), KEY(2, { glance: 1, shine: true, mouth: 'mochiopen', tilt: 6 }),
+    KEY(2.4, { ...OUT(-11), lift: 3, closed: [true, true], mouth: 'D', extra: ['hearts'], sprout: 'happy', ease: 'out' }),
+    KEY(2.75, { lift: 0, squat: 1, ease: 'in' }), KEY(3.3, {})] },
+};
+// Where action `a` is (`{ bit, t (seconds into its keys), tq (on its 12 fixed frames) }`), or
+// null once it's done (and `m.action` is cleared).
+function actionAt(m, time) {
+  const a = m.action;
+  const bit = ACTIONS[a.name];
+  if (!bit) return (m.action = null);
+  a.t0 ??= time;
+  const map = (e) => {
+    if (!bit.loop) return e;
+    const [l0, l1] = bit.loop;
+    const len = l1 - l0;
+    const turns = Math.max(1, Math.round(((a.hold ?? 0) - (bit.dur - len)) / len));
+    if (e < l0) return e;
+    if (e < l0 + turns * len) return l0 + ((e - l0) % len);
+    return l1 + (e - l0 - turns * len);
+  };
+  const e = time - a.t0;
+  const t = map(e);
+  if (t >= bit.dur) return (m.action = null);
+  return { bit, t, tq: map(Math.floor(e * 12) / 12) };
 }
 
 // ---------- Following: every number of the pose is carried to the next on a spring ----------
@@ -1156,18 +1324,27 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     st.idle = null;
     st.nextIdle = null;
   }
-  const idle = !moving && !resting && !m.noIdle ? idleAt(st, g, time, m.idleBits) : null;
+  // Something the garden has it doing (eating, napping, playing...) comes before idling.
+  const act = !moving && !resting && m.action ? actionAt(m, time) : null;
+  if (act) {
+    st.idle = null;
+    st.nextIdle = null;
+  }
+  const sweetKind = act ? m.action.sweet ?? (m.action.name === 'hated' ? g.hates : g.loves) : null;
+  const idle = !act && !moving && !resting && !m.noIdle ? idleAt(st, g, time, m.idleBits) : null;
   m.idling = idle?.name ?? null;
-  const still = idle ? pose(STANCE[g.personality] ?? STANCE.gentle) : null;
-  let target = resting ? restPose(restT) : moving ? poseAt(phase) : idle ? idlePose(idle.name, Math.floor((time - idle.t0) * 12) / 12, still) : standPose(g, time);
-  let live = resting ? target : moving ? poseAt(pc) : idle ? idlePose(idle.name, time - idle.t0, still) : target;
+  const posed = idle || act;
+  const baby = (m.size ?? 'grown') === 'baby';
+  const still = posed ? pose(baby ? babyOf(STANCE[g.personality] ?? STANCE.gentle) : STANCE[g.personality] ?? STANCE.gentle) : null;
+  let target = resting ? restPose(restT) : moving ? poseAt(phase) : act ? idlePose(act.bit, act.tq, still) : idle ? idlePose(IDLE_BITS[idle.name], Math.floor((time - idle.t0) * 12) / 12, still) : standPose(g, time, baby);
+  let live = resting ? target : moving ? poseAt(pc) : act ? idlePose(act.bit, act.t, still) : idle ? idlePose(IDLE_BITS[idle.name], time - idle.t0, still) : target;
   if (!resting && kind === 'run' && moving) {
     target = tiredPose(target, fq);
     live = tiredPose(live, fatigue);
   }
   // Springs only carry it from one way of moving to the next (a third of a second); once there it
   // runs on its fixed frames exactly, so every drawing comes round again.
-  const mode = resting ? 'rest' : moving ? `${kind}${tier}` : idle ? 'idle' : 'stand';
+  const mode = resting ? 'rest' : moving ? `${kind}${tier}` : act ? 'act' : idle ? 'idle' : 'stand';
   if (st.mode !== mode) {
     st.mode = mode;
     st.blendAt = time;
@@ -1210,7 +1387,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const tipNow = lerp(P.tip, live.tip, blendK);
   const dir = m.dir || 1;
   const tl = loopTime(g, time);
-  const blink = moving || idle ? null : eyesAt(g, tl);
+  const blink = moving || posed ? null : eyesAt(g, tl);
   const rig = {
     tx: 0, by: q(P.bob), hx: q(P.hx), hy: q(P.hy), tilt: Math.round(P.tilt / 2) * 2, lift: liftNow, squat: Math.round(P.squat),
     backArm: [q(P.back[0]), q(P.back[1])], frontArm: [q(P.front[0]), q(P.front[1])], armSide: moving ? 0.35 : 0.6, hipIn: moving ? 0.6 : 0,
@@ -1218,15 +1395,15 @@ export function drawMochiAnim(ctx, m, x, y, time) {
     air: target.lift > 1.5, hair: Math.round(P.hair * 2) / 2, hairTip: Math.round(P.hair * 2.4) / 2,
     eyes: target.eyes ?? blink ?? 'open',
     view: target.view ?? 'side', climb: Math.round((P.climb ?? 0) * 4) / 4, armOver: target.armOver ?? null,
-    face: { brows: target.brows ?? REST.brows, extra: [], blush: target.blush ?? REST.blush, glance: target.glance ?? (moving || idle ? 0 : glanceAt(g, tl)), look: target.look },
+    face: { brows: target.brows ?? REST.brows, extra: [], blush: target.blush ?? REST.blush, glance: target.glance ?? (moving || posed ? 0 : glanceAt(g, tl)), look: target.look },
   };
-  if (idle) {
-    for (const k of ['wide', 'shine', 'teary', 'spiral', 'cross', 'lid', 'closed']) if (target[k] != null) rig.face[k] = target[k];
+  if (posed) {
+    for (const k of ['wide', 'shine', 'teary', 'spiral', 'cross', 'lid', 'closed', 'puff']) if (target[k] != null) rig.face[k] = target[k];
     rig.face.extra = target.extra;
   }
   // Running, its tier's face, and now and then an act over it.
   let mouth = target.mouth;
-  let sprout = idle ? target.sprout : null;
+  let sprout = posed ? target.sprout : null;
   if (moving && !resting && kind !== 'climb') {
     const act = runActAt(st, g, tier, time);
     const beat = act ? beatOf(act, time) : null;
@@ -1278,7 +1455,12 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   drawCoatBack(ctx, g, x, y, s, time);
   const tip = tipNow;
   // (A backstroke is drawn facing the other way, so tipped over its front faces the sky.)
-  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(lean) > 0.005 ? { tilt: lean, lift: tip } : null };
+  // (What it holds goes in its near hand: a sweet, bitten as it eats; its ball, moving smoothly.)
+  const over = posed && target.hold ? (c, hand, flip) => {
+    if (target.hold === 'sweet') drawSweet(c, sweetKind, hand[0], hand[1] + s, s * 0.75, Math.round(target.bites ?? 0));
+    else if (target.hold === 'ball') drawBall(c, hand[0] + (flip ? -1 : 1) * live.ball[0] * s, hand[1] + live.ball[1] * s, s, live.spin);
+  } : null;
+  const opts = { scale: s, facing: target.flip || target.turned ? -dir : dir, lean: Math.abs(lean) > 0.005 || Math.abs(tip) > 0.005 ? { tilt: lean, lift: tip } : null, ...(over ? { over, hold: 'front' } : {}) };
   // (A ninja dash leaves two fading after-images behind: the same drawing stamped again, nothing
   // painted afresh.)
   // (Swimming, it sits down in the water: its feet below the waterline at `y`.)
@@ -1286,13 +1468,62 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // its own middle.)
   const alt = kind === 'fly' || kind === 'climb' ? liftNow : 0;
   if (alt) rig.lift = 0;
-  const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s;
+  // (Lying down for a nap, it's laid on the ground the same way.)
+  const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed ? sinkNow * s : 0);
+  const feat = featureOf(g);
+  if (feat && rig.view !== 'back') {
+    const Fr = posedFrame(Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { scale: s, facing: opts.facing });
+    const mvF = { mode: moving ? kind : 'stand', phase, pc, time };
+    const prop = opts.over;
+    opts.under = (c) => drawFeature(c, feat, 'under', Fr, mvF);
+    opts.over = (c, hand, flip, other) => {
+      drawFeature(c, feat, 'over', Fr, mvF, hand);
+      prop?.(c, hand, flip, other);
+    };
+    opts.hold = 'front';
+  }
   if (kind === 'run' && moving && tier === 5) {
-    for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha });
+    for (const [back, alpha] of [[26, 0.12], [13, 0.26]]) drawPosed(ctx, look, Math.round((x - dir * back * (s / 0.6)) * 2) / 2, Math.round((y + dy) * 2) / 2, rig, { ...opts, alpha, under: null, over: null });
   }
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts);
+  if (posed && target.bubble) drawSnooze(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time);
   if (kind === 'swim') drawWater(ctx, x, y, s, tier, pc, time, dir);
   drawCoat(ctx, g, x, y + dy, s, time);
+}
+
+// Asleep: a bubble at its nose swelling and shrinking with each breath, and little z's drifting up.
+function drawSnooze(ctx, x, y, rig, opts, s, time) {
+  const k = s / 0.6;
+  const [mx, my] = posedMouth(x, y, rig, { scale: s, facing: opts.facing, lean: opts.lean });
+  const th = (opts.lean?.tilt ?? 0) * (opts.facing < 0 ? -1 : 1);
+  const up = [Math.sin(th), -Math.cos(th)];
+  const breath = 0.5 - 0.5 * Math.cos((TAU * (time % 2)) / 2);
+  const r = (0.5 + 1.4 * breath) * k;
+  const fd = opts.facing < 0 ? -1 : 1;
+  const side = [-fd * Math.cos(th), -fd * Math.sin(th)];
+  const [nx, ny] = [mx + up[0] * 1.2 * k, my + up[1] * 1.2 * k];
+  const [bx, by] = [nx + side[0] * (2.6 * k + r), ny + side[1] * (2.6 * k + r)];
+  ctx.save();
+  ctx.fillStyle = 'rgba(214,236,255,0.55)';
+  ctx.strokeStyle = '#9cc8ee';
+  ctx.lineWidth = 0.3 * k;
+  ctx.beginPath();
+  ctx.arc(bx, by, r, 0, TAU);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(bx - r * 0.5, by - r * 0.55, 0.4 * k, 0.4 * k);
+  // The z's: little pixel letters from above its head, rising and fading, bigger as they go.
+  const [hx, hy] = [mx + up[0] * 9 * k, my + up[1] * 9 * k];
+  ctx.fillStyle = '#8a7ac8';
+  for (let i = 0; i < 3; i++) {
+    const u = (time / 2.4 + i / 3) % 1;
+    const c = (0.28 + 0.16 * u) * k;
+    const [zx, zy] = [hx + (opts.facing < 0 ? -1 : 1) * (1 + u * 4) * k, hy - u * 7 * k];
+    ctx.globalAlpha = u < 0.15 ? u / 0.15 : u > 0.75 ? (1 - u) / 0.25 : 1;
+    for (const [a, b] of [[0, 0], [1, 0], [2, 0], [1, 1], [0, 2], [1, 2], [2, 2]]) ctx.fillRect(Math.round((zx + a * c) * 4) / 4, Math.round((zy + b * c) * 4) / 4, c, c);
+  }
+  ctx.restore();
 }
 
 // Puffs of dust kicked up at each footfall, left behind where they landed (they drift back as the

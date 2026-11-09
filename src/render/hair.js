@@ -1407,6 +1407,9 @@ Object.assign(FRINGES, {
 // Every Mochi has a sprout growing from the top of its head; it acts out their mood. Set for the
 // call by hairParts (look.sprout: { leaf, mood }). Leaves: round, point, ginkgo, clover, bud,
 // heart (rare), blossom (epic), gold (legendary). Moods: calm, happy, excited, sad, sleepy, curious.
+// On a path (`path`: grown on it, or a Mochiko leaning that way), the leaves change: angel, little
+// white feathered wings veined in gold with a tiny ring floating over the tip (`ring`); demon, dark
+// plum curled up like little horns, veined in magenta.
 let SPROUT = null;
 const SPROUT_POSE = {
   calm: { lean: -10, len: 3.4, open: 25 },
@@ -1429,6 +1432,17 @@ function sproutLeaf(kind, x, y, ang, L, c, dk) {
     return [poly(smooth([[0, 0], [0.38, 0.1], [0.72, 0.62], [1, 0.4], [1.02, 0.06], [0.92, 0], [1.02, -0.06], [1, -0.4], [0.72, -0.62], [0.38, -0.1]].map(([l, o]) => at(l, o)), 2), c),
       poly([at(0.1, 0.04), at(0.8, 0.3), at(0.8, 0.26), at(0.1, 0)], dk), poly([at(0.1, 0), at(0.8, -0.26), at(0.8, -0.3), at(0.1, -0.04)], dk)];
   }
+  if (kind === 'wing') {
+    // A feathered leaf: round at the front, its back edge scalloped into three feather tips.
+    return [poly(smooth([[0, 0], [0.3, 0.36], [0.7, 0.46], [1.04, 0.22], [0.88, 0.06], [1, -0.08], [0.8, -0.16], [0.9, -0.3], [0.6, -0.3], [0.3, -0.2]].map(([l, o]) => at(l, o)), 1), c),
+      poly([at(0.08, 0.04), at(0.8, 0.12), at(0.8, 0.08), at(0.08, 0)], dk)];
+  }
+  if (kind === 'horn' || kind === 'hornR') {
+    // A horn-curled leaf: narrow, its tip hooked outward (`hornR` the one on the right).
+    const o = kind === 'hornR' ? -1 : 1;
+    return [poly(smooth([[0, 0], [0.3, 0.26], [0.64, 0.3], [0.94, 0.16], [1.14, -0.12], [0.86, 0], [0.58, -0.06], [0.3, -0.2]].map(([l, w]) => at(l, w * o)), 1), c),
+      poly([at(0.08, 0.03 * o), at(0.76, 0.1 * o), at(0.76, 0.06 * o), at(0.08, -0.01 * o)], dk)];
+  }
   const shape = kind === 'point' ? [[0, 0], [0.35, 0.28], [0.72, 0.2], [1.05, 0], [0.72, -0.2], [0.35, -0.28]]
     : kind === 'heart' ? [[0, 0], [0.42, 0.48], [0.9, 0.48], [1.05, 0.18], [0.86, 0], [1.05, -0.18], [0.9, -0.48], [0.42, -0.48]]
       : [[0, 0], [0.28, 0.42], [0.72, 0.4], [1, 0], [0.72, -0.4], [0.28, -0.42]];
@@ -1439,9 +1453,11 @@ function sproutAt(x, y, m) {
   const kind = sp.leaf ?? 'round';
   const pose = SPROUT_POSE[sp.mood] ?? SPROUT_POSE.calm;
   const gold = kind === 'gold';
+  const path = sp.path ?? null;
   // (On green hair the sprout is a paler spring green, so it doesn't melt into it.)
-  const c = gold ? '#f6cf52' : sp.pale ? '#d4ee9a' : '#86c96e';
-  const dk = gold ? '#b88a22' : sp.pale ? '#7aa83e' : '#4f8f45';
+  const c = path === 'angel' ? '#fffaf0' : path === 'demon' ? '#6a2a5a' : gold ? '#f6cf52' : sp.pale ? '#d4ee9a' : '#86c96e';
+  const dk = path === 'angel' ? '#e8b840' : path === 'demon' ? '#d8487e' : gold ? '#b88a22' : sp.pale ? '#7aa83e' : '#4f8f45';
+  const stemC = path === 'angel' ? '#c8b070' : path === 'demon' ? '#4a1e3a' : dk;
   // The stem bends a beat behind the head, then the leaves open from its tip.
   const a = pose.lean + (m?.tip ?? 0) * 9;
   const mid = [x + Math.sin(deg(a * 0.5)) * pose.len * 0.5, y - Math.cos(deg(a * 0.5)) * pose.len * 0.5];
@@ -1449,11 +1465,12 @@ function sproutAt(x, y, m) {
   const side = (p, q, w) => { const l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1; return [(-(q[1] - p[1]) / l) * w, ((q[0] - p[0]) / l) * w]; };
   const [ax, ay] = side([x, y], mid, 0.36);
   const [bx, by] = side(mid, tip, 0.26);
-  const stem = poly([[x + ax, y + ay], [mid[0] + bx, mid[1] + by], [tip[0] + bx * 0.6, tip[1] + by * 0.6], [tip[0] - bx * 0.6, tip[1] - by * 0.6], [mid[0] - bx, mid[1] - by], [x - ax, y - ay]], dk);
-  const leafKind = kind === 'blossom' || kind === 'bud' || gold ? 'round' : kind;
-  const L = kind === 'clover' ? 3.2 : 3.6;
-  const open = 100 - pose.open;
-  const out = [stem, ...sproutLeaf(leafKind, ...tip, a + open, L, c, dk), ...sproutLeaf(leafKind, ...tip, a - open + (pose.odd ? 50 : 0), L * 0.9, mix(c, dk, 0.18), dk)];
+  const stem = poly([[x + ax, y + ay], [mid[0] + bx, mid[1] + by], [tip[0] + bx * 0.6, tip[1] + by * 0.6], [tip[0] - bx * 0.6, tip[1] - by * 0.6], [mid[0] - bx, mid[1] - by], [x - ax, y - ay]], stemC);
+  const leafKind = path === 'angel' ? 'wing' : path === 'demon' ? 'horn' : kind === 'blossom' || kind === 'bud' || gold ? 'round' : kind;
+  const L = kind === 'clover' ? 3.2 : leafKind === 'horn' ? 3.9 : 3.6;
+  // (Horn leaves stand up in a little V, whatever the mood, drooping a touch when it's low.)
+  const open = leafKind === 'horn' ? 32 + Math.max(0, -pose.open) * 0.4 : 100 - pose.open;
+  const out = [stem, ...sproutLeaf(leafKind === 'horn' ? 'hornR' : leafKind, ...tip, a + open, L, c, dk), ...sproutLeaf(leafKind, ...tip, a - open + (pose.odd && leafKind !== 'horn' ? 50 : 0), L * 0.9, mix(c, dk, 0.18), dk)];
   if (kind === 'blossom') {
     // A little cherry blossom opens at the tip.
     for (let i = 0; i < 5; i++) {
@@ -1465,6 +1482,14 @@ function sproutAt(x, y, m) {
   // A bud: small leaves and a fat round bud at the tip, blushing pink.
   if (kind === 'bud') out.push(F(E(tip[0], tip[1] - 0.8, 1.35, 1.6, '#c8e8a8')), F(E(tip[0], tip[1] - 1.5, 0.8, 0.9, '#ffc8d8')), F(E(tip[0] - 0.4, tip[1] - 1.4, 0.3, 0.4, '#ffffff')));
   if (gold) out.push(F(E(tip[0] + 0.9, tip[1] - 2.2, 0.35, 0.35, '#fff6c8')));
+  if (path === 'angel' && sp.ring !== false) {
+    // The tiny ring over the tip, in eight short gold links.
+    const [rx, ry, rr, rv] = [tip[0], tip[1] - 3.2, 1.7, 0.6];
+    for (let i = 0; i < 8; i++) {
+      const [a0, a1] = [(i / 8) * Math.PI * 2, ((i + 1) / 8) * Math.PI * 2];
+      out.push(poly([[rx + Math.cos(a0) * rr, ry + Math.sin(a0) * rv - 0.18], [rx + Math.cos(a1) * rr, ry + Math.sin(a1) * rv - 0.18], [rx + Math.cos(a1) * rr, ry + Math.sin(a1) * rv + 0.22], [rx + Math.cos(a0) * rr, ry + Math.sin(a0) * rv + 0.22]], i < 4 ? '#f2b844' : '#ffe27a'));
+    }
+  }
   return out;
 }
 

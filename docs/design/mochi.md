@@ -108,6 +108,12 @@ Each step is pushed on its own. Status as of 2026-11-09.
    bit each), the sprout acting out moods, eat, nap, play, cheer, sulk; hatching (the mochi ball
    puffs up and a Mochiko pops out) and the leaf-wrap evolution. A Mochiko drawn smaller and rounder
    than stage 2; the 10 stage-2 features. No squash or stretch: poses only.
+   **Done** (render/mochi-anim.js, mochi-life.js, mochi-features.js, mochi-sweets.js; preview
+   tools/mochi-anim.html): six styles per stat for running, swimming, flying, climbing and stamina;
+   acting while running; 16 shared idle moments and a signature one per personality; eat, hated,
+   nap, play, cheer, sulk, pet, tickle (the garden sets `m.action`); hatching and evolving; a baby
+   stance for the Mochiko; the 10 features kept small, and the sprout turning angel or demon.
+   Features aren't drawn yet in the climbing (back) view.
 3. **Raising.** Stat points and levels; grades rise on evolution and rebirth; sweets made from
    monster, fishing and garden ingredients, each training a stat; training spots; mood and bond; the
    sweet/spicy lean; evolution and rebirth.

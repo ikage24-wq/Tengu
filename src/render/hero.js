@@ -2805,6 +2805,35 @@ export function posedPoint(x, y, pose, opts, [bx, by]) {
   const rig = { ...baseRig(), ...pose };
   return placed(x, y, rig, opts, squashX(bx + rig.tx), squashY(by + rig.by + hipDrop(rig)));
 }
+// Where things are worn on a figure drawn with drawPosed (same x, y, pose, scale and facing), in
+// the frame drawPosed's under/over callbacks draw in (its lean already applied): `at` turns a
+// sprite point into the canvas; `body` gives a sprite point of the upper body (carried with its
+// bob), `head` one of the head (turned with its tilt, `tilt` radians), `ankle` each foot's
+// ('front' or 'back').
+export function posedFrame(x, y, pose, { scale = 1, facing = 1 } = {}) {
+  const rig = { ...baseRig(), ...halfRig(pose) };
+  const flip = facing < 0;
+  const left = x - (W / 2) * scale;
+  const top = y - H * scale - (rig.lift ?? 0) * scale;
+  const ux = rig.tx;
+  const uy = rig.by + hipDrop(rig);
+  const nx = squashX(15.5 + ux) + rig.hx;
+  const ny = 25 + uy * KY + rig.hy + NECK_LIFT;
+  const tilt = ((rig.tilt ?? 0) * Math.PI) / 180;
+  const at = ([px, py]) => [flip ? left + (W - (px + OX)) * scale : left + (px + OX) * scale, top + (py + OY) * scale];
+  const head = ([hx, hy]) => {
+    const r0 = hx + squashX(15.5 + ux) - 15.5 + rig.hx;
+    const r1 = hy + uy * KY + rig.hy + NECK_LIFT;
+    return [nx + (r0 - nx) * Math.cos(tilt) - (r1 - ny) * Math.sin(tilt), ny + (r0 - nx) * Math.sin(tilt) + (r1 - ny) * Math.cos(tilt)];
+  };
+  const body = ([bx, by]) => [squashX(bx + ux), squashY(by + uy)];
+  const ankle = (side) => {
+    const lx = side === 'back' ? LEFT_LEG + (LEG_MID - LEFT_LEG) * rig.hipIn : RIGHT_LEG + (LEG_MID - RIGHT_LEG) * rig.hipIn;
+    const [, , [ax, ay]] = legJoints(lx, side === 'back' ? rig.backLeg : rig.frontLeg, HIP_Y + hipDrop(rig));
+    return [squashX(ax), squashY(ay)];
+  };
+  return { at, head, body, ankle, tilt, flip, scale };
+}
 // A sprite point (px, py) of a posed figure, placed and leaned as drawPosed draws it.
 function placed(x, y, rig, { scale = 1, facing = 1, lean = null } = {}, px, py) {
   const flip = facing < 0;
