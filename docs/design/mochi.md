@@ -243,6 +243,13 @@ Each step is pushed on its own. Status as of 2026-11-09.
    (yours by its name; a friend's as "Bea's Momo"), and the Garden's messages.
 8. **The Mochi window.** *(New.)* One page per Mochi: its stage and path, stats and grades,
    personality, favourite and hated sweets, voice, rarity and coat, its parents.
+   **Built (2026-11-10, ui/mochi-info.js):** its portrait at twice its size, name, stage and path,
+   form, generation and age, rarity and coat (Halo Dawn / Ember Spice for Radiant by path); the five
+   stats (grade, level, points in the tooltip, a bar to the next level, and the way it moves now:
+   trot, breaststroke, slow climb...); personality, loved and hated sweets, voice; mood, bond and
+   tummy, and a devil-angel slider; what a Mochiko is growing into; its tricks (listed on hover);
+   its race medals, three per stage. Opened with Info on the care panel (a friend's Mochi too) and
+   on the race board (the one picked); ◀ ▶ go through your Mochi. Parents come with breeding.
 9. **Breeding.** *(New.)* Two grown Mochi that are happy together leave an egg in the Garden. Each
    part comes from one parent or the other, with a small chance of something new; talents average
    the parents' with a chance to step up; rare coats can be passed on at a reduced chance. The way

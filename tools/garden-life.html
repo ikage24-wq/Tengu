@@ -137,6 +137,11 @@ if (q.has('lobby')) {
   w.raceLobby = { stageId: 'sprint', rank: 'beginner', rec: c.garden.mochi[0], invited: ['B', 'C'], joined: { B: { rec: c.garden.mochi[1], name: 'Bea' } }, declined: [] };
   Object.assign(state.windows.race, { open: true, openedAt: -99 });
 }
+// (?info=1: Mochi 1's page.)
+if (q.has('info')) {
+  w.mochiInfo = c.garden.mochi[Number(q.get('info'))];
+  Object.assign(state.windows.mochiinfo, { open: true, openedAt: -99 });
+}
 // (?naming=1: Mochi 1 waiting for its name.)
 if (q.has('naming')) {
   w.naming = c.garden.mochi[Number(q.get('naming'))];

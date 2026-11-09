@@ -87,6 +87,11 @@ export function raceBoardWindow(ui, state, world) {
   y += 22;
   // Your Mochi: pick who races.
   text(ctx, 'Who races?', x, y + 4, { size: 7, bold: true, color: COLORS.muted });
+  // (The picked one's whole page: ui/mochi-info.js.)
+  if (win.pick && button(ui, win.x + W - 46, y - 3, 36, 11, 'Info', { size: 6.5 })) {
+    world.mochiInfo = win.pick;
+    world.events.push({ type: 'mochiinfo' });
+  }
   const list = (world.char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
   if (!list.length) {
     text(ctx, 'Hatch a Mochi in your Garden first!', x, y + 20, { size: 7, color: COLORS.muted });

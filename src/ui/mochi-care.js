@@ -23,7 +23,6 @@ const CARE_ROWS = [
   ['wrestle', 'Wrestle', 'Rough play: trains a little Power, leans it devilish.'],
   ['prank', 'Prank', 'Mischief: leans it devilish.'],
 ];
-const sweetName = (kind) => MOCHI_SWEETS.find((s) => s.kind === kind)?.name ?? kind;
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 export function mochiCareWindow(ui, state, world) {
@@ -48,7 +47,11 @@ export function mochiCareWindow(ui, state, world) {
   const x = win.x + 10;
   let y = win.y + 32;
   text(ctx, `${cap(rec.personality)} ${STAGES[rec.stage] ?? 'Mochi'}`, x, y, { size: 8.5, bold: true });
-  text(ctx, `Loves ${sweetName(rec.loves)}`, win.x + W - 10, y, { size: 6.5, align: 'right', color: COLORS.muted });
+  // Its whole page (ui/mochi-info.js).
+  if (button(ui, win.x + W - 46, y - 9, 36, 12, 'Info', { size: 6.5 })) {
+    world.mochiInfo = rec;
+    world.events.push({ type: 'mochiinfo' });
+  }
   y += 7;
   // How it's feeling.
   const bw = (W - 28) / 3;
