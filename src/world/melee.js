@@ -38,7 +38,7 @@ import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from 
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY, groundAt } from './physics.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
-import { provoke, healMembers, groupOf } from './dungeon.js';
+import { provoke, healMembers, groupOf, isUp, hpOf, maxHpOf, giveBuff, reviveMember } from './dungeon.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -366,7 +366,34 @@ const DEEP_POOL = {
   slam: { move: 'msslam', dur: 0.66, step: 6, finisher: true, strikes: [deep({ at: 0.56, pct: 180, reach: 130, h: 130, targets: 4, knock: 240, launch: 180, burst: 'msslam', burstAt: 0.6, burstDur: 0.55, big: true, stop: 0.08, shake: 4 })] },
 };
 
+// The Tidecaller (docs/design/tidecaller.md): the moon's tide out of her staff, sung rather than
+// hurled. Her own string: a pearl of water flicked off the staff, a ribbon of water swept round like
+// a dancer's sash, and a pillar of moonlight called down on them that mends the party round her.
+// Her pool: a shell skipped along the floor or a shower of drops; a crescent wave or a chain of
+// bubbles; a spring welling up under them or a great crescent wave rolled through the line (both
+// mend too).
+const moon = (st) => ({ magic: true, fx: 'tchit', ...st });
+const MOON_SHOT = { magic: true, burst: 'tchit' };
+PATH_COMBOS.tidecaller = [
+  { move: 'tcpearl', dur: 0.42, step: 4, strikes: [{ ...MOON_SHOT, at: 0.48, shot: 'tcpearl', pct: 88, range: 300, h: 60, knock: 50, speed: 720 }] },
+  { move: 'tcribbon', dur: 0.48, step: 6, strikes: [moon({ at: 0.5, pct: 96, reach: 128, h: 76, targets: 3, knock: 70, burst: 'tcribbon', burstAt: 0.08, burstDur: 0.42 })] },
+  { move: 'tcpillar', dur: 0.66, step: 0, finisher: true, strikes: [moon({ at: 0.56, pct: 175, reach: 170, h: 140, targets: 4, knock: 160, launch: 260, burst: 'tcpillar', burstAt: 0.75, burstDur: 0.7, big: true, stop: 0.07, shake: 2, heal: 0.03, healR: 260 })] },
+];
+const MOON_POOL = {
+  shell: { move: 'tcshell', dur: 0.44, step: 4, strikes: [{ ...MOON_SHOT, at: 0.46, shot: 'tcshell', pct: 46, range: 300, h: 50, targets: 2, pierce: true, knock: 40, speed: 560, oy: 18 }, { ...MOON_SHOT, at: 0.62, shot: 'tcshell', pct: 46, range: 300, h: 50, targets: 2, pierce: true, knock: 40, speed: 560, oy: 18 }] },
+  drops: { move: 'tcdrops', dur: 0.46, step: 2, strikes: [0.36, 0.5, 0.64].map((at) => moon({ at, pct: 32, reach: 130, h: 96, targets: 3, knock: 20, ...(at === 0.36 ? { burst: 'tcdrops', burstAt: 0.6, burstDur: 0.5 } : {}) })) },
+  crescent: { move: 'tccrescent', dur: 0.48, step: 4, strikes: [{ ...MOON_SHOT, at: 0.46, shot: 'tccrescent', pct: 95, range: 300, h: 70, targets: 3, pierce: true, knock: 80, speed: 640 }] },
+  chain: { move: 'tcchain', dur: 0.5, step: 2, strikes: [0.3, 0.44, 0.58].map((at, i) => ({ ...MOON_SHOT, at, shot: 'tcbubble', pct: 34, range: 270, h: 70, knock: 20, speed: 400, oy: (1 - i) * 8, burst: 'tcbubblepop' })) },
+  spring: { move: 'tcspring', dur: 0.64, step: 0, finisher: true, strikes: [moon({ at: 0.52, pct: 180, reach: 150, h: 150, targets: 4, knock: 30, launch: 380, burst: 'tcspring', burstAt: 0.8, burstDur: 0.6, big: true, stop: 0.07, shake: 2, heal: 0.03, healR: 260 })] },
+  wave: { move: 'tcwave', dur: 0.66, step: -4, finisher: true, strikes: [{ ...MOON_SHOT, at: 0.56, shot: 'tccrescentbig', pct: 180, range: 330, h: 100, targets: 4, pierce: true, knock: 230, launch: 140, speed: 600, big: true, stop: 0.07, shake: 3, heal: 0.03, healR: 260 }] },
+};
+
 export const PATH_VARIANTS = {
+  tidecaller: [
+    [PATH_COMBOS.tidecaller[0], MOON_POOL.shell, MOON_POOL.drops],
+    [PATH_COMBOS.tidecaller[1], MOON_POOL.crescent, MOON_POOL.chain],
+    [PATH_COMBOS.tidecaller[2], MOON_POOL.spring, MOON_POOL.wave],
+  ],
   maelstrom: [
     [PATH_COMBOS.maelstrom[0], DEEP_POOL.jet, DEEP_POOL.glow],
     [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
@@ -537,6 +564,17 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
+  // The Tidecaller: a spring of moonlit water called up under whatever flies, a shower of drops
+  // rained down from a hang in the air (the second a heavy one), and a glide on a ribbon of foam out
+  // of a run.
+  tidecaller: {
+    up: { move: 'tcrise', dur: 0.48, strikes: [moon({ at: 0.42, pct: 108, reach: 84, h: 210, targets: 4, knock: 20, launch: 420, burst: 'tcspring', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.04 })] },
+    air: [
+      { move: 'tcairdrops', dur: 0.44, hang: true, strikes: [moon({ at: 0.42, pct: 78, reach: 100, h: 200, targets: 3, knock: 30, burst: 'tcdrops', burstAt: 0.35, burstDur: 0.5, floor: true })] },
+      { move: 'tcairdrops', dur: 0.5, hang: true, finisher: true, strikes: [moon({ at: 0.42, pct: 102, reach: 116, h: 220, targets: 4, knock: 120, burst: 'tcdropsbig', burstAt: 0.35, burstDur: 0.55, floor: true, big: true, stop: 0.05, shake: 1 })] },
+    ],
+    dash: { move: 'tcglide', dur: 0.5, step: 84, carry: 0.6, guard: 0.3, strikes: [moon({ at: 0.5, pct: 118, reach: 88, h: 72, targets: 3, knock: 160, burst: 'tcsplash', burstAt: 0.5, burstDur: 0.45, big: true, stop: 0.04 })] },
+  },
   // The Maelstrom: a spiral of black water driven up under whatever flies, spears hurled down from a
   // hang in the air (the second a big one), and a dive through a wave out of a run.
   maelstrom: {
@@ -779,7 +817,7 @@ export const TIDE_MAX = 100;
 const TIDE_HOLD = 5;
 const TIDE_DRAIN = 10;
 export const TIDE_MEND = 0.01; // of max HP a second, at High Tide, for her and the party near her
-export const hasTide = (char) => jobChain(char.job).includes('tidemage') && !hasDepth(char);
+export const hasTide = (char) => jobChain(char.job).includes('tidemage') && !hasDepth(char) && !hasMoon(char);
 export function addTide(world, n) {
   if (!hasTide(world.char) || n <= 0) return;
   world.tide = Math.min(TIDE_MAX, (world.tide ?? 0) + n);
@@ -788,6 +826,54 @@ export function addTide(world, n) {
 export const highTide = (world) => hasTide(world.char) && (world.tide ?? 0) >= TIDE_MAX;
 // How much bigger her waves run with the Tide: up to a third larger when it's full.
 export const tideSwell = (world) => (hasTide(world.char) ? 1 + (world.tide ?? 0) / TIDE_MAX / 3 : 1);
+// Moonsong: the Tidecaller's gauge (the Tide Mage's healer path, docs/design/tidecaller.md). Her
+// hits and her heals build it; it fades once the fighting stops. The fuller it runs, the stronger
+// her heals (up to a third more). Full (Spring Tide), her heals leave a bubble on everyone they
+// reach, and every basic attack that lands drops a healing droplet on whoever in the party is hurt
+// most. The finisher spends it.
+export const MOON_MAX = 100;
+const MOON_HOLD = 5;
+const MOON_DRAIN = 10;
+const MOON_HEAL = 0.3;
+export const SPRING_BUBBLE = 0.08; // of max HP: the bubble her heals leave at Spring Tide (6 s)
+export const SPRING_DROP = 0.025; // of max HP: each droplet at Spring Tide
+export const hasMoon = (char) => jobChain(char.job).includes('tidecaller');
+export function addMoon(world, n) {
+  if (!hasMoon(world.char) || n <= 0) return;
+  world.moon = Math.min(MOON_MAX, (world.moon ?? 0) + n);
+  world.moonAt = world.now;
+}
+export const springTide = (world) => hasMoon(world.char) && (world.moon ?? 0) >= MOON_MAX;
+// How much harder her heals mend: Moonsong (up to a third) and Tidesong's passive.
+const moonHeal = (world) => (hasMoon(world.char) ? 1 + (MOON_HEAL * (world.moon ?? 0)) / MOON_MAX + (world.stats.healBoost ?? 0) : 1);
+function tickMoon(world, dt) {
+  if (world.moon > 0 && world.now - (world.moonAt ?? 0) > MOON_HOLD) world.moon = Math.max(0, world.moon - MOON_DRAIN * dt);
+}
+// Spring Tide: a droplet of healing water falls on whoever in the party is hurt most (you too),
+// one at most every 0.4 s.
+export function springDrop(world) {
+  if (!springTide(world) || world.dead || world.now - (world.moonDropAt ?? -9) < 0.4) return;
+  const group = world.dungeon ? groupOf(world).filter((g) => isUp(world, g)) : [{ id: 'you', body: world.body }];
+  const hurt = group.map((g) => ({ g, f: g.id === 'you' ? world.char.hp / world.stats.maxHp : hpOf(world, g) / maxHpOf(world, g) })).filter((h) => h.f < 1).sort((a, b) => a.f - b.f)[0];
+  if (!hurt) return;
+  world.moonDropAt = world.now;
+  const { g } = hurt;
+  world.fx.push({ kind: 'tcdrop', x: g.body.x, y: g.body.y, h: g.body.h ?? 40, t: 0, dur: 0.7 });
+  if (g.id === 'you') {
+    const amount = Math.max(1, Math.round(world.stats.maxHp * SPRING_DROP * moonHeal(world)));
+    world.char.hp = Math.min(world.stats.maxHp, world.char.hp + amount);
+    world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
+  } else healMembers(world, SPRING_DROP * moonHeal(world), { x: g.body.x - 1, y: g.body.y - 160, w: 2, h: 320 });
+}
+// Tide's Return and Moon Tide: the fallen in `r` of her get back on their feet with `pct` of their HP.
+function reviveAround(world, pct, r) {
+  if (!world.dungeon) return;
+  for (const g of groupOf(world)) {
+    if (g.id === 'you' || isUp(world, g) || Math.abs(g.body.x - world.body.x) > r) continue;
+    reviveMember(world, g, pct);
+    world.fx.push({ kind: 'tcrevive', x: g.body.x, y: g.body.y, t: 0, dur: 1.2 });
+  }
+}
 // Depth: the Maelstrom's gauge (the Tide Mage's damage path). Her hits build it; it drains once the
 // fighting stops. The deeper it runs, the harder she hits (up to a quarter more); full (the Abyss),
 // every hit leaves a small vortex on what it struck that shreds it three times more, and the
@@ -1093,12 +1179,23 @@ export function barrageRelease(world) {
 // Paladin's Judgment).
 export function healAround(world, x, y, pct, r, gauge = true, el = null) {
   const { char, body, stats } = world;
-  if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
+  // (The Tidecaller's heals mend harder with her Moonsong, and at Spring Tide leave a bubble on
+  // everyone they reach.)
+  pct *= moonHeal(world);
+  const near = Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && !world.dead;
+  if (springTide(world)) {
+    if (near) {
+      char.buffs.springbubble = { until: world.now + 6, since: world.now, values: { barrier: SPRING_BUBBLE }, name: 'Spring Bubble', shield: Math.round(stats.maxHp * SPRING_BUBBLE) };
+    }
+    if (world.dungeon) for (const g of groupOf(world)) if (g.id !== 'you' && isUp(world, g) && Math.abs(g.body.x - x) <= r) giveBuff(world, g, 'springbubble', 'Spring Bubble', { barrier: SPRING_BUBBLE }, 6);
+  }
+  if (near && char.hp < stats.maxHp) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
     // (A Tide Mage's heals build her Tide.)
     if (gauge) addTide(world, 3);
+    if (gauge) addMoon(world, 3);
     // (The Cleric's heals land as her own mark: soap bubbles and sparkles rising round them.)
     // (At most one every half second: her heal bombs mend on nearly every hit, and a stack of
     // them reads as a column of crosses.)
@@ -1116,7 +1213,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasTide(char) ? 'tide' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasMoon(char) ? 'moon' : hasTide(char) ? 'tide' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1133,6 +1230,7 @@ export function addAim(world, n, mob = null, el = null) {
   addCharge(world, n);
   addTide(world, n);
   addDepth(world, n);
+  addMoon(world, n);
   if (mob && n > 0) abyssVortex(world, mob);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
@@ -1148,6 +1246,7 @@ export function pathOf(world) {
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
   if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
   if (w === 'staff' && hasDepth(char)) return 'maelstrom';
+  if (w === 'staff' && hasMoon(char)) return 'tidecaller';
   if (w === 'staff' && hasTide(char)) return 'tidemage';
   return null;
 }
@@ -1396,6 +1495,7 @@ export function tickMelee(world, dt) {
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   tickTide(world, dt);
   tickDepth(world, dt);
+  tickMoon(world, dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
@@ -1512,6 +1612,8 @@ function land(world, s) {
   }
   // A support skill lands with the cast: a buff on her and the party round her (`grant`).
   if (s.grant) grantSpell(world, s.grant);
+  // Tide's Return and Moon Tide bring the fallen round her back up.
+  if (s.revive) reviveAround(world, s.revive, s.reviveR ?? 320);
   // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
   if (s.turret) deployTurret(world, s.turret);
   // The Phantom Trickster's Grand Illusion (world/phantom.js).
@@ -1563,6 +1665,8 @@ function land(world, s) {
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   if (targets.length && hasDepth(char)) targets.forEach((m) => abyssVortex(world, m));
+  if (targets.length && !s.phantom) addMoon(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (targets.length && s.key.startsWith('basic')) springDrop(world);
   // A Thief's finisher springs her back out of the blow in a backflip (`flipback`, px), hit or miss.
   if (s.flipback && body.onGround && !s.phantom) {
     world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
@@ -1819,7 +1923,7 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
-    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend,
+    gauge: s.gauge ?? (s.key.startsWith('basic') ? 3 : 5), rank, el: s.el, mend: miss ? undefined : s.mend, basic: s.key.startsWith('basic') || undefined,
     // The archer paths' hits bring their own sprite burst, so the plain spark is left off.
     ownSpark: Boolean(spark),
   });
@@ -1887,7 +1991,7 @@ function fire(world, strike) {
   // (Worked out exactly as the figure is drawn, render/hero.js `strikePose`.)
   // (The Maelstrom's spears and bolts leave from her hands, chest high: off a raised staff's head
   // they'd fly down at a slant.)
-  const tip = !s.from && s.move && (world.stats.weaponType === 'wand' || (world.stats.weaponType === 'staff' && !hasDepth(world.char))) && world.char.appearance ? wandTip(world, s) : null;
+  const tip = !s.from && s.move && (world.stats.weaponType === 'wand' || (world.stats.weaponType === 'staff' && !hasDepth(world.char) && !hasMoon(world.char))) && world.char.appearance ? wandTip(world, s) : null;
   if (tip) {
     ox = body.x + s.dir * tip[0];
     oy = body.y + tip[1] + (s.oy ?? 0);
@@ -1914,7 +2018,7 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' || s.shot === 'msblackwave' || s.shot === 'msblacktide' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' || s.shot === 'msblackwave' || s.shot === 'msblacktide' || s.shot === 'tcsilverwave' || s.shot === 'tcsilvertide' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;
@@ -1924,7 +2028,7 @@ function fire(world, strike) {
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  else if (!hasBond(world.char) && !hasTide(world.char) && !hasDepth(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  else if (!hasBond(world.char) && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.

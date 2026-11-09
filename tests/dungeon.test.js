@@ -49,7 +49,7 @@ test('the group finder fills a 1 tank / 1 healer / 2 DPS group around you', () =
   const tank = members.find((b) => world.dungeon.roles[b.id] === 'tank');
   const healer = members.find((b) => world.dungeon.roles[b.id] === 'healer');
   assert.equal(tank.char.job, 'warrior');
-  // (With the Mage line wiped, a Warrior takes the healer's seat.)
+  // (A Warrior takes the healer's seat before 30, a Tidecaller after.)
   assert.equal(healer.char.job, 'warrior');
   assert.equal(world.map.id, DUNGEONS.hollow.rooms[0]);
   for (const b of members) assert.equal(b.hp, b.stats.maxHp);
@@ -602,4 +602,42 @@ test('every dungeon monster and boss draws every frame as flat shapes', async ()
       }
     }
   }
+});
+
+test('the Tidecaller is the party healer: the finder brings her in, and her moves heal', () => {
+  assert.equal(roleOf('tidecaller', 'mage'), 'healer');
+  assert.equal(roleOf('maelstrom', 'mage'), 'dps');
+  const rng = seeded(21);
+  const world = heroAt(rng, 32, ['archer'], 'observatory_steps');
+  assert.equal(startRun(world, 'observatory'), null);
+  const healer = partyMembers(world.bots).find((b) => world.dungeon.roles[b.id] === 'healer');
+  assert.equal(healer.char.job, 'tidecaller');
+  // Hurt, she heals you with her own spring of water.
+  world.char.hp = Math.round(world.stats.maxHp * 0.3);
+  const before = world.char.hp;
+  healer.body.x = world.body.x + 40;
+  healerTurn(healer, world, rng);
+  assert.ok(world.char.hp > before, 'she heals you');
+  assert.match(healer.attack.pose, /^tc/, 'with her own move, not a prayer');
+});
+
+test("Tide's Return and Moon Tide bring the fallen back up", async () => {
+  const { cast } = await import('../src/world/combat.js');
+  const rng = seeded(23);
+  const world = heroAt(rng, 40, ['tidemage', 'tidecaller'], 'observatory_steps');
+  assert.equal(startRun(world, 'observatory'), null);
+  const idle = { held: new Set(), pressed: new Set(), locked: false };
+  for (let i = 0; i < 30; i++) updateWorld(world, 1 / 60, idle);
+  const friend = partyMembers(world.bots)[0];
+  friend.down = true;
+  friend.hp = 0;
+  friend.map = world.map.id;
+  friend.body.x = world.body.x + 60;
+  friend.body.y = world.body.y;
+  world.char.skills.tidesreturn = 10;
+  world.char.mp = 9999;
+  const r = cast(world, 'tidesreturn');
+  assert.ok(r.ok, JSON.stringify(r));
+  for (let i = 0; i < 90; i++) updateWorld(world, 1 / 60, idle);
+  assert.ok(!friend.down && friend.hp > 0, 'back on their feet');
 });

@@ -1,7 +1,7 @@
 # Maelstrom
 
 The Tide Mage's damage path at level 30 (2026-11-09), after Elowen's trial (break 20 Gem Mimics in
-the Crystal Cave). The support path is still to be made. Held to the Tide Mage's standard
+the Crystal Cave). Her sister path is the healer, the Tidecaller (docs/design/tidecaller.md). Held to the Tide Mage's standard
 (docs/design/tide-mage.md).
 
 ## Who she is

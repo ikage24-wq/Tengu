@@ -122,14 +122,16 @@ export const ROLES = {
   dps: { label: 'DPS', color: '#ff7a6b' },
 };
 
-// A group's roles, in finder order. (With the Mage line wiped, 2026-11-08, the healer's seat is a
-// helper's: see world/dungeon.js recruit.)
+// A group's roles, in finder order. (The healer's seat is the Tidecaller's from level 30, a
+// Warrior's before: see world/dungeon.js recruit.)
 export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
   // (The Berserker takes the damage seat its family doesn't.)
   if (jobId === 'berserker') return 'dps';
+  // (The Tidecaller is the party's healer.)
+  if (jobId === 'tidecaller') return 'healer';
   if (family === 'warrior') return 'tank';
   return 'dps';
 }

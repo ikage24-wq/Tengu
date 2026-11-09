@@ -7491,7 +7491,7 @@
   // instead of jumping between key poses. (Art px are strip px: three to a game pixel.)
   let TIDEP = ['#ffffff', '#c8f4ff', '#46c4e4', '#1787bb', '#0c4a80'];
   let FOAM = ['#ffffff', '#f3fdff', '#cfeef8', '#93cde4', '#3f80ac'];
-  const TMCORAL = ['#ffffff', '#ffe2d6', '#ff9c88', '#ee6670', '#9e3b5c'];
+  let TMCORAL = ['#ffffff', '#ffe2d6', '#ff9c88', '#ee6670', '#9e3b5c'];
   const smooth = (t) => t * t * (3 - 2 * t);
   const clamp01 = (t) => Math.max(0, Math.min(1, t));
   const win = (k, a, b) => clamp01((k - a) / (b - a));
@@ -8662,6 +8662,880 @@
   E.msmaelstrombig = grown(E.msvortex, 2.6);
   // Hydro Cannon: the beam drawn heavier and longer.
   E.msbeambig = grown(E.msbeam, 1.35);
+
+  // ---------- The Tidecaller (docs/design/tidecaller.md) ----------
+  // The moon's tide: seafoam and mint water inked in deep teal, pearl white, pale moon gold. Her
+  // shapes, hers alone: pearls, moon crescents, scallop shells, rising bubbles, raindrops and soft
+  // rings of light. Her water is the Tide Mage's living water (rippling edges, currents) in her own
+  // palette (`moonPal` swaps it in while she draws); her light is soft and warm, never a flash.
+  const MOONW = ['#ffffff', '#e4fff4', '#8fe8c8', '#3fb0a0', '#1d5a66'];
+  const PEARL = ['#ffffff', '#fffcf2', '#f6eedc', '#d9c7aa', '#7d6a54'];
+  const MGOLD = ['#ffffff', '#fff6cc', '#ffe08a', '#e3b04c', '#8a6420'];
+  // (Her foam: white touched with mint, never cream.)
+  const MFOAM = ['#ffffff', '#f6fffb', '#d8f6ec', '#a8dcd0', '#3f8a86'];
+  function moonPal(fn) {
+    const [w, f, c] = [TIDEP, FOAM, TMCORAL];
+    TIDEP = MOONW;
+    FOAM = MFOAM;
+    TMCORAL = MGOLD;
+    try {
+      fn();
+    } finally {
+      TIDEP = w;
+      FOAM = f;
+      TMCORAL = c;
+    }
+  }
+  const moonlit = (e) => ({ ...e, draw: (ctx, i) => moonPal(() => e.draw(ctx, i)) });
+  // A pearl: inked round, its pearly body, a seafoam sheen on its shadow side and a gold one on its
+  // rim, and a white glint. `ph` turns the sheen round it.
+  function pearl(ctx, x, y, r, ph = 0) {
+    if (r <= 1) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r + 2.5, 0, TAU);
+    ctx.fillStyle = PEARL[4];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fillStyle = PEARL[3];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - r * 0.12, y - r * 0.12, r * 0.86, 0, TAU);
+    ctx.fillStyle = PEARL[2];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x - r * 0.22, y - r * 0.24, r * 0.6, 0, TAU);
+    ctx.fillStyle = PEARL[1];
+    ctx.fill();
+    const a = ph * TAU;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.78, 0.3 + a * 0.2, 1.5 + a * 0.2);
+    ctx.lineWidth = Math.max(1.5, r * 0.16);
+    ctx.strokeStyle = MOONW[2];
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.8, 1.9 + a * 0.2, 2.5 + a * 0.2);
+    ctx.lineWidth = Math.max(1.2, r * 0.1);
+    ctx.strokeStyle = MGOLD[2];
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.36, y - r * 0.4, r * 0.26, r * 0.15, -0.7, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.restore();
+  }
+  // A soft light: a pale glow round a bright heart (her motes, her heals).
+  function glim(ctx, x, y, r, pal = MGOLD) {
+    if (r <= 0.5) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 1.8, 0, TAU);
+    ctx.fillStyle = pal[2];
+    ctx.globalAlpha *= 0.28;
+    ctx.fill();
+    ctx.restore();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fillStyle = pal[1];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.45, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+  // Pearls of light drifting round (x, y) in a w x h box, each on its own slow loop with `ph`.
+  function glims(ctx, x, y, w, h, n, ph, seed, r = 4) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const ox = (R() - 0.5) * w;
+      const oy = (R() - 0.5) * h;
+      const sp = 0.5 + R();
+      const a = (ph * sp + R()) * TAU;
+      glim(ctx, x + ox + Math.cos(a) * 6, y + oy + Math.sin(a) * 6, r * (0.6 + R() * 0.6) * (0.75 + 0.25 * Math.sin(a * 2)), j % 3 === 0 ? MOONW : MGOLD);
+    }
+  }
+  // A moon crescent standing upright, its belly toward +x: R tall (half), `th` thick at its middle.
+  function moonShape(cx, cy, R, th, n = 28) {
+    const A = 1.25;
+    const outer = [];
+    const inner = [];
+    for (let i = 0; i <= n; i++) {
+      const t = lerp(-A, A, i / n);
+      const w = th * Math.cos((t / A) * (Math.PI / 2));
+      outer.push([cx + Math.cos(t) * R, cy + Math.sin(t) * R]);
+      inner.push([cx + Math.cos(t) * R - w, cy + Math.sin(t) * R]);
+    }
+    return outer.concat(inner.reverse());
+  }
+  // A ring of soft light flat on the floor, in gold (`sy` squashes it into perspective).
+  function lightRing(ctx, x, y, r, th, a = 1, sy = 0.3, pal = MGOLD, broken = 0, seed = 1) {
+    if (r <= th || a <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.translate(x, y);
+    ctx.scale(1, sy);
+    celRing(ctx, pal, 0, 0, r, th, { broken, seed });
+    ctx.restore();
+  }
+  // A column of soft light from y0 down to y1 round x, `w` wide at its widest.
+  function lightColumn(ctx, x, y0, y1, w, a = 1) {
+    if (a <= 0 || y1 <= y0) return;
+    ctx.save();
+    for (const [f, col, al] of [[1, MGOLD[2], 0.22], [0.66, MGOLD[1], 0.38], [0.34, '#fffdf0', 0.7], [0.12, '#ffffff', 0.95]]) {
+      ctx.globalAlpha = a * al;
+      const hw = (w * f) / 2;
+      fill(ctx, [[x - hw * 0.6, y0], [x + hw * 0.6, y0], [x + hw, y1], [x - hw, y1]], col);
+    }
+    ctx.restore();
+  }
+
+  // Her pearl in flight (loops; flies toward +x): a pearl of water spinning, a ring of water turning
+  // round it, droplets and a glint trailing.
+  E.tcpearl = moonlit((() => {
+    const n = 24;
+    const c = [104, 56];
+    return {
+      w: 160, h: 112, n, fps: 40, px: c[0], py: c[1], loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        for (let j = 0; j < 3; j++) {
+          const u = (ph * 2 + j / 3) % 1;
+          speedLine(ctx, MOONW, c[0] - 30 - u * 60, c[1] - 8 + j * 8, c[0] - 4 - u * 30, c[1] - 6 + j * 6, 3.4 * (1 - u));
+        }
+        for (let j = 0; j < 4; j++) {
+          const u = (ph + j / 4) % 1;
+          drop(ctx, j % 2 ? PEARL : MOONW, c[0] - 26 - u * 64, c[1] + Math.sin((u + j) * 5) * 8, Math.PI, 5 * (1 - u) + 1);
+        }
+        // The ring of water round it: its far half behind the pearl, its near half in front.
+        const tilt = 0.32;
+        const ring = (a0, a1) => {
+          ctx.save();
+          ctx.translate(c[0], c[1]);
+          ctx.rotate(-0.5);
+          ctx.scale(1, tilt);
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(0, 0, 32, a0, a1);
+          ctx.lineWidth = 9;
+          ctx.strokeStyle = MOONW[4];
+          ctx.stroke();
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = MOONW[2];
+          ctx.stroke();
+          ctx.lineWidth = 2.4;
+          ctx.strokeStyle = MOONW[1];
+          ctx.stroke();
+          ctx.restore();
+        };
+        const rot = ph * TAU * 2;
+        ring(Math.PI + rot, TAU + rot);
+        pearl(ctx, c[0], c[1], 19, ph);
+        ring(rot, Math.PI + rot);
+        sparkle(ctx, MGOLD, c[0] + 14, c[1] - 18, 6 + 3 * Math.sin(ph * TAU * 2), ph * TAU);
+      },
+    };
+  })());
+
+  // Her mark on a monster: a pearly splash, a ring of seafoam opening, droplets on their arcs and a
+  // little gold crescent turning and fading in the middle.
+  E.tchit = moonlit((() => {
+    const n = 24;
+    const c = 120;
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const ring = smooth(win(k, 0.02, 0.7));
+        if (ring > 0 && ring < 1) celRing(ctx, MOONW, c, c, 24 + 70 * ring, 14 * (1 - ring) + 3, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 901 });
+        spray(ctx, c, c, -Math.PI / 2, 3.6, 12, 90, win(k, 0, 0.9), 902, { pal: PEARL });
+        const g = swell(k, 0, 0.5);
+        if (g > 0) {
+          glim(ctx, c, c, 18 * g, MOONW);
+          ctx.save();
+          ctx.translate(c, c);
+          ctx.rotate(k * 2);
+          ctx.globalAlpha = g;
+          inked(ctx, moonShape(0, 0, 20, 9), MGOLD[2], MGOLD[4], 3);
+          fill(ctx, moonShape(0, 0, 20, 4), MGOLD[1]);
+          ctx.restore();
+        }
+        if (k > 0.2 && k < 0.8) sparkle(ctx, MGOLD, c + 34, c - 30, 10 * swell(k, 0.2, 0.8), k * 4);
+      },
+    };
+  })());
+
+  // Her ribbon (swept out ahead of the staff to its reach: 128 px, 384 art px): a ribbon of water
+  // drawn through the air in a long S behind the staff's head, its tail following it out and
+  // thinning away, droplets shed off it and glints along it.
+  E.tcribbon = moonlit((() => {
+    const n = 30;
+    const x0 = 20;
+    const L = 380;
+    const cy = 130;
+    const at = (u) => [x0 + u * L, cy + 48 * Math.sin(u * TAU * 0.95 + 0.6) * (0.5 + 0.5 * u) - 30 * u];
+    return {
+      w: L + 60, h: 260, n, fps: 48, px: x0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const head = smooth(win(k, 0, 0.5));
+        const tail = smooth(win(k, 0.22, 0.9));
+        if (head - tail > 0.02) {
+          const top = [];
+          const bot = [];
+          const m = 40;
+          for (let j = 0; j <= m; j++) {
+            const u = lerp(tail, head, j / m);
+            const [x, y] = at(u);
+            const [x2, y2] = at(Math.min(1, u + 0.01));
+            const a = Math.atan2(y2 - y, x2 - x);
+            const w = 20 * Math.pow(Math.sin(Math.PI * (j / m)), 0.7) * (1 - 0.4 * tail) + 1;
+            top.push([x - Math.sin(a) * w, y + Math.cos(a) * w]);
+            bot.push([x + Math.sin(a) * w * 0.7, y - Math.cos(a) * w * 0.7]);
+          }
+          water(ctx, top.concat(bot.reverse()), { ph: k * 2, inset: 0.3, ripple: 0.5 });
+          current(ctx, (u) => at(lerp(tail, head, u)), 1, k * 2, 2.4, 0.5);
+          const [hx, hy] = at(head);
+          glim(ctx, hx, hy, 9 * (1 - tail), PEARL);
+          for (let j = 0; j < 3; j++) {
+            const u = lerp(tail, head, 0.3 + j * 0.25);
+            const [sx, sy] = at(u);
+            sparkle(ctx, MGOLD, sx, sy - 18, 7 * swell(k, 0.15 + j * 0.1, 0.7 + j * 0.1), k * 5 + j);
+          }
+        }
+        spray(ctx, at(0.95)[0], at(0.95)[1], -0.4, 1.8, 9, 110, win(k, 0.35, 1), 911, { pal: PEARL });
+      },
+    };
+  })());
+
+  // A pillar of moonlight (on the floor out where it lands, about 140 px tall): a crescent moon
+  // fades in high over them, a column of soft light falls from it to the floor, a spring of seafoam
+  // water rises inside the light, rings of light open across the floor, and it all breaks up into
+  // falling drops and rising pearls of light.
+  E.tcpillar = moonlit((() => {
+    const n = 36;
+    const c = 150;
+    const gy = 500;
+    const top = 70;
+    return {
+      w: 300, h: 540, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const moonIn = smooth(win(k, 0, 0.18)) * (1 - smooth(win(k, 0.7, 0.95)));
+        const fall = smooth(win(k, 0.08, 0.26));
+        const fade = 1 - smooth(win(k, 0.6, 1));
+        for (let j = 0; j < 3; j++) {
+          const u = win(k, 0.2 + j * 0.12, 0.75 + j * 0.1);
+          if (u > 0 && u < 1) lightRing(ctx, c, gy, 30 + 130 * smooth(u), 12 * (1 - u) + 3, 1 - u, 0.28, j === 1 ? MOONW : MGOLD, u > 0.5 ? u - 0.5 : 0, 921 + j);
+        }
+        // Two ribbons of water winding up round the light, each passing behind it (drawn before the
+        // light) and in front (after).
+        const rise = smooth(win(k, 0.16, 0.46));
+        const gone = smooth(win(k, 0.6, 0.86));
+        const ribbons = (side) => {
+          if (rise <= 0.03 || gone >= 0.97) return;
+          const H = 380 * rise;
+          for (let j = 0; j < 2; j++) {
+            const at = (u) => {
+              const a = u * Math.PI * 3.2 + j * Math.PI - k * 9;
+              return [c + Math.sin(a) * (54 - 20 * u), gy - 10 - u * H, Math.cos(a)];
+            };
+            const m = 36;
+            {
+              const top = [];
+              const bot = [];
+              let on = false;
+              const flush = () => {
+                if (top.length > 2) water(ctx, top.concat(bot.reverse()), { ph: k * 2, inset: 0.3, ripple: 0.3 });
+                top.length = 0;
+                bot.length = 0;
+              };
+              for (let q = 0; q <= m; q++) {
+                const u = gone + (1 - gone) * (q / m);
+                const [x, y, z] = at(u);
+                const front = z > 0;
+                if (front !== (side === 1)) {
+                  if (on) flush();
+                  on = false;
+                  continue;
+                }
+                on = true;
+                const th = 9 * Math.sin(Math.PI * (q / m)) + 2;
+                top.push([x, y - th]);
+                bot.push([x, y + th]);
+              }
+              flush();
+            }
+          }
+          if (side) glim(ctx, c, gy - 10 - 380 * rise, 10 * (1 - gone), MOONW);
+        };
+        ribbons(0);
+        lightColumn(ctx, c, top, lerp(top, gy, fall), 150, fade * (0.6 + 0.4 * Math.sin(Math.PI * win(k, 0.08, 0.6))));
+        ribbons(1);
+        spray(ctx, c, gy - 300, -Math.PI / 2, 2.6, 14, 150, win(k, 0.55, 1), 924, { pal: PEARL, g: 1.2 });
+        glims(ctx, c, gy - 180 - 140 * k, 160, 200, 10, k, 925, 5 * fade);
+        if (moonIn > 0) {
+          ctx.save();
+          ctx.globalAlpha = moonIn;
+          glim(ctx, c, top, 30, MGOLD);
+          inked(ctx, moonShape(c + 10, top, 34, 15), MGOLD[2], MGOLD[4], 4);
+          fill(ctx, moonShape(c + 10, top, 34, 9), MGOLD[1]);
+          fill(ctx, moonShape(c + 10, top, 33, 3), '#ffffff');
+          ctx.restore();
+        }
+      },
+    };
+  })());
+
+  // Her skipping shell in flight (loops; skims toward +x along the floor): a little scallop shell
+  // spinning flat, bouncing in low hops, a splash and a ripple where it touches.
+  E.tcshell = moonlit((() => {
+    const n = 24;
+    const cx = 80;
+    const fy = 96;
+    function shell(x, y, r, sx) {
+      ctx0.save();
+      ctx0.translate(x, y);
+      ctx0.scale(sx, 1);
+      const pts = [];
+      for (let j = 0; j <= 20; j++) {
+        const t = lerp(Math.PI * 1.08, Math.PI * 1.92, j / 20);
+        const rr = r * (1 + 0.06 * Math.cos(j * Math.PI));
+        pts.push([Math.cos(t) * rr, Math.sin(t) * rr * 0.92 + r * 0.45]);
+      }
+      pts.push([r * 0.18, r * 0.62], [-r * 0.18, r * 0.62]);
+      inked(ctx0, pts, PEARL[2], PEARL[4], 3);
+      for (let j = 1; j < 5; j++) {
+        const t = lerp(Math.PI * 1.08, Math.PI * 1.92, j / 5);
+        ctx0.beginPath();
+        ctx0.moveTo(0, r * 0.58);
+        ctx0.lineTo(Math.cos(t) * r * 0.92, Math.sin(t) * r * 0.86 + r * 0.45);
+        ctx0.lineWidth = 2;
+        ctx0.strokeStyle = PEARL[3];
+        ctx0.stroke();
+      }
+      ctx0.beginPath();
+      ctx0.ellipse(-r * 0.3, -r * 0.1, r * 0.22, r * 0.12, -0.5, 0, TAU);
+      ctx0.fillStyle = '#ffffff';
+      ctx0.fill();
+      fill(ctx0, [[-r * 0.3, r * 0.6], [r * 0.3, r * 0.6], [r * 0.2, r * 0.74], [-r * 0.2, r * 0.74]], MGOLD[2]);
+      ctx0.restore();
+    }
+    let ctx0 = null;
+    return {
+      w: 180, h: 130, n, fps: 40, px: cx, py: fy - 20, loop: true,
+      draw(ctx, i) {
+        ctx0 = ctx;
+        const ph = i / n;
+        const hop = Math.abs(Math.sin(ph * TAU));
+        // Where it touched the water last, behind it now: a ripple opening and a splash.
+        const since = (ph % 0.5) / 0.5;
+        ripple(ctx, cx - 50 * since, fy, 10 + 34 * since, 5, 0.3, 0, 931, 1 - since);
+        spray(ctx, cx - 30 * since, fy - 2, -Math.PI / 2 - 0.5, 1.4, 5, 40, Math.min(0.99, since * 1.2), 932, { pal: MOONW });
+        for (let j = 0; j < 2; j++) {
+          const u = (ph * 2 + j / 2) % 1;
+          speedLine(ctx, PEARL, cx - 24 - u * 50, fy - 20 - hop * 30 + j * 6, cx - 8 - u * 20, fy - 20 - hop * 30 + j * 4, 2.6 * (1 - u));
+        }
+        shell(cx, fy - 24 - hop * 30, 27, Math.max(0.28, Math.abs(Math.cos(ph * TAU * 2))));
+      },
+    };
+  })());
+
+  // A shower of drops (out over them, on the floor at `py`): a breath of pearly mist gathers, the
+  // drops fall through the air in streaks, and each lands with a ring and a little splash.
+  E.tcdrops = moonlit((() => {
+    const n = 30;
+    const c = 170;
+    const gy = 320;
+    const R = rng(941);
+    const D = Array.from({ length: 18 }, (_, j) => ({ x: c + (R() - 0.5) * 260, at: 0.12 + R() * 0.45, sp: 0.18 + R() * 0.1, r: 6 + R() * 4, j }));
+    return {
+      w: 340, h: 340, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const mist = swell(k, 0, 0.6);
+        if (mist > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.7 * mist;
+          for (let j = 0; j < 5; j++) {
+            ctx.beginPath();
+            ctx.ellipse(c - 110 + j * 55, 44 + Math.sin(j * 2 + k * 3) * 6, (30 + 8 * (j % 2)) * (0.6 + 0.4 * mist), 14 * (0.6 + 0.4 * mist), 0, 0, TAU);
+            ctx.fillStyle = j % 2 ? MFOAM[2] : MOONW[1];
+            ctx.globalAlpha = 0.45 * mist;
+            ctx.fill();
+          }
+          glims(ctx, c, 44, 240, 20, 6, k, 944, 4 * mist);
+          ctx.restore();
+        }
+        for (const d of D) {
+          const u = (k - d.at) / d.sp;
+          if (u > 0 && u < 1) {
+            const y = lerp(50, gy - 6, u * u);
+            speedLine(ctx, MOONW, d.x, y - 40 * u - 8, d.x, y, d.r * 0.4);
+            drop(ctx, d.j % 3 ? MOONW : PEARL, d.x, y, Math.PI / 2, d.r);
+          } else if (u >= 1) {
+            const v = (k - d.at - d.sp) / 0.3;
+            if (v < 1) {
+              ripple(ctx, d.x, gy, 6 + 24 * v, 4, 0.3, 0, 943 + d.j, 1 - v);
+              spray(ctx, d.x, gy - 2, -Math.PI / 2, 1.8, 3, 26, Math.min(0.99, v * 1.4), 960 + d.j, { pal: PEARL });
+            }
+          }
+        }
+      },
+    };
+  })());
+  E.tcdropsbig = grown(E.tcdrops, 1.4);
+
+  // Her crescent wave in flight (loops; rolls toward +x at chest height): a crescent of seafoam
+  // water standing on its tips, its belly forward, rippling, a gold edge of light along its belly,
+  // foam peeling off its tips and pearls trailing.
+  E.tccrescent = moonlit((() => {
+    const n = 24;
+    const cx = 110;
+    const cy = 110;
+    return {
+      w: 220, h: 220, n, fps: 40, px: cx + 40, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        for (let j = 0; j < 3; j++) {
+          const u = (ph * 2 + j / 3) % 1;
+          speedLine(ctx, MOONW, cx - 30 - u * 70, cy - 50 + j * 50, cx + 10 - u * 40, cy - 46 + j * 46, 3.4 * (1 - u));
+        }
+        const R0 = 86;
+        water(ctx, moonShape(cx, cy, R0, 38), { ph: ph * 2, inset: 0.28, lit: { w: 6, pts: moonShape(cx - 6, cy, R0 - 6, 1, 12).slice(2, 11) } });
+        current(ctx, (u, j) => {
+          const t = lerp(-1.1, 1.1, u);
+          return [cx + Math.cos(t) * (R0 - 14 - j * 10), cy + Math.sin(t) * (R0 - 14 - j * 10)];
+        }, 2, ph * 2, 2.4, 0.45);
+        // Its edge of light.
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, cy, R0 + 1, -1.05, 1.05);
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = MGOLD[1];
+        ctx.stroke();
+        ctx.restore();
+        for (const s of [-1, 1]) claws(ctx, cx + Math.cos(1.2 * s) * R0, cy + Math.sin(1.2 * s) * R0, 16, Math.PI + s * 0.9, 3, ph, 951 + s);
+        for (let j = 0; j < 4; j++) {
+          const u = (ph + j / 4) % 1;
+          pearl(ctx, cx - 40 - u * 60, cy + (j - 1.5) * 34, 7 * (1 - u) + 1, u);
+        }
+        sparkle(ctx, MGOLD, cx + R0 * 0.92, cy - 20, 7 + 3 * Math.sin(ph * TAU * 2), ph * TAU);
+      },
+    };
+  })());
+  E.tccrescentbig = grown(E.tccrescent, 1.5);
+
+  // A droplet of healing (Spring Tide; on whoever it mends, from their feet at `py`): a glowing drop
+  // falls onto them, bursts in a ring of soft light that washes down to their feet, and little
+  // lights rise off them.
+  E.tcdrop = moonlit((() => {
+    const n = 30;
+    const c = 80;
+    const gy = 290;
+    const head = 150;
+    return {
+      w: 160, h: 300, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fall = win(k, 0, 0.3);
+        if (fall < 1) {
+          const y = lerp(0, head, fall * fall);
+          speedLine(ctx, MOONW, c, y - 50 * fall - 10, c, y, 4);
+          glim(ctx, c, y, 12, MOONW);
+          drop(ctx, MOONW, c, y, Math.PI / 2, 9);
+        }
+        const wash = win(k, 0.3, 0.85);
+        if (wash > 0 && wash < 1) {
+          lightRing(ctx, c, lerp(head, gy - 4, smooth(wash)), 30 + 16 * wash, 8 * (1 - wash) + 2, 1 - wash * 0.6, 0.3, MGOLD);
+          if (wash < 0.4) glim(ctx, c, head, 20 * swell(wash, 0, 0.4), MGOLD);
+        }
+        spray(ctx, c, head, -Math.PI / 2, 2.8, 8, 50, win(k, 0.28, 0.8), 971, { pal: PEARL });
+        const R = rng(972);
+        for (let j = 0; j < 5; j++) {
+          const u = win(k, 0.4 + R() * 0.2, 1);
+          if (u > 0 && u < 1) glim(ctx, c + (R() - 0.5) * 80, gy - 40 - 140 * u, 4.5 * (1 - u), j % 2 ? MGOLD : MOONW);
+          else R();
+        }
+      },
+    };
+  })());
+
+  // A pearl of light (her aura's, rising round her as her Moonsong builds; loops).
+  E.tcmote = (() => {
+    const n = 24;
+    return {
+      w: 60, h: 60, n, fps: 24, px: 30, py: 30, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        glim(ctx, 30, 30, 9 + 2 * Math.sin(ph * TAU), ph < 0.5 ? MGOLD : MOONW);
+        sparkle(ctx, MGOLD, 30, 30, 6 + 6 * Math.max(0, Math.sin(ph * TAU)), ph * TAU);
+      },
+    };
+  })();
+
+  // Spring Tide's ring (loops; flat at her feet): a ring of moonlight turning, three little
+  // crescents riding round it and glints rising off it.
+  E.tcring = (() => {
+    const n = 24;
+    const c = [150, 70];
+    return {
+      w: 300, h: 140, n, fps: 24, px: c[0], py: c[1], loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        lightRing(ctx, c[0], c[1], 120, 10, 0.85, 0.3, MGOLD, 0.25, 981 + (i % 2));
+        lightRing(ctx, c[0], c[1], 98, 6, 0.6, 0.3, MOONW);
+        for (let j = 0; j < 3; j++) {
+          const a = ph * TAU + (j / 3) * TAU;
+          const x = c[0] + Math.cos(a) * 110;
+          const y = c[1] + Math.sin(a) * 110 * 0.3;
+          ctx.save();
+          ctx.globalAlpha = Math.sin(a) > 0 ? 1 : 0.55;
+          inked(ctx, moonShape(x, y - 10, 12, 5), MGOLD[2], MGOLD[4], 2.5);
+          ctx.restore();
+        }
+        for (let j = 0; j < 4; j++) {
+          const u = (ph + j / 4) % 1;
+          glim(ctx, c[0] + Math.cos(j * 1.7) * 90, c[1] - 6 - 50 * u, 4 * (1 - u), j % 2 ? MOONW : MGOLD);
+        }
+      },
+    };
+  })();
+
+  // Tide's Return (on the fallen, from their feet at `py`): the water at their feet glows, a column
+  // of soft light rises up out of it, drops lift off the floor and float up with it, a crescent
+  // shines over them, and it fades as they stand.
+  E.tcrevive = moonlit((() => {
+    const n = 40;
+    const c = 120;
+    const gy = 460;
+    return {
+      w: 240, h: 480, n, fps: 34, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fade = 1 - smooth(win(k, 0.7, 1));
+        const pool = smooth(win(k, 0, 0.2));
+        lightRing(ctx, c, gy, 30 + 60 * pool, 10, fade, 0.3, MOONW);
+        lightRing(ctx, c, gy, 20 + 40 * pool, 6, fade, 0.3, MGOLD);
+        const up = smooth(win(k, 0.12, 0.5));
+        lightColumn(ctx, c, lerp(gy, 80, up), gy, 110, fade * 0.9);
+        const R = rng(991);
+        for (let j = 0; j < 12; j++) {
+          const x = c + (R() - 0.5) * 120;
+          const s = R();
+          const u = win(k, 0.1 + s * 0.3, 0.7 + s * 0.3);
+          if (u <= 0 || u >= 1) continue;
+          const y = gy - 10 - 360 * smooth(u);
+          if (j % 3) drop(ctx, j % 2 ? MOONW : PEARL, x, y, -Math.PI / 2, 6 * (1 - u * 0.5));
+          else glim(ctx, x, y, 5 * (1 - u), MGOLD);
+        }
+        const moonIn = smooth(win(k, 0.3, 0.5)) * fade;
+        if (moonIn > 0) {
+          ctx.save();
+          ctx.globalAlpha = moonIn;
+          glim(ctx, c, 80, 24, MGOLD);
+          inked(ctx, moonShape(c + 8, 80, 28, 12), MGOLD[2], MGOLD[4], 3);
+          fill(ctx, moonShape(c + 8, 80, 27, 6), MGOLD[1]);
+          ctx.restore();
+        }
+        if (k > 0.4 && k < 0.9) for (let j = 0; j < 3; j++) sparkle(ctx, MGOLD, c + (j - 1) * 50, 200 - j * 30, 10 * swell(k, 0.4 + j * 0.05, 0.9), k * 4 + j);
+      },
+    };
+  })());
+
+  // Her versions of the Tide Mage's water, in her palette with pearls of light drifting in it.
+  const withGlims = (e, { x, y, w, h, n, r = 4, seed }) => moonlit({
+    ...e,
+    draw(ctx, i) {
+      e.draw(ctx, i);
+      glims(ctx, x, y, w, h, n, i / e.n, seed, r);
+    },
+  });
+  E.tcbubble = moonlit(E.tmbubble);
+  E.tcbubblepop = moonlit(E.tmhit);
+  E.tcspring = withGlims(E.tmgeyser, { x: 130, y: 250, w: 160, h: 300, n: 8, r: 4.5, seed: 1001 });
+  E.tcsplash = moonlit(E.tmsplash);
+
+  // ---------- The Tidecaller's skills ----------
+  // Healing Rain (loops while it lasts; over the party, on the floor at `py`): a soft cloud of
+  // seafoam mist hangs overhead, lit gold from inside, and a gentle rain falls from it, every drop
+  // landing in a ring, little lights rising where they land.
+  E.tcrain = moonlit((() => {
+    const n = 30;
+    const c = 300;
+    const gy = 330;
+    const R = rng(1101);
+    const D = Array.from({ length: 26 }, (_, j) => ({ x: c + (R() - 0.5) * 520, o: R(), r: 5 + R() * 3, j }));
+    return {
+      w: 600, h: 350, n, fps: 20, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        // The rain, under the cloud.
+        for (const d of D) {
+          const u = (ph + d.o) % 1;
+          if (u < 0.7) {
+            const v = u / 0.7;
+            const y = lerp(80, gy - 4, v);
+            speedLine(ctx, MOONW, d.x - 4, y - 46, d.x, y, d.r * 0.36);
+            drop(ctx, d.j % 4 ? MOONW : PEARL, d.x, y, Math.PI / 2 - 0.08, d.r);
+          } else {
+            const v = (u - 0.7) / 0.3;
+            ripple(ctx, d.x, gy, 6 + 22 * v, 4, 0.3, 0, 1102 + d.j, 1 - v);
+            if (d.j % 3 === 0) glim(ctx, d.x, gy - 8 - 40 * v, 4 * (1 - v), MGOLD);
+          }
+        }
+        // The cloud: soft lobes of mist drifting, lit from inside, a glint or two turning in it.
+        // (Soft and see-through, lobes of every size overlapping in two rows, none of them white.)
+        const CR = rng(1104);
+        for (let row = 0; row < 2; row++) {
+          for (let j = 0; j < 8; j++) {
+            const x = c - 250 + j * 70 + row * 34 + (CR() - 0.5) * 30 + Math.sin(ph * TAU + j * 1.3 + row) * 10;
+            const y = 52 + row * 26 + (CR() - 0.5) * 16 + Math.cos(ph * TAU + j + row * 2) * 4;
+            const sz = 0.7 + CR() * 0.6;
+            for (const [rx, ry, col, a] of [[62, 32, MOONW[3], 0.16], [50, 26, MOONW[2], 0.24], [34, 17, MOONW[1], 0.3]]) {
+              ctx.beginPath();
+              ctx.ellipse(x, y, rx * sz, ry * sz, 0, 0, TAU);
+              ctx.fillStyle = col;
+              ctx.globalAlpha = a;
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
+        }
+        glims(ctx, c, 60, 480, 40, 8, ph, 1103, 5);
+        for (let j = 0; j < 3; j++) sparkle(ctx, MGOLD, c - 160 + j * 160, 50 + (j % 2) * 20, 8 * Math.max(0, Math.sin(ph * TAU + j * 2)), ph * TAU + j);
+      },
+    };
+  })());
+
+  // Spring Surge (round her, on the floor at `py`): the floor glows under her, rings of gold and
+  // seafoam race out across it, a curtain of water leaps up all round her and falls back, and
+  // lights rise off everyone it reaches.
+  E.tcsurge = moonlit((() => {
+    const n = 32;
+    const c = 260;
+    const gy = 360;
+    return {
+      w: 520, h: 380, n, fps: 36, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const glow = swell(k, 0, 0.6);
+        if (glow > 0) {
+          ctx.save();
+          ctx.globalAlpha = 0.5 * glow;
+          ctx.beginPath();
+          ctx.ellipse(c, gy, 140, 40, 0, 0, TAU);
+          ctx.fillStyle = MGOLD[1];
+          ctx.fill();
+          ctx.restore();
+        }
+        for (let j = 0; j < 3; j++) {
+          const u = win(k, j * 0.1, 0.6 + j * 0.12);
+          if (u > 0 && u < 1) lightRing(ctx, c, gy, 30 + 210 * smooth(u), 14 * (1 - u) + 3, 1 - u, 0.3, j === 1 ? MOONW : MGOLD, u > 0.5 ? u - 0.5 : 0, 1111 + j);
+        }
+        // The curtain: arcs of water leaping up on both sides and falling back.
+        const R = rng(1114);
+        for (let j = 0; j < 14; j++) {
+          const side = j % 2 ? 1 : -1;
+          const x = c + side * (30 + R() * 150);
+          const H = 120 + R() * 140;
+          const st = R() * 0.15;
+          const u = win(k, 0.05 + st, 0.75 + st);
+          if (u <= 0 || u >= 1) continue;
+          const y = gy - 4 * H * u * (1 - u);
+          const dirA = u < 0.5 ? -Math.PI / 2 : Math.PI / 2;
+          speedLine(ctx, MOONW, x, y + (u < 0.5 ? 40 : -40), x, y, 5 * (1 - Math.abs(u - 0.5)));
+          drop(ctx, j % 3 ? MOONW : MFOAM, x, y, dirA, 9 * (1 - u * 0.4));
+        }
+        glims(ctx, c, gy - 80 - 160 * k, 380, 120, 12, k, 1115, 6 * (1 - win(k, 0.6, 1)));
+        if (k < 0.4) {
+          glim(ctx, c, gy - 70, 34 * swell(k, 0, 0.4), MGOLD);
+          sparkle(ctx, MGOLD, c, gy - 70, 26 * swell(k, 0, 0.4), k * 3);
+        }
+      },
+    };
+  })());
+
+  // Moon Blessing (round her): a crescent fades in over her with a ring of gold, and flakes of
+  // moonlight drift down round the party, each one turning and glinting as it falls.
+  E.tcbless = moonlit((() => {
+    const n = 34;
+    const c = 220;
+    const gy = 420;
+    const R = rng(1121);
+    const F = Array.from({ length: 16 }, () => ({ x: c + (R() - 0.5) * 400, at: R() * 0.4, sp: 0.4 + R() * 0.2, s: R() }));
+    return {
+      w: 440, h: 440, n, fps: 34, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const moonIn = smooth(win(k, 0, 0.25)) * (1 - smooth(win(k, 0.7, 1)));
+        lightRing(ctx, c, gy, 60 + 120 * smooth(win(k, 0, 0.6)), 10, 1 - win(k, 0.4, 1), 0.3, MGOLD, 0.3, 1122);
+        for (const f of F) {
+          const u = (k - f.at) / f.sp;
+          if (u <= 0 || u >= 1) continue;
+          const x = f.x + Math.sin(u * 6 + f.s * 6) * 14;
+          const y = lerp(90, gy - 10, u);
+          const a = 1 - win(u, 0.7, 1);
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.translate(x, y);
+          ctx.rotate(u * 4 + f.s * 6);
+          if (f.s < 0.5) sparkle(ctx, MGOLD, 0, 0, 7 + 3 * Math.sin(u * 12), 0);
+          else inked(ctx, moonShape(0, 0, 8, 3.5), MGOLD[2], MGOLD[4], 2);
+          ctx.restore();
+        }
+        if (moonIn > 0) {
+          ctx.save();
+          ctx.globalAlpha = moonIn;
+          glim(ctx, c, 70, 30, MGOLD);
+          inked(ctx, moonShape(c + 10, 70, 32, 14), MGOLD[2], MGOLD[4], 4);
+          fill(ctx, moonShape(c + 10, 70, 31, 8), MGOLD[1]);
+          fill(ctx, moonShape(c + 10, 70, 30, 3), '#ffffff');
+          ctx.restore();
+        }
+      },
+    };
+  })());
+
+  // Moonfall (on the floor out where it lands): a great crescent of water and light drawn in the
+  // sky over them, falling, turning as it comes, slamming into the floor in a crown of water, rings
+  // racing out and spray flying, the light washing over the party.
+  E.tcmoonfall = moonlit((() => {
+    const n = 36;
+    const c = 230;
+    const gy = 520;
+    return {
+      w: 460, h: 540, n, fps: 40, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fall = win(k, 0.12, 0.42);
+        const hit = win(k, 0.42, 1);
+        if (k < 0.44) {
+          const y = lerp(90, gy - 70, fall * fall);
+          const a = smooth(win(k, 0, 0.14));
+          ctx.save();
+          ctx.globalAlpha = a;
+          ctx.translate(c, y);
+          ctx.rotate(-0.9 + 0.9 * fall);
+          if (fall > 0.2) for (let j = 0; j < 4; j++) speedLine(ctx, MGOLD, -30 + j * 20, -90 - 60 * fall, -30 + j * 20, -40, 4);
+          glim(ctx, 0, 0, 50, MGOLD);
+          water(ctx, moonShape(-30, 0, 80, 40), { ph: k * 2, inset: 0.26 });
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(-30, 0, 81, -1.05, 1.05);
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = MGOLD[1];
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (hit > 0 && hit < 1) {
+          const crown = swell(hit, 0, 0.6);
+          if (crown > 0) {
+            const pts = [];
+            const m = 9;
+            for (let j = 0; j <= m * 2; j++) {
+              const u = j / (m * 2);
+              const x = c - 140 + u * 280;
+              const tip = j % 2 === 0;
+              pts.push([x, gy - (tip ? 150 : 60) * crown * Math.sin(Math.PI * u) - 8]);
+            }
+            pts.push([c + 140, gy], [c - 140, gy]);
+            water(ctx, pts, { ph: hit * 2, inset: 0.25, ripple: 0.6 });
+          }
+          for (let j = 0; j < 3; j++) {
+            const u = win(hit, j * 0.12, 0.7 + j * 0.1);
+            if (u > 0 && u < 1) lightRing(ctx, c, gy, 40 + 190 * smooth(u), 14 * (1 - u) + 3, 1 - u, 0.3, j === 1 ? MGOLD : MOONW, u > 0.5 ? u - 0.5 : 0, 1131 + j);
+          }
+          spray(ctx, c, gy - 40, -Math.PI / 2, 2.6, 20, 200, win(hit, 0, 0.9), 1134, { pal: MFOAM, g: 1.1 });
+          glims(ctx, c, gy - 120 - 160 * hit, 340, 160, 12, hit, 1135, 6 * (1 - hit));
+          if (hit < 0.3) {
+            glim(ctx, c, gy - 40, 70 * swell(hit, 0, 0.3), MGOLD);
+            sparkle(ctx, MGOLD, c, gy - 60, 40 * swell(hit, 0, 0.3), hit * 3);
+          }
+        }
+      },
+    };
+  })());
+
+  // Moon Tide (her finisher; round her, on the floor at `py`, the width of the screen): the moon
+  // rises huge behind her, the tide rises across the whole floor in a long rippling swell lit gold
+  // by it, pearls of light lifting out of the water, then it surges, breaks into spray all along
+  // its length and drains away.
+  E.tcmoontidebig = moonlit((() => {
+    const n = 44;
+    const c = 640;
+    const gy = 640;
+    const W = 1180;
+    return {
+      w: 1280, h: 680, n, fps: 26, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const moonIn = smooth(win(k, 0, 0.3)) * (1 - smooth(win(k, 0.8, 1)));
+        if (moonIn > 0) {
+          ctx.save();
+          ctx.globalAlpha = moonIn;
+          const my = lerp(380, 150, smooth(win(k, 0, 0.5)));
+          glim(ctx, c, my, 110, MGOLD);
+          inked(ctx, moonShape(c + 30, my, 110, 50), MGOLD[2], MGOLD[4], 5);
+          fill(ctx, moonShape(c + 30, my, 108, 30), MGOLD[1]);
+          fill(ctx, moonShape(c + 30, my, 106, 10), '#ffffff');
+          ctx.restore();
+        }
+        // The swell: its top a long wave running along, rising, surging and draining.
+        // (No higher than a monster's middle: she stays in plain sight, the tide behind her.)
+        const level = 130 * smooth(win(k, 0.12, 0.5)) * (1 - smooth(win(k, 0.72, 0.98))) + 40 * swell(k, 0.5, 0.72);
+        if (level > 4) {
+          const pts = [];
+          const m = 48;
+          for (let j = 0; j <= m; j++) {
+            const u = j / m;
+            // (Flat across the floor, only its two ends running down to it: a flood, not a mound.)
+            const edge = smooth(Math.min(1, Math.sin(Math.PI * u) * 3.5));
+            pts.push([c - W / 2 + u * W, gy - level * edge - 14 * Math.sin(u * 14 - k * 18) * edge]);
+          }
+          pts.push([c + W / 2, gy], [c - W / 2, gy]);
+          water(ctx, pts, { ph: k * 3, inset: 0.18, lit: { w: 8, pts: pts.slice(4, m - 3).map(([x, y]) => [x, y + 10]) } });
+          current(ctx, (u, j) => [c - W / 2 + 60 + u * (W - 120), gy - level * 0.5 + (j - 1) * 30 + Math.sin(u * 10 + j) * 8], 3, k * 3, 3, 0.4);
+          for (let j = 0; j < 8; j++) claws(ctx, c - W / 2 + 80 + j * ((W - 160) / 7), pts[Math.round(((80 + j * ((W - 160) / 7)) / W) * m)][1], 22, -Math.PI / 2 + (j % 2 ? 0.4 : -0.4), 3, k, 1141 + j);
+          glims(ctx, c, gy - level * 0.6, W - 100, level * 0.8, 20, k * 2, 1142, 7);
+        }
+        // It breaks: spray all along its top.
+        for (let j = 0; j < 6; j++) spray(ctx, c - W / 2 + 120 + j * ((W - 240) / 5), gy - 150, -Math.PI / 2, 2.4, 10, 160, win(k, 0.66, 1), 1150 + j, { pal: MFOAM, g: 1.1 });
+      },
+    };
+  })());
+
+  // Lunar Flow: a glint running up the staff and a burst of little gold lights.
+  E.tcglint = moonlit((() => {
+    const n = 24;
+    const c = 110;
+    return {
+      w: 220, h: 220, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const ring = smooth(win(k, 0.05, 0.7));
+        if (ring > 0 && ring < 1) celRing(ctx, MGOLD, c, c, 20 + 70 * ring, 10 * (1 - ring) + 2, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 1161 });
+        const R = rng(1162);
+        for (let j = 0; j < 10; j++) {
+          const a = R() * TAU;
+          const v = win(k, R() * 0.15, 1);
+          if (v <= 0 || v >= 1) continue;
+          sparkle(ctx, j % 3 ? MGOLD : MOONW, c + Math.cos(a) * (20 + 70 * v), c + Math.sin(a) * (20 + 70 * v), 8 * (1 - v), v * 4 + j);
+        }
+        if (k < 0.5) glim(ctx, c, c, 22 * swell(k, 0, 0.5), MGOLD);
+      },
+    };
+  })());
+
+  // Her versions of the Tide Mage's skills.
+  E.tcshellfx = withGlims(E.tmshieldfx, { x: 150, y: 140, w: 220, h: 200, n: 10, r: 4, seed: 1171 });
+  E.tcpool = withGlims(E.tmpool, { x: 190, y: 66, w: 300, h: 40, n: 12, r: 3.5, seed: 1172 });
+  E.tcwhirl = moonlit(E.tmwhirlbig);
+  E.tcsilverwave = withGlims(E.tmwavebig, { x: 210, y: 210, w: 300, h: 200, n: 10, r: 5, seed: 1173 });
+  E.tcsilvertidebig = withGlims(E.tmgreatbig, { x: 320, y: 300, w: 560, h: 420, n: 16, r: 8, seed: 1174 });
+  E.tcsplashbig = moonlit(E.tmsplashbig);
 
   window.FXART = E;
   window.FXHD = { render, RAW };

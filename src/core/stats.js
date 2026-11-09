@@ -133,7 +133,9 @@ export function computeStats(char, now = 0) {
     critDamage: (pas.critDamage ?? 0) + (buf.critDamage ?? 0) + (set.critDamage ?? 0),
     attackSpeed: Math.min(0.5, (pas.attackSpeed ?? 0) + (buf.attackSpeed ?? 0)),
     manaShield: buf.manaShield ?? 0,
-    mpRegen: pas.mpRegen ?? 0,
+    mpRegen: (pas.mpRegen ?? 0) + (buf.mpRegen ?? 0),
+    // (Tidecaller: Tidesong's stronger heals.)
+    healBoost: pas.healBoost ?? 0,
     weaponType: weaponTypeOf(char),
   };
 }

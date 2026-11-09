@@ -91,6 +91,14 @@ export const JOBS = {
     blurb: 'A dancer who never lands, with gloves of wind. Every blow lifts her higher over the monsters and throws a crescent of wind down at them; her hits in the air build Tailwind, and full, she flies freely and her gusts are twice as big. Updraft, Zephyr, and Sky Waltz: a giant tornado that lifts them all and slams them down.',
   },
 
+  // The Tide Mage's healer path (docs/design/tidecaller.md), the party's healer. Asks for Elowen's
+  // trial first, like the Maelstrom.
+  tidecaller: {
+    id: 'tidecaller', power: 6.54, spread: 2.13, name: 'Tidecaller', family: 'mage', tier: 2, parent: 'tidemage', level: 30, trial: 'mage_trial',
+    hp: 24, mp: 34, advanceHp: 300, advanceMp: 520, weapons: ['staff'],
+    blurb: 'The Tide Mage the moon answers: the party\'s healer. Pearls, crescents and pillars of moonlight; her hits and heals build Moonsong, and the fuller it runs the stronger she heals. Full (Spring Tide), her heals leave bubbles on everyone and her attacks rain healing on whoever is hurt most. Healing Rain, Spring Surge, Tide\'s Return, and Moon Tide: the tide floods the screen and brings everyone back.',
+  },
+
   // The Tide Mage's damage path (docs/design/maelstrom.md). Asks for Elowen's trial first.
   maelstrom: {
     id: 'maelstrom', power: 4.41, spread: 1.68, name: 'Maelstrom', family: 'mage', tier: 2, parent: 'tidemage', level: 30, trial: 'mage_trial',

@@ -5320,6 +5320,475 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Tidecaller (docs/design/tidecaller.md) ----------
+  // The mage the moon answers: graceful and flowing, sung rather than hurled. She sways, turns and
+  // conducts the water with long sweeping gestures, up on her toes, the free hand as much a part of
+  // every spell as the staff; the staff stays ahead of her, its head never across her face.
+  // Pearl (opener, at ~0.48): a little turn of the wrist draws the staff's head back in a soft loop,
+  // then a flick sends a pearl of water spinning off it, her free hand opening after it.
+  tcpearl(p) {
+    const loop = soft(seg(p, 0, 0.42));
+    const a = loop * Math.PI * 1.4;
+    const flick = ease(seg(p, 0.42, 0.52));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: 50 + 16 * Math.sin(a) * (1 - flick) + 36 * flick - 36 * back, arm: 44 + 6 * Math.sin(a + 0.6) * (1 - flick) + 10 * flick - 10 * back,
+      lift: 1.2 * bump(p, 0.3, 0.6), lunge: 2.5 * flick * (1 - back), tilt: -0.04 * loop * (1 - flick) + 0.08 * flick * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [loop * (1 - flick), [2.4, -0.4, 2], [-2.6, 0, -6]], [flick * (1 - back), [3.4, -0.6, 4], [-3.2, 0, -10]]);
+        r.backArm = [q(lerp(-1, -3, loop) * (1 - flick) + 5 * flick * (1 - back)), q(lerp(-1, -3, loop) * (1 - flick) - 2 * flick * (1 - back))];
+        r.hairLift = flick > 0.3 && back < 0.4 ? -1 : 0;
+        if (loop > 0.3 && flick < 0.2) r.eyes = 'half';
+        if (flick > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Ribbon (second, at ~0.5): a dancer's turn on the spot, the staff swept round low to high so a
+  // ribbon of water follows its head in a long S through them.
+  tcribbon(p) {
+    const wind = soft(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.32, 0.56));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(40, 124, wind), 40, sweep) + 10 * back, arm: lerp(lerp(40, 30, wind), 58, sweep) - 14 * back,
+      lift: 1.6 * bump(p, 0.3, 0.62), lunge: -1 * wind + 4 * sweep * (1 - 0.6 * back), tilt: 0.06 * wind * (1 - sweep) - 0.08 * sweep * (1 - back),
+      turn: wind > 0.5 && sweep < 0.35 ? -1 : 1,
+      rig: (r) => {
+        danceLegs(r, [wind * (1 - sweep), [2, -0.8, 2], [-3, 0, -8]], [sweep * (1 - back), [3.8, -0.4, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, 4, wind), -5, sweep) + 5 * back), q(lerp(lerp(-1, 1, wind), -4, sweep) + 3 * back)];
+        r.hairLift = sweep > 0.2 && back < 0.4 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.3, 0.7));
+        if (sweep > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Pillar of moonlight (finisher, at ~0.56): she raises the staff high and lifts onto her toes, her
+  // free hand rising open to the sky as if calling the moon, then draws both down and the light
+  // falls on them.
+  tcpillar(p) {
+    const call = soft(seg(p, 0, 0.4));
+    const hold = bump(p, 0.36, 0.56);
+    const fall = ease(seg(p, 0.5, 0.62));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 10, call), 70, fall) - 30 * back, arm: lerp(lerp(40, 60, call), 52, fall) - 12 * back,
+      lift: 4 * call * (1 - fall) + 1.4 * hold, lunge: 3 * fall * (1 - back), tilt: -0.1 * call * (1 - fall) + 0.1 * fall * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.4 * fall * (1 - back));
+        danceLegs(r, [call * (1 - fall), [1.6, -1.6, 2], [-1.8, -1.4, -4]], [fall * (1 - back), [3.8, 0, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -4, call), -4, fall) + 4 * back * fall), q(lerp(lerp(-1, -12, call), -2, fall) + 1 * back)];
+        r.hairLift = call > 0.4 && fall < 0.3 ? -1 : fall > 0.4 && back < 0.4 ? 1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.2, 0.7));
+        if (call > 0.4 && fall < 0.3) r.eyes = 'blink';
+        else if (fall > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Skipping shells (opener, two at ~0.46 and ~0.62): a low sidearm skim, like skipping stones on
+  // the sea, the staff swept flat along the floor twice.
+  tcshell(p) {
+    const low = soft(seg(p, 0, 0.3));
+    const a = ease(seg(p, 0.36, 0.48));
+    const b = ease(seg(p, 0.54, 0.64));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(40, 112, low), 96, a) + 10 * bump(p, 0.48, 0.56) - 4 * b - 50 * back, arm: lerp(lerp(40, 34, low), 54, a) - 14 * back,
+      lunge: 2 * a + 1.5 * b * (1 - back) - 1.5 * back * a, tilt: 0.12 * low * (1 - back),
+      rig: (r) => {
+        r.squat = q(2 * low * (1 - back));
+        danceLegs(r, [low * (1 - back), [3.6, 0, 6], [-3.4, 0, -12]]);
+        r.backArm = [q(lerp(0, -4, low) * (1 - back)), q(lerp(-1, 2, low) * (1 - back))];
+        if ((a > 0.3 && a < 1) || (b > 0.3 && back < 0.5)) r.mouth = 'o';
+      },
+    };
+  },
+  // Shower of drops (opener, at ~0.36-0.64): she spins the staff's head in a little circle over them
+  // like stirring a cloud, the drops falling, her free hand raised palm down.
+  tcdrops(p) {
+    const up = soft(seg(p, 0, 0.26)) * (1 - soft(seg(p, 0.78, 1)));
+    const a = seg(p, 0.2, 0.7) * Math.PI * 4;
+    return {
+      weapon: lerp(40, 54, up) + 10 * Math.sin(a) * up, arm: lerp(40, 62, up) + 4 * Math.cos(a) * up,
+      lift: 1.6 * up, lunge: 1.5 * up, tilt: -0.04 * up,
+      rig: (r) => {
+        danceLegs(r, [up, [2.2, -0.8, 2], [-2.4, -0.4, -4]]);
+        r.backArm = [q(lerp(0, -3, up)), q(lerp(-1, -8, up))];
+        if (up > 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Crescent wave (second, at ~0.46): the staff drawn across her in a wide arc from high behind to
+  // low ahead, the crescent of water left by its head rolling off.
+  tccrescent(p) {
+    const rise = soft(seg(p, 0, 0.32));
+    const cut = ease(seg(p, 0.34, 0.5));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(40, 8, rise), 120, cut) - 70 * back, arm: lerp(lerp(40, 58, rise), 46, cut) - 6 * back,
+      lift: 2 * rise * (1 - cut), lunge: -1 * rise + 5 * cut * (1 - 0.6 * back), tilt: -0.08 * rise * (1 - cut) + 0.12 * cut * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.4 * cut * (1 - back));
+        danceLegs(r, [rise * (1 - cut), [1.8, -1.2, 2], [-2.4, -0.6, -6]], [cut * (1 - back), [4, 0, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -5, rise), -4, cut) + 4 * back), q(lerp(lerp(-1, -6, rise), 1, cut) - 2 * back)];
+        r.hairLift = cut > 0.3 && back < 0.4 ? 1 : rise > 0.4 ? -1 : 0;
+        if (cut > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Chain of bubbles (second, three at ~0.3, 0.44, 0.58): she blows across her open palm and taps
+  // the staff's head three times as the bubbles string out from it.
+  tcchain(p) {
+    const up = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.76, 1)));
+    const taps = bump(p, 0.24, 0.34) + bump(p, 0.38, 0.48) + bump(p, 0.52, 0.62);
+    return {
+      weapon: lerp(40, 70, up) + 5 * taps, arm: lerp(40, 52, up) + 2 * taps,
+      lunge: 1.2 * up + 0.6 * taps, tilt: 0.03 * up + 0.02 * taps,
+      rig: (r) => {
+        danceLegs(r, [up, [2.4, -0.6, 2], [-2.4, 0, -6]]);
+        r.backArm = [q(lerp(0, 5, up)), q(lerp(-1, -6, up))];
+        if (up > 0.4) r.mouth = 'o';
+      },
+    };
+  },
+  // Rising spring (finisher, at ~0.52): she sinks low with the staff's foot to the floor, then sweeps
+  // it up in one long lift, rising onto her toes, and the spring wells up under them.
+  tcspring(p) {
+    const sink = soft(seg(p, 0, 0.34));
+    const lift = ease(seg(p, 0.38, 0.56));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 120, sink), 20, lift) + 20 * back, arm: lerp(lerp(40, 28, sink), 62, lift) - 20 * back,
+      lift: 3 * lift * (1 - back), lunge: 1 * sink + 2 * lift * (1 - back), tilt: 0.1 * sink * (1 - lift) - 0.1 * lift * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.8 * sink * (1 - lift));
+        danceLegs(r, [sink * (1 - lift), [3.4, 0, 6], [-3.4, 0, -16]], [lift * (1 - back), [1.8, -1.4, 2], [-2, -1.2, -4]]);
+        r.backArm = [q(lerp(lerp(0, 3, sink), -6, lift) + 6 * back), q(lerp(lerp(-1, 3, sink), -11, lift) + 10 * back)];
+        r.hairLift = lift > 0.3 && back < 0.4 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.4, 0.8));
+        if (sink > 0.4 && lift < 0.2) r.eyes = 'half';
+        if (lift > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Great crescent wave (finisher, at ~0.56): a full turn, the staff carried round her at arm's
+  // length, and she comes out of it sweeping the great crescent off along the floor.
+  tcwave(p) {
+    const turn = seg(p, 0.08, 0.5);
+    const a = soft(turn) * Math.PI * 2;
+    const send = ease(seg(p, 0.5, 0.6));
+    const back = soft(seg(p, 0.78, 1));
+    return {
+      weapon: 60 + 30 * Math.sin(a) * (1 - send) + 40 * send - 40 * back, arm: 46 + 8 * Math.cos(a) * (1 - send) + 10 * send - 14 * back,
+      lift: 2 * Math.sin(Math.PI * turn), lunge: 5 * send * (1 - 0.6 * back), tilt: 0.05 * Math.sin(a) * (1 - send) + 0.12 * send * (1 - back),
+      turn: Math.cos(a) >= 0 || send > 0 ? 1 : -1,
+      rig: (r) => {
+        r.squat = q(1.6 * send * (1 - back));
+        danceLegs(r, [Math.sin(Math.PI * turn), [1.8, -1, 2], [-2.2, -0.6, -6]], [send * (1 - back), [4.2, 0, 6], [-3.8, 0, -12]]);
+        r.backArm = [q(-4 * Math.sin(Math.PI * turn) - 4 * send * (1 - back)), q(-4 * Math.sin(Math.PI * turn) - 1 * send)];
+        r.hairLift = turn > 0.1 && send < 0.5 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.08, 0.7));
+        if (turn > 0.3 && send < 0.2) r.eyes = 'half';
+        if (send > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Command moves. Up + attack: she reaches up under whatever flies and the spring follows her hand.
+  tcrise(p) {
+    const sink = soft(seg(p, 0, 0.3));
+    const up = ease(seg(p, 0.34, 0.48));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(40, 70, sink), 10, up) + 34 * back, arm: lerp(lerp(40, 34, sink), 64, up) - 24 * back,
+      lift: 4 * up * (1 - back), lunge: 1.5 * up, tilt: 0.06 * sink * (1 - up) - 0.12 * up * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.2 * sink * (1 - up));
+        danceLegs(r, [sink * (1 - up), [3, 0, 4], [-3, 0, -12]], [up * (1 - back), [1.6, -1.6, 2], [-1.8, -1.4, -4]]);
+        r.backArm = [q(lerp(0, -6, up) + 6 * back), q(lerp(lerp(-1, 2, sink), -12, up) + 10 * back)];
+        r.hairLift = up > 0.3 && back < 0.5 ? -1 : 0;
+        if (up > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // In the air: she hangs with the staff held out and down, stirring, and the drops rain from it.
+  tcairdrops(p) {
+    const out = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.8, 1)));
+    const a = seg(p, 0.2, 0.74) * Math.PI * 4;
+    return {
+      weapon: lerp(40, 128, out) + 8 * Math.sin(a) * out, arm: lerp(40, 40, out) + 4 * Math.cos(a) * out,
+      lunge: 1 * out, tilt: 0.12 * out,
+      rig: (r) => {
+        r.air = true;
+        r.frontLeg = [q(1.6), q(-2.6), 10];
+        r.backLeg = [q(-1.4), q(-1.8), -14];
+        r.backArm = [q(lerp(0, -4, out)), q(lerp(-1, -5, out))];
+        r.hairLift = -1;
+        if (out > 0.4) r.eyes = 'half';
+      },
+    };
+  },
+  // Out of a run: she glides in on a ribbon of foam, one foot trailed, the staff swept back, then
+  // swings it through as she lands.
+  tcglide(p) {
+    const glide = soft(seg(p, 0, 0.22)) * (1 - ease(seg(p, 0.46, 0.56)));
+    const swing = ease(seg(p, 0.44, 0.56));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(40, 130, glide), 60, swing) - 20 * back, arm: lerp(lerp(40, 32, glide), 56, swing) - 14 * back,
+      lift: 2.4 * glide, lunge: 3 * glide + 4 * swing * (1 - back), tilt: 0.16 * glide + 0.08 * swing * (1 - back),
+      rig: (r) => {
+        if (glide > 0.3) {
+          r.frontLeg = [q(2.4), q(-0.4), 6];
+          r.backLeg = [q(-5), q(-2.2), -24];
+        } else danceLegs(r, [swing * (1 - back), [3.8, 0, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(0, -6, glide) * (1 - swing) + 4 * swing * (1 - back)), q(lerp(-1, -6, glide) * (1 - swing) - 2 * swing * (1 - back))];
+        r.hairLift = glide > 0.3 ? -1 : 0;
+        r.cape = Math.round(-5 * glide);
+        if (glide > 0.4) r.mouth = 'cat';
+        else if (swing > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // ---------- Her skills ----------
+  // Healing Rain: she lifts the staff high and turns its head in a slow circle overhead, her free
+  // hand held up palm to the sky, and the rain cloud gathers over the party.
+  tcrain(p) {
+    const up = soft(seg(p, 0, 0.3)) * (1 - soft(seg(p, 0.8, 1)));
+    const a = seg(p, 0.24, 0.8) * Math.PI * 2;
+    return {
+      weapon: lerp(40, 16, up) + 10 * Math.sin(a) * up, arm: lerp(40, 62, up) + 3 * Math.cos(a) * up,
+      lift: 2 * up + 1 * Math.sin(a) * up, tilt: -0.08 * up,
+      rig: (r) => {
+        danceLegs(r, [up, [1.8, -1.2, 2], [-2, -1, -4]]);
+        r.backArm = [q(lerp(0, -5, up)), q(lerp(-1, -11, up))];
+        r.hairLift = up > 0.5 ? -1 : 0;
+        if (up > 0.4) r.eyes = 'blink';
+        if (up > 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Spring Surge: she draws both hands in to her heart, head bowed, then throws her arms wide as she
+  // rises onto her toes, and the spring bursts up round her.
+  tcsurge(p) {
+    const gather = soft(seg(p, 0, 0.36));
+    const open = ease(seg(p, 0.4, 0.54));
+    const back = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(lerp(40, 14, gather), 70, open) - 30 * back, arm: lerp(lerp(40, 26, gather), 60, open) - 20 * back,
+      lift: 4 * open * (1 - back), tilt: 0.1 * gather * (1 - open) - 0.08 * open * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * gather * (1 - open));
+        danceLegs(r, [open * (1 - back), [1.6, -1.6, 2], [-1.8, -1.4, -4]]);
+        r.backArm = [q(lerp(lerp(0, 5, gather), -6, open) + 6 * back), q(lerp(lerp(-1, -3, gather), -8, open) + 7 * back)];
+        r.hairLift = open > 0.3 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.4, 0.8));
+        if (gather > 0.4 && open < 0.3) r.eyes = 'blink';
+        else if (open > 0.3 && back < 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Moon Blessing: she stands the staff upright before her, bows her head over her free hand on her
+  // heart, then lifts her face and the hand opens to the party.
+  tcbless(p) {
+    const bow = soft(seg(p, 0, 0.4));
+    const lift = ease(seg(p, 0.44, 0.62));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(40, 14, bow) + 26 * back, arm: lerp(40, 34, bow) + 6 * lift * (1 - back),
+      lift: 1.5 * lift * (1 - back), tilt: 0.1 * bow * (1 - lift) - 0.04 * lift * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [bow * (1 - back), [1.8, 0, 2], [-2, 0, -4]]);
+        r.backArm = [q(lerp(lerp(0, 5, bow), -2, lift) + 2 * back), q(lerp(lerp(-1, -4, bow), -7, lift) + 6 * back)];
+        if (bow > 0.4 && lift < 0.4) r.eyes = 'blink';
+        else if (lift > 0.4 && back < 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Tide's Return: she kneels and reaches her free hand out low over the fallen, then rises slowly,
+  // lifting the hand, and they come up with it.
+  tcreturn(p) {
+    const kneel = soft(seg(p, 0, 0.3));
+    const rise = soft(seg(p, 0.46, 0.82));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(40, 20, kneel) + 10 * rise, arm: lerp(40, 30, kneel) + 10 * rise * (1 - back),
+      lift: 2 * rise * (1 - back), lunge: 2 * kneel * (1 - rise), tilt: 0.14 * kneel * (1 - rise) - 0.06 * rise * (1 - back),
+      rig: (r) => {
+        r.squat = q(3 * kneel * (1 - rise));
+        danceLegs(r, [kneel * (1 - rise), [3, 0, 6], [-2.6, 0, -22]], [rise * (1 - back), [1.8, -1, 2], [-2, -0.8, -4]]);
+        r.backArm = [q(lerp(lerp(0, 6, kneel), -4, rise) + 4 * back), q(lerp(lerp(-1, 2, kneel), -10, rise) + 9 * back)];
+        r.hairLift = rise > 0.4 && back < 0.5 ? -1 : 0;
+        if (kneel > 0.4 && rise < 0.3) r.eyes = 'blink';
+        else if (rise > 0.5 && back < 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Moonfall: her free hand draws a crescent in the air over them, then she pulls it down hard and
+  // drives the staff's head after it.
+  tcmoonfall(p) {
+    const draw = seg(p, 0.06, 0.46);
+    const a = soft(draw) * Math.PI;
+    const pull = ease(seg(p, 0.48, 0.6));
+    const back = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(40, 30, soft(draw)) + 80 * pull - 70 * back, arm: lerp(40, 54, soft(draw)) - 6 * pull - 6 * back,
+      lift: 2.4 * Math.sin(a) * (1 - pull), lunge: 4 * pull * (1 - 0.6 * back), tilt: -0.06 * Math.sin(a) * (1 - pull) + 0.14 * pull * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * pull * (1 - back));
+        danceLegs(r, [soft(draw) * (1 - pull), [2, -1, 2], [-2.4, -0.6, -6]], [pull * (1 - back), [4.2, 0, 6], [-3.8, 0, -12]]);
+        r.backArm = [q(lerp(0, -5 - 2 * Math.cos(a), Math.min(1, draw * 3)) * (1 - pull) + 3 * pull * (1 - back)), q(lerp(-1, -9 - 3 * Math.sin(a), Math.min(1, draw * 3)) * (1 - pull) + 2 * pull * (1 - back))];
+        r.hairLift = pull > 0.3 && back < 0.4 ? 1 : draw > 0.2 ? -1 : 0;
+        if (draw > 0.2 && pull < 0.2) r.eyes = 'half';
+        if (pull > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Moon Tide (finisher): she rises off the floor with the staff held high as the moon climbs behind
+  // her, turns slowly with both arms open as the tide rises, then sweeps the staff round and down
+  // and it floods the screen.
+  tcmoontide(p) {
+    const rise = soft(seg(p, 0, 0.3));
+    const turn = seg(p, 0.3, 0.8);
+    const a = turn * Math.PI * 2;
+    const sweep = ease(seg(p, 0.8, 0.9));
+    const land = bump(p, 0.88, 1);
+    return {
+      weapon: lerp(lerp(40, 12, rise), 110, sweep) + 4 * Math.sin(a * 2) * (1 - sweep), arm: lerp(lerp(40, 62, rise), 50, sweep),
+      lift: 14 * rise * (1 - sweep) + 2 * Math.sin(a) * (1 - sweep), lunge: 4 * sweep, tilt: -0.12 * rise * (1 - sweep) + 0.16 * sweep,
+      turn: Math.cos(a) >= 0 ? 1 : -1,
+      rig: (r) => {
+        if (rise > 0.3 && sweep < 0.6) {
+          r.air = true;
+          r.frontLeg = [q(1.2), q(-2.2), 8];
+          r.backLeg = [q(-1.6), q(-1.2), -10];
+        } else {
+          r.squat = q(2 * land);
+          danceLegs(r, [sweep, [4, 0, 6], [-4, 0, -12]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -6, rise), -4, sweep)), q(lerp(lerp(-1, -9, rise), -2, sweep))];
+        r.hairLift = rise > 0.3 && sweep < 0.5 ? -1 : land > 0.3 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.9));
+        if (turn > 0 && sweep < 0.2) r.eyes = 'blink';
+        if (sweep > 0.3) r.mouth = 'o';
+      },
+    };
+  },
+  // Her versions of the Tide Mage's skills.
+  // Pearl Shell (Bubble Shield): she cups both hands round the staff's head as if holding a pearl,
+  // then lets it go upward and the shell opens round them.
+  tcpearlshell(p) {
+    const cup = soft(seg(p, 0, 0.34));
+    const release = ease(seg(p, 0.38, 0.54));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 30, cup), 14, release) + 26 * back, arm: lerp(lerp(40, 36, cup), 58, release) - 18 * back,
+      lift: 2 * release * (1 - back), tilt: 0.06 * cup * (1 - release) - 0.06 * release * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [release * (1 - back), [1.8, -1.2, 2], [-2, -1, -4]]);
+        r.backArm = [q(lerp(lerp(0, 5, cup), -5, release) + 5 * back), q(lerp(lerp(-1, -1, cup), -10, release) + 9 * back)];
+        if (cup > 0.4 && release < 0.3) r.eyes = 'half';
+        else if (release > 0.3 && back < 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Moon Pool (Tide Pool): she sets the staff's foot down and draws a slow circle on the floor
+  // round her with it, turning on the spot, and the moonlit pool spreads where it's drawn.
+  tcmoonpool(p) {
+    const set = soft(seg(p, 0, 0.2));
+    const a = soft(seg(p, 0.2, 0.76)) * Math.PI * 2;
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(40, 118, set) - 6 * Math.sin(a) * (1 - back) - 78 * back, arm: lerp(40, 34, set) + 2 * Math.cos(a) + 6 * back,
+      lunge: 1 * set * (1 - back), tilt: 0.08 * set * (1 - back),
+      turn: Math.cos(a) >= 0 || back > 0 ? 1 : -1,
+      rig: (r) => {
+        r.squat = q(1.4 * set * (1 - back));
+        danceLegs(r, [set * (1 - back), [2.8, 0, 4], [-2.8, 0, -8]]);
+        r.backArm = [q(lerp(0, -4, set) * (1 - back)), q(lerp(-1, -5, set) * (1 - back))];
+        if (set > 0.5 && back < 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Moon Pull (Riptide): she sweeps her free hand round low and draws it in like reeling a net, the
+  // current pulling them close, then lifts the staff and brings the spring up under them.
+  tcpull(p) {
+    const reach = soft(seg(p, 0, 0.22));
+    const reel = soft(seg(p, 0.22, 0.48));
+    const up = ease(seg(p, 0.54, 0.68));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(40, 70, reach) - 40 * up + 30 * back, arm: lerp(40, 46, reach) + 16 * up * (1 - back),
+      lift: 3 * up * (1 - back), lunge: 2 * reach * (1 - reel) - 1 * reel + 2 * up * (1 - back), tilt: 0.1 * reach * (1 - reel) - 0.06 * reel - 0.06 * up * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * reach * (1 - up));
+        danceLegs(r, [reach * (1 - up), [3.4, 0, 6], [-3, 0, -10]], [up * (1 - back), [1.8, -1.4, 2], [-2, -1.2, -4]]);
+        r.backArm = [q(lerp(lerp(0, 7, reach), 1, reel) * (1 - up) - 4 * up * (1 - back)), q(lerp(lerp(-1, 1, reach), -3, reel) * (1 - up) - 9 * up * (1 - back))];
+        r.hairLift = up > 0.3 && back < 0.5 ? -1 : 0;
+        if (reel > 0.3 && up < 0.3) r.mouth = 'grit';
+        else if (up > 0.3 && back < 0.6) r.mouth = 'o';
+      },
+    };
+  },
+  // Silver Wave (Tidal Wave): she sways back with the staff low behind her, then rises in one long
+  // lift and sweeps it forward, and the silver wave rears up off the floor.
+  tcsilverwave(p) {
+    const sway = soft(seg(p, 0, 0.4));
+    const lift = ease(seg(p, 0.44, 0.62));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 130, sway), 64, lift) - 24 * back, arm: lerp(lerp(40, 28, sway), 60, lift) - 20 * back,
+      lift: 3 * lift * (1 - back), lunge: -2 * sway * (1 - lift) + 4 * lift * (1 - back), tilt: 0.1 * sway * (1 - lift) - 0.1 * lift * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.4 * sway * (1 - lift));
+        danceLegs(r, [sway * (1 - lift), [3, 0, 6], [-3.4, 0, -14]], [lift * (1 - back), [1.8, -1.4, 2], [-2, -1.2, -4]]);
+        r.backArm = [q(lerp(lerp(0, 3, sway), -5, lift) + 5 * back), q(lerp(lerp(-1, 2, sway), -10, lift) + 9 * back)];
+        r.hairLift = lift > 0.3 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.44, 0.84));
+        if (sway > 0.4 && lift < 0.2) r.eyes = 'half';
+        if (lift > 0.3 && back < 0.6) r.mouth = 'o';
+      },
+    };
+  },
+  // Lunar Flow (Flow): she turns the staff slowly before her face-up palm, eyes closed, a glint
+  // running along it, then opens her eyes and gives it a bright twirl.
+  tcflow(p) {
+    const hold = soft(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.56, 0.66)));
+    const twirl = ease(seg(p, 0.56, 0.7));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(40, 30, hold) + 60 * twirl * (1 - back) + 0 * back, arm: lerp(40, 50, hold) + 6 * twirl * (1 - back),
+      lift: 1.2 * hold + 2 * twirl * (1 - back), tilt: 0.04 * hold - 0.04 * twirl * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [Math.max(hold, twirl * (1 - back)), [1.8, -0.8, 2], [-2, -0.6, -4]]);
+        r.backArm = [q(lerp(0, 4, hold) - 4 * twirl * (1 - back)), q(lerp(-1, -5, hold) - 3 * twirl * (1 - back))];
+        if (hold > 0.4) r.eyes = 'blink';
+        else if (twirl > 0.3 && back < 0.6) r.mouth = 'cat';
+      },
+    };
+  },
+  // Silver Tide (Great Wave): she rises on the silver swell with the staff high and the moon behind
+  // her, holds it as it towers, and sweeps it down.
+  tcsilver(p) {
+    const rise = soft(seg(p, 0, 0.36));
+    const hold = bump(p, 0.32, 0.62);
+    const down = ease(seg(p, 0.58, 0.7));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(lerp(40, 10, rise), 116, down) - 50 * back, arm: lerp(lerp(40, 62, rise), 50, down) - 8 * back,
+      lift: 10 * rise * (1 - down) + 1.5 * hold, lunge: 4 * down * (1 - 0.6 * back), tilt: -0.1 * rise * (1 - down) + 0.16 * down * (1 - back),
+      rig: (r) => {
+        if (rise > 0.3 && down < 0.6) {
+          r.air = true;
+          r.frontLeg = [q(1.4), q(-2.2), 8];
+          r.backLeg = [q(-1.6), q(-1.4), -10];
+        } else danceLegs(r, [down * (1 - back), [4, 0, 6], [-4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -6, rise), -3, down) + 3 * back), q(lerp(lerp(-1, -10, rise), -2, down) + 1 * back)];
+        r.hairLift = rise > 0.3 && down < 0.5 ? -1 : down > 0.4 && back < 0.4 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.84));
+        if (hold > 0.4) r.eyes = 'blink';
+        if (down > 0.3 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
   whirlflip(p) {
     // (The free arm swings out with the spin, then tucks in for the flip and opens to land.)
     const out = bump(p, 0.04, 0.6);

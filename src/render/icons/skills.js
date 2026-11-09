@@ -50,6 +50,7 @@ const BG = {
   tidebg: ['#c8f4ff', '#0c4a80'],
   // The Maelstrom's: glowing aqua down into the midnight deep.
   deepbg: ['#8ff3e8', '#070d33'],
+  moonbg: ['#c8f7e4', '#1d4a52'],
   rosegold: ['#ffe0cf', '#a8405a'],
   coral: ['#ffcdb6', '#c23c48'],
   shrine: ['#f6f0ff', '#5a46a8'],
@@ -1170,6 +1171,76 @@ function abyssmaelstrom() {
   return out;
 }
 
+// ---------- Tidecaller (the moon's tide: seafoam water, pearl white, pale moon gold) ----------
+const MOONC = '#5fd0b4';
+const MOONINK = '#1d4a52';
+const PEARLC = '#fff6e4';
+const GOLDC = '#ffe08a';
+// A crescent moon standing upright, belly to +x.
+function moonIcon(cx, cy, r, th, c = GOLDC) {
+  const outer = arcPts(cx, cy, r, r, -72, 72, 14);
+  const inner = arcPts(cx - th, cy, r * 0.92, r * 0.86, 72, -72, 14);
+  return solid([...outer, ...inner], c, { ink: '#8a6420', d: 0.3 });
+}
+const pearlDot = (x, y, r) => [S(oval(x, y, r + 0.35, r + 0.35, 0, 16), '#7d6a54'), S(oval(x, y, r, r, 0, 16), PEARLC), S(oval(x - r * 0.3, y - r * 0.32, r * 0.3, r * 0.2, -40, 10), '#ffffff')];
+// Healing Rain: a soft cloud with drops falling from it.
+function healingrain() {
+  const out = [...tile('moonbg', 'active'), ...aura(8, 6, 6, GOLDC)];
+  for (const [x, y, r] of [[4.6, 5.4, 2.4], [8, 4.4, 3], [11.4, 5.4, 2.4], [8, 6.6, 2.6]]) out.push(S(oval(x, y, r + 0.4, r * 0.8 + 0.4, 0, 18), MOONINK), S(oval(x, y, r, r * 0.8, 0, 18), mix(MOONC, '#ffffff', 0.55)));
+  for (const [x, y] of [[4.4, 10.4], [8, 12.2], [11.4, 10.6], [6.2, 14], [10, 14.2]]) out.push(S(tube([[x + 0.3, y - 1.6], [x, y]], 0.2, 0.55), MOONC), S(oval(x, y, 0.55, 0.7, 0, 10), '#e4fff4'));
+  out.push(...spark(12.8, 2.6, 1, GOLDC));
+  return out;
+}
+// Spring Surge: water leaping up round a burst of gold light.
+function springsurge() {
+  const out = [...tile('moonbg', 'active'), ...aura(8, 9, 6.4, GOLDC, 1.2, 5)];
+  out.push(S(arcPts(8, 13, 6.4, 1.8, 0, 360, 24), mix(GOLDC, cur.mid, 0.3)));
+  for (const s of [-1, 1]) for (const [dx, h] of [[2.2, 7], [4.6, 5]]) out.push(...solid(tube([[8 + s * dx, 13.4], [8 + s * (dx + 0.8), 13.4 - h * 0.6], [8 + s * (dx + 0.2), 13.4 - h]], 0.9, 0.2), MOONC, { ink: MOONINK, d: 0.3 }));
+  out.push(...spark(8, 7.6, 2.6, GOLDC), ...pearlDot(3.4, 4, 0.7), ...pearlDot(12.6, 3.4, 0.6));
+  return out;
+}
+// Moon Blessing: a crescent over flakes of moonlight drifting down.
+function moonblessing() {
+  const out = [...tile('moonbg', 'buff'), ...aura(8, 6, 6, GOLDC)];
+  out.push(...moonIcon(8.6, 6, 4.4, 2.2));
+  for (const [x, y, r] of [[3.6, 11, 1], [7.4, 13.2, 1.2], [11.6, 11.6, 1], [5.4, 8.6, 0.7], [12.4, 8.2, 0.7]]) out.push(...spark(x, y, r, GOLDC));
+  return out;
+}
+// Tide's Return: a column of light rising out of a ring of water, a crescent over it.
+function tidesreturn() {
+  const out = [...tile('moonbg', 'active'), ...aura(8, 8, 6.4, GOLDC)];
+  out.push(S(arcPts(8, 13.2, 5.2, 1.5, 0, 360, 24), MOONC), S(arcPts(8, 13.2, 3.6, 1, 0, 360, 20), mix(GOLDC, '#ffffff', 0.4)));
+  out.push(S(rect(6.6, 4.6, 2.8, 8.6), mix(GOLDC, '#ffffff', 0.55)), S(rect(7.4, 4.6, 1.2, 8.6), '#ffffff'));
+  for (const [x, y] of [[4.6, 9.6], [11.2, 8.4], [5.8, 6.4]]) out.push(S(oval(x, y, 0.55, 0.75, 0, 10), MOONC));
+  out.push(...moonIcon(8.6, 3.2, 2.2, 1.1));
+  return out;
+}
+// Moonfall: a great crescent of water falling onto a splash.
+function moonfall() {
+  const out = [...tile('moonbg', 'active'), ...aura(8, 7, 6, GOLDC)];
+  out.push(...solid([...arcPts(7, 6.6, 5.2, 5.2, -70, 70, 14), ...arcPts(4.6, 6.6, 4.6, 4.4, 70, -70, 14)], MOONC, { ink: MOONINK, d: 0.35 }));
+  out.push(S(arcPts(7, 6.6, 5.2, 5.2, -50, 50, 10), GOLDC));
+  out.push(...solid([[2.6, 14.6], [4, 11.6], [5.4, 13.4], [7.6, 10.6], [9.6, 13.2], [11.8, 11.4], [13.4, 14.6]], MOONC, { ink: MOONINK, d: 0.3 }));
+  for (const [x, y] of [[3, 3], [13, 9]]) out.push(...spark(x, y, 0.9, GOLDC));
+  return out;
+}
+// Tidesong: the staff's head over a pearl and a crescent.
+function tidesong() {
+  const out = [...tile('moonbg', 'passive'), ...aura(8, 8, 6, GOLDC)];
+  out.push(...moonIcon(9.4, 8.4, 4.8, 2.4, mix(GOLDC, '#ffffff', 0.2)));
+  out.push(S(tube([[6.4, 14.4], [6.4, 4.6]], 0.5, 0.9), MOONINK), S(tube([[6.4, 14.2], [6.4, 4.8]], 0.3, 0.5), '#ffe9a0'), ...pearlDot(6.4, 3.8, 1.3));
+  return out;
+}
+// Moon Tide: a great moon over a flood of water across the tile.
+function moontide() {
+  const out = [...tile('moonbg', 'active'), ...aura(8, 6, 7, GOLDC, 1.2, 5)];
+  out.push(S(oval(8, 5.4, 4.2, 4.2, 0, 28), mix(GOLDC, '#ffffff', 0.5)), ...moonIcon(9.4, 5.4, 4, 2));
+  out.push(...solid([[0.6, 15.4], [0.6, 10.8], [3, 10], [5.4, 11], [8, 9.8], [10.6, 11], [13, 10], [15.4, 10.8], [15.4, 15.4]], MOONC, { ink: MOONINK, d: 0.35 }));
+  out.push(S(tube([[1.2, 11.6], [5, 12], [8, 10.8], [11, 12], [14.8, 11.6]], 0.3, 0.3), '#e4fff4'));
+  for (const x of [3.2, 8, 12.8]) out.push(...pearlDot(x, 13.4, 0.6));
+  return out;
+}
+
 function shadowdash() {
   const navy = '#2e2466';
   const out = [...tile('dusk', 'active')];
@@ -1602,6 +1673,7 @@ const ART = {
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
   tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
+  healingrain, springsurge, moonblessing, tidesreturn, moonfall, tidesong, moontide,
 };
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint

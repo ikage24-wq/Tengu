@@ -2400,3 +2400,53 @@ test("no second job plays another job's move when casting any skill it can cast"
     if (chain.includes('warrior')) assert.notEqual(whirlMoveOf({ job }), whirlMoveOf({ job: 'warrior' }), `${job} spins the Warrior's Whirlwind`);
   }
 });
+
+// A level 40 Tidecaller with a staff, in the arena.
+function tidecaller() {
+  const w = arena('staff_50');
+  const c = w.char;
+  gainExp(c, 4e8);
+  c.job = 'novice';
+  assert.ok(advanceJob(c, 'tidemage'));
+  c.quests.mage_trial = { state: 'done', kills: {} };
+  assert.ok(advanceJob(c, 'tidecaller'));
+  c.mp = 9999;
+  c.baseMp = 99999;
+  for (let i = 0; i < 5; i++) updateWorld(w, DT, idle);
+  return w;
+}
+
+test('the Tidecaller builds Moonsong; full (Spring Tide), her heals leave bubbles and mend harder', async () => {
+  const { healAround, gaugeOf, pathOf } = await import('../src/world/melee.js');
+  const w = tidecaller();
+  assert.equal(gaugeOf(w.char), 'moon');
+  assert.equal(pathOf(w), 'tidecaller');
+  const press = { held: new Set(['KeyZ']), pressed: new Set(['KeyZ']), locked: false };
+  for (let i = 0; i < 120; i++) updateWorld(w, DT, i % 20 === 0 ? press : idle);
+  assert.ok(w.moon > 0, 'her hits build it');
+  // Healing at an empty Moonsong, then at a full one.
+  const heal = (moon) => {
+    w.moon = moon;
+    w.moonAt = w.now;
+    w.char.hp = 100;
+    delete w.char.buffs.springbubble;
+    healAround(w, w.body.x, w.body.y, 0.1, 200);
+    return w.char.hp - 100;
+  };
+  const low = heal(0);
+  const full = heal(100);
+  assert.ok(full > low * 1.15, `a full Moonsong heals harder (${low} -> ${full})`);
+  assert.ok(w.char.buffs.springbubble?.shield > 0, 'Spring Tide leaves a bubble');
+});
+
+test("at Spring Tide the Tidecaller's basic attacks drop healing on whoever is hurt", () => {
+  const w = tidecaller();
+  w.moon = 100;
+  w.moonAt = w.now;
+  w.char.hp = Math.round(w.stats.maxHp * 0.4);
+  const before = w.char.hp;
+  const press = { held: new Set(['KeyZ']), pressed: new Set(['KeyZ']), locked: false };
+  for (let i = 0; i < 90; i++) updateWorld(w, DT, i % 20 === 0 ? press : idle);
+  assert.ok(w.fx.some((f) => f.kind === 'tcdrop') || w.char.hp > before, 'a droplet fell');
+  assert.ok(w.char.hp > before, 'and it mended her');
+});

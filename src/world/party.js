@@ -168,6 +168,8 @@ function weaponStyle(bot) {
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['ptflourish', 'ptswirl', 'ptcard', 'ptlean']), shot: 'ptarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
+  // The Tidecaller flicks pearls and crescents of moonlit water.
+  if (bot.char.job === 'tidecaller') return { reach: 220, lift: 100, pose: pick2(['tcpearl', 'tccrescent', 'tcribbon', 'tcchain']), shot: 'tcpearl', ranged: true };
   // The Maelstrom throws spears of the deep.
   if (bot.char.job === 'maelstrom') return { reach: 220, lift: 100, pose: pick2(['msspear', 'msbolt', 'mscross', 'msjet']), shot: 'msspear', ranged: true };
   // The Tide Mage sends her water.

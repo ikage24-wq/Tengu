@@ -27,7 +27,7 @@ import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
-import { healAround, hasTide, hasDepth } from './melee.js';
+import { healAround, hasTide, hasDepth, hasMoon, springDrop } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
@@ -844,11 +844,13 @@ export function updateWorld(world, dt, input) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
       if (h.gauge) addAim(world, h.gauge, m, h.el);
+      // (Spring Tide: the Tidecaller's basic shots drop healing on the party.)
+      if (h.basic) springDrop(world);
       // The Cleric's heal bombs mend the party round where they burst, carrying their element.
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);
     }
-    if (!h.ownSpark && !hasTide(world.char) && !hasDepth(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
+    if (!h.ownSpark && !hasTide(world.char) && !hasDepth(world.char) && !hasMoon(world.char)) world.fx.push({ kind: 'spark', via: h.via, weapon: world.stats.weaponType, path: hasRage(world.char) ? 'rage' : hasFaith(world.char) ? 'holy' : hasKi(world.char) ? 'rosegold' : hasShadow(world.char) ? 'shadow' : hasMomentum(world.char) ? 'hawk' : hasValor(world.char) ? 'steel' : null, dir: world.body.facing, x: m.x, y: m.y - (m.air ?? 0) - m.def.h / 2, t: 0, dur: h.big ? 0.32 : 0.25, crit: h.crit || h.big, seed: Math.random() });
     world.juice.push({ type: 'hit', x: m.x, y: m.y - m.def.h / 2, crit: h.crit, big: h.big, party: Boolean(h.party), element: h.party ? null : h.element ?? weaponElement(char), dir: Math.sign(m.x - h.fromX) || 1, via: h.via, school: h.school, weapon: h.weapon, mob: m.def.id, boss: Boolean(m.def.boss) });
     // Endgame weapons add an elemental impact on every hit.
     const element = h.party ? null : h.element ?? weaponElement(char);

@@ -11,9 +11,9 @@ body: she coils and cracks a whip, bowls a wave along the floor, raises a great 
 and brings it down. She uses staffs only (wands are to be deleted), and the staff is always drawn
 exactly as equipped: the water comes off its head, nothing is added to it.
 
-She has some support (a shield and a heal for the party) and branches at level 30 into a support
-path (Tidecaller, pitched) or a ranged damage path (Maelstrom, pitched). Those paths are still to
-be made.
+She has some support (a shield and a heal for the party) and branches at level 30 into a healer
+path (the Tidecaller, docs/design/tidecaller.md) or a ranged damage path (the Maelstrom,
+docs/design/maelstrom.md).
 
 - **Colour:** deep sea teal inked in navy, white foam, a coral accent.
 - **Shapes, hers alone:** curling wave crests capped with foam, round bubbles with a white glint,

@@ -569,6 +569,8 @@ const GAUGES = {
     tip: 'Every bolt of yours that lands builds steam pressure; it fades once the fighting stops. Full (Overdrive), your crossbow vents steam and every shot fires a second bolt, and Big Bertha is ready.' },
   depth: { color: '#1f3f9a', hot: '#5fe8e0', icon: 'drop', name: 'Depth', full: 'THE ABYSS', notch: () => null, edge: 'rgba(95,232,224,', ink: '#070d33',
     tip: 'Your hits build it; it drains once the fighting stops. The deeper it runs, the harder you hit. Full (the Abyss), every hit opens a little vortex on what it struck that shreds it three times more, and Maelstrom is ready.' },
+  moon: { color: '#2f9a8a', hot: '#fff3c0', icon: 'drop', name: 'Moonsong', full: 'SPRING TIDE', notch: () => null, edge: 'rgba(255,243,192,', ink: '#1d4a52',
+    tip: 'Your hits and your heals build it; it fades once the fighting stops. The fuller it runs, the stronger you heal. Full (Spring Tide), your heals leave a bubble on everyone they reach, every basic attack that lands drops healing on whoever in the party is hurt most, and Moon Tide is ready.' },
   tide: { color: '#1787bb', hot: '#9ff0ff', icon: 'drop', name: 'Tide', full: 'HIGH TIDE', notch: () => null, edge: 'rgba(70,196,228,', ink: '#0c4a80',
     tip: 'Your water that lands builds it, and so do your heals and shields; it ebbs once the fighting stops. The fuller it runs, the bigger your waves. Full (High Tide), every basic attack sends a little wave rolling after it, you and the party near you slowly mend, and Great Wave is ready.' },
 };

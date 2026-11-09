@@ -2,8 +2,9 @@
 // water, the waves she sends rolling along the floor (bigger the fuller her Tide: `swell`), her
 // bubbles, the splash, geyser, whirlpool and waterfall her blows throw up, and her mark on a
 // monster. And the Maelstrom's (docs/design/maelstrom.md), the deep sea: spears, vortex bolts,
-// glowing bubbles, vortex funnels, beams, black water slammed down, her slash and her mark.
-// Strips in tools/fx-art.js (tm*, ms*), three strip pixels to a game pixel; each drawn out to the
+// glowing bubbles, vortex funnels, beams, black water slammed down, her slash and her mark. And the
+// Tidecaller's (docs/design/tidecaller.md), the moon's tide: pearls, shells, crescents, ribbons,
+// pillars of moonlight, showers of drops and her healing. Strips in tools/fx-art.js (tm*, ms*, tc*), three strip pixels to a game pixel; each drawn out to the
 // reach of the blow it shows.
 import { fxSprite } from './fx-sprites.js';
 
@@ -47,6 +48,28 @@ export function drawTideShot(ctx, f, x, y, dir, cam) {
       return true;
     case 'msglow':
       fxSprite(ctx, 'celmsglow', x, y + 3 * Math.sin(f.t * 10), { t: f.t, flip, scale: 1.1 });
+      return true;
+    // The Tidecaller's: a pearl spinning in its ring of water, a shell skipping, a crescent rolling.
+    case 'tcpearl':
+      fxSprite(ctx, 'celtcpearl', x, y, { t: f.t, flip, scale: 0.95 });
+      return true;
+    case 'tcshell':
+      fxSprite(ctx, 'celtcshell', x, y, { t: f.t, flip, scale: 0.9 });
+      return true;
+    case 'tccrescent': case 'tccrescentbig':
+      fxSprite(ctx, f.shot === 'tccrescent' ? 'celtccrescent' : 'celtccrescentbig', x, y - (f.shot === 'tccrescent' ? 4 : 10), { t: f.t, flip, scale: 0.8 + 0.2 * Math.min(1, f.t / Math.max(0.01, f.dur * 0.2)) });
+      return true;
+    case 'tcsilverwave': {
+      // Silver Wave: rising out of the floor ahead of her, as the Tide Mage's does.
+      const k = Math.min(1, f.t / Math.max(0.01, f.dur * 0.25));
+      fxSprite(ctx, 'celtcsilverwave', x + dir * 34, f.floorY != null ? f.floorY - cam.y : y + 16, { t: f.t, flip, scale: 0.6 + 0.4 * k, alpha: Math.min(1, 0.3 + k) });
+      return true;
+    }
+    case 'tcsilvertide':
+      fxSprite(ctx, 'celtcsilvertidebig', x + dir * 60, f.floorY != null ? f.floorY - cam.y : y + 16, { t: f.t, flip, scale: 0.75 + 0.25 * Math.min(1, f.t / Math.max(0.01, f.dur * 0.2)) });
+      return true;
+    case 'tcbubble':
+      fxSprite(ctx, 'celtcbubble', x, y + 3 * Math.sin(f.t * 12), { t: f.t, flip, scale: 0.8 });
       return true;
   }
   return false;
@@ -113,6 +136,55 @@ export function drawTideFx(ctx, f, x, y, p) {
       return fxSprite(ctx, 'celmsslash', x, y - 10, { p, flip, scale: (f.r ?? 120) / 110 }) || true;
     case 'tmhit':
       return fxSprite(ctx, 'celtmhit', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    // The Tidecaller's.
+    case 'tchit':
+      return fxSprite(ctx, 'celtchit', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    case 'tcbubblepop':
+      return fxSprite(ctx, 'celtcbubblepop', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: 0.6 }) || true;
+    case 'tcribbon':
+      // Out ahead of the staff's head to the end of the blow's reach, level with her hands.
+      return fxSprite(ctx, 'celtcribbon', x, y - 16, { p, flip, scale: ((f.r ?? 128) * 0.92) / 127 }) || true;
+    case 'tcpillar':
+      // Standing on the floor out where it lands.
+      return fxSprite(ctx, 'celtcpillar', x, y + 2, { p, flip, scale: Math.min(1, Math.max(0.75, (f.r ?? 170) / 200)) }) || true;
+    case 'tcdrops': case 'tcdropsbig':
+      return fxSprite(ctx, f.kind === 'tcdrops' ? 'celtcdrops' : 'celtcdropsbig', x, y + 2, { p, flip, scale: Math.min(1.1, Math.max(0.8, (f.r ?? 120) / 120)) }) || true;
+    case 'tcspring':
+      return fxSprite(ctx, 'celtcspring', x, y + 2, { p, flip, scale: Math.min(1.2, Math.max(0.8, (f.r ?? 150) / 140)) }) || true;
+    case 'tcsplash':
+      return fxSprite(ctx, 'celtcsplash', x, y + 2, { p, flip, scale: Math.max(0.8, (f.r ?? 88) / 90) }) || true;
+    case 'tcdrop':
+      // Spring Tide's droplet, on whoever it mends.
+      return fxSprite(ctx, 'celtcdrop', x, y + 2, { p, scale: Math.max(0.8, (f.h ?? 40) / 48) }) || true;
+    case 'tcrevive':
+      return fxSprite(ctx, 'celtcrevive', x, y + 2, { p }) || true;
+    // Her skills.
+    case 'tcrain': {
+      // Healing Rain: over her and the party while it lasts, following her, fading in and out.
+      const fade = Math.min(1, (f.dur - f.t) / 0.6, f.t / 0.4);
+      return fxSprite(ctx, 'celtcrain', x, y + 2, { t: f.t, scale: 1.35, alpha: Math.max(0, fade) }) || true;
+    }
+    case 'tcsurge':
+      return fxSprite(ctx, 'celtcsurge', x, y + 2, { p, scale: 1.1 }) || true;
+    case 'tcbless':
+      return fxSprite(ctx, 'celtcbless', x, y + 2, { p, scale: 1.1 }) || true;
+    case 'tcmoonfall':
+      return fxSprite(ctx, 'celtcmoonfall', x, y + 2, { p, flip, scale: Math.min(1.2, Math.max(0.8, (f.r ?? 240) / 200)) }) || true;
+    case 'tcmoontide':
+      // Her finisher's tide, round her, across the screen.
+      return fxSprite(ctx, 'celtcmoontidebig', x, y + 2, { p, flip, scale: 1.15 }) || true;
+    case 'tcglint':
+      return fxSprite(ctx, 'celtcglint', x, y - 30, { p, scale: 0.8 }) || true;
+    case 'tcshellfx':
+      return fxSprite(ctx, 'celtcshellfx', x, y + 2, { p, scale: 0.9 }) || true;
+    case 'tcpool': {
+      const fade = Math.min(1, (f.dur - f.t) / 0.8, f.t / 0.3);
+      return fxSprite(ctx, 'celtcpool', x, y + 2, { t: f.t, alpha: Math.max(0, fade) }) || true;
+    }
+    case 'tcwhirl':
+      return fxSprite(ctx, 'celtcwhirl', x, y + 2, { p, flip, scale: (f.r ?? 104) / 108 }) || true;
+    case 'tcsplashbig':
+      return fxSprite(ctx, 'celtcsplashbig', x, y + 2, { p, flip }) || true;
   }
   return false;
 }

@@ -839,7 +839,7 @@ export const SKILLS = {
   // water to fight with; she branches at 30 into a support path or a ranged damage path.
   bubbleshield: skill({
     id: 'bubbleshield', anim: 'tmshield', name: 'Bubble Shield', job: 'tidemage', type: 'buff', fx: null, icon: 'bubbleshield', school: 'tide', party: true, maxLevel: 10,
-    pathNames: { maelstrom: 'Abyss Shell' },
+    pathNames: { maelstrom: 'Abyss Shell', tidecaller: 'Pearl Shell' },
     desc: 'Hug your staff close, then throw your hand wide: a bubble of water closes round you and everyone near you, soaking up the next blows until it pops. Builds Tide. A short wait before the next (30 seconds).',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -850,13 +850,15 @@ export const SKILLS = {
         mp: k(18, 30), pct: 0, hits: 0, targets: 0, range, cooldown: 30, aimGain: 15,
         combo: [{ move: 'tmshield', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmshieldfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }],
         // Abyss Shell: she folds round the staff, then throws herself open and a dark shell closes.
-        paths: { maelstrom: [{ move: 'msshell', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msshellfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }] },
+        paths: { maelstrom: [{ move: 'msshell', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msshellfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }],
+          // Pearl Shell: she cups the staff's head as if holding a pearl, lets it rise and the shell opens.
+          tidecaller: [{ move: 'tcpearlshell', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tcshellfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }] },
       };
     },
   }),
   tidepool: skill({
     id: 'tidepool', anim: 'tmpool', name: 'Tide Pool', job: 'tidemage', type: 'buff', fx: null, icon: 'tidepool', school: 'tide', party: true, maxLevel: 10,
-    pathNames: { maelstrom: 'Glowing Pool' },
+    pathNames: { maelstrom: 'Glowing Pool', tidecaller: 'Moon Pool' },
     desc: 'Plant your staff in the floor and a pool of sea water wells up round it: you and everyone near you mend a little every second while it lasts. Builds Tide. A short wait before the next (24 seconds).',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -867,13 +869,15 @@ export const SKILLS = {
         mp: k(20, 34), pct: 0, hits: 0, targets: 0, range, cooldown: 24, aimGain: 15,
         combo: [{ move: 'tmpool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmpool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }],
         // Glowing Pool: she kneels with her palm on the floor and the glowing water spreads from it.
-        paths: { maelstrom: [{ move: 'mspool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mspool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }] },
+        paths: { maelstrom: [{ move: 'mspool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mspool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }],
+          // Moon Pool: she draws a slow circle on the floor round her with the staff and the pool spreads.
+          tidecaller: [{ move: 'tcmoonpool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tcpool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }] },
       };
     },
   }),
   riptide: skill({
     id: 'riptide', anim: 'tmriptide', name: 'Riptide', job: 'tidemage', type: 'attack', fx: null, icon: 'riptide', school: 'tide', maxLevel: 20,
-    pathNames: { maelstrom: 'Black Current' },
+    pathNames: { maelstrom: 'Black Current', tidecaller: 'Moon Pull' },
     desc: 'Sweep your staff low across the floor and haul: a current drags the monsters round you in together, then you heave the staff over and bring the water crashing down on the lot of them.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -888,13 +892,18 @@ export const SKILLS = {
         paths: { maelstrom: [{ move: 'msriptide', dur: 0.8, step: 4, strikes: [
           { at: 0.3, magic: true, fx: 'mshit', pct: k(40, 70), reach: 170, h: 100, around: true, targets: 6, knock: 0, pull: 240, burst: 'msvortex', burstAt: 0.4, burstDur: 0.6 },
           { at: 0.66, magic: true, fx: 'mshit', pct: k(120, 210), reach: 110, h: 100, targets: 6, knock: 200, launch: 160, burst: 'msslam', burstAt: 0.55, burstDur: 0.55, big: true, stop: 0.07, shake: 3 },
+        ] }],
+        // Moon Pull: she reels them in with her free hand like a net, then the spring comes up under them.
+        tidecaller: [{ move: 'tcpull', dur: 0.8, step: 4, strikes: [
+          { at: 0.3, magic: true, fx: 'tchit', pct: k(40, 70), reach: 170, h: 100, around: true, targets: 6, knock: 0, pull: 240, burst: 'tcwhirl', burstAt: 0.3, burstDur: 0.6 },
+          { at: 0.66, magic: true, fx: 'tchit', pct: k(120, 210), reach: 110, h: 120, targets: 6, knock: 120, launch: 300, burst: 'tcspring', burstAt: 0.55, burstDur: 0.6, big: true, stop: 0.07, shake: 3 },
         ] }] },
       };
     },
   }),
   tidalwave: skill({
     id: 'tidalwave', anim: 'tmtidal', name: 'Tidal Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'tidalwave', school: 'tide', maxLevel: 20,
-    pathNames: { maelstrom: 'Black Wave' },
+    pathNames: { maelstrom: 'Black Wave', tidecaller: 'Silver Wave' },
     desc: 'Crouch low with your staff swept back, then rise in one long heave: a great wave rears up off the floor and rolls away through every monster in front of you.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -903,13 +912,15 @@ export const SKILLS = {
         mp: k(14, 26), pct: k(160, 280), hits: 1, targets: 8,
         combo: [{ move: 'tmtidal', dur: 0.9, step: 0, strikes: [{ at: 0.56, magic: true, burst: 'tmhit', shot: 'tmwavebig', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }],
         // Black Wave: she heaves the black water up out of the floor and it rolls on.
-        paths: { maelstrom: [{ move: 'msblack', dur: 0.9, step: 0, strikes: [{ at: 0.58, magic: true, burst: 'mshit', shot: 'msblackwave', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }] },
+        paths: { maelstrom: [{ move: 'msblack', dur: 0.9, step: 0, strikes: [{ at: 0.58, magic: true, burst: 'mshit', shot: 'msblackwave', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }],
+          // Silver Wave: she sways back, then rises and sweeps the silver wave up off the floor.
+          tidecaller: [{ move: 'tcsilverwave', dur: 0.9, step: 0, strikes: [{ at: 0.56, magic: true, burst: 'tchit', shot: 'tcsilverwave', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }] },
       };
     },
   }),
   flow: skill({
     id: 'flow', anim: 'tmflow', name: 'Flow', job: 'tidemage', type: 'buff', fx: null, icon: 'flow', school: 'tide', maxLevel: 10,
-    pathNames: { maelstrom: 'Deep Flow' },
+    pathNames: { maelstrom: 'Deep Flow', tidecaller: 'Lunar Flow' },
     desc: 'Twirl your staff and let the water run with you: for a while you cast faster and your magic hits harder.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -918,13 +929,15 @@ export const SKILLS = {
         mp: lerp(16, 26, lv, m), pct: 0, hits: 0, targets: 0, cooldown: 60,
         combo: [{ move: 'tmflow', dur: 0.7, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmsplash', burstAt: 0, burstDur: 0.45, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }],
         // Deep Flow: a slow breath with her eyes closed, motes rising, then a sharp turn of the staff.
-        paths: { maelstrom: [{ move: 'msflow', dur: 0.8, step: 0, strikes: [{ at: 0.64, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msglowpop', burstAt: 0, burstDur: 0.5, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }] },
+        paths: { maelstrom: [{ move: 'msflow', dur: 0.8, step: 0, strikes: [{ at: 0.64, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msglowpop', burstAt: 0, burstDur: 0.5, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }],
+          // Lunar Flow: the staff turned slowly over her palm, eyes closed, then a bright twirl.
+          tidecaller: [{ move: 'tcflow', dur: 0.8, step: 0, strikes: [{ at: 0.62, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tcglint', burstAt: 0, burstDur: 0.5, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }] },
       };
     },
   }),
   waverider: skill({
     id: 'waverider', anim: 'tmsurf', name: 'Wave Rider', job: 'tidemage', type: 'attack', fx: null, icon: 'waverider', school: 'tide', maxLevel: 10, movement: true,
-    pathNames: { maelstrom: 'Deep Dive' },
+    pathNames: { maelstrom: 'Deep Dive', tidecaller: 'Foam Glide' },
     desc: 'Ride a wave forward in a surfer\'s crouch, knocking aside whatever is in the way, and spring off the top of it with a splash. Nothing touches you on the wave.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -933,7 +946,9 @@ export const SKILLS = {
         mp: k(10, 6), pct: k(80, 140), hits: 1, targets: 4,
         combo: [{ move: 'tmsurf', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'tmhit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }],
         // Deep Dive: she dives forward through a wall of black water and comes up out of it.
-        paths: { maelstrom: [{ move: 'msdash', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'mshit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'msslam', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }] },
+        paths: { maelstrom: [{ move: 'msdash', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'mshit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'msslam', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }],
+          // Foam Glide: she glides in on a ribbon of foam and swings through as she lands.
+          tidecaller: [{ move: 'tcglide', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'tchit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tcsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }] },
       };
     },
   }),
@@ -944,7 +959,7 @@ export const SKILLS = {
   }),
   greatwave: skill({
     id: 'greatwave', anim: 'tmgreat', dmg: 2, name: 'Great Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'greatwave', school: 'tide', maxLevel: 10, fullGauge: true,
-    pathNames: { maelstrom: 'Black Tide' },
+    pathNames: { maelstrom: 'Black Tide', tidecaller: 'Silver Tide' },
     desc: 'Finisher: needs a full Tide, and spends it. Rise off the floor on the swell with your staff held high as the sea climbs up behind you, hold it while it towers, then bring it all down: a giant wave sweeps the screen, crashing through every monster in front of you, and mends you and the party as it passes.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -957,6 +972,10 @@ export const SKILLS = {
         // Black Tide: the dark sea towers behind her on a black swell and breaks.
         paths: { maelstrom: [{ move: 'msblacktide', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
           { at: 0.62, magic: true, burst: 'mshit', shot: 'msblacktide', pct: k(160, 260), range: 560, h: 180, targets: 12, pierce: true, knock: 300, launch: 220, speed: 520, big: true, stop: 0.1, shake: 5, heal: 0.18, healR: 400 },
+        ] }],
+        // Silver Tide: she rises on the silver swell with the moon behind her and sweeps it down.
+        tidecaller: [{ move: 'tcsilver', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.64, magic: true, burst: 'tchit', shot: 'tcsilvertide', pct: k(160, 260), range: 560, h: 180, targets: 12, pierce: true, knock: 300, launch: 220, speed: 520, big: true, stop: 0.1, shake: 5, heal: 0.18, healR: 400 },
         ] }] },
       };
     },
@@ -1040,6 +1059,99 @@ export const SKILLS = {
         combo: [{ move: 'msfinale', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
           { ...rip(0.3), burst: 'msmaelstrom', burstAt: 0.35, burstDur: 1.2 }, rip(0.42), rip(0.54), rip(0.66), rip(0.78),
           { ...rip(0.88), pct: k(160, 260), knock: 320, launch: 300, big: true, stop: 0.12, shake: 6 },
+        ] }],
+      };
+    },
+  }),
+
+  // ---------- Tidecaller (the Tide Mage's healer path: the moon's tide, seafoam, pearl and gold) ----------
+  // docs/design/tidecaller.md. The party's healer. Her hits and heals build Moonsong (world/melee.js):
+  // the fuller it runs the stronger she heals; full (Spring Tide), her heals leave a bubble on
+  // everyone they reach and her basic attacks drop healing on whoever is hurt most. She plays the
+  // Tide Mage's skills her own way (their `paths`), and these are hers.
+  healingrain: skill({
+    id: 'healingrain', anim: 'tcrain', name: 'Healing Rain', job: 'tidecaller', type: 'buff', fx: null, icon: 'healingrain', school: 'moon', party: true, maxLevel: 10,
+    desc: 'Lift your staff high and turn its head slowly over you: a soft cloud gathers over you and the party and a gentle rain falls, mending everyone under it every second while it lasts. Builds Moonsong. A short wait before the next (20 seconds).',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 560, h: 220, around: true };
+      return {
+        mp: k(20, 34), pct: 0, hits: 0, targets: 0, range, cooldown: 20, aimGain: 15,
+        combo: [{ move: 'tcrain', dur: 0.9, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tcrain', burstAt: 0, burstDur: 6, follow: true, grant: { id: 'healingrain', duration: 6, buff: { regenPct: kf(0.04, 0.07) }, range } }] }],
+      };
+    },
+  }),
+  springsurge: skill({
+    id: 'springsurge', anim: 'tcsurge', name: 'Spring Surge', job: 'tidecaller', type: 'heal', fx: null, icon: 'springsurge', school: 'moon', party: true, maxLevel: 20,
+    desc: 'Draw both hands in to your heart, then throw your arms wide as you rise onto your toes: a spring bursts up all round you, mending you and everyone near you in one great wave and throwing back the monsters close by. A short wait before the next (6 seconds).',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(16, 28), pct: k(60, 110), hits: 1, targets: 6, cooldown: 6, range: { w: 600, h: 220, around: true },
+        combo: [{ move: 'tcsurge', dur: 0.85, step: 0, strikes: [{ at: 0.5, magic: true, fx: 'tchit', pct: k(60, 110), reach: 150, h: 120, around: true, targets: 6, knock: 140, launch: 120, burst: 'tcsurge', burstAt: 0, burstDur: 0.85, heal: kf(0.18, 0.32), healR: 300, big: true, stop: 0.05, shake: 1 }] }],
+      };
+    },
+  }),
+  moonblessing: skill({
+    id: 'moonblessing', anim: 'tcbless', name: 'Moon Blessing', job: 'tidecaller', type: 'buff', fx: null, icon: 'moonblessing', school: 'moon', party: true, maxLevel: 10,
+    desc: 'Stand your staff before you and bow your head over your heart, then lift your face and open your hand: moonlight falls on you and the party, and for a long while everyone defends better, takes less from every hit and gets MP back faster.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 600, h: 220, around: true };
+      return {
+        mp: lerp(24, 40, lv, m), pct: 0, hits: 0, targets: 0, range, cooldown: 120, aimGain: 10,
+        combo: [{ move: 'tcbless', dur: 0.9, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tcbless', burstAt: 0, burstDur: 1, follow: true, grant: { id: 'moonblessing', duration: 120, buff: { wdef: lerp(10, 50, lv, m), dmgCut: kf(0.04, 0.1), mpRegen: lerp(2, 8, lv, m) }, range } }] }],
+      };
+    },
+  }),
+  tidesreturn: skill({
+    id: 'tidesreturn', anim: 'tcreturn', name: "Tide's Return", job: 'tidecaller', type: 'revive', fx: null, icon: 'tidesreturn', school: 'moon', party: true, maxLevel: 10,
+    desc: 'Kneel and reach your hand out over a fallen friend near you, then rise slowly, lifting it, and the tide brings them back up on their feet with some of their HP, mending everyone near you a little. Only when someone near you has fallen (in a dungeon). A wait before the next (30 seconds).',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: lerp(40, 24, lv, m), pct: 0, hits: 0, targets: 0, range: { w: 640, h: 220, around: true }, healPct: kf(0.3, 0.7), cooldown: 30,
+        combo: [{ move: 'tcreturn', dur: 1.1, step: 0, strikes: [{ at: 0.6, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, revive: kf(0.3, 0.7), reviveR: 320, heal: kf(0.05, 0.12), healR: 320 }] }],
+      };
+    },
+  }),
+  moonfall: skill({
+    id: 'moonfall', anim: 'tcmoonfall', name: 'Moonfall', job: 'tidecaller', type: 'attack', fx: null, icon: 'moonfall', school: 'moon', maxLevel: 20,
+    desc: 'Draw a crescent in the air over the monsters ahead with your hand, then pull it down: a great crescent of water and moonlight falls on them and bursts, and its light mends you and the party near you.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(150, 260), hits: 1, targets: 6,
+        combo: [{ move: 'tcmoonfall', dur: 0.95, step: 0, strikes: [{ at: 0.56, magic: true, fx: 'tchit', pct: k(150, 260), reach: 240, h: 150, targets: 6, knock: 160, launch: 140, burst: 'tcmoonfall', burstAt: 0.62, burstDur: 0.8, big: true, stop: 0.07, shake: 3, heal: kf(0.05, 0.1), healR: 300 }] }],
+      };
+    },
+  }),
+  tidesong: skill({
+    id: 'tidesong', name: 'Tidesong', job: 'tidecaller', type: 'passive', grows: true, fx: null, icon: 'tidesong',
+    desc: 'The moon hears you: your heals mend more, your MP comes back faster, and your magic hits steadier.',
+    at: (lv, m) => ({ passive: { healBoost: lerpf(0.05, 0.25, lv, m), mpRegen: lerp(2, 8, lv, m), mastery: lerpf(0.1, 0.3, lv, m) } }),
+  }),
+  moontide: skill({
+    id: 'moontide', anim: 'tcmoontide', dmg: 2, name: 'Moon Tide', job: 'tidecaller', type: 'attack', fx: null, icon: 'moontide', school: 'moon', maxLevel: 10, fullGauge: true, party: true,
+    desc: 'Finisher: needs a full Moonsong, and spends it. Rise off the floor with your staff held high as the moon climbs behind you and the tide rises across the whole floor, turn slowly with your arms open, then sweep the staff down: the tide floods the screen, crashing through every monster round you, mending you and the party and bringing the fallen back up.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const swell = (at) => ({ at, magic: true, fx: 'tchit', pct: k(40, 66), reach: 440, h: 200, around: true, targets: 12, knock: 30, gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(160, 260), hits: 3, targets: 12,
+        combo: [{ move: 'tcmoontide', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
+          { ...swell(0.4), burst: 'tcmoontide', burstAt: 0, burstDur: 1.7 }, swell(0.6),
+          { ...swell(0.86), pct: k(160, 260), knock: 320, launch: 220, big: true, stop: 0.12, shake: 5, heal: kf(0.4, 0.6), healR: 500, revive: kf(0.4, 0.6), reviveR: 500 },
         ] }],
       };
     },

@@ -54,6 +54,12 @@ S = {
     'surf': 'Nick McMahan - Cascadia Shore Waves/WATRSurf_Ocean Hydrophone In Sand Large Near Single 01 _Cascadia Shore Waves.wav',
     'wflow': 'InMotionAudio - Submerge/WATRFlow_WaterFlow21_InMotionAudio_Submerge.wav',
     'wrock': 'InMotionAudio - Submerge/WATRMvmt_WaterRockMovement04_InMotionAudio_Submerge.wav',
+    # The Tidecaller's moon (2026-11-09): bell shimmers, a twinkle, a bright chime and calm rain.
+    'shimmer': 'Epic Stock Media - Strange Game Ambient Loops 3/MAGShim_Shimmer Loop Small Bell Metal Taps_ESM_SGA3.wav',
+    'twinkle': 'Cinematic Sound Design - User Interface/Button Arp Twinkle.wav',
+    'brightup': 'Epic Stock Media - Anime Game/DSGNStngr_Power Up Bright Positive Successful Light Saturation Crash Shimmer 05_ESM_AG.wav',
+    'rain': 'Bolt - Backyard Rain & Thunder - Suburban Rain Recordings/RAIN_Rain at Night Slow Crescendo Calm Suburban_BOLT_BackyardRain_UsiPro.wav',
+    'astral': 'Alexander Kopeikin - Emotion and Magic/magic, energy flow, astral travel-015.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
@@ -72,6 +78,32 @@ B = {
     'tmfall': [('wflow', 3.5, 0.7, 1.05, -2, 0), ('wimpact', 0.05, 0.5, 0.95, -3, 180)],
     'tmfallbig': [('wflow', 3.5, 0.9, 0.9, -1, 0), ('wimpact', 0.05, 0.7, 0.8, -2, 200), ('drown', 0.0, 0.5, 0.9, -6, 240)],
     'tmhit': [('liquid', 0.0, 0.32, 1.2, 0, 0), ('subimpact', 0.1, 0.28, 1.45, -6, 0)],
+    # The Tidecaller (2026-11-09): the moon's tide, lighter and brighter than the Tide Mage's water:
+    # pearls and crescents, bells and twinkles over the splashes, a calm rain, the moon's chime.
+    'tcpearl': [('watery', 0.0, 0.3, 1.3, -2, 0), ('twinkle', 0.0, 0.35, 1.4, -10, 0)],
+    'tchit': [('liquid', 0.0, 0.3, 1.35, 0, 0), ('shimmer', 2.0, 0.3, 1.2, -10, 0)],
+    'tcbubblepop': [('bubbles', 0.0, 0.3, 1.25, -2, 0), ('liquid', 0.0, 0.25, 1.5, -8, 0)],
+    'tcribbon': [('watery', 0.0, 0.4, 1.0, 0, 0), ('wflow', 9.6, 0.5, 1.2, -6, 0)],
+    'tcpillar': [('brightup', 0.0, 1.0, 0.9, -4, 0), ('wflow', 9.6, 0.9, 1.1, -4, 80), ('shimmer', 5.0, 0.8, 1.0, -10, 0)],
+    'tcshell': [('liquid', 0.0, 0.2, 1.6, -4, 0), ('bubbles', 0.0, 0.25, 1.4, -8, 0)],
+    'tcdrops': [('lid', 0.0, 0.9, 1.1, -2, 0), ('liquid', 0.0, 0.3, 1.4, -8, 120)],
+    'tcdropsbig': [('lid', 0.0, 1.0, 0.95, -2, 0), ('liquid', 0.0, 0.35, 1.2, -6, 120)],
+    'tccrescent': [('watery', 0.0, 0.45, 0.9, 0, 0), ('wtrans', 1.6, 0.6, 1.1, -8, 0)],
+    'tcspring': [('wflow', 9.6, 1.0, 1.1, -2, 0), ('wimpact', 0.05, 0.6, 0.95, -4, 60), ('twinkle', 0.0, 0.6, 1.0, -10, 100)],
+    'tcsplash': [('wimpact', 0.05, 0.5, 1.0, 0, 0), ('bubbles', 0.0, 0.3, 1.1, -8, 40)],
+    'tcsplashbig': [('wimpact', 0.05, 0.7, 0.85, 0, 0), ('drown', 0.0, 0.6, 1.0, -6, 60)],
+    'tcdrop': [('liquid', 0.0, 0.25, 1.5, -6, 0), ('twinkle', 0.0, 0.5, 1.3, -8, 60)],
+    'tcrevive': [('brightup', 0.0, 1.4, 0.85, -2, 0), ('shimmer', 8.0, 1.2, 1.0, -8, 100)],
+    'tcrain': [('rain', 200.0, 3.0, 1.0, -2, 0), ('shimmer', 12.0, 2.0, 1.0, -12, 0)],
+    'tcsurge': [('brightup', 0.0, 1.2, 1.0, -2, 0), ('wimpact', 0.05, 0.6, 0.9, -4, 40), ('wflow', 9.6, 0.8, 1.2, -6, 0)],
+    'tcbless': [('shimmer', 16.0, 1.4, 1.0, -4, 0), ('light', 0.0, 0.9, 0.9, -6, 0)],
+    'tcmoonfall': [('twinkle', 0.0, 0.5, 0.8, -6, 0), ('drown', 0.0, 0.8, 0.8, -2, 250), ('wimpact', 0.05, 0.7, 0.8, -2, 300)],
+    'tcmoontide': [('astral', 0.0, 2.5, 1.0, -4, 0), ('surf', 0.0, 2.2, 0.9, -2, 300), ('brightup', 0.0, 1.4, 0.8, -6, 1200)],
+    'tcglint': [('twinkle', 0.0, 0.9, 1.1, -4, 0), ('shimmer', 20.0, 0.6, 1.2, -8, 0)],
+    'tcshellfx': [('bubbles', 0.0, 0.5, 1.0, 0, 0), ('shimmer', 24.0, 0.8, 1.0, -8, 80)],
+    'tcpool': [('wflow', 3.5, 1.1, 1.05, -2, 0), ('shimmer', 28.0, 1.0, 1.0, -10, 120)],
+    'tcwhirl': [('wrock', 0.0, 1.0, 0.95, -2, 0), ('watery', 0.0, 0.4, 0.9, -6, 0)],
+    'tcsilverwave': [('wtrans', 1.6, 1.3, 0.95, 0, 0), ('shimmer', 30.0, 1.0, 1.0, -10, 100)],
     # The Maelstrom (2026-11-09): the deep sea, heavier and lower: spears of pressure, vortex bolts,
     # vortices and the finisher's whirlpool, beams, black water slammed down, glowing charges.
     'msspear': [('watery', 0.0, 0.3, 0.8, 0, 0), ('subimpact', 0.1, 0.3, 0.7, -4, 40)],

@@ -235,6 +235,19 @@ function depthAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Moonsong (the Tidecaller): pearls of moonlit water rising round her as it builds, and full
+// (Spring Tide), a ring of moonlight turning at her feet.
+function moonAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celtcring', x, y + 2 * s, { frame: Math.floor(t * 24) % 24, scale: s * 0.5, alpha: 0.85 });
+    return;
+  }
+  if (k > 0.2) for (let i = 0; i < 2 + Math.floor(k * 3); i++) {
+    const u = (t * 0.5 + i / 5) % 1;
+    fxSprite(ctx, 'celtcmote', x + (i - 2) * 9 * s + Math.sin(t * 1.6 + i) * 4 * s, y - (6 + 46 * u) * s, { frame: i * 5, scale: s * 0.2, alpha: Math.min(1, (k - 0.2) * 2) * (1 - u) });
+  }
+}
+
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
 // him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
 // again and again.
@@ -308,7 +321,7 @@ function tailsAura(ctx, x, y, t, s, k, layer) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, depth: depthAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, moon: moonAura, depth: depthAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

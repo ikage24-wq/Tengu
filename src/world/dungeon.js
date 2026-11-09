@@ -144,9 +144,9 @@ function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
   const level = Math.floor(between(lo, hi + 1, rng));
-  // (With the Mage line wiped, 2026-11-08, a healer comes as a Paladin past level 30, the party's
-  // holy knight, and a Warrior before.)
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['warrior', 'paladin'] : ['warrior']) : [pick(['archer', 'thief'], rng)];
+  // (A healer comes as a Tidecaller past level 30, the party's healer; before, while no first job
+  // heals, a sturdy Warrior fills the seat.)
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['tidemage', 'tidecaller'] : ['warrior']) : [pick(['archer', 'thief'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -1684,24 +1684,34 @@ export function healerTurn(bot, world, rng) {
   const me = group.find((g) => g.bot === bot);
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
-  // (The healer's own look: the party's holy knight praying, since the Mage line was wiped 2026-11-08.)
-  const cast = () => {
-    bot.attack = { pose: 'pray', t: 0, dur: 0.7 };
+  // (The healer's own look: a Tidecaller heals with her own moves and water, a Tide Mage with hers;
+  // anyone else filling the seat prays.)
+  const job = bot.char?.job;
+  const tc = job === 'tidecaller';
+  const tm = job === 'tidemage';
+  const looks = tc ? { heal: 'tcsurge', ward: 'tcpearlshell', renew: 'tcrain', up: 'tcreturn' } : tm ? { heal: 'tmpool', ward: 'tmshield', renew: 'tmpool', up: 'tmpool' } : { heal: 'pray', ward: 'pray', renew: 'pray', up: 'pray' };
+  const mark = (kind, g, dur) => {
+    if (tc || tm) world.fx.push({ kind, x: g.body.x, y: g.body.y, h: g.body.h, t: 0, dur });
   };
-  const barrier = { id: 'healerward', name: 'Ward', pose: 'pray', dur: 0.8 };
-  const renew = { id: 'healerrenew', name: 'Renew', pose: 'pray', dur: 0.8 };
+  const cast = () => {
+    bot.attack = { pose: looks.heal, t: 0, dur: 0.7 };
+  };
+  const barrier = { id: 'healerward', name: 'Ward', pose: looks.ward, dur: 0.8 };
+  const renew = { id: 'healerrenew', name: 'Renew', pose: looks.renew, dur: 0.8 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
       healMember(world, h.g, maxHpOf(world, h.g) * 0.2 + bot.stats.int * 0.5, bot.id);
     }
-    run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
+    if (tc || tm) mark(tc ? 'tcsurge' : 'tmsplash', me, 0.85);
+    else run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
     cast();
     if (rng() < 0.2) groupSay(world, bot, 'dgHeal');
     return between(1.5, 1.9, rng);
   }
   if (low.length) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
+    mark(tc ? 'tcdrop' : 'tmhit', low[0].g, 0.7);
     if (low[0].g.id === 'you' && low[0].f < 0.5) callOut(world, bot, 'heal');
     else if (low[0].g.bot === bot && low[0].f < 0.5) callOut(world, bot, 'healSelf');
     cast();
@@ -1729,7 +1739,8 @@ export function healerTurn(bot, world, rng) {
     const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < 44);
     if (fallen) {
       revive(world, fallen, 0.5);
-      bot.attack = { pose: 'pray', t: 0, dur: 1 };
+      mark(tc ? 'tcrevive' : 'tmsplash', fallen, 1.2);
+      bot.attack = { pose: looks.up, t: 0, dur: 1 };
       return 1.2;
     }
   }
