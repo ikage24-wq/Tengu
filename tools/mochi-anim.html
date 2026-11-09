@@ -1,0 +1,127 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#eef5e6">
+<canvas id="c" width="800" height="620" style="width:100%;max-width:800px;image-rendering:pixelated"></canvas>
+<script type="module">
+// Dev tool: the Mochi's animations (render/mochi-anim.js). Top: the four running gaits on
+// treadmills (Run talent E, C, A, S); below: four Mochi standing about in their personalities.
+// ?manual steps only through window.step(dt) (for recording); window.frame() gives the canvas.
+import { rollMochi } from '../src/data/mochi-genes.js';
+import { drawMochiAnim, GAITS, RUN_STYLES, SWIMS, FLIES } from '../src/render/mochi-anim.js';
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const q = new URLSearchParams(location.search);
+const Z = 4;
+// One runner per running style, its Run points just past each threshold.
+const points = RUN_STYLES.map((p, i) => p + [150, 100, 100, 100, 100, 200][i]);
+const runners = points.map((runPoints, i) => ({ genes: rollMochi(60 + i, { coat: null }), dir: 1, speed: GAITS[i].speed, dist: 0, runPoints }));
+const idlers = ['playful', 'shy', 'proud', 'sleepy'].map((personality, i) => ({ genes: rollMochi(70 + i, { coat: null, personality }), dir: 1, speed: 0, dist: 0 }));
+let t = 0;
+function label(text, x, y) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillStyle = '#4a3a4f';
+  ctx.fillText(text, x, y);
+}
+// ?acts: one runner per tier, big, the act it's playing named under it (personalities chosen to
+// show their favourite acts).
+const actors = ['timid', 'bubbly', 'playful', 'cheeky', 'hyper', 'sassy'].map((personality, i) => ({ genes: rollMochi(80 + i, { coat: null, personality }), dir: 1, speed: GAITS[i].speed, dist: 0, runPoints: RUN_STYLES[i] + 100 }));
+function stepActs(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  actors.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 133 + (i % 3) * 267;
+    const y = 230 + Math.floor(i / 3) * 290;
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 125) / ZB, y / ZB, 250 / ZB, 4);
+    ctx.fillStyle = '#9fd08a';
+    for (let k = -2; k < 6; k++) ctx.fillRect((x - 170) / ZB + ((((-m.dist) % 12) + 12) % 12) + k * 12, y / ZB, 2, 4);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(`${GAITS[i].name} · ${m.genes.personality}`, x, y + 44);
+    ctx.font = '13px sans-serif';
+    ctx.fillStyle = '#9a4ad0';
+    ctx.fillText(m.acting ? `~ ${m.acting} ~` : '', x, y + 62);
+  });
+}
+// ?swim / ?fly: one Mochi per style, its points just past each threshold, in a pool or the air.
+const kind = q.has('swim') ? 'swim' : q.has('fly') ? 'fly' : null;
+const TABLE = kind === 'swim' ? SWIMS : FLIES;
+const movers = RUN_STYLES.map((need, i) => ({ genes: rollMochi(90 + i, { coat: null }), dir: 1, speed: TABLE[i].speed, dist: 0, mode: kind, [`${kind}Points`]: need + 120 }));
+function stepKind(dt) {
+  t += dt;
+  const ZB = 5;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = kind === 'swim' ? '#eef5e6' : '#dff0fb';
+  ctx.fillRect(0, 0, c.width, c.height);
+  movers.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 133 + (i % 3) * 267;
+    const y = (kind === 'swim' ? 200 : 260) + Math.floor(i / 3) * 290;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    if (kind === 'swim') {
+      // The pool: a tiled wall behind, deeper water below the surface, ripples sliding past.
+      ctx.fillStyle = '#b9d7e6';
+      ctx.fillRect(x - 125, y - 150, 250, 150);
+      ctx.fillStyle = '#a9cbdc';
+      for (let k = 0; k < 6; k++) ctx.fillRect(x - 125, y - 150 + k * 25, 250, 2);
+      ctx.fillStyle = '#9ed2f2';
+      ctx.fillRect(x - 125, y, 250, 70);
+      ctx.fillStyle = '#c4e6f8';
+      for (let k = -1; k < 6; k++) ctx.fillRect(x - 125 + ((((-m.dist * ZB) % 60) + 60) % 60) + k * 60, y + 30, 26, 3);
+    } else {
+      ctx.fillStyle = '#bfe3a8';
+      ctx.fillRect(x - 125, y, 250, 16);
+      ctx.fillStyle = '#9fd08a';
+      for (let k = -1; k < 6; k++) ctx.fillRect(x - 125 + ((((-m.dist * ZB) % 60) + 60) % 60) + k * 60, y, 10, 16);
+    }
+    ctx.setTransform(ZB, 0, 0, ZB, 0, 0);
+    drawMochiAnim(ctx, m, x / ZB, y / ZB, t);
+    label(`${TABLE[i].name} · ${kind === 'swim' ? 'Swim' : 'Fly'} ${m[`${kind}Points`]}`, x, y + (kind === 'swim' ? 90 : 36));
+  });
+}
+function step(dt) {
+  if (kind) return stepKind(dt);
+  if (q.has('acts')) return stepActs(dt);
+  t += dt;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  runners.forEach((m, i) => {
+    m.dist += m.speed * dt;
+    const x = 133 + (i % 3) * 267;
+    const y = 190 + Math.floor(i / 3) * 175;
+    // The treadmill: ground ticks sliding back as far as it runs.
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
+    ctx.fillStyle = '#bfe3a8';
+    ctx.fillRect((x - 120) / Z, y / Z, 240 / Z, 4);
+    ctx.fillStyle = '#9fd08a';
+    for (let k = -2; k < 5; k++) ctx.fillRect((x - 120) / Z + ((((-m.dist) % 12) + 12) % 12) + k * 12, y / Z, 2, 4);
+    drawMochiAnim(ctx, m, x / Z, y / Z, t);
+    label(`${GAITS[i].name} · Run ${m.runPoints}`, x, y + 34);
+  });
+  idlers.forEach((m, i) => {
+    const x = 100 + i * 200;
+    const y = 555;
+    ctx.setTransform(Z, 0, 0, Z, 0, 0);
+    drawMochiAnim(ctx, m, x / Z, y / Z, t);
+    label(m.genes.personality, x, y + 30);
+  });
+}
+window.step = step;
+window.frame = () => c.toDataURL('image/png');
+window.ready = true;
+if (!q.has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0);
+</script></body></html>

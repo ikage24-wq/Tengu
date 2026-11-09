@@ -2705,7 +2705,7 @@ function weaponIdle(type, t, job) {
 // its middle. Whatever the hand holds goes with the upper body.
 // `hold: 'front'` hands the callbacks the front (near) hand instead, the one on the facing side,
 // which can reach out well past the body (a weapon held out at arm's length).
-export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back' } = {}) {
+export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under = null, over = null, lean = null, hold = 'back', alpha = 1 } = {}) {
   // (Its pose on half pixels: fine enough to read smooth, few enough poses to come round again.)
   const rig = { ...baseRig(), ...halfRig(pose), armIn: true };
   const g = resolveGear(look, null);
@@ -2726,7 +2726,7 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
   const other = rig.view === 'back' ? hand : [sx(squashX(ox + rig.tx)), sy(squashY(oy + rig.by + hipDrop(rig)))];
   if (!lean || (!lean.tilt && !lean.lunge && !lean.lift)) {
     under?.(ctx, hand, flip, other);
-    blit(ctx, body, left, top, { flip, scale });
+    blit(ctx, body, left, top, { flip, scale, alpha });
     over?.(ctx, hand, flip, other);
     return;
   }
@@ -2749,17 +2749,17 @@ export function drawPosed(ctx, look, x, y, pose, { scale = 1, facing = 1, under 
     ctx.save();
     legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, false);
     whole(ctx, 0);
-    blit(ctx, body, left, top, { flip, scale });
+    blit(ctx, body, left, top, { flip, scale, alpha });
     ctx.restore();
     ctx.save();
     legBand(ctx, x + dir * mv.lunge * scale, cut, y, scale, true);
     whole(ctx, tilt);
-    blit(ctx, body, left, top, { flip, scale });
+    blit(ctx, body, left, top, { flip, scale, alpha });
     ctx.restore();
   } else {
     ctx.save();
     whole(ctx, tilt);
-    blit(ctx, body, left, top, { flip, scale });
+    blit(ctx, body, left, top, { flip, scale, alpha });
     ctx.restore();
   }
   ctx.save();

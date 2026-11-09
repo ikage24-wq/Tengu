@@ -47,6 +47,35 @@ mythic and Mutation eggs sit in a gold-banded mortar and glow.
 No hats by default: the six hoods drawn first (baby, Dango Runner, Warabi, Sakura, Kagami, Monaka)
 are dress-up.
 
+## Stats, levels and grades (decided 2026-11-09)
+
+Five stats: Run, Fly, Power, Stamina, Swim. Like a Chao Garden:
+
+- **Every stat levels from 1 to 99**, by training, sweets and play. Nothing caps the level.
+- **The grade (E to S) decides how much each level adds** to the stat's points: about 10 a level
+  for E, 13 for D, 16 for C, 19 for B, 22 for A and 25 for S. At Lv 99 an E stat sits near 990 points
+  and an S near 2,475, so the grade is how far that stat can ever grow (its top speed).
+- **Grades can rise** on evolving and on rebirth, so a later generation can grow further. Mutations
+  are born S in everything.
+- **How it moves follows the points,** in six styles per stat, each funnier and more skilled:
+
+  | Points | Run style | Reached at Lv 99 by |
+  |---|---|---|
+  | 0 | waddle: little hops, arms out for balance | |
+  | 300 | trot: a bouncy, happy jog | |
+  | 700 | run: a natural steady run, a light lean | E |
+  | 1,100 | sprint: long bounds, dust kicked up | D, C |
+  | 1,600 | power sprint: deep lean, knees driving, arms pumping hard | B |
+  | 2,100 | ninja dash: bent right over, arms back, speed lines, after-images | A, S |
+
+  Swim, Fly, Power and Stamina get six styles each the same way (swimming ends in a lazy backstroke).
+- **Acting while running:** every few seconds a running Mochi plays a short act that fits its style
+  (struggling: panting, scared looks back, tears, dizziness; happy: joy, singing, cheering back;
+  focused: grit, grins, winks, checks over the shoulder; cool: smirks, taunts with a tongue out,
+  smug calm, showing off, yawning), its personality's favourites three times as likely.
+- **Speed note for the game:** a Mochi's run drawings (its 16 stride frames times its act faces)
+  should be painted ahead in the background worker before a race, so the first laps never stutter.
+
 ## The life of a Mochi
 
 - **Egg** → **Mochiko** (stage 1, the hatchling) → **stage 2** on one of two paths: **Amamochi**
