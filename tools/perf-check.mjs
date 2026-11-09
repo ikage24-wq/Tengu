@@ -110,6 +110,8 @@ export function checkMaps(ids = Object.keys(MAPS), warm = 300, frames = 300) {
         const rec = newRecord(rollMochi(7));
         for (const st of Object.values(rec.stats)) st.points = 900;
         w.char.garden = { back: null, mochi: [rec], eggs: [], unlocked: {} };
+        // (Every stage open, the Grand course too.)
+        w.char.raceWins = Object.fromEntries(Object.keys(RACE_STAGES).map((s) => [s + '|beginner', true]));
         loadMap(w, 'mochi_stadium', 'board');
         if (!startRace(w, rec, Object.keys(RACE_STAGES).find((k) => RACE_STAGES[k].map === id))) throw new Error("couldn't start the race");
       } else {

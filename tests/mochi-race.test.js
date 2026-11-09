@@ -17,9 +17,11 @@ const mochi = (seed, points, personality = 'stoic') => {
   for (const st of STATS) Object.assign(rec.stats[st], { points, level: Math.max(1, Math.round(points / 16)) });
   return rec;
 };
+// (Every stage's Beginner race won already, so every stage is open.)
 function racer(...recs) {
   const char = createCharacter('Mina', { hairStyle: 'bob' });
   char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
+  char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills'].map((s) => [s + '|beginner', true]));
   const w = createWorld(char);
   w.log = () => {};
   loadMap(w, 'mochi_stadium', 'board');
@@ -141,4 +143,47 @@ test('swimming, climbing and gliding: the racer moves the way the leg does', () 
     if (w.race.racers[0].m.mode === 'swim') assert.ok(w.race.racers[0].m.inWater);
   }
   assert.deepEqual([...seen].sort(), ['climb', 'fly', 'run', 'swim']);
+});
+
+test('ranks: a win opens the next rank; the Grand course after three Beginner wins; medals and prizes by rank', async () => {
+  const { rankOpen, prizeOf } = await import('../src/data/mochi-race.js');
+  const rec = mochi(30, 2400);
+  const w = racer(rec);
+  w.char.raceWins = {};
+  assert.ok(rankOpen(w.char, 'sprint', 'beginner'));
+  assert.ok(!rankOpen(w.char, 'sprint', 'challenge'));
+  assert.ok(!rankOpen(w.char, 'grand', 'beginner'));
+  assert.equal(startRace(w, rec, 'sprint', 'challenge'), false, 'not open yet');
+  // Win the Sprint, Swim and Climb Beginner races: their Challenge opens, and so does the Grand course.
+  for (const stage of ['sprint', 'swim', 'climb']) {
+    assert.ok(startRace(w, rec, stage));
+    const R = run(w);
+    assert.equal(R.racers[0].place, 1, stage);
+    assert.equal(R.medal.medal, 'gold');
+    for (let k = 0; k < 60 * 3.2; k++) updateWorld(w, 1 / 60, keys());
+    updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  }
+  assert.equal(rec.medals['sprint|beginner'], 'gold');
+  assert.ok(rankOpen(w.char, 'sprint', 'challenge'));
+  assert.ok(!rankOpen(w.char, 'sprint', 'master'));
+  assert.ok(rankOpen(w.char, 'grand', 'beginner'));
+  // Prizes grow by rank; the Grand course pays half again.
+  assert.ok(prizeOf('sprint', 'master', 1) > prizeOf('sprint', 'challenge', 1));
+  assert.ok(prizeOf('sprint', 'challenge', 1) > prizeOf('sprint', 'beginner', 1));
+  assert.equal(prizeOf('grand', 'beginner', 1), 750);
+  // A worse finish later doesn't take its gold away.
+  const slow = mochi(31, 0);
+  slow.medals = { 'sprint|beginner': 'gold' };
+  const w2 = racer(slow);
+  startRace(w2, slow, 'sprint');
+  run(w2);
+  assert.equal(slow.medals['sprint|beginner'], 'gold');
+});
+
+test('rivals get stronger rank by rank', () => {
+  const avg = (rank) => {
+    const rs = rivalsFor('sprint', rank, raceHour());
+    return rs.reduce((s, r) => s + r.rec.stats.run.points, 0) / rs.length;
+  };
+  assert.ok(avg('beginner') < avg('challenge') && avg('challenge') < avg('master'));
 });

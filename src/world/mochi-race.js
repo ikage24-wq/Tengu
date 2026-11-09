@@ -23,7 +23,7 @@
 import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
-import { RACE_STAGES, RACE_RANKS, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX } from '../data/mochi-race.js';
+import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
 import { groundAt } from './physics.js';
 import { loadMap } from './world.js';
 
@@ -80,7 +80,7 @@ const hashStr = (s) => {
 export const raceHour = (now = Date.now()) => Math.floor(now / 3.6e6);
 
 // The five rivals for a stage and rank this hour: rolled Mochi with stats in the rank's range
-// (mostly toward its low end), some of them grown, each with a name.
+// (mostly toward its low end), some of them grown (more, the higher the rank), each with a name.
 export function rivalsFor(stageId, rank, hour) {
   const rng = seededRandom(hashStr(`${stageId}|${rank}|${hour}`));
   const [lo, hi] = RACE_RANKS[rank].rivals;
@@ -92,7 +92,7 @@ export function rivalsFor(stageId, rank, hour) {
       const p = Math.round(lo + (hi - lo) * rng() ** 1.4);
       Object.assign(rec.stats[st], { points: p, level: Math.max(1, Math.min(99, Math.round(p / 16))) });
     }
-    if (rng() < 0.45) {
+    if (rng() < RACE_RANKS[rank].grown) {
       Object.assign(rec, { age: 99999, mood: 80 });
       evolve(rec, rng);
     }
@@ -107,7 +107,7 @@ export const progressOf = (course, r) => r.x - course.start + r.climbed;
 // Sends `rec` (one of your Mochi) to race stage `stageId` at `rank`. Returns false if it can't.
 export function startRace(world, rec, stageId, rank = 'beginner') {
   const stage = RACE_STAGES[stageId];
-  if (!stage || !RACE_RANKS[rank] || world.race || world.dungeon || world.trial || world.scene || !rec || rec.stage === 'egg') return false;
+  if (!stage || !RACE_RANKS[rank] || !rankOpen(world.char, stageId, rank) || world.race || world.dungeon || world.trial || world.scene || !rec || rec.stage === 'egg') return false;
   const map = MAPS[stage.map];
   const course = map.race;
   const hour = raceHour();
@@ -295,16 +295,32 @@ export function standings(R, course) {
   return [...R.racers].sort((a, b) => (a.place && b.place ? a.place - b.place : a.place ? -1 : b.place ? 1 : p(b) - p(a)));
 }
 
-// The race is over: the ones still out are placed by how far they got; the prize; your Mochi is
-// happier for the race (a win most of all) and a little closer to you.
+// The race is over: the ones still out are placed by how far they got; the prize; a medal for your
+// Mochi if it came in the top three (kept if it's its best there); a win opens the next rank; your
+// Mochi is happier for the race (a win most of all) and a little closer to you.
 function endOfRace(world, R) {
   Object.assign(R, { phase: 'done', t: 0 });
   for (const r of standings(R, world.map.race)) if (!r.place) r.place = ++R.finished;
   R.results = standings(R, world.map.race);
   const you = R.racers[0];
-  const rank = RACE_RANKS[R.rank];
-  R.prize = you.done != null ? rank.prize[you.place - 1] ?? rank.rest : 0;
+  R.prize = you.done != null ? prizeOf(R.stageId, R.rank, you.place) : 0;
   world.char.gold += R.prize;
+  const key = medalKey(R.stageId, R.rank);
+  const medal = you.done != null ? MEDALS[you.place - 1] ?? null : null;
+  if (medal) {
+    you.rec.medals ??= {};
+    const had = you.rec.medals[key];
+    if (!had || MEDALS.indexOf(medal) < MEDALS.indexOf(had)) you.rec.medals[key] = medal;
+    R.medal = { medal, best: !had || MEDALS.indexOf(medal) < MEDALS.indexOf(had) };
+  }
+  // (What a win opens: the next rank here, and the Grand course once enough Beginner races are won.)
+  if (you.place === 1 && you.done != null) {
+    const char = world.char;
+    const before = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk)).map((rk) => medalKey(id, rk)));
+    char.raceWins ??= {};
+    char.raceWins[key] = true;
+    R.opened = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk) && !before.includes(medalKey(id, rk))).map((rk) => `${RACE_STAGES[id].name} (${RACE_RANKS[rk].name})`));
+  }
   you.rec.mood = Math.min(100, (you.rec.mood ?? 60) + (you.place === 1 ? 15 : 8));
   you.rec.bond = Math.min(1000, (you.rec.bond ?? 0) + 4);
   const nth = ['1st', '2nd', '3rd', '4th', '5th', '6th'][you.place - 1];

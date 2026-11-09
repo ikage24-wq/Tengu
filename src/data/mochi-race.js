@@ -13,14 +13,46 @@ export const RACE_STAGES = {
   climb: { name: 'Mortar Cliff Climb', tab: 'Climb', stat: 'power', map: 'mrace_climb', about: 'Up two climbing walls, a ledge between and a sprint along the top. All about Power.' },
   glide: { name: 'Cloud Glide', tab: 'Glide', stat: 'fly', map: 'mrace_glide', about: 'Off a high cliff and down over the cloud fluff: the further it glides, the less fluff to wade. All about Fly.' },
   hills: { name: 'Long Hill Run', tab: 'Hills', stat: 'stamina', map: 'mrace_hills', about: 'A long way over big hills: uphill slows and tires it. All about Stamina.' },
-  grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.' },
+  grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.', prizeMul: 1.5, needs: 3 },
 };
 
-// The ranks: how strong the rivals are (stat points, from and to) and the prizes for 1st, 2nd and
-// 3rd (gold: the money scale), with a little something for everyone else who finishes.
+// The ranks, in order: how strong the rivals are (stat points, from and to; how many of them are
+// grown) and the prizes for 1st, 2nd and 3rd (gold: the money scale), with a little something for
+// everyone else who finishes. The Grand course pays half again (`prizeMul`).
+// Unlocking: a stage's Beginner race is open from the start (the Grand course's once you've won
+// `needs` Beginner races); winning a rank opens the next rank of that stage.
 export const RACE_RANKS = {
-  beginner: { name: 'Beginner', rivals: [120, 620], prize: [500, 250, 100], rest: 20 },
+  beginner: { name: 'Beginner', rivals: [120, 620], grown: 0.45, prize: [500, 250, 100], rest: 20 },
+  challenge: { name: 'Challenge', rivals: [650, 1400], grown: 0.8, prize: [2000, 1000, 400], rest: 80 },
+  master: { name: 'Master', rivals: [1300, 2100], grown: 1, prize: [8000, 4000, 1500], rest: 300 },
 };
+export const RANK_ORDER = Object.keys(RACE_RANKS);
+export const prizeOf = (stageId, rank, place) => {
+  const r = RACE_RANKS[rank];
+  return Math.round((r.prize[place - 1] ?? r.rest) * (RACE_STAGES[stageId]?.prizeMul ?? 1));
+};
+// Medals: a top-three finish wins one, kept on the Mochi that won it (its best for each stage and
+// rank); `MEDAL_COLOR` for drawing them.
+export const MEDALS = ['gold', 'silver', 'bronze'];
+export const MEDAL_COLOR = { gold: '#f2c94c', silver: '#c8d0dc', bronze: '#d89060' };
+export const medalKey = (stageId, rank) => `${stageId}|${rank}`;
+
+// Whether `char` can race `stageId` at `rank` (its race wins: char.raceWins, keyed like medals).
+export function rankOpen(char, stageId, rank) {
+  const wins = char.raceWins ?? {};
+  const i = RANK_ORDER.indexOf(rank);
+  if (i < 0 || !RACE_STAGES[stageId]) return false;
+  if (i > 0) return Boolean(wins[medalKey(stageId, RANK_ORDER[i - 1])]);
+  const needs = RACE_STAGES[stageId].needs ?? 0;
+  return Object.keys(RACE_STAGES).filter((id) => id !== stageId && wins[medalKey(id, 'beginner')]).length >= needs;
+}
+// What's still needed to open it, in words (null if it's open).
+export function rankNeeds(char, stageId, rank) {
+  if (rankOpen(char, stageId, rank)) return null;
+  const i = RANK_ORDER.indexOf(rank);
+  if (i > 0) return `Win ${RACE_STAGES[stageId].name} (${RACE_RANKS[RANK_ORDER[i - 1]].name}) to open it.`;
+  return `Win ${RACE_STAGES[stageId].needs} Beginner races to open it.`;
+}
 
 // Rivals' names (Mochi don't have names of their own yet: step 7).
 export const RIVAL_NAMES = ['Momo', 'Kinu', 'Azuki', 'Yuzu', 'Tofu', 'Sumi', 'Hana', 'Kiri', 'Mugi', 'Ume', 'Pom', 'Natsu', 'Koko', 'Rin',

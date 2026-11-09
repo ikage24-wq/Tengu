@@ -125,7 +125,9 @@ if (q.has('kitchen')) {
   Object.assign(state.windows.cook, { open: true, openedAt: -99 });
 }
 if (q.has('board')) Object.assign(state.windows.race, { open: true, openedAt: -99 });
-if (q.has('race')) startRace(w, c.garden.mochi[Number(q.get('who') ?? 0)], q.get('race'));
+// (Racing: every stage and rank open; ?rank=master.)
+c.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].flatMap((s) => ['beginner', 'challenge'].map((r) => [s + '|' + r, true])));
+if (q.has('race')) startRace(w, c.garden.mochi[Number(q.get('who') ?? 0)], q.get('race'), q.get('rank') ?? 'beginner');
 // (?raceskip=25: that far into the race first.)
 for (let k = 0; k < Number(q.get('raceskip') ?? 0) * 30; k++) step(1 / 30, false);
 for (let k = 0; k < 60; k++) step(1 / 60, false);

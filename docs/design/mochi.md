@@ -204,6 +204,13 @@ Each step is pushed on its own. Status as of 2026-11-09.
    specialist beats a 1,600-point runner on its stage); an ordinary Beginner race takes 35-85 s.
    The board has a tab per stage. New pieces: mr_wall, mr_launch, mr_clouds. Racers paint ahead for
    every way the course moves them.
+   **Batch 3 built (2026-11-10):** ranks Beginner (rivals 120-620 points), Challenge (650-1,400) and
+   Master (1,300-2,100); prizes 500 / 2,000 / 8,000 gold for 1st (the Grand course x1.5); a gold,
+   silver or bronze medal for a top-three finish, kept on the Mochi (`rec.medals`, its best per stage
+   and rank); a win opens that stage's next rank (`char.raceWins`), and the Grand course opens after
+   three Beginner wins. The board has rank buttons (a lock and what's needed on one not open; the
+   picked Mochi's medal on each) and each Mochi's medals for the stage. Checked with a simulation:
+   Beginner is won at about 400-800 points in every stat, Challenge 1,200-1,600, Master about 2,000.
 6. **Getting eggs.** *(New.)* Proposed: plain eggs from the Garden's egg stall for gold (a few
    thousand: "decent" on the money scale); an egg as the reward for some quests; a rare egg drop from
    monsters; and bred eggs (step 9). No Cash.

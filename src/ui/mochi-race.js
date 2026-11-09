@@ -4,14 +4,14 @@
 // Cheer button (or Up), and at the end the results and the prize.
 
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
-import { RACE_STAGES, RACE_RANKS, CHEER } from '../data/mochi-race.js';
+import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
 import { startRace, leaveRace, standings, progressOf, COUNTDOWN } from '../world/mochi-race.js';
 import { drawMochiAnim } from '../render/mochi-anim.js';
 import { VW, VH } from '../input.js';
-import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, bar, tabs } from './kit.js';
+import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, fit, bar, tabs, icon } from './kit.js';
 
 const W = 300;
-const H = 250;
+const H = 274;
 const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
 const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 const NTH = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
@@ -22,6 +22,22 @@ const portraitOf = (rec) => {
   return portraits.get(rec);
 };
 const nameOf = (r) => r.name ?? `Your ${MOCHI_STAGES[r.rec.stage] ?? 'Mochi'}`;
+
+// A medal: a little coin in its colour, or an empty ring where there isn't one yet.
+function medalDot(ctx, x, y, medal, r = 3.2) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (medal) {
+    ctx.fillStyle = MEDAL_COLOR[medal];
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.fillRect(x - r * 0.45, y - r * 0.5, r * 0.4, r * 0.4);
+  } else {
+    ctx.strokeStyle = '#e8d8e0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
 
 // ---------- The race board ----------
 export function raceBoardWindow(ui, state, world) {
@@ -41,14 +57,28 @@ export function raceBoardWindow(ui, state, world) {
   win.rank ??= 'beginner';
   win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { w: 45, h: 14 })];
   y += 18;
+  const char = world.char;
   const stage = RACE_STAGES[win.stage];
+  // (A rank not open here: back to Beginner.)
+  if (!rankOpen(char, win.stage, win.rank)) win.rank = 'beginner';
   const rank = RACE_RANKS[win.rank];
   box(ctx, x, y, W - 20, 40, { fill: '#fff4f8', edge: '#ffc2d4', r: 8, width: 1 });
   text(ctx, stage.name, x + 8, y + 12, { size: 8.5, bold: true });
   text(ctx, `${rank.name} · ${stage.stat ? `tests ${STAT_WORD[stage.stat]}` : 'tests everything'}`, x + W - 28, y + 12, { size: 6.5, align: 'right', color: '#d0507a' });
   text(ctx, fit(ctx, stage.about, W - 40, 6.5, false), x + 8, y + 23, { size: 6.5, color: COLORS.muted });
-  text(ctx, `Prizes: ${rank.prize.map((g, i) => `${NTH[i]} ${g} gold`).join(', ')}`, x + 8, y + 33, { size: 6, color: '#b08a2a' });
-  y += 48;
+  text(ctx, `Prizes: ${[1, 2, 3].map((p) => `${NTH[p - 1]} ${prizeOf(win.stage, win.rank, p)} gold`).join(', ')}`, x + 8, y + 33, { size: 6, color: '#b08a2a' });
+  y += 46;
+  // The ranks: a button each (a lock on one not open yet), with the picked Mochi's medal there.
+  const rw = (W - 20 - 8) / 3;
+  RANK_ORDER.forEach((rk, i) => {
+    const bx = x + i * (rw + 4);
+    const open = rankOpen(char, win.stage, rk);
+    if (button(ui, bx, y, rw, 16, RACE_RANKS[rk].name, { primary: win.rank === rk, enabled: open, size: 7.5 })) win.rank = rk;
+    if (!open) icon(ctx, 'lock', bx + 9, y + 8, 6, COLORS.muted);
+    else medalDot(ctx, bx + rw - 9, y + 8, win.pick?.medals?.[medalKey(win.stage, rk)]);
+    if (hover(ui, bx, y, rw, 16)) tooltip(ui, open ? [{ text: `${RACE_RANKS[rk].name}`, bold: true }, { text: `1st: ${prizeOf(win.stage, rk, 1)} gold`, color: COLORS.muted }] : [{ text: 'Not open yet', bold: true, color: COLORS.bad }, { text: rankNeeds(char, win.stage, rk), color: COLORS.muted }]);
+  });
+  y += 22;
   // Your Mochi: pick who races.
   text(ctx, 'Who races?', x, y + 4, { size: 7, bold: true, color: COLORS.muted });
   const list = (world.char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
@@ -73,9 +103,13 @@ export function raceBoardWindow(ui, state, world) {
     // (What this stage tests, and Stamina; the Grand course, its best two.)
     const shown = stage.stat ? [stage.stat, stage.stat === 'stamina' ? 'run' : 'stamina'] : Object.keys(STAT_WORD).sort((a, b) => rec.stats[b].points - rec.stats[a].points).slice(0, 2);
     text(ctx, shown.map((st) => `${STAT_WORD[st]} Lv ${rec.stats[st].level}`).join(' · '), cx + 26, cy + 19, { size: 6, color: COLORS.muted });
+    // (Its medals on this stage: Beginner, Challenge, Master.)
+    RANK_ORDER.forEach((rk, k) => medalDot(ctx, cx + cw - 22 + k * 7, cy + 7, rec.medals?.[medalKey(win.stage, rk)], 2.4));
     if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;
   });
-  if (button(ui, win.x + W / 2 - 40, win.y + H - 26, 80, 18, 'Race!', { primary: true, size: 9 })) {
+  const open = rankOpen(char, win.stage, win.rank);
+  if (!open) text(ctx, rankNeeds(char, win.stage, win.rank), win.x + W / 2, win.y + H - 34, { size: 6.5, align: 'center', color: COLORS.bad });
+  if (button(ui, win.x + W / 2 - 40, win.y + H - 26, 80, 18, 'Race!', { primary: open, enabled: open, size: 9 })) {
     if (startRace(world, win.pick, win.stage, win.rank)) win.open = false;
   }
 }
@@ -147,11 +181,11 @@ export function raceHud(ui, state, world) {
   }
   // The results.
   const pw = 250;
-  const ph = 196;
+  const ph = 214;
   const px = VW / 2 - pw / 2;
   const py = VH / 2 - ph / 2 - 6;
   box(ctx, px, py, pw, ph, { fill: '#fffaf6', edge: '#ffb3c8', r: 12, width: 2 });
-  text(ctx, `${RACE_STAGES[R.stageId].name}: results`, VW / 2, py + 18, { size: 10, bold: true, align: 'center' });
+  text(ctx, `${RACE_STAGES[R.stageId].name} (${RACE_RANKS[R.rank].name}): results`, VW / 2, py + 18, { size: 9.5, bold: true, align: 'center' });
   R.results.forEach((r, i) => {
     const ry = py + 30 + i * 20;
     if (r.you) box(ctx, px + 10, ry - 2, pw - 20, 18, { fill: '#ffe8f0', edge: '#ff8fb0', r: 6, width: 1, plain: true });
@@ -161,9 +195,13 @@ export function raceHud(ui, state, world) {
     ctx.arc(px + 48, ry + 8, 5, 0, Math.PI * 2);
     ctx.fill();
     text(ctx, fit(ctx, nameOf(r), 120, 8, r.you), px + 60, ry + 11, { size: 8, bold: r.you });
+    if (r.you && R.medal) medalDot(ctx, px + 186, ry + 8, R.medal.medal, 4);
     text(ctx, r.done != null ? `${r.done.toFixed(1)}s` : 'not home', px + pw - 18, ry + 11, { size: 7, align: 'right', color: r.done != null ? COLORS.muted : COLORS.bad });
   });
-  text(ctx, R.prize ? `+${R.prize} gold!` : 'No prize this time.', VW / 2, py + ph - 34, { size: 9, bold: true, align: 'center', color: R.prize ? '#c89a20' : COLORS.muted });
+  // The prize, the medal, and anything a win has opened.
+  const medal = R.medal ? `  ·  ${cap(R.medal.medal)} medal${R.medal.best ? '!' : ' (it has a better one here)'}` : '';
+  text(ctx, fit(ctx, `${R.prize ? `+${R.prize} gold!` : 'No prize this time.'}${medal}`, pw - 20, 8.5, true), VW / 2, py + 166, { size: 8.5, bold: true, align: 'center', color: R.prize ? '#c89a20' : COLORS.muted });
+  if (R.opened?.length) text(ctx, fit(ctx, `Now open: ${R.opened.join(', ')}`, pw - 20, 7, true), VW / 2, py + 179, { size: 7, bold: true, align: 'center', color: '#d0507a' });
   if (button(ui, VW / 2 - 64, py + ph - 26, 128, 18, 'Back to the Stadium', { primary: true, size: 8 }) && R.t > 0.6) leaveRace(world);
 }
 
