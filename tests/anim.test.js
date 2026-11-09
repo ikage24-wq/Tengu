@@ -183,7 +183,7 @@ test('the Warrior line swings round a fist kept under the chin, and nothing come
   const { PATH_VARIANTS } = await import('../src/world/melee.js');
   const commands = ['rising', 'airslash', 'airslash2', 'meteor', 'dashstab', 'plunge', 'dash', 'ascend', 'plaircut', 'pldive', 'consecrate', 'bash', 'dragrise', 'bkairchop', 'bkdive', 'bkgore', 'bodyslam', 'shieldrush', 'verdict', 'rampage', 'eclipse', 'tgskyward', 'tgaircut', 'tgaircut2', 'tgplunge', 'tgflash', 'tgslam', 'tgrush', 'tgcleave', 'tgcyclone', 'tgrod', 'tgthunderclap', 'tgguard', 'tgfall'];
   const moves = new Set(commands);
-  for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
+  for (const job of ['warrior', 'tempest', 'stormwall']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
   for (const weapon of ['sword', 'axe', 'spear']) {
     for (const kind of moves) {
       for (let i = 0; i <= 40; i++) {
@@ -197,13 +197,6 @@ test('the Warrior line swings round a fist kept under the chin, and nothing come
       assert.ok(!(w > -20 && w < 40) || end.orbit, `${kind} with a ${weapon} ends with the blade up before the face (${w.toFixed(0)})`);
     }
   }
-});
-
-test("the Paladin and the Berserker swing none of the Warrior's swings", async () => {
-  const { PATH_VARIANTS } = await import('../src/world/melee.js');
-  const own = (job) => new Set(PATH_VARIANTS[job].flat().map((s) => s.move));
-  const warrior = own('warrior');
-  for (const job of ['paladin', 'berserker']) for (const m of own(job)) assert.ok(!warrior.has(m), `${job} borrows ${m}`);
 });
 
 test('life-skill moves: their own tools, nothing over the face, smooth all the way', async () => {
@@ -242,7 +235,7 @@ test('the Warrior line never passes a blade across the face mid-move, and each m
   const { weaponBehind, rigid } = await import('../src/render/hero.js');
   const { PATH_VARIANTS } = await import('../src/world/melee.js');
   const moves = new Set(['bkeclipse', 'dragrise', 'plverdict', 'skysplit', 'leapchop', 'tgstrike', 'tgfall', 'tgcyclone', 'tgstorm', 'tgcleave', 'tgskyward']);
-  for (const job of ['warrior', 'paladin', 'berserker']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
+  for (const job of ['warrior', 'tempest', 'stormwall']) for (const step of PATH_VARIANTS[job]) for (const s of step) moves.add(s.move);
   for (const weapon of ['sword', 'axe']) {
     for (const kind of moves) {
       for (let i = 0; i <= 60; i++) {

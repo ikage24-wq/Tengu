@@ -38,15 +38,15 @@ function member(world, level, jobs) {
 
 test('a party member fights with their real skills and finisher, at a human pace', () => {
   const rng = seeded(7);
-  const { world } = heroAt(rng, 40, ['warrior', 'paladin']);
+  const { world } = heroAt(rng, 40, ['warrior', 'stormwall']);
   loadMap(world, 'woods', 'start');
-  const bot = member(world, 38, ['warrior', 'paladin']);
+  const bot = member(world, 38, ['warrior', 'stormwall']);
   // Their kit: the moves of their own skills and finisher.
   bot.stats = computeStats(bot.char);
   const skills = botSkills(bot.char);
   const skillMoves = new Set(skills.filter((s) => !s.full).flatMap((s) => s.steps.map((st) => st.move)));
   const finMoves = new Set(skills.filter((s) => s.full).flatMap((s) => s.steps.map((st) => st.move)));
-  assert.ok(skillMoves.size && finMoves.size, 'a Paladin has attack skills and a finisher');
+  assert.ok(skillMoves.size && finMoves.size, 'a Stormwall has attack skills and a finisher');
   const starts = [];
   let last = null;
   for (let i = 0; i < 60 * 90; i++) {
@@ -69,9 +69,9 @@ test('a party member fights with their real skills and finisher, at a human pace
 
 test('skills fit the fight: area skills on a pack, the finisher saved for a boss, the launcher then an air combo', () => {
   const rng = seeded(9);
-  const { world } = heroAt(rng, 40, ['warrior', 'paladin']);
+  const { world } = heroAt(rng, 40, ['warrior', 'stormwall']);
   loadMap(world, 'woods', 'start');
-  const bot = member(world, 38, ['warrior', 'paladin']);
+  const bot = member(world, 38, ['warrior', 'stormwall']);
   bot.stats = computeStats(bot.char);
   bot.ai = { special: 1, weapon: { ranged: false, reach: 42 } };
   bot.body = { x: 400, y: world.map.groundY, vx: 0, onGround: true, facing: 1 };

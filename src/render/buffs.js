@@ -164,7 +164,7 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   // Maelstrom's and the Tidecaller's too: her shell, pool, rain and blessing are their own effects.)
   const own = SKILLS[f.skill]?.school;
   // (The Thunderguard's too: his clap, his static shell.)
-  if (['tide', 'deep', 'moon', 'thunder'].includes(school) || ['tide', 'deep', 'moon', 'thunder'].includes(own)) {
+  if (['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo'].includes(school) || ['tide', 'deep', 'moon', 'thunder', 'redstorm', 'indigo'].includes(own)) {
     ctx.restore();
     return;
   }

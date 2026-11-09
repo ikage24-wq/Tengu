@@ -142,7 +142,7 @@ function rollLevel(pro, rng) {
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
   const first = pick(['warrior', 'archer', 'thief', 'tidemage'], rng);
-  if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
+  if (first === 'warrior' && level >= 30) return [first, pick(['tempest', 'stormwall'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
   if (first === 'tidemage' && level >= 30) return [first, pick(['maelstrom', 'tidecaller'], rng)];

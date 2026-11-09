@@ -37,7 +37,7 @@ function scene(n = 1, { level = 40 } = {}) {
   const bots = { list: [], memory: new Set(), names: new Set(), rng: seeded(71), replies: [], spawnIn: 999, waveIn: 999, newsIn: 999 };
   world.bots = bots;
   for (let i = 0; i < n; i++) {
-    const char = makeBotCharacter(seeded(8 + i), { name: `Pal${i}`, level, jobs: ['warrior', 'paladin'] });
+    const char = makeBotCharacter(seeded(8 + i), { name: `Pal${i}`, level, jobs: ['warrior', 'stormwall'] });
     const pal = { id: `p${i}`, name: `Pal${i}`, char, level, party: true, style: {}, map: world.map.id, x: world.body.x - 20 - i * 10, facing: 1, state: 'idle', session: 9999, stay: 9999, nextLine: 999, appear: 0 };
     pal.body = createBody(pal.x, world.body.y);
     pal.stats = computeStats(char);
@@ -190,7 +190,7 @@ test('a Group Finisher needs another full gauge, spends it, and ends in a shared
   // Their gauge not full: your finisher is a plain party combo.
   pal.fight.gauge = 60;
   assert.equal(groupReady(world), false);
-  world.finisherCast = { at: world.now, id: 'grandverdict' };
+  world.finisherCast = { at: world.now, id: 'fortress' };
   updateBots(bots, world, DT);
   assert.ok(!lines.some((l) => /Group Finisher/.test(l)));
   assert.ok(!world.team.burst);
@@ -202,7 +202,7 @@ test('a Group Finisher needs another full gauge, spends it, and ends in a shared
   pal.body.x = world.body.x + 30;
   pal.fight.gauge = 100;
   assert.equal(groupReady(world), true);
-  world.finisherCast = { at: world.now, id: 'grandverdict' };
+  world.finisherCast = { at: world.now, id: 'fortress' };
   updateBots(bots, world, DT);
   assert.ok(lines.some((l) => /Group Finisher! Pal0/.test(l)));
   assert.ok(world.team.burst);
@@ -214,7 +214,7 @@ test('a Group Finisher needs another full gauge, spends it, and ends in a shared
     updateBots(bots, world, DT);
     burst ||= world.fx.some((f) => f.kind === 'teamburst');
     slow ||= world.slowmo > 0;
-    fin ||= pal.attack?.pose === 'plverdict';
+    fin ||= pal.attack?.pose === 'bwfortress';
   }
   assert.ok(fin, 'their finisher went off');
   assert.ok(pal.fight.gauge < 100, 'and spent their gauge');

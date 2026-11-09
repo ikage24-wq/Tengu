@@ -7,6 +7,7 @@
 // pillars of moonlight, showers of drops and her healing. Strips in tools/fx-art.js (tm*, ms*, tc*), three strip pixels to a game pixel; each drawn out to the
 // reach of the blow it shows.
 import { fxSprite } from './fx-sprites.js';
+import { onMob } from './storm-fx.js';
 
 // Her shots in flight. A wave rolls along the floor under where it was aimed (`floorY`), its foot
 // on the ground; a bubble floats, bobbing, along its line.
@@ -106,8 +107,10 @@ export function drawTideFx(ctx, f, x, y, p) {
     case 'tmshieldfx':
       return fxSprite(ctx, 'celtmshieldfx', x, y + 2, { p, scale: 0.9 }) || true;
     // The Maelstrom's.
-    case 'mshit':
-      return fxSprite(ctx, 'celmshit', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    case 'mshit': {
+      const [mx, my] = onMob(f, x, y);
+      return fxSprite(ctx, 'celmshit', mx, my - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    }
     case 'msvortex':
       // Standing on the floor out where the blow reaches, as tall as it.
       return fxSprite(ctx, 'celmsvortex', x, y + 2, { p, flip, scale: Math.min(1.3, Math.max(0.8, (f.r ?? 150) / 150)) }) || true;
@@ -130,17 +133,25 @@ export function drawTideFx(ctx, f, x, y, p) {
       const fade = Math.min(1, (f.dur - f.t) / 0.8, f.t / 0.3);
       return fxSprite(ctx, 'celmspool', x, y + 2, { t: f.t, alpha: Math.max(0, fade) }) || true;
     }
-    case 'msglowpop':
-      return fxSprite(ctx, 'celmsglowpop', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: 0.7 }) || true;
+    case 'msglowpop': {
+      const [mx, my] = onMob(f, x, y);
+      return fxSprite(ctx, 'celmsglowpop', mx, my - (f.h ?? 40) * 0.55, { p, flip, scale: 0.7 }) || true;
+    }
     case 'msslash':
       return fxSprite(ctx, 'celmsslash', x, y - 10, { p, flip, scale: (f.r ?? 120) / 110 }) || true;
-    case 'tmhit':
-      return fxSprite(ctx, 'celtmhit', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    case 'tmhit': {
+      const [mx, my] = onMob(f, x, y);
+      return fxSprite(ctx, 'celtmhit', mx, my - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    }
     // The Tidecaller's.
-    case 'tchit':
-      return fxSprite(ctx, 'celtchit', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
-    case 'tcbubblepop':
-      return fxSprite(ctx, 'celtcbubblepop', x, y - (f.h ?? 40) * 0.55, { p, flip, scale: 0.6 }) || true;
+    case 'tchit': {
+      const [mx, my] = onMob(f, x, y);
+      return fxSprite(ctx, 'celtchit', mx, my - (f.h ?? 40) * 0.55, { p, flip, scale: f.big || f.crit ? 0.75 : 0.6 }) || true;
+    }
+    case 'tcbubblepop': {
+      const [mx, my] = onMob(f, x, y);
+      return fxSprite(ctx, 'celtcbubblepop', mx, my - (f.h ?? 40) * 0.55, { p, flip, scale: 0.6 }) || true;
+    }
     case 'tcribbon':
       // Out ahead of the staff's head to the end of the blow's reach, level with her hands.
       return fxSprite(ctx, 'celtcribbon', x, y - 16, { p, flip, scale: ((f.r ?? 128) * 0.92) / 127 }) || true;

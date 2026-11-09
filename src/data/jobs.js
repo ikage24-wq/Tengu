@@ -57,15 +57,17 @@ export const JOBS = {
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
-  paladin: {
-    id: 'paladin', guard: 0.8, power: 1.61, spread: 2.7, name: 'Paladin', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
-    hp: 32, mp: 14, advanceHp: 600, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
-    blurb: 'The shield of the party. Holy light stuns and taunts, and blessings guard everyone near. The tank of any dungeon group.',
+  // The Thunderguard's tank path (docs/design/stormwall.md): the storm as a fortress.
+  stormwall: {
+    id: 'stormwall', guard: 0.8, power: 4.29, spread: 2.22, name: 'Stormwall', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    hp: 34, mp: 14, advanceHp: 520, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
+    blurb: 'The Thunderguard who became the storm\'s fortress: the tank. Huge, slow and unmovable, he pulls monsters in and holds them while a thunderhead gathers over him. The hits he takes build Thunderhead; the fuller it runs the less he takes, and from half its cloud answers anything that hits him or his party with a bolt. Lightning Cage, Storm Wall, Magnetize, Overcast, and Fortress: a thunderhead over the whole fight.',
   },
-  berserker: {
-    id: 'berserker', power: 0.61, spread: 2.6, name: 'Berserker', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
-    hp: 30, mp: 12, advanceHp: 450, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
-    blurb: 'Rage made flesh. Every blow builds Rage and makes them bleed; Rampage spends it all in one savage flurry. Deals damage in a group.',
+  // The Thunderguard's damage path (docs/design/tempest.md): red lightning, speed itself.
+  tempest: {
+    id: 'tempest', power: 2.45, spread: 2.01, name: 'Tempest', family: 'warrior', tier: 2, parent: 'warrior', level: 30, trial: 'warrior_trial',
+    hp: 26, mp: 14, advanceHp: 400, advanceMp: 200, weapons: ['sword', 'axe', 'spear'],
+    blurb: 'The Thunderguard who let the storm loose: speed itself, red lightning. Short wind-ups and flash-steps; his hits build Velocity, and the fuller it runs the faster he swings, red afterimages of him striking again behind every blow. Full (Lightspeed), every finisher blinks him through the pack. Flash Step, Thousand Cuts, Crimson Arc, and Red Thunder: he blinks from monster to monster across the screen. Deals damage in a group.',
   },
 
   // Archer branches. Both ask for Kestrel's trial first.
@@ -127,6 +129,9 @@ export const RETIRED_JOBS = {
   // (The whole Mage line, wiped 2026-11-08 to be made again from scratch: its characters play as
   // Novices, keeping their level and items, until the new mage jobs are there to pick.)
   mage: 'novice', sorcerer: 'novice', cleric: 'novice', spiritmage: 'novice', onmyoji: 'novice', shrinemaiden: 'novice',
+  // (The old Warrior's paths, retired 2026-11-09 when the Thunderguard's own were made: the tank
+  // plays on as the Stormwall, the damage path as the Tempest; their skill points come back.)
+  paladin: 'stormwall', berserker: 'tempest',
   testwarrior: 'warrior', blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 

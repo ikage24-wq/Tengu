@@ -971,6 +971,1104 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Tempest (the Thunderguard's damage path; docs/design/tempest.md) ----------
+  // Speed itself: always leaning into the next blow, wind-ups barely there, follow-throughs that
+  // roll straight on, footwork that skims (`skim`). Blade angles as the Thunderguard's: -58 on the
+  // shoulder, 0 upright (behind the head), 90 level, 150 low ahead, 180 point-down.
+
+  // Streak (opener, at ~0.42): no wind-up to speak of, the blade flicks off the shoulder and through
+  // in a long flat streak as he leans into it.
+  tpstreak(p) {
+    const cut = ease(seg(p, 0.12, 0.46));
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(-58, -76, soft(seg(p, 0, 0.14))), 132, cut) - 30 * back, arm: lerp(54, 58, cut) - 8 * back,
+      lunge: 6 * cut * (1 - 0.6 * back), tilt: 0.12 + 0.08 * cut * (1 - back), trail: cut > 0 && p < 0.6,
+      rig: (r) => {
+        danceLegs(r, [cut * (1 - back), [4.4, -0.4, 6], [-4.2, -0.6, -14]]);
+        r.backArm = [q(-4 - 2 * cut + 2 * back), q(-2 - cut)];
+        r.hairLift = cut > 0.2 ? 1 : 0;
+        r.cape = Math.round(-4 * cut * (1 - back));
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Double (opener, at ~0.28 and ~0.6): backhand and forehand, the blade whipping one way and
+  // straight back, his hips turning under it.
+  tpdouble(p) {
+    const a = ease(seg(p, 0.08, 0.3));
+    const b = ease(seg(p, 0.4, 0.62));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(-58, 130, a), -40, b) - 18 * back, arm: lerp(54, 58, a) - 4 * back,
+      lunge: 4 * a * (1 - b) + 5 * b * (1 - back), tilt: 0.1 + 0.06 * a * (1 - b) - 0.04 * b * (1 - back), trail: (a > 0 && a < 1) || (b > 0 && b < 1),
+      rig: (r) => {
+        danceLegs(r, [a, [4, -0.4, 6], [-3.8, 0, -12]], [b * (1 - back), [4.6, 0, 8], [-4.2, -0.6, -14]]);
+        r.backArm = [q(-3 - 3 * a + 3 * back), q(-2 - 2 * b + 2 * back)];
+        r.hairLift = a > 0.2 && back < 0.5 ? 1 : 0;
+        if ((a > 0.3 && b < 0.2) || (b > 0.3 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+  // Flash (opener, at ~0.45): he crouches a hair and is gone, the length of a stride ahead in a
+  // flicker, the blade held out level behind his cut.
+  tpflash(p) {
+    const set = soft(seg(p, 0, 0.18));
+    const go = ease(seg(p, 0.2, 0.42));
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(-58, -96, set), 104, go) - 36 * back, arm: lerp(lerp(54, 46, set), 58, go) - 8 * back,
+      lunge: -1 * set * (1 - go) + 8 * go * (1 - 0.6 * back), tilt: 0.12 * set * (1 - go) + 0.22 * go * (1 - back), trail: go > 0 && p < 0.6,
+      rig: (r) => {
+        r.squat = q(1.4 * set * (1 - go));
+        danceLegs(r, [set * (1 - go), [2.6, 0, 4], [-3.2, 0, -8]], [go * (1 - back), [5.4, 0, 8], [-5.4, -1, -22]]);
+        r.backArm = [q(-6 * go * (1 - back)), q(-3 * go * (1 - back))];
+        r.hairLift = go > 0.2 && back < 0.6 ? 1 : 0;
+        r.cape = Math.round(-5 * go * (1 - back));
+        if (go > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Heel turn (second, at ~0.5): he spins once on his heel with the blade out flat, coming round
+  // already leaning into the next.
+  tpturn(p) {
+    const u = ease(seg(p, 0.1, 0.62));
+    const back = soft(seg(p, 0.7, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    return {
+      weapon: lerp(-58, 96, soft(seg(p, 0, 0.14))) + 360 * u + 30 * back, arm: 56 - 6 * back,
+      lift: 2 * Math.sin(Math.PI * u), lunge: 2 + 4 * u * (1 - 0.6 * back), orbit: u > 0 && u < 1, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)),
+      tilt: 0.1 * (1 - back), trail: u > 0 && u < 1,
+      rig: (r) => {
+        danceLegs(r, [Math.sin(Math.PI * u), [1.4, -1.6, 8], [-1.6, -1, -10]], [back, [3.6, 0, 4], [-3.6, 0, -10]]);
+        r.backArm = [q(-5 * (1 - back)), q(-2 * (1 - back))];
+        r.hairLift = u > 0.1 && u < 0.9 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.1, 0.7));
+        if (u > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Lift (second, at ~0.44): a rising slash that throws them up, and he hops up after them.
+  tplift(p) {
+    const low = soft(seg(p, 0, 0.2));
+    const up = ease(seg(p, 0.22, 0.46));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(-58, 152, low), -34, up) - 20 * back, arm: lerp(lerp(54, 32, low), 60, up) - 6 * back,
+      lift: 7 * bump(p, 0.24, 0.9), lunge: 2 * up, tilt: 0.1 * low * (1 - up) - 0.1 * up * (1 - back), trail: up > 0 && p < 0.6,
+      rig: (r) => {
+        r.squat = q(1.6 * low * (1 - up));
+        danceLegs(r, [low * (1 - up), [3.4, 0, 6], [-3.4, 0, -12]], [up * (1 - back), [2.2, -2.6, 12], [-1.8, -2, -16]]);
+        r.backArm = [q(-4 * up + 4 * back), q(-3 * up + 2 * back)];
+        r.hairLift = up > 0.2 && back < 0.5 ? -1 : 0;
+        if (up > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Blur of jabs (second, at ~0.2, 0.42, 0.64): three thrusts so quick they blur, the arm snapping
+  // out and back, his weight rocking forward on the last.
+  tpjabs(p) {
+    const set = soft(seg(p, 0, 0.12));
+    const jab = bump(p, 0.12, 0.28) + bump(p, 0.34, 0.5) + 1.3 * bump(p, 0.56, 0.74);
+    const back = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(-58, 92, set) + 4 * jab - 40 * back, arm: lerp(54, 44, set) + 14 * Math.min(1, jab) - 6 * back,
+      lunge: 2 * set + 4 * jab * (1 - back), tilt: 0.12 * set * (1 - back) + 0.04 * jab,
+      rig: (r) => {
+        danceLegs(r, [set * (1 - back), [4.2, 0, 6], [-4, -0.6, -14]]);
+        r.backArm = [q(-4 * set * (1 - back)), q(-2 * set * (1 - back))];
+        r.hairLift = jab > 0.6 ? 1 : 0;
+        if (jab > 0.5 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Cross (third, at ~0.3 and ~0.6): two streaks crossing, high to low and low to high, so fast the
+  // blade seems to be in two places.
+  tpcross(p) {
+    const a = ease(seg(p, 0.1, 0.32));
+    const b = ease(seg(p, 0.42, 0.62));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(lerp(-58, -100, soft(seg(p, 0, 0.1))), 150, a), -40, b) - 20 * back, arm: lerp(54, 58, a) - 4 * back,
+      lunge: 4 * a + 2 * b * (1 - back), tilt: 0.12 + 0.06 * a * (1 - b) - 0.06 * b * (1 - back), trail: (a > 0 && a < 1) || (b > 0 && b < 1),
+      rig: (r) => {
+        danceLegs(r, [a, [4.4, -0.4, 6], [-4, 0, -14]], [b * (1 - back), [3.8, -1, 6], [-4.4, -0.6, -16]]);
+        r.backArm = [q(-4 - 2 * a * (1 - b) + 4 * back), q(-2 - 2 * b + 2 * back)];
+        r.hairLift = b > 0.2 && back < 0.5 ? -1 : a > 0.2 ? 1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.1, 0.76));
+        if ((a > 0.3 && b < 0.2) || (b > 0.3 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+  // Leg sweep (third, at ~0.46): he drops onto one knee in a skid and sweeps the blade flat along
+  // the floor, sparks flying off it.
+  tpsweep(p) {
+    const drop = ease(seg(p, 0, 0.28));
+    const sweep = ease(seg(p, 0.3, 0.5));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(-58, -150, drop), 110, sweep) - 50 * back, arm: lerp(lerp(54, 30, drop), 40, sweep) + 14 * back,
+      lunge: 3 * drop + 5 * sweep * (1 - 0.6 * back), tilt: 0.16 * drop * (1 - back), trail: sweep > 0 && p < 0.66,
+      rig: (r) => {
+        r.squat = q(3 * drop * (1 - back));
+        danceLegs(r, [drop * (1 - back), [4.4, 0, 8], [-5.2, 0, -66]]);
+        r.backArm = [q(-5 * drop * (1 - back)), q(lerp(-1, 1, drop) * (1 - back))];
+        r.cape = Math.round(-5 * drop * (1 - back));
+        if (sweep > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Lunge (third, at ~0.46): a long low lunge, the point driven straight out through the line, his
+  // back leg flung out behind him.
+  tplunge(p) {
+    const set = soft(seg(p, 0, 0.26));
+    const go = ease(seg(p, 0.3, 0.48));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(-58, 100, set), 90, go) + 44 * back, arm: lerp(lerp(54, 38, set), 60, go) - 10 * back,
+      lunge: -2 * set * (1 - go) + 12 * go * (1 - 0.7 * back), tilt: 0.06 * set * (1 - go) + 0.18 * go * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.6 * set * (1 - go) + 1.4 * go * (1 - back));
+        danceLegs(r, [set * (1 - go), [2.4, 0, 2], [-3.6, 0, -10]], [go * (1 - back), [6, 0, 10], [-6, -0.8, -24]]);
+        r.backArm = [q(lerp(2, -7, go) + 7 * back), q(lerp(0, -3, go) + 3 * back)];
+        r.hairLift = go > 0.3 && back < 0.5 ? 1 : 0;
+        r.cape = Math.round(-5 * go * (1 - back));
+        if (go > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Blink (finisher, at ~0.55): he draws the blade back along his hip, crouches, and is gone in a
+  // red bolt (world/melee.js moves him through to the far side), cutting back through all of them;
+  // he lands crouched, blade swept out behind, and rises.
+  tpblink(p) {
+    const draw = ease(seg(p, 0, 0.4));
+    const go = ease(seg(p, 0.48, 0.58));
+    const land = soft(seg(p, 0.58, 0.72));
+    const back = soft(seg(p, 0.84, 1));
+    const thrum = Math.sin(p * 90) * 2 * bump(p, 0.24, 0.46);
+    return {
+      weapon: lerp(lerp(-58, 104, draw) + thrum, 212, go) - 40 * back, arm: lerp(lerp(54, 36, draw), 56, go) - 10 * back,
+      lunge: -2 * draw * (1 - go) + 6 * go * (1 - land * 0.5) * (1 - back), tilt: 0.1 * draw * (1 - go) + 0.24 * go * (1 - land * 0.5) * (1 - back), trail: go > 0 && p < 0.7,
+      rig: (r) => {
+        r.squat = q(2.2 * draw * (1 - go) + 2.6 * land * (1 - back));
+        danceLegs(r, [draw * (1 - go), [2.6, 0, 4], [-3.8, 0, -10]], [land * (1 - back), [5, 0, 10], [-5.4, 0, -18]]);
+        r.backArm = [q(lerp(2, -6, go) * (1 - back)), q(lerp(0, -4, go) * (1 - back))];
+        r.hairLift = go > 0.2 && back < 0.5 ? 1 : 0;
+        r.cape = Math.round(-6 * go * (1 - back));
+        if (draw > 0.5 && go < 0.2) r.eyes = 'half';
+        else if (go > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Whirlwind of streaks (finisher, at ~0.3 and ~0.66): two full spins on the spot, fast, the blade
+  // out flat drawing rings of red round him, and a last cut flung out of the second.
+  tpwhirl(p) {
+    const u = ease(seg(p, 0.08, 0.7));
+    const back = soft(seg(p, 0.78, 1));
+    const turn = Math.cos(u * Math.PI * 4);
+    return {
+      weapon: lerp(-58, 96, soft(seg(p, 0, 0.1))) + 720 * u + 40 * back, arm: 58 - 8 * back,
+      lift: 3 * Math.sin(Math.PI * u), lunge: 2 + 3 * u * (1 - back), orbit: u > 0 && u < 1, turn: Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)),
+      tilt: 0.06 * (1 - back), trail: u > 0 && u < 1,
+      rig: (r) => {
+        danceLegs(r, [Math.sin(Math.PI * u), [1.4, -1.8, 8], [-1.4, -1.2, -10]], [back, [4, 0, 6], [-4, 0, -12]]);
+        r.backArm = [q(-5 * (1 - back)), q(-3 * (1 - back))];
+        r.hairLift = u > 0.05 && u < 0.95 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.08, 0.78));
+        if (u > 0.2 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Diving cut (finisher, lands at ~0.58): a quick crouch, a leap up and forward with the blade
+  // hauled back, and a diving cut down through them that lands as a red bolt.
+  tpdive(p) {
+    const crouch = soft(seg(p, 0, 0.12));
+    const up = ease(seg(p, 0.12, 0.36));
+    const down = easeIn(seg(p, 0.44, 0.58));
+    const land = soft(seg(p, 0.58, 0.72));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(lerp(-58, -110, up), 160, down) - 30 * back, arm: lerp(lerp(54, 50, up), 52, down) - 10 * land * (1 - back),
+      lift: 18 * up * (1 - down), lunge: 3 * up + 8 * down * (1 - 0.5 * back), tilt: -0.1 * up * (1 - down) + 0.28 * down * (1 - land * 0.5) * (1 - back), trail: down > 0 && p < 0.7,
+      rig: (r) => {
+        if (up > 0.2 && down < 0.95) tuck(r);
+        else {
+          r.squat = q(1.8 * crouch * (1 - up) + 2.6 * land * (1 - back));
+          danceLegs(r, [crouch * (1 - up), [3, 0, 4], [-3, 0, -6]], [land * (1 - back), [4.6, 0, 8], [-5, 0, -18]]);
+        }
+        r.backArm = [q(lerp(-2, 2, down) * (1 - back)), q(lerp(-6, 1, down) * (1 - back))];
+        r.hairLift = up > 0.2 && down < 1 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.12, 0.84));
+        if (down > 0.4 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Up + attack: a rising cut and a second one higher, up after them.
+  tpskyward(p) {
+    const a = ease(seg(p, 0.08, 0.3));
+    const b = ease(seg(p, 0.42, 0.62));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(lerp(lerp(-58, 150, soft(seg(p, 0, 0.08))), -20, a), 130, soft(seg(p, 0.32, 0.42))), -40, b) - 18 * back, arm: lerp(lerp(36, 60, a), 40, soft(seg(p, 0.32, 0.42))) + 20 * b - 6 * back,
+      lift: 6 * bump(p, 0.08, 0.5) + 12 * bump(p, 0.4, 0.95), tilt: -0.1 * a * (1 - back), trail: (a > 0 && a < 1) || (b > 0 && b < 1),
+      rig: (r) => {
+        if (p > 0.36 && back < 0.6) tuck(r);
+        else danceLegs(r, [1 - a, [3, 0, 4], [-3, 0, -10]]);
+        r.backArm = [q(-4 * a), q(-4 * a)];
+        r.hairLift = a > 0.2 ? -1 : 0;
+        if (a > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // In the air: quick cuts down and back up (each keeps him hanging), then a red dive.
+  tpaircut(p) {
+    const cut = ease(seg(p, 0.14, 0.5));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-80, 130, cut) - 24 * back, arm: lerp(52, 58, cut) - 6 * back, tilt: 0.14 * cut * (1 - back), trail: cut > 0 && cut < 1,
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(-3 * cut), q(-2 * cut)];
+        r.hairLift = 1;
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  tpaircut2(p) {
+    const cut = ease(seg(p, 0.14, 0.5));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(150, -30, cut) - 20 * back, arm: lerp(38, 60, cut) - 6 * back, tilt: -0.12 * cut * (1 - back), trail: cut > 0 && cut < 1,
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(-4 * cut), q(-4 * cut)];
+        r.hairLift = -1;
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  tpairfall(p) {
+    const point = ease(seg(p, 0, 0.4));
+    return {
+      weapon: lerp(-58, 160, point), arm: lerp(52, 46, point), tilt: 0.3 * point,
+      rig: (r) => {
+        r.air = true;
+        r.frontLeg = [q(lerp(2.6, 1.8, point)), q(lerp(-5, -1.6, point)), 10];
+        r.backLeg = [q(-2.2), q(-1.4), -24];
+        r.backArm = [q(-6 * point), q(-3 * point)];
+        r.hairLift = -1;
+        r.cape = -5;
+        if (point > 0.4) strikeFace(r);
+      },
+    };
+  },
+  // Out of a run: he flashes clean through the line, low and leaning, the cut held out level.
+  tpdash(p) {
+    const lean = ease(seg(p, 0, 0.2));
+    const cut = ease(seg(p, 0.3, 0.44));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(-58, -140, lean), 96, cut) - 40 * back, arm: lerp(lerp(54, 30, lean), 58, cut) - 8 * back,
+      lunge: 5 * lean + 6 * cut * (1 - back), tilt: 0.3 * lean * (1 - cut * 0.4) * (1 - back), trail: cut > 0 && p < 0.66,
+      rig: (r) => {
+        r.squat = q(1.4 * lean * (1 - back));
+        danceLegs(r, [lean * (1 - cut), [4.6, -1.6, 14], [-5.4, -2.2, -40]], [cut * (1 - back), [5.6, 0, 8], [-5.4, 0, -18]]);
+        r.backArm = [q(-7 * lean * (1 - back)), q(-3 * lean * (1 - back))];
+        r.hairLift = lean > 0.2 && back < 0.6 ? 1 : 0;
+        r.cape = Math.round(-6 * lean * (1 - back));
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Down + attack: a hop and a skidding slam, sparks thrown off the floor.
+  tpslam(p) {
+    const hop = ease(seg(p, 0.04, 0.26));
+    const down = easeIn(seg(p, 0.38, 0.5));
+    const skid = soft(seg(p, 0.5, 0.7));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(-58, -112, hop), 166, down) - 40 * back, arm: lerp(lerp(54, 56, hop), 46, down) + 6 * back,
+      lift: 9 * hop * (1 - down), lunge: 2 * hop + 6 * down * (1 - 0.6 * back), tilt: -0.08 * hop * (1 - down) + 0.24 * down * (1 - skid * 0.3) * (1 - back),
+      rig: (r) => {
+        if (hop > 0.3 && down < 0.9) tuck(r);
+        else {
+          r.squat = q(2.6 * skid * (1 - back));
+          danceLegs(r, [down * (1 - back), [4.8, 0, 8], [-5, 0, -14]]);
+        }
+        r.backArm = [q(lerp(-2, 2, down) * (1 - back)), q(lerp(-6, 1, down) * (1 - back))];
+        r.hairLift = hop > 0.3 && down < 0.9 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.04, 0.82));
+        if (down > 0.5 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // His skills.
+  // Flash Step: a hair's crouch, then gone: low and leaning, the blade trailing, and out of it in a cut.
+  tpstep(p) {
+    const set = soft(seg(p, 0, 0.16));
+    const go = ease(seg(p, 0.16, 0.4));
+    const out = soft(seg(p, 0.56, 0.74));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(lerp(-58, -90, set), -150, go), 100, out) - 40 * back, arm: lerp(lerp(54, 30, go), 58, out) - 8 * back,
+      lunge: -1 * set + 7 * go * (1 - out * 0.3) * (1 - back), tilt: 0.1 * set + 0.24 * go * (1 - out * 0.5) * (1 - back), trail: out > 0 && p < 0.8,
+      rig: (r) => {
+        r.squat = q(1.4 * set * (1 - go) + 1.2 * go * (1 - back));
+        danceLegs(r, [set * (1 - go), [2.6, 0, 4], [-3.2, 0, -8]], [go * (1 - out), [4.6, -1.4, 14], [-5.4, -2, -40]], [out * (1 - back), [5.4, 0, 8], [-5, 0, -16]]);
+        r.backArm = [q(-7 * go * (1 - back)), q(-3 * go * (1 - back))];
+        r.hairLift = go > 0.2 && back < 0.6 ? 1 : 0;
+        r.cape = Math.round(-6 * go * (1 - back));
+        if (go > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Thousand Cuts: he leans in, braced, and the blade becomes a blur (it flickers back and forth
+  // across the front of him faster and faster), then one last huge cut.
+  tpthousand(p) {
+    const set = soft(seg(p, 0, 0.1));
+    const blur = seg(p, 0.1, 0.76);
+    const a = blur * Math.PI * 2 * (3 + 4 * blur);
+    const last = ease(seg(p, 0.8, 0.88));
+    const back = soft(seg(p, 0.88, 1));
+    const on = blur > 0 && blur < 1 ? 1 : 0;
+    return {
+      weapon: (on ? 110 + 70 * Math.sin(a) : lerp(lerp(-58, 110, set), -60, soft(seg(p, 0.76, 0.8)))) + (p >= 0.8 ? lerp(0, 210, last) : 0) - 30 * back, arm: 52 + 6 * Math.cos(a) * on - 8 * back,
+      lunge: 3 * set + 1.5 * Math.sin(a * 0.5) * on + 5 * last * (1 - back), tilt: 0.14 * set * (1 - back) + 0.1 * last * (1 - back), trail: on > 0 || (last > 0 && last < 1),
+      rig: (r) => {
+        r.squat = q(1.4 * set * (1 - back));
+        danceLegs(r, [set * (1 - back), [4.6, 0, 8], [-4.6, 0, -14]]);
+        r.backArm = [q(-5 * set * (1 - back)), q(-2 * set * (1 - back))];
+        r.hairLift = on ? (Math.sin(a) > 0 ? 1 : -1) : 0;
+        r.cape = Math.round(-4 * set * (1 - back));
+        if (on || (last > 0.3 && back < 0.5)) r.mouth = on ? 'grit' : 'open';
+      },
+    };
+  },
+  // Crimson Arc: a wide flat whip of the blade round and out, and straight back the other way.
+  tparc(p) {
+    const a = ease(seg(p, 0.1, 0.34));
+    const b = ease(seg(p, 0.44, 0.66));
+    const back = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(lerp(lerp(-58, -130, soft(seg(p, 0, 0.1))), 110, a), -60, b) + 20 * back, arm: lerp(54, 58, a) - 4 * back,
+      lunge: 4 * a * (1 - b) + 5 * b * (1 - back), tilt: 0.12 * a * (1 - b) - 0.04 * b * (1 - back),
+      turn: a > 0.5 && b < 0.4 ? 1 : 1, trail: (a > 0 && a < 1) || (b > 0 && b < 1),
+      rig: (r) => {
+        danceLegs(r, [a * (1 - b), [4.4, 0, 6], [-4, 0, -14]], [b * (1 - back), [4.8, -0.6, 8], [-4.4, -0.4, -14]]);
+        r.backArm = [q(-4 - 3 * a * (1 - b) + 4 * back), q(-2 - 2 * b + 2 * back)];
+        r.hairLift = a > 0.2 && back < 0.5 ? 1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.1, 0.78));
+        if ((a > 0.3 && b < 0.2) || (b > 0.3 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+  // Afterimage: a flick of the blade out and a blur of a sidestep, a grin.
+  tpafter(p) {
+    const flick = ease(seg(p, 0.1, 0.36));
+    const side = bump(p, 0.36, 0.72);
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-58, 104, flick) - 50 * back, arm: lerp(54, 58, flick) - 8 * back, lunge: -4 * side, tilt: 0.08 * flick * (1 - back) - 0.08 * side,
+      rig: (r) => {
+        danceLegs(r, [flick * (1 - back), [3.6, -0.4, 4], [-3.6, 0, -10]], [side, [2, -1.6, 8], [-3, -1.2, -16]]);
+        r.backArm = [q(-4 * flick * (1 - back)), q(-2 * flick * (1 - back))];
+        r.hairLift = side > 0.3 ? -1 : 0;
+        if (side > 0.3) r.mouth = 'grin';
+      },
+    };
+  },
+  // Red Thunder (finisher): he draws the blade back along his hip, crouched, and vanishes into the
+  // blinks (world/melee.js moves him from monster to monster; he's a blur of cuts the whole time),
+  // then stands in the middle of them, the blade raised, as the red bolt falls.
+  tpredthunder(p) {
+    const draw = ease(seg(p, 0, 0.2));
+    const u = seg(p, 0.22, 0.7);
+    const a = u * Math.PI * 2 * 5;
+    const raise = ease(seg(p, 0.72, 0.84));
+    const back = soft(seg(p, 0.9, 1));
+    const on = u > 0 && u < 1 ? 1 : 0;
+    return {
+      weapon: (on ? 100 + 90 * Math.sin(a) : lerp(-58, 104, draw)) * (p < 0.72 ? 1 : 0) + (p >= 0.72 ? lerp(104, 160, raise) - 30 * back : 0), arm: on ? 54 + 6 * Math.cos(a) : lerp(lerp(54, 36, draw), 50, raise) - 6 * back,
+      lunge: on ? 6 : -2 * draw * (1 - raise) + 2 * raise * (1 - back), tilt: on ? 0.22 : 0.12 * draw * (1 - raise) + 0.2 * raise * (1 - back), trail: on > 0,
+      rig: (r) => {
+        r.squat = q(on ? 1.2 : 2 * draw * (1 - raise) + 2.4 * raise * (1 - back));
+        if (on) danceLegs(r, [1, [5, -0.6, 10], [-5.4, -1, -24]]);
+        else danceLegs(r, [draw * (1 - raise), [2.6, 0, 4], [-3.8, 0, -10]], [raise * (1 - back), [4.6, 0, 8], [-5, 0, -18]]);
+        r.backArm = [q(on ? -6 : -2 * raise * (1 - back)), q(on ? -3 : -1)];
+        r.hairLift = on ? 1 : 0;
+        r.cape = Math.round(on ? -6 : -4 * raise * (1 - back));
+        if (draw > 0.5 && !on && raise < 0.1) r.eyes = 'half';
+        else if (on || (raise > 0.3 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+  // His versions of the Thunderguard's skills.
+  // Red Rush: a streak, low and leaning (not a charge), out of it in a cut.
+  tprush(p) {
+    const lean = ease(seg(p, 0, 0.14));
+    const cut = ease(seg(p, 0.54, 0.66));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(-58, -150, lean), 100, cut) - 42 * back, arm: lerp(lerp(54, 26, lean), 58, cut) - 8 * back,
+      lunge: 7 * lean * (1 - cut) + 9 * cut * (1 - back), tilt: 0.34 * lean * (1 - cut) + 0.14 * cut * (1 - back), trail: cut > 0 && p < 0.76,
+      rig: (r) => {
+        r.squat = q(1.2 * lean * (1 - back));
+        danceLegs(r, [lean * (1 - cut), [4.8, -1.8, 16], [-5.6, -2.6, -46]], [cut * (1 - back), [5.6, 0, 8], [-5.2, 0, -16]]);
+        r.backArm = [q(-7 * lean * (1 - cut) - 4 * cut * (1 - back)), q(-3 * lean * (1 - cut) - 2 * cut * (1 - back))];
+        r.hairLift = lean > 0.3 && back < 0.5 ? 1 : 0;
+        r.cape = Math.round(-6 * lean * (1 - back));
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+        else if (lean > 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Crimson Cleave: no long haul, a cleave whipped up from the hip and over, flinging the crescent.
+  tpcleave(p) {
+    const load = ease(seg(p, 0, 0.3));
+    const whip = ease(seg(p, 0.34, 0.5));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(-58, -140, load), 150, whip) - 30 * back, arm: lerp(lerp(54, 56, load), 52, whip) - 8 * back,
+      lunge: -2 * load * (1 - whip) + 8 * whip * (1 - 0.6 * back), tilt: -0.08 * load * (1 - whip) + 0.22 * whip * (1 - back), trail: whip > 0 && p < 0.7,
+      rig: (r) => {
+        r.squat = q(1.6 * load * (1 - whip) + 1.6 * whip * (1 - back));
+        danceLegs(r, [load * (1 - whip), [3, 0, 4], [-3.8, 0, -10]], [whip * (1 - back), [5.4, 0, 10], [-5, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, -2, load), 4, whip) - 4 * back), q(lerp(lerp(-1, -5, load), 1, whip) - 1 * back)];
+        r.hairLift = whip > 0.3 && back < 0.4 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.3, 0.78));
+        if (whip > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Red Cyclone: four tight fast spins, then a cut flung out of the last.
+  tpcyclone(p) {
+    const cock = ease(seg(p, 0, 0.1));
+    const u = seg(p, 0.1, 0.8);
+    const spun = soft(u) * 4;
+    const fling = ease(seg(p, 0.8, 0.88));
+    const back = soft(seg(p, 0.9, 1));
+    const turn = Math.cos(spun * Math.PI * 2);
+    const spinning = u > 0 && u < 1;
+    return {
+      weapon: (u <= 0 ? lerp(-58, 96, cock) : 96 + 360 * spun) + (u >= 1 ? lerp(0, 40, fling) - 30 * back : 0), arm: spinning ? 58 : 56 - 6 * back,
+      lift: 4 * Math.sin(Math.PI * u), lunge: 2 + 4 * fling * (1 - back), orbit: spinning, turn: spinning ? Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)) : 1,
+      tilt: 0.08 * (1 - back), trail: spinning || (fling > 0 && fling < 1),
+      rig: (r) => {
+        danceLegs(r, [cock * (1 - Math.sin(Math.PI * u)), [3, 0, 4], [-3, 0, -6]], [Math.sin(Math.PI * u), [1.4, -2.2, 8], [-1.4, -1.6, -10]], [fling * (1 - back), [5, 0, 8], [-4.6, 0, -14]]);
+        r.backArm = [q(-5 + 2 * fling * (1 - back)), q(-2 - 2 * Math.sin(Math.PI * u))];
+        r.hairLift = spinning ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.9));
+        if (spinning || (fling > 0.3 && back < 0.5)) r.mouth = spinning ? 'grit' : 'open';
+      },
+    };
+  },
+  // Red Spears: he points the blade out at them, free hand thrown up behind, and the bolts slant in.
+  tprod(p) {
+    const point = ease(seg(p, 0.06, 0.28));
+    const hold = soft(seg(p, 0.28, 0.4));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(-58, 86, point) - 4 * Math.sin(p * 20) * hold * (1 - back) + 44 * back, arm: lerp(54, 60, point) - 10 * back,
+      lunge: 4 * point * (1 - back), tilt: 0.08 * point * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [point * (1 - back), [4.4, 0, 6], [-4.2, 0, -14]]);
+        r.backArm = [q(lerp(0, -5, hold) * (1 - back)), q(lerp(-1, -10, hold) * (1 - back))];
+        r.hairLift = hold > 0.5 && back < 0.5 ? -1 : 0;
+        if (hold > 0.4 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+  // Warcry: the blade swung up and slapped flat on the floor in front of him, with a shout.
+  tpclap(p) {
+    const up = ease(seg(p, 0, 0.3));
+    const slap = easeIn(seg(p, 0.36, 0.46));
+    const hold = soft(seg(p, 0.46, 0.6));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(-58, -96, up), 164, slap) - 30 * back, arm: lerp(lerp(54, 60, up), 40, slap) + 10 * back,
+      lift: 2 * up * (1 - slap), lunge: 4 * slap * (1 - back), tilt: -0.08 * up * (1 - slap) + 0.18 * slap * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.4 * hold * (1 - back) + 1.2 * slap * (1 - hold));
+        danceLegs(r, [up * (1 - slap), [2, -1, 2], [-2.2, -0.8, -4]], [slap * (1 - back), [5, 0, 10], [-5, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -3, up), -5, slap) + 5 * back), q(lerp(lerp(-1, -8, up), 1, slap) - 1 * back)];
+        r.hairLift = hold > 0.3 && back < 0.5 ? 1 : 0;
+        if (slap > 0.5 && back < 0.6) r.mouth = 'open';
+      },
+    };
+  },
+  // Afterburn: a quick shake out of the arms and a bounce on the toes as the red blur wraps him.
+  tpguard(p) {
+    const shake = bump(p, 0.08, 0.5);
+    const bounce = bump(p, 0.4, 0.62) + bump(p, 0.62, 0.84) * 0.6;
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: -58 + 20 * Math.sin(p * 30) * shake + 40 * bounce * (1 - back), arm: 54 - 6 * shake, lift: 2.4 * bounce,
+      tilt: 0.04 * Math.sin(p * 30) * shake,
+      rig: (r) => {
+        danceLegs(r, [Math.max(shake, bounce), [2.6, -0.8, 4], [-2.8, -0.6, -8]]);
+        r.backArm = [q(-2 + 2 * Math.sin(p * 30) * shake), q(-1 + 2 * shake)];
+        if (bounce > 0.3) r.mouth = 'grin';
+      },
+    };
+  },
+  // Skyfall: a crouch, a leap high into the red storm, a hang with the blade up behind his head, and
+  // a dive down as the red bolt; he lands crouched, blade low.
+  tpfall(p) {
+    const crouch = soft(seg(p, 0, 0.08));
+    const up = ease(seg(p, 0.08, 0.3));
+    const hang = seg(p, 0.3, 0.54);
+    const fall = easeIn(seg(p, 0.54, 0.6));
+    const land = soft(seg(p, 0.6, 0.72));
+    const rise = soft(seg(p, 0.88, 1));
+    return {
+      weapon: lerp(lerp(-58, -120, up) + 3 * Math.sin(p * 80) * hang, 168, fall) - 30 * rise, arm: lerp(lerp(54, 58, up), 48, fall) - 12 * land * (1 - rise),
+      lift: 60 * up * (1 - fall) + 3 * Math.sin(hang * Math.PI * 2) * (1 - fall), lunge: 2 * up + 7 * fall * (1 - 0.5 * rise),
+      tilt: -0.12 * up * (1 - fall) + 0.3 * fall * (1 - land * 0.6) * (1 - rise), trail: fall > 0 && p < 0.7,
+      rig: (r) => {
+        if (up > 0.2 && fall < 0.95) {
+          r.air = true;
+          r.frontLeg = [q(lerp(2.6, 3.4, fall)), q(lerp(-4.4, -2, fall)), 10];
+          r.backLeg = [q(-1.8), q(-2.8), -16];
+        } else {
+          r.squat = q(2 * crouch * (1 - up) + 2.8 * land * (1 - rise));
+          danceLegs(r, [crouch * (1 - up), [3, 0, 4], [-3, 0, -6]], [land * (1 - rise), [4.6, 0, 8], [-5.4, 0, -20]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -4, up), 3, land) * (1 - rise)), q(lerp(lerp(-1, -9, up), 2, land) * (1 - rise))];
+        r.hairLift = up > 0.2 && fall < 1 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.08, 0.86));
+        if (hang > 0.2 && fall < 0.3) r.mouth = 'grit';
+        if (fall > 0.5 && rise < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+
+  // ---------- The Stormwall (the Thunderguard's tank path; docs/design/stormwall.md) ----------
+  // Weight: deep braced stances, long slow wind-ups, a planted strike that lands like a falling wall,
+  // and a heavy settle (`plant` footwork: no hops, one stamp). Blade angles as the Thunderguard's.
+
+  // Braced overhead (opener, at ~0.52): he sinks into his stance with the blade hauled back over his
+  // shoulder, then brings it down in one heavy planted chop.
+  bwbrace(p) {
+    const sink = soft(seg(p, 0, 0.36));
+    const chop = ease(seg(p, 0.4, 0.56));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(-58, -104, sink), 146, chop) - 30 * back, arm: lerp(lerp(54, 50, sink), 54, chop) - 10 * back,
+      lunge: -1 * sink * (1 - chop) + 4 * chop * (1 - 0.6 * back), tilt: -0.08 * sink * (1 - chop) + 0.14 * chop * (1 - back), trail: chop > 0 && p < 0.7,
+      rig: (r) => {
+        r.squat = q(2.2 * sink * (1 - chop) + 2.2 * chop * (1 - back));
+        danceLegs(r, [Math.max(sink, chop) * (1 - back), [3.8, 0, 6], [-4.2, 0, -10]]);
+        r.backArm = [q(lerp(0, 3, chop) * (1 - back)), q(lerp(-1, 1, chop) * (1 - back))];
+        r.cape = Math.round(-3 * bump(p, 0.4, 0.8));
+        if (sink > 0.5 && chop < 0.2) r.mouth = 'grit';
+        else if (chop > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Heavy return (second, at ~0.5): from low in front he drags the blade back up and over in a slow,
+  // grinding arc, leaning his whole weight into it.
+  bwreturn(p) {
+    const low = soft(seg(p, 0, 0.3));
+    const up = ease(seg(p, 0.34, 0.56));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(-58, 172, low), -44, up) - 14 * back, arm: lerp(lerp(54, 32, low), 58, up) - 4 * back,
+      lunge: 1.5 * low * (1 - up) + 3 * up * (1 - back), tilt: 0.1 * low * (1 - up) - 0.1 * up * (1 - back), trail: up > 0 && p < 0.7,
+      rig: (r) => {
+        r.squat = q(2.6 * low * (1 - up) + 1 * up * (1 - back));
+        danceLegs(r, [low * (1 - back), [3.8, 0, 6], [-4.2, 0, -12]]);
+        r.backArm = [q(lerp(2, -4, up) + 4 * back), q(lerp(1, -3, up) + 2 * back)];
+        if (up > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Rain cleave (third, at ~0.56): a wide two-handed cleave round from his back hip, the rain
+  // curtain falling with it.
+  bwcleave(p) {
+    const wind = soft(seg(p, 0, 0.4));
+    const cut = ease(seg(p, 0.44, 0.6));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(-58, -150, wind), 140, cut) - 26 * back, arm: lerp(lerp(54, 46, wind), 56, cut) - 10 * back,
+      lunge: -2 * wind * (1 - cut) + 6 * cut * (1 - 0.6 * back), tilt: -0.1 * wind * (1 - cut) + 0.18 * cut * (1 - back), trail: cut > 0 && p < 0.72,
+      rig: (r) => {
+        r.squat = q(2.4 * wind * (1 - cut) + 2 * cut * (1 - back));
+        danceLegs(r, [wind * (1 - cut), [3.4, 0, 4], [-4.6, 0, -12]], [cut * (1 - back), [5, 0, 10], [-5, 0, -14]]);
+        r.backArm = [q(lerp(lerp(0, -3, wind), 4, cut) - 4 * back), q(lerp(lerp(-1, -4, wind), 1, cut) - 1 * back)];
+        r.cape = Math.round(-4 * bump(p, 0.3, 0.84));
+        if (wind > 0.5 && cut < 0.2) r.mouth = 'grit';
+        else if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // The thunderhead's bolt (finisher, at ~0.6): he raises the blade high and holds it, braced, as the
+  // cloud's charge pours into it (it thrums), then drives it down and the bolt follows.
+  bwbolt(p) {
+    const raise = soft(seg(p, 0, 0.36));
+    const hold = bump(p, 0.3, 0.56);
+    const down = easeIn(seg(p, 0.5, 0.62));
+    const settle = soft(seg(p, 0.62, 0.78));
+    const back = soft(seg(p, 0.86, 1));
+    const thrum = Math.sin(p * 80) * 3 * hold;
+    return {
+      weapon: lerp(lerp(-58, -128, raise) + thrum, 168, down) - 36 * back, arm: lerp(lerp(54, 60, raise), 48, down) - 10 * settle * (1 - back),
+      lift: 1.5 * raise * (1 - down), lunge: 6 * down * (1 - 0.5 * back), tilt: -0.1 * raise * (1 - down) + 0.24 * down * (1 - settle * 0.4) * (1 - back), trail: down > 0 && p < 0.72,
+      rig: (r) => {
+        r.squat = q(1.2 * raise * (1 - down) + 3.2 * settle * (1 - back) + 2 * down * (1 - settle));
+        danceLegs(r, [raise * (1 - down), [3, 0, 4], [-3.6, 0, -8]], [down * (1 - back), [5, 0, 10], [-5.2, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, -5, raise), -4, down) + 4 * back), q(lerp(lerp(-1, -9, raise), 1, down) - 1 * back)];
+        r.hairLift = raise > 0.4 && down < 0.5 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.2, 0.86));
+        if (hold > 0.3 && down < 0.3) r.mouth = 'grit';
+        if (down > 0.5 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Static shove (opener, at ~0.46): the blade held back on his shoulder, he drops his free shoulder
+  // behind a plate of static and drives it into them.
+  bwshove(p) {
+    const load = soft(seg(p, 0, 0.32));
+    const drive = ease(seg(p, 0.34, 0.48));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(-58, -80, load) + 22 * back, arm: lerp(54, 46, load) + 8 * back,
+      lunge: -2 * load * (1 - drive) + 9 * drive * (1 - 0.7 * back), tilt: -0.08 * load * (1 - drive) + 0.24 * drive * (1 - back),
+      rig: (r) => {
+        r.squat = q(2 * load * (1 - drive) + 1.2 * drive * (1 - back));
+        danceLegs(r, [load * (1 - drive), [2.4, 0, 2], [-3.6, 0, -10]], [drive * (1 - back), [5, 0, 8], [-5, 0, -20]]);
+        r.backArm = [q(lerp(0, 6, drive) - 6 * back), q(lerp(-1, -3, drive) + 3 * back)];
+        r.tx = q(1.6 * drive * (1 - back));
+        if (drive > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Field pull (opener, at ~0.5): he points the blade out at them, plants, and hauls it back across
+  // his body like a rope, dragging them in on the field lines.
+  bwpull(p) {
+    const point = ease(seg(p, 0, 0.3));
+    const haul = ease(seg(p, 0.42, 0.62));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(-58, 92, point), 150, haul) - 50 * back, arm: lerp(lerp(54, 60, point), 40, haul) + 6 * back,
+      lunge: 4 * point * (1 - haul) - 3 * haul * (1 - back), tilt: 0.1 * point * (1 - haul) - 0.08 * haul * (1 - back),
+      rig: (r) => {
+        r.squat = q(2 * haul * (1 - back));
+        danceLegs(r, [point * (1 - haul), [4.6, 0, 6], [-4, 0, -12]], [haul * (1 - back), [3.2, 0, 2], [-5, 0, -10]]);
+        r.backArm = [q(lerp(lerp(0, 4, point), -4, haul) * (1 - back)), q(lerp(-1, -2, point) * (1 - back))];
+        if (haul > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Thunder stamp (second, at ~0.5): he lifts his front foot high and stamps; thunder rolls out along
+  // the floor from it, the blade braced point-down at his side.
+  bwstamp(p) {
+    const lift = soft(seg(p, 0.06, 0.4));
+    const stamp = easeIn(seg(p, 0.42, 0.5));
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(-58, 160, soft(seg(p, 0, 0.3))) - 6 * stamp - 40 * back, arm: lerp(54, 36, soft(seg(p, 0, 0.3))) + 10 * back,
+      lift: 1.5 * lift * (1 - stamp), tilt: -0.06 * lift * (1 - stamp) + 0.08 * stamp * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.6 * stamp * (1 - back));
+        if (lift > 0.1 && stamp < 1) {
+          r.frontLeg = [q(lerp(0.8, 2.6, lift)), q(-5 * lift * (1 - stamp)), Math.round((lerp(0, 30, lift) * (1 - stamp)) / 2) * 2];
+          r.backLeg = [q(-2.6), 0, -6];
+        } else danceLegs(r, [stamp * (1 - back), [4.4, 0, 6], [-4.2, 0, -10]]);
+        r.backArm = [q(lerp(0, -4, lift) * (1 - back)), q(lerp(-1, -4, lift) * (1 - back))];
+        if (stamp > 0.5 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+  // Guard-cut (second, at ~0.48): the blade swept up from low in front into a high guard, lifting
+  // them, and held there a beat like a raised wall.
+  bwguardcut(p) {
+    const low = soft(seg(p, 0, 0.3));
+    const up = ease(seg(p, 0.34, 0.52));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(-58, 160, low), -30, up) - 24 * back, arm: lerp(lerp(54, 30, low), 60, up) - 6 * back,
+      lunge: 1.5 * low * (1 - up) + 2 * up * (1 - back), tilt: 0.1 * low * (1 - up) - 0.08 * up * (1 - back), trail: up > 0 && p < 0.66,
+      rig: (r) => {
+        r.squat = q(2.4 * low * (1 - up) + 1 * up * (1 - back));
+        danceLegs(r, [Math.max(low, up) * (1 - back), [3.6, 0, 6], [-4, 0, -12]]);
+        r.backArm = [q(lerp(0, -4, up) + 4 * back), q(lerp(1, -4, up) + 3 * back)];
+        if (up > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Lightning cage (third, at ~0.54): he swings the blade round flat at waist height once, slowly,
+  // and drives it point-down into the floor; the cage snaps up round them.
+  bwcage(p) {
+    const swing = ease(seg(p, 0.06, 0.42));
+    const plant = easeIn(seg(p, 0.46, 0.56));
+    const back = soft(seg(p, 0.8, 1));
+    const turn = Math.cos(swing * Math.PI * 2);
+    const spinning = swing > 0 && swing < 1;
+    return {
+      weapon: (swing <= 0 ? lerp(-58, 96, soft(seg(p, 0, 0.06))) : 96 + 360 * swing) + (swing >= 1 ? lerp(0, 82, plant) - 40 * back : 0), arm: lerp(56, 34, plant) + 10 * back,
+      lunge: 2 * plant * (1 - back), orbit: spinning, turn: spinning ? Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)) : 1, tilt: 0.12 * plant * (1 - back), trail: spinning,
+      rig: (r) => {
+        r.squat = q(1.2 * Math.sin(Math.PI * swing) + 2.8 * plant * (1 - back));
+        danceLegs(r, [Math.max(Math.sin(Math.PI * swing), plant) * (1 - back), [4.4, 0, 6], [-4.4, 0, -12]]);
+        r.backArm = [q(-4 * Math.sin(Math.PI * swing) + 3 * plant * (1 - back)), q(-2 * Math.sin(Math.PI * swing))];
+        r.cape = Math.round(-4 * bump(p, 0.06, 0.8));
+        if (plant > 0.4 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Hammering double (third, at ~0.36 and ~0.7): two overhead chops, the second heavier, each with a
+  // full re-wind.
+  bwdouble(p) {
+    const a = ease(seg(p, 0.16, 0.38));
+    const rewind = soft(seg(p, 0.42, 0.58));
+    const b = easeIn(seg(p, 0.6, 0.72));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(lerp(lerp(-58, -110, soft(seg(p, 0, 0.16))), 140, a), -110, rewind), 150, b) - 30 * back, arm: lerp(54, 52, a) - 8 * back,
+      lunge: 4 * a * (1 - rewind) + 5 * b * (1 - 0.6 * back), tilt: 0.12 * a * (1 - rewind) - 0.06 * rewind * (1 - b) + 0.18 * b * (1 - back), trail: (a > 0 && a < 1) || (b > 0 && b < 1),
+      rig: (r) => {
+        r.squat = q(1.6 * a * (1 - rewind) + 2.6 * b * (1 - back));
+        danceLegs(r, [Math.max(a * (1 - rewind), b) * (1 - back), [4.4, 0, 8], [-4.6, 0, -12]]);
+        r.backArm = [q(2 * (a + b) * (1 - back)), q(-2 * rewind * (1 - b))];
+        if ((a > 0.3 && rewind < 0.2) || (b > 0.3 && back < 0.5)) strikeFace(r);
+        else if (rewind > 0.4) r.mouth = 'grit';
+      },
+    };
+  },
+  // Wall of storm (finisher, at ~0.58): he hauls the blade right up behind him in both hands, rising
+  // tall, and slams it into the floor; a wall of rain and lightning bursts up in front of him.
+  bwslam(p) {
+    const raise = soft(seg(p, 0, 0.42));
+    const slam = easeIn(seg(p, 0.48, 0.58));
+    const hold = soft(seg(p, 0.58, 0.74));
+    const back = soft(seg(p, 0.86, 1));
+    const thrum = Math.sin(p * 70) * 2.6 * bump(p, 0.26, 0.48);
+    return {
+      weapon: lerp(lerp(-58, -128, raise) + thrum, 174, slam) - 70 * back, arm: lerp(lerp(54, 60, raise), 46, slam) - 10 * hold * (1 - back),
+      lift: 2.5 * raise * (1 - slam), lunge: -1 * raise * (1 - slam) + 6 * slam * (1 - 0.5 * back), tilt: -0.12 * raise * (1 - slam) + 0.28 * slam * (1 - hold * 0.4) * (1 - back), trail: slam > 0 && p < 0.7,
+      rig: (r) => {
+        r.squat = q(3.4 * hold * (1 - back) + 2 * slam * (1 - hold));
+        danceLegs(r, [raise * (1 - slam), [1.8, -1, 2], [-2, -0.8, -4]], [slam * (1 - back), [5.4, 0, 10], [-5.4, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, -3, raise), -5, slam) + 5 * back), q(lerp(lerp(-1, -8, raise), 1, slam) - 1 * back)];
+        r.hairLift = raise > 0.4 && slam < 0.5 ? -1 : hold > 0.3 && back < 0.4 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.2, 0.86));
+        if (raise > 0.5 && slam < 0.3) r.mouth = 'grit';
+        if (slam > 0.5 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Drag sweep (finisher, at ~0.34 and ~0.72): a slow full turn with the blade out flat dragging
+  // everything in on the field lines, then a heavy flat sweep that throws them.
+  bwsweep(p) {
+    const u = ease(seg(p, 0.06, 0.6));
+    const throwIt = ease(seg(p, 0.62, 0.74));
+    const back = soft(seg(p, 0.84, 1));
+    const turn = Math.cos(u * Math.PI * 2);
+    const spinning = u > 0 && u < 1;
+    return {
+      weapon: (u <= 0 ? lerp(-58, 96, soft(seg(p, 0, 0.06))) : 96 + 360 * u) + 40 * throwIt - 60 * back, arm: 56 - 6 * back,
+      lunge: 1 + 4 * throwIt * (1 - back), orbit: spinning, turn: spinning ? Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)) : 1, tilt: 0.06 + 0.1 * throwIt * (1 - back), trail: spinning || (throwIt > 0 && throwIt < 1),
+      rig: (r) => {
+        r.squat = q(1.8 * Math.sin(Math.PI * u) + 2 * throwIt * (1 - back));
+        danceLegs(r, [(Math.sin(Math.PI * u) + throwIt) * (1 - back), [4.4, 0, 6], [-4.6, 0, -12]]);
+        r.backArm = [q(-5 * (1 - back)), q(-2 * (1 - back))];
+        r.cape = Math.round(-4 * bump(p, 0.06, 0.84));
+        if (spinning) r.mouth = 'grit';
+        else if (throwIt > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Up + attack: a low crouch and a heavy uppercut, the spout bursting up under them.
+  bwupper(p) {
+    const crouch = soft(seg(p, 0, 0.3));
+    const up = ease(seg(p, 0.34, 0.52));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(-58, 156, crouch), -30, up) - 24 * back, arm: lerp(lerp(54, 30, crouch), 60, up) - 6 * back,
+      lift: 5 * bump(p, 0.34, 0.86), tilt: 0.1 * crouch * (1 - up) - 0.14 * up * (1 - back), trail: up > 0 && p < 0.66,
+      rig: (r) => {
+        r.squat = q(3 * crouch * (1 - up));
+        danceLegs(r, [crouch * (1 - up), [3.6, 0, 6], [-3.6, 0, -12]], [up * (1 - back), [2.4, -2, 10], [-2, -1.6, -14]]);
+        r.backArm = [q(lerp(0, -5, up)), q(lerp(1, -5, up))];
+        r.hairLift = up > 0.3 && back < 0.5 ? -1 : 0;
+        if (up > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // In the air: a heavy cut, then a crash down like thunder.
+  bwaircut(p) {
+    const cut = ease(seg(p, 0.2, 0.56));
+    const back = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(-58, -104, ease(seg(p, 0, 0.2))), 140, cut) - 30 * back, arm: lerp(50, 56, cut) - 8 * back, tilt: 0.14 * cut * (1 - back), trail: cut > 0 && cut < 1,
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(-3 * cut), q(-2 * cut)];
+        r.hairLift = -1;
+        if (cut > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  bwairslam(p) {
+    const raise = ease(seg(p, 0, 0.3));
+    const down = ease(seg(p, 0.3, 0.5));
+    return {
+      weapon: lerp(lerp(-58, -120, raise), 170, down), arm: lerp(lerp(52, 58, raise), 46, down), tilt: -0.1 * raise * (1 - down) + 0.24 * down, lift: 2 * raise * (1 - down),
+      rig: (r) => {
+        r.air = true;
+        r.frontLeg = [q(lerp(2.6, 1.6, down)), q(lerp(-5, -1.4, down)), 10];
+        r.backLeg = [q(-1.6), q(lerp(-2.6, -1, down)), -10];
+        r.backArm = [q(-2 + 5 * down), q(-6 + 6 * down)];
+        r.hairLift = -1;
+        r.cape = -4;
+        if (down > 0.4) r.mouth = 'grit';
+      },
+    };
+  },
+  // Rolling Thunder (out of a run): he lowers his free shoulder behind locked plates of static and
+  // charges, heavy, then plants and heaves them off.
+  bwcharge(p) {
+    const lower = soft(seg(p, 0, 0.2));
+    const heave = ease(seg(p, 0.44, 0.56));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(-58, -84, lower) + 30 * heave * (1 - back), arm: lerp(54, 44, lower) + 6 * heave,
+      lunge: 6 * lower * (1 - heave) + 8 * heave * (1 - back), tilt: 0.26 * lower * (1 - heave * 0.4) * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * lower * (1 - back));
+        danceLegs(r, [lower * (1 - heave), [4.6, -1, 10], [-5, -1.6, -30]], [heave * (1 - back), [5.4, 0, 8], [-5.4, 0, -20]]);
+        r.backArm = [q(lerp(0, 7, lower) * (1 - back)), q(lerp(-1, -3, lower) * (1 - back))];
+        r.tx = q(1.6 * lower * (1 - back));
+        if (lower > 0.4 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Down + attack: the blade raised point-down in both hands and driven into the floor; the quake
+  // rolls out.
+  bwquake(p) {
+    const raise = soft(seg(p, 0, 0.42));
+    const drive = easeIn(seg(p, 0.5, 0.6));
+    const hold = soft(seg(p, 0.6, 0.76));
+    const back = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(-58, 176, soft(seg(p, 0, 0.2))), 178, drive) - 40 * back, arm: lerp(lerp(54, 60, raise), 30, drive) + 14 * back,
+      lift: 2 * raise * (1 - drive), tilt: 0.06 * drive * (1 - back),
+      rig: (r) => {
+        r.squat = q(3.2 * hold * (1 - back) + 2 * drive * (1 - hold));
+        danceLegs(r, [Math.max(raise, drive) * (1 - back), [4, 0, 6], [-4.4, 0, -10]]);
+        r.backArm = [q(lerp(0, 4, raise) * (1 - back)), q(lerp(-1, -6, raise) * (1 - drive) * (1 - back))];
+        if (drive > 0.5 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+
+  // His skills.
+  // Lightning Cage: he drives the blade point-down into the floor and throws his free arm up; the
+  // cage snaps up and he holds the pose, braced, as they're dragged in.
+  bwcagecast(p) {
+    const drive = easeIn(seg(p, 0.1, 0.4));
+    const arm = soft(seg(p, 0.36, 0.5));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(lerp(-58, -90, soft(seg(p, 0, 0.1))), 178, drive) - 40 * back, arm: lerp(54, 32, drive) + 14 * back,
+      lunge: 3 * drive * (1 - back), tilt: 0.08 * drive * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.6 * drive * (1 - back));
+        danceLegs(r, [drive * (1 - back), [4.4, 0, 8], [-4.6, 0, -12]]);
+        r.backArm = [q(lerp(0, -5, arm) * (1 - back)), q(lerp(-1, -11, arm) * (1 - back))];
+        r.hairLift = arm > 0.5 && back < 0.5 ? -1 : 0;
+        if (arm > 0.4 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+  // Storm Wall: he plants wide and sweeps the blade across in front of him, low to high, and holds it
+  // up like a gate as the wall bursts up.
+  bwbarrier(p) {
+    const set = soft(seg(p, 0, 0.26));
+    const sweep = ease(seg(p, 0.3, 0.52));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(-58, 150, set), 70, sweep) - 10 * back, arm: lerp(lerp(54, 34, set), 60, sweep) - 12 * back,
+      lunge: 3 * sweep * (1 - back), tilt: 0.08 * set * (1 - sweep) - 0.04 * sweep * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.4 * Math.max(set, sweep) * (1 - back));
+        danceLegs(r, [Math.max(set, sweep) * (1 - back), [5, 0, 8], [-5, 0, -12]]);
+        r.backArm = [q(lerp(0, -5, sweep) * (1 - back)), q(lerp(-1, -3, sweep) * (1 - back))];
+        r.cape = Math.round(-4 * bump(p, 0.3, 0.82));
+        if (sweep > 0.4 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Magnetize: he points the blade out, plants, and hauls it back two-handed like a rope, leaning back
+  // against the weight of them.
+  bwmagnet(p) {
+    const point = ease(seg(p, 0, 0.3));
+    const haul = ease(seg(p, 0.42, 0.66));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(-58, 90, point), 158, haul) - 50 * back, arm: lerp(lerp(54, 60, point), 36, haul) + 10 * back,
+      lunge: 5 * point * (1 - haul) - 4 * haul * (1 - back), tilt: 0.12 * point * (1 - haul) - 0.14 * haul * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.4 * haul * (1 - back));
+        danceLegs(r, [point * (1 - haul), [5, 0, 8], [-4.4, 0, -14]], [haul * (1 - back), [3, 0, 2], [-5.4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, 5, point), -5, haul) * (1 - back)), q(lerp(-1, -2, point) * (1 - back))];
+        if (haul > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Overcast: he raises the blade straight up to the sky in both hands (behind his head), and holds
+  // it there as the cloud spreads.
+  bwovercast(p) {
+    const up = ease(seg(p, 0, 0.42));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(-58, 4, up) - 62 * back, arm: lerp(54, 60, up) - 6 * back, lift: 1.5 * up * (1 - back), tilt: -0.06 * up * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [up * (1 - back), [3.2, 0, 4], [-3.4, 0, -8]]);
+        r.backArm = [q(lerp(0, -5, up) * (1 - back)), q(lerp(-1, -10, up) * (1 - back))];
+        r.hairLift = up > 0.5 && back < 0.5 ? -1 : 0;
+        if (up > 0.6 && back < 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Fortress (finisher): he raises the blade to the sky as the storm gathers, drives it point-down
+  // into the floor as the cage locks, and stands braced on it, both hands on the hilt, as the bolts
+  // fall; then wrenches it out in a last heavy sweep.
+  bwfortress(p) {
+    const up = ease(seg(p, 0, 0.3));
+    const drive = easeIn(seg(p, 0.34, 0.42));
+    const brace = soft(seg(p, 0.42, 0.52));
+    const sweep = ease(seg(p, 0.82, 0.9));
+    const back = soft(seg(p, 0.92, 1));
+    return {
+      weapon: lerp(lerp(lerp(-58, 4, up), 178, drive), 110 + 360, sweep) - 40 * back, arm: lerp(lerp(lerp(54, 60, up), 30, drive), 56, sweep) + 6 * back,
+      lift: 2 * up * (1 - drive), lunge: 3 * drive * (1 - sweep) + 5 * sweep * (1 - back), tilt: -0.08 * up * (1 - drive) + 0.06 * brace * (1 - sweep) + 0.14 * sweep * (1 - back),
+      trail: sweep > 0 && sweep < 1,
+      rig: (r) => {
+        r.squat = q(3 * brace * (1 - sweep) + 2 * sweep * (1 - back));
+        danceLegs(r, [Math.max(up * (1 - drive), brace) * (1 - back), [4.6, 0, 8], [-4.8, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -5, up), 4, brace) * (1 - sweep)), q(lerp(lerp(-1, -10, up), 0, brace) * (1 - sweep))];
+        r.hairLift = up > 0.5 && drive < 0.5 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.92));
+        if (brace > 0.5 && sweep < 0.2) r.mouth = 'grit';
+        else if (sweep > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Rain Cleave (Storm Cleave): the long slow haul back of a storm, the rain coming down, and one
+  // enormous cleave.
+  bwraincleave(p) {
+    const haul = soft(seg(p, 0, 0.46));
+    const cleave = ease(seg(p, 0.5, 0.62));
+    const back = soft(seg(p, 0.84, 1));
+    const thrum = Math.sin(p * 70) * 2.4 * bump(p, 0.3, 0.52);
+    return {
+      weapon: lerp(lerp(-58, -142, haul) + thrum, 150, cleave) - 30 * back, arm: lerp(lerp(54, 58, haul), 50, cleave) - 10 * back,
+      lunge: -2 * haul * (1 - cleave) + 7 * cleave * (1 - 0.6 * back), tilt: -0.12 * haul * (1 - cleave) + 0.22 * cleave * (1 - back), trail: cleave > 0 && p < 0.78,
+      rig: (r) => {
+        r.squat = q(2.8 * haul * (1 - cleave) + 2.4 * cleave * (1 - back));
+        danceLegs(r, [haul * (1 - cleave), [3.4, 0, 4], [-4.6, 0, -12]], [cleave * (1 - back), [5.4, 0, 10], [-5.2, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, -3, haul), 4, cleave) - 4 * back), q(lerp(lerp(-1, -6, haul), 1, cleave) - 1 * back)];
+        r.cape = Math.round(-5 * bump(p, 0.2, 0.86));
+        if (haul > 0.5 && cleave < 0.2) r.mouth = 'grit';
+        else if (cleave > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Squall (Cyclone Edge): two slow heavy turns, planted, the blade out flat, the squall round him.
+  bwsquall(p) {
+    const cock = soft(seg(p, 0, 0.12));
+    const u = seg(p, 0.12, 0.82);
+    const spun = soft(u) * 2;
+    const down = easeIn(seg(p, 0.84, 0.9));
+    const back = soft(seg(p, 0.92, 1));
+    const turn = Math.cos(spun * Math.PI * 2);
+    const spinning = u > 0 && u < 1;
+    return {
+      weapon: (u <= 0 ? lerp(-58, 96, cock) : 96 + 360 * spun) + (u >= 1 ? lerp(0, 70, down) - 40 * back : 0), arm: spinning ? 56 : 52 + 4 * back,
+      lunge: 1 + 3 * down * (1 - back), orbit: spinning, turn: spinning ? Math.sign(turn || 1) * Math.max(0.4, Math.abs(turn)) : 1,
+      tilt: 0.06 + 0.12 * down * (1 - back), trail: spinning || (down > 0 && down < 1),
+      rig: (r) => {
+        r.squat = q(1.8 * Math.sin(Math.PI * u) + 2.6 * down * (1 - back));
+        danceLegs(r, [Math.max(Math.sin(Math.PI * u), down) * (1 - back), [4.6, 0, 6], [-4.6, 0, -12]]);
+        r.backArm = [q(-5 * (1 - back)), q(-2 * (1 - back))];
+        r.cape = Math.round(-5 * bump(p, 0.12, 0.92));
+        if (spinning) r.mouth = 'grit';
+        else if (down > 0.5 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Thunderhead (Thunderclap): he sets the blade on his shoulder, lifts his free fist and brings it
+  // down onto his own chest with a shout, then stamps; the thunder booms out.
+  bwclapmv(p) {
+    const fist = soft(seg(p, 0.06, 0.34));
+    const beat = easeIn(seg(p, 0.36, 0.46));
+    const stamp = easeIn(seg(p, 0.5, 0.58));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: -58 - 8 * beat, arm: 54, lift: 1.5 * fist * (1 - stamp), tilt: -0.06 * fist * (1 - beat) + 0.08 * stamp * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.8 * stamp * (1 - back));
+        if (fist > 0.2 && stamp < 1) {
+          r.frontLeg = [q(lerp(0.8, 2.4, fist)), q(-4 * fist * (1 - stamp)), Math.round((24 * fist * (1 - stamp)) / 2) * 2];
+          r.backLeg = [q(-2.6), 0, -6];
+        } else danceLegs(r, [stamp * (1 - back), [4.4, 0, 6], [-4.2, 0, -10]]);
+        r.backArm = [q(lerp(lerp(0, -6, fist), 4, beat) * (1 - back)), q(lerp(lerp(-1, -8, fist), -4, beat) * (1 - back))];
+        r.hairLift = stamp > 0.5 && back < 0.5 ? 1 : 0;
+        if (beat > 0.3 && back < 0.6) r.mouth = 'open';
+      },
+    };
+  },
+  // Iron Cloud (Static Guard): the blade set point-down before him like a pillar, both hands on it,
+  // head bowed, then he lifts his eyes as the shell locks round him.
+  bwguard(p) {
+    const set = ease(seg(p, 0, 0.34));
+    const lift = soft(seg(p, 0.5, 0.66));
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(-58, 178, set) - 44 * back, arm: lerp(54, 36, set) + 8 * back,
+      lunge: 2 * set * (1 - back), tilt: 0.1 * set * (1 - lift * 0.6) * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.6 * set * (1 - back));
+        danceLegs(r, [set * (1 - back), [4.8, 0, 8], [-4.8, 0, -12]]);
+        r.backArm = [q(lerp(0, 5, set) * (1 - back)), q(lerp(-1, -1, set) * (1 - back))];
+        if (set > 0.5 && lift < 0.3) r.eyes = 'half';
+        else if (lift > 0.5 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Downpour (Thunderfall): a heavy leap up into the storm (not high; he's a mountain), a hang with
+  // the blade up behind his head as the rain begins, and a crash down that shakes everything.
+  bwfall(p) {
+    const crouch = soft(seg(p, 0, 0.12));
+    const up = ease(seg(p, 0.12, 0.34));
+    const hang = seg(p, 0.34, 0.56);
+    const fall = easeIn(seg(p, 0.56, 0.62));
+    const land = soft(seg(p, 0.62, 0.76));
+    const rise = soft(seg(p, 0.88, 1));
+    return {
+      weapon: lerp(lerp(-58, -126, up) + 3 * Math.sin(p * 70) * hang, 174, fall) - 34 * rise, arm: lerp(lerp(54, 58, up), 46, fall) - 12 * land * (1 - rise),
+      lift: 42 * up * (1 - fall) + 2 * Math.sin(hang * Math.PI * 2) * (1 - fall), lunge: 2 * up + 6 * fall * (1 - 0.5 * rise),
+      tilt: -0.12 * up * (1 - fall) + 0.28 * fall * (1 - land * 0.6) * (1 - rise), trail: fall > 0 && p < 0.72,
+      rig: (r) => {
+        if (up > 0.2 && fall < 0.95) {
+          r.air = true;
+          r.frontLeg = [q(lerp(2.6, 3.4, fall)), q(lerp(-4.4, -2, fall)), 10];
+          r.backLeg = [q(-1.8), q(-2.6), -14];
+        } else {
+          r.squat = q(2.6 * crouch * (1 - up) + 3.4 * land * (1 - rise));
+          danceLegs(r, [crouch * (1 - up), [3.4, 0, 6], [-3.4, 0, -10]], [land * (1 - rise), [5, 0, 10], [-5.2, 0, -14]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -4, up), 3, land) * (1 - rise)), q(lerp(lerp(-1, -9, up), 2, land) * (1 - rise))];
+        r.hairLift = up > 0.2 && fall < 1 ? -1 : land > 0.3 && rise < 0.3 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.12, 0.88));
+        if (hang > 0.2 && fall < 0.3) r.mouth = 'grit';
+        if (fall > 0.5 && rise < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+
   // ---------- Skills that used to borrow a generic pose or a combo move, given moves of their own ----------
 
   // Overclock (the Arbalist Engineer): she props the crossbow up on her hip, cranks it hard past
@@ -6215,8 +7313,51 @@ const STEP_STYLES = {
   // dart (the Thunderguard): quick low darting steps, the weight thrown into the blow and a light
   // spring back onto the toes; no big hops, it's the strike that's explosive.
   dart: { air: [[2.4, -3.4, 14], [-2.4, -3, -40]], plant: [[4.6, 0, 6], [-4.4, 0, -12]], squat: 1.6, lean: 0.12, b: 0.8, hk: 1.3 },
+  // skim (the Tempest): fast low glides into each blow, barely leaving the floor, the weight
+  // always forward; the next step starts before the last has settled.
+  skim: { air: [[3, -2, 10], [-3, -1.6, -30]], plant: [[5, 0, 8], [-5, 0, -16]], squat: 1.2, lean: 0.16, b: 0.6, hk: 1.1 },
+  // plant (the Stormwall): no hops; one heavy stamp into the blow and a deep settle after.
+  plant: { air: [[2.8, -3, 16], [-3, 0, -8]], plant: [[5, 0, 8], [-5, 0, -14]], squat: 2.4, lean: 0.08, b: 0.5, hk: 1.4 },
 };
 const FOOTWORK = {
+  // The Stormwall.
+  bwbrace: { s: 'plant', beats: [[null, 1.5]], drive: 3 },
+  bwreturn: { s: 'plant', beats: [[0.5, 1]], pre: 0.3 },
+  bwcleave: { s: 'plant', beats: [[null, 2]], drive: 4, b: 0.6 },
+  bwbolt: { s: 'plant', beats: [[0.62, 2]], pre: 0.3, b: 0.7 },
+  bwshove: { s: 'plant', beats: [[null, 1.5]], drive: 7, lean: 0.14 },
+  bwpull: { s: 'plant', beats: [[null, 0]] },
+  bwguardcut: { s: 'plant', beats: [[null, 0]], b: 0.6 },
+  bwcage: { s: 'plant', beats: [[0.56, 0]], b: 0.6 },
+  bwdouble: { s: 'plant', beats: [[0.36, 1], [0.7, 2]], pre: 0.16, drive: 3, b: 0.6 },
+  bwslam: { s: 'plant', beats: [[0.58, 2]], pre: 0.3, b: 0.7 },
+  bwsweep: { s: 'plant', beats: [[0.72, 1]], pre: 0.2, b: 0.6 },
+  bwcharge: { s: 'plant', beats: [[null, 0]], drive: 6 },
+  bwraincleave: { s: 'plant', beats: [[0.58, 2]], pre: 0.2, drive: 5, b: 0.7 },
+  bwclapmv: { s: 'plant', beats: [[0.56, 0]], b: 0.7 },
+  bwfall: { s: 'plant', beats: [[0.62, 0]], b: 0.8, settleAt: 0.9 },
+  bwfortress: { s: 'plant', beats: [[0.42, 0]], b: 0.6, settleAt: 0.92 },
+  // The Tempest.
+  tpstreak: { s: 'skim', beats: [[null, 2]], drive: 7 },
+  tpdouble: { s: 'skim', beats: [[0.28, 1.5], [0.6, 1.5]], pre: 0.1, drive: 4, b: 0.6 },
+  tpflash: { s: 'skim', beats: [[null, 0]], drive: 8 },
+  tpturn: { s: 'skim', beats: [[0.5, 2]], pre: 0.2 },
+  tplift: { s: 'skim', beats: [[null, 0]], b: 0.9 },
+  tpjabs: { s: 'skim', beats: [[0.2, 1], [0.42, 1], [0.64, 1.5]], pre: 0.08, drive: 5, b: 0.6 },
+  tpcross: { s: 'skim', beats: [[0.3, 1.5], [0.6, 1.5]], pre: 0.1, drive: 5 },
+  tpsweep: { s: 'skim', beats: [[null, 0]], drive: 6 },
+  tplunge: { s: 'skim', beats: [[null, 1]], drive: 10 },
+  tpblink: { s: 'skim', beats: [[0.6, 0]], b: 1.1, settleAt: 0.88 },
+  tpwhirl: { s: 'skim', beats: [[0.66, 2]], pre: 0.2, b: 1 },
+  tpdive: { s: 'skim', beats: [[0.58, 0]], b: 1.2 },
+  tpdash: { s: 'skim', beats: [[null, 0]], drive: 8 },
+  tpslam: { s: 'skim', beats: [[0.5, 0]], b: 1.1 },
+  tpstep: { s: 'skim', beats: [[0.6, 0]], b: 0.9 },
+  tparc: { s: 'skim', beats: [[0.3, 1.5], [0.62, 1.5]], pre: 0.12, drive: 4 },
+  tprush: { s: 'skim', beats: [[0.62, 0]], b: 1 },
+  tpcleave: { s: 'skim', beats: [[0.48, 2]], pre: 0.2, drive: 6, b: 1.1 },
+  tpclap: { s: 'skim', beats: [[0.44, 1.5]], pre: 0.2, b: 1 },
+  tpfall: { s: 'skim', beats: [[0.6, 0]], b: 1.2, settleAt: 0.9 },
   // The Thunderguard.
   tgcut: { s: 'dart', beats: [[null, 3]], drive: 5 },
   tgreturn: { s: 'dart', beats: [[0.52, 3]], pre: 0.3 },

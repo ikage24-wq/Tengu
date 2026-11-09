@@ -1707,9 +1707,9 @@ export const WHALE_RADIO = {
 // second (by job).
 export const JOB_SCENES = {
   warrior: [
-    { card: 'A New Path', sub: 'Warrior' },
-    { who: 'brann', text: "Welcome to Ember Crag, {name}. From today, you stand in front so others can shine behind you. You'll get hit a lot. You'll love it.", mood: 'happy' },
-    { who: 'brann', text: "Heavy blows, steady feet, and a big heart. Now go hit something that deserves it! Not me." },
+    { card: 'A New Path', sub: 'Thunderguard' },
+    { who: 'brann', text: "Welcome to Ember Crag, {name}. Feel that? The air's gone tight around you. That's the storm, and it's yours now. You stand in front, and you let it out on whatever comes.", mood: 'happy' },
+    { who: 'brann', text: "Wind it up, let it go, take the hits and send them back as thunder. Now go strike something that deserves it! Not me." },
   ],
   archer: [
     { card: 'A New Path', sub: 'Acrobat Archer' },

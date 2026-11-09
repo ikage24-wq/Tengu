@@ -574,7 +574,7 @@ test('the group finder brings only real jobs, and helpers use only their own rea
     assert.ok(SKILLS[id], `${id} is a real skill`);
     assert.equal(SKILLS[id].job, job);
   }
-  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [34, 40, ['warrior', 'paladin']]]) {
+  for (const [seed, level, jobs] of [[3, 11, ['archer']], [8, 12, ['thief']], [34, 40, ['warrior', 'stormwall']]]) {
     const rng = seeded(seed);
     const world = heroAt(rng, level, jobs);
     assert.equal(startRun(world), null);

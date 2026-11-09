@@ -62,6 +62,10 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdr
   'pthit', 'ptsmoke', 'ptillusion',
   // The Tide Mage.
   'tmlash', 'tmsplash', 'tmsplashbig', 'tmgeyser', 'tmwhirl', 'tmfall', 'tmfallbig', 'tmhit', 'tmshieldfx', 'tmpool',
+  // The Stormwall.
+  'bwhit', 'bwplate', 'bwfield', 'bwspout', 'bwrain', 'bwcage', 'bwwall', 'bwboltdown', 'bwroll', 'bwovercastfx', 'bwcagebig', 'bwwallbig', 'bwfieldbig', 'bwsquallfx', 'bwstormcloud', 'bwclapbig', 'bwboltbig', 'bwguardshell',
+  // The Tempest.
+  'tphit', 'tpline', 'tpflashstep', 'tpwhirlfx', 'tpfloor', 'tpflashburst', 'tpbolt', 'tpcuts', 'tprush', 'tpclapbig', 'tpboltbig', 'tpguardshell', 'tpstormcloud',
   // The Thunderguard.
   'tghit', 'tgspark', 'tgchain', 'tgdart', 'tgburst', 'tgfloor', 'tgring', 'tgbeam', 'tgcolumn', 'tgflash', 'tgbolt', 'tgclap', 'tgrush', 'tgcyclone', 'tgrodfx', 'tgclapbig', 'tgboltbig', 'tgguardshell', 'tgstormcloud',
   // The Tidecaller.
@@ -204,6 +208,8 @@ export function hearWorld(world, cam) {
     if (tier > (m.tier ?? 0)) sfx('tier', { n: tier });
     m.tier = tier;
     if ((world.volt ?? 0) >= 100 && !(m.volt >= 100)) sfx('tgovercharge');
+    if ((world.gale ?? 0) >= 100 && !(m.gale >= 100)) sfx('tplightspeed');
+    if ((world.bulwark ?? 0) >= 100 && !(m.bulwark >= 100)) sfx('bweye');
     if ((world.momentum ?? 0) >= 100 && !(m.momentum >= 100)) sfx('showtime');
     if ((world.shadow ?? 0) >= 100 && !(m.shadow >= 100)) sfx('phantom');
     if ((world.ki ?? 0) >= 100 && !(m.ki >= 100)) sfx('carouselfull');
@@ -258,7 +264,7 @@ export function hearWorld(world, cam) {
     [m.active, m.done] = questCounts(char);
   }
   m.fall = b.onGround ? 0 : Math.max(m.fall ?? 0, b.vy);
-  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, volt: world.volt, momentum: world.momentum, shadow: world.shadow, ki: world.ki, spirit: world.spirit, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
+  Object.assign(m, { job: char.job, level: char.level, map: world.map.id, dead: world.dead, gold: char.gold, ground: b.onGround, x: b.x, y: b.y, volt: world.volt, gale: world.gale, bulwark: world.bulwark, momentum: world.momentum, shadow: world.shadow, ki: world.ki, spirit: world.spirit, tails: world.tails, rage: world.rage, faith: world.faith, bond: world.bond, charge: world.charge });
 
   // ----- The summons' voices: each one speaks up when it sets about something new -----
   hearSummons(world, m, pan);

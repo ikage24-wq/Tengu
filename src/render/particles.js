@@ -6,7 +6,7 @@ import { zoneLook } from './scenery.js';
 import { settings } from '../core/settings.js';
 import { ITEMS } from '../data/items.js';
 import { ELEMENTS } from './elements.js';
-import { hasVolt, hasFaith, hasRage } from '../world/melee.js';
+import { hasVolt, hasGale, hasBulwark, hasFaith, hasRage } from '../world/melee.js';
 import { needle, starFlash, shardRing, puff, crown, shock, wisp, contrast, stepped, inked, easeOut, easeIn } from './fxkit.js';
 
 const MAX = 600;
@@ -245,10 +245,10 @@ function elementOf(world) {
 
 // The paths drawn as real light, fire and lightning (the Paladin, the Berserker, the Stormcaller):
 // their hits throw only sparks of their own colour, no cartoon star or ring.
-const REAL_SPARKS = { holy: ['#fff3c4', '#ffd36a', '#ffffff'], rage: ['#ffd27a', '#ff7a3a', '#e0301c'], storm: ['#efe4ff', '#b48cff', '#ffffff'], thunder: ['#ffffff', '#fff3b0', '#8fb8ff'] };
+const REAL_SPARKS = { holy: ['#fff3c4', '#ffd36a', '#ffffff'], rage: ['#ffd27a', '#ff7a3a', '#e0301c'], storm: ['#efe4ff', '#b48cff', '#ffffff'], thunder: ['#ffffff', '#fff3b0', '#8fb8ff'], redstorm: ['#ffffff', '#ffe0e4', '#ff5a6e'], indigo: ['#ffffff', '#ffe08a', '#9aa2f0'] };
 // A blow's school when the hit doesn't say: a warrior's path (the Warrior's steel is his alone; a
 // Thief's blade is drawn the old way still).
-const blowSchool = (j, char) => j.school ?? (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasVolt(char) ? 'thunder' : null);
+const blowSchool = (j, char) => j.school ?? (hasFaith(char) ? 'holy' : hasRage(char) ? 'rage' : hasVolt(char) ? 'thunder' : hasGale(char) ? 'redstorm' : hasBulwark(char) ? 'indigo' : null);
 const realOf = (j, char) => {
   const school = blowSchool(j, char);
   return school === 'thunder' && !hasVolt(char) ? null : REAL_SPARKS[school];
@@ -327,7 +327,7 @@ export function absorbJuice(fx, world) {
       // A warrior plants a foot to put their weight into a big move: a puff of dust skids out
       // from under it, the view dips, and a heavy move adds a small ring on the ground.
       // The realistic jobs' (the Warrior and his paths) kicks up soft earthy dust, no outline.
-      const soft = hasVolt(world.char) || hasFaith(world.char) || hasRage(world.char);
+      const soft = hasVolt(world.char) || hasGale(world.char) || hasBulwark(world.char) || hasFaith(world.char) || hasRage(world.char);
       const [, puff, puffShade] = soft ? [null, '#d8cec4', '#b0a69e'] : SLAM_TINTS[j.school] ?? SLAM_TINTS.steel;
       dust(fx, j.x - j.dir * 4, j.y, j.big ? 6 : 3, -j.dir, puff, puffShade, soft);
       dust(fx, j.x + j.dir * 4, j.y, j.big ? 3 : 1, j.dir, puff, puffShade, soft);

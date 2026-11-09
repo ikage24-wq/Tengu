@@ -152,7 +152,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
   if ((f.kind.startsWith('tm') || f.kind.startsWith('ms') || f.kind.startsWith('tc')) && drawTideFx(ctx, f, x, y, p)) return true;
   // The Thunderguard's lightning (render/storm-fx.js).
-  if (f.kind.startsWith('tg') && drawStormFx(ctx, f, x, y, p, cam)) return true;
+  if ((f.kind.startsWith('tg') || f.kind.startsWith('tp') || f.kind.startsWith('bw')) && drawStormFx(ctx, f, x, y, p, cam)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.

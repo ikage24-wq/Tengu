@@ -334,14 +334,14 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
 });
 
-test('the warrior, the archer and the thief branch two ways at 30 (the Tide Mage has no paths yet)', async () => {
+test('the warrior, the archer and the thief branch at 30', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
   assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'tidemage', 'warrior']);
   for (const first of ['warrior', 'archer', 'thief', 'tidemage']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
-  assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
+  assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['stormwall', 'tempest'], 'warrior has his paths at 30');
   assert.deepEqual(nextJobs('archer', 30).map((j) => j.id).sort(), ['beastmaster', 'stormcaller'], 'archer has two paths at 30');
   assert.deepEqual(nextJobs('thief', 30).map((j) => j.id).sort(), ['kitsune', 'shinobi'], 'thief has two paths at 30');
 });
@@ -492,13 +492,13 @@ test('the stat-only skills grow by themselves and give their SP back', async () 
   const { canLearn } = await import('../src/core/character.js');
   const { grownLevel } = await import('../src/core/stats.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  const c = { job: 'paladin', level: 35, sp: 0, skills: { stormsteel: 12, paladinmastery: 4 }, hotkeys: {} };
+  const c = { job: 'stormwall', level: 35, sp: 0, skills: { stormsteel: 12, bedrock: 4 }, hotkeys: {} };
   updateRetiredJobs(c);
   assert.equal(c.sp, 12 + 4, 'the masteries give their points back');
   assert.deepEqual(c.skills, {});
   c.sp = 5;
   assert.ok(!canLearn(c, 'stormsteel'), 'a mastery is not learned with SP');
   assert.equal(grownLevel(c, SKILLS.stormsteel), SKILLS.stormsteel.maxLevel, 'a first-job mastery is full by 30');
-  assert.ok(grownLevel(c, SKILLS.paladinmastery) > 0 && grownLevel(c, SKILLS.paladinmastery) < SKILLS.paladinmastery.maxLevel, 'a second-job mastery grows from 30');
-  assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.paladinmastery), SKILLS.paladinmastery.maxLevel, 'and is full by 50');
+  assert.ok(grownLevel(c, SKILLS.bedrock) > 0 && grownLevel(c, SKILLS.bedrock) < SKILLS.bedrock.maxLevel, 'a second-job mastery grows from 30');
+  assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.bedrock), SKILLS.bedrock.maxLevel, 'and is full by 50');
 });

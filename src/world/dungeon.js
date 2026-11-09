@@ -9,7 +9,7 @@
 //   - fallen members get back up once the fight is over; if everyone falls, the room resets and
 //     the group regroups at its entrance.
 
-import { faithGuard, pathSchool } from './melee.js';
+import { faithGuard, pathSchool, cloudBolt } from './melee.js';
 import { ventGuard } from './engineer.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
@@ -683,6 +683,8 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   const body = g.body;
   if (g.bot) {
     const bot = g.bot;
+    // (The Stormwall's thunderhead answers a blow on a friend near him too.)
+    if (Math.abs(body.x - world.body.x) < 400) cloudBolt(world, fromX, body.y);
     const dmg = absorb(world, body, bot.buffs, Math.round((pierce ? raw : damageTaken(raw, bot.stats.wdef)) * (bot.stats.guard ?? 1) * (1 - cutOf(bot.buffs, world.now))));
     bot.hp = Math.max(0, bot.hp - dmg);
     bot.hurt = 0.3;

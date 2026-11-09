@@ -187,8 +187,8 @@ export function makeAI(bot, rng, kind = null) {
   const st = weaponStyle(bot);
   const family = JOBS[bot.char.job].family;
   kind ??= st.ranged ? 'sniper'
-    : bot.char.job === 'paladin' ? (rng() < 0.8 ? 'guardian' : 'rusher')
-    : bot.char.job === 'berserker' ? 'rusher'
+    : bot.char.job === 'stormwall' ? (rng() < 0.8 ? 'guardian' : 'rusher')
+    : bot.char.job === 'tempest' ? 'rusher'
     : rng() < 0.55 ? 'rusher' : 'guardian';
   const base = {
     rusher: { keep: 0.6, react: [0.12, 0.25], rhythm: [0.6, 0.95], special: 0.22, habits: ['roar', 'cheer'] },
@@ -556,7 +556,8 @@ export function botSkills(char) {
     if (s.type !== 'attack') continue;
     // (Each path plays a skill its own way: a Paladin's Shield Rush for the Shoulder Charge.)
     const at = s.at(lv, s.maxLevel);
-    const combo = pathParams(at, char.job).combo;
+    // (A bot plays a taunt or a party shield as its blows alone: the Stormwall's skills all taunt.)
+    const combo = pathParams(at, char.job).combo?.map((st) => ({ ...st, strikes: st.strikes.map(({ provoke, grant, ...k }) => k) }));
     if (!combo || !combo.every((st) => st.strikes.every(plain))) continue;
     if (!combo.some((st) => st.strikes.some((k) => k.pct > 0 && (k.reach > 0 || k.shot)))) continue;
     out.push({ id: s.id, steps: combo, full: Boolean(s.fullGauge), tune: s.dmg ?? 1, rank: chain.indexOf(s.job), charge: Boolean(s.movement) });
@@ -656,7 +657,7 @@ function play(bot, step, m, world, rng) {
   const body = bot.body;
   const dir = body.facing;
   const path = pathOf({ char: bot.char, stats: bot.stats });
-  const school = path === 'paladin' ? 'holy' : path === 'berserker' ? 'rage' : null;
+  const school = path === 'warrior' ? 'thunder' : path === 'tempest' ? 'redstorm' : path === 'stormwall' ? 'indigo' : null;
   const reachable = (look, box, n) => pickTargets(world.mobs.filter((mob) => fair(bot, world, mob)), look, box, n);
   for (const s of step.strikes) {
     const lag = s.at * step.dur + (s.delay ?? 0);
@@ -689,7 +690,7 @@ function play(bot, step, m, world, rng) {
     targets.forEach((mob, i) => hit(mob, lag, i));
     const cy = body.y - 25;
     if (s.arc) world.fx.push({ kind: 'arc', path: school, x: body.x + sdir * (s.around ? 0 : 10), y: cy, dir: sdir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: CUT_TINT[school]?.[s.big ? 1 : 0] ?? (s.big ? '#ffb347' : '#8fb8ff'), t: -lag, dur: (s.big ? 0.32 : 0.24) + lag });
-    if (s.pierce && !s.arc) world.fx.push({ kind: 'pierce', school, x: body.x, y: body.y, dir: sdir, box: { x: sdir > 0 ? body.x - 6 : body.x + 6 - s.reach, y: cy - 10, w: s.reach, h: 20 }, t: -lag, dur: (s.big ? 0.35 : 0.25) + lag });
+    if (s.pierce && !s.arc && school !== 'thunder' && school !== 'redstorm' && school !== 'indigo') world.fx.push({ kind: 'pierce', school, x: body.x, y: body.y, dir: sdir, box: { x: sdir > 0 ? body.x - 6 : body.x + 6 - s.reach, y: cy - 10, w: s.reach, h: 20 }, t: -lag, dur: (s.big ? 0.35 : 0.25) + lag });
     if (s.crack) world.fx.push({ kind: 'crack', school, x: body.x + sdir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: -lag, dur: 0.7 + lag, seed: rng() });
   }
 }

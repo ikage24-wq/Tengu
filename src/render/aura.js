@@ -251,6 +251,29 @@ function moonAura(ctx, x, y, t, s, k, layer) {
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
 // him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
 // again and again.
+function bulwarkAura(ctx, x, y, t, s, k, layer) {
+  // Thunderhead (the Stormwall; internally Bulwark): a storm cloud gathering over his head as it
+  // builds, growing and darkening, lit from inside; full (Eye of the Storm), lightning ringing his feet.
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celbwring', x, y + 2 * s, { frame: Math.floor(t * 24) % 24, scale: s * 0.55, alpha: 0.85 });
+    return;
+  }
+  if (k > 0.3) fxSprite(ctx, 'celbwcloud', x, y - 82 * s, { frame: Math.floor(t * 20) % 24, scale: s * (0.42 + 0.22 * k), alpha: Math.min(1, (k - 0.3) * 2.2) });
+}
+
+function galeAura(ctx, x, y, t, s, k, layer) {
+  // Velocity (the Tempest; internally Gale): red sparks streaming back off him as it builds, quicker
+  // the fuller it runs; full (Lightspeed), red static crackling over him.
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celtpshell', x, y + 2 * s, { frame: Math.floor(t * 24) % 24, scale: s * 0.6, alpha: 0.85 });
+    return;
+  }
+  if (k > 0.2) for (let i = 0; i < 1 + Math.floor(k * 4); i++) {
+    const u = (t * (1 + 1.5 * k) + i / 5) % 1;
+    fxSprite(ctx, 'celtpmote', x + (i - 2) * 7 * s - u * 16 * s, y - (10 + 30 * u + i * 5) * s, { frame: (i * 5 + Math.floor(t * 24)) % 24, scale: s * 0.18, alpha: Math.min(1, (k - 0.2) * 2) * (1 - u) });
+  }
+}
+
 function voltAura(ctx, x, y, t, s, k, layer) {
   // Charge (the Thunderguard; internally Volt): static sparks crackling up round him as it builds,
   // more and quicker the fuller it runs; full (Overcharge), a shell of static crackling round him.
@@ -324,7 +347,7 @@ function tailsAura(ctx, x, y, t, s, k, layer) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { ki: kiAura, tails: tailsAura, volt: voltAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, moon: moonAura, depth: depthAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, volt: voltAura, gale: galeAura, bulwark: bulwarkAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, moon: moonAura, depth: depthAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

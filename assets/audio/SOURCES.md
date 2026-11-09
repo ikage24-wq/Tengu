@@ -64,6 +64,14 @@ The buff and party buff: Epic Stock Media Fantasy Game 2 (a bright light spell) 
 
 Her whip of water, waves, bubbles, splashes, geyser, whirlpool, waterfall, hits and staff swish, from the same bundles: BluezoneCorp Designed Water, InMotionAudio Submerge, Epic Stock Media Elemental Mutation Whooshes and Impacts, Nick McMahan Cascadia Shore Waves, Rescopic Sound Distinct Whooshes, David Dumais Audio Melee Weapons 2, 344 Audio Elemental Palette Designed Vol. 1, Cinematic Sound Design Cartoon & Animation Vol 2.
 
+## Stormwall sounds (tools/build-fight.py, 2026-11-09)
+
+His heavy blows, rain curtains, static plates, field lines, lightning cages, walls of storm, the thunderhead's bolts, rolling thunder, Overcast and Fortress: the Thunderguard's storm bundles pitched down and heavy, with the Bolt Backyard Rain recording, the line's axe hit and booms.
+
+## Tempest sounds (tools/build-fight.py, 2026-11-09)
+
+His streaks, flash-steps, red bolts, Thousand Cuts, crescents, rush and clap: the Thunderguard's storm bundles (BluezoneCorp High Voltage, InMotionAudio Arc, Epic Stock Media, Jake Fielding) pitched up and cut short, with the line's fast blade and sci-fi whooshes.
+
 ## Thunderguard sounds (tools/build-fight.py, 2026-11-09)
 
 His crackling blows, jumping bolts, static bursts and rings, bolt beams and columns, the bolts he calls down, the thunderclaps, Thunder Rush, Cyclone Edge, Lightning Rod, Static Guard, Thunderfall's storm and bolt, and Overcharge: BluezoneCorp High Voltage (arc discharge, sizzling crackle), InMotionAudio Arc (arc design, buzz), Epic Stock Media Elemental Mutation Whooshes and Impacts (electric impact), Epic Stock Media Public Spaces Storms (a real thunderclap) and Jake Fielding Interior Wind Rain and Storms (thunder rumble), layered with the line's booms and whooshes.

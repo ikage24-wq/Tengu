@@ -129,7 +129,7 @@ export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
   // (The Berserker takes the damage seat its family doesn't.)
-  if (jobId === 'berserker') return 'dps';
+  if (jobId === 'tempest') return 'dps';
   // (The Tidecaller is the party's healer.)
   if (jobId === 'tidecaller') return 'healer';
   if (family === 'warrior') return 'tank';

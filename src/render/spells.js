@@ -15,6 +15,8 @@ export const SCHOOL_COLORS = {
   deep: { main: '#5fe8e0', light: '#e6fffb', deep: '#14306e' },
   moon: { main: '#8fe8c8', light: '#fffbe8', deep: '#2f8a86' },
   thunder: { main: '#5b8cff', light: '#fff3b0', deep: '#1c2a78' },
+  redstorm: { main: '#ff5a6e', light: '#ffe0e4', deep: '#3a0a24' },
+  indigo: { main: '#6a70e0', light: '#ffe08a', deep: '#141433' },
   ice: { main: '#8fe3ff', light: '#e8fbff', deep: '#3f9fd8' },
   lightning: { main: '#ffe86b', light: '#fffbe0', deep: '#5fb8ff' },
   // The Stormcaller's lightning: electric violet, deep storm blue.

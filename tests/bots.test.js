@@ -275,7 +275,7 @@ test('other players really fight: their job\'s own string of moves, back to back
   const { tickHunter, botSkills } = await import('../src/world/party.js');
   const { spawnMob } = await import('../src/world/mobs.js');
   const { createBody } = await import('../src/world/physics.js');
-  for (const job of [['warrior', 'paladin'], ['thief', 'shinobi'], ['archer', 'beastmaster']]) {
+  for (const job of [['warrior', 'stormwall'], ['thief', 'shinobi'], ['archer', 'beastmaster']]) {
     const world = createWorld(createCharacter('Me', {}));
     quiet(world);
     world.god = true;
@@ -384,7 +384,7 @@ test('dash moves carry a player along, and a party member who dies walks back in
   m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
   m.hp = 1e9;
   world.mobs.push(m);
-  const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['warrior', 'berserker'], pro: false });
+  const char = makeBotCharacter(seeded(4), { name: 'Dasher', level: 45, jobs: ['warrior', 'tempest'], pro: false });
   const bot = { id: 'd1', name: 'Dasher', char, level: 45, hunter: true, map: world.map.id, x: x - 40, facing: 1, state: 'hunt', body: createBody(x - 40, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
   let carried = 0;
   for (let t = 0; t < 15; t += 1 / 30) {
@@ -556,7 +556,7 @@ test('a party combo: your finisher brings the members fighting by you in with th
   m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
   m.hp = 1e9;
   world.mobs.push(m);
-  const pal = { id: 'p1', name: 'Pal', char: makeBotCharacter(seeded(8), { name: 'Pal', level: 40, jobs: ['warrior', 'paladin'] }), level: 40, style: {}, map: world.map.id, x: world.body.x + 20, facing: 1, state: 'idle', session: 9999, stay: 9999, nextLine: 999, appear: 0 };
+  const pal = { id: 'p1', name: 'Pal', char: makeBotCharacter(seeded(8), { name: 'Pal', level: 40, jobs: ['warrior', 'stormwall'] }), level: 40, style: {}, map: world.map.id, x: world.body.x + 20, facing: 1, state: 'idle', session: 9999, stay: 9999, nextLine: 999, appear: 0 };
   bots.list.push(pal);
   joinParty(bots, pal, world);
   for (let t = 0; t < 6; t += 1 / 30) {
@@ -565,14 +565,14 @@ test('a party combo: your finisher brings the members fighting by you in with th
   }
   assert.ok(pal.fight, 'they were fighting');
   pal.fight.gauge = 60;
-  world.finisherCast = { at: world.now, id: 'grandverdict' };
+  world.finisherCast = { at: world.now, id: 'fortress' };
   updateBots(bots, world, 1 / 30);
   assert.ok(lines.some((l) => /Party Combo! Pal/.test(l)));
   let fin = false;
   for (let t = 0; t < 3 && !fin; t += 1 / 30) {
     world.now += 1 / 30;
     updateBots(bots, world, 1 / 30);
-    fin = pal.attack?.pose === 'plverdict';
+    fin = pal.attack?.pose === 'bwfortress';
   }
   assert.ok(fin, 'and their own finisher goes off');
 });

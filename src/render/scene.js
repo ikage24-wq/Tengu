@@ -6,7 +6,7 @@ import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
-import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
+import { gaugeOf, phantom, inForm, hasFaith, thiefSchool, hasGale } from '../world/melee.js';
 import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
 import { settings } from '../core/settings.js';
@@ -483,6 +483,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   // A warrior path's form: a glow round the hero that breathes with the heartbeat, and in Demon Form
   // a blood-red shadow of him just behind him that strikes again a beat after each swing.
   if (!world.dead && inForm(world)) drawForm(ctx, world, look, gear, hx, hy, heroState, time);
+  // The Tempest's red afterimage: a copy of him a step behind, playing the swing again a beat
+  // after he does, fading as it ends.
+  if (!world.dead && hasGale(world.char)) drawEcho(ctx, world, look, gear, hx, hy, heroState);
   // Knocked out: the same fall as a downed party member (up and back, a bounce, lying with a ghost).
   if (world.dead) {
     if (feel.fellAt === undefined) feel.fellAt = time;
@@ -831,6 +834,17 @@ function drawForm(ctx, world, look, gear, x, y, state, time) {
   drawTinted(ctx, sx, y, form.shadow, 0.85, (c) => drawHero(c, look, gear, sx, y, { ...state, ...pose, job: null, alpha: state.alpha * (0.6 + 0.2 * beat) }, live ? null : feel.anim));
 }
 
+function drawEcho(ctx, world, look, gear, x, y, state) {
+  const sw = world.echoSwing;
+  if (!sw || world.now < sw.since || world.now >= sw.until) return;
+  const k = (world.now - sw.since) / sw.dur;
+  // (It stays where he swung it, a step behind; it fades in, then out, never snapping.)
+  const sx = x - state.facing * 14;
+  const alpha = Math.min(1, k * 4, (1 - k) * 3) * 0.55;
+  if (alpha <= 0.02) return;
+  drawTinted(ctx, sx, y, '#ff2e4a', 0.8, (c) => drawHero(c, look, gear, sx, y, { ...state, pose: sw.kind, progress: k, dur: sw.dur, from: null, blend: 1, job: null, alpha: state.alpha * alpha }, null));
+}
+
 function drawBuffClones(ctx, buffs, look, gear, x, y, state, time) {
   const clone = (dx, alpha, tint, k) => stampCopy(ctx, x + dx, y, state.alpha * alpha, copyImage(ctx, look, gear, { ...state, job: null }, tint, k, time, feel.anim));
   if (buffs.shadowpartner) {
@@ -953,6 +967,7 @@ function drawDungeonFront(ctx, world, cam, time) {
 
 // A mage's support magic on someone: a shimmering bubble while their Arcane Barrier holds, and
 // little green plus-sparkles rising while Renew heals them.
+const STORM_SHIELDS = new Set(['overcast', 'fortress']);
 function drawSupport(ctx, buffs, x, y, time, now) {
   let barrier = null;
   let renew = false;
@@ -960,6 +975,11 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     if (b.until <= now) continue;
     if (b.shield > 0) barrier = { ...b, id };
     if (b.values?.regenPct) renew = true;
+  }
+  // (The Stormwall's shields are his own: static running over an unseen shell, not a bubble.)
+  if (barrier && STORM_SHIELDS.has(barrier.id)) {
+    fxSprite(ctx, 'celbwguardshell', x, y + 2, { frame: Math.floor(time * 24) % 24, scale: 0.5, alpha: 0.55 });
+    barrier = null;
   }
   if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
