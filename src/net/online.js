@@ -221,7 +221,9 @@ export function othersHere(world) {
   if (!isOnline() || !world || solo(world)) return [];
   // (On an island, only those on the same one: yours, or the friend's you're visiting.)
   const island = world.map.home ? world.visiting?.ownerId ?? online.id : null;
-  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.body && (!island || g.home === island) && inMyRun(world, g));
+  // (In a Mochi Garden, the same: only those in the same one.)
+  const garden = world.map.garden ? world.gardenVisit?.ownerId ?? online.id : null;
+  return [...online.ghosts.values()].filter((g) => g.map === world.map.id && g.body && (!island || g.home === island) && (!garden || g.gd === garden) && inMyRun(world, g));
 }
 
 function netId(m) {
@@ -339,7 +341,7 @@ function adopt(world) {
 function sendProfile(world) {
   online.profileIn = PROFILE_EVERY;
   const c = world.char;
-  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home) });
+  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home), garden: Boolean(c.garden) });
 }
 
 function sendMe(world) {
@@ -359,6 +361,8 @@ function sendMe(world) {
     // Riding (world/mount.js): which mount, and its trick right now, so friends see it move.
     // Whose island you're on (net/visit.js), so only the others on that same island see you.
     home: world.map.home ? world.visiting?.ownerId ?? online.id : null,
+    // ...and whose Mochi Garden (net/visit.js).
+    gd: world.map.garden ? world.gardenVisit?.ownerId ?? online.id : null,
     ride: world.riding && !world.riding.stowed ? { id: world.riding.id, s: rideMotion(world)?.special ?? null, h: round(world.riding.hoverLeft ?? 1) } : null,
     // Fishing: where their bobber is and how it's going.
     fish: world.fishing ? { bx: world.fishing.spot.bx, by: world.fishing.spot.by, face: world.fishing.spot.face, phase: world.fishing.phase } : null,
@@ -469,7 +473,7 @@ function receive(world, msg) {
     case 'prof': {
       const g = ghostOf(msg.id);
       const fresh = g.name === '...';
-      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island) });
+      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island), garden: Boolean(msg.garden) });
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }
@@ -519,6 +523,7 @@ function onMe(world, msg) {
   g.fish = msg.fish ?? null;
   g.ride = msg.ride ?? null;
   g.home = msg.home ?? null;
+  g.gd = msg.gd ?? null;
   g.buffs = {};
   for (const [id, b] of Object.entries(msg.buffs ?? {})) g.buffs[id] = { ...b, until: world.now + b.until };
   if (msg.map !== world.map.id || solo(world)) return;

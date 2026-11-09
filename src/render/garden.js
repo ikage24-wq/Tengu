@@ -34,7 +34,7 @@ import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
-import { drawHatch, drawEvolve } from './mochi-life.js';
+import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
 import { EGG_SLOTS, cropGrowth } from '../world/garden-life.js';
@@ -592,8 +592,17 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
   }
   for (const e of life.mochi) {
     if (e.hidden || e.x == null) continue;
-    if (e.scene === 'evolve') drawEvolve(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
-    else drawMochiAnim(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
+    const [x, y] = [e.x - cam.x, e.y - cam.y];
+    // (Saying goodbye, it fades away.)
+    if (e.fade != null) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, e.fade));
+    }
+    if (e.scene === 'evolve') drawEvolve(ctx, e.m, x, y, time);
+    else if (e.scene === 'rebirth') drawRebirth(ctx, e.m, x, y, time);
+    else if (e.scene === 'hatch') drawHatch(ctx, e.m, x, y, time);
+    else drawMochiAnim(ctx, e.m, x, y, time);
+    if (e.fade != null) ctx.restore();
   }
 }
 

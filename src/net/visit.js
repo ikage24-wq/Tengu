@@ -5,8 +5,14 @@
 // The Home Shell or their skiff takes you back. Everyone on an island sees only the others on that
 // same island (net/online.js: each player says whose island they're on).
 
+// Your Mochi Garden too (world/garden.js): "Visit their Mochi Garden" asks for its Mochi, its eggs
+// and its crop bed, and builds it for you; you can pet, play with, cheer on and feed their Mochi, and
+// your game sends that to theirs (world/garden-life.js applyGardenGift). The Mochi Bell or the gate
+// takes you back.
+
 import { online, send } from './online.js';
 import { loadMap } from '../world/world.js';
+import { applyGardenGift } from '../world/garden-life.js';
 
 // What of you a visitor needs to see your island as it is.
 function islandOf(char) {
@@ -19,6 +25,27 @@ function islandOf(char) {
     derbyWins: char.derbyWins ?? 0,
     livingWith: char.livingWith ?? null,
   };
+}
+
+// What of you a visitor needs to see your Mochi Garden as it is.
+function gardenOf(char) {
+  const g = char.garden;
+  return { name: char.name, garden: { mochi: g.mochi, eggs: g.eggs ?? [], cropAt: g.cropAt ?? 0, unlocked: g.unlocked ?? {} } };
+}
+
+// Asks a friend for their Mochi Garden.
+export function askGardenVisit(world, id) {
+  if (online.status !== 'on' || !online.ghosts.has(id)) return 'Not online.';
+  if (world.dungeon || world.trial || world.map.voyage || world.scene) return 'Not from here.';
+  send({ t: 'visit', op: 'gask', to: id });
+  world.log(`Ringing at ${online.ghosts.get(id).name}'s garden gate...`, '#cfe8ff');
+  return null;
+}
+// You petted or fed one of the Mochi in the garden you're visiting: tell its owner's game.
+export function sendGardenGift(world, seed, what, sweet = null) {
+  const to = world.gardenVisit?.ownerId;
+  if (!to || online.status !== 'on') return;
+  send({ t: 'visit', op: 'gcare', to, seed, what, sweet });
 }
 
 // Asks a friend for their island.
@@ -42,6 +69,33 @@ export function onVisit(world, msg, g) {
     }
     send({ t: 'visit', op: 'data', to: msg.id, island: islandOf(world.char) });
     world.log(`${g?.name ?? 'A friend'} is visiting your island!`, '#ffc2d4');
+    return;
+  }
+  if (msg.op === 'gask') {
+    if (!world.char.garden) {
+      send({ t: 'visit', op: 'gnone', to: msg.id });
+      return;
+    }
+    send({ t: 'visit', op: 'gdata', to: msg.id, ...gardenOf(world.char) });
+    world.log(`${g?.name ?? 'A friend'} is visiting your Mochi Garden!`, '#ffc2d4');
+    return;
+  }
+  if (msg.op === 'gnone') {
+    world.log(`${g?.name ?? 'They'} doesn't have a Mochi Garden yet.`, '#ffb3c6');
+    return;
+  }
+  if (msg.op === 'gdata' && msg.garden) {
+    if (world.dungeon || world.trial || world.map.voyage) return;
+    // (Where the bell takes you back to: where you were, or wherever your own garden would.)
+    if (!world.map.garden) world.gardenVisitBack = { map: world.map.id, x: Math.round(world.body.x) };
+    else if (!world.gardenVisit) world.gardenVisitBack = world.char.garden?.back ?? null;
+    world.gardenVisit = { ownerId: msg.id, name: msg.name, garden: msg.garden };
+    loadMap(world, 'garden', 'start');
+    world.log(`Welcome to ${msg.name}'s Mochi Garden! Pet their Mochi, or bring them a sweet.`, '#ffc2d4');
+    return;
+  }
+  if (msg.op === 'gcare') {
+    applyGardenGift(world, msg, g?.name ?? 'A friend');
     return;
   }
   if (msg.op === 'none') {

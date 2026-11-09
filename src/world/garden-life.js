@@ -9,16 +9,22 @@
 // What you do here (greeting them, hatching an egg) can move one off its path for a moment; it then
 // walks back to where the clock has it.
 //
-// Raising them (owner only): Up beside one opens its care panel (ui/mochi-care.js): petting and
-// playing, and feeding it sweets from the kitchen, which is what raises its stats. While you're here
-// the garden's time passes for them (data/mochi-raise.js tick), and one ready to evolve does, there
-// and then. The crop bed in the orchard grows the kitchen's crops: ripe every CROP_GROW seconds.
+// Raising them: Up beside one opens its care panel (ui/mochi-care.js): petting and playing, and
+// feeding it sweets from the kitchen, which is what raises its stats. While you're here the garden's
+// time passes for them (data/mochi-raise.js tick); one ready to evolve does, there and then, and one
+// at the end of a long, happy life goes back to its egg and hatches again, a generation on. You can
+// say goodbye to one (it waves, and is off to a new home); the garden has room for GARDEN_MAX. The
+// crop bed in the orchard grows the kitchen's crops: ripe every CROP_GROW seconds.
+// A friend visiting (net/visit.js: world.gardenVisit is whose garden it is) sees the same Mochi in
+// the same places; they can pet, play with and cheer on your Mochi and feed them sweets of their
+// own, and their game sends it to yours (applyGardenGift), where it happens to your real Mochi.
 //
 //   world.gardenLife = { owner, mochi: [{ rec, m, x, y }], hatching: { egg, m, x } | null, greeted,
 //     caring (the entry whose care panel is open) }
 
 import { rollMochi, STAGES } from '../data/mochi-genes.js';
-import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
+import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf } from '../data/mochi-raise.js';
+import { sendGardenGift } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { nightOf } from './daytime.js';
 import { groundAt } from './physics.js';
@@ -31,6 +37,10 @@ const WATER_Y = 760;
 const NURSERY_DOOR = 760;
 const BEDS = [560, 630, 700, 476, 406, 336, 266, 196];
 const HOUR = 60;
+// How many Mochi a garden has room for (a bed each in the nursery).
+export const GARDEN_MAX = BEDS.length;
+// What a visitor can do with your Mochi (besides feeding it).
+export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS), by points.
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
@@ -132,25 +142,45 @@ export function tickGarden(world, dt) {
   const night = (world.night ?? nightOf(new Date())) > 0.5;
   const inside = Boolean(map.indoor);
   // Greeting: the first moment you're here, the Mochi who love you most come running.
-  if (!life.greeted && !inside && !night) {
+  const owner = !world.gardenVisit;
+  if (!life.greeted && !inside && !night && owner) {
     life.greeted = true;
     life.mochi.forEach((e, i) => {
       if ((e.rec.bond ?? 0) >= 250) e.greet = { until: now + 6 + i * 0.4 };
     });
   }
-  const owner = !world.gardenVisit;
   if (life.caring && !life.mochi.includes(life.caring)) life.caring = null;
+  const gone = [];
   life.mochi.forEach((e, i) => {
     const { rec } = e;
     // (The garden's time passes for them while you're here.)
     if (owner) tickRec(rec, dt);
-    // Evolving, there and then: the scene plays, and it's grown.
+    // Saying goodbye: it waves, then fades away, off to its new home.
+    if (e.leaving) {
+      e.m.speed = 0;
+      e.fade = Math.max(0, 1 - (now - e.leaving.t0 - 2.4) / 1.2);
+      if (e.fade <= 0) gone.push(e);
+      return;
+    }
+    // A scene playing where it stands: evolving; going back to its egg; hatching again.
     if (e.scene) {
-      if (!e.m.evolved) return;
-      e.m = newAnim(rec);
-      e.m.dir = e.dir ?? 1;
-      e.scene = null;
-      e.m.action = { name: 'evolved', t0: null, hold: 0 };
+      const sm = e.m;
+      if (e.scene === 'evolve' && sm.evolved) {
+        e.m = newAnim(rec);
+        e.m.dir = e.dir ?? 1;
+        e.scene = null;
+        e.m.action = { name: 'evolved', t0: null, hold: 0 };
+      } else if (e.scene === 'rebirth' && sm.reborn) {
+        e.m = { genes: rec, dir: sm.dir, speed: 0, dist: 0, size: 'baby', hatch: { t0: null } };
+        e.scene = 'hatch';
+        return;
+      } else if (e.scene === 'hatch' && sm.hatched) {
+        rec.stage = 'mochiko';
+        sm.genes = rec;
+        sm.noIdle = false;
+        e.scene = null;
+        if (owner) world.log(`It hatched again: a little Mochiko, generation ${rec.gen}!`, '#ffc2d4');
+      } else return;
     }
     const m = e.m;
     m.genes = rec;
@@ -163,6 +193,18 @@ export function tickGarden(world, dt) {
       e.scene = 'evolve';
       if (life.caring === e) life.caring = null;
       world.log(out.stage === 'tsukimochi' ? 'Your Mochiko is glowing... a Tsukimochi! It will live forever.' : `Your Mochiko is glowing... it's evolving into ${STAGES[out.stage] ?? out.stage}!`, '#ffc2d4');
+      return;
+    }
+    // The end of a long, happy life: back to its egg, to start again (stronger for it).
+    if (owner && !inside && !night && e.x != null && canRebirth(rec)) {
+      const out = rebirthRec(rec);
+      const list = life.owner.garden.mochi;
+      list[list.indexOf(rec)] = out.egg;
+      e.rec = out.egg;
+      e.m = { genes: rec, dir: m.dir, speed: 0, dist: 0, size: 'grown', rebirth: { t0: null }, egg: out.egg };
+      e.scene = 'rebirth';
+      if (life.caring === e) life.caring = null;
+      world.log(`Your ${STAGES[rec.stage]} has lived a long, happy life... it waves, and goes back to its egg to start again!${out.raised.length ? ' It will be stronger for it.' : ''}`, '#ffc2d4');
       return;
     }
     if (inside) {
@@ -207,6 +249,12 @@ export function tickGarden(world, dt) {
       m.action = { name: 'cheer', t0: null, hold: 1.5 };
     }
   });
+  for (const e of gone) {
+    life.mochi.splice(life.mochi.indexOf(e), 1);
+    const list = life.owner?.garden?.mochi;
+    if (owner && list?.includes(e.rec)) list.splice(list.indexOf(e.rec), 1);
+    if (life.caring === e) life.caring = null;
+  }
 }
 
 // ---------- Caring ----------
@@ -217,7 +265,7 @@ export function mochiNear(world, reach = 26) {
   const b = world.body;
   let best = null;
   for (const e of life.mochi) {
-    if (e.hidden || e.x == null || e.scene) continue;
+    if (e.hidden || e.x == null || e.scene || e.leaving) continue;
     const d = Math.abs(e.x - b.x);
     if (d < reach && Math.abs((e.y ?? b.y) - b.y) < 30 && (!best || d < Math.abs(best.x - b.x))) best = e;
   }
@@ -237,23 +285,61 @@ function react(e, out, action, extra = {}) {
   e.greet = null;
 }
 export function careFor(world, e, what) {
-  if (world.gardenVisit || e.scene) return null;
+  if (e.scene || e.leaving || (world.gardenVisit && !VISITOR_CARE.includes(what))) return null;
   const out = careRec(e.rec, what);
   if (out) react(e, out, out.action, { hold: 1.4 });
+  // (A visitor's game tells the owner's, where it happens to the real Mochi.)
+  if (out && world.gardenVisit) sendGardenGift(world, e.rec.seed, what);
   return out;
 }
 // Feeds it sweet `id` from your bag (it won't when it's too full).
 export function feedMochi(world, e, id) {
   const sw = SWEET_BY_ID[id];
-  if (world.gardenVisit || !sw || e.scene || countItem(world.char.inventory, id) < 1) return null;
+  if (!sw || e.scene || e.leaving || countItem(world.char.inventory, id) < 1) return null;
   const out = feedRec(e.rec, id);
   if (!out) return null;
   if (!out.refused) removeItem(world.char.inventory, id, 1);
+  if (!out.refused && world.gardenVisit) sendGardenGift(world, e.rec.seed, 'feed', id);
   react(e, out, out.action, { sweet: sw.kind });
   if (out.refused) world.log('It pats its round tummy: too full for now!', '#ffd6a0');
   else if (out.learned) world.log(`It loved trying ${sw.name}... and learned a new trick!`, '#ffc2d4');
   return out;
 }
+// Says goodbye to it (your own garden only): it waves, and is off to a new home.
+export function sayGoodbye(world, e) {
+  if (world.gardenVisit || e.scene || e.leaving) return false;
+  e.leaving = { t0: Date.now() / 1000 };
+  e.greet = null;
+  e.m.queue = [];
+  e.m.action = { name: 'farewell', t0: null, hold: 0 };
+  world.log(`Your ${STAGES[e.rec.stage] ?? 'Mochi'} waves goodbye... off to a new home, where it'll be loved too.`, '#ffc2d4');
+  return true;
+}
+// A friend visiting your garden petted or fed one of your Mochi (net/visit.js): it happens to your
+// real Mochi, and if you're there you see it react. (Its bond is with you: a visitor's care cheers it
+// up, but doesn't change that.)
+export function applyGardenGift(world, msg, who) {
+  const rec = world.char.garden?.mochi.find((r) => r.seed === msg.seed);
+  if (!rec || rec.stage === 'egg') return;
+  const here = !world.gardenVisit ? world.gardenLife?.mochi.find((e) => e.rec === rec && !e.scene && !e.leaving) : null;
+  const name = STAGES[rec.stage] ?? 'Mochi';
+  const bond = rec.bond;
+  if (msg.what === 'feed') {
+    const sw = SWEET_BY_ID[msg.sweet];
+    if (!sw) return;
+    const out = feedRec(rec, sw.id);
+    rec.bond = bond;
+    if (here && out) react(here, out, out.action, { sweet: sw.kind });
+    world.log(out?.refused ? `${who} offered your ${name} a ${sw.name}, but it was too full.` : `${who} fed your ${name} a ${sw.name}!`, '#ffc2d4');
+    return;
+  }
+  if (!VISITOR_CARE.includes(msg.what)) return;
+  const out = careRec(rec, msg.what);
+  rec.bond = bond;
+  if (here && out) react(here, out, out.action, { hold: 1.4 });
+  world.log(`${who} ${msg.what === 'pet' ? 'petted' : msg.what === 'play' ? 'played with' : 'cheered on'} your ${name}!`, '#ffc2d4');
+}
+
 // ---------- The crop bed ----------
 // How grown the bed is (0 just picked, 1 ripe).
 export const cropGrowth = (g, now = Date.now() / 1000) => Math.max(0, Math.min(1, (now - (g?.cropAt ?? 0)) / CROP_GROW));
@@ -286,6 +372,10 @@ export function rockEgg(world) {
     if (d < 28 && (i < 0 || d < Math.abs(EGG_SLOTS[i] - world.body.x))) i = k;
   });
   if (i < 0) return false;
+  if ((g.mochi?.length ?? 0) >= GARDEN_MAX) {
+    world.log(`Your garden is full (${GARDEN_MAX} Mochi). Say goodbye to one before this egg can hatch.`, '#ffb3c6');
+    return true;
+  }
   const egg = g.eggs[i];
   const genes = { ...rollMochi(egg.seed), stage: 'egg' };
   life.hatching = { egg, x: EGG_SLOTS[i], m: { genes, dir: world.body.x < EGG_SLOTS[i] ? 1 : -1, speed: 0, dist: 0, size: 'baby', eggScale: 1, hatch: { t0: null } } };

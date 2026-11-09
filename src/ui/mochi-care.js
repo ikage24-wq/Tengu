@@ -9,7 +9,7 @@ import { countItem } from '../core/inventory.js';
 import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, bar } from './kit.js';
 import { itemTooltip } from './tooltips.js';
-import { careFor, feedMochi } from '../world/garden-life.js';
+import { careFor, feedMochi, sayGoodbye, VISITOR_CARE } from '../world/garden-life.js';
 
 const W = 236;
 const H = 182;
@@ -40,7 +40,9 @@ export function mochiCareWindow(ui, state, world) {
   const now = Date.now() / 1000;
   e.busyUntil = Math.max(e.busyUntil ?? 0, now + 0.4);
   const rec = e.rec;
-  if (!windowFrame(ui, win, W, H, STAGES[rec.stage] ?? 'Mochi')) return;
+  // (In a friend's garden: their Mochi, and only gentle care.)
+  const guest = world.gardenVisit;
+  if (!windowFrame(ui, win, W, guest ? H - 19 : H, guest ? `${guest.name}'s ${STAGES[rec.stage] ?? 'Mochi'}` : STAGES[rec.stage] ?? 'Mochi')) return;
   const { ctx } = ui;
   const x = win.x + 10;
   let y = win.y + 32;
@@ -69,14 +71,25 @@ export function mochiCareWindow(ui, state, world) {
   y += 36;
   // Care.
   text(ctx, 'Care', x, y + 6, { size: 7, bold: true, color: COLORS.muted });
+  // Goodbye (your own Mochi): a second click to be sure.
+  if (!guest) {
+    const sure = win.bye?.e === e && now < win.bye.until;
+    if (button(ui, win.x + W - 70, y - 3, 60, 12, sure ? 'Sure?' : 'Goodbye', { size: 6.5, theme: sure ? 'pink' : null })) {
+      if (sure) {
+        sayGoodbye(world, e);
+        win.bye = null;
+      } else win.bye = { e, until: now + 3 };
+    }
+    if (hover(ui, win.x + W - 70, y - 3, 60, 12)) tooltip(ui, [{ text: 'Say goodbye', bold: true }, { text: 'It goes off to a new home, for good. Click twice.', color: COLORS.muted }]);
+  }
   const bw2 = (W - 20 - 8) / 3;
-  CARE_ROWS.forEach(([what, label, tip], i) => {
+  CARE_ROWS.filter(([what]) => !guest || VISITOR_CARE.includes(what)).forEach(([what, label, tip], i) => {
     const bx = x + (i % 3) * (bw2 + 4);
     const by = y + 10 + Math.floor(i / 3) * 19;
     if (button(ui, bx, by, bw2, 16, label, { size: 7.5, primary: CARE[what]?.lean >= 0 })) careFor(world, e, what);
     if (hover(ui, bx, by, bw2, 16)) tooltip(ui, [{ text: label, bold: true }, { text: tip, color: COLORS.muted }]);
   });
-  y += 52;
+  y += guest ? 33 : 52;
   // Feed: the sweets in your bag.
   text(ctx, 'Feed', x, y + 6, { size: 7, bold: true, color: COLORS.muted });
   const sweets = MOCHI_SWEETS.filter((sw) => countItem(world.char.inventory, sw.id) > 0);

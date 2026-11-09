@@ -9,6 +9,8 @@
 // window.frame() gives the canvas. Raising: ?ui=1 draws the windows; ?care=0 opens Mochi 0's care
 // panel (you beside it); ?kitchen=1 at the Sweet Kitchen with crops in your bag; ?sweets=1 a few
 // sweets in your bag; ?skip=30 runs 30 s on first; ?follow=1&who=0 keeps the camera on Mochi 0.
+// ?guest=1: you're visiting Ann's garden (these Mochi are hers); ?reborn=1: Mochi 1 has lived a
+// long, happy life (it goes back to its egg); ?icons=1 draws the garden's item icons up top.
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -16,7 +18,8 @@ import { setHd, nextFrame } from '../src/render/pixel.js';
 import { preloadFxSprites } from '../src/render/fx-sprites.js';
 import { VW, VH } from '../src/input.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
-import { newRecord, giveExp, evolve, MOCHI_SWEETS } from '../src/data/mochi-raise.js';
+import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
+import { drawItemIcon } from '../src/render/icons.js';
 import { createInput } from '../src/input.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
 import { createUiState, drawUi } from '../src/ui/manager.js';
@@ -46,15 +49,19 @@ for (let i = 0; i < n; i++) {
     rec.age = 99999;
     rec.mood = 90;
     evolve(rec);
+    // (Grown, but not yet at the end of its life.)
+    rec.age = 4 * 3600;
   }
   if (i % 3 === 1) giveExp(rec, 'swim', 3000);
   mochi.push(rec);
 }
+if (q.has('reborn')) Object.assign(mochi[1], { age: 30 * 3600, mood: 95 });
 c.garden = { back: null, mochi, eggs: Array.from({ length: Number(q.get('eggs') ?? 2) }, (_, i) => ({ seed: 4242 + i })), unlocked: {} };
 const w = createWorld(c);
 w.log = (m) => console.log(m);
 window.W = w;
 if (q.get('night') != null) w.forceNight = Number(q.get('night'));
+if (q.has('guest')) w.gardenVisit = { ownerId: 'A', name: 'Ann', garden: c.garden };
 loadMap(w, q.get('map') ?? 'garden', 'start');
 w.god = true;
 Object.assign(w.body, { x: Number(q.get('x') ?? 300), vx: 0, vy: 0, facing: 1 });
@@ -88,6 +95,7 @@ function step(dt, draw = true) {
   ctx.imageSmoothingEnabled = false;
   setHd(true, SCALE);
   drawWorld(ctx, w, cam, t);
+  if (q.has('icons')) ['mochi_bell', ...Object.keys(GARDEN_CROPS), ...MOCHI_SWEETS.slice(0, 5).map((sw) => sw.id)].forEach((id, k) => drawItemIcon(ctx, id, 8 + k * 36, 8, 2));
   if (q.has('ui')) {
     const ui = beginUi(ctx, input);
     drawUi(ui, state, w);

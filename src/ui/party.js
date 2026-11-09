@@ -1,7 +1,7 @@
 // Party UI: the right-click menu on players (and yourself), and the party panel on the HUD with
 // each member's level, job, and HP, plus a Leave button.
 
-import { askVisit } from '../net/visit.js';
+import { askVisit, askGardenVisit } from '../net/visit.js';
 import { JOBS } from '../data/jobs.js';
 import { ROLES } from '../data/dungeons.js';
 import { invite, kick, leaveParty, partyMembers, inviteBlocker, PARTY_MAX, PLAYSTYLES } from '../world/party.js';
@@ -51,6 +51,8 @@ function menuItems(state, world) {
     if (!online.trade) items.push({ label: 'Trade', icon: 'coin', run: () => askTrade(world, g.id) });
     // Their island (net/visit.js), if they have one.
     if (g.island) items.push({ label: 'Visit their island', icon: 'heart', run: () => { const why = askVisit(world, g.id); if (why) world.log(why, '#ffb3c6'); } });
+    // Their Mochi Garden (net/visit.js), if they have one.
+    if (g.garden) items.push({ label: 'Visit their Mochi Garden', icon: 'heart', run: () => { const why = askGardenVisit(world, g.id); if (why) world.log(why, '#ffb3c6'); } });
     return items;
   }
   const bot = world.bots?.list.find((b) => b.id === m.id);

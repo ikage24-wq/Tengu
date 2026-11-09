@@ -155,7 +155,18 @@ Each step is pushed on its own. Status as of 2026-11-09.
    while you're there, and a Mochiko ready to evolve does, on the spot. The glide board over the
    falls is drawn now (it was an invisible ledge). Training spots with routes were built, then
    removed at the user's word: food and care raise the stats. Tests: tests/mochi-garden.test.js.
-   Still to come: visiting and the extras (batch 4); rebirth in the garden.
+   **Visiting and the rest (batch 4):** "Visit their Mochi Garden" on a friend (net/visit.js: your
+   game asks theirs for its Mochi, eggs and crop bed and builds it); only those in the same garden
+   see each other (net/online.js `gd`); a visitor sees the same Mochi in the same places (the clock),
+   can Pet, Play and Cheer and feed them their own sweets, and that's sent to the owner's game
+   (applyGardenGift), where it happens to the real Mochi (mood, tummy, stats: never bond, which is
+   with the owner); the Mochi Bell or the gate takes a visitor back. Greeting is for the owner.
+   Rebirth plays in the garden at the end of a long, happy life (back to its egg, hatching again a
+   generation on). Goodbye in the care panel (two clicks): it waves and fades, off to a new home. A
+   garden holds 8 Mochi (a nursery bed each); a full garden won't hatch an egg. The Mochi Bell has
+   its icon. Dropped from the batch (user agreed 2026-11-10): digging up hats (Mochi wear no hats;
+   belongs with dress-up, step 14), the egg stall (to step 6, getting eggs), Dawn Terrace and Dusk
+   Grotto (no purpose yet). **The Garden is done.**
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
    swimming; cups from beginner up; rivals rolled like the fishing derby's; prizes on the money scale
    plus garden decorations and toys. Personality shows in how each one races (see 12).

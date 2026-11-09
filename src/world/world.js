@@ -137,7 +137,10 @@ export function loadMap(world, mapId, portalId) {
     }
     refreshGarden(world.char, world.gardenVisit ?? null);
     enterGarden(world, world.gardenVisit ?? world.char);
-  } else world.gardenLife = null;
+  } else {
+    world.gardenLife = null;
+    world.gardenVisit = null;
+  }
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
@@ -318,8 +321,10 @@ export function useItem(world, id) {
       return false;
     }
     world.fx.push({ kind: 'mountpoof', on: false, x: world.body.x, y: world.body.y, t: 0, dur: 0.45 });
-    if (world.map.garden && !world.gardenVisit) {
-      const back = char.garden?.back;
+    if (world.map.garden) {
+      // (Visiting a friend's: back where you were before.)
+      const back = world.gardenVisit ? world.gardenVisitBack : char.garden?.back;
+      world.gardenVisit = null;
       if (back && MAPS[back.map] && !MAPS[back.map].garden) {
         loadMap(world, back.map, 'start');
         Object.assign(world.body, { x: Math.max(20, Math.min(world.map.width - 20, back.x)), y: groundAt(world.map, back.x) });
@@ -501,7 +506,7 @@ function interact(world) {
     return true;
   }
   // One of your Mochi beside you in your garden: its care panel (ui/mochi-care.js).
-  const mochi = world.map.garden && !world.gardenVisit ? mochiNear(world) : null;
+  const mochi = world.map.garden ? mochiNear(world) : null;
   if (mochi) {
     world.gardenLife.caring = mochi;
     world.events.push({ type: 'mochi' });
