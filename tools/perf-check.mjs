@@ -192,10 +192,81 @@ export function checkWindows(warm = 120, frames = 240) {
   return out;
 }
 
+// The frame budgets (CLAUDE.md, "Budgets and caps"): the game logic and the other players, timed
+// on the busiest places (a town full of people, a hunting field full of hunters, a dungeon room),
+// their slowest 1% of frames against their share of the 6.9 ms frame. (The drawing's 4 ms is
+// measured live in the browser, `__frameTimes.summary()`: a stand-in screen can't time it.)
+const { timed, summary, reset: resetTimes, BUDGETS } = await import('../src/core/frametimes.js');
+export function checkBudgets(places = [['town', 'sprout', 'start'], ['market', 'coinbridge', 'west'], ['field', 'meadow1', 'west'], ['field', 'woods', 'west']], frames = 900) {
+  const out = [];
+  for (const [kind, id, portal] of places) steady(11, () => {
+    const w = createWorld(balanceChar('warrior', 40));
+    w.log = () => {};
+    w.forceNight = 0;
+    w.bots = createBots(w, Math.random, { clock: () => new Date(2026, 9, 28, 20, 0) });
+    loadMap(w, id, portal);
+    const press = { held: new Set(['ArrowRight']), pressed: new Set(), locked: false };
+    for (let f = 0; f < 300 + frames; f++) {
+      if (f === 300) resetTimes();
+      press.held = new Set(f % 240 < 120 ? ['ArrowRight', 'KeyZ'] : ['ArrowLeft', 'KeyZ']);
+      timed('logic', () => updateWorld(w, 1 / 60, press));
+      timed('bots', () => updateBots(w.bots, w, 1 / 60));
+      w.events.length = 0;
+    }
+    const s = summary();
+    const row = { name: `budget ${kind} ${id}`, logic: +s.logic.p99.toFixed(2), bots: +s.bots.p99.toFixed(2) };
+    row.bad = row.logic > BUDGETS.logic || row.bots > BUDGETS.bots;
+    out.push(row);
+  });
+  return out;
+}
+
+// The long session (CLAUDE.md, "Long sessions"): 30 minutes of play, hunting and changing map every
+// two minutes, drawn on the stand-in screen now and then; it fails if memory or the time a frame
+// takes keeps growing from the first five minutes to the last.
+export function checkSession(minutes = 30) {
+  const out = [];
+  steady(5, () => {
+    const w = createWorld(balanceChar('warrior', 40));
+    w.log = () => {};
+    w.forceNight = 0;
+    w.bots = createBots(w, Math.random, { clock: () => new Date(2026, 9, 28, 20, 0) });
+    const ids = Object.values(MAPS).filter((m) => !m.dungeon && !m.private && !m.indoor).map((m) => m.id);
+    const cam = createCamera();
+    const ui = createUiState();
+    const heap = () => { globalThis.gc?.(); return process.memoryUsage().heapUsed / 1e6; };
+    const frames = minutes * 60 * 60;
+    let time = 0;
+    let first = null;
+    const spans = [];
+    let t0 = performance.now();
+    for (let f = 0; f < frames; f++) {
+      if (f % (2 * 60 * 60) === 0) loadMap(w, ids[(f / 7200) % ids.length]);
+      const press = { held: new Set(f % 240 < 120 ? ['ArrowRight', 'KeyZ'] : ['ArrowLeft', 'KeyZ']), pressed: new Set(), locked: false };
+      updateWorld(w, 1 / 60, press);
+      updateBots(w.bots, w, 1 / 60);
+      if (f % 6 === 0) frame(w, cam, time, ui);
+      else w.events.length = 0;
+      time += 1 / 60;
+      if ((f + 1) % (5 * 60 * 60) === 0) {
+        spans.push({ ms: (performance.now() - t0) / (5 * 60 * 60), heap: heap() });
+        t0 = performance.now();
+        if (!first) first = spans[0];
+      }
+    }
+    const last = spans.at(-1);
+    const row = { name: `session ${minutes} min`, firstMs: +first.ms.toFixed(3), lastMs: +last.ms.toFixed(3), firstMB: Math.round(first.heap), lastMB: Math.round(last.heap) };
+    row.bad = last.ms > first.ms * 1.5 || last.heap > first.heap * 1.5 + 20;
+    out.push(row);
+  });
+  return out;
+}
+
 if (process.argv[1]?.endsWith('perf-check.mjs')) {
   const parts = process.argv.slice(2);
   const want = (p) => !parts.length || parts.includes(p);
-  const rows = [...(want('maps') ? checkMaps() : []), ...(want('skills') ? checkSkills() : []), ...(want('windows') ? checkWindows() : [])];
+  const rows = [...(want('maps') ? checkMaps() : []), ...(want('skills') ? checkSkills() : []), ...(want('windows') ? checkWindows() : []), ...(want('budgets') ? checkBudgets() : []), ...(parts.includes('session') ? checkSession() : [])];
+  for (const r of rows.filter((r) => r.name.startsWith('budget') || r.name.startsWith('session'))) console.log(r.bad ? 'OVER' : 'ok  ', JSON.stringify(r));
   const bad = rows.filter((r) => r.bad);
   for (const r of rows.filter((r) => r.bad || r.characters > 60 || r.other > 5 || r.canvases > 10 || r.tints > 60 || r.reads > 61)) console.log(`${r.bad ? 'SLOW ' : '     '}${r.name}: ${r.error ? `error: ${r.error}` : `characters ${r.characters}/s, other ${r.other}/s, canvases ${r.canvases}/s, reads ${r.reads}/s, tints ${r.tints}/s  (${r.top})${r.other > 5 ? `  e.g. ${r.example}` : ''}`}`);
   console.log(`${rows.length} checked, ${bad.length} over the limits.`);

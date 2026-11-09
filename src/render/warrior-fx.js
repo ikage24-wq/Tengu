@@ -8,7 +8,6 @@
 // the hero's feet otherwise. Returns false for kinds it doesn't draw.
 
 import { fxSprite } from './fx-sprites.js';
-import { drawBubbleFx } from './bubbles.js';
 import { drawArbalistFx } from './arbalist-fx.js';
 import { rockBurst } from './blade-fx.js';
 import { dancerHit, cloudRing, springTrail } from './dancer-fx.js';
@@ -25,45 +24,12 @@ export const pillarSprite = (school) => `celpillar${tint(school)}`;
 // for the Berserker (they share the Warrior's skills).
 export const pathTint = (school, steel, gold, red) => (school === 'holy' || school === 'hawk' ? gold : school === 'rage' ? red : steel);
 // The emblem rising in a path's pillar.
-const EMBLEMS = { phantom: 'celembphantom', acro: 'celembacro', astral: 'celembastro', idol: 'celembidol', brass: 'celembgear', starlit: 'celembwitch', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox', spirit: 'celembspirit' };
+const EMBLEMS = { phantom: 'celembphantom', acro: 'celembacro', brass: 'celembgear', aerial: 'celembsky', rosegold: 'celembblade', coral: 'celembdancer', holy: 'celembholy', rage: 'celembrage', steel: 'celembsteel', hawk: 'celembhawk', wind: 'celembwind', storm: 'celembstorm', shadow: 'celembshadow', ink: 'celembink', fox: 'celembfox' };
 
 // Pixel art keeps its pixel size: effects that play large have big versions drawn large (`*big`
 // strips), so scales stay near 1.
-const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringmint', 'celringink', 'celringfox', 'celringspirit']);
+const BIG = new Set(['celshockred', 'celringstorm', 'celring', 'celringholy', 'celringrage', 'celringwind', 'celringhawk', 'celringshadow', 'celringmint', 'celringink', 'celringfox']);
 
-// A Starlight Idol song where it hangs: its little shapes (`celsibead*`, one drawing each) ringing
-// the ground out to its reach `r`, each bobbing on the beat and twinkling, the ring turning slowly,
-// the far side a touch smaller and dimmer; they pop in round the ring as it starts, and a few float
-// up off it and fade. The ring is its exact reach at any size, and the shapes stay small and crisp.
-const BEADS = { heal: 'celsibeadsong', cheer: 'celsibeadcheer', lull: 'celsibeadlull' };
-const STAFFS = { heal: 'celsistaffsong', cheer: 'celsistaffcheer', lull: 'celsistafflull' };
-export function songRing(ctx, kind, x, y, r, t, fade = 1) {
-  const name = BEADS[kind] ?? BEADS.heal;
-  const ry = r * 0.3;
-  const n = Math.max(8, Math.round((2 * Math.PI * Math.sqrt((r * r + ry * ry) / 2)) / 24));
-  const slow = kind === 'lull' ? 0.5 : 1;
-  // The staff it rides, opening out to the reach as it starts.
-  const open = 1 - (1 - Math.min(1, t / 0.3)) ** 3;
-  fxSprite(ctx, STAFFS[kind] ?? STAFFS.heal, x, y, { t, scale: (r / 140) * open, alpha: fade * 0.9 });
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + t * 0.22 * slow;
-    const far = Math.sin(a) < 0;
-    const born = Math.min(1, Math.max(0, (t - (i / n) * 0.3) / 0.18));
-    if (born <= 0) continue;
-    const pop = born < 1 ? 1 + 0.35 * Math.sin(born * Math.PI) : 1;
-    const bob = 3 * Math.abs(Math.sin(t * 3.2 * slow + i * 1.3));
-    const tw = 0.88 + 0.12 * Math.sin(t * 5 + i * 2.1);
-    fxSprite(ctx, name, x + Math.cos(a) * r, y + Math.sin(a) * ry - 4 - bob, { frame: i % 4, scale: (far ? 1.0 : 1.2) * tw * pop * born, alpha: fade * (far ? 0.75 : 1) });
-  }
-  // A few float up off the ring and fade (slower for the Lullaby).
-  for (let k = 0; k < 5; k++) {
-    const u = (t * 0.45 * slow + k / 5) % 1;
-    const a = k * 2.4 + Math.floor(t * 0.45 * slow + k / 5) * 1.7;
-    const lift = Math.sin(Math.PI * u);
-    fxSprite(ctx, name, x + Math.cos(a) * r * 0.8 + Math.sin(u * 6 + k) * 4, y + Math.sin(a) * ry - 10 - u * 46, { frame: (k + 1) % 4, scale: 1.05 * lift, alpha: fade * lift * Math.min(1, t * 2) });
-  }
-  return true;
-}
 
 // A ring of force racing out flat along the ground to radius `r`.
 export function groundRing(ctx, name, x, y, p, r, { sy = 0.32, alpha = 1 } = {}) {
@@ -103,28 +69,10 @@ export function pillarOf(ctx, school, x, y, p, { h = 90 } = {}) {
     if (p > 0.15) fxSprite(ctx, EMBLEMS.acro, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
-  // The Astronomer's: no pillar, Lunar Tide's silver waves rising round her, her badge rising.
-  if (school === 'astral') {
-    fxSprite(ctx, 'celastide', x, y + 4, { p, scale: 0.55 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.astral, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
-  // The Starlight Idol's: no pillar, a burst of sound waves and notes, her badge rising.
-  if (school === 'idol') {
-    fxSprite(ctx, 'celsiwave', x, y - 26, { p, scale: 0.3 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.idol, x, y - 50 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
-    return;
-  }
   // The Arbalist Engineer's: no pillar, a burst of steam with her badge turning in it.
   if (school === 'brass') {
     fxSprite(ctx, 'celaesteam', x, y + 4, { p, scale: 0.45 });
     if (p > 0.15) fxSprite(ctx, EMBLEMS.brass, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5, rot: p * 2 });
-    return;
-  }
-  // The Star Witch's: no pillar, her constellation snapping shut over her with her badge.
-  if (school === 'starlit') {
-    fxSprite(ctx, 'celstconst', x, y - 64, { frame: Math.min(7, Math.floor(p * 10)), scale: 0.4, alpha: p < 0.8 ? 1 : (1 - p) / 0.2 });
-    if (p > 0.15) fxSprite(ctx, EMBLEMS.starlit, x, y - 44 - 14 * Math.min(1, p * 2), { p: (p - 0.15) / 0.85, scale: 0.5 });
     return;
   }
   // The Sky Dancer's: no pillar, a whirlwind rising under her with her badge over it.
@@ -186,11 +134,8 @@ export function hitMark(ctx, school, x, y, p, { big = false, seed = 0.5, dir = 1
   else if (school === 'shadow') fxSprite(ctx, 'celshadowhit', x, y, { p, scale: k, rot: (seed - 0.5) * 0.6 });
   else if (school === 'ink') fxSprite(ctx, 'celinkhit', x, y, { p, scale: k * 0.85, rot: (seed - 0.5) * 1.2, flip: dir < 0 });
   else if (school === 'brass') fxSprite(ctx, 'celaehit', x, y, { p, scale: k * 0.6 });
-  else if (school === 'idol') fxSprite(ctx, 'celsihit', x, y, { p, scale: k * 0.4, rot: (seed - 0.5) * 0.4 });
   else if (school === 'phantom') fxSprite(ctx, 'celpthit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.4 });
   else if (school === 'acro') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.5 });
-  else if (school === 'astral') fxSprite(ctx, 'celashit', x, y, { p, scale: k * 0.55, rot: (seed - 0.5) * 0.6 });
-  else if (school === 'starlit') fxSprite(ctx, 'celsthit', x, y, { p, scale: k * 0.6, rot: (seed - 0.5) * 0.6 });
   else if (school === 'aerial') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.6 });
   else if (school === 'rosegold') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
   else if (school === 'coral') dancerHit(ctx, school, x, y, p, { big, seed, dir, scale: k * 0.7 });
@@ -202,7 +147,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const flip = dir < 0;
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
-  if (f.kind.startsWith('bb') && drawBubbleFx(ctx, f, x, y, p, cam, time)) return true;
   if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
@@ -224,77 +168,10 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       return fxSprite(ctx, 'celwdgustfar', x - dir * 10, y - 26, { p, flip, scale: ((f.r ?? 95) * 0.8) / 150 }) || true;
     case 'wdfinale':
       return fxSprite(ctx, 'celwdfinale', x, y + 4, { p }) || true;
-    // The Blade Dancer's (rose gold): her ring-cut on a monster, the spark where a ring ricochets,
-    // and Golden Carousel's rings on their track.
-    // The Sky Dancer's (sky blue): her cloud on a monster, Updraft's rising whirl, and Sky Waltz's
-    // tornado.
-    // The Star Witch's (midnight and gold): her constellation hit, Wishing Star's fall of light, Star
-    // Veil, and Starfall's constellation over the sky and its great impact.
-    // The Arbalist Engineer's (brass and teal): her hit with flying cogs, a sticky or cluster burst, a
-    // vent of steam, a sticky bolt ticking on a monster, and Big Bertha's ballista over her.
-    // The Starlight Idol's (pink and gold): her hit of notes and hearts, a song's sound waves, a
-    // song hanging in the air (a ring on the ground for as long as it lasts), a song's ring sung
-    // once (the party's healer bots), and Grand Concert's stage.
-    case 'sihit':
-      return fxSprite(ctx, 'celsihit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.85 : 0.6, rot: (seed - 0.5) * 0.4 }) || true;
-    case 'siwave':
-      return fxSprite(ctx, 'celsiwave', x, y, { p, scale: f.scale ?? (f.big ? 0.6 : 0.4) }) || true;
     case 'shock':
       // A finisher's shockwave racing out to the edge of its reach (world/melee.js), capped so it
       // never draws a thin line right across the screen (the player found those ugly).
       return fxSprite(ctx, f.name, x, y + 2, { p, scale: Math.min(f.r, 150) / 99 }) || true;
-    case 'sishock': {
-      // A blast of Grand Concert's music rolling out along the ground to the edge of its reach: the
-      // monsters it passes are hit as it reaches them (world/idol.js).
-      const u = Math.min(1, f.t / f.dur);
-      const go = 1 - (1 - u) ** 2;
-      const fade = Math.min(1, (1 - u) * 4);
-      return fxSprite(ctx, 'celsibig', x + f.dir * f.r * go, y, { t: f.t, flip: f.dir < 0, scale: (f.big ? 1 : 0.8) * (0.8 + 0.4 * go), alpha: fade }) || true;
-    }
-    case 'sispot': {
-      // Center Stage: the spotlight on whoever she is mending, following them (world/idol.js moves
-      // it with them); it fades in from above and out again.
-      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 2.5);
-      if (fade <= 0) return true;
-      const drop = 1 - (1 - Math.min(1, f.t / 0.25)) ** 3;
-      return fxSprite(ctx, 'celsispot', x, y + 4, { t: f.t, scale: (f.live ? 1.12 : 1) * (0.85 + 0.15 * drop), alpha: fade * 0.95 }) || true;
-    }
-    case 'sihype': {
-      // Hype Wave's crest rolling out along the ground to the edge of its reach.
-      const roll = Math.max(0, f.dur - 0.35);
-      const u = Math.min(1, f.t / roll);
-      const fade = Math.min(1, f.t * 8, f.t < roll ? 1 : Math.max(0, (f.dur - f.t) / 0.35));
-      if (fade <= 0) return true;
-      return fxSprite(ctx, 'celsihype', x + f.dir * f.r * u, y + 2, { t: f.t, flip: f.dir < 0, scale: (f.live ? 0.95 : 0.8) * (0.85 + 0.15 * Math.min(1, u * 3)), alpha: fade }) || true;
-    }
-    case 'silullcloud': {
-      // Lullaby's little cloud drifting after the monsters (world/idol.js moves it), bobbing.
-      const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
-      if (fade <= 0) return true;
-      const grow = 1 - (1 - Math.min(1, f.t / 0.3)) ** 3;
-      return fxSprite(ctx, 'celsilull', x, y - 46 + 3 * Math.sin(f.t * 2.2), { t: f.t, flip: (f.vx ?? 1) < 0, scale: (f.r / 70) * 0.5 * grow, alpha: fade * 0.95 }) || true;
-    }
-    case 'sicurtain':
-      // Curtain Call's stage curtains behind her, sweeping shut and parting again.
-      return f.t < 0 || fxSprite(ctx, 'celsicurtain', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'sipyro':
-      // Grand Concert's pyro off the stage's edge on a beat.
-      return fxSprite(ctx, 'celsipyro', x, y, { p, scale: f.big ? 0.9 : 0.75 }) || true;
-    case 'sistage':
-      return fxSprite(ctx, 'celsistage', x, y + 6, { p, scale: 1.2 }) || true;
-    // The Astronomer's (violet and silver): her hit (a crescent passing and a ring opening), Gravity
-    // Well hanging where she pointed for as long as it lasts, Lunar Tide, and the planets aligning.
-    case 'ashit':
-      return fxSprite(ctx, 'celashit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.65 : 0.45, rot: (seed - 0.5) * 0.6 }) || true;
-    case 'aswell': {
-      const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
-      if (fade <= 0) return true;
-      return fxSprite(ctx, 'celaswell', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 110, alpha: fade }) || true;
-    }
-    case 'astide':
-      return fxSprite(ctx, 'celastide', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'asalign':
-      return fxSprite(ctx, 'celasalign', x, y, { p, scale: ((f.span ?? 520) - 50) / 331, flip }) || true;
     case 'aehit':
       return fxSprite(ctx, 'celaehit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5 }) || true;
     case 'aeboom':
@@ -313,107 +190,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
     case 'aeballista':
       // (Behind her and set well back, so the whole machine shows and she stands at its crank.)
       return fxSprite(ctx, 'celaeballista', x - dir * 34, y + 4, { p, scale: 0.85, flip }) || true;
-    // The Mage's element reactions (world/reactions.js): Steam Blast rolling out along the floor as
-    // far as it scalds, Shatter bursting from the monster's middle, Kaboom and the small blasts it
-    // jumps on with, and the zap that carries it from one monster to the next.
-    // The Cleric's own reactions on monsters: Fever Break, Cold Shock, Shock Therapy.
-    case 'mdrxsteam':
-      return fxSprite(ctx, 'celmdrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 100 }) || true;
-    case 'mdrxshatter':
-      return fxSprite(ctx, 'celmdrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.6 }) || true;
-    case 'mdrxkaboom':
-      return f.t < 0 || fxSprite(ctx, 'celmdrxkaboom', x, y + 4, { p, scale: f.small ? 0.45 : 0.7 }) || true;
-    // The Spell Juggler's: a spout of mist, a star of crystal shards, a firework burst (each sized to
-    // the monster, clear of her).
-    // Her skills: Encore's orbs spiralling home to her hands, Spinning Plates round the party (on
-    // the floor, under everyone), the Grand Finale's firework over the crowd ahead.
-    // The Meteor Caller's: the updraft round her as she charges, a tier reached, a meteor's crater
-    // and shock ring (sized to its blast), and her hit mark.
-    case 'mcgather':
-      return fxSprite(ctx, 'celmcgather', x, y + 4, { t: f.t, scale: 1.1, alpha: Math.min(1, f.t * 4) }) || true;
-    case 'mctier':
-      return fxSprite(ctx, 'celmctier', x, y + 4, { p, scale: 0.5 + 0.15 * (f.tier ?? 1) }) || true;
-    case 'mccrater':
-      return f.t < 0 || fxSprite(ctx, 'celmccrater', x, y + 6, { p, scale: Math.min(1.1, (f.r ?? 130) / 170) }) || true;
-    // Her reactions: a burst of starlight (steam), a star shattering (shatter), a small crater of
-    // embers (kaboom), each on the monster, never a cloud over everyone.
-    case 'mcrxsteam':
-      return fxSprite(ctx, 'celmctier', x, y - (f.h ?? 40) * 0.4, { p, scale: 0.7 }) || true;
-    case 'mcrxshatter':
-      return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.7 }) || true;
-    case 'mcrxkaboom':
-      return f.t < 0 || fxSprite(ctx, 'celmccrater', x, y + 6, { p, scale: f.small ? 0.35 : 0.5 }) || true;
-    // Her skills: Shooting Star's streak (laid along her dive), the Gravity Well on the floor, the
-    // column of Starlight, the moons of the Orbit Shield round the party (both on the floor, under
-    // everyone), the Black Hole where it opens, Extinction's sky and its impact far ahead.
-    case 'mcstreak':
-      return fxSprite(ctx, 'celmcstreak', x - dir * 20, y + 4, { p, flip, scale: 0.8 }) || true;
-    case 'mcwellfx':
-      return fxSprite(ctx, 'celmcwellfx', x, y + 6, { p, scale: 0.9 }) || true;
-    case 'mclight':
-      return fxSprite(ctx, 'celmclight', x, y + 6, { p, scale: 0.8 }) || true;
-    case 'mcmoons':
-      return fxSprite(ctx, 'celmcmoons', x, y + 6, { p, scale: 1 }) || true;
-    case 'mchole':
-      return fxSprite(ctx, 'celmchole', x, y + 4, { t: f.t, scale: 0.8, alpha: Math.min(1, f.t * 4, (f.dur - f.t) * 3) }) || true;
-    case 'mcsky':
-      return fxSprite(ctx, 'celmcsky', x + dir * 170, y + 4, { p, scale: 0.9 }) || true;
-    case 'mcextinctfx':
-      return f.t < 0 || fxSprite(ctx, 'celmcextinctfx', x + dir * 20, y + 6, { p, scale: 1.1 }) || true;
-    case 'mchit':
-      return fxSprite(ctx, 'celmchit', x, y - (f.h ?? 24) / 2, { p, scale: f.big || f.crit ? 0.6 : 0.45 }) || true;
-    case 'jgencore':
-      return fxSprite(ctx, 'celjgencore', x + dir * 16, y + 18, { p, scale: 0.75 }) || true;
-    case 'jgplates':
-      return fxSprite(ctx, 'celjgplates', x, y + 6, { p, scale: Math.min(1, (f.r || 220) / 210) }) || true;
-    case 'jgfinalefx':
-      return f.t < 0 || fxSprite(ctx, 'celjgfinalefx', x + dir * 70, y + 4, { p, scale: 0.8 }) || true;
-    case 'jgrxsteam':
-      return fxSprite(ctx, 'celjgrxsteam', x, y + 4, { p, scale: 0.62 }) || true;
-    case 'jgrxshatter':
-      return fxSprite(ctx, 'celjgrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.55 }) || true;
-    case 'jgrxkaboom':
-      return f.t < 0 || fxSprite(ctx, 'celjgrxkaboom', x, y - (f.h ?? 40) * 0.6, { p, scale: f.small ? 0.42 : 0.6 }) || true;
-    case 'rxsteam':
-      return fxSprite(ctx, 'celrxsteam', x, y + 4, { p, scale: (f.r ?? 90) / 88 }) || true;
-    case 'rxshatter':
-      return fxSprite(ctx, 'celrxshatter', x, y - (f.h ?? 40) * 0.5, { p, scale: 0.75 }) || true;
-    case 'rxkaboom':
-      return f.t < 0 || fxSprite(ctx, 'celrxkaboom', x, y + 4, { p, scale: f.small ? 0.55 : 0.85 }) || true;
-    // The Cleric's healing reactions, round her (her face clear).
-    case 'rxsoothe': case 'rxfrost': case 'rxspark':
-      return fxSprite(ctx, `cel${f.kind}`, x, y + 4, { p, scale: 0.5 }) || true;
-    case 'rxchain': {
-      // The Sorcerer's chain: a crackle of the element leaping from one monster to the next.
-      if (f.t < 0) return true;
-      // (The Meteor Caller's chains are starlight: violet with a white-hot core, whatever the element.)
-      const col = ['#2e1e5a', '#efe4ff'];
-      const tx = f.tx - cam.x;
-      const ty = f.ty - cam.y;
-      const n = 7;
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, (1 - p) * 3);
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      for (let i = 0; i <= n; i++) {
-        const u = i / n;
-        const j = i && i < n ? Math.sin(i * 7.3 + Math.floor(f.t * 30)) * 6 : 0;
-        const px = x + (tx - x) * u;
-        const py = y + (ty - y) * u - Math.sin(u * Math.PI) * 26 + j;
-        if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
-      }
-      ctx.strokeStyle = col[0];
-      ctx.lineWidth = 4.5;
-      ctx.stroke();
-      ctx.strokeStyle = col[1];
-      ctx.lineWidth = 2.6;
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.restore();
-      return true;
-    }
     case 'rxjump': {
       if (f.t < 0) return true;
       const tx = f.tx - cam.x;
@@ -443,149 +219,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       ctx.restore();
       return true;
     }
-    // The Mage's skills (the remake): Blink Bang's pop and smoke, Frost Flop's ice bursting up both
-    // ways along the floor, Campfire Break's campfire (in front of her, on the floor), Scroll
-    // Shield's whirling scrolls (round her middle, under her face), Big Bad Kaboom's blast.
-    // The Sorcerer's skills (the remake): Grand Entrance's confetti, Cold Shoulder's crowns of ice
-    // along the floor, Royal Pardon's gold light, Royal Guard's crown fence, the Royal Decree's
-    // seal, the Grand Finale's throne (behind her) and its blast.
-    // The Cleric's skills (the remake): the Ambulance Run's siren, the Cold Compress along the floor,
-    // First Aid's bandages, Bubble Wrap, the Airdrop's blast, Revive Paddles' jolt.
-    case 'mdcoffee':
-      // Espresso Round: cups flying out to everyone, steam and jitter lines (round her, low).
-      return fxSprite(ctx, 'celmdcoffee', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'mdsiren':
-      return fxSprite(ctx, 'celmdsiren', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'mdnovafx':
-      return fxSprite(ctx, 'celmdnovafx', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'mdaid':
-      // (Low, round her middle: the loops never cross her face.)
-      return fxSprite(ctx, 'celmdaid', x, y + 22, { p, scale: 0.5, sy: 0.7 }) || true;
-    case 'mdbubble':
-      return fxSprite(ctx, 'celmdbubble', x, y + 4, { p, scale: 0.7 }) || true;
-    case 'mdboom':
-      return f.t < 0 || fxSprite(ctx, 'celmdboom', x + dir * 60, y + 4, { p, scale: 0.75 }) || true;
-    case 'mdrevive':
-      return fxSprite(ctx, 'celmdrevive', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'qnconfetti':
-      return fxSprite(ctx, 'celqnconfetti', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'qnnovafx':
-      return fxSprite(ctx, 'celqnnovafx', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'qnpardon':
-      return fxSprite(ctx, 'celqnpardon', x, y + 4, { p, scale: 0.7 }) || true;
-    case 'qnguard':
-      return fxSprite(ctx, 'celqnguard', x, y + 4, { p, scale: 0.7 }) || true;
-    case 'qnstamp':
-      return fxSprite(ctx, 'celqnstamp', x + dir * 26, y + 4, { p, scale: 0.5 }) || true;
-    case 'qnthrone': {
-      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 4);
-      return fade <= 0 || fxSprite(ctx, 'celqnthrone', x - dir * 2, y + 4, { t: f.t, scale: 0.5, alpha: fade, flip: dir < 0 }) || true;
-    }
-    case 'qnfinalefx':
-      return f.t < 0 || fxSprite(ctx, 'celqnfinalefx', x + dir * 120, y + 4, { p, scale: 0.75 }) || true;
-    case 'pmpop':
-      return fxSprite(ctx, 'celpmpop', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'pmnovafx':
-      return fxSprite(ctx, 'celpmnovafx', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'pmcamp':
-      return fxSprite(ctx, 'celpmcamp', x + dir * 22, y + 4, { p, scale: 0.55 }) || true;
-    case 'pmscrolls':
-      return fxSprite(ctx, 'celpmscrolls', x, y + 14, { p, scale: 0.6 }) || true;
-    case 'pmboom':
-      return f.t < 0 || fxSprite(ctx, 'celpmboom', x + dir * 60, y + 4, { p, scale: 0.75 }) || true;
-    // The Mage's skills: Teleport's rune swirl, Heal's column of light, Magic Guard's dome, Frost
-    // Nova's ring of spikes along the floor, Meteor's crimson rune sky (spread over the stretch its
-    // meteors fall on) and its impact.
-    case 'mgswirl':
-      return fxSprite(ctx, 'celmgswirl', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'mgheal':
-      return fxSprite(ctx, 'celmgheal', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'mgguard':
-      return fxSprite(ctx, 'celmgguard', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'mgnova':
-      return fxSprite(ctx, 'celmgnova', x, y + 2, { p, scale: 0.62 }) || true;
-    case 'mgcircle':
-      return fxSprite(ctx, 'celmgcircle', x + dir * 130, y - 120, { t: f.t, scale: 0.6, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
-    case 'mgimpact':
-      return fxSprite(ctx, 'celmgimpact', x, y + 4, { p, scale: 0.9 }) || true;
-    // The Cleric's bursts: Ascension's feathers, Holy Nova's ring of light, her bright heal, Divine
-    // Shield's wings, Heaven's Gate in the sky (spread over the stretch its spears fall on) and its
-    // light crashing down, and Resurrection's rays.
-    case 'clfeathers':
-      return fxSprite(ctx, 'celclfeathers', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'clnovafx':
-      return fxSprite(ctx, 'celclnovafx', x, y + 2, { p, scale: 0.62 }) || true;
-    case 'clglow':
-      return fxSprite(ctx, 'celclglow', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'clshieldfx':
-      return fxSprite(ctx, 'celclshieldfx', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'clgatefx':
-      return fxSprite(ctx, 'celclgatefx', x + dir * 130, y - 120, { p, scale: 0.6, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
-    case 'clgateimpact':
-      return fxSprite(ctx, 'celclgateimpact', x, y + 4, { p, scale: 0.9 }) || true;
-    case 'clrays':
-      return f.t < 0 || fxSprite(ctx, 'celclrays', x, y + 4, { p, scale: 0.75 }) || true;
-    // The Sorcerer's skills: Shadow Step's pool, Dread Circle's hands all round, Ember Mend's flame,
-    // Shadow Ward's cupped hands, Dark Pact's sigil, the rift in the sky (spread over the stretch
-    // below it) and a giant hand's impact; Abyssal Maw's pit of hands.
-    case 'sosink':
-      return fxSprite(ctx, 'celsosink', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'sonovafx':
-      return fxSprite(ctx, 'celsonovafx', x, y + 2, { p, scale: 0.62 }) || true;
-    case 'soglow':
-      return fxSprite(ctx, 'celsoglow', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'soguard':
-      return fxSprite(ctx, 'celsoguard', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'sopact':
-      return fxSprite(ctx, 'celsopact', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'sosummon':
-      return fxSprite(ctx, 'celsosummon', x + dir * 156, y - 150, { t: f.t, scale: 0.7, alpha: Math.min(1, p * 5, (1 - p) * 4) }) || true;
-    case 'sobighand': {
-      // Hand of the Abyss: a colossal shadow hand plunging down out of the rift (the first third),
-      // pressed flat on them as it lands, then sinking away.
-      const fall = Math.min(1, p / 0.3);
-      const k = fall * fall;
-      return fxSprite(ctx, 'celsoslam', x, y - 40 - 230 * (1 - k), { t: f.t, rot: Math.PI / 2, scale: 1.5, alpha: Math.min(1, p * 8, (1 - p) * 3) }) || true;
-    }
-    case 'soimpact':
-      return fxSprite(ctx, 'celsoimpact', x, y + 4, { p, scale: 0.9 }) || true;
-    case 'somaw': {
-      const fade = Math.min(1, f.t * 3, Math.max(0, f.dur - f.t) * 2);
-      if (fade <= 0) return true;
-      // (The Sorcerer's Chaos Vortex: her whirl of all three elements.)
-      if (f.well?.chaos) return fxSprite(ctx, 'celqnvortex', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 118, alpha: fade }) || true;
-      return fxSprite(ctx, 'celsomaw', x, y + 2, { t: f.t, scale: (f.well?.r ?? 130) / 110 * 0.55, alpha: fade }) || true;
-    }
-    case 'sohit':
-      // The Sorcerer's mark: three claw rakes of shadow and an ember ring breaking apart.
-      return fxSprite(ctx, 'celsohit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
-    case 'mdhitfire': case 'mdhitice': case 'mdhitbolt':
-      // The Cleric's hits (the remake): her element's pop with plus-crosses flying off.
-      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.58 : 0.44, rot: (seed - 0.5) * 0.4 }) || true;
-    case 'qnhitfire': case 'qnhitice': case 'qnhitbolt':
-      // The Sorcerer's hits (the remake): her element's pop with a gold crown flashing over it.
-      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.46, rot: (seed - 0.5) * 0.4 }) || true;
-    case 'pmhitfire': case 'pmhitice': case 'pmhitbolt':
-      // The Mage's hits (the remake): a pop of her element with sparkles flying off.
-      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.6 : 0.44, rot: (seed - 0.5) * 0.5 }) || true;
-    case 'mghitfire': case 'mghitice': case 'mghitbolt':
-      // The Mage's marks: her crimson rune ring flashing round a burst of her element.
-      return fxSprite(ctx, `cel${f.kind}`, x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;
-    case 'kwhit':
-      // The Kitchen Witch's mark: a splat, a crown of broth flung out, steam and pepper.
-      return fxSprite(ctx, 'celkwhit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.62 : 0.45, rot: (seed - 0.5) * 0.5 }) || true;
-    case 'sthit':
-      return fxSprite(ctx, 'celsthit', x, y - (f.h ?? 40) * 0.55, { p, scale: f.big || f.crit ? 0.7 : 0.5, rot: (seed - 0.5) * 0.6 }) || true;
-    case 'stwish':
-      return fxSprite(ctx, 'celstwish', x, y + 4, { p, scale: 0.75 }) || true;
-    case 'stveil':
-      return fxSprite(ctx, 'celstveil', x, y + 4, { p, scale: 0.6 }) || true;
-    case 'starfallsky':
-      // (Spread over the whole stretch her meteors fall on: rainFrom 20, rainW 380.)
-      return fxSprite(ctx, 'celstsky', x + dir * 210, y - 130, { frame: Math.min(7, Math.floor(p * 9)), scale: 1.2 }) || true;
-    case 'starfallimpact':
-      fxSprite(ctx, 'celsthit', x, y - 30, { p, scale: 1.4 });
-      return fxSprite(ctx, 'celstwish', x, y + 4, { p: 0.4 + 0.6 * p, scale: 1.3 }) || true;
     // On a monster, her cloud; as a blow's burst all round her (`f.r`), clouds bursting at both edges
     // of its reach, clear of her face (the wind ring out to its reach comes from world/melee.js).
     case 'skyhit':
@@ -701,64 +334,6 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       }
       return true;
     }
-    // Star Step as the Starlight Idol's knee slide: a pop of hearts and notes where she drops.
-    case 'sihearts':
-      fxSprite(ctx, 'celsihit', x, y - 24, { p, scale: 0.6 });
-      return fxSprite(ctx, 'celsinote', x - dir * 18, y - 40 - 20 * p, { t: f.t, flip, scale: 0.45, alpha: Math.min(1, (1 - p) * 3) }) || true;
-    // Wishing Star as her ballad: her healing song's ring opening round her out to the party, and
-    // hearts and notes drifting down over everyone.
-    case 'siballad': {
-      const fade = Math.min(1, f.t * 4, Math.max(0, f.dur - f.t) * 3);
-      songRing(ctx, 'heal', x, y, 110 + 60 * Math.min(1, p * 2), f.t, fade);
-      for (let i = 0; i < 6; i++) {
-        const u = (p * 1.4 + i / 6) % 1;
-        const sx = x + (((i * 73) % 11) / 11 - 0.5) * 300;
-        fxSprite(ctx, i % 2 ? 'celsinote' : 'celsihit', sx + 10 * Math.sin(f.t * 3 + i), y - 150 + 130 * u, { t: f.t + i * 0.1, p: 0.3, scale: i % 2 ? 0.4 : 0.32, alpha: fade * Math.min(1, u * 4, (1 - u) * 4) });
-      }
-      return true;
-    }
-    // Star Veil as her harmony: rings of sound spreading out over the party one after another and
-    // settling.
-    case 'siharmony': {
-      for (let i = 0; i < 3; i++) {
-        const u = Math.max(0, Math.min(1, (p - i * 0.18) / 0.64));
-        if (u > 0 && u < 1) fxSprite(ctx, 'celsiwave', x, y - 30, { p: u, scale: 0.55 + 0.35 * u + 0.15 * i });
-      }
-      return true;
-    }
-    // Starfall as her encore: one great blast of sound where the last note lands.
-    case 'sifinale':
-      fxSprite(ctx, 'celsiwave', x, y - 40, { p, scale: 1.2 });
-      fxSprite(ctx, 'celsibig', x, y - 50, { t: f.t, scale: 1.4 * (0.7 + 0.3 * p), alpha: Math.min(1, (1 - p) * 3) });
-      return fxSprite(ctx, 'celsihit', x, y - 40, { p, scale: 1.3 }) || true;
-    // Star Step as the Astronomer's moon phase: a silver crescent waning where she fades.
-    case 'asphase':
-      fxSprite(ctx, 'celasmoon', x, y - 40, { t: f.t, scale: 1.1 * (1 - 0.4 * p), alpha: Math.min(1, (1 - p) * 2.5) });
-      return fxSprite(ctx, 'celashit', x, y - 34, { p, scale: 0.45 }) || true;
-    // Wishing Star as her moonrise: a silver moon sinking down onto her and a ring of its light
-    // opening over the party.
-    case 'asmoonfall': {
-      const fall = Math.min(1, p / 0.55);
-      const fade = Math.min(1, p * 5, (1 - p) * 3);
-      fxSprite(ctx, 'celasmoon', x, y - 150 + 100 * (1 - (1 - fall) ** 2), { t: f.t, scale: 1.6, alpha: fade });
-      if (p > 0.5) fxSprite(ctx, 'celashit', x, y - 30, { p: (p - 0.5) / 0.5, scale: 1.2, sy: 0.5 });
-      return true;
-    }
-    // Star Veil as her halo: silver moons taking up an orbit round her out to the party's reach and
-    // settling into it (behind her on the far side).
-    case 'asveil': {
-      const fade = Math.min(1, p * 5, (1 - p) * 4);
-      const r = 150 * Math.min(1, 0.3 + p * 1.6);
-      for (let i = 0; i < 5; i++) {
-        const a = dir * (f.t * 2.4) + (i * Math.PI * 2) / 5;
-        fxSprite(ctx, 'celasmoon', x + Math.cos(a) * r, y - 34 + Math.sin(a) * r * 0.22, { t: f.t + i * 0.2, scale: 0.75, alpha: fade * (Math.sin(a) < 0 ? 0.65 : 1) });
-      }
-      return true;
-    }
-    // Starfall as her meteor shower: the great ringed world landing, and its ring of light.
-    case 'asimpact':
-      fxSprite(ctx, 'celasbig', x, y - 60 + 40 * Math.min(1, p * 3), { t: f.t, scale: 1.3, alpha: Math.min(1, (1 - p) * 2.5) });
-      return fxSprite(ctx, 'celashit', x, y - 30, { p, scale: 1.5 }) || true;
     case 'powerup': {
       // Power bursting out as a skill begins: a pillar of the path's light with its emblem, and a
       // ring of fire for rage.
@@ -770,35 +345,19 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
       // A dash: speed streaks along the path, dust kicked up behind, a burst where it ends.
       const tx = f.tx - cam.x;
       const len = Math.abs(tx - x);
-      // The Shinobi darts off in a burst of white smoke and out of another; the Kitsune leaves a
-      // trail of fox fire.
-      // The Spirit Mage comes apart into paper streamers and light, and gathers again ahead.
-      if (f.school === 'spirit') {
-        fxSprite(ctx, 'celspiritstep', x, y, { p, flip, scale: 0.5 });
-        fxSprite(ctx, 'celspiritstep', tx, y, { p: Math.max(0, 1 - p * 1.4), scale: 0.5 });
-        return true;
-      }
-      // The paths' own (their Pirouette and Star Step): the Blade Dancer skims a rose-gold ring
-      // along her path and it sparks where she stops; the Sky Dancer rides a crescent of wind with a
-      // cloud at each end; the Starlight Idol leaves notes and hearts; the Astronomer a silver moon
-      // waning behind her and her light opening ahead.
-      if (f.school === 'rosegold' || f.school === 'aerial' || f.school === 'idol' || f.school === 'astral') {
+      // The paths' own (their Pirouette): the Blade Dancer skims a rose-gold ring along her path and
+      // it sparks where she stops; the Sky Dancer rides a crescent of wind with a cloud at each end.
+      if (f.school === 'rosegold' || f.school === 'aerial') {
         const go = 1 - (1 - Math.min(1, p / 0.7)) ** 2;
         const mx = x + (tx - x) * go;
         const fade = Math.min(1, p * 8, (1 - p) * 4);
         if (f.school === 'rosegold') {
           fxSprite(ctx, 'celbdring', mx, y - 22, { t: f.t, flip, scale: 0.8, alpha: fade });
           if (p > 0.6) fxSprite(ctx, 'celbdbounce', tx, y - 24, { p: (p - 0.6) / 0.4, scale: 0.6, flip });
-        } else if (f.school === 'aerial') {
+        } else {
           fxSprite(ctx, 'celskygust', mx, y - 24, { t: f.t, flip, scale: 0.9 + 0.4 * go, alpha: fade });
           fxSprite(ctx, 'celskyhit', x, y - 20, { p, scale: 0.5, flip: !flip });
           if (p > 0.55) fxSprite(ctx, 'celskyhit', tx, y - 22, { p: (p - 0.55) / 0.45, scale: 0.5, flip });
-        } else if (f.school === 'idol') {
-          for (let i = 0; i < 3; i++) fxSprite(ctx, 'celsinote', x + (tx - x) * (0.2 + 0.3 * i) * go, y - 26 - 10 * Math.sin(f.t * 8 + i * 2), { t: f.t + i * 0.1, flip, scale: 0.4, alpha: fade * (0.6 + 0.4 * (i / 2)) });
-          if (p > 0.55) fxSprite(ctx, 'celsihit', tx, y - 24, { p: (p - 0.55) / 0.45, scale: 0.5 });
-        } else {
-          fxSprite(ctx, 'celasmoon', mx - dir * 16, y - 30, { t: f.t, scale: 0.7, alpha: fade * 0.8 });
-          if (p > 0.5) fxSprite(ctx, 'celashit', tx, y - 30, { p: (p - 0.5) / 0.5, scale: 0.5 });
         }
         return true;
       }

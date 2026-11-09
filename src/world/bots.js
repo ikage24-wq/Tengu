@@ -138,14 +138,13 @@ function rollLevel(pro, rng) {
 }
 
 // The job path a character of this level would be on. Warriors, archers and thieves advance to a
-// level 30 path (the Mage was removed; a new magic class is being built).
+// level 30 path (the Mage line was wiped 2026-11-08; a new one is being made).
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
-  const first = pick(['warrior', 'archer', 'thief', 'mage'], rng);
+  const first = pick(['warrior', 'archer', 'thief'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
-  if (first === 'mage' && level >= 30) return [first, pick(['cleric', 'sorcerer'], rng)];
   return [first];
 }
 
@@ -803,7 +802,7 @@ function listen(bots, world) {
         // here may, but not a party member a second time.)
         const fromBar = world.now - (world.partyEmoteAt ?? -99) < 0.5;
         const bot = fromBar ? all.find((b) => !b.party) : all[0];
-        if (bot && rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'kagura'], rng) });
+        if (bot && rng() < 0.65) queueReply(bots, world, bot, reply(bots.memory, 'emote', ctx(bot), bot.style, rng), { pose: pick(['cheer', 'flip', 'emdance'], rng) });
       } else {
         const words = h.words.toLowerCase();
         const named = all.find((b) => words.includes(b.name.toLowerCase()));

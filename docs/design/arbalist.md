@@ -39,7 +39,7 @@ Built, replacing the Stormcaller in place (the path keeps the `stormcaller` id, 
 Kestrel's trial carry over; the name is Arbalist Engineer).
 
 - Crossbows are redrawn as compact gadget crossbows (render/weapon-designs.js), the rail level
-  with the hand, so they sit at the waist; hers take a polished brass finish.
+  with the hand, so they sit at the waist; she holds the one you equip exactly as it looks.
 - Moves (render/moves.js `ae*`): aesnap, aedouble, aebrace, aerecoil and the pool's aetwirl,
   aeduck, aetriple, aeslide; aeup, aeair (down and in the air), aeroll; aedeploy, aebertha.
 - Gadgets (world/engineer.js): Sticky Bolt, Cluster Bolt, Steam Vent, Deploy Turret (a machine

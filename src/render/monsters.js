@@ -11,7 +11,6 @@ import { sprite, spriteLater, spriteAsync, blit, snap, footShadow } from './pixe
 import { springStep } from './animator.js';
 import { fxSprite } from './fx-sprites.js';
 import { ARTS, mobBuild } from './mobs/index.js';
-import { MARK_TIME } from '../world/reactions.js';
 
 export { ARTS };
 
@@ -438,19 +437,12 @@ export function drawMonster(ctx, m, x, y, time, now = time) {
   else blit(ctx, s, -s.w / 2, -s.h, { flip: m.dir < 0, flash: flash / 8, alpha });
   ctx.restore();
   if (puff >= 0) poofCloud(ctx, x, y, s.w, puff);
-  // The Mage's element mark on a monster she's hit (world/reactions.js), bobbing over its head,
-  // fading in and out.
-  if (m.elMark && m.hp > 0) {
-    const age = now - m.elMark.at;
-    const fade = Math.min(1, age * 6, Math.max(0, MARK_TIME - age) * 2);
-    if (fade > 0) fxSprite(ctx, `celrm${m.elMark.el}`, x, y - s.h * sy - 12 + Math.sin(time * 3 + m.uid) * 1.5, { t: time + m.uid, scale: 0.42 * (0.8 + 0.2 * Math.min(1, age * 6)), alpha: fade });
-  }
   if (m.poison && m.hp > 0) (m.poison.kind === 'bleed' ? bleedDrops : poisonBubbles)(ctx, x, y, s, time + m.uid);
   if (frozen && m.hold === 'stun') dizzyStars(ctx, x, y - s.h * sy - 2, time + m.uid);
   // A Snare Arrow's net over it (Tengu's own art), slipping off as the hold runs out.
   else if (frozen && m.hold === 'snare' && m.holdLook === 'ribbon') fxSprite(ctx, 'celacribbon', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.35, s.w / 70), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
   else if (frozen && m.hold === 'snare') fxSprite(ctx, 'celnet', x, y - (s.h * sy) / 2, { t: time + m.uid, scale: Math.max(0.7, s.w / 30), alpha: Math.min(1, (m.frozenUntil - now) / 0.25) });
-  // (Up in the air with it, if it's been lifted frozen: the Onmyoji's Troupe Combo.)
+  // (Up in the air with it, if it's been lifted while frozen.)
   else if (frozen) iceBlock(ctx, x, y - (m.air > 0 && m.hp > 0 ? m.air : 0), s, m.frozenUntil - now, time + m.uid);
   if (alpha > 0.5 && !frozen) drawEmote(ctx, m, mood, x, y - s.h * sy, t, now);
 }

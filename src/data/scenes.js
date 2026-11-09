@@ -73,7 +73,6 @@ export const QUEST_SCENES = {
   kestrel_canyon: { done: 'kestrel_canyon_done' },
   kestrel_glade: { done: 'kestrel_glade_done' },
   kestrel_wings: { done: 'kestrel_wings_done' },
-  mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   elowen_dance: { done: 'elowen_dance_done' },
   elowen_wisps: { done: 'elowen_wisps_done' },
   elowen_foxfire: { done: 'elowen_foxfire_done' },
@@ -895,14 +894,6 @@ export const SIDE_SCENES = {
     { together: [{ fx: 'notes', at: 'elowen', n: 14 }, { fx: 'sparkle', at: 'mira', n: 14 }, { emote: 'mira', kind: 'heart', dur: 1.8 }, { emote: 'elowen', kind: 'heart', dur: 1.8 }] },
     { who: 'mira', text: "Same time next spring? And every spring after. I'm still bringing the biscuits.", mood: 'happy' },
     { who: 'elowen', text: "Every spring. I'll bring better ones. Now, {name}, come back at level 30. A Mage's trial waits, and you've earned your tea.", mood: 'happy' },
-  ],
-  trial_elowen: [
-    { who: 'elowen', text: "The Wraiths are spirits who forgot the way home. We don't fight them. We dance them home. Gracefully. With feeling. I will be judging." },
-    { who: 'elowen', text: "Twenty of them. Be kind, but be firm. They are lost, not wicked. Mostly." },
-  ],
-  trial_elowen_done: [
-    { who: 'elowen', text: "I felt every one of them go home. Peacefully. You have a gift, {name}. Don't tell Mira I said so. She'll be insufferable.", mood: 'happy' },
-    { who: 'elowen', text: 'The Cleric heals everyone near her, and makes sure they know it. The Sorcerer calls shadow hands up out of the dark, and they really come. Both are yours to choose.' },
   ],
   // ----- Vex and Tora's hammer -----
   vex_shadows_done: [

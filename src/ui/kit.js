@@ -708,42 +708,14 @@ const ICONS = {
     ctx.fillRect(-s * 0.3, -s * 0.22, s * 0.11, s * 0.68);
     ctx.fillRect(s * 0.19, -s * 0.22, s * 0.11, s * 0.68);
   },
-  // The seiman, onmyodo's five-pointed star, in a ring (the Onmyoji's Binding).
-  seiman(ctx, s) {
-    ctx.save();
-    ctx.lineWidth = s * 0.1;
-    ctx.strokeStyle = ctx.fillStyle;
-    ctx.beginPath();
-    for (let k = 0; k <= 5; k++) {
-      const a = ((-90 + k * 144) * Math.PI) / 180;
-      if (k) ctx.lineTo(Math.cos(a) * s * 0.38, Math.sin(a) * s * 0.38);
-      else ctx.moveTo(Math.cos(a) * s * 0.38, Math.sin(a) * s * 0.38);
-    }
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, s * 0.46, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  },
+
   // A top hat (the Phantom Trickster's Illusion).
   tophat(ctx, s) {
     ctx.fillRect(-s * 0.48, s * 0.18, s * 0.96, s * 0.14);
     ctx.fillRect(-s * 0.28, -s * 0.42, s * 0.56, s * 0.62);
   },
-  // A ringed planet (the Astronomer's Orbit).
-  planet(ctx, s) {
-    ctx.beginPath();
-    ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.save();
-    ctx.lineWidth = s * 0.09;
-    ctx.strokeStyle = ctx.fillStyle;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, s * 0.5, s * 0.15, -0.35, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  },
-  // A music note, two beamed together (the Starlight Idol's Applause).
+
+  // A music note, two beamed together.
   note(ctx, s) {
     for (const [hx, hy] of [[-s * 0.24, s * 0.3], [s * 0.3, s * 0.22]]) {
       ctx.beginPath();
@@ -759,7 +731,7 @@ const ICONS = {
     ctx.closePath();
     ctx.fill();
   },
-  // A five-point star (the Star Witch's Constellation).
+  // A five-point star.
   star5(ctx, s) {
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {

@@ -30,7 +30,8 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
   shots leave on the release frame and hit when the projectile arrives. Build attack skills as
   combo steps in `world/melee.js` style (`combo` in `data/skills.js`: a move, a duration, and
   strikes timed with `at`), so timing, stepping in or back, knockback, launches, hit-stop, and
-  shake all follow the same rules.
+  shake all follow the same rules. The press itself still answers at once: the move starts on that frame (the art
+  standard, Feel).
 - **Presses are buffered.** A tap or skill pressed mid-motion goes off the moment it's allowed.
 - **Weight matches the blow.** Light hits barely push; finishers knock back or launch; heavy blows
   get hit-stop, screen shake, and bigger effects.
@@ -45,8 +46,9 @@ These hold for all jobs, current and future. Keep them when adding or reworking 
 
 ## Making a job (every new job or path, the standard the player approved)
 
-Build every future job the way the Warrior, Archer and Thief and their paths (Paladin, Berserker,
-Stormcaller; now the Acrobat Archer, Phantom Trickster, Wind Dancer, Blade Dancer, Sky Dancer, Star Witch, Starlight Idol, Astronomer and Arbalist Engineer) were built; the player signed off on that result and wants all jobs made like it. The full
+Build every future job the way the Warrior and its paths (Paladin, Berserker), the Acrobat Archer
+and its paths (Phantom Trickster, Arbalist Engineer) and the Wind Dancer and its paths (Blade
+Dancer, Sky Dancer) were built; the player signed off on that result and wants all jobs made like it. The full
 step-by-step recipe is `docs/design/making-a-job.md`: read it before starting any job. In short:
 
 - **Research first.** Read the art research (below) and look at real references for the job
@@ -59,23 +61,27 @@ step-by-step recipe is `docs/design/making-a-job.md`: read it before starting an
 - **Its own animation:** moves drawn for its weapon (a bow really draws, a crossbow kneels and
   cranks), with weight that matches each blow.
 - **Its own colour and shape language**, bold enough to read on every map, so a hit says whose it
-  is (the Warrior's steel-blue cross and giant sword, the Acrobat Archer's gold arrows, mint ribbons and confetti, the Phantom Trickster's plum smoke, cards and doves, the Wind Dancer's coral ribbons, crescent gusts and spinning rings, the Blade Dancer's rose-gold rings that ricochet and spark, the Sky Dancer's sky-blue wind crescents, clouds and whirlwinds, the Star Witch's gold stars, midnight comets and constellations, the Starlight Idol's pink notes, hearts and sound waves, the Astronomer's violet ringed planets and silver moons, the Arbalist Engineer's brass cogs, teal bolts and steam, the Paladin's gold star, the Berserker's rose claws, the Ranger's
-  emerald wind and leaves, the Sniper's ice-blue streaks and rose sight).
+  is (the Warrior's steel-blue cross, the Acrobat Archer's gold arrows, mint ribbons and confetti,
+  the Phantom Trickster's plum smoke, cards and doves, the Arbalist Engineer's brass cogs, teal bolts
+  and steam, the Wind Dancer's coral ribbons, crescent gusts and spinning rings, the Blade Dancer's
+  rose-gold rings that ricochet and spark, the Sky Dancer's sky-blue wind crescents, clouds and
+  whirlwinds, the Paladin's gold star, the Berserker's rose claws). Colour and shapes live in the
+  effects, never in a restyled weapon (see "A job never replaces the weapon").
 - **Effects in Tengu's own art** (`tools/fx-art.js`, HD with a soft glow; see the effects rule
   below): swipes or shots, a hit mark, a buff pillar with its emblem, a gauge aura, and a picture
   for each big skill. Never packs or code-drawn glows.
 - **Everything else it touches:** icons, HUD gauge, sounds, bots and party play, its trial or
   quest to unlock, docs (README and the art notes).
-- **Show it:** record demo videos of every skill and send them; fix what looks wrong before
-  calling it done.
+- **Show it:** at each real checkpoint send one short clip of what's new (the basic attacks, then
+  the skills); more only if the player asks. Fix what looks wrong before sending.
 
 ## Art, animation, and effects
 
-**Always consult the research first.** `docs/art/research/` is the saved research guide: about 350
-sources in five languages (tutorials, artists' process posts, game-dev talks, real game data).
-Before any visual or feel work (sprites, faces, hair, animation, effects, maps, UI, HUD, windows,
-icons, fonts, game feel), read `docs/art/README.md` and `docs/art/art-bible.md` (the rules drawn
-from it), then the research files that cover the task. For UI that's `research/env.md` sections
+**Consult the research for new designs.** `docs/art/research/` is the saved research guide: about
+350 sources in five languages (tutorials, artists' process posts, game-dev talks, real game data).
+Before designing something new (a job, a map, a monster, a look, a UI screen), read
+`docs/art/README.md` and `docs/art/art-bible.md` (the rules drawn from it), then the research files
+that cover the task. Small fixes and tweaks don't need it. For UI that's `research/env.md` sections
 E (UI) and F (Icons); for effects and game feel `research/fx.md`; for animation
 `research/anim.md`. Follow what they say, compare the work against them rather than against our
 own older work, and save anything new we learn back there (the rule in `README.md`, the finding
@@ -109,64 +115,42 @@ but it is always drawn at its own width and height: a spin is a clean mirror fli
 turn, never a squeeze, and jumping, landing and getting hit show in the pose alone. `rigid` in
 `render/hero.js` enforces it and `tests/anim.test.js` checks every move against it.
 
-**Expressive, smooth, creative, never generic (the player's standing rule, for everything).**
-Every character, summon, NPC, monster, move, effect, UI piece and map must be expressive,
-smoothly animated, creative and polished to as near perfect as we can make it. Nothing may be
-generic, stiff or clunky:
-- Poses blend into each other, never snap.
-- Motion has anticipation, follow-through and overlap: hair, cloth, tails and props trail and
-  settle.
-- Faces and bodies act: they react, emote and have idle life.
-- Every design has its own idea rather than a stock one.
+**The quality bar (the player's standing rules, 2026-11-01 and 2026-11-02, for everything).** The
+remade Wind Dancer is the bar the player approved. Every character, summon, NPC, monster, move,
+effect, UI piece and map is held to it:
+- **Its own idea, never generic.** Every move is drawn for what the thing *is*: a dancer dances
+  (piqué, pirouette, arabesque, fouetté, a bow), a knight fights like a knight. Name each move for
+  the figure it is and build the whole set from that one idea. Never borrow another job's swings,
+  throws, poses or effects and re-skin them (the first Wind Dancer reused the old Thief's swings and
+  was called generic): reuse the engine (the rig, the timing, the strike system), never the motion.
+- **Alive.** Nothing sits frozen: characters, monsters, props, plants, platforms, effects, UI and
+  HUD all have motion or idle life; living things breathe and shift their weight, and faces and
+  bodies act (react, emote, idle).
+- **Fluid.** Anticipation, a clean strike landing early, follow-through and a held end pose; hair,
+  cloth, tails, ears, capes, sleeves and dangling gear trail and settle on their own timing; changes ease in and out (smoothstep, springs, blends),
+  never snap or switch on and off; motion runs on time at the frame rate with nothing stuttering,
+  flickering or popping; animation phases come from a thing's own place in the world or its id,
+  never from where it is on screen, and things on a moving platform move with it.
+- **Re-rig freely to get there.** Change how the weapon is held (its grip point, rest and ready
+  angles), idle fidgets and the rig's poses whenever it makes the motion read better (the chakram
+  was re-gripped on its rim and hung at the hip so it never covers the face). Never the weapon
+  itself: its size, shape and look stay as equipped.
+- **Readable.** Nothing covers the face in any pose (standing, idle fidgets, ready, walk, jump,
+  every move); the silhouette says what the move is at game size.
+- **Its effects follow the moves**, in the job's own colour and shapes, never another job's
+  defaults (no steel trails, pillars or emblems on a coral dancer).
+- **Checked moving, then shown.** Look at every move as a strip of moments (`tools/move-strip.html`)
+  and every pose for the face (`tools/hold-sheet.html`), fix what looks wrong, then send a short
+  clip at the checkpoint (`tools/make-gif.py`).
 
 If something reads as plain, rigid or "default", it isn't done: rework it before showing it.
 
-**Everything is animated, fluid, smooth and good (the player's standing rule, 2026-11-01).** Nothing
-in the game sits frozen: characters, monsters, summons, NPCs, props, plants, gathering spots,
-platforms, effects, UI and HUD pieces all have motion or idle life. And every motion is fluid:
-- Changes ease in and out (smoothstep, springs, blends between key poses), never snap or jump
-  between two states; timed beats use eased windows, not on/off switches.
-- Motion runs on time, at the frame rate, with in-between frames where sprites step; nothing
-  stutters, flickers or pops in and out.
-- Animation phases come from a thing's own place in the world (or its own id), never from where
-  it is on screen, so nothing speeds up or stalls as the camera moves; things on a moving platform
-  move with it.
-- Check it moving (a strip of moments or a short recording), not just a still, before calling it
-  done.
-
-**The Wind Dancer standard (the player's standing rule, 2026-11-02, for every job, path, summon,
-monster and move from now on).** The remade Wind Dancer is the quality bar the player approved;
-everything is held to it:
-- **Its own motion, matching its name.** Every move is drawn for what the thing *is*: a dancer
-  dances (piqué, pirouette, arabesque, fouetté, a bow), a knight fights like a knight, a witch
-  casts like a witch. Name each move for the figure it is, and build the whole set from that one
-  idea.
-- **Re-rig freely to get there.** Change how the weapon is held, its size, its grip point, rest and
-  ready angles, idle fidgets and the rig's poses whenever it makes the motion read better (the
-  chakram was re-gripped on its rim and hung at the hip so it never covers the face).
-- **Fluid and smooth.** Anticipation, a clean strike landing early, follow-through and a held end
-  pose; poses ease into each other, turns are clean mirror flips, nothing snaps or stutters.
-- **Readable.** Nothing covers the face in any pose (check standing, idle fidgets, ready, walk,
-  jump, every move); the silhouette says what the move is at game size.
-- **Its effects follow the moves**, in the job's own colour and shapes, never another job's
-  defaults (no steel trails, pillars or emblems on a coral dancer).
-- **Checked moving, then shown.** Render every move as a strip of moments (`tools/move-strip.html`),
-  check every pose for the face (`tools/hold-sheet.html`), record GIFs of the moves and of the skills
-  in the game (`tools/make-gif.py`), fix what looks wrong, and send the GIFs before calling it done.
-
-**Never reuse another job's moves (the player's standing rule, 2026-11-02).** Every job and path
-gets its own animations drawn for its own fantasy: a dancer moves like a dancer, a knight like a
-knight. Never borrow another job's swings, throws, poses or effects and re-skin them (the first
-Wind Dancer reused the old Thief's swings and the player called them generic). Reuse the engine
-(the rig, the timing, the strike system), never the motion. A new job isn't done until every
-move it plays is its own.
-
 **Summons are built on a player character, with a new rig (the player's standing rule, for every
-summon and companion).** Every summon (a companion, a shikigami, a guardian, anything a job calls
+summon and companion).** Every summon (a companion, a guardian, anything a job calls
 to fight beside it) starts from the player character (the hero's body, parts and drawing, so it
 belongs in the game's look), and then gets:
 - a new rig of its own: its own skeleton, poses and joints on top of that base, never the
-  player's moves and never another summon's (not Snow wolf's, not the Spirit Doll's);
+  player's moves and never another summon's;
 - new animations of its own: very, very smooth and expressive, with anticipation, overshoot,
   follow-through and overlap, idle life and personality in every move, unique to it;
 - a unique look: its own outfit, hair, ears, tail, face and props (draw new parts freely), and its
@@ -174,22 +158,144 @@ belongs in the game's look), and then gets:
 Never take a shortcut by reusing another character's rig or animations, and never draw a summon
 from scratch outside the player-character base.
 
-**Freedom to make it better (the player's standing rule).** The player always wants things better,
-so you have broad freedom to improve whatever you're working on: redraw, rework, add, or replace
-art, effects, animation, moves and feel when it raises the quality, without asking first. That
-includes re-rigging freely (the rig, poses, joints, how weapons are held, how a move is built) for
-any character, job, monster or move, to animate it, make it fit, or make it look better, and
-reanimating or redrawing anything (sprites, monsters, effects, maps, UI, icons) so it fits the
-game's theme and look. You may also freely draw new character parts whenever they help a design:
-new clothes and outfits, hairstyles, faces, eyes, brows, ears, tails, horns, wings, accessories,
-props, and anything else (for heroes, summons, NPCs and monsters alike). Keep the
-other standing rules (no squash or stretch, hits on the animation, no spam), and show the result
-with pictures or videos. Still ask before changing what the game is (story, progression, removing
-features) or when the player's choice is genuinely needed.
+**Freedom for polish (the player's standing rule).** Small fixes and polish that are clearly better
+(smoother motion, a cleaner pose, a fixed effect, a re-rig so a move reads) don't need asking. Real
+choices (a job's idea, a look, how something should feel, what to build next) go to the player first
+(the check-in rule below). Keep the other standing rules (no squash or stretch, hits on the
+animation, no spam, never restyle a weapon) and show the result with pictures or videos.
 
-"Continue the redo pass" means: read `docs/art/briefs/redo-pass.md` (the brief) and
-`docs/art/briefs/redo-status.md` (what's done and what's left), then pick up the remaining items
-there and update the status file as they get done.
+## The art standard (the player's standing rules, 2026-11-09)
+
+Every character, monster, summon, NPC, move, prop, map, effect and UI piece meets all of these.
+"(test)" marks a rule a test checks: the rigs and motion in `tests/rig.test.js` (every frame of
+every move), placement and readability in `tests/placement.test.js`, sizes in `tests/assets.test.js`,
+map-change cleanup in `tests/session.test.js`. Moves or files that broke a rule when its check was
+written sit on that test's KNOWN list, to be fixed (a fixed one must come off it). Rules without a
+test are checked by eye on the strips, the hold sheet and a real map before showing anything.
+
+**Rigs**
+- **Joints bend the right way:** elbows and knees never bend backward or past a natural limit. (test)
+- **Hands really hold things:** the weapon's grip sits in the hand on every frame; no floating
+  weapon, no gap between fist and handle. (test)
+- **Nothing comes apart:** arms, legs and head overlap the body at the joints in every pose. (test)
+- **Feet stay planted** on the ground during attacks, idles and turns; they slide only when stepping. (test)
+- **Limbs never change length:** upper arm, forearm, thigh and shin keep their length in every pose. (test)
+- **Joints pivot at real joints** (shoulder, elbow, hip, knee, neck).
+- **The neck has limits:** the head turns and tilts within a natural range. (test)
+- **Feet follow the ground:** on slopes and steps the feet tilt with it and the body adjusts.
+- **Hands have shapes:** a fist to punch, a grip to hold, an open hand to cast or wave, a point to
+  point; never one hand shape for everything.
+- **Layer order never flickers:** the back arm stays behind the body and the front arm in front; a
+  part changes layer only at a planned moment of a move.
+
+**Animation**
+- **Arcs:** limbs and weapons travel on curves, never straight lines between poses.
+- **Uneven timing:** every move has one fast moment and one held moment, never even spacing.
+- **No linear motion in bodies:** every pose change of a character, monster or summon eases in and
+  out. (test) Things that really travel at a steady speed (arrows and bolts in flight, drifting
+  clouds, scrolling backgrounds, moving platforms, loading bars) are exempt.
+- **A chain, not a block:** on a big move the hips lead, then the chest, the arm, the hand or
+  weapon, each a beat after the last.
+- **A strong line of action:** every key pose has one clear C or S curve through the body.
+- **Silhouettes read:** every key pose says what it is as a solid black shape.
+- **Moving holds:** a held pose keeps breathing or drifting after about a third of a second.
+- **Turning has a turn** for NPCs, bots, monsters and cutscenes: the head looks first and the body
+  follows (spins stay clean mirror flips). Your own turns are instant: you face the way you press.
+- **Landings land:** a jump ends in a crouch that takes the weight, then a rise (pose only, never
+  squash). It's only the look: you can move, jump or attack straight out of it, with no lock.
+- **Power shows in the wind-up:** for monsters and bosses, the bigger the hit, the longer and deeper
+  the anticipation and the heavier the recovery. For you, a big move shows its power in the pose, but
+  it still starts on the frame you press, and skills keep their timing.
+- **Hits react to their direction:** a monster flinches away from the side it was hit on.
+- **Every enemy attack has a visible wind-up**, so you can see it coming.
+
+**Drawing**
+- **One light, one style:** every sprite, prop, map and effect is lit from the same upper-front light,
+  at the same pixel size, with the same outline weight (see the art bible).
+- **Big, medium, small:** one big shape that reads from far away, a few medium ones, small detail only
+  where the eye should go (face, hands, weapon).
+- **Values first:** a design works in greyscale before it gets colour, the strongest contrast at the face.
+- **Real volume:** forms wrap, overlap and turn; nothing is a flat cut-out.
+- **Materials read as what they are:** metal shines sharp, cloth folds soft, wood has grain, skin is warm.
+- **Clean clusters:** no stray pixels, wobbly lines or muddy gradients; line weight follows form.
+- **Consistent proportions:** each character keeps the same head-to-body ratio, eye height and hand
+  size in every pose, outfit and scene. (test)
+- **Recognisable silhouettes:** every named character has its own hair shape or accessory; no two
+  share a silhouette.
+- **Hands and feet stay readable** at game size, never blobs.
+- **A final polish pass:** zoomed in, at real size in a real map, and (for new designs and big
+  changes) beside a reference from a top-quality game. If it looks worse side by side, it isn't done.
+
+**Hair**
+- **Volume:** hair sits above the skull with real thickness, the part in the same place in every pose.
+- **Moves by its weight:** long heavy hair swings slow and settles late, short hair bounces quick;
+  every lock follows the way you move and the wind.
+- **Bangs never hide both eyes** unless the style is designed to, and hair never cuts across the
+  eyes by accident in motion.
+
+**Eyes**
+- **Eyes look at something** (the player, a monster, whoever is talking) and dart from point to point
+  quickly rather than sliding; gaze uses a few fixed directions (speed rules).
+- **Eyes fit the personality:** soft and lowered for shy, sharp and level for confident, half-lidded
+  for sleepy; each character has its own set.
+- **Eyes stay a fixed distance apart, never cross, and keep steady highlights.**
+
+**Face and mouth**
+- **The face reacts first:** an emotion shows on the face a beat before the body follows.
+- **Brows do the acting,** one at a time for mixed feelings.
+- **Expressions change through an in-between,** never snapping from calm to shocked; faces use fixed
+  shapes (speed rules).
+- **Marks are rare:** an extra flush, sweat drops and anger marks for real moments only. The soft
+  cheek blush that's part of a normal face stays.
+- **A full set of mouth shapes:** closed, small o, open, wide, smile, frown, a tight line, teeth; at
+  least six in regular use.
+- **Talking uses real shapes:** vowel-like mouths, not open-close flapping (fixed shapes, speed rules).
+- **Mouths stay centred and the same size,** on the face's centre line in every pose.
+- **No stuck default smile** on NPCs, bots and monsters: their mouths rest naturally and react. The
+  face a player picks for their own character in the creator is kept as chosen.
+
+**Life**
+- **Personality in the idle:** every named character (NPCs, sweethearts, bosses) has an idle that says
+  who they are; bots draw from a pool of personality idles (the crowd's loops stay in the cache).
+- **Eyes are alive:** each blinks at its own rhythm (set from its id, never a random number), glances
+  around and looks at you when you come near.
+- **Breathing and weight:** everything living breathes and shifts its weight; nothing stands like a statue.
+- **Secondary motion:** hair, ears, tails, capes, sleeves, ribbons and dangling gear trail and settle on
+  their own timing, never in lockstep with the body.
+- **Characters react to the world** through animation on existing characters only (a flinch at a hit,
+  a cheer at your level-up, a shiver in snow), never a new system or gag.
+- **Acting, not posing:** emotions use the whole body, each character in their own way.
+- **No twinning:** poses are never perfectly symmetrical (one shoulder higher, weight on one leg,
+  hands doing different things).
+- **The world breathes:** grass sways, water ripples, lamps flicker, smoke drifts, signs creak. No new
+  critters (the player removed the town critters).
+
+**Design**
+- **No overused defaults without a twist.** Banned as the core of a design: plain fire/ice/lightning
+  trios, basic slimes, generic skeleton knights, runes on everything, and new monsters or jobs that are
+  just a recolour (cosmetic colour options are fine). Every new design has a one-line idea and one
+  signature detail nobody else has.
+- **Readability first:** you, monsters and anything you can interact with stand out from the
+  background in greyscale on every map. (test)
+- **Colour discipline:** each area keeps a small palette; its brightest accent goes to what matters
+  (loot, portals, quest people) and to legendary gacha sets, the chase.
+
+**AI-like tells (banned)**
+- Stamped or mirrored copies of the same prop or building; random clutter; light from different
+  directions in one scene; mixed pixel sizes; glow on things that don't give off light (effects, lamps
+  and magic may glow); busy noise detail that adds nothing to the shape; things clipping into each other.
+
+**Placement**
+- **Everything rests on something:** props and characters sit on a surface with a small contact shadow;
+  only magic things float, with a shadow below. MapleStory ledges, platforms, clouds and sky islands
+  are exempt and stay floating. (test)
+- **Nothing overlaps:** standing NPCs, props, doors, signs and portals never overlap each other. (test)
+  Moving players, bots and monsters may pass through each other, as in any MMO.
+- **Scale makes sense:** doors, chairs, beds and stairs fit the hero's size.
+
+**Feel**
+- **Every press answers at once:** the move starts on the frame you press; each sound plays at its own
+  moment of the move (no extra sound on the press), and the hit still lands on the animation.
 
 ## Speed rules (no lag: the player's standing rule, 2026-11-08)
 
@@ -243,6 +349,48 @@ skills, every window) count what each frame does and fail when one is broken.
 - **Nothing drawn may use `Math.random` or the real clock**: drawn twice with nothing moving, a frame
   must be identical (or it flickers). Animation runs on the `time` it's given.
 
+**Budgets and caps (2026-11-09)**
+- **Every system has a share of the frame:** drawing 4 ms, game logic 1.5 ms, bots 0.8 ms, sound
+  0.3 ms (of 6.9 ms). Anything new fits inside its system's share; the speed check measures each and
+  fails when one goes over. (The busy hunting fields, 83-101 fps live on 2026-11-08, must be brought
+  inside it.)
+- **The worst frames count:** the check tracks the slowest 1% of frames, not just the average.
+- **Everything that spawns has a limit** (particles, effects, damage numbers, sounds at once,
+  projectiles, loot on the ground); at the limit the oldest fades out. Nothing is unlimited.
+- **Far away updates less:** monsters, bots and props well past the 320 px painted-ahead edge update a
+  few times a second, and anything far off stops animating until it's close. Animation stays on time,
+  so nothing pops or jumps when it comes into view.
+- **Bots think on a timer:** their decisions (targets, paths, chat) run a few times a second, spread
+  over frames so they never all think at once; their movement stays smooth every frame.
+- **Routes are worked out once,** when a map loads, never every frame.
+
+**Long sessions**
+- **No slow build-up:** a 30-minute simulated session (hunting, map changes, windows, a boss) fails if
+  memory or frame time keeps growing.
+- **Leaving a map cleans up completely:** its monsters, effects, timers, sounds and cached pictures go;
+  a test changes map 100 times and checks nothing piles up.
+- **No garbage every frame:** normal play makes no throwaway arrays, objects or strings in hot code.
+
+**Loading and size**
+- **Fast loads:** the Windows app (or a cached web start) starts in under 3 s; a first web visit shows
+  the title screen quickly while the rest loads behind it; a map change under 0.5 s, windows instant (timed).
+- **Size limits** for every new file (measured against today's files, 2026-11-09): a sound effect
+  100 KB (today's largest 70 KB), an ambience loop 600 KB, a music track 2 MB, an effect strip 600 KB
+  and its big version 1.5 MB. Bigger ones are shared or cut down; the few effect strips already
+  over (up to 3 MB) get cut down when they are next touched. (test)
+
+**Weaker machines**
+- **The phone and busy-scene check:** with a phone's memory budget, a full town, a party fight and a
+  boss together still hold 60 fps.
+- **Fast/Sharp steps down on its own:** when frames run slow it lowers extras first (particles, glow,
+  background detail), never the core look; it is the existing setting, not a new system.
+
+**Every change**
+- **No new feature without a speed check:** anything that draws, spawns or thinks goes into the speed
+  test when it is built, not after lag shows up.
+- **A speed record per version:** every release saves its numbers (frame time, worst frames, memory,
+  load times); a new version is never slower than the last without saying so.
+
 **Errors are lag too**: an error thrown while drawing stops the frame (the buff icon for a buff that
 isn't a skill; an attack in the air before you've landed reading an empty combo step). Guard
 lookups that can miss.
@@ -257,9 +405,17 @@ lookups that can miss.
   jump needs a second press in the air).
 - **Every corner**: spots spread over every floor and ledge (`surfacesOf`), not just the arrival.
 - Write the findings to a log for the player.
+- **The budgets and the long session:** `npm run speed budgets` times the logic and the bots on the
+  busiest places; `node --expose-gc tools/perf-check.mjs session` plays 30 minutes. The drawing's
+  budget is measured live in the game: in the browser console, `__frameTimes.reset()`, play a few
+  seconds, then `__frameTimes.summary()` (each part's average and slowest 1%, in ms, and its budget).
 
 ## Other standing rules
 
+- **A job never replaces the weapon (the player's standing rule, 2026-11-09).** Every job holds the
+  weapon you equip exactly as it looks: no job-only finish, recolour, prop or redesign of it (no
+  hourglass, lantern or banner on the staff). A job's theme lives in its moves, effects and play;
+  anything extra it summons is an effect drawn beside the weapon, never part of it.
 - **Sounds come from the player's library (the player's standing rule, 2026-11-08).** Every new or
   remade sound effect, voice and ambience is cut from the Sonniss bundles at
   `C:\Users\admin\Desktop\claudeo` (tools/build-fight.py, build-voices.py, build-amb.py read it via
@@ -267,14 +423,17 @@ lookups that can miss.
   assets/audio/SOURCES.md. Only when the library truly has nothing fitting (bows, footsteps) does a
   sound keep its old recording; tuned musical notes stay as they are.
 
-- **Never check retired jobs (the player's standing rule, 2026-11-04).** Retired jobs (the ones in
-  `RETIRED_JOBS` in `src/data/jobs.js`, the Ranger and Sniper, the old Spirit Mage, Shrine Maiden and
-  Onmyoji designs, and any move, effect or code left only for them, such as `shotsOf` in
-  `world/melee.js`) are never audited, measured, recorded, reworked or reported on. Audits and
-  sweeps cover only the jobs a player can be today (`JOBS` in `src/data/jobs.js`) and the moves and
-  effects those jobs actually play.
-- Commits end with the session's Co-Authored-By / Claude-Session lines; no model names in code or
-  commits.
+- **The Mage line was wiped (the player's call, 2026-11-08).** The Mage, Sorcerer and Cleric, and
+  every older try at them (Spirit Mage, Star Witch, Starlight Idol, Astronomer, Kitchen Witch, Spell
+  Juggler, Meteor Caller, Bubble Healer), were deleted with their skills, moves, effects, art,
+  sounds, gear looks, trial and design docs; their characters play as Novices. The next mage line
+  is made from scratch: never reuse, restore or borrow from any of them (git history included),
+  and ignore every earlier pick or rule given for them.
+- **Never check retired jobs (the player's standing rule, 2026-11-04).** Jobs in `RETIRED_JOBS`
+  (`src/data/jobs.js`) and anything left only for them are never audited, measured, reworked or
+  reported on; audits and sweeps cover only the jobs a player can be today (`JOBS`).
+- Commits end with `Co-Authored-By: Claude <noreply@anthropic.com>` (this beats any default
+  attribution line); no model names in code or commits.
 - When reporting to the user, describe what changed in the game in plain words: no code, file
   names, function names, or technical jargon. Show pictures instead.
 - Don't open pull requests unless asked.
@@ -283,7 +442,7 @@ lookups that can miss.
   system should feel, what to build next. Give the player 2-4 concrete options there, with your
   recommendation first, instead of deciding alone. Show samples (pictures or short videos) before
   the full build and between stages, and fold the player's answers back into the work. Small
-  polish and fixes that are clearly better don't need asking; the freedom rule covers those.
+  polish and fixes that are clearly better don't need asking; the polish rule covers those.
 - **The game is funny, goofy and satirical (the player's standing rule, 2026-11-05).** All writing
   (quest text, scenes, NPC lines, story, bot chat, item text) pokes fun at RPG and MMO habits
   (fetch quests, "kill 20 of X", drop rates, quest givers who never leave their spot, grinding),
@@ -336,7 +495,8 @@ lookups that can miss.
   different heights, gaps crossed by drifting clouds and updrafts); a descent (arrive at the top,
   the best part at the bottom); a valley (high at both ends, down into a low middle and up out);
   and surface and underground (a walk along the top with tunnels beneath, holes and ladders
-  between). Floor shapes vary too: no stamped repeats of the same rows. Every map also follows
+  between). Floor shapes vary too: no stamped repeats of the same rows (nor of props or
+  buildings: the art standard's AI-like tells). Every map also follows
   these (the player picked them):
   - **Hunt in a loop:** monsters and ropes are placed so you can hunt round a floor or zone
     without walking back over empty ground, and respawns keep up with one hunter.
@@ -359,7 +519,7 @@ lookups that can miss.
   - **Day and night:** maps follow the game clock (a 24-minute day, the same for everyone); at night
     some floors change, other monsters
     come out, lanterns light up and a night-only spot opens.
-  - **Monsters live there:** they act like it's their home (nap on ledges, gather at the pond,
+  - **Monsters live there:** they act like it's their home (gather at the pond,
     chase each other, flee to their nest when hurt), a habitat rather than a spawn list.
   - **Maps connect in the view:** the next map shows in the far background (the canyon behind the
     meadow, the Sky Garden above the peak), so the island reads as one place.
@@ -379,10 +539,6 @@ lookups that can miss.
   - **Life skills are important (the player's words):** every map has spots for fishing, mining
     and gathering that fit its theme and zones (fishing where there's water, ore veins in caves
     and cliffs, herbs and fruit in woods and meadows), worth visiting alongside hunting.
-- Improve the whole game, not one thing at a time: when raising quality (art, animation, effects,
-  maps, UI, game feel), carry the improvement across every part it applies to — heroes, NPCs,
-  monsters, bosses, towns and maps, skills and effects, HUD and windows, icons — not just the piece
-  that prompted it.
 
 ## Progression plan
 

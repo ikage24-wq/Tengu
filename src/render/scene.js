@@ -1,15 +1,14 @@
 // Draws one frame of the world: scenery, NPCs, loot, monsters, the player, effects, and numbers.
 
+import { lapStart, lap } from '../core/frametimes.js';
 import { usingSkin } from '../data/cosmetics.js';
 import { drawSkinTag } from './cosmetics.js';
 import { awayNow } from '../world/nightmarket.js';
 import { wornGear } from '../core/character.js';
 import { drawCombatAura, heartbeat } from './aura.js';
 import { gaugeOf, phantom, inForm, hasFaith, thiefSchool } from '../world/melee.js';
-import { moveAt, MOVES, DANCE_MOVES, streamHover } from './moves.js';
+import { moveAt, MOVES, streamHover } from './moves.js';
 import { wheelShape, wheelWisps } from '../world/foxwheel.js';
-import { drawOrbs } from './juggler.js';
-import { drawSoapBubbles } from './bubbles.js';
 import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
@@ -25,7 +24,7 @@ import { createAnim, stepAnim } from './animator.js';
 import { createParticles, updateParticles, drawParticles, absorbJuice, shakeOffset, dust, elementStep, elementAura, landing } from './particles.js';
 import { ITEMS } from '../data/items.js';
 import { drawBubble, flushBubbles } from '../ui/chat.js';
-import { drawBuffEffects, scrollBelt } from './buffs.js';
+import { drawBuffEffects } from './buffs.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawTinted } from './tint.js';
 import { drawPets } from './pets.js';
@@ -132,9 +131,6 @@ const BLEND = 0.07;
 // that snaps straight to idle is where combat feels choppiest; 150-200 ms reads as recovering).
 const SETTLE = 0.17;
 
-// The Spirit Mage's dance flows from figure to figure and sinks back to standing slowly.
-const DANCE_BLEND = 0.18;
-const DANCE_SETTLE = 0.32;
 
 export function playerPose(world) {
   const b = world.body;
@@ -142,11 +138,11 @@ export function playerPose(world) {
   const life = lifePose(world);
   if (life) return life;
   const last = world.lastPose;
-  const settle = last && DANCE_MOVES.has(last.kind) ? DANCE_SETTLE : SETTLE;
+  const settle = SETTLE;
   if (!world.pose && last && b.onGround && !b.rope && Math.abs(b.vx) <= 8 && world.now - last.endedAt < settle && MOVES[last.kind]) {
     return { pose: last.kind, progress: 1, dur: last.dur, settle: (world.now - last.endedAt) / settle, ready: true, hit: last.hit, fin: last.fin };
   }
-  const blend = world.pose && DANCE_MOVES.has(world.pose.kind) ? DANCE_BLEND : BLEND;
+  const blend = BLEND;
   if (world.pose) return { pose: world.pose.kind, progress: 1 - world.pose.t / world.pose.dur, dur: world.pose.dur, from: world.pose.from, blend: (world.now - (world.pose.since ?? -9)) / blend, hit: world.pose.hit, fin: world.pose.fin, flow: world.pose.flow };
   if (b.rope) return { pose: 'climb' };
   if (!b.onGround) return { pose: 'jump', vy: b.vy };
@@ -388,7 +384,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   const nearPortal = world.map.portals.find((p) => !p.hidden && Math.abs(p.x - b.x) < 22 && Math.abs(p.y - b.y) < 6);
   // The portal on your guided route, if you're following one.
   const routePortal = world.route ? nextStep(world.map.id, world.route.to)?.portal : null;
+  lapStart();
   drawSceneBack(ctx, world.map, cam, VIEW_W, VIEW_H, time, nearPortal?.id, () => drawStreet(ctx, world.map, cam, VIEW_W, time, { wind: world.char.windBack && !world.windHold, name: world.char.name }), routePortal?.id);
+  lap('back');
   // Water to wade into, behind everyone (render/water.js).
   drawWaterBack(ctx, world.map, cam, VIEW_W, time);
   // Your furniture (or the friend's whose island you're visiting: world/decor.js), behind everyone.
@@ -398,6 +396,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   drawTownsfolk(ctx, world.map, cam, VIEW_W, time, botsIn(world.bots, world.map.id), world.hoverBot, world.body);
   drawNpcs(ctx, world, cam, time);
+  lap('people');
   drawWarnings(ctx, world, cam, time);
   drawGroundFx(ctx, world, cam, time);
   if (world.dungeon) drawDungeonBack(ctx, world, cam, time);
@@ -437,12 +436,14 @@ export function drawWorld(ctx, world, viewCam, time) {
     ctx.restore();
   }
   drawMobs(ctx, world, cam, time);
+  lap('mobs');
   // A Beastmaster's wolf and bear walk behind her; her hawk flies over her (drawn after her).
   drawPets(ctx, world, cam, time, 'back');
 
   drawParty(ctx, bodiedIn(world.bots, world.map.id), cam, VIEW_W, time, world.hoverBot);
   // Friends in your online room.
   drawGhosts(ctx, world, cam, VIEW_W, time);
+  lap('party');
 
   const p = playerPose(world);
   // Blink while recovering from a hit, but not through a move's own untouchable stretch (dashes,
@@ -505,7 +506,6 @@ export function drawWorld(ctx, world, viewCam, time) {
     const auraScale = inForm(world) ? 1.4 : 1;
     if (power) drawCombatAura(ctx, power[0], 'back', hx, ay, time, auraScale, power[1], b.facing);
     drawFoxWheel(ctx, world, hx, hy, time, 'back');
-    drawOrbs(ctx, world, hx, ay, time, 'back');
     // On a date: your sweetheart beside you, walking (or on a Puff Bun on a ride) (world/dates.js).
     if (world.date) drawDateBuddy(ctx, world, cam, time);
     // Riding: the mount with the hero in its seat (render/mounts.js). On a rope the gecko clings
@@ -525,8 +525,6 @@ export function drawWorld(ctx, world, viewCam, time) {
     // A low plant she's kneeling at, in front of her hands.
     drawNodesFront(ctx, world, cam, time);
     drawFoxWheel(ctx, world, hx, hy, time, 'front');
-    drawOrbs(ctx, world, hx, ay, time, 'front');
-    drawSoapBubbles(ctx, world, cam, time);
     if (power) drawCombatAura(ctx, power[0], 'front', hx, ay, time, auraScale, power[1], b.facing);
     // The rod and line while you fish (and the Fish / Cook hints).
     drawFishing(ctx, world, cam, time, hx, hy);
@@ -563,6 +561,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const lights = [{ x: hx, y: hy - 22, r: 96 }];
   for (const pt of world.map.portals) if (!pt.hidden) lights.push({ x: pt.x - cam.x, y: pt.y - 26 - cam.y, r: 56, k: 0.8, c: '#e6dcff' });
   // A soured map's colours fade.
+  lap('hero');
   drawSoured(ctx, world, VIEW_W, VIEW_H);
   if (hd && !gfx.noLight) drawLighting(ctx, world.map, cam, VIEW_W, VIEW_H, time, lights);
   // Night: the map's lamps light up too.
@@ -572,7 +571,9 @@ export function drawWorld(ctx, world, viewCam, time) {
   }
   // The nearest drifting petals, in front of everyone (and of the light, being between it and the
   // camera), but under the effects.
+  lap('light');
   drawSceneFront(ctx, world.map, cam, VIEW_W, VIEW_H, time);
+  lap('front');
   if (world.dungeon) {
     drawHollowFront(ctx, world, cam, time);
     drawManorFront(ctx, world, cam, time);
@@ -599,6 +600,7 @@ export function drawWorld(ctx, world, viewCam, time) {
   const glowy = world.fx.length || feel.fx.list.length || world.dungeon || world.team || world.zones?.length || coopBosses(world).length;
   if (hd && !gfx.noGlow && glowy) drawGlowing(ctx, drawFx);
   else drawFx(ctx);
+  lap('fx');
   if (settings.damageNumbers) drawNumbers(ctx, world, cam);
   drawCallout(ctx, world);
   if (settings.chatBubbles) drawBubbles(ctx, world, cam);
@@ -959,14 +961,7 @@ function drawSupport(ctx, buffs, x, y, time, now) {
     if (b.shield > 0) barrier = { ...b, id };
     if (b.values?.regenPct) renew = true;
   }
-  // The Cleric's element on her party (world/reactions.js), a little sigil bobbing over their heads.
-  const mark = buffs.mdmark;
-  if (mark && mark.until > now) fxSprite(ctx, `celrm${mark.el}`, x, y - 62 + Math.sin(time * 3) * 1.5, { t: time, scale: 0.36, alpha: Math.min(1, (now - mark.since) * 6, (mark.until - now) * 2) });
-  // The Mage's Scroll Shield: her scrolls circling their hips, as on her.
-  if (barrier?.id === 'spiritward') scrollBelt(ctx, x, y, time, Math.min(1, (now - barrier.since) * 3));
-  // The Cleric's Frost Shield: a cold pack hovering at each side of them while it holds.
-  else if (barrier?.id === 'mdfrost') fxSprite(ctx, 'celmdfrosthold', x, y + 3, { t: time, scale: 0.42, alpha: Math.min(1, (now - barrier.since) * 3) });
-  else if (barrier) {
+  if (barrier) {
     const k = 1 + Math.sin(time * 4) * 0.03;
     ctx.save();
     ctx.globalAlpha = 0.16;

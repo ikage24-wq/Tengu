@@ -61,28 +61,6 @@ const VARIANT_LOOKS = {
   crimson: { blade: '#dc4a5e', bladeDark: '#a02a40', edge: '#ffb8c2' },
   azure: { blade: '#4f8fe8', bladeDark: '#2f60b4', edge: '#c4f4ff' },
   gilded: { blade: '#f4c443', bladeDark: '#cc931e', edge: WHITE, trim: '#fff6dc', trimDark: '#e0c890' },
-  // The Blade Dancer's own finish on a plain chakram (render/hero.js): rose gold with a gold rim.
-  // The Arbalist Engineer's on a plain crossbow: polished brass with teal light.
-  brass: { blade: '#e8b85a', bladeDark: '#a8702a', edge: '#4fe0d0', trim: '#ffe0a0', trimDark: '#b8782a' },
-  // The Sky Dancer's on plain gloves: sky blue with a white cuff.
-  skyblue: { blade: '#8fd0ff', bladeDark: '#4e90d8', edge: '#ffffff', trim: '#ffffff', trimDark: '#c8dcf0' },
-  // The Phantom Trickster's on her bow, the same short recurve (weapon-designs.js): plum and silver.
-  phantom: { blade: '#9a4a9a', bladeDark: '#5a2462', edge: '#f6eeff', trim: '#d8dcec', trimDark: '#7a7e9a' },
-  // The Acrobat Archer's on her bow, drawn as a short trick recurve (weapon-designs.js): mint and gold.
-  acro: { blade: '#5ed6a8', bladeDark: '#2a9a78', edge: '#e6fff4', trim: '#ffd36a', trimDark: '#c8902e' },
-  // The Astronomer's on her staff, drawn as an orrery (weapon-designs.js): violet and silver.
-  astro: { blade: '#8a6ae0', bladeDark: '#4a3a9a', edge: '#f2eeff', trim: '#d8dcec', trimDark: '#7a7e9a' },
-  // The Starlight Idol's on her wand, drawn as her microphone (weapon-designs.js): pink and gold.
-  idol: { blade: '#ff8fc0', bladeDark: '#e0609e', edge: '#fff0f6', trim: '#ffd36a', trimDark: '#d89a36' },
-  // The Kitchen Witch's ladle and frying pan (weapon-designs.js): steel, cast iron, warm wood, a gold yolk.
-  chef: { blade: '#5a5468', bladeDark: '#36303f', edge: '#e6e8f2', trim: '#ffd36a', trimDark: '#c8902e', gem: '#ffc23b', handle: '#d09a5e', handleDark: '#9a6a3e' },
-  // The Mage's wand and staff (weapon-designs.js): gnarled wood, a crystal shard, the element orb.
-  arcane: { blade: '#8a5a3a', bladeDark: '#5a3a28', edge: '#f2eeff', handle: '#8a5a3a', handleDark: '#5a3a28' },
-  // The Cleric's sun scepter (weapon-designs.js): white and gold.
-  cleric: { blade: '#fbf6ec', bladeDark: '#e0d4bc', edge: '#ffffff', trim: '#ffd36a', trimDark: '#d89a36', handle: '#fbf6ec', handleDark: '#e0d4bc' },
-  // The Sorcerer's staff and wand (weapon-designs.js): black wood, iron, a violet flame.
-  sorcery: { blade: '#2a1c30', bladeDark: '#140c18', edge: '#ffd27a', trim: '#ff8a3a', trimDark: '#b8501e', gem: '#ff8a3a', handle: '#2a1c30', handleDark: '#140c18', fx: 'embers', glow: null, prism: null },
-  rosegold: { blade: '#f2a48c', bladeDark: '#c8666a', edge: '#fff0d6', trim: '#ffd36a', trimDark: '#d89a36' },
 };
 // Types whose shaft or wood (not a blade) carries most of the color.
 const WOODEN = new Set(['bow', 'crossbow', 'wand', 'staff', 'spear']);
@@ -110,7 +88,7 @@ export function lookFor(type, tier, theme, variant = null) {
   const look = { ...base, ...ornaments(t), tier: t, rank: Math.ceil(t / 4), step: t ? (t - 1) % 4 : 0, theme: null, variant: null };
   if (look.rune) look.runeDim = mix(base.bladeDark, base.rune, 0.3);
   if (base.name === 'genesis') look.prism = PRISM;
-  const v = (t > 0 || variant === 'idol' || variant === 'astro' || variant === 'acro' || variant === 'phantom' || variant === 'chef' || variant === 'arcane' || variant === 'cleric' || variant === 'sorcery') && VARIANT_LOOKS[variant];
+  const v = t > 0 && VARIANT_LOOKS[variant];
   if (!v) return look;
   Object.assign(look, v, { variant });
   if (WOODEN.has(type) && !v.handle) Object.assign(look, { handle: v.blade, handleDark: v.bladeDark });

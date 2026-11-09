@@ -26,7 +26,7 @@ collected here, worst first within each part. Tick items off as they're fixed. I
 - [x] Two weapons per type share a name (Mithril Sword lv 30 and lv 40). (fixed)
 
 ## B. Classes and heroes
-- [ ] **(player: own version per path)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves".
+- [x] **(player: own version per path)** Second jobs still play their first job's skills with the first job's moves (Blade/Sky Dancer cast the Wind Dancer's Pirouette and Grand Finale; Idol/Astronomer cast the Star Witch's spells and Starfall; Trickster/Arbalist cast the Acrobat's Vault and Grand Somersault; Paladin/Berserker the Warrior's Whirlwind and Titan Breaker). Breaks "never reuse another job's moves". (done: every second job plays its first job's skills with its own moves and effects.)
 - [x] The Wind Dancer's Ribbon Lash and Gust Line proc for the Blade and Sky Dancer too (coral swirls on a rose-gold dancer). (fixed)
 - [x] The Wind Dancer's basic cuts draw the Warrior's steel-blue swipe and spin ring. (fixed)
 - [x] Arbalist's steam puff on her face on every shot. (fixed)

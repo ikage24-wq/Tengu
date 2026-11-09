@@ -17,8 +17,6 @@ import { crescent, starFlash, needle, shock, bloom, stepped, haloStroke, inked, 
 import { mix, snap, gfx } from './pixel.js';
 import { font } from '../ui/kit.js';
 import { strikePose } from './hero.js';
-import { drawFilm } from './bubbles.js';
-import { drawMeteor, drawComet } from './meteor-fx.js';
 import { weaponTrail, weaponHit, thrustStreak } from './blade-fx.js';
 import { wornGear } from '../core/character.js';
 
@@ -104,169 +102,6 @@ function drawShot(ctx, f, cam) {
       // Wind-Up Bomb toddling along to them, rocking on its little feet.
       fxSprite(ctx, 'celaewindup', x, y + 6 - 2 * Math.abs(Math.sin(f.t * 20)), { t: f.t, flip: f.tx < f.x, scale: 1.1 });
       break;
-    case 'asplanet': case 'asbig': case 'asmoon': {
-      // The Astronomer's: a little ringed planet rolling with an orbit trailing it, a great ringed
-      // world, and one of her moons flying off at a monster.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const name = f.shot === 'asplanet' ? 'celasplanet' : f.shot === 'asbig' ? 'celasbig' : 'celasmoon';
-      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'asmoon' ? 0 : left ? a + Math.PI : a, scale: f.shot === 'asplanet' ? 0.75 : f.shot === 'asbig' ? 0.8 : 0.8, alpha: f.split ? 0.85 : 1 });
-      break;
-    }
-    case 'siheart': {
-      // Her heart drawn in the air: it sails on level, rocking gently, with a trail of sparkles.
-      const born = bornAt(f);
-      fxSprite(ctx, 'celsiheart', x, y, { t: f.t, flip: f.tx < f.x, rot: 0.12 * Math.sin(f.t * 9), scale: born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'bbshot':
-      // A party Bubble Healer's bubble: it bobs as it floats on, swelling out of the wand first.
-      drawFilm(ctx, x, y + 3 * Math.sin(f.t * 8), 7 * bornAt(f), f.t * 3, 0, 1);
-      break;
-    case 'sinote': case 'sibig': {
-      // The Starlight Idol's: a pink note that bobs as it flies, and her big burst of sound.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      // (Born small at the mic and grown to full in its first moment, so it never sits on her face.)
-      const born = bornAt(f);
-      fxSprite(ctx, f.shot === 'sinote' ? 'celsinote' : 'celsibig', x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: (f.shot === 'sinote' ? 1 : 1.05) * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'clbolt': case 'clorb': case 'clpillar': {
-      // The Cleric's: a little sun with gold rays trailing, an orb of light with feathers circling,
-      // and Judgment's pillar of light falling straight down.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const born = f.shot === 'clpillar' ? 1 : bornAt(f);
-      const size = { clbolt: 0.6, clorb: 0.62, clpillar: 0.85 }[f.shot];
-      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: f.shot === 'clorb' ? 0 : left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'sohand': case 'soflame': case 'sofire': case 'sograsp': case 'soslam': {
-      // The Sorcerer's: a shadow hand flung reaching, a wisp or ball of violet flame round an ember
-      // heart, shadow hands clawing up out of the ground as the line races along it, a giant hand
-      // reaching down out of the sky (born small at the wand or staff, grown to full in its first
-      // moment). An echo cast by Spellstorm comes a little smaller and fainter.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const ground = f.shot === 'sograsp';
-      const born = f.shot === 'soslam' ? 1 : bornAt(f);
-      const size = { sohand: 0.55, soflame: 0.6, sofire: 0.7, sograsp: 0.62, soslam: 0.75 }[f.shot];
-      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot: ground ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.85 : 1), alpha: (f.split ? 0.8 : 1) * Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'mdpill': case 'mdpack': case 'mdpulse': case 'mdbottle': case 'mdspray': case 'mdecg': case 'mdhuge': case 'mdzapbig':
-    case 'mdbomb': case 'mdmist': case 'mdzap': {
-      // The Cleric's medical gear (the remake): a hot-pack capsule tumbling, a gel ice pack sliding
-      // along low, a heart-monitor pulse racing down the line, a hot-water bottle lobbed, a cloud of
-      // cold spray rolling along the floor, a great heartbeat wave; the giant capsule and the long
-      // pulse of her skills (born small at the wand or staff, grown to full in its first moment).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const born = bornAt(f);
-      const line = f.shot === 'mdpulse' || f.shot === 'mdecg' || f.shot === 'mdzapbig' || f.shot === 'mdzap';
-      const size = { mdpill: 0.55, mdpack: 0.55, mdpulse: 0.62, mdbottle: 0.6, mdspray: 0.6, mdecg: 0.65, mdhuge: 0.6, mdzapbig: 0.65, mdbomb: 0.55, mdmist: 0.55, mdzap: 0.62 }[f.shot];
-      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: line ? (left ? a + Math.PI : a) : 0, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'qnorb': case 'qncrown': case 'qndecree': case 'qngeyser': case 'qnwall': case 'qnstrike': {
-      // The Sorcerer's (the remake): a royal fire orb rolling slow and huge, a spinning ice crown,
-      // a lightning scepter, fire geysers and a wall of ice racing along the floor, a crown of
-      // lightning straight down from the sky (born small at the wand or staff, grown to full in its
-      // first moment).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const ground = f.shot === 'qngeyser' || f.shot === 'qnwall';
-      const born = f.shot === 'qnstrike' ? 1 : bornAt(f);
-      const size = { qnorb: 0.7, qncrown: 0.62, qndecree: 0.7, qngeyser: 0.62, qnwall: 0.62, qnstrike: 0.85 }[f.shot];
-      const rot = ground || f.shot === 'qnorb' || f.shot === 'qncrown' ? 0 : left ? a + Math.PI : a;
-      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'mcspark': case 'mccomet': case 'mcmeteor': case 'mcgiant': {
-      // The Meteor Caller's: a star-spark, and the comet and the meteor falling slanted from the sky
-      // (pointed along their fall, grown in from small as they come out of the dark).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const born = f.shot === 'mcspark' ? bornAt(f) : Math.min(1, 0.4 + f.t * 3);
-      // (Extinction's colossal star is the meteor drawn far larger.)
-      const size = { mcspark: 0.5, mccomet: 0.62, mcmeteor: 0.8, mcgiant: 2 }[f.shot];
-      // (The comet and the meteors are drawn by hand: render/meteor-fx.js.)
-      if (f.shot === 'mccomet') drawComet(ctx, x, y, a, 5.5 * born, (f.t ?? 0) + (f.seed ?? 0) * 3, Math.min(1, born * 1.4));
-      else if (f.shot === 'mcmeteor' || f.shot === 'mcgiant') drawMeteor(ctx, x, y, a, (f.shot === 'mcgiant' ? 34 : 11) * born, (f.t ?? 0) + (f.seed ?? 0) * 3, f.shot === 'mcgiant' ? 7 : 3, Math.min(1, born * 1.4));
-      else fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'jgpotato': {
-      // Hot Potato: the enormous orb bowled along the floor, bouncing three times as it goes.
-      const born = bornAt(f);
-      const hop = f.dur > 0 ? -Math.abs(Math.sin(Math.max(0, f.t / f.dur) * Math.PI * 3)) * 16 * born : 0;
-      fxSprite(ctx, 'celjgpotato', x, y + 10 + hop, { t: f.t, flip: f.tx < f.x, scale: 0.6 * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'jgfire': case 'jgice': case 'jgbolt': case 'jgbigfire': case 'jgbigice': case 'jgbigbolt': case 'jgpalm': {
-      // The Spell Juggler's flung orbs (their comet tails streaming behind; born small at her hand,
-      // grown to full in a moment), and her little palm spark. On the way home an orb is smaller.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const born = bornAt(f);
-      const size = (f.shot === 'jgpalm' ? 0.5 : f.shot.startsWith('jgbig') ? 0.62 : 0.55) * (f.home ? 0.8 : 1);
-      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: left ? a + Math.PI : a, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'pmspark': case 'pmshard': case 'pmzap': case 'pmbomb': case 'pmspike': case 'pmstrike': case 'pmhuge': case 'pmwire': {
-      // The Mage's (the remake): a firecracker spark, a spiky snowball, a crackling zap ball, a
-      // grinning fireball that bounces along and rocks as it flies, ice spikes punching up along the
-      // floor, and a strike straight down from the sky (born small at the wand or staff, grown to
-      // full in its first moment).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const ground = f.shot === 'pmspike';
-      const bomb = f.shot === 'pmbomb' || f.shot === 'pmhuge';
-      const born = f.shot === 'pmstrike' ? 1 : bornAt(f);
-      const hop = f.shot === 'pmbomb' && f.dur > 0 ? -Math.abs(Math.sin(Math.max(0, f.t / f.dur) * Math.PI * 3)) * 14 * born : 0;
-      const size = { pmspark: 0.6, pmshard: 0.6, pmzap: 0.62, pmbomb: 0.7, pmspike: 0.62, pmstrike: 0.8, pmhuge: 0.7, pmwire: 0.7 }[f.shot];
-      const rot = ground ? 0 : bomb ? 0.15 * Math.sin(f.t * 20) : left ? a + Math.PI : a;
-      fxSprite(ctx, `cel${f.shot}`, x, ground ? y + 18 : y + hop, { t: f.t, flip: left, rot, scale: size * born, alpha: Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'mgfire': case 'mgfireball': case 'mgice': case 'mgspike': case 'mgbolt': case 'mgsky': {
-      // The Mage's: a fire bolt or a fireball streaming flame, a frost shard, ice spikes bursting up
-      // out of the ground as the line races along it, a lightning bolt through the line, lightning
-      // straight down from the sky (born small at the wand or orb, grown to full in its first moment).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const spike = f.shot === 'mgspike';
-      const born = f.shot === 'mgsky' ? 1 : bornAt(f);
-      const size = { mgfire: 0.6, mgfireball: 0.7, mgice: 0.6, mgspike: 0.62, mgbolt: 0.7, mgsky: 0.8 }[f.shot];
-      fxSprite(ctx, `cel${f.shot}`, x, spike ? y + 18 : y, { t: f.t, flip: left, rot: spike ? 0 : left ? a + Math.PI : a, scale: size * born * (f.split ? 0.8 : 1), alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'kwglob': case 'kwwave': case 'kpegg': case 'kpflame': case 'kwspice': {
-      // The Kitchen Witch's: a glob of hot broth, a curling wave of soup, a spinning fried egg, a gush
-      // of flambé fire, a cloud of salt and pepper, each turned along its flight (born small at the
-      // ladle or pan and grown to full in its first moment, so it never sits on her face).
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const born = bornAt(f);
-      const size = { kwglob: 0.62, kwwave: 0.8, kpegg: 0.62, kpflame: 0.95, kwspice: 0.6 }[f.shot];
-      // (The wave and the fire roll along level; the egg wobbles as it spins; the spice just drifts.)
-      const spin = f.shot === 'kwspice' || f.shot === 'kwwave' || f.shot === 'kpflame' ? 0 : f.shot === 'kpegg' ? 0.25 * Math.sin(f.t * 12) : left ? a + Math.PI : a;
-      fxSprite(ctx, `cel${f.shot}`, x, y, { t: f.t, flip: left, rot: spin, scale: size * born * (f.split ? 0.8 : 1), alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
-      break;
-    }
-    case 'stbolt': case 'stcomet': case 'stmeteor': {
-      // The Star Witch's: a spinning gold star with a midnight comet tail, turned along its flight; a
-      // comet with a great tail and ring; a meteor falling from the sky.
-      const a = Math.atan2(f.ty - f.y, f.tx - f.x);
-      const left = Math.cos(a) < 0;
-      const name = f.shot === 'stbolt' ? 'celstbolt' : f.shot === 'stcomet' ? 'celstcomet' : 'celstmeteor';
-      // (A star or comet is born small at the wand's tip and its tail grows out behind it as it
-      // flies, so the tail never lies back over her; a meteor falls in from the sky full size.)
-      const born = f.shot === 'stmeteor' ? 1 : bornAt(f);
-      fxSprite(ctx, name, x, y, { t: f.t, flip: left, rot: f.shot === 'stmeteor' ? 0 : left ? a + Math.PI : a, scale: 0.75 * born, alpha: (f.split ? 0.85 : 1) * Math.min(1, born * 1.4) });
-      break;
-    }
     case 'skygust': case 'skygustbig': {
       // The Sky Dancer's gust: a crescent of wind with a feather riding it, turned along its flight;
       // on full Tailwind (and her finishers) a great one.
@@ -1132,11 +967,10 @@ function drawFx(ctx, f, cam, time) {
 
 // The hero whose blows the smears and spikes belong to, so they line up with the weapon.
 let hero = null;
-// Effects that lie on the ground under everyone (the Starlight Idol's song rings and her stage,
-// the Astronomer's Gravity Well, the dancers' finisher stages: Grand Finale's spotlight and rose,
+// Effects that lie on the ground under everyone (the dancers' finisher stages: Grand Finale's spotlight and rose,
 // Golden Carousel's track, Sky Waltz's tornado, which stand round her and must not cover her face):
 // drawn behind the heroes and monsters (drawGroundFx), so they never wash over a face.
-const GROUND_FX = new Set(['bbhype', 'bbfoam', 'mcwellfx', 'mcmoons', 'mccrater', 'jgplates', 'mdnovafx', 'qnnovafx', 'qnthrone', 'pmnovafx', 'pmcamp', 'sistage', 'sihype', 'sispot', 'sicurtain', 'sipyro', 'aswell', 'shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
+const GROUND_FX = new Set(['shock', 'wdfinale', 'bdcarousel', 'skytornado', 'sddownburst', 'sdcloudnine', 'aeballista', 'titanwave', 'consecrate', 'verdict',
   // (the first jobs' skills as the paths play them: data/skills.js `paths`)
   'bdrevue', 'skycloudburst', 'siballad', 'siharmony', 'asmoonfall', 'asveil']);
 export function drawEffects(ctx, world, cam, time) {

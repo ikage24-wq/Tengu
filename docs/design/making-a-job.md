@@ -1,8 +1,9 @@
 # Making a job
 
-The recipe for every new job or path. The player approved how the Warrior paths (Paladin,
-Berserker) and archer paths (Ranger, Sniper) turned out and wants every future job made the same
-way. Read this whole page before starting a job, follow it in order, and update it when something
+The recipe for every new job or path. The player approved how the Warrior and its paths
+(Paladin, Berserker), the Acrobat Archer and its paths (Phantom Trickster, Arbalist Engineer) and
+the Wind Dancer and its paths (Blade Dancer, Sky Dancer) turned out and wants every future job made
+the same way. Read this whole page before starting a job, follow it in order, and update it when something
 new is learned.
 
 ## 1. Research and plan
@@ -13,10 +14,11 @@ new is learned.
   pass).
 - Look at real references for the job's fantasy (MapleStory first, then other 2D action games).
   Save what you learn, with sources, in `docs/art/research/`.
-- Decide the job's identity before writing code: its fantasy, its weapon, its **colour**, and its
+- Decide the job's identity before writing code: its fantasy, which weapon types it uses (shown
+  exactly as equipped: a job never restyles the weapon, CLAUDE.md), its **colour**, and its
   **shape language** (the Warrior's blue cross, the Paladin's gold star and pillars of light, the
-  Berserker's rose claws, fire, torn ground and jagged shockwaves, the Ranger's emerald wind and
-  leaves, the Sniper's ice-blue streaks and rose sight). The shapes must be its own, not another
+  Berserker's rose claws, fire, torn ground and jagged shockwaves, the Phantom Trickster's plum
+  smoke, cards and doves, the Blade Dancer's rose-gold rings). The shapes must be its own, not another
   job's in a new colour: the Paladin and Berserker once shared pillars, rings and swings and read
   as the same job twice. Pick a colour bold enough to read on every map (pale mint vanished on
   purple maps).
@@ -30,17 +32,19 @@ blow).
 - **Basic combo** (`world/melee.js`): three steps with a finisher on the third, each a move, a
   duration and strikes timed with `at`.
 - **Command moves**: up + attack, attacking in the air, attacking out of a run.
-- **Its own gauge** (like Valor, Momentum, Bloom, Shadow, Ki, Tails, Rage, Faith, Bond, Charge in `world/melee.js`):
+- **Its own gauge** (like the Warrior's Valor, the Acrobat Archer's Combo, the Wind Dancer's
+  Encore, the Berserker's Rage, the Paladin's Faith, the Blade Dancer's Ricochet, the Sky Dancer's
+  Tailwind in `world/melee.js`):
   - It builds in a fight in the job's own way (Valor from blows, faster the more monsters one
-    blow catches; Momentum from shots landing in a row, halved when hit; Shadow from hits landing in a quick chain; Rage from blows, Faith
-    also from hits taken, Gale from arrows landing, Focus from standing still and aiming).
+    blow catches; Combo from shots landing in a row, halved when hit; Rage from blows; Faith also
+    from hits taken).
   - It drains once the fighting stops.
   - The fuller it is, the stronger something gets.
-  - While it's full, something special happens: Unbroken, Hawkeye, Full Bloom, Phantom, Execution, Constellation, Berserk, Sanctified,
-    Tailwind's twin arrows, Deadeye.
+  - While it's full, something special happens (Unbroken, Showtime, Berserk, Sanctified,
+    Carousel, Tailwind).
   - Show it on the HUD (`ui/hud.js` GAUGES) with an aura on the hero (`render/aura.js`).
 - **Skills** (`data/skills.js`): built as timed combo steps; limited by MP and their own
-  animation only.
+  animation, plus a cooldown where it fits (long buffs, big heals, strong utility).
 - **Finisher**: one big signature skill that needs the gauge **full** and spends **all** of it
   (`fullGauge: true`).
   - "FINISHER READY" shows over the gauge.
@@ -52,7 +56,7 @@ blow).
   - the finisher waits for a full gauge and spends it;
   - the no-spam rule holds: every skill plays its motion plus its beat of recovery (`AFTER`, by
     weight), and the pace test ("no job can mash out its attacks") passes for it;
-  - any special behaviour is tested (e.g. Sniper bolts pierce the line).
+  - any special behaviour is tested (e.g. the Blade Dancer's rings bounce on).
 
 - **A first job with two weapons** (like the Thief's dagger and gauntlet) is the base for both
   2nd-job paths (the Blade Dancer and the Sky Dancer grew from the Wind Dancer's chakram and glove sets): one shared gauge and a few shared skills, then a set of skills for each weapon
@@ -74,7 +78,7 @@ blow).
 
 ## 3. Animation
 
-Held to the Wind Dancer standard (CLAUDE.md): every move is the job's own, drawn for its name
+Held to the quality bar (CLAUDE.md): every move is the job's own, drawn for its name
 (a dancer dances), re-rigged as freely as it needs, fluid, and never covering the face. Never
 borrow another job's moves. Check it with strips (`tools/move-strip.html`), every pose for the
 face (`tools/hold-sheet.html`) and GIFs (`tools/make-gif.py`) before showing it.
@@ -130,7 +134,8 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
 ## 5. Everything else it touches
 
 - Job data (`data/jobs.js`), its trial quest and trainer NPC (`data/quests.js`, `data/npcs.js`).
-- Skill icons (`render/icons/skills.js`) and job gear look (`render/jobgear/`).
+- Skill icons (`render/icons/skills.js`) and the gear for its family (`render/jobgear/`); a job never
+  restyles the gear or weapon you equip.
 - Sounds for its weapon and skills.
 - Bots and party play (`world/bots.js`, `world/party.js`).
 - Dungeon roles (`data/dungeons.js`).
@@ -138,9 +143,8 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
 
 ## 6. Show it
 
-- Record GIFs of every move and of every skill in the game (basic strings, command moves, each
-  skill, the gauge filling, the finisher) with captions (`tools/make-gif.py`: the moves alone with
-  the page `move-frames`, the skills on the stage with `moves-stage` and its `record` plan), and
-  send them.
+- At each checkpoint send one short captioned clip of what's new (`tools/make-gif.py`: the moves
+  alone with the page `move-frames`, the skills on the stage with `moves-stage`): the basic
+  attacks first, then the skills, then the finisher. More only if the player asks.
 - Fix anything that looks wrong before calling the job done.
 - Commit and push, and report in plain words with pictures.

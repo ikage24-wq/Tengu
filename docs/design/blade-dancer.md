@@ -44,7 +44,7 @@ carry over; the name is Blade Dancer).
   three to five bounces each).
 - Effects (tools/fx-art.js): `bdring`, `bdbounce`, `bdhit`, `embblade`, `bdcarousel`. Icons,
   HUD gauge (Ricochet / CAROUSEL), aura, sounds (`bdbounce`, `bdcarousel`, `carouselfull`).
-- Outfit: the dancers' showgirl line, trimmed in her rose gold with gold gems.
+- Outfit and chakrams: whatever you equip, exactly as they look (a job never restyles them).
 
 ## Animation pass (2026-11-03)
 

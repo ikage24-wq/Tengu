@@ -26,15 +26,12 @@ import { createSpawner, tickSpawner, updateMob, hitMob, mobBox } from './mobs.js
 import { rollLoot, spawnDrops, updateDrops, dropInReach, dropFromHero } from './drops.js';
 import { cast, castBlocker, weaponElement, hurtProcs, blockOnHit, drinkBlood, tickLater } from './combat.js';
 import { ventGuard } from './engineer.js';
-import { CALL_WALK } from './melee.js';
 import { tickMelee, faithGuard, addAim, hasRage, hasFaith, hasShadow, hasKi, hasMomentum, hasValor, unbroken, loseMomentum, barrageRelease, BARRAGE_WALK, skyFlight } from './melee.js';
-import { elementHit, allyElement } from './reactions.js';
 import { healAround } from './melee.js';
 import { JOBS, nextJobs } from '../data/jobs.js';
 import { celebrateLevels } from './levelup.js';
 import { DUNGEONS } from '../data/dungeons.js';
 import { onMapLoaded, tickDungeon, noteHit, onMobKilled, dungeonInteract, portalSealed, absorb, cutOf } from './dungeon.js';
-import { lastRite } from './idol.js';
 import { SETS, SET_SLOTS, setPieceId } from '../data/sets.js';
 import { makeEquip } from '../core/items.js';
 import { recordBook } from '../core/collection.js';
@@ -154,14 +151,6 @@ export function loadMap(world, mapId, portalId) {
   world.cloud = null;
   world.numbers = [];
   world.channel = null;
-  // Spells laid on the last map stay there (Heaven's Lantern, the Starlight Idol's songs and stage,
-  // the Astronomer's Gravity Well).
-  world.lantern = null;
-  world.spot = null;
-  world.hype = null;
-  world.lull = null;
-  world.concert = null;
-  world.well = null;
   world.events.push({ type: 'map', mapId: map.id });
   // Home to whoever lives with you: a welcome, and some mornings a dish (world/sweethearts.js).
   if (map.home && !map.indoor) welcomeHome(world);
@@ -629,8 +618,7 @@ export function hurtPlayer(world, rawAtk, fromX) {
   // Unbroken (full Valor), nothing knocks a Warrior back; a hit breaks an Archer's Momentum.
   if (!unbroken(world)) knockBack(world.body, fromX);
   loseMomentum(world);
-  // (A Shrine Maiden's Last Rite keeps her standing, once.)
-  if (char.hp <= 0 && !world.dead && !lastRite(world)) {
+  if (char.hp <= 0 && !world.dead) {
     world.dead = true;
     dismount(world, { quiet: true, hop: false });
     world.events.push({ type: 'death' });
@@ -743,8 +731,6 @@ export function updateWorld(world, dt, input) {
   const repeats = (b) => Boolean(b?.skill) && ['attack', 'magic'].includes(SKILLS[b.skill]?.type);
   const skillHeld = Object.entries(char.hotkeys).some(([code, b]) => repeats(b) && held.has(code)) && !world.body.rope;
   const attackHeld = basicHeld || skillHeld;
-  // (The Meteor Caller's charge reads whether attack is still held: world/melee.js tickCaller.)
-  world.basicHeld = basicHeld;
   const acting = world.attackTimer > 0 || world.lockTimer > 0;
   const walkAway = (intent.left || intent.right) && !attackHeld;
   // An attack about to start faces the way you're holding (planted, you turn on the spot).
@@ -761,9 +747,7 @@ export function updateWorld(world, dt, input) {
   // Endless Fox-Fire's barrage doesn't root her: she walks slowly through it (and can jump into the
   // air barrage). Its finisher roots her as any move does.
   const streaming = basicHeld && Boolean(world.barrage) && world.recoverKind === 'basic' && !world.pose?.fin;
-  // The Meteor Caller walks slowly while she gathers a charge (CALL_WALK).
-  const calling = Boolean(world.call);
-  const rooted = !streaming && !calling && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
+  const rooted = !streaming && (world.attackTimer > 0.15 || world.lockTimer > 0 || attackHeld) && world.body.onGround;
   // Riding (world/mount.js): H gets on and off; an attack or a skill hops you off and goes off at
   // once; fishing, gathering and crafting put the mount away.
   if (pressed.has('KeyH')) toggleMount(world);
@@ -778,7 +762,7 @@ export function updateWorld(world, dt, input) {
   if (!(pressed.has('ArrowUp') && interact(world))) {
     // (The Sky Dancer on full Tailwind hovers where she is unless Up or Down flies her.)
     const hover = !world.body.onGround && world.body.vy >= 0 && skyFlight(world) && !intent.up && !intent.down;
-    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : calling ? { speed: world.stats.speed * CALL_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
+    stepBody(world.body, world.map, bodyIntent, dt, { ...world.stats, wade: WADE, ...(streaming ? { speed: world.stats.speed * BARRAGE_WALK } : null), ...(hover ? { float: true } : null), ...(ride ?? null), rider: true });
   }
   rideAfter(world);
   if (!ride) tickAgility(world, dt, blockWalls);
@@ -860,8 +844,6 @@ export function updateWorld(world, dt, input) {
       world.hits = world.now - (world.hitsAt ?? -9) <= HITS_WINDOW ? (world.hits ?? 0) + 1 : 1;
       world.hitsAt = world.now;
       if (h.gauge) addAim(world, h.gauge, m, h.el);
-      // The Mage's spells mark what they hit with their element, and set off reactions.
-      elementHit(world, m, h);
       // The Cleric's heal bombs mend the party round where they burst, carrying their element.
       if (h.mend) healAround(world, m.x, m.y, h.mend, 220, true, h.el);
       drinkBlood(world, h.damage);

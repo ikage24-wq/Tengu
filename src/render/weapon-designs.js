@@ -684,7 +684,7 @@ function bowl(x, y, r, c) {
 // A metal ring: a loop with a hole.
 const ring = (x, y, r, c) => [E(x, y, r, r, c), E(x, y, r * 0.55, r * 0.55, 'none')];
 
-// ---------- Wands: star wands (the Star Witch's) ----------
+// ---------- Wands: star wands ----------
 //
 // A short slim wand held at its end (a little pommel below the hand), a star on top, so it points
 // out from her hand and never sits across her face. A wooden wand with a brass star, a copper star
@@ -706,85 +706,8 @@ function star5(x, y, r, c, k = 0.46, rot = 0) {
 // A star with a light face and a gem at its heart.
 const starHead = (x, y, r, c, light, gemC, k) => [star5(x, y, r, c, k), F(star5(x, y - r * 0.08, r * 0.62, light, k)), ...(gemC ? gem(x, y, r * 0.24, gemC) : [])];
 
-// The Starlight Idol's wand is her microphone (the 'idol' finish, render/hero.js): a short gold
-// handle, a round pink mic head with a gold grille band and a little star on it, ribbons tied at
-// the neck. Small, so she can sing into it with it held out beside her face, never across it. It
-// grows a little and gains a gem and wings up the tiers.
-function idolMic(m, t) {
-  const s = [];
-  const a = {};
-  const H = 4.6 + t * 0.2;
-  const r = 3 + t * 0.07;
-  const cy = -H - r + 0.6;
-  // Ribbons tied at the neck, trailing down either side of the handle.
-  for (const sd of [-1, 1]) s.push(T([[0, -H + 0.8], [sd * 2.6, -H + 2], [sd * 2.2, -H + 4.6], [sd * 1.4, -H + 3.6], [sd * 0.6, -H + 1.6]], m.bladeDark));
-  s.push(T([[-1.2, 2.4], [1.2, 2.4], [1, -H], [-1, -H]], m.trim), F(T([[0.3, 2.4], [1.2, 2.4], [1, -H], [0.3, -H]], m.trimDark)));
-  s.push(E(0, 2.6, 1.4, 1.1, m.trimDark), F(R(-1.1, -1, 2.2, 0.7, m.trimDark)), E(0, -H + 0.2, 1.9, 1, m.trimDark));
-  if (t >= 6) for (const sd of [-1, 1]) s.push(leafAt(sd * 2.6, cy + 0.6, sd < 0 ? 160 : 20, 3.8, 1.3, m.edge));
-  s.push(E(0, cy, r, r, m.blade), F(E(0.7, cy + 0.8, r * 0.75, r * 0.7, m.bladeDark)), F(E(-0.9, cy - 1, r * 0.42, r * 0.36, m.edge)));
-  for (const [x, y] of [[-1.2, -1.6], [0.4, -2], [1.6, -1], [-1.8, 0.4], [0.2, 0.2], [1.6, 1.2], [-0.6, 1.8]]) s.push(F(E(x * r / 3, cy + y * r / 3, 0.32, 0.32, m.bladeDark)));
-  s.push(R(-r, cy + 0.2, r * 2, 1, m.trim), F(R(-r, cy + 0.9, r * 2, 0.3, m.trimDark)));
-  s.push(F(star5(r * 0.55, cy - r * 0.55, 1.2 + t * 0.06, m.trim)));
-  if (t >= 4) {
-    s.push(...gem(0, cy + 0.7, 0.75, m.gem));
-    a.gem = [0, cy + 0.7];
-  }
-  a.blade = [cy - r, -H];
-  a.head = [0, cy];
-  a.tip = [0, cy - r];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
 
-// The Kitchen Witch's wand is a ladle and her staff a frying pan (the 'chef' finish, render/hero.js;
-// concept samples for the mage line rework, docs/design/kitchen-witch.md). The ladle is held at the
-// end of its long handle, its deep bowl up and out so it scoops and flicks away from her face; the
-// pan is held by its handle, the pan itself a heavy round of cast iron seen a little from above.
-function ladle(m, t) {
-  const s = [];
-  const a = {};
-  const H = 6.4 + t * 0.25;
-  const r = 2.9 + t * 0.05;
-  const steel = '#e6eaf4';
-  const steelDk = '#9aa2b8';
-  // The handle: wood from the pommel up, a steel neck that hooks forward into the bowl.
-  s.push(T([[-0.9, 2.4], [0.9, 2.4], [0.6, -H + 1.4], [-0.6, -H + 1.4]], m.handle), F(T([[0.2, 2.4], [0.9, 2.4], [0.6, -H + 1.4], [0.2, -H + 1.4]], m.handleDark)));
-  s.push(E(0, 2.8, 1.3, 1.1, '#c4cad8'), F(E(0, 2.8, 0.5, 0.45, '#5a5468')), F(R(-1, -0.2, 2, 0.8, m.trimDark)));
-  s.push(T([[-0.6, -H + 1.6], [0.6, -H + 1.6], [1.2, -H - 0.6], [0.2, -H - 1.2]], steelDk));
-  // The bowl hangs off the neck to the side (local +x), its round bottom out and its mouth facing
-  // back along the neck: held out in front, the mouth faces up, full of hot broth.
-  const cx = 0.9;
-  const cy = -H - 1 - r * 0.6;
-  s.push(T(arcPts(cx, cy, r * 1.05, r, -90, 90, 12), steelDk), F(T(arcPts(cx, cy, r * 0.82, r * 0.78, -80, 80, 10), steel)));
-  s.push(E(cx, cy, 1, r, steelDk), E(cx - 0.1, cy, 0.6, r - 0.6, '#ff8a4a'), F(E(cx - 0.2, cy - r * 0.35, 0.3, 0.8, '#ffd08a')));
-  s.push(F(E(cx + r * 0.6, cy + r * 0.35, 0.5, 0.7, WHITE)));
-  a.head = [cx, cy];
-  a.tip = [cx, cy - r];
-  a.gem = [cx, cy];
-  a.blade = [cy - r, -H];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
 
-function fryingPan(m, t) {
-  const s = [];
-  const a = {};
-  const H = 8 + t * 0.35;
-  const r = 5.8 + t * 0.1;
-  // The handle, wood-wrapped where she grips it, iron where it meets the pan.
-  s.push(T([[-1.2, 3], [1.2, 3], [0.9, -H], [-0.9, -H]], m.handle), F(T([[0.3, 3], [1.2, 3], [0.9, -H], [0.3, -H]], m.handleDark)));
-  for (let y = -2; y < 3; y += 1.4) s.push(F(R(-1.2, y, 2.4, 0.4, m.handleDark)));
-  s.push(E(0, 3.4, 1.4, 1.1, m.trim), R(-1, -H - 1, 2, 2.4, m.bladeDark));
-  // The pan: a heavy disc, its rim lit, the inside a darker well with a shine.
-  const cy = -H - r + 0.6;
-  s.push(E(0, cy, r + 0.8, r + 0.6, m.bladeDark), E(0, cy - 0.3, r, r - 0.2, m.blade), E(0, cy + 0.4, r - 1.6, r - 1.9, m.bladeDark));
-  s.push(F(T([...arcPts(0, cy + 0.4, r - 2.4, r - 2.7, 200, 250, 6), ...arcPts(0, cy + 0.4, r - 3.6, r - 3.9, 250, 200, 6)], m.edge)));
-  // A fried egg in it, for the show (and the yolk is her gem).
-  s.push(T(ring12(1.6, cy + 1.2, 3.2, 2.4), WHITE), E(1.8, cy + 0.8, 1.3, 1.2, m.gem), F(E(1.4, cy + 0.4, 0.4, 0.35, WHITE)));
-  a.head = [0, cy];
-  a.tip = [0, cy - r];
-  a.gem = [1.8, cy + 0.8];
-  a.blade = [cy - r, -H];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
 // A lumpy egg-white outline round (x, y).
 function ring12(x, y, rx, ry) {
   return Array.from({ length: 12 }, (_, i) => {
@@ -794,115 +717,7 @@ function ring12(x, y, rx, ry) {
   });
 }
 
-// The Mage's wand and staff (the 'arcane' finish, render/hero.js; docs/design/mage-line.md): the
-// classic wizard's. The staff is a gnarled wooden staff whose top splits into claws holding a
-// glowing orb swirling with her three elements (fire, ice, lightning); the wand a short dark rod
-// tipped with a crystal shard. Both grow grander up the tiers: a metal cage round the orb, rings
-// and floating shards.
-const ELEMENTS = ['#ff7a3c', '#6fd8ff', '#ffe04a'];
-// The orb: a glowing ball split into three swirling lobes of fire, ice and lightning round a white
-// core, turned by `f` (the animation frame) so it slowly churns.
-function elementOrb(s, x, y, r, f) {
-  s.push(E(x, y, r + 0.7, r + 0.7, '#3a2a5a'));
-  for (let k = 0; k < 3; k++) {
-    const a0 = ((k / 3) + f / 12) * Math.PI * 2;
-    const pts = [[x, y]];
-    for (let j = 0; j <= 6; j++) {
-      const a = a0 + (j / 6) * (Math.PI * 2 / 3);
-      const rr = r * (0.85 + 0.15 * Math.sin(j * 1.3));
-      pts.push([x + Math.cos(a) * rr + Math.cos(a + 1.2) * r * 0.2, y + Math.sin(a) * rr + Math.sin(a + 1.2) * r * 0.2]);
-    }
-    s.push(T(pts, ELEMENTS[k]));
-  }
-  s.push(F(E(x, y, r * 0.42, r * 0.42, '#ffffff')), F(E(x - r * 0.4, y - r * 0.45, r * 0.22, r * 0.16, '#ffffff')));
-}
-function arcaneStaff(m, t, f) {
-  const s = [];
-  const a = {};
-  const S = 24 + t * 0.7;
-  const wood = '#8a5a3a';
-  const woodDk = '#5a3a28';
-  // A gnarled shaft: a slight wiggle, knots, a metal foot cap.
-  const sh = [];
-  for (let k = 0; k <= 8; k++) { const y = 4 - (k / 8) * (S + 4); sh.push([1.3 + 0.5 * Math.sin(k * 1.7), y]); }
-  s.push(T([...sh, ...sh.slice().reverse().map(([x, y], k) => [-1.3 + 0.5 * Math.sin((8 - k) * 1.7 + 0.8), y])], wood), F(T(sh.map(([x, y]) => [x - 0.6, y]).concat([[0.2, -S], [0.2, 4]]), woodDk)));
-  for (const y of [-S * 0.3, -S * 0.62]) s.push(F(E(0.9, y, 0.7, 0.9, woodDk)));
-  s.push(R(-1.6, 3, 3.2, 1.6, m.trim), T([[-1.6, 4.6], [0, 6.4], [1.6, 4.6]], m.trimDark));
-  // The claws: three wooden prongs curling up round the orb.
-  const r = 4 + Math.min(t, 10) * 0.12;
-  const cy = -S - r - 0.5;
-  for (const sd of [-1, 0, 1]) s.push(T([[sd * 0.8, -S + 1.5], [sd * (r + 1.2), cy + 0.6], [sd * (r + 0.4) + (sd ? 0 : 0.4), cy - r * (sd ? 0.6 : 1.2)], [sd * (r - 0.6), cy + 0.6], [sd * 0.2, -S - 0.4]], sd ? woodDk : wood));
-  // From Bronze a metal band at the neck, from Steel a ring round the orb, from Mithril floating shards.
-  if (t >= 2) s.push(R(-1.8, -S + 0.4, 3.6, 1.4, m.trim));
-  elementOrb(s, 0, cy, r, f);
-  // The claw tips curl in over the orb's sides, holding it.
-  for (const sd of [-1, 1]) s.push(T([[sd * (r + 1.2), cy + 1.2], [sd * (r + 0.9), cy - r * 0.7], [sd * (r - 1.4), cy - r * 0.95], [sd * (r - 0.6), cy - r * 0.4], [sd * (r - 0.2), cy + 0.8]], woodDk), F(T([[sd * (r + 0.7), cy - r * 0.5], [sd * (r - 1.2), cy - r * 0.85], [sd * (r - 0.4), cy - r * 0.5]], wood)));
-  if (t >= 4) s.push(T([...arcPts(0, cy, r + 2.4, (r + 2.4) * 0.35, 200, 340, 10), ...arcPts(0, cy, r + 1.6, (r + 1.6) * 0.25, 340, 200, 10)], m.trim));
-  if (t >= 6) for (const [x, y, k] of [[-r - 3, cy - 2, 0], [r + 3, cy - 3, 1], [0, cy - r - 3.4, 2]]) s.push(T([[x, y - 1.8], [x + 0.9, y], [x, y + 1.8], [x - 0.9, y]], ELEMENTS[(k + f) % 3]));
-  if (t >= 9) s.push(...gem(0, -S * 0.45, 0.9, m.gem));
-  a.head = [0, cy];
-  a.gem = [0, cy];
-  a.tip = [0, cy - r];
-  a.blade = [cy - r, -S];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
-function arcaneWand(m, t, f) {
-  const s = [];
-  const a = {};
-  const H = 4.6 + t * 0.22;
-  // A dark rod, a metal grip at the end and a ferrule under the crystal.
-  s.push(T([[-1, 2.4], [1, 2.4], [0.7, -H], [-0.7, -H]], '#3a2a4a'), F(T([[0.2, 2.4], [1, 2.4], [0.7, -H], [0.2, -H]], '#251a32')));
-  s.push(E(0, 2.8, 1.3, 1.1, m.trim), F(R(-1.1, -0.6, 2.2, 0.8, m.trim)), R(-1.2, -H - 0.6, 2.4, 1.4, m.trim));
-  // The crystal shard, faceted, in her violet with a white glint, and a glow of the element she
-  // last cast in its heart (here turning through all three).
-  const L = 4.4 + t * 0.1;
-  const top = -H - 0.6 - L;
-  s.push(T([[0, top], [1.9, top + L * 0.45], [0, -H - 0.4], [-1.9, top + L * 0.45]], '#8a5ae0'), F(T([[0, top], [1.9, top + L * 0.45], [0, top + L * 0.55]], '#c8a8ff')), F(T([[0, top + L * 0.55], [1.9, top + L * 0.45], [0, -H - 0.4]], '#5a3aa8')));
-  s.push(F(E(0, top + L * 0.5, 0.8, 1.1, ELEMENTS[Math.floor(f / 2) % 3])), F(E(-0.7, top + L * 0.28, 0.3, 0.6, '#ffffff')));
-  if (t >= 4) for (const sd of [-1, 1]) s.push(T([[0, -H + 0.4], [sd * 2.8, -H - 1.2], [sd * 1.2, -H + 0.8]], m.trim));
-  if (t >= 7) s.push(F(E(2.8 * Math.cos(f), top + 1 + Math.sin(f) * 1.2, 0.5, 0.5, ELEMENTS[f % 3])));
-  a.head = [0, top + L * 0.5];
-  a.gem = [0, top + L * 0.5];
-  a.tip = [0, top];
-  a.blade = [top, -H];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
-
-// The Cleric's wand is a sun scepter (the 'cleric' finish, render/hero.js; docs/design/mage-line.md):
-// a white and gold rod held at its end, its head a gold sunburst round a glowing gem, little wings
-// spreading from it up the tiers. Short, so it points out from her hand, never over her face.
-function sunScepter(m, t, f) {
-  const s = [];
-  const a = {};
-  const H = 5 + t * 0.22;
-  s.push(T([[-1, 2.4], [1, 2.4], [0.7, -H], [-0.7, -H]], '#fbf6ec'), F(T([[0.2, 2.4], [1, 2.4], [0.7, -H], [0.2, -H]], '#e0d4bc')));
-  for (let y = -H + 1.4; y < 1.6; y += 2.2) s.push(F(R(-1, y, 2, 0.6, '#ffd36a')));
-  s.push(E(0, 2.8, 1.4, 1.1, '#ffd36a'), R(-1.3, -H - 0.6, 2.6, 1.2, '#d89a36'));
-  const r = 3 + t * 0.06;
-  const cy = -H - 1 - r;
-  if (t >= 4) for (const sd of [-1, 1]) s.push(T([[sd * 1.6, cy + 1.6], [sd * (r + 4.4), cy - 2.6], [sd * (r + 3.6), cy - 0.4], [sd * (r + 4.2), cy + 1.4], [sd * (r + 2), cy + 2.6]], '#ffffff'), F(T([[sd * 2, cy + 1.8], [sd * (r + 3.4), cy - 1.2], [sd * (r + 2.6), cy + 1.4]], '#e6ecff')));
-  // The sunburst: twelve gold rays turning a little with the frames, round a gold disc and a gem.
-  const pts = [];
-  for (let i = 0; i < 24; i++) {
-    const ang = (i / 24) * Math.PI * 2 + (f % 6) * 0.04;
-    const rr = i % 2 ? r * 0.98 : r * 1.55;
-    pts.push([Math.cos(ang) * rr, cy + Math.sin(ang) * rr]);
-  }
-  s.push(T(pts, '#ffd36a'), E(0, cy, r * 0.95, r * 0.95, '#d89a36'), E(0, cy, r * 0.75, r * 0.75, '#ffe9a8'));
-  s.push(...gem(0, cy, r * 0.42, '#8fd8ff', f));
-  a.head = [0, cy];
-  a.gem = [0, cy];
-  a.tip = [0, cy - r * 1.55];
-  a.blade = [cy - r * 1.55, -H];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
-
 function wand(m, t, f = 0) {
-  if (m.variant === 'chef') return ladle(m, t);
-  if (m.variant === 'cleric') return sunScepter(m, t, f);
-  if (m.variant === 'sorcery') return sorceryWand(m, t, f);
-  if (m.variant === 'arcane') return arcaneWand(m, t, f);
-  if (m.variant === 'idol') return idolMic(m, t);
   const s = [];
   const a = {};
   const H = 7 + t * 0.35;
@@ -988,104 +803,8 @@ function wand(m, t, f = 0) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
-// ---------- Staffs: witch's staves (the Star Witch's) ----------
-//
-// A long staff held near its foot (only a short capped end below the hand), its head a moon and
-// stars: a wooden staff with a crescent, a copper crescent with a hanging star, a bronze star
-// lantern, an iron crook with a star, a steel orb in a crescent, a silver crescent ringed with
-// dots, a mithril staff of twisted wood round a star crystal, a cobalt moon and comet, a crystal
-// shard, a runic orb in a cage, and a starsteel crescent holding a gold star.
-// The Astronomer's staff (the 'astro' finish, render/hero.js): an orrery. A slim silver staff,
-// shorter than a witch's so it never reads as a lance, held near its foot, its head a violet world inside two tilted silver rings with a little moon
-// riding the outer one; more rings, a gem and stars up the tiers.
-function orrery(m, t) {
-  const s = [];
-  const a = {};
-  const S = 19 + t * 0.55;
-  s.push(R(-1.1, -S, 2.2, S + 4, m.trim), F(R(0.3, -S, 0.8, S + 4, m.trimDark)));
-  for (let y = -S + 6; y < 2; y += 8) s.push(F(R(-1.3, y, 2.6, 0.7, m.edge)));
-  s.push(R(-1.5, 3, 3, 1.6, m.trim), T([[-1.5, 4.6], [0, 6.2], [1.5, 4.6]], m.trimDark));
-  const r = 3.6 + t * 0.08;
-  const cy = -S - r - 3;
-  const ring = (rx, ry, th, a0, a1, c) => T([...arcPts(0, cy, rx, ry, a0, a1, 14), ...arcPts(0, cy, rx - th, ry - th * 0.4, a1, a0, 14)], c);
-  const rings = t >= 6 ? 2 : 1;
-  // The back halves of the rings, the world, then their front halves over it.
-  for (let k = 0; k < rings; k++) s.push(ring(r * (1.9 + k * 0.5), r * (0.55 + k * 0.12), 0.9, 180, 360, m.trimDark));
-  s.push(E(0, cy, r, r, m.blade), F(E(0.9, cy + 0.9, r * 0.75, r * 0.7, m.bladeDark)), F(E(-1, cy - 1.1, r * 0.4, r * 0.34, m.edge)));
-  s.push(F(R(-r * 0.8, cy + 0.6, r * 1.6, 0.5, m.bladeDark)));
-  for (let k = 0; k < rings; k++) s.push(ring(r * (1.9 + k * 0.5), r * (0.55 + k * 0.12), 0.9, 0, 180, m.trim));
-  // The little moon on the outer ring.
-  const mx = r * (1.9 + (rings - 1) * 0.5) * 0.92;
-  s.push(E(mx, cy + 0.6, 1.3, 1.3, m.edge), F(E(mx + 0.4, cy + 0.9, 0.8, 0.8, m.trim)));
-  s.push(R(-0.6, cy + r - 0.2, 1.2, 2.6, m.trim));
-  if (t >= 4) {
-    s.push(...gem(0, cy, 0.8, m.gem));
-    a.gem = [0, cy];
-  }
-  if (t >= 9) for (const [x, y] of [[-r * 2, cy - r * 1.4], [r * 1.6, cy - r * 1.6]]) s.push(F(star(x, y, 1.2, WHITE, 0.3)));
-  a.head = [0, cy];
-  a.tip = [0, cy - r];
-  a.blade = [cy - r, -S];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
-
-// The Sorcerer's staff (the 'sorcery' finish, render/hero.js; docs/design/mage-line.md): a staff of
-// black wood, short enough never to read as a lance, held near its foot, its head a crooked iron claw cradling a violet flame with an ember
-// core; the claw grows thorns and a floating rune shard up the tiers. Never over her face.
-function sorceryStaff(m, t, f) {
-  const s = [];
-  const a = {};
-  const S = 14 + t * 0.4;
-  s.push(T([[-1.2, 4], [1.2, 4], [1, -S], [-1, -S]], '#2a1c30'), F(T([[0.2, 4], [1.2, 4], [1, -S], [0.2, -S]], '#140c18')));
-  for (let y = -S + 5; y < 2; y += 7) s.push(F(R(-1.3, y, 2.6, 0.6, '#ff8a3a')));
-  s.push(T([[-1.5, 4], [1.5, 4], [0, 7]], '#4a3a58'));
-  const r = 3.2 + t * 0.07;
-  const cy = -S - r - 1.6;
-  // The flame: violet outer tongues flickering with the frames, an ember core, a white-hot heart.
-  const fl = (f % 4) * 0.35;
-  s.push(F(T([[-r, cy + r * 0.6], [-r * 1.05, cy - r * 0.4], [-r * 0.4, cy - r * 1.1], [-r * 0.2 + fl * 0.4, cy - r * 2.1 - fl], [r * 0.3, cy - r * 1.2], [r * 0.7 - fl * 0.3, cy - r * 1.7], [r * 1.05, cy - r * 0.3], [r, cy + r * 0.6], [0, cy + r]], '#8a4ae0')));
-  s.push(F(T([[-r * 0.6, cy + r * 0.5], [-r * 0.5, cy - r * 0.5], [0, cy - r * 1.3 - fl * 0.6], [r * 0.5, cy - r * 0.5], [r * 0.6, cy + r * 0.5], [0, cy + r * 0.8]], '#ff8a3a')));
-  s.push(F(E(0, cy, r * 0.32, r * 0.42, '#ffd27a')), F(E(0, cy + 0.2, r * 0.14, r * 0.2, '#ffffff')));
-  // The claw: iron talons curling up round the flame from a collar.
-  s.push(F(R(-1.8, -S - 1.2, 3.6, 1.6, '#3a2c46')));
-  for (const sd of [-1, 1]) s.push(F(T([[sd * 1.2, -S - 0.6], [sd * (r + 1.4), cy + r * 0.4], [sd * (r + 0.8), cy - r * 0.8], [sd * (r + 0.2), cy - r * 0.4], [sd * (r * 0.6), cy + r * 0.7], [sd * 0.4, -S - 1]], '#3a2c46')), F(T([[sd * (r + 1.1), cy + r * 0.2], [sd * (r + 0.8), cy - r * 0.8], [sd * (r + 0.5), cy]], '#7a6a8a')));
-  if (t >= 4) for (const sd of [-1, 1]) s.push(F(T([[sd * (r + 1.2), cy + r * 0.1], [sd * (r + 3.2), cy - r * 0.3], [sd * (r + 1.3), cy + r * 0.5]], '#3a2c46')));
-  if (t >= 8) {
-    const ry = cy - r * 2.6 - (f % 6) * 0.15;
-    s.push(F(E(0, ry, 1.8, 1.8, 'rgba(255,138,58,0.35)')), T([[0, ry - 1.6], [1.1, ry], [0, ry + 1.6], [-1.1, ry]], '#ff8a3a'), F(R(-0.15, ry - 0.9, 0.3, 1.8, '#ffd27a')));
-  }
-  a.head = [0, cy];
-  a.gem = [0, cy];
-  a.tip = [0, cy - r * 1.6];
-  a.blade = [cy - r * 1.6, -S];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
-
-// The Sorcerer's wand: a short rod of black wood bound in iron, hooked at the end like a crooked
-// finger, a violet flame with an ember core burning in the hook.
-function sorceryWand(m, t, f) {
-  const s = [];
-  const a = {};
-  const H = 6 + t * 0.2;
-  s.push(T([[-0.9, 2.6], [0.9, 2.6], [0.6, -H], [-0.6, -H]], '#2a1c30'), F(T([[0.1, 2.6], [0.9, 2.6], [0.6, -H], [0.1, -H]], '#140c18')));
-  s.push(R(-1.1, -0.6, 2.2, 1, '#4a3a58'), R(-1, -H * 0.55, 2, 0.8, '#ff8a3a'), E(0, 2.8, 1.2, 1, '#4a3a58'));
-  s.push(T([[-0.6, -H], [0.6, -H], [2.6, -H - 2.2], [2.2, -H - 4.4], [1.2, -H - 3], [1.4, -H - 2.2]], '#2a1c30'));
-  const cy = -H - 3.2;
-  const fl = (f % 4) * 0.3;
-  s.push(T([[-1.6, cy + 1.2], [-1.4, cy - 0.8], [-0.4 + fl * 0.3, cy - 3 - fl], [0.6, cy - 1.2], [1.4, cy + 1.2]], '#8a4ae0'));
-  s.push(T([[-0.9, cy + 1], [-0.3, cy - 1.6 - fl * 0.5], [0.7, cy + 1]], '#ff8a3a'), F(E(-0.1, cy + 0.4, 0.45, 0.6, '#ffd27a')));
-  a.head = [0, cy];
-  a.gem = [0, cy];
-  a.tip = [0, cy - 3];
-  a.blade = [cy - 3, -H];
-  return { shapes: s, blade: a.blade, reach: [], a };
-}
 
 function staff(m, t, f = 0) {
-  if (m.variant === 'astro') return orrery(m, t);
-  if (m.variant === 'sorcery') return sorceryStaff(m, t, f);
-  if (m.variant === 'chef') return fryingPan(m, t);
-  if (m.variant === 'arcane') return arcaneStaff(m, t, f);
   const s = [];
   const a = {};
   const S = 26 + t * 0.8;
@@ -1176,63 +895,9 @@ function staff(m, t, f = 0) {
   return { shapes: s, blade: a.blade, reach: [], a };
 }
 
-// ---------- Bows ----------
-//
-// Limbs above and below the grip bowing toward +x, tips back at the string (x = tipX). A plain
-// shortbow, copper-capped, a bronze recurve, an iron-banded composite, a steel bow with an arrow
-// shelf, a silver wing bow, a mithril leaf bow, a cobalt fin bow, a crystal bow, a runic recurve
-// and a starsteel crescent moon with stars at its tips.
-// The Acrobat Archer's bow (the 'acro' finish, render/hero.js): a short trick recurve, half the
-// height of a hunter's bow so it can be loosed mid-flip and held out in front of her chest without
-// reaching up across her face. Mint limbs curling back hard at the tips, gold star caps, a gold
-// grip wrapped with a mint ribbon whose tails flutter; a gem and a second star pair up the tiers.
-// The Phantom Trickster's bow (the 'phantom' finish) is the same short recurve in plum and silver:
-// little silver crescent moons for tips and a silver tassel hanging from a diamond on the grip.
-function acroBow(m, t) {
-  const s = [];
-  const phantom = m.variant === 'phantom';
-  const H = 10.5 + t * 0.25;
-  const bulge = 4.6;
-  const thick = 2.2;
-  const sx = -bulge + thick / 2;
-  // The belly bows out toward the target (+x), the string behind the grip; past three quarters of
-  // the way out the limbs flick forward again at the tips (the recurve).
-  const xAt = (u) => sx + bulge * (1 - Math.pow(Math.abs(u), 1.6)) + 1.3 * Math.max(0, Math.abs(u) - 0.75) * 4;
-  const tipX = xAt(1);
-  const limb = (c, w = thick, u0 = -1, u1 = 1) => {
-    const o = [];
-    const i2 = [];
-    for (let i = 0; i <= 20; i++) {
-      const u = u0 + ((u1 - u0) * i) / 20;
-      const k = w * (1 - 0.4 * Math.abs(u));
-      o.push([xAt(u) + k / 2, u * H]);
-      i2.push([xAt(u) - k / 2, u * H]);
-    }
-    return T([...o, ...i2.reverse()], c);
-  };
-  s.push({ ...R(tipX - 0.35, -H, 0.7, H * 2, '#fff6fb'), string: true });
-  // The ribbon's tails, hanging from the grip behind the limbs.
-  if (phantom) s.push(R(-0.9, 1, 0.6, 3, m.trimDark), T([[-1.6, 4], [0, 4], [0.4, 7.4], [-0.6, 8], [-2, 7.4]], m.trim), F(T([[-1, 4.4], [-0.4, 4.4], [-0.4, 7.4], [-1, 7.6]], m.edge)));
-  else s.push(T([[-1, 1], [-3.4, 3.4], [-2.6, 5.4], [-1.6, 3.6], [-0.4, 1.6]], m.bladeDark), T([[-1, 1.4], [-0.8, 4.6], [0.4, 6], [0.4, 3.4], [0, 1.6]], m.blade));
-  s.push(limb(m.blade));
-  s.push(F(limb(m.edge, thick * 0.3, -0.92, -0.12)), F(limb(m.edge, thick * 0.3, 0.12, 0.92)));
-  s.push(R(xAt(0) - 1.6, -2, 2.6, 4, m.trim), F(R(xAt(0) - 1.6, -0.4, 2.6, 0.8, m.trimDark)));
-  if (phantom) {
-    for (const sd of [-1, 1]) s.push(T([...arcPts(xAt(sd), sd * H, 1.9, 1.9, 60, 300, 10), ...arcPts(xAt(sd) + 0.8, sd * H, 1.5, 1.5, 300, 60, 10)], m.trim));
-    s.push(T([[xAt(0) + 1.2, -1.6], [xAt(0) + 2.4, 0], [xAt(0) + 1.2, 1.6], [xAt(0), 0]], m.edge));
-  } else for (const sd of [-1, 1]) s.push(F(star(xAt(sd), sd * H, 1.6, m.trim, 0.42)));
-  const a = { tip: [tipX, -H], head: [1, 0], blade: [-H, H] };
-  if (t >= 4) {
-    s.push(...gem(xAt(0) - 0.3, 0, 0.8, m.gem));
-    a.gem = [xAt(0) - 0.3, 0];
-  }
-  if (t >= 8) for (const sd of [-1, 1]) s.push(F(star(xAt(sd * 0.55) - 1.2, sd * H * 0.55, 1, WHITE, 0.4)));
-  a.string = { x: tipX, h: H, color: '#fff6fb' };
-  return { shapes: s, blade: [-H, H], reach: [], a };
-}
+
 
 function bow(m, t) {
-  if (m.variant === 'acro' || m.variant === 'phantom') return acroBow(m, t);
   const s = [];
   const H = [19, 19.5, 20, 20.5, 21, 22, 22.5, 23, 23.5, 24, 25][t];
   const bulge = [7, 7, 8, 8, 8.5, 9, 9, 9.5, 9.5, 10, 11][t];

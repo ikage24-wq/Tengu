@@ -1,0 +1,158 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Animation test</title>
+<style>body { margin: 0; background: #f4eefb; font: 13px sans-serif; color: #5a4a72; } canvas { display: block; } a { color: #7a5ad8; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: a reanimation test on the art standard (CLAUDE.md), the Warrior's greatsword opener
+// (gsdrop) and finisher (gscleave) beside test versions of them, playing live (?slow=1 at quarter
+// speed). The test moves live only on this page: the game's moves are untouched.
+// What the test versions do differently: a chain (hips first, then the chest, the arm, the blade,
+// each a beat behind), a wind-up sized to the blow, a C curve coiled back and an S curve through
+// the strike, the blade overshooting and settling, a landing that takes the weight, holds that
+// keep moving, hair and cape a beat behind the body.
+await import('/src/data/cash.js');
+const { MOVES } = await import('/src/render/moves.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { drawHero } = await import('/src/render/hero.js');
+const q = new URLSearchParams(location.search);
+const SPEED = q.get('slow') ? 0.25 : 1;
+
+const clamp = (v) => Math.max(0, Math.min(1, v));
+const seg = (p, a, b) => clamp((p - a) / (b - a));
+const ease = (t) => t * t * (3 - 2 * t);
+const easeIn = (t) => t * t * t;
+const easeOut = (t) => 1 - (1 - t) ** 3;
+const lerp = (a, b, t) => a + (b - a) * t;
+const bump = (p, a, b) => Math.sin(Math.PI * seg(p, a, b));
+const qh = (v) => Math.round(v * 2) / 2;
+// An overshoot: past the target and back (for the blade's follow-through).
+const over = (t, k = 0.12) => (t < 1 ? easeOut(t) * (1 + k) : 1 + k) - k * ease(seg(t, 0.7, 1));
+
+// The opener: a quick chop off the shoulder. A small wind-up (it's a light blow): the hips sink and
+// shift back first, the chest coils back a beat later, the blade cocks back last. Then the chain
+// fires the same way round: hips drive forward, chest whips over, the arm and blade follow and the
+// blade overshoots low before it settles. The front foot steps in; the head and hair trail.
+MOVES.t_gsdrop = (p) => {
+  const sink = ease(seg(p, 0, 0.16));
+  const coil = ease(seg(p, 0.04, 0.28));
+  const cock = ease(seg(p, 0.08, 0.3));
+  const drive = ease(seg(p, 0.26, 0.42));
+  const whip = ease(seg(p, 0.29, 0.45));
+  const cut = over(seg(p, 0.31, 0.47), 0.16);
+  const settle = ease(seg(p, 0.72, 1));
+  return {
+    weapon: lerp(-58, -118, cock) + (cut > 0 ? lerp(0, 268, cut) : 0) - 18 * settle,
+    arm: lerp(60, 44, cock) + 14 * whip - 14 * settle,
+    lunge: lerp(0, -2.5, sink) * (1 - drive) + 8 * drive * (1 - 0.55 * settle),
+    tilt: -0.24 * coil * (1 - whip) + 0.28 * whip * (1 - 0.7 * settle) + 0.03 * Math.sin(p * 9) * settle,
+    trail: p > 0.3 && p < 0.62,
+    rig: (r) => {
+      r.squat = qh(2 * sink * (1 - drive) + 1.8 * bump(p, 0.4, 0.75));
+      r.tx = qh(lerp(-1.2 * sink, 2, drive));
+      if (drive > 0.2) { r.frontLeg = [qh(1 + 3 * drive), drive < 0.7 ? -1 : 0, 4]; r.backLeg = [qh(-3 * drive), 0, -10]; } else { r.frontLeg = [3, 0, 2]; r.backLeg = [-3, 0, -2]; }
+      r.backArm = [qh(lerp(2, -3, whip)), qh(lerp(-2.5, -1, whip))];
+      r.hairLift = p > 0.32 && p < 0.55 ? -1 : 0;
+      r.cape = Math.round(-3 * bump(p, 0.3, 0.7));
+      if (p > 0.26) r.mouth = 'open';
+    },
+  };
+};
+
+// The finisher: a big jump smash. The biggest wind-up in the string: a deep crouch, a spring up as
+// the body arches back into a C, the blade raised far behind her, a beat of hang at the top (still
+// moving), then the chain slams down (hips, chest, arm, blade), the blade overshooting into the
+// ground; she lands in a deep crouch that takes the weight, holds it a moment, and rises.
+MOVES.t_gscleave = (p) => {
+  const crouch = ease(seg(p, 0, 0.13));
+  const spring = easeOut(seg(p, 0.11, 0.32));
+  const arch = ease(seg(p, 0.12, 0.34));
+  const raise = ease(seg(p, 0.14, 0.36));
+  const hang = bump(p, 0.32, 0.4);
+  const fall = easeIn(seg(p, 0.37, 0.49));
+  const slam = over(seg(p, 0.39, 0.51), 0.08);
+  const land = bump(p, 0.48, 0.8);
+  const rise = ease(seg(p, 0.74, 1));
+  const air = spring > 0.05 && fall < 1;
+  return {
+    weapon: lerp(-58, -126, raise) + 270 * slam - 14 * rise,
+    arm: lerp(60, 44, raise) + 16 * fall - 18 * rise,
+    lift: 18 * spring * (1 - fall) + 1.2 * hang,
+    lunge: 2 * spring + 9 * fall * (1 - 0.4 * rise),
+    tilt: -0.3 * arch * (1 - fall) + 0.38 * fall * (1 - 0.8 * rise),
+    trail: p > 0.36 && p < 0.6,
+    rig: (r) => {
+      if (air) { r.air = true; r.frontLeg = [qh(2.6 - 1.2 * fall), qh(-5 + 3 * fall), 10]; r.backLeg = [-1.6, -2.6, -10]; } else { r.frontLeg = [3, 0, 2]; r.backLeg = [-3, 0, -2]; }
+      r.squat = qh(2.5 * crouch * (1 - spring) + 3 * land);
+      r.tx = qh(lerp(-1, 2, fall));
+      r.backArm = [qh(lerp(-1, -4, fall)), qh(lerp(-5, 1, fall))];
+      r.hairLift = air ? -1 : land > 0.4 ? 1 : 0;
+      r.cape = Math.round(-4 * bump(p, 0.12, 0.42) + 3 * bump(p, 0.46, 0.8));
+      if (p > 0.36) r.mouth = 'open';
+    },
+  };
+};
+
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const GEAR = { weapon: { id: 'sword_50', type: 'sword', tier: 12 } };
+const ROWS = [['gsdrop', 't_gsdrop', 0.36, 'opener'], ['gscleave', 't_gscleave', 0.56, 'finisher']];
+const D = 1.5;
+const W = 860;
+const H = 720;
+const c = document.getElementById('c');
+c.width = W * D;
+c.height = H * D;
+const ctx = c.getContext('2d');
+setHd(true, D * 4);
+const t0 = performance.now();
+function frame(now) {
+  const t = ((now - t0) / 1000) * SPEED;
+  nextFrame();
+  ctx.setTransform(D, 0, 0, D, 0, 0);
+  ctx.fillStyle = '#f4eefb';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#5a4a72';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.fillText('Today', 170, 26);
+  ctx.fillText('Test', 590, 26);
+  ctx.font = '12px sans-serif';
+  ctx.fillText(SPEED < 1 ? 'quarter speed' : 'full speed (add ?slow=1 for quarter speed)', 16, 46);
+  ROWS.forEach(([old, neu, dur, label], i) => {
+    // Each plays its move, then a moment standing, over and over.
+    const loop = dur + 0.6;
+    const u = t % loop;
+    const y = 300 + i * 330;
+    ctx.fillText(label, 16, y - 120);
+    for (const [kind, x] of [[old, 230], [neu, 650]]) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(4.2, 4.2);
+      const st = u < dur ? { pose: kind, progress: u / dur, dur, time: t, facing: 1, ready: true } : { pose: 'idle', ready: true, time: t, facing: 1 };
+      drawHero(ctx, LOOK, GEAR, 0, 0, st);
+      ctx.restore();
+    }
+  });
+  requestAnimationFrame(frame);
+}
+// ?strip=1: each move as a row of moments instead (to check every pose).
+if (q.get('strip')) {
+  const N = 9;
+  c.width = 1500 * D; c.height = 860 * D;
+  nextFrame();
+  ctx.setTransform(D, 0, 0, D, 0, 0);
+  ctx.fillStyle = '#f4eefb'; ctx.fillRect(0, 0, 1500, 860);
+  ctx.fillStyle = '#5a4a72'; ctx.font = '12px sans-serif';
+  ROWS.flatMap(([old, neu, dur, label]) => [[old, dur, `${label}, today`], [neu, dur, `${label}, test`]]).forEach(([kind, dur, label], row) => {
+    const y = 170 + row * 205;
+    ctx.fillText(label, 8, y - 150);
+    for (let i = 0; i < N; i++) {
+      const pr = i / (N - 1);
+      ctx.save(); ctx.translate(90 + i * 160, y); ctx.scale(2.6, 2.6);
+      drawHero(ctx, LOOK, GEAR, 0, 0, { pose: kind, progress: pr, dur, time: pr * dur, facing: 1, ready: true });
+      ctx.restore();
+      ctx.fillText(pr.toFixed(2), 80 + i * 160, y + 18);
+    }
+  });
+} else requestAnimationFrame(frame);
+document.title = 'ready';
+</script>

@@ -55,3 +55,7 @@ Weapon swings and thrusts, throwing stars, heavy arrow hits, poison, fire, mist,
 ## Movement sounds (tools/build-fight.py, 2026-11-08)
 
 Jumping, landing, climbing, mounting, furniture, the kettle mount's whistle and rattle, the cloud's puff, the turtle's splash and the bunny's hop, from the same bundles: InMotionAudio (Foley T-Shirt, Wood), Pole Position Steam Engine Model, Justsoundeffects (Steampunk Gadgets, Water in Motion), Cinematic Sound Design Cartoon & Animation Vol 2.
+
+## Buff sounds (tools/build-fight.py, 2026-11-08)
+
+The buff and party buff: Epic Stock Media Fantasy Game 2 (a bright light spell) and 344 Audio Christmas Vol. 1 (magic bells).

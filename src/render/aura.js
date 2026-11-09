@@ -8,7 +8,7 @@
 // (x, y) is the hero's feet in screen space, s the draw scale, k the fade (0-1).
 
 import { fxSprite } from './fx-sprites.js';
-import { lightPillar, songRing } from './warrior-fx.js';
+import { lightPillar } from './warrior-fx.js';
 
 const TAU = Math.PI * 2;
 const hash = (n) => {
@@ -249,56 +249,8 @@ function shadowAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembdancer', x, y - 62 * s, { frame: 1, scale: s * 0.32, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
-// Mayhem (the Mage; internally Spirit, docs/design/mage-line.md): sparks of her three elements
-// fizz up off her as it builds, more and faster the fuller it is (kept out to her sides, off her
-// face); full (Meltdown), her three element sigils whirl round her feet and the sparks pour up.
-const MAYHEM_SPARKS = ['#ffb43c', '#9ae2ff', '#ffe04a'];
-function spiritAura(ctx, x, y, t, s, k, layer) {
-  if (k < 0.05) return;
-  const full = k >= 1;
-  if (full) {
-    for (let i = 0; i < 3; i++) {
-      const a = t * 3 + (i * Math.PI * 2) / 3;
-      const front = Math.sin(a) > 0;
-      if ((layer === 'back') === front) continue;
-      fxSprite(ctx, `celrm${['fire', 'ice', 'bolt'][i]}`, x + Math.cos(a) * 16 * s, y - 3 * s + Math.sin(a) * 4 * s, { t: t + i, scale: s * 0.3, alpha: 0.9 });
-    }
-  }
-  if (layer === 'back') return;
-  motes(ctx, x, y, t, s, 0.45 + 0.55 * k, { n: 1 + Math.round(5 * k), spread: 16, inner: 9, height: 22 + 16 * k, speed: 0.5 + 0.8 * k, size: 1 + 0.5 * k, draw: (c, mx, my, r, i) => { c.fillStyle = MAYHEM_SPARKS[i % 3]; c.fillRect(mx - r / 2, my - r / 2, r, r); } });
-}
 
-// Devotion (the Cleric; internally Grace, docs/design/mage-line.md): little red and green plus-
-// crosses drifting up beside her as it builds, more of them the fuller it is (out at her sides, off
-// her face); full, a soft red glow at her feet and the crosses pour up.
-function graceAura(ctx, x, y, t, s, k, layer) {
-  if (k < 0.05) return;
-  if (layer === 'back') {
-    if (k >= 1) footGlow(ctx, x, y, s * 1.2, '#ff6a74', 0.45 + 0.15 * Math.sin(t * 4));
-    return;
-  }
-  motes(ctx, x, y, t, s, 0.5 + 0.5 * k, { n: 1 + Math.round(4 * k), spread: 17, inner: 11, height: 26 + 14 * k, speed: 0.35 + 0.4 * k, size: 1.4 + 0.4 * k, draw: (c, mx, my, r, i) => {
-    c.fillStyle = i % 2 ? '#ff6a74' : '#5ae08a';
-    const w = Math.max(1, r * 0.45);
-    c.fillRect(mx - r / 2, my - w / 2, r, w);
-    c.fillRect(mx - w / 2, my - r / 2, w, r);
-  } });
-}
 
-// Spellstorm (the Sorcerer; internally Binding): a violet shadow pooling round her feet, darker the
-// fuller it is, with embers rising off it, more and faster as it builds; full (Spellstorm), an ember
-// ring turns at her feet and the embers stream up round her (kept out to her sides, off her face).
-function bindingAura(ctx, x, y, t, s, k, layer) {
-  if (k < 0.05) return;
-  const full = k >= 1;
-  if (layer === 'back') {
-    footGlow(ctx, x, y, s * (1 + 0.4 * k), '#7a4ad8', 0.35 + 0.45 * k);
-    if (full) runeRing(ctx, x, y, t * 2, s * 1.2, '#ff8a3a', 0.85, false);
-    return;
-  }
-  if (full) runeRing(ctx, x, y, t * 2, s * 1.2, '#ff8a3a', 0.85, true);
-  motes(ctx, x, y, t, s, 0.5 + 0.5 * k, { n: 2 + Math.round(4 * k), spread: 16, inner: 9, height: 30 + 14 * k, speed: 0.4 + 0.5 * k, size: 1.1 + 0.4 * k, draw: (c, mx, my, r, i) => { c.fillStyle = i % 2 ? '#ffd27a' : '#ff8a3a'; c.fillRect(mx - r / 2, my - r / 2, r, r); } });
-}
 
 // Ricochet (the Blade Dancer; internally Ki): a small ring skims round her feet as it builds,
 // faster the fuller it is; full (Carousel), two rings orbit her waist, passing in front of her and
@@ -330,7 +282,7 @@ function tailsAura(ctx, x, y, t, s, k, layer) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { grace: graceAura, binding: bindingAura, spirit: spiritAura, ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

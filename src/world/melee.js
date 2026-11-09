@@ -35,14 +35,10 @@ import { moveAt } from '../render/moves.js';
 import { strikePose } from '../render/hero.js';
 import { wornGear } from '../core/character.js';
 import { tickPhantom, copiesShoot, vanishAgain, doveBurst, grandIllusion } from './phantom.js';
-import { tickIdol, spotlight as idolSpotlight, hypeWave, lullaby, curtainCall, grandConcert } from './idol.js';
-import { tickAstro, gravityWell, planetaryAlignment } from './astro.js';
 import { launchWisp } from './foxwheel.js';
 import { GRAVITY, groundAt } from './physics.js';
 import { tickEngineer, stickyBurst, clusterBurst, overclocked, deployTurret } from './engineer.js';
 import { provoke, healMembers, groupOf } from './dungeon.js';
-import { allyElement } from './reactions.js';
-import { tickJuggle, takeOrb, orbHome, conjure, refillOrbs, spendOrbs, isJuggler } from './juggle.js';
 
 // The longest freeze a blow gets; anything heavier turns the rest into slow motion.
 export const MAX_STOP = 0.1;
@@ -77,11 +73,7 @@ export const pathSchool = (char) => (hasFaith(char) ? 'holy' : hasRage(char) ? '
 // Trickster, brass for the Arbalist Engineer.
 // And the Thief's violet shadow skills: the Blade Dancer's rose gold, the Sky Dancer's sky blue.
 export const thiefSchool = (char) => (hasKi(char) ? 'rosegold' : hasTails(char) ? 'aerial' : hasShadow(char) ? 'coral' : 'shadow');
-// The Wind Dancer's coral skills and the Star Witch's starlit ones the same way (each path plays
-// them its own way, data/skills.js `paths`): the Blade Dancer's rose gold, the Sky Dancer's sky
-// blue; the Starlight Idol's pink, the Astronomer's violet.
-const starSchool = (char) => (hasGrace(char) ? 'idol' : hasBinding(char) ? 'astral' : 'starlit');
-export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' || school === 'coral' ? thiefSchool(char) : school === 'starlit' ? starSchool(char) : school);
+export const schoolFor = (char, school) => (school === 'steel' ? pathSchool(char) : school === 'hawk' ? archerLook(char).school : school === 'shadow' || school === 'coral' ? thiefSchool(char) : school);
 // The colour a pop-up word comes in, by its school.
 export const SCHOOL_TEXT = { steel: '#bfe0ff', holy: '#ffe9a0', rage: '#ff6a5a' };
 
@@ -201,55 +193,6 @@ export const PATH_COMBOS = {
     { move: 'sdscissor', dur: 0.41, step: 12, strikes: [{ at: 0.45, shot: 'skygust', pct: 95, range: 260, h: 200, drop: 70, knock: 30, speed: 800 }] },
     { move: 'sdspin', dur: 0.45, step: 8, strikes: [{ at: 0.5, pct: 100, reach: 90, h: 120, around: true, targets: 4, knock: 60, fx: 'skyhit', burst: 'skyhit' }] },
     { move: 'sdcrescent', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.48, shot: 'skygustbig', pct: 170, range: 300, h: 220, drop: 80, targets: 4, pierce: true, knock: 200, speed: 870, big: true, stop: 0.07, shake: 2 }] },
-  ],
-  // The Mage (docs/design/mage-line.md, the remake): a pyro gremlin of fire, ice and lightning;
-  // every step of her strings is a different element, so attacking sets off her reactions (the
-  // shot's `el`; world/reactions.js). (Keys starwand and starstaff kept.) Wand: a hip flick (a
-  // firecracker spark), a snowball pitch, a cattle prod (two little zaps and a big one). Staff: a
-  // golf swing (a grinning fireball bouncing along the floor), a pogo slam (ice spikes punching up
-  // along the ground), a lightning rod (a strike from the sky).
-  starwand: [
-    { move: 'jgtoss', dur: 0.32, step: 8, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 86, range: 300, h: 70, knock: 30, speed: 820 }] },
-    { move: 'jgwhip', dur: 0.42, step: 12, strikes: [{ at: 0.38, shot: 'jgfire', orb: true, magic: true, pct: 94, range: 310, h: 70, knock: 35, speed: 900, bend: -16 }] },
-    { move: 'jgspin', dur: 0.62, step: 14, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 70, range: 300, h: 80, knock: 30, speed: 860 }, { at: 0.52, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 165, range: 330, h: 80, hops: 2, knock: 220, launch: 130, speed: 780, big: true, stop: 0.09, shake: 3 }] },
-  ],
-  // The Cleric (the healer path, id kept; docs/design/mage-line.md, the remake): the combat medic,
-  // who works rather than casts: each spell is medical gear that hurts what it hits and mends the
-  // party round where it lands (`mend`), carrying its element onto them (world/reactions.js). Fire
-  // is a hot pack, ice a cold pack, lightning a heart-monitor pulse. Wand (key `idol` kept): a pill
-  // flicked off her thumb, an ice pack slap-shot along the floor, a pulse check that sends the
-  // heartbeat down the line. Staff (`medstaff`): a hot-water bottle catapulted, a mop of cold spray,
-  // Code Blue (a heartbeat wave down the line).
-  idol: [
-    { move: 'bbflick', dur: 0.34, step: 6, strikes: [{ at: 0.34, bubble: 'small', count: 3, spread: 24, magic: true, pct: 40 }] },
-    { move: 'bbtwirl', dur: 0.46, step: 6, strikes: [{ at: 0.44, bubble: 'big', count: 1, spread: 0, magic: true, pct: 90 }] },
-    { move: 'bbblow', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.42, bubble: 'small', count: 3, spread: 30, magic: true, pct: 36 }, { at: 0.52, bubble: 'small', count: 3, spread: 30, magic: true, pct: 36 }, { at: 0.62, bubble: 'big', count: 1, spread: 0, magic: true, pct: 120, big: true }] },
-  ],
-  medstaff: [
-    { move: 'bbwave', dur: 0.48, step: 8, strikes: [{ at: 0.4, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70 }] },
-    { move: 'bbsweep', dur: 0.56, step: 8, strikes: [{ at: 0.46, bubble: 'small', count: 5, spread: 40, magic: true, pct: 34, oy: 18 }, { at: 0.5, bubble: 'big', count: 1, spread: 0, magic: true, pct: 70, oy: 10 }] },
-    { move: 'bbswing', dur: 0.66, step: 6, finisher: true, strikes: [{ at: 0.52, bubble: 'big', count: 3, spread: 50, magic: true, pct: 90, big: true }] },
-  ],
-  // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen. Bigger and slower than
-  // the Mage: fewer, grander spells that hit crowds hard, each a different element so her
-  // reactions (and their chains) go off. (Keys astro and astrowand kept for her staff and wand.)
-  // Staff: a throne tap (fire geysers bursting up along the floor), a curtain sweep (a wall of ice
-  // sweeping along it), judgment (a crown of lightning from the sky). Wand: a finger snap (a royal
-  // fire orb), a royal wave (a spinning ice crown), a decree (a lightning scepter through the line).
-  astro: [
-    { move: 'mcflick', dur: 0.4, step: 4, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'ice', pct: 105, range: 320, h: 70, knock: 50, speed: 1150 }] },
-    { move: 'mcspark', dur: 0.34, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 95, range: 320, h: 70, knock: 45, speed: 1150 }] },
-    { move: 'mccomet', dur: 0.5, step: 6, finisher: true, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'fire', pct: 200, range: 340, h: 100, targets: 3, blast: 70, knock: 220, launch: 130, speed: 760, big: true, stop: 0.09, shake: 3 }] },
-  ],
-  astrowand: [
-    { move: 'mcspark', dur: 0.34, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 95, range: 320, h: 70, knock: 25, speed: 1150 }] },
-    { move: 'mcflick', dur: 0.4, step: 4, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'ice', pct: 105, range: 320, h: 70, knock: 30, speed: 1150 }] },
-    { move: 'mccomet', dur: 0.5, step: 6, finisher: true, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'fire', pct: 200, range: 340, h: 100, targets: 3, blast: 60, knock: 80, launch: 60, speed: 760, big: true, stop: 0.05, shake: 2 }] },
-  ],
-  starstaff: [
-    { move: 'jgbat', dur: 0.46, step: 10, strikes: [{ at: 0.4, shot: 'jgfire', orb: true, magic: true, pct: 104, range: 320, h: 70, knock: 90, speed: 760 }] },
-    { move: 'jgpong', dur: 0.58, step: 8, strikes: [{ at: 0.52, shot: 'jgfire', orb: true, magic: true, pct: 112, range: 320, h: 70, knock: 60, speed: 820, hops: 1 }] },
-    { move: 'jgslam', dur: 0.64, step: 10, finisher: true, strikes: [{ at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 185, range: 280, h: 90, hops: 3, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
   ],
   paladin: [
     { move: 'pslash', dur: 0.38, step: 10, strikes: [{ at: 0.45, pct: 90, reach: 68, h: 58, knock: 45, arc: [-115, 205] }] },
@@ -481,37 +424,6 @@ export const PATH_VARIANTS = {
     [PATH_COMBOS.shinobi[3],
       { move: 'bdspinhurl', dur: 0.56, step: 16, finisher: true, strikes: [{ at: 0.28, pct: 70, reach: 64, h: 58, around: true, targets: 3, knock: 40, arc: [-90, 360], thick: 6, fx: 'bdhit' }, { at: 0.47, shot: 'ringbig', bounce: 3, pct: 160, range: 320, h: 64, knock: 200, speed: 920, big: true, stop: 0.07, shake: 2 }] }],
   ],
-  // The Mage. Wand: the hip flick or a no-look shot; the snowball pitch or a baton twirl; the cattle
-  // prod or a jammed wand that goes off all at once. Staff: the golf swing or a home run; the pogo
-  // slam or an ice skate; the lightning rod or conducting the storm.
-  starwand: [
-    [PATH_COMBOS.starwand[0], { move: 'jgback', dur: 0.36, step: 6, strikes: [{ at: 0.34, shot: 'jgfire', orb: true, magic: true, pct: 88, range: 300, h: 70, knock: 30, speed: 840, bend: 20 }] }],
-    [PATH_COMBOS.starwand[1], { move: 'jgkick', dur: 0.44, step: 10, strikes: [{ at: 0.36, shot: 'jgfire', orb: true, magic: true, pct: 96, range: 310, h: 60, oy: 10, knock: 50, speed: 880 }] }],
-    [PATH_COMBOS.starwand[2], { move: 'jgflurry', dur: 0.62, step: 12, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 70, knock: 30, speed: 900 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 150, range: 320, h: 80, hops: 2, knock: 220, launch: 130, speed: 860, big: true, stop: 0.09, shake: 3 }] }],
-  ],
-  // The Cleric. Wand: the pill flick or a pill tossed over her shoulder; the slap-shot or keepy-uppy
-  // with an ice pack; the pulse check or a listen with the stethoscope. Staff: the catapult or a
-  // gurney push; the mop or a floor buffer; Code Blue or a heartbeat drummed on the floor.
-  idol: [
-    [PATH_COMBOS.idol[0], { move: 'bbskip', dur: 0.4, step: 14, strikes: [{ at: 0.36, bubble: 'small', count: 3, spread: 20, magic: true, pct: 40 }] }],
-    [PATH_COMBOS.idol[1], { move: 'bbeight', dur: 0.62, step: 4, strikes: [{ at: 0.3, bubble: 'big', count: 1, spread: 0, magic: true, pct: 50 }, { at: 0.56, bubble: 'big', count: 1, spread: 0, magic: true, pct: 50 }] }],
-    [PATH_COMBOS.idol[2], { move: 'bbspin', dur: 0.66, step: 4, finisher: true, strikes: [{ at: 0.4, bubble: 'small', count: 6, spread: 160, magic: true, pct: 30 }, { at: 0.6, bubble: 'big', count: 1, spread: 0, magic: true, pct: 120, big: true }] }],
-  ],
-  medstaff: [
-    [PATH_COMBOS.medstaff[0], { move: 'bbloop', dur: 0.54, step: 6, strikes: [{ at: 0.4, bubble: 'small', count: 4, spread: 90, magic: true, pct: 40 }] }],
-    [PATH_COMBOS.medstaff[1], { move: 'bbhula', dur: 0.62, step: 2, strikes: [{ at: 0.5, bubble: 'big', count: 2, spread: 60, magic: true, pct: 70 }] }],
-    [PATH_COMBOS.medstaff[2], { move: 'bbpogo', dur: 0.7, step: 10, finisher: true, strikes: [{ at: 0.4, bubble: 'big', count: 1, spread: 0, magic: true, pct: 80 }, { at: 0.62, bubble: 'big', count: 2, spread: 40, magic: true, pct: 80, big: true }] }],
-  ],
-  // The Sorcerer. Staff: the throne tap or a majorette's twirl; the curtain sweep or a bow; judgment
-  // or an encore. Wand: the finger snap or fanning herself; the royal wave or a curtsy; the decree or
-  // a bored yawn.
-  astro: [[PATH_COMBOS.astro[0], PATH_COMBOS.astrowand[0]], [PATH_COMBOS.astro[1], PATH_COMBOS.astrowand[1]], [PATH_COMBOS.astro[2]]],
-  astrowand: [[PATH_COMBOS.astrowand[0], PATH_COMBOS.astro[0]], [PATH_COMBOS.astrowand[1], PATH_COMBOS.astro[1]], [PATH_COMBOS.astrowand[2]]],
-  starstaff: [
-    [PATH_COMBOS.starstaff[0], { move: 'jgcue', dur: 0.5, step: 14, strikes: [{ at: 0.44, shot: 'jgfire', orb: true, magic: true, pct: 106, range: 340, h: 60, knock: 70, speed: 980, pierce: true, targets: 2 }] }],
-    [PATH_COMBOS.starstaff[1], { move: 'jgserve', dur: 0.56, step: 8, strikes: [{ at: 0.5, shot: 'jgfire', orb: true, magic: true, pct: 112, range: 320, h: 80, knock: 60, speed: 880, bend: -22 }] }],
-    [PATH_COMBOS.starstaff[2], { move: 'jgbaton', dur: 0.64, step: 6, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 80, range: 300, h: 80, knock: 40, speed: 860 }, { at: 0.5, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 160, range: 320, h: 80, hops: 2, knock: 220, launch: 130, speed: 820, big: true, stop: 0.09, shake: 3 }] }],
-  ],
   // The Sky Dancer. Openers: the palm push or a twirl that unfurls into one. Second: the scissor
   // kick or a flutter of both palms that beats out two gusts. Third: the aerial spin or an axe heel
   // chopped down on them. Finisher: the crescent kick or a sweeping kick that turns her once round.
@@ -567,67 +479,6 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
-  // The Mage with the wand: a zap ball flung straight up like a sparkler, a snowball dropped from a
-  // tuck in the air (the second time a spray of three), and a fire-rocket skid out of a run.
-  starwand: {
-    up: { move: 'jgup', dur: 0.4, step: 4, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 900, big: true, stop: 0.04 }] },
-    air: [
-      { move: 'jgair', dur: 0.36, hang: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 82, range: 260, h: 170, drop: 60, knock: 30, speed: 900 }] },
-      { move: 'jgair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 120, range: 260, h: 190, drop: 70, hops: 1, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
-    ],
-    dash: { move: 'jgslide', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.34, shot: 'jgfire', orb: true, magic: true, pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 960 }] },
-  },
-  // The Cleric with the wand: a pill popped straight up off her thumb, an ice pack dropped from a
-  // tuck in the air (the second time a spray of three), and a paramedic's knee slide flicking a pill.
-  idol: {
-    up: { move: 'bbup', dur: 0.4, step: 4, strikes: [{ at: 0.3, bubble: 'small', count: 4, spread: 30, magic: true, pct: 50, up: 1.3 }] },
-    air: [
-      { move: 'bbair', dur: 0.36, hang: true, strikes: [{ at: 0.3, bubble: 'small', count: 3, spread: 30, magic: true, pct: 40, up: -0.6 }] },
-      { move: 'bbair', dur: 0.42, hang: true, finisher: true, strikes: [{ at: 0.3, bubble: 'big', count: 1, spread: 0, magic: true, pct: 90, up: -0.5 }] },
-    ],
-    dash: { move: 'bbdash', dur: 0.52, step: 60, carry: 0.55, strikes: [{ at: 0.3, bubble: 'small', count: 5, spread: 20, magic: true, pct: 40, speedK: 1.4 }] },
-  },
-  // With the staff: a hot-water bottle pole-vaulted up, an ice pack batted down from the air, and a
-  // scooter ride on the staff out of a run.
-  medstaff: {
-    up: { move: 'bbsup', dur: 0.44, step: 4, strikes: [{ at: 0.32, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70, up: 1.2 }] },
-    air: [
-      { move: 'bbsair', dur: 0.38, hang: true, strikes: [{ at: 0.32, bubble: 'big', count: 1, spread: 0, magic: true, pct: 80, up: -0.6 }] },
-      { move: 'bbsair', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.32, bubble: 'big', count: 2, spread: 40, magic: true, pct: 80, up: -0.5 }] },
-    ],
-    dash: { move: 'bbsdash', dur: 0.54, step: 60, carry: 0.5, strikes: [{ at: 0.44, bubble: 'big', count: 2, spread: 30, magic: true, pct: 70 }] },
-  },
-  // The Sorcerer with the staff: a banner raised (lightning up), a throne in the air (fire orb
-  // down; the second time a crown of ice), a throne ride out of a run that ends in a tap of geysers.
-  astro: {
-    up: { move: 'mcup', dur: 0.38, step: 4, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1100, big: true, stop: 0.04 }] },
-    air: [
-      { move: 'mcair', dur: 0.34, hang: true, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 84, range: 260, h: 170, drop: 60, knock: 30, speed: 1100 }] },
-      { move: 'mcair', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mccomet', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, knock: 80, speed: 950, big: true, stop: 0.04, shake: 1 }] },
-    ],
-    dash: { move: 'mcdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'bolt', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 1150 }] },
-  },
-  // With the wand: a royal salute (lightning up), floating cross-legged on air pointing down, and a
-  // regal glide out of a run.
-  astrowand: {
-    up: { move: 'mcup', dur: 0.38, step: 4, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 110, range: 260, h: 190, lift: 60, knock: 20, launch: 360, speed: 1100, big: true, stop: 0.04 }] },
-    air: [
-      { move: 'mcair', dur: 0.34, hang: true, strikes: [{ at: 0.3, shot: 'mcspark', magic: true, el: 'bolt', pct: 84, range: 260, h: 170, drop: 60, knock: 30, speed: 1100 }] },
-      { move: 'mcair', dur: 0.4, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'mccomet', magic: true, el: 'ice', pct: 130, range: 260, h: 190, drop: 70, knock: 80, speed: 950, big: true, stop: 0.04, shake: 1 }] },
-    ],
-    dash: { move: 'mcdash', dur: 0.5, step: 56, carry: 0.5, strikes: [{ at: 0.4, shot: 'mcspark', magic: true, el: 'bolt', pct: 115, range: 300, h: 70, targets: 2, pierce: true, knock: 80, speed: 1150 }] },
-  },
-  // With the staff: a vault off the planted staff zapping straight up, a fireball batted down from
-  // the air (the second time a spray of snowballs), and a broomstick ride out of a run that ends in
-  // a fireball.
-  starstaff: {
-    up: { move: 'jgvault', dur: 0.44, step: 6, strikes: [{ at: 0.32, shot: 'jgfire', orb: true, magic: true, pct: 114, range: 260, h: 190, lift: 60, knock: 20, launch: 380, speed: 900, big: true, stop: 0.04 }] },
-    air: [
-      { move: 'jgdunk', dur: 0.38, hang: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, pct: 88, range: 260, h: 170, drop: 60, knock: 40, speed: 900 }] },
-      { move: 'jgdunk', dur: 0.44, hang: true, finisher: true, strikes: [{ at: 0.3, shot: 'jgfire', orb: true, magic: true, orbShot: 'jgbig', pct: 125, range: 260, h: 190, drop: 70, hops: 2, knock: 220, launch: 130, speed: 900, big: true, stop: 0.09, shake: 3 }] },
-    ],
-    dash: { move: 'jgscoot', dur: 0.52, step: 60, carry: 0.5, strikes: [{ at: 0.42, shot: 'jgfire', orb: true, magic: true, pct: 118, range: 300, h: 70, targets: 2, pierce: true, knock: 90, speed: 900 }] },
-  },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
   kitsune: {
@@ -810,7 +661,6 @@ export function addFaith(world, n) {
 }
 // The share Faith takes off a hit; a hit taken also builds it.
 export function faithGuard(world) {
-  stormHurt(world);
   if (!hasFaith(world.char)) return 0;
   const cut = (FAITH_CUT * (world.faith ?? 0)) / FAITH_MAX;
   addFaith(world, FAITH_ON_HURT);
@@ -1108,92 +958,10 @@ export function barrageRelease(world) {
   const step = spec.finish(b, pct, k, air);
   playStep(world, step, 100, air ? 'basicair1' : 'basic2');
 }
-// Spirit, as the Star Witch's Constellation (her paths turn it into their own gauges below): her
-// spells that land light its stars, and so do her heals, half again when she turns from one to the
-// other; it fades once the fighting stops. Full (all seven stars lit), every star bolt and comet she
-// casts splits into three (STAR_SPLIT of its strength each), and Starfall is ready.
-export const SPIRIT_MAX = 100;
-const SPIRIT_HOLD = 5;
-const SPIRIT_DRAIN = 10;
-export const STAR_SPLIT = 0.5;
-// Mayhem (the Mage's gauge; world/reactions.js): what a plain spell hit builds (a share of its
-// gauge), what a heal builds; her element reactions build it fastest (REACT_GAIN).
-export const MAYHEM_HIT = 0.35;
-export const MAYHEM_MEND = 0.5;
-export const hasSpirit = (char) => jobChain(char.job).includes('mage');
-export function addSpirit(world, n, kind = 'harm', el = null) {
-  if (!hasSpirit(world.char) || n <= 0) return;
-  // A Starlight Idol builds Applause instead (her heals count most); an Astronomer, Orbit.
-  if (hasGrace(world.char)) return addGrace(world, n * (kind === 'mend' ? 1.6 : 0.6));
-  // (The Sorcerer's Chaos fills from her chains, world/reactions.js; plain hits barely move it.)
-  if (hasBinding(world.char)) return addBinding(world, n * 0.25);
-  // The Mage's Mayhem (docs/design/mage-line.md): plain hits barely build it; her element
-  // reactions (world/reactions.js) fill it.
-  if (world.char.job === 'mage') {
-    world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (kind === 'react' ? 1 : kind === 'mend' ? MAYHEM_MEND : MAYHEM_HIT));
-    world.spiritAt = world.now;
-    world.spiritKind = kind;
-    return;
-  }
-  const turn = world.spiritKind && world.spiritKind !== kind && world.now - (world.spiritAt ?? -9) < SPIRIT_HOLD;
-  world.spirit = Math.min(SPIRIT_MAX, (world.spirit ?? 0) + n * (turn ? 1.5 : 1));
-  world.spiritAt = world.now;
-  world.spiritKind = kind;
-}
-export const constellation = (world) => world.char.job === 'mage' && (world.spirit ?? 0) >= SPIRIT_MAX;
-// Applause (internally Grace): the Starlight Idol's gauge, in place of Spirit. The crowd cheers for
-// her heals (most, more the more allies they reach), her songs laid on the party, and her notes
-// that land; it fades once the fighting stops. Full (LIVE SHOW), her songs reach half again as far and
-// mend more (world/idol.js), and her finisher, Grand Concert, is ready.
-export const GRACE_MAX = 100;
-const GRACE_HOLD = 6;
-const GRACE_DRAIN = 8;
-export const hasGrace = (char) => jobChain(char.job).includes('cleric');
-export function addGrace(world, n) {
-  if (!hasGrace(world.char) || n <= 0) return;
-  world.grace = Math.min(GRACE_MAX, (world.grace ?? 0) + n);
-  world.graceAt = world.now;
-}
-export const liveShow = (world) => hasGrace(world.char) && (world.grace ?? 0) >= GRACE_MAX;
-// Spellstorm (internally Binding): the Sorcerer's gauge (docs/design/mage-line.md). Her spells that
-// land build it, quickly while she keeps casting (a hit within STORM_QUICK of the last), slowly when
-// she lets up; a hit taken knocks a share of it away (STORM_HURT); it fades once the fighting stops.
-// Full (SPELLSTORM), every spell she casts casts twice: an echo of it follows a beat behind
-// (STORM_ECHO as strong), and her finisher is ready.
-export const BINDING_MAX = 100;
-const BINDING_HOLD = 6;
-const BINDING_DRAIN = 9;
-export const STORM_QUICK = 1.2;
-export const STORM_FAST = 1.5;
-export const STORM_SLOW = 0.6;
-export const STORM_HURT = 0.35;
-export const STORM_ECHO = 0.6;
-export const hasBinding = (char) => jobChain(char.job).includes('sorcerer');
-export function addBinding(world, n) {
-  if (!hasBinding(world.char) || n <= 0) return;
-  const quick = world.now - (world.bindingAt ?? -9) < STORM_QUICK;
-  // (Dark Pact makes it build faster while it lasts.)
-  const pact = world.char.buffs?.yokairally;
-  const gain = pact && pact.until > world.now ? 1 + (pact.values?.stormGain ?? 0) : 1;
-  world.binding = Math.min(BINDING_MAX, (world.binding ?? 0) + n * (quick ? STORM_FAST : STORM_SLOW) * gain);
-  world.bindingAt = world.now;
-}
-export const fullOrbit = (world) => hasBinding(world.char) && (world.binding ?? 0) >= BINDING_MAX;
-export const spellstorm = fullOrbit;
-// A hit taken knocks part of her Spellstorm away.
-export function stormHurt(world) {
-  if (!hasBinding(world.char) || !(world.binding > 0)) return;
-  world.binding = Math.max(0, world.binding * (1 - STORM_HURT));
-}
-// How many allies are within `r` of (x, y) besides her (her party in a dungeon), for Applause.
-const alliesNear = (world, x, r) => (world.dungeon ? groupOf(world).filter((g) => g.bot && Math.abs(g.body.x - x) <= r).length : 0);
 // Heals you and the party members within `r` of (x, y) by `pct` of max HP (a heal, like the
-// Paladin's Judgment); a Spirit Mage's healing builds her Spirit (not a finisher's: `gauge` false).
+// Paladin's Judgment).
 export function healAround(world, x, y, pct, r, gauge = true, el = null) {
   const { char, body, stats } = world;
-  // A Starlight Idol's Stage Presence makes every heal she gives mend more.
-  const lv = grownLevel(char, SKILLS.shrinemastery);
-  if (lv > 0) pct *= 1 + (skillAt('shrinemastery', lv).passive.healPower ?? 0);
   if (Math.abs(body.x - x) <= r && Math.abs(body.y - y) < 160 && char.hp < stats.maxHp && !world.dead) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);
@@ -1208,9 +976,6 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
     }
   }
   if (world.dungeon) healMembers(world, pct, { x: x - r, y: y - 160, w: r * 2, h: 320 });
-  if (gauge) addSpirit(world, 40 * pct * (1 + 0.5 * alliesNear(world, x, r)), 'mend');
-  // (The Cleric's heals carry their element onto her party: world/reactions.js.)
-  if (el) allyElement(world, el);
 }
 // The thrown stars a gauntlet uses up (one each from the set in your bag).
 const STAR_SHOTS = new Set(['star', 'moonstar']);
@@ -1218,7 +983,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasGrace(char) ? 'grace' : hasBinding(char) ? 'binding' : hasSpirit(char) ? 'spirit' : hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1227,7 +992,6 @@ export function gaugeFull(world) {
 
 // What a shot that lands builds on an archer path's gauge (see world.js).
 export function addAim(world, n, mob = null, el = null) {
-  addSpirit(world, n, 'harm', el);
   addTails(world, n);
   addMomentum(world, n);
   addShadow(world, n);
@@ -1239,10 +1003,6 @@ export function addAim(world, n, mob = null, el = null) {
 export function pathOf(world) {
   const { char } = world;
   const w = world.stats.weaponType;
-  if ((w === 'wand' || w === 'staff') && char.job === 'mage') return w === 'wand' ? 'starwand' : 'starstaff';
-  if (w === 'wand' && hasGrace(char)) return 'idol';
-  if (w === 'staff' && hasGrace(char)) return 'medstaff';
-  if ((w === 'wand' || w === 'staff') && hasBinding(char)) return w === 'wand' ? 'astrowand' : 'astro';
   if (w === 'dagger' && hasKi(char)) return 'shinobi';
   if (w === 'gauntlet' && hasTails(char)) return 'kitsune';
   if (hasShadow(char) && (w === 'dagger' || w === 'gauntlet')) return w === 'dagger' ? 'thiefdagger' : 'thiefstar';
@@ -1256,26 +1016,7 @@ export function pathOf(world) {
 
 // Rage makes a Berserker's blows hit harder: up to RAGE_POWER more at full Rage.
 const RAGE_POWER = 0.25;
-function mageHeft(s) {
-  const big = s.big || s.finisher;
-  return {
-    ...s,
-    knock: Math.max(s.knock ?? 0, big ? 200 : 60),
-    launch: big ? Math.max(s.launch ?? 0, 110) : s.launch,
-    stop: Math.max(s.stop ?? 0, big ? 0.08 : 0.02),
-    shake: Math.max(s.shake ?? 0, big ? 3 : 0),
-  };
-}
-// The Mage line's gauges work like Rage (the player's ask, 2026-11-07): the fuller Mayhem,
-// Starfall or Devotion is, the harder every one of her spells hits, up to MAGE_POWER more when full.
-const MAGE_POWER = 0.25;
-export function gaugePower(world) {
-  const char = world.char;
-  if (hasRage(char)) return 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX;
-  if (JOBS[char.job]?.family !== 'mage') return 1;
-  const g = gaugeOf(char);
-  return g ? 1 + MAGE_POWER * Math.min(1, (world[g] ?? 0) / 100) : 1;
-}
+const ragePower = (world) => (hasRage(world.char) ? 1 + (RAGE_POWER * (world.rage ?? 0)) / RAGE_MAX : 1);
 // How much heavier each path's blows land: longer hit-stop, harder knockback.
 const WEIGHT = { berserker: 1.4, paladin: 1.2, unbroken: 1.35 };
 // Unbroken (full Valor) lands a Warrior's blows heavier too.
@@ -1363,8 +1104,6 @@ export function basicCombo(world) {
       return;
     }
   }
-  // (The Meteor Caller's basic spell is a plain string now: no holding to charge, the player's call
-  // 2026-11-07; the meteor is a skill, Meteor Shower.)
   if (stream) return barrageThrow(world, stream);
   const steps = PATH_COMBOS[path] ?? COMBOS[world.stats.weaponType];
   const flowing = world.now <= (world.comboUntil ?? -9);
@@ -1388,156 +1127,7 @@ export function skillCombo(world, skillId, params, scale = 100) {
   playStep(world, step, scale, skillId, params.school, after);
 }
 
-// ---------- The Meteor Caller (the Sorcerer, remade 2026-11-07; docs/design/mage-line.md) ----------
-// Her basic spell is charged: a tap flicks a quick star-spark; held, she gathers power (slowed to a
-// walk, the updraft round her rising) through three tiers, and letting go calls down what she
-// reached: a comet at CALL_TIERS[1] seconds, a meteor at CALL_TIERS[2]; held to CALL_MAX it goes
-// off by itself. Charged hits fill her gauge (Starfall, internally Binding); full (STARSTORM), every
-// tap calls down a meteor at once, each spending CALL_STORM of it.
-export const isCaller = (char) => char.job === 'sorcerer';
-export const CALL_TIERS = [0, 0.45, 1.1];
-export const CALL_MAX = 1.6;
-export const CALL_WALK = 0.4;
-export const CALL_STORM = 25;
-const CALL_GAIN = [0, 9, 22];
-const CALL_GATHER = { move: 'mcgather', dur: CALL_MAX + 0.2, carry: 1, strikes: [] };
-export const CALL_STEPS = [
-  { move: 'mcspark', dur: 0.3, step: 4, strikes: [{ at: 0.42, shot: 'mcspark', magic: true, el: 'bolt', pct: 82, range: 320, h: 70, knock: 25, speed: 1150 }] },
-  { move: 'mccomet', dur: 0.44, step: 6, strikes: [{ at: 0.42, shot: 'mccomet', sky: true, skyH: 240, skyX: 150, magic: true, el: 'ice', pct: 230, range: 340, h: 100, targets: 2, blast: 60, knock: 80, launch: 60, speed: 760, big: true, stop: 0.05, shake: 2 }] },
-  { move: 'mcmeteor', dur: 0.58, step: 0, finisher: true, strikes: [{ at: 0.5, shot: 'mcmeteor', sky: true, skyH: 320, skyX: 190, magic: true, el: 'fire', pct: 470, range: 360, h: 140, targets: 1, blast: 130, knock: 170, launch: 150, speed: 560, big: true, stop: 0.09, shake: 5, crater: true }] },
-];
-export const starstorm = (world) => isCaller(world.char) && (world.binding ?? 0) >= BINDING_MAX;
-function callerBasic(world) {
-  if (world.call) return;
-  // On a full Starfall a tap calls the meteor down at once.
-  if (starstorm(world) || (world.binding ?? 0) >= BINDING_MAX * 0.999) {
-    world.binding = Math.max(0, (world.binding ?? 0) - CALL_STORM);
-    world.bindingAt = world.now;
-    world.storming = world.now;
-    playStep(world, CALL_STEPS[2], 100, 'basic2');
-    return;
-  }
-  if (!world.body.onGround) return playStep(world, CALL_STEPS[0], 100, 'basicair0');
-  world.call = { since: world.now, tier: 0 };
-  playStep(world, CALL_GATHER, 100, 'basiccall');
-  world.fx.push({ kind: 'mcgather', follow: true, x: world.body.x, y: world.body.y, dir: world.body.facing, t: 0, dur: CALL_MAX + 0.2 });
-}
-function tickCaller(world) {
-  const c = world.call;
-  if (!c) return;
-  // A skill, a hit or a jump that took over the pose ends the charge unspent.
-  if (world.pose?.kind !== 'mcgather' || world.dead) {
-    world.call = null;
-    world.fx = world.fx.filter((f) => f.kind !== 'mcgather');
-    return;
-  }
-  // (Stargazer gathers a charge faster while it lasts.)
-  const sg = world.char.buffs?.yokairally;
-  const quick = sg && sg.until > world.now ? 1 - (sg.values?.quickCall ?? 0) : 1;
-  const held = (world.now - c.since) / quick;
-  const tier = held >= CALL_TIERS[2] ? 2 : held >= CALL_TIERS[1] ? 1 : 0;
-  if (tier > c.tier) {
-    c.tier = tier;
-    world.fx.push({ kind: 'mctier', tier, x: world.body.x, y: world.body.y, dir: world.body.facing, follow: true, t: 0, dur: 0.4 });
-    world.juice.push({ type: 'shake', mag: tier, dur: 0.12 });
-  }
-  if (world.basicHeld && held < CALL_MAX) return;
-  world.call = null;
-  world.fx = world.fx.filter((f) => f.kind !== 'mcgather');
-  world.attackTimer = 0;
-  world.lockTimer = 0;
-  world.pose = null;
-  const step = CALL_STEPS[tier];
-  if (tier && pickTargets(world.mobs, world.body, { w: step.strikes[0].range, h: step.strikes[0].h }, 1).length) addBinding(world, CALL_GAIN[tier]);
-  playStep(world, step, 100, `basic${tier}`);
-}
 
-// ---------- The Bubble Healer (the Cleric, remade 2026-11-07; docs/design/mage-line.md) ----------
-// Her wand and staff are bubble wands. Her attacks blow bubbles (`bubble` strikes: 'small', 'big'
-// or a skill's 'giant', `count` of them fanned over `spread` degrees) that drift slowly forward, bobbing and rising a
-// little. A bubble that touches a monster pops on it for damage (a big one traps it for a moment);
-// one that touches an ally in her party pops into a heal; every pop splashes a little heal round it
-// (and on her, at half); one that finds nothing fades at the end of its life with a soft heal where
-// it ends. Pops fill her gauge (Grace); full, every bubble she blows splits into three.
-export const isBubbler = (char) => char.job === 'cleric';
-export const BUBBLE = {
-  small: { r: 7, speed: 230, life: 1.3, heal: 0.012, gain: 2 },
-  big: { r: 15, speed: 150, life: 1.9, heal: 0.035, gain: 5, trap: 0.9 },
-  // (A skill's giant bubble rolls on through every monster in its way, hitting each once, and pops
-  // at the end of its life in a great splash of healing.)
-  giant: { r: 30, speed: 80, life: 2.6, heal: 0.08, gain: 8, pierce: true },
-};
-const BUBBLE_SPLASH = 120;
-function blowBubbles(world, s) {
-  const { body } = world;
-  const k = BUBBLE[s.bubble];
-  const triple = liveShow(world);
-  const lift = moveAt(s.move, s.at, s.dur)?.lift ?? 0;
-  const ox = body.x + s.dir * 14;
-  const oy = body.y - HAND_Y - lift + (s.oy ?? 0);
-  const n = s.count ?? 1;
-  const spread = ((s.spread ?? 0) * Math.PI) / 180;
-  for (let i = 0; i < n; i++) {
-    const a = n > 1 ? -spread / 2 + (spread * i) / (n - 1) : 0;
-    for (const split of triple ? [-0.22, 0, 0.22] : [0]) {
-      const aa = a + split - (s.up ?? 0);
-      const sp = k.speed * (s.speedK ?? 1) * (0.85 + 0.3 * Math.random());
-      // (`sky`: a skill's bubbles drift down from high overhead along the ground ahead, `sky` wide.)
-      const sky = s.sky ? { x: body.x + s.dir * ((s.skyFrom ?? 30) + (s.sky * (i + 0.5 + split * 1.5)) / n), y: body.y - 150 - Math.random() * 40 } : null;
-      (world.soap ??= []).push({
-        x: sky ? sky.x : ox, y: sky ? sky.y : oy, vx: sky ? (Math.random() - 0.5) * 20 : Math.cos(aa) * sp * s.dir, vy: sky ? 50 + Math.random() * 30 : Math.sin(aa) * sp - 18, pierce: k.pierce, hits: k.pierce ? new Set() : undefined, sink: Boolean(sky), r: k.r * (triple ? 0.8 : 1), big: s.bubble === 'big', born: world.now + i * (s.sky ? 0.09 : 0.04),
-        life: k.life * (0.9 + 0.2 * Math.random()), pct: s.pct * (triple ? 0.45 : 1), heal: k.heal * (triple ? 0.5 : 1), gain: k.gain, trap: k.trap, key: s.key, dir: s.dir, fin: Boolean(s.big), wob: Math.random() * 6, map: world.map.id,
-      });
-    }
-  }
-  if (!s.sky) world.fx.push({ kind: 'bbpuff', x: ox, y: oy, dir: s.dir, t: 0, dur: 0.35 });
-}
-function popBubble(world, b, kind) {
-  b.popped = true;
-  world.fx.push({ kind: b.pierce ? 'bbpopgiant' : b.big ? 'bbpopbig' : 'bbpop', x: b.x, y: b.y, t: 0, dur: b.pierce ? 0.6 : 0.4 });
-  const soft = kind === 'fade' && !b.pierce ? 0.5 : 1;
-  healAround(world, b.x, b.y, b.heal * soft, b.pierce ? BUBBLE_SPLASH * 2 : BUBBLE_SPLASH, false);
-  // (She is mended a little by every pop, wherever she is.)
-  if (Math.abs(world.body.x - b.x) > BUBBLE_SPLASH && !world.dead) {
-    const amount = Math.max(1, Math.round(world.stats.maxHp * b.heal * 0.5 * soft));
-    world.char.hp = Math.min(world.stats.maxHp, world.char.hp + amount);
-  }
-  addGrace(world, b.gain * (kind === 'fade' && !b.pierce ? 0.3 : 1));
-}
-function tickBubbles(world, dt) {
-  if (!world.soap?.length) return;
-  world.soap = world.soap.filter((b) => b.map === world.map.id);
-  const allies = world.dungeon ? groupOf(world).filter((g) => g.bot && g.body) : [];
-  for (const b of world.soap) {
-    if (b.popped || world.now < b.born) continue;
-    const age = world.now - b.born;
-    b.vx *= 1 - (b.pierce ? 0.2 : 0.9) * dt;
-    // (Falling ones drift down and settle; the rest rise a little.)
-    b.vy = b.vy * (1 - 1.2 * dt) - (b.sink ? 0 : b.pierce ? 4 : 10) * dt;
-    b.x += b.vx * dt;
-    b.y += b.vy * dt + Math.sin(age * 5 + b.wob) * 12 * dt;
-    if (age >= b.life) {
-      popBubble(world, b, 'fade');
-      continue;
-    }
-    const m = world.mobs.find((o) => o.hp > 0 && !b.hits?.has(o) && Math.abs(o.x - b.x) < o.def.w / 2 + b.r && Math.abs(o.y - (o.air ?? 0) - o.def.h / 2 - b.y) < o.def.h / 2 + b.r);
-    if (m && b.pierce) {
-      b.hits.add(m);
-      dollHit(world, m, { pct: b.pct, x: b.x, knock: 80, launch: 60, burst: 'bbhitbig', gauge: 0, key: b.key, big: true, stop: 0.03 });
-      addGrace(world, 1);
-      continue;
-    }
-    if (m) {
-      popBubble(world, b, 'mob');
-      dollHit(world, m, { pct: b.pct, x: b.x, knock: b.fin ? 220 : b.big ? 120 : 45, launch: b.fin ? 130 : b.big ? 70 : 0, burst: b.big ? 'bbhitbig' : 'bbhit', stun: b.big && !m.def.boss ? b.trap : undefined, gauge: 0, key: b.key, big: b.big || b.fin, stop: b.fin ? 0.09 : b.big ? 0.06 : 0.03, shake: b.fin ? 3 : b.big ? 1 : 0 });
-      if (b.big && !m.def.boss) world.fx.push({ kind: 'bbtrap', mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: b.trap });
-      continue;
-    }
-    const ally = allies.find((g) => Math.abs(g.body.x - b.x) < 14 + b.r && Math.abs(g.body.y - 20 - b.y) < 26 + b.r);
-    if (ally && !b.pierce) popBubble(world, b, 'ally');
-  }
-  world.soap = world.soap.filter((b) => !b.popped && b.map === world.map.id && world.now - b.born < b.life + 0.1);
-}
 
 function playStep(world, step, scale, key, school = null, after = 0) {
   const { body, now, stats } = world;
@@ -1552,8 +1142,6 @@ function playStep(world, step, scale, key, school = null, after = 0) {
   // weapon's own timing bends around that moment without moving it (render/moves.js `feel`).
   const timed = step.strikes.filter((st) => !st.onLand);
   world.pose = { from: outgoing(world), kind: step.move, t: dur, dur, since: world.now, hit: timed[0]?.at, fin: Boolean(step.finisher) };
-  // The Cleric and the Sorcerer name their big spells out loud (MAGE_SHOUTS).
-  if (world.char.job === 'cleric' || world.char.job === 'sorcerer') mageShout(world, step.move);
   world.comboUntil = now + dur + WINDOW;
   // Once the last blow lands, moving, jumping, or a skill can cut the follow-through short.
   world.recoverAt = now + (timed.length ? timed.at(-1).at : 1) * dur + 0.03;
@@ -1657,15 +1245,9 @@ export function tickMelee(world, dt) {
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
-  if (world.spirit > 0 && world.now - (world.spiritAt ?? 0) > SPIRIT_HOLD) world.spirit = Math.max(0, world.spirit - SPIRIT_DRAIN * dt);
-  if (world.grace > 0 && world.now - (world.graceAt ?? 0) > GRACE_HOLD) world.grace = Math.max(0, world.grace - GRACE_DRAIN * dt);
-  if (world.binding > 0 && world.now - (world.bindingAt ?? 0) > BINDING_HOLD) world.binding = Math.max(0, world.binding - BINDING_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
   tickSky(world);
-  tickJuggle(world, dt);
-  tickCaller(world);
-  tickBubbles(world, dt);
   if (world.tails > 0 && world.now - (world.tailsAt ?? 0) > TAILS_HOLD) world.tails = Math.max(0, world.tails - TAILS_DRAIN * dt);
   if (world.shadow > 0 && world.now - (world.shadowAt ?? 0) > SHADOW_HOLD) world.shadow = Math.max(0, world.shadow - SHADOW_DRAIN * dt);
   if (world.momentum > 0 && FLIPS.has(world.pose?.kind)) world.flipAt = world.now;
@@ -1673,8 +1255,6 @@ export function tickMelee(world, dt) {
   tickTraps(world);
   tickEngineer(world);
   tickPhantom(world);
-  tickIdol(world);
-  tickAstro(world);
   if (world.dead) {
     world.strikes.length = 0;
     world.lunge = null;
@@ -1732,22 +1312,6 @@ function land(world, s) {
   // they leave the bow, hit or miss (Blast and Snare Arrow change the shot itself).
   if (s.shot && !s.key.startsWith('basic')) s = { ...s, shot: pathShot(char, s.shot), muzzle: s.muzzle && pathShot(char, s.muzzle) };
   if ((s.rain || s.shot) && s.key.startsWith('basic') && !s.phantom) s = shotProcs(world, s);
-  // The Spell Juggler flings the oldest orb circling her (world/juggle.js), or with empty hands
-  // snaps a little palm spark.
-  // (Encore: every orb she can hold back in the air at once.)
-  if (s.refillOrbs) refillOrbs(world);
-  // (Fountain and the Grand Finale throw up every orb she holds: each one makes the rain heavier.)
-  if (s.spendOrbs && isJuggler(world.char)) {
-    const n = spendOrbs(world);
-    s = { ...s, pct: s.pct * (1 + 0.15 * n), rain: s.rain + Math.floor(n / 2) };
-  }
-  // The Mage line's skills land with a warrior's weight (the player's ask, 2026-11-07): every
-  // spell that does damage shoves what it hits, and its big hits stop the moment, shake the screen
-  // and throw monsters back hard.
-  if (JOBS[char.job]?.family === 'mage' && !s.key.startsWith('basic') && (s.pct ?? 0) > 0) s = mageHeft(s);
-  // (The Bubble Healer blows bubbles: blowBubbles.)
-  if (s.bubble) return blowBubbles(world, s);
-  if (s.orb) s = orbStrike(world, s);
   if (s.rain) return rain(world, s);
   if (s.shot) return fire(world, s);
   // A form reaches farther: every cut grows by FORM_REACH (once, not again for its echo).
@@ -1755,7 +1319,6 @@ function land(world, s) {
   const range = s.around ? { w: s.reach * 2, h: s.h, around: true } : { w: s.reach, h: s.h };
   const targets = pickTargets(world.mobs, body, range, s.targets ?? 1);
   const acc = accuracy(JOBS[char.job].family, stats, char.level);
-  const power = gaugePower(world);
   const weight = weightOf(world);
   // A finisher hits harder the fewer it catches: double on one, half again on two (its whole
   // gauge goes into them), so it pays on a lone boss as well as a crowd.
@@ -1763,7 +1326,8 @@ function land(world, s) {
   const tune = tuneOf(s.key) * focus;
   // ...and it feels it: its big blow, a whole gauge into one or two, lands with a heavier stop and shake.
   if (focus > 1 && (s.stop ?? 0) >= 0.1) s = { ...s, stop: Math.max(s.stop ?? 0, 0.1 + 0.04 * focus), shake: Math.max(s.shake ?? 0, 3 + 2 * focus) };
-  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * power * tune) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power * tune) / 100);
+  const power = ragePower(world);
+  const dmgRange = s.magic ? magicRange(stats, (s.pct * s.scale * tune) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * power * tune) / 100);
   const cy = body.y - body.h / 2;
   // The smear, spike, or whirl of the blow.
   if (s.pierce) {
@@ -1774,14 +1338,13 @@ function land(world, s) {
     world.fx.push({ kind: 'arc', weapon: world.stats.weaponType, snd: s.school, path: hasRage(char) ? 'rage' : hasFaith(char) ? 'holy' : hasValor(char) ? 'steel' : hasKi(char) ? 'rosegold' : hasShadow(char) ? 'coral' : null, x: body.x + s.dir * (s.around ? 0 : 10), y: cy - 2, bx: body.x, by: body.y, move: s.move, at: s.at, moveDur: s.dur, hit: s.hit, fin: s.finisher, dir: s.dir, r: s.around ? s.reach * 0.8 : s.reach * 0.52, start: s.arc[0], sweep: s.arc[1], thick: s.thick ?? 7, big: s.big, flat: s.around, color: TINTS[s.school]?.[s.big ? 1 : 0] ?? (hasShadow(char) ? TINTS.coral[s.big ? 1 : 0] : s.big ? HEAVY : BLADE), element: s.key.startsWith('basic') ? weaponElement(char) : null, t: 0, dur: s.big ? 0.32 : 0.24 });
   }
   // A finisher's big blow all round her races a shockwave out along the ground to the edge of its
-  // reach, in her path's colour, so the whole area it hits shows (the dancers' and the Star Witch's).
+  // reach, in her path's colour, so the whole area it hits shows (the dancers').
   // The dancers mark every wide blow all round them this way, big or with a burst, from 90 px out
   // (an aerial spin's ring of wind, a flourish's, Spotlight's dazzle).
   const dancer = hasKi(char) || hasTails(char) || hasShadow(char);
   const shock = s.around && !s.arc && ((s.big && (s.reach ?? 0) >= 150) || (dancer && (s.big || s.burst) && (s.reach ?? 0) >= 90)) && (hasKi(char) ? 'celshockrose' : hasTails(char) ? 'celshocksky' : hasShadow(char) ? 'celshockcoral' : char.job === 'mage' ? 'celshockstar' : null);
   if (shock) world.fx.push({ kind: 'shock', name: shock, x: body.x, y: body.y, r: s.reach, t: 0, dur: 0.42 });
-  // The Star Witch's party spells (Wishing Star, Star Veil) ring out over everyone they reach.
-  if (s.grant?.range?.around && char.job === 'mage') world.fx.push({ kind: 'shock', name: 'celshockstar', x: body.x, y: body.y, r: s.grant.range.w / 2, t: 0, dur: 0.5 });
+
   if (s.crack) {
     world.fx.push({ kind: 'crack', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.55, y: body.y, w: s.around ? s.reach * 2 : s.reach * 1.4, t: 0, dur: 0.7, seed: Math.random() });
     world.juice.push({ type: 'slam', school: s.school ? schoolFor(char, s.school) : pathSchool(char), x: body.x + s.dir * s.reach * 0.5, y: body.y, range: s.reach });
@@ -1795,20 +1358,10 @@ function land(world, s) {
     // (`floor`: on the ground she took off from, for the Sky Dancer's tornado while she's up in the air.)
     world.fx.push({ kind: s.burst, school: s.school, x: body.x + s.dir * s.reach * (s.burstAt ?? (s.around ? 0.3 : 0.45)), y: s.floor && !body.onGround ? world.skyFloor ?? body.y : body.y, r: s.reach, dir: s.dir, t: 0, dur: s.burstDur ?? 0.7, seed: Math.random(), follow: s.follow || undefined });
   }
-  // The mage line's support spells land with the cast: a buff on her and the party round her
-  // (`grant`).
+  // A support skill lands with the cast: a buff on her and the party round her (`grant`).
   if (s.grant) grantSpell(world, s.grant);
   // Deploy Turret: she sets the turret down as the strike lands (world/engineer.js).
   if (s.turret) deployTurret(world, s.turret);
-  // The Starlight Idol's songs and show (world/idol.js).
-  if (s.spot) idolSpotlight(world, s);
-  if (s.hype) hypeWave(world, s);
-  if (s.lull) lullaby(world, s);
-  if (s.revive) curtainCall(world, s);
-  if (s.concert) grandConcert(world, s);
-  // The Astronomer's (world/astro.js).
-  if (s.well) gravityWell(world, s);
-  if (s.align) planetaryAlignment(world, s);
   // The Phantom Trickster's Grand Illusion (world/phantom.js).
   if (s.grand) grandIllusion(world, s);
   let crits = 0;
@@ -1850,7 +1403,6 @@ function land(world, s) {
   // Valor builds faster the more monsters a blow catches at once (half again for each extra one).
   // A healing blow mends you and the party around you.
   if (s.heal) healAround(world, body.x, body.y, s.heal, s.healR ?? 220, true, s.el);
-  if (s.magic && targets.length && !s.phantom) addSpirit(world, s.gauge ?? 4, 'harm', s.el);
   if (targets.length && !s.phantom) addShadow(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addKi(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)));
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
@@ -2104,12 +1656,11 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   const sure = s.crit;
   const miss = !sure && Math.random() >= hitChance(acc, char.level, m.def);
   const extraCrit = sure ? 1 : 0;
-  const gp = JOBS[char.job]?.family === 'mage' ? gaugePower(world) : 1;
-  const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key) * gp) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
+  const range = s.magic ? magicRange(stats, (s.pct * s.scale * tuneOf(s.key)) / 100) : physicalRange(stats, stats.weaponType, (s.pct * s.scale * tuneOf(s.key)) / 100);
   const roll = miss ? null : rollHit(range, stats, m.def, char.level, Math.random, extraCrit);
   // (Snare Arrow: a monster held in her net takes more.)
   const held = m.hold === 'snare' && m.frozenUntil > world.now ? procOf(char, 'snarearrow')?.bonus ?? 0 : 0;
-  const spark = MC_SHOTS.has(s.shot) ? 'mchit' : JG_SHOTS.has(s.shot) ? `jghit${s.el ?? 'bolt'}` : MD_SHOTS.has(s.shot) ? `mdhit${s.el ?? 'fire'}` : QN_SHOTS.has(s.shot) ? `qnhit${s.el ?? 'fire'}` : SO_SHOTS.has(s.shot) ? 'sohit' : CL_SHOTS.has(s.shot) ? 'sihit' : MG_SHOTS.has(s.shot) ? `pmhit${s.el ?? 'fire'}` : KW_SHOTS.has(s.shot) ? 'kwhit' : char.job === 'sorcerer' && s.rain ? 'mchit' : char.job === 'cleric' ? 'bbhit' : char.job === 'mage' && s.rain ? `pmhit${s.el ?? 'fire'}` : hasGrace(char) && (s.shot === 'sinote' || s.shot === 'sibig' || s.shot === 'siheart' || s.doll || s.rain) ? 'sihit' : hasBinding(char) && (s.shot === 'asplanet' || s.shot === 'asbig' || s.shot === 'asmoon' || s.doll || s.rain) ? 'ashit' : hasSpirit(char) ? 'spirithit' : hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
+  const spark = hasTails(char) ? 'skyhit' : hasKi(char) ? 'bdhit' : hasShadow(char) ? 'shadowhit' : hasMomentum(char) ? 'achit' : hasBond(char) ? 'pthit' : hasCharge(char) ? 'aehit' : undefined;
   world.pending.push({
     at: world.now + delay, mob: m, miss, damage: Math.round((roll?.damage ?? 0) * (1 + held)), crit: roll?.crit ?? false, fromX: s.fromX ?? body.x, stack, knock: s.knock, launch: s.launch, big: s.big, stop: s.stop, shake: s.shake, element,
     via: s.shot ?? (s.rain ? 'rain' : undefined), stun: miss ? undefined : s.stun, burn: miss ? undefined : s.burn, freeze: miss ? undefined : s.freeze, snare: miss ? undefined : s.snare, burst: s.burst ?? spark, dir: s.dir,
@@ -2130,21 +1681,13 @@ function shotHit(world, s, m, delay, stack = 0, element = null, rank = 0) {
   }
 }
 
-// A buff the Spirit Mage's dance gives as it lands (Blessing's regen, Spirit Ward's barrier): on her,
-// and on the party in `range` (applyBuff does both for a `party` skill).
+// A support skill's buff as it lands: on her, and on the party in `range` (applyBuff does both for
+// a `party` skill).
 function grantSpell(world, g) {
   if (world.dead) return;
   applyBuff(world, g.id, { duration: g.duration, buff: g.buff, range: g.range });
-  // A song or a blessing laid on the party builds a Starlight Idol's Applause, more for each ally.
-  addGrace(world, 7 * (1 + alliesNear(world, world.body.x, (g.range?.w ?? 440) / 2)));
 }
 
-// A hit of a mage path's spell that lands on its own (the Idol's songs and show, the Astronomer's
-// moons and planets): a spell of her own magic attack, landing `at` seconds from now, knocking
-// monsters away from `x`; it builds her gauge a little.
-export function dollHit(world, m, f, at = 0) {
-  shotHit(world, { pct: f.pct, scale: 100, magic: true, doll: true, key: f.key ?? 'procdoll', dir: Math.sign(m.x - f.x) || 1, fromX: f.x, knock: f.knock ?? 40, launch: f.launch ?? 0, big: f.big, stop: f.stop, shake: f.shake, burst: f.burst ?? 'spirithit', stun: f.stun, freeze: f.freeze, gauge: f.gauge ?? 2, el: f.el }, m, at);
-}
 
 // Where the wand's tip is (from her feet, facing right) at the moment a shot leaves it; null where
 // the figure can't be worked out (no drawing, as in the tests' bare worlds).
@@ -2221,43 +1764,13 @@ function fire(world, strike) {
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
-  // (The Cleric throws her gear rather than casting it: no flash off the wand.)
-  else if (!hasBond(world.char) && world.char.job !== 'cleric') world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
   if (s.lift || s.drop) box.dy = (s.drop ?? 0) - (s.lift ?? 0);
   // A finisher shot that finds a mark opens a Link too (see land).
   if (s.finisher && pickTargets(world.mobs, body, box, 1).length) world.finisherAt = { at: world.now, key: s.key };
-  // The Star Witch: full Constellation splits her bolts and comets into three.
-  // The Sorcerer: on full Spellstorm every spell casts twice, its echo a beat behind.
-  if (SO_SHOTS.has(s.shot) && !s.echo && !s.split && spellstorm(world)) fire(world, { ...s, echo: true, split: true, lag: (s.lag ?? 0) + 0.14, oy: (s.oy ?? 0) + (s.shot === 'sograsp' ? 0 : -6), pct: s.pct * STORM_ECHO, big: false, stop: 0, shake: 0, gauge: 1 });
-  if (STAR_SHOTS_WITCH.has(s.shot) && !MG_SHOTS.has(s.shot) && !s.split && constellation(world)) {
-    for (const oy of [-9, 9]) fire(world, { ...s, split: true, oy: (s.oy ?? 0) + oy, bend: oy * 1.6, lag: (s.lag ?? 0) + 0.04, pct: s.pct * STAR_SPLIT, big: false, stop: 0, shake: 0, gauge: 1 });
-  }
-  // A meteor called down from the sky (her staff plant): it falls on each monster from high above.
-  if (s.sky) {
-    for (const m of pickTargets(world.mobs, body, box, s.targets ?? 1)) {
-      const my = m.y - (m.air ?? 0) - m.def.h / 2;
-      // (Her lightning comes straight down; a meteor slants in.)
-      const straight = s.shot === 'pmstrike' || s.shot === 'qnstrike' || s.shot === 'mgsky' || s.shot === 'clpillar' || s.shot === 'soslam';
-      // (A shot may fall from higher, `skyH`, and slant in further, `skyX`: the Meteor Caller's stars.)
-      const sx = straight ? m.x : m.x - s.dir * (s.skyX ?? 70);
-      const sy = my - (s.skyH ?? (straight ? 200 : 170));
-      const travel = Math.hypot(m.x - sx, my - sy) / speed;
-      world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, x: sx, y: sy, tx: m.x, ty: my, mob: m, t: -lag, dur: travel });
-      shotHit(world, s, m, travel + lag, 0, element);
-      // A falling star that blasts where it lands (the Meteor Caller's comet and meteor): those
-      // close round it are caught too, and a meteor leaves a crater and a ring of shock.
-      if (s.blast) {
-        world.mobs.filter((o) => o !== m && o.hp > 0 && Math.abs(o.x - m.x) <= s.blast && Math.abs(o.y - m.y) < 90).slice(0, 8).forEach((o, k) => shotHit(world, { ...s, pct: s.pct * 0.6, fromX: m.x, burst: undefined }, o, travel + lag + 0.04 + Math.abs(o.x - m.x) / 500, (k + 1) % 3, element));
-        if (s.crater) world.fx.push({ kind: 'mccrater', x: m.x, y: m.y, r: s.blast, t: -(travel + lag), dur: 1.1 });
-      }
-    }
-    return;
-  }
-  // The Spell Juggler's orbs fly their own way: on to a mark, or out and back into her hands.
-  if (s.orbEl) return orbThrow(world, s, ox, oy, speed, box, element);
   // The Blade Dancer's ring flies its own way: out, bouncing on, and home (ringThrow).
   if (s.bounce != null) {
     for (let i = 0; i < (s.fan ?? 1); i++) ringThrow(world, { ...s, lag: lag + i * 0.07, pick: (s.pick ?? 0) + i }, ox, oy, speed, box, element);
@@ -2332,52 +1845,6 @@ function fire(world, strike) {
 const RING_JUMP = { x: 170, y: 90 };
 const RING_FALLOFF = 0.85;
 const ringMid = (m) => m.y - (m.air ?? 0) - m.def.h / 2;
-// The Spell Juggler's fling (world/juggle.js): the strike takes the oldest orb off her orbit and
-// becomes that element's shot (`orbShot` picks a heavier one for a finisher); with no orb she
-// snaps a short palm spark instead, much weaker.
-const PALM = { shot: 'jgpalm', el: null, orbEl: null, range: 170, targets: 1, pierce: false, big: false, stop: 0, shake: 0, fan: 1 };
-function orbStrike(world, s) {
-  const o = takeOrb(world) ?? (s.orbFree && isJuggler(world.char) ? { el: conjure(world) } : null);
-  if (!o) return { ...s, ...PALM, pct: s.pct * 0.8, knock: Math.min(s.knock ?? 20, 60) };
-  return { ...s, shot: `${s.orbShot ?? 'jg'}${o.el}`, el: o.el, orbEl: o.el };
-}
-// An orb in flight: it curves on to the first monster in reach (homing as it flies) and bursts on
-// it, hopping on to the next ones close by when the strike `hops`; with nothing to hit it sails out
-// to its reach and curves back into her hands.
-function orbThrow(world, s, ox, oy, speed, box, element) {
-  const { body } = world;
-  const lag = s.lag ?? 0;
-  const leg = (x, y, tx, ty, at, mob, home = false, bend = 0) => {
-    const d = Math.max(0.05, Math.hypot(tx - x, ty - y) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, x, y, tx, ty, mob, home, bend, t: -at, dur: d });
-    return at + d;
-  };
-  const targets = pickTargets(world.mobs, body, box, s.pierce ? s.targets ?? 1 : 1);
-  if (!targets.length) {
-    const tx = ox + s.dir * s.range;
-    const ty = oy + (s.drop ? 40 : s.lift ? -60 : -10);
-    const out = leg(ox, oy, tx, ty, lag, null, false, -18 * s.dir);
-    const back = leg(tx, ty, body.x + s.dir * 8, body.y - HAND_Y, out, null, true, 26 * s.dir);
-    orbHome(world, s.orbEl, world.now + back);
-    return;
-  }
-  let at = lag;
-  let x = ox;
-  let y = oy;
-  const hit = new Set();
-  let m = targets[0];
-  for (let j = 0; m; j++) {
-    const my = m.y - (m.air ?? 0) - m.def.h / 2;
-    at = leg(x, y, m.x, my, at, m, false, j ? -14 * Math.sign(m.x - x) : s.bend ?? 0);
-    shotHit(world, j ? { ...s, pct: s.pct * 0.7, fromX: x, dir: Math.sign(m.x - x) || s.dir, knock: 40, launch: 0, big: false, stop: 0.02, shake: 0 } : s, m, at, j % 3, element, j);
-    hit.add(m);
-    x = m.x;
-    y = my;
-    if (j >= (s.hops ?? 0) + (s.pierce ? (s.targets ?? 1) - 1 : 0)) break;
-    m = s.pierce && targets[j + 1] && !hit.has(targets[j + 1]) ? targets[j + 1] : world.mobs.filter((o) => !hit.has(o) && o.hp > 0 && Math.abs(o.x - x) <= 140 && Math.abs(o.y - m.y) <= 90).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
-  }
-}
-
 function ringThrow(world, s, ox, oy, speed, box, element) {
   const { body, char } = world;
   const rebound = !s.twin && procOf(char, 'rebound');
@@ -2420,71 +1887,9 @@ function ringThrow(world, s, ox, oy, speed, box, element) {
   if (twin && Math.random() < twin.chance) ringThrow(world, { ...s, twin: true, pct: (s.pct * twin.pct) / 100, lag: (s.lag ?? 0) + 0.1, pick: (s.pick ?? 0) + 1, big: false, stop: 0, shake: 0 }, ox, oy + 4, speed, box, element);
 }
 
-// The Spell Juggler's orbs, her palm spark and her finisher orbs (world/juggle.js).
 // How far a level piercing shot may tip toward a monster above or below its line (radians).
 const PIERCE_TIP = 0.28;
-// The Meteor Caller's shots.
-const MC_SHOTS = new Set(['mcspark', 'mccomet', 'mcmeteor', 'mcgiant']);
-const JG_SHOTS = new Set(['jgfire', 'jgice', 'jgbolt', 'jgpalm', 'jgpotato', 'jgbigfire', 'jgbigice', 'jgbigbolt']);
 const SKY_SHOTS = new Set(['skygust', 'skygustbig']);
-const STAR_SHOTS_WITCH = new Set(['stbolt', 'stcomet']);
-// The Mage's shots (her own art); their hits leave her element's mark.
-// The Sorcerer's shots (the remake); their hits leave her crowned mark.
-// The Cleric's shots (the remake); their hits leave her pop of plus-crosses.
-export const MD_SHOTS = new Set(['mdpill', 'mdpack', 'mdpulse', 'mdbottle', 'mdspray', 'mdecg', 'mdhuge', 'mdzapbig', 'mdbomb', 'mdmist', 'mdzap']);
-export const QN_SHOTS = new Set(['qnorb', 'qncrown', 'qndecree', 'qngeyser', 'qnwall', 'qnstrike']);
-export const MG_SHOTS = new Set(['pmspark', 'pmshard', 'pmzap', 'pmbomb', 'pmspike', 'pmstrike', 'pmhuge', 'pmwire', 'mgfire', 'mgfireball', 'mgice', 'mgspike', 'mgbolt', 'mgsky']);
-// The Sorcerer's shots (her own art); their hits leave her claw marks.
-export const SO_SHOTS = new Set(['sohand', 'soflame', 'sofire', 'sograsp', 'soslam']);
-// The Mage shouts the name of every big spell as she casts it, like a chosen one in a story (her
-// finishers and skills; never her quick casts). A move has a few names and never says the same one
-// twice in a row; the line floats up over her head.
-export const MAGE_SHOUTS = {
-  // The Cleric names her heals the same way (it's the same girl).
-  cljudge: ['JUDGMENT OF THE DAWN!', 'BEHOLD THE LIGHT!', 'REPENT!'],
-  clglass: ['SAINTLY RADIANCE!', 'BASK IN MY GLORY!', 'SANCTUS!'],
-  clguide: ['YOU! BE HEALED!', 'RADIANT SALVATION!', 'THE LIGHT CHOOSES YOU!'],
-  clvalor: ['BLESSING OF VALOR!', 'FIGHT ON, MY FLOCK!', 'BE BRAVE, MORTALS!'],
-  clsanct: ['THINK ABOUT WHAT YOU DID!', 'PENANCE!', 'REPENT, FIEND!'],
-  clraise: ['RISE, MY FRIENDS!', 'NOT TODAY, DEATH!', 'ARISE!'],
-  clmiracle: ['BEHOLD... A MIRACLE!'],
-  // The Sorcerer: it's the same girl, but now it actually works, so every villain line comes with
-  // its own little wobble.
-  sowgrip: ['KNEEL.', 'THE DARK HOLDS YOU.', 'BE STILL... please?'],
-  sowdoom: ['RISE, MY SERVANTS!', 'THE GROUND HUNGERS.', "THEY'RE... THEY'RE MINE?"],
-  sosclose: ['I TAKE YOU.', 'FROM ABOVE... I CLAIM YOU!', 'CRUSH... oh no.'],
-  sosrage: ['WITNESS ME!', 'THE ABYSS ANSWERS!', 'MY POWER IS... REAL?!'],
-  sohell: ['HELLFIRE.', 'BURN.', "That was meant to be smaller."],
-  sohorde: ['GO, MY HORDE!', 'TAKE THEM ALL!', 'SO MANY HANDS...'],
-  sonova: ['NONE ESCAPE.', 'HOLD THEM FAST!', 'THE FLOOR IS MINE.'],
-  sostep: ['...', 'Behind you. Sorry.', 'I was in the shadows.'],
-  somend: ["Don't look at me.", "It's just warm. Shush.", 'Ember Mend. Whatever.'],
-  soward: ['NOTHING TOUCHES MY OWN.', 'BEHIND MY HANDS!', 'SHADOW WARD!'],
-  sorain: ['THE SKY IS TORN!', 'ABYSSAL RAIN!'],
-  sograspd: ['GRASPING DARK!', 'THE DEEP REACHES UP!', 'DOWN YOU GO.'],
-  somawcast: ['ABYSSAL MAW.', 'THE FLOOR OPENS.', 'FEED, LITTLE PIT.'],
-  sopact: ['I ACCEPT.', 'SEALED IN EMBER.', '...what did I just sign?'],
-  soabyss: ["HAND... OF THE ABYSS!", "...I didn't mean to summon THAT."],
-  clholy: ['HOLY BOLT!', 'SMITE OF THE SUN!', 'BE PURIFIED!'],
-  cljudgment: ['JUDGMENT RAY!', 'THE LIGHT SEES ALL!', 'BE JUDGED!'],
-  clnova: ['HOLY NOVA!', 'RADIANT BURST!', 'BEGONE!'],
-  clheal: ['RADIANT SALVATION!', 'BE WELL, MY CHILD!', 'HEAL!'],
-  clshield: ['DIVINE SHIELD!', 'THE LIGHT PROTECTS!', 'SHIELDED BY GRACE!'],
-  clgate: ["HEAVEN'S GATE... OPEN!"],
-};
-function mageShout(world, move) {
-  const lines = MAGE_SHOUTS[move];
-  if (!lines) return;
-  const last = world.mageShout?.[move];
-  const pick = lines.length > 1 ? lines.filter((l) => l !== last) : lines;
-  const line = pick[Math.floor(Math.random() * pick.length)];
-  world.mageShout = { ...world.mageShout, [move]: line };
-  world.numbers.push({ x: world.body.x, y: world.body.y - world.body.h - 14, text: line, color: world.char.job === 'sorcerer' ? '#ffa04a' : '#ff6a7a', t: 0, shout: true });
-}
-// The Cleric's shots (her own art); their hits leave her mark of light.
-export const CL_SHOTS = new Set(['clbolt', 'clorb', 'clpillar']);
-// The Kitchen Witch's shots (shelved: data/kitchen-witch.js); their hits leave her splash.
-const KW_SHOTS = new Set(['kwglob', 'kwwave', 'kpegg', 'kpflame', 'kwspice']);
 function skyProcs(world, s) {
   const { char } = world;
   if (skyFlight(world) && !s.tailwind) s = { ...s, tailwind: true, shot: 'skygustbig', pct: s.pct * 1.5, targets: Math.max(s.targets ?? 1, 3), pierce: true, big: true };

@@ -36,6 +36,7 @@ S = {
     'boom': 'Federico Soler - Effective Trailer Booms Vol. 2/EffectiveTrailer_Booms_Vol2_011.wav',
     'astonish': 'Alexander Kopeikin - Emotion and Magic/magic, energy flow, astonishment-001.wav',
     'light': 'Epic Stock Media - Fantasy Game 2 - Sound Kit for Enchanted Realms/MAGAngl_Magic Light Spell Enchantment Potion Effect Tonal Bright 03_ESM_FG2.wav',
+    'bells': '344 Audio - Christmas Vol. 1/MAGMisc_Magic Christmas Bells 2_344 Audio_Christmas.wav',
     'cloth24': 'InMotionAudio - Foley T-Shirt/FOLYClth_ClothMovement24_InMotionAudio_FoleyT-Shirt.wav',
     'cloth29': 'InMotionAudio - Foley T-Shirt/FOLYClth_ClothMovement29_InMotionAudio_FoleyT-Shirt.wav',
     'pats': 'InMotionAudio - Foley T-Shirt/FOLYClth_SinglePats04_InMotionAudio_FoleyT-Shirt.wav',
@@ -112,6 +113,10 @@ B = {
     'turtleSplash': [('wade', 0.3, 0.7, 1.1, 0, 0)],
     # The bunny's hop: a cartoon bubble boing.
     'bunHop': [('bubbles', 0.23, 0.23, 1.2, 0, 0)],
+    # Buffs (2026-11-08, the player's pick over a shrill anime power-up): a warm light spell with
+    # little bells; the party's is longer and fuller, the bells ringing on.
+    'buff': [('light', 0.0, 1.3, 1.0, 0, 0), ('bells', 2.21, 1.2, 1.0, -8, 0)],
+    'partyBuff': [('light', 0.0, 1.9, 0.94, 0, 0), ('bells', 2.21, 2.0, 1.0, -6, 0), ('bells', 0.41, 0.6, 1.0, -9, 450)],
 }
 
 

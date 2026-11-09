@@ -22,11 +22,6 @@ export function drawHealFx(ctx, f, x, y, p) {
       fxSprite(ctx, 'celhealbloom', x, y, { p, scale: 0.55 });
       return true;
     }
-    case 'mdhealed':
-      // The Cleric's heal landing on someone: a red-cross ring at their feet, plus-crosses and hearts
-      // floating up their sides.
-      fxSprite(ctx, 'celmdhealed', x, y + 2, { p, scale: 0.5 });
-      return true;
     default:
       return false;
   }

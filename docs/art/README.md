@@ -21,8 +21,8 @@ carry an improvement across every part of the game it applies to.
   squash and timing),
   [combat](research/combat.md) (combo counters, links, finishers and cut-ins, juggles, blending
   between moves)).
-- [briefs/](briefs/): the briefs the art and improvement passes worked from (conventions, quality
-  bar, review loop).
+- [briefs/quality-pass.md](briefs/quality-pass.md): the last whole-game quality pass, and the
+  choices from it still waiting on the player.
 
 ## The rules in short
 
@@ -53,7 +53,7 @@ carry an improvement across every part of the game it applies to.
   scales down to small heads).
 
 **Lines, colour, shading**
-- Outlines are a darkened shade of the part's own hue, never neutral black. Selective outlines:
+- Monster and effect outlines are a darkened shade of the part's own hue, never neutral black (player characters keep their deep ink, see below). Selective outlines:
   lighter on edges facing the light, darkest at the bottom and back (done by the renderer for
   monster sprites, `selout`).
 - Character outlines stay as they are: the player tried a thinner line and a line in each part's
@@ -496,8 +496,9 @@ carry an improvement across every part of the game it applies to.
 1. Look at the work zoomed in (6–8x) before judging it, and write down concretely what's wrong.
 2. Research references first; compare against them, not against our own older art.
 3. Build shared kits so every character gets the same quality from the same construction.
-4. Iterate at least three critique rounds, then check at real game size (1x) in a real map.
-5. Show before/after for every change.
+4. Critique it properly before showing it (zoomed in, then at real game size in a real map), and
+   rework what's weak.
+5. Show before/after for big changes (a remake, a new look), not for every small fix.
 7. **Hair always covers the head (the player's rule).** No skin, scalp or ear may peek through
    gaps in the hair: at the sides, between the bangs and the hair behind, or under the crown.
    Every hairstyle draws side hair in front that covers the ears and the sides of the head
@@ -505,7 +506,7 @@ carry an improvement across every part of the game it applies to.
    forehead under the bangs is face, not head, and may show.
 6. Clean beats busy. A hairstyle remake made of many small spikes, plait stripes and dark
    patches read as messy and overdone to the player; what worked was one smooth outline per
-   mass cut into a few pointed clumps, a short crease at each notch, one shine band and one
+   mass cut into a few soft, rounded clumps (never spiky), a short crease at each notch, one shine band and one
    signature shape per style (`src/render/hair.js`). Add detail only where it changes the
    silhouette.
 

@@ -282,8 +282,7 @@ S['castWind'] = [[('airy', 0.5, 0.9, 0, 0)]]
 S['crescentcut'] = [[('energy', 0.07, 0.85, 0, 0)]]
 # Buffs.
 S['powerup'] = [[('pwr', 0.27, 1.9, 0, 0)]]
-S['partyBuff'] = [[('pwr', 0.27, 1.9, 0, 0), ('chord', peak('chord', 0.25, 1.48), 0.9, -10, 0)]]
-S['buff'] = [[('pwr', 4.32, 0.85, 0, 0)]]
+# buff and partyBuff: tools/build-fight.py (2026-11-08)
 S['suzu'] = [[('handbell', 0.05, 1.8, 0, 0)]]
 S['holyChime'] = [[('handbell', 0.05, 1.2, 0, 0), ('light', 0.0, 0.8, -8, 0)]]
 # What things are made of (struck).

@@ -36,13 +36,13 @@ These points come from qfaces2, mfaces, q1, faces-a, faces-c and queens-sky, and
 9. **Hue-shift the shadows** (Slynyrd #1, Saint11 "Shading"). As tones get darker, rotate the hue 8–20° toward red or magenta for warm materials and toward blue or violet for cool ones, and raise saturation slightly. Never darken toward grey. Highlights shift toward yellow and white. The engine's `shadowTone` (mix with `#9b8ad0`) is fine for cloth, but faces use the explicit skin ramps below.
 
 ### C. Lines and outlines
-10. **The silhouette outline is a darkened shade of the part's own hue, never a neutral near-black.** For skin, use rose-brown `#a8606e` on light-facing edges and `#6e3550` on shadow edges and under the chin. Hair outlines use hair shadow 2, darkened.
+10. **Monster and effect outlines are a darkened shade of the part's own hue, never a neutral near-black.** (Player characters keep their deep near-navy ink: the player tried own-colour lines on them and chose the original.) For monster skin, use rose-brown `#a8606e` on light-facing edges and `#6e3550` on shadow edges and under the chin. Hair outlines use hair shadow 2, darkened.
 11. **Selective outline ("sel-out").** Edges facing the light (top and front) get a lighter outline, about the fill's shadow-2 tone. The bottom, back and contact edges get the darkest line (Lospec part 2; imonk; Pixnote). Pipeline ask: make `outlineFor` take the outline cell's offset `dy` and use `shade(c,-28)` when `dy<0` (top) and `mix(shade(c,-55),INK,0.5)` when `dy>0` (bottom). Until that lands, add a 0.67-lpx light rim polygon just inside the top edge of the head and shoulders.
 12. **Interior lines** go only where two parts touch and differ in value by less than about 15%, or where one part overlaps another (bang over face, sleeve over body, tail over tail). Use the darker part's shadow-2 colour at 0.67 lpx and **fade it out** toward the end (Lospec part 2: "fade toward a lighter colour where a line ends at a join").
 13. **Vary the line weight with weight and depth.** Lash line: 1–1.33 lpx. Jaw contour on the near side: 0.67. Nose and mouth: 0.33–0.67 in lip or skin-shadow colour, **never INK**. Brows: 0.67.
 
 ### D. Shading and form (skin)
-14. **The light comes from the upper front** (facing direction, top-right when facing right). Every sprite in a scene uses the same light (Pixnote; BuskHusker: lit 1/2–2/3 of the face).
+14. **One light, one style:** every sprite, prop, map and effect shares one pixel size and outline weight (CLAUDE.md, the art standard). **The light comes from the upper front** (facing direction, top-right when facing right). Every sprite in a scene uses the same light (Pixnote; BuskHusker: lit 1/2–2/3 of the face).
 15. Each face carries exactly these shadow shapes, all flat F shapes in skin shadow 1, with shadow 2 only where two shadows overlap:
     - a band under the bangs, following the bang tips, 1–1.5 lpx deep, notched where the clumps are;
     - a far-cheek plane from the far temple to the jaw (already present, but keep it at shadow 1 and not mixed);
@@ -53,14 +53,14 @@ These points come from qfaces2, mfaces, q1, faces-a, faces-c and queens-sky, and
 17. **Blush.** Use either (a) 3 diagonal 0.67-lpx hatch strokes in the blush colour (Slynyrd's female face uses exactly this), or (b) a 2-tone soft ellipse: outer ring at 40% alpha and a 60% core, at most 3.5×1.2 lpx at queen scale. It never touches the cheek contour or the eye. Queens use (a) or a small (b). A hard solid pink ellipse is banned.
 
 ### E. Hair
-18. **Build hair as clumps, 4–7 across the bangs.** Each clump is a polygon that ends in a point or a V notch, with lengths that differ by 1–3 lpx. Straight, parallel stripes are banned.
+18. **Build hair as clumps, 4–7 across the bangs.** Each clump is a polygon with a soft, rounded tip (never spiky: the player's rule, 2026-10-31), with lengths that differ by 1–3 lpx. Straight, parallel stripes are banned.
 19. **Every head of hair gets one highlight band** (the "angel ring") across the crown. It is a strip 1–1.5 lpx tall in hairLt that follows the curve of the skull, broken by the gaps between clumps, with a zigzag lower edge. Draw shadow 1 where clumps overlap and shadow 2 under the crown and behind the neck.
 20. Locks taper to tips and **curve with an S-flow** that starts at a part or cowlick (Slynyrd). Long hair splits into 2–3 locks at the ends, never one slab.
 
 ### F. Animation polish
 21. **Overlap.** Hair tips, tails, sleeves, capes and wings lag the body by **1 frame** on the walk and idle sine (`ph - 0.6`), and the lag grows toward the tip (tertiary parts drag most). A 2-px bob of the body becomes a 1–1.5-lpx swing at the tips.
 22. **The idle is never purely vertical.** Pair every vertical bob with a 0.33–0.67-lpx sideways sway or a shoulder rotation (Saint11 "Character Idle"). Move the face contents 1 frame after the silhouette.
-23. **Blink** every 2.5–5 s (randomise per instance). Hold closed for 1 frame (about 80 ms), with a half-closed frame on either side.
+23. **Blink** every 2.5–5 s (each one's timing set from its own id, so they differ but never flicker: nothing drawn uses a random number). Hold closed for 1 frame (about 80 ms), with a half-closed frame on either side.
 24. **Smears.** On attack frames with fast arcs, add one frame with a smear shape: a crescent in a lighter version of the weapon colour with a hard leading edge that fades out at the trailing edge (Saint11 "Motion Blur"; lighter colours "bleed" over darker ones). Hold the impact frame 120–200 ms, keep wind-ups short at 60–80 ms (sprite-ai timing table), and squash or stretch by 1–3 real px on launches.
 25. **Readable expressions.** Each expression must read from the eye shape alone at 1x in-game. Brows and mouth only support it.
 

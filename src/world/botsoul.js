@@ -109,7 +109,7 @@ export function moodVoice(bot, text, rng = Math.random) {
 // The emote they pick in their mood (town pastimes).
 export function moodEmote(bot, rng) {
   const m = bot.char?.soul?.mood ?? 'chill';
-  const list = { cheerful: ['cheer', 'flip', 'kagura', 'showoff'], tired: ['pray', 'lookaround'], focused: ['roar', 'cheer'], chill: ['kagura', 'pray', 'lookaround'] }[m];
+  const list = { cheerful: ['cheer', 'flip', 'emdance', 'showoff'], tired: ['pray', 'lookaround'], focused: ['roar', 'cheer'], chill: ['emdance', 'pray', 'lookaround'] }[m];
   return pick(list, rng);
 }
 

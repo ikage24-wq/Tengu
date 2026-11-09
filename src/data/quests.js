@@ -173,13 +173,6 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 41000, gold: 880, items: [{ id: 'elixir', qty: 5 }] },
   },
-  // Elowen's trial for a Star Witch before either level 30 path (the Starlight Idol, the Astronomer).
-  mage_trial: {
-    id: 'mage_trial', name: "The Mage's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
-    text: "Deep in the Crystal Cave the Wraiths wander, spirits who've forgotten the way to rest. A Mage doesn't just fight them: she lights their way home, with a speech, while everyone watches. Lay 20 of them to rest, then come back and I'll show you the Sorcerer's way and the Cleric's way.",
-    objectives: [{ type: 'kill', mob: 'shade', count: 20 }],
-    rewards: { exp: 55000, gold: 1200, items: [{ id: 'elixir', qty: 5 }] },
-  },
   // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
   thief_trial: {
     id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',
@@ -633,7 +626,7 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'gloombat', count: 15 }, { type: 'collect', item: 'bat_wing', count: 7 }],
     rewards: { exp: 29000, gold: 780, items: [{ id: 'warrior_cape_20', qty: 1, forJob: true, variant: 'roll' }] },
   },
-  // Elowen's story (her Star Witches'): the teapot she and Mira broke as apprentices, each keeping
+  // Elowen's story: the teapot she and Mira broke as apprentices, each keeping
   // half (Mira the pot, Elowen the lid; data/scenes.js letter_open). The real quarrel was never
   // about the teapot, and at the end Mira comes to the Grove to put it back together.
   elowen_dance: {

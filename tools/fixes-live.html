@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Fixes live</title>
+<style>body { margin: 0; background: #f4eefb; font: 13px sans-serif; color: #5a4a72; } canvas { display: block; }</style>
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: the animation fixes of 2026-11-09 playing live, in the game's own drawing: every job's
+// basic combo with its own weapon (each move in turn, then a moment on guard), and the jump.
+// ?slow=1 plays at quarter speed.
+await import('/src/data/cash.js');
+const { drawHero } = await import('/src/render/hero.js');
+const { setHd, nextFrame } = await import('/src/render/pixel.js');
+const { PATH_VARIANTS } = await import('/src/world/melee.js');
+const q = new URLSearchParams(location.search);
+const SPEED = q.get('slow') ? 0.25 : 1;
+const LOOK = { hairStyle: 'fluffybob', hairColor: '#ffb38a', skinTone: '#fbe2cf', eyeColor: '#4fae8f', eyeStyle: 'sparkle', outfitColor: '#ffffff', face: 'smile' };
+const JOBS = [
+  ['Warrior', 'warrior', 'sword_50'], ['Paladin', 'paladin', 'spear_50'], ['Berserker', 'berserker', 'axe_50'],
+  ['Wind Dancer (dagger)', 'thiefdagger', 'dagger_50'], ['Wind Dancer (gauntlet)', 'thiefstar', 'gauntlet_50'], ['Blade Dancer', 'shinobi', 'dagger_50'],
+  ['Sky Dancer', 'kitsune', 'gauntlet_50'], ['Acrobat Archer', 'archer', 'bow_50'], ['Phantom Trickster', 'beastmaster', 'bow_50'],
+  ['Arbalist Engineer', 'stormcaller', 'crossbow_50'], ['Bare fists', 'fists', null],
+];
+const DUR = 0.5;
+const REST = 0.7;
+// A job's combo: the first way of each step, one after another, then a moment on guard.
+const tiles = JOBS.map(([label, path, weapon]) => {
+  const moves = (PATH_VARIANTS[path] ?? []).map((step) => step[0].move);
+  const loop = moves.length * DUR + REST;
+  return { label, gear: weapon ? { weapon: { id: weapon } } : {}, at: (t) => {
+    const u = t % loop;
+    const i = Math.floor(u / DUR);
+    return i < moves.length ? { pose: moves[i], progress: (u - i * DUR) / DUR, dur: DUR, time: t, name: moves[i] } : { pose: 'idle', ready: true, time: t, name: 'on guard' };
+  } };
+});
+tiles.push({ label: 'Jump', gear: {}, at: (t) => { const u = (t % 1.4) / 1.4; return { pose: 'jump', vy: -420 + 840 * u, time: t, name: u < 0.5 ? 'rising' : 'falling' }; } });
+const D = Math.min(2, devicePixelRatio || 1);
+const COLS = 4;
+const W = 1000, TH = 225, S = 3.2;
+const H = 40 + Math.ceil(tiles.length / COLS) * TH;
+const c = document.getElementById('c');
+c.width = W * D; c.height = H * D; c.style.width = W + 'px';
+const ctx = c.getContext('2d');
+setHd(true, D * S);
+const t0 = performance.now();
+function frame(now) {
+  const t = ((now - t0) / 1000) * SPEED;
+  nextFrame();
+  ctx.setTransform(D, 0, 0, D, 0, 0);
+  ctx.fillStyle = '#f4eefb'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#5a4a72'; ctx.font = 'bold 15px sans-serif';
+  ctx.fillText("Every job's basic combo with today's fixes" + (SPEED < 1 ? ' (quarter speed)' : ' (add ?slow=1 for quarter speed)'), 16, 26);
+  tiles.forEach(({ label, gear, at }, i) => {
+    const x = 125 + (i % COLS) * 250;
+    const y = 40 + Math.floor(i / COLS) * TH + TH - 22;
+    const st = at(t);
+    ctx.fillStyle = '#5a4a72'; ctx.font = 'bold 13px sans-serif'; ctx.fillText(label, x - 100, y - TH + 44);
+    ctx.fillStyle = '#9a8ab2'; ctx.font = '11px sans-serif'; ctx.fillText(st.name, x - 100, y - TH + 58);
+    ctx.save(); ctx.translate(x, y); ctx.scale(S, S);
+    drawHero(ctx, LOOK, gear, 0, 0, { facing: 1, urgent: true, ...st });
+    ctx.restore();
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+document.title = 'ready';
+</script>

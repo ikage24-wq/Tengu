@@ -190,7 +190,7 @@ export function partyEmote(world, e) {
   if (members.length && rng() < 0.75) {
     const bot = pick(members, rng);
     queueSay(world, bot, emoteLines(e.id, bot, world).sort(() => rng() - 0.5), 0.6 + rng() * 0.8);
-    if (['cheer', 'dance', 'love'].includes(e.id) && bot.body && !bot.attack) bot.attack = { pose: e.id === 'dance' ? 'kagura' : 'cheer', t: 0, dur: 1 };
+    if (['cheer', 'dance', 'love'].includes(e.id) && bot.body && !bot.attack) bot.attack = { pose: e.id === 'dance' ? 'emdance' : 'cheer', t: 0, dur: 1 };
   }
   return true;
 }

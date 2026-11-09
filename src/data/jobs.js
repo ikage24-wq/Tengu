@@ -35,13 +35,6 @@ export const JOBS = {
     hp: 28, mp: 12, advanceHp: 350, advanceMp: 150, weapons: ['sword', 'axe', 'spear'],
     blurb: 'Close-range fighter with big HP. Raises STR.',
   },
-  // The Mage (docs/design/mage-line.md; the Star Witch and the old Spirit Mage before her, id kept):
-  // a dramatic edgelord of fire, ice and lightning, who heals a little.
-  mage: {
-    id: 'mage', power: 0.28, spread: 0.69, name: 'Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
-    hp: 14, mp: 24, advanceHp: 120, advanceMp: 380, weapons: ['wand', 'staff'],
-    blurb: 'A Spell Juggler with INT: fire, ice and spark orbs pop into being and circle her waist, and every attack flings one, tossed off the wand or batted off the staff. Mix the elements and her orbs set off Steam, Shatter and Kaboom; reactions fill her Mayhem. Fountain, Ricochet, Hot Potato, Encore, Spinning Plates, and Grand Finale: a ring of orbs hurled into a storm.',
-  },
   archer: {
     id: 'archer', power: 1.48, spread: 0.98, name: 'Acrobat Archer', family: 'archer', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
@@ -51,21 +44,6 @@ export const JOBS = {
     id: 'thief', power: 0.74, spread: 1.19, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],
     blurb: 'A travelling dancer who fights like it\'s a show, with LUK: twin chakrams up close, or wind from her gloved hands. Her hits build Encore; full, every attack strikes twice.',
-  },
-
-  // The Mage's paths (ids kept). Both ask for Elowen's trial first. The Cleric of light (the healer,
-  // on the Starlight Idol's engine: Devotion and Miracle; docs/design/mage-line.md) and the
-  // Astronomer (her moons, Orbit and Planetary Alignment; docs/design/astronomer.md; to be remade as
-  // the Sorcerer).
-  cleric: {
-    id: 'cleric', guard: 0.8, power: 0.82, spread: 1.32, name: 'Cleric', family: 'mage', tier: 2, parent: 'mage', level: 30, trial: 'mage_trial',
-    hp: 30, mp: 26, advanceHp: 520, advanceMp: 480, weapons: ['wand', 'staff'],
-    blurb: 'A Mage whose wand and staff are bubble wands. Her bubbles drift and bob: on a monster they pop for damage (a big one traps it for a moment), on a friend they pop into a heal, and every pop mends her a little. Pops fill her Devotion; full, every bubble splits in three. Guardian Bubble, Bubble Wave, Lather Cloud, Rebirth Bubble, and Bubble Party: a dome over everyone. The healer of any dungeon group.',
-  },
-  sorcerer: {
-    id: 'sorcerer', power: 0.52, spread: 0.94, name: 'Sorcerer', family: 'mage', tier: 2, parent: 'mage', level: 30, trial: 'mage_trial',
-    hp: 16, mp: 28, advanceHp: 220, advanceMp: 520, weapons: ['wand', 'staff'],
-    blurb: 'A Mage who calls the sky down. Her wand and staff flick star-sparks and bring a comet down at the end of every string. Her spells fill Starfall. Meteor Shower, Comet Lance, Black Hole, Stargazer, and with Starfall full, Extinction: a star the size of a hill dropped on everything ahead. Deals damage in a group.',
   },
 
   // Warrior branches. Both ask for Brann's trial first (see `trial`).
@@ -121,8 +99,9 @@ export const JOBS = {
 // Trickster and the Arbalist Engineer, ids kept). The test
 // warrior (Swordsman, test) was tried and taken out.
 export const RETIRED_JOBS = {
-  // (The Mage line's old ids, retired 2026-11-07: the Mage, the Sorcerer and the Cleric.)
-  spiritmage: 'mage', onmyoji: 'sorcerer', shrinemaiden: 'cleric',
+  // (The whole Mage line, wiped 2026-11-08 to be made again from scratch: its characters play as
+  // Novices, keeping their level and items, until the new mage jobs are there to pick.)
+  mage: 'novice', sorcerer: 'novice', cleric: 'novice', spiritmage: 'novice', onmyoji: 'novice', shrinemaiden: 'novice',
   testwarrior: 'warrior', blademaster: 'warrior', lancer: 'warrior', guardian: 'warrior', swordsaint: 'warrior', dragonknight: 'warrior', ranger: 'beastmaster', sniper: 'stormcaller', marksman: 'archer', hunter: 'archer', windwalker: 'archer', deadeye: 'archer', assassin: 'shinobi', nightlord: 'kitsune', duelist: 'thief', shadow: 'thief', trickster: 'thief', bladedancer: 'thief', nightstalker: 'thief', phantomthief: 'thief',
 };
 

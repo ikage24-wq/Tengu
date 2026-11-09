@@ -206,50 +206,6 @@ test("the Paladin and the Berserker swing none of the Warrior's swings", async (
   for (const job of ['paladin', 'berserker']) for (const m of own(job)) assert.ok(!warrior.has(m), `${job} borrows ${m}`);
 });
 
-test('the Starlight Idol sings into her mic, belts with her head back, and ends each figure on its own pose (her Star Witch skills too)', async () => {
-  const { moveAt } = await import('../src/render/moves.js');
-  const DUR = { sibeat: 0.36, sistep: 0.46, sihigh: 0.58, sikiss: 0.36, sishoulder: 0.5, sijump: 0.52, sipose: 0.56, sitwirl: 0.42, sihair: 0.46, siheart: 0.6, siup: 0.44, siair: 0.38, sidash: 0.52, sispot: 0.9, sihype: 0.85, silullaby: 0.9, sibow: 1.15, siconcert: 2.1, sicall: 0.36, siecho: 0.46, sicrescendo: 0.56, sislide: 0.5, sipower: 0.54, siballad: 0.8, siharmony: 0.72, siencore: 1.45 };
-  const SINGS = ['sibeat', 'sistep', 'sihigh', 'sishoulder', 'sijump', 'sipose', 'siup', 'sidash', 'sispot', 'silullaby', 'siconcert', 'sitwirl', 'sihair', 'siheart', 'sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower'];
-  const BELTS = ['sihigh', 'siup', 'sidash', 'sihype', 'sibow', 'siconcert', 'sicrescendo', 'sislide', 'siencore'];
-  const base = () => ({ tx: 0, by: 0, hx: 0, hy: 0, frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], backArm: [0, 0], armSide: 1, air: false, squat: 0, hairLift: 0, cape: 0, eyes: 'open', mouth: null, tilt: 0 });
-  const at = (kind, p) => {
-    const mv = moveAt(kind, p, DUR[kind], { weapon: 'wand' });
-    const r = base();
-    mv.rig?.(r);
-    return { mv, r };
-  };
-  for (const kind of Object.keys(DUR)) {
-    let chin = false;
-    let back = 0;
-    for (let i = 0; i <= 60; i++) {
-      const { mv, r } = at(kind, i / 60);
-      // The mic under her chin: the hand low, the mic tipped forward so its head sits below her mouth.
-      if (mv.arm < 20 && mv.weapon > 25 && mv.weapon < 65) chin = true;
-      back = Math.min(back, r.tilt);
-      // With the hand low, the mic never stands straight up over her face.
-      if (mv.turn > 0) assert.ok(!(mv.arm < 30 && mv.weapon < 28), `${kind} stands the mic up over her face at ${i / 60}`);
-    }
-    if (SINGS.includes(kind)) assert.ok(chin, `${kind} never sings into the mic under her chin`);
-    if (BELTS.includes(kind)) assert.ok(back <= -10, `${kind} never throws her head back`);
-  }
-  // Each figure ends on its own pose (the string and its pool, the command moves, her skills).
-  const sig = (kind) => {
-    const { mv, r } = at(kind, 1);
-    return `${Math.round(mv.weapon / 20)},${Math.round(mv.arm / 20)},${r.eyes},${r.armSide},${r.backArm[1] < -12}`;
-  };
-  for (const set of [['sibeat', 'sistep', 'sihigh', 'sikiss', 'sishoulder', 'sijump', 'sipose', 'sitwirl', 'sihair', 'siheart'], ['siup', 'siair', 'sidash'], ['sispot', 'sihype', 'silullaby', 'sibow', 'siconcert'], ['sicall', 'siecho', 'sicrescendo', 'sislide', 'sipower', 'siballad', 'siharmony', 'siencore']]) {
-    const seen = new Map();
-    for (const kind of set) {
-      const s = sig(kind);
-      assert.ok(!seen.has(s), `${kind} ends on the same pose as ${seen.get(s)}`);
-      seen.set(s, kind);
-    }
-  }
-});
-
-// Life skills (render/life-moves.js): every move holds a tool that exists, keeps the weapon arm
-// at or below the shoulder whenever it's drawn in front (raised, it goes behind the head), keeps the
-// free hand below her jaw, acts its own face, and flows without a jump from moment to moment.
 test('life-skill moves: their own tools, nothing over the face, smooth all the way', async () => {
   const { LIFE_MOVES } = await import('../src/render/life-moves.js');
   const { moveAt } = await import('../src/render/moves.js');

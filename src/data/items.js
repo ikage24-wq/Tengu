@@ -37,7 +37,7 @@ export const ELEMENT_NAMES = {
 
 // Per type: how hard it hits relative to a sword, magic attack for wands and staves, the main
 // stat its wielders want, and its names (five tiers, then the endgame themes). Wands and staves
-// are the Star Witch's: star wands and witch's staves with moons and stars.
+// are star wands and witch's staves with moons and stars.
 const WEAPON_LINES = {
   sword: { scale: 1.0, main: 'str', names: ['Wooden Sword', 'Iron Sword', 'Steel Longsword', 'Mithril Blade', 'Runeblade'], themes: { holy: "Seraph's Grace", demonic: 'Hellbringer', bone: 'Ossuary Edge', laser: 'Photon Saber', chainsaw: 'Ripper', cyber: 'Neon Katana' } },
   axe: { scale: 0.95, main: 'str', names: ['Stone Hatchet', 'Iron Axe', 'Steel Battleaxe', 'Mithril Cleaver', 'Runic Greataxe'], themes: { holy: 'Dawnbreaker', demonic: 'Abyssal Reaver', bone: 'Gravedigger', laser: 'Plasma Cleaver', chainsaw: 'Buzzkill', cyber: 'Glitch Axe' } },

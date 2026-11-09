@@ -21,7 +21,6 @@ import { PET_OUTFIT_KEYS } from './jobgear/pets.js';
 import { hsl } from './jobgear/kit.js';
 import { pack } from './weapon-kit.js';
 import { drawGearFx } from './jobgear/live.js';
-import { paintFan } from './props.js';
 import { R, E, T, F, sprite, spriteBudgeted, spriteAsync, spriteSoon, blit, shade, mix, tinted, snap, sparkLine } from './pixel.js';
 import {
   topShapes, sleeveColor, longSleeves, legLook, hipShapes, skirtShapes, legShapes, hatShapes, hatBackShapes, hatTucks, hatHidesBangs, shoulderShapes, topOverShapes, capeShapes, capeFrontShapes, handShapes, earringShapes, limb, reach, THIGH, SHIN, HIP_Y, ANKLE_Y, legJoints, drape,
@@ -185,15 +184,6 @@ function popOf(c) {
   return '#ffd36e';
 }
 
-// The Mage's scarf (and the accent of her battle gear): flame orange.
-const MAGE_SCARF = '#ff8a3a';
-// Her battle gear's colour (the player's pick, 2026-11-06): crimson.
-const MAGE_CRIMSON = '#b8324a';
-// A dancer path's trim on the dancers' gear (see drawHero).
-const PATH_TRIMS = {
-  shinobi: { trim: '#f4b49a', trimDark: '#c8746a', trimLight: '#ffe0cf', accent: '#ffd36a' },
-  kitsune: { trim: '#bfe6ff', trimDark: '#6fa8d8', trimLight: '#eef9ff', accent: '#ffe6a0' },
-};
 
 function resolveGear(look, gear) {
   const outfit = look.outfitColor ?? '#ffc2d6';
@@ -1157,7 +1147,7 @@ function headShapes(look, g, rig) {
   if (look.marks) f = { ...f, extra: [...(f.extra ?? []), ...look.marks] };
   if (rig.eyes === 'hurt') f = { brows: [[0.5, 0.7], [0.5, 0.7]], extra: ['sweat0'] };
   else if (rig.eyes === 'dead') f = { brows: [[0.2, -0.3], [0.2, -0.3]] };
-  // A move's wink (the Star Witch after a big spell): one eye shut in a happy arc, a cheeky mouth.
+  // A move's wink (after a big move): one eye shut in a happy arc, a cheeky mouth.
   else if (rig.eyes === 'wink') f = { ...f, closed: [false, true], brows: [[0.7, -0.3], [0, 0.2]], mouth: 'cat' };
   else if (rig.mouth && f.puff) f = { ...f, puff: false };
   // The eye-cover lock hides the right eye and brow, so a wink or a raised brow moves to the eye
@@ -1263,8 +1253,6 @@ const HAND_Y = 37.6;
 // A resting arm from the shoulder at (sx, SHOULDER_Y), the hand offset (dx, dy) from its rest spot.
 function armShapes(sx, dx, dy, sleeve, long, g, skin, side = 1) {
   const out = sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD;
-  // The Mage's one dramatic glove goes on her casting (front) hand.
-  if (g.edgeGlove && sx >= HEAD_X) g = { ...g, gloves: { edge: true } };
   return arm(sx, SHOULDER_Y, sx + out + dx, HAND_Y + dy, sleeve, long, gloved(g), skin, side);
 }
 
@@ -1280,7 +1268,7 @@ function aimedArm(angle, sleeve, long, g, skin) {
   const rad = (angle * Math.PI) / 180;
   const hx = FRONT_SHOULDER + Math.sin(rad) * 8.6;
   const hy = SHOULDER_Y + Math.cos(rad) * 8.6;
-  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, gloved(g.edgeGlove ? { ...g, gloves: { edge: true } } : g), skin), hand: [hx, hy] };
+  return { shapes: arm(FRONT_SHOULDER, SHOULDER_Y, hx, hy, sleeve, long, gloved(g), skin), hand: [hx, hy] };
 }
 
 // ---------- Body parts per rig ----------
@@ -1559,13 +1547,16 @@ const legKey = ([dx, dy, tilt]) => [q(dx), q(dy), Math.round(tilt / 2) * 2];
 // sank the hips barely a pixel and every crouch and kneel read as standing straight.
 const SQUAT_DEPTH = 2.2;
 function hipDrop(r) {
-  if (r.air) return 0;
+  // (`airK`, 0-1, is how far a move has left the ground as it takes off or lands, so the hips
+  // ease between the crouch and the air instead of jumping there: render/moves.js, the glide.)
+  const k = r.airK ?? (r.air ? 1 : 0);
+  if (k >= 1) return 0;
   let drop = r.squat * SQUAT_DEPTH;
   for (const [dx, dy] of [r.frontLeg, r.backLeg]) {
     if (dy < -0.01) continue;
     drop = Math.max(drop, REST_LEG - Math.sqrt(Math.max(0, LEG * LEG - dx * dx)));
   }
-  return q(drop);
+  return q(drop * (1 - k));
 }
 
 function baseRig() {
@@ -2107,6 +2098,9 @@ function solveRig(state, anim, mv = null) {
   } else if (pose === 'jump') {
     const vy = state.vy ?? -1;
     r.air = true;
+    // (The hips turn toward the way she's going, as in the walk, so a tucked leg folds forward past
+    // the other instead of both knees knocking together in the middle with the feet splayed out.)
+    r.hipIn = 0.75;
     if (anim?.rise > 0 || vy < -250) {
       // Rising: legs tucked, arms swept back.
       r.by = -1;
@@ -2219,7 +2213,7 @@ function solveRig(state, anim, mv = null) {
 }
 
 function rigKey(r) {
-  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, ...r.ears, r.tail, r.tailCurl ?? 0, r.face ? JSON.stringify(r.face) : ''].join(',');
+  return [r.view, r.tx, r.by, r.hx, r.hy, ...r.frontLeg, ...r.backLeg, ...r.backArm, r.armSide, r.hipIn, r.armIn ? r.frontArm.join(',') : '-', r.air ? 1 : 0, r.airK ?? '', r.squat, r.hair, r.hairTip, r.hairLift, r.hairWave, r.cape, r.capeRoot, r.flap ? 1 : 0, r.eyes, r.mouth, r.climb, r.tilt, r.armOver, ...r.ears, r.tail, r.tailCurl ?? 0, r.face ? JSON.stringify(r.face) : ''].join(',');
 }
 
 // ---------- Weapons ----------
@@ -2414,7 +2408,7 @@ function aboveFloor(angle, hand, wpn, hilt, mv) {
   return best;
 }
 // How far down its hilt a weapon is held (art px from the grip point toward the pommel).
-const HILT = { sword: 8, axe: 7.5, spear: 9 };
+const HILT = { sword: 5.5, axe: 7.5, spear: 9 };
 
 // Idle routines while standing still: each weapon has a few things it does, taken in turn with a
 // breather of the gentle loop between them, each easing in and out so the hands never jump.
@@ -2917,6 +2911,40 @@ export function strikePose(look, gear, move, progress, dur, facing = 1, scale = 
   return { hand: body(h), tip: body(tip), shoulder: body(at(shoulder)), angle: mv.weapon, reach: len, dir };
 }
 
+// Where every joint is at a moment of a move, solved exactly as the figure is drawn (for the art
+// standard's rig checks, tests/rig.test.js): each leg's hip, knee and ankle and where its foot was
+// aimed, each arm's shoulder, elbow and wrist and where its hand was aimed, the bone lengths each
+// limb has to work with, the head's offset and roll, and the whole-body moves. Body coordinates.
+export function poseJoints(move, progress, dur = 0.5, weaponType = null) {
+  const mv = moveAt(move, progress, dur, { weapon: weaponType });
+  if (!mv) return null;
+  const m = rigid(mv);
+  const rig = solveRig({ pose: move, progress, dur, time: 0 }, null, m);
+  const drop = hipDrop(rig);
+  const lx = LEFT_LEG + (LEG_MID - LEFT_LEG) * rig.hipIn;
+  const rx = RIGHT_LEG + (LEG_MID - RIGHT_LEG) * rig.hipIn;
+  const leg = (x, foot) => {
+    const [hip, knee, ankle] = legJoints(x, foot, HIP_Y + drop);
+    return { hip, knee, ankle, aim: [hip[0] + foot[0], ANKLE_Y + foot[1]], a: THIGH, b: SHIN, grounded: !rig.air && foot[1] >= -0.01 };
+  };
+  const armAt = (sx, hx, hy, bend) => {
+    const [elbow, wrist] = reach(sx, SHOULDER_Y, hx, hy, UPPER_ARM, FOREARM, bend);
+    return { shoulder: [sx, SHOULDER_Y], elbow, wrist, aim: [hx, hy], a: UPPER_ARM, b: FOREARM };
+  };
+  const rest = (sx, d) => armAt(sx, sx + (sx < HEAD_X ? -HAND_FORWARD : HAND_FORWARD) + d[0], HAND_Y + d[1], sx < HEAD_X ? 1 : -1);
+  let front = null;
+  if (m.arm != null) {
+    const rad = (m.arm * Math.PI) / 180;
+    front = armAt(FRONT_SHOULDER, FRONT_SHOULDER + Math.sin(rad) * 8.6, SHOULDER_Y + Math.cos(rad) * 8.6, -1);
+  } else if (rig.armIn) front = rest(FRONT_SHOULDER, rig.frontArm);
+  return {
+    legs: [leg(lx, rig.backLeg), leg(rx, rig.frontLeg)],
+    arms: [rest(BACK_SHOULDER, rig.backArm), front].filter(Boolean),
+    armSide: rig.armSide, head: [rig.hx, rig.hy], tilt: rig.tilt ?? 0, lift: m.lift ?? 0, lunge: m.lunge ?? 0,
+    stretch: m.stretch, air: Boolean(rig.air), mv: m,
+  };
+}
+
 // How high up the figure leans from (a share of its height) and how far: on the ground from low
 // down (about the knees), so the feet stay planted while the body leans into a blow, and no further
 // than 0.5 rad; in the air about its middle (flips, dives), as far as the move says.
@@ -2988,41 +3016,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   const { pose = 'idle', facing = 1, alpha = 1, scale = 1 } = state;
   const attack = Boolean(mv);
   const g = resolveGear(look, gear);
-  // The Blade Dancer's chakrams take her rose gold, unless the item has a colour of its own.
-  if (state.job === 'shinobi' && g.weapon?.type === 'dagger' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'rosegold' };
-  // The Arbalist Engineer's crossbow takes her polished brass.
-  if (state.job === 'stormcaller' && g.weapon?.type === 'crossbow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'brass' };
-  // The Phantom Trickster's bow is the same recurve in plum and silver.
-  if (state.job === 'beastmaster' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'phantom' };
-  // The Acrobat Archer's bow is her short mint and gold trick recurve.
-  if (state.job === 'archer' && g.weapon?.type === 'bow' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'acro' };
-  // The Mage (docs/design/mage-line.md): her wand and staff are the wizard's crystal wand and element
-  // orb staff, and her casting hand wears the rune gauntlet.
-  if (state.job === 'mage' && (g.weapon?.type === 'wand' || g.weapon?.type === 'staff') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'arcane' };
-  if (state.job === 'mage') g.edgeGlove = true;
-  // She wears the mage pieces as her battle gear (render/jobgear/battlemage.js): coat, belt of spell
-  // vials, scroll satchel, singed scarf, goggled hat; plain pieces only, in crimson.
-  if (state.job === 'mage') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'battlemage', pal: gearPalette('mage', g[s].tier, MAGE_CRIMSON, MAGE_SCARF) };
-  // The Sorcerer's staff and wand: black wood and iron round a violet flame.
-  if (state.job === 'sorcerer' && (g.weapon?.type === 'staff' || g.weapon?.type === 'wand') && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'sorcery' };
-  // The Cleric's wand is her gold sun scepter.
-  if (state.job === 'cleric' && g.weapon?.type === 'wand' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'cleric' };
-  // The Sky Dancer's gloves take her sky blue the same way.
-  if (state.job === 'kitsune' && g.weapon?.type === 'gauntlet' && !g.weapon.variant && !g.weapon.theme && !g.weapon.fun) g.weapon = { ...g.weapon, variant: 'skyblue' };
-  // Each dancer path trims the dancers' showgirl gear in its own colour (plain pieces only, not
-  // gear sets or recoloured variants): the Blade Dancer's in rose gold with gold gems.
-  // The Cleric (docs/design/mage-line.md, the remake): the combat medic keeps the Mage's battle coat in
-  // field white with a cross, a nurse's cap with goggles and a stethoscope (render/jobgear/medic.js);
-  // the cross in medic red (the player's pick); plain pieces only.
-  if (state.job === 'cleric') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'medic', pal: { ...gearPalette('mage', g[s].tier, '#f1eee9', '#e0404a'), accent: '#e0404a' } };
-  if (state.job === 'cleric') g.edgeGlove = true;
-  // The Sorcerer (docs/design/mage-line.md, the remake): the chaos queen keeps the Mage's battle coat
-  // and gauntlet, with a crooked crown of lightning points and a royal ermine mantle
-  // (render/jobgear/chaosqueen.js); plain pieces only.
-  if (state.job === 'sorcerer') for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'mage' && !g[s].set && !g[s].variant) g[s] = { ...g[s], family: 'chaosqueen', pal: { ...gearPalette('mage', g[s].tier, '#5a2a8a', '#ffd36a'), trim: '#ffd36a', trimDark: '#c8902e', trimLight: '#fff0b0' } };
-  if (state.job === 'sorcerer') g.edgeGlove = true;
-  const trim = PATH_TRIMS[state.job];
-  if (trim) for (const s of ['hat', 'top', 'bottom', 'shoes', 'gloves', 'cape']) if (g[s]?.family === 'thief' && !g[s].set && !g[s].variant) g[s] = { ...g[s], pal: { ...g[s].pal, ...trim } };
+  // (Every job shows the weapon and gear you equip exactly as they are: the player's rule, 2026-11-09.)
   // The body acts out the mood: the expression, or worn out at low health.
   const mine = state.urgent || state.preview;
   // (The crowd walks at two speeds, a stroll and a run, so its walk is one set of frames for each.)
@@ -3102,7 +3096,7 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (rig.capeRoot != null) rig.capeRoot = Math.round(rig.capeRoot);
   }
   const lookKey = JSON.stringify(look);
-  const gk = `${gearKey(gear)}${trim ? `|${state.job}` : ''}`;
+  const gk = gearKey(gear);
   // (Yours are labelled apart, 'you', so the speed check can tell your painting from the crowd's.)
   const bodyKey = `${mine ? 'you' : 'hero'}|${lookKey}|${gk}|${rigKey(rig)}|${LIGHT}`;
   // (Taller than the figure: floor-length hair hangs past its feet, and was sliced off flat.)
@@ -3213,7 +3207,11 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // On guard, the weapon points out front and dips with each bounce.
   // A crossbow is held at low ready, a little under the aim, so a shot settles into it instead of
   // the weapon dropping the moment the move ends (research/archery.md 2, 27: hold the finish).
-  const guard = state.ready && pose === 'idle' ? { crossbow: 22, gauntlet: 95, bow: -76, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62 : null;
+  // A greatsword, axe or spear is held higher, the tip up and out ahead of her, instead of lying
+  // across her legs (a bow stays low: raised, it would cross her face); and every weapon on guard
+  // lives: a slow drift up and down (whole degrees), on top of the dip with each bounce.
+  const drift = Math.round((HEFTED.has(g.weapon?.type) ? 4 : 3) * Math.sin((state.time ?? 0) * 1.7));
+  const guard = state.ready && pose === 'idle' ? ({ sword: 53, axe: 53, spear: 53, staff: 53, crossbow: 22, gauntlet: 95, bow: -76, dagger: 105, wand: 80 }[g.weapon?.type] ?? 62) + drift : null;
   let weaponAngle = angles ? angles.weapon : idleW ? idleW.angle : guard != null ? guard + rig.by * 6 : restAngle + rig.frontArm[0] * (HEFTED.has(g.weapon?.type) ? 1 : 4) + (pose === 'jump' ? -15 : 0);
   // Between moves the held weapon eases to where it should be (guard, shoulder, a fidget) instead
   // of jumping there; a greatsword goes the long way, down and round behind her, rather than up
@@ -3306,22 +3304,6 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
 
   // (A swing's smear is the effect pack's slash, drawn with the blow; see effects.js bladeCut.)
 
-  // A folding fan in the free (back) hand, for moves that dance with one (`mv.fan`, how far it's
-  // open, 0-1; `mv.fanA` its angle, degrees, 0 = straight up, + tipping forward): drawn from where
-  // that hand really is, over the body so it always reads (a back hand reaching behind her is
-  // out past her silhouette anyway); `mv.fanBack: true` tucks it behind instead.
-  const drawFan = () => {
-    if (mv?.fan == null || rig.view === 'back') return;
-    const [, [wx, wy]] = reach(BACK_SHOULDER, SHOULDER_Y, BACK_SHOULDER - HAND_FORWARD + rig.backArm[0], HAND_Y + rig.backArm[1], UPPER_ARM, FOREARM, 1);
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.translate(sx(squashX(wx + rig.tx)), sy(squashY(wy + bodyY)));
-    if (flip) ctx.scale(-1, 1);
-    ctx.rotate((((mv.fanA ?? 0) - 90) * Math.PI) / 180);
-    paintFan(ctx, scale * 1.3, mv.fan);
-    ctx.restore();
-  };
-  if (mv?.fanBack) drawFan();
 
   // Where both hands are on screen, for whoever holds something in them (`state.onHands`: an NPC's
   // props), called once the figure is drawn: (ctx, front hand, back hand, facing, scale).
@@ -3419,20 +3401,17 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
     if (idleW?.sparkle) idleSparkle(ctx, sx(hand[0]), sy(hand[1]), weaponAngle, (wpn.grip[1] - 4) * ws, flip, state.time ?? 0, scale);
     return handsAt();
   }
-  if (armBehind) {
-    if (mv && !mv.fanBack) drawFan();
-    return handsAt();
-  }
-  if (!behind && bowLive) {
-    // A drawn bow is in front of her, all but where it would cross her face: there it passes
-    // behind her head (a clip that leaves out the oval of her face), so the whole bow reads and
-    // her eyes and mouth never hide behind a limb.
+  if (armBehind) return handsAt();
+  if (!behind && g.weapon?.type === 'bow') {
+    // A bow in front of her (drawn or not: a full-size bow in a flip or a roll too) passes behind
+    // her head wherever it would cross her face (a clip that leaves out the oval of her face), so
+    // the whole bow reads and her eyes and mouth never hide behind a limb.
     const fx = sx(15.5 + squashX(15.5 + rig.tx) - 15.5 + rig.hx + 1.5);
     const fy = sy(17 + bodyY * KY + rig.hy);
     ctx.save();
     ctx.beginPath();
     ctx.rect(fx - W * scale * 3, fy - H * scale * 3, W * scale * 6, H * scale * 6);
-    ctx.ellipse(fx, fy, 8.5 * scale, 7 * scale, 0, 0, Math.PI * 2);
+    ctx.ellipse(fx, fy, 11 * scale, 9.5 * scale, 0, 0, Math.PI * 2);
     ctx.clip('evenodd');
     drawWeapon();
     ctx.restore();
@@ -3440,7 +3419,6 @@ function paintHero(ctx, look, gear, x, y, state, anim, mv) {
   // A dance arm lies over the face and hair, so it takes a soft line in its own colours instead of
   // the heavy ink of a swinging weapon arm.
   drawArm();
-  if (mv && !mv.fanBack) drawFan();
   handsAt();
 }
 

@@ -57,19 +57,11 @@ const SPELLS = new Set(['healbloom', 'titanwave', 'feathers', 'moonslash', 'smok
 const MOUNT_JUMP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'jump', gecko: 'jump' };
 const MOUNT_STEP = { bun: 'bunHop', crane: 'craneFlap', nimbus: 'nimbusPuff', kettle: 'kettleRattle', turtle: 'turtleStep', gecko: 'geckoPatter' };
 const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, gecko: 16 };
-// The Starlight Idol's Center Stage, Hype Wave, Lullaby cloud, curtains and pyro.
-const IDOL_SOUND = { sispot: 'idolsong', silullcloud: 'sisong', sicurtain: 'sisong', sipyro: 'siwave' };
-const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'stwish', 'stveil', 'starfallsky', 'starfallimpact', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
-  // The Spirit Mage and her doll.
-  'spiritwave', 'blessing', 'wardbreak', 'heavenslantern', 'lanternray', 'lanternblaze', 'fanslap', 'bellbonk', 'dollcharm', 'dolltwirl', 'dollpop', 'spitball', 'spitsplat',
-  // The Starlight Idol.
-  'siwave', 'sistage', 'sihit',
+const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Phantom Trickster.
   'pthit', 'ptsmoke', 'ptillusion',
   // The Acrobat Archer.
   'achit', 'acfirework', 'acburst', 'trapsnap',
-  // The Astronomer.
-  'ashit', 'aswell', 'astide', 'asalign',
   // Team moves.
   'teamcatch', 'teamrevive', 'teamburst']);
 
@@ -114,8 +106,6 @@ export function hearWorld(world, cam) {
         // (A bolt's small muzzle sparks ride on the shot's own sound.)
         if (f.small && f.kind === 'boltshock') break;
         if (NAMED.has(f.kind)) say(f.kind, { pan: p });
-        // The Starlight Idol's reworked songs play her existing song sounds.
-        else if (IDOL_SOUND[f.kind] && !f.short) say(IDOL_SOUND[f.kind], { pan: p });
         else if (SPELLS.has(f.kind) || f.kind === 'fire' || f.kind === 'holy') say('spell', { kind: f.kind, pan: p });
     }
   }
@@ -214,7 +204,6 @@ export function hearWorld(world, cam) {
     if ((world.faith ?? 0) >= 100 && !(m.faith >= 100)) sfx('sanctified');
     if ((world.bond ?? 0) >= 100 && !(m.bond >= 100)) sfx('galeFull');
     if ((world.charge ?? 0) >= 100 && !(m.charge >= 100)) sfx('overdrive');
-    if (world.char.job === 'mage' && (world.spirit ?? 0) >= 100 && !(m.spirit >= 100)) sfx('allstars');
     // Jumps, landings, steps, and climbing.
     // Riding, the mount's own sounds stand in for your feet (world/mount.js).
     const ride = world.riding && !world.riding.stowed ? world.riding.id : null;
@@ -304,9 +293,7 @@ export function hearWorld(world, cam) {
 }
 
 // Each summon: what it says when it starts a move, and now and then when it's idle.
-const SUMMONS = [
-  ['doll', 'dollHey', 'dollGiggle'],
-];
+const SUMMONS = [];
 function hearSummons(world, m, pan) {
   const said = (m.said ??= {});
   for (const [key, act, idle] of SUMMONS) {
@@ -315,11 +302,6 @@ function hearSummons(world, m, pan) {
     const a = k.act ?? null;
     if (a && a !== said[key] && Math.random() < 0.6) sfx(act, { pan: pan(k.x) });
     said[key] = a;
-    // The doll giggles when she starts one of her idle bits.
-    if (key === 'doll') {
-      if (k.bit && k.bit !== said.dollBit) sfx('dollGiggle', { pan: pan(k.x) });
-      said.dollBit = k.bit;
-    }
     // Now and then, idle, a line of their own.
     if (idle && !a && world.now > (said[`${key}At`] ?? world.now + 8 + Math.random() * 10)) {
       said[`${key}At`] = world.now + 18 + Math.random() * 20;

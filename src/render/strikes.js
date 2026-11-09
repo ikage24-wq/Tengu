@@ -7,14 +7,12 @@
 // by the skill's school. (x, y) is a monster's feet for per-target effects, the player's otherwise.
 
 import { SCHOOL_COLORS } from './spells.js';
-import { drawMeteor, drawComet } from './meteor-fx.js';
 import { drawArcheryShot, drawArchery, windRainPiece, hawkRainPiece } from './archery.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawWarriorFx } from './warrior-fx.js';
 import { drawThiefFx, moonRainPiece } from './thief-fx.js';
 import { drawHealFx } from './heal-fx.js';
 import { drawLifeFx } from './life-fx.js';
-import { drawSpiritFx, drawSpiritShot } from './spirit-fx.js';
 import { drawTeamFx } from './team-fx.js';
 import { wash, deep } from './fxkit.js';
 
@@ -147,7 +145,6 @@ function arrow(ctx, x, y, a, len, c) {
 // ---------- Projectiles ----------
 
 export function drawStrikeShot(ctx, f, x, y, dir, time) {
-  if (drawSpiritShot(ctx, f, x, y, dir, time)) return true;
   const c = colors(f);
   switch (f.shot) {
     case 'wave': {
@@ -258,7 +255,6 @@ export function drawStrike(ctx, f, x, y, p, cam, time) {
   if (drawThiefFx(ctx, f, x, y, p, cam, time)) return true;
   if (drawHealFx(ctx, f, x, y, p)) return true;
   if (drawLifeFx(ctx, f, x, y, p)) return true;
-  if (drawSpiritFx(ctx, f, x, y, p)) return true;
   if (drawTeamFx(ctx, f, x, y, p)) return true;
   const c = colors(f);
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
@@ -735,14 +731,6 @@ function scratch(main) {
 // One falling piece of a rain ultimate.
 function rainPiece(ctx, variant, x, y, s, time, c) {
   switch (variant) {
-    // The Meteor Caller's showers: her hand-drawn meteors and comets (render/meteor-fx.js), falling
-    // the way the rain falls (steeply, drifting a little back).
-    case 'mcmeteor':
-      drawMeteor(ctx, x, y, 1.69, 7 * s, time, Math.floor(time * 10) % 7 + 1);
-      break;
-    case 'mccomet':
-      drawComet(ctx, x, y, 1.69, 3.6 * s, time);
-      break;
     case 'sword':
       sword(ctx, x, y, 34 * s, c);
       glow(ctx, x, y, 10 * s, c.light, 0.6);
@@ -770,34 +758,6 @@ function rainPiece(ctx, variant, x, y, s, time, c) {
     case 'aebolt':
       // Bolt Mortar's hail (the Arbalist Engineer's): brass bolts streaking teal, falling steeply.
       fxSprite(ctx, 'celaebolt', x, y, { t: time, rot: Math.atan2(2.6, 1), scale: 0.4 * s });
-    case 'sinote':
-      // Starfall as the Starlight Idol's encore: pink notes pouring down.
-      fxSprite(ctx, 'celsinote', x, y, { t: time, rot: 1.2, scale: 0.5 * s });
-      break;
-    case 'asplanet':
-      // Starfall as the Astronomer's meteor shower: little ringed planets falling.
-      fxSprite(ctx, 'celasplanet', x, y, { t: time, rot: 1.2, scale: 0.5 * s });
-      break;
-    case 'clspear':
-      // Heaven's Gate's: spears of light falling from the gates.
-      fxSprite(ctx, 'celclspear', x, y, { t: time, scale: 0.5 * s });
-      break;
-    case 'soslam':
-      // Abyssal Rain's: giant shadow hands reaching down out of her rift.
-      fxSprite(ctx, 'celsoslam', x, y, { t: time, rot: 1.2, scale: 0.42 * s });
-      break;
-    case 'pmbomb': case 'pmshard': case 'pmzap': case 'qnorb': case 'qncrown': case 'qndecree': case 'mdbomb': case 'mdmist': case 'mdzap': case 'mdpill': case 'mdpack': case 'mdpulse':
-      // Big Bad Kaboom's: her grinning fireballs, snowballs and zap balls raining down.
-      fxSprite(ctx, `cel${variant}`, x, y, { t: time, rot: 1.2, scale: 0.42 * s });
-      break;
-    case 'mgrock':
-      // Meteor's: flaming rocks falling from her crimson rune sky.
-      fxSprite(ctx, 'celmgrock', x, y, { t: time, scale: 0.5 * s });
-      break;
-    case 'stmeteor':
-      // Starfall's meteors: a gold star trailing midnight fire, falling down and right.
-      fxSprite(ctx, 'celstmeteor', x, y, { t: time, scale: 0.5 * s });
-      break;
     case 'star':
       glow(ctx, x, y, 10 * s, c.main, 0.6);
       star(ctx, x, y, 8 * s, time * 12, c.deep, c.light);

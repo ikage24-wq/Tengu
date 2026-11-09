@@ -122,15 +122,15 @@ export const ROLES = {
   dps: { label: 'DPS', color: '#ff7a6b' },
 };
 
-// A group's roles, in finder order. The Spirit Mage (the magic class) takes the healer's seat.
+// A group's roles, in finder order. (With the Mage line wiped, 2026-11-08, the healer's seat is a
+// helper's: see world/dungeon.js recruit.)
 export const GROUP = ['tank', 'healer', 'dps', 'dps'];
 
 export function roleOf(jobId, family) {
   if (jobId === 'novice' || family === 'beginner') return null;
-  // (The Berserker and the Onmyoji take the damage seat their families don't.)
-  if (jobId === 'berserker' || jobId === 'sorcerer') return 'dps';
+  // (The Berserker takes the damage seat its family doesn't.)
+  if (jobId === 'berserker') return 'dps';
   if (family === 'warrior') return 'tank';
-  if (family === 'mage') return 'healer';
   return 'dps';
 }
 

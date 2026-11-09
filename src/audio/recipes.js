@@ -301,70 +301,11 @@ const R = {
       { seq: 'A3+E4+A4+C5:900', inst: 'string_ensemble_1', attack: 0.02, db: -8 },
     ],
   },
-  // The Spirit Mage: her bolts leave the bell staff with a shake of the suzu bells and land with a
-  // celesta chime; Spirit Wave is a taiko-like thump and a struck bell; Blessing a celesta run and
-  // a soft choir; a ward breaks like glass; Heaven's Lantern rises on a harp run and choir, each ray
-  // a little chime, and it blazes with a great bell. All in the bright yo scale (D E G A B).
-  suzu: { db: -15, vary: 4, max: 3, room: true, layers: [{ rec: 'bell', len: 500, rate: 1.6, db: -4 }, sparkle('D7:25 A6:25 D7:25 E7:200', { db: -10 }), whoosh(260, 900, 2600, { db: -12 })] },
-  suzuBig: { db: -12, max: 2, room: true, layers: [{ rec: 'bell', len: 900, rate: 1.2 }, sparkle('D6:30 E6:30 G6:30 A6:30 D7:400', { db: -8 }), whoosh(380, 600, 2400, { db: -9 }), thump(140, 200, { db: -10 })] },
-  spiritHit: { db: -14, vary: 5, max: 4, layers: [{ rec: 'sparkle', len: 400, db: -6 }, { seq: 'A6:200', inst: 'celesta', db: -6 }, { rec: 'soft', db: -8 }] },
-  castSpirit: { db: -14, max: 1, room: true, layers: [{ rec: 'holyProtect', len: 900, db: -4 }, sparkle('D6:40 G6:40 A6:300', { db: -10 })] },
-  spiritwave: { db: -9, max: 1, room: true, duck: [-5, 700], layers: [thump(80, 380, { slide: -1.5 }), { drum: 'K' }, { rec: 'holyWave', len: 1200 }, { rec: 'bell', len: 1100, rate: 0.9, db: -4 }, whoosh(700, 500, 3000, { focus: 0.3, db: -6 })] },
-  blessing: { db: -11, max: 1, room: true, layers: [{ rec: 'holyHeal', len: 1500 }, { seq: 'D5:90 E5:90 G5:90 A5:90 D6:700', inst: 'celesta', db: -4 }, { seq: 'r:300 D5+A5:900', inst: 'choir_aahs', attack: 0.2, db: -10 }] },
-  wardbreak: { db: -11, max: 2, layers: [{ rec: 'glass', len: 700 }, sparkle('E7:30 B6:30 G6:200', { db: -8 }), thump(160, 160, { db: -8 })] },
-  heavenslantern: { db: -10, max: 1, room: true, duck: [-6, 1500], layers: [{ rec: 'holyBlast', len: 1600, db: -4 }, { seq: 'D4:80 E4:80 G4:80 A4:80 B4:80 D5:80 E5:900', inst: 'orchestral_harp' }, { seq: 'r:400 D4+A4+D5:1400', inst: 'choir_aahs', attack: 0.3, db: -8 }] },
-  // The Arbalist Engineer: a sticky or cluster bolt bursting (a pop and a clatter of cogs), her
-  // machine venting steam (a hiss), Big Bertha (the ballista ratcheting open, a huge thump and a
-  // long hiss), and Overdrive (a steam whistle and a ratchet).
   aeboom: { db: -12, vary: 6, max: 3, gap: 60, layers: [{ rec: 'rockHit', rate: 1.5, len: 300, db: -4 }, thump(140, 160, { db: -6 }), { rec: 'clang', rate: 1.8, len: 300, db: -10 }] },
   aesteam: { db: -16, vary: 6, max: 2, gap: 120, layers: [whoosh(500, 1800, 5200, { focus: 0.2, db: -4 })] },
   aeballista: { db: -9, max: 1, room: true, duck: [-6, 1600], layers: [{ rec: 'clang', rate: 0.7, len: 500, db: -4 }, { rec: 'clang', rate: 0.9, len: 400, db: -6, at: 300 }, thump(60, 700, { slide: -1.4, at: 1000 }), whoosh(1200, 1400, 4800, { focus: 0.3, db: -6, at: 1050 })] },
   overdrive: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'E6:80 A6:600', inst: 'pan_flute', db: -4 }, whoosh(800, 1500, 5200, { focus: 0.2, db: -8 }), { rec: 'clang', rate: 1.4, len: 300, db: -10 }] },
-  // The Star Witch: a star bolt (a bright glassy ping and a sparkle), a comet (a whoosh with a
-  // trailing chime), Wishing Star (a falling glissando into a warm harp chord), Star Veil (a shimmer
-  // of bells closing round), all seven stars lit (a rising celesta run), and Starfall (the sky
-  // drawn note by note, then meteors and a great boom). All in a bright major key.
-  starbolt: { db: -15, vary: 6, max: 3, layers: [{ rec: 'glass', len: 260, rate: 1.8, db: -10 }, sparkle('G7:0 D8:40', { db: -10 }), whoosh(240, 700, 3200, { focus: 0.3, db: -10 })] },
-  starcomet: { db: -12, vary: 4, max: 2, layers: [whoosh(420, 400, 2600, { focus: 0.4, db: -4 }), sparkle('C7:0 G6:60 E6:120', { db: -10 }), { rec: 'bell', len: 500, rate: 1.4, db: -10 }] },
-  stwish: { db: -10, max: 1, room: true, layers: [{ seq: 'C7:50 A6:50 F6:50 D6:50 C6:50', inst: 'celesta', db: -6 }, { seq: 'r:260 F4+A4+C5+F5:900', inst: 'orchestral_harp', attack: 0.02, db: -4 }, { rec: 'holyHeal', len: 1200, db: -8 }] },
-  stveil: { db: -11, max: 1, room: true, layers: [sparkle('C6:0 E6:50 G6:100 C7:150 E7:200 G7:250', { db: -6 }), { rec: 'holyProtect', len: 1000, db: -6 }] },
-  allstars: { db: -11, max: 1, room: true, duck: [-5, 800], layers: [{ seq: 'C6:60 D6:60 E6:60 G6:60 A6:60 C7:60 E7:600', inst: 'celesta', db: -2 }, sparkle('r:420 C8:0 G7:60', { db: -10 })] },
-  starfallsky: { db: -10, max: 1, room: true, layers: [{ seq: 'C6:90 E6:90 G6:90 A6:90 C7:90 E7:90 G7:400', inst: 'celesta', db: -2 }, { rec: 'holyProtect', len: 1200, db: -8 }] },
-  starfallimpact: { db: -6, max: 1, room: true, duck: [-8, 1400], layers: [thump(55, 700, { slide: -1.6 }), { rec: 'holyBlast', len: 1600, db: -2 }, { rec: 'rockHit', rate: 0.7, db: -6 }, sparkle('r:200 C7:0 G6:80 E6:160 C6:240', { db: -8 })] },
-  // The Astronomer, slow and spacious in a dreamy key: a planet flung (a soft low whoosh with a
-  // glassy ring), a great ringed world (a deeper whoosh under a low harp chord), a moon flying off
-  // (a tiny bell), her hit (a crystal ping), Gravity Well (a deep swirling hum), Lunar Tide (a
-  // rising shimmer of strings), and Planetary Alignment (the planets chiming into line one by one,
-  // then a vast chord as the beam fires).
-  astroplanet: { db: -15, vary: 6, max: 3, layers: [whoosh(320, 300, 1800, { focus: 0.3, db: -6 }), { rec: 'glass', len: 400, rate: 1.1, db: -12 }] },
-  astrobig: { db: -11, vary: 4, max: 2, layers: [whoosh(520, 200, 1400, { focus: 0.4, db: -2 }), { seq: 'D3+A3+D4+F4:900', inst: 'orchestral_harp', db: -6 }, sparkle('A6:0 D7:80', { db: -12 })] },
-  astromoon: { db: -20, vary: 8, max: 3, gap: 80, layers: [{ seq: 'A6:200', inst: 'celesta', db: -4 }, whoosh(160, 900, 3000, { focus: 0.2, db: -14 })] },
-  ashit: { db: -18, vary: 8, max: 3, gap: 60, layers: [{ rec: 'glass', len: 260, rate: 1.5, db: -6 }, sparkle('D7:40', { db: -14 })] },
-  aswell: { db: -11, max: 1, room: true, layers: [{ rec: 'darkRiser', rate: 0.7, len: 1400 }, whoosh(1200, 120, 900, { focus: 0.6, db: -6 }), { seq: 'D2+A2:1400', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
-  astide: { db: -11, max: 1, room: true, layers: [{ seq: 'D5:80 F5:80 A5:80 D6:80 F6:600', inst: 'celesta', db: -4 }, { seq: 'D4+A4+D5:1200', inst: 'string_ensemble_1', attack: 0.3, db: -8 }] },
-  asalign: { db: -8, max: 1, room: true, duck: [-7, 2000], layers: [{ seq: 'D5:220 F5:220 A5:220 C6:220 D6:300', inst: 'celesta', db: -2 }, { seq: 'r:1150 D3+A3+D4+F4+A4:1600', inst: 'brass_section', attack: 0.02, db: -4 }, { seq: 'r:1150 D3+A3+D4:1800', inst: 'choir_aahs', attack: 0.2, db: -6 }, thump(50, 800, { slide: -1.4, db: -4 })] },
-  // The Starlight Idol, a pop stage in a bright major key: a note sung off the mic (a glockenspiel
-  // ping on a breath of voice), her big note (a chord with a whoosh), a note landing (a tiny pluck
-  // and sparkle), a song starting (a sung phrase over a harp), her sound waves (a stab of brass),
-  // and Grand Concert (a drum roll into a big chord with the choir).
-  idolnote: { db: -16, vary: 6, max: 3, layers: [{ seq: 'E7:120', inst: 'glockenspiel', db: -4 }, { seq: 'B5:160', inst: 'choir_aahs', attack: 0.01, db: -14 }, whoosh(200, 900, 3200, { focus: 0.3, db: -12 })] },
-  idolbig: { db: -12, vary: 4, max: 2, layers: [whoosh(380, 500, 2800, { focus: 0.4, db: -6 }), { seq: 'C5+E5+G5+C6:400', inst: 'brass_section', attack: 0.01, db: -6 }, sparkle('G7:0 C8:60', { db: -10 })] },
-  sihit: { db: -19, vary: 8, max: 3, gap: 60, layers: [{ seq: 'C7:90', inst: 'pizzicato_strings', db: -4 }, sparkle('G7:40', { db: -12 })] },
-  idolsong: { db: -10, max: 1, room: true, layers: [{ seq: 'E5:160 G5:160 A5:160 C6:600', inst: 'choir_aahs', attack: 0.04, db: -4 }, { seq: 'C4+E4+G4+C5:1000', inst: 'orchestral_harp', db: -6 }, sparkle('r:200 C7:0 E7:80 G7:160', { db: -12 })] },
-  sisong: { db: -13, max: 1, room: true, layers: [{ seq: 'G5:140 C6:500', inst: 'choir_aahs', attack: 0.04, db: -4 }, sparkle('C7:0 G7:80', { db: -12 })] },
-  siwave: { db: -13, vary: 4, max: 2, gap: 120, layers: [{ seq: 'G4+C5+E5:260', inst: 'brass_section', attack: 0.01, db: -4 }, whoosh(300, 300, 2000, { focus: 0.5, db: -8 })] },
-  sistage: { db: -8, max: 1, room: true, duck: [-6, 2200], layers: [{ seq: 'C4:70 C4:70 C4:70 C4:70 C4:70 G4:300', inst: 'timpani', db: -4 }, { seq: 'r:420 C5+E5+G5+C6:1600', inst: 'brass_section', attack: 0.02, db: -4 }, { seq: 'r:420 C4+G4+C5+E5:1800', inst: 'choir_aahs', attack: 0.2, db: -6 }, sparkle('r:600 C7:0 E7:80 G7:160 C8:240', { db: -10 })] },
-  lanternray: { db: -15, vary: 6, max: 3, gap: 80, layers: [{ rec: 'holyBlast', len: 500, db: -6 }, sparkle('A6:30 D7:200', { db: -8 })] },
-  lanternblaze: { db: -8, max: 1, room: true, duck: [-8, 1200], layers: [thump(70, 600, { slide: -1 }), { rec: 'holyBlast', len: 1800 }, { rec: 'bell', len: 1500, rate: 0.8, db: -3 }, { seq: 'D5+A5+D6+E6:1200', inst: 'celesta', db: -5 }] },
-  // Her Spirit Doll, small and silly: a paper-fan smack, a bell bonked on a head, a twirl of
-  // streamers, a charm flicked off, popping in and out, and a spitball's pff and wet splat.
-  fanslap: { db: -14, vary: 8, max: 3, layers: [{ rec: 'swingFist', rate: 1.4, db: -4 }, { rec: 'punch', rate: 1.5 }, { rec: 'cloth', rate: 1.6, db: -8 }] },
   bellbonk: { db: -11, vary: 5, max: 2, layers: [{ rec: 'metal', rate: 1.3, len: 300 }, { rec: 'bell', rate: 1.4, len: 1200 }, sparkle('E7:40 B6:40 E7:300', { db: -10 })] },
-  dollcharm: { db: -15, max: 2, layers: [whoosh(220, 1500, 4000, { db: -6 }), sparkle('A6:30 E7:120', { db: -12 })] },
-  dolltwirl: { db: -14, max: 2, layers: [whoosh(500, 700, 2800, { focus: 0.4 }), { rec: 'cloth', rate: 1.3, db: -6 }] },
-  dollpop: { db: -16, max: 2, layers: [{ rec: 'teleIn', rate: 1.6, len: 400 }, sparkle('C7:30 G7:100', { db: -12 })] },
-  spitball: { db: -13, vary: 10, max: 3, layers: [whoosh(120, 800, 2400, { focus: 0.15 }), thump(700, 60, { slide: 1, db: -10 })] },
-  spitsplat: { db: -12, vary: 8, max: 3, layers: [{ rec: 'slime', len: 500, rate: 1.2 }, { rec: 'splash', len: 400, rate: 1.5, db: -6 }] },
   // The Thief's paths. The Blade Dancer: Ricochet topping out (rings whirring up and a bright
   // chime: Carousel). The Sky Dancer's follow hers.
   carouselfull: { db: -10, max: 1, duck: [-5, 800], layers: [whoosh(500, 300, 2400, { focus: 0.6, db: -4 }), sparkle('C7:0 E7:70 G7:140 C8:210', { db: -10 }), { seq: 'r:120 C5+G5:600', inst: 'orchestral_harp', attack: 0.02, db: -8 }] },
@@ -539,10 +480,6 @@ const R = {
   // A crit's low thump, under its ring.
   // Low HP: a heartbeat, lub-dub.
   heartbeat: { db: -15, max: 1, gap: 500, layers: [thump(62, 120, { slide: -1.5 }), thump(55, 160, { slide: -1.5, at: 170, db: -3 })] },
-  // ---------- Your summons' voices (sfx.js; played when they set about something) ----------
-  // The Spirit Doll's giggle: a quick run of tiny high notes.
-  dollGiggle: { db: -21, vary: 6, max: 1, gap: 600, layers: [{ wave: 'sine', arp: [1568, 1760, 1568, 2093, 1760], arpStep: 55, vib: [14, 4], env: { a: 5, s: 260, d: 60 }, overtones: [3, 0.25] }] },
-  dollHey: { db: -20, vary: 6, max: 1, gap: 400, layers: [{ wave: 'sine', f0: 1400, slide: 1.4, vib: [12, 3], env: { a: 4, s: 90, d: 60 }, overtones: [3, 0.25] }] },
   // ---------- Interface: real clicks, high, short and dry ----------
   // The emotes (ui/emotes.js): short and cute, one each (recorded, recorded.js; these chimes stand
   // in until the recordings are ready).

@@ -54,7 +54,7 @@ test('only the right job wears a set, and a Novice can wear the starter sets', (
   assert.match(equipBlocker(warrior, { id: 'warrior_top_35' }), /level 35/);
   const novice = hero('novice', 6);
   assert.equal(equipBlocker(novice, { id: 'mage_hat_5' }), null);
-  assert.match(equipBlocker(novice, { id: 'mage_hat_10' }), /level 10|Star Witches only/);
+  assert.match(equipBlocker(novice, { id: 'mage_hat_10' }), /level 10|only/);
 });
 
 test('colors are a look only: a name and a recolor, never stats', () => {

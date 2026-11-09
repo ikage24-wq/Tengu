@@ -577,41 +577,6 @@ test('a party combo: your finisher brings the members fighting by you in with th
   assert.ok(fin, 'and their own finisher goes off');
 });
 
-test("the Mage's paths fight with their whole kit: the bubble circle and the falling star", async () => {
-  const { botSkills, tickHunter } = await import('../src/world/party.js');
-  const { spawnMob } = await import('../src/world/mobs.js');
-  const { createBody } = await import('../src/world/physics.js');
-  const shrine = makeBotCharacter(seeded(3), { name: 'Mimi', level: 50, jobs: ['mage', 'cleric'] });
-  const onmyo = makeBotCharacter(seeded(4), { name: 'Vega', level: 50, jobs: ['mage', 'sorcerer'] });
-  const ids = (c) => botSkills(c).map((s) => s.id);
-  for (const id of ['thousandtorii', 'grandblessing', 'blessing']) assert.ok(ids(shrine).includes(id), `Starlight Idol: ${id}`);
-  for (const id of ['ofudabarrage', 'troupecombo']) assert.ok(ids(onmyo).includes(id), `Sorcerer: ${id}`);
-  for (const [char, fx] of [[shrine, 'bbcircle'], [onmyo, 'mcsky']]) {
-    const world = createWorld(createCharacter('Me', {}));
-    quiet(world);
-    world.god = true;
-    loadMap(world, 'woods', 'start');
-    world.mobs = [];
-    const x = world.body.x + 600;
-    const m = spawnMob(world.map, { mob: 'snailbun', x, y: world.map.groundY });
-    // (A copy of its kind, so other tests still get ordinary ones.)
-    m.def = { ...m.def, hp: 1e9, speed: 0, atk: 0 };
-    m.hp = 1e9;
-    world.mobs.push(m);
-    const bot = { id: 'b1', name: char.name, char, level: 50, hunter: true, map: world.map.id, x: x - 120, facing: 1, state: 'hunt', body: createBody(x - 120, world.map.groundY), session: 999, stay: 999, nextLine: 999, appear: 0 };
-    let seen = false;
-    for (let t = 0; t < 40 && !seen; t += 1 / 30) {
-      world.now += 1 / 30;
-      world.pending = world.pending.filter((h) => h.at > world.now);
-      tickHunter(bot, world, [bot], 1 / 30, seeded(Math.floor(t * 30) + 3));
-      if (bot.fight) bot.fight.gauge = Math.max(bot.fight.gauge, 100);
-      seen = world.fx.some((f) => f.kind === fx);
-      world.fx = world.fx.filter((f) => f.kind === fx);
-    }
-    assert.ok(seen, `${char.name} casts with ${fx}`);
-  }
-});
-
 test('the Crystal Throne fills up for a raid on the Crystal King', async () => {
   const world = createWorld(createCharacter('Me', {}));
   const lines = quiet(world);
@@ -790,7 +755,7 @@ test('a dungeon group looking for your role takes you in', async () => {
   const { advanceJob } = await import('../src/core/character.js');
   const { world, bots, lines } = eventTown(431);
   world.char.level = 15;
-  advanceJob(world.char, 'mage');
+  advanceJob(world.char, 'archer');
   // Players of other jobs about.
   for (const b of bots.list.filter((x) => x.map === world.map.id).slice(0, 6)) {
     b.char = makeBotCharacter(seeded(b.name.length), { name: b.name, level: 14, jobs: ['warrior'] });
@@ -803,7 +768,7 @@ test('a dungeon group looking for your role takes you in', async () => {
     bot = bots.list.find((b) => b.lfg);
   }
   assert.ok(bot, 'someone is looking');
-  assert.ok(lines.some((l) => /healer/i.test(l) && l.startsWith(`${bot.name}:`)), 'for a healer, like you');
+  assert.ok(lines.some((l) => /dps|damage/i.test(l) && l.startsWith(`${bot.name}:`)), 'for a damage dealer, like you');
   assert.equal(joinGroup(bots, world, bot), null);
   assert.ok(world.dungeon && bot.party, 'in the dungeon with them');
 });

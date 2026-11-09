@@ -49,7 +49,7 @@ carry over; the name is Sky Dancer).
 - Skills: Sky Mastery, Updraft, Zephyr, Sky Waltz (finisher; its tornado stands on the ground she
   took off from, `floor`).
 - Effects (tools/fx-art.js): `skygust`, `skyhit`, `skywhirl`, `embsky`, `skytornado`. Icons, HUD
-  gauge (Tailwind / TAILWIND), aura, sounds, sky-blue gloves and outfit trim.
+  gauge (Tailwind / TAILWIND), aura and sounds. Your gloves and outfit show exactly as equipped.
 - The Kitsune's fox-fire stars, illusions, decoy, trap, barrage and Nine-Tail Blaze are removed (the
   Shrine Maiden's fox guardian is separate and stays).
 

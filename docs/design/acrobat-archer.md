@@ -13,9 +13,8 @@ loosed from the top of each, a wink after the good ones.
 - **Colour:** mint and gold (a touch of pink in her confetti).
 - **Shapes:** gold arrows trailing curling mint ribbons, five-point gold stars, confetti, round
   circus bursts.
-- **Her bow:** the 'acro' finish draws her bow as a short trick recurve, half a hunter's bow's
-  height, mint limbs curling back at the tips, gold star caps, a gold grip with a mint ribbon; she
-  holds it canted at chest height, so it never reaches up across her face.
+- **Her bow:** whatever bow you equip, exactly as it looks (a job never restyles the weapon,
+  CLAUDE.md). Wherever it would cross her face in a flip or a roll it passes behind her head.
 
 ## How she fights
 

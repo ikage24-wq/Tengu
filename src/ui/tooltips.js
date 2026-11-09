@@ -183,7 +183,7 @@ export function skillTooltip(char, skillId) {
     { text: s.desc },
   ];
   // (Grand Concert's music and Planetary Alignment's beam hit everything they reach alike.)
-  const focus = skillId === 'troupecombo' || skillId === 'thousandtorii' ? '' : ' Hits harder the fewer it catches (double on one).';
+  const focus = ' Hits harder the fewer it catches (double on one).';
   if (s.fullGauge) lines.push({ text: `Finisher: needs a full gauge and spends it.${focus}`, color: '#c99a1f', size: 8 });
   const now = lv > 0 ? describeParts(skillAt(skillId, lv), tune) : [];
   if (lv > 0) lines.push({ text: `Now: ${now.join(', ')}`, color: '#3f9f5f' });

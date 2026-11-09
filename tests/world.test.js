@@ -334,21 +334,11 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
 });
 
-test("the Star Witch branches two ways at 30, the Starlight Idol and the Astronomer, after Elowen's trial", async () => {
-  const { nextJobs, jobChain } = await import('../src/data/jobs.js');
-  const { QUESTS } = await import('../src/data/quests.js');
-  assert.deepEqual(nextJobs('mage', 30).map((j) => j.id).sort(), ['cleric', 'sorcerer']);
-  assert.deepEqual(nextJobs('mage', 30, {}).map((j) => j.id), [], 'not before the trial');
-  assert.deepEqual(nextJobs('mage', 30, { mage_trial: { state: 'done' } }).map((j) => j.id).sort(), ['cleric', 'sorcerer']);
-  assert.equal(QUESTS.mage_trial.giver, 'elowen');
-  for (const path of ['cleric', 'sorcerer']) assert.ok(jobChain(path).includes('mage'), `${path} keeps the Spirit Mage's kit`);
-});
-
-test('the warrior, the archer and the thief branch two ways at 30; the Spirit Mage is the magic class', async () => {
+test('the warrior, the archer and the thief branch two ways at 30 (the Mage line is being made again)', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'mage', 'thief', 'warrior']);
-  for (const first of ['warrior', 'archer', 'thief', 'mage']) {
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'warrior']);
+  for (const first of ['warrior', 'archer', 'thief']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');
@@ -380,13 +370,15 @@ test('old saves move to the renamed jobs and get SP back for removed skills', as
   assert.deepEqual(c.skills, {});
   assert.equal(c.hotkeys.KeyQ, null);
   assert.equal(c.hotkeys.KeyW, null);
-  // The Mage line's old ids move to their new ones, and the trial's record moves with them.
-  for (const [was, now] of [['spiritmage', 'mage'], ['onmyoji', 'sorcerer'], ['shrinemaiden', 'cleric']]) {
-    const r = { job: was, sp: 0, skills: {}, hotkeys: {}, quests: { spiritmage_trial: { state: 'done' } } };
+  // The whole Mage line was wiped (2026-11-08): its characters play as Novices (keeping their level)
+  // until the new mage jobs are there, their skills' points come back, and the trial starts fresh.
+  for (const was of ['mage', 'sorcerer', 'cleric', 'spiritmage', 'onmyoji', 'shrinemaiden']) {
+    const r = { job: was, sp: 0, skills: { spiritbolt: 4, frostnova: 2 }, hotkeys: { KeyQ: { skill: 'spiritbolt' } }, quests: { mage_trial: { state: 'done' }, spiritmage_trial: { state: 'done' } } };
     updateRetiredJobs(r);
-    assert.equal(r.job, now, was);
-    assert.equal(r.quests.mage_trial?.state, 'done', `${was}: the trial stays done`);
-    assert.ok(!r.quests.spiritmage_trial, 'under its new name');
+    assert.equal(r.job, 'novice', was);
+    assert.equal(r.sp, 6, `${was}: the skills' points come back`);
+    assert.equal(r.hotkeys.KeyQ, null);
+    assert.ok(!r.quests.mage_trial && !r.quests.spiritmage_trial, `${was}: the old trial is gone`);
   }
   // The Ranger and Sniper were remade as the Beastmaster and the Stormcaller; a job that exists
   // today stays, even if an old retired job once had its id (the Beastmaster).
@@ -483,20 +475,18 @@ test('potions heal a share of your max as well as a flat amount, so they keep up
   assert.equal(c.hp, 1 + 300 + Math.round(max * 0.3));
 });
 
-test('the stat-only skills grow by themselves and give their SP back; a replaced skill hands its hotkey over', async () => {
+test('the stat-only skills grow by themselves and give their SP back', async () => {
   const { updateRetiredJobs } = await import('../src/core/save.js');
   const { canLearn } = await import('../src/core/character.js');
-  const c = { job: 'cleric', level: 35, sp: 0, skills: { manamastery: 12, shrinemastery: 4, blessing: 7, grandblessing: 2, cozyrest: 3 }, hotkeys: { KeyQ: { skill: 'blessing' } } };
-  updateRetiredJobs(c);
-  assert.equal(c.sp, 12 + 4 + 7 + 3, 'the masteries, the replaced Blessing and the cut Cozy Rest give their points back');
-  assert.deepEqual(c.skills, { grandblessing: 2 });
-  assert.equal(c.hotkeys.KeyQ.skill, 'grandblessing', "Blessing's key now casts Grand Blessing");
-  c.sp = 5;
-  assert.ok(!canLearn(c, 'manamastery'), 'a mastery is not learned with SP');
-  assert.ok(!canLearn(c, 'blessing'), 'nor is a replaced skill');
   const { grownLevel } = await import('../src/core/stats.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.equal(grownLevel(c, SKILLS.manamastery), 20, 'a first-job mastery is full by 30');
-  assert.equal(grownLevel(c, SKILLS.shrinemastery), 6, 'a second-job mastery grows from 30');
-  assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.shrinemastery), 20, 'and is full by 50');
+  const c = { job: 'paladin', level: 35, sp: 0, skills: { swordmastery: 12, paladinmastery: 4 }, hotkeys: {} };
+  updateRetiredJobs(c);
+  assert.equal(c.sp, 12 + 4, 'the masteries give their points back');
+  assert.deepEqual(c.skills, {});
+  c.sp = 5;
+  assert.ok(!canLearn(c, 'swordmastery'), 'a mastery is not learned with SP');
+  assert.equal(grownLevel(c, SKILLS.swordmastery), SKILLS.swordmastery.maxLevel, 'a first-job mastery is full by 30');
+  assert.ok(grownLevel(c, SKILLS.paladinmastery) > 0 && grownLevel(c, SKILLS.paladinmastery) < SKILLS.paladinmastery.maxLevel, 'a second-job mastery grows from 30');
+  assert.equal(grownLevel({ ...c, level: 50 }, SKILLS.paladinmastery), SKILLS.paladinmastery.maxLevel, 'and is full by 50');
 });

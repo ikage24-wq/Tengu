@@ -24,7 +24,7 @@ import { MOBS } from '../src/data/mobs.js';
 import { roleOf } from '../src/data/dungeons.js';
 import { GEAR_LEVELS } from '../src/data/items.js';
 
-export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet', mage: 'wand', cleric: 'wand', sorcerer: 'staff' };
+export const WEAPON = { warrior: 'sword', paladin: 'sword', berserker: 'axe', archer: 'bow', beastmaster: 'bow', stormcaller: 'crossbow', thief: 'dagger', shinobi: 'dagger', kitsune: 'gauntlet' };
 export const BALANCE_JOBS = Object.keys(WEAPON);
 const DT = 1 / 60;
 // How hard the monsters in the survival test hit (their attack times this, plus 3 a level).

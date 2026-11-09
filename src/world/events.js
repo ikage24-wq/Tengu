@@ -78,7 +78,7 @@ function festivalTick(ev, bots, world, dt, hooks) {
     ev.danceAt = between(3, 7, rng);
     const b = pick(bots.list.filter((x) => free(x, world)), rng);
     if (b) {
-      b.emote = { pose: pick(['kagura', 'cheer', 'flip'], rng), t: 0, dur: 1.2 };
+      b.emote = { pose: pick(['emdance', 'cheer', 'flip'], rng), t: 0, dur: 1.2 };
       if (rng() < 0.3 && !b.bubble) shout(world, b, pick(f.lines, rng));
     }
   }

@@ -14,8 +14,8 @@ when it lands.
 - **Colour:** plum and silver (red on her card hearts).
 - **Shapes:** plum arrows trailing wisps of smoke, silver sparkles, playing cards and their suits,
   silver doves, puffs of plum stage smoke, a top hat.
-- **Her bow:** the Acrobat Archer's short recurve in a 'phantom' finish: plum limbs, silver
-  crescent-moon tips, a silver tassel from a diamond on the grip; held canted at chest height.
+- **Her bow:** whatever bow you equip, exactly as it looks (a job never restyles the weapon,
+  CLAUDE.md); wherever it would cross her face it passes behind her head.
 
 ## How she fights
 

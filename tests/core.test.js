@@ -99,11 +99,11 @@ test('a Novice\'s first job gives back every stat point spent', () => {
   const spent = c.ap;
   assert.equal(spent, 0);
   const total = Object.values(c.base).reduce((a, b) => a + b, 0);
-  advanceJob(c, 'mage');
+  advanceJob(c, 'archer');
   assert.deepEqual(c.base, { str: 4, dex: 4, int: 4, luk: 4 });
   assert.equal(c.ap, total - 16, 'all of it back to spend');
   autoAssignAp(c);
-  assert.ok(c.base.int > c.base.str);
+  assert.ok(c.base.dex > c.base.int);
   // Later jobs keep what's spent.
   const before = { ...c.base };
   gainExp(c, 30000000);
@@ -238,7 +238,7 @@ test('Sell junk sells monster drops, but keeps what quests and known recipes nee
 });
 
 test('a first job comes with its first weapon, straight into your hands', () => {
-  for (const [job, weapon] of [['warrior', 'sword_5'], ['archer', 'bow_5'], ['thief', 'dagger_5'], ['mage', 'wand_5']]) {
+  for (const [job, weapon] of [['warrior', 'sword_5'], ['archer', 'bow_5'], ['thief', 'dagger_5']]) {
     const c = fresh();
     gainExp(c, 2000);
     const held = c.equipment.weapon;

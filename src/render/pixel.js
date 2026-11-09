@@ -532,8 +532,9 @@ export function resetPaintStats() {
 // only while the frame's budget lasts; past it, the last one drawn for the same `slot` (that
 // character) stands in until a later frame. On a fast computer everyone still updates every
 // frame; on a slow one the crowd waits a beat instead of the whole game lagging.
-// (2.5 ms: room enough to keep up, and a frame that never spends a whole 60th of a second on the crowd.)
-const BUDGET_MS = 2.5;
+// (1 ms: the crowd's share of a 144 Hz frame's 4 ms drawing budget; past it the worker paints the
+// rest a frame or two later, so a field full of hunters never spikes a frame. Was 2.5 ms.)
+const BUDGET_MS = 1;
 const budget = { frame: 0, at: -1, ms: 0 };
 const lastOf = new Map();
 export function nextFrame() {
@@ -591,6 +592,12 @@ export function spriteBudgeted(key, build, slot, job = null) {
   const prev = lastOf.get(slot);
   // (gfx.noBudget: the speed check counts every painting that's needed, however fast the computer.)
   if (prev && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget) return prev;
+  // (Someone already on screen whose new frame isn't painted yet keeps their last one while the
+  // worker paints it: a person costs 1-2 ms to paint, so even one a frame spikes it.)
+  if (prev && job && !cache.has(key) && !gfx.noBudget && workerOf()) {
+    spriteSoon(key, job());
+    return prev;
+  }
   if (!prev && job && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget && workerOf()) {
     spriteSoon(key, job());
     return null;

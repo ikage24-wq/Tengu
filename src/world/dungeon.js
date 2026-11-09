@@ -11,10 +11,9 @@
 
 import { faithGuard, pathSchool } from './melee.js';
 import { ventGuard } from './engineer.js';
-import { lastRite } from './idol.js';
 import { hurtProcs, blockOnHit } from './combat.js';
 import { DUNGEONS, GROUP, ROLES, roleOf, PROVOKE, TANK_THREAT } from '../data/dungeons.js';
-import { JOBS, jobChain } from '../data/jobs.js';
+import { JOBS } from '../data/jobs.js';
 import { ITEMS, JOB_SLOTS, GEAR_FAMILIES, jobGearId } from '../data/items.js';
 import { computeStats } from '../core/stats.js';
 import { gainExp } from '../core/character.js';
@@ -111,7 +110,7 @@ export function planGroup(world, id = 'hollow') {
     slots.push({ role, who });
     return true;
   };
-  // Real players always get a seat in their own role, even a second Warrior or Star Witch: the seat
+  // Real players always get a seat in their own role, even a second Warrior: the seat
   // they push out is the one the finder would have filled (a DPS seat first, the tank's last).
   const seat = (role, who) => {
     if (take(role, who)) return true;
@@ -145,11 +144,9 @@ function recruit(world, def, role) {
   const rng = world.bots.rng;
   const [lo, hi] = def.recruit[role];
   const level = Math.floor(between(lo, hi + 1, rng));
-  // Past level 30 the Spirit Mages have taken a path: a healer comes as a Shrine Maiden, and now and
-  // then a damage dealer is an Onmyoji.
-  const sage = level >= 30;
-  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (sage ? ['mage', 'cleric'] : ['mage'])
-    : sage && rng() < 0.3 ? ['mage', 'sorcerer'] : [pick(['archer', 'thief'], rng)];
+  // (With the Mage line wiped, 2026-11-08, a healer comes as a Paladin past level 30, the party's
+  // holy knight, and a Warrior before.)
+  const jobs = role === 'tank' ? ['warrior'] : role === 'healer' ? (level >= 30 ? ['warrior', 'paladin'] : ['warrior']) : [pick(['archer', 'thief'], rng)];
   const bot = recruitBot(world.bots, world, { level, jobs });
   joinParty(world.bots, bot, world);
   const ranged = bot.ai.weapon.ranged;
@@ -717,8 +714,7 @@ export function hurtMember(world, g, raw, fromX, { knock = false, pierce = false
   world.juice.push({ type: 'hurt', x: body.x, y: body.y - body.h / 2 });
   world.channel = null;
   if (knock) knockBack(body, fromX);
-  // (A Shrine Maiden's Last Rite keeps her standing, once.)
-  if (char.hp <= 0 && !lastRite(world)) {
+  if (char.hp <= 0) {
     world.dead = true;
     if (world.dungeon) world.dungeon.downs += 1;
     world.events.push({ type: 'death' });
@@ -755,11 +751,6 @@ export function healMembers(world, pct, box) {
     const b = g.body;
     if (b.x < box.x || b.x > box.x + box.w || b.y - b.h > box.y + box.h || b.y < box.y) continue;
     healMember(world, g, maxHpOf(world, g) * pct, 'you');
-    // (The Cleric's heals show her mark on each one she mends.)
-    if (world.char.job === 'cleric' && world.now - (g.healedFxAt ?? -9) >= 0.5) {
-      g.healedFxAt = world.now;
-      world.fx.push({ kind: 'bbhealed', x: b.x, y: b.y, t: 0, dur: 0.8 });
-    }
   }
 }
 
@@ -782,7 +773,6 @@ export function absorb(world, body, buffs, dmg) {
     world.numbers.push({ x: body.x + 10, y: body.y - body.h - 2, text: `(${take})`, color: '#9fd8ff', t: 0, small: true });
     if (b.shield <= 0) {
       b.until = world.now;
-      if (b.values?.barrier && b.name === 'Spirit Ward') world.fx.push({ kind: 'wardbreak', x: body.x, y: body.y, t: 0, dur: 0.6 });
     }
   }
   return dmg;
@@ -1694,30 +1684,18 @@ export function healerTurn(bot, world, rng) {
   const me = group.find((g) => g.bot === bot);
   const hurt = up.map((g) => ({ g, f: hpOf(world, g) / maxHpOf(world, g) })).sort((a, b) => a.f - b.f);
   const low = hurt.filter((h) => h.f < (h.g.role === 'tank' ? 0.9 : 0.8));
-  // A Star Witch heals with her own spells: Wishing Star and Star Veil. A Starlight Idol with her
-  // songs: Center Stage for the group and its long regen, and Curtain Call for the fallen.
-  const shrine = jobChain(bot.char.job).includes('mage');
-  const maiden = bot.char.job === 'cleric';
-  // (The Star Witch wishes stars down; the Idol sings; the Astronomer's moons tide round them.)
-  const witch = bot.char.job === 'mage';
-  const star = witch || maiden;
-  const bless = (g) => shrine && world.fx.push({ kind: maiden ? 'bbspot' : witch ? 'jgencore' : 'mclight', x: g.body.x, y: g.body.y, t: 0, dur: 1 });
+  // (The healer's own look: the party's holy knight praying, since the Mage line was wiped 2026-11-08.)
   const cast = () => {
-    bot.attack = shrine ? { pose: maiden ? 'bbguard' : witch ? 'jgencore' : 'mclight', t: 0, dur: maiden ? 0.95 : witch ? 0.9 : 1 } : { pose: 'pray', t: 0, dur: 0.7 };
+    bot.attack = { pose: 'pray', t: 0, dur: 0.7 };
   };
-  const barrier = { id: 'spiritward', name: SKILLS.spiritward.name, pose: star ? 'jgplates' : 'mcorbit', dur: star ? 0.8 : 1 };
-  const renew = maiden ? { id: 'grandblessing', name: SKILLS.grandblessing.name, pose: 'bbguard', dur: 0.95 } : { id: 'blessing', name: SKILLS.blessing.name, pose: witch ? 'jgencore' : 'mclight', dur: witch ? 0.9 : 1 };
+  const barrier = { id: 'healerward', name: 'Ward', pose: 'pray', dur: 0.8 };
+  const renew = { id: 'healerrenew', name: 'Renew', pose: 'pray', dur: 0.8 };
   if (low.length >= 2 && low[1].f < 0.7) {
     for (const h of hurt) {
       if (h.f >= 0.95) continue;
-      healMember(world, h.g, maxHpOf(world, h.g) * (maiden ? 0.24 : 0.16) + bot.stats.int * 0.5, bot.id);
-      if (!maiden) bless(h.g);
+      healMember(world, h.g, maxHpOf(world, h.g) * 0.2 + bot.stats.int * 0.5, bot.id);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    if (maiden) {
-      world.fx.push({ kind: 'bbspot', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
-      world.fx.push({ kind: 'bbring', x: bot.body.x, y: bot.body.y - 26, t: 0, dur: 0.6 });
-    }
     cast();
     if (rng() < 0.2) groupSay(world, bot, 'dgHeal');
     return between(1.5, 1.9, rng);
@@ -1726,7 +1704,6 @@ export function healerTurn(bot, world, rng) {
     healMember(world, low[0].g, maxHpOf(world, low[0].g) * between(0.22, 0.3, rng) + bot.stats.int * 0.6, bot.id);
     if (low[0].g.id === 'you' && low[0].f < 0.5) callOut(world, bot, 'heal');
     else if (low[0].g.bot === bot && low[0].f < 0.5) callOut(world, bot, 'healSelf');
-    bless(low[0].g);
     cast();
     return between(1.1, 1.5, rng);
   }
@@ -1735,7 +1712,7 @@ export function healerTurn(bot, world, rng) {
   const buffsOf = (g) => (g.bot ? g.bot.buffs : world.char.buffs) ?? {};
   if (run.combat && tank && !(buffsOf(tank)[barrier.id]?.shield > 0)) {
     giveBuff(world, tank, barrier.id, barrier.name, { barrier: 0.22 }, 20);
-    world.fx.push({ kind: 'buffcast', skill: barrier.id, name: barrier.name, school: shrine ? 'spirit' : undefined, x: tank.body.x, y: tank.body.y, t: 0, dur: 1.1 });
+    world.fx.push({ kind: 'buffcast', skill: barrier.id, name: barrier.name, x: tank.body.x, y: tank.body.y, t: 0, dur: 1.1 });
     bot.attack = { pose: barrier.pose, t: 0, dur: barrier.dur };
     return between(1.2, 1.6, rng);
   }
@@ -1743,24 +1720,17 @@ export function healerTurn(bot, world, rng) {
     for (const g of up) {
       if (Math.abs(g.body.x - me.body.x) >= 320) continue;
       giveBuff(world, g, renew.id, renew.name, { regenPct: 0.025 }, 20);
-      bless(g);
     }
     run.vfx.push({ kind: 'groupheal', x: bot.body.x, y: bot.body.y, t: 0, dur: 0.8 });
-    if (maiden) world.fx.push({ kind: 'bbspot', big: true, x: bot.body.x, y: bot.body.y, t: 0, dur: 1.4 });
     bot.attack = { pose: renew.pose, t: 0, dur: renew.dur };
     return between(1.2, 1.6, rng);
   }
   if (!run.combat) {
-    // (A Starlight Idol raises them with Curtain Call, from further off.)
-    const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < (maiden ? 320 : 44));
+    const fallen = group.find((g) => !isUp(world, g) && Math.abs(g.body.x - me.body.x) < 44);
     if (fallen) {
-      revive(world, fallen, maiden ? 0.6 : 0.5);
-      if (maiden) {
-        world.fx.push({ kind: 'bbsparkle', big: true, x: fallen.body.x, y: fallen.body.y - 10, h: 0, t: 0, dur: 0.7 });
-        world.fx.push({ kind: 'bbspot', x: fallen.body.x, y: fallen.body.y, t: 0, dur: 1.1 });
-      }
-      bot.attack = maiden ? { pose: 'bbrebirth', t: 0, dur: 1.15 } : { pose: 'pray', t: 0, dur: 1 };
-      return maiden ? 1.5 : 1.2;
+      revive(world, fallen, 0.5);
+      bot.attack = { pose: 'pray', t: 0, dur: 1 };
+      return 1.2;
     }
   }
   return 0.4;

@@ -1,5 +1,6 @@
 // Entry point: canvas scaling, screens (title -> character select -> creator -> game), the fixed-step loop, and autosave.
 
+import { timed, record } from './core/frametimes.js';
 import { awayNow } from './world/nightmarket.js';
 import { createInput, endFrame, VW, VH } from './input.js';
 import { beginUi, endUi } from './ui/kit.js';
@@ -68,6 +69,8 @@ const lobby = { slot: 0, file: 0, confirm: false };
 const files = { file: 0, worlds: [], chars: [], confirm: false, naming: false, name: '' };
 let draft = null;
 let world = null;
+// (For the live speed check: the browser's console reads the world, `__tengu.world`.)
+globalThis.__tengu = { get world() { return world; } };
 let uiState = null;
 let camera = null;
 let autosave = AUTOSAVE_EVERY;
@@ -272,6 +275,7 @@ function step(now) {
     if (slow) world.slowmo -= dt;
     acc += slow ? dt * 0.35 : dt;
     for (const code of input.pressed) queued.add(code);
+    const logicAt = performance.now();
     while (acc >= TICK) {
       acc -= TICK;
       // Hitstop: a few frozen ticks on big hits. Presses wait for the next real tick.
@@ -287,12 +291,15 @@ function step(now) {
       updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
       queued = new Set();
     }
+    record('logic', performance.now() - logicAt);
     // Everything the other players set off this frame is theirs: its sounds play softer, behind
     // yours (listen.js).
     const before = new Set([...world.fx, ...world.juice]);
     autoPotion(world);
-    updateBots(world.bots, world, dt);
-    updateGrouping(world, dt);
+    timed('bots', () => {
+      updateBots(world.bots, world, dt);
+      updateGrouping(world, dt);
+    });
     for (const f of world.fx) if (!before.has(f)) f.ally = true;
     for (const j of world.juice) if (!before.has(j)) j.ally = true;
     // Online: tell friends what you're doing, and show what they're doing.
@@ -305,7 +312,8 @@ function step(now) {
       autosave = AUTOSAVE_EVERY;
     }
     // Sounds for whatever just happened, before the renderer drains the cues.
-    hearWorld(world, camera);
+    timed('sound', () => hearWorld(world, camera));
+    const drawAt = performance.now();
     blended(world, acc / TICK, () => {
       updateCamera(camera, world, dt);
       drawWorld(ctx, world, camera, time);
@@ -313,6 +321,7 @@ function step(now) {
     // The HUD needs the camera to fly picked-up loot from the world into the Bag button.
     uiState.cam = camera;
     drawUi(ui, uiState, world);
+    record('draw', performance.now() - drawAt);
     hearUi(uiState);
     npcPointer(ui);
     // The Options window can send you back to character select or the title.

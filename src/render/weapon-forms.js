@@ -742,9 +742,8 @@ function spear(m0, f) {
   return { shapes: s, blade: [top, sock], reach, a };
 }
 
-// ---------- Wands and staves: the Spirit Mage's shrine tools ----------
-// Remade for the Spirit Mage (the old orb-topped wands and staves are retired). A wand is a kagura
-// suzu, the bell staff a shrine maiden dances with: a lacquered handle, tiers of little gold bells
+// ---------- Wands and staves: shrine tools ----------
+// (The old orb-topped wands and staves are retired.) A wand is a suzu, the bell staff a shrine maiden dances with: a lacquered handle, tiers of little gold bells
 // on a slender stem (more tiers as it ranks up), and five-colour ribbons trailing from its end. A
 // staff is a gohei on a tall pole: zigzag paper streamers hanging from a crossbar at the top, a
 // ring of rattling bells round the head (a shakujo's), and a crowning ornament. Endgame themes keep

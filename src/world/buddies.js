@@ -210,8 +210,7 @@ function sendHelp(bots, world) {
   world.log(`${bot.name} rushes over to help you!`, '#bff0dc');
 }
 
-// A helper close enough patches you up once: a blessing from a Spirit Mage (or her paths), a
-// potion tossed over from anyone else.
+// A helper close enough patches you up once: a potion tossed over.
 function helpers(bots, world) {
   const b = world.body;
   for (const bot of bots.list) {
@@ -224,16 +223,13 @@ function helpers(bots, world) {
     bot.gave = true;
     bot.helped = true;
     const max = world.stats.maxHp;
-    const shrine = jobChain(bot.char.job).includes('mage');
-    const witch = bot.char.job === 'mage';
-    const amount = Math.round(max * (shrine ? 0.45 : 0.3));
+    const amount = Math.round(max * 0.3);
     world.char.hp = Math.min(max, world.char.hp + amount);
-    world.fx.push(shrine ? { kind: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbspot' : 'mclight', x: b.x, y: b.y, t: 0, dur: 1 } : { kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
+    world.fx.push({ kind: 'heal', x: b.x, y: b.y, t: 0, dur: 0.8 });
     world.numbers.push({ x: b.x, y: b.y - 52, text: `+${amount}`, color: '#7ee081', t: 0 });
-    if (shrine) bot.attack = { pose: witch ? 'jgencore' : bot.char.job === 'cleric' ? 'bbguard' : 'mclight', t: 0, dur: witch ? 0.9 : 1.1 };
     // (Through the chat gate: two helpers never toss the same line, and a line said lately isn't
     // said again; one of the others is, or the potion just flies.)
-    const lines = shrine ? ['blessed u!', 'heal!', 'there :)'] : ['here have a pot!', 'catch!! *throws pot*', 'drink this'];
+    const lines = ['here have a pot!', 'catch!! *throws pot*', 'drink this'];
     const from = Math.floor(bots.rng() * lines.length);
     for (let k = 0; k < lines.length; k++) if (botChat(world, bot, lines[(from + k) % lines.length], { important: true, log: false })) break;
   }
