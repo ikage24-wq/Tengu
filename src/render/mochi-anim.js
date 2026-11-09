@@ -376,11 +376,12 @@ function flyPose(style, p) {
 
 // Water laid over a swimming Mochi from the waterline down: a band of see-through blue, a bright
 // surface line rippling, and drops flicked off the hands on the stronger strokes.
-function drawWater(ctx, x, y, s, style, phase, time, dir = 1) {
+function drawWater(ctx, x, y, s, style, phase, time, dir = 1, inWater = false) {
   const k = s / 0.6;
   const w = 26 * k;
   ctx.save();
-  ctx.fillStyle = 'rgba(96,176,232,0.62)';
+  // (In a real pond the map draws the water: just the ripples and splashes then.)
+  ctx.fillStyle = inWater ? 'rgba(96,176,232,0)' : 'rgba(96,176,232,0.62)';
   ctx.fillRect(x - w, y, w * 2, 14 * k);
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 0.8 * k;
@@ -1690,7 +1691,7 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts);
   if (posed && live.flame > 0.05) drawFlame(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time, live.flame);
   if (posed && target.bubble) drawSnooze(ctx, Math.round(x * 2) / 2, Math.round((y + dy) * 2) / 2, rig, opts, s, time);
-  if (kind === 'swim') drawWater(ctx, x, y, s, cant === 'flail' ? 'flail' : tier, pc, time, dir);
+  if (kind === 'swim') drawWater(ctx, x, y, s, cant === 'flail' ? 'flail' : tier, pc, time, dir, m.inWater);
   drawCoat(ctx, g, x, y + dy, s, time);
 }
 

@@ -139,8 +139,14 @@ Each step is pushed on its own. Status as of 2026-11-09.
    tree with its swing), Lily Pond (lily pads, reeds, the fishing dock), Moonmortar Cliff (climbing
    rocks, ropes, the waterfall into a rock basin and a bamboo spout to the pond, the glide board, the
    Moonmortar, the stadium gate); the nursery room inside. First visit: two eggs and a Mochi Bell
-   (to the garden and back, like the Home Shell). Still to come: Mochi living there (batch 2),
-   raising hooked up (batch 3), visiting and the extras (batch 4).
+   (to the garden and back, like the Home Shell). **Mochi living there (batch 2,
+   world/garden-life.js):** the eggs wait by the gate; Up beside one rocks it and it hatches in
+   front of you. Each Mochi's place comes from the real clock (a game hour is a real minute): an
+   anchor spot per hour, strolls near it with idles between, home to the next anchor, so a visitor
+   sees the same thing; swimmers take to the pond, and one who can't swim yet stops at the edge. On
+   arriving, the ones with bond 250+ come running and cheer. At night they walk in at the nursery
+   door and sleep in its beds. Dev page: tools/garden-life.html. Still to come: raising hooked up
+   (batch 3), visiting and the extras (batch 4).
 5. **Racing.** Courses that mix running, flying, climbing (Power), long stretches (Stamina) and
    swimming; cups from beginner up; rivals rolled like the fishing derby's; prizes on the money scale
    plus garden decorations and toys. Personality shows in how each one races (see 12).

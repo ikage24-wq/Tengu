@@ -44,6 +44,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch } from './garden-life.js';
 import { tickDate, DATES } from './dates.js';
 import { movedAway, welcomeHome } from './sweethearts.js';
 import { settleSweethearts, tickGoingHome } from './goinghome.js';
@@ -125,6 +126,8 @@ function findPortal(map, id) {
 export function loadMap(world, mapId, portalId) {
   // Your island is built fresh from how far Shelly has got (world/home.js).
   if (mapId === 'home' || mapId === 'home_in') refreshHome(world.char, world.visiting ?? null);
+  // (Leaving a friend's island ends the visit: net/visit.js.)
+  else world.visiting = null;
   // So is your Mochi Garden (world/garden.js); the first time you walk in, it's yours, with two eggs
   // waiting and a Mochi Bell to ring you back here from anywhere.
   if (mapId === 'garden' || mapId === 'garden_in') {
@@ -133,9 +136,8 @@ export function loadMap(world, mapId, portalId) {
       world.log('This little valley is your Mochi Garden! Two eggs are waiting by the gate. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
     }
     refreshGarden(world.char, world.gardenVisit ?? null);
-  }
-  // (Leaving a friend's island ends the visit: net/visit.js.)
-  else world.visiting = null;
+    enterGarden(world, world.gardenVisit ?? world.char);
+  } else world.gardenLife = null;
   const map = getMap(mapId);
   const portal = findPortal(map, portalId);
   world.map = map;
@@ -451,6 +453,8 @@ function interact(world) {
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');
     return true;
   }
+  // An egg in your garden: Up beside it to rock it, and it hatches (world/garden-life.js).
+  if (world.map.garden && rockEgg(world)) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);
@@ -696,6 +700,11 @@ export function updateWorld(world, dt, input) {
     tickStall(world);
   }
   tickGoingHome(world, dt);
+  // Your Mochi going about their day in the garden (world/garden-life.js).
+  if (world.gardenLife) {
+    tickGarden(world, dt);
+    finishHatch(world);
+  }
   tickCalm(world);
   // On the Sea Biscuit, the trip's clock (world/voyage.js).
   tickVoyage(world, dt);

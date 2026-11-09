@@ -33,6 +33,11 @@ import { ramp, planks, foliage, bark, gable, hash, swing, pivoted, flicker, lean
 import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { drawHatch } from './mochi-life.js';
+import { drawMochiEgg } from './wagashi.js';
+import { rollMochi } from '../data/mochi-genes.js';
+import { EGG_SLOTS } from '../world/garden-life.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c8945a';
@@ -505,7 +510,39 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
   ];
   return out;
 });
-const eggMortarArt = (c) => art(`mg-eggmortar|${c}`, 40, 40, () => [R(6, 26, 28, 13, WOOD), F(R(6, 26, 28, 2, ramp(WOOD).hi)), E(20, 20, 11, 10, c), F(E(16, 16, 3, 2, '#ffffff')), F(limb(20, 10, 20.4, 6, 0.8, 0.6, '#5aa04a')), F(E(22.4, 6, 2.2, 1.2, MATCHA))]);
+const emptyMortarArt = () => art('mg-emptymortar', 40, 20, () => [R(6, 6, 28, 13, WOOD), F(R(6, 6, 28, 2, ramp(WOOD).hi)), E(20, 7, 12, 2.6, '#7a5438')]);
+
+// ---------- The garden's life ----------
+// The eggs waiting by the gate (each rolled from its seed, so it looks like what's inside), an egg
+// hatching, and your Mochi wherever they are (world/garden-life.js).
+// (In the world the eggs sit bigger than on the preview pages: knee-high to you.)
+const GARDEN_EGG = 1;
+const eggGenes = new Map();
+const genesOf = (seed) => {
+  if (!eggGenes.has(seed)) eggGenes.set(seed, rollMochi(seed));
+  return eggGenes.get(seed);
+};
+export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
+  const life = world.gardenLife;
+  const map = world.map;
+  const h = life.hatching;
+  if (layer === 'front') {
+    if (h && !map.indoor) drawHatch(ctx, h.m, h.x - cam.x, groundAt(map, h.x) - cam.y, time);
+    return;
+  }
+  if (!map.indoor) {
+    (life.owner?.garden?.eggs ?? []).forEach((egg, i) => {
+      if (life.hatching?.egg === egg) return;
+      const ex = EGG_SLOTS[i];
+      if (ex == null) return;
+      drawMochiEgg(ctx, ex - cam.x, groundAt(map, ex) - cam.y, genesOf(egg.seed), time, GARDEN_EGG);
+    });
+  }
+  for (const e of life.mochi) {
+    if (e.hidden || e.x == null) continue;
+    drawMochiAnim(ctx, e.m, e.x - cam.x, e.y - cam.y, time);
+  }
+}
 
 // ---------- Drawing ----------
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
@@ -653,8 +690,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       place(ctx, nurseryRoomArt(), snap(x), gy + 40);
       // The fire in the hearth, flickering; the two eggs warming by it.
       glow(ctx, x - 170, gy - 30, 46, '#ffb070', 0.45 * flicker(time, 3));
-      place(ctx, eggMortarArt('#ffe4ec'), snap(x - 260), gy + 2);
-      place(ctx, eggMortarArt(MOCHI), snap(x - 90), gy + 2);
+      place(ctx, emptyMortarArt(), snap(x - 260), gy + 2);
+      place(ctx, emptyMortarArt(), snap(x - 90), gy + 2);
       return true;
     }
     default:

@@ -380,12 +380,12 @@ function mortarFront(band) {
 // shifted `wob`, or the mortar left empty once it's out (`empty`), fading by `alpha`, the whole
 // thing rocked `rock` radians about its base.
 const shiftShapes = (shapes, dx, dy) => shapes.map((sh) => ({ ...sh, x: (sh.x ?? 0) + dx, y: (sh.y ?? 0) + dy }));
-export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alpha = 1, rock = 0) {
+export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alpha = 1, rock = 0, scale = EGG_SCALE) {
   const tier = g?.rarity ?? 'common';
   const hair = g ? (MUTANT[coatOf(g)]?.dough ?? lookOf(g, null, 0).hairColor) : DOUGH;
   const ball = g ? mix(DOUGH, hair, EGG_TINT[tier]) : DOUGH;
   const band = tier === 'legendary' || tier === 'mythic' || tier === 'mutation';
-  const k = EGG_SCALE;
+  const k = scale;
   const p = Math.round(puff * 20) / 20;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -405,12 +405,12 @@ export function drawHatchEgg(ctx, x, y, g, puff = 0, wob = 0, empty = false, alp
 export const EGG_SCALE = 0.72;
 // Draws the egg of Mochi `g` (or a plain one) with its foot at (x, y), on a small contact shadow,
 // at `time` seconds.
-export function drawMochiEgg(ctx, x, y, g = null, time = 0) {
+export function drawMochiEgg(ctx, x, y, g = null, time = 0, scale = EGG_SCALE) {
   const tier = g?.rarity ?? 'common';
   const hair = g ? (MUTANT[coatOf(g)]?.dough ?? lookOf(g, null, step(time * 0.1, KOHAKU.length)).hairColor) : DOUGH;
   const ball = g ? mix(DOUGH, hair, EGG_TINT[tier]) : DOUGH;
   const band = tier === 'legendary' || tier === 'mythic' || tier === 'mutation';
-  const k = EGG_SCALE;
+  const k = scale;
   ctx.save();
   if (band) {
     for (const [rr, a] of [[16, 0.14], [11, 0.2]]) dot(ctx, x, y - 12 * k, rr * k, tier === 'mythic' ? ball : '#fff1c0', a);

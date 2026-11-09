@@ -83,7 +83,7 @@ export function drawHatch(ctx, m, x, y, time) {
     const build = clamp01((e - 1) / (POP - 1));
     const rock = (0.035 + 0.05 * build) * easeIO(e / 0.5) * Math.sin(TAU * (1.3 * e + 1.2 * Math.max(0, e - 1) ** 2 / (POP - 1)));
     const puff = e < 1 ? 0 : easeIO((e - 1) / 1.2);
-    drawHatchEgg(ctx, x, y, g, puff, 0, false, 1, rock);
+    drawHatchEgg(ctx, x, y, g, puff, 0, false, 1, rock, m.eggScale);
     if (e > POP - 0.35) glow(ctx, x, y - 16 * k, 15 * k, '#ffffff', ((e - (POP - 0.35)) / 0.35) ** 2 * 0.95);
     if (puff > 0) {
       ctx.save();
@@ -104,7 +104,7 @@ export function drawHatch(ctx, m, x, y, time) {
   // Out: the empty mortar (it fades away once the Mochiko has landed), the Mochiko springing out to
   // land beside it, and the burst of flour over the moment it appears.
   const after = e - POP;
-  drawHatchEgg(ctx, x, y, g, 0, 0, true, after < 2.5 ? 1 : clamp01(1 - (after - 2.5) / 0.8));
+  drawHatchEgg(ctx, x, y, g, 0, 0, true, after < 2.5 ? 1 : clamp01(1 - (after - 2.5) / 0.8), 0, m.eggScale);
   if (!m.action && !m.hatchStarted) {
     m.hatchStarted = true;
     m.size = 'baby';

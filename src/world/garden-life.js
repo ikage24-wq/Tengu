@@ -1,0 +1,201 @@
+// Your Mochi living in the Garden (world/garden.js; docs/design/mochi.md step 4): the eggs waiting
+// by the gate (Up beside one rocks it, and it hatches), and the Mochi going about their day.
+//
+// Where a Mochi is comes from the game's own clock (the same for everyone), not from what happened
+// on this screen, so a friend visiting sees each Mochi in the same place doing the same thing.
+// Each game hour (a real minute) a Mochi starts from its anchor spot for that hour, strolls between
+// spots near it (idling at each), and ends the hour back at the next hour's anchor; swimmers take
+// to the pond now and then. At night they all go in to the nursery, where they sleep in its beds.
+// What you do here (greeting them, hatching an egg) can move one off its path for a moment; it then
+// walks back to where the clock has it.
+//
+//   world.gardenLife = { owner, mochi: [{ rec, m, x }], hatching: { egg, m, x } | null, greeted }
+
+import { rollMochi } from '../data/mochi-genes.js';
+import { newRecord, CANT_POINTS as CANT } from '../data/mochi-raise.js';
+import { nightOf } from './daytime.js';
+import { groundAt } from './physics.js';
+
+// Where things are in the garden (world/garden.js).
+export const EGG_SLOTS = [404, 430, 456];
+const LAND = [236, 2200];
+const POND = [2290, 2770];
+const WATER_Y = 760;
+const NURSERY_DOOR = 760;
+const BEDS = [560, 630, 700, 476, 406, 336, 266, 196];
+const HOUR = 60;
+// Its running styles' speeds (render/mochi-anim.js GAITS), for strolling at half of.
+const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
+
+const hash = (n) => {
+  const s = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+  return s - Math.floor(s);
+};
+const runPts = (rec) => rec.stats?.run?.points ?? 0;
+const swimPts = (rec) => rec.stats?.swim?.points ?? 0;
+// How fast it strolls about the garden (px/s): a gentle fraction of its running style; a Mochiko
+// who can't walk yet scoots along slowly.
+function strollSpeed(rec) {
+  const p = runPts(rec);
+  if (p < CANT.run) return 6;
+  const tier = [0, 300, 700, 1100, 1600, 2100].reduce((t, need, i) => (p >= need ? i : t), 0);
+  return Math.max(18, GAIT_SPEED[tier] * 0.5);
+}
+// How far from its anchor it wanders in an hour.
+const rangeOf = (v) => Math.min(520, 40 + v * 9);
+
+// Its anchor for game hour `b`: somewhere on land (a swimmer's sometimes by the pond).
+function anchor(rec, b) {
+  const h = hash(rec.seed * 0.137 + b * 7.31);
+  const v = strollSpeed(rec);
+  // (A slow one drifts from where it was the hour before, so it never has far to go.)
+  if (v < 12) {
+    const base = LAND[0] + 80 + hash(rec.seed * 0.71) * 500;
+    return Math.max(LAND[0], Math.min(LAND[1], base + (hash(rec.seed + b * 3.3) - 0.5) * 120));
+  }
+  return LAND[0] + h * (LAND[1] - LAND[0]);
+}
+
+// Where the clock has it at real time `t` (seconds): { x, moving, swim, inside }.
+export function scheduledAt(rec, t) {
+  const b = Math.floor(t / HOUR);
+  const tt = t - b * HOUR;
+  const v = strollSpeed(rec);
+  const R = rangeOf(v);
+  const a0 = anchor(rec, b);
+  const a1 = anchor(rec, b + 1);
+  const canSwim = swimPts(rec) >= CANT.swim;
+  // The hour's legs: idle, then stroll to a spot near the anchor, again and again; then home to the
+  // next hour's anchor before the hour is out.
+  let x = a0;
+  let clock = 0;
+  for (let i = 0; i < 12; i++) {
+    const idle = 2.5 + hash(rec.seed * 0.31 + b * 1.7 + i * 2.9) * 4.5;
+    if (tt < clock + idle) return { x, moving: false };
+    clock += idle;
+    let to = a0 + (hash(rec.seed * 0.53 + b * 2.3 + i * 4.1) - 0.5) * 2 * R;
+    // (A swimmer heads for the water now and then.)
+    if (canSwim && hash(rec.seed * 0.91 + b * 5.1 + i) < 0.22) to = POND[0] + hash(rec.seed + b + i * 9.7) * (POND[1] - POND[0]);
+    else to = Math.max(LAND[0], Math.min(LAND[1], to));
+    const walk = Math.abs(to - x) / v;
+    const home = Math.abs(a1 - to) / v;
+    if (clock + walk + home > HOUR - 1) break;
+    if (tt < clock + walk) return { x: x + Math.sign(to - x) * v * (tt - clock), moving: true, dir: Math.sign(to - x) || 1 };
+    clock += walk;
+    x = to;
+  }
+  // Home to the next hour's anchor, arriving just as the hour turns.
+  const walk = Math.abs(a1 - x) / v;
+  const start = HOUR - walk;
+  if (tt < start) return { x, moving: false };
+  return { x: x + Math.sign(a1 - x) * v * (tt - start), moving: Math.abs(a1 - x) > 0.5, dir: Math.sign(a1 - x) || 1 };
+}
+
+// The garden as it is now, made fresh on arriving: its owner's Mochi and eggs.
+export function enterGarden(world, owner) {
+  const g = owner?.garden;
+  world.gardenLife = {
+    owner,
+    mochi: (g?.mochi ?? []).map((rec) => ({ rec, m: newAnim(rec), x: null })),
+    hatching: null,
+    greeted: false,
+  };
+}
+const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, size: rec.stage === 'mochiko' || rec.stage === 'egg' ? 'baby' : 'grown' });
+
+// Each frame: every Mochi heads for where the clock has it (or to you, greeting), stepping along
+// the ground or swimming; at night they're inside, asleep.
+export function tickGarden(world, dt) {
+  const life = world.gardenLife;
+  if (!life) return;
+  const map = world.map;
+  const now = Date.now() / 1000;
+  // (The world's own night: the game clock, or what a scene or a test has set.)
+  const night = (world.night ?? nightOf(new Date())) > 0.5;
+  const inside = Boolean(map.indoor);
+  // Greeting: the first moment you're here, the Mochi who love you most come running.
+  if (!life.greeted && !inside && !night) {
+    life.greeted = true;
+    life.mochi.forEach((e, i) => {
+      if ((e.rec.bond ?? 0) >= 250) e.greet = { until: now + 6 + i * 0.4 };
+    });
+  }
+  life.mochi.forEach((e, i) => {
+    const { rec, m } = e;
+    m.genes = rec;
+    m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
+    if (inside) {
+      // The nursery: asleep in the beds at night; by day, nobody's in.
+      e.hidden = !night;
+      e.x = BEDS[i % BEDS.length];
+      e.y = groundAt(map, e.x);
+      if (night && !m.action) m.action = { name: 'nap', t0: null, hold: 1e9 };
+      return;
+    }
+    if (night) {
+      // Bedtime: off to the nursery door, and in.
+      e.hidden = e.x != null && Math.abs(e.x - NURSERY_DOOR) < 4;
+    } else e.hidden = false;
+    const sched = night ? { x: NURSERY_DOOR, moving: true } : scheduledAt(rec, now + i * 3.7);
+    let target = sched.x;
+    if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
+    else e.greet = null;
+    // (One who can't swim yet stops at the water's edge.)
+    if (swimPts(rec) < CANT.swim && target > LAND[1]) target = LAND[1];
+    if (e.x == null) e.x = sched.x;
+    const v = strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
+    const dx = target - e.x;
+    const step = Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
+    e.x += step;
+    if (Math.abs(dx) > 0.5) m.dir = Math.sign(dx);
+    else if (e.greet) m.dir = Math.sign(world.body.x - e.x) || 1;
+    m.dist += Math.abs(step);
+    m.speed = Math.abs(dx) > 0.5 ? v : 0;
+    // In the pond it swims; on land it walks (or scoots, if it can't yet).
+    const swimming = e.x > POND[0] - 40 && e.x < POND[1] + 40 && swimPts(rec) >= CANT.swim;
+    m.mode = swimming ? 'swim' : 'run';
+    m.inWater = swimming;
+    e.y = swimming ? WATER_Y : groundAt(map, e.x);
+    // A greeting ends in a happy wave.
+    if (e.greet && Math.abs(dx) <= 0.5 && !e.waved) {
+      e.waved = true;
+      m.action = { name: 'cheer', t0: null, hold: 1.5 };
+    }
+  });
+}
+
+// Up beside an egg rocks it, and it hatches (the egg's genes are rolled from its seed). Returns
+// true if there was an egg to rock.
+export function rockEgg(world) {
+  const life = world.gardenLife;
+  const g = life?.owner?.garden;
+  if (!g || world.gardenVisit || life.hatching || world.map.indoor) return false;
+  // (The egg nearest you, if you're beside one.)
+  let i = -1;
+  (g.eggs ?? []).forEach((egg, k) => {
+    const d = Math.abs((EGG_SLOTS[k] ?? 1e9) - world.body.x);
+    if (d < 28 && (i < 0 || d < Math.abs(EGG_SLOTS[i] - world.body.x))) i = k;
+  });
+  if (i < 0) return false;
+  const egg = g.eggs[i];
+  const genes = { ...rollMochi(egg.seed), stage: 'egg' };
+  life.hatching = { egg, x: EGG_SLOTS[i], m: { genes, dir: world.body.x < EGG_SLOTS[i] ? 1 : -1, speed: 0, dist: 0, size: 'baby', eggScale: 1, hatch: { t0: null } } };
+  world.log('You rock the egg gently... it wobbles back!', '#ffc2d4');
+  return true;
+}
+// When the hatching's done, the Mochiko is yours and joins the garden.
+export function finishHatch(world) {
+  const life = world.gardenLife;
+  const h = life?.hatching;
+  if (!h || !h.m.hatched) return;
+  const g = life.owner.garden;
+  g.eggs = g.eggs.filter((e) => e !== h.egg);
+  const rec = newRecord(rollMochi(h.egg.seed));
+  g.mochi.push(rec);
+  // (It carries on from where it landed, with the same animation.)
+  h.m.genes = rec;
+  h.m.noIdle = false;
+  life.mochi.push({ rec, m: h.m, x: h.x + h.m.dir * 14 });
+  life.hatching = null;
+  world.log(`It hatched! A ${rec.personality} little Mochiko. It loves ${rec.loves}.`, '#ffc2d4');
+}

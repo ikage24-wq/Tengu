@@ -1,0 +1,77 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#222">
+<canvas id="c"></canvas>
+<script type="module">
+// Dev tool: your Mochi Garden with Mochi living in it (world/garden-life.js), drawn as the game
+// draws it. ?n=8 Mochi (a mix: babies who can't walk or swim yet, grown ones, swimmers), ?x=900 where
+// you stand, ?night=1, ?eggs=2. ?manual steps only through window.step(dt) (for recording);
+// window.frame() gives the canvas.
+import { balanceChar } from './balance.mjs';
+import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
+import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
+import { setHd, nextFrame } from '../src/render/pixel.js';
+import { preloadFxSprites } from '../src/render/fx-sprites.js';
+import { VW, VH } from '../src/input.js';
+import { rollMochi, STATS } from '../src/data/mochi-genes.js';
+import { newRecord, giveExp, evolve } from '../src/data/mochi-raise.js';
+
+const q = new URLSearchParams(location.search);
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const SCALE = Number(q.get('s') ?? 1);
+canvas.width = VW * SCALE;
+canvas.height = VH * SCALE;
+preloadFxSprites();
+const c = balanceChar('thief', 30);
+// A garden with Mochi of every kind.
+const n = Number(q.get('n') ?? 8);
+const mochi = [];
+for (let i = 0; i < n; i++) {
+  const rec = newRecord(rollMochi(900 + i * 17, { coat: null }));
+  rec.bond = 300 + i * 40;
+  if (i % 4 !== 0) for (const s of STATS) giveExp(rec, s, i % 3 === 0 ? 300 : 1400);
+  if (i % 2 === 1) {
+    rec.age = 99999;
+    rec.mood = 90;
+    evolve(rec);
+  }
+  if (i % 3 === 1) giveExp(rec, 'swim', 3000);
+  mochi.push(rec);
+}
+c.garden = { back: null, mochi, eggs: Array.from({ length: Number(q.get('eggs') ?? 2) }, (_, i) => ({ seed: 4242 + i })), unlocked: {} };
+const w = createWorld(c);
+w.log = (m) => console.log(m);
+window.W = w;
+if (q.get('night') != null) w.forceNight = Number(q.get('night'));
+loadMap(w, q.get('map') ?? 'garden', 'start');
+w.god = true;
+Object.assign(w.body, { x: Number(q.get('x') ?? 300), vx: 0, vy: 0, facing: 1 });
+const idle = { held: new Set(), pressed: new Set(), locked: false };
+const cam = createCamera();
+let t = 0;
+let steps = 0;
+function step(dt) {
+  w.scene = null;
+  // (?rock=1: you press Up by the first egg a moment in, to hatch it.)
+  if (q.has('rock') && ++steps === 30) idle.pressed.add('ArrowUp');
+  updateWorld(w, dt, idle);
+  idle.pressed.delete('ArrowUp');
+  t += dt;
+  updateCamera(cam, w, dt);
+  nextFrame();
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  setHd(true, SCALE);
+  drawWorld(ctx, w, cam, t);
+}
+window.step = step;
+window.frame = () => canvas.toDataURL('image/png');
+window.press = (key) => { idle.pressed.add(key); step(1 / 60); idle.pressed.delete(key); };
+for (let k = 0; k < 120; k++) updateWorld(w, 1 / 60, idle);
+window.ready = true;
+if (!q.has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script></body></html>
