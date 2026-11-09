@@ -424,7 +424,13 @@ function setEggsDown(world) {
   for (const [id, tries] of BAG_EGGS) {
     while (g.eggs.length < EGG_SLOTS.length && countItem(inv, id) > 0) {
       removeItem(inv, id, 1);
-      g.eggs.push({ seed: eggSeed(tries) });
+      const egg = { seed: eggSeed(tries) };
+      // (Your old pet's Star Egg: it hatches as itself, its name and all: world/mochi.js.)
+      if (id === 'mochi_egg_star' && world.char.oldPetName) {
+        egg.name = world.char.oldPetName;
+        delete world.char.oldPetName;
+      }
+      g.eggs.push(egg);
       n++;
     }
   }
@@ -529,6 +535,11 @@ export function finishHatch(world) {
   h.m.noIdle = false;
   life.mochi.push({ rec, m: h.m, x: h.x + h.m.dir * 14 });
   life.hatching = null;
+  if (h.egg.name) {
+    rec.name = h.egg.name;
+    world.log(`It's ${rec.name}! Your old friend, hatched in a garden of its own.`, '#ffc2d4');
+    return;
+  }
   world.log(`It hatched! A ${rec.personality} little Mochiko. It loves ${rec.loves}. What will you call it?`, '#ffc2d4');
   // (Its name: ui/mochi-name.js.)
   world.naming = rec;

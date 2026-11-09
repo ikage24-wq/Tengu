@@ -1,15 +1,24 @@
-// The Pet window (P): your Mochi (world/mochi.js). With none yet, an egg to adopt for Cash. With
-// one: it on the left, bouncing and cheering when you click it, and its name; on the right what it
-// does for you (loot, and the HP and MP it drinks a tonic at), and whether it's out with you.
+// The Mochi window (P): which of your Mochi comes along with you (world/mochi.js). With none hatched
+// yet, where to get one. Otherwise: one of your Mochi on the left (◀ ▶ for the others), its name,
+// and Take along / Send home; on the right what it does for you: fetching loot (how far it reaches),
+// the HP and MP it gives you a tonic at, and what its form lends you while it's out.
 
-import { drawMochi, MOCHI_CHEER } from '../render/mochi.js';
-import { adoptPet, EGG_CASH, PET_REACH } from '../world/mochi.js';
-import { COLORS, windowFrame, button, text, hover, clicked, tooltip, well, toggle } from './kit.js';
+import { STAGES } from '../data/mochi-genes.js';
+import { drawMochiAnim } from '../render/mochi-anim.js';
+import { companionOf, takeAlong, sendHome, petReach, formHelp } from '../world/mochi.js';
+import { COLORS, windowFrame, button, text, hover, tooltip, well, toggle, wrap, fit } from './kit.js';
 
 const W = 330;
 const H = 214;
-// The Mochi shown in the window (its own, so its idle bits don't fight the one in the world).
-const preview = { form: 'baby', dir: 1, seed: 3, cheerAt: null };
+const WORD = { speed: 'speed', watk: 'attack', matk: 'magic', jump: 'jump', regenPct: 'HP back/s', mp: 'max MP', expPct: 'EXP' };
+const helpLine = (values) => Object.entries(values).map(([k, v]) => (k === 'regenPct' || k === 'expPct' ? `+${Math.round(v * 1000) / 10}% ${WORD[k]}` : `+${Math.round(v)} ${WORD[k]}`)).join(', ');
+const portraits = new WeakMap();
+const portraitOf = (rec) => {
+  if (!portraits.has(rec)) portraits.set(rec, { genes: rec, dir: 1, speed: 0, dist: 0 });
+  const m = portraits.get(rec);
+  m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
+  return m;
+};
 
 export function petWindow(ui, state, world) {
   const win = state.windows.pet;
@@ -17,74 +26,50 @@ export function petWindow(ui, state, world) {
   const { ctx } = ui;
   const th = ui.theme;
   const char = world.char;
-  const pet = char.pet;
   const x0 = win.x + 10;
   const y0 = win.y + 26;
-  const now = world.now;
-
-  // ----- The left: the Mochi (or its egg) -----
+  const list = (char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
   well(ctx, x0, y0, 110, H - 36, th);
-  if (!pet) {
-    // An egg, rocking a little, and the price.
-    const ex = x0 + 55;
-    const ey = y0 + 70 + Math.sin(now * 3) * 1.5;
-    ctx.save();
-    ctx.translate(ex, ey);
-    ctx.rotate(Math.sin(now * 2) * 0.12);
-    ctx.fillStyle = '#fff8ee';
-    ctx.strokeStyle = '#d9b98a';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 18, 23, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#f4a7c4';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-13, -3);
-    for (let i = 0; i < 5; i++) ctx.lineTo(-13 + (i + 0.5) * 6.5, i % 2 ? -3 : 3);
-    ctx.stroke();
-    ctx.restore();
-    text(ctx, 'A Mochi egg!', ex, y0 + 116, { size: 9, bold: true, align: 'center', color: th.ink });
-    text(ctx, `${EGG_CASH.toLocaleString()} Cash`, ex, y0 + 128, { size: 8, align: 'center', color: COLORS.muted });
-    const reason = (char.cash ?? 0) < EGG_CASH ? `You have ${(char.cash ?? 0).toLocaleString()} Cash.` : null;
-    if (button(ui, x0 + 12, y0 + 138, 86, 18, 'Adopt', { primary: true, enabled: !reason, size: 9 })) {
-      const why = adoptPet(char);
-      if (why) world.log(why, '#ffb3c6');
-      else {
-        world.log('Your Mochi hatched! Say hello.', '#ffc2d8');
-        preview.cheerAt = now;
-      }
-    }
-    if (reason && hover(ui, x0 + 12, y0 + 138, 86, 18)) tooltip(ui, [{ text: reason, bold: true }]);
-    // What a Mochi does, while you think about it.
-    const lines = ['A pet that follows you round:', '• picks up your loot', '• drinks a tonic when you run low', '', 'It never needs feeding.'];
-    lines.forEach((l, i) => text(ctx, l, x0 + 120, y0 + 12 + i * 12, { size: 8, bold: i === 0, color: i === 0 ? th.ink : COLORS.ink }));
+  if (!list.length) {
+    // None hatched yet: where they come from.
+    text(ctx, 'Your Mochi can come along!', x0 + 120, y0 + 12, { size: 8.5, bold: true, color: th.ink });
+    wrap(ctx, "Any Mochi from your Mochi Garden can follow you round: it fetches your loot, gives you a tonic when you run low, and a grown one lends you a little of its form. Hatch one in your Garden (at the end of Sprout Village's Pond Garden).", x0 + 120, y0 + 26, W - 140, { size: 7.5, color: COLORS.ink });
     return;
   }
-  // Click it to make it cheer.
-  if (clicked(ui, x0, y0, 110, 100)) preview.cheerAt = now;
+  const out = companionOf(char);
+  if (!list.includes(win.pick)) win.pick = out ?? list[0];
+  const rec = win.pick;
+  // ----- The left: the Mochi -----
   ctx.save();
   ctx.beginPath();
   ctx.rect(x0 + 2, y0 + 2, 106, 98);
   ctx.clip();
   ctx.translate(x0 + 55, y0 + 92);
   ctx.scale(2, 2);
-  drawMochi(ctx, preview, 0, 0, now);
+  drawMochiAnim(ctx, portraitOf(rec), 0, 0, world.now);
   ctx.restore();
-  if (preview.cheerAt != null && now - preview.cheerAt > (MOCHI_CHEER.baby ?? 2)) preview.cheerAt = null;
-  text(ctx, pet.name, x0 + 55, y0 + 114, { size: 11, bold: true, align: 'center', color: th.ink });
-  if (button(ui, x0 + 12, y0 + 150, 86, 16, pet.out ? 'Send home' : 'Take along', { size: 8, primary: !pet.out })) pet.out = !pet.out;
-
-  // ----- The right: helping -----
+  text(ctx, fit(ctx, rec.name ?? STAGES[rec.stage] ?? 'Mochi', 100, 10, true), x0 + 55, y0 + 114, { size: 10, bold: true, align: 'center', color: th.ink });
+  const along = out === rec && Boolean(char.pet?.out);
+  text(ctx, along ? 'Out with you' : 'In the Garden', x0 + 55, y0 + 125, { size: 7, align: 'center', color: along ? '#4fbf72' : COLORS.muted });
+  if (button(ui, x0 + 12, y0 + 132, 86, 16, along ? 'Send home' : 'Take along', { size: 8, primary: !along })) {
+    if (along) sendHome(char);
+    else takeAlong(char, rec);
+  }
+  if (list.length > 1) {
+    const at = list.indexOf(rec);
+    if (button(ui, x0 + 6, y0 + 154, 22, 14, '◀', { size: 7.5 })) win.pick = list[(at + list.length - 1) % list.length];
+    if (button(ui, x0 + 82, y0 + 154, 22, 14, '▶', { size: 7.5 })) win.pick = list[(at + 1) % list.length];
+    text(ctx, `${at + 1} / ${list.length}`, x0 + 55, y0 + 164, { size: 6.5, align: 'center', color: COLORS.muted });
+  }
+  // ----- The right: helping (the settings are kept with whoever's out) -----
   const rx = x0 + 118;
   const rw = W - 138;
   let y = y0 + 4;
-  // What it does for you.
-  const opts = pet.opts;
+  const opts = char.pet?.opts ?? (win.opts ??= { loot: true, hp: 40, mp: 25 });
   text(ctx, 'Loot', rx, y + 9, { size: 7.5, bold: true, color: th.ink });
   opts.loot = toggle(ui, rx + 26, y + 1, opts.loot);
-  text(ctx, `${PET_REACH.range}px`, rx + rw - 4, y + 9, { size: 6.5, align: 'right', color: COLORS.muted });
+  text(ctx, `reaches ${petReach(rec).range}px`, rx + rw - 4, y + 9, { size: 6.5, align: 'right', color: COLORS.muted });
+  if (hover(ui, rx, y, rw, 14)) tooltip(ui, [{ text: 'Fetches your loot', bold: true }, { text: 'The faster a runner, the further it reaches and the quicker it fetches.', color: COLORS.muted }]);
   y += 16;
   const stepper = (label, key, color) => {
     text(ctx, label, rx, y + 9, { size: 7.5, bold: true, color });
@@ -95,4 +80,13 @@ export function petWindow(ui, state, world) {
   };
   stepper('HP tonic', 'hp', COLORS.hp);
   stepper('MP tonic', 'mp', COLORS.mp);
+  y += 6;
+  // What its form lends you.
+  const help = formHelp(rec);
+  text(ctx, 'Its form lends you', rx, y + 8, { size: 7.5, bold: true, color: th.ink });
+  y += 12;
+  if (help) {
+    text(ctx, help.name, rx, y + 8, { size: 7.5 });
+    text(ctx, helpLine(help.values), rx, y + 19, { size: 7, bold: true, color: '#4fbf72' });
+  } else wrap(ctx, 'Nothing yet: a grown Mochi lends you a little of its form.', rx, y + 8, rw, { size: 7, color: COLORS.muted });
 }

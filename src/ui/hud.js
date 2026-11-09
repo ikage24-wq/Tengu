@@ -1132,7 +1132,8 @@ function drawBuffs(ui, world) {
     const x = 8 + i * 22;
     const left = Math.max(0, b.until - world.now);
     const total = b.until - (b.since ?? b.until - 60);
-    const frac = total > 0 ? Math.min(1, left / total) : 1;
+    // (`keep`: it lasts as long as what gives it, your Mochi out with you: a full ring, no count.)
+    const frac = b.keep ? 1 : total > 0 ? Math.min(1, left / total) : 1;
     box(ctx, x - 1, y - 1, 20, 20, { fill: '#ffffff', edge: null, r: 10 });
     ctx.save();
     ctx.beginPath();
@@ -1141,13 +1142,13 @@ function drawBuffs(ui, world) {
     if (b.food || b.icon) drawItemIcon(ctx, b.food ?? b.icon, x + 1, y + 1);
     else drawSkillIcon(ctx, id, x + 1, y + 1);
     ctx.restore();
-    ctx.strokeStyle = left < 5 && Math.sin(world.now * 10) > 0 ? COLORS.bad : COLORS.select;
+    ctx.strokeStyle = !b.keep && left < 5 && Math.sin(world.now * 10) > 0 ? COLORS.bad : COLORS.select;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(x + 9, y + 9, 9.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac);
     ctx.stroke();
-    text(ctx, `${Math.ceil(left)}`, x + 9, y + 26, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: COLORS.ink });
-    if (hover(ui, x, y, 18, 18)) tooltip(ui, [{ text: SKILLS[id]?.name ?? b.name, bold: true }, ...(b.about ? [{ text: b.about }] : []), { text: `${Math.ceil(left)}s left`, color: COLORS.muted }]);
+    if (!b.keep) text(ctx, `${Math.ceil(left)}`, x + 9, y + 26, { size: 6.5, bold: true, align: 'center', color: '#ffffff', outline: COLORS.ink });
+    if (hover(ui, x, y, 18, 18)) tooltip(ui, [{ text: SKILLS[id]?.name ?? b.name, bold: true }, ...(b.about ? [{ text: b.about }] : []), { text: b.keep ? 'While it lasts' : `${Math.ceil(left)}s left`, color: COLORS.muted }]);
   });
 }
 

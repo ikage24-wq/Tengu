@@ -1,13 +1,14 @@
 // Draws the companions ('back', before the hero): your Mochi, and the Arbalist Engineer's turret.
 
-import { drawMochi } from './mochi.js';
+import { drawMochiAnim } from './mochi-anim.js';
 import { fxSprite } from './fx-sprites.js';
 import { drawGardenLife } from './garden.js';
 import { drawRace } from './race.js';
 
 export function drawPets(ctx, world, cam, time, layer) {
   // Your Mochi, behind you.
-  if (world.mochi && layer === 'back') drawMochi(ctx, world.mochi, world.mochi.x - cam.x, world.mochi.y - cam.y, world.now);
+  // Your Mochi out with you (world/mochi.js), as itself.
+  if (world.mochi?.m && layer === 'back') drawMochiAnim(ctx, world.mochi.m, world.mochi.x - cam.x, world.mochi.y - cam.y, world.now);
   // Your garden's Mochi and eggs (world/garden-life.js).
   // (An egg you're hatching sits in front of you, so you see it pop.)
   if (world.gardenLife) drawGardenLife(ctx, world, cam, world.now, layer);

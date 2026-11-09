@@ -23,6 +23,7 @@ import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
 import { drawItemIcon } from '../src/render/icons.js';
 import { startRace } from '../src/world/mochi-race.js';
+import { takeAlong } from '../src/world/mochi.js';
 import { online } from '../src/net/online.js';
 import { createInput } from '../src/input.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
@@ -145,6 +146,9 @@ if (q.has('bloom')) {
   e3.x = e1.x + 70;
   Object.assign(w.body, { x: e1.x - 60 });
 }
+// (?pet=1: Mochi 1 out with you (?map=meadow1 to see it follow); ?petwin=1 the Mochi window.)
+if (q.has('pet')) takeAlong(c, c.garden.mochi[Number(q.get('pet'))]);
+if (q.has('petwin')) Object.assign(state.windows.pet, { open: true, openedAt: -99 });
 // (?info=1: Mochi 1's page.)
 if (q.has('info')) {
   w.mochiInfo = c.garden.mochi[Number(q.get('info'))];

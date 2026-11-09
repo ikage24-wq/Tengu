@@ -267,6 +267,15 @@ Each step is pushed on its own. Status as of 2026-11-09.
     Like the capsule album for the gacha.
 11. **Your Mochi as your pet.** Any Mochi can follow you; its form and stats change how it helps
     (loot reach, potions, buffs). Replaces the old Cash egg pet.
+    **Built (2026-11-10; the user chose loot, tonics and a form buff; old pets become Star Eggs):**
+    the Mochi window (P, ui/pet.js) picks which of your Garden Mochi comes along (Take along / Send
+    home, ◀ ▶). Out with you (world/mochi.js) it follows, drawn as itself; fetches loot within 110 px
+    plus 14 per Run style (and quicker); gives you your best tonic at your HP / MP marks; and a grown
+    one's form lends a small lasting buff (FORM_HELP, more the better that stat: Swift speed, Strong
+    attack and magic, Sky jump, Steady HP back, Tide max MP, Plain EXP, Moon a little of each), shown
+    as a full-ring buff with the bell icon. In a garden it's home with the others; in a race it
+    watches. An old Cash egg pet becomes a Star Egg that hatches keeping its name. The album (step
+    10) was skipped for now (the user agreed: a checklist with no reward isn't worth it).
 12. **Personality in play.** *(New.)* Beyond idles: how each reacts to sweets, to other Mochi, to
     being petted or tickled, and how it races (a hyper one bolts and tires, a stoic one keeps a
     steady pace).
