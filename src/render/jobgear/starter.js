@@ -577,21 +577,21 @@ const of = (t) => (t === 'basics' ? BASICS : OUTFITS[t] ?? PET_OUTFITS[t] ?? OUT
 export default {
   hat: (t, p, m) => of(t).hat?.(p, m) ?? [],
   hatBack: (t, p, m) => of(t).hatBack?.(p, m) ?? [],
-  hatTucks: () => false,
-  hatHidesBangs: () => false,
+  hatTucks: (t) => Boolean(of(t).tucks),
+  hatHidesBangs: (t) => Boolean(of(t).hidesBangs),
   top: (t, p, m) => of(t).top(p, m),
   sleeve: (t, p) => of(t).sleeve(p),
   longSleeves: (t) => Boolean(of(t).long),
   shoulder: (t, p, side) => of(t).shoulder?.(p, side) ?? [],
   legs: (t, p, skin) => of(t).legs(p, skin),
-  skirt: (t, p) => {
-    const out = of(t).skirt?.(p) ?? [];
+  skirt: (t, p, m) => {
+    const out = of(t).skirt?.(p, m) ?? [];
     return out.length ? out : null;
   },
   shoe: (t, p, k) => of(t).shoe(p, k, k.tint),
   hand: (t, p, hx, hy, ex, ey) => of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 2, 2, p.skin)],
-  cape: (t, p) => of(t).back?.(p) ?? [],
-  capeFront: (t, p) => of(t).front?.(p) ?? [],
+  cape: (t, p, m) => of(t).back?.(p, m) ?? [],
+  capeFront: (t, p, m) => of(t).front?.(p, m) ?? [],
 };
 
 // Whether an outfit has a back piece (a hood, a bow), so the renderer only asks for those.

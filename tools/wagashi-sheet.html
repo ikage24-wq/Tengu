@@ -1,0 +1,165 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#eef5e6">
+<canvas id="c" width="800" height="920"></canvas>
+<script type="module">
+// Dev tool: a sheet of randomly rolled Mochi (data/mochi-genes.js, render/wagashi.js). Three rows
+// of random eggs, then a row of rares forced on so they can be checked. ?seed=N starts the random
+// rows elsewhere; ?z=N&only=seed,seed draws just those, big. window.ready when drawn.
+import { drawPosed } from '../src/render/hero.js';
+import { rollMochi, rarityOf, HAIRS, EYES, MOUTHS, ALL_DOUGHS, FRINGES, BROWS } from '../src/data/mochi-genes.js';
+import { lookOf, drawCoat, drawCoatBack, coatOf, drawMochiEgg, MOCHI_SIZE } from '../src/render/wagashi.js';
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const q = new URLSearchParams(location.search);
+const base = (o) => ({
+  tx: 0, by: 0, hx: 0, hy: 1, tilt: -2, lift: 0, squat: 0, backArm: [0, 0], frontArm: [0, 0], armSide: 0.6,
+  frontLeg: [0.8, 0, 0], backLeg: [-0.8, 0, 0], ears: [0, 0], tail: 0, air: false, eyes: 'open',
+  face: { brows: [[0.2, 0], [0.2, 0]], extra: [], blush: 1.2 }, ...o,
+});
+// A standing pose for each personality (no two alike): lean, near hand, far hand, stance, extras.
+const pose = (tilt, fa, ba, st, o = {}) => base({ tilt, frontArm: fa, backArm: ba, frontLeg: [st, 0, st * 3], backLeg: [-st, 0, -st * 3], ...o });
+const POSES = {
+  playful: pose(-5, [1.8, -4.6], [-1.6, -2], 1.4), shy: pose(5, [2.4, -1.4], [2.2, -1.2], 0.4, { hy: 1.4 }), proud: pose(-6, [-1.4, -1.2], [-1.2, -1], 1.8),
+  sleepy: pose(7, [0.4, 0.6], [0.2, 0.4], 0.8, { hy: 1.6, hx: -0.3, eyes: 'half' }), curious: pose(-8, [2.6, -2.4], [0, 0], 1.6, { tx: 0.6 }), bossy: pose(-3, [3.4, -5.6], [-1.4, -1.2], 2),
+  gentle: pose(3, [1.6, -2.2], [1.8, -2], 0.9), showoff: pose(-7, [3, -8.2], [-2.4, -3], 1.6), clumsy: pose(9, [-2, -3], [2.6, -4], 1.2, { tx: -0.6 }),
+  brave: pose(-4, [3.8, -3], [-1.8, -1], 2.2), grumpy: pose(2, [2.6, -4.4], [2.8, -4.6], 1.2), dreamy: pose(6, [2, -7.6], [0.6, 0], 0.6, { hy: 0.6 }),
+  cheeky: pose(-6, [1.2, -9], [-1, -1.4], 1), timid: pose(8, [2.8, -2.6], [2.4, -2.4], 0.3, { hy: 1.6 }), bubbly: pose(-4, [-3, -6.4], [3, -6.4], 1.6),
+  stoic: pose(0, [0.2, 0.2], [0.2, 0.2], 1.4), foodie: pose(4, [2.4, -3.4], [2.2, -3], 1, { hy: 1.2 }), sassy: pose(-5, [-1.6, -1.4], [-1.4, -1.2], 1.6, { tx: 0.8 }),
+  lazy: pose(10, [0.6, 1], [0.4, 0.8], 1.4, { hy: 1.8, eyes: 'half' }), hyper: pose(-9, [-3.4, -8], [3, -7], 2), polite: pose(4, [2.4, -0.6], [2.2, -0.4], 0.4),
+  mischief: pose(-7, [2.2, -6.4], [-2.2, -2.6], 1.2, { tx: 0.6 }), clingy: pose(6, [3, -3.2], [2.8, -3.6], 0.6), loner: pose(-2, [0.8, 0.4], [0.4, 0.2], 1),
+  artsy: pose(-5, [2.8, -5], [0.6, -1], 1.2), sporty: pose(-6, [-2.4, -3.6], [2.6, -4.4], 2.2), nosy: pose(-10, [2.8, -3], [0.4, -0.6], 1.8, { tx: 1 }),
+  dramatic: pose(-9, [3.4, -9.4], [-2.6, -5], 1.4), cool: pose(-3, [-1.2, -0.8], [0.6, 0.2], 1.4), sweet: pose(5, [2.2, -4.2], [2, -4], 0.6),
+  chatty: pose(-4, [3.2, -4.2], [-1, -1.6], 1.2), sneaky: pose(8, [1.8, -1.8], [2.6, -2.6], 1.8, { tx: -0.8 }),
+};
+// The rares, forced on so every one shows: shiny, two candied, odd eyes with star pupils, a
+// blossom sprout, and the Moonlit legend.
+const SHOWCASE = [
+  rollMochi(901, { coat: 'shiny' }), rollMochi(907, { coat: 'twoflavour', hairColor: 'sakura', hairTip: 'matcha' }), rollMochi(902, { coat: 'candied', candy: 'ruby' }),
+  rollMochi(908, { coat: 'goldleaf' }), rollMochi(909, { coat: 'glassjelly' }), rollMochi(910, { coat: 'sakura' }),
+  rollMochi(906, { coat: 'moonlit' }), rollMochi(911, { coat: 'hanabi' }), rollMochi(912, { coat: 'radiant', path: 'angel' }),
+  rollMochi(913, { coat: 'radiant', path: 'demon' }), rollMochi(914, { coat: 'kohakutou' }), rollMochi(904, { eyeColor2: '#3aa08a', pupil: 'heart', sprout: 'blossom' }),
+];
+for (const g of SHOWCASE) g.rarity = rarityOf(g);
+const TIER = { common: '#7a6a80', uncommon: '#3f9a5a', rare: '#2f78c8', epic: '#9a4ad0', legendary: '#d08a10', mythic: '#e0409a', mutation: '#4a3a8a' };
+const COAT_NAME = { shiny: 'shiny', twoflavour: 'two-flavour', candied: 'candied', goldleaf: 'gold leaf', glassjelly: 'glass jelly', sakura: 'sakura storm', moonlit: 'moonlit', hanabi: 'hanabi', dawn: 'halo dawn', ember: 'ember spice', radiant: 'radiant', kohakutou: 'kohakutou', goma: 'black sesame', kurozato: 'brown sugar', yoru: 'midnight', beniume: 'red plum', shinkai: 'deep sea' };
+
+function drawOne(g, x, y, Z) {
+  const s = MOCHI_SIZE.grown;
+  ctx.setTransform(Z, 0, 0, Z, 0, 0);
+  ctx.fillStyle = 'rgba(70,40,90,0.16)';
+  ctx.beginPath();
+  ctx.ellipse(x / Z, y / Z, 7, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  drawCoatBack(ctx, g, x / Z, y / Z, s, 0.3);
+  drawPosed(ctx, lookOf(g), x / Z, y / Z, POSES[g.personality], { scale: s, facing: 1 });
+  drawCoat(ctx, g, x / Z, y / Z, s, 0.3);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+}
+function label(g, x, y) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.fillStyle = TIER[g.rarity];
+  ctx.fillText(g.coat ? `${g.rarity} · ${COAT_NAME[coatOf(g)]}${g.candy ? ` ${g.candy}` : ''}` : g.rarity, x, y);
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = '#7a6a80';
+  ctx.fillText(g.personality, x, y + 13);
+}
+
+ctx.imageSmoothingEnabled = false;
+ctx.fillStyle = '#eef5e6';
+ctx.fillRect(0, 0, c.width, c.height);
+if (q.has('dark')) {
+  // A preview of fully dark Mochi: black sesame, brown-sugar syrup, and midnight.
+  c.height = 1000;
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  // (The real Mutation coats, on the same three looks as the first preview, each with its egg.)
+  const darks = [
+    ['black sesame', rollMochi(51, { coat: 'goma', hair: 'tamago', fringe: 'kagamiblunt', eyes: 'mochiround', personality: 'cool', cheek: null })],
+    ['brown sugar', rollMochi(52, { coat: 'kurozato', hair: 'warabiwave', fringe: 'warabisweep', eyes: 'mochiglass', personality: 'gentle', cheek: null })],
+    ['midnight', rollMochi(53, { coat: 'yoru', hair: 'usagibuns', fringe: 'mochipuff', eyes: 'mochiwide', personality: 'sweet', cheek: null })],
+    ['red plum', rollMochi(54, { coat: 'beniume', hair: 'sakuratails', fringe: 'sakurapetal', eyes: 'mochilash', personality: 'shy', cheek: null })],
+    ['deep sea', rollMochi(55, { coat: 'shinkai', hair: 'kuruma', fringe: 'finfringe', eyes: 'mochiround', personality: 'dreamy', cheek: null })],
+  ];
+  for (const [, g] of darks) g.rarity = rarityOf(g);
+  darks.forEach(([name, g], i) => {
+    const row = i < 3 ? 0 : 1;
+    const x = row ? (i - 2.5) * (800 / 3) + 400 / 3 : (i + 0.5) * (800 / 3);
+    const y = 440 + row * 480;
+    drawOne(g, x + 30, y, 9);
+    ctx.setTransform(5, 0, 0, 5, 0, 0);
+    drawMochiEgg(ctx, (x - 85) / 5, (y + 30) / 5, g, 0.8);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = TIER.mutation;
+    ctx.fillText('mutation · ' + name, x, y + 60);
+  });
+} else if (q.has('eggs')) {
+  // One egg of each rarity, big, with the Mochi that hatches from it beside it.
+  c.height = 520;
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  const plain = { coat: null, hairTip: null, sprout: 'round', cheek: null, eyeColor2: null, pupil: null, dough: '#fff6ee' };
+  const eggs = [rollMochi(21, plain), rollMochi(22, { ...plain, hairTip: 'mint' }), rollMochi(23, { ...plain, coat: 'shiny' }),
+    rollMochi(24, { ...plain, coat: 'goldleaf' }), rollMochi(906, { coat: 'moonlit' }), rollMochi(914, { coat: 'kohakutou' })];
+  eggs.forEach((g, i) => {
+    g.rarity = rarityOf(g);
+    const x = 70 + (i % 3) * 260;
+    const y = 200 + Math.floor(i / 3) * 250;
+    ctx.setTransform(6, 0, 0, 6, 0, 0);
+    drawMochiEgg(ctx, x / 6, y / 6, g, 0.8);
+    drawOne(g, x + 110, y, 4);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillStyle = TIER[g.rarity];
+    ctx.fillText(g.rarity, x + 50, y + 26);
+  });
+} else if (q.has('gallery')) {
+  // ?gallery=hair|eyes|mouth&page=N&seed=S: one part at a time on the same Mochi, 16 a page, 4 by 4.
+  const kind = q.get('gallery');
+  const list = { eyes: EYES, mouth: MOUTHS, dough: ALL_DOUGHS, fringe: FRINGES, brows: BROWS }[kind] ?? HAIRS;
+  const key = { eyes: 'eyes', mouth: 'mouth', dough: 'dough', fringe: 'fringe', brows: 'brows' }[kind] ?? 'hair';
+  const page = Number(q.get('page') ?? 0);
+  const Z = kind === 'hair' ? 5 : 6;
+  c.height = kind === 'hair' ? 4 * 230 : 4 * 215 + 40;
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#eef5e6';
+  ctx.fillRect(0, 0, c.width, c.height);
+  list.slice(page * 16, page * 16 + 16).forEach((part, i) => {
+    const g = rollMochi(Number(q.get('seed')) || 3, { [key]: part, ...(key === 'hair' ? { fringe: null } : key === 'fringe' ? { hair: 'ohagi' } : key === 'brows' ? { hair: 'ohagi', fringe: 'mochibaby' } : { hair: 'ohagi', fringe: 'mochipuff' }), coat: null, hairTip: null, eyeColor2: null, pupil: null, cheek: null, personality: 'gentle' });
+    const x = 100 + (i % 4) * 200;
+    const y = kind === 'hair' ? 190 + Math.floor(i / 4) * 230 : 230 + Math.floor(i / 4) * 215;
+    drawOne(g, x, y, Z);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.fillStyle = '#4a3a4f';
+    ctx.fillText(part, x, y + 22);
+  });
+} else if (q.get('only')) {
+  const Z = Number(q.get('z') ?? 10);
+  const list = q.get('only').split(',').map((t) => (t[0] === 's' ? SHOWCASE[Number(t.slice(1))] : rollMochi(Number(t))));
+  c.height = 50 * Z;
+  ctx.imageSmoothingEnabled = false;
+  list.forEach((g, i) => drawOne(g, (i + 0.5) * (800 / list.length), 46 * Z, Z));
+} else {
+  const start = Number(q.get('seed') ?? 1);
+  const rolls = Array.from({ length: 18 }, (_, i) => rollMochi(start + i));
+  [...rolls, ...SHOWCASE].forEach((g, i) => {
+    const col = i % 6;
+    const row = Math.floor(i / 6);
+    const x = 66 + col * 133;
+    const y = 150 + row * 178 + (row >= 3 ? 8 : 0);
+    drawOne(g, x, y, 4);
+    label(g, x, y + 18);
+  });
+  ctx.fillStyle = '#c9b8d8';
+  ctx.fillRect(20, 548, 760, 1);
+}
+window.ready = true;
+</script></body></html>

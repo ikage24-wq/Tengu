@@ -15,6 +15,7 @@
 
 import { R, E, T, F, shade } from '../pixel.js';
 import { torsoPts, MID, limb } from '../figure.js';
+import { MOCHI_OUTFITS } from './mochi.js';
 
 const TORSO = torsoPts();
 const WHITE = '#fffdfb';
@@ -109,4 +110,6 @@ export const PET_OUTFITS = {
     hat: () => [F(T([[22.6, 8.6], [27.8, 1.6], [28.6, 2.4], [23.8, 9.4]], '#ffffff')), F(limb(23, 9, 28.2, 2, 0.25, 0.2, '#7fb8ff'))],
   },
 };
+// The Wagashi Sprites (the Mochi redraw).
+Object.assign(PET_OUTFITS, MOCHI_OUTFITS);
 export const PET_OUTFIT_KEYS = Object.keys(PET_OUTFITS);

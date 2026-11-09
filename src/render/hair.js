@@ -1378,23 +1378,915 @@ function twoTone(shapes, r, tint, [y1, y2]) {
   return out;
 }
 
+// ---------- The Mochi's own hair (the Wagashi Sprites, 2026-11-09) ----------
+// Worn only by the Mochi, always under their mochi hoods, so what shows is the fringe and a short
+// lock at the near cheek; each fringe is cut to its sweet.
+Object.assign(FRINGES, {
+  // Baby: three soft round puffs like fresh dough, the middle one longest.
+  mochipuff: { pts: [[24, 13.4], [21.6, 15.6], [19, 13.6], [15.5, 16.2], [12, 13.6], [9.4, 15.6], [7, 13.4]], lean: 0, round: true },
+  // Dango: three big round clumps in a row, like the balls on the skewer.
+  dangoclump: { pts: [[24, 12.6], [22.6, 10.8], [20.6, 15.4], [18.2, 11.4], [15.5, 16.4], [12.8, 11.4], [10.4, 15.4], [8.4, 10.8], [7, 12.6]], lean: 0, softTips: true, gentle: true },
+  // Warabi: sleek and swept, wet-looking, longest at the far side.
+  warabisweep: { pts: [[23.6, 10.6], [22.4, 8.8], [20.6, 13], [19.2, 10.4], [16.8, 15.4], [15.4, 12.2], [12.8, 16.8], [11.8, 13.6], [9.2, 17.2], [8.4, 14.4], [6.6, 16]], lean: -1.3, gentle: true },
+  // Sakura: every clump's tip notched like a cherry petal.
+  sakurapetal: { pts: [[24, 13], P(22.4, 10.8), [21.4, 14.6], P(20.6, 13.6), [19.6, 14.6], P(18.2, 11), [16.6, 16.2], P(15.6, 15), [14.6, 16.2], P(13, 11), [11.6, 14.6], P(10.8, 13.6), [9.8, 14.6], P(8.6, 10.8), [7, 13]],
+    lean: 0, plain: true, strands: [[20.4, 5.6, 20.4, 12.8, 0.7, 0.3], [15.6, 4.6, 15.6, 14.2, 0.7, 0], [11, 5.6, 11, 12.8, 0.7, -0.3]] },
+  // Kagami: a heavy blunt fringe cut straight and low, solid as a stacked mochi.
+  kagamiblunt: { pts: [[24.2, 15.8], [23.5, 14.8], [22.8, 15.9], [19.4, 16], [18.8, 15], [18.2, 16], [12.8, 16], [12.2, 15], [11.6, 16], [8.2, 15.9], [7.5, 14.8], [6.8, 15.8]], lean: 0, blunt: true },
+  // Monaka: a neat short crop (a curl falls over the middle: see the style).
+  monakacrop: { pts: [[23.4, 11.8], [21.8, 9.8], [20, 12.8], [18.2, 10.4], [16.4, 13.4], [14.6, 10.8], [12.6, 13], [10.8, 10.6], [9, 12.6], [7.6, 11.8]], lean: 0.3, gentle: true },
+});
+// Two more fringes for them: a side sweep with one long rounded clump (a fish's fin), and a
+// centre part between two round clumps.
+Object.assign(FRINGES, {
+  finfringe: { pts: [[23.6, 11.2], [22.4, 9.4], [20.8, 13.6], [19.4, 10.6], [16.8, 16.8], [15.6, 11.6], [13.4, 14.6], [12.2, 11.2], [10, 14], [8.8, 11], [7.2, 12.8]], lean: -0.8, softTips: true },
+  loopfringe: { pts: [[24.2, 14.6], [22.6, 11.6], [20.8, 14.2], [18.4, 10.6], [16.4, 9.8], [HX, 10.4], [14.6, 9.8], [12.6, 10.6], [10.2, 14.2], [8.4, 11.6], [6.8, 14.6]], lean: 0, softTips: true, part: [[HX, 2.4], [HX, 9.2]] },
+});
+
+// ---------- The mood sprout ----------
+// Every Mochi has a sprout growing from the top of its head; it acts out their mood. Set for the
+// call by hairParts (look.sprout: { leaf, mood }). Leaves: round, point, ginkgo, clover, bud,
+// heart (rare), blossom (epic), gold (legendary). Moods: calm, happy, excited, sad, sleepy, curious.
+let SPROUT = null;
+const SPROUT_POSE = {
+  calm: { lean: -10, len: 3.4, open: 25 },
+  happy: { lean: 0, len: 4.2, open: 55 },
+  excited: { lean: 20, len: 4, open: 65 },
+  sad: { lean: 70, len: 3, open: -45 },
+  sleepy: { lean: -60, len: 2.8, open: -20 },
+  curious: { lean: 14, len: 3.8, open: 30, odd: true },
+};
+const deg = (a) => (a * Math.PI) / 180;
+// A leaf from (x, y) pointing `ang` degrees clockwise from straight up, `L` long.
+function sproutLeaf(kind, x, y, ang, L, c, dk) {
+  const [dx, dy] = [Math.sin(deg(ang)), -Math.cos(deg(ang))];
+  const at = (l, o) => [x + dx * l * L - dy * o * L, y + dy * l * L + dx * o * L];
+  if (kind === 'clover') {
+    return [[0.7, 0.32], [0.95, 0], [0.7, -0.32]].map(([l, o]) => F(E(...at(l, o), 0.34 * L, 0.34 * L, c))).concat([F(E(...at(0.62, 0), 0.12 * L, 0.12 * L, dk))]);
+  }
+  // A ginkgo's fan, narrow at the stalk and notched across its wide end.
+  if (kind === 'ginkgo') {
+    return [poly(smooth([[0, 0], [0.38, 0.1], [0.72, 0.62], [1, 0.4], [1.02, 0.06], [0.92, 0], [1.02, -0.06], [1, -0.4], [0.72, -0.62], [0.38, -0.1]].map(([l, o]) => at(l, o)), 2), c),
+      poly([at(0.1, 0.04), at(0.8, 0.3), at(0.8, 0.26), at(0.1, 0)], dk), poly([at(0.1, 0), at(0.8, -0.26), at(0.8, -0.3), at(0.1, -0.04)], dk)];
+  }
+  const shape = kind === 'point' ? [[0, 0], [0.35, 0.28], [0.72, 0.2], [1.05, 0], [0.72, -0.2], [0.35, -0.28]]
+    : kind === 'heart' ? [[0, 0], [0.42, 0.48], [0.9, 0.48], [1.05, 0.18], [0.86, 0], [1.05, -0.18], [0.9, -0.48], [0.42, -0.48]]
+      : [[0, 0], [0.28, 0.42], [0.72, 0.4], [1, 0], [0.72, -0.4], [0.28, -0.42]];
+  return [poly(smooth(shape.map(([l, o]) => at(l, o)), 2), c), poly([at(0.08, 0.05), at(0.75, 0.02), at(0.75, -0.02), at(0.08, -0.05)], dk)];
+}
+function sproutAt(x, y, m) {
+  const sp = SPROUT ?? {};
+  const kind = sp.leaf ?? 'round';
+  const pose = SPROUT_POSE[sp.mood] ?? SPROUT_POSE.calm;
+  const gold = kind === 'gold';
+  // (On green hair the sprout is a paler spring green, so it doesn't melt into it.)
+  const c = gold ? '#f6cf52' : sp.pale ? '#d4ee9a' : '#86c96e';
+  const dk = gold ? '#b88a22' : sp.pale ? '#7aa83e' : '#4f8f45';
+  // The stem bends a beat behind the head, then the leaves open from its tip.
+  const a = pose.lean + (m?.tip ?? 0) * 9;
+  const mid = [x + Math.sin(deg(a * 0.5)) * pose.len * 0.5, y - Math.cos(deg(a * 0.5)) * pose.len * 0.5];
+  const tip = [mid[0] + Math.sin(deg(a)) * pose.len * 0.5, mid[1] - Math.cos(deg(a)) * pose.len * 0.5];
+  const side = (p, q, w) => { const l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1; return [(-(q[1] - p[1]) / l) * w, ((q[0] - p[0]) / l) * w]; };
+  const [ax, ay] = side([x, y], mid, 0.36);
+  const [bx, by] = side(mid, tip, 0.26);
+  const stem = poly([[x + ax, y + ay], [mid[0] + bx, mid[1] + by], [tip[0] + bx * 0.6, tip[1] + by * 0.6], [tip[0] - bx * 0.6, tip[1] - by * 0.6], [mid[0] - bx, mid[1] - by], [x - ax, y - ay]], dk);
+  const leafKind = kind === 'blossom' || kind === 'bud' || gold ? 'round' : kind;
+  const L = kind === 'clover' ? 3.2 : 3.6;
+  const open = 100 - pose.open;
+  const out = [stem, ...sproutLeaf(leafKind, ...tip, a + open, L, c, dk), ...sproutLeaf(leafKind, ...tip, a - open + (pose.odd ? 50 : 0), L * 0.9, mix(c, dk, 0.18), dk)];
+  if (kind === 'blossom') {
+    // A little cherry blossom opens at the tip.
+    for (let i = 0; i < 5; i++) {
+      const t = deg(a + i * 72);
+      out.push(F(E(tip[0] + Math.sin(t) * 1.1, tip[1] - Math.cos(t) * 1.1, 0.95, 0.95, '#ffd6e2')));
+    }
+    out.push(F(E(tip[0], tip[1], 0.55, 0.55, '#ff7fa6')));
+  }
+  // A bud: small leaves and a fat round bud at the tip, blushing pink.
+  if (kind === 'bud') out.push(F(E(tip[0], tip[1] - 0.8, 1.35, 1.6, '#c8e8a8')), F(E(tip[0], tip[1] - 1.5, 0.8, 0.9, '#ffc8d8')), F(E(tip[0] - 0.4, tip[1] - 1.4, 0.3, 0.4, '#ffffff')));
+  if (gold) out.push(F(E(tip[0] + 0.9, tip[1] - 2.2, 0.35, 0.35, '#fff6c8')));
+  return out;
+}
+
+// ---------- The Mochi's hairstyles (rolled per egg: data/mochi-genes.js) ----------
+Object.assign(STYLES, {
+  // Daifuku bun: one big round bun sitting on top like a daifuku (the sprout grows out of it),
+  // over a round bob whose ends turn in under the jaw; soft dough-puff bangs.
+  mochibun(r, m) {
+    const knot = [F(E(13.6, 2.2, 3.4, 1.2, r.sh2)), ...bun(13.4, -2, 5.4, 4.4, r, 1)];
+    const back = mass([[5.6, 21.6], P(4.6, 23.2), [3.4, 17], [3.6, 9.6], [7.2, 3.4], [13.2, 1.4], [19.8, 1.6], [26.4, 6.4], [27.6, 13.4], [26.8, 21], P(25.6, 23), [21.4, 22], [HX, 22.8], [9.6, 22]], r.sh1, m, 0.5);
+    const turn = [[25, 11.2], [27, 16.6], [26.4, 21.4], [24, 22.6]];
+    return {
+      head: [crown(r, 0.6), back, ...knot],
+      hang: [],
+      front: bangs('mochipuff', r, m, [lock(turn, 3.8, r.base, m, 1.1), lock(fx(turn), 3.8, r.base, m, 1.1), ...sproutAt(13.2, -6.2, m)]),
+      top: knot,
+      tips: [18, 23],
+    };
+  },
+  // Dango tail: a side tail tied off into three round puffs, like dango on a skewer.
+  dangotail(r, m) {
+    const mv = mover(m, 1.15);
+    const puff = (x, y, rr) => {
+      const [px, py] = mv([x, y]);
+      return [F(E(px, py, rr, rr * 0.92, r.base)), F(E(px + 0.6, py + rr * 0.48, rr * 0.7, rr * 0.34, r.sh1)), streak(px - rr * 0.5, py - rr * 0.45, px - rr * 0.05, py - rr * 0.8, 0.8, 0.3, r.hi)];
+    };
+    const tie = (x, y) => { const [px, py] = mv([x, y]); return F(E(px, py, 1.5, 0.8, r.sh2)); };
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [lock([[6, 8.6], [4.6, 11]], 3, r.base, m, 1), ...puff(3.6, 25.8, 3.3), tie(3.4, 22.6), ...puff(3.2, 19.6, 3.6), tie(3.6, 16.1), ...puff(4.4, 12.8, 3.4), F(E(6, 8.6, 1.6, 1.4, r.sh2))],
+      front: bangs('dangoclump', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25, 19.4]], null, 3), ...sproutAt(16, 1.2, m)]),
+      tips: [17, 27],
+    };
+  },
+  // Sakura tails: low twin tails, each ending in a fan of petal-notched clumps like a blossom.
+  sakuratails(r, m) {
+    const tail = [[6.4, 17], [4, 20.6], [3.2, 25], [3.8, 29]];
+    const end = (pts, dir, c) => {
+      const [ex, ey] = mover(m, 1.1)(pts[pts.length - 1]);
+      return [-42, 0, 42].flatMap((a) => {
+        const [dx, dy] = [Math.sin(deg(a)) * dir, Math.cos(deg(a))];
+        const [nx, ny] = [-dy, dx];
+        const at = (l, o) => [ex + dx * l + nx * o, ey + dy * l + ny * o];
+        return [poly(smooth([at(0, 0.9), at(2.4, 1.5), at(3.4, 0.7), P(...at(2.8, 0)), at(3.4, -0.7), at(2.4, -1.5), at(0, -0.9)], 2), c), poly([at(2.8, 0.2), at(1.6, 0), at(2.8, -0.2)], r.sh2)];
+      });
+    };
+    const far = fx(tail);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)],
+      hang: [lock(tail, 4.6, r.sh1, m, 1.1, 0.5), ...end(tail, 1, r.sh1), F(E(6.6, 17.2, 1.5, 1.3, r.sh2)), lock(far, 4.6, r.base, m, 1.1, 0.5), ...end(far, -1, r.base), F(E(24.4, 17.2, 1.5, 1.3, r.sh2))],
+      front: bangs('sakurapetal', r, m, sproutAt(15.8, 1.2, m)),
+      tips: [24, 31],
+    };
+  },
+  // Taiyaki tail: a high ponytail that arcs out and curls down into a fanned fish fin.
+  taiyakitail(r, m) {
+    const tail = [[6, 4.6], [2.4, 3.2], [-1.4, 5.4], [-3, 10.4], [-2.4, 15.6], [-3.6, 20]];
+    const [ex, ey] = mover(m, 1.1)(tail[tail.length - 1]);
+    const fin = [[ex + 1.4, ey + 4.8], [ex - 0.4, ey + 5.6], [ex - 3.2, ey + 4.2]];
+    const tie = F(E(6, 4.8, 1.6, 2, r.sh2));
+    return {
+      head: [crown(r), shortBack(r, m, 20), tie],
+      hang: [lock(tail, 7.4, r.sh1, m, 1.1, 0.35), poly(smooth([[ex + 1.6, ey - 1.4], fin[0], [ex + 0.6, ey + 2.8], fin[1], [ex - 1, ey + 2.6], fin[2], [ex - 2.2, ey - 1]], 1), r.sh1),
+        ...fin.map(([x2, y2]) => streak(ex, ey + 0.4, x2 * 0.7 + ex * 0.3, y2 * 0.7 + ey * 0.3, 0.45, 0, r.sh2)), streak(-1, 7.4, -2.6, 15, 0.9, 0.5, r.hi, m, 1.1)],
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16.2, 1.2, m)]),
+      top: [tie],
+      tips: [16, 25],
+    };
+  },
+  // Warabi waves: long hair in soft S-waves to the waist with a wet shine, and a lock at the
+  // temple that curls like a breaking wave.
+  warabiwave(r, m) {
+    return {
+      head: [crown(r, 0.8)],
+      hang: [napeShadow(r), ...sheet({ len: 40, flare: 15.6, wave: 2, ends: 'points', n: 5, w0: 12.6 }, r, m), ...[[5.6, 30], [25.4, 33], [9.6, 36]].map(([x, y]) => streak(x, y - 4.4, x, y, 0.7, 0.2, r.hi, m))],
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25.2, 11], [27, 17], [25.8, 23], [27.2, 28.6]], undefined, 3.4), lock([[22.6, 9.6], [24, 14], [22.6, 17.6], [21, 16.6]], 2.6, r.base, m, 1.2), ...sproutAt(15.6, 1.2, m)]),
+      tips: [30, 38],
+    };
+  },
+  // Kinako puffs: two big round puffs at the sides like soft earmuffs, short behind; a heavy
+  // straight fringe.
+  kinakopuffs(r, m) {
+    const puff = (x, y, dir) => [...bun(x, y, 4.4, 4, r, dir), F(E(x - dir * 0.4, y + 2.7, 3.4, 1.1, r.sh1))];
+    const far = puff(4.2, 17, 1);
+    const near = puff(26.8, 17, -1);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...far],
+      hang: [],
+      front: bangs('kagamiblunt', r, m, [...near, ...sproutAt(15.6, 1.2, m)]),
+      top: [...far, ...near],
+      tips: [14, 21],
+    };
+  },
+  // Kashiwa: one long lock at the near side shaped like an oak leaf, lobed along its edge with a
+  // midrib, the far side cut short; a neat crop with a round curl on the brow.
+  kashiwa(r, m) {
+    const leaf = [[24.4, 9.6], [27.4, 15], [28, 21.4], [26.8, 27.6]];
+    const mv = mover(m, 1.15);
+    const lobes = [[27.8, 14.6], [29.2, 19.4], [28.8, 24.2]].map(([x, y]) => { const [px, py] = mv([x, y]); return F(E(px, py, 1.5, 1.8, r.base)); });
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 19)],
+      hang: [],
+      front: bangs('monakacrop', r, m, [...lobes, lock(leaf, 5.4, r.base, m, 1.15, 0.15), lock(fx([[24.6, 10.6], [25.6, 14.4], [25, 17.4]]), 3, r.base, m, 1.1),
+        lock([[16.2, 7], [17.2, 11], [16.4, 13.8], [15, 13.2]], 2.4, r.base, m, 1), streak(16.4, 8, 16.8, 11.6, 0.5, 0.2, r.hi), ...sproutAt(15.4, 1.2, m)]),
+      tips: [20, 27],
+    };
+  },
+  // Loop braids: a braid each side looped up and tied back near the ear; a centre part.
+  loopbraids(r, m) {
+    const loop = [[6.6, 15.6], [3.4, 19.4], [2.8, 24.2], [4.6, 27.4], [7.4, 26], [7.8, 21.6]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [...plait(loop, 3.2, r, m, 1.05), ...plait(fx(loop), 3.2, r, m, 1.05), F(E(7.6, 21.2, 1.4, 1.2, r.sh2)), F(E(23.4, 21.2, 1.4, 1.2, r.sh2))],
+      front: bangs('loopfringe', r, m, sproutAt(15.6, 1.2, m)),
+      tips: [22, 28],
+    };
+  },
+});
+export const MOCHI_HAIR = ['mochibun', 'dangotail', 'sakuratails', 'taiyakitail', 'warabiwave', 'kinakopuffs', 'kashiwa', 'loopbraids'];
+OWN_HAIR.push(...MOCHI_HAIR);
+
+// The second eight (2026-11-09). Any hairstyle can take any of the Mochi's fringes: the fringe is
+// a gene of its own (look.hairBangs); each style's own below is only its default.
+// A twisted rope of hair (two strands wound round each other) along a spine, ending in a tuft.
+function twist(spine, w, r, m, k = 1) {
+  const sp = smoothOpen(spine.map(mover(m, k)), 2);
+  const out = [];
+  for (let i = 0; i < sp.length - 1; i++) {
+    const [x0, y0] = sp[i];
+    const [x1, y1] = sp[i + 1];
+    const l = Math.hypot(x1 - x0, y1 - y0) || 1;
+    const [dx, dy] = [(x1 - x0) / l, (y1 - y0) / l];
+    const [nx, ny] = [-dy, dx];
+    const h = (w / 2) * (1 - (0.25 * i) / sp.length);
+    const c = [(x0 + x1) / 2, (y0 + y1) / 2];
+    const at = (a, b) => [c[0] + dx * a + nx * b, c[1] + dy * a + ny * b];
+    out.push(poly(smooth([at(-l * 0.7, h), at(l * 0.2, h), at(l * 0.7, -h), at(-l * 0.2, -h)], 2), i % 2 ? r.sh1 : r.base));
+  }
+  const [ex, ey] = sp[sp.length - 1];
+  out.push(lock([[ex, ey - 0.4], [ex - 0.4, ey + 1.8], [ex + 0.4, ey + 3.4]], w * 0.7, r.base, null));
+  return out;
+}
+Object.assign(STYLES, {
+  // Sakura wrap: a low bun at the nape with a lock wrapped round it like a leaf round a sweet.
+  sakurawrap(r, m) {
+    const knot = [...bun(2.8, 21.6, 4.2, 3.9, r, 1), lock([[-0.6, 19.2], [2.8, 21.4], [6.4, 23.8]], 2.4, r.base, null), streak(-0.2, 19.6, 5.8, 23.4, 0.5, 0, r.hi)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 22), ...knot],
+      hang: [],
+      front: bangs('sakurapetal', r, m, [...sideLocks(r, m, [[25.2, 11], [26, 16.4], [25.4, 21]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]),
+      top: knot,
+      tips: [19, 25],
+    };
+  },
+  // Dorayaki buns: a flat bun each side on top, two pancakes with a dark line of filling between.
+  dorayaki(r, m) {
+    const disc = (x, y) => [F(E(x, y + 1.3, 4.6, 2.1, r.sh1)), F(E(x, y + 0.25, 4.3, 0.9, r.sh2)), F(E(x, y - 0.9, 4.6, 2.1, r.base)), streak(x - 2.6, y - 1.5, x + 0.8, y - 2.2, 0.6, 0.2, r.hi)];
+    const buns = [...disc(5.4, 3.8), ...disc(25.6, 3.8)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21), ...buns],
+      hang: [],
+      front: bangs('kagamiblunt', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.6]], undefined, 3), ...sproutAt(15.6, 1.2, m)]),
+      top: buns,
+      tips: [16, 22],
+    };
+  },
+  // Mitsu tails: three short tails tied at the back, fanned out, each curling down at its end.
+  mitsutails(r, m) {
+    const tails = [[[5.8, 5.4], [2, 3.4], [-1.4, 4.4], [-2.8, 7.4], [-2, 9]], [[5, 9.2], [1, 9.4], [-2.2, 11.4], [-3, 14.4], [-2, 15.8]], [[5.4, 13], [2.2, 15], [0, 18], [-0.2, 21], [0.8, 22.2]]];
+    const ties = tails.map(([p]) => F(E(p[0], p[1], 1.3, 1.1, r.sh2)));
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [...tails.map((t) => lock(t, 4.6, r.sh1, m, 1.1, 0.6)), ...ties],
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16, 1.2, m)]),
+      tips: [12, 20],
+    };
+  },
+  // Manju curl: one big round curl wound up on the far side of the head like a sweet bun's swirl.
+  manjucurl(r, m) {
+    const [x, y, rr] = [5, 5.4, 5];
+    const roll = [F(E(x, y, rr, rr * 0.92, r.base)), F(E(x + 0.7, y + 0.5, rr * 0.66, rr * 0.6, r.sh1)), F(E(x + 1, y + 0.3, rr * 0.44, rr * 0.4, r.base)), F(E(x + 1.2, y + 0.2, rr * 0.2, rr * 0.18, r.sh2)),
+      streak(x - rr * 0.6, y - rr * 0.4, x - rr * 0.1, y - rr * 0.85, 0.8, 0.3, r.hi)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...roll],
+      hang: [],
+      front: bangs('monakacrop', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(16, 1.2, m)]),
+      top: roll,
+      tips: [16, 21],
+    };
+  },
+  // Chimaki: a long low tail cross-wrapped all the way down, the way a leaf parcel is tied.
+  chimaki(r, m) {
+    const tail = [[5.6, 16], [3, 21], [2.4, 27], [3, 33], [2, 37.4]];
+    const sp = tail.map(mover(m, 1.1));
+    const wraps = [1, 2, 3].flatMap((i) => {
+      const [cx, cy] = [(sp[i][0] + sp[i + 1][0]) / 2, (sp[i][1] + sp[i + 1][1]) / 2];
+      return [streak(cx - 2, cy - 1.3, cx + 2, cy + 1.3, 0.6, 0, r.sh2), streak(cx - 2, cy + 1.3, cx + 2, cy - 1.3, 0.6, 0, r.sh2)];
+    });
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [lock(tail, 5.2, r.sh1, m, 1.1, 0.3), ...wraps, F(E(5.6, 16, 1.5, 1.3, r.sh2))],
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25.2, 11], [26, 16.4], [25.4, 21]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]),
+      tips: [28, 36],
+    };
+  },
+  // Kakigori: a tall soft heap piled up on top like shaved ice, layered in flakes; the sprout
+  // grows out of its peak.
+  kakigori(r, m) {
+    const pile = mass([[6.6, 6.4], [5.2, 0.6], [7.4, -4.6], [11.4, -8], [HX, -9.2], [19.6, -8], [23.6, -4.6], [25.8, 0.6], [24.4, 6.4], [HX, 4.6]], r.base, m, 0.2);
+    const flakes = [[-4.4, 7.2], [0, 9.6], [3.6, 8.8]].map(([y, rx]) => poly(smooth([[HX - rx, y], [HX - rx * 0.5, y + 1.3], [HX, y + 0.6], [HX + rx * 0.5, y + 1.3], [HX + rx, y], [HX, y + 2.2]], 2), r.sh1));
+    const heap = [pile, ...flakes, streak(10.6, -5.4, 14, -7.8, 0.8, 0.3, r.hi)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 19), ...heap],
+      hang: [],
+      front: bangs('mochipuff', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, -8.6, m)]),
+      top: heap,
+      tips: [17, 22],
+    };
+  },
+  // Nejiri: twin tails twisted into ropes down to the chest.
+  nejiri(r, m) {
+    const tail = [[6.2, 16.4], [3.2, 20.6], [2.2, 26], [2.8, 31.4]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)],
+      hang: [...twist(tail, 5.2, r, m, 1.1), ...twist(fx(tail), 5.2, r, m, 1.1), F(E(6.6, 16.6, 1.5, 1.3, r.sh2)), F(E(24.4, 16.6, 1.5, 1.3, r.sh2))],
+      front: bangs('loopfringe', r, m, sproutAt(15.6, 1.2, m)),
+      tips: [24, 31],
+    };
+  },
+  // Yatsuhashi: a bun folded into a soft triangle at the back of the head, over straight hair to
+  // the shoulders.
+  yatsuhashi(r, m) {
+    const fold = [poly(smooth([[7.6, 3], [-2, 7.8], [6.6, 14]], 2), r.base), poly(smooth([[7.2, 4.4], [1.4, 8.2], [6.6, 12.6]], 1), r.sh1), streak(7, 4, 6.6, 12.8, 0.6, 0, r.sh2)];
+    return {
+      head: [crown(r, 0.4), ...fold],
+      hang: [napeShadow(r), ...sheet({ len: 27, flare: 12.6, n: 4 }, r, m, 0.7)],
+      front: bangs('dangoclump', r, m, [...sideLocks(r, m, [[25.2, 11], [26, 16.4], [25.6, 21.6]], undefined, 3.2), ...sproutAt(16, 1.2, m)]),
+      top: fold,
+      tips: [20, 26],
+    };
+  },
+});
+MOCHI_HAIR.push('sakurawrap', 'dorayaki', 'mitsutails', 'manjucurl', 'chimaki', 'kakigori', 'nejiri', 'yatsuhashi');
+OWN_HAIR.push('sakurawrap', 'dorayaki', 'mitsutails', 'manjucurl', 'chimaki', 'kakigori', 'nejiri', 'yatsuhashi');
+// The fringes a Mochi can roll (any of them on any hairstyle).
+export const MOCHI_FRINGES = ['mochipuff', 'dangoclump', 'warabisweep', 'sakurapetal', 'kagamiblunt', 'monakacrop', 'finfringe', 'loopfringe'];
+
+// ...and 24 more fringes (32 in all), each its own cut:
+Object.assign(FRINGES, {
+  // A straight cut, higher on the brow than the kagami's.
+  mochistraight: { pts: [[24, 12.6], [23.4, 11.8], [22.8, 12.7], [18.4, 12.8], [17.8, 11.9], [17.2, 12.8], [13.8, 12.8], [13.2, 11.9], [12.6, 12.8], [8.2, 12.7], [7.6, 11.8], [7, 12.6]], lean: 0, blunt: true },
+  // Many fine wisps.
+  mochiwisp: { pts: [[24, 13], [23.2, 11], [22.2, 14.6], [21.2, 11.4], [20, 15.4], [18.8, 11.6], [17.6, 15.8], [16.4, 11.8], [15.2, 16], [14, 11.8], [12.8, 15.6], [11.6, 11.6], [10.4, 15], [9.2, 11.2], [8, 14.2], [7.2, 12]], lean: 0.2, softTips: true },
+  // Parted far over at the near side and swept across.
+  mochiside: { pts: [[24.6, 12], [23.4, 10.6], [21.6, 13.8], [20, 10.8], [17.6, 14.8], [16.2, 11.4], [13.6, 15.8], [12.6, 12.6], [10, 16.2], [9.4, 13.6], [7.4, 15]], lean: -1.6, part: [[20.4, 1.8], [21.8, 6.8]], gentle: true },
+  // Curtains: parted in the middle, sweeping out long to the cheeks.
+  mochicurtain: { pts: [[24.8, 17.4], [23.2, 14.6], [21, 12.6], [18.4, 11.4], [16.2, 11], [HX, 12], [14.8, 11], [12.6, 11.4], [10, 12.6], [7.8, 14.6], [6.2, 17.4]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 11]] },
+  // Two round lobes meeting in a point in the middle: a heart.
+  mochiheart: { pts: [[24, 13.4], [22.6, 15.2], [20.2, 15.6], [17.6, 14.2], P(HX, 11.6), [13.4, 14.2], [10.8, 15.6], [8.4, 15.2], [7, 13.4]], lean: 0, plain: true, strands: [[19.8, 5, 19.8, 13.6, 0.7, 0.2], [11.2, 5, 11.2, 13.6, 0.7, -0.2]] },
+  // A row of small round waves.
+  mochiwave: { pts: [[24, 13.4], [22.6, 14.6], [21, 13.6], [19.4, 14.8], [17.6, 13.8], [HX, 15], [13.4, 13.8], [11.6, 14.8], [10, 13.6], [8.4, 14.6], [7, 13.4]], lean: 0, round: true },
+  // Short all across but for one long round clump down the middle.
+  mochidip: { pts: [[23.8, 12], [21.8, 11.2], [19.6, 12.4], [17.6, 12.6], [16.4, 15.8], [14.6, 15.8], [13.4, 12.6], [11.4, 12.4], [9.2, 11.2], [7.2, 12]], lean: 0, plain: true, strands: [[HX, 5, HX, 14.6, 0.8, 0], [20.6, 5.4, 20.6, 11.4, 0.6, 0.2], [10.4, 5.4, 10.4, 11.4, 0.6, -0.2]] },
+  // Cut on a slant: long at the near side, short at the far.
+  mochiasym: { pts: [[24.4, 16.4], [22.6, 16.6], [20, 16], [16, 14.6], [12, 13.2], [8.6, 12], [6.8, 12.2]], lean: 0, plain: true, strands: [[21, 5, 21.4, 15.4, 0.7, 0.2], [16, 4, 16, 13.6, 0.7, 0], [11, 5, 10.8, 12.2, 0.7, -0.2]] },
+  // Baby bangs: a tiny straight fringe high on the forehead.
+  mochibaby: { pts: [[24.2, 10.8], [23.5, 9.9], [22.8, 10.9], [18.6, 10], [18, 9.2], [17.4, 10], [13.6, 10], [13, 9.2], [12.4, 10], [8.2, 10.9], [7.5, 9.9], [6.8, 10.8]], lean: 0, blunt: true },
+  // Its ends flick up and out at both sides.
+  mochiflip: { pts: [[25.6, 11.6], [24.2, 13.4], [22.6, 12.4], [21, 14.8], [18.6, 11.8], [HX, 15], [12.4, 11.8], [10, 14.8], [8.4, 12.4], [6.8, 13.4], [5.4, 11.6]], lean: 0, softTips: true, gentle: true },
+  // Two big round clumps at the sides, the forehead bare between them.
+  mochigap: { pts: [[24.4, 16], [22.4, 15.8], [20.4, 12], [18.6, 9.4], [HX, 8.6], [12.4, 9.4], [10.6, 12], [8.6, 15.8], [6.6, 16]], lean: 0, plain: true, part: [[HX, 2.2], [HX, 8.4]] },
+  // A short neat fringe with one curl dropping over the middle.
+  mochicurl: { pts: [[23.6, 11], [22, 9.6], [20.4, 11.6], [18.6, 9.8], [16.8, 11.8], [14.4, 9.8], [12.6, 11.8], [10.8, 9.8], [9, 11.6], [7.4, 11]], lean: 0.2, gentle: true, locks: [[[16, 6.4], [17.4, 10.6], [16.4, 13.8], [14.8, 12.6]]] },
+  // One big swoop from the far side across to the near, stopping above the eye.
+  mochiswoop: { pts: [[25.2, 12.4], [24, 15.2], [21.6, 15.8], [18.8, 14.6], [15.6, 12.8], [12.4, 11.4], [9.4, 10.6], [6.8, 11.2]], lean: 0, plain: true, strands: [[10, 4, 18, 13.6, 0.7, 0.3], [14, 3.6, 22, 15, 0.7, 0.3]] },
+  // A fringe with a little tied tuft standing at the near side.
+  mochiknot: { pts: [[23.8, 12.6], [22.4, 10.6], [20.6, 14.4], [18.6, 11], [16.2, 15], [14, 11], [11.8, 14.6], [9.8, 10.8], [7.4, 12.6]], lean: 0.2, softTips: true, gentle: true, locks: [[[21, 5.4], [24, 7.4], [25.6, 10.6]]] },
+  // Layered: long and short clumps in turn.
+  mochilayer: { pts: [[24, 14.6], [23, 11], [21.6, 12.6], [20.4, 10.8], [19, 15.4], [17.6, 11], [16.2, 12.8], [15, 11], [13.6, 15.6], [12.2, 11], [10.8, 12.8], [9.6, 11], [8.2, 15], [7.2, 12.6]], lean: 0, softTips: true },
+  // Choppy, every clump a different length.
+  mochichoppy: { pts: [[24, 13.6], [22.8, 11.2], [21.6, 15.4], [20.2, 11.6], [19, 13], [17.8, 11.2], [16.2, 16.2], [14.8, 11.4], [13.6, 13.4], [12.2, 11.2], [10.8, 15.8], [9.6, 11.4], [8.4, 13], [7.2, 12]], lean: 0.3, softTips: true, gentle: true },
+  // An arch: high in the middle, longer down each side.
+  mochiarch: { pts: [[24.6, 16.4], [23, 14], [20.6, 12.4], [17.6, 11.6], [HX, 11.4], [13.4, 11.6], [10.4, 12.4], [8, 14], [6.4, 16.4]], lean: 0, plain: true, strands: [[20, 5, 20.6, 12.2, 0.6, 0.2], [HX, 4.4, HX, 10.6, 0.6, 0], [11, 5, 10.4, 12.2, 0.6, -0.2]] },
+  // Swept up off the forehead, one loose strand falling at the near side.
+  mochiup: { pts: [[24.8, 10.4], [22.6, 8.2], [19.6, 7], [16, 6.6], [12.4, 7], [9.2, 8.2], [6.6, 10.4]], lean: 0, plain: true, strands: [[12, 7.4, 13.4, 2.6, 0.6, 0.2], [18.4, 7.2, 17.4, 2.4, 0.6, -0.2]], locks: [[[21.4, 7.4], [22.6, 11], [22, 14]]] },
+  // Feathered: many soft tips leaning one way.
+  mochifeather: { pts: [[24, 13], [23, 11.2], [21.8, 14.2], [20.8, 11.6], [19.4, 14.8], [18.4, 12], [17, 15.2], [16, 12.2], [14.6, 15.2], [13.6, 12], [12.2, 14.8], [11.2, 11.6], [9.8, 14.2], [8.8, 11.2], [7.4, 13]], lean: 0.8, gentle: true },
+  // Messy, tumbling every which way.
+  mochimess: { pts: [[24.4, 12.6], [22.8, 10.4], [21.8, 14.4], [20.6, 12], [19.2, 15.2], [17, 11.4], [15.8, 14], [14.2, 10.8], [12.4, 15.4], [11.4, 12.8], [9.8, 14.6], [8.4, 11], [7, 13.6]], lean: 0.6, softTips: true },
+  // A fringe with a long thin lock falling in front of each ear.
+  mochiantenna: { pts: [[23.6, 12.4], [22, 10.4], [20.2, 13.8], [18.2, 10.8], [HX, 14.2], [12.8, 10.8], [10.8, 13.8], [9, 10.4], [7.4, 12.4]], lean: 0, softTips: true, gentle: true, locks: [[[23.4, 9.6], [24.6, 15], [23.8, 20.6]], [[7.6, 9.6], [6.4, 15], [7.2, 20.6]]] },
+  // Swept the other way: toward the near side.
+  mochisweepnear: { pts: [[24.4, 14.8], [22.6, 13.2], [21.8, 16], [19.2, 12.4], [18.2, 15.6], [15.6, 11], [14.2, 14.2], [11.8, 9.2], [10.4, 11.8], [8.6, 7.6], [7.4, 9.4]], lean: 1.3, gentle: true },
+  // A fan: short in the middle, longer and longer out to the sides.
+  mochifan: { pts: [[24.8, 15.6], [23.6, 12.4], [22.4, 14.8], [20.8, 11.4], [19.4, 13.2], [17.8, 10.6], [16.6, 12], [HX, 10.4], [14.4, 12], [13.2, 10.6], [11.6, 13.2], [10.2, 11.4], [8.6, 14.8], [7.4, 12.4], [6.2, 15.6]], lean: 0, softTips: true },
+  // A blunt cut with one notch in the middle.
+  mochinotch: { pts: [[24.2, 15], [23.4, 15.2], [17, 15.2], [16, 12.6], [15, 12.6], [14, 15.2], [7.6, 15.2], [6.8, 15]], lean: 0, plain: true, strands: [[20.4, 5, 20.4, 14, 0.6, 0.2], [10.6, 5, 10.6, 14, 0.6, -0.2]] },
+});
+MOCHI_FRINGES.push('mochistraight', 'mochiwisp', 'mochiside', 'mochicurtain', 'mochiheart', 'mochiwave', 'mochidip', 'mochiasym', 'mochibaby', 'mochiflip', 'mochigap', 'mochicurl',
+  'mochiswoop', 'mochiknot', 'mochilayer', 'mochichoppy', 'mochiarch', 'mochiup', 'mochifeather', 'mochimess', 'mochiantenna', 'mochisweepnear', 'mochifan', 'mochinotch');
+
+// ---------- Batch two of the Mochi's hairstyles (32 in all) ----------
+Object.assign(STYLES, {
+  // Kagami bun: two buns stacked on top, a big one and a small one, like a kagami mochi.
+  kagamibun(r, m) {
+    const knot = [F(E(HX, 2.4, 3.8, 1.2, r.sh2)), ...bun(HX, -1.4, 5.8, 3.8, r, 1), ...bun(HX, -6.2, 3.8, 2.8, r, -1)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...knot], hang: [],
+      front: bangs('kagamiblunt', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, -8.6, m)]), top: knot, tips: [16, 21],
+    };
+  },
+  // Usagi buns: two loops of hair standing up on top like a moon rabbit's ears.
+  usagibuns(r, m) {
+    const ear = [[9.6, 3.4], [7.8, -2.6], [8.8, -8.6], [11.8, -9.2], [13, -3.6], [12.6, 2.4]];
+    const ears = [lock(ear, 3, r.base, null, 1, 0.8), lock(fx(ear), 3, r.base, null, 1, 0.8), F(E(11, 3, 2.2, 1.2, r.sh2)), F(E(20, 3, 2.2, 1.2, r.sh2))];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...ears], hang: [],
+      front: bangs('mochipuff', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, 1.6, m)]), top: ears, tips: [16, 21],
+    };
+  },
+  // Sensu tail: a high tail at the back spread open like a folding fan, ribbed, its edge scalloped.
+  sensutail(r, m) {
+    const [tx, ty] = [6, 5];
+    const at = (a, rr) => [tx + Math.cos(deg(a)) * rr, ty - Math.sin(deg(a)) * rr];
+    const fan = poly(smooth([[tx, ty], ...[100, 112, 125, 137, 150, 162, 175, 187, 200, 212, 225].map((a, i) => at(a, i % 2 ? 8.8 : 10))], 1), r.sh1);
+    const ribs = [106, 131, 156, 181, 206].map((a) => streak(tx, ty, ...at(a, 8.6), 0.5, 0, r.sh2));
+    return {
+      head: [crown(r), shortBack(r, m, 20), F(E(tx, ty, 1.6, 1.8, r.sh2))], hang: [fan, ...ribs, streak(3.4, 1.4, -1.6, 0.2, 0.7, 0.2, r.hi)],
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16, 1.2, m)]), top: [F(E(tx, ty, 1.6, 1.8, r.sh2))], tips: [8, 16],
+    };
+  },
+  // Sakuranbo: a pair of round puffs hanging from one tie at the side, like twin cherries.
+  sakuranbo(r, m) {
+    const mv = mover(m, 1.2);
+    const [a, b] = [mv([2.2, 17.4]), mv([6.4, 19.8])];
+    const shine = ([x, y]) => streak(x - 1.6, y - 1.2, x - 0.4, y - 2.2, 0.6, 0.2, r.hi);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 19)],
+      hang: [lock([[5.6, 9.4], [3.4, 13], a], 1.4, r.sh1, null, 1, 0.6), lock([[5.6, 9.4], [6.6, 14], b], 1.4, r.sh1, null, 1, 0.6),
+        F(E(...a, 3, 2.9, r.base)), F(E(...b, 3.2, 3.1, r.base)), shine(a), shine(b), F(E(5.6, 9.4, 1.4, 1.2, r.sh2))],
+      front: bangs('dangoclump', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25, 19.4]], null, 3), ...sproutAt(16, 1.2, m)]), tips: [16, 22],
+    };
+  },
+  // Wataame: twin tails puffed up into soft clouds, like cotton candy.
+  wataame(r, m) {
+    const mv = mover(m, 1.1);
+    const cloud = (pts, c) => pts.map(([x, y, rr]) => { const [px, py] = mv([x, y]); return F(E(px, py, rr, rr * 0.9, c)); });
+    const far = [[5.6, 16.4, 2.4], [2.6, 19.6, 3.2], [4.8, 22.6, 3.4], [1.6, 25, 3], [4, 27.8, 2.8]];
+    const near = far.map(([x, y, rr]) => [31 - x, y, rr]);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)],
+      hang: [...cloud(far, r.sh1), ...cloud(near, r.base), F(E(6.4, 16.2, 1.5, 1.3, r.sh2)), F(E(24.6, 16.2, 1.5, 1.3, r.sh2))],
+      front: bangs('mochipuff', r, m, sproutAt(15.6, 1.2, m)), tips: [22, 29],
+    };
+  },
+  // Ohagi: a short round fluffy crop, wider than it is tall, little curls pressed into it.
+  ohagi(r, m) {
+    const ball = mass([[1.4, 20], [-0.2, 14], [1.4, 7], [6, 2], [HX, 0], [25, 2], [29.6, 7], [31.2, 14], [29.6, 20], [25, 22.4], [HX, 21], [6, 22.4]], r.sh1, m, 0.3);
+    const curls = [[2, 12], [29, 12], [4.4, 18.6], [26.6, 18.6]].map(([x, y]) => poly(smooth([[x - 1.2, y], [x, y + 0.8], [x + 1.2, y], [x, y + 0.4]], 1), r.sh2));
+    return {
+      head: [crown(r, 0.8), ball, ...curls], hang: [],
+      front: bangs('mochipuff', r, m, [lock([[25, 11], [27.6, 15], [27, 19]], 4.2, r.base, m, 1.1), lock(fx([[25, 11], [27.6, 15], [27, 19]]), 4.2, r.base, m, 1.1), ...sproutAt(15.6, 0.6, m)]), tips: [16, 22],
+    };
+  },
+  // Ringo tail: a long low tail that loops round into a ring at its end.
+  ringotail(r, m) {
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [lock([[5.6, 15], [3.2, 20], [2.4, 26], [2.6, 30.4], [0.8, 34], [3, 37.4], [6.2, 35.8], [5.8, 31.8], [4, 31]], 3.6, r.sh1, m, 1.1, 0.7), F(E(5.6, 15, 1.5, 1.3, r.sh2))],
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25.2, 11], [26, 16.4], [25.4, 21]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]), tips: [28, 36],
+    };
+  },
+  // Karintou: a bun wound from a twisted rope of hair, coiled at the back of the head.
+  karintou(r, m) {
+    const coil = Array.from({ length: 11 }, (_, i) => { const a = deg(i * 34); const rr = 4.2 - i * 0.28; return [3.4 + Math.cos(a) * rr, 11 + Math.sin(a) * rr * 0.9]; });
+    const knot = twist(coil, 2.6, r, null);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21), ...knot], hang: [],
+      front: bangs('monakacrop', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(16, 1.2, m)]), top: knot, tips: [16, 21],
+    };
+  },
+  // Koshian: two tiny bunches high on the head, each drooping out like a little sprout.
+  koshian(r, m) {
+    const tuft = [[10.2, 3], [8.6, 0.2], [6, -0.6], [4.2, 1.6]];
+    const tufts = [lock(tuft, 3, r.base, null, 1, 0.5), lock(fx(tuft), 3, r.base, null, 1, 0.5), F(E(10.2, 3, 1.3, 1.1, r.sh2)), F(E(20.8, 3, 1.3, 1.1, r.sh2))];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...tufts], hang: [],
+      front: bangs('sakurapetal', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, 1.4, m)]), top: tufts, tips: [16, 21],
+    };
+  },
+  // Pom braids: twin braids to the chest, each ending in a round pom of hair.
+  pombraids(r, m) {
+    const tail = [[6.4, 16.4], [4, 20.6], [3.4, 25.6], [3.8, 29.4]];
+    const pom = (pts) => { const [x, y] = mover(m, 1.05)(pts[pts.length - 1]); return [F(E(x, y + 1.6, 2.8, 2.6, r.base)), streak(x - 1.6, y + 0.4, x - 0.4, y - 0.4, 0.6, 0.2, r.hi)]; };
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)],
+      hang: [...plait(tail, 3, r, m, 1.05), ...pom(tail), ...plait(fx(tail), 3, r, m, 1.05), ...pom(fx(tail))],
+      front: bangs('loopfringe', r, m, sproutAt(15.6, 1.2, m)), tips: [24, 32],
+    };
+  },
+  // Nami: the hair swept back into one big wave that curls over at the back of the head.
+  nami(r, m) {
+    return {
+      head: [crown(r, 0.4), lock([[10, 2.6], [4, -0.6], [-0.8, 0.4], [-2.8, 4], [-1.2, 6.8], [1, 5.6]], 6.4, r.sh1, null, 1, 0.3), napeShadow(r)],
+      hang: sheet({ len: 24, flare: 12, n: 3 }, r, m, 0.7),
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25, 11], [26, 16], [25.4, 20.4]], undefined, 3.2), ...sproutAt(16.2, 1.2, m)]), tips: [18, 24],
+    };
+  },
+  // Kibi: lopsided, the near side cut at the chin, the far side long to the shoulder with a curl.
+  kibi(r, m) {
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)], hang: [],
+      front: bangs('finfringe', r, m, [lock([[6.2, 10.6], [4, 17.6], [4.6, 24.6], [2.8, 28.2], [1.2, 27]], 4.8, r.base, m, 1.1, 0.3), ...sideLocks(r, m, [[25, 11], [25.8, 15.4], [25, 18.4]], null, 3), ...sproutAt(16, 1.2, m)]),
+      tips: [19, 27],
+    };
+  },
+  // Anmitsu: two low buns at the sides, soft cubes like the jellies in an anmitsu bowl.
+  anmitsu(r, m) {
+    const cube = (x, y) => [poly(smooth([[x - 3, y - 2.8], [x + 3, y - 2.8], [x + 3, y + 2.8], [x - 3, y + 2.8]], 2), r.base), poly(smooth([[x - 2, y + 1.4], [x + 2.4, y + 1.4], [x + 2.2, y + 2.4], [x - 2, y + 2.4]], 1), r.sh1),
+      streak(x - 2, y - 1.6, x - 0.2, y - 2.1, 0.6, 0, r.hi), streak(x - 2.2, y - 1.4, x - 2.4, y + 0.6, 0.5, 0, r.hi)];
+    const far = cube(3.6, 19.4);
+    const near = cube(27.4, 19.4);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...far], hang: [],
+      front: bangs('kagamiblunt', r, m, [...near, ...sproutAt(15.6, 1.2, m)]), top: [...far, ...near], tips: [16, 23],
+    };
+  },
+  // Hishi: a bob cut in three tiers, each a step longer, like the layers of a hishi mochi.
+  hishi(r, m) {
+    const tiers = (side) => [[[24.6, 9], [27.2, 12.4], [28, 14.4]], [[24.8, 12], [27.6, 16.4], [28.4, 18.6]], [[25, 15], [27.6, 20], [28, 22.6]]]
+      .map((pts, i) => lock(side > 0 ? pts : fx(pts), 4.2, i % 2 ? r.sh1 : r.base, m, 1.05, 0.55));
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 22)], hang: [],
+      front: bangs('kagamiblunt', r, m, [...tiers(-1).reverse(), ...tiers(1).reverse(), ...sproutAt(15.6, 1.2, m)]), tips: [17, 23],
+    };
+  },
+  // Suama: long hair gathered loosely at the very end and tied there, the tips puffing out.
+  suama(r, m) {
+    const tail = [[6, 18], [4, 24], [4.4, 30], [5.6, 34]];
+    const [ex, ey] = mover(m, 1.1)(tail[tail.length - 1]);
+    return {
+      head: [crown(r, 0.6)],
+      hang: [napeShadow(r), mass([[4, 12], [2.4, 20], [3.2, 28], [5.2, 33.6], [8.4, 33], [9.4, 26], [10, 18], [9, 12]], r.sh1, m, 1), F(E(ex + 1, ey - 0.6, 2, 1, r.sh2)),
+        poly(smooth([[ex - 1.4, ey], [ex - 2.8, ey + 3], [ex + 0.6, ey + 4.2], [ex + 3.6, ey + 3], [ex + 3, ey]], 2), r.base)],
+      front: bangs('loopfringe', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 17], [25.6, 23]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]), tips: [26, 34],
+    };
+  },
+  // Hanabira: locks framing the face cut wide and round like petals, two each side.
+  hanabira(r, m) {
+    const petals = (side) => [[[24.6, 9.6], [28, 13], [27.4, 17]], [[24.8, 15], [27.8, 19], [26.2, 22.6]]].map((pts, i) => lock(side > 0 ? pts : fx(pts), 5.4, i ? r.sh1 : r.base, m, 1.1, 0.35));
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)], hang: [],
+      front: bangs('sakurapetal', r, m, [...petals(-1).reverse(), ...petals(1).reverse(), ...sproutAt(15.6, 1.2, m)]), tips: [17, 23],
+    };
+  },
+});
+MOCHI_HAIR.push('kagamibun', 'usagibuns', 'sensutail', 'sakuranbo', 'wataame', 'ohagi', 'ringotail', 'karintou', 'koshian', 'pombraids', 'nami', 'kibi', 'anmitsu', 'hishi', 'suama', 'hanabira');
+OWN_HAIR.push('kagamibun', 'usagibuns', 'sensutail', 'sakuranbo', 'wataame', 'ohagi', 'ringotail', 'karintou', 'koshian', 'pombraids', 'nami', 'kibi', 'anmitsu', 'hishi', 'suama', 'hanabira');
+
+// ---------- Batch three of the Mochi's hairstyles (48 in all) ----------
+Object.assign(STYLES, {
+  // Kinkan: lopsided, a round bun on the far side and a tail falling on the near side.
+  kinkan(r, m) {
+    const knot = bun(5.6, 4.8, 4, 3.6, r, 1);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...knot], hang: [],
+      front: bangs('dangoclump', r, m, [lock([[25.4, 8], [28.4, 13], [28.6, 19], [27.2, 24.4]], 4.2, r.base, m, 1.1, 0.35), F(E(25.4, 8, 1.5, 1.3, r.sh2)),
+        ...sideLocks(r, m, null, fx([[25, 11], [25.8, 15.4], [25, 18.6]]), 3), ...sproutAt(15.6, 1.2, m)]),
+      top: knot, tips: [17, 25],
+    };
+  },
+  // Tama: a high tail tied off into a long string of little round beads, down to the waist.
+  tama(r, m) {
+    const mv = mover(m, 1.15);
+    const beads = [[3, 8.4], [1.8, 13], [1.6, 17.8], [2.2, 22.6], [3, 27.2], [4, 31.4]].flatMap(([x, y], i) => {
+      const [px, py] = mv([x, y]);
+      const rr = 2.5 - i * 0.12;
+      return [F(E(px, py, rr, rr * 0.92, i % 2 ? r.sh1 : r.base)), F(E(px + 0.5, py - rr * 0.9, 1.1, 0.5, r.sh2))];
+    });
+    return {
+      head: [crown(r), shortBack(r, m, 20), F(E(6, 4.6, 1.6, 1.8, r.sh2))], hang: beads.reverse(),
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16, 1.2, m)]), top: [F(E(6, 4.6, 1.6, 1.8, r.sh2))], tips: [18, 30],
+    };
+  },
+  // Wa: a braid coiled into a flat ring on each side of the top of the head.
+  wa(r, m) {
+    const ring = Array.from({ length: 13 }, (_, i) => { const a = deg(i * 30 + 90); return [6.2 + Math.cos(a) * 3.4, 3.8 - Math.sin(a) * 2.6]; });
+    const rings = [...plait(ring, 2, r, null), ...plait(fx(ring), 2, r, null)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...rings], hang: [],
+      front: bangs('loopfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, 1.2, m)]), top: rings, tips: [16, 21],
+    };
+  },
+  // Sasa: a short crop with two long thin locks falling in front to the chest, like bamboo leaves.
+  sasa(r, m) {
+    const leaf = [[24.4, 10], [26, 17], [26.4, 25], [25.6, 31]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 18)], hang: [],
+      front: bangs('monakacrop', r, m, [lock(leaf, 2.8, r.base, m, 1.1, 0.25), lock(fx(leaf), 2.8, r.sh1, m, 1.1, 0.25), ...sproutAt(15.6, 1.2, m)]), tips: [22, 30],
+    };
+  },
+  // Nebou: soft bedhead, round tufts sticking out every which way.
+  nebou(r, m) {
+    const tufts = [[[8, 3], [4.6, -0.6], [2.4, -0.4]], [[5, 8], [0.8, 7], [-1, 8.6]], [[23, 3], [26.6, -0.4], [28.6, 0.4]], [[26.4, 8], [30.4, 7.6], [31.8, 9.6]], [[6, 14], [1.6, 15.6], [0.6, 18]]]
+      .map((t) => lock(t, 3.8, r.base, m, 1, 0.7));
+    return {
+      head: [crown(r, 0.8), shortBack(r, m, 20), ...tufts], hang: [],
+      front: bangs('monakacrop', r, m, [lock([[25, 12], [28.6, 15], [29.4, 18.4]], 3.6, r.base, m, 1.1, 0.7), ...sproutAt(16, 1, m)]), top: tufts, tips: [16, 22],
+    };
+  },
+  // Musubi: the hair gathered over the near shoulder and tied in a loose knot, the end hanging on.
+  musubi(r, m) {
+    const knot = bun(26.4, 24.6, 2.6, 2.4, r, -1);
+    return {
+      head: [crown(r, 0.4)], hang: [napeShadow(r), ...sheet({ len: 21, flare: 12, n: 3 }, r, m, 0.6)],
+      front: bangs('warabisweep', r, m, [lock([[21.6, 12], [26.4, 17.4], [26.4, 23.4]], 4.6, r.sh1, m, 1.05, 0.6), ...knot, lock([[26.4, 25.6], [28, 29.6], [27.4, 33]], 3.6, r.base, m, 1.1, 0.3), ...sproutAt(15.6, 1.2, m)]),
+      tips: [24, 32],
+    };
+  },
+  // Kuruma: twin tails from high on the head whose ends curl back up like wheels.
+  kuruma(r, m) {
+    const tail = [[6, 6], [2.6, 9], [1, 15], [1.6, 21], [4, 24], [5.8, 21.6]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)],
+      hang: [lock(tail, 4, r.sh1, m, 1.1, 0.6), lock(fx(tail), 4, r.base, m, 1.1, 0.6), F(E(6, 6, 1.5, 1.4, r.sh2)), F(E(25, 6, 1.5, 1.4, r.sh2))],
+      front: bangs('sakurapetal', r, m, sproutAt(15.6, 1.2, m)), tips: [16, 24],
+    };
+  },
+  // Tanabata: one long tail all the way to the heels, tied in two places along the way.
+  tanabata(r, m) {
+    const tail = [[6, 14], [4, 22], [3.4, 30], [3.6, 38], [4.2, 44]];
+    const mv = mover(m, 1.05);
+    const ties = [[3.6, 26], [3.5, 37]].map(([x, y]) => { const [px, py] = mv([x, y]); return F(E(px, py, 2.6, 0.8, r.sh2)); });
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 21)], hang: [lock(tail, 5, r.sh1, m, 1.05, 0.5), ...ties, F(E(6, 14, 1.8, 1.4, r.sh2))],
+      front: bangs('kagamiblunt', r, m, [...sideLocks(r, m, [[25.2, 11], [26.2, 17], [25.8, 23.6], [26.4, 29]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]), tips: [32, 42],
+    };
+  },
+  // Kasa: a bob that flares out wide at the jaw like an open parasol.
+  kasa(r, m) {
+    const flare = mass([[3.4, 9], [6.4, 3], [HX, 0.6], [24.6, 3], [27.6, 9], [29.6, 16], [33.4, 21.6], [31.2, 23.4], [26, 22.4], [HX, 23], [5, 22.4], [-0.2, 23.4], [-2.4, 21.6], [1.4, 16]], r.sh1, m, 0.5);
+    return {
+      head: [crown(r, 0.6), flare, streak(-1, 21.8, 4.6, 21.6, 0.5, 0, r.sh2), streak(26.4, 21.6, 32, 21.8, 0.5, 0, r.sh2)], hang: [],
+      front: bangs('kagamiblunt', r, m, sproutAt(15.6, 1, m)), tips: [18, 24],
+    };
+  },
+  // Tsuru tail: a short crop with one long thin braid trailing from the nape.
+  tsurutail(r, m) {
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 18)], hang: [...plait([[6, 18], [4.4, 23], [4, 29], [4.6, 34]], 2.2, r, m, 1.05)],
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.6, 14.8], [25, 17.6]], undefined, 2.8), ...sproutAt(16, 1.2, m)]), tips: [24, 33],
+    };
+  },
+  // Koromo: long hair with a round ringlet curling at each cheek.
+  koromo(r, m) {
+    const curl = [[24.8, 11], [26.6, 16], [27, 20], [25.4, 22.6], [24.6, 21]];
+    return {
+      head: [crown(r, 0.6)], hang: [napeShadow(r), ...sheet({ len: 34, flare: 14, n: 4, ends: 'curls' }, r, m)],
+      front: bangs('mochipuff', r, m, [lock(curl, 3.4, r.base, m, 1.1, 0.4), lock(fx(curl), 3.4, r.base, m, 1.1, 0.4), ...sproutAt(15.6, 1.2, m)]), tips: [26, 33],
+    };
+  },
+  // Hanami: half up, two little buns at the back of the crown, the rest falling long and loose.
+  hanami(r, m) {
+    const buns = [...bun(5.4, 3.4, 2.7, 2.5, r, 1), ...bun(25.6, 3.4, 2.7, 2.5, r, -1)];
+    return {
+      head: [crown(r, 0.6), ...buns], hang: [napeShadow(r), ...sheet({ len: 38, flare: 14.6, wave: 0.8, n: 4 }, r, m)],
+      front: bangs('loopfringe', r, m, [...sideLocks(r, m, [[25.2, 11], [26.6, 17], [25.8, 23]], undefined, 3.2), ...sproutAt(HX, 1.2, m)]), top: buns, tips: [28, 36],
+    };
+  },
+  // Momiji: a ponytail at the back whose end opens into a leaf of five round lobes.
+  momiji(r, m) {
+    const tail = [[5.6, 10], [2.4, 13], [1.2, 18], [1.8, 22]];
+    const [ex, ey] = mover(m, 1.1)(tail[tail.length - 1]);
+    const lobes = [-60, -30, 0, 30, 60].map((a) => F(E(ex + Math.sin(deg(a)) * 2.6, ey + 1.6 + Math.cos(deg(a)) * 2.4, 1.6, 1.7, r.sh1)));
+    return {
+      head: [crown(r), shortBack(r, m, 20), F(E(5.6, 10, 1.5, 1.5, r.sh2))], hang: [lock(tail, 4.2, r.sh1, m, 1.1, 0.5), ...lobes, ...[-40, 0, 40].map((a) => streak(ex, ey, ex + Math.sin(deg(a)) * 3, ey + 1.6 + Math.cos(deg(a)) * 3, 0.4, 0, r.sh2))],
+      front: bangs('sakurapetal', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16, 1.2, m)]), tips: [14, 24],
+    };
+  },
+  // Kumo: three soft puffs in a row across the top of the head, like little clouds; the sprout
+  // grows out of the middle one.
+  kumo(r, m) {
+    const puffs = [[9, 1.8, 3], [22, 1.8, 3], [HX, -0.6, 3.4]].flatMap(([x, y, rr]) => [F(E(x, y, rr, rr * 0.9, r.base)), poly(smooth([[x - rr * 0.6, y + rr * 0.3], [x, y + rr * 0.6], [x + rr * 0.6, y + rr * 0.3], [x, y + rr * 0.45]], 1), r.sh1), streak(x - rr * 0.5, y - rr * 0.4, x + rr * 0.1, y - rr * 0.8, 0.6, 0.2, r.hi)]);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...puffs], hang: [],
+      front: bangs('mochipuff', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, -3.6, m)]), top: puffs, tips: [16, 21],
+    };
+  },
+  // Hotaru: two thin tails starting high on the crown and falling all the way to the ground.
+  hotaru(r, m) {
+    const tail = [[9, 2], [4, 0.4], [0.4, 4], [-1, 12], [-0.4, 22], [-1.2, 32], [0, 40]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), F(E(9, 2, 1.4, 1.2, r.sh2)), F(E(22, 2, 1.4, 1.2, r.sh2))],
+      hang: [lock(tail, 2.8, r.sh1, m, 1.1, 0.4), lock(fx(tail), 2.8, r.base, m, 1.1, 0.4)],
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, 1.2, m)]), tips: [26, 40],
+    };
+  },
+  // Amezaiku: a high tail that curls up and round into a spiral over the back of the head, like a
+  // sugar sculpture.
+  amezaiku(r, m) {
+    const curl = lock([[7, 3], [4, -1], [0, -2], [-2.6, 0.6], [-2, 4], [0.8, 4.6], [1.6, 2], [0, 0.8]], 3.6, r.sh1, null, 1, 0.5);
+    return {
+      head: [crown(r), shortBack(r, m, 20), curl, F(E(7, 3, 1.5, 1.6, r.sh2))], hang: [],
+      front: bangs('dangoclump', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16.4, 1.2, m)]), top: [curl], tips: [12, 20],
+    };
+  },
+});
+const BATCH3 = ['kinkan', 'tama', 'wa', 'sasa', 'nebou', 'musubi', 'kuruma', 'tanabata', 'kasa', 'tsurutail', 'koromo', 'hanami', 'momiji', 'kumo', 'hotaru', 'amezaiku'];
+MOCHI_HAIR.push(...BATCH3);
+OWN_HAIR.push(...BATCH3);
+
+
+// ---------- Batch four of the Mochi's hairstyles (64 in all) ----------
+Object.assign(STYLES, {
+  // Nagare: all the hair swept over from the far side and falling long down the near shoulder.
+  nagare(r, m) {
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 19)], hang: [],
+      front: bangs('warabisweep', r, m, [lock([[8, 4], [18, 5.6], [25.6, 12], [27.4, 20], [26.6, 28], [27.6, 34]], 6, r.sh1, m, 1.1, 0.3),
+        lock([[12, 4.4], [20.4, 7], [25.4, 13.6], [26.4, 21], [25.8, 27]], 3, r.base, m, 1.15, 0.3), ...sproutAt(15.6, 1.2, m)]), tips: [24, 33],
+    };
+  },
+  // Pompon: a high tail tied into one big round fluffy pom at the back of the head.
+  pompon(r, m) {
+    const pom = [[-2.4, 4, 3, r.sh1], [-2.6, 8.4, 3, r.sh1], [1.6, 2.4, 3, r.base], [1.8, 9.6, 3, r.sh1], [0.6, 6, 4.2, r.base], [3.8, 6, 3, r.base]].map(([x, y, rr, c]) => F(E(x, y, rr, rr * 0.92, c)));
+    return {
+      head: [crown(r), shortBack(r, m, 20)], hang: [...pom, streak(-1.4, 3.6, 1.6, 2, 0.8, 0.3, r.hi), F(E(6, 5, 1.6, 1.8, r.sh2))],
+      front: bangs('mochipuff', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(16, 1.2, m)]), tips: [6, 12],
+    };
+  },
+  // Ramen: long hair crimped into tight little waves, strand by strand.
+  ramen(r, m) {
+    const strand = (x, c) => lock(Array.from({ length: 9 }, (_, i) => [x + (i % 2 ? 1.1 : -1.1) * (i > 0 ? 1 : 0), 13 + i * 3]), 3.8, c, m, 1.05, 0.4);
+    return {
+      head: [crown(r, 0.6)], hang: [napeShadow(r), ...[3, 7.4, 23.6, 28].map((x, i) => strand(x, i % 2 ? r.base : r.sh1))],
+      front: bangs('loopfringe', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 15], [25.2, 19], [26.4, 23]], undefined, 3), ...sproutAt(HX, 1.2, m)]), tips: [28, 37],
+    };
+  },
+  // Tsubaki: a bun at the side of the head ringed with loops of hair like a camellia's petals.
+  tsubaki(r, m) {
+    const flower = [...[0, 72, 144, 216, 288].map((a) => F(E(4.2 + Math.cos(deg(a)) * 3.8, 8 + Math.sin(deg(a)) * 3.4, 2.2, 1.9, r.sh1))), ...bun(4.2, 8, 3, 2.8, r, 1)];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...flower], hang: [],
+      front: bangs('sakurapetal', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(16, 1.2, m)]), top: flower, tips: [16, 21],
+    };
+  },
+  // Mimi: two long round locks falling from the top of the head down past the cheeks, like a lop
+  // rabbit's ears.
+  mimi(r, m) {
+    const ear = [[8.4, 3], [4.6, 4], [2.6, 9], [2.4, 16], [3.4, 21]];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 19), lock(ear, 5, r.sh1, m, 1, 0.75), lock(fx(ear), 5, r.base, m, 1, 0.75)], hang: [],
+      front: bangs('mochipuff', r, m, sproutAt(HX, 1.2, m)), tips: [15, 22],
+    };
+  },
+  // Futago: twin short tails, each tied off into two round bubbles.
+  futago(r, m) {
+    const mv = mover(m, 1.1);
+    const tail = (dir) => [[4.4, 16.6, 2.8], [3.6, 21.6, 2.6]].flatMap(([x, y, rr]) => { const [px, py] = mv([dir > 0 ? x : 31 - x, y]); return [F(E(px, py, rr, rr * 0.92, dir > 0 ? r.sh1 : r.base)), F(E(px, py - rr * 0.95, 1.2, 0.5, r.sh2))]; });
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20)], hang: [...tail(1).reverse(), ...tail(-1).reverse(), F(E(6.4, 14.4, 1.4, 1.2, r.sh2)), F(E(24.6, 14.4, 1.4, 1.2, r.sh2))],
+      front: bangs('dangoclump', r, m, sproutAt(15.6, 1.2, m)), tips: [16, 24],
+    };
+  },
+  // Nejibun: a bun twisted up into a tall cone on top; the sprout grows from its tip.
+  nejibun(r, m) {
+    const cone = twist([[HX, 2.6], [15.2, -1.4], [15.6, -4.8], [15.4, -7.6]], 5.4, r, null);
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...cone], hang: [],
+      front: bangs('kagamiblunt', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(15.4, -8.6, m)]), top: cone, tips: [16, 21],
+    };
+  },
+  // Sembei: one big flat round bun at the back of the head, coiled, framing it like a plate.
+  sembei(r, m) {
+    const disc = [F(E(HX, 9, 15.4, 12.4, r.sh1)), F(E(HX, 9, 13.4, 10.6, r.base)), poly(smooth([[HX - 11, 9], [HX - 9, 2.4], [HX, -0.6], [HX + 9, 2.4], [HX + 11, 9], [HX + 10, 8.4], [HX + 8.2, 3.2], [HX, 0.4], [HX - 8.2, 3.2], [HX - 10, 8.4]], 1), r.sh1)];
+    return {
+      head: [...disc, crown(r, 0.4), shortBack(r, m, 20)], hang: [],
+      front: bangs('loopfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, 1.2, m)]), top: disc, tips: [16, 21],
+    };
+  },
+  // Shishi: a huge mane spreading out round the head and down to the shoulders, like a lion dancer's.
+  shishi(r, m) {
+    const lobes = Array.from({ length: 11 }, (_, i) => { const a = deg(200 - i * 22); return F(E(HX + Math.cos(a) * 15, 14 - Math.sin(a) * 13, 4.2, 4, i % 2 ? r.sh1 : r.base)); });
+    return {
+      head: [mass([[-1, 26], [-3, 16], [0, 4], [8, -2], [HX, -3.4], [23, -2], [31, 4], [34, 16], [32, 26], [HX, 22]], r.sh1, m, 0.5), ...lobes, crown(r, 0.8)], hang: [],
+      front: bangs('monakacrop', r, m, [lock([[25, 11], [28.6, 16], [29, 21.6]], 4.4, r.base, m, 1.1, 0.5), lock(fx([[25, 11], [28.6, 16], [29, 21.6]]), 4.4, r.base, m, 1.1, 0.5), ...sproutAt(16, 0.6, m)]), tips: [20, 28],
+    };
+  },
+  // Mizuame: long straight hair whose ends drip into round drops, like syrup off a spoon.
+  mizuame(r, m) {
+    const mv = mover(m, 1.05);
+    const drops = [[4, 34.6], [9.6, 35.6], [21.4, 35.6], [27, 34.6]].map(([x, y]) => { const [px, py] = mv([x, y]); return [F(E(px, py, 1.4, 1.7, r.sh1)), F(E(px - 0.4, py - 0.5, 0.4, 0.5, r.hi))]; }).flat();
+    return {
+      head: [crown(r, 0.6)], hang: [napeShadow(r), ...sheet({ len: 33, flare: 13.6, n: 4 }, r, m), ...drops],
+      front: bangs('warabisweep', r, m, [...sideLocks(r, m, [[25.2, 11], [26.4, 17], [25.6, 23]], undefined, 3.2), ...sproutAt(15.6, 1.2, m)]), tips: [26, 34],
+    };
+  },
+  // Chakin: the hair gathered up on top and pinched into a knot, flaring above it like a twisted
+  // cloth pouch; the sprout grows from the top.
+  chakin(r, m) {
+    const pouch = [poly(smooth([[11.4, -0.4], [11.8, -5.4], [HX, -6.8], [19.2, -5.4], [19.6, -0.4], [HX, 1.4]], 2), r.base), ...[-2.6, 0, 2.6].map((d) => streak(HX + d * 0.4, 0.4, HX + d, -5.4, 0.5, 0, r.sh1)), F(E(HX, 1.4, 3, 1.1, r.sh2))];
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...pouch], hang: [],
+      front: bangs('mochipuff', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19.4]], undefined, 3), ...sproutAt(HX, -6.4, m)]), top: pouch, tips: [16, 21],
+    };
+  },
+  // Soba: long straight hair falling in fine separate strands, like noodles.
+  soba(r, m) {
+    const strands = [2.6, 5.6, 8.6, 22.4, 25.4, 28.4].map((x, i) => lock([[x + (x < HX ? 2 : -2), 12], [x, 22], [x + (i % 2 ? 0.4 : -0.4), 34], [x, 38]], 2.8, i % 2 ? r.base : r.sh1, m, 1.05, 0.5));
+    return {
+      head: [crown(r, 0.6)], hang: [napeShadow(r), ...strands],
+      front: bangs('kagamiblunt', r, m, [...sideLocks(r, m, [[25.2, 11], [25.8, 16.4], [25.4, 22]], undefined, 2.6), ...sproutAt(15.6, 1.2, m)]), tips: [28, 38],
+    };
+  },
+  // Onigiri: hair in a soft rounded triangle, a dark band round the bottom like the nori wrap.
+  onigiri(r, m) {
+    const tri = mass([[-0.6, 22], [2, 14], [7.6, 4], [HX, -1.6], [23.4, 4], [29, 14], [31.6, 22], [HX, 21]], r.sh1, m, 0.4);
+    const nori = poly(smooth([[-0.4, 21.6], [0.6, 17.6], [30.4, 17.6], [31.4, 21.6], [HX, 21.2]], 1), r.sh2);
+    return {
+      head: [tri, nori, crown(r, 0.4)], hang: [],
+      front: bangs('kagamiblunt', r, m, sproutAt(HX, -1, m)), tips: [16, 22],
+    };
+  },
+  // Funsui: a little tuft tied up on top of the head, its locks arching out and down all round
+  // like a fountain.
+  funsui(r, m) {
+    const jets = [[[HX, 1], [12.6, -3.4], [9, -3.6], [7.2, -0.8]], [[HX, 1], [18.4, -3.4], [22, -3.6], [23.8, -0.8]], [[HX, 1], [14, -4.6], [11.4, -6], [10, -4.6]], [[HX, 1], [17, -4.6], [19.6, -6], [21, -4.6]]]
+      .map((j, i) => lock(j, 2.8, i < 2 ? r.sh1 : r.base, null, 1, 0.7));
+    return {
+      head: [crown(r, 0.4), shortBack(r, m, 20), ...jets, F(E(HX, 1.2, 2, 1, r.sh2))], hang: [],
+      front: bangs('finfringe', r, m, [...sideLocks(r, m, [[25, 11], [25.8, 15.6], [25.2, 19]], undefined, 3), ...sproutAt(HX, -2.4, m)]), top: jets, tips: [16, 21],
+    };
+  },
+  // Senko: long straight hair whose ends curl out into little tendrils, like a sparkler's sparks.
+  senko(r, m) {
+    const curls = [[3.4, 30, -1], [8.4, 31, -1], [22.6, 31, 1], [27.6, 30, 1]].map(([x, y, d]) => lock([[x, y], [x + d * 1.2, y + 2.4], [x + d * 2.8, y + 2.8], [x + d * 3, y + 1.4]], 1.8, r.sh1, m, 1.05, 0.4));
+    return {
+      head: [crown(r, 0.6)], hang: [napeShadow(r), ...sheet({ len: 31, flare: 13.6, n: 4 }, r, m), ...curls],
+      front: bangs('sakurapetal', r, m, [...sideLocks(r, m, [[25.2, 11], [26.2, 17], [25.4, 22.6]], undefined, 3), ...sproutAt(15.6, 1.2, m)]), tips: [24, 33],
+    };
+  },
+  // Tamago: a smooth glossy egg-shaped bob, sleek all over, with one big shine.
+  tamago(r, m) {
+    const shell = mass([[3, 22.6], [1.8, 14], [3.6, 5.6], [9, 0.2], [HX, -1.2], [22, 0.2], [27.4, 5.6], [29.2, 14], [28, 22.6], [HX, 22]], r.sh1, m, 0.3);
+    return {
+      head: [shell, crown(r, 0.8)], hang: [],
+      front: bangs('kagamiblunt', r, m, [lock([[25, 11], [27.6, 16], [27.2, 21.6]], 4, r.base, m, 1.05, 0.6), lock(fx([[25, 11], [27.6, 16], [27.2, 21.6]]), 4, r.base, m, 1.05, 0.6), streak(8, 3.6, 13.4, 1.4, 1.2, 0.3, r.hi), ...sproutAt(15.6, 0.4, m)]),
+      tips: [17, 23],
+    };
+  },
+});
+const BATCH4 = ['nagare', 'pompon', 'ramen', 'tsubaki', 'mimi', 'futago', 'nejibun', 'sembei', 'shishi', 'mizuame', 'chakin', 'soba', 'onigiri', 'funsui', 'senko', 'tamago'];
+MOCHI_HAIR.push(...BATCH4);
+OWN_HAIR.push(...BATCH4);
+
+// ---------- Two-Flavour coats: the far half of the hair in a second colour ----------
+// The part of a closed outline with x at most `x0` (clipped against that line).
+function leftOf(pts, x0) {
+  const out = [];
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const ain = a[0] <= x0;
+    const bin = b[0] <= x0;
+    if (ain) out.push(a);
+    if (ain !== bin) out.push([x0, a[1] + ((b[1] - a[1]) * (x0 - a[0])) / (b[0] - a[0])]);
+  }
+  return out;
+}
+// Every hair shape gets its far half laid over in the same tone of the second colour.
+function splitTone(shapes, r, r2) {
+  if (!r2) return shapes;
+  const role = new Map(Object.entries(r).map(([k, v]) => [v, k]));
+  const out = [];
+  for (const sh of shapes) {
+    out.push(sh);
+    const k = role.get(sh.c);
+    if (!k || !(k in r2)) continue;
+    const pts = sh.t === 'p' ? sh.pts.map(([x, y]) => [x + (sh.x ?? 0), y + (sh.y ?? 0)]) : sh.t === 'e' ? ellipsePts(sh.x, sh.y, sh.rx, sh.ry) : null;
+    if (!pts) continue;
+    const part = leftOf(pts, HX);
+    if (part.length > 2) out.push({ ...poly(part, r2[k]), hang: sh.hang });
+  }
+  return out;
+}
+// Gold Leaf coats: flakes of gold leaf pressed into the hair.
+// A Mutation's mark in its hair: white sesame seeds scattered over it (Black Sesame), a sky of
+// tiny stars (Midnight), or a plum blossom tucked in at the near side (Dark Plum).
+// (Big enough to read at the Mochi's size: a few bold marks, not a dust of tiny ones.)
+const SPOTS = [[9, 4.4, 0.7], [15.2, 2.8, -0.5], [21.4, 4.2, 0.6], [6.4, 9.6, -0.6], [12.4, 6.8, 0.4], [18.6, 6.6, -0.4], [24.6, 9.4, 0.5]];
+const HAIR_MARKS = {
+  seeds: SPOTS.map(([x, y, t]) => F(T([[x - 1.6, y + t], [x - 0.3, y - 0.85], [x + 1.6, y - t], [x + 0.3, y + 0.85]], '#f4ecdc'))),
+  stars: SPOTS.map(([x, y], i) => {
+    const k = i % 2 ? 1.3 : 1.9;
+    return F(T([[x, y - k], [x + k * 0.3, y - k * 0.3], [x + k, y], [x + k * 0.3, y + k * 0.3], [x, y + k], [x - k * 0.3, y + k * 0.3], [x - k, y], [x - k * 0.3, y - k * 0.3]], i % 3 ? '#fff3c4' : '#c8e8ff'));
+  }),
+  blossom: [0, 72, 144, 216, 288].map((a) => F(E(23 + Math.cos(((a - 90) * Math.PI) / 180) * 2.2, 6.6 + Math.sin(((a - 90) * Math.PI) / 180) * 2.2, 1.8, 1.8, '#ff8ab0')))
+    .concat([F(E(23, 6.6, 1, 1, '#c8305a')), F(E(22.6, 6.2, 0.4, 0.4, '#fff3c4'))]),
+};
+const GOLD_FLAKES = [[10, 4.2, 0.2], [19.4, 3, -0.4], [23.6, 8.4, 0.5], [7, 10, -0.2], [14.2, 6.4, 0.3]].flatMap(([x, y, t]) => [
+  F(T([[x - 1, y - 0.4 + t], [x + 0.2, y - 0.9], [x + 1.1, y + 0.2 - t], [x - 0.2, y + 0.8]], '#f2c94c')), F(T([[x - 0.5, y - 0.3], [x + 0.2, y - 0.6], [x + 0.4, y - 0.1]], '#fff3b0'))]);
+
 // ---------- What the hero draws ----------
 
 // Every part of a hairstyle for one look and motion: { head, hang, front, shade, top }.
 // `r` is the hair's colour ramp, `tint` the blend and tip ramps for two-tone (or null), `m` the
 // motion ({ root, tip, lift, wave }), and `mood` the face (for the ahoge).
-export function hairParts(style, r, tint, m, mood = 'smile', bangsKind = 'auto') {
+// `extra` (the Mochi's coats): `split`, a second colour's ramp for the far half; `gold`, gold leaf.
+export function hairParts(style, r, tint, m, mood = 'smile', bangsKind = 'auto', sprout = null, extra = {}) {
   const s = STYLES[style];
   if (!s) return { head: [], hang: [], front: [], shade: [], top: [] };
   BANGS = bangsKind && bangsKind !== 'auto' && FRINGES[bangsKind] ? bangsKind : null;
+  SPROUT = sprout;
   const p = s(r, m, mood);
   BANGS = null;
+  SPROUT = null;
   const tips = p.tips ?? [99, 99];
   return {
     // (A tail's lock comes as its body plus strands, so the lists are flattened.)
-    head: twoTone(p.head.flat(2), r, tint, tips),
-    hang: twoTone(p.hang.flat(2), r, tint, tips),
-    front: twoTone(p.front.shapes.flat(2), r, tint, tips),
+    head: splitTone(twoTone(p.head.flat(2), r, tint, tips), r, extra.split),
+    hang: splitTone(twoTone(p.hang.flat(2), r, tint, tips), r, extra.split),
+    front: [...splitTone(twoTone(p.front.shapes.flat(2), r, tint, tips), r, extra.split), ...(extra.gold ? GOLD_FLAKES : []), ...(HAIR_MARKS[extra.marks] ?? [])],
     shade: p.front.shade,
     hairline: p.front.hairline !== false,
     top: p.top ?? [],

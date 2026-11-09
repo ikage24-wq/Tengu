@@ -272,11 +272,12 @@ function arc(cx, cy, rx, ry, a0, a1, th, c) {
 function hairOf(look, rig) {
   const style = hairStyleOf(look);
   const color = look.hairColor ?? '#e9ebfa';
-  const r = hairRamp(color);
+  // (A Mochi's candied or Moonlit coat: glassy hair, its shine pure white.)
+  const r = look.hairGloss ? { ...hairRamp(color), hi: '#ffffff' } : hairRamp(color);
   const tipColor = look.hairTip && look.hairTip !== 'none' && look.hairTip !== color ? look.hairTip : null;
   const tint = tipColor ? { mid: hairRamp(mix(color, tipColor, 0.5)), tip: hairRamp(tipColor) } : null;
   const m = rig ? { root: rig.hair ?? 0, tip: rig.hairTip ?? rig.hair ?? 0, lift: rig.hairLift ?? 0, wave: rig.hairWave ?? 0 } : null;
-  const p = hairParts(style, r, tint, m, look.face ?? 'smile', look.hairBangs);
+  const p = hairParts(style, r, tint, m, look.face ?? 'smile', look.hairBangs, look.sprout, look.hairSplit || look.goldLeaf || look.hairMarks ? { split: look.hairSplit ? hairRamp(look.hairSplit) : null, gold: look.goldLeaf, marks: look.hairMarks } : {});
   const front = [...p.front];
   front.shade = p.front.length ? [...(p.hairline ? [F(E(HEAD_X, 8.2, 10.4, 3.2, '#000000'))] : []), ...p.shade] : [];
   return { style, r, head: p.head, hang: p.hang.map((sh) => ({ ...sh, hang: true })), front, top: p.top };
@@ -317,6 +318,47 @@ const EYE_LOOK = {
   // three flicks, a slightly smaller iris for that scheming look. Still big and bright: she can't
   // quite manage menacing.
   villain: { rx: 2.15, ry: 2.4, tilt: 0.52, wing: 2, flicks: 3, iris: 1.18, open: 0.92, sparkle: true },
+  // The Mochi's own (data/mochi-genes.js rolls one per egg): round button eyes with barely a lash
+  // and a big shine; upturned drops; soft and half-lidded; tiny dark beans; sharp almonds with a
+  // flicked wing; and big wide sparkly ones.
+  mochiround: { rx: 2.25, ry: 2.5, tilt: 0, wing: 0, flicks: 0, iris: 1.5, lashW: 0.45, sparkle: true },
+  mochidrop: { rx: 2, ry: 2.7, tilt: 0.3, wing: 0.7, flicks: 1, iris: 1.3 },
+  mochisleepy: { rx: 2.15, ry: 2.35, tilt: -0.14, wing: 0.5, flicks: 1, iris: 1.36, open: 0.66 },
+  mochibean: { rx: 1.45, ry: 1.95, tilt: 0, wing: 0, flicks: 0, iris: 1.6, lashW: 0.35 },
+  mochisharp: { rx: 2.15, ry: 2.2, tilt: 0.4, wing: 1.35, flicks: 2, iris: 1.12 },
+  mochiwide: { rx: 2.45, ry: 3, tilt: 0.08, wing: 0.6, flicks: 1, iris: 1.42, sparkle: true },
+  // ...and sly upswept fox eyes with a slit; big doe eyes with three lashes; glassy eyes with a
+  // ring for a pupil; and lazy half-moons.
+  mochifox: { rx: 2.2, ry: 2, tilt: 0.5, wing: 1.6, flicks: 1, iris: 1.08, pupil: 'slit' },
+  mochilash: { rx: 2.3, ry: 2.9, tilt: -0.04, wing: 0.5, flicks: 3, iris: 1.36 },
+  mochiglass: { rx: 2.2, ry: 2.6, tilt: 0.06, wing: 0.3, flicks: 1, iris: 1.48, pupil: 'ring', sparkle: true },
+  mochilazy: { rx: 2.15, ry: 2.4, tilt: 0, wing: 0.6, flicks: 1, iris: 1.32, open: 0.5 },
+  // ...and the rest of the Mochi's 32: snowflake, crescent, crystal, ringed, blank, bar and
+  // diamond pupils; tiny irises in big whites; round with a slit; sharply upturned; sad and
+  // downturned; glamorous lashes; plain with no lash; a squint; huge; tall; tiny dots; soft;
+  // wide cat eyes; flat-lidded; weary; and the classic.
+  mochisnow: { rx: 2.2, ry: 2.6, tilt: 0.06, wing: 0.5, flicks: 1, iris: 1.4, pupil: 'flake', sparkle: true },
+  mochimoon: { rx: 2.15, ry: 2.55, tilt: 0.1, wing: 0.7, flicks: 1, iris: 1.38, pupil: 'crescent' },
+  mochicrystal: { rx: 2.3, ry: 2.7, tilt: 0.1, wing: 0.8, flicks: 2, iris: 1.4, pupil: 'crystal', sparkle: true },
+  mochirings: { rx: 2.2, ry: 2.5, tilt: 0, wing: 0.4, flicks: 1, iris: 1.45, pupil: 'rings', open: 0.86 },
+  mochiblank: { rx: 2.25, ry: 2.6, tilt: 0.04, wing: 0.5, flicks: 1, iris: 1.4, pupil: 'none', sparkle: true },
+  mochigoat: { rx: 2.1, ry: 2.3, tilt: 0.12, wing: 0.7, flicks: 1, iris: 1.3, pupil: 'bar' },
+  mochidiamond: { rx: 2.15, ry: 2.5, tilt: 0.2, wing: 1, flicks: 2, iris: 1.3, pupil: 'diamond' },
+  mochitiny: { rx: 2.2, ry: 2.6, tilt: 0.02, wing: 0.4, flicks: 1, iris: 0.92 },
+  mochislit: { rx: 2.25, ry: 2.6, tilt: 0.08, wing: 0.6, flicks: 1, iris: 1.4, pupil: 'slit' },
+  mochiupturn: { rx: 2.05, ry: 2.6, tilt: 0.55, wing: 1, flicks: 1, iris: 1.28 },
+  mochisad: { rx: 2.2, ry: 2.6, tilt: -0.36, wing: 0.6, flicks: 1, iris: 1.36 },
+  mochiglam: { rx: 2.25, ry: 2.6, tilt: 0.24, wing: 1.9, flicks: 3, iris: 1.3, sparkle: true },
+  mochiplain: { rx: 1.9, ry: 2.3, tilt: 0, wing: 0, flicks: 0, iris: 1.35, lashW: 0.25 },
+  mochisquint: { rx: 2.25, ry: 1.7, tilt: 0.14, wing: 0.9, flicks: 1, iris: 1.2, open: 0.8 },
+  mochibig: { rx: 2.6, ry: 3.2, tilt: 0.06, wing: 0.7, flicks: 2, iris: 1.48, sparkle: true },
+  mochitall: { rx: 1.7, ry: 2.95, tilt: 0.04, wing: 0.5, flicks: 1, iris: 1.36 },
+  mochidot: { rx: 1.1, ry: 1.35, tilt: 0, wing: 0, flicks: 0, iris: 1.6, lashW: 0.3 },
+  mochisoft: { rx: 2.1, ry: 2.45, tilt: -0.1, wing: 0.35, flicks: 1, iris: 1.42, open: 0.86 },
+  mochiwidecat: { rx: 2.45, ry: 2.4, tilt: 0.42, wing: 1.3, flicks: 2, iris: 1.3, pupil: 'slit', sparkle: true },
+  mochiflat: { rx: 2.2, ry: 2.4, tilt: 0.1, wing: 1.1, flicks: 1, iris: 1.3, open: 0.76 },
+  mochiweary: { rx: 2.15, ry: 2.3, tilt: -0.3, wing: 1.4, flicks: 2, iris: 1.22, open: 0.84 },
+  mochiclassic: { rx: 2.1, ry: 2.6, tilt: 0.15, wing: 1, flicks: 2, iris: 1.3, sparkle: true },
 };
 const mirrorAt = (x, y) => [-x, y];
 
@@ -345,8 +387,8 @@ function eye(ex, out, style, color, mode, look, f = {}, cross = 0) {
   const kit = {
     k: 1, chibi: true, skin: sk.base, skinSh: sk.sh1, skinSh2: sk.sh2, lip: sk.lip,
     eye: {
-      iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil ? 'star' : st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
-      ink: st.lash ?? hr.ink, lashW: 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
+      iris: color, pupil: f.heart ? 'heart' : f.shine && !st.pupil && !look.pupil ? 'star' : look.pupil ?? st.pupil, pupilC: f.heart ? '#ff4f86' : mix(shade(color, -62), hr.ink, 0.4), white: '#fffaf7', lashSh: mix('#fffaf7', hr.ink, 0.2),
+      ink: st.lash ?? hr.ink, lashW: st.lashW ?? 0.85, wing: st.wing, flicks: st.flicks, lashLen: 0.95, crease: false, lower: mix(sk.lip, sk.base, 0.4),
       sparkle: st.sparkle || f.shine, tilt: st.tilt, jewel: st.jewel,
     },
   };
@@ -445,6 +487,33 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
     return [x0 + (x1 - x0) * u, y + tilt + (-tilt * 1.6) * u - lift];
   };
   switch (style) {
+    // The Mochi's own: a thin soft dash; a small high arch; a gentle worried slope, thick at the
+    // inner end; a little bean.
+    case 'mochidash': return ribbon([at(0.15), at(0.5, 0.05), at(0.82)], g([0.7, 0.8, 0.55]), c);
+    case 'mochiarc': return ribbon([at(0.05, 0.1), at(0.45, 0.75), at(0.92, 0.3)], g([0.55, 0.7, 0.4]), c);
+    case 'mochislope': return ribbon([at(0, -0.25), at(0.5, 0.15), at(0.95, 0.45)], g([1.05, 0.85, 0.45]), c);
+    case 'mochibean': {
+      const [cx, cy] = at(0.45, 0.55);
+      return F(E(cx, cy, 1.2 + grow, 0.55 + grow, c));
+    }
+    // ...and twelve more: thin and arched; bold and straight; fierce, slanting down to the nose; two
+    // little dots; raised high in surprise; a short flat dash; a long gentle curve; thick tapering
+    // to a point; a tiny wave; a soft round blob; split in two; and long and straight.
+    case 'mochithin': return ribbon([at(0), at(0.5, 0.35), at(1)], g([0.4, 0.5, 0.3]), c);
+    case 'mochibold': return ribbon([at(0), at(0.5, 0.1), at(0.95)], g([1.3, 1.35, 1]), c);
+    case 'mochifierce': return ribbon([at(0, -0.3), at(0.5, 0.15), at(1, 0.6)], g([1.1, 0.9, 0.45]), c);
+    case 'mochitwodot': return [at(0.22, 0.3), at(0.66, 0.45)].map(([x, y]) => F(E(x, y, 0.5 + grow, 0.45 + grow, c)));
+    case 'mochihigh': return ribbon([at(0.2, 1.1), at(0.5, 1.5), at(0.8, 1.1)], g([0.5, 0.6, 0.4]), c);
+    case 'mochiflat': return ribbon([at(0.15), at(0.5), at(0.85)], g([0.6, 0.65, 0.6]), c);
+    case 'mochicurve': return ribbon([at(-0.05), at(0.3, 0.5), at(0.7, 0.6), at(1.05, 0.1)], g([0.5, 0.7, 0.65, 0.35]), c);
+    case 'mochitaper': return ribbon([at(0), at(0.4, 0.15), at(1, 0.3)], g([1.4, 0.9, 0.2]), c);
+    case 'mochiwavy': return ribbon([at(0), at(0.33, 0.35), at(0.66, 0.05), at(1, 0.35)], g([0.5, 0.6, 0.6, 0.4]), c);
+    case 'mochiblob': {
+      const [cx, cy] = at(0.5, 0.8);
+      return F(E(cx, cy, 1.3 + grow, 0.7 + grow, c));
+    }
+    case 'mochisplit': return [ribbon([at(0), at(0.2, 0.1), at(0.38)], g([0.7, 0.75, 0.6]), c), ribbon([at(0.58, 0.2), at(0.78, 0.3), at(0.98, 0.2)], g([0.6, 0.7, 0.5]), c)];
+    case 'mochilong': return ribbon([at(-0.15), at(0.5, 0.15), at(1.15, 0.05)], g([0.55, 0.6, 0.35]), c);
     case 'thick':
       // Bold and straight-ish, a little longer, thinning only at the tail.
       return ribbon([at(-0.08), at(0.35, 0.1), at(0.75, 0.1), at(1.08)], g([1.25, 1.35, 1.2, 0.6]), c);
@@ -475,6 +544,20 @@ function brow(ex, side, raise, tilt, c, style = 'soft', grow = 0) {
       return ribbon([at(0), at(0.5, 0.15), at(1.12, 0.75)], g([0.95, 0.7, 0.12]), c);
     default:
       return ribbon([at(0), at(0.45, 0.15), at(1)], g([0.6, 0.85, 0.45]), c);
+  }
+}
+
+// A Mochi's cheek mark.
+function cheekMarks(kind, sk) {
+  const nx = FACE_X + 6.1;
+  const fx = FACE_X - 6.1;
+  switch (kind) {
+    case 'freckles': return [nx, fx].flatMap((x) => [[-0.9, 0.2], [0.2, -0.3], [0.9, 0.4]].map(([a, b]) => F(E(x + a, 21.6 + b, 0.3, 0.3, sk.blushDk))));
+    case 'swirl': return [nx, fx].flatMap((x) => [arc(x, 21.9, 1.1, 0.7, 0, 300, 0.4, sk.blushDk), F(E(x + 0.2, 21.8, 0.25, 0.2, sk.blushDk))]);
+    case 'dimple': return [FACE_X - 2.6, FACE_X + 2.6].map((x, i) => arc(x, MY + 0.2, 0.5, 0.45, i ? 200 : -20, i ? 380 : 160, 0.35, sk.lipDk));
+    case 'star': return [star(nx - 0.8, 20.8, 0.9, '#ffd24a')];
+    case 'heart': return [F(T([[nx - 0.8, 20.6], [nx - 0.4, 20.2], [nx, 20.6], [nx + 0.4, 20.2], [nx + 0.8, 20.6], [nx, 21.6]], '#ff6f9a'))];
+    default: return [];
   }
 }
 
@@ -527,6 +610,47 @@ function mouthShapes(kind, sk) {
       F(T([[x - 2, MY - 0.3], [x - 1.4, MY + 0.7], [x - 0.8, MY - 0.3], [x - 0.2, MY + 0.7], [x + 0.4, MY - 0.4], [x + 1, MY + 0.6], [x + 1.6, MY - 0.5], [x + 2.2, MY + 0.4], [x + 2.3, MY - 0.6]], '#ffffff')),
       F(T([[x - 1.4, MY + 1.6], [x - 0.9, MY + 0.9], [x - 0.3, MY + 1.6], [x + 0.3, MY + 0.9], [x + 0.9, MY + 1.6], [x + 1.4, MY + 1]], '#ffffff'))];
     case 'onicat': return [arc(x - 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), arc(x + 0.75, MY + 0.2, 0.8, 0.8, 10, 170, 0.6, LIP), F(T([[x + 0.9, MY + 0.8], [x + 1.7, MY + 0.7], [x + 1.3, MY + 1.9]], '#ffffff'))];
+    // The Mochi's own resting mouths: a round "w" with the tongue peeking; a tiny dot; a little
+    // smile with a dimple each side; a smile with one fang; a small open triangle; a smile with a
+    // grain of rice stuck at the corner.
+    case 'mochiw': return [arc(x - 0.95, MY + 0.1, 0.95, 0.95, 5, 175, 0.58, LIP), arc(x + 0.95, MY + 0.1, 0.95, 0.95, 5, 175, 0.58, LIP), F(E(x, MY + 1.15, 0.45, 0.35, TONGUE))];
+    case 'mochidot': return [F(E(x, MY + 0.7, 0.45, 0.42, LIP))];
+    case 'mochibeam': return [arc(x, MY - 0.2, 1.3, 1.2, 25, 155, 0.6, LIP), F(E(x - 2.1, MY + 0.1, 0.22, 0.22, LIP)), F(E(x + 2.1, MY + 0.1, 0.22, 0.22, LIP))];
+    case 'mochifang': return [arc(x, MY - 0.1, 1.25, 1.05, 20, 160, 0.6, LIP), F(T([[x - 0.75, MY + 0.85], [x - 0.05, MY + 0.85], [x - 0.4, MY + 1.75]], '#ffffff'))];
+    case 'mochitri': return [F(T([[x - 1.15, MY + 0.15], [x + 1.15, MY + 0.15], [x, MY + 1.65]], MOUTH)), F(E(x, MY + 1, 0.42, 0.28, '#ff9fb8'))];
+    case 'mochicrumb': return [arc(x, MY - 0.1, 1.15, 1, 25, 155, 0.6, LIP), F(E(x + 1.75, MY + 0.55, 0.42, 0.3, '#ffffff'))];
+    // ...a closed line with just the tip of the tongue out at one corner; a wide smile with a
+    // fang at each end.
+    case 'mochiblep': return [stroke([[x - 1.2, MY + 0.4], [x + 1.2, MY + 0.5]], 0.5, LIP), F(E(x + 0.6, MY + 1.05, 0.5, 0.55, TONGUE))];
+    // ...and the rest of the Mochi's 32: a deep u; a wide gentle smile; a small open smile; a
+    // tiny o; a pout; a flat line; a wavy line; a lopsided :3; a smirk; top teeth; gap teeth;
+    // bunny teeth; a little frown; tongue out; a closed v; a big cheesy grin; a smile off to one
+    // side; a squiggle; a drool drop; heart lips; shark teeth; a big w; a sleepy oval; a full cheek.
+    case 'mochiu': return [arc(x, MY - 0.6, 1, 1.3, 25, 155, 0.6, LIP)];
+    case 'mochismile': return [arc(x, MY - 1.2, 2, 1.6, 40, 140, 0.55, LIP)];
+    case 'mochiopen': return [F(T([[x - 1.3, MY], [x + 1.3, MY], [x + 0.8, MY + 1.2], [x, MY + 1.5], [x - 0.8, MY + 1.2]], MOUTH)), F(E(x, MY + 1, 0.6, 0.3, '#ff9fb8'))];
+    case 'mochio': return [F(E(x, MY + 0.8, 0.55, 0.6, MOUTH))];
+    case 'mochipout': return [arc(x - 0.1, MY + 0.4, 0.55, 0.45, 270, 450, 0.5, LIP), arc(x - 0.1, MY + 1.2, 0.55, 0.45, 270, 450, 0.5, LIP)];
+    case 'mochiflat': return [F(R(x - 0.8, MY + 0.5, 1.6, 0.5, LIP))];
+    case 'mochiwave': return [stroke([[x - 1.2, MY + 0.6], [x - 0.6, MY + 0.25], [x, MY + 0.6], [x + 0.6, MY + 0.25], [x + 1.2, MY + 0.6]], 0.45, LIP)];
+    case 'mochicat3': return [arc(x - 0.6, MY + 0.3, 0.6, 0.6, 10, 170, 0.5, LIP), arc(x + 0.75, MY + 0.1, 0.8, 0.8, 10, 170, 0.55, LIP)];
+    case 'mochismirk': return [stroke([[x - 1, MY + 0.6], [x + 0.6, MY + 0.5], [x + 1.4, MY - 0.2]], 0.5, LIP)];
+    case 'mochiteeth': return [F(T([[x - 1.5, MY], [x + 1.5, MY], [x + 1, MY + 1.2], [x - 1, MY + 1.2]], MOUTH)), F(R(x - 1.3, MY, 2.6, 0.5, '#ffffff'))];
+    case 'mochigap': return [arc(x, MY - 0.3, 1.4, 1.1, 20, 160, 0.55, LIP), F(R(x - 0.75, MY + 0.75, 0.6, 0.6, '#ffffff')), F(R(x + 0.15, MY + 0.75, 0.6, 0.6, '#ffffff'))];
+    case 'mochibunny': return [stroke([[x - 1.2, MY + 0.3], [x + 1.2, MY + 0.3]], 0.45, LIP), F(R(x - 0.6, MY + 0.5, 0.55, 0.7, '#ffffff')), F(R(x + 0.05, MY + 0.5, 0.55, 0.7, '#ffffff'))];
+    case 'mochifrown': return [arc(x, MY + 1.2, 0.9, 0.8, 205, 335, 0.55, LIP)];
+    case 'mochitongue': return [F(E(x, MY + 0.8, 1, 0.8, MOUTH)), F(E(x, MY + 1.3, 0.65, 0.45, TONGUE))];
+    case 'mochiv': return [stroke([[x - 1, MY + 0.2], [x, MY + 1], [x + 1, MY + 0.2]], 0.5, LIP)];
+    case 'mochicheese': return [F(T([[x - 2.1, MY - 0.4], [x + 2.1, MY - 0.4], [x + 1.5, MY + 1], [x, MY + 1.6], [x - 1.5, MY + 1]], MOUTH)), F(R(x - 1.8, MY - 0.4, 3.6, 0.55, '#ffffff')), F(E(x, MY + 1, 0.9, 0.4, '#ff9fb8'))];
+    case 'mochiside': return [arc(x + 0.9, MY, 0.8, 0.7, 20, 160, 0.5, LIP)];
+    case 'mochisquig': return [stroke([[x - 1.4, MY + 0.2], [x - 0.5, MY + 0.8], [x + 0.4, MY + 0.2], [x + 1.3, MY + 0.5]], 0.45, LIP)];
+    case 'mochidrool': return [arc(x, MY - 0.1, 1.2, 1, 25, 155, 0.55, LIP), F(E(x + 1.3, MY + 1.3, 0.35, 0.55, '#bfe6ff'))];
+    case 'mochiheartlip': return [F(T([[x - 0.9, MY + 0.2], [x - 0.45, MY - 0.15], [x, MY + 0.2], [x + 0.45, MY - 0.15], [x + 0.9, MY + 0.2], [x, MY + 1.2]], '#ff7f9b'))];
+    case 'mochishark': return [F(T([[x - 1.6, MY], [x + 1.6, MY], [x + 1.1, MY + 1.2], [x - 1.1, MY + 1.2]], MOUTH)), F(T([[x - 1.4, MY], [x - 0.9, MY + 0.7], [x - 0.4, MY], [x + 0.1, MY + 0.7], [x + 0.6, MY], [x + 1.1, MY + 0.7], [x + 1.4, MY]], '#ffffff'))];
+    case 'mochiomega': return [arc(x - 1.15, MY + 0.1, 1.15, 1.1, 5, 175, 0.55, LIP), arc(x + 1.15, MY + 0.1, 1.15, 1.1, 5, 175, 0.55, LIP)];
+    case 'mochiyawnish': return [F(E(x, MY + 0.9, 0.7, 1, MOUTH)), F(E(x, MY + 1.5, 0.4, 0.3, TONGUE))];
+    case 'mochimunch': return [stroke([[x - 1.2, MY + 0.5], [x + 0.4, MY + 0.5]], 0.45, LIP), arc(x + 0.9, MY + 0.3, 0.55, 0.5, -70, 70, 0.4, LIP)];
+    case 'mochitwofang': return [arc(x, MY - 0.4, 1.7, 1.3, 20, 160, 0.6, LIP), F(T([[x - 1.35, MY + 0.55], [x - 0.75, MY + 0.7], [x - 1.1, MY + 1.5]], '#ffffff')), F(T([[x + 1.35, MY + 0.55], [x + 0.75, MY + 0.7], [x + 1.1, MY + 1.5]], '#ffffff'))];
     // The yuki-onna's: small, pale blue lips, closed; or parted with a cold breath.
     case 'yukilips': return [F(E(x, MY + 0.6, 1.1, 0.55, '#8ab4e8')), F(E(x, MY + 0.45, 0.7, 0.2, '#c8e0ff'))];
     case 'yukibreath': return [F(E(x, MY + 0.9, 0.9, 0.8, '#5a7ab8')), F(E(x, MY + 0.9, 1.3, 1.1, '#8ab4e8')), F(E(x, MY + 0.9, 0.7, 0.6, '#3a4a78'))];
@@ -1166,6 +1290,13 @@ function headShapes(look, g, rig) {
     out.push(F(E(bx, 21.9, 1.8 * blush * k, 0.75 * blush, mix(skin, sk.blush, 0.55))), F(E(bx, 21.9, 1.0 * blush * k, 0.42 * blush, sk.blush)));
     if (blush > 1) for (const j of [-1, 0, 1]) out.push(stroke([[bx + j * 1 - 0.3, 22.4], [bx + j * 1 + 0.3, 21.2]], 0.5, sk.blushDk));
   }
+  // A Mochi's cheek mark (data/mochi-genes.js): kinako freckles, a swirl, dimples, or a tiny
+  // star or heart under the near eye.
+  if (look.cheek) out.push(...cheekMarks(look.cheek, sk));
+  // (A Gold Leaf coat: a flake of gold on each cheek.)
+  // (Deep Sea: glowing dots across the cheeks and brow, like a deep-sea creature's lights.)
+  if (look.glowSpots) for (const [x, y, r] of [[FACE_X + 7, 22.6, 0.9], [FACE_X + 5.2, 23.8, 0.65], [FACE_X - 6.6, 22.8, 0.8], [FACE_X - 4.8, 24, 0.6]]) out.push(F(E(x, y, r + 0.4, r + 0.4, '#1a6e78')), F(E(x, y, r, r, '#e8fffc')));
+  if (look.goldLeaf) for (const [x, y] of [[FACE_X + 6.6, 21.2], [FACE_X - 5.8, 21.8]]) out.push(F(T([[x - 0.7, y - 0.2], [x + 0.1, y - 0.7], [x + 0.8, y + 0.1], [x - 0.1, y + 0.6]], '#f2c94c')));
   // Eyes: hurt and blinks win over the expression; otherwise the expression may close one or
   // both eyes, lower the lids, or glance aside. Angry faces pull the inner lids down.
   const cross = f.cross ?? 0;
@@ -1174,11 +1305,13 @@ function headShapes(look, g, rig) {
     // open eye.
     const shut = f.closed?.[i];
     const mode = rig.eyes === 'hurt' || rig.eyes === 'dead' ? rig.eyes : shut ? (shut === true ? 'happy' : shut) : rig.eyes === 'wink' ? 'open' : rig.eyes;
-    out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, eyeColor, mode, look, f, cross));
+    out.push(...eye(FACE_X + EYE_DX * side, side, eyeStyle, side < 0 && look.eyeColor2 ? look.eyeColor2 : eyeColor, mode, look, f, cross));
   });
-  if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', sk));
-  else if (rig.eyes === 'dead') out.push(...mouthShapes('open', sk));
-  else out.push(...mouthShapes(look.mouth ?? rig.mouth ?? f.mouth ?? 'smile', sk));
+  // (A Mochi Mutation's dark dough: a light pink lip line, so the little mouth still reads.)
+  const skM = look.lightMouth ? { ...sk, lipDk: '#f2b4c4', lip: '#ffd0dc' } : sk;
+  if (rig.eyes === 'hurt') out.push(...mouthShapes('grit', skM));
+  else if (rig.eyes === 'dead') out.push(...mouthShapes('open', skM));
+  else out.push(...mouthShapes(look.mouth ?? rig.mouth ?? f.mouth ?? 'smile', skM));
   if (front) out.push(...front);
   // Brows, in the look's style; an expression that doesn't move them leaves them at rest. The
   // eye-cover lock hides that side's brow.
