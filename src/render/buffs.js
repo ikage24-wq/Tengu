@@ -191,7 +191,13 @@ export function drawBuffCast(ctx, f, x, y, p, time) {
   // bursting out instead; Iron Guard snaps plates of steel round the body behind a steel shield.
   const school = f.school ?? SKILLS[f.skill]?.school ?? 'steel';
   // (The mage line's buffs and the Cleric's healing reactions bring their own pictures, round the
-  // body and clear of the face, so no pillar of light goes up over them.)
+  // body and clear of the face, so no pillar of light goes up over them. The Tide Mage's, the
+  // Maelstrom's and the Tidecaller's too: her shell, pool, rain and blessing are their own effects.)
+  const own = SKILLS[f.skill]?.school;
+  if (['tide', 'deep', 'moon'].includes(school) || ['tide', 'deep', 'moon'].includes(own)) {
+    ctx.restore();
+    return;
+  }
   if (school === 'arcane' || school === 'idol' || school === 'astral' || f.skill === 'cloudnine' || f.skill === 'showstopper' || /^md(soothe|frost|spark)$/.test(f.skill ?? '')) {
     ctx.restore();
     return;
