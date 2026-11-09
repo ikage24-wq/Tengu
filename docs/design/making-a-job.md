@@ -101,6 +101,12 @@ Every effect is drawn for the game in `tools/fx-art.js` in the style the player 
     game smooths them and blends each drawing into the next.
   - Every effect is a few key drawings: it pops in, holds a beat, then breaks into beads and
     sparkles.
+- **Smooth motion, the Tide Mage's way (the player's model job, 2026-11-09).** Draw each effect as
+  one picture at its own moment `k` (0-1), not a few key poses, and give it 24-40 drawings (the game
+  runs at 144 fps; there are no size limits). Droplets and sparks fly on real arcs; bodies of the
+  job's stuff stay alive (her water ripples at its edges and carries long flowing currents); a shape
+  made of parts is merged into one body with one outline, never a stack of separate pieces. Build
+  with `python tools/build-fx.py --only <prefix>`.
 - **Never** use effect packs or code-drawn glows.
 - **Draw big things big.** For something that plays large, add a big version (`big()` in
   fx-art.js); it is re-rendered from the art at its own size rather than stretched.
