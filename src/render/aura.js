@@ -209,6 +209,19 @@ function chargeAura(ctx, x, y, t, s, k, layer) {
   if (k >= 1) fxSprite(ctx, 'celembgear', x, y - 62 * s, { frame: 1, scale: s * 0.3, rot: t * 1.5, alpha: 0.75 + 0.25 * Math.sin(t * 6) });
 }
 
+// Tide (the Tide Mage): a whirlpool turns flat round her feet as it builds, wider and faster the
+// fuller it is; full (High Tide), it runs at full size and bubbles rise round her.
+function tideAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k > 0.15) fxSprite(ctx, 'celtmwhirlbig', x, y + 2 * s, { frame: Math.floor(t * (5 + 6 * k)) % 8 > 5 ? 3 : 2 + (Math.floor(t * (5 + 6 * k)) % 4), scale: s * (0.12 + 0.12 * k), alpha: Math.min(0.85, (k - 0.15) * 2) });
+    return;
+  }
+  if (k >= 1) for (let i = 0; i < 3; i++) {
+    const u = (t * 0.7 + i / 3) % 1;
+    fxSprite(ctx, 'celtmbubble', x + (i - 1) * 12 * s + Math.sin(t * 3 + i) * 3 * s, y - (8 + 46 * u) * s, { frame: i, scale: s * 0.28, alpha: 1 - u });
+  }
+}
+
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
 // him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
 // again and again.
@@ -282,7 +295,7 @@ function tailsAura(ctx, x, y, t, s, k, layer) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

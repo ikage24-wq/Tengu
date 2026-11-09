@@ -118,7 +118,7 @@ const COLOUR = {
 // A spell's cast, by school: each element's own recorded charge-up.
 const CAST = { fire: 'castFire', ice: 'castIce', lightning: 'castZap', holy: 'castHoly', poison: 'castPoison', shadow: 'castDark', rage: 'castDark', wind: 'castWind', steel: 'castSteel' };
 // Projectiles leaving the hand or the bow, by kind.
-const SHOTS = { ptarrow: 'arrow', ptbig: 'arrowHeavy', ptcard: 'star', ptdove: 'gust', acarrow: 'arrow', acbig: 'arrowHeavy', skygust: 'gust', skygustbig: 'gust', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
+const SHOTS = { tmwave: 'tmwave', tmwavebig: 'tmwavebig', tmgreat: 'tmwavebig', tmbubble: 'tmbubble', ptarrow: 'arrow', ptbig: 'arrowHeavy', ptcard: 'star', ptdove: 'gust', acarrow: 'arrow', acbig: 'arrowHeavy', skygust: 'gust', skygustbig: 'gust', kunai: 'arrow', hawkarrow: 'arrow', hawkbig: 'arrowHeavy', falcon: 'arrowHeavy', featherwake: 'gust', wisp: 'gust', windarrow: 'arrow', galearrow: 'arrowHeavy', cyclone: 'cycloneShot', heavybolt: 'crossbow', blastbolt: 'crossbowHeavy', frostbolt: 'crossbowHeavy', ballista: 'boltKick', heartbolt: 'heartshock', arrow: 'arrow', rapid: 'arrow', draw: 'arrowHeavy', bigarrow: 'arrowHeavy', star: 'star', bigstar: 'star', fire: 'fire', bomb: 'fire', holy: 'holyChime', feather: 'gust', pebble: 'star', bolt: 'zap', stormbolt: 'crossbow', thunderbolt: 'crossbowHeavy', megabolt: 'crossbowHeavy' };
 // Spells and skill effects landing, by kind.
 const SPELLS = {
   burst: 'zapHit', beam: 'zapHit',
@@ -137,7 +137,7 @@ const HEAVY_BOLTS = new Set(['bigarrow', 'blastbolt', 'frostbolt', 'aebig', 'aeb
 // Heavy bolts that land with a thud of their own.
 const HEAVY_HITS = new Set(['ballista', 'heartbolt', 'galearrow', 'blastbolt']);
 // Each melee weapon's swing [light, heavy], and the cut its blows land with.
-const SWINGS = { sword: ['swing', 'swingHeavy'], axe: ['axeSwing', 'axeSwingHeavy'], spear: ['spearSwing', 'spearSwingHeavy'], dagger: ['daggerSwing', 'swing'], none: ['fistSwing', 'fistSwing'] };
+const SWINGS = { sword: ['swing', 'swingHeavy'], axe: ['axeSwing', 'axeSwingHeavy'], spear: ['spearSwing', 'spearSwingHeavy'], dagger: ['daggerSwing', 'swing'], none: ['fistSwing', 'fistSwing'], staff: ['tmswish', 'tmswish'] };
 const BLADE_HITS = { axe: 'hitAxe', spear: 'hitSpear', dagger: 'hitDagger', none: 'hitFist' };
 
 const SOUNDS = {

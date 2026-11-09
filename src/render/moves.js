@@ -4469,6 +4469,387 @@ export const MOVES = {
 
   // A whirl: two quick turns with the dagger out, cutting everything round her, then a backflip
   // out of it. Cuts at about 0.22 and 0.46.
+  // ---------- The Tide Mage (docs/design/tide-mage.md) ----------
+  // Water out of the head of her staff, worked with her whole body: she coils and cracks a whip,
+  // bowls a wave along the floor, raises a great wave over her head and brings it down, blows
+  // bubbles, slams a splash up, spins a whirlpool, rides a wave in. The staff is held as equipped
+  // (0 points it straight up, 90 level ahead); her free hand pulls the water along with it.
+
+  // Whip (opener, cracks at ~0.46): the staff drawn back over her shoulder as she coils away, then
+  // snapped out level as she leans in on a forward step, the tip overshooting and settling; her
+  // free hand flung back for balance and her hair whipping after.
+  tmwhip(p) {
+    const coil = soft(seg(p, 0, 0.3));
+    const crack = ease(seg(p, 0.3, 0.48));
+    const settle = soft(seg(p, 0.62, 1));
+    return {
+      weapon: lerp(lerp(30, 4, coil), 104, crack) - 14 * settle, arm: lerp(lerp(40, 28, coil), 58, crack) - 10 * settle,
+      lunge: -2.5 * coil * (1 - crack) + 6 * crack * (1 - 0.5 * settle), tilt: -0.12 * coil * (1 - crack) + 0.14 * crack * (1 - 0.7 * settle),
+      rig: (r) => {
+        danceLegs(r, [coil * (1 - crack), [1.4, 0, 2], [-2.6, 0, -6]], [crack * (1 - 0.6 * settle), [4.2, 0, 6], [-3.4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(1, 3, coil), -4, crack) + 2 * settle), q(lerp(-2, -4, crack) + 2 * settle)];
+        r.tx = q(lerp(-1 * coil, 1.5, crack) * (1 - 0.5 * settle));
+        r.hairLift = crack > 0.2 && settle < 0.4 ? -1 : 0;
+        r.cape = Math.round(-3 * bump(p, 0.3, 0.75));
+        if (crack > 0.3 && settle < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Rolling wave (second, sent at ~0.44): she crouches like a bowler, sweeps the staff low along
+  // the floor from behind her to out in front, and the wave rolls off its head; she rises
+  // watching it go, the back leg stretched long.
+  tmroll(p) {
+    const dip = soft(seg(p, 0, 0.26));
+    const sweep = ease(seg(p, 0.22, 0.46));
+    const rise = soft(seg(p, 0.6, 1));
+    return {
+      weapon: lerp(lerp(30, 6, dip), 122, sweep) - 30 * rise, arm: lerp(lerp(40, 22, dip), 50, sweep) - 8 * rise,
+      lunge: -1.5 * dip + 5 * sweep * (1 - 0.6 * rise), tilt: 0.06 * dip + 0.12 * sweep * (1 - 0.8 * rise),
+      rig: (r) => {
+        const low = Math.max(dip, sweep) * (1 - rise);
+        r.squat = q(2 * low);
+        danceLegs(r, [low, [3.6, 0, 6], [-4.6, 0, -18]]);
+        r.backArm = [q(lerp(lerp(0, 3, dip), -5, sweep) + 3 * rise), q(lerp(-1, -3, sweep) + 2 * rise)];
+        r.tx = q(1.2 * sweep * (1 - rise));
+        r.cape = Math.round(-3 * bump(p, 0.25, 0.7));
+        if (sweep > 0.3 && rise < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Great curling wave (finisher, crashes at ~0.56): she rises onto her toes with the staff lifted
+  // high and her free hand raised to draw the water up behind her, holds it there trembling for a
+  // beat while it builds, then brings everything down with a long lean, the wave crashing out
+  // ahead; she lands in a deep, wide crouch and holds it, breathing, before standing.
+  tmcrash(p) {
+    const raise = soft(seg(p, 0, 0.3));
+    const hold = seg(p, 0.3, 0.46);
+    const shiver = Math.sin(hold * Math.PI * 7) * bump(p, 0.3, 0.46);
+    const down = ease(seg(p, 0.44, 0.58));
+    const land = bump(p, 0.54, 0.86);
+    const up = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(lerp(30, 2, raise) + 3 * shiver, 128, down) - 36 * up, arm: lerp(lerp(40, 58, raise), 56, down) - 12 * up,
+      lift: 4 * raise * (1 - down) + 1.2 * hold * (1 - down), lunge: -2 * raise * (1 - down) + 8 * down * (1 - 0.5 * up),
+      tilt: -0.16 * raise * (1 - down) + 0.03 * shiver + 0.26 * down * (1 - 0.8 * up),
+      rig: (r) => {
+        r.squat = q(2.5 * land * (1 - up));
+        danceLegs(r, [raise * (1 - down), [1.2, -1.2, 10], [-1.6, -1, -10]], [down * (1 - up), [4.4, 0, 6], [-4.4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -4, raise), -5, down) + 4 * up), q(lerp(lerp(-1, -12, raise), -3, down) + 2 * up)];
+        r.tx = q(lerp(-0.8 * raise, 2, down) * (1 - 0.6 * up));
+        r.hairLift = raise > 0.5 && down < 0.3 ? -1 : land > 0.4 ? 1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.1, 0.5) + 3 * bump(p, 0.5, 0.9));
+        if (hold > 0 && down < 0.2) r.eyes = 'half';
+        if (down > 0.2 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Bubbles (opener, three at ~0.3, 0.48, 0.66): the staff held up and out, its head drawing little
+  // loops, a bob up onto her toes and a flick of the staff with each bubble, a happy face.
+  tmbubbles(p) {
+    const up = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.78, 1)));
+    const puffs = [0.3, 0.48, 0.66].reduce((n, at) => n + bump(p, at - 0.09, at + 0.07), 0);
+    const loop = Math.sin(p * Math.PI * 6);
+    return {
+      weapon: lerp(30, 40, up) + 8 * loop * up + 10 * puffs, arm: lerp(40, 54, up),
+      lift: 1.8 * puffs, lunge: 1.5 * up, tilt: 0.04 * up + 0.03 * loop * up,
+      rig: (r) => {
+        danceLegs(r, [up, [2, 0, 2], [-2.2, 0, -4]], [puffs, [2, -0.8, 8], [-2.2, -0.6, -8]]);
+        r.backArm = [q(2 + 2.5 * up + Math.cos(p * Math.PI * 6) * up), q(-2 - 3 * up - 1.5 * puffs)];
+        r.hairLift = puffs > 0.6 ? -1 : 0;
+        if (up > 0.4) [r.eyes, r.mouth] = puffs > 0.5 ? ['happy', 'o'] : ['open', 'o'];
+      },
+    };
+  },
+
+  // Splash (opener, the staff strikes the floor at ~0.45): she lifts the staff high in both a
+  // wind-up and a little hop, then drives its head down into the floor ahead in a wide crouch, a
+  // splash thrown up where it lands; the recoil rocks her back up.
+  tmsplash(p) {
+    const lift = soft(seg(p, 0, 0.3));
+    const drive = ease(seg(p, 0.3, 0.46));
+    const recoil = bump(p, 0.46, 0.7);
+    const back = soft(seg(p, 0.66, 1));
+    return {
+      weapon: lerp(lerp(30, 3, lift), 150, drive) - 12 * recoil - 50 * back, arm: lerp(lerp(40, 58, lift), 46, drive) - 6 * back,
+      lift: 3 * bump(p, 0.08, 0.36), lunge: 5 * drive * (1 - 0.6 * back), tilt: -0.1 * lift * (1 - drive) + 0.2 * drive * (1 - back) - 0.05 * recoil,
+      rig: (r) => {
+        r.squat = q(2 * drive * (1 - back));
+        if (lift > 0.3 && drive < 0.3) tuck(r);
+        else danceLegs(r, [drive * (1 - back), [3.6, 0, 4], [-3.6, 0, -8]]);
+        r.backArm = [q(lerp(-2, -5, drive) + 3 * back), q(lerp(-6 * lift, -1, drive) + 1 * back)];
+        r.hairLift = drive > 0.5 && back < 0.3 ? 1 : lift > 0.5 ? -1 : 0;
+        if (drive > 0.3 && back < 0.4) strikeFace(r);
+      },
+    };
+  },
+
+  // Double whip (second, cracks at ~0.3 and ~0.64): the forehand crack out level, then the staff
+  // swung low and round under and up into a backhand crack, the body turning with each.
+  tmtwin(p) {
+    const a = ease(seg(p, 0.1, 0.3));
+    const under = soft(seg(p, 0.36, 0.52));
+    const b = ease(seg(p, 0.5, 0.66));
+    const settle = soft(seg(p, 0.76, 1));
+    return {
+      weapon: lerp(lerp(lerp(14, 100, a), 150, under), 84, b) - 20 * settle, arm: lerp(lerp(lerp(34, 56, a), 40, under), 58, b) - 12 * settle,
+      lunge: 4 * a * (1 - under) + 5 * b * (1 - 0.6 * settle), tilt: 0.1 * a * (1 - under) - 0.08 * under * (1 - b) + 0.14 * b * (1 - 0.8 * settle),
+      rig: (r) => {
+        danceLegs(r, [a, [3.4, 0, 4], [-3, 0, -10]], [under, [2, 0, 2], [-3.6, 0, -6]], [b * (1 - 0.6 * settle), [4.2, 0, 6], [-3.6, 0, -12]]);
+        r.squat = q(1.2 * under * (1 - b));
+        r.backArm = [q(lerp(lerp(-3, 2, under), -5, b) + 3 * settle), q(lerp(-3, -1, under) - 2 * b + 2 * settle)];
+        r.hairLift = (a > 0.4 && under < 0.3) || (b > 0.4 && settle < 0.4) ? -1 : 0;
+        if ((a > 0.4 && under < 0.4) || (b > 0.4 && settle < 0.5)) strikeFace(r);
+      },
+    };
+  },
+
+  // Geyser (second, bursts up at ~0.5): she plants the staff upright beside her and brings her free
+  // hand up from low to high, palm up, as the water bursts up out of the floor ahead; she rises
+  // onto her toes with it and leans back to watch it go up.
+  tmgeyser(p) {
+    const plant = soft(seg(p, 0, 0.24));
+    const call = ease(seg(p, 0.3, 0.5));
+    const watch = bump(p, 0.48, 0.86);
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(30, 6, plant) - 2 * watch + 26 * back, arm: lerp(40, 30, plant) + 6 * call - 4 * back,
+      lift: 3 * call * (1 - back), lunge: 1.5 * plant * (1 - back), tilt: 0.04 * plant - 0.1 * watch,
+      rig: (r) => {
+        danceLegs(r, [plant * (1 - back), [2.6, 0, 2], [-2.2, 0, -4]], [call * (1 - back), [2.6, -1.2, 12], [-2.2, -1, -10]]);
+        r.backArm = [q(lerp(lerp(-1, 3, plant), -3, call) + 3 * back), q(lerp(lerp(-1, 1, plant), -10, call) + 9 * back)];
+        r.hairLift = call > 0.5 && back < 0.5 ? -1 : 0;
+        if (call > 0.4 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+
+  // Whirlpool (finisher, drags them in at ~0.28, flings them out at ~0.64): she spins on the spot
+  // with the staff swept round her level (a clean turn, never squeezed), the water spinning up
+  // round her, then stops dead facing out and thrusts the staff ahead to fling it all outward.
+  tmwhirl(p) {
+    const spin = soft(seg(p, 0.06, 0.58));
+    const turns = 2 * spin;
+    const thrust = ease(seg(p, 0.56, 0.68));
+    const settle = soft(seg(p, 0.76, 1));
+    const a = turns * Math.PI * 2;
+    return {
+      weapon: 92 + 360 * turns - 6 * thrust - 20 * settle, arm: lerp(46, 58, thrust) - 10 * settle, orbit: spin > 0 && spin < 1,
+      turn: Math.cos(a) >= 0 ? 1 : -1, lift: 2.5 * bump(p, 0.1, 0.58), lunge: 6 * thrust * (1 - 0.6 * settle), tilt: 0.04 * Math.sin(a) * (1 - thrust) + 0.16 * thrust * (1 - settle),
+      rig: (r) => {
+        danceLegs(r, [bump(p, 0.04, 0.6), [1, -0.6, 6], [-1.2, 0, -2]], [thrust * (1 - 0.6 * settle), [4.2, 0, 6], [-4, 0, -12]]);
+        r.squat = q(1.5 * thrust * (1 - settle));
+        r.backArm = [q(-5 * bump(p, 0.06, 0.58) - 4 * thrust + 4 * settle), q(-6 * bump(p, 0.06, 0.58) - 2 * thrust + 2 * settle)];
+        r.hairLift = spin > 0.1 && spin < 0.95 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.06, 0.6));
+        if (thrust > 0.3 && settle < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Wave ride (finisher, crashes in at ~0.56): she rides in on a wave in a surfer's crouch, arms out
+  // for balance and the staff held level like a balance pole, bobbing on the swell, then springs
+  // off the top of it and lands with a splash in a wide crouch.
+  tmsurf(p) {
+    const ride = soft(seg(p, 0, 0.16)) * (1 - ease(seg(p, 0.46, 0.56)));
+    const bob = Math.sin(p * Math.PI * 5) * ride;
+    const spring = bump(p, 0.44, 0.62);
+    const land = bump(p, 0.56, 0.86);
+    const up = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(30, 84, ride) + 6 * bob + 40 * land * (1 - up) - 10 * up, arm: lerp(40, 48, ride) + 6 * land - 6 * up,
+      lift: 3 + 1.5 * bob, lunge: 2 * ride, tilt: 0.06 * ride + 0.04 * bob + 0.16 * land * (1 - up),
+      rig: (r) => {
+        if (spring > 0.4 && land < 0.3) tuck(r);
+        else {
+          r.squat = q(2 * ride + 2 * land * (1 - up));
+          danceLegs(r, [ride, [3.4, -0.4, 10], [-3.6, 0, -6]], [land * (1 - up), [4, 0, 4], [-4.2, 0, -10]]);
+        }
+        r.backArm = [q(-6 * ride + 2 * up), q(-5 * ride - 2 * spring + 2 * up)];
+        r.hairLift = ride > 0.3 || spring > 0.3 ? -1 : land > 0.5 ? 1 : 0;
+        r.cape = Math.round(-4 * ride + 2 * land);
+        if (ride > 0.4) r.mouth = 'grin';
+        if (land > 0.3 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // Spout (up + attack, at ~0.42): she thrusts the staff straight up, rising onto her toes, and the
+  // water spouts up under whatever is above her; she hops a little up on it.
+  tmspout(p) {
+    const up = ease(seg(p, 0.12, 0.42));
+    const hop = bump(p, 0.36, 0.7);
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(30, 3, up) + 30 * back, arm: lerp(40, 58, up) - 14 * back,
+      lift: 6 * hop, lunge: 0, tilt: -0.08 * up * (1 - back),
+      rig: (r) => {
+        if (hop > 0.3) tuck(r);
+        else {
+          r.squat = q(1.5 * soft(seg(p, 0, 0.14)) * (1 - up));
+          danceLegs(r, [up, [1.6, -1.4, 12], [-1.6, -1.2, -10]]);
+        }
+        r.backArm = [q(-4 * up + 4 * back), q(-8 * up + 7 * back)];
+        r.hairLift = hop > 0.2 ? -1 : 0;
+        if (up > 0.5 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+
+  // Waterfall (in the air, poured at ~0.42): hanging in the air she tucks and swings the staff
+  // down to point under her, and the water pours down from it onto whatever is below.
+  tmfall(p) {
+    const tuckIn = soft(seg(p, 0, 0.3));
+    const pour = ease(seg(p, 0.3, 0.46));
+    const open = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(30, 6, tuckIn), 170, pour) - 60 * open, arm: lerp(lerp(40, 54, tuckIn), 44, pour), lift: 2 * tuckIn,
+      tilt: -0.1 * tuckIn * (1 - pour) + 0.18 * pour * (1 - open),
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(lerp(2, -5, pour) + 3 * open), q(lerp(-8 * tuckIn, -2, pour))];
+        r.hairLift = -1;
+        if (pour > 0.3 && open < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // The Tide Mage's skills.
+  // Bubble Shield (the bubble closes round her at ~0.5): she hugs the staff to her, crouching a
+  // little as she draws a breath, then rises and spreads her free hand wide, palm out, as the
+  // bubble blows up round her and the party; a little bob as it settles.
+  tmshield(p) {
+    const hug = soft(seg(p, 0, 0.3));
+    const open = ease(seg(p, 0.34, 0.54));
+    const bob = bump(p, 0.54, 0.8);
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(30, 8, hug), 20, open) + 10 * back, arm: lerp(lerp(40, 30, hug), 46, open), lift: 2.5 * open * (1 - back) + 1.5 * bob,
+      tilt: 0.05 * hug * (1 - open) - 0.06 * open * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.5 * hug * (1 - open));
+        danceLegs(r, [open * (1 - back), [2, -0.8, 8], [-2.2, -0.6, -8]]);
+        r.backArm = [q(lerp(lerp(0, 3, hug), -6, open) + 6 * back), q(lerp(-1, -4, open) + 3 * back)];
+        r.hairLift = open > 0.4 && back < 0.5 ? -1 : 0;
+        if (hug > 0.4 && open < 0.3) r.eyes = 'happy';
+        else if (open > 0.3 && back < 0.6) r.mouth = 'o';
+      },
+    };
+  },
+  // Tide Pool (the pool spreads at ~0.45): she lifts the staff in both a little hop and plants its
+  // foot in the floor beside her; the water wells up round it and she steps back to let it spread.
+  tmpool(p) {
+    const lift = soft(seg(p, 0, 0.26));
+    const plant = ease(seg(p, 0.26, 0.42));
+    const step = soft(seg(p, 0.5, 0.8));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(30, 4, lift), 12, plant) + 20 * back, arm: lerp(lerp(40, 56, lift), 30, plant) + 6 * back,
+      lift: 2.5 * bump(p, 0.04, 0.32), lunge: -2.5 * step * (1 - back), tilt: -0.06 * lift * (1 - plant) + 0.06 * plant * (1 - step),
+      rig: (r) => {
+        r.squat = q(1.5 * plant * (1 - step));
+        danceLegs(r, [plant * (1 - step), [2.6, 0, 4], [-2.6, 0, -6]], [step * (1 - back), [1.4, 0, 2], [-3.4, 0, -8]]);
+        r.backArm = [q(lerp(-1, 4, plant) - 2 * step), q(lerp(-4 * lift, -1, plant) - 3 * step + 3 * back)];
+        if (plant > 0.4 && back < 0.5) r.mouth = 'o';
+      },
+    };
+  },
+  // Riptide (drags them in at ~0.3, crashes at ~0.66): she sweeps the staff low and wide across in
+  // front of her, leaning back against the pull as if hauling a net in, then heaves it up and over
+  // and brings it down where they've been dragged together.
+  tmriptide(p) {
+    const reach = soft(seg(p, 0, 0.2));
+    const haul = ease(seg(p, 0.2, 0.42));
+    const heave = soft(seg(p, 0.44, 0.58));
+    const slam = ease(seg(p, 0.58, 0.68));
+    const settle = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(lerp(lerp(30, 120, reach), 60, haul), 6, heave) + 118 * slam - 30 * settle, arm: lerp(lerp(40, 54, reach), 34, haul) + 20 * heave * (1 - slam) - 6 * settle,
+      lunge: 3 * reach * (1 - haul) - 3 * haul * (1 - slam) + 6 * slam * (1 - 0.6 * settle), tilt: 0.08 * reach * (1 - haul) - 0.14 * haul * (1 - heave) + 0.22 * slam * (1 - settle),
+      rig: (r) => {
+        r.squat = q(1.2 * haul * (1 - heave) + 2 * slam * (1 - settle));
+        danceLegs(r, [reach, [3.4, 0, 4], [-2.6, 0, -6]], [haul * (1 - heave), [3.8, 0, 2], [-4, 0, -14]], [slam * (1 - settle), [4.2, 0, 6], [-4, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, 4, reach), -4, haul) - 2 * slam + 4 * settle), q(lerp(-1, -3, haul) - 4 * heave * (1 - slam) + 2 * settle)];
+        r.hairLift = heave > 0.4 && slam < 0.5 ? -1 : slam > 0.5 && settle < 0.4 ? 1 : 0;
+        if (haul > 0.3 && heave < 0.5) r.mouth = 'grit';
+        if (slam > 0.3 && settle < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Tidal Wave (sent at ~0.56): she turns side-on and crouches with the staff swept down and back
+  // past her heel, gathering, then rises in one long heave, the staff sweeping up and out level as
+  // the wave rears up off the floor and rolls away; she's left up on her toes, leaning into it.
+  tmtidal(p) {
+    const gather = soft(seg(p, 0, 0.34));
+    const heave = ease(seg(p, 0.34, 0.56));
+    const hold = seg(p, 0.56, 0.8);
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(30, 120, gather), 96, heave) - 6 * Math.sin(hold * Math.PI) - 40 * back, arm: lerp(lerp(40, 24, gather), 58, heave) - 12 * back,
+      lift: 3 * heave * (1 - back), lunge: -2 * gather * (1 - heave) + 7 * heave * (1 - 0.6 * back), tilt: 0.1 * gather * (1 - heave) + 0.16 * heave * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.4 * gather * (1 - heave));
+        danceLegs(r, [gather * (1 - heave), [3.4, 0, 4], [-4.4, 0, -16]], [heave * (1 - back), [3.6, -1.2, 14], [-4, -0.6, -16]]);
+        r.backArm = [q(lerp(lerp(0, 3, gather), -6, heave) + 5 * back), q(lerp(-1, -6, heave) + 5 * back)];
+        r.hairLift = heave > 0.3 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.34, 0.8));
+        if (heave > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Flow (the buff, at ~0.5): a quick twirl of the staff round her fingers in front of her, the
+  // water ribboning off its head, and a playful little spin on her toes to finish.
+  tmflow(p) {
+    const twirl = soft(seg(p, 0.04, 0.6));
+    const spin = soft(seg(p, 0.4, 0.8));
+    const back = soft(seg(p, 0.8, 1));
+    const a = spin * Math.PI * 2;
+    return {
+      weapon: 30 + 360 * twirl, arm: 46 - 6 * back, orbit: twirl > 0 && twirl < 1, turn: Math.cos(a) >= 0 ? 1 : -1,
+      lift: 2 * bump(p, 0.4, 0.82), tilt: 0.04 * Math.sin(a),
+      rig: (r) => {
+        danceLegs(r, [bump(p, 0.36, 0.84), [1, -1, 10], [-1, -0.6, -6]]);
+        r.backArm = [q(-4 * bump(p, 0.36, 0.84) + 2 * twirl * (1 - spin)), q(-5 * bump(p, 0.36, 0.84) - 2 * twirl * (1 - spin))];
+        r.hairLift = spin > 0.1 && spin < 0.9 ? -1 : 0;
+        if (spin > 0.2) [r.eyes, r.mouth] = ['happy', 'grin'];
+      },
+    };
+  },
+  // Great Wave (her finisher; the wave breaks at ~0.62): she rises off the floor on the swell with
+  // the staff held high and both arms raised as the sea climbs up behind her, holds there while it
+  // towers, then brings the staff sweeping down and forward with her whole body as it breaks, and
+  // lands in a deep crouch, holding it, breathing, before she stands.
+  tmgreat(p) {
+    const rise = soft(seg(p, 0, 0.34));
+    const hold = seg(p, 0.34, 0.54);
+    const shiver = Math.sin(hold * Math.PI * 8) * bump(p, 0.34, 0.54);
+    const down = ease(seg(p, 0.54, 0.66));
+    const land = bump(p, 0.64, 0.92);
+    const up = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(30, 2, rise) + 3 * shiver, 126, down) - 40 * up, arm: lerp(lerp(40, 58, rise), 56, down) - 12 * up,
+      lift: 10 * rise * (1 - down) + 2 * hold * (1 - down), lunge: -2 * rise * (1 - down) + 9 * down * (1 - 0.5 * up),
+      tilt: -0.18 * rise * (1 - down) + 0.03 * shiver + 0.28 * down * (1 - 0.8 * up),
+      rig: (r) => {
+        if (rise > 0.3 && down < 0.6) {
+          r.air = true;
+          r.frontLeg = [q(1.6 + 0.8 * hold), q(-2.4), 10];
+          r.backLeg = [q(-1.6), q(-1.6), -12];
+        } else {
+          r.squat = q(2.6 * land * (1 - up));
+          danceLegs(r, [down * (1 - up), [4.6, 0, 6], [-4.6, 0, -12]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -5, rise), -6, down) + 6 * up), q(lerp(lerp(-1, -11, rise), -3, down) + 3 * up)];
+        r.hairLift = rise > 0.3 && down < 0.4 ? -1 : land > 0.4 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.6) + 3 * bump(p, 0.6, 0.95));
+        if (hold > 0 && down < 0.2) r.eyes = 'half';
+        if (down > 0.2 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+
   whirlflip(p) {
     // (The free arm swings out with the spin, then tucks in for the flip and opens to land.)
     const out = bump(p, 0.04, 0.6);

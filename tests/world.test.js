@@ -334,11 +334,11 @@ test("a GM job swap forgets skills from outside the new job's line and gives the
   assert.ok(Object.keys(c.skills).every((id) => ['novice', 'warrior'].includes(SKILLS[id].job)));
 });
 
-test('the warrior, the archer and the thief branch two ways at 30 (the Mage line is being made again)', async () => {
+test('the warrior, the archer and the thief branch two ways at 30 (the Tide Mage has no paths yet)', async () => {
   const { nextJobs, JOBS } = await import('../src/data/jobs.js');
   const { SKILLS } = await import('../src/data/skills.js');
-  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'warrior']);
-  for (const first of ['warrior', 'archer', 'thief']) {
+  assert.deepEqual(nextJobs('novice', 10).map((j) => j.id).sort(), ['archer', 'thief', 'tidemage', 'warrior']);
+  for (const first of ['warrior', 'archer', 'thief', 'tidemage']) {
     assert.ok(Object.values(SKILLS).some((k) => k.job === first && (k.type === 'blink' || k.movement)), `${first} has a movement skill`);
   }
   assert.deepEqual(nextJobs('warrior', 30).map((j) => j.id).sort(), ['berserker', 'paladin'], 'warrior has two paths at 30');

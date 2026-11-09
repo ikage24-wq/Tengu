@@ -1712,10 +1712,10 @@ export const JOB_SCENES = {
     { who: 'vex', text: "Every fight is a show, {name}, and from today you're the star of it. Second star. After me. Light feet, big finish.", mood: 'happy' },
     { who: 'vex', text: 'Chakrams if you like it close, gloves if you like the wind. Either way: never stop moving.' },
   ],
-  mage: [
-    { card: 'A New Path', sub: 'Mage' },
-    { who: 'elowen', text: "The stars answer you, {name}. I've never seen anyone your age call them so easily. It's annoying. In a good way.", mood: 'happy' },
-    { who: 'elowen', text: "A wand for quick stars, a staff for comets. Show off a little. Show off a lot. It's half the job." },
+  tidemage: [
+    { card: 'A New Path', sub: 'Tide Mage' },
+    { who: 'elowen', text: "The water answers you, {name}. It came up the moment you touched the staff. It usually sulks for a week first. Rude of it, really.", mood: 'happy' },
+    { who: 'elowen', text: "Strike with it, and mend with it. And keep your feet dry if you can. You won't. Nobody does." },
   ],
   path: [
     { card: 'A New Path', sub: '{job}' },

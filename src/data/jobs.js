@@ -40,6 +40,14 @@ export const JOBS = {
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['bow', 'crossbow'],
     blurb: 'A show-off who shoots mid-trick with DEX: skips, flips, splits and rolls, a short trick bow loosed from the top of each. Her hits in a row build Combo, and her flips keep it going; full (Showtime), every shot splits into three. Handspring, Springboard, and Grand Somersault: a huge leap raining golden arrows down.',
   },
+  // The Tide Mage (docs/design/tide-mage.md): water from the head of her staff, with INT. Whips of
+  // water, rolling waves and bubbles that pop; her hits and her heals build Tide, and at High Tide
+  // every attack sends a little wave after it and the party round her mends.
+  tidemage: {
+    id: 'tidemage', power: 2.31, spread: 1.01, name: 'Tide Mage', family: 'mage', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
+    hp: 18, mp: 26, advanceHp: 200, advanceMp: 400, weapons: ['staff'],
+    blurb: 'A mage of the sea, with INT and a staff: whips of water, rolling waves and bubbles that pop. Her hits and heals build Tide; at High Tide every attack sends a wave after it, and the party near her mends. Bubble Shield, Tide Pool, and Great Wave: a giant wave that sweeps the screen.',
+  },
   thief: {
     id: 'thief', power: 0.74, spread: 1.19, name: 'Wind Dancer', family: 'thief', tier: 1, parent: 'novice', level: FIRST_JOB_LEVEL,
     hp: 22, mp: 17, advanceHp: 250, advanceMp: 250, weapons: ['dagger', 'gauntlet'],

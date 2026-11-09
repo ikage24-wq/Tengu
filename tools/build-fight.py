@@ -46,10 +46,34 @@ S = {
     'lid': 'Justsoundeffects - Water in Motion/WATRDrip_Dripping Water On Metal Pot Lid_JSE_WIM_Mono.wav',
     'wade': 'Justsoundeffects - Water in Motion/WATRMvmt_Soft Movement 01_JSE_WIM.wav',
     'bubbles': 'Cinematic Sound Design - Cartoon & Animation Vol 2/Cartoon Bubbles Short.wav',
+    # The Tide Mage's water (2026-11-09).
+    'wimpact': 'BluezoneCorp - Designed Water/Bluezone_BC0298_designed_water_impact_006.wav',
+    'wtrans': 'BluezoneCorp - Designed Water/Bluezone_BC0298_designed_water_transition_impact_017.wav',
+    'subimpact': 'InMotionAudio - Submerge/WATRImpt_Impact20_InMotionAudio_Submerge.wav',
+    'drown': 'Epic Stock Media - Elemental Mutation Whooshes and Impacts/WATRImpt_Impact Water Deep Submerge Bubble Drown Ship Hit 05_ESM_EMWI.wav',
+    'surf': 'Nick McMahan - Cascadia Shore Waves/WATRSurf_Ocean Hydrophone In Sand Large Near Single 01 _Cascadia Shore Waves.wav',
+    'wflow': 'InMotionAudio - Submerge/WATRFlow_WaterFlow21_InMotionAudio_Submerge.wav',
+    'wrock': 'InMotionAudio - Submerge/WATRMvmt_WaterRockMovement04_InMotionAudio_Submerge.wav',
 }
 
 # name: [(source, start s, length s, pitch x, gain dB, delay ms), ...]
 B = {
+    # The Tide Mage (2026-11-09): a whip of water cracking, waves sent rolling and crashing down,
+    # bubbles, splashes, a geyser, a whirlpool, a waterfall, her hits, and the swish of her staff.
+    'tmswish': [('watery', 0.0, 0.34, 1.15, 0, 0), ('airy', 0.6, 0.25, 1.4, -10, 0)],
+    'tmlash': [('whip', 0.0, 0.32, 1.05, -3, 0), ('watery', 0.0, 0.36, 1.2, -2, 0), ('subimpact', 0.08, 0.36, 1.35, -9, 50)],
+    'tmwave': [('wtrans', 1.75, 0.8, 1.2, 0, 0), ('watery', 0.0, 0.4, 0.95, -6, 0)],
+    'tmwavebig': [('wtrans', 1.6, 1.3, 0.92, 0, 0), ('drown', 0.0, 0.8, 0.8, -5, 140), ('surf', 16.9, 1.2, 1.0, -6, 100)],
+    'tmbubble': [('bubbles', 0.0, 0.4, 1.15, 0, 0), ('liquid', 0.0, 0.25, 1.7, -9, 0)],
+    'tmsplash': [('wimpact', 0.05, 0.55, 1.05, 0, 0), ('subimpact', 0.1, 0.45, 1.0, -4, 30)],
+    'tmsplashbig': [('wimpact', 0.05, 0.8, 0.85, 0, 0), ('drown', 0.0, 0.6, 0.9, -4, 40), ('subimpact', 0.1, 0.5, 0.8, -4, 60)],
+    'tmgeyser': [('wflow', 9.6, 1.0, 1.25, -2, 0), ('wimpact', 0.05, 0.6, 0.85, -2, 60)],
+    'tmwhirl': [('wrock', 0.0, 1.0, 1.0, -2, 0), ('watery', 0.0, 0.5, 0.8, -4, 100)],
+    'tmfall': [('wflow', 3.5, 0.7, 1.05, -2, 0), ('wimpact', 0.05, 0.5, 0.95, -3, 180)],
+    'tmfallbig': [('wflow', 3.5, 0.9, 0.9, -1, 0), ('wimpact', 0.05, 0.7, 0.8, -2, 200), ('drown', 0.0, 0.5, 0.9, -6, 240)],
+    'tmhit': [('liquid', 0.0, 0.32, 1.2, 0, 0), ('subimpact', 0.1, 0.28, 1.45, -6, 0)],
+    'tmshieldfx': [('bubbles', 0.0, 0.5, 0.9, 0, 0), ('light', 0.0, 0.9, 1.0, -6, 80)],
+    'tmpool': [('wflow', 3.5, 1.1, 0.95, -2, 0), ('liquid', 0.0, 0.35, 1.0, -6, 120)],
     # Swings: an axe's heavy scrape through the air, a spear's long blade sweep, a dagger's quick
     # flick, a fist's whump; the heavy ones lower and longer.
     'axeSwing': [('scrapes', 14.46, 0.42, 0.85, 0, 0), ('airy', 0.7, 0.3, 1.3, -10, 0)],

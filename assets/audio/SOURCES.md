@@ -59,3 +59,7 @@ Jumping, landing, climbing, mounting, furniture, the kettle mount's whistle and 
 ## Buff sounds (tools/build-fight.py, 2026-11-08)
 
 The buff and party buff: Epic Stock Media Fantasy Game 2 (a bright light spell) and 344 Audio Christmas Vol. 1 (magic bells).
+
+## Tide Mage sounds (tools/build-fight.py, 2026-11-09)
+
+Her whip of water, waves, bubbles, splashes, geyser, whirlpool, waterfall, hits and staff swish, from the same bundles: BluezoneCorp Designed Water, InMotionAudio Submerge, Epic Stock Media Elemental Mutation Whooshes and Impacts, Nick McMahan Cascadia Shore Waves, Rescopic Sound Distinct Whooshes, David Dumais Audio Melee Weapons 2, 344 Audio Elemental Palette Designed Vol. 1, Cinematic Sound Design Cartoon & Animation Vol 2.

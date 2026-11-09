@@ -60,6 +60,8 @@ const MOUNT_STRIDE = { bun: 60, crane: 34, nimbus: 90, kettle: 40, turtle: 30, g
 const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdraft', 'bdbounce', 'bdcarousel', 'pillar', 'aegis', 'consecrate', 'verdict', 'bloodmoon', 'eclipse', 'rageburst', 'crack', 'roar', 'hook', 'titanrise', 'titanbreak', 'falconcall', 'falconloose', 'nightfall', 'fullmoon', 'crescentcut',
   // The Phantom Trickster.
   'pthit', 'ptsmoke', 'ptillusion',
+  // The Tide Mage.
+  'tmlash', 'tmsplash', 'tmsplashbig', 'tmgeyser', 'tmwhirl', 'tmfall', 'tmfallbig', 'tmhit', 'tmshieldfx', 'tmpool',
   // The Acrobat Archer.
   'achit', 'acfirework', 'acburst', 'trapsnap',
   // Team moves.

@@ -46,6 +46,8 @@ const BG = {
   skydance: ['#e6f6ff', '#3f7ad0'],
   midnight: ['#8a96e8', '#141a4a'],
   brassbg: ['#ffe6a8', '#5a3818'],
+  // The Tide Mage's: pale sea foam to the deep sea.
+  tidebg: ['#c8f4ff', '#0c4a80'],
   rosegold: ['#ffe0cf', '#a8405a'],
   coral: ['#ffcdb6', '#c23c48'],
   shrine: ['#f6f0ff', '#5a46a8'],
@@ -1017,6 +1019,88 @@ function bigbertha() {
 }
 
 
+// ---------- Tide Mage (sea teal and foam) ----------
+const SEA = '#46c4e4';
+const SEADEEP = '#1787bb';
+const SEAINK = '#0c4a80';
+const FOAMC = '#f3fdff';
+// A curling wave rising from the floor of the tile to a crest at (cx, cy) tipping right.
+function waveIcon(cx, cy, s = 1) {
+  const P = (x, y) => [cx + x * s, cy + y * s];
+  const out = [];
+  out.push(...solid([P(-6.5, 5), P(-4, 2), P(-1.6, -1.8), P(0.6, -4), P(2.6, -4.4), P(4.2, -3.2), P(4.4, -1.6), P(2.8, -1.6), P(1.6, -0.4), P(1.6, 2.2), P(2.6, 5)], SEA, { d: 0.35, ink: SEAINK }));
+  out.push(S([P(-4.6, 4), P(-2, 0.6), P(0.4, -2.4), P(1, -1.6), P(-1.4, 1.4), P(-3.4, 4.4)], lt(SEA)));
+  out.push(...puffs([[cx + 3.4 * s, cy - 3.6 * s, 1.3 * s], [cx + 1.6 * s, cy - 4.4 * s, 1 * s]], FOAMC, { ink: SEAINK, shadow: false }));
+  out.push(...puffs([[cx + 2.6 * s, cy + 4.6 * s, 1.1 * s]], FOAMC, { ink: SEAINK, shadow: false }));
+  return out;
+}
+// A round bubble: a ring of water, a clear middle, a white glint.
+function bubbleIcon(x, y, r) {
+  return [S(oval(x, y, r + 0.45, r + 0.45, 0, 24), SEAINK), S(oval(x, y, r, r, 0, 24), SEADEEP), S(oval(x, y, r - 0.6, r - 0.6, 0, 24), mix(SEA, '#ffffff', 0.55)), S(oval(x - r * 0.4, y - r * 0.42, r * 0.3, r * 0.2, -40, 12), '#ffffff')];
+}
+// Bubble Shield: a big bubble round a little figure's silhouette, small bubbles rising.
+function bubbleshield() {
+  const out = [...tile('tidebg', 'buff'), ...aura(8, 8.4, 6.4, '#c8f4ff')];
+  out.push(...bubbleIcon(8, 8.6, 5.4));
+  out.push(...solid([[6.6, 12.4], [6.9, 9.6], [7.4, 8.8], [8.6, 8.8], [9.1, 9.6], [9.4, 12.4]], SEADEEP, { d: 0.25, ink: SEAINK }), S(oval(8, 7.6, 1.3, 1.3, 0, 14), SEADEEP));
+  out.push(...bubbleIcon(13.2, 3.6, 1.2), ...bubbleIcon(2.8, 4.4, 0.9), ...spark(12.6, 12.4, 1, FOAMC));
+  return out;
+}
+// Tide Pool: a pool on the floor with ripples, a heart-shaped drop welling up out of it.
+function tidepool() {
+  const out = [...tile('tidebg', 'buff'), ...aura(8, 9, 6, '#c8f4ff')];
+  out.push(S(oval(8, 12, 6.4, 2.2, 0, 26), SEAINK), S(oval(8, 12, 5.8, 1.8, 0, 26), SEA), S(oval(8, 11.8, 4, 1.1, 0, 22), lt(SEA)), S(oval(8, 11.8, 2.2, 0.6, 0, 18), FOAMC));
+  out.push(...solid([[8, 9.6], [5.4, 6.4], [5.6, 4.4], [7, 3.8], [8, 4.8], [9, 3.8], [10.4, 4.4], [10.6, 6.4]], SEA, { d: 0.3, ink: SEAINK }));
+  out.push(S(oval(6.8, 5.2, 0.8, 0.5, -30, 12), '#ffffff'), ...bubbleIcon(12.6, 8.4, 0.9), ...bubbleIcon(3.4, 9, 0.7));
+  return out;
+}
+// Riptide: a whirl of current, three arcs turning in to the middle.
+function riptide() {
+  const out = [...tile('tidebg', 'active'), ...aura(8, 8, 6.4, '#c8f4ff')];
+  for (let k = 0; k < 3; k++) {
+    const a0 = k * 120;
+    const pts = arcPts(8, 8, 5.8 - k * 0.2, 5.2 - k * 0.2, a0, a0 + 150, 10);
+    out.push(S(tube(pts, 0.4, 1.4), SEAINK), S(tube(pts, 0.25, 0.9), k === 1 ? FOAMC : SEA));
+  }
+  out.push(...bubbleIcon(8, 8, 1.4), ...spark(12.8, 3.4, 1, FOAMC));
+  return out;
+}
+// Tidal Wave: one great curl rearing up.
+function tidalwave() {
+  const out = [...tile('tidebg', 'active'), ...aura(7, 7, 6, '#c8f4ff')];
+  out.push(...waveIcon(7.2, 8, 1.15), ...spark(13.4, 4, 1, FOAMC));
+  return out;
+}
+// Flow: a ribbon of water curling round a staff head.
+function flow() {
+  const out = [...tile('tidebg', 'buff'), ...aura(8, 8, 6, '#c8f4ff')];
+  const pts = [[2.6, 12], [5, 9.6], [8.6, 10.4], [10.8, 7.6], [9, 5], [6.4, 5.8], [7.4, 3.4], [11, 2.6], [13.4, 4.4]];
+  out.push(S(tube(pts, 0.5, 1.6), SEAINK), S(tube(pts, 0.3, 1.1), SEA), S(tube(pts.slice(2, 6), 0.2, 0.45), FOAMC));
+  out.push(...bubbleIcon(4.4, 4.4, 1.1), ...bubbleIcon(12.2, 11.2, 0.9));
+  return out;
+}
+// Wave Rider: a small wave with a staff laid along its top like a board, spray off the back.
+function waverider() {
+  const out = [...tile('tidebg', 'active'), ...aura(8, 9, 6, '#c8f4ff')];
+  out.push(...waveIcon(8.2, 10.4, 0.85));
+  out.push(S(tube([[3, 6.4], [12.6, 4.8]], 0.5, 0.9), SEAINK), S(tube([[3.2, 6.3], [12.4, 4.9]], 0.3, 0.5), '#ffe9a0'));
+  out.push(...puffs([[2.4, 9.6, 1], [3.6, 11, 0.8]], FOAMC, { ink: SEAINK, shadow: false }));
+  return out;
+}
+// Ocean Heart: a heart of sea water with a glint.
+function oceanheart() {
+  const out = [...tile('tidebg', 'passive'), ...aura(8, 8, 6, '#c8f4ff')];
+  out.push(...solid([[8, 13], [3.4, 8.4], [3.2, 5.4], [5.4, 3.6], [8, 5.4], [10.6, 3.6], [12.8, 5.4], [12.6, 8.4]], SEA, { d: 0.35, ink: SEAINK }));
+  out.push(S([[8, 11.4], [4.6, 8.2], [4.6, 6], [6, 5.2]], lt(SEA)), S(oval(5.8, 6.2, 0.9, 0.6, -30, 12), '#ffffff'), ...bubbleIcon(10.4, 8.6, 1));
+  return out;
+}
+// Great Wave: the giant wave, towering, with its curl of foam over the top.
+function greatwave() {
+  const out = [...tile('tidebg', 'active'), ...aura(7, 6, 6.6, '#c8f4ff', 1.2, 5)];
+  out.push(...waveIcon(7, 9.2, 1.35), ...spark(13.6, 3, 1.2, FOAMC), ...spark(2.6, 3.4, 0.9, FOAMC));
+  return out;
+}
+
 function shadowdash() {
   const navy = '#2e2466';
   const out = [...tile('dusk', 'active')];
@@ -1447,6 +1531,7 @@ const ART = {
   skymastery, updraft, zephyr, skywaltz, downburst, galestep, cloudnine, hoopla, jugglingact, showstopper, windupbomb, crossslash,
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
   gmsmite, gmhaste, gmblessing,
+  bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
 };
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint

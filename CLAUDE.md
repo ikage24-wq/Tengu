@@ -374,10 +374,8 @@ skills, every window) count what each frame does and fail when one is broken.
 **Loading and size**
 - **Fast loads:** the Windows app (or a cached web start) starts in under 3 s; a first web visit shows
   the title screen quickly while the rest loads behind it; a map change under 0.5 s, windows instant (timed).
-- **Size limits** for every new file (measured against today's files, 2026-11-09): a sound effect
-  100 KB (today's largest 70 KB), an ambience loop 600 KB, a music track 2 MB, an effect strip 600 KB
-  and its big version 1.5 MB. Bigger ones are shared or cut down; the few effect strips already
-  over (up to 3 MB) get cut down when they are next touched. (test)
+- **No size limits** on files (the player's call, 2026-11-09): an effect gets as many drawings as it
+  needs to move smoothly at 144 fps.
 
 **Weaker machines**
 - **The phone and busy-scene check:** with a phone's memory budget, a full town, a party fight and a

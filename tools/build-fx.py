@@ -5,11 +5,15 @@ with a soft glow by tools/draw-fx.cjs. Each effect's frames are trimmed to the b
 share and laid out as one horizontal strip (the `cel*` strips).
 
 Usage: python3 tools/build-fx.py   (needs Pillow and Playwright)
+       python3 tools/build-fx.py --only tm   (just the effects named tm..., drawn with the project's
+       own Electron, tools/draw-fx-electron.cjs, and added to the list without redrawing the rest)
 """
 
 import json
 import os
+import re
 import subprocess
+import sys
 import tempfile
 
 from PIL import Image
@@ -17,10 +21,18 @@ from PIL import Image
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+ONLY = sys.argv[sys.argv.index('--only') + 1] if '--only' in sys.argv else ''
+
+
 def cel_frames():
-    # Tengu's own effect art (tools/fx-art.js), drawn by tools/draw-fx.cjs in the browser.
+    # Tengu's own effect art (tools/fx-art.js), drawn by tools/draw-fx.cjs in the browser (or, for
+    # --only, by the project's Electron).
     tmp = tempfile.mkdtemp()
-    subprocess.run(['node', os.path.join(ROOT, 'tools', 'draw-fx.cjs'), tmp], check=True)
+    if ONLY:
+        electron = os.path.join(ROOT, 'node_modules', '.bin', 'electron.cmd' if os.name == 'nt' else 'electron')
+        subprocess.run([electron, os.path.join(ROOT, 'tools', 'draw-fx-electron.cjs'), tmp.replace(os.sep, '/'), ONLY], check=True)
+    else:
+        subprocess.run(['node', os.path.join(ROOT, 'tools', 'draw-fx.cjs'), tmp], check=True)
     meta = json.load(open(os.path.join(tmp, 'meta.json')))
     frames = {n: [Image.open(os.path.join(tmp, n, f'{i}.png')).convert('RGBA') for i in range(m['n'])] for n, m in meta.items() if 'alias' not in m}
     return frames, meta
@@ -68,7 +80,16 @@ def build():
             extra += f", r: {s['swing'][2]}, mid: {s['swing'][0]}, turn: {s['swing'][1]}"
         lines.append(f"  {name}: {{ w: {s['w']}, h: {s['h']}, n: {s['n']}, fps: {s['fps']}, px: {s['px']}, py: {s['py']}, d: {s['d']}, loop: {str(s['loop']).lower()}{extra} }},")
     lines.append('};')
-    open(os.path.join(ROOT, 'src', 'render', 'fx-sheets.js'), 'w').write('\n'.join(lines) + '\n')
+    target = os.path.join(ROOT, 'src', 'render', 'fx-sheets.js')
+    if ONLY:
+        # Only some were drawn: keep every other strip's line, replacing or adding these.
+        entry = re.compile(r'^  cel\w+: ')
+        old = open(target, encoding='utf-8').read().split('\n')
+        new = {l.split(':')[0].strip(): l for l in lines if entry.match(l)}
+        kept = [l for l in old if not (entry.match(l) and l.split(':')[0].strip() in new)]
+        end = kept.index('};')
+        lines = kept[:end] + list(new.values()) + ['};']
+    open(target, 'w', encoding='utf-8', newline='\n').write('\n'.join(lines) + '\n')
 
 
 if __name__ == '__main__':

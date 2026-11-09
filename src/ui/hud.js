@@ -567,6 +567,8 @@ const GAUGES = {
     tip: 'Your shots that land build it; it fades once the fighting stops. Half full, a see-through copy of you stands behind you and shoots with you every other arrow; full, two (a third with Hall of Mirrors) shoot with every arrow, and Grand Illusion is ready.' },
   charge: { color: '#b8782a', hot: '#4fe0d0', icon: 'cog', name: 'Pressure', full: 'OVERDRIVE', notch: () => null, edge: 'rgba(79,224,208,', ink: '#5a3818',
     tip: 'Every bolt of yours that lands builds steam pressure; it fades once the fighting stops. Full (Overdrive), your crossbow vents steam and every shot fires a second bolt, and Big Bertha is ready.' },
+  tide: { color: '#1787bb', hot: '#9ff0ff', icon: 'drop', name: 'Tide', full: 'HIGH TIDE', notch: () => null, edge: 'rgba(70,196,228,', ink: '#0c4a80',
+    tip: 'Your water that lands builds it, and so do your heals and shields; it ebbs once the fighting stops. The fuller it runs, the bigger your waves. Full (High Tide), every basic attack sends a little wave rolling after it, you and the party near you slowly mend, and Great Wave is ready.' },
 };
 function drawGauge(ui, world, kind, value, x = 566) {
   const { ctx } = ui;

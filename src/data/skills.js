@@ -831,6 +831,111 @@ export const SKILLS = {
     },
   }),
 
+  // ---------- Tide Mage (sea teal and foam: curling waves, bubbles, spray, ripples) ----------
+  // The new Mage (docs/design/tide-mage.md; the old line was wiped 2026-11-08): water from the head
+  // of her staff, every blow hit with her magic. Her water that lands builds Tide (world/melee.js),
+  // and so do her heals and shields; full (High Tide), every basic attack sends a little wave after
+  // it and she and the party near her mend. Some support (Bubble Shield, Tide Pool) and the rest
+  // water to fight with; she branches at 30 into a support path or a ranged damage path.
+  bubbleshield: skill({
+    id: 'bubbleshield', anim: 'tmshield', name: 'Bubble Shield', job: 'tidemage', type: 'buff', fx: null, icon: 'bubbleshield', school: 'tide', party: true, maxLevel: 10,
+    desc: 'Hug your staff close, then throw your hand wide: a bubble of water closes round you and everyone near you, soaking up the next blows until it pops. Builds Tide. A short wait before the next (30 seconds).',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 520, h: 200, around: true };
+      return {
+        mp: k(18, 30), pct: 0, hits: 0, targets: 0, range, cooldown: 30, aimGain: 15,
+        combo: [{ move: 'tmshield', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmshieldfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }],
+      };
+    },
+  }),
+  tidepool: skill({
+    id: 'tidepool', anim: 'tmpool', name: 'Tide Pool', job: 'tidemage', type: 'buff', fx: null, icon: 'tidepool', school: 'tide', party: true, maxLevel: 10,
+    desc: 'Plant your staff in the floor and a pool of sea water wells up round it: you and everyone near you mend a little every second while it lasts. Builds Tide. A short wait before the next (24 seconds).',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      const range = { w: 360, h: 200, around: true };
+      return {
+        mp: k(20, 34), pct: 0, hits: 0, targets: 0, range, cooldown: 24, aimGain: 15,
+        combo: [{ move: 'tmpool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmpool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }],
+      };
+    },
+  }),
+  riptide: skill({
+    id: 'riptide', anim: 'tmriptide', name: 'Riptide', job: 'tidemage', type: 'attack', fx: null, icon: 'riptide', school: 'tide', maxLevel: 20,
+    desc: 'Sweep your staff low across the floor and haul: a current drags the monsters round you in together, then you heave the staff over and bring the water crashing down on the lot of them.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 20), pct: k(120, 210), hits: 2, targets: 6,
+        combo: [{ move: 'tmriptide', dur: 0.8, step: 4, strikes: [
+          { at: 0.3, magic: true, fx: 'tmhit', pct: k(40, 70), reach: 170, h: 100, around: true, targets: 6, knock: 0, pull: 240, burst: 'tmwhirl', burstAt: 0.3, burstDur: 0.6 },
+          { at: 0.66, magic: true, fx: 'tmhit', pct: k(120, 210), reach: 110, h: 100, targets: 6, knock: 200, launch: 160, burst: 'tmsplashbig', burstAt: 0.55, burstDur: 0.55, big: true, stop: 0.07, shake: 3 },
+        ] }],
+      };
+    },
+  }),
+  tidalwave: skill({
+    id: 'tidalwave', anim: 'tmtidal', name: 'Tidal Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'tidalwave', school: 'tide', maxLevel: 20,
+    desc: 'Crouch low with your staff swept back, then rise in one long heave: a great wave rears up off the floor and rolls away through every monster in front of you.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(160, 280), hits: 1, targets: 8,
+        combo: [{ move: 'tmtidal', dur: 0.9, step: 0, strikes: [{ at: 0.56, magic: true, burst: 'tmhit', shot: 'tmwavebig', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }],
+      };
+    },
+  }),
+  flow: skill({
+    id: 'flow', anim: 'tmflow', name: 'Flow', job: 'tidemage', type: 'buff', fx: null, icon: 'flow', school: 'tide', maxLevel: 10,
+    desc: 'Twirl your staff and let the water run with you: for a while you cast faster and your magic hits harder.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const kf = (a, b) => lerpf(a, b, lv, m);
+      return {
+        mp: lerp(16, 26, lv, m), pct: 0, hits: 0, targets: 0, cooldown: 60,
+        combo: [{ move: 'tmflow', dur: 0.7, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmsplash', burstAt: 0, burstDur: 0.45, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }],
+      };
+    },
+  }),
+  waverider: skill({
+    id: 'waverider', anim: 'tmsurf', name: 'Wave Rider', job: 'tidemage', type: 'attack', fx: null, icon: 'waverider', school: 'tide', maxLevel: 10, movement: true,
+    desc: 'Ride a wave forward in a surfer\'s crouch, knocking aside whatever is in the way, and spring off the top of it with a splash. Nothing touches you on the wave.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(10, 6), pct: k(80, 140), hits: 1, targets: 4,
+        combo: [{ move: 'tmsurf', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'tmhit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }],
+      };
+    },
+  }),
+  oceanheart: skill({
+    id: 'oceanheart', name: 'Ocean Heart', job: 'tidemage', type: 'passive', grows: true, fx: null, icon: 'oceanheart',
+    desc: 'The sea runs deep in you: your magic hits truer and steadier, and your MP comes back faster.',
+    at: (lv, m) => ({ passive: { acc: lerp(3, 25, lv, m), mastery: lerpf(0.1, 0.35, lv, m), mpRegen: lerp(1, 6, lv, m) } }),
+  }),
+  greatwave: skill({
+    id: 'greatwave', anim: 'tmgreat', dmg: 2, name: 'Great Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'greatwave', school: 'tide', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Tide, and spends it. Rise off the floor on the swell with your staff held high as the sea climbs up behind you, hold it while it towers, then bring it all down: a giant wave sweeps the screen, crashing through every monster in front of you, and mends you and the party as it passes.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(30, 50), pct: k(160, 260), hits: 1, targets: 0,
+        combo: [{ move: 'tmgreat', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.62, magic: true, burst: 'tmhit', shot: 'tmgreat', pct: k(160, 260), range: 560, h: 180, targets: 12, pierce: true, knock: 300, launch: 220, speed: 520, big: true, stop: 0.1, shake: 5, heal: 0.18, healR: 400 },
+        ] }],
+      };
+    },
+  }),
+
   // ---------- Game Master (hidden) ----------
   gmsmite: skill({
     id: 'gmsmite', name: 'GM Smite', job: 'gamemaster', type: 'magic', fx: 'judgment', maxLevel: 1,

@@ -168,6 +168,8 @@ function weaponStyle(bot) {
   if (bot.char.job === 'beastmaster') return { reach: 200, lift: 100, pose: pick2(['ptflourish', 'ptswirl', 'ptcard', 'ptlean']), shot: 'ptarrow', ranged: true };
   if (bot.char.job === 'stormcaller') return { reach: 220, lift: 100, pose: pick2(['aesnap', 'aedouble', 'aebrace']), shot: 'aebolt', ranged: true };
   if (bot.char.job === 'archer') return { reach: 200, lift: 100, pose: pick2(['acskip', 'acflip', 'acroll', 'acspin']), shot: 'acarrow', ranged: true };
+  // The Tide Mage sends her water.
+  if (bot.char.job === 'tidemage') return { reach: 200, lift: 100, pose: pick2(['tmwhip', 'tmroll', 'tmbubbles', 'tmgeyser']), shot: 'tmwave', ranged: true };
   // The Sky Dancer throws her gusts of wind.
   if (bot.char.job === 'kitsune') return { reach: 190, lift: 100, pose: pick2(['sdpalm', 'sdscissor', 'sdflutter']), shot: 'skygust', ranged: true };
   if (WEAPON_TYPES[type]?.ranged) return { reach: 190, lift: 100, pose: type === 'gauntlet' ? 'throw' : 'draw', shot: type === 'gauntlet' ? 'star' : 'arrow', ranged: true };

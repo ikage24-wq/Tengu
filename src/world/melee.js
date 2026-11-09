@@ -318,7 +318,37 @@ const FISTS = {
   cartwheel: { move: 'cartwheel', dur: 0.6, step: 16, carry: 0.5, finisher: true, strikes: [{ at: 0.48, pct: 150, reach: 60, h: 70, knock: 160, launch: 220, big: true, stop: 0.07, shake: 2 }] },
 };
 
+// The Tide Mage (docs/design/tide-mage.md): every blow is water out of the head of her staff, hit
+// with her magic. Her own string: a whip of water cracked out level, a wave sent rolling along the
+// ground, and a great curling wave raised and brought crashing down the line. Her pool: three
+// bubbles blown off the staff that pop on what they reach, or a staff slammed down that throws a
+// splash up; a double whip, or a geyser burst up under them; a whirlpool spun round her that drags
+// them in and flings them out, or a wave she rides in on.
+const tide = (st) => ({ magic: true, fx: 'tmhit', ...st });
+const TIDE_SHOT = { magic: true, burst: 'tmhit' };
+PATH_COMBOS.tidemage = [
+  { move: 'tmwhip', dur: 0.42, step: 6, strikes: [tide({ at: 0.46, pct: 90, reach: 118, h: 60, targets: 2, knock: 50, burst: 'tmlash', burstAt: 0.24, burstDur: 0.32 })] },
+  { move: 'tmroll', dur: 0.48, step: 4, strikes: [{ ...TIDE_SHOT, at: 0.44, shot: 'tmwave', pct: 95, range: 280, h: 70, targets: 3, pierce: true, knock: 90, speed: 520 }] },
+  { move: 'tmcrash', dur: 0.66, step: -6, finisher: true, strikes: [{ ...TIDE_SHOT, at: 0.56, shot: 'tmwavebig', pct: 185, range: 320, h: 100, targets: 4, pierce: true, knock: 240, launch: 160, speed: 600, big: true, stop: 0.07, shake: 3 }] },
+];
+const TIDE_POOL = {
+  bubbles: { move: 'tmbubbles', dur: 0.46, step: 4, strikes: [0.3, 0.48, 0.66].map((at, i) => ({ ...TIDE_SHOT, at, shot: 'tmbubble', pct: 34, range: 260, h: 64, knock: 20, speed: 430, oy: (i - 1) * 6 })) },
+  splash: { move: 'tmsplash', dur: 0.44, step: 8, strikes: [tide({ at: 0.45, pct: 95, reach: 80, h: 72, targets: 3, knock: 70, launch: 140, burst: 'tmsplash', burstAt: 0.7, burstDur: 0.45 })] },
+  twin: { move: 'tmtwin', dur: 0.5, step: 6, strikes: [tide({ at: 0.3, pct: 50, reach: 118, h: 60, targets: 2, knock: 30, burst: 'tmlash', burstAt: 0.24, burstDur: 0.3 }), tide({ at: 0.64, pct: 56, reach: 118, h: 64, targets: 2, knock: 70, burst: 'tmlash', burstAt: 0.24, burstDur: 0.3, flip: true })] },
+  geyser: { move: 'tmgeyser', dur: 0.5, step: 4, strikes: [tide({ at: 0.5, pct: 105, reach: 130, h: 130, targets: 2, knock: 20, launch: 360, burst: 'tmgeyser', burstAt: 0.85, burstDur: 0.55, stop: 0.04 })] },
+  whirl: { move: 'tmwhirl', dur: 0.64, step: 6, finisher: true, strikes: [
+    tide({ at: 0.28, pct: 60, reach: 104, h: 80, around: true, targets: 4, knock: 30, pull: 140, burst: 'tmwhirl', burstAt: 0, burstDur: 0.6 }),
+    tide({ at: 0.64, pct: 120, reach: 104, h: 86, around: true, targets: 5, knock: 210, launch: 180, big: true, stop: 0.07, shake: 2 }),
+  ] },
+  surf: { move: 'tmsurf', dur: 0.62, step: 64, carry: 0.6, finisher: true, strikes: [tide({ at: 0.56, pct: 170, reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.07, shake: 3 })] },
+};
+
 export const PATH_VARIANTS = {
+  tidemage: [
+    [PATH_COMBOS.tidemage[0], TIDE_POOL.bubbles, TIDE_POOL.splash],
+    [PATH_COMBOS.tidemage[1], TIDE_POOL.twin, TIDE_POOL.geyser],
+    [PATH_COMBOS.tidemage[2], TIDE_POOL.whirl, TIDE_POOL.surf],
+  ],
   fists: [
     [COMBOS.none[0], FISTS.headbutt],
     [COMBOS.none[1], FISTS.flyingkick],
@@ -479,6 +509,16 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
+  // The Tide Mage: a spout of water thrown up under whatever flies, a waterfall poured down from a
+  // hang in the air (the second a great one), and a wave surfed in on out of a run.
+  tidemage: {
+    up: { move: 'tmspout', dur: 0.48, strikes: [tide({ at: 0.42, pct: 110, reach: 84, h: 210, targets: 4, knock: 20, launch: 420, burst: 'tmgeyser', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.04 })] },
+    air: [
+      { move: 'tmfall', dur: 0.44, hang: true, strikes: [tide({ at: 0.42, pct: 80, reach: 96, h: 200, targets: 3, knock: 30, burst: 'tmfall', burstAt: 0.35, burstDur: 0.45, floor: true })] },
+      { move: 'tmfall', dur: 0.5, hang: true, finisher: true, strikes: [tide({ at: 0.42, pct: 105, reach: 110, h: 220, targets: 4, knock: 130, burst: 'tmfallbig', burstAt: 0.35, burstDur: 0.55, floor: true, big: true, stop: 0.05, shake: 1 })] },
+    ],
+    dash: { move: 'tmsurf', dur: 0.5, step: 84, carry: 0.6, strikes: [tide({ at: 0.5, pct: 120, reach: 86, h: 72, targets: 3, knock: 160, burst: 'tmsplash', burstAt: 0.5, burstDur: 0.45, big: true, stop: 0.04 })] },
+  },
   // The Sky Dancer: a rising spiral that throws them up, and a glide out of a run with both palms
   // out. (In the air she has no separate air string: her whole string is danced in the air.)
   kitsune: {
@@ -694,6 +734,31 @@ export function addCharge(world, n) {
 }
 // Full Pressure (Overdrive): her crossbow vents steam and every shot fires a second bolt.
 export const overdrive = (world) => hasCharge(world.char) && (world.charge ?? 0) >= CHARGE_MAX;
+// Tide: the Tide Mage's gauge. Her water that lands builds it, and so do her heals and shields; it
+// ebbs once the fighting stops. The fuller it runs, the bigger her waves; full (High Tide), every
+// basic attack sends a little wave rolling after it, and she and the party near her slowly mend.
+export const TIDE_MAX = 100;
+const TIDE_HOLD = 5;
+const TIDE_DRAIN = 10;
+export const TIDE_MEND = 0.01; // of max HP a second, at High Tide, for her and the party near her
+export const hasTide = (char) => jobChain(char.job).includes('tidemage');
+export function addTide(world, n) {
+  if (!hasTide(world.char) || n <= 0) return;
+  world.tide = Math.min(TIDE_MAX, (world.tide ?? 0) + n);
+  world.tideAt = world.now;
+}
+export const highTide = (world) => hasTide(world.char) && (world.tide ?? 0) >= TIDE_MAX;
+// How much bigger her waves run with the Tide: up to a third larger when it's full.
+export const tideSwell = (world) => (hasTide(world.char) ? 1 + (world.tide ?? 0) / TIDE_MAX / 3 : 1);
+function tickTide(world, dt) {
+  if (world.tide > 0 && world.now - (world.tideAt ?? 0) > TIDE_HOLD) world.tide = Math.max(0, world.tide - TIDE_DRAIN * dt);
+  if (!highTide(world) || world.dead) return;
+  // (Mended once a second, so the numbers read: TIDE_MEND each time, her own and the party's.)
+  world.tideMendIn = (world.tideMendIn ?? 1) - dt;
+  if (world.tideMendIn > 0) return;
+  world.tideMendIn = 1;
+  healAround(world, world.body.x, world.body.y, TIDE_MEND, 200, false);
+}
 // Valor: the Warrior's gauge (first job; the paths have their own). Every blow that lands builds
 // it, and faster the more monsters one blow catches at once; it fades once the fighting stops.
 // Full (Unbroken), his blows land heavier and knock harder, and nothing knocks him back.
@@ -966,6 +1031,8 @@ export function healAround(world, x, y, pct, r, gauge = true, el = null) {
     const amount = Math.max(1, Math.round(stats.maxHp * pct));
     char.hp = Math.min(stats.maxHp, char.hp + amount);
     world.numbers.push({ x: body.x, y: body.y - body.h - 6, text: `+${amount}`, color: '#7ee0b0', t: 0 });
+    // (A Tide Mage's heals build her Tide.)
+    if (gauge) addTide(world, 3);
     // (The Cleric's heals land as her own mark: soap bubbles and sparkles rising round them.)
     // (At most one every half second: her heal bombs mend on nearly every hit, and a stack of
     // them reads as a column of crosses.)
@@ -983,7 +1050,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasTide(char) ? 'tide' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -998,6 +1065,7 @@ export function addAim(world, n, mob = null, el = null) {
   addKi(world, n);
   addBond(world, n);
   addCharge(world, n);
+  addTide(world, n);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
 export function pathOf(world) {
@@ -1011,6 +1079,7 @@ export function pathOf(world) {
   if (w === 'none') return 'fists';
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
   if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
+  if (w === 'staff' && hasTide(char)) return 'tidemage';
   return null;
 }
 
@@ -1229,6 +1298,16 @@ function playStep(world, step, scale, key, school = null, after = 0) {
       });
     }
   }
+  // High Tide (full Tide): every basic attack sends a little wave rolling after it. And her waves
+  // run bigger the fuller the Tide (`swell`, drawn and hit alike).
+  if (hasTide(world.char) && step.strikes.some((s) => s.magic)) {
+    const swell = tideSwell(world);
+    step = { ...step, strikes: step.strikes.map((s) => (s.shot === 'tmwave' || s.shot === 'tmwavebig' ? { ...s, swell, h: Math.round((s.h ?? 60) * swell) } : s)) };
+    if (highTide(world) && key.startsWith('basic') && !step.hang) {
+      const last = Math.max(...step.strikes.map((s) => s.at));
+      step = { ...step, strikes: [...step.strikes, { ...TIDE_SHOT, at: Math.min(0.95, last + 0.1), shot: 'tmwave', pct: 35, range: 260, h: 60, targets: 3, pierce: true, knock: 40, speed: 560, gauge: 0, swell: 0.7, quiet: true }] };
+    }
+  }
   step.strikes.forEach((s, n) => {
     if (s.onLand) return;
     // The blade's whoosh starts during the wind-up, so it peaks as the blow lands (audio cue).
@@ -1244,6 +1323,7 @@ export function tickMelee(world, dt) {
   if (world.faith > 0 && world.now - (world.faithAt ?? 0) > FAITH_HOLD && !inForm(world)) world.faith = Math.max(0, world.faith - FAITH_DRAIN * dt);
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
+  tickTide(world, dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
@@ -1408,6 +1488,7 @@ function land(world, s) {
   if (targets.length && !s.phantom) addTails(world, s.gauge ?? 4, targets[0]);
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
+  if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
   // A Thief's finisher springs her back out of the blow in a backflip (`flipback`, px), hit or miss.
   if (s.flipback && body.onGround && !s.phantom) {
     world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
@@ -1701,6 +1782,8 @@ function wandTip(world, s) {
 
 // A shot (or a fan of them, or one that pierces a line) leaves the bow or hand.
 function fire(world, strike) {
+  // (A shot that mends as it goes, the Great Wave: you and the party round you, as it breaks.)
+  if (strike.heal && !strike.split) healAround(world, world.body.x, world.body.y, strike.heal, strike.healR ?? 220, true);
   // Overclock: her next few bolts go out heavy.
   let s = hasCharge(world.char) ? overclocked(world, strike) : strike;
   // Overdrive (full Pressure): a second bolt after every shot, and a puff of steam off the machine.
@@ -1728,7 +1811,7 @@ function fire(world, strike) {
   let oy = (s.from?.y ?? body.y) - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
   // A wand's spell leaves its tip, where the pose points it at the moment it's cast (not her chest).
   // (Worked out exactly as the figure is drawn, render/hero.js `strikePose`.)
-  const tip = !s.from && s.move && world.stats.weaponType === 'wand' && world.char.appearance ? wandTip(world, s) : null;
+  const tip = !s.from && s.move && (world.stats.weaponType === 'wand' || world.stats.weaponType === 'staff') && world.char.appearance ? wandTip(world, s) : null;
   if (tip) {
     ox = body.x + s.dir * tip[0];
     oy = body.y + tip[1] + (s.oy ?? 0);
@@ -1755,7 +1838,7 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;
@@ -1764,7 +1847,8 @@ function fire(world, strike) {
   // (The archer paths use effect sprites: a gust of leaves or sparks off the bolt.)
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
-  else if (!hasBond(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  // (The Tide Mage's water carries its own splash: no flash off her staff.)
+  else if (!hasBond(world.char) && !hasTide(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.

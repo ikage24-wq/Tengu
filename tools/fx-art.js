@@ -7483,6 +7483,809 @@
     };
   })();
 
+  // ---------- The Tide Mage (docs/design/tide-mage.md) ----------
+  // Her shapes, hers alone: curling wave crests capped with foam, round bubbles with a white glint,
+  // spray droplets, and ripple rings; deep sea teal inked in navy, white foam, a coral accent.
+  // Every one is drawn as smooth motion over many drawings (12-16): each drawing is the same
+  // picture at its own moment (`k`, 0-1), so droplets fly in real arcs, foam churns and crests roll
+  // instead of jumping between key poses. (Art px are strip px: three to a game pixel.)
+  const TIDEP = ['#ffffff', '#c8f4ff', '#46c4e4', '#1787bb', '#0c4a80'];
+  const FOAM = ['#ffffff', '#f3fdff', '#cfeef8', '#93cde4', '#3f80ac'];
+  const TMCORAL = ['#ffffff', '#ffe2d6', '#ff9c88', '#ee6670', '#9e3b5c'];
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const clamp01 = (t) => Math.max(0, Math.min(1, t));
+  const win = (k, a, b) => clamp01((k - a) / (b - a));
+  // In then out over k: 0 outside a..b, 1 at its middle, smooth either side.
+  const swell = (k, a, b) => Math.sin(Math.PI * win(k, a, b));
+
+  // A body of water: the shape inked in navy, then its deep tone, its sea teal a little inside,
+  // a light band along `lit` (a list of points it runs through) and white specular streaks.
+  // A closed outline resampled to `n` points evenly round its edge.
+  function resample(pts, n) {
+    const seg = pts.map((p, i) => Math.hypot(pts[(i + 1) % pts.length][0] - p[0], pts[(i + 1) % pts.length][1] - p[1]));
+    const total = seg.reduce((a, b) => a + b, 0) || 1;
+    const out = [];
+    let i = 0;
+    let acc = 0;
+    for (let k = 0; k < n; k++) {
+      const want = (k / n) * total;
+      while (i < pts.length - 1 && acc + seg[i] < want) acc += seg[i++];
+      const f = seg[i] ? (want - acc) / seg[i] : 0;
+      const p = pts[i];
+      const q = pts[(i + 1) % pts.length];
+      out.push([lerp(p[0], q[0], f), lerp(p[1], q[1], f)]);
+    }
+    return { out, total };
+  }
+  // A body of water's edge rippling: small waves running round its outline (`ph`, 0-1, carries them
+  // on; whole turns, so a loop stays seamless), the points pushed in and out along the edge.
+  function rippled(pts, ph, amp) {
+    const { out, total } = resample(pts, Math.max(24, Math.round(pts.length * 6)));
+    const cx = out.reduce((n, p) => n + p[0], 0) / out.length;
+    const cy = out.reduce((n, p) => n + p[1], 0) / out.length;
+    const waves = Math.max(3, Math.round(total / 110));
+    return out.map(([x, y], i) => {
+      const [px, py] = out[(i - 1 + out.length) % out.length];
+      const [nx2, ny2] = out[(i + 1) % out.length];
+      let nx = ny2 - py;
+      let ny = -(nx2 - px);
+      const l = Math.hypot(nx, ny) || 1;
+      nx /= l;
+      ny /= l;
+      if (nx * (x - cx) + ny * (y - cy) < 0) [nx, ny] = [-nx, -ny];
+      const u = i / out.length;
+      const d = amp * (Math.sin(u * waves * TAU - ph * TAU * 2) * 0.85 + Math.sin(u * waves * 2 * TAU + ph * TAU * 2) * 0.15);
+      return [x + nx * d, y + ny * d];
+    });
+  }
+  function water(ctx, pts, { inset = 0.12, lit = null, glints = null, ph = 0, ripple = 1 } = {}) {
+    // Every body of water ripples: its edge undulating, ripple marks drifting over it.
+    // (As deep as the water is thick: a thin whip ripples finely, a wave in broad swells.)
+    const thick = Math.min(Math.max(...pts.map((p) => p[0])) - Math.min(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1])) - Math.min(...pts.map((p) => p[1])));
+    if (ripple) pts = rippled(pts, ph, Math.min(5, Math.max(1, thick * 0.045)) * ripple);
+    inked(ctx, pts, TIDEP[3], TIDEP[4], 3);
+    const cx = pts.reduce((n, p) => n + p[0], 0) / pts.length;
+    const cy = pts.reduce((n, p) => n + p[1], 0) / pts.length;
+    fill(ctx, pts.map(([x, y]) => [lerp(x, cx, inset), lerp(y, cy, inset)]), TIDEP[2]);
+    // Depth: the water darkens toward its foot and catches a pale rim of sky along its top, in two
+    // flat cel bands, kept inside the shape.
+    const ys = pts.map((p) => p[1]);
+    const top = Math.min(...ys);
+    const bot = Math.max(...ys);
+    const xs = pts.map((p) => p[0]);
+    ctx.save();
+    path(ctx, pts);
+    ctx.clip();
+    ctx.fillStyle = TIDEP[3];
+    ctx.globalAlpha = 0.55;
+    ctx.fillRect(Math.min(...xs) - 4, lerp(top, bot, 0.78), Math.max(...xs) - Math.min(...xs) + 8, bot - top);
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = Math.max(3, (bot - top) * 0.035);
+    ctx.strokeStyle = TIDEP[1];
+    path(ctx, pts.map(([x, y]) => [x, y + ctx.lineWidth * 0.9]));
+    ctx.stroke();
+    // Ripple marks: little doubled crescents of light drifting across the water, each swelling up
+    // and fading as it goes.
+    if (ripple) {
+      const x0 = Math.min(...xs);
+      const wdt = Math.max(...xs) - x0;
+      const m = Math.max(2, Math.min(7, Math.round((wdt * (bot - top)) / 5000)));
+      const size = Math.max(8, Math.min(26, Math.min(wdt, bot - top) * 0.22));
+      ctx.lineCap = 'round';
+      for (let j = 0; j < m; j++) {
+        const u = (ph * 2 + j / m) % 1;
+        const fx = x0 + wdt * ((j * 0.618 + u * 0.35) % 1);
+        const fy = lerp(top, bot, 0.18 + 0.62 * ((j * 0.413) % 1)) - u * size * 0.6;
+        const a = Math.sin(Math.PI * u);
+        for (const [dy, col, lw] of [[0, TIDEP[1], size * 0.2], [size * 0.32, '#ffffff', size * 0.11]]) {
+          ctx.beginPath();
+          ctx.ellipse(fx, fy + dy, size * (0.6 + 0.4 * u), size * 0.28, 0, Math.PI * 1.15, Math.PI * 1.85);
+          ctx.strokeStyle = col;
+          ctx.globalAlpha = a * 0.9;
+          ctx.lineWidth = lw;
+          ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+    if (lit) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = TIDEP[1];
+      ctx.lineWidth = lit.w ?? 8;
+      ctx.beginPath();
+      lit.pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      ctx.stroke();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = (lit.w ?? 8) * 0.35;
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (glints) for (const [x, y, l, a] of glints) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, l, l * 0.22, 0, 0, TAU);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  // Current lines: thin white strokes running through a body of water along `line(u, j)` (u 0-1
+  // along it, j which line), each broken into dashes that scroll on with `ph`, so the water reads
+  // as moving inside, not just its outline.
+  function current(ctx, line, n, ph, w = 3, dash = 0.55) {
+    // (Each line carries two long strokes half a loop apart; a stroke flows in at one end and out
+    // at the other, thinning toward its tail, so the loop never jumps.)
+    ctx.save();
+    ctx.lineCap = 'round';
+    for (let j = 0; j < n; j++) {
+      for (let d = 0; d < 2; d++) {
+        const headU = ((ph + j * 0.37 + d * 0.5) % 1) * (1 + dash);
+        const tailU = headU - dash;
+        const a = Math.max(0, tailU);
+        const b = Math.min(1, headU);
+        if (b - a < 0.02) continue;
+        const steps = 16;
+        for (let s = 0; s < steps; s++) {
+          const u = a + ((b - a) * s) / steps;
+          const u2 = a + ((b - a) * (s + 1)) / steps;
+          const taper = clamp01((u - tailU) / dash);
+          const [x1, y1] = line(u, j);
+          const [x2, y2] = line(u2, j);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = TIDEP[1];
+          ctx.globalAlpha = 0.75 * (0.3 + 0.7 * taper);
+          ctx.lineWidth = w * (0.8 + 1.2 * taper);
+          ctx.stroke();
+          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = 0.4 + 0.6 * taper;
+          ctx.lineWidth = w * (0.3 + 0.6 * taper);
+          ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+  }
+  // Claws of foam: small curled tongues of white water reaching out from (x, y) along angle `a`,
+  // each curling at its tip, swaying with `ph` (the crest of a great wave, a geyser's head).
+  function claws(ctx, x, y, r, a, n, ph, seed) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const aa = a + (j - (n - 1) / 2) * 0.42 + Math.sin(ph * TAU + j) * 0.08;
+      const rr = r * (0.7 + R() * 0.5) * (1 + 0.12 * Math.sin(ph * TAU * 2 + j * 1.7));
+      const cx = x + Math.cos(aa) * rr * 0.55;
+      const cy = y + Math.sin(aa) * rr * 0.55;
+      celCrescent(ctx, FOAM, cx, cy, rr * 0.5, aa - 1.9, aa + 1.2, rr * 0.28, { seed: seed + j, inkW: 2.5 });
+    }
+  }
+
+  // A curl of wave at its moment `ph` (0-1, loops): water rising from a base `w` wide to a crest `h`
+  // high that tips over forward (+x) and pours down its hollow face; foam riding the lip and
+  // churning at its foot turn with `ph`, and spray streams off the crest in arcs.
+  function waveCurl(ctx, x, y, w, h, ph = 0, seed = 1) {
+    const t = ph * TAU;
+    const lip = Math.sin(t) * 0.04;
+    const rise = 1 + Math.sin(t + 0.6) * 0.03;
+    const H = h * rise;
+    const back = [];
+    for (let i = 0; i <= 18; i++) {
+      const u = i / 18;
+      const ripple = Math.sin(u * 9 - t * 2) * H * 0.012 * u;
+      back.push([x - w * 0.56 + u * w * 0.7, y - H * Math.pow(Math.sin((u * Math.PI) / 2), 1.5) + ripple]);
+    }
+    const curlPts = [];
+    for (let i = 1; i <= 8; i++) {
+      // Over the top and round into the curl: an arc from the crest down into the hollow.
+      const a = -Math.PI / 2 + (i / 8) * Math.PI * 1.05;
+      const r = H * 0.2;
+      curlPts.push([x + w * (0.14 + lip) + Math.cos(a) * r * 1.25, y - H * 0.8 + Math.sin(a) * r]);
+    }
+    const front = [[x + w * 0.24, y - H * 0.5], [x + w * 0.22, y - H * 0.3], [x + w * 0.32, y - H * 0.1], [x + w * 0.46, y]];
+    const pts = back.concat(curlPts, front);
+    water(ctx, pts, {
+      ph,
+      inset: 0.1,
+      lit: { w: H * 0.06, pts: back.slice(4, 16).map(([px, py]) => [px + 6, py + H * 0.07]) },
+      glints: [[x - w * 0.08 + Math.sin(t) * 6, y - H * 0.42, H * 0.07, -0.9], [x + w * 0.27, y - H * 0.42, H * 0.05, 1.45]],
+    });
+    // Current running up the back and over: three lines following the slope, scrolling with it
+    // (kept inside the water).
+    ctx.save();
+    path(ctx, pts.map(([px, py]) => [lerp(px, x, 0.06), lerp(py, y - H * 0.4, 0.06)]));
+    ctx.clip();
+    current(ctx, (u, j) => {
+      const v = 0.12 + u * 0.72;
+      const inset = 0.16 + j * 0.13;
+      return [x - w * 0.56 + v * w * 0.7 + inset * w * 0.12, y - H * Math.pow(Math.sin((v * Math.PI) / 2), 1.5) + H * inset];
+    }, 3, ph * 2, H * 0.018);
+    ctx.restore();
+    // Inside the curl: the glassy hollow, lighter, and a thin sheet of water falling through it.
+    fill(ctx, [[x + w * 0.2, y - H * 0.56], [x + w * 0.27, y - H * 0.68], [x + w * 0.29, y - H * 0.36], [x + w * 0.23, y - H * 0.34]], TIDEP[1]);
+    for (let j = 0; j < 3; j++) {
+      const u = (ph * 2 + j / 3) % 1;
+      const sx = x + w * (0.245 + j * 0.014);
+      fill(ctx, [[sx - 1.5, y - H * (0.66 - u * 0.2)], [sx + 1.5, y - H * (0.66 - u * 0.2)], [sx + 2, y - H * (0.5 - u * 0.2)], [sx - 2, y - H * (0.5 - u * 0.2)]], '#ffffff');
+    }
+    for (let j = 0; j < 4; j++) {
+      const u = (ph + j / 4) % 1;
+      bubble(ctx, x + w * (0.3 - u * 0.5), y - H * (0.08 + u * 0.14), (3.5 + (j % 2) * 2) * (1 - u * 0.5), Math.sin(u * 9 + j));
+    }
+    // Foam riding the lip, rolling over: two crescents turning with the wave.
+    celCrescent(ctx, FOAM, x + w * (0.16 + lip), y - H * 0.8, H * 0.24, -2.9 + Math.sin(t) * 0.12, 0.9 + Math.sin(t) * 0.12, H * 0.12, { seed: seed + 3, inkW: 3 });
+    celCrescent(ctx, FOAM, x + w * (0.06 + lip), y - H * 0.88, H * 0.16, -3.2, -0.6, H * 0.08, { seed: seed + 4, inkW: 3 });
+    // Claws of foam reaching out along the crest as it tips over.
+    claws(ctx, x + w * (0.22 + lip), y - H * 0.86, H * 0.2, -0.3, 4, ph, seed + 20);
+    // White water churning at its foot and trailing off its back.
+    for (let j = 0; j < 3; j++) {
+      const a = t + j * 2.1;
+      puff(ctx, FOAM, x + w * (0.36 + 0.04 * Math.cos(a)), y - H * (0.06 + 0.03 * Math.sin(a)), H * (0.1 + 0.03 * Math.sin(a + 1)), seed + 5 + j, { lobes: 4 });
+    }
+    puff(ctx, FOAM, x - w * 0.44, y - H * 0.03, H * 0.08, seed + 9, { lobes: 3 });
+    // Spray streaming off the crest: each droplet on its own arc, round and round with the loop.
+    const R = rng(seed + 11);
+    for (let j = 0; j < 7; j++) {
+      const off = R();
+      const u = (ph + off) % 1;
+      const vx = 0.3 + R() * 0.3;
+      const vy = -0.4 - R() * 0.4;
+      const dx = w * vx * u;
+      const dy = H * (vy * u + 0.9 * u * u);
+      const r = (4 + R() * 4) * (1 - u * 0.6);
+      drop(ctx, j % 3 ? FOAM : TIDEP, x + w * 0.24 + dx, y - H * 0.9 + dy, Math.atan2(vy + 1.8 * u, vx), r);
+    }
+  }
+  // A bubble: a ring of water round a clear middle, a white glint that slides round as it wobbles.
+  function bubble(ctx, x, y, r, wob = 0) {
+    // (Too small to have a ring inside its ink: just a bead of water.)
+    if (r < 4) {
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(1, r), 0, TAU);
+      ctx.fillStyle = TIDEP[4];
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, Math.max(0.6, r * 0.65), 0, TAU);
+      ctx.fillStyle = TIDEP[1];
+      ctx.fill();
+      return;
+    }
+    const rx = r * (1 + wob * 0.06);
+    const ry = r * (1 - wob * 0.06);
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, TAU);
+    ctx.fillStyle = TIDEP[1];
+    ctx.globalAlpha = 0.45;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = Math.max(3, r * 0.15);
+    ctx.strokeStyle = TIDEP[4];
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx - ctx.lineWidth * 0.6, ry - ctx.lineWidth * 0.6, 0, 0, TAU);
+    ctx.lineWidth = Math.max(2, r * 0.1);
+    ctx.strokeStyle = TIDEP[2];
+    ctx.stroke();
+    // A thin rainbow-teal sheen on its far side, and the glints.
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx * 0.78, ry * 0.78, 0, 0.2 + wob * 0.2, 1.4 + wob * 0.2);
+    ctx.lineWidth = Math.max(1.5, r * 0.07);
+    ctx.strokeStyle = TMCORAL[1];
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(x - r * (0.38 - wob * 0.05), y - r * 0.4, r * 0.24, r * 0.14, -0.7, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + r * 0.42, y + r * 0.36, r * 0.08, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  // A ripple ring flat on the floor (`sy` squashes it into perspective).
+  function ripple(ctx, x, y, r, th, sy = 0.32, broken = 0, seed = 1, a = 1) {
+    if (r <= th || a <= 0) return;
+    ctx.save();
+    ctx.globalAlpha *= a;
+    ctx.translate(x, y);
+    ctx.scale(1, sy);
+    celRing(ctx, TIDEP, 0, 0, r, th, { broken, seed });
+    ctx.restore();
+  }
+  // Droplets thrown from (x, y) at moment `u` (0-1 of their flight): each its own speed and angle
+  // round `a` (spread `sp`), falling under gravity `g`, shrinking as they go.
+  function spray(ctx, x, y, a, sp, n, d, u, seed, { g = 0.9, pal = FOAM } = {}) {
+    if (u <= 0 || u >= 1) return;
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const aa = a + (R() - 0.5) * sp;
+      const sp0 = d * (0.5 + R() * 0.5);
+      const late = R() * 0.15;
+      const v = clamp01((u - late) / (1 - late));
+      if (v <= 0) continue;
+      const px = x + Math.cos(aa) * sp0 * v;
+      const py = y + Math.sin(aa) * sp0 * v + g * d * v * v * 0.6;
+      const vy = Math.sin(aa) * sp0 + g * d * v * 1.2;
+      const vx = Math.cos(aa) * sp0;
+      const dir = Math.atan2(vy, vx);
+      const r = (5 + R() * 4) * (1 - v * 0.55);
+      // (Early in their flight, while they're quick, a streak of water behind them.)
+      if (v < 0.35) speedLine(ctx, pal, px - Math.cos(dir) * r * 4, py - Math.sin(dir) * r * 4, px, py, r * 0.45);
+      if (j % 4 === 3) {
+        ctx.beginPath();
+        ctx.arc(px, py, r * 0.75, 0, TAU);
+        ctx.fillStyle = TIDEP[4];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px, py, r * 0.55, 0, TAU);
+        ctx.fillStyle = TIDEP[1];
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(px - r * 0.2, py - r * 0.2, r * 0.2, 0, TAU);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+      } else drop(ctx, j % 3 ? pal : TIDEP, px, py, dir, r);
+    }
+  }
+
+  // Her whip of water (cracked out ahead of the staff, out to its reach: 118 px, 354 art px): the
+  // stream flies out with a travelling wave running down it, snaps straight and cracks at its tip
+  // in a burst of white water, then breaks up, the droplets falling.
+  E.tmlash = (() => {
+    const x0 = 20;
+    const cy = 100;
+    const L = 360;
+    const n = 26;
+    return {
+      w: L + 90, h: 210, n, fps: 30, px: x0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const out = smooth(win(k, 0, 0.32));
+        const snap = smooth(win(k, 0.18, 0.4));
+        const fade = win(k, 0.42, 0.62);
+        if (fade < 1) {
+          const top = [];
+          const bot = [];
+          const m = 32;
+          for (let j = 0; j <= m; j++) {
+            const u = (j / m) * out;
+            // A wave travelling down the stream as it flies out, damping as it snaps straight.
+            const amp = 38 * (1 - snap * 0.85) * Math.sin(u * Math.PI * 2.4 - k * 14) * (0.35 + u);
+            const yy = cy + amp;
+            const wid = lerp(42, 14, Math.pow(u, 0.8)) * (1 - fade * 0.7) * (1 + 0.12 * Math.sin(u * 21 - k * 20));
+            top.push([x0 + u * L, yy - wid / 2]);
+            bot.push([x0 + u * L, yy + wid / 2]);
+          }
+          ctx.save();
+          ctx.globalAlpha = 1 - fade;
+          water(ctx, top.concat(bot.slice().reverse()), { ph: k * 2, inset: 0.25, lit: { w: 7, pts: top.map(([px, py]) => [px, py + 6]) } });
+          // A twist of light round it, sliding down its length as it flies.
+          for (let j = 0; j <= m; j++) {
+            const tw = Math.sin((j / m) * 30 - k * 40);
+            if (tw < 0.55 || j % 2) continue;
+            const side = Math.sin((j / m) * 15 - k * 20) > 0 ? 0.3 : 0.7;
+            const px = top[j][0];
+            const py = lerp(top[j][1], bot[j][1], side);
+            fill(ctx, [[px - 7, py - 2], [px + 7, py - 3.5], [px + 7, py], [px - 7, py + 1.5]], '#ffffff');
+          }
+          // Bubbles carried along inside it.
+          for (let j = 1; j < 5; j++) {
+            const at = Math.round(((j / 5 + k * 0.4) % 1) * m * 0.9);
+            bubble(ctx, top[at][0], (top[at][1] + bot[at][1]) / 2, 4 + (j % 2) * 2, Math.sin(k * 9 + j));
+          }
+          ctx.restore();
+        }
+        // The crack at the tip: white water bursting, then spray flung on ahead and falling.
+        const tx = x0 + L * out;
+        const crack = swell(k, 0.26, 0.6);
+        if (crack > 0) {
+          puff(ctx, FOAM, tx, cy, 14 + 30 * crack, 601 + Math.floor(k * 4), { lobes: 6, holes: k > 0.45 ? 0.5 : 0 });
+          sparkle(ctx, FOAM, tx + 24, cy - 30, 6 + 14 * crack, k * 3);
+        }
+        spray(ctx, tx - 20, cy, -0.25, 1.6, 9, 120, win(k, 0.3, 1), 605);
+        // Droplets peeling off along its length as it whips through the air.
+        for (let j = 0; j < 4; j++) spray(ctx, x0 + L * out * (0.25 + j * 0.18), cy, -Math.PI / 2 + (j % 2 ? 0.4 : -0.4), 1, 2, 60, win(k, 0.12 + j * 0.05, 0.6 + j * 0.05), 615 + j);
+        spray(ctx, x0 + L * 0.5, cy, -Math.PI / 2, 2.6, 10, 90, win(k, 0.42, 1), 611);
+        if (k > 0.6) sparkle(ctx, TIDEP, x0 + L * 0.7, cy - 40 + k * 30, 9 * (1 - win(k, 0.6, 1)), k * 4);
+      },
+    };
+  })();
+
+  // Her rolling wave in flight (loops; it rolls along the floor toward +x): a curl of water tipping
+  // forward, foam churning on its lip and foot, spray streaming off the crest, a wake behind it.
+  E.tmwave = (() => {
+    const x = 160;
+    const y = 200;
+    const n = 24;
+    return {
+      w: 300, h: 230, n, fps: 48, px: x, py: y, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        // The wake: streaks of white water peeling back, scrolling with the loop.
+        for (let j = 0; j < 4; j++) {
+          const u = (ph + j / 4) % 1;
+          const lx = x - 80 - u * 90;
+          speedLine(ctx, FOAM, lx - 40, y - 12 - j * 18, lx + 20, y - 16 - j * 22, 3 * (1 - u * 0.6));
+        }
+        for (let j = 0; j < 2; j++) {
+          const u = (ph + j / 2) % 1;
+          puff(ctx, FOAM, x - 80 - u * 70, y - 6, 14 * (1 - u * 0.6), 621 + j, { lobes: 3, holes: u > 0.6 ? 0.4 : 0 });
+        }
+        waveCurl(ctx, x, y, 175, 155, ph, 623);
+        bubble(ctx, x - 44 + Math.sin(ph * TAU) * 6, y - 64 - Math.sin(ph * TAU * 2) * 4, 9, Math.sin(ph * TAU));
+        bubble(ctx, x - 12, y - 110 + Math.cos(ph * TAU) * 5, 6, Math.cos(ph * TAU));
+      },
+    };
+  })();
+  // The great curling wave (her finisher's): drawn big for the line it crashes down.
+  E.tmwavebig = grown(E.tmwave, 1.5);
+
+  // A bubble in flight (loops): wobbling as it floats, its glint sliding, two little ones trailing.
+  E.tmbubble = (() => {
+    const c = 70;
+    const n = 24;
+    return {
+      w: 140, h: 120, n, fps: 32, px: c + 20, py: c - 10, loop: true,
+      draw(ctx, i) {
+        const t = (i / n) * TAU;
+        bubble(ctx, c + 20, c - 10 + Math.sin(t) * 3, 30, Math.sin(t * 2));
+        bubble(ctx, c - 26 + Math.cos(t) * 2, c + 10 - Math.sin(t + 1) * 3, 11, Math.sin(t * 2 + 1));
+        bubble(ctx, c - 46, c - 6 + Math.sin(t + 2) * 3, 7, Math.sin(t * 2 + 2));
+      },
+    };
+  })();
+
+  // Her mark on a monster: water bursts round it, a ring of water spreading out as droplets fly off
+  // in arcs and bubbles float up and pop, then a sparkle.
+  E.tmhit = (() => {
+    const c = 120;
+    const n = 24;
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const burst = swell(k, 0, 0.42);
+        if (burst > 0) puff(ctx, FOAM, c, c, 18 + 30 * burst, 631 + Math.floor(k * 3), { lobes: 6, holes: k > 0.3 ? 0.5 : 0 });
+        const ring = smooth(win(k, 0.05, 0.7));
+        if (ring > 0 && ring < 1) celRing(ctx, TIDEP, c, c, 30 + 60 * ring, 16 * (1 - ring) + 3, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 632 });
+        if (k < 0.4) sparkle(ctx, FOAM, c + 34, c - 32, 16 * swell(k, 0, 0.4), 0.4);
+        spray(ctx, c, c, -Math.PI / 2, 4.6, 12, 100, win(k, 0.08, 1), 633);
+        const R = rng(634);
+        for (let j = 0; j < 4; j++) {
+          const born = 0.15 + R() * 0.2;
+          const u = win(k, born, born + 0.55);
+          if (u > 0 && u < 1) bubble(ctx, c + (R() - 0.5) * 110, c - 10 - u * 70, (7 + R() * 6) * (1 - u * 0.4), Math.sin(u * 8 + j));
+          else if (u >= 1 && k < born + 0.7) sparkle(ctx, FOAM, c + (R() - 0.5) * 110, c - 80, 8, j);
+        }
+        if (k > 0.55 && k < 0.9) sparkle(ctx, TMCORAL, c - 36, c - 40, 10 * swell(k, 0.55, 0.9), k * 2);
+      },
+    };
+  })();
+
+  // A splash thrown up off the floor: a sheet of water and a crown of fingers rising round where it
+  // struck, tipped with drops that fly free on their own arcs, a ring spreading out on the floor,
+  // then it all falls back. Its foot sits on the floor at `py`; about 70 px tall in game.
+  E.tmsplash = (() => {
+    const c = 150;
+    const gy = 260;
+    const n = 26;
+    return {
+      w: 300, h: 280, n, fps: 26, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        // How far up the crown is: shoots up fast, hangs, sinks back.
+        const up = k < 0.25 ? smooth(k / 0.25) : 1 - smooth(win(k, 0.35, 0.85));
+        const ring = smooth(win(k, 0, 0.9));
+        ripple(ctx, c, gy, 40 + 110 * ring, 14 * (1 - ring) + 4, 0.3, ring > 0.6 ? 0.5 : 0, 641, 1 - win(k, 0.7, 1));
+        if (up > 0.02) {
+          // One body of water: a crown rising out of the floor, its rim drawn up into fingers that
+          // curve outward, all one shape with one outline (never a stack of separate blades).
+          const R = rng(644);
+          const F = 7;
+          const rimY = gy - 44 * up;
+          const tips = [];
+          for (let j = 0; j < F; j++) {
+            const off = (j - (F - 1) / 2) / ((F - 1) / 2);
+            const len = 100 * up * (1 - Math.abs(off) * 0.4) * (0.85 + R() * 0.3);
+            const bx = c + off * 62;
+            const lean = off * 58 * up;
+            const sway = Math.sin(k * 9 + j * 1.3) * 4 * up;
+            tips.push({ bx, off, len, lean, sway, half: 13 + 4 * (1 - Math.abs(off)) });
+          }
+          const edge = [[c - 86, gy]];
+          // The crown's outer wall flares from the floor up to the first finger.
+          edge.push([c - 80 - 8 * up, gy - 18 * up], [tips[0].bx - tips[0].half - 4, rimY]);
+          tips.forEach((f, j) => {
+            const fx = (u) => f.bx + f.lean * u * u + f.sway * u;
+            const fy = (u) => rimY - f.len * u;
+            // Up the left side of the finger, round its rounded tip, down its right side.
+            for (let q = 0; q <= 6; q++) {
+              const u = q / 6;
+              edge.push([fx(u) - f.half * (1 - u * 0.82), fy(u)]);
+            }
+            edge.push([fx(1), fy(1) - 5]);
+            for (let q = 6; q >= 0; q--) {
+              const u = q / 6;
+              edge.push([fx(u) + f.half * (1 - u * 0.82), fy(u)]);
+            }
+            // The dip of the rim between this finger and the next.
+            if (j < F - 1) {
+              const nx = (f.bx + tips[j + 1].bx) / 2;
+              edge.push([nx, rimY + 10 * up + Math.sin(k * 7 + j) * 3]);
+            }
+          });
+          edge.push([tips[F - 1].bx + tips[F - 1].half + 4, rimY], [c + 80 + 8 * up, gy - 18 * up], [c + 86, gy]);
+          water(ctx, edge, { ph: k * 2, inset: 0.14, ripple: 0.6 });
+          // Light running up each finger, and the drop breaking free off its tip.
+          ctx.save();
+          ctx.lineCap = 'round';
+          tips.forEach((f, j) => {
+            if (Math.abs(f.off) > 0.7) return;
+            ctx.beginPath();
+            for (let q = 1; q <= 5; q++) {
+              const u = q / 6;
+              const px = f.bx + f.lean * u * u + f.sway * u - f.half * 0.3;
+              const py = rimY - f.len * u;
+              q === 1 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.strokeStyle = TIDEP[1];
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          });
+          ctx.restore();
+          tips.forEach((f, j) => {
+            const tx = f.bx + f.lean + f.sway;
+            const ty = rimY - f.len;
+            // (Flown clear of the tip, never sat on it.)
+            const fly = win(k, 0.08, 0.34);
+            if (fly > 0 && fly < 1) drop(ctx, FOAM, tx + f.off * 10 * fly, ty - 16 - 36 * fly, -Math.PI / 2 + f.off * 0.5, 4 + 2 * up);
+          });
+          // White water churning in the middle of the crown.
+          for (const dx of [-34, 0, 34]) puff(ctx, FOAM, c + dx, gy - 6, (5 + 9 * up) * (dx ? 0.8 : 1), 642 + dx + Math.floor(k * 3), { lobes: 4, holes: k > 0.5 ? 0.4 : 0 });
+        }
+        // The drops off the fingertips fly free on their own arcs and fall.
+        spray(ctx, c, gy - 140, -Math.PI / 2, 2.6, 12, 150, win(k, 0.2, 1), 643, { g: 1.6 });
+        if (k > 0.5 && k < 0.85) sparkle(ctx, FOAM, c + 54, gy - 100, 12 * swell(k, 0.5, 0.85), k * 3);
+      },
+    };
+  })();
+  E.tmsplashbig = grown(E.tmsplash, 1.6);
+
+  // A geyser bursting up out of the floor under them (about 130 px tall in game): the floor
+  // trembles and bubbles, a jet shoots up and plumes white at its head, holds roaring, then sinks
+  // back as the water rains down round it.
+  E.tmgeyser = (() => {
+    const c = 140;
+    const gy = 450;
+    const n = 28;
+    return {
+      w: 280, h: 480, n, fps: 22, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const up = k < 0.1 ? 0 : k < 0.28 ? smooth((k - 0.1) / 0.18) : 1 - smooth(win(k, 0.55, 0.92));
+        const ring = smooth(win(k, 0, 1));
+        ripple(ctx, c, gy, 50 + 50 * ring, 14, 0.3, k > 0.7 ? 0.5 : 0, 651, 1 - win(k, 0.8, 1));
+        if (k < 0.12) for (let j = 0; j < 3; j++) bubble(ctx, c - 30 + j * 30, gy - 8 - k * 120, 6, j + k * 9);
+        if (up > 0.02) {
+          const h = 400 * up;
+          const top = gy - h;
+          const wob = Math.sin(k * 30) * 7;
+          const jet = [[c - 36, gy], [c - 28 + wob * 0.5, gy - h * 0.5], [c - 22 + wob, top + 44], [c + 22 + wob, top + 44], [c + 28 + wob * 0.5, gy - h * 0.5], [c + 36, gy]];
+          water(ctx, jet, { ph: k * 3, inset: 0.3, lit: { w: 9, pts: [[c - 12, gy - 10], [c - 10 + wob * 0.6, gy - h * 0.5], [c - 8 + wob, top + 50]] } });
+          // Bands of light swirling up the column, round and round.
+          current(ctx, (u, j) => {
+            const yy = gy - h * u;
+            return [c + wob * u + Math.sin(u * 9 + j * 2.1 - k * 30) * 20, yy];
+          }, 2, k * 3, 2.6, 0.35);
+          // Water racing up inside it: streaks and bubbles rising.
+          for (let j = 0; j < 4; j++) {
+            const u = (k * 3 + j / 4) % 1;
+            bubble(ctx, c + wob * u + (j % 2 ? 12 : -12), gy - h * u, 6 + (j % 2) * 2, j + k * 6);
+          }
+          for (let j = 0; j < 3; j++) puff(ctx, FOAM, c + wob + (j - 1) * 22 * up, top + 30 - Math.sin(k * 20 + j) * 6, 26 + 18 * up, 652 + j, { lobes: 5, holes: k > 0.6 ? 0.4 : 0 });
+          for (const sd of [-1, 1]) claws(ctx, c + wob + sd * 34 * up, top + 22, 34 * up, sd < 0 ? Math.PI + 0.5 : -0.5, 3, k * 3, 657 + sd);
+          puff(ctx, FOAM, c, gy - 12, 34, 655 + Math.floor(k * 4), { lobes: 4 });
+        }
+        spray(ctx, c, gy - 380, -Math.PI / 2, 3.8, 18, 170, win(k, 0.3, 1), 656, { g: 1.5 });
+        if (k > 0.3 && k < 0.6) sparkle(ctx, FOAM, c + 54, gy - 330, 14 * swell(k, 0.3, 0.6), k * 4);
+      },
+    };
+  })();
+
+  // A whirlpool round her (drawn flat at her feet, out to the reach it pulls from: 104 px each side):
+  // rings of water turning inward, spiral arms sweeping round, spray and bubbles flung off the rim.
+  E.tmwhirlbig = (() => {
+    const c = 330;
+    const gy = 160;
+    const n = 30;
+    return {
+      w: 660, h: 300, n, fps: 22, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fade = 1 - win(k, 0.75, 1);
+        const grow = smooth(win(k, 0, 0.3));
+        ctx.save();
+        ctx.globalAlpha = fade;
+        ctx.translate(c, gy);
+        ctx.scale(1, 0.34);
+        for (let j = 0; j < 3; j++) {
+          const r = (300 - j * 80) * grow;
+          const a0 = -k * TAU * (1.2 + j * 0.4) + j * 1.4;
+          if (r > 50) {
+            celCrescent(ctx, j === 1 ? FOAM : TIDEP, 0, 0, r, a0, a0 + 2.6, 46 - j * 8, { seed: 661 + j, inkW: 4 });
+            celCrescent(ctx, j === 1 ? TIDEP : FOAM, 0, 0, r * 0.92, a0 + Math.PI, a0 + Math.PI + 2.2, 34 - j * 6, { seed: 664 + j, inkW: 4 });
+          }
+        }
+        ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = fade;
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU - k * TAU * 1.4;
+          bubble(ctx, c + Math.cos(a) * 265 * grow, gy + Math.sin(a) * 85 - 20, 9 - (j % 2) * 3, Math.sin(k * 10 + j));
+        }
+        for (const sd of [-1, 1]) spray(ctx, c + sd * 270, gy - 10, -Math.PI / 2 + sd * 0.6, 1.4, 7, 110, win(k, 0.2, 0.95), 667 + sd);
+        ctx.restore();
+      },
+    };
+  })();
+
+  // A waterfall poured down from the staff in the air onto whatever is below: a column of water
+  // falling, streaks racing down it, white water churning where it meets the floor, then it thins
+  // and stops. Its foot sits on the floor at `py`; drawn about 110 px tall in game.
+  E.tmfall = (() => {
+    const c = 130;
+    const gy = 390;
+    const n = 26;
+    return {
+      w: 260, h: 410, n, fps: 26, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const reach = smooth(win(k, 0, 0.25));
+        const thin = 1 - smooth(win(k, 0.6, 0.95));
+        const top = gy - 340 + 340 * smooth(win(k, 0.65, 1)) * 0.6;
+        const bottom = gy - 340 + 340 * reach;
+        if (thin > 0.03 && bottom > top) {
+          const w0 = 30 * thin;
+          const w1 = 46 * thin;
+          const col = [[c - w0, top], [c + w0, top], [c + w1 + Math.sin(k * 20) * 3, bottom], [c - w1, bottom]];
+          water(ctx, col, { ph: k * 3, inset: 0.35 });
+          for (let j = 0; j < 4; j++) {
+            const sx = c - w0 * 0.6 + j * w0 * 0.4;
+            const off = ((k * 3 + j / 4) % 1) * (bottom - top);
+            fill(ctx, [[sx - 3, top + off], [sx + 3, top + off], [sx + 4, Math.min(bottom, top + off + 90)], [sx - 4, Math.min(bottom, top + off + 90)]], TIDEP[1]);
+          }
+        }
+        const hitK = win(k, 0.2, 1);
+        if (hitK > 0) {
+          ripple(ctx, c, gy, 50 + 90 * smooth(hitK), 12, 0.3, hitK > 0.6 ? 0.5 : 0, 671, 1 - win(k, 0.8, 1));
+          puff(ctx, FOAM, c, gy - 14, (30 + 16 * swell(hitK, 0, 0.8)) * (thin * 0.7 + 0.3), 672 + Math.floor(k * 3), { lobes: 6, holes: k > 0.7 ? 0.4 : 0 });
+          spray(ctx, c, gy - 20, -Math.PI / 2, 3.4, 12, 130, hitK, 673, { g: 1.4 });
+        }
+      },
+    };
+  })();
+  E.tmfallbig = grown(E.tmfall, 1.4);
+
+  // Tide Pool (loops, flat on the floor round where she planted the staff, about 120 px across): a
+  // pool of clear water, ripples spreading through it one after another, bubbles welling up and
+  // popping, and the odd sparkle on its surface.
+  E.tmpool = (() => {
+    const c = 190;
+    const gy = 70;
+    const n = 40;
+    return {
+      w: 380, h: 140, n, fps: 30, px: c, py: gy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        ctx.save();
+        ctx.translate(c, gy);
+        ctx.scale(1, 0.3);
+        // Its rim laps in and out, small waves running round it.
+        const rim = (r) => rippled(Array.from({ length: 48 }, (_, q) => [Math.cos((q / 48) * TAU) * r, Math.sin((q / 48) * TAU) * r]), ph, 4);
+        path(ctx, rim(175));
+        ctx.fillStyle = TIDEP[1];
+        ctx.globalAlpha = 0.6;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 9;
+        ctx.strokeStyle = TIDEP[4];
+        ctx.stroke();
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = TIDEP[2];
+        path(ctx, rim(166));
+        ctx.stroke();
+        // Caustics: a net of light wavering over the bottom of the pool, drifting with the loop.
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 160, 160, 0, 0, TAU);
+        ctx.clip();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = '#ffffff';
+        ctx.globalAlpha = 0.75;
+        for (let j = -4; j <= 4; j++) {
+          ctx.beginPath();
+          for (let s = 0; s <= 30; s++) {
+            const xx = -170 + s * (340 / 30);
+            const yy = j * 38 + Math.sin(xx * 0.05 + ph * TAU + j) * 14 + Math.sin(xx * 0.11 - ph * TAU * 2) * 6;
+            s ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+        for (let j = 0; j < 3; j++) {
+          const u = (ph + j / 3) % 1;
+          ctx.globalAlpha = 1 - u;
+          celRing(ctx, FOAM, 0, 0, 30 + u * 135, 10, { seed: 681 + j });
+        }
+        ctx.restore();
+        const R = rng(684);
+        for (let j = 0; j < 6; j++) {
+          const u = (ph + j / 6) % 1;
+          const bx = c + (R() - 0.5) * 260;
+          if (u < 0.85) bubble(ctx, bx, gy - u * 60, (5 + R() * 5) * (1 - u * 0.4), Math.sin(u * 8 + j));
+          else sparkle(ctx, FOAM, bx, gy - 54, 8 * swell(u, 0.85, 1), j);
+        }
+      },
+    };
+  })();
+
+  // Bubble Shield closing round her (and each party member it reaches): little bubbles drift in
+  // from all round, merge as the big bubble swells up round her, it wobbles and settles, a glint
+  // sliding over it.
+  E.tmshieldfx = (() => {
+    const c = 140;
+    const cy = 130;
+    const n = 28;
+    return {
+      w: 280, h: 280, n, fps: 22, px: c, py: 240,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const gather = smooth(win(k, 0, 0.35));
+        if (k < 0.4) for (let j = 0; j < 6; j++) {
+          const a = (j / 6) * TAU + k * 3;
+          const d = 125 * (1 - gather) + 20;
+          bubble(ctx, c + Math.cos(a) * d, cy + Math.sin(a) * d * 0.9, 9 + 4 * gather, Math.sin(k * 12 + j));
+        }
+        const grow = smooth(win(k, 0.28, 0.5));
+        if (grow > 0) {
+          const wob = Math.sin(win(k, 0.45, 1) * Math.PI * 4) * (1 - win(k, 0.45, 1));
+          bubble(ctx, c, cy, 104 * grow, wob);
+          // A sheen of light turning slowly over its face, and little bubbles circling it.
+          if (grow > 0.6) {
+            ctx.save();
+            ctx.lineCap = 'round';
+            const a0 = k * 5;
+            for (const [rr, col, lw] of [[0.86, TMCORAL[1], 6], [0.8, '#ffffff', 3]]) {
+              ctx.beginPath();
+              ctx.ellipse(c, cy, 104 * grow * rr, 104 * grow * rr * 0.96, 0, a0, a0 + 1.1);
+              ctx.strokeStyle = col;
+              ctx.lineWidth = lw;
+              ctx.stroke();
+            }
+            ctx.restore();
+            for (let j = 0; j < 4; j++) {
+              const a = k * 6 + (j / 4) * TAU;
+              bubble(ctx, c + Math.cos(a) * 118 * grow, cy + Math.sin(a) * 40 * grow + 40, 6 + (j % 2) * 2, Math.sin(k * 9 + j));
+            }
+          }
+          if (k > 0.45) sparkle(ctx, FOAM, c - 50 + 100 * win(k, 0.45, 1), cy - 70 + Math.sin(win(k, 0.45, 1) * Math.PI) * -12, 12 * swell(k, 0.45, 1), k * 3);
+        }
+        spray(ctx, c, cy, 0, TAU, 10, 130, win(k, 0.42, 0.9), 691, { g: 0.6 });
+      },
+    };
+  })();
+
+  // The Great Wave (her finisher): the great curl drawn far bigger, for the wave that sweeps the
+  // screen.
+  E.tmgreatbig = grown(E.tmwave, 2.4);
+
   window.FXART = E;
   window.FXHD = { render, RAW };
 })();
