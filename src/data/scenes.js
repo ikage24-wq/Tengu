@@ -69,6 +69,7 @@ export const QUEST_SCENES = {
   brann_forge: { done: 'brann_forge_done' },
   brann_howl: { done: 'brann_howl_done' },
   archer_trial: { accept: 'trial_kestrel', done: 'trial_kestrel_done' },
+  mage_trial: { accept: 'trial_elowen', done: 'trial_elowen_done' },
   kestrel_targets: { done: 'kestrel_targets_done' },
   kestrel_canyon: { done: 'kestrel_canyon_done' },
   kestrel_glade: { done: 'kestrel_glade_done' },
@@ -930,6 +931,14 @@ export const SIDE_SCENES = {
     { who: null, text: "The lanterns flicker on down the pier. Vex dances the opening number, then pulls the whole harbor up on stage. Rook does his kitchen dance. It's terrible. Everyone loves it." },
     { together: [{ emote: 'tora', kind: 'heart', dur: 1.8 }, { emote: 'player', kind: 'heart', dur: 1.8 }, { jump: 'vex', height: 14 }] },
     { who: 'vex', text: "Light feet, big finish, {name}. Come find me at level 30 for your trial. Tonight, though? We dance.", mood: 'happy' },
+  ],
+  trial_elowen: [
+    { who: 'elowen', text: "Twenty Gem Mimics in the Crystal Cave. They look like treasure. They are not treasure. They bite." },
+    { who: 'elowen', text: "Hit them with all the sea you've got. Hard things teach you how hard the water can be.", mood: 'happy' },
+  ],
+  trial_elowen_done: [
+    { who: 'elowen', text: "Twenty. And your staff is still dripping. Good. The surface water is yours now.", mood: 'happy' },
+    { who: 'elowen', text: "Under it is the deep: the pressure, the currents, the things that glow where the sun never reaches. The Maelstrom calls it up. Shall we go down?" },
   ],
   trial_vex: [
     { who: 'vex', text: "The Dullahans ride the Ruins at night. Twenty of them. All that armour turns slow: spin round them and they'll never land a blow." },

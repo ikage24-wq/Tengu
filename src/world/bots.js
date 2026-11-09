@@ -138,13 +138,15 @@ function rollLevel(pro, rng) {
 }
 
 // The job path a character of this level would be on. Warriors, archers and thieves advance to a
-// level 30 path; the Tide Mage (the new Mage, 2026-11-09) has no paths yet, so she stays one.
+// level 30 path; the Tide Mage (the new Mage, 2026-11-09) has her damage path, the Maelstrom.
 function jobPath(level, rng) {
   if (level < FIRST_JOB_LEVEL) return ['novice'];
   const first = pick(['warrior', 'archer', 'thief', 'tidemage'], rng);
   if (first === 'warrior' && level >= 30) return [first, pick(['paladin', 'berserker'], rng)];
   if (first === 'archer' && level >= 30) return [first, pick(['beastmaster', 'stormcaller'], rng)];
   if (first === 'thief' && level >= 30) return [first, pick(['shinobi', 'kitsune'], rng)];
+  // (The Tide Mage's support path is still to come: at 30 she becomes a Maelstrom.)
+  if (first === 'tidemage' && level >= 30) return [first, 'maelstrom'];
   return [first];
 }
 

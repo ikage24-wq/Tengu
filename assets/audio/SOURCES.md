@@ -63,3 +63,7 @@ The buff and party buff: Epic Stock Media Fantasy Game 2 (a bright light spell) 
 ## Tide Mage sounds (tools/build-fight.py, 2026-11-09)
 
 Her whip of water, waves, bubbles, splashes, geyser, whirlpool, waterfall, hits and staff swish, from the same bundles: BluezoneCorp Designed Water, InMotionAudio Submerge, Epic Stock Media Elemental Mutation Whooshes and Impacts, Nick McMahan Cascadia Shore Waves, Rescopic Sound Distinct Whooshes, David Dumais Audio Melee Weapons 2, 344 Audio Elemental Palette Designed Vol. 1, Cinematic Sound Design Cartoon & Animation Vol 2.
+
+## Maelstrom sounds (tools/build-fight.py, 2026-11-09)
+
+Her spears, vortex bolts, vortices, beams, slams, glowing charges, slash, shell, pool, black wave and the Maelstrom whirlpool, from the same bundles as the Tide Mage's, pitched down and layered with Federico Soler Effective Trailer Booms Vol. 2 and Cinematic Sound Design Ultra Transitions & Impacts.

@@ -7489,8 +7489,8 @@
   // Every one is drawn as smooth motion over many drawings (12-16): each drawing is the same
   // picture at its own moment (`k`, 0-1), so droplets fly in real arcs, foam churns and crests roll
   // instead of jumping between key poses. (Art px are strip px: three to a game pixel.)
-  const TIDEP = ['#ffffff', '#c8f4ff', '#46c4e4', '#1787bb', '#0c4a80'];
-  const FOAM = ['#ffffff', '#f3fdff', '#cfeef8', '#93cde4', '#3f80ac'];
+  let TIDEP = ['#ffffff', '#c8f4ff', '#46c4e4', '#1787bb', '#0c4a80'];
+  let FOAM = ['#ffffff', '#f3fdff', '#cfeef8', '#93cde4', '#3f80ac'];
   const TMCORAL = ['#ffffff', '#ffe2d6', '#ff9c88', '#ee6670', '#9e3b5c'];
   const smooth = (t) => t * t * (3 - 2 * t);
   const clamp01 = (t) => Math.max(0, Math.min(1, t));
@@ -8285,6 +8285,383 @@
   // The Great Wave (her finisher): the great curl drawn far bigger, for the wave that sweeps the
   // screen.
   E.tmgreatbig = grown(E.tmwave, 2.4);
+
+  // ---------- The Maelstrom (docs/design/maelstrom.md) ----------
+  // The deep sea: midnight water lit from inside, glowing aqua plankton, a magenta accent. Her
+  // shapes, hers alone: spears of pressurised water, spinning vortices and funnels, beams, spirals,
+  // and glowing motes. Her water is drawn with the same living-water kit as the Tide Mage's
+  // (rippling edges, currents), in the deep palette (`deepPal` swaps it in while she draws).
+  const DEEPW = ['#ffffff', '#5fe8e0', '#1f4fa0', '#14306e', '#070d33'];
+  const DEEPGLOW = ['#ffffff', '#e6fffb', '#8ff3e8', '#36b8c8', '#0e3e6a'];
+  const DEEPPINK = ['#ffffff', '#ffd6f4', '#ff7ad8', '#d23aa8', '#5a1050'];
+  function deepPal(fn) {
+    const [w, f] = [TIDEP, FOAM];
+    TIDEP = DEEPW;
+    FOAM = DEEPGLOW;
+    try {
+      fn();
+    } finally {
+      TIDEP = w;
+      FOAM = f;
+    }
+  }
+  const deep = (e) => ({ ...e, draw: (ctx, i) => deepPal(() => e.draw(ctx, i)) });
+  // A glowing mote of the deep: a soft round light with a white heart.
+  function mote(ctx, x, y, r, pal = DEEPGLOW) {
+    if (r <= 0.5) return;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 1.6, 0, TAU);
+    ctx.fillStyle = pal[2];
+    ctx.globalAlpha *= 0.35;
+    ctx.fill();
+    ctx.globalAlpha /= 0.35;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, TAU);
+    ctx.fillStyle = pal[1];
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.45, 0, TAU);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
+  // Motes drifting: n of them round (x, y) in a box w x h, each on its own slow loop with `ph`.
+  function motes(ctx, x, y, w, h, n, ph, seed, r = 4) {
+    const R = rng(seed);
+    for (let j = 0; j < n; j++) {
+      const ox = (R() - 0.5) * w;
+      const oy = (R() - 0.5) * h;
+      const sp = 0.5 + R();
+      const a = (ph * sp + R()) * TAU;
+      mote(ctx, x + ox + Math.cos(a) * 6, y + oy + Math.sin(a) * 6, r * (0.6 + R() * 0.6) * (0.75 + 0.25 * Math.sin(a * 2)), j % 5 === 0 ? DEEPPINK : DEEPGLOW);
+    }
+  }
+  // A spiral arm of water round (cx, cy) from radius r0 to r1, turned by `rot`, `th` thick.
+  function spiralArm(ctx, cx, cy, r0, r1, rot, turns, th, ph) {
+    const out = [];
+    const inn = [];
+    const n = 28;
+    for (let i = 0; i <= n; i++) {
+      const u = i / n;
+      const a = rot + u * turns * TAU;
+      const r = lerp(r0, r1, u);
+      const w = th * Math.sin(Math.PI * Math.min(1, u * 1.2)) + 1;
+      out.push([cx + Math.cos(a) * (r + w / 2), cy + Math.sin(a) * (r + w / 2)]);
+      inn.push([cx + Math.cos(a) * (r - w / 2), cy + Math.sin(a) * (r - w / 2)]);
+    }
+    water(ctx, out.concat(inn.reverse()), { ph, inset: 0.25, ripple: 0.4 });
+  }
+
+  // Her spear in flight (loops; flies toward +x): a long tapered spear of pressurised water, a
+  // current spiralling round it, rings of pressure peeling off its head, glowing motes and
+  // droplets trailing behind.
+  E.msspear = deep((() => {
+    const n = 24;
+    const x0 = 30;
+    const L = 250;
+    const cy = 60;
+    return {
+      w: L + 70, h: 120, n, fps: 48, px: x0 + L * 0.75, py: cy, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        const top = [];
+        const bot = [];
+        for (let j = 0; j <= 20; j++) {
+          const u = j / 20;
+          const wdt = 32 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.9 + 0.08)), 0.6) * (u > 0.85 ? (1 - u) / 0.15 + 0.1 : 1);
+          top.push([x0 + u * L, cy - wdt]);
+          bot.push([x0 + u * L, cy + wdt * 0.85]);
+        }
+        // Its wake: streaks of glowing water.
+        for (let j = 0; j < 3; j++) {
+          const u = (ph * 2 + j / 3) % 1;
+          speedLine(ctx, DEEPGLOW, x0 - 20 - u * 60, cy - 12 + j * 12, x0 + 40 - u * 40, cy - 10 + j * 10, 3 * (1 - u));
+        }
+        water(ctx, top.concat(bot.reverse()), { ph: ph * 2, inset: 0.3, lit: { w: 6, pts: top.slice(3, 18).map(([px, py]) => [px, py + 6]) } });
+        current(ctx, (u, j) => [x0 + u * L * 0.95, cy + Math.sin(u * 14 + j * Math.PI) * 14 * Math.sin(Math.PI * u)], 2, ph * 2, 3, 0.5);
+        // Its white-hot core: the pressure, brightest toward the head.
+        fill(ctx, [[x0 + L * 0.2, cy - 2], [x0 + L * 0.95, cy - 4], [x0 + L * 0.95, cy + 4], [x0 + L * 0.2, cy + 2]], DEEPGLOW[1]);
+        fill(ctx, [[x0 + L * 0.45, cy - 1], [x0 + L * 0.95, cy - 2], [x0 + L * 0.95, cy + 2], [x0 + L * 0.45, cy + 1]], '#ffffff');
+        // Rings of pressure peeling off the head and widening behind it.
+        for (let j = 0; j < 3; j++) {
+          const u = (ph + j / 3) % 1;
+          ctx.save();
+          ctx.globalAlpha = 1 - u;
+          ctx.translate(x0 + L * (0.92 - u * 0.5), cy);
+          ctx.scale(0.35, 1);
+          celRing(ctx, DEEPGLOW, 0, 0, 14 + u * 22, 6, { seed: 701 + j });
+          ctx.restore();
+        }
+        mote(ctx, x0 + L * 0.97, cy - 2, 14 + Math.sin(ph * TAU * 2) * 2);
+        motes(ctx, x0 + 40, cy, 80, 36, 6, ph * 2, 703, 3.5);
+      },
+    };
+  })());
+  E.msspearbig = grown(E.msspear, 1.5);
+
+  // Her vortex bolt in flight (loops): a knot of black water spinning on itself, spiral arms
+  // winding into a glowing heart, motes caught in it.
+  E.msbolt = deep((() => {
+    const n = 24;
+    const c = 80;
+    return {
+      w: 160, h: 160, n, fps: 40, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const ph = i / n;
+        const rot = -ph * TAU;
+        for (let j = 0; j < 3; j++) spiralArm(ctx, c, c, 8, 54, rot + (j / 3) * TAU, 0.7, 16, ph + j / 3);
+        mote(ctx, c, c, 14 + Math.sin(ph * TAU * 2) * 2);
+        for (let j = 0; j < 6; j++) {
+          const a = rot * 1.4 + (j / 6) * TAU;
+          mote(ctx, c + Math.cos(a) * 60, c + Math.sin(a) * 60, 3.5, j % 3 ? DEEPGLOW : DEEPPINK);
+        }
+      },
+    };
+  })());
+
+  // Her mark on a monster: a burst of dark water and a ring of glowing light, a little spiral
+  // closing in on itself, and motes flying off on their arcs.
+  E.mshit = deep((() => {
+    const n = 24;
+    const c = 120;
+    return {
+      w: 240, h: 240, n, fps: 48, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const burst = swell(k, 0, 0.4);
+        if (burst > 0) for (let j = 0; j < 3; j++) spiralArm(ctx, c, c, 10, 30 + 40 * burst, -k * 8 + (j / 3) * TAU, 0.45, 14 * burst + 2, k);
+        const ring = smooth(win(k, 0.05, 0.7));
+        if (ring > 0 && ring < 1) celRing(ctx, DEEPGLOW, c, c, 26 + 70 * ring, 14 * (1 - ring) + 3, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 711 });
+        if (k < 0.45) mote(ctx, c, c, 18 * swell(k, 0, 0.45));
+        const R = rng(712);
+        for (let j = 0; j < 10; j++) {
+          const a = R() * TAU;
+          const v = win(k, 0.05 + R() * 0.1, 1);
+          if (v <= 0 || v >= 1) continue;
+          const d = 40 + 80 * v;
+          mote(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d + 40 * v * v, 5 * (1 - v), j % 4 ? DEEPGLOW : DEEPPINK);
+        }
+      },
+    };
+  })());
+
+  // A vortex funnel (her finisher's, Undertow's, the spiral; drawn standing on the floor at `py`,
+  // about 120 px tall): it rises out of the floor, spinning, bands of black water winding up round a
+  // glowing eye, motes and droplets flung off its rim, and collapses back into a splash.
+  E.msvortex = deep((() => {
+    const n = 30;
+    const c = 150;
+    const gy = 380;
+    return {
+      w: 300, h: 400, n, fps: 30, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const grow = smooth(win(k, 0, 0.25)) * (1 - smooth(win(k, 0.8, 1)));
+        const spin = k * 5;
+        ripple(ctx, c, gy, 60 + 70 * smooth(k), 14, 0.3, k > 0.7 ? 0.5 : 0, 721, 1 - win(k, 0.85, 1));
+        if (grow > 0.02) {
+          const H = 340 * grow;
+          // The funnel: rings of water stacked up it, wider toward the top, each turning.
+          for (let j = 0; j < 7; j++) {
+            const u = j / 6;
+            const y = gy - u * H;
+            const r = (24 + u * 90) * grow;
+            ctx.save();
+            ctx.translate(c + Math.sin(spin * 0.6 + u * 3) * 8 * u, y);
+            ctx.scale(1, 0.28);
+            const a0 = -spin * TAU * (1 + u * 0.3) + j;
+            celCrescent(ctx, j % 2 ? DEEPGLOW : DEEPW, 0, 0, r, a0, a0 + 3.6, 26 + u * 8, { seed: 722 + j, inkW: 3 });
+            celCrescent(ctx, j % 2 ? DEEPW : DEEPGLOW, 0, 0, r * 0.9, a0 + Math.PI, a0 + Math.PI + 2.6, 18 + u * 6, { seed: 729 + j, inkW: 3 });
+            ctx.restore();
+          }
+          mote(ctx, c, gy - H * 0.5, 12 * grow + Math.sin(spin * TAU) * 2);
+          motes(ctx, c, gy - H * 0.5, 220 * grow, H, 10, k * 3, 731, 4);
+        }
+        spray(ctx, c, gy - 300 * grow, -Math.PI / 2, 4, 12, 140, win(k, 0.3, 1), 733, { g: 1.4 });
+        if (k > 0.78) puff(ctx, DEEPGLOW, c, gy - 10, 36 * swell(k, 0.78, 1), 735, { lobes: 5, holes: 0.3 });
+      },
+    };
+  })());
+  E.msvortexsmall = grown(E.msvortex, 0.42);
+
+  // A high-pressure beam (her jet, her beam finisher, Hydro Cannon): a long rippling bar of water
+  // tearing out level from the staff, a white-hot core, rings of pressure racing along it, motes
+  // stripped off its edges, and a burst at its far end; it swells out, holds, and thins away.
+  E.msbeam = deep((() => {
+    const n = 22;
+    const x0 = 20;
+    const L = 760;
+    const cy = 70;
+    return {
+      w: L + 80, h: 140, n, fps: 40, px: x0, py: cy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const out = smooth(win(k, 0, 0.18));
+        const thick = smooth(win(k, 0, 0.25)) * (1 - smooth(win(k, 0.65, 1)));
+        if (thick <= 0.02) return;
+        const end = x0 + L * out;
+        const T = 30 * thick;
+        const top = [];
+        const bot = [];
+        for (let j = 0; j <= 30; j++) {
+          const u = j / 30;
+          const x = lerp(x0, end, u);
+          const w = T * (0.7 + 0.3 * Math.sin(u * 20 - k * 30)) * (u < 0.05 ? u / 0.05 : 1);
+          top.push([x, cy - w]);
+          bot.push([x, cy + w]);
+        }
+        water(ctx, top.concat(bot.reverse()), { ph: k * 3, inset: 0.35 });
+        fill(ctx, [[x0 + 10, cy - T * 0.18], [end, cy - T * 0.12], [end, cy + T * 0.12], [x0 + 10, cy + T * 0.18]], '#ffffff');
+        for (let j = 0; j < 5; j++) {
+          const u = (k * 3 + j / 5) % 1;
+          ctx.save();
+          ctx.translate(lerp(x0, end, u), cy);
+          ctx.scale(0.3, 1);
+          celRing(ctx, DEEPGLOW, 0, 0, T * 1.5 + 6, 6, { seed: 741 + j });
+          ctx.restore();
+        }
+        motes(ctx, (x0 + end) / 2, cy, end - x0, T * 3, 12, k * 3, 743, 3.5);
+        puff(ctx, DEEPGLOW, end, cy, 14 + 22 * thick, 745 + Math.floor(k * 4), { lobes: 5, holes: k > 0.6 ? 0.4 : 0 });
+        mote(ctx, x0 + 10, cy, 10 * thick);
+      },
+    };
+  })());
+
+  // Black water slammed down (her slam finisher and her dive): a column of dark water falls from
+  // above and hits the floor in a crown of black water edged with glowing foam, a ring racing out,
+  // motes flung up. Its foot sits on the floor at `py`; about 130 px tall in game.
+  E.msslam = deep((() => {
+    const n = 26;
+    const c = 160;
+    const gy = 400;
+    return {
+      w: 320, h: 420, n, fps: 30, px: c, py: gy,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const fall = smooth(win(k, 0, 0.3));
+        const thin = 1 - smooth(win(k, 0.45, 0.8));
+        if (thin > 0.03) {
+          const top = gy - 380;
+          const bottom = top + 380 * fall;
+          const w0 = 26 * thin;
+          const w1 = 44 * thin;
+          water(ctx, [[c - w0, top], [c + w0, top], [c + w1, bottom], [c - w1, bottom]], { ph: k * 3, inset: 0.35 });
+          current(ctx, (u, j) => [c + (j - 0.5) * w0 * 0.8, lerp(top, bottom, u)], 2, k * 4, 2.6, 0.5);
+        }
+        const hitK = win(k, 0.25, 1);
+        if (hitK > 0) {
+          const up = swell(hitK, 0, 0.7);
+          ripple(ctx, c, gy, 60 + 110 * smooth(hitK), 14, 0.3, hitK > 0.6 ? 0.5 : 0, 751, 1 - win(k, 0.85, 1));
+          if (up > 0.02) {
+            const edge = [[c - 96, gy]];
+            for (let j = 0; j <= 10; j++) {
+              const u = j / 10;
+              edge.push([c - 90 + u * 180, gy - 70 * up * (0.5 + 0.5 * Math.sin(u * Math.PI)) - (j % 2) * 26 * up]);
+            }
+            edge.push([c + 96, gy]);
+            water(ctx, edge, { ph: k * 2, inset: 0.2, ripple: 0.6 });
+            puff(ctx, DEEPGLOW, c, gy - 10, 12 + 20 * up, 752 + Math.floor(k * 3), { lobes: 5, holes: k > 0.6 ? 0.4 : 0 });
+          }
+          spray(ctx, c, gy - 40, -Math.PI / 2, 3.2, 14, 150, hitK, 753, { g: 1.4 });
+          motes(ctx, c, gy - 80 - 60 * hitK, 200, 80, 8, k * 2, 755, 4 * (1 - hitK * 0.6));
+        }
+      },
+    };
+  })());
+
+  // A glowing bubble in flight (loops): a bubble of the deep with a light floating inside it.
+  E.msglow = deep((() => {
+    const n = 24;
+    const c = 70;
+    return {
+      w: 140, h: 140, n, fps: 32, px: c, py: c, loop: true,
+      draw(ctx, i) {
+        const t = (i / n) * TAU;
+        bubble(ctx, c, c + Math.sin(t) * 3, 30, Math.sin(t * 2));
+        mote(ctx, c + Math.cos(t) * 6, c + Math.sin(t * 2) * 5, 9 + Math.sin(t * 2) * 1.5);
+        motes(ctx, c, c, 50, 50, 3, i / n, 761, 2.5);
+      },
+    };
+  })());
+  // ...and going off: a flash of light, a ring, motes scattering.
+  E.msglowpop = deep((() => {
+    const n = 20;
+    const c = 110;
+    return {
+      w: 220, h: 220, n, fps: 40, px: c, py: c,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        if (k < 0.35) mote(ctx, c, c, 30 * swell(k, 0, 0.35));
+        const ring = smooth(win(k, 0.05, 0.8));
+        if (ring > 0 && ring < 1) celRing(ctx, DEEPGLOW, c, c, 20 + 70 * ring, 12 * (1 - ring) + 3, { broken: ring > 0.5 ? (ring - 0.5) * 1.6 : 0, seed: 771 });
+        const R = rng(772);
+        for (let j = 0; j < 12; j++) {
+          const a = R() * TAU;
+          const d = (30 + R() * 60) * smooth(win(k, 0.05, 1));
+          mote(ctx, c + Math.cos(a) * d, c + Math.sin(a) * d, 5 * (1 - win(k, 0.4, 1)), j % 4 ? DEEPGLOW : DEEPPINK);
+        }
+      },
+    };
+  })());
+
+  // A slashing current (her slash): a crescent of black water tearing round in front of her,
+  // rippling, glowing along its leading edge, breaking into motes and droplets.
+  E.msslash = deep((() => {
+    const n = 20;
+    const c = 170;
+    const cy = 170;
+    return {
+      w: 340, h: 300, n, fps: 40, px: c - 110, py: cy + 40,
+      draw(ctx, i) {
+        const k = i / (n - 1);
+        const sweep = smooth(win(k, 0, 0.35));
+        const fade = win(k, 0.4, 0.8);
+        if (fade < 1) {
+          const a0 = -2.4;
+          const a1 = lerp(-2.2, 0.9, sweep);
+          ctx.save();
+          ctx.globalAlpha = 1 - fade;
+          water(ctx, crescent(c, cy, 120, a0, a1, 42 * (1 - fade * 0.6), { n: 40 }), { ph: k * 3, inset: 0.2, ripple: 0.6 });
+          // Its leading edge glowing as it tears round.
+          ctx.lineCap = 'round';
+          for (const [lw, col] of [[10, DEEPGLOW[2]], [4, '#ffffff']]) {
+            ctx.beginPath();
+            ctx.arc(c, cy, 118, a0 + 0.3, a1);
+            ctx.strokeStyle = col;
+            ctx.lineWidth = lw * (1 - fade);
+            ctx.stroke();
+          }
+          ctx.restore();
+          for (let j = 0; j < 5; j++) {
+            const a = lerp(a0, a1, 0.3 + j * 0.15);
+            mote(ctx, c + Math.cos(a) * 124, cy + Math.sin(a) * 124, 4 + (j % 2) * 2, j === 2 ? DEEPPINK : DEEPGLOW);
+          }
+        }
+        spray(ctx, c + 110, cy + 40, -0.6, 2, 10, 110, win(k, 0.25, 1), 781, { g: 1.2 });
+      },
+    };
+  })());
+
+  // The Maelstrom's skills. Her versions of the Tide Mage's (the same water, drawn from the deep:
+  // dark and lit from inside, glowing motes of plankton drifting through it), and her own big ones.
+  const withMotes = (e, { x, y, w, h, n, r = 4, seed }) => deep({
+    ...e,
+    draw(ctx, i) {
+      e.draw(ctx, i);
+      motes(ctx, x, y, w, h, n, i / e.n, seed, r);
+    },
+  });
+  // Abyss Shell (Bubble Shield): a dark shell closing round them, plankton glowing in its skin.
+  E.msshellfx = withMotes(E.tmshieldfx, { x: 140, y: 130, w: 200, h: 200, n: 10, seed: 801 });
+  // Glowing Pool (Tide Pool): dark water that glows, plankton drifting in it.
+  E.mspool = withMotes(E.tmpool, { x: 190, y: 66, w: 300, h: 40, n: 12, r: 3.5, seed: 803 });
+  // Black Wave (Tidal Wave) in flight: a wave of black water, lit from inside.
+  E.msblackwave = withMotes(E.tmwavebig, { x: 210, y: 210, w: 300, h: 200, n: 10, r: 5, seed: 805 });
+  // Black Tide (Great Wave): the giant wave of the deep.
+  E.msblacktidebig = withMotes(E.tmgreatbig, { x: 320, y: 300, w: 560, h: 420, n: 16, r: 8, seed: 807 });
+  // Maelstrom (her finisher): the vortex grown into a whirlpool that tears the screen apart.
+  E.msmaelstrombig = grown(E.msvortex, 2.6);
+  // Hydro Cannon: the beam drawn heavier and longer.
+  E.msbeambig = grown(E.msbeam, 1.35);
 
   window.FXART = E;
   window.FXHD = { render, RAW };

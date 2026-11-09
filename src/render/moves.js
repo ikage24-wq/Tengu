@@ -4850,6 +4850,476 @@ export const MOVES = {
     };
   },
 
+  // ---------- The Maelstrom (docs/design/maelstrom.md) ----------
+  // The deep sea out of her staff: heavier and more forceful than the Tide Mage, grounded, the
+  // power held and then let go. The staff stays as equipped and forward of her (0 straight up, 90
+  // level ahead), so its head never crosses her face; her free hand drives the water.
+
+  // Spear (opener, thrown at ~0.5): she settles low and draws her free hand back past her hip as the
+  // pressure builds at the staff's head, then drives the palm forward beside the staff and the spear
+  // of water shoots out; she holds the push a beat, leaning in.
+  msspear(p) {
+    const load = soft(seg(p, 0, 0.36));
+    const push = ease(seg(p, 0.38, 0.52));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(40, 82, load), 92, push) - 30 * back, arm: lerp(lerp(40, 50, load), 58, push) - 12 * back,
+      lunge: -2 * load * (1 - push) + 6 * push * (1 - 0.6 * back), tilt: -0.06 * load * (1 - push) + 0.12 * push * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.5 * load * (1 - back));
+        danceLegs(r, [load * (1 - push), [2.8, 0, 4], [-3.4, 0, -10]], [push * (1 - back), [4.2, 0, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(lerp(0, -4, load), 5, push) - 5 * back), q(lerp(-1, -4, push) + 3 * back)];
+        r.hairLift = push > 0.3 && back < 0.4 ? -1 : 0;
+        if (load > 0.4 && push < 0.3) r.eyes = 'half';
+        if (push > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Vortex bolt (second, sent at ~0.48): the staff's head stirs a tight circle out in front of her,
+  // faster and faster, winding the water into a spinning knot, then she flicks it on.
+  msbolt(p) {
+    const stir = seg(p, 0.06, 0.44);
+    const a = soft(stir) * Math.PI * 6;
+    const flick = ease(seg(p, 0.44, 0.54));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: 60 + 14 * Math.sin(a) * (1 - flick) + 30 * flick - 30 * back, arm: 50 + 6 * Math.cos(a) * (1 - flick) + 6 * flick - 10 * back,
+      lunge: 1.5 * soft(stir) + 3 * flick * (1 - back), tilt: 0.04 * Math.sin(a) * (1 - flick) + 0.1 * flick * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [soft(seg(p, 0, 0.2)) * (1 - back), [2.6, 0, 2], [-2.8, 0, -6]], [flick * (1 - back), [3.6, 0, 4], [-3.2, 0, -10]]);
+        r.backArm = [q(2 + 2 * Math.cos(a + 1) * (1 - flick) + 2 * flick - 2 * back), q(-3 + 2 * Math.sin(a + 1) * (1 - flick) - 2 * flick + 3 * back)];
+        if (stir > 0.3 && flick < 0.3) r.eyes = 'half';
+        if (flick > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Open the vortex (finisher; drags them in at ~0.36, bursts at ~0.72): she plants the staff upright
+  // and sweeps her free hand round in a wide circle, the vortex opening ahead of her, then closes
+  // the hand into a fist and pulls it down, and the vortex bursts.
+  msopen(p) {
+    const plant = soft(seg(p, 0, 0.2));
+    const circle = seg(p, 0.16, 0.6);
+    const a = soft(circle) * Math.PI * 2;
+    const close = ease(seg(p, 0.62, 0.74));
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(40, 8, plant) + 22 * close * (1 - back) + 30 * back, arm: lerp(40, 34, plant) + 10 * back,
+      lift: 2 * bump(p, 0.2, 0.62), lunge: 2 * close * (1 - back), tilt: -0.04 * Math.sin(a) * (1 - close) + 0.12 * close * (1 - back),
+      rig: (r) => {
+        r.squat = q(2 * close * (1 - back));
+        danceLegs(r, [plant * (1 - back), [3, 0, 4], [-3, 0, -6]], [close * (1 - back), [4, 0, 6], [-3.8, 0, -12]]);
+        const hx = 3 + 6 * Math.cos(a - 1.2);
+        const hy = -2 - 4 * Math.sin(a - 1.2);
+        r.backArm = [q(lerp(lerp(0, hx, Math.min(1, circle * 4)), 2, close) - 2 * back), q(lerp(lerp(-1, hy, Math.min(1, circle * 4)), -1, close) + back)];
+        r.hairLift = circle > 0.1 && circle < 0.9 ? -1 : close > 0.4 && back < 0.4 ? 1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.16, 0.7));
+        if (circle > 0.2 && close < 0.2) r.eyes = 'half';
+        if (close > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Pressure jet (opener, at ~0.45): a short, hard push of the staff straight ahead, braced on her
+  // back foot, the recoil rocking her back a step.
+  msjet(p) {
+    const brace = soft(seg(p, 0, 0.36));
+    const fire = ease(seg(p, 0.4, 0.48));
+    const kick = bump(p, 0.46, 0.7);
+    const back = soft(seg(p, 0.72, 1));
+    return {
+      weapon: lerp(lerp(40, 86, brace), 94, fire) - 30 * back, arm: lerp(lerp(40, 52, brace), 58, fire) - 12 * back,
+      lunge: 2 * fire * (1 - kick) - 3 * kick, tilt: -0.05 * brace * (1 - fire) + 0.06 * fire * (1 - kick) - 0.06 * kick,
+      rig: (r) => {
+        r.squat = q(1.2 * brace * (1 - back));
+        danceLegs(r, [brace * (1 - back), [3.4, 0, 4], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(0, 4, brace) - 4 * back), q(lerp(-1, -3, brace) + 2 * back)];
+        if (fire > 0.3 && back < 0.4) r.mouth = 'grit';
+      },
+    };
+  },
+  // Glowing bubbles (opener, two at ~0.36 and ~0.6): she holds the staff up and out and cups her
+  // free hand under its head; two glowing bubbles swell there and drift off, one after the other.
+  msglow(p) {
+    const up = soft(seg(p, 0, 0.22)) * (1 - soft(seg(p, 0.78, 1)));
+    const puffs = bump(p, 0.28, 0.42) + bump(p, 0.52, 0.66);
+    return {
+      weapon: lerp(40, 46, up) + 6 * puffs, arm: lerp(40, 56, up),
+      lift: 1.4 * puffs, lunge: 1 * up, tilt: 0.03 * up,
+      rig: (r) => {
+        danceLegs(r, [up, [2, 0, 2], [-2.2, 0, -4]]);
+        r.backArm = [q(4 * up + 1.5 * puffs), q(-3 * up - 1.5 * puffs)];
+        if (up > 0.4) r.eyes = 'half';
+      },
+    };
+  },
+  // Crossing spears (second, at ~0.32 and ~0.58): a palm thrust with the free hand, then the staff
+  // swept level ahead as she turns her hips, each sending a spear.
+  mscross(p) {
+    const a = ease(seg(p, 0.16, 0.34));
+    const turn = soft(seg(p, 0.36, 0.5));
+    const b = ease(seg(p, 0.5, 0.6));
+    const back = soft(seg(p, 0.74, 1));
+    return {
+      weapon: lerp(lerp(40, 56, a), 96, b) - 34 * back, arm: lerp(lerp(40, 44, a), 58, b) - 12 * back,
+      lunge: 3 * a * (1 - turn) + 4 * b * (1 - 0.6 * back), tilt: 0.08 * a * (1 - turn) - 0.04 * turn * (1 - b) + 0.1 * b * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [a, [3.4, 0, 4], [-3.2, 0, -10]], [b * (1 - back), [4, 0, 6], [-3.6, 0, -12]]);
+        r.backArm = [q(lerp(-2, 6, a) * (1 - turn) - 3 * turn + 3 * back), q(lerp(-1, -4, a) * (1 - turn) - 1 * turn + 2 * back)];
+        if ((a > 0.4 && turn < 0.5) || (b > 0.4 && back < 0.5)) strikeFace(r);
+      },
+    };
+  },
+  // Slashing current (second, at ~0.46): she sweeps the staff low and up through a wide arc in front
+  // of her, the current tearing along behind its head.
+  msslash(p) {
+    const low = soft(seg(p, 0, 0.3));
+    const sweep = ease(seg(p, 0.32, 0.5));
+    const back = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(lerp(40, 130, low), 30, sweep) + 20 * back, arm: lerp(lerp(40, 30, low), 58, sweep) - 14 * back,
+      lunge: -1 * low + 5 * sweep * (1 - 0.6 * back), tilt: 0.08 * low * (1 - sweep) - 0.06 * sweep * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * low * (1 - sweep));
+        danceLegs(r, [low * (1 - sweep), [3, 0, 4], [-3.4, 0, -12]], [sweep * (1 - back), [3.6, -0.8, 10], [-3, 0, -10]]);
+        r.backArm = [q(lerp(2, -5, sweep) + 4 * back), q(lerp(-1, -4, sweep) + 3 * back)];
+        r.hairLift = sweep > 0.3 && back < 0.4 ? -1 : 0;
+        if (sweep > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // High-pressure beam (finisher, at ~0.5): she sets her feet wide, levels the staff with both arms
+  // braced, gathers for a beat, and the beam tears out; she holds it, trembling against the force,
+  // and is pushed back along the floor.
+  msbeamfin(p) {
+    const set = soft(seg(p, 0, 0.3));
+    const fire = ease(seg(p, 0.46, 0.52));
+    const hold = seg(p, 0.5, 0.8);
+    const shake = Math.sin(hold * Math.PI * 12) * bump(p, 0.5, 0.8);
+    const back = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(40, 90, set) + 2 * shake - 30 * back, arm: lerp(40, 58, set) - 12 * back,
+      lunge: -1.5 * set * (1 - fire) - 3 * hold * (1 - back), tilt: -0.05 * set * (1 - fire) + 0.03 * shake,
+      rig: (r) => {
+        r.squat = q(2 * set * (1 - back));
+        danceLegs(r, [set * (1 - back), [4.2, 0, 4], [-4.4, 0, -12]]);
+        r.backArm = [q(lerp(0, 6, set) - 6 * back), q(lerp(-1, -5, set) + 4 * back)];
+        r.hairLift = fire > 0.5 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.48, 0.86));
+        if (set > 0.4 && fire < 0.3) r.eyes = 'half';
+        if (fire > 0.4 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Black water slam (finisher, at ~0.56): she rises onto her toes with the staff held upright and
+  // her free hand raised, the black water climbing behind her, then drives the staff down into the
+  // floor ahead with her whole weight and the column slams down.
+  msslam(p) {
+    const rise = soft(seg(p, 0, 0.36));
+    const down = ease(seg(p, 0.44, 0.58));
+    const land = bump(p, 0.56, 0.86);
+    const up = soft(seg(p, 0.82, 1));
+    return {
+      weapon: lerp(lerp(40, 4, rise), 150, down) - 60 * up, arm: lerp(lerp(40, 58, rise), 46, down) - 6 * up,
+      lift: 3 * rise * (1 - down), lunge: -1.5 * rise * (1 - down) + 6 * down * (1 - 0.6 * up), tilt: -0.12 * rise * (1 - down) + 0.24 * down * (1 - 0.8 * up),
+      rig: (r) => {
+        r.squat = q(2.4 * land * (1 - up));
+        danceLegs(r, [rise * (1 - down), [1.4, -1.2, 10], [-1.6, -1, -10]], [down * (1 - up), [4.2, 0, 4], [-4.2, 0, -10]]);
+        r.backArm = [q(lerp(lerp(0, -4, rise), -5, down) + 5 * up), q(lerp(lerp(-1, -10, rise), -1, down) + up)];
+        r.hairLift = rise > 0.5 && down < 0.3 ? -1 : land > 0.4 ? 1 : 0;
+        if (down > 0.3 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Spiral (up + attack, at ~0.42): she thrusts the staff straight up and turns once on the spot,
+  // the black water spiralling up round her.
+  msspiral(p) {
+    const up = ease(seg(p, 0.1, 0.42));
+    const turn = soft(seg(p, 0.1, 0.62));
+    const back = soft(seg(p, 0.7, 1));
+    const a = turn * Math.PI * 2;
+    return {
+      weapon: lerp(40, 4, up) + 30 * back, arm: lerp(40, 58, up) - 14 * back, turn: Math.cos(a) >= 0 ? 1 : -1,
+      lift: 4 * bump(p, 0.3, 0.7), tilt: -0.06 * up * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [up * (1 - back), [1.6, -1.4, 12], [-1.6, -1.2, -10]]);
+        r.backArm = [q(-4 * up + 4 * back), q(-8 * up + 7 * back)];
+        r.hairLift = turn > 0.1 && turn < 0.9 ? -1 : 0;
+        if (up > 0.5 && back < 0.5) r.mouth = 'open';
+      },
+    };
+  },
+  // Spears from the air (in the air, at ~0.42): hanging, she points the staff down at them and
+  // drives her free hand down beside it, the spears hurled down.
+  msairspear(p) {
+    const aim = soft(seg(p, 0, 0.3));
+    const hurl = ease(seg(p, 0.34, 0.46));
+    const open = soft(seg(p, 0.7, 1));
+    return {
+      weapon: lerp(40, 120, aim) + 20 * hurl - 50 * open, arm: lerp(40, 54, aim) - 10 * open, lift: 2 * aim,
+      tilt: 0.1 * aim * (1 - open) + 0.1 * hurl * (1 - open),
+      rig: (r) => {
+        tuck(r);
+        r.backArm = [q(lerp(0, -4, aim) + 7 * hurl * (1 - open)), q(lerp(-1, -6, aim) + 5 * hurl * (1 - open))];
+        r.hairLift = -1;
+        if (hurl > 0.3 && open < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Wave dive (out of a run): she dives forward through a wall of black water, arms and staff
+  // stretched ahead, and comes up out of it into a crouch.
+  msdash(p) {
+    const dive = soft(seg(p, 0, 0.3)) * (1 - ease(seg(p, 0.5, 0.62)));
+    const land = bump(p, 0.52, 0.86);
+    const up = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(40, 92, dive) + 20 * land * (1 - up), arm: lerp(40, 58, dive) - 10 * up,
+      lift: 6 * dive, lunge: 3 * dive, tilt: 0.3 * dive + 0.1 * land * (1 - up),
+      rig: (r) => {
+        if (dive > 0.3) {
+          r.air = true;
+          r.frontLeg = [q(-1 - 2 * dive), q(-2 * dive), -10];
+          r.backLeg = [q(-3 - 2 * dive), q(-1.5 * dive), -20];
+        } else {
+          r.squat = q(2 * land * (1 - up));
+          danceLegs(r, [land * (1 - up), [3.6, 0, 4], [-3.8, 0, -10]]);
+        }
+        r.backArm = [q(6 * dive - 3 * land + 3 * up), q(-6 * dive - 2 * land + 2 * up)];
+        r.hairLift = dive > 0.3 ? -1 : land > 0.4 ? 1 : 0;
+        if (land > 0.3 && up < 0.5) strikeFace(r);
+      },
+    };
+  },
+
+  // The Maelstrom's skills.
+  // Tidal Lance (thrown at ~0.56): a long, heavy wind-up, the free hand drawn far back and the body
+  // coiled low as the pressure builds, then the whole body uncoils into a lunging two-handed thrust
+  // and the great lance tears out; she holds the lunge.
+  mslance(p) {
+    const coil = soft(seg(p, 0, 0.44));
+    const drive = ease(seg(p, 0.46, 0.58));
+    const back = soft(seg(p, 0.8, 1));
+    const shiver = Math.sin(p * 60) * bump(p, 0.3, 0.46);
+    return {
+      weapon: lerp(lerp(40, 80, coil), 94, drive) + 2 * shiver - 34 * back, arm: lerp(lerp(40, 46, coil), 58, drive) - 12 * back,
+      lunge: -3 * coil * (1 - drive) + 10 * drive * (1 - 0.6 * back), tilt: -0.1 * coil * (1 - drive) + 0.02 * shiver + 0.2 * drive * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.2 * coil * (1 - drive) + 1 * drive * (1 - back));
+        danceLegs(r, [coil * (1 - drive), [2.6, 0, 4], [-4.4, 0, -14]], [drive * (1 - back), [4.8, 0, 6], [-4.6, 0, -16]]);
+        r.backArm = [q(lerp(lerp(0, -5, coil), 6, drive) - 6 * back), q(lerp(-1, -4, drive) + 3 * back)];
+        r.hairLift = drive > 0.3 && back < 0.4 ? -1 : 0;
+        r.cape = Math.round(-4 * bump(p, 0.44, 0.9));
+        if (coil > 0.4 && drive < 0.3) r.eyes = 'half';
+        if (drive > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Undertow (the vortex opens at ~0.3 and churns to ~0.9): she points the staff out at the spot,
+  // then turns her free hand round and round in slow circles, holding it open while it drags and
+  // shreds, and closes it to end.
+  msundertow(p) {
+    const point = soft(seg(p, 0, 0.24));
+    const turn = seg(p, 0.24, 0.9);
+    const a = turn * Math.PI * 4;
+    const close = soft(seg(p, 0.88, 1));
+    return {
+      weapon: lerp(40, 84, point) - 30 * close, arm: lerp(40, 56, point) - 10 * close,
+      lunge: 2 * point * (1 - close), tilt: 0.06 * point * (1 - close) + 0.02 * Math.sin(a),
+      rig: (r) => {
+        danceLegs(r, [point * (1 - close), [3, 0, 4], [-3.2, 0, -10]]);
+        r.backArm = [q(lerp(0, 3 + 3 * Math.cos(a), point) * (1 - close)), q(lerp(-1, -4 + 2.5 * Math.sin(a), point) * (1 - close) - close)];
+        r.hairLift = turn > 0 && close < 0.5 ? (Math.sin(a) > 0 ? -1 : 0) : 0;
+        if (turn > 0.05 && close < 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Hydro Cannon (the beam from ~0.4 to ~0.8): she drops into a wide braced stance, both arms on the
+  // staff levelled like a cannon, fires, and is driven back along the floor by it, trembling.
+  mscannon(p) {
+    const set = soft(seg(p, 0, 0.32));
+    const fire = ease(seg(p, 0.36, 0.42));
+    const hold = seg(p, 0.42, 0.82);
+    const shake = Math.sin(hold * Math.PI * 16) * bump(p, 0.42, 0.82);
+    const back = soft(seg(p, 0.84, 1));
+    return {
+      weapon: lerp(40, 92, set) + 2 * shake - 32 * back, arm: lerp(40, 58, set) - 12 * back,
+      lunge: -2 * set * (1 - fire) - 6 * hold * (1 - back), tilt: -0.08 * set * (1 - fire) + 0.04 * shake,
+      rig: (r) => {
+        r.squat = q(2.4 * set * (1 - back));
+        danceLegs(r, [set * (1 - back), [4.6, 0, 4], [-4.8, 0, -14]]);
+        r.backArm = [q(lerp(0, 7, set) - 7 * back), q(lerp(-1, -5, set) + 4 * back)];
+        r.hairLift = fire > 0.5 && back < 0.5 ? -1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.4, 0.88));
+        if (set > 0.4 && fire < 0.3) r.eyes = 'half';
+        if (fire > 0.4 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Depth Charge (three bubbles at ~0.3, 0.42, 0.54): the staff held out, she flicks it three
+  // times, each flick sending off a glowing charge, then snaps her fingers to set them off.
+  mscharge(p) {
+    const out = soft(seg(p, 0, 0.2)) * (1 - soft(seg(p, 0.84, 1)));
+    const flicks = [0.3, 0.42, 0.54].reduce((n, at) => n + bump(p, at - 0.06, at + 0.04), 0);
+    const snap = bump(p, 0.7, 0.84);
+    return {
+      weapon: lerp(40, 60, out) + 16 * flicks, arm: lerp(40, 54, out), lift: 1.2 * flicks, lunge: 1.5 * out,
+      tilt: 0.04 * flicks + 0.06 * snap,
+      rig: (r) => {
+        danceLegs(r, [out, [2.4, 0, 2], [-2.6, 0, -6]]);
+        r.backArm = [q(2 * out + 4 * snap), q(-2 * out - 6 * snap)];
+        if (snap > 0.3) [r.eyes, r.mouth] = ['wink', 'grin'];
+        else if (out > 0.4) r.eyes = 'half';
+      },
+    };
+  },
+  // Maelstrom (her finisher; the whirlpool opens at ~0.3 and tears until ~0.85): she rises off the
+  // floor with the staff held up and her free hand raised, the sea turning under her into a giant
+  // whirlpool; she hangs there turning slowly with it, then drives the staff down and it bursts.
+  msfinale(p) {
+    const rise = soft(seg(p, 0, 0.26));
+    const turn = seg(p, 0.26, 0.82);
+    const a = turn * Math.PI * 2;
+    const down = ease(seg(p, 0.82, 0.9));
+    const land = bump(p, 0.88, 1);
+    return {
+      weapon: lerp(lerp(40, 4, rise), 130, down) + 3 * Math.sin(a * 3) * (1 - down), arm: lerp(lerp(40, 58, rise), 48, down),
+      lift: 12 * rise * (1 - down) + 1.5 * Math.sin(a * 2) * (1 - down), lunge: 4 * down, tilt: -0.14 * rise * (1 - down) + 0.04 * Math.sin(a) + 0.2 * down,
+      turn: Math.cos(a) >= 0 ? 1 : -1,
+      rig: (r) => {
+        if (rise > 0.3 && down < 0.6) {
+          r.air = true;
+          r.frontLeg = [q(1.4), q(-2.4), 10];
+          r.backLeg = [q(-1.4), q(-1.6), -12];
+        } else {
+          r.squat = q(2.4 * land);
+          danceLegs(r, [down, [4.4, 0, 6], [-4.4, 0, -12]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -4, rise), -5, down)), q(lerp(lerp(-1, -11, rise), -2, down))];
+        r.hairLift = rise > 0.3 && down < 0.5 ? -1 : land > 0.3 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.9));
+        if (turn > 0 && down < 0.2) r.eyes = 'half';
+        if (down > 0.3) r.mouth = 'grit';
+      },
+    };
+  },
+  // Her versions of the Tide Mage's skills.
+  // Abyss Shell (Bubble Shield): she draws the staff in and crosses her free arm over it, head bowed,
+  // then throws both open and the dark shell closes round them.
+  msshell(p) {
+    const fold = soft(seg(p, 0, 0.32));
+    const open = ease(seg(p, 0.36, 0.52));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 12, fold), 30, open) + 10 * back, arm: lerp(lerp(40, 28, fold), 50, open), lift: 2 * open * (1 - back),
+      tilt: 0.1 * fold * (1 - open) - 0.05 * open * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.8 * fold * (1 - open));
+        danceLegs(r, [open * (1 - back), [2.4, 0, 4], [-2.6, 0, -6]]);
+        r.backArm = [q(lerp(lerp(0, 5, fold), -6, open) + 6 * back), q(lerp(-1, -3, open) + 2 * back)];
+        if (fold > 0.4 && open < 0.3) r.eyes = 'half';
+        else if (open > 0.3 && back < 0.6) r.mouth = 'o';
+      },
+    };
+  },
+  // Glowing Pool (Tide Pool): she drives the staff's foot into the floor and kneels on one knee beside
+  // it, her free hand flat on the floor, and the glowing water spreads out from under her palm.
+  mspool(p) {
+    const drive = ease(seg(p, 0.12, 0.34));
+    const kneel = soft(seg(p, 0.3, 0.5));
+    const up = soft(seg(p, 0.78, 1));
+    return {
+      weapon: lerp(40, 10, drive) + 20 * up, arm: lerp(40, 30, drive) + 6 * up, lunge: 1 * kneel * (1 - up),
+      tilt: 0.08 * kneel * (1 - up),
+      rig: (r) => {
+        r.squat = q(2.6 * kneel * (1 - up));
+        danceLegs(r, [kneel * (1 - up), [2.8, 0, 6], [-2.6, 0, -20]]);
+        r.backArm = [q(lerp(0, 4, kneel) * (1 - up)), q(lerp(-1, 4, kneel) * (1 - up))];
+        if (kneel > 0.4 && up < 0.5) r.eyes = 'half';
+      },
+    };
+  },
+  // Black Current (Riptide): the staff swept round in a wide low circle at her feet, the current
+  // dragging them in, then she stamps and the black water bursts up where they've gathered.
+  msriptide(p) {
+    const sweep = seg(p, 0.04, 0.5);
+    const a = soft(sweep) * Math.PI * 2;
+    const stamp = ease(seg(p, 0.56, 0.68));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: 110 + 30 * Math.sin(a) * (1 - stamp) - 60 * stamp * (1 - back) - 40 * back, arm: 40 + 10 * Math.cos(a) * (1 - stamp) + 10 * stamp - 10 * back,
+      lunge: 2 * Math.sin(a) * (1 - stamp) + 3 * stamp * (1 - back), tilt: 0.06 * Math.sin(a) * (1 - stamp) + 0.12 * stamp * (1 - back),
+      rig: (r) => {
+        r.squat = q(1.4 * (1 - stamp) * soft(seg(p, 0, 0.2)) + 2.2 * stamp * (1 - back));
+        danceLegs(r, [soft(seg(p, 0, 0.2)) * (1 - back), [3.6, 0, 4], [-3.8, 0, -12]]);
+        r.backArm = [q(-3 + 3 * Math.cos(a + 1) * (1 - stamp) + 6 * stamp - 3 * back), q(-2 + 2 * Math.sin(a + 1) * (1 - stamp) - 2 * stamp + 3 * back)];
+        if (stamp > 0.3 && back < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+  // Black Wave (Tidal Wave): she sinks low with both arms drawn down and back, then heaves them up and
+  // out, and a wave of black water rises out of the floor and rolls on.
+  msblack(p) {
+    const sink = soft(seg(p, 0, 0.36));
+    const heave = ease(seg(p, 0.38, 0.58));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(lerp(40, 120, sink), 70, heave) - 30 * back, arm: lerp(lerp(40, 22, sink), 58, heave) - 14 * back,
+      lift: 2 * heave * (1 - back), lunge: -2 * sink * (1 - heave) + 6 * heave * (1 - 0.6 * back), tilt: 0.1 * sink * (1 - heave) - 0.08 * heave * (1 - back),
+      rig: (r) => {
+        r.squat = q(2.6 * sink * (1 - heave));
+        danceLegs(r, [sink * (1 - heave), [3.2, 0, 4], [-4, 0, -14]], [heave * (1 - back), [3.4, -1.2, 12], [-3.6, -0.6, -14]]);
+        r.backArm = [q(lerp(lerp(0, 2, sink), -5, heave) + 5 * back), q(lerp(lerp(-1, 3, sink), -9, heave) + 8 * back)];
+        r.hairLift = heave > 0.3 && back < 0.5 ? -1 : 0;
+        if (heave > 0.3 && back < 0.5) strikeFace(r);
+      },
+    };
+  },
+  // Deep Flow (Flow): she breathes in slowly, eyes closed, glowing motes rising round her, and opens
+  // her eyes with a sharp turn of the staff.
+  msflow(p) {
+    const breathe = soft(seg(p, 0, 0.6));
+    const snap = ease(seg(p, 0.6, 0.7));
+    const back = soft(seg(p, 0.8, 1));
+    return {
+      weapon: lerp(40, 20, breathe) + 60 * snap * (1 - back), arm: lerp(40, 34, breathe) + 16 * snap * (1 - back), lift: 2 * breathe * (1 - snap),
+      tilt: -0.04 * breathe * (1 - snap) + 0.08 * snap * (1 - back),
+      rig: (r) => {
+        danceLegs(r, [breathe * (1 - back), [1.6, 0, 2], [-1.8, 0, -4]]);
+        r.backArm = [q(2 * breathe * (1 - snap) - 3 * snap * (1 - back)), q(-3 * breathe * (1 - snap) - 3 * snap * (1 - back))];
+        if (breathe > 0.2 && snap < 0.3) r.eyes = 'blink';
+        else if (snap > 0.3 && back < 0.6) r.mouth = 'grin';
+      },
+    };
+  },
+  // Black Tide (Great Wave): she rises on a black swell with the staff held up and both arms raised as
+  // the dark sea towers behind her, holds it, then brings everything down and it breaks.
+  msblacktide(p) {
+    const rise = soft(seg(p, 0, 0.36));
+    const hold = seg(p, 0.36, 0.54);
+    const glow = Math.sin(hold * Math.PI * 6) * bump(p, 0.36, 0.54);
+    const down = ease(seg(p, 0.54, 0.66));
+    const land = bump(p, 0.64, 0.92);
+    const up = soft(seg(p, 0.86, 1));
+    return {
+      weapon: lerp(lerp(40, 4, rise) + 2 * glow, 128, down) - 40 * up, arm: lerp(lerp(40, 58, rise), 56, down) - 12 * up,
+      lift: 9 * rise * (1 - down) + 1.5 * hold * (1 - down), lunge: -2 * rise * (1 - down) + 9 * down * (1 - 0.5 * up),
+      tilt: -0.16 * rise * (1 - down) + 0.02 * glow + 0.26 * down * (1 - 0.8 * up),
+      rig: (r) => {
+        if (rise > 0.3 && down < 0.6) {
+          r.air = true;
+          r.frontLeg = [q(1.6), q(-2.4), 10];
+          r.backLeg = [q(-1.6), q(-1.6), -12];
+        } else {
+          r.squat = q(2.6 * land * (1 - up));
+          danceLegs(r, [down * (1 - up), [4.6, 0, 6], [-4.6, 0, -12]]);
+        }
+        r.backArm = [q(lerp(lerp(0, -5, rise), -6, down) + 6 * up), q(lerp(lerp(-1, -11, rise), -3, down) + 3 * up)];
+        r.hairLift = rise > 0.3 && down < 0.4 ? -1 : land > 0.4 ? 1 : 0;
+        r.cape = Math.round(-5 * bump(p, 0.1, 0.6) + 3 * bump(p, 0.6, 0.95));
+        if (hold > 0 && down < 0.2) r.eyes = 'half';
+        if (down > 0.2 && up < 0.5) r.mouth = 'grit';
+      },
+    };
+  },
+
   whirlflip(p) {
     // (The free arm swings out with the spin, then tucks in for the flip and opens to land.)
     const out = bump(p, 0.04, 0.6);

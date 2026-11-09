@@ -149,7 +149,7 @@ export function drawWarriorFx(ctx, f, x, y, p, cam, time) {
   const seed = f.seed ?? 0.5;
   const box = f.box ? { x: f.box.x - cam.x, y: f.box.y - cam.y, w: f.box.w, h: f.box.h } : null;
   if ((f.kind === 'aehit' || f.kind === 'aesteam' || f.kind === 'aeclockfx') && drawArbalistFx(ctx, f, x, y, p)) return true;
-  if (f.kind.startsWith('tm') && drawTideFx(ctx, f, x, y, p)) return true;
+  if ((f.kind.startsWith('tm') || f.kind.startsWith('ms')) && drawTideFx(ctx, f, x, y, p)) return true;
   switch (f.kind) {
     // The Wind Dancer's (coral and cream): her mark on each monster hit, the swirl of ribbons, the
     // crescent gust down the line, and Grand Finale's spotlight and rose of ribbons.

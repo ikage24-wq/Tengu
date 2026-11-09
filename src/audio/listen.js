@@ -62,6 +62,8 @@ const NAMED = new Set(['aeboom', 'aesteam', 'aeballista', 'skytornado', 'skyupdr
   'pthit', 'ptsmoke', 'ptillusion',
   // The Tide Mage.
   'tmlash', 'tmsplash', 'tmsplashbig', 'tmgeyser', 'tmwhirl', 'tmfall', 'tmfallbig', 'tmhit', 'tmshieldfx', 'tmpool',
+  // The Maelstrom.
+  'mshit', 'msvortex', 'msvortexsmall', 'msbeam', 'msbeambig', 'msslam', 'msglowpop', 'msslash', 'msmaelstrom', 'msshellfx', 'mspool',
   // The Acrobat Archer.
   'achit', 'acfirework', 'acburst', 'trapsnap',
   // Team moves.

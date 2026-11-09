@@ -173,6 +173,14 @@ export const QUESTS = {
     objectives: [{ type: 'kill', mob: 'shade', count: 15 }],
     rewards: { exp: 41000, gold: 880, items: [{ id: 'elixir', qty: 5 }] },
   },
+  // Elowen's trial for a Tide Mage before her level 30 path (the Maelstrom; the support path is
+  // still to come).
+  mage_trial: {
+    id: 'mage_trial', name: "The Tide Mage's Trial", giver: 'elowen', minLevel: 30, family: 'mage',
+    text: "The water you've called so far is the friendly kind, the kind that sits on top. There is more under it. Go to the Crystal Cave and break 20 Gem Mimics: hard little things, so hit them with everything the sea has. Then come back, and I'll show you the deep.",
+    objectives: [{ type: 'kill', mob: 'crystalslime', count: 20 }],
+    rewards: { exp: 44000, gold: 950, items: [{ id: 'elixir', qty: 5 }] },
+  },
   // Vex's trial for a Wind Dancer before either level 30 path (the Blade Dancer, the Sky Dancer).
   thief_trial: {
     id: 'thief_trial', name: "The Wind Dancer's Trial", giver: 'vex', minLevel: 30, family: 'thief',

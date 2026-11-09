@@ -222,6 +222,19 @@ function tideAura(ctx, x, y, t, s, k, layer) {
   }
 }
 
+// Depth (the Maelstrom): glowing motes of the deep rise round her as it builds, more the deeper it
+// runs; full (the Abyss), a small vortex turns at her feet.
+function depthAura(ctx, x, y, t, s, k, layer) {
+  if (layer === 'back') {
+    if (k >= 1) fxSprite(ctx, 'celmsvortexsmall', x, y + 2 * s, { frame: 8 + (Math.floor(t * 20) % 12), scale: s * 0.55, alpha: 0.8 });
+    return;
+  }
+  if (k > 0.2) for (let i = 0; i < 2 + Math.floor(k * 3); i++) {
+    const u = (t * 0.6 + i / 5) % 1;
+    fxSprite(ctx, 'celmsglow', x + (i - 2) * 9 * s + Math.sin(t * 2 + i) * 3 * s, y - (6 + 44 * u) * s, { frame: i * 4, scale: s * 0.18, alpha: Math.min(1, (k - 0.2) * 2) * (1 - u) });
+  }
+}
+
 // Valor: a steel ring at his feet widening as it builds, steel chevrons and diamonds rising round
 // him from halfway, and full (Unbroken), the steel emblem over his head and rings racing out
 // again and again.
@@ -295,7 +308,7 @@ function tailsAura(ctx, x, y, t, s, k, layer) {
 
 // Draws a combat aura: `kind` a job's gauge ('ki', 'tails', 'valor', 'momentum', 'shadow', 'rage', 'faith' or
 // 'bond' or 'charge'), `k` how full (0-1).
-const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura };
+const COMBAT = { ki: kiAura, tails: tailsAura, valor: valorAura, momentum: momentumAura, shadow: shadowAura, rage: rageAura, faith: faithAura, bond: bondAura, charge: chargeAura, tide: tideAura, depth: depthAura };
 export function drawCombatAura(ctx, kind, layer, x, y, time, scale, k, dir = 1) {
   if (k <= 0.02 || !COMBAT[kind]) return;
   ctx.save();

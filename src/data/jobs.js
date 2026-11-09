@@ -91,6 +91,13 @@ export const JOBS = {
     blurb: 'A dancer who never lands, with gloves of wind. Every blow lifts her higher over the monsters and throws a crescent of wind down at them; her hits in the air build Tailwind, and full, she flies freely and her gusts are twice as big. Updraft, Zephyr, and Sky Waltz: a giant tornado that lifts them all and slams them down.',
   },
 
+  // The Tide Mage's damage path (docs/design/maelstrom.md). Asks for Elowen's trial first.
+  maelstrom: {
+    id: 'maelstrom', power: 4.41, spread: 1.68, name: 'Maelstrom', family: 'mage', tier: 2, parent: 'tidemage', level: 30, trial: 'mage_trial',
+    hp: 20, mp: 30, advanceHp: 260, advanceMp: 480, weapons: ['staff'],
+    blurb: 'The Tide Mage who called up the deep: crushing pressure, vortices and the glowing things of the abyss. Spears of water, vortex bolts and beams; her hits build Depth, and the deeper it runs the harder she hits. Full (the Abyss), every hit leaves a vortex shredding what it struck. Tidal Lance, Undertow, Hydro Cannon, and Maelstrom: a whirlpool that tears the screen apart.',
+  },
+
   // Hidden: only unlocked with the Game Master passphrase, never offered by an instructor.
   gamemaster: {
     id: 'gamemaster', name: 'Game Master', family: 'gm', tier: 9, parent: null, hidden: true,

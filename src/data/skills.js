@@ -839,6 +839,7 @@ export const SKILLS = {
   // water to fight with; she branches at 30 into a support path or a ranged damage path.
   bubbleshield: skill({
     id: 'bubbleshield', anim: 'tmshield', name: 'Bubble Shield', job: 'tidemage', type: 'buff', fx: null, icon: 'bubbleshield', school: 'tide', party: true, maxLevel: 10,
+    pathNames: { maelstrom: 'Abyss Shell' },
     desc: 'Hug your staff close, then throw your hand wide: a bubble of water closes round you and everyone near you, soaking up the next blows until it pops. Builds Tide. A short wait before the next (30 seconds).',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -848,11 +849,14 @@ export const SKILLS = {
       return {
         mp: k(18, 30), pct: 0, hits: 0, targets: 0, range, cooldown: 30, aimGain: 15,
         combo: [{ move: 'tmshield', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmshieldfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }],
+        // Abyss Shell: she folds round the staff, then throws herself open and a dark shell closes.
+        paths: { maelstrom: [{ move: 'msshell', dur: 0.8, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msshellfx', burstAt: 0, burstDur: 0.6, follow: true, grant: { id: 'bubbleshield', duration: 12, buff: { barrier: kf(0.12, 0.3) }, range } }] }] },
       };
     },
   }),
   tidepool: skill({
     id: 'tidepool', anim: 'tmpool', name: 'Tide Pool', job: 'tidemage', type: 'buff', fx: null, icon: 'tidepool', school: 'tide', party: true, maxLevel: 10,
+    pathNames: { maelstrom: 'Glowing Pool' },
     desc: 'Plant your staff in the floor and a pool of sea water wells up round it: you and everyone near you mend a little every second while it lasts. Builds Tide. A short wait before the next (24 seconds).',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -862,11 +866,14 @@ export const SKILLS = {
       return {
         mp: k(20, 34), pct: 0, hits: 0, targets: 0, range, cooldown: 24, aimGain: 15,
         combo: [{ move: 'tmpool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmpool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }],
+        // Glowing Pool: she kneels with her palm on the floor and the glowing water spreads from it.
+        paths: { maelstrom: [{ move: 'mspool', dur: 0.8, step: 0, strikes: [{ at: 0.45, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'mspool', burstAt: 0, burstDur: 8, grant: { id: 'tidepool', duration: 8, buff: { regenPct: kf(0.015, 0.035) }, range } }] }] },
       };
     },
   }),
   riptide: skill({
     id: 'riptide', anim: 'tmriptide', name: 'Riptide', job: 'tidemage', type: 'attack', fx: null, icon: 'riptide', school: 'tide', maxLevel: 20,
+    pathNames: { maelstrom: 'Black Current' },
     desc: 'Sweep your staff low across the floor and haul: a current drags the monsters round you in together, then you heave the staff over and bring the water crashing down on the lot of them.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -877,11 +884,17 @@ export const SKILLS = {
           { at: 0.3, magic: true, fx: 'tmhit', pct: k(40, 70), reach: 170, h: 100, around: true, targets: 6, knock: 0, pull: 240, burst: 'tmwhirl', burstAt: 0.3, burstDur: 0.6 },
           { at: 0.66, magic: true, fx: 'tmhit', pct: k(120, 210), reach: 110, h: 100, targets: 6, knock: 200, launch: 160, burst: 'tmsplashbig', burstAt: 0.55, burstDur: 0.55, big: true, stop: 0.07, shake: 3 },
         ] }],
+        // Black Current: the staff swept round low, the dark current dragging them in, then a stamp.
+        paths: { maelstrom: [{ move: 'msriptide', dur: 0.8, step: 4, strikes: [
+          { at: 0.3, magic: true, fx: 'mshit', pct: k(40, 70), reach: 170, h: 100, around: true, targets: 6, knock: 0, pull: 240, burst: 'msvortex', burstAt: 0.4, burstDur: 0.6 },
+          { at: 0.66, magic: true, fx: 'mshit', pct: k(120, 210), reach: 110, h: 100, targets: 6, knock: 200, launch: 160, burst: 'msslam', burstAt: 0.55, burstDur: 0.55, big: true, stop: 0.07, shake: 3 },
+        ] }] },
       };
     },
   }),
   tidalwave: skill({
     id: 'tidalwave', anim: 'tmtidal', name: 'Tidal Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'tidalwave', school: 'tide', maxLevel: 20,
+    pathNames: { maelstrom: 'Black Wave' },
     desc: 'Crouch low with your staff swept back, then rise in one long heave: a great wave rears up off the floor and rolls away through every monster in front of you.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -889,11 +902,14 @@ export const SKILLS = {
       return {
         mp: k(14, 26), pct: k(160, 280), hits: 1, targets: 8,
         combo: [{ move: 'tmtidal', dur: 0.9, step: 0, strikes: [{ at: 0.56, magic: true, burst: 'tmhit', shot: 'tmwavebig', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }],
+        // Black Wave: she heaves the black water up out of the floor and it rolls on.
+        paths: { maelstrom: [{ move: 'msblack', dur: 0.9, step: 0, strikes: [{ at: 0.58, magic: true, burst: 'mshit', shot: 'msblackwave', pct: k(160, 280), range: 420, h: 110, targets: 8, pierce: true, knock: 260, launch: 160, speed: 560, big: true, stop: 0.07, shake: 3 }] }] },
       };
     },
   }),
   flow: skill({
     id: 'flow', anim: 'tmflow', name: 'Flow', job: 'tidemage', type: 'buff', fx: null, icon: 'flow', school: 'tide', maxLevel: 10,
+    pathNames: { maelstrom: 'Deep Flow' },
     desc: 'Twirl your staff and let the water run with you: for a while you cast faster and your magic hits harder.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -901,11 +917,14 @@ export const SKILLS = {
       return {
         mp: lerp(16, 26, lv, m), pct: 0, hits: 0, targets: 0, cooldown: 60,
         combo: [{ move: 'tmflow', dur: 0.7, step: 0, strikes: [{ at: 0.5, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'tmsplash', burstAt: 0, burstDur: 0.45, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }],
+        // Deep Flow: a slow breath with her eyes closed, motes rising, then a sharp turn of the staff.
+        paths: { maelstrom: [{ move: 'msflow', dur: 0.8, step: 0, strikes: [{ at: 0.64, pct: 0, reach: 0, h: 0, targets: 0, quiet: true, gauge: 0, burst: 'msglowpop', burstAt: 0, burstDur: 0.5, grant: { id: 'flow', duration: 60, buff: { attackSpeed: kf(0.06, 0.15), matk: lerp(4, 16, lv, m) }, range: { w: 0, h: 0 } } }] }] },
       };
     },
   }),
   waverider: skill({
     id: 'waverider', anim: 'tmsurf', name: 'Wave Rider', job: 'tidemage', type: 'attack', fx: null, icon: 'waverider', school: 'tide', maxLevel: 10, movement: true,
+    pathNames: { maelstrom: 'Deep Dive' },
     desc: 'Ride a wave forward in a surfer\'s crouch, knocking aside whatever is in the way, and spring off the top of it with a splash. Nothing touches you on the wave.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -913,6 +932,8 @@ export const SKILLS = {
       return {
         mp: k(10, 6), pct: k(80, 140), hits: 1, targets: 4,
         combo: [{ move: 'tmsurf', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'tmhit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }],
+        // Deep Dive: she dives forward through a wall of black water and comes up out of it.
+        paths: { maelstrom: [{ move: 'msdash', dur: 0.62, step: k(130, 180), carry: 0.6, guard: 0.5, strikes: [{ at: 0.56, magic: true, fx: 'mshit', pct: k(80, 140), reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'msslam', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.05, shake: 2 }] }] },
       };
     },
   }),
@@ -923,6 +944,7 @@ export const SKILLS = {
   }),
   greatwave: skill({
     id: 'greatwave', anim: 'tmgreat', dmg: 2, name: 'Great Wave', job: 'tidemage', type: 'attack', fx: null, icon: 'greatwave', school: 'tide', maxLevel: 10, fullGauge: true,
+    pathNames: { maelstrom: 'Black Tide' },
     desc: 'Finisher: needs a full Tide, and spends it. Rise off the floor on the swell with your staff held high as the sea climbs up behind you, hold it while it towers, then bring it all down: a giant wave sweeps the screen, crashing through every monster in front of you, and mends you and the party as it passes.',
     weapons: ['staff'],
     at: (lv, m) => {
@@ -931,6 +953,93 @@ export const SKILLS = {
         mp: k(30, 50), pct: k(160, 260), hits: 1, targets: 0,
         combo: [{ move: 'tmgreat', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
           { at: 0.62, magic: true, burst: 'tmhit', shot: 'tmgreat', pct: k(160, 260), range: 560, h: 180, targets: 12, pierce: true, knock: 300, launch: 220, speed: 520, big: true, stop: 0.1, shake: 5, heal: 0.18, healR: 400 },
+        ] }],
+        // Black Tide: the dark sea towers behind her on a black swell and breaks.
+        paths: { maelstrom: [{ move: 'msblacktide', dur: 1.6, step: 0, finisher: true, guard: 1.4, strikes: [
+          { at: 0.62, magic: true, burst: 'mshit', shot: 'msblacktide', pct: k(160, 260), range: 560, h: 180, targets: 12, pierce: true, knock: 300, launch: 220, speed: 520, big: true, stop: 0.1, shake: 5, heal: 0.18, healR: 400 },
+        ] }] },
+      };
+    },
+  }),
+
+  // ---------- Maelstrom (the Tide Mage's damage path: the deep sea, midnight and glowing aqua) ----------
+  // docs/design/maelstrom.md. Her hits build Depth (world/melee.js): the deeper it runs the harder she
+  // hits; full (the Abyss), every hit opens a vortex on what it struck. She plays the Tide Mage's
+  // skills her own way (their `paths`), and these are hers.
+  tidallance: skill({
+    id: 'tidallance', anim: 'mslance', name: 'Tidal Lance', job: 'maelstrom', type: 'attack', fx: null, icon: 'tidallance', school: 'deep', maxLevel: 20,
+    desc: 'Coil low as the pressure builds at your staff, then uncoil in one lunging thrust: a great lance of water tears out through every monster in the line.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      return {
+        mp: k(14, 26), pct: k(200, 340), hits: 1, targets: 8,
+        combo: [{ move: 'mslance', dur: 0.85, step: 6, strikes: [{ at: 0.56, magic: true, burst: 'mshit', shot: 'msspearbig', pct: k(200, 340), range: 460, h: 64, targets: 8, pierce: true, knock: 240, speed: 1100, big: true, stop: 0.08, shake: 3 }] }],
+      };
+    },
+  }),
+  undertow: skill({
+    id: 'undertow', anim: 'msundertow', name: 'Undertow', job: 'maelstrom', type: 'attack', fx: null, icon: 'undertow', school: 'deep', maxLevel: 20,
+    desc: 'Point your staff out ahead and turn your hand: a vortex opens there, drags in every monster near it and shreds them again and again while it turns.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const tick = (at) => ({ at, magic: true, fx: 'mshit', pct: k(36, 60), reach: 230, h: 130, targets: 6, knock: 0, pull: 140, gauge: 1 });
+      return {
+        mp: k(16, 28), pct: k(36, 60), hits: 5, targets: 6, cooldown: 6,
+        combo: [{ move: 'msundertow', dur: 1.2, step: 0, strikes: [
+          { ...tick(0.3), burst: 'msvortex', burstAt: 0.62, burstDur: 0.9 }, tick(0.45), tick(0.6), tick(0.75),
+          { ...tick(0.9), knock: 180, launch: 200, big: true, stop: 0.06, shake: 2 },
+        ] }],
+      };
+    },
+  }),
+  hydrocannon: skill({
+    id: 'hydrocannon', anim: 'mscannon', name: 'Hydro Cannon', job: 'maelstrom', type: 'attack', fx: null, icon: 'hydrocannon', school: 'deep', maxLevel: 20,
+    desc: 'Drop into a braced stance with your staff levelled like a cannon and let it go: a beam of crushing water tears through everything ahead, driving you back along the floor as you hold it.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const beam = (at, f = {}) => ({ at, magic: true, fx: 'mshit', pct: k(55, 90), reach: 340, h: 60, targets: 8, knock: 40, ...f });
+      return {
+        mp: k(20, 34), pct: k(55, 90), hits: 4, targets: 8, cooldown: 8,
+        combo: [{ move: 'mscannon', dur: 1.1, step: 0, strikes: [
+          beam(0.42, { burst: 'msbeambig', burstAt: 0.05, burstDur: 0.45 }), beam(0.54), beam(0.66),
+          beam(0.78, { knock: 260, big: true, stop: 0.08, shake: 3 }),
+        ] }],
+      };
+    },
+  }),
+  depthcharge: skill({
+    id: 'depthcharge', anim: 'mscharge', name: 'Depth Charge', job: 'maelstrom', type: 'attack', fx: null, icon: 'depthcharge', school: 'deep', maxLevel: 20,
+    desc: 'Flick three glowing charges off your staff; they drift out to the monsters ahead and, at a snap of your fingers, go off together.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const charge = (at, oy) => ({ at, magic: true, burst: 'msglowpop', shot: 'msglow', pct: k(70, 120), range: 280, h: 90, targets: 3, knock: 120, speed: 330, oy, big: true, stop: 0.04 });
+      return {
+        mp: k(12, 22), pct: k(70, 120), hits: 3, targets: 3,
+        combo: [{ move: 'mscharge', dur: 0.9, step: 0, strikes: [charge(0.3, -8), charge(0.42, 0), charge(0.54, 8)] }],
+      };
+    },
+  }),
+  deepmastery: skill({
+    id: 'deepmastery', name: 'Deep Sea Mastery', job: 'maelstrom', type: 'passive', grows: true, fx: null, icon: 'deepmastery',
+    desc: 'The weight of the whole sea behind every spell: your magic hits steadier, and lands critical hits more often.',
+    at: (lv, m) => ({ passive: { mastery: lerpf(0.15, 0.4, lv, m), critRate: lerpf(0.03, 0.12, lv, m), acc: lerp(4, 30, lv, m) } }),
+  }),
+  abyssmaelstrom: skill({
+    id: 'abyssmaelstrom', anim: 'msfinale', dmg: 2, name: 'Maelstrom', job: 'maelstrom', type: 'attack', fx: null, icon: 'abyssmaelstrom', school: 'deep', maxLevel: 10, fullGauge: true,
+    desc: 'Finisher: needs a full Depth, and spends it. Rise off the floor as the sea turns under you into a giant whirlpool that drags in everything on the screen and tears it apart, then drive your staff down and it bursts.',
+    weapons: ['staff'],
+    at: (lv, m) => {
+      const k = (a, b) => lerp(a, b, lv, m);
+      const rip = (at) => ({ at, magic: true, fx: 'mshit', pct: k(40, 66), reach: 420, h: 220, around: true, targets: 12, knock: 0, pull: 200, gauge: 0 });
+      return {
+        mp: k(30, 50), pct: k(40, 66), hits: 6, targets: 12,
+        combo: [{ move: 'msfinale', dur: 2, step: 0, finisher: true, guard: 1.8, strikes: [
+          { ...rip(0.3), burst: 'msmaelstrom', burstAt: 0.35, burstDur: 1.2 }, rip(0.42), rip(0.54), rip(0.66), rip(0.78),
+          { ...rip(0.88), pct: k(160, 260), knock: 320, launch: 300, big: true, stop: 0.12, shake: 6 },
         ] }],
       };
     },

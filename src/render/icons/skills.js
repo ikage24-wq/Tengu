@@ -48,6 +48,8 @@ const BG = {
   brassbg: ['#ffe6a8', '#5a3818'],
   // The Tide Mage's: pale sea foam to the deep sea.
   tidebg: ['#c8f4ff', '#0c4a80'],
+  // The Maelstrom's: glowing aqua down into the midnight deep.
+  deepbg: ['#8ff3e8', '#070d33'],
   rosegold: ['#ffe0cf', '#a8405a'],
   coral: ['#ffcdb6', '#c23c48'],
   shrine: ['#f6f0ff', '#5a46a8'],
@@ -1101,6 +1103,73 @@ function greatwave() {
   return out;
 }
 
+// ---------- Maelstrom (the deep: midnight water lit by glowing aqua, a magenta accent) ----------
+const DEEPC = '#1f4fa0';
+const DEEPINK = '#070d33';
+const GLOWC = '#8ff3e8';
+const PINKC = '#ff7ad8';
+const glowDot = (x, y, r, c = GLOWC) => [S(oval(x, y, r * 1.5, r * 1.5, 0, 14), mix(c, cur.mid, 0.6)), S(oval(x, y, r, r, 0, 14), c), S(oval(x, y, r * 0.45, r * 0.45, 0, 10), '#ffffff')];
+// A spiral of water arms turning into a glowing eye.
+function vortexIcon(cx, cy, r) {
+  const out = [];
+  for (let k = 0; k < 3; k++) {
+    const a0 = k * 120;
+    const pts = Array.from({ length: 12 }, (_, i) => {
+      const u = i / 11;
+      const a = (a0 + u * 200) * D2R;
+      const rr = r * (0.25 + 0.75 * u);
+      return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr];
+    });
+    out.push(S(tube(pts, 0.3, 1.4), DEEPINK), S(tube(pts, 0.2, 0.9), k === 1 ? GLOWC : DEEPC));
+  }
+  out.push(...glowDot(cx, cy, 1.4));
+  return out;
+}
+// Tidal Lance: a great spear of water through the tile, a ring of pressure off its head.
+function tidallance() {
+  const out = [...tile('deepbg', 'active'), ...aura(11, 5, 5, GLOWC)];
+  out.push(...solid([[1.6, 13.6], [2.8, 14.4], [13.6, 3.6], [14.6, 1.4], [12.4, 2.4]], DEEPC, { d: 0.35, ink: DEEPINK }));
+  out.push(S(tube([[3, 13], [13, 3]], 0.2, 0.5), '#ffffff'));
+  out.push(S(arcPts(11.4, 4.6, 2.6, 1.2, 0, 360, 16), GLOWC), ...glowDot(13.8, 2.2, 1.1), ...glowDot(4.4, 9.4, 0.6, PINKC));
+  return out;
+}
+// Undertow: a vortex dragging, current lines pulled into it.
+function undertow() {
+  const out = [...tile('deepbg', 'active'), ...aura(8, 8, 6.4, GLOWC)];
+  out.push(...vortexIcon(8, 8, 6), ...glowDot(2.6, 3.2, 0.6), ...glowDot(13.4, 12.6, 0.6, PINKC));
+  return out;
+}
+// Hydro Cannon: a thick beam tearing out of the left edge, rings round it.
+function hydrocannon() {
+  const out = [...tile('deepbg', 'active'), ...aura(9, 8, 6, GLOWC)];
+  out.push(...solid([[0.8, 6], [15.2, 6.6], [15.2, 9.4], [0.8, 10]], DEEPC, { d: 0.35, ink: DEEPINK }));
+  out.push(S(rect(1, 7.6, 14, 0.8), '#ffffff'), S(rect(1, 7.2, 14, 0.4), GLOWC));
+  for (const x of [4, 8, 12]) out.push(S(arcPts(x, 8, 0.9, 3, 0, 360, 14), GLOWC));
+  out.push(...glowDot(14.2, 8, 1.4));
+  return out;
+}
+// Depth Charge: three glowing bubbles, one going off.
+function depthcharge() {
+  const out = [...tile('deepbg', 'active'), ...aura(8, 8, 6, GLOWC)];
+  for (const [x, y, r] of [[4.4, 10.6, 2.2], [8.2, 6.4, 2.4]]) out.push(S(oval(x, y, r + 0.4, r + 0.4, 0, 20), DEEPINK), S(oval(x, y, r, r, 0, 20), mix(DEEPC, GLOWC, 0.35)), ...glowDot(x, y, r * 0.45));
+  out.push(...spark(12, 10.6, 2.4, GLOWC), ...glowDot(12, 10.6, 1.2, PINKC));
+  return out;
+}
+// Deep Sea Mastery: the staff's head over a swirl of the deep.
+function deepmastery() {
+  const out = [...tile('deepbg', 'passive'), ...aura(8, 8, 6, GLOWC)];
+  out.push(...vortexIcon(8, 9, 5));
+  out.push(S(tube([[8, 14], [8, 3.6]], 0.5, 0.9), DEEPINK), S(tube([[8, 13.8], [8, 3.8]], 0.3, 0.5), '#ffe9a0'), ...glowDot(8, 3.2, 1.3));
+  return out;
+}
+// Maelstrom: a giant whirlpool seen from above it, everything turning into it.
+function abyssmaelstrom() {
+  const out = [...tile('deepbg', 'active'), ...aura(8, 8, 7, GLOWC, 1.2, 5)];
+  for (const r of [6.6, 4.4]) out.push(S(arcPts(8, 8, r, r * 0.9, 0, 360, 28), mix(DEEPC, GLOWC, r > 5 ? 0.2 : 0.5)));
+  out.push(...vortexIcon(8, 8, 6.2), ...glowDot(2.8, 12.6, 0.7, PINKC), ...glowDot(13, 3.4, 0.7));
+  return out;
+}
+
 function shadowdash() {
   const navy = '#2e2466';
   const out = [...tile('dusk', 'active')];
@@ -1532,6 +1601,7 @@ const ART = {
   pirouette, ribbonlash, gustline, spotlight, grandfinale,
   gmsmite, gmhaste, gmblessing,
   bubbleshield, tidepool, riptide, tidalwave, flow, waverider, oceanheart, greatwave,
+  tidallance, undertow, hydrocannon, depthcharge, deepmastery, abyssmaelstrom,
 };
 
 // Each skill's background tones [light, deep], noted as its tile is built, so windows can tint

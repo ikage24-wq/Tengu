@@ -343,7 +343,35 @@ const TIDE_POOL = {
   surf: { move: 'tmsurf', dur: 0.62, step: 64, carry: 0.6, finisher: true, strikes: [tide({ at: 0.56, pct: 170, reach: 92, h: 84, targets: 4, knock: 230, launch: 140, burst: 'tmsplashbig', burstAt: 0.45, burstDur: 0.55, big: true, stop: 0.07, shake: 3 })] },
 };
 
+// The Maelstrom (docs/design/maelstrom.md): the deep sea out of her staff. Her own string: a spear
+// of pressurised water through two, a vortex bolt spinning in, and a vortex opened ahead that drags
+// them in and bursts. Her pool: a jet of pressure or two glowing bubbles that go off; two crossing
+// spears or a slashing current; a beam through the line or a column of black water slammed down.
+const deep = (st) => ({ magic: true, fx: 'mshit', ...st });
+const DEEP_SHOT = { magic: true, burst: 'mshit' };
+PATH_COMBOS.maelstrom = [
+  { move: 'msspear', dur: 0.42, step: 4, strikes: [{ ...DEEP_SHOT, at: 0.5, shot: 'msspear', pct: 90, range: 320, h: 56, targets: 2, pierce: true, knock: 50, speed: 920 }] },
+  { move: 'msbolt', dur: 0.44, step: 4, strikes: [{ ...DEEP_SHOT, at: 0.48, shot: 'msbolt', pct: 96, range: 300, h: 64, knock: 60, speed: 640 }] },
+  { move: 'msopen', dur: 0.66, step: 0, finisher: true, strikes: [
+    deep({ at: 0.36, pct: 60, reach: 190, h: 110, targets: 4, knock: 0, pull: 160, burst: 'msvortex', burstAt: 0.7, burstDur: 0.75 }),
+    deep({ at: 0.72, pct: 140, reach: 190, h: 120, targets: 4, knock: 200, launch: 200, big: true, stop: 0.07, shake: 3 }),
+  ] },
+];
+const DEEP_POOL = {
+  jet: { move: 'msjet', dur: 0.42, step: 2, strikes: [deep({ at: 0.45, pct: 92, reach: 150, h: 50, targets: 3, knock: 80, burst: 'msbeam', burstAt: 0.08, burstDur: 0.35 })] },
+  glow: { move: 'msglow', dur: 0.48, step: 2, strikes: [0.36, 0.6].map((at, i) => ({ ...DEEP_SHOT, at, shot: 'msglow', pct: 48, range: 260, h: 70, knock: 30, speed: 360, oy: i ? 5 : -5, burst: 'msglowpop' })) },
+  cross: { move: 'mscross', dur: 0.5, step: 4, strikes: [{ ...DEEP_SHOT, at: 0.32, shot: 'msspear', pct: 50, range: 320, h: 56, targets: 2, pierce: true, knock: 30, speed: 920, oy: -5 }, { ...DEEP_SHOT, at: 0.58, shot: 'msspear', pct: 54, range: 320, h: 56, targets: 2, pierce: true, knock: 60, speed: 920, oy: 5 }] },
+  slash: { move: 'msslash', dur: 0.46, step: 8, strikes: [deep({ at: 0.46, pct: 100, reach: 120, h: 80, targets: 3, knock: 90, burst: 'msslash', burstAt: 0.35, burstDur: 0.4 })] },
+  beam: { move: 'msbeamfin', dur: 0.64, step: -6, finisher: true, strikes: [deep({ at: 0.5, pct: 175, reach: 280, h: 52, targets: 5, knock: 220, burst: 'msbeam', burstAt: 0.06, burstDur: 0.45, big: true, stop: 0.07, shake: 3 })] },
+  slam: { move: 'msslam', dur: 0.66, step: 6, finisher: true, strikes: [deep({ at: 0.56, pct: 180, reach: 130, h: 130, targets: 4, knock: 240, launch: 180, burst: 'msslam', burstAt: 0.6, burstDur: 0.55, big: true, stop: 0.08, shake: 4 })] },
+};
+
 export const PATH_VARIANTS = {
+  maelstrom: [
+    [PATH_COMBOS.maelstrom[0], DEEP_POOL.jet, DEEP_POOL.glow],
+    [PATH_COMBOS.maelstrom[1], DEEP_POOL.cross, DEEP_POOL.slash],
+    [PATH_COMBOS.maelstrom[2], DEEP_POOL.beam, DEEP_POOL.slam],
+  ],
   tidemage: [
     [PATH_COMBOS.tidemage[0], TIDE_POOL.bubbles, TIDE_POOL.splash],
     [PATH_COMBOS.tidemage[1], TIDE_POOL.twin, TIDE_POOL.geyser],
@@ -509,6 +537,16 @@ export function planCombo(variants, last = null, rng = Math.random) {
 // In the air: shots that hold you up (`hang`) and loose down at them. Running: the Beastmaster
 // slides in under them loosing two arrows.
 const ARCHER_COMMANDS = {
+  // The Maelstrom: a spiral of black water driven up under whatever flies, spears hurled down from a
+  // hang in the air (the second a big one), and a dive through a wave out of a run.
+  maelstrom: {
+    up: { move: 'msspiral', dur: 0.48, strikes: [deep({ at: 0.42, pct: 112, reach: 84, h: 210, targets: 4, knock: 20, launch: 420, burst: 'msvortex', burstAt: 0.5, burstDur: 0.55, big: true, stop: 0.04 })] },
+    air: [
+      { move: 'msairspear', dur: 0.42, hang: true, strikes: [{ ...DEEP_SHOT, at: 0.42, shot: 'msspear', pct: 78, fan: 2, range: 280, h: 200, drop: 70, knock: 40, speed: 920 }] },
+      { move: 'msairspear', dur: 0.48, hang: true, finisher: true, strikes: [{ ...DEEP_SHOT, at: 0.42, shot: 'msspearbig', pct: 100, fan: 2, range: 280, h: 220, drop: 90, knock: 140, speed: 960, big: true, stop: 0.05, shake: 1 }] },
+    ],
+    dash: { move: 'msdash', dur: 0.5, step: 86, carry: 0.6, guard: 0.3, strikes: [deep({ at: 0.52, pct: 122, reach: 88, h: 72, targets: 3, knock: 160, burst: 'msslam', burstAt: 0.5, burstDur: 0.45, big: true, stop: 0.04 })] },
+  },
   // The Tide Mage: a spout of water thrown up under whatever flies, a waterfall poured down from a
   // hang in the air (the second a great one), and a wave surfed in on out of a run.
   tidemage: {
@@ -741,7 +779,7 @@ export const TIDE_MAX = 100;
 const TIDE_HOLD = 5;
 const TIDE_DRAIN = 10;
 export const TIDE_MEND = 0.01; // of max HP a second, at High Tide, for her and the party near her
-export const hasTide = (char) => jobChain(char.job).includes('tidemage');
+export const hasTide = (char) => jobChain(char.job).includes('tidemage') && !hasDepth(char);
 export function addTide(world, n) {
   if (!hasTide(world.char) || n <= 0) return;
   world.tide = Math.min(TIDE_MAX, (world.tide ?? 0) + n);
@@ -750,6 +788,34 @@ export function addTide(world, n) {
 export const highTide = (world) => hasTide(world.char) && (world.tide ?? 0) >= TIDE_MAX;
 // How much bigger her waves run with the Tide: up to a third larger when it's full.
 export const tideSwell = (world) => (hasTide(world.char) ? 1 + (world.tide ?? 0) / TIDE_MAX / 3 : 1);
+// Depth: the Maelstrom's gauge (the Tide Mage's damage path). Her hits build it; it drains once the
+// fighting stops. The deeper it runs, the harder she hits (up to a quarter more); full (the Abyss),
+// every hit leaves a small vortex on what it struck that shreds it three times more, and the
+// finisher spends it.
+export const DEPTH_MAX = 100;
+const DEPTH_HOLD = 5;
+const DEPTH_DRAIN = 10;
+const DEPTH_POWER = 0.25;
+export const ABYSS_PCT = 18;
+export const hasDepth = (char) => jobChain(char.job).includes('maelstrom');
+export function addDepth(world, n) {
+  if (!hasDepth(world.char) || n <= 0) return;
+  world.depth = Math.min(DEPTH_MAX, (world.depth ?? 0) + n);
+  world.depthAt = world.now;
+}
+export const abyss = (world) => hasDepth(world.char) && (world.depth ?? 0) >= DEPTH_MAX;
+const depthPower = (world) => (hasDepth(world.char) ? 1 + (DEPTH_POWER * (world.depth ?? 0)) / DEPTH_MAX : 1);
+// The Abyss: a vortex opens on a monster she hit and shreds it, three more little hits (one vortex
+// on it at a time).
+function abyssVortex(world, m) {
+  if (!abyss(world) || !m || m.hp <= 0 || (m.vortexUntil ?? 0) > world.now) return;
+  m.vortexUntil = world.now + 1.1;
+  world.fx.push({ kind: 'msvortexsmall', mob: m, x: m.x, y: m.y, h: m.def.h, t: 0, dur: 1.05 });
+  [0.3, 0.6, 0.9].forEach((d, i) => shotHit(world, { pct: ABYSS_PCT, scale: 100, key: 'procabyss', dir: Math.sign(m.x - world.body.x) || 1, knock: 0, burst: 'mshit', gauge: 0, magic: true, quiet: true }, m, d, i));
+}
+function tickDepth(world, dt) {
+  if (world.depth > 0 && world.now - (world.depthAt ?? 0) > DEPTH_HOLD) world.depth = Math.max(0, world.depth - DEPTH_DRAIN * dt);
+}
 function tickTide(world, dt) {
   if (world.tide > 0 && world.now - (world.tideAt ?? 0) > TIDE_HOLD) world.tide = Math.max(0, world.tide - TIDE_DRAIN * dt);
   if (!highTide(world) || world.dead) return;
@@ -1050,7 +1116,7 @@ const STAR_SHOTS = new Set(['star', 'moonstar']);
 // 'shadow', 'rage', 'faith', 'bond' or 'charge'), and how full it is (0-1). Finishers need it full
 // and spend it.
 export function gaugeOf(char) {
-  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasTide(char) ? 'tide' : null;
+  return hasKi(char) ? 'ki' : hasTails(char) ? 'tails' : hasValor(char) ? 'valor' : hasMomentum(char) ? 'momentum' : hasShadow(char) ? 'shadow' : hasRage(char) ? 'rage' : hasFaith(char) ? 'faith' : hasBond(char) ? 'bond' : hasCharge(char) ? 'charge' : hasDepth(char) ? 'depth' : hasTide(char) ? 'tide' : null;
 }
 export function gaugeFull(world) {
   const g = gaugeOf(world.char);
@@ -1066,6 +1132,8 @@ export function addAim(world, n, mob = null, el = null) {
   addBond(world, n);
   addCharge(world, n);
   addTide(world, n);
+  addDepth(world, n);
+  if (mob && n > 0) abyssVortex(world, mob);
 }
 // The path a basic attack fights in: a warrior path with a blade, an archer path with its bow.
 export function pathOf(world) {
@@ -1079,6 +1147,7 @@ export function pathOf(world) {
   if (w === 'none') return 'fists';
   if (w === 'bow' && hasBond(char)) return 'beastmaster';
   if (w === 'crossbow' && hasCharge(char)) return 'stormcaller';
+  if (w === 'staff' && hasDepth(char)) return 'maelstrom';
   if (w === 'staff' && hasTide(char)) return 'tidemage';
   return null;
 }
@@ -1199,6 +1268,8 @@ export function skillCombo(world, skillId, params, scale = 100) {
 
 
 function playStep(world, step, scale, key, school = null, after = 0) {
+  // (Depth: the Maelstrom hits harder the deeper it runs.)
+  scale *= depthPower(world);
   const { body, now, stats } = world;
   // Basic swings run a touch quicker than their written timing.
   // Shots need the whole draw and loose, so they hold you a little longer than a cut.
@@ -1324,6 +1395,7 @@ export function tickMelee(world, dt) {
   if (world.bond > 0 && world.now - (world.bondAt ?? 0) > BOND_HOLD) world.bond = Math.max(0, world.bond - BOND_DRAIN * dt);
   if (world.charge > 0 && world.now - (world.chargeAt ?? 0) > CHARGE_HOLD) world.charge = Math.max(0, world.charge - CHARGE_DRAIN * dt);
   tickTide(world, dt);
+  tickDepth(world, dt);
   if (world.valor > 0 && world.now - (world.valorAt ?? 0) > VALOR_HOLD) world.valor = Math.max(0, world.valor - VALOR_DRAIN * dt);
   if (world.ki > 0 && world.now - (world.kiAt ?? 0) > KI_HOLD) world.ki = Math.max(0, world.ki - KI_DRAIN * dt);
   tickCarousel(world);
@@ -1489,6 +1561,8 @@ function land(world, s) {
   if (targets.length) addValor(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.5 * (targets.length - 1)));
   if (targets.length) addFaith(world, s.faith ?? (s.key.startsWith('basic') ? 2 : 4));
   if (targets.length && !s.phantom) addTide(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (targets.length && !s.phantom) addDepth(world, (s.gauge ?? (s.key.startsWith('basic') ? 3 : 4)) * (1 + 0.3 * (targets.length - 1)));
+  if (targets.length && hasDepth(char)) targets.forEach((m) => abyssVortex(world, m));
   // A Thief's finisher springs her back out of the blow in a backflip (`flipback`, px), hit or miss.
   if (s.flipback && body.onGround && !s.phantom) {
     world.lunge = { v: (-s.dir * s.flipback) / 0.3, until: world.now + 0.3 };
@@ -1811,7 +1885,9 @@ function fire(world, strike) {
   let oy = (s.from?.y ?? body.y) - HAND_Y - (moveAt(s.move, s.at, s.dur)?.lift ?? 0) + (s.oy ?? 0);
   // A wand's spell leaves its tip, where the pose points it at the moment it's cast (not her chest).
   // (Worked out exactly as the figure is drawn, render/hero.js `strikePose`.)
-  const tip = !s.from && s.move && (world.stats.weaponType === 'wand' || world.stats.weaponType === 'staff') && world.char.appearance ? wandTip(world, s) : null;
+  // (The Maelstrom's spears and bolts leave from her hands, chest high: off a raised staff's head
+  // they'd fly down at a slant.)
+  const tip = !s.from && s.move && (world.stats.weaponType === 'wand' || (world.stats.weaponType === 'staff' && !hasDepth(world.char))) && world.char.appearance ? wandTip(world, s) : null;
   if (tip) {
     ox = body.x + s.dir * tip[0];
     oy = body.y + tip[1] + (s.oy ?? 0);
@@ -1838,7 +1914,7 @@ function fire(world, strike) {
   // monster is now, and a piercing one keeps its line through it out to `reach`.
   const fly = (tx, ty, mob = null, reach = 0) => {
     const travel = Math.max(0.06, Math.hypot(tx - ox, ty - oy) / speed);
-    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
+    world.fx.push({ kind: 'projectile', weapon: world.stats.weaponType, shot: s.shot, swell: s.swell, floorY: s.shot?.startsWith('tmwave') || s.shot === 'tmgreat' || s.shot === 'msblackwave' || s.shot === 'msblacktide' ? body.y : undefined, school: s.school, element, starColor: star?.color, bend: s.lob ? -s.lob * s.dir : s.bend, shadow: hasShadow(world.char), fox: hasTails(world.char), illusion: s.illusion, phantom: s.phantom, x: ox, y: oy, tx, ty, mob, reach, t: -lag, dur: travel });
     // A gale shot leaves a band of wind hanging along the path it tore through.
     if (s.shot === 'galearrow' || s.shot === 'cyclone') world.fx.push({ kind: 'windtrail', x: ox, y: oy, tx, ty, big: s.shot === 'cyclone', t: -lag, dur: 0.75 });
     return travel + lag;
@@ -1848,7 +1924,7 @@ function fire(world, strike) {
   // (The Arbalist's steam puffs off the crossbow's tip, low and ahead, clear of her face.)
   if (hasCharge(world.char)) world.fx.push({ kind: 'aesteam', small: true, x: ox + s.dir * 14, y: oy + 12, dir: s.dir, t: 0, dur: 0.3 });
   // (The Tide Mage's water carries its own splash: no flash off her staff.)
-  else if (!hasBond(world.char) && !hasTide(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
+  else if (!hasBond(world.char) && !hasTide(world.char) && !hasDepth(world.char)) world.fx.push({ kind: 'spark', x: ox, y: oy, t: 0, dur: 0.16, muzzle: true });
   // Heavy shots kick the view back (research/archery.md 37).
   if (s.big) world.juice.push({ type: 'kick', x: -s.dir * 2, y: 0 });
   // Shots aimed up or down (`lift`, `drop`) look for monsters above or below you.
