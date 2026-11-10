@@ -146,13 +146,13 @@ export const NPCS = {
   encore: {
     id: 'encore', name: 'Madame Encore', title: 'Retired Leading Lady', role: 'dungeon', quests: ['story_encore', 'story_playwright'], dungeon: 'theatre',
     look: { hairStyle: 'wolf', hairColor: '#f2f0f6', skinTone: '#f6d2b8', eyeColor: '#b03050', outfitColor: '#9a2040', eyeStyle: 'sparkle', face: 'smile' },
-    greeting: "Forty years I played that stage, darling, and now it plays the audience. I still have my backstage pass. Bring a tank, a healer and two fighters, and never miss your cue.",
+    greeting: "Forty years I played that stage, darling, and now it plays the audience. Bring a tank, a healer and two fighters, and never miss your cue.",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   nimbus: {
     id: 'nimbus', name: 'Skipper Nimbus', title: 'Whale Sailor', role: 'dungeon', quests: ['story_whale', 'nimbus_sail', 'nimbus_storm', 'nimbus_lantern', 'nimbus_voyage'], dungeon: 'skywhale',
     look: { hairStyle: 'ponytail', hairColor: '#8ac8ff', skinTone: '#f2c8a8', eyeColor: '#2a74c8', outfitColor: '#3a74c8', eyeStyle: 'round', face: 'grin' },
-    greeting: "I've sailed that whale's back since I was knee-high to a kite. She's sinking in her sleep, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat.",
+    greeting: "I've sailed that whale since I was knee-high to a kite, and the pirates are picking her clean. Bring a tank, a healer and two fighters, and hold onto your hat!",
     shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'mana_elixir', 'return_scroll'],
   },
   // Posy keeps the Party Board in every town's plaza (world/partyquest.js): party quests for the

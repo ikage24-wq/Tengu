@@ -12,7 +12,7 @@ import { ITEMS, RENAMED_ITEMS } from '../data/items.js';
 import { STARTING_CASH } from '../data/cash.js';
 import { JOBS, RETIRED_JOBS } from '../data/jobs.js';
 import { SKILLS } from '../data/skills.js';
-import { settleSkills, ECON } from './character.js';
+import { settleSkills, ECON, createCharacter } from './character.js';
 import { MAX_LEVEL } from './exp.js';
 
 export const FILES = 3;
@@ -163,6 +163,7 @@ export function loadGame(slot = 0, file = 0) {
     loadWorld(file);
     const char = read(charKey(file, slot));
     if (!char) return null;
+    repairSave(char);
     char.slot = slot;
     char.file = file;
     // A night at the Gilded Kettle turns into rest (world/inn.js).
@@ -205,9 +206,59 @@ export function loadGame(slot = 0, file = 0) {
     giveStartingOutfit(char);
     char.buffs = {};
     return char;
-  } catch {
+  } catch (err) {
+    // (Still couldn't load it: a copy is kept beside it, so making a new hero in this slot never
+    // throws the old one away.)
+    console.error('A save could not be loaded:', err);
+    try {
+      const raw = localStorage.getItem(charKey(file, slot));
+      if (raw) localStorage.setItem(`${charKey(file, slot)}-broken`, raw);
+    } catch { /* storage full */ }
     return null;
   }
+}
+
+// Puts a damaged save back into shape before it's loaded (2026-11-10: the dev save fuzzer found one
+// bad bag slot or a missing list could lose the whole hero). Anything a new hero has, found in the
+// wrong shape, is reset to a new hero's; slots hold an item or nothing; bag entries that aren't
+// items are dropped; the Mochi album's lists are lists.
+export function repairSave(char) {
+  const fresh = createCharacter(typeof char.name === 'string' ? char.name : 'Hero', char.appearance && typeof char.appearance === 'object' ? char.appearance : {});
+  const kind = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'number' ? (Number.isFinite(v) ? 'number' : 'bad') : typeof v);
+  // (Only what's there but broken, and the core containers if they're missing: an old save without
+  // a newer field is left for the steps below that bring old saves up to date. Worn and outfit slots
+  // can be empty, so they're checked item by item instead.)
+  const CORE = new Set(['appearance', 'base', 'skills', 'equipment', 'outfit', 'inventory', 'quests', 'buffs', 'hotkeys']);
+  const fix = (o, tpl, inside) => {
+    for (const [k, v] of Object.entries(tpl)) {
+      const want = kind(v);
+      const have = kind(o[k]);
+      if (want === 'null' || want === 'undefined' || have === want) {
+        if (have === 'object' && want === 'object' && (k === 'base' || k === 'inventory')) fix(o[k], v, true);
+        continue;
+      }
+      if (have === 'undefined' && !(inside || CORE.has(k))) continue;
+      if (want === 'number' && have === 'string' && Number.isFinite(Number(o[k])) && o[k].trim()) o[k] = Number(o[k]);
+      else if (k === 'equipment' || k === 'outfit') o[k] = have === 'object' ? o[k] : {};
+      else o[k] = JSON.parse(JSON.stringify(v));
+    }
+  };
+  fix(char, fresh, false);
+  const isItem = (it) => Boolean(it && typeof it === 'object' && !Array.isArray(it) && typeof it.id === 'string');
+  for (const box of [char.equipment, char.outfit ?? {}]) for (const [slot, it] of Object.entries(box)) if (it !== null && !isItem(it)) box[slot] = null;
+  for (const [tab, list] of Object.entries(char.inventory)) {
+    if (!Array.isArray(list)) continue;
+    char.inventory[tab] = list.filter(isItem).map((it) => (it.qty === undefined || (Number.isFinite(it.qty) && it.qty >= 1) ? it : { ...it, qty: 1 }));
+  }
+  // (Parts only some heroes have: if one's there but isn't a record at all, it's let go, and the
+  // game starts it afresh as it would for a hero who never had it.)
+  for (const k of Object.keys(char)) {
+    const v = char[k];
+    if (!(k in fresh) && v !== null && v !== undefined && typeof v !== 'object' && /^(tutorial|album|garden|pet|home|life|raceBests|raceWins|ghosts|dressBought|stall|rep|book|cards|fishing|aquarium|mochiDaily|daily)$/.test(k)) delete char[k];
+  }
+  if (char.album != null && (typeof char.album !== 'object' || Array.isArray(char.album))) char.album = {};
+  if (char.album) for (const [k, v] of Object.entries(char.album)) if (!Array.isArray(v)) char.album[k] = [];
+  return char;
 }
 
 // Items removed from the game since the save was made (like the old weapon lines) are dropped,

@@ -308,10 +308,13 @@ export function installKits(t) {
       const covered = new Set();
       const cut = new Set();
       const onText = new Set();
+      // (The game log's lines sit under any window that opens: that's meant, so they're left out.)
+      const logs = (t.world?.messages ?? []).map((m) => String(m.text ?? ''));
+      const isLog = (x) => logs.some((l) => l.includes(x.s) || (x.s.length > 12 && x.s.includes(l.slice(0, 12))));
       for (const p of pics) {
         const where = p.screen ? '' : ` (in a ${p.w}x${p.h} picture)`;
         for (const x of p.texts) {
-          if (x.coveredBy && x.coveredBy !== 'cleared') covered.add(`${name(x)} under ${x.coveredBy}${where}`);
+          if (x.coveredBy && x.coveredBy !== 'cleared' && !isLog(x)) covered.add(`${name(x)} under ${x.coveredBy}${where}`);
           const b = x.box;
           if ((b[0] < 0 && b[2] > 0) || (b[1] < 0 && b[3] > 0) || (b[2] > p.w && b[0] < p.w) || (b[3] > p.h && b[1] < p.h)) cut.add(`${name(x)}${where}`);
         }

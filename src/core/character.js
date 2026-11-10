@@ -144,9 +144,14 @@ export function apPlan(char) {
 // Spends all AP: mostly into the family's primary stat, enough into the secondary to keep accuracy up.
 export function autoAssignAp(char) {
   const { primary, secondary } = apPlan(char);
+  // (A whole number of points, never more than a lifetime's worth, and stopping if a point won't
+  // spend: a damaged save once had a trillion and hung the game here. Found by the save fuzzer.)
+  char.ap = Math.max(0, Math.min(5000, Math.floor(Number(char.ap) || 0)));
   while (char.ap > 0) {
+    const before = char.ap;
     const wantSecondary = char.base[secondary] < 4 + Math.floor(char.level * 0.8);
     spendAp(char, wantSecondary ? secondary : primary);
+    if (char.ap >= before) break;
   }
 }
 
