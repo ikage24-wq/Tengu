@@ -1,29 +1,30 @@
 // A Mochi's care panel, opened with Up beside one of your Mochi in your garden
-// (world/garden-life.js): how it's feeling, its five stats, and what you can do with it: care for
-// it (gentle care leans it angelic, rough play devilish) and feed it a sweet from your bag (sweets
-// are what raise its stats). Walk away and the panel closes.
+// (world/garden-life.js): its portrait, how it's feeling, its five stats, and what you can do with
+// it: care for it (gentle care leans it angelic, rough play devilish) and feed it a sweet from your
+// bag (sweets are what raise its stats; its favourite has a heart, the one it hates a cross). Walk
+// away and the panel closes. Built from the Mochi kit (ui/mochi-kit.js).
 
 import { STAGES } from '../data/mochi-genes.js';
-import { CARE, MOCHI_SWEETS, expToNext } from '../data/mochi-raise.js';
+import { CARE, MOCHI_SWEETS } from '../data/mochi-raise.js';
 import { countItem } from '../core/inventory.js';
 import { drawItemIcon } from '../render/icons.js';
-import { COLORS, windowFrame, text, box, button, hover, clicked, tooltip, bar } from './kit.js';
+import { COLORS, windowFrame, text, button, hover, clicked, tooltip, fit, roundRect, icon } from './kit.js';
 import { itemTooltip } from './tooltips.js';
+import { VW, VH } from '../input.js';
 import { careFor, feedMochi, sayGoodbye, VISITOR_CARE } from '../world/garden-life.js';
+import { STAT_ORDER, STAT_INFO, portraitCard, statRow, feelMeter, heading, cap } from './mochi-kit.js';
 
-const W = 236;
-const H = 182;
-const STAT_ROWS = [['run', 'Run'], ['fly', 'Fly'], ['power', 'Power'], ['stamina', 'Stamina'], ['swim', 'Swim']];
-const GRADE_COLOR = { E: '#9a9aa8', D: '#6fae6a', C: '#4a9ad0', B: '#9a6ad8', A: '#e08a3a', S: '#e8485e' };
+const W = 300;
+const H = 262;
+// Gentle care first (pink), then rough play (lavender), each with its icon.
 const CARE_ROWS = [
-  ['pet', 'Pet', 'Gentle: leans it angelic.'],
-  ['play', 'Play', 'A game of catch. Trains a little Run.'],
-  ['cheer', 'Cheer', 'Cheer it on. Leans it angelic.'],
-  ['tickle', 'Tickle', 'Cheeky: leans it devilish.'],
-  ['wrestle', 'Wrestle', 'Rough play: trains a little Power, leans it devilish.'],
-  ['prank', 'Prank', 'Mischief: leans it devilish.'],
+  ['pet', 'Pet', 'heart', 'Gentle: leans it angelic.'],
+  ['play', 'Play', 'paw', 'A game of catch. Now and then it learns a little Run.'],
+  ['cheer', 'Cheer', 'star', 'Cheer it on. Leans it angelic.'],
+  ['tickle', 'Tickle', 'feather', 'Cheeky: leans it devilish.'],
+  ['wrestle', 'Wrestle', 'hammer', 'Rough play. Now and then it learns a little Power; leans it devilish.'],
+  ['prank', 'Prank', 'dice', 'Mischief: leans it devilish.'],
 ];
-const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
 
 export function mochiCareWindow(ui, state, world) {
   const win = state.windows.mochi;
@@ -42,75 +43,94 @@ export function mochiCareWindow(ui, state, world) {
   // (In a friend's garden: their Mochi, and only gentle care.)
   const guest = world.gardenVisit;
   const title = rec.name ?? STAGES[rec.stage] ?? 'Mochi';
-  if (!windowFrame(ui, win, W, guest ? H - 19 : H, guest ? `${guest.name}'s ${title}` : title)) return;
+  const care = CARE_ROWS.filter(([what]) => !guest || VISITOR_CARE.includes(what));
+  const h = guest ? H - 20 : H;
+  // (Kept on screen: a window left near the edge when it was smaller.)
+  win.x = Math.max(4, Math.min(VW - W - 4, win.x ?? 0));
+  win.y = Math.max(4, Math.min(VH - h - 40, win.y ?? 0));
+  if (!windowFrame(ui, win, W, h, guest ? `${guest.name}'s ${title}` : title, { icon: 'heart' })) return;
   const { ctx } = ui;
   const x = win.x + 10;
-  let y = win.y + 32;
-  text(ctx, `${cap(rec.personality)} ${STAGES[rec.stage] ?? 'Mochi'}`, x, y, { size: 8.5, bold: true });
-  // Its whole page (ui/mochi-info.js).
-  if (button(ui, win.x + W - 46, y - 9, 36, 12, 'Info', { size: 6.5 })) {
+  const y = win.y + 28;
+  // ---- Left: its portrait, who it is, and its page.
+  portraitCard(ctx, rec, x, y, 86, 92, world.now);
+  text(ctx, fit(ctx, `${cap(rec.personality)} ${STAGES[rec.stage] ?? 'Mochi'}`, 86, 7, true), x + 43, y + 103, { size: 7, bold: true, align: 'center' });
+  if (button(ui, x, y + 109, 86, 14, 'Its page', { size: 7, iconName: 'book' })) {
     world.mochiInfo = rec;
     world.events.push({ type: 'mochiinfo' });
   }
-  y += 7;
-  // How it's feeling.
-  const bw = (W - 28) / 3;
-  bar(ctx, x, y, bw, 9, (rec.mood ?? 0) / 100, '#ff8fb0', 'Mood', { size: 6 });
-  bar(ctx, x + bw + 4, y, bw, 9, Math.min(1, (rec.bond ?? 0) / 1000), '#f0b53a', 'Bond', { size: 6 });
-  bar(ctx, x + (bw + 4) * 2, y, bw, 9, (rec.tummy ?? 0) / 100, rec.hungry ? '#e8485e' : '#f0a070', rec.hungry ? 'Hungry!' : 'Tummy', { size: 6 });
-  y += 15;
-  // Its stats: level, grade, and how far to the next level.
-  const cw = (W - 20) / 5;
-  STAT_ROWS.forEach(([st, name], i) => {
-    const s = rec.stats[st];
-    const cx = x + i * cw;
-    box(ctx, cx, y, cw - 3, 30, { fill: '#fffaf6', edge: '#f0dce4', r: 6, width: 1 });
-    text(ctx, name, cx + (cw - 3) / 2, y + 8, { size: 6, align: 'center', color: COLORS.muted });
-    text(ctx, `Lv ${s.level}`, cx + (cw - 3) / 2 - 3, y + 18, { size: 7.5, bold: true, align: 'center' });
-    text(ctx, s.grade, cx + cw - 9, y + 18, { size: 7, bold: true, align: 'center', color: GRADE_COLOR[s.grade] ?? COLORS.muted });
-    box(ctx, cx + 4, y + 22, cw - 11, 3, { fill: '#f3e6ee', edge: null, r: 1.5 });
-    box(ctx, cx + 4, y + 22, Math.max(1, (cw - 11) * Math.min(1, s.exp / expToNext(s.level))), 3, { fill: GRADE_COLOR[s.grade] ?? '#ff8fb0', edge: null, r: 1.5 });
-    if (hover(ui, cx, y, cw - 3, 30)) tooltip(ui, [{ text: `${name}: Lv ${s.level}, grade ${s.grade}`, bold: true }, { text: `${s.points} points`, color: COLORS.muted }]);
-  });
-  y += 36;
-  // Care.
-  text(ctx, 'Care', x, y + 6, { size: 7, bold: true, color: COLORS.muted });
-  // Rename it (your own Mochi): ui/mochi-name.js.
-  if (!guest && button(ui, win.x + W - 134, y - 3, 60, 12, rec.name ? 'Rename' : 'Name it', { size: 6.5 })) {
-    world.naming = rec;
-    world.events.push({ type: 'mochiname' });
-  }
-  // Goodbye (your own Mochi): a second click to be sure.
+  // (Your own: name it, and say goodbye with a second click to be sure.)
   if (!guest) {
+    if (button(ui, x, y + 126, 41, 13, rec.name ? 'Rename' : 'Name', { size: 6.5 })) {
+      world.naming = rec;
+      world.events.push({ type: 'mochiname' });
+    }
     const sure = win.bye?.e === e && now < win.bye.until;
-    if (button(ui, win.x + W - 70, y - 3, 60, 12, sure ? 'Sure?' : 'Goodbye', { size: 6.5, theme: sure ? 'pink' : null })) {
+    if (button(ui, x + 45, y + 126, 41, 13, sure ? 'Sure?' : 'Goodbye', { size: 6.5, theme: sure ? 'ruby' : null })) {
       if (sure) {
         sayGoodbye(world, e);
         win.bye = null;
       } else win.bye = { e, until: now + 3 };
     }
-    if (hover(ui, win.x + W - 70, y - 3, 60, 12)) tooltip(ui, [{ text: 'Say goodbye', bold: true }, { text: 'It goes off to a new home, for good. Click twice.', color: COLORS.muted }]);
+    if (hover(ui, x + 45, y + 126, 41, 13)) tooltip(ui, [{ text: 'Say goodbye', bold: true }, { text: 'It goes off to a new home, for good. Click twice.', color: COLORS.muted }]);
   }
-  const bw2 = (W - 20 - 8) / 3;
-  CARE_ROWS.filter(([what]) => !guest || VISITOR_CARE.includes(what)).forEach(([what, label, tip], i) => {
-    const bx = x + (i % 3) * (bw2 + 4);
-    const by = y + 10 + Math.floor(i / 3) * 19;
-    if (button(ui, bx, by, bw2, 16, label, { size: 7.5, primary: CARE[what]?.lean >= 0 })) careFor(world, e, what);
-    if (hover(ui, bx, by, bw2, 16)) tooltip(ui, [{ text: label, bold: true }, { text: tip, color: COLORS.muted }]);
+  // ---- Right: how it feels, and its stats.
+  const rx = x + 96;
+  const rw = W - 20 - 96;
+  const mw = (rw - 8) / 3;
+  feelMeter(ui, rx, y, mw, 'mood', rec.mood);
+  feelMeter(ui, rx + mw + 4, y, mw, 'bond', rec.bond);
+  feelMeter(ui, rx + (mw + 4) * 2, y, mw, 'tummy', rec.tummy, { hungry: rec.hungry });
+  let ry = y + 16;
+  heading(ctx, 'Stats', rx, ry, rw);
+  ry += 11;
+  for (const st of STAT_ORDER) {
+    statRow(ui, rx, ry, rw, rec, st, { style: false });
+    ry += 15;
+  }
+  // ---- Below: care, then feed.
+  let by = y + 146;
+  heading(ctx, 'Care', x, by, W - 20);
+  by += 11;
+  const bw = (W - 20 - 10) / 3;
+  care.forEach(([what, label, ico, tip], i) => {
+    const bx = x + (i % 3) * (bw + 5);
+    const yy = by + Math.floor(i / 3) * 18;
+    const rough = (CARE[what]?.lean ?? 0) < 0;
+    if (button(ui, bx, yy, bw, 15, label, { size: 7.5, primary: !rough, theme: rough ? 'lavender' : null, iconName: ico })) careFor(world, e, what);
+    if (hover(ui, bx, yy, bw, 15)) tooltip(ui, [{ text: label, bold: true }, { text: tip, color: COLORS.muted }]);
   });
-  y += guest ? 33 : 52;
-  // Feed: the sweets in your bag.
-  text(ctx, 'Feed', x, y + 6, { size: 7, bold: true, color: COLORS.muted });
+  by += Math.ceil(care.length / 3) * 18 + 3;
+  // Feed: the sweets in your bag, its favourite with a heart, the one it hates with a cross.
+  heading(ctx, 'Feed', x, by, W - 20);
+  by += 10;
   const sweets = MOCHI_SWEETS.filter((sw) => countItem(world.char.inventory, sw.id) > 0);
-  if (!sweets.length) text(ctx, 'No sweets. Cook some at the kitchen!', x + 30, y + 6, { size: 6.5, color: COLORS.muted });
-  sweets.slice(0, 10).forEach((sw, i) => {
-    const ix = x + i * 21;
-    const iy = y + 10;
-    const on = hover(ui, ix, iy, 19, 19);
-    box(ctx, ix, iy, 19, 19, { fill: on ? '#fff0f5' : '#ffffff', edge: on ? '#ff8fb0' : '#f0dce4', r: 5, width: 1 });
-    drawItemIcon(ctx, sw.id, ix + 1.5, iy + 1.5);
-    text(ctx, String(countItem(world.char.inventory, sw.id)), ix + 17, iy + 18, { size: 5.5, bold: true, align: 'right' });
-    if (on) tooltip(ui, [...itemTooltip(world.char, sw.id), { text: sw.kind === rec.loves ? 'Its favourite!' : sw.kind === rec.hates ? 'It hates this one...' : 'Click to feed', color: sw.kind === rec.loves ? COLORS.good : sw.kind === rec.hates ? COLORS.bad : COLORS.muted }]);
-    if (clicked(ui, ix, iy, 19, 19)) feedMochi(world, e, sw.id);
+  if (!sweets.length) text(ctx, 'No sweets in your bag: cook some at the Sweet Kitchen!', x + 2, by + 12, { size: 6.5, color: COLORS.muted });
+  sweets.slice(0, 12).forEach((sw, i) => {
+    const ix = x + i * 23;
+    const iy = by;
+    const on = hover(ui, ix, iy, 21, 21);
+    const loved = sw.kind === rec.loves;
+    const hated = sw.kind === rec.hates;
+    ctx.fillStyle = on ? '#fff0f6' : '#ffffff';
+    roundRect(ctx, ix, iy, 21, 21, 6);
+    ctx.fill();
+    ctx.strokeStyle = loved ? '#ff6f9a' : on ? '#ff9ec0' : '#f0d8e4';
+    ctx.lineWidth = loved ? 1.4 : 1;
+    ctx.stroke();
+    drawItemIcon(ctx, sw.id, ix + 2.5, iy + 2.5);
+    text(ctx, String(countItem(world.char.inventory, sw.id)), ix + 19, iy + 19.5, { size: 5.5, bold: true, align: 'right' });
+    if (loved || hated) {
+      ctx.fillStyle = loved ? '#ff6f9a' : '#9a8aa8';
+      ctx.beginPath();
+      ctx.arc(ix + 19, iy + 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+      icon(ctx, loved ? 'heart' : 'skull', ix + 19, iy + 2, 5, '#ffffff');
+    }
+    if (on) {
+      const trains = Object.entries(sw.trains).map(([st, n]) => `${STAT_INFO[st]?.name ?? st} +${n}`).join(', ');
+      tooltip(ui, [...itemTooltip(world.char, sw.id), { text: trains || 'Makes a grown Mochi bloom', color: COLORS.muted }, { text: loved ? 'Its favourite!' : hated ? 'It hates this one...' : 'Click to feed', color: loved ? COLORS.good : hated ? COLORS.bad : COLORS.muted }]);
+    }
+    if (clicked(ui, ix, iy, 21, 21)) feedMochi(world, e, sw.id);
   });
 }

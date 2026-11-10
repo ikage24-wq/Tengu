@@ -1234,6 +1234,63 @@ export const TRICK_BITS = {
 Object.assign(IDLE_BITS, TRICK_BITS);
 SHARED.push(...Object.keys(TRICK_BITS));
 
+// ---- Racing feelings (world/mochi-race.js and ui/mochi-race.js put them on) ----
+// Its brows set hard (determined) or tipped up in the middle (worried).
+const SET = [[-0.4, 0.8], [-0.4, 0.8]];
+const WORRY = [[0.5, -0.7], [0.5, -0.7]];
+const FISTS = { front: [5, -6], back: [-4, -5] };
+const CROUCH = { squat: 3, lean: 0.22, tip: 1, hx: 1.2, tilt: -10, front: [7, -2], back: [-6, -1], brows: SET, mouth: 'grit', legF: [2, -0.6, 20], legB: [-2.4, 0, -20] };
+Object.assign(ACTIONS, {
+  // On the line before 3-2-1, nervous: shifting from foot to foot, glancing at the others, a bead of sweat.
+  race_nerves: { dur: 1.4, loop: [0.1, 1.3], keys: [
+    KEY(0, {}), KEY(0.1, { hx: -0.6, tilt: 6, glance: -1, brows: WORRY, mouth: 'mochiwave', front: [2, -4], back: [-1, -4] }),
+    KEY(0.4, { hx: 0.6, tilt: -6, glance: 1, brows: WORRY, mouth: 'mochiwave', front: [2, -4], back: [-1, -4], extra: ['sweat0'], lift: 0.6 }),
+    KEY(0.7, { hx: -0.6, tilt: 6, glance: -1, brows: WORRY, mouth: 'tiny', front: [2, -4], back: [-1, -4], extra: ['sweat0'] }),
+    KEY(1, { hx: 0.6, tilt: -6, glance: 1, brows: WORRY, mouth: 'mochiwave', front: [2, -4], back: [-1, -4], lift: 0.6 }),
+    KEY(1.3, { hx: -0.6, tilt: 6, glance: -1, brows: WORRY, mouth: 'mochiwave', front: [2, -4], back: [-1, -4] }), KEY(1.4, {})] },
+  // ...or pumped: bouncing on its toes, punching the air, grinning.
+  race_pumped: { dur: 1.2, loop: [0.1, 1.1], keys: [
+    KEY(0, {}), KEY(0.1, { squat: 1, ...FISTS, brows: SET, mouth: 'grin' }),
+    KEY(0.35, { lift: 2.4, front: [8, -15], back: [-4, -5], brows: SET, mouth: 'yell', extra: ['bang1'], ease: 'out' }),
+    KEY(0.6, { squat: 1, ...FISTS, brows: SET, mouth: 'grin', ease: 'in' }),
+    KEY(0.85, { lift: 2, ...FISTS, tilt: -6, brows: SET, mouth: 'grin', ease: 'out' }), KEY(1.1, { squat: 1, ...FISTS, brows: SET, mouth: 'grin', ease: 'in' }), KEY(1.2, {})] },
+  // 2, 1: down in a crouch, leaning at the line, teeth set, rocking a little.
+  race_crouch: { dur: 1.1, loop: [0.25, 1.05], keys: [
+    KEY(0, {}), KEY(0.25, { ...CROUCH, ease: 'out' }), KEY(0.65, { ...CROUCH, bob: 0.6, hx: 1.4 }), KEY(1.05, { ...CROUCH }), KEY(1.1, {})] },
+  // Its face in the race (the close-up on your screen): set and ready...
+  race_ready: { dur: 1.6, loop: [0.2, 1.4], keys: [
+    KEY(0, {}), KEY(0.2, { ...FISTS, brows: SET, mouth: 'grit', tilt: -4 }), KEY(0.8, { ...FISTS, brows: SET, mouth: 'grit', tilt: -6, bob: 0.6 }),
+    KEY(1.4, { ...FISTS, brows: SET, mouth: 'grit', tilt: -4 }), KEY(1.6, {})] },
+  // ...smug in the lead: a wink, a smirk, hands on its hips...
+  race_smug: { dur: 2.4, loop: [0.2, 2.2], keys: [
+    KEY(0, {}), KEY(0.2, { ...HIPS, tilt: -8, mouth: 'smirk' }), KEY(0.9, { ...HIPS, tilt: -10, closed: [false, true], mouth: 'smirk', extra: ['spark0'] }),
+    KEY(1.5, { ...HIPS, tilt: -8, mouth: 'smirk' }), KEY(2.2, { ...HIPS, tilt: -8, mouth: 'smirk' }), KEY(2.4, {})] },
+  // ...worried, falling behind: looking back, a nervous wobble, sweating...
+  race_worried: { dur: 1.6, loop: [0.2, 1.4], keys: [
+    KEY(0, {}), KEY(0.2, { brows: WORRY, mouth: 'mochiwave', glance: 1, tilt: 6, front: [2, -4], back: [-1, -4], extra: ['sweat0'] }),
+    KEY(0.8, { brows: WORRY, mouth: 'gasp', glance: 1, tilt: 2, front: [2, -4], back: [-1, -4], extra: ['sweat1'] }),
+    KEY(1.4, { brows: WORRY, mouth: 'mochiwave', glance: 1, tilt: 6, front: [2, -4], back: [-1, -4], extra: ['sweat0'] }), KEY(1.6, {})] },
+  // ...worn out: drooping, panting, sweat flying...
+  race_tired: { dur: 1, loop: [0.1, 0.9], keys: [
+    KEY(0, {}), KEY(0.1, { eyes: 'half', mouth: 'tongue', hy: 2, tilt: 10, squat: 1, front: [1.4, 4], back: [0.6, 4], extra: ['sweat1'], blush: 1.8 }),
+    KEY(0.5, { eyes: 'half', mouth: 'mochiopen', hy: 2.4, tilt: 12, squat: 1, bob: 0.6, front: [1.4, 4], back: [0.6, 4], extra: ['sweat0'], blush: 1.8 }),
+    KEY(0.9, { eyes: 'half', mouth: 'tongue', hy: 2, tilt: 10, squat: 1, front: [1.4, 4], back: [0.6, 4], extra: ['sweat1'], blush: 1.8 }), KEY(1, {})] },
+  // ...and cheered on: eyes squeezed happy, sparkles, a little hop.
+  race_cheered: { dur: 1.2, loop: [0.1, 1.1], keys: [
+    KEY(0, {}), KEY(0.1, { closed: [true, true], mouth: 'D', ...OUT(-11), sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.35, { closed: [true, true], mouth: 'D', ...OUT(-13), lift: 2.4, sprout: 'excited', extra: ['spark1'], ease: 'out' }),
+    KEY(0.6, { closed: [true, true], mouth: 'D', ...OUT(-11), sprout: 'excited', extra: ['spark0'], ease: 'in' }),
+    KEY(0.85, { closed: [true, true], mouth: 'D', ...OUT(-13), lift: 2.4, sprout: 'excited', extra: ['spark1'], ease: 'out' }),
+    KEY(1.1, { closed: [true, true], mouth: 'D', ...OUT(-11), sprout: 'excited' }), KEY(1.2, {})] },
+  // Winning: happy tears, hopping with its arms up, sparkles.
+  race_joy: { dur: 1.6, loop: [0.1, 1.5], keys: [
+    KEY(0, {}), KEY(0.1, { closed: [true, true], mouth: 'D', ...OUT(-12), extra: ['tear0', 'spark0'], sprout: 'happy', blush: 1.9 }),
+    KEY(0.45, { closed: [true, true], mouth: 'D', ...OUT(-14), lift: 3.4, extra: ['tear0', 'spark1'], sprout: 'excited', blush: 1.9, ease: 'out' }),
+    KEY(0.8, { closed: [true, true], mouth: 'mochibeam', ...CHEST, extra: ['tear0', 'hearts'], blush: 1.9, ease: 'in' }),
+    KEY(1.15, { closed: [true, true], mouth: 'D', ...OUT(-14), lift: 3, extra: ['tear0', 'spark0'], sprout: 'excited', blush: 1.9, ease: 'out' }),
+    KEY(1.5, { closed: [true, true], mouth: 'D', ...OUT(-12), extra: ['tear0'], blush: 1.9 }), KEY(1.6, {})] },
+});
+
 // Where action `a` is (`{ bit, t (seconds into its keys), tq (on its 12 fixed frames) }`), or
 // null once it's done (and `m.action` is cleared, or the next in `m.queue` begins).
 function actionAt(m, time) {

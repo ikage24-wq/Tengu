@@ -1,40 +1,34 @@
-// The Mochi window (docs/design/mochi.md step 8): one page per Mochi. Its portrait, name, stage and
-// path, form, generation and age, rarity and coat; its five stats (grade, level, points, how far to
-// the next level, and the way it moves now); who it is (personality, the sweet it loves and the one
-// it hates, its voice); how it feels (mood, bond, tummy) and which way it leans; what it's growing
-// into, while a Mochiko; its tricks; its race medals; its parents, if it was bred; and (yours) the
-// costume it wears (data/mochi-dress.js: ◀ ▶ through the ones you've won). Opened from its care panel (or, for the one
-// picked, the race board): ◀ ▶ go through the rest of your Mochi.
+// The Mochi window (docs/design/mochi.md step 8): one page per Mochi. Its portrait (a photo card in
+// a little garden scene), its stage, path, form, rarity and coat as tags; generation and age; its
+// five stats (grade, level, how far to the next, the way it moves now); how it feels (mood, bond,
+// tummy) and which way it leans (devil to angel); who it is (personality, the sweet it loves and the
+// one it hates, its voice); what it's growing into, while a Mochiko; all 21 tricks, lit as it learns
+// them; its race medals, course by course; its parents, if it was bred; and (yours) the costume it
+// wears (data/mochi-dress.js: ◀ ▶ through the ones you've won). Opened from its care panel (or, for
+// the one picked, the race board): ◀ ▶ go through the rest of your Mochi. Built from the Mochi kit
+// (ui/mochi-kit.js).
 
-import { STAGES, STATS } from '../data/mochi-genes.js';
-import { MOCHI_SWEETS, TRICKS, trendOf, leanOf, expToNext } from '../data/mochi-raise.js';
+import { STAGES } from '../data/mochi-genes.js';
+import { MOCHI_SWEETS, TRICKS, trendOf, leanOf } from '../data/mochi-raise.js';
 import { RACE_STAGES, RANK_ORDER, MEDAL_COLOR, medalKey } from '../data/mochi-race.js';
 import { DRESS, dressOpen } from '../data/mochi-dress.js';
-import { drawMochiAnim, GAITS, SWIMS, FLIES, CLIMBS, STAMINAS, runStyle } from '../render/mochi-anim.js';
-import { COLORS, windowFrame, text, box, button, bar, hover, tooltip, fit } from './kit.js';
+import { drawItemIcon } from '../render/icons.js';
+import { VW, VH } from '../input.js';
+import { COLORS, windowFrame, text, button, hover, tooltip, fit, roundRect, icon } from './kit.js';
+import { STAT_ORDER, STAT_INFO, RARITY_COLOR, portraitCard, statRow, feelMeter, heading, tag, cap } from './mochi-kit.js';
 
-const W = 320;
-const H = 244;
-const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
-const STYLE_OF = { run: GAITS, fly: FLIES, power: CLIMBS, stamina: STAMINAS, swim: SWIMS };
-const GRADE_COLOR = { E: '#9a9aa8', D: '#6fae6a', C: '#4a9ad0', B: '#9a6ad8', A: '#e08a3a', S: '#e8485e' };
-const RARITY_COLOR = { common: '#9a9aa8', uncommon: '#5aae6a', rare: '#4a8ad8', epic: '#9a5ad8', legendary: '#e0902a', mythic: '#e8508a', mutation: '#3a8a8a' };
+const W = 344;
+const H = 318;
 const COAT = { goma: 'Black Sesame', kurozato: 'Brown Sugar', yoru: 'Midnight', beniume: 'Red Plum', shinkai: 'Deep Sea', kohakutou: 'Kohakutou', moonlit: 'Moonlit', hanabi: 'Hanabi', candied: 'Candied', goldleaf: 'Gold Leaf', glassjelly: 'Glass Jelly', sakura: 'Sakura Storm', twoflavour: 'Two-Flavour', shiny: 'Shiny' };
 const FORM = { run: 'Swift', fly: 'Sky', power: 'Strong', stamina: 'Steady', swim: 'Tide', plain: 'Plain', moon: 'Moon' };
-const cap = (s) => (s ? s[0].toUpperCase() + s.slice(1) : '');
-const sweetName = (kind) => MOCHI_SWEETS.find((s) => s.kind === kind)?.name ?? cap(kind ?? '');
+const sweetOf = (kind) => MOCHI_SWEETS.find((s) => s.kind === kind) ?? null;
 const coatName = (rec) => (rec.coat === 'radiant' ? (rec.path === 'angel' ? 'Halo Dawn' : rec.path === 'demon' ? 'Ember Spice' : 'Radiant') : COAT[rec.coat] ?? null);
 const ageOf = (secs) => {
   const m = Math.floor((secs ?? 0) / 60);
   return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} m` : `${m} m`;
 };
-const portraits = new WeakMap();
-const portraitOf = (rec) => {
-  if (!portraits.has(rec)) portraits.set(rec, { genes: rec, dir: 1, speed: 0, dist: 0 });
-  const m = portraits.get(rec);
-  m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
-  return m;
-};
+const ANGEL = '#e0a82a';
+const DEVIL = '#a0508a';
 
 export function mochiInfoWindow(ui, state, world) {
   const win = state.windows.mochiinfo;
@@ -44,124 +38,168 @@ export function mochiInfoWindow(ui, state, world) {
     return;
   }
   const title = rec.name ?? `${cap(rec.personality)} ${STAGES[rec.stage] ?? 'Mochi'}`;
-  if (!windowFrame(ui, win, W, H, title)) {
+  win.x = Math.max(4, Math.min(VW - W - 4, win.x ?? 0));
+  win.y = Math.max(4, Math.min(VH - H - 40, win.y ?? 0));
+  if (!windowFrame(ui, win, W, H, title, { icon: 'book' })) {
     if (!win.open) world.mochiInfo = null;
     return;
   }
   const { ctx } = ui;
   const x = win.x + 10;
   const y = win.y + 28;
-  // ---- Left: its portrait (twice its size), and what it is.
-  box(ctx, x, y, 92, 96, { fill: '#fff4f8', edge: '#ffc2d4', r: 10, width: 1 });
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(x + 1, y + 1, 90, 94);
-  ctx.clip();
-  ctx.translate(x + 46, y + 90);
-  ctx.scale(2, 2);
-  drawMochiAnim(ctx, portraitOf(rec), 0, 0, world.now);
-  ctx.restore();
-  let ly = y + 108;
+  // ---- Left: its portrait, and what it is.
+  portraitCard(ctx, rec, x, y, 108, 116, world.now, { scale: 2.4 });
+  let ly = y + 128;
+  let tx = x;
+  tx += tag(ctx, STAGES[rec.stage] ?? 'Mochi', tx, ly, '#ff8fb8') + 3;
+  if (rec.path) tag(ctx, rec.path === 'angel' ? 'Angel' : 'Devil', tx, ly, rec.path === 'angel' ? ANGEL : DEVIL);
+  ly += 14;
   const line = (s, opts = {}) => {
-    text(ctx, fit(ctx, s, 92, opts.size ?? 6.5, Boolean(opts.bold)), x, ly, { size: 6.5, color: COLORS.muted, ...opts });
+    text(ctx, fit(ctx, s, 108, opts.size ?? 6.5, Boolean(opts.bold)), x + 1, ly, { size: 6.5, color: COLORS.muted, ...opts });
     ly += 10;
   };
-  line(`${STAGES[rec.stage] ?? 'Mochi'}${rec.path ? ` · ${rec.path === 'angel' ? 'angel' : 'devil'} path` : ''}`, { size: 7.5, bold: true, color: COLORS.ink });
-  if (rec.form) line(`${FORM[rec.form] ?? cap(rec.form)} form`);
+  if (rec.form) line(`${FORM[rec.form] ?? cap(rec.form)} form`, { bold: true, color: COLORS.ink });
   line(`Generation ${rec.gen ?? 1} · ${ageOf(rec.age)} old`);
-  line(cap(rec.rarity ?? 'common'), { bold: true, color: RARITY_COLOR[rec.rarity] ?? COLORS.muted });
-  if (coatName(rec)) line(`${coatName(rec)} coat`, { color: RARITY_COLOR[rec.rarity] ?? COLORS.muted });
+  if (coatName(rec)) line(`${coatName(rec)} coat`, { bold: true, color: RARITY_COLOR[rec.rarity] ?? COLORS.muted });
   if (rec.parents?.length === 2) line(`Parents: ${rec.parents.map((p) => p.name ?? 'a Mochi').join(' & ')}`);
   if (rec.bloom > 0) line('In bloom!', { color: '#ff6f9a', bold: true });
   else if (rec.bredRest > 0) line('Resting after an egg');
-  // ---- Right: its stats.
-  const rx = x + 102;
-  const rw = W - 122;
+  // ---- Right: its stats, how it feels, which way it leans, who it is.
+  const rx = x + 118;
+  const rw = W - 20 - 118;
   let ry = y;
-  text(ctx, 'Stats', rx, ry + 6, { size: 7, bold: true, color: COLORS.muted });
-  ry += 10;
-  for (const st of STATS) {
-    const s = rec.stats[st];
-    const style = STYLE_OF[st][runStyle(s.points)]?.name ?? '';
-    text(ctx, STAT_WORD[st], rx, ry + 8, { size: 7, bold: true });
-    text(ctx, s.grade, rx + 46, ry + 8, { size: 8, bold: true, align: 'center', color: GRADE_COLOR[s.grade] ?? COLORS.muted });
-    text(ctx, `Lv ${s.level}`, rx + 58, ry + 8, { size: 7 });
-    box(ctx, rx + 86, ry + 3, 60, 5, { fill: '#f3e6ee', edge: null, r: 2.5 });
-    box(ctx, rx + 86, ry + 3, Math.max(2, 60 * Math.min(1, (s.exp ?? 0) / expToNext(s.level))), 5, { fill: GRADE_COLOR[s.grade] ?? '#ff8fb0', edge: null, r: 2.5 });
-    text(ctx, fit(ctx, style, rw - 152, 6, false), rx + rw, ry + 8, { size: 6, align: 'right', color: COLORS.muted });
-    if (hover(ui, rx, ry, rw, 11)) tooltip(ui, [{ text: `${STAT_WORD[st]}: grade ${s.grade}, Lv ${s.level}`, bold: true }, { text: `${s.points} points · ${style}`, color: COLORS.muted }]);
-    ry += 12;
+  heading(ctx, 'Stats', rx, ry, rw);
+  ry += 11;
+  for (const st of STAT_ORDER) {
+    statRow(ui, rx, ry, rw, rec, st);
+    ry += 15;
   }
-  // Who it is.
-  ry += 4;
-  text(ctx, `${cap(rec.personality)} · loves ${sweetName(rec.loves)} · hates ${sweetName(rec.hates)}`, rx, ry + 6, { size: 6.5 });
-  if (rec.voice) text(ctx, `Voice: a ${rec.voice.pitch > 1.1 ? 'high' : rec.voice.pitch < 0.9 ? 'low' : 'soft'} ${rec.voice.style}`, rx, ry + 16, { size: 6.5, color: COLORS.muted });
-  ry += 22;
-  // How it feels, and which way it leans.
-  const bw = (rw - 8) / 3;
-  bar(ctx, rx, ry, bw, 8, (rec.mood ?? 0) / 100, '#ff8fb0', 'Mood', { size: 5.5 });
-  bar(ctx, rx + bw + 4, ry, bw, 8, Math.min(1, (rec.bond ?? 0) / 1000), '#f0b53a', 'Bond', { size: 5.5 });
-  bar(ctx, rx + (bw + 4) * 2, ry, bw, 8, (rec.tummy ?? 0) / 100, '#f0a070', 'Tummy', { size: 5.5 });
-  ry += 13;
+  ry += 2;
+  heading(ctx, 'Feelings', rx, ry, rw);
+  ry += 11;
+  const mw = (rw - 8) / 3;
+  feelMeter(ui, rx, ry, mw, 'mood', rec.mood);
+  feelMeter(ui, rx + mw + 4, ry, mw, 'bond', rec.bond);
+  feelMeter(ui, rx + (mw + 4) * 2, ry, mw, 'tummy', rec.tummy, { hungry: rec.hungry });
+  ry += 16;
+  // The way it leans: devil (a little flame) to angel (a feather).
   const lean = Math.max(-1, Math.min(1, rec.lean ?? 0));
-  text(ctx, 'Devil', rx, ry + 6, { size: 6, color: '#a0508a' });
-  text(ctx, 'Angel', rx + rw, ry + 6, { size: 6, align: 'right', color: '#c8a020' });
-  box(ctx, rx + 26, ry + 2, rw - 54, 4, { fill: '#f3e6ee', edge: null, r: 2 });
-  ctx.fillStyle = lean >= 0 ? '#f2c94c' : '#b05aa0';
-  ctx.beginPath();
-  ctx.arc(rx + 26 + (rw - 54) * (lean + 1) / 2, ry + 4, 3, 0, Math.PI * 2);
+  icon(ctx, 'flame', rx + 5, ry + 4, 8, DEVIL);
+  icon(ctx, 'feather', rx + rw - 5, ry + 4, 8, ANGEL);
+  const lx = rx + 14;
+  const lw = rw - 28;
+  const lg = ctx.createLinearGradient(lx, 0, lx + lw, 0);
+  lg.addColorStop(0, '#e2b8d8');
+  lg.addColorStop(0.5, '#f6eef2');
+  lg.addColorStop(1, '#f8e2a8');
+  ctx.fillStyle = lg;
+  roundRect(ctx, lx, ry + 2, lw, 5, 2.5);
   ctx.fill();
-  const leaning = leanOf(rec);
+  const mx = lx + (lw * (lean + 1)) / 2;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(mx, ry + 4.5, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = lean >= 0 ? ANGEL : DEVIL;
+  ctx.beginPath();
+  ctx.arc(mx, ry + 4.5, 2.8, 0, Math.PI * 2);
+  ctx.fill();
+  if (hover(ui, rx, ry, rw, 10)) {
+    const leaning = leanOf(rec);
+    tooltip(ui, [{ text: 'Which way it leans', bold: true }, { text: leaning ? `Leaning ${leaning === 'angel' ? 'angel' : 'devil'}: sweet treats and gentle care lean it angel, spicy ones and rough play devil.` : 'Neither way yet.', color: COLORS.muted }]);
+  }
+  ry += 14;
+  // Who it is: its personality, the sweet it loves and the one it hates (their pictures), its voice.
+  text(ctx, cap(rec.personality), rx, ry + 7, { size: 7, bold: true });
+  const love = sweetOf(rec.loves);
+  const hate = sweetOf(rec.hates);
+  let sx = rx + 54;
+  for (const [sw, ico, color] of [[love, 'heart', '#ff6f9a'], [hate, 'skull', '#9a8aa8']]) {
+    if (!sw) continue;
+    icon(ctx, ico, sx + 4, ry + 4.5, 7, color);
+    ctx.save();
+    ctx.translate(sx + 9, ry - 1.5);
+    ctx.scale(0.8, 0.8);
+    drawItemIcon(ctx, sw.id, 0, 0);
+    ctx.restore();
+    if (hover(ui, sx, ry - 2, 22, 13)) tooltip(ui, [{ text: `${ico === 'heart' ? 'Loves' : 'Hates'} ${sw.name}`, bold: true }]);
+    sx += 30;
+  }
+  if (rec.voice) text(ctx, `a ${rec.voice.pitch > 1.1 ? 'high' : rec.voice.pitch < 0.9 ? 'low' : 'soft'} ${rec.voice.style}`, rx + rw, ry + 7, { size: 6, align: 'right', color: COLORS.muted });
   ry += 12;
-  // What it's growing into (a Mochiko), its tricks.
   if (rec.stage === 'mochiko') {
     const tr = trendOf(rec);
-    text(ctx, tr ? (tr.plain ? 'Growing up evenly: the Plain form' : `Growing into the ${FORM[tr.stat]} form (${STAT_WORD[tr.stat]} ${Math.round(tr.share * 100)}% lately)`) : 'Not growing into anything yet', rx, ry + 6, { size: 6.5 });
-    if (leaning) text(ctx, `Leaning ${leaning === 'angel' ? 'angel' : 'devil'}`, rx + rw, ry + 6, { size: 6, align: 'right', color: leaning === 'angel' ? '#c8a020' : '#a0508a' });
-    ry += 10;
+    text(ctx, fit(ctx, tr ? (tr.plain ? 'Growing up evenly: the Plain form' : `Growing into the ${FORM[tr.stat]} form (${STAT_INFO[tr.stat].name} ${Math.round(tr.share * 100)}% lately)`) : 'Not growing into anything yet', rw, 6.5, false), rx, ry + 7, { size: 6.5, color: COLORS.muted });
   }
-  const tricks = rec.tricks ?? [];
-  text(ctx, `Tricks: ${tricks.length} of ${TRICKS.length}`, rx, ry + 6, { size: 6.5, bold: true });
-  if (tricks.length && hover(ui, rx, ry, 80, 10)) tooltip(ui, [{ text: 'Tricks', bold: true }, { text: tricks.map(cap).join(', '), color: COLORS.muted }]);
-  ry += 12;
-  // Its race medals: a row of three (Beginner, Challenge, Master) per stage.
-  text(ctx, 'Medals', rx, ry + 6, { size: 6.5, bold: true });
-  Object.keys(RACE_STAGES).forEach((id, i) => {
-    const mx = rx + 34 + i * 28;
+  // ---- Across the bottom: its tricks, then its medals.
+  let by = y + 190;
+  const learned = rec.tricks ?? [];
+  heading(ctx, `Tricks  ${learned.length} of ${TRICKS.length}`, x, by, W - 20);
+  by += 11;
+  const step = (W - 20) / TRICKS.length;
+  TRICKS.forEach((tk, i) => {
+    const cx = x + step * i + step / 2;
+    const has = learned.includes(tk);
+    ctx.fillStyle = has ? '#ffd75e' : '#f4ecf0';
+    ctx.beginPath();
+    ctx.arc(cx, by + 5, 5, 0, Math.PI * 2);
+    ctx.fill();
+    if (has) icon(ctx, 'star', cx, by + 5, 6.5, '#ffffff');
+    else {
+      ctx.strokeStyle = '#e6d6de';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    if (hover(ui, cx - step / 2, by, step, 11)) tooltip(ui, [{ text: has ? cap(tk) : 'Not learned yet', bold: true }, { text: has ? 'A trick it shows off now and then.' : 'Each sweet teaches one, the first time it eats it.', color: COLORS.muted }]);
+  });
+  by += 17;
+  heading(ctx, 'Medals', x, by, W - 20);
+  by += 11;
+  const ids = Object.keys(RACE_STAGES);
+  const cw = (W - 20 - (ids.length - 1) * 4) / ids.length;
+  ids.forEach((id, i) => {
+    const cx = x + i * (cw + 4);
+    ctx.fillStyle = '#fff6fa';
+    roundRect(ctx, cx, by, cw, 16, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#f2d8e4';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    text(ctx, RACE_STAGES[id].tab, cx + 5, by + 10.5, { size: 6, bold: true, color: '#a8467a' });
     RANK_ORDER.forEach((rk, k) => {
       const medal = rec.medals?.[medalKey(id, rk)];
+      const mx = cx + cw - 22 + k * 7;
       ctx.beginPath();
-      ctx.arc(mx + k * 7, ry + 4, 2.6, 0, Math.PI * 2);
+      ctx.arc(mx, by + 8, 2.8, 0, Math.PI * 2);
       if (medal) {
         ctx.fillStyle = MEDAL_COLOR[medal];
         ctx.fill();
       } else {
-        ctx.strokeStyle = '#e8d8e0';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = '#e6d6de';
         ctx.stroke();
       }
     });
-    if (hover(ui, mx - 4, ry - 1, 24, 10)) tooltip(ui, [{ text: RACE_STAGES[id].name, bold: true }, { text: RANK_ORDER.map((rk) => `${rk}: ${rec.medals?.[medalKey(id, rk)] ?? '-'}`).join(' · '), color: COLORS.muted }]);
+    if (hover(ui, cx, by, cw, 16)) tooltip(ui, [{ text: RACE_STAGES[id].name, bold: true }, { text: RANK_ORDER.map((rk) => `${cap(rk)}: ${rec.medals?.[medalKey(id, rk)] ?? '-'}`).join(' · '), color: COLORS.muted }]);
   });
-  // ◀ ▶: the rest of your Mochi.
+  // ---- The bottom bar: ◀ ▶ through your Mochi, and (yours) what it wears.
   const list = (world.char.garden?.mochi ?? []).filter((r) => r.stage !== 'egg');
   const at = list.indexOf(rec);
-  // What it wears (your own Mochi): ◀ ▶ through no costume and the ones you've won.
+  const wy = win.y + H - 24;
+  if (at >= 0 && list.length > 1) {
+    if (button(ui, x, wy, 24, 16, '◀', { size: 8 })) world.mochiInfo = list[(at + list.length - 1) % list.length];
+    text(ctx, `${at + 1} / ${list.length}`, x + 42, wy + 11, { size: 7, bold: true, align: 'center', color: COLORS.muted });
+    if (button(ui, x + 60, wy, 24, 16, '▶', { size: 8 })) world.mochiInfo = list[(at + 1) % list.length];
+  }
   if (at >= 0) {
     const won = Object.keys(DRESS).filter((id) => dressOpen(world.char, id));
     const options = [null, ...won];
     const now = options.indexOf(rec.dress ?? null);
-    const wy = win.y + H - 22;
-    text(ctx, 'Wears', rx, wy + 11, { size: 6.5, bold: true });
-    if (button(ui, rx + 30, wy, 18, 15, '◀', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + options.length - 1) % options.length];
-    text(ctx, fit(ctx, DRESS[rec.dress]?.name ?? 'Nothing', 92, 7, true), rx + 98, wy + 11, { size: 7, bold: true, align: 'center', color: rec.dress ? '#d0507a' : COLORS.muted });
-    if (button(ui, rx + 148, wy, 18, 15, '▶', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + 1) % options.length];
-    text(ctx, `${won.length} of ${Object.keys(DRESS).length}`, rx + rw, wy + 11, { size: 6, align: 'right', color: COLORS.muted });
-    if (hover(ui, rx + rw - 24, wy, 24, 15)) tooltip(ui, [{ text: 'Costumes', bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)`, color: COLORS.muted }))]);
-  }
-  if (at >= 0 && list.length > 1) {
-    if (button(ui, x, win.y + H - 22, 24, 15, '◀', { size: 8 })) world.mochiInfo = list[(at + list.length - 1) % list.length];
-    if (button(ui, x + 68, win.y + H - 22, 24, 15, '▶', { size: 8 })) world.mochiInfo = list[(at + 1) % list.length];
-    text(ctx, `${at + 1} / ${list.length}`, x + 46, win.y + H - 11, { size: 6.5, align: 'center', color: COLORS.muted });
+    const dx = x + W - 20 - 178;
+    icon(ctx, 'hanger', dx + 5, wy + 8, 9, '#a8467a');
+    text(ctx, 'Wears', dx + 13, wy + 11, { size: 7, bold: true, color: '#a8467a' });
+    if (button(ui, dx + 44, wy, 18, 16, '◀', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + options.length - 1) % options.length];
+    text(ctx, fit(ctx, DRESS[rec.dress]?.name ?? 'Nothing', 82, 7, true), dx + 107, wy + 11, { size: 7, bold: true, align: 'center', color: rec.dress ? '#d0507a' : COLORS.muted });
+    if (button(ui, dx + 152, wy, 18, 16, '▶', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + 1) % options.length];
+    if (hover(ui, dx, wy, 44, 16)) tooltip(ui, [{ text: `Costumes: ${won.length} of ${Object.keys(DRESS).length}`, bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)`, color: COLORS.muted }))]);
   }
 }

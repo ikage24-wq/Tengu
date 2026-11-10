@@ -388,7 +388,9 @@ export function drawRace(ctx, world, cam, time) {
     const x = r.x + lineupOffset(R, r) - cam.x;
     // (Every lane on the ground, the water or the wall itself: the ground is an edge, not a field,
     // so a lane drawn higher would float. The back lanes are drawn first, behind.)
-    const y = r.y - cam.y;
+    // (GO!: each springs off the line, a little hop as it launches, staggered by lane.)
+    const go = R.phase === 'run' ? (R.clock - (r.lane ?? 0) * 0.03) / 0.32 : -1;
+    const y = r.y - cam.y - (go > 0 && go < 1 ? Math.sin(go * Math.PI) * 7 : 0);
     drawMochiAnim(ctx, r.m, x, y, time);
     const top = y - (r.m.size === 'baby' ? 36 : 44);
     // Up on the podium: its medal.
@@ -423,7 +425,17 @@ export function drawRace(ctx, world, cam, time) {
 // moving up a place ('pass': yours, or anyone taking the lead), and each change in how it's moving:
 // into the water (a splash), onto a wall (a puff of chalk), off the edge (a whoosh), down from a
 // glide (dust). Each lasts a moment.
-const FX_LIFE = { pass: 1.1, splash: 0.7, chalk: 0.6, whoosh: 0.6, land: 0.6, finish: 1 };
+const FX_LIFE = { pass: 1.1, splash: 0.7, chalk: 0.6, whoosh: 0.6, land: 0.6, finish: 1, emote: 1.3 };
+// How a racer reacts to being overtaken, by personality: a cross puff (the hot-headed), a sweat drop
+// (the nervous), or a startled "!" (everyone else). Getting past someone: a little note, pleased.
+const HOT = new Set(['grumpy', 'bossy', 'proud', 'sassy', 'dramatic', 'brave', 'cool', 'stoic']);
+const NERVY = new Set(['timid', 'shy', 'clumsy', 'clingy', 'sleepy', 'lazy', 'gentle', 'dreamy']);
+const passedMark = (r) => (HOT.has(r.rec.personality) ? 'angry' : NERVY.has(r.rec.personality) ? 'sweat' : 'bang');
+function emote(fx, r, mark, time) {
+  if (time - (r.emoteAt ?? -9) < 1.6) return;
+  r.emoteAt = time;
+  fx.push({ kind: 'emote', r, mark, t0: time });
+}
 function noteEffects(R, course, time) {
   const fx = (R.fx ??= []);
   for (let i = fx.length - 1; i >= 0; i--) if (time - fx[i].t0 > FX_LIFE[fx[i].kind]) fx.splice(i, 1);
@@ -438,8 +450,31 @@ function noteEffects(R, course, time) {
       }
     });
   }
+  // (Overtakes: the one passed reacts, the one passing is pleased; only where yours is in it, or
+  // near it, so the screen isn't full of them.)
+  if (R.order && R.clock > 2) {
+    const you = R.racers[R.me];
+    order.forEach((r, i) => {
+      const was = R.order.indexOf(r);
+      if (was <= i || r.done != null) return;
+      const beaten = R.order[i];
+      if (!beaten || beaten === r) return;
+      if (!r.you && !beaten.you && Math.abs(r.x - you.x) > 260) return;
+      emote(fx, beaten, passedMark(beaten), time);
+      emote(fx, r, 'note', time);
+    });
+  }
   R.order = order;
+  // (Off the line: a puff of dust at everyone's feet.)
+  if (!R.goFx) {
+    R.goFx = true;
+    for (const r of R.racers) fx.push({ kind: 'land', x: r.x, y: r.y, t0: time });
+  }
   for (const r of R.racers) {
+    // (Worn out, stopping for breath: a puff of tiredness. Into the water: a startled splash "!".)
+    if (r.m.rest && !r.fxRest) emote(fx, r, 'puff', time);
+    r.fxRest = Boolean(r.m.rest);
+    if (r.m.mode === 'swim' && r.fxMode && r.fxMode !== 'swim') emote(fx, r, 'bang', time);
     const mode = r.m.mode;
     if (r.fxMode && r.fxMode !== mode) {
       const kind = mode === 'swim' ? 'splash' : mode === 'climb' ? 'chalk' : mode === 'fly' ? 'whoosh' : r.fxMode === 'fly' ? 'land' : null;
@@ -452,12 +487,84 @@ function noteEffects(R, course, time) {
     }
   }
 }
+// A reaction over a racer's head: a little white bubble that pops in with a bounce, floats up and
+// fades, with its mark in it: "!", a cross puff, a sweat drop, a music note, a tired puff.
+function drawEmote(ctx, x, y, mark, k) {
+  const u = Math.min(1, k / 0.18);
+  const s = 1 + 1.7 * (u - 1) ** 3 + 0.7 * (u - 1) ** 2;
+  const a = Math.min(1, (1 - k) / 0.25);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, a);
+  ctx.translate(x, y - k * 6);
+  ctx.scale(s, s);
+  ctx.fillStyle = 'rgba(40,20,40,0.2)';
+  ctx.beginPath();
+  ctx.arc(0.6, 1, 7, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, 0, 7, 0, TAU);
+  ctx.moveTo(-4, 4);
+  ctx.lineTo(-7, 9);
+  ctx.lineTo(-1, 6);
+  ctx.fill();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  if (mark === 'bang') {
+    ctx.fillStyle = '#ff9a20';
+    ctx.fillRect(-1.1, -4.5, 2.2, 5.5);
+    ctx.beginPath();
+    ctx.arc(0, 3, 1.2, 0, TAU);
+    ctx.fill();
+  } else if (mark === 'angry') {
+    ctx.strokeStyle = '#ee4060';
+    ctx.lineWidth = 1.4;
+    for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      ctx.beginPath();
+      ctx.moveTo(sx * 1, sy * 3.6);
+      ctx.quadraticCurveTo(sx * 1.2, sy * 1.2, sx * 3.6, sy * 1);
+      ctx.stroke();
+    }
+  } else if (mark === 'sweat') {
+    ctx.fillStyle = '#5ab4f0';
+    ctx.beginPath();
+    ctx.moveTo(0, -4.6);
+    ctx.quadraticCurveTo(3.6, 0, 3, 2);
+    ctx.arc(0, 1.6, 3, 0.1, Math.PI - 0.1);
+    ctx.quadraticCurveTo(-3.6, 0, 0, -4.6);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(-1.6, 0, 1, 1.6);
+  } else if (mark === 'note') {
+    ctx.fillStyle = '#ff6f9a';
+    ctx.strokeStyle = '#ff6f9a';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(-1.6, 2.6, 2, 1.5, -0.4, 0, TAU);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0.2, 2.4);
+    ctx.lineTo(0.2, -4);
+    ctx.quadraticCurveTo(2.4, -3, 3, -1);
+    ctx.stroke();
+  } else if (mark === 'puff') {
+    ctx.fillStyle = '#b8a8c8';
+    for (const [px, py, pr] of [[-2.4, 1, 2.2], [0.6, -1, 2.6], [2.8, 1.2, 1.8]]) {
+      ctx.beginPath();
+      ctx.arc(px, py, pr, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
 function drawEffects(ctx, R, cam, time) {
   for (const f of R.fx ?? []) {
     const k = (time - f.t0) / FX_LIFE[f.kind];
     const ease = 1 - (1 - k) ** 3;
     ctx.save();
-    if (f.kind === 'pass') {
+    if (f.kind === 'emote') {
+      drawEmote(ctx, f.r.x - cam.x + 9, f.r.y - cam.y - (f.r.m.size === 'baby' ? 38 : 46), f.mark, k);
+    } else if (f.kind === 'pass') {
       const r = f.r;
       const x = r.x - cam.x;
       const y = r.y - cam.y - (r.m.size === 'baby' ? 48 : 56) - ease * 10;

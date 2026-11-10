@@ -75,7 +75,7 @@ const LEAVE_AFTER = 1;
 // Before the countdown, the race's opening (a cutscene; Up skips it): the camera sweeps along the
 // course from the finish back to the start (`sweep` s), then each racer on the line gets its card
 // (`card` s each). `introLen`: how long all of it takes; the countdown follows.
-export const INTRO = { sweep: 2.6, card: 0.5 };
+export const INTRO = { sweep: 2.6, card: 0.7 };
 export const introLen = (R) => INTRO.sweep + INTRO.card * R.racers.length;
 // The finish: as the first one crosses, a moment in slow motion (`secs` real seconds at `rate`).
 export const SLOW_MO = { secs: 1.4, rate: 0.3 };
@@ -300,6 +300,29 @@ function stepRacer(R, r, dt, course, map) {
 
 // Each frame of the race: the countdown, the running, the finish; Up cheers (and once it's over,
 // takes you back to the stadium).
+// On the line: as the line-up comes to each racer it does its personality's signature move and
+// says something; then for the first second of the countdown everyone's nervous (or pumped, by
+// personality), and for 2, 1 they crouch at the line.
+// (Which kind of nerves: render/mochi-anim.js race_nerves or race_pumped.)
+const PUMPED = new Set(['brave', 'bossy', 'proud', 'sporty', 'hyper', 'cool', 'showoff', 'sassy', 'stoic', 'cheeky', 'mischief', 'dramatic']);
+const lineNerves = (personality) => (PUMPED.has(personality) ? 'race_pumped' : 'race_nerves');
+function lineActs(world, R) {
+  const il = introLen(R);
+  const put = (r, name) => {
+    if (r.m.action?.name !== name) r.m.action = { name, t0: null, hold: 30 };
+  };
+  if (R.t >= INTRO.sweep && R.t < il) {
+    const i = Math.min(R.racers.length - 1, Math.floor((R.t - INTRO.sweep) / INTRO.card));
+    if (R.spot !== i) {
+      R.spot = i;
+      const r = R.racers[i];
+      r.m.action = { name: `sig_${r.rec.personality}`, t0: null };
+      mochiVoice(world, r.rec, r.you ? 'happy' : 'call', world.body.x);
+    }
+  } else if (R.t >= il) {
+    for (const r of R.racers) put(r, R.t < il + 1 ? lineNerves(r.rec.personality) : 'race_crouch');
+  }
+}
 export function tickRace(world, dt, input) {
   const R = world.race;
   const course = world.map.race;
@@ -313,7 +336,11 @@ export function tickRace(world, dt, input) {
   R.t += dt;
   if (R.phase === 'ready') {
     if (up && R.t < introLen(R)) R.t = introLen(R);
-    if (R.t >= introLen(R) + COUNTDOWN) Object.assign(R, { phase: 'run', t: 0 });
+    lineActs(world, R);
+    if (R.t >= introLen(R) + COUNTDOWN) {
+      Object.assign(R, { phase: 'run', t: 0 });
+      for (const r of R.racers) r.m.action = null;
+    }
   } else if (R.phase === 'run') {
     // (The first across the line: a moment in slow motion.)
     const sdt = R.slowLeft > 0 ? dt * SLOW_MO.rate : dt;
