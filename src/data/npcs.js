@@ -196,8 +196,9 @@ export const NPCS = {
     // shady coat and dark glasses for his secret stall (render/scene.js swaps them with a puff).
     look: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#ff9ec0', eyeStyle: 'round', face: 'grin', browStyle: 'dots' },
     nightLook: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#3a2e4a', eyeStyle: 'round', face: 'smug', browStyle: 'dots' },
-    greeting: "Welcome, welcome to the square! Races, outfits, a little something for your Mochi... and if you come by after dark, I might have something special.",
-    nightGreeting: "Psst. Over here. Yes, it's me. After dark I've got... rarer things. Don't tell the egg stall.",
+    // (One line each: his eight choices fill the rest of the window.)
+    greeting: "Welcome to the square! Races, outfits and treats for your Mochi!",
+    nightGreeting: "Psst... it's me. After dark I've got rarer things. Shh!",
     shop: ['mochi_rice', 'azuki', 'kinako', 'fire_pepper', 'msweet_daifuku', 'msweet_dango', 'msweet_heartmochi', 'mochi_egg'],
     // (After dark, her secret stall: a Star Egg and the rarest sweets' ingredients.)
     secretShop: ['mochi_egg_star', 'honeycomb', 'crystal_gel', 'sprite_petal'],

@@ -71,7 +71,9 @@ const files = { file: 0, worlds: [], chars: [], confirm: false, naming: false, n
 let draft = null;
 let world = null;
 // (For the live speed check: the browser's console reads the world, `__tengu.world`.)
-globalThis.__tengu = { get world() { return world; } };
+globalThis.__tengu = { get world() { return world; }, get ui() { return uiState; }, get input() { return input; }, get screen() { return screen; }, get camera() { return camera; } };
+// (Run from localhost, more tools for checking it live: dev/debug.js. Never in the desktop game.)
+if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') import('./dev/debug.js').then((m) => m.install(globalThis.__tengu));
 let uiState = null;
 let camera = null;
 let autosave = AUTOSAVE_EVERY;
@@ -274,7 +276,8 @@ function step(now) {
     if (!settings.hitStop) world.slowmo = 0;
     const slow = world.slowmo > 0 && !(world.hitstop > 0);
     if (slow) world.slowmo -= dt;
-    acc += slow ? dt * 0.35 : dt;
+    // (`world.devSpeed`: the dev tools' fast-forward and pause, dev/debug.js. Never set in play.)
+    acc += (slow ? dt * 0.35 : dt) * (world.devSpeed ?? 1);
     for (const code of input.pressed) queued.add(code);
     const logicAt = performance.now();
     while (acc >= TICK) {

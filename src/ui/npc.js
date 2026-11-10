@@ -124,7 +124,9 @@ function dialogFrame(ui, win, npc, H, world, talking = false) {
   roundRect(ctx, x - 40, y - 60, 140, H + 60 - 3, 10);
   ctx.clip();
   // (Rasterized at the portrait's own size, so the big figure stays smooth in HD.)
-  withZoom(2, () => drawHero(ctx, npc.look, npc.gear ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
+  // (Kinako after dark: in his night coat here too, as he is out on the square.)
+  const night = npc.nightGear && isNight(world);
+  withZoom(2, () => drawHero(ctx, night ? npc.nightLook ?? npc.look : npc.look, (night ? npc.nightGear : npc.gear) ?? null, px, y + H - 8, { pose: 'idle', time: world.now, seed: 3, scale: 2, job: npc.showJob, talking }));
   ctx.restore();
 
   // The name on washi tape, the title written beside it.
