@@ -5,6 +5,7 @@
 // Mochi's stamina and the Cheer button (or Up), and at the end the results and the prize.
 
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
+import { CANT_POINTS } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
 import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO } from '../world/mochi-race.js';
 import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites } from '../net/mochi-race.js';
@@ -135,7 +136,9 @@ export function raceBoardWindow(ui, state, world) {
     if (button(ui, win.x + W / 2 + 2, by, 84, 18, 'Call it off', { size: 8 })) cancelLobby(world);
     return;
   }
+  const little = open ? tooLittle(win.pick, win.stage) : null;
   if (!open) text(ctx, rankNeeds(char, win.stage, win.rank), win.x + W / 2, by - 8, { size: 6.5, align: 'center', color: COLORS.bad });
+  else if (little) text(ctx, fit(ctx, little, W - 20, 6.5, true), win.x + W / 2, by - 8, { size: 6.5, bold: true, align: 'center', color: '#d0507a' });
   const party = partyFriends().length > 0;
   const rx = party ? win.x + W / 2 - 86 : win.x + W / 2 - 40;
   if (button(ui, rx, by, party ? 84 : 80, 18, 'Race!', { primary: open, enabled: open, size: 9 })) {
@@ -147,6 +150,21 @@ export function raceBoardWindow(ui, state, world) {
     if (why) world.log(why, '#ffb3c6');
   }
   if (party && hover(ui, win.x + W / 2 + 2, by, 84, 18)) tooltip(ui, [{ text: 'Race with your party', bold: true }, { text: 'Everyone in your party online picks one of their Mochi; rivals fill the rest.', color: COLORS.muted }]);
+}
+
+// A gentle word when the Mochi picked can't yet do what this course asks (it can still race, but
+// it won't get far): scooting instead of walking, flailing in water, flopping off the glide. Null
+// when it's ready.
+const LITTLE = [
+  ['run', 'Too little to race yet: it can only scoot. Feed it Dango to get it walking!'],
+  ['swim', "It can't swim yet, so it'll flail in the lake. Taiyaki helps!"],
+  ['fly', "It can't fly yet, so it'll drop off the launch. Sakura Mochi helps!"],
+];
+const COURSE_NEEDS = { sprint: ['run'], hills: ['run'], climb: ['run'], swim: ['run', 'swim'], glide: ['run', 'fly'], grand: ['run', 'swim', 'fly'] };
+export function tooLittle(rec, stageId) {
+  if (!rec) return null;
+  const needs = COURSE_NEEDS[stageId] ?? ['run'];
+  return LITTLE.find(([st]) => needs.includes(st) && (rec.stats?.[st]?.points ?? 0) < CANT_POINTS[st])?.[1] ?? null;
 }
 
 // ---------- A friend's invite ----------
