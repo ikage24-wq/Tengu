@@ -139,11 +139,122 @@ const boardArt = () => art('mr-board', 100, 104, () => {
 // scalloped edge (sakura pink at the start, chequered at the finish, sky blue at the gate), and under
 // it a garland draped between the posts: blossoms and leaves, or at the finish little pennants.
 const ARCH_DANGO = ['#b8e09c', '#fff6ee', '#ffb7cf'];
+// The Grand Tour's part arches, each in its part's colour (softened for the banner).
+const PART_ARCH = ['#ffb3c8', '#9cccf4', '#f4bc88', '#ffa898', '#b8a0ec'];
+// A part's sign: a little wooden board on two cords from the arch's garland, its number on a round
+// plate in the part's colour, its name, its icon; swinging a touch in the breeze.
+function partSign(ctx, x, y, n, part, time, wx) {
+  const a = Math.sin(time * 1.3 + wx * 0.01) * 0.05;
+  ctx.save();
+  ctx.translate(x, y - 16);
+  ctx.rotate(a);
+  ctx.font = '800 7.5px Nunito, "Trebuchet MS", system-ui, sans-serif';
+  const w = Math.max(70, ctx.measureText(part.name).width + 30);
+  ctx.strokeStyle = '#9a6a40';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-w / 2 + 8, 0);
+  ctx.lineTo(-w / 2 + 12, 14);
+  ctx.moveTo(w / 2 - 8, 0);
+  ctx.lineTo(w / 2 - 12, 14);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(80,40,30,0.2)';
+  ctx.fillRect(-w / 2 + 1, 15.5, w, 15);
+  ctx.fillStyle = WOOD;
+  ctx.fillRect(-w / 2, 14, w, 15);
+  ctx.fillStyle = '#dcae74';
+  ctx.fillRect(-w / 2, 14, w, 2);
+  ctx.fillStyle = WOOD_DK;
+  ctx.fillRect(-w / 2, 27.5, w, 1.5);
+  ctx.fillStyle = '#fff6e8';
+  ctx.fillRect(-w / 2 + 3, 16.5, w - 6, 10.5);
+  ctx.fillStyle = part.color;
+  ctx.beginPath();
+  ctx.arc(-w / 2 + 10, 21.7, 4.4, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.font = '900 6px Nunito, "Trebuchet MS", system-ui, sans-serif';
+  ctx.fillText(String(n), -w / 2 + 10, 23.9);
+  ctx.font = '800 7.5px Nunito, "Trebuchet MS", system-ui, sans-serif';
+  ctx.fillStyle = '#7a4a5a';
+  ctx.fillText(part.name, 4, 24.4);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+// A hot-air balloon: a round envelope in stripes (pink and cream, or mint and cream), a little
+// highlight, its skirt, cords down to a wicker basket with a pennant.
+const BALLOON_STRIPES = [['#ff9ec0', '#fff2ea'], ['#8fd8c0', '#fff6e8']];
+const balloonArt = (v) => art(`mr-balloon|${v}`, 64, 96, () => {
+  const [a, b] = BALLOON_STRIPES[v % BALLOON_STRIPES.length];
+  const out = [];
+  const cx = 32;
+  const cy = 32;
+  const env = (k) => {
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const t = -Math.PI / 2 + (i / 24) * Math.PI * 2;
+      const r = 28;
+      const sx = Math.cos(t) * r * k;
+      const sy = Math.sin(t) * r;
+      // (A teardrop: the bottom draws in towards the skirt.)
+      const pinch = Math.sin(t) > 0 ? 1 - Math.sin(t) * 0.42 : 1;
+      pts.push([cx + sx * pinch, cy + sy * (Math.sin(t) > 0 ? 1.12 : 1)]);
+    }
+    return pts;
+  };
+  out.push(T(env(1), b));
+  for (const k of [0.78, 0.34]) out.push(F(T(env(k), a)));
+  out.push(F(T(env(0.12), b)));
+  out.push(F(E(cx - 12, cy - 14, 5, 7, '#ffffff')));
+  // The skirt and the cords.
+  out.push(R(cx - 7, 62, 14, 4, a), F(R(cx - 7, 62, 14, 1.2, '#ffffff')));
+  for (const dx of [-6, -2, 2, 6]) out.push(F(T([[cx + dx - 0.4, 66], [cx + dx + 0.4, 66], [cx + dx * 0.8 + 0.4, 80], [cx + dx * 0.8 - 0.4, 80]], '#9a6a40')));
+  // The basket.
+  out.push(R(cx - 8, 80, 16, 12, '#c8945a'), F(R(cx - 8, 80, 16, 2, '#9a6a40')), F(R(cx - 8, 85, 16, 1, '#dcae74')), F(R(cx - 8, 89, 16, 1, '#dcae74')));
+  out.push(F(T([[cx + 6, 70], [cx + 6, 79], [cx + 12, 72]], a)));
+  return out;
+});
+// A string of lights from one lantern post to the next, sagging between them, little bulbs in warm
+// colours along it, each with a soft halo, twinkling (by the world clock, not repainted pictures).
+const BULBS = ['#ffd27a', '#ff9ec0', '#fff2b0', '#b8e0ff'];
+function stringLights(ctx, map, x1, x2, cam, time) {
+  const ax = x1 + 2;
+  const bx = x2 - 2;
+  const ay = groundAt(map, x1) - 46;
+  const by = groundAt(map, x2) - 46;
+  if (bx - cam.x < -40 || ax - cam.x > VW + 40) return;
+  const at = (k) => [ax + (bx - ax) * k - cam.x, ay + (by - ay) * k + Math.sin(Math.PI * k) * 22 - cam.y];
+  ctx.strokeStyle = '#6a4a5a';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  for (let i = 0; i <= 16; i++) {
+    const [px, py] = at(i / 16);
+    if (i) ctx.lineTo(px, py);
+    else ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+  const n = Math.max(4, Math.round((bx - ax) / 16));
+  for (let i = 1; i < n; i++) {
+    const [px, py] = at(i / n);
+    const c = BULBS[i % BULBS.length];
+    const tw = 0.55 + 0.45 * Math.sin(time * 2.2 + i * 1.7 + x1 * 0.01);
+    ctx.globalAlpha = 0.18 + 0.14 * tw;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(px, py + 2.6, 4.6, 0, TAU);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.arc(px, py + 2.6, 1.7, 0, TAU);
+    ctx.fill();
+  }
+}
 const archTop = (x) => 13 + 12 * ((x - 75) / 67) ** 2;
-const archArt = (kind) => art(`mr-arch|${kind}`, 150, 132, () => {
+const archArt = (kind, color = null) => art(`mr-arch|${kind}|${color}`, 150, 132, () => {
   const post = ramp('#ecdcc4');
   const stone = '#e2d8d2';
-  const banner = kind === 'finish' ? '#3a3040' : kind === 'gate' ? '#8fc8f0' : SAKURA;
+  const banner = color ?? (kind === 'finish' ? '#3a3040' : kind === 'gate' ? '#8fc8f0' : SAKURA);
   const out = [];
   // The posts, a ribbon wound round each, their stone feet.
   for (const px of [16, 134]) {
@@ -222,15 +333,25 @@ const launchArt = () => art('mr-launch', 50, 16, () => {
 });
 const PUFF = '#ffffff';
 const PUFF_SH = '#e4eefc';
-const cloudsArt = (w) => art(`mr-clouds|${w}`, w, 40, () => {
+// (Rounded off at both ends: the puffs grow smaller towards each end and stay inside the picture, so
+// the bank closes in soft round puffs instead of being sliced off flat.)
+const cloudsArt = (w) => art(`mr-clouds2|${w}`, w, 40, () => {
   const out = [];
+  const taper = (cx) => Math.max(0.35, Math.min(1, Math.min(cx, w - cx) / 70));
+  const puff = (cx, r, ry) => {
+    const rr = r * taper(cx);
+    const x = Math.max(rr + 1, Math.min(w - rr - 1, cx));
+    return [x, rr, ry * taper(cx)];
+  };
   for (let x = 6, k = 0; x < w - 6; x += 26, k++) {
     const r = 14 + hash(k * 3.3 + w) * 9;
-    out.push(E(x + 8, 40 - r * 0.7, r, r * 0.75, PUFF_SH));
+    const [px, rr, ry] = puff(x + 8, r, r * 0.75);
+    out.push(E(px, 40 - rr * 0.7, rr, ry, PUFF_SH));
   }
   for (let x = 0, k = 0; x < w; x += 22, k++) {
     const r = 10 + hash(k * 7.1 + w * 0.3) * 8;
-    out.push(F(E(x + 10, 40 - r * 0.6, r, r * 0.66, PUFF)), F(E(x + 6, 40 - r * 0.9, r * 0.4, r * 0.24, '#ffffff')));
+    const [px, rr, ry] = puff(x + 10, r, r * 0.66);
+    out.push(F(E(px, 40 - rr * 0.6, rr, ry, PUFF)), F(E(px - 4 * taper(x + 10), 40 - rr * 0.9, rr * 0.4, rr * 0.24, '#ffffff')));
   }
   return out;
 });
@@ -250,7 +371,7 @@ function fluff(ctx, map, cam, from, to, time) {
 
 export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
   if (!map.mochiRace || !kind.startsWith('mr_')) return false;
-  const w = extra?.w ?? 0;
+  const w = extra?.w ?? (extra?.to ? extra.to - wx : 0);
   const x = wx - cam.x;
   if (x + w < -220 || x > width + 220) return true;
   const gy = groundAt(map, wx) - cam.y;
@@ -270,6 +391,22 @@ export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mr_arch':
       place(ctx, archArt(extra?.kind ?? 'start'), snap(x), gy + 2);
       if (extra?.kind === 'finish') finishLine(ctx, x, gy);
+      return true;
+    case 'mr_checkpoint': {
+      // A part of a long course (the Grand Tour): an arch in the part's colour, and hanging from its
+      // garland a wooden sign with the part's number and name, swinging a little.
+      const part = map.race?.parts?.[(extra?.part ?? 1) - 1];
+      place(ctx, archArt('part', PART_ARCH[(extra?.part ?? 1) - 1] ?? SAKURA), snap(x), gy + 2);
+      if (part) partSign(ctx, x, gy - 78, extra.part, part, time, wx);
+      return true;
+    }
+    case 'mr_balloon':
+      // A hot-air balloon drifting over the course, bobbing gently (`extra.y`: where its basket floats).
+      place(ctx, balloonArt(extra?.color ?? 0), snap(x + Math.sin(time * 0.35 + wx) * 6), snap(extra.y - cam.y + Math.sin(time * 0.8 + wx * 0.01) * 4));
+      return true;
+    case 'mr_lights':
+      // A string of little lights draped from this lantern post to the next, twinkling softly.
+      stringLights(ctx, map, wx, extra.to, cam, time);
       return true;
     case 'mr_marker':
       place(ctx, markerArt(extra ?? 1), snap(x), gy + 2);

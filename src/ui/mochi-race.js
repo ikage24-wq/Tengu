@@ -63,7 +63,7 @@ export function raceBoardWindow(ui, state, world) {
   const ids = Object.keys(RACE_STAGES);
   win.stage ??= ids[0];
   win.rank ??= 'beginner';
-  win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { w: 45, h: 14 })];
+  win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { w: 39, h: 14 })];
   y += 18;
   const char = world.char;
   const stage = RACE_STAGES[win.stage];
@@ -173,7 +173,7 @@ const LITTLE = [
   ['swim', "It can't swim yet, so it'll flail in the lake. Taiyaki helps!"],
   ['fly', "It can't fly yet, so it'll drop off the launch. Sakura Mochi helps!"],
 ];
-const COURSE_NEEDS = { sprint: ['run'], hills: ['run'], climb: ['run'], swim: ['run', 'swim'], glide: ['run', 'fly'], grand: ['run', 'swim', 'fly'] };
+const COURSE_NEEDS = { sprint: ['run'], hills: ['run'], climb: ['run'], swim: ['run', 'swim'], glide: ['run', 'fly'], grand: ['run', 'swim', 'fly'], tour: ['run', 'swim', 'fly'] };
 export function tooLittle(rec, stageId) {
   if (!rec) return null;
   const needs = COURSE_NEEDS[stageId] ?? ['run'];
@@ -262,9 +262,25 @@ export function raceHud(ui, state, world) {
   ctx.fillStyle = '#ffd0e0';
   roundRect(ctx, x0, 18, (x1 - x0) * lead, 5, 2.5);
   ctx.fill();
-  for (const q of [0.25, 0.5, 0.75]) {
-    ctx.fillStyle = '#e8cfdc';
-    ctx.fillRect(x0 + (x1 - x0) * q - 0.5, 15, 1, 11);
+  // (A long course in parts: a little plate with each part's icon where it begins; otherwise quarter marks.)
+  if (course.parts) {
+    for (const p of course.parts.slice(1)) {
+      const px = x0 + (x1 - x0) * partFrac(course, p.from);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, 20.5, 5.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(px, 20.5, 4.4, 0, Math.PI * 2);
+      ctx.fill();
+      icon(ctx, p.icon, px, 20.5, 5.6, '#ffffff');
+    }
+  } else {
+    for (const q of [0.25, 0.5, 0.75]) {
+      ctx.fillStyle = '#e8cfdc';
+      ctx.fillRect(x0 + (x1 - x0) * q - 0.5, 15, 1, 11);
+    }
   }
   for (let i = 0; i < 6; i++) {
     ctx.fillStyle = i % 2 ? '#3a3040' : '#ffffff';
@@ -314,6 +330,22 @@ export function raceHud(ui, state, world) {
     const n = Math.max(1, Math.ceil(left));
     pop(ctx, String(n), n - left, ['#ff6f9a', '#f0a03a', '#5a9ae0'][n - 1] ?? '#ff6f9a', false, true);
   } else if (R.phase === 'run' && R.t < 0.9) pop(ctx, 'GO!', R.t / 0.9, '#ffb020', true);
+  // A long course: as yours comes into each new part, its name sweeps across on a ribbon in its colour.
+  if (course.parts && R.phase === 'run') {
+    let k = 0;
+    course.parts.forEach((p, i) => {
+      if (you.x >= p.from) k = i;
+    });
+    if (R.myPart == null) R.myPart = k;
+    if (k > R.myPart) {
+      R.myPart = k;
+      R.partAt = R.clock;
+    }
+    if (R.partAt != null && R.clock - R.partAt < 2.4) {
+      const p = course.parts[R.myPart];
+      banner(ctx, `${R.myPart + 1} · ${p.name}`, (R.clock - R.partAt) / 2.4, p.color);
+    }
+  }
   // The leader into the last fifth: the final stretch.
   if (R.phase === 'run') {
     if (R.finalAt == null && progressOf(course, order[0]) >= course.total * 0.8) R.finalAt = R.clock;
@@ -495,6 +527,12 @@ function trackFace(ctx, x, y, r0, R, r, order) {
     ctx.arc(x + sx * r0 * 0.62, y + r0 * 0.3, r0 * 0.16, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+// How far along a course (0 to 1) world x is, counting the walls climbed before it.
+function partFrac(course, x) {
+  const up = course.legs.filter((l) => l.kind === 'climb' && l.x < x).reduce((sum, l) => sum + (l.from - l.to), 0);
+  return Math.max(0, Math.min(1, (x - course.start + up) / course.total));
 }
 
 // ---------- The race's cutscenes ----------
@@ -738,14 +776,14 @@ function pop(ctx, s, f, color, burst = false, plate = false) {
   ctx.restore();
 }
 // A ribbon sweeping across the screen with words on it (`k`: 0 to 1 through its time).
-function banner(ctx, words, k) {
+function banner(ctx, words, k, color = '#ff6f9a') {
   const inK = Math.min(1, k / 0.15);
   const outK = Math.max(0, (k - 0.8) / 0.2);
   const x = (1 - inK) ** 2 * VW - outK * outK * VW;
   const y = VH * 0.24;
   ctx.save();
   ctx.translate(x, 0);
-  ctx.fillStyle = '#ff6f9a';
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(VW * 0.18, y - 12);
   ctx.lineTo(VW * 0.84, y - 12);

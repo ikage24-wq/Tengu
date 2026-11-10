@@ -359,7 +359,7 @@ export function tickRace(world, dt, input) {
       if (R.first == null) R.slowLeft = SLOW_MO.secs;
       R.first ??= R.clock;
     }
-    if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + RACE_TAIL) || R.clock >= RACE_MAX) endOfRace(world, R);
+    if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + RACE_TAIL) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
     podiumStep(world, R);
@@ -433,7 +433,9 @@ function shotOf(world, R) {
     if (R.t < INTRO.sweep) {
       const k = R.t / INTRO.sweep;
       const e = k * k * (3 - 2 * k);
-      const x = course.finish + 160 + (course.start + 80 - course.finish - 160) * e;
+      // (From the finish back to the start; on a long course, from a stretch along it.)
+      const from = Math.min(course.finish + 160, course.start + 1700);
+      const x = from + (course.start + 80 - from) * e;
       return { shot: 'sweep', x, y: g(x) };
     }
     const i = Math.floor((R.t - INTRO.sweep) / INTRO.card);

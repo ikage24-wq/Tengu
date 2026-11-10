@@ -32,7 +32,7 @@
 import { R, E, T, F, snap } from './pixel.js';
 import { ramp, planks, foliage, bark, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 import { limb } from './figure.js';
-import { art, place, BEHIND_GROUND } from './scenery.js';
+import { art, place, BEHIND_GROUND, zoneAt } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
@@ -841,7 +841,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   if (x < -280 && kind !== 'mg_falls') return true;
   if (x > width + 280 && kind !== 'mg_falls') return true;
   const gy = groundAt(map, wx) - cam.y;
-  const night = map.night ?? 0;
+  // (Night, or a part of a long course at dusk, `look.glow`: lanterns lit.)
+  const night = Math.max(map.night ?? 0, zoneAt(map, 0, wx)?.look?.glow ?? 0);
   switch (kind) {
     case 'mg_lantern': {
       const v = extra ?? 0;

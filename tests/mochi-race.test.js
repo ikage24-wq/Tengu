@@ -22,7 +22,7 @@ const mochi = (seed, points, personality = 'stoic') => {
 function racer(...recs) {
   const char = createCharacter('Mina', { hairStyle: 'bob' });
   char.garden = { back: null, mochi: recs, eggs: [], unlocked: {} };
-  char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills'].map((s) => [s + '|beginner', true]));
+  char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].map((s) => [s + '|beginner', true]));
   const w = createWorld(char);
   w.log = () => {};
   loadMap(w, 'mochi_stadium', 'board');
@@ -31,7 +31,7 @@ function racer(...recs) {
 // Runs the race to its end (cheering on every frame if asked); returns the race.
 function run(w, cheering = false) {
   const R = w.race;
-  for (let k = 0; k < 60 * 200 && R.phase !== 'done'; k++) updateWorld(w, 1 / 60, keys(cheering ? ['ArrowUp'] : []));
+  for (let k = 0; k < 60 * 450 && R.phase !== 'done'; k++) updateWorld(w, 1 / 60, keys(cheering ? ['ArrowUp'] : []));
   return R;
 }
 
@@ -145,6 +145,11 @@ test('every stage runs to the end; each one is won by the Mochi strong in what i
     assert.ok(a < b, `${stage}: the ${stat} Mochi ${a.toFixed(0)}s, the runner ${b.toFixed(0)}s`);
   }
   assert.ok(time(mochi(21, 900), 'grand') > 0);
+  // The Grand Tour: the longest; a middling Mochi takes minutes, a master one a good deal less.
+  const mid = time(mochi(23, 600), 'tour');
+  const top = time(mochi(24, 1800), 'tour');
+  assert.ok(mid > 150 && mid < 420, `middling ${mid.toFixed(0)}s`);
+  assert.ok(top < mid, `master ${top.toFixed(0)}s`);
 });
 
 test('swimming, climbing and gliding: the racer moves the way the leg does', () => {
@@ -245,14 +250,14 @@ test('dress-up: the Daifuku hood from the start; each other costume with a first
 });
 
 test('every racer, every frame, on every course: on the ground, in the water, on its wall or gliding over the ground, never on air', () => {
-  for (const stage of ['sprint', 'swim', 'climb', 'glide', 'hills', 'grand']) {
+  for (const stage of ['sprint', 'swim', 'climb', 'glide', 'hills', 'grand', 'tour']) {
     for (const pts of [0, 700, 2400]) {
       const rec = mochi(40 + pts, pts);
       const w = racer(rec);
       assert.ok(startRace(w, rec, stage, 'beginner'));
       const R = w.race;
       const course = w.map.race;
-      for (let k = 0; k < 60 * 200 && R.phase !== 'done'; k++) {
+      for (let k = 0; k < 60 * 450 && R.phase !== 'done'; k++) {
         updateWorld(w, 1 / 60, keys());
         for (const r of R.racers) {
           const where = `${stage} (${pts}): ${r.name} at ${r.x.toFixed(1)},${r.y.toFixed(1)} ${r.m.mode}`;

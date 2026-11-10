@@ -86,6 +86,19 @@ export const MATERIALS = {
   // The Dream Theatre: honey stage boards over a velvet-dark understage.
   stage: { lip: '#ffd36b', body: '#c88a5a', deep: '#8a5a3a', stone: '#e8b080', style: 'boards', blades: false, drip: null },
   throne: { lip: '#d9ccff', body: '#5d4ba6', deep: '#382c78', stone: '#9b88e0', style: 'brick', blades: false, drip: 'crystal', glow: '#c9b6ff' },
+  // The Mochi race courses, each its own ground (world/stadium.js; the Grand Tour changes ground part
+  // by part, `map.grounds`). Sakura Sprint: fresh spring grass over rosy loam strewn with petals.
+  sakura: { lip: '#9ce08e', body: '#efc4b0', deep: '#cc8f84', stone: '#fbe2d6', style: 'meadowsoil', blades: true, drip: 'vine' },
+  // Lily Lake: a pale sandy shore in wind-rippled layers, shells and pebbles along it.
+  lakeshore: { lip: '#fff0cc', body: '#f2d8a8', deep: '#d6ae7c', stone: '#fff4dc', style: 'sand', blades: false, drip: 'weed' },
+  // Mortar Cliff: layered lilac-grey cliff stone under a mossy grass top.
+  cliffstone: { lip: '#a8dc94', body: '#d8c8de', deep: '#a494b8', stone: '#efe6f4', style: 'strata', blades: true, drip: 'root' },
+  // Cloud Glide: soft cloud underfoot, up among the clouds.
+  cloudfloor: { lip: '#ffffff', body: '#eef2ff', deep: '#c8d2f4', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
+  // Long Hill Run: late-summer hills, sun-gold grass over warm tilled clay.
+  harvest: { lip: '#cfd66e', body: '#e8b47e', deep: '#c48654', stone: '#f8d8ae', style: 'farm', blades: true, drip: 'vine' },
+  // The Grand Tour's last hills: cool evening grass over mauve loam.
+  duskmeadow: { lip: '#94d4a4', body: '#d8b0bc', deep: '#a8808e', stone: '#eed4dc', style: 'meadowsoil', blades: true, drip: 'vine' },
   // Interior floors (the interior rule: a room's floor is its own material, never grass or soil).
   // Polished parquet over a timber understage, for halls, kitchens and workshops.
   parquet: { lip: '#f0c48a', body: '#b07a5a', deep: '#7a4a3a', stone: '#d8a070', style: 'boards', blades: false, drip: null },
@@ -910,6 +923,27 @@ export function drawTerrain(ctx, theme, map, cam, width, height, time) {
   theme = gl?.material ?? theme;
   const m = MATERIALS[theme] ?? MATERIALS.meadow;
   const deco = gl?.edges ?? null;
+  // A map whose ground changes along it (`map.grounds`: [{ from, material, edges }], left to right,
+  // the Grand Tour's parts): each stretch drawn in its own material, cut where the change is hidden
+  // (under water, at a wall, at a cliff).
+  if (map.grounds) {
+    map.grounds.forEach((g, i) => {
+      const x0 = g.from - cam.x;
+      const x1 = (map.grounds[i + 1]?.from ?? Infinity) - cam.x;
+      if (x1 < -40 || x0 > width + 40) return;
+      ctx.save();
+      ctx.beginPath();
+      const l = Math.max(-60, x0);
+      ctx.rect(l, -60, Math.min(width + 60, x1) - l, height + 200);
+      ctx.clip();
+      landWith(ctx, g.material, MATERIALS[g.material] ?? m, g.edges ?? deco, map, cam, width, height, time);
+      ctx.restore();
+    });
+    return;
+  }
+  landWith(ctx, theme, m, deco, map, cam, width, height, time);
+}
+function landWith(ctx, theme, m, deco, map, cam, width, height, time) {
   camX = cam.x;
   const runs = groundRuns(map, cam);
   const bottom = height + 40;
@@ -1300,6 +1334,63 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(x + 2, y - 6, 1, 1);
         ctx.globalAlpha = 1;
+      }
+    } else if (kind === 'petals') {
+      // Fallen blossom petals lying in the grass, and the odd little pink flower.
+      ctx.fillStyle = h > 0.8 ? '#ffd0e0' : '#ffb3cc';
+      ctx.beginPath();
+      ctx.ellipse(x + sway * 0.3, y - 1, 1.8, 1, 0.5 + h * 2, 0, Math.PI * 2);
+      ctx.fill();
+      if (h > 0.72) {
+        ctx.beginPath();
+        ctx.ellipse(x + 3, y - 0.6, 1.4, 0.8, -0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      if (h > 0.9) {
+        ctx.strokeStyle = '#5fb878';
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        ctx.moveTo(x - 3, y);
+        ctx.lineTo(x - 3 + sway, y - 5);
+        ctx.stroke();
+        ctx.fillStyle = '#ff9ec0';
+        ctx.beginPath();
+        ctx.arc(x - 3 + sway, y - 5.5, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff6a8';
+        ctx.fillRect(x - 3.5 + sway, y - 6, 1, 1);
+      }
+    } else if (kind === 'shells') {
+      // A shore's little finds: pebbles, a pink scallop shell now and then, a tuft of beach grass.
+      if (h > 0.86) {
+        ctx.fillStyle = '#ffc4d0';
+        ctx.beginPath();
+        ctx.arc(x, y - 0.4, 2.2, Math.PI, 0);
+        ctx.fill();
+        ctx.strokeStyle = '#e894a8';
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 0.4);
+        ctx.lineTo(x, y - 2.4);
+        ctx.moveTo(x - 1.2, y - 0.4);
+        ctx.lineTo(x - 1.6, y - 1.9);
+        ctx.moveTo(x + 1.2, y - 0.4);
+        ctx.lineTo(x + 1.6, y - 1.9);
+        ctx.stroke();
+      } else if (h > 0.7) {
+        ctx.strokeStyle = '#a8c878';
+        ctx.lineWidth = 0.9;
+        ctx.beginPath();
+        for (const d of [-1.4, 0, 1.4]) {
+          ctx.moveTo(x + d, y);
+          ctx.lineTo(x + d * 1.8 + sway, y - 4.5 - Math.abs(d));
+        }
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = h > 0.58 ? '#d8ccc4' : '#c4d0d8';
+        ctx.beginPath();
+        ctx.ellipse(x, y - 0.6, 1.6, 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
       }
     } else if (kind === 'glowcaps') {
       if (h < 0.75) return;

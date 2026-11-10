@@ -14,6 +14,7 @@ export const RACE_STAGES = {
   glide: { name: 'Cloud Glide', tab: 'Glide', stat: 'fly', map: 'mrace_glide', about: 'Off a high cliff and down over the cloud fluff: the further it glides, the less fluff to wade. All about Fly.' },
   hills: { name: 'Long Hill Run', tab: 'Hills', stat: 'stamina', map: 'mrace_hills', about: 'A long way over big hills: uphill slows and tires it. All about Stamina.' },
   grand: { name: 'Grand Mochi Course', tab: 'Grand', stat: null, map: 'mrace_grand', about: 'The meadow, the lake, a wall, a glide over the clouds and home over the hills. Everything.', prizeMul: 1.5, needs: 3 },
+  tour: { name: 'Mochi Grand Tour', tab: 'Tour', stat: null, map: 'mrace_tour', about: 'A whole day: meadow, river, cliffs, a sunset glide and the lantern hills home. Stamina most of all.', prizeMul: 2.5, needs: 6 },
 };
 
 // The ranks, in order: how strong the rivals are (stat points, from and to; how many of them are
