@@ -32,7 +32,7 @@ export function partyBlocker(g) {
   if (inParty(g.id)) return 'Already in your party';
   if (online.party && online.party.leader !== online.id) return 'Only the leader invites';
   if ((online.party?.members.length ?? 1) >= ONLINE_PARTY_MAX) return 'Your party is full';
-  if (online.partyAsked === g.id) return 'Waiting for an answer';
+  if (online.partyAsked?.has(g.id)) return 'Waiting for an answer';
   return null;
 }
 
@@ -40,7 +40,8 @@ export function askParty(world, id) {
   const g = online.ghosts.get(id);
   const why = partyBlocker(g);
   if (why) return why;
-  online.partyAsked = id;
+  // (Every invite out at once is remembered: inviting three friends in a row, each one's yes counts.)
+  (online.partyAsked ??= new Set()).add(id);
   send({ t: 'party', to: id, op: 'ask', name: world.char.name });
   world.log(`You invited ${g.name} to your party.`, '#bff0dc');
   return null;
@@ -80,11 +81,13 @@ export function kickFromParty(world, id) {
   world.log(`${name} was removed from the party.`, '#d4cbe8');
 }
 
-// The leader drops friends who left the room.
+// The leader drops friends who left the room. (Left it: off the room's list, not just quiet for a
+// few seconds, so a friend whose game paused a moment keeps their place.)
 export function tickParty(world) {
   const p = online.party;
   if (!p || p.leader !== online.id) return;
-  const here = p.members.filter((id) => id === online.id || online.ghosts.has(id));
+  const inRoom = (id) => online.ghosts.has(id) || online.order.includes(id);
+  const here = p.members.filter((id) => id === online.id || inRoom(id));
   if (here.length === p.members.length) return;
   p.members = here;
   if (here.length < 2) online.party = null;
@@ -172,8 +175,8 @@ function onParty(world, msg, g) {
       }
       return;
     case 'accept':
-      if (online.partyAsked !== msg.id) return;
-      online.partyAsked = null;
+      if (!online.partyAsked?.has(msg.id)) return;
+      online.partyAsked.delete(msg.id);
       if (partyBlocker(g) && !inParty(msg.id)) return;
       online.party ??= { leader: online.id, members: [online.id] };
       if (!inParty(msg.id)) online.party.members.push(msg.id);
@@ -181,7 +184,7 @@ function onParty(world, msg, g) {
       world.log(`${g.name} joined your party!`, '#bff0dc');
       return;
     case 'decline':
-      online.partyAsked = null;
+      online.partyAsked?.delete(msg.id);
       world.log(msg.busy ? `${g.name} is already in a party.` : `${g.name} declined your party invite.`, '#ffb3c6');
       return;
     case 'leave':

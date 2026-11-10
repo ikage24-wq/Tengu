@@ -28,6 +28,9 @@ export function drawGhosts(ctx, world, cam, width, time) {
   // Friends here, and in a friend's dungeon run, the bots of their group.
   const dt = time - (drawGhosts.at ?? time);
   drawGhosts.at = time;
+  // (Name tags already on screen this frame, yours first, so a group standing together has its
+  // tags stacked one under another instead of piled on top of each other.)
+  const placed = [{ x0: snap(world.body.x - cam.x) - 26, x1: snap(world.body.x - cam.x) + 26, y0: snap(world.body.y - cam.y), y1: snap(world.body.y - cam.y) + 14 }];
   for (const g of [...othersHere(world), ...botsHere(world, dt)]) {
     if (!g.look) continue;
     const b = g.body;
@@ -74,7 +77,14 @@ export function drawGhosts(ctx, world, cam, width, time) {
       drawBuffEffects(ctx, g.buffs, 'front', x, y, time, world.now, b.facing);
       if (g.fish) drawFriendFishing(ctx, g.fish, x, y, cam, time, tip);
     }
-    nameTag(ctx, g, x, y, time);
+    // Stacked under any tag already there, eased into place.
+    ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+    const tw = ctx.measureText(`Lv${g.level ?? 1} ${g.name}`).width + 18;
+    let ty = 0;
+    for (let n = 0; n < 4 && placed.some((r) => x - tw / 2 < r.x1 && x + tw / 2 > r.x0 && y + ty < r.y1 && y + ty + (g.maxHp ? 18 : 13) > r.y0); n++) ty += 13;
+    placed.push({ x0: x - tw / 2, x1: x + tw / 2, y0: y + ty, y1: y + ty + (g.maxHp ? 18 : 13) });
+    g.tagDy = (g.tagDy ?? ty) + (ty - (g.tagDy ?? ty)) * Math.min(1, dt * 12);
+    nameTag(ctx, g, x, y + Math.round(g.tagDy), time);
     if (g.bubble && settings.chatBubbles) drawBubble(ctx, x, y - 62, g.bubble.text, Math.min(1, g.bubble.t * 2));
   }
 }

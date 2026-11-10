@@ -54,6 +54,8 @@ const solo = (world) => Boolean((world.dungeon && !world.dungeon.shared) || worl
 const inMyRun = (world, g) => !world.dungeon?.shared || Boolean(world.dungeon.roles?.[g.id]);
 
 function reset() {
+  clearInterval(online.beat);
+  online.beat = null;
   const w = online.world;
   // Back on your own: the monsters you were shown become yours.
   if (w?.mirror?.endsWith(`@${w.map.id}`)) adopt(w);
@@ -103,6 +105,15 @@ export function joinRoom(world, code) {
   online.link = openLink(code, false, handlers(world));
 }
 
+// (Closing or refreshing the game says goodbye, so friends' rooms free your place at once.)
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    if (online.status === 'off') return;
+    send({ t: 'bye' });
+    online.link?.close();
+  });
+}
+
 export function leaveRoom(world, why = null) {
   if (online.status === 'off') return;
   send({ t: 'bye' });
@@ -125,6 +136,12 @@ function handlers(first) {
       if (online.host) world.log(`Room ${online.code} is open! Friends join with this code.`, '#bff0dc');
       else send({ t: 'hi', name: world.char.name });
       sendProfile(world);
+      // (A "still here" every two seconds on a timer of its own, so a game that stops drawing for a
+      // while (minimised, another tab in front) isn't taken for gone by the others.)
+      clearInterval(online.beat);
+      online.beat = setInterval(() => {
+        if (online.status === 'on') send({ t: 'hb' });
+      }, 2000);
     },
     onPeer(id, joined) {
       if (!online.host || joined) return;
@@ -456,6 +473,9 @@ function receive(world, msg) {
     case 'hi': {
       if (!online.host) return;
       if (!online.order.includes(msg.id)) {
+        // (Before turning anyone away: let go of places held by players gone quiet, a game that
+        // crashed or was refreshed without saying goodbye, so they can come straight back in.)
+        online.order = online.order.filter((id) => id === online.id || online.ghosts.has(id));
         if (online.order.length >= ROOM_MAX) {
           online.link.sendTo(msg.id, { t: 'full', id: online.id });
           return;
@@ -497,6 +517,10 @@ function receive(world, msg) {
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }
+    case 'hb':
+      // (Still here: ghostOf has noted it.)
+      ghostOf(msg.id);
+      return;
     case 'me':
       return onMe(world, msg);
     case 'mobs':
@@ -528,6 +552,7 @@ function onMe(world, msg) {
     g.anim = createAnim();
   }
   g.tx = msg.x;
+  g.heardAt = performance.now() / 1000;
   g.ty = msg.y;
   Object.assign(g.body, { vx: msg.vx, vy: msg.vy, onGround: msg.g, rope: msg.r ? {} : null, facing: msg.f });
   g.pose = msg.p;
@@ -674,8 +699,11 @@ function smoothGhosts(world, dt) {
   for (const g of online.ghosts.values()) {
     if (!g.body || g.tx == null) continue;
     // Carry on along their last speed between messages, then ease onto where they really are.
+    // (Only for a moment after their last word, and never off the map: a friend whose game paused
+    // mid-stride used to slide on and on, right off the edge.)
     const b = g.body;
-    g.tx += (b.vx ?? 0) * dt * 0.5;
+    if (performance.now() / 1000 - (g.heardAt ?? 0) < 0.3) g.tx += (b.vx ?? 0) * dt * 0.5;
+    if (g.map === world.map.id && world.map.width) g.tx = Math.max(0, Math.min(world.map.width, g.tx));
     if (Math.abs(g.tx - b.x) > 80 || Math.abs(g.ty - b.y) > 80) {
       b.x = g.tx;
       b.y = g.ty;

@@ -12,6 +12,9 @@ import { NPCS } from '../data/npcs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questState, objectiveProgress, objectiveText } from '../core/quests.js';
+import { currentLesson } from '../world/tutorial.js';
+// (Under the tutorial's hint card while a lesson shows, so the two never sit on each other.)
+const topOf = (world, y) => (currentLesson(world.char) ? y + 30 : y);
 import { questTarget, setRoute } from '../world/routes.js';
 import { settings } from '../core/settings.js';
 import { sfx } from '../audio/sfx.js';
@@ -146,7 +149,7 @@ function drawAccept(ctx, world, m, age) {
   const trackerY = settings.trackerPos ? settings.trackerPos.y + 8 : 14;
   const e = outK * outK;
   const cx = (1 - e) * W / 2 + e * trackerX;
-  const cy = (1 - e) * (54 + (1 - inK) * -26) + e * trackerY;
+  const cy = (1 - e) * (topOf(world, 54) + (1 - inK) * -26) + e * trackerY;
   const s = (0.9 + 0.1 * inK) * (1 - 0.82 * e);
   ctx.save();
   ctx.globalAlpha = clamp(age / 0.18) * (1 - outK * outK);
@@ -231,7 +234,7 @@ function drawComplete(ui, state, world, m, age) {
   const cw = 250;
   const ch = 82;
   const x0 = W / 2 - cw / 2;
-  const y0 = 46;
+  const y0 = topOf(world, 46);
   const inK = easeBack(clamp(age / 0.3));
   const outK = clamp((age - (m.life - 0.5)) / 0.5);
   ctx.save();

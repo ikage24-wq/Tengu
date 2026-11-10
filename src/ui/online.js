@@ -80,7 +80,7 @@ export function onlineWindow(ui, state, world) {
           if (hover(ui, x + W - 128, y + 3, 34, 16)) tooltip(ui, [{ text: jw ?? `Ask to join ${online.ghosts.get(leaderOf(r.id))?.name ?? r.name}'s party`, size: 8 }]);
         } else if (!inParty(r.id)) {
           const pw = partyBlocker(r);
-          if (button(ui, x + W - 128, y + 3, 34, 16, online.partyAsked === r.id ? '...' : 'Party', { size: 7, enabled: !pw, theme: 'pink' })) askParty(world, r.id);
+          if (button(ui, x + W - 128, y + 3, 34, 16, online.partyAsked?.has(r.id) ? '...' : 'Party', { size: 7, enabled: !pw, theme: 'pink' })) askParty(world, r.id);
           if (pw && hover(ui, x + W - 128, y + 3, 34, 16)) tooltip(ui, [{ text: pw, size: 8 }]);
         }
         const why = warpBlocker(world, r);

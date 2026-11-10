@@ -6,7 +6,7 @@ import { tickStall } from './stall.js';
 import { tickBounties, eliteSlain } from './bounties.js';
 import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
-import { tickTutorial } from './tutorial.js';
+import { ISLAND_LESSONS, tickTutorial } from './tutorial.js';
 import { getMap, MAPS } from '../data/maps.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { itemName, itemColors } from '../core/items.js';
@@ -181,7 +181,12 @@ export function loadMap(world, mapId, portalId) {
   onStoryMap(world);
 }
 
+// (Dawnlight Isle, where a new hero learns the ropes: fainting there before the boat leaves wakes you
+// on the beach, not stranded on the mainland mid-lesson with Kuro across the sea.)
+const ISLE = new Set(['dawnbeach', 'trainfield', 'dock']);
 function townOf(world) {
+  const t = world.char.tutorial;
+  if (ISLE.has(world.map.id) && t && t.step < ISLAND_LESSONS) return 'dawnbeach';
   return world.map.town ?? 'sprout';
 }
 
@@ -1038,6 +1043,10 @@ export function updateWorld(world, dt, input) {
     }
     // (A napping monster is harmless: world/habits.js.)
     if (m.hp <= 0 || world.dead || world.invuln > 0 || m.frozenUntil > world.now || napping(m, world.now)) continue;
+    // (Talking to someone, or in a menu that holds your controls: a harmless monster wandering into
+    // you doesn't hurt. One you've stirred up, or one that hunts, still does. A new hero once fainted
+    // reading Kuro's practice quest among the Kitsune Kits.)
+    if (input?.locked && !m.def.aggro && !(world.now < m.aggroUntil)) continue;
     if (!overlaps(pbox, mobBox(m))) continue;
     m.attackAt = world.now;
     if (Math.random() < mobHitChance(m.def.acc, avoid(world.stats))) {
