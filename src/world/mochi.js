@@ -33,6 +33,9 @@ const BUFF = 'mochi:pet';
 // How it gets about: getting going and slowing down (px/s each second), its hop (gravity, and how
 // far over a ledge's top it hops), and how far off it can fall behind before it pops back to you.
 const PET_MOVE = { accel: 900, gravity: 1100, clear: 10, lost: 520 };
+// A drop it can't get to (just off a ledge, or your bag's full) it gives up on after `giveUp` seconds
+// and leaves alone for `leave`, so it never stands about chasing one and stops following and looting.
+const LOOT_TRY = { giveUp: 4, leave: 20 };
 const DEFAULT_OPTS = { loot: true, hp: 40, mp: 25 };
 
 // The one of your Mochi chosen to come along (or null).
@@ -88,7 +91,7 @@ export function tickMochi(world, dt, api) {
     world.mochi.y = footingAt(world.map, b.x, b.y).y;
   }
   const p = world.mochi;
-  p.m ??= { genes: rec, dir: p.dir, speed: 0, dist: 0, mode: 'run' };
+  p.m ??= { genes: rec, dir: p.dir, speed: 0, dist: 0, mode: 'run', easy: true };
   p.m.genes = rec;
   p.m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
   const helping = !world.dead;
@@ -104,11 +107,16 @@ export function tickMochi(world, dt, api) {
   // Loot: the nearest drop in its reach, fetched.
   if (helping && pet.opts.loot) {
     if (p.target && !world.drops.includes(p.target)) p.target = null;
+    p.skip ??= new Map();
+    if (p.target && world.now - p.targetAt > LOOT_TRY.giveUp) {
+      p.skip.set(p.target, world.now + LOOT_TRY.leave);
+      p.target = null;
+    }
     if (!p.target) {
       let best = null;
       let bd = Infinity;
       for (const d of world.drops) {
-        if (!d.landed || d.dropped) continue;
+        if (!d.landed || d.dropped || (p.skip.get(d) ?? 0) > world.now) continue;
         const dx = Math.abs(d.x - b.x);
         const dy = b.y - d.y;
         if (dx > reach.range || dy > reach.up || dy < -60) continue;
@@ -116,12 +124,14 @@ export function tickMochi(world, dt, api) {
         if (dist < bd) [best, bd] = [d, dist];
       }
       p.target = best;
+      p.targetAt = world.now;
     }
   } else p.target = null;
   stepPet(world, p, dt);
   // Got there: it picks the drop up for you.
   if (p.target && Math.abs(p.target.x - p.x) < 8 && Math.abs(p.target.y - p.y) < 14 && world.now >= p.pickAt) {
     if (api.collect(p.target)) p.pickedAt = world.now;
+    else p.skip.set(p.target, world.now + LOOT_TRY.leave);
     p.target = null;
     p.pickAt = world.now + reach.every;
   }
@@ -190,7 +200,7 @@ function stepPet(world, p, dt) {
     foot = footingAt(map, p.x, p.y);
     const up = wantY != null ? footingAt(map, p.x, wantY) : null;
     // You're up on a ledge right over it, or the ground steps up in front of it: a hop up.
-    const to = up && !up.swim && up.y < p.y - PET_MOVE.clear && Math.abs(up.y - wantY) < 4 ? up.y : foot.y < p.y - 6 ? foot.y : null;
+    const to = up && !up.swim && up.y < p.y - PET_MOVE.clear && Math.abs(up.y - wantY) < 10 ? up.y : foot.y < p.y - 6 ? foot.y : null;
     if (to != null) {
       p.air = true;
       p.vy = -Math.sqrt(2 * PET_MOVE.gravity * (p.y - to + PET_MOVE.clear));
@@ -203,8 +213,10 @@ function stepPet(world, p, dt) {
   const swim = !p.air && foot.swim;
   if (Math.abs(p.vx) > 4) p.dir = Math.sign(p.vx);
   else if (!p.target) p.dir = b.facing;
-  Object.assign(m, { dir: p.dir, speed: Math.abs(p.vx) > 4 ? Math.abs(p.vx) : 0, mode: p.air ? 'fly' : swim ? 'swim' : 'run', inWater: swim, noShadow: p.air });
-  m.dist += Math.abs(step) + (p.air ? Math.abs(p.vy) * dt : 0);
+  // (In the air it's a plain jump, standing tall: not its flying style, which for a great flyer is a
+  // whole loop, nor its running legs going round.)
+  Object.assign(m, { dir: p.dir, speed: !p.air && Math.abs(p.vx) > 4 ? Math.abs(p.vx) : 0, mode: swim ? 'swim' : 'run', inWater: swim, noShadow: p.air });
+  if (!p.air) m.dist += Math.abs(step);
 }
 
 // The tonic for `kind` ('hp' or 'mp') to drink: the strongest one in the bag.

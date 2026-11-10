@@ -1506,7 +1506,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const table = kind === 'swim' ? SWIMS : kind === 'fly' ? FLIES : kind === 'climb' ? CLIMBS : GAITS;
   const stat = kind === 'swim' ? 'swim' : kind === 'fly' ? 'fly' : kind === 'climb' ? 'power' : 'run';
   const pts = m[`${stat}Points`] ?? g.stats?.[stat]?.points ?? 0;
-  const tier = m.tier ?? runStyle(pts);
+  // (Out of a race, `m.easy`: it runs in the style that suits how fast it's going, up to its best,
+  // so a great runner trotting after you trots instead of ninja-dashing at walking pace.)
+  const fits = m.easy && kind === 'run' && (m.speed ?? 0) > 1 ? GAITS.findIndex((gt) => gt.speed >= m.speed * 0.9) : null;
+  const easyTier = fits == null ? null : fits < 0 ? GAITS.length - 1 : fits;
+  const tier = m.tier ?? (easyTier != null ? Math.min(runStyle(pts), easyTier) : runStyle(pts));
   // (Swimming and flying never stop: holding still, it treads water or hovers.)
   const moving = (m.speed ?? 0) > 1 || kind !== 'run';
   // (Not able to yet: crawling, flailing, flopping. `m.cant` reports which.)

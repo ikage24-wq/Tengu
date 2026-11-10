@@ -126,7 +126,7 @@ test('your Mochi is always on something: the ground, a ledge or swimming at the 
       airFor = p.air ? airFor + DT : 0;
       assert.ok(airFor < 1.5, `stuck in the air at ${p.x.toFixed(0)},${p.y.toFixed(0)}`);
       if (!p.air) assert.ok(onSomething(p), `standing on nothing at ${p.x.toFixed(0)},${p.y.toFixed(0)} (${p.m.mode})`);
-      assert.equal(p.m.mode === 'fly', p.air, 'flutters only in the air');
+      assert.notEqual(p.m.mode, 'fly', 'a hop is a plain jump, never its flying style');
     }
   };
   Object.assign(b, { x: 600, y: 990, vx: 0, vy: 0, onGround: false });
@@ -161,4 +161,21 @@ test('the Game Master can put a maxed Mochi in the Garden: every stat S at Lv 99
   for (const s of STATS) assert.ok(rec.stats[s].grade === 'S' && rec.stats[s].level === 99 && rec.stats[s].points > 2400, s);
   while (c.garden.mochi.length < 8) gmCommand(w, 'mochi', []);
   assert.match(gmCommand(w, 'mochi', []), /full/);
+});
+
+test("your Mochi gives up on loot it can't reach, and fetches the rest", () => {
+  const rec = mochi(16, 300);
+  const w = world(rec);
+  takeAlong(w.char, rec);
+  run(w, 0.5);
+  const b = w.body;
+  // (One hanging in the air above you, nothing under it to stand on; one on the ground beside you.)
+  const [high] = spawnDrops([{ kind: 'item', id: 'fluff', qty: 1 }], b.x + 30, b.y - 60);
+  Object.assign(high, { landed: true, y: b.y - 60, vy: 0 });
+  w.drops.push(high);
+  run(w, 1);
+  w.drops.push(...spawnDrops([{ kind: 'item', id: 'shell', qty: 1 }], b.x + 90, b.y));
+  run(w, 8);
+  assert.equal(countItem(w.char.inventory, 'shell'), 1, 'fetched the one it could reach');
+  assert.ok(Math.abs(w.mochi.x - b.x) < 60, 'and came back to you');
 });

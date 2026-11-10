@@ -158,7 +158,7 @@ export function enterGarden(world, owner) {
     caring: null,
   };
 }
-const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, size: rec.stage === 'mochiko' || rec.stage === 'egg' ? 'baby' : 'grown' });
+const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, easy: true, size: rec.stage === 'mochiko' || rec.stage === 'egg' ? 'baby' : 'grown' });
 
 // Each frame: every Mochi heads for where the clock has it (or to you, greeting), stepping along
 // the ground or swimming; at night they're inside, asleep.
