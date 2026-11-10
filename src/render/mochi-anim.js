@@ -1282,6 +1282,14 @@ Object.assign(ACTIONS, {
     KEY(0.6, { closed: [true, true], mouth: 'D', ...OUT(-11), sprout: 'excited', extra: ['spark0'], ease: 'in' }),
     KEY(0.85, { closed: [true, true], mouth: 'D', ...OUT(-13), lift: 2.4, sprout: 'excited', extra: ['spark1'], ease: 'out' }),
     KEY(1.1, { closed: [true, true], mouth: 'D', ...OUT(-11), sprout: 'excited' }), KEY(1.2, {})] },
+  // On the podium: feet planted (its medal stays on its chest), swaying side to side and waving both
+  // arms over its head, eyes squeezed happy, sparkles.
+  podium_cheer: { dur: 1.6, loop: [0.1, 1.5], keys: [
+    KEY(0, {}), KEY(0.1, { closed: [true, true], mouth: 'D', front: [9, -14], back: [-6, -16], tilt: -7, hx: -0.5, sprout: 'excited', extra: ['spark0'] }),
+    KEY(0.5, { closed: [true, true], mouth: 'D', front: [6, -16], back: [-9, -14], tilt: 7, hx: 0.5, sprout: 'excited', extra: ['spark1'] }),
+    KEY(0.9, { closed: [true, true], mouth: 'mochiopen', front: [9, -14], back: [-6, -16], tilt: -7, hx: -0.5, sprout: 'excited', extra: ['spark0'] }),
+    KEY(1.3, { closed: [true, true], mouth: 'D', front: [6, -16], back: [-9, -14], tilt: 7, hx: 0.5, sprout: 'excited', extra: ['spark1'] }),
+    KEY(1.5, { closed: [true, true], mouth: 'D', front: [9, -14], back: [-6, -16], tilt: -7, hx: -0.5 }), KEY(1.6, {})] },
   // Winning: happy tears, hopping with its arms up, sparkles.
   race_joy: { dur: 1.6, loop: [0.1, 1.5], keys: [
     KEY(0, {}), KEY(0.1, { closed: [true, true], mouth: 'D', ...OUT(-12), extra: ['tear0', 'spark0'], sprout: 'happy', blush: 1.9 }),

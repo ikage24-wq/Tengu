@@ -55,7 +55,9 @@ function stadiumMap() {
 // faster (`tire`) and make the worn-out stop to rest (`restAt`: how tired; `rest`: for how long).
 const course = (start, finish, legs, slow = []) => ({ start, finish, legs, slow, total: finish - start + legs.reduce((sum, l) => sum + (l.kind === 'climb' ? l.from - l.to : 0), 0) });
 // The skies: a blossom meadow, a lake, the cliffs, high among the clouds, the warm hills.
-const LOOK = { far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1 };
+// (Calm: no petals drifting across the race and no butterflies over the runners, just a few birds
+// on the grass, so the racers and their reactions read.)
+const LOOK = { far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, critters: ['bird'], drift: null };
 const SKIES = {
   meadow: ['#ffd6e4', '#ffeadc', '#fff8f0'],
   lake: ['#cfe8ff', '#e6f4ff', '#f6fbff'],
@@ -74,7 +76,7 @@ function groundAtX(terrain, x) {
 }
 // The finish: its arch (pennants strung under it), the stands where you watch from just past it, a
 // lantern.
-const finishPieces = (x) => [['mr_arch', x, { kind: 'finish' }], ['mr_stands', x + 96, { w: 320 }], ['mg_lantern', x + 450, 2]];
+const finishPieces = (x) => [['mr_arch', x, { kind: 'finish' }], ['mr_stands', x + 250, { w: 260 }]];
 // (`groundY`: where the land's horizon sits, the backdrop's hills along it; the start's height unless
 // most of the course is lower.)
 function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pieces, race, groundY = terrain[0][1] }) {
@@ -88,7 +90,7 @@ function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pi
     townPieces: [['mr_arch', race.start, { kind: 'start' }], ...pieces, ...finishPieces(race.finish)],
     race,
     portals: [{ id: 'start', x: race.start, y: groundAtX(terrain, race.start), hidden: true }],
-    lamps: [{ x: race.finish + 450, y: groundAtX(terrain, race.finish + 450) - 44, c: '#ffd6a0' }],
+    lamps: [],
     npcs: [], spawns: [], deco: [],
   };
 }

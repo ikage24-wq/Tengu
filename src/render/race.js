@@ -394,7 +394,7 @@ export function drawRace(ctx, world, cam, time) {
     drawMochiAnim(ctx, r.m, x, y, time);
     const top = y - (r.m.size === 'baby' ? 36 : 44);
     // Up on the podium: its medal.
-    if (R.phase === 'done' && r.place <= 3 && r.podCheer) podiumMedal(ctx, x, y - (r.m.size === 'baby' ? 9 : 11), r.place, time);
+    if (R.phase === 'done' && r.place <= 3 && r.podCheer) podiumMedal(ctx, x, y - (r.m.size === 'baby' ? 4.5 : 6.5), r.place, time, r.m.size === 'baby' ? 0.6 : 0.72, r.m.size === 'baby' ? 2.5 : 3.5);
     // The leader's little crown (over yours, above its heart).
     if (r === lead && r.done == null) crown(ctx, x, top - (r.you ? 9 : 0) + Math.sin(time * 3) * 0.8);
     // Its card showing in the opening: a pink arrow bobbing over it.
@@ -666,32 +666,44 @@ function speedStreaks(ctx, speed, time) {
   }
   ctx.restore();
 }
-// The podium: three blocks rising out of the ground in front of the stands (the winner's tallest, in
-// the middle), the place painted on each.
-const PODIUM_COLORS = [['#fff1c4', '#f0c860'], ['#f2f2f8', '#c4c8d8'], ['#ffe2cc', '#e0a878']];
-// Behind it, a rounded cream board trimmed in pink with three stars along its top, so the three on
-// the podium stand out from the crowd in the stands behind.
-const POD_H = 86;
-const podiumArt = () => art('mr-podium', 110, POD_H, () => {
+// The podium: three blocks rising out of the grass between the finish arch and the stands (the
+// winner's tallest, in the middle), each cream with a top in its metal (gold, silver, bronze), a
+// soft band of shade under the lip and its place on a round plate; behind it a rounded pink board
+// with three gold stars, so the three on it stand out from the meadow behind.
+const PODIUM_COLORS = [['#ffd75e', '#e0a830'], ['#e4e8f2', '#b4bacc'], ['#f2b88a', '#c88458']];
+const POD_W = 150;
+const POD_H = 88;
+const BLOCK_W = 36;
+const podiumArt = () => art('mr-podium2', POD_W, POD_H, () => {
+  const c = POD_W / 2;
   const out = [
-    T([[6, POD_H - 10], [6, 22], [16, 8], [55, 2], [94, 8], [104, 22], [104, POD_H - 10]], '#ff9ec0'),
-    F(T([[10, POD_H - 10], [10, 23], [18, 12], [55, 6.5], [92, 12], [100, 23], [100, POD_H - 10]], '#fff6ee')),
-    F(T([[10, 23], [18, 12], [55, 6.5], [92, 12], [100, 23], [100, 25], [92, 14.4], [55, 9], [18, 14.4], [10, 25]], '#ffe2ec')),
+    // The board: pink edge, cream face, a blush band along its top.
+    T([[8, POD_H - 6], [8, 30], [22, 12], [c, 3], [POD_W - 22, 12], [POD_W - 8, 30], [POD_W - 8, POD_H - 6]], '#ff9ec0'),
+    F(T([[12, POD_H - 6], [12, 31], [25, 15.5], [c, 7.5], [POD_W - 25, 15.5], [POD_W - 12, 31], [POD_W - 12, POD_H - 6]], '#fff6ee')),
+    F(T([[12, 31], [25, 15.5], [c, 7.5], [POD_W - 25, 15.5], [POD_W - 12, 31], [POD_W - 12, 34], [POD_W - 25, 18.5], [c, 10.5], [25, 18.5], [12, 34]], '#ffe0ea')),
   ];
-  for (const [x, y, r] of [[30, 13, 3.4], [55, 8, 4.6], [80, 13, 3.4]]) {
+  for (const [x, y, r] of [[c - 32, 21, 3.6], [c, 15, 5], [c + 32, 21, 3.6]]) {
     const pts = [];
     for (let i = 0; i < 10; i++) {
       const a = -Math.PI / 2 + (i * Math.PI) / 5;
-      const rr = i % 2 ? r * 0.45 : r;
+      const rr = i % 2 ? r * 0.46 : r;
       pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
     }
     out.push(T(pts, '#ffd75e'));
   }
   for (const place of [2, 3, 1]) {
     const [dx, h] = PODIUM.blocks[place - 1];
-    const [face, trim] = PODIUM_COLORS[place - 1];
-    const x0 = 55 + dx - 15;
-    out.push(R(x0, POD_H - h, 30, h, face), F(R(x0, POD_H - h, 30, 2.4, '#ffffff')), F(R(x0, POD_H - h + 2.4, 30, 1.6, trim)), F(R(x0, POD_H - 1.6, 30, 1.6, trim)));
+    const [top, deep] = PODIUM_COLORS[place - 1];
+    const x0 = c + dx - BLOCK_W / 2;
+    const y0 = POD_H - h;
+    out.push(
+      R(x0, y0, BLOCK_W, h, '#fffaf2'),
+      F(R(x0, y0, BLOCK_W, 4, top)),
+      F(R(x0, y0 + 4, BLOCK_W, 1.4, deep)),
+      F(R(x0, y0 + 5.4, BLOCK_W, 2, '#f2e4d8')),
+      F(R(x0, POD_H - 2.4, BLOCK_W, 2.4, '#ead6c6')),
+      F(R(x0 + BLOCK_W - 2, y0 + 4, 2, h - 4, '#f0e2d4')),
+    );
   }
   return out;
 });
@@ -700,36 +712,97 @@ function drawPodium(ctx, map, cam, t) {
   const cx = course.finish + PODIUM.x;
   const gy = groundAt(map, cx) - cam.y;
   const k = Math.max(0, Math.min(1, t / 0.6));
-  const rise = (1 - k * k * (3 - 2 * k)) * 30;
+  const e = k * k * (3 - 2 * k);
+  const rise = (1 - e) * POD_H;
+  const base = gy + 1 + rise;
   ctx.save();
   ctx.beginPath();
-  ctx.rect(cx - cam.x - 60, gy - POD_H - 4, 120, POD_H + 6);
+  ctx.rect(cx - cam.x - POD_W / 2 - 2, gy - POD_H - 4, POD_W + 4, POD_H + 6);
   ctx.clip();
-  place(ctx, podiumArt(), snap(cx - cam.x), gy + 1 + rise * (POD_H / 30));
-  ctx.font = '900 9px Nunito, "Trebuchet MS", system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  for (const place of [1, 2, 3]) {
-    const [dx, h] = PODIUM.blocks[place - 1];
-    ctx.fillStyle = PODIUM_COLORS[place - 1][1];
-    ctx.fillText(String(place), cx + dx - cam.x, gy + 1 + rise * (POD_H / 30) - h + 13);
+  place(ctx, podiumArt(), snap(cx - cam.x), base);
+  // Each block's place on a round plate in its metal, white numeral.
+  for (const p of [1, 2, 3]) {
+    const [dx, h] = PODIUM.blocks[p - 1];
+    const [top, deep] = PODIUM_COLORS[p - 1];
+    const x = cx + dx - cam.x;
+    const y = base - Math.max(h / 2 + 0.5, 6.5);
+    ctx.fillStyle = deep;
+    ctx.beginPath();
+    ctx.arc(x, y + 0.8, 4.8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = top;
+    ctx.beginPath();
+    ctx.arc(x, y, 4.8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.arc(x - 1.5, y - 1.7, 1.2, 0, TAU);
+    ctx.fill();
+    ctx.font = '900 6.5px Nunito, "Trebuchet MS", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = deep;
+    ctx.strokeText(String(p), x, y + 2.4);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(String(p), x, y + 2.4);
   }
+  ctx.textAlign = 'left';
   ctx.restore();
 }
-function podiumMedal(ctx, x, y, place, time) {
-  const c = ['#ffcc3a', '#d8dce8', '#e09a5a'][place - 1];
-  const sway = Math.sin(time * 3 + place) * 0.6;
-  ctx.fillStyle = ['#ff6f9a', '#8fc8f0', '#9fe0a0'][place - 1];
+// A medal on the chest of each of the three: a ribbon in two stripes from round its neck down to a
+// round medal in its metal, a darker rim, a star pressed in it, a glint; swinging a little.
+function podiumMedal(ctx, x0, y0, place, time, k = 1, neck = 6) {
+  ctx.save();
+  ctx.translate(x0, y0);
+  ctx.scale(k, k);
+  const x = 0;
+  const y = 0;
+  const [metal, rim] = PODIUM_COLORS[place - 1];
+  const ribbon = [['#ff6f9a', '#ffd0de'], ['#5aa8e8', '#cfe6ff'], ['#5ab86a', '#cdeec8']][place - 1];
+  const sway = Math.sin(time * 2.4 + place) * 0.8;
+  const mx = x + sway;
+  const my = y + 3;
+  // The ribbon: a V from either side of the neck, each side two-tone.
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = ribbon[0];
+    ctx.beginPath();
+    ctx.moveTo(x + side * 4.2, y - neck);
+    ctx.lineTo(x + side * 1.8, y - neck);
+    ctx.lineTo(mx, my - 2.6);
+    ctx.lineTo(mx + side * 1.6, my - 1.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = ribbon[1];
+    ctx.beginPath();
+    ctx.moveTo(x + side * 3.2, y - neck);
+    ctx.lineTo(x + side * 2.6, y - neck);
+    ctx.lineTo(mx + side * 0.6, my - 2.2);
+    ctx.lineTo(mx + side * 1, my - 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.fillStyle = rim;
   ctx.beginPath();
-  ctx.moveTo(x - 3, y - 6);
-  ctx.lineTo(x + sway, y);
-  ctx.lineTo(x + 3, y - 6);
+  ctx.arc(mx, my + 0.5, 4.4, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = c;
+  ctx.fillStyle = metal;
   ctx.beginPath();
-  ctx.arc(x + sway, y + 2, 3, 0, TAU);
+  ctx.arc(mx, my, 4.2, 0, TAU);
   ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(x + sway - 1.4, y + 0.6, 1.2, 1.2);
+  ctx.fillStyle = rim;
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? 1.1 : 2.5;
+    pts.push([mx + Math.cos(a) * rr, my + 0.2 + Math.sin(a) * rr]);
+  }
+  ctx.beginPath();
+  pts.forEach(([px, py], i) => (i ? ctx.lineTo(px, py) : ctx.moveTo(px, py)));
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillRect(mx - 2.6, my - 2.4, 1.2, 1.2);
+  ctx.restore();
 }
 // The leader's crown: a little gold crown with three points and a pink jewel.
 function crown(ctx, x, y) {
@@ -758,18 +831,20 @@ function arrow(ctx, x, y) {
   ctx.closePath();
   ctx.fill();
 }
-// Confetti over the podium: little papers in every flag colour tumbling down.
+// Confetti over the podium: one shower of little papers in the flag colours, falling round the
+// three (the camera's on them) and settling away, not the whole sky.
 function confetti(ctx, t, time) {
-  const k = Math.min(1, Math.max(0, (t - 0.6) / 0.5));
-  if (k <= 0) return;
+  const k = (t - 1.2) / 3.2;
+  if (k <= 0 || k >= 1) return;
   ctx.save();
-  for (let i = 0; i < 46; i++) {
+  for (let i = 0; i < 26; i++) {
     const h = hash(i * 5.7);
-    const fall = 22 + h * 26;
-    const y = ((time * fall + hash(i * 2.3) * (VH + 40)) % (VH + 40)) - 20;
-    const x = hash(i * 9.1) * VW + Math.sin(time * (1.4 + h) + i) * 10;
+    const age = t - 1.2 - hash(i * 3.1) * 0.8;
+    if (age <= 0) continue;
+    const y = VH * 0.18 + age * (34 + h * 22);
+    const x = VW / 2 + (hash(i * 9.1) - 0.5) * 180 + Math.sin(time * (1.4 + h) + i) * 8;
     const flip = Math.abs(Math.sin(time * (3 + h * 3) + i));
-    ctx.globalAlpha = k * 0.9;
+    ctx.globalAlpha = Math.max(0, Math.min(1, age * 4, (1 - k) * 4)) * 0.9;
     ctx.fillStyle = FLAGS[i % FLAGS.length];
     ctx.fillRect(x - 1.5 * flip, y, 3 * flip + 0.4, 2.2);
   }

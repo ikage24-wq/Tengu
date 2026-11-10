@@ -83,7 +83,7 @@ export const SLOW_MO = { secs: 1.4, rate: 0.3 };
 // apart) and cheer, confetti flying, for `secs` seconds (Up skips it once it's begun); then the
 // results. It stands in front of the stands, `x` past the finish; each place's block, how far
 // across from its middle and how tall.
-export const PODIUM = { secs: 5, x: 300, skipAfter: 1.2, hop: 0.6, blocks: [[0, 26], [-30, 18], [30, 12]] };
+export const PODIUM = { secs: 5, x: 150, skipAfter: 1.2, hop: 0.6, blocks: [[0, 26], [-36, 18], [36, 12]] };
 export const podiumSpot = (course, place) => ({ x: course.finish + PODIUM.x + PODIUM.blocks[place - 1][0], h: PODIUM.blocks[place - 1][1] });
 // On the line before Go each lane stands a little apart (so each can be seen), closing up over the
 // first moments of the race (only how they're drawn: everyone runs the same course).
@@ -163,10 +163,12 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
     cam: null,
   };
   loadMap(world, stage.map, 'start');
-  // You watch from the finish, by the crowd at the near end of the stands, facing the runners (clear
-  // of the podium, further along).
-  const at = course.finish + 140;
+  // You watch from the finish, by the crowd at the near end of the stands, facing the runners (past
+  // the podium, which stands on the grass between the finish arch and the stands).
+  const at = course.finish + 280;
   Object.assign(world.body, { x: at, y: groundAt(world.map, at), vx: 0, vy: 0, facing: -1 });
+  // (Your Mochi out with you is the one racing: it leaves your side till the race is over.)
+  world.mochi = null;
   world.race.cam = { x: course.start, y: y0 };
   world.log(`${stage.name} (${RACE_RANKS[rank].name}): on your marks...`, '#ffc2d4');
   return true;
@@ -396,9 +398,11 @@ function podiumStep(world, R) {
   const course = map.race;
   for (const r of R.racers) {
     if (!(r.place >= 1 && r.place <= 3)) continue;
-    r.pod ??= { x: r.x, y: r.y };
     const s = podiumSpot(course, r.place);
-    const top = groundAt(map, s.x) - s.h;
+    // (From wherever it coasted to past the line, just short of the podium, it hops up.)
+    r.pod ??= { x: r.x, y: r.y };
+    // (The podium stands level on the ground at its middle, so every block's top is measured from there.)
+    const top = groundAt(map, course.finish + PODIUM.x) - s.h;
     const k = Math.max(0, Math.min(1, (R.t - 0.8 - (3 - r.place) * 0.35) / PODIUM.hop));
     const e = k * k * (3 - 2 * k);
     r.x = r.pod.x + (s.x - r.pod.x) * e;
@@ -408,7 +412,7 @@ function podiumStep(world, R) {
     Object.assign(r.m, { mode: 'run', speed: 0, noShadow: air, inWater: false, dir: 1, tired: 0, rest: false });
     if (k >= 1 && !r.podCheer) {
       r.podCheer = true;
-      r.m.action = { name: 'cheer', t0: null, hold: 30 };
+      r.m.action = { name: 'podium_cheer', t0: null, hold: 30 };
     }
   }
 }

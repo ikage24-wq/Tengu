@@ -7,7 +7,7 @@
 // What each action sounds like.
 const MOOD = {
   cheer: 'happy', levelup: 'happy', newstyle: 'happy', eat: 'happy', pet: 'happy', tickle: 'happy', play: 'happy', born: 'happy', evolved: 'happy',
-  hops: 'happy', clap: 'happy', twirl: 'happy',
+  hops: 'happy', clap: 'happy', twirl: 'happy', podium_cheer: 'happy', race_joy: 'happy',
   sulk: 'sad', hated: 'sad', sigh: 'sad', farewell: 'sad',
   nap: 'sleepy', yawn: 'sleepy',
   wave: 'call', peek: 'call', lookaround: 'call', full: 'call',
