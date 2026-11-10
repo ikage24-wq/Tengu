@@ -11,12 +11,18 @@ export const DRESS = {
   sakura: { name: 'Sakura Glider', outfit: 'mochisakura', stage: 'glide' },
   kagami: { name: 'Kagami Wrestler', outfit: 'mochikagami', stage: 'climb' },
   monaka: { name: 'Monaka Knight', outfit: 'mochimonaka', stage: 'hills' },
-  // Bought from Kinako, the Garden Keeper: outfits, no hoods (the last only at her secret stall, at night).
+  // Bought from Kinako, the Garden Keeper: outfits, no hoods (the secret ones only at his secret stall, at night).
   study: { name: 'Study Buddy', outfit: 'mochistudy', price: 20000 },
   sailor: { name: 'Sailor Sweet', outfit: 'mochisailor', price: 20000 },
   cozy: { name: 'Cozy Knit', outfit: 'mochicozy', price: 30000 },
   berry: { name: 'Berry Overalls', outfit: 'mochiberry', price: 30000 },
+  chef: { name: 'Little Chef', outfit: 'mochichef', price: 25000 },
+  rain: { name: 'Raindrop Slicker', outfit: 'mochirain', price: 25000 },
+  artist: { name: 'Little Artist', outfit: 'mochiartist', price: 35000 },
+  bee: { name: 'Honey Bee', outfit: 'mochibee', price: 35000 },
+  disco: { name: 'Disco Star', outfit: 'mochidisco', price: 60000 },
   starry: { name: 'Starry Night', outfit: 'mochistarry', price: 120000, secret: true },
+  cloud: { name: 'Cloud Pajamas', outfit: 'mochicloud', price: 90000, secret: true },
 };
 // Whether `char` has won costume `id`.
 export const dressOpen = (char, id) => Boolean(DRESS[id] && (DRESS[id].free || char.raceWins?.[`${DRESS[id].stage}|beginner`] || char.dressBought?.includes(id)));

@@ -217,6 +217,11 @@ if (q.has('dress')) {
   const ids = ['daifuku', 'dango', 'warabi', 'sakura', 'kagami', 'monaka'];
   c.garden.mochi.forEach((rec, i) => { rec.dress = ids[i % ids.length]; });
 }
+// (?wear=chef,rain,...: the Mochi wear these, one each in turn.)
+if (q.get('wear')) {
+  const ids = q.get('wear').split(',');
+  c.garden.mochi.forEach((rec, i) => { rec.dress = ids[i % ids.length]; });
+}
 // (?lineup=1: everyone stands in a row beside you, facing you: for looking at them.)
 if (q.has('lineup')) life.mochi.forEach((e, i) => Object.assign(e, { x: w.body.x + 34 + i * 34, greet: null, busyUntil: Date.now() / 1000 + 9999 }));
 // (?info=1: Mochi 1's page.)

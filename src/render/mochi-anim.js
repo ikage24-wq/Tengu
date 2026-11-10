@@ -1579,7 +1579,11 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // (Swimming and flying never stop: holding still, it treads water or hovers.)
   const moving = (m.speed ?? 0) > 1 || kind !== 'run';
   // (Not able to yet: crawling, flailing, flopping. `m.cant` reports which.)
-  const cant = m.tier != null || !moving ? null : kind === 'run' && pts < CANT.run ? 'crawl' : kind === 'swim' && pts < CANT.swim ? 'flail' : kind === 'fly' && pts < CANT.fly ? 'flop' : null;
+  const cant0 = m.tier != null || !moving ? null : kind === 'run' && pts < CANT.run ? 'crawl' : kind === 'swim' && pts < CANT.swim ? 'flail' : kind === 'fly' && pts < CANT.fly ? 'flop' : null;
+  // (A crawler turning round, or pausing for a blink, stays down on all fours: it only sits up once
+  // it's been still a moment. Otherwise each turn popped it up onto its feet and back down, a hop.)
+  if (cant0 === 'crawl') st.crawlAt = time;
+  const cant = cant0 ?? (m.tier == null && kind === 'run' && !m.action && pts < CANT.run && time - (st.crawlAt ?? -9) < 0.45 ? 'crawl' : null);
   m.cant = cant;
   const mvT = cant ? CANT_MOVES[cant] : table[tier];
   // The cycle follows the distance travelled. Arms, legs and face (what's drawn) step through it on
@@ -1592,7 +1596,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   // (While an act's face is on, the limbs step at half the rate: the face is what's being drawn new.)
   const N0 = kind === 'swim' ? 32 : Math.max(16, Math.min(32, Math.round((cycle * 30) / 4) * 4));
   const N = st.act && kind !== 'swim' ? N0 / 2 : N0;
-  const phase = moving ? Math.floor(pc * N) / N : 0;
+  // (Held down on all fours through a turn, it keeps the stroke it was in rather than snapping back.)
+  const phase = moving ? Math.floor(pc * N) / N : cant === 'crawl' ? st.crawlPh ?? 0 : 0;
+  if (cant === 'crawl') st.crawlPh = phase;
   const poseAt = (ph) => (cant ? cantPose(cant, ph) : kind === 'swim' ? swimPose(tier, ph) : kind === 'fly' ? flyPose(tier, ph) : kind === 'climb' ? climbPose(tier, ph) : gaitPose(tier, ph));
   // Running wears it out, as much as its Stamina allows (standing, it gets its breath back); the
   // most tired stop to catch their breath. (`m.fatigue` and `m.resting` tell whoever moves it.)

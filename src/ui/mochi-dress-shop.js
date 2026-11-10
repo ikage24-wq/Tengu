@@ -1,7 +1,7 @@
 // Kinako's costumes (ui/npc.js, her "Mochi costumes"): the dress-up she sells (data/mochi-dress.js,
-// the ones with a price; the Tsukimi Usagi only at night, at her secret stall). On the left, one of
+// the ones with a price; the secret ones only at night, at his secret stall). On the left, one of
 // your Mochi trying the picked costume on, big, in a photo (arrows: your other Mochi); on the right,
-// her costumes as cards, each with its price or "Yours". Buy it and every Mochi of yours can wear it
+// his outfits as cards, each with its price or "Yours". Buy it and every Mochi of yours can wear it
 // (the Mochi page's "Wears").
 
 import { DRESS, dressOpen } from '../data/mochi-dress.js';
@@ -61,31 +61,33 @@ export function dressShopWindow(ui, state, world) {
   } else {
     text(ctx, 'Hatch a Mochi first', x + pw / 2, y + ph / 2, { size: 7.5, bold: true, align: 'center', color: COLORS.muted });
   }
-  // ---- Right: her costumes.
+  // ---- Right: his outfits.
   const rx = x + pw + 10;
   const rw = W - 20 - pw - 10;
-  heading(ctx, isNight(world) ? 'Outfits (and a secret one!)' : 'Outfits', rx, y, rw);
+  heading(ctx, isNight(world) ? 'Outfits (and secret ones!)' : 'Outfits', rx, y, rw);
+  // (Two columns of cards: there are a dozen of them now.)
+  const cw = (rw - 4) / 2;
   ids.forEach((id, i) => {
     const d = DRESS[id];
-    const cy = y + 12 + i * 27;
+    const cx = rx + (i % 2) * (cw + 4);
+    const cy = y + 12 + Math.floor(i / 2) * 25;
     const on = dlg.pickDress === id;
     const owned = dressOpen(char, id);
-    const over = hover(ui, rx, cy, rw, 24);
+    const over = hover(ui, cx, cy, cw, 23);
     ctx.fillStyle = on ? (d.secret ? '#f0e8ff' : '#fff0f6') : over ? '#fffafc' : '#ffffff';
-    roundRect(ctx, rx, cy, rw, 24, 8);
+    roundRect(ctx, cx, cy, cw, 23, 8);
     ctx.fill();
     ctx.strokeStyle = on ? (d.secret ? '#a88ae0' : '#ff8fb8') : '#f0dce6';
     ctx.lineWidth = on ? 1.4 : 1;
     ctx.stroke();
-    icon(ctx, d.secret ? 'moon' : 'hanger', rx + 11, cy + 12, 9, d.secret ? '#8a6ad0' : '#e0659f');
-    text(ctx, d.name, rx + 22, cy + 10.5, { size: 7.5, bold: true });
-    text(ctx, d.secret ? 'Secret: only after dark' : 'Every Mochi of yours can wear it', rx + 22, cy + 19, { size: 5.8, color: COLORS.muted });
-    if (owned) tag(ctx, 'Yours', rx + rw - 6, cy + 12, '#62c072', { align: 'right' });
+    icon(ctx, d.secret ? 'moon' : 'hanger', cx + 9, cy + 11.5, 8, d.secret ? '#8a6ad0' : '#e0659f');
+    text(ctx, d.name, cx + 18, cy + 9.6, { size: 6.6, bold: true });
+    if (owned) text(ctx, 'Yours', cx + 18, cy + 19, { size: 6.4, bold: true, color: '#62c072' });
     else {
-      icon(ctx, 'coin', rx + rw - 46, cy + 12, 7, '#e0a82a');
-      text(ctx, d.price.toLocaleString(), rx + rw - 6, cy + 14.6, { size: 7, bold: true, align: 'right', color: char.gold >= d.price ? '#c89a20' : COLORS.bad });
+      icon(ctx, 'coin', cx + 21, cy + 16.6, 6, '#e0a82a');
+      text(ctx, d.price.toLocaleString(), cx + 26, cy + 19, { size: 6.4, bold: true, color: char.gold >= d.price ? '#c89a20' : COLORS.bad });
     }
-    if (clicked(ui, rx, cy, rw, 24)) dlg.pickDress = id;
+    if (clicked(ui, cx, cy, cw, 23)) dlg.pickDress = id;
   });
   // ---- Buy the picked one.
   const d = DRESS[dlg.pickDress];

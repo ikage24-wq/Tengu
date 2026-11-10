@@ -141,7 +141,7 @@ export function loadMap(world, mapId, portalId) {
       addItem(world.char.inventory, 'msweet_kinakomochi', 2);
       world.char.gold += 500;
       world.log('This little valley is your Mochi Garden! Two eggs are waiting by the egg stall: walk up and press Up to rock them. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
-      world.log("Kinako, the Garden Keeper, gives you 500 gold and two Kinako Mochi to welcome you. Talk to her (Up) if you're not sure what to do!", '#ffe36b');
+      world.log("Kinako, the Garden Keeper, gives you 500 gold and two Kinako Mochi to welcome you. Talk to him (Up) if you're not sure what to do!", '#ffe36b');
     }
     refreshGarden(world.char, world.gardenVisit ?? null);
     enterGarden(world, world.gardenVisit ?? world.char);

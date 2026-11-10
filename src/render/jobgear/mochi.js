@@ -138,6 +138,12 @@ const NAVY = '#36488a';
 const CARDIGAN = '#f6e2c4';
 const PLAID = '#9a7ac8';
 const KNIT = '#f4e6d2';
+const SLICKER = '#ffd84a';
+const SMOCK = '#c8b8f0';
+const HONEY = '#ffd23a';
+const BEE_DK = '#5a3a1a';
+const SEQUIN = '#b06ae0';
+const PJ = '#dfe8ff';
 const SCARF = '#86d6bc';
 const OVERALL = '#ff9ec0';
 
@@ -167,12 +173,6 @@ const waves = (x0, x1, y, c) => {
 // The eyes sit at (11.2, 18.2) and (19.8, 18.2) on the head.
 const EYE_AT = [11.2, 19.8];
 const EYE_Y = 18.2;
-// Round glasses: a rim round each eye, a lit top edge, a glint, the bridge and the arms.
-function roundGlasses(c) {
-  return [...EYE_AT.flatMap((x) => [F(crescent([x, EYE_Y, 3.5, 3.5], [x, EYE_Y, 2.8, 2.8], -1, 361, c)), F(crescent([x, EYE_Y, 3.5, 3.5], [x, EYE_Y, 3, 3], 40, 140, shade(c, 30))),
-    F(limb(x - 1.8, EYE_Y - 1.4, x - 0.8, EYE_Y - 2.2, 0.35, 0.28, '#ffffff'))]),
-    F(limb(14.4, EYE_Y - 0.6, 16.6, EYE_Y - 0.6, 0.45, 0.45, c)), F(R(4.2, EYE_Y - 1.2, 3.6, 0.8, c)), F(R(23.2, EYE_Y - 1.2, 3.6, 0.8, c))];
-}
 // A heart's outline round (cx, cy), `r` its size.
 const heartPts = (cx, cy, r) => Array.from({ length: 24 }, (_, i) => {
   const t = (i / 24) * Math.PI * 2;
@@ -193,6 +193,30 @@ const starPts = (x, y, r, c) => T(Array.from({ length: 10 }, (_, i) => {
 function starGlasses(c) {
   return [...EYE_AT.flatMap((x) => [F(starPts(x, EYE_Y, 4.6, c)), F(starPts(x, EYE_Y, 3, '#4a3f7a')), F(E(x - 0.9, EYE_Y - 1, 0.6, 0.5, '#ffffff'))]),
     F(limb(14.6, EYE_Y - 0.6, 16.4, EYE_Y - 0.6, 0.45, 0.45, c)), F(R(3.4, EYE_Y - 1, 3, 0.8, c)), F(R(24.6, EYE_Y - 1, 3, 0.8, c))];
+}
+// Big round glasses (2026-11-10, the player's ask: larger glasses): rims round most of the face, a
+// lit top edge, two glints; `lens` tints them (null: clear, the eyes show through).
+function bigGlasses(c, lens = null, r = 4.55) {
+  return [...EYE_AT.flatMap((x, i) => {
+    const cx = x + (i ? 0.3 : -0.3);
+    return [...(lens ? [F(E(cx, EYE_Y, r - 0.5, r - 0.5, lens))] : []),
+      F(crescent([cx, EYE_Y, r, r], [cx, EYE_Y, r - 0.8, r - 0.8], -1, 361, c)), F(crescent([cx, EYE_Y, r, r], [cx, EYE_Y, r - 0.45, r - 0.45], 40, 140, shade(c, 34))),
+      F(limb(cx - 2.2, EYE_Y - 1.2, cx - 0.9, EYE_Y - 2.5, 0.4, 0.32, '#ffffff')), F(E(cx + 1.9, EYE_Y + 1.9, 0.35, 0.35, '#ffffff'))];
+  }), F(limb(15, EYE_Y - 1, 16, EYE_Y - 1, 0.5, 0.5, c)), F(R(2.6, EYE_Y - 1.2, 4, 0.9, c)), F(R(24.4, EYE_Y - 1.2, 4, 0.9, c))];
+}
+// Big square disco shades: chunky frames, tinted lenses lit along the top, a streak of light.
+function retroShades(c, lens) {
+  return [...EYE_AT.flatMap((x, i) => {
+    const cx = x + (i ? 0.4 : -0.4);
+    return [F(R(cx - 4.2, EYE_Y - 3.2, 8.4, 6.2, c)), F(R(cx - 3.4, EYE_Y - 2.4, 6.8, 4.6, lens)), F(R(cx - 3.4, EYE_Y - 2.4, 6.8, 1.1, shade(lens, 34))),
+      F(limb(cx - 2.4, EYE_Y + 1.4, cx - 0.4, EYE_Y - 1.4, 0.35, 0.3, '#ffffff'))];
+  }), F(R(14.8, EYE_Y - 2.4, 1.4, 1, c)), F(R(2.2, EYE_Y - 2, 4, 1, c)), F(R(24.8, EYE_Y - 2, 4, 1, c))];
+}
+// A sleep mask pushed up on its forehead, with sleepy closed eyes and lashes drawn on.
+function sleepMask(c, line) {
+  return [F(R(1.6, 9.6, 27.8, 1.1, shade(c, -22))), ...EYE_AT.flatMap((x) => [F(E(x, 10.4, 4.2, 2.8, c)), F(E(x - 0.8, 9.2, 2, 0.7, shade(c, 18))),
+    F(crescent([x, 10.2, 1.9, 1.4], [x, 9.7, 1.9, 1.2], 200, 340, line)), ...[-1.4, 0, 1.4].map((d) => F(limb(x + d, 11.3, x + d * 1.4, 12.4, 0.2, 0.15, line)))]),
+    F(E(15.5, 10.6, 2, 1.8, c)), F(T(heartPts(15.5, 10.6, 1.1), '#ff8fb0'))];
 }
 // A bow tie at (x, y).
 const bowTie = (x, y, c) => [T([[x, y], [x - 3, y - 1.6], [x - 3, y + 1.6]], c), T([[x, y], [x + 3, y - 1.6], [x + 3, y + 1.6]], c), E(x, y, 0.9, 0.9, shade(c, -20))];
@@ -372,7 +396,7 @@ export const MOCHI_OUTFITS = {
   // a scarf, a hair clip, a backpack, a cape.
   // ---------- Study Buddy: round pink glasses, a cardigan over a blouse, a red bow tie, plaid shorts ----------
   mochistudy: {
-    hat: () => roundGlasses('#ff8fb0'),
+    hat: () => bigGlasses('#ff8fb0'),
     top: () => [...tunic(CARDIGAN, shade(CARDIGAN, -14), 36),
       T([[12, 25.6], [19, 25.6], [17, 33.6], [15.5, 34.4], [14, 33.6]], '#ffffff'),
       F(limb(12, 25.6, 14.4, 34, 0.4, 0.4, shade(CARDIGAN, -18))), F(limb(19, 25.6, 16.6, 34, 0.4, 0.4, shade(CARDIGAN, -18))),
@@ -467,6 +491,116 @@ export const MOCHI_OUTFITS = {
         ...[[10, 31], [13, 37.4], [19.4, 34], [8.6, 39.6], [21.6, 40]].map(([x, y]) => F(starPts(x + s * 0.3, y, 0.9, GOLD)))];
     },
     shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#ffffff')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c(NIGHT)), k.poly([[0, -1], [1, -1], [1, 0], [0, 0]], c(GOLD))],
+  },
+
+  // ---------- More of Kinako's outfits (2026-11-10): bigger glasses, cute themes ----------
+  // ---------- Little Chef: big red glasses, a double-breasted chef's jacket, a red neckerchief ----------
+  mochichef: {
+    hat: () => bigGlasses('#e8485e'),
+    top: () => [...tunic('#ffffff', '#e8e2ee', 36),
+      F(limb(17.6, 27, 17.6, 34.6, 0.3, 0.3, '#e0dae6')), ...dots([[13.2, 28.8], [13.2, 31.6], [19.6, 28.8], [19.6, 31.6]], 0.55, '#c8c0d2'),
+      // The neckerchief, knotted at the side, its point sticking out.
+      E(15.5, 25.6, 6.4, 1.8, '#e8485e'), T([[18.4, 25.4], [21.6, 27.2], [19.2, 29]], '#e8485e'), F(E(18.6, 25.8, 1.1, 1.1, shade('#e8485e', -18)))],
+    sleeve: () => '#ffffff',
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? '#ffffff' : '#ebe6f0')],
+    legs: bareLegs,
+    // Checked trousers, cut short.
+    skirt: () => [...puffs('#3a3a48', '#24242e'), ...[0, 1, 2, 3, 4, 5].flatMap((i) => [0, 1, 2].map((j) => [9.4 + i * 2.3, 35 + j * 2.2, (i + j) % 2]))
+      .filter(([x, y, on]) => on && !(y > 38.2 && Math.abs(x + 0.6 - 15.6) < 1.6)).map(([x, y]) => F(R(x, y, 1.1, 1.1, '#f4f0f8')))],
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#ffffff')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c('#3a3a48'))],
+    // A wooden spoon tucked in at its back.
+    back: () => [F(limb(9.6, 38, 7, 27.4, 0.55, 0.5, '#c8945a')), E(6.6, 26, 1.8, 2.4, '#c8945a'), F(E(6.2, 25.4, 0.7, 0.9, '#e2b47a'))],
+  },
+
+  // ---------- Raindrop Slicker: big blue glasses, a yellow raincoat with toggles, rain boots ----------
+  mochirain: {
+    hat: () => [...bigGlasses('#4a8fd8'), T([[22.8, 5], [24.4, 8.2], [21.2, 8.2]], '#7ec8f0'), E(22.8, 8.8, 1.7, 1.7, '#7ec8f0'), F(E(22.2, 8.4, 0.5, 0.6, '#ffffff'))],
+    top: () => [...tunic(SLICKER, shade(SLICKER, -16), 36.6),
+      F(limb(15.5, 27.6, 15.5, 36.4, 0.35, 0.35, shade(SLICKER, -22))),
+      // The big collar, the toggles on their loops, a pocket flap.
+      T([[9.8, 24.8], [15.5, 27.6], [21.2, 24.8], [21.4, 26.6], [15.5, 29.4], [9.6, 26.6]], shade(SLICKER, 10)),
+      ...[30, 32.6, 35].flatMap((y) => [F(R(14.4, y - 0.3, 2.2, 0.6, '#8a5a34')), F(E(15.5, y, 0.5, 0.45, '#6a4428'))]),
+      F(R(10.4, 32, 3.6, 1.1, shade(SLICKER, -14))), F(R(17.2, 32, 3.6, 1.1, shade(SLICKER, -14)))],
+    sleeve: () => SLICKER,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? SLICKER : shade(SLICKER, -12))],
+    legs: bareLegs,
+    skirt: () => [...puffs('#7ec8f0', '#5aa8d8'), ...dots([[11, 37.4], [19.8, 36.6], [12.6, 40.2], [18.6, 40]], 0.45, '#ffffff')],
+    shoe: (p, k, c) => [k.poly([[-2.6, -3.4], [2.8, -3.4], [3.4, 2.6], [-2.8, 2.6]], c(SLICKER)), k.poly([[-2.8, 1.8], [3.4, 1.8], [3.4, 2.8], [-2.8, 2.8]], c('#4a8fd8')), k.dot(0.8, -2, 0.6, c('#ffffff'))],
+  },
+
+  // ---------- Little Artist: big tortoiseshell glasses, a paint-spattered smock, a palette ----------
+  mochiartist: {
+    hat: () => [...bigGlasses('#8a5a3a'), ...[[8, 15.4], [6.9, 19.4], [12.6, 22], [18.4, 14.6], [23.8, 17.6], [21.6, 22.2]].map(([x, y]) => F(E(x, y, 0.55, 0.45, '#d8a060')))],
+    top: () => [...tunic(SMOCK, shade(SMOCK, -14), 36.6),
+      E(15.5, 25.4, 5.6, 1.6, '#ffffff'), ...[11.6, 13.6, 15.5, 17.4, 19.4].map((x) => F(E(x, 26.6, 1, 0.8, '#ffffff'))),
+      // Paint splats, and a brush in the front pocket.
+      ...[[11.4, 30, '#ff8fb0'], [19.8, 28.8, '#ffd66b'], [12.6, 34.4, '#86d6bc'], [18.4, 35, '#7ab4ff']].flatMap(([x, y, c]) => [F(E(x, y, 0.9, 0.8, c)), F(E(x + 0.9, y + 0.7, 0.35, 0.35, c))]),
+      F(limb(18.2, 32.4, 19.8, 27.8, 0.4, 0.35, '#c8945a')), F(E(20, 27.2, 0.6, 0.9, '#ff6f9a')), R(16.4, 31.6, 4.4, 3.4, shade(SMOCK, -10)), F(R(16.4, 31.6, 4.4, 0.7, shade(SMOCK, 10)))],
+    sleeve: () => SMOCK,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? SMOCK : shade(SMOCK, -12))],
+    legs: bareLegs,
+    skirt: () => puffs('#6a5a8a', '#4e4270'),
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#f4ecdc')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c('#6a5a8a')), k.dot(1, -0.2, 0.45, c('#ff8fb0'))],
+    // The palette on its back, a thumb hole and blobs of paint.
+    back: () => [E(7.4, 31.4, 4.8, 3.8, '#e8c890'), F(E(9, 32.4, 1, 0.8, '#c8a468')), ...[[5, 30], [6.6, 28.6], [8.6, 29.2], [4.8, 32.6]].map(([x, y], i) => F(E(x, y, 0.8, 0.7, ['#ff6f9a', '#ffd66b', '#7ab4ff', '#86d6bc'][i])))],
+  },
+
+  // ---------- Honey Bee: big amber glasses, bobbing antennae, a striped top, little wings ----------
+  mochibee: {
+    hat: (p, m) => {
+      const s = (m?.hair ?? 0) * 0.8;
+      return [...bigGlasses('#5a3a1a', '#f2a830'),
+        ...[[11.4, 6.4, 9.2, 1.2], [19.6, 6.4, 21.8, 1.2]].flatMap(([x0, y0, x1, y1]) => [F(limb(x0, y0, x1 + s, y1, 0.4, 0.35, '#3a2a1a')), F(E(x1 + s, y1, 1.2, 1.2, '#3a2a1a')), F(E(x1 + s - 0.4, y1 - 0.4, 0.4, 0.35, '#8a6a4a'))])];
+    },
+    top: () => [...tunic(HONEY, BEE_DK, 36), ...[28.2, 31.4, 34].map((y) => F(R(8.8, y, 13.6, 1.5, BEE_DK))),
+      E(15.5, 25.4, 6.6, 1.9, '#fff3c4'), ...[10.4, 12.8, 15.5, 18.2, 20.6].map((x) => F(E(x, 26.8, 1.2, 0.9, '#fff3c4')))],
+    sleeve: () => HONEY,
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? HONEY : shade(HONEY, -12)), F(R(-2.6, 2.2, 5.2, 0.9, BEE_DK))],
+    legs: bareLegs,
+    skirt: () => puffs(BEE_DK, shade(BEE_DK, -16)),
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c(HONEY)), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c(BEE_DK))],
+    // Two pairs of little wings, fluttering a touch with its step.
+    back: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.5;
+      return [E(6.4 - s, 27.6, 4.4, 2.8, '#e8f6ff'), F(E(6.6 - s, 27.4, 3.4, 1.8, '#f6fcff')), E(7.4 - s * 0.6, 31.6, 3, 2, '#e0f0fc'), F(limb(4, 27.2, 9.6, 28.4, 0.2, 0.2, '#b8dcf0'))];
+    },
+  },
+
+  // ---------- Disco Star: huge pink square shades, a sparkly sequin jacket, gold platforms ----------
+  mochidisco: {
+    hat: () => retroShades('#ff6fb0', '#5a3a7a'),
+    top: () => [...tunic(SEQUIN, shade(SEQUIN, -18), 36),
+      T([[12.6, 25.4], [18.4, 25.4], [15.5, 31.6]], '#ffffff'),
+      T([[10.4, 24.8], [12.6, 25.4], [15.5, 31.6], [11.4, 29.4]], shade(SEQUIN, 16)), T([[20.6, 24.8], [18.4, 25.4], [15.5, 31.6], [19.6, 29.4]], shade(SEQUIN, 16)),
+      ...[[11, 32], [13.4, 34.4], [19.8, 32.6], [17.8, 34.8], [12.2, 27.8], [19.4, 27.6]].map(([x, y]) => F(starPts(x, y, 0.9, '#fff0fa'))),
+      ...dots([[10.2, 34.8], [21, 30.4], [16.6, 33.2]], 0.35, GOLD)],
+    sleeve: () => SEQUIN,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.4, 2.9, side > 0 ? SEQUIN : shade(SEQUIN, -14)), F(starPts(0.6, 0.4, 0.8, '#fff0fa'))],
+    legs: bareLegs,
+    skirt: () => [...puffs('#ffffff', '#e6dcf0'), ...dots([[10.8, 37], [20.2, 37.4]], 0.4, '#ff6fb0')],
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 1.6], [-2.8, 1.6]], c(GOLD)), k.poly([[-2.9, 1.6], [3.3, 1.6], [3.3, 3.4], [-2.9, 3.4]], c(shade(GOLD, -22))), k.dot(0.4, 0.2, 0.5, c('#fff6c8'))],
+  },
+
+  // ---------- Cloud Pajamas (Kinako's secret, at night): a sleep mask pushed up, moon-print pajamas ----------
+  mochicloud: {
+    hat: () => sleepMask('#ffa8c8', '#5a2a4a'),
+    top: () => [...tunic(PJ, shade(PJ, -12), 36),
+      T([[10.4, 24.8], [15.5, 27.4], [13.2, 28.8]], '#ffffff'), T([[20.6, 24.8], [15.5, 27.4], [17.8, 28.8]], '#ffffff'),
+      F(limb(10.6, 25, 13.2, 28.6, 0.25, 0.25, '#8a9ae0')), F(limb(20.4, 25, 17.8, 28.6, 0.25, 0.25, '#8a9ae0')),
+      ...dots([[15.5, 29.6], [15.5, 32], [15.5, 34.4]], 0.5, '#ffffff'),
+      ...[[11.6, 31.4], [19.6, 33.6]].map(([x, y]) => F(crescent([x, y, 1.4, 1.4], [x + 0.7, y - 0.4, 1.2, 1.2], -1, 361, '#ffe08a'))),
+      ...[[19.4, 29.4], [12, 35]].map(([x, y]) => F(starPts(x, y, 0.8, '#ffe08a')))],
+    sleeve: () => PJ,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? PJ : shade(PJ, -12))],
+    legs: bareLegs,
+    skirt: () => [...puffs(PJ, shade(PJ, -14)), F(starPts(11.4, 38.4, 0.8, '#ffe08a')), F(crescent([20, 38.2, 1.2, 1.2], [20.6, 37.8, 1, 1], -1, 361, '#ffe08a'))],
+    // Fluffy slippers with a pom-pom.
+    shoe: (p, k, c) => [k.poly([[-2.8, -1.4], [3, -1.4], [3.6, 2.6], [-3, 2.6]], c('#ffffff')), k.poly([[-3, 1.8], [3.6, 1.8], [3.6, 2.8], [-3, 2.8]], c('#dfe4f4')), k.dot(1.4, -1.2, 1, c('#b8c8f8'))],
   },
 };
 
