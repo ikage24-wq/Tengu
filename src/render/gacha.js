@@ -5,7 +5,8 @@
 
 import { E, T, F, R, sprite, blit, snap, mix, shade } from './pixel.js';
 import { ITEMS } from '../data/items.js';
-import { GACHA_LOOKS, GACHA_SETS } from '../data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_SETS, COLOURWAYS } from '../data/outfits-gacha.js';
+import { recolourCtx } from '../core/colourway.js';
 
 const INK = '#3a2d4f';
 const RARITY = {
@@ -412,29 +413,47 @@ export function drawBurst(ctx, x, y, t, rarity = 'common') {
 const TAU = Math.PI * 2;
 
 // The effects a hero's worn gear carries: { fx: Set, sets: Set }, or null when there are none.
+// Shiny pieces (their set's colourway) carry their effects separately, in that colourway:
+// { ..., shiny: [{ fx, sets, way }] }. A set bonus is shiny when every piece of it is.
 export function outfitFx(gear) {
   if (!gear) return null;
   let fx = null;
   const worn = new Map();
+  const shinyFx = new Map();
   for (const inst of Object.values(gear)) {
     const def = inst?.id ? ITEMS[inst.id] : null;
     if (def?.family !== 'gacha') continue;
     const e = GACHA_LOOKS[def.tier];
     if (!e) continue;
-    if (!worn.has(e.machine)) worn.set(e.machine, new Set());
-    worn.get(e.machine).add(e.key);
-    if (e.fx) (fx ??= new Set()).add(e.fx);
-    if (e.fx2) (fx ??= new Set()).add(e.fx2);
+    if (!worn.has(e.machine)) worn.set(e.machine, new Map());
+    const shiny = inst.variant === 'shiny' && COLOURWAYS[e.machine];
+    worn.get(e.machine).set(e.key, Boolean(shiny));
+    const into = shiny ? (shinyFx.get(e.machine) ?? shinyFx.set(e.machine, new Set()).get(e.machine)) : (fx ??= new Set());
+    if (e.fx) into.add(e.fx);
+    if (e.fx2) into.add(e.fx2);
   }
   if (!worn.size) return null;
   const sets = new Set();
+  const shinySets = new Map();
   for (const [machine, keys] of worn) {
     if (GACHA_SETS[machine] && GACHA_LOOKS.filter((e) => e.machine === machine).every((e) => keys.has(e.key))) {
-      sets.add(GACHA_SETS[machine].fx);
-      (fx ??= new Set()).add(GACHA_SETS[machine].fx);
+      const all = [...keys.values()].every(Boolean);
+      if (all) shinySets.set(machine, GACHA_SETS[machine].fx);
+      else {
+        sets.add(GACHA_SETS[machine].fx);
+        (fx ??= new Set()).add(GACHA_SETS[machine].fx);
+      }
     }
   }
-  return fx ? { fx, sets } : null;
+  const shiny = [];
+  for (const [machine, f] of shinyFx) {
+    const s = new Set(shinySets.has(machine) ? [shinySets.get(machine)] : []);
+    for (const k of s) f.add(k);
+    // (A set's other pieces worn plain still show their own effects, with the shiny ones' set bonus.)
+    shiny.push({ fx: f, sets: s, way: COLOURWAYS[machine] });
+  }
+  if (!fx && !shiny.length) return null;
+  return { fx: fx ?? new Set(), sets, shiny };
 }
 
 const ease = (u) => u * u * (3 - 2 * u);
@@ -1384,6 +1403,11 @@ function poseFor(back, x, y) {
 // Draws one layer ('back', behind the hero, or 'front') of the worn looks' effects. (x, y) is
 // where the hero stands; `state` gives the time, scale, facing and whether they're on the move.
 export function drawOutfitFx(ctx, worn, layer, x, y, state) {
+  if (worn.shiny?.length) {
+    for (const s of worn.shiny) drawOutfitFx(recolourCtx(ctx, s.way), { fx: s.fx, sets: s.sets }, layer, x, y, state);
+    if (!worn.fx.size) return;
+    worn = { fx: worn.fx, sets: worn.sets };
+  }
   const t = (state.time ?? 0) + (state.seed ?? 0) * 1.37;
   const s = state.scale ?? 1;
   const f = state.facing ?? 1;

@@ -3,6 +3,7 @@
 // it stronger.
 
 import { SETS, SET_SLOTS, setPieceId } from './sets.js';
+import { GACHA_LOOKS, SHINY_VARIANTS } from './outfits-gacha.js';
 import { FISH, RARITY_NAMES } from './fishing.js';
 import { DISHES, FEASTS } from './cooking.js';
 import { GATHERED } from './gathering.js';
@@ -354,6 +355,8 @@ export function variantsFor(def) {
   // Cash outfits come in the colors of the look they wear; endgame weapon covers don't.
   if (def?.type === 'cash') return def.cover ? (def.cover.tier ? VARIANTS : null) : variantsFor(ITEMS[def.skin]);
   // Casual and funny looks come in the gear colors unless they have one look only.
+  // (A capsule piece comes in its set's colours or, shiny, its colourway.)
+  if (def?.type === 'look' && def.family === 'gacha') return SHINY_VARIANTS[GACHA_LOOKS[def.tier]?.machine] ?? null;
   if (def?.type === 'look') return def.colors === false ? null : VARIANTS;
   if (!def || def.type !== 'equip' || def.legacy || def.unique || def.endgame) return null;
   if (def.slot === 'earring') return def.design === 'jewel' ? GEMS : null;

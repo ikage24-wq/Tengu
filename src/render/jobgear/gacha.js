@@ -5,7 +5,8 @@
 // with the hair spring.
 import { R, E, T, F, mix } from '../pixel.js';
 import { torsoPts, band, MID } from '../figure.js';
-import { GACHA_LOOKS } from '../../data/outfits-gacha.js';
+import { GACHA_LOOKS, COLOURWAYS } from '../../data/outfits-gacha.js';
+import { recolour, recolourShapes } from '../../core/colourway.js';
 
 const WHITE = '#ffffff';
 const LEAF = '#7fd17a';
@@ -883,22 +884,29 @@ const D = {
 // ---------- The job-module interface ----------
 
 const of = (t) => D[GACHA_LOOKS[t]?.key] ?? {};
+// A shiny piece (its `shiny` variant) is drawn as usual, then repainted in its set's colourway.
+const wayOf = (t, p) => (p?.variant === 'shiny' ? COLOURWAYS[GACHA_LOOKS[t]?.machine] ?? null : null);
+const S = (t, p, shapes) => recolourShapes(shapes, wayOf(t, p));
+const C1 = (t, p, c) => recolour(c, wayOf(t, p));
 
 export default {
-  hat: (t, p, m) => of(t).hat?.(p, m) ?? [],
-  hatBack: (t, p, m) => of(t).hatBack?.(p, m) ?? [],
+  hat: (t, p, m) => S(t, p, of(t).hat?.(p, m) ?? []),
+  hatBack: (t, p, m) => S(t, p, of(t).hatBack?.(p, m) ?? []),
   hatTucks: (t) => Boolean(of(t).tucks),
   hatHidesBangs: (t) => Boolean(of(t).bangs),
-  top: (t, p, m) => of(t).top?.(p, m) ?? [T(torsoPts(), p.main)],
-  sleeve: (t, p) => of(t).sleeve?.(p) ?? (GACHA_LOOKS[t]?.colors === false ? GACHA_LOOKS[t].color : p.main),
+  top: (t, p, m) => S(t, p, of(t).top?.(p, m) ?? [T(torsoPts(), p.main)]),
+  sleeve: (t, p) => C1(t, p, of(t).sleeve?.(p) ?? (GACHA_LOOKS[t]?.colors === false ? GACHA_LOOKS[t].color : p.main)),
   longSleeves: () => false,
-  shoulder: (t, p, side) => of(t).shoulder?.(p, side) ?? [],
-  legs: (t, p, skin) => of(t).legs?.(p, skin) ?? { top: p.main, low: p.main, pad: null },
-  skirt: (t, p, m) => of(t).skirt?.(p, m) ?? null,
-  shoe: (t, p, k) => of(t).shoe?.(p, k) ?? [k.sole(k.tint(p.main))],
-  hand: (t, p, hx, hy, ex, ey) => of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 1.9, 1.9, p.main)],
-  cape: (t, p, m) => of(t).cape?.(p, m) ?? [],
-  capeFront: (t, p, m) => of(t).capeFront?.(p, m) ?? [],
-  topOver: (t, p, m) => of(t).topOver?.(p, m) ?? [],
+  shoulder: (t, p, side) => S(t, p, of(t).shoulder?.(p, side) ?? []),
+  legs: (t, p, skin) => {
+    const l = of(t).legs?.(p, skin) ?? { top: p.main, low: p.main, pad: null };
+    return wayOf(t, p) ? { ...l, top: C1(t, p, l.top), low: C1(t, p, l.low), pad: Array.isArray(l.pad) ? S(t, p, l.pad) : C1(t, p, l.pad) } : l;
+  },
+  skirt: (t, p, m) => S(t, p, of(t).skirt?.(p, m) ?? null),
+  shoe: (t, p, k) => S(t, p, of(t).shoe?.(p, k) ?? [k.sole(k.tint(p.main))]),
+  hand: (t, p, hx, hy, ex, ey) => S(t, p, of(t).hand?.(p, hx, hy, ex, ey) ?? [E(hx, hy, 1.9, 1.9, p.main)]),
+  cape: (t, p, m) => S(t, p, of(t).cape?.(p, m) ?? []),
+  capeFront: (t, p, m) => S(t, p, of(t).capeFront?.(p, m) ?? []),
+  topOver: (t, p, m) => S(t, p, of(t).topOver?.(p, m) ?? []),
   cover: () => [],
 };

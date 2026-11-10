@@ -106,6 +106,53 @@ export const GACHA_PRIZES = {
 // a page and it's sealed with this, a skin that only the album gives.
 export const GACHA_ALBUM = { sprout: { kind: 'tag', key: 'springseal' }, crag: { kind: 'tag', key: 'godseal' }, coinbridge: { kind: 'tag', key: 'ledgerseal' }, grove: { kind: 'tag', key: 'fullmoonseal' }, lagoon: { kind: 'tag', key: 'dragonseal' }, harbor: { kind: 'tag', key: 'beaconseal' } };
 
+// Each set's colourway (2026-11-10, the player's six picks): a pull comes out shiny, in it, about
+// 1 in 15 times (core/colourway.js repaints the drawn pieces and their effects by these rules).
+export const SHINY_CHANCE = 1 / 15;
+export const COLOURWAYS = {
+  // Spring Spirit -> Autumn Spirit: maple red and gold.
+  sprout: { id: 'autumn', name: 'Autumn', rules: [
+    { from: [70, 170], to: 10, s: 1.5, l: -0.06 },
+    { from: [36, 69], to: 30, s: 1.05 },
+    { from: [290, 359], to: 36, s: 1.1, l: -0.14 },
+    { from: [240, 289], to: 20, s: 0.9, l: -0.14 },
+    { from: [171, 239], to: 34, s: 0.85, l: -0.08 },
+  ] },
+  // Forge God -> Frostforge: silver for gold, ice-blue for lava, blue steel for obsidian.
+  crag: { id: 'frost', name: 'Frostforge', rules: [
+    { from: [35, 62], minL: 0.4, to: 210, s: 0.14, l: 0.1 },
+    { from: [340, 34], to: 196, s: 1, l: 0.05 },
+    { from: [35, 62], to: 212, s: 0.5 },
+    { from: [250, 330], maxL: 0.4, to: 222, s: 0.7 },
+  ] },
+  // Wandering Peddler -> Night Market: plum, neon cyan and neon pink.
+  coinbridge: { id: 'night', name: 'Night Market', rules: [
+    { from: [18, 55], maxL: 0.45, to: 290, s: 1.2, l: -0.02 },
+    { from: [35, 62], minL: 0.45, to: 186, s: 1.1, l: 0.02 },
+    { from: [340, 30], to: 326, s: 1.2, l: 0.08 },
+  ] },
+  // Moon Moth Empress -> Sun Moth: amber dusk for midnight, gold for moonlight, copper accents.
+  grove: { id: 'sun', name: 'Sun Moth', rules: [
+    { from: [214, 268], to: 26, s: 1.1, l: 0.16 },
+    { from: [168, 213], to: 46, s: 1 },
+    { from: [269, 330], to: 16, s: 0.9 },
+  ] },
+  // Koi Dragon Angler -> Ghost Koi: indigo for red, blue fire for gold, pale for teal.
+  lagoon: { id: 'ghost', name: 'Ghost Koi', rules: [
+    { from: [340, 26], to: 246, s: 0.9 },
+    { from: [27, 62], to: 205, s: 1, l: 0.05 },
+    { from: [150, 210], to: 222, s: 0.6 },
+  ] },
+  // Lighthouse Keeper -> Storm Keeper: teal for red, a green beam, a deeper navy.
+  harbor: { id: 'storm', name: 'Storm Keeper', rules: [
+    { from: [340, 22], to: 182, s: 0.8 },
+    { from: [30, 66], to: 140, s: 0.65, l: -0.06 },
+    { from: [195, 245], to: 226, s: 0.8, l: -0.08 },
+  ] },
+};
+// A gacha piece's colourway as a colour variant (data/items.js variantsFor): { shiny: { name } }.
+export const SHINY_VARIANTS = Object.fromEntries(Object.entries(COLOURWAYS).map(([m, w]) => [m, { shiny: { name: w.name, colourway: m } }]));
+
 // Wearing every piece of a machine's set.
 export const GACHA_SETS = {
   sprout: { name: 'Spring Spirit', fx: 'springglow', bonus: 'a spring bloom, a butterfly, and light at your feet' },

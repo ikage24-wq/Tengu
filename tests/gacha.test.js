@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 import { ITEMS } from '../src/data/items.js';
 import { CASH_ITEMS } from '../src/data/cash.js';
-import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES } from '../src/data/outfits-gacha.js';
+import { GACHA_LOOKS, GACHA_MACHINES, GACHA_PRIZES, GACHA_SETS } from '../src/data/outfits-gacha.js';
 import { MAPS } from '../src/data/maps.js';
 import { MOBS } from '../src/data/mobs.js';
 import { QUESTS } from '../src/data/quests.js';
@@ -82,9 +82,38 @@ test('wearing a piece carries its effect; the whole set adds its bonus', () => {
   while (char.inventory.cash.some((i) => ITEMS[i.id].gacha)) wearOutfit(char, char.inventory.cash.findIndex((i) => ITEMS[i.id].gacha));
   for (const e of machineLooks('sprout')) assert.ok(ownsLook(char, e), `${e.key} still counts as had when worn`);
   const worn = outfitFx(wornGear(char));
-  for (const e of machineLooks('sprout')) if (e.fx) assert.ok(worn.fx.has(e.fx), e.fx);
-  assert.ok(worn.sets.has('springglow'));
+  // (A shiny piece carries its effect in its colourway's group.)
+  const has = (f) => worn.fx.has(f) || worn.shiny.some((g) => g.fx.has(f));
+  for (const e of machineLooks('sprout')) if (e.fx) assert.ok(has(e.fx), e.fx);
+  assert.ok(worn.sets.has('springglow') || worn.shiny.some((g) => g.sets.has('springglow')));
   assert.equal(outfitFx(wornGear(fresh())), null);
+});
+
+test('now and then a pull comes out shiny, in its set colourway, and draws and glows in it', async () => {
+  const { COLOURWAYS, SHINY_CHANCE } = await import('../src/data/outfits-gacha.js');
+  const { recolour } = await import('../src/core/colourway.js');
+  const { itemName } = await import('../src/core/items.js');
+  // Every machine has a colourway, and it really changes the set's colours.
+  for (const m of Object.keys(GACHA_SETS)) {
+    const way = COLOURWAYS[m];
+    assert.ok(way?.name && way.rules.length, `${m} has a colourway`);
+    assert.ok(GACHA_MACHINES[m].colors.some((c) => recolour(c, way) !== c), `${m}: its colourway changes its colours`);
+  }
+  assert.equal(recolour('#ffcf4a', COLOURWAYS.crag) !== '#ffcf4a', true, 'Frostforge turns the gold');
+  assert.ok(SHINY_CHANCE > 0.03 && SHINY_CHANCE < 0.15);
+  // A rigged roll: the first number picks the piece, the second makes it shiny.
+  const char = fresh();
+  addItem(char.inventory, 'gacha_ticket', 1);
+  const seq = [0.01, 0.001];
+  const got = pull(char, 'crag', () => seq.shift() ?? 0.5);
+  assert.equal(got.shiny, 'Frostforge');
+  const inst = char.inventory.cash.find((i) => ITEMS[i.id].gacha === 'crag');
+  assert.equal(inst.variant, 'shiny');
+  assert.match(itemName(inst), /^Frostforge /);
+  // Worn, its effects come out in the colourway.
+  wearOutfit(char, char.inventory.cash.indexOf(inst));
+  const worn = outfitFx(wornGear(char));
+  assert.ok(worn.shiny.length === 1 && worn.shiny[0].way === COLOURWAYS.crag);
 });
 
 test('tickets are earned by playing: dailies and bosses give them', () => {
