@@ -314,6 +314,19 @@ Each step is pushed on its own. Status as of 2026-11-09.
     far behind). Racers all run on the ground line (no lane rise), get away smoothly at Go, hop off
     the glide launch, and one that can't fly stays on the lip until it's off the edge. Tests check
     every racer on every course, every frame, and the Garden and pet the same way.
+    **Redraw (2026-11-10):** the Garden pond and the race lakes are bowls with soft banks, a lily
+    pond's green-teal, their own lilies floating on top; the cliffs (the Garden's, the glide cliffs)
+    are faced with warm garden stone instead of bare soil; the climbing walls are rock crags built
+    out from the face, holds bolted in (no brick pillars); the bamboo spout pours a real stream; the
+    fishing dock starts on the bank; Cloud Glide's horizon sits on its lower ground; the race board
+    stands on its own between the gate and the stands. **High quality (2026-11-10):** the crowd is
+    real Mochi (sixteen of every kind, a few drawings each: sitting, paws up, flung high, a shout),
+    seated behind each bench row, swaying and cheering in turns (more on a course), seats free here
+    and there; the arches have dango on their posts, a scalloped curved banner and a garland under
+    it (pennants at the finish, the stands just past it); the board is framed cork with picture
+    cards and a mochi on its roof; every way into the Garden and stadium is the Mochi gate (a ring of
+    hanami dango, a smiling mochi on top), the old wooden gate round it gone, Sprout's moved past the
+    footbridge with Clover beside it.
 
 ## Checked against the Chao Garden (chao-island.com Info Center, read in full 2026-11-09)
 

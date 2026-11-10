@@ -11,8 +11,9 @@
 // sweets in your bag; ?skip=30 runs 30 s on first; ?follow=1&who=0 keeps the camera on Mochi 0.
 // ?guest=1: you're visiting Ann's garden (these Mochi are hers); ?reborn=1: Mochi 1 has lived a
 // long, happy life (it goes back to its egg); ?icons=1 draws the garden's item icons up top.
-// Racing: ?map=mochi_stadium&x=330&board=1 the Race Stadium with its board open; ?race=sprint&who=1
+// Racing: ?map=mochi_stadium&x=220&board=1 the Race Stadium with its board open; ?race=sprint&who=1
 // races Mochi 1 there (?cheer=1: Up every 2 s; ?raceskip=25 starts 25 s in). ?stall=1: the egg stall.
+// ?pan=1200: the camera on x 1200 (for looking over a whole map).
 import { balanceChar } from './balance.mjs';
 import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { createCamera, updateCamera, drawWorld } from '../src/render/scene.js';
@@ -29,6 +30,7 @@ import { createInput } from '../src/input.js';
 import { beginUi, endUi } from '../src/ui/kit.js';
 import { createUiState, drawUi } from '../src/ui/manager.js';
 import { addItem } from '../src/core/inventory.js';
+import { groundAt } from '../src/world/physics.js';
 
 const q = new URLSearchParams(location.search);
 const canvas = document.getElementById('c');
@@ -94,6 +96,12 @@ function step(dt, draw = true) {
     cam.fy = (cam.fy ?? fe.y) + (fe.y - (cam.fy ?? fe.y)) * k;
     cam.x = cam.fx - VW / 2;
     cam.y = cam.fy - VH * 0.62;
+  }
+  // (?pan=1200: the camera looks at x 1200 on the ground there, whatever's going on.)
+  if (q.has('pan')) {
+    const px = Number(q.get('pan'));
+    cam.x = Math.max(0, Math.min(w.map.width - VW, px - VW / 2));
+    cam.y = Math.max(0, Math.min((w.map.height ?? 900) - VH, groundAt(w.map, px) - VH * 0.62));
   }
   if (!draw) return;
   nextFrame();

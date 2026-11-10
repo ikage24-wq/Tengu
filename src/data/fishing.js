@@ -159,7 +159,7 @@ export const SPOTS = {
   meadow1: [{ x: 2212, y: 992, face: 1, bx: 2262, by: 1011, tier: 1, pool: { fish_minnow: 6, fish_carp: 4, fish_perch: 1.5, fish_loach: 4, fish_shiner: 3, fish_firefly: 3 } }],
   meadow2: [{ x: 150, y: 992, face: -1, bx: 70, by: 1011, tier: 1, pool: { fish_minnow: 5, fish_carp: 5, fish_trout: 2, fish_perch: 1, fish_bluegill: 4, fish_loach: 2, fish_rainbow: 3, fish_pike: 1.5, fish_firefly: 2, fish_petalking: 0.12 } }],
   // Sprout Village's duck pond in the Garden Corner.
-  sprout: [{ x: 2268, y: 480, face: -1, bx: 2210, by: 491, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1, fish_goldfish: 5, fish_shiner: 2, fish_firefly: 2 } }],
+  sprout: [{ x: 2200, y: 480, face: 1, bx: 2258, by: 491, tier: 1, pool: { fish_minnow: 6, fish_carp: 3, fish_perch: 1, fish_goldfish: 5, fish_shiner: 2, fish_firefly: 2 } }],
   harbor: [{ x: 2190, y: 426, face: 1, bx: 2242, by: 451, tier: 1, pool: { fish_sardine: 5, fish_mackerel: 4, fish_puffer: 2, fish_starfish: 0.3, fish_bream: 4, fish_moonjelly: 2, fish_darter: 1.5 } }],
   // Tier 2: the glade's waterfall pool.
   glade: [{ x: 872, y: 840, face: 1, bx: 950, by: 894, tier: 2, pool: { fish_mossbass: 5, fish_trout: 4, fish_catfish: 3, fish_koi: 1.2, fish_eel: 0.8, fish_sylphfin: 0.6, fish_dace: 4, fish_guppy: 4, fish_betta: 2, fish_wisptetra: 2.5, fish_mistgar: 1.5, fish_raincarp: 2.5, fish_sturgeon: 0.6, fish_arowana: 0.12 } }],

@@ -11,6 +11,7 @@
 //   star    a pool of night sky in the clouds: indigo, stars twinkling in it
 //   cloud   a gap in the cloud sea: the open sky below, white billows rolling through it
 //   sea     the lagoon's turquoise shallows (the default)
+// (A map with lilies and reeds of its own turns the pond's off: `lilies: false`, `reeds: false`.)
 // Everything moves on time from the water's place in the world, never the screen. Also here: the
 // sea along a quay (`drawQuaySea`) and a boat afloat in it (`drawAfloat`): the hull sinks to its
 // waterline, its reflection darkens the water under it, and it bobs with the swell.
@@ -217,7 +218,7 @@ function bankLife(ctx, map, w, C, cam, time) {
     const top = Math.min(groundAt(map, ex - dir * 6), groundAt(map, ex + dir * 6));
     const gy = groundAt(map, ex - dir * 6) - cam.y;
     ctx.save();
-    if (w.kind === 'pond' || w.kind === 'spring') {
+    if ((w.kind === 'pond' || w.kind === 'spring') && w.reeds !== false) {
       // Reeds and a cattail or two at the water's edge, swaying in their own time.
       for (let i = 0; i < 5; i++) {
         const rx = sx + dir * (3 + i * 3.4);
@@ -329,8 +330,9 @@ function surfaceLife(ctx, map, w, C, cam, time, x0, x1, k) {
   const night = map.night ?? 0;
   const at = (x) => w.y - cam.y + swell(x, time, k);
   if (w.kind === 'pond') {
-    // Lily pads bobbing (some with a blossom), and a petal drifting across now and then.
-    for (let x = Math.floor(w.x1 / 46) * 46 + 23; x < w.x2 - 10; x += 46) {
+    // Lily pads bobbing (some with a blossom), and a petal drifting across now and then. (A map that
+    // lays its own, `lilies: false`, has just the petal.)
+    for (let x = Math.floor(w.x1 / 46) * 46 + 23; x < w.x2 - 10 && w.lilies !== false; x += 46) {
       if (x < x0 - 20 || x > x1 + 20 || x - w.x1 < 18) continue;
       const h = hash(x * 0.37);
       const px = x - cam.x + Math.sin(time * 0.4 + h * 6) * 2;

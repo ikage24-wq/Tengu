@@ -5098,7 +5098,7 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
     // stone instead, with its sign lower down).
     // (A `door` is a building's own door: no gateway, only its name over it.)
     if (p.homestone) drawHomestone(ctx, x, y, time, p.x);
-    else if (!p.door) drawPortalGate(ctx, map, x, y, time, p.x);
+    else if (!p.door) drawPortalGate(ctx, map, x, y, time, p.x, p.style);
     const top = p.homestone ? 62 : p.door ? 78 : 94;
     const dest = MAPS[p.to];
     const name = p.label ?? dest?.name;

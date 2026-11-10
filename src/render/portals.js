@@ -32,6 +32,7 @@ export const PORTAL_STYLES = {
   ridge: { swirl: ['#8fa6ff', '#cdd6ff', '#f4f6ff'], arch: logArch },
   springs: { swirl: ['#7fdcd0', '#c4f2ec', '#f2fffd'], arch: bambooGate },
   snow: { swirl: ['#a8d4ff', '#dcefff', '#ffffff'], arch: iceArch },
+  mochi: { swirl: ['#ffb3cf', '#ffe2ee', '#fff8fb'], arch: mochiGate },
 };
 
 // Which style a map's portals take: its own (`look.portal`), its theme's, or the meadow's.
@@ -40,9 +41,10 @@ export function portalStyleOf(map) {
   return PORTAL_STYLES[key] ? key : 'meadow';
 }
 
-// Draws one portal with its base centered on (x, y), the ground line.
-export function drawPortalGate(ctx, map, x, y, time, seed = 0) {
-  const key = portalStyleOf(map);
+// Draws one portal with its base centered on (x, y), the ground line (`own`: a portal's own style,
+// over its map's).
+export function drawPortalGate(ctx, map, x, y, time, seed = 0, own = null) {
+  const key = own && PORTAL_STYLES[own] ? own : portalStyleOf(map);
   const style = PORTAL_STYLES[key];
   const f = Math.floor(time * 10 + seed) % FRAMES;
   place(ctx, swirlArt(key, style.swirl, f), x, y - (H - 48 - SH / 2));
@@ -116,6 +118,31 @@ function lanternGate() {
   out.push(T([[0, 18], [30, 4], [60, 18], [56, 20], [30, 8], [4, 20]], roof.base), F(T([[30, 4], [60, 18], [56, 20], [30, 8]], roof.sh)), F(T([[6, 16], [30, 5.6], [22, 10]], roof.hi)));
   out.push(E(30, 10, 3, 3, '#fff3a6'), F(E(30, 10, 1.6, 1.6, '#ffffff')));
   for (const x of [9, 51]) out.push(R(x - 0.4, 28, 0.8, 4, '#7a6a8a'), E(x, 36, 4, 5, '#ffd6a0'), F(E(x + 1.2, 37, 2.4, 3.8, '#ffc07a')), F(R(x - 3.6, 31.4, 7.2, 1, '#ff8fb0')), F(R(x - 3.6, 40, 7.2, 1, '#ff8fb0')));
+  return out;
+}
+
+// The Mochi Garden's (and every way into it): a ring of hanami dango round the doorway, pink, white and
+// matcha green, standing on two little stones; and a round mochi sat on top of it, smiling, rosy,
+// its sprout up.
+const DANGO = ['#b8e09c', '#fff6ee', '#ffb7cf'];
+function mochiGate() {
+  const out = [];
+  const bead = (x, y, c, r = 6.4) => out.push(E(x, y, r, r * 0.94, c), F(E(x - r * 0.32, y - r * 0.4, r * 0.32, r * 0.2, '#ffffff')));
+  // The two stones it stands on.
+  for (const x of [9.5, 50.5]) out.push(E(x, 79, 7.5, 3.6, '#e4d8d2'), F(E(x - 2, 77.6, 3, 1, '#f6eeea')));
+  // Up each side and round the top, the colours mirrored either side.
+  const side = [[9.5, 70], [9.5, 59], [9.5, 48], [12.4, 37.4], [19.8, 29.4]];
+  side.forEach(([x, y], i) => {
+    bead(x, y, DANGO[i % 3]);
+    bead(60 - x, y, DANGO[i % 3]);
+  });
+  // The mochi on top.
+  out.push(E(30, 19, 11.5, 9.8, '#fff8f2'), F(E(26.4, 14.6, 4.4, 2, '#ffffff')));
+  out.push(F(E(25.8, 19.4, 1.2, 1.7, '#4a3040')), F(E(34.2, 19.4, 1.2, 1.7, '#4a3040')), F(E(25.4, 18.6, 0.5, 0.6, '#ffffff')), F(E(33.8, 18.6, 0.5, 0.6, '#ffffff')));
+  out.push(F(E(22.6, 22, 2.4, 1.3, '#ffbccb')), F(E(37.4, 22, 2.4, 1.3, '#ffbccb')));
+  out.push(F(E(29.1, 22.4, 1, 0.7, '#d0507a')), F(E(30.9, 22.4, 1, 0.7, '#d0507a')));
+  // Its sprout.
+  out.push(F(R(29.5, 5.6, 1.1, 4.4, '#6fae52')), E(26.6, 6.2, 3.4, 1.8, '#8fd16f'), E(33.4, 5.4, 3.4, 1.8, '#8fd16f'));
   return out;
 }
 

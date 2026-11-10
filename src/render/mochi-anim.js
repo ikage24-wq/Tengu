@@ -1461,6 +1461,30 @@ function beatOf(act, time) {
   return null;
 }
 
+// ---------- In the crowd ----------
+// A little Mochi in the stands (render/race.js), cheering: `beat` 0 sitting happy, paws at its chest;
+// 1 paws up; 2 paws flung high; 3 a shout. Only these few drawings for each Mochi (facing either way
+// is the same drawing turned), so a whole crowd is painted once, then only placed and bobbed.
+const SPECTATE = [
+  { front: [1.4, -4.4], back: [2, -4.2], mouth: 'mochiw', sprout: 'happy', blush: 1.6 },
+  { front: [5, -5], back: [-5, -5], closed: [true, true], mouth: 'D', sprout: 'excited', blush: 1.6 },
+  { ...OUT(-12), closed: [true, true], mouth: 'D', sprout: 'excited', blush: 1.8 },
+  { ...OUT(-14), tilt: -6, closed: [true, true], mouth: 'yell', sprout: 'excited', blush: 1.8 },
+].map((o) => ({ ...pose(o), closed: o.closed, sprout: o.sprout }));
+export const SPECTATOR_BEATS = SPECTATE.length;
+export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null) {
+  const P = SPECTATE[beat] ?? SPECTATE[0];
+  const rig = {
+    tx: 0, by: 0, hx: P.hx, hy: P.hy + 0.6, tilt: P.tilt, lift: 0, squat: 0,
+    backArm: P.back, frontArm: P.front, armSide: 0.6, hipIn: 0, frontLeg: [0.5, 0, 1.5], backLeg: [-0.5, 0, -1.5],
+    air: false, hair: 0, hairTip: 0, eyes: 'open', view: 'side', climb: 0, armOver: null,
+    face: { brows: P.brows, extra: [], blush: P.blush, glance: 0, ...(P.closed ? { closed: P.closed } : {}) },
+  };
+  let look = lookOf(g, P.sprout, 0);
+  if (P.mouth) look = { ...look, mouth: P.mouth };
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot });
+}
+
 // Draws Mochi `m` with its feet at (x, y) at `time` seconds. `m`: { genes, dir (1 right, -1 left),
 // speed (px/s along the ground; 0 standing), dist (px it has travelled: the steps follow it, so feet
 // never slide), mood (the sprout, optional), size ('grown' or 'baby') }.

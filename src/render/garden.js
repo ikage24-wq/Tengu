@@ -5,8 +5,6 @@
 // the noren curtain stirring, the swing on the big tree, lily pads bobbing, the waterfall pouring,
 // the windsock), phased by its place in the world, never the screen.
 //
-//   mg_gate        the gate from Sprout Village: two posts, a beam with upturned ends, crossed mochi
-//                  mallets on top, a hanging sign with a little mochi on it, paper lanterns
 //   mg_lantern     a paper lantern on a post (extra: which one, so no two are alike)
 //   mg_eggstall    the egg stall: a striped awning over a counter of eggs in their little mortars
 //   mg_kitchen     the sweet kitchen: a tiled cottage with a serving window, a pot steaming on the
@@ -20,6 +18,9 @@
 //   mg_reeds       reeds and cattails at the water's edge, swaying
 //   mg_falls       the waterfall down the upper cliff into a rock basin on the ledge, and a bamboo
 //                  spout carrying the water on out over the pond
+//   mg_rockface    a cliff faced with rock: warm garden stone stacked up the face, rough and mossed,
+//                  a few stones set into the soil behind (flip: the land to the left); the race
+//                  courses use it too, and their climbing crags are the same stone (cragArt)
 //   mg_boulders    the climbing rocks on the ledge, mossy, with a knotted rope
 //   mg_glide       the windsock on the cliff top by the glide launch, and its sign
 //   mg_moonmortar  the Moonmortar: a great stone mortar with its wooden mallet, a sacred rope and
@@ -48,7 +49,6 @@ const SAKURA = '#f6a8c0';
 const MATCHA = '#9fcf7a';
 const KINAKO = '#e8c87a';
 const AZUKI = '#9a4a56';
-const INK = '#5a3a48';
 
 function glow(ctx, x, y, r, color, alpha) {
   if (alpha <= 0.01) return;
@@ -99,26 +99,6 @@ function paperLantern(ctx, x, y, time, wx, c, night) {
   });
 }
 
-// ---------- The gate ----------
-const gateArt = () => art('mg-gate', 124, 134, () => {
-  const w = ramp(WOOD);
-  const out = [
-    R(14, 120, 18, 14, STONE), R(92, 120, 18, 14, STONE),
-    R(19, 34, 8, 88, WOOD), R(97, 34, 8, 88, WOOD), F(R(19, 34, 2, 88, w.hi)), F(R(97, 34, 2, 88, w.hi)),
-    // The beam, its ends turned up, and the tie beam under it.
-    T([[2, 30], [10, 26], [62, 23], [114, 26], [122, 30], [120, 34], [62, 31], [4, 34]], WOOD_DK), F(T([[10, 27], [62, 24], [114, 27], [114, 28.4], [62, 25.6], [10, 28.4]], ramp(WOOD_DK).hi)),
-    R(14, 44, 96, 6, WOOD), F(R(14, 44, 96, 1.2, w.hi)),
-    // The crossed mallets on top: their handles, and the barrel heads.
-    F(limb(42, 6, 76, 22, 2, 2, WOOD_DK)), F(limb(82, 6, 48, 22, 2, 2, WOOD_DK)), E(40, 6, 6.5, 4.2, KINAKO), E(84, 6, 6.5, 4.2, KINAKO),
-    F(R(36, 4, 3, 4, ramp(KINAKO).sh)), F(R(85, 4, 3, 4, ramp(KINAKO).sh)),
-    // The sign, hung from the tie beam on two cords, with a little mochi on it.
-    F(R(46, 50, 1, 6, '#7a5a40')), F(R(77, 50, 1, 6, '#7a5a40')),
-    R(38, 56, 48, 28, MOCHI), F(R(38, 56, 48, 2, SAKURA)), F(R(38, 82, 48, 2, SAKURA)),
-    E(62, 72, 8, 6.4, '#ffffff'), F(E(58, 74, 1.6, 1, '#ffb8c8')), F(E(66, 74, 1.6, 1, '#ffb8c8')), F(R(58.4, 70, 1.2, 1.6, INK)), F(R(64.4, 70, 1.2, 1.6, INK)),
-    F(limb(62, 66, 62.6, 61, 0.7, 0.6, '#5aa04a')), F(E(64.4, 61.4, 2.2, 1.2, MATCHA)), F(E(60.4, 61.8, 2, 1.1, '#86c96e')),
-  ];
-  return out;
-});
 
 // ---------- Lantern posts ----------
 const LANTERN_BANDS = [SAKURA, '#a8dcc0', KINAKO, '#c8b4f0', '#ffb8a0', '#9fd0f0'];
@@ -295,17 +275,19 @@ function lilies(ctx, x, waterY, time, wx, v) {
   pads.forEach(([dx, rx, ry], i) => {
     const bob = Math.sin(time * 0.9 + wx * 0.01 + i * 1.7) * 0.6;
     const px = x + dx;
-    const py = waterY + 0.6 + bob;
-    ctx.fillStyle = '#5f9a4e';
+    // (Floating on the surface, not under it: the water's skin is laid over everything below it.)
+    const py = waterY - ry * 0.55 + bob;
+    // (A deep leaf green, so the pads read against the pond's green-teal.)
+    ctx.fillStyle = '#3f7f48';
     ctx.beginPath();
     ctx.ellipse(px + 0.4, py + 0.6, rx, ry, 0, 0, TAU);
     ctx.fill();
-    ctx.fillStyle = '#7cc06a';
+    ctx.fillStyle = '#56a35e';
     ctx.beginPath();
     ctx.ellipse(px, py, rx, ry, 0, 0.35, TAU - 0.05);
     ctx.lineTo(px, py);
     ctx.fill();
-    ctx.fillStyle = '#a8dc88';
+    ctx.fillStyle = '#8fd07a';
     ctx.fillRect(snap(px - rx * 0.5), snap(py - ry * 0.5), rx * 0.6, 0.8);
   });
   // A lotus on one pad, opening and closing very slowly.
@@ -390,14 +372,27 @@ function falls(ctx, map, x, cam, time) {
   const sy0 = ledge - 6;
   const sy1 = ledge + 12;
   place(ctx, spoutArt(), snap((sx0 + sx1) / 2), sy1 + 6);
+  // The stream from its end: a rope of water, a deeper edge and a bright core, widening as it falls,
+  // ripples of light running down it.
   const fx = sx1 - 2;
-  ctx.fillStyle = '#9fd4f0';
-  ctx.beginPath();
-  ctx.moveTo(fx, sy1);
-  ctx.quadraticCurveTo(fx - 8, sy1 + 30, fx - 9, pond);
-  ctx.lineTo(fx - 5, pond);
-  ctx.quadraticCurveTo(fx - 4, sy1 + 28, fx + 3, sy1);
-  ctx.fill();
+  const stream = (c, l0, r0, l1, r1) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(fx + l0, sy1);
+    ctx.quadraticCurveTo(fx + l0 - 8, sy1 + 30, fx + l1, pond);
+    ctx.lineTo(fx + r1, pond);
+    ctx.quadraticCurveTo(fx + r0 - 7, sy1 + 28, fx + r0, sy1);
+    ctx.fill();
+  };
+  stream('#6fb0dc', -1.5, 4.5, -12, -3);
+  stream('#9fd4f0', -0.8, 3.6, -11, -4.4);
+  stream('#e2f4fc', 0.6, 1.8, -8.4, -6.6);
+  for (let i = 0; i < 4; i++) {
+    const u = (time * 1.1 + i / 4) % 1;
+    const k = u * u;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(snap(fx + 1 - 10 * k), snap(sy1 + (pond - sy1) * k), 2, 5);
+  }
   for (let i = 0; i < 3; i++) {
     const u = (time * 1.6 + i / 3) % 1;
     ctx.globalAlpha = 0.6 * (1 - u);
@@ -420,24 +415,64 @@ const spoutArt = () => art('mg-spout', 150, 30, () => {
   ];
 });
 
-// ---------- The cliff faces ----------
-// What grows on a cliff face, `h` tall (the soil face is the map's own): mossy stones set into it,
-// ferns and flowers in its nooks, a little way in from the face, never in a row.
-const faceArt = (h, seed) => art(`mg-face|${h}|${seed}`, 60, h, () => {
+// ---------- The rock ----------
+// Warm garden stone, the same family as the soil it's set in (one stone for the Garden's cliff and the
+// race walls).
+const GARDEN_STONE = ['#d2c8ba', '#c6bbac', '#ddd3c5'];
+// Stone stacked up from the bottom (`h` tall): blocks each their own height, shade and set (one
+// juts a little, the next sits back), from `x0` (less its jut) to somewhere between `x1` and `x1 +
+// spread`; lit from above, a crack across a few, moss along the top of a few of the ledges they
+// make. `holds`: climbing holds bolted into the part out from the face (left of `face`).
+function stackedRock(h, seed, { x0, x1, spread, jut = 5, holds = null, face = 0 }) {
   const out = [];
-  for (let i = 0, y = 14; y < h - 10; i++, y += 26 + hash(seed * 7 + i * 3.1) * 30) {
-    const x = 8 + hash(seed * 11 + i * 2.3) * 34;
-    const r = 5 + hash(seed * 5 + i) * 6;
-    if (i % 3 !== 2) {
-      out.push(E(x, y, r * 1.3, r, ['#cfc4b2', '#d8ccbc', '#c4b8a6'][i % 3]), F(E(x - r * 0.3, y - r * 0.8, r * 0.9, r * 0.32, '#9fcf7a')));
-    } else {
-      // A fern clump, a flower or two.
-      for (let k = -2; k <= 2; k++) out.push(F(limb(x, y + 4, x + k * 4, y - 6 + Math.abs(k) * 2, 1.2, 0.5, k % 2 ? '#7cbf64' : '#8fcf72')));
-      out.push(F(E(x + 6, y - 2, 1.6, 1.6, ['#ffd0dc', '#fff0a0', '#ffffff'][i % 3])));
+  const moss = [];
+  for (let y = h, i = 0; y > 0.5; i++) {
+    const bh = Math.min(y, 15 + hash(seed * 3.1 + i * 1.7) * 19);
+    const top = y - bh;
+    const a = x0 - hash(seed * 5.3 + i * 2.9) * jut;
+    const b = x1 + hash(seed * 7.7 + i * 1.3) * spread;
+    const c = GARDEN_STONE[Math.floor(hash(seed + i * 4.1) * 3)];
+    // (Each block its own rough shape: corners worn away by different amounts, sides bulging.)
+    const r = (n) => hash(seed * 1.3 + i * 6.7 + n * 2.1);
+    const k = Math.min(5, bh * 0.3);
+    out.push(T([[a + k * r(1), top + k * r(2) * 0.5], [b - k * (0.4 + r(3)), top], [b + 2 * r(4), top + bh * (0.3 + 0.3 * r(5))], [b - k * r(6), y], [a + k * r(7) * 0.6, y], [a - 2 * r(8), top + bh * (0.4 + 0.3 * r(9))]], c));
+    if (hash(seed * 9.1 + i) < 0.4) {
+      const cy = top + bh * (0.35 + hash(seed + i * 7.7) * 0.3);
+      out.push(F(limb(a + 5, cy, a + 12, cy + 2.5, 0.7, 0.5, ramp(c).deep)), F(limb(a + 12, cy + 2.5, a + 17, cy + 1.5, 0.6, 0.4, ramp(c).deep)));
     }
+    if (hash(seed * 2.3 + i * 5.1) < 0.32 && top > 4) moss.push(F(E(a + 10, top + 1, 8, 1.8, '#9fcf7a')), F(E(a + 6, top + 0.4, 3.4, 1.1, '#bfe596')));
+    if (holds) {
+      for (let k2 = 0; k2 < 2; k2++) {
+        const hx = a + 4 + hash(seed * 4.7 + i * 3.3 + k2) * Math.max(4, face - a - 10);
+        const hy = top + 4 + hash(seed * 6.1 + i * 2.1 + k2) * Math.max(2, bh - 8);
+        const col = holds[Math.floor(hash(seed + i * 1.9 + k2 * 5) * holds.length)];
+        moss.push(E(hx, hy, 2.4, 1.8, col), F(E(hx - 0.6, hy - 0.7, 0.9, 0.5, '#ffffff')));
+      }
+    }
+    y = top + 0.5;
   }
-  return out;
-});
+  return [...out, ...moss];
+}
+// A cliff faced with rock, `h` tall: the face at x 6 of the drawing, the land to its right.
+export const ROCK_FACE_AT = 6;
+// (A few loose stones set into the soil behind it, so the rock grows out of the land.)
+const rockFaceArt = (h, seed) => art(`mg-rockface|${h}|${seed}`, 66, h, () => [
+  ...stackedRock(h, seed, { x0: ROCK_FACE_AT, x1: 24, spread: 26 }),
+  ...Array.from({ length: Math.floor(h / 70) }, (_, i) => {
+    const sy = 20 + hash(seed * 8.3 + i * 3.9) * (h - 40);
+    const sx = 46 + hash(seed * 2.9 + i * 5.3) * 14;
+    const rr = 3 + hash(seed + i * 9.1) * 3;
+    return E(sx, sy, rr * 1.3, rr, GARDEN_STONE[i % 3]);
+  }),
+]);
+// A climbing crag against a cliff, `h` tall: rock built out from the face (at x 50 of the drawing)
+// into the air, holds bolted into it, its top flat and mossed where the climbers come over.
+export const CRAG_FACE_AT = 50;
+export const cragArt = (h, seed, holds) => art(`mg-crag|${h}|${seed}`, 66, h, () => [
+  ...stackedRock(h, seed, { x0: 4, x1: CRAG_FACE_AT + 4, spread: 8, jut: 3, holds, face: CRAG_FACE_AT }),
+  // The top: a mossy lip all along it.
+  F(R(2, 0, 58, 3, '#9fcf7a')), F(R(4, 0, 50, 1.2, '#bfe596')), ...[8, 22, 36, 50].map((x) => F(E(x, 3.5, 4, 1.6, '#8cc46a'))),
+]);
 function vines(ctx, x, y, time, wx, n, len) {
   for (let i = 0; i < n; i++) {
     const vx = x + 6 + i * 9;
@@ -720,12 +755,6 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   const gy = groundAt(map, wx) - cam.y;
   const night = map.night ?? 0;
   switch (kind) {
-    case 'mg_gate': {
-      place(ctx, gateArt(), snap(x), gy + 2);
-      paperLantern(ctx, x - 52, gy - 102, time, wx - 52, SAKURA, night);
-      paperLantern(ctx, x + 52, gy - 102, time, wx + 52, SAKURA, night);
-      return true;
-    }
     case 'mg_lantern': {
       const v = extra ?? 0;
       place(ctx, lanternPostArt(v), snap(x), gy + 2);
@@ -840,11 +869,14 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     case 'mg_falls':
       falls(ctx, map, x, cam, time);
       return true;
-    case 'mg_cliffface': {
-      // What grows on a cliff face from `extra.top` down to `extra.bottom`, vines from its lip.
-      const top = extra.top - cam.y;
-      place(ctx, faceArt(extra.bottom - extra.top, extra.seed ?? 1), snap(x + 30), extra.bottom - cam.y);
-      vines(ctx, x, top, time, wx, extra.vines ?? 3, 46);
+    case 'mg_rockface': {
+      // A cliff faced with rock, from `extra.top` down to `extra.bottom`, its face at x (`flip`: the
+      // land to the left, the face looking right). A little below the top, so the grass lip and its
+      // vines hang over it.
+      const h = extra.bottom - extra.top - 4;
+      const s = rockFaceArt(h, extra.seed ?? 1);
+      const cx = extra.flip ? x + ROCK_FACE_AT - s.w / 2 : x - ROCK_FACE_AT + s.w / 2;
+      place(ctx, s, snap(cx), extra.bottom - cam.y, { flip: Boolean(extra.flip) });
       return true;
     }
     case 'mg_boulders':

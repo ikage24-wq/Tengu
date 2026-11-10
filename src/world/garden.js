@@ -7,7 +7,7 @@
 //                   (data/mochi-raise.js), eggs: [{ seed }], unlocked: { dawn, dusk } }
 //
 // Left to right, high on the left and dipping to a pond under a cliff:
-//   Mortar Gate       the gate from Sprout Village, the egg stall, the sweet kitchen, the nursery
+//   Mortar Gate       the Mochi gate from Sprout Village, the egg stall, the sweet kitchen, the nursery
 //   The Orchard       fruit trees down the slope, the running track, the big old tree with a swing
 //   Lily Pond         the lowest point: the swimming pond, lily pads, a little fishing dock, the
 //                     waterfall (and a nook behind it, the garden's secret)
@@ -30,11 +30,13 @@ export function gardenMap(g = {}) {
   const width = 3600;
   const terrain = [
     [0, PLATEAU], [880, PLATEAU], [1040, ORCHARD], [1500, ORCHARD], [1560, 684], [1650, 684], [1710, ORCHARD], [2160, ORCHARD],
-    [2236, POND], [2256, BED], [2806, BED], [2826, POND], [2900, POND], [2900, LEDGE], [3002, LEDGE], [3002, TOP], [width, TOP],
+    // (The pond: a bowl, its banks shelving gently down to the bed.)
+    [2236, POND], [2250, 784], [2272, 808], [2306, 828], [2360, BED], [2700, BED], [2752, 830], [2786, 810], [2810, 786], [2826, POND],
+    [2900, POND], [2900, LEDGE], [3002, LEDGE], [3002, TOP], [width, TOP],
   ];
   const platforms = [
-    // The little fishing dock out over the pond.
-    { x: 2244, y: 748, w: 112, style: 'planks', dock: true },
+    // The little fishing dock out over the pond, from the bank where it's level with the grass.
+    { x: 2221, y: 748, w: 119, style: 'planks', dock: true, walkOn: true },
     // The glide launch: a board jutting out from the cliff top over the pond (the upper rope hangs
     // from it).
     // (Level with the cliff top and ending at its edge, so you walk straight on: drawn by mg_glide,
@@ -51,10 +53,11 @@ export function gardenMap(g = {}) {
     width, height: 900, groundY: PLATEAU,
     // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
     stove: 548, gardenData: g,
-    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1 },
+    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
     cottages: [],
     terrain, platforms, ropes,
-    water: [{ x1: 2236, x2: 2826, y: POND }],
+    // (Its own lilies and reeds: render/garden.js.)
+    water: [{ x1: 2236, x2: 2826, y: POND, kind: 'pond', lilies: false, reeds: false }],
     nodes: [],
     zonesBy: 'x',
     zones: [
@@ -65,11 +68,11 @@ export function gardenMap(g = {}) {
     ],
     // The garden's pieces (render/garden.js), left to right.
     townPieces: [
-      ['mg_gate', 70], ['mg_lantern', 196, 0], ['mg_eggstall', 330], ['mg_kitchen', 548], ['mg_nursery', 760], ['mg_lantern', 872, 1],
+      ['mg_lantern', 196, 0], ['mg_eggstall', 330], ['mg_kitchen', 548], ['mg_nursery', 760], ['mg_lantern', 872, 1],
       ['mg_track', 1090, { to: 1450 }], ['mg_fruittree', 1150, 0], ['mg_fruittree', 1380, 1], ['mg_lantern', 1478, 2], ['mg_bigtree', 1605],
       ['mg_fruittree', 1850, 2], ['mg_cropbed', 1962], ['mg_fruittree', 2070, 3], ['mg_lantern', 2150, 3],
-      ['mg_reeds', 2228, 0], ['mg_lilies', 2470, 0], ['mg_lilies', 2690, 1], ['mg_reeds', 2816, 1], ['mg_falls', 3002],
-      ['mg_cliffface', 2904, { top: LEDGE, bottom: POND, seed: 3, vines: 3 }], ['mg_cliffface', 3020, { top: TOP, bottom: LEDGE, seed: 7, vines: 2 }],
+      ['mg_reeds', 2228, 0], ['mg_lilies', 2470, 0], ['mg_lilies', 2690, 1], ['mg_reeds', 2816, 1],
+      ['mg_rockface', 2900, { top: LEDGE, bottom: POND, seed: 3 }], ['mg_rockface', 3002, { top: TOP, bottom: LEDGE, seed: 7 }], ['mg_falls', 3002],
       ['mg_boulders', 2928], ['mg_glide', 3034], ['mg_lantern', 3110, 4], ['mg_moonmortar', 3250], ['mg_lantern', 3390, 5], ['mg_stadium', 3500],
     ],
     portals: [

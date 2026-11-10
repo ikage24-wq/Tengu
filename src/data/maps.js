@@ -66,7 +66,7 @@ export const MAPS = {
       { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
-    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2152 }, { id: 'clover', x: 2340 }, { id: 'kestrel', x: 2480 }, { id: 'malvina', x: 1530 }],
+    npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2152 }, { id: 'clover', x: 2390 }, { id: 'kestrel', x: 2480 }, { id: 'malvina', x: 1530 }],
     // Its districts, left to right, each named as you walk in.
     zonesBy: 'x',
     zones: [
@@ -882,7 +882,7 @@ Object.assign(MAPS, {
 // The road down to Coinbridge leaves Sprout Village's Gate Lane, past the farmhouse.
 MAPS.sprout.portals.push({ id: 'coin', x: 470, y: 480, to: 'coinbridge', toPortal: 'west', label: 'Coinbridge' });
 // The lane to your own Mochi Garden (world/garden.js), at the far end of the Pond Garden.
-MAPS.sprout.portals.push({ id: 'garden', x: 2398, y: 480, to: 'garden', toPortal: 'gate', label: 'Mochi Garden' });
+MAPS.sprout.portals.push({ id: 'garden', x: 2336, y: 480, to: 'garden', toPortal: 'gate', label: 'Mochi Garden', style: 'mochi' });
 
 // Towns in world-map order, for fast travel.
 export const TOWNS = ['sprout', 'harbor', 'crag', 'grove'];
