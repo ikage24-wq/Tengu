@@ -317,7 +317,7 @@ test('a race has its own music: the race, the final-lap mix from the final stret
 test("the race board says when a Mochi is too little for a course: can't walk, swim or fly yet", async () => {
   const { tooLittle } = await import('../src/ui/mochi-race.js');
   const baby = mochi(4, 0);
-  assert.match(tooLittle(baby, 'sprint'), /crawl.*Dango/);
+  assert.match(tooLittle(baby, 'sprint'), /crawl.*Kinako Mochi/);
   const walker = mochi(5, 0);
   walker.stats.run.points = 300;
   assert.equal(tooLittle(walker, 'sprint'), null);

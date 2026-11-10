@@ -1063,6 +1063,8 @@ function news(bots, world, dt) {
   let line = null;
   for (let i = 0; i < 6 && !line; i++) line = pick(kinds, rng)();
   if (!line) return;
+  // (Not in your own private places, your Garden or your island: the news waits for town.)
+  if (world.map?.private) return;
   world.log?.(`★ ${line}`, '#ffd6f0');
   // Someone around says well done.
   const all = listeners(bots, world).filter((b) => b !== who);

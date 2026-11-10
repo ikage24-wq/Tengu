@@ -114,7 +114,10 @@ export function raceBoardWindow(ui, state, world) {
     ctx.beginPath();
     ctx.rect(cx + 1, cy + 1, 22, 21);
     ctx.clip();
-    drawMochiAnim(ctx, portraitOf(rec), cx + 12, cy + 31, world.now);
+    // (Its head and shoulders, the whole head in the frame.)
+    ctx.translate(cx + 12, cy + 23);
+    ctx.scale(0.82, 0.82);
+    drawMochiAnim(ctx, portraitOf(rec), 0, 0, world.now);
     ctx.restore();
     text(ctx, fit(ctx, lineOf(rec), cw - 30, 7, true), cx + 26, cy + 10, { size: 7, bold: true });
     // (What this stage tests, and Stamina; the Grand course, its best two.)
@@ -171,7 +174,7 @@ export function raceBoardWindow(ui, state, world) {
 // it won't get far): crawling instead of walking, flailing in water, flopping off the glide. Null
 // when it's ready.
 const LITTLE = [
-  ['run', 'Too little to race yet: it can only crawl. Feed it Dango to get it walking!'],
+  ['run', 'Too little to race: it only crawls. Cook it Kinako Mochi to get it walking!'],
   ['swim', "It can't swim yet, so it'll flail in the lake. Taiyaki helps!"],
   ['fly', "It can't fly yet, so it'll drop off the launch. Sakura Mochi helps!"],
 ];
@@ -256,6 +259,9 @@ export function raceHud(ui, state, world) {
   // name under it.
   const x0 = 168;
   const x1 = VW - 112;
+  // (Not over the results at the end: the race's over.)
+  ctx.save();
+  if (R.phase === 'done') ctx.globalAlpha = 0;
   box(ctx, x0 - 14, 8, x1 - x0 + 34, 24, { fill: 'rgba(255,250,246,0.94)', edge: '#f0c8d8', r: 12, width: 1.2, plain: true });
   ctx.fillStyle = '#f4e2ea';
   roundRect(ctx, x0, 18, x1 - x0, 5, 2.5);
@@ -322,6 +328,7 @@ export function raceHud(ui, state, world) {
   ctx.fill();
   text(ctx, NTH[place - 1], x0 - 34, 24, { size: 9.5, bold: true, align: 'center', color: place <= 3 ? '#ffffff' : '#d0507a', outline: place <= 3 ? '#a8763a' : null });
   text(ctx, RACE_STAGES[R.stageId].name, VW - 12, 46, { size: 7, bold: true, align: 'right', color: '#a8467a' });
+  ctx.restore();
   // The countdown, and Go!
   const big = (s, color) => {
     text(ctx, s, VW / 2 + 2, VH * 0.38 + 2, { size: 30, bold: true, align: 'center', color: 'rgba(80,40,70,0.25)' });
@@ -528,7 +535,7 @@ export function raceHud(ui, state, world) {
   const news = [R.dressWon ? `The ${R.dressWon}!` : null, R.starEgg ? 'A Star Egg!' : null, ...(R.opened ?? []).map((o) => `${o} open`)].filter(Boolean);
   let nx = px + 14;
   for (const n of news.slice(0, 3)) nx += tag(ctx, n, nx, by + 17, '#ff8fb8') + 4;
-  if (button(ui, VW / 2 - 66, py + ph - 26, 132, 19, 'Back to the Stadium', { primary: true, size: 8, iconName: 'door' }) && R.t > PODIUM.secs + 0.6) leaveRace(world);
+  if (button(ui, VW / 2 - 66, py + ph - 26, 132, 19, R.back?.map === 'garden' ? 'Back to the Garden' : 'Back to the Stadium', { primary: true, size: 8, iconName: 'door' }) && R.t > PODIUM.secs + 0.6) leaveRace(world);
 }
 
 // A racer's little face on the track: two eyes and a mouth on its hair colour, by how it's doing:

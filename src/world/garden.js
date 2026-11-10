@@ -57,7 +57,8 @@ export function gardenMap(g = {}) {
     width, height: 900, groundY: 730,
     // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
     stove: 760, gardenData: g,
-    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
+    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi', critters: [] },
+    // (No birds or butterflies: the Garden's life is your Mochi.)
     cottages: [],
     terrain, platforms, ropes,
     // (Its own lilies and reeds: render/garden.js.)
@@ -108,7 +109,7 @@ export function gardenInside() {
   return {
     id: 'garden_in', name: 'The Nursery', theme: 'town', isTown: true, private: true, garden: true, indoor: true, town: 'sprout',
     width: 760, height: 400, groundY: 360,
-    look: { ceiling: true, floor: 'painted', sky: ['#ffe8e0', '#fff2ea', '#fff8f2'], material: 'parquet', propKeep: 1 },
+    look: { ceiling: true, floor: 'painted', sky: ['#ffe8e0', '#fff2ea', '#fff8f2'], material: 'parquet', propKeep: 1, critters: [] },
     cottages: [],
     terrain: [[0, 360], [760, 360]],
     platforms: [],
@@ -147,7 +148,7 @@ export function trophiesOf(char) {
   return Object.keys(RACE_STAGES).map((id) => ({ id, rank: [...RANK_ORDER].reverse().find((r) => wins[`${id}|${r}`]) ?? null }));
 }
 
-// The first time you walk in: the garden is yours, with two eggs waiting by the gate and a Mochi
+// The first time you walk in: the garden is yours, with two eggs waiting by the egg stall and a Mochi
 // Bell to ring you back here from anywhere. Returns true if it was new.
 export function grantGarden(char, seed = Date.now()) {
   if (char.garden) return false;

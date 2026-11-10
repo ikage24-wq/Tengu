@@ -49,7 +49,9 @@ export function dressShopWindow(ui, state, world) {
   const pw = 118;
   const ph = 150;
   if (mochi.length) {
-    portraitCard(ctx, tryOn(mochi[dlg.who], dlg.pickDress), x, y, pw, ph, world.now, { scale: 2.5, ribbon: false });
+    // (Close up, so the glasses and the little things show; a baby closer still.)
+    const baby = mochi[dlg.who].stage === 'mochiko';
+    portraitCard(ctx, tryOn(mochi[dlg.who], dlg.pickDress), x, y, pw, ph, world.now, { scale: baby ? 3.2 : 2.7, drop: baby ? 14 : 18, ribbon: false });
     text(ctx, mochi[dlg.who].name ?? 'Your Mochi', x + pw / 2, y + ph + 12, { size: 7.5, bold: true, align: 'center' });
     if (mochi.length > 1) {
       if (button(ui, x, y + ph + 18, 22, 14, '<', { size: 8 })) dlg.who = (dlg.who + mochi.length - 1) % mochi.length;

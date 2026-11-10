@@ -241,6 +241,8 @@ test('eggs: from your bag to the gate on arriving; the stall sells three a day; 
     assert.ok(buyStallEgg(g.w, 1), 'sold already');
     assert.ok(buyStallEgg(g.w, 0), 'not enough gold');
     // Up at the stall opens it.
+    // (No Mochi at your feet: that would come first.)
+    for (const e of g.w.gardenLife.mochi) e.x = 1500;
     Object.assign(g.w.body, { x: STALL_X, y: g.w.body.y });
     assert.deepEqual(g.up(), [{ type: 'eggstall' }]);
     // A monster, very rarely (here, always); and the end of each open story chain.
@@ -413,4 +415,27 @@ test('Garden Mochi walk on the ground and swim at the pond surface, easing in an
   }
   assert.ok(swam > 0, 'the swimmer went for a swim');
   done();
+});
+
+test('a Mochi too little to walk crawls along, never sliding about standing still', () => {
+  const g = garden();
+  try {
+    const e = g.w.gardenLife.mochi.find((m) => m.rec === g.baby);
+    let slid = 0;
+    let moved = 0;
+    for (let f = 0; f < 30 * 120; f++) {
+      const x = e.x;
+      g.run(1 / 30, 1 / 30);
+      if (x == null || e.x == null || e.hidden) continue;
+      const d = Math.abs(e.x - x);
+      if (d > 0.1) {
+        moved += 1;
+        if (!(e.m.speed > 1)) slid += 1;
+      }
+    }
+    assert.ok(moved > 100, `it moved (${moved} frames)`);
+    assert.ok(slid <= moved * 0.02, `slid standing still on ${slid} of ${moved} frames`);
+  } finally {
+    g.done();
+  }
 });

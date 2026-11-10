@@ -180,7 +180,8 @@ function stepPet(world, p, dt) {
   let step = p.vx * dt;
   if ((Math.sign(step) === Math.sign(dx) && Math.abs(step) > Math.abs(dx)) || (Math.abs(dx) < 1 && Math.abs(p.vx) < 6)) {
     step = dx;
-    p.vx = 0;
+    // (Keeping pace with you walking slowly: still on the move, legs and all, not sliding.)
+    p.vx = dt > 0 && Math.abs(dx) / dt > 4 ? dx / dt : 0;
   }
   p.x += step;
   // Up and down.

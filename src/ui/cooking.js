@@ -130,7 +130,8 @@ function sweetsList(ui, win, world, x, st) {
     }
   });
   const tab = win.sweetTab ?? 'all';
-  const list = MOCHI_SWEETS.filter((sw) => tab === 'all' || sw.trains[tab]);
+  // (What you can cook now comes first.)
+  const list = MOCHI_SWEETS.filter((sw) => tab === 'all' || sw.trains[tab]).sort((a, b) => Number(hasAll(char, b)) - Number(hasAll(char, a)));
   let y = win.y + 46;
   const rows = Math.floor((H - 66) / ROW);
   if (hover(ui, x, y, W - 16, rows * ROW)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
@@ -159,11 +160,14 @@ function sweetsList(ui, win, world, x, st) {
     // What it trains: a sticker per stat and its points.
     if (sw.heart) text(ctx, 'Two in bloom make an egg', x + 31, y + 23, { size: 6.5, color: '#d0507a' });
     else {
+      // (Up to five stats: closer together when there are many, so they never run into the ingredients.)
+      const trains = Object.entries(sw.trains);
+      const gap = Math.min(30, 124 / trains.length);
       let sx = x + 31;
-      for (const [k, n] of Object.entries(sw.trains)) {
+      for (const [k, n] of trains) {
         statIcon(ctx, k, sx + 4.5, y + 21, 4.5);
-        text(ctx, `+${n}`, sx + 11, y + 23.4, { size: 6.5, bold: true, color: STAT_INFO[k].color });
-        sx += 30;
+        text(ctx, `+${n}`, sx + 10.5, y + 23.4, { size: gap < 28 ? 5.5 : 6.5, bold: true, color: STAT_INFO[k].color });
+        sx += gap;
       }
     }
     let ix = x + 160;

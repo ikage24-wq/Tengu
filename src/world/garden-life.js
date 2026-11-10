@@ -291,7 +291,9 @@ export function tickGarden(world, dt) {
     let step = e.vx * dt;
     if ((Math.sign(step) === Math.sign(dx) && Math.abs(step) > Math.abs(dx)) || (Math.abs(dx) < 0.5 && Math.abs(e.vx) < 4)) {
       step = dx;
-      e.vx = 0;
+      // (Caught up with a target that's itself still creeping along, a crawler's stroll: it's still
+      // on the move at that pace, legs and all, not sliding along standing still.)
+      e.vx = dt > 0 && Math.abs(dx) / dt > 2 ? dx / dt : 0;
     }
     e.x += step;
     if (Math.abs(e.vx) > 2) m.dir = Math.sign(e.vx);

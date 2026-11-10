@@ -45,6 +45,12 @@ export function mochiCareWindow(ui, state, world) {
   const title = rec.name ?? STAGES[rec.stage] ?? 'Mochi';
   const care = CARE_ROWS.filter(([what]) => !guest || VISITOR_CARE.includes(what));
   const h = guest ? H - 20 : H;
+  // (Opened beside a Mochi: on the far side of the screen from it, so you can watch it eat and
+  // react; the camera keeps you, and so it, near the middle.)
+  if (win.forMochi !== e) {
+    win.forMochi = e;
+    win.x = e.x < world.body.x ? VW - W - 8 : 8;
+  }
   // (Kept on screen: a window left near the edge when it was smaller.)
   win.x = Math.max(4, Math.min(VW - W - 4, win.x ?? 0));
   win.y = Math.max(4, Math.min(VH - h - 40, win.y ?? 0));

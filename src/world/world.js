@@ -137,7 +137,7 @@ export function loadMap(world, mapId, portalId) {
   if (mapId === 'garden' || mapId === 'garden_in') {
     if (!world.char.garden && !world.gardenVisit && grantGarden(world.char)) {
       addItem(world.char.inventory, 'mochi_bell', 1);
-      world.log('This little valley is your Mochi Garden! Two eggs are waiting by the gate. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
+      world.log('This little valley is your Mochi Garden! Two eggs are waiting by the egg stall: walk up and press Up to rock them. (You got a Mochi Bell: ring it to come back from anywhere.)', '#ffc2d4');
     }
     refreshGarden(world.char, world.gardenVisit ?? null);
     enterGarden(world, world.gardenVisit ?? world.char);
@@ -465,6 +465,14 @@ function interact(world) {
     return true;
   }
   // An egg in your garden: Up beside it to rock it, and it hatches (world/garden-life.js).
+  // (A Mochi right at your feet comes first: you meant it, not the stall or the tree behind it.)
+  const close = world.map.garden && !world.map.indoor ? mochiNear(world, 14) : null;
+  if (close) {
+    world.gardenLife.caring = close;
+    wakeUp(world, close);
+    world.events.push({ type: 'mochi' });
+    return true;
+  }
   if (world.map.garden && (rockEgg(world) || harvestCrops(world) || eggStallUp(world) || shakeTree(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {

@@ -92,7 +92,7 @@ function startGame(char) {
   screen = 'game';
   autosave = AUTOSAVE_EVERY;
   if (char.tutorial && char.tutorial.step === 0) world.log('Welcome to Dawnlight Isle!', '#ffe36b');
-  else if (!char.quests.first_steps && (!char.tutorial || char.tutorial.step === ISLAND_LESSONS)) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
+  else if (!char.quests.first_steps && (!char.tutorial || char.tutorial.step === ISLAND_LESSONS) && world.map.npcs?.some((n) => n.id === 'mira')) world.log('Welcome! Walk up to Mira and press Up to talk.', '#ffe36b');
 }
 
 function loadFiles() {
