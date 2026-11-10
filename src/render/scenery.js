@@ -5674,6 +5674,9 @@ function nightLook(t, k) {
   return { ...out, face: 'moon', stars: true, rainbow: 0, critters: [...new Set([...(t.critters ?? []).filter((c) => c !== 'butterfly'), 'firefly'])] };
 }
 
+// Things a map's own pieces draw just behind the ground's front edge, so the grass lip overlaps their
+// foot (render/garden.js: the fruit trees, growing up out of the ground rather than stood on it).
+export const BEHIND_GROUND = [];
 export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, street = null, routePortalId = null) {
   const theme = THEMES[map.theme] ? map.theme : 'meadow';
   // A map can restyle its theme (its own sky, skyline, drift...) so no two maps look alike, and a
@@ -5719,6 +5722,7 @@ export function drawSceneBack(ctx, map, cam, width, height, time, nearPortalId, 
   backdrop(ctx);
   drawDrift(ctx, t, cam, width, height, time, 'back');
   drawDeco(ctx, map, cam, width, time, 'behind', air);
+  for (const hook of BEHIND_GROUND) hook(ctx, map, cam, width, time);
   drawTerrain(ctx, theme, map, cam, width, height, time);
   drawDeco(ctx, map, cam, width, time, 'ground');
   // Town buildings stand on the street, behind ledges and props.

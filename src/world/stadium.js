@@ -147,7 +147,7 @@ function hillsMap() {
   return courseMap('mrace_hills', 'Long Hill Run', {
     width: 2200, sky: 'hills',
     terrain: [[0, G], [340, G], [520, 458], [660, 450], [820, 514], [1000, 500], [1180, 436], [1320, 428], [1500, 512], [1640, G], [2200, G]],
-    pieces: [['mg_fruittree', 120, 0], ['mr_marker', 565, 1], ['mg_fruittree', 660, 3], ['mr_marker', 890, 2], ['mr_marker', 1215, 3], ['mg_fruittree', 1320, 1]],
+    pieces: [['mg_fruittree', 120, 0], ['mr_marker', 565, 1], ['mg_fruittree', 615, 3], ['mr_marker', 890, 2], ['mr_marker', 1215, 3], ['mg_fruittree', 1265, 1]],
     race: { ...course(240, 1540, [{ kind: 'run', to: 1540 }]), tire: 1.5, restAt: 0.6, rest: 2.2 },
   });
 }

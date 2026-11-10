@@ -32,7 +32,7 @@
 import { R, E, T, F, snap } from './pixel.js';
 import { ramp, planks, foliage, bark, gable, hash, swing, pivoted, flicker, lean } from './propkit.js';
 import { limb } from './figure.js';
-import { art, place } from './scenery.js';
+import { art, place, BEHIND_GROUND } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
@@ -230,11 +230,16 @@ const FRUIT = [
   { name: 'plum', leaf: '#86c46e', fruit: '#b866b0', blossom: '#ffffff', lean: -5, h: 112 },
   { name: 'loquat', leaf: '#74b25c', fruit: '#ffc84a', blossom: null, lean: 3, h: 124 },
 ];
-const fruitTreeArt = (v) => art(`mg-ftree|${v}`, 120, 150, () => {
+const fruitTreeArt = (v) => art(`mg-ftree3|${v}`, 120, 150, () => {
   const f = FRUIT[v % FRUIT.length];
   const top = 150 - f.h;
   const trunk = [[60, 150], [59, 120], [60 + f.lean * 0.5, 96], [60 + f.lean, top + 40]];
-  const out = [...bark(trunk, (u) => 10 - u * 4, ramp('#a87850'), v * 3.1, 2)];
+  // (Planted: two roots flaring into the ground and the trunk widening at its foot; its shadow and the
+  // grass round it are drawn along the ground itself, drawGardenPiece, so they sit on a slope too.)
+  const out = [];
+  out.push(...bark([[58, 145], [46, 149.6]], (u) => 4 - u * 2.6, ramp('#a87850'), v + 2, 1));
+  out.push(...bark([[62, 145], [75, 149.6]], (u) => 4 - u * 2.6, ramp('#a87850'), v + 3, 1));
+  out.push(...bark(trunk, (u) => 11.5 - u * 5.5, ramp('#a87850'), v * 3.1, 2));
   // A bough or two off the trunk.
   out.push(...bark([[60 + f.lean * 0.6, top + 58], [60 + f.lean * 0.6 - 22, top + 40]], (u) => 4 - u * 2, ramp('#a87850'), v + 5, 1));
   out.push(...bark([[60 + f.lean * 0.8, top + 50], [60 + f.lean + 20, top + 34]], (u) => 3.6 - u * 1.8, ramp('#a87850'), v + 9, 1));
@@ -781,6 +786,53 @@ function heart(ctx, x, y, s, color) {
   ctx.fill();
 }
 
+// A tree's shadow, a soft band of darker grass along the ground under it, `r` either side.
+function treeShadow(ctx, map, wx, cam, r) {
+  ctx.fillStyle = '#7cc06c';
+  ctx.beginPath();
+  for (let d = -r; d <= r; d += 4) {
+    const t = 1 - (d / r) ** 2;
+    ctx.lineTo(wx + d - cam.x, groundAt(map, wx + d) - cam.y - 0.6 - t * 1.4);
+  }
+  for (let d = r; d >= -r; d -= 4) {
+    const t = 1 - (d / r) ** 2;
+    ctx.lineTo(wx + d - cam.x, groundAt(map, wx + d) - cam.y + 0.4 + t * 1.6);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+// Grass tufts round a tree's foot, each standing on the ground where it is.
+const TUFTS = [[-18, 5, '#7cc86e'], [-13, 7, '#94d884'], [-8, 4, '#7cc86e'], [9, 6, '#94d884'], [14, 4, '#7cc86e'], [19, 6, '#94d884']];
+function treeTufts(ctx, map, wx, cam) {
+  for (const [d, h, c] of TUFTS) {
+    const gx = wx + d - cam.x;
+    const gy = groundAt(map, wx + d) - cam.y + 0.6;
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(gx - 1.6, gy);
+    ctx.lineTo(gx + 0.4, gy - h);
+    ctx.lineTo(gx + 1.6, gy);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+// The fruit trees, drawn before the ground so its grassy lip covers the foot of the trunk: each
+// grows up out of the ground. Set on the lower side of the ground under its trunk, so on a slope
+// none stands on air.
+function fruitTreesBehind(ctx, map, cam, width, time) {
+  if (!(map.garden || map.mochiRace)) return;
+  for (const [kind, wx, extra] of map.townPieces ?? []) {
+    if (kind !== 'mg_fruittree') continue;
+    const x = wx - cam.x;
+    if (x < -280 || x > width + 280) continue;
+    const foot = Math.max(groundAt(map, wx - 9), groundAt(map, wx + 9)) - cam.y;
+    const a = (lean(time, wx) + 0.45) * 0.02;
+    pivoted(ctx, x, foot, a, () => place(ctx, fruitTreeArt(extra ?? 0), snap(x), foot + 5));
+  }
+}
+BEHIND_GROUND.push(fruitTreesBehind);
+
 // ---------- Drawing ----------
 export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
   // (The race stadium and courses borrow the trees and lanterns: world/stadium.js.)
@@ -858,9 +910,10 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       return true;
     }
     case 'mg_fruittree': {
-      // (A breath of wind through the canopy.)
-      const a = (lean(time, wx) + 0.45) * 0.02;
-      pivoted(ctx, x, gy - 40, a, () => place(ctx, fruitTreeArt(extra ?? 0), snap(x), gy + 3));
+      // (The tree itself is drawn behind the ground's edge, fruitTreesBehind; here, in front: the
+      // shade on the grass at its foot and the tufts growing round it.)
+      treeShadow(ctx, map, wx, cam, 22);
+      treeTufts(ctx, map, wx, cam);
       return true;
     }
     case 'mg_bigtree': {
