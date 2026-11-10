@@ -77,7 +77,10 @@ function reset() {
 
 export function send(msg) {
   if (online.status !== 'on' && msg.t !== 'hi') return;
-  online.link?.send({ ...msg, id: online.id });
+  // (The dev tools can log, delay or drop it: dev/debug.js. Nothing in play.)
+  const out = (m) => online.link?.send({ ...m, id: online.id });
+  if (globalThis.__tengu?.netOut?.(msg, out)) return;
+  out(msg);
 }
 
 export function hostRoom(world) {
@@ -140,6 +143,7 @@ function handlers(first) {
       w().log(was === 'on' ? `Disconnected: ${why}.` : `Couldn't connect: ${why}.`, '#ffb3c6');
     },
     onMessage(msg) {
+      if (globalThis.__tengu?.netIn?.(msg, (m) => receive(w(), m))) return;
       receive(w(), msg);
     },
   };

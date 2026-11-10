@@ -8,6 +8,7 @@ import { MOBS } from '../data/mobs.js';
 import { gmCommand } from '../world/gm.js';
 import { loadMap } from '../world/world.js';
 import { groundAt } from '../world/physics.js';
+import { installKits, KIT_HELP } from './kits.js';
 
 const HELP = {
   // Looking
@@ -119,7 +120,8 @@ export function install(t) {
   }
 
   Object.assign(t, {
-    help: () => HELP,
+    help: () => ({ ...HELP, ...KIT_HELP }),
+    errorCount: () => errors.length,
     errors: () => (errors.length ? errors : 'No errors since load.'),
     log: (n = 30) => history.slice(-n),
 
@@ -294,15 +296,9 @@ export function install(t) {
       if (!e) return Promise.resolve('No such Mochi here: __tengu.mochi() lists them.');
       return watch(() => `${e.m.cant ?? (e.m.mode === 'run' ? 'feet' : e.m.mode)} ${(e.m.speed ?? 0) > 1 ? 'moving' : 'still'}${e.m.action ? ` ${e.m.action.name}` : ''}`, secs);
     },
-    // Films a spot of the screen straight off the game's canvas, every `every` frames for `secs`,
-    // and lays the frames out as a numbered contact sheet over the game (for the browser pane's
-    // screenshot): what a swap, a hop or a flicker really looks like, frame by frame.
-    film(target = 'hero', secs = 1.5, every = 3, scale = 3) {
-      const world = need();
-      t.closeFilm();
-      const canvas = document.getElementById('game');
-      const k = canvas.width / 640;
-      const box = () => {
+    // Where a spot is on the screen, in game pixels: an NPC id, 'hero', 'mochi:0' or {x,y,w,h}.
+    filmBox(target) {
+        const world = need();
         if (typeof target === 'object') return target;
         const cam = t.camera ?? { x: 0, y: 0 };
         let wx;
@@ -318,7 +314,16 @@ export function install(t) {
         // (A Mochi is small: a tighter box.)
         const small = typeof target === 'string' && target.startsWith('mochi:');
         return small ? { x: wx - cam.x - 24, y: wy - cam.y - 40, w: 48, h: 48 } : { x: wx - cam.x - 32, y: wy - cam.y - 62, w: 64, h: 72 };
-      };
+    },
+    // Films a spot of the screen straight off the game's canvas, every `every` frames for `secs`,
+    // and lays the frames out as a numbered contact sheet over the game (for the browser pane's
+    // screenshot): what a swap, a hop or a flicker really looks like, frame by frame.
+    film(target = 'hero', secs = 1.5, every = 3, scale = 3) {
+      need();
+      t.closeFilm();
+      const canvas = document.getElementById('game');
+      const k = canvas.width / 640;
+      const box = () => t.filmBox(target);
       const shots = [];
       const t0 = performance.now();
       let f = 0;
@@ -375,6 +380,7 @@ export function install(t) {
       return n ? { x: n.x, y: n.y ?? groundAt(world.map, n.x), night: isNight(world), nightOutfit: Boolean(npc?.nightGear && isNight(world)) } : 'Not on this map.';
     },
   });
+  installKits(t);
 }
 
 function safe(v) {

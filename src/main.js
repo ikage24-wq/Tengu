@@ -278,6 +278,11 @@ function step(now) {
     if (slow) world.slowmo -= dt;
     // (`world.devSpeed`: the dev tools' fast-forward and pause, dev/debug.js. Never set in play.)
     acc += (slow ? dt * 0.35 : dt) * (world.devSpeed ?? 1);
+    // (The dev tools' frame step: one game tick at a time while paused.)
+    if (world.devSteps > 0) {
+      acc += TICK;
+      world.devSteps -= 1;
+    }
     for (const code of input.pressed) queued.add(code);
     const logicAt = performance.now();
     while (acc >= TICK) {
@@ -327,6 +332,8 @@ function step(now) {
     // The HUD needs the camera to fly picked-up loot from the world into the Bag button.
     uiState.cam = camera;
     drawUi(ui, uiState, world);
+    // (The dev tools' overlays, drawn over everything: dev/debug.js. Nothing in play.)
+    globalThis.__tengu?.afterDraw?.(ctx, world, camera);
     record('draw', performance.now() - drawAt);
     hearUi(uiState);
     npcPointer(ui);

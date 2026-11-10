@@ -251,6 +251,8 @@ const SOUNDS = {
 };
 
 export function sfx(name, o = {}) {
+  // (The dev tools' sound log: dev/debug.js. Nothing in play.)
+  globalThis.__tengu?.onSound?.(name, o);
   if (!audioReady()) return;
   allyNow = Boolean(o.ally);
   if (SOUNDS[name]) SOUNDS[name](o);
