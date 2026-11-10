@@ -26,3 +26,10 @@ test('a Mochi raised with care evolves, is reborn and never gets broken numbers'
   assert.ok(life.steps.some((s) => s.includes('evolved')), life.steps.join('; '));
   assert.ok(life.steps.some((s) => s.includes('reborn')), life.steps.join('; '));
 });
+
+test('a Mochi raised right for the moon ascends in its third life, not by luck', () => {
+  for (const life of t.mochiLife(3, 80)) {
+    assert.equal(life.stage, 'tsukimochi', life.steps.join('; '));
+    assert.equal(life.gen, 3, life.steps.join('; '));
+  }
+});

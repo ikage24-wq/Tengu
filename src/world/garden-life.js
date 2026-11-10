@@ -236,6 +236,11 @@ export function tickGarden(world, dt) {
     const { rec } = e;
     // (The garden's time passes for them while you're here; a visiting Mochi's, in its own garden.)
     if (owner && !e.guest) tickRec(rec, dt);
+    // (Ready for the moon: told once, so you know it'll be a Tsukimochi when it grows up.)
+    if (owner && !e.guest && rec.moonReady && !rec.moonTold) {
+      rec.moonTold = true;
+      world.log(`${calledOf(rec, 'Your Mochi')} glows softly, like the moon... it'll be a Tsukimochi when it grows up!`, '#fff3c4');
+    }
     // Saying goodbye: it waves, then fades away, off to its new home.
     if (e.leaving) {
       e.m.speed = 0;

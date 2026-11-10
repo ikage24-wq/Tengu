@@ -129,6 +129,10 @@ export const leanOf = (rec) => (rec.lean >= LEAN_SHOWS ? 'angel' : rec.lean <= -
 export function tick(rec, secs) {
   if (rec.stage === 'egg') return;
   rec.age += secs;
+  // (Once a Mochiko has been raised right for the moon, it remembers: it becomes a Tsukimochi when it
+  // grows up even if, that very moment, its last few sweets tipped the balance. 2026-11-10, the
+  // player's ask: it used to come down to luck.)
+  if (rec.stage === 'mochiko' && !rec.moonReady && canAscend(rec)) rec.moonReady = true;
   if (rec.bloom > 0) rec.bloom = Math.max(0, rec.bloom - secs);
   if (rec.bredRest > 0) rec.bredRest = Math.max(0, rec.bredRest - secs);
   const fade = 0.5 ** (secs / TREND.half);
@@ -299,7 +303,8 @@ export function evolve(rec, rng = Math.random) {
   rec.path = path;
   rec.stage = PATHS[path];
   const tr = trendOf(rec);
-  if (canAscend(rec)) {
+  if (rec.moonReady || canAscend(rec)) {
+    delete rec.moonReady;
     rec.stage = 'tsukimochi';
     rec.form = 'moon';
     rec.immortal = true;
@@ -339,7 +344,7 @@ export function rebirth(rec, rng = Math.random) {
     }
     stats[s] = { grade, level: 1, exp: 0, points: Math.round(st.points * 0.1) };
   }
-  const egg = newRecord({ ...rec, tricks: [] }, { gen: rec.gen + 1, stats });
+  const egg = newRecord({ ...rec, tricks: [], moonReady: undefined, moonTold: undefined }, { gen: rec.gen + 1, stats });
   egg.stage = 'egg';
   egg.bond = rec.bond;
   return { egg, raised };
