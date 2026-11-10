@@ -9,7 +9,7 @@ import { QUESTS } from '../data/quests.js';
 import { ITEMS } from '../data/items.js';
 import { MOBS } from '../data/mobs.js';
 import { JOBS, nextJobs, FAMILY_STATS } from '../data/jobs.js';
-import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today } from '../core/quests.js';
+import { questState, acceptQuest, completeQuest, objectiveProgress, objectiveText, rewardId, objectiveHint, waitingToTalk, today, questsOf } from '../core/quests.js';
 import { advanceJob, wornGear, giveStarterWeapon } from '../core/character.js';
 import { deathExpLoss } from '../core/formulas.js';
 import { respawn, loadMap } from '../world/world.js';
@@ -63,7 +63,7 @@ import { routeFrom, setSail, hasSailed } from '../world/voyage.js';
 import { derbyClock, standings, PRIZES } from '../world/derby.js';
 
 export function questMarker(char, npcId) {
-  const ids = NPCS[npcId].quests ?? [];
+  const ids = questsOf(char, npcId);
   // Someone you've been sent to talk to (or bring something to) waits with a "?" too.
   if (ids.some((id) => questState(char, id) === 'ready') || waitingToTalk(char, npcId)) return '?';
   // The next step of the story shows a star.
@@ -255,7 +255,7 @@ export function npcWindow(ui, state, world) {
   const char = world.char;
   const { ctx } = ui;
   const jobOptions = dlg.job ? nextJobs(char.job, char.level, char.quests).filter((j) => !npc.family || j.family === npc.family) : [];
-  const questIds = (npc.quests ?? []).filter((id) => !['locked', 'done'].includes(questState(char, id)));
+  const questIds = questsOf(char, npc.id).filter((id) => !['locked', 'done'].includes(questState(char, id)));
 
   // What you can say: each quest (new, in progress, or ready to hand in), the NPC's own service,
   // and goodbye.

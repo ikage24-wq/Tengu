@@ -11,7 +11,7 @@ import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
-import { questState, objectiveProgress, objectiveText } from '../core/quests.js';
+import { questState, objectiveProgress, objectiveText, reportTo } from '../core/quests.js';
 import { currentLesson } from '../world/tutorial.js';
 // (Under the tutorial's hint card while a lesson shows, so the two never sit on each other.)
 const topOf = (world, y) => (currentLesson(world.char) ? y + 30 : y);
@@ -196,7 +196,7 @@ function goalLines(world, id) {
 // Green and bright: the quest is done, here's who to tell.
 function drawReady(ctx, world, m, age) {
   const q = QUESTS[m.id];
-  const giver = NPCS[q.giver];
+  const giver = NPCS[reportTo(m.id)];
   const to = questTarget(world.char, m.id);
   const where = to && to !== world.map.id ? ` in ${MAPS[to]?.name ?? ''}` : '';
   const pop = age < 0.3 ? 1.35 - 0.35 * easeOut(age / 0.3) : 1;
@@ -248,7 +248,7 @@ function drawComplete(ui, state, world, m, age) {
   box(ctx, x0 + 4, y0 + 4, cw - 8, 15, { fill: th.light, edge: null, r: 8 });
   text(ctx, fit(ctx, q.name, cw - 90, 9.5), x0 + 12, y0 + 15, { size: 9.5, bold: true, color: th.ink });
   // The giver's thanks, typing out.
-  const giver = NPCS[q.giver]?.name ?? '';
+  const giver = NPCS[reportTo(m.id)]?.name ?? '';
   const words = `${giver}: "${thanksFor(m.id)}"`;
   const typed = Math.floor(clamp((age - 0.15) / 0.9) * words.length);
   wrap(ctx, words, x0 + 12, y0 + 33, cw - 24, { size: 8.5, chars: typed, lineHeight: 10.5, color: COLORS.ink });

@@ -66,7 +66,7 @@ export const QUESTS = {
     rewards: { exp: 1350, gold: 100, items: [{ id: 'red_potion', qty: 10 }] },
   },
   bun_buddy: {
-    id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 15, prereq: 'clover_count',
+    id: 'bun_buddy', name: 'Bun Round-Up', giver: 'clover', minLevel: 8, prereq: 'clover_count',
     text: "The Mandrakes in Clover Hills screamed so loud my Puff Buns bolted! Quiet 15 of them, and pick 8 Lucky Clover in the hills to coax the buns home. The bravest one has taken a shine to you, I can tell. Its name is Fluffy. They're all called Fluffy. It's easier.",
     objectives: [{ type: 'kill', mob: 'sproutling', count: 15 }, { type: 'collect', item: 'clover', count: 8 }],
     rewards: { exp: 900, gold: 120, items: [], mount: 'bun' },
@@ -112,10 +112,10 @@ export const QUESTS = {
     rewards: { exp: 2200, gold: 140, items: [{ id: 'red_potion', qty: 15 }] },
   },
   hollow_heart: {
-    id: 'hollow_heart', name: 'Heart of the Hollow', giver: 'bramble', minLevel: 10, prereq: 'bramble_check',
-    text: "Gnarlroot has been grumbling under the canyon for a week, and the whole Hollow woke up with him. Take a group of four down and calm him. One tank, one healer, two fighters. Not three fighters. Not 'two fighters and a bard'. Talk to me again when you're ready.",
-    objectives: [{ type: 'kill', mob: 'gnarlroot', count: 1 }],
-    rewards: { exp: 9000, gold: 600, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }, { id: 'hollow_acorn', qty: 5 }] },
+    id: 'hollow_heart', name: 'Nobody Charges In', giver: 'bramble', minLevel: 10, prereq: 'bramble_check',
+    text: "Rule 12: proof or it didn't happen. The Hollow's full of acorns, and the Rootlings hoard them. Take a group of four down, one tank, one healer, two fighters. Not three fighters. Not 'two fighters and a bard'. Bring me 5 Hollow Acorns so I know you went all the way down.",
+    objectives: [{ type: 'collect', item: 'hollow_acorn', count: 5 }],
+    rewards: { exp: 9000, gold: 600, items: [{ id: 'warrior_cape_15', qty: 1, forJob: true, variant: 'roll' }] },
   },
   bramble_wipe: {
     id: 'bramble_wipe', name: 'The Great Wipe', giver: 'bramble', minLevel: 12, prereq: 'hollow_heart',
@@ -200,9 +200,12 @@ export const QUESTS = {
   // Sprout Village.
   pip_parcel: {
     id: 'pip_parcel', name: 'Special Delivery', giver: 'pip', minLevel: 3, prereq: 'snail_trouble',
-    text: "This parcel's for Captain Rook in Pastel Harbor, just past Petal Meadow. I'd take it myself, but I can't leave the shop! Shopkeepers can't. Everyone knows that. Probably. Mind the corners, it's fragile. And mysterious.",
+    text: "This parcel's for Captain Rook in Pastel Harbor, past Petal Meadow and Clover Hills. I'd take it myself, but I can't leave the shop! Shopkeepers can't. Everyone knows that. Probably. Mind the corners, it's fragile. And mysterious.",
     gives: [{ id: 'parcel' }],
-    objectives: [{ type: 'deliver', npc: 'rook', item: 'parcel', say: "A parcel from Pip? The tag says... 'From Pip. To Pip. Do not open until brave.' Ha! I think this one's hers, kid. Take it back to her, and tell her the harbor's lovely this time of year." }],
+    objectives: [{ type: 'deliver', npc: 'rook', item: 'parcel', say: "A parcel from Pip? The tag says... 'From Pip. To Pip. Do not open until brave.' Ha! It's hers, kid. I'll send it back on the next cart. You've walked far enough." }],
+    // (Handed in right here: no walk all the way back to Sprout for it.)
+    handIn: 'rook',
+    thanks: "Pip's parcel, safe and sound, and a fine walk you've had. Mind you tell her it got here.",
     rewards: { exp: 180, gold: 70, items: [{ id: 'return_scroll', qty: 3 }, { id: 'red_potion', qty: 10 }] },
   },
   pip_souvenirs: {
@@ -320,13 +323,13 @@ export const QUESTS = {
   // Old Lumen, the great lantern fish who has lived under the point since Granny was a girl, is
   // restless. Any level can do it: it asks for fishing, not fighting (world/lumen.js).
   kelp_1: {
-    id: 'kelp_1', name: 'The Dim Light', giver: 'kelp', minLevel: 1,
+    id: 'kelp_1', name: 'The Dim Light', giver: 'kelp', minLevel: 3,
     text: "See my light? Flickering like a guttering candle, it is, and it's never done that. The fish know why, dearie. Bring me three Lantern Gobies from the cove's rock pools: their little glow tells me the mood of the tide.",
     objectives: [{ type: 'collect', item: 'fish_goby', count: 3 }],
     rewards: { exp: 150, gold: 90, items: [{ id: 'lantern_bait', qty: 3 }] },
   },
   kelp_2: {
-    id: 'kelp_2', name: 'Strange Bites', giver: 'kelp', minLevel: 1, prereq: 'kelp_1',
+    id: 'kelp_2', name: 'Strange Bites', giver: 'kelp', minLevel: 4, prereq: 'kelp_1',
     text: "The gobies are dim as dishwater. Something's stirring the deep. Go ask the folk who know the water: Nori, Mister Brine, and that sleepy Bobbin, if he's awake. Then come tell me.",
     objectives: [
       { type: 'talk', npc: 'nori', say: "Weird? Yeah! The big fish keep swimming toward the point, all at once, like they're scared. Don't tell anyone I said scared." },
@@ -336,7 +339,7 @@ export const QUESTS = {
     rewards: { exp: 250, gold: 120, items: [] },
   },
   kelp_3: {
-    id: 'kelp_3', name: 'Oil for the Lamp', giver: 'kelp', minLevel: 1, prereq: 'kelp_2',
+    id: 'kelp_3', name: 'Oil for the Lamp', giver: 'kelp', minLevel: 6, prereq: 'kelp_2',
     text: "Big glowing scales... it's Old Lumen, then. He's lived under the point since I was a girl, and he's never been restless. First, my light: it burns angler oil. Catch me two Lantern Anglers off the boardwalk, then climb up to the gallery and see how dark the sea's gone.",
     objectives: [
       { type: 'collect', item: 'fish_angler', count: 2 },
@@ -345,13 +348,13 @@ export const QUESTS = {
     rewards: { exp: 500, gold: 200, items: [{ id: 'rod_oak', qty: 1 }] },
   },
   kelp_4: {
-    id: 'kelp_4', name: 'The Deep Water', giver: 'kelp', minLevel: 1, prereq: 'kelp_3',
+    id: 'kelp_4', name: 'The Deep Water', giver: 'kelp', minLevel: 8, prereq: 'kelp_3',
     text: "The light's back, and look: the deep water's all churned up off the point. Lumen's down there, and he won't come to just anybody's line. Show him you can handle the deep: catch a Sailfin Tuna from the point.",
     objectives: [{ type: 'catch', fish: 'fish_tuna', count: 1, map: 'lagoon', place: 'Lighthouse Point' }],
     rewards: { exp: 800, gold: 300, items: [{ id: 'lantern_bait', qty: 5 }] },
   },
   kelp_5: {
-    id: 'kelp_5', name: 'Old Lumen', giver: 'kelp', minLevel: 1, prereq: 'kelp_4',
+    id: 'kelp_5', name: 'Old Lumen', giver: 'kelp', minLevel: 10, prereq: 'kelp_4',
     text: "He's frightened, dearie. With no wind the currents have gone still, and the old fellow thinks the sea is dying. Cast off the point and he'll come. Reel him in, gently, let him see the light up close, and let him go. He'll understand. Mind: he's the biggest thing you'll ever hook.",
     objectives: [{ type: 'catch', fish: 'fish_lumen', count: 1, map: 'lagoon', place: 'the deep water off Lighthouse Point' }],
     rewards: { exp: 1500, gold: 680, items: [{ id: 'rod_skywood', qty: 1 }, { id: 'lantern_bait', qty: 10 }] },

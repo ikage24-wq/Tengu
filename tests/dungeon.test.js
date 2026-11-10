@@ -149,9 +149,22 @@ function pilot(world) {
     const hi = danger.kind === 'circle' ? danger.x + danger.w / 2 + 20 : danger.x + danger.w + 20;
     go(Math.abs(b.x - lo) < Math.abs(b.x - hi) && lo > 30 ? lo : hi);
   } else if (fights.length) {
-    const t = fights.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
+    // (With a boss up, its helpers first, awake or not: a Sapling left alone heals Gnarlroot.)
+    const boss = fights.find((m) => m.def.boss);
+    const helpers = boss ? world.mobs.filter((m) => m.hp > 0 && !m.def.boss) : [];
+    const pool = helpers.length ? helpers : fights;
+    const t = pool.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
     const spot = t.x + (Math.sign(b.x - t.x) || -1) * 150;
-    if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
+    // (His heart open: only blows from a ledge reach it. Up onto the nearest ledge over him.)
+    const ledge = t.heartOpen && nav.surfaces.filter((sf) => sf.yAt((sf.x1 + sf.x2) / 2) < world.map.groundY - 40 && sf.x2 > t.x - 200 && sf.x1 < t.x + 200)
+      .sort((p, q) => Math.abs((p.x1 + p.x2) / 2 - t.x) - Math.abs((q.x1 + q.x2) / 2 - t.x))[0];
+    if (ledge && b.y > world.map.groundY - 40) {
+      const lx = Math.max(ledge.x1 + 12, Math.min(ledge.x2 - 12, t.x));
+      goTo(lx, ledge.yAt(lx));
+    } else if (ledge) {
+      b.facing = Math.sign(t.x - b.x) || 1;
+      held.add('KeyZ');
+    } else if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
     else if (Math.abs(b.x - spot) > 20) go(spot);
     else {
       b.facing = Math.sign(t.x - b.x) || 1;
@@ -170,6 +183,18 @@ function pilot(world) {
     else if (obj) {
       goTo(obj.x, obj.y);
       if (Math.abs(obj.x - b.x) < 8 && Math.abs(obj.y - b.y) < 4 && !world.channel && b.onGround && Math.abs(b.vx) < 1) pressed.add('ArrowUp');
+    } else if (asleep.length) {
+      // (Monsters left idle keep the room shut: go and wake them, as a player would, instead of
+      // waiting by the tank for them to come. The small ones first, then the boss.)
+      const pool = asleep.some((m) => !m.def.boss) ? asleep.filter((m) => !m.def.boss) : asleep;
+      const t = pool.reduce((a, m) => (Math.abs(m.x - b.x) + Math.abs(m.y - b.y) < Math.abs(a.x - b.x) + Math.abs(a.y - b.y) ? m : a));
+      const spot = t.x + (Math.sign(b.x - t.x) || -1) * 60;
+      if (Math.abs(t.y - b.y) > 4 || b.rope) goTo(spot, t.y);
+      else if (Math.abs(b.x - spot) > 20) go(spot);
+      else {
+        b.facing = Math.sign(t.x - b.x) || 1;
+        held.add('KeyZ');
+      }
     } else {
       const tank = groupOf(world).find((g) => g.role === 'tank' && isUp(world, g));
       if (tank) goTo(tank.body.x - 60, tank.body.y);

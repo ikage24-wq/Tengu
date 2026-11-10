@@ -107,6 +107,8 @@ test('the Fishing Derby: on the hour for five minutes, your best catch at the la
 
 test("Granny Kelp's story ends with Old Lumen at the point: reeled in, counted, let go", () => {
   const char = createCharacter('Kelp', {});
+  // (Old Lumen's step needs level 10.)
+  char.level = 10;
   for (const id of ['kelp_1', 'kelp_2', 'kelp_3', 'kelp_4']) char.quests[id] = { state: 'done' };
   const w = createWorld(char);
   loadMap(w, 'lagoon', 'start');

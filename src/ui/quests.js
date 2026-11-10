@@ -17,7 +17,7 @@ import { MOBS } from '../data/mobs.js';
 import { ITEMS } from '../data/items.js';
 import { MAPS } from '../data/maps.js';
 import { questTarget, setRoute } from '../world/routes.js';
-import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint } from '../core/quests.js';
+import { questState, objectiveText, objectiveProgress, rewardId, trackedQuests, isTracked, toggleTracked, npcMap, objectiveHint, reportTo } from '../core/quests.js';
 import { COLORS, THEMES, windowFrame, button, tabs, text, box, bar, hover, clicked, tooltip, wrap, well, icon, fit, toggle, itemSlot, font, textFont } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { settings, saveSettings } from '../core/settings.js';
@@ -33,6 +33,9 @@ const objName = (o) => {
 };
 const giverName = (q) => NPCS[q.giver]?.name ?? '';
 const giverPlace = (q) => MAPS[npcMap(q.giver)]?.name ?? '';
+// (Who you report to once it's done: usually the giver.)
+const reportName = (q) => NPCS[reportTo(q.id)]?.name ?? '';
+const reportPlace = (q) => MAPS[npcMap(reportTo(q.id))]?.name ?? '';
 
 // How far along a quest is (0..1), across all its objectives.
 function progressOf(char, id) {
@@ -171,7 +174,7 @@ function listRow(ui, char, id, x, y, w, on, th) {
   text(ctx, fit(ctx, q.name, nameW, 7.5), x + 21, y + 10, { size: 7.5, bold: true, color: st === 'locked' ? COLORS.muted : ready ? GREEN : COLORS.ink });
   if (pinned) icon(ctx, 'pin', x + w - 7, y + 7, 6.5, th.main);
   let sub;
-  if (ready) sub = `Report to ${giverName(q)}`;
+  if (ready) sub = `Report to ${reportName(q)}`;
   else if (st === 'active') {
     const o = objectiveProgress(char, id).find((x) => x.have < x.count);
     sub = o ? (errand(o) ? objName(o) : `${objName(o)} ${o.have}/${o.count}`) : `${Math.round(progressOf(char, id) * 100)}%`;
@@ -275,7 +278,7 @@ function details(ui, char, id, x0, y0, w0, h0, th, world = null) {
   let note;
   let color = COLORS.muted;
   if (st === 'ready') {
-    note = `Report to ${giverName(q)} in ${giverPlace(q)}!`;
+    note = `Report to ${reportName(q)} in ${reportPlace(q)}!`;
     color = GREEN;
   } else if (st === 'active') note = `${Math.round(progressOf(char, id) * 100)}% done`;
   else if (st === 'available') note = `Talk to ${giverName(q)} in ${giverPlace(q)} to start.`;
@@ -407,7 +410,7 @@ export function drawQuestTracker(ui, state, world) {
     if (c.ready) {
       icon(ctx, 'check', x + w - 11, cy + 6.5, 8, COLORS.good);
       const bob = Math.sin(t * 5) * 1;
-      text(ctx, fit(ctx, `➜ Report to ${giverName(c.q)}`, w - 20, 6.5), x + 9 + Math.max(0, bob), cy + 19.5, { size: 6.5, bold: true, color: COLORS.good });
+      text(ctx, fit(ctx, `➜ Report to ${reportName(c.q)}`, w - 20, 6.5), x + 9 + Math.max(0, bob), cy + 19.5, { size: 6.5, bold: true, color: COLORS.good });
     } else {
       c.objs.forEach((o, i) => {
         const key = `${c.id}|${i}`;

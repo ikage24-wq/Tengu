@@ -5,7 +5,7 @@
 import { MAPS } from '../data/maps.js';
 import { MOBS } from '../data/mobs.js';
 import { QUESTS } from '../data/quests.js';
-import { questState, objectiveProgress } from '../core/quests.js';
+import { questState, objectiveProgress, reportTo } from '../core/quests.js';
 
 // "Lv 4-8" for a map's monsters (bosses left out), or null for a place without any.
 export function levelRange(map) {
@@ -57,9 +57,10 @@ export function questTarget(char, id) {
   const q = QUESTS[id];
   const st = questState(char, id);
   const npcAt = (npc) => Object.values(MAPS).find((m) => m.npcs?.some((n) => n.id === npc))?.id ?? null;
+  if (st === 'ready') return npcAt(reportTo(id));
   if (st !== 'active') return npcAt(q.giver);
   const o = objectiveProgress(char, id).find((x) => x.have < x.count);
-  if (!o) return npcAt(q.giver);
+  if (!o) return npcAt(reportTo(id));
   const mobMap = (mob) => Object.values(MAPS).find((m) => !m.dungeon && m.spawns?.some((s) => s.mob === mob && !s.after))?.id ?? Object.values(MAPS).find((m) => m.spawns?.some((s) => s.mob === mob))?.id ?? null;
   if (o.type === 'kill') return mobMap(o.mob);
   if (o.type === 'collect') {

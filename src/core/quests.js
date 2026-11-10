@@ -232,6 +232,20 @@ export function toggleTracked(char, id) {
 // Hints for the quest log and tracker: where a quest's giver stands, where its monsters live,
 // and who drops the items it wants.
 
+// Who you report a finished quest to: its giver, or (`handIn`) someone else, as when Pip's parcel
+// ends with Captain Rook instead of a walk all the way back.
+export function reportTo(id) {
+  return QUESTS[id].handIn ?? QUESTS[id].giver;
+}
+
+// The quests an NPC deals with right now: their own (less any you hand in elsewhere once done),
+// plus finished ones that are handed in to them.
+export function questsOf(char, npcId) {
+  const own = (NPCS[npcId]?.quests ?? []).filter((id) => !(QUESTS[id].handIn && QUESTS[id].handIn !== npcId && questState(char, id) === 'ready'));
+  const brought = Object.values(QUESTS).filter((q) => q.handIn === npcId && q.giver !== npcId && questState(char, q.id) === 'ready').map((q) => q.id);
+  return [...own, ...brought];
+}
+
 export function npcMap(npcId) {
   return Object.values(MAPS).find((m) => m.npcs?.some((n) => n.id === npcId))?.id ?? null;
 }

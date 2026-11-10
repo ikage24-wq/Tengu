@@ -8,6 +8,8 @@ import { tickCine } from './director.js';
 import { tickMochi } from './mochi.js';
 import { ISLAND_LESSONS, tickTutorial } from './tutorial.js';
 import { getMap, MAPS } from '../data/maps.js';
+import { MOBS } from '../data/mobs.js';
+import { levelRange } from './routes.js';
 import { ITEMS, RARITIES } from '../data/items.js';
 import { itemName, itemColors } from '../core/items.js';
 import { QUESTS } from '../data/quests.js';
@@ -123,6 +125,14 @@ export function createWorld(char) {
 
 function findPortal(map, id) {
   return map.portals.find((p) => p.id === id) ?? map.portals.find((p) => p.id === 'start') ?? map.portals[0];
+}
+
+// A door into a place whose weakest regular monster is 10 or more levels above you.
+export function tooStrong(world, portal) {
+  const to = MAPS[portal.to];
+  if (!to || to.dungeon || to.isTown) return false;
+  const levels = (to.spawns ?? []).filter((x) => !MOBS[x.mob]?.boss).map((x) => MOBS[x.mob].level);
+  return levels.length > 0 && Math.min(...levels) >= world.char.level + 10;
 }
 
 export function loadMap(world, mapId, portalId) {
@@ -468,6 +478,16 @@ function interact(world) {
   }
   // (The way to the Mochi Garden asks whose, with friends online who have one: world/garden-life.js.)
   if (portal && gardenGateUp(world, portal)) return true;
+  // (A door into a place far above your level asks first: a second Up within a few seconds goes in.)
+  if (portal && tooStrong(world, portal)) {
+    const ask = world.doorAsk;
+    if (!ask || ask.id !== `${world.map.id}.${portal.id}` || world.now - ask.at > 4) {
+      world.doorAsk = { id: `${world.map.id}.${portal.id}`, at: world.now };
+      world.log(`${MAPS[portal.to].name}: monsters ${levelRange(MAPS[portal.to])}. Careful! Press Up again to go in.`, '#ffb3c6');
+      return true;
+    }
+    world.doorAsk = null;
+  }
   if (portal) {
     loadMap(world, portal.to, portal.toPortal);
     world.log(`Entered ${world.map.name}.`, '#cfe8ff');

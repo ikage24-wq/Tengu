@@ -132,6 +132,10 @@ test('a friend taking a party quest shares it with you', () => {
 });
 
 test('a gather quest counts your finds and party members gather for it too', () => {
+  // (Seeded: on an unlucky roll the party wandered for the whole 90 seconds without a clover.)
+  const random = Math.random;
+  Math.random = seeded(7);
+  try {
   const world = field('meadow1', { n: 2 });
   const q = { ...boardOffers(world, 'sprout').find((o) => o.kind === 'gather'), map: 'meadow1', item: 'clover', need: PQ_KINDS.gather.need };
   takePartyQuest(world, q);
@@ -142,6 +146,9 @@ test('a gather quest counts your finds and party members gather for it too', () 
   world.god = true;
   for (let t = 0; t < 90 && world.char.partyQuest && world.char.partyQuest.have <= 2; t++) step(world, 1);
   assert.ok(!world.char.partyQuest || world.char.partyQuest.have > 2, 'a party member gathered clover for the party');
+  } finally {
+    Math.random = random;
+  }
 });
 
 test('a defend quest sends waves at the calm stone, and holding them off counts', () => {

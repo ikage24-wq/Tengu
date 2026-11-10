@@ -7,8 +7,8 @@
 export const QUEST_SCENES = {
   tut_farewell: { done: 'tut_bye' },
   snail_trouble: { done: 'pip_snails_done' },
-  pip_parcel: { done: 'pip_parcel_done' },
-  pip_souvenirs: { done: 'pip_souvenirs_done' },
+  // (The parcel is handed in to Rook; Pip hears about the tag when you take her next errand.)
+  pip_souvenirs: { accept: 'pip_parcel_done', done: 'pip_souvenirs_done' },
   pip_lunch: { done: 'pip_lunch_done' },
   malv_minion: { done: 'malv_minion_done' },
   malv_well: { done: 'malv_well_done' },
@@ -198,7 +198,7 @@ export const SIDE_SCENES = {
     { together: [{ face: 'pip', to: -1 }, { wait: 0.8 }, { face: 'pip', to: 'player' }] },
     { who: 'pip', text: "...Okay. It's a compass. For me. For when I go out there. Someday. I put Rook's name on it so at least it would get to travel.", mood: 'sad' },
     { who: null, text: 'Pip sets the compass on the shelf between the potions, with a price tag that says NOT FOR SALE (YET).' },
-    { who: 'pip', text: 'Now! Would you like to buy a potion? You would. I can tell. You have a potion face.', mood: 'happy' },
+    { who: 'pip', text: "Anyway! Souvenirs! Petals and tufts, for the shelf. And buy a potion on your way out. You have a potion face.", mood: 'happy' },
   ],
   pip_souvenirs_done: [
     { who: null, text: 'Pip arranges every petal and tuft on a little shelf under a hand-lettered sign: THE WORLD.' },

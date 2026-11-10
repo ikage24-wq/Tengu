@@ -212,6 +212,27 @@ export function bindFreeHotkey(char, binding) {
   return key ?? null;
 }
 
+// Your first tonics go on a key by themselves, as new skills do: HP tonics on 1, MP on 2 (or the
+// first free key), once each, so a new hero who never found the drag-to-key still drinks one in a
+// pinch. A key you clear stays clear. Returns what it said, or null.
+const TONIC_KEYS = { hp: 'Digit1', mp: 'Digit2' };
+export function bindFirstTonics(char) {
+  const said = [];
+  char.tonicKeys ??= {};
+  for (const kind of ['hp', 'mp']) {
+    if (char.tonicKeys[kind]) continue;
+    const id = (char.inventory.use ?? []).find((it) => it && ITEMS[it.id]?.effect?.[kind] && !ITEMS[it.id].effect?.[kind === 'hp' ? 'mp' : 'hp'])?.id;
+    if (!id) continue;
+    char.tonicKeys[kind] = true;
+    if (Object.values(char.hotkeys).some((b) => b?.item && ITEMS[b.item]?.effect?.[kind])) continue;
+    const code = !char.hotkeys[TONIC_KEYS[kind]] ? TONIC_KEYS[kind] : HOTKEYS.find((k) => !char.hotkeys[k]);
+    if (!code) continue;
+    char.hotkeys[code] = { item: id };
+    said.push(`${ITEMS[id].name} is on key ${code.replace(/^Digit|^Key/, '')}: press it to ${kind === 'hp' ? 'heal' : 'get MP back'}.`);
+  }
+  return said.length ? said : null;
+}
+
 // ---------- Equipment ----------
 
 export function equipBlocker(char, inst) {

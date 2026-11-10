@@ -62,8 +62,8 @@ export const MAPS = {
     ],
     portals: [
       { id: 'start', x: 140, y: 480, hidden: true },
-      // The old mine road west, closing the island's ring: it comes out in the Crystal Cave.
-      { id: 'west', x: 40, y: 480, to: 'cave', toPortal: 'sprout', label: 'Crystal Cave' },
+      // (No road west: the old mine road to the Crystal Cave was closed 2026-11-10, a Lv 27-35 cave
+      // one step from the first town. The cave is reached the long way, past Twilight Ruins.)
       { id: 'east', x: 3150, y: 480, to: 'meadow1', toPortal: 'west' },
     ],
     npcs: [{ id: 'mira', x: 330 }, { id: 'lulu', x: 1105 }, { id: 'pip', x: 1260 }, { id: 'posy', x: 2152 }, { id: 'clover', x: 2390 }, { id: 'kestrel', x: 2480 }, { id: 'malvina', x: 1530 }],
@@ -460,8 +460,6 @@ export const MAPS = {
       { id: 'west', x: 40, y: 600, to: 'ruins', toPortal: 'east' },
       { id: 'east', x: 2100, y: 480, to: 'sky', toPortal: 'west' },
       { id: 'boss', x: 1700, y: 880, to: 'bossroom', toPortal: 'west', label: 'Throne' },
-      // The mine road back down to Sprout Village (the ring round the island).
-      { id: 'sprout', x: 500, y: 720, to: 'sprout', toPortal: 'west', label: 'Sprout Village' },
     ],
     npcs: [],
     // A landmark per zone: glowing pools on the terraces, a great crystal by the throne's gate at

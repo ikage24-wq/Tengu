@@ -10,7 +10,7 @@ import { drawDateHud } from './dates.js';
 import { VW } from '../input.js';
 import { ITEMS } from '../data/items.js';
 import { SKILLS } from '../data/skills.js';
-import { HOTKEYS } from '../core/character.js';
+import { HOTKEYS, bindFirstTonics } from '../core/character.js';
 import { statsWindow } from './windows.js';
 import { skillsWindow } from './skills.js';
 import { bagWindow } from './bag.js';
@@ -45,7 +45,7 @@ import { drawPartyQuestCard } from './partyboard.js';
 import { isGm } from '../world/gm.js';
 import { QUESTS } from '../data/quests.js';
 import { NPCS } from '../data/npcs.js';
-import { noteTalk, noteVisit, questState } from '../core/quests.js';
+import { noteTalk, noteVisit, questState, reportTo } from '../core/quests.js';
 import { say } from './chat.js';
 import { checkArrival } from '../world/routes.js';
 import { sceneInput, drawScene, drawRadio } from './cutscene.js';
@@ -58,7 +58,7 @@ import { smartPing } from '../world/grouping.js';
 function noteVisits(world) {
   for (const id of noteVisit(world.char, world.map.id, world.body)) {
     const q = QUESTS[id];
-    world.log(questState(world.char, id) === 'ready' ? `${q.name}: done! Report to ${NPCS[q.giver].name}.` : `${q.name}: you made it to ${world.map.name}.`, '#bff0dc');
+    world.log(questState(world.char, id) === 'ready' ? `${q.name}: done! Report to ${NPCS[reportTo(id)].name}.` : `${q.name}: you made it to ${world.map.name}.`, '#bff0dc');
   }
 }
 
@@ -129,6 +129,7 @@ export function routeInput(state, world, input, dt) {
   if (state.visitIn <= 0) {
     state.visitIn = 0.25;
     noteVisits(world);
+    for (const line of bindFirstTonics(world.char) ?? []) world.log(line, '#bff0dc');
   }
   for (const e of world.events) {
     if (e.type === 'talk') {
@@ -141,7 +142,7 @@ export function routeInput(state, world, input, dt) {
           say(world, e.npc, done.say);
           world.log(`${NPCS[e.npc].name}: ${done.say}`, '#ffffff');
         }
-        world.log(questState(world.char, done.id) === 'ready' ? `${q.name}: done! Report to ${NPCS[q.giver].name}.` : `${q.name}: talked to ${NPCS[e.npc].name}.`, '#bff0dc');
+        world.log(questState(world.char, done.id) === 'ready' ? `${q.name}: done! Report to ${NPCS[reportTo(done.id)].name}.` : `${q.name}: talked to ${NPCS[e.npc].name}.`, '#bff0dc');
       }
     } else if (e.type === 'cook') {
       state.windows.cook.open = true;
