@@ -18,6 +18,8 @@ import { othersHere, ghostPose } from '../net/online.js';
 import { botsHere } from '../net/dungeonrun.js';
 import { drawFriendFishing } from './fishing.js';
 import { friendFishPose } from './life.js';
+import { drawMochiAnim } from './mochi-anim.js';
+import { friendMochi, followFriend } from '../world/mochi.js';
 
 const TAG = 'rgba(58,128,214,0.86)';
 const TAG_EDGE = '#d6ecff';
@@ -42,6 +44,15 @@ export function drawGhosts(ctx, world, cam, width, time) {
     let tip = null;
     const look = g.emote ? { ...g.look, face: g.emote } : g.look;
     const state = { ...p, time, facing: b.facing, hurt: g.hurt, alpha: g.dead ? 0.5 : 1, job: g.job, ready: !world.map.isTown, urgent: true };
+    // Their Mochi out with them, at their heels (not in a garden, where it's one of the garden's,
+    // nor in a race).
+    if (g.pet && !world.map.garden && !world.race && !g.dead) {
+      if (!g.mochi || g.mochi.map !== world.map.id || g.mochi.rec.seed !== g.pet.seed) g.mochi = friendMochi(world, g.pet, b);
+      g.mochi.rec = g.pet;
+      g.mochi.m.genes = g.pet;
+      followFriend(world, g.mochi, dt, b);
+      drawMochiAnim(ctx, g.mochi.m, g.mochi.x - cam.x, g.mochi.y - cam.y, world.now);
+    }
     if (b.onGround) footShadow(ctx, x, y, 13, slopeAt(b.surface, b.x));
     if (g.dead) {
       g.fellAt ??= time;

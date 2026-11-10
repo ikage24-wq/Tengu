@@ -79,15 +79,20 @@ test('a party race: invite, join with your own Mochi, race together, cheer, and 
     for (let f = 0; f < 60 * 120 && !(A.race?.phase === 'done' && B.race?.phase === 'done'); f++) {
       net.as('A', (w) => updateWorld(w, 1 / 60, keys()));
       net.deliver();
-      net.as('B', (w) => updateWorld(w, 1 / 60, keys(f % 30 === 0 ? ['ArrowUp'] : [])));
+      // (Cheering only while hers is still running: once it's home, Up skips to the results.)
+      const running = B.race?.racers?.[B.race.me]?.done == null;
+      net.as('B', (w) => updateWorld(w, 1 / 60, keys(running && f % 30 === 0 ? ['ArrowUp'] : [])));
       net.deliver();
     }
     assert.equal(A.race.phase, 'done');
     assert.equal(B.race.phase, 'done');
     assert.ok(A.race.racers[1].cheers > 3, `Bea's cheers reached Ann's game: ${A.race.racers[1].cheers}`);
-    // The same race on both screens: the same places, and Bea's Mochi where Ann's game has it.
-    assert.deepEqual(B.race.racers.map((r) => r.place), A.race.racers.map((r) => r.place));
-    assert.ok(Math.abs(B.race.racers[1].x - A.race.racers[1].x) < 30);
+    // The same race on both screens: Bea's Mochi in the place Ann's game gave it, and where Ann's
+    // game has it. (Her screen ends a few seconds after hers is home, so the ones still running then
+    // are ranked by how far along they were.)
+    assert.equal(B.race.racers[1].place, A.race.racers[1].place);
+    assert.deepEqual([...B.race.racers.map((r) => r.place)].sort(), [...A.race.racers.map((r) => r.place)].sort());
+    assert.ok(Math.abs(B.race.racers[1].done - A.race.racers[1].done) < 0.3, 'home at the same time on both screens');
     // Bea's own Mochi got her own prize and medal.
     const place = B.race.racers[1].place;
     // (Less today's race goal, if racing was one of them: world/garden-life.js noteDaily.)

@@ -156,8 +156,16 @@ export function tickMochi(world, dt, api) {
 // a ledge, or swimming at the water's surface; off an edge it drops, and when you're up on a ledge
 // above it, it hops up (fluttering, in its Fly style) and lands beside you. Fallen far behind (a long
 // climb, a fall), it pops back to you.
-function stepPet(world, p, dt) {
-  const b = world.body;
+// A friend's Mochi out with them (net/online.js shares it): following them on your screen the same
+// way yours follows you (render/ghosts.js steps and draws it).
+export function friendMochi(world, rec, body) {
+  const y = footingAt(world.map, body.x, body.y).y;
+  return { map: world.map.id, rec, x: body.x - (body.facing ?? 1) * 26, y, vx: 0, vy: 0, air: false, dir: body.facing ?? 1, target: null,
+    m: { genes: rec, dir: body.facing ?? 1, speed: 0, dist: 0, mode: 'run', easy: true, size: rec.stage === 'mochiko' ? 'baby' : 'grown' } };
+}
+export const followFriend = (world, p, dt, body) => stepPet(world, p, dt, body);
+
+function stepPet(world, p, dt, b = world.body) {
   const map = world.map;
   const m = p.m;
   if (Math.abs(p.x - b.x) > PET_MOVE.lost || Math.abs(p.y - b.y) > PET_MOVE.lost) {

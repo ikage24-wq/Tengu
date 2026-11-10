@@ -347,7 +347,16 @@ const raceBestTimes = (c) => Object.fromEntries(Object.entries(c.raceBests ?? {}
 function sendProfile(world) {
   online.profileIn = PROFILE_EVERY;
   const c = world.char;
-  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home), garden: Boolean(c.garden), bests: raceBestTimes(c) });
+  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home), garden: Boolean(c.garden), bests: raceBestTimes(c), pet: petOut(c) });
+}
+// The Mochi out with you, for friends to see at your heels (render/ghosts.js): its record without
+// the bits only your own game needs.
+function petOut(c) {
+  if (!c.pet?.out) return null;
+  const rec = (c.garden?.mochi ?? []).find((r) => r.seed === c.pet.seed && r.stage !== 'egg');
+  if (!rec) return null;
+  const { trend, album, ...look } = rec;
+  return look;
 }
 
 function sendMe(world) {
@@ -484,7 +493,7 @@ function receive(world, msg) {
     case 'prof': {
       const g = ghostOf(msg.id);
       const fresh = g.name === '...';
-      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island), garden: Boolean(msg.garden), bests: msg.bests ?? {} });
+      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island), garden: Boolean(msg.garden), bests: msg.bests ?? {}, pet: msg.pet ?? null });
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }

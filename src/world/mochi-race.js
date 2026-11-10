@@ -618,7 +618,9 @@ export function applyRaceState(world, msg) {
   const R = world.race;
   if (!R?.remote || R.remote !== msg.id) return;
   R.heard = Date.now() / 1000;
-  if (R.phase !== 'done' && msg.phase !== 'done' && msg.phase !== R.phase) Object.assign(R, { phase: msg.phase, t: msg.pt ?? 0 });
+  // (Over on this screen already: the podium's own, the host's later positions aren't wanted.)
+  if (R.phase === 'done') return;
+  if (msg.phase !== 'done' && msg.phase !== R.phase) Object.assign(R, { phase: msg.phase, t: msg.pt ?? 0 });
   if (R.phase !== 'done') R.clock = msg.clock;
   msg.rs.forEach(([x, y, mode, speed, tired, rest, cheerLeft, done, place, leg, luck = 0, luckAt = -1], i) => {
     const r = R.racers[i];
@@ -630,6 +632,14 @@ export function applyRaceState(world, msg) {
       if (r.luckKind === 'trip') r.m.action = { name: 'sig_clumsy', t0: null };
     }
     const mv = MODES[mode] ?? 'run';
+    // (How fast it's been going since the host's last word, so between words it carries on at that
+    // pace instead of easing to a stop and lurching on: smooth on a friend's screen.)
+    if (r.heardAt != null && msg.clock > r.heardAt) {
+      const span = msg.clock - r.heardAt;
+      r.vx = (x - r.hx) / span;
+      r.vy = (y - r.hy) / span;
+    }
+    Object.assign(r, { hx: x, hy: y, heardAt: msg.clock, ahead: 0 });
     Object.assign(r, { tx: x, ty: y, leg, cheerUntil: R.clock + cheerLeft / 10 });
     if (R.phase !== 'done') Object.assign(r, { done, place });
     Object.assign(r.m, { mode: mv, speed, tired: tired / 100, rest: Boolean(rest), inWater: mv === 'swim', noShadow: mv === 'fly' });
@@ -655,6 +665,12 @@ function tickRemote(world, R, dt, up, you, input = null) {
   const map = world.map;
   for (const r of R.racers) {
     if (r.tx == null) continue;
+    // (Between the host's words: on at its last pace, for a little while at most.)
+    if (R.phase === 'run' && r.done == null && r.vx != null && r.ahead < 0.35) {
+      r.tx += r.vx * dt;
+      r.ty += r.vy * dt;
+      r.ahead += dt;
+    }
     const [px, py] = [r.x, r.y];
     r.x += (r.tx - r.x) * k;
     // (On the ground, or in the water, exactly where it is now, never a step behind it in the air;
@@ -665,6 +681,15 @@ function tickRemote(world, R, dt, up, you, input = null) {
     else r.y = Math.min(groundAt(map, r.x), r.y + (r.ty - r.y) * k);
     r.m.dist += Math.hypot(r.x - px, r.y - py);
     r.m.dir = 1;
+  }
+  // (Yours home: as on the host's screen, a few seconds to see who else gets in, or on at once with
+  // Up. Your own place is the host's word already; anyone still running is ranked by how far along.)
+  if (R.phase === 'run' && you.done != null && you.place && (R.clock >= you.done + AFTER_YOU || (up && R.clock > you.done + 0.5))) {
+    let n = Math.max(0, ...R.racers.map((r) => r.place ?? 0));
+    for (const r of standings(R, world.map.race)) if (!r.place) r.place = ++n;
+    Object.assign(R, { phase: 'done', t: 0, finished: R.racers.length });
+    R.results = standings(R, world.map.race);
+    award(world, R);
   }
   if (R.phase !== 'done' && Date.now() / 1000 - R.heard > HOST_QUIET) {
     // (Lost touch with the host: it ends here, nobody's prize.)

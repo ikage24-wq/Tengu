@@ -196,7 +196,7 @@ export function raceBoardWindow(ui, state, world) {
     const names = L.invited.map((id) => {
       const g = online.ghosts.get(id);
       const j = L.joined[id];
-      return `${g?.name ?? 'A friend'}${j ? ` (${MOCHI_STAGES[j.rec.stage] ?? 'Mochi'}) is in` : L.declined.includes(id) ? ' said no' : '...'}`;
+      return `${g?.name ?? 'A friend'}${j ? ` is in with ${j.rec.name ?? MOCHI_STAGES[j.rec.stage] ?? 'their Mochi'}` : L.declined.includes(id) ? ' said no' : '...'}`;
     });
     text(ctx, fit(ctx, `${RACE_STAGES[L.stageId].name}: ${names.join(', ')}`, W - 24, 6.5, false), win.x + W / 2, by - 8, { size: 6.5, align: 'center', color: '#d0507a' });
     if (button(ui, win.x + W / 2 - 86, by, 84, 18, 'Start!', { primary: true, size: 8.5 })) {
