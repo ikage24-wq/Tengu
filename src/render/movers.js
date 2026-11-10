@@ -83,6 +83,45 @@ function blossom(ctx, x, y, time, since, wx = x) {
 
 // A hay bale bounce: a round golden bale tied with twine. Stepped on, it dips and springs back,
 // straw flying off it.
+// A big old kettle lid lying on a mossy stone: stepped on, it clanks down, then pops you up and
+// rattles, a puff of steam escaping under it (the Tea Terraces' Upper Rows).
+function kettleLid(ctx, x, y, time, since) {
+  const k = since < 0.9 ? since : 9;
+  const pop = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 5) * Math.sin((k - 0.08) * 24) : 0;
+  ctx.save();
+  ctx.fillStyle = '#8fa080';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 2, 13, 3.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const ly = y - 6 - pop * 5;
+  ctx.fillStyle = '#4a5262';
+  ctx.strokeStyle = '#2a2f3a';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.ellipse(x, ly, 11, 3.6, pop * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#6a7486';
+  ctx.beginPath();
+  ctx.ellipse(x - 3, ly - 1, 5, 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#2a2f3a';
+  ctx.beginPath();
+  ctx.ellipse(x, ly - 3.4, 2.4, 1.8, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Steam escaping under it after a bounce.
+  if (k < 0.9) {
+    ctx.strokeStyle = '#ffffff';
+    for (let i = 0; i < 2; i++) {
+      ctx.globalAlpha = (1 - k / 0.9) * 0.8;
+      ctx.beginPath();
+      ctx.arc(x + (i ? 8 : -8), ly - 4 - k * 14, 2 + k * 4, 0.2, Math.PI * 1.5);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 function hay(ctx, x, y, since) {
   const k = since < 0.9 ? since : 9;
   const dip = k < 0.08 ? k / 0.08 : k < 9 ? -Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
@@ -321,6 +360,7 @@ export function drawMovers(ctx, map, cam, width, height, time) {
     else if (s.kind === 'spring') springboard(ctx, snap(x), snap(s.y - cam.y), since);
     else if (s.kind === 'shroom') shroom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
     else if (s.kind === 'clam') clam(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
+    else if (s.kind === 'kettle') kettleLid(ctx, snap(x), snap(s.y - cam.y), time, since);
     else blossom(ctx, snap(x), snap(s.y - cam.y), time, since, s.x);
   }
 }

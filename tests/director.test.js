@@ -290,6 +290,24 @@ test("Professor Lumen's fallen star plays through on the Observatory Steps", () 
   }
 });
 
+test("Master Sencha's tea story plays through on the Tea Terraces' rim", () => {
+  for (const id of ['tea_leaves_done', 'tea_kettles_done', 'tea_lanterns_done', 'tea_grandkettle_done']) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'tea', 'west');
+    const sencha = w.map.npcs.find((n) => n.id === 'sencha');
+    w.body.x = sencha.x + 60;
+    playScene(w, id);
+    for (let k = 0; k < 200 && w.scene; k++) {
+      run(w, 0.5);
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(w.map.npcs.every((n) => !n.cine), `${id}: everyone is back to themselves`);
+  }
+});
+
 test("Tora's Great Forge story plays through in Ember Crag", () => {
   for (const id of ['tora_handles_done', 'tora_bellows_done', 'tora_draught_done', 'cores_done']) {
     const w = createWorld(createCharacter('Hana', {}));

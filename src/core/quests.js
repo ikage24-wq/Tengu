@@ -254,7 +254,8 @@ export function npcMap(npcId) {
 export function mobPlaces(mobId) {
   const names = [];
   for (const m of Object.values(MAPS)) {
-    if (!m.spawns?.some((s) => s.mob === mobId)) continue;
+    // (An area boss lives where its nest is: it wakes there.)
+    if (!m.spawns?.some((s) => s.mob === mobId) && m.nest?.mob !== mobId) continue;
     const name = m.dungeon ? DUNGEONS[m.dungeon]?.name ?? m.name : m.name;
     if (!names.includes(name)) names.push(name);
   }

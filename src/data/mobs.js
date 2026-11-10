@@ -151,6 +151,20 @@ export const MOBS = {
     id: 'kitsunemiko', name: 'Kitsune Miko', level: 27, hp: 1250, atk: 86, def: 24, acc: 58, eva: 10, exp: 790, gold: [10, 23],
     speed: 40, w: 24, h: 48, art: 'kitsunemiko', drops: [{ id: 'wisp_flame', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }, { id: 'kimono', chance: 0.01 }],
   }),
+  // The Tanuki Tea Terraces (render/mobs/tea.js): the pickers on the upper rows, the kettles on the
+  // steps, the lanterns down in the misty hollow (and out at night).
+  tanukipicker: mob({
+    id: 'tanukipicker', name: 'Tanuki Picker', level: 24, hp: 900, atk: 78, def: 18, acc: 55, eva: 12, exp: 640, gold: [9, 20],
+    speed: 54, w: 26, h: 34, art: 'tanukipicker', drops: [{ id: 'tea_leaf', chance: 0.45 }, { id: 'cedar_log', chance: 0.08 }, { gear: 'hat', chance: 0.01 }],
+  }),
+  kettletanuki: mob({
+    id: 'kettletanuki', name: 'Kettle Tanuki', level: 26, hp: 1150, atk: 82, def: 26, acc: 56, eva: 6, exp: 740, gold: [10, 22],
+    speed: 34, w: 34, h: 30, art: 'kettletanuki', drops: [{ id: 'kettle_lid', chance: 0.45 }, { id: 'tea_leaf', chance: 0.12 }, { gear: 'shoes', chance: 0.01 }],
+  }),
+  lantertanuki: mob({
+    id: 'lantertanuki', name: 'Lantern Tanuki', level: 28, hp: 1220, atk: 92, def: 22, acc: 60, eva: 12, exp: 840, gold: [11, 24],
+    speed: 44, gait: 'bound', w: 26, h: 36, art: 'lantertanuki', drops: [{ id: 'lantern_paper', chance: 0.45 }, { id: 'lotus_fiber', chance: 0.08 }, { gear: 'earring', chance: 0.01 }],
+  }),
   lupina: mob({
     id: 'lupina', name: 'Lupina', level: 29, hp: 1500, atk: 96, def: 28, acc: 62, eva: 10, exp: 900, gold: [11, 25],
     speed: 50, gait: 'stalk', w: 24, h: 50, art: 'lupina', drops: [{ id: 'moon_fang', chance: 0.45 }, { id: 'lotus_fiber', chance: 0.08 }, { gear: 'gloves', chance: 0.01 }],
@@ -616,6 +630,13 @@ export const MOBS = {
     gold: [440, 700], speed: 30, w: 70, h: 118, art: 'tamamo', boss: true,
     drops: [{ id: 'fluff', chance: 1, qty: 20 }, { id: 'wisp_flame', chance: 1, qty: 5 }, { id: 'elixir', chance: 1, qty: 3 }],
     special: { kind: 'slam', every: 6, warn: 1.2, damage: 290, range: 380 },
+  }),
+  // The Tea Terraces' area boss (world/nest.js): wakes in the giant teapot hut.
+  grandkettle: mob({
+    id: 'grandkettle', name: 'The Grand Kettle', level: 28, hp: 24000, atk: 150, def: 30, acc: 70, eva: 2, exp: 22000,
+    gold: [420, 640], speed: 26, w: 84, h: 90, art: 'grandkettle', boss: true,
+    drops: [{ id: 'grand_brew', chance: 1, qty: 1 }, { id: 'tea_leaf', chance: 1, qty: 8 }, { id: 'kettle_lid', chance: 1, qty: 4 }, { id: 'white_potion', chance: 1, qty: 6 }],
+    special: { kind: 'slam', every: 6, warn: 1.5, damage: 240, range: 260 },
   }),
   lilith: mob({
     id: 'lilith', name: 'Lilith, the Succubus Queen', level: 38, hp: 110000, atk: 220, def: 48, acc: 94, eva: 12, exp: 90000,

@@ -43,7 +43,7 @@ const cell = (c, r) => ({ x: COL[c], y: ROW[r] });
 const SPOT = {
   theatre_row: cell(3, 'sky'), sky: cell(4, 'sky'), starfall: cell(5, 'sky'), cloudcatch_pier: cell(6, 'sky'),
   sugar_trail: cell(1, 'snow'), springs: cell(2, 'snow'), peak: cell(3, 'snow'),
-  bossroom: cell(0, 'north'), cave: cell(1, 'north'), ruins: cell(4, 'north'), shrine: cell(5, 'north'), carnival_gate: cell(6, 'north'),
+  bossroom: cell(0, 'north'), cave: cell(1, 'north'), tea: cell(3, 'north'), ruins: cell(4, 'north'), shrine: cell(5, 'north'), carnival_gate: cell(6, 'north'),
   sprout: cell(0, 'middle'), hollow_gate: cell(1, 'middle'), canyon: cell(2, 'middle'), crag: cell(3, 'middle'), ridge: cell(4, 'middle'),
   observatory_steps: cell(5, 'middle'), grove: cell(6, 'middle'),
   coinbridge: cell(0, 'south'), meadow1: cell(1, 'south'), meadow2: cell(2, 'south'), harbor: cell(3, 'south'), glade: cell(4, 'south'), woods: cell(5, 'south'),
@@ -95,7 +95,7 @@ function traceRoad(ctx, ox, oy, a, b, start = true) {
 // Each region's colour for its name pill's edge.
 const EDGE = {
   meadow: '#7fc98a', forest: '#5fae7a', ruins: '#9a82d8', cave: '#7a6ad0', crag: '#e88a4c', sky: '#8fb8ff',
-  shrine: '#e8708a', ridge: '#6a7ad0', springs: '#4fb8a4', snow: '#8fb8e8', harbor: '#d9a060', grove: '#8a72d8',
+  shrine: '#e8708a', tea: '#7cb86a', ridge: '#6a7ad0', springs: '#4fb8a4', snow: '#8fb8e8', harbor: '#d9a060', grove: '#8a72d8',
   manor: '#7a6ab8', carnival: '#e0709a', observatory: '#6a8ad8', candy: '#e889b4', theatre: '#c0607a', skywhale: '#5aa8d8',
 };
 // The places on the map (not the queens' trial arenas, which belong to their regions).
@@ -481,6 +481,16 @@ function drawPlaces(ctx, ox, oy, time) {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
+  // The tea terraces: a little iron teapot.
+  {
+    const [x, y] = at('tea', 0, -3);
+    ctx.fillStyle = '#4a5262';
+    ctx.beginPath();
+    ctx.ellipse(x, y - 4, 6, 4.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(x + 4, y - 7, 4, 1.6);
+    ctx.fillRect(x - 3, y - 9.6, 6, 1.6);
   }
   // The fox shrine: a red gate.
   {

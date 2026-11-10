@@ -6,7 +6,7 @@ import { tooStrong } from "../src/world/world.js";
 import { MAPS } from "../src/data/maps.js";
 
 test("no road from Sprout Village into Crystal Cave, and its doors ask a low-level hero first, not a strong one, and towns never ask", () => {
-  const door = MAPS.ruins.portals.find((p) => p.to === "cave");
+  const door = MAPS.tea.portals.find((p) => p.to === "cave");
   assert.ok(!MAPS.sprout.portals.some((p) => p.to === "cave"));
   assert.ok(!MAPS.cave.portals.some((p) => p.to === "sprout"));
   assert.equal(tooStrong({ char: { level: 5 } }, door), true);

@@ -34,7 +34,7 @@ export const TIER_LV = [0, 1, 12, 24, 36];
 export const MAP_TIER = {
   meadow1: 1, meadow2: 1, trainfield: 1, canyon: 1, dawnbeach: 1,
   woods: 2, glade: 2, hollow_gate: 2, ruins: 2,
-  shrine: 3, ridge: 3, cave: 3, springs: 3,
+  shrine: 3, ridge: 3, cave: 3, springs: 3, tea: 3,
   peak: 4, sky: 4, starfall: 4, bossroom: 4,
   sprout: 1, harbor: 1, crag: 1, grove: 2,
 };

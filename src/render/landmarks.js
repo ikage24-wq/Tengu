@@ -2521,6 +2521,96 @@ function hokoraArt() {
   });
 }
 
+// ---------- The Tanuki Tea Terraces (2026-11-10) ----------
+
+// A tea bush clipped into a sleeping tanuki: a round clipped body, its ears and striped tail
+// trimmed in, a picker's ladder leaning on it (the pickers' joke: they trimmed their grandpa).
+// Variant 1 is a smaller, lighter one on the far rows.
+function teatopiaryArt(v) {
+  return art(`teatopiary|${v}`, 110, 92, () => {
+    const g = ramp(v ? '#6cb860' : '#5aa85a', 0.82);
+    const d = ramp('#3f7a46', 0.85);
+    const wood = ramp('#c89a64', 0.8);
+    const s = v ? 0.82 : 1;
+    const cx = 55;
+    const by = 90;
+    const out = [];
+    // The ladder behind, leaning on the bush's flank.
+    out.push(F(T([[cx - 40 * s, by], [cx - 36 * s, by], [cx - 18 * s, by - 62 * s], [cx - 22 * s, by - 62 * s]], wood.sh)));
+    // Tail: a fat clipped tail curling round the front, its stripes clipped darker.
+    for (let i = 0; i < 4; i++) out.push(E(cx + (30 - i * 7) * s, by - (10 + i * 2) * s, (11 - i) * s, (8 - i * 0.6) * s, i % 2 ? d.base : g.base));
+    // The body: one big clipped mound, lighter on top where the light falls.
+    out.push(E(cx, by - 34 * s, 42 * s, 32 * s, g.base), F(E(cx - 8 * s, by - 46 * s, 26 * s, 14 * s, g.hi)), F(E(cx + 16 * s, by - 20 * s, 22 * s, 12 * s, g.sh)));
+    // The head: a smaller mound at the front, its ears trimmed up, eyes clipped shut (asleep).
+    const hx = cx + 30 * s;
+    const hy = by - 50 * s;
+    out.push(E(hx, hy, 18 * s, 15 * s, g.base), F(E(hx - 4 * s, hy - 5 * s, 10 * s, 6 * s, g.hi)));
+    for (const ex of [-9, 7]) out.push(E(hx + ex * s, hy - 14 * s, 6 * s, 6 * s, g.sh));
+    for (const ex of [-6, 6]) out.push(F(T([[hx + ex * s - 4 * s, hy + 1 * s], [hx + ex * s + 4 * s, hy + 1 * s], [hx + ex * s, hy + 3 * s]], d.deep)));
+    out.push(F(E(hx + 2 * s, hy + 7 * s, 4 * s, 2.6 * s, d.base)));
+    // Tea buds tipping the clipped green, and a basket left at its foot.
+    for (let k = 0; k < 9; k++) out.push(F(E(cx - 34 * s + ((k * 31 + v * 13) % 70) * s, by - 30 * s - ((k * 17) % 26) * s, 1.6, 1, '#b8e88a')));
+    out.push(R(cx - 18 * s, by - 9, 14 * s, 9, wood.base), F(R(cx - 18 * s, by - 9, 14 * s, 2, wood.hi)), F(E(cx - 11 * s, by - 10, 6 * s, 2, '#7cc46a')));
+    out.push(tuft(cx - 44 * s, by, '#9fd8a8'), tuft(cx + 46 * s, by, '#9fd8a8'));
+    return out;
+  });
+}
+
+// A tower of old iron kettles stacked by the pickers on the steps, smallest on top, a lid askew,
+// one with a tanuki tail still poking out of it (it's asleep in there).
+function kettlestackArt() {
+  return art('kettlestack', 70, 112, () => {
+    const iron = ramp('#4a5262', 0.85);
+    const fur = ramp('#a07a5a', 0.85);
+    const out = [];
+    const pots = [[35, 92, 30, 18], [37, 64, 24, 14], [34, 42, 18, 11], [36, 25, 12, 8]];
+    pots.forEach(([x, y, rx, ry], i) => {
+      out.push(E(x, y, rx, ry, iron.base), F(E(x - rx * 0.3, y - ry * 0.4, rx * 0.45, ry * 0.25, iron.hi)), F(E(x + rx * 0.35, y + ry * 0.3, rx * 0.5, ry * 0.4, iron.sh)));
+      out.push(F(R(x - rx * 0.6, y - ry - 2, rx * 1.2, 3, iron.deep)));
+      // Each one's spout, turning a different way.
+      const sd = i % 2 ? -1 : 1;
+      out.push(F(T([[x + sd * rx * 0.8, y - 2], [x + sd * (rx + 8), y - ry * 0.8], [x + sd * (rx + 9), y - ry * 0.6], [x + sd * rx * 0.85, y + 3]], iron.sh)));
+    });
+    // The lid on top, askew.
+    out.push(F(T([[27, 15], [45, 12], [45, 15], [27, 18]], iron.sh)), E(36, 11, 2.4, 2, iron.deep));
+    // A tail out of the second kettle: a sleeping tanuki in there.
+    for (let i = 0; i < 4; i++) out.push(E(12 - i * 3, 66 - i * 3, 4 - i * 0.4, 3.4 - i * 0.3, i % 2 ? '#4e3a34' : fur.base));
+    out.push(tuft(10, 112, '#9fd8a8'), tuft(60, 112, '#9fd8a8'));
+    return out;
+  });
+}
+
+// The giant teapot hut down in the Mist Hollow: a cast-iron teapot the size of a house, a round
+// door in its belly, a paper window lit warm, a bamboo bench, the spout puffing steam (drawn live).
+// The Grand Kettle wakes in it.
+function teapothutArt() {
+  return art('teapothut', 190, 168, () => {
+    const iron = ramp('#4a5262', 0.85);
+    const wood = ramp('#b8885a', 0.82);
+    const paper = '#fff0c8';
+    const cx = 95;
+    const by = 166;
+    const out = [];
+    // The spout, rising from the front.
+    out.push(T([[cx + 62, by - 70], [cx + 88, by - 120], [cx + 96, by - 114], [cx + 72, by - 56]], iron.sh), F(E(cx + 92, by - 118, 5, 3, iron.deep)));
+    // The handle arching over the top.
+    out.push(F(T([[cx - 66, by - 92], [cx - 52, by - 150], [cx + 52, by - 150], [cx + 66, by - 92], [cx + 58, by - 92], [cx + 46, by - 142], [cx - 46, by - 142], [cx - 58, by - 92]], iron.deep)));
+    // The great pot: a squat round body, the light on its upper left.
+    out.push(E(cx, by - 62, 80, 60, iron.base), F(E(cx - 26, by - 92, 40, 18, iron.hi)), F(E(cx + 30, by - 40, 46, 26, iron.sh)));
+    for (let i = 0; i < 15; i++) out.push(F(E(cx - 63 + i * 9, by - 86 + Math.abs(i - 7) * 0.8, 1.6, 1.6, iron.hi)));
+    // The lid and its knob.
+    out.push(E(cx, by - 118, 44, 9, iron.sh), F(E(cx - 8, by - 121, 22, 3, iron.base)), E(cx, by - 128, 7, 6, iron.deep));
+    // The round door in a wooden frame with a little green curtain, and a lit paper window.
+    out.push(E(cx - 14, by - 34, 20, 26, wood.base), F(E(cx - 14, by - 32, 15, 22, '#3a2d3a')), F(R(cx - 28, by - 54, 28, 9, '#7cb86a')));
+    for (let k = 0; k < 3; k++) out.push(F(R(cx - 27 + k * 9.4, by - 46, 8, 8, '#6aa85a')));
+    out.push(E(cx + 38, by - 70, 12, 12, wood.base), F(E(cx + 38, by - 70, 9, 9, paper)), F(R(cx + 37.4, by - 79, 1.2, 18, wood.sh)), F(R(cx + 29, by - 70.6, 18, 1.2, wood.sh)));
+    // A bamboo bench out front, and a doorstep.
+    out.push(F(R(cx + 26, by - 14, 34, 3, '#c8b46a')), F(R(cx + 28, by - 11, 2, 11, '#9a8a48')), F(R(cx + 56, by - 11, 2, 11, '#9a8a48')), F(R(cx - 30, by - 6, 32, 6, wood.sh)));
+    out.push(tuft(cx - 76, by, '#9fd8a8'), tuft(cx + 74, by, '#9fd8a8'), ...bloom(cx + 66, by - 2, 1.2, '#ffffff'));
+    return out;
+  });
+}
+
 // A great cherry tree in full bloom: a dark twisting trunk and arching boughs under a broad, lumpy
 // crown of pink, a few blossoms falling.
 function sakuraArt(v) {
@@ -2639,6 +2729,17 @@ const KINDS = {
     place(ctx, sakuraArt(variant(seed, 2)), x + l * 0.8, y);
   } },
   hotspring: { w: 150, h: 40, draw: drawHotspring },
+  teatopiary: { w: 110, h: 92, draw: (ctx, x, y, time, seed) => place(ctx, teatopiaryArt(variant(seed, 2)), x, y) },
+  kettlestack: { w: 70, h: 112, draw: (ctx, x, y) => place(ctx, kettlestackArt(), x, y) },
+  teapothut: {
+    w: 190, h: 168,
+    draw(ctx, x, y, time, seed, wx) {
+      place(ctx, teapothutArt(), x, y);
+      // The paper window lit warm, and steam out of the spout.
+      glow(ctx, x + 38, y - 70, 12, '#ffe6a0', 0.35 * flicker(time, seed));
+      smoke(ctx, x + 92, y - 122, time, seed, wx);
+    },
+  },
   howlrock: { w: 140, h: 104, draw: (ctx, x, y) => place(ctx, howlrockArt(), x, y) },
   snowpine: { w: 84, h: 150, draw: (ctx, x, y, time, seed) => place(ctx, snowpineArt(variant(seed, 2)), x, y) },
   snowman: { w: 44, h: 58, draw: (ctx, x, y, time, seed) => place(ctx, snowmanArt(blinking(time, seed)), x, y) },

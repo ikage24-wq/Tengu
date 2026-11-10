@@ -68,6 +68,7 @@ export const COOP_MECHS = {
   // Area bosses (world/nest.js).
   queenbee: [{ kind: 'split', name: 'Royal Honey Bomb', every: 14, first: 8, warn: 3.2, w: 130, hit: 6 }],
   macgoblin: [{ kind: 'sides', name: 'Barn-Door Guard', guard: 0.4, broken: 1.25, window: 1.6, open: 7 }],
+  grandkettle: [{ kind: 'split', name: 'Boiling Over', every: 15, first: 9, warn: 3.3, w: 140, hit: 5.4 }],
   // Rootwood Hollow (world/dungeon.js).
   mothercapper: [{ kind: 'split', name: 'Spore Bloom', every: 16, first: 9, warn: 3.4, w: 130, hit: 4.6 }],
   tuskar: [{ kind: 'sides', name: 'Bark Hide', guard: 0.45, broken: 1.25, window: 1.8, open: 7 }],

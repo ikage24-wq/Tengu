@@ -61,7 +61,7 @@ export function questTarget(char, id) {
   if (st !== 'active') return npcAt(q.giver);
   const o = objectiveProgress(char, id).find((x) => x.have < x.count);
   if (!o) return npcAt(reportTo(id));
-  const mobMap = (mob) => Object.values(MAPS).find((m) => !m.dungeon && m.spawns?.some((s) => s.mob === mob && !s.after))?.id ?? Object.values(MAPS).find((m) => m.spawns?.some((s) => s.mob === mob))?.id ?? null;
+  const mobMap = (mob) => Object.values(MAPS).find((m) => !m.dungeon && m.spawns?.some((s) => s.mob === mob && !s.after))?.id ?? Object.values(MAPS).find((m) => m.spawns?.some((s) => s.mob === mob) || m.nest?.mob === mob)?.id ?? null;
   if (o.type === 'kill') return mobMap(o.mob);
   if (o.type === 'collect') {
     const from = Object.values(MOBS).find((m) => m.drops?.some((d) => d.id === o.item) && mobMap(m.id));

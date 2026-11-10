@@ -486,6 +486,11 @@ const ETC = [
   ['moon_fang', 'Moonhowl Fang', 26, '#eef0ff'],
   ['bramble_claw', 'Bramble Claw', 30, '#e8c79a'],
   ['hollow_acorn', 'Hollow Acorn', 75, '#d99a5a'],
+  // The Tanuki Tea Terraces (2026-11-10).
+  ['tea_leaf', 'Fresh Tea Leaf', 22, '#7cc46a'],
+  ['kettle_lid', 'Little Kettle Lid', 24, '#7a849a'],
+  ['lantern_paper', 'Lantern Paper', 26, '#f4e4c4'],
+  ['grand_brew', 'Grand Kettle Brew', 1250, '#b8e07a'],
   ['moonlit_ribbon', 'Moonlit Ribbon', 90, '#c9a6ff'],
   ['porcelain_shard', 'Porcelain Shard', 12, '#ffe6ee'],
   ['candle_wax', 'Ghost Candle Wax', 12, '#fff4d6'],

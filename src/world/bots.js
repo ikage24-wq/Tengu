@@ -948,7 +948,7 @@ function huntersHere(bots, world, dt) {
     // (Now and then, about what they just took down.)
     if (bot && m && !bot.bubble && rng() < 0.03) {
       const n = m.def.name;
-      shout(bot, bots, world, pick([`another ${n} down`, `${bot.kills} ${n}s so far`, `${n}s go down so fast now`, `that ${n} almost got me`, `${n}s give good exp here`], rng));
+      shout(bot, bots, world, pick([`another ${n} down`, bot.kills === 1 ? `my first ${n}!` : `${bot.kills} ${n}s so far`, `${n}s go down so fast now`, `that ${n} almost got me`, `${n}s give good exp here`], rng));
     }
   };
   // A boss here (a queen back for a rematch, the Crystal King on his throne): word gets around,

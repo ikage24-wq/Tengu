@@ -369,6 +369,7 @@ const AMBIENT = {
   cave: { rate: 3, make: (x, y) => ({ x, y, vx: 0, vy: -6, life: 5, size: 1, shape: 'glint', color: '#8fe3ff', sway: 6 }) },
   sky: { rate: 3, make: (x, y) => ({ x, y, vx: 18, vy: 2, life: 7, size: 1.5, shape: 'glint', color: '#fff3a6', sway: 10 }) },
   shrine: { rate: 3, make: (x, y) => ({ x, y, vx: 12, vy: 10 + Math.random() * 6, life: 7, size: 1.5, shape: 'petal', color: Math.random() < 0.6 ? '#ffc6de' : '#ffffff', spin: 2, sway: 20 }) },
+  tea: { rate: 2, make: (x, y) => ({ x, y, vx: 8, vy: 8 + Math.random() * 5, life: 7, size: 1.5, shape: 'petal', color: Math.random() < 0.6 ? '#9fd88a' : '#d8f0b0', spin: 2, sway: 16 }) },
   ridge: { rate: 2, make: (x, y) => ({ x, y, vx: 2, vy: -4, life: 6, size: 1.2, shape: 'glow', color: '#cfe0ff', sway: 10 }) },
   springs: { rate: 2, make: (x, y) => ({ x, y, vx: 2, vy: -8, life: 5, size: 1.5, shape: 'glow', color: '#ffffff', sway: 12 }) },
   snow: { rate: 4, make: (x, y) => ({ x, y, vx: 6, vy: 14 + Math.random() * 8, life: 7, size: 1.4, shape: 'glow', color: '#ffffff', sway: 16 }) },

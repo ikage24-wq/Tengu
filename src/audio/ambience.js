@@ -157,7 +157,7 @@ export function placeOf(map) {
   if (map.dungeon || map.theme === 'hollow') return 'hollow';
   if (map.indoor) return 'room';
   if (map.isTown) return 'town';
-  if (map.theme === 'grove' || map.theme === 'shrine' || map.theme === 'springs') return 'forest';
+  if (map.theme === 'grove' || map.theme === 'shrine' || map.theme === 'springs' || map.theme === 'tea') return 'forest';
   return PLACES[map.theme] ? map.theme : 'meadow';
 }
 

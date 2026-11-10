@@ -93,6 +93,14 @@ export const THEMES = {
     skyline: 'pagodas', props: ['stonelamp', 'tuft', 'flower', 'tuft', 'bush', 'stonelamp'],
     critters: ['butterfly', 'bird'], drift: 'petal', face: 'sun',
   },
+  // The Tanuki Tea Terraces: a soft spring-green valley of clipped tea rows under a pale gold sky,
+  // tea hills rolling away behind, steam drifting up off the kettles.
+  tea: {
+    sky: ['#bfe4c8', '#e6f2d2', '#fff6e2'], sun: '#fff6d6', far: '#9cc89a', mid: '#b4d8a6', midTrim: '#86b878',
+    ground: '#c9b49a', groundDeep: '#a8927a', trim: '#a8dc8c', ledge: '#d2c0a6', ledgeTrim: '#b4e494', ledgeShade: '#ae9880',
+    skyline: 'teahills', props: ['tuft', 'bush', 'flower', 'tuft', 'flower', 'bush'],
+    critters: ['butterfly', 'bird'], drift: 'steam', face: 'sun',
+  },
   // Moonlit Ridge: blue night on the mountain, a huge moon, pines on the slopes, wolves' country.
   ridge: {
     sky: ['#1f2658', '#46509c', '#9a8ad6'], sun: '#e6ecff', far: '#3c4688', mid: '#4f5aa2', midTrim: '#7a86d0',
@@ -1436,6 +1444,43 @@ function drawFar(ctx, t, cam, width, y0, time) {
           ctx.closePath();
           ctx.fill();
           ctx.fillStyle = t.far;
+        }
+      });
+      break;
+    // The tea hills: round hills striped with clipped tea rows that follow each hill's curve, a
+    // picker's hut on a hilltop here and there.
+    case 'teahills':
+      backRidge(ctx, t, cam, width, y0 - 30, 30, true);
+      ctx.fillStyle = t.far;
+      ctx.fillRect(0, snap(y0 + 24), width, 400);
+      repeat(cam.x, 0.2, 230, width, (i, x) => {
+        const rx = 130 + hash(i) * 40;
+        const ry = 60 + hash(i + 1) * 34;
+        const cx = x + 115;
+        const p = new Path2D();
+        p.ellipse(cx, y0 + 30, rx, ry, 0, Math.PI, 0);
+        litFill(ctx, t, p, 2.4, 1.6);
+        // The rows: arcs across the hill, each a little narrower toward the top.
+        ctx.strokeStyle = shade(t.far, -9);
+        ctx.lineWidth = 3;
+        for (let r = 1; r <= 4; r++) {
+          const k = r / 5;
+          ctx.beginPath();
+          ctx.ellipse(cx, y0 + 30, rx * (1 - k * 0.55), ry * (1 - k * 0.7), 0, Math.PI * 1.08, Math.PI * 1.92);
+          ctx.stroke();
+        }
+        if (hash(i + 5) < 0.4) {
+          // A picker's hut: a little roof on the top row.
+          const hx = cx - 10 + hash(i + 6) * 20;
+          const hy = y0 + 30 - ry - 2;
+          ctx.fillStyle = shade(t.far, -14);
+          ctx.fillRect(snap(hx - 7), snap(hy - 8), 14, 9);
+          ctx.beginPath();
+          ctx.moveTo(hx - 11, hy - 7);
+          ctx.lineTo(hx, hy - 15);
+          ctx.lineTo(hx + 11, hy - 7);
+          ctx.closePath();
+          ctx.fill();
         }
       });
       break;

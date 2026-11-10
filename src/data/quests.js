@@ -419,6 +419,41 @@ export const QUESTS = {
     objectives: [{ type: 'collect', item: 'rock_core', count: 10 }],
     rewards: { exp: 44000, gold: 990, items: [{ id: 'warrior_gloves_30', qty: 1, forJob: true, variant: 'roll' }] },
   },
+  // Master Sencha's Ancient Tea Ceremony (the Tanuki Tea Terraces, levels 24-28): he sells a
+  // "forty-seven step" ceremony he invented last Tuesday, and the leaves, the kettles and the
+  // lanterns are all tanuki work. Midway the twist: the tanuki aren't wild at all, they're his
+  // pickers, on strike, and you've been knocking out the staff. It ends with one honest pot of tea
+  // shared with them, brewed by the Grand Kettle, the old tanuki master he learned it all from.
+  tea_leaves: {
+    id: 'tea_leaves', name: 'The Forty-Seven Steps', giver: 'sencha', minLevel: 24,
+    text: "Step one of the Ancient Ceremony: the leaves must be picked by the tanuki of these terraces. Step two: the leaves must be taken FROM the tanuki. By you. Bring me 10 Fresh Tea Leaves. Steps three to forty-seven are mostly waiting. You'll love them.",
+    objectives: [{ type: 'collect', item: 'tea_leaf', count: 10 }],
+    rewards: { exp: 26000, gold: 480, items: [{ id: 'white_potion', qty: 10 }] },
+  },
+  tea_kettles: {
+    id: 'tea_kettles', name: 'Kettle Discipline', giver: 'sencha', minLevel: 25, prereq: 'tea_leaves',
+    text: "Bad news: my kettles have grown legs. And opinions. A kettle should whistle, not sulk on the Kettle Steps. Calm 15 Kettle Tanuki and bring me 5 of their lids. A kettle without a lid is a kettle that listens.",
+    objectives: [{ type: 'kill', mob: 'kettletanuki', count: 15 }, { type: 'collect', item: 'kettle_lid', count: 5 }],
+    rewards: { exp: 28000, gold: 520, items: [{ id: 'warrior_shoes_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  tea_lanterns: {
+    id: 'tea_lanterns', name: 'Notes in the Mist', giver: 'sencha', minLevel: 26, prereq: 'tea_kettles',
+    text: "The lanterns in the Mist Hollow are covered in writing. Graffiti! On my lanterns! Go down there and bring me 8 sheets of Lantern Paper so I can see who's been, ahem, expressing themselves. Not because I'm worried. Grand Tea Masters don't worry. They steep.",
+    objectives: [{ type: 'visit', map: 'tea', place: 'the Mist Hollow' }, { type: 'collect', item: 'lantern_paper', count: 8 }],
+    rewards: { exp: 30000, gold: 560, items: [{ id: 'warrior_gloves_25', qty: 1, forJob: true, variant: 'roll' }] },
+  },
+  tea_grandkettle: {
+    id: 'tea_grandkettle', name: 'One Pot for Everyone', giver: 'sencha', minLevel: 28, prereq: 'tea_lanterns',
+    text: "The Grand Kettle. My old master. He's been asleep in the teapot hut since I, um, took over the business. Hunt the terraces until he wakes, and he will, grumpy, then calm him down. Only he knows how to brew a pot big enough for everyone. Even interns.",
+    objectives: [{ type: 'kill', mob: 'grandkettle', count: 1 }],
+    rewards: { exp: 60000, gold: 900, items: [{ id: 'warrior_cape_25', qty: 1, forJob: true, variant: 'roll' }, { id: 'elixir', qty: 3 }] },
+  },
+  daily_tea: {
+    id: 'daily_tea', name: 'Daily: Tea Break', giver: 'sencha', minLevel: 24, daily: true, prereq: 'tea_grandkettle',
+    text: "The pickers get a tea break now. Contractually. Someone still has to pick. Calm 20 Tanuki Pickers who are 'on break' in the Upper Rows, and I'll pay you in actual gold, not exposure.",
+    objectives: [{ type: 'kill', mob: 'tanukipicker', count: 20 }],
+    rewards: { exp: 21000, gold: 400, items: [{ id: 'white_potion', qty: 10 }, { id: 'gacha_ticket', qty: 1 }] },
+  },
   daily_crag: {
     id: 'daily_crag', name: 'Daily: Restless Bones', giver: 'brann', minLevel: 24, daily: true,
     text: "The Dullahans never stay down for long. Put 20 of them back to rest today, and keep your guard up.",

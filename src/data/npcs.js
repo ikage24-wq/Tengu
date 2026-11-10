@@ -79,6 +79,16 @@ export const NPCS = {
     look: { hairStyle: 'swoop', hairColor: '#3b3650', skinTone: '#c98e66', eyeColor: '#e8a23c', outfitColor: '#5d5285', eyeStyle: 'sleepy', face: 'smug' },
     greeting: 'Every fight is a dance, and the harbor is my stage. Light feet, big finish. Shall we?',
   },
+  // Master Sencha, the Tea Terraces' self-appointed Grand Tea Master (2026-11-10): a showman in a
+  // green kimono and a grey topknot who sells an "Ancient Tea Ceremony" he made up last Tuesday,
+  // run on tanuki labour. His four quests are one story (data/quests.js, tea_*).
+  sencha: {
+    id: 'sencha', name: 'Master Sencha', title: 'Grand Tea Master', role: 'shop',
+    look: { hairStyle: 'samurai', hairColor: '#d8d4e0', skinTone: '#f0c8a8', eyeColor: '#5a7a4a', outfitColor: '#5a8a5a', outfit: 'kimono', eyeStyle: 'round', face: 'smile' },
+    greeting: "Welcome, seeker, to the Ancient Tea Ceremony. Forty-seven steps. Very ancient. Extremely steps. Membership is reasonable.",
+    shop: ['red_potion', 'orange_potion', 'white_potion', 'blue_potion', 'return_scroll'],
+    quests: ['tea_leaves', 'tea_kettles', 'tea_lanterns', 'tea_grandkettle', 'daily_tea'],
+  },
   tora: {
     id: 'tora', name: 'Tora', title: 'Blacksmith', role: 'shop',
     quests: ['tora_handles', 'tora_bellows', 'brann_forge', 'tora_draught', 'tora_cores'],

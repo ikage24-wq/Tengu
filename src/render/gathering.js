@@ -37,7 +37,7 @@ const TIER_OF_ITEM = {
 const TIER_OF_MAP = {
   meadow1: 1, meadow2: 1, trainfield: 1, canyon: 1, dawnbeach: 1,
   woods: 2, glade: 2, hollow_gate: 2, ruins: 2,
-  shrine: 3, ridge: 3, cave: 3, springs: 3,
+  shrine: 3, ridge: 3, cave: 3, springs: 3, tea: 3,
   peak: 4, sky: 4, starfall: 4, bossroom: 4,
 };
 function tierOf(n, mapId) {

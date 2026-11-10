@@ -31,6 +31,7 @@ export const PORTAL_STYLES = {
   shrine: { swirl: ['#ff9a8a', '#ffd0c4', '#fff4ef'], arch: toriiGate },
   ridge: { swirl: ['#8fa6ff', '#cdd6ff', '#f4f6ff'], arch: logArch },
   springs: { swirl: ['#7fdcd0', '#c4f2ec', '#f2fffd'], arch: bambooGate },
+  tea: { swirl: ['#9fd88a', '#d8f0c0', '#f6fff0'], arch: bambooGate },
   snow: { swirl: ['#a8d4ff', '#dcefff', '#ffffff'], arch: iceArch },
   mochi: { swirl: ['#ffb3cf', '#ffe2ee', '#fff8fb'], arch: mochiGate },
 };

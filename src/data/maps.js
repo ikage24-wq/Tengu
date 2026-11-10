@@ -400,7 +400,7 @@ export const MAPS = {
     springs: [{ x: 1250, y: 340, up: 160, kind: 'gust' }],
     portals: [
       { id: 'west', x: 40, y: 300, to: 'grove', toPortal: 'east' },
-      { id: 'east', x: 2540, y: 1120, to: 'cave', toPortal: 'west' },
+      { id: 'east', x: 2540, y: 1120, to: 'tea', toPortal: 'west', label: 'Tanuki Tea Terraces' },
     ],
     npcs: [],
     // A landmark per zone: pillars and a statue on the roof, the great arch in the halls, the
@@ -457,7 +457,7 @@ export const MAPS = {
     springs: [{ x: 620, y: 720, up: 170, kind: 'gust' }],
     updrafts: [{ x: 2100, w: 50, top: 450, bottom: 720, kind: 'wisplight' }],
     portals: [
-      { id: 'west', x: 40, y: 600, to: 'ruins', toPortal: 'east' },
+      { id: 'west', x: 40, y: 600, to: 'tea', toPortal: 'east', label: 'Tanuki Tea Terraces' },
       { id: 'east', x: 2100, y: 480, to: 'sky', toPortal: 'west' },
       { id: 'boss', x: 1700, y: 880, to: 'bossroom', toPortal: 'west', label: 'Throne' },
     ],
@@ -2495,6 +2495,70 @@ Object.assign(MAPS, {
 
 
 
+  // The Tanuki Tea Terraces (2026-11-10, the player's pick for levels 24-28) are a valley: you
+  // arrive high on the west rim from the Twilight Ruins and come down the terraces into a misty
+  // hollow, then climb out the east side to the Crystal Cave. The Upper Rows, the tea rows on the
+  // west rim, where the Tanuki Pickers work and a kettle lid bounces you up; the Kettle Steps, the
+  // terraced slope down, where the Kettle Tanuki sit steaming and vents puff you up the steps; the
+  // Mist Hollow at the bottom, round the pond and the giant teapot hut, where the Lantern Tanuki
+  // drift (and a tea tray floats over the pond); and the Sunrise Rows, the climb out of the east
+  // side, pickers and kettles together, with the way on to the cave at the top and a homestone.
+  tea: {
+    id: 'tea', name: 'Tanuki Tea Terraces', theme: 'tea', town: 'grove', world: { x: 330, y: 120 },
+    ...lay({
+      width: 3000, ground: 1040, by: 'x',
+      // The valley: the west rim, three terraces down, the hollow (a pond sunk in it), three up.
+      terrain: [[0, 560], [900, 560], [900, 680], [1100, 680], [1100, 800], [1300, 800], [1300, 920], [1500, 920], [1500, 1040],
+        [1600, 1040], [1624, 1078], [1736, 1078], [1760, 1040], [2300, 1040], [2300, 900], [2500, 900], [2500, 760], [2700, 760], [2700, 620], [3000, 620]],
+      // Ropes down each terrace face, on its low side.
+      ropes: [{ x: 912, top: 560, bottom: 680 }, { x: 1112, top: 680, bottom: 800 }, { x: 1312, top: 800, bottom: 920 }, { x: 1512, top: 920, bottom: 1040 },
+        { x: 2288, top: 900, bottom: 1040 }, { x: 2488, top: 760, bottom: 900 }, { x: 2688, top: 620, bottom: 760 }],
+      quiet: [[40, 560, 340], [2960, 620, 200], [1650, 1000, 60]],
+      zones: [
+        { name: 'Upper Rows', color: '#7cb86a', from: 0, mobs: ['tanukipicker'], nodes: [SPOT.fruit(3, 'shrine_plum'), SPOT.fiber(3), SPOT.wood(3)] },
+        { name: 'Kettle Steps', color: '#6a7486', from: 900, mobs: ['kettletanuki', 'tanukipicker'], nodes: [SPOT.ore(3), SPOT.herb(3, 'steam_ginger')],
+          look: { sky: ['#cfe6c4', '#eef4d8', '#fff4e0'] } },
+        { name: 'Mist Hollow', color: '#c8463c', from: 1500, mobs: ['lantertanuki', 'lantertanuki', 'kettletanuki'], nodes: [SPOT.herb(3, 'duskcap', { night: true }), SPOT.night(3), SPOT.fiber(3)],
+          look: { sky: ['#b4c8c4', '#dce6dc', '#f4f2e6'] } },
+        { name: 'Sunrise Rows', color: '#e0a040', from: 2300, mobs: ['tanukipicker', 'kettletanuki'], nodes: [SPOT.fruit(3, 'cherry'), SPOT.wood(3)],
+          look: { sky: ['#ffd6a8', '#ffe8c8', '#fff6e8'] } },
+      ],
+      ledges: [
+        // The Upper Rows: tea terraces stepping up above the rim.
+        { x: 160, y: 480, w: 300 }, { x: 520, y: 480, w: 260 }, { x: 300, y: 400, w: 280 }, { x: 640, y: 400, w: 200 }, { x: 420, y: 320, w: 240 },
+        // The Kettle Steps: a ledge over each terrace.
+        { x: 940, y: 600, w: 140 }, { x: 1140, y: 720, w: 140 }, { x: 1340, y: 840, w: 140 },
+        // The Mist Hollow: ledges round the teapot hut and a high perch above it (the secret).
+        { x: 1790, y: 960, w: 180 }, { x: 1830, y: 880, w: 170 }, { x: 1870, y: 800, w: 150 }, { x: 1900, y: 720, w: 110 },
+        // The Sunrise Rows.
+        { x: 2340, y: 820, w: 140 }, { x: 2540, y: 680, w: 140 }, { x: 2760, y: 540, w: 180 },
+        // The tea tray drifting over the pond and up toward the perch.
+        { x: 1560, y: 960, w: 110, drift: { dx: 200, period: 10 } },
+      ],
+    }),
+    // A moving part per zone: a big kettle lid that bounces you up the rows, steam vents up the
+    // steps, the tea tray floating over the pond, and a vent on the sunrise climb.
+    springs: [{ x: 780, y: 560, up: 170, kind: 'kettle' }, { x: 1200, y: 800, up: 170, kind: 'gust' }, { x: 2400, y: 900, up: 170, kind: 'gust' }],
+    water: [{ x1: 1600, x2: 1760, y: 1046, kind: 'spring' }],
+    portals: [
+      { id: 'west', x: 40, y: 560, to: 'ruins', toPortal: 'east' },
+      { id: 'east', x: 2960, y: 620, to: 'cave', toPortal: 'west' },
+      // The shortcut home: a homestone back to Moonleaf Grove at the far end.
+      { id: 'homestone', x: 2850, y: 540, to: 'grove', toPortal: 'start', homestone: true, label: 'Home: Moonleaf Grove' },
+    ],
+    // Master Sencha keeps his tea stall on the rim, where you arrive, clear of the rows.
+    npcs: [{ id: 'sencha', x: 260 }],
+    // A landmark per zone: the tea bush clipped into a sleeping tanuki on the rim, the tower of
+    // kettles on the steps, the giant teapot hut in the hollow, a smaller clipped tanuki up the
+    // sunrise rows.
+    deco: [['teatopiary', 480, 0, 560], ['kettlestack', 1200, 0, 800], ['teapothut', 2130, 0, 1040], ['teatopiary', 2600, 1, 760], ['stonelamp', 1560, 0, 1040], ['stonelamp', 2262, 0, 1040]],
+    lamps: [{ x: 1560, y: 1010 }, { x: 2262, y: 1010 }, { x: 2168, y: 970 }, { x: 600, y: 530 }],
+    spirit: { x: 1700, y: 900 },
+    habitats: { tanukipicker: { naps: true, play: true }, kettletanuki: { naps: true, home: { x: 1200, y: 800 } }, lantertanuki: { play: true, home: { x: 2130, y: 1040 } } },
+    // The area boss (world/nest.js): after enough hunting, the Grand Kettle steps out of his hut.
+    nest: { mob: 'grandkettle', x: 2130, y: 1040, kills: 150, name: 'The giant teapot hut', wake: 'WHO is rattling MY kettles?! Everyone to the teapot hut!', stirs: ['Steam is puffing out of the giant teapot hut...', "The teapot hut's lid is rattling! Someone very old and very round is waking up."] },
+  },
+
   // The Fox Shrine Path climbs a sacred hill in three zones (the tall-map rules, a light rework,
   // data/climb.js): the Torii Steps, where the Nekomata lounge under the great gates and blossoms
   // bounce you up; the Lantern Terraces, where foxfire rises to carry you higher; and the Hokora
@@ -2779,6 +2843,8 @@ MAPS.cave.nodes.push(
   { ...SPOT.ore(3), x: 350, y: 440 }, { ...SPOT.herb(3, 'crystal_truffle'), x: 1300, y: 600 },
   { ...SPOT.herb(3, 'duskcap', { night: true }), x: 1300, y: 760 }, { ...SPOT.ore(3, { gem: 0.18 }), x: 2420, y: 420 },
 );
+// The Tea Terraces' fishing stone over the pond.
+MAPS.tea.platforms.push({ x: 1620, y: 1000, w: 60, style: 'stone', walkOn: true });
 // Serpent Springs' drifting ledge and fishing dock; the grotto is behind the waterfall.
 MAPS.springs.platforms.push({ x: 1035, y: 480, w: 130, drift: { dx: 200, period: 9 } }, { x: 1990, y: 872, w: 120, style: 'stone', walkOn: true });
 // The hot spring sunk into the east corner of the pools floor, behind a stone lip the Lamias never

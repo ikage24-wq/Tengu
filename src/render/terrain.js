@@ -34,6 +34,8 @@ export const MATERIALS = {
   sky: { lip: '#ffffff', body: '#f6f8ff', deep: '#d6e0ff', stone: '#ffffff', style: 'cloud', blades: false, drip: null },
   // The far regions: a petal-strewn stone path, blue night rock, warm spring stone, packed snow.
   shrine: { lip: '#ffc6de', body: '#d8c4b6', deep: '#b49a8e', stone: '#efe2d8', style: 'slab', blades: true, drip: 'vine' },
+  // The tea terraces: packed earth terraces with clipped green tops.
+  tea: { lip: '#a8dc8c', body: '#c9b49a', deep: '#a8927a', stone: '#e6dcc8', style: 'loam', blades: true, drip: 'vine' },
   ridge: { lip: '#a8d8c8', body: '#7a80b8', deep: '#545a96', stone: '#9aa0d6', style: 'rock', blades: true, drip: 'root' },
   springs: { lip: '#9fe0c0', body: '#c4a6a0', deep: '#a08486', stone: '#e4cec6', style: 'slab', blades: true, drip: 'weed' },
   snow: { lip: '#ffffff', body: '#dfe8fa', deep: '#b6c4e8', stone: '#f4f8ff', style: 'slab', blades: false, drip: 'crystal', glow: '#e6f4ff' },
