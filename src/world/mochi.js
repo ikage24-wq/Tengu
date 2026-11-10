@@ -14,6 +14,7 @@ import { STATS } from '../data/mochi-genes.js';
 import { styleOf } from '../data/mochi-raise.js';
 import { addItem, countItem } from '../core/inventory.js';
 import { voiceAction } from './mochi-voice.js';
+import { footingAt } from './physics.js';
 
 // How it fetches loot: how far from you (across, the faster a runner the further; and up), and how
 // often it can pick something up (s).
@@ -29,6 +30,9 @@ export const FORM_HELP = {
   moon: { name: 'a little of everything', values: (k) => ({ speed: k, watk: k, matk: k, jump: 0.75 * k, expPct: 0.005 * k }) },
 };
 const BUFF = 'mochi:pet';
+// How it gets about: getting going and slowing down (px/s each second), its hop (gravity, and how
+// far over a ledge's top it hops), and how far off it can fall behind before it pops back to you.
+const PET_MOVE = { accel: 900, gravity: 1100, clear: 10, lost: 520 };
 const DEFAULT_OPTS = { loot: true, hp: 40, mp: 25 };
 
 // The one of your Mochi chosen to come along (or null).
@@ -80,7 +84,8 @@ export function tickMochi(world, dt, api) {
   const pet = char.pet;
   const b = world.body;
   if (!world.mochi || world.mochi.map !== world.map.id || world.mochi.rec !== rec) {
-    world.mochi = { map: world.map.id, rec, x: b.x - b.facing * 26, y: b.y, dir: b.facing, target: null, pickAt: 0, potAt: 0, level: char.level, m: null };
+    world.mochi = { map: world.map.id, rec, x: b.x, y: b.y, vx: 0, vy: 0, air: false, dir: b.facing, target: null, pickAt: 0, potAt: 0, level: char.level, m: null };
+    world.mochi.y = footingAt(world.map, b.x, b.y).y;
   }
   const p = world.mochi;
   p.m ??= { genes: rec, dir: p.dir, speed: 0, dist: 0, mode: 'run' };
@@ -113,18 +118,7 @@ export function tickMochi(world, dt, api) {
       p.target = best;
     }
   } else p.target = null;
-  // Moving: to its target, or to its spot just behind you; quicker the further it has to go.
-  const goal = p.target ? { x: p.target.x, y: p.target.y } : { x: b.x - b.facing * 26, y: b.onGround ? b.y : p.y };
-  const dx = goal.x - p.x;
-  const speed = Math.min(260, 70 + Math.abs(dx) * 2.4);
-  const step = Math.sign(dx) * Math.min(Math.abs(dx), speed * dt);
-  p.x += step;
-  p.y += (goal.y - p.y) * Math.min(1, dt * 8);
-  const vx = dt > 0 ? step / dt : 0;
-  if (Math.abs(vx) > 12) p.dir = Math.sign(vx);
-  else if (!p.target) p.dir = b.facing;
-  Object.assign(p.m, { dir: p.dir, speed: Math.abs(vx) > 12 ? Math.abs(vx) : 0 });
-  p.m.dist += Math.abs(step);
+  stepPet(world, p, dt);
   // Got there: it picks the drop up for you.
   if (p.target && Math.abs(p.target.x - p.x) < 8 && Math.abs(p.target.y - p.y) < 14 && world.now >= p.pickAt) {
     if (api.collect(p.target)) p.pickedAt = world.now;
@@ -145,6 +139,72 @@ export function tickMochi(world, dt, api) {
       } else p.potAt = world.now + 1.5;
     }
   }
+}
+
+// Moving: to the drop it's fetching, or to its spot just behind you. Across, quicker the further it
+// has to go, getting going and slowing smoothly. Up and down, it's always on something: the ground,
+// a ledge, or swimming at the water's surface; off an edge it drops, and when you're up on a ledge
+// above it, it hops up (fluttering, in its Fly style) and lands beside you. Fallen far behind (a long
+// climb, a fall), it pops back to you.
+function stepPet(world, p, dt) {
+  const b = world.body;
+  const map = world.map;
+  const m = p.m;
+  if (Math.abs(p.x - b.x) > PET_MOVE.lost || Math.abs(p.y - b.y) > PET_MOVE.lost) {
+    const f = footingAt(map, b.x, b.y);
+    Object.assign(p, { x: b.x, y: f.y, vx: 0, vy: 0, air: false });
+    m.action = { name: 'cheer', t0: null, hold: 0.6 };
+  }
+  // Where it's headed, and the height it means to be at: the drop, or you while you're standing
+  // (kept on your ledge, not out past its end over the air).
+  const on = b.onGround ? b.surface : null;
+  let gx = p.target ? p.target.x : b.x - b.facing * 26;
+  if (!p.target && on && !on.ground) gx = Math.max(on.x1 + 4, Math.min(on.x2 - 4, gx));
+  const wantY = p.target ? p.target.y : on ? b.y : null;
+  // Across.
+  const dx = gx - p.x;
+  const top = Math.min(260, 70 + Math.abs(dx) * 2.4);
+  const A = PET_MOVE.accel;
+  const want = Math.abs(dx) < 1 ? 0 : Math.sign(dx) * Math.min(top, Math.sqrt(2 * A * Math.abs(dx)));
+  p.vx += Math.max(-A * dt, Math.min(A * dt, want - p.vx));
+  let step = p.vx * dt;
+  if ((Math.sign(step) === Math.sign(dx) && Math.abs(step) > Math.abs(dx)) || (Math.abs(dx) < 1 && Math.abs(p.vx) < 6)) {
+    step = dx;
+    p.vx = 0;
+  }
+  p.x += step;
+  // Up and down.
+  let foot;
+  if (p.air) {
+    const was = p.y;
+    p.vy = Math.min(700, p.vy + PET_MOVE.gravity * dt);
+    p.y += p.vy * dt;
+    // (Coming down, it lands on the first thing it meets: the ground, a ledge, the water.)
+    foot = footingAt(map, p.x, was);
+    if (p.vy > 0 && p.y >= foot.y) {
+      p.y = foot.y;
+      p.air = false;
+      p.vy = 0;
+    }
+  } else {
+    foot = footingAt(map, p.x, p.y);
+    const up = wantY != null ? footingAt(map, p.x, wantY) : null;
+    // You're up on a ledge right over it, or the ground steps up in front of it: a hop up.
+    const to = up && !up.swim && up.y < p.y - PET_MOVE.clear && Math.abs(up.y - wantY) < 4 ? up.y : foot.y < p.y - 6 ? foot.y : null;
+    if (to != null) {
+      p.air = true;
+      p.vy = -Math.sqrt(2 * PET_MOVE.gravity * (p.y - to + PET_MOVE.clear));
+    } else if (foot.y > p.y + 6) {
+      // Off an edge: down it drops.
+      p.air = true;
+      p.vy = 0;
+    } else p.y = foot.y;
+  }
+  const swim = !p.air && foot.swim;
+  if (Math.abs(p.vx) > 4) p.dir = Math.sign(p.vx);
+  else if (!p.target) p.dir = b.facing;
+  Object.assign(m, { dir: p.dir, speed: Math.abs(p.vx) > 4 ? Math.abs(p.vx) : 0, mode: p.air ? 'fly' : swim ? 'swim' : 'run', inWater: swim, noShadow: p.air });
+  m.dist += Math.abs(step) + (p.air ? Math.abs(p.vy) * dt : 0);
 }
 
 // The tonic for `kind` ('hp' or 'mp') to drink: the strongest one in the bag.

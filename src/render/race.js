@@ -22,7 +22,7 @@ import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { groundAt } from '../world/physics.js';
 import { drawMochiAnim, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { LANE_RISE, runSpeed } from '../world/mochi-race.js';
+import { runSpeed } from '../world/mochi-race.js';
 import { CANT_POINTS } from '../data/mochi-raise.js';
 import { HAIR_COLORS } from '../data/mochi-genes.js';
 
@@ -350,8 +350,9 @@ export function drawRace(ctx, world, cam, time) {
   if (R.phase === 'ready') paintAhead(ctx, R, map.race, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
     const x = r.x - cam.x;
-    // (On a wall each lane has its own spot along it: no rise.)
-    const y = r.y - (r.m.mode === 'climb' ? 0 : r.lane * LANE_RISE) - cam.y;
+    // (Every lane on the ground, the water or the wall itself: the ground is an edge, not a field,
+    // so a lane drawn higher would float. The back lanes are drawn first, behind.)
+    const y = r.y - cam.y;
     drawMochiAnim(ctx, r.m, x, y, time);
     if (!r.you) continue;
     const top = y - (r.m.size === 'baby' ? 36 : 44);

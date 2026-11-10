@@ -15,6 +15,7 @@ import { addItem, countItem } from '../src/core/inventory.js';
 import { ITEMS } from '../src/data/items.js';
 import { careFor, feedMochi, sayGoodbye, scheduledAt, CROP_X, CROP_GROW, GARDEN_MAX, EGG_SLOTS } from '../src/world/garden-life.js';
 import { online } from '../src/net/online.js';
+import { footingAt } from '../src/world/physics.js';
 import { onVisit, askGardenVisit } from '../src/net/visit.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
@@ -386,4 +387,28 @@ test('voices: a Mochi speaks in its own voice when it does something with feelin
   } finally {
     g.done();
   }
+});
+
+test('Garden Mochi walk on the ground and swim at the pond surface, easing in and out, never on air', () => {
+  const { w, run, done } = garden();
+  const map = w.map;
+  const last = new Map();
+  let swam = 0;
+  // An hour of the garden's clock, with the swimmer in and out of the pond.
+  for (let t = 0; t < 3600; t += 1 / 20) {
+    run(1 / 20, 1 / 20);
+    for (const e of w.gardenLife.mochi) {
+      if (e.hidden || e.x == null || e.scene) continue;
+      const f = footingAt(map, e.x);
+      const where = `${e.rec.seed} at ${e.x.toFixed(1)},${e.y.toFixed(1)}`;
+      assert.equal(e.m.mode, f.swim ? 'swim' : 'run', `${where}: swims only in the pond`);
+      assert.ok(Math.abs(e.y - f.y) < 7, `${where}: on the ground or the water (${f.y})`);
+      if (f.swim) swam += 1;
+      const p = last.get(e);
+      if (p) assert.ok(Math.abs(e.y - p) < 4, `${where}: no popping (was ${p.toFixed(1)})`);
+      last.set(e, e.y);
+    }
+  }
+  assert.ok(swam > 0, 'the swimmer went for a swim');
+  done();
 });

@@ -163,7 +163,7 @@ Each step is pushed on its own. Status as of 2026-11-09.
    with the owner); the Mochi Bell or the gate takes a visitor back. Greeting is for the owner.
    Rebirth plays in the garden at the end of a long, happy life (back to its egg, hatching again a
    generation on). Goodbye in the care panel (two clicks): it waves and fades, off to a new home. A
-   garden holds 8 Mochi (a nursery bed each); a full garden won't hatch an egg. The Mochi Bell has
+   garden holds 8 Mochi (two to each of the nursery's four basket beds); a full garden won't hatch an egg. The Mochi Bell has
    its icon. Dropped from the batch (user agreed 2026-11-10): digging up hats (Mochi wear no hats;
    belongs with dress-up, step 14), the egg stall (to step 6, getting eggs), Dawn Terrace and Dusk
    Grotto (no purpose yet). **The Garden is done.**
@@ -306,7 +306,14 @@ Each step is pushed on its own. Status as of 2026-11-09.
     first Beginner win on its stage (Sprint, Lily Lake, Cloud Glide, Cliff Climb, Long Hill), said
     in the results. Chosen on the Mochi page ("Wears ◀ ▶", your own Mochi). Seen by visitors and in
     party races, as it's part of the Mochi.
-15. **Polish.** HD props, effects, speed checks, a full play-through.
+15. **Polish.** HD props, effects, speed checks, a full play-through. **Footing (2026-11-10):** a
+    Mochi is always on something: the ground, a ledge, its wall, or swimming at the surface. Garden
+    Mochi ease into and out of the pond and get going and stop smoothly; they sleep two to each of
+    the nursery's four basket beds, tucked in behind the rim. The follow pet stands on what's under
+    it, hops up to a ledge you're on, drops off edges and swims at the surface (pops back to you if
+    far behind). Racers all run on the ground line (no lane rise), get away smoothly at Go, hop off
+    the glide launch, and one that can't fly stays on the lip until it's off the edge. Tests check
+    every racer on every course, every frame, and the Garden and pet the same way.
 
 ## Checked against the Chao Garden (chao-island.com Info Center, read in full 2026-11-09)
 

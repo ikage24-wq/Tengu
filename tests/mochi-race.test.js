@@ -9,6 +9,7 @@ import { MAPS } from '../src/data/maps.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord } from '../src/data/mochi-raise.js';
 import { startRace, rivalsFor, raceHour } from '../src/world/mochi-race.js';
+import { groundAt, waterAt } from '../src/world/physics.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
 const mochi = (seed, points, personality = 'stoic') => {
@@ -227,4 +228,33 @@ test('dress-up: the Daifuku hood from the start; each other costume with a first
   assert.equal(lookOf(rec).outfit, DRESS.dango.outfit);
   // Every costume is won on a real stage.
   for (const d of Object.values(DRESS)) assert.ok(d.free || ['sprint', 'swim', 'climb', 'glide', 'hills'].includes(d.stage));
+});
+
+test('every racer, every frame, on every course: on the ground, in the water, on its wall or gliding over the ground, never on air', () => {
+  for (const stage of ['sprint', 'swim', 'climb', 'glide', 'hills', 'grand']) {
+    for (const pts of [0, 700, 2400]) {
+      const rec = mochi(40 + pts, pts);
+      const w = racer(rec);
+      assert.ok(startRace(w, rec, stage, 'beginner'));
+      const R = w.race;
+      const course = w.map.race;
+      for (let k = 0; k < 60 * 200 && R.phase !== 'done'; k++) {
+        updateWorld(w, 1 / 60, keys());
+        for (const r of R.racers) {
+          const where = `${stage} (${pts}): ${r.name} at ${r.x.toFixed(1)},${r.y.toFixed(1)} ${r.m.mode}`;
+          // (Smoothly: never a jump from one frame to the next.)
+          if (r.lastAt) assert.ok(Math.abs(r.x - r.lastAt[0]) < 8 && Math.abs(r.y - r.lastAt[1]) < 8, `${where}: jumped from ${r.lastAt.map((v) => v.toFixed(1))}`);
+          r.lastAt = [r.x, r.y];
+          const leg = course.legs[r.leg];
+          const ground = groundAt(w.map, r.x);
+          if (r.m.mode === 'swim') assert.ok(waterAt(w.map, r.x) === r.y, `${where}: swimming at the surface`);
+          else if (r.m.mode === 'climb') assert.ok(leg.kind === 'climb' && r.x > leg.x - 48 && r.x < leg.x && r.y <= leg.from && r.y >= leg.to, `${where}: on its wall`);
+          else if (r.m.mode === 'fly') assert.ok(r.y <= ground + 0.01, `${where}: above the ground`);
+          else if (leg.kind === 'climb') assert.ok(r.x > leg.x - 48 && (r.y === leg.to || Math.abs(r.y - ground) < 0.01), `${where}: at the foot of its wall or over the top`);
+          else assert.ok(Math.abs(r.y - ground) < 0.01, `${where}: on the ground`);
+        }
+      }
+      assert.equal(R.phase, 'done', `${stage} ends`);
+    }
+  }
 });

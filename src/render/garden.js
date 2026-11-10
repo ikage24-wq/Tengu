@@ -37,7 +37,7 @@ import { drawMochiAnim } from './mochi-anim.js';
 import { drawHatch, drawEvolve, drawRebirth } from './mochi-life.js';
 import { drawMochiEgg } from './wagashi.js';
 import { rollMochi } from '../data/mochi-genes.js';
-import { EGG_SLOTS, cropGrowth } from '../world/garden-life.js';
+import { EGG_SLOTS, NURSERY_BEDS, cropGrowth } from '../world/garden-life.js';
 
 const TAU = Math.PI * 2;
 const WOOD = '#c8945a';
@@ -559,14 +559,23 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
     R(140, 206, 140, 10, WOOD), F(R(140, 206, 140, 2, ramp(WOOD).hi)),
     // The rug.
     E(380, 362, 150, 14, '#f6c0cc'), F(E(380, 362, 132, 10, '#ffd8e0')), F(E(380, 362, 112, 7, '#f6c0cc')),
-    // Basket beds, each with its little blanket, along the right.
-    ...[[560, '#c8e6f8'], [630, '#ffe4ec'], [700, '#e2f4d8']].flatMap(([x, c]) => [E(x, 352, 28, 10, '#d8a86a'), E(x, 346, 24, 6, c), F(E(x - 8, 344, 8, 3, '#ffffff')), F(R(x - 26, 352, 52, 2, '#b88850'))]),
+    // The basket beds (world/garden-life.js NURSERY_BEDS), each with its own blanket: the back of the
+    // basket and the blanket inside (the front of the rim is drawn over whoever's asleep in it).
+    ...NURSERY_BEDS.flatMap((x, i) => [E(x, 352, 34, 4, '#d8a86a'), F(E(x, 351, 33, 1.2, '#ecc890')), E(x, 353, 31, 2.4, '#a8784a'), E(x, 354, 29, 2.6, BED_BLANKETS[i % BED_BLANKETS.length]), F(E(x - 14, 353, 7, 1.2, '#ffffff'))]),
     // The toy shelf (its ledge is a platform): a ball, a little drum, blocks.
     R(520, 262, 150, 8, WOOD), F(R(520, 262, 150, 2, ramp(WOOD).hi)),
     E(546, 252, 8, 8, '#ff9ab0'), F(E(543, 249, 3, 2, '#ffffff')), R(572, 246, 14, 14, '#9fc8f0'), F(E(579, 246, 7, 2, '#cfe6ff')), R(600, 250, 10, 10, KINAKO), R(612, 252, 8, 8, MATCHA), R(606, 242, 8, 8, SAKURA),
   ];
   return out;
 });
+const BED_BLANKETS = ['#c8e6f8', '#ffe4ec', '#e2f4d8', '#fff0c4'];
+// The front of a basket bed's rim, woven, drawn in front of the Mochi asleep in it (its middle at x,
+// sitting on the floor).
+const bedFrontArt = () => art('mg-bedfront', 72, 16, () => [
+  E(36, 11, 34, 4, '#d8a86a'), F(E(36, 7.6, 33, 1.2, '#ecc890')),
+  ...[-24, -16, -8, 0, 8, 16, 24].map((dx) => F(R(36 + dx, 9, 1, 4 - Math.abs(dx) / 12, '#c08a52'))),
+  F(R(8, 14, 56, 1, '#b88850')),
+]);
 const emptyMortarArt = () => art('mg-emptymortar', 40, 20, () => [R(6, 6, 28, 13, WOOD), F(R(6, 6, 28, 2, ramp(WOOD).hi)), E(20, 7, 12, 2.6, '#7a5438')]);
 
 // ---------- The garden's life ----------
@@ -612,6 +621,8 @@ export function drawGardenLife(ctx, world, cam, time, layer = 'back') {
     if (bloom) bloomFlowers(ctx, x, y, time, e.rec.seed, true);
     if (e.fade != null) ctx.restore();
   }
+  // In the nursery: the front of each basket bed, over whoever's curled up asleep in it.
+  if (map.indoor) for (const bx of NURSERY_BEDS) place(ctx, bedFrontArt(), snap(bx - cam.x), groundAt(map, bx) + 4 - cam.y);
   // A moment between two Mochi (world/garden-life.js): a little bubble over the one who started it.
   const mo = life.moment;
   if (mo && !mo.a.hidden && mo.a.x != null) {

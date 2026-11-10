@@ -11,6 +11,7 @@ import { spawnDrops } from '../src/world/drops.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, evolve } from '../src/data/mochi-raise.js';
 import { takeAlong, sendHome, petReach, formHelp } from '../src/world/mochi.js';
+import { surfacesOf, waterAt } from '../src/world/physics.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -103,4 +104,48 @@ test('the old Cash egg pet becomes a Star Egg that hatches as itself, its name a
   run(w, 0.1);
   assert.equal(w.char.garden.mochi.at(-1).name, 'Mochi');
   assert.equal(w.naming ?? null, null, 'no need to name it again');
+});
+
+test('your Mochi is always on something: the ground, a ledge or swimming at the surface, never walking on air', () => {
+  const rec = mochi(15, 600);
+  const w = world(rec);
+  takeAlong(w.char, rec);
+  const b = w.body;
+  const map = w.map;
+  const onSomething = (p) => (waterAt(map, p.x) != null && Math.abs(waterAt(map, p.x) - p.y) < 0.5 && p.m.mode === 'swim')
+    || surfacesOf(map).some((s) => p.x >= s.x1 && p.x <= s.x2 && Math.abs(s.yAt(p.x) - p.y) < 0.5);
+  let airFor = 0;
+  let hops = 0;
+  const go = (secs, input = idle) => {
+    for (let i = 0; i < secs * 60; i++) {
+      updateWorld(w, DT, input);
+      const p = w.mochi;
+      if (!p) continue;
+      if (p.air && !airFor && p.vy < 0) hops += 1;
+      airFor = p.air ? airFor + DT : 0;
+      assert.ok(airFor < 1.5, `stuck in the air at ${p.x.toFixed(0)},${p.y.toFixed(0)}`);
+      if (!p.air) assert.ok(onSomething(p), `standing on nothing at ${p.x.toFixed(0)},${p.y.toFixed(0)} (${p.m.mode})`);
+      assert.equal(p.m.mode === 'fly', p.air, 'flutters only in the air');
+    }
+  };
+  Object.assign(b, { x: 600, y: 990, vx: 0, vy: 0, onGround: false });
+  go(2);
+  // You hop up onto a ledge: it hops up after you and stands beside you on it.
+  Object.assign(b, { x: 600, y: 900, vx: 0, vy: 0, onGround: false });
+  go(3);
+  assert.ok(Math.abs(w.mochi.y - 920) < 0.5 && Math.abs(w.mochi.x - b.x) < 40, 'up on the ledge with you');
+  assert.equal(hops, 1, 'it hopped up');
+  // You walk off its end: it follows, dropping down after you.
+  go(4, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+  go(2);
+  assert.ok(Math.abs(w.mochi.y - b.y) < 0.5, 'down on the ground with you');
+  // Into the pond: you wade, it swims at the surface.
+  Object.assign(b, { x: 2240, y: 1000, vx: 0, vy: 0, onGround: false });
+  go(3);
+  assert.equal(w.mochi.m.mode, 'swim');
+  assert.equal(w.mochi.y, waterAt(map, w.mochi.x), 'at the surface');
+  // Out the far side and away: it climbs out and walks on.
+  go(3, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+  go(2);
+  assert.equal(w.mochi.m.mode, 'run');
 });

@@ -44,7 +44,7 @@ import { calledOf } from '../data/mochi-names.js';
 import { breedGenes } from '../data/mochi-breed.js';
 import { voiceAction } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
-import { groundAt } from './physics.js';
+import { groundAt, footingAt } from './physics.js';
 
 // Where things are in the garden (world/garden.js).
 export const EGG_SLOTS = [404, 430, 456, 254, 228];
@@ -53,24 +53,32 @@ export const STALL_X = 330;
 export const EGG_PRICE = 3000;
 const LAND = [236, 2200];
 const POND = [2290, 2770];
-const WATER_Y = 760;
 const NURSERY_DOOR = 760;
-const BEDS = [560, 630, 700, 476, 406, 336, 266, 196];
+// The nursery's basket beds (render/garden.js mg_nurseryroom), two Mochi to a bed, curled up side by
+// side; one on its own sleeps in the middle.
+export const NURSERY_BEDS = [384, 472, 560, 648];
+const BED_SIDE = 12;
 const HOUR = 60;
-// How many Mochi a garden has room for (a bed each in the nursery).
-export const GARDEN_MAX = BEDS.length;
+// How many Mochi a garden has room for (two to each bed in the nursery).
+export const GARDEN_MAX = NURSERY_BEDS.length * 2;
+// Where Mochi `i` of `n` sleeps: the beds filled one each first, then a second in each.
+export function bedSpot(i, n) {
+  const beds = NURSERY_BEDS.length;
+  const bed = i % beds;
+  const shared = n > beds + bed;
+  return NURSERY_BEDS[bed] + (shared ? (i < beds ? -BED_SIDE : BED_SIDE) : 0);
+}
+// How quickly a Mochi gets going and slows to a stop (px/s each second), by its top speed.
+const accelOf = (v) => Math.max(90, v * 3);
 // What a visitor can do with your Mochi (besides feeding it).
 export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS), by points.
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
-// The pond's water (world/garden.js).
-const WATER = [2236, 2826];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
 export const CROP_X = 1962;
 export const CROP_GROW = 15 * 60;
 const CROP_YIELD = { mochi_rice: 3, azuki: 2, kinako: 2, fire_pepper: 1 };
-const inWater = (x) => x > WATER[0] + 4 && x < WATER[1] - 4;
 const tierOf = (rec, stat) => styleOf(rec.stats?.[stat]?.points ?? 0);
 const pts = (rec, stat) => rec.stats?.[stat]?.points ?? 0;
 
@@ -232,8 +240,9 @@ export function tickGarden(world, dt) {
     if (inside) {
       // The nursery: asleep in the beds at night; by day, nobody's in.
       e.hidden = !night;
-      e.x = BEDS[i % BEDS.length];
+      e.x = bedSpot(i, life.mochi.length);
       e.y = groundAt(map, e.x);
+      e.vx = 0;
       if (night && !m.action) m.action = { name: 'nap', t0: null, hold: 1e9 };
       return;
     }
@@ -259,22 +268,32 @@ export function tickGarden(world, dt) {
     // (One who can't swim yet stops at the water's edge.)
     if (pts(rec, 'swim') < CANT.swim && target > LAND[1]) target = LAND[1];
     if (e.x == null) e.x = sched.x;
-    const wet = inWater(e.x);
+    const wet = footingAt(map, e.x).swim;
     const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
     const v = other ? Math.max(v0, 40) : inMoment ? Math.max(v0, mo.kind === 'chase' ? 46 : 26) : v0;
+    // It gets going and slows to a stop smoothly (never off at full speed, never a dead stop), and
+    // turns round only once it's stopped.
     const dx = target - e.x;
-    const step = Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
+    const A = accelOf(v);
+    const want = Math.abs(dx) < 0.5 ? 0 : Math.sign(dx) * Math.min(v, Math.sqrt(2 * A * Math.abs(dx)));
+    e.vx = (e.vx ?? 0) + Math.max(-A * dt, Math.min(A * dt, want - (e.vx ?? 0)));
+    let step = e.vx * dt;
+    if ((Math.sign(step) === Math.sign(dx) && Math.abs(step) > Math.abs(dx)) || (Math.abs(dx) < 0.5 && Math.abs(e.vx) < 4)) {
+      step = dx;
+      e.vx = 0;
+    }
     e.x += step;
-    if (Math.abs(dx) > 0.5) m.dir = Math.sign(dx);
+    if (Math.abs(e.vx) > 2) m.dir = Math.sign(e.vx);
     else if (inMoment) m.dir = momentFacing(mo, e);
     else if (e.greet || busy) m.dir = Math.sign(world.body.x - e.x) || 1;
     m.dist += Math.abs(step);
-    m.speed = Math.abs(dx) > 0.5 ? v : 0;
-    // In the pond it swims; on land it walks (or scoots, if it can't yet).
-    const swimming = inWater(e.x);
-    m.mode = swimming ? 'swim' : 'run';
-    m.inWater = swimming;
-    e.y = swimming ? WATER_Y : groundAt(map, e.x);
+    m.speed = Math.abs(e.vx) > 2 ? Math.abs(e.vx) : 0;
+    // In the pond it swims, at the surface; on land it walks on the ground (or scoots, if it can't
+    // yet). Where one gives way to the other it eases up or down, never popping.
+    const foot = footingAt(map, e.x);
+    m.mode = foot.swim ? 'swim' : 'run';
+    m.inWater = foot.swim;
+    settle(e, foot.y, dt);
     // A greeting ends in a happy wave.
     if (e.greet && Math.abs(dx) <= 0.5 && !e.waved) {
       e.waved = true;
@@ -291,6 +310,16 @@ export function tickGarden(world, dt) {
     if (owner && list?.includes(e.rec)) list.splice(list.indexOf(e.rec), 1);
     if (life.caring === e) life.caring = null;
   }
+}
+
+// Puts Mochi `e` at height `y` (the ground or the water under it): following the ground exactly, but
+// easing out any sudden jump (stepping into the pond and starting to swim, climbing out).
+function settle(e, y, dt) {
+  if (e.baseY != null && Math.abs(y - e.baseY) > 4) e.yOff = (e.yOff ?? 0) + e.baseY - y;
+  e.baseY = y;
+  e.yOff = (e.yOff ?? 0) * Math.exp(-dt * 12);
+  if (Math.abs(e.yOff) < 0.2) e.yOff = 0;
+  e.y = y + e.yOff;
 }
 
 // ---------- Caring ----------

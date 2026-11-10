@@ -140,6 +140,23 @@ export function waterAt(map, x) {
   for (const w of map.water ?? []) if (w.kind !== 'ice' && x >= w.x1 && x <= w.x2) return w.y;
   return null;
 }
+// Where something small that walks and swims (a Mochi) is at x: on the highest surface there that's
+// no more than a step above `ref` (its height now; left out, the ground), or, over water deeper than
+// it can wade, at the surface, swimming. Never in the air, never under the water: { y, swim, surface }.
+const STEP_UP = 6;
+const WADE_MAX = 6;
+export function footingAt(map, x, ref = Infinity) {
+  let best = null;
+  for (const s of surfacesOf(map)) {
+    if (x < s.x1 || x > s.x2) continue;
+    const y = s.yAt(x);
+    if (y >= ref - STEP_UP && (!best || y < best.y)) best = { y, surface: s };
+  }
+  best ??= { y: groundAt(map, x), surface: groundPieceAt(map, x) };
+  const wy = waterAt(map, x);
+  if (wy != null && best.y > wy + WADE_MAX) return { y: wy, swim: true, surface: null };
+  return { y: best.y, swim: false, surface: best.surface };
+}
 const WADE_DEPTH = 6;
 // Whether a body's feet are down in water deep enough to wade.
 export const wading = (map, body) => {

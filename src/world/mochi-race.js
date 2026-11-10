@@ -30,7 +30,7 @@ import { MAPS } from '../data/maps.js';
 import { rollMochi, seededRandom, STATS } from '../data/mochi-genes.js';
 import { newRecord, evolve, styleOf, STYLE_POINTS, CANT_POINTS as CANT } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, RIVAL_NAMES, paceOf, CHEER, RACE_TAIL, RACE_MAX, prizeOf, MEDALS, medalKey, rankOpen } from '../data/mochi-race.js';
-import { groundAt } from './physics.js';
+import { groundAt, waterAt } from './physics.js';
 import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
 import { DRESS, dressFor } from '../data/mochi-dress.js';
@@ -65,9 +65,10 @@ const WADE = 22;
 const WALL_GAP = 8;
 const WALL_LANE = 6;
 const LIP = 8;
-// The lanes: each one back sits this much higher up the screen (only a touch: the ground is an edge,
-// not a field, so more and the back ones would float).
-export const LANE_RISE = 1;
+// Off the mark: from a standing start to full speed over the first moments after Go.
+const GETAWAY = [0.35, 1.3];
+// Off the launch: a little hop up before the glide takes it down (px high, over how far along).
+const HOP = [10, 70];
 // The countdown before Go; and how long the results show before Up can take you back.
 export const COUNTDOWN = 3;
 const LEAVE_AFTER = 3;
@@ -180,10 +181,13 @@ function glideStep(course, r, dt, map, boost) {
   r.glide ??= { x0: r.x, y0: r.y, slope: can ? GLIDE_SLOPE[styleOf(s.fly.points)] : DROP };
   const v = speedOf(FLY_SPEED, s.fly.points, CANT.fly, FLOP) * boost;
   r.x += v * dt;
-  r.y = r.glide.y0 + r.glide.slope * (r.x - r.glide.x0);
+  const d = r.x - r.glide.x0;
+  r.y = r.glide.y0 + r.glide.slope * d - (can ? HOP[0] * Math.sin(Math.PI * Math.min(1, d / HOP[1])) : 0);
   Object.assign(r.m, { mode: 'fly', inWater: false, speed: v, tired: 0, noShadow: true });
+  // (Still over the lip it left from, it's on it, not in it; it comes down only on the ground below.)
   const ground = groundAt(map, r.x);
-  if (r.y >= ground) {
+  if (ground <= r.glide.y0 + 2) r.y = Math.min(r.y, ground);
+  else if (r.y >= ground) {
     r.y = ground;
     r.m.noShadow = false;
     nextLeg(course, r);
@@ -237,7 +241,7 @@ function stepRacer(R, r, dt, course, map) {
       const hill = Math.max(0.55, Math.min(1.3, 1 + sl * HILL_SPEED));
       const wading = (course.slow ?? []).some(([a, b]) => r.x >= a && r.x < b);
       const run = wading ? WADE + runSpeed(s.run.points) * 0.05 : runSpeed(s.run.points) * hill;
-      const v = run * pace * wob * (1 - TIRED_SLOW * f) * boost;
+      const v = run * pace * wob * (1 - TIRED_SLOW * f) * boost * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
       const end = runEnd(course, r);
       r.x = Math.min(end, r.x + v * dt);
       r.y = groundAt(map, r.x);
@@ -361,11 +365,17 @@ function tickRemote(world, R, dt, up, you) {
     raceNet.cheer?.(world, R);
   }
   const k = 1 - Math.exp(-dt * 12);
+  const map = world.map;
   for (const r of R.racers) {
     if (r.tx == null) continue;
     const [px, py] = [r.x, r.y];
     r.x += (r.tx - r.x) * k;
-    r.y += (r.ty - r.y) * k;
+    // (On the ground, or in the water, exactly where it is now, never a step behind it in the air;
+    // up a wall or in a glide, eased along with it.)
+    const mode = r.m.mode;
+    if (mode === 'run' && map.race?.legs[r.leg]?.kind === 'run') r.y = groundAt(map, r.x);
+    else if (mode === 'swim') r.y = waterAt(map, r.x) ?? r.ty;
+    else r.y = Math.min(groundAt(map, r.x), r.y + (r.ty - r.y) * k);
     r.m.dist += Math.hypot(r.x - px, r.y - py);
     r.m.dir = 1;
   }
