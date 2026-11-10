@@ -327,6 +327,12 @@ Each step is pushed on its own. Status as of 2026-11-09.
     cards and a mochi on its roof; every way into the Garden and stadium is the Mochi gate (a ring of
     hanami dango, a smiling mochi on top), the old wooden gate round it gone, Sprout's moved past the
     footbridge with Clover beside it.
+    **Pace (2026-11-10, the player: "a grind, not something you can insta do"):** a tummy takes an
+    hour to empty (about four sweets an hour at most), and care teaches a stat only once every 10
+    minutes of its life for each kind (mood and bond any time; clicking Play over and over used to
+    max a stat in 5 minutes). `node tools/raise-pace.mjs`: a top-talent Mochi fed perfectly evolves
+    at ~11.5 h, is Master-ready at ~36 h and Lv 99 at ~47 h of Garden time; average talents need
+    rebirths for the top ranks.
 
 ## Checked against the Chao Garden (chao-island.com Info Center, read in full 2026-11-09)
 

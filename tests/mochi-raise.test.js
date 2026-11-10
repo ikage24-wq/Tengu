@@ -4,10 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
-import {
-  TRICKS, TRICK_OF, CANT_POINTS, canDo, rescue, canAscend, ASCEND, trendOf, HUNGER, TREND, TUMMY, styleOf, STYLE_POINTS, newRecord, giveExp, expToNext, GRADE_POINTS, MAX_LEVEL, feed, care, tick, leanOf, canEvolve, evolve, EVOLVE,
-  canRebirth, rebirth, REBIRTH, MOCHI_SWEETS, SWEET_BY_ID, GARDEN_CROPS, totalLevels, bestStat,
-} from '../src/data/mochi-raise.js';
+import { TRICKS, TRICK_OF, CANT_POINTS, canDo, rescue, canAscend, ASCEND, trendOf, HUNGER, TREND, TUMMY, styleOf, STYLE_POINTS, newRecord, giveExp, expToNext, GRADE_POINTS, MAX_LEVEL, feed, care, tick, leanOf, canEvolve, evolve, EVOLVE, canRebirth, rebirth, REBIRTH, MOCHI_SWEETS, SWEET_BY_ID, GARDEN_CROPS, totalLevels, bestStat, CARE_EXP_EVERY } from '../src/data/mochi-raise.js';
 import { SWEET_KINDS } from '../src/render/mochi-sweets.js';
 import { ITEMS } from '../src/data/items.js';
 import { runStyle, CANT, IDLE_BITS } from '../src/render/mochi-anim.js';
@@ -273,4 +270,17 @@ test('a third-life Mochi, very happy, every trick learned, raised evenly, become
   s2.tricks = [...TRICKS];
   for (const s of STATS) giveExp(s2, s, 900, half);
   assert.equal(canAscend(s2), false);
+});
+
+test('raising is a grind: care teaches only now and then, and a tummy takes an hour to empty', () => {
+  const r = newRecord(rollMochi(77, { coat: null }));
+  for (let i = 0; i < 200; i++) care(r, 'play');
+  const after = r.stats.run.points + r.stats.run.exp;
+  assert.ok(after > 0, 'the first play teaches a little');
+  for (let i = 0; i < 200; i++) care(r, 'play');
+  assert.equal(r.stats.run.points + r.stats.run.exp, after, 'clicking away teaches nothing more');
+  tick(r, CARE_EXP_EVERY);
+  care(r, 'play');
+  assert.ok(r.stats.run.points + r.stats.run.exp > after, 'ten minutes on, it learns again');
+  assert.equal(TUMMY.empty, 3600);
 });

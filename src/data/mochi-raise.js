@@ -35,7 +35,9 @@ export const LEAN_SHOWS = 0.35;
 // The points each movement style starts at (render/mochi-anim.js draws them, six a stat).
 export const STYLE_POINTS = [0, 300, 700, 1100, 1600, 2100];
 export const styleOf = (points) => STYLE_POINTS.reduce((t, need, i) => (points >= need ? i : t), 0);
-export const TUMMY = { sweet: 25, spicy: 20, empty: 30 * 60 };
+// (A whole tummy takes an hour to empty: about four sweets an hour at most, so raising one takes
+// real time; tools/raise-pace.mjs checks the pace: a top-talent Mochi Master-ready in about 32 h.)
+export const TUMMY = { sweet: 25, spicy: 20, empty: 60 * 60 };
 export const HUNGER = { after: 20 * 60, sink: 1 / 180 };
 export const TREND = { half: 30 * 60 };
 // Below these points it can't yet (render/mochi-anim.js CANT): it scoots on its bottom instead of
@@ -239,6 +241,7 @@ export const CARE = {
   prank: { mood: 2, bond: 1, lean: -0.045, action: 'sulk', likes: ['mischief', 'cheeky', 'sneaky'], dislikes: ['proud', 'dramatic', 'polite', 'sassy'] },
   play: { mood: 7, bond: 3, lean: 0, action: 'play', exp: { run: 6 }, likes: ['playful', 'hyper', 'sporty'], dislikes: [] },
 };
+export const CARE_EXP_EVERY = 10 * 60;
 // Lifting it out of the water while it can't swim yet: it clings on, grateful.
 export function rescue(rec) {
   feel(rec, { mood: 12, bond: 5, lean: 0.01 });
@@ -256,8 +259,14 @@ function careNow(rec, what, rng) {
   const dislikes = c.dislikes.includes(rec.personality);
   const mood = dislikes ? -Math.max(4, c.mood) : c.mood * (likes ? 2 : 1);
   feel(rec, { mood, bond: dislikes ? 0 : c.bond * (likes ? 1.5 : 1), lean: c.lean });
+  // (What playing teaches it, only now and then: CARE_EXP_EVERY seconds of its life apart for each
+  // kind of care, so clicking away at it doesn't raise it. Its mood and bond take any amount.)
   const ups = {};
-  for (const [stat, exp] of Object.entries(c.exp ?? {})) ups[stat] = giveExp(rec, stat, Math.round(exp * moodMul(rec.mood)), rng);
+  rec.careExp ??= {};
+  if (c.exp && (rec.age ?? 0) - (rec.careExp[what] ?? -Infinity) >= CARE_EXP_EVERY) {
+    rec.careExp[what] = rec.age ?? 0;
+    for (const [stat, exp] of Object.entries(c.exp)) ups[stat] = giveExp(rec, stat, Math.round(exp * moodMul(rec.mood)), rng);
+  }
   const action = what === 'prank' ? (likes ? 'cheer' : 'sulk') : dislikes ? 'sulk' : c.action;
   return { action, ups };
 }
