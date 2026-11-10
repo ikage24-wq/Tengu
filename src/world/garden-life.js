@@ -40,7 +40,9 @@ import { noteAlbum, ALBUM_PAGES } from '../data/mochi-album.js';
 import { spawnDrops } from './drops.js';
 import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
 import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf, BLOOM } from '../data/mochi-raise.js';
-import { sendGardenGift, gardenFriends } from '../net/visit.js';
+import { sendGardenGift, gardenFriends, sendBreed } from '../net/visit.js';
+import { othersHere } from '../net/online.js';
+import { companionOf } from './mochi.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { calledOf } from '../data/mochi-names.js';
 import { breedGenes } from '../data/mochi-breed.js';
@@ -79,6 +81,16 @@ const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
 export const CROP_X = 1920;
+// The toy box in the orchard (world/garden.js mg_toybox): now and then a Mochi wanders over to it and
+// plays with the ball a while. Its turn comes at the same time for a visitor (by the hour and its seed).
+export const TOY_X = 1528;
+const TOY = { chance: 0.22, at: [4, 24], stay: 32 };
+function toyTime(rec, now) {
+  const b = Math.floor(now / HOUR);
+  if (hash(rec.seed * 0.53 + b * 2.17) > TOY.chance) return false;
+  const start = b * HOUR + TOY.at[0] + hash(rec.seed * 0.29 + b) * (TOY.at[1] - TOY.at[0]);
+  return now >= start && now < start + TOY.stay;
+}
 export const CROP_GROW = 15 * 60;
 const CROP_YIELD = { mochi_rice: 3, azuki: 2, kinako: 2, fire_pepper: 1 };
 const tierOf = (rec, stat) => styleOf(rec.stats?.[stat]?.points ?? 0);
@@ -159,6 +171,32 @@ export function enterGarden(world, owner) {
     greeted: false,
     caring: null,
   };
+  // Visiting a friend with your Mochi out with you: it comes along, and follows you round theirs.
+  const pet = owner !== world.char ? companionOf(world.char) : null;
+  if (pet && world.char.pet?.out) world.gardenLife.mochi.push({ rec: pet, m: newAnim(pet), x: null, guest: 'me' });
+  // (And friends already here with theirs: net/visit.js gardenGuests.)
+  for (const [id, rec] of Object.entries(world.gardenGuests ?? {})) if (owner === world.char) world.gardenLife.mochi.push({ rec, m: newAnim(rec), x: null, guest: id });
+}
+// A friend's Mochi arriving in your garden with them (their game sent it: net/visit.js), or leaving.
+export function guestArrives(world, id, rec) {
+  (world.gardenGuests ??= {})[id] = rec;
+  const life = world.gardenLife;
+  if (life && life.owner === world.char && !life.mochi.some((e) => e.guest === id)) life.mochi.push({ rec, m: newAnim(rec), x: null, guest: id });
+}
+export function guestLeaves(world, id) {
+  if (world.gardenGuests) delete world.gardenGuests[id];
+  const life = world.gardenLife;
+  if (!life) return;
+  const e = life.mochi.find((x) => x.guest === id);
+  if (e) life.mochi.splice(life.mochi.indexOf(e), 1);
+  if (life.pairing && (life.pairing.a === e || life.pairing.b === e)) life.pairing = null;
+}
+// Where a visiting Mochi heads: at its person's heels (you, or the friend whose it is), or null if
+// they've gone.
+function guestTarget(world, e, i) {
+  if (e.guest === 'me') return world.body.x - (world.body.facing ?? 1) * (20 + (i % 2) * 6);
+  const g = othersHere(world).find((x) => x.id === e.guest);
+  return g ? g.body.x - (g.body.facing ?? 1) * 20 : null;
 }
 const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, easy: true, size: rec.stage === 'mochiko' || rec.stage === 'egg' ? 'baby' : 'grown' });
 
@@ -196,8 +234,8 @@ export function tickGarden(world, dt) {
   const owls = night ? new Set(life.mochi.filter((e) => nightOwl(e.rec)).slice(0, 2)) : new Set();
   life.mochi.forEach((e, i) => {
     const { rec } = e;
-    // (The garden's time passes for them while you're here.)
-    if (owner) tickRec(rec, dt);
+    // (The garden's time passes for them while you're here; a visiting Mochi's, in its own garden.)
+    if (owner && !e.guest) tickRec(rec, dt);
     // Saying goodbye: it waves, then fades away, off to its new home.
     if (e.leaving) {
       e.m.speed = 0;
@@ -228,7 +266,7 @@ export function tickGarden(world, dt) {
     const m = e.m;
     m.genes = rec;
     m.size = rec.stage === 'mochiko' ? 'baby' : 'grown';
-    if (owner && !inside && !night && e.x != null && rec.stage === 'mochiko' && canEvolve(rec)) {
+    if (owner && !e.guest && !inside && !night && e.x != null && rec.stage === 'mochiko' && canEvolve(rec)) {
       const before = { ...rec, stage: 'mochiko', path: null };
       const out = evolveRec(rec);
       e.dir = m.dir;
@@ -240,7 +278,7 @@ export function tickGarden(world, dt) {
       return;
     }
     // The end of a long, happy life: back to its egg, to start again (stronger for it).
-    if (owner && !inside && !night && e.x != null && canRebirth(rec)) {
+    if (owner && !e.guest && !inside && !night && e.x != null && canRebirth(rec)) {
       const out = rebirthRec(rec);
       const list = life.owner.garden.mochi;
       list[list.indexOf(rec)] = out.egg;
@@ -251,7 +289,8 @@ export function tickGarden(world, dt) {
       world.log(`${rec.name ?? `Your ${STAGES[rec.stage]}`} has lived a long, happy life... it waves, and goes back to its egg to start again!${out.raised.length ? ' It will be stronger for it.' : ''}`, '#ffc2d4');
       return;
     }
-    const owl = owls.has(e);
+    // (A visiting Mochi is out as long as its person is: never off to bed in someone else's nursery.)
+    const owl = owls.has(e) || Boolean(e.guest);
     if (inside) {
       // The nursery: asleep in the beds at night (the night owls are out); by day, nobody's in.
       e.hidden = !night || owl;
@@ -267,12 +306,31 @@ export function tickGarden(world, dt) {
     } else e.hidden = false;
     const sched = night && !owl ? { x: NURSERY_DOOR, moving: true } : scheduledAt(rec, now + i * 3.7);
     let target = sched.x;
+    if (e.guest) {
+      const gx = guestTarget(world, e, i);
+      if (gx == null) {
+        gone.push(e);
+        return;
+      }
+      if (e.x == null) e.x = gx;
+      target = gx;
+    }
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
     else e.greet = null;
     // (Blooming and paired: off to find the other.)
     const pair = life.pairing;
     const other = pair && !pair.met ? (pair.a === e ? pair.b : pair.b === e ? pair.a : null) : null;
     if (other && other.x != null && e.x != null) target = other.x + (e.x < other.x ? -11 : 11);
+    // (Its turn at the toy box: over to it, and a game with the ball once it's there.)
+    const toy = !other && !night && pts(rec, 'run') >= CANT.run && toyTime(rec, now);
+    if (toy) {
+      target = TOY_X + (i % 2 ? 14 : -14);
+      // (Arrived: a game with the ball, whatever it was last up to; once, for this turn.)
+      if (e.x != null && Math.abs(e.x - target) < 3 && e.toyTurn !== Math.floor(now / HOUR)) {
+        e.toyTurn = Math.floor(now / HOUR);
+        m.action = { name: 'play', t0: null };
+      }
+    }
     // (In a moment with a neighbour: where the moment has it.)
     const mo = life.moment;
     const inMoment = mo && !other && (mo.a === e || mo.b === e) && e.x != null;
@@ -323,6 +381,7 @@ export function tickGarden(world, dt) {
   if (!inside) tickMoment(world, life, now, night);
   for (const e of gone) {
     life.mochi.splice(life.mochi.indexOf(e), 1);
+    if (e.guest) continue;
     const list = life.owner?.garden?.mochi;
     if (owner && list?.includes(e.rec)) list.splice(list.indexOf(e.rec), 1);
     if (life.caring === e) life.caring = null;
@@ -390,6 +449,7 @@ export function shakeTree(world) {
   const y = groundAt(map, tree[1]);
   world.drops.push(...spawnDrops(Array.from({ length: n }, () => ({ kind: 'item', id: 'cherry', qty: 1 })), tree[1], y - 40));
   world.log(`You shake the tree: ${n} cherr${n === 1 ? 'y drops' : 'ies drop'}!`, '#ffd6e4');
+  noteDaily(world, 'shake');
   return true;
 }
 
@@ -425,6 +485,7 @@ export function careFor(world, e, what) {
   if (out) react(e, out, out.action, { hold: 1.4 });
   // (A visitor's game tells the owner's, where it happens to the real Mochi.)
   if (out && world.gardenVisit) sendGardenGift(world, e.rec.seed, what);
+  if (out) noteDaily(world, 'care');
   return out;
 }
 // Feeds it sweet `id` from your bag (it won't when it's too full).
@@ -435,6 +496,7 @@ export function feedMochi(world, e, id) {
   if (!out) return null;
   if (!out.refused) removeItem(world.char.inventory, id, 1);
   if (!out.refused && world.gardenVisit) sendGardenGift(world, e.rec.seed, 'feed', id);
+  if (!out.refused) noteDaily(world, 'feed');
   react(e, out, out.action, { sweet: sw.kind });
   if (out.refused) world.log('It pats its round tummy: too full for now!', '#ffd6a0');
   else if (out.learned) world.log(`It loved trying ${sw.name}... and learned a new trick!`, '#ffc2d4');
@@ -635,7 +697,8 @@ function tickPairing(world, life, now, night) {
   const ok = (e) => life.mochi.includes(e) && !e.scene && !e.leaving && !e.hidden && e.x != null && e.rec.bloom > 0;
   if (pair && (night || !ok(pair.a) || !ok(pair.b))) pair = life.pairing = null;
   if (!pair && !night) {
-    const blooming = life.mochi.filter(ok);
+    // (Two of a friend's own don't pair here: one of yours and one of theirs can.)
+    const blooming = life.mochi.filter(ok).filter((e, k, all) => !e.guest || !all.slice(0, k).some((o) => o.guest));
     if (blooming.length >= 2 && (g.eggs ?? []).length < EGG_SLOTS.length) pair = life.pairing = { a: blooming[0], b: blooming[1], met: null };
   }
   if (!pair) return;
@@ -657,7 +720,14 @@ function tickPairing(world, life, now, night) {
       (g.eggs ??= []).push({ seed, genes: breedGenes(a.rec, b.rec, seed) });
       for (const e of [a, b]) Object.assign(e.rec, { bloom: 0, bredRest: BLOOM.rest });
       life.pairing = null;
-      world.log(`${calledOf(a.rec, 'Your')} and ${calledOf(b.rec, 'your')} nuzzle and dance... and there's an egg by the gate!`, '#ffc2d4');
+      // (One of them a friend's Mochi, visiting: an egg for them too, in their own garden.)
+      const guest = [a, b].find((e) => e.guest && e.guest !== 'me');
+      if (guest) {
+        const mine = guest === a ? b : a;
+        const seed2 = Math.floor(Math.random() * 1e9);
+        sendBreed(world, guest.guest, { seed: seed2, genes: breedGenes(guest.rec, mine.rec, seed2) }, calledOf(mine.rec, 'their'));
+        world.log(`${calledOf(mine.rec, 'Your')} and your friend's ${calledOf(guest.rec, 'Mochi')} nuzzle and dance... an egg for each of you!`, '#ffc2d4');
+      } else world.log(`${calledOf(a.rec, 'Your')} and ${calledOf(b.rec, 'your')} nuzzle and dance... and there's an egg by the stall!`, '#ffc2d4');
     }
   }
 }
@@ -698,6 +768,62 @@ function setEggsDown(world) {
 }
 // The stall's eggs today: three of its own each real day (the same all day), for each hero.
 const dayOf = (now = Date.now()) => Math.floor(now / 864e5);
+
+// ---------- Today's care goals ----------
+// Three small things to do in your Garden each day, picked by the day: feed your Mochi, care for
+// them, pick the crop bed, shake the fruit trees, cook at the Sweet Kitchen, race one of them. Each
+// done pays a little gold and makes every Mochi a bit happier and closer to you; all three, a bonus.
+// (A reason to drop by every day; none of it raises stats, so raising stays the grind it is.)
+export const DAILY_KINDS = {
+  feed: { need: 3, words: (n) => `Feed your Mochi ${n} sweets` },
+  care: { need: 4, words: (n) => `Pet or play with your Mochi ${n} times` },
+  harvest: { need: 1, words: () => 'Pick the crop bed' },
+  shake: { need: 2, words: (n) => `Shake fruit from the trees ${n} times` },
+  cook: { need: 2, words: (n) => `Cook ${n} batches of sweets` },
+  race: { need: 1, words: () => 'Race one of your Mochi' },
+};
+export const DAILY_PAY = { each: 300, all: 600, bond: 10, mood: 8 };
+// Today's three goals (made fresh each day).
+export function dailyGoals(char, day = dayOf()) {
+  const g = char.garden;
+  if (!g) return null;
+  if (g.daily?.day !== day) {
+    const kinds = Object.keys(DAILY_KINDS);
+    const rng = seededRandom(day * 7919 + 13);
+    const pick = [];
+    while (pick.length < 3) {
+      const k = kinds[Math.floor(rng() * kinds.length)];
+      if (!pick.includes(k)) pick.push(k);
+    }
+    g.daily = { day, goals: pick.map((kind) => ({ kind, need: DAILY_KINDS[kind].need, have: 0 })), all: false };
+  }
+  return g.daily;
+}
+// Counts something done toward today's goals (your own garden only); pays out as each is met.
+export function noteDaily(world, kind, n = 1) {
+  if (world.gardenVisit || !world.char.garden) return;
+  const d = dailyGoals(world.char);
+  const goal = d.goals.find((x) => x.kind === kind && x.have < x.need);
+  if (!goal) return;
+  goal.have = Math.min(goal.need, goal.have + n);
+  if (goal.have < goal.need) return;
+  const char = world.char;
+  char.gold += DAILY_PAY.each;
+  for (const r of char.garden.mochi) Object.assign(r, { bond: Math.min(1000, (r.bond ?? 0) + DAILY_PAY.bond), mood: Math.min(100, (r.mood ?? 60) + DAILY_PAY.mood) });
+  world.log(`Today's goal done: ${DAILY_KINDS[kind].words(goal.need)}! +${DAILY_PAY.each} gold, and your Mochi are happier.`, '#ffe36b');
+  if (!d.all && d.goals.every((x) => x.have >= x.need)) {
+    d.all = true;
+    char.gold += DAILY_PAY.all;
+    world.log(`All of today's goals done! A bonus ${DAILY_PAY.all} gold from Kinako. See you tomorrow!`, '#ffe36b');
+  }
+}
+// Today's goals in a line: "Feed 1/3 · Care 0/4 · Harvest 1/1".
+export function dailyLine(char) {
+  const d = dailyGoals(char);
+  if (!d) return '';
+  const short = { feed: 'Feed', care: 'Care', harvest: 'Crops', shake: 'Trees', cook: 'Cook', race: 'Race' };
+  return d.goals.map((x) => `${short[x.kind]} ${x.have}/${x.need}`).join(' · ');
+}
 const hashStr = (s) => {
   let h = 2166136261;
   for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
@@ -755,6 +881,7 @@ export function harvestCrops(world) {
   for (const [id, n] of Object.entries(CROP_YIELD)) addItem(world.char.inventory, id, n);
   g.cropAt = now;
   world.log('You pick the crop bed: 3 Mochi Rice, 2 Red Beans, 2 Kinako and a Fire Pepper!', '#d6f5b0');
+  noteDaily(world, 'harvest');
   return true;
 }
 

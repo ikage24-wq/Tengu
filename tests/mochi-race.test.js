@@ -61,7 +61,7 @@ test('a race: the countdown, everyone home or out of time, six places, a prize f
   assert.equal(R.phase, 'done');
   assert.deepEqual(R.results.map((r) => r.place), [1, 2, 3, 4, 5, 6]);
   assert.equal(R.racers[0].place, 1, 'a strong Mochi wins a Beginner race');
-  assert.equal(w.char.gold, gold + 500);
+  assert.equal(w.char.gold - (w.char.garden.daily?.goals.some((x) => x.kind === 'race') ? 300 : 0) - (w.char.garden.daily?.all ? 600 : 0), gold + 500);
   assert.ok(rec.mood > 60, 'a win cheers it up');
   // The podium: the top three up on their blocks (the winner on the tallest), cheering.
   // (Up straight away doesn't skip it; a moment in, it does, to the results.)

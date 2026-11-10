@@ -10,6 +10,9 @@
 // your game sends that to theirs (world/garden-life.js applyGardenGift). The Mochi Bell or the gate
 // takes you back.
 
+import { guestArrives, EGG_SLOTS } from '../world/garden-life.js';
+import { addItem } from '../core/inventory.js';
+import { BLOOM } from '../data/mochi-raise.js';
 import { online, send } from './online.js';
 import { loadMap } from '../world/world.js';
 import { applyGardenGift } from '../world/garden-life.js';
@@ -40,9 +43,23 @@ export const gardenFriends = () => (online.status === 'on' ? [...online.ghosts.v
 export function askGardenVisit(world, id) {
   if (online.status !== 'on' || !online.ghosts.has(id)) return 'Not online.';
   if (world.dungeon || world.trial || world.map.voyage || world.scene) return 'Not from here.';
-  send({ t: 'visit', op: 'gask', to: id });
+  // (Your Mochi out with you comes along: theirs shows it following you.)
+  const pet = world.char.pet?.out ? (world.char.garden?.mochi ?? []).find((r) => r.seed === world.char.pet.seed && r.stage !== 'egg') : null;
+  send({ t: 'visit', op: 'gask', to: id, pet: pet ?? null });
   world.log(`Ringing at ${online.ghosts.get(id).name}'s garden gate...`, '#cfe8ff');
   return null;
+}
+// Your Mochi and a friend's visiting one had an egg: theirs goes to their game, for their garden.
+export function sendBreed(world, to, egg, mate) {
+  if (online.status !== 'on') return;
+  send({ t: 'visit', op: 'gbreed', to, egg, mate });
+}
+// Leaves a gift in the garden you're visiting: an egg of yours, or some sweets.
+export function sendGardenPresent(world, present) {
+  const to = world.gardenVisit?.ownerId;
+  if (!to || online.status !== 'on') return false;
+  send({ t: 'visit', op: 'ggift', to, ...present });
+  return true;
 }
 // You petted or fed one of the Mochi in the garden you're visiting: tell its owner's game.
 export function sendGardenGift(world, seed, what, sweet = null) {
@@ -80,7 +97,29 @@ export function onVisit(world, msg, g) {
       return;
     }
     send({ t: 'visit', op: 'gdata', to: msg.id, ...gardenOf(world.char) });
-    world.log(`${g?.name ?? 'A friend'} is visiting your Mochi Garden!`, '#ffc2d4');
+    if (msg.pet) guestArrives(world, msg.id, msg.pet);
+    world.log(`${g?.name ?? 'A friend'} is visiting your Mochi Garden${msg.pet ? `, with ${msg.pet.name ?? 'their Mochi'}` : ''}!`, '#ffc2d4');
+    return;
+  }
+  if (msg.op === 'gbreed' && msg.egg) {
+    const gd = world.char.garden;
+    if (!gd) return;
+    (gd.eggs ??= []).push(msg.egg);
+    const pet = (gd.mochi ?? []).find((r) => r.seed === world.char.pet?.seed);
+    if (pet) Object.assign(pet, { bloom: 0, bredRest: BLOOM.rest });
+    world.log(`Your ${pet?.name ?? 'Mochi'} and ${msg.mate ?? 'their Mochi'} had an egg! It's waiting in your own Garden.`, '#ffc2d4');
+    return;
+  }
+  if (msg.op === 'ggift') {
+    const gd = world.char.garden;
+    if (!gd) return;
+    if (msg.egg && (gd.eggs ?? []).length < EGG_SLOTS.length) {
+      (gd.eggs ??= []).push(msg.egg);
+      world.log(`${g?.name ?? 'A friend'} left you an egg by the stall!`, '#ffc2d4');
+    } else if (msg.sweet && msg.n > 0) {
+      addItem(world.char.inventory, msg.sweet, msg.n);
+      world.log(`${g?.name ?? 'A friend'} left you ${msg.n} sweets!`, '#ffc2d4');
+    }
     return;
   }
   if (msg.op === 'gnone') {

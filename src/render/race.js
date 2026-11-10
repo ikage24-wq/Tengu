@@ -528,7 +528,10 @@ export function drawRace(ctx, world, cam, time) {
     // (GO!: each springs off the line, a little hop as it launches, staggered by lane.)
     const go = R.phase === 'run' ? (R.clock - (r.lane ?? 0) * 0.03) / 0.32 : -1;
     const y = r.y - cam.y - (go > 0 && go < 1 ? Math.sin(go * Math.PI) * 7 : 0);
+    // (A friend's ghost: see-through.)
+    if (r.ghost) ctx.globalAlpha = 0.55;
     drawMochiAnim(ctx, r.m, x, y, time);
+    ctx.globalAlpha = 1;
     const top = y - (r.m.size === 'baby' ? 36 : 44);
     // Up on the podium: its medal.
     if (R.phase === 'done' && r.place <= 3 && r.podCheer) podiumMedal(ctx, x, y - (r.m.size === 'baby' ? 4.5 : 6.5), r.place, time, r.m.size === 'baby' ? 0.6 : 0.72, r.m.size === 'baby' ? 2.5 : 3.5);

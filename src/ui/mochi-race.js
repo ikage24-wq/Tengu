@@ -8,7 +8,7 @@ import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
 import { CANT_POINTS } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
 import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO, cheerCost, canAffordCheer, forkAhead, FORK_NEAR } from '../world/mochi-race.js';
-import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites } from '../net/mochi-race.js';
+import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites, askGhost } from '../net/mochi-race.js';
 import { partyFriends } from '../net/together.js';
 import { online } from '../net/online.js';
 import { drawMochiAnim } from '../render/mochi-anim.js';
@@ -136,6 +136,33 @@ export function raceBoardWindow(ui, state, world) {
     RANK_ORDER.forEach((rk, k) => medalDot(ctx, cx + cw - 8 - (RANK_ORDER.length - 1 - k) * 7, cy + 7, rec.medals?.[medalKey(win.stage, rk)], 2.4));
     if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;
   });
+  // ---- Best times here (course and rank): yours, friends' in your room, ghosts you've kept; race a
+  // friend's ghost (asked for over the room the first time, kept after).
+  const rows = Math.ceil(Math.min(list.length, 8) / 2);
+  let ty = y + 9 + rows * 26 + 6;
+  const key = medalKey(win.stage, win.rank);
+  const times = [];
+  if (char.raceBests?.[key]) times.push({ name: 'You', time: char.raceBests[key].time, you: true });
+  for (const g of online.status === 'on' ? online.ghosts.values() : []) if (g.bests?.[key]) times.push({ name: g.name, time: g.bests[key], id: g.id });
+  for (const [k, v] of Object.entries(char.ghosts ?? {})) if (k.endsWith(`|${key}`) && !times.some((t) => t.name === v.name)) times.push({ name: v.name, time: v.best.time, kept: true });
+  times.sort((a, b) => a.time - b.time);
+  const by0 = win.y + H - 40;
+  if (times.length && ty + 22 < by0) {
+    text(ctx, 'Best times', x, ty + 4, { size: 7, bold: true, color: COLORS.muted });
+    ty += 8;
+    for (const [n, t] of times.slice(0, Math.floor((by0 - ty) / 15)).entries()) {
+      const kept = char.ghosts?.[`${t.name}|${key}`];
+      box(ctx, x, ty, W - 20, 13, { fill: t.you ? '#fff0f6' : '#ffffff', edge: '#f2dce6', r: 6, width: 1, plain: true });
+      text(ctx, `${n + 1}. ${t.name}`, x + 6, ty + 9.4, { size: 6.8, bold: t.you });
+      text(ctx, `${t.time.toFixed(1)}s`, x + W - 20 - 64, ty + 9.4, { size: 6.8, bold: true, align: 'right', color: '#c89a20' });
+      if (!t.you && button(ui, x + W - 20 - 56, ty + 1, 54, 11, kept ? 'Race ghost' : 'Get ghost', { size: 6, primary: Boolean(kept), enabled: Boolean(kept) || Boolean(t.id) })) {
+        if (kept) {
+          if (startRace(world, win.pick, win.stage, win.rank, { ghost: kept, ...(world.map.garden ? { back: { map: world.map.id, x: world.body.x } } : {}) })) win.open = false;
+        } else if (t.id && askGhost(world, t.id, key)) world.log(`Asking ${t.name} for their ghost...`, '#cfe8ff');
+      }
+      ty += 15;
+    }
+  }
   const open = rankOpen(char, win.stage, win.rank);
   const L = world.raceLobby;
   const by = win.y + H - 26;
@@ -341,7 +368,7 @@ export function raceHud(ui, state, world) {
     pop(ctx, String(n), n - left, ['#ff6f9a', '#f0a03a', '#5a9ae0'][n - 1] ?? '#ff6f9a', false, true);
   } else if (R.phase === 'run' && R.t < 0.9) pop(ctx, 'GO!', R.t / 0.9, '#ffb020', true);
   // A fork coming up: which way yours will go, the other way, and Down to switch.
-  const fk = R.phase === 'run' && you.done == null && !R.remote ? forkAhead(course, you) : null;
+  const fk = R.phase === 'run' && you.done == null ? forkAhead(course, you) : null;
   if (fk && fk.at - you.x < FORK_NEAR && fk.at > you.x) {
     const leg = course.legs[fk.leg];
     const alt = Boolean(you.alt?.[fk.leg]);
@@ -461,10 +488,21 @@ export function raceHud(ui, state, world) {
       }
       ctx.restore();
     }
-    const ready = R.phase === 'run' && you.done == null && R.clock >= you.cheerReady && afford;
-    const broke = R.phase === 'run' && you.done == null && !afford;
+    // (Catching its breath: Encourage! gets it going sooner, free, once a second.)
+    const resting2 = R.phase === 'run' && you.done == null && resting;
+    const canEnc = resting2 && (R.remote || R.clock >= (you.encourageReady ?? 0));
+    const ready = R.phase === 'run' && you.done == null && !resting && R.clock >= you.cheerReady && afford;
+    const broke = R.phase === 'run' && you.done == null && !afford && !resting;
     const bx = cx + cw - 96;
-    if (button(ui, bx, cy + 8, 88, 30, ready ? 'Cheer!  (Up)' : broke ? 'Too tired' : 'Cheering...', { primary: ready, enabled: ready, size: 8.5, iconName: 'heart' })) R.cheerAsk = true;
+    const label = resting2 ? (canEnc ? 'Encourage! (Up)' : 'Encouraging...') : ready ? 'Cheer!  (Up)' : broke ? 'Too tired' : 'Cheering...';
+    if (button(ui, bx, cy + 8, 88, 30, label, { primary: ready || canEnc, enabled: ready || canEnc, size: resting2 ? 7.5 : 8.5, iconName: resting2 ? 'star' : 'heart' })) R.cheerAsk = true;
+    // (Just encouraged: a little heart pops off the photo.)
+    if (you.encouraged != null && R.clock - you.encouraged < 0.6) {
+      const k = (R.clock - you.encouraged) / 0.6;
+      ctx.globalAlpha = 1 - k;
+      icon(ctx, 'heart', cx + 24, cy + 8 - k * 14, 9, '#ff6f9a');
+      ctx.globalAlpha = 1;
+    }
     if (R.phase === 'run' && you.done == null) {
       const k = ready ? 1 : Math.max(0, Math.min(1, 1 - (you.cheerReady - R.clock) / CHEER.every));
       ctx.fillStyle = '#f6dce8';

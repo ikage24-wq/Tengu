@@ -14,7 +14,7 @@ import { online, send } from './online.js';
 import { inParty, partyFriends } from './together.js';
 import { STAGES } from '../data/mochi-genes.js';
 import { RACE_STAGES, RACE_RANKS } from '../data/mochi-race.js';
-import { startRace, rivalsFor, raceHour, setRaceNet, raceState, applyRaceState, applyRaceEnd, applyCheer } from '../world/mochi-race.js';
+import { startRace, rivalsFor, raceHour, setRaceNet, raceState, applyRaceState, applyRaceEnd, applyCheer, applyFork } from '../world/mochi-race.js';
 
 // How long an invite waits for an answer, and a friend who's joined waits for you to start.
 const INVITE_SECS = 60;
@@ -22,6 +22,13 @@ const WAIT_SECS = 120;
 const now = () => Date.now() / 1000;
 const stageName = (id, rank) => `${RACE_STAGES[id]?.name ?? 'a race'} (${RACE_RANKS[rank]?.name ?? ''})`;
 const mochiName = (who, rec) => `${who}'s ${rec.name ?? STAGES[rec.stage] ?? 'Mochi'}`;
+
+// Asks friend `id` for their best run on `key` (course|rank), to race as a ghost.
+export function askGhost(world, id, key) {
+  if (online.status !== 'on' || !online.ghosts.has(id)) return false;
+  send({ t: 'mrace', op: 'ghostask', to: id, key });
+  return true;
+}
 
 // ---------- Hosting ----------
 // Invites your party to race `stageId` at `rank`, your Mochi `rec` in the first lane.
@@ -134,6 +141,22 @@ export function onMochiRace(world, msg, g) {
     case 'cheer':
       if (world.race?.party?.includes(msg.id)) applyCheer(world, msg.id);
       return;
+    // Ghosts: a friend asks for your best run on a course; you send it; they keep it to race.
+    case 'ghostask': {
+      const best = world.char.raceBests?.[msg.key];
+      if (best) send({ t: 'mrace', op: 'ghostdata', to: msg.id, key: msg.key, best });
+      return;
+    }
+    case 'ghostdata': {
+      const name = online.ghosts.get(msg.id)?.name ?? 'A friend';
+      if (!msg.best?.track?.length) return;
+      (world.char.ghosts ??= {})[`${name}|${msg.key}`] = { name, best: msg.best };
+      world.log(`Got ${name}'s ghost (${msg.best.time.toFixed(1)}s)! Race it from the board.`, '#ffe08a');
+      return;
+    }
+    case 'fork':
+      if (world.race?.party?.includes(msg.id)) applyFork(world, msg.id, msg.leg, msg.alt);
+      return;
     default:
   }
 }
@@ -150,5 +173,8 @@ setRaceNet({
   },
   cheer(world, R) {
     send({ t: 'mrace', op: 'cheer', to: R.remote });
+  },
+  fork(world, R, leg, alt) {
+    send({ t: 'mrace', op: 'fork', to: R.remote, leg, alt });
   },
 });

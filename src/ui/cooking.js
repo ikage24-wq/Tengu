@@ -19,6 +19,7 @@ import { cookFeast, feastReady, feastSkilled, partyBotsHere } from '../world/coo
 import { MOCHI_SWEETS, GARDEN_CROPS } from '../data/mochi-raise.js';
 import { STAT_ORDER, STAT_INFO, statIcon, tag } from './mochi-kit.js';
 import { roundRect, clicked } from './kit.js';
+import { noteDaily } from '../world/garden-life.js';
 
 const W = 320;
 const H = 254;
@@ -178,13 +179,19 @@ function sweetsList(ui, win, world, x, st) {
       if (hover(ui, ix, y + 4, 16, 16)) tooltip(ui, itemTooltip(char, id));
       ix += 22;
     }
-    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5, iconName: 'flame' })) {
-      for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n);
-      addItem(char.inventory, sw.id, SWEET_BATCH);
-      lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
+    // (Enough for two batches or more: All cooks every batch you have the makings of.)
+    const batches = Math.min(...Object.entries(sw.needs).map(([id, n]) => Math.floor(countItem(char.inventory, id) / n)));
+    const cookN = (k) => {
+      for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n * k);
+      addItem(char.inventory, sw.id, SWEET_BATCH * k);
+      for (let j = 0; j < k; j++) lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
+      noteDaily(world, 'cook', k);
       playLifePose(world, 'cook', { at: st, find: sw.id });
-      world.log(`You made ${SWEET_BATCH} ${sw.name}! Up beside a Mochi to feed it.`, '#ffc2d4');
-    }
+      world.log(`You made ${SWEET_BATCH * k} ${sw.name}! Up beside a Mochi to feed it.`, '#ffc2d4');
+    };
+    if (batches >= 2 && button(ui, x + W - 84, y + 7, 20, 16, 'All', { size: 6.5 })) cookN(batches);
+    if (batches >= 2 && hover(ui, x + W - 84, y + 7, 20, 16)) tooltip(ui, [{ text: `Cook all: ${batches} batches, ${batches * SWEET_BATCH} ${sw.name}`, bold: true }]);
+    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5, iconName: 'flame' })) cookN(1);
     y += ROW;
   }
   const crops = Object.values(GARDEN_CROPS).map((c) => c.name).join(', ');

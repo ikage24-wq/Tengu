@@ -35,6 +35,7 @@ import { addItem } from '../core/inventory.js';
 import { mochiVoice, voiceAction } from './mochi-voice.js';
 import { DRESS, dressFor } from '../data/mochi-dress.js';
 import { loadMap } from './world.js';
+import { noteDaily } from './garden-life.js';
 
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS, CLIMBS, FLIES); between two styles, its
 // speed climbs with its points. One who can't yet: crawls, flails, drops.
@@ -150,7 +151,9 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
   const hour = raceHour();
   const wobble = seededRandom(hashStr(`${stageId}|${rank}|${hour}|pace`));
   const me = opts.me ?? 0;
-  const field = (opts.field ?? [{ rec, name: null }, ...rivalsFor(stageId, rank, hour)]).slice(0, 6);
+  // (Racing a friend's ghost: their Mochi in the next lane, the hour's rivals in the rest.)
+  const ghost = opts.ghost ? [{ rec: opts.ghost.best.rec, name: `${opts.ghost.name}'s ghost`, ghost: opts.ghost.best.track }] : [];
+  const field = (opts.field ?? [{ rec, name: null }, ...ghost, ...rivalsFor(stageId, rank, hour)]).slice(0, 6);
   // (Your own lane is your own Mochi: what the race gives it stays with it.)
   field[me] = { ...field[me], rec, name: null };
   const y0 = groundAt(map, course.start);
@@ -185,9 +188,20 @@ export const cheerCost = (rec) => CHEER.cost[0] - styleOf(rec.stats.stamina.poin
 const cheerBack = (rec) => CHEER.back[0] + styleOf(rec.stats.stamina.points) * CHEER.back[1];
 // Whether it has the stamina for a cheer now (not while it's catching its breath).
 export const canAffordCheer = (r) => !r.m.rest && (r.m.tired ?? 0) + cheerCost(r.rec) <= 1.001;
+// Catching its breath, a cheer is an "Encourage!" instead: it costs nothing and gets it going a
+// little sooner (once a second at most).
+export const ENCOURAGE = { cut: 0.8, every: 1 };
+export const canEncourage = (R, r) => R.clock < r.restUntil && R.clock >= (r.encourageReady ?? 0);
 export function cheer(R, r) {
-  if (R.phase !== 'run' || r.done != null || R.clock < r.cheerReady) return false;
-  if (R.clock < r.restUntil || !canAffordCheer(r)) return false;
+  if (R.phase !== 'run' || r.done != null) return false;
+  if (R.clock < r.restUntil) {
+    if (!canEncourage(R, r)) return false;
+    r.restUntil = Math.max(R.clock, r.restUntil - ENCOURAGE.cut);
+    r.encourageReady = R.clock + ENCOURAGE.every;
+    r.encouraged = R.clock;
+    return 'encourage';
+  }
+  if (R.clock < r.cheerReady || !canAffordCheer(r)) return false;
   r.cheerUntil = R.clock + CHEER.secs;
   r.cheerReady = R.clock + CHEER.every;
   r.spent = Math.min(1, (r.spent ?? 0) + cheerCost(r.rec));
@@ -282,7 +296,12 @@ function stepRacer(R, r, dt, course, map) {
   const [px, py] = [r.x, r.y];
   const C = R.clock;
   const over = r.done != null || R.phase === 'done';
-  stepLuck(R, r, course, leg);
+  if (r.ghost && R.phase === 'run') {
+    stepGhost(R, r, course);
+    m.dist += Math.hypot(r.x - px, r.y - py);
+    return;
+  }
+  if (!r.ghost) stepLuck(R, r, course, leg);
   // (Tripped: a moment stopped where it is, picking itself up.)
   if (!over && C < (r.stunUntil ?? 0)) {
     m.speed = 0;
@@ -407,7 +426,7 @@ export function tickRace(world, dt, input) {
   const up = Boolean(input?.pressed?.has('ArrowUp')) || R.cheerAsk;
   R.cheerAsk = false;
   if (R.remote) {
-    tickRemote(world, R, dt, up, you);
+    tickRemote(world, R, dt, up, you, input);
     return;
   }
   R.t += dt;
@@ -432,6 +451,11 @@ export function tickRace(world, dt, input) {
       R.forkFlip = R.clock;
     }
     for (const r of R.racers) stepRacer(R, r, sdt, course, world.map);
+    // (Your run, a few times a second: your best becomes a ghost others can race.)
+    if (you.done == null && R.clock >= (R.trackAt ?? 0)) {
+      R.trackAt = (R.trackAt ?? 0) + GHOST_STEP;
+      (R.track ??= []).push([Math.round(you.x), Math.round(you.y), MODES.indexOf(you.m.mode), you.leg]);
+    }
     const last = course.legs.length - 1;
     for (const r of R.racers) {
       if (r.done != null || r.leg < last || r.x < course.finish) continue;
@@ -498,6 +522,26 @@ function podiumStep(world, R) {
   }
 }
 
+// ---------- Ghosts ----------
+// A friend's best run (their `raceBests`, sent over: net/mochi-race.js), raced as a ghost: their
+// Mochi, see-through, going exactly where it went, a few points a second, eased between.
+export const GHOST_STEP = 0.25;
+function stepGhost(R, r, course) {
+  const t = R.clock / GHOST_STEP;
+  const tr = r.ghost;
+  const i = Math.min(tr.length - 1, Math.floor(t));
+  const j = Math.min(tr.length - 1, i + 1);
+  const k = t - Math.floor(t);
+  const [x0, y0, mode, leg] = tr[i];
+  const [x1, y1] = tr[j];
+  const px = r.x;
+  r.x = x0 + (x1 - x0) * k;
+  r.y = y0 + (y1 - y0) * k;
+  r.leg = Math.min(leg, course.legs.length - 1);
+  Object.assign(r.m, { mode: MODES[mode] ?? 'run', inWater: MODES[mode] === 'swim', speed: Math.abs(r.x - px) / (1 / 60), tired: 0, rest: false, noShadow: MODES[mode] === 'fly' });
+  if (i >= tr.length - 1) r.x = Math.max(r.x, course.finish);
+}
+
 // ---------- The camera ----------
 // Where the race camera looks (`R.cam`: render/scene.js eases to it, or cuts straight there when
 // `cut` changes), by what's happening: the opening sweep from the finish back to the start; along
@@ -559,7 +603,9 @@ export const setRaceNet = (fns) => {
 };
 // Where everyone is now, as the host sends it: [x, y, mode, speed, tiredness, resting, cheer left,
 // done, place, leg] each.
-export const raceState = (R) => R.racers.map((r) => [Math.round(r.x * 10) / 10, Math.round(r.y * 10) / 10, MODES.indexOf(r.m.mode), Math.round(r.m.speed ?? 0), Math.round((r.m.tired ?? 0) * 100), r.m.rest ? 1 : 0, Math.max(0, Math.round((r.cheerUntil - R.clock) * 10)), r.done, r.place, r.leg]);
+// (Each racer: where, how, and its last bit of luck, so a friend's screen shows the trips and tailwinds too.)
+const LUCKS = [null, 'trip', 'wind'];
+export const raceState = (R) => R.racers.map((r) => [Math.round(r.x * 10) / 10, Math.round(r.y * 10) / 10, MODES.indexOf(r.m.mode), Math.round(r.m.speed ?? 0), Math.round((r.m.tired ?? 0) * 100), r.m.rest ? 1 : 0, Math.max(0, Math.round((r.cheerUntil - R.clock) * 10)), r.done, r.place, r.leg, LUCKS.indexOf(r.luckKind ?? null), r.luckAt != null ? Math.round(r.luckAt * 10) : -1]);
 // A friend's game: the host's latest word on where everyone is.
 export function applyRaceState(world, msg) {
   const R = world.race;
@@ -567,9 +613,15 @@ export function applyRaceState(world, msg) {
   R.heard = Date.now() / 1000;
   if (R.phase !== 'done' && msg.phase !== 'done' && msg.phase !== R.phase) Object.assign(R, { phase: msg.phase, t: msg.pt ?? 0 });
   if (R.phase !== 'done') R.clock = msg.clock;
-  msg.rs.forEach(([x, y, mode, speed, tired, rest, cheerLeft, done, place, leg], i) => {
+  msg.rs.forEach(([x, y, mode, speed, tired, rest, cheerLeft, done, place, leg, luck = 0, luckAt = -1], i) => {
     const r = R.racers[i];
     if (!r) return;
+    // (A trip or a tailwind on the host's screen: here too, with its stumble.)
+    if (luckAt >= 0 && r.luckAt !== luckAt / 10) {
+      r.luckAt = luckAt / 10;
+      r.luckKind = LUCKS[luck];
+      if (r.luckKind === 'trip') r.m.action = { name: 'sig_clumsy', t0: null };
+    }
     const mv = MODES[mode] ?? 'run';
     Object.assign(r, { tx: x, ty: y, leg, cheerUntil: R.clock + cheerLeft / 10 });
     if (R.phase !== 'done') Object.assign(r, { done, place });
@@ -578,10 +630,17 @@ export function applyRaceState(world, msg) {
 }
 // A friend's game, each frame: the racers eased along to where the host last had them; Up cheers
 // (sent to the host); once it's over, Up takes you back.
-function tickRemote(world, R, dt, up, you) {
+function tickRemote(world, R, dt, up, you, input = null) {
   R.t += dt;
   if (R.phase === 'run') R.clock += dt;
-  if (up && R.phase === 'run' && you.done == null && R.clock >= (you.cheerReady ?? 0) && canAffordCheer(you)) {
+  // (A fork coming up: Down switches your way, and tells the host, whose game runs the race.)
+  const fk = R.phase === 'run' && you.done == null ? forkAhead(world.map.race, you) : null;
+  if (fk && input?.pressed?.has('ArrowDown') && fk.at - you.x < FORK_NEAR) {
+    you.alt = { ...(you.alt ?? {}), [fk.leg]: !you.alt?.[fk.leg] };
+    R.forkFlip = R.clock;
+    raceNet.fork?.(world, R, fk.leg, you.alt[fk.leg]);
+  }
+  if (up && R.phase === 'run' && you.done == null && (you.m.rest || (R.clock >= (you.cheerReady ?? 0) && canAffordCheer(you)))) {
     you.cheerReady = R.clock + CHEER.every;
     raceNet.cheer?.(world, R);
   }
@@ -623,6 +682,14 @@ export function applyRaceEnd(world, msg) {
   award(world, R);
 }
 // The host's game: a friend cheered their Mochi on.
+// The host's game: a friend switched their Mochi's way at a fork.
+export function applyFork(world, ownerId, leg, alt) {
+  const R = world.race;
+  const r = R && !R.remote ? R.racers.find((x) => x.owner === ownerId) : null;
+  if (!r || r.leg >= leg || !world.map.race?.legs[leg]?.alt) return false;
+  r.alt = { ...(r.alt ?? {}), [leg]: Boolean(alt) };
+  return true;
+}
 export function applyCheer(world, ownerId) {
   const R = world.race;
   const r = R && !R.remote ? R.racers.find((x) => x.owner === ownerId) : null;
@@ -677,6 +744,16 @@ function award(world, R) {
     }
     char.raceWins[key] = true;
     R.opened = Object.keys(RACE_STAGES).flatMap((id) => RANK_ORDER.filter((rk) => rankOpen(char, id, rk) && !before.includes(medalKey(id, rk))).map((rk) => `${RACE_STAGES[id].name} (${RACE_RANKS[rk].name})`));
+  }
+  noteDaily(world, 'race');
+  // (Your best time on this course and rank, with the run itself: your ghost.)
+  if (you.done != null && R.track?.length && !you.ghost) {
+    const bests = (world.char.raceBests ??= {});
+    if (!bests[key] || you.done < bests[key].time) {
+      bests[key] = { time: Math.round(you.done * 100) / 100, rec: JSON.parse(JSON.stringify(you.rec)), track: [...R.track, [Math.round(you.x), Math.round(you.y), MODES.indexOf(you.m.mode), you.leg]] };
+      R.newBest = true;
+      world.log(`A new best time: ${you.done.toFixed(1)}s! Friends in your room can race your ghost.`, '#ffe08a');
+    }
   }
   you.rec.mood = Math.min(100, (you.rec.mood ?? 60) + (you.place === 1 ? 15 : 8));
   you.rec.bond = Math.min(1000, (you.rec.bond ?? 0) + 4);

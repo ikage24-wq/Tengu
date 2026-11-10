@@ -439,3 +439,60 @@ test('a Mochi too little to walk crawls along, never sliding about standing stil
     g.done();
   }
 });
+
+test("visiting with your Mochi: it follows you round a friend's garden, and two blooming ones have an egg for each of you", () => {
+  const host = garden();
+  const mine = host.char.garden.mochi[0];
+  Object.assign(mine, { stage: 'amamochi', path: 'angel', bloom: 600, grown: 1, mood: 90 });
+  const char = createCharacter('Bea', { hairStyle: 'bob' });
+  const pet = newRecord(rollMochi(777, { coat: null }));
+  Object.assign(pet, { stage: 'karamochi', path: 'demon', bloom: 600, name: 'Mugi' });
+  for (const st of STATS) pet.stats[st].points = 600;
+  char.garden = { back: null, mochi: [pet], eggs: [], unlocked: {} };
+  char.pet = { seed: pet.seed, out: true, opts: {} };
+  const bea = createWorld(char);
+  bea.log = () => {};
+  bea.forceNight = 0;
+  loadMap(bea, 'sprout', 'start');
+  const out = [];
+  const was = { ...online, ghosts: online.ghosts };
+  const beaGhost = { id: 'B', name: 'Bea', map: 'garden', gd: 'A', body: { x: 700, y: 620, facing: 1 } };
+  Object.assign(online, { status: 'on', link: { send: (m) => out.push(m) }, ghosts: new Map([['A', { id: 'A', name: 'Ann' }], ['B', beaGhost]]) });
+  const deliver = () => {
+    while (out.length) {
+      const msg = JSON.parse(JSON.stringify(out.shift()));
+      const [w, from] = msg.to === 'A' ? [host.w, 'Bea'] : [bea, 'Ann'];
+      online.id = msg.to;
+      onVisit(w, msg, { name: from });
+    }
+  };
+  try {
+    online.id = 'B';
+    askGardenVisit(bea, 'A');
+    deliver();
+    // Bea's own game: her Mugi came along, at her heels.
+    assert.ok(bea.gardenLife.mochi.some((e) => e.guest === 'me' && e.rec.seed === pet.seed), 'Mugi came along');
+    // Ann's game: Mugi is there too, following Bea about.
+    const guest = host.w.gardenLife.mochi.find((e) => e.guest === 'B');
+    assert.ok(guest, "Mugi shows in Ann's garden");
+    assert.ok(host.logs.some((l) => /with Mugi/.test(l)));
+    online.id = 'A';
+    host.run(2);
+    assert.ok(Math.abs(guest.x - 700) < 60 || host.w.gardenLife.pairing, 'it follows Bea (or is off to meet a blooming Mochi)');
+    // Both blooming: they find each other and dance; an egg in Ann's garden, and one sent to Bea's.
+    const eggsA = host.char.garden.eggs.length;
+    for (let k = 0; k < 60 && host.char.garden.eggs.length === eggsA; k++) host.run(1);
+    assert.equal(host.char.garden.eggs.length, eggsA + 1, 'an egg for Ann');
+    deliver();
+    assert.equal(char.garden.eggs.length, 1, 'and one for Bea, in her own garden');
+    assert.equal(guest.rec.seed, pet.seed);
+    // Bea leaves: Mugi goes with her.
+    beaGhost.map = 'sprout';
+    host.run(0.5);
+    assert.ok(!host.w.gardenLife.mochi.some((e) => e.guest === 'B'), 'gone with Bea');
+    assert.ok(!host.char.garden.mochi.some((r) => r.seed === pet.seed), "never one of Ann's");
+  } finally {
+    Object.assign(online, was);
+    host.done();
+  }
+});

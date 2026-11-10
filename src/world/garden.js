@@ -76,7 +76,7 @@ export function gardenMap(g = {}) {
     // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
     townPieces: [
       ['mg_lantern', 150, 0], ['mg_shop', 300], ['mg_eggstall', 520], ['mg_kitchen', 760], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
-      ['mg_fruittree', 1480, 0], ['mg_bigtree', 1650], ['mg_fruittree', 1830, 2], ['mg_cropbed', 1920], ['mg_fruittree', 2016, 3], ['mg_lantern', 2072, 3],
+      ['mg_fruittree', 1480, 0], ['mg_toybox', 1528], ['mg_bigtree', 1650], ['mg_fruittree', 1830, 2], ['mg_cropbed', 1920], ['mg_fruittree', 2016, 3], ['mg_lantern', 2072, 3],
       ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
       ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
       ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],

@@ -41,6 +41,10 @@ import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
 import { dressShopWindow } from './mochi-dress-shop.js';
 import { isNight } from '../world/daytime.js';
+import { countItem, removeItem } from '../core/inventory.js';
+import { sendGardenPresent } from '../net/visit.js';
+import { MOCHI_SWEETS } from '../data/mochi-raise.js';
+import { dailyGoals, dailyLine, DAILY_KINDS, DAILY_PAY } from '../world/garden-life.js';
 
 // Kinako's tips for a new gardener, one each time you ask "How do I start?".
 const KINAKO_HELP = [
@@ -288,6 +292,29 @@ export function npcWindow(ui, state, world) {
   }
   if (npc.storage) choices.push({ label: 'Storage', sub: npc.storage, icon: 'bag', run: () => (dlg.mode = 'storage') });
 // Kinako, the Garden Keeper: the race board, her costumes, and after dark her secret stall.
+  // (Visiting a friend's garden: leave them a present, an egg of yours or some sweets.)
+  if (npc.role === 'mochikeeper' && world.gardenVisit) {
+    const friend = world.gardenVisit.name ?? 'your friend';
+    const mine = world.char.garden?.eggs ?? [];
+    choices.push(mine.length
+      ? { label: `Leave an egg for ${friend}`, sub: 'One of the eggs in your own garden', icon: 'gift', primary: true, run: () => {
+        if (sendGardenPresent(world, { egg: mine[0] })) {
+          mine.shift();
+          say(world, 'kinako', `How kind! I'll set it by ${friend}'s stall.`);
+        }
+      } }
+      : { label: `Leave an egg for ${friend}`, sub: 'You have no eggs waiting in your garden', icon: 'gift', run: () => say(world, 'kinako', 'Bring one from your own garden next time, dear.') });
+    const sw = MOCHI_SWEETS.map((s) => ({ s, n: countItem(world.char.inventory, s.id) })).filter((x) => x.n > 0).sort((a, b) => b.n - a.n)[0];
+    choices.push(sw
+      ? { label: `Leave ${Math.min(3, sw.n)} ${sw.s.name} for ${friend}`, sub: 'Sweets from your bag', icon: 'gift', run: () => {
+        const n = Math.min(3, sw.n);
+        if (sendGardenPresent(world, { sweet: sw.s.id, n })) {
+          removeItem(world.char.inventory, sw.s.id, n);
+          say(world, 'kinako', `I'll make sure ${friend} gets them!`);
+        }
+      } }
+      : { label: `Leave sweets for ${friend}`, sub: 'No sweets in your bag', icon: 'gift', run: () => say(world, 'kinako', 'Cook some at the Sweet Kitchen first!') });
+  }
   if (npc.role === 'mochikeeper' && !world.gardenVisit) {
     choices.unshift({ label: 'Enter a race', sub: 'Pick a course and one of your Mochi', icon: 'star', primary: true, run: () => {
       Object.assign(state.windows.race, { open: true, openedAt: performance.now() / 1000 });
@@ -295,6 +322,10 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
     choices.push({ label: 'Mochi outfits', sub: 'Glasses, scarves and cute clothes for your Mochi', icon: 'hanger', run: () => (dlg.mode = 'dress') });
+    choices.push({ label: "Today's goals", sub: dailyLine(world.char) || 'Three small things to do each day', icon: 'check', run: () => {
+      const d = dailyGoals(world.char);
+      say(world, 'kinako', d ? `Today: ${d.goals.map((x) => `${DAILY_KINDS[x.kind].words(x.need)} (${x.have}/${x.need})`).join(', ')}. ${d.all ? 'All done, well done!' : `${DAILY_PAY.each} gold for each!`}` : 'Come by your garden first!');
+    } });
     choices.push({ label: 'How do I start?', sub: 'Kinako tells you how to raise a Mochi', icon: 'chat', run: () => say(world, 'kinako', KINAKO_HELP[(dlg.help = ((dlg.help ?? -1) + 1) % KINAKO_HELP.length)]) });
     choices.push({ label: 'The Mochi album', sub: 'Everything your Mochi have been, and its rewards', icon: 'book', run: () => {
       Object.assign(state.windows.album, { open: true, openedAt: performance.now() / 1000 });

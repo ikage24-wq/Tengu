@@ -11,7 +11,7 @@ import { drawItemIcon } from '../render/icons.js';
 import { COLORS, windowFrame, text, button, hover, clicked, tooltip, fit, roundRect, icon } from './kit.js';
 import { itemTooltip } from './tooltips.js';
 import { VW, VH } from '../input.js';
-import { careFor, feedMochi, sayGoodbye, VISITOR_CARE } from '../world/garden-life.js';
+import { careFor, feedMochi, sayGoodbye, VISITOR_CARE, dailyLine } from '../world/garden-life.js';
 import { STAT_ORDER, STAT_INFO, portraitCard, statRow, feelMeter, heading, cap } from './mochi-kit.js';
 
 const W = 300;
@@ -109,6 +109,8 @@ export function mochiCareWindow(ui, state, world) {
   by += Math.ceil(care.length / 3) * 18 + 3;
   // Feed: the sweets in your bag, its favourite with a heart, the one it hates with a cross.
   heading(ctx, 'Feed', x, by, W - 20);
+  // (Today's goals, at the end of the Feed line.)
+  if (!guest) text(ctx, `Today: ${dailyLine(world.char)}`, x + W - 20, by + 6, { size: 5.8, bold: true, align: 'right', color: '#c89a20' });
   by += 10;
   const sweets = MOCHI_SWEETS.filter((sw) => countItem(world.char.inventory, sw.id) > 0);
   if (!sweets.length) text(ctx, 'No sweets in your bag: cook some at the Sweet Kitchen!', x + 2, by + 12, { size: 6.5, color: COLORS.muted });

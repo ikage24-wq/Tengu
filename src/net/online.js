@@ -338,10 +338,12 @@ function adopt(world) {
   }
 }
 
+// Your best race times, course and rank to seconds (for the room's race board: ui/mochi-race.js).
+const raceBestTimes = (c) => Object.fromEntries(Object.entries(c.raceBests ?? {}).map(([k, v]) => [k, v.time]));
 function sendProfile(world) {
   online.profileIn = PROFILE_EVERY;
   const c = world.char;
-  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home), garden: Boolean(c.garden) });
+  send({ t: 'prof', name: c.name, look: c.appearance, gear: wornGear(c), job: c.job, level: c.level, island: Boolean(c.home), garden: Boolean(c.garden), bests: raceBestTimes(c) });
 }
 
 function sendMe(world) {
@@ -473,7 +475,7 @@ function receive(world, msg) {
     case 'prof': {
       const g = ghostOf(msg.id);
       const fresh = g.name === '...';
-      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island), garden: Boolean(msg.garden) });
+      Object.assign(g, { name: msg.name, look: msg.look, gear: msg.gear, job: msg.job, level: msg.level, island: Boolean(msg.island), garden: Boolean(msg.garden), bests: msg.bests ?? {} });
       if (fresh && !online.host) world.log(`${msg.name} is in the room.`, '#bff0dc');
       return;
     }

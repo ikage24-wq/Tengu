@@ -163,6 +163,12 @@ if (q.has('dress')) {
   state.npc = { id: 'kinako', mode: 'dress' };
   state.windows.npc.open = true;
 }
+// (?bests=1: best times on the board, yours and a friend's kept ghost.)
+if (q.has('bests')) {
+  const run = { time: 41.2, rec: mochi[0], track: [[0, 0, 0, 0]] };
+  c.raceBests = { 'sprint|beginner': run };
+  c.ghosts = { 'Ann|sprint|beginner': { name: 'Ann', best: { ...run, time: 38.6 } }, 'Kiri|sprint|beginner': { name: 'Kiri', best: { ...run, time: 44.9 } } };
+}
 if (q.has('trophies')) {
   const wins = { 'sprint|beginner': true, 'sprint|challenge': true, 'sprint|master': true, 'swim|beginner': true, 'swim|challenge': true, 'climb|beginner': true, 'glide|beginner': true, 'tour|beginner': true };
   const { trophiesOf } = await import('../src/world/garden.js');

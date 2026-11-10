@@ -90,7 +90,9 @@ test('a party race: invite, join with your own Mochi, race together, cheer, and 
     assert.ok(Math.abs(B.race.racers[1].x - A.race.racers[1].x) < 30);
     // Bea's own Mochi got her own prize and medal.
     const place = B.race.racers[1].place;
-    assert.equal(B.char.gold - goldB, prizeOf('sprint', 'beginner', place));
+    // (Less today's race goal, if racing was one of them: world/garden-life.js noteDaily.)
+    const goal = B.char.garden.daily?.goals.some((x) => x.kind === 'race') ? 300 : 0;
+    assert.equal(B.char.gold - goldB - goal, prizeOf('sprint', 'beginner', place));
     if (place <= 3) assert.ok(recB.medals?.['sprint|beginner']);
     // Up after the results: Bea goes back where she was.
     for (let f = 0; f < 60 * 6.2; f++) net.as('B', (w) => updateWorld(w, 1 / 60, keys()));
@@ -121,4 +123,79 @@ test('the way into the Mochi Garden asks whose garden when a friend online has o
   Object.assign(C.body, { x: gate.x, y: gate.y });
   updateWorld(C, 1 / 60, keys(['ArrowUp']));
   assert.equal(C.map.id, 'garden');
+});
+
+test('a party race on the Grand Tour: a friend picks their way at the river fork, and luck shows on both screens', () => {
+  const recA = mochi(60, 1800);
+  const recB = mochi(61, 1800);
+  const A = player('Ann', recA);
+  const B = player('Bea', recB);
+  A.char.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].map((s) => [`${s}|beginner`, true]));
+  loadMap(A, 'mochi_stadium', 'board');
+  loadMap(B, 'sprout', 'start');
+  const net = room({ A, B });
+  try {
+    net.as('A', (w) => inviteParty(w, recA, 'tour', 'beginner'));
+    net.deliver();
+    net.as('B', (w) => answerInvite(w, recB));
+    net.deliver();
+    net.as('A', (w) => startPartyRace(w));
+    net.deliver();
+    assert.equal(B.map.id, 'mrace_tour');
+    const forkLeg = A.map.race.legs.findIndex((l) => l.alt);
+    const before = Boolean(A.race.racers[1].alt?.[forkLeg]);
+    let flipped = false;
+    let luckSeen = false;
+    for (let f = 0; f < 60 * 200 && !(A.race?.phase === 'done' && B.race?.phase === 'done'); f++) {
+      net.as('A', (w) => updateWorld(w, 1 / 60, keys()));
+      net.deliver();
+      const you = B.race?.racers[1];
+      // (Near the fork, Bea presses Down once.)
+      const press = !flipped && you && B.race.phase === 'run' && you.x > 1500 && you.x < 2080;
+      if (press) flipped = true;
+      net.as('B', (w) => updateWorld(w, 1 / 60, keys(press ? ['ArrowDown'] : [])));
+      net.deliver();
+      if (B.race?.racers.some((r) => r.luckKind)) luckSeen = true;
+    }
+    assert.ok(flipped, 'Bea reached the fork');
+    assert.equal(Boolean(A.race.racers[1].alt?.[forkLeg]), !before, "Bea's choice reached Ann's game");
+    const hostLuck = A.race.racers.some((r) => r.luckKind);
+    if (hostLuck) assert.ok(luckSeen, "a trip or tailwind on Ann's screen showed on Bea's");
+  } finally {
+    net.done();
+  }
+});
+
+test("ghost races: your best run is kept; a friend in your room gets it and races your ghost, which runs just as you did", async () => {
+  const { startRace, leaveRace } = await import('../src/world/mochi-race.js');
+  const { askGhost } = await import('../src/net/mochi-race.js');
+  const recA = mochi(70, 1200);
+  const recB = mochi(71, 1200);
+  const A = player('Ann', recA);
+  const B = player('Bea', recB);
+  loadMap(A, 'mochi_stadium', 'board');
+  loadMap(B, 'mochi_stadium', 'board');
+  const net = room({ A, B });
+  try {
+    // Ann races: her time, and her run, are kept as her best.
+    net.as('A', (w) => startRace(w, recA, 'sprint', 'beginner'));
+    for (let f = 0; f < 60 * 120 && A.race.phase !== 'done'; f++) net.as('A', (w) => updateWorld(w, 1 / 60, keys()));
+    const best = A.char.raceBests?.['sprint|beginner'];
+    assert.ok(best && best.track.length > 20, 'her best run is kept');
+    assert.equal(best.time, Math.round(A.race.racers[0].done * 100) / 100);
+    // Bea asks for it: Ann's game sends it, Bea keeps it.
+    assert.ok(net.as('B', (w) => askGhost(w, 'A', 'sprint|beginner')));
+    net.deliver();
+    const kept = B.char.ghosts?.['Ann|sprint|beginner'];
+    assert.ok(kept, 'Bea has Ann\'s ghost');
+    // Bea races it: Ann's Mochi, see-through, home at Ann's time.
+    net.as('B', (w) => startRace(w, recB, 'sprint', 'beginner', { ghost: kept }));
+    const g = B.race.racers.find((r) => r.ghost);
+    assert.ok(g && /Ann's ghost/.test(g.name));
+    for (let f = 0; f < 60 * 120 && B.race.phase !== 'done'; f++) net.as('B', (w) => updateWorld(w, 1 / 60, keys()));
+    assert.ok(g.done != null && Math.abs(g.done - best.time) < 1, `the ghost came home at ${g.done?.toFixed(1)}s, Ann's ${best.time}s`);
+    void leaveRace;
+  } finally {
+    net.done();
+  }
 });

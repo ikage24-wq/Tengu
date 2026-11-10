@@ -165,6 +165,25 @@ const shopArt = () => art('mg-shop', SHOP_W, 124, () => {
   return out;
 });
 
+// ---------- The toy box ----------
+// A little wooden chest in the orchard, its lid propped open: a ball on top, blocks, a drum and a
+// paper pinwheel sticking out (the pinwheel turns in the breeze: drawGardenPiece mg_toybox).
+const toyBoxArt = () => art('mg-toybox', 64, 46, () => {
+  const w = ramp('#e2a86a');
+  return [
+    // The lid, propped open behind.
+    T([[10, 18], [54, 18], [58, 4], [14, 6]], w.sh), F(T([[12, 16], [52, 16], [55, 6], [15, 7.6]], w.base)),
+    // What's inside, peeking out: blocks, a drum, the ball.
+    R(16, 14, 9, 9, '#9fd0f0'), F(R(16, 14, 9, 2, '#c8e6f8')), R(27, 12, 8, 8, '#ffd27a'), F(R(27, 12, 8, 2, '#fff0b8')),
+    E(43, 17, 7, 4, '#ff9ab0'), R(36, 17, 14, 5, '#ff9ab0'), F(E(43, 16.6, 6, 2.6, '#ffe4ec')),
+    E(24, 9, 5.4, 5.4, '#ff8a6a'), F(E(22.6, 7.6, 1.8, 1.4, '#ffffff')), F(R(18.8, 8.6, 10.4, 0.9, '#fff4ea')),
+    // The box, planked, a heart painted on its front.
+    ...planks(8, 20, 48, 24, w, 6, 2), F(R(8, 20, 48, 2.4, w.hi)), F(R(8, 41.6, 48, 2.4, w.deep)),
+    R(6, 19, 3, 25, WOOD_DK), R(55, 19, 3, 25, WOOD_DK),
+    F(E(29.4, 30, 3, 3, '#ff8fb0')), F(E(34.6, 30, 3, 3, '#ff8fb0')), F(T([[26.6, 31], [37.4, 31], [32, 36.6]], '#ff8fb0')),
+  ];
+});
+
 // ---------- The sweet kitchen ----------
 const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
   const wall = '#f3dcb4';
@@ -950,6 +969,31 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       place(ctx, lanternPostArt(v), snap(x), gy + 2);
       const h = 46 + (v % 3) * 3;
       paperLantern(ctx, x + 8, gy + 2 - h + 1, time, wx, LANTERN_BANDS[v % LANTERN_BANDS.length], night);
+      return true;
+    }
+    case 'mg_toybox': {
+      place(ctx, toyBoxArt(), snap(x), gy + 2);
+      // The pinwheel on its stick, turning with the breeze.
+      const px = x + 16;
+      const py = gy - 46;
+      ctx.fillStyle = WOOD_DK;
+      ctx.fillRect(snap(px - 0.5), snap(py), 1, 22);
+      const a = time * (2 + lean(time, wx) * 3);
+      const cols = ['#ff9ec0', '#9fd0f0', '#ffd27a', '#a8dc94'];
+      for (let k = 0; k < 4; k++) {
+        const t = a + (k * Math.PI) / 2;
+        ctx.fillStyle = cols[k];
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + Math.cos(t) * 6, py + Math.sin(t) * 6);
+        ctx.lineTo(px + Math.cos(t + 0.9) * 4, py + Math.sin(t + 0.9) * 4);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, py, 1.2, 0, TAU);
+      ctx.fill();
       return true;
     }
     case 'mg_shop': {
