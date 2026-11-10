@@ -63,6 +63,16 @@ for (let i = 0; i < n; i++) {
   mochi.push(rec);
 }
 if (q.has('reborn')) Object.assign(mochi[1], { age: 30 * 3600, mood: 95 });
+// (?max=1: Mochi `who` maxed: every stat S at Lv 99, grown.)
+if (q.has('max')) {
+  const r = mochi[Number(q.get('who') ?? 0)];
+  for (const s of STATS) {
+    r.stats[s] = { grade: 'S', level: 1, exp: 0, points: 0 };
+    giveExp(r, s, 1e6);
+  }
+  if (r.stage === 'mochiko') Object.assign(r, { age: 99999, mood: 90 }) && evolve(r);
+  Object.assign(r, { age: 4 * 3600, mood: 100, name: q.get('name') ?? 'Dango' });
+}
 c.garden = { back: null, mochi, eggs: Array.from({ length: Number(q.get('eggs') ?? 2) }, (_, i) => ({ seed: 4242 + i })), unlocked: {} };
 const w = createWorld(c);
 window.w = w;
@@ -118,7 +128,7 @@ function step(dt, draw = true) {
   }
 }
 window.step = step;
-window.frame = () => canvas.toDataURL('image/png');
+window.frame = (type = 'image/png') => canvas.toDataURL(type, 0.92);
 window.press = (key) => { idle.pressed.add(key); step(1 / 60); idle.pressed.delete(key); };
 for (let k = 0; k < 120; k++) updateWorld(w, 1 / 60, idle);
 if (q.has('sweets')) for (const sw of MOCHI_SWEETS.slice(0, 6)) addItem(c.inventory, sw.id, 3);
@@ -190,6 +200,8 @@ if (q.has('stall')) {
 }
 // (Racing: every stage and rank open; ?rank=master.)
 c.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].flatMap((s) => ['beginner', 'challenge'].map((r) => [s + '|' + r, true])));
+// (Any rank open: as if every lower one had been won.)
+if (q.has('race')) c.raceWins = Object.fromEntries(['sprint', 'swim', 'climb', 'glide', 'hills', 'grand'].flatMap((st) => ['beginner', 'challenge'].map((rk) => [`${st}|${rk}`, true])));
 if (q.has('race')) startRace(w, c.garden.mochi[Number(q.get('who') ?? 0)], q.get('race'), q.get('rank') ?? 'beginner');
 // (?raceskip=25: that far into the race first.)
 for (let k = 0; k < Number(q.get('raceskip') ?? 0) * 30; k++) step(1 / 30, false);
