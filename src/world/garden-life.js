@@ -322,6 +322,17 @@ function settle(e, y, dt) {
   e.y = y + e.yOff;
 }
 
+// A Mochi arriving in your garden from outside it (the Game Master's /mochi, world/gm.js): onto your
+// garden's list, and out into the garden at once if you're in it. False if the garden is full.
+export function addGardenMochi(world, rec) {
+  const g = world.char.garden;
+  if (!g || g.mochi.length >= GARDEN_MAX) return false;
+  g.mochi.push(rec);
+  const life = world.gardenLife;
+  if (life && !world.gardenVisit && life.owner?.garden === g) life.mochi.push({ rec, m: newAnim(rec), x: null });
+  return true;
+}
+
 // ---------- Caring ----------
 // The Mochi beside you, if there's one (and not one in the middle of a scene).
 export function mochiNear(world, reach = 26) {

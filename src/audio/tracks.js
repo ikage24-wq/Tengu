@@ -56,6 +56,12 @@ export const TRACKS = {
   volcanoboss: EPIC,
   theatreboss: LAIR,
   skywhaleboss: T('apocalypse', 'Apocalypse', JJ),
+  // A Mochi race (world/mochi-race.js): the race, its faster final-lap mix once the leader's into
+  // the final stretch, and a little win jingle over the podium and the results (padded with quiet so
+  // it plays once).
+  race: T('pure-raceway', 'Pure Raceway', 'mintodog'),
+  raceclimax: T('pure-raceway-climax', 'Pure Raceway (Climax)', 'mintodog'),
+  racewin: T('win-jingle', 'Win Jingle (Vibraphone)', 'fupi'),
 };
 
 // The track for a music key ("harbor-night" plays the harbor's), or null for a written song.

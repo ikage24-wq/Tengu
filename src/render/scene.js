@@ -97,7 +97,8 @@ export function updateCamera(cam, world, dt) {
   if (rc) {
     const rx = Math.max(0, Math.min(map.width - VIEW_W, rc.x - VIEW_W * 0.4));
     const ry = Math.max(0, Math.min(map.height - VIEW_H, rc.y - VIEW_H * 0.66));
-    if (fresh) Object.assign(cam, { x: rx, y: ry, ready: true, mapId: map.id });
+    // (A cut, `rc.cut` changing: straight to the new shot.)
+    if (fresh || rc.cut !== cam.raceCut) Object.assign(cam, { x: rx, y: ry, ready: true, mapId: map.id, raceCut: rc.cut });
     else {
       cam.x += (rx - cam.x) * (1 - Math.exp(-dt * 6));
       cam.y += (ry - cam.y) * (1 - Math.exp(-dt * 4));

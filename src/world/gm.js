@@ -14,6 +14,11 @@ import { clampVitals, stats as statsOf, bindFreeHotkey, settleSkills } from '../
 import { loadMap } from './world.js';
 import { spawnMob } from './mobs.js';
 import { groundAt } from './physics.js';
+import { rollMochi, STATS } from '../data/mochi-genes.js';
+import { newRecord, giveExp, evolve } from '../data/mochi-raise.js';
+import { suggestName } from '../data/mochi-names.js';
+import { grantGarden } from './garden.js';
+import { addGardenMochi } from './garden-life.js';
 
 const GM_HASH = '01a1ea974eb6725f52e6b8b8fe2c3261eaab572040dece2a859559cf8b3f6039';
 const STORE_KEY = 'twzt-gm';
@@ -115,13 +120,30 @@ export function killAll(world) {
   for (const m of world.mobs) m.hp = 0;
 }
 
+// A grown Mochi with every stat at S and Lv 99 (`path`: 'angel' or 'demon', else as its personality
+// leans), happy and fond of you, put in your Mochi Garden (made for you if you haven't one yet):
+// for trying out races and the like. Null if the garden is full.
+export function maxedMochi(world, path = null, name = null) {
+  const char = world.char;
+  grantGarden(char);
+  const rec = newRecord(rollMochi(Math.floor(Math.random() * 1e9)));
+  for (const s of STATS) {
+    rec.stats[s].grade = 'S';
+    giveExp(rec, s, 1e6);
+  }
+  if (path === 'angel' || path === 'demon') rec.lean = path === 'angel' ? 1 : -1;
+  evolve(rec);
+  Object.assign(rec, { mood: 100, bond: 1000, name: name || suggestName((char.garden.mochi ?? []).map((r) => r.name)) });
+  return addGardenMochi(world, rec) ? rec : null;
+}
+
 // Chat commands. Returns a line for the log, or null when `cmd` isn't a GM command.
 export function gmCommand(world, cmd, args) {
   const char = world.char;
   const n = (i, d) => (Number.isFinite(Number(args[i])) ? Number(args[i]) : d);
   switch (cmd) {
     case 'gmhelp':
-      return '/admin (F9) · /job <id> · /level <n> · /give <item> [qty] · /gold <n> · /sp <n> · /ap <n> · /tp <map> · /spawn <mob> [n] · /killall · /heal · /god';
+      return '/admin (F9) · /job <id> · /level <n> · /give <item> [qty] · /gold <n> · /sp <n> · /ap <n> · /tp <map> · /spawn <mob> [n] · /killall · /heal · /god · /mochi [angel|demon] [name]';
     case 'admin':
       world.events.push({ type: 'admin' });
       return 'Admin menu opened.';
@@ -157,6 +179,10 @@ export function gmCommand(world, cmd, args) {
     case 'god':
       world.god = !world.god;
       return `God mode ${world.god ? 'on' : 'off'}.`;
+    case 'mochi': {
+      const rec = maxedMochi(world, args[0], args.slice(args[0] === 'angel' || args[0] === 'demon' ? 1 : 0).join(' ').slice(0, 12) || null);
+      return rec ? `${rec.name}: every stat S and Lv 99, waiting in your Mochi Garden.` : 'Your Mochi Garden is full (8). Say goodbye to one first.';
+    }
     default:
       return null;
   }

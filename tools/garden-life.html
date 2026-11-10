@@ -65,6 +65,7 @@ for (let i = 0; i < n; i++) {
 if (q.has('reborn')) Object.assign(mochi[1], { age: 30 * 3600, mood: 95 });
 c.garden = { back: null, mochi, eggs: Array.from({ length: Number(q.get('eggs') ?? 2) }, (_, i) => ({ seed: 4242 + i })), unlocked: {} };
 const w = createWorld(c);
+window.w = w;
 w.log = (m) => console.log(m);
 window.W = w;
 if (q.get('night') != null) w.forceNight = Number(q.get('night'));

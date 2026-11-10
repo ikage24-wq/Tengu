@@ -21,8 +21,9 @@ import { limb } from './figure.js';
 import { art, place } from './scenery.js';
 import { cragArt, CRAG_FACE_AT } from './garden.js';
 import { groundAt } from '../world/physics.js';
-import { drawMochiAnim, drawSpectator, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
-import { runSpeed } from '../world/mochi-race.js';
+import { drawMochiAnim, drawSpectator, SPECTATOR_BEATS, GAITS, SWIMS, FLIES, CLIMBS, runStyle } from './mochi-anim.js';
+import { runSpeed, lineupOffset, PODIUM, podiumSpot, INTRO, introLen, standings, progressOf } from '../world/mochi-race.js';
+import { VW, VH } from '../input.js';
 import { CANT_POINTS, newRecord } from '../data/mochi-raise.js';
 import { rollMochi } from '../data/mochi-genes.js';
 
@@ -313,7 +314,9 @@ function heart(ctx, x, y, s, color) {
 // tiredness, for the sprite worker to paint in the background, so Go never stutters: one racer and
 // one step of tiredness a frame, the most tired first (the newest asked is painted first, so the
 // fresh ones, wanted at Go, come out first).
-// (Swimming, climbing and gliding as well, where the course has them: once each, unwearied.)
+// (Swimming, climbing and gliding as well, where the course has them: once each, unwearied. And
+// for the end, everyone's cheer, for whoever makes the podium, and every face in the crowd at the
+// finish, so the camera's cut to the podium never waits on a painting.)
 const TIRED_STEPS = [1, 0.75, 0.5, 0.25, 0];
 const SAMPLES = 32;
 // Each way of moving: its stat, its styles (for the stride), what it is when it can't yet (a scoot
@@ -329,13 +332,29 @@ function aheadJobs(R, course) {
   const jobs = [];
   for (const kind of ['climb', 'fly', 'swim']) if (kinds.has(kind)) for (const r of R.racers) jobs.push([r, kind, 0]);
   for (const tired of TIRED_STEPS) for (const r of R.racers) jobs.push([r, 'run', tired]);
+  for (const r of R.racers) jobs.push([r, 'cheer', 0]);
+  crowdOf().forEach((g) => jobs.push([null, 'crowd', g]));
   return jobs;
 }
+const CHEER_SAMPLES = 40;
 function paintAhead(ctx, R, course, time) {
   R.aheadJobs ??= aheadJobs(R, course);
   const job = R.aheadJobs.shift();
   if (!job) return;
   const [r, kind, tired] = job;
+  if (kind === 'crowd') {
+    for (let b = 0; b < SPECTATOR_BEATS; b++) drawSpectator(ctx, tired, 0, 0, b, 1, null, true);
+    return;
+  }
+  if (kind === 'cheer') {
+    const probe = (r.probes ??= {}).cheer ??= { genes: r.rec, dir: 1, size: r.m.size, mode: 'run', speed: 0, dist: 0, ahead: true };
+    probe.action = { name: 'cheer', t0: time, hold: 30 };
+    ctx.save();
+    ctx.translate(-5000, -5000);
+    for (let i = 0; i < CHEER_SAMPLES; i++) drawMochiAnim(ctx, probe, 0, 0, time + 0.4 + i / 24);
+    ctx.restore();
+    return;
+  }
   const mv = MOVES[kind];
   const pts = r.rec.stats[mv.stat].points;
   const cant = pts < mv.cant;
@@ -356,15 +375,31 @@ function paintAhead(ctx, R, course, time) {
 export function drawRace(ctx, world, cam, time) {
   const R = world.race;
   const map = world.map;
-  if (R.phase === 'ready') paintAhead(ctx, R, map.race, time);
+  const course = map.race;
+  if (R.phase === 'ready') paintAhead(ctx, R, course, time);
+  // Behind everyone: the rush of speed when yours is flying along, and the podium.
+  const you = R.racers[R.me];
+  if (R.phase === 'run') speedStreaks(ctx, you.m.speed ?? 0, time);
+  if (R.phase === 'done') drawPodium(ctx, map, cam, R.t);
+  const lead = R.phase === 'run' ? standings(R, course)[0] : null;
+  noteEffects(R, course, time);
   for (const r of [...R.racers].sort((a, b) => b.lane - a.lane)) {
-    const x = r.x - cam.x;
+    // (On the line before Go, each lane a little apart: world/mochi-race.js lineupOffset.)
+    const x = r.x + lineupOffset(R, r) - cam.x;
     // (Every lane on the ground, the water or the wall itself: the ground is an edge, not a field,
     // so a lane drawn higher would float. The back lanes are drawn first, behind.)
     const y = r.y - cam.y;
     drawMochiAnim(ctx, r.m, x, y, time);
-    if (!r.you) continue;
     const top = y - (r.m.size === 'baby' ? 36 : 44);
+    // Up on the podium: its medal.
+    if (R.phase === 'done' && r.place <= 3 && r.podCheer) podiumMedal(ctx, x, y - (r.m.size === 'baby' ? 9 : 11), r.place, time);
+    // The leader's little crown (over yours, above its heart).
+    if (r === lead && r.done == null) crown(ctx, x, top - (r.you ? 9 : 0) + Math.sin(time * 3) * 0.8);
+    // Its card showing in the opening: a pink arrow bobbing over it.
+    if (R.phase === 'ready' && R.t >= INTRO.sweep && R.t < introLen(R) && Math.floor((R.t - INTRO.sweep) / INTRO.card) === R.racers.indexOf(r)) {
+      arrow(ctx, x, top - 10 + Math.abs(Math.sin(time * 6)) * -3);
+    }
+    if (!r.you) continue;
     heart(ctx, x, top + Math.sin(time * 4) * 1.2, 3.2, '#ff6f9a');
     const left = R.phase === 'run' ? r.cheerUntil - R.clock : 0;
     if (left > 0) {
@@ -378,5 +413,258 @@ export function drawRace(ctx, world, cam, time) {
     }
   }
   // The cloud fluff's low wisps, over the feet of anyone wading through it.
-  for (const [from, to] of map.race.slow ?? []) fluff(ctx, map, cam, from, to, time);
+  for (const [from, to] of course.slow ?? []) fluff(ctx, map, cam, from, to, time);
+  drawEffects(ctx, R, cam, time);
+  if (R.phase === 'done') confetti(ctx, R.t, time);
+}
+
+// ---------- The race's moments ----------
+// What happens is noticed here from how the race stands (so a friend's game sees the same): a racer
+// moving up a place ('pass': yours, or anyone taking the lead), and each change in how it's moving:
+// into the water (a splash), onto a wall (a puff of chalk), off the edge (a whoosh), down from a
+// glide (dust). Each lasts a moment.
+const FX_LIFE = { pass: 1.1, splash: 0.7, chalk: 0.6, whoosh: 0.6, land: 0.6, finish: 1 };
+function noteEffects(R, course, time) {
+  const fx = (R.fx ??= []);
+  for (let i = fx.length - 1; i >= 0; i--) if (time - fx[i].t0 > FX_LIFE[fx[i].kind]) fx.splice(i, 1);
+  if (R.phase !== 'run') return;
+  const order = standings(R, course);
+  if (R.order) {
+    order.forEach((r, i) => {
+      const was = R.order.indexOf(r);
+      if (was > i && (r.you || i === 0) && R.clock > 2 && r.done == null && time - (r.passAt ?? -9) > 1.4) {
+        r.passAt = time;
+        fx.push({ kind: 'pass', r, t0: time, lead: i === 0 });
+      }
+    });
+  }
+  R.order = order;
+  for (const r of R.racers) {
+    const mode = r.m.mode;
+    if (r.fxMode && r.fxMode !== mode) {
+      const kind = mode === 'swim' ? 'splash' : mode === 'climb' ? 'chalk' : mode === 'fly' ? 'whoosh' : r.fxMode === 'fly' ? 'land' : null;
+      if (kind) fx.push({ kind, x: r.x, y: r.y, t0: time });
+    }
+    r.fxMode = mode;
+    if (r.done != null && !r.fxDone) {
+      r.fxDone = true;
+      if (r.place === 1) fx.push({ kind: 'finish', x: course.finish, y: r.y, t0: time });
+    }
+  }
+}
+function drawEffects(ctx, R, cam, time) {
+  for (const f of R.fx ?? []) {
+    const k = (time - f.t0) / FX_LIFE[f.kind];
+    const ease = 1 - (1 - k) ** 3;
+    ctx.save();
+    if (f.kind === 'pass') {
+      const r = f.r;
+      const x = r.x - cam.x;
+      const y = r.y - cam.y - (r.m.size === 'baby' ? 48 : 56) - ease * 10;
+      ctx.globalAlpha = Math.min(1, (1 - k) * 3);
+      const s = 1 + 0.5 * (1 - Math.min(1, k * 5));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(s, s);
+      ctx.font = '900 9px Nunito, "Trebuchet MS", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffffff';
+      const word = f.lead ? 'Lead!' : 'Pass!';
+      ctx.strokeText(word, 0, 0);
+      ctx.fillStyle = f.lead ? '#f0a020' : '#ff5f8f';
+      ctx.fillText(word, 0, 0);
+      ctx.restore();
+      // A ring bursting round it.
+      ctx.globalAlpha = (1 - k) * 0.8;
+      ctx.strokeStyle = f.lead ? '#ffd75e' : '#ffb3c8';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(r.x - cam.x, r.y - cam.y - 12, 8 + ease * 16, 6 + ease * 12, 0, 0, TAU);
+      ctx.stroke();
+    } else if (f.kind === 'splash') {
+      const x = f.x - cam.x;
+      const y = f.y - cam.y;
+      ctx.globalAlpha = 1 - k;
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 7; i++) {
+        const a = Math.PI * (0.1 + 0.8 * (i / 6));
+        const d = ease * 16;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * d, y - Math.sin(a) * d * 1.3 + k * k * 14, 1.6 * (1 - k * 0.5), 0, TAU);
+        ctx.fill();
+      }
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 1, 6 + ease * 18, 1.5 + ease * 2, 0, 0, TAU);
+      ctx.stroke();
+    } else if (f.kind === 'chalk' || f.kind === 'land') {
+      const x = f.x - cam.x;
+      const y = f.y - cam.y - (f.kind === 'chalk' ? 14 : 1);
+      ctx.globalAlpha = (1 - k) * 0.8;
+      ctx.fillStyle = f.kind === 'chalk' ? '#ffffff' : '#f0e2d0';
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * TAU + 0.6;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * ease * 9, y + Math.sin(a) * ease * (f.kind === 'land' ? 3 : 7) - ease * 3, 2.6 + ease * 2.4, 0, TAU);
+        ctx.fill();
+      }
+    } else if (f.kind === 'whoosh') {
+      const x = f.x - cam.x;
+      const y = f.y - cam.y - 10;
+      ctx.globalAlpha = 1 - k;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.4;
+      ctx.lineCap = 'round';
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x - 6 - ease * 22, y - 6 + i * 6);
+        ctx.quadraticCurveTo(x - ease * 10, y - 8 + i * 6, x + 4, y - 6 + i * 6 + 2);
+        ctx.stroke();
+      }
+    } else if (f.kind === 'finish') {
+      // A burst of streamers off the finish line as the winner crosses.
+      const x = f.x - cam.x;
+      const y = f.y - cam.y - 30;
+      for (let i = 0; i < 14; i++) {
+        const a = -Math.PI / 2 + (i - 6.5) * 0.2;
+        const d = ease * (40 + (i % 3) * 12);
+        ctx.globalAlpha = 1 - k;
+        ctx.fillStyle = FLAGS[i % FLAGS.length];
+        ctx.fillRect(x + Math.cos(a) * d - 1.2, y + Math.sin(a) * d + k * k * 30, 2.4, 3.4);
+      }
+    }
+    ctx.restore();
+  }
+}
+// The rush of speed: thin streaks of air flying past, the faster yours goes the more of them.
+function speedStreaks(ctx, speed, time) {
+  const k = Math.max(0, Math.min(1, (speed - 100) / 90));
+  if (k <= 0) return;
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 16; i++) {
+    const h = hash(i * 7.3);
+    const len = 30 + h * 50;
+    const x = VW + 60 - (((time * (520 + h * 300)) + h * 900) % (VW + 160));
+    const y = 30 + hash(i * 3.1) * (VH - 90);
+    ctx.globalAlpha = k * (0.18 + h * 0.2);
+    ctx.lineWidth = 0.8 + h * 0.8;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// The podium: three blocks rising out of the ground in front of the stands (the winner's tallest, in
+// the middle), the place painted on each.
+const PODIUM_COLORS = [['#fff1c4', '#f0c860'], ['#f2f2f8', '#c4c8d8'], ['#ffe2cc', '#e0a878']];
+// Behind it, a rounded cream board trimmed in pink with three stars along its top, so the three on
+// the podium stand out from the crowd in the stands behind.
+const POD_H = 86;
+const podiumArt = () => art('mr-podium', 110, POD_H, () => {
+  const out = [
+    T([[6, POD_H - 10], [6, 22], [16, 8], [55, 2], [94, 8], [104, 22], [104, POD_H - 10]], '#ff9ec0'),
+    F(T([[10, POD_H - 10], [10, 23], [18, 12], [55, 6.5], [92, 12], [100, 23], [100, POD_H - 10]], '#fff6ee')),
+    F(T([[10, 23], [18, 12], [55, 6.5], [92, 12], [100, 23], [100, 25], [92, 14.4], [55, 9], [18, 14.4], [10, 25]], '#ffe2ec')),
+  ];
+  for (const [x, y, r] of [[30, 13, 3.4], [55, 8, 4.6], [80, 13, 3.4]]) {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rr = i % 2 ? r * 0.45 : r;
+      pts.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
+    }
+    out.push(T(pts, '#ffd75e'));
+  }
+  for (const place of [2, 3, 1]) {
+    const [dx, h] = PODIUM.blocks[place - 1];
+    const [face, trim] = PODIUM_COLORS[place - 1];
+    const x0 = 55 + dx - 15;
+    out.push(R(x0, POD_H - h, 30, h, face), F(R(x0, POD_H - h, 30, 2.4, '#ffffff')), F(R(x0, POD_H - h + 2.4, 30, 1.6, trim)), F(R(x0, POD_H - 1.6, 30, 1.6, trim)));
+  }
+  return out;
+});
+function drawPodium(ctx, map, cam, t) {
+  const course = map.race;
+  const cx = course.finish + PODIUM.x;
+  const gy = groundAt(map, cx) - cam.y;
+  const k = Math.max(0, Math.min(1, t / 0.6));
+  const rise = (1 - k * k * (3 - 2 * k)) * 30;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cx - cam.x - 60, gy - POD_H - 4, 120, POD_H + 6);
+  ctx.clip();
+  place(ctx, podiumArt(), snap(cx - cam.x), gy + 1 + rise * (POD_H / 30));
+  ctx.font = '900 9px Nunito, "Trebuchet MS", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  for (const place of [1, 2, 3]) {
+    const [dx, h] = PODIUM.blocks[place - 1];
+    ctx.fillStyle = PODIUM_COLORS[place - 1][1];
+    ctx.fillText(String(place), cx + dx - cam.x, gy + 1 + rise * (POD_H / 30) - h + 13);
+  }
+  ctx.restore();
+}
+function podiumMedal(ctx, x, y, place, time) {
+  const c = ['#ffcc3a', '#d8dce8', '#e09a5a'][place - 1];
+  const sway = Math.sin(time * 3 + place) * 0.6;
+  ctx.fillStyle = ['#ff6f9a', '#8fc8f0', '#9fe0a0'][place - 1];
+  ctx.beginPath();
+  ctx.moveTo(x - 3, y - 6);
+  ctx.lineTo(x + sway, y);
+  ctx.lineTo(x + 3, y - 6);
+  ctx.fill();
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.arc(x + sway, y + 2, 3, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x + sway - 1.4, y + 0.6, 1.2, 1.2);
+}
+// The leader's crown: a little gold crown with three points and a pink jewel.
+function crown(ctx, x, y) {
+  ctx.fillStyle = '#ffcc3a';
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + 2);
+  ctx.lineTo(x - 5, y - 3);
+  ctx.lineTo(x - 2.5, y - 0.6);
+  ctx.lineTo(x, y - 4.4);
+  ctx.lineTo(x + 2.5, y - 0.6);
+  ctx.lineTo(x + 5, y - 3);
+  ctx.lineTo(x + 5, y + 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ff6f9a';
+  ctx.fillRect(x - 0.9, y - 0.4, 1.8, 1.8);
+  ctx.fillStyle = '#fff3b0';
+  ctx.fillRect(x - 4.4, y - 2.6, 1, 1);
+}
+function arrow(ctx, x, y) {
+  ctx.fillStyle = '#ff6f9a';
+  ctx.beginPath();
+  ctx.moveTo(x - 4.5, y - 5);
+  ctx.lineTo(x + 4.5, y - 5);
+  ctx.lineTo(x, y + 1);
+  ctx.closePath();
+  ctx.fill();
+}
+// Confetti over the podium: little papers in every flag colour tumbling down.
+function confetti(ctx, t, time) {
+  const k = Math.min(1, Math.max(0, (t - 0.6) / 0.5));
+  if (k <= 0) return;
+  ctx.save();
+  for (let i = 0; i < 46; i++) {
+    const h = hash(i * 5.7);
+    const fall = 22 + h * 26;
+    const y = ((time * fall + hash(i * 2.3) * (VH + 40)) % (VH + 40)) - 20;
+    const x = hash(i * 9.1) * VW + Math.sin(time * (1.4 + h) + i) * 10;
+    const flip = Math.abs(Math.sin(time * (3 + h * 3) + i));
+    ctx.globalAlpha = k * 0.9;
+    ctx.fillStyle = FLAGS[i % FLAGS.length];
+    ctx.fillRect(x - 1.5 * flip, y, 3 * flip + 0.4, 2.2);
+  }
+  ctx.restore();
 }

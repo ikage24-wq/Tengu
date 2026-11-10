@@ -93,7 +93,7 @@ test('a party race: invite, join with your own Mochi, race together, cheer, and 
     assert.equal(B.char.gold - goldB, prizeOf('sprint', 'beginner', place));
     if (place <= 3) assert.ok(recB.medals?.['sprint|beginner']);
     // Up after the results: Bea goes back where she was.
-    for (let f = 0; f < 60 * 3.2; f++) net.as('B', (w) => updateWorld(w, 1 / 60, keys()));
+    for (let f = 0; f < 60 * 6.2; f++) net.as('B', (w) => updateWorld(w, 1 / 60, keys()));
     net.as('B', (w) => updateWorld(w, 1 / 60, keys(['ArrowUp'])));
     assert.equal(B.race, null);
     assert.equal(B.map.id, 'sprout');

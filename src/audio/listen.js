@@ -47,6 +47,10 @@ export function songFor(map, world = null) {
   // A queen's trial, or a queen back on her map for a rematch and in the fight.
   if (map.trial) return 'queen';
   if (world?.mobs?.some((m) => isQueen(m) && m.hp > 0 && (m.aggroUntil > world.now || Math.abs(m.x - world.body.x) < 420))) return 'queen';
+  // A Mochi race: its own music (audio/tracks.js), the final-lap mix from the final stretch, the
+  // jingle once it's over.
+  const R = world?.race;
+  if (R && map.race) return R.phase === 'done' ? 'racewin' : R.finalAt != null ? 'raceclimax' : 'race';
   if (map.music) return map.music;
   if (map.isTown) return `${TOWN_SONG[map.town] ?? 'town'}${dayPart() === 'night' ? '-night' : ''}`;
   return { crag: 'crag', meadow: 'meadow', forest: 'forest', ruins: 'ruins', cave: 'cave', sky: 'sky', harbor: 'harbor', grove: 'grove', shrine: 'shrine', ridge: 'ridge', springs: 'springs', snow: 'peak' }[map.theme] ?? 'meadow';

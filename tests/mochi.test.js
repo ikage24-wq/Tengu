@@ -12,6 +12,7 @@ import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, evolve } from '../src/data/mochi-raise.js';
 import { takeAlong, sendHome, petReach, formHelp } from '../src/world/mochi.js';
 import { surfacesOf, waterAt } from '../src/world/physics.js';
+import { gmCommand } from '../src/world/gm.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -148,4 +149,16 @@ test('your Mochi is always on something: the ground, a ledge or swimming at the 
   go(3, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
   go(2);
   assert.equal(w.mochi.m.mode, 'run');
+});
+
+test('the Game Master can put a maxed Mochi in the Garden: every stat S at Lv 99, grown; not past 8', () => {
+  const c = createCharacter('Owner', {});
+  const w = createWorld(c);
+  w.log = () => {};
+  assert.match(gmCommand(w, 'mochi', ['demon', 'Zoomy']), /Zoomy/);
+  const rec = c.garden.mochi.at(-1);
+  assert.equal(rec.path, 'demon');
+  for (const s of STATS) assert.ok(rec.stats[s].grade === 'S' && rec.stats[s].level === 99 && rec.stats[s].points > 2400, s);
+  while (c.garden.mochi.length < 8) gmCommand(w, 'mochi', []);
+  assert.match(gmCommand(w, 'mochi', []), /full/);
 });

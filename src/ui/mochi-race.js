@@ -6,7 +6,7 @@
 
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
-import { startRace, leaveRace, standings, progressOf, COUNTDOWN } from '../world/mochi-race.js';
+import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO } from '../world/mochi-race.js';
 import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites } from '../net/mochi-race.js';
 import { partyFriends } from '../net/together.js';
 import { online } from '../net/online.js';
@@ -204,6 +204,20 @@ export function raceHud(ui, state, world) {
   const { ctx } = ui;
   const course = world.map.race;
   const you = R.racers[R.me];
+  // The cutscenes (the opening, the podium, the finish in slow motion) between black bars.
+  const il = introLen(R);
+  const intro = R.phase === 'ready' && R.t < il;
+  const podium = R.phase === 'done' && R.t < PODIUM.secs;
+  const slow = R.slowLeft > 0 ? Math.min(1, (SLOW_MO.secs - R.slowLeft) / 0.25, R.slowLeft / 0.3) : 0;
+  letterbox(ctx, intro ? Math.min(1, R.t / 0.4, (il - R.t) / 0.3) : podium ? Math.min(1, R.t / 0.4, (PODIUM.secs - R.t) / 0.3) : slow * 0.7);
+  if (intro) {
+    introCards(ctx, R, il);
+    return;
+  }
+  if (podium) {
+    podiumTitle(ctx, R);
+    return;
+  }
   // Up top: the course as a line, everyone's head along it, yours with a heart; your place.
   const x0 = 150;
   const x1 = VW - 110;
@@ -243,8 +257,21 @@ export function raceHud(ui, state, world) {
     text(ctx, s, VW / 2 + 2, VH * 0.38 + 2, { size: 30, bold: true, align: 'center', color: 'rgba(80,40,70,0.25)' });
     text(ctx, s, VW / 2, VH * 0.38, { size: 30, bold: true, align: 'center', color });
   };
-  if (R.phase === 'ready') big(String(Math.max(1, Math.ceil(COUNTDOWN - R.t))), '#ff6f9a');
-  else if (R.phase === 'run' && R.t < 0.8) big('Go!', '#ffb020');
+  if (R.phase === 'ready') {
+    const left = il + COUNTDOWN - R.t;
+    const n = Math.max(1, Math.ceil(left));
+    pop(ctx, String(n), n - left, '#ff6f9a');
+  } else if (R.phase === 'run' && R.t < 0.9) pop(ctx, 'GO!', R.t / 0.9, '#ffb020', true);
+  // The leader into the last fifth: the final stretch.
+  if (R.phase === 'run') {
+    if (R.finalAt == null && progressOf(course, order[0]) >= course.total * 0.8) R.finalAt = R.clock;
+    if (R.finalAt != null && R.clock - R.finalAt < 2) banner(ctx, 'Final Stretch!', (R.clock - R.finalAt) / 2);
+  }
+  // The winner crossing the line: a flash.
+  if (R.slowLeft > SLOW_MO.secs - 0.3) {
+    ctx.fillStyle = `rgba(255,255,255,${(0.55 * (R.slowLeft - (SLOW_MO.secs - 0.3))) / 0.3})`;
+    ctx.fillRect(0, 0, VW, VH);
+  }
   if (R.phase === 'run' && you.done != null && R.clock - you.done < 2) big(you.place === 1 ? 'Winner!' : 'Finish!', you.place === 1 ? '#ffb020' : '#ff6f9a');
   if (R.phase !== 'done') {
     // Your Mochi's stamina, and the Cheer button.
@@ -287,6 +314,115 @@ export function raceHud(ui, state, world) {
   text(ctx, fit(ctx, `${R.prize ? `+${R.prize} gold!` : 'No prize this time.'}${medal}`, pw - 20, 8.5, true), VW / 2, py + 166, { size: 8.5, bold: true, align: 'center', color: R.prize ? '#c89a20' : COLORS.muted });
   const news = [R.dressWon ? `The ${R.dressWon}!` : null, R.starEgg ? 'A Star Egg!' : null, R.opened?.length ? `Now open: ${R.opened.join(', ')}` : null].filter(Boolean).join('  ·  ');
   if (news) text(ctx, fit(ctx, news, pw - 20, 7, true), VW / 2, py + 179, { size: 7, bold: true, align: 'center', color: '#d0507a' });
-  if (button(ui, VW / 2 - 64, py + ph - 26, 128, 18, 'Back to the Stadium', { primary: true, size: 8 }) && R.t > 0.6) leaveRace(world);
+  if (button(ui, VW / 2 - 64, py + ph - 26, 128, 18, 'Back to the Stadium', { primary: true, size: 8 }) && R.t > PODIUM.secs + 0.6) leaveRace(world);
+}
+
+// ---------- The race's cutscenes ----------
+// Black bars top and bottom, sliding in (`k` 0 to 1).
+function letterbox(ctx, k) {
+  if (k <= 0) return;
+  const h = Math.round(26 * k * k * (3 - 2 * k));
+  ctx.fillStyle = '#20141e';
+  ctx.fillRect(0, 0, VW, h);
+  ctx.fillRect(0, VH - h, VW, h);
+}
+// The opening: the course's name as the camera sweeps along it, then each racer's card in turn.
+const STAT_NAME = { run: 'Run', swim: 'Swim', power: 'Power', fly: 'Fly', stamina: 'Stamina' };
+function introCards(ctx, R, il) {
+  const stage = RACE_STAGES[R.stageId];
+  if (R.t < INTRO.sweep) {
+    const k = Math.min(1, R.t / 0.5, (INTRO.sweep - R.t) / 0.35);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, k);
+    const y = VH * 0.7 + (1 - k) * 8;
+    text(ctx, stage.name, VW / 2 + 1.5, y + 1.5, { size: 22, bold: true, align: 'center', color: 'rgba(60,30,60,0.35)' });
+    text(ctx, stage.name, VW / 2, y, { size: 22, bold: true, align: 'center', color: '#ffffff', outline: '#ff6f9a' });
+    text(ctx, `${RACE_RANKS[R.rank].name}  ·  ${R.racers.length} racers`, VW / 2, y + 16, { size: 9, bold: true, align: 'center', color: '#ffe0ec' });
+    ctx.restore();
+  } else {
+    const i = Math.min(R.racers.length - 1, Math.floor((R.t - INTRO.sweep) / INTRO.card));
+    const r = R.racers[i];
+    const u = (R.t - INTRO.sweep) / INTRO.card - i;
+    const slide = 1 - Math.min(1, u / 0.25) ** 0.5;
+    const x = 22 - slide * 60;
+    const y = VH - 82;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, (1 - u) / 0.15, 1);
+    box(ctx, x, y, 196, 40, { fill: 'rgba(255,250,246,0.96)', edge: r.you ? '#ff6f9a' : '#d8c0e8', r: 10, width: 2, plain: true });
+    ctx.fillStyle = HAIR_COLORS[r.rec.hairColor] ?? '#ffb3c8';
+    ctx.beginPath();
+    ctx.arc(x + 20, y + 20, 10, 0, Math.PI * 2);
+    ctx.fill();
+    text(ctx, `${i + 1}`, x + 20, y + 24, { size: 10, bold: true, align: 'center', color: '#ffffff' });
+    text(ctx, fit(ctx, nameOf(r), 110, 11, true), x + 38, y + 17, { size: 11, bold: true });
+    const who = r.you ? 'Your Mochi' : r.owner ? 'Friend' : 'Rival';
+    text(ctx, who, x + 186, y + 15, { size: 7, bold: true, align: 'right', color: r.you ? '#ff6f9a' : '#9a82c8' });
+    const st = stage.stat ?? ['run', 'swim', 'power', 'fly', 'stamina'].reduce((b, s) => (r.rec.stats[s].points > r.rec.stats[b].points ? s : b), 'run');
+    text(ctx, `${STAT_NAME[st]} ${r.rec.stats[st].points.toLocaleString()}  ·  ${cap(r.rec.personality)}`, x + 38, y + 31, { size: 7.5, color: '#8a6a9a' });
+    ctx.restore();
+  }
+  text(ctx, 'Up: skip', VW - 14, VH - 34, { size: 7, align: 'right', color: 'rgba(255,255,255,0.75)' });
+  void il;
+}
+// The countdown's numbers and GO!: each pops in big and settles (`f`: how far into its beat).
+function pop(ctx, s, f, color, burst = false) {
+  const k = Math.min(1, f * 4);
+  const scale = 1 + 0.9 * (1 - k) ** 2;
+  const alpha = f > 0.75 ? Math.max(0, (1 - f) / 0.25) : 1;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(VW / 2, VH * 0.38);
+  ctx.scale(scale, scale);
+  if (burst) {
+    ctx.strokeStyle = '#ffd75e';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      const r0 = 26 + f * 20;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * r0, Math.sin(a) * r0 * 0.6 - 10);
+      ctx.lineTo(Math.cos(a) * (r0 + 10), Math.sin(a) * (r0 + 10) * 0.6 - 10);
+      ctx.stroke();
+    }
+  }
+  text(ctx, s, 2, 2, { size: 34, bold: true, align: 'center', color: 'rgba(80,40,70,0.25)' });
+  text(ctx, s, 0, 0, { size: 34, bold: true, align: 'center', color, outline: '#ffffff' });
+  ctx.restore();
+}
+// A ribbon sweeping across the screen with words on it (`k`: 0 to 1 through its time).
+function banner(ctx, words, k) {
+  const inK = Math.min(1, k / 0.15);
+  const outK = Math.max(0, (k - 0.8) / 0.2);
+  const x = (1 - inK) ** 2 * VW - outK * outK * VW;
+  const y = VH * 0.24;
+  ctx.save();
+  ctx.translate(x, 0);
+  ctx.fillStyle = '#ff6f9a';
+  ctx.beginPath();
+  ctx.moveTo(VW * 0.18, y - 12);
+  ctx.lineTo(VW * 0.84, y - 12);
+  ctx.lineTo(VW * 0.82, y + 12);
+  ctx.lineTo(VW * 0.16, y + 12);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#ffd75e';
+  ctx.fillRect(VW * 0.18, y - 12, VW * 0.66, 2);
+  ctx.fillRect(VW * 0.16, y + 10, VW * 0.66, 2);
+  text(ctx, words, VW / 2, y + 5, { size: 15, bold: true, align: 'center', color: '#ffffff' });
+  ctx.restore();
+}
+// The podium's title: who won, and the top three.
+function podiumTitle(ctx, R) {
+  const k = Math.min(1, Math.max(0, (R.t - 1.6) / 0.4));
+  if (k <= 0 || !R.results) return;
+  const top = R.results.slice(0, 3);
+  ctx.save();
+  ctx.globalAlpha = k;
+  const y = 52 - (1 - k) * 6;
+  text(ctx, `${nameOf(top[0])} wins!`, VW / 2 + 1.5, y + 1.5, { size: 20, bold: true, align: 'center', color: 'rgba(60,30,60,0.35)' });
+  text(ctx, `${nameOf(top[0])} wins!`, VW / 2, y, { size: 20, bold: true, align: 'center', color: '#ffd75e', outline: '#c06a30' });
+  text(ctx, top.map((r, i) => `${NTH[i]} ${nameOf(r)}`).join('   ·   '), VW / 2, y + 16, { size: 8, bold: true, align: 'center', color: '#ffffff', outline: '#8a5a7a' });
+  ctx.restore();
 }
 

@@ -45,6 +45,11 @@ terms like these. Rebuild with `node tools/build-audio.mjs`.
   chicks and gosling, a cat), Epic Stock Media (HD Game Materials' dry-ice squeak, Synthesized
   Nature's frog), CB Sounddesign (Applicable Sounds' bird flutes), 344 Audio (Dinosaurs' hatchling)
   and SoundBits (Vox Hominis' whistle).
+- **Race music** (`music/pure-raceway*.mp3`, `music/win-jingle.mp3`, listed in `src/audio/tracks.js`),
+  all CC0 from OpenGameArt: mintodog's Pure Raceway and its Climax mix
+  (opengameart.org/content/pure-raceway), and fupi's Win Jingle, vibraphone version
+  (opengameart.org/node/114596), padded with quiet so it plays once. Cut to 96 kbps and levelled to
+  the rest of the soundtrack.
 - **Music** (`music/`, listed in `src/audio/tracks.js`): Juhani Junkala's JRPG Music Packs 1, 2, 3, 4
   and 5 and Epic Boss Battle; Tarush Singhal's Happy Ukulele Island Surfing Theme; cynicmusic's Crystal Cave, Dark Forest and Battle Theme A; Kistol's
   Snowfall; Cleyton RX's Underwater; RandomMind's The Old Tower Inn. All from

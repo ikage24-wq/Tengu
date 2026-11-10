@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { MAPS } from '../src/data/maps.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord } from '../src/data/mochi-raise.js';
-import { startRace, rivalsFor, raceHour } from '../src/world/mochi-race.js';
+import { startRace, rivalsFor, raceHour, PODIUM, podiumSpot } from '../src/world/mochi-race.js';
 import { groundAt, waterAt } from '../src/world/physics.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
@@ -51,6 +51,10 @@ test('a race: the countdown, everyone home or out of time, six places, a prize f
   assert.ok(startRace(w, rec, 'sprint'));
   assert.equal(w.map.id, 'mrace_sprint');
   assert.equal(w.race.phase, 'ready');
+  // The opening plays (the camera sweeps the course, each racer's card); Up skips it to the countdown.
+  for (let k = 0; k < 60; k++) updateWorld(w, 1 / 60, keys());
+  assert.equal(w.race.shot, 'sweep');
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
   for (let k = 0; k < 60 * 3.1; k++) updateWorld(w, 1 / 60, keys());
   assert.equal(w.race.phase, 'run');
   const R = run(w);
@@ -59,11 +63,21 @@ test('a race: the countdown, everyone home or out of time, six places, a prize f
   assert.equal(R.racers[0].place, 1, 'a strong Mochi wins a Beginner race');
   assert.equal(w.char.gold, gold + 500);
   assert.ok(rec.mood > 60, 'a win cheers it up');
-  // Up takes you back to the stadium.
-  // (Not straight away, though: the results stay up a moment.)
+  // The podium: the top three up on their blocks (the winner on the tallest), cheering.
+  // (Up straight away doesn't skip it; a moment in, it does, to the results.)
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.ok(w.race && w.race.t < PODIUM.secs);
+  for (let k = 0; k < 60 * 3; k++) updateWorld(w, 1 / 60, keys());
+  const win = R.results[0];
+  assert.equal(win.x, podiumSpot(w.map.race, 1).x);
+  assert.ok(Math.abs(win.y - (groundAt(w.map, win.x) - podiumSpot(w.map.race, 1).h)) < 0.01, 'on the top block');
+  assert.equal(w.race.shot, 'podium');
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.ok(w.race.t >= PODIUM.secs, 'on to the results');
+  // Up takes you back to the stadium (not straight away: the results stay up a moment).
   updateWorld(w, 1 / 60, keys(['ArrowUp']));
   assert.ok(w.race);
-  for (let k = 0; k < 60 * 3.1; k++) updateWorld(w, 1 / 60, keys());
+  for (let k = 0; k < 60 * 1.1; k++) updateWorld(w, 1 / 60, keys());
   updateWorld(w, 1 / 60, keys(['ArrowUp']));
   assert.equal(w.race, null);
   assert.equal(w.map.id, 'mochi_stadium');
@@ -161,7 +175,7 @@ test('ranks: a win opens the next rank; the Grand course after three Beginner wi
     const R = run(w);
     assert.equal(R.racers[0].place, 1, stage);
     assert.equal(R.medal.medal, 'gold');
-    for (let k = 0; k < 60 * 3.2; k++) updateWorld(w, 1 / 60, keys());
+    for (let k = 0; k < 60 * 6.2; k++) updateWorld(w, 1 / 60, keys());
     updateWorld(w, 1 / 60, keys(['ArrowUp']));
   }
   assert.equal(rec.medals['sprint|beginner'], 'gold');
@@ -199,7 +213,7 @@ test('the first Master win on a stage brings a Star Egg (only the first)', async
     const R = run(w);
     assert.equal(R.racers[0].place, 1);
     assert.equal(Boolean(R.starEgg), k === 1);
-    for (let f = 0; f < 60 * 3.2; f++) updateWorld(w, 1 / 60, keys());
+    for (let f = 0; f < 60 * 6.2; f++) updateWorld(w, 1 / 60, keys());
     updateWorld(w, 1 / 60, keys(['ArrowUp']));
   }
   assert.equal(countItem(w.char.inventory, 'mochi_egg_star'), 1);
@@ -218,7 +232,7 @@ test('dress-up: the Daifuku hood from the start; each other costume with a first
     const R = run(w);
     assert.equal(R.racers[0].place, 1);
     assert.equal(R.dressWon ?? null, k === 1 ? DRESS.dango.name : null, 'only the first win');
-    for (let f = 0; f < 60 * 3.2; f++) updateWorld(w, 1 / 60, keys());
+    for (let f = 0; f < 60 * 6.2; f++) updateWorld(w, 1 / 60, keys());
     updateWorld(w, 1 / 60, keys(['ArrowUp']));
   }
   assert.ok(dressOpen(w.char, 'dango'));
@@ -257,4 +271,18 @@ test('every racer, every frame, on every course: on the ground, in the water, on
       assert.equal(R.phase, 'done', `${stage} ends`);
     }
   }
+});
+
+test('a race has its own music: the race, the final-lap mix from the final stretch, the win jingle at the end', async () => {
+  const { songFor } = await import('../src/audio/listen.js');
+  const { trackFor } = await import('../src/audio/tracks.js');
+  const rec = mochi(3, 2400);
+  const w = racer(rec);
+  assert.ok(startRace(w, rec, 'sprint'));
+  assert.equal(songFor(w.map, w), 'race');
+  w.race.finalAt = 1;
+  assert.equal(songFor(w.map, w), 'raceclimax');
+  run(w);
+  assert.equal(songFor(w.map, w), 'racewin');
+  for (const k of ['race', 'raceclimax', 'racewin']) assert.ok(trackFor(k)?.file.endsWith('.mp3'), k);
 });

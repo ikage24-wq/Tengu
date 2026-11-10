@@ -1472,7 +1472,8 @@ const SPECTATE = [
   { ...OUT(-14), tilt: -6, closed: [true, true], mouth: 'yell', sprout: 'excited', blush: 1.8 },
 ].map((o) => ({ ...pose(o), closed: o.closed, sprout: o.sprout }));
 export const SPECTATOR_BEATS = SPECTATE.length;
-export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null) {
+// (`ahead`: only asked for, for the sprite worker to paint before it's needed.)
+export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null, ahead = false) {
   const P = SPECTATE[beat] ?? SPECTATE[0];
   const rig = {
     tx: 0, by: 0, hx: P.hx, hy: P.hy + 0.6, tilt: P.tilt, lift: 0, squat: 0,
@@ -1482,7 +1483,7 @@ export function drawSpectator(ctx, g, x, y, beat, facing = 1, slot = null) {
   };
   let look = lookOf(g, P.sprout, 0);
   if (P.mouth) look = { ...look, mouth: P.mouth };
-  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot });
+  drawPosed(ctx, look, Math.round(x * 2) / 2, Math.round(y * 2) / 2, rig, { scale: MOCHI_SIZE.baby, facing, slot, ahead });
 }
 
 // Draws Mochi `m` with its feet at (x, y) at `time` seconds. `m`: { genes, dir (1 right, -1 left),

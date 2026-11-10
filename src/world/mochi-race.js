@@ -71,7 +71,27 @@ const GETAWAY = [0.35, 1.3];
 const HOP = [10, 70];
 // The countdown before Go; and how long the results show before Up can take you back.
 export const COUNTDOWN = 3;
-const LEAVE_AFTER = 3;
+const LEAVE_AFTER = 1;
+// Before the countdown, the race's opening (a cutscene; Up skips it): the camera sweeps along the
+// course from the finish back to the start (`sweep` s), then each racer on the line gets its card
+// (`card` s each). `introLen`: how long all of it takes; the countdown follows.
+export const INTRO = { sweep: 2.6, card: 0.5 };
+export const introLen = (R) => INTRO.sweep + INTRO.card * R.racers.length;
+// The finish: as the first one crosses, a moment in slow motion (`secs` real seconds at `rate`).
+export const SLOW_MO = { secs: 1.4, rate: 0.3 };
+// After the race, the podium (render/race.js): the top three hop up onto it (`hop` s each, a beat
+// apart) and cheer, confetti flying, for `secs` seconds (Up skips it once it's begun); then the
+// results. It stands in front of the stands, `x` past the finish; each place's block, how far
+// across from its middle and how tall.
+export const PODIUM = { secs: 5, x: 300, skipAfter: 1.2, hop: 0.6, blocks: [[0, 26], [-30, 18], [30, 12]] };
+export const podiumSpot = (course, place) => ({ x: course.finish + PODIUM.x + PODIUM.blocks[place - 1][0], h: PODIUM.blocks[place - 1][1] });
+// On the line before Go each lane stands a little apart (so each can be seen), closing up over the
+// first moments of the race (only how they're drawn: everyone runs the same course).
+const LINEUP = { gap: 13, close: 1.2 };
+export function lineupOffset(R, r) {
+  const at = (r.lane - (R.racers.length - 1) / 2) * LINEUP.gap;
+  return R.phase === 'ready' ? at : R.phase === 'run' ? at * Math.max(0, 1 - R.clock / LINEUP.close) : 0;
+}
 
 function speedOf(table, points, cantBelow, cantSpeed) {
   if (points < cantBelow) return cantSpeed;
@@ -143,8 +163,9 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
     cam: null,
   };
   loadMap(world, stage.map, 'start');
-  // You watch from the finish, by the crowd, facing the runners.
-  const at = course.finish + 300;
+  // You watch from the finish, by the crowd at the near end of the stands, facing the runners (clear
+  // of the podium, further along).
+  const at = course.finish + 140;
   Object.assign(world.body, { x: at, y: groundAt(world.map, at), vx: 0, vy: 0, facing: -1 });
   world.race.cam = { x: course.start, y: y0 };
   world.log(`${stage.name} (${RACE_RANKS[rank].name}): on your marks...`, '#ffc2d4');
@@ -291,29 +312,33 @@ export function tickRace(world, dt, input) {
   }
   R.t += dt;
   if (R.phase === 'ready') {
-    if (R.t >= COUNTDOWN) Object.assign(R, { phase: 'run', t: 0 });
+    if (up && R.t < introLen(R)) R.t = introLen(R);
+    if (R.t >= introLen(R) + COUNTDOWN) Object.assign(R, { phase: 'run', t: 0 });
   } else if (R.phase === 'run') {
-    R.clock += dt;
+    // (The first across the line: a moment in slow motion.)
+    const sdt = R.slowLeft > 0 ? dt * SLOW_MO.rate : dt;
+    R.slowLeft = Math.max(0, (R.slowLeft ?? 0) - dt);
+    R.clock += sdt;
     // (Cheered on, it squeaks back.)
     if (up && cheer(R, you)) mochiVoice(world, you.rec, 'happy', world.body.x);
-    for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
+    for (const r of R.racers) stepRacer(R, r, sdt, course, world.map);
     const last = course.legs.length - 1;
     for (const r of R.racers) {
       if (r.done != null || r.leg < last || r.x < course.finish) continue;
       r.done = R.clock;
       r.place = ++R.finished;
+      if (R.first == null) R.slowLeft = SLOW_MO.secs;
       R.first ??= R.clock;
     }
     if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + RACE_TAIL) || R.clock >= RACE_MAX) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
+    podiumStep(world, R);
     // (Yours cheers or sulks at the end, and says so: world/mochi-voice.js.)
     voiceAction(world, you.rec, you.m, world.body.x);
-    // (Not straight away: someone still cheering as it ends shouldn't skip the results.)
-    if (up && R.t > LEAVE_AFTER) {
-      leaveRace(world);
-      return;
-    }
+    // (Up: past the podium to the results, then back. Not straight away: someone still cheering as
+    // it ends shouldn't skip it all.)
+    if (up && podiumUp(world, R)) return;
   }
   // (Hosting a party race: where everyone is, to the friends, a few times a second; and a little
   // while after the end, so they see the racers come to a stop.)
@@ -322,7 +347,89 @@ export function tickRace(world, dt, input) {
     R.sendIn = SEND_EVERY;
     raceNet.state?.(world, R);
   }
-  R.cam = { x: you.x, y: you.y };
+  aimCamera(world, R);
+}
+
+// After the race, Up skips the podium to the results (once it's begun), and from the results takes
+// you back. Returns true if it took you back.
+function podiumUp(world, R) {
+  if (R.t < PODIUM.secs) {
+    if (R.t > PODIUM.skipAfter) R.t = PODIUM.secs;
+    return false;
+  }
+  if (R.t < PODIUM.secs + LEAVE_AFTER) return false;
+  leaveRace(world);
+  return true;
+}
+// The podium: the top three, from wherever they came to a stop, hop up onto their blocks (3rd, then
+// 2nd, then the winner) and cheer. (Worked out from the places alone, so a friend's game puts them
+// there the same.)
+function podiumStep(world, R) {
+  const map = world.map;
+  const course = map.race;
+  for (const r of R.racers) {
+    if (!(r.place >= 1 && r.place <= 3)) continue;
+    r.pod ??= { x: r.x, y: r.y };
+    const s = podiumSpot(course, r.place);
+    const top = groundAt(map, s.x) - s.h;
+    const k = Math.max(0, Math.min(1, (R.t - 0.8 - (3 - r.place) * 0.35) / PODIUM.hop));
+    const e = k * k * (3 - 2 * k);
+    r.x = r.pod.x + (s.x - r.pod.x) * e;
+    r.y = r.pod.y + (top - r.pod.y) * e - Math.sin(Math.PI * k) * 26;
+    // (A plain jump up, standing tall: not its flying style, which for a great flyer is a whole loop.)
+    const air = k > 0 && k < 1;
+    Object.assign(r.m, { mode: 'run', speed: 0, noShadow: air, inWater: false, dir: 1, tired: 0, rest: false });
+    if (k >= 1 && !r.podCheer) {
+      r.podCheer = true;
+      r.m.action = { name: 'cheer', t0: null, hold: 30 };
+    }
+  }
+}
+
+// ---------- The camera ----------
+// Where the race camera looks (`R.cam`: render/scene.js eases to it, or cuts straight there when
+// `cut` changes), by what's happening: the opening sweep from the finish back to the start; along
+// the line-up as each card shows; the start for the countdown; then running with your Mochi, a
+// little ahead of it the faster it goes; between it and a rival when they're neck and neck; at the
+// line as the first comes in (and as yours does); and at the podium.
+const CUT_SHOTS = new Set(['sweep', 'finish', 'podium']);
+function shotOf(world, R) {
+  const map = world.map;
+  const course = map.race;
+  const you = R.racers[R.me];
+  const g = (x) => groundAt(map, x);
+  if (R.phase === 'ready') {
+    if (R.t < INTRO.sweep) {
+      const k = R.t / INTRO.sweep;
+      const e = k * k * (3 - 2 * k);
+      const x = course.finish + 160 + (course.start + 80 - course.finish - 160) * e;
+      return { shot: 'sweep', x, y: g(x) };
+    }
+    const i = Math.floor((R.t - INTRO.sweep) / INTRO.card);
+    const r = R.racers[Math.min(R.racers.length - 1, i)];
+    if (i < R.racers.length) return { shot: 'line', x: course.start + lineupOffset(R, r) + 40, y: r.y };
+    return { shot: 'line', x: course.start + 70, y: g(course.start) };
+  }
+  if (R.phase === 'done') {
+    const x = course.finish + PODIUM.x;
+    return { shot: 'podium', x, y: g(x) - 8 };
+  }
+  const last = course.legs.length - 1;
+  const coming = (r) => r.done == null && r.leg === last && course.finish - r.x < 200;
+  if (R.slowLeft > 0 || (coming(you) && R.clock > 2)) return { shot: 'finish', x: course.finish + 30, y: g(course.finish) };
+  const ahead = Math.min(80, (you.m.speed ?? 0) * 0.45);
+  if (you.done == null) {
+    const p = progressOf(course, you);
+    const rival = R.racers.find((r) => r !== you && r.done == null && Math.abs(progressOf(course, r) - p) < 22);
+    if (rival) return { shot: 'duel', x: (you.x + rival.x) / 2 + ahead * 0.5, y: (you.y + rival.y) / 2 };
+  }
+  return { shot: 'follow', x: you.x + ahead, y: you.y };
+}
+function aimCamera(world, R) {
+  const s = shotOf(world, R);
+  if (s.shot !== R.shot && (CUT_SHOTS.has(s.shot) || CUT_SHOTS.has(R.shot))) R.cut = (R.cut ?? 0) + 1;
+  R.shot = s.shot;
+  R.cam = { x: s.x, y: s.y, cut: R.cut ?? 0 };
 }
 
 // ---------- A friend's party race ----------
@@ -386,11 +493,9 @@ function tickRemote(world, R, dt, up, you) {
     R.results = standings(R, world.map.race);
     world.log('Lost touch with the race...', '#ffb3c6');
   }
-  if (R.phase === 'done' && up && R.t > LEAVE_AFTER) {
-    leaveRace(world);
-    return;
-  }
-  R.cam = { x: you.x, y: you.y };
+  if (R.phase === 'done') podiumStep(world, R);
+  if (R.phase === 'done' && up && podiumUp(world, R)) return;
+  aimCamera(world, R);
 }
 // A friend's game: the host's race is over; where everyone came, and your own Mochi's prize.
 export function applyRaceEnd(world, msg) {
