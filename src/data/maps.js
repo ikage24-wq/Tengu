@@ -2816,6 +2816,10 @@ for (const [id, [x, y]] of Object.entries(HOMESTONES)) {
 }
 
 // Safe arrival (the map rules): no monster starts near a way in, a homestone or where you appear.
+// (Quests ask for 8 Petals and Straw Tufts: a few more Petal Sprites and Scarecrow Imps, so a group
+// sharing the field isn't queueing for three of each. The drop chances stay as they were.)
+MAPS.meadow1.spawns.push({ mob: 'petalsprite', x: 750, y: 440 }, ...[330, 650].map((x) => ({ mob: 'petalsprite', x, y: 360 })));
+MAPS.meadow2.spawns.push(...[520, 880, 1350].map((x) => ({ mob: 'strawimp', x, y: 700 })));
 for (const m of Object.values(MAPS)) if (!m.dungeon && m.spawns?.length) clearArrivals(m, MOBS, NODES[m.id]);
 
 // Every map's gathering spots, settled clear of what was added after its layout (data/climb.js).
