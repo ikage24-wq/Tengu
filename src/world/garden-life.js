@@ -336,6 +336,15 @@ export function tickGarden(world, dt) {
         m.action = { name: 'play', t0: null };
       }
     }
+    // (You tossed the ball from the toy box: off after it, and a game once there.)
+    if (e.ballChase && life.ball && now < life.ball.until) {
+      target = life.ball.x + (i % 2 ? 16 : -16) + (i % 3) * 5;
+      if (e.x != null && Math.abs(e.x - target) < 3 && !e.ballPlayed) {
+        e.ballPlayed = true;
+        m.action = { name: 'play', t0: null };
+        careRec(rec, 'play');
+      }
+    } else if (e.ballChase) Object.assign(e, { ballChase: false, ballPlayed: false });
     // (In a moment with a neighbour: where the moment has it.)
     const mo = life.moment;
     const inMoment = mo && !other && (mo.a === e || mo.b === e) && e.x != null;
@@ -348,7 +357,7 @@ export function tickGarden(world, dt) {
     if (e.x == null) e.x = sched.x;
     const wet = footingAt(map, e.x).swim;
     const v0 = wet ? (pts(rec, 'swim') >= CANT.swim ? SWIM_SPEED[tierOf(rec, 'swim')] * 0.6 : 18) : strollSpeed(rec) * (e.greet ? 2 : Math.abs(target - e.x) > 40 ? 1.5 : 1);
-    const v = other ? Math.max(v0, 40) : inMoment ? Math.max(v0, mo.kind === 'chase' ? 46 : 26) : v0;
+    const v = other ? Math.max(v0, 40) : e.ballChase && !e.ballPlayed ? Math.max(v0, 52) : inMoment ? Math.max(v0, mo.kind === 'chase' ? 46 : 26) : v0;
     // It gets going and slows to a stop smoothly (never off at full speed, never a dead stop), and
     // turns round only once it's stopped.
     const dx = target - e.x;
@@ -867,6 +876,30 @@ export function gardenGateUp(world, portal) {
 export function eggStallUp(world) {
   if (!world.map.garden || world.map.indoor || world.gardenVisit || Math.abs(world.body.x - STALL_X) > 40) return false;
   world.events.push({ type: 'eggstall' });
+  return true;
+}
+
+// ---------- The toy box ----------
+// Up at the toy box: you toss the ball, and your Mochi nearby who can walk run after it and play (a
+// little care each). Once every two minutes, so it's a treat, not a button to press for care.
+const BALL = { every: 120, near: 280, secs: 14 };
+export function tossBall(world) {
+  const life = world.gardenLife;
+  if (!life || world.gardenVisit || world.map.indoor || Math.abs(world.body.x - TOY_X) > 40) return false;
+  const now = Date.now() / 1000;
+  if (life.ballAt && now - life.ballAt < BALL.every) {
+    world.log('The ball is still rolling about. Give them a little while!', '#cfe8ff');
+    return true;
+  }
+  const near = life.mochi.filter((e) => !e.guest && !e.hidden && e.x != null && Math.abs(e.x - TOY_X) < BALL.near && pts(e.rec, 'run') >= CANT.run && e.rec.stage !== 'egg');
+  if (!near.length) {
+    world.log('You toss the ball... but no Mochi is near enough to chase it.', '#cfe8ff');
+    return true;
+  }
+  life.ballAt = now;
+  life.ball = { x: TOY_X, until: now + BALL.secs };
+  for (const e of near) Object.assign(e, { ballChase: true, ballPlayed: false });
+  world.log(`You toss the ball! ${near.length === 1 ? calledOf(near[0].rec, 'Your Mochi') + ' chases' : 'Your Mochi chase'} after it.`, '#ffc2d4');
   return true;
 }
 

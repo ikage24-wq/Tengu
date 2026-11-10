@@ -439,6 +439,18 @@ export function drawRacePiece(ctx, map, kind, wx, extra, cam, width, time) {
 // ---------- The racers ----------
 // Back lanes first, so the nearer ones run in front; your Mochi with a little heart over it, and
 // hearts bursting off it while a cheer lasts.
+function youTag(ctx, x, y) {
+  ctx.save();
+  ctx.font = '800 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ff6f9a';
+  ctx.beginPath();
+  ctx.roundRect(Math.round(x - 9), Math.round(y - 5), 18, 8, 4);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('You', Math.round(x), Math.round(y + 1.2));
+  ctx.restore();
+}
 function heart(ctx, x, y, s, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -528,6 +540,17 @@ export function drawRace(ctx, world, cam, time) {
     // (GO!: each springs off the line, a little hop as it launches, staggered by lane.)
     const go = R.phase === 'run' ? (R.clock - (r.lane ?? 0) * 0.03) / 0.32 : -1;
     const y = r.y - cam.y - (go > 0 && go < 1 ? Math.sin(go * Math.PI) * 7 : 0);
+    // (Yours, easy to find in the bunch: a soft pink ring at its feet.)
+    if (r.you && R.phase !== 'done') {
+      ctx.save();
+      ctx.strokeStyle = '#ff6f9a';
+      ctx.lineWidth = 1.6;
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(time * 4);
+      ctx.beginPath();
+      ctx.ellipse(x, y + 1, 12, 3.4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
     // (A friend's ghost: see-through.)
     if (r.ghost) ctx.globalAlpha = 0.55;
     drawMochiAnim(ctx, r.m, x, y, time);
@@ -543,6 +566,8 @@ export function drawRace(ctx, world, cam, time) {
     }
     if (!r.you) continue;
     heart(ctx, x, top + Math.sin(time * 4) * 1.2, 3.2, '#ff6f9a');
+    // ...and a little "You" tag over the heart while it runs.
+    if (R.phase !== 'done') youTag(ctx, x, top - 9 - (r === lead && r.done == null ? 9 : 0) + Math.sin(time * 4) * 1.2);
     const left = R.phase === 'run' ? r.cheerUntil - R.clock : 0;
     if (left > 0) {
       const k = 1 - left / 1.2;

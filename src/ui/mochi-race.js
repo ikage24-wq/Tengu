@@ -163,6 +163,31 @@ export function raceBoardWindow(ui, state, world) {
       ty += 15;
     }
   }
+  // ---- No times here yet: how the picked Mochi measures up against this rank's rivals, a bar for
+  // each stat the course tests (the rivals' range shaded, yours marked), so you can tell if it's ready.
+  if (!times.length && win.pick && ty + 34 < by0) {
+    const rec = win.pick;
+    const [lo, hi] = RACE_RANKS[win.rank].rivals;
+    const stats = stage.stat ? [stage.stat, stage.stat === 'stamina' ? 'run' : 'stamina'] : STAT_ORDER;
+    text(ctx, fit(ctx, `${rec.name ?? 'Your Mochi'} against the ${RACE_RANKS[win.rank].name} rivals`, W - 20, 7, true), x, ty + 4, { size: 7, bold: true, color: COLORS.muted });
+    ty += 9;
+    for (const st of stats) {
+      if (ty + 12 > by0) break;
+      const have = rec.stats[st]?.points ?? 0;
+      const top = Math.max(hi * 1.4, have * 1.1, 10);
+      const bx = x + 52;
+      const bw = W - 20 - 52 - 34;
+      statIcon(ctx, st, x + 5, ty + 5, 3.4);
+      text(ctx, STAT_WORD[st], x + 12, ty + 7.5, { size: 6.8, bold: true });
+      box(ctx, bx, ty + 2, bw, 7, { fill: '#fff4f8', edge: '#f2dce6', r: 3.5, width: 1, plain: true });
+      box(ctx, bx + (lo / top) * bw, ty + 2, ((hi - lo) / top) * bw, 7, { fill: '#ffd8e6', edge: null, r: 3.5, plain: true });
+      const mx = bx + Math.min(1, have / top) * bw;
+      box(ctx, mx - 2.5, ty, 5, 11, { fill: have >= hi ? '#62c072' : have >= lo ? '#ffb347' : '#e0659f', edge: '#ffffff', r: 2.5, width: 1, plain: true });
+      text(ctx, `${Math.round(have)}`, x + W - 20 - 2, ty + 8, { size: 6.8, bold: true, align: 'right', color: have >= hi ? '#3f9a50' : have >= lo ? '#c07a10' : COLORS.bad });
+      ty += 13;
+    }
+    if (ty + 9 < by0) text(ctx, 'Pink: where the rivals are. Green: ahead of them all.', x, ty + 5, { size: 6, color: COLORS.muted });
+  }
   const open = rankOpen(char, win.stage, win.rank);
   const L = world.raceLobby;
   const by = win.y + H - 26;

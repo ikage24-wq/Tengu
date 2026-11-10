@@ -669,8 +669,65 @@ const stadiumArt = () => art('mg-stadium', 184, 160, () => {
     ...[[64, 72], [84, 76], [104, 72], [124, 76]].map(([x, y], i) => F(T([[x - 4, y], [x + 4, y], [x, y + 7]], i % 2 ? '#8fd3ff' : '#ffd75e'))),
     T([[36, 60], [46, 66], [46, 154], [36, 160]], '#a87850'), T([[148, 60], [138, 66], [138, 154], [148, 160]], '#a87850'),
     ...[80, 104, 128].map((y) => F(R(37, y, 9, 2, '#7a5438'))), ...[80, 104, 128].map((y) => F(R(138, y, 9, 2, '#7a5438'))),
-    R(66, 22, 52, 18, '#fff6ea'), F(E(84, 31, 5, 4, '#ffffff')), F(R(78, 30, 4, 1, '#9fd0f0')), F(R(76, 33, 5, 1, '#9fd0f0')), F(R(96, 28, 14, 2, SAKURA)), F(R(96, 32, 10, 2, SAKURA)),
+    // The plaque: a racing mochi, and RACES lettered beside it (drawGardenPiece mg_stadium).
+    R(62, 20, 60, 20, '#fff6ea'), F(R(62, 20, 60, 2, '#ffffff')), F(R(62, 38, 60, 2, '#e8d8c0')),
+    F(E(74, 31, 5, 4, '#ffffff')), F(E(73, 30, 1, 1, '#5a4038')), F(E(76, 30, 1, 1, '#5a4038')), F(R(66, 30, 3, 1, '#9fd0f0')), F(R(65, 33, 4, 1, '#9fd0f0')),
   ];
+  return out;
+});
+
+// ---------- The earth under the ledges ----------
+// The inside of a high ledge, seen from below (by the pond, under the Moonmortar): instead of a
+// plain sheet of dirt, gentle bands of rock laid down over the years, stones with moss on their
+// tops, roots hanging from the grass above, and on the big one a little burrow where glowing
+// mushrooms grow. `extra`: { left, right, top, bottom, seed, burrow }.
+const earthWallArt = (e) => art(`mg-earthwall|${e.left}|${e.top}|${e.seed}`, e.right - e.left, e.bottom - e.top, () => {
+  const W = e.right - e.left;
+  const H = e.bottom - e.top;
+  let s = e.seed ?? 1;
+  const rnd = () => (s = hash(s * 1.37 + 0.71)) ;
+  const out = [];
+  // Rock bands, each a soft wave across, a lighter seam on top.
+  // (At the same heights in the world on every piece, so the layers run on from one ledge's earth
+  // into the next.)
+  for (const [wy, th] of [[428, 12], [510, 16], [612, 12], [700, 18], [800, 12]]) {
+    const depth = wy - e.top;
+    if (depth < 10 || depth > H - 10) continue;
+    const pts = [];
+    for (let x = -4; x <= W + 4; x += 12) pts.push([x, depth + Math.sin((x + e.left) / 38 + wy) * 4]);
+    const lower = [...pts].reverse().map(([x, y]) => [x, y + th + Math.sin((x + e.left) / 23 + wy) * 2]);
+    out.push(F(T([...pts, ...lower], '#d2a47c')));
+    out.push(F(T([...pts, ...pts.slice().reverse().map(([x, y]) => [x, y + 1.6])], '#efd2ae')));
+  }
+  // Stones set in the earth, the higher ones with a little moss.
+  for (let i = 0; i < Math.round(W * H / 9000); i++) {
+    const x = 10 + rnd() * (W - 20);
+    const y = 24 + rnd() * (H - 40);
+    const r = 4 + rnd() * 6;
+    out.push(E(x, y, r * 1.3, r, '#c9b8a4'), F(E(x - r * 0.3, y - r * 0.35, r * 0.7, r * 0.4, '#ddd0c0')), F(E(x + r * 0.2, y + r * 0.5, r, r * 0.3, '#a8977f')));
+    if (y < 120) out.push(F(E(x, y - r * 0.75, r * 1.05, r * 0.35, '#9fcf7a')));
+  }
+  // Roots trailing down from the grass above.
+  for (let i = 0; i < Math.max(2, Math.round(W / 50)); i++) {
+    let x = 12 + rnd() * (W - 24);
+    let y = 6;
+    const len = 18 + rnd() * 34;
+    for (let k = 0; k < 4; k++) {
+      const nx = x + (rnd() - 0.5) * 10;
+      const ny = y + len / 4;
+      out.push(F(limb(x, y, nx, ny, 1.4 - k * 0.25, 1.2 - k * 0.25, '#a2704a')));
+      [x, y] = [nx, ny];
+    }
+  }
+  // The burrow: a round den, its rim, and mushrooms glowing softly inside.
+  if (e.burrow) {
+    const [bx, by] = e.burrow;
+    out.push(E(bx, by, 22, 15, '#6a4a38'), E(bx, by + 1, 18, 12, '#3e2a22'), F(E(bx, by - 9, 16, 4, '#8a6448')));
+    for (const [mx, h, c] of [[-8, 7, '#ff9ab0'], [-1, 10, '#9fd0f0'], [7, 6, '#ffd75e']]) {
+      out.push(F(R(bx + mx - 0.8, by + 12 - h, 1.6, h, '#fff6ea')), F(E(bx + mx, by + 12 - h, 3.6, 2.4, c)), F(E(bx + mx - 1, by + 11 - h, 1, 0.6, '#ffffff')));
+    }
+    out.push(F(E(bx, by + 10, 14, 2, '#6a4a38')));
+  }
   return out;
 });
 
@@ -683,12 +740,35 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
     // Timber ribs of the dome, curving up the walls, and the wainscot.
     ...[90, 250, 510, 670].map((x) => F(T([[x - 4, 360], [x + 4, 360], [x + 4 + (x < 380 ? 40 : -40), 0], [x - 4 + (x < 380 ? 40 : -40), 0]], '#d8b088'))),
     F(R(0, 300, 760, 60, '#e8c8a8')), F(R(0, 300, 760, 3, '#f8dcc0')),
-    // The round window onto the garden.
-    E(380, 150, 62, 62, WOOD), E(380, 150, 54, 54, '#cfe8ff'), F(E(366, 136, 30, 26, '#e6f4ff')), F(R(378, 96, 4, 108, WOOD)), F(R(326, 148, 108, 4, WOOD)),
-    F(E(352, 196, 18, 6, '#9fcf7a')), F(E(410, 194, 22, 7, '#8fc46a')), F(E(392, 120, 8, 6, '#ffd0dc')),
-    // The hearth: stone, a fire glow, a kettle; and the eggs' mortars warming beside it.
-    R(150, 214, 120, 146, '#cfc6b8'), F(R(150, 214, 120, 8, '#e0d8ca')), R(176, 280, 68, 80, '#5a4038'), F(E(210, 346, 24, 10, '#ff9a5a')), F(E(210, 342, 14, 6, '#ffd27a')),
+    // Paper bunting, a string each side of the window, sagging between the ribs.
+    ...[[24, 300], [460, 736]].flatMap(([x0, x1]) => {
+      const n = Math.round((x1 - x0) / 26);
+      return [F(limb(x0, 96, (x0 + x1) / 2, 112, 0.5, 0.5, '#c8a888')), F(limb((x0 + x1) / 2, 112, x1, 96, 0.5, 0.5, '#c8a888')),
+        ...Array.from({ length: n }, (_, i) => {
+          const u = (i + 0.5) / n;
+          const x = x0 + (x1 - x0) * u;
+          const y = 96 + Math.sin(u * Math.PI) * 16;
+          return F(T([[x - 8, y], [x + 8, y], [x, y + 12]], [SAKURA, '#a8dcc0', KINAKO, '#c8b4f0', '#9fd0f0'][i % 5]));
+        })];
+    }),
+    // The round window onto the garden: its frame (the sky in it is drawn live, day or night), and a
+    // sill with a potted plant.
+    E(380, 150, 62, 62, WOOD),
+    R(318, 208, 124, 7, WOOD), F(R(318, 208, 124, 2, ramp(WOOD).hi)),
+    R(422, 194, 16, 14, '#e0905a'), F(R(420, 192, 20, 3, '#ec9c66')), E(424, 188, 6, 5, '#8fc46a'), E(434, 186, 6, 6, '#9fcf7a'), E(429, 181, 5, 5, '#8fc46a'), F(E(429, 180, 2.4, 2.4, '#ffd0dc')),
+    // The hearth: stone, its dark mouth (the flames are drawn live), a kettle on the side.
+    R(150, 214, 120, 146, '#cfc6b8'), F(R(150, 214, 120, 8, '#e0d8ca')), R(176, 280, 68, 80, '#5a4038'), F(R(176, 280, 68, 6, '#4a3430')),
+    ...[[188, 352], [204, 354], [222, 352]].map(([lx, ly]) => F(R(lx - 9, ly - 3, 18, 6, '#7a4a30'))),
     R(140, 206, 140, 10, WOOD), F(R(140, 206, 140, 2, ramp(WOOD).hi)),
+    // A crayon drawing over the mantel: three Mochi in a row under a sun.
+    R(172, 128, 76, 62, '#a8784a'), R(176, 132, 68, 54, '#fffaf2'),
+    ...[[192, 170, SAKURA], [210, 168, MOCHI], [228, 170, MATCHA]].flatMap(([dx, dy, c]) => [E(dx, dy, 8, 7, c), F(E(dx - 2.4, dy - 1, 0.9, 1.2, '#5a4038')), F(E(dx + 2.4, dy - 1, 0.9, 1.2, '#5a4038')), F(R(dx - 0.5, dy - 12, 1, 5, '#6aa84a'))]),
+    E(234, 144, 6, 6, '#ffd75e'), F(R(178, 178, 64, 2, '#9fcf7a')),
+    // The way out: an arched wooden door.
+    R(56, 296, 48, 64, '#b07a4a'), E(80, 296, 24, 20, '#b07a4a'), F(R(62, 300, 36, 58, '#c8945a')), F(E(80, 300, 18, 14, '#c8945a')),
+    F(R(79, 286, 2, 72, '#a06a3a')), F(E(92, 330, 2.4, 2.4, '#ffd75e')), R(52, 356, 56, 4, '#9a6a40'),
+    // A second drawing on the far wall: a heart and a little house.
+    R(694, 116, 46, 50, '#a8784a'), R(697, 119, 40, 44, '#fffaf2'), F(T([[717, 152], [705, 138], [711, 132], [717, 137], [723, 132], [729, 138]], '#ff8fb0')), F(R(703, 154, 28, 2, '#9fd0f0')),
     // The rug.
     E(380, 362, 150, 14, '#f6c0cc'), F(E(380, 362, 132, 10, '#ffd8e0')), F(E(380, 362, 112, 7, '#f6c0cc')),
     // The basket beds (world/garden-life.js NURSERY_BEDS), each with its own blanket: the back of the
@@ -705,6 +785,75 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
   return out;
 });
 const BED_BLANKETS = ['#c8e6f8', '#ffe4ec', '#e2f4d8', '#fff0c4'];
+// The round window's glass, drawn under the room's picture (which cuts the window's round hole
+// with its frame): blue sky and a cloud by day, deep blue with stars and the moon by night, eased
+// between at dusk and dawn. (cx, cy): its centre on screen.
+function nurseryWindow(ctx, cx, cy, night, time) {
+  const mixc = (a, b, t) => {
+    const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const [x, y] = [p(a), p(b)];
+    return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`;
+  };
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 54, 0, TAU);
+  ctx.clip();
+  ctx.fillStyle = mixc('#cfe8ff', '#2e3468', night);
+  ctx.fillRect(cx - 56, cy - 56, 112, 112);
+  if (night < 0.6) {
+    ctx.globalAlpha = 1 - night / 0.6;
+    ctx.fillStyle = '#ffffff';
+    const drift = ((time * 2) % 140) - 70;
+    for (const [dx, dy, r] of [[0, -16, 9], [10, -14, 7], [-9, -13, 6]]) {
+      ctx.beginPath();
+      ctx.arc(cx + drift + dx, cy + dy, r, 0, TAU);
+      ctx.fill();
+    }
+  }
+  if (night > 0.3) {
+    ctx.globalAlpha = Math.min(1, (night - 0.3) / 0.4);
+    ctx.fillStyle = '#fff3c4';
+    ctx.beginPath();
+    ctx.arc(cx + 22, cy - 20, 9, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = mixc('#cfe8ff', '#2e3468', night);
+    ctx.beginPath();
+    ctx.arc(cx + 26, cy - 23, 8, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    for (const [dx, dy, k] of [[-30, -18, 0], [-14, -34, 1], [-36, 8, 2], [6, -40, 3], [34, 14, 4], [-20, 24, 5]]) {
+      ctx.globalAlpha = Math.min(1, (night - 0.3) / 0.4) * (0.55 + 0.45 * Math.sin(time * 2 + k * 1.7));
+      ctx.fillRect(Math.round(cx + dx), Math.round(cy + dy), 1.6, 1.6);
+    }
+  }
+  // The glass's shine, and the window's cross bars over it.
+  ctx.globalAlpha = 0.35 * (1 - night * 0.7);
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(cx - 14, cy - 14, 30, 26, 0, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = WOOD;
+  ctx.fillRect(Math.round(cx - 2), Math.round(cy - 54), 4, 108);
+  ctx.fillRect(Math.round(cx - 54), Math.round(cy - 2), 108, 4);
+  ctx.restore();
+}
+// The hearth's flames: three tongues swaying and stretching, gold inside orange.
+function hearthFire(ctx, x, y, time) {
+  ctx.save();
+  for (const [dx, h, ph, c] of [[-10, 18, 0, '#ff8a4a'], [8, 20, 1.7, '#ff8a4a'], [-1, 26, 0.8, '#ff9a5a'], [-1, 15, 2.4, '#ffd27a'], [6, 11, 3.1, '#ffe8a0']]) {
+    const sway = Math.sin(time * 5 + ph) * 2.4;
+    const hh = h * (0.85 + 0.15 * Math.sin(time * 7 + ph * 2));
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(x + dx - 7, y);
+    ctx.quadraticCurveTo(x + dx - 6, y - hh * 0.6, x + dx + sway, y - hh);
+    ctx.quadraticCurveTo(x + dx + 6, y - hh * 0.6, x + dx + 7, y);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
 // The trophy shelf's cups (world/garden.js trophiesOf): one for each course, in the metal of the
 // best rank won there (bronze Beginner, silver Challenge, gold Master), a faint ring where one's
 // still to win; a glint now and then on the gold. (ox, oy): where the room's picture starts.
@@ -1155,10 +1304,21 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
     }
     case 'mg_stadium':
       place(ctx, stadiumArt(), snap(x), gy + 2);
+      ctx.font = '900 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#e0659f';
+      ctx.fillText('RACES', snap(x - 92 + 100), snap(gy + 2 - 160 + 34));
+      ctx.textAlign = 'left';
+      return true;
+    case 'mg_earthwall':
+      place(ctx, earthWallArt(extra), snap(x), extra.bottom - cam.y);
       return true;
     case 'mg_nurseryroom': {
       place(ctx, nurseryRoomArt(), snap(x), gy + 40);
-      // The fire in the hearth, flickering; the two eggs warming by it.
+      // The sky in the round window: the garden's day or night (map.outsideNight: world/daytime.js).
+      nurseryWindow(ctx, x, gy + 40 - 400 + 150, map.outsideNight ?? 0, time);
+      // The fire in the hearth: flames licking up, and its glow; the two eggs warming by it.
+      hearthFire(ctx, x - 380 + 210, gy + 40 - 400 + 350, time);
       glow(ctx, x - 170, gy - 30, 46, '#ffb070', 0.45 * flicker(time, 3));
       place(ctx, emptyMortarArt(), snap(x - 260), gy + 2);
       place(ctx, emptyMortarArt(), snap(x - 90), gy + 2);

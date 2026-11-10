@@ -419,11 +419,13 @@ function lineActs(world, R) {
     for (const r of R.racers) put(r, R.t < il + 1 ? lineNerves(r.rec.personality) : 'race_crouch');
   }
 }
+const AFTER_YOU = 5;
 export function tickRace(world, dt, input) {
   const R = world.race;
   const course = world.map.race;
   const you = R.racers[R.me];
-  const up = Boolean(input?.pressed?.has('ArrowUp')) || R.cheerAsk;
+  // (Up cheers; so does Space, the key you'd reach for.)
+  const up = Boolean(input?.pressed?.has('ArrowUp') || input?.pressed?.has('Space')) || R.cheerAsk;
   R.cheerAsk = false;
   if (R.remote) {
     tickRemote(world, R, dt, up, you, input);
@@ -464,7 +466,12 @@ export function tickRace(world, dt, input) {
       if (R.first == null) R.slowLeft = SLOW_MO.secs;
       R.first ??= R.clock;
     }
-    if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + (RACE_RANKS[R.rank].tail ?? RACE_TAIL)) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
+    // (Once yours is home, no long wait for the stragglers: a few seconds to see who else gets in,
+    // or straight on with Up; the rest are ranked by how far they got. Not when friends are still
+    // running theirs.)
+    const friendsOut = R.racers.some((r, i) => i !== R.me && r.owner && r.done == null);
+    const yoursHome = you.done != null && !friendsOut && (R.clock >= you.done + AFTER_YOU || (up && R.clock > you.done + 0.5));
+    if (yoursHome || R.finished === R.racers.length || (R.first != null && R.clock >= R.first + (RACE_RANKS[R.rank].tail ?? RACE_TAIL)) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
     podiumStep(world, R);

@@ -1006,9 +1006,46 @@ function landWith(ctx, theme, m, deco, map, cam, width, height, time) {
   }
   // The lip along the top of every run.
   // The lip casts a soft shadow onto the dirt just under it.
-  for (const pts of runs) strokeAlong(ctx, pts, m.moss ? 15 : 12, hexA(INK, 0.16), 6);
-  runs.forEach((pts, ri) => lip(ctx, m, pts, time, ri, width, m.moss ? 12 : 10, deco));
+  // (Not under water: a pond's bed has no grass. The line is cut where it dips below the surface;
+  // the Mochi Garden's pond for now, 2026-11-10.)
+  // (A line that isn't cut keeps its own pattern, as before.)
+  const dry = runs.flatMap((pts, ri) => dryParts(pts, map.garden ? map.water : null, cam).map((p, j) => [p, j === 0 ? ri : ri * 7 + j]));
+  for (const [pts] of dry) strokeAlong(ctx, pts, m.moss ? 15 : 12, hexA(INK, 0.16), 6);
+  for (const [pts, seed] of dry) lip(ctx, m, pts, time, seed, width, m.moss ? 12 : 10, deco);
   if (map.look?.ceiling) drawCeiling(ctx, m, map, cam, width, time);
+}
+
+// The parts of a ground line (screen points) that aren't under any of the map's water: split where
+// the line goes more than a few pixels below a pond's surface, the crossing found along the slope.
+function dryParts(pts, water, cam) {
+  if (!water?.length) return [pts];
+  const wet = ([x, y]) => water.some((w) => x > w.x1 - cam.x && x < w.x2 - cam.x && y > w.y - cam.y + 3);
+  const out = [];
+  let cur = [];
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    const q = pts[i - 1];
+    if (!wet(p)) {
+      if (q && wet(q)) {
+        const w = water.find((v) => q[0] > v.x1 - cam.x && q[0] < v.x2 - cam.x);
+        const sy = w.y - cam.y + 3;
+        const k = (sy - q[1]) / (p[1] - q[1] || 1);
+        cur.push([q[0] + (p[0] - q[0]) * k, sy]);
+      }
+      cur.push(p);
+    } else {
+      if (q && !wet(q)) {
+        const w = water.find((v) => p[0] > v.x1 - cam.x && p[0] < v.x2 - cam.x);
+        const sy = w.y - cam.y + 3;
+        const k = (sy - q[1]) / (p[1] - q[1] || 1);
+        cur.push([q[0] + (p[0] - q[0]) * k, sy]);
+      }
+      if (cur.length > 1) out.push(cur);
+      cur = [];
+    }
+  }
+  if (cur.length > 1) out.push(cur);
+  return out;
 }
 
 const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${a})`;

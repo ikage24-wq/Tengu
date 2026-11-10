@@ -44,7 +44,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear, eggStallUp, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, tossBall, mochiNear, eggStallUp, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
 import './stadium.js';
 import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
@@ -477,7 +477,7 @@ function interact(world) {
     world.events.push({ type: 'mochi' });
     return true;
   }
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || eggStallUp(world) || shakeTree(world))) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || tossBall(world) || eggStallUp(world) || shakeTree(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);

@@ -4,6 +4,7 @@
 
 import { bubbleDeco } from '../render/cosmetics.js';
 import { NPCS } from '../data/npcs.js';
+import { isNight } from '../world/daytime.js';
 import { FACE_STYLES } from '../render/hero.js';
 import { COLORS, text, font, clicked, paper, tape, roughRect } from './kit.js';
 import { isGm, unlockGm, gmCommand } from '../world/gm.js';
@@ -30,7 +31,11 @@ const CHATTER = {
   shop: ['Fresh stock today!', 'Everything must go! Well, most things.', 'Ooh, a customer?'],
   stylist: ['That outfit is SO you.', 'Have you tried a new hairstyle?', 'Fashion is a battle, too!'],
   instructor: ['Training never ends!', 'Ready for your next step?', 'Show me what you have learned.'],
-  any: ['La la la~', '*yawn*', 'What a nice day!', 'Hmm hmm~', 'I wonder what is for dinner...'],
+  any: ['La la la~', 'Hmm hmm~', 'I wonder what is for dinner...'],
+  // (Only when it fits the hour and the sky.)
+  clear: ['What a nice day!'],
+  night: ['*yawn*', 'What a quiet night...'],
+  rain: ['Pitter patter...', 'Good weather for ducks!'],
 };
 
 export function createChat() {
@@ -175,7 +180,13 @@ export function updateChat(chat, world, dt) {
     chat.chatter = 18 + Math.random() * 14;
     const n = world.map.npcs[Math.floor(Math.random() * world.map.npcs.length)];
     if (!world.bubbles[n.id]) {
-      const lines = [...(NPCS[n.id].chatter ?? CHATTER[NPCS[n.id].role] ?? []), ...CHATTER.any];
+      // (Their own lines, by day or by night if they have night ones, then everyone's, for the hour
+      // and the weather.)
+      const npc = NPCS[n.id];
+      const night = isNight(world);
+      const own = (night && npc.nightChatter) || npc.chatter || CHATTER[npc.role] || [];
+      const sky = world.weather ? CHATTER.rain : night ? CHATTER.night : CHATTER.clear;
+      const lines = [...own, ...(night && npc.nightChatter ? [] : [...CHATTER.any, ...sky])];
       say(world, n.id, lines[Math.floor(Math.random() * lines.length)]);
     }
   }

@@ -942,6 +942,9 @@ function drawBubbles(ctx, world, cam) {
     if (who !== 'player' && !npc) continue;
     const x = who === 'player' ? world.body.x : npc.x;
     const y = who === 'player' ? world.body.y : groundAt(world.map, npc.x);
+    // (Someone talking off the screen isn't shown: their bubble would hang at the edge with no one
+    // under it.)
+    if (who !== 'player' && (x - cam.x < -24 || x - cam.x > 664)) continue;
     drawBubble(ctx, snap(x - cam.x), snap(y - cam.y - 62), bubble.text, Math.min(1, bubble.t * 2), who === 'player' ? usingSkin(world.char, 'bubble') : null);
   }
 }

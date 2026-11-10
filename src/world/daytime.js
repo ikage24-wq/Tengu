@@ -39,6 +39,8 @@ export function tickDaytime(world, dt) {
     world.night = world.forceNight ?? Math.round(nightOf((world.dayClock ?? (() => new Date()))()) * 16) / 16;
   }
   world.map.night = indoors(world.map) ? 0 : world.night ?? 0;
+  // (What it's like outside, for a room's window: render/garden.js nurseryWindow.)
+  world.map.outsideNight = world.night ?? 0;
 }
 
 export const isNight = (world) => (world.map?.night ?? 0) >= 0.5;

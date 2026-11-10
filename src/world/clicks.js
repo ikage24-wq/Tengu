@@ -5,7 +5,7 @@
 // level (up a cliff, down at the pond) is out of reach of a walk, and says so.
 
 import { groundAt } from './physics.js';
-import { STALL_X, CROP_X, EGG_SLOTS } from './garden-life.js';
+import { STALL_X, CROP_X, TOY_X, EGG_SLOTS } from './garden-life.js';
 
 // What can be clicked on this map: { x, w, h, label, mochi? } (h: how tall above the ground).
 export function clickTargets(world) {
@@ -17,6 +17,7 @@ export function clickTargets(world) {
     if (!world.gardenVisit) {
       out.push({ x: STALL_X, w: 110, h: 80, label: 'Egg stall' });
       out.push({ x: CROP_X, w: 90, h: 30, label: 'Crop bed' });
+      out.push({ x: TOY_X, w: 44, h: 30, label: 'Toy box' });
       (world.char.garden?.eggs ?? []).forEach((e, i) => EGG_SLOTS[i] != null && out.push({ x: EGG_SLOTS[i], w: 18, h: 22, label: 'Egg' }));
     }
     if (map.stove != null) out.push({ x: map.stove, w: 70, h: 90, label: 'Sweet Kitchen' });

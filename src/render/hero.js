@@ -1524,6 +1524,7 @@ function foxTail(look, rig, dx, dy) {
     ...tufts.map((t) => F(T(swing(t), hr.sh1)))];
 }
 
+let badShapeSaid = false;
 // Turns shapes by deg about (cx, cy): polygons point by point, ellipses and rects by their centres
 // (fine for the few degrees a head tilts).
 function roll(shapes, cx, cy, deg) {
@@ -1533,7 +1534,16 @@ function roll(shapes, cx, cy, deg) {
   const r = (x, y) => [cx + (x - cx) * c - (y - cy) * sn, cy + (x - cx) * sn + (y - cy) * c];
   return shapes.map((sh) => {
     if (!sh) return sh;
-    if (sh.t === 'p') return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => r(sh.x + px, sh.y + py)) };
+    if (sh.t === 'p') {
+      // (A shape whose points aren't points is left out rather than stopping the frame, and said
+      // once, so where it came from can be found: seen once in a race line-up, 2026-11-10.)
+      if (!Array.isArray(sh.pts) || !sh.pts.every(Array.isArray)) {
+        if (!badShapeSaid) console.warn('A shape with broken points was skipped:', JSON.stringify(sh).slice(0, 300));
+        badShapeSaid = true;
+        return null;
+      }
+      return { ...sh, x: 0, y: 0, pts: sh.pts.map(([px, py]) => r(sh.x + px, sh.y + py)) };
+    }
     if (sh.t === 'e') {
       const [x, y] = r(sh.x, sh.y);
       return { ...sh, x, y };

@@ -199,6 +199,8 @@ export const NPCS = {
     // (One line each: his eight choices fill the rest of the window.)
     greeting: "Welcome to the square! Races, outfits and treats for your Mochi!",
     nightGreeting: "Psst... it's me. After dark I've got rarer things. Shh!",
+    chatter: ['Fresh sweets today!', 'Your Mochi look so happy!', 'Races start at my counter!', 'Ooh, a customer?'],
+    nightChatter: ['Psst...', 'Nothing to see here.', '*adjusts glasses*', 'Rare finds, after dark...'],
     shop: ['mochi_rice', 'azuki', 'kinako', 'fire_pepper', 'msweet_daifuku', 'msweet_dango', 'msweet_heartmochi', 'mochi_egg'],
     // (After dark, her secret stall: a Star Egg and the rarest sweets' ingredients.)
     secretShop: ['mochi_egg_star', 'honeycomb', 'crystal_gel', 'sprite_petal'],
