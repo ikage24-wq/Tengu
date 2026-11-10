@@ -34,6 +34,11 @@
 //                                 'hoist' (up on a thread `from` px at once), 'descend' (lowers
 //                                 on it to the floor), 'float' (drifts up and down, `height` px,
 //                                 easing in and out)
+//   { free: monster, as }         a beaten boss stands back up for its farewell (no longer falling),
+//                                 wearing the face `as`; then it can act like any actor, and leave
+//                                 with 'fade' (fades where it stands), 'ascend' (rises `height` px
+//                                 and fades), 'sinkaway' (sinks into the floor) or 'swimup' (rises
+//                                 away on a slow sway): gone for good when it's done
 //   { mood: monster, as }         holds a face on a monster: blink (asleep), angry, sad, happy,
 //                                 hurt (null lets it go)
 //   { perform: npc, move, dur, as }  they play one of their own moves (render/moves.js, e.g.
@@ -81,7 +86,8 @@ export function startCine(world) {
 
 // A monster on the map taking part in a scene, by its id (the first one still standing).
 export function mobActor(world, who) {
-  const m = world.mobs?.find((q) => q.def.id === who && q.hp > 0);
+  // (Or a beaten boss stood back up for its farewell: `free`.)
+  const m = world.mobs?.find((q) => q.def.id === who && q.hp > 0) ?? world.mobs?.find((q) => q.def.id === who && q.cine?.freed && !q.cine.gone);
   if (m) m.cine ??= {};
   return m ?? null;
 }
@@ -400,6 +406,15 @@ function runner(world, step) {
       return t >= 0.3;
     };
   }
+  if (step.free) {
+    const m = world.mobs?.find((q) => q.def.id === step.free);
+    if (m) {
+      m.cine ??= {};
+      Object.assign(m.cine, { freed: true, alpha: 1, mood: step.as ?? null, gone: false });
+      if (m.hp <= 0) m.dying = 0;
+    }
+    return () => true;
+  }
   if (step.mood !== undefined) {
     const m = mobActor(world, step.mood);
     if (m) m.cine.mood = step.as ?? null;
@@ -422,9 +437,37 @@ function runner(world, step) {
       return () => true;
     }
     const sunk = m.cine.sink ?? 0;
+    // A farewell: the boss leaves the scene and the room for good.
+    const leaving = ['fade', 'ascend', 'sinkaway', 'swimup'].includes(step.move);
     return (dt, skip) => {
       t = skip ? dur : t + dt;
       const u = Math.min(1, t / dur);
+      if (leaving) {
+        const e = easeInOut(u);
+        if (step.move === 'fade') m.cine.alpha = 1 - e;
+        if (step.move === 'ascend') {
+          m.cine.lift = lift0 + (step.height ?? 160) * e;
+          m.cine.alpha = 1 - easeInOut(Math.max(0, (u - 0.5) / 0.5));
+        }
+        if (step.move === 'swimup') {
+          m.cine.lift = lift0 + (step.height ?? 200) * e;
+          m.cine.sway = Math.sin(t * 3) * 0.12 * (1 - u);
+          m.cine.alpha = 1 - easeInOut(Math.max(0, (u - 0.6) / 0.4));
+        }
+        if (step.move === 'sinkaway') {
+          m.cine.sink = (m.def.h + 12) * e;
+          m.cine.alpha = 1 - easeInOut(Math.max(0, (u - 0.7) / 0.3));
+        }
+        if (u >= 1 && !m.cine.gone) {
+          m.cine.gone = true;
+          m.cine.alpha = 0;
+          m.cine.sway = 0;
+          m.dying = 9;
+          // (Gone for good: out of the room now, so it never falls again after the scene.)
+          if (m.hp <= 0) world.mobs = world.mobs.filter((q) => q !== m);
+        }
+        return u >= 1;
+      }
       if (step.move === 'windup') m.windup = u < 1 ? dur - t : 0;
       if (step.move === 'emerge') m.cine.sink = sunk * (1 - easeInOut(u));
       if (step.move === 'descend') m.cine.lift = lift0 * (1 - easeInOut(u));

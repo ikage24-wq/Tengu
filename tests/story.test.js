@@ -36,7 +36,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
   for (const id of ids) assert.ok(ids.filter((o) => QUESTS[o].prereq === id).length <= 1, `${id} branches`);
   // Every step is a card, a line, or staging (world/director.js) that names real people and known
   // emotes and bursts.
-  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'perform', 'expr', 'together'];
+  const STAGING = ['cam', 'walk', 'face', 'jump', 'emote', 'say', 'wait', 'fade', 'flash', 'shake', 'fx', 'spawn', 'leave', 'act', 'mood', 'free', 'spot', 'ride', 'trip', 'place', 'wind', 'night', 'perform', 'expr', 'together'];
   const EMOTES = ['!', '?', 'heart', 'note', 'sweat', 'anger', 'zzz', 'sparkle', 'idea'];
   const BURSTS = ['sparkle', 'hearts', 'petals', 'leaves', 'wind', 'confetti', 'spores', 'dust', 'rubble', 'notes', 'china', 'bubbles', 'ink', 'gears', 'pages', 'starfall', 'sparks', 'caramel', 'crumbs', 'shout', 'feathers', 'coins', 'shells', 'clouds'];
   // People, and monsters (a boss acts in its own entrance); only people step in and out.
@@ -46,7 +46,7 @@ test('the story chains from Mira at level 1 to the Crystal King, every step real
     const kind = STAGING.find((k) => st[k] !== undefined);
     assert.ok(kind, `a staging step of a known kind: ${JSON.stringify(st)}`);
     if (kind === 'together') return st.together.forEach(check);
-    for (const k of ['act', 'mood']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
+    for (const k of ['act', 'mood', 'free']) if (st[k] !== undefined) assert.ok(MOBS[st[k]], `${k} names a real monster: ${st[k]}`);
     for (const k of ['walk', 'face', 'jump', 'emote', 'say', 'away', 'trip', 'place']) if (st[k] !== undefined) assert.ok(actor(st[k]), `${k} names a real actor: ${st[k]}`);
     if (st.fx && typeof st.at === 'object') assert.ok(Number.isFinite(st.at.x) && Number.isFinite(st.at.y), 'a burst at a real place');
     else if (st.fx && st.at !== undefined) assert.ok(actor(st.at), `a burst on a real actor: ${st.at}`);

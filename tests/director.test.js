@@ -646,3 +646,32 @@ test("Malvina's villain story plays through at her tower, and the party guests g
     for (const n of w.map.npcs) assert.equal(n.x, home[n.id], `${id}: ${n.id} is back where they stand`);
   }
 });
+
+test('a beaten boss stands up for its farewell, then leaves the room for good', async () => {
+  const { spawnMob } = await import('../src/world/mobs.js');
+  const { MOBS } = await import('../src/data/mobs.js');
+  for (const [boss, id] of [['gnarlroot', 'hollow_sleep'], ['marigold', 'manor_freed'], ['coralie', 'aquarium_freed'], ['astraea', 'observatory_freed']]) {
+    const w = createWorld(createCharacter('Hana', {}));
+    loadMap(w, 'dawnbeach', 'start');
+    const m = spawnMob(w.map, { mob: boss, x: w.body.x + 160, y: w.body.y });
+    w.mobs.push(m);
+    m.hp = 0;
+    m.dying = 0.05;
+    playScene(w, id);
+    let stood = false;
+    let left = false;
+    for (let k = 0; k < 300 && w.scene; k++) {
+      run(w, 0.3);
+      if (m.cine?.freed && !m.cine.gone) stood = true;
+      if (m.cine?.gone) left = true;
+      if (w.cine) w.cine.go = true;
+      const step = w.scene && SCENES[w.scene.id][w.scene.i];
+      if (step && (step.card || (typeof step.text === 'string' && step.say === undefined))) advanceScene(w);
+    }
+    assert.equal(w.scene, null, `${id} finished`);
+    assert.ok(stood, `${boss} stood up for it`);
+    assert.ok(left, `${boss} left`);
+    run(w, 0.1);
+    assert.ok(!w.mobs.includes(m), `${boss} is gone from the room`);
+  }
+});

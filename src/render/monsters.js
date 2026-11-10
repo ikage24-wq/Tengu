@@ -298,6 +298,21 @@ function poofCloud(ctx, x, y, w, u) {
 // hurt face held for a beat; they drag a little behind sudden starts and stops; new monsters pop
 // in; and defeated ones are knocked up, bounce, and poof.
 export function drawMonster(ctx, m, x, y, time, now = time) {
+  // A beaten boss stood back up for its farewell (world/director.js `free`): drawn standing, at
+  // its scene alpha, and not at all once it has left.
+  if (m.cine?.gone) return;
+  if (m.cine?.freed && m.hp <= 0) m = m.cine.standing ??= Object.assign(Object.create(m), { hp: 1, dying: 0 });
+  if (m.cine?.freed && m.cine.alpha < 1) {
+    ctx.save();
+    ctx.globalAlpha *= Math.max(0, m.cine.alpha);
+    drawMonsterNow(ctx, m, x, y, time, now);
+    ctx.restore();
+    return;
+  }
+  drawMonsterNow(ctx, m, x, y, time, now);
+}
+
+function drawMonsterNow(ctx, m, x, y, time, now = time) {
   const frozen = m.frozenUntil > now && m.hp > 0;
   const flying = m.def.fly;
   const moving = !frozen && ((m.state === 'walk' && m.stagger <= 0) || flying);

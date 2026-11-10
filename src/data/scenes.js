@@ -1006,10 +1006,15 @@ export const SIDE_SCENES = {
 export const HOLLOW_SCENES = {
   // Gnarlroot, calmed at last.
   hollow_sleep: [
+    { together: [{ free: 'gnarlroot', as: 'sad' }, { cam: ['gnarlroot', 'player'], dur: 1.2 }, { walk: 'player', to: 'gnarlroot', gap: 110, speed: 70 }] },
+    { together: [{ face: 'player', to: 'gnarlroot' }, { face: 'gnarlroot', to: 'player' }] },
     { who: 'gnarlroot', text: '...so... quiet now... the little ones... cheering...', mood: 'sad' },
+    { together: [{ fx: 'notes', at: 'gnarlroot', top: true }, { act: 'gnarlroot', move: 'sway', amp: 0.05, speed: 1.6, dur: 2.4 }] },
     { who: null, text: 'The great roots sag and settle. Somewhere deep in the Hollow, a lullaby starts up: the Sprouts, humming.' },
+    { mood: 'gnarlroot', as: 'blink' },
     { who: 'gnarlroot', text: '...thank you... sleep... at last...', mood: 'happy' },
-    { who: null, text: 'Gnarlroot snores. The whole Hollow snores with him.' },
+    { together: [{ act: 'gnarlroot', move: 'sinkaway', dur: 2.8 }, { fx: 'leaves', at: 'gnarlroot' }, { emote: 'player', kind: 'zzz', dur: 1.6 }] },
+    { who: null, text: 'Gnarlroot sinks back down among his roots, snoring. The whole Hollow snores with him.' },
   ],
   // The run's result card ({grade}, {time}, {notes}, {bonus} filled in at the chest).
   hollow_results: [
@@ -1168,10 +1173,15 @@ export const MANOR_SCENES = {
   ],
   // She's freed at the end, not slain.
   manor_freed: [
+    { together: [{ free: 'marigold', as: 'sad' }, { cam: ['marigold', 'player'], dur: 1.2 }, { walk: 'player', to: 'marigold', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'marigold' }, { face: 'marigold', to: 'player' }] },
     { who: 'marigold', text: '...You kept up. All of you. Nobody has danced with me like that in a hundred years.', mood: 'sad' },
-    { who: null, text: 'One by one, the guests at the long table stand, stretch, and drift away down the hill toward home.' },
-    { who: 'marigold', text: "Go on, then. All of you. Thank you for coming to my party. Truly.", mood: 'happy' },
-    { who: null, text: 'The moon dims to its usual size. Lady Marigold fades with a smile.' },
+    { together: [{ act: 'marigold', move: 'sway', amp: 0.12, speed: 3, dur: 2.2 }, { fx: 'petals', at: 'marigold', top: true }, { emote: 'player', kind: 'heart', dur: 1.4 }] },
+    { who: null, text: 'One last turn across the floor. One by one, the guests at the long table stand, stretch, and drift away down the hill toward home.' },
+    { mood: 'marigold', as: 'happy' },
+    { who: 'marigold', text: 'Go on, then. All of you. Thank you for coming to my party. Truly.', mood: 'happy' },
+    { together: [{ act: 'marigold', move: 'fade', dur: 2.6 }, { fx: 'petals', at: 'marigold' }] },
+    { who: null, text: 'The moon dims to its usual size. Lady Marigold fades with a smile, in a drift of petals.' },
   ],
 };
 
@@ -1259,9 +1269,15 @@ export const AQUA_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   aquarium_freed: [
+    { together: [{ free: 'coralie', as: 'sad' }, { cam: ['coralie', 'player'], dur: 1.2 }, { walk: 'player', to: 'coralie', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'coralie' }, { face: 'coralie', to: 'player' }] },
     { who: 'coralie', text: '...The water is warm again. I remember. I remember the sun on the waves.', mood: 'sad' },
+    { together: [{ fx: 'bubbles', at: 'coralie', top: true }, { act: 'coralie', move: 'float', height: 10, dur: 2 }] },
     { who: null, text: 'One by one, the bubble wards flicker back on. The palace lights up from the throne to the coral gate.' },
+    { mood: 'coralie', as: 'happy' },
     { who: 'coralie', text: "Thank you, surface-friends. Come back and visit us. We'll leave the gate open.", mood: 'happy' },
+    { together: [{ act: 'coralie', move: 'swimup', height: 220, dur: 3.2 }, { fx: 'bubbles', at: 'coralie' }, { emote: 'player', kind: 'sparkle', dur: 1.4 }] },
+    { who: null, text: 'Queen Coralie swims up toward the light, trailing bubbles, and is gone.' },
   ],
 };
 
@@ -1352,9 +1368,15 @@ export const CARNIVAL_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   carnival_freed: [
+    { together: [{ free: 'gearheart', as: 'sad' }, { cam: ['gearheart', 'player'], dur: 1.2 }, { walk: 'player', to: 'gearheart', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'gearheart' }, { face: 'gearheart', to: 'player' }] },
     { who: 'gearheart', text: '...tick... ...tock... Oh. It is quiet. I had forgotten what quiet sounds like.', mood: 'sad' },
+    { together: [{ act: 'gearheart', move: 'sway', amp: 0.08, speed: 2.4, dur: 2.6 }, { fx: 'gears', at: 'gearheart', top: true }] },
     { who: null, text: 'Her key slows, and stops. All over the fairground, the toys sit down where they stand and sigh.' },
+    { mood: 'gearheart', as: 'happy' },
     { who: 'gearheart', text: 'Thank you. Come back tomorrow night. We will play one slow tune, just for you.', mood: 'happy' },
+    { together: [{ act: 'gearheart', move: 'fade', dur: 2.6 }, { fx: 'gears', at: 'gearheart' }, { fx: 'notes', at: 'player', top: true }] },
+    { who: null, text: 'A last slow tick, a scatter of little gears, and the Gearheart is gone to her rest.' },
   ],
 };
 
@@ -1441,9 +1463,15 @@ export const OBS_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   observatory_freed: [
+    { together: [{ free: 'astraea', as: 'sad' }, { cam: ['astraea', 'player'], dur: 1.2 }, { walk: 'player', to: 'astraea', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'astraea' }, { face: 'astraea', to: 'player' }] },
     { who: 'astraea', text: "...Look. They're moving again. And there, a shooting star. It's... beautiful, isn't it?", mood: 'sad' },
+    { together: [{ fx: 'starfall', at: 'astraea' }, { face: 'player', to: 1 }, { emote: 'player', kind: '!', dur: 1.2 }] },
     { who: null, text: 'The great telescope swings slowly round. Above the tower the whole sky begins to turn, and stars fall like rain.' },
+    { together: [{ face: 'player', to: 'astraea' }, { mood: 'astraea', as: 'happy' }] },
     { who: 'astraea', text: 'Make a wish, all of you. I think I finally will, too.', mood: 'happy' },
+    { together: [{ act: 'astraea', move: 'ascend', height: 240, dur: 2.8 }, { fx: 'sparkle', at: 'astraea', top: true }] },
+    { who: null, text: 'Astraea leaps up into the falling stars and becomes one of them.' },
   ],
 };
 
@@ -1542,9 +1570,16 @@ export const VOLCANO_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   volcano_freed: [
+    { together: [{ free: 'bonbon', as: 'sad' }, { cam: ['bonbon', 'player'], dur: 1.2 }, { walk: 'player', to: 'bonbon', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'bonbon' }, { face: 'bonbon', to: 'player' }] },
     { who: 'bonbon', text: "...Oh my. I got rather carried away, didn't I? It's just... nobody ever stays for dessert.", mood: 'sad' },
+    { together: [{ fx: 'caramel', at: 'bonbon' }, { act: 'bonbon', move: 'sway', amp: 0.06, speed: 2, dur: 1.8 }] },
     { who: null, text: 'The caramel cools and settles. The volcano gives one last, gentle puff of pink sugar-steam.' },
+    { mood: 'bonbon', as: 'happy' },
     { who: 'bonbon', text: 'Stay a while? I make a VERY good cake. A normal-sized one. Probably.', mood: 'happy' },
+    { together: [{ fx: 'crumbs', at: 'player', top: true }, { emote: 'player', kind: 'heart', dur: 1.4 }, { jump: 'player' }] },
+    { who: null, text: 'A slice of cake the size of a door lands in your arms. It is, technically, normal-sized. For her.' },
+    { together: [{ act: 'bonbon', move: 'fade', dur: 2.4 }, { fx: 'confetti', at: 'bonbon' }] },
   ],
 };
 
@@ -1637,9 +1672,15 @@ export const THEATRE_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   theatre_freed: [
+    { together: [{ free: 'playwright', as: 'sad' }, { cam: ['playwright', 'player'], dur: 1.2 }, { walk: 'player', to: 'playwright', gap: 80, speed: 70 }] },
+    { together: [{ face: 'player', to: 'playwright' }, { face: 'playwright', to: 'player' }] },
     { who: 'playwright', text: '...Applause? For them? Nobody has ever applauded my ending before.', mood: 'sad' },
+    { together: [{ fx: 'pages', at: 'playwright', top: true }, { act: 'playwright', move: 'sway', amp: 0.1, speed: 2.2, dur: 1.6 }] },
     { who: null, text: 'The pages settle like snow. Out in the stalls, the audience blink and remember their own names.' },
+    { mood: 'playwright', as: 'happy' },
     { who: 'playwright', text: 'Very well. One more draft. This time, a happy ending. For everyone.', mood: 'happy' },
+    { together: [{ act: 'playwright', move: 'sinkaway', dur: 2.6 }, { fx: 'ink', at: 'playwright' }, { fx: 'confetti', at: 'player', top: true }] },
+    { who: null, text: 'He takes one deep bow and sinks into his inkwell, already scribbling.' },
   ],
 };
 
@@ -1729,9 +1770,13 @@ export const WHALE_SCENES = {
     { cam: 'player', dur: 0.7 },
   ],
   skywhale_woken: [
+    { together: [{ free: 'whaledream', as: 'happy' }, { cam: ['whaledream', 'player'], dur: 1.4 }, { face: 'player', to: 'whaledream' }] },
     { who: 'whaledream', text: "...Oh! Oh my. I was dreaming I was a pebble at the bottom of the sea. Have I been asleep long?", mood: 'happy' },
+    { together: [{ act: 'whaledream', move: 'float', height: 14, dur: 2.4 }, { fx: 'clouds', at: 'whaledream' }] },
     { who: null, text: 'Somewhere far below, a great tail sweeps once. The whole back rises, and the clouds fall away beneath it.' },
     { who: 'whaledream', text: 'Thank you, little ones. Ride with me a while. I know a sunrise you have never seen.', mood: 'happy' },
+    { together: [{ act: 'whaledream', move: 'ascend', height: 200, dur: 3.4 }, { fx: 'clouds', at: 'whaledream' }, { emote: 'player', kind: 'sparkle', dur: 1.6 }] },
+    { who: null, text: "The Whale's Dream drifts up into the morning, humming, and the clouds close softly behind it." },
   ],
 };
 
