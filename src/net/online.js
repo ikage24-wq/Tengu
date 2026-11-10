@@ -169,6 +169,10 @@ function handlers(first) {
 // ---------- Hooks the world calls (world.net) ----------
 
 const api = {
+  // The names of everyone else in the room, lower case (wherever they are).
+  names() {
+    return new Set([...online.ghosts.values()].map((g) => String(g.name ?? '').toLowerCase()).filter(Boolean));
+  },
   // Whether this game runs the monsters on the map it's on.
   owns(world) {
     return !api.mirrored(world);

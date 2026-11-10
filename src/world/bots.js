@@ -414,6 +414,10 @@ function say(world, bot, text, important = false) {
 export function updateBots(bots, world, dt) {
   if (!bots) return;
   bots.clock ??= () => new Date();
+  // (Online, your other heroes and townsfolk step aside for a real player with the same name, so no name is ever
+  // on two people at once and nothing is said in a friend's name that they didn't type.)
+  const taken = world.net?.names?.();
+  if (taken?.size) for (const b of bots.list) if (!b.party && taken.has(b.name.toLowerCase())) b.gone = true;
   const rng = bots.rng;
   const here = world.map.id;
   // Logins: right away if the server dips under its minimum, otherwise now and then up to the usual
