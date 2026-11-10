@@ -14,7 +14,7 @@ import { clampVitals, stats as statsOf, bindFreeHotkey, settleSkills } from '../
 import { loadMap } from './world.js';
 import { spawnMob } from './mobs.js';
 import { groundAt } from './physics.js';
-import { rollMochi, STATS } from '../data/mochi-genes.js';
+import { rollMochi, STATS, COATS } from '../data/mochi-genes.js';
 import { newRecord, giveExp, evolve } from '../data/mochi-raise.js';
 import { suggestName } from '../data/mochi-names.js';
 import { grantGarden } from './garden.js';
@@ -122,11 +122,16 @@ export function killAll(world) {
 
 // A grown Mochi with every stat at S and Lv 99 (`path`: 'angel' or 'demon', else as its personality
 // leans), happy and fond of you, put in your Mochi Garden (made for you if you haven't one yet):
-// for trying out races and the like. Null if the garden is full.
-export function maxedMochi(world, path = null, name = null) {
+// for trying out races and the like. `coat`: a coat by name (goma, kohakutou, moonlit...) or a
+// rarity (mutation, mythic, legendary, epic, rare: one of that tier's coats at random). Null if the
+// garden is full.
+export const COAT_WORDS = new Set([...COATS.map(([c]) => c), ...COATS.map((c) => c[2])]);
+export function maxedMochi(world, path = null, name = null, coat = null) {
   const char = world.char;
   grantGarden(char);
-  const rec = newRecord(rollMochi(Math.floor(Math.random() * 1e9)));
+  const tier = COATS.filter((c) => c[2] === coat);
+  const pick = tier.length ? tier[Math.floor(Math.random() * tier.length)][0] : COATS.some(([c]) => c === coat) ? coat : null;
+  const rec = newRecord(rollMochi(Math.floor(Math.random() * 1e9), pick ? { coat: pick } : {}));
   for (const s of STATS) {
     rec.stats[s].grade = 'S';
     giveExp(rec, s, 1e6);
@@ -143,7 +148,7 @@ export function gmCommand(world, cmd, args) {
   const n = (i, d) => (Number.isFinite(Number(args[i])) ? Number(args[i]) : d);
   switch (cmd) {
     case 'gmhelp':
-      return '/admin (F9) · /job <id> · /level <n> · /give <item> [qty] · /gold <n> · /sp <n> · /ap <n> · /tp <map> · /spawn <mob> [n] · /killall · /heal · /god · /mochi [angel|demon] [name]';
+      return '/admin (F9) · /job <id> · /level <n> · /give <item> [qty] · /gold <n> · /sp <n> · /ap <n> · /tp <map> · /spawn <mob> [n] · /killall · /heal · /god · /mochi [angel|demon] [mutation|mythic|legendary|epic|<coat>] [name]';
     case 'admin':
       world.events.push({ type: 'admin' });
       return 'Admin menu opened.';
@@ -180,8 +185,12 @@ export function gmCommand(world, cmd, args) {
       world.god = !world.god;
       return `God mode ${world.god ? 'on' : 'off'}.`;
     case 'mochi': {
-      const rec = maxedMochi(world, args[0], args.slice(args[0] === 'angel' || args[0] === 'demon' ? 1 : 0).join(' ').slice(0, 12) || null);
-      return rec ? `${rec.name}: every stat S and Lv 99, waiting in your Mochi Garden.` : 'Your Mochi Garden is full (8). Say goodbye to one first.';
+      // /mochi [angel|demon] [coat or rarity] [name]
+      const rest = [...args];
+      const path = rest[0] === 'angel' || rest[0] === 'demon' ? rest.shift() : null;
+      const coat = COAT_WORDS.has(rest[0]?.toLowerCase()) ? rest.shift().toLowerCase() : null;
+      const rec = maxedMochi(world, path, rest.join(' ').slice(0, 12) || null, coat);
+      return rec ? `${rec.name} (${rec.rarity ?? 'common'}${rec.coat ? `, ${rec.coat} coat` : ''}): every stat S and Lv 99, waiting in your Mochi Garden.` : 'Your Mochi Garden is full (8). Say goodbye to one first.';
     }
     default:
       return null;
