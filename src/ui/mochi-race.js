@@ -153,10 +153,10 @@ export function raceBoardWindow(ui, state, world) {
 }
 
 // A gentle word when the Mochi picked can't yet do what this course asks (it can still race, but
-// it won't get far): scooting instead of walking, flailing in water, flopping off the glide. Null
+// it won't get far): crawling instead of walking, flailing in water, flopping off the glide. Null
 // when it's ready.
 const LITTLE = [
-  ['run', 'Too little to race yet: it can only scoot. Feed it Dango to get it walking!'],
+  ['run', 'Too little to race yet: it can only crawl. Feed it Dango to get it walking!'],
   ['swim', "It can't swim yet, so it'll flail in the lake. Taiyaki helps!"],
   ['fly', "It can't fly yet, so it'll drop off the launch. Sakura Mochi helps!"],
 ];

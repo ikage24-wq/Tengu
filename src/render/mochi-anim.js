@@ -565,23 +565,28 @@ function climbPose(style, p) {
 
 // ---------- Can't yet ----------
 // Below the first few points a Mochiko can't do it yet (as a Chao child crawls before it walks,
-// thrashes in water before it swims, and can't take off): under CANT.run Run points it scoots
-// along on its bottom; under CANT.swim Swim points it flails in the water, splashing, eyes
+// thrashes in water before it swims, and can't take off): under CANT.run Run points it crawls
+// on its hands and knees; under CANT.swim Swim points it flails in the water, splashing, eyes
 // squeezed, until someone lifts it out (data/mochi-raise.js rescue); under CANT.fly Fly points
 // it crouches, leaps flapping like mad, hangs a moment, and flops back down on its bottom.
 export const CANT = { run: 50, swim: 100, fly: 100 };
-const CANT_MOVES = { scoot: { stride: 7, speed: 5 }, flail: { stride: 10, speed: 2 }, flop: { stride: 1, speed: 0.42 } };
+const CANT_MOVES = { crawl: { stride: 9, speed: 6 }, flail: { stride: 10, speed: 2 }, flop: { stride: 1, speed: 0.42 } };
 const SAT = { squat: 3, bob: 3, legF: [3.4, -1.6, 40], legB: [2.2, -1.2, 30], front: [1, 1.5], back: [1.6, 1.5] };
 function cantPose(what, p) {
   const a = TAU * p;
-  if (what === 'scoot') {
-    // A push with its hands and heels, a little scoot forward, a settle; tongue out, concentrating.
-    const push = p < 0.35 ? Math.sin((p / 0.35) * Math.PI * 0.5) : p < 0.55 ? 1 - ((p - 0.35) / 0.2) : 0;
-    const scoot = p >= 0.35 && p < 0.6 ? Math.sin(((p - 0.35) / 0.25) * Math.PI) : 0;
-    return pose({ ...SAT, lean: 0.1 * push, lift: 0.9 * scoot, tilt: 4 + 6 * push, hy: 1.4,
-      legF: [3.4 - 1.4 * push + 0.6 * scoot, -1.6 + 0.4 * push, 40 - 12 * push], legB: [2.2 - 1 * push + 0.6 * scoot, -1.2 + 0.3 * push, 30 - 10 * push],
-      front: [1.6 + 1.2 * push, 2 + 0.6 * push], back: [2 + 1.2 * push, 2 + 0.6 * push], hair: -0.6 * scoot,
-      mouth: 'mochiblep', sprout: 'curious', blush: 1.5 });
+  if (what === 'crawl') {
+    // A crawl on hands and knees: its body tipped right over, its head held up looking where it's
+    // going; a hand and the opposite knee step ahead together, then the other pair, the head
+    // nodding a little with each; tongue out, concentrating. (Tipped this far the rig needs it off
+    // the ground, `tip`, so `sink` sets it back down onto its hands and knees.)
+    const c = Math.sin(a);
+    const up1 = Math.max(0, Math.sin(a));
+    const up2 = Math.max(0, -Math.sin(a));
+    const nod = Math.sin(a * 2);
+    return pose({ lean: 1.1 + 0.03 * nod, tip: 6, sink: 18 - 0.5 * Math.abs(c), tilt: -62 + 3 * nod, hy: 0.4 + 0.3 * nod,
+      front: [9 + 2.4 * c, -1.6 - 1.8 * up1], back: [8 - 2.4 * c, -1.6 - 1.8 * up2], armOver: true,
+      legF: [-2 - 2 * c, -5 - 1.4 * up2, 60], legB: [-1 + 2 * c, -5 - 1.4 * up1, 60],
+      hair: 0.5 * nod, mouth: 'mochiblep', sprout: 'curious', blush: 1.5 });
   }
   if (what === 'flail') {
     // Arms thrashing up out of the water by turns, legs kicking, bobbing low, splashing.
@@ -1504,17 +1509,17 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const tier = m.tier ?? runStyle(pts);
   // (Swimming and flying never stop: holding still, it treads water or hovers.)
   const moving = (m.speed ?? 0) > 1 || kind !== 'run';
-  // (Not able to yet: scooting, flailing, flopping. `m.cant` reports which.)
-  const cant = m.tier != null || !moving ? null : kind === 'run' && pts < CANT.run ? 'scoot' : kind === 'swim' && pts < CANT.swim ? 'flail' : kind === 'fly' && pts < CANT.fly ? 'flop' : null;
+  // (Not able to yet: crawling, flailing, flopping. `m.cant` reports which.)
+  const cant = m.tier != null || !moving ? null : kind === 'run' && pts < CANT.run ? 'crawl' : kind === 'swim' && pts < CANT.swim ? 'flail' : kind === 'fly' && pts < CANT.fly ? 'flop' : null;
   m.cant = cant;
   const mvT = cant ? CANT_MOVES[cant] : table[tier];
   // The cycle follows the distance travelled. Arms, legs and face (what's drawn) step through it on
   // fixed frames, more of them the slower the cycle (16 to 32), so every drawing
   // comes round again; how high it is, how far it leans and how deep it sits are worked out fresh
   // every frame (they only move the drawing, never repaint it), so the motion itself is smooth.
-  const travelled = cant && cant !== 'scoot' ? time * mvT.speed : (m.speed ?? 0) > 1 ? (m.dist ?? 0) / (mvT.stride * s / 0.6) : time * 0.8;
+  const travelled = cant && cant !== 'crawl' ? time * mvT.speed : (m.speed ?? 0) > 1 ? (m.dist ?? 0) / (mvT.stride * s / 0.6) : time * 0.8;
   const pc = ((travelled % 1) + 1) % 1;
-  const cycle = cant && cant !== 'scoot' ? 1 / mvT.speed : mvT.stride / mvT.speed;
+  const cycle = cant && cant !== 'crawl' ? 1 / mvT.speed : mvT.stride / mvT.speed;
   // (While an act's face is on, the limbs step at half the rate: the face is what's being drawn new.)
   const N0 = kind === 'swim' ? 32 : Math.max(16, Math.min(32, Math.round((cycle * 30) / 4) * 4));
   const N = st.act && kind !== 'swim' ? N0 / 2 : N0;
@@ -1677,7 +1682,9 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   if (kind !== 'swim' && kind !== 'climb' && !m.noShadow) {
     ctx.fillStyle = 'rgba(70,40,90,0.16)';
     ctx.beginPath();
-    ctx.ellipse(x, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), 0, 0, TAU);
+    // (Crawling, its weight sits back on its knees: the shadow goes with it.)
+    const sx = x - (cant === 'crawl' ? dir * 6 * (s / 0.6) : 0);
+    ctx.ellipse(sx, y, Math.max(2, 7 - liftNow * 0.22) * (s / 0.6), Math.max(0.8, 1.8 - liftNow * 0.04) * (s / 0.6), 0, 0, TAU);
     ctx.fill();
   }
   if (kind === 'run' && moving && tier >= 3) drawDust(ctx, x, y, dir, phase, GAITS[tier].stride * (s / 0.6), tier);
@@ -1700,7 +1707,8 @@ export function drawMochiAnim(ctx, m, x, y, time) {
   const alt = kind === 'fly' || kind === 'climb' ? liftNow : 0;
   if (alt) rig.lift = 0;
   // (Lying down for a nap, it's laid on the ground the same way.)
-  const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed ? sinkNow * s : 0);
+  // (Crawling, it's tipped right over, which the rig only does off the ground, so it's set back down.)
+  const dy = kind === 'swim' ? (sinkNow + tip) * s : -alt * s + (posed || cant === 'crawl' ? sinkNow * s : 0);
   // (Painting ahead, `m.ahead`: only its body's drawing is asked for, for the sprite worker.)
   if (m.ahead) {
     drawPosed(ctx, look, 0, 0, rig, { ...opts, ahead: true });

@@ -83,7 +83,7 @@ test('a race: the countdown, everyone home or out of time, six places, a prize f
   assert.equal(w.map.id, 'mochi_stadium');
 });
 
-test('a newborn who can only scoot comes last', () => {
+test('a newborn who can only crawl comes last', () => {
   const rec = mochi(3, 0, 'sleepy');
   const w = racer(rec);
   startRace(w, rec, 'sprint');
@@ -290,7 +290,7 @@ test('a race has its own music: the race, the final-lap mix from the final stret
 test("the race board says when a Mochi is too little for a course: can't walk, swim or fly yet", async () => {
   const { tooLittle } = await import('../src/ui/mochi-race.js');
   const baby = mochi(4, 0);
-  assert.match(tooLittle(baby, 'sprint'), /scoot.*Dango/);
+  assert.match(tooLittle(baby, 'sprint'), /crawl.*Dango/);
   const walker = mochi(5, 0);
   walker.stats.run.points = 300;
   assert.equal(tooLittle(walker, 'sprint'), null);

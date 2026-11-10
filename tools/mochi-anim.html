@@ -11,10 +11,13 @@ import { PERSONALITIES } from '../src/data/mochi-genes.js';
 import { ACTIONS, TRICK_BITS } from '../src/render/mochi-anim.js';
 import { drawHatch, drawEvolve } from '../src/render/mochi-life.js';
 import { drawSweet, drawBall, SWEET_KINDS } from '../src/render/mochi-sweets.js';
+import { nextFrame } from '../src/render/pixel.js';
 
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
 const q = new URLSearchParams(location.search);
+// (?noworker: every sprite painted here, none in the background: for tracking down painting bugs.)
+if (q.has('noworker')) globalThis.Worker = undefined;
 const Z = 4;
 // One runner per running style, its Run points just past each threshold.
 const points = RUN_STYLES.map((p, i) => p + [150, 100, 100, 100, 100, 200][i]);
@@ -353,6 +356,9 @@ function stepMoon(dt) {
   });
 }
 function step(dt) {
+  // (A new frame: the painting budget starts again, and sprites asked for ahead go to the worker,
+  // as in the game; without it every pose after the first few was left blank.)
+  nextFrame();
   if (q.has('tricks')) return stepTricks(dt);
   if (q.has('moon')) return stepMoon(dt);
   if (q.has('cant')) return stepCant(dt);

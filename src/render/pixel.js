@@ -601,11 +601,13 @@ export function spriteBudgeted(key, build, slot, job = null) {
   if (prev && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget) return prev;
   // (Someone already on screen whose new frame isn't painted yet keeps their last one while the
   // worker paints it: a person costs 1-2 ms to paint, so even one a frame spikes it.)
-  if (prev && job && !cache.has(key) && !gfx.noBudget && workerOf()) {
+  // (One the worker couldn't paint, `failed`, is painted here instead: never left blank.)
+  const worker = !failed.has(key) && workerOf();
+  if (prev && job && !cache.has(key) && !gfx.noBudget && worker) {
     spriteSoon(key, job());
     return prev;
   }
-  if (!prev && job && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget && workerOf()) {
+  if (!prev && job && !cache.has(key) && budget.ms >= BUDGET_MS && !gfx.noBudget && worker) {
     spriteSoon(key, job());
     return null;
   }

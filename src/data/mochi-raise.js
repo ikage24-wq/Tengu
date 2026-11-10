@@ -40,7 +40,7 @@ export const styleOf = (points) => STYLE_POINTS.reduce((t, need, i) => (points >
 export const TUMMY = { sweet: 25, spicy: 20, empty: 60 * 60 };
 export const HUNGER = { after: 20 * 60, sink: 1 / 180 };
 export const TREND = { half: 30 * 60 };
-// Below these points it can't yet (render/mochi-anim.js CANT): it scoots on its bottom instead of
+// Below these points it can't yet (render/mochi-anim.js CANT): it crawls on its hands and knees instead of
 // walking, flails in water until it's lifted out, flops back down when it tries to fly.
 export const CANT_POINTS = { run: 50, swim: 100, fly: 100 };
 export const canDo = (rec, stat) => (rec.stats[stat]?.points ?? 0) >= (CANT_POINTS[stat] ?? 0);

@@ -89,7 +89,7 @@ const hash = (n) => {
 const runPts = (rec) => rec.stats?.run?.points ?? 0;
 const swimPts = (rec) => rec.stats?.swim?.points ?? 0;
 // How fast it strolls about the garden (px/s): a gentle fraction of its running style; a Mochiko
-// who can't walk yet scoots along slowly.
+// who can't walk yet crawls along slowly.
 function strollSpeed(rec) {
   const p = runPts(rec);
   if (p < CANT.run) return 6;
@@ -288,7 +288,7 @@ export function tickGarden(world, dt) {
     else if (e.greet || busy) m.dir = Math.sign(world.body.x - e.x) || 1;
     m.dist += Math.abs(step);
     m.speed = Math.abs(e.vx) > 2 ? Math.abs(e.vx) : 0;
-    // In the pond it swims, at the surface; on land it walks on the ground (or scoots, if it can't
+    // In the pond it swims, at the surface; on land it walks on the ground (or crawls, if it can't
     // yet). Where one gives way to the other it eases up or down, never popping.
     const foot = footingAt(map, e.x);
     m.mode = foot.swim ? 'swim' : 'run';

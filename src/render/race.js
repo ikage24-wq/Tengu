@@ -319,7 +319,7 @@ function heart(ctx, x, y, s, color) {
 // finish, so the camera's cut to the podium never waits on a painting.)
 const TIRED_STEPS = [1, 0.75, 0.5, 0.25, 0];
 const SAMPLES = 32;
-// Each way of moving: its stat, its styles (for the stride), what it is when it can't yet (a scoot
+// Each way of moving: its stat, its styles (for the stride), what it is when it can't yet (a crawl
 // steps with the distance; a flail and a drop go by the clock).
 const MOVES = {
   run: { stat: 'run', table: GAITS, cant: CANT_POINTS.run, cantStride: 7 },

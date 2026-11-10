@@ -6,7 +6,7 @@
 //
 // A course is a row of legs (world/stadium.js `race.legs`): along the ground, across water, up a
 // climbing wall, and off an edge in a glide. Each racer goes on its own stats: Run points set its
-// running speed (and its running style, so a baby who can't walk yet scoots), Swim its swimming (one
+// running speed (and its running style, so a baby who can't walk yet crawls), Swim its swimming (one
 // who can't yet flails), Power its climbing, Fly how fast and how far it glides (one who can't yet
 // drops); its Stamina how fast running tires it (the same tiring as in the Garden: render/mochi-
 // anim.js STAMINAS, handed to the drawing as `m.tired`, so what you see is what is slowing it down),
@@ -37,7 +37,7 @@ import { DRESS, dressFor } from '../data/mochi-dress.js';
 import { loadMap } from './world.js';
 
 // Its styles' speeds (render/mochi-anim.js GAITS, SWIMS, CLIMBS, FLIES); between two styles, its
-// speed climbs with its points. One who can't yet: scoots, flails, drops.
+// speed climbs with its points. One who can't yet: crawls, flails, drops.
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 const CLIMB_SPEED = [8, 16, 26, 40, 56, 74];
