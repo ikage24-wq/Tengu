@@ -6,6 +6,8 @@
 export const ACC_LOOKS = [
   // Face.
   { key: 'biground', name: 'Big Round Glasses', slot: 'face', style: 'fancy', cash: 900, color: '#3a2d4f' },
+  // (Kinako's after dark: the same big round frames with dark lenses. Never sold.)
+  { key: 'bigshades', name: 'Big Dark Shades', slot: 'face', style: 'fancy', cash: 0, color: '#2a2036', unsold: true },
   { key: 'cateye', name: 'Cat-Eye Glasses', slot: 'face', style: 'fancy', cash: 900, color: '#e8485f' },
   { key: 'starshades', name: 'Star Shades', slot: 'face', style: 'fancy', cash: 1000, color: '#ffd34d' },
   { key: 'monocle', name: 'Gold Monocle', slot: 'face', style: 'fancy', cash: 1100, color: '#ffd66b', colors: false },

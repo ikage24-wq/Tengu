@@ -127,7 +127,16 @@ function step(dt, draw = true) {
     endUi(ui);
   }
 }
-window.step = step;
+// (?flip=1: day turns to night (or back) a second in, to see Kinako change outfits.)
+let flipAt = q.has('flip') ? 1 : null;
+window.step = (dt) => {
+  if (flipAt != null && (flipAt -= dt) <= 0) {
+    flipAt = null;
+    w.forceNight = 1 - (w.forceNight ?? 0);
+    w.dayT = 1;
+  }
+  return step(dt);
+};
 window.frame = (type = 'image/png') => canvas.toDataURL(type, 0.92);
 window.press = (key) => { idle.pressed.add(key); step(1 / 60); idle.pressed.delete(key); };
 for (let k = 0; k < 120; k++) updateWorld(w, 1 / 60, idle);

@@ -74,6 +74,12 @@ const FACE = {
     return [hoop(cx, y + 0.6, 4.4, 4.4, 3.5, 3.5, p.main, 0, 360, 24), F(hoop(cx, y + 0.6, 4.2, 4.2, 3.7, 3.7, lighter(p.main, 0.22), 200, 300, 8)),
       F(limb(cx - 3, y - 0.2, cx - 1.6, y - 1.8, 0.6, 0.4, WHITE)), F(limb(cx + 1.6, y + 3.4, cx + 2.8, y + 2.2, 0.4, 0.3, WHITE)), F(E(cx + 2.8, y + 3, 0.4, 0.4, WHITE))];
   }), F(hoop(15.5, 18, 1.5, 1.4, 0.8, 0.7, p.main, 190, 350, 8)), F(R(3, 17.6, 2.4, 0.8, p.main)), F(R(25.6, 17.6, 2.4, 0.8, p.main))],
+  // The same big round frames with dark lenses (Kinako's after dark): a glint across each.
+  bigshades: (p) => [...EYES.flatMap(([x, y], i) => {
+    const cx = x + (i ? 0.4 : -0.4);
+    return [E(cx, y + 0.6, 4.2, 4.2, '#2a2036'), F(E(cx, y + 0.6, 3.5, 3.5, '#3e3254')), hoop(cx, y + 0.6, 4.4, 4.4, 3.5, 3.5, p.main, 0, 360, 24),
+      F(limb(cx - 2.6, y + 1.6, cx - 0.4, y - 1.4, 0.5, 0.4, '#8a7ab0')), F(E(cx + 2, y + 2.4, 0.4, 0.4, '#b8a8e0'))];
+  }), F(hoop(15.5, 18, 1.5, 1.4, 0.8, 0.7, p.main, 190, 350, 8)), F(R(3, 17.6, 2.4, 0.8, p.main)), F(R(25.6, 17.6, 2.4, 0.8, p.main))],
   // Frames whose outer corners sweep up into points, a rhinestone at each tip, faint pink lenses.
   cateye: (p) => [...EYES.flatMap(([x, y], i) => {
     const o = i ? 1 : -1;

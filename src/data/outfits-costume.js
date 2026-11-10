@@ -39,5 +39,8 @@ export const COSTUME_LOOKS = [
   { key: 'cbjuniper', name: "Juniper's Kettle Apron", slot: 'top', style: 'costume', cash: 0, color: '#c8603a', covers: [...body, 'cape'], unsold: true },
   { key: 'cbwendell', name: "Wendell's Comfy Cardigan", slot: 'top', style: 'costume', cash: 0, color: '#8a9a6a', covers: body, unsold: true },
   { key: 'cbtilly', name: "Tilly's Card Shark Vest", slot: 'top', style: 'costume', cash: 0, color: '#3f8a5a', covers: body, unsold: true },
+  // Kinako, the Mochi Garden's keeper (data/npcs.js): his shop apron by day, his shady coat by night.
+  { key: 'kinakoday', name: "Kinako's Shop Apron", slot: 'top', style: 'costume', cash: 0, color: '#ff9ec0', covers: body, unsold: true },
+  { key: 'kinakonight', name: "Kinako's Night Coat", slot: 'top', style: 'costume', cash: 0, color: '#3a2e4a', covers: body, unsold: true },
   { key: 'cbmoth', name: "The Moth's Wing Shawl", slot: 'top', style: 'costume', cash: 0, color: '#3a2a4a', covers: [...body, 'cape'], unsold: true },
 ];

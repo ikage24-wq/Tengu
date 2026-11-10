@@ -13,7 +13,7 @@ import { settings } from '../core/settings.js';
 import { NPCS } from '../data/npcs.js';
 import { drawSceneBack, drawSceneFront } from './scenery.js';
 import { drawHero, setLight, rimLightOf } from './hero.js';
-import { gameHour } from '../world/daytime.js';
+import { gameHour, isNight } from '../world/daytime.js';
 import { drawMonster } from './monsters.js';
 import { drawEffects, drawGroundFx, drawWarnings, drawNumbers, drawDrops } from './effects.js';
 import { questMarker } from '../ui/npc.js';
@@ -166,6 +166,61 @@ export function playerPose(world) {
 // How someone looks now: Yuzu has grown her second tail once her story is done (data/quests.js
 // yuzu_loved).
 export const lookOf = (world, npc) => (npc.id === 'yuzu' && world.char?.quests?.yuzu_loved?.state === 'done' ? { ...npc.look, tails: 2 } : npc.look);
+// ---------- Night outfits (Kinako) ----------
+// Someone with a night outfit wears it after dark. When the hour turns while you're there: a little
+// hop, a puff of smoke, a quick spin (mirror flips only), and they come out in the other outfit.
+// Arriving on the map, they're simply in the right one.
+const SWAP = 0.9;
+const swaps = new Map();
+function nightSwap(world, n, npc, time) {
+  if (!npc.nightGear) return null;
+  const night = isNight(world);
+  let s = swaps.get(n.id);
+  if (!s || s.map !== world.map.id) swaps.set(n.id, (s = { night, at: -99, map: world.map.id }));
+  else if (s.night !== night) Object.assign(s, { night, at: time });
+  const k = (time - s.at) / SWAP;
+  const on = k >= 0 && k < 1;
+  return { k: on ? k : null, night: on && k < 0.5 ? !night : night, toNight: night };
+}
+const ease = (t) => t * t * (3 - 2 * t);
+// The puff: soft round clouds swelling out from him and fading, a few sparkles drifting up.
+function drawSwapPuff(ctx, x, y, k, toNight) {
+  const smoke = toNight ? ['#4e3e62', '#6a5a82', '#8a7ab0'] : ['#ffd6e4', '#ffe9f0', '#fff6ec'];
+  const swell = ease(Math.min(1, k / 0.45));
+  const fade = k < 0.55 ? 1 : 1 - ease((k - 0.55) / 0.45);
+  ctx.save();
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + 0.4;
+    const d = 6 + swell * (9 + (i % 3) * 2.5);
+    const r = (5 + (i % 2) * 2.5) * (0.5 + swell * 0.7);
+    ctx.globalAlpha = 0.85 * fade;
+    ctx.fillStyle = smoke[i % 3];
+    ctx.beginPath();
+    ctx.arc(x + Math.cos(a) * d, y - 20 + Math.sin(a) * d * 0.9 - k * 6, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 0.9 * fade;
+  ctx.fillStyle = smoke[2];
+  ctx.beginPath();
+  ctx.arc(x, y - 20 - k * 6, 9 * swell, 0, Math.PI * 2);
+  ctx.fill();
+  // Sparkles: four-point stars rising and twinkling out.
+  ctx.fillStyle = toNight ? '#ffd66b' : '#ff8fb0';
+  for (let i = 0; i < 4; i++) {
+    const t = Math.max(0, k - 0.2 - i * 0.08);
+    if (t <= 0 || t > 0.6) continue;
+    const s = 2.4 * Math.sin((t / 0.6) * Math.PI);
+    const sx = x + (i % 2 ? 1 : -1) * (14 + i * 3);
+    const sy = y - 30 - t * 28 + i * 4;
+    ctx.globalAlpha = 1;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - s * 2); ctx.lineTo(sx + s * 0.5, sy - s * 0.5); ctx.lineTo(sx + s * 2, sy); ctx.lineTo(sx + s * 0.5, sy + s * 0.5);
+    ctx.lineTo(sx, sy + s * 2); ctx.lineTo(sx - s * 0.5, sy + s * 0.5); ctx.lineTo(sx - s * 2, sy); ctx.lineTo(sx - s * 0.5, sy - s * 0.5);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 function drawNpcs(ctx, world, cam, time) {
   const near = nearbyNpc(world);
   for (const n of world.map.npcs) {
@@ -204,14 +259,21 @@ function drawNpcs(ctx, world, cam, time) {
     // Each NPC runs their own idle routine, but turns to face you while you're close.
     const r = npcRoutine(n.id, time + (n.x % 97) * 0.1);
     const close = near?.id === n.id && !world.scene;
-    const facing = r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1;
-    const busy = r.pose && !close;
-    const look = r.face ? { ...lookOf(world, npc), face: r.face } : lookOf(world, npc);
+    const sw = nightSwap(world, n, npc, time);
+    // (Mid-swap: a spin, flipping every tenth of a second while the smoke is thickest.)
+    const spin = sw?.k != null && sw.k > 0.15 && sw.k < 0.8 ? (Math.floor((sw.k - 0.15) / 0.1) % 2 ? -1 : 1) : 1;
+    const facing = (r.facing && !close ? r.facing : world.body.x < n.x ? -1 : 1) * spin;
+    const busy = r.pose && !close && sw?.k == null;
+    const base = sw?.night ? npc.nightLook ?? lookOf(world, npc) : lookOf(world, npc);
+    const look = r.face && sw?.k == null ? { ...base, face: r.face } : sw?.k != null ? { ...base, face: 'excited' } : base;
+    const gear = sw?.night ? npc.nightGear : npc.gear;
+    const hop = sw?.k != null ? Math.sin(Math.min(1, sw.k / 0.6) * Math.PI) * 6 : 0;
     footShadow(ctx, x, y, 12);
     // (Something they carry behind them: Shelly's shell.)
     r.back?.(ctx, x, y - (r.lift ?? 0), time, facing);
-    drawHero(ctx, look, npc.gear ?? null, x, y - (r.lift ?? 0), { pose: busy ? r.pose : 'idle', progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob, rig: r.rig, onHands: r.hands });
-    if (r.extra) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
+    drawHero(ctx, look, gear ?? null, x, y - (r.lift ?? 0) - hop, { pose: hop > 0.5 ? 'jump' : busy ? r.pose : 'idle', vy: -40, progress: r.progress ?? 0, dur: 0.5, time, seed: n.x % 97, facing, job: npc.showJob, rig: r.rig, onHands: r.hands });
+    if (r.extra && sw?.k == null) r.extra(ctx, x, y - (r.lift ?? 0), time, facing);
+    if (sw?.k != null) drawSwapPuff(ctx, x, y, sw.k, sw.toNight);
     // (During a cutscene, no name tags, markers or prompts: the scene has the stage.)
     if (world.scene) continue;
     ctx.font = '800 8px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';

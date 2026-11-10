@@ -573,7 +573,7 @@ export function npcWindow(ui, state, world) {
   // columns, each with its number key.
   // (A Sweetheart says something for how close you are, or what they just said to your chat.)
   dlg.words ??= npc.role === 'sweetheart' ? greetingFor(world, npc.id) : null;
-  const hello = dlg.words ?? npc.greeting;
+  const hello = dlg.words ?? (npc.nightGreeting && isNight(world) ? npc.nightGreeting : npc.greeting);
   const chars = typed(ui, dlg, `hi:${dlg.id}:${hello.length}`, world, area, hello);
   const end = wrap(ctx, hello, tx, area.y + 2, tw, { size: 8.5, chars, lineHeight: 11.5 });
   if (chars >= hello.length) sparkle(ctx, tx + tw - 4, end - 10 + Math.sin(world.now * 6) * 1.5, 2.5, th.main);

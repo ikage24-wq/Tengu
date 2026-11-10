@@ -192,8 +192,12 @@ export const NPCS = {
   // racing) and the Garden's crops and treats, and after dark opens a secret stall with rarer stock.
   kinako: {
     id: 'kinako', name: 'Kinako', title: 'Garden Keeper', role: 'mochikeeper',
-    look: { hairStyle: 'bob', hairColor: '#e2c07a', skinTone: '#fff0e6', eyeColor: '#8a5a3a', outfitColor: '#ffd6e4', eyeStyle: 'round', face: 'grin' },
-    greeting: "Welcome to the square, dear! Races, costumes, a little something for your Mochi... and if you come by after dark, I might have something special.",
+    // A happy little salesman in big round glasses and a shop apron; after dark he slips into a
+    // shady coat and dark glasses for his secret stall (render/scene.js swaps them with a puff).
+    look: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#ff9ec0', eyeStyle: 'round', face: 'grin', browStyle: 'dots' },
+    nightLook: { hairStyle: 'comma', hairColor: '#a8703f', skinTone: '#ffe6d2', eyeColor: '#8a5a3a', outfitColor: '#3a2e4a', eyeStyle: 'round', face: 'smug', browStyle: 'dots' },
+    greeting: "Welcome, welcome to the square! Races, outfits, a little something for your Mochi... and if you come by after dark, I might have something special.",
+    nightGreeting: "Psst. Over here. Yes, it's me. After dark I've got... rarer things. Don't tell the egg stall.",
     shop: ['mochi_rice', 'azuki', 'kinako', 'fire_pepper', 'msweet_daifuku', 'msweet_dango', 'msweet_heartmochi', 'mochi_egg'],
     // (After dark, her secret stall: a Star Egg and the rarest sweets' ingredients.)
     secretShop: ['mochi_egg_star', 'honeycomb', 'crystal_gel', 'sprite_petal'],
@@ -415,3 +419,7 @@ for (const [id, own] of Object.entries(OWN_LOOKS)) {
   npc.look = { ...npc.look, ...own.look };
   if (own.gear) npc.gear = { ...(npc.gear ?? {}), ...own.gear };
 }
+
+// Kinako's two looks (render/scene.js picks by the hour, with a puff and a spin between).
+NPCS.kinako.gear = { ...costume('kinakoday'), face: piece('look_acc_biground_face') };
+NPCS.kinako.nightGear = { ...costume('kinakonight'), face: piece('look_acc_bigshades_face') };
