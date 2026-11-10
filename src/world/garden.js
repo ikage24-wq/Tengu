@@ -50,10 +50,12 @@ export function gardenMap(g = {}) {
   const spots = [{ x: 2340, y: 748, face: 1, bx: 2430, by: POND + 2, tier: 1, pool: HOME_POND_POOL }];
   const map = {
     id: 'garden', name: 'Mochi Garden', theme: 'town', isTown: true, private: true, garden: true, town: 'sprout',
-    width, height: 900, groundY: PLATEAU,
+    // (`groundY` is where the backdrop's land sits: the valley floor, not the gate's plateau high up
+    // it, or the far hills and trees would hang in the sky.)
+    width, height: 900, groundY: 730,
     // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
     stove: 548, gardenData: g,
-    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
+    look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
     cottages: [],
     terrain, platforms, ropes,
     // (Its own lilies and reeds: render/garden.js.)
@@ -72,7 +74,7 @@ export function gardenMap(g = {}) {
       ['mg_track', 1090, { to: 1450 }], ['mg_fruittree', 1150, 0], ['mg_fruittree', 1380, 1], ['mg_lantern', 1478, 2], ['mg_bigtree', 1605],
       ['mg_fruittree', 1850, 2], ['mg_cropbed', 1962], ['mg_fruittree', 2070, 3], ['mg_lantern', 2150, 3],
       ['mg_reeds', 2228, 0], ['mg_lilies', 2470, 0], ['mg_lilies', 2690, 1], ['mg_reeds', 2816, 1],
-      ['mg_rockface', 2900, { top: LEDGE, bottom: POND, seed: 3 }], ['mg_rockface', 3002, { top: TOP, bottom: LEDGE, seed: 7 }], ['mg_falls', 3002],
+      ['mg_rockface', 2900, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 3002, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 3002],
       ['mg_boulders', 2928], ['mg_glide', 3034], ['mg_lantern', 3110, 4], ['mg_moonmortar', 3250], ['mg_lantern', 3390, 5], ['mg_stadium', 3500],
     ],
     portals: [

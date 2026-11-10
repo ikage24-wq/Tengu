@@ -1544,6 +1544,26 @@ function drawFar(ctx, t, cam, width, y0, time) {
       });
       ctx.fillStyle = t.far;
       break;
+    case 'mochigarden':
+      // The Mochi Garden's valley: soft rolling hills, and on them round puffs of trees in little
+      // clumps (never in a row), a gap here and there.
+      backRidge(ctx, t, cam, width, y0 - 54, 34);
+      ctx.fillStyle = t.far;
+      ctx.fillRect(0, snap(y0 + 10), width, 400);
+      repeat(cam.x, 0.2, 70, width, (i, x) => {
+        if (hash(i * 1.7 + 4) < 0.4) return;
+        const r = 12 + hash(i) * 14;
+        const bx = x + hash(i + 9) * 30;
+        const cy = y0 - 4 - r * 0.9;
+        const p = new Path2D();
+        p.arc(bx, cy, r, 0, Math.PI * 2);
+        p.arc(bx - r * 0.7, cy + r * 0.45, r * 0.62, 0, Math.PI * 2);
+        p.arc(bx + r * 0.75, cy + r * 0.4, r * 0.58, 0, Math.PI * 2);
+        p.rect(bx - r * 1.3, cy + r * 0.4, r * 2.6, 60);
+        litFill(ctx, t, p, 2, 1.5);
+      });
+      ctx.fillStyle = t.far;
+      break;
     case 'bigtrees':
       backRidge(ctx, t, cam, width, y0 - 70, 50, true);
       ctx.fillStyle = t.far;
@@ -4633,6 +4653,17 @@ function drawMid(ctx, t, theme, cam, width, y0, time) {
         } else place(ctx, bannerArt(pick(['#ff6b6b', '#ff9a5c', '#ffd66b'], hash(i)), leanFrame(time, x + cam.x * 0.45, 5, 0.2, i), Math.floor(time * 3 + windTravel(time) * 3 + i) % 3), x + 55, y0 + 4);
       });
       break;
+    case 'mochigarden':
+      // Nearer: blossom trees and a few round green ones, in loose groups with open meadow between.
+      repeat(cam.x, 0.45, 96, width, (i, x) => {
+        const s = hash(i + 5);
+        if (s < 0.38) return;
+        const dx = hash(i + 11) * 40;
+        const sway = leanFrame(time, x + cam.x, 5, 0.1, i);
+        if (s < 0.74) place(ctx, treeArt(hash(i), true, undefined, sway), x + dx, y0 + 4);
+        else place(ctx, treeArt(hash(i), false, ['#a8e2b8', '#bfe8a0', '#9fdcc8'], sway), x + dx, y0 + 4);
+      });
+      break;
     case 'bigtrees':
       repeat(cam.x, 0.45, 160, width, (i, x) => {
         const s = hash(i + 5);
@@ -5107,6 +5138,8 @@ function drawPortals(ctx, map, cam, time, nearId, routeId = null) {
       const lv = dest && !dest.dungeon && !p.door && !dest.home ? (dest.isTown ? 'Town' : levelRange(dest)?.replace('Lv ', 'Lv')) : null;
       const out = p.x < 200 ? -1 : p.x > map.width - 200 ? 1 : 0;
       ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+      // (Its own alignment: whatever was drawn before may have left it centred.)
+      ctx.textAlign = 'left';
       const nw = ctx.measureText(name).width;
       ctx.font = '500 6px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       const lw = lv ? ctx.measureText(lv).width + 5 : 0;

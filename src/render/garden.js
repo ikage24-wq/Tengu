@@ -150,13 +150,15 @@ const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
 });
 
 // ---------- The nursery ----------
-const nurseryArt = () => art('mg-nursery', 184, 152, () => {
+// (Its frame ends at the dome's foot, so the dome stands on the ground, a soft shadow at its foot.)
+const nurseryArt = () => art('mg-nursery', 184, 144, () => {
   const dome = [];
   for (let i = 0; i <= 20; i++) {
     const a = Math.PI + (Math.PI * i) / 20;
     dome.push([92 + Math.cos(a) * 80, 142 + Math.sin(a) * 96]);
   }
   const out = [
+    F(E(92, 142.5, 86, 2, '#c9b8a8')),
     T(dome, MOCHI),
     // Blush on its cheeks, like a mochi.
     F(E(38, 116, 10, 4, '#ffd0da')), F(E(146, 116, 10, 4, '#ffd0da')),
@@ -484,12 +486,27 @@ function vines(ctx, x, y, time, wx, n, len) {
     ctx.moveTo(vx, y);
     ctx.quadraticCurveTo(vx + Math.sin(a) * l * 0.6, y + l * 0.6, vx + Math.sin(a) * l, y + l);
     ctx.stroke();
-    ctx.fillStyle = '#8fcf72';
-    for (let k = 1; k < 4; k++) {
-      const t = k / 4;
+    // Leaves all down it (more the longer it hangs), two greens, and on every third strand a tiny
+    // blossom near its tip.
+    const leaves = Math.max(3, Math.round(l / 8));
+    for (let k = 1; k <= leaves; k++) {
+      const t = k / (leaves + 0.5);
+      ctx.fillStyle = k % 3 ? '#8fcf72' : '#7cbf64';
       ctx.beginPath();
-      ctx.ellipse(vx + Math.sin(a) * l * t + (k % 2 ? 2 : -2), y + l * t, 2, 1.2, k % 2 ? 0.5 : -0.5, 0, TAU);
+      ctx.ellipse(vx + Math.sin(a) * l * t * t + (k % 2 ? 2.2 : -2.2), y + l * t, 2.4, 1.4, k % 2 ? 0.5 : -0.5, 0, TAU);
       ctx.fill();
+    }
+    if (i % 3 === 1) {
+      const fx = vx + Math.sin(a) * l * 0.72;
+      const fy = y + l * 0.85;
+      ctx.fillStyle = '#ffd0dc';
+      for (let k = 0; k < 5; k++) {
+        ctx.beginPath();
+        ctx.arc(fx + Math.cos((k / 5) * TAU) * 1.6, fy + Math.sin((k / 5) * TAU) * 1.6, 1.1, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#ffe680';
+      ctx.fillRect(fx - 0.5, fy - 0.5, 1, 1);
     }
   }
 }
@@ -541,23 +558,42 @@ function windsock(ctx, x, gy, time, wx) {
   ctx.fillStyle = WOOD_DK;
   ctx.fillRect(snap(x + 16), snap(gy - 13), 2, 13);
 }
+// The Moonmortar: the Garden's great mochi mortar, a fat wooden tub on a mossy stone, a gold crescent
+// carved on its front, the sacred rope twisted round its waist with zigzag paper streamers, and in
+// it a big soft mochi, smiling, its sprout up; the pounding mallet leans beside it.
 const moonmortarArt = () => art('mg-moonmortar', 210, 176, () => {
-  const s = ramp('#cfc6b8');
-  const bowl = [[30, 92], [180, 92], [172, 128], [160, 150], [150, 172], [60, 172], [50, 150], [38, 128]];
-  return [
-    // The base stone, the mortar itself, its hollow and lip, the carved band and crescent.
-    R(40, 164, 130, 12, '#b8ae9e'),
-    T(bowl, '#d6cebe'), F(T([[150, 92], [180, 92], [172, 128], [160, 150], [150, 172], [138, 172], [150, 130]], s.sh)),
-    E(105, 92, 75, 14, '#cfc6b8'), E(105, 92, 62, 10, '#8a7e70'), F(E(98, 90, 40, 5, '#a89a8a')), F(E(80, 88, 16, 3, '#fbf6ee')),
-    F(R(44, 118, 122, 3, s.deep)), F(R(48, 142, 114, 2, s.deep)),
-    F(T([[95, 126], [104, 120], [100, 132], [104, 140], [95, 136], [92, 130]], '#fff4c8')),
-    // The great wooden mallet leaning on it.
-    F(limb(182, 168, 150, 40, 5, 5, WOOD_DK)), F(limb(182, 168, 150, 40, 1.6, 1.6, ramp(WOOD_DK).hi)),
-    T([[132, 34], [150, 20], [172, 44], [154, 58]], KINAKO), F(T([[150, 20], [172, 44], [168, 48], [148, 25]], ramp(KINAKO).sh)),
-    // The sacred rope round it, and its paper streamers.
-    F(limb(36, 104, 174, 104, 4, 4, '#e8d8a8')), ...[52, 74, 96, 118, 140, 162].map((x) => F(R(x, 106, 2, 4, '#c8b888'))),
-    ...[60, 104, 148].flatMap((x) => [F(T([[x, 108], [x + 6, 108], [x + 3, 116], [x + 7, 116], [x + 2, 126], [x + 3, 117], [x - 1, 117]], '#ffffff'))]),
+  const wood = ramp('#d8a46a');
+  const out = [
+    // The stone it stands on, moss along its edge.
+    E(105, 170, 82, 7, '#cfc4b6'), F(E(105, 167, 78, 3, '#ddd4c8')), F(E(52, 166, 12, 2.4, '#9fcf7a')), F(E(156, 167, 10, 2, '#9fcf7a')),
+    // The tub: round-bellied, a rim at the top, its grain.
+    T([[44, 82], [166, 82], [172, 104], [168, 136], [158, 164], [52, 164], [42, 136], [38, 104]], wood.base),
+    F(T([[140, 82], [166, 82], [172, 104], [168, 136], [158, 164], [136, 164], [148, 120]], wood.sh)),
+    ...[62, 84, 106, 128].map((x) => F(R(x, 92, 1.4, 68, wood.deep))),
+    E(105, 82, 64, 12, wood.hi), E(105, 82, 56, 9, '#b07a44'),
+    // The gold crescent on its front.
+    F(E(104, 138, 11, 11, '#ffd75e')), F(E(109, 135, 9.6, 9.6, wood.base)),
+    // The sacred rope, twisted, round its waist, and its zigzag paper streamers.
+    F(limb(38, 106, 172, 106, 5, 5, '#c8a868')), F(limb(38, 104.6, 172, 104.6, 1.6, 1.6, '#f0dca0')),
+    ...[46, 60, 74, 88, 102, 116, 130, 144, 158].map((x) => F(limb(x, 102.6, x + 7, 109.4, 1.3, 1.3, '#9a7a48'))),
   ];
+  for (const x of [62, 104, 146]) {
+    out.push(F(T([[x - 4, 110], [x + 4, 110], [x + 4, 116], [x, 116], [x + 4, 122], [x + 4, 128], [x - 4, 128], [x - 4, 122], [x, 122], [x - 4, 116]], '#ffffff')), F(R(x - 4, 115.6, 8, 0.8, '#e6e0f0')), F(R(x - 4, 121.6, 8, 0.8, '#e6e0f0')));
+  }
+  // The mochi in it: a soft round mound over the rim, smiling, rosy, a sprout on top.
+  out.push(
+    E(105, 74, 50, 24, '#fffaf4'), F(E(92, 62, 24, 8, '#ffffff')),
+    F(E(96, 72, 1.8, 2.4, '#5a3a48')), F(E(114, 72, 1.8, 2.4, '#5a3a48')), F(E(95.4, 71, 0.7, 0.8, '#ffffff')), F(E(113.4, 71, 0.7, 0.8, '#ffffff')),
+    F(E(88, 77, 4, 2, '#ffccd8')), F(E(122, 77, 4, 2, '#ffccd8')),
+    F(E(103.4, 77.6, 1.6, 1, '#d0507a')), F(E(106.6, 77.6, 1.6, 1, '#d0507a')),
+    F(limb(105, 51, 106, 40, 1.4, 1.2, '#6fae52')), E(100, 41, 5, 2.6, '#8fd16f'), E(112, 39, 5, 2.6, '#7cc060'),
+  );
+  // The mallet leaning on it: its long handle, and the barrel head up top.
+  out.push(
+    F(limb(186, 170, 160, 52, 3.4, 3.4, WOOD_DK)), F(limb(186, 170, 160, 52, 1.2, 1.2, ramp(WOOD_DK).hi)),
+    T([[142, 38], [174, 30], [180, 50], [148, 58]], '#c8945a'), F(T([[142, 38], [174, 30], [175, 34], [143, 42]], '#e2b880')), E(145, 48, 4, 10, '#b07a44'), E(177, 40, 4, 10, '#e2b880'),
+  );
+  return out;
 });
 const stadiumArt = () => art('mg-stadium', 184, 160, () => {
   const out = [
@@ -768,6 +804,7 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('EGGS', snap(x + 6), snap(gy - 21));
+      ctx.textAlign = 'left';
       return true;
     }
     case 'mg_kitchen': {
@@ -877,6 +914,8 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       const s = rockFaceArt(h, extra.seed ?? 1);
       const cx = extra.flip ? x + ROCK_FACE_AT - s.w / 2 : x - ROCK_FACE_AT + s.w / 2;
       place(ctx, s, snap(cx), extra.bottom - cam.y, { flip: Boolean(extra.flip) });
+      // (Ivy hanging down over the face from its grassy lip, swaying: `extra.vines` strands.)
+      if (extra.vines) vines(ctx, extra.flip ? x - 4 - extra.vines * 9 : x - 4, extra.top - cam.y + 2, time, wx, extra.vines, extra.vineLen ?? 50);
       return true;
     }
     case 'mg_boulders':

@@ -19,7 +19,7 @@ function stadiumMap() {
   return {
     id: 'mochi_stadium', name: 'Mochi Race Stadium', theme: 'town', isTown: true, private: true, mochiRace: true, town: 'sprout',
     width, height: 520, groundY: FLOOR,
-    look: { sky: ['#cfe6ff', '#e8f3ff', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
+    look: { sky: ['#cfe6ff', '#e8f3ff', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
     cottages: [],
     terrain: [[0, FLOOR], [width, FLOOR]],
     platforms: [],
@@ -55,7 +55,7 @@ function stadiumMap() {
 // faster (`tire`) and make the worn-out stop to rest (`restAt`: how tired; `rest`: for how long).
 const course = (start, finish, legs, slow = []) => ({ start, finish, legs, slow, total: finish - start + legs.reduce((sum, l) => sum + (l.kind === 'climb' ? l.from - l.to : 0), 0) });
 // The skies: a blossom meadow, a lake, the cliffs, high among the clouds, the warm hills.
-const LOOK = { far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'bigtrees', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1 };
+const LOOK = { far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1 };
 const SKIES = {
   meadow: ['#ffd6e4', '#ffeadc', '#fff8f0'],
   lake: ['#cfe8ff', '#e6f4ff', '#f6fbff'],
