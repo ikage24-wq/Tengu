@@ -23,6 +23,8 @@ export const RACE_STAGES = {
 // Unlocking: a stage's Beginner race is open from the start (the Grand course's once you've won
 // `needs` Beginner races); winning a rank opens the next rank of that stage.
 export const RACE_RANKS = {
+  // (For a Mochi just hatched: rivals that can only just walk, a small purse for everyone who runs.)
+  hatchling: { name: 'Hatchling', rivals: [30, 100], grown: 0, prize: [300, 150, 80], rest: 40, tail: 45, speedUp: 2.2 },
   beginner: { name: 'Beginner', rivals: [120, 620], grown: 0.45, prize: [500, 250, 100], rest: 20 },
   challenge: { name: 'Challenge', rivals: [650, 1400], grown: 0.8, prize: [2000, 1000, 400], rest: 80 },
   master: { name: 'Master', rivals: [1300, 2100], grown: 1, prize: [8000, 4000, 1500], rest: 300 },
@@ -43,7 +45,8 @@ export function rankOpen(char, stageId, rank) {
   const wins = char.raceWins ?? {};
   const i = RANK_ORDER.indexOf(rank);
   if (i < 0 || !RACE_STAGES[stageId]) return false;
-  if (i > 0) return Boolean(wins[medalKey(stageId, RANK_ORDER[i - 1])]);
+  // (Hatchling and Beginner are open from the start; each rank after, by winning the one before.)
+  if (i > 1) return Boolean(wins[medalKey(stageId, RANK_ORDER[i - 1])]);
   const needs = RACE_STAGES[stageId].needs ?? 0;
   return Object.keys(RACE_STAGES).filter((id) => id !== stageId && wins[medalKey(id, 'beginner')]).length >= needs;
 }
@@ -51,7 +54,7 @@ export function rankOpen(char, stageId, rank) {
 export function rankNeeds(char, stageId, rank) {
   if (rankOpen(char, stageId, rank)) return null;
   const i = RANK_ORDER.indexOf(rank);
-  if (i > 0) return `Win ${RACE_STAGES[stageId].name} (${RACE_RANKS[RANK_ORDER[i - 1]].name}) to open it.`;
+  if (i > 1) return `Win ${RACE_STAGES[stageId].name} (${RACE_RANKS[RANK_ORDER[i - 1]].name}) to open it.`;
   return `Win ${RACE_STAGES[stageId].needs} Beginner races to open it.`;
 }
 

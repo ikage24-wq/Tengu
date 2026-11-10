@@ -62,7 +62,8 @@ export function raceBoardWindow(ui, state, world) {
   // The stage: a tab each, and its card.
   const ids = Object.keys(RACE_STAGES);
   win.stage ??= ids[0];
-  win.rank ??= 'beginner';
+  // (New to racing: the Hatchling races first.)
+  win.rank ??= Object.keys(world.char.raceWins ?? {}).length ? 'beginner' : 'hatchling';
   win.stage = ids[tabs(ui, x, y, ids.map((id) => RACE_STAGES[id].tab), ids.indexOf(win.stage), { w: 39, h: 14 })];
   y += 18;
   const char = world.char;
@@ -81,7 +82,7 @@ export function raceBoardWindow(ui, state, world) {
   text(ctx, [1, 2, 3].map((p) => `${NTH[p - 1]} ${prizeOf(win.stage, win.rank, p).toLocaleString()}`).join('   ·   '), x + 20, y + 33.5, { size: 6.5, bold: true, color: '#b08a2a' });
   y += 46;
   // The ranks: a button each (a lock on one not open yet), with the picked Mochi's medal there.
-  const rw = (W - 20 - 8) / 3;
+  const rw = (W - 20 - (RANK_ORDER.length - 1) * 4) / RANK_ORDER.length;
   RANK_ORDER.forEach((rk, i) => {
     const bx = x + i * (rw + 4);
     const open = rankOpen(char, win.stage, rk);
@@ -132,7 +133,7 @@ export function raceBoardWindow(ui, state, world) {
     // (Too little for this course: a small warning mark.)
     if (tooLittle(rec, win.stage)) icon(ctx, 'skull', cx + cw - 9, cy + 17, 6, '#e0a0b0');
     // (Its medals on this stage: Beginner, Challenge, Master.)
-    RANK_ORDER.forEach((rk, k) => medalDot(ctx, cx + cw - 22 + k * 7, cy + 7, rec.medals?.[medalKey(win.stage, rk)], 2.4));
+    RANK_ORDER.forEach((rk, k) => medalDot(ctx, cx + cw - 8 - (RANK_ORDER.length - 1 - k) * 7, cy + 7, rec.medals?.[medalKey(win.stage, rk)], 2.4));
     if (clicked(ui, cx, cy, cw, 23)) win.pick = rec;
   });
   const open = rankOpen(char, win.stage, win.rank);

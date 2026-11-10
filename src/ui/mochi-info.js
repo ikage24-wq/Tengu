@@ -166,7 +166,8 @@ export function mochiInfoWindow(ui, state, world) {
     ctx.lineWidth = 1;
     ctx.stroke();
     text(ctx, RACE_STAGES[id].tab, cx + 5, by + 10.5, { size: 6, bold: true, color: '#a8467a' });
-    RANK_ORDER.forEach((rk, k) => {
+    // (Beginner, Challenge, Master as dots; the Hatchling medal is in the tooltip.)
+    RANK_ORDER.filter((rk) => rk !== 'hatchling').forEach((rk, k) => {
       const medal = rec.medals?.[medalKey(id, rk)];
       const mx = cx + cw - 22 + k * 7;
       ctx.beginPath();

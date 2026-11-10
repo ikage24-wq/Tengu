@@ -191,6 +191,9 @@ export function tickGarden(world, dt) {
   }
   if (life.caring && !life.mochi.includes(life.caring)) life.caring = null;
   const gone = [];
+  // Night owls: up to two stay out after dark (the night-loving kinds, and anyone just hatched), so
+  // the Garden is never empty at night; the rest go to bed in the nursery.
+  const owls = night ? new Set(life.mochi.filter((e) => nightOwl(e.rec)).slice(0, 2)) : new Set();
   life.mochi.forEach((e, i) => {
     const { rec } = e;
     // (The garden's time passes for them while you're here.)
@@ -248,20 +251,21 @@ export function tickGarden(world, dt) {
       world.log(`${rec.name ?? `Your ${STAGES[rec.stage]}`} has lived a long, happy life... it waves, and goes back to its egg to start again!${out.raised.length ? ' It will be stronger for it.' : ''}`, '#ffc2d4');
       return;
     }
+    const owl = owls.has(e);
     if (inside) {
-      // The nursery: asleep in the beds at night; by day, nobody's in.
-      e.hidden = !night;
+      // The nursery: asleep in the beds at night (the night owls are out); by day, nobody's in.
+      e.hidden = !night || owl;
       e.x = bedSpot(i, life.mochi.length);
       e.y = groundAt(map, e.x);
       e.vx = 0;
       if (night && !m.action) m.action = { name: 'nap', t0: null, hold: 1e9 };
       return;
     }
-    if (night) {
+    if (night && !owl) {
       // Bedtime: off to the nursery door, and in.
       e.hidden = e.x != null && Math.abs(e.x - NURSERY_DOOR) < 4;
     } else e.hidden = false;
-    const sched = night ? { x: NURSERY_DOOR, moving: true } : scheduledAt(rec, now + i * 3.7);
+    const sched = night && !owl ? { x: NURSERY_DOOR, moving: true } : scheduledAt(rec, now + i * 3.7);
     let target = sched.x;
     if (e.greet && now < e.greet.until) target = world.body.x + (e.x != null && e.x < world.body.x ? -26 - i * 14 : 26 + i * 14);
     else e.greet = null;
@@ -358,6 +362,11 @@ export function wakeUp(world, e) {
   world.log(fond ? `${e.rec.name ?? 'Your Mochi'} wakes with a big stretch and a smile.` : `${e.rec.name ?? 'Your Mochi'} was fast asleep... and is grumpy about it.`, fond ? '#ffd6e4' : '#c8b8d8');
   return fond ? 'happy' : 'grumpy';
 }
+
+// Who stays up after dark: the night-loving personalities, and a Mochi just hatched (its first half
+// hour), too excited to sleep.
+const NIGHT_OWLS = ['hyper', 'sneaky', 'mischief', 'cool', 'nosy', 'curious', 'loner', 'dramatic', 'artsy'];
+export const nightOwl = (rec) => rec.stage !== 'egg' && (NIGHT_OWLS.includes(rec.personality) || (rec.age ?? 0) < 1800);
 
 // The orchard's fruit trees (world/garden.js mg_fruittree): Up beside one to give it a shake, and
 // a cherry or two (once in a while three) drop for you to pick up. Each tree once every

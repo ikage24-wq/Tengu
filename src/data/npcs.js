@@ -199,6 +199,9 @@ export const NPCS = {
     secretShop: ['mochi_egg_star', 'honeycomb', 'crystal_gel', 'sprite_petal'],
     prices: { mochi_rice: 150, azuki: 200, kinako: 200, fire_pepper: 400, msweet_daifuku: 1200, msweet_dango: 1200, msweet_heartmochi: 25000, mochi_egg: 4000,
       mochi_egg_star: 45000, honeycomb: 2500, crystal_gel: 2500, sprite_petal: 2500 },
+    // (What she pays for your Garden's things: crops, cherries, and any Mochi sweet you've made.)
+    buys: { mochi_rice: 60, azuki: 80, kinako: 80, fire_pepper: 120, cherry: 90 },
+    buysSweets: 250,
   },
   posy: {
     id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',

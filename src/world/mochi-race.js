@@ -288,7 +288,8 @@ function stepRacer(R, r, dt, course, map) {
     m.speed = 0;
     return;
   }
-  const boost = (!over && C < r.cheerUntil ? CHEER.boost : 1) * (!over && C < (r.windUntil ?? 0) ? LUCK.windBoost : 1);
+  // (A Hatchling race: little legs, so everyone goes at `speedUp` times their pace, or nobody would get home.)
+  const boost = (!over && C < r.cheerUntil ? CHEER.boost : 1) * (!over && C < (r.windUntil ?? 0) ? LUCK.windBoost : 1) * (RACE_RANKS[R.rank]?.speedUp ?? 1);
   const k = progressOf(course, r) / course.total;
   const pace = k < 1 / 3 ? r.pace.early : k > 2 / 3 ? r.pace.late : 1;
   const wob = 1 + r.pace.wobble * (0.6 * Math.sin(C * 0.9 + r.seed) + 0.4 * Math.sin(C * 2.3 + r.seed * 1.7));
@@ -439,7 +440,7 @@ export function tickRace(world, dt, input) {
       if (R.first == null) R.slowLeft = SLOW_MO.secs;
       R.first ??= R.clock;
     }
-    if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + RACE_TAIL) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
+    if (R.finished === R.racers.length || (R.first != null && R.clock >= R.first + (RACE_RANKS[R.rank].tail ?? RACE_TAIL)) || R.clock >= (course.maxTime ?? RACE_MAX)) endOfRace(world, R);
   } else {
     for (const r of R.racers) stepRacer(R, r, dt, course, world.map);
     podiumStep(world, R);
@@ -647,7 +648,8 @@ function endOfRace(world, R) {
 }
 function award(world, R) {
   const you = R.racers[R.me];
-  R.prize = you.done != null ? prizeOf(R.stageId, R.rank, you.place) : 0;
+  // (Home in time: its place's prize. Not home: still a little something for running.)
+  R.prize = you.done != null ? prizeOf(R.stageId, R.rank, you.place) : Math.round(RACE_RANKS[R.rank].rest / 2);
   world.char.gold += R.prize;
   const key = medalKey(R.stageId, R.rank);
   const medal = you.done != null ? MEDALS[you.place - 1] ?? null : null;

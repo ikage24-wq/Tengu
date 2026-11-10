@@ -41,6 +41,16 @@ import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
 import { dressShopWindow } from './mochi-dress-shop.js';
 import { isNight } from '../world/daytime.js';
+
+// Kinako's tips for a new gardener, one each time you ask "How do I start?".
+const KINAKO_HELP = [
+  "First, the eggs by my neighbour's stall: stand by one and press Up to rock it. Out pops a Mochiko!",
+  "A new Mochiko can only crawl. Feed it two Kinako Mochi (stand by it, Up, then pick the sweet) and it'll be walking!",
+  "Sweets come from the Sweet Kitchen. The crop bed in the orchard gives rice, beans and kinako; shake the fruit trees for cherries.",
+  "A Mochi's tummy holds about four sweets an hour. Sweets raise its stats; petting and play make it happy.",
+  "Race your Mochi from my counter! The Hatchling races are for little ones, and everybody gets a little something.",
+  "Short of gold? I'll buy your crops, cherries and sweets. And after dark... come and see my secret stall!",
+];
 import { storageWindow } from './storage.js';
 import { polishWindow } from './polish.js';
 import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
@@ -277,7 +287,7 @@ export function npcWindow(ui, state, world) {
       : { label: 'Curse me again!', sub: 'One curse a day. Come back tomorrow.', icon: 'star', run: () => say(world, 'malvina', "Greedy! One curse a day, minion. Even EVIL has opening hours.") });
   }
   if (npc.storage) choices.push({ label: 'Storage', sub: npc.storage, icon: 'bag', run: () => (dlg.mode = 'storage') });
-  // Kinako, the Garden Keeper: the race board, her costumes, and after dark her secret stall.
+// Kinako, the Garden Keeper: the race board, her costumes, and after dark her secret stall.
   if (npc.role === 'mochikeeper' && !world.gardenVisit) {
     choices.unshift({ label: 'Enter a race', sub: 'Pick a course and one of your Mochi', icon: 'star', primary: true, run: () => {
       Object.assign(state.windows.race, { open: true, openedAt: performance.now() / 1000 });
@@ -285,6 +295,7 @@ export function npcWindow(ui, state, world) {
       state.windows.npc.open = false;
     } });
     choices.push({ label: 'Mochi outfits', sub: 'Glasses, scarves and cute clothes for your Mochi', icon: 'hanger', run: () => (dlg.mode = 'dress') });
+    choices.push({ label: 'How do I start?', sub: 'Kinako tells you how to raise a Mochi', icon: 'chat', run: () => say(world, 'kinako', KINAKO_HELP[(dlg.help = ((dlg.help ?? -1) + 1) % KINAKO_HELP.length)]) });
     choices.push({ label: 'The Mochi album', sub: 'Everything your Mochi have been, and its rewards', icon: 'book', run: () => {
       Object.assign(state.windows.album, { open: true, openedAt: performance.now() / 1000 });
       state.npc = null;
