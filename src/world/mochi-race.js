@@ -52,6 +52,8 @@ const DROP = 3;
 // STAMINAS); the most it can get is 1 only for the least stamina-ed, who then stop for a rest.
 const STAMINA = [[1 / 5, 1], [1 / 8, 0.85], [1 / 12, 0.65], [1 / 18, 0.45], [1 / 30, 0.25], [0, 0]];
 const REST = 2.6;
+// How far before a fork you can still choose your way.
+export const FORK_NEAR = 700;
 // How much slower it runs, all tired out; how much a hill slows it going up (and speeds it coming
 // down), and how much more going up tires it. Wading through cloud fluff, everyone goes at much the
 // same slow pace (a quick runner only a little quicker): the further a glide carries it, the less of
@@ -158,6 +160,8 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
     racers: field.map((f, lane) => ({
       ...f, you: lane === me, lane, leg: 0, x: course.start, y: y0, climbed: 0, glide: null, seed: wobble() * 100, pace: paceOf(f.rec.personality),
       runFor: 0, restUntil: 0, resting: false, cheerUntil: -1, cheerReady: 0, cheers: 0, done: null, place: 0, reacted: false,
+      // (At each fork, the way it would rather go: you can change yours on the way, ArrowDown.)
+      alt: Object.fromEntries(course.legs.map((l, i) => [i, Boolean(l.alt && preferAlt(f.rec, l))]).filter(([, v]) => v)),
       m: { genes: f.rec, dir: 1, speed: 0, dist: course.start, size: f.rec.stage === 'mochiko' ? 'baby' : 'grown', mode: 'run', tired: 0, rest: false },
     })),
     cam: null,
@@ -176,20 +180,46 @@ export function startRace(world, rec, stageId, rank = 'beginner', opts = {}) {
 
 // Cheers racer `r` on: a burst of speed, paid for in stamina; a cheer gets one catching its breath
 // back on its feet sooner. Returns whether it took.
+// What one cheer costs this Mochi, out of its stamina bar (0 to 1), and how fast it gets it back.
+export const cheerCost = (rec) => CHEER.cost[0] - styleOf(rec.stats.stamina.points) * CHEER.cost[1];
+const cheerBack = (rec) => CHEER.back[0] + styleOf(rec.stats.stamina.points) * CHEER.back[1];
+// Whether it has the stamina for a cheer now (not while it's catching its breath).
+export const canAffordCheer = (r) => !r.m.rest && (r.m.tired ?? 0) + cheerCost(r.rec) <= 1.001;
 export function cheer(R, r) {
   if (R.phase !== 'run' || r.done != null || R.clock < r.cheerReady) return false;
-  if (R.clock < r.restUntil) r.restUntil = Math.max(R.clock, r.restUntil - 0.8);
+  if (R.clock < r.restUntil || !canAffordCheer(r)) return false;
   r.cheerUntil = R.clock + CHEER.secs;
   r.cheerReady = R.clock + CHEER.every;
-  r.runFor += CHEER.cost;
+  r.spent = Math.min(1, (r.spent ?? 0) + cheerCost(r.rec));
   r.cheers += 1;
   return true;
+}
+
+// A fork: a leg with another way round (`alt`, say a boardwalk over a river beside the swim), and
+// which way this racer takes it (`r.alt[leg]`: true for the other way).
+export const legOf = (course, r) => {
+  const l = course.legs[r.leg];
+  return l?.alt && r.alt?.[r.leg] ? l.alt : l;
+};
+// The next fork ahead of this racer: { leg, at (where it starts) }, or null.
+export function forkAhead(course, r) {
+  for (let i = r.leg + 1; i < course.legs.length; i++) {
+    if (course.legs[i].alt) return { leg: i, at: course.legs[i - 1].to ?? course.legs[i - 1].x };
+  }
+  return null;
+}
+// Which way a racer would rather go at a fork, by its stats: the other way if it's quicker there.
+function preferAlt(rec, leg) {
+  const s = rec.stats;
+  const main = leg.kind === 'swim' ? speedOf(SWIM_SPEED, s.swim.points, CANT.swim, FLAIL) : runSpeed(s.run.points);
+  const alt = (leg.alt.kind === 'run' ? runSpeed(s.run.points) : speedOf(SWIM_SPEED, s.swim.points, CANT.swim, FLAIL)) * (leg.alt.slow ?? 1);
+  return alt > main;
 }
 
 // Where a run leg ends for this racer: at a climbing wall, each lane at its own spot along its foot.
 function runEnd(course, r) {
   const next = course.legs[r.leg + 1];
-  return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : course.legs[r.leg].to;
+  return next?.kind === 'climb' ? next.x - WALL_GAP - r.lane * WALL_LANE : legOf(course, r).to;
 }
 const nextLeg = (course, r) => {
   if (r.leg < course.legs.length - 1) r.leg += 1;
@@ -219,14 +249,46 @@ function glideStep(course, r, dt, map, boost) {
 
 // One racer's step along its leg; or, once past the line (or once the race is over), easing to a
 // stop (one still gliding comes down first) and cheering or sulking as its place deserves.
+// Luck, lightly: now and then a racer trips on the run (a stumble, a moment stopped) or catches a
+// tailwind (a moment quicker). Most get one moment a race or none, never more than two, never in
+// the last stretch; drawn from its own seed, so a party race has the same luck on every screen.
+const LUCK = { trip: 0.9, wind: 1.6, windBoost: 1.25, none: 0.45, two: 0.15, last: 0.9 };
+function luckOf(r) {
+  const rng = seededRandom(Math.floor(r.seed * 1000) + 77);
+  const n = rng() < LUCK.none ? 0 : rng() < LUCK.two / (1 - LUCK.none) ? 2 : 1;
+  return Array.from({ length: n }, () => ({ at: 0.12 + rng() * (LUCK.last - 0.12), kind: rng() < 0.6 ? 'trip' : 'wind', done: false })).sort((a, b) => a.at - b.at);
+}
+function stepLuck(R, r, course, leg) {
+  if (R.phase !== 'run' || r.done != null) return;
+  r.luck ??= luckOf(r);
+  const k = progressOf(course, r) / course.total;
+  const next = r.luck.find((l) => !l.done);
+  if (!next || k < next.at) return;
+  // (A trip only on the run; a tailwind running or gliding; otherwise it waits for the next run.)
+  if (leg.kind !== 'run' && !(next.kind === 'wind' && leg.kind === 'glide')) return;
+  next.done = true;
+  r.luckAt = R.clock;
+  r.luckKind = next.kind;
+  if (next.kind === 'trip') {
+    r.stunUntil = R.clock + LUCK.trip;
+    r.m.action = { name: 'sig_clumsy', t0: null };
+  } else r.windUntil = R.clock + LUCK.wind;
+}
+
 function stepRacer(R, r, dt, course, map) {
   const m = r.m;
   const s = r.rec.stats;
-  const leg = course.legs[r.leg];
+  const leg = legOf(course, r);
   const [px, py] = [r.x, r.y];
   const C = R.clock;
   const over = r.done != null || R.phase === 'done';
-  const boost = !over && C < r.cheerUntil ? CHEER.boost : 1;
+  stepLuck(R, r, course, leg);
+  // (Tripped: a moment stopped where it is, picking itself up.)
+  if (!over && C < (r.stunUntil ?? 0)) {
+    m.speed = 0;
+    return;
+  }
+  const boost = (!over && C < r.cheerUntil ? CHEER.boost : 1) * (!over && C < (r.windUntil ?? 0) ? LUCK.windBoost : 1);
   const k = progressOf(course, r) / course.total;
   const pace = k < 1 / 3 ? r.pace.early : k > 2 / 3 ? r.pace.late : 1;
   const wob = 1 + r.pace.wobble * (0.6 * Math.sin(C * 0.9 + r.seed) + 0.4 * Math.sin(C * 2.3 + r.seed * 1.7));
@@ -252,24 +314,36 @@ function stepRacer(R, r, dt, course, map) {
     if (r.resting) {
       r.resting = false;
       r.runFor *= 0.35;
+      r.spent = (r.spent ?? 0) * 0.35;
     }
+    // (What cheering spent comes back slowly, whatever it's doing.)
+    r.spent = Math.max(0, (r.spent ?? 0) - dt * cheerBack(r.rec));
     if (leg.kind === 'run') {
       // Running: tiring (more uphill), slower up a hill and quicker down one, slow in the fluff.
-      const sl = (groundAt(map, r.x + 6) - groundAt(map, r.x - 6)) / 12;
+      // (A boardwalk, `leg.y`, is flat and a little slower going, `leg.slow`.)
+      const sl = leg.y != null ? 0 : (groundAt(map, r.x + 6) - groundAt(map, r.x - 6)) / 12;
       r.runFor += dt * (1 + Math.max(0, -sl) * HILL_TIRE);
       // (A long hard course tires it faster, and wears it out sooner: `course.tire`, `course.restAt`,
       // for `course.rest` seconds.)
       const f = Math.min(most, r.runFor * tire * r.pace.tire * (course.tire ?? 1));
-      if (f >= (course.restAt ?? 0.98) && most >= (course.restAt ?? 1)) r.restUntil = C + (course.rest ?? REST);
+      // (Its stamina bar: tired from running, plus what cheering has spent. Run down to nothing, by
+      // either, it has to stop and catch its breath.)
+      const bar = Math.min(1, f + (r.spent ?? 0));
+      if ((f >= (course.restAt ?? 0.98) && most >= (course.restAt ?? 1)) || bar >= 0.98) r.restUntil = C + (course.rest ?? REST);
       const hill = Math.max(0.55, Math.min(1.3, 1 + sl * HILL_SPEED));
       const wading = (course.slow ?? []).some(([a, b]) => r.x >= a && r.x < b);
-      const run = wading ? WADE + runSpeed(s.run.points) * 0.05 : runSpeed(s.run.points) * hill;
+      const run = (wading ? WADE + runSpeed(s.run.points) * 0.05 : runSpeed(s.run.points) * hill) * (leg.slow ?? 1);
       const v = run * pace * wob * (1 - TIRED_SLOW * f) * boost * Math.min(1, GETAWAY[0] + C * GETAWAY[1]);
       const end = runEnd(course, r);
       r.x = Math.min(end, r.x + v * dt);
-      r.y = groundAt(map, r.x);
-      Object.assign(m, { mode: 'run', inWater: false, speed: v, tired: f });
-      if (r.x >= end && r.leg < course.legs.length - 1) nextLeg(course, r);
+      r.y = leg.y ?? groundAt(map, r.x);
+      Object.assign(m, { mode: 'run', inWater: false, speed: v, tired: bar });
+      if (r.x >= end && r.leg < course.legs.length - 1) {
+        nextLeg(course, r);
+        // (Onto a boardwalk, or off one: its height at once, a little step.)
+        const nl = legOf(course, r);
+        if (nl.kind === 'run') r.y = nl.y ?? groundAt(map, r.x);
+      }
     } else {
       // Swimming and climbing don't tire it; it gets its breath back a little.
       r.runFor = Math.max(0, r.runFor - dt * 0.5);
@@ -277,7 +351,7 @@ function stepRacer(R, r, dt, course, map) {
         const v = speedOf(SWIM_SPEED, s.swim.points, CANT.swim, FLAIL) * pace * wob * boost;
         r.x = Math.min(leg.to, r.x + v * dt);
         r.y = leg.y;
-        Object.assign(m, { mode: 'swim', inWater: true, speed: v, tired: 0 });
+        Object.assign(m, { mode: 'swim', inWater: true, speed: v, tired: r.spent ?? 0 });
         if (r.x >= leg.to) nextLeg(course, r);
       } else if (r.y > leg.to) {
         // Up the wall, hand over hand...
@@ -285,13 +359,13 @@ function stepRacer(R, r, dt, course, map) {
         const ny = Math.max(leg.to, r.y - v * dt);
         r.climbed += r.y - ny;
         r.y = ny;
-        Object.assign(m, { mode: 'climb', inWater: false, speed: v, tired: 0 });
+        Object.assign(m, { mode: 'climb', inWater: false, speed: v, tired: r.spent ?? 0 });
       } else {
         // ...and over the top onto the ledge.
         const v = Math.max(20, runSpeed(s.run.points) * 0.6);
         r.x = Math.min(leg.x + LIP, r.x + v * dt);
         r.y = leg.to;
-        Object.assign(m, { mode: 'run', inWater: false, speed: v, tired: 0 });
+        Object.assign(m, { mode: 'run', inWater: false, speed: v, tired: r.spent ?? 0 });
         if (r.x >= leg.x + LIP) nextLeg(course, r);
       }
     }
@@ -350,6 +424,12 @@ export function tickRace(world, dt, input) {
     R.clock += sdt;
     // (Cheered on, it squeaks back.)
     if (up && cheer(R, you)) mochiVoice(world, you.rec, 'happy', world.body.x);
+    // (A fork coming up: Down switches which way yours takes it.)
+    const fk = forkAhead(course, you);
+    if (fk && input?.pressed?.has('ArrowDown') && fk.at - you.x < FORK_NEAR && you.done == null) {
+      you.alt = { ...(you.alt ?? {}), [fk.leg]: !you.alt?.[fk.leg] };
+      R.forkFlip = R.clock;
+    }
     for (const r of R.racers) stepRacer(R, r, sdt, course, world.map);
     const last = course.legs.length - 1;
     for (const r of R.racers) {
@@ -500,7 +580,7 @@ export function applyRaceState(world, msg) {
 function tickRemote(world, R, dt, up, you) {
   R.t += dt;
   if (R.phase === 'run') R.clock += dt;
-  if (up && R.phase === 'run' && you.done == null && R.clock >= (you.cheerReady ?? 0)) {
+  if (up && R.phase === 'run' && you.done == null && R.clock >= (you.cheerReady ?? 0) && canAffordCheer(you)) {
     you.cheerReady = R.clock + CHEER.every;
     raceNet.cheer?.(world, R);
   }
@@ -513,7 +593,7 @@ function tickRemote(world, R, dt, up, you) {
     // (On the ground, or in the water, exactly where it is now, never a step behind it in the air;
     // up a wall or in a glide, eased along with it.)
     const mode = r.m.mode;
-    if (mode === 'run' && map.race?.legs[r.leg]?.kind === 'run') r.y = groundAt(map, r.x);
+    if (mode === 'run' && map.race && legOf(map.race, r)?.kind === 'run') r.y = legOf(map.race, r).y ?? groundAt(map, r.x);
     else if (mode === 'swim') r.y = waterAt(map, r.x) ?? r.ty;
     else r.y = Math.min(groundAt(map, r.x), r.y + (r.ty - r.y) * k);
     r.m.dist += Math.hypot(r.x - px, r.y - py);

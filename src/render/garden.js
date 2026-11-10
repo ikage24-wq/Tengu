@@ -128,6 +128,43 @@ const eggStallArt = () => art('mg-eggstall', 132, 98, () => {
   return out;
 });
 
+// ---------- Kinako's shop ----------
+// The Garden Keeper's little wagashi shop on the square: a cream front under a pink-tiled roof,
+// shelves of sweet jars in the window, a counter with a noren hung over it, and beside it a stand
+// showing one of her costumes (a strawberry hood). Its name board is drawn live; at night a purple
+// lantern lights by the door for her secret stall (drawGardenPiece mg_shop).
+const SHOP_W = 168;
+const shopArt = () => art('mg-shop', SHOP_W, 124, () => {
+  const wall = '#fbe6cc';
+  const out = [
+    R(14, 46, 124, 76, wall), F(R(14, 46, 124, 3, ramp(wall).hi)),
+    R(12, 44, 5, 78, WOOD_DK), R(135, 44, 5, 78, WOOD_DK), F(R(14, 110, 124, 3, WOOD_DK)),
+    ...gable(0, 152, 48, 8, '#e88aa8', 11),
+    // The window: shelves of jars, each with sweets of its own colour.
+    R(24, 58, 74, 34, '#7a5444'), F(R(24, 58, 74, 4, '#9a6e58')),
+    F(R(26, 72, 70, 2, WOOD)), F(R(26, 86, 70, 2, WOOD)),
+    ...[[32, 66, '#ffb3c8'], [44, 66, '#c8e8a8'], [56, 66, '#ffe08a'], [68, 66, '#c8b4f0'], [80, 66, '#ffc8a0'], [90, 66, '#a8dcf0'],
+      [36, 80, '#ffd0dc'], [50, 80, '#e8c88a'], [64, 80, '#b8e0c8'], [78, 80, '#ffb0b8'], [90, 80, '#fff2c0']].flatMap(([x, y, c]) => [
+      R(x - 4, y - 4, 8, 8, '#e8f4f8'), F(R(x - 4, y - 4, 8, 1.4, '#ffffff')), F(R(x - 3, y - 1, 6, 4, c)), F(R(x - 4.6, y - 5.6, 9.2, 2, WOOD))]),
+    // The counter, planked, a sakura cloth along its top.
+    ...planks(18, 92, 84, 22, ramp('#d8a46a'), 6, 3), F(R(18, 92, 84, 3, '#ffc4d6')), F(R(18, 95, 84, 1.2, '#f0a0b8')),
+    // The door (the noren hangs over it).
+    R(108, 64, 24, 56, '#8a5a44'), F(R(110, 66, 2, 52, '#a8705a')), F(E(127, 94, 1.2, 1.2, '#f2c94c')),
+  ];
+  // The noren over the window: four pink panels, each with a white mochi crest.
+  for (let i = 0; i < 4; i++) {
+    const x0 = 24 + i * 18.5;
+    out.push(T([[x0, 50], [x0 + 17.5, 50], [x0 + 17.5, 62], [x0, 62]], i % 2 ? '#ff9ec0' : '#ffb3cf'), F(E(x0 + 8.75, 56, 2.6, 2.4, '#ffffff')));
+  }
+  out.push(R(22, 48, 78, 3, WOOD_DK));
+  // The costume stand: a little post with a strawberry hood on top.
+  out.push(R(151, 70, 3, 52, WOOD_DK), E(152.5, 122, 7, 2, WOOD_DK),
+    E(152.5, 62, 10, 9.4, '#fffaf4'), F(E(152.5, 63.4, 6.6, 6, '#f6e8dc')), E(152.5, 52.6, 4.6, 4.2, '#ff6b84'),
+    F(E(151, 51.6, 1, 0.8, '#ffffff')), F(E(154, 53.2, 0.5, 0.5, '#ffe08a')), F(E(151.4, 54, 0.5, 0.5, '#ffe08a')),
+    F(T([[150, 48.6], [152.5, 47], [155, 48.6], [152.5, 49.6]], '#86c96e')));
+  return out;
+});
+
 // ---------- The sweet kitchen ----------
 const kitchenArt = () => art('mg-kitchen', 152, 124, () => {
   const wall = '#f3dcb4';
@@ -528,7 +565,7 @@ const bouldersArt = () => art('mg-boulders', 70, 60, () => {
   ];
 });
 // The glide board: planks from the ledge's left end to the lip, a stone weighting the back end.
-const GLIDE_BOARD = { x: 2946, y: 380, w: 70 };
+const GLIDE_BOARD = { x: 2706, y: 380, w: 70 };
 const glideBoardArt = () => art('mg-glideboard', GLIDE_BOARD.w + 14, 12, () => {
   const w = ramp('#d8a46a');
   const L = GLIDE_BOARD.w + 14;
@@ -638,6 +675,10 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
     // The basket beds (world/garden-life.js NURSERY_BEDS), each with its own blanket: the back of the
     // basket and the blanket inside (the front of the rim is drawn over whoever's asleep in it).
     ...NURSERY_BEDS.flatMap((x, i) => [E(x, 352, 34, 4, '#d8a86a'), F(E(x, 351, 33, 1.2, '#ecc890')), E(x, 353, 31, 2.4, '#a8784a'), E(x, 354, 29, 2.6, BED_BLANKETS[i % BED_BLANKETS.length]), F(E(x - 14, 353, 7, 1.2, '#ffffff'))]),
+    // The trophy shelf above it (the cups are drawn live: drawGardenPiece mg_nurseryroom), on two
+    // brackets, a little wooden plaque under it.
+    R(512, 196, 166, 7, WOOD), F(R(512, 196, 166, 2, ramp(WOOD).hi)), R(522, 203, 4, 10, WOOD_DK), R(664, 203, 4, 10, WOOD_DK),
+    R(568, 205, 54, 11, '#e8c890'), F(R(568, 205, 54, 1.4, '#f6dcae')), F(R(570, 214, 50, 1, '#c8a060')),
     // The toy shelf (its ledge is a platform): a ball, a little drum, blocks.
     R(520, 262, 150, 8, WOOD), F(R(520, 262, 150, 2, ramp(WOOD).hi)),
     E(546, 252, 8, 8, '#ff9ab0'), F(E(543, 249, 3, 2, '#ffffff')), R(572, 246, 14, 14, '#9fc8f0'), F(E(579, 246, 7, 2, '#cfe6ff')), R(600, 250, 10, 10, KINAKO), R(612, 252, 8, 8, MATCHA), R(606, 242, 8, 8, SAKURA),
@@ -645,6 +686,64 @@ const nurseryRoomArt = () => art('mg-nurseryroom', 760, 400, () => {
   return out;
 });
 const BED_BLANKETS = ['#c8e6f8', '#ffe4ec', '#e2f4d8', '#fff0c4'];
+// The trophy shelf's cups (world/garden.js trophiesOf): one for each course, in the metal of the
+// best rank won there (bronze Beginner, silver Challenge, gold Master), a faint ring where one's
+// still to win; a glint now and then on the gold. (ox, oy): where the room's picture starts.
+const CUP = { beginner: ['#e0a070', '#b8784a'], challenge: ['#e4e8f2', '#a8b0c4'], master: ['#ffd75e', '#d8a030'] };
+function trophyShelf(ctx, cups, ox, oy, time) {
+  ctx.font = '800 5px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#8a5a34';
+  ctx.fillText('TROPHIES', snap(ox + 595), snap(oy + 213));
+  ctx.textAlign = 'left';
+  cups.forEach((c, i) => {
+    const x = ox + 530 + i * 22;
+    const y = oy + 196;
+    if (!c.rank) {
+      ctx.strokeStyle = 'rgba(160,120,90,0.35)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.ellipse(x, y - 1, 5, 1.6, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      return;
+    }
+    const [m, dk] = CUP[c.rank];
+    const big = c.rank === 'master' ? 1.2 : c.rank === 'challenge' ? 1.08 : 1;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(big, big);
+    // Base, stem, the bowl with its two handles, its shine.
+    ctx.fillStyle = dk;
+    ctx.fillRect(-4.5, -3, 9, 3);
+    ctx.fillRect(-1.2, -7, 2.4, 4);
+    ctx.strokeStyle = dk;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(-5.4, -12.6, 2.4, Math.PI * 0.5, Math.PI * 1.5);
+    ctx.arc(5.4, -12.6, 2.4, Math.PI * 1.5, Math.PI * 0.5);
+    ctx.stroke();
+    ctx.fillStyle = m;
+    ctx.beginPath();
+    ctx.moveTo(-5.4, -16);
+    ctx.lineTo(5.4, -16);
+    ctx.quadraticCurveTo(5.2, -8.4, 0, -7.2);
+    ctx.quadraticCurveTo(-5.2, -8.4, -5.4, -16);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.fillRect(-3.4, -15, 1.2, 5);
+    ctx.fillStyle = dk;
+    ctx.fillRect(-5.4, -16, 10.8, 1);
+    if (c.rank === 'master') {
+      const g = (Math.sin(time * 1.6 + i * 1.3) + 1) / 2;
+      ctx.globalAlpha = g * 0.9;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(2.2, -14.6, 1, 3);
+      ctx.fillRect(1.2, -13.6, 3, 1);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  });
+}
 // The front of a basket bed's rim, woven, drawn in front of the Mochi asleep in it (its middle at x,
 // sitting on the floor).
 const bedFrontArt = () => art('mg-bedfront', 72, 16, () => [
@@ -827,7 +926,9 @@ function fruitTreesBehind(ctx, map, cam, width, time) {
     const x = wx - cam.x;
     if (x < -280 || x > width + 280) continue;
     const foot = Math.max(groundAt(map, wx - 9), groundAt(map, wx + 9)) - cam.y;
-    const a = (lean(time, wx) + 0.45) * 0.02;
+    // (A breath of wind through it; just shaken, it sways hard and settles.)
+    const k = time - (map.shook?.[wx] ?? -9);
+    const a = (lean(time, wx) + 0.45) * 0.02 + (k >= 0 && k < 0.9 ? Math.sin(k * 26) * 0.07 * (1 - k / 0.9) : 0);
     pivoted(ctx, x, foot, a, () => place(ctx, fruitTreeArt(extra ?? 0), snap(x), foot + 5));
   }
 }
@@ -849,6 +950,25 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       place(ctx, lanternPostArt(v), snap(x), gy + 2);
       const h = 46 + (v % 3) * 3;
       paperLantern(ctx, x + 8, gy + 2 - h + 1, time, wx, LANTERN_BANDS[v % LANTERN_BANDS.length], night);
+      return true;
+    }
+    case 'mg_shop': {
+      place(ctx, shopArt(), snap(x - 8), gy + 2);
+      // The name board up on the roof's front, and at night the secret stall's lantern.
+      ctx.fillStyle = WOOD;
+      ctx.fillRect(snap(x - 44), snap(gy - 98), 72, 14);
+      ctx.fillStyle = '#fff6ea';
+      ctx.fillRect(snap(x - 42), snap(gy - 96), 68, 10);
+      ctx.fillStyle = AZUKI;
+      ctx.font = '800 7px Nunito, "Trebuchet MS", "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText("Kinako's", snap(x - 8), snap(gy - 88.6));
+      ctx.textAlign = 'left';
+      // (Hung under the left eave, clear of the costume stand.)
+      ctx.fillStyle = WOOD_DK;
+      ctx.fillRect(snap(x - 89), snap(gy - 78), 1, 6);
+      paperLantern(ctx, x - 89, gy - 72, time, wx - 89, night > 0.3 ? '#b89af0' : '#e8d8f6', night);
+      if (night > 0.3) glow(ctx, x - 89, gy - 64, 26, '#c8a8ff', 0.45 * night * flicker(time, wx));
       return true;
     }
     case 'mg_eggstall': {
@@ -998,6 +1118,7 @@ export function drawGardenPiece(ctx, map, kind, wx, extra, cam, width, time) {
       glow(ctx, x - 170, gy - 30, 46, '#ffb070', 0.45 * flicker(time, 3));
       place(ctx, emptyMortarArt(), snap(x - 260), gy + 2);
       place(ctx, emptyMortarArt(), snap(x - 90), gy + 2);
+      trophyShelf(ctx, map.trophies ?? [], x - 380, gy - 360, time);
       return true;
     }
     default:

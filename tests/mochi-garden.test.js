@@ -13,7 +13,7 @@ import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord, giveExp, evolve, MOCHI_SWEETS, GARDEN_CROPS } from '../src/data/mochi-raise.js';
 import { addItem, countItem } from '../src/core/inventory.js';
 import { ITEMS } from '../src/data/items.js';
-import { careFor, feedMochi, sayGoodbye, scheduledAt, CROP_X, CROP_GROW, GARDEN_MAX, EGG_SLOTS } from '../src/world/garden-life.js';
+import { careFor, feedMochi, sayGoodbye, scheduledAt, CROP_X, CROP_GROW, GARDEN_MAX, EGG_SLOTS, STALL_X } from '../src/world/garden-life.js';
 import { online } from '../src/net/online.js';
 import { footingAt } from '../src/world/physics.js';
 import { onVisit, askGardenVisit } from '../src/net/visit.js';
@@ -59,6 +59,8 @@ test('Up beside a Mochi opens its care panel; care and sweets change it', () => 
   const g = garden();
   try {
     const e = g.w.gardenLife.mochi[0];
+    // (Out in the square, clear of the doors and the stalls.)
+    Object.assign(e, { x: 650, y: g.w.map.terrain[0][1] });
     Object.assign(g.w.body, { x: e.x + 8, y: e.y });
     assert.deepEqual(g.up(), [{ type: 'mochi' }]);
     assert.equal(g.w.gardenLife.caring, e);
@@ -239,7 +241,7 @@ test('eggs: from your bag to the gate on arriving; the stall sells three a day; 
     assert.ok(buyStallEgg(g.w, 1), 'sold already');
     assert.ok(buyStallEgg(g.w, 0), 'not enough gold');
     // Up at the stall opens it.
-    Object.assign(g.w.body, { x: 330, y: g.w.body.y });
+    Object.assign(g.w.body, { x: STALL_X, y: g.w.body.y });
     assert.deepEqual(g.up(), [{ type: 'eggstall' }]);
     // A monster, very rarely (here, always); and the end of each open story chain.
     const mob = Object.values(MOBS).find((d) => !d.boss);
@@ -267,7 +269,7 @@ test('names: a hatchling asks for one; suggestions are sweet, never a rival\'s o
     assert.equal(calledOf(g.baby), 'Kinako');
     // Hatching an egg asks what to call it.
     g.char.garden.eggs = [{ seed: 4242 }];
-    Object.assign(g.w.body, { x: 404, y: g.w.body.y });
+    Object.assign(g.w.body, { x: EGG_SLOTS[0], y: g.w.body.y });
     g.up();
     const h = g.w.gardenLife.hatching;
     assert.ok(h);
@@ -321,7 +323,7 @@ test('breeding: a Heart Mochi makes a grown Mochi bloom; two blooming find each 
     assert.ok(g.swimmer.bredRest > 0, 'resting after');
     assert.ok(!feed(g.swimmer, 'msweet_heartmochi').bloomed, 'not again so soon');
     // The egg hatches as exactly the baby bred.
-    Object.assign(g.w.body, { x: 404, y: g.w.body.y });
+    Object.assign(g.w.body, { x: EGG_SLOTS[0], y: g.w.body.y });
     g.up();
     g.w.gardenLife.hatching.m.hatched = true;
     g.run(0.1);

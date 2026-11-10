@@ -30,6 +30,7 @@ import { preloadFxSprites } from './render/fx-sprites.js';
 import { tickNet, leaveRoom, othersHere } from './net/online.js';
 import { ISLAND_LESSONS } from './world/tutorial.js';
 import { createTouch, touchFrame } from './ui/touch.js';
+import { targetAt, walkTo, steer } from './world/clicks.js';
 
 loadSettings();
 
@@ -288,7 +289,9 @@ function step(now) {
         continue;
       }
       remember(world);
-      updateWorld(world, TICK, { held: input.held, pressed: queued, locked });
+      // (Walking over to something clicked: world/clicks.js.)
+      const walk = locked ? { held: input.held, pressed: queued } : steer(world, input.held, queued);
+      updateWorld(world, TICK, { held: walk.held, pressed: walk.pressed, locked });
       queued = new Set();
     }
     record('logic', performance.now() - logicAt);
@@ -380,6 +383,7 @@ function npcPointer(ui) {
   let bot = null;
   let friend = null;
   let self = false;
+  let thing = null;
   if (!uiState.npc && !uiState.death && !ui.used) {
     const wx = m.x + camera.x;
     const wy = m.y + camera.y;
@@ -396,12 +400,15 @@ function npcPointer(ui) {
     if (!npc && !bot) friend = othersHere(world).find((g) => Math.abs(g.body.x - wx) < 13 && wy > g.body.y - 46 && wy < g.body.y + 13) ?? null;
     const b = world.body;
     if (!npc && !bot && !friend) self = Math.abs(b.x - wx) < 12 && wy > b.y - 46 && wy < b.y + 13;
+    // Things in the Mochi places: the board, the stall, the kitchen, eggs, doors, your Mochi.
+    if (!npc && !bot && !friend && !self) thing = targetAt(world, wx, wy);
   }
+  world.hoverThing = thing?.label ?? null;
   world.hoverNpc = npc?.id ?? null;
   world.hoverBot = bot?.id ?? null;
   world.hoverSelf = self;
   world.hoverFriend = friend?.id ?? null;
-  canvas.style.cursor = npc || bot || friend || self ? 'pointer' : '';
+  canvas.style.cursor = npc || bot || friend || self || thing ? 'pointer' : '';
   // Right-click a player or yourself for the menu (invite to party, profile, leave).
   if (m.right && (bot || friend || self)) {
     openMenu(uiState, bot ? { kind: 'bot', id: bot.id, x: m.x + 4, y: m.y } : friend ? { kind: 'ghost', id: friend.id, x: m.x + 4, y: m.y } : { kind: 'self', x: m.x + 4, y: m.y });
@@ -409,6 +416,11 @@ function npcPointer(ui) {
     return;
   }
   if (!m.clicked) return;
+  if (thing) {
+    walkTo(world, thing);
+    m.clicked = false;
+    return;
+  }
   if (npc) world.events.push({ type: 'talk', npc: npc.id });
   else if (bot) openProfile(uiState, { kind: 'bot', id: bot.id, shop: Boolean(bot.shop) });
   else if (friend) openProfile(uiState, { kind: 'ghost', id: friend.id });

@@ -8,7 +8,7 @@ import { createWorld, updateWorld, loadMap } from '../src/world/world.js';
 import { MAPS } from '../src/data/maps.js';
 import { rollMochi, STATS } from '../src/data/mochi-genes.js';
 import { newRecord } from '../src/data/mochi-raise.js';
-import { startRace, rivalsFor, raceHour, PODIUM, podiumSpot } from '../src/world/mochi-race.js';
+import { startRace, rivalsFor, raceHour, PODIUM, podiumSpot, legOf } from '../src/world/mochi-race.js';
 import { groundAt, waterAt } from '../src/world/physics.js';
 
 const keys = (pressed = []) => ({ held: new Set(), pressed: new Set(pressed) });
@@ -110,6 +110,28 @@ test('cheering speeds it up (every couple of seconds, not every frame), and cost
   startRace(w, rec, 'sprint');
   for (let k = 0; k < 60 * 6; k++) updateWorld(w, 1 / 60, keys(['ArrowUp']));
   assert.ok(w.race.racers[0].m.tired > 0.5 || w.race.racers[0].m.rest);
+});
+
+test('each cheer spends stamina, even for a tireless Mochi; with too little left, no cheer', () => {
+  const rec = mochi(6, 900);
+  rec.stats.stamina.points = 2400;
+  const w = racer(rec);
+  startRace(w, rec, 'sprint');
+  const R = w.race;
+  while (R.phase !== 'run') updateWorld(w, 1 / 60, keys());
+  for (let k = 0; k < 30; k++) updateWorld(w, 1 / 60, keys());
+  const me = R.racers[0];
+  const before = me.m.tired;
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  updateWorld(w, 1 / 60, keys());
+  assert.equal(me.cheers, 1);
+  assert.ok(me.m.tired - before > 0.08, `spent ${(me.m.tired - before).toFixed(2)}`);
+  // Spent right down, Up does nothing.
+  me.spent = 0.97;
+  updateWorld(w, 1 / 60, keys());
+  me.cheerReady = 0;
+  updateWorld(w, 1 / 60, keys(['ArrowUp']));
+  assert.equal(me.cheers, 1);
 });
 
 test('the rivals are the same for everyone in the same hour, and new the next', () => {
@@ -246,7 +268,7 @@ test('dress-up: the Daifuku hood from the start; each other costume with a first
   rec.dress = 'dango';
   assert.equal(lookOf(rec).outfit, DRESS.dango.outfit);
   // Every costume is won on a real stage.
-  for (const d of Object.values(DRESS)) assert.ok(d.free || ['sprint', 'swim', 'climb', 'glide', 'hills'].includes(d.stage));
+  for (const d of Object.values(DRESS)) assert.ok(d.free || d.price > 0 || ['sprint', 'swim', 'climb', 'glide', 'hills'].includes(d.stage));
 });
 
 test('every racer, every frame, on every course: on the ground, in the water, on its wall or gliding over the ground, never on air', () => {
@@ -264,8 +286,8 @@ test('every racer, every frame, on every course: on the ground, in the water, on
           // (Smoothly: never a jump from one frame to the next.)
           if (r.lastAt) assert.ok(Math.abs(r.x - r.lastAt[0]) < 8 && Math.abs(r.y - r.lastAt[1]) < 8, `${where}: jumped from ${r.lastAt.map((v) => v.toFixed(1))}`);
           r.lastAt = [r.x, r.y];
-          const leg = course.legs[r.leg];
-          const ground = groundAt(w.map, r.x);
+          const leg = legOf(course, r);
+          const ground = leg.y != null && leg.kind === 'run' ? leg.y : groundAt(w.map, r.x);
           if (r.m.mode === 'swim') assert.ok(waterAt(w.map, r.x) === r.y, `${where}: swimming at the surface`);
           else if (r.m.mode === 'climb') assert.ok(leg.kind === 'climb' && r.x > leg.x - 48 && r.x < leg.x && r.y <= leg.from && r.y >= leg.to, `${where}: on its wall`);
           else if (r.m.mode === 'fly') assert.ok(r.y <= ground + 0.01, `${where}: above the ground`);

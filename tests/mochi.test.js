@@ -13,6 +13,7 @@ import { newRecord, evolve } from '../src/data/mochi-raise.js';
 import { takeAlong, sendHome, petReach, formHelp } from '../src/world/mochi.js';
 import { surfacesOf, waterAt } from '../src/world/physics.js';
 import { gmCommand } from '../src/world/gm.js';
+import { EGG_SLOTS } from '../src/world/garden-life.js';
 
 const DT = 1 / 60;
 const idle = { held: new Set(), pressed: new Set(), locked: false };
@@ -99,7 +100,7 @@ test('the old Cash egg pet becomes a Star Egg that hatches as itself, its name a
   const egg = w.char.garden.eggs.find((e) => e.name === 'Mochi');
   assert.ok(egg, 'set down by the gate, with its name');
   w.forceNight = 0;
-  Object.assign(w.body, { x: 404 + 26 * w.char.garden.eggs.indexOf(egg), y: w.body.y });
+  Object.assign(w.body, { x: EGG_SLOTS[w.char.garden.eggs.indexOf(egg)], y: w.body.y });
   updateWorld(w, DT, { ...idle, pressed: new Set(['ArrowUp']) });
   w.gardenLife.hatching.m.hatched = true;
   run(w, 0.1);

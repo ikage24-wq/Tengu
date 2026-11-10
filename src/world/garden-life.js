@@ -36,24 +36,26 @@
 //   world.gardenLife = { owner, mochi: [{ rec, m, x, y }], hatching: { egg, m, x } | null, greeted,
 //     caring (the entry whose care panel is open) }
 
+import { noteAlbum, ALBUM_PAGES } from '../data/mochi-album.js';
+import { spawnDrops } from './drops.js';
 import { rollMochi, STAGES, seededRandom } from '../data/mochi-genes.js';
 import { newRecord, CANT_POINTS as CANT, tick as tickRec, care as careRec, feed as feedRec, canEvolve, evolve as evolveRec, canRebirth, rebirth as rebirthRec, SWEET_BY_ID, styleOf, BLOOM } from '../data/mochi-raise.js';
 import { sendGardenGift, gardenFriends } from '../net/visit.js';
 import { addItem, countItem, removeItem } from '../core/inventory.js';
 import { calledOf } from '../data/mochi-names.js';
 import { breedGenes } from '../data/mochi-breed.js';
-import { voiceAction } from './mochi-voice.js';
+import { voiceAction, mochiVoice } from './mochi-voice.js';
 import { nightOf } from './daytime.js';
 import { groundAt, footingAt } from './physics.js';
 
 // Where things are in the garden (world/garden.js).
-export const EGG_SLOTS = [404, 430, 456, 254, 228];
+export const EGG_SLOTS = [594, 620, 646, 444, 418];
 // The egg stall: where it stands, what an egg costs.
-export const STALL_X = 330;
+export const STALL_X = 520;
 export const EGG_PRICE = 3000;
-const LAND = [236, 2200];
-const POND = [2290, 2770];
-const NURSERY_DOOR = 760;
+const LAND = [236, 2080];
+const POND = [2230, 2530];
+const NURSERY_DOOR = 990;
 // The nursery's basket beds (render/garden.js mg_nurseryroom), two Mochi to a bed, curled up side by
 // side; one on its own sleeps in the middle.
 export const NURSERY_BEDS = [384, 472, 560, 648];
@@ -76,7 +78,7 @@ export const VISITOR_CARE = ['pet', 'play', 'cheer'];
 const GAIT_SPEED = [34, 60, 80, 104, 136, 168];
 const SWIM_SPEED = [26, 44, 64, 88, 112, 140];
 // The crop bed (world/garden.js mg_cropbed): ripe again this long after you pick it, and what it gives.
-export const CROP_X = 1962;
+export const CROP_X = 1920;
 export const CROP_GROW = 15 * 60;
 const CROP_YIELD = { mochi_rice: 3, azuki: 2, kinako: 2, fire_pepper: 1 };
 const tierOf = (rec, stat) => styleOf(rec.stats?.[stat]?.points ?? 0);
@@ -165,6 +167,15 @@ const newAnim = (rec) => ({ genes: rec, dir: 1, speed: 0, dist: 0, easy: true, s
 export function tickGarden(world, dt) {
   const life = world.gardenLife;
   if (!life) return;
+  // (Your own Mochi fill in the album, data/mochi-album.js, a few times a second.)
+  life.albumIn = (life.albumIn ?? 0) - dt;
+  if (!world.gardenVisit && life.albumIn <= 0) {
+    life.albumIn = 0.5;
+    for (const e of life.mochi) {
+      const added = noteAlbum(world.char, e.rec);
+      if (added.length) world.log(`Mochi album: ${added.map((p) => ALBUM_PAGES[p].name).join(', ')} filled in by ${e.rec.name ?? 'your Mochi'}!`, '#ffd6e4');
+    }
+  }
   const map = world.map;
   const now = Date.now() / 1000;
   // (The world's own night: the game clock, or what a scene or a test has set.)
@@ -334,6 +345,43 @@ export function addGardenMochi(world, rec) {
 }
 
 // ---------- Caring ----------
+// Woken from a nap (Up on a sleeping Mochi: its care panel opens): one who loves you (bond 500+)
+// stretches and smiles; anyone else is grumpy about it, a huff and a little less mood.
+export function wakeUp(world, e) {
+  if (e?.m?.action?.name !== 'nap') return null;
+  const fond = (e.rec.bond ?? 0) >= 500;
+  e.m.action = fond ? { name: 'yawn', t0: null } : { name: 'sulk', t0: null, hold: 1.4 };
+  if (!fond) e.rec.mood = Math.max(0, (e.rec.mood ?? 60) - 4);
+  mochiVoice(world, e.rec, fond ? 'sleepy' : 'sad', e.x);
+  world.log(fond ? `${e.rec.name ?? 'Your Mochi'} wakes with a big stretch and a smile.` : `${e.rec.name ?? 'Your Mochi'} was fast asleep... and is grumpy about it.`, fond ? '#ffd6e4' : '#c8b8d8');
+  return fond ? 'happy' : 'grumpy';
+}
+
+// The orchard's fruit trees (world/garden.js mg_fruittree): Up beside one to give it a shake, and
+// a cherry or two (once in a while three) drop for you to pick up. Each tree once every
+// TREE_REST seconds of real time; shaken too soon it only rustles.
+export const TREE_REST = 10 * 60;
+export function shakeTree(world) {
+  const map = world.map;
+  if (!map.garden || map.indoor) return false;
+  const tree = (map.townPieces ?? []).find(([k, x]) => k === 'mg_fruittree' && Math.abs(x - world.body.x) < 26);
+  if (!tree) return false;
+  const now = Date.now() / 1000;
+  // (The tree sways hard for a moment: render/garden.js reads `map.shook`.)
+  (map.shook ??= {})[tree[1]] = world.now;
+  const shaken = ((world.char.garden ??= { mochi: [], eggs: [], unlocked: {} }).shaken ??= {});
+  if (now - (shaken[tree[1]] ?? -1e9) < TREE_REST) {
+    world.log('It rustles... nothing ripe yet.', '#c8d8b8');
+    return true;
+  }
+  shaken[tree[1]] = now;
+  const n = 1 + (hash(now * 0.37 + tree[1]) < 0.5 ? 1 : 0) + (hash(now * 0.71 + tree[1]) < 0.12 ? 1 : 0);
+  const y = groundAt(map, tree[1]);
+  world.drops.push(...spawnDrops(Array.from({ length: n }, () => ({ kind: 'item', id: 'cherry', qty: 1 })), tree[1], y - 40));
+  world.log(`You shake the tree: ${n} cherr${n === 1 ? 'y drops' : 'ies drop'}!`, '#ffd6e4');
+  return true;
+}
+
 // The Mochi beside you, if there's one (and not one in the middle of a scene).
 export function mochiNear(world, reach = 26) {
   const life = world.gardenLife;

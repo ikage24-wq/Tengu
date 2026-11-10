@@ -146,6 +146,28 @@ if (q.has('kitchen')) {
   Object.assign(state.windows.cook, { open: true, openedAt: -99 });
 }
 if (q.has('board')) Object.assign(state.windows.race, { open: true, openedAt: -99 });
+// (?album=forms: the Mochi album at that page, a few things filled in; ?keeper=1: Kinako's menu;
+// ?dress=1: her costumes; ?trophies=1: race wins for the nursery's shelf.)
+if (q.has('album')) {
+  c.album = { forms: ['angel|run', 'demon|power', 'angel|plain'], personalities: ['shy', 'bossy', 'sleepy', 'gentle', 'cheeky'], hairs: ['mochibun', 'dangotail', 'sakuratails', 'kashiwa', 'loopbraids', 'kinakopuffs'], eyes: ['mochiround', 'mochisleepy', 'mochifox'], coats: ['shiny'], voices: ['chirp', 'coo', 'purr'] };
+  Object.assign(state.windows.album, { open: true, openedAt: -99, page: q.get('album') });
+}
+if (q.has('keeper')) {
+  Object.assign(w.body, { x: 286, facing: -1 });
+  state.npc = { id: 'kinako' };
+  state.windows.npc.open = true;
+}
+if (q.has('dress')) {
+  c.gold = 50000;
+  Object.assign(w.body, { x: 286, facing: -1 });
+  state.npc = { id: 'kinako', mode: 'dress' };
+  state.windows.npc.open = true;
+}
+if (q.has('trophies')) {
+  const wins = { 'sprint|beginner': true, 'sprint|challenge': true, 'sprint|master': true, 'swim|beginner': true, 'swim|challenge': true, 'climb|beginner': true, 'glide|beginner': true, 'tour|beginner': true };
+  const { trophiesOf } = await import('../src/world/garden.js');
+  w.map.trophies = trophiesOf({ raceWins: wins });
+}
 // (?invite=1: a friend's party-race invite; ?lobby=1: your party race, a friend in.)
 if (q.has('invite')) {
   online.raceInvite = { from: 'A', name: 'Ann', stageId: 'swim', rank: 'beginner', until: Date.now() / 1000 + 999 };

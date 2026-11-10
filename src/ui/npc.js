@@ -39,6 +39,8 @@ import { COLORS, THEMES, windowFrame, button, tabs, text, box, hover, clicked, t
 import { itemTooltip } from './tooltips.js';
 import { questAccepted, questCompleted, thanksFor } from './questfx.js';
 import { shopWindow } from './shop.js';
+import { dressShopWindow } from './mochi-dress-shop.js';
+import { isNight } from '../world/daytime.js';
 import { storageWindow } from './storage.js';
 import { polishWindow } from './polish.js';
 import { canCurse, curseOfDay, layCurse } from '../world/malvina.js';
@@ -227,6 +229,7 @@ export function npcWindow(ui, state, world) {
   if (dlg.mode !== 'shop') dlg.placedShop = false;
   if (dlg.mode !== 'style') dlg.placed = false;
   if (dlg.mode === 'shop') return shopWindow(ui, state, world);
+  if (dlg.mode === 'dress') return dressShopWindow(ui, state, world);
   if (dlg.mode === 'style') return styleWindow(ui, state, world);
   if (dlg.mode === 'polish') return polishWindow(ui, state, world);
   if (dlg.mode !== 'storage') dlg.placedStore = false;
@@ -274,6 +277,22 @@ export function npcWindow(ui, state, world) {
       : { label: 'Curse me again!', sub: 'One curse a day. Come back tomorrow.', icon: 'star', run: () => say(world, 'malvina', "Greedy! One curse a day, minion. Even EVIL has opening hours.") });
   }
   if (npc.storage) choices.push({ label: 'Storage', sub: npc.storage, icon: 'bag', run: () => (dlg.mode = 'storage') });
+  // Kinako, the Garden Keeper: the race board, her costumes, and after dark her secret stall.
+  if (npc.role === 'mochikeeper' && !world.gardenVisit) {
+    choices.unshift({ label: 'Enter a race', sub: 'Pick a course and one of your Mochi', icon: 'star', primary: true, run: () => {
+      Object.assign(state.windows.race, { open: true, openedAt: performance.now() / 1000 });
+      state.npc = null;
+      state.windows.npc.open = false;
+    } });
+    choices.push({ label: 'Mochi outfits', sub: 'Glasses, scarves and cute clothes for your Mochi', icon: 'hanger', run: () => (dlg.mode = 'dress') });
+    choices.push({ label: 'The Mochi album', sub: 'Everything your Mochi have been, and its rewards', icon: 'book', run: () => {
+      Object.assign(state.windows.album, { open: true, openedAt: performance.now() / 1000 });
+      state.npc = null;
+      state.windows.npc.open = false;
+    } });
+    if (isNight(world)) choices.push({ label: 'The secret stall', sub: 'Only after dark: rare eggs and finds', icon: 'moon', primary: true, run: () => Object.assign(dlg, { mode: 'shop', secret: true }) });
+    else choices.push({ label: 'The secret stall', sub: 'Shut. Come back after dark...', icon: 'moon', run: () => say(world, 'kinako', "Oh, that one's only open at night, dear. Come back when the lanterns are lit!") });
+  }
   if (npc.role === 'stylist') choices.push({ label: 'A new look', sub: `${npc.styleCost} gold a visit`, icon: 'wand', primary: true, run: () => Object.assign(dlg, { mode: 'style', look: fullLook(char.appearance) }) });
   // A Sweetheart: Chat, a gift, a date (ui/sweetheart.js).
   if (npc.role === 'sweetheart') choices.push(...sweetheartChoices(world, state, npc));

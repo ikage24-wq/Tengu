@@ -84,7 +84,11 @@ export const paceOf = (personality) => ({ early: 1, late: 1, tire: 1, wobble: 0.
 
 // Cheering: a burst this much faster, for this long; it costs this many seconds of running's
 // tiredness, and it can't be done again too soon.
-export const CHEER = { boost: 1.4, secs: 1.2, cost: 1.4, every: 2.5 };
+// Cheering: a burst of speed (`boost` for `secs`, at most every `every` seconds) paid for out of its
+// stamina: each cheer spends `cost[0]` of the stamina bar, less by `cost[1]` for each Stamina style
+// (so a tireless Mochi cheers cheaper, never free); what's spent comes back `back[0]` a second,
+// plus `back[1]` for each style. Spent all the way down, it has to stop and catch its breath.
+export const CHEER = { boost: 1.4, secs: 1.2, every: 2.5, cost: [0.25, 0.025], back: [0.01, 0.003] };
 // The race ends this long after the first one home (the rest are placed by how far they got), or
 // at this time at the latest.
 export const RACE_TAIL = 15;

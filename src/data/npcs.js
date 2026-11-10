@@ -187,6 +187,19 @@ export const NPCS = {
     quests: ['malv_minion', 'malv_well', 'malv_mob', 'malv_diary'],
     chatter: ['Ohohoho!', 'Fear me! ...Please?', 'Today I shall do something TERRIBLE. After lunch.', 'Why does everyone keep THANKING me?'],
   },
+  // Kinako keeps your Mochi Garden's little wagashi shop on the square: she enters your Mochi in
+  // races (the race board is at her counter), sells costumes (data/mochi-dress.js: the ones not won
+  // racing) and the Garden's crops and treats, and after dark opens a secret stall with rarer stock.
+  kinako: {
+    id: 'kinako', name: 'Kinako', title: 'Garden Keeper', role: 'mochikeeper',
+    look: { hairStyle: 'bob', hairColor: '#e2c07a', skinTone: '#fff0e6', eyeColor: '#8a5a3a', outfitColor: '#ffd6e4', eyeStyle: 'round', face: 'grin' },
+    greeting: "Welcome to the square, dear! Races, costumes, a little something for your Mochi... and if you come by after dark, I might have something special.",
+    shop: ['mochi_rice', 'azuki', 'kinako', 'fire_pepper', 'msweet_daifuku', 'msweet_dango', 'msweet_heartmochi', 'mochi_egg'],
+    // (After dark, her secret stall: a Star Egg and the rarest sweets' ingredients.)
+    secretShop: ['mochi_egg_star', 'honeycomb', 'crystal_gel', 'sprite_petal'],
+    prices: { mochi_rice: 150, azuki: 200, kinako: 200, fire_pepper: 400, msweet_daifuku: 1200, msweet_dango: 1200, msweet_heartmochi: 25000, mochi_egg: 4000,
+      mochi_egg_star: 45000, honeycomb: 2500, crystal_gel: 2500, sprite_petal: 2500 },
+  },
   posy: {
     id: 'posy', name: 'Posy', title: 'Party Board', role: 'board',
     look: { hairStyle: 'hearttails', hairColor: '#ffb0d8', skinTone: '#fff0e6', eyeColor: '#7a4ad8', outfitColor: '#ffd6ea', eyeStyle: 'sparkle', face: 'grin' },

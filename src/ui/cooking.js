@@ -17,6 +17,8 @@ import { lifeLevel, lifePerks, lifeAction, needFor, withExtra } from '../core/li
 import { playLifePose } from '../world/lifepose.js';
 import { cookFeast, feastReady, feastSkilled, partyBotsHere } from '../world/coop-life.js';
 import { MOCHI_SWEETS, GARDEN_CROPS } from '../data/mochi-raise.js';
+import { STAT_ORDER, STAT_INFO, statIcon, tag } from './mochi-kit.js';
+import { roundRect, clicked } from './kit.js';
 
 const W = 320;
 const H = 254;
@@ -95,25 +97,75 @@ export function cookingWindow(ui, state, world) {
   text(ctx, more ? `${more} more recipe${more === 1 ? '' : 's'} to learn: catch new fish!` : 'You know every recipe!', win.x + 12, win.y + H - 10, { size: 7, color: COLORS.muted });
 }
 
-// The Sweet Kitchen (your Mochi Garden): every Mochi sweet, what it trains, what it needs (the
-// garden's crops, finds, drops and fish), and Cook, which makes SWEET_BATCH of it.
+// The Sweet Kitchen (your Mochi Garden): every Mochi sweet, in tabs by the stat it trains (All, and
+// one per stat), each a card: the sweet, its name, what it trains as stat stickers (+points), sweet
+// or spicy (sweet leans a Mochi angelic, spicy devilish), what it needs (what you have, green when
+// it's enough), and Cook, which makes SWEET_BATCH of it.
 const SWEET_BATCH = 2;
-const STAT_WORD = { run: 'Run', fly: 'Fly', power: 'Power', stamina: 'Stamina', swim: 'Swim' };
+const KITCHEN_TABS = ['all', ...STAT_ORDER];
 function sweetsList(ui, win, world, x, st) {
   const { ctx } = ui;
-  const th = ui.theme;
   const char = world.char;
-  let y = win.y + 28;
-  const rows = Math.floor((H - 50) / ROW);
+  // The tabs: All, then a stat sticker each.
+  const ty = win.y + 26;
+  const tw = (W - 16) / KITCHEN_TABS.length;
+  KITCHEN_TABS.forEach((k, i) => {
+    const on = (win.sweetTab ?? 'all') === k;
+    const hx = x + i * tw;
+    const over = hover(ui, hx, ty, tw - 3, 15);
+    ctx.fillStyle = on ? '#ffe0ec' : over ? '#fff4f8' : '#ffffff';
+    roundRect(ctx, hx, ty, tw - 3, 15, 7.5);
+    ctx.fill();
+    ctx.strokeStyle = on ? '#ff8fb8' : '#f0d8e4';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    if (k === 'all') text(ctx, 'All', hx + (tw - 3) / 2, ty + 10.4, { size: 7, bold: true, align: 'center', color: on ? '#d0507a' : COLORS.ink });
+    else {
+      statIcon(ctx, k, hx + 9, ty + 7.5, 4.6);
+      text(ctx, STAT_INFO[k].name, hx + 16, ty + 10.4, { size: 6.5, bold: on, color: on ? '#d0507a' : COLORS.ink });
+    }
+    if (clicked(ui, hx, ty, tw - 3, 15)) {
+      win.sweetTab = k;
+      win.scroll = 0;
+    }
+  });
+  const tab = win.sweetTab ?? 'all';
+  const list = MOCHI_SWEETS.filter((sw) => tab === 'all' || sw.trains[tab]);
+  let y = win.y + 46;
+  const rows = Math.floor((H - 66) / ROW);
   if (hover(ui, x, y, W - 16, rows * ROW)) win.scroll = (win.scroll ?? 0) + ui.mouse.wheel;
-  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, MOCHI_SWEETS.length - rows));
-  for (const sw of MOCHI_SWEETS.slice(win.scroll, win.scroll + rows)) {
+  win.scroll = Math.max(0, Math.min(win.scroll ?? 0, list.length - rows));
+  for (const sw of list.slice(win.scroll, win.scroll + rows)) {
     const ok = hasAll(char, sw);
-    box(ctx, x, y, W - 16, ROW - 3, { fill: ok ? '#fff4f8' : '#ffffff', edge: ok ? '#ff8fb0' : th.light, r: 8, width: 1 });
-    drawItemIcon(ctx, sw.id, x + 6, y + 7);
-    text(ctx, fit(ctx, sw.name, 124, 8, true), x + 28, y + 11, { size: 8, bold: true });
-    const trains = sw.heart ? 'A grown Mochi blooms: two make an egg' : Object.entries(sw.trains).map(([s, n]) => `${STAT_WORD[s]} +${n}`).join(', ');
-    text(ctx, fit(ctx, trains, 124, 6.5, false), x + 28, y + 21, { size: 6.5, color: sw.taste === 'spicy' ? '#d8483a' : '#3f9f5f' });
+    const spicy = sw.taste === 'spicy';
+    ctx.fillStyle = 'rgba(70,40,90,0.08)';
+    roundRect(ctx, x + 1, y + 1.5, W - 16, ROW - 3, 9);
+    ctx.fill();
+    ctx.fillStyle = ok ? '#fff4f8' : '#ffffff';
+    roundRect(ctx, x, y, W - 16, ROW - 3, 9);
+    ctx.fill();
+    ctx.strokeStyle = ok ? '#ff8fb0' : '#f0dce6';
+    ctx.lineWidth = ok ? 1.3 : 1;
+    ctx.stroke();
+    // The sweet on a round plate.
+    ctx.fillStyle = spicy ? '#ffe4dc' : '#fff0f6';
+    ctx.beginPath();
+    ctx.arc(x + 15, y + 15, 12, 0, Math.PI * 2);
+    ctx.fill();
+    drawItemIcon(ctx, sw.id, x + 7, y + 7);
+    if (hover(ui, x + 3, y + 3, 24, 24)) tooltip(ui, itemTooltip(char, sw.id));
+    text(ctx, fit(ctx, sw.name, 92, 8, true), x + 31, y + 11, { size: 8, bold: true });
+    tag(ctx, spicy ? 'Spicy' : 'Sweet', x + 31 + Math.min(92, (ctx.measureText(sw.name).width || 0)) + 4, y + 8, spicy ? '#e8604a' : '#ff8fb8', { size: 5.5 });
+    // What it trains: a sticker per stat and its points.
+    if (sw.heart) text(ctx, 'Two in bloom make an egg', x + 31, y + 23, { size: 6.5, color: '#d0507a' });
+    else {
+      let sx = x + 31;
+      for (const [k, n] of Object.entries(sw.trains)) {
+        statIcon(ctx, k, sx + 4.5, y + 21, 4.5);
+        text(ctx, `+${n}`, sx + 11, y + 23.4, { size: 6.5, bold: true, color: STAT_INFO[k].color });
+        sx += 30;
+      }
+    }
     let ix = x + 160;
     for (const [id, n] of Object.entries(sw.needs)) {
       const have = countItem(char.inventory, id);
@@ -122,8 +174,7 @@ function sweetsList(ui, win, world, x, st) {
       if (hover(ui, ix, y + 4, 16, 16)) tooltip(ui, itemTooltip(char, id));
       ix += 22;
     }
-    if (hover(ui, x + 6, y + 7, 16, 16)) tooltip(ui, itemTooltip(char, sw.id));
-    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5 })) {
+    if (button(ui, x + W - 62, y + 7, 42, 16, 'Cook', { primary: ok, enabled: ok, size: 7.5, iconName: 'flame' })) {
       for (const [id, n] of Object.entries(sw.needs)) removeItem(char.inventory, id, n);
       addItem(char.inventory, sw.id, SWEET_BATCH);
       lifeAction(world, 'cooking', { tier: 1, kind: 'cook' });
@@ -133,9 +184,8 @@ function sweetsList(ui, win, world, x, st) {
     y += ROW;
   }
   const crops = Object.values(GARDEN_CROPS).map((c) => c.name).join(', ');
-  text(ctx, fit(ctx, `${crops}: from the crop bed in the orchard.`, W - 24, 6.5, false), win.x + 12, win.y + H - 10, { size: 6.5, color: COLORS.muted });
+  text(ctx, fit(ctx, `${crops}: from the crop bed in the orchard.`, W - 30, 6.5, false), win.x + 16, win.y + H - 10, { size: 6.5, color: COLORS.muted });
 }
-
 // A recipe your Cooking level can't make yet: not a button at all but a flat, dashed tag with a
 // lock and the level, so it never reads like a greyed-out Cook.
 function locked(ctx, x, y, w, h, lv) {

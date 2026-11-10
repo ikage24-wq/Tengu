@@ -88,13 +88,13 @@ function groundAtX(terrain, x) {
 const finishPieces = (x) => [['mr_arch', x, { kind: 'finish' }], ['mr_stands', x + 250, { w: 260 }]];
 // (`groundY`: where the land's horizon sits, the backdrop's hills along it; the start's height unless
 // most of the course is lower.)
-function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pieces, race, groundY = terrain[0][1], zones = null, ground = null, grounds = null }) {
+function courseMap(id, name, { width, height = 640, terrain, water = [], sky, pieces, race, groundY = terrain[0][1], zones = null, ground = null, grounds = null, platforms = [] }) {
   return {
     id, name, theme: 'town', isTown: true, private: true, mochiRace: true, town: 'sprout',
     width, height, groundY,
     look: { ...LOOK, sky: SKIES[sky], ...(ground ? GROUNDS[ground] : {}) },
     grounds,
-    cottages: [], terrain, platforms: [], ropes: [], water, nodes: [],
+    cottages: [], terrain, platforms, ropes: [], water, nodes: [],
     zonesBy: 'x',
     zones: zones ?? [{ name, from: 0, color: '#ff9ec0' }],
     townPieces: [['mr_arch', race.start, { kind: 'start' }], ...pieces, ...finishPieces(race.finish)],
@@ -218,6 +218,8 @@ function tourMap() {
       [6100, 806], [6300, 798], [6500, 828], [6700, 820], [6900, 788], [7100, 782], [7300, 812], [7500, 820], [7700, 804], [7900, 812], [8100, 820], [8900, 820],
     ],
     water: [{ x1: 2100, x2: 3300, y: G, kind: 'pond', lilies: false, reeds: false }],
+    // (The fork at Lily River: swim across, or take the boardwalk on its stilts beside it.)
+    platforms: [{ x: 2100, y: G - 4, w: 1200, style: 'planks', dock: true, walkOn: true }],
     pieces: [
       ['mg_fruittree', 110, 0], ['mg_fruittree', 500, 2], ['mg_bigtree', 1300], ['mg_fruittree', 1740, 1],
       ['mr_checkpoint', 2000, { part: 2 }], ['mg_reeds', 2092, 0], ['mg_lilies', 2240, 1], ['mg_lilies', 2400, 0], ['mg_reeds', 2560, 1], ['mg_lilies', 2690, 1], ['mg_lilies', 2860, 0], ['mr_balloon', 2780, { y: 650, color: 1 }], ['mg_lilies', 3020, 1], ['mg_lilies', 3170, 0], ['mg_reeds', 3308, 1],
@@ -229,7 +231,7 @@ function tourMap() {
       ...lanterns.slice(0, -1).map((x, i) => ['mr_lights', x, { to: lanterns[i + 1] }]),
     ],
     race: {
-      ...course(240, 8300, [{ kind: 'run', to: 2100 }, { kind: 'swim', to: 3300, y: G }, { kind: 'run', to: 3700 }, { kind: 'climb', x: 3700, from: G, to: 610 },
+      ...course(240, 8300, [{ kind: 'run', to: 2100 }, { kind: 'swim', to: 3300, y: G, alt: { kind: 'run', to: 3300, y: G - 4, slow: 0.82, name: 'the boardwalk' }, name: 'the river' }, { kind: 'run', to: 3700 }, { kind: 'climb', x: 3700, from: G, to: 610 },
         { kind: 'run', to: 4000 }, { kind: 'climb', x: 4000, from: 610, to: 460 }, { kind: 'run', to: 4558 }, { kind: 'glide' }, { kind: 'run', to: 8300 }], [[4560, 5260]]),
       parts: TOUR_PARTS, tire: 1.15, restAt: 0.75, rest: 1.8, maxTime: 420,
     },

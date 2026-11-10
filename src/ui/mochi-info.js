@@ -190,6 +190,8 @@ export function mochiInfoWindow(ui, state, world) {
     text(ctx, `${at + 1} / ${list.length}`, x + 42, wy + 11, { size: 7, bold: true, align: 'center', color: COLORS.muted });
     if (button(ui, x + 60, wy, 24, 16, '▶', { size: 8 })) world.mochiInfo = list[(at + 1) % list.length];
   }
+  // (The album: everything your Mochi have been.)
+  if (at >= 0 && button(ui, x + 90, wy, 50, 16, 'Album', { size: 7, iconName: 'book' })) Object.assign(state.windows.album, { open: true, openedAt: performance.now() / 1000 });
   if (at >= 0) {
     const won = Object.keys(DRESS).filter((id) => dressOpen(world.char, id));
     const options = [null, ...won];
@@ -200,6 +202,6 @@ export function mochiInfoWindow(ui, state, world) {
     if (button(ui, dx + 44, wy, 18, 16, '◀', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + options.length - 1) % options.length];
     text(ctx, fit(ctx, DRESS[rec.dress]?.name ?? 'Nothing', 82, 7, true), dx + 107, wy + 11, { size: 7, bold: true, align: 'center', color: rec.dress ? '#d0507a' : COLORS.muted });
     if (button(ui, dx + 152, wy, 18, 16, '▶', { size: 7.5 })) rec.dress = options[(Math.max(0, now) + 1) % options.length];
-    if (hover(ui, dx, wy, 44, 16)) tooltip(ui, [{ text: `Costumes: ${won.length} of ${Object.keys(DRESS).length}`, bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)`, color: COLORS.muted }))]);
+    if (hover(ui, dx, wy, 44, 16)) tooltip(ui, [{ text: `Costumes: ${won.length} of ${Object.keys(DRESS).length}`, bold: true }, ...Object.keys(DRESS).filter((id) => !dressOpen(world.char, id)).map((id) => ({ text: DRESS[id].stage ? `${DRESS[id].name}: win ${RACE_STAGES[DRESS[id].stage].name} (Beginner)` : `${DRESS[id].name}: from Kinako's shop${DRESS[id].secret ? ', after dark' : ''}`, color: COLORS.muted }))]);
   }
 }

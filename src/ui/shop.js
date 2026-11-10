@@ -43,7 +43,8 @@ function makePreview(id) {
 }
 
 // What one costs to buy, and what one sells for.
-const unitCost = (def) => def.price;
+// (A shopkeeper can set her own prices: Kinako, data/npcs.js `prices`.)
+const unitCost = (def) => buyer?.prices?.[def.id] ?? def.price;
 // Mister Brine (Lantern Lagoon) pays more for fish (`fishBonus`); everyone else the usual price.
 let buyer = null;
 const fishCut = (id) => (buyer?.fishBonus && ITEMS[id]?.fish ? buyer.fishBonus : 1);
@@ -59,7 +60,9 @@ const kindOf = (def) => {
 function entriesOf(npc, char, dlg) {
   if (dlg.tab === 0) {
     const kind = (id) => (ITEMS[id].type !== 'equip' ? 3 : ITEMS[id].slot === 'weapon' ? 2 : 1);
-    return shopStock(npc, char).filter((id) => !dlg.buyTab || kind(id) === dlg.buyTab).map((id) => ({ id, key: `b:${id}` }));
+    // (Kinako's secret stall, after dark: its own stock.)
+    const stock = dlg.secret ? npc.secretShop ?? [] : shopStock(npc, char);
+    return stock.filter((id) => !dlg.buyTab || kind(id) === dlg.buyTab).map((id) => ({ id, key: `b:${id}` }));
   }
   const tab = ['equip', 'use', 'etc'][dlg.sellTab ?? 0];
   const out = [];
@@ -87,7 +90,7 @@ export function shopWindow(ui, state, world) {
     win.y = Math.max(20, 326 - H - 8);
     dlg.placedShop = true;
   }
-  if (!windowFrame(ui, win, W, H, `${npc.name}'s Shop`, { theme: 'peach', icon: 'shop' })) {
+  if (!windowFrame(ui, win, W, H, dlg.secret ? `${npc.name}'s Secret Stall` : `${npc.name}'s Shop`, { theme: dlg.secret ? 'lavender' : 'peach', icon: dlg.secret ? 'moon' : 'shop' })) {
     state.npc = null;
     return;
   }

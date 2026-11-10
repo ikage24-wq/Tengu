@@ -7,7 +7,7 @@
 import { STAGES as MOCHI_STAGES, HAIR_COLORS } from '../data/mochi-genes.js';
 import { CANT_POINTS } from '../data/mochi-raise.js';
 import { RACE_STAGES, RACE_RANKS, RANK_ORDER, CHEER, prizeOf, rankOpen, rankNeeds, medalKey, MEDAL_COLOR } from '../data/mochi-race.js';
-import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO } from '../world/mochi-race.js';
+import { startRace, leaveRace, standings, progressOf, COUNTDOWN, INTRO, introLen, PODIUM, SLOW_MO, cheerCost, canAffordCheer, forkAhead, FORK_NEAR } from '../world/mochi-race.js';
 import { inviteParty, cancelLobby, startPartyRace, answerInvite, leaveWait, tickRaceInvites } from '../net/mochi-race.js';
 import { partyFriends } from '../net/together.js';
 import { online } from '../net/online.js';
@@ -51,7 +51,7 @@ function medalDot(ctx, x, y, medal, r = 3.2) {
 export function raceBoardWindow(ui, state, world) {
   const win = state.windows.race;
   const board = world.map.raceBoard;
-  if (board == null || world.race || Math.abs(board - world.body.x) > 80) {
+  if (board == null || world.race || world.gardenVisit || Math.abs(board - world.body.x) > 80) {
     win.open = false;
     return;
   }
@@ -155,7 +155,9 @@ export function raceBoardWindow(ui, state, world) {
   const party = partyFriends().length > 0;
   const rx = party ? win.x + W / 2 - 86 : win.x + W / 2 - 40;
   if (button(ui, rx, by, party ? 84 : 80, 18, 'Race!', { primary: open, enabled: open, size: 9 })) {
-    if (startRace(world, win.pick, win.stage, win.rank)) win.open = false;
+    // (Entered from the Garden, at Kinako's counter: back to the Garden afterwards.)
+    const back = world.map.garden ? { back: { map: world.map.id, x: world.body.x } } : {};
+    if (startRace(world, win.pick, win.stage, win.rank, back)) win.open = false;
   }
   // (With your party online: race them, each with one of their own Mochi.)
   if (party && button(ui, win.x + W / 2 + 2, by, 84, 18, 'With party', { enabled: open, size: 8 })) {
@@ -330,6 +332,32 @@ export function raceHud(ui, state, world) {
     const n = Math.max(1, Math.ceil(left));
     pop(ctx, String(n), n - left, ['#ff6f9a', '#f0a03a', '#5a9ae0'][n - 1] ?? '#ff6f9a', false, true);
   } else if (R.phase === 'run' && R.t < 0.9) pop(ctx, 'GO!', R.t / 0.9, '#ffb020', true);
+  // A fork coming up: which way yours will go, the other way, and Down to switch.
+  const fk = R.phase === 'run' && you.done == null && !R.remote ? forkAhead(course, you) : null;
+  if (fk && fk.at - you.x < FORK_NEAR && fk.at > you.x) {
+    const leg = course.legs[fk.leg];
+    const alt = Boolean(you.alt?.[fk.leg]);
+    const ways = [cap(leg.name ?? leg.kind), cap(leg.alt.name ?? leg.alt.kind)];
+    const fw = 228;
+    const fx = VW / 2 - fw / 2;
+    const fy = 52;
+    const pulse = R.forkFlip != null && R.clock - R.forkFlip < 0.25 ? 1 - (R.clock - R.forkFlip) / 0.25 : 0;
+    ctx.fillStyle = 'rgba(70,40,90,0.16)';
+    roundRect(ctx, fx + 1.5, fy + 2.5, fw, 30, 12);
+    ctx.fill();
+    box(ctx, fx, fy - pulse * 2, fw, 30, { fill: 'rgba(255,250,246,0.96)', edge: '#ffb3cf', r: 12, width: 1.4, plain: true });
+    text(ctx, 'Fork ahead!', fx + 10, fy + 12, { size: 7.5, bold: true, color: '#d0507a' });
+    text(ctx, 'Down: switch', fx + 10, fy + 23, { size: 6, color: COLORS.muted });
+    ways.forEach((w, i) => {
+      const on = (i === 1) === alt;
+      const wx = fx + 78 + i * 74;
+      ctx.fillStyle = on ? '#ff8fb8' : '#f6e8ee';
+      roundRect(ctx, wx, fy + 7, 70, 16, 8);
+      ctx.fill();
+      icon(ctx, i === 0 ? (leg.kind === 'swim' ? 'drop' : 'gust') : leg.alt.kind === 'swim' ? 'drop' : 'gust', wx + 10, fy + 15, 8, on ? '#ffffff' : '#c8a8b8');
+      text(ctx, fit(ctx, w, 52, 6.5, true), wx + 40, fy + 17.6, { size: 6.5, bold: true, align: 'center', color: on ? '#ffffff' : '#a88898' });
+    });
+  }
   // A long course: as yours comes into each new part, its name sweeps across on a ribbon in its colour.
   if (course.parts && R.phase === 'run') {
     let k = 0;
@@ -395,6 +423,20 @@ export function raceHud(ui, state, world) {
     ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.fillRect(sx + 3, cy + 24.5, Math.max(0, sw * (1 - tired) - 6), 1.5);
+    // (What the next cheer would spend: the end of the bar, pale and pulsing, while it can cheer.)
+    const cost = cheerCost(you.rec);
+    const afford = canAffordCheer(you);
+    if (R.phase === 'run' && you.done == null && afford && !resting) {
+      const full = sw * (1 - tired);
+      const cw2 = Math.min(full, sw * cost);
+      ctx.globalAlpha = 0.55 + 0.25 * Math.sin(R.clock * 6);
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, sx + full - cw2, cy + 23, cw2, 9, 4.5);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#ff9ec0';
+      ctx.fillRect(sx + full - cw2, cy + 23, 1, 9);
+    }
     if (resting) {
       ctx.save();
       roundRect(ctx, sx, cy + 23, sw, 9, 4.5);
@@ -411,9 +453,10 @@ export function raceHud(ui, state, world) {
       }
       ctx.restore();
     }
-    const ready = R.phase === 'run' && you.done == null && R.clock >= you.cheerReady;
+    const ready = R.phase === 'run' && you.done == null && R.clock >= you.cheerReady && afford;
+    const broke = R.phase === 'run' && you.done == null && !afford;
     const bx = cx + cw - 96;
-    if (button(ui, bx, cy + 8, 88, 30, ready ? 'Cheer!  (Up)' : 'Cheering...', { primary: ready, enabled: ready, size: 8.5, iconName: 'heart' })) R.cheerAsk = true;
+    if (button(ui, bx, cy + 8, 88, 30, ready ? 'Cheer!  (Up)' : broke ? 'Too tired' : 'Cheering...', { primary: ready, enabled: ready, size: 8.5, iconName: 'heart' })) R.cheerAsk = true;
     if (R.phase === 'run' && you.done == null) {
       const k = ready ? 1 : Math.max(0, Math.min(1, 1 - (you.cheerReady - R.clock) / CHEER.every));
       ctx.fillStyle = '#f6dce8';
@@ -423,7 +466,7 @@ export function raceHud(ui, state, world) {
       roundRect(ctx, bx + 8, cy + 40, 72 * k, 3, 1.5);
       ctx.fill();
     }
-    if (hover(ui, bx, cy + 8, 88, 30)) tooltip(ui, [{ text: 'Cheer it on  (Up)', bold: true }, { text: 'A burst of speed, but it tires it a little. Every couple of seconds.', color: COLORS.muted }]);
+    if (hover(ui, bx, cy + 8, 88, 30)) tooltip(ui, [{ text: 'Cheer it on  (Up)', bold: true }, { text: `A burst of speed, paid for with ${Math.round(cost * 100)}% of its stamina (less the better its Stamina). Run it right down and it has to stop for breath.`, color: COLORS.muted }]);
     return;
   }
   // The results: your Mochi's photo with its place on a big rosette, the standings with gold, silver

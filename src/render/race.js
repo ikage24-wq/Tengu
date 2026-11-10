@@ -562,7 +562,7 @@ export function drawRace(ctx, world, cam, time) {
 // moving up a place ('pass': yours, or anyone taking the lead), and each change in how it's moving:
 // into the water (a splash), onto a wall (a puff of chalk), off the edge (a whoosh), down from a
 // glide (dust). Each lasts a moment.
-const FX_LIFE = { pass: 1.1, splash: 0.7, chalk: 0.6, whoosh: 0.6, land: 0.6, finish: 1, emote: 1.3 };
+const FX_LIFE = { pass: 1.1, splash: 0.7, chalk: 0.6, whoosh: 0.6, land: 0.6, finish: 1, emote: 1.3, luck: 1.2 };
 // How a racer reacts to being overtaken, by personality: a cross puff (the hot-headed), a sweat drop
 // (the nervous), or a startled "!" (everyone else). Getting past someone: a little note, pleased.
 const HOT = new Set(['grumpy', 'bossy', 'proud', 'sassy', 'dramatic', 'brave', 'cool', 'stoic']);
@@ -606,6 +606,15 @@ function noteEffects(R, course, time) {
   if (!R.goFx) {
     R.goFx = true;
     for (const r of R.racers) fx.push({ kind: 'land', x: r.x, y: r.y, t0: time });
+  }
+  // (A trip or a tailwind, world/mochi-race.js: its word over it, and a puff or a gust.)
+  for (const r of R.racers) {
+    if (r.luckAt != null && r.luckSeen !== r.luckAt) {
+      r.luckSeen = r.luckAt;
+      fx.push({ kind: 'luck', r, word: r.luckKind === 'trip' ? 'Oops!' : 'Tailwind!', wind: r.luckKind === 'wind', t0: time });
+      fx.push({ kind: r.luckKind === 'trip' ? 'land' : 'whoosh', x: r.x, y: r.y, t0: time });
+      if (r.luckKind === 'trip') emote(fx, r, 'sweat', time);
+    }
   }
   for (const r of R.racers) {
     // (Worn out, stopping for breath: a puff of tiredness. Into the water: a startled splash "!".)
@@ -699,7 +708,23 @@ function drawEffects(ctx, R, cam, time) {
     const k = (time - f.t0) / FX_LIFE[f.kind];
     const ease = 1 - (1 - k) ** 3;
     ctx.save();
-    if (f.kind === 'emote') {
+    if (f.kind === 'luck') {
+      const r = f.r;
+      const x = r.x - cam.x;
+      const y = r.y - cam.y - (r.m.size === 'baby' ? 50 : 58) - ease * 8;
+      ctx.globalAlpha = Math.min(1, (1 - k) * 3);
+      const s = 1 + 0.4 * (1 - Math.min(1, k * 5));
+      ctx.translate(x, y);
+      ctx.scale(s, s);
+      ctx.font = '900 8px Nunito, "Trebuchet MS", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeText(f.word, 0, 0);
+      ctx.fillStyle = f.wind ? '#4aa8e0' : '#a888c8';
+      ctx.fillText(f.word, 0, 0);
+      ctx.textAlign = 'left';
+    } else if (f.kind === 'emote') {
       drawEmote(ctx, f.r.x - cam.x + 9, f.r.y - cam.y - (f.r.m.size === 'baby' ? 38 : 46), f.mark, k);
     } else if (f.kind === 'pass') {
       const r = f.r;

@@ -1,0 +1,62 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#eef5e6">
+<canvas id="c" width="960" height="360" style="width:100%;max-width:960px;image-rendering:pixelated"></canvas>
+<script type="module">
+// Dev tool: every Mochi costume (data/mochi-dress.js) on the same Mochi, standing (top row) and
+// walking (bottom row), big. ?manual steps only through window.step(dt); window.frame() gives it.
+import { rollMochi } from '../src/data/mochi-genes.js';
+import { newRecord } from '../src/data/mochi-raise.js';
+import { DRESS } from '../src/data/mochi-dress.js';
+import { drawMochiAnim } from '../src/render/mochi-anim.js';
+import { nextFrame } from '../src/render/pixel.js';
+
+const q = new URLSearchParams(location.search);
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const ids = Object.keys(DRESS);
+const seed = Number(q.get('seed') ?? 21);
+const recs = ids.map((id) => {
+  const r = newRecord(rollMochi(seed, { coat: null }));
+  r.stage = 'grown';
+  for (const st of Object.keys(r.stats)) r.stats[st].points = 900;
+  r.dress = id;
+  return r;
+});
+const stand = recs.map((r) => ({ genes: r, dir: 1, speed: 0, dist: 0, size: 'grown', noIdle: true }));
+const walk = recs.map((r) => ({ genes: r, dir: 1, speed: 40, dist: 0, size: 'grown', easy: true }));
+let t = 0;
+function step(dt) {
+  t += dt;
+  nextFrame?.();
+  ctx.fillStyle = '#fff6f0';
+  ctx.fillRect(0, 0, c.width, c.height);
+  const cw = c.width / ids.length;
+  ctx.font = '700 11px sans-serif';
+  ctx.textAlign = 'center';
+  ids.forEach((id, i) => {
+    const x = cw * i + cw / 2;
+    ctx.fillStyle = '#7a4a5a';
+    ctx.fillText(DRESS[id].name, x, 20);
+    for (const [row, m, y] of [[0, stand[i], 170], [1, walk[i], 330]]) {
+      m.dist += (m.speed ?? 0) * dt;
+      ctx.fillStyle = '#e6f2dc';
+      ctx.fillRect(x - cw / 2 + 4, y, cw - 8, 4);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(2.6, 2.6);
+      drawMochiAnim(ctx, m, 0, 0, t);
+      ctx.restore();
+      void row;
+    }
+  });
+}
+window.step = step;
+window.frame = () => c.toDataURL('image/png');
+window.ready = true;
+if (!q.has('manual')) {
+  let last = performance.now();
+  const loop = (now) => { step(Math.min(0.05, (now - last) / 1000)); last = now; requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+} else step(0);
+</script>
+</body></html>

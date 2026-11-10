@@ -44,7 +44,7 @@ import { rideStep, rideAfter, dismount, toggleMount, giveMount, ownsMount } from
 import { WADE, MOUNTS } from '../data/mounts.js';
 import { refreshHome } from './home.js';
 import { refreshGarden, grantGarden } from './garden.js';
-import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear, eggStallUp, gardenGateUp } from './garden-life.js';
+import { enterGarden, tickGarden, rockEgg, finishHatch, harvestCrops, mochiNear, eggStallUp, gardenGateUp, shakeTree, wakeUp } from './garden-life.js';
 import './stadium.js';
 import { tickRace } from './mochi-race.js';
 import { tickDate, DATES } from './dates.js';
@@ -465,7 +465,7 @@ function interact(world) {
     return true;
   }
   // An egg in your garden: Up beside it to rock it, and it hatches (world/garden-life.js).
-  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || eggStallUp(world))) return true;
+  if (world.map.garden && (rockEgg(world) || harvestCrops(world) || eggStallUp(world) || shakeTree(world))) return true;
   // Your skiff at your island's dock: Up to sail back to Pastel Harbor (world/voyage.js).
   if (world.map.home && !world.map.indoor && b.x < 150 && b.y <= 530) {
     setSail(world);
@@ -480,6 +480,14 @@ function interact(world) {
     return true;
   }
   const npc = world.map.npcs.find((n) => Math.abs(n.x - b.x) < TALK_RANGE && Math.abs(groundAt(world.map, n.x) - b.y) < 6 && !(movedAway(world.char, n.id) && !world.map.home) && world.date?.id !== n.id && !n.going && !awayNow(world, n));
+  // (In your garden, a Mochi right beside you comes before the keeper, if it's the nearer.)
+  const pal = npc && world.map.garden ? mochiNear(world) : null;
+  if (pal && Math.abs(pal.x - b.x) < Math.abs(npc.x - b.x)) {
+    world.gardenLife.caring = pal;
+    wakeUp(world, pal);
+    world.events.push({ type: 'mochi' });
+    return true;
+  }
   if (npc) {
     world.events.push({ type: 'talk', npc: npc.id });
     return true;
@@ -520,6 +528,7 @@ function interact(world) {
   const mochi = world.map.garden ? mochiNear(world) : null;
   if (mochi) {
     world.gardenLife.caring = mochi;
+    wakeUp(world, mochi);
     world.events.push({ type: 'mochi' });
     return true;
   }

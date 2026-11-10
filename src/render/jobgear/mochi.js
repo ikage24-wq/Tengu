@@ -130,6 +130,16 @@ const WAFER_LT = '#f8d9a0';
 const WAFER_DK = '#c08a48';
 const ANKO = '#7a3442';
 const ANKO_DK = '#5a2432';
+// The Garden Keeper's costumes.
+const STRAWB = '#ff6b84';
+const SEED = '#ffe08a';
+const NIGHT = '#2e3468';
+const NAVY = '#36488a';
+const CARDIGAN = '#f6e2c4';
+const PLAID = '#9a7ac8';
+const KNIT = '#f4e6d2';
+const SCARF = '#86d6bc';
+const OVERALL = '#ff9ec0';
 
 // A dango on the skewer, with its shine.
 const dango = (x, y, c) => [E(x, y, 3, 2.9, c), F(E(x - 1, y - 1, 1, 0.7, mix(c, '#ffffff', 0.6)))];
@@ -151,6 +161,41 @@ const waves = (x0, x1, y, c) => {
   for (let x = x0 + 1.4; x < x1 - 0.6; x += 2.8) out.push(F(crescent([x, y, 1.4, 1.3], [x, y + 0.1, 0.8, 0.7], 0, 180, c)));
   return out;
 };
+
+
+// ---------- Little things for the shop outfits ----------
+// The eyes sit at (11.2, 18.2) and (19.8, 18.2) on the head.
+const EYE_AT = [11.2, 19.8];
+const EYE_Y = 18.2;
+// Round glasses: a rim round each eye, a lit top edge, a glint, the bridge and the arms.
+function roundGlasses(c) {
+  return [...EYE_AT.flatMap((x) => [F(crescent([x, EYE_Y, 3.5, 3.5], [x, EYE_Y, 2.8, 2.8], -1, 361, c)), F(crescent([x, EYE_Y, 3.5, 3.5], [x, EYE_Y, 3, 3], 40, 140, shade(c, 30))),
+    F(limb(x - 1.8, EYE_Y - 1.4, x - 0.8, EYE_Y - 2.2, 0.35, 0.28, '#ffffff'))]),
+    F(limb(14.4, EYE_Y - 0.6, 16.6, EYE_Y - 0.6, 0.45, 0.45, c)), F(R(4.2, EYE_Y - 1.2, 3.6, 0.8, c)), F(R(23.2, EYE_Y - 1.2, 3.6, 0.8, c))];
+}
+// A heart's outline round (cx, cy), `r` its size.
+const heartPts = (cx, cy, r) => Array.from({ length: 24 }, (_, i) => {
+  const t = (i / 24) * Math.PI * 2;
+  return [cx + r * 0.95 * Math.sin(t) ** 3, cy - r * 0.8 * (0.8 * Math.cos(t) - 0.3 * Math.cos(2 * t) - 0.12 * Math.cos(3 * t))];
+});
+// Heart sunglasses: dark heart lenses in coloured frames, a shine on each.
+function heartShades(c) {
+  return [...EYE_AT.flatMap((x) => [F(T(heartPts(x, EYE_Y - 0.4, 4.2), c)), F(T(heartPts(x, EYE_Y - 0.4, 3.1), '#3b3550')), F(E(x - 1.3, EYE_Y - 1.6, 0.8, 0.5, '#ffffff'))]),
+    F(limb(14.4, EYE_Y - 1.2, 16.6, EYE_Y - 1.2, 0.5, 0.5, c)), F(R(3.6, EYE_Y - 1.6, 3.6, 0.9, c)), F(R(23.8, EYE_Y - 1.6, 3.6, 0.9, c))];
+}
+// A five-pointed star round (x, y).
+const starPts = (x, y, r, c) => T(Array.from({ length: 10 }, (_, i) => {
+  const a = -Math.PI / 2 + (i * Math.PI) / 5;
+  const rr = i % 2 ? r * 0.45 : r;
+  return [x + Math.cos(a) * rr, y + Math.sin(a) * rr];
+}), c);
+// Star glasses: gold star frames round tinted lenses.
+function starGlasses(c) {
+  return [...EYE_AT.flatMap((x) => [F(starPts(x, EYE_Y, 4.6, c)), F(starPts(x, EYE_Y, 3, '#4a3f7a')), F(E(x - 0.9, EYE_Y - 1, 0.6, 0.5, '#ffffff'))]),
+    F(limb(14.6, EYE_Y - 0.6, 16.4, EYE_Y - 0.6, 0.45, 0.45, c)), F(R(3.4, EYE_Y - 1, 3, 0.8, c)), F(R(24.6, EYE_Y - 1, 3, 0.8, c))];
+}
+// A bow tie at (x, y).
+const bowTie = (x, y, c) => [T([[x, y], [x - 3, y - 1.6], [x - 3, y + 1.6]], c), T([[x, y], [x + 3, y - 1.6], [x + 3, y + 1.6]], c), E(x, y, 0.9, 0.9, shade(c, -20))];
 
 export const MOCHI_OUTFITS = {
   // ---------- The smock every Mochi wears: no hat, in its rolled colour ----------
@@ -320,6 +365,108 @@ export const MOCHI_OUTFITS = {
     skirt: () => [...puffs(ANKO, ANKO_DK), ...[10.6, 15.5, 20.4].flatMap((x) => [T([[x - 2.6, 34.6], [x + 2.6, 34.6], [x + 2.2, 38.8], [x, 39.8], [x - 2.2, 38.8]], WAFER), F(limb(x - 2.2, 35.4, x + 2.2, 35.4, 0.3, 0.3, WAFER_LT))])],
     shoe: (p, k, c) => [k.poly([[-2.6, -2.4], [2.8, -2.4], [3.4, 2.6], [-2.8, 2.6]], c('#7a5232')), k.poly([[-2.8, 1.8], [3.4, 1.8], [3.4, 2.8], [-2.8, 2.8]], c('#4e3420')),
       k.poly([[-2.6, -2.4], [2.8, -2.4], [2.8, -1.4], [-2.6, -1.4]], c(WAFER))],
+  },
+
+  // ---------- The Garden Keeper's outfits (bought from Kinako, not won) ----------
+  // No hoods: the Mochi's own hair shows, and the fun is in the little things: glasses, a bow tie,
+  // a scarf, a hair clip, a backpack, a cape.
+  // ---------- Study Buddy: round pink glasses, a cardigan over a blouse, a red bow tie, plaid shorts ----------
+  mochistudy: {
+    hat: () => roundGlasses('#ff8fb0'),
+    top: () => [...tunic(CARDIGAN, shade(CARDIGAN, -14), 36),
+      T([[12, 25.6], [19, 25.6], [17, 33.6], [15.5, 34.4], [14, 33.6]], '#ffffff'),
+      F(limb(12, 25.6, 14.4, 34, 0.4, 0.4, shade(CARDIGAN, -18))), F(limb(19, 25.6, 16.6, 34, 0.4, 0.4, shade(CARDIGAN, -18))),
+      ...dots([[13.4, 29.6], [13.8, 32.4]], 0.45, '#c8945a'), ...bowTie(MID, 26.4, '#e8485e')],
+    sleeve: () => CARDIGAN,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? CARDIGAN : shade(CARDIGAN, -12))],
+    legs: bareLegs,
+    skirt: () => [...puffs(PLAID, shade(PLAID, -20)), ...[10.4, 13.6, 17.2, 20.4].map((x) => F(R(x, 34.6, 0.6, 6.6, shade(PLAID, 22)))), F(R(8.6, 37.4, 14, 0.6, shade(PLAID, 22))), F(R(8.6, 39.6, 14, 0.5, '#e8485e'))],
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#8a5a3a')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c('#5e3c22')), k.poly([[-0.6, -1], [1.6, -1], [1.6, -0.2], [-0.6, -0.2]], c('#e8485e'))],
+    // A little book bag on its back, its strap over the shoulder.
+    back: () => [R(5.6, 28, 6.4, 6.8, '#c8945a'), F(R(5.6, 28, 6.4, 1.6, '#a87444')), F(E(8.8, 31.6, 0.8, 0.8, GOLD))],
+  },
+
+  // ---------- Sailor Sweet: pink heart sunglasses, a sailor top, a pink neckerchief ----------
+  mochisailor: {
+    hat: () => heartShades('#ff6f9a'),
+    top: () => [...tunic('#ffffff', NAVY, 36),
+      // The sailor collar: navy, square at the back, a V at the front with a white stripe.
+      T([[9.6, 25], [21.4, 25], [17.4, 31], [15.5, 32], [13.6, 31]], NAVY), F(T([[12.6, 25.6], [18.4, 25.6], [15.5, 30.4]], '#ffffff')),
+      F(limb(10.6, 25.6, 14.2, 31, 0.3, 0.3, '#ffffff')), F(limb(20.4, 25.6, 16.8, 31, 0.3, 0.3, '#ffffff')),
+      T([[13.8, 30.6], [17.2, 30.6], [15.5, 34.4]], '#ff8fb0'), F(E(15.5, 30.8, 1.4, 1, '#ff6f9a'))],
+    sleeve: () => '#ffffff',
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? '#ffffff' : '#e6e6ee'), F(limb(-2.6, 2.6, 2.6, 2.6, 0.5, 0.5, NAVY))],
+    legs: bareLegs,
+    skirt: () => [...puffs(NAVY, shade(NAVY, -16)), ...dots([[11, 39], [20, 39]], 0.45, '#ffffff')],
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#ffffff')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c(NAVY))],
+  },
+
+  // ---------- Cozy Knit: a big mint scarf, a cable-knit sweater, little boots ----------
+  mochicozy: {
+    top: (p, m) => {
+      const s = (m?.sway ?? 0) * 0.4;
+      return [...tunic(KNIT, shade(KNIT, -12), 36.4),
+        // Cables down the front.
+        ...[12.4, 18.6].flatMap((x) => [26.8, 29.2, 31.6, 34].map((y) => F(crescent([x, y, 1.2, 1.1], [x, y - 0.4, 0.8, 0.7], 200, 340, shade(KNIT, -14))))),
+        // The scarf: wrapped twice round the neck, one end hanging down the front.
+        E(15.5, 25.8, 7.6, 3, SCARF), F(E(15.5, 24.9, 6.8, 1.2, shade(SCARF, 14))), F(limb(9, 27, 22, 27, 0.4, 0.4, shade(SCARF, -16))),
+        ...[11.4, 14, 16.6, 19.2].map((x) => F(limb(x, 24.2, x - 0.6, 27.6, 0.25, 0.25, shade(SCARF, -12)))),
+        T([[16.8, 26.8], [21, 26.8], [21.8 + s, 34.4], [17.6 + s, 34.6]], SCARF), F(R(17.6 + s, 33.6, 4.2, 1.4, shade(SCARF, -16))),
+        ...[18.4, 19.4, 20.4].map((x) => F(limb(x + s, 34.2, x + s, 35.6, 0.3, 0.3, SCARF)))];
+    },
+    sleeve: () => KNIT,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3.2, 2.8, side > 0 ? KNIT : shade(KNIT, -12))],
+    legs: bareLegs,
+    skirt: () => puffs('#b8a088', '#9a8470'),
+    // The scarf's other end, out behind.
+    back: (p, m) => {
+      const s = m?.sway ?? 0;
+      return [ribbon([[10, 25.4], [7, 27 + s * 0.3], [4.6, 29.4 + s * 0.6], [3, 32 + s]], 1.4, shade(SCARF, -10))];
+    },
+    shoe: (p, k, c) => [k.poly([[-2.6, -2.4], [2.8, -2.4], [3.4, 2.6], [-2.8, 2.6]], c('#c8a070')), k.poly([[-2.8, -2.6], [2.8, -2.6], [2.8, -1.4], [-2.8, -1.4]], c('#fff6ec')), k.poly([[-2.8, 1.8], [3.4, 1.8], [3.4, 2.8], [-2.8, 2.8]], c('#8a6a48'))],
+  },
+
+  // ---------- Berry Overalls: pink overalls, a strawberry patch, a strawberry clip and backpack ----------
+  mochiberry: {
+    // A little strawberry clip in its hair, at the near side.
+    hat: () => [E(23.4, 8, 2, 2.4, STRAWB), ...dots([[22.8, 7.4], [24, 8.6], [23, 9]], 0.25, SEED), ...leaf(23.4, 5.8, 25.6, 4.6, 0.8, LEAF, LEAF_DK), ...leaf(23.4, 5.8, 21.4, 4.8, 0.8, LEAF, LEAF_DK)],
+    top: () => [...tunic('#ffffff', '#ffd0dc', 36),
+      ...[27, 29.4, 31.8].map((y) => F(R(8.8, y, 13.6, 0.9, '#ffc4d4'))),
+      // The bib and its straps, two buttons, the strawberry patch.
+      T([[11.4, 28.6], [19.6, 28.6], [20, 36], [11, 36]], OVERALL), F(R(11.4, 28.6, 8.2, 0.8, shade(OVERALL, 16))),
+      F(limb(11.8, 28.8, 11, 25, 0.7, 0.7, OVERALL)), F(limb(19.2, 28.8, 20, 25, 0.7, 0.7, OVERALL)),
+      F(E(12.2, 29.6, 0.6, 0.6, GOLD)), F(E(18.8, 29.6, 0.6, 0.6, GOLD)),
+      E(15.5, 32.4, 1.9, 2.1, STRAWB), ...dots([[14.9, 32], [16.1, 32.8], [15.3, 33.4]], 0.22, SEED), F(T([[14.4, 30.6], [15.5, 31.2], [16.6, 30.6], [15.5, 30]], LEAF))],
+    sleeve: () => '#ffffff',
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? '#ffffff' : '#ece4ea'), F(limb(-2.4, 1.2, 2.4, 1.2, 0.35, 0.35, '#ffc4d4'))],
+    legs: bareLegs,
+    skirt: () => [...puffs(OVERALL, shade(OVERALL, -16)), F(R(9.6, 39.4, 2.4, 1.6, shade(OVERALL, -10)))],
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#fff6f2')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c(STRAWB))],
+    // The strawberry backpack.
+    back: () => [E(7.6, 31.4, 4.2, 4.8, STRAWB), ...dots([[6.4, 30], [8.6, 31.4], [6.8, 33], [8.8, 33.6], [7.4, 28.8]], 0.32, SEED), F(T([[5.2, 27.2], [7.6, 26], [10, 27.2], [7.6, 28.4]], LEAF))],
+  },
+
+  // ---------- Starry Night (Kinako's secret, at night): star glasses, a bell collar, a starry cape ----------
+  mochistarry: {
+    hat: () => starGlasses(GOLD),
+    top: () => [...tunic(NIGHT, GOLD, 36), ...dots([[11.2, 29.4], [19.8, 30.6], [13.4, 34], [18.6, 34.6]], 0.45, GOLD), ...dots([[16.6, 28.6], [12.2, 32.4]], 0.3, '#fff6c8'),
+      // The bell on its collar.
+      R(10.4, 24.8, 10.2, 1.6, '#e8485e'), E(15.5, 27.4, 1.6, 1.6, GOLD), F(R(14.2, 27.2, 2.6, 0.4, shade(GOLD, -24))), F(E(15.5, 28.4, 0.35, 0.35, shade(GOLD, -40))), F(E(15, 26.8, 0.45, 0.35, '#fff6c8'))],
+    sleeve: () => NIGHT,
+    long: true,
+    shoulder: (p, side) => [E(0, 1, 3, 2.6, side > 0 ? NIGHT : shade(NIGHT, -14))],
+    legs: bareLegs,
+    skirt: () => [...puffs(NIGHT, shade(NIGHT, -18)), ...dots([[11, 38.6], [19.6, 39.2]], 0.45, GOLD)],
+    // The cape, sweeping out behind, scattered with little stars.
+    back: (p, m) => {
+      const s = m?.sway ?? 0;
+      return [T([[9, 25], [22, 25], [24 + s * 0.4, 42 + s * 0.3], [15.5, 43.4 + s * 0.2], [5.6 + s, 42]], shade(NIGHT, -8)),
+        F(T([[9, 25], [22, 25], [21.4, 26.6], [9.6, 26.6]], '#e8485e')),
+        ...[[10, 31], [13, 37.4], [19.4, 34], [8.6, 39.6], [21.6, 40]].map(([x, y]) => F(starPts(x + s * 0.3, y, 0.9, GOLD)))];
+    },
+    shoe: (p, k, c) => [k.poly([[-2.6, -1.2], [2.8, -1.2], [3.2, 2.6], [-2.8, 2.6]], c('#ffffff')), k.poly([[-2.8, 1.7], [3.2, 1.7], [3.2, 2.6], [-2.8, 2.6]], c(NIGHT)), k.poly([[0, -1], [1, -1], [1, 0], [0, 0]], c(GOLD))],
   },
 };
 

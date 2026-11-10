@@ -15,6 +15,7 @@
 //                     Moonmortar (the landmark), the stadium gate (to the Race Stadium)
 
 import { MAPS } from '../data/maps.js';
+import { RACE_STAGES, RANK_ORDER } from '../data/mochi-race.js';
 import { SPOTS } from '../data/fishing.js';
 import { HOME_POND_POOL } from '../data/home.js';
 
@@ -27,69 +28,74 @@ const TOP = 380;
 
 // The garden's map, for the garden `g` (its unlocked areas).
 export function gardenMap(g = {}) {
-  const width = 3600;
+  const width = 3200;
   const terrain = [
-    [0, PLATEAU], [880, PLATEAU], [1040, ORCHARD], [1500, ORCHARD], [1560, 684], [1650, 684], [1710, ORCHARD], [2160, ORCHARD],
+    // The square by the gate, then down into the orchard (the big tree on its rise).
+    [0, PLATEAU], [1320, PLATEAU], [1440, ORCHARD], [1540, ORCHARD], [1600, 684], [1700, 684], [1760, ORCHARD], [2100, ORCHARD],
     // (The pond: a bowl, its banks shelving gently down to the bed.)
-    [2236, POND], [2250, 784], [2272, 808], [2306, 828], [2360, BED], [2700, BED], [2752, 830], [2786, 810], [2810, 786], [2826, POND],
-    [2900, POND], [2900, LEDGE], [3002, LEDGE], [3002, TOP], [width, TOP],
+    [2176, POND], [2190, 784], [2212, 808], [2246, 828], [2300, BED], [2460, BED], [2512, 830], [2546, 810], [2570, 786], [2586, POND],
+    [2660, POND], [2660, LEDGE], [2762, LEDGE], [2762, TOP], [width, TOP],
   ];
   const platforms = [
     // The little fishing dock out over the pond, from the bank where it's level with the grass.
-    { x: 2221, y: 748, w: 119, style: 'planks', dock: true, walkOn: true },
+    { x: 2161, y: 748, w: 119, style: 'planks', dock: true, walkOn: true },
     // The glide launch: a board jutting out from the cliff top over the pond (the upper rope hangs
     // from it).
     // (Level with the cliff top and ending at its edge, so you walk straight on: drawn by mg_glide,
     // render/garden.js, its back end weighted on the lip.)
-    { x: 2946, y: TOP, w: 56, style: 'planks', bare: true },
+    { x: 2706, y: TOP, w: 56, style: 'planks', bare: true },
   ];
   const ropes = [
-    { x: 2894, top: LEDGE, bottom: POND },
-    { x: 2960, top: TOP, bottom: LEDGE },
+    { x: 2654, top: LEDGE, bottom: POND },
+    { x: 2720, top: TOP, bottom: LEDGE },
   ];
-  const spots = [{ x: 2340, y: 748, face: 1, bx: 2430, by: POND + 2, tier: 1, pool: HOME_POND_POOL }];
+  const spots = [{ x: 2280, y: 748, face: 1, bx: 2370, by: POND + 2, tier: 1, pool: HOME_POND_POOL }];
   const map = {
     id: 'garden', name: 'Mochi Garden', theme: 'town', isTown: true, private: true, garden: true, town: 'sprout',
     // (`groundY` is where the backdrop's land sits: the valley floor, not the gate's plateau high up
     // it, or the far hills and trees would hang in the sky.)
     width, height: 900, groundY: 730,
     // The sweet kitchen cooks Mochi sweets (ui/cooking.js); the garden's own data (the crop bed).
-    stove: 548, gardenData: g,
+    stove: 760, gardenData: g,
     look: { sky: ['#ffd6e4', '#ffeadc', '#fff8f0'], far: '#d4ecc8', mid: '#e2f2d4', midTrim: '#bfe0ac', skyline: 'mochigarden', edges: 'flowers', islands: 'planks', material: 'meadow', propKeep: 1, portal: 'mochi' },
     cottages: [],
     terrain, platforms, ropes,
     // (Its own lilies and reeds: render/garden.js.)
-    water: [{ x1: 2236, x2: 2826, y: POND, kind: 'pond', lilies: false, reeds: false }],
+    water: [{ x1: 2176, x2: 2586, y: POND, kind: 'pond', lilies: false, reeds: false }],
     nodes: [],
     zonesBy: 'x',
     zones: [
-      { name: 'Mortar Gate', from: 0, color: '#ff9ec0' },
-      { name: 'The Orchard', from: 960, color: '#9fd87a', look: { sky: ['#ffe2cc', '#fff0dc', '#fffaf0'] } },
-      { name: 'Lily Pond', from: 2180, color: '#6fc8e0', look: { sky: ['#cfe8ff', '#e6f4ff', '#f6fbff'] } },
-      { name: 'Moonmortar Cliff', from: 2850, color: '#b8a8f0', look: { sky: ['#d8d0ff', '#ebe6ff', '#f8f6ff'] } },
+      { name: 'Mortar Square', from: 0, color: '#ff9ec0' },
+      { name: 'The Orchard', from: 1320, color: '#9fd87a', look: { sky: ['#ffe2cc', '#fff0dc', '#fffaf0'] } },
+      { name: 'Lily Pond', from: 2100, color: '#6fc8e0', look: { sky: ['#cfe8ff', '#e6f4ff', '#f6fbff'] } },
+      { name: 'Moonmortar Cliff', from: 2620, color: '#b8a8f0', look: { sky: ['#d8d0ff', '#ebe6ff', '#f8f6ff'] } },
     ],
-    // The garden's pieces (render/garden.js), left to right.
+    // The garden's pieces (render/garden.js), left to right: the square (the keeper's shop, the egg
+    // stall, the sweet kitchen, the nursery and the gate to the Race Stadium, side by side), the
+    // orchard (fruit trees to shake, the big tree with its swing, the crop bed), the pond, the cliff.
     townPieces: [
-      ['mg_lantern', 196, 0], ['mg_eggstall', 330], ['mg_kitchen', 548], ['mg_nursery', 760], ['mg_lantern', 872, 1],
-      ['mg_track', 1090, { to: 1450 }], ['mg_fruittree', 1150, 0], ['mg_fruittree', 1380, 1], ['mg_lantern', 1478, 2], ['mg_bigtree', 1605],
-      ['mg_fruittree', 1850, 2], ['mg_cropbed', 1962], ['mg_fruittree', 2070, 3], ['mg_lantern', 2150, 3],
-      ['mg_reeds', 2228, 0], ['mg_lilies', 2470, 0], ['mg_lilies', 2690, 1], ['mg_reeds', 2816, 1],
-      ['mg_rockface', 2900, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 3002, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 3002],
-      ['mg_boulders', 2928], ['mg_glide', 3034], ['mg_lantern', 3110, 4], ['mg_moonmortar', 3250], ['mg_lantern', 3390, 5], ['mg_stadium', 3500],
+      ['mg_lantern', 150, 0], ['mg_shop', 300], ['mg_eggstall', 520], ['mg_kitchen', 760], ['mg_nursery', 990], ['mg_stadium', 1190], ['mg_lantern', 1290, 1],
+      ['mg_fruittree', 1480, 0], ['mg_bigtree', 1650], ['mg_fruittree', 1830, 2], ['mg_cropbed', 1920], ['mg_fruittree', 2016, 3], ['mg_lantern', 2072, 3],
+      ['mg_reeds', 2168, 0], ['mg_lilies', 2330, 0], ['mg_lilies', 2480, 1], ['mg_reeds', 2576, 1],
+      ['mg_rockface', 2660, { top: LEDGE, bottom: POND, seed: 3, vines: 4, vineLen: 60 }], ['mg_rockface', 2762, { top: TOP, bottom: LEDGE, seed: 7, vines: 6, vineLen: 90 }], ['mg_falls', 2762],
+      ['mg_boulders', 2688], ['mg_glide', 2794], ['mg_moonmortar', 2960], ['mg_lantern', 3110, 5],
     ],
     portals: [
       // The gate from Sprout Village (and where the Mochi Bell sets you down), and the nursery's door.
       { id: 'gate', x: 70, y: PLATEAU, to: 'sprout', toPortal: 'garden', label: 'Sprout Village' },
       { id: 'start', x: 200, y: PLATEAU, hidden: true },
-      { id: 'nursery', x: 760, y: PLATEAU, to: 'garden_in', toPortal: 'door', label: 'Nursery', door: true },
-      // The stadium gate at the top: the Mochi Race Stadium (world/stadium.js).
-      { id: 'stadium', x: 3500, y: TOP, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
+      { id: 'nursery', x: 990, y: PLATEAU, to: 'garden_in', toPortal: 'door', label: 'Nursery', door: true },
+      // The gate to the Race Stadium, at the end of the square (world/stadium.js).
+      { id: 'stadium', x: 1190, y: PLATEAU, to: 'mochi_stadium', toPortal: 'gate', label: 'Race Stadium', door: true },
     ],
     lamps: [
-      { x: 196, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 872, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1478, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 2150, y: ORCHARD - 44, c: '#ffd6a0' },
-      { x: 3110, y: TOP - 44, c: '#ffd6a0' }, { x: 3390, y: TOP - 44, c: '#ffd6a0' }, { x: 760, y: PLATEAU - 34, c: '#ffd27a' }, { x: 548, y: PLATEAU - 40, c: '#ffd27a' },
+      { x: 150, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 1290, y: PLATEAU - 44, c: '#ffd6a0' }, { x: 2072, y: ORCHARD - 44, c: '#ffd6a0' }, { x: 3110, y: TOP - 44, c: '#ffd6a0' },
+      { x: 990, y: PLATEAU - 34, c: '#ffd27a' }, { x: 760, y: PLATEAU - 40, c: '#ffd27a' }, { x: 300, y: PLATEAU - 40, c: '#ffd27a' },
     ],
-    npcs: [],
+    // The garden keeper, at her shop's counter (data/npcs.js kinako).
+    npcs: [{ id: 'kinako', x: 268 }],
+    // The race board is at Kinako's counter (her menu opens it: ui/npc.js).
+    raceBoard: 268,
     spawns: [],
     deco: [],
   };
@@ -120,6 +126,8 @@ export function refreshGarden(char, guest = null) {
   const { map, spots } = gardenMap(owner.garden ?? {});
   MAPS.garden = map;
   MAPS.garden_in = gardenInside();
+  // The nursery's trophy shelf: a cup for each course won, in its best rank's metal.
+  MAPS.garden_in.trophies = trophiesOf(owner);
   if (guest) {
     map.guestOf = guest;
     MAPS.garden_in.guestOf = guest;
@@ -132,6 +140,12 @@ export function refreshGarden(char, guest = null) {
 refreshGarden({});
 
 export const hasGarden = (char) => Boolean(char.garden);
+
+// Each race course and the best rank `char` has won it at (null if not yet), in the board's order.
+export function trophiesOf(char) {
+  const wins = char.raceWins ?? {};
+  return Object.keys(RACE_STAGES).map((id) => ({ id, rank: [...RANK_ORDER].reverse().find((r) => wins[`${id}|${r}`]) ?? null }));
+}
 
 // The first time you walk in: the garden is yours, with two eggs waiting by the gate and a Mochi
 // Bell to ring you back here from anywhere. Returns true if it was new.
