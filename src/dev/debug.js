@@ -10,6 +10,7 @@ import { loadMap } from '../world/world.js';
 import { groundAt } from '../world/physics.js';
 import { installKits, KIT_HELP } from './kits.js';
 import { installKits2, KIT2_HELP } from './kits2.js';
+import { installKits3, KIT3_HELP } from './kits3.js';
 
 const HELP = {
   // Looking
@@ -121,7 +122,7 @@ export function install(t) {
   }
 
   Object.assign(t, {
-    help: () => ({ ...HELP, ...KIT_HELP, ...KIT2_HELP }),
+    help: () => ({ ...HELP, ...KIT_HELP, ...KIT2_HELP, ...KIT3_HELP }),
     errorCount: () => errors.length,
     errors: () => (errors.length ? errors : 'No errors since load.'),
     log: (n = 30) => history.slice(-n),
@@ -383,6 +384,7 @@ export function install(t) {
   });
   installKits(t);
   installKits2(t);
+  installKits3(t);
 }
 
 function safe(v) {

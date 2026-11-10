@@ -436,6 +436,11 @@ function ghostOf(id) {
   return g;
 }
 
+// (The dev tools' online stress test feeds pretend players' messages in here: dev/kits3.js.)
+export function devReceive(msg) {
+  if (online.world) receive(online.world, msg);
+}
+
 function receive(world, msg) {
   if (!msg?.id || msg.id === online.id) return;
   switch (msg.t) {
