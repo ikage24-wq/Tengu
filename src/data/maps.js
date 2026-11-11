@@ -310,51 +310,75 @@ export const MAPS = {
   // and above it the Treetops, where the old Treants doze, with a log drifting between the boughs
   // and, on the highest one, the way on to the Whispering Glade. A bouncy mushroom on the floor
   // springs you up into the trees.
+  // Mossy Woods (remade 2026-11-12, the player's call: a wood built from giant trees, not floating
+  // islands). A solid mossy forest floor along the bottom (the way from the harbour to the grove),
+  // where three giant trees stand. Their branches step up round each trunk, a ladder up every trunk;
+  // level rope bridges join the three crowns, all at one height, into a walk across the canopy. Zones by height: the Forest Floor, the
+  // Branchways, the Canopy, with the stump house on the middle crown and the ways to the manor and
+  // the glade on the outer ones.
   woods: {
-    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 },
-    look: { sky: ['#8fd6a8', '#c6ecc9', '#f2f8d6'], far: '#7fc79a', mid: '#5aa878', islands: 'branch', edges: 'glowcaps' },
+    id: 'woods', name: 'Mossy Woods', theme: 'forest', town: 'harbor', world: { x: 254, y: 166 }, perSpawn: 1,
+    look: { sky: ['#6fc6f0', '#b6e6f0', '#eafbe4'], far: '#86cc9c', mid: '#58b474', midTrim: '#479a62', forestStyle: 'mossy', material: 'mossy', edges: 'mossy', islands: 'branch', props: ['tuft'], propKeep: 0.4, ledgeKeep: 0.3, critters: [], drift: null, noAmbient: true, spots: 'cute' },
     ...lay({
-      width: 2200, ground: 1000, by: 'y', quiet: [[40, 680, 160], [2140, 680, 160], [1250, 440, 220]],
+      width: 1800, ground: 1000, by: 'y', quiet: [[40, 1000, 160], [1760, 1000, 160]],
       zones: [
-        { name: 'Root Tunnels', color: '#8a6656', mobs: ['boarlet', 'leafling'], nodes: [SPOT.ore(2), SPOT.ore(2)],
-          look: underground({ material: 'tunnel', edges: null, sky: ['#2e3e36', '#46584a', '#62765e'], far: '#3a4c40', mid: '#4a5e4e', midTrim: '#6a8a6a' }) },
-        { name: 'Forest Floor', color: '#4f9e55', from: 760, mobs: ['leafling', 'boarlet'], nodes: [SPOT.herb(2, 'chanterelle'), SPOT.wood(2), SPOT.fiber(2)] },
-        { name: 'Treetops', color: '#3f9a7a', from: 640, mobs: ['mossgolem', 'leafling'], nodes: [SPOT.honey(2), SPOT.wood(2), SPOT.night(2)],
-          look: { sky: ['#a8e0c0', '#d8f2d8', '#fbfbe6'], far: '#9fd8b0', mid: '#7fc898' } },
+        { name: 'Forest Floor', color: '#4f9e55', mobs: ['boarlet', 'leafling'], look: { material: 'mossy', edges: 'mossy', props: ['tuft'] } },
+        { name: 'Branchways', color: '#8a6656', from: 900, mobs: ['leafling', 'boarlet'] },
+        { name: 'Canopy', color: '#3f9a7a', from: 540, mobs: ['mossgolem', 'leafling'], look: { edges: 'flowers' } },
       ],
+      // Each giant tree's branches step up round its trunk, 120px apart, each crossing the trunk
+      // (so the ladder up the trunk stops at every one); its crown platform on top.
       ledges: [
-        // The Forest Floor: a long walk with two holes fallen through to the tunnels.
-        { x: 0, y: 680, w: 600 }, { x: 700, y: 680, w: 700 }, { x: 1500, y: 680, w: 700 },
-        // Root shelves down in the tunnels.
-        { x: 150, y: 920, w: 300 }, { x: 900, y: 920, w: 400 }, { x: 1700, y: 920, w: 300 },
-        { x: 480, y: 840, w: 260 }, { x: 1280, y: 840, w: 300 },
-        // The Treetops, and the highest bough with the way to the glade.
-        { x: 200, y: 600, w: 300 }, { x: 900, y: 600, w: 400 }, { x: 1700, y: 600, w: 300 },
-        { x: 500, y: 520, w: 300 }, { x: 1300, y: 520, w: 300 },
-        { x: 850, y: 440, w: 500, thick: 44 },
-        // A twig off to the side of the highest bough, half hidden in the leaves, where the Ivy Gecko
-        // suns itself (the map's secret: a mount, data/mounts.js).
-        { x: 1450, y: 432, w: 76 },
-        // The log drifting between the boughs.
-        { x: 810, y: 520, w: 120, style: 'planks', drift: { dx: 360, period: 10 } },
+        // (`root`: the end that grows out of the trunk, tucked inside it, a twig on the other end.)
+        // The west tree (x 360).
+        { x: 342, y: 880, w: 268, root: 'left', noRope: true }, { x: 110, y: 760, w: 268, root: 'right', noRope: true }, { x: 342, y: 640, w: 268, root: 'left', noRope: true }, { x: 220, y: 520, w: 280, root: 'mid', noRope: true },
+        // The middle tree (x 900).
+        { x: 640, y: 840, w: 278, root: 'right', noRope: true }, { x: 882, y: 720, w: 298, root: 'left', noRope: true }, { x: 640, y: 600, w: 278, root: 'right', noRope: true }, { x: 720, y: 520, w: 360, root: 'mid', noRope: true },
+        // The east tree (x 1440).
+        { x: 1422, y: 880, w: 268, root: 'left', noRope: true }, { x: 1190, y: 760, w: 268, root: 'right', noRope: true }, { x: 1422, y: 640, w: 268, root: 'left', noRope: true }, { x: 1300, y: 520, w: 280, root: 'mid', noRope: true },
+        // Rope bridges joining the crowns, level with them, end to end (nothing grows on the planks).
+        { x: 500, y: 520, w: 220, style: 'bridge', noProps: true, noRope: true }, { x: 1080, y: 520, w: 220, style: 'bridge', noProps: true, noRope: true },
+        // A twig off the east crown, half hidden in the leaves, where the Ivy Gecko suns itself (the
+        // map's secret: a mount, data/mounts.js).
+        { x: 1580, y: 508, w: 70, noRope: true },
+      ],
+      // The ladders up the trunks, a stretch between each branch and the next.
+      ropes: [
+        ...[[880, 1000], [760, 880], [640, 760], [520, 640]].map(([top, bottom]) => ({ x: 360, top, bottom })),
+        ...[[840, 1000], [720, 840], [600, 720], [520, 600]].map(([top, bottom]) => ({ x: 900, top, bottom })),
+        ...[[880, 1000], [760, 880], [640, 760], [520, 640]].map(([top, bottom]) => ({ x: 1440, top, bottom })),
       ],
     }),
-    // A moving part per zone: glowing spores rising from the tunnels up through a hole (Up to ride
-    // them), a bouncy mushroom on the floor, and the drifting log in the treetops.
-    updrafts: [{ x: 650, w: 56, top: 650, bottom: 1000, kind: 'spores' }],
-    springs: [{ x: 1100, y: 680, up: 170, kind: 'shroom' }],
+    // Its monsters, placed by hand (one each), spread out, none near the ways in or out.
+    spawns: [
+      // The Forest Floor, between the trees.
+      { mob: 'boarlet', x: 620, y: 1000 }, { mob: 'leafling', x: 1180, y: 1000 },
+      // The Branchways.
+      { mob: 'leafling', x: 520, y: 880 }, { mob: 'boarlet', x: 200, y: 760 }, { mob: 'leafling', x: 1060, y: 720 }, { mob: 'leafling', x: 1280, y: 760 },
+      // The Canopy (and the Moss Golem that likes the east tree's top branch).
+      { mob: 'mossgolem', x: 800, y: 520 }, { mob: 'mossgolem', x: 1540, y: 640 },
+    ],
+    // Its gathering spots, placed by hand, clear of the trunks, the doors and the ladders.
+    nodes: [
+      { ...SPOT.ore(2), x: 230, y: 1000 }, { ...SPOT.wood(2), x: 500, y: 1000 }, { ...SPOT.herb(2, 'chanterelle'), x: 1300, y: 1000 },
+      { ...SPOT.fiber(2), x: 180, y: 760 }, { ...SPOT.honey(2), x: 760, y: 600 }, { ...SPOT.wood(2), x: 1650, y: 640 },
+      { ...SPOT.night(2), x: 420, y: 520 },
+    ],
+    // A bouncy mushroom on the floor springs you up onto the middle tree's first branch.
+    springs: [{ x: 760, y: 1000, up: 170, kind: 'shroom' }],
     portals: [
-      { id: 'west', x: 40, y: 680, to: 'harbor', toPortal: 'east' },
-      { id: 'east', x: 2140, y: 680, to: 'grove', toPortal: 'west' },
+      { id: 'west', x: 40, y: 1000, to: 'harbor', toPortal: 'east' },
+      { id: 'east', x: 1760, y: 1000, to: 'grove', toPortal: 'west' },
     ],
     npcs: [],
-    // A landmark per zone: the mushroom ring in the tunnels, the great trees and the hollow log on
-    // the floor, the stump house on the highest bough.
-    deco: [['mushring', 1100], ['bigtree', 380, 0, 680], ['hollowlog', 1000, 0, 680], ['giantshroom', 1900, 1, 680], ['stumphouse', 1050, 0, 440]],
-    lamps: [{ x: 1100, y: 970 }, { x: 1050, y: 400 }, { x: 650, y: 980 }],
-    spirit: { x: 1500, y: 400 },
-    finds: [{ x: 1488, y: 432, mount: 'gecko', say: 'It scurried up your arm and settled on your shoulder.' }],
-    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true, home: { x: 1100, y: 1000 } }, mossgolem: { naps: true } },
+    // The three giant trees (standing on the ground, behind their branches), the stump house on the
+    // middle crown, the hollow log on the floor. (No mushroom ring: its glowing pastel caps looked
+    // out of place on the forest floor, the player's call 2026-11-12.)
+    deco: [['woodtree', 360, 0], ['woodtree', 900, 1], ['woodtree', 1440, 2], ['hollowlog', 1620], ['stumphouse', 990, 0, 520]],
+    lamps: [{ x: 360, y: 470 }, { x: 900, y: 470 }, { x: 1440, y: 470 }],
+    spirit: { x: 620, y: 440 },
+    finds: [{ x: 1615, y: 508, mount: 'gecko', say: 'It scurried up your arm and settled on your shoulder.' }],
+    habitats: { leafling: { naps: true }, boarlet: { play: true, naps: true, home: { x: 1060, y: 1000 } }, mossgolem: { naps: true } },
   },
 
 
@@ -1170,7 +1194,7 @@ Object.assign(MAPS, {
 const MANOR_OUT = { skyline: 'manor', material: 'manorgarden', critters: ['firefly'], drift: 'mote', face: 'moon', light: 'dusk' };
 const MANOR_IN = { skyline: 'manorhall', material: 'manor', critters: [], drift: 'mote', face: null, light: 'cave', ceiling: 'manor' };
 
-MAPS.woods.portals.push({ id: 'manor', x: 910, y: 440, to: 'manor_gate', toPortal: 'south', label: 'Moonlit Manor' });
+MAPS.woods.portals.push({ id: 'manor', x: 250, y: 520, to: 'manor_gate', toPortal: 'south', label: 'Moonlit Manor' });
 
 Object.assign(MAPS, {
   // Manor Hill: the garden path up from the treetops of Mossy Woods to the manor's iron gates, where
@@ -2430,7 +2454,7 @@ MAPS.sky.portals.push({ id: 'theatre', x: 2800, y: 1040, to: 'theatre_row', toPo
 // `n` monsters evenly along a surface from x1 to x2 at height y, taking turns from `mobs`.
 const along = (y, x1, x2, n, ...mobs) => Array.from({ length: n }, (_, i) => ({ mob: mobs[i % mobs.length], x: Math.round(x1 + ((i + 0.5) / n) * (x2 - x1)), y }));
 
-MAPS.woods.portals.push({ id: 'glade', x: 1250, y: 440, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
+MAPS.woods.portals.push({ id: 'glade', x: 1540, y: 520, to: 'glade', toPortal: 'west', label: 'Whispering Glade' });
 // The way to the shrine leads off the collapsed halls.
 MAPS.ruins.portals.push({ id: 'shrine', x: 2380, y: 700, to: 'shrine', toPortal: 'west', label: 'Fox Shrine Path' });
 // The tunnel to the springs leaves from the cave's east rim.
@@ -2866,7 +2890,7 @@ MAPS.starfall.spawns.push({ mob: 'selene', x: 1300, y: 1040, respawn: 600 });
 // from the way you came in from town. Step up to it and it carries you straight back to town (one
 // way), so a long map never means a long walk back.
 const HOMESTONES = {
-  meadow1: [1555, 400], meadow2: [200, 700], woods: [1950, 920], ruins: [2220, 900], cave: [2380, 520],
+  meadow1: [1555, 400], meadow2: [200, 700], woods: [1650, 880], ruins: [2220, 900], cave: [2380, 520],
   sky: [2460, 400], canyon: [410, 520], glade: [2140, 560], shrine: [2164, 560], ridge: [2200, 400],
   springs: [1992, 640], peak: [2040, 880], starfall: [2290, 440],
 };

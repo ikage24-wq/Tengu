@@ -420,8 +420,9 @@ function vent(ctx, x, y, time, since) {
   ctx.restore();
 }
 
-// A bouncy mushroom: a fat red cap with cream spots on a stubby stem, swaying a little; stepped
-// on, the cap squashes down, springs up past its rest and wobbles back, spores puffing off it.
+// A bouncy mushroom: a plump red cap with cream spots on a chubby stem with a face; stepped on,
+// it dips, springs up past its rest and wobbles back (lifted and tilted, never squashed), spores
+// puffing off it.
 // A giant clam on your island's beach: it breathes slowly, its lid ajar; stepped on, it snaps
 // down, flings itself open and settles back, a pearl winking inside and droplets flying.
 function clam(ctx, x, y, time, since, wx) {
@@ -475,43 +476,122 @@ function clam(ctx, x, y, time, since, wx) {
 }
 
 function shroom(ctx, x, y, time, since, wx) {
+  // (Remade 2026-11-12, Mossy Woods' pass, like the hay bale: a plump cute mushroom with a face that
+  // dips and springs back, lifted and tilted only, never squashed.)
   const k = since < 0.9 ? since : 9;
-  const s = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
-  const sway = Math.sin(time * 1.5 + wx) * 0.8;
+  const fling = k < 0.08 ? -k / 0.08 : k < 9 ? Math.exp(-(k - 0.08) * 6) * Math.cos((k - 0.08) * 22) : 0;
+  const lift = Math.max(-2.5, fling * 4);
+  const tilt = Math.sin(time * 1.2 + wx) * 0.025 + (k < 9 ? fling * 0.05 : 0);
   ctx.save();
-  ctx.fillStyle = '#fff2e0';
-  ctx.strokeStyle = shade('#fff2e0', -40);
-  ctx.lineWidth = 1;
+  // Its shadow on the ground.
+  ctx.fillStyle = 'rgba(70,50,40,0.16)';
   ctx.beginPath();
-  ctx.roundRect(x - 4, y - 9, 8, 9, 3);
+  ctx.ellipse(x, y + 0.5, 15, 2.8, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.stroke();
-  const cy = y - 9 - s * 3;
-  const rx = 14 - s * 2;
-  const ry = 7 + s * 2;
-  ctx.fillStyle = '#ff6a6a';
-  ctx.strokeStyle = shade('#ff6a6a', -45);
+  ctx.translate(x, y - lift);
+  ctx.rotate(tilt);
+  ctx.lineJoin = 'round';
+  // The stem: chubby, cream, a little skirt round it under the cap.
+  ctx.fillStyle = '#fff4e4';
+  ctx.strokeStyle = '#c8a888';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.ellipse(x + sway, cy, rx, ry, 0, Math.PI, 0);
+  ctx.moveTo(-6.5, 0);
+  ctx.quadraticCurveTo(-7.5, -6, -5.5, -12);
+  ctx.lineTo(5.5, -12);
+  ctx.quadraticCurveTo(7.5, -6, 6.5, 0);
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  ctx.fillStyle = '#fff2e0';
-  for (const [dx, dy, r] of [[-7, -2.4, 2], [0, -5, 2.4], [7, -2.6, 1.8], [-2, -1.4, 1.2]]) {
+  ctx.fillStyle = 'rgba(232,206,180,0.7)';
+  ctx.fillRect(2.5, -11, 2.4, 10);
+  ctx.fillStyle = '#ffeedd';
+  ctx.beginPath();
+  ctx.ellipse(0, -11.5, 7.5, 2.2, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.stroke();
+  // The cap: a plump dome, a soft shine, cream spots, the gills peeking under its rim.
+  ctx.fillStyle = '#f6dcc4';
+  ctx.beginPath();
+  ctx.ellipse(0, -13, 14, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const g = ctx.createLinearGradient(0, -30, 0, -13);
+  g.addColorStop(0, '#ff8a86');
+  g.addColorStop(1, '#e8545c');
+  ctx.fillStyle = g;
+  ctx.strokeStyle = '#a83a46';
+  ctx.beginPath();
+  ctx.moveTo(-16, -13);
+  ctx.bezierCurveTo(-16, -27, 16, -27, 16, -13);
+  ctx.quadraticCurveTo(0, -10.5, -16, -13);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
+  ctx.beginPath();
+  ctx.ellipse(-6, -22, 5, 2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff4e4';
+  for (const [dx, dy, r] of [[-9, -17, 2.2], [1, -22.5, 2.6], [9, -18, 2], [3, -16, 1.3], [-3.5, -19.5, 1.1]]) {
     ctx.beginPath();
-    ctx.ellipse(x + sway + dx, cy + dy * (ry / 7), r, r * 0.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(dx, dy, r, r * 0.85, 0, 0, Math.PI * 2);
     ctx.fill();
   }
-  if (since < 0.9) {
-    ctx.fillStyle = '#c8ffd0';
-    for (let i = 0; i < 6; i++) {
-      ctx.globalAlpha = 1 - since / 0.9;
-      ctx.beginPath();
-      ctx.arc(x + (i - 2.5) * 5 + Math.sin(i * 3) * 4 * since, cy - 8 - since * 30 - i % 2 * 4, 1.6, 0, Math.PI * 2);
+  // The face on the stem: dips squeeze its eyes shut, flings make it grin, else it smiles and blinks.
+  const dip = k < 0.1;
+  const glee = !dip && k < 0.9;
+  const blink = ((time * 0.3 + Math.abs(Math.sin(wx * 7.3)) * 5) % 1) < 0.04;
+  const cy = -6;
+  ctx.strokeStyle = '#3a2d4f';
+  ctx.fillStyle = '#3a2d4f';
+  ctx.lineWidth = 1.1;
+  ctx.lineCap = 'round';
+  for (const sd of [-1, 1]) {
+    const ex = sd * 2.6;
+    ctx.beginPath();
+    if (dip) {
+      ctx.moveTo(ex - sd * 1, cy - 1);
+      ctx.lineTo(ex + sd * 0.5, cy);
+      ctx.lineTo(ex - sd * 1, cy + 1);
+      ctx.stroke();
+    } else if (glee || blink) {
+      ctx.arc(ex, cy + 0.6, 1.1, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    } else {
+      ctx.ellipse(ex, cy, 0.9, 1.2, 0, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(ex - 0.6, cy - 0.9, 0.6, 0.6);
+      ctx.fillStyle = '#3a2d4f';
     }
   }
+  ctx.fillStyle = 'rgba(255,140,170,0.55)';
+  for (const sd of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(sd * 4.4, cy + 2.2, 1.4, 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.beginPath();
+  if (glee) {
+    ctx.fillStyle = '#c84a60';
+    ctx.ellipse(0, cy + 2.6, 1.4, 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    ctx.arc(0, cy + 1.6, 1.1, Math.PI * 0.15, Math.PI * 0.85);
+    ctx.stroke();
+  }
   ctx.restore();
+  // A puff of spores off the cap when it flings you.
+  if (since < 0.9) {
+    ctx.fillStyle = '#e6ffd8';
+    for (let i = 0; i < 6; i++) {
+      ctx.globalAlpha = (1 - since / 0.9) * 0.9;
+      ctx.beginPath();
+      ctx.arc(x + (i - 2.5) * 5 + Math.sin(i * 3) * 4 * since, y - 26 - since * 30 - (i % 2) * 4, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 
 // An updraft: motes rising in a slow spiral, with a faint column of light. Pollen is warm gold

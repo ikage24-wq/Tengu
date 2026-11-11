@@ -978,6 +978,39 @@ function cuteStrawArt(stage, blink) {
   });
 }
 
+// Chanterelles (Mossy Woods, 2026-11-11): a little cluster of golden trumpet mushrooms on a mossy
+// mound, frilly caps with soft ridges underneath, the biggest with a sleepy smile. Picked: just
+// the moss and a stub; growing back: small pale buttons, then golden caps.
+function cuteChanterelleArt(stage, blink) {
+  return art(`spot|cute|chant|${stage}|${blink ? 1 : 0}`, 36, 30, () => {
+    const cx = 18;
+    const gy = 29;
+    const g = ramp('#7fd07a');
+    const out = [...mound(cx, gy, 12)];
+    out.push(E(cx - 7, gy - 3, 5, 3.4, g.sh), E(cx + 7, gy - 3, 5, 3.4, g.sh), F(E(cx - 3, gy - 4, 2.6, 1.2, g.hi)));
+    if (stage === 0) {
+      out.push(E(cx + 1, gy - 2.4, 1.6, 1.2, '#e8b860'));
+      return out;
+    }
+    const gold = ramp(stage === 1 ? '#f2e2b0' : '#f6b84a');
+    const k = stage === 1 ? 0.55 : stage === 2 ? 0.8 : 1;
+    for (const [dx, sz, face] of [[-7, 0.8, false], [7, 0.85, false], [0, 1.1, true]]) {
+      const x = cx + dx * (0.8 + 0.2 * k);
+      const h = 9 * sz * k;
+      const w = 5.2 * sz * k;
+      const y = gy - 2;
+      // The stem flaring up into the cap, ridges under the cap's rim.
+      out.push(T([[x - 1.2 * sz, y], [x + 1.2 * sz, y], [x + w * 0.55, y - h * 0.8], [x - w * 0.55, y - h * 0.8]], gold.sh));
+      out.push(E(x, y - h * 0.82, w, w * 0.42, gold.base));
+      out.push(T([[x - w, y - h * 0.85], [x - w * 0.6, y - h * 1.02], [x, y - h * 0.94], [x + w * 0.6, y - h * 1.04], [x + w, y - h * 0.86], [x + w * 0.9, y - h * 0.74], [x - w * 0.9, y - h * 0.74]], gold.base));
+      for (const fx of [-0.5, 0, 0.5]) out.push(F(T([[x + fx * w - 0.25, y - h * 0.74], [x + fx * w + 0.25, y - h * 0.74], [x + fx * w * 0.4, y - h * 0.4]], gold.sh)));
+      out.push(F(E(x - w * 0.35, y - h * 0.92, w * 0.3, w * 0.12, gold.hi)));
+      if (face && stage === 3) out.push(...cuteFace(x, y - h * 0.5, 1.1, blink ? 'shut' : 'happy', 0.9));
+    }
+    return out;
+  });
+}
+
 // The cotton plant: a few slim stems with leaves, three fluffy bolls on top, the biggest with a
 // sleepy smile. Picked: bare stems; growing back: green buds, then opening bolls.
 function cuteCottonArt(stage, blink) {
@@ -1015,7 +1048,9 @@ const CUTE = {
   herb(ctx, x, y, s) {
     const [dy, tilt] = s.ready ? hopOf(s.time, s.wx, 3.2, 3.2) : [0, 0];
     const a = 0.04 * lean(s.time, s.wx) + 0.03 * s.jolt + tilt;
-    hopped(ctx, x, y, dy, a, () => staged(ctx, s.g, (st, al) => placeA(ctx, cuteCloverArt(st, s.blink), x, y + 1, al)));
+    // (Mossy Woods' chanterelles have their own little cluster.)
+    const pic = s.find === 'chanterelle' ? cuteChanterelleArt : cuteCloverArt;
+    hopped(ctx, x, y, dy, a, () => staged(ctx, s.g, (st, al) => placeA(ctx, pic(st, s.blink), x, y + 1, al)));
     if (s.ready) twinkle(ctx, x + 4, y - 32 + dy, s.time, s.wx, '#fff6c8');
   },
   moonpetal(ctx, x, y, s) {

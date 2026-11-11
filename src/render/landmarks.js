@@ -3122,7 +3122,111 @@ function snowmanArt(blink) {
 
 // ---------- Drawing ----------
 
+// ---------- Mossy Woods' giant trees (its remake, 2026-11-12) ----------
+
+// A giant tree the woods are built on: a thick trunk on flaring roots, bark grooves with a sunny
+// side and a shady side, moss creeping up from the roots, a couple of shelf fungi, a sleepy face in
+// the bark (the big round leafy crown at its top is its own picture: woodCrownArt). Its branches are the map's
+// ledges (drawn in front of it); a ladder runs up the trunk. `rise`: how high the crown platform
+// stands above the ground.
+const WT = { bark: '#9c6a46', lit: '#bd8758', dark: '#77503a', groove: '#5e3c28', moss: '#5fb862', mossLit: '#93d884', leaf: '#56b468', leafSh: '#3a8f52', leafDeep: '#2f7a48', leafLit: '#8ad67e', leafHi: '#d4f7b8' };
+function woodTreeArt(rise, seed) {
+  const w = 300;
+  const h = rise + 150;
+  return art(`woodtree|${rise}|${seed}`, w, h, () => {
+    const out = [];
+    const cx = 150;
+    const gy = h;
+    const top = h - rise;
+    const r = (k) => hash01(seed * 13 + k);
+    // The roots, flaring into the ground.
+    out.push(T([[cx - 64, gy], [cx - 40, gy - 20], [cx - 30, gy - 64], [cx + 30, gy - 64], [cx + 40, gy - 20], [cx + 66, gy], [cx + 36, gy - 5], [cx + 12, gy - 1], [cx - 10, gy - 6], [cx - 38, gy - 2]], WT.bark));
+    out.push(F(T([[cx - 64, gy], [cx - 40, gy - 20], [cx - 30, gy - 60], [cx - 22, gy - 60], [cx - 30, gy - 18], [cx - 50, gy - 2]], WT.lit)));
+    // The trunk, tapering up into the crown.
+    const mid = (gy + top) / 2;
+    out.push(T([[cx - 32, gy - 40], [cx - 30, mid], [cx - 25, top - 50], [cx + 25, top - 50], [cx + 30, mid], [cx + 32, gy - 40]], WT.bark));
+    out.push(F(T([[cx - 32, gy - 40], [cx - 30, mid], [cx - 25, top - 50], [cx - 13, top - 50], [cx - 17, mid], [cx - 19, gy - 40]], WT.lit)));
+    out.push(F(T([[cx + 32, gy - 40], [cx + 30, mid], [cx + 25, top - 50], [cx + 15, top - 50], [cx + 19, mid], [cx + 21, gy - 40]], WT.dark)));
+    // Bark grooves: long soft waves running up the trunk.
+    for (const [dx, y0, y1] of [[-11, gy - 30, top - 20], [1, gy - 60, mid + 40], [12, gy - 40, top + 30], [-3, mid - 20, top - 30], [20, mid + 30, mid - 120]]) {
+      const pts = [];
+      for (let k = 0; k <= 10; k++) {
+        const y = y0 + ((y1 - y0) * k) / 10;
+        pts.push([cx + dx + Math.sin(k * 1.3 + seed) * 1.4, y]);
+      }
+      out.push(F(band(pts, () => 0.7, WT.groove)));
+    }
+    // Moss creeping up from the roots, more on the shady side's edge and up the sunny side.
+    for (const [dx, dy, rx, ry] of [[-30, -26, 18, 12], [-8, -14, 22, 10], [24, -22, 16, 11], [44, -8, 14, 7], [-46, -8, 14, 7], [-26, -64, 10, 14], [-27, -98, 8, 12], [-26, -128, 6, 9]]) {
+      out.push(E(cx + dx, gy + dy, rx, ry, WT.moss));
+      out.push(F(E(cx + dx - rx * 0.2, gy + dy - ry * 0.45, rx * 0.6, ry * 0.35, WT.mossLit)));
+    }
+    // Shelf fungi on the shady side.
+    // (Their inner half sunk into the bark at the trunk's edge, so they grow out of it.)
+    for (const [fy, fw] of [[gy - rise * 0.32, 10], [gy - rise * 0.32 - 11, 7]]) {
+      out.push(E(cx + 27, fy, fw, fw * 0.36, '#f4d29a'), F(E(cx + 27, fy + fw * 0.12, fw * 0.9, fw * 0.16, '#d8a868')));
+    }
+    // A sleepy face in the bark, now and then smiling in its sleep.
+    out.push(...face(cx - 2, gy - rise * (0.5 + r(1) * 0.1), 5.5, 'shut', 'smile', 2.4));
+    return out;
+  });
+}
+// The crown: a big round cloud of leaf clumps, its own picture so it can sway. Each clump is drawn
+// whole (shade, leaf, the shadow under it, its light) from the back ones to the front ones, so a
+// front clump covers the ones behind cleanly; a few little pink blossoms dotted over it. Box
+// 340 x 220, the crown's middle at (170, 132): wide enough that no clump is cut at the edges.
+function woodCrownArt(seed) {
+  return art(`woodcrown|${seed}`, 340, 220, () => {
+    const out = [];
+    const cx = 170;
+    const cy = 132;
+    const r = (k) => hash01(seed * 13 + k);
+    const clumps = [[-104, 18, 40], [104, 16, 42], [-70, -26, 48], [70, -28, 50], [0, -52, 58], [-38, 22, 44], [40, 24, 44], [0, 6, 52], [-122, -10, 30], [124, -12, 30]];
+    // (The back first: the higher clumps and the outer ones, then down and in to the front.)
+    const order = [...clumps].sort((a, b) => a[1] - b[1] || Math.abs(b[0]) - Math.abs(a[0]));
+    for (const [dx, dy, rr] of order) {
+      const x = cx + dx;
+      const y = cy + dy;
+      out.push(E(x, y, rr, rr * 0.86, WT.leafSh));
+      out.push(E(x - rr * 0.08, y - rr * 0.12, rr * 0.9, rr * 0.76, WT.leaf));
+      out.push(F(arc(x - rr * 0.08, y - rr * 0.12, rr * 0.9, rr * 0.76, 25, 155, rr * 0.18, WT.leafSh)));
+      out.push(F(E(x - rr * 0.3, y - rr * 0.42, rr * 0.42, rr * 0.22, WT.leafLit)));
+      out.push(F(E(x - rr * 0.38, y - rr * 0.5, rr * 0.14, rr * 0.08, WT.leafHi)));
+    }
+    for (let k = 0; k < 9; k++) {
+      const bx = cx + (r(20 + k) - 0.5) * 220;
+      const by = cy - 50 + r(40 + k) * 80;
+      out.push(F(E(bx, by, 2.2, 2, k % 3 ? '#ffc4d6' : '#ffffff')), F(E(bx, by, 0.8, 0.8, '#ffe68a')));
+    }
+    return out;
+  });
+}
+// A giant tree drawn: the trunk still, the crown swaying gently from the top of the trunk (a
+// fraction of a degree and a hair side to side, each tree on its own slow beat), drawn smoothly so
+// it never steps a pixel at a time.
+function drawWoodTree(ctx, x, y, time, seed) {
+  const rise = 480;
+  place(ctx, woodTreeArt(rise, seed), x, y);
+  const c = woodCrownArt(seed);
+  const top = y - rise;
+  const a = Math.sin(time * 0.42 + seed * 1.7) * 0.007 + Math.sin(time * 0.93 + seed) * 0.002;
+  const dx = Math.sin(time * 0.6 + seed * 2.3) * 0.8;
+  const breath = (Math.sin(time * 0.5 + seed) + 1) * 0.3;
+  ctx.save();
+  ctx.translate(x + dx, top + 20);
+  ctx.rotate(a);
+  blit(ctx, c, -170, -20 - 34 - 132 - breath, { soft: true });
+  ctx.restore();
+}
+const hash01 = (n) => {
+  const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 const KINDS = {
+  // (Mossy Woods' giant trees: all three crowns at one height, 480 up, so the bridges run level;
+  // the seed varies each tree's face and blossoms.)
+  woodtree: { w: 300, h: 640, draw: (ctx, x, y, time, seed) => drawWoodTree(ctx, x, y, time, seed) },
   torii: { w: 132, h: 118, draw: (ctx, x, y) => place(ctx, toriiArt(), x, y) },
   foxstatue: { w: 50, h: 74, draw: (ctx, x, y, time, seed) => place(ctx, foxstatueArt(variant(seed, 2)), x, y, { flip: variant(seed, 2) === 1 }) },
   hokora: {

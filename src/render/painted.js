@@ -170,6 +170,7 @@ function planeColors(t, base, air, k) {
 }
 
 export function drawPaintedForest(ctx, t, cam, width, height, time, layerY, air) {
+  if (t.forestStyle === 'mossy') return drawPaintedMossy(ctx, t, cam, width, height, time, layerY, air);
   // 1. The far tree line: a wall of soft round crowns deep in the mist.
   const farY = layerY(70, 0.04);
   const cf = planeColors(t, t.far, air, 0.58);
@@ -267,6 +268,176 @@ export function drawPaintedForest(ctx, t, cam, width, height, time, layerY, air)
   }
 }
 
+// Mossy Woods' own backdrop (redrawn 2026-11-12, the player's call: the round trees on hills read
+// as a meadow). A wood of giant trees, like the ones you climb, seen deep into the mist: a warm
+// glow far in among them; three rows of giant trunks behind the play, each mistier and bluer than
+// the one before, a soft fog lying at each row's foot; a continuous leafy roof across the top with
+// a scalloped, sun-rimmed underside and a few vines hanging from it; a few soft sunbeams falling
+// through its gaps; near, dark ferns and grass along the bottom, framing it, swaying a little.
+// Few, big shapes and clear planes, so the play reads in front of it.
+function mossyTrunk(ctx, x, base, top, w, body, lit, seed) {
+  // A giant trunk: tapering up, flaring into roots at its foot, lit down one side.
+  const lean = (hash(seed + 3) - 0.5) * 4;
+  ctx.fillStyle = body;
+  ctx.beginPath();
+  ctx.moveTo(x - w * 1.25, base + 2);
+  ctx.quadraticCurveTo(x - w * 0.62, base - w * 0.35, x - w * 0.5, base - w * 1.2);
+  ctx.lineTo(x - w * 0.4 + lean, top);
+  ctx.lineTo(x + w * 0.4 + lean, top);
+  ctx.lineTo(x + w * 0.5, base - w * 1.2);
+  ctx.quadraticCurveTo(x + w * 0.62, base - w * 0.35, x + w * 1.25, base + 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = lit;
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.5, base - w * 1.2);
+  ctx.lineTo(x - w * 0.4 + lean, top);
+  ctx.lineTo(x - w * 0.18 + lean, top);
+  ctx.lineTo(x - w * 0.26, base - w * 1.2);
+  ctx.closePath();
+  ctx.fill();
+}
+function fogBand(ctx, width, y, h, c, k) {
+  const g = ctx.createLinearGradient(0, y - h, 0, y + h * 0.4);
+  g.addColorStop(0, hexA(c, 0));
+  g.addColorStop(0.75, hexA(c, k));
+  g.addColorStop(1, hexA(c, k));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, y - h, width, h * 1.4 + 400);
+}
+function drawPaintedMossy(ctx, t, cam, width, height, time, layerY, air) {
+  const sun = t.sun ?? '#fff6dc';
+  const rowY = [layerY(84, 0.03), layerY(52, 0.06), layerY(22, 0.1)];
+  // 1. A warm glow far in among the trees.
+  {
+    const gx = width * 0.55 - ((cam.x * 0.02) % width) * 0.2;
+    const gy = rowY[0] - 70;
+    const g = ctx.createRadialGradient(gx, gy, 10, gx, gy, Math.max(width, height) * 0.7);
+    g.addColorStop(0, hexA(sun, 0.55));
+    g.addColorStop(0.35, hexA(sun, 0.18));
+    g.addColorStop(1, hexA(sun, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  }
+  // 2. Three rows of giant trunks, far to near, each mistier the further it stands.
+  const rows = [
+    { f: 0.05, gap: 120, w: [9, 14], c: '#8cc4c0', a: 0.62 },
+    { f: 0.12, gap: 190, w: [14, 20], c: '#76b4a6', a: 0.42 },
+    { f: 0.2, gap: 280, w: [20, 28], c: '#5e9e88', a: 0.24 },
+  ];
+  rows.forEach((r, ri) => {
+    const base = rowY[ri];
+    const body = mix(r.c, air, r.a);
+    const lit = mix(body, sun, 0.28);
+    repeat(cam.x, r.f, r.gap, width, (i, x) => {
+      if (hash(i * 3.1 + ri * 17) < 0.12) return;
+      const xx = x + hash(i + ri * 31) * r.gap * 0.5;
+      const w = r.w[0] + hash(i * 7 + ri) * (r.w[1] - r.w[0]);
+      mossyTrunk(ctx, xx, base, -40, w, body, lit, i + ri * 100);
+    });
+    // The soft ground this row stands on, and the fog lying at its foot.
+    ctx.fillStyle = mix(mix(r.c, '#6aa878', 0.4), air, r.a);
+    ctx.beginPath();
+    ctx.moveTo(-4, base + 400);
+    for (let sx = -4; sx <= width + 8; sx += 8) {
+      const k = sx + cam.x * r.f;
+      ctx.lineTo(sx, base - 3 - 4 * Math.sin(k * 0.011 + ri * 2) - 2 * Math.sin(k * 0.027 + ri));
+    }
+    ctx.lineTo(width + 8, base + 400);
+    ctx.closePath();
+    ctx.fill();
+    fogBand(ctx, width, base, 46 - ri * 8, air, 0.5 - ri * 0.12);
+  });
+  // 3. A few soft sunbeams falling through gaps in the leaves.
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  repeat(cam.x, 0.22, 360, width, (i, x) => {
+    if (hash(i + 21) < 0.45) return;
+    const w = 30 + hash(i + 22) * 26;
+    const a = (0.05 + 0.02 * Math.sin(time * 0.35 + i * 2.1)) * (0.7 + 0.5 * hash(i + 23));
+    const x0 = x + hash(i + 24) * 160;
+    const g = ctx.createLinearGradient(0, 0, 0, height);
+    g.addColorStop(0, hexA(sun, a * 1.3));
+    g.addColorStop(0.8, hexA(sun, a * 0.35));
+    g.addColorStop(1, hexA(sun, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x0, -10);
+    ctx.lineTo(x0 + w, -10);
+    ctx.lineTo(x0 + w * 1.5 - 120, height);
+    ctx.lineTo(x0 - 120, height);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+  // 4. The leafy roof across the top: one mass with a scalloped underside lit by the sun, a few
+  // vines hanging from it.
+  const roofY = 34 - cam.y * 0.05 + 30;
+  if (roofY > -60) {
+    const leaf = mix('#4f9c6c', air, 0.2);
+    const rim = mix(leaf, sun, 0.35);
+    const edgeAt = (sx) => {
+      const k = sx + cam.x * 0.26;
+      const u = ((k % 64) + 64) % 64;
+      return roofY + Math.sin((u / 64) * Math.PI) * 16 + Math.sin(k * 0.013) * 10;
+    };
+    for (const [c, dy] of [[rim, 3], [leaf, 0]]) {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(-4, -60);
+      for (let sx = -4; sx <= width + 6; sx += 3) ctx.lineTo(sx, edgeAt(sx) + dy);
+      ctx.lineTo(width + 6, -60);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Leaf texture up in the roof: a few lighter clusters.
+    ctx.fillStyle = mix(leaf, sun, 0.15);
+    repeat(cam.x, 0.26, 52, width, (i, x) => {
+      const yy = roofY - 22 - hash(i + 5) * 26;
+      ctx.beginPath();
+      ctx.ellipse(x + hash(i) * 20, yy, 14 + hash(i + 2) * 8, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    const cv = planeColors(t, leaf, air, 0);
+    repeat(cam.x, 0.26, 150, width, (i, x) => {
+      if (hash(i + 44) < 0.4) return;
+      const vx = x + hash(i + 45) * 60;
+      vine(ctx, vx, edgeAt(vx) - 2, 24 + hash(i + 46) * 40, cv, time, i + 500);
+    });
+  }
+  // 5. Near: dark ferns and grass along the bottom, swaying a little.
+  const nearY = layerY(-4, 0.14);
+  const fern = mix('#3f7f58', air, 0.08);
+  ctx.strokeStyle = fern;
+  ctx.fillStyle = fern;
+  ctx.lineCap = 'round';
+  repeat(cam.x, 0.36, 46, width, (i, x) => {
+    const fx = x + hash(i + 90) * 30;
+    const sw = Math.sin(time * 0.9 + fx * 0.03) * 1.4;
+    const h = 14 + hash(i + 91) * 14;
+    if (hash(i + 92) > 0.45) {
+      // A fern: fronds fanning out and arching over.
+      ctx.lineWidth = 1.6;
+      for (const d of [-1, -0.45, 0.45, 1]) {
+        ctx.beginPath();
+        ctx.moveTo(fx, nearY);
+        ctx.quadraticCurveTo(fx + d * h * 0.5 + sw, nearY - h, fx + d * h * 0.9 + sw, nearY - h * 0.55);
+        ctx.stroke();
+      }
+    } else {
+      // A tuft of grass.
+      ctx.lineWidth = 1.2;
+      for (const d of [-3, -1, 1, 3]) {
+        ctx.beginPath();
+        ctx.moveTo(fx + d, nearY);
+        ctx.lineTo(fx + d * 1.8 + sw, nearY - h * 0.6 - Math.abs(d));
+        ctx.stroke();
+      }
+    }
+  });
+  ctx.fillRect(0, nearY - 1, width, height);
+}
+
 // Soft-focus sprites. The front layers' out-of-focus shapes are blurred once into small offscreen
 // canvases (per shape and drawing scale) and drawn from there every frame, moved and leaned for
 // their sway, instead of re-blurring each fill each frame (a canvas blur costs ~10 ms a fill
@@ -323,6 +494,9 @@ function softClump(ctx, x, y, r, c, seed, sway, blur, alpha, width, height) {
 // Out-of-focus leaves drifting past in front of the player at the top corners and along the
 // bottom, darker and cooler than the play space, swaying.
 export function drawPaintedForestFront(ctx, t, cam, width, height, time) {
+  // (Mossy Woods keeps its view clear: no blurred leaves across the front, the player's taste for
+  // one calm backdrop, 2026-11-11.)
+  if (t.forestStyle === 'mossy') return;
   const base = mix(shade(t.mid, -22), '#2a3a4a', 0.35);
   const c = { base, lit: mix(base, t.sun ?? '#fff6dc', 0.12), glint: mix(base, '#ffffff', 0.12), shadow: shade(base, -8) };
   ctx.save();
@@ -474,14 +648,93 @@ function songbird(ctx, x, y, dir, beat, c) {
   ctx.restore();
 }
 
+// Mossy Woods' own ambience (2026-11-12, remade at the player's ask: calm, few, tied to its giant
+// trees; no animals). By day, now and then a single leaf comes off a tree's crown and drifts down,
+// fluttering and turning slowly, and fades before it lands (a couple across the map at a time); a
+// few tiny golden specks of light float lazily in each crown. At night the specks give way to a few
+// soft fireflies drifting round each trunk, glowing and fading. All of it from the clock and each
+// one's own seed, so nothing moves in step.
+export function drawMossyAmbience(ctx, map, cam, width, height, time) {
+  const night = Math.min(1, Math.max(0, map.night ?? 0));
+  const ground = map.groundY ?? 1000;
+  const trees = (map.deco ?? []).filter(([kind]) => kind === 'woodtree');
+  trees.forEach(([, tx], ti) => {
+    const rise = 480;
+    const crownY = ground - rise - 34;
+    const sx0 = tx - cam.x;
+    if (sx0 < -260 || sx0 > width + 260) return;
+    // Falling leaves: two per tree, each on its own long cycle, out of sight most of it.
+    for (let k = 0; k < 2; k++) {
+      const id = ti * 7 + k;
+      const T = 11 + hash(id + 1) * 6;
+      const u = ((time / T + hash(id + 2)) % 1 + 1) % 1;
+      if (u > 0.55) continue;
+      const v = u / 0.55;
+      const fall = v * 260;
+      const x = tx + (hash(id + 3) - 0.5) * 200 + Math.sin(v * Math.PI * 2.2 + id) * 12 + v * 18 - cam.x;
+      const y = crownY + 20 + fall - cam.y;
+      const fade = Math.min(1, v / 0.12) * Math.min(1, (1 - v) / 0.25);
+      ctx.save();
+      ctx.globalAlpha *= fade * (1 - night * 0.5);
+      leafShape(ctx, x, y, 1.15, v * 7 + id, Math.sin(v * 6 + id) * 0.7, k ? '#8fd678' : '#c4e88a', '#6cb860');
+      ctx.restore();
+    }
+    // Specks of light in the crown by day, fireflies round the trunk by night.
+    for (let k = 0; k < 4; k++) {
+      const id = ti * 13 + k + 50;
+      const ax = tx + (hash(id) - 0.5) * 180;
+      const ay = crownY - 30 + hash(id + 1) * 70;
+      const day = 1 - night;
+      if (day > 0.05) {
+        const x = ax + Math.sin(time * 0.35 + id) * 10 - cam.x;
+        const y = ay + Math.sin(time * 0.27 + id * 1.7) * 7 - cam.y;
+        ctx.fillStyle = hexA('#fff6c4', day * (0.35 + 0.35 * Math.sin(time * 0.9 + id * 2.3)));
+        ctx.fillRect(x - 0.6, y - 0.6, 1.2, 1.2);
+      }
+    }
+  });
+  // (The fireflies' glow is the night's light, scene.js: here just their bright little cores.)
+  for (const f of mossyFireflies(map, cam, width, time)) {
+    ctx.fillStyle = hexA('#fbffe0', f.glow);
+    ctx.fillRect(f.x - 0.8, f.y - 0.8, 1.6, 1.6);
+  }
+}
+
+// Mossy Woods' fireflies at night (on screen): a few drifting round each giant tree's trunk, each
+// glowing and fading on its own slow beat.
+export function mossyFireflies(map, cam, width, time) {
+  const night = Math.min(1, Math.max(0, map.night ?? 0));
+  if (night < 0.05) return [];
+  const ground = map.groundY ?? 1000;
+  const out = [];
+  (map.deco ?? []).filter(([kind]) => kind === 'woodtree').forEach(([, tx], ti) => {
+    if (tx - cam.x < -260 || tx - cam.x > width + 260) return;
+    const rise = 480;
+    for (let k = 0; k < 4; k++) {
+      const id = ti * 13 + k + 50;
+      const glow = night * Math.max(0, Math.sin(time * 0.8 + id * 2.1)) ** 2;
+      if (glow < 0.02) continue;
+      out.push({
+        x: tx + (hash(id + 5) - 0.5) * 220 + Math.sin(time * 0.4 + id) * 26 - cam.x,
+        y: ground - 80 - hash(id + 6) * (rise - 120) + Math.sin(time * 0.31 + id * 1.3) * 18 - cam.y,
+        glow,
+      });
+    }
+  });
+  return out;
+}
+
 // Squirrels living on the woods' branches: each scampers along its branch, stops, sits up to
 // nibble with a flick of the tail, then runs on, turning at the ends. Songbirds flit across
 // between the trees in bounding flight (a few beats, then a glide). Each critter's timing comes
 // from its own index, so they never move in step.
 export function drawWoodlandLife(ctx, map, cam, width, height, time) {
+  // (Mossy Woods keeps its animals few, the player's call 2026-11-11: a squirrel on about one
+  // branch in four, a single songbird now and then.)
+  const few = map.look?.forestStyle === 'mossy';
   const branches = (map.platforms ?? []).filter((p) => p.w >= 200 && p.y < map.groundY - 60);
   branches.forEach((b, i) => {
-    if (hash(i * 7.7 + 1) < 0.45) return;
+    if (hash(i * 7.7 + 1) < (few ? 0.75 : 0.45)) return;
     const span = b.w - 40;
     const T = 9 + hash(i + 2) * 5;
     const u = ((time / T + hash(i + 3)) % 1 + 1) % 1;
@@ -501,8 +754,8 @@ export function drawWoodlandLife(ctx, map, cam, width, height, time) {
     const nibble = running ? 0 : Math.max(0, Math.sin(time * 14 + i));
     squirrel(ctx, sx, sy, dir, running ? (leg / 0.55) * 6 % 1 : 0, sitK, flick, nibble);
   });
-  for (let i = 0; i < 3; i++) {
-    const period = 11 + hash(i + 40) * 6;
+  for (let i = 0; i < (few ? 1 : 3); i++) {
+    const period = (few ? 22 : 11) + hash(i + 40) * 6;
     const u = ((time / period + hash(i + 41)) % 1 + 1) % 1;
     if (u > 0.55) continue;
     const v = u / 0.55;

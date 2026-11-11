@@ -12,7 +12,7 @@ import { drawLandmark, LANDMARKS } from './landmarks.js';
 import { ramp, foliage, lightUL, flagShapes, leanFrame, swing, pivoted, flicker, stones, planks, bark, windowPane, wallShade, beam, gable } from './propkit.js';
 import { MAPS } from '../data/maps.js';
 import { drawCat } from './critters.js';
-import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
+import { drawPaintedForest, drawPaintedForestFront, drawWoodlandLife, drawMossyAmbience, mossyFireflies, leafShape, drawPaintedMeadow, drawMeadowLife, drawPaintedTownFar, drawVillageLife, washingLine, drawPaintedTownFront } from './painted.js';
 import { drawPortalGate } from './portals.js';
 import { drawFarRoom, drawFarWhaleRoom, drawMidRoom } from './rooms.js';
 import { levelRange } from '../world/routes.js';
@@ -979,7 +979,10 @@ function fireflySpots(map, cam, width, height, time) {
 // The fireflies' little lights at night: where a map's night brings them out (render/scene.js).
 export function fireflyLights(map, cam, width, height, time) {
   const t = map.look ? { ...THEMES[map.theme], ...map.look } : THEMES[map.theme];
-  if (!t || t.underground || !((t.critters ?? []).includes('firefly') || map.night >= 0.5)) return [];
+  if (!t || t.underground) return [];
+  // (Mossy Woods has its own few fireflies round its giant trees, and no others.)
+  if (t.forestStyle === 'mossy') return mossyFireflies(map, cam, width, time).map((f) => ({ x: f.x, y: f.y, r: 10 * f.glow, k: 0.8, c: '#e8ff9a' }));
+  if (!((t.critters ?? []).includes('firefly') || map.night >= 0.5)) return [];
   return fireflySpots(map, cam, width, height, time).map((f) => ({ x: f.x - 1.6 * f.dir, y: f.y, r: 8 * f.a * f.life, k: 0.7, c: '#fff6a0' }));
 }
 
@@ -4984,8 +4987,9 @@ const BUILDINGS = {
 // A landmark or house standing under a ledge must not run up into it: it reads as poking
 // through. Where one would, it's set back a plane instead (`behind`): drawn before the ground,
 // washed toward the sky like the backdrop, so the ledge reads as passing in front of it.
-// Waterfalls pour off a ledge, and cloud pillars and the watchtower hold one up, on purpose.
-const MEETS_LEDGE = new Set(['waterfall', 'cloudpillar', 'watchtower']);
+// Waterfalls pour off a ledge, and cloud pillars, the watchtower and Mossy Woods' giant trees
+// (whose branches are its ledges) hold one up, on purpose.
+const MEETS_LEDGE = new Set(['woodtree', 'waterfall', 'cloudpillar', 'watchtower']);
 const decoSize = (kind, seed) => {
   const b = BUILDINGS[kind];
   if (b) {
@@ -5473,7 +5477,8 @@ function drawProps(ctx, t, map, cam, width, time) {
   surfaces.forEach((s, si) => {
     // Nothing grows on a drifting ledge, or on a ledge that's really a tree's bough.
     if (s.drift) return;
-    if (!s.ground && map.platforms.some((p) => p.bare && Math.abs(p.x - s.x) < 2 && Math.abs(p.y - s.yAt(s.x)) < 2)) return;
+    // (`noProps`: a ledge drawn but kept clear, like a rope bridge's planks.)
+    if (!s.ground && map.platforms.some((p) => (p.bare || p.noProps) && Math.abs(p.x - s.x) < 2 && Math.abs(p.y - s.yAt(s.x)) < 2)) return;
     const step = s.ground ? 38 : 44;
     for (let wx = s.x + 14; wx < s.x + s.w - 12; wx += step) {
       const seed = hash(wx * 0.37 + si * 13 + map.width);
@@ -5539,7 +5544,8 @@ const hexA = (hex, a) => `rgba(${parseInt(hex.slice(1, 3), 16)},${parseInt(hex.s
 function drawCritters(ctx, t, map, cam, width, height, time) {
   const kinds = t.critters ?? [];
   // The painted woods' own life: squirrels on the branches and songbirds between the trees.
-  if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
+  if (t.painted === 'forest' && t.forestStyle === 'mossy') drawMossyAmbience(ctx, map, cam, width, height, time);
+  else if (t.painted === 'forest') drawWoodlandLife(ctx, map, cam, width, height, time);
   if (t.painted === 'meadow') drawMeadowLife(ctx, map, cam, width, height, time, groundAt);
   // (Not in the Mochi places, the Garden, the stadium and its courses: their life is the Mochi.)
   if (t.painted === 'town' && !(map.garden || map.mochiRace)) {

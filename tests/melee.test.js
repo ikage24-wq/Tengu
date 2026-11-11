@@ -776,8 +776,12 @@ test('the archer paths have command shots: up at flyers, from the air, and on th
     assert.equal(w.pose.kind, air, `${job}: a shot from the air`);
     assert.ok(w.hangUntil > w.now, 'it holds you up');
     run(w, 1.5);
+    // (Nothing close by for the run, so it's a running shot and not a close-range combo, wherever
+    // the map's shelves happen to be.)
+    w.mobs = [];
     Object.assign(w.body, { x: 200, facing: 1 });
-    run(w, 0.5, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
+    // (A full second, so she's up to speed even if she lands from a drop first.)
+    run(w, 1, { held: new Set(['ArrowRight']), pressed: new Set(), locked: false });
     updateWorld(w, DT, { held: new Set(['ArrowRight', 'KeyZ']), pressed: new Set(['KeyZ']), locked: false });
     assert.equal(w.pose.kind, run0, `${job}: a running shot`);
   }

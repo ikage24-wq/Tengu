@@ -64,6 +64,8 @@ export const MATERIALS = {
   // Clover Hills' fields (its art pass, 2026-11-11): Petal Meadow's puffy grass cap and soft soil
   // in warm farm browns.
   clover: { lip: '#86dc7e', body: '#d8a77a', deep: '#a8734e', stone: '#f2d2a8', style: 'petalsoil', blades: true, drip: 'root', cap: 'puffy' },
+  // Mossy Woods' own (its art pass, 2026-11-11): a deep soft moss on warm brown soil.
+  mossy: { lip: '#74cf7e', body: '#c4946c', deep: '#94644a', stone: '#e6cba8', style: 'petalsoil', blades: true, drip: 'root', moss: true },
   farm: { lip: '#72d672', body: '#b5845a', deep: '#875c3a', stone: '#d6a878', style: 'farm', blades: true, drip: 'vine' },
   // Dawnlight Beach (the tutorial island): pale sand over warm sandstone.
   beach: { lip: '#fff0cc', body: '#f2d29c', deep: '#d9ad72', stone: '#fbe6bf', style: 'slab', blades: false, drip: 'weed' },
@@ -1508,7 +1510,7 @@ const BLOOMS = ['#ff9ec0', '#ffe36b', '#ffffff', '#c9a6ff', '#ffb38a'];
 function edgeDeco(ctx, kind, pts, time, seed, width) {
   forAlong(pts, 11, (x, y, k) => {
     const h = hash(k * 2.3 + seed * 7);
-    if (x < -6 || x > width + 6 || h < 0.45) return;
+    if (x < -6 || x > width + 6 || h < (kind === 'mossy' ? 0.74 : 0.45)) return;
     const w = windAt(time, x + camX);
     const sway = Math.sin(time * 2 + (x + camX) * 0.07) * 0.45 * (0.5 + w) + w * 0.9;
     if (kind === 'flowers') {
@@ -1597,6 +1599,41 @@ function edgeDeco(ctx, kind, pts, time, seed, width) {
         ctx.fillStyle = h > 0.58 ? '#d8ccc4' : '#c4d0d8';
         ctx.beginPath();
         ctx.ellipse(x, y - 0.6, 1.6, 1.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (kind === 'mossy') {
+      // A wood's little finds, few and far between: tiny spotted mushrooms, a curl of fern, a soft
+      // tuft of moss.
+      if (h > 0.93) {
+        const red = hash(k * 1.7 + seed) > 0.45;
+        ctx.fillStyle = '#fff4e0';
+        ctx.fillRect(x - 0.6, y - 2.6, 1.2, 2.6);
+        ctx.fillStyle = red ? '#ff6f6f' : '#e8b07a';
+        ctx.beginPath();
+        ctx.ellipse(x + sway * 0.15, y - 2.8, 2.3, 1.7, 0, Math.PI, 0);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x - 1 + sway * 0.15, y - 3.6, 0.9, 0.9);
+        if (red) ctx.fillRect(x + 0.7 + sway * 0.15, y - 3.1, 0.7, 0.7);
+      } else if (h > 0.84) {
+        ctx.strokeStyle = '#5fb46a';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + 1 + sway, y - 4, x + 3 + sway, y - 5);
+        for (let j = 1; j < 4; j++) {
+          const fx = x + j * 0.8 + sway * (j / 4);
+          const fy = y - j * 1.3;
+          ctx.moveTo(fx, fy);
+          ctx.lineTo(fx - 1.4, fy - 0.8);
+          ctx.moveTo(fx, fy);
+          ctx.lineTo(fx + 0.9, fy - 1.4);
+        }
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = h > 0.56 ? '#8fdc8a' : '#6cc478';
+        ctx.beginPath();
+        ctx.ellipse(x, y - 0.6, 2.2, 1.3, 0, Math.PI, 0);
         ctx.fill();
       }
     } else if (kind === 'glowcaps') {
@@ -2168,7 +2205,7 @@ export function drawIsland(ctx, theme, p, cam, time, pi, look = null, map = null
       }
       drawPlanks(ctx, m, x, y, w, time, pi, look?.edges);
     }
-    else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges);
+    else if (style === 'branch') drawBranch(ctx, m, x, y, w, time, pi, look?.edges, p.root);
     else if (style === 'bridge') drawBridge(ctx, x, y, w, time, pi);
     else if (style === 'leaf') drawLeafPad(ctx, x, y, w, time, pi);
     else if (style === 'stone') drawStone(ctx, theme, m, x, y, w, p.thick ?? 26, cam, time, pi, look?.edges);
@@ -2414,7 +2451,11 @@ function drawPlanks(ctx, m, x, y, w, time, seed, deco) {
 // that hangs over its edges, a sawn ring at one end and a leafy twig at the other that sways in
 // the wind, little twigs with leaves and vines hanging beneath, and knots and bark along it.
 const BARK = '#9a7356';
-function drawBranch(ctx, m, x, y, w, time, seed, deco) {
+// `root`: which end grows out of a tree trunk ('left' or 'right'; 'mid' for a crown platform
+// sitting across a trunk): no sawn ring there, a bark collar flaring into the trunk instead, and
+// the leafy twig on the other end (both ends for 'mid'). Without it, a cut log: the sawn ring at
+// the near end.
+function drawBranch(ctx, m, x, y, w, time, seed, deco, root = null) {
   const line = edge(BARK);
   const sway = Math.sin(time * 1.1 + seed * 2.7) * 1.6 + windAt(time, x + camX) * 0.8;
   // Hanging below: vines and little leafy twigs.
@@ -2422,24 +2463,28 @@ function drawBranch(ctx, m, x, y, w, time, seed, deco) {
     if (hash(seed * 9.1 + dx) < 0.35) continue;
     drip(ctx, { ...m, drip: 'vine' }, x + dx, y + 15, 22, time, seed * 3 + dx);
   }
-  // The leafy twig curling up off the far end.
-  const tx = x + w - 2;
-  ctx.strokeStyle = shade(BARK, -10);
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(tx - 6, y + 7);
-  ctx.quadraticCurveTo(tx + 8, y + 4, tx + 14 + sway, y - 8);
-  ctx.stroke();
-  for (const [lx, ly, a] of [[tx + 8, y - 1, -0.5], [tx + 14 + sway, y - 10, -1.1], [tx + 4, y + 1, 0.4]]) {
-    ctx.fillStyle = m.lip;
-    ctx.strokeStyle = edge(m.lip);
-    ctx.lineWidth = 0.8;
+  // The leafy twig curling up off the far end (or ends: d = 1 off the right end, -1 the left).
+  const twig = (d) => {
+    const tx = d > 0 ? x + w - 2 : x + 2;
+    ctx.strokeStyle = shade(BARK, -10);
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.ellipse(lx + sway * 0.5, ly, 4.6, 2.2, a, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(tx - 6 * d, y + 7);
+    ctx.quadraticCurveTo(tx + 8 * d, y + 4, tx + (14 + sway) * d, y - 8);
     ctx.stroke();
-  }
+    for (const [lx, ly, a] of [[8, -1, -0.5], [14 + sway, -10, -1.1], [4, 1, 0.4]]) {
+      ctx.fillStyle = m.lip;
+      ctx.strokeStyle = edge(m.lip);
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.ellipse(tx + (lx + sway * 0.5) * d, y + ly, 4.6, 2.2, a * d, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+  };
+  if (root !== 'right') twig(1);
+  if (root === 'right' || root === 'mid') twig(-1);
   // The log: a rounded tube, lit on top, shadowed under, outlined.
   ctx.fillStyle = BARK;
   ctx.strokeStyle = line;
@@ -2473,21 +2518,47 @@ function drawBranch(ctx, m, x, y, w, time, seed, deco) {
       ctx.fill();
     }
   }
-  // The sawn ring at the near end.
-  ctx.fillStyle = '#f0d4a6';
-  ctx.strokeStyle = line;
-  ctx.beginPath();
-  ctx.ellipse(x + 1, y + 7, 4.6, 8, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.strokeStyle = '#c99a6a';
-  for (const r of [2, 4.5]) {
+  if (root === 'left' || root === 'right') {
+    // Growing out of the trunk: a collar of the trunk's bark flaring round the branch's root, a
+    // couple of grooves running from it into the branch.
+    const cx = root === 'left' ? x + 6 : x + w - 6;
+    const d = root === 'left' ? 1 : -1;
+    ctx.fillStyle = '#9c6a46';
     ctx.beginPath();
-    ctx.ellipse(x + 1, y + 7, r * 0.55, r, 0, 0, Math.PI * 2);
+    ctx.moveTo(cx - 6 * d, y - 7);
+    ctx.quadraticCurveTo(cx + 4 * d, y - 2, cx + 16 * d, y);
+    ctx.lineTo(cx + 16 * d, y + 15);
+    ctx.quadraticCurveTo(cx + 4 * d, y + 17, cx - 6 * d, y + 23);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#5e3c28';
+    ctx.lineWidth = 0.9;
+    for (const gy of [y + 4, y + 10]) {
+      ctx.beginPath();
+      ctx.moveTo(cx - 4 * d, gy - 3);
+      ctx.quadraticCurveTo(cx + 6 * d, gy, cx + 15 * d, gy);
+      ctx.stroke();
+    }
+  } else if (!root) {
+    // A cut log: the sawn ring at the near end.
+    ctx.fillStyle = '#f0d4a6';
+    ctx.strokeStyle = line;
+    ctx.beginPath();
+    ctx.ellipse(x + 1, y + 7, 4.6, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
+    ctx.strokeStyle = '#c99a6a';
+    for (const r of [2, 4.5]) {
+      ctx.beginPath();
+      ctx.ellipse(x + 1, y + 7, r * 0.55, r, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
-  // The moss cap, lumpy on top and hanging over the front edge in tongues.
-  lip(ctx, { ...m, blades: true }, [[x + 3, y], [x + w - 3, y]], time, seed + 70, Infinity, 6, deco);
+  // The moss cap, lumpy on top and hanging over the front edge in tongues (stopping short of a
+  // trunk end, so the bark collar there runs into the trunk's bark).
+  const l0 = root === 'left' ? x + 20 : x + 3;
+  const l1 = root === 'right' ? x + w - 20 : x + w - 3;
+  lip(ctx, { ...m, blades: true }, [[l0, y], [l1, y]], time, seed + 70, Infinity, 6, deco);
 }
 
 // A rope bridge: posts at both ends, sagging rope rails, and planks with gaps between them.

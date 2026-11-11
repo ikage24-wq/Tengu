@@ -166,7 +166,8 @@ export function lay({ width, ground, ledges, by = 'x', zones, quiet = [], terrai
   };
   const ropes = [...extra];
   for (const l of platforms) {
-    if (l.drift) continue;
+    // (`noRope`: a ledge with its own way up, like a giant tree's branch with the ladder on the trunk.)
+    if (l.drift || l.noRope) continue;
     const cx = l.x + l.w / 2;
     const under = platforms.filter((o) => o !== l && !o.drift && o.y > l.y && cx >= o.x && cx <= o.x + o.w).sort((a, b) => a.y - b.y)[0];
     const below = under ? under.y : groundAt(cx);

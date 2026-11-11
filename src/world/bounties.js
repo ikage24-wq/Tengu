@@ -73,8 +73,12 @@ function makeBoard(char, day) {
   const list = [];
   const used = new Set();
   for (let i = 0; i < 3 && pool.length; i++) {
-    const options = pool.filter((h) => !used.has(h.map) && !list.some((b) => b.mob === h.mob));
-    const h = (options.length ? options : pool)[Math.floor(rng() * (options.length ? options : pool).length)];
+    // (A new field and a new monster if it can; failing that a new field at least, so the board
+    // never sends you to the same field twice while another has something.)
+    const fresh = pool.filter((h) => !used.has(h.map) && !list.some((b) => b.mob === h.mob));
+    const newField = pool.filter((h) => !used.has(h.map));
+    const options = fresh.length ? fresh : newField.length ? newField : pool;
+    const h = options[Math.floor(rng() * options.length)];
     used.add(h.map);
     const name = EPITHETS[Math.floor(rng() * EPITHETS.length)];
     const gold = Math.round((rank.gold * (0.6 + h.level / 40)) / 10) * 10;
